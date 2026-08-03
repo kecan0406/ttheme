@@ -1,0 +1,30 @@
+[meta]
+name = "miku"
+group = "Vocaloid"
+order = 2
+ansi_source = "vauxe Miku"
+
+[colors]
+background = "#0e2124"
+foreground = "#dedacf"
+cursor = "#39c5bb"
+selection_background = "#1b3b3e"
+ansi = [
+  "#000000",
+  "#ff91c7",
+  "#4af79b",
+  "#ffe8c7",
+  "#aeb4fa",
+  "#ffc4fa",
+  "#76ffe6",
+  "#dedacf",
+
+  "#4a4a4a",
+  "#ff8fd5",
+  "#62ffb1",
+  "#ffe2b7",
+  "#aab0ff",
+  "#ffd6ff",
+  "#4bfff9",
+  "#ffffff",
+]

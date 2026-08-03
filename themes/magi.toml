@@ -1,0 +1,31 @@
+[meta]
+name = "magi"
+group = "Evangelion"
+native = "エヴァンゲリオン"
+order = 6
+ansi_source = "lotap/magi-theme"
+
+[colors]
+background = "#000000"
+foreground = "#ec7420"
+cursor = "#ec7420"
+selection_background = "#401010"
+ansi = [
+  "#000000",
+  "#c41414",
+  "#409820",
+  "#f4b000",
+  "#5090c8",
+  "#a06090",
+  "#60f0a0",
+  "#b0b0b0",
+
+  "#484848",
+  "#f02020",
+  "#50ff10",
+  "#f9e2af",
+  "#40c8e8",
+  "#b040a0",
+  "#3cffd0",
+  "#e8e8e8",
+]

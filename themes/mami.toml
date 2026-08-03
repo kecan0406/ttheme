@@ -1,0 +1,31 @@
+[meta]
+name = "mami"
+group = "Madoka Magica"
+native = "魔法少女まどか☆マギカ"
+order = 11
+ansi_source = "Selenized Black + Magica"
+
+[colors]
+background = "#23200f"
+foreground = "#b9b9b9"
+cursor = "#f0d066"
+selection_background = "#423b1d"
+ansi = [
+  "#252525",
+  "#ed4a46",
+  "#70b433",
+  "#f9d59d",
+  "#368aeb",
+  "#eb6eb7",
+  "#3fc5b7",
+  "#b9b9b9",
+
+  "#777777",
+  "#ff5e56",
+  "#83c746",
+  "#f9d59d",
+  "#4f9cfe",
+  "#ff81ca",
+  "#56d8c9",
+  "#dedede",
+]

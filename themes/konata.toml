@@ -1,0 +1,31 @@
+[meta]
+name = "konata"
+group = "Lucky☆Star"
+native = "らき☆すた"
+order = 13
+ansi_source = "Dark Modern"
+
+[colors]
+background = "#0f2028"
+foreground = "#cccccc"
+cursor = "#4fb8d0"
+selection_background = "#1c3a45"
+ansi = [
+  "#272727",
+  "#f74949",
+  "#2ea043",
+  "#9e6a03",
+  "#0078d4",
+  "#d01273",
+  "#1db4d6",
+  "#cccccc",
+
+  "#5d5d5d",
+  "#dc5452",
+  "#23d18b",
+  "#f5f543",
+  "#3b8eea",
+  "#d670d6",
+  "#29b8db",
+  "#e5e5e5",
+]

@@ -1,0 +1,50 @@
+[tools]
+bun = "1.3"
+
+[env]
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+[tasks.build]
+description = "emit themes for all five terminals into dist/"
+run = "bun src/cli.ts build"
+
+[tasks.test]
+description = "unit tests, including the contrast gate"
+run = "bun test"
+
+[tasks.check]
+description = "typecheck"
+run = "tsc --noEmit"
+
+[tasks.lint]
+description = "biome lint + format check + import order"
+run = "biome check ."
+
+[tasks.format]
+description = "apply biome fixes"
+run = "biome check --write ."
+
+[tasks."shell:check"]
+description = "syntax-check and exercise the zsh layer"
+depends = ["build"]
+run = '''
+{% raw %}
+set -e
+for f in shell/ttheme.zsh shell/launch-tab.zsh shell/adapters/*.zsh; do
+  zsh -n "$f"
+done
+zsh -c '
+  source shell/ttheme.zsh
+  (( ${#TTHEME_PALETTE} > 0 )) || { print -u2 "no palettes loaded"; exit 1 }
+  (( ${#TTHEME_ORDER} == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
+  __tt_menu > /dev/null || exit 1
+  REPLY=; __tt_resolve ho || exit 1
+  [[ $REPLY == homura ]] || { print -u2 "prefix resolve broke: $REPLY"; exit 1 }
+  print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$TTHEME_ADAPTER"
+'
+{% endraw %}
+'''
+
+[tasks.ci]
+description = "everything the ci workflow runs"
+depends = ["lint", "check", "test", "shell:check"]

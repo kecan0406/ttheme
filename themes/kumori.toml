@@ -1,0 +1,30 @@
+[meta]
+name = "kumori"
+group = "Vocaloid"
+order = 3
+ansi_source = "MWidzi/inabashell"
+
+[colors]
+background = "#1e1e20"
+foreground = "#c7c7c7"
+cursor = "#f5959f"
+selection_background = "#3a2c31"
+ansi = [
+  "#151515",
+  "#e84f56",
+  "#9cbf9b",
+  "#f4d177",
+  "#8fb6e8",
+  "#f5959f",
+  "#93c9c6",
+  "#c7c7c7",
+
+  "#858585",
+  "#e95274",
+  "#b7d3b3",
+  "#f6de29",
+  "#c4c9fc",
+  "#f7b9c0",
+  "#b2dedb",
+  "#f3f3f3",
+]

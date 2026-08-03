@@ -1,0 +1,31 @@
+[meta]
+name = "rei"
+group = "Evangelion"
+native = "エヴァンゲリオン"
+order = 5
+ansi_source = "Idle Toes"
+
+[colors]
+background = "#131c28"
+foreground = "#ffffff"
+cursor = "#7fb3d5"
+selection_background = "#24344a"
+ansi = [
+  "#323232",
+  "#d25252",
+  "#7fe173",
+  "#ffc66d",
+  "#4099ff",
+  "#f680ff",
+  "#bed6ff",
+  "#eeeeec",
+
+  "#606060",
+  "#f07070",
+  "#9dff91",
+  "#ffe48b",
+  "#5eb7f7",
+  "#ff9dff",
+  "#dcf4ff",
+  "#ffffff",
+]

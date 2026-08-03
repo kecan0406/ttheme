@@ -1,0 +1,30 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: bun install --frozen-lockfile
+      - run: mise run test
+      - run: mise run build
+
+      - name: package
+        run: |
+          mkdir -p release
+          for term in ghostty kitty alacritty wezterm iterm2; do
+            tar -czf "release/ttheme-$term.tar.gz" -C dist "$term"
+          done
+          tar -czf release/ttheme-all.tar.gz dist shell ghostty/shaders install.sh README.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true

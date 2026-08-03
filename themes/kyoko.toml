@@ -1,0 +1,31 @@
+[meta]
+name = "kyoko"
+group = "Madoka Magica"
+native = "魔法少女まどか☆マギカ"
+order = 10
+ansi_source = "Cursor Dark + Magica"
+
+[colors]
+background = "#241014"
+foreground = "#ffffff"
+cursor = "#d63a4a"
+selection_background = "#43202a"
+ansi = [
+  "#2a2a2a",
+  "#b15e6e",
+  "#a3be8c",
+  "#ebcb8b",
+  "#81a1c1",
+  "#b48ead",
+  "#88c0d0",
+  "#d8dee9",
+
+  "#505050",
+  "#d64073",
+  "#a3be8c",
+  "#ebcb8b",
+  "#81a1c1",
+  "#b48ead",
+  "#88c0d0",
+  "#ffffff",
+]

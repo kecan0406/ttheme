@@ -1,0 +1,31 @@
+[meta]
+name = "madoka"
+group = "Madoka Magica"
+native = "魔法少女まどか☆マギカ"
+order = 7
+ansi_source = "Elegant + Magica"
+
+[colors]
+background = "#26141d"
+foreground = "#ced2d6"
+cursor = "#ffc1c6"
+selection_background = "#452636"
+ansi = [
+  "#0a1222",
+  "#ff0257",
+  "#85cc95",
+  "#ffcb8b",
+  "#8dabe1",
+  "#ffc1c6",
+  "#78ccf0",
+  "#ffffff",
+
+  "#575656",
+  "#ff0057",
+  "#85cc95",
+  "#ffcb8b",
+  "#8dabe1",
+  "#ffc1c6",
+  "#3facef",
+  "#ffffff",
+]

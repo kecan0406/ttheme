@@ -1,0 +1,31 @@
+[meta]
+name = "tsukasa"
+group = "Lucky☆Star"
+native = "らき☆すた"
+order = 15
+ansi_source = "Sublette"
+
+[colors]
+background = "#241426"
+foreground = "#ccced0"
+cursor = "#e8a8d0"
+selection_background = "#3f2440"
+ansi = [
+  "#253045",
+  "#ee5577",
+  "#55ee77",
+  "#ffdd88",
+  "#5588ff",
+  "#ff77cc",
+  "#44eeee",
+  "#f5f5da",
+
+  "#405570",
+  "#ee6655",
+  "#99ee77",
+  "#ffff77",
+  "#77bbff",
+  "#aa88ff",
+  "#55ffbb",
+  "#ffffee",
+]

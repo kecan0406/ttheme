@@ -1,0 +1,31 @@
+[meta]
+name = "sayaka"
+group = "Madoka Magica"
+native = "魔法少女まどか☆マギカ"
+order = 9
+ansi_source = "Teerb + Magica"
+
+[colors]
+background = "#101c2b"
+foreground = "#d0d0d0"
+cursor = "#88afc0"
+selection_background = "#1d3550"
+ansi = [
+  "#1c1c1c",
+  "#d68686",
+  "#aed686",
+  "#d7af87",
+  "#5b7397",
+  "#d6aed6",
+  "#8adbb4",
+  "#d0d0d0",
+
+  "#4f4f4f",
+  "#d68686",
+  "#aed686",
+  "#e4c9af",
+  "#88afc0",
+  "#d6aed6",
+  "#b1e7dd",
+  "#efefef",
+]

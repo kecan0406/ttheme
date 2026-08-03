@@ -1,0 +1,31 @@
+[meta]
+name = "miyuki"
+group = "Lucky☆Star"
+native = "らき☆すた"
+order = 16
+ansi_source = "Oxocarbon"
+
+[colors]
+background = "#26161e"
+foreground = "#f2f4f8"
+cursor = "#dda0bb"
+selection_background = "#402836"
+ansi = [
+  "#161616",
+  "#00dfdb",
+  "#00b4ff",
+  "#ff4297",
+  "#00c15a",
+  "#c693ff",
+  "#ff74b8",
+  "#f2f4f8",
+
+  "#585858",
+  "#00dfdb",
+  "#00b4ff",
+  "#ff4297",
+  "#00c15a",
+  "#c693ff",
+  "#ff74b8",
+  "#f2f4f8",
+]

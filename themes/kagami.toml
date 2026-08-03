@@ -1,0 +1,31 @@
+[meta]
+name = "kagami"
+group = "Lucky☆Star"
+native = "らき☆すた"
+order = 14
+ansi_source = "Nightfox"
+
+[colors]
+background = "#1a1526"
+foreground = "#cdcecf"
+cursor = "#a682e0"
+selection_background = "#322a47"
+ansi = [
+  "#393b44",
+  "#c94f6d",
+  "#81b29a",
+  "#dbc074",
+  "#719cd6",
+  "#9d79d6",
+  "#63cdcf",
+  "#dfdfe0",
+
+  "#575860",
+  "#d16983",
+  "#8ebaa4",
+  "#e0c989",
+  "#86abdc",
+  "#baa1e2",
+  "#7ad5d6",
+  "#e4e4e5",
+]
