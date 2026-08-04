@@ -1,0 +1,31 @@
+[meta]
+name = "mercury"
+group = "Sailor Moon"
+native = "美少女戦士セーラームーン"
+order = 38
+ansi_source = "Glacier + Senshi"
+
+[colors]
+background = "#0d1420"
+foreground = "#dcebf7"
+cursor = "#3c9cd7"
+selection_background = "#1d3550"
+ansi = [
+  "#2e343c",
+  "#e0304a",
+  "#35a770",
+  "#fb9435",
+  "#2a8bc1",
+  "#d94f43",
+  "#778397",
+  "#ffffff",
+
+  "#404a55",
+  "#f2634f",
+  "#49e998",
+  "#fddf6e",
+  "#5db6e8",
+  "#ea4727",
+  "#a0b6d3",
+  "#ffffff",
+]

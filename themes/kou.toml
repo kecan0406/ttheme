@@ -1,0 +1,31 @@
+[meta]
+name = "kou"
+group = "Call of the Night"
+native = "よふかしのうた"
+order = 63
+ansi_source = "Under The Sea + Night"
+
+[colors]
+background = "#011116"
+foreground = "#ffffff"
+cursor = "#e0a94a"
+selection_background = "#1e3a3a"
+ansi = [
+  "#022026",
+  "#b2302d",
+  "#00a941",
+  "#e0a94a",
+  "#459a86",
+  "#1298ff",
+  "#5d7e19",
+  "#c8d8d8",
+
+  "#384451",
+  "#ff4242",
+  "#2aea5e",
+  "#8ed4fd",
+  "#61d5ba",
+  "#1298ff",
+  "#98d028",
+  "#58fbd6",
+]

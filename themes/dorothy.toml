@@ -1,0 +1,31 @@
+[meta]
+name = "dorothy"
+group = "VA-11 Hall-A"
+native = "Cyberpunk Bartender Action"
+order = 44
+ansi_source = "Cyberpunk + Glitch City"
+
+[colors]
+background = "#1c0f14"
+foreground = "#ffe9ee"
+cursor = "#ff4d6d"
+selection_background = "#57202f"
+ansi = [
+  "#241016",
+  "#ff7092",
+  "#00fbac",
+  "#fffa6a",
+  "#00bfff",
+  "#df95ff",
+  "#86cbfe",
+  "#fff0f3",
+
+  "#6b545c",
+  "#ff8aa4",
+  "#21f6bc",
+  "#fff787",
+  "#1bccfd",
+  "#e6aefe",
+  "#99d6fc",
+  "#fffafb",
+]

@@ -1,0 +1,31 @@
+[meta]
+name = "jill"
+group = "VA-11 Hall-A"
+native = "Cyberpunk Bartender Action"
+order = 43
+ansi_source = "TokyoNight"
+
+[colors]
+background = "#14151f"
+foreground = "#c8d3f5"
+cursor = "#82aaff"
+selection_background = "#33467c"
+ansi = [
+  "#15161e",
+  "#f7768e",
+  "#9ece6a",
+  "#e0af68",
+  "#7aa2f7",
+  "#bb9af7",
+  "#7dcfff",
+  "#a9b1d6",
+
+  "#414868",
+  "#f7768e",
+  "#9ece6a",
+  "#e0af68",
+  "#7aa2f7",
+  "#bb9af7",
+  "#7dcfff",
+  "#c0caf5",
+]

@@ -1,0 +1,31 @@
+[meta]
+name = "lucy"
+group = "Cyberpunk: Edgerunners"
+native = "サイバーパンク エッジランナーズ"
+order = 88
+ansi_source = "Mellow"
+
+[colors]
+background = "#15141b"
+foreground = "#eae8f2"
+cursor = "#e29eca"
+selection_background = "#2c2a3a"
+ansi = [
+  "#27272a",
+  "#f5a191",
+  "#90b99f",
+  "#e6b99d",
+  "#aca1cf",
+  "#e29eca",
+  "#ea83a5",
+  "#c1c0d4",
+
+  "#424246",
+  "#ffae9f",
+  "#9dc6ac",
+  "#f0c5a9",
+  "#b9aeda",
+  "#ecaad6",
+  "#f591b2",
+  "#cac9dd",
+]

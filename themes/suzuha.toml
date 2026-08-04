@@ -1,0 +1,31 @@
+[meta]
+name = "suzuha"
+group = "Steins;Gate"
+native = "シュタインズ・ゲート"
+order = 24
+ansi_source = "Gruvbox Dark + Lab"
+
+[colors]
+background = "#1e1e14"
+foreground = "#ebdbb2"
+cursor = "#d98e32"
+selection_background = "#3c3826"
+ansi = [
+  "#282828",
+  "#cc241d",
+  "#98971a",
+  "#d79921",
+  "#458588",
+  "#b16286",
+  "#689d6a",
+  "#d5c4a1",
+
+  "#928374",
+  "#fb4934",
+  "#b8bb26",
+  "#fabd2f",
+  "#83a598",
+  "#d3869b",
+  "#8ec07c",
+  "#ebdbb2",
+]

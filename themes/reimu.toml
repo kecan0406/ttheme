@@ -1,0 +1,31 @@
+[meta]
+name = "reimu"
+group = "Touhou Project"
+native = "東方Project"
+order = 91
+ansi_source = "Firewatch"
+
+[colors]
+background = "#1b1216"
+foreground = "#f7f0ee"
+cursor = "#e14b52"
+selection_background = "#44222a"
+ansi = [
+  "#585f6d",
+  "#d95360",
+  "#5ab977",
+  "#dfb563",
+  "#4d89c4",
+  "#d55119",
+  "#44a8b6",
+  "#e6e5ff",
+
+  "#585f6d",
+  "#d95360",
+  "#5ab977",
+  "#dfb563",
+  "#4c89c5",
+  "#d55119",
+  "#44a8b6",
+  "#e6e5ff",
+]

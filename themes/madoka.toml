@@ -2,7 +2,7 @@
 name = "madoka"
 group = "Madoka Magica"
 native = "魔法少女まどか☆マギカ"
-order = 7
+order = 15
 ansi_source = "Elegant + Magica"
 
 [colors]

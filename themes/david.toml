@@ -1,0 +1,31 @@
+[meta]
+name = "david"
+group = "Cyberpunk: Edgerunners"
+native = "サイバーパンク エッジランナーズ"
+order = 87
+ansi_source = "Cobalt2 + Edgerunner"
+
+[colors]
+background = "#132738"
+foreground = "#eef4fc"
+cursor = "#f0cc09"
+selection_background = "#18354f"
+ansi = [
+  "#000000",
+  "#ff0000",
+  "#38de21",
+  "#ffe50a",
+  "#2f7de0",
+  "#ff005d",
+  "#00bbbb",
+  "#bbbbbb",
+
+  "#555555",
+  "#f40e17",
+  "#3bd01d",
+  "#edc809",
+  "#5555ff",
+  "#ff55ff",
+  "#6ae3fa",
+  "#ffffff",
+]

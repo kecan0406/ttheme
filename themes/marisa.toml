@@ -1,0 +1,31 @@
+[meta]
+name = "marisa"
+group = "Touhou Project"
+native = "東方Project"
+order = 92
+ansi_source = "Apple Classic + Danmaku"
+
+[colors]
+background = "#120e08"
+foreground = "#f0e2c0"
+cursor = "#ffd700"
+selection_background = "#443a12"
+ansi = [
+  "#000000",
+  "#c91b00",
+  "#00c200",
+  "#c7c400",
+  "#4664ec",
+  "#ca30c7",
+  "#00c5c7",
+  "#c7c7c7",
+
+  "#686868",
+  "#ff6e67",
+  "#5ffa68",
+  "#fffc67",
+  "#6871ff",
+  "#ff77ff",
+  "#60fdff",
+  "#ffffff",
+]

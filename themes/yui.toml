@@ -1,0 +1,31 @@
+[meta]
+name = "yui"
+group = "K-On!"
+native = "けいおん!"
+order = 82
+ansi_source = "Espresso Libre + HTT"
+
+[colors]
+background = "#2a211c"
+foreground = "#f0e6dc"
+cursor = "#e0442e"
+selection_background = "#4d3c2d"
+ansi = [
+  "#000000",
+  "#e0442e",
+  "#1a921c",
+  "#f0e53a",
+  "#0066ff",
+  "#c5656b",
+  "#06989a",
+  "#d3d7cf",
+
+  "#555753",
+  "#ef2929",
+  "#9aff87",
+  "#fffb5c",
+  "#43a8ed",
+  "#ff818a",
+  "#34e2e2",
+  "#eeeeec",
+]

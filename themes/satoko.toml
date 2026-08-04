@@ -1,0 +1,31 @@
+[meta]
+name = "satoko"
+group = "Higurashi"
+native = "ひぐらしのなく頃に"
+order = 70
+ansi_source = "Espresso"
+
+[colors]
+background = "#1c1410"
+foreground = "#f5e8d7"
+cursor = "#ffc66d"
+selection_background = "#4a3826"
+ansi = [
+  "#353535",
+  "#d25252",
+  "#a5c261",
+  "#ffc66d",
+  "#6c99bb",
+  "#d197d9",
+  "#bed6ff",
+  "#eeeeec",
+
+  "#606060",
+  "#f00c0c",
+  "#c2e075",
+  "#e1e48b",
+  "#8ab7d9",
+  "#efb5f7",
+  "#dcf4ff",
+  "#ffffff",
+]

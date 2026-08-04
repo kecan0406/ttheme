@@ -1,0 +1,31 @@
+[meta]
+name = "mugi"
+group = "K-On!"
+native = "けいおん!"
+order = 85
+ansi_source = "Tomorrow Night Eighties"
+
+[colors]
+background = "#211c14"
+foreground = "#f7f0dc"
+cursor = "#f4a7c0"
+selection_background = "#453b28"
+ansi = [
+  "#000000",
+  "#f2777a",
+  "#99cc99",
+  "#ffcc66",
+  "#6699cc",
+  "#cc99cc",
+  "#66cccc",
+  "#ffffff",
+
+  "#595959",
+  "#f2777a",
+  "#99cc99",
+  "#ffcc66",
+  "#6699cc",
+  "#cc99cc",
+  "#66cccc",
+  "#ffffff",
+]

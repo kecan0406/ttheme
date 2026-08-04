@@ -1,0 +1,31 @@
+[meta]
+name = "nadeko"
+group = "Monogatari"
+native = "〈物語〉シリーズ"
+order = 36
+ansi_source = "Tinacious Design Dark"
+
+[colors]
+background = "#231825"
+foreground = "#cbcbf0"
+cursor = "#f2a0bd"
+selection_background = "#472440"
+ansi = [
+  "#1d1d26",
+  "#ff3399",
+  "#00d364",
+  "#ffcc66",
+  "#00cbff",
+  "#cc66ff",
+  "#00ceca",
+  "#cbcbf0",
+
+  "#636667",
+  "#ff2f92",
+  "#00d364",
+  "#ffd479",
+  "#00cbff",
+  "#d783ff",
+  "#00d5d4",
+  "#d5d6f3",
+]

@@ -1,0 +1,31 @@
+[meta]
+name = "alma"
+group = "VA-11 Hall-A"
+native = "Cyberpunk Bartender Action"
+order = 45
+ansi_source = "Belafonte Night + Glitch City"
+
+[colors]
+background = "#20111b"
+foreground = "#ead9b9"
+cursor = "#eaa549"
+selection_background = "#45373c"
+ansi = [
+  "#2b1a24",
+  "#e04b3a",
+  "#8f8b6a",
+  "#eaa549",
+  "#5d8ba0",
+  "#b96a3a",
+  "#989a9c",
+  "#d5ccba",
+
+  "#6b5a5f",
+  "#ee6a52",
+  "#adaa84",
+  "#f2bd66",
+  "#74a2b8",
+  "#cd8148",
+  "#b0b4b8",
+  "#efe6d4",
+]

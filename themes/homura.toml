@@ -2,7 +2,7 @@
 name = "homura"
 group = "Madoka Magica"
 native = "魔法少女まどか☆マギカ"
-order = 8
+order = 16
 ansi_source = "Monokai Pro Machine + Magica"
 
 [colors]

@@ -1,0 +1,31 @@
+[meta]
+name = "joker"
+group = "Persona 5"
+native = "ペルソナ5"
+order = 49
+ansi_source = "Red Alert + Phantom"
+
+[colors]
+background = "#131013"
+foreground = "#f2eef2"
+cursor = "#d81818"
+selection_background = "#3d0f12"
+ansi = [
+  "#1a171a",
+  "#d81818",
+  "#71be6b",
+  "#beb86b",
+  "#489bee",
+  "#e979d7",
+  "#6bbeb8",
+  "#d6d6d6",
+
+  "#666666",
+  "#ff3b3b",
+  "#aff08c",
+  "#dfddb7",
+  "#65aaf1",
+  "#ddb7df",
+  "#b7dfdd",
+  "#ffffff",
+]

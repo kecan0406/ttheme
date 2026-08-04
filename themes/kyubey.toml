@@ -1,0 +1,31 @@
+[meta]
+name = "kyubey"
+group = "Madoka Magica"
+native = "魔法少女まどか☆マギカ"
+order = 21
+ansi_source = "Rose Pine Dawn + Magica"
+
+[colors]
+background = "#faf4ed"
+foreground = "#444060"
+cursor = "#d2325a"
+selection_background = "#f2d5de"
+ansi = [
+  "#26233a",
+  "#b4637a",
+  "#286983",
+  "#b57614",
+  "#56949f",
+  "#907aa9",
+  "#c05a55",
+  "#444060",
+
+  "#9893a5",
+  "#b4637a",
+  "#286983",
+  "#b57614",
+  "#56949f",
+  "#907aa9",
+  "#c05a55",
+  "#2a273f",
+]

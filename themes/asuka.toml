@@ -2,7 +2,7 @@
 name = "asuka"
 group = "Evangelion"
 native = "エヴァンゲリオン"
-order = 4
+order = 9
 ansi_source = "GitLab Dark"
 
 [colors]

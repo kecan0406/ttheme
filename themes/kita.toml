@@ -1,0 +1,31 @@
+[meta]
+name = "kita"
+group = "Bocchi the Rock!"
+native = "ぼっち・ざ・ろっく!"
+order = 32
+ansi_source = "Wild Cherry + Kessoku"
+
+[colors]
+background = "#241019"
+foreground = "#fdeef0"
+cursor = "#ff4637"
+selection_background = "#4d1e2a"
+ansi = [
+  "#000507",
+  "#d94085",
+  "#2ab250",
+  "#ffd16f",
+  "#308cba",
+  "#ececec",
+  "#c1b8b7",
+  "#fff8de",
+
+  "#009cc9",
+  "#da6bac",
+  "#f4dca5",
+  "#eac066",
+  "#9d6ce8",
+  "#ae636b",
+  "#ff919d",
+  "#f2aab2",
+]

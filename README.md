@@ -2,9 +2,12 @@
 
 Character terminal palettes — every new tab takes the next one.
 
-Fifteen palettes drawn from Vocaloid, Evangelion, Madoka Magica, Steins;Gate and
-Lucky☆Star, built for **Ghostty, kitty, Alacritty, WezTerm and iTerm2**, plus a
-zsh layer that rotates through them as you open tabs.
+Ninety-five palettes drawn from Vocaloid, Evangelion, Madoka Magica,
+Steins;Gate, Lucky☆Star, Bocchi the Rock!, Monogatari, Sailor Moon, Serial
+Experiments Lain, VA-11 Hall-A, Persona 5, Undertale, Call of the Night,
+Higurashi, Doki Doki Literature Club, Umineko, K-On!, Cyberpunk: Edgerunners
+and Touhou Project, built for **Ghostty, kitty, Alacritty, WezTerm and iTerm2**, plus a zsh
+layer that rotates through them as you open tabs.
 
 Two things separate this from the usual color-scheme dump:
 
@@ -12,26 +15,39 @@ Two things separate this from the usual color-scheme dump:
   background (WCAG AAA), every meaningful ANSI color at 3:1. The build fails if a
   palette regresses, so "it looked cute in the screenshot" cannot ship.
 - **Colors switch at runtime, not just at startup.** Tabs get different palettes
-  in the same window, `cd` into a production directory turns the terminal red,
-  and it all comes back when you leave.
+  in the same window, and any tab can be repainted at any time.
 
 ## Palettes
 
 | Group | Palettes |
 |---|---|
-| Vocaloid | `miku` `kumori` |
-| Evangelion — エヴァンゲリオン | `asuka` `rei` `magi` |
-| Madoka Magica — 魔法少女まどか☆マギカ | `madoka` `homura` `sayaka` `kyoko` `mami` |
-| Steins;Gate — シュタインズ・ゲート | `kurisu` |
+| Vocaloid | `miku` `kumori` `rin` `len` `luka` `kaito` `meiko` |
+| Evangelion — エヴァンゲリオン | `asuka` `rei` `kaworu` `misato` `eva01` `magi` |
+| Madoka Magica — 魔法少女まどか☆マギカ | `madoka` `homura` `sayaka` `kyoko` `mami` `nagisa` `kyubey` |
+| Steins;Gate — シュタインズ・ゲート | `kurisu` `mayuri` `suzuha` |
 | Lucky☆Star — らき☆すた | `konata` `kagami` `tsukasa` `miyuki` |
-| — | `neutral` (default) · `danger` (warning) |
+| Bocchi the Rock! — ぼっち・ざ・ろっく! | `bocchi` `nijika` `ryo` `kita` |
+| Monogatari — 〈物語〉シリーズ | `hitagi` `shinobu` `tsubasa` `nadeko` |
+| Sailor Moon — 美少女戦士セーラームーン | `moon` `mercury` `mars` `jupiter` `venus` |
+| Lain — serial experiments lain | `lain` |
+| VA-11 Hall-A — Cyberpunk Bartender Action | `jill` `dorothy` `alma` `stella` `sei` `valhalla` |
+| Persona 5 — ペルソナ5 | `joker` `skull` `panther` `fox` `queen` `oracle` `velvet` |
+| Undertale | `toriel` `sans` `papyrus` `undyne` `mettaton` `determination` |
+| Call of the Night — よふかしのうた | `nazuna` `kou` `seri` `anko` `yofukashi` |
+| Higurashi — ひぐらしのなく頃に | `rena` `mion` `rika` `satoko` `hinamizawa` |
+| Doki Doki Literature Club | `sayori` `natsuki` `yuri` `monika` `glitch` |
+| Umineko — うみねこのなく頃に | `battler` `beatrice` `bernkastel` `lambdadelta` `rokkenjima` |
+| K-On! — けいおん! | `yui` `ritsu` `mio` `mugi` `azusa` |
+| Cyberpunk: Edgerunners — サイバーパンク エッジランナーズ | `david` `lucy` `rebecca` `nightcity` |
+| Touhou Project — 東方Project | `reimu` `marisa` `cirno` `youmu` `patchouli` `flandre` |
+| — | `neutral` (default) |
 
-`neutral` and `danger` sit out of the rotation: one is the pre-shell default, the
-other is what a dangerous directory looks like.
+`neutral` sits out of the rotation — it is the pre-shell default.
 
 Backgrounds and cursors are hand-tuned; the 16 ANSI colors are borrowed from
 established themes (Nvim Dark, Nightfox, Oxocarbon, Selenized, Monokai Pro,
-Duotone…) or from published character themes, picked to match each character's
+Duotone, Gruvbox, Rose Pine, TokyoNight, Everforest, IR Black…) or from
+published character themes, picked to match each character's
 tones while passing the contrast gate. Each palette records where its ANSI set
 came from — `ttheme` prints it, and it is in the theme's TOML.
 
@@ -44,7 +60,7 @@ git clone https://github.com/kecan0406/ttheme && cd ttheme
 ./install.sh          # or ./install.sh --link to work on the palettes
 ```
 
-It prints the three config lines to paste. Nothing is overwritten — an existing
+It prints the four config lines to paste. Nothing is overwritten — an existing
 file is moved to `.bak` first.
 
 **Any other terminal** — one archive per terminal in the
@@ -72,9 +88,11 @@ cp wezterm/colors/miku.toml ~/.config/wezterm/colors/
 curl -L $REL/ttheme-iterm2.tar.gz | tar xz
 ```
 
-Each archive also carries a `config/` file per theme with that theme's font
-(and, for Ghostty, its shader and dock icon) — those are separate so you can
-take the colors without the rest.
+Each archive also carries a `config/` file per theme with that theme's font —
+separate so you can take the colors without the rest. Ghostty is laid out
+differently: the dock-icon colors travel inside each theme file (they derive
+from the palette), and the font + shader — identical across themes — ship as
+one shared `ttheme.conf` you include once with `config-file`.
 
 Building from a checkout works too: `mise install && bun install && mise run
 build` writes the same tree to `dist/`.
@@ -95,15 +113,10 @@ New tabs take the next palette in group order, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather
 than rolling the same one twice.
 
-`cd` into a path matching `TTHEME_WARN_PATTERN` (default: `prod`, `production`,
-`infra`, `terraform`, `k8s`, `deploy`) and the tab switches to `danger`. Leaving
-restores what you had.
-
 | Variable | Default | |
 |---|---|---|
 | `TTHEME_TAB_PALETTE` | `seq` | `off` makes new tabs inherit the window's colors |
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
-| `TTHEME_WARN_PATTERN` | see above | zsh regex for dangerous directories |
 
 ## What each terminal can actually do
 
@@ -152,7 +165,7 @@ mise run build --only kitty   # just one terminal's subtree
 mise run test
 ```
 
-All fifteen currently pass unwaived — `magi` comes closest at 7.09:1, since
+All ninety-six currently pass unwaived — `magi` comes closest at 7.09:1, since
 amber on pure black is the whole point of the NERV CRT look. If a palette
 genuinely has to break a rule, waive it by name and say why; a waiver without a
 reason fails the test suite.

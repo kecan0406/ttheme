@@ -1,0 +1,31 @@
+[meta]
+name = "lambdadelta"
+group = "Umineko"
+native = "うみねこのなく頃に"
+order = 80
+ansi_source = "Neon Purple + Truth"
+
+[colors]
+background = "#291b47"
+foreground = "#f5eefa"
+cursor = "#ff3fae"
+selection_background = "#3f2a66"
+ansi = [
+  "#000000",
+  "#e8158a",
+  "#03eba5",
+  "#fffa6a",
+  "#00bfff",
+  "#ff00e0",
+  "#9aa5ed",
+  "#ffffff",
+
+  "#a8fcff",
+  "#ff0da5",
+  "#00ffb6",
+  "#fff787",
+  "#1bccfd",
+  "#ff00f8",
+  "#a6b6ff",
+  "#ffffff",
+]

@@ -2,7 +2,7 @@
 name = "tsukasa"
 group = "Lucky☆Star"
 native = "らき☆すた"
-order = 15
+order = 27
 ansi_source = "Sublette"
 
 [colors]

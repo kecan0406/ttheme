@@ -1,0 +1,31 @@
+[meta]
+name = "panther"
+group = "Persona 5"
+native = "ペルソナ5"
+order = 51
+ansi_source = "Warm Neon + Phantom"
+
+[colors]
+background = "#1a0e10"
+foreground = "#f2e3c8"
+cursor = "#f0393f"
+selection_background = "#4a1418"
+ansi = [
+  "#241114",
+  "#e24346",
+  "#39b13a",
+  "#dae145",
+  "#4261c5",
+  "#f920fb",
+  "#2abbd4",
+  "#d0b8a3",
+
+  "#6e5a52",
+  "#e97071",
+  "#9cc090",
+  "#ddda7a",
+  "#7b91d6",
+  "#f674ba",
+  "#5ed1e5",
+  "#d8c8bb",
+]

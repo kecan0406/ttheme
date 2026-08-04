@@ -1,0 +1,31 @@
+[meta]
+name = "mio"
+group = "K-On!"
+native = "けいおん!"
+order = 84
+ansi_source = "Ardoise + HTT"
+
+[colors]
+background = "#191b20"
+foreground = "#e8ecf2"
+cursor = "#84aadc"
+selection_background = "#303740"
+ansi = [
+  "#2c2c2c",
+  "#d3322d",
+  "#588b35",
+  "#fca93a",
+  "#2465c2",
+  "#be68ca",
+  "#64e1b8",
+  "#f7f7f7",
+
+  "#535353",
+  "#fa5852",
+  "#8dc252",
+  "#ffea51",
+  "#6ab5f8",
+  "#be68ca",
+  "#89ffdb",
+  "#fefefe",
+]

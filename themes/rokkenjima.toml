@@ -1,0 +1,31 @@
+[meta]
+name = "rokkenjima"
+group = "Umineko"
+native = "うみねこのなく頃に"
+order = 81
+ansi_source = "Sequoia Retro Dark + Truth"
+
+[colors]
+background = "#0f1014"
+foreground = "#d9c9a3"
+cursor = "#e8b246"
+selection_background = "#2b2836"
+ansi = [
+  "#131317",
+  "#829fa7",
+  "#648f68",
+  "#da674b",
+  "#5c87a4",
+  "#e8b246",
+  "#a27e57",
+  "#b8b8c2",
+
+  "#575861",
+  "#e8b246",
+  "#648f68",
+  "#da674b",
+  "#5c87a4",
+  "#829fa7",
+  "#a27e57",
+  "#d8d8e0",
+]

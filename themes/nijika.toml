@@ -1,0 +1,31 @@
+[meta]
+name = "nijika"
+group = "Bocchi the Rock!"
+native = "ぼっち・ざ・ろっく!"
+order = 30
+ansi_source = "Medallion"
+
+[colors]
+background = "#1d1908"
+foreground = "#cac296"
+cursor = "#ffb400"
+selection_background = "#4c3f13"
+ansi = [
+  "#000000",
+  "#b64c00",
+  "#7c8b16",
+  "#d3bd26",
+  "#616bb0",
+  "#8c5a90",
+  "#916c25",
+  "#cac29a",
+
+  "#5e5219",
+  "#ff9149",
+  "#b2ca3b",
+  "#ffe54a",
+  "#acb8ff",
+  "#ffa0ff",
+  "#ffbc51",
+  "#fed698",
+]

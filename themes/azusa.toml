@@ -1,0 +1,31 @@
+[meta]
+name = "azusa"
+group = "K-On!"
+native = "けいおん!"
+order = 86
+ansi_source = "Retro Legends"
+
+[colors]
+background = "#101210"
+foreground = "#eef2ee"
+cursor = "#45eb45"
+selection_background = "#2c382c"
+ansi = [
+  "#262626",
+  "#de5454",
+  "#45eb45",
+  "#f7bf2b",
+  "#4066f2",
+  "#bf4cf2",
+  "#40d9e6",
+  "#bfe6bf",
+
+  "#4c594c",
+  "#ff6666",
+  "#59ff59",
+  "#ffd933",
+  "#4c80ff",
+  "#e666ff",
+  "#59e6ff",
+  "#f2fff2",
+]

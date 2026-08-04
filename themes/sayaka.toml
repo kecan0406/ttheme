@@ -2,7 +2,7 @@
 name = "sayaka"
 group = "Madoka Magica"
 native = "魔法少女まどか☆マギカ"
-order = 9
+order = 17
 ansi_source = "Teerb + Magica"
 
 [colors]

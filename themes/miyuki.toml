@@ -2,7 +2,7 @@
 name = "miyuki"
 group = "Lucky☆Star"
 native = "らき☆すた"
-order = 16
+order = 28
 ansi_source = "Oxocarbon"
 
 [colors]

@@ -1,0 +1,31 @@
+[meta]
+name = "youmu"
+group = "Touhou Project"
+native = "東方Project"
+order = 94
+ansi_source = "Everforest Dark Med + Danmaku"
+
+[colors]
+background = "#232a2e"
+foreground = "#f2efdf"
+cursor = "#83c092"
+selection_background = "#364540"
+ansi = [
+  "#343f44",
+  "#e67e80",
+  "#a7c080",
+  "#dbbc7f",
+  "#7fbbb3",
+  "#d699b6",
+  "#83c092",
+  "#f2efdf",
+
+  "#a6b0a0",
+  "#f85552",
+  "#8da101",
+  "#dfa000",
+  "#3a94c5",
+  "#df69ba",
+  "#35a77c",
+  "#fffbef",
+]

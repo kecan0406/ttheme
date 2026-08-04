@@ -1,0 +1,31 @@
+[meta]
+name = "nightcity"
+group = "Cyberpunk: Edgerunners"
+native = "サイバーパンク エッジランナーズ"
+order = 90
+ansi_source = "Vibrant Ink + Edgerunner"
+
+[colors]
+background = "#0b0b0e"
+foreground = "#f5f2dc"
+cursor = "#fcee0a"
+selection_background = "#403c0a"
+ansi = [
+  "#26262b",
+  "#ff6600",
+  "#ccff04",
+  "#ffcc00",
+  "#44b4cc",
+  "#9933cc",
+  "#44b4cc",
+  "#f5f5f5",
+
+  "#555555",
+  "#ff0000",
+  "#00ff00",
+  "#ffff00",
+  "#4d4dff",
+  "#ff00ff",
+  "#00ffff",
+  "#e5e5e5",
+]

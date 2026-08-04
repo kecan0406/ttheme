@@ -1,0 +1,31 @@
+[meta]
+name = "patchouli"
+group = "Touhou Project"
+native = "東方Project"
+order = 95
+ansi_source = "SeedFlip Ultraviolet"
+
+[colors]
+background = "#0b0014"
+foreground = "#e8e0f5"
+cursor = "#c77dff"
+selection_background = "#2a1a44"
+ansi = [
+  "#05000a",
+  "#f04242",
+  "#42f07c",
+  "#f0d342",
+  "#428bf0",
+  "#f042f0",
+  "#42f0f0",
+  "#f6f3fb",
+
+  "#5b2687",
+  "#f58989",
+  "#89f5ad",
+  "#f5e389",
+  "#89b6f5",
+  "#f589f5",
+  "#89f5f5",
+  "#ffffff",
+]

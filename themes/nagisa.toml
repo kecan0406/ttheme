@@ -1,0 +1,31 @@
+[meta]
+name = "nagisa"
+group = "Madoka Magica"
+native = "魔法少女まどか☆マギカ"
+order = 20
+ansi_source = "Cutie Pro"
+
+[colors]
+background = "#211309"
+foreground = "#d5d0c9"
+cursor = "#f7941d"
+selection_background = "#4a2c15"
+ansi = [
+  "#000000",
+  "#f56e7f",
+  "#bec975",
+  "#f58669",
+  "#42d9c5",
+  "#d286b7",
+  "#37cb8a",
+  "#d5c3c3",
+
+  "#88847f",
+  "#e5a1a3",
+  "#e8d6a7",
+  "#f1bb79",
+  "#80c5de",
+  "#b294bb",
+  "#9dccbb",
+  "#ffffff",
+]

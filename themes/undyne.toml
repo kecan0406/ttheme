@@ -1,0 +1,30 @@
+[meta]
+name = "undyne"
+group = "Undertale"
+order = 59
+ansi_source = "Sea Shells + Determination"
+
+[colors]
+background = "#09141b"
+foreground = "#deb88d"
+cursor = "#f64438"
+selection_background = "#143247"
+ansi = [
+  "#17384c",
+  "#d15123",
+  "#027c9b",
+  "#fca02f",
+  "#2f89ad",
+  "#68d4f1",
+  "#50a3b5",
+  "#deb88d",
+
+  "#434b53",
+  "#d48678",
+  "#628d98",
+  "#fdd39f",
+  "#1bbcdd",
+  "#bbe3ee",
+  "#87acb4",
+  "#fee4ce",
+]

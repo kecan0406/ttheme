@@ -2,7 +2,7 @@
 name = "konata"
 group = "Lucky☆Star"
 native = "らき☆すた"
-order = 13
+order = 25
 ansi_source = "Dark Modern"
 
 [colors]

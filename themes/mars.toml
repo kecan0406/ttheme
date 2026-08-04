@@ -1,0 +1,31 @@
+[meta]
+name = "mars"
+group = "Sailor Moon"
+native = "美少女戦士セーラームーン"
+order = 39
+ansi_source = "Red Planet + Senshi"
+
+[colors]
+background = "#241211"
+foreground = "#c2b790"
+cursor = "#d31e30"
+selection_background = "#3d1e2e"
+ansi = [
+  "#202020",
+  "#b55242",
+  "#728271",
+  "#e8bf6a",
+  "#69819e",
+  "#896492",
+  "#5b8390",
+  "#b9aa99",
+
+  "#676767",
+  "#d9604d",
+  "#869985",
+  "#ebeb91",
+  "#60827e",
+  "#de4974",
+  "#38add8",
+  "#d6bfb8",
+]

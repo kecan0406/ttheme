@@ -1,0 +1,31 @@
+[meta]
+name = "stella"
+group = "VA-11 Hall-A"
+native = "Cyberpunk Bartender Action"
+order = 46
+ansi_source = "Scarlet Protocol + Glitch City"
+
+[colors]
+background = "#1b0d12"
+foreground = "#f6e3da"
+cursor = "#ff2e51"
+selection_background = "#4b1622"
+ansi = [
+  "#170a10",
+  "#ff1a4b",
+  "#00dc84",
+  "#eab04d",
+  "#2e86c9",
+  "#ca30c7",
+  "#00c5c7",
+  "#d8c8c3",
+
+  "#6d5158",
+  "#ff6e67",
+  "#5ffa68",
+  "#ffd97a",
+  "#6871ff",
+  "#bd35ec",
+  "#60fdff",
+  "#fff1e8",
+]

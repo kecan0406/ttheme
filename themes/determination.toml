@@ -1,0 +1,30 @@
+[meta]
+name = "determination"
+group = "Undertale"
+order = 61
+ansi_source = "CGA + Determination"
+
+[colors]
+background = "#000000"
+foreground = "#ffffff"
+cursor = "#ff0000"
+selection_background = "#4d3d00"
+ansi = [
+  "#000000",
+  "#c81818",
+  "#00aa00",
+  "#b88828",
+  "#5555ff",
+  "#aa00aa",
+  "#00aaaa",
+  "#aaaaaa",
+
+  "#555555",
+  "#ff5555",
+  "#55ff55",
+  "#ffff55",
+  "#5555ff",
+  "#ff55ff",
+  "#55ffff",
+  "#ffffff",
+]

@@ -2,7 +2,7 @@
 name = "kurisu"
 group = "Steins;Gate"
 native = "シュタインズ・ゲート"
-order = 12
+order = 22
 ansi_source = "Duotone Dark"
 
 [colors]

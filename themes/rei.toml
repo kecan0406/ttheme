@@ -2,7 +2,7 @@
 name = "rei"
 group = "Evangelion"
 native = "エヴァンゲリオン"
-order = 5
+order = 10
 ansi_source = "Idle Toes"
 
 [colors]

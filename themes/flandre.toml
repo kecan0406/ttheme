@@ -1,0 +1,31 @@
+[meta]
+name = "flandre"
+group = "Touhou Project"
+native = "東方Project"
+order = 96
+ansi_source = "Molokai"
+
+[colors]
+background = "#150a0d"
+foreground = "#f5e6ea"
+cursor = "#e60033"
+selection_background = "#3a1220"
+ansi = [
+  "#121212",
+  "#fa2573",
+  "#98e123",
+  "#dfd460",
+  "#1080d0",
+  "#8700ff",
+  "#43a8d0",
+  "#bbbbbb",
+
+  "#555555",
+  "#f6669d",
+  "#b1e05f",
+  "#fff26d",
+  "#00afff",
+  "#af87ff",
+  "#51ceff",
+  "#ffffff",
+]

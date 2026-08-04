@@ -2,7 +2,7 @@
 name = "magi"
 group = "Evangelion"
 native = "エヴァンゲリオン"
-order = 6
+order = 14
 ansi_source = "lotap/magi-theme"
 
 [colors]

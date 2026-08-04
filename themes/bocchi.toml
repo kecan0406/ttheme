@@ -1,0 +1,31 @@
+[meta]
+name = "bocchi"
+group = "Bocchi the Rock!"
+native = "ぼっち・ざ・ろっく!"
+order = 29
+ansi_source = "Sakura + Kessoku"
+
+[colors]
+background = "#1d1322"
+foreground = "#f2d7ee"
+cursor = "#ff2291"
+selection_background = "#40213e"
+ansi = [
+  "#000000",
+  "#d52370",
+  "#41af1a",
+  "#bc7053",
+  "#6964ab",
+  "#c71fbf",
+  "#939393",
+  "#c4bbd4",
+
+  "#786d69",
+  "#f41d99",
+  "#22e529",
+  "#f59574",
+  "#9892f1",
+  "#e90cdd",
+  "#eeeeee",
+  "#cbb6ff",
+]

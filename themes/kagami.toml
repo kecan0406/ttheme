@@ -2,7 +2,7 @@
 name = "kagami"
 group = "Lucky☆Star"
 native = "らき☆すた"
-order = 14
+order = 26
 ansi_source = "Nightfox"
 
 [colors]

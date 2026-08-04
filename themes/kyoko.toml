@@ -2,7 +2,7 @@
 name = "kyoko"
 group = "Madoka Magica"
 native = "魔法少女まどか☆マギカ"
-order = 10
+order = 18
 ansi_source = "Cursor Dark + Magica"
 
 [colors]

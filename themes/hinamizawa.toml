@@ -1,0 +1,31 @@
+[meta]
+name = "hinamizawa"
+group = "Higurashi"
+native = "ひぐらしのなく頃に"
+order = 71
+ansi_source = "Red Sands"
+
+[colors]
+background = "#1c0808"
+foreground = "#d7c9a7"
+cursor = "#ff3f00"
+selection_background = "#4d1414"
+ansi = [
+  "#000000",
+  "#ff3f00",
+  "#00bb00",
+  "#e7b000",
+  "#0072ff",
+  "#bb00bb",
+  "#00bbbb",
+  "#bbbbbb",
+
+  "#6e6e6e",
+  "#d41a1a",
+  "#00bb00",
+  "#e7b000",
+  "#0072ae",
+  "#ff55ff",
+  "#55ffff",
+  "#ffffff",
+]

@@ -1,0 +1,31 @@
+[meta]
+name = "rena"
+group = "Higurashi"
+native = "ひぐらしのなく頃に"
+order = 67
+ansi_source = "Japanesque + Watanagashi"
+
+[colors]
+background = "#201512"
+foreground = "#f7f6ec"
+cursor = "#ff8243"
+selection_background = "#4d2b1c"
+ansi = [
+  "#343935",
+  "#cf3f61",
+  "#7bb75b",
+  "#e9b32a",
+  "#4c9ad4",
+  "#a57fc4",
+  "#389aad",
+  "#fafaf6",
+
+  "#595b59",
+  "#d18fa6",
+  "#767f2c",
+  "#c69749",
+  "#3f83ab",
+  "#8666b8",
+  "#76bbca",
+  "#b2b5ae",
+]

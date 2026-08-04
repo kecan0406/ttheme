@@ -1,0 +1,30 @@
+[meta]
+name = "natsuki"
+group = "Doki Doki Literature Club"
+order = 73
+ansi_source = "Fairyfloss"
+
+[colors]
+background = "#221726"
+foreground = "#fdeef6"
+cursor = "#ffb8d1"
+selection_background = "#432b49"
+ansi = [
+  "#040303",
+  "#f92672",
+  "#c2ffdf",
+  "#e6c000",
+  "#c2ffdf",
+  "#ffb8d1",
+  "#c5a3ff",
+  "#f8f8f0",
+
+  "#6090cb",
+  "#ff857f",
+  "#c2ffdf",
+  "#ffea00",
+  "#c2ffdf",
+  "#ffb8d1",
+  "#c5a3ff",
+  "#f8f8f0",
+]

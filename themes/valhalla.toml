@@ -1,0 +1,31 @@
+[meta]
+name = "valhalla"
+group = "VA-11 Hall-A"
+native = "Cyberpunk Bartender Action"
+order = 48
+ansi_source = "Synthwave + Glitch City"
+
+[colors]
+background = "#131020"
+foreground = "#f2f0f7"
+cursor = "#f6188f"
+selection_background = "#24243c"
+ansi = [
+  "#12101c",
+  "#f6188f",
+  "#1ebb2b",
+  "#fdf834",
+  "#2186ec",
+  "#f85a21",
+  "#12c3e2",
+  "#ffffff",
+
+  "#7f7094",
+  "#f841a0",
+  "#25c141",
+  "#fdf454",
+  "#2f9ded",
+  "#f97137",
+  "#19cde6",
+  "#ffffff",
+]

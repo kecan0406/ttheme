@@ -1,0 +1,30 @@
+[meta]
+name = "kaito"
+group = "Vocaloid"
+order = 7
+ansi_source = "Aardvark Blue + Crypton"
+
+[colors]
+background = "#102040"
+foreground = "#e6eefa"
+cursor = "#3367cd"
+selection_background = "#1e3a68"
+ansi = [
+  "#191919",
+  "#f05b50",
+  "#4b8c0f",
+  "#dbba00",
+  "#1370d3",
+  "#c43ac3",
+  "#008eb0",
+  "#bebebe",
+
+  "#525252",
+  "#f05b50",
+  "#95dc55",
+  "#ffe763",
+  "#60a4ec",
+  "#e26be2",
+  "#60b6cb",
+  "#f7f7f7",
+]

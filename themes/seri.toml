@@ -1,0 +1,31 @@
+[meta]
+name = "seri"
+group = "Call of the Night"
+native = "よふかしのうた"
+order = 64
+ansi_source = "Birds Of Paradise + Night"
+
+[colors]
+background = "#2a1f1d"
+foreground = "#e0dbb7"
+cursor = "#e99d2a"
+selection_background = "#563c27"
+ansi = [
+  "#573d26",
+  "#d64438",
+  "#6ba18a",
+  "#e99d2a",
+  "#5a86ad",
+  "#ac80a6",
+  "#74a6ad",
+  "#e0dbb7",
+
+  "#9b6c4a",
+  "#e84627",
+  "#95d8ba",
+  "#d0d150",
+  "#b8d3ed",
+  "#d19ecb",
+  "#93cfd7",
+  "#fff9d5",
+]

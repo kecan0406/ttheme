@@ -1,0 +1,31 @@
+[meta]
+name = "misato"
+group = "Evangelion"
+native = "エヴァンゲリオン"
+order = 12
+ansi_source = "Purple Rain"
+
+[colors]
+background = "#21084a"
+foreground = "#fffbf6"
+cursor = "#e0262c"
+selection_background = "#3a1b66"
+ansi = [
+  "#000000",
+  "#ff260e",
+  "#9be205",
+  "#ffc400",
+  "#00a2fa",
+  "#815bb5",
+  "#00deef",
+  "#ffffff",
+
+  "#565656",
+  "#ff4250",
+  "#b8e36e",
+  "#ffd852",
+  "#00a6ff",
+  "#ac7bf0",
+  "#74fdf3",
+  "#ffffff",
+]

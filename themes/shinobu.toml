@@ -1,0 +1,31 @@
+[meta]
+name = "shinobu"
+group = "Monogatari"
+native = "〈物語〉シリーズ"
+order = 34
+ansi_source = "Mona Lisa + Oddity"
+
+[colors]
+background = "#170f08"
+foreground = "#f7d66a"
+cursor = "#f2c230"
+selection_background = "#3f2c10"
+ansi = [
+  "#351b0e",
+  "#d14a38",
+  "#8f8e4a",
+  "#c36e28",
+  "#7f9fa1",
+  "#e05560",
+  "#588056",
+  "#f7d75c",
+
+  "#874228",
+  "#ff4331",
+  "#b4b264",
+  "#ff9566",
+  "#9eb2b4",
+  "#ff5b6a",
+  "#8acd8f",
+  "#ffe598",
+]

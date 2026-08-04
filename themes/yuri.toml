@@ -1,0 +1,30 @@
+[meta]
+name = "yuri"
+group = "Doki Doki Literature Club"
+order = 74
+ansi_source = "Purple Portal + DDLC"
+
+[colors]
+background = "#160528"
+foreground = "#ede4f7"
+cursor = "#c4a0ff"
+selection_background = "#2e1548"
+ansi = [
+  "#483a57",
+  "#fb7185",
+  "#34d399",
+  "#f472b6",
+  "#facc15",
+  "#38bdf8",
+  "#7a3ff5",
+  "#d8b4fe",
+
+  "#503872",
+  "#fc8d9d",
+  "#5ddcad",
+  "#f68bc3",
+  "#fbd644",
+  "#60caf9",
+  "#793ff3",
+  "#faf5ff",
+]

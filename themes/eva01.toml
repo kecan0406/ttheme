@@ -1,0 +1,31 @@
+[meta]
+name = "eva01"
+group = "Evangelion"
+native = "エヴァンゲリオン"
+order = 13
+ansi_source = "Aura"
+
+[colors]
+background = "#1d1a2f"
+foreground = "#edecee"
+cursor = "#8bd450"
+selection_background = "#3a2c52"
+ansi = [
+  "#110f18",
+  "#ff6767",
+  "#61ffca",
+  "#ffca85",
+  "#a277ff",
+  "#a277ff",
+  "#61ffca",
+  "#edecee",
+
+  "#4d4d4d",
+  "#ffca85",
+  "#a277ff",
+  "#ffca85",
+  "#a277ff",
+  "#a277ff",
+  "#61ffca",
+  "#edecee",
+]

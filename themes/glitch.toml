@@ -1,0 +1,30 @@
+[meta]
+name = "glitch"
+group = "Doki Doki Literature Club"
+order = 76
+ansi_source = "Neon + DDLC"
+
+[colors]
+background = "#0e0d12"
+foreground = "#f2f2f2"
+cursor = "#f924e7"
+selection_background = "#2e2438"
+ansi = [
+  "#000000",
+  "#ff3045",
+  "#5ffa74",
+  "#fffc7e",
+  "#545eff",
+  "#f924e7",
+  "#00fffc",
+  "#c7c7c7",
+
+  "#686868",
+  "#ff5a5a",
+  "#75ff88",
+  "#fffd96",
+  "#6a71f2",
+  "#f15be5",
+  "#88fffe",
+  "#ffffff",
+]
