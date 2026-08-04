@@ -42,7 +42,7 @@ __tt_new_window() {
   local name=$1
   shift
   if ! __tt_kitty launch --type=os-window --cwd="$PWD" --env=TTHEME_START="$name" "$@" >/dev/null 2>&1; then
-    print -u2 "tw: kitty remote control is off (allow_remote_control yes)"
+    print -u2 "ttheme window: kitty remote control is off (allow_remote_control yes)"
     return 1
   fi
 }

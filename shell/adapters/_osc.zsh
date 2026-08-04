@@ -35,7 +35,7 @@ __tt_query_bg() {
 }
 
 __tt_new_window() {
-  print -u2 "tw: opening a window is not supported under the $TTHEME_ADAPTER backend"
+  print -u2 "ttheme window: opening a window is not supported under the $TTHEME_ADAPTER backend"
   return 1
 }
 

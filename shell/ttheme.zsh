@@ -140,9 +140,9 @@ __tt_next() {
   REPLY=${TTHEME_PALETTE[$TTHEME_ROTATION[idx]]}
 }
 
-tnow() {
+__tt_current() {
   if [[ -z $TTHEME_SPEC ]]; then
-    print -u2 "tnow: no palette assigned to this shell"
+    print -u2 "ttheme current: no palette assigned to this shell"
     return 1
   fi
   local name=$(__tt_name_of "$TTHEME_SPEC")
@@ -153,9 +153,9 @@ tnow() {
   fi
 }
 
-tlist() {
+__tt_tabs() {
   local f name spec pid mark
-  [[ -d $TTHEME_STATE_DIR ]] || { print -u2 "tlist: no recorded tabs"; return 1 }
+  [[ -d $TTHEME_STATE_DIR ]] || { print -u2 "ttheme tabs: no recorded tabs"; return 1 }
   for f in $TTHEME_STATE_DIR/*(N:t); do
     if [[ ! -e /dev/$f ]]; then
       rm -f $TTHEME_STATE_DIR/$f
@@ -177,6 +177,29 @@ tlist() {
   done
 }
 
+__tt_rotate() {
+  if [[ $TTHEME_TAB_PALETTE == off ]]; then
+    print -u2 "ttheme next: TTHEME_TAB_PALETTE is off"
+    return 1
+  fi
+  local REPLY
+  __tt_next
+  __tt_apply "$REPLY"
+  TTHEME_SPEC=$REPLY
+  __tt_record
+  __tt_announce
+}
+
+__tt_window() {
+  local REPLY name=neutral
+  if (( $# )); then
+    __tt_resolve "$1" || return 1
+    name=$REPLY
+    shift
+  fi
+  __tt_new_window "$name" "$@"
+}
+
 ttheme() {
   local all=0
   if [[ $1 == --all ]]; then
@@ -188,6 +211,15 @@ ttheme() {
     (( all )) && { print -u2 "ttheme --all: needs a palette name"; return 1 }
     __tt_menu
     return 0
+  fi
+
+  if (( ! all )); then
+    case $1 in
+      tabs) __tt_tabs; return ;;
+      current) __tt_current; return ;;
+      next) __tt_rotate; return ;;
+      window) shift; __tt_window "$@"; return ;;
+    esac
   fi
 
   local REPLY
@@ -205,32 +237,12 @@ ttheme() {
   __tt_announce
 }
 
-troll() {
-  if [[ $TTHEME_TAB_PALETTE == off ]]; then
-    print -u2 "troll: TTHEME_TAB_PALETTE is off"
-    return 1
-  fi
-  local REPLY
-  __tt_next
-  __tt_apply "$REPLY"
-  TTHEME_SPEC=$REPLY
-  __tt_record
-  __tt_announce
-}
-
-tw() {
-  local REPLY name=neutral
-  if (( $# )); then
-    __tt_resolve "$1" || return 1
-    name=$REPLY
-    shift
-  fi
-  __tt_new_window "$name" "$@"
-}
-
 if (( $+functions[compdef] )); then
-  __tt_complete() { compadd -- $TTHEME_ORDER }
-  compdef __tt_complete ttheme tw
+  __tt_complete() {
+    (( CURRENT == 2 )) && compadd -- tabs current next window
+    compadd -- $TTHEME_ORDER
+  }
+  compdef __tt_complete ttheme
 fi
 
 if __tt_active; then

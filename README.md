@@ -100,14 +100,17 @@ build` writes the same tree to `dist/`.
 ## Use
 
 ```
-ttheme              list every palette, grouped, with previews
-ttheme homura       pin this tab      (a unique prefix works: ttheme ho)
-ttheme --all miku   paint every tab   (kitty only — needs remote control)
-troll               advance this tab to the next palette
-tnow                what this tab is using
-tlist               what every live tab is using
-tw kurisu           open a new window in that palette
+ttheme                list every palette, grouped, with previews
+ttheme homura         pin this tab      (a unique prefix works: ttheme ho)
+ttheme --all miku     paint every tab   (kitty only — needs remote control)
+ttheme next           advance this tab to the next palette
+ttheme current        what this tab is using
+ttheme tabs           what every live tab is using
+ttheme window kurisu  open a new window in that palette
 ```
+
+`tabs`, `current`, `next` and `window` match exactly; every other first
+argument is read as a palette name, where a unique prefix is enough.
 
 New tabs take the next palette in group order, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather

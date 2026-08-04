@@ -40,6 +40,12 @@ zsh -c '
   __tt_menu > /dev/null || exit 1
   REPLY=; __tt_resolve ho || exit 1
   [[ $REPLY == homura ]] || { print -u2 "prefix resolve broke: $REPLY"; exit 1 }
+  for r in tabs current next window; do
+    [[ -z $TTHEME_PALETTE[$r] ]] || { print -u2 "palette '\''$r'\'' collides with a ttheme subcommand"; exit 1 }
+  done
+  TTHEME_SPEC=$TTHEME_PALETTE[homura]
+  ttheme current > /dev/null || { print -u2 "ttheme current broke"; exit 1 }
+  ttheme window nosuchpalette 2>/dev/null && { print -u2 "ttheme window took a bad name"; exit 1 }
   print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$TTHEME_ADAPTER"
 '
 {% endraw %}
