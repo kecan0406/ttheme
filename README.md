@@ -100,17 +100,18 @@ build` writes the same tree to `dist/`.
 ## Use
 
 ```
-ttheme                list every palette, grouped, with previews
-ttheme homura         pin this tab      (a unique prefix works: ttheme ho)
-ttheme --all miku     paint every tab   (kitty only — needs remote control)
-ttheme next           advance this tab to the next palette
-ttheme current        what this tab is using
-ttheme tabs           what every live tab is using
-ttheme window kurisu  open a new window in that palette
+ttheme          list every palette, grouped, with previews
+ttheme homura   pin this tab      (a unique prefix works: ttheme ho)
+ttheme next     advance this tab to the next palette
+ttheme current  what this tab is using
+ttheme help     the list above, in your terminal
 ```
 
-`tabs`, `current`, `next` and `window` match exactly; every other first
-argument is read as a palette name, where a unique prefix is enough.
+`next`, `current` and `help` match exactly; every other first argument is read
+as a palette name, where a unique prefix is enough. Mistyped names get a "did
+you mean" suggestion instead of a wall of output. Piped output drops color and
+turns tab-separated — `ttheme current` prints just the name — and `NO_COLOR`
+is respected.
 
 New tabs take the next palette in group order, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather
@@ -129,7 +130,7 @@ get it.
 | | palette file | runtime switching | font | shader |
 |---|---|---|---|---|
 | **Ghostty** | ✅ | ✅ native adapter | ✅ incl. per-codepoint map | ✅ |
-| **kitty** | ✅ | ✅ native adapter, can paint *other* tabs | family + size | ✗ |
+| **kitty** | ✅ | ✅ native adapter | family + size | ✗ |
 | **WezTerm** | ✅ | OSC — per window, never per pane | family + size | ✗ |
 | **Alacritty** | ✅ | OSC only (no runtime color API exists) | family + size | ✗ |
 | **iTerm2** | ✅ | OSC, minus the cursor (it ignores OSC 12) | profile-only | ✗ |

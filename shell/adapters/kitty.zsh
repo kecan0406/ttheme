@@ -28,21 +28,3 @@ __tt_apply() {
 
   __tt_osc_apply "$1"
 }
-
-__tt_apply_all() {
-  local -a reply
-  __tt_kitty_args "$1" || return 1
-  if ! __tt_kitty set-colors --all -- "${reply[@]}" 2>/dev/null; then
-    print -u2 "ttheme --all: kitty remote control is off (allow_remote_control yes)"
-    return 1
-  fi
-}
-
-__tt_new_window() {
-  local name=$1
-  shift
-  if ! __tt_kitty launch --type=os-window --cwd="$PWD" --env=TTHEME_START="$name" "$@" >/dev/null 2>&1; then
-    print -u2 "ttheme window: kitty remote control is off (allow_remote_control yes)"
-    return 1
-  fi
-}

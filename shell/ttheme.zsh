@@ -58,16 +58,7 @@ __tt_name_of() {
   print -r -- custom
 }
 
-__tt_record() {
-  [[ -n $TTY ]] || return 0
-  mkdir -p $TTHEME_STATE_DIR 2>/dev/null || return 0
-  print -r -- "$(__tt_name_of "$TTHEME_SPEC")	$TTHEME_SPEC	$$" \
-    > $TTHEME_STATE_DIR/${TTY:t} 2>/dev/null
-}
-
-__tt_unrecord() {
-  [[ -n $TTY ]] && rm -f $TTHEME_STATE_DIR/${TTY:t} 2>/dev/null
-}
+__tt_color() { [[ -t 1 && -z $NO_COLOR ]] }
 
 __tt_palette_line() {
   local name=$1 marker=$2
@@ -85,6 +76,10 @@ __tt_announce() {
   local -a p=(${=TTHEME_SPEC})
   (( ${#p} >= 20 )) || return 0
   local name=$(__tt_name_of "$TTHEME_SPEC")
+  if ! __tt_color; then
+    print -r -- "$name · ANSI ${TTHEME_SRC[$name]:-unknown}"
+    return 0
+  fi
   local hex=${p[3]#\#}
   printf '\033[38;2;%d;%d;%dm●\033[0m %s \033[2m· ANSI %s\033[0m\n' \
     $((16#${hex:0:2})) $((16#${hex:2:2})) $((16#${hex:4:2})) \
@@ -93,6 +88,12 @@ __tt_announce() {
 
 __tt_menu() {
   local k cur="" mark grp last_grp=""
+  if ! __tt_color; then
+    for k in $TTHEME_ORDER; do
+      printf '%s\t%s\t%s\n' "$k" "${TTHEME_GROUP[$k]:-Other}" "${TTHEME_SRC[$k]:-unknown}"
+    done
+    return 0
+  fi
   [[ -n $TTHEME_SPEC ]] && cur=$(__tt_name_of "$TTHEME_SPEC")
   for k in $TTHEME_ORDER; do
     grp=${TTHEME_GROUP[$k]:-Other}
@@ -106,6 +107,19 @@ __tt_menu() {
     [[ $k == $cur ]] && mark=" ← current"
     __tt_palette_line "$k" "$mark"
   done
+  printf '\n\033[2mttheme <name> paints this tab · ttheme help\033[0m\n'
+}
+
+__tt_help() {
+  print -r -- 'ttheme — character terminal palettes
+
+  ttheme          list every palette, grouped, with previews
+  ttheme homura   paint this tab (a unique prefix works: ttheme ho)
+  ttheme next     advance this tab to the next palette
+  ttheme current  what this tab is using (just the name when piped)
+
+  TTHEME_TAB_PALETTE=off  new tabs inherit the window'\''s colors
+  TTHEME_ANNOUNCE=0       silence the notice under "Last login:"'
 }
 
 __tt_resolve() {
@@ -122,10 +136,12 @@ __tt_resolve() {
     REPLY=$m[1]
     return 0
   elif (( ${#m} > 1 )); then
-    print -u2 "multiple palettes start with '$name': ${(o)m}"
+    m=(${(o)m})
+    print -u2 "multiple palettes start with '$name': $m"
+  elif m=(${(o)${(M)${(k)TTHEME_PALETTE}:#*$name*}}) && (( ${#m} )); then
+    print -u2 "unknown palette '$name' — did you mean: ${(j:, :)m[1,3]}?"
   else
-    print -u2 "unknown palette '$name' — pick one below:"
-    __tt_menu >&2
+    print -u2 "unknown palette '$name' — run \`ttheme\` to list palettes"
   fi
   return 1
 }
@@ -146,35 +162,13 @@ __tt_current() {
     return 1
   fi
   local name=$(__tt_name_of "$TTHEME_SPEC")
-  if [[ -n ${TTHEME_PALETTE[$name]} ]]; then
+  if ! __tt_color; then
+    print -r -- "$name"
+  elif [[ -n ${TTHEME_PALETTE[$name]} ]]; then
     __tt_palette_line "$name"
   else
     print -r -- "custom	$TTHEME_SPEC"
   fi
-}
-
-__tt_tabs() {
-  local f name spec pid mark
-  [[ -d $TTHEME_STATE_DIR ]] || { print -u2 "ttheme tabs: no recorded tabs"; return 1 }
-  for f in $TTHEME_STATE_DIR/*(N:t); do
-    if [[ ! -e /dev/$f ]]; then
-      rm -f $TTHEME_STATE_DIR/$f
-      continue
-    fi
-    IFS=$'\t' read -r name spec pid < $TTHEME_STATE_DIR/$f
-    if ! kill -0 $pid 2>/dev/null; then
-      rm -f $TTHEME_STATE_DIR/$f
-      continue
-    fi
-    mark=""
-    [[ $f == ${TTY:t} ]] && mark=" ← this tab"
-    printf '%-8s ' "$f"
-    if [[ -n ${TTHEME_PALETTE[$name]} ]]; then
-      __tt_palette_line "$name" "$mark"
-    else
-      printf '%-8s %s%s\n' "$name" "$spec" "$mark"
-    fi
-  done
 }
 
 __tt_rotate() {
@@ -186,60 +180,33 @@ __tt_rotate() {
   __tt_next
   __tt_apply "$REPLY"
   TTHEME_SPEC=$REPLY
-  __tt_record
   __tt_announce
 }
 
-__tt_window() {
-  local REPLY name=neutral
-  if (( $# )); then
-    __tt_resolve "$1" || return 1
-    name=$REPLY
-    shift
-  fi
-  __tt_new_window "$name" "$@"
-}
-
 ttheme() {
-  local all=0
-  if [[ $1 == --all ]]; then
-    all=1
-    shift
-  fi
-
   if (( ! $# )); then
-    (( all )) && { print -u2 "ttheme --all: needs a palette name"; return 1 }
     __tt_menu
     return 0
   fi
 
-  if (( ! all )); then
-    case $1 in
-      tabs) __tt_tabs; return ;;
-      current) __tt_current; return ;;
-      next) __tt_rotate; return ;;
-      window) shift; __tt_window "$@"; return ;;
-    esac
-  fi
+  case $1 in
+    -h|--help|help) __tt_help; return 0 ;;
+    next) __tt_rotate; return ;;
+    current) __tt_current; return ;;
+    -*) print -u2 "ttheme: unknown option $1 — see \`ttheme help\`"; return 1 ;;
+  esac
 
   local REPLY
   __tt_resolve "$1" || return 1
   local spec=${TTHEME_PALETTE[$REPLY]}
-
-  if (( all )); then
-    __tt_apply_all "$spec" || return 1
-  else
-    __tt_apply "$spec"
-  fi
-
+  __tt_apply "$spec"
   TTHEME_SPEC=$spec
-  __tt_record
   __tt_announce
 }
 
 if (( $+functions[compdef] )); then
   __tt_complete() {
-    (( CURRENT == 2 )) && compadd -- tabs current next window
+    (( CURRENT == 2 )) && compadd -- next current help
     compadd -- $TTHEME_ORDER
   }
   compdef __tt_complete ttheme
@@ -248,10 +215,6 @@ fi
 if __tt_active; then
   if [[ -n $TTHEME_SPEC ]]; then
     :
-  elif [[ -n $TTHEME_START && -n ${TTHEME_PALETTE[$TTHEME_START]} ]]; then
-    TTHEME_SPEC=${TTHEME_PALETTE[$TTHEME_START]}
-    __tt_apply "$TTHEME_SPEC"
-    unset TTHEME_START
   elif [[ $TTHEME_TAB_PALETTE == off ]]; then
     __tt_bg=$(__tt_query_bg)
     if [[ -n $__tt_bg ]]; then
@@ -273,9 +236,5 @@ if __tt_active; then
     unset REPLY
   fi
 
-  __tt_record
   __tt_announce
-
-  autoload -Uz add-zsh-hook
-  add-zsh-hook zshexit __tt_unrecord
 fi

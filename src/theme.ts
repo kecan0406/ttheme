@@ -40,6 +40,8 @@ export interface Theme {
 
 const DEFAULTS_FILE = "_defaults.toml";
 
+export const RESERVED_NAMES = new Set(["next", "current", "help"]);
+
 function fail(file: string, message: string): never {
   throw new Error(`${file}: ${message}`);
 }
@@ -151,6 +153,12 @@ function readTheme(
   const name = str(file, "meta.name", meta.name);
   if (name !== basename(file, ".toml")) {
     fail(file, `meta.name "${name}" does not match the filename`);
+  }
+  if (RESERVED_NAMES.has(name)) {
+    fail(file, `meta.name "${name}" collides with a ttheme subcommand`);
+  }
+  if (name.startsWith("-")) {
+    fail(file, `meta.name "${name}" would be read as a flag by the ttheme CLI`);
   }
 
   const role = meta.role;

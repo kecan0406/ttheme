@@ -33,13 +33,3 @@ __tt_query_bg() {
   (( ${#parts} >= 3 )) || return 1
   printf '#%s%s%s' "${parts[1]:0:2}" "${parts[2]:0:2}" "${parts[3]:0:2}"
 }
-
-__tt_new_window() {
-  print -u2 "ttheme window: opening a window is not supported under the $TTHEME_ADAPTER backend"
-  return 1
-}
-
-__tt_apply_all() {
-  print -u2 "ttheme --all: not supported under the $TTHEME_ADAPTER backend"
-  return 1
-}

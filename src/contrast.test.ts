@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { contrast, luminance } from "./color.ts";
 import { check, RULES } from "./contrast.ts";
-import { loadThemes, rotation } from "./theme.ts";
+import { loadThemes, RESERVED_NAMES, rotation } from "./theme.ts";
 
 const themes = loadThemes(
   join(dirname(fileURLToPath(import.meta.url)), "..", "themes"),
@@ -50,6 +50,15 @@ test("palette data is structurally sound", () => {
     assert.ok(
       Number.isFinite(theme.font.size),
       `${theme.name} has no font size`,
+    );
+  }
+});
+
+test("no palette name collides with a ttheme subcommand", () => {
+  for (const theme of themes) {
+    assert.ok(
+      !RESERVED_NAMES.has(theme.name),
+      `${theme.name} shadows the ttheme subcommand of the same name`,
     );
   }
 });
