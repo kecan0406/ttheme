@@ -57,7 +57,7 @@ function shellPalettes(themes: Theme[]): string {
     "# display order for `ttheme`, and the order new tabs are assigned in",
     `typeset -ga TTHEME_ORDER=(${themes.map((t) => t.name).join(" ")})`,
     "",
-    "# themes new tabs cycle through (default/warning roles sit out)",
+    "# themes new tabs cycle through (the default role sits out)",
     `typeset -ga TTHEME_ROTATION=(${rotation(themes)
       .map((t) => t.name)
       .join(" ")})`,
@@ -75,9 +75,6 @@ function shellPalettes(themes: Theme[]): string {
     "typeset -gA TTHEME_SRC=(",
     ...themes.map((t) => entry(t, t.ansiSource)),
     ")",
-    "",
-    "# the palette used for dangerous directories",
-    `typeset -g TTHEME_WARN_PALETTE=${themes.find((t) => t.role === "warning")?.name ?? "danger"}`,
     "",
   ].join("\n");
 }

@@ -54,9 +54,8 @@ test("palette data is structurally sound", () => {
   }
 });
 
-test("the rotation excludes the default and warning roles", () => {
+test("the rotation excludes the default role", () => {
   const names = rotation(themes).map((t) => t.name);
   assert.ok(!names.includes("neutral"), "neutral must sit out of the rotation");
-  assert.ok(!names.includes("danger"), "danger must sit out of the rotation");
   assert.ok(names.length >= 1);
 });

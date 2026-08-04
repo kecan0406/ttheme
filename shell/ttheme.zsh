@@ -13,8 +13,6 @@ fi
 
 : ${TTHEME_ANNOUNCE:=1}
 
-: ${TTHEME_WARN_PATTERN:='(prod|production|infra|terraform|k8s|deploy)'}
-
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
 __tt_detect() {
@@ -203,7 +201,6 @@ ttheme() {
   fi
 
   TTHEME_SPEC=$spec
-  TTHEME_WARN_ON=0
   __tt_record
   __tt_announce
 }
@@ -217,7 +214,6 @@ troll() {
   __tt_next
   __tt_apply "$REPLY"
   TTHEME_SPEC=$REPLY
-  TTHEME_WARN_ON=0
   __tt_record
   __tt_announce
 }
@@ -232,36 +228,12 @@ tw() {
   __tt_new_window "$name" "$@"
 }
 
-__tt_guard() {
-  [[ -n $TTHEME_SPEC ]] || return 0
-
-  local want=0
-  [[ ${PWD:l} =~ $TTHEME_WARN_PATTERN ]] && want=1
-  (( want == TTHEME_WARN_ON )) && return 0
-  TTHEME_WARN_ON=$want
-
-  local spec
-  if (( want )); then
-    spec=$(__tt_spec "$TTHEME_WARN_PALETTE") || return 0
-    (( TTHEME_ANNOUNCE )) &&
-      printf '\033[2m⚠ warning colors — %s matches TTHEME_WARN_PATTERN\033[0m\n' "$PWD"
-  else
-    spec=$TTHEME_SPEC
-    (( TTHEME_ANNOUNCE )) &&
-      printf '\033[2m↩ left the warning area — restoring the palette\033[0m\n'
-  fi
-  [[ ${TTHEME_SPEC%% *} == - ]] && spec="- ${spec#* }"
-  __tt_apply "$spec"
-}
-
 if (( $+functions[compdef] )); then
   __tt_complete() { compadd -- $TTHEME_ORDER }
   compdef __tt_complete ttheme tw
 fi
 
 if __tt_active; then
-  typeset -g TTHEME_WARN_ON=${TTHEME_WARN_ON:-0}
-
   if [[ -n $TTHEME_SPEC ]]; then
     :
   elif [[ -n $TTHEME_START && -n ${TTHEME_PALETTE[$TTHEME_START]} ]]; then
@@ -293,7 +265,5 @@ if __tt_active; then
   __tt_announce
 
   autoload -Uz add-zsh-hook
-  add-zsh-hook chpwd __tt_guard
   add-zsh-hook zshexit __tt_unrecord
-  __tt_guard
 fi

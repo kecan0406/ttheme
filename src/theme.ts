@@ -25,7 +25,7 @@ export interface Theme {
   group: string;
   native?: string;
   order: number;
-  role?: "default" | "warning";
+  role?: "default";
   ansiSource: string;
   background: Hex;
   foreground: Hex;
@@ -138,11 +138,8 @@ function readTheme(
   }
 
   const role = meta.role;
-  if (role !== undefined && role !== "default" && role !== "warning") {
-    fail(
-      file,
-      `meta.role must be "default" or "warning", got ${JSON.stringify(role)}`,
-    );
+  if (role !== undefined && role !== "default") {
+    fail(file, `meta.role must be "default", got ${JSON.stringify(role)}`);
   }
 
   const cursor = hex(file, "colors.cursor", colors.cursor);
