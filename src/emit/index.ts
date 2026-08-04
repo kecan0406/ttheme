@@ -9,6 +9,7 @@ export interface Emitter {
   id: string;
   limits?: string;
   emit(theme: Theme): Output[];
+  emitShared?(themes: Theme[]): Output[];
 }
 
 export { alacritty } from "./alacritty.ts";

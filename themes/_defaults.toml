@@ -9,4 +9,3 @@ codepoint_map = [
 
 [ghostty]
 shader = "cursor_tail.glsl"
-icon_screen = "#16161d"

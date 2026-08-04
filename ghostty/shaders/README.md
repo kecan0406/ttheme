@@ -14,7 +14,7 @@ Both come from [sahaj-b/ghostty-cursor-shaders][sahaj] (MIT — see `LICENSE`).
 | File | Effect | Local change |
 |---|---|---|
 | `cursor_tail.glsl` | comet trail behind the cursor | `DURATION` 0.09 → 0.05 (shorter tail) |
-| `ripple_cursor.glsl` | expanding ring on cursor move | none |
+| `ripple_cursor.glsl` | expanding ring on cursor move | fixed `COLOR` → theme cursor via `iCurrentCursorColor` |
 
 Trail length lives in `DURATION` and `MAX_TRAIL_LENGTH` inside the file.
 

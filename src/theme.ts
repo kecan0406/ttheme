@@ -17,7 +17,7 @@ export interface Font {
 export interface GhosttyExtras {
   shader?: string;
   iconGhost: Hex;
-  iconScreen?: Hex;
+  iconScreen: Hex[];
 }
 
 export interface Theme {
@@ -86,11 +86,30 @@ function readFont(file: string, own: unknown, base: unknown): Font {
   };
 }
 
+interface IconColors {
+  background: Hex;
+  cursor: Hex;
+  selectionBackground: Hex;
+}
+
+function readIconScreen(
+  file: string,
+  value: unknown,
+  colors: IconColors,
+): Hex[] {
+  if (value === undefined) {
+    return [colors.cursor, colors.selectionBackground, colors.background];
+  }
+  const raw = Array.isArray(value) ? value : [value];
+  if (raw.length === 0) fail(file, "ghostty.icon_screen must not be empty");
+  return raw.map((c, i) => hex(file, `ghostty.icon_screen[${i}]`, c));
+}
+
 function readGhostty(
   file: string,
   own: unknown,
   base: unknown,
-  cursor: Hex,
+  colors: IconColors,
 ): GhosttyExtras {
   const o = table(own);
   const b = table(base);
@@ -103,12 +122,9 @@ function readGhostty(
       shader === undefined ? undefined : str(file, "ghostty.shader", shader),
     iconGhost:
       iconGhost === undefined
-        ? cursor
+        ? colors.cursor
         : hex(file, "ghostty.icon_ghost", iconGhost),
-    iconScreen:
-      iconScreen === undefined
-        ? undefined
-        : hex(file, "ghostty.icon_screen", iconScreen),
+    iconScreen: readIconScreen(file, iconScreen, colors),
   };
 }
 
@@ -142,7 +158,13 @@ function readTheme(
     fail(file, `meta.role must be "default", got ${JSON.stringify(role)}`);
   }
 
+  const background = hex(file, "colors.background", colors.background);
   const cursor = hex(file, "colors.cursor", colors.cursor);
+  const selectionBackground = hex(
+    file,
+    "colors.selection_background",
+    colors.selection_background,
+  );
   const waive = Array.isArray(contrastRules.waive)
     ? contrastRules.waive.map(String)
     : [];
@@ -160,17 +182,17 @@ function readTheme(
     order: Number(meta.order),
     role,
     ansiSource: str(file, "meta.ansi_source", meta.ansi_source),
-    background: hex(file, "colors.background", colors.background),
+    background,
     foreground: hex(file, "colors.foreground", colors.foreground),
     cursor,
-    selectionBackground: hex(
-      file,
-      "colors.selection_background",
-      colors.selection_background,
-    ),
+    selectionBackground,
     ansi: ansiRaw.map((c, i) => hex(file, `colors.ansi[${i}]`, c)),
     font: readFont(file, doc.font, defaults.font),
-    ghostty: readGhostty(file, doc.ghostty, defaults.ghostty, cursor),
+    ghostty: readGhostty(file, doc.ghostty, defaults.ghostty, {
+      background,
+      cursor,
+      selectionBackground,
+    }),
     waive,
     waiveReason:
       typeof contrastRules.reason === "string"

@@ -8,6 +8,7 @@ import {
   ghostty,
   iterm2,
   kitty,
+  type Output,
   wezterm,
 } from "./emit/index.ts";
 import { loadThemes, rotation, type Theme } from "./theme.ts";
@@ -107,14 +108,21 @@ export function build({ only }: { only?: string[] } = {}): void {
   }
 
   let count = 0;
+  const write = (out: Output) => {
+    const target = join(DIST, out.path);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, out.content);
+    count++;
+  };
+
   for (const emitter of emitters) {
     for (const theme of themes) {
       for (const out of emitter.emit(theme)) {
-        const target = join(DIST, out.path);
-        mkdirSync(dirname(target), { recursive: true });
-        writeFileSync(target, out.content);
-        count++;
+        write(out);
       }
+    }
+    for (const out of emitter.emitShared?.(themes) ?? []) {
+      write(out);
     }
     console.log(
       `  ${emitter.id.padEnd(10)} ${themes.length} themes${emitter.limits ? `  (${emitter.limits})` : ""}`,

@@ -34,6 +34,7 @@ place "$REPO/shell/ttheme.zsh"        "$DEST/ttheme.zsh"
 place "$REPO/shell/launch-tab.zsh"    "$DEST/launch-tab.zsh"
 place "$REPO/shell/adapters"          "$DEST/adapters"
 place "$REPO/dist/shell/palettes.zsh" "$DEST/palettes.zsh"
+place "$REPO/dist/ghostty/ttheme.conf" "$DEST/ttheme.conf"
 chmod +x "$DEST/launch-tab.zsh" 2>/dev/null || true
 
 GHOSTTY=${XDG_CONFIG_HOME:-$HOME/.config}/ghostty
@@ -47,6 +48,7 @@ done. Add these to $GHOSTTY/config:
   command = $DEST/launch-tab.zsh
   shell-integration = zsh
   theme = neutral
+  config-file = $DEST/ttheme.conf
 
 and this to your ~/.zshrc, after compinit:
 

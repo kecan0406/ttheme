@@ -45,6 +45,22 @@ zsh -c '
 {% endraw %}
 '''
 
+[tasks."ghostty:check"]
+description = "validate emitted ghostty files with ghostty +validate-config"
+depends = ["build"]
+run = '''
+set -e
+if ! command -v ghostty >/dev/null 2>&1; then
+  echo "ghostty:check skipped — no ghostty binary on this machine"
+  exit 0
+fi
+for f in dist/ghostty/themes/* dist/ghostty/ttheme.conf; do
+  ghostty +validate-config --config-file="$PWD/$f" ||
+    { echo "ghostty:check failed: $f"; exit 1; }
+done
+echo "ghostty:check ok"
+'''
+
 [tasks.ci]
 description = "everything the ci workflow runs"
-depends = ["lint", "check", "test", "shell:check"]
+depends = ["lint", "check", "test", "shell:check", "ghostty:check"]

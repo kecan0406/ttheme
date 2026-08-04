@@ -1,13 +1,18 @@
 // ripple_cursor.glsl — from sahaj-b/ghostty-cursor-shaders (MIT).
 // https://github.com/sahaj-b/ghostty-cursor-shaders
-// See LICENSE in this directory. Unmodified from upstream.
+// See LICENSE in this directory. Local change: COLOR follows the theme cursor.
+
+// sRGB -> Linear conversion (needed because Ghostty passes sRGB values but the shader pipeline operates in linear color space)
+vec3 sRGBToLinear(vec3 c) {
+    return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
+}
 
 // CONFIGURATION
 const float DURATION = 0.15;               // How long the ripple animates (seconds)
 const float MAX_RADIUS = 0.05;             // Max radius in normalized coords (0.5 = 1/4 screen height)
 const float RING_THICKNESS = 0.02;             // Ring width in normalized coords
 const float CURSOR_WIDTH_CHANGE_THRESHOLD = 0.5; // Triggers ripple if cursor width changes by this fraction
-vec4 COLOR = vec4(0.35, 0.36, 0.44, 1.0); // change to iCurrentCursorColor for your cursor's color
+vec4 COLOR = vec4(sRGBToLinear(iCurrentCursorColor.rgb), 1.0); // for custom color: vec4(0.35, 0.36, 0.44, 1.0)
 const float BLUR = 3.0;                    // Blur level in pixels
 const float ANIMATION_START_OFFSET = 0.0;        // Start the ripple slightly progressed (0.0 - 1.0)
 
