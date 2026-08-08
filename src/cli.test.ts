@@ -40,3 +40,17 @@ test('--version exits cleanly through exitOverride', async () => {
   const error = await parseError(['--version'])
   assert.equal(error.exitCode, 0)
 })
+
+test('init is registered alongside build', () => {
+  assert.deepEqual(
+    makeProgram()
+      .commands.map((cmd) => cmd.name())
+      .sort(),
+    ['build', 'init'],
+  )
+})
+
+test('init rejects unknown options', async () => {
+  const error = await parseError(['init', '--frobnicate'])
+  assert.equal(error.code, 'commander.unknownOption')
+})

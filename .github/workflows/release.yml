@@ -23,7 +23,7 @@ jobs:
           for term in ghostty kitty alacritty wezterm iterm2; do
             tar -czf "release/ttheme-$term.tar.gz" -C dist "$term"
           done
-          tar -czf release/ttheme-all.tar.gz dist shell ghostty/shaders install.sh README.md
+          tar -czf release/ttheme-all.tar.gz dist shell ghostty/shaders README.md
       - uses: softprops/action-gh-release@v2
         with:
           files: release/*

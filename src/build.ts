@@ -58,6 +58,9 @@ function shellPalettes(themes: Theme[]): string {
 }
 
 export async function build({ only }: { only?: string[] } = {}): Promise<void> {
+  if (typeof Bun === 'undefined') {
+    throw new Error('ttheme build needs bun — run it from a checkout: bun src/bin.ts build')
+  }
   const emitters = only && only.length > 0 ? EMITTERS.filter((e) => only.includes(e.id)) : EMITTERS
 
   const themes = loadThemes(THEMES)

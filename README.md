@@ -53,17 +53,19 @@ came from — `ttheme` prints it, and it is in the theme's TOML.
 
 ## Install
 
-**Ghostty**, with the runtime layer:
+**Ghostty, kitty or Alacritty** — one command, no clone:
 
 ```sh
-git clone https://github.com/kecan0406/ttheme && cd ttheme
-./install.sh          # or ./install.sh --link to work on the palettes
+npx @kecan0406/ttheme@latest init
 ```
 
-It prints the four config lines to paste. Nothing is overwritten — an existing
-file is moved to `.bak` first.
+It detects your terminal, asks which ones to wire, places the palettes and the
+zsh layer under `~/.config/ttheme`, and edits your terminal config and `~/.zshrc`
+between `# ttheme begin` / `# ttheme end` markers — everything outside the
+markers is left alone. Running it again updates in place; `--yes` skips every
+prompt and takes the defaults.
 
-**Any other terminal** — one archive per terminal in the
+**WezTerm and iTerm2** — one archive per terminal in the
 [latest release](https://github.com/kecan0406/ttheme/releases/latest):
 
 ```sh
@@ -77,7 +79,8 @@ cp kitty/themes/miku.conf ~/.config/kitty/themes/
 # alacritty
 curl -L $REL/ttheme-alacritty.tar.gz | tar xz
 cp alacritty/themes/miku.toml ~/.config/alacritty/themes/
-#   alacritty.toml:  import = ["~/.config/alacritty/themes/miku.toml"]
+#   alacritty.toml:  [general]
+#                    import = ["~/.config/alacritty/themes/miku.toml"]
 
 # wezterm
 curl -L $REL/ttheme-wezterm.tar.gz | tar xz
@@ -95,7 +98,8 @@ from the palette), and the font + shader — identical across themes — ship as
 one shared `ttheme.conf` you include once with `config-file`.
 
 Building from a checkout works too: `mise install && bun install && mise run
-build` writes the same tree to `dist/`.
+build` writes the same tree to `dist/`, and `bun src/bin.ts init --link`
+symlinks the checkout into place so palette edits land live.
 
 ## Use
 
