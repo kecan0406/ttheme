@@ -76,14 +76,15 @@ __tt_announce() {
   local -a p=(${=TTHEME_SPEC})
   (( ${#p} >= 20 )) || return 0
   local name=$(__tt_name_of "$TTHEME_SPEC")
+  local grp=${TTHEME_GROUP[$name]:-Other} src=${TTHEME_SRC[$name]:-unknown}
   if ! __tt_color; then
-    print -r -- "$name · ANSI ${TTHEME_SRC[$name]:-unknown}"
+    print -r -- "$name · $grp · ANSI $src"
     return 0
   fi
-  local hex=${p[3]#\#}
-  printf '\033[38;2;%d;%d;%dm●\033[0m %s \033[2m· ANSI %s\033[0m\n' \
-    $((16#${hex:0:2})) $((16#${hex:2:2})) $((16#${hex:4:2})) \
-    "$name" "${TTHEME_SRC[$name]:-unknown}"
+  local cur=${p[3]#\#} sel=${p[4]#\#}
+  printf '\033[48;2;%d;%d;%dm %s \033[0m\n\033[7;1;38;2;%d;%d;%dm %s \033[0m \033[2m· ANSI %s\033[0m\n' \
+    $((16#${sel:0:2})) $((16#${sel:2:2})) $((16#${sel:4:2})) "$grp" \
+    $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2})) "$name" "$src"
 }
 
 __tt_menu() {
@@ -107,7 +108,7 @@ __tt_menu() {
     [[ $k == $cur ]] && mark=" ← current"
     __tt_palette_line "$k" "$mark"
   done
-  printf '\n\033[2mttheme <name> paints this tab · ttheme help\033[0m\n'
+  printf '\n\033[2mttheme <name> paints this tab · ttheme preview · ttheme help\033[0m\n'
 }
 
 __tt_help() {
@@ -115,6 +116,7 @@ __tt_help() {
 
   ttheme          list every palette, grouped, with previews
   ttheme homura   paint this tab (a unique prefix works: ttheme ho)
+  ttheme preview  browse live — focus repaints, enter keeps, esc restores
   ttheme next     advance this tab to the next palette
   ttheme current  what this tab is using (just the name when piped)
 
@@ -183,6 +185,346 @@ __tt_rotate() {
   __tt_announce
 }
 
+__tt_pv_rows() {
+  rtype=() rval=()
+  local g t
+  local -a ts
+  for g in $groups; do
+    ts=()
+    for t in ${=gthemes[$g]}; do
+      [[ -z $flt || $t == *$flt* ]] && ts+=($t)
+    done
+    [[ -n $flt ]] && (( ! ${#ts} )) && continue
+    rtype+=(hdr); rval+=($g)
+    if [[ -n $flt || -n ${exp[$g]} ]]; then
+      for t in $ts; do rtype+=(thm); rval+=($t); done
+    fi
+  done
+}
+
+__tt_pv_first() {
+  local i
+  cur=1 top=1
+  for (( i = 1; i <= ${#rtype}; i++ )); do
+    [[ ${rtype[i]} == thm ]] && { cur=$i; return 0 }
+  done
+  return 0
+}
+
+__tt_pv_goto() {
+  local name=$1 i
+  exp[${TTHEME_GROUP[$name]:-Other}]=1
+  __tt_pv_rows
+  for (( i = 1; i <= ${#rval}; i++ )); do
+    [[ ${rtype[i]} == thm && ${rval[i]} == $name ]] && { cur=$i; return 0 }
+  done
+  cur=1
+}
+
+__tt_pv_focus() {
+  [[ ${rtype[cur]} == thm ]] || return 0
+  local spec=${TTHEME_PALETTE[${rval[cur]}]}
+  [[ $spec == "$applied" ]] && return 0
+  __tt_apply "$spec"
+  applied=$spec
+}
+
+__tt_pv_toggle() {
+  [[ -n $flt ]] && return 0
+  local g=${rval[cur]}
+  if [[ -n ${exp[$g]} ]]; then
+    exp[$g]=""
+  else
+    exp[$g]=1
+  fi
+  __tt_pv_rows
+}
+
+__tt_pv_left() {
+  [[ -n $flt ]] && return 0
+  if [[ ${rtype[cur]} == hdr ]]; then
+    [[ -n ${exp[${rval[cur]}]} ]] && __tt_pv_toggle
+    return 0
+  fi
+  local g=${TTHEME_GROUP[${rval[cur]}]:-Other} i
+  for (( i = cur; i >= 1; i-- )); do
+    [[ ${rtype[i]} == hdr ]] && { cur=$i; break }
+  done
+  exp[$g]=""
+  __tt_pv_rows
+}
+
+__tt_pv_draw() {
+  local h=$(( ${LINES:-24} - 2 )) i out line g arrow chunk hidden
+  (( h < 1 )) && h=1
+  (( cur < top )) && top=$cur
+  (( cur >= top + h )) && top=$(( cur - h + 1 ))
+  (( top < 1 )) && top=1
+  out=$'\e[H'
+  line="ttheme preview"
+  (( color )) && line=$'\e[1m'"ttheme preview"$'\e[0m'
+  if [[ -n ${TTHEME_PALETTE[$cn]} ]]; then
+    if (( color )); then
+      line+="   $cdot $cn"
+    else
+      line+="   current $cn"
+    fi
+  fi
+  [[ -n $flt ]] && line+="   /$flt"
+  out+=$line$'\e[K\n'
+  for (( i = top; i < top + h; i++ )); do
+    if (( ! ${#rval} && i == 1 )); then
+      out+="  no palettes match '$flt'"$'\e[K\n'
+      continue
+    fi
+    if (( i > ${#rval} )); then
+      out+=$'\e[K\n'
+      continue
+    fi
+    if [[ ${rtype[i]} == hdr ]]; then
+      g=${rval[i]}
+      arrow=▸
+      [[ -n $flt || -n ${exp[$g]} ]] && arrow=▾
+      if (( i == cur )); then
+        if (( color )); then
+          chunk=$'\e[1;7m'" $g "$'\e[0m'
+        else
+          chunk="[$g]"
+        fi
+      else
+        chunk=${hchip[$g]}
+      fi
+      line="$arrow"$chunk${hnat[$g]}
+      if [[ -n ${TTHEME_PALETTE[$cn]} && ${TTHEME_GROUP[$cn]:-Other} == $g ]]; then
+        hidden=1
+        if [[ -n $flt ]]; then
+          [[ $cn == *$flt* ]] && hidden=0
+        elif [[ -n ${exp[$g]} ]]; then
+          hidden=0
+        fi
+        if (( hidden )); then
+          if (( color )); then
+            line+=$cchip
+          else
+            line+=" · current"
+          fi
+        fi
+      fi
+    elif (( i == cur )); then
+      line="  ▶ "${tbody[${rval[i]}]}
+    else
+      line="    "${tbody[${rval[i]}]}
+    fi
+    out+=$line$'\e[K\n'
+  done
+  line="↑↓ move · ←→ fold · type to filter · enter apply · esc restore"
+  (( color )) && line=$'\e[2m'$line$'\e[0m'
+  out+=$line$'\e[K'
+  print -rn -- "$out"
+}
+
+__tt_pv_init() {
+  local k g
+  for k in $TTHEME_ORDER; do
+    g=${TTHEME_GROUP[$k]:-Other}
+    if [[ -z ${gthemes[$g]} ]]; then
+      groups+=($g)
+      gnative[$g]=$TTHEME_NATIVE[$k]
+    fi
+    gthemes[$g]+=" $k"
+  done
+  [[ -n $orig ]] && cn=$(__tt_name_of "$orig")
+  if [[ -n ${TTHEME_PALETTE[$cn]} ]] && (( color )); then
+    local -a cp=(${=TTHEME_PALETTE[$cn]})
+    local ch=${cp[3]#\#}
+    printf -v cdot '\e[38;2;%d;%d;%dm●\e[0m' \
+      $((16#${ch:0:2})) $((16#${ch:2:2})) $((16#${ch:4:2}))
+    printf -v cchip ' \e[7;1;38;2;%d;%d;%dm current \e[0m' \
+      $((16#${ch:0:2})) $((16#${ch:2:2})) $((16#${ch:4:2}))
+  fi
+  local body nat
+  for g in $groups; do
+    nat=${gnative[$g]}
+    if (( color )); then
+      local -a gp=(${=TTHEME_PALETTE[${${=gthemes[$g]}[1]}]})
+      local sb=${gp[4]#\#}
+      printf -v body '\e[48;2;%d;%d;%dm %s \e[0m' \
+        $((16#${sb:0:2})) $((16#${sb:2:2})) $((16#${sb:4:2})) "$g"
+      hchip[$g]=$body
+      hnat[$g]=${nat:+$'\e[2m'$nat$'\e[0m'}
+    else
+      hchip[$g]=" $g "
+      hnat[$g]=$nat
+    fi
+  done
+  local t mark
+  for t in $TTHEME_ORDER; do
+    mark=""
+    if [[ $t == $cn ]]; then
+      if (( color )); then
+        mark=$cchip
+      else
+        mark=" ← current"
+      fi
+    fi
+    if (( color )); then
+      local -a tp=(${=TTHEME_PALETTE[$t]})
+      local bg=${tp[1]#\#} cu=${tp[3]#\#}
+      printf -v body '\e[48;2;%d;%d;%d;38;2;%d;%d;%dm ● \e[0m %-13s \e[2m· ANSI %s\e[0m%s' \
+        $((16#${bg:0:2})) $((16#${bg:2:2})) $((16#${bg:4:2})) \
+        $((16#${cu:0:2})) $((16#${cu:2:2})) $((16#${cu:4:2})) \
+        "$t" "${TTHEME_SRC[$t]:-unknown}" "$mark"
+    else
+      printf -v body '● %-13s · ANSI %s%s' "$t" "${TTHEME_SRC[$t]:-unknown}" "$mark"
+    fi
+    tbody[$t]=$body
+  done
+}
+
+__tt_pv_getch() {
+  if (( $# )); then
+    read -sk 1 -t $1 2>/dev/null
+  else
+    read -sk 1 2>/dev/null
+  fi
+}
+
+__tt_pv_read() {
+  key=""
+  if (( $# )); then
+    __tt_pv_getch 0 || return 1
+  else
+    __tt_pv_getch || return 1
+  fi
+  key=$REPLY
+  [[ $key == $'\e' ]] || return 0
+  local seq=""
+  if ! __tt_pv_getch 0.05; then
+    key=esc
+    return 0
+  fi
+  if [[ $REPLY != '[' && $REPLY != O ]]; then
+    key=nop
+    return 0
+  fi
+  while __tt_pv_getch 0.05; do
+    seq+=$REPLY
+    [[ $REPLY == [A-Za-z~] ]] && break
+  done
+  case $seq in
+    A) key=up ;;
+    B) key=down ;;
+    C) key=right ;;
+    D) key=left ;;
+    H|"1~"|"7~") key=home ;;
+    F|"4~"|"8~") key=end ;;
+    "5~") key=pgup ;;
+    "6~") key=pgdn ;;
+    *) key=nop ;;
+  esac
+}
+
+__tt_pv_handle() {
+  local name
+  case $key in
+    $'\x03') return 1 ;;
+    esc|$'\x15')
+      if [[ -z $flt ]]; then
+        [[ $key == esc ]] && return 1
+      else
+        name=""
+        [[ ${rtype[cur]} == thm ]] && name=${rval[cur]}
+        flt=""
+        if [[ -n $name ]]; then
+          __tt_pv_goto "$name"
+        else
+          __tt_pv_rows
+          (( cur > ${#rval} )) && cur=${#rval}
+          (( cur < 1 )) && cur=1
+        fi
+      fi
+      ;;
+    $'\r'|$'\n')
+      if [[ ${rtype[cur]} == thm ]]; then
+        sel=${rval[cur]}
+        return 1
+      elif [[ ${rtype[cur]} == hdr ]]; then
+        __tt_pv_toggle
+      fi
+      ;;
+    up) (( cur > 1 )) && cur=$(( cur - 1 )) ;;
+    down) (( cur < ${#rval} )) && cur=$(( cur + 1 )) ;;
+    right) [[ ${rtype[cur]} == hdr && -z ${exp[${rval[cur]}]} ]] && __tt_pv_toggle ;;
+    left) __tt_pv_left ;;
+    home) cur=1 ;;
+    end) (( ${#rval} )) && cur=${#rval} ;;
+    pgup)
+      cur=$(( cur - ${LINES:-24} + 2 ))
+      (( cur < 1 )) && cur=1
+      ;;
+    pgdn)
+      cur=$(( cur + ${LINES:-24} - 2 ))
+      (( cur > ${#rval} )) && cur=${#rval}
+      (( cur < 1 )) && cur=1
+      ;;
+    ' ') [[ ${rtype[cur]} == hdr ]] && __tt_pv_toggle ;;
+    $'\x7f'|$'\x08')
+      if [[ -n $flt ]]; then
+        flt=${flt%?}
+        __tt_pv_rows
+        __tt_pv_first
+      fi
+      ;;
+    [a-zA-Z0-9-])
+      flt+=${(L)key}
+      __tt_pv_rows
+      __tt_pv_first
+      ;;
+  esac
+  return 0
+}
+
+__tt_preview() {
+  emulate -L zsh
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    print -u2 "ttheme preview: needs a terminal"
+    return 1
+  fi
+  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" cchip="" key="" REPLY="" cur=1 top=1 color=0
+  local -a groups=() rtype=() rval=()
+  local -A gnative=() gthemes=() exp=() hchip=() hnat=() tbody=()
+  __tt_color && color=1
+  __tt_pv_init
+  __tt_pv_rows
+  [[ -n ${TTHEME_PALETTE[$cn]} ]] && __tt_pv_goto "$cn"
+  printf '\e[?1049h\e[?7l\e[?25l\e[2J'
+  {
+    while :; do
+      __tt_pv_focus
+      __tt_pv_draw
+      if ! __tt_pv_read; then
+        [[ -t 0 ]] && continue
+        break
+      fi
+      while :; do
+        __tt_pv_handle || break 2
+        __tt_pv_read drain || break
+      done
+    done
+  } always {
+    printf '\e[?7h\e[?1049l\e[?25h'
+    if [[ -n $sel ]]; then
+      local spec=${TTHEME_PALETTE[$sel]}
+      [[ $spec == "$applied" ]] || __tt_apply "$spec"
+      TTHEME_SPEC=$spec
+      __tt_announce
+    elif [[ -n $orig && $orig != "$applied" ]]; then
+      __tt_apply "$orig"
+    fi
+  }
+  return 0
+}
+
 ttheme() {
   if (( ! $# )); then
     __tt_menu
@@ -193,6 +535,7 @@ ttheme() {
     -h|--help|help) __tt_help; return 0 ;;
     next) __tt_rotate; return ;;
     current) __tt_current; return ;;
+    preview) __tt_preview; return ;;
     -*) print -u2 "ttheme: unknown option $1 — see \`ttheme help\`"; return 1 ;;
   esac
 
@@ -206,7 +549,7 @@ ttheme() {
 
 if (( $+functions[compdef] )); then
   __tt_complete() {
-    (( CURRENT == 2 )) && compadd -- next current help
+    (( CURRENT == 2 )) && compadd -- preview next current help
     compadd -- $TTHEME_ORDER
   }
   compdef __tt_complete ttheme

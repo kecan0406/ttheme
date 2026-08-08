@@ -102,12 +102,19 @@ build` writes the same tree to `dist/`.
 ```
 ttheme          list every palette, grouped, with previews
 ttheme homura   pin this tab      (a unique prefix works: ttheme ho)
+ttheme preview  browse live — focus repaints the tab, enter keeps it
 ttheme next     advance this tab to the next palette
 ttheme current  what this tab is using
 ttheme help     the list above, in your terminal
 ```
 
-`next`, `current` and `help` match exactly; every other first argument is read
+In `preview`, groups start folded with the cursor on the current palette;
+`↑`/`↓` move (the tab repaints as the focus lands on a palette), `←`/`→` and
+space fold and unfold, page up/down and home/end jump, typing filters by
+substring (ctrl-u clears it), enter applies, and esc steps back — first out
+of the filter, then out of the preview with the original colors restored.
+
+`preview`, `next`, `current` and `help` match exactly; every other first argument is read
 as a palette name, where a unique prefix is enough. Mistyped names get a "did
 you mean" suggestion instead of a wall of output. Piped output drops color and
 turns tab-separated — `ttheme current` prints just the name — and `NO_COLOR`
