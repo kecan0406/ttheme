@@ -12,6 +12,34 @@ const EMITTERS: Emitter[] = [ghostty, kitty, alacritty, wezterm, iterm2]
 
 export const TERMINALS = EMITTERS.map((e) => e.id)
 
+export interface PaletteEntry {
+  name: string
+  group: string
+  native?: string
+  ansiSource: string
+  default?: boolean
+  background: string
+  foreground: string
+  cursor: string
+  selection: string
+  ansi: string[]
+}
+
+export function manifest(themes: Theme[]): PaletteEntry[] {
+  return themes.map((t) => ({
+    name: t.name,
+    group: t.group,
+    ...(t.native ? { native: t.native } : {}),
+    ansiSource: t.ansiSource,
+    ...(t.role === 'default' ? { default: true } : {}),
+    background: t.background,
+    foreground: t.foreground,
+    cursor: t.cursor,
+    selection: t.selectionBackground,
+    ansi: t.ansi,
+  }))
+}
+
 function shellPalettes(themes: Theme[]): string {
   for (const t of themes) {
     for (const field of [t.name, t.group, t.native ?? '', t.ansiSource]) {
@@ -104,6 +132,10 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
   await Bun.write(join(DIST, 'shell', 'palettes.zsh'), shellPalettes(themes))
   count++
   console.log(`  ${'shell'.padEnd(10)} palettes.zsh`)
+
+  await Bun.write(join(DIST, 'manifest.json'), JSON.stringify(manifest(themes)))
+  count++
+  console.log(`  ${'meta'.padEnd(10)} manifest.json`)
 
   console.log(
     `\n${themes.length} themes (${rotation(themes).length} in the new-tab rotation) -> ${count} files in dist/`,

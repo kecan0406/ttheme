@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { applyInit, type InitOptions, type InitPaths, listPalettes, planInit } from './init.ts'
+import { applyInit, type InitOptions, type InitPaths, planInit } from './init.ts'
 
 function makeFixture(): InitPaths {
   const base = mkdtempSync(join(tmpdir(), 'ttheme-init-'))
@@ -37,11 +37,6 @@ function makeFixture(): InitPaths {
 function options(partial: Partial<InitOptions> = {}): InitOptions {
   return { terminals: ['ghostty'], palette: 'neutral', tabPalette: 'seq', announce: true, link: false, ...partial }
 }
-
-test('listPalettes reads the built ghostty theme names', () => {
-  const paths = makeFixture()
-  assert.deepEqual(listPalettes(paths.root), ['miku', 'neutral'])
-})
 
 test('planInit places the runtime layer and wires ghostty and kitty', () => {
   const paths = makeFixture()

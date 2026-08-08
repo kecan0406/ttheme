@@ -12,7 +12,9 @@ import {
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
-import { build } from './build.ts'
+import { build, type PaletteEntry } from './build.ts'
+import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
+import { PalettePrompt } from './palette-prompt.ts'
 import {
   alacrittyBlock,
   detectTerminal,
@@ -46,8 +48,22 @@ export interface InitPlan {
   notes: string[]
 }
 
-export function listPalettes(root: string): string[] {
-  return readdirSync(join(root, 'dist', 'ghostty', 'themes')).sort()
+async function pickPalette(root: string): Promise<string> {
+  const entries: PaletteEntry[] = JSON.parse(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
+  const live = process.stdout.isTTY === true && !process.env.NO_COLOR
+  const saved = live ? await queryTerminalColors() : new Map<string, string>()
+  const prompt = new PalettePrompt({
+    entries,
+    color: !process.env.NO_COLOR,
+    onFocus: live ? (entry) => process.stdout.write(paletteOsc(entry)) : undefined,
+  })
+  const pick = await prompt.prompt()
+  if (p.isCancel(pick)) {
+    process.stdout.write(restoreOsc(saved))
+    p.cancel('nothing changed')
+    process.exit(1)
+  }
+  return pick ?? 'neutral'
 }
 
 function copyDir(copies: InitPlan['copies'], from: string, to: string): void {
@@ -133,14 +149,7 @@ async function ask(root: string, detected: string, preselected: InitTerminal[], 
       required: true,
     }),
   )
-  const palette = accepted(
-    await p.select({
-      message: 'startup palette',
-      options: listPalettes(root).map((v) => ({ value: v })),
-      initialValue: 'neutral',
-      maxItems: 12,
-    }),
-  )
+  const palette = await pickPalette(root)
   const tabPalette = accepted(
     await p.select<'seq' | 'off'>({
       message: 'new tabs',

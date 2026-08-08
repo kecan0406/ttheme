@@ -186,25 +186,32 @@ __tt_rotate() {
 }
 
 __tt_pv_rows() {
-  rtype=() rval=()
-  local g t
+  rtype=() rval=() rcnt=()
+  local g t gm
   local -a ts
   for g in $groups; do
     ts=()
+    gm=""
+    [[ -n $flt && ${(L)g} == *$flt* ]] && gm=1
     for t in ${=gthemes[$g]}; do
-      [[ -z $flt || $t == *$flt* ]] && ts+=($t)
+      [[ -z $flt || -n $gm || $t == *$flt* ]] && ts+=($t)
     done
     [[ -n $flt ]] && (( ! ${#ts} )) && continue
-    rtype+=(hdr); rval+=($g)
+    rtype+=(hdr); rval+=($g); rcnt+=(${#ts})
     if [[ -n $flt || -n ${exp[$g]} ]]; then
-      for t in $ts; do rtype+=(thm); rval+=($t); done
+      for t in $ts; do rtype+=(thm); rval+=($t); rcnt+=(0); done
     fi
   done
 }
 
 __tt_pv_first() {
-  local i
+  local name=$1 i
   cur=1 top=1
+  if [[ -n $name ]]; then
+    for (( i = 1; i <= ${#rval}; i++ )); do
+      [[ ${rtype[i]} == thm && ${rval[i]} == $name ]] && { cur=$i; return 0 }
+    done
+  fi
   for (( i = 1; i <= ${#rtype}; i++ )); do
     [[ ${rtype[i]} == thm ]] && { cur=$i; return 0 }
   done
@@ -255,23 +262,68 @@ __tt_pv_left() {
 }
 
 __tt_pv_draw() {
-  local h=$(( ${LINES:-24} - 2 )) i out line g arrow chunk hidden
+  local h=$(( ph - 5 )) w=$pw i out line g arrow chunk hidden cnt hz="" seg vis mt=${#TTHEME_ORDER}
+  local N=${#rval} rail=0 rl=0 rs=0 rthumb="█" rtrack="░" cmark="▶"
   (( h < 1 )) && h=1
   (( cur < top )) && top=$cur
   (( cur >= top + h )) && top=$(( cur - h + 1 ))
   (( top < 1 )) && top=1
+  (( N > h && top > N - h + 1 )) && top=$(( N - h + 1 ))
+  if (( N > h )); then
+    rail=1
+    rl=$(( h * h / N ))
+    (( rl < 1 )) && rl=1
+    rs=$(( 1 + (top - 1) * (h - rl) / (N - h) ))
+  fi
+  if (( color )); then
+    rtrack=$'\e[2m'"░"$'\e[0m'
+    if [[ ${rtype[cur]} == thm ]]; then
+      local -a fp=(${=TTHEME_PALETTE[${rval[cur]}]})
+      local fc=${fp[3]#\#}
+      printf -v rthumb '\e[38;2;%d;%d;%dm█\e[0m' $((16#${fc:0:2})) $((16#${fc:2:2})) $((16#${fc:4:2}))
+      printf -v cmark '\e[38;2;%d;%d;%dm▶\e[0m' $((16#${fc:0:2})) $((16#${fc:2:2})) $((16#${fc:4:2}))
+    fi
+  else
+    rthumb="#" rtrack="."
+  fi
+  if [[ -n $flt ]]; then
+    local -a mm=(${(M)rtype:#thm})
+    mt=${#mm}
+  fi
+  cnt="($mt/${#TTHEME_ORDER})"
+  hz=${(l:$(( w - 2 ))::─:)hz}
   out=$'\e[H'
-  line="ttheme preview"
-  (( color )) && line=$'\e[1m'"ttheme preview"$'\e[0m'
+  if (( resized )); then
+    out+=$'\e[2J'
+    resized=0
+  fi
+  if (( color )); then
+    line=$'\e[1m'"ttheme preview"$'\e[0m'" "$'\e[2m'$cnt$'\e[0m'
+  else
+    line="ttheme preview $cnt"
+  fi
+  out+=$line$'\e[K'
   if [[ -n ${TTHEME_PALETTE[$cn]} ]]; then
     if (( color )); then
-      line+="   $cdot $cn"
+      seg="$cdot $cn" vis=$(( ${#cn} + 2 ))
     else
-      line+="   current $cn"
+      seg="current $cn" vis=$(( ${#cn} + 8 ))
+    fi
+    if (( w - vis + 1 > 17 + ${#cnt} )); then
+      out+=$'\e['$(( w - vis + 1 ))G$seg
     fi
   fi
-  [[ -n $flt ]] && line+="   /$flt"
-  out+=$line$'\e[K\n'
+  out+=$'\n'
+  out+="╭$hz╮"$'\e[K\n'
+  if [[ -n $flt ]]; then
+    line="│ ⌕ ${flt}_"
+  elif (( color )); then
+    line="│ ⌕ "$'\e[2m'"search…"$'\e[0m'
+  else
+    line="│ ⌕ search…"
+  fi
+  out+=$line$'\e[K'$'\e['${w}G"│"$'\n'
+  out+="╰$hz╯"$'\e[K\n'
   for (( i = top; i < top + h; i++ )); do
     if (( ! ${#rval} && i == 1 )); then
       out+="  no palettes match '$flt'"$'\e[K\n'
@@ -294,7 +346,11 @@ __tt_pv_draw() {
       else
         chunk=${hchip[$g]}
       fi
-      line="$arrow"$chunk${hnat[$g]}
+      if (( color )); then
+        line="$arrow"$chunk" "$'\e[2m'"(${rcnt[i]})"$'\e[0m'${hnat[$g]}
+      else
+        line="$arrow"$chunk" (${rcnt[i]})"${hnat[$g]}
+      fi
       if [[ -n ${TTHEME_PALETTE[$cn]} && ${TTHEME_GROUP[$cn]:-Other} == $g ]]; then
         hidden=1
         if [[ -n $flt ]]; then
@@ -311,11 +367,19 @@ __tt_pv_draw() {
         fi
       fi
     elif (( i == cur )); then
-      line="  ▶ "${tbody[${rval[i]}]}
+      line="  $cmark "${tbody[${rval[i]}]}
     else
       line="    "${tbody[${rval[i]}]}
     fi
-    out+=$line$'\e[K\n'
+    out+=$line$'\e[K'
+    if (( rail )); then
+      if (( i - top + 1 >= rs && i - top + 1 < rs + rl )); then
+        out+=$'\e['${w}G$rthumb
+      else
+        out+=$'\e['${w}G$rtrack
+      fi
+    fi
+    out+=$'\n'
   done
   line="↑↓ move · ←→ fold · type to filter · enter apply · esc restore"
   (( color )) && line=$'\e[2m'$line$'\e[0m'
@@ -337,7 +401,7 @@ __tt_pv_init() {
   if [[ -n ${TTHEME_PALETTE[$cn]} ]] && (( color )); then
     local -a cp=(${=TTHEME_PALETTE[$cn]})
     local ch=${cp[3]#\#}
-    printf -v cdot '\e[38;2;%d;%d;%dm●\e[0m' \
+    printf -v cdot '\e[38;2;%d;%d;%dm*\e[0m' \
       $((16#${ch:0:2})) $((16#${ch:2:2})) $((16#${ch:4:2}))
     printf -v cchip ' \e[7;1;38;2;%d;%d;%dm current \e[0m' \
       $((16#${ch:0:2})) $((16#${ch:2:2})) $((16#${ch:4:2}))
@@ -351,13 +415,13 @@ __tt_pv_init() {
       printf -v body '\e[48;2;%d;%d;%dm %s \e[0m' \
         $((16#${sb:0:2})) $((16#${sb:2:2})) $((16#${sb:4:2})) "$g"
       hchip[$g]=$body
-      hnat[$g]=${nat:+$'\e[2m'$nat$'\e[0m'}
+      hnat[$g]=${nat:+" "$'\e[2m'$nat$'\e[0m'}
     else
-      hchip[$g]=" $g "
-      hnat[$g]=$nat
+      hchip[$g]=" $g"
+      hnat[$g]=${nat:+" $nat"}
     fi
   done
-  local t mark
+  local t mark sw sc j
   for t in $TTHEME_ORDER; do
     mark=""
     if [[ $t == $cn ]]; then
@@ -370,23 +434,41 @@ __tt_pv_init() {
     if (( color )); then
       local -a tp=(${=TTHEME_PALETTE[$t]})
       local bg=${tp[1]#\#} cu=${tp[3]#\#}
-      printf -v body '\e[48;2;%d;%d;%d;38;2;%d;%d;%dm ● \e[0m %-13s \e[2m· ANSI %s\e[0m%s' \
+      sw=""
+      for j in 6 7 8 9 10 11; do
+        sc=${tp[j]#\#}
+        printf -v sc '\e[38;2;%d;%d;%dm▄' $((16#${sc:0:2})) $((16#${sc:2:2})) $((16#${sc:4:2}))
+        sw+=$sc
+      done
+      printf -v body '\e[48;2;%d;%d;%d;38;2;%d;%d;%dm ● \e[0m %-13s %s\e[0m  \e[2m%s\e[0m%s' \
         $((16#${bg:0:2})) $((16#${bg:2:2})) $((16#${bg:4:2})) \
         $((16#${cu:0:2})) $((16#${cu:2:2})) $((16#${cu:4:2})) \
-        "$t" "${TTHEME_SRC[$t]:-unknown}" "$mark"
+        "$t" "$sw" "${TTHEME_SRC[$t]:-unknown}" "$mark"
     else
-      printf -v body '● %-13s · ANSI %s%s' "$t" "${TTHEME_SRC[$t]:-unknown}" "$mark"
+      printf -v body '● %-13s · %s%s' "$t" "${TTHEME_SRC[$t]:-unknown}" "$mark"
     fi
     tbody[$t]=$body
   done
 }
 
+__tt_pv_size() {
+  local sz=$(stty size 2>/dev/null)
+  [[ $sz == <1->" "<1-> ]] || return 1
+  [[ $sz == "$ph $pw" ]] && return 1
+  ph=${sz%% *} pw=${sz##* } resized=1
+  return 0
+}
+
 __tt_pv_getch() {
   if (( $# )); then
     read -sk 1 -t $1 2>/dev/null
-  else
-    read -sk 1 2>/dev/null
+    return
   fi
+  while ! read -sk 1 -t 0.2 2>/dev/null; do
+    [[ -t 0 ]] || return 1
+    __tt_pv_size && return 1
+  done
+  return 0
 }
 
 __tt_pv_read() {
@@ -459,26 +541,31 @@ __tt_pv_handle() {
     home) cur=1 ;;
     end) (( ${#rval} )) && cur=${#rval} ;;
     pgup)
-      cur=$(( cur - ${LINES:-24} + 2 ))
+      cur=$(( cur - ph + 5 ))
       (( cur < 1 )) && cur=1
       ;;
     pgdn)
-      cur=$(( cur + ${LINES:-24} - 2 ))
+      cur=$(( cur + ph - 5 ))
       (( cur > ${#rval} )) && cur=${#rval}
       (( cur < 1 )) && cur=1
       ;;
     ' ') [[ ${rtype[cur]} == hdr ]] && __tt_pv_toggle ;;
     $'\x7f'|$'\x08')
       if [[ -n $flt ]]; then
+        name=""
+        [[ ${rtype[cur]} == thm ]] && name=${rval[cur]}
         flt=${flt%?}
         __tt_pv_rows
-        __tt_pv_first
+        __tt_pv_first "$name"
       fi
       ;;
     [a-zA-Z0-9-])
+      (( ${#flt} >= pw - 8 )) && return 0
+      name=""
+      [[ ${rtype[cur]} == thm ]] && name=${rval[cur]}
       flt+=${(L)key}
       __tt_pv_rows
-      __tt_pv_first
+      __tt_pv_first "$name"
       ;;
   esac
   return 0
@@ -490,14 +577,15 @@ __tt_preview() {
     print -u2 "ttheme preview: needs a terminal"
     return 1
   fi
-  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" cchip="" key="" REPLY="" cur=1 top=1 color=0
-  local -a groups=() rtype=() rval=()
+  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" cchip="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1
+  __tt_pv_size
+  local -a groups=() rtype=() rval=() rcnt=()
   local -A gnative=() gthemes=() exp=() hchip=() hnat=() tbody=()
   __tt_color && color=1
   __tt_pv_init
   __tt_pv_rows
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && __tt_pv_goto "$cn"
-  printf '\e[?1049h\e[?7l\e[?25l\e[2J'
+  printf '\e[?1049h\e[?7l\e[?25l'
   {
     while :; do
       __tt_pv_focus

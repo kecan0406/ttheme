@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { alacrittyBlock, detectTerminal, ghosttyBlock, kittyBlock, upsertBlock, zshrcBlock } from './wiring.ts'
+import { alacrittyBlock, ansiDot, detectTerminal, ghosttyBlock, kittyBlock, upsertBlock, zshrcBlock } from './wiring.ts'
 
 test('upsertBlock appends a marked block to empty content', () => {
   assert.equal(upsertBlock('', 'a = 1'), '# ttheme begin\na = 1\n# ttheme end\n')
@@ -51,6 +51,10 @@ test('zshrcBlock only exports non-default settings', () => {
     zshrcBlock('/cfg/ttheme', { tabPalette: 'off', announce: false }),
     'export TTHEME_TAB_PALETTE=off\nexport TTHEME_ANNOUNCE=0\nsource /cfg/ttheme/ttheme.zsh',
   )
+})
+
+test('ansiDot paints a truecolor palette dot', () => {
+  assert.equal(ansiDot('#000000', '#ffffff'), '\x1b[48;2;0;0;0;38;2;255;255;255m ● \x1b[0m')
 })
 
 test('kitty and alacritty blocks reference the chosen palette', () => {
