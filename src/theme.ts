@@ -39,7 +39,7 @@ export interface Theme {
 
 const DEFAULTS_FILE = '_defaults.toml'
 
-export const RESERVED_NAMES = new Set(['next', 'current', 'help', 'preview'])
+export const RESERVED_NAMES = new Set(['next', 'help', 'preview'])
 
 function fail(file: string, message: string): never {
   throw new Error(`${file}: ${message}`)

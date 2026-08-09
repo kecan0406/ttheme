@@ -36,7 +36,7 @@ done
 zsh -c '
   source shell/ttheme.zsh
   (( ${#TTHEME_PALETTE} > 0 )) || { print -u2 "no palettes loaded"; exit 1 }
-  (( ${#TTHEME_ORDER} == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
+  (( ${#TTHEME_ORDER} + 1 == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
   __tt_menu > /dev/null || exit 1
   ttheme help > /dev/null || { print -u2 "ttheme help broke"; exit 1 }
   ttheme -h > /dev/null || { print -u2 "ttheme -h broke"; exit 1 }
@@ -48,8 +48,6 @@ zsh -c '
   ttheme --frobnicate 2>/dev/null && { print -u2 "ttheme took an unknown option"; exit 1 }
   out=$(ttheme preview </dev/null 2>&1) && { print -u2 "ttheme preview ran without a tty"; exit 1 }
   [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }
-  TTHEME_SPEC=$TTHEME_PALETTE[homura]
-  [[ $(ttheme current) == homura ]] || { print -u2 "ttheme current broke"; exit 1 }
   print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$TTHEME_ADAPTER"
 '
 {% endraw %}

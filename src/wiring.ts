@@ -81,6 +81,10 @@ export function ansiDot(bg: string, fg: string): string {
   return `\x1b[48;2;${rgb(bg)};38;2;${rgb(fg)}m ● \x1b[0m`
 }
 
-export function ansiSwatch(colors: string[]): string {
-  return `${colors.map((c) => `\x1b[38;2;${rgb(c)}m▄`).join('')}\x1b[0m`
+export function ansiFg(color: string): string {
+  return `\x1b[38;2;${rgb(color)}m`
+}
+
+export function ansiSwatch(colors: string[], bg: string): string {
+  return `\x1b[48;2;${rgb(bg)}m${colors.map((c) => `\x1b[38;2;${rgb(c)}m▄`).join('')} \x1b[0m`
 }

@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import { build, type PaletteEntry } from './build.ts'
 import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
-import { PalettePrompt } from './palette-prompt.ts'
+import { PalettePrompt, promptFx } from './palette-prompt.ts'
 import {
   alacrittyBlock,
   detectTerminal,
@@ -55,6 +55,7 @@ async function pickPalette(root: string): Promise<string> {
   const prompt = new PalettePrompt({
     entries,
     color: !process.env.NO_COLOR,
+    fx: promptFx(process.env.TTHEME_FX),
     onFocus: live ? (entry) => process.stdout.write(paletteOsc(entry)) : undefined,
   })
   const pick = await prompt.prompt()

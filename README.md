@@ -42,7 +42,8 @@ Two things separate this from the usual color-scheme dump:
 | Touhou Project — 東方Project | `reimu` `marisa` `cirno` `youmu` `patchouli` `flandre` |
 | — | `neutral` (default) |
 
-`neutral` sits out of the rotation — it is the pre-shell default.
+`neutral` sits out of the rotation and the listings — it is the pre-shell
+default, still applyable as `ttheme neutral`.
 
 Backgrounds and cursors are hand-tuned; the 16 ANSI colors are borrowed from
 established themes (Nvim Dark, Nightfox, Oxocarbon, Selenized, Monokai Pro,
@@ -108,7 +109,6 @@ ttheme          list every palette, grouped, with previews
 ttheme homura   pin this tab      (a unique prefix works: ttheme ho)
 ttheme preview  browse live — focus repaints the tab, enter keeps it
 ttheme next     advance this tab to the next palette
-ttheme current  what this tab is using
 ttheme help     the list above, in your terminal
 ```
 
@@ -118,11 +118,10 @@ space fold and unfold, page up/down and home/end jump, typing filters by
 substring (ctrl-u clears it), enter applies, and esc steps back — first out
 of the filter, then out of the preview with the original colors restored.
 
-`preview`, `next`, `current` and `help` match exactly; every other first argument is read
+`preview`, `next` and `help` match exactly; every other first argument is read
 as a palette name, where a unique prefix is enough. Mistyped names get a "did
 you mean" suggestion instead of a wall of output. Piped output drops color and
-turns tab-separated — `ttheme current` prints just the name — and `NO_COLOR`
-is respected.
+turns tab-separated, and `NO_COLOR` is respected.
 
 New tabs take the next palette in group order, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather
@@ -132,6 +131,7 @@ than rolling the same one twice.
 |---|---|---|
 | `TTHEME_TAB_PALETTE` | `seq` | `off` makes new tabs inherit the window's colors |
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
+| `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
 
 ## What each terminal can actually do
 

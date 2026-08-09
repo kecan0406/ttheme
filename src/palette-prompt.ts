@@ -1,7 +1,7 @@
 import type { Readable, Writable } from 'node:stream'
 import { Prompt } from '@clack/core'
 import type { PaletteEntry } from './build.ts'
-import { ansiChip, ansiDot, ansiSwatch } from './wiring.ts'
+import { ansiChip, ansiDot, ansiFg, ansiSwatch } from './wiring.ts'
 
 export type PickerRow =
   | { kind: 'palette'; entry: PaletteEntry }
@@ -49,13 +49,21 @@ export function firstPalette(rows: PickerRow[]): number {
 
 const RESET = '\x1b[0m'
 const DIM = '\x1b[2m'
+const BOLD = '\x1b[1m'
 const BOLD_INVERSE = '\x1b[1;7m'
 const CYAN = '\x1b[36m'
+
+export type PromptFx = 'typewriter' | 'decode' | 'glitch'
+
+export function promptFx(value: string | undefined): PromptFx {
+  return value === 'decode' || value === 'glitch' ? value : 'typewriter'
+}
 
 export interface PalettePromptOptions {
   entries: PaletteEntry[]
   maxItems?: number
   color?: boolean
+  fx?: PromptFx
   input?: Readable
   output?: Writable
   onFocus?: (entry: PaletteEntry) => void
@@ -73,6 +81,11 @@ export class PalettePrompt extends Prompt<string> {
   private lastFocused = ''
   private onFocus?: (entry: PaletteEntry) => void
   private paletteTotal: number
+  private example = ''
+  private fx: PromptFx
+  private fxStep = 0
+  private fxSeed = 0
+  private fxTimer?: ReturnType<typeof setTimeout>
 
   constructor(opts: PalettePromptOptions) {
     super({ render: () => this.draw(), input: opts.input, output: opts.output }, true)
@@ -81,7 +94,19 @@ export class PalettePrompt extends Prompt<string> {
     this.paletteTotal = named.length
     this.maxItems = opts.maxItems ?? 12
     this.color = opts.color ?? true
+    this.fx = opts.fx ?? 'typewriter'
     this.onFocus = opts.onFocus
+    this.rollExample()
+    const roller = setInterval(() => {
+      this.rollExample()
+      this.fxStep = 8
+      this.output.emit('resize')
+    }, 3000)
+    roller.unref?.()
+    this.once('finalize', () => {
+      clearInterval(roller)
+      clearTimeout(this.fxTimer)
+    })
     this.rebuild('first')
     this.on('cursor', (action) => {
       if (action === 'up') {
@@ -110,6 +135,47 @@ export class PalettePrompt extends Prompt<string> {
 
   protected override _shouldSubmit(): boolean {
     return this.rows[this.cursor]?.kind === 'palette'
+  }
+
+  private rollExample(): void {
+    const named = this.entries.filter((e) => !e.default)
+    const groups = [...new Set(named.map((e) => e.group))]
+    const pal = named[Math.floor(Math.random() * named.length)]
+    const grp = groups[Math.floor(Math.random() * groups.length)]
+    if (!pal || !grp) {
+      this.example = ''
+      return
+    }
+    const ex = `${pal.name} | ${grp}`
+    this.example = ex.length > 30 ? `${ex.slice(0, 29)}…` : ex
+    this.fxSeed = Math.floor(Math.random() * 997)
+  }
+
+  private animatedExample(): string {
+    if (this.fxStep === 0) {
+      return this.example
+    }
+    if (!this.fxTimer) {
+      this.fxTimer = setTimeout(() => {
+        this.fxTimer = undefined
+        this.fxStep -= 1
+        this.output.emit('resize')
+      }, 60)
+      this.fxTimer.unref?.()
+    }
+    const keep = Math.floor((this.example.length * (8 - this.fxStep)) / 8)
+    if (this.fx === 'typewriter') {
+      return `${this.example.slice(0, keep)}▏`
+    }
+    const pool = this.fx === 'decode' ? 'abcdefghijklmnopqrstuvwxyz' : '▓▒░#*+=<>?/-_'
+    const still = this.fx === 'decode' ? (ch: string) => !/[a-z0-9]/i.test(ch) : (ch: string) => ch === ' '
+    return [...this.example]
+      .map((ch, i) =>
+        i + ((i * 7 + this.fxSeed) % 3) < keep || still(ch)
+          ? ch
+          : (pool[Math.floor(Math.random() * pool.length)] ?? ch),
+      )
+      .join('')
   }
 
   private sync(): void {
@@ -180,23 +246,28 @@ export class PalettePrompt extends Prompt<string> {
   private renderRow(row: PickerRow, focused: boolean): string {
     if (row.kind === 'group') {
       const arrow = row.expanded ? '▾' : '▸'
+      const at = this.rows[this.cursor]
+      const held = at?.kind === 'palette' && at.entry.group === row.name ? at.entry : undefined
       const name = this.color
         ? focused
           ? `${BOLD_INVERSE} ${row.name} ${RESET}`
-          : ansiChip(row.name, row.selection)
+          : held
+            ? `${BOLD_INVERSE}${ansiFg(held.cursor)} ${row.name} ${RESET}`
+            : ` ${BOLD}${row.name}${RESET} `
         : focused
           ? `[${row.name}]`
           : ` ${row.name}`
+      const chip = this.color ? ansiChip('●', row.selection) : ''
       const count = this.color ? ` ${DIM}(${row.count})${RESET}` : ` (${row.count})`
       const native = row.native ? (this.color ? ` ${DIM}${row.native}${RESET}` : ` ${row.native}`) : ''
-      return `${arrow}${name}${count}${native}`
+      return `${arrow}${name}${chip}${count}${native}`
     }
     const e = row.entry
     const marker = focused ? '▶ ' : '  '
     if (!this.color) {
-      return `  ${marker}● ${e.name.padEnd(13)} · ${e.ansiSource}`
+      return `  ${marker}${e.name.padEnd(13)} ● · ${e.ansiSource}`
     }
-    return `  ${marker}${ansiDot(e.background, e.cursor)} ${e.name.padEnd(13)} ${ansiSwatch(e.ansi.slice(1, 7))}  ${DIM}${e.ansiSource}${RESET}`
+    return `  ${marker}${e.name.padEnd(13)} ${ansiDot(e.background, e.cursor)}${ansiSwatch(e.ansi.slice(1, 7), e.background)}  ${DIM}${e.ansiSource}${RESET}`
   }
 
   private draw(): string {
@@ -210,7 +281,7 @@ export class PalettePrompt extends Prompt<string> {
     }
     const matched = this.userInput ? this.rows.filter((r) => r.kind === 'palette').length : this.paletteTotal
     const head = `${bar('◆')} startup palette ${dim(`(${matched}/${this.paletteTotal})`)}`
-    const search = `${bar('│')} ${this.userInput ? `⌕ ${this.userInput}_` : dim('⌕ search…')}`
+    const search = `${bar('│')} ${this.userInput ? `⌕ ${this.userInput}_` : dim(`⌕ search…${this.example ? ` e.g. ${this.animatedExample()}` : ''}`)}`
     if (this.cursor < this.top) {
       this.top = this.cursor
     }
