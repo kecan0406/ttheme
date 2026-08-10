@@ -14,5 +14,17 @@
       "semicolons": "asNeeded",
       "quoteStyle": "single"
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noTemplateCurlyInString": "off"
+          }
+        }
+      }
+    }
+  ]
 }
