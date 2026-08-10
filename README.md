@@ -109,6 +109,7 @@ ttheme          list every palette, grouped, with previews
 ttheme homura   pin this tab      (a unique prefix works: ttheme ho)
 ttheme preview  browse live — focus repaints the tab, enter keeps it
 ttheme next     advance this tab to the next palette
+ttheme config   edit settings in $EDITOR — they apply in new tabs
 ttheme help     the list above, in your terminal
 ```
 
@@ -118,7 +119,7 @@ space fold and unfold, page up/down and home/end jump, typing filters by
 substring (ctrl-u clears it), enter applies, and esc steps back — first out
 of the filter, then out of the preview with the original colors restored.
 
-`preview`, `next` and `help` match exactly; every other first argument is read
+`preview`, `next`, `config` and `help` match exactly; every other first argument is read
 as a palette name, where a unique prefix is enough. Mistyped names get a "did
 you mean" suggestion instead of a wall of output. Piped output drops color and
 turns tab-separated, and `NO_COLOR` is respected.
@@ -127,7 +128,12 @@ New tabs take the next palette in group order, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather
 than rolling the same one twice.
 
-| Variable | Default | |
+Settings live in `~/.config/ttheme/config.zsh` — `init` seeds it from your
+answers and `ttheme config` opens it in `$EDITOR`. Each line is a plain zsh
+`: ${VAR:=value}` assignment, so a variable exported before the layer loads
+still wins:
+
+| Setting | Default | |
 |---|---|---|
 | `TTHEME_TAB_PALETTE` | `seq` | `off` makes new tabs inherit the window's colors |
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |

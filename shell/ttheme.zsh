@@ -9,6 +9,10 @@ else
   return 1
 fi
 
+typeset -g TTHEME_CONFIG=${XDG_CONFIG_HOME:-$HOME/.config}/ttheme/config.zsh
+
+[[ -r $TTHEME_CONFIG ]] && source $TTHEME_CONFIG
+
 : ${TTHEME_TAB_PALETTE:=seq}
 
 : ${TTHEME_ANNOUNCE:=1}
@@ -128,10 +132,16 @@ __tt_help() {
   ttheme homura   paint this tab (a unique prefix works: ttheme ho)
   ttheme preview  browse live — focus repaints, enter keeps, esc restores
   ttheme next     advance this tab to the next palette
+  ttheme config   edit settings in $EDITOR — they apply in new tabs'
+}
 
-  TTHEME_TAB_PALETTE=off  new tabs inherit the window'\''s colors
-  TTHEME_ANNOUNCE=0       silence the notice under "Last login:"
-  TTHEME_FX=typewriter    search hint animation: typewriter, decode or glitch'
+__tt_config() {
+  if [[ ! -e $TTHEME_CONFIG ]]; then
+    mkdir -p ${TTHEME_CONFIG:h} || return 1
+    print -r -- "$TTHEME_CONFIG_TEMPLATE" > $TTHEME_CONFIG
+  fi
+  ${=${VISUAL:-${EDITOR:-vi}}} $TTHEME_CONFIG || return
+  print -r -- "settings apply in new tabs — $TTHEME_CONFIG"
 }
 
 __tt_resolve() {
@@ -638,6 +648,7 @@ ttheme() {
     -h|--help|help) __tt_help; return 0 ;;
     next) __tt_rotate; return ;;
     preview) __tt_preview; return ;;
+    config) __tt_config; return ;;
     -*) print -u2 "ttheme: unknown option $1 — see \`ttheme help\`"; return 1 ;;
   esac
 
@@ -651,7 +662,7 @@ ttheme() {
 
 if (( $+functions[compdef] )); then
   __tt_complete() {
-    (( CURRENT == 2 )) && compadd -- preview next help
+    (( CURRENT == 2 )) && compadd -- preview next config help
     compadd -- $TTHEME_ORDER
   }
   compdef __tt_complete ttheme

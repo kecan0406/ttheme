@@ -17,6 +17,7 @@ import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
 import { PalettePrompt, promptFx } from './palette-prompt.ts'
 import {
   alacrittyBlock,
+  configFile,
   detectTerminal,
   ghosttyBlock,
   INIT_TERMINALS,
@@ -45,6 +46,7 @@ export interface InitPaths {
 export interface InitPlan {
   copies: { from: string; to: string; executable?: boolean }[]
   edits: { file: string; block: string }[]
+  settings: { file: string; content: string }
   notes: string[]
 }
 
@@ -83,7 +85,12 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     { from: join(dist, 'ghostty', 'ttheme.conf'), to: join(home, 'ttheme.conf') },
   ]
   copyDir(copies, join(paths.root, 'shell', 'adapters'), join(home, 'adapters'))
-  const edits: InitPlan['edits'] = [{ file: join(paths.zdotdir, '.zshrc'), block: zshrcBlock(home, opts) }]
+  const edits: InitPlan['edits'] = [{ file: join(paths.zdotdir, '.zshrc'), block: zshrcBlock(home) }]
+  const configPath = join(home, 'config.zsh')
+  const settings = {
+    file: configPath,
+    content: configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : '', opts),
+  }
   const notes: string[] = []
   if (opts.terminals.includes('ghostty')) {
     copyDir(copies, join(dist, 'ghostty', 'themes'), join(paths.configHome, 'ghostty', 'themes'))
@@ -109,7 +116,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   }
   notes.push(`wezterm: copy colors/ from the release archive, then ${weztermSnippet(opts.palette)}`)
   notes.push('iterm2: import the .itermcolors files from the release archive')
-  return { copies, edits, notes }
+  return { copies, edits, settings, notes }
 }
 
 export function applyInit(plan: InitPlan, link: boolean): void {
@@ -125,6 +132,8 @@ export function applyInit(plan: InitPlan, link: boolean): void {
       }
     }
   }
+  mkdirSync(dirname(plan.settings.file), { recursive: true })
+  writeFileSync(plan.settings.file, plan.settings.content)
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''
@@ -170,12 +179,17 @@ async function ask(root: string, detected: string, preselected: InitTerminal[], 
 function report(plan: InitPlan, opts: InitOptions, interactive: boolean): void {
   const missing = [
     ...plan.copies.filter((c) => !existsSync(c.to)).map((c) => c.to),
+    ...(existsSync(plan.settings.file) ? [] : [plan.settings.file]),
     ...plan.edits.filter((e) => !readFileSync(e.file, 'utf8').includes('# ttheme begin')).map((e) => e.file),
   ]
   if (missing.length > 0) {
     throw new Error(`init left gaps:\n${missing.join('\n')}`)
   }
-  const lines = [`placed ${plan.copies.length} files`, ...plan.edits.map((e) => `wired ${e.file}`)]
+  const lines = [
+    `placed ${plan.copies.length} files`,
+    `settings in ${plan.settings.file} — edit later with \`ttheme config\``,
+    ...plan.edits.map((e) => `wired ${e.file}`),
+  ]
   if (opts.terminals.includes('ghostty')) {
     lines.push('restart ghostty to pick up its config')
   }
@@ -223,7 +237,11 @@ export async function runInit(flags: { yes?: boolean; link?: boolean } = {}): Pr
   const plan = planInit(opts, paths)
   if (interactive) {
     p.note(
-      [`copy ${plan.copies.length} files under ${configHome}`, ...plan.edits.map((e) => `edit ${e.file}`)].join('\n'),
+      [
+        `copy ${plan.copies.length} files under ${configHome}`,
+        `write ${plan.settings.file}`,
+        ...plan.edits.map((e) => `edit ${e.file}`),
+      ].join('\n'),
       `wiring ${opts.terminals.join(', ')}`,
     )
     const go = accepted(await p.confirm({ message: 'apply these changes?' }))

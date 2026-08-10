@@ -44,16 +44,60 @@ export function ghosttyBlock(tthemeDir: string, palette: string, tabPalette: 'se
   return lines.join('\n')
 }
 
-export function zshrcBlock(tthemeDir: string, opts: { tabPalette: 'seq' | 'off'; announce: boolean }): string {
-  const lines = []
-  if (opts.tabPalette === 'off') {
-    lines.push('export TTHEME_TAB_PALETTE=off')
+export function zshrcBlock(tthemeDir: string): string {
+  return `source ${tthemeDir}/ttheme.zsh`
+}
+
+const CONFIG_HEADER = '# ttheme settings — exported variables win over this file'
+
+const CONFIG_SETTINGS = {
+  TTHEME_TAB_PALETTE: {
+    doc: '# new tabs: seq rotates through the palettes, off inherits the window colors (default seq)',
+    default: 'seq',
+  },
+  TTHEME_ANNOUNCE: {
+    doc: '# the palette notice under "Last login:": 1 shows it, 0 silences it (default 1)',
+    default: '1',
+  },
+  TTHEME_FX: {
+    doc: '# search hint animation: typewriter, decode or glitch (default typewriter)',
+    default: 'typewriter',
+  },
+} as const
+
+function settingLine(name: string, value: string): string {
+  return `: \${${name}:=${value}}`
+}
+
+function settingPattern(name: string): RegExp {
+  return new RegExp(String.raw`^#? ?: \$\{${name}[^\n]*$`, 'm')
+}
+
+function appendSetting(content: string, name: keyof typeof CONFIG_SETTINGS, value: string): string {
+  return `${content.replace(/\n*$/, '\n')}\n${CONFIG_SETTINGS[name].doc}\n${settingLine(name, value)}\n`
+}
+
+function applySetting(content: string, name: keyof typeof CONFIG_SETTINGS, value: string): string {
+  const pattern = settingPattern(name)
+  if (pattern.test(content)) {
+    return content.replace(pattern, () => settingLine(name, value))
   }
-  if (!opts.announce) {
-    lines.push('export TTHEME_ANNOUNCE=0')
-  }
-  lines.push(`source ${tthemeDir}/ttheme.zsh`)
-  return lines.join('\n')
+  return appendSetting(content, name, value)
+}
+
+function ensureSetting(content: string, name: keyof typeof CONFIG_SETTINGS): string {
+  return settingPattern(name).test(content) ? content : appendSetting(content, name, CONFIG_SETTINGS[name].default)
+}
+
+export function configTemplate(): string {
+  const sections = Object.entries(CONFIG_SETTINGS).map(([name, s]) => `${s.doc}\n${settingLine(name, s.default)}`)
+  return `${[CONFIG_HEADER, ...sections].join('\n\n')}\n`
+}
+
+export function configFile(content: string, opts: { tabPalette: 'seq' | 'off'; announce: boolean }): string {
+  const seeded = content === '' ? configTemplate() : content
+  const tabbed = applySetting(seeded, 'TTHEME_TAB_PALETTE', opts.tabPalette)
+  return ensureSetting(applySetting(tabbed, 'TTHEME_ANNOUNCE', opts.announce ? '1' : '0'), 'TTHEME_FX')
 }
 
 export function kittyBlock(palette: string): string {

@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { checkAll } from './contrast.ts'
 import { alacritty, type Emitter, ghostty, iterm2, kitty, type Output, wezterm } from './emit/index.ts'
 import { loadThemes, rotation, type Theme } from './theme.ts'
+import { configTemplate } from './wiring.ts'
 
 const root = join(import.meta.dirname, '..')
 const THEMES = join(root, 'themes')
@@ -59,6 +60,9 @@ function shellPalettes(themes: Theme[]): string {
     '# Source of truth: themes/*.toml in the ttheme repo.',
     '',
     `typeset -g TTHEME_VERSION=${version}`,
+    '',
+    '# seed for `ttheme config` when no config.zsh exists yet',
+    `typeset -g TTHEME_CONFIG_TEMPLATE='${configTemplate().trimEnd().replaceAll("'", "'\\''")}'`,
     '',
     'typeset -gA TTHEME_PALETTE=(',
     ...themes.map((t) => entry(t, [t.background, t.foreground, t.cursor, t.selectionBackground, ...t.ansi].join(' '))),
