@@ -111,6 +111,16 @@ echo "bin:check ok"
 {% endraw %}
 '''
 
+[tasks."site:dev"]
+description = "dev server for the showcase site"
+dir = "{{config_root}}/site"
+run = "bun run dev"
+
+[tasks."site:build"]
+description = "static-export the showcase site into site/out"
+dir = "{{config_root}}/site"
+run = "bun install && bun run build"
+
 [tasks.publish]
 description = "verify everything, rebuild dist and the bundle, publish to npm"
 depends = ["ci"]

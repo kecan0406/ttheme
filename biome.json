@@ -15,6 +15,9 @@
       "quoteStyle": "single"
     }
   },
+  "files": {
+    "includes": ["**", "!site/app/globals.css"]
+  },
   "overrides": [
     {
       "includes": ["src/**/*.test.ts"],
@@ -22,6 +25,26 @@
         "rules": {
           "suspicious": {
             "noTemplateCurlyInString": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["site/components/landing.tsx", "site/components/hero-terminal.tsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useExhaustiveDependencies": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["site/components/hero-terminal.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off"
           }
         }
       }

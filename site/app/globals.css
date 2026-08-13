@@ -1,0 +1,121 @@
+@import 'tailwindcss';
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --font-mono: var(--font-jetbrains), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+:root {
+  --ground: #0b0c10;
+  --card: #12141a;
+  --ink: #e9ebf1;
+  --muted: #8b93a7;
+  --line: #262a34;
+  --accent: #8cb8e8;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--ground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.term,
+.term * {
+  transition:
+    background-color 0.5s ease,
+    color 0.5s ease;
+}
+
+.cpreg .term,
+.cpreg .term * {
+  transition: none;
+}
+
+.cpreg .term {
+  transition:
+    --bg 0.5s ease,
+    --fg 0.5s ease,
+    --cur 0.5s ease,
+    --sel 0.5s ease,
+    --a0 0.5s ease,
+    --a1 0.5s ease,
+    --a2 0.5s ease,
+    --a3 0.5s ease,
+    --a4 0.5s ease,
+    --a5 0.5s ease,
+    --a6 0.5s ease,
+    --a7 0.5s ease,
+    --a8 0.5s ease,
+    --a9 0.5s ease,
+    --a10 0.5s ease,
+    --a11 0.5s ease,
+    --a12 0.5s ease,
+    --a13 0.5s ease,
+    --a14 0.5s ease,
+    --a15 0.5s ease,
+    --wm0 0.5s ease,
+    --wm1 0.5s ease,
+    --wm2 0.5s ease,
+    --wm3 0.5s ease,
+    --wm4 0.5s ease,
+    --wm5 0.5s ease;
+}
+
+.cpreg .stage {
+  transition: --glow 0.5s ease;
+}
+
+html.cpreg {
+  transition: --accent 0.5s ease;
+}
+
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: -14% -22%;
+  background: radial-gradient(52% 62% at 50% 42%, var(--glow, transparent), transparent 72%);
+  pointer-events: none;
+}
+
+.cursor {
+  display: inline-block;
+  width: 0.62em;
+  height: 1.15em;
+  background: var(--cur);
+  vertical-align: text-bottom;
+  animation: blink 1.15s steps(2, start) infinite;
+}
+
+.cursor[data-typing] {
+  animation: none;
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .term,
+  .term *,
+  .cpreg .term,
+  .cpreg .stage,
+  html.cpreg {
+    transition: none;
+  }
+
+  .cursor {
+    animation: none;
+  }
+}
