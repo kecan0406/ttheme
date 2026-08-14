@@ -69,7 +69,7 @@ export function PaletteWall({
       <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2.5">
         {list.map((theme) => (
           <button
-            key={theme.slug}
+            key={theme.name}
             type="button"
             data-active={theme === current || undefined}
             onClick={() => onWear(theme)}

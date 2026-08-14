@@ -115,13 +115,13 @@ export function Landing({ themes, children }: { themes: Theme[]; children: React
   const manual = (direction: number) => {
     stopAll()
     const next = advance(direction)
-    setTyped(direction < 0 ? `ttheme apply ${next.slug}` : CMD)
+    setTyped(direction < 0 ? `ttheme apply ${next.name}` : CMD)
     cycle()
   }
 
   const wearTheme = (theme: Theme) => {
     stopAll()
-    setTyped(`ttheme apply ${theme.slug}`)
+    setTyped(`ttheme apply ${theme.name}`)
     wear(theme)
     cycle()
     stageRef.current?.scrollIntoView({ behavior: reduced.current ? 'auto' : 'smooth', block: 'center' })

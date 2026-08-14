@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import type { PaletteEntry } from './build.ts'
+import type { PaletteEntry } from './emit/manifest.ts'
 import { paletteOsc, parseOscColors, restoreOsc } from './osc.ts'
 
 const miku: PaletteEntry = {

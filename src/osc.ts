@@ -1,6 +1,6 @@
 import { openSync, writeSync } from 'node:fs'
 import { ReadStream } from 'node:tty'
-import type { PaletteEntry } from './build.ts'
+import type { PaletteEntry } from './emit/manifest.ts'
 
 const QUERY_CODES = ['10', '11', '12', '17', ...Array.from({ length: 16 }, (_, i) => `4;${i}`)]
 

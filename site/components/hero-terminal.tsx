@@ -182,7 +182,7 @@ export function HeroTerminal({
           {'\n'}
           <span className="text-(--a2)">❯</span> git diff --stat{'\n'}
           {' themes/'}
-          <span className="text-(--a5)">{theme.slug}.toml</span>
+          <span className="text-(--a5)">{theme.name}.toml</span>
           {' | '}
           <span className="text-(--a2)">+18</span> <span className="text-(--a1)">-6</span>
           {'\n'}

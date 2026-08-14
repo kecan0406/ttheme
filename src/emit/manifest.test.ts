@@ -2,10 +2,15 @@ import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { manifest } from './build.ts'
-import { loadThemes } from './theme.ts'
+import pkg from '../../package.json' with { type: 'json' }
+import { loadThemes } from '../theme.ts'
+import { manifest } from './manifest.ts'
 
-const entries = manifest(loadThemes(join(import.meta.dirname, '..', 'themes')))
+const { version, palettes: entries } = manifest(loadThemes(join(import.meta.dirname, '..', '..', 'themes')))
+
+test('manifest states which build produced it', () => {
+  assert.equal(version, pkg.version)
+})
 
 test('manifest carries every theme in display order', () => {
   assert.ok(entries.length > 0)

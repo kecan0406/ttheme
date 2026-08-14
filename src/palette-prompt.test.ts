@@ -3,7 +3,7 @@ import { PassThrough } from 'node:stream'
 import { test } from 'node:test'
 import { isCancel } from '@clack/core'
 
-import type { PaletteEntry } from './build.ts'
+import type { PaletteEntry } from './emit/manifest.ts'
 import { firstPalette, matchesPalette, PalettePrompt, pickerRows } from './palette-prompt.ts'
 
 function entry(partial: Partial<PaletteEntry> & { name: string; group: string }): PaletteEntry {

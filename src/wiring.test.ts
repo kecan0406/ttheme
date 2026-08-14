@@ -3,7 +3,6 @@ import { test } from 'node:test'
 
 import {
   alacrittyBlock,
-  ansiDot,
   configFile,
   configTemplate,
   detectTerminal,
@@ -105,10 +104,6 @@ test('configFile appends a documented line when a setting is missing', () => {
   assert.match(out, /^# new tabs: .*\n: \$\{TTHEME_TAB_PALETTE:=off\}$/m)
   assert.match(out, /^# the palette notice .*\n: \$\{TTHEME_ANNOUNCE:=1\}$/m)
   assert.match(out, /^# search hint animation: .*\n: \$\{TTHEME_FX:=typewriter\}$/m)
-})
-
-test('ansiDot paints a truecolor palette dot', () => {
-  assert.equal(ansiDot('#000000', '#ffffff'), '\x1b[48;2;0;0;0;38;2;255;255;255m ● \x1b[0m')
 })
 
 test('kitty and alacritty blocks reference the chosen palette', () => {
