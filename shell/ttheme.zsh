@@ -94,6 +94,18 @@ __tt_announce() {
     $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2})) "$name" "$src"
 }
 
+__tt_keep() {
+  if ! __tt_persist "$1"; then
+    print -u2 "ttheme: could not save the default — no \`theme =\` line inside the \`# ttheme begin\` block of the ghostty config (run \`npx @kecan0406/ttheme@latest init\`)"
+    return 1
+  fi
+  if __tt_color; then
+    printf '\033[2mdefault · new tabs open with %s\033[0m\n' "$1"
+  else
+    print -r -- "default · new tabs open with $1"
+  fi
+}
+
 __tt_menu() {
   local k cur="" mark grp last_grp=""
   if ! __tt_color; then
@@ -130,7 +142,7 @@ __tt_help() {
 
   ttheme          list every palette, grouped, with previews
   ttheme homura   paint this tab (a unique prefix works: ttheme ho)
-  ttheme preview  browse live — focus repaints, enter keeps, esc restores
+  ttheme preview  browse live — focus repaints, enter keeps (this tab or default), esc restores
   ttheme next     advance this tab to the next palette
   ttheme config   edit settings in $EDITOR — they apply in new tabs'
 }
@@ -400,8 +412,23 @@ __tt_pv_draw() {
     fi
     out+=$'\n'
   done
-  line="↑↓ move · ←→ fold · type to filter · enter apply · esc restore"
-  (( color )) && line=$'\e[2m'$line$'\e[0m'
+  if [[ -n $pick ]]; then
+    local a=" this tab " b=" default " on=${hsel:-$'\e[7;1m'}
+    if (( color )); then
+      if (( pk == 1 )); then
+        a=$on$a$'\e[0m' b=$'\e[2m'$b$'\e[0m'
+      else
+        a=$'\e[2m'$a$'\e[0m' b=$on$b$'\e[0m'
+      fi
+      line=" $pick → $a $b "$'\e[2m'"←→ choose · enter · esc back"$'\e[0m'
+    else
+      if (( pk == 1 )); then a="[this tab]"; else b="[default]"; fi
+      line=" $pick → $a $b ←→ choose · enter · esc back"
+    fi
+  else
+    line="↑↓ move · ←→ fold · type to filter · enter apply · esc restore"
+    (( color )) && line=$'\e[2m'$line$'\e[0m'
+  fi
   out+=$line$'\e[K'
   print -rn -- "$out"
 }
@@ -530,8 +557,26 @@ __tt_pv_read() {
   esac
 }
 
+__tt_pv_pick() {
+  case $key in
+    $'\x03') return 1 ;;
+    esc) pick="" ;;
+    left|right|$'\t') pk=$(( 3 - pk )) ;;
+    $'\r'|$'\n')
+      sel=$pick
+      (( pk == 2 )) && keep=1
+      return 1
+      ;;
+  esac
+  return 0
+}
+
 __tt_pv_handle() {
   local name
+  if [[ -n $pick ]]; then
+    __tt_pv_pick
+    return
+  fi
   case $key in
     $'\x03') return 1 ;;
     esc|$'\x15')
@@ -552,8 +597,12 @@ __tt_pv_handle() {
       ;;
     $'\r'|$'\n')
       if [[ ${rtype[cur]} == thm ]]; then
-        sel=${rval[cur]}
-        return 1
+        if (( canpick )); then
+          pick=${rval[cur]} pk=1
+        else
+          sel=${rval[cur]}
+          return 1
+        fi
       elif [[ ${rtype[cur]} == hdr ]]; then
         __tt_pv_toggle
       fi
@@ -602,6 +651,8 @@ __tt_preview() {
     return 1
   fi
   local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0
+  local pick="" pk=1 keep=0 canpick=0
+  (( $+functions[__tt_persist] )) && [[ $TTHEME_TAB_PALETTE == off ]] && canpick=1
   __tt_pv_size
   local -a groups=() rtype=() rval=() rcnt=()
   local -A gnative=() gthemes=() exp=() hchip=() hnat=() tbody=()
@@ -631,6 +682,7 @@ __tt_preview() {
       [[ $spec == "$applied" ]] || __tt_apply "$spec"
       TTHEME_SPEC=$spec
       __tt_announce
+      (( keep )) && __tt_keep "$sel"
     elif [[ -n $orig && $orig != "$applied" ]]; then
       __tt_apply "$orig"
     fi

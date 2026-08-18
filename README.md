@@ -107,7 +107,7 @@ symlinks the checkout into place so palette edits land live.
 ```
 ttheme          list every palette, grouped, with previews
 ttheme homura   pin this tab      (a unique prefix works: ttheme ho)
-ttheme preview  browse live — focus repaints the tab, enter keeps it
+ttheme preview  browse live — focus repaints the tab, enter keeps it (this tab or default)
 ttheme next     advance this tab to the next palette
 ttheme config   edit settings in $EDITOR — they apply in new tabs
 ttheme help     the list above, in your terminal
@@ -118,6 +118,12 @@ In `preview`, groups start folded with the cursor on the current palette;
 space fold and unfold, page up/down and home/end jump, typing filters by
 substring (ctrl-u clears it), enter applies, and esc steps back — first out
 of the filter, then out of the preview with the original colors restored.
+Under Ghostty with `TTHEME_TAB_PALETTE=off`, enter asks **this tab** or
+**default**: default rewrites `theme =` in the `# ttheme begin` block of your
+Ghostty config and sends `SIGUSR2`, so new tabs — and open tabs you have not
+painted by hand — take the palette without a restart. Painting is per surface
+otherwise: a new tab starts from the configured theme, not from what the last
+tab was painted.
 
 `preview`, `next`, `config` and `help` match exactly; every other first argument is read
 as a palette name, where a unique prefix is enough. Mistyped names get a "did
@@ -135,7 +141,7 @@ still wins:
 
 | Setting | Default | |
 |---|---|---|
-| `TTHEME_TAB_PALETTE` | `seq` | `off` makes new tabs inherit the window's colors |
+| `TTHEME_TAB_PALETTE` | `seq` | `off` keeps new tabs on the terminal's configured theme (`preview` → default changes it) |
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
 

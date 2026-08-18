@@ -66,7 +66,7 @@ test('configFile seeds the template with every default spelled out', () => {
     [
       '# ttheme settings — exported variables win over this file',
       '',
-      '# new tabs: seq rotates through the palettes, off inherits the window colors (default seq)',
+      '# new tabs: seq rotates through the palettes, off keeps the configured terminal theme (default seq)',
       ': ${TTHEME_TAB_PALETTE:=seq}',
       '',
       '# the palette notice under "Last login:": 1 shows it, 0 silences it (default 1)',

@@ -52,7 +52,7 @@ const CONFIG_HEADER = '# ttheme settings — exported variables win over this fi
 
 const CONFIG_SETTINGS = {
   TTHEME_TAB_PALETTE: {
-    doc: '# new tabs: seq rotates through the palettes, off inherits the window colors (default seq)',
+    doc: '# new tabs: seq rotates through the palettes, off keeps the configured terminal theme (default seq)',
     default: 'seq',
   },
   TTHEME_ANNOUNCE: {

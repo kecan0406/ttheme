@@ -51,6 +51,15 @@ zsh -c '
   out=$(ttheme preview </dev/null 2>&1) && { print -u2 "ttheme preview ran without a tty"; exit 1 }
   [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }
   EDITOR=true ttheme config > /dev/null || { print -u2 "ttheme config broke"; exit 1 }
+  source shell/adapters/ghostty.zsh
+  killall() { :; }; pkill() { :; }
+  mkdir -p $XDG_CONFIG_HOME/ghostty
+  print -l "font-size = 14" "# ttheme begin" "theme = magi" "config-file = x" "# ttheme end" > $XDG_CONFIG_HOME/ghostty/config
+  __tt_persist homura || { print -u2 "__tt_persist failed"; exit 1 }
+  [[ "$(<$XDG_CONFIG_HOME/ghostty/config)" == "$(print -l "font-size = 14" "# ttheme begin" "theme = homura" "config-file = x" "# ttheme end")" ]] ||
+    { print -u2 "__tt_persist rewrote the config wrong:"; cat $XDG_CONFIG_HOME/ghostty/config; exit 1 }
+  print "theme = magi" > $XDG_CONFIG_HOME/ghostty/config
+  __tt_persist homura 2>/dev/null && { print -u2 "__tt_persist touched a theme line outside the block"; exit 1 }
   [[ "$(<$TTHEME_CONFIG)" == "$TTHEME_CONFIG_TEMPLATE" ]] || { print -u2 "config seed drifted from the template"; exit 1 }
   print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$TTHEME_ADAPTER"
 '
