@@ -3,12 +3,12 @@ name = "youmu"
 group = "Touhou Project"
 native = "東方Project"
 order = 94
-ansi_source = "Everforest Dark Med + Danmaku"
+ansi_source = "Everforest Dark Med"
 
 [colors]
 background = "#232a2e"
 foreground = "#f2efdf"
-cursor = "#83c092"
+cursor = "#0cbba4"
 selection_background = "#364540"
 ansi = [
   "#343f44",

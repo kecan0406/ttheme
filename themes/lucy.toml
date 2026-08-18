@@ -9,7 +9,7 @@ ansi_source = "Mellow"
 background = "#15141b"
 foreground = "#eae8f2"
 cursor = "#e29eca"
-selection_background = "#2c2a3a"
+selection_background = "#3a2152"
 ansi = [
   "#27272a",
   "#f5a191",

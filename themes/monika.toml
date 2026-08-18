@@ -7,7 +7,7 @@ ansi_source = "Hipster Green + DDLC"
 [colors]
 background = "#100b05"
 foreground = "#d8ecd0"
-cursor = "#3ecf5e"
+cursor = "#80ad64"
 selection_background = "#173a20"
 ansi = [
   "#000000",

@@ -8,7 +8,7 @@ ansi_source = "Rose Pine Dawn + Magica"
 [colors]
 background = "#faf4ed"
 foreground = "#444060"
-cursor = "#d2325a"
+cursor = "#c22e63"
 selection_background = "#f2d5de"
 ansi = [
   "#26233a",

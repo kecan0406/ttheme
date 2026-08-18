@@ -7,7 +7,7 @@ ansi_source = "Ubuntu + Determination"
 [colors]
 background = "#22091b"
 foreground = "#f1ede4"
-cursor = "#ef2929"
+cursor = "#f34511"
 selection_background = "#4a1638"
 ansi = [
   "#2e3436",

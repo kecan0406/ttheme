@@ -7,8 +7,8 @@ ansi_source = "Laser"
 [colors]
 background = "#150a14"
 foreground = "#f4e3ee"
-cursor = "#ff2d95"
-selection_background = "#3d1535"
+cursor = "#ef11ec"
+selection_background = "#3a1038"
 ansi = [
   "#626262",
   "#ff8373",

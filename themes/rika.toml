@@ -8,7 +8,7 @@ ansi_source = "Nocturnal Winter"
 [colors]
 background = "#0d0d17"
 foreground = "#f0eef6"
-cursor = "#f12d52"
+cursor = "#515ba5"
 selection_background = "#23233a"
 ansi = [
   "#4d4d4d",

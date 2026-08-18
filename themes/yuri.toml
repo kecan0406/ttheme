@@ -7,8 +7,8 @@ ansi_source = "Purple Portal + DDLC"
 [colors]
 background = "#160528"
 foreground = "#ede4f7"
-cursor = "#c4a0ff"
-selection_background = "#2e1548"
+cursor = "#c29ed0"
+selection_background = "#3b1f3f"
 ansi = [
   "#483a57",
   "#fb7185",

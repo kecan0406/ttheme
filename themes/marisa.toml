@@ -3,7 +3,7 @@ name = "marisa"
 group = "Touhou Project"
 native = "東方Project"
 order = 92
-ansi_source = "Apple Classic + Danmaku"
+ansi_source = "Apple Classic"
 
 [colors]
 background = "#120e08"

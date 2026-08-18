@@ -8,7 +8,7 @@ ansi_source = "Japanesque + Watanagashi"
 [colors]
 background = "#201512"
 foreground = "#f7f6ec"
-cursor = "#ff8243"
+cursor = "#ea8942"
 selection_background = "#4d2b1c"
 ansi = [
   "#343935",

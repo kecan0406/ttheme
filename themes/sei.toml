@@ -8,7 +8,7 @@ ansi_source = "Blue Matrix"
 [colors]
 background = "#0e1420"
 foreground = "#e8f4ff"
-cursor = "#00b0ff"
+cursor = "#7bcdb5"
 selection_background = "#14304d"
 ansi = [
   "#101116",

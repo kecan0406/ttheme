@@ -8,7 +8,7 @@ ansi_source = "TokyoNight Storm"
 [colors]
 background = "#1e2233"
 foreground = "#c0caf5"
-cursor = "#02d1e0"
+cursor = "#d6d233"
 selection_background = "#364a82"
 ansi = [
   "#1d202f",

@@ -8,8 +8,8 @@ ansi_source = "Emerald Synth"
 [colors]
 background = "#0d0221"
 foreground = "#e8fff6"
-cursor = "#ff79c6"
-selection_background = "#2b1750"
+cursor = "#bcf1e5"
+selection_background = "#2e6b5f"
 ansi = [
   "#0a0118",
   "#ff2a6d",

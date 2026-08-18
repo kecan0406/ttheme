@@ -3,7 +3,7 @@ name = "mami"
 group = "Madoka Magica"
 native = "魔法少女まどか☆マギカ"
 order = 19
-ansi_source = "Selenized Black + Magica"
+ansi_source = "Selenized Black"
 
 [colors]
 background = "#23200f"
@@ -14,7 +14,7 @@ ansi = [
   "#252525",
   "#ed4a46",
   "#70b433",
-  "#f9d59d",
+  "#dbb32d",
   "#368aeb",
   "#eb6eb7",
   "#3fc5b7",
@@ -23,7 +23,7 @@ ansi = [
   "#777777",
   "#ff5e56",
   "#83c746",
-  "#f9d59d",
+  "#efc541",
   "#4f9cfe",
   "#ff81ca",
   "#56d8c9",

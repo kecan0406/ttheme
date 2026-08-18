@@ -8,13 +8,13 @@ ansi_source = "Neon + DDLC"
 background = "#0e0d12"
 foreground = "#f2f2f2"
 cursor = "#f924e7"
-selection_background = "#2e2438"
+selection_background = "#352550"
 ansi = [
   "#000000",
   "#ff3045",
   "#5ffa74",
   "#fffc7e",
-  "#545eff",
+  "#366dce",
   "#f924e7",
   "#00fffc",
   "#c7c7c7",
@@ -23,7 +23,7 @@ ansi = [
   "#ff5a5a",
   "#75ff88",
   "#fffd96",
-  "#6a71f2",
+  "#5c8ade",
   "#f15be5",
   "#88fffe",
   "#ffffff",

@@ -6,10 +6,10 @@ order = 11
 ansi_source = "Spacegray"
 
 [colors]
-background = "#1c1f26"
+background = "#221d28"
 foreground = "#d5d9e0"
 cursor = "#c9394a"
-selection_background = "#333845"
+selection_background = "#392c5b"
 ansi = [
   "#000000",
   "#b04b57",

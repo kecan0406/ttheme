@@ -3,10 +3,10 @@ name = "nightcity"
 group = "Cyberpunk: Edgerunners"
 native = "サイバーパンク エッジランナーズ"
 order = 90
-ansi_source = "Vibrant Ink + Edgerunner"
+ansi_source = "Vibrant Ink"
 
 [colors]
-background = "#0b0b0e"
+background = "#0b120e"
 foreground = "#f5f2dc"
 cursor = "#fcee0a"
 selection_background = "#403c0a"

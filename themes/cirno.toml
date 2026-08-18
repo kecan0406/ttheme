@@ -3,13 +3,13 @@ name = "cirno"
 group = "Touhou Project"
 native = "東方Project"
 order = 93
-ansi_source = "Forest Blue + Danmaku"
+ansi_source = "Forest Blue"
 
 [colors]
 background = "#051519"
 foreground = "#e4f4fa"
-cursor = "#8ed0ce"
-selection_background = "#123240"
+cursor = "#b7ddf8"
+selection_background = "#14294a"
 ansi = [
   "#333333",
   "#f8818e",

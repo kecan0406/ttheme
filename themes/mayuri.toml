@@ -7,7 +7,7 @@ ansi_source = "Iceberg Dark"
 
 [colors]
 background = "#151a28"
-foreground = "#cde3f5"
+foreground = "#c6c8d1"
 cursor = "#a8d3e8"
 selection_background = "#263a52"
 ansi = [

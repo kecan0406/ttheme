@@ -6,10 +6,10 @@ order = 42
 ansi_source = "IR Black"
 
 [colors]
-background = "#0b0b0d"
-foreground = "#eaeaef"
-cursor = "#ff2a00"
-selection_background = "#3e3630"
+background = "#100b0a"
+foreground = "#f1f1f1"
+cursor = "#c93425"
+selection_background = "#5a1915"
 ansi = [
   "#4f4f4f",
   "#fa6c60",

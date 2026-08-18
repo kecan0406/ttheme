@@ -8,7 +8,7 @@ ansi_source = "Nightfox"
 [colors]
 background = "#1a1526"
 foreground = "#cdcecf"
-cursor = "#a682e0"
+cursor = "#a782c7"
 selection_background = "#322a47"
 ansi = [
   "#393b44",

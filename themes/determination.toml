@@ -8,12 +8,12 @@ ansi_source = "CGA + Determination"
 background = "#000000"
 foreground = "#ffffff"
 cursor = "#ff0000"
-selection_background = "#4d3d00"
+selection_background = "#4d4a00"
 ansi = [
   "#000000",
   "#c81818",
   "#00aa00",
-  "#b88828",
+  "#aa5500",
   "#5555ff",
   "#aa00aa",
   "#00aaaa",

@@ -8,14 +8,14 @@ ansi_source = "Sakura + Kessoku"
 [colors]
 background = "#1d1322"
 foreground = "#f2d7ee"
-cursor = "#ff2291"
+cursor = "#feabc0"
 selection_background = "#40213e"
 ansi = [
   "#000000",
   "#d52370",
   "#41af1a",
   "#bc7053",
-  "#6964ab",
+  "#506b9a",
   "#c71fbf",
   "#939393",
   "#c4bbd4",

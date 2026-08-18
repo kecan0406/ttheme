@@ -6,10 +6,10 @@ order = 27
 ansi_source = "Sublette"
 
 [colors]
-background = "#241426"
+background = "#211a30"
 foreground = "#ccced0"
-cursor = "#e8a8d0"
-selection_background = "#3f2440"
+cursor = "#efe95a"
+selection_background = "#382e4e"
 ansi = [
   "#253045",
   "#ee5577",

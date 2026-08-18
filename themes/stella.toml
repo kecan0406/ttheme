@@ -6,10 +6,10 @@ order = 46
 ansi_source = "Scarlet Protocol + Glitch City"
 
 [colors]
-background = "#1b0d12"
+background = "#1b0c15"
 foreground = "#f6e3da"
 cursor = "#ff2e51"
-selection_background = "#4b1622"
+selection_background = "#53113a"
 ansi = [
   "#170a10",
   "#ff1a4b",

@@ -8,7 +8,7 @@ ansi_source = "Firewatch"
 [colors]
 background = "#1b1216"
 foreground = "#f7f0ee"
-cursor = "#e14b52"
+cursor = "#e30d12"
 selection_background = "#44222a"
 ansi = [
   "#585f6d",

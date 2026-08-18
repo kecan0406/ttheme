@@ -6,10 +6,10 @@ order = 86
 ansi_source = "Retro Legends"
 
 [colors]
-background = "#101210"
+background = "#141117"
 foreground = "#eef2ee"
 cursor = "#45eb45"
-selection_background = "#2c382c"
+selection_background = "#322b38"
 ansi = [
   "#262626",
   "#de5454",

@@ -8,7 +8,7 @@ ansi_source = "Kanso Ink"
 [colors]
 background = "#14171d"
 foreground = "#c5c9c7"
-cursor = "#e6c384"
+cursor = "#faafc0"
 selection_background = "#22262d"
 ansi = [
   "#14171d",

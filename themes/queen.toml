@@ -9,7 +9,7 @@ ansi_source = "Argonaut + Phantom"
 background = "#0e1019"
 foreground = "#fffaf4"
 cursor = "#ff0018"
-selection_background = "#002a3b"
+selection_background = "#384565"
 ansi = [
   "#232323",
   "#ff000f",

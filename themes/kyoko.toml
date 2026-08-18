@@ -7,25 +7,25 @@ ansi_source = "Cursor Dark + Magica"
 
 [colors]
 background = "#241014"
-foreground = "#ffffff"
+foreground = "#d4d4d4"
 cursor = "#d63a4a"
 selection_background = "#43202a"
 ansi = [
-  "#2a2a2a",
-  "#b15e6e",
-  "#a3be8c",
-  "#ebcb8b",
+  "#242424",
+  "#bd4f62",
+  "#3fa266",
+  "#d2943e",
   "#81a1c1",
   "#b48ead",
   "#88c0d0",
-  "#d8dee9",
+  "#e4e4e4",
 
-  "#505050",
-  "#d64073",
-  "#a3be8c",
-  "#ebcb8b",
-  "#81a1c1",
+  "#4a4a4a",
+  "#e14d60",
+  "#70b489",
+  "#f1b467",
+  "#87a6c4",
   "#b48ead",
   "#88c0d0",
-  "#ffffff",
+  "#e4e4e4",
 ]

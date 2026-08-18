@@ -7,9 +7,9 @@ ansi_source = "Synthwave + Glitch City"
 
 [colors]
 background = "#131020"
-foreground = "#f2f0f7"
+foreground = "#dad9c7"
 cursor = "#f6188f"
-selection_background = "#24243c"
+selection_background = "#4c1439"
 ansi = [
   "#12101c",
   "#f6188f",

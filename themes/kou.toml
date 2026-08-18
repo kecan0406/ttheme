@@ -3,18 +3,18 @@ name = "kou"
 group = "Call of the Night"
 native = "よふかしのうた"
 order = 63
-ansi_source = "Under The Sea + Night"
+ansi_source = "Under The Sea"
 
 [colors]
 background = "#011116"
 foreground = "#ffffff"
-cursor = "#e0a94a"
+cursor = "#d25d4b"
 selection_background = "#1e3a3a"
 ansi = [
   "#022026",
   "#b2302d",
   "#00a941",
-  "#e0a94a",
+  "#59819c",
   "#459a86",
   "#1298ff",
   "#5d7e19",

@@ -8,7 +8,7 @@ ansi_source = "Oxocarbon"
 [colors]
 background = "#26161e"
 foreground = "#f2f4f8"
-cursor = "#dda0bb"
+cursor = "#f9a6b2"
 selection_background = "#402836"
 ansi = [
   "#161616",

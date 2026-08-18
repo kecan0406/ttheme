@@ -7,7 +7,7 @@ ansi_source = "0x96f"
 [colors]
 background = "#241b1d"
 foreground = "#fdf3ec"
-cursor = "#ff666d"
+cursor = "#f0a797"
 selection_background = "#472a2e"
 ansi = [
   "#262427",

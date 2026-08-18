@@ -9,7 +9,7 @@ ansi_source = "Cyberpunk + Glitch City"
 background = "#1c0f14"
 foreground = "#ffe9ee"
 cursor = "#ff4d6d"
-selection_background = "#57202f"
+selection_background = "#5c1a3e"
 ansi = [
   "#241016",
   "#ff7092",

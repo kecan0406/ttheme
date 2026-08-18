@@ -3,7 +3,7 @@ name = "homura"
 group = "Madoka Magica"
 native = "魔法少女まどか☆マギカ"
 order = 16
-ansi_source = "Monokai Pro Machine + Magica"
+ansi_source = "Monokai Pro Machine"
 
 [colors]
 background = "#1b1428"
@@ -11,7 +11,7 @@ foreground = "#f2fffc"
 cursor = "#8b5cf6"
 selection_background = "#322447"
 ansi = [
-  "#2d282f",
+  "#273136",
   "#ff6d7e",
   "#a2e57b",
   "#ffed72",
@@ -20,7 +20,7 @@ ansi = [
   "#7cd5f1",
   "#f2fffc",
 
-  "#6a6767",
+  "#6b7678",
   "#ff6d7e",
   "#a2e57b",
   "#ffed72",

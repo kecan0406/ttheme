@@ -8,7 +8,7 @@ ansi_source = "Espresso"
 [colors]
 background = "#1c1410"
 foreground = "#f5e8d7"
-cursor = "#ffc66d"
+cursor = "#e4c767"
 selection_background = "#4a3826"
 ansi = [
   "#353535",
