@@ -1,9 +1,9 @@
 [meta]
 name = "miyuki"
 group = "Lucky☆Star"
-native = "らき☆すた"
 order = 28
 ansi_source = "Oxocarbon"
+signature = ["cursor", "ansi4", "ansi2"]
 
 [colors]
 background = "#26161e"

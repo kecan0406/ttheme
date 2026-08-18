@@ -1,9 +1,9 @@
 [meta]
 name = "youmu"
 group = "Touhou Project"
-native = "東方Project"
 order = 94
 ansi_source = "Everforest Dark Med"
+signature = ["cursor", "foreground", "ansi6"]
 
 [colors]
 background = "#232a2e"

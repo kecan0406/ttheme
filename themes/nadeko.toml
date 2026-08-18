@@ -1,9 +1,9 @@
 [meta]
 name = "nadeko"
 group = "Monogatari"
-native = "〈物語〉シリーズ"
 order = 36
 ansi_source = "Tinacious Design Dark"
+signature = ["cursor", "ansi4", "ansi2"]
 
 [colors]
 background = "#231825"

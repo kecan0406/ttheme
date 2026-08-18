@@ -1,9 +1,9 @@
 [meta]
 name = "flandre"
 group = "Touhou Project"
-native = "東方Project"
 order = 96
 ansi_source = "Molokai"
+signature = ["cursor", "ansi11", "ansi12"]
 
 [colors]
 background = "#150a0d"

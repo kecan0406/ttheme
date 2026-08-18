@@ -3,6 +3,7 @@ name = "sans"
 group = "Undertale"
 order = 57
 ansi_source = "Galaxy"
+signature = ["cursor", "foreground", "ansi11"]
 
 [colors]
 background = "#10151d"

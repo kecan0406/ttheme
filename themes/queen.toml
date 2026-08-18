@@ -1,9 +1,9 @@
 [meta]
 name = "queen"
 group = "Persona 5"
-native = "ペルソナ5"
 order = 53
 ansi_source = "Argonaut + Phantom"
+signature = ["cursor", "foreground", "ansi4"]
 
 [colors]
 background = "#0e1019"

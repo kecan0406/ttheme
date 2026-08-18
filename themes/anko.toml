@@ -1,9 +1,9 @@
 [meta]
 name = "anko"
 group = "Call of the Night"
-native = "よふかしのうた"
 order = 65
 ansi_source = "Arthur"
+signature = ["cursor", "ansi4", "ansi2"]
 
 [colors]
 background = "#1e1813"

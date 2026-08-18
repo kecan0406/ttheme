@@ -1,0 +1,108 @@
+[[group]]
+name = "Default"
+lead = "neutral"
+
+[[group]]
+name = "Vocaloid"
+native = "ボーカロイド"
+lead = "miku"
+
+[[group]]
+name = "Evangelion"
+native = "エヴァンゲリオン"
+lead = "eva01"
+
+[[group]]
+name = "Madoka Magica"
+native = "魔法少女まどか☆マギカ"
+lead = "madoka"
+
+[[group]]
+name = "Steins;Gate"
+native = "シュタインズ・ゲート"
+lead = "kurisu"
+
+[[group]]
+name = "Lucky☆Star"
+native = "らき☆すた"
+lead = "konata"
+
+[[group]]
+name = "Bocchi the Rock!"
+native = "ぼっち・ざ・ろっく!"
+lead = "bocchi"
+
+[[group]]
+name = "Monogatari"
+native = "〈物語〉シリーズ"
+lead = "hitagi"
+
+[[group]]
+name = "Sailor Moon"
+native = "美少女戦士セーラームーン"
+lead = "moon"
+
+[[group]]
+name = "Lain"
+native = "serial experiments lain"
+lead = "lain"
+
+[[group]]
+name = "VA-11 Hall-A"
+native = "Cyberpunk Bartender Action"
+lead = "jill"
+
+[[group]]
+name = "Persona 5"
+native = "ペルソナ5"
+lead = "joker"
+
+[[group]]
+name = "Undertale"
+native = "アンダーテイル"
+lead = "determination"
+
+[[group]]
+name = "Call of the Night"
+native = "よふかしのうた"
+lead = "nazuna"
+
+[[group]]
+name = "Higurashi"
+native = "ひぐらしのなく頃に"
+lead = "hinamizawa"
+
+[[group]]
+name = "Doki Doki Literature Club"
+native = "ドキドキ文芸部!"
+lead = "monika"
+
+[[group]]
+name = "Umineko"
+native = "うみねこのなく頃に"
+lead = "beatrice"
+
+[[group]]
+name = "K-On!"
+native = "けいおん!"
+lead = "yui"
+
+[[group]]
+name = "Cyberpunk: Edgerunners"
+native = "サイバーパンク エッジランナーズ"
+lead = "lucy"
+
+[[group]]
+name = "Touhou Project"
+native = "東方Project"
+lead = "reimu"
+
+[[group]]
+name = "Chuunibyou"
+native = "中二病でも恋がしたい!"
+lead = "rikka"
+
+[[group]]
+name = "Eternal Return"
+native = "이터널 리턴"
+lead = "bihyung"

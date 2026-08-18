@@ -6,12 +6,14 @@ export interface PaletteEntry {
   name: string
   group: string
   native?: string
+  lead?: boolean
   ansiSource: string
   default?: boolean
   background: string
   foreground: string
   cursor: string
   selection: string
+  signature: string[]
   ansi: string[]
 }
 
@@ -27,12 +29,14 @@ export function manifest(themes: Theme[]): Manifest {
       name: t.name,
       group: t.group,
       ...(t.native ? { native: t.native } : {}),
+      ...(t.lead ? { lead: true } : {}),
       ansiSource: t.ansiSource,
       ...(t.role === 'default' ? { default: true } : {}),
       background: t.background,
       foreground: t.foreground,
       cursor: t.cursor,
       selection: t.selectionBackground,
+      signature: t.signature,
       ansi: t.ansi,
     })),
   }

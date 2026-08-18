@@ -1,9 +1,9 @@
 [meta]
 name = "valhalla"
 group = "VA-11 Hall-A"
-native = "Cyberpunk Bartender Action"
 order = 48
 ansi_source = "Synthwave + Glitch City"
+signature = ["cursor", "ansi6", "ansi3"]
 
 [colors]
 background = "#131020"

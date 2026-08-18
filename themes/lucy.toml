@@ -1,9 +1,9 @@
 [meta]
 name = "lucy"
 group = "Cyberpunk: Edgerunners"
-native = "サイバーパンク エッジランナーズ"
 order = 88
 ansi_source = "Mellow"
+signature = ["cursor", "foreground", "ansi12"]
 
 [colors]
 background = "#15141b"

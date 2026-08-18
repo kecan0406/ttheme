@@ -1,9 +1,9 @@
 [meta]
 name = "joker"
 group = "Persona 5"
-native = "ペルソナ5"
 order = 49
 ansi_source = "Red Alert + Phantom"
+signature = ["cursor", "foreground", "ansi9"]
 
 [colors]
 background = "#131013"

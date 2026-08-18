@@ -3,6 +3,7 @@ name = "glitch"
 group = "Doki Doki Literature Club"
 order = 76
 ansi_source = "Neon + DDLC"
+signature = ["cursor", "ansi10", "ansi12"]
 
 [colors]
 background = "#0e0d12"

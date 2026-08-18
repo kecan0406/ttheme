@@ -1,9 +1,9 @@
 [meta]
 name = "mercury"
 group = "Sailor Moon"
-native = "美少女戦士セーラームーン"
 order = 38
 ansi_source = "Glacier + Senshi"
+signature = ["cursor", "ansi12", "ansi2"]
 
 [colors]
 background = "#0d1420"

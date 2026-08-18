@@ -1,9 +1,9 @@
 [meta]
 name = "beatrice"
 group = "Umineko"
-native = "うみねこのなく頃に"
 order = 78
 ansi_source = "Batman + Truth"
+signature = ["cursor", "foreground", "ansi9"]
 
 [colors]
 background = "#16130a"

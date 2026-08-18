@@ -1,9 +1,9 @@
 [meta]
 name = "shinka"
 group = "Chuunibyou"
-native = "中二病でも恋がしたい!"
 order = 99
 ansi_source = "Everforest Dark Hard + Delusion"
+signature = ["cursor", "ansi11", "ansi12"]
 
 [colors]
 background = "#1e2326"

@@ -1,9 +1,9 @@
 [meta]
 name = "rena"
 group = "Higurashi"
-native = "ひぐらしのなく頃に"
 order = 67
 ansi_source = "Japanesque + Watanagashi"
+signature = ["cursor", "foreground", "ansi1"]
 
 [colors]
 background = "#201512"

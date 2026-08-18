@@ -1,9 +1,9 @@
 [meta]
 name = "kita"
 group = "Bocchi the Rock!"
-native = "ぼっち・ざ・ろっく!"
 order = 32
 ansi_source = "Wild Cherry + Kessoku"
+signature = ["cursor", "ansi2", "ansi3"]
 
 [colors]
 background = "#241019"

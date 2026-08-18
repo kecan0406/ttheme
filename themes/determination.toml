@@ -3,6 +3,7 @@ name = "determination"
 group = "Undertale"
 order = 61
 ansi_source = "CGA + Determination"
+signature = ["cursor", "ansi11", "ansi4"]
 
 [colors]
 background = "#000000"

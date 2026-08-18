@@ -1,9 +1,9 @@
 [meta]
 name = "marisa"
 group = "Touhou Project"
-native = "東方Project"
 order = 92
 ansi_source = "Apple Classic"
+signature = ["cursor", "foreground", "ansi1"]
 
 [colors]
 background = "#120e08"

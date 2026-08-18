@@ -1,9 +1,9 @@
 [meta]
 name = "kyubey"
 group = "Madoka Magica"
-native = "魔法少女まどか☆マギカ"
 order = 21
 ansi_source = "Rose Pine Dawn + Magica"
+signature = ["cursor", "foreground", "ansi3"]
 
 [colors]
 background = "#faf4ed"

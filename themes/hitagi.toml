@@ -1,9 +1,9 @@
 [meta]
 name = "hitagi"
 group = "Monogatari"
-native = "〈物語〉シリーズ"
 order = 33
 ansi_source = "Duskfox"
+signature = ["cursor", "ansi9", "ansi13"]
 
 [colors]
 background = "#232136"

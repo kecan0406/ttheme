@@ -1,9 +1,9 @@
 [meta]
 name = "satoko"
 group = "Higurashi"
-native = "ひぐらしのなく頃に"
 order = 70
 ansi_source = "Espresso"
+signature = ["cursor", "ansi9", "ansi12"]
 
 [colors]
 background = "#1c1410"

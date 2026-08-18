@@ -1,9 +1,9 @@
 [meta]
 name = "jill"
 group = "VA-11 Hall-A"
-native = "Cyberpunk Bartender Action"
 order = 43
 ansi_source = "TokyoNight"
+signature = ["cursor", "ansi1", "ansi5"]
 
 [colors]
 background = "#150f1e"

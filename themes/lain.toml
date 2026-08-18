@@ -1,9 +1,9 @@
 [meta]
 name = "lain"
 group = "Lain"
-native = "serial experiments lain"
 order = 42
 ansi_source = "IR Black"
+signature = ["cursor", "ansi2", "ansi12"]
 
 [colors]
 background = "#100b0a"

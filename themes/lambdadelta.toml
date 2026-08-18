@@ -1,9 +1,9 @@
 [meta]
 name = "lambdadelta"
 group = "Umineko"
-native = "うみねこのなく頃に"
 order = 80
 ansi_source = "Neon Purple + Truth"
+signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]
 background = "#291b47"

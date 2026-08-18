@@ -1,9 +1,9 @@
 [meta]
 name = "mars"
 group = "Sailor Moon"
-native = "美少女戦士セーラームーン"
 order = 39
 ansi_source = "Red Planet + Senshi"
+signature = ["cursor", "ansi9", "foreground"]
 
 [colors]
 background = "#241211"

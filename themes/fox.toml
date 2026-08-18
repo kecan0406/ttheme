@@ -1,9 +1,9 @@
 [meta]
 name = "fox"
 group = "Persona 5"
-native = "ペルソナ5"
 order = 52
 ansi_source = "Nord"
+signature = ["cursor", "foreground", "ansi1"]
 
 [colors]
 background = "#232831"

@@ -1,9 +1,9 @@
 [meta]
 name = "yofukashi"
 group = "Call of the Night"
-native = "よふかしのうた"
 order = 66
 ansi_source = "Bright Lights"
+signature = ["cursor", "ansi5", "ansi4"]
 
 [colors]
 background = "#191c46"

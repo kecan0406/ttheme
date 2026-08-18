@@ -1,9 +1,9 @@
 [meta]
 name = "dekomori"
 group = "Chuunibyou"
-native = "中二病でも恋がしたい!"
 order = 100
 ansi_source = "Cobalt2 + Delusion"
+signature = ["cursor", "ansi12", "ansi5"]
 
 [colors]
 background = "#132738"

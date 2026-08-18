@@ -1,9 +1,9 @@
 [meta]
 name = "battler"
 group = "Umineko"
-native = "うみねこのなく頃に"
 order = 77
 ansi_source = "Deep"
+signature = ["cursor", "ansi4", "ansi11"]
 
 [colors]
 background = "#10090b"

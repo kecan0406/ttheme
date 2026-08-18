@@ -1,9 +1,9 @@
 [meta]
 name = "mayuri"
 group = "Steins;Gate"
-native = "シュタインズ・ゲート"
 order = 23
 ansi_source = "Iceberg Dark"
+signature = ["cursor", "foreground", "ansi13"]
 
 [colors]
 background = "#151a28"

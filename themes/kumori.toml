@@ -3,6 +3,7 @@ name = "kumori"
 group = "Vocaloid"
 order = 3
 ansi_source = "MWidzi/inabashell"
+signature = ["cursor", "ansi12", "ansi14"]
 
 [colors]
 background = "#1e1e20"

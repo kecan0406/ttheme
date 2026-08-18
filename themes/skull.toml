@@ -1,9 +1,9 @@
 [meta]
 name = "skull"
 group = "Persona 5"
-native = "ペルソナ5"
 order = 50
 ansi_source = "Desert"
+signature = ["cursor", "ansi1", "foreground"]
 
 [colors]
 background = "#1b1610"

@@ -1,9 +1,9 @@
 [meta]
 name = "rikka"
 group = "Chuunibyou"
-native = "中二病でも恋がしたい!"
 order = 97
 ansi_source = "Challenger Deep + Delusion"
+signature = ["cursor", "ansi12", "ansi1"]
 
 [colors]
 background = "#1e1c31"

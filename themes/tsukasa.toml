@@ -1,9 +1,9 @@
 [meta]
 name = "tsukasa"
 group = "Lucky☆Star"
-native = "らき☆すた"
 order = 27
 ansi_source = "Sublette"
+signature = ["cursor", "ansi13", "ansi12"]
 
 [colors]
 background = "#211a30"

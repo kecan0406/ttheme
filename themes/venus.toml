@@ -1,9 +1,9 @@
 [meta]
 name = "venus"
 group = "Sailor Moon"
-native = "美少女戦士セーラームーン"
 order = 41
 ansi_source = "Earthsong"
+signature = ["cursor", "ansi3", "ansi12"]
 
 [colors]
 background = "#251c12"

@@ -1,9 +1,9 @@
 [meta]
 name = "azusa"
 group = "K-On!"
-native = "けいおん!"
 order = 86
 ansi_source = "Retro Legends"
+signature = ["cursor", "ansi9", "foreground"]
 
 [colors]
 background = "#141117"

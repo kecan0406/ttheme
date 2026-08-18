@@ -1,9 +1,9 @@
 [meta]
 name = "bihyung"
 group = "Eternal Return"
-native = "이터널 리턴"
 order = 102
 ansi_source = "Pierre Dark + Lumia"
+signature = ["cursor", "ansi2", "ansi13"]
 
 [colors]
 background = "#050807"

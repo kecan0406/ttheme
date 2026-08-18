@@ -1,9 +1,9 @@
 [meta]
 name = "rika"
 group = "Higurashi"
-native = "ひぐらしのなく頃に"
 order = 69
 ansi_source = "Nocturnal Winter"
+signature = ["cursor", "ansi13", "foreground"]
 
 [colors]
 background = "#0d0d17"

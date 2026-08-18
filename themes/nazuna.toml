@@ -1,9 +1,9 @@
 [meta]
 name = "nazuna"
 group = "Call of the Night"
-native = "よふかしのうた"
 order = 62
 ansi_source = "Purplepeter"
+signature = ["cursor", "ansi1", "ansi13"]
 
 [colors]
 background = "#150f26"

@@ -3,6 +3,7 @@ name = "undyne"
 group = "Undertale"
 order = 59
 ansi_source = "Sea Shells + Determination"
+signature = ["cursor", "ansi2", "ansi3"]
 
 [colors]
 background = "#09141b"

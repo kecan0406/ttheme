@@ -1,9 +1,9 @@
 [meta]
 name = "cirno"
 group = "Touhou Project"
-native = "東方Project"
 order = 93
 ansi_source = "Forest Blue"
+signature = ["cursor", "ansi6", "ansi5"]
 
 [colors]
 background = "#051519"

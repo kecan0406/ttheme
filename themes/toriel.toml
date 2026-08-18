@@ -3,6 +3,7 @@ name = "toriel"
 group = "Undertale"
 order = 56
 ansi_source = "Shades Of Purple + Determination"
+signature = ["cursor", "ansi4", "foreground"]
 
 [colors]
 background = "#1e1d40"

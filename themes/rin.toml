@@ -3,6 +3,7 @@ name = "rin"
 group = "Vocaloid"
 order = 4
 ansi_source = "Citruszest"
+signature = ["cursor", "ansi4", "ansi1"]
 
 [colors]
 background = "#1c1708"

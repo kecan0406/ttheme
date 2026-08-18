@@ -1,9 +1,9 @@
 [meta]
 name = "kumin"
 group = "Chuunibyou"
-native = "中二病でも恋がしたい!"
 order = 101
 ansi_source = "Rose Pine + Delusion"
+signature = ["cursor", "ansi4", "ansi1"]
 
 [colors]
 background = "#191724"

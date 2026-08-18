@@ -1,9 +1,9 @@
 [meta]
 name = "shinobu"
 group = "Monogatari"
-native = "〈物語〉シリーズ"
 order = 34
 ansi_source = "Mona Lisa + Oddity"
+signature = ["cursor", "ansi9", "ansi13"]
 
 [colors]
 background = "#170f08"

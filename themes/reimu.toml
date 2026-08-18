@@ -1,9 +1,9 @@
 [meta]
 name = "reimu"
 group = "Touhou Project"
-native = "東方Project"
 order = 91
 ansi_source = "Firewatch"
+signature = ["cursor", "foreground", "ansi3"]
 
 [colors]
 background = "#1b1216"

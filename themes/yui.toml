@@ -1,9 +1,9 @@
 [meta]
 name = "yui"
 group = "K-On!"
-native = "けいおん!"
 order = 82
 ansi_source = "Espresso Libre + HTT"
+signature = ["cursor", "ansi11", "ansi13"]
 
 [colors]
 background = "#2a211c"

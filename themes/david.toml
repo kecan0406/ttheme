@@ -1,9 +1,9 @@
 [meta]
 name = "david"
 group = "Cyberpunk: Edgerunners"
-native = "サイバーパンク エッジランナーズ"
 order = 87
 ansi_source = "Cobalt2 + Edgerunner"
+signature = ["cursor", "ansi12", "ansi1"]
 
 [colors]
 background = "#132738"

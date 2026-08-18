@@ -3,6 +3,7 @@ name = "papyrus"
 group = "Undertale"
 order = 58
 ansi_source = "Ubuntu + Determination"
+signature = ["cursor", "foreground", "ansi4"]
 
 [colors]
 background = "#22091b"

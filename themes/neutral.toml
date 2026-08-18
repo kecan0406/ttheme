@@ -4,6 +4,7 @@ group = "Default"
 order = 1
 role = "default"
 ansi_source = "Nvim Dark"
+signature = ["cursor", "ansi4", "ansi5"]
 
 [colors]
 background = "#17171f"

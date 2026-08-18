@@ -1,9 +1,9 @@
 [meta]
 name = "misato"
 group = "Evangelion"
-native = "エヴァンゲリオン"
 order = 12
 ansi_source = "Purple Rain"
+signature = ["cursor", "ansi13", "foreground"]
 
 [colors]
 background = "#21084a"

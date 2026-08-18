@@ -1,9 +1,9 @@
 [meta]
 name = "tsubasa"
 group = "Monogatari"
-native = "〈物語〉シリーズ"
 order = 35
 ansi_source = "Kanso Ink"
+signature = ["cursor", "foreground", "ansi12"]
 
 [colors]
 background = "#14171d"

@@ -1,9 +1,9 @@
 [meta]
 name = "yuuta"
 group = "Chuunibyou"
-native = "中二病でも恋がしたい!"
 order = 98
 ansi_source = "Srcery + Delusion"
+signature = ["cursor", "ansi11", "ansi6"]
 
 [colors]
 background = "#1d1512"

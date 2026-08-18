@@ -1,9 +1,9 @@
 [meta]
 name = "kaworu"
 group = "Evangelion"
-native = "エヴァンゲリオン"
 order = 11
 ansi_source = "Spacegray"
+signature = ["cursor", "foreground", "ansi1"]
 
 [colors]
 background = "#221d28"

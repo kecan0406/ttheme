@@ -1,9 +1,9 @@
 [meta]
 name = "stella"
 group = "VA-11 Hall-A"
-native = "Cyberpunk Bartender Action"
 order = 46
 ansi_source = "Scarlet Protocol + Glitch City"
+signature = ["cursor", "ansi2", "ansi13"]
 
 [colors]
 background = "#1b0c15"

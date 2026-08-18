@@ -1,9 +1,9 @@
 [meta]
 name = "panther"
 group = "Persona 5"
-native = "ペルソナ5"
 order = 51
 ansi_source = "Warm Neon + Phantom"
+signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]
 background = "#1a0e10"

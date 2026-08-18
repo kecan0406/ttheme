@@ -3,6 +3,7 @@ name = "len"
 group = "Vocaloid"
 order = 5
 ansi_source = "Srcery"
+signature = ["cursor", "ansi6", "ansi9"]
 
 [colors]
 background = "#201a0e"

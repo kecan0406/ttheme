@@ -3,6 +3,7 @@ name = "sayori"
 group = "Doki Doki Literature Club"
 order = 72
 ansi_source = "0x96f"
+signature = ["cursor", "ansi9", "ansi4"]
 
 [colors]
 background = "#241b1d"

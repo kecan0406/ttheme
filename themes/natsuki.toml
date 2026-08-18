@@ -3,6 +3,7 @@ name = "natsuki"
 group = "Doki Doki Literature Club"
 order = 73
 ansi_source = "Fairyfloss"
+signature = ["cursor", "ansi9", "ansi3"]
 
 [colors]
 background = "#221726"

@@ -1,9 +1,9 @@
 [meta]
 name = "homura"
 group = "Madoka Magica"
-native = "魔法少女まどか☆マギカ"
 order = 16
 ansi_source = "Monokai Pro Machine"
+signature = ["cursor", "foreground", "ansi5"]
 
 [colors]
 background = "#1b1428"

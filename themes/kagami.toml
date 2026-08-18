@@ -1,9 +1,9 @@
 [meta]
 name = "kagami"
 group = "Lucky☆Star"
-native = "らき☆すた"
 order = 26
 ansi_source = "Nightfox"
+signature = ["cursor", "ansi4", "ansi9"]
 
 [colors]
 background = "#1a1526"

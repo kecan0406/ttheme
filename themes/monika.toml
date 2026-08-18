@@ -3,6 +3,7 @@ name = "monika"
 group = "Doki Doki Literature Club"
 order = 75
 ansi_source = "Hipster Green + DDLC"
+signature = ["cursor", "foreground", "ansi3"]
 
 [colors]
 background = "#100b05"

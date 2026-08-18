@@ -1,9 +1,9 @@
 [meta]
 name = "mion"
 group = "Higurashi"
-native = "ひぐらしのなく頃に"
 order = 68
 ansi_source = "Patina Moss"
+signature = ["cursor", "ansi1", "ansi3"]
 
 [colors]
 background = "#20231f"

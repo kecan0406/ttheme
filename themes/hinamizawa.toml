@@ -1,9 +1,9 @@
 [meta]
 name = "hinamizawa"
 group = "Higurashi"
-native = "ひぐらしのなく頃に"
 order = 71
 ansi_source = "Red Sands"
+signature = ["cursor", "ansi2", "ansi3"]
 
 [colors]
 background = "#1c0808"

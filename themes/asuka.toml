@@ -1,9 +1,9 @@
 [meta]
 name = "asuka"
 group = "Evangelion"
-native = "エヴァンゲリオン"
 order = 9
 ansi_source = "GitLab Dark"
+signature = ["cursor", "ansi11", "ansi4"]
 
 [colors]
 background = "#241412"

@@ -1,9 +1,9 @@
 [meta]
 name = "nightcity"
 group = "Cyberpunk: Edgerunners"
-native = "サイバーパンク エッジランナーズ"
 order = 90
 ansi_source = "Vibrant Ink"
+signature = ["cursor", "ansi13", "ansi14"]
 
 [colors]
 background = "#0b120e"

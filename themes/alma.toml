@@ -1,9 +1,9 @@
 [meta]
 name = "alma"
 group = "VA-11 Hall-A"
-native = "Cyberpunk Bartender Action"
 order = 45
 ansi_source = "Belafonte Night + Glitch City"
+signature = ["cursor", "ansi12", "ansi9"]
 
 [colors]
 background = "#20111b"

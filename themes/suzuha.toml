@@ -1,9 +1,9 @@
 [meta]
 name = "suzuha"
 group = "Steins;Gate"
-native = "シュタインズ・ゲート"
 order = 24
 ansi_source = "Gruvbox Dark + Lab"
+signature = ["cursor", "ansi9", "ansi4"]
 
 [colors]
 background = "#1e1e14"

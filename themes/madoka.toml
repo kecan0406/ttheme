@@ -1,9 +1,9 @@
 [meta]
 name = "madoka"
 group = "Madoka Magica"
-native = "魔法少女まどか☆マギカ"
 order = 15
 ansi_source = "Elegant + Magica"
+signature = ["cursor", "ansi1", "ansi3"]
 
 [colors]
 background = "#26141d"

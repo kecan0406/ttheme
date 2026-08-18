@@ -19,6 +19,8 @@ All dev commands are mise tasks. package.json deliberately has **no scripts** �
 - First-party code carries **no comments** — a deliberate choice; do not add any. `ghostty/shaders/*.glsl` is third-party (MIT) and keeps its headers.
 - No backwards-compat shims, deprecated aliases, or legacy fallbacks.
 - `themes/*.toml` is the single source of truth; `dist/` is generated, never committed. `[font]` and `[ghostty]` sections inherit from `themes/_defaults.toml`.
+- Series metadata lives once, in `themes/_groups.toml`: every `meta.group` needs a `[[group]]` table there, which owns the `native` title and names the `lead` palette whose signature colors the group. A theme file never repeats them.
+- `meta.signature` names three palette slots (`cursor`, `foreground`, `background`, `selection`, `ansi0`-`ansi15`) — the colors that identify the character on a card. They must resolve to three different colors.
 - `dist/manifest.json` is the data contract for everything outside the build: `init` and `site/` read it instead of re-parsing `themes/` (site tasks depend on `build`). Every dist artifact goes through an `Emitter` in `src/emit/` — terminals emit per theme, `shell`/`meta` emit shared files.
 - Every palette must pass the contrast gate (src/contrast.ts). Opting out needs `[contrast] waive = [...]` **plus** a `reason` — a waiver without a reason fails the test suite.
 

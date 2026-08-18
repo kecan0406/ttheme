@@ -1,9 +1,9 @@
 [meta]
 name = "jupiter"
 group = "Sailor Moon"
-native = "美少女戦士セーラームーン"
 order = 40
 ansi_source = "Everforest Dark Hard + Senshi"
+signature = ["cursor", "ansi1", "ansi11"]
 
 [colors]
 background = "#1c231d"

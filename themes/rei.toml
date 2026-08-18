@@ -1,9 +1,9 @@
 [meta]
 name = "rei"
 group = "Evangelion"
-native = "エヴァンゲリオン"
 order = 10
 ansi_source = "Idle Toes"
+signature = ["cursor", "ansi9", "foreground"]
 
 [colors]
 background = "#131c28"

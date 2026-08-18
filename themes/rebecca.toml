@@ -1,9 +1,9 @@
 [meta]
 name = "rebecca"
 group = "Cyberpunk: Edgerunners"
-native = "サイバーパンク エッジランナーズ"
 order = 89
 ansi_source = "Emerald Synth"
+signature = ["ansi1", "ansi2", "cursor"]
 
 [colors]
 background = "#0d0221"

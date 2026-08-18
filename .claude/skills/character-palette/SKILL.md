@@ -11,7 +11,8 @@ Every color in a character theme must be traceable: anchors are measured from of
 
 - Web-search each character's appearance (hair, eyes, signature item, chuuni/persona colors) so you know what to look for before sampling.
 - Theme names follow the project convention (given names); use the common alias instead when the given name collides with a character from another series already in `themes/`.
-- `group` = series English name, `native` = official native title, `order` = next unused integers (`meta.order` must stay unique across all themes).
+- `group` = series English name, `order` = next unused integers (`meta.order` must stay unique across all themes).
+- A new series needs a `[[group]]` table in `themes/_groups.toml`: `native` = official native title, `lead` = the palette whose signature color stands for the whole series on the site's band headers and filter pills. Pick the lead for color, not seniority — Undertale leads with `determination`, Evangelion with `eva01` — and check it against the other groups' lead colors so two series do not land on the same hue.
 
 ## 2. Measured anchors
 
@@ -34,6 +35,7 @@ Every color in a character theme must be traceable: anchors are measured from of
 
 - Start from the base scheme's 16 slots; substitute anchors into background / cursor / selection and at most 1-2 accent slots.
 - ANSI 1-6 keep their functions (red=error, green=ok, yellow=warn, blue/cyan legible). Character identity lives in bg / cursor / selection plus the substituted slots — do not spread it across all 16.
+- Record where the identity landed: `meta.signature` names the three slots the site renders as the card's identity block — usually `cursor` plus the two substituted slots. Order them the way the character reads (hair, then eyes or costume); the first one also colors the group's band header when the theme is its lead. The build rejects three slots that resolve to fewer than three distinct colors.
 
 ## 5. Gate loop
 

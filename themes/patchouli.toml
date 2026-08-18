@@ -1,9 +1,9 @@
 [meta]
 name = "patchouli"
 group = "Touhou Project"
-native = "東方Project"
 order = 95
 ansi_source = "SeedFlip Ultraviolet"
+signature = ["cursor", "ansi5", "ansi3"]
 
 [colors]
 background = "#0b0014"

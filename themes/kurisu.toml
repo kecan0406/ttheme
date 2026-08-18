@@ -1,9 +1,9 @@
 [meta]
 name = "kurisu"
 group = "Steins;Gate"
-native = "シュタインズ・ゲート"
 order = 22
 ansi_source = "Duotone Dark"
+signature = ["cursor", "ansi1", "ansi6"]
 
 [colors]
 background = "#241a11"

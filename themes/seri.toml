@@ -1,9 +1,9 @@
 [meta]
 name = "seri"
 group = "Call of the Night"
-native = "よふかしのうた"
 order = 64
 ansi_source = "Birds Of Paradise"
+signature = ["cursor", "ansi12", "ansi9"]
 
 [colors]
 background = "#2a1f1d"

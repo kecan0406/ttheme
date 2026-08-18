@@ -4,6 +4,7 @@ import { type CSSProperties, useMemo } from 'react'
 import type { Theme } from '@/lib/themes'
 
 const CORE_SLOTS = ['bg', 'fg', 'cur', 'sel']
+const SIG_SLOTS = ['signature', 'support', 'accent']
 const ANSI_SLOTS = Array.from({ length: 16 }, (_, index) => `a${index}`)
 
 const coreOf = (theme: Theme) => [theme.background, theme.foreground, theme.cursor, theme.selectionBackground]
@@ -26,7 +27,7 @@ function Chip({ theme }: { theme: Theme }) {
   )
 }
 
-const rowGrid = 'grid grid-cols-[150px_122px_1fr_240px] items-center gap-3.5'
+const rowGrid = 'grid grid-cols-[150px_78px_138px_1fr_240px] items-center gap-3.5'
 
 function BoardRow({ theme, active, onWear }: { theme: Theme; active: boolean; onWear: () => void }) {
   return (
@@ -42,6 +43,11 @@ function BoardRow({ theme, active, onWear }: { theme: Theme; active: boolean; on
         <span className="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-muted">
           {theme.ansiSource}
         </span>
+      </span>
+      <span className="flex gap-[3px]">
+        {SIG_SLOTS.map((slot, index) => (
+          <Swatch key={slot} hex={theme.signature[index] ?? theme.cursor} className="w-[24px]" />
+        ))}
       </span>
       <span className="flex gap-[3px]">
         {CORE_SLOTS.map((slot, index) => (
@@ -78,27 +84,35 @@ export function PaletteBoard({
       if (bucket) bucket.push(theme)
       else byGroup.set(theme.group, [theme])
     }
-    return [...byGroup.entries()]
+    return [...byGroup.entries()].map(([group, themesInGroup]) => ({
+      group,
+      native: themesInGroup[0]?.native ?? null,
+      accent: (themesInGroup.find((theme) => theme.lead) ?? themesInGroup[0])?.signature[0] as string,
+      themes: themesInGroup,
+    }))
   }, [list])
 
   return (
     <div>
       <div className="overflow-x-auto">
-        <div className="min-w-[900px]">
+        <div className="min-w-[996px]">
           <div className={`${rowGrid} px-2 pt-4 pb-1.5 text-[10px] uppercase tracking-[0.07em] text-muted`}>
             <span>theme</span>
+            <span>signature</span>
             <span>bg · fg · cur · sel</span>
             <span>ansi 0–15</span>
             <span>preview</span>
           </div>
-          {sections.map(([group, themesInGroup]) => (
-            <div key={group}>
+          {sections.map((section) => (
+            <div key={section.group}>
               <div className="flex items-baseline gap-2.5 pt-3 pb-2 text-xs font-bold">
-                {group}
-                <span className="text-[11px] font-normal text-muted tabular-nums">{themesInGroup.length}</span>
+                <span className="size-[9px] self-center rounded-[2px]" style={{ background: section.accent }} />
+                {section.group}
+                {section.native ? <span className="text-[11px] font-normal text-muted">{section.native}</span> : null}
+                <span className="text-[11px] font-normal text-muted tabular-nums">{section.themes.length}</span>
               </div>
               <div className="flex flex-col gap-1">
-                {themesInGroup.map((theme) => (
+                {section.themes.map((theme) => (
                   <BoardRow key={theme.name} theme={theme} active={theme === current} onWear={() => onWear(theme)} />
                 ))}
               </div>

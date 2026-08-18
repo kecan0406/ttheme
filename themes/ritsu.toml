@@ -1,9 +1,9 @@
 [meta]
 name = "ritsu"
 group = "K-On!"
-native = "けいおん!"
 order = 83
 ansi_source = "Acid Lime"
+signature = ["cursor", "ansi1", "ansi6"]
 
 [colors]
 background = "#15120a"

@@ -1,9 +1,9 @@
 [meta]
 name = "oracle"
 group = "Persona 5"
-native = "ペルソナ5"
 order = 54
 ansi_source = "Monokai Remastered"
+signature = ["cursor", "ansi2", "ansi4"]
 
 [colors]
 background = "#0c0c0c"

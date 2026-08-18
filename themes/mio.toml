@@ -1,9 +1,9 @@
 [meta]
 name = "mio"
 group = "K-On!"
-native = "けいおん!"
 order = 84
 ansi_source = "Ardoise + HTT"
+signature = ["cursor", "ansi4", "foreground"]
 
 [colors]
 background = "#191b20"

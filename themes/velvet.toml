@@ -1,9 +1,9 @@
 [meta]
 name = "velvet"
 group = "Persona 5"
-native = "ペルソナ5"
 order = 55
 ansi_source = "Tomorrow Night Blue"
+signature = ["cursor", "ansi4", "ansi5"]
 
 [colors]
 background = "#131535"

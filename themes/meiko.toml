@@ -3,6 +3,7 @@ name = "meiko"
 group = "Vocaloid"
 order = 8
 ansi_source = "Sundried + Crypton"
+signature = ["cursor", "ansi11", "ansi14"]
 
 [colors]
 background = "#211114"

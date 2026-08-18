@@ -1,9 +1,9 @@
 [meta]
 name = "eva01"
 group = "Evangelion"
-native = "エヴァンゲリオン"
 order = 13
 ansi_source = "Aura"
+signature = ["cursor", "ansi4", "ansi3"]
 
 [colors]
 background = "#1d1a2f"

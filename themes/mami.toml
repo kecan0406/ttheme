@@ -1,9 +1,9 @@
 [meta]
 name = "mami"
 group = "Madoka Magica"
-native = "魔法少女まどか☆マギカ"
 order = 19
 ansi_source = "Selenized Black"
+signature = ["cursor", "foreground", "ansi11"]
 
 [colors]
 background = "#23200f"

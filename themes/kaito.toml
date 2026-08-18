@@ -3,6 +3,7 @@ name = "kaito"
 group = "Vocaloid"
 order = 7
 ansi_source = "Aardvark Blue + Crypton"
+signature = ["cursor", "ansi4", "ansi3"]
 
 [colors]
 background = "#102040"

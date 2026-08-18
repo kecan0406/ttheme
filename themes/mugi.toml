@@ -1,9 +1,9 @@
 [meta]
 name = "mugi"
 group = "K-On!"
-native = "けいおん!"
 order = 85
 ansi_source = "Tomorrow Night Eighties"
+signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]
 background = "#211c14"

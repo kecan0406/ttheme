@@ -1,9 +1,9 @@
 [meta]
 name = "kou"
 group = "Call of the Night"
-native = "よふかしのうた"
 order = 63
 ansi_source = "Under The Sea"
+signature = ["cursor", "ansi5", "ansi9"]
 
 [colors]
 background = "#011116"

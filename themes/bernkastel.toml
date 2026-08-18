@@ -1,9 +1,9 @@
 [meta]
 name = "bernkastel"
 group = "Umineko"
-native = "うみねこのなく頃に"
 order = 79
 ansi_source = "Challenger Deep"
+signature = ["cursor", "ansi5", "ansi1"]
 
 [colors]
 background = "#1e1c31"

@@ -1,9 +1,9 @@
 [meta]
 name = "konata"
 group = "Lucky☆Star"
-native = "らき☆すた"
 order = 25
 ansi_source = "Dark Modern"
+signature = ["cursor", "ansi2", "ansi12"]
 
 [colors]
 background = "#0f1c30"

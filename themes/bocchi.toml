@@ -1,9 +1,9 @@
 [meta]
 name = "bocchi"
 group = "Bocchi the Rock!"
-native = "ぼっち・ざ・ろっく!"
 order = 29
 ansi_source = "Sakura + Kessoku"
+signature = ["cursor", "ansi4", "ansi9"]
 
 [colors]
 background = "#1d1322"

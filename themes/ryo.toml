@@ -1,9 +1,9 @@
 [meta]
 name = "ryo"
 group = "Bocchi the Rock!"
-native = "ぼっち・ざ・ろっく!"
 order = 31
 ansi_source = "TokyoNight Storm"
+signature = ["cursor", "ansi4", "ansi6"]
 
 [colors]
 background = "#1e2233"

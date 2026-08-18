@@ -1,9 +1,9 @@
 [meta]
 name = "magi"
 group = "Evangelion"
-native = "エヴァンゲリオン"
 order = 14
 ansi_source = "lotap/magi-theme"
+signature = ["cursor", "ansi10", "ansi9"]
 
 [colors]
 background = "#000000"

@@ -4,7 +4,7 @@ import { test } from 'node:test'
 
 import pkg from '../../package.json' with { type: 'json' }
 import { loadThemes } from '../theme.ts'
-import { manifest } from './manifest.ts'
+import { manifest, type PaletteEntry } from './manifest.ts'
 
 const { version, palettes: entries } = manifest(loadThemes(join(import.meta.dirname, '..', '..', 'themes')))
 
@@ -32,5 +32,29 @@ test('manifest entries carry the full palette the picker renders and paints', ()
       assert.match(hex, /^#[0-9a-fA-F]{6}$/, `${e.name}: bad color ${hex}`)
     }
     assert.ok(e.ansiSource.length > 0, `${e.name}: missing ansiSource`)
+  }
+})
+
+test('manifest carries a signature drawn from each palette', () => {
+  for (const e of entries) {
+    assert.equal(e.signature.length, 3, `${e.name}: expected 3 signature colors`)
+    assert.equal(new Set(e.signature).size, 3, `${e.name}: signature colors must differ`)
+    const palette = new Set([e.background, e.foreground, e.cursor, e.selection, ...e.ansi])
+    for (const hex of e.signature) {
+      assert.ok(palette.has(hex), `${e.name}: signature color ${hex} is not a slot of its own palette`)
+    }
+  }
+})
+
+test('every group names one lead palette and one native title', () => {
+  const groups = new Map<string, PaletteEntry[]>()
+  for (const e of entries) {
+    const members = groups.get(e.group)
+    if (members) members.push(e)
+    else groups.set(e.group, [e])
+  }
+  for (const [group, members] of groups) {
+    assert.equal(members.filter((e) => e.lead).length, 1, `${group}: expected exactly one lead palette`)
+    assert.equal(new Set(members.map((e) => e.native)).size, 1, `${group}: native title must match across the group`)
   }
 })

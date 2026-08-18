@@ -1,9 +1,9 @@
 [meta]
 name = "moon"
 group = "Sailor Moon"
-native = "美少女戦士セーラームーン"
 order = 37
 ansi_source = "Starlight"
+signature = ["cursor", "ansi3", "ansi12"]
 
 [colors]
 background = "#191b2e"

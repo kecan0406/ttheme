@@ -19,10 +19,17 @@ export interface GhosttyExtras {
   iconScreen: Hex[]
 }
 
+export interface Group {
+  name: string
+  native?: string
+  lead: string
+}
+
 export interface Theme {
   name: string
   group: string
   native?: string
+  lead: boolean
   order: number
   role?: 'default'
   ansiSource: string
@@ -31,6 +38,7 @@ export interface Theme {
   cursor: Hex
   selectionBackground: Hex
   ansi: Hex[]
+  signature: Hex[]
   font: Font
   ghostty: GhosttyExtras
   waive: string[]
@@ -38,6 +46,11 @@ export interface Theme {
 }
 
 const DEFAULTS_FILE = '_defaults.toml'
+const GROUPS_FILE = '_groups.toml'
+const SIGNATURE_SIZE = 3
+const NAMED_SLOTS = ['background', 'foreground', 'cursor', 'selection'] as const
+
+type NamedSlot = (typeof NAMED_SLOTS)[number]
 
 export const RESERVED_NAMES = new Set(['next', 'help', 'preview'])
 
@@ -106,7 +119,55 @@ function readGhostty(file: string, own: unknown, base: unknown, colors: IconColo
   }
 }
 
-function readTheme(file: string, source: string, defaults: Record<string, unknown>): Theme {
+type Slots = Record<NamedSlot, Hex> & { ansi: Hex[] }
+
+function slotColors(slots: Slots): Map<string, Hex> {
+  return new Map<string, Hex>([
+    ...NAMED_SLOTS.map((slot): [string, Hex] => [slot, slots[slot]]),
+    ...slots.ansi.map((color, index): [string, Hex] => [`ansi${index}`, color]),
+  ])
+}
+
+function readSignature(file: string, value: unknown, slots: Slots): Hex[] {
+  if (!Array.isArray(value) || value.length !== SIGNATURE_SIZE) {
+    fail(file, `meta.signature must name exactly ${SIGNATURE_SIZE} palette slots`)
+  }
+  const known = slotColors(slots)
+  const colors: Hex[] = []
+  for (const [i, raw] of value.entries()) {
+    const field = `meta.signature[${i}]`
+    const color = known.get(str(file, field, raw))
+    if (color === undefined) {
+      fail(
+        file,
+        `${field} ${JSON.stringify(raw)} is not a palette slot — use ${NAMED_SLOTS.join(', ')} or ansi0-ansi15`,
+      )
+    }
+    colors.push(color)
+  }
+  if (new Set(colors).size !== colors.length) {
+    fail(file, 'meta.signature slots must resolve to three different colors')
+  }
+  return colors
+}
+
+function readGroups(dir: string): Group[] {
+  const doc = Bun.TOML.parse(readFileSync(join(dir, GROUPS_FILE), 'utf8')) as Record<string, unknown>
+  const raw = doc.group
+  if (!Array.isArray(raw) || raw.length === 0) {
+    fail(GROUPS_FILE, 'needs at least one [[group]] table')
+  }
+  return raw.map((entry) => {
+    const g = table(entry)
+    return {
+      name: str(GROUPS_FILE, 'group.name', g.name),
+      native: g.native === undefined ? undefined : str(GROUPS_FILE, 'group.native', g.native),
+      lead: str(GROUPS_FILE, 'group.lead', g.lead),
+    }
+  })
+}
+
+function readTheme(file: string, source: string, defaults: Record<string, unknown>, groups: Map<string, Group>): Theme {
   const doc = Bun.TOML.parse(source) as Record<string, unknown>
   const meta = table(doc.meta)
   const colors = table(doc.colors)
@@ -136,9 +197,15 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
     fail(file, `meta.role must be "default", got ${JSON.stringify(role)}`)
   }
 
+  const groupName = str(file, 'meta.group', meta.group)
+  const group = groups.get(groupName)
+  if (!group) fail(file, `meta.group "${groupName}" has no [[group]] table in ${GROUPS_FILE}`)
+
   const background = hex(file, 'colors.background', colors.background)
+  const foreground = hex(file, 'colors.foreground', colors.foreground)
   const cursor = hex(file, 'colors.cursor', colors.cursor)
   const selectionBackground = hex(file, 'colors.selection_background', colors.selection_background)
+  const ansi = ansiRaw.map((c, i) => hex(file, `colors.ansi[${i}]`, c))
   const waive = Array.isArray(contrastRules.waive) ? contrastRules.waive.map(String) : []
   if (waive.length > 0 && typeof contrastRules.reason !== 'string') {
     fail(file, 'contrast.waive needs a contrast.reason explaining why')
@@ -146,16 +213,24 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
 
   return {
     name,
-    group: str(file, 'meta.group', meta.group),
-    native: meta.native === undefined ? undefined : str(file, 'meta.native', meta.native),
+    group: groupName,
+    native: group.native,
+    lead: group.lead === name,
     order: Number(meta.order),
     role,
     ansiSource: str(file, 'meta.ansi_source', meta.ansi_source),
     background,
-    foreground: hex(file, 'colors.foreground', colors.foreground),
+    foreground,
     cursor,
     selectionBackground,
-    ansi: ansiRaw.map((c, i) => hex(file, `colors.ansi[${i}]`, c)),
+    ansi,
+    signature: readSignature(file, meta.signature, {
+      background,
+      foreground,
+      cursor,
+      selection: selectionBackground,
+      ansi,
+    }),
     font: readFont(file, doc.font, defaults.font),
     ghostty: readGhostty(file, doc.ghostty, defaults.ghostty, {
       background,
@@ -169,15 +244,28 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
 
 export function loadThemes(dir: string): Theme[] {
   const defaults = Bun.TOML.parse(readFileSync(join(dir, DEFAULTS_FILE), 'utf8')) as Record<string, unknown>
+  const groups = readGroups(dir)
+  const byName = new Map(groups.map((g) => [g.name, g]))
+  if (byName.size !== groups.length) {
+    fail(GROUPS_FILE, 'group.name must be unique')
+  }
 
   const themes = readdirSync(dir)
-    .filter((f) => f.endsWith('.toml') && f !== DEFAULTS_FILE)
-    .map((f) => readTheme(f, readFileSync(join(dir, f), 'utf8'), defaults))
+    .filter((f) => f.endsWith('.toml') && !f.startsWith('_'))
+    .map((f) => readTheme(f, readFileSync(join(dir, f), 'utf8'), defaults, byName))
     .sort((a, b) => a.order - b.order)
 
   const orders = new Set(themes.map((t) => t.order))
   if (orders.size !== themes.length) {
     throw new Error('themes: meta.order must be unique across all themes')
+  }
+
+  for (const group of groups) {
+    const members = themes.filter((t) => t.group === group.name)
+    if (members.length === 0) fail(GROUPS_FILE, `group "${group.name}" has no themes`)
+    if (!members.some((t) => t.name === group.lead)) {
+      fail(GROUPS_FILE, `group "${group.name}" lead "${group.lead}" is not one of its themes`)
+    }
   }
   return themes
 }
