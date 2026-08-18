@@ -5,6 +5,7 @@ export interface Theme {
   name: string
   group: string
   native: string | null
+  ansiSource: string
   background: string
   foreground: string
   cursor: string
@@ -16,6 +17,7 @@ interface ManifestEntry {
   name: string
   group: string
   native?: string
+  ansiSource: string
   default?: boolean
   background: string
   foreground: string
@@ -39,6 +41,7 @@ export function loadThemes(): Theme[] {
       name: entry.name,
       group: entry.group,
       native: entry.native ?? null,
+      ansiSource: entry.ansiSource,
       background: entry.background,
       foreground: entry.foreground,
       cursor: entry.cursor,

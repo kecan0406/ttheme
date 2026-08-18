@@ -19,6 +19,10 @@
   --accent: #8cb8e8;
 }
 
+html {
+  overflow-anchor: none;
+}
+
 ::selection {
   background: var(--accent);
   color: var(--ground);
@@ -29,93 +33,73 @@
   outline-offset: 3px;
 }
 
-.term,
-.term * {
-  transition:
-    background-color 0.5s ease,
-    color 0.5s ease;
-}
-
-.cpreg .term,
-.cpreg .term * {
-  transition: none;
-}
-
-.cpreg .term {
-  transition:
-    --bg 0.5s ease,
-    --fg 0.5s ease,
-    --cur 0.5s ease,
-    --sel 0.5s ease,
-    --a0 0.5s ease,
-    --a1 0.5s ease,
-    --a2 0.5s ease,
-    --a3 0.5s ease,
-    --a4 0.5s ease,
-    --a5 0.5s ease,
-    --a6 0.5s ease,
-    --a7 0.5s ease,
-    --a8 0.5s ease,
-    --a9 0.5s ease,
-    --a10 0.5s ease,
-    --a11 0.5s ease,
-    --a12 0.5s ease,
-    --a13 0.5s ease,
-    --a14 0.5s ease,
-    --a15 0.5s ease,
-    --wm0 0.5s ease,
-    --wm1 0.5s ease,
-    --wm2 0.5s ease,
-    --wm3 0.5s ease,
-    --wm4 0.5s ease,
-    --wm5 0.5s ease;
-}
-
-.cpreg .stage {
-  transition: --glow 0.5s ease;
-}
-
 html.cpreg {
-  transition: --accent 0.5s ease;
+  transition: --accent 0.55s ease;
 }
 
-.stage::before {
-  content: '';
-  position: absolute;
-  inset: -14% -22%;
-  background: radial-gradient(52% 62% at 50% 42%, var(--glow, transparent), transparent 72%);
-  pointer-events: none;
+.hero-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--ground);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) calc(100% * var(--morph, 0)), transparent);
 }
 
-.cursor {
-  display: inline-block;
-  width: 0.62em;
-  height: 1.15em;
-  background: var(--cur);
-  vertical-align: text-bottom;
-  animation: blink 1.15s steps(2, start) infinite;
+.hero-wrap {
+  padding-top: calc(20px - 12px * var(--morph, 0));
+  padding-bottom: calc(12px - 4px * var(--morph, 0));
 }
 
-.cursor[data-typing] {
-  animation: none;
+.hero-collapse {
+  overflow: hidden;
+  max-height: calc(var(--collapse-h, 9999px) - (var(--collapse-h, 9999px) - 54px) * var(--morph, 0));
 }
 
-@keyframes blink {
-  to {
-    visibility: hidden;
+.hero-field {
+  position: relative;
+  aspect-ratio: 16 / 6.6;
+  min-height: 330px;
+  max-height: 540px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.hero-field canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 640px) {
+  .hero-field {
+    aspect-ratio: 4 / 3.4;
+    min-height: 300px;
   }
+}
+
+.swcell {
+  position: relative;
+}
+
+.swcell:hover::after {
+  content: attr(data-hex);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  transform: translateX(-50%);
+  background: var(--ground);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 3;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .term,
-  .term *,
-  .cpreg .term,
-  .cpreg .stage,
   html.cpreg {
     transition: none;
-  }
-
-  .cursor {
-    animation: none;
   }
 }

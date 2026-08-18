@@ -1,6 +1,6 @@
 import type { Theme } from './themes'
 
-function luminance(hex: string): number {
+export function luminance(hex: string): number {
   const value = Number.parseInt(hex.slice(1), 16)
   const channel = (c: number) => {
     const s = c / 255

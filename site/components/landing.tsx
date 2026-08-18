@@ -1,12 +1,14 @@
 'use client'
 
-import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
-import { accentFor } from '@/lib/accent'
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { accentFor } from '@/lib/color'
 import type { Theme } from '@/lib/themes'
-import { HeroTerminal } from './hero-terminal'
+import { HeroField } from './hero-field'
 import { PaletteWall } from './palette-wall'
 
-const CMD = 'ttheme next'
+const CYCLE_MS = 6000
+const TURBO_MS = 700
+const CYCLE_STEP = 7
 const KONAMI = [
   'arrowup',
   'arrowup',
@@ -19,23 +21,10 @@ const KONAMI = [
   'b',
   'a',
 ]
-const COLOR_PROPS = [
-  '--bg',
-  '--fg',
-  '--cur',
-  '--sel',
-  '--accent',
-  '--glow',
-  ...Array.from({ length: 16 }, (_, index) => `--a${index}`),
-  ...Array.from({ length: 6 }, (_, index) => `--wm${index}`),
-]
 
 export function Landing({ themes, children }: { themes: Theme[]; children: ReactNode }) {
   const [group, setGroup] = useState('all')
   const [current, setCurrent] = useState(themes[0] as Theme)
-  const [applied, setApplied] = useState<Theme | null>(null)
-  const [typed, setTyped] = useState('')
-  const [typing, setTyping] = useState(false)
 
   const list = useMemo(
     () => (group === 'all' ? themes : themes.filter((theme) => theme.group === group)),
@@ -43,88 +32,49 @@ export function Landing({ themes, children }: { themes: Theme[]; children: React
   )
   const accent = useMemo(() => accentFor(current), [current])
 
-  const stageRef = useRef<HTMLDivElement>(null)
+  const stickyRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
   const listRef = useRef(list)
   listRef.current = list
   const currentRef = useRef(current)
   currentRef.current = current
-  const holdTimer = useRef(0)
-  const stepTimer = useRef(0)
+  const cycleTimer = useRef(0)
   const turbo = useRef(false)
   const reduced = useRef(false)
 
-  const stopAll = () => {
-    clearTimeout(holdTimer.current)
-    clearTimeout(stepTimer.current)
-    setTyping(false)
-  }
+  const stopCycle = () => clearTimeout(cycleTimer.current)
 
-  const wear = (theme: Theme) => {
-    setCurrent(theme)
-    setApplied(theme)
-  }
-
-  const advance = (direction: number) => {
+  const advance = (step: number) => {
     const themesInList = listRef.current
     const index = themesInList.indexOf(currentRef.current)
     const next = themesInList[
-      ((index === -1 ? 0 : index) + direction + themesInList.length) % themesInList.length
+      ((index === -1 ? 0 : index) + step + themesInList.length * Math.abs(step)) % themesInList.length
     ] as Theme
-    wear(next)
-    return next
-  }
-
-  const typeCmd = (text: string, done: () => void) => {
-    setTyping(true)
-    setTyped('')
-    let length = 0
-    const step = () => {
-      length += 1
-      setTyped(text.slice(0, length))
-      if (length < text.length) {
-        stepTimer.current = window.setTimeout(step, 45 + Math.random() * 65)
-      } else {
-        setTyping(false)
-        stepTimer.current = window.setTimeout(done, 320)
-      }
-    }
-    stepTimer.current = window.setTimeout(step, 60)
+    setCurrent(next)
   }
 
   const cycle = () => {
     if (reduced.current) return
-    stopAll()
-    if (turbo.current) {
-      holdTimer.current = window.setTimeout(() => {
-        setTyped(CMD)
-        advance(1)
+    stopCycle()
+    cycleTimer.current = window.setTimeout(
+      () => {
+        advance(CYCLE_STEP)
         cycle()
-      }, 300)
-      return
-    }
-    holdTimer.current = window.setTimeout(
-      () =>
-        typeCmd(CMD, () => {
-          advance(1)
-          cycle()
-        }),
-      3200,
+      },
+      turbo.current ? TURBO_MS : CYCLE_MS,
     )
   }
 
   const manual = (direction: number) => {
-    stopAll()
-    const next = advance(direction)
-    setTyped(direction < 0 ? `ttheme apply ${next.name}` : CMD)
+    stopCycle()
+    advance(direction)
     cycle()
   }
 
   const wearTheme = (theme: Theme) => {
-    stopAll()
-    setTyped(`ttheme apply ${theme.name}`)
-    wear(theme)
+    stopCycle()
+    setCurrent(theme)
     cycle()
-    stageRef.current?.scrollIntoView({ behavior: reduced.current ? 'auto' : 'smooth', block: 'center' })
   }
 
   const pickGroup = (nextGroup: string) => {
@@ -132,24 +82,18 @@ export function Landing({ themes, children }: { themes: Theme[]; children: React
     const nextList = nextGroup === 'all' ? themes : themes.filter((theme) => theme.group === nextGroup)
     const head = nextList[0]
     if (head && !nextList.includes(currentRef.current)) {
-      stopAll()
-      setTyped(`ttheme menu — ${nextGroup}`)
-      wear(head)
+      stopCycle()
+      setCurrent(head)
       cycle()
     }
   }
 
   useEffect(() => {
     reduced.current = matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (typeof CSS !== 'undefined' && 'registerProperty' in CSS) {
-      for (const name of COLOR_PROPS) {
-        try {
-          CSS.registerProperty({ name, syntax: '<color>', inherits: true, initialValue: 'transparent' })
-        } catch {
-          break
-        }
-      }
-      document.documentElement.classList.add('cpreg')
+    const root = document.documentElement
+    if (!root.classList.contains('cpreg') && typeof CSS !== 'undefined' && 'registerProperty' in CSS) {
+      CSS.registerProperty({ name: '--accent', syntax: '<color>', inherits: true, initialValue: '#8cb8e8' })
+      root.classList.add('cpreg')
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -169,7 +113,7 @@ export function Landing({ themes, children }: { themes: Theme[]; children: React
       }
     }
     const onVisibility = () => {
-      if (document.hidden) stopAll()
+      if (document.hidden) stopCycle()
       else cycle()
     }
     document.addEventListener('keydown', onKeyDown)
@@ -177,7 +121,7 @@ export function Landing({ themes, children }: { themes: Theme[]; children: React
     document.addEventListener('visibilitychange', onVisibility)
     cycle()
     return () => {
-      stopAll()
+      stopCycle()
       document.removeEventListener('keydown', onKeyDown)
       document.removeEventListener('keyup', onKeyUp)
       document.removeEventListener('visibilitychange', onVisibility)
@@ -188,26 +132,46 @@ export function Landing({ themes, children }: { themes: Theme[]; children: React
     document.documentElement.style.setProperty('--accent', accent)
   }, [accent])
 
+  useEffect(() => {
+    let raf = 0
+    let field: HTMLElement | null = null
+    const update = () => {
+      raf = 0
+      const sentinel = sentinelRef.current
+      const sticky = stickyRef.current
+      if (!sentinel || !sticky) return
+      field ??= sticky.querySelector('.hero-field')
+      const range = Math.max(field?.offsetHeight ?? 380, 120)
+      let progress = Math.min(Math.max(-sentinel.getBoundingClientRect().top / range, 0), 1)
+      if (reduced.current) progress = progress > 0.5 ? 1 : 0
+      sticky.style.setProperty('--morph', String(progress))
+    }
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update)
+    }
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    update()
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+    }
+  }, [])
+
   return (
     <>
-      <section className="mx-auto max-w-[840px] px-5 pt-5 text-center">
-        <div ref={stageRef} className="stage relative" style={{ '--glow': `${accent}26` } as CSSProperties}>
-          <HeroTerminal
+      <div ref={sentinelRef} aria-hidden />
+      <div ref={stickyRef} className="hero-sticky">
+        <div className="hero-wrap mx-auto max-w-[1160px] px-6">
+          <HeroField
             theme={current}
             position={`${list.indexOf(current) + 1}/${list.length}`}
-            typed={typed}
-            typing={typing}
-            applied={applied}
             onNext={() => manual(1)}
           />
         </div>
-        <p className="mt-4 text-xs text-muted">
-          click the terminal — next palette ·{' '}
-          <kbd className="rounded border border-line px-1.5 py-px text-[11px]">←</kbd>{' '}
-          <kbd className="rounded border border-line px-1.5 py-px text-[11px]">→</kbd> browse
-        </p>
-        {children}
-      </section>
+      </div>
+      <section className="mx-auto max-w-[840px] px-5 text-center">{children}</section>
       <PaletteWall themes={themes} group={group} list={list} current={current} onGroup={pickGroup} onWear={wearTheme} />
     </>
   )

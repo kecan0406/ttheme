@@ -30,21 +30,11 @@
       }
     },
     {
-      "includes": ["site/components/landing.tsx", "site/components/hero-terminal.tsx"],
+      "includes": ["site/components/landing.tsx", "site/components/hero-field.tsx"],
       "linter": {
         "rules": {
           "correctness": {
             "useExhaustiveDependencies": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["site/components/hero-terminal.tsx"],
-      "linter": {
-        "rules": {
-          "a11y": {
-            "useSemanticElements": "off"
           }
         }
       }
