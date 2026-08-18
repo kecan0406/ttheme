@@ -1,0 +1,31 @@
+[meta]
+name = "dekomori"
+group = "Chuunibyou"
+native = "中二病でも恋がしたい!"
+order = 100
+ansi_source = "Cobalt2 + Delusion"
+
+[colors]
+background = "#132738"
+foreground = "#ffffff"
+cursor = "#f0cc09"
+selection_background = "#18354f"
+ansi = [
+  "#000000",
+  "#ff0000",
+  "#38de21",
+  "#ffe50a",
+  "#3d82e8",
+  "#ff005d",
+  "#00bbbb",
+  "#ebdfc1",
+
+  "#555555",
+  "#f40e17",
+  "#3bd01d",
+  "#edc809",
+  "#6b6bff",
+  "#ff55ff",
+  "#6ae3fa",
+  "#f9f4e7",
+]

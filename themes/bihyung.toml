@@ -1,0 +1,31 @@
+[meta]
+name = "bihyung"
+group = "Eternal Return"
+native = "이터널 리턴"
+order = 102
+ansi_source = "Pierre Dark + Lumia"
+
+[colors]
+background = "#050807"
+foreground = "#f0f7f4"
+cursor = "#f4f11f"
+selection_background = "#4c0f18"
+ansi = [
+  "#111513",
+  "#fa3459",
+  "#74d6b0",
+  "#f4f11f",
+  "#25a5e0",
+  "#be5ea5",
+  "#2bc5cc",
+  "#ccd3d0",
+
+  "#64706b",
+  "#f97f93",
+  "#8fdcbc",
+  "#fcfc91",
+  "#61b7e9",
+  "#cf7db6",
+  "#65d2d8",
+  "#ffffff",
+]

@@ -2,12 +2,12 @@
 
 Character terminal palettes — every new tab takes the next one.
 
-Ninety-five palettes drawn from Vocaloid, Evangelion, Madoka Magica,
+One hundred and one palettes drawn from Vocaloid, Evangelion, Madoka Magica,
 Steins;Gate, Lucky☆Star, Bocchi the Rock!, Monogatari, Sailor Moon, Serial
 Experiments Lain, VA-11 Hall-A, Persona 5, Undertale, Call of the Night,
-Higurashi, Doki Doki Literature Club, Umineko, K-On!, Cyberpunk: Edgerunners
-and Touhou Project, built for **Ghostty, kitty, Alacritty, WezTerm and iTerm2**, plus a zsh
-layer that rotates through them as you open tabs.
+Higurashi, Doki Doki Literature Club, Umineko, K-On!, Cyberpunk: Edgerunners,
+Touhou Project, Chuunibyou and Eternal Return, built for **Ghostty, kitty, Alacritty,
+WezTerm and iTerm2**, plus a zsh layer that rotates through them as you open tabs.
 
 Two things separate this from the usual color-scheme dump:
 
@@ -40,6 +40,8 @@ Two things separate this from the usual color-scheme dump:
 | K-On! — けいおん! | `yui` `ritsu` `mio` `mugi` `azusa` |
 | Cyberpunk: Edgerunners — サイバーパンク エッジランナーズ | `david` `lucy` `rebecca` `nightcity` |
 | Touhou Project — 東方Project | `reimu` `marisa` `cirno` `youmu` `patchouli` `flandre` |
+| Chuunibyou — 中二病でも恋がしたい! | `rikka` `yuuta` `shinka` `dekomori` `kumin` |
+| Eternal Return — 이터널 리턴 | `bihyung` |
 | — | `neutral` (default) |
 
 `neutral` sits out of the rotation and the listings — it is the pre-shell
