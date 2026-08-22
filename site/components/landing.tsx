@@ -3,7 +3,7 @@
 import { Tooltip } from '@base-ui/react/tooltip'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { accentFor } from '@/lib/color'
-import type { Theme } from '@/lib/themes'
+import type { GateRule, Theme } from '@/lib/themes'
 import { HeroSession } from './hero-session'
 import { matchesFilter, PaletteSidebar } from './palette-sidebar'
 
@@ -28,34 +28,38 @@ interface WearOptions {
   reveal?: boolean
 }
 
-export function Landing({ themes }: { themes: Theme[] }) {
+export function Landing({ themes, gate }: { themes: Theme[]; gate: GateRule[] }) {
   const first = themes[0] as Theme
   const [current, setCurrent] = useState(first)
   const [open, setOpen] = useState<string[]>([first.group])
   const [collapsed, setCollapsed] = useState(false)
   const [filter, setFilter] = useState('')
   const [reveal, setReveal] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const [cycleKey, setCycleKey] = useState(0)
 
   const query = filter.trim().toLowerCase()
   const hits = useMemo(() => themes.filter((theme) => matchesFilter(theme, query)), [themes, query])
   const hitGroups = useMemo(() => [...new Set(hits.map((theme) => theme.group))], [hits])
-  const series = useMemo(() => new Set(themes.map((theme) => theme.group)).size, [themes])
   const accent = useMemo(() => accentFor(current), [current])
 
   const hitsRef = useRef(hits)
   hitsRef.current = hits
   const currentRef = useRef(current)
   currentRef.current = current
+  const pausedRef = useRef(paused)
+  pausedRef.current = paused
+  const heldRef = useRef(false)
   const filterRef = useRef<HTMLInputElement>(null)
   const cycleTimer = useRef(0)
   const turbo = useRef(false)
-  const reduced = useRef(false)
 
   const stopCycle = () => clearTimeout(cycleTimer.current)
 
   const cycle = () => {
-    if (reduced.current) return
     stopCycle()
+    if (pausedRef.current || heldRef.current) return
+    setCycleKey((tick) => tick + 1)
     cycleTimer.current = window.setTimeout(() => advance(CYCLE_STEP), turbo.current ? TURBO_MS : CYCLE_MS)
   }
 
@@ -72,6 +76,19 @@ export function Landing({ themes }: { themes: Theme[] }) {
     const index = list.indexOf(currentRef.current)
     const next = list[((index === -1 ? 0 : index) + step + list.length * Math.abs(step)) % list.length]
     if (next) wear(next, options)
+    else cycle()
+  }
+
+  const pause = (value: boolean) => {
+    pausedRef.current = value
+    setPaused(value)
+    if (value) stopCycle()
+    else cycle()
+  }
+
+  const hold = (value: boolean) => {
+    heldRef.current = value
+    if (value) stopCycle()
     else cycle()
   }
 
@@ -95,11 +112,9 @@ export function Landing({ themes }: { themes: Theme[] }) {
   }
 
   useEffect(() => {
-    reduced.current = matchMedia('(prefers-reduced-motion: reduce)').matches
-    const root = document.documentElement
-    if (!root.classList.contains('cpreg') && typeof CSS !== 'undefined' && 'registerProperty' in CSS) {
-      CSS.registerProperty({ name: '--accent', syntax: '<color>', inherits: true, initialValue: '#8cb8e8' })
-      root.classList.add('cpreg')
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      pausedRef.current = true
+      setPaused(true)
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -152,9 +167,14 @@ export function Landing({ themes }: { themes: Theme[] }) {
       <div className="relative grid min-h-0 grid-cols-[minmax(0,1fr)_auto]">
         <HeroSession
           theme={current}
+          themes={themes}
+          gate={gate}
           position={`${index === -1 ? '–' : index + 1}/${hits.length}`}
-          count={themes.length}
-          series={series}
+          paused={paused}
+          onPausedChange={pause}
+          onHoldChange={hold}
+          cycleMs={turbo.current ? TURBO_MS : CYCLE_MS}
+          cycleKey={cycleKey}
         />
         <PaletteSidebar
           themes={themes}

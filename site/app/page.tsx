@@ -1,8 +1,8 @@
 import { Landing } from '@/components/landing'
-import { loadThemes } from '@/lib/themes'
+import { loadCatalog } from '@/lib/themes'
 
 export default function Page() {
-  const themes = loadThemes()
+  const { themes, gate } = loadCatalog()
 
   return (
     <main className="grid h-dvh grid-rows-[44px_minmax(0,1fr)] overflow-hidden">
@@ -26,7 +26,7 @@ export default function Page() {
           </a>
         </nav>
       </header>
-      <Landing themes={themes} />
+      <Landing themes={themes} gate={gate} />
     </main>
   )
 }

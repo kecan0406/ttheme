@@ -39,6 +39,7 @@ export interface Theme {
   selectionBackground: Hex
   ansi: Hex[]
   signature: Hex[]
+  signatureSlots: string[]
   font: Font
   ghostty: GhosttyExtras
   waive: string[]
@@ -121,6 +122,11 @@ function readGhostty(file: string, own: unknown, base: unknown, colors: IconColo
 
 type Slots = Record<NamedSlot, Hex> & { ansi: Hex[] }
 
+interface Signature {
+  names: string[]
+  colors: Hex[]
+}
+
 function slotColors(slots: Slots): Map<string, Hex> {
   return new Map<string, Hex>([
     ...NAMED_SLOTS.map((slot): [string, Hex] => [slot, slots[slot]]),
@@ -128,27 +134,30 @@ function slotColors(slots: Slots): Map<string, Hex> {
   ])
 }
 
-function readSignature(file: string, value: unknown, slots: Slots): Hex[] {
+function readSignature(file: string, value: unknown, slots: Slots): Signature {
   if (!Array.isArray(value) || value.length !== SIGNATURE_SIZE) {
     fail(file, `meta.signature must name exactly ${SIGNATURE_SIZE} palette slots`)
   }
   const known = slotColors(slots)
+  const names: string[] = []
   const colors: Hex[] = []
   for (const [i, raw] of value.entries()) {
     const field = `meta.signature[${i}]`
-    const color = known.get(str(file, field, raw))
+    const slot = str(file, field, raw)
+    const color = known.get(slot)
     if (color === undefined) {
       fail(
         file,
         `${field} ${JSON.stringify(raw)} is not a palette slot — use ${NAMED_SLOTS.join(', ')} or ansi0-ansi15`,
       )
     }
+    names.push(slot)
     colors.push(color)
   }
   if (new Set(colors).size !== colors.length) {
     fail(file, 'meta.signature slots must resolve to three different colors')
   }
-  return colors
+  return { names, colors }
 }
 
 function readGroups(dir: string): Group[] {
@@ -206,6 +215,13 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
   const cursor = hex(file, 'colors.cursor', colors.cursor)
   const selectionBackground = hex(file, 'colors.selection_background', colors.selection_background)
   const ansi = ansiRaw.map((c, i) => hex(file, `colors.ansi[${i}]`, c))
+  const signature = readSignature(file, meta.signature, {
+    background,
+    foreground,
+    cursor,
+    selection: selectionBackground,
+    ansi,
+  })
   const waive = Array.isArray(contrastRules.waive) ? contrastRules.waive.map(String) : []
   if (waive.length > 0 && typeof contrastRules.reason !== 'string') {
     fail(file, 'contrast.waive needs a contrast.reason explaining why')
@@ -224,13 +240,8 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
     cursor,
     selectionBackground,
     ansi,
-    signature: readSignature(file, meta.signature, {
-      background,
-      foreground,
-      cursor,
-      selection: selectionBackground,
-      ansi,
-    }),
+    signature: signature.colors,
+    signatureSlots: signature.names,
     font: readFont(file, doc.font, defaults.font),
     ghostty: readGhostty(file, doc.ghostty, defaults.ghostty, {
       background,

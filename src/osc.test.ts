@@ -12,8 +12,11 @@ const miku: PaletteEntry = {
   foreground: '#e0f4f2',
   cursor: '#39c5bb',
   selection: '#1b3b3e',
+  order: 2,
   signature: ['#39c5bb', '#ff91c7', '#aab0ff'],
+  signatureSlots: ['cursor', 'ansi1', 'ansi12'],
   ansi: Array.from({ length: 16 }, (_, i) => `#0000${i.toString(16).padStart(2, '0')}`),
+  gate: [11.92, 8.03, 0, 11.92, 1.88],
 }
 
 test('paletteOsc emits the same sequences as the zsh osc adapter', () => {

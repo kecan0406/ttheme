@@ -6,7 +6,11 @@ import pkg from '../../package.json' with { type: 'json' }
 import { loadThemes } from '../theme.ts'
 import { manifest, type PaletteEntry } from './manifest.ts'
 
-const { version, palettes: entries } = manifest(loadThemes(join(import.meta.dirname, '..', '..', 'themes')))
+const {
+  version,
+  gate: rules,
+  palettes: entries,
+} = manifest(loadThemes(join(import.meta.dirname, '..', '..', 'themes')))
 
 test('manifest states which build produced it', () => {
   assert.equal(version, pkg.version)
@@ -42,6 +46,42 @@ test('manifest carries a signature drawn from each palette', () => {
     const palette = new Set([e.background, e.foreground, e.cursor, e.selection, ...e.ansi])
     for (const hex of e.signature) {
       assert.ok(palette.has(hex), `${e.name}: signature color ${hex} is not a slot of its own palette`)
+    }
+  }
+})
+
+test('manifest carries the signature slots each signature color was drawn from', () => {
+  for (const e of entries) {
+    assert.equal(e.signatureSlots.length, e.signature.length, `${e.name}: signature slots must match colors`)
+    const slots = new Map<string, string>([
+      ['background', e.background],
+      ['foreground', e.foreground],
+      ['cursor', e.cursor],
+      ['selection', e.selection],
+      ...e.ansi.map((hex, i): [string, string] => [`ansi${i}`, hex]),
+    ])
+    for (const [i, slot] of e.signatureSlots.entries()) {
+      assert.equal(slots.get(slot), e.signature[i], `${e.name}: signature slot ${slot} does not hold its color`)
+    }
+  }
+})
+
+test('manifest publishes the gate every palette was measured against', () => {
+  assert.ok(rules.length > 0)
+  for (const rule of rules) {
+    assert.ok(rule.min !== undefined || rule.max !== undefined, `${rule.rule}: needs a threshold`)
+  }
+  for (const e of entries) {
+    assert.equal(e.gate.length, rules.length, `${e.name}: expected one measurement per gate rule`)
+    for (const [i, rule] of rules.entries()) {
+      if (e.waived?.includes(rule.rule)) continue
+      const value = e.gate[i] as number
+      if (rule.min !== undefined) {
+        assert.ok(value >= rule.min, `${e.name}: ${rule.rule} measured ${value}, needs ${rule.min}`)
+      }
+      if (rule.max !== undefined) {
+        assert.ok(value <= rule.max, `${e.name}: ${rule.rule} measured ${value}, needs at most ${rule.max}`)
+      }
     }
   }
 })

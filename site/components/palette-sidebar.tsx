@@ -56,7 +56,7 @@ function Signature({ theme, className }: { theme: Theme; className: string }) {
   )
 }
 
-function Tip({
+export function Tip({
   label,
   side = 'bottom',
   children,

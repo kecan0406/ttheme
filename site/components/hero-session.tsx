@@ -1,185 +1,262 @@
-import type { ReactNode } from 'react'
-import type { Theme } from '@/lib/themes'
+'use client'
+
+import { Collapsible } from '@base-ui/react/collapsible'
+import { ContextMenu } from '@base-ui/react/context-menu'
+import { Menu } from '@base-ui/react/menu'
+import { ScrollArea } from '@base-ui/react/scroll-area'
+import { Tabs } from '@base-ui/react/tabs'
+import { Toolbar } from '@base-ui/react/toolbar'
+import { type CSSProperties, type FocusEvent, type ReactNode, useEffect, useRef, useState } from 'react'
+import type { GateRule, Theme } from '@/lib/themes'
 import { CopyCommand } from './copy-command'
+import { gateScore, Inspector } from './hero-inspector'
+import { GitSurface, ListSurface, NvimStatus, NvimSurface } from './hero-surfaces'
+import { Tip } from './palette-sidebar'
 
-const LS_ROWS = [
-  ['bin', 'CLAUDE.md', 'LICENSE', 'package.json', 'site', 'tsconfig.json'],
-  ['biome.json', 'dist', 'mise.toml', 'README.md', 'src'],
-  ['bun.lock', 'ghostty', 'node_modules', 'shell', 'themes'],
+const SURFACES = [
+  { value: 'ttheme', label: 'ttheme' },
+  { value: 'nvim', label: 'nvim' },
+  { value: 'git', label: 'git' },
 ]
-const LS_DIRS = new Set(['bin', 'dist', 'ghostty', 'node_modules', 'shell', 'site', 'src', 'themes'])
-const LS_COLUMN = 14
-const TERMINALS = 'ghostty · kitty · alacritty · wezterm · iTerm2'
-const ansiSlots = Array.from({ length: 16 }, (_, index) => `a${index}`)
+const REPO = 'https://github.com/kecan0406/ttheme/blob/main/themes'
+const NOTICE_MS = 1600
 
-function Prompt({ theme }: { theme: Theme }) {
+function paletteStyle(theme: Theme): CSSProperties {
+  const style: Record<string, string> = {
+    '--bg': theme.background,
+    '--fg': theme.foreground,
+    '--cu': theme.cursor,
+    '--se': theme.selectionBackground,
+  }
+  for (const [index, color] of theme.ansi.entries()) style[`--a${index}`] = color
+  return style as CSSProperties
+}
+
+function Scrollback({ active, tail, children }: { active: boolean; tail?: boolean; children: ReactNode }) {
+  const viewport = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const element = viewport.current
+    if (element && active && tail) element.scrollTop = element.scrollHeight
+  }, [active, tail])
+
+  return (
+    <ScrollArea.Root className="min-h-0 min-w-0">
+      <ScrollArea.Viewport ref={viewport} className="hero-view">
+        <ScrollArea.Content className={tail ? 'hero-scr hero-scr-tail' : 'hero-scr'}>{children}</ScrollArea.Content>
+      </ScrollArea.Viewport>
+      <ScrollArea.Scrollbar className="hero-bar" orientation="vertical">
+        <ScrollArea.Thumb className="hero-thumb" />
+      </ScrollArea.Scrollbar>
+      <ScrollArea.Scrollbar className="hero-bar hero-bar-x" orientation="horizontal">
+        <ScrollArea.Thumb className="hero-thumb" />
+      </ScrollArea.Scrollbar>
+    </ScrollArea.Root>
+  )
+}
+
+function Actions({
+  theme,
+  kind,
+  paused,
+  onPausedChange,
+  onNotice,
+}: {
+  theme: Theme
+  kind: 'menu' | 'context'
+  paused: boolean
+  onPausedChange: (paused: boolean) => void
+  onNotice: (notice: string) => void
+}) {
+  const Item = kind === 'context' ? ContextMenu.Item : Menu.Item
+  const Separator = kind === 'context' ? ContextMenu.Separator : Menu.Separator
+
+  const copy = async (text: string, notice: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      onNotice(notice)
+    } catch {
+      onNotice('clipboard blocked')
+    }
+  }
+
   return (
     <>
-      <span style={{ color: theme.ansi[2] }}>{'➜  '}</span>
-      <span style={{ color: theme.ansi[6] }}>ttheme</span>
-      <span style={{ color: theme.ansi[4] }}>{' git:('}</span>
-      <span style={{ color: theme.ansi[1] }}>main</span>
-      <span style={{ color: theme.ansi[4] }}>{') '}</span>
+      <Item className="hero-item" onClick={() => copy(`ttheme ${theme.name}`, `copied ttheme ${theme.name}`)}>
+        copy <code>ttheme {theme.name}</code>
+      </Item>
+      <Item className="hero-item" onClick={() => copy(theme.ansi.join('\n'), 'copied 16 ansi colors')}>
+        copy the 16 ansi colors
+      </Item>
+      <Separator className="hero-sep" />
+      <Item className="hero-item" render={<a href={`${REPO}/${theme.name}.toml`} target="_blank" rel="noreferrer" />}>
+        open themes/{theme.name}.toml
+      </Item>
+      <Item className="hero-item" onClick={() => onPausedChange(!paused)}>
+        {paused ? 'resume cycling' : 'keep this palette'}
+      </Item>
     </>
   )
 }
 
-function Swatch({ color }: { color: string }) {
-  return <i className="hero-sw" style={{ background: color }} />
-}
-
-function Muted({ theme, children }: { theme: Theme; children: ReactNode }) {
-  return <span style={{ color: theme.ansi[8] }}>{children}</span>
-}
-
-function Command({ theme, children }: { theme: Theme; children: ReactNode }) {
-  return <span style={{ color: theme.ansi[6] }}>{children}</span>
-}
-
 export function HeroSession({
   theme,
+  themes,
+  gate,
   position,
-  count,
-  series,
+  paused,
+  onPausedChange,
+  onHoldChange,
+  cycleMs,
+  cycleKey,
 }: {
   theme: Theme
+  themes: Theme[]
+  gate: GateRule[]
   position: string
-  count: number
-  series: number
+  paused: boolean
+  onPausedChange: (paused: boolean) => void
+  onHoldChange: (held: boolean) => void
+  cycleMs: number
+  cycleKey: number
 }) {
+  const [surface, setSurface] = useState('ttheme')
+  const [inspector, setInspector] = useState(false)
+  const [held, setHeld] = useState(false)
+  const [notice, setNotice] = useState('')
+
+  useEffect(() => {
+    if (!notice) return
+    const clear = window.setTimeout(() => setNotice(''), NOTICE_MS)
+    return () => clearTimeout(clear)
+  }, [notice])
+
+  const hold = (value: boolean) => {
+    setHeld(value)
+    onHoldChange(value)
+  }
+  const onBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) hold(false)
+  }
+
+  const score = gateScore(theme, gate)
+  const running = !paused && !held
+  const actions = { theme, paused, onPausedChange, onNotice: setNotice }
+
   return (
-    <section className="@container grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_44px] px-3.5 pt-3.5">
-      <div className="hero-pane" style={{ background: theme.background, color: theme.foreground }}>
-        <div className="hero-scroll">
-          <div>
-            <div>
-              <Prompt theme={theme} />
-              ttheme help
-            </div>
-            <div>ttheme — character terminal palettes</div>
-            <div>
-              <Muted theme={theme}>{TERMINALS}</Muted>
-            </div>
-            <div>
-              {'  '}
-              <Command theme={theme}>{'ttheme        '}</Command>list every palette, grouped, with previews{' '}
-              <Muted theme={theme}>
-                ({count} · {series} series)
-              </Muted>
-            </div>
-            <div>
-              {'  '}
-              <Command theme={theme}>{`ttheme ${theme.name.padEnd(7)}`}</Command> paint this tab{' '}
-              <Muted theme={theme}>(a unique prefix works: ttheme {theme.name.slice(0, 2)})</Muted>
-            </div>
-            <div>
-              {'  '}
-              <Command theme={theme}>ttheme preview</Command> browse live — focus repaints, enter keeps, esc restores
-            </div>
-            <div>
-              {'  '}
-              <Command theme={theme}>{'ttheme next   '}</Command> advance this tab to the next palette
-            </div>
-          </div>
-
-          <div>
-            <div>
-              <Prompt theme={theme} />
-              ttheme {theme.name}
-            </div>
-            <div>
-              <span style={{ background: theme.selectionBackground }}>{` ${theme.group} `}</span>
-              {theme.native ? <Muted theme={theme}>{`  ${theme.native}`}</Muted> : null}
-            </div>
-            <div>
-              <span style={{ background: theme.cursor, color: theme.background, fontWeight: 700 }}>
-                {` ${theme.name} `}
-              </span>
-              <Muted theme={theme}>{` · ANSI ${theme.ansiSource}`}</Muted>
-            </div>
-          </div>
-
-          <div>
-            <div>
-              <Prompt theme={theme} />
-              ttheme preview
-            </div>
-            <div>
-              <Muted theme={theme}>{'ansi       '}</Muted>
-              {theme.ansi.slice(0, 8).map((color, index) => (
-                <Swatch key={ansiSlots[index]} color={color} />
-              ))}
-            </div>
-            <div>
-              <Muted theme={theme}>{'           '}</Muted>
-              {theme.ansi.slice(8).map((color, index) => (
-                <Swatch key={ansiSlots[index + 8]} color={color} />
-              ))}
-            </div>
-            <div>
-              <Muted theme={theme}>bg </Muted>
-              <Swatch color={theme.background} />
-              <Muted theme={theme}>fg </Muted>
-              <Swatch color={theme.foreground} />
-              <Muted theme={theme}>cursor </Muted>
-              <Swatch color={theme.cursor} />
-              <Muted theme={theme}>selection </Muted>
-              <Swatch color={theme.selectionBackground} />
-            </div>
-          </div>
-
-          <div className="max-sm:hidden">
-            <div>
-              <Prompt theme={theme} />
-              ls
-            </div>
-            {LS_ROWS.map((row) => (
-              <div key={row[0]}>
-                {row.map((entry) => (
-                  <span key={entry} style={LS_DIRS.has(entry) ? { color: theme.ansi[12], fontWeight: 700 } : undefined}>
-                    {entry.padEnd(LS_COLUMN)}
-                  </span>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          <div>
-            <div>
-              <Prompt theme={theme} />
-              git status -sb
-            </div>
-            <div>
-              <Muted theme={theme}>{'## '}</Muted>
-              <span style={{ color: theme.ansi[2] }}>main</span>
-              <Muted theme={theme}>...</Muted>
-              <span style={{ color: theme.ansi[1] }}>origin/main</span>
-              <span style={{ color: theme.ansi[3] }}>{' [ahead 1]'}</span>
-            </div>
-            <div>
-              <span style={{ color: theme.ansi[2] }}>{'M  '}</span>
-              themes/{theme.name}.toml
-            </div>
-            <div>
-              <span style={{ color: theme.ansi[1] }}>{' M '}</span>
-              themes/_groups.toml
-            </div>
-          </div>
-
-          <div>
-            <Prompt theme={theme} />
-            <span className="hero-caret" style={{ background: theme.cursor }} />
-          </div>
+    <section className="@container grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_44px] px-3.5 pt-3.5 max-md:pr-[3.125rem]">
+      <Collapsible.Root
+        open={inspector}
+        onOpenChange={setInspector}
+        className="term hero-win"
+        style={paletteStyle(theme)}
+        onPointerEnter={() => hold(true)}
+        onPointerLeave={() => hold(false)}
+        onFocusCapture={() => hold(true)}
+        onBlurCapture={onBlur}
+      >
+        <div className="hero-cycle" aria-hidden="true">
+          <i
+            key={cycleKey}
+            style={{ animationDuration: `${cycleMs}ms`, animationPlayState: running ? 'running' : 'paused' }}
+          />
         </div>
-      </div>
+
+        <Tabs.Root value={surface} onValueChange={(value) => setSurface(String(value))} className="hero-body">
+          <div className="hero-strip">
+            <Tabs.List className="hero-tablist">
+              {SURFACES.map((entry) => (
+                <Tabs.Tab key={entry.value} value={entry.value} className="hero-tab">
+                  {entry.label}
+                </Tabs.Tab>
+              ))}
+              <Tabs.Indicator className="hero-tabind" />
+            </Tabs.List>
+            <span className="hero-title max-md:hidden">
+              {theme.name} — {theme.group}
+            </span>
+            <Toolbar.Root className="hero-tools" aria-label="terminal">
+              <Tip label={paused ? 'resume cycling' : 'keep this palette'}>
+                <Toolbar.Button
+                  className="hero-tool"
+                  aria-label={paused ? 'resume cycling' : 'stop cycling'}
+                  aria-pressed={!paused}
+                  onClick={() => onPausedChange(!paused)}
+                >
+                  {paused ? '▶' : '❚❚'}
+                </Toolbar.Button>
+              </Tip>
+              <Toolbar.Separator className="hero-tsep" />
+              <Menu.Root>
+                <Toolbar.Button render={<Menu.Trigger />} className="hero-tool" aria-label="palette actions">
+                  ⋯
+                </Toolbar.Button>
+                <Menu.Portal>
+                  <Menu.Positioner align="end" sideOffset={6} className="outline-none">
+                    <Menu.Popup className="hero-menu">
+                      <Actions kind="menu" {...actions} />
+                    </Menu.Popup>
+                  </Menu.Positioner>
+                </Menu.Portal>
+              </Menu.Root>
+            </Toolbar.Root>
+          </div>
+
+          <ContextMenu.Root>
+            <ContextMenu.Trigger className="hero-panels">
+              <Tabs.Panel keepMounted value="ttheme" className="hero-panel">
+                <Scrollback active={surface === 'ttheme'} tail>
+                  <ListSurface theme={theme} themes={themes} />
+                </Scrollback>
+              </Tabs.Panel>
+              <Tabs.Panel keepMounted value="nvim" className="hero-panel">
+                <Scrollback active={surface === 'nvim'}>
+                  <NvimSurface theme={theme} />
+                </Scrollback>
+                <NvimStatus theme={theme} />
+              </Tabs.Panel>
+              <Tabs.Panel keepMounted value="git" className="hero-panel">
+                <Scrollback active={surface === 'git'} tail>
+                  <GitSurface theme={theme} score={score} rules={gate.length} count={themes.length} />
+                </Scrollback>
+              </Tabs.Panel>
+            </ContextMenu.Trigger>
+            <ContextMenu.Portal>
+              <ContextMenu.Positioner className="outline-none">
+                <ContextMenu.Popup className="hero-menu">
+                  <Actions kind="context" {...actions} />
+                </ContextMenu.Popup>
+              </ContextMenu.Positioner>
+            </ContextMenu.Portal>
+          </ContextMenu.Root>
+        </Tabs.Root>
+
+        <div className="hero-status">
+          <b className="hero-status-name">◆ {theme.name}</b>
+          <span className="hero-status-dim max-sm:hidden">
+            {theme.group}
+            {theme.native ? ` ${theme.native}` : ''}
+          </span>
+          <span className="hero-status-dim max-lg:hidden">ANSI {theme.ansiSource}</span>
+          <span className="hero-status-notice">{notice}</span>
+          <span className="hero-status-pos tabular-nums">{position}</span>
+          <Collapsible.Trigger className="hero-gate" aria-label="contrast gate">
+            <span className={score === gate.length ? 'term-c2' : 'term-c1'}>●</span> gate {score}/{gate.length}
+          </Collapsible.Trigger>
+        </div>
+
+        <Collapsible.Panel className="hero-drawer">
+          <Inspector theme={theme} gate={gate} />
+        </Collapsible.Panel>
+      </Collapsible.Root>
+
       <footer className="flex min-w-0 items-center gap-3.5 text-xs whitespace-nowrap text-muted">
-        <b className="text-[13px] text-ink">{theme.name}</b>
-        <span>{theme.group}</span>
-        <span className="tabular-nums">{position}</span>
-        <span className="ml-auto truncate max-md:hidden">
-          <kbd>←</kbd> <kbd>→</kbd> browse · <kbd>\</kbd> sidebar · <kbd>/</kbd> find
+        <span className="min-w-0 truncate max-md:hidden">
+          <kbd>←</kbd> <kbd>→</kbd> browse · <kbd>\</kbd> sidebar · <kbd>/</kbd> find · <kbd>right-click</kbd> actions
         </span>
-        <CopyCommand command="npx @kecan0406/ttheme init" />
+        <span className="ml-auto flex-none">
+          <CopyCommand command="npx @kecan0406/ttheme init" />
+        </span>
       </footer>
     </section>
   )

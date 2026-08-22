@@ -13,8 +13,11 @@ function entry(partial: Partial<PaletteEntry> & { name: string; group: string })
     foreground: '#eeeeee',
     cursor: '#ffffff',
     selection: '#222222',
+    order: 1,
     signature: ['#ffffff', '#eeeeee', '#000000'],
+    signatureSlots: ['foreground', 'cursor', 'background'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
+    gate: [16.1, 3.9, 0, 16.1, 3.9],
     ...partial,
   }
 }
