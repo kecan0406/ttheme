@@ -30,7 +30,7 @@
       }
     },
     {
-      "includes": ["site/components/landing.tsx", "site/components/hero-field.tsx"],
+      "includes": ["site/components/landing.tsx"],
       "linter": {
         "rules": {
           "correctness": {

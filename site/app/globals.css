@@ -21,85 +21,94 @@
 
 html {
   overflow-anchor: none;
+  color-scheme: dark;
 }
 
-::selection {
-  background: var(--accent);
-  color: var(--ground);
-}
+@layer base {
+  ::selection {
+    background: var(--accent);
+    color: var(--ground);
+  }
 
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  kbd {
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0 5px;
+    font-size: 11px;
+  }
 }
 
 html.cpreg {
   transition: --accent 0.55s ease;
 }
 
-.hero-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: var(--ground);
-  border-bottom: 1px solid color-mix(in srgb, var(--line) calc(100% * var(--morph, 0)), transparent);
-}
-
-.hero-wrap {
-  padding-top: calc(20px - 12px * var(--morph, 0));
-  padding-bottom: calc(12px - 4px * var(--morph, 0));
-}
-
-.hero-collapse {
+.hero-pane {
+  display: grid;
+  min-height: 0;
   overflow: hidden;
-  max-height: calc(var(--collapse-h, 9999px) - (var(--collapse-h, 9999px) - 54px) * var(--morph, 0));
-}
-
-.hero-field {
-  position: relative;
-  aspect-ratio: 16 / 6.6;
-  min-height: 330px;
-  max-height: 540px;
-  overflow: hidden;
+  padding: 1.1em 1.4em;
   border: 1px solid var(--line);
-  background: var(--card);
+  border-radius: 6px;
+  font-size: clamp(11px, 1.5cqw, 16px);
+  line-height: 1.62;
+  white-space: pre;
 }
 
-.hero-field canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
+.hero-pane,
+.hero-pane * {
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-@media (max-width: 640px) {
-  .hero-field {
-    aspect-ratio: 4 / 3.4;
-    min-height: 300px;
+.hero-scroll {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1.62em;
+  min-height: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 2.6em);
+}
+
+.hero-sw {
+  display: inline-block;
+  width: 2.2em;
+  height: 1.1em;
+  margin-right: 0.35em;
+  vertical-align: text-bottom;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgb(128 136 160 / 28%);
+}
+
+.hero-caret {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.05em;
+  vertical-align: text-bottom;
+  animation: hero-blink 1.1s steps(1, end) infinite;
+}
+
+@keyframes hero-blink {
+  50% {
+    opacity: 0;
   }
-}
-
-.swcell {
-  position: relative;
-}
-
-.swcell:hover::after {
-  content: attr(data-hex);
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 5px);
-  transform: translateX(-50%);
-  background: var(--ground);
-  border: 1px solid var(--line);
-  color: var(--ink);
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  z-index: 3;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html.cpreg {
     transition: none;
+  }
+
+  .hero-pane,
+  .hero-pane * {
+    transition: none;
+  }
+
+  .hero-caret {
+    animation: none;
   }
 }

@@ -12,7 +12,7 @@ Every color in a character theme must be traceable: anchors are measured from of
 - Web-search each character's appearance (hair, eyes, signature item, chuuni/persona colors) so you know what to look for before sampling.
 - Theme names follow the project convention (given names); use the common alias instead when the given name collides with a character from another series already in `themes/`.
 - `group` = series English name, `order` = next unused integers (`meta.order` must stay unique across all themes).
-- A new series needs a `[[group]]` table in `themes/_groups.toml`: `native` = official native title, `lead` = the palette whose signature color stands for the whole series on the site's band headers and filter pills. Pick the lead for color, not seniority — Undertale leads with `determination`, Evangelion with `eva01` — and check it against the other groups' lead colors so two series do not land on the same hue.
+- A new series needs a `[[group]]` table in `themes/_groups.toml`: `native` = official native title, `lead` = the palette whose signature color stands for the whole series on the site's sidebar group headers. Pick the lead for color, not seniority — Undertale leads with `determination`, Evangelion with `eva01` — and check it against the other groups' lead colors so two series do not land on the same hue.
 
 ## 2. Measured anchors
 
