@@ -12,15 +12,15 @@ export function CopyCommand({ command }: { command: string }) {
   }
 
   return (
-    <span className="inline-flex flex-none items-stretch overflow-hidden rounded-md border border-line bg-card text-xs text-ink">
+    <span className="inline-flex flex-none items-stretch overflow-hidden rounded-md border border-border bg-card text-xs text-foreground">
       <code className="px-2.5 py-[5px]">
-        <span className="select-none text-muted">$ </span>
+        <span className="select-none text-muted-foreground">$ </span>
         {command}
       </code>
       <button
         type="button"
         onClick={copy}
-        className="cursor-pointer border-l border-line px-2.5 text-muted transition-colors hover:text-accent"
+        className="cursor-pointer border-l border-border px-2.5 text-muted-foreground transition-colors hover:text-primary"
       >
         {copied ? 'copied ✓' : 'copy'}
       </button>

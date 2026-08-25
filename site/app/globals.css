@@ -1,20 +1,37 @@
 @import 'tailwindcss';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-ground: var(--ground);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-card: var(--card);
-  --color-ink: var(--ink);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
-  --color-line: var(--line);
+  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
   --font-mono: var(--font-jetbrains), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-@property --accent {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #8cb8e8;
-}
 @property --bg {
   syntax: '<color>';
   inherits: true;
@@ -53,37 +70,51 @@
 @property --a15 { syntax: '<color>'; inherits: true; initial-value: #000000; }
 
 :root {
-  --ground: #0b0c10;
+  --background: #0b0c10;
+  --foreground: #e9ebf1;
   --card: #12141a;
-  --ink: #e9ebf1;
-  --muted: #8b93a7;
-  --line: #262a34;
-  --accent: #8cb8e8;
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: #8cb8e8;
+  --primary-foreground: var(--background);
+  --secondary: #181b22;
+  --secondary-foreground: var(--foreground);
+  --muted: #181b22;
+  --muted-foreground: #8b93a7;
+  --accent: color-mix(in srgb, var(--primary) 15%, transparent);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #262a34;
+  --input: var(--border);
+  --ring: var(--primary);
+  --radius: 0.375rem;
 }
 
 html {
   overflow-anchor: none;
   color-scheme: dark;
-  transition: --accent 0.55s ease;
 }
 
 @layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
   ::selection {
-    background: var(--accent);
-    color: var(--ground);
+    background: var(--primary);
+    color: var(--background);
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--ring);
     outline-offset: 3px;
   }
 
-  kbd {
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 0 5px;
-    font-size: 11px;
-  }
 }
 
 /* the cell grid — every terminal decoration is a whole number of cells */
@@ -113,16 +144,10 @@ html {
 }
 
 .term-chip,
-.term-blk,
 .term-caret {
   display: inline-block;
   height: var(--cell-h);
   vertical-align: top;
-}
-
-.term-blk {
-  width: calc(var(--cell-w) * 2);
-  background: currentColor;
 }
 
 .term-caret {
@@ -145,15 +170,6 @@ html {
   background: var(--cu);
   color: var(--bg);
   font-weight: 700;
-}
-
-.term-curline {
-  background: color-mix(in srgb, var(--se) 62%, transparent);
-}
-
-.term-lnum {
-  color: var(--a8);
-  opacity: 0.75;
 }
 
 .term-dim {
@@ -189,471 +205,16 @@ html {
 
 /* the window — chrome inherits the palette it is showing */
 
-.hero-win {
-  display: grid;
-  grid-template-rows: 2px minmax(0, 1fr) auto auto;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--fg) 18%, var(--bg));
-  border-radius: 6px;
-}
-
-.hero-win:focus-within {
-  border-color: color-mix(in srgb, var(--cu) 55%, var(--bg));
-}
-
-.hero-cycle {
-  overflow: hidden;
-  background: color-mix(in srgb, var(--fg) 12%, var(--bg));
-}
-
-.hero-cycle i {
-  display: block;
-  height: 100%;
-  background: var(--cu);
-  transform-origin: left;
-  animation: hero-sweep 6s linear forwards;
-}
-
-@keyframes hero-sweep {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-.hero-body {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  min-height: 0;
-  min-width: 0;
-}
-
-.hero-strip {
-  display: flex;
-  align-items: stretch;
-  min-width: 0;
-  height: calc(var(--cell-h) * 2);
-  background: color-mix(in srgb, var(--se) 52%, var(--bg));
-  border-bottom: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
-}
-
-.hero-tablist {
-  position: relative;
-  display: flex;
-  flex: none;
-}
-
-.hero-tab {
-  padding: 0 calc(var(--cell-w) * 2);
-  color: color-mix(in srgb, var(--fg) 52%, transparent);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.hero-tab:hover {
-  color: var(--fg);
-}
-
-.hero-tab[data-active] {
-  color: var(--fg);
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-}
-
-.hero-tabind {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  width: var(--active-tab-width);
-  translate: var(--active-tab-left);
-  background: var(--cu);
-  transition: translate 0.22s ease, width 0.22s ease;
-}
-
-.hero-title {
-  flex: 1;
-  min-width: 0;
-  align-self: center;
-  padding: 0 1ch;
-  text-align: center;
-  font-size: 0.92em;
-  color: color-mix(in srgb, var(--fg) 46%, transparent);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hero-tools {
-  display: flex;
-  align-items: stretch;
-  margin-left: auto;
-  flex: none;
-}
-
-.hero-tool {
-  width: calc(var(--cell-w) * 5);
-  color: color-mix(in srgb, var(--fg) 55%, transparent);
-  cursor: pointer;
-  font-size: 0.9em;
-}
-
-.hero-tool:hover,
-.hero-tool[data-popup-open] {
-  color: var(--fg);
-  background: color-mix(in srgb, var(--fg) 10%, transparent);
-}
-
-.hero-tsep {
-  align-self: center;
-  width: 1px;
-  height: var(--cell-h);
-  background: color-mix(in srgb, var(--fg) 16%, transparent);
-}
-
-.hero-panels {
-  display: grid;
-  min-height: 0;
-  min-width: 0;
-}
-
-.hero-panel {
-  grid-area: 1 / 1;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  min-height: 0;
-  min-width: 0;
-}
-
-.hero-panel[hidden] {
-  display: none;
-}
-
-.hero-view {
-  height: 100%;
-  overscroll-behavior: contain;
-}
-
-.hero-view:focus-visible {
-  outline: 2px solid var(--cu);
-  outline-offset: -2px;
-}
-
-.hero-scr {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  padding: var(--cell-h) calc(var(--cell-w) * 2);
-}
-
-.hero-scr-tail > :first-child {
-  margin-top: auto;
-}
-
-.hero-bar {
-  display: flex;
-  justify-content: center;
-  margin: 1px;
-  width: 6px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.hero-bar-x {
-  width: auto;
-  height: 6px;
-  align-items: center;
-}
-
-.hero-bar[data-hovering],
-.hero-bar[data-scrolling] {
-  opacity: 1;
-  transition-duration: 0s;
-}
-
-.hero-thumb {
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;
+.hero-win [data-slot='scroll-area-thumb'] {
   background: color-mix(in srgb, var(--fg) 30%, transparent);
 }
 
-.hero-nvimline {
-  display: flex;
-  align-items: center;
-  height: var(--cell-h);
-  font-size: 0.9em;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--a4) 88%, var(--bg));
-  color: var(--bg);
-  font-weight: 700;
-}
-
-.hero-nvimline > span {
-  padding: 0 calc(var(--cell-w) * 2);
-}
-
-.hero-nvimline-file {
-  flex: 1;
-  min-width: 0;
-  background: color-mix(in srgb, var(--a4) 42%, var(--bg));
-  color: var(--fg);
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hero-status {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--cell-w) * 2);
-  height: calc(var(--cell-h) * 2);
-  padding: 0 calc(var(--cell-w) * 2);
-  background: color-mix(in srgb, var(--se) 85%, var(--bg));
-  font-size: 0.88em;
-  overflow: hidden;
-}
-
-.hero-status-name {
-  color: var(--cu);
-  flex: none;
-}
-
-.hero-status-dim {
-  color: color-mix(in srgb, var(--fg) 62%, transparent);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hero-status-notice {
-  margin-left: auto;
-  flex: none;
-  color: var(--cu);
-}
-
-.hero-status-pos {
-  flex: none;
-  color: color-mix(in srgb, var(--fg) 62%, transparent);
-}
-
-.hero-gate {
-  display: flex;
-  align-items: center;
-  gap: 0.6ch;
-  flex: none;
-  padding: 0 calc(var(--cell-w) * 1);
-  height: 100%;
-  cursor: pointer;
-  color: var(--fg);
-}
-
-.hero-gate:hover {
-  background: color-mix(in srgb, var(--fg) 10%, transparent);
-}
-
-.hero-drawer {
-  height: var(--collapsible-panel-height);
-  overflow: hidden;
-  transition: height 0.22s ease;
-}
-
-.hero-drawer[data-starting-style],
-.hero-drawer[data-ending-style] {
-  height: 0;
-}
-
-/* the inspector — the gate the build already measured */
-
-.hero-insp {
-  display: grid;
-  gap: calc(var(--cell-h) * 0.8);
-  padding: calc(var(--cell-h) * 0.8) calc(var(--cell-w) * 2);
-  background: color-mix(in srgb, var(--bg) 84%, var(--fg));
-  border-top: 1px solid color-mix(in srgb, var(--fg) 14%, transparent);
-  font-size: 0.86em;
-}
-
-.hero-insp-head {
-  display: flex;
-  gap: 2ch;
-  align-items: baseline;
-  color: color-mix(in srgb, var(--fg) 58%, transparent);
-}
-
-.hero-insp-head b {
-  color: var(--fg);
-}
-
-.hero-chips {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 2px;
-}
-
-.hero-chip {
-  display: grid;
-  gap: 1px;
-  cursor: default;
-  text-align: left;
-  color: color-mix(in srgb, var(--fg) 55%, transparent);
-}
-
-.hero-chip-swatch {
-  display: block;
-  height: calc(var(--cell-h) * 1.1);
-  border-radius: 1px;
-  background: currentColor;
-}
-
-.hero-chip-index {
-  font-size: 0.76em;
-}
-
-.hero-meters {
-  display: grid;
-  gap: 3px;
-}
-
-.hero-meter {
-  display: grid;
-  grid-template-columns: 11em 5.6em minmax(60px, 1fr) 4.4em;
-  gap: 1ch;
-  align-items: center;
-}
-
-.hero-meter-label {
-  color: color-mix(in srgb, var(--fg) 74%, transparent);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hero-meter-value {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.hero-meter-track {
-  position: relative;
-  height: calc(var(--cell-h) * 0.5);
-  border-radius: 1px;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--fg) 12%, transparent);
-}
-
-.hero-meter-track::after {
-  content: '';
-  position: absolute;
-  inset-block: 0;
-  left: 50%;
-  width: 1px;
-  background: color-mix(in srgb, var(--fg) 65%, transparent);
-}
-
-.hero-meter-fill {
-  height: 100%;
-  background: var(--a2);
-  transition: width 0.35s ease;
-}
-
-.hero-meter-fill-fail {
-  background: var(--a1);
-}
-
-.hero-meter-limit {
-  color: color-mix(in srgb, var(--fg) 58%, transparent);
-  font-variant-numeric: tabular-nums;
-}
-
-/* popups live in a portal, so they wear the site chrome, not the palette */
-
-.hero-menu {
-  transform-origin: var(--transform-origin);
-  min-width: 15rem;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--card);
-  box-shadow: 0 18px 40px -18px rgb(0 0 0 / 70%);
-  font-size: 12.5px;
-  color: var(--ink);
-  outline: none;
-  transition: opacity 0.1s, scale 0.1s;
-}
-
-.hero-menu[data-starting-style],
-.hero-menu[data-ending-style] {
-  opacity: 0;
-  scale: 0.97;
-}
-
-.hero-item {
-  display: block;
-  padding: 6px 9px;
-  border-radius: 4px;
-  color: var(--muted);
-  cursor: pointer;
-  outline: none;
-  white-space: nowrap;
-}
-
-.hero-item code {
-  font-size: 11.5px;
-}
-
-.hero-item[data-highlighted] {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-  color: var(--ink);
-}
-
-.hero-sep {
-  margin: 4px 2px;
-  height: 1px;
-  background: var(--line);
-}
-
-.hero-card {
-  transform-origin: var(--transform-origin);
-  display: grid;
-  gap: 1px;
-  padding: 7px 10px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--card);
-  box-shadow: 0 18px 40px -18px rgb(0 0 0 / 70%);
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--muted);
-  outline: none;
-  white-space: nowrap;
-  transition: opacity 0.12s, scale 0.12s;
-}
-
-.hero-card b {
-  color: var(--ink);
-}
-
-.hero-card[data-starting-style],
-.hero-card[data-ending-style] {
-  opacity: 0;
-  scale: 0.97;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  html,
-  .term,
-  .hero-tabind,
-  .hero-drawer,
-  .hero-meter-fill,
-  .hero-menu,
-  .hero-card {
+  .term {
     transition: none;
   }
 
-  .term-caret,
-  .hero-cycle i {
+  .term-caret {
     animation: none;
   }
 }

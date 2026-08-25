@@ -23,6 +23,7 @@ All dev commands are mise tasks. package.json deliberately has **no scripts** �
 - `meta.signature` names three palette slots (`cursor`, `foreground`, `background`, `selection`, `ansi0`-`ansi15`) — the colors that identify the character on a card. They must resolve to three different colors.
 - `dist/manifest.json` is the data contract for everything outside the build: `init` and `site/` read it instead of re-parsing `themes/` (site tasks depend on `build`). Every dist artifact goes through an `Emitter` in `src/emit/` — terminals emit per theme, `shell`/`meta` emit shared files.
 - Every palette must pass the contrast gate (src/contrast.ts). Opting out needs `[contrast] waive = [...]` **plus** a `reason` — a waiver without a reason fails the test suite.
+- `site/` consumes `@base-ui/react` only through `site/components/ui/*`, managed by the shadcn CLI (`site/components.json`, style `base-nova`): add parts with `bunx shadcn@latest add <name>` from `site/`, then adapt them in place — feature components never import `@base-ui/react` directly (biome enforces it). Color tokens use shadcn's vocabulary in a dark-only `:root`. The terminal window is a `Card` whose inline style remaps the shadcn tokens (`--card`, `--primary`, `--secondary`…) to the palette it shows, so every part inside wears that palette.
 
 ## Gotchas
 
