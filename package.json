@@ -9,6 +9,7 @@
     "bin",
     "dist",
     "shell",
+    "!shell/check.zsh",
     "ghostty/shaders"
   ],
   "description": "Character terminal palettes for ghostty, kitty, alacritty, wezterm and iTerm2",

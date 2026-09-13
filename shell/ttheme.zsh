@@ -13,6 +13,29 @@ typeset -g TTHEME_CONFIG=${XDG_CONFIG_HOME:-$HOME/.config}/ttheme/config.zsh
 
 [[ -r $TTHEME_CONFIG ]] && source $TTHEME_CONFIG
 
+typeset -g TTHEME_PINS_FILE=${TTHEME_CONFIG:h}/pins
+typeset -g TTHEME_PINS_RAW=""
+typeset -gA TTHEME_PINS=()
+typeset -g TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_SPEC=""
+
+__tt_tilde() { REPLY=${1/#$HOME\//~/} }
+
+__tt_pins_load() {
+  local raw="" line key name
+  [[ -r $TTHEME_PINS_FILE ]] && raw="$(<$TTHEME_PINS_FILE)"
+  [[ $raw == "$TTHEME_PINS_RAW" ]] && return 0
+  TTHEME_PINS_RAW=$raw
+  TTHEME_PINS=()
+  for line in "${(@f)raw}"; do
+    [[ $line == [~/]* ]] || continue
+    key=${line%%[[:space:]]*} name=${line##*[[:space:]]}
+    TTHEME_PINS[${key/#\~\//$HOME/}]=$name
+    [[ -n ${TTHEME_PALETTE[$name]} ]] || print -u2 "ttheme: unknown palette '$name' pinned to $key"
+  done
+}
+
+__tt_pins_load
+
 : ${TTHEME_TAB_PALETTE:=seq}
 
 : ${TTHEME_ANNOUNCE:=1}
@@ -94,6 +117,111 @@ __tt_announce() {
     $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2})) "$name" "$src"
 }
 
+__tt_dir_rule() {
+  local k base best="" bestlen=-1 p=${1:A}
+  for k in ${(k)TTHEME_PINS}; do
+    [[ -n ${TTHEME_PALETTE[$TTHEME_PINS[$k]]} ]] || continue
+    base=${${k%/\*\*}:A}
+    if [[ $k == *"/**" ]]; then
+      [[ $p == "$base" || $p == "$base"/* ]] || continue
+    else
+      [[ $p == "$base" ]] || continue
+    fi
+    (( ${#base} > bestlen )) && { best=$k; bestlen=${#base} }
+  done
+  [[ -n $best ]] || return 1
+  REPLY=$best
+}
+
+__tt_dir_sync() {
+  local REPLY="" spec=""
+  __tt_dir_rule "$PWD" || REPLY=""
+  [[ $REPLY == "$TTHEME_PIN" ]] && return 0
+  if [[ -n $REPLY ]]; then
+    [[ -n $TTHEME_PIN ]] || TTHEME_BASE_SPEC=$TTHEME_SPEC
+    spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
+  elif [[ $TTHEME_SPEC == "$TTHEME_PIN_SPEC" ]]; then
+    spec=$TTHEME_BASE_SPEC
+  fi
+  TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
+  [[ -n $spec && $spec != "$TTHEME_SPEC" ]] || return 0
+  __tt_apply "$spec"
+  TTHEME_SPEC=$spec
+}
+
+__tt_chpwd() {
+  __tt_pins_load
+  __tt_dir_sync
+}
+
+__tt_pins_write() {
+  local k REPLY w=0
+  local -a keys=(${(ok)TTHEME_PINS}) lines=()
+  for k in $keys; do
+    __tt_tilde "$k"
+    (( ${#REPLY} > w )) && w=${#REPLY}
+  done
+  for k in $keys; do
+    __tt_tilde "$k"
+    printf -v REPLY '%-*s  %s' $w "$REPLY" "${TTHEME_PINS[$k]}"
+    lines+=("$REPLY")
+  done
+  if (( ! ${#lines} )); then
+    rm -f $TTHEME_PINS_FILE || return 1
+    TTHEME_PINS_RAW=""
+    return 0
+  fi
+  mkdir -p ${TTHEME_PINS_FILE:h} || return 1
+  print -rl -- "${lines[@]}" > $TTHEME_PINS_FILE || return 1
+  TTHEME_PINS_RAW="$(<$TTHEME_PINS_FILE)"
+}
+
+__tt_pin_save() {
+  local name=$1 key=$PWD REPLY
+  (( $2 == 2 )) && key="$PWD/**"
+  unset "TTHEME_PINS[$PWD]" "TTHEME_PINS[$PWD/**]"
+  TTHEME_PINS[$key]=$name
+  if ! __tt_pins_write; then
+    print -u2 "ttheme pin: could not write $TTHEME_PINS_FILE"
+    return 1
+  fi
+  [[ -n $TTHEME_PIN ]] || TTHEME_BASE_SPEC=$3
+  TTHEME_PIN=$key TTHEME_PIN_SPEC=${TTHEME_PALETTE[$name]}
+  __tt_tilde "$key"
+  if __tt_color; then
+    printf '\033[2mpinned · %s → %s\033[0m\n' "$REPLY" "$name"
+  else
+    print -r -- "pinned · $REPLY → $name"
+  fi
+}
+
+__tt_unpin() {
+  local key REPLY
+  for key in "$PWD" "$PWD/**"; do
+    [[ -n ${TTHEME_PINS[$key]} ]] || continue
+    unset "TTHEME_PINS[$key]"
+    if ! __tt_pins_write; then
+      print -u2 "ttheme unpin: could not write $TTHEME_PINS_FILE"
+      return 1
+    fi
+    __tt_dir_sync
+    __tt_tilde "$key"
+    if __tt_color; then
+      printf '\033[2munpinned · %s\033[0m\n' "$REPLY"
+    else
+      print -r -- "unpinned · $REPLY"
+    fi
+    return 0
+  done
+  if __tt_dir_rule "$PWD"; then
+    __tt_tilde "$REPLY"
+    print -u2 "ttheme unpin: nothing pinned here — $REPLY covers this directory"
+  else
+    print -u2 "ttheme unpin: nothing pinned here"
+  fi
+  return 1
+}
+
 __tt_keep() {
   if ! __tt_persist "$1"; then
     print -u2 "ttheme: could not save the default — no \`theme =\` line inside the \`# ttheme begin\` block of the ghostty config (run \`npx @kecan0406/ttheme@latest init\`)"
@@ -144,6 +272,8 @@ __tt_help() {
   ttheme homura   paint this tab (a unique prefix works: ttheme ho)
   ttheme preview  browse live — focus repaints, enter keeps (this tab or default), esc restores
   ttheme next     advance this tab to the next palette
+  ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
+  ttheme unpin    drop the palette pinned to this directory
   ttheme config   edit settings in $EDITOR — they apply in new tabs'
 }
 
@@ -413,17 +543,21 @@ __tt_pv_draw() {
     out+=$'\n'
   done
   if [[ -n $pick ]]; then
-    local a=" this tab " b=" default " on=${hsel:-$'\e[7;1m'}
+    local a=$plabel[1] b=$plabel[2] on=${hsel:-$'\e[7;1m'} at=$pick
+    if [[ $mode == pin ]]; then
+      __tt_tilde "$PWD"
+      at+=" → $REPLY"
+    fi
     if (( color )); then
       if (( pk == 1 )); then
         a=$on$a$'\e[0m' b=$'\e[2m'$b$'\e[0m'
       else
         a=$'\e[2m'$a$'\e[0m' b=$on$b$'\e[0m'
       fi
-      line=" $pick → $a $b "$'\e[2m'"←→ choose · enter · esc back"$'\e[0m'
+      line=" $at → $a $b "$'\e[2m'"←→ choose · enter · esc back"$'\e[0m'
     else
-      if (( pk == 1 )); then a="[this tab]"; else b="[default]"; fi
-      line=" $pick → $a $b ←→ choose · enter · esc back"
+      if (( pk == 1 )); then a="[${${a# }% }]"; else b="[${${b# }% }]"; fi
+      line=" $at → $a $b ←→ choose · enter · esc back"
     fi
   else
     line="↑↓ move · ←→ fold · type to filter · enter apply · esc restore"
@@ -563,8 +697,7 @@ __tt_pv_pick() {
     esc) pick="" ;;
     left|right|$'\t') pk=$(( 3 - pk )) ;;
     $'\r'|$'\n')
-      sel=$pick
-      (( pk == 2 )) && keep=1
+      sel=$pick picked=$pk
       return 1
       ;;
   esac
@@ -598,7 +731,7 @@ __tt_pv_handle() {
     $'\r'|$'\n')
       if [[ ${rtype[cur]} == thm ]]; then
         if (( canpick )); then
-          pick=${rval[cur]} pk=1
+          pick=${rval[cur]} pk=$pkdef
         else
           sel=${rval[cur]}
           return 1
@@ -646,13 +779,19 @@ __tt_pv_handle() {
 
 __tt_preview() {
   emulate -L zsh
+  local mode=$1
   if [[ ! -t 0 || ! -t 1 ]]; then
-    print -u2 "ttheme preview: needs a terminal"
+    print -u2 "ttheme ${mode:-preview}: needs a terminal"
     return 1
   fi
   local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0
-  local pick="" pk=1 keep=0 canpick=0
-  (( $+functions[__tt_persist] )) && [[ $TTHEME_TAB_PALETTE == off ]] && canpick=1
+  local pick="" pk=1 pkdef=1 picked=0 canpick=0
+  local -a plabel=(" this tab " " default ")
+  if [[ $mode == pin ]]; then
+    canpick=1 pkdef=2 plabel=(" this directory " " and below ")
+  elif (( $+functions[__tt_persist] )) && [[ $TTHEME_TAB_PALETTE == off ]]; then
+    canpick=1
+  fi
   __tt_pv_size
   local -a groups=() rtype=() rval=() rcnt=()
   local -A gnative=() gthemes=() exp=() hchip=() hnat=() tbody=()
@@ -682,7 +821,11 @@ __tt_preview() {
       [[ $spec == "$applied" ]] || __tt_apply "$spec"
       TTHEME_SPEC=$spec
       __tt_announce
-      (( keep )) && __tt_keep "$sel"
+      if [[ $mode == pin ]]; then
+        __tt_pin_save "$sel" $picked "$orig"
+      elif (( picked == 2 )); then
+        __tt_keep "$sel"
+      fi
     elif [[ -n $orig && $orig != "$applied" ]]; then
       __tt_apply "$orig"
     fi
@@ -700,6 +843,8 @@ ttheme() {
     -h|--help|help) __tt_help; return 0 ;;
     next) __tt_rotate; return ;;
     preview) __tt_preview; return ;;
+    pin) __tt_preview pin; return ;;
+    unpin) __tt_unpin; return ;;
     config) __tt_config; return ;;
     -*) print -u2 "ttheme: unknown option $1 — see \`ttheme help\`"; return 1 ;;
   esac
@@ -714,7 +859,7 @@ ttheme() {
 
 if (( $+functions[compdef] )); then
   __tt_complete() {
-    (( CURRENT == 2 )) && compadd -- preview next config help
+    (( CURRENT == 2 )) && compadd -- preview next pin unpin config help
     compadd -- $TTHEME_ORDER
   }
   compdef __tt_complete ttheme
@@ -744,5 +889,8 @@ if __tt_active; then
     unset REPLY
   fi
 
+  __tt_dir_sync
+  autoload -Uz add-zsh-hook
+  add-zsh-hook chpwd __tt_chpwd
   __tt_announce
 fi

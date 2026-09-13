@@ -53,7 +53,7 @@ const NAMED_SLOTS = ['background', 'foreground', 'cursor', 'selection'] as const
 
 type NamedSlot = (typeof NAMED_SLOTS)[number]
 
-export const RESERVED_NAMES = new Set(['next', 'help', 'preview'])
+export const RESERVED_NAMES = new Set(['next', 'help', 'preview', 'pin', 'unpin', 'config'])
 
 function fail(file: string, message: string): never {
   throw new Error(`${file}: ${message}`)

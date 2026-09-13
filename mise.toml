@@ -28,42 +28,11 @@ run = "biome check --write ."
 description = "syntax-check and exercise the zsh layer"
 depends = ["build"]
 run = '''
-{% raw %}
 set -e
-for f in shell/ttheme.zsh shell/launch-tab.zsh shell/adapters/*.zsh; do
+for f in shell/*.zsh shell/adapters/*.zsh; do
   zsh -n "$f"
 done
-zsh -c '
-  export XDG_CONFIG_HOME=$(mktemp -d)
-  trap "rm -rf $XDG_CONFIG_HOME" EXIT
-  source shell/ttheme.zsh
-  (( ${#TTHEME_PALETTE} > 0 )) || { print -u2 "no palettes loaded"; exit 1 }
-  (( ${#TTHEME_ORDER} + 1 == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
-  __tt_menu > /dev/null || exit 1
-  ttheme help > /dev/null || { print -u2 "ttheme help broke"; exit 1 }
-  ttheme -h > /dev/null || { print -u2 "ttheme -h broke"; exit 1 }
-  REPLY=; __tt_resolve ho || exit 1
-  [[ $REPLY == homura ]] || { print -u2 "prefix resolve broke: $REPLY"; exit 1 }
-  ttheme nosuchpalette 2>/dev/null && { print -u2 "ttheme took a bad name"; exit 1 }
-  out=$(ttheme city 2>&1) && { print -u2 "ttheme took a bad name"; exit 1 }
-  [[ $out == *"did you mean"*nightcity* ]] || { print -u2 "did-you-mean broke: $out"; exit 1 }
-  ttheme --frobnicate 2>/dev/null && { print -u2 "ttheme took an unknown option"; exit 1 }
-  out=$(ttheme preview </dev/null 2>&1) && { print -u2 "ttheme preview ran without a tty"; exit 1 }
-  [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }
-  EDITOR=true ttheme config > /dev/null || { print -u2 "ttheme config broke"; exit 1 }
-  source shell/adapters/ghostty.zsh
-  killall() { :; }; pkill() { :; }
-  mkdir -p $XDG_CONFIG_HOME/ghostty
-  print -l "font-size = 14" "# ttheme begin" "theme = magi" "config-file = x" "# ttheme end" > $XDG_CONFIG_HOME/ghostty/config
-  __tt_persist homura || { print -u2 "__tt_persist failed"; exit 1 }
-  [[ "$(<$XDG_CONFIG_HOME/ghostty/config)" == "$(print -l "font-size = 14" "# ttheme begin" "theme = homura" "config-file = x" "# ttheme end")" ]] ||
-    { print -u2 "__tt_persist rewrote the config wrong:"; cat $XDG_CONFIG_HOME/ghostty/config; exit 1 }
-  print "theme = magi" > $XDG_CONFIG_HOME/ghostty/config
-  __tt_persist homura 2>/dev/null && { print -u2 "__tt_persist touched a theme line outside the block"; exit 1 }
-  [[ "$(<$TTHEME_CONFIG)" == "$TTHEME_CONFIG_TEMPLATE" ]] || { print -u2 "config seed drifted from the template"; exit 1 }
-  print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$TTHEME_ADAPTER"
-'
-{% endraw %}
+zsh shell/check.zsh
 '''
 
 [tasks."ghostty:check"]

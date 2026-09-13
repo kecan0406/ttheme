@@ -111,6 +111,8 @@ ttheme          list every palette, grouped, with previews
 ttheme homura   pin this tab      (a unique prefix works: ttheme ho)
 ttheme preview  browse live — focus repaints the tab, enter keeps it (this tab or default)
 ttheme next     advance this tab to the next palette
+ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
+ttheme unpin    drop the palette pinned to this directory
 ttheme config   edit settings in $EDITOR — they apply in new tabs
 ttheme help     the list above, in your terminal
 ```
@@ -127,7 +129,17 @@ painted by hand — take the palette without a restart. Painting is per surface
 otherwise: a new tab starts from the configured theme, not from what the last
 tab was painted.
 
-`preview`, `next`, `config` and `help` match exactly; every other first argument is read
+`pin` opens the same browser and, on enter, asks **this directory** or **and
+below**; the answer lands in `~/.config/ttheme/pins`, one `path  palette` per
+line, where `path/**` covers everything below it (`~` works, and the file is
+yours to edit). From then on a tab that `cd`s into a pinned path takes its
+palette — symlinks resolve to the pinned directory — and `cd`ing out restores
+what the tab had before, unless you painted it by hand in between, in which
+case your pick stays. The nearest pinned ancestor wins, so a project can pin
+one palette and a subfolder another. Open tabs pick up a changed pins file on
+their next `cd`; `unpin` drops the pin on the current directory.
+
+`preview`, `next`, `pin`, `unpin`, `config` and `help` match exactly; every other first argument is read
 as a palette name, where a unique prefix is enough. Mistyped names get a "did
 you mean" suggestion instead of a wall of output. Piped output drops color and
 turns tab-separated, and `NO_COLOR` is respected.
