@@ -6,26 +6,26 @@ ansi_source = "Duskfox"
 signature = ["cursor", "ansi9", "ansi13"]
 
 [colors]
-background = "#232136"
-foreground = "#e0def4"
+background = "#1e151a"
+foreground = "#f5dce8"
 cursor = "#b56d9e"
-selection_background = "#433c59"
+selection_background = "#403956"
 ansi = [
-  "#393552",
-  "#eb6f92",
-  "#a3be8c",
-  "#f6c177",
-  "#569fba",
-  "#c4a7e7",
-  "#9ccfd8",
-  "#e0def4",
+  "#2b2127",
+  "#f179ad",
+  "#d1a360",
+  "#f9a88b",
+  "#8d9fd9",
+  "#c396d0",
+  "#98b1e1",
+  "#d3c2ca",
 
-  "#544d8a",
+  "#81737a",
   "#f083a2",
-  "#b1d196",
-  "#f9cb8c",
-  "#65b1cd",
+  "#f5c47e",
+  "#ffd3c5",
+  "#acbffd",
   "#ccb1ed",
-  "#a6dae3",
-  "#e2e0f7",
+  "#bbd2ff",
+  "#ffe8f3",
 ]

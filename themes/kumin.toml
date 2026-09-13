@@ -6,26 +6,26 @@ ansi_source = "Rose Pine + Delusion"
 signature = ["cursor", "ansi4", "ansi1"]
 
 [colors]
-background = "#191724"
-foreground = "#e0def4"
+background = "#1a161e"
+foreground = "#eadef1"
 cursor = "#c4a7e7"
-selection_background = "#403d52"
+selection_background = "#3e3b50"
 ansi = [
-  "#26233a",
+  "#26222a",
   "#eb6f92",
-  "#bdcd80",
-  "#f6c177",
+  "#df9d60",
+  "#faa69e",
   "#9ccfd8",
-  "#c4a7e7",
-  "#ebbcba",
-  "#e0def4",
+  "#b69ad9",
+  "#df9ebc",
+  "#ccc4cf",
 
-  "#6e6a86",
-  "#eb6f92",
-  "#bdcd80",
-  "#f6c177",
-  "#9ccfd8",
-  "#c4a7e7",
-  "#ebbcba",
-  "#e0def4",
+  "#7b757f",
+  "#ffa4e3",
+  "#ffbf85",
+  "#ffd3ce",
+  "#9dc5ee",
+  "#d8bafb",
+  "#ffc0dc",
+  "#f5eafc",
 ]

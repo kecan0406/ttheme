@@ -6,26 +6,26 @@ ansi_source = "Warm Neon + Phantom"
 signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]
-background = "#1a0e10"
-foreground = "#f2e3c8"
+background = "#201514"
+foreground = "#fcdbd8"
 cursor = "#f0393f"
-selection_background = "#4a1418"
+selection_background = "#5c3233"
 ansi = [
-  "#241114",
-  "#e24346",
-  "#39b13a",
+  "#2d2120",
+  "#ff7671",
+  "#cba800",
   "#dae145",
   "#4261c5",
-  "#f920fb",
-  "#2abbd4",
-  "#d0b8a3",
+  "#fe78ba",
+  "#97adff",
+  "#d8c2c0",
 
-  "#6e5a52",
-  "#e97071",
-  "#9cc090",
-  "#ddda7a",
-  "#7b91d6",
-  "#f674ba",
-  "#5ed1e5",
-  "#d8c8bb",
+  "#857371",
+  "#ffaba8",
+  "#e3cb7d",
+  "#ffd6a1",
+  "#dfaff9",
+  "#ffb1c4",
+  "#c3d0ff",
+  "#ffe9e7",
 ]

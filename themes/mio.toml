@@ -6,26 +6,26 @@ ansi_source = "Ardoise + HTT"
 signature = ["cursor", "ansi4", "foreground"]
 
 [colors]
-background = "#191b20"
+background = "#14181e"
 foreground = "#e8ecf2"
 cursor = "#84aadc"
-selection_background = "#303740"
+selection_background = "#373e47"
 ansi = [
-  "#2c2c2c",
-  "#d3322d",
-  "#588b35",
-  "#fca93a",
+  "#20242a",
+  "#e478df",
+  "#12c0ac",
+  "#ffa1b0",
   "#2465c2",
-  "#be68ca",
-  "#64e1b8",
-  "#f7f7f7",
+  "#b195ff",
+  "#16c3d0",
+  "#c3c6cf",
 
-  "#535353",
-  "#fa5852",
-  "#8dc252",
-  "#ffea51",
-  "#6ab5f8",
-  "#be68ca",
-  "#89ffdb",
-  "#fefefe",
+  "#73777f",
+  "#ffa0fa",
+  "#19e5c9",
+  "#6ef5b5",
+  "#90c5ff",
+  "#cfbdff",
+  "#60e3f3",
+  "#e7eefd",
 ]

@@ -6,26 +6,26 @@ ansi_source = "IR Black"
 signature = ["cursor", "ansi2", "ansi12"]
 
 [colors]
-background = "#100b0a"
-foreground = "#f1f1f1"
+background = "#211513"
+foreground = "#fddbd6"
 cursor = "#c93425"
-selection_background = "#5a1915"
+selection_background = "#5c322e"
 ansi = [
-  "#4f4f4f",
-  "#fa6c60",
+  "#2e211f",
+  "#ff7667",
   "#a8ff60",
-  "#fffeb7",
-  "#96cafe",
-  "#fa73fd",
-  "#c6c5fe",
-  "#efedef",
+  "#e1b46e",
+  "#ae94d8",
+  "#fe78b8",
+  "#cfa2d2",
+  "#d8c2be",
 
-  "#7b7b7b",
-  "#fcb6b0",
-  "#cfffab",
-  "#ffffcc",
+  "#857370",
+  "#fdaca4",
+  "#ebc960",
+  "#ffd799",
   "#b5dcff",
-  "#fb9cfe",
-  "#e0e0fe",
-  "#ffffff",
+  "#ffafd2",
+  "#f0c3f6",
+  "#ffe9e6",
 ]

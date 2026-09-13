@@ -6,26 +6,26 @@ ansi_source = "Laser"
 signature = ["cursor", "ansi12", "ansi4"]
 
 [colors]
-background = "#150a14"
-foreground = "#f4e3ee"
+background = "#1d151b"
+foreground = "#f3dceb"
 cursor = "#ef11ec"
-selection_background = "#3a1038"
+selection_background = "#52344d"
 ansi = [
-  "#626262",
-  "#ff8373",
-  "#b4fb73",
-  "#09b4bd",
+  "#2a2128",
+  "#f37b98",
+  "#e99b00",
+  "#8cbfff",
   "#fed300",
-  "#ff90fe",
-  "#d1d1fe",
-  "#f1f1f1",
+  "#ea7ee5",
+  "#bda7de",
+  "#d1c2cb",
 
-  "#8f8f8f",
-  "#ffc4be",
-  "#d6fcba",
-  "#fffed5",
+  "#80747b",
+  "#f8acbd",
+  "#f6c478",
+  "#ffd5b6",
   "#f92883",
-  "#ffb2fe",
-  "#e6e7fe",
-  "#ffffff",
+  "#fbacf6",
+  "#dbc9ff",
+  "#fee8f6",
 ]

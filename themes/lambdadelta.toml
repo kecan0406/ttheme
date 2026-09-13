@@ -6,26 +6,26 @@ ansi_source = "Neon Purple + Truth"
 signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]
-background = "#291b47"
-foreground = "#f5eefa"
+background = "#1f1519"
+foreground = "#f7dbe5"
 cursor = "#ff3fae"
-selection_background = "#3f2a66"
+selection_background = "#433859"
 ansi = [
-  "#000000",
-  "#e8158a",
-  "#03eba5",
+  "#2c2125",
+  "#f972b0",
+  "#bcae00",
   "#fffa6a",
   "#00bfff",
-  "#ff00e0",
-  "#9aa5ed",
-  "#ffffff",
+  "#f77acb",
+  "#c5a2ec",
+  "#d4c2c7",
 
-  "#a8fcff",
-  "#ff0da5",
-  "#00ffb6",
-  "#fff787",
-  "#1bccfd",
-  "#ff00f8",
-  "#a6b6ff",
-  "#ffffff",
+  "#827378",
+  "#ffa7cd",
+  "#decf0b",
+  "#ffd5b2",
+  "#b1beff",
+  "#ffade2",
+  "#e0c7ff",
+  "#ffe8ef",
 ]

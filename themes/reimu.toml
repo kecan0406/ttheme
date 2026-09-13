@@ -6,26 +6,26 @@ ansi_source = "Firewatch"
 signature = ["cursor", "foreground", "ansi3"]
 
 [colors]
-background = "#1b1216"
+background = "#201513"
 foreground = "#f7f0ee"
 cursor = "#e30d12"
-selection_background = "#44222a"
+selection_background = "#58333b"
 ansi = [
-  "#585f6d",
-  "#d95360",
-  "#5ab977",
+  "#2e211f",
+  "#ff7575",
+  "#bdad2c",
   "#dfb563",
-  "#4d89c4",
-  "#d55119",
-  "#44a8b6",
-  "#e6e5ff",
+  "#b292e0",
+  "#ff8260",
+  "#96aff1",
+  "#d8c2be",
 
-  "#585f6d",
-  "#d95360",
-  "#5ab977",
-  "#dfb563",
-  "#4c89c5",
-  "#d55119",
-  "#44a8b6",
-  "#e6e5ff",
+  "#857370",
+  "#ffaba8",
+  "#e0ce4c",
+  "#ffd5b3",
+  "#d3b3ff",
+  "#ffb5a1",
+  "#c1d1ff",
+  "#ffe9e6",
 ]

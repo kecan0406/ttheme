@@ -6,26 +6,26 @@ ansi_source = "Purplepeter"
 signature = ["cursor", "ansi1", "ansi13"]
 
 [colors]
-background = "#150f26"
-foreground = "#ece7fa"
+background = "#1e151a"
+foreground = "#f4dce9"
 cursor = "#d0b8c5"
-selection_background = "#3a2a5e"
+selection_background = "#423859"
 ansi = [
-  "#0a0520",
+  "#2a2127",
   "#ff796d",
-  "#99b481",
-  "#efdfac",
-  "#66d9ef",
-  "#e78fcd",
-  "#ba8cff",
-  "#ffba81",
+  "#d1a361",
+  "#f2ac80",
+  "#7aa1e9",
+  "#e089c7",
+  "#df93fe",
+  "#d2c2ca",
 
-  "#504b63",
-  "#f99f92",
-  "#b4be8f",
-  "#f2e9bf",
-  "#79daed",
+  "#81737a",
+  "#ffa9b7",
+  "#fcc182",
+  "#ffd4b9",
+  "#a2c1ff",
   "#ba91d4",
-  "#a0a0d6",
-  "#b9aed3",
+  "#e2c7ff",
+  "#ffe8f3",
 ]

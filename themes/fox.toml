@@ -6,26 +6,26 @@ ansi_source = "Nord"
 signature = ["cursor", "foreground", "ansi1"]
 
 [colors]
-background = "#232831"
+background = "#12181d"
 foreground = "#eceff4"
 cursor = "#05a9ee"
-selection_background = "#434c5e"
+selection_background = "#353e4f"
 ansi = [
-  "#3b4252",
+  "#1e242a",
   "#bf616a",
-  "#a3be8c",
-  "#ebcb8b",
-  "#81a1c1",
-  "#b48ead",
-  "#88c0d0",
-  "#e5e9f0",
+  "#75b8a5",
+  "#9cc795",
+  "#79a5ca",
+  "#ab9ed5",
+  "#7eb9d2",
+  "#c1c7ce",
 
-  "#596377",
-  "#bf616a",
-  "#a3be8c",
-  "#ebcb8b",
-  "#81a1c1",
-  "#b48ead",
-  "#8fbcbb",
-  "#eceff4",
+  "#71787e",
+  "#e6acfa",
+  "#95d9c6",
+  "#bce9b4",
+  "#9ac6ec",
+  "#ccbff7",
+  "#9adceb",
+  "#e3effb",
 ]

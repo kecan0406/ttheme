@@ -6,26 +6,26 @@ ansi_source = "Neon + DDLC"
 signature = ["cursor", "ansi10", "ansi12"]
 
 [colors]
-background = "#0e0d12"
-foreground = "#f2f2f2"
+background = "#1d151b"
+foreground = "#f3dcea"
 cursor = "#f924e7"
-selection_background = "#352550"
+selection_background = "#443858"
 ansi = [
-  "#000000",
-  "#ff3045",
-  "#5ffa74",
-  "#fffc7e",
-  "#366dce",
-  "#f924e7",
-  "#00fffc",
-  "#c7c7c7",
+  "#2a2127",
+  "#fd729d",
+  "#d6a400",
+  "#ffa75f",
+  "#a690ff",
+  "#f07cdb",
+  "#6cb5ff",
+  "#d2c2cb",
 
-  "#686868",
-  "#ff5a5a",
+  "#80747b",
+  "#ffa9bd",
   "#75ff88",
-  "#fffd96",
+  "#ffd5b6",
   "#5c8ade",
-  "#f15be5",
-  "#88fffe",
-  "#ffffff",
+  "#ffabee",
+  "#b2d4ff",
+  "#ffe7f5",
 ]

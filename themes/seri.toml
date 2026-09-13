@@ -6,26 +6,26 @@ ansi_source = "Birds Of Paradise"
 signature = ["cursor", "ansi12", "ansi9"]
 
 [colors]
-background = "#2a1f1d"
-foreground = "#e0dbb7"
+background = "#1e160d"
+foreground = "#f6dfc6"
 cursor = "#e99d2a"
-selection_background = "#563c27"
+selection_background = "#523823"
 ansi = [
-  "#573d26",
-  "#d64438",
-  "#6ba18a",
-  "#e99d2a",
-  "#5a86ad",
-  "#ac80a6",
-  "#74a6ad",
-  "#e0dbb7",
+  "#2b2218",
+  "#fc7c35",
+  "#9bb477",
+  "#faab38",
+  "#63ada3",
+  "#dc9298",
+  "#8abc92",
+  "#d4c4b4",
 
-  "#9b6c4a",
+  "#827568",
   "#e84627",
-  "#95d8ba",
-  "#d0d150",
+  "#bbd592",
+  "#feda51",
   "#b8d3ed",
-  "#d19ecb",
-  "#93cfd7",
-  "#fff9d5",
+  "#ffb2b9",
+  "#abdeb1",
+  "#ffebd6",
 ]

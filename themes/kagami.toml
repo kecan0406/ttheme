@@ -6,26 +6,26 @@ ansi_source = "Nightfox"
 signature = ["cursor", "ansi4", "ansi9"]
 
 [colors]
-background = "#1a1526"
-foreground = "#cdcecf"
+background = "#1a161d"
+foreground = "#ebdef0"
 cursor = "#a782c7"
-selection_background = "#322a47"
+selection_background = "#413957"
 ansi = [
-  "#393b44",
-  "#c94f6d",
-  "#81b29a",
-  "#dbc074",
+  "#27222a",
+  "#ec78c4",
+  "#78b3cb",
+  "#f6a990",
   "#719cd6",
-  "#9d79d6",
-  "#63cdcf",
-  "#dfdfe0",
+  "#bd93f1",
+  "#75b7ea",
+  "#cdc4ce",
 
-  "#575860",
+  "#7c757e",
   "#d16983",
-  "#8ebaa4",
-  "#e0c989",
-  "#86abdc",
-  "#baa1e2",
-  "#7ad5d6",
-  "#e4e4e5",
+  "#99d5ee",
+  "#ffd3c6",
+  "#b4bdfa",
+  "#d8bafc",
+  "#a8d7ff",
+  "#f7e9fc",
 ]

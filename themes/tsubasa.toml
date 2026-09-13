@@ -6,26 +6,26 @@ ansi_source = "Kanso Ink"
 signature = ["cursor", "foreground", "ansi12"]
 
 [colors]
-background = "#14171d"
+background = "#201517"
 foreground = "#c5c9c7"
 cursor = "#faafc0"
-selection_background = "#22262d"
+selection_background = "#3a3e45"
 ansi = [
-  "#14171d",
-  "#c4746e",
-  "#8a9a7b",
-  "#c4b28a",
-  "#8ba4b0",
-  "#a292a3",
-  "#8ea4a2",
-  "#c8c093",
+  "#2d2123",
+  "#dd898e",
+  "#cba65f",
+  "#f0ad7c",
+  "#989dd2",
+  "#cc95bd",
+  "#90b4de",
+  "#d6c2c5",
 
-  "#a4a7a4",
-  "#e46876",
-  "#87a987",
-  "#e6c384",
+  "#847376",
+  "#ffaab5",
+  "#e6ca7c",
+  "#ffd4bb",
   "#7fb4ca",
-  "#938aa9",
-  "#7aa89f",
-  "#c5c9c7",
+  "#e5b8ea",
+  "#aad7fe",
+  "#ffe8ec",
 ]

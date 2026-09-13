@@ -6,26 +6,26 @@ ansi_source = "Cutie Pro"
 signature = ["cursor", "foreground", "ansi12"]
 
 [colors]
-background = "#211309"
+background = "#1f160d"
 foreground = "#d5d0c9"
 cursor = "#f7941d"
-selection_background = "#4a2c15"
+selection_background = "#56361e"
 ansi = [
-  "#000000",
-  "#f56e7f",
-  "#bec975",
-  "#f58669",
-  "#42d9c5",
-  "#d286b7",
-  "#37cb8a",
-  "#d5c3c3",
+  "#2c2219",
+  "#fe7956",
+  "#c2aa52",
+  "#ffa679",
+  "#7aaf53",
+  "#ea8b90",
+  "#a0bc36",
+  "#d5c3b6",
 
-  "#88847f",
-  "#e5a1a3",
-  "#e8d6a7",
-  "#f1bb79",
+  "#837469",
+  "#fdae97",
+  "#f0c67c",
+  "#ffd6ab",
   "#80c5de",
-  "#b294bb",
-  "#9dccbb",
-  "#ffffff",
+  "#fdb2c7",
+  "#c1da99",
+  "#ffeada",
 ]

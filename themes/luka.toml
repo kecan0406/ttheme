@@ -6,26 +6,26 @@ ansi_source = "Rose Pine"
 signature = ["cursor", "ansi3", "ansi2"]
 
 [colors]
-background = "#221724"
-foreground = "#e0def4"
+background = "#1f1517"
+foreground = "#f9dbe1"
 cursor = "#ffbacc"
-selection_background = "#452f3f"
+selection_background = "#4d3747"
 ansi = [
-  "#26233a",
-  "#eb6f92",
+  "#2c2123",
+  "#f6789d",
   "#31748f",
   "#f6c177",
-  "#9ccfd8",
-  "#c4a7e7",
-  "#ebbcba",
-  "#e0def4",
+  "#8ea0d1",
+  "#ca94ca",
+  "#e89ca3",
+  "#d6c2c5",
 
-  "#6e6a86",
-  "#eb6f92",
-  "#31748f",
-  "#f6c177",
-  "#9ccfd8",
-  "#c4a7e7",
-  "#ebbcba",
-  "#e0def4",
+  "#837376",
+  "#ffa9be",
+  "#c4c8ff",
+  "#ffd4c0",
+  "#aec0f3",
+  "#edb4ec",
+  "#ffc2c7",
+  "#ffe8ec",
 ]

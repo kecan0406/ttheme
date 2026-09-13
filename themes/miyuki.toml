@@ -6,26 +6,26 @@ ansi_source = "Oxocarbon"
 signature = ["cursor", "ansi4", "ansi2"]
 
 [colors]
-background = "#26161e"
-foreground = "#f2f4f8"
+background = "#201516"
+foreground = "#fbdbde"
 cursor = "#f9a6b2"
-selection_background = "#402836"
+selection_background = "#503645"
 ansi = [
-  "#161616",
-  "#00dfdb",
+  "#2d2122",
+  "#52a5f8",
   "#00b4ff",
-  "#ff4297",
+  "#ffa0b9",
   "#00c15a",
-  "#c693ff",
-  "#ff74b8",
-  "#f2f4f8",
+  "#e285dc",
+  "#ff8db4",
+  "#d7c1c3",
 
-  "#585858",
-  "#00dfdb",
-  "#00b4ff",
-  "#ff4297",
-  "#00c15a",
-  "#c693ff",
-  "#ff74b8",
-  "#f2f4f8",
+  "#847374",
+  "#94c4ff",
+  "#cec5ff",
+  "#ffd1db",
+  "#e6bd00",
+  "#ffaaf7",
+  "#ffc1d2",
+  "#ffe9ea",
 ]

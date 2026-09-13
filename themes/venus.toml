@@ -6,26 +6,26 @@ ansi_source = "Earthsong"
 signature = ["cursor", "ansi3", "ansi12"]
 
 [colors]
-background = "#251c12"
-foreground = "#e5c7a9"
+background = "#1e160d"
+foreground = "#f5dfc6"
 cursor = "#f7a700"
 selection_background = "#4d3a1e"
 ansi = [
-  "#121418",
-  "#c94234",
-  "#85c54c",
+  "#2a2218",
+  "#fb7d2f",
+  "#b1b100",
   "#f5ae2e",
-  "#1398b9",
-  "#d0633d",
-  "#509552",
-  "#e5c6aa",
+  "#51b285",
+  "#f48b3c",
+  "#aab94f",
+  "#d3c4b4",
 
-  "#675f54",
-  "#ff645a",
-  "#98e036",
-  "#e0d561",
+  "#817567",
+  "#ffae86",
+  "#d7d119",
+  "#feda63",
   "#5fdaff",
-  "#ff9269",
-  "#84f088",
-  "#f6f7ec",
+  "#ffb786",
+  "#c8dc40",
+  "#ffebd4",
 ]

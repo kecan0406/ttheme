@@ -6,26 +6,26 @@ ansi_source = "Mellow"
 signature = ["cursor", "foreground", "ansi12"]
 
 [colors]
-background = "#15141b"
+background = "#1e151a"
 foreground = "#eae8f2"
 cursor = "#e29eca"
-selection_background = "#3a2152"
+selection_background = "#473757"
 ansi = [
-  "#27272a",
-  "#f5a191",
-  "#90b99f",
-  "#e6b99d",
-  "#aca1cf",
-  "#e29eca",
-  "#ea83a5",
-  "#c1c0d4",
+  "#2b2127",
+  "#d98b95",
+  "#b9ac62",
+  "#f7a79e",
+  "#b594c8",
+  "#d491bd",
+  "#f691bf",
+  "#d3c2ca",
 
-  "#424246",
-  "#ffae9f",
-  "#9dc6ac",
-  "#f0c5a9",
+  "#81737a",
+  "#fbacb6",
+  "#dbcd80",
+  "#ffd3cd",
   "#b9aeda",
-  "#ecaad6",
-  "#f591b2",
-  "#cac9dd",
+  "#f5b2de",
+  "#ffc0da",
+  "#ffe8f3",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Red Planet + Senshi"
 signature = ["cursor", "ansi9", "foreground"]
 
 [colors]
-background = "#241211"
+background = "#201514"
 foreground = "#c2b790"
 cursor = "#d31e30"
-selection_background = "#33204a"
+selection_background = "#463757"
 ansi = [
-  "#202020",
-  "#b55242",
-  "#728271",
-  "#e8bf6a",
-  "#69819e",
-  "#896492",
-  "#5b8390",
-  "#b9aa99",
+  "#2d2120",
+  "#f18073",
+  "#bcab61",
+  "#f4ac6f",
+  "#ac97cd",
+  "#d194b6",
+  "#a7ade3",
+  "#d7c1c0",
 
-  "#676767",
+  "#857372",
   "#d9604d",
-  "#869985",
-  "#ebeb91",
-  "#60827e",
-  "#de4974",
-  "#38add8",
-  "#d6bfb8",
+  "#decc7e",
+  "#ffd6a0",
+  "#b1ca8a",
+  "#ffb2b9",
+  "#d1ccff",
+  "#ffe9e7",
 ]

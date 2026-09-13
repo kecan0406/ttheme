@@ -6,26 +6,26 @@ ansi_source = "Mona Lisa + Oddity"
 signature = ["cursor", "ansi9", "ansi13"]
 
 [colors]
-background = "#170f08"
-foreground = "#f7d66a"
+background = "#1c170c"
+foreground = "#efe1c5"
 cursor = "#f2c230"
-selection_background = "#3f2c10"
+selection_background = "#4f3a1d"
 ansi = [
-  "#351b0e",
-  "#d14a38",
-  "#8f8e4a",
-  "#c36e28",
-  "#7f9fa1",
-  "#e05560",
-  "#588056",
-  "#f7d75c",
+  "#282318",
+  "#f78019",
+  "#b9ac62",
+  "#faab46",
+  "#77ac87",
+  "#ff843b",
+  "#a7b876",
+  "#cfc5b4",
 
-  "#874228",
+  "#7e7667",
   "#ff4331",
-  "#b4b264",
-  "#ff9566",
-  "#9eb2b4",
+  "#dccd7a",
+  "#ffd5b3",
+  "#96cea7",
   "#ff5b6a",
-  "#8acd8f",
-  "#ffe598",
+  "#c1dc81",
+  "#fbecd0",
 ]

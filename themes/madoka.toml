@@ -6,26 +6,26 @@ ansi_source = "Elegant + Magica"
 signature = ["cursor", "ansi1", "ansi3"]
 
 [colors]
-background = "#26141d"
-foreground = "#ced2d6"
+background = "#201516"
+foreground = "#fbdbdd"
 cursor = "#ffc1c6"
-selection_background = "#452636"
+selection_background = "#553444"
 ansi = [
-  "#0a1222",
+  "#2d2021",
   "#ff0257",
-  "#85cc95",
+  "#c2aa48",
   "#ffcb8b",
-  "#8dabe1",
-  "#ffc1c6",
-  "#78ccf0",
-  "#ffffff",
+  "#af95d2",
+  "#dc9299",
+  "#aaaaf3",
+  "#d7c1c2",
 
-  "#575656",
-  "#ff0057",
-  "#85cc95",
-  "#ffcb8b",
-  "#8dabe1",
-  "#ffc1c6",
-  "#3facef",
-  "#ffffff",
+  "#857374",
+  "#ffaab2",
+  "#e4cb65",
+  "#ffd4be",
+  "#d1b5f5",
+  "#ffb2b9",
+  "#d5cbff",
+  "#ffe9e9",
 ]

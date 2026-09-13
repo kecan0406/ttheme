@@ -6,26 +6,26 @@ ansi_source = "Bright Lights"
 signature = ["cursor", "ansi5", "ansi4"]
 
 [colors]
-background = "#191c46"
-foreground = "#e8ecfa"
+background = "#1d170c"
+foreground = "#f3e0c5"
 cursor = "#ffc251"
-selection_background = "#2c2f6b"
+selection_background = "#393b5b"
 ansi = [
-  "#191919",
-  "#ff355b",
-  "#b7e876",
-  "#ffc251",
+  "#2a2318",
+  "#fe7a3e",
+  "#b1b029",
+  "#ecb142",
   "#76d4ff",
   "#ba76e7",
-  "#6cbfb5",
-  "#c2c8d7",
+  "#8dbd84",
+  "#d2c5b4",
 
-  "#4c4c4c",
-  "#ff355b",
-  "#b7e876",
-  "#ffc251",
-  "#76d5ff",
-  "#ba76e7",
-  "#6cbfb5",
-  "#c2c8d7",
+  "#807667",
+  "#ffad8c",
+  "#d3d249",
+  "#ffd796",
+  "#6ed4ad",
+  "#ffb1c1",
+  "#addfa3",
+  "#ffebd0",
 ]

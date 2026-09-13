@@ -6,26 +6,26 @@ ansi_source = "Blue Matrix"
 signature = ["cursor", "ansi12", "ansi9"]
 
 [colors]
-background = "#0e1420"
-foreground = "#e8f4ff"
+background = "#101916"
+foreground = "#d4e7df"
 cursor = "#7bcdb5"
-selection_background = "#14304d"
+selection_background = "#293f59"
 ansi = [
-  "#101116",
-  "#ff5680",
-  "#00ff9c",
-  "#fffc58",
-  "#00b0ff",
-  "#d57bff",
-  "#76c1ff",
-  "#c7c7c7",
+  "#1c2622",
+  "#e28d00",
+  "#00c38a",
+  "#88ce5a",
+  "#00b0cc",
+  "#6da7ff",
+  "#44bfdc",
+  "#bfc9c4",
 
-  "#686868",
+  "#6f7975",
   "#ff6e67",
-  "#5ffa68",
-  "#fffc67",
+  "#4de693",
+  "#adef80",
   "#6871ff",
-  "#d682ec",
-  "#60fdff",
-  "#ffffff",
+  "#acc7ff",
+  "#47e8db",
+  "#e0f2ea",
 ]

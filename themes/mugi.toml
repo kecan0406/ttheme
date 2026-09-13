@@ -6,26 +6,26 @@ ansi_source = "Tomorrow Night Eighties"
 signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]
-background = "#211c14"
-foreground = "#f7f0dc"
+background = "#1f1518"
+foreground = "#f9dbe2"
 cursor = "#f4a7c0"
-selection_background = "#453b28"
+selection_background = "#463c29"
 ansi = [
-  "#000000",
-  "#f2777a",
-  "#99cc99",
+  "#2c2124",
+  "#f57a8e",
+  "#c7a859",
   "#ffcc66",
   "#6699cc",
-  "#cc99cc",
-  "#66cccc",
-  "#ffffff",
+  "#d193bd",
+  "#87b3ef",
+  "#d5c2c6",
 
-  "#595959",
-  "#f2777a",
-  "#99cc99",
-  "#ffcc66",
-  "#6699cc",
-  "#cc99cc",
-  "#66cccc",
-  "#ffffff",
+  "#837377",
+  "#ffaab5",
+  "#eac876",
+  "#ffd4bd",
+  "#c4b8ff",
+  "#f4b3df",
+  "#b6d4ff",
+  "#ffe8ed",
 ]

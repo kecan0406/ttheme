@@ -6,26 +6,26 @@ ansi_source = "Apple Classic"
 signature = ["cursor", "foreground", "ansi1"]
 
 [colors]
-background = "#120e08"
+background = "#1b170c"
 foreground = "#f0e2c0"
 cursor = "#ffd700"
-selection_background = "#443a12"
+selection_background = "#473d15"
 ansi = [
-  "#000000",
+  "#272418",
   "#c91b00",
-  "#00c200",
-  "#c7c400",
-  "#4664ec",
-  "#ca30c7",
-  "#00c5c7",
-  "#c7c7c7",
+  "#95b822",
+  "#cebe00",
+  "#e977d6",
+  "#ff8076",
+  "#5fc486",
+  "#cdc6b4",
 
-  "#686868",
-  "#ff6e67",
-  "#5ffa68",
-  "#fffc67",
-  "#6871ff",
-  "#ff77ff",
-  "#60fdff",
-  "#ffffff",
+  "#7c7767",
+  "#ffaf79",
+  "#b0db49",
+  "#f0e049",
+  "#ffa4e0",
+  "#ffb3ae",
+  "#7de7a4",
+  "#f8edd1",
 ]

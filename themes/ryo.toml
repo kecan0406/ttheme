@@ -6,26 +6,26 @@ ansi_source = "TokyoNight Storm"
 signature = ["cursor", "ansi4", "ansi6"]
 
 [colors]
-background = "#1e2233"
-foreground = "#c0caf5"
+background = "#19180d"
+foreground = "#e7e3c8"
 cursor = "#d6d233"
-selection_background = "#364a82"
+selection_background = "#333d5b"
 ansi = [
-  "#1d202f",
-  "#f7768e",
-  "#9ece6a",
-  "#e0af68",
+  "#252419",
+  "#f38235",
+  "#9bb649",
+  "#d8b86a",
   "#7aa2f7",
-  "#bb9af7",
+  "#f184a3",
   "#7dcfff",
-  "#a9b1d6",
+  "#cac7b6",
 
-  "#4e5575",
-  "#f7768e",
-  "#9ece6a",
-  "#e0af68",
-  "#7aa2f7",
-  "#bb9af7",
-  "#7dcfff",
-  "#c0caf5",
+  "#797769",
+  "#ffae7e",
+  "#bbd766",
+  "#fbd987",
+  "#38d3e4",
+  "#ffb1c4",
+  "#75e4d4",
+  "#f2efd3",
 ]

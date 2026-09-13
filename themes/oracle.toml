@@ -6,26 +6,26 @@ ansi_source = "Monokai Remastered"
 signature = ["cursor", "ansi2", "ansi4"]
 
 [colors]
-background = "#0c0c0c"
-foreground = "#d9d9d9"
+background = "#1f160e"
+foreground = "#f9dec8"
 cursor = "#fd971f"
-selection_background = "#3c443b"
+selection_background = "#384037"
 ansi = [
-  "#1a1a1a",
-  "#f4005f",
+  "#2c2219",
+  "#ff775b",
   "#98e024",
-  "#fd971f",
+  "#ffa851",
   "#9d65ff",
-  "#f4005f",
-  "#58d1eb",
-  "#c4c5b5",
+  "#ff8167",
+  "#6dc287",
+  "#d5c3b6",
 
-  "#625e4c",
-  "#f4005f",
-  "#98e024",
-  "#e0d561",
-  "#9d65ff",
-  "#f4005f",
-  "#58d1eb",
-  "#f6f6ef",
+  "#837469",
+  "#ffac9b",
+  "#e3ce00",
+  "#ffd87d",
+  "#ffa6d1",
+  "#ffb4a4",
+  "#8ee4a6",
+  "#ffeadb",
 ]

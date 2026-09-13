@@ -6,26 +6,26 @@ ansi_source = "Dark Modern"
 signature = ["cursor", "ansi2", "ansi12"]
 
 [colors]
-background = "#0f1c30"
-foreground = "#cccccc"
+background = "#15171e"
+foreground = "#dee2f2"
 cursor = "#4977d6"
-selection_background = "#1d3152"
+selection_background = "#2e3e5a"
 ansi = [
-  "#272727",
-  "#f74949",
+  "#21242b",
+  "#e877d8",
   "#2ea043",
-  "#9e6a03",
-  "#0078d4",
-  "#d01273",
-  "#1db4d6",
-  "#cccccc",
+  "#ffa2a6",
+  "#62a1ff",
+  "#dc82f6",
+  "#57baf4",
+  "#c5c6d0",
 
-  "#5d5d5d",
-  "#dc5452",
-  "#23d18b",
-  "#f5f543",
+  "#757780",
+  "#ffa2ef",
+  "#00e1ef",
+  "#17f9c1",
   "#3b8eea",
-  "#d670d6",
-  "#29b8db",
-  "#e5e5e5",
+  "#d8baff",
+  "#a3d8ff",
+  "#eaedfe",
 ]

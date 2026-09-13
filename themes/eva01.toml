@@ -6,26 +6,26 @@ ansi_source = "Aura"
 signature = ["cursor", "ansi4", "ansi3"]
 
 [colors]
-background = "#1d1a2f"
-foreground = "#edecee"
+background = "#151910"
+foreground = "#dde6d0"
 cursor = "#8bd450"
-selection_background = "#3a2c52"
+selection_background = "#443858"
 ansi = [
-  "#110f18",
-  "#ff6767",
-  "#61ffca",
+  "#21251c",
+  "#e58c00",
+  "#45c177",
   "#ffca85",
   "#a277ff",
-  "#a277ff",
-  "#61ffca",
-  "#edecee",
+  "#00b0fa",
+  "#4cc77c",
+  "#c4c8ba",
 
-  "#4d4d4d",
-  "#ffca85",
-  "#a277ff",
-  "#ffca85",
-  "#a277ff",
-  "#a277ff",
-  "#61ffca",
-  "#edecee",
+  "#74796d",
+  "#d4c174",
+  "#97d3ff",
+  "#f1dd8d",
+  "#7bc9ff",
+  "#8aceff",
+  "#70e99b",
+  "#e9f1db",
 ]

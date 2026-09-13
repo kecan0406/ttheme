@@ -6,26 +6,26 @@ ansi_source = "Cyberpunk + Glitch City"
 signature = ["cursor", "ansi4", "ansi5"]
 
 [colors]
-background = "#1c0f14"
-foreground = "#ffe9ee"
+background = "#201515"
+foreground = "#fbdbdc"
 cursor = "#ff4d6d"
-selection_background = "#5c1a3e"
+selection_background = "#573243"
 ansi = [
-  "#241016",
-  "#ff7092",
-  "#00fbac",
-  "#fffa6a",
+  "#2d2021",
+  "#ff728e",
+  "#bead00",
+  "#feaa2f",
   "#00bfff",
   "#df95ff",
-  "#86cbfe",
-  "#fff0f3",
+  "#b4a7f3",
+  "#d7c1c2",
 
-  "#6b545c",
-  "#ff8aa4",
-  "#21f6bc",
-  "#fff787",
-  "#1bccfd",
-  "#e6aefe",
-  "#99d6fc",
-  "#fffafb",
+  "#857374",
+  "#ffaab6",
+  "#d5d21f",
+  "#ffd6a9",
+  "#babbff",
+  "#fface7",
+  "#d2ccff",
+  "#ffe9e9",
 ]

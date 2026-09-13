@@ -6,26 +6,26 @@ ansi_source = "Iceberg Dark"
 signature = ["cursor", "foreground", "ansi13"]
 
 [colors]
-background = "#151a28"
+background = "#11191c"
 foreground = "#c6c8d1"
 cursor = "#a8d3e8"
-selection_background = "#263a52"
+selection_background = "#2b3f57"
 ansi = [
-  "#1e2132",
-  "#e27878",
-  "#b4be82",
-  "#e2a478",
-  "#84a0c6",
-  "#a093c7",
-  "#89b8c2",
-  "#c6c8d1",
+  "#1d2529",
+  "#c48bdc",
+  "#7db897",
+  "#bcc078",
+  "#79a5ca",
+  "#93a5d7",
+  "#7abacd",
+  "#c0c8cd",
 
-  "#6b7089",
-  "#e98989",
-  "#c0ca8e",
-  "#e9b189",
-  "#91acd1",
+  "#70787d",
+  "#e1aff6",
+  "#9dd9b7",
+  "#dde297",
+  "#9ac6ec",
   "#ada0d3",
-  "#95c4ce",
-  "#d2d4de",
+  "#9bdbef",
+  "#e1f0f9",
 ]

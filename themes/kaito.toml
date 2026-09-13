@@ -6,26 +6,26 @@ ansi_source = "Aardvark Blue + Crypton"
 signature = ["cursor", "ansi4", "ansi3"]
 
 [colors]
-background = "#102040"
-foreground = "#e6eefa"
+background = "#15171e"
+foreground = "#dfe2f2"
 cursor = "#3367cd"
-selection_background = "#1e3a68"
+selection_background = "#2f3e5a"
 ansi = [
-  "#191919",
-  "#f05b50",
-  "#4b8c0f",
+  "#21232b",
+  "#ea76d5",
+  "#00c0b3",
   "#dbba00",
   "#1370d3",
-  "#c43ac3",
-  "#008eb0",
-  "#bebebe",
+  "#c18eff",
+  "#6bb8ef",
+  "#c5c6d0",
 
-  "#525252",
-  "#f05b50",
-  "#95dc55",
-  "#ffe763",
-  "#80a7d7",
-  "#e26be2",
-  "#60b6cb",
-  "#f7f7f7",
+  "#757780",
+  "#ffa3ea",
+  "#00e4d5",
+  "#87f2b6",
+  "#a2c2f7",
+  "#d8b9ff",
+  "#9fd9ff",
+  "#eaedfe",
 ]

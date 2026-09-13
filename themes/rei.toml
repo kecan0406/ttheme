@@ -6,26 +6,26 @@ ansi_source = "Idle Toes"
 signature = ["cursor", "ansi9", "foreground"]
 
 [colors]
-background = "#131c28"
+background = "#12181d"
 foreground = "#ffffff"
 cursor = "#7fb3d5"
-selection_background = "#24344a"
+selection_background = "#2f3e55"
 ansi = [
-  "#323232",
-  "#d25252",
-  "#7fe173",
-  "#ffc66d",
-  "#4099ff",
-  "#f680ff",
-  "#bed6ff",
-  "#eeeeec",
+  "#1e2529",
+  "#d67eee",
+  "#00c1a8",
+  "#9dc880",
+  "#30a7ff",
+  "#a798ff",
+  "#8eb4de",
+  "#c1c7ce",
 
-  "#606060",
+  "#71787e",
   "#f07070",
-  "#9dff91",
-  "#ffe48b",
-  "#5eb7f7",
-  "#ff9dff",
-  "#dcf4ff",
-  "#ffffff",
+  "#00e5c8",
+  "#b1ebb7",
+  "#7cc9ff",
+  "#c9beff",
+  "#a0daf6",
+  "#e3effa",
 ]

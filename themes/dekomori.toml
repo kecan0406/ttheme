@@ -6,26 +6,26 @@ ansi_source = "Cobalt2 + Delusion"
 signature = ["cursor", "ansi12", "ansi5"]
 
 [colors]
-background = "#132738"
-foreground = "#ffffff"
+background = "#1a180d"
+foreground = "#ece2c6"
 cursor = "#f0cc09"
-selection_background = "#18354f"
+selection_background = "#264058"
 ansi = [
-  "#000000",
-  "#ff0000",
-  "#38de21",
-  "#ffe50a",
-  "#3d82e8",
+  "#272418",
+  "#f58209",
+  "#95b821",
+  "#d6bb00",
+  "#00b2bc",
   "#ff005d",
-  "#00bbbb",
-  "#ebdfc1",
+  "#64c386",
+  "#cdc6b4",
 
-  "#555555",
-  "#f40e17",
-  "#3bd01d",
-  "#edc809",
+  "#7c7767",
+  "#ffaf75",
+  "#b5da43",
+  "#ffdb37",
   "#6b6bff",
-  "#ff55ff",
-  "#6ae3fa",
-  "#f9f4e7",
+  "#ffb3ad",
+  "#7de5b8",
+  "#f8edd1",
 ]

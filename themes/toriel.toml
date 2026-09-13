@@ -6,26 +6,26 @@ ansi_source = "Shades Of Purple + Determination"
 signature = ["cursor", "ansi4", "foreground"]
 
 [colors]
-background = "#1e1d40"
+background = "#1a180d"
 foreground = "#f5f0f5"
 cursor = "#ffe700"
-selection_background = "#38306b"
+selection_background = "#3e3a5a"
 ansi = [
-  "#000000",
-  "#d90429",
-  "#3ad900",
-  "#ffe700",
+  "#262418",
+  "#f68112",
+  "#91b927",
+  "#d1bd00",
   "#7a58ff",
-  "#ff2c70",
-  "#00c5c7",
-  "#c7c7c7",
+  "#ff843a",
+  "#59c48a",
+  "#ccc6b5",
 
-  "#686868",
-  "#f92a1c",
-  "#43d426",
-  "#f1d000",
-  "#6871ff",
-  "#ff77ff",
-  "#79e8fb",
-  "#ffffff",
+  "#7b7768",
+  "#ffaf6e",
+  "#b0db49",
+  "#fadd20",
+  "#0dd2ff",
+  "#ffb4ab",
+  "#83e4bb",
+  "#f5eed2",
 ]

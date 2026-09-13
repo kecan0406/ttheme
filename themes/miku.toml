@@ -6,26 +6,26 @@ ansi_source = "vauxe Miku"
 signature = ["cursor", "ansi1", "ansi12"]
 
 [colors]
-background = "#0e2124"
-foreground = "#dedacf"
+background = "#101918"
+foreground = "#d3e6e3"
 cursor = "#39c5bb"
-selection_background = "#1b3b3e"
+selection_background = "#234246"
 ansi = [
-  "#000000",
+  "#1c2524",
   "#ff91c7",
-  "#4af79b",
-  "#ffe8c7",
-  "#aeb4fa",
-  "#ffc4fa",
-  "#76ffe6",
-  "#dedacf",
+  "#00c294",
+  "#b2c380",
+  "#6aa6d6",
+  "#95a3de",
+  "#27c5b3",
+  "#bec9c6",
 
-  "#4a4a4a",
-  "#ff8fd5",
-  "#62ffb1",
-  "#ffe2b7",
+  "#6f7977",
+  "#bbbbff",
+  "#00e7b5",
+  "#d3e49e",
   "#aab0ff",
-  "#ffd6ff",
-  "#4bfff9",
-  "#ffffff",
+  "#b6c5f9",
+  "#23e9e1",
+  "#dff2ef",
 ]

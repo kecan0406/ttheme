@@ -6,26 +6,26 @@ ansi_source = "Srcery + Delusion"
 signature = ["cursor", "ansi11", "ansi6"]
 
 [colors]
-background = "#1d1512"
-foreground = "#fce8c3"
+background = "#211512"
+foreground = "#fddbd4"
 cursor = "#ff5a36"
-selection_background = "#3d2119"
+selection_background = "#55362d"
 ansi = [
-  "#241a16",
-  "#ef2f27",
-  "#519f50",
-  "#fbb829",
-  "#2c78bf",
-  "#e02c6d",
+  "#2e211e",
+  "#ff7762",
+  "#c3ab1f",
+  "#ffa854",
+  "#b98de8",
+  "#ff7e87",
   "#0aaeb3",
-  "#baa67f",
+  "#d8c2bd",
 
-  "#918175",
-  "#f75341",
-  "#98bc37",
+  "#85736f",
+  "#ffac9d",
+  "#fec312",
   "#fed06e",
-  "#68a8e4",
-  "#ff5c8f",
-  "#2be4d0",
-  "#fce8c3",
+  "#d3b3ff",
+  "#ffb3b6",
+  "#bbdf65",
+  "#ffe9e5",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Purple Rain"
 signature = ["cursor", "ansi13", "foreground"]
 
 [colors]
-background = "#21084a"
+background = "#201514"
 foreground = "#fffbf6"
 cursor = "#e0262c"
-selection_background = "#3a1b66"
+selection_background = "#453858"
 ansi = [
-  "#000000",
-  "#ff260e",
-  "#9be205",
-  "#ffc400",
-  "#00a2fa",
-  "#815bb5",
-  "#00deef",
-  "#ffffff",
+  "#2d211f",
+  "#ff7766",
+  "#d7a300",
+  "#ffa851",
+  "#b38bff",
+  "#e088cf",
+  "#8ab0ff",
+  "#d8c2bf",
 
-  "#565656",
-  "#ff4250",
-  "#b8e36e",
-  "#ffd852",
-  "#00a6ff",
+  "#857371",
+  "#ffaba7",
+  "#fcc435",
+  "#ffd5ae",
+  "#ceb5ff",
   "#ac7bf0",
-  "#74fdf3",
-  "#ffffff",
+  "#b5df7a",
+  "#ffe9e7",
 ]

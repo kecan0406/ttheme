@@ -6,26 +6,26 @@ ansi_source = "Purple Portal + DDLC"
 signature = ["cursor", "ansi11", "ansi9"]
 
 [colors]
-background = "#160528"
-foreground = "#ede4f7"
+background = "#1b161d"
+foreground = "#eddeef"
 cursor = "#c29ed0"
-selection_background = "#3b1f3f"
+selection_background = "#4e3551"
 ansi = [
-  "#483a57",
-  "#fb7185",
-  "#34d399",
-  "#f472b6",
-  "#facc15",
-  "#38bdf8",
-  "#7a3ff5",
-  "#d8b4fe",
+  "#282229",
+  "#f375b9",
+  "#00bae7",
+  "#ff99e9",
+  "#fb7c47",
+  "#7ca4ff",
+  "#c89dff",
+  "#cec3ce",
 
-  "#503872",
+  "#7d747e",
   "#fc8d9d",
-  "#5ddcad",
+  "#7cd7ff",
   "#f68bc3",
-  "#fbd644",
-  "#60caf9",
-  "#793ff3",
-  "#faf5ff",
+  "#ffad8c",
+  "#adc6ff",
+  "#e1c7ff",
+  "#f9e9fa",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Sequoia Retro Dark + Truth"
 signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]
-background = "#0f1014"
-foreground = "#d9c9a3"
+background = "#1d170c"
+foreground = "#f2e0c5"
 cursor = "#e8b246"
-selection_background = "#2b2836"
+selection_background = "#3f3c4a"
 ansi = [
-  "#131317",
-  "#829fa7",
-  "#648f68",
+  "#292318",
+  "#73ad8c",
+  "#a2b270",
   "#da674b",
   "#5c87a4",
-  "#e8b246",
-  "#a27e57",
-  "#b8b8c2",
+  "#d19d33",
+  "#d9a866",
+  "#d1c5b4",
 
-  "#575861",
-  "#e8b246",
-  "#648f68",
-  "#da674b",
-  "#5c87a4",
-  "#829fa7",
-  "#a27e57",
-  "#d8d8e0",
+  "#807667",
+  "#efb84c",
+  "#c3d38e",
+  "#ffd4bb",
+  "#8acebc",
+  "#99d3b0",
+  "#fdc984",
+  "#feebd0",
 ]

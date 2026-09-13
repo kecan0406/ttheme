@@ -6,26 +6,26 @@ ansi_source = "Acid Lime"
 signature = ["cursor", "ansi1", "ansi6"]
 
 [colors]
-background = "#15120a"
-foreground = "#f0ecd4"
+background = "#19180d"
+foreground = "#e8e3c7"
 cursor = "#f5e93c"
-selection_background = "#383310"
+selection_background = "#433e1a"
 ansi = [
-  "#131d0c",
+  "#252418",
   "#ff3344",
-  "#97e63c",
-  "#eeff5c",
-  "#4deca0",
-  "#a6ff6b",
+  "#99b71b",
+  "#bec314",
+  "#64b343",
+  "#8eb31d",
   "#50ffb4",
-  "#bfe0a4",
+  "#cbc7b5",
 
-  "#4a6b36",
-  "#ff3344",
-  "#97e63c",
-  "#dbff45",
-  "#4deca0",
-  "#a6ff6b",
-  "#50ffb4",
-  "#d4efbc",
+  "#7a7768",
+  "#ffaf74",
+  "#b9d940",
+  "#d9e740",
+  "#84d560",
+  "#aed540",
+  "#8ee770",
+  "#f4eed2",
 ]

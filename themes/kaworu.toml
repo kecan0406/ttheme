@@ -6,26 +6,26 @@ ansi_source = "Spacegray"
 signature = ["cursor", "foreground", "ansi1"]
 
 [colors]
-background = "#221d28"
+background = "#201515"
 foreground = "#d5d9e0"
 cursor = "#c9394a"
-selection_background = "#392c5b"
+selection_background = "#423959"
 ansi = [
-  "#000000",
+  "#2d2021",
   "#b04b57",
-  "#87b379",
-  "#e5c179",
-  "#7d8fa4",
-  "#a47996",
-  "#85a7a5",
-  "#b3b8c3",
+  "#c5a855",
+  "#efae7a",
+  "#a998ce",
+  "#d693ad",
+  "#9cba7f",
+  "#d7c1c1",
 
-  "#4c4c4c",
-  "#b04b57",
-  "#87b379",
-  "#e5c179",
-  "#7d8fa4",
-  "#a47996",
-  "#85a7a5",
-  "#ffffff",
+  "#857373",
+  "#ffaaaf",
+  "#e8c972",
+  "#ffd5b6",
+  "#cab8f0",
+  "#f9b2ce",
+  "#bddb9d",
+  "#ffe9e8",
 ]

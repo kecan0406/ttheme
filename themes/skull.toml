@@ -6,26 +6,26 @@ ansi_source = "Desert"
 signature = ["cursor", "ansi1", "foreground"]
 
 [colors]
-background = "#1b1610"
+background = "#1b170c"
 foreground = "#f5e9c9"
 cursor = "#ffd700"
-selection_background = "#4a3a14"
+selection_background = "#4c3b15"
 ansi = [
-  "#4d4d4d",
+  "#272418",
   "#ff2b2b",
-  "#98fb98",
-  "#f0e68c",
-  "#cd853f",
-  "#ffdead",
-  "#ffa0a0",
-  "#f5deb3",
+  "#91b83a",
+  "#cbbd66",
+  "#cf963d",
+  "#c3a25a",
+  "#f09d6a",
+  "#cdc6b4",
 
-  "#626262",
-  "#ff5555",
-  "#55ff55",
-  "#ffff55",
-  "#87ceff",
-  "#ff55ff",
-  "#ffd700",
-  "#ffffff",
+  "#7c7767",
+  "#ffaf7a",
+  "#b2da46",
+  "#f0e02f",
+  "#6cd2c0",
+  "#ffb3ad",
+  "#f5cf00",
+  "#f8edd1",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Vibrant Ink"
 signature = ["cursor", "ansi13", "ansi14"]
 
 [colors]
-background = "#0b120e"
-foreground = "#f5f2dc"
+background = "#19180d"
+foreground = "#e8e3c7"
 cursor = "#fcee0a"
-selection_background = "#403c0a"
+selection_background = "#423f14"
 ansi = [
-  "#26262b",
-  "#ff6600",
-  "#ccff04",
-  "#ffcc00",
-  "#44b4cc",
-  "#9933cc",
-  "#44b4cc",
-  "#f5f5f5",
+  "#252418",
+  "#e38d00",
+  "#a5b400",
+  "#daba00",
+  "#4bb291",
+  "#ff7f83",
+  "#5dc2a1",
+  "#cbc7b5",
 
-  "#555555",
-  "#ff0000",
-  "#00ff00",
-  "#ffff00",
-  "#4d4dff",
+  "#7a7768",
+  "#ffb06b",
+  "#abdc4d",
+  "#e8e330",
+  "#2fd1ff",
   "#ff00ff",
   "#00ffff",
-  "#e5e5e5",
+  "#f4eed2",
 ]

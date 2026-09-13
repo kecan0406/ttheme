@@ -6,26 +6,26 @@ ansi_source = "Starlight"
 signature = ["cursor", "ansi3", "ansi12"]
 
 [colors]
-background = "#191b2e"
-foreground = "#f4eef8"
+background = "#1f1518"
+foreground = "#f9dbe2"
 cursor = "#f48fb1"
-selection_background = "#363156"
+selection_background = "#3e3a5a"
 ansi = [
-  "#242424",
-  "#f62b5a",
-  "#47b413",
+  "#2c2124",
+  "#ff7292",
+  "#dca100",
   "#e3c401",
-  "#24acd4",
-  "#f2affd",
-  "#13c299",
-  "#e6e6e6",
+  "#8d9af2",
+  "#dd8bc9",
+  "#b3b732",
+  "#d5c2c6",
 
-  "#616161",
-  "#ff4d51",
-  "#35d450",
-  "#e9e836",
+  "#837377",
+  "#ffaab2",
+  "#fec300",
+  "#ffd5ad",
   "#5dc5f8",
-  "#feabf2",
-  "#24dfc4",
-  "#ffffff",
+  "#ffaedf",
+  "#a5d7ff",
+  "#ffe8ed",
 ]

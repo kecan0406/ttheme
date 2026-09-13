@@ -6,26 +6,26 @@ ansi_source = "Pierre Dark + Lumia"
 signature = ["cursor", "ansi2", "ansi13"]
 
 [colors]
-background = "#050807"
-foreground = "#f0f7f4"
+background = "#18180d"
+foreground = "#e7e3c8"
 cursor = "#f4f11f"
-selection_background = "#4c0f18"
+selection_background = "#5b3234"
 ansi = [
-  "#111513",
-  "#fa3459",
+  "#252419",
+  "#f78017",
   "#74d6b0",
-  "#f4f11f",
-  "#25a5e0",
-  "#be5ea5",
-  "#2bc5cc",
-  "#ccd3d0",
+  "#c4c100",
+  "#00b4a5",
+  "#fd8363",
+  "#56c494",
+  "#cac7b6",
 
-  "#64706b",
-  "#f97f93",
-  "#8fdcbc",
-  "#fcfc91",
-  "#61b7e9",
+  "#797869",
+  "#ffaf7d",
+  "#a5d99e",
+  "#e3e27a",
+  "#5dd4c5",
   "#cf7db6",
-  "#65d2d8",
-  "#ffffff",
+  "#8ae3b8",
+  "#f2efd3",
 ]

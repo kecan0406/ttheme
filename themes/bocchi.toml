@@ -6,26 +6,26 @@ ansi_source = "Sakura + Kessoku"
 signature = ["cursor", "ansi4", "ansi9"]
 
 [colors]
-background = "#1d1322"
-foreground = "#f2d7ee"
+background = "#201517"
+foreground = "#fadbe1"
 cursor = "#feabc0"
-selection_background = "#40213e"
+selection_background = "#51344e"
 ansi = [
-  "#000000",
-  "#d52370",
-  "#41af1a",
-  "#bc7053",
+  "#2c2123",
+  "#fd729f",
+  "#daa200",
+  "#fea49a",
   "#506b9a",
-  "#c71fbf",
-  "#939393",
-  "#c4bbd4",
+  "#f979c8",
+  "#abb772",
+  "#d6c2c5",
 
-  "#786d69",
+  "#847376",
   "#f41d99",
-  "#22e529",
-  "#f59574",
-  "#9892f1",
-  "#e90cdd",
-  "#eeeeee",
-  "#cbb6ff",
+  "#ffc30f",
+  "#ffd3ce",
+  "#e5abff",
+  "#ffaeda",
+  "#ccd890",
+  "#ffe8ec",
 ]

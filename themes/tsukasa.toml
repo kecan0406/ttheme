@@ -6,26 +6,26 @@ ansi_source = "Sublette"
 signature = ["cursor", "ansi13", "ansi12"]
 
 [colors]
-background = "#211a30"
-foreground = "#ccced0"
+background = "#19180d"
+foreground = "#e7e3c8"
 cursor = "#efe95a"
-selection_background = "#382e4e"
+selection_background = "#433859"
 ansi = [
-  "#253045",
-  "#ee5577",
-  "#55ee77",
-  "#ffdd88",
-  "#5588ff",
-  "#ff77cc",
-  "#44eeee",
-  "#f5f5da",
+  "#252419",
+  "#f97e25",
+  "#7ebc3c",
+  "#d0bb69",
+  "#00b1c4",
+  "#ff825a",
+  "#4ec68b",
+  "#cac7b5",
 
-  "#405570",
-  "#ee6655",
-  "#99ee77",
-  "#ffff77",
+  "#7a7768",
+  "#ffb06a",
+  "#addb4f",
+  "#e5e25d",
   "#77bbff",
   "#aa88ff",
-  "#55ffbb",
-  "#ffffee",
+  "#8be778",
+  "#f3efd3",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Fairyfloss"
 signature = ["cursor", "ansi9", "ansi3"]
 
 [colors]
-background = "#221726"
-foreground = "#fdeef6"
+background = "#1f1518"
+foreground = "#f8dbe3"
 cursor = "#ffb8d1"
-selection_background = "#432b49"
+selection_background = "#4d3552"
 ansi = [
-  "#040303",
-  "#f92672",
-  "#c2ffdf",
+  "#2c2124",
+  "#fd729e",
+  "#b5ad64",
   "#e6c000",
-  "#c2ffdf",
-  "#ffb8d1",
-  "#c5a3ff",
-  "#f8f8f0",
+  "#aaa35b",
+  "#d692ab",
+  "#dd98e9",
+  "#d5c2c6",
 
-  "#6090cb",
+  "#837377",
   "#ff857f",
-  "#c2ffdf",
-  "#ffea00",
-  "#c2ffdf",
-  "#ffb8d1",
-  "#c5a3ff",
-  "#f8f8f0",
+  "#d6ce82",
+  "#ffd5b3",
+  "#cbc378",
+  "#fab2cc",
+  "#f7beff",
+  "#ffe8ee",
 ]

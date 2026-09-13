@@ -6,26 +6,26 @@ ansi_source = "lotap/magi-theme"
 signature = ["cursor", "ansi10", "ansi9"]
 
 [colors]
-background = "#000000"
-foreground = "#ec7420"
+background = "#20150f"
+foreground = "#fcdccd"
 cursor = "#ec7420"
-selection_background = "#401010"
+selection_background = "#5c3230"
 ansi = [
-  "#000000",
-  "#c41414",
-  "#409820",
-  "#f4b000",
-  "#5090c8",
-  "#a06090",
-  "#60f0a0",
-  "#b0b0b0",
+  "#2d211b",
+  "#ff7850",
+  "#bfac00",
+  "#ffa938",
+  "#b591dd",
+  "#e68c9e",
+  "#b0b80f",
+  "#d7c2b9",
 
-  "#484848",
+  "#85746b",
   "#f02020",
   "#50ff10",
-  "#f9e2af",
-  "#40c8e8",
-  "#b040a0",
-  "#3cffd0",
-  "#e8e8e8",
+  "#ffd6a4",
+  "#72d599",
+  "#ffb1c0",
+  "#bcdf51",
+  "#ffeae0",
 ]

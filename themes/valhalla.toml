@@ -6,26 +6,26 @@ ansi_source = "Synthwave + Glitch City"
 signature = ["cursor", "ansi6", "ansi3"]
 
 [colors]
-background = "#131020"
-foreground = "#dad9c7"
+background = "#1f1518"
+foreground = "#f9dbe3"
 cursor = "#f6188f"
-selection_background = "#4c1439"
+selection_background = "#563347"
 ansi = [
-  "#12101c",
-  "#f6188f",
-  "#1ebb2b",
+  "#2c2124",
+  "#fb72a9",
+  "#d9a200",
   "#fdf834",
-  "#2186ec",
-  "#f85a21",
+  "#ac8eff",
+  "#ff7f7c",
   "#12c3e2",
-  "#ffffff",
+  "#d5c2c6",
 
-  "#7f7094",
-  "#f841a0",
-  "#25c141",
-  "#fdf454",
-  "#2f9ded",
-  "#f97137",
-  "#19cde6",
-  "#ffffff",
+  "#837377",
+  "#ffa7c8",
+  "#ffc313",
+  "#ffd5b0",
+  "#c3b8ff",
+  "#ffb3ad",
+  "#c2d1ff",
+  "#ffe8ed",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Ubuntu + Determination"
 signature = ["cursor", "foreground", "ansi4"]
 
 [colors]
-background = "#22091b"
+background = "#201512"
 foreground = "#f1ede4"
 cursor = "#f34511"
-selection_background = "#4a1638"
+selection_background = "#563347"
 ansi = [
-  "#2e3436",
-  "#cc0000",
-  "#4e9a06",
-  "#c4a000",
+  "#2e211d",
+  "#ff775d",
+  "#cca800",
+  "#fea933",
   "#3465a4",
-  "#ad7fa8",
-  "#06989a",
-  "#d3d7cf",
+  "#d692ab",
+  "#8dbe72",
+  "#d8c2bc",
 
-  "#555753",
-  "#ef2929",
-  "#8ae234",
-  "#fce94f",
-  "#729fcf",
-  "#ad7fa8",
-  "#34e2e2",
-  "#eeeeec",
+  "#85736f",
+  "#ffac9e",
+  "#f4c700",
+  "#ffd6a0",
+  "#d3b4f5",
+  "#fab2cc",
+  "#a6e27d",
+  "#ffe9e4",
 ]

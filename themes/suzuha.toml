@@ -6,26 +6,26 @@ ansi_source = "Gruvbox Dark + Lab"
 signature = ["cursor", "ansi9", "ansi4"]
 
 [colors]
-background = "#1e1e14"
-foreground = "#ebdbb2"
+background = "#1f160d"
+foreground = "#f8dec7"
 cursor = "#d98e32"
-selection_background = "#3c3826"
+selection_background = "#423e2b"
 ansi = [
-  "#282828",
-  "#cc241d",
-  "#98971a",
-  "#d79921",
+  "#2b2218",
+  "#fd7b3a",
+  "#cca722",
+  "#f6ad3c",
   "#458588",
-  "#b16286",
-  "#689d6a",
-  "#d5c4a1",
+  "#ec8b84",
+  "#afb665",
+  "#d5c4b5",
 
-  "#928374",
+  "#837568",
   "#fb4934",
-  "#b8bb26",
-  "#fabd2f",
-  "#83a598",
-  "#d3869b",
-  "#8ec07c",
-  "#ebdbb2",
+  "#f2c824",
+  "#ffd79d",
+  "#b0ca8b",
+  "#ffb4a7",
+  "#d7d776",
+  "#ffead9",
 ]

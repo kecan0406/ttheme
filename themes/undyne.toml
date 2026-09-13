@@ -6,26 +6,26 @@ ansi_source = "Sea Shells + Determination"
 signature = ["cursor", "ansi2", "ansi3"]
 
 [colors]
-background = "#09141b"
-foreground = "#deb88d"
+background = "#201513"
+foreground = "#fddbd6"
 cursor = "#f64438"
-selection_background = "#143247"
+selection_background = "#244056"
 ansi = [
-  "#17384c",
-  "#d15123",
+  "#2e211f",
+  "#ff7857",
   "#027c9b",
   "#fca02f",
-  "#2f89ad",
-  "#68d4f1",
-  "#50a3b5",
-  "#deb88d",
+  "#9f98e1",
+  "#94a1ef",
+  "#9faeeb",
+  "#d8c2be",
 
-  "#434b53",
-  "#d48678",
-  "#628d98",
-  "#fdd39f",
-  "#1bbcdd",
-  "#bbe3ee",
-  "#87acb4",
-  "#fee4ce",
+  "#857370",
+  "#ffac9f",
+  "#bfcaff",
+  "#ffd4b9",
+  "#b3bdff",
+  "#b9c4fa",
+  "#c3d0ff",
+  "#ffe9e6",
 ]

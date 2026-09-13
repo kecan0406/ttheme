@@ -6,26 +6,26 @@ ansi_source = "Deep"
 signature = ["cursor", "ansi4", "ansi11"]
 
 [colors]
-background = "#10090b"
-foreground = "#f2e8e8"
+background = "#201513"
+foreground = "#fddbd6"
 cursor = "#fb0007"
-selection_background = "#5c0004"
+selection_background = "#5c322e"
 ansi = [
-  "#000000",
-  "#d70005",
-  "#1cd915",
-  "#d9bd26",
+  "#2e211f",
+  "#ff7765",
+  "#caa900",
+  "#ffa92d",
   "#5665ff",
-  "#b052da",
-  "#50d2da",
-  "#e0e0e0",
+  "#f879c9",
+  "#83c073",
+  "#d8c2be",
 
-  "#535353",
-  "#fb0007",
-  "#22ff18",
+  "#857370",
+  "#ffac9f",
+  "#f0c900",
   "#fedc2b",
-  "#9fa9ff",
-  "#e09aff",
-  "#8df9ff",
-  "#ffffff",
+  "#ebaafa",
+  "#ffaedc",
+  "#a9e095",
+  "#ffe9e6",
 ]

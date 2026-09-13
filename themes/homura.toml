@@ -6,26 +6,26 @@ ansi_source = "Monokai Pro Machine"
 signature = ["cursor", "foreground", "ansi5"]
 
 [colors]
-background = "#1b1428"
+background = "#19161e"
 foreground = "#f2fffc"
 cursor = "#8b5cf6"
-selection_background = "#322447"
+selection_background = "#453858"
 ansi = [
-  "#273136",
-  "#ff6d7e",
-  "#a2e57b",
-  "#ffed72",
-  "#ffb270",
+  "#25222b",
+  "#f075c8",
+  "#00bec0",
+  "#ffa67d",
+  "#df8892",
   "#baa0f8",
-  "#7cd5f1",
-  "#f2fffc",
+  "#82b4ed",
+  "#cac4cf",
 
-  "#6b7678",
-  "#ff6d7e",
-  "#a2e57b",
-  "#ffed72",
-  "#ffb270",
-  "#baa0f8",
-  "#7cd5f1",
-  "#f2fffc",
+  "#7a757f",
+  "#ffa5dd",
+  "#00e3e4",
+  "#ffd4c2",
+  "#ffaab3",
+  "#d0bcff",
+  "#b2d5ff",
+  "#f3eafd",
 ]

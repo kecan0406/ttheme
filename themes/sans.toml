@@ -6,26 +6,26 @@ ansi_source = "Galaxy"
 signature = ["cursor", "foreground", "ansi11"]
 
 [colors]
-background = "#10151d"
+background = "#12181d"
 foreground = "#eef3fb"
 cursor = "#3ec1ff"
-selection_background = "#23324d"
+selection_background = "#2f3e59"
 ansi = [
-  "#000000",
-  "#f9555f",
-  "#21b089",
-  "#fef02a",
-  "#589df6",
-  "#944d95",
-  "#1f9ee7",
-  "#bbbbbb",
+  "#1e2529",
+  "#d47ef3",
+  "#00bebf",
+  "#32d585",
+  "#45a6f6",
+  "#a899f8",
+  "#45baff",
+  "#c1c7ce",
 
-  "#555555",
-  "#fa8c8f",
-  "#35bb9a",
+  "#71787e",
+  "#e8abfd",
+  "#4fe0e4",
   "#ffff55",
-  "#589df6",
-  "#e75699",
-  "#3979bc",
-  "#ffffff",
+  "#8dc6ff",
+  "#dab9ff",
+  "#add6ff",
+  "#e3f0fa",
 ]

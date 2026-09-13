@@ -6,26 +6,26 @@ ansi_source = "Hipster Green + DDLC"
 signature = ["cursor", "foreground", "ansi3"]
 
 [colors]
-background = "#100b05"
+background = "#141911"
 foreground = "#d8ecd0"
 cursor = "#80ad64"
-selection_background = "#173a20"
+selection_background = "#26442c"
 ansi = [
-  "#000000",
-  "#b6214a",
-  "#00a600",
+  "#20251c",
+  "#ed8700",
+  "#69bf4d",
   "#bfbf00",
-  "#246eb2",
-  "#b200b2",
-  "#00a6b2",
-  "#bfbfbf",
+  "#00b1c1",
+  "#ff825d",
+  "#4cc3a9",
+  "#c4c8bb",
 
-  "#666666",
-  "#e50000",
-  "#86a93e",
-  "#e5e500",
-  "#4d4dff",
-  "#e500e5",
-  "#00e5e5",
-  "#e5e5e5",
+  "#74796d",
+  "#ffb144",
+  "#abdb6f",
+  "#cbea4e",
+  "#3ad0ff",
+  "#ffb59f",
+  "#4deabe",
+  "#e8f1db",
 ]

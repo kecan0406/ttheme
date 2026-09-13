@@ -6,26 +6,26 @@ ansi_source = "Retro Legends"
 signature = ["cursor", "ansi9", "foreground"]
 
 [colors]
-background = "#141117"
+background = "#131912"
 foreground = "#eef2ee"
 cursor = "#45eb45"
-selection_background = "#322b38"
+selection_background = "#423b48"
 ansi = [
-  "#262626",
-  "#de5454",
-  "#45eb45",
-  "#f7bf2b",
-  "#4066f2",
-  "#bf4cf2",
-  "#40d9e6",
-  "#bfe6bf",
+  "#1f251d",
+  "#e08e00",
+  "#5fc055",
+  "#c4c033",
+  "#00afd5",
+  "#68a7ff",
+  "#30c5ac",
+  "#c2c8bc",
 
-  "#4c594c",
+  "#73796e",
   "#ff6666",
-  "#59ff59",
-  "#ffd933",
-  "#4c80ff",
-  "#e666ff",
-  "#59e6ff",
-  "#f2fff2",
+  "#7fe273",
+  "#dbe650",
+  "#00d2fb",
+  "#ffb4a9",
+  "#58e7d4",
+  "#e6f1de",
 ]

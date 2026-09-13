@@ -6,26 +6,26 @@ ansi_source = "Forest Blue"
 signature = ["cursor", "ansi6", "ansi5"]
 
 [colors]
-background = "#051519"
-foreground = "#e4f4fa"
+background = "#12181d"
+foreground = "#d8e4ef"
 cursor = "#b7ddf8"
-selection_background = "#14294a"
+selection_background = "#2e3e5a"
 ansi = [
-  "#333333",
-  "#f8818e",
-  "#92d3a2",
-  "#1a8e63",
-  "#8ed0ce",
+  "#1e2529",
+  "#c788e4",
+  "#61bab0",
+  "#46ceca",
+  "#68abb8",
   "#7e62b3",
   "#3f7fae",
-  "#e2d8cd",
+  "#c1c7ce",
 
-  "#4a4a4a",
-  "#fb3d66",
-  "#6bb48d",
-  "#30c85a",
-  "#39a7a2",
-  "#7e62b3",
-  "#6096bf",
-  "#e2d8cd",
+  "#71787e",
+  "#e5acff",
+  "#80dbd6",
+  "#00f7df",
+  "#6bcfe0",
+  "#b8c3ff",
+  "#a4d8ff",
+  "#e3f0fa",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Everforest Dark Hard + Senshi"
 signature = ["cursor", "ansi1", "ansi11"]
 
 [colors]
-background = "#1c231d"
-foreground = "#d3c6aa"
+background = "#131913"
+foreground = "#d9e6d5"
 cursor = "#2e9e4f"
-selection_background = "#4c3743"
+selection_background = "#4d3743"
 ansi = [
-  "#2e383c",
+  "#1f251e",
   "#e67e80",
-  "#a7c080",
-  "#dbbc7f",
-  "#7fbbb3",
-  "#d699b6",
-  "#83c092",
-  "#f2efdf",
+  "#92b57d",
+  "#c0bf76",
+  "#6cad96",
+  "#da966d",
+  "#83be8e",
+  "#c1c9be",
 
-  "#a6b0a0",
-  "#f85552",
-  "#8da101",
+  "#727970",
+  "#ffb237",
+  "#a3dd5f",
   "#dfa000",
-  "#3a94c5",
-  "#df69ba",
-  "#35a77c",
-  "#fffbef",
+  "#59d2db",
+  "#ffb693",
+  "#83e5ac",
+  "#e4f2e1",
 ]

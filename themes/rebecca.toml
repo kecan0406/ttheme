@@ -6,26 +6,26 @@ ansi_source = "Emerald Synth"
 signature = ["ansi1", "ansi2", "cursor"]
 
 [colors]
-background = "#0d0221"
-foreground = "#e8fff6"
+background = "#201516"
+foreground = "#fbdbde"
 cursor = "#bcf1e5"
-selection_background = "#2e6b5f"
+selection_background = "#17453c"
 ansi = [
-  "#0a0118",
+  "#2d2122",
   "#ff2a6d",
   "#00e67e",
-  "#ffcc66",
-  "#8b9cf7",
-  "#ff79c6",
-  "#4dd0e1",
-  "#f0e6ff",
+  "#ffa768",
+  "#c08be5",
+  "#ff79b1",
+  "#8eafff",
+  "#d6c2c3",
 
-  "#6a5585",
-  "#ff5c8a",
-  "#40ffdd",
-  "#ffe099",
-  "#b0b8fc",
-  "#ff9ed0",
-  "#7ee0ec",
-  "#ffffff",
+  "#847375",
+  "#ffa9b9",
+  "#c0d74b",
+  "#ffd5b7",
+  "#dcb1f4",
+  "#ffb0cb",
+  "#bfd1ff",
+  "#ffe9ea",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Espresso Libre + HTT"
 signature = ["cursor", "ansi11", "ansi13"]
 
 [colors]
-background = "#2a211c"
-foreground = "#f0e6dc"
+background = "#211513"
+foreground = "#fddbd5"
 cursor = "#e0442e"
-selection_background = "#4d3c2d"
+selection_background = "#4b3a2b"
 ansi = [
-  "#000000",
-  "#e0442e",
-  "#1a921c",
-  "#f0e53a",
-  "#0066ff",
-  "#c5656b",
-  "#06989a",
-  "#d3d7cf",
+  "#2e211e",
+  "#ff7761",
+  "#c8a900",
+  "#fcab00",
+  "#cf7ff8",
+  "#f18884",
+  "#8dbe72",
+  "#d8c2be",
 
-  "#555753",
-  "#ef2929",
-  "#9aff87",
+  "#857370",
+  "#ffaca0",
+  "#eeca00",
   "#fffb5c",
-  "#43a8ed",
+  "#ceb4ff",
   "#ff818a",
-  "#34e2e2",
-  "#eeeeec",
+  "#a6e27d",
+  "#ffe9e5",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Everforest Dark Med"
 signature = ["cursor", "foreground", "ansi6"]
 
 [colors]
-background = "#232a2e"
+background = "#101917"
 foreground = "#f2efdf"
 cursor = "#0cbba4"
-selection_background = "#364540"
+selection_background = "#32413c"
 ansi = [
-  "#343f44",
-  "#e67e80",
-  "#a7c080",
-  "#dbbc7f",
-  "#7fbbb3",
-  "#d699b6",
+  "#1c2623",
+  "#d0962e",
+  "#86b78a",
+  "#b2c380",
+  "#67ada2",
+  "#a5a0d6",
   "#83c092",
-  "#f2efdf",
+  "#bec9c5",
 
-  "#a6b0a0",
-  "#f85552",
-  "#8da101",
-  "#dfa000",
-  "#3a94c5",
-  "#df69ba",
-  "#35a77c",
-  "#fffbef",
+  "#6f7976",
+  "#f9b500",
+  "#84e17a",
+  "#cee866",
+  "#5fd0e9",
+  "#c0c1ff",
+  "#71e6c0",
+  "#dff2ec",
 ]

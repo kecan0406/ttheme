@@ -6,26 +6,26 @@ ansi_source = "Teerb + Magica"
 signature = ["cursor", "ansi4", "foreground"]
 
 [colors]
-background = "#101c2b"
+background = "#11191c"
 foreground = "#d0d0d0"
 cursor = "#88afc0"
-selection_background = "#1d3550"
+selection_background = "#293f59"
 ansi = [
-  "#1c1c1c",
-  "#d68686",
-  "#aed686",
-  "#d7af87",
+  "#1d2528",
+  "#ba92ca",
+  "#61bc9a",
+  "#afc382",
   "#5b7397",
-  "#d6aed6",
-  "#8adbb4",
-  "#d0d0d0",
+  "#a2a1d7",
+  "#60c0b8",
+  "#c0c8cc",
 
-  "#4f4f4f",
-  "#d68686",
-  "#aed686",
-  "#e4c9af",
-  "#88afc0",
-  "#d6aed6",
-  "#b1e7dd",
-  "#efefef",
+  "#70787c",
+  "#dcb2ec",
+  "#82deba",
+  "#cfe5a2",
+  "#8ec9e2",
+  "#c3c1f9",
+  "#97dee1",
+  "#e1f0f8",
 ]

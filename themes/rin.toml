@@ -6,26 +6,26 @@ ansi_source = "Citruszest"
 signature = ["cursor", "ansi4", "ansi1"]
 
 [colors]
-background = "#1c1708"
-foreground = "#f5eed8"
+background = "#1b170c"
+foreground = "#efe1c5"
 cursor = "#ffcc11"
-selection_background = "#443711"
+selection_background = "#4a3c16"
 ansi = [
-  "#404040",
+  "#282318",
   "#ff5454",
-  "#00cc7a",
-  "#ffd400",
+  "#82bb37",
+  "#e0b700",
   "#00bfff",
-  "#ff90fe",
-  "#48d1cc",
-  "#bfbfbf",
+  "#ff7f7f",
+  "#70c281",
+  "#cfc5b4",
 
-  "#808080",
-  "#ff1a75",
-  "#1affa3",
-  "#ffff00",
-  "#33cfff",
-  "#ffb2fe",
-  "#00fff2",
-  "#f9f9f9",
+  "#7e7667",
+  "#ffad8d",
+  "#9fde59",
+  "#f5df22",
+  "#42d8ad",
+  "#ffb3b2",
+  "#79e98e",
+  "#faedd0",
 ]

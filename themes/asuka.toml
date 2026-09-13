@@ -6,26 +6,26 @@ ansi_source = "GitLab Dark"
 signature = ["cursor", "ansi11", "ansi4"]
 
 [colors]
-background = "#241412"
-foreground = "#ffffff"
+background = "#211513"
+foreground = "#fddbd5"
 cursor = "#e8442c"
-selection_background = "#45201c"
+selection_background = "#5b322e"
 ansi = [
-  "#000000",
-  "#f57f6c",
-  "#52b87a",
-  "#d99530",
+  "#2e211e",
+  "#f47e6b",
+  "#b9ae2f",
+  "#ffa765",
   "#7fb6ed",
-  "#f88aaf",
-  "#32c5d2",
-  "#ffffff",
+  "#f68393",
+  "#7bc175",
+  "#d8c2be",
 
-  "#666666",
-  "#fcb5aa",
-  "#91d4a8",
+  "#857370",
+  "#fdada0",
+  "#d6cf77",
   "#e9be74",
-  "#498dd1",
-  "#fcacc5",
-  "#5edee3",
-  "#ffffff",
+  "#d5b2ff",
+  "#ffb2ba",
+  "#a6e18e",
+  "#ffe9e5",
 ]

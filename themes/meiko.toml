@@ -6,26 +6,26 @@ ansi_source = "Sundried + Crypton"
 signature = ["cursor", "ansi11", "ansi14"]
 
 [colors]
-background = "#211114"
-foreground = "#e8d5c8"
+background = "#201514"
+foreground = "#fcdbda"
 cursor = "#c9283a"
-selection_background = "#48222a"
+selection_background = "#5a323a"
 ansi = [
-  "#302b2a",
-  "#a7463d",
-  "#587744",
-  "#9d602a",
-  "#6b83c9",
-  "#c96578",
-  "#9c814f",
-  "#c9c9c9",
+  "#2d2120",
+  "#f27f78",
+  "#c5a85d",
+  "#fda680",
+  "#bb8fd9",
+  "#f38692",
+  "#e3a370",
+  "#d7c1c1",
 
-  "#4d4e48",
-  "#c9283a",
-  "#128c21",
+  "#857372",
+  "#ffabaa",
+  "#f4c800",
   "#fc6a21",
-  "#7999f7",
-  "#fd8aa1",
+  "#dfaeff",
+  "#ffb2b9",
   "#fad484",
-  "#ffffff",
+  "#ffe9e8",
 ]

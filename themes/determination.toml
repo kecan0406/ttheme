@@ -6,26 +6,26 @@ ansi_source = "CGA + Determination"
 signature = ["cursor", "ansi11", "ansi4"]
 
 [colors]
-background = "#000000"
-foreground = "#ffffff"
+background = "#211513"
+foreground = "#fddbd5"
 cursor = "#ff0000"
-selection_background = "#4d4a00"
+selection_background = "#413f15"
 ansi = [
-  "#000000",
-  "#c81818",
-  "#00aa00",
-  "#aa5500",
+  "#2e211f",
+  "#ff7766",
+  "#caa900",
+  "#ffa67c",
   "#5555ff",
-  "#aa00aa",
-  "#00aaaa",
-  "#aaaaaa",
+  "#ff78b4",
+  "#8dbe6a",
+  "#d8c2be",
 
-  "#555555",
-  "#ff5555",
-  "#55ff55",
+  "#857370",
+  "#ffaba3",
+  "#eeca00",
   "#ffff55",
-  "#5555ff",
-  "#ff55ff",
-  "#55ffff",
-  "#ffffff",
+  "#f4a5ff",
+  "#ffb0cf",
+  "#a4e37b",
+  "#ffe9e6",
 ]

@@ -6,26 +6,26 @@ ansi_source = "TokyoNight"
 signature = ["cursor", "ansi1", "ansi5"]
 
 [colors]
-background = "#150f1e"
-foreground = "#c0caf5"
+background = "#15181e"
+foreground = "#dee2f2"
 cursor = "#7aa2f7"
-selection_background = "#33467c"
+selection_background = "#333d5b"
 ansi = [
-  "#15161e",
+  "#21242b",
   "#f7768e",
-  "#9ece6a",
-  "#e0af68",
-  "#7aa2f7",
+  "#03c0b0",
+  "#f7a6a9",
+  "#779ff4",
   "#bb9af7",
-  "#7dcfff",
-  "#a9b1d6",
+  "#77b6f1",
+  "#c5c6d0",
 
-  "#414868",
-  "#f7768e",
-  "#9ece6a",
-  "#e0af68",
-  "#7aa2f7",
-  "#bb9af7",
-  "#7dcfff",
-  "#c0caf5",
+  "#757780",
+  "#faa2ff",
+  "#4be2d1",
+  "#ffd2d3",
+  "#a6c0ff",
+  "#c4c0ff",
+  "#aed6ff",
+  "#eaedfe",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Rose Pine Dawn + Magica"
 signature = ["cursor", "foreground", "ansi3"]
 
 [colors]
-background = "#faf4ed"
+background = "#fff8f7"
 foreground = "#444060"
 cursor = "#c22e63"
-selection_background = "#f2d5de"
+selection_background = "#edd0d9"
 ansi = [
-  "#26233a",
-  "#b4637a",
-  "#286983",
+  "#35292b",
+  "#a3556b",
+  "#616497",
   "#b57614",
-  "#56949f",
-  "#907aa9",
-  "#c05a55",
-  "#444060",
+  "#5b6c9a",
+  "#8a5f88",
+  "#aa4952",
+  "#514346",
 
-  "#9893a5",
-  "#b4637a",
-  "#286983",
-  "#b57614",
-  "#56949f",
-  "#907aa9",
-  "#c05a55",
-  "#2a273f",
+  "#917f82",
+  "#91465c",
+  "#525588",
+  "#a35125",
+  "#4d5d8b",
+  "#7a5079",
+  "#973a44",
+  "#2c1b1f",
 ]

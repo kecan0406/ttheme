@@ -6,26 +6,26 @@ ansi_source = "Cursor Dark + Magica"
 signature = ["cursor", "ansi11", "foreground"]
 
 [colors]
-background = "#241014"
+background = "#201515"
 foreground = "#d4d4d4"
 cursor = "#d63a4a"
-selection_background = "#43202a"
+selection_background = "#59323d"
 ansi = [
-  "#242424",
-  "#bd4f62",
-  "#3fa266",
-  "#d2943e",
-  "#81a1c1",
-  "#b48ead",
-  "#88c0d0",
-  "#e4e4e4",
+  "#2d2120",
+  "#f67a88",
+  "#c1ab2c",
+  "#ffa76f",
+  "#a898ce",
+  "#d493b1",
+  "#a5aee3",
+  "#d7c1c1",
 
-  "#4a4a4a",
-  "#e14d60",
-  "#70b489",
+  "#857372",
+  "#ffaaad",
+  "#dccd71",
   "#f1b467",
-  "#87a6c4",
-  "#b48ead",
-  "#88c0d0",
-  "#e4e4e4",
+  "#c9b9f1",
+  "#f8b3d2",
+  "#c8cfff",
+  "#ffe9e8",
 ]

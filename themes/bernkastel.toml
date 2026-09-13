@@ -6,26 +6,26 @@ ansi_source = "Challenger Deep"
 signature = ["cursor", "ansi5", "ansi1"]
 
 [colors]
-background = "#1e1c31"
-foreground = "#cbe1e7"
+background = "#13181e"
+foreground = "#dbe3f1"
 cursor = "#65b2ff"
-selection_background = "#35314f"
+selection_background = "#3e3a58"
 ansi = [
-  "#141228",
+  "#1f242a",
   "#ff5458",
-  "#62d196",
-  "#ffb378",
-  "#65b2ff",
+  "#00bec0",
+  "#f5a4c2",
+  "#57a5f1",
   "#906cff",
-  "#63f2f1",
-  "#a6b3cc",
+  "#30c0e0",
+  "#c3c7cf",
 
-  "#565575",
-  "#ff8080",
-  "#95ffa4",
-  "#ffe9aa",
-  "#91ddff",
-  "#c991e1",
-  "#aaffe4",
-  "#cbe3e7",
+  "#73777f",
+  "#faa2ff",
+  "#00e4da",
+  "#b5eabd",
+  "#87c9f3",
+  "#c8bfff",
+  "#87dfea",
+  "#e6eefd",
 ]

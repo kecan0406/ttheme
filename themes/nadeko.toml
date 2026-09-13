@@ -6,26 +6,26 @@ ansi_source = "Tinacious Design Dark"
 signature = ["cursor", "ansi4", "ansi2"]
 
 [colors]
-background = "#231825"
-foreground = "#cbcbf0"
+background = "#1f1518"
+foreground = "#f9dbe3"
 cursor = "#f2a0bd"
-selection_background = "#472440"
+selection_background = "#53334b"
 ansi = [
-  "#1d1d26",
-  "#ff3399",
+  "#2c2124",
+  "#fa72aa",
   "#00d364",
-  "#ffcc66",
+  "#ffa671",
   "#00cbff",
-  "#cc66ff",
-  "#00ceca",
-  "#cbcbf0",
+  "#eb7de3",
+  "#71b5ff",
+  "#d5c2c6",
 
-  "#636667",
-  "#ff2f92",
-  "#00d364",
-  "#ffd479",
-  "#00cbff",
-  "#d783ff",
-  "#00d5d4",
-  "#d5d6f3",
+  "#837377",
+  "#ffa8c5",
+  "#f8c600",
+  "#ffd4bc",
+  "#b4bdff",
+  "#ffaaf4",
+  "#b5d4ff",
+  "#ffe8ee",
 ]

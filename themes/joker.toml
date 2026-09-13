@@ -6,26 +6,26 @@ ansi_source = "Red Alert + Phantom"
 signature = ["cursor", "foreground", "ansi9"]
 
 [colors]
-background = "#131013"
+background = "#201513"
 foreground = "#f2eef2"
 cursor = "#d81818"
-selection_background = "#3d0f12"
+selection_background = "#5c3232"
 ansi = [
-  "#1a171a",
-  "#d81818",
-  "#71be6b",
-  "#beb86b",
-  "#489bee",
-  "#e979d7",
-  "#6bbeb8",
-  "#d6d6d6",
+  "#2e211f",
+  "#ff7767",
+  "#c6aa20",
+  "#e5b36c",
+  "#b88bf3",
+  "#ff78b1",
+  "#9dba76",
+  "#d8c2be",
 
-  "#666666",
+  "#857370",
   "#ff3b3b",
-  "#aff08c",
-  "#dfddb7",
-  "#65aaf1",
-  "#ddb7df",
-  "#b7dfdd",
-  "#ffffff",
+  "#f0c83f",
+  "#ffd79d",
+  "#d3b3ff",
+  "#f7b3d3",
+  "#bcdb9e",
+  "#ffe9e6",
 ]

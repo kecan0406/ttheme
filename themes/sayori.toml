@@ -6,26 +6,26 @@ ansi_source = "0x96f"
 signature = ["cursor", "ansi9", "ansi4"]
 
 [colors]
-background = "#241b1d"
-foreground = "#fdf3ec"
+background = "#211512"
+foreground = "#fddbd4"
 cursor = "#f0a797"
-selection_background = "#472a2e"
+selection_background = "#543539"
 ansi = [
-  "#262427",
-  "#ff666d",
-  "#b3e03a",
-  "#ffc739",
+  "#2e211e",
+  "#ff766d",
+  "#d6a400",
+  "#ffa849",
   "#00cde8",
-  "#a392e8",
-  "#9deaf6",
-  "#fcfcfa",
+  "#d88cd0",
+  "#8bbd8a",
+  "#d8c2bd",
 
-  "#545452",
+  "#85736f",
   "#ff7e83",
-  "#bee55e",
-  "#ffd05e",
-  "#1bd5eb",
-  "#b0a3eb",
-  "#acedf8",
-  "#fcfcfa",
+  "#fdc418",
+  "#ffd5af",
+  "#7ad585",
+  "#f4b1ec",
+  "#aedead",
+  "#ffe9e5",
 ]

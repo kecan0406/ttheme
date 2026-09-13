@@ -6,26 +6,26 @@ ansi_source = "Under The Sea"
 signature = ["cursor", "ansi5", "ansi9"]
 
 [colors]
-background = "#011116"
-foreground = "#ffffff"
+background = "#211513"
+foreground = "#fddbd5"
 cursor = "#d25d4b"
-selection_background = "#1e3a3a"
+selection_background = "#264242"
 ansi = [
-  "#022026",
-  "#b2302d",
-  "#00a941",
-  "#59819c",
-  "#459a86",
+  "#2e211e",
+  "#ff7668",
+  "#c3ab00",
+  "#c3b3eb",
+  "#9ca757",
   "#1298ff",
-  "#5d7e19",
-  "#c8d8d8",
+  "#daaa24",
+  "#d8c2be",
 
-  "#384451",
+  "#857370",
   "#ff4242",
-  "#2aea5e",
-  "#8ed4fd",
-  "#61d5ba",
-  "#1298ff",
-  "#98d028",
-  "#58fbd6",
+  "#e9cb00",
+  "#e1d7ff",
+  "#bbc961",
+  "#dab9ff",
+  "#ffca3d",
+  "#ffe9e5",
 ]

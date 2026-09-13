@@ -6,26 +6,26 @@ ansi_source = "Nocturnal Winter"
 signature = ["cursor", "ansi13", "foreground"]
 
 [colors]
-background = "#0d0d17"
+background = "#16171f"
 foreground = "#f0eef6"
 cursor = "#515ba5"
-selection_background = "#23233a"
+selection_background = "#3c3b54"
 ansi = [
-  "#4d4d4d",
-  "#f12d52",
-  "#09cd7e",
-  "#f5f17a",
-  "#3182e0",
-  "#ff2b6d",
-  "#09c87a",
-  "#fcfcfc",
+  "#23232b",
+  "#e877d7",
+  "#00bdcd",
+  "#61cfa6",
+  "#729eff",
+  "#ea7ee4",
+  "#00c3d3",
+  "#c7c5d0",
 
-  "#808080",
-  "#f16d86",
-  "#0ae78d",
-  "#fffc67",
-  "#6096ff",
+  "#777680",
+  "#ffa1f5",
+  "#00e1f4",
+  "#5df6c3",
+  "#acbfff",
   "#ff78a2",
-  "#0ae78d",
-  "#ffffff",
+  "#00e7fa",
+  "#edecfe",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Challenger Deep + Delusion"
 signature = ["cursor", "ansi12", "ansi1"]
 
 [colors]
-background = "#1e1c31"
-foreground = "#cbe1e7"
+background = "#1b170c"
+foreground = "#eee1c5"
 cursor = "#ffd447"
-selection_background = "#343061"
+selection_background = "#3d3a5b"
 ansi = [
-  "#141228",
+  "#282318",
   "#ff5458",
-  "#62d196",
-  "#ffd447",
-  "#65b2ff",
-  "#6a6dab",
-  "#63f2f1",
-  "#a6b3cc",
+  "#88b958",
+  "#e0b72a",
+  "#00b3ad",
+  "#d790bc",
+  "#67c383",
+  "#cfc6b4",
 
-  "#565575",
-  "#ff8080",
-  "#95ffa4",
-  "#ffe9aa",
+  "#7d7667",
+  "#ffae80",
+  "#b0da5c",
+  "#f6db8c",
   "#91ddff",
-  "#8f92cf",
-  "#aaffe4",
-  "#cbe3e7",
+  "#f8b1dd",
+  "#aedf9e",
+  "#faedd0",
 ]

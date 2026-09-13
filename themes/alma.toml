@@ -6,26 +6,26 @@ ansi_source = "Belafonte Night + Glitch City"
 signature = ["cursor", "ansi12", "ansi9"]
 
 [colors]
-background = "#20111b"
-foreground = "#ead9b9"
+background = "#1e160d"
+foreground = "#f6dfc6"
 cursor = "#eaa549"
-selection_background = "#45373c"
+selection_background = "#483a3f"
 ansi = [
-  "#2b1a24",
-  "#e04b3a",
-  "#8f8b6a",
-  "#eaa549",
-  "#5d8ba0",
-  "#b96a3a",
-  "#989a9c",
-  "#d5ccba",
+  "#2b2218",
+  "#fc7c34",
+  "#c3a95f",
+  "#f4ae51",
+  "#6fad92",
+  "#e39351",
+  "#9aba81",
+  "#d4c4b5",
 
-  "#6b5a5f",
+  "#827568",
   "#ee6a52",
-  "#adaa84",
-  "#f2bd66",
+  "#e4ca7d",
+  "#ffd6a0",
   "#74a2b8",
-  "#cd8148",
-  "#b0b4b8",
-  "#efe6d4",
+  "#ffb778",
+  "#bbdca0",
+  "#ffebd6",
 ]

@@ -6,26 +6,26 @@ ansi_source = "Scarlet Protocol + Glitch City"
 signature = ["cursor", "ansi2", "ansi13"]
 
 [colors]
-background = "#1b0c15"
-foreground = "#f6e3da"
+background = "#201515"
+foreground = "#fcdbdb"
 cursor = "#ff2e51"
-selection_background = "#53113a"
+selection_background = "#573245"
 ansi = [
-  "#170a10",
-  "#ff1a4b",
+  "#2d2121",
+  "#ff747d",
   "#00dc84",
-  "#eab04d",
-  "#2e86c9",
-  "#ca30c7",
-  "#00c5c7",
-  "#d8c8c3",
+  "#ffa768",
+  "#ad91ee",
+  "#fc78be",
+  "#7ab3ff",
+  "#d7c1c1",
 
-  "#6d5158",
-  "#ff6e67",
-  "#5ffa68",
-  "#ffd97a",
-  "#6871ff",
+  "#857373",
+  "#ffaba8",
+  "#f4c800",
+  "#ffd5b4",
+  "#e9aaff",
   "#bd35ec",
-  "#60fdff",
-  "#fff1e8",
+  "#b7d3ff",
+  "#ffe9e8",
 ]

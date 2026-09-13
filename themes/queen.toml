@@ -6,26 +6,26 @@ ansi_source = "Argonaut + Phantom"
 signature = ["cursor", "foreground", "ansi4"]
 
 [colors]
-background = "#0e1019"
+background = "#201513"
 foreground = "#fffaf4"
 cursor = "#ff0018"
-selection_background = "#384565"
+selection_background = "#313d5b"
 ansi = [
-  "#232323",
-  "#ff000f",
-  "#8ce10b",
-  "#ffb900",
+  "#2d211f",
+  "#ff7767",
+  "#d3a500",
+  "#ffa859",
   "#008df8",
-  "#9a5feb",
-  "#00d8eb",
-  "#ffffff",
+  "#ef7cdc",
+  "#8cafff",
+  "#d8c2bf",
 
-  "#444444",
-  "#ff2740",
-  "#abe15b",
-  "#ffd242",
-  "#0092ff",
-  "#9a5feb",
-  "#67fff0",
-  "#ffffff",
+  "#857370",
+  "#ffaba5",
+  "#fec400",
+  "#ffd5ae",
+  "#d6b2ff",
+  "#ffacec",
+  "#b7df70",
+  "#ffe9e6",
 ]

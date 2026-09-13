@@ -6,26 +6,26 @@ ansi_source = "Molokai"
 signature = ["cursor", "ansi11", "ansi12"]
 
 [colors]
-background = "#150a0d"
-foreground = "#f5e6ea"
+background = "#201514"
+foreground = "#fcdbd9"
 cursor = "#e60033"
-selection_background = "#3a1220"
+selection_background = "#59323e"
 ansi = [
-  "#121212",
-  "#fa2573",
-  "#98e123",
-  "#dfd460",
-  "#1080d0",
-  "#8700ff",
-  "#43a8d0",
-  "#bbbbbb",
+  "#2d2120",
+  "#ff7389",
+  "#d8a300",
+  "#f5ad4b",
+  "#b38df7",
+  "#ed7de0",
+  "#aea8fa",
+  "#d7c1c0",
 
-  "#555555",
-  "#f6669d",
-  "#b1e05f",
+  "#857372",
+  "#ffa9b8",
+  "#ffc330",
   "#fff26d",
   "#00afff",
-  "#af87ff",
-  "#51ceff",
-  "#ffffff",
+  "#ffaaf7",
+  "#d1ccff",
+  "#ffe9e8",
 ]
