@@ -377,6 +377,7 @@ __tt_pv_goto() {
 
 __tt_pv_focus() {
   [[ ${rtype[cur]} == thm ]] || return 0
+  (( resized )) || [[ ${rval[cur]} == "$bgname" ]] || __tt_pv_bg_show "${rval[cur]}"
   local spec=${TTHEME_PALETTE[${rval[cur]}]}
   [[ $spec == "$applied" ]] && return 0
   __tt_apply "$spec"
@@ -409,7 +410,7 @@ __tt_pv_left() {
 }
 
 __tt_pv_draw() {
-  local h=$(( ph - 6 )) w=$pw i out line g arrow chunk cnt hz="" mt=${#TTHEME_ORDER}
+  local h=$(( ph - 6 )) w=$pw i out line g arrow chunk cnt hz="" mt=${#TTHEME_ORDER} wiped=0
   local bw=$(( pw < 48 ? pw : 48 ))
   local N=${#rval} rail=0 rl=0 rs=0 rthumb="█" rtrack="░" cmark="▶" ag="" hsel=""
   (( h < 1 )) && h=1
@@ -445,7 +446,7 @@ __tt_pv_draw() {
   out=$'\e[H'
   if (( resized )); then
     out+=$'\e[2J'
-    resized=0
+    resized=0 wiped=1
   fi
   local ver="v$TTHEME_VERSION" hl=$'\e[1m'
   if (( color )); then
@@ -565,6 +566,11 @@ __tt_pv_draw() {
   fi
   out+=$line$'\e[K'
   print -rn -- "$out"
+  if (( wiped )); then
+    local bn=$bgname
+    [[ ${rtype[cur]} == thm ]] && bn=${rval[cur]}
+    [[ -n $bn ]] && __tt_pv_bg_show "$bn" 1
+  fi
 }
 
 __tt_pv_init() {
@@ -785,7 +791,8 @@ __tt_preview() {
     return 1
   fi
   local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0
-  local pick="" pk=1 pkdef=1 picked=0 canpick=0
+  local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown=""
+  local -A bgsent=() bgdim=()
   local -a plabel=(" this tab " " default ")
   if [[ $mode == pin ]]; then
     canpick=1 pkdef=2 plabel=(" this directory " " and below ")
@@ -801,6 +808,7 @@ __tt_preview() {
   __tt_pv_rows
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && __tt_pv_goto "$cn"
   printf '\e[?1049h\e[?7l\e[?25l'
+  __tt_pv_bg_open
   {
     while :; do
       __tt_pv_focus
@@ -815,6 +823,7 @@ __tt_preview() {
       done
     done
   } always {
+    __tt_pv_bg_close
     printf '\e[?7h\e[?1049l\e[?25h'
     if [[ -n $sel ]]; then
       local spec=${TTHEME_PALETTE[$sel]}

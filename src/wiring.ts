@@ -40,7 +40,11 @@ export function detectTerminal(env: Record<string, string | undefined>): string 
 
 export function ghosttyBlock(tthemeDir: string, palette: string, tabPalette: 'seq' | 'off'): string {
   const lines = tabPalette === 'seq' ? [`command = ${tthemeDir}/launch-tab.zsh`, 'shell-integration = zsh'] : []
-  lines.push(`theme = ${palette}`, `config-file = ${tthemeDir}/ttheme.conf`)
+  lines.push(
+    `theme = ${palette}`,
+    `config-file = ${tthemeDir}/ttheme.conf`,
+    `config-file = ?${tthemeDir}/backgrounds/${palette}.conf`,
+  )
   return lines.join('\n')
 }
 

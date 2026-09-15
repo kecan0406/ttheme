@@ -12,6 +12,12 @@ __tt_osc_apply() {
 
 __tt_apply() { __tt_osc_apply "$@" }
 
+__tt_pv_bg_open() { : }
+
+__tt_pv_bg_show() { : }
+
+__tt_pv_bg_close() { : }
+
 __tt_query_bg() {
   local saved resp fd
   exec {fd}<>/dev/tty 2>/dev/null || return 1

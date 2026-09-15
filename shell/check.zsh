@@ -18,12 +18,20 @@ EDITOR=true ttheme config > /dev/null || { print -u2 "ttheme config broke"; exit
 source shell/adapters/ghostty.zsh
 killall() { :; }; pkill() { :; }
 mkdir -p $XDG_CONFIG_HOME/ghostty
-print -l "font-size = 14" "# ttheme begin" "theme = magi" "config-file = x" "# ttheme end" > $XDG_CONFIG_HOME/ghostty/config
+print -l "font-size = 14" "# ttheme begin" "theme = magi" "config-file = x" "config-file = ?/cfg/ttheme/backgrounds/magi.conf" "# ttheme end" > $XDG_CONFIG_HOME/ghostty/config
 __tt_persist homura || { print -u2 "__tt_persist failed"; exit 1 }
-[[ "$(<$XDG_CONFIG_HOME/ghostty/config)" == "$(print -l "font-size = 14" "# ttheme begin" "theme = homura" "config-file = x" "# ttheme end")" ]] ||
+[[ "$(<$XDG_CONFIG_HOME/ghostty/config)" == "$(print -l "font-size = 14" "# ttheme begin" "theme = homura" "config-file = x" "config-file = ?/cfg/ttheme/backgrounds/homura.conf" "# ttheme end")" ]] ||
   { print -u2 "__tt_persist rewrote the config wrong:"; cat $XDG_CONFIG_HOME/ghostty/config; exit 1 }
 print "theme = magi" > $XDG_CONFIG_HOME/ghostty/config
 __tt_persist homura 2>/dev/null && { print -u2 "__tt_persist touched a theme line outside the block"; exit 1 }
+REPLY=; __tt_b64 26 22 29
+[[ $REPLY == GhYd ]] || { print -u2 "__tt_b64 broke on 3 bytes: $REPLY"; exit 1 }
+REPLY=; __tt_b64 26 22 29 204
+[[ $REPLY == GhYdzA== ]] || { print -u2 "__tt_b64 broke on 4 bytes: $REPLY"; exit 1 }
+REPLY=; __tt_bg_crop 2560 1550 714 518
+[[ $REPLY == "212 0 2136 1550" ]] || { print -u2 "__tt_bg_crop broke on a tall area: $REPLY"; exit 1 }
+REPLY=; __tt_bg_crop 1000 1000 2000 1000
+[[ $REPLY == "0 250 1000 500" ]] || { print -u2 "__tt_bg_crop broke on a wide area: $REPLY"; exit 1 }
 [[ "$(<$TTHEME_CONFIG)" == "$TTHEME_CONFIG_TEMPLATE" ]] || { print -u2 "config seed drifted from the template"; exit 1 }
 proj=$XDG_CONFIG_HOME/proj
 mkdir -p $proj/sub/deep $proj-sibling

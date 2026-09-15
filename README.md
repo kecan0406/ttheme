@@ -129,6 +129,29 @@ painted by hand — take the palette without a restart. Painting is per surface
 otherwise: a new tab starts from the configured theme, not from what the last
 tab was painted.
 
+A palette can also bring a Ghostty background image. The block `init` writes
+includes `~/.config/ttheme/backgrounds/<palette>.conf` for the configured
+theme with an optional `config-file = ?…`, and choosing **default** points that
+include at the new palette — so whatever Ghostty settings you put in that file
+follow the default, and palettes without one show no image:
+
+```
+# ~/.config/ttheme/backgrounds/kagami.conf
+background-image = ~/.config/ttheme/backgrounds/kagami.png
+background-image-fit = cover
+background-image-opacity = 0.2
+```
+
+ttheme ships no images; they stay on your machine. A background is Ghostty
+config, not an escape sequence, so it follows the default for every window
+rather than the palette painted on one tab.
+
+`preview` shows the background of the palette under the cursor while you
+browse: through the kitty graphics protocol it draws that palette's
+`background-image`, cropped like `cover` and faded by
+`background-image-opacity`, behind the list — or just its plain background when
+it has no file. Only PNG images preview.
+
 `pin` opens the same browser and, on enter, asks **this directory** or **and
 below**; the answer lands in `~/.config/ttheme/pins`, one `path  palette` per
 line, where `path/**` covers everything below it (`~` works, and the file is

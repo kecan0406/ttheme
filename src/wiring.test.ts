@@ -48,10 +48,13 @@ test('ghosttyBlock wires the tab launcher only in seq mode', () => {
   const seq = ghosttyBlock('/cfg/ttheme', 'miku', 'seq')
   assert.equal(
     seq,
-    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = miku\nconfig-file = /cfg/ttheme/ttheme.conf',
+    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = miku\nconfig-file = /cfg/ttheme/ttheme.conf\nconfig-file = ?/cfg/ttheme/backgrounds/miku.conf',
   )
   const off = ghosttyBlock('/cfg/ttheme', 'miku', 'off')
-  assert.equal(off, 'theme = miku\nconfig-file = /cfg/ttheme/ttheme.conf')
+  assert.equal(
+    off,
+    'theme = miku\nconfig-file = /cfg/ttheme/ttheme.conf\nconfig-file = ?/cfg/ttheme/backgrounds/miku.conf',
+  )
 })
 
 test('zshrcBlock only sources the layer', () => {
