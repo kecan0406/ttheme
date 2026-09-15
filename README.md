@@ -148,9 +148,36 @@ rather than the palette painted on one tab.
 
 `preview` shows the background of the palette under the cursor while you
 browse: through the kitty graphics protocol it draws that palette's
-`background-image`, cropped like `cover` and faded by
+`background-image` where Ghostty would place it, faded by
 `background-image-opacity`, behind the list — or just its plain background when
 it has no file. Only PNG images preview.
+
+The row above the key hints tunes that background in place. `[`/`]` walk the
+size 1% at a time, shown large in the middle of the screen as it changes: 100%
+is the whole image fitted into the window (`contain`), below that it shrinks to
+20%, above it the image grows around the face until it covers the window, and
+the top step is **fill** (`cover`). Fill uses `<palette>@fill-<focus>.png` when
+it sits beside the image — a crop made to fill the window, whose name carries
+the height of the face in percent, which the sizes above 100% zoom around — and
+the image itself otherwise. `{`/`}` step through the nine
+`background-image-position` anchors, `<`/`>` move the opacity by 0.01, space
+turns the palette's background off and on, and `=` returns it to its defaults.
+
+The palette's `.conf` holds those defaults; the preview only appends two
+optional includes to it and keeps everything else in `<palette>.tune.conf` (the
+tuning) and `<palette>.off.conf` (the off switch), which Ghostty loads after
+the conf. Both are written when the preview closes, by whichever key, and
+Ghostty reloads when that palette is the default. Ghostty has no scale setting,
+so every size but 100% and fill is baked into a copy beside the image and the
+tuning points at it: below 100% onto a transparent canvas of the image's own
+size (`kagami@60-bottom-right.png`, fitted with `contain`), above it onto one of
+the window's size at the time (`kagami@130-center-2880x1800.png`, with
+`cover`). Baking runs `sips`, so those sizes are offered on macOS only.
+
+The preview draws inside the cell grid, and Ghostty's `window-padding` around
+it keeps showing the configured background. While the cursor rests on the
+configured palette and nothing has been tuned, the preview draws nothing and
+lets that background show through whole.
 
 `pin` opens the same browser and, on enter, asks **this directory** or **and
 below**; the answer lands in `~/.config/ttheme/pins`, one `path  palette` per

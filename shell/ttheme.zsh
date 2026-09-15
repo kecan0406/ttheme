@@ -409,8 +409,50 @@ __tt_pv_left() {
   __tt_pv_rows
 }
 
+typeset -gA TTHEME_GLYPHS=(
+  0 111101101101111 1 010110010010111 2 111001111100111 3 111001111001111 4 101101111001001
+  5 111100111001111 6 111100111101111 7 111001001001001 8 111101111101111 9 111101111001111
+  '%' 101001010100101 F 111100110100100 I 111010010010111 L 100100100100111
+)
+
+__tt_pv_osd() {
+  local text=${(U)osd} bits line oc=$'\e[1m' blank
+  local -i s=2 n=${#text} w r c k i top left
+  (( n * 16 + 4 <= pw && ph >= 14 )) || s=1
+  w=$(( n * 8 * s - 2 * s + 4 ))
+  top=$(( (ph - 5 * s) / 2 )) left=$(( (pw - w) / 2 + 1 ))
+  (( top < 2 )) && top=2
+  (( left < 1 )) && left=1
+  if (( color )) && [[ ${rtype[cur]} == thm ]]; then
+    local -a fp=(${=TTHEME_PALETTE[${rval[cur]}]})
+    local fc=${fp[3]#\#}
+    printf -v oc '\e[1;38;2;%d;%d;%dm' $((16#${fc:0:2})) $((16#${fc:2:2})) $((16#${fc:4:2}))
+  fi
+  blank=${(l:w:: :)}
+  out+=$'\e['$(( top - 1 ))';'${left}H$blank
+  for (( r = 0; r < 5; r++ )); do
+    line="  "
+    for (( k = 1; k <= n; k++ )); do
+      bits=${TTHEME_GLYPHS[${text[k]}]}
+      for (( c = 1; c <= 3; c++ )); do
+        if [[ ${bits[r * 3 + c]} == 1 ]]; then
+          line+=${(l:2*s::█:)}
+        else
+          line+=${(l:2*s:: :)}
+        fi
+      done
+      (( k < n )) && line+=${(l:2*s:: :)}
+    done
+    line+="  "
+    for (( i = 0; i < s; i++ )); do
+      out+=$'\e['$(( top + r * s + i ))';'${left}H$oc$line$'\e[0m'
+    done
+  done
+  out+=$'\e['$(( top + 5 * s ))';'${left}H$blank
+}
+
 __tt_pv_draw() {
-  local h=$(( ph - 6 )) w=$pw i out line g arrow chunk cnt hz="" mt=${#TTHEME_ORDER} wiped=0
+  local h=$(( ph - 6 - bgrow )) w=$pw i out line g arrow chunk cnt hz="" mt=${#TTHEME_ORDER} wiped=0
   local bw=$(( pw < 48 ? pw : 48 ))
   local N=${#rval} rail=0 rl=0 rs=0 rthumb="█" rtrack="░" cmark="▶" ag="" hsel=""
   (( h < 1 )) && h=1
@@ -543,6 +585,10 @@ __tt_pv_draw() {
     fi
     out+=$'\n'
   done
+  if (( bgrow )); then
+    __tt_pv_bg_line
+    out+=$REPLY$'\e[K\n'
+  fi
   if [[ -n $pick ]]; then
     local a=$plabel[1] b=$plabel[2] on=${hsel:-$'\e[7;1m'} at=$pick
     if [[ $mode == pin ]]; then
@@ -565,12 +611,14 @@ __tt_pv_draw() {
     (( color )) && line=$'\e[2m'$line$'\e[0m'
   fi
   out+=$line$'\e[K'
+  (( osdt > 0 )) && __tt_pv_osd
   print -rn -- "$out"
   if (( wiped )); then
     local bn=$bgname
     [[ ${rtype[cur]} == thm ]] && bn=${rval[cur]}
     [[ -n $bn ]] && __tt_pv_bg_show "$bn" 1
   fi
+  printf '\e[?2026l'
 }
 
 __tt_pv_init() {
@@ -656,6 +704,10 @@ __tt_pv_getch() {
   while ! read -sk 1 -t $t 2>/dev/null; do
     [[ -t 0 ]] || return 1
     __tt_pv_size && return 1
+    if (( osdt > 0 )); then
+      (( osdt -= gstep ? 6 : 20 ))
+      (( osdt > 0 )) || return 1
+    fi
     (( gstep )) && { gstep=$(( gstep - 1 )); return 1 }
     (( SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; return 1 }
   done
@@ -753,15 +805,22 @@ __tt_pv_handle() {
     home) cur=1 ;;
     end) (( ${#rval} )) && cur=${#rval} ;;
     pgup)
-      cur=$(( cur - ph + 6 ))
+      cur=$(( cur - ph + 6 + bgrow ))
       (( cur < 1 )) && cur=1
       ;;
     pgdn)
-      cur=$(( cur + ph - 6 ))
+      cur=$(( cur + ph - 6 - bgrow ))
       (( cur > ${#rval} )) && cur=${#rval}
       (( cur < 1 )) && cur=1
       ;;
-    ' ') [[ ${rtype[cur]} == hdr ]] && __tt_pv_toggle ;;
+    ' ')
+      if [[ ${rtype[cur]} == hdr ]]; then
+        __tt_pv_toggle
+      else
+        __tt_pv_bg_adjust "$key"
+      fi
+      ;;
+    '['|']'|'{'|'}'|'<'|'>'|'=') __tt_pv_bg_adjust "$key" ;;
     $'\x7f'|$'\x08')
       if [[ -n $flt ]]; then
         name=""
@@ -791,8 +850,8 @@ __tt_preview() {
     return 1
   fi
   local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0
-  local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown=""
-  local -A bgsent=() bgdim=()
+  local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgrow=0 bgname="" bgshown="" bginc="" osd="" osdt=0
+  local -A bgsent=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=()
   local -a plabel=(" this tab " " default ")
   if [[ $mode == pin ]]; then
     canpick=1 pkdef=2 plabel=(" this directory " " and below ")
@@ -807,10 +866,11 @@ __tt_preview() {
   __tt_pv_roll
   __tt_pv_rows
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && __tt_pv_goto "$cn"
-  printf '\e[?1049h\e[?7l\e[?25l'
+  printf '\e[?2026h\e[?1049h\e[?7l\e[?25l'
   __tt_pv_bg_open
   {
     while :; do
+      printf '\e[?2026h'
       __tt_pv_focus
       __tt_pv_draw
       if ! __tt_pv_read; then
@@ -823,8 +883,10 @@ __tt_preview() {
       done
     done
   } always {
+    printf '\e[?2026h'
     __tt_pv_bg_close
-    printf '\e[?7h\e[?1049l\e[?25h'
+    printf '\e[?7h\e[?1049l\e[?25h\e[?2026l'
+    __tt_pv_bg_save
     if [[ -n $sel ]]; then
       local spec=${TTHEME_PALETTE[$sel]}
       [[ $spec == "$applied" ]] || __tt_apply "$spec"

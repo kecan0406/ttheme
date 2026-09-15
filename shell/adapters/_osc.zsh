@@ -16,7 +16,13 @@ __tt_pv_bg_open() { : }
 
 __tt_pv_bg_show() { : }
 
+__tt_pv_bg_adjust() { : }
+
+__tt_pv_bg_line() { REPLY="" }
+
 __tt_pv_bg_close() { : }
+
+__tt_pv_bg_save() { : }
 
 __tt_query_bg() {
   local saved resp fd
