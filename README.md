@@ -118,10 +118,20 @@ ttheme help     the list above, in your terminal
 ```
 
 In `preview`, groups start folded with the cursor on the current palette;
-`↑`/`↓` move (the tab repaints as the focus lands on a palette), `←`/`→` and
-space fold and unfold, page up/down and home/end jump, typing filters by
-substring (ctrl-u clears it), enter applies, and esc steps back — first out
-of the filter, then out of the preview with the original colors restored.
+`↑`/`↓` move (the tab repaints as the focus lands on a palette), `←`/`→` fold
+and unfold (so do enter and space on a series), page up/down and home/end
+jump, typing filters by substring and underlines the match (ctrl-u clears it),
+enter applies, and esc steps back — first out of the filter, then out of the
+preview with the original colors restored. Each palette row carries its 16
+colors, normal over bright. The last line lists only the keys that work right
+there, names the mode when it is not plain browsing (`FILTER`, `TUNE`, `APPLY`,
+`KEYS`) and pins where esc goes to the right; `?` shows all of them. From 76
+columns on, a sample session sits against the right edge of the window — the
+16 colors, a prompt, git and test output, a selection — in the palette under
+the cursor. The list and the sample widen with the window (the sample up to 64
+columns) and the gap between them takes the rest; the tuning panel takes the
+sample's place while open, and so does the key list once the sample is 48
+columns wide.
 Under Ghostty with `TTHEME_TAB_PALETTE=off`, enter asks **this tab** or
 **default**: default rewrites `theme =` in the `# ttheme begin` block of your
 Ghostty config and sends `SIGUSR2`, so new tabs — and open tabs you have not
@@ -152,21 +162,24 @@ browse: through the kitty graphics protocol it draws that palette's
 `background-image-opacity`, behind the list — or just its plain background when
 it has no file. Only PNG images preview.
 
-The row above the key hints tunes that background in place. `[`/`]` walk the
-size 1% at a time, shown large in the middle of the screen as it changes: 100%
-is the whole image fitted into the window (`contain`), below that it shrinks to
-20%, above it the image grows around the face until it covers the window, and
-the top step is **fill** (`cover`). Fill uses `<palette>@fill-<focus>.png` when
-it sits beside the image — a crop made to fill the window, whose name carries
-the height of the face in percent, which the sizes above 100% zoom around — and
-the image itself otherwise. `{`/`}` step through the nine
-`background-image-position` anchors, `<`/`>` move the opacity by 0.01, space
-turns the palette's background off and on, and `=` returns it to its defaults.
+On a palette with a background, tab opens a panel that tunes it in place:
+`↑`/`↓` pick size, position or opacity, and `←`/`→` change it (with shift, ten
+steps at a time). Size walks 1% at a time, shown large in the middle of the
+screen as it changes: 100% is the whole image fitted into the window
+(`contain`), below that it shrinks to 20%, above it the image grows around the
+face until it covers the window, and the top step is **fill** (`cover`). Fill
+uses `<palette>@fill-<focus>.png` when it sits beside the image — a crop made
+to fill the window, whose name carries the height of the face in percent, which
+the sizes above 100% zoom around — and the image itself otherwise. Position
+steps through the nine `background-image-position` anchors, or `1`–`9` jump to
+one in reading order; opacity moves by 0.01. Space turns the palette's
+background off and on, `=` returns it to its defaults, enter keeps the change
+and esc puts back what the panel opened with.
 
 The palette's `.conf` holds those defaults; the preview only appends two
 optional includes to it and keeps everything else in `<palette>.tune.conf` (the
 tuning) and `<palette>.off.conf` (the off switch), which Ghostty loads after
-the conf. Both are written when the preview closes, by whichever key, and
+the conf. Kept changes are written when the preview closes, by whichever key, and
 Ghostty reloads when that palette is the default. Ghostty has no scale setting,
 so every size but 100% and fill is baked into a copy beside the image and the
 tuning points at it: below 100% onto a transparent canvas of the image's own
@@ -177,7 +190,10 @@ the window's size at the time (`kagami@130-center-2880x1800.png`, with
 The preview draws inside the cell grid, and Ghostty's `window-padding` around
 it keeps showing the configured background. While the cursor rests on the
 configured palette and nothing has been tuned, the preview draws nothing and
-lets that background show through whole.
+lets that background show through whole. Once Ghostty supports kitty's relative
+placements (merged after 1.3.1), the preview notices when it opens and hangs
+its layers out over the padding instead, so every palette reaches the window
+edge.
 
 `pin` opens the same browser and, on enter, asks **this directory** or **and
 below**; the answer lands in `~/.config/ttheme/pins`, one `path  palette` per

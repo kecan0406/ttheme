@@ -18,7 +18,9 @@ __tt_pv_bg_show() { : }
 
 __tt_pv_bg_adjust() { : }
 
-__tt_pv_bg_line() { REPLY="" }
+__tt_pv_bg_state() { REPLY=""; return 1 }
+
+__tt_pv_bg_panel() { : }
 
 __tt_pv_bg_close() { : }
 

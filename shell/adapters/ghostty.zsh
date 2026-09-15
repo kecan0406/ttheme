@@ -64,6 +64,16 @@ __tt_bg_place() {
   REPLY="$(( c0 + 1 )) $(( r0 + 1 )) $(( c1 - c0 )) $(( r1 - r0 )) $(( (c0 * cw - sx) * $1 / dw )) $(( (r0 * ch - sy) * $2 / dh )) $(( (c1 - c0) * cw * $1 / dw )) $(( (r1 - r0) * ch * $2 / dh ))"
 }
 
+__tt_bg_at() {
+  local src=""
+  (( $# > 7 )) && src=",x=$8,y=$9,w=${10},h=${11}"
+  if (( bgrel )); then
+    printf '\e_Ga=p,i=%d,p=%d,P=999999,Q=1,H=%d,V=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $1 $2 $(( $4 - bgmx )) $(( $5 - bgmy )) $6 $7 "$src" $3
+  else
+    printf '\e[%d;%dH\e_Ga=p,i=%d,p=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $(( $5 + 1 )) $(( $4 + 1 )) $1 $2 $6 $7 "$src" $3
+  fi
+}
+
 __tt_bg_path() {
   local p=${${1#\"}%\"}
   p=${p/#\~\//$HOME/}
@@ -172,7 +182,7 @@ __tt_bg_include() {
 __tt_bg_write() {
   local name=$1 dir=${TTHEME_CONFIG:h}/backgrounds src=${bgsrc[$1]} size=${bgsize[$1]} img="" fit=contain f REPLY
   local pos=${TTHEME_BG_POSITIONS[${bgpos[$1]}]}
-  local -i W=$(( pw * bgcw )) H=$(( ph * bgch ))
+  local -i W=$(( (pw + 2 * bgmx) * bgcw )) H=$(( (ph + 2 * bgmy) * bgch ))
   local -a wh fr
   __tt_bg_include $name || return 1
   if [[ "$size ${bgpos[$1]} ${bgop[$1]}" == "${bgdef[$1]}" ]]; then
@@ -220,36 +230,52 @@ __tt_bg_write() {
 }
 
 __tt_pv_bg_open() {
-  bgcw=0 bgch=0 bginc=""
+  bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bganchor=0
   local -a confs=(${TTHEME_CONFIG:h}/backgrounds/*.conf(N))
   (( ${#confs} )) || return 0
-  local fd saved resp="" line f=${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config
-  if [[ -r $f ]]; then
+  local fd saved resp="" line c v f
+  local -i px=2 py=2 fs=0 sc=2
+  for f in ${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config ${TTHEME_CONFIG:h}/ttheme.conf; do
+    [[ -r $f ]] || continue
     for line in "${(@f)$(<$f)}"; do
-      [[ $line == 'config-file = ?'*'/backgrounds/'*'.conf' ]] && bginc=${${line:t}%.conf}
+      v=${${line#*=}// /}
+      case $line in
+        'config-file = ?'*'/backgrounds/'*'.conf') bginc=${${line:t}%.conf} ;;
+        window-padding-x*=*) [[ $v == <->(|,<->) ]] && px=$(( ${v%%,*} > ${v##*,} ? ${v%%,*} : ${v##*,} )) ;;
+        window-padding-y*=*) [[ $v == <->(|,<->) ]] && py=$(( ${v%%,*} > ${v##*,} ? ${v%%,*} : ${v##*,} )) ;;
+        font-size*=*) [[ $v == <->(|.<->) ]] && fs=${v%%.*} ;;
+      esac
     done
-  fi
+  done
   exec {fd}<>/dev/tty 2>/dev/null || return 0
   saved=$(stty -g <&$fd 2>/dev/null)
   stty raw -echo min 0 time 3 <&$fd 2>/dev/null
-  printf '\e[16t' >&$fd
-  IFS= read -r -s -t 1 -d t -u $fd resp 2>/dev/null
+  printf '\e_Ga=t,f=24,s=1,v=1,i=1,q=2;AAAA\e\\\e_Ga=p,i=1,p=9,P=999998,Q=1,C=1,q=1\e\\\e_Ga=d,d=i,i=1,p=9,q=2\e\\\e[16t' >&$fd
+  while IFS= read -r -s -k 1 -t 1 -u $fd c 2>/dev/null; do
+    resp+=$c
+    [[ $resp == *'[6;'<1->';'<1->t ]] && break
+  done
   stty "$saved" <&$fd 2>/dev/null
   exec {fd}>&-
-  [[ $resp == *'[6;'<1->';'<1-> ]] || return 0
-  resp=${resp##*\[6;}
-  bgch=${resp%;*} bgcw=${resp#*;} bgrow=1
+  [[ $resp == *'[6;'<1->';'<1->t ]] || return 0
+  [[ $resp == *$'\e_G'*';E'* ]] && bgrel=1
+  resp=${${resp##*\[6;}%t}
+  bgch=${resp%;*} bgcw=${resp#*;}
+  (( fs && bgch * 10 < fs * 20 )) && sc=1
+  (( bgrel )) || return 0
+  bgmx=$(( (px * sc + bgcw - 1) / bgcw + 1 )) bgmy=$(( (py * sc + bgch - 1) / bgch + 1 ))
 }
 
 __tt_pv_bg_show() {
   (( bgcw )) || return 0
   local name=$1 img="" op size fit=contain focus=-1 REPLY
   local -a p=(${=TTHEME_PALETTE[$name]}) wh at
+  local -i cols=$(( pw + 2 * bgmx )) rows=$(( ph + 2 * bgmy ))
   (( ${#p} >= 20 )) || return 0
-  (( $2 )) && { bgsent=(); bgshown="" }
+  (( $2 )) && { bgsent=(); bgshown="" bganchor=0 }
   bgname=$name
   __tt_bg_load $name
-  if [[ $name == "$bginc" && "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" == "${bgload[$name]}" ]]; then
+  if (( ! bgrel )) && [[ $name == "$bginc" && "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" == "${bgload[$name]}" ]]; then
     printf '\e_Ga=d,d=i,i=1,q=2\e\\\e_Ga=d,d=i,i=2,q=2\e\\'
     [[ -n $bgshown ]] && printf '\e_Ga=d,d=i,i=%d,q=2\e\\' ${bgsent[$bgshown]}
     bgshown=""
@@ -267,10 +293,16 @@ __tt_pv_bg_show() {
   local bg=${p[1]#\#}
   local -i r=$(( 16#${bg:0:2} )) g=$(( 16#${bg:2:2} )) b=$(( 16#${bg:4:2} )) a=$(( (1.0 - op) * 255 + 0.5 ))
   (( a < 0 )) && a=0
+  if (( bgrel && ! bganchor )); then
+    printf '\e_Ga=t,f=32,s=1,v=1,i=999999,q=2;AAAAAA==\e\\\e[H\e_Ga=p,i=999999,p=1,c=1,r=1,C=1,z=-1073741828,q=2\e\\'
+    bganchor=1
+  fi
   __tt_b64 $r $g $b
-  printf '\e_Ga=t,f=24,s=1,v=1,i=1,q=2;%s\e\\\e[H\e_Ga=p,i=1,p=1,c=%d,r=%d,C=1,z=-1073741827,q=2\e\\' "$REPLY" $pw $ph
+  printf '\e_Ga=t,f=24,s=1,v=1,i=1,q=2;%s\e\\' "$REPLY"
+  __tt_bg_at 1 1 -1073741827 0 0 $cols $rows
   __tt_b64 $r $g $b $a
-  printf '\e_Ga=t,f=32,s=1,v=1,i=2,q=2;%s\e\\\e[H\e_Ga=p,i=2,p=1,c=%d,r=%d,C=1,z=-1073741825,q=2\e\\' "$REPLY" $pw $ph
+  printf '\e_Ga=t,f=32,s=1,v=1,i=2,q=2;%s\e\\' "$REPLY"
+  __tt_bg_at 2 1 -1073741825 0 0 $cols $rows
   __tt_bg_dim "$img" || img=""
   if [[ -n $bgshown && $bgshown != "$img" ]]; then
     printf '\e_Ga=d,d=i,i=%d,q=2\e\\' ${bgsent[$bgshown]}
@@ -282,58 +314,71 @@ __tt_pv_bg_show() {
     printf '\e_Ga=t,t=f,f=100,i=%d,q=2;%s\e\\' ${bgsent[$img]} "$(print -rn -- $img | base64 | tr -d '\n')"
   fi
   wh=(${=bgdim[$img]})
-  if __tt_bg_place $wh[1] $wh[2] $pw $ph $bgcw $bgch $size ${bgpos[$name]} $fit $focus; then
+  if __tt_bg_place $wh[1] $wh[2] $cols $rows $bgcw $bgch $size ${bgpos[$name]} $fit $focus; then
     at=(${=REPLY})
-    printf '\e[%d;%dH\e_Ga=p,i=%d,p=1,x=%d,y=%d,w=%d,h=%d,c=%d,r=%d,C=1,z=-1073741826,q=2\e\\' \
-      $at[2] $at[1] ${bgsent[$img]} $at[5] $at[6] $at[7] $at[8] $at[3] $at[4]
+    __tt_bg_at ${bgsent[$img]} 1 -1073741826 $(( at[1] - 1 )) $(( at[2] - 1 )) $at[3] $at[4] $at[5] $at[6] $at[7] $at[8]
   else
     printf '\e_Ga=d,d=i,i=%d,q=2\e\\' ${bgsent[$img]}
   fi
   bgshown=$img
 }
 
+__tt_pv_bg_fs() {
+  local name=$1
+  local -a wh fwh
+  local -i W=$(( (pw + 2 * bgmx) * bgcw )) H=$(( (ph + 2 * bgmy) * bgch )) kw kh
+  REPLY=0
+  (( W && H )) || return 1
+  __tt_bg_dim "${bgsrc[$name]}" && __tt_bg_dim "${bgfill[$name]}" || return 1
+  wh=(${=bgdim[${bgsrc[$name]}]}) fwh=(${=bgdim[${bgfill[$name]}]})
+  kw=$(( wh[1] < wh[2] * fwh[1] / fwh[2] ? wh[1] : wh[2] * fwh[1] / fwh[2] ))
+  kh=$(( kw * fwh[2] / fwh[1] ))
+  REPLY=$(( 100 * (W * kh > H * kw ? W * kh : H * kw) * wh[1] * wh[2] / (kw * kh * (W * wh[2] < H * wh[1] ? W * wh[2] : H * wh[1])) ))
+}
+
 __tt_pv_bg_adjust() {
-  (( bgcw )) && [[ ${rtype[cur]} == thm ]] || return 0
-  local name=${rval[cur]} REPLY
+  (( bgcw )) && [[ -n $tune ]] || return 0
+  local name=$tune REPLY
   __tt_bg_load $name
   __tt_bg_image $name
   __tt_bg_dim "$REPLY" || return 0
   local size=${bgsize[$name]} op=${bgop[$name]}
-  local -i at=${bgpos[$name]} off=${bgoff[$name]} o=$(( ${bgop[$name]} * 100 + 0.5 )) fs=0 bake=$+commands[sips]
-  local -a def=(${=bgdef[$name]}) wh fwh
-  if __tt_bg_dim "${bgsrc[$name]}" && __tt_bg_dim "${bgfill[$name]}"; then
-    wh=(${=bgdim[${bgsrc[$name]}]}) fwh=(${=bgdim[${bgfill[$name]}]})
-    local -i W=$(( pw * bgcw )) H=$(( ph * bgch )) kw kh
-    kw=$(( wh[1] < wh[2] * fwh[1] / fwh[2] ? wh[1] : wh[2] * fwh[1] / fwh[2] ))
-    kh=$(( kw * fwh[2] / fwh[1] ))
-    fs=$(( 100 * (W * kh > H * kw ? W * kh : H * kw) * wh[1] * wh[2] / (kw * kh * (W * wh[2] < H * wh[1] ? W * wh[2] : H * wh[1])) ))
-  fi
+  local -i n=${2:-0} at=${bgpos[$name]} off=${bgoff[$name]} o=$(( ${bgop[$name]} * 100 + 0.5 )) m fs=0 bake=$+commands[sips]
+  local -a def=(${=bgdef[$name]})
+  __tt_pv_bg_fs $name && fs=$REPLY
   case $1 in
-    ' ') off=$(( ! off )) ;;
-    '=') size=$def[1] at=$def[2] op=$def[3] off=0 ;;
+    on) off=$(( ! off )) ;;
+    def) size=$def[1] at=$def[2] op=$def[3] off=0 ;;
     *)
       (( off )) && return 0
       case $1 in
-        '[')
-          if [[ $size == fill ]]; then
-            (( fs )) && size=$(( bake && fs > 100 ? fs : 100 ))
-          elif (( bake && size > 20 )); then
-            size=$(( size - 1 ))
-          fi
-          ;;
-        ']')
-          if [[ $size != fill ]]; then
-            if (( ! bake || size + 1 > fs )); then
+        size)
+          if (( n < 0 )); then
+            if [[ $size == fill ]]; then
+              (( fs )) || return 0
+              size=$(( bake && fs > 100 ? fs : 100 ))
+              n=$(( n + 1 ))
+            fi
+            if (( bake && n )); then
+              size=$(( size + n ))
+              (( size < 20 )) && size=20
+            fi
+          elif [[ $size != fill ]]; then
+            if (( ! bake || size + n > fs )); then
               size=fill
             else
-              size=$(( size + 1 ))
+              size=$(( size + n ))
             fi
           fi
           ;;
-        '{') at=$(( (at + 7) % 9 + 1 )) ;;
-        '}') at=$(( at % 9 + 1 )) ;;
-        '<') (( o > 0 )) && printf -v op '%d.%02d' $(( (o - 1) / 100 )) $(( (o - 1) % 100 )) ;;
-        '>') (( o < 100 )) && printf -v op '%d.%02d' $(( (o + 1) / 100 )) $(( (o + 1) % 100 )) ;;
+        pos) at=$(( ((at - 1 + n) % 9 + 9) % 9 + 1 )) ;;
+        at) at=$n ;;
+        op)
+          m=$(( o + n ))
+          (( m < 0 )) && m=0
+          (( m > 100 )) && m=100
+          (( m != o )) && printf -v op '%d.%02d' $(( m / 100 )) $(( m % 100 ))
+          ;;
       esac
       ;;
   esac
@@ -342,29 +387,79 @@ __tt_pv_bg_adjust() {
     osd=$size osdt=100
     [[ $size == fill ]] || osd+=%
   fi
-  bgsize[$name]=$size bgpos[$name]=$at bgop[$name]=$op bgoff[$name]=$off bgedit[$name]=1 bgname=""
+  bgsize[$name]=$size bgpos[$name]=$at bgop[$name]=$op bgoff[$name]=$off bgname=""
 }
 
-__tt_pv_bg_line() {
+__tt_pv_bg_state() {
   REPLY=""
-  [[ ${rtype[cur]} == thm ]] || return 0
-  local name=${rval[cur]} vals keys
-  __tt_bg_load $name
-  __tt_bg_image $name
-  __tt_bg_dim "$REPLY" || { REPLY=""; return 0 }
-  if (( bgoff[$name] )); then
-    vals="bg off" keys="space on"
+  (( bgcw )) || return 1
+  __tt_bg_load $1
+  __tt_bg_image $1
+  __tt_bg_dim "$REPLY" || { REPLY=""; return 1 }
+  if (( bgoff[$1] )); then
+    REPLY=off
   else
-    __tt_bg_label $name
-    vals="bg $REPLY" keys="{ } position · < > opacity · space off"
-    __tt_bg_dim "${bgsrc[$name]}" && keys="[ ] size · $keys"
+    __tt_bg_label $1
   fi
-  [[ "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]}" == "${bgdef[$name]}" ]] && (( ! bgoff[$name] )) || keys+=" · = default"
-  if (( color )); then
-    REPLY=$vals$'\e[2m'" · $keys"$'\e[0m'
-  else
-    REPLY="$vals · $keys"
-  fi
+}
+
+__tt_pv_bg_panel() {
+  local name=$1 z=$'\e[0m' b=$'\e[1m' d=$'\e[2m' c=$ac val sty REPLY
+  local -a labs=(size position opacity) at=(0 3 6)
+  local -i r0=$2 col=$3 end=$4 off=${bgoff[$1]} T=$(( $4 - $3 - 19 )) lo=100 hi=100 k i r knob pos=${bgpos[$1]} o
+  (( color )) || z= b= d= c=
+  (( T < 8 )) && T=8
+  (( $+commands[sips] )) && lo=20
+  __tt_pv_bg_fs $name && (( REPLY > hi )) && hi=$REPLY
+  for k in 1 2 3; do
+    r=$(( r0 + at[k] ))
+    sty=$d
+    (( tf == k && ! off )) && sty=$b
+    out+=$'\e['$r';'$col'H'
+    if (( tf == k && ! off )); then
+      out+=$c"▶"$z" "
+    else
+      out+="  "
+    fi
+    out+=$sty$labs[k]$z
+    if (( k == 2 )); then
+      for (( i = 1; i <= 9; i++ )); do
+        out+=$'\e['$(( r0 + 2 + (i - 1) / 3 ))';'$(( col + 12 + (i - 1) % 3 * 3 ))'H'
+        if (( ! color )); then
+          if (( i == pos )); then out+="#"; else out+="."; fi
+        elif (( i == pos && ! off )); then
+          out+=$b$c"■"$z
+        elif (( i == pos )); then
+          out+=$d"■"$z
+        else
+          out+=$d"·"$z
+        fi
+      done
+      val=${TTHEME_BG_POSITIONS[pos]}
+    else
+      if (( k == 1 )); then
+        if [[ ${bgsize[$name]} == fill ]]; then
+          knob=$(( T - 1 )) val=FILL
+        else
+          knob=$(( (${bgsize[$name]} - lo) * (T - 1) / (hi - lo + 1) )) val=${bgsize[$name]}%
+        fi
+      else
+        o=$(( ${bgop[$name]} * 100 + 0.5 ))
+        knob=$(( o * (T - 1) / 100 )) val=${bgop[$name]}
+      fi
+      (( knob < 0 )) && knob=0
+      (( knob > T - 1 )) && knob=$(( T - 1 ))
+      out+=$'\e['$r';'$(( col + 12 ))'H'
+      if (( ! color )); then
+        out+=${(l:knob::=:)}"O"${(l:$(( T - 1 - knob ))::-:)}
+      elif (( off )); then
+        out+=$d${(l:knob::━:)}"●"${(l:$(( T - 1 - knob ))::─:)}$z
+      else
+        out+=$c${(l:knob::━:)}$b"●"$z$d${(l:$(( T - 1 - knob ))::─:)}$z
+      fi
+    fi
+    out+=$'\e['$r';'$(( end - ${#val} + 1 ))'H'$sty$val$z
+  done
 }
 
 __tt_pv_bg_close() {
