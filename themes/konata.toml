@@ -2,30 +2,30 @@
 name = "konata"
 group = "Lucky☆Star"
 order = 25
-ansi_source = "Dark Modern"
+ansi_source = "Dark Modern + Ryouou"
 signature = ["cursor", "ansi2", "ansi12"]
 
 [colors]
-background = "#15171e"
-foreground = "#dee2f2"
-cursor = "#4977d6"
-selection_background = "#2e3e5a"
+background = "#13181e"
+foreground = "#dae3f1"
+cursor = "#5f95ca"
+selection_background = "#3b3e42"
 ansi = [
-  "#21242b",
-  "#e877d8",
-  "#2ea043",
-  "#ffa2a6",
-  "#62a1ff",
-  "#dc82f6",
-  "#57baf4",
-  "#c5c6d0",
+  "#1f242a",
+  "#e07ae5",
+  "#64be79",
+  "#9bc976",
+  "#63a5e8",
+  "#d187ff",
+  "#4abcee",
+  "#c2c7cf",
 
-  "#757780",
-  "#ffa2ef",
-  "#00e1ef",
-  "#17f9c1",
-  "#3b8eea",
-  "#d8baff",
-  "#a3d8ff",
-  "#eaedfe",
+  "#73777f",
+  "#fca1ff",
+  "#00e3e4",
+  "#37f9b8",
+  "#8fc6ff",
+  "#d0bcff",
+  "#97daff",
+  "#e6effc",
 ]

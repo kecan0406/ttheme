@@ -2,30 +2,30 @@
 name = "miyuki"
 group = "Lucky☆Star"
 order = 28
-ansi_source = "Oxocarbon"
-signature = ["cursor", "ansi4", "ansi2"]
+ansi_source = "Tinacious Design Dark + Ryouou"
+signature = ["cursor", "ansi5", "ansi1"]
 
 [colors]
-background = "#201516"
-foreground = "#fbdbde"
-cursor = "#f9a6b2"
-selection_background = "#503645"
+background = "#201517"
+foreground = "#fadbe1"
+cursor = "#ffc1d0"
+selection_background = "#593240"
 ansi = [
-  "#2d2122",
-  "#52a5f8",
-  "#00b4ff",
-  "#ffa0b9",
-  "#00c15a",
-  "#e285dc",
-  "#ff8db4",
-  "#d7c1c3",
+  "#2c2123",
+  "#dd8895",
+  "#d0a600",
+  "#ffa76d",
+  "#8d98ff",
+  "#ce88ff",
+  "#71b5ff",
+  "#d6c2c5",
 
-  "#847374",
-  "#94c4ff",
-  "#cec5ff",
-  "#ffd1db",
-  "#e6bd00",
-  "#ffaaf7",
-  "#ffc1d2",
-  "#ffe9ea",
+  "#847376",
+  "#ffa8c2",
+  "#f7c600",
+  "#ffd4bb",
+  "#b6bcff",
+  "#ffabef",
+  "#b5d4ff",
+  "#ffe8ec",
 ]

@@ -2,30 +2,30 @@
 name = "tsukasa"
 group = "Lucky☆Star"
 order = 27
-ansi_source = "Sublette"
-signature = ["cursor", "ansi13", "ansi12"]
+ansi_source = "Sublette + Ryouou"
+signature = ["cursor", "ansi11", "ansi4"]
 
 [colors]
-background = "#19180d"
-foreground = "#e7e3c8"
-cursor = "#efe95a"
-selection_background = "#433859"
+background = "#1b161d"
+foreground = "#eddeef"
+cursor = "#c8a6da"
+selection_background = "#3b3e40"
 ansi = [
-  "#252419",
-  "#f97e25",
-  "#7ebc3c",
-  "#d0bb69",
-  "#00b1c4",
-  "#ff825a",
-  "#4ec68b",
-  "#cac7b5",
+  "#27222a",
+  "#f374c0",
+  "#00bdd0",
+  "#faa78d",
+  "#8b9bf1",
+  "#b999d4",
+  "#53b9ff",
+  "#cdc3ce",
 
-  "#7a7768",
-  "#ffb06a",
-  "#addb4f",
-  "#e5e25d",
-  "#77bbff",
-  "#aa88ff",
-  "#8be778",
-  "#f3efd3",
+  "#7c747e",
+  "#ffa8c5",
+  "#00e2e8",
+  "#eede89",
+  "#b1bdff",
+  "#d7baff",
+  "#85ddff",
+  "#f8e9fb",
 ]

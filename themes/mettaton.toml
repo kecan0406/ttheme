@@ -3,29 +3,29 @@ name = "mettaton"
 group = "Undertale"
 order = 60
 ansi_source = "Laser"
-signature = ["cursor", "ansi12", "ansi4"]
+signature = ["cursor", "ansi13", "ansi3"]
 
 [colors]
 background = "#1d151b"
 foreground = "#f3dceb"
-cursor = "#ef11ec"
+cursor = "#d468ca"
 selection_background = "#52344d"
 ansi = [
   "#2a2128",
   "#f37b98",
   "#e99b00",
-  "#8cbfff",
-  "#fed300",
+  "#dbb92a",
+  "#829df1",
   "#ea7ee5",
-  "#bda7de",
+  "#83b7d7",
   "#d1c2cb",
 
   "#80747b",
   "#f8acbd",
   "#f6c478",
   "#ffd5b6",
-  "#f92883",
+  "#acbfff",
   "#fbacf6",
-  "#dbc9ff",
+  "#a7d8f7",
   "#fee8f6",
 ]

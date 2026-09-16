@@ -8,15 +8,15 @@ signature = ["cursor", "ansi4", "ansi5"]
 [colors]
 background = "#1b170c"
 foreground = "#ece2c6"
-cursor = "#ffd700"
+cursor = "#f5cf00"
 selection_background = "#383b5b"
 ansi = [
   "#272418",
   "#e18c5b",
   "#a7b165",
   "#cebb6f",
-  "#bbdaff",
-  "#ebbbff",
+  "#7fa4cd",
+  "#c395d6",
   "#77c08e",
   "#cdc6b4",
 

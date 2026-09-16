@@ -7,7 +7,7 @@ signature = ["cursor", "foreground", "ansi11"]
 
 [colors]
 background = "#12181d"
-foreground = "#eef3fb"
+foreground = "#dee3eb"
 cursor = "#3ec1ff"
 selection_background = "#2f3e59"
 ansi = [
@@ -23,7 +23,7 @@ ansi = [
   "#71787e",
   "#e8abfd",
   "#4fe0e4",
-  "#ffff55",
+  "#e4e43b",
   "#8dc6ff",
   "#dab9ff",
   "#add6ff",

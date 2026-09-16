@@ -2,30 +2,30 @@
 name = "kagami"
 group = "Lucky☆Star"
 order = 26
-ansi_source = "Nightfox"
-signature = ["cursor", "ansi4", "ansi9"]
+ansi_source = "Nightfox + Ryouou"
+signature = ["cursor", "ansi4", "ansi1"]
 
 [colors]
-background = "#1a161d"
-foreground = "#ebdef0"
-cursor = "#a782c7"
-selection_background = "#413957"
+background = "#19161e"
+foreground = "#e8dff1"
+cursor = "#9b86c8"
+selection_background = "#2f3f55"
 ansi = [
-  "#27222a",
-  "#ec78c4",
-  "#78b3cb",
-  "#f6a990",
-  "#719cd6",
-  "#bd93f1",
-  "#75b7ea",
-  "#cdc4ce",
+  "#25222a",
+  "#d58c98",
+  "#76b4c9",
+  "#f7a895",
+  "#9099f2",
+  "#b49cd1",
+  "#70b8e8",
+  "#cbc4cf",
 
-  "#7c757e",
-  "#d16983",
-  "#99d5ee",
-  "#ffd3c6",
-  "#b4bdfa",
-  "#d8bafc",
-  "#a8d7ff",
-  "#f7e9fc",
+  "#7a757f",
+  "#ffa3e6",
+  "#97d5eb",
+  "#ffd3c8",
+  "#b0bff9",
+  "#d4bbfe",
+  "#a2d8ff",
+  "#f4eafd",
 ]

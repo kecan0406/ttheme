@@ -25,6 +25,8 @@ const GREY_CHROMA = 10
 const BRIGHT_LIFT = 12
 const SELECTION_CHROMA = 24
 const SELECTION_TONE = { dark: 26, light: 86 }
+const SIGNATURE_TEXT_CHROMA = 24
+const CURSOR_TONE = { dark: { min: 60, max: 84 }, light: { min: 36, max: 56 } }
 const NORMAL_TONE: Record<number, number> = { 1: 66, 2: 70, 3: 76, 4: 66, 5: 68, 6: 72 }
 const LIGHT_TONE: Record<number, number> = { 1: 46, 2: 44, 3: 50, 4: 46, 5: 46, 6: 44 }
 const FALLBACK_HUE: Record<number, number> = { 1: 27, 2: 120, 3: 80, 4: 230, 5: 340, 6: 180 }
@@ -59,7 +61,7 @@ function selection(own: string, light: boolean): string {
   return make(o.hue, Math.min(o.chroma, SELECTION_CHROMA), light ? SELECTION_TONE.light : SELECTION_TONE.dark)
 }
 
-function accent(own: string, index: number, seedHue: number, light: boolean): string {
+function accent(own: string, index: number, seedHue: number, light: boolean, rotate = true): string {
   const o = hct(own)
   const base = index % 8
   const hue = o.chroma < GREY_CHROMA ? (FALLBACK_HUE[base] as number) : o.hue
@@ -67,7 +69,40 @@ function accent(own: string, index: number, seedHue: number, light: boolean): st
   const tone = light
     ? (LIGHT_TONE[base] as number) - (index > 8 ? BRIGHT_LIFT / 2 : 0)
     : (NORMAL_TONE[base] as number) + (index > 8 ? BRIGHT_LIFT : 0)
-  return make(harmonize(hue, seedHue), chroma, tone)
+  return make(rotate ? harmonize(hue, seedHue) : hue, chroma, tone)
+}
+
+function cursor(own: string, light: boolean): string {
+  const o = hct(own)
+  const band = light ? CURSOR_TONE.light : CURSOR_TONE.dark
+  return make(
+    o.hue,
+    Math.max(CHROMA_MIN, Math.min(CHROMA_MAX, o.chroma)),
+    Math.max(band.min, Math.min(band.max, o.tone)),
+  )
+}
+
+function signatureText(own: string, light: boolean): string {
+  const o = hct(own)
+  return make(o.hue, Math.min(o.chroma, SIGNATURE_TEXT_CHROMA), light ? 12 : 90)
+}
+
+export function signatureColors(doc: ThemeDoc): Record<string, string> {
+  const seedSlot = doc.meta.signature[0]
+  if (seedSlot === undefined) throw new Error(`${doc.meta.name}: signature is empty`)
+  const seed = hct(slotColor(doc, seedSlot))
+  const light = hct(doc.colors.background).tone > 50
+  const surfaceChroma = Math.min(seed.chroma, SURFACE_CHROMA)
+  const out: Record<string, string> = {}
+  for (const slot of doc.meta.signature) {
+    const value = slotColor(doc, slot)
+    if (slot === 'background') out[slot] = make(hct(value).hue, surfaceChroma, light ? 98 : 8)
+    else if (slot === 'foreground') out[slot] = signatureText(value, light)
+    else if (slot === 'cursor') out[slot] = cursor(value, light)
+    else if (slot === 'selection') out[slot] = selection(value, light)
+    else out[slot] = accent(value, Number(slot.slice(4)), seed.hue, light, false)
+  }
+  return out
 }
 
 export function harmonizePalette(doc: ThemeDoc): Palette {
@@ -83,14 +118,14 @@ export function harmonizePalette(doc: ThemeDoc): Palette {
     ? {
         background: surface(98),
         foreground: text(12),
-        cursor: doc.colors.cursor,
+        cursor: cursor(doc.colors.cursor, true),
         selection: selection(doc.colors.selection_background, true),
         ansi: doc.colors.ansi.map((own, i) => accent(own, i, seed.hue, true)),
       }
     : {
         background: surface(8),
         foreground: text(90),
-        cursor: doc.colors.cursor,
+        cursor: cursor(doc.colors.cursor, false),
         selection: selection(doc.colors.selection_background, false),
         ansi: doc.colors.ansi.map((own, i) => accent(own, i, seed.hue, false)),
       }
@@ -98,8 +133,7 @@ export function harmonizePalette(doc: ThemeDoc): Palette {
   palette.ansi[7] = light ? surface(30) : surface(80)
   palette.ansi[8] = surface(light ? 55 : 50)
   palette.ansi[15] = light ? text(12) : text(94)
-  for (const slot of doc.meta.signature) {
-    const value = slotColor(doc, slot)
+  for (const [slot, value] of Object.entries(signatureColors(doc))) {
     if (slot === 'background') palette.background = value
     else if (slot === 'foreground') palette.foreground = value
     else if (slot === 'cursor') palette.cursor = value
