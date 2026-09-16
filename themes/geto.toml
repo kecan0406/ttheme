@@ -1,0 +1,31 @@
+[meta]
+name = "geto"
+group = "Jujutsu Kaisen"
+order = 107
+ansi_source = "Royal + Jujutsu"
+signature = ["cursor", "ansi3", "ansi2"]
+
+[colors]
+background = "#16171f"
+foreground = "#e1e1f3"
+cursor = "#747999"
+selection_background = "#3e3c4b"
+ansi = [
+  "#22232b",
+  "#d97fde",
+  "#6c8768",
+  "#9b7534",
+  "#8ba0d4",
+  "#a89cec",
+  "#8fb4de",
+  "#c6c5d0",
+
+  "#767680",
+  "#fda0ff",
+  "#00e2e5",
+  "#57f8b2",
+  "#a5c1ff",
+  "#cabeff",
+  "#afd5ff",
+  "#ececfe",
+]

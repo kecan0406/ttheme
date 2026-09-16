@@ -1,0 +1,31 @@
+[meta]
+name = "nobara"
+group = "Jujutsu Kaisen"
+order = 105
+ansi_source = "Spacedust + Jujutsu"
+signature = ["cursor", "ansi4", "ansi3"]
+
+[colors]
+background = "#20160e"
+foreground = "#faddca"
+cursor = "#b67b4d"
+selection_background = "#273f58"
+ansi = [
+  "#2c211a",
+  "#fa7e29",
+  "#9ab46e",
+  "#96802f",
+  "#9da0b3",
+  "#ff8432",
+  "#6cc382",
+  "#d6c3b7",
+
+  "#84746a",
+  "#ffaf79",
+  "#c6d38c",
+  "#ffd6ab",
+  "#e8b0db",
+  "#ffb787",
+  "#a4dfba",
+  "#ffeadd",
+]

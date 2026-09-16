@@ -1,0 +1,31 @@
+[meta]
+name = "megumi"
+group = "Jujutsu Kaisen"
+order = 104
+ansi_source = "Night Owl + Jujutsu"
+signature = ["cursor", "ansi11", "ansi3"]
+
+[colors]
+background = "#13181e"
+foreground = "#dae3f1"
+cursor = "#44729e"
+selection_background = "#224156"
+ansi = [
+  "#1f242a",
+  "#df7ae5",
+  "#00bfb7",
+  "#816735",
+  "#88a1d0",
+  "#a29bf8",
+  "#00c3d3",
+  "#c2c7cf",
+
+  "#73777f",
+  "#fca0ff",
+  "#00e3db",
+  "#c2b473",
+  "#9dc3ff",
+  "#c5c0ff",
+  "#85dfef",
+  "#e6effc",
+]

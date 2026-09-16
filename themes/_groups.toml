@@ -106,3 +106,8 @@ lead = "rikka"
 name = "Eternal Return"
 native = "이터널 리턴"
 lead = "bihyung"
+
+[[group]]
+name = "Jujutsu Kaisen"
+native = "呪術廻戦"
+lead = "gojo"

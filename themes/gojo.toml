@@ -1,0 +1,31 @@
+[meta]
+name = "gojo"
+group = "Jujutsu Kaisen"
+order = 102
+ansi_source = "Horizon + Jujutsu"
+signature = ["cursor", "foreground", "ansi13"]
+
+[colors]
+background = "#11191c"
+foreground = "#f0eef4"
+cursor = "#7cc1d6"
+selection_background = "#383b5b"
+ansi = [
+  "#1d2528",
+  "#bf86ff",
+  "#00c0b1",
+  "#c5be73",
+  "#79a4cf",
+  "#96a4d7",
+  "#31c2d0",
+  "#bfc8cb",
+
+  "#70787c",
+  "#d6b2ff",
+  "#00e4d5",
+  "#e7df91",
+  "#52d0ed",
+  "#796392",
+  "#6ce2f0",
+  "#e0f1f7",
+]
