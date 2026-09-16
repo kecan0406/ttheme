@@ -67,6 +67,10 @@ const CONFIG_SETTINGS = {
     doc: '# search hint animation: typewriter, decode or glitch (default typewriter)',
     default: 'typewriter',
   },
+  TTHEME_SORT: {
+    doc: '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
+    default: 'abc',
+  },
 } as const
 
 function settingLine(name: string, value: string): string {
@@ -101,7 +105,8 @@ export function configTemplate(): string {
 export function configFile(content: string, opts: { tabPalette: 'seq' | 'off'; announce: boolean }): string {
   const seeded = content === '' ? configTemplate() : content
   const tabbed = applySetting(seeded, 'TTHEME_TAB_PALETTE', opts.tabPalette)
-  return ensureSetting(applySetting(tabbed, 'TTHEME_ANNOUNCE', opts.announce ? '1' : '0'), 'TTHEME_FX')
+  const announced = applySetting(tabbed, 'TTHEME_ANNOUNCE', opts.announce ? '1' : '0')
+  return ensureSetting(ensureSetting(announced, 'TTHEME_FX'), 'TTHEME_SORT')
 }
 
 export function kittyBlock(palette: string): string {

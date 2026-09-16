@@ -97,8 +97,10 @@ cd $proj-sibling
 __tt_unpin 2>/dev/null && { print -u2 "unpin succeeded outside every pin"; exit 1 }
 cd $proj; __tt_unpin > /dev/null || { print -u2 "__tt_unpin (last pin) failed"; exit 1 }
 [[ ! -e $TTHEME_PINS_FILE ]] || { print -u2 "empty pins file left behind"; exit 1 }
-print -l "~/proj-home/**  luka" "# comment" "" "$proj-sibling   rei" > $TTHEME_PINS_FILE
+print -l "~/proj-home/**  luka" "# comment" "" "$proj-sibling   rei" "$proj two/**  mio  " > $TTHEME_PINS_FILE
 cd $proj-sibling; __tt_chpwd > /dev/null
-[[ ${#TTHEME_PINS} == 2 && $TTHEME_PINS[$HOME/proj-home/**] == luka && $TTHEME_PIN == "$proj-sibling" ]] || { print -u2 "hand-written pins did not load on cd: ${(kv)TTHEME_PINS} pin=$TTHEME_PIN"; exit 1 }
+[[ ${#TTHEME_PINS} == 3 && $TTHEME_PINS[$HOME/proj-home/**] == luka && ${TTHEME_PINS[$proj two/**]} == mio && $TTHEME_PIN == "$proj-sibling" ]] || { print -u2 "hand-written pins did not load on cd: ${(kv)TTHEME_PINS} pin=$TTHEME_PIN"; exit 1 }
+REPLY=; __tt_tilde $HOME/proj-home
+[[ $REPLY == "~/proj-home" ]] || { print -u2 "__tt_tilde kept the home prefix: $REPLY"; exit 1 }
 cd $OLDPWD
 print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$TTHEME_ADAPTER"

@@ -117,15 +117,20 @@ ttheme config   edit settings in $EDITOR — they apply in new tabs
 ttheme help     the list above, in your terminal
 ```
 
-In `preview`, groups start folded with the cursor on the current palette;
+In `preview`, series and palettes are listed by name (`TTHEME_SORT=series`
+keeps the order they were added), groups start folded with the cursor on the
+current palette;
 `↑`/`↓` move (the tab repaints as the focus lands on a palette), `←`/`→` fold
 and unfold (so do enter and space on a series), page up/down and home/end
 jump, typing filters by substring and underlines the match (ctrl-u clears it),
 enter applies, and esc steps back — first out of the filter, then out of the
 preview with the original colors restored. Each palette row carries its 16
 colors, normal over bright. The last line lists only the keys that work right
-there, names the mode when it is not plain browsing (`FILTER`, `TUNE`, `APPLY`,
-`KEYS`) and pins where esc goes to the right; `?` shows all of them. From 76
+there, names the mode when it is not plain browsing (`FILTER`, `TUNE`, `CONFIG`,
+`APPLY`, `KEYS`) and pins where esc goes to the right; `?` shows all of them.
+alt-c opens the settings below in place — `↑`/`↓` pick one, `←`/`→` change it
+(the sort and the search hint animation change live), enter writes the changed
+lines to `config.zsh`, esc puts every value back. From 76
 columns on, a sample session sits against the right edge of the window — the
 16 colors, a prompt, git and test output, a selection — in the palette under
 the cursor. The list and the sample widen with the window (the sample up to 64
@@ -215,7 +220,7 @@ tabs — so opening four tabs walks you through four different characters rather
 than rolling the same one twice.
 
 Settings live in `~/.config/ttheme/config.zsh` — `init` seeds it from your
-answers and `ttheme config` opens it in `$EDITOR`. Each line is a plain zsh
+answers, `ttheme config` opens it in `$EDITOR` and alt-c in `preview` edits it in place. Each line is a plain zsh
 `: ${VAR:=value}` assignment, so a variable exported before the layer loads
 still wins:
 
@@ -224,6 +229,7 @@ still wins:
 | `TTHEME_TAB_PALETTE` | `seq` | `off` keeps new tabs on the terminal's configured theme (`preview` → default changes it) |
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
+| `TTHEME_SORT` | `abc` | `series` lists series and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |
 
 ## What each terminal can actually do
 

@@ -284,3 +284,8 @@ export function loadThemes(dir: string): Theme[] {
 export function rotation(themes: Theme[]): Theme[] {
   return themes.filter((t) => t.role === undefined)
 }
+
+export function alphabetical<T extends { group: string; name: string }>(items: T[]): T[] {
+  const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
+  return [...items].sort((a, b) => cmp(a.group.toLowerCase(), b.group.toLowerCase()) || cmp(a.name, b.name))
+}

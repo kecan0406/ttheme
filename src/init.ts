@@ -16,6 +16,7 @@ import { build } from './build.ts'
 import type { Manifest } from './emit/manifest.ts'
 import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
 import { PalettePrompt, promptFx } from './palette-prompt.ts'
+import { alphabetical } from './theme.ts'
 import {
   alacrittyBlock,
   configFile,
@@ -52,7 +53,8 @@ export interface InitPlan {
 }
 
 async function pickPalette(root: string): Promise<string> {
-  const { palettes: entries }: Manifest = JSON.parse(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
+  const { palettes }: Manifest = JSON.parse(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
+  const entries = process.env.TTHEME_SORT === 'series' ? palettes : alphabetical(palettes)
   const live = process.stdout.isTTY === true && !process.env.NO_COLOR
   const saved = live ? await queryTerminalColors() : new Map<string, string>()
   const prompt = new PalettePrompt({

@@ -18,17 +18,19 @@ typeset -g TTHEME_PINS_RAW=""
 typeset -gA TTHEME_PINS=()
 typeset -g TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_SPEC=""
 
-__tt_tilde() { REPLY=${1/#$HOME\//~/} }
+__tt_tilde() { REPLY=${1/#$HOME\//\~/} }
 
 __tt_pins_load() {
+  setopt localoptions extendedglob
   local raw="" line key name
   [[ -r $TTHEME_PINS_FILE ]] && raw="$(<$TTHEME_PINS_FILE)"
   [[ $raw == "$TTHEME_PINS_RAW" ]] && return 0
   TTHEME_PINS_RAW=$raw
   TTHEME_PINS=()
   for line in "${(@f)raw}"; do
-    [[ $line == [~/]* ]] || continue
-    key=${line%%[[:space:]]*} name=${line##*[[:space:]]}
+    line=${line%%[[:space:]]##}
+    [[ $line == [~/]*[[:space:]]* ]] || continue
+    name=${line##*[[:space:]]} key=${${line%[[:space:]]*}%%[[:space:]]##}
     TTHEME_PINS[${key/#\~\//$HOME/}]=$name
     [[ -n ${TTHEME_PALETTE[$name]} ]] || print -u2 "ttheme: unknown palette '$name' pinned to $key"
   done
@@ -42,27 +44,25 @@ __tt_pins_load
 
 : ${TTHEME_FX:=typewriter}
 
+: ${TTHEME_SORT:=abc}
+
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
-__tt_detect() {
-  if [[ -n $GHOSTTY_RESOURCES_DIR || $TERM_PROGRAM == ghostty ]]; then
-    print -r -- ghostty
-  elif [[ -n $KITTY_WINDOW_ID ]]; then
-    print -r -- kitty
-  elif [[ -n $WEZTERM_PANE ]]; then
-    print -r -- wezterm
-  elif [[ -n $ALACRITTY_WINDOW_ID ]]; then
-    print -r -- alacritty
-  elif [[ -n $ITERM_SESSION_ID || $TERM_PROGRAM == iTerm.app ]]; then
-    print -r -- iterm2
-  elif [[ $TERM == foot* ]]; then
-    print -r -- foot
-  else
-    print -r -- unknown
-  fi
-}
-
-typeset -g TTHEME_ADAPTER=$(__tt_detect)
+if [[ -n $GHOSTTY_RESOURCES_DIR || $TERM_PROGRAM == ghostty ]]; then
+  typeset -g TTHEME_ADAPTER=ghostty
+elif [[ -n $KITTY_WINDOW_ID ]]; then
+  typeset -g TTHEME_ADAPTER=kitty
+elif [[ -n $WEZTERM_PANE ]]; then
+  typeset -g TTHEME_ADAPTER=wezterm
+elif [[ -n $ALACRITTY_WINDOW_ID ]]; then
+  typeset -g TTHEME_ADAPTER=alacritty
+elif [[ -n $ITERM_SESSION_ID || $TERM_PROGRAM == iTerm.app ]]; then
+  typeset -g TTHEME_ADAPTER=iterm2
+elif [[ $TERM == foot* ]]; then
+  typeset -g TTHEME_ADAPTER=foot
+else
+  typeset -g TTHEME_ADAPTER=unknown
+fi
 
 source $TTHEME_HOME/adapters/_osc.zsh
 [[ -r $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh ]] &&
@@ -79,13 +79,7 @@ __tt_spec() {
   print -r -- "$spec"
 }
 
-__tt_name_of() {
-  local k
-  for k in ${(k)TTHEME_PALETTE}; do
-    [[ $TTHEME_PALETTE[$k] == $1 ]] && { print -r -- "$k"; return 0 }
-  done
-  print -r -- custom
-}
+__tt_name_of() { REPLY=${${(k)TTHEME_PALETTE[(re)$1]}:-custom} }
 
 __tt_color() { [[ -t 1 && -z $NO_COLOR ]] }
 
@@ -105,7 +99,10 @@ __tt_announce() {
   (( TTHEME_ANNOUNCE )) || return 0
   local -a p=(${=TTHEME_SPEC})
   (( ${#p} >= 20 )) || return 0
-  local name=$(__tt_name_of "$TTHEME_SPEC")
+  local REPLY
+  __tt_name_of "$TTHEME_SPEC"
+  [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || return 0
+  local name=$REPLY
   local grp=${TTHEME_GROUP[$name]:-Other} src=${TTHEME_SRC[$name]:-unknown}
   if ! __tt_color; then
     print -r -- "$name · $grp · ANSI $src"
@@ -234,15 +231,25 @@ __tt_keep() {
   fi
 }
 
+__tt_order() {
+  if [[ $TTHEME_SORT == series ]]; then
+    reply=($TTHEME_ORDER)
+  else
+    reply=($TTHEME_ABC)
+  fi
+}
+
 __tt_menu() {
-  local k cur="" mark grp last_grp=""
+  local k cur="" mark grp last_grp="" REPLY
+  local -a reply
+  __tt_order
   if ! __tt_color; then
-    for k in $TTHEME_ORDER; do
+    for k in $reply; do
       printf '%s\t%s\t%s\n' "$k" "${TTHEME_GROUP[$k]:-Other}" "${TTHEME_SRC[$k]:-unknown}"
     done
     return 0
   fi
-  [[ -n $TTHEME_SPEC ]] && cur=$(__tt_name_of "$TTHEME_SPEC")
+  [[ -n $TTHEME_SPEC ]] && __tt_name_of "$TTHEME_SPEC" && cur=$REPLY
   local gutter=""
   if [[ -n ${TTHEME_PALETTE[$cur]} ]]; then
     local -a cp=(${=TTHEME_PALETTE[$cur]})
@@ -250,7 +257,7 @@ __tt_menu() {
     printf -v gutter '\033[38;2;%d;%d;%dm◆\033[0m ' \
       $((16#${ch:0:2})) $((16#${ch:2:2})) $((16#${ch:4:2}))
   fi
-  for k in $TTHEME_ORDER; do
+  for k in $reply; do
     grp=${TTHEME_GROUP[$k]:-Other}
     if [[ $grp != $last_grp ]]; then
       printf '\033[1m%s\033[0m' "$grp"
@@ -286,6 +293,38 @@ __tt_config() {
   print -r -- "settings apply in new tabs — $TTHEME_CONFIG"
 }
 
+__tt_config_write() {
+  local line name doc
+  local -a out=()
+  local -A want=("$@")
+  local -i i
+  if [[ ! -e $TTHEME_CONFIG ]]; then
+    mkdir -p ${TTHEME_CONFIG:h} 2>/dev/null || return 1
+    print -r -- "$TTHEME_CONFIG_TEMPLATE" 2>/dev/null > $TTHEME_CONFIG || return 1
+  fi
+  [[ -r $TTHEME_CONFIG && -w $TTHEME_CONFIG ]] || return 1
+  for line in "${(@f)$(<$TTHEME_CONFIG)}"; do
+    for name in ${(k)want}; do
+      [[ $line == (|\#)(| )': ${'${name}[:=}]* ]] || continue
+      line=": \${$name:=${want[$name]}}"
+      unset "want[$name]"
+      break
+    done
+    out+=("$line")
+  done
+  for (( i = 1; i < $#; i += 2 )); do
+    name=${@[i]}
+    (( ${+want[$name]} )) || continue
+    doc=""
+    for line in "${(@f)TTHEME_CONFIG_TEMPLATE}"; do
+      [[ $line == ": \${$name:="* ]] && break
+      doc=$line
+    done
+    out+=("" "$doc" ": \${$name:=${want[$name]}}")
+  done
+  print -rl -- "${out[@]}" 2>/dev/null > $TTHEME_CONFIG
+}
+
 __tt_resolve() {
   local name=$1 k
   if [[ -n ${TTHEME_PALETTE[$name]} ]]; then
@@ -312,12 +351,12 @@ __tt_resolve() {
 
 __tt_next() {
   local f=$TTHEME_STATE_DIR/.rotation idx=0
-  mkdir -p $TTHEME_STATE_DIR 2>/dev/null
+  [[ -d $TTHEME_STATE_DIR ]] || mkdir -p $TTHEME_STATE_DIR 2>/dev/null
   [[ -r $f ]] && idx=$(<$f)
   [[ $idx == <-> ]] || idx=0
-  (( idx = idx % ${#TTHEME_ROTATION} + 1 ))
+  (( idx = idx % ${#TTHEME_ORDER} + 1 ))
   print -r -- $idx > $f 2>/dev/null
-  REPLY=${TTHEME_PALETTE[$TTHEME_ROTATION[idx]]}
+  REPLY=${TTHEME_PALETTE[$TTHEME_ORDER[idx]]}
 }
 
 __tt_rotate() {
@@ -501,6 +540,7 @@ __tt_pv_row() {
   fi
   __tt_pv_hl "$t" "$base"
   if (( color )); then
+    [[ -n ${tstrip[$t]} ]] || __tt_pv_strip $t
     w=$(( lw - 20 - ${#t} ))
     (( w < 1 )) && w=1
     REPLY="$on  $mark $base$REPLY$r${(l:w:: :)}${tstrip[$t]}"
@@ -554,6 +594,9 @@ __tt_pv_foot() {
     fi
     kk+=(space '=' enter)
     if (( bgoff[$tune] )); then kl+=(show default keep); else kl+=(hide default keep); fi
+    right=$b"esc"$z$d" undo"$z
+  elif (( conf )); then
+    badge=CONFIG kk=(↑↓ ←→ enter) kl=(setting value save)
     right=$b"esc"$z$d" undo"$z
   else
     [[ -n $flt ]] && badge=FILTER
@@ -632,6 +675,8 @@ __tt_pv_help() {
     hk+=("tune bg" "" "" "")
     hv+=("tab on a palette with a background" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "space hides  ·  = default" "enter keeps  ·  esc undoes")
   fi
+  hk+=(config "")
+  hv+=("alt-c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")
   hk+=(close)
   hv+=("?  esc")
   (( color )) || z= b=
@@ -725,6 +770,126 @@ __tt_pv_untune() {
   bgsize[$tune]=$s[1] bgpos[$tune]=$s[2] bgop[$tune]=$s[3] bgoff[$tune]=$s[4] bgname="" tune=""
 }
 
+__tt_pv_regroup() {
+  local ty=${rtype[cur]} v=${rval[cur]} i
+  __tt_pv_group
+  __tt_pv_rows
+  for (( i = 1; i <= ${#rval}; i++ )); do
+    [[ ${rtype[i]} == "$ty" && ${rval[i]} == "$v" ]] && { cur=$i; return 0 }
+  done
+  cur=1
+}
+
+__tt_pv_conf() {
+  case $key in
+    $'\x03') return 1 ;;
+    up) (( cf > 1 )) && cf=$(( cf - 1 )) ;;
+    down) (( cf < ${#cvars} )) && cf=$(( cf + 1 )) ;;
+    left|sleft) __tt_pv_conf_step -1 ;;
+    right|sright) __tt_pv_conf_step 1 ;;
+    $'\r'|$'\n') __tt_pv_conf_save ;;
+    esc) __tt_pv_unconf ;;
+    '?') help=1 ;;
+  esac
+  return 0
+}
+
+__tt_pv_conf_step() {
+  local var=${cvars[cf]}
+  local -a ch=(${=cchoice[cf]})
+  local -i i=${ch[(Ie)${(P)var}]}
+  (( i += $1 ))
+  (( i >= 1 && i <= ${#ch} )) || return 0
+  __tt_pv_conf_put $var ${ch[i]}
+}
+
+__tt_pv_conf_put() {
+  [[ ${(P)1} == "$2" ]] && return 0
+  typeset -g "$1=$2"
+  case $1 in
+    TTHEME_SORT) __tt_pv_regroup ;;
+    TTHEME_FX) [[ -n $flt ]] || { __tt_pv_roll; gstep=8 } ;;
+    TTHEME_TAB_PALETTE) __tt_pv_canpick ;;
+  esac
+}
+
+__tt_pv_unconf() {
+  local -i i
+  for (( i = 1; i <= ${#cvars}; i++ )); do
+    __tt_pv_conf_put ${cvars[i]} "${csnap[i]}"
+  done
+  conf=0
+}
+
+__tt_pv_conf_save() {
+  local var REPLY
+  local -a pairs=()
+  local -i i
+  for (( i = 1; i <= ${#cvars}; i++ )); do
+    var=${cvars[i]}
+    [[ ${(P)var} == "${csnap[i]}" ]] || pairs+=($var "${(P)var}")
+  done
+  if (( ! ${#pairs} )); then
+    conf=0
+    return 0
+  fi
+  __tt_tilde "$TTHEME_CONFIG"
+  if __tt_config_write "${pairs[@]}"; then
+    conf=0 msg="saved · $REPLY" msgt=200
+  else
+    __tt_pv_unconf
+    msg="could not write $REPLY" msgt=200
+  fi
+}
+
+__tt_pv_conf_panel() {
+  local z=$'\e[0m' b=$'\e[1m' d=$'\e[2m' c=$ac on=$'\e[7;1m'$ac var v note
+  local -a ch sh
+  local -i r0=$1 col=$2 end=$3 k i j fit=1
+  (( color )) || z= b= d= c= on=
+  for (( k = 1; k <= ${#cvars}; k++ )); do
+    sh=(${=cshow[k]})
+    (( 13 + ${#${(j: :)sh}} + 2 * ${#sh} > end - col + 1 )) && fit=0
+  done
+  for (( k = 1; k <= ${#cvars}; k++ )); do
+    var=${cvars[k]} ch=(${=cchoice[k]}) sh=(${=cshow[k]})
+    i=${ch[(Ie)${(P)var}]}
+    out+=$'\e['$(( r0 + k - 1 ))';'$col'H'
+    if (( k == cf )); then
+      out+=$c"▶"$z" "$b
+    else
+      out+="  "$d
+    fi
+    out+=${(r:11:)clabel[k]}$z
+    if (( ! fit )); then
+      v=${(P)var}
+      (( i )) && v=${sh[i]}
+      if (( k == cf )); then
+        out+=$c"‹ "$z$b$v$z$c" ›"$z
+      else
+        out+="  "$v
+      fi
+      continue
+    fi
+    for (( j = 1; j <= ${#sh}; j++ )); do
+      (( j > 1 )) && out+=" "
+      if (( j != i )); then
+        out+=$d" ${sh[j]} "$z
+      elif (( ! color )); then
+        out+="[${sh[j]}]"
+      elif (( k == cf )); then
+        out+=$on" ${sh[j]} "$z
+      else
+        out+=" ${sh[j]} "
+      fi
+    done
+  done
+  var=${cvars[cf]}
+  note=${cnote[${(P)var}]}
+  [[ -n $note ]] && out+=$'\e['$(( r0 + ${#cvars} + 1 ))';'$col'H'$d${note[1,end-col+1]}$z
+  return 0
+}
+
 __tt_pv_flush() {
   print -rn -- "$out"
   if (( wiped )); then
@@ -743,6 +908,7 @@ __tt_pv_draw() {
   split=$(( sw > 0 )) sc=$(( pw - 1 - sw ))
   h=$(( ph - 5 ))
   [[ -n $tune ]] && (( ! split )) && h=$(( ph - 14 ))
+  (( conf && ! split )) && h=$(( ph - 12 ))
   (( h < 1 )) && h=1
   (( cur < top )) && top=$cur
   (( cur >= top + h )) && top=$(( cur - h + 1 ))
@@ -851,18 +1017,27 @@ __tt_pv_draw() {
       (( bgoff[$tune] )) && state=off
       __tt_pv_head 1 $sc $se $tune background $state
       __tt_pv_bg_panel $tune 4 $sc $se
+    elif (( conf )); then
+      __tt_tilde "$TTHEME_CONFIG"
+      src=$REPLY
+      (( 8 + ${#src} > sw )) && src=""
+      __tt_pv_head 1 $sc $se config "" "$src"
+      __tt_pv_conf_panel 4 $sc $se
     else
       [[ -n $an ]] && src=${TTHEME_SRC[$an]}
       (( ${#an} + 2 + ${#src} > sw )) && src=""
       __tt_pv_head 1 $sc $se ${an:-custom} "" "$src"
       __tt_pv_specimen
-      (( help )) && __tt_pv_help
     fi
+    (( help && sw < 48 )) && __tt_pv_help
   else
     if [[ -n $tune ]]; then
       (( bgoff[$tune] )) && state=off
       __tt_pv_head $(( ph - 9 )) 1 $lw $tune background $state
       __tt_pv_bg_panel $tune $(( ph - 8 )) 1 $lw
+    elif (( conf )); then
+      __tt_pv_head $(( ph - 7 )) 1 $lw config
+      __tt_pv_conf_panel $(( ph - 6 )) 1 $lw
     fi
     (( help )) && __tt_pv_help
   fi
@@ -870,37 +1045,49 @@ __tt_pv_draw() {
   __tt_pv_flush
 }
 
-__tt_pv_init() {
-  local k g t cell lo hi
-  local -a tp
-  local -i j
-  for k in $TTHEME_ORDER; do
+__tt_pv_group() {
+  local k g
+  groups=() gthemes=()
+  __tt_order
+  for k in $reply; do
     g=${TTHEME_GROUP[$k]:-Other}
     [[ -n ${gthemes[$g]} ]] || groups+=($g)
     gthemes[$g]+=" $k"
   done
-  [[ -n $orig ]] && cn=$(__tt_name_of "$orig")
-  if [[ -n ${TTHEME_PALETTE[$cn]} ]]; then
-    cdot="◆"
-    if (( color )); then
-      tp=(${=TTHEME_PALETTE[$cn]})
-      lo=${tp[3]#\#}
-      printf -v cdot '\e[38;2;%d;%d;%dm◆\e[39m' $((16#${lo:0:2})) $((16#${lo:2:2})) $((16#${lo:4:2}))
-    fi
+}
+
+__tt_pv_canpick() {
+  canpick=0
+  if [[ $mode == pin ]]; then
+    canpick=1
+  elif (( $+functions[__tt_persist] )) && [[ $TTHEME_TAB_PALETTE == off ]]; then
+    canpick=1
   fi
-  (( color )) || return 0
-  for t in $TTHEME_ORDER; do
-    tp=(${=TTHEME_PALETTE[$t]})
-    tstrip[$t]=""
-    for (( j = 0; j < 8; j++ )); do
-      lo=${tp[j+5]#\#} hi=${tp[j+13]#\#}
-      printf -v cell '\e[38;2;%d;%d;%d;48;2;%d;%d;%dm▀▀' \
-        $((16#${lo:0:2})) $((16#${lo:2:2})) $((16#${lo:4:2})) \
-        $((16#${hi:0:2})) $((16#${hi:2:2})) $((16#${hi:4:2}))
-      tstrip[$t]+=$cell
-    done
-    tstrip[$t]+=$'\e[0m'
+}
+
+__tt_pv_strip() {
+  local lo hi cell
+  local -a tp=(${=TTHEME_PALETTE[$1]}) v=()
+  local -i j
+  for (( j = 5; j <= 12; j++ )); do
+    lo=${tp[j]#\#} hi=${tp[j+8]#\#}
+    v+=($((16#${lo:0:2})) $((16#${lo:2:2})) $((16#${lo:4:2})) $((16#${hi:0:2})) $((16#${hi:2:2})) $((16#${hi:4:2})))
   done
+  printf -v cell '\e[38;2;%d;%d;%d;48;2;%d;%d;%dm▀▀' $v
+  tstrip[$1]=$cell$'\e[0m'
+}
+
+__tt_pv_init() {
+  local lo
+  local -a tp
+  __tt_pv_group
+  [[ -n $orig ]] && __tt_name_of "$orig" && cn=$REPLY
+  [[ -n ${TTHEME_PALETTE[$cn]} ]] || return 0
+  cdot="◆"
+  (( color )) || return 0
+  tp=(${=TTHEME_PALETTE[$cn]})
+  lo=${tp[3]#\#}
+  printf -v cdot '\e[38;2;%d;%d;%dm◆\e[39m' $((16#${lo:0:2})) $((16#${lo:2:2})) $((16#${lo:4:2}))
 }
 
 __tt_pv_roll() {
@@ -950,6 +1137,7 @@ __tt_pv_read() {
     __tt_pv_getch || return 1
   fi
   key=$REPLY
+  [[ $key == ç ]] && key=altc
   [[ $key == $'\e' ]] || return 0
   local seq=""
   if ! __tt_pv_getch 0.05; then
@@ -958,6 +1146,7 @@ __tt_pv_read() {
   fi
   if [[ $REPLY != '[' && $REPLY != O ]]; then
     key=nop
+    [[ $REPLY == c ]] && key=altc
     return 0
   fi
   while __tt_pv_getch 0.05; do
@@ -1007,6 +1196,10 @@ __tt_pv_handle() {
   fi
   if [[ -n $tune ]]; then
     __tt_pv_tune
+    return
+  fi
+  if (( conf )); then
+    __tt_pv_conf
     return
   fi
   case $key in
@@ -1064,6 +1257,12 @@ __tt_pv_handle() {
         msg="no background image for $name" msgt=200
       fi
       ;;
+    altc)
+      conf=1 cf=1 csnap=()
+      for name in $cvars; do
+        csnap+=("${(P)name}")
+      done
+      ;;
     '?') help=1 ;;
     $'\x7f'|$'\x08')
       if [[ -n $flt ]]; then
@@ -1098,12 +1297,18 @@ __tt_preview() {
   local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown="" bginc="" osd="" osdt=0
   local tune="" tsnap="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bganchor=0
   local -A bgsent=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=()
-  local -a plabel=(" this tab " " default ")
-  if [[ $mode == pin ]]; then
-    canpick=1 pkdef=2 plabel=(" this directory " " and below ")
-  elif (( $+functions[__tt_persist] )) && [[ $TTHEME_TAB_PALETTE == off ]]; then
-    canpick=1
-  fi
+  local conf=0 cf=1
+  local -a plabel=(" this tab " " default ") csnap=()
+  local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT) clabel=("new tabs" announce "search fx" sort)
+  local -a cchoice=("seq off" "1 0" "typewriter decode glitch" "abc series") cshow=("seq off" "on off" "typewriter decode glitch" "abc series")
+  local -A cnote=(
+    seq "new tabs rotate through palettes" off "new tabs keep the terminal theme"
+    1 "shows the palette notice" 0 "silences the palette notice"
+    typewriter "the search hint types itself" decode "the search hint decodes" glitch "the search hint glitches in"
+    abc "series and palettes by name" series "series in the order added"
+  )
+  [[ $mode == pin ]] && pkdef=2 plabel=(" this directory " " and below ")
+  __tt_pv_canpick
   __tt_pv_size
   local -a groups=() rtype=() rval=() rcnt=() reply=()
   local -A gthemes=() exp=() tstrip=()
@@ -1134,6 +1339,7 @@ __tt_preview() {
     __tt_pv_bg_close
     printf '\e[?7h\e[?1049l\e[?25h\e[?2026l'
     [[ -n $tune ]] && __tt_pv_untune
+    (( conf )) && __tt_pv_unconf
     __tt_pv_bg_save
     if [[ -n $sel ]]; then
       local spec=${TTHEME_PALETTE[$sel]}
@@ -1145,7 +1351,9 @@ __tt_preview() {
       elif (( picked == 2 )); then
         __tt_keep "$sel"
       fi
-    elif [[ -n $orig && $orig != "$applied" ]]; then
+    elif [[ -z $orig && -n $applied ]]; then
+      __tt_osc_reset
+    elif [[ $orig != "$applied" ]]; then
       __tt_apply "$orig"
     fi
   }
@@ -1185,30 +1393,26 @@ if (( $+functions[compdef] )); then
 fi
 
 if __tt_active; then
-  if [[ -n $TTHEME_SPEC ]]; then
-    :
-  elif [[ $TTHEME_TAB_PALETTE == off ]]; then
-    __tt_bg=$(__tt_query_bg)
-    if [[ -n $__tt_bg ]]; then
-      for __k in ${(k)TTHEME_PALETTE}; do
-        if [[ ${TTHEME_PALETTE[$__k]%% *} == $__tt_bg ]]; then
-          TTHEME_SPEC=$TTHEME_PALETTE[$__k]
-          break
-        fi
-      done
-      [[ -n $TTHEME_SPEC ]] || TTHEME_SPEC="$__tt_bg ${TTHEME_PALETTE[neutral]#* }"
+  () {
+    local REPLY k
+    if [[ -n $TTHEME_SPEC ]]; then
+      :
+    elif [[ $TTHEME_TAB_PALETTE == off ]]; then
+      if __tt_query_bg; then
+        for k in ${(k)TTHEME_PALETTE}; do
+          [[ ${TTHEME_PALETTE[$k]%% *} == "$REPLY" ]] && { TTHEME_SPEC=$TTHEME_PALETTE[$k]; break }
+        done
+        [[ -n $TTHEME_SPEC ]] || TTHEME_SPEC="$REPLY ${TTHEME_PALETTE[neutral]#* }"
+      else
+        TTHEME_SPEC="- ${TTHEME_PALETTE[neutral]#* }"
+      fi
     else
-      TTHEME_SPEC="- ${TTHEME_PALETTE[neutral]#* }"
+      __tt_next
+      TTHEME_SPEC=$REPLY
+      __tt_apply "$TTHEME_SPEC"
     fi
-    unset __tt_bg __k
-  else
-    __tt_next
-    TTHEME_SPEC=$REPLY
-    __tt_apply "$TTHEME_SPEC"
-    unset REPLY
-  fi
-
-  __tt_dir_sync
+    __tt_dir_sync
+  }
   autoload -Uz add-zsh-hook
   add-zsh-hook chpwd __tt_chpwd
   __tt_announce
