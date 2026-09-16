@@ -18,14 +18,19 @@ The envelope is modeled on illogical-impulse's Material You terminal theming: a 
 
 ## 2. Measured anchors
 
-- Fetch official character art. AniList GraphQL works unauthenticated and is the most reliable source:
-  - `curl -s 'https://graphql.anilist.co' -H 'Content-Type: application/json' -d '{"query":"query{Media(search:\"<title>\",type:ANIME){id characters(role:MAIN,perPage:10){edges{node{name{full} image{large}}}}}}"}'`
-  - Fallback: Jikan (`https://api.jikan.moe/v4/anime?q=<title>` then `/anime/<id>/characters`) — it proxies MAL and goes down with it.
-  - Download portraits to the scratchpad, never into the repo.
+- Fetch official character art. The anime's own full-body settei is the only source whose colors are the character's; everything else is a colorist's interpretation. Work down this order and stop at the first one that yields a clean, evenly lit render:
+  - The series' Fandom wiki, which hosts the settei as transparent PNGs. List them, then resolve the URL:
+    - `curl -s -G 'https://<wiki>.fandom.com/api.php' --data-urlencode 'action=query' --data-urlencode 'format=json' --data-urlencode 'list=allimages' --data-urlencode 'aiprefix=<Character Name>' --data-urlencode 'ailimit=60' --data-urlencode 'aiprop=url|dimensions'` — the settei are the `<Name>_(Anime).png` / `_(Anime_2).png` entries, not the 1920x1080 episode stills. `prop=pageimages&piprop=original&titles=<Name>` gives the page's own infobox pick.
+    - `static.wikia.nocookie.net` serves a Cloudflare challenge on the original path. Fetch `<url>/revision/latest/scale-to-width-down/1000?format=original` with a browser `User-Agent` and `Referer: https://<wiki>.fandom.com/`.
+  - safebooru.donmai.us for an official illustration when the settei hides the anchor (a blindfold over the eyes, a closed hand over a signature item): `posts.json?tags=<character_tag> official_art&limit=60`, then keep only posts whose `tag_string` has `solo`. Anonymous queries take two tags. Manga volume covers land here too and are duotone-graded — reject them.
+  - AniList / Jikan character images are manga color-page crops, not anime color, and they are cropped too tight to carry a costume anchor. Use them only to confirm a cast list.
+  - Download to the scratchpad, never into the repo.
+- Flatten alpha before sampling. `sips` composites transparent PNGs onto black, which swamps every cluster: `ffmpeg -y -i <in>.png -filter_complex "color=white:s=<W>x<H>:d=1[bg];[bg][0]overlay=format=auto:shortest=1" -frames:v 1 <out>.png` (without `-frames:v 1` the color source never ends and the muxer errors out).
 - Sample dominant colors: `bun .claude/skills/character-palette/scripts/sample-colors.ts <image> [k]` (k defaults to 8; decodes via macOS sips, prints hex + share, largest cluster first).
-- Record 3-4 anchors per character: hair, eyes, signature item. Portraits rarely surface tiny features like irises — center-crop first (`sips --cropToHeightWidth <h> <w>`) or keep that anchor from step 1 research and note that it is unmeasured.
+- Record 3-4 anchors per character: hair, eyes, signature item. A full-body settei puts the head in the top tenth, so crop before sampling — `ffmpeg -y -i <in>.png -vf "crop=<w>:<h>:<x>:<y>,scale=760:-1:flags=neighbor"` keeps the flat cel fills unblended and large enough to read coordinates off.
 - Portrait backgrounds (white/gray clusters) are noise; ignore them.
 - An anchor is only worth keeping if it can carry a slot: the harmonizer keeps signature slots verbatim, so a dull or mid-tone anchor in a signature slot lands on the card unchanged. Prefer the character's most saturated identifying color as the first signature entry — it becomes the seed that tints every derived surface.
+- Sample the base tone, not the shadow. Anime cels hold two or three flats per surface and a k-means centroid drifts toward the darker one, which is what pushes an anchor under the accent gate. For a dark costume, measure the lit flat directly.
 
 ## 3. Real base scheme
 
@@ -39,6 +44,7 @@ The envelope is modeled on illogical-impulse's Material You terminal theming: a 
 - Start from the base scheme's 16 slots; substitute anchors into cursor and at most 1-2 accent slots.
 - ANSI 1-6 keep their functions (red=error, green=ok, yellow=warn, blue/cyan legible). Character identity lives in cursor plus the substituted slots — do not spread it across all 16.
 - Background, foreground, selection and ANSI 0/7/8/15 are surfaces: the harmonizer derives them from the seed, so a measured value there only survives if that slot is in `meta.signature` (a measured foreground is the usual case). Write the base scheme's values and let the harmonizer replace them.
+- A dark identity color cannot be a signature slot. The site draws the three signature colors as dots on the theme's own background, so a near-black uniform or robe vanishes there, and the accent gate needs roughly relative luminance 0.12 to clear 3:1 against a tone-8 background. Put that color in a non-signature accent slot instead — only its hue survives, which is what you wanted from it — and let the seed carry it into the background, where a dark character belongs anyway.
 - Record where the identity landed: `meta.signature` names the three slots the site renders as the card's identity block — usually `cursor` plus the two substituted slots. Order them the way the character reads (hair, then eyes or costume); the first one is the seed and also colors the group's band header when the theme is its lead. The build rejects three slots that resolve to fewer than three distinct colors.
 
 ## 5. Harmonize
