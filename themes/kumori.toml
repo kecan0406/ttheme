@@ -2,30 +2,30 @@
 name = "kumori"
 group = "Vocaloid"
 order = 3
-ansi_source = "MWidzi/inabashell"
+ansi_source = "Everblush + Crypton"
 signature = ["cursor", "ansi12", "ansi14"]
 
 [colors]
 background = "#201516"
 foreground = "#fbdbdc"
 cursor = "#f5959f"
-selection_background = "#493a3f"
+selection_background = "#383f42"
 ansi = [
   "#2d2021",
-  "#ff747d",
-  "#c0aa60",
-  "#f4ac6e",
-  "#ab96d4",
-  "#e98b95",
-  "#91b3df",
+  "#f17e83",
+  "#cea72e",
+  "#f4ac6a",
+  "#a695e6",
+  "#e686c7",
+  "#8eb3e6",
   "#d7c1c2",
 
   "#857374",
-  "#ffaab4",
-  "#e4ca7d",
-  "#ffd5ad",
+  "#ffabad",
+  "#f1c74f",
+  "#ffd5b3",
   "#b8bdf4",
-  "#ffb2ba",
+  "#ffade2",
   "#97deda",
   "#ffe9e9",
 ]

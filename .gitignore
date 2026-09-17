@@ -6,3 +6,9 @@ mise.local.toml
 .next/
 out/
 next-env.d.ts
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.avif
+*.gif
