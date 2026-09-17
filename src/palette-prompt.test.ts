@@ -83,8 +83,8 @@ test('the default palette is never offered, even by filter', () => {
 
 async function drive(
   keys: string[],
-  opts: { color?: boolean; maxItems?: number } = {},
-): Promise<{ result: string | symbol | undefined; frames: string; focused: string[] }> {
+  opts: { color?: boolean; maxItems?: number; multi?: boolean; installed?: string[]; title?: string } = {},
+): Promise<{ result: string | symbol | undefined; frames: string; focused: string[]; picked: string[] }> {
   const input = new PassThrough()
   const output = new PassThrough()
   let frames = ''
@@ -105,7 +105,8 @@ async function drive(
     await new Promise((resolve) => setTimeout(resolve, 5))
     input.write(key)
   }
-  return { result: await pending, frames, focused }
+  const result = await pending
+  return { result, frames, focused, picked: [...prompt.picked] }
 }
 
 test('enter on a folded group expands it, then a member submits', async () => {
@@ -155,4 +156,29 @@ test('a small window counts the rows below it', async () => {
 test('ctrl-c cancels the picker', async () => {
   const { result } = await drive(['\x03'])
   assert.ok(typeof result === 'symbol' && isCancel(result))
+})
+
+test('multi mode picks a palette with tab and submits the set with enter', async () => {
+  const { picked, frames } = await drive(['\x1b[C', '\x1b[B', '\t', '\r'], { multi: true, title: 'catalog' })
+  assert.deepEqual(picked, ['miku'])
+  assert.match(frames, /catalog \(4\/4 · 0 picked\)/)
+  assert.match(frames, /tab pick · type to filter · enter install/)
+})
+
+test('multi mode marks installed palettes as already picked', async () => {
+  const { picked } = await drive(['\r'], { multi: true, installed: ['rin'] })
+  assert.deepEqual(picked, ['rin'])
+})
+
+test('tab on a group row picks every palette under it, and again drops them', async () => {
+  const all = await drive(['\x1b[C', '\t', '\r'], { multi: true })
+  assert.deepEqual(all.picked.sort(), ['miku', 'rin'])
+  const none = await drive(['\x1b[C', '\t', '\t', '\r'], { multi: true })
+  assert.deepEqual(none.picked, [])
+})
+
+test('single mode is unchanged by the multi additions', async () => {
+  const { result, frames } = await drive(['\r', '\x1b[B', '\r'])
+  assert.equal(result, 'miku')
+  assert.doesNotMatch(frames, /picked/)
 })

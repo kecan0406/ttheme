@@ -41,12 +41,12 @@ test('--version exits cleanly through exitOverride', async () => {
   assert.equal(error.exitCode, 0)
 })
 
-test('init is registered alongside build', () => {
+test('the catalog verbs are registered alongside build and init', () => {
   assert.deepEqual(
     makeProgram()
       .commands.map((cmd) => cmd.name())
       .sort(),
-    ['build', 'init'],
+    ['add', 'browse', 'build', 'init', 'list', 'remove', 'update'],
   )
 })
 

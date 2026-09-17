@@ -70,7 +70,13 @@ source $TTHEME_HOME/adapters/_osc.zsh
 
 __tt_active() {
   [[ -o interactive ]] || return 1
+  (( ${#TTHEME_PALETTE} )) || return 1
   [[ $TTHEME_ADAPTER != unknown || -n $TTHEME_FORCE ]]
+}
+
+__tt_empty() {
+  print -u2 'ttheme: no palettes installed yet — run `ttheme browse` to pick some'
+  return 1
 }
 
 __tt_spec() {
@@ -281,7 +287,34 @@ __tt_help() {
   ttheme next     advance this tab to the next palette
   ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
   ttheme unpin    drop the palette pinned to this directory
-  ttheme config   edit settings in $EDITOR — they apply in new tabs'
+  ttheme config   edit settings in $EDITOR — they apply in new tabs
+
+  ttheme browse   pick palettes from the catalog in a live picker
+  ttheme list     show the catalog, marking what is installed
+  ttheme add      install palettes from the catalog
+  ttheme remove   uninstall palettes
+  ttheme update   refresh the catalog from the registry'
+}
+
+__tt_cli() {
+  local bin
+  bin=$(whence -p ttheme 2>/dev/null)
+  if [[ -n $bin ]]; then
+    "$bin" "$@"
+  elif (( $+commands[npx] )); then
+    npx -y @kecan0406/ttheme "$@"
+  else
+    print -u2 'ttheme: the catalog needs the CLI — npm i -g @kecan0406/ttheme'
+    return 1
+  fi
+}
+
+__tt_catalog() {
+  __tt_cli "$@" || return
+  [[ $1 == list ]] && return 0
+  [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
+  unset TTHEME_PALETTE TTHEME_GROUP TTHEME_NATIVE TTHEME_SRC
+  source $TTHEME_HOME/palettes.zsh
 }
 
 __tt_config() {
@@ -1362,17 +1395,24 @@ __tt_preview() {
 
 ttheme() {
   if (( ! $# )); then
+    (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
     __tt_menu
     return 0
   fi
 
   case $1 in
     -h|--help|help) __tt_help; return 0 ;;
+    browse|list|add|remove|update) __tt_catalog "$@"; return ;;
+    config) __tt_config; return ;;
+  esac
+
+  (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
+
+  case $1 in
     next) __tt_rotate; return ;;
     preview) __tt_preview; return ;;
     pin) __tt_preview pin; return ;;
     unpin) __tt_unpin; return ;;
-    config) __tt_config; return ;;
     -*) print -u2 "ttheme: unknown option $1 — see \`ttheme help\`"; return 1 ;;
   esac
 
@@ -1386,7 +1426,7 @@ ttheme() {
 
 if (( $+functions[compdef] )); then
   __tt_complete() {
-    (( CURRENT == 2 )) && compadd -- preview next pin unpin config help
+    (( CURRENT == 2 )) && compadd -- preview next pin unpin config help browse list add remove update
     compadd -- $TTHEME_ORDER
   }
   compdef __tt_complete ttheme

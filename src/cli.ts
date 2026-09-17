@@ -2,6 +2,7 @@ import { Command, CommanderError, Option } from 'commander'
 import pkg from '../package.json' with { type: 'json' }
 import { build, TERMINALS } from './build.ts'
 import { runInit } from './init.ts'
+import { runAdd, runBrowse, runList, runRemove, runUpdate } from './market.ts'
 
 export function createProgram(): Command {
   const program = new Command()
@@ -20,6 +21,34 @@ export function createProgram(): Command {
     .option('--yes', 'accept every default without prompting')
     .option('--link', 'symlink from this checkout instead of copying')
     .action((opts: { yes?: boolean; link?: boolean }) => runInit(opts))
+
+  program
+    .command('browse')
+    .description('pick palettes from the catalog in a live picker')
+    .action(() => runBrowse())
+
+  program
+    .command('list')
+    .argument('[query]', 'match a palette, series or ANSI source')
+    .description('show the catalog, marking what is installed')
+    .action((query?: string) => runList(query))
+
+  program
+    .command('add')
+    .argument('<palette...>')
+    .description('install palettes from the catalog')
+    .action((names: string[]) => runAdd(names))
+
+  program
+    .command('remove')
+    .argument('<palette...>')
+    .description('uninstall palettes')
+    .action((names: string[]) => runRemove(names))
+
+  program
+    .command('update')
+    .description('refresh the catalog from the registry')
+    .action(() => runUpdate())
 
   return program
 }

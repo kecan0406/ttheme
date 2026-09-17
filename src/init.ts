@@ -13,26 +13,14 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import { build } from './build.ts'
+import { writeCatalog } from './catalog.ts'
 import type { Manifest } from './emit/manifest.ts'
-import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
-import { PalettePrompt, promptFx } from './palette-prompt.ts'
-import { alphabetical } from './theme.ts'
-import {
-  alacrittyBlock,
-  configFile,
-  detectTerminal,
-  ghosttyBlock,
-  INIT_TERMINALS,
-  type InitTerminal,
-  kittyBlock,
-  upsertBlock,
-  weztermSnippet,
-  zshrcBlock,
-} from './wiring.ts'
+import { runBrowse } from './market.ts'
+import { type Installed, sync, writeInstalled } from './palettes.ts'
+import { configFile, detectTerminal, INIT_TERMINALS, type InitTerminal, upsertBlock, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {
   terminals: InitTerminal[]
-  palette: string
   tabPalette: 'seq' | 'off'
   announce: boolean
   link: boolean
@@ -49,27 +37,9 @@ export interface InitPlan {
   copies: { from: string; to: string; executable?: boolean }[]
   edits: { file: string; block: string }[]
   settings: { file: string; content: string }
+  catalog: Manifest
+  installed: Installed
   notes: string[]
-}
-
-async function pickPalette(root: string): Promise<string> {
-  const { palettes }: Manifest = JSON.parse(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
-  const entries = process.env.TTHEME_SORT === 'series' ? palettes : alphabetical(palettes)
-  const live = process.stdout.isTTY === true && !process.env.NO_COLOR
-  const saved = live ? await queryTerminalColors() : new Map<string, string>()
-  const prompt = new PalettePrompt({
-    entries,
-    color: !process.env.NO_COLOR,
-    fx: promptFx(process.env.TTHEME_FX),
-    onFocus: live ? (entry) => process.stdout.write(paletteOsc(entry)) : undefined,
-  })
-  const pick = await prompt.prompt()
-  if (p.isCancel(pick)) {
-    process.stdout.write(restoreOsc(saved))
-    p.cancel('nothing changed')
-    process.exit(1)
-  }
-  return pick ?? 'neutral'
 }
 
 function copyDir(copies: InitPlan['copies'], from: string, to: string): void {
@@ -84,7 +54,6 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const copies: InitPlan['copies'] = [
     { from: join(paths.root, 'shell', 'ttheme.zsh'), to: join(home, 'ttheme.zsh') },
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
-    { from: join(dist, 'shell', 'palettes.zsh'), to: join(home, 'palettes.zsh') },
     { from: join(dist, 'ghostty', 'ttheme.conf'), to: join(home, 'ttheme.conf') },
   ]
   copyDir(copies, join(paths.root, 'shell', 'adapters'), join(home, 'adapters'))
@@ -96,30 +65,18 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   }
   const notes: string[] = []
   if (opts.terminals.includes('ghostty')) {
-    copyDir(copies, join(dist, 'ghostty', 'themes'), join(paths.configHome, 'ghostty', 'themes'))
     copyDir(copies, join(paths.root, 'ghostty', 'shaders'), join(paths.configHome, 'ghostty', 'shaders'))
-    edits.push({
-      file: join(paths.configHome, 'ghostty', 'config'),
-      block: ghosttyBlock(home, opts.palette, opts.tabPalette),
-    })
-  }
-  if (opts.terminals.includes('kitty')) {
-    copyDir(copies, join(dist, 'kitty', 'themes'), join(paths.configHome, 'kitty', 'themes'))
-    edits.push({ file: join(paths.configHome, 'kitty', 'kitty.conf'), block: kittyBlock(opts.palette) })
   }
   if (opts.terminals.includes('alacritty')) {
-    copyDir(copies, join(dist, 'alacritty', 'themes'), join(paths.configHome, 'alacritty', 'themes'))
     const config = join(paths.configHome, 'alacritty', 'alacritty.toml')
-    const block = alacrittyBlock(join(paths.configHome, 'alacritty', 'themes', `${opts.palette}.toml`))
-    if (!existsSync(config) || readFileSync(config, 'utf8').includes('# ttheme begin')) {
-      edits.push({ file: config, block })
-    } else {
-      notes.push(`alacritty.toml already exists — add this to it yourself:\n${block}`)
+    if (existsSync(config) && !readFileSync(config, 'utf8').includes('# ttheme begin')) {
+      notes.push('alacritty.toml already exists — ttheme left it alone; add its themes/ import yourself')
     }
   }
-  notes.push(`wezterm: copy colors/ from the release archive, then ${weztermSnippet(opts.palette)}`)
-  notes.push('iterm2: import the .itermcolors files from the release archive')
-  return { copies, edits, settings, notes }
+  notes.push('wezterm and iterm2: import the palettes you install from the release archive')
+  const catalog: Manifest = JSON.parse(readFileSync(join(dist, 'manifest.json'), 'utf8'))
+  const installed: Installed = { terminals: opts.terminals, tabPalette: opts.tabPalette, palettes: [] }
+  return { copies, edits, settings, catalog, installed, notes }
 }
 
 export function applyInit(plan: InitPlan, link: boolean): void {
@@ -137,6 +94,10 @@ export function applyInit(plan: InitPlan, link: boolean): void {
   }
   mkdirSync(dirname(plan.settings.file), { recursive: true })
   writeFileSync(plan.settings.file, plan.settings.content)
+  const configHome = dirname(dirname(plan.settings.file))
+  writeCatalog(configHome, plan.catalog)
+  writeInstalled(configHome, plan.installed)
+  sync(configHome, plan.catalog, plan.installed)
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''
@@ -152,7 +113,7 @@ function accepted<T>(value: T | symbol): T {
   return value as T
 }
 
-async function ask(root: string, detected: string, preselected: InitTerminal[], link: boolean): Promise<InitOptions> {
+async function ask(detected: string, preselected: InitTerminal[], link: boolean): Promise<InitOptions> {
   p.intro('ttheme init')
   const terminals = accepted(
     await p.multiselect({
@@ -162,7 +123,6 @@ async function ask(root: string, detected: string, preselected: InitTerminal[], 
       required: true,
     }),
   )
-  const palette = await pickPalette(root)
   const tabPalette = accepted(
     await p.select<'seq' | 'off'>({
       message: 'new tabs',
@@ -176,7 +136,7 @@ async function ask(root: string, detected: string, preselected: InitTerminal[], 
   const announce = accepted(
     await p.confirm({ message: 'show the palette name under "Last login:"?', initialValue: true }),
   )
-  return { terminals, palette, tabPalette, announce, link }
+  return { terminals, tabPalette, announce, link }
 }
 
 function report(plan: InitPlan, opts: InitOptions, interactive: boolean): void {
@@ -200,12 +160,12 @@ function report(plan: InitPlan, opts: InitOptions, interactive: boolean): void {
     lines.push('open a new kitty window to pick up its config')
   }
   lines.push(...plan.notes)
+  lines.push('no palettes yet — `ttheme browse` picks them from the catalog')
   if (interactive) {
     p.note(lines.join('\n'), 'done')
-    p.outro('open a new tab and run `ttheme`')
   } else {
     console.log(lines.join('\n'))
-    console.log('open a new tab and run `ttheme`')
+    console.log('run `ttheme browse` to pick your palettes')
   }
 }
 
@@ -230,12 +190,12 @@ export async function runInit(flags: { yes?: boolean; link?: boolean } = {}): Pr
   const interactive = !flags.yes && process.stdin.isTTY === true && process.stdout.isTTY === true
   let opts: InitOptions
   if (interactive) {
-    opts = await ask(root, detected, preselected, link)
+    opts = await ask(detected, preselected, link)
   } else {
     if (preselected.length === 0) {
       throw new Error('no supported terminal detected — run this inside ghostty, kitty or alacritty')
     }
-    opts = { terminals: preselected, palette: 'neutral', tabPalette: 'seq', announce: true, link }
+    opts = { terminals: preselected, tabPalette: 'seq', announce: true, link }
   }
   const plan = planInit(opts, paths)
   if (interactive) {
@@ -255,4 +215,13 @@ export async function runInit(flags: { yes?: boolean; link?: boolean } = {}): Pr
   }
   applyInit(plan, opts.link)
   report(plan, opts, interactive)
+  if (!interactive) {
+    return
+  }
+  const browse = accepted(await p.confirm({ message: 'pick your palettes now?', initialValue: true }))
+  if (browse) {
+    await runBrowse()
+  } else {
+    p.outro('run `ttheme browse` when you are ready')
+  }
 }

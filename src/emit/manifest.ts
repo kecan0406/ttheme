@@ -1,6 +1,6 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { GATE_RULES, type GateRule, measure } from '../contrast.ts'
-import type { Theme } from '../theme.ts'
+import type { Font, Theme } from '../theme.ts'
 import type { Emitter, Output } from './index.ts'
 
 export interface PaletteEntry {
@@ -25,31 +25,47 @@ export interface PaletteEntry {
 export interface Manifest {
   version: string
   gate: GateRule[]
+  font: Font
+  shader?: string
   palettes: PaletteEntry[]
 }
 
+export function paletteEntry(t: Theme): PaletteEntry {
+  return {
+    name: t.name,
+    group: t.group,
+    ...(t.native ? { native: t.native } : {}),
+    ...(t.lead ? { lead: true } : {}),
+    order: t.order,
+    ansiSource: t.ansiSource,
+    ...(t.role === 'default' ? { default: true } : {}),
+    background: t.background,
+    foreground: t.foreground,
+    cursor: t.cursor,
+    selection: t.selectionBackground,
+    signature: t.signature,
+    signatureSlots: t.signatureSlots,
+    ansi: t.ansi,
+    gate: measure(t),
+    ...(t.waive.length > 0 ? { waived: t.waive } : {}),
+  }
+}
+
+export function listed(palettes: PaletteEntry[]): PaletteEntry[] {
+  return palettes.filter((p) => p.default !== true)
+}
+
 export function manifest(themes: Theme[]): Manifest {
+  const [first] = themes
+  if (!first) {
+    throw new Error('manifest needs at least one theme')
+  }
   return {
     version: pkg.version,
     gate: GATE_RULES,
-    palettes: themes.map((t) => ({
-      name: t.name,
-      group: t.group,
-      ...(t.native ? { native: t.native } : {}),
-      ...(t.lead ? { lead: true } : {}),
-      order: t.order,
-      ansiSource: t.ansiSource,
-      ...(t.role === 'default' ? { default: true } : {}),
-      background: t.background,
-      foreground: t.foreground,
-      cursor: t.cursor,
-      selection: t.selectionBackground,
-      signature: t.signature,
-      signatureSlots: t.signatureSlots,
-      ansi: t.ansi,
-      gate: measure(t),
-      ...(t.waive.length > 0 ? { waived: t.waive } : {}),
-    })),
+    font: first.font,
+    ...(first.ghostty.shader ? { shader: first.ghostty.shader } : {}),
+    palettes: themes.map(paletteEntry),
   }
 }
 

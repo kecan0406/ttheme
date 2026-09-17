@@ -38,13 +38,15 @@ export function detectTerminal(env: Record<string, string | undefined>): string 
   return 'unknown'
 }
 
-export function ghosttyBlock(tthemeDir: string, palette: string, tabPalette: 'seq' | 'off'): string {
+export function ghosttyBlock(tthemeDir: string, palette: string | undefined, tabPalette: 'seq' | 'off'): string {
   const lines = tabPalette === 'seq' ? [`command = ${tthemeDir}/launch-tab.zsh`, 'shell-integration = zsh'] : []
-  lines.push(
-    `theme = ${palette}`,
-    `config-file = ${tthemeDir}/ttheme.conf`,
-    `config-file = ?${tthemeDir}/backgrounds/${palette}.conf`,
-  )
+  if (palette) {
+    lines.push(`theme = ${palette}`)
+  }
+  lines.push(`config-file = ${tthemeDir}/ttheme.conf`)
+  if (palette) {
+    lines.push(`config-file = ?${tthemeDir}/backgrounds/${palette}.conf`)
+  }
   return lines.join('\n')
 }
 
@@ -109,12 +111,12 @@ export function configFile(content: string, opts: { tabPalette: 'seq' | 'off'; a
   return ensureSetting(ensureSetting(announced, 'TTHEME_FX'), 'TTHEME_SORT')
 }
 
-export function kittyBlock(palette: string): string {
-  return `include themes/${palette}.conf`
+export function kittyBlock(palette: string | undefined): string {
+  return palette ? `include themes/${palette}.conf` : ''
 }
 
-export function alacrittyBlock(themePath: string): string {
-  return `[general]\nimport = ["${themePath}"]`
+export function alacrittyBlock(themePath: string | undefined): string {
+  return themePath ? `[general]\nimport = ["${themePath}"]` : ''
 }
 
 export function weztermSnippet(palette: string): string {

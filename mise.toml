@@ -78,8 +78,20 @@ run_init
 for f in ttheme/ttheme.zsh ttheme/palettes.zsh ttheme/ttheme.conf ttheme/config.zsh ttheme/adapters/_osc.zsh ghostty/config; do
   [ -e "$tmp/.config/$f" ] || { echo "bin:check failed: missing $f"; exit 1; }
 done
-zsh -c 'source "$1/.config/ttheme/ttheme.zsh"; (( ${#TTHEME_PALETTE} > 0 ))' zsh "$tmp" ||
-  { echo "bin:check failed: installed layer does not source"; exit 1; }
+zsh -c 'source "$1/.config/ttheme/ttheme.zsh"; (( ${#TTHEME_PALETTE} == 0 ))' zsh "$tmp" ||
+  { echo "bin:check failed: a fresh init should install no palettes"; exit 1; }
+grep -q '^theme = ' "$tmp/.config/ghostty/config" &&
+  { echo "bin:check failed: a fresh init should not pin a terminal theme"; exit 1; }
+env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" \
+  node bin/ttheme.js add gojo > /dev/null
+zsh -c 'source "$1/.config/ttheme/ttheme.zsh"; (( ${#TTHEME_PALETTE} == 1 )) && [[ -n ${TTHEME_PALETTE[gojo]} ]]' zsh "$tmp" ||
+  { echo "bin:check failed: add did not reach the installed layer"; exit 1; }
+grep -q '^theme = gojo$' "$tmp/.config/ghostty/config" ||
+  { echo "bin:check failed: add did not point ghostty at the palette"; exit 1; }
+env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" \
+  node bin/ttheme.js remove gojo > /dev/null
+zsh -c 'source "$1/.config/ttheme/ttheme.zsh"; (( ${#TTHEME_PALETTE} == 0 ))' zsh "$tmp" ||
+  { echo "bin:check failed: remove did not reach the installed layer"; exit 1; }
 run_init
 for f in "$tmp/.config/ghostty/config" "$tmp/.zshrc"; do
   [ "$(grep -c '# ttheme begin' "$f")" = 1 ] ||

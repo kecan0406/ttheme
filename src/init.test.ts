@@ -1,10 +1,34 @@
 import assert from 'node:assert/strict'
 import { lstatSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, sep } from 'node:path'
 import { test } from 'node:test'
 
 import { applyInit, type InitOptions, type InitPaths, planInit } from './init.ts'
+
+function manifestFixture() {
+  const palette = (name: string, order: number, role?: 'default') => ({
+    name,
+    group: 'Fixture',
+    order,
+    ansiSource: 'Fixture',
+    ...(role ? { default: true } : {}),
+    background: '#101010',
+    foreground: '#f0f0f0',
+    cursor: '#ff8800',
+    selection: '#303030',
+    signature: ['#ff8800', '#f0f0f0', '#101010'],
+    signatureSlots: ['cursor', 'foreground', 'background'],
+    ansi: Array.from({ length: 16 }, (_, i) => `#${i.toString(16).repeat(6)}`),
+    gate: [21, 21, 0, 21, 21],
+  })
+  return {
+    version: '0.0.0',
+    gate: [],
+    font: { family: 'Fixture Mono', size: 14, codepointMap: [] },
+    palettes: [palette('neutral', 1, 'default'), palette('miku', 2)],
+  }
+}
 
 function makeFixture(): InitPaths {
   const base = mkdtempSync(join(tmpdir(), 'ttheme-init-'))
@@ -24,6 +48,7 @@ function makeFixture(): InitPaths {
     'dist/kitty/themes/miku.conf': 'miku kitty',
     'dist/alacritty/themes/neutral.toml': 'neutral alacritty',
     'dist/alacritty/themes/miku.toml': 'miku alacritty',
+    'dist/manifest.json': JSON.stringify(manifestFixture()),
   }
   for (const [path, content] of Object.entries(files)) {
     mkdirSync(join(root, path, '..'), { recursive: true })
@@ -35,34 +60,46 @@ function makeFixture(): InitPaths {
 }
 
 function options(partial: Partial<InitOptions> = {}): InitOptions {
-  return { terminals: ['ghostty'], palette: 'neutral', tabPalette: 'seq', announce: true, link: false, ...partial }
+  return { terminals: ['ghostty'], tabPalette: 'seq', announce: true, link: false, ...partial }
 }
 
-test('planInit places the runtime layer and wires ghostty and kitty', () => {
+test('planInit places the runtime layer and touches only .zshrc', () => {
   const paths = makeFixture()
-  const plan = planInit(options({ terminals: ['ghostty', 'kitty'], palette: 'miku' }), paths)
+  const plan = planInit(options({ terminals: ['ghostty', 'kitty'] }), paths)
   const tthemeDir = join(paths.configHome, 'ttheme')
   const targets = plan.copies.map((c) => c.to)
   for (const expected of [
     join(tthemeDir, 'ttheme.zsh'),
     join(tthemeDir, 'launch-tab.zsh'),
-    join(tthemeDir, 'palettes.zsh'),
     join(tthemeDir, 'ttheme.conf'),
     join(tthemeDir, 'adapters', '_osc.zsh'),
-    join(paths.configHome, 'ghostty', 'themes', 'miku'),
     join(paths.configHome, 'ghostty', 'shaders', 'cursor.glsl'),
-    join(paths.configHome, 'kitty', 'themes', 'miku.conf'),
   ]) {
     assert.ok(targets.includes(expected), `missing copy target ${expected}`)
   }
   assert.deepEqual(
     plan.edits.map((e) => e.file),
-    [
-      join(paths.home, '.zshrc'),
-      join(paths.configHome, 'ghostty', 'config'),
-      join(paths.configHome, 'kitty', 'kitty.conf'),
-    ],
+    [join(paths.home, '.zshrc')],
   )
+})
+
+test('planInit installs no palettes and copies no theme files', () => {
+  const paths = makeFixture()
+  const plan = planInit(options({ terminals: ['ghostty', 'kitty'] }), paths)
+  assert.deepEqual(plan.installed.palettes, [])
+  assert.equal(plan.installed.tabPalette, 'seq')
+  assert.ok(!plan.copies.some((c) => c.to.includes(`${sep}themes${sep}`)))
+})
+
+test('applyInit leaves a fresh install with an empty table and no terminal theme', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options({ terminals: ['ghostty'] }), paths), false)
+  const table = readFileSync(join(paths.configHome, 'ttheme', 'palettes.zsh'), 'utf8')
+  assert.match(table, /TTHEME_ORDER=\(\)/)
+  const ghostty = readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8')
+  assert.match(ghostty, /# ttheme begin/)
+  assert.doesNotMatch(ghostty, /^theme = /m)
+  assert.deepEqual(JSON.parse(readFileSync(join(paths.configHome, 'ttheme', 'installed.json'), 'utf8')).palettes, [])
 })
 
 test('applyInit creates the layout, marks the launcher executable and wires configs', () => {
@@ -118,26 +155,18 @@ test('applyInit preserves existing zshrc content', () => {
   assert.match(zshrc, /# ttheme begin/)
 })
 
-test('planInit creates alacritty.toml when absent but falls back to a note when present', () => {
+test('init writes its own alacritty block but never edits a foreign alacritty.toml', () => {
   const paths = makeFixture()
-  const fresh = planInit(options({ terminals: ['alacritty'] }), paths)
   const config = join(paths.configHome, 'alacritty', 'alacritty.toml')
-  assert.deepEqual(
-    fresh.edits.map((e) => e.file),
-    [join(paths.home, '.zshrc'), config],
-  )
-  applyInit(fresh, false)
-  assert.match(readFileSync(config, 'utf8'), /\[general\]\nimport = \[/)
-  const rerun = planInit(options({ terminals: ['alacritty'] }), paths)
-  assert.ok(
-    rerun.edits.some((e) => e.file === config),
-    'own marker block should stay editable',
-  )
+  applyInit(planInit(options({ terminals: ['alacritty'] }), paths), false)
+  assert.match(readFileSync(config, 'utf8'), /# ttheme begin/)
+
   mkdirSync(join(paths.configHome, 'alacritty'), { recursive: true })
   writeFileSync(config, '[general]\nimport = ["mine.toml"]\n')
   const foreign = planInit(options({ terminals: ['alacritty'] }), paths)
-  assert.ok(!foreign.edits.some((e) => e.file === config))
   assert.ok(foreign.notes.some((n) => n.includes('alacritty.toml already exists')))
+  applyInit(foreign, false)
+  assert.equal(readFileSync(config, 'utf8'), '[general]\nimport = ["mine.toml"]\n')
 })
 
 test('applyInit with link symlinks back to the checkout', () => {

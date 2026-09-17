@@ -64,12 +64,18 @@ export interface PalettePromptOptions {
   maxItems?: number
   color?: boolean
   fx?: PromptFx
+  title?: string
+  multi?: boolean
+  installed?: Iterable<string>
   input?: Readable
   output?: Writable
   onFocus?: (entry: PaletteEntry) => void
 }
 
 export class PalettePrompt extends Prompt<string> {
+  readonly picked: Set<string>
+  private title: string
+  private multi: boolean
   private entries: PaletteEntry[]
   private expanded = new Set<string>()
   private rows: PickerRow[] = []
@@ -90,6 +96,9 @@ export class PalettePrompt extends Prompt<string> {
   constructor(opts: PalettePromptOptions) {
     super({ render: () => this.draw(), input: opts.input, output: opts.output }, true)
     this.entries = opts.entries
+    this.title = opts.title ?? 'startup palette'
+    this.multi = opts.multi ?? false
+    this.picked = new Set(opts.installed ?? [])
     const named = opts.entries.filter((e) => !e.default)
     this.paletteTotal = named.length
     this.maxItems = opts.maxItems ?? 12
@@ -127,14 +136,42 @@ export class PalettePrompt extends Prompt<string> {
     })
     this.on('key', (_char, key) => {
       const row = this.rows[this.cursor]
-      if (key?.name === 'return' && row?.kind === 'group') {
+      if (key?.name === 'return' && row?.kind === 'group' && !this.multi) {
         this.toggle(row.name)
+      }
+      if (key?.name === 'tab' && this.multi) {
+        this.pick(row)
       }
     })
   }
 
   protected override _shouldSubmit(): boolean {
-    return this.rows[this.cursor]?.kind === 'palette'
+    return this.multi || this.rows[this.cursor]?.kind === 'palette'
+  }
+
+  private pick(row: PickerRow | undefined): void {
+    const names =
+      row?.kind === 'palette'
+        ? [row.entry.name]
+        : row?.kind === 'group'
+          ? this.rows.flatMap((r) => (r.kind === 'palette' && r.entry.group === row.name ? [r.entry.name] : []))
+          : []
+    if (names.length === 0) {
+      return
+    }
+    const add = names.some((n) => !this.picked.has(n))
+    for (const n of names) {
+      if (add) {
+        this.picked.add(n)
+      } else {
+        this.picked.delete(n)
+      }
+    }
+  }
+
+  private pickedIn(group: string): number {
+    return this.rows.filter((r) => r.kind === 'palette' && r.entry.group === group && this.picked.has(r.entry.name))
+      .length
   }
 
   private rollExample(): void {
@@ -258,29 +295,35 @@ export class PalettePrompt extends Prompt<string> {
           ? `[${row.name}]`
           : ` ${row.name}`
       const chip = this.color ? ansiChip('●', row.selection) : ''
-      const count = this.color ? ` ${DIM}(${row.count})${RESET}` : ` (${row.count})`
+      const tally = this.multi ? `${this.pickedIn(row.name)}/${row.count}` : `${row.count}`
+      const count = this.color ? ` ${DIM}(${tally})${RESET}` : ` (${tally})`
       const native = row.native ? (this.color ? ` ${DIM}${row.native}${RESET}` : ` ${row.native}`) : ''
       return `${arrow}${name}${chip}${count}${native}`
     }
     const e = row.entry
     const marker = focused ? '▶ ' : '  '
+    const box = this.multi ? (this.picked.has(e.name) ? '● ' : '○ ') : ''
     if (!this.color) {
-      return `  ${marker}${e.name.padEnd(13)} ● · ${e.ansiSource}`
+      return `  ${marker}${box}${e.name.padEnd(13)} ● · ${e.ansiSource}`
     }
-    return `  ${marker}${e.name.padEnd(13)} ${ansiDot(e.background, e.cursor)}${ansiSwatch(e.ansi.slice(1, 7), e.background)}  ${DIM}${e.ansiSource}${RESET}`
+    return `  ${marker}${box}${e.name.padEnd(13)} ${ansiDot(e.background, e.cursor)}${ansiSwatch(e.ansi.slice(1, 7), e.background)}  ${DIM}${e.ansiSource}${RESET}`
   }
 
   private draw(): string {
     const dim = (s: string) => (this.color ? `${DIM}${s}${RESET}` : s)
     const bar = (s: string) => (this.color ? `${CYAN}${s}${RESET}` : s)
     if (this.state === 'submit') {
-      return `${dim('◇')} startup palette ${dim(`· ${this.value ?? ''}`)}`
+      const done = this.multi ? `${this.picked.size} picked` : (this.value ?? '')
+      return `${dim('◇')} ${this.title} ${dim(`· ${done}`)}`
     }
     if (this.state === 'cancel') {
-      return `${dim('◇ startup palette · cancelled')}`
+      return `${dim(`◇ ${this.title} · cancelled`)}`
     }
     const matched = this.userInput ? this.rows.filter((r) => r.kind === 'palette').length : this.paletteTotal
-    const head = `${bar('◆')} startup palette ${dim(`(${matched}/${this.paletteTotal})`)}`
+    const tally = this.multi
+      ? `${matched}/${this.paletteTotal} · ${this.picked.size} picked`
+      : `${matched}/${this.paletteTotal}`
+    const head = `${bar('◆')} ${this.title} ${dim(`(${tally})`)}`
     const search = `${bar('│')} ${this.userInput ? `⌕ ${this.userInput}_` : dim(`⌕ search…${this.example ? ` e.g. ${this.animatedExample()}` : ''}`)}`
     if (this.cursor < this.top) {
       this.top = this.cursor
@@ -299,7 +342,10 @@ export class PalettePrompt extends Prompt<string> {
     }
     const below = this.rows.length - this.top - window.length
     const more = below > 0 ? `${bar('│')} ${dim(`↓ ${below} more`)}` : bar('│')
-    const hint = `${bar('└')} ${dim('↑↓ move · ←→ fold · type to filter · enter pick · esc cancel')}`
+    const keys = this.multi
+      ? '↑↓ move · ←→ fold · tab pick · type to filter · enter install · esc cancel'
+      : '↑↓ move · ←→ fold · type to filter · enter pick · esc cancel'
+    const hint = `${bar('└')} ${dim(keys)}`
     return [head, search, ...body, more, hint].join('\n')
   }
 }
