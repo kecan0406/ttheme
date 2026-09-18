@@ -3,6 +3,7 @@ name = "cirno"
 group = "Touhou Project"
 order = 93
 ansi_source = "Forest Blue"
+booru = "cirno"
 signature = ["cursor", "ansi6", "ansi5"]
 
 [colors]

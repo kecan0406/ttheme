@@ -3,6 +3,7 @@ name = "anko"
 group = "Call of the Night"
 order = 65
 ansi_source = "Arthur"
+booru = "uguisu_anko"
 signature = ["cursor", "ansi4", "ansi2"]
 
 [colors]

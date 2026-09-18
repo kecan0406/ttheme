@@ -3,6 +3,7 @@ name = "yui"
 group = "K-On!"
 order = 82
 ansi_source = "Espresso Libre + HTT"
+booru = "hirasawa_yui"
 signature = ["cursor", "ansi11", "ansi13"]
 
 [colors]

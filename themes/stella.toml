@@ -3,6 +3,7 @@ name = "stella"
 group = "VA-11 Hall-A"
 order = 46
 ansi_source = "Scarlet Protocol + Glitch City"
+booru = "stella_hoshii"
 signature = ["cursor", "ansi2", "ansi13"]
 
 [colors]

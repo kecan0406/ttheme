@@ -3,6 +3,7 @@ name = "sei"
 group = "VA-11 Hall-A"
 order = 47
 ansi_source = "Blue Matrix"
+booru = "sei_asagiri"
 signature = ["cursor", "ansi12", "ansi9"]
 
 [colors]

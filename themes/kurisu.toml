@@ -3,6 +3,7 @@ name = "kurisu"
 group = "Steins;Gate"
 order = 22
 ansi_source = "Duotone Dark"
+booru = "makise_kurisu"
 signature = ["cursor", "ansi1", "ansi6"]
 
 [colors]

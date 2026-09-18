@@ -172,6 +172,40 @@ ttheme ships no images; they stay on your machine. A background is Ghostty
 config, not an escape sequence, so it follows the default for every window
 rather than the palette painted on one tab.
 
+A palette with no background yet can find one: on it in `preview`, tab opens
+**find**, which searches a booru for the palette's character tag
+(`meta.booru`) and lays the results out as a grid of thumbnails. It starts on
+safebooru; `p` moves to yande.re, then konachan, then back — the three share
+one tag vocabulary, so the same tag works on each. The site you are on sits in
+a colored badge at the top right, and again at the start of the line above a
+picture you try on, next to the site the artwork itself came from when the post
+records one (`pixiv.net`, `deviantart.com`). The grid starts
+with **cutouts** — posts carrying the site's transparency tags
+(`transparent_background` or `vector_trace` on safebooru, `transparent_png` on
+yande.re, `transparent` or `vector` on konachan) whose PNG header says they have
+an alpha channel; yande.re's `transparent_png` already means exactly that, so
+its posts skip the header check, which its slow file server would drag out —
+and the counter reads shown out of checked, `13/33`. Pictures by the uploader of the backgrounds you already have
+in the same series come first and carry `≈`, so a series keeps one hand;
+anything under 1600 px on its long edge shows its size in yellow. Enter tries
+the picture on: ttheme downloads the original and paints the whole window with
+it the way the installed background will look — tinted with the palette,
+cropped with headroom above the face, at the opacity the contrast gate allows —
+over a sample of shell output, with the share of transparent pixels next to its
+size (`opaque` when there are none). `←`/`→` try the neighbours, enter installs,
+and the preview carries on straight into the tuning panel below. Tab switches to
+every post of the character, esc goes back. Only `safe` and `general` posts are
+ever shown — yande.re and konachan are always asked for `rating:s`, whatever
+else is searched — and downloads stay in `~/.cache/ttheme/<site>/`. ttheme keeps no
+list of images — the tag is all it knows about a character.
+
+An install writes `<palette>.png` (the tinted figure), `<palette>@fill-<focus>.png`
+(the window-shaped crop), `<palette>.conf` and the untouched original under
+`backgrounds/originals/`, and removes any earlier tuning of that palette. The
+conf opens with where the picture came from —
+`# from yande.re 214705 https://yande.re/post/show/214705` — and the tuning
+panel shows it next to the palette's name.
+
 `preview` shows the background of the palette under the cursor while you
 browse: through the kitty graphics protocol it draws that palette's
 `background-image` where Ghostty would place it, faded by
@@ -190,7 +224,8 @@ the sizes above 100% zoom around — and the image itself otherwise. Position
 steps through the nine `background-image-position` anchors, or `1`–`9` jump to
 one in reading order; opacity moves by 0.01. Space turns the palette's
 background off and on, `=` returns it to its defaults, enter keeps the change
-and esc puts back what the panel opened with.
+and esc puts back what the panel opened with. `f` in the panel opens find again
+to replace the picture.
 
 The palette's `.conf` holds those defaults; the preview only appends two
 optional includes to it and keeps everything else in `<palette>.tune.conf` (the
@@ -316,6 +351,7 @@ name = "madoka"                            # must match the filename
 group = "Madoka Magica"                    # needs a [[group]] in themes/_groups.toml
 order = 15                                 # position in the rotation
 ansi_source = "Elegant + Magica"           # what the harmonizer was fed
+booru = "kaname_madoka"                    # safebooru character tag find searches
 signature = ["cursor", "ansi1", "ansi3"]   # the three slots the site draws as identity
 
 [colors]
@@ -366,5 +402,6 @@ reproduced here. Shaders come from
 Palettes are inspired by characters from the listed works; this project is
 unaffiliated with and unendorsed by their rights holders. No character art,
 audio or trademarked asset is redistributed here — only color values.
-Terminal background images are built on your own machine and written to
+Terminal background images are downloaded from the booru you pick only when you
+ask `find` for one, built on your own machine and written to
 `~/.config/ttheme/backgrounds/`; none ship in this repository or on npm.

@@ -3,6 +3,7 @@ name = "azusa"
 group = "K-On!"
 order = 86
 ansi_source = "Retro Legends"
+booru = "nakano_azusa"
 signature = ["cursor", "ansi9", "foreground"]
 
 [colors]

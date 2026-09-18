@@ -3,6 +3,7 @@ name = "misato"
 group = "Evangelion"
 order = 12
 ansi_source = "Purple Rain"
+booru = "katsuragi_misato"
 signature = ["cursor", "ansi13", "foreground"]
 
 [colors]

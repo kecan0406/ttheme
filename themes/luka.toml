@@ -3,6 +3,7 @@ name = "luka"
 group = "Vocaloid"
 order = 6
 ansi_source = "Rose Pine"
+booru = "megurine_luka"
 signature = ["cursor", "ansi3", "ansi2"]
 
 [colors]

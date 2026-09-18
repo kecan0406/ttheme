@@ -3,6 +3,7 @@ name = "miku"
 group = "Vocaloid"
 order = 2
 ansi_source = "vauxe Miku"
+booru = "hatsune_miku"
 signature = ["cursor", "ansi1", "ansi12"]
 
 [colors]

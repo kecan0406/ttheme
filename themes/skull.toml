@@ -3,6 +3,7 @@ name = "skull"
 group = "Persona 5"
 order = 50
 ansi_source = "Desert"
+booru = "sakamoto_ryuuji"
 signature = ["cursor", "ansi1", "foreground"]
 
 [colors]

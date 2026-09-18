@@ -3,6 +3,7 @@ name = "rei"
 group = "Evangelion"
 order = 10
 ansi_source = "Idle Toes"
+booru = "ayanami_rei"
 signature = ["cursor", "ansi9", "foreground"]
 
 [colors]

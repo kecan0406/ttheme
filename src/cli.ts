@@ -1,6 +1,7 @@
 import { Command, CommanderError, Option } from 'commander'
 import pkg from '../package.json' with { type: 'json' }
 import { build, TERMINALS } from './build.ts'
+import { runFind } from './find.ts'
 import { runInit } from './init.ts'
 import { runAdd, runBrowse, runDefault, runList, runRemove, runUpdate } from './market.ts'
 
@@ -51,6 +52,14 @@ export function createProgram(): Command {
     .action((name: string) => runDefault(name))
 
   program
+    .command('find', { hidden: true })
+    .argument('<palette>')
+    .description('pick a safebooru background for a palette — preview opens this on tab')
+    .action(async (name: string) => {
+      process.exitCode = await runFind(name)
+    })
+
+  program
     .command('update')
     .description('refresh the catalog from the registry')
     .action(() => runUpdate())
@@ -61,7 +70,7 @@ export function createProgram(): Command {
 export async function runCli(argv: readonly string[]): Promise<number> {
   try {
     await createProgram().parseAsync(argv)
-    return 0
+    return Number(process.exitCode ?? 0)
   } catch (error) {
     if (error instanceof CommanderError) {
       return error.exitCode

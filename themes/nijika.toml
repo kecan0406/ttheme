@@ -3,6 +3,7 @@ name = "nijika"
 group = "Bocchi the Rock!"
 order = 30
 ansi_source = "Medallion"
+booru = "ijichi_nijika"
 signature = ["cursor", "ansi12", "ansi1"]
 
 [colors]

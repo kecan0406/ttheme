@@ -3,6 +3,7 @@ name = "kaworu"
 group = "Evangelion"
 order = 11
 ansi_source = "Spacegray"
+booru = "nagisa_kaworu"
 signature = ["cursor", "foreground", "ansi1"]
 
 [colors]

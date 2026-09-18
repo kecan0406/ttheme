@@ -3,6 +3,7 @@ name = "joker"
 group = "Persona 5"
 order = 49
 ansi_source = "Red Alert + Phantom"
+booru = "amamiya_ren"
 signature = ["cursor", "foreground", "ansi9"]
 
 [colors]

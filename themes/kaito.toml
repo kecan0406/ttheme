@@ -3,6 +3,7 @@ name = "kaito"
 group = "Vocaloid"
 order = 7
 ansi_source = "Aardvark Blue + Crypton"
+booru = "kaito_(vocaloid)"
 signature = ["cursor", "ansi4", "ansi3"]
 
 [colors]

@@ -3,6 +3,7 @@ name = "rika"
 group = "Higurashi"
 order = 69
 ansi_source = "Nocturnal Winter"
+booru = "furude_rika"
 signature = ["cursor", "ansi13", "foreground"]
 
 [colors]

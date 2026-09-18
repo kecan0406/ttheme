@@ -1,17 +1,11 @@
 import { existsSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { join } from 'node:path'
 import * as p from '@clack/prompts'
 import { catalogPath, fetchCatalog, REGISTRY_URL, readCatalog, search, writeCatalog } from './catalog.ts'
 import { listed } from './emit/manifest.ts'
 import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
 import { PalettePrompt, promptFx } from './palette-prompt.ts'
-import { forget, readInstalled, sync, writeInstalled } from './palettes.ts'
+import { configHome, forget, readInstalled, sync, writeInstalled } from './palettes.ts'
 import { alphabetical } from './theme.ts'
-
-function configHome(): string {
-  return process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config')
-}
 
 function reload(count: number): void {
   console.log(`\n${count} palettes installed — open a new tab, or reload your terminal config`)

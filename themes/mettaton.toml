@@ -3,6 +3,7 @@ name = "mettaton"
 group = "Undertale"
 order = 60
 ansi_source = "Laser"
+booru = "mettaton"
 signature = ["cursor", "ansi13", "ansi3"]
 
 [colors]

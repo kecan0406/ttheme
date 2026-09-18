@@ -83,7 +83,7 @@ capture() {
   scenario_env $home
   tmux -L $SOCKET kill-server 2>/dev/null || true
   tmux -L $SOCKET new-session -d -x $COLS -y $ROWS \
-    "env $reply NO_COLOR=1 zsh -f -c '${cmd}; sleep 60'"
+    "env -u GHOSTTY_RESOURCES_DIR -u KITTY_WINDOW_ID -u WEZTERM_PANE -u ALACRITTY_WINDOW_ID -u ITERM_SESSION_ID $reply NO_COLOR=1 zsh -f -c '${cmd}; sleep 60'"
   settle
   for key in "$@"; do
     tmux -L $SOCKET send-keys -- "$key"

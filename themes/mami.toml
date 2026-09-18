@@ -3,6 +3,7 @@ name = "mami"
 group = "Madoka Magica"
 order = 19
 ansi_source = "Selenized Black"
+booru = "tomoe_mami"
 signature = ["cursor", "foreground", "ansi11"]
 
 [colors]

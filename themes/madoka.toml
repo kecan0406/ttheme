@@ -3,6 +3,7 @@ name = "madoka"
 group = "Madoka Magica"
 order = 15
 ansi_source = "Elegant + Magica"
+booru = "kaname_madoka"
 signature = ["cursor", "ansi1", "ansi3"]
 
 [colors]

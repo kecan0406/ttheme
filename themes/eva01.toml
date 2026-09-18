@@ -3,6 +3,7 @@ name = "eva01"
 group = "Evangelion"
 order = 13
 ansi_source = "Aura"
+booru = "eva_01"
 signature = ["cursor", "ansi4", "ansi3"]
 
 [colors]

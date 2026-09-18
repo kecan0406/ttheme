@@ -3,6 +3,7 @@ name = "nagisa"
 group = "Madoka Magica"
 order = 20
 ansi_source = "Cutie Pro"
+booru = "momoe_nagisa"
 signature = ["cursor", "foreground", "ansi12"]
 
 [colors]

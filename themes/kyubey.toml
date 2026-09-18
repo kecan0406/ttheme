@@ -3,6 +3,7 @@ name = "kyubey"
 group = "Madoka Magica"
 order = 21
 ansi_source = "Rose Pine Dawn + Magica"
+booru = "kyuubee"
 signature = ["cursor", "foreground", "ansi3"]
 
 [colors]

@@ -15,6 +15,8 @@ export interface Violation {
   detail: string
 }
 
+export type Gated = Pick<Theme, 'name' | 'background' | 'foreground' | 'ansi' | 'waive'>
+
 export interface GateRule {
   rule: string
   label: string
@@ -24,17 +26,17 @@ export interface GateRule {
 }
 
 interface Check extends GateRule {
-  measure(theme: Theme): number
-  check(theme: Theme): string[]
+  measure(theme: Gated): number
+  check(theme: Gated): string[]
 }
 
-function at(theme: Theme, index: number): Hex {
+function at(theme: Gated, index: number): Hex {
   const color = theme.ansi[index]
   if (color === undefined) throw new Error(`${theme.name}: missing ANSI ${index}`)
   return color
 }
 
-function belowMin(theme: Theme, indices: number[], min: number): string[] {
+function belowMin(theme: Gated, indices: number[], min: number): string[] {
   const bg = theme.background
   return indices.flatMap((i) => {
     const color = at(theme, i)
@@ -42,7 +44,7 @@ function belowMin(theme: Theme, indices: number[], min: number): string[] {
   })
 }
 
-function weakest(theme: Theme, indices: number[]): number {
+function weakest(theme: Gated, indices: number[]): number {
   return Math.min(...indices.map((i) => contrast(at(theme, i), theme.background)))
 }
 
@@ -107,11 +109,11 @@ export const GATE_RULES: GateRule[] = CHECKS.map(({ rule, label, unit, min, max 
   ...(max === undefined ? {} : { max }),
 }))
 
-export function measure(theme: Theme): number[] {
+export function measure(theme: Gated): number[] {
   return CHECKS.map((c) => Math.round(c.measure(theme) * 1000) / 1000)
 }
 
-export function check(theme: Theme): Violation[] {
+export function check(theme: Gated): Violation[] {
   return CHECKS.filter((c) => !theme.waive.includes(c.rule)).flatMap((c) =>
     c.check(theme).map((detail) => ({ theme: theme.name, rule: c.rule, detail })),
   )

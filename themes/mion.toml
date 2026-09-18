@@ -3,6 +3,7 @@ name = "mion"
 group = "Higurashi"
 order = 68
 ansi_source = "Patina Moss"
+booru = "sonozaki_mion"
 signature = ["cursor", "ansi1", "ansi3"]
 
 [colors]

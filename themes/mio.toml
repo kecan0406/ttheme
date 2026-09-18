@@ -3,6 +3,7 @@ name = "mio"
 group = "K-On!"
 order = 84
 ansi_source = "Ardoise + HTT"
+booru = "akiyama_mio"
 signature = ["cursor", "ansi4", "foreground"]
 
 [colors]

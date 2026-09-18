@@ -3,6 +3,7 @@ name = "lucy"
 group = "Cyberpunk: Edgerunners"
 order = 88
 ansi_source = "Mellow"
+booru = "lucy_(cyberpunk)"
 signature = ["cursor", "foreground", "ansi12"]
 
 [colors]

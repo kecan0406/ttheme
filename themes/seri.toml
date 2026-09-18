@@ -3,6 +3,7 @@ name = "seri"
 group = "Call of the Night"
 order = 64
 ansi_source = "Birds Of Paradise"
+booru = "kikyou_seri"
 signature = ["cursor", "ansi12", "ansi9"]
 
 [colors]

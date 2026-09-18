@@ -3,6 +3,7 @@ name = "fox"
 group = "Persona 5"
 order = 52
 ansi_source = "Nord"
+booru = "kitagawa_yuusuke"
 signature = ["cursor", "foreground", "ansi1"]
 
 [colors]

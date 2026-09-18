@@ -10,6 +10,7 @@ export interface PaletteEntry {
   lead?: boolean
   order: number
   ansiSource: string
+  booru?: string
   default?: boolean
   background: string
   foreground: string
@@ -38,6 +39,7 @@ export function paletteEntry(t: Theme): PaletteEntry {
     ...(t.lead ? { lead: true } : {}),
     order: t.order,
     ansiSource: t.ansiSource,
+    ...(t.booru ? { booru: t.booru } : {}),
     ...(t.role === 'default' ? { default: true } : {}),
     background: t.background,
     foreground: t.foreground,

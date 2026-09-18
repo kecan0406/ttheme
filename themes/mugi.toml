@@ -3,6 +3,7 @@ name = "mugi"
 group = "K-On!"
 order = 85
 ansi_source = "Tomorrow Night Eighties"
+booru = "kotobuki_tsumugi"
 signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]

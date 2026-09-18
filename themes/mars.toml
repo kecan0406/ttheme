@@ -3,6 +3,7 @@ name = "mars"
 group = "Sailor Moon"
 order = 39
 ansi_source = "Red Planet + Senshi"
+booru = "sailor_mars"
 signature = ["cursor", "ansi9", "foreground"]
 
 [colors]

@@ -3,6 +3,7 @@ name = "bernkastel"
 group = "Umineko"
 order = 79
 ansi_source = "Challenger Deep"
+booru = "frederica_bernkastel"
 signature = ["cursor", "ansi5", "ansi1"]
 
 [colors]

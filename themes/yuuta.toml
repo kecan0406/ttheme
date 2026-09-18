@@ -3,6 +3,7 @@ name = "yuuta"
 group = "Chuunibyou"
 order = 98
 ansi_source = "Srcery + Delusion"
+booru = "togashi_yuuta"
 signature = ["cursor", "ansi11", "ansi6"]
 
 [colors]

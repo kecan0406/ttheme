@@ -3,6 +3,7 @@ name = "gojo"
 group = "Jujutsu Kaisen"
 order = 102
 ansi_source = "Horizon + Jujutsu"
+booru = "gojou_satoru"
 signature = ["cursor", "foreground", "ansi13"]
 
 [colors]

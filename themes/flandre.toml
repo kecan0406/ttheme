@@ -3,6 +3,7 @@ name = "flandre"
 group = "Touhou Project"
 order = 96
 ansi_source = "Molokai"
+booru = "flandre_scarlet"
 signature = ["cursor", "ansi11", "ansi12"]
 
 [colors]

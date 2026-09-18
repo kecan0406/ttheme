@@ -3,6 +3,7 @@ name = "rena"
 group = "Higurashi"
 order = 67
 ansi_source = "Japanesque + Watanagashi"
+booru = "ryuuguu_rena"
 signature = ["cursor", "foreground", "ansi1"]
 
 [colors]

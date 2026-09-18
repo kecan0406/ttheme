@@ -3,6 +3,7 @@ name = "kagami"
 group = "Lucky☆Star"
 order = 26
 ansi_source = "Nightfox + Ryouou"
+booru = "hiiragi_kagami"
 signature = ["cursor", "ansi4", "ansi1"]
 
 [colors]

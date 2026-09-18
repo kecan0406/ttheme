@@ -3,6 +3,7 @@ name = "kou"
 group = "Call of the Night"
 order = 63
 ansi_source = "Under The Sea"
+booru = "yamori_kou"
 signature = ["cursor", "ansi5", "ansi9"]
 
 [colors]

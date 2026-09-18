@@ -3,6 +3,7 @@ name = "kyoko"
 group = "Madoka Magica"
 order = 18
 ansi_source = "Cursor Dark + Magica"
+booru = "sakura_kyouko"
 signature = ["cursor", "ansi11", "foreground"]
 
 [colors]

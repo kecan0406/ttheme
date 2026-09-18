@@ -98,3 +98,9 @@ test('every group names one lead palette and one native title', () => {
     assert.equal(new Set(members.map((e) => e.native)).size, 1, `${group}: native title must match across the group`)
   }
 })
+
+test('manifest carries the booru tag find searches, and leaves it off palettes without a character', () => {
+  const byName = new Map(entries.map((e) => [e.name, e]))
+  assert.equal(byName.get('kagami')?.booru, 'hiiragi_kagami')
+  assert.equal(byName.get('neutral')?.booru, undefined)
+})

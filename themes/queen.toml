@@ -3,6 +3,7 @@ name = "queen"
 group = "Persona 5"
 order = 53
 ansi_source = "Argonaut + Phantom"
+booru = "niijima_makoto"
 signature = ["cursor", "foreground", "ansi4"]
 
 [colors]

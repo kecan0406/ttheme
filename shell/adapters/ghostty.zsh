@@ -80,10 +80,12 @@ __tt_bg_load() {
   local -i at=5
   local -a fills
   (( ${+bgsrc[$name]} )) && return 0
+  bgfrom[$name]=""
   for f in $dir/$name.conf $dir/$name.tune.conf; do
     if [[ -r $f ]]; then
       for line in "${(@f)$(<$f)}"; do
         case $line in
+          '# from '*) [[ $f == *.tune.conf ]] || bgfrom[$name]=${(j: :)${${=line#\# from }[1,2]}} ;;
           'background-image = '*|'background-image='*) img=${${line#*=}# } ;;
           'background-image-fit = '*|'background-image-fit='*) fit=${${line#*=}# } ;;
           'background-image-opacity = '*|'background-image-opacity='*) op=${${line#*=}# } ;;
@@ -225,8 +227,6 @@ __tt_bg_write() {
 
 __tt_pv_bg_open() {
   bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bganchor=0
-  local -a confs=(${TTHEME_CONFIG:h}/backgrounds/*.conf(N))
-  (( ${#confs} )) || return 0
   local fd saved resp="" line c v f
   local -i px=2 py=2 fs=0 sc=2
   for f in ${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config ${TTHEME_CONFIG:h}/ttheme.conf; do
@@ -395,6 +395,29 @@ __tt_pv_bg_state() {
   else
     __tt_bg_label $1
   fi
+}
+
+__tt_pv_bg_findable() {
+  (( bgcw )) && [[ -n ${TTHEME_BOORU[$1]} ]]
+}
+
+__tt_pv_bg_find() {
+  local name=$1 err
+  local -i rc
+  __tt_pv_bg_close
+  err=$(__tt_cli find $name 2>&1 >/dev/tty)
+  rc=$?
+  err=${${err//$'\n'/ }## #}
+  resized=1 bgname="" bgshown="" bgsent=() bgdim=()
+  if (( rc == 1 )); then
+    msg=${err:-"find failed for $name"} msgt=300
+  fi
+  (( rc == 0 )) || return 1
+  unset "bgsrc[$name]"
+  __tt_bg_load $name
+  bgload[$name]="" bgedit[$name]=1
+  msg=${err:-"background · $name"} msgt=200
+  return 0
 }
 
 __tt_pv_bg_panel() {

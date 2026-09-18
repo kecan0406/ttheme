@@ -3,6 +3,7 @@ name = "youmu"
 group = "Touhou Project"
 order = 94
 ansi_source = "Everforest Dark Med"
+booru = "konpaku_youmu"
 signature = ["cursor", "foreground", "ansi6"]
 
 [colors]

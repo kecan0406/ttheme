@@ -3,6 +3,7 @@ name = "nanami"
 group = "Jujutsu Kaisen"
 order = 106
 ansi_source = "Pnevma + Jujutsu"
+booru = "nanami_kento"
 signature = ["cursor", "ansi2", "ansi4"]
 
 [colors]

@@ -3,6 +3,7 @@ name = "oracle"
 group = "Persona 5"
 order = 54
 ansi_source = "Monokai Remastered"
+booru = "sakura_futaba"
 signature = ["cursor", "ansi2", "ansi4"]
 
 [colors]

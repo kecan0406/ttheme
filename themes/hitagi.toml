@@ -3,6 +3,7 @@ name = "hitagi"
 group = "Monogatari"
 order = 33
 ansi_source = "Duskfox"
+booru = "senjougahara_hitagi"
 signature = ["cursor", "ansi9", "ansi13"]
 
 [colors]

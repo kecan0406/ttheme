@@ -3,6 +3,7 @@ name = "rikka"
 group = "Chuunibyou"
 order = 97
 ansi_source = "Challenger Deep + Delusion"
+booru = "takanashi_rikka"
 signature = ["cursor", "ansi12", "ansi1"]
 
 [colors]

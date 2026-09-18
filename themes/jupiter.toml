@@ -3,6 +3,7 @@ name = "jupiter"
 group = "Sailor Moon"
 order = 40
 ansi_source = "Everforest Dark Hard + Senshi"
+booru = "sailor_jupiter"
 signature = ["cursor", "ansi1", "ansi11"]
 
 [colors]

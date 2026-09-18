@@ -3,6 +3,7 @@ name = "kumin"
 group = "Chuunibyou"
 order = 101
 ansi_source = "Rose Pine + Delusion"
+booru = "tsuyuri_kumin"
 signature = ["cursor", "ansi4", "ansi1"]
 
 [colors]

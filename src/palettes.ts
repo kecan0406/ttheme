@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { gateFailures } from './catalog.ts'
 import { alacritty, type Emitter, ghostty, kitty } from './emit/index.ts'
@@ -13,6 +14,10 @@ export interface Installed {
   terminals: InitTerminal[]
   startup?: string
   palettes: string[]
+}
+
+export function configHome(): string {
+  return process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config')
 }
 
 export function installedPath(configHome: string): string {
@@ -50,6 +55,7 @@ export function toTheme(entry: PaletteEntry, catalog: Manifest): Theme {
     order: entry.order,
     ...(entry.default ? { role: 'default' as const } : {}),
     ansiSource: entry.ansiSource,
+    ...(entry.booru ? { booru: entry.booru } : {}),
     background: entry.background,
     foreground: entry.foreground,
     cursor: entry.cursor,

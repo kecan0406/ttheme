@@ -3,6 +3,7 @@ name = "geto"
 group = "Jujutsu Kaisen"
 order = 107
 ansi_source = "Royal + Jujutsu"
+booru = "getou_suguru"
 signature = ["cursor", "ansi3", "ansi2"]
 
 [colors]

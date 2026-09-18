@@ -3,6 +3,7 @@ name = "satoko"
 group = "Higurashi"
 order = 70
 ansi_source = "Espresso"
+booru = "houjou_satoko"
 signature = ["cursor", "ansi9", "ansi12"]
 
 [colors]

@@ -3,6 +3,7 @@ name = "battler"
 group = "Umineko"
 order = 77
 ansi_source = "Deep"
+booru = "ushiromiya_battler"
 signature = ["cursor", "ansi4", "ansi11"]
 
 [colors]

@@ -3,6 +3,7 @@ name = "mayuri"
 group = "Steins;Gate"
 order = 23
 ansi_source = "Iceberg Dark"
+booru = "shiina_mayuri"
 signature = ["cursor", "foreground", "ansi13"]
 
 [colors]

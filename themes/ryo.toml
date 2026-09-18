@@ -3,6 +3,7 @@ name = "ryo"
 group = "Bocchi the Rock!"
 order = 31
 ansi_source = "TokyoNight Storm"
+booru = "yamada_ryou"
 signature = ["cursor", "ansi4", "ansi6"]
 
 [colors]

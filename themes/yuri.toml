@@ -3,6 +3,7 @@ name = "yuri"
 group = "Doki Doki Literature Club"
 order = 74
 ansi_source = "Purple Portal + DDLC"
+booru = "yuri_(doki_doki_literature_club)"
 signature = ["cursor", "ansi11", "ansi9"]
 
 [colors]

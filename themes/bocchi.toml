@@ -3,6 +3,7 @@ name = "bocchi"
 group = "Bocchi the Rock!"
 order = 29
 ansi_source = "Sakura + Kessoku"
+booru = "gotoh_hitori"
 signature = ["cursor", "ansi4", "ansi9"]
 
 [colors]

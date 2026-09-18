@@ -3,6 +3,7 @@ name = "jill"
 group = "VA-11 Hall-A"
 order = 43
 ansi_source = "TokyoNight"
+booru = "jill_stingray"
 signature = ["cursor", "ansi1", "ansi5"]
 
 [colors]

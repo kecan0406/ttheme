@@ -3,6 +3,7 @@ name = "reimu"
 group = "Touhou Project"
 order = 91
 ansi_source = "Firewatch"
+booru = "hakurei_reimu"
 signature = ["cursor", "foreground", "ansi3"]
 
 [colors]

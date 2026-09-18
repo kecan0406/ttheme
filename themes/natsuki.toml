@@ -3,6 +3,7 @@ name = "natsuki"
 group = "Doki Doki Literature Club"
 order = 73
 ansi_source = "Fairyfloss"
+booru = "natsuki_(doki_doki_literature_club)"
 signature = ["cursor", "ansi9", "ansi3"]
 
 [colors]

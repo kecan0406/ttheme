@@ -3,6 +3,7 @@ name = "miyuki"
 group = "Lucky☆Star"
 order = 28
 ansi_source = "Tinacious Design Dark + Ryouou"
+booru = "takara_miyuki"
 signature = ["cursor", "ansi5", "ansi1"]
 
 [colors]

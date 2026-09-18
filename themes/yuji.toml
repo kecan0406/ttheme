@@ -3,6 +3,7 @@ name = "yuji"
 group = "Jujutsu Kaisen"
 order = 103
 ansi_source = "Rose Pine Moon + Jujutsu"
+booru = "itadori_yuuji"
 signature = ["cursor", "ansi3", "ansi1"]
 
 [colors]

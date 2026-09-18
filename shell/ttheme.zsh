@@ -612,6 +612,7 @@ __tt_pv_foot() {
     fi
     kk+=(space '=' enter)
     if (( bgoff[$tune] )); then kl+=(show default keep); else kl+=(hide default keep); fi
+    __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
     right=$b"esc"$z$d" undo"$z
   elif (( conf )); then
     badge=CONFIG kk=(↑↓ ←→ enter) kl=(setting value save)
@@ -629,7 +630,11 @@ __tt_pv_foot() {
     else
       kk=(enter) kl=(apply)
       [[ $mode == pin ]] && kl[1]=pin
-      __tt_pv_bg_state ${rval[cur]} && { kk+=(tab); kl+=("tune bg") }
+      if __tt_pv_bg_state ${rval[cur]}; then
+        kk+=(tab) kl+=("tune bg")
+      elif __tt_pv_bg_findable ${rval[cur]}; then
+        kk+=(tab) kl+=("find bg")
+      fi
       [[ -n $flt ]] && { kk+=(bksp); kl+=(edit) }
     fi
     kk+=('?') kl+=(keys)
@@ -691,7 +696,7 @@ __tt_pv_help() {
   )
   if (( bgcw )); then
     hk+=("tune bg" "" "" "")
-    hv+=("tab on a palette with a background" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "space hides  ·  = default" "enter keeps  ·  esc undoes")
+    hv+=("tab  ·  finds one on safebooru if none" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "space hides  ·  = default  ·  f replaces" "enter keeps  ·  esc undoes")
   fi
   hk+=(config "")
   hv+=("alt-c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")
@@ -756,6 +761,7 @@ __tt_pv_specimen() {
 __tt_pv_tune() {
   local -a fields=(size pos op)
   local -i n=1
+  local name
   case $key in
     $'\x03') return 1 ;;
     up) (( tf > 1 )) && tf=$(( tf - 1 )) ;;
@@ -771,6 +777,13 @@ __tt_pv_tune() {
       ;;
     ' ') __tt_pv_bg_adjust on ;;
     '=') __tt_pv_bg_adjust def ;;
+    f)
+      __tt_pv_bg_findable $tune || return 0
+      name=$tune
+      __tt_pv_untune
+      __tt_pv_bg_find $name
+      tune=$name tf=1 tsnap="${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}"
+      ;;
     $'\r'|$'\n')
       if [[ "${bgsize[$tune]} ${bgpos[$tune]} ${bgop[$tune]} ${bgoff[$tune]}" != "$tsnap" ]]; then
         bgedit[$tune]=1 msg="kept · saved when preview closes" msgt=200
@@ -1033,7 +1046,10 @@ __tt_pv_draw() {
       __tt_pv_help
     elif [[ -n $tune ]]; then
       (( bgoff[$tune] )) && state=off
-      __tt_pv_head 1 $sc $se $tune background $state
+      src=background
+      [[ -n ${bgfrom[$tune]} ]] && src+=" · ${bgfrom[$tune]}"
+      (( ${#tune} + ${#src} + 6 > sw )) && src=background
+      __tt_pv_head 1 $sc $se $tune "$src" $state
       __tt_pv_bg_panel $tune 4 $sc $se
     elif (( conf )); then
       __tt_tilde "$TTHEME_CONFIG"
@@ -1051,7 +1067,10 @@ __tt_pv_draw() {
   else
     if [[ -n $tune ]]; then
       (( bgoff[$tune] )) && state=off
-      __tt_pv_head $(( ph - 9 )) 1 $lw $tune background $state
+      src=background
+      [[ -n ${bgfrom[$tune]} ]] && src+=" · ${bgfrom[$tune]}"
+      (( ${#tune} + ${#src} + 6 > lw )) && src=background
+      __tt_pv_head $(( ph - 9 )) 1 $lw $tune "$src" $state
       __tt_pv_bg_panel $tune $(( ph - 8 )) 1 $lw
     elif (( conf )); then
       __tt_pv_head $(( ph - 7 )) 1 $lw config
@@ -1269,8 +1288,10 @@ __tt_pv_handle() {
     $'\t')
       [[ ${rtype[cur]} == thm ]] || return 0
       name=${rval[cur]}
-      if __tt_pv_bg_state $name; then
+      if __tt_pv_bg_state $name || { __tt_pv_bg_findable $name && __tt_pv_bg_find $name }; then
         tune=$name tf=1 tsnap="${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}"
+      elif __tt_pv_bg_findable $name; then
+        :
       elif (( bgcw )); then
         msg="no background image for $name" msgt=200
       fi
@@ -1314,7 +1335,7 @@ __tt_preview() {
   local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0
   local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown="" bginc="" osd="" osdt=0
   local tune="" tsnap="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bganchor=0
-  local -A bgsent=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=()
+  local -A bgfrom=() bgsent=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=()
   local conf=0 cf=1
   local -a plabel=(" this tab " " default ") csnap=()
   local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT) clabel=("new tabs" announce "search fx" sort)

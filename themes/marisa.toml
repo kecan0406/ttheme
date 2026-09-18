@@ -3,6 +3,7 @@ name = "marisa"
 group = "Touhou Project"
 order = 92
 ansi_source = "Apple Classic"
+booru = "kirisame_marisa"
 signature = ["cursor", "foreground", "ansi1"]
 
 [colors]

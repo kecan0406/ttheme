@@ -3,6 +3,7 @@ name = "nazuna"
 group = "Call of the Night"
 order = 62
 ansi_source = "Purplepeter"
+booru = "nanakusa_nazuna"
 signature = ["cursor", "ansi1", "ansi13"]
 
 [colors]

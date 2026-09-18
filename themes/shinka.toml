@@ -3,6 +3,7 @@ name = "shinka"
 group = "Chuunibyou"
 order = 99
 ansi_source = "Everforest Dark Hard + Delusion"
+booru = "nibutani_shinka"
 signature = ["cursor", "ansi11", "ansi12"]
 
 [colors]

@@ -3,6 +3,7 @@ name = "venus"
 group = "Sailor Moon"
 order = 41
 ansi_source = "Earthsong"
+booru = "sailor_venus"
 signature = ["cursor", "ansi3", "ansi12"]
 
 [colors]

@@ -26,6 +26,10 @@ __tt_pv_bg_adjust() { : }
 
 __tt_pv_bg_state() { REPLY=""; return 1 }
 
+__tt_pv_bg_findable() { return 1 }
+
+__tt_pv_bg_find() { return 1 }
+
 __tt_pv_bg_panel() { : }
 
 __tt_pv_bg_close() { : }

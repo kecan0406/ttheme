@@ -3,6 +3,7 @@ name = "tsukasa"
 group = "Lucky☆Star"
 order = 27
 ansi_source = "Sublette + Ryouou"
+booru = "hiiragi_tsukasa"
 signature = ["cursor", "ansi11", "ansi4"]
 
 [colors]

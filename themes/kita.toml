@@ -3,6 +3,7 @@ name = "kita"
 group = "Bocchi the Rock!"
 order = 32
 ansi_source = "Wild Cherry + Kessoku"
+booru = "kita_ikuyo"
 signature = ["cursor", "ansi2", "ansi3"]
 
 [colors]

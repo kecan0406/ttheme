@@ -3,6 +3,7 @@ name = "patchouli"
 group = "Touhou Project"
 order = 95
 ansi_source = "SeedFlip Ultraviolet"
+booru = "patchouli_knowledge"
 signature = ["cursor", "ansi5", "ansi3"]
 
 [colors]

@@ -3,6 +3,7 @@ name = "suzuha"
 group = "Steins;Gate"
 order = 24
 ansi_source = "Gruvbox Dark + Lab"
+booru = "amane_suzuha"
 signature = ["cursor", "ansi9", "ansi4"]
 
 [colors]

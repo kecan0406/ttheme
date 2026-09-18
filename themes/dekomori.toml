@@ -3,6 +3,7 @@ name = "dekomori"
 group = "Chuunibyou"
 order = 100
 ansi_source = "Cobalt2 + Delusion"
+booru = "dekomori_sanae"
 signature = ["cursor", "ansi12", "ansi5"]
 
 [colors]

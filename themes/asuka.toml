@@ -3,6 +3,7 @@ name = "asuka"
 group = "Evangelion"
 order = 9
 ansi_source = "GitLab Dark"
+booru = "souryuu_asuka_langley"
 signature = ["cursor", "ansi11", "ansi4"]
 
 [colors]

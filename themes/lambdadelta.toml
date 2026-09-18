@@ -3,6 +3,7 @@ name = "lambdadelta"
 group = "Umineko"
 order = 80
 ansi_source = "Neon Purple + Truth"
+booru = "lambdadelta"
 signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]

@@ -3,6 +3,7 @@ name = "ritsu"
 group = "K-On!"
 order = 83
 ansi_source = "Acid Lime"
+booru = "tainaka_ritsu"
 signature = ["cursor", "ansi1", "ansi6"]
 
 [colors]

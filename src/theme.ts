@@ -33,6 +33,7 @@ export interface Theme {
   order: number
   role?: 'default'
   ansiSource: string
+  booru?: string
   background: Hex
   foreground: Hex
   cursor: Hex
@@ -222,6 +223,10 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
     selection: selectionBackground,
     ansi,
   })
+  const booru = meta.booru === undefined ? undefined : str(file, 'meta.booru', meta.booru)
+  if (booru !== undefined && /\s/.test(booru)) {
+    fail(file, `meta.booru must be a single booru tag, got ${JSON.stringify(booru)}`)
+  }
   const waive = Array.isArray(contrastRules.waive) ? contrastRules.waive.map(String) : []
   if (waive.length > 0 && typeof contrastRules.reason !== 'string') {
     fail(file, 'contrast.waive needs a contrast.reason explaining why')
@@ -235,6 +240,7 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
     order: Number(meta.order),
     role,
     ansiSource: str(file, 'meta.ansi_source', meta.ansi_source),
+    ...(booru ? { booru } : {}),
     background,
     foreground,
     cursor,

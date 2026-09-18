@@ -3,6 +3,7 @@ name = "sayaka"
 group = "Madoka Magica"
 order = 17
 ansi_source = "Teerb + Magica"
+booru = "miki_sayaka"
 signature = ["cursor", "ansi4", "foreground"]
 
 [colors]

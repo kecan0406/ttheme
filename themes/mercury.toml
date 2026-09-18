@@ -3,6 +3,7 @@ name = "mercury"
 group = "Sailor Moon"
 order = 38
 ansi_source = "Glacier + Senshi"
+booru = "sailor_mercury"
 signature = ["cursor", "ansi12", "ansi2"]
 
 [colors]

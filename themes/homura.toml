@@ -3,6 +3,7 @@ name = "homura"
 group = "Madoka Magica"
 order = 16
 ansi_source = "Monokai Pro Machine"
+booru = "akemi_homura"
 signature = ["cursor", "foreground", "ansi5"]
 
 [colors]

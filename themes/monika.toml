@@ -3,6 +3,7 @@ name = "monika"
 group = "Doki Doki Literature Club"
 order = 75
 ansi_source = "Hipster Green + DDLC"
+booru = "monika_(doki_doki_literature_club)"
 signature = ["cursor", "foreground", "ansi3"]
 
 [colors]

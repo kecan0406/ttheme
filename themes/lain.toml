@@ -3,6 +3,7 @@ name = "lain"
 group = "Lain"
 order = 42
 ansi_source = "IR Black"
+booru = "iwakura_lain"
 signature = ["cursor", "ansi2", "ansi12"]
 
 [colors]

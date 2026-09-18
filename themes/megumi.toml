@@ -3,6 +3,7 @@ name = "megumi"
 group = "Jujutsu Kaisen"
 order = 104
 ansi_source = "Night Owl + Jujutsu"
+booru = "fushiguro_megumi"
 signature = ["cursor", "ansi11", "ansi3"]
 
 [colors]

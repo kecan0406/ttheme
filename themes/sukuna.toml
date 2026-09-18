@@ -3,6 +3,7 @@ name = "sukuna"
 group = "Jujutsu Kaisen"
 order = 108
 ansi_source = "Hurtado + Jujutsu"
+booru = "ryoumen_sukuna_(jujutsu_kaisen)"
 signature = ["cursor", "foreground", "ansi9"]
 
 [colors]

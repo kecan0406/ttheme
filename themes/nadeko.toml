@@ -3,6 +3,7 @@ name = "nadeko"
 group = "Monogatari"
 order = 36
 ansi_source = "Tinacious Design Dark"
+booru = "sengoku_nadeko"
 signature = ["cursor", "ansi4", "ansi2"]
 
 [colors]

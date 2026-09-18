@@ -3,6 +3,7 @@ name = "nobara"
 group = "Jujutsu Kaisen"
 order = 105
 ansi_source = "Spacedust + Jujutsu"
+booru = "kugisaki_nobara"
 signature = ["cursor", "ansi4", "ansi3"]
 
 [colors]

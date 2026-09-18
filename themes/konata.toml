@@ -3,6 +3,7 @@ name = "konata"
 group = "Lucky☆Star"
 order = 25
 ansi_source = "Dark Modern + Ryouou"
+booru = "izumi_konata"
 signature = ["cursor", "ansi2", "ansi12"]
 
 [colors]

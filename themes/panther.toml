@@ -3,6 +3,7 @@ name = "panther"
 group = "Persona 5"
 order = 51
 ansi_source = "Warm Neon + Phantom"
+booru = "takamaki_anne"
 signature = ["cursor", "ansi3", "ansi4"]
 
 [colors]

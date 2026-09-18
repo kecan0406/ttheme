@@ -3,6 +3,7 @@ name = "tsubasa"
 group = "Monogatari"
 order = 35
 ansi_source = "Kanso Ink"
+booru = "hanekawa_tsubasa"
 signature = ["cursor", "foreground", "ansi12"]
 
 [colors]

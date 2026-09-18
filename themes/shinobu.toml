@@ -3,6 +3,7 @@ name = "shinobu"
 group = "Monogatari"
 order = 34
 ansi_source = "Mona Lisa + Oddity"
+booru = "oshino_shinobu"
 signature = ["cursor", "ansi9", "ansi13"]
 
 [colors]
