@@ -1,35 +1,8 @@
 import { Landing } from '@/components/landing'
-import { loadThemes } from '@/lib/themes'
+import { loadManifest } from '@/lib/themes'
 
 export default function Page() {
-  const themes = loadThemes()
+  const { version, gate, themes } = loadManifest()
 
-  return (
-    <main className="grid h-dvh grid-rows-[44px_minmax(0,1fr)] overflow-hidden">
-      <header className="flex min-w-0 items-baseline gap-[18px] border-b border-border px-[18px] leading-[43px] whitespace-nowrap">
-        <span className="text-sm font-bold">
-          <span className="font-normal text-muted-foreground">$ </span>ttheme
-        </span>
-        <h1 className="min-w-0 truncate text-[12.5px] font-normal text-muted-foreground max-sm:hidden">
-          character palettes for your terminal
-        </h1>
-        <nav className="ml-auto flex gap-4 text-[12.5px]">
-          <span className="text-muted-foreground/70 max-md:hidden">MIT © kecan0406</span>
-          <a
-            href="https://github.com/kecan0406/ttheme"
-            className="text-muted-foreground transition-colors hover:text-primary"
-          >
-            github
-          </a>
-          <a
-            href="https://www.npmjs.com/package/@kecan0406/ttheme"
-            className="text-muted-foreground transition-colors hover:text-primary"
-          >
-            npm
-          </a>
-        </nav>
-      </header>
-      <Landing themes={themes} />
-    </main>
-  )
+  return <Landing themes={themes} gate={gate} version={version} />
 }

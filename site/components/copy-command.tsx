@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 
-export function CopyCommand({ command }: { command: string }) {
+function CopyButton({ command }: { command: string }) {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -12,18 +13,20 @@ export function CopyCommand({ command }: { command: string }) {
   }
 
   return (
-    <span className="inline-flex flex-none items-stretch overflow-hidden rounded-md border border-border bg-card text-xs text-foreground">
-      <code className="px-2.5 py-[5px]">
-        <span className="select-none text-muted-foreground">$ </span>
+    <Button variant="line" size="xs" onClick={copy} className="flex-none rounded-[2px] px-[9px] text-xs">
+      {copied ? 'copied' : 'copy'}
+    </Button>
+  )
+}
+
+export function CopyCommand({ command }: { command: string }) {
+  return (
+    <div className="flex items-center justify-between gap-1.5 rounded-[3px] border bg-background py-1 pr-1 pl-2 text-foreground">
+      <code className="min-w-0 text-[11px] [overflow-wrap:anywhere]">
+        <span className="mr-[.6ch] text-muted-foreground/70 select-none">$</span>
         {command}
       </code>
-      <button
-        type="button"
-        onClick={copy}
-        className="cursor-pointer border-l border-border px-2.5 text-muted-foreground transition-colors hover:text-primary"
-      >
-        {copied ? 'copied ✓' : 'copy'}
-      </button>
-    </span>
+      <CopyButton command={command} />
+    </div>
   )
 }

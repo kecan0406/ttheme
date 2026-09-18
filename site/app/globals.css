@@ -22,6 +22,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -30,28 +31,13 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
   --font-mono: var(--font-jetbrains), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-pixel: var(--font-dotgothic), var(--font-jetbrains), monospace;
 }
 
-@property --bg {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #000000;
-}
-@property --fg {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #ffffff;
-}
-@property --cu {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #ffffff;
-}
-@property --se {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #333333;
-}
+@property --bg { syntax: '<color>'; inherits: true; initial-value: #000000; }
+@property --fg { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
+@property --cu { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
+@property --se { syntax: '<color>'; inherits: true; initial-value: #333333; }
 @property --a0 { syntax: '<color>'; inherits: true; initial-value: #000000; }
 @property --a1 { syntax: '<color>'; inherits: true; initial-value: #000000; }
 @property --a2 { syntax: '<color>'; inherits: true; initial-value: #000000; }
@@ -86,8 +72,9 @@
   --accent-foreground: var(--foreground);
   --destructive: oklch(0.704 0.191 22.216);
   --border: #262a34;
-  --input: var(--border);
+  --input: #3a3f4b;
   --ring: var(--primary);
+  --sidebar: #0f1116;
   --radius: 0.375rem;
 }
 
@@ -106,32 +93,62 @@ html {
   }
 
   ::selection {
-    background: var(--primary);
-    color: var(--background);
+    background: var(--secondary);
+    color: var(--foreground);
   }
 
   :focus-visible {
     outline: 2px solid var(--ring);
-    outline-offset: 3px;
+    outline-offset: 2px;
   }
-
 }
 
-/* the cell grid — every terminal decoration is a whole number of cells */
-
-.term {
-  --lead: 1.32;
-  --cell-w: 1ch;
-  --cell-h: calc(1em * var(--lead));
+.wear {
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--bg);
+  --card-foreground: var(--fg);
+  --popover: var(--bg);
+  --popover-foreground: var(--fg);
+  --primary: var(--cu);
+  --primary-foreground: var(--bg);
+  --secondary: var(--se);
+  --secondary-foreground: var(--fg);
+  --muted: color-mix(in oklab, var(--fg) 6%, var(--bg));
+  --muted-foreground: color-mix(in oklab, var(--fg) 62%, var(--bg));
+  --accent: color-mix(in oklab, var(--cu) 15%, var(--bg));
+  --accent-foreground: var(--fg);
+  --border: color-mix(in oklab, var(--fg) 14%, var(--bg));
+  --input: color-mix(in oklab, var(--fg) 26%, var(--bg));
+  --ring: var(--cu);
+  --sidebar: color-mix(in oklab, var(--fg) 3%, var(--bg));
   background: var(--bg);
   color: var(--fg);
-  font-size: clamp(11px, 1.45cqw, 15px);
-  line-height: var(--lead);
-  white-space: pre;
   transition-property: --bg, --fg, --cu, --se, --a0, --a1, --a2, --a3, --a4, --a5, --a6, --a7, --a8, --a9, --a10, --a11,
     --a12, --a13, --a14, --a15;
-  transition-duration: 0.45s;
-  transition-timing-function: ease;
+  transition-duration: 0.6s;
+  transition-timing-function: cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+.board-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--fg) 5%, var(--bg)) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--fg) 5%, var(--bg)) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+  background-attachment: local;
+}
+
+.term {
+  font-size: 13px;
+  line-height: 1.75;
+  white-space: pre;
+}
+
+@container (min-width: 1100px) {
+  .term {
+    font-size: 14px;
+  }
 }
 
 .term ::selection {
@@ -140,47 +157,31 @@ html {
 }
 
 .term-line {
-  height: var(--cell-h);
+  min-height: 1.75em;
 }
 
-.term-chip,
+.term [data-mark] {
+  border-radius: 2px;
+  outline: 1px dashed transparent;
+  outline-offset: 2px;
+  transition: outline-color 0.15s;
+}
+
+.term [data-hl] {
+  outline-color: var(--fg);
+}
+
 .term-caret {
   display: inline-block;
-  height: var(--cell-h);
-  vertical-align: top;
-}
-
-.term-caret {
-  width: var(--cell-w);
+  width: 1ch;
+  height: 1.35em;
+  vertical-align: -0.3em;
   background: var(--cu);
   animation: term-blink 1.06s steps(1, end) infinite;
 }
 
-.hero-win:not(:focus-within) .term-caret {
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--cu);
-  animation: none;
-}
-
-.term-on-se {
-  background: var(--se);
-}
-
-.term-on-cu {
-  background: var(--cu);
-  color: var(--bg);
-  font-weight: 700;
-}
-
-.term-dim {
-  opacity: 0.6;
-}
-
-.term-bg { color: var(--bg); }
-.term-fg { color: var(--fg); }
-.term-cu { color: var(--cu); }
-.term-se { color: var(--se); }
-.term-c0 { color: var(--a0); }
+.term-on-se { background: var(--se); }
+.term-on-cu { background: var(--cu); color: var(--bg); font-weight: 700; }
 .term-c1 { color: var(--a1); }
 .term-c2 { color: var(--a2); }
 .term-c3 { color: var(--a3); }
@@ -189,13 +190,64 @@ html {
 .term-c6 { color: var(--a6); }
 .term-c7 { color: var(--a7); }
 .term-c8 { color: var(--a8); }
-.term-c9 { color: var(--a9); }
-.term-c10 { color: var(--a10); }
-.term-c11 { color: var(--a11); }
-.term-c12 { color: var(--a12); }
-.term-c13 { color: var(--a13); }
-.term-c14 { color: var(--a14); }
-.term-c15 { color: var(--a15); }
+
+.leaders g {
+  transition: opacity 0.2s;
+}
+
+.leaders path {
+  fill: none;
+  stroke-width: 1;
+  transition: stroke 0.2s;
+}
+
+.leaders .leader-out {
+  stroke: color-mix(in oklab, var(--fg) 46%, var(--bg));
+}
+
+.leaders .leader-in {
+  stroke: color-mix(in oklab, var(--fg) 34%, var(--bg));
+  stroke-dasharray: 2 4;
+}
+
+.leaders circle {
+  fill: var(--bg);
+  stroke: var(--fg);
+  stroke-width: 1.5;
+}
+
+[data-focus] .leaders g:not([data-on]) {
+  opacity: 0.14;
+}
+
+.leaders g[data-on] path {
+  stroke: var(--fg);
+  stroke-width: 1.5;
+}
+
+.leaders g[data-on] .leader-in {
+  stroke-dasharray: none;
+}
+
+.leaders .leader-badge circle {
+  fill: var(--fg);
+  stroke: none;
+}
+
+.leaders .leader-badge text {
+  fill: var(--bg);
+  font: 700 10px var(--font-mono);
+}
+
+.leaders.draw .leader-out {
+  stroke-dasharray: 1;
+  animation: leader-draw 0.5s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+.leaders.draw .leader-in,
+.leaders.draw circle {
+  animation: leader-fade 0.3s 0.4s both;
+}
 
 @keyframes term-blink {
   50% {
@@ -203,18 +255,38 @@ html {
   }
 }
 
-/* the window — chrome inherits the palette it is showing */
+@keyframes leader-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
 
-.hero-win [data-slot='scroll-area-thumb'] {
-  background: color-mix(in srgb, var(--fg) 30%, transparent);
+@keyframes leader-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .term {
+  .wear {
     transition: none;
   }
 
-  .term-caret {
+  .term-caret,
+  .leaders.draw path,
+  .leaders.draw circle {
     animation: none;
+  }
+
+  .leaders g,
+  .leaders path,
+  .term [data-mark] {
+    transition: none;
   }
 }
