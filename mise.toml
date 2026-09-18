@@ -56,7 +56,7 @@ description = "bundle the node cli into bin/ttheme.js"
 run = "bun build src/bin.ts --target=node --outfile=bin/ttheme.js"
 
 [tasks."bin:check"]
-description = "smoke-test the node bundle: help, non-interactive init, idempotency, installed layout"
+description = "smoke-test the node bundle: help, non-interactive init, the installed CLI copy, keep surviving an add, idempotency"
 depends = ["build", "bin:build"]
 run = '''
 {% raw %}
@@ -70,27 +70,39 @@ head -1 bin/ttheme.js | grep -q '^#!/usr/bin/env node' ||
 node bin/ttheme.js --help > /dev/null
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
+sandboxed() {
+  env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" "$@"
+}
+cli() {
+  sandboxed node "$tmp/.config/ttheme/ttheme.js" "$@" > /dev/null
+}
+layer() {
+  sandboxed zsh -c 'source "$HOME/.config/ttheme/ttheme.zsh"; __tt_reload() { :; }; '"$1"
+}
 run_init() {
-  env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" GHOSTTY_RESOURCES_DIR=x \
-    node bin/ttheme.js init --yes < /dev/null > /dev/null
+  sandboxed GHOSTTY_RESOURCES_DIR=x node bin/ttheme.js init --yes < /dev/null > /dev/null
 }
 run_init
-for f in ttheme/ttheme.zsh ttheme/palettes.zsh ttheme/ttheme.conf ttheme/config.zsh ttheme/adapters/_osc.zsh ghostty/config; do
+for f in ttheme/ttheme.js ttheme/ttheme.zsh ttheme/palettes.zsh ttheme/ttheme.conf ttheme/config.zsh ttheme/adapters/_osc.zsh ghostty/config; do
   [ -e "$tmp/.config/$f" ] || { echo "bin:check failed: missing $f"; exit 1; }
 done
-zsh -c 'source "$1/.config/ttheme/ttheme.zsh"; (( ${#TTHEME_PALETTE} == 0 ))' zsh "$tmp" ||
+layer '(( ${#TTHEME_PALETTE} == 0 ))' ||
   { echo "bin:check failed: a fresh init should install no palettes"; exit 1; }
 grep -q '^theme = ' "$tmp/.config/ghostty/config" &&
   { echo "bin:check failed: a fresh init should not pin a terminal theme"; exit 1; }
-env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" \
-  node bin/ttheme.js add gojo > /dev/null
-zsh -c 'source "$1/.config/ttheme/ttheme.zsh"; (( ${#TTHEME_PALETTE} == 1 )) && [[ -n ${TTHEME_PALETTE[gojo]} ]]' zsh "$tmp" ||
+cli add gojo
+layer '(( ${#TTHEME_PALETTE} == 1 )) && [[ -n ${TTHEME_PALETTE[gojo]} ]]' ||
   { echo "bin:check failed: add did not reach the installed layer"; exit 1; }
 grep -q '^theme = gojo$' "$tmp/.config/ghostty/config" ||
   { echo "bin:check failed: add did not point ghostty at the palette"; exit 1; }
-env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" \
-  node bin/ttheme.js remove gojo > /dev/null
-zsh -c 'source "$1/.config/ttheme/ttheme.zsh"; (( ${#TTHEME_PALETTE} == 0 ))' zsh "$tmp" ||
+cli add geto
+layer '__tt_keep geto > /dev/null' ||
+  { echo "bin:check failed: keep could not save a default"; exit 1; }
+cli add sukuna
+grep -q '^theme = geto$' "$tmp/.config/ghostty/config" ||
+  { echo "bin:check failed: an add undid the default keep saved"; exit 1; }
+cli remove gojo geto sukuna
+layer '(( ${#TTHEME_PALETTE} == 0 ))' ||
   { echo "bin:check failed: remove did not reach the installed layer"; exit 1; }
 run_init
 for f in "$tmp/.config/ghostty/config" "$tmp/.zshrc"; do
@@ -114,7 +126,14 @@ run = "zsh tests/tui.zsh --update"
 [tasks.demo]
 description = "open one TUI scenario for real, in its fixture — `mise run demo browse-filter`"
 depends = ["build", "bin:build"]
+interactive = true
 run = "zsh tests/tui.zsh demo"
+
+[tasks.sandbox]
+description = "a throwaway home wired with this checkout — `mise run sandbox [--ghostty] [palette…]`"
+depends = ["build", "bin:build"]
+interactive = true
+run = "zsh tests/sandbox.zsh"
 
 [tasks."site:dev"]
 description = "dev server for the showcase site"

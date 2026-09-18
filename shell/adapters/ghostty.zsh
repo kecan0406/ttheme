@@ -1,20 +1,14 @@
-__tt_persist() {
-  local f=${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config name=$1
-  [[ -r $f && -w $f ]] || return 1
-  local -a lines=("${(@f)$(<$f)}")
-  local i in=0 hit=0
-  for (( i = 1; i <= ${#lines}; i++ )); do
-    case ${lines[i]} in
-      '# ttheme begin') in=1 ;;
-      '# ttheme end') in=0 ;;
-      'theme = '*|'theme='*) (( in )) && { lines[i]="theme = $name"; hit=1 } ;;
-      'config-file = ?'*'/backgrounds/'*'.conf') (( in )) && lines[i]="${lines[i]%/*}/$name.conf" ;;
-    esac
+__tt_reload() {
+  local pid=$PPID ppid comm
+  while (( pid > 1 )); do
+    read -r ppid comm <<< "$(ps -o ppid=,comm= -p $pid)"
+    if [[ ${comm:t} == ghostty ]]; then
+      kill -USR2 $pid
+      return
+    fi
+    pid=$ppid
   done
-  (( hit )) || return 1
-  print -rl -- "${lines[@]}" > $f || return 1
-  killall -USR2 ghostty 2>/dev/null || pkill -USR2 -x ghostty 2>/dev/null
-  return 0
+  pkill -USR2 -x ghostty 2>/dev/null
 }
 
 typeset -ga TTHEME_BG_POSITIONS=(top-left top-center top-right center-left center center-right bottom-left bottom-center bottom-right)
@@ -487,6 +481,6 @@ __tt_pv_bg_save() {
       print -r -- "$msg"
     fi
   done
-  (( reload )) && { killall -USR2 ghostty 2>/dev/null || pkill -USR2 -x ghostty 2>/dev/null }
+  (( reload )) && __tt_reload
   return 0
 }

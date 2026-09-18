@@ -2,10 +2,8 @@ typeset -g TTHEME_HOME=${${(%):-%x}:A:h}
 
 if [[ -r $TTHEME_HOME/palettes.zsh ]]; then
   source $TTHEME_HOME/palettes.zsh
-elif [[ -r $TTHEME_HOME/../dist/shell/palettes.zsh ]]; then
-  source $TTHEME_HOME/../dist/shell/palettes.zsh
 else
-  print -u2 "ttheme: palettes.zsh not found — run \`mise run build\` in the repo"
+  print -u2 "ttheme: palettes.zsh not found — run \`npx @kecan0406/ttheme@latest init\`"
   return 1
 fi
 
@@ -226,10 +224,8 @@ __tt_unpin() {
 }
 
 __tt_keep() {
-  if ! __tt_persist "$1"; then
-    print -u2 "ttheme: could not save the default — no \`theme =\` line inside the \`# ttheme begin\` block of the ghostty config (run \`npx @kecan0406/ttheme@latest init\`)"
-    return 1
-  fi
+  __tt_cli default "$1" > /dev/null || return 1
+  __tt_reload
   if __tt_color; then
     printf '\033[2mdefault · new tabs open with %s\033[0m\n' "$1"
   else
@@ -296,18 +292,7 @@ __tt_help() {
   ttheme update   refresh the catalog from the registry'
 }
 
-__tt_cli() {
-  local bin
-  bin=$(whence -p ttheme 2>/dev/null)
-  if [[ -n $bin ]]; then
-    "$bin" "$@"
-  elif (( $+commands[npx] )); then
-    npx -y @kecan0406/ttheme "$@"
-  else
-    print -u2 'ttheme: the catalog needs the CLI — npm i -g @kecan0406/ttheme'
-    return 1
-  fi
-}
+__tt_cli() { node $TTHEME_HOME/ttheme.js "$@" }
 
 __tt_catalog() {
   __tt_cli "$@" || return
@@ -1093,7 +1078,7 @@ __tt_pv_canpick() {
   canpick=0
   if [[ $mode == pin ]]; then
     canpick=1
-  elif (( $+functions[__tt_persist] )) && [[ $TTHEME_TAB_PALETTE == off ]]; then
+  elif (( $+functions[__tt_reload] )) && [[ $TTHEME_TAB_PALETTE == off ]]; then
     canpick=1
   fi
 }

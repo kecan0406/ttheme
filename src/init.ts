@@ -6,7 +6,6 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
-  symlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { homedir } from 'node:os'
@@ -23,7 +22,6 @@ export interface InitOptions {
   terminals: InitTerminal[]
   tabPalette: 'seq' | 'off'
   announce: boolean
-  link: boolean
 }
 
 export interface InitPaths {
@@ -52,6 +50,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const dist = join(paths.root, 'dist')
   const home = join(paths.configHome, 'ttheme')
   const copies: InitPlan['copies'] = [
+    { from: join(paths.root, 'bin', 'ttheme.js'), to: join(home, 'ttheme.js') },
     { from: join(paths.root, 'shell', 'ttheme.zsh'), to: join(home, 'ttheme.zsh') },
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
     { from: join(dist, 'ghostty', 'ttheme.conf'), to: join(home, 'ttheme.conf') },
@@ -75,21 +74,17 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   }
   notes.push('wezterm and iterm2: import the palettes you install from the release archive')
   const catalog: Manifest = JSON.parse(readFileSync(join(dist, 'manifest.json'), 'utf8'))
-  const installed: Installed = { terminals: opts.terminals, tabPalette: opts.tabPalette, palettes: [] }
+  const installed: Installed = { terminals: opts.terminals, palettes: [] }
   return { copies, edits, settings, catalog, installed, notes }
 }
 
-export function applyInit(plan: InitPlan, link: boolean): void {
+export function applyInit(plan: InitPlan): void {
   for (const c of plan.copies) {
     mkdirSync(dirname(c.to), { recursive: true })
     rmSync(c.to, { force: true })
-    if (link) {
-      symlinkSync(c.from, c.to)
-    } else {
-      copyFileSync(c.from, c.to)
-      if (c.executable) {
-        chmodSync(c.to, 0o755)
-      }
+    copyFileSync(c.from, c.to)
+    if (c.executable) {
+      chmodSync(c.to, 0o755)
     }
   }
   mkdirSync(dirname(plan.settings.file), { recursive: true })
@@ -113,7 +108,7 @@ function accepted<T>(value: T | symbol): T {
   return value as T
 }
 
-async function ask(detected: string, preselected: InitTerminal[], link: boolean): Promise<InitOptions> {
+async function ask(detected: string, preselected: InitTerminal[]): Promise<InitOptions> {
   p.intro('ttheme init')
   const terminals = accepted(
     await p.multiselect({
@@ -136,7 +131,7 @@ async function ask(detected: string, preselected: InitTerminal[], link: boolean)
   const announce = accepted(
     await p.confirm({ message: 'show the palette name under "Last login:"?', initialValue: true }),
   )
-  return { terminals, tabPalette, announce, link }
+  return { terminals, tabPalette, announce }
 }
 
 function report(plan: InitPlan, opts: InitOptions, interactive: boolean): void {
@@ -169,11 +164,10 @@ function report(plan: InitPlan, opts: InitOptions, interactive: boolean): void {
   }
 }
 
-export async function runInit(flags: { yes?: boolean; link?: boolean } = {}): Promise<void> {
+export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const root = join(import.meta.dirname, '..')
-  const link = flags.link === true
-  if (link && !existsSync(join(root, 'src'))) {
-    throw new Error('--link needs a repo checkout')
+  if (!existsSync(join(root, 'bin', 'ttheme.js'))) {
+    throw new Error('bin/ttheme.js is missing — run `mise run bin:build` first')
   }
   if (!existsSync(join(root, 'dist'))) {
     if (typeof Bun === 'undefined') {
@@ -190,12 +184,12 @@ export async function runInit(flags: { yes?: boolean; link?: boolean } = {}): Pr
   const interactive = !flags.yes && process.stdin.isTTY === true && process.stdout.isTTY === true
   let opts: InitOptions
   if (interactive) {
-    opts = await ask(detected, preselected, link)
+    opts = await ask(detected, preselected)
   } else {
     if (preselected.length === 0) {
       throw new Error('no supported terminal detected — run this inside ghostty, kitty or alacritty')
     }
-    opts = { terminals: preselected, tabPalette: 'seq', announce: true, link }
+    opts = { terminals: preselected, tabPalette: 'seq', announce: true }
   }
   const plan = planInit(opts, paths)
   if (interactive) {
@@ -213,7 +207,7 @@ export async function runInit(flags: { yes?: boolean; link?: boolean } = {}): Pr
       process.exit(1)
     }
   }
-  applyInit(plan, opts.link)
+  applyInit(plan)
   report(plan, opts, interactive)
   if (!interactive) {
     return

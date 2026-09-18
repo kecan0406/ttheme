@@ -55,6 +55,19 @@ export function runRemove(names: string[]): void {
   reload(next.palettes.length)
 }
 
+export function runDefault(name: string): void {
+  const home = configHome()
+  const catalog = readCatalog(home)
+  const state = readInstalled(home)
+  if (!state.palettes.includes(name)) {
+    throw new Error(`${name} is not installed — \`ttheme add ${name}\` first`)
+  }
+  const next = { ...state, startup: name }
+  sync(home, catalog, next)
+  writeInstalled(home, next)
+  console.log(`new tabs open with ${name} — reload your terminal config to pick it up`)
+}
+
 export function runList(query?: string): void {
   const home = configHome()
   const catalog = readCatalog(home)

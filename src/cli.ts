@@ -2,7 +2,7 @@ import { Command, CommanderError, Option } from 'commander'
 import pkg from '../package.json' with { type: 'json' }
 import { build, TERMINALS } from './build.ts'
 import { runInit } from './init.ts'
-import { runAdd, runBrowse, runList, runRemove, runUpdate } from './market.ts'
+import { runAdd, runBrowse, runDefault, runList, runRemove, runUpdate } from './market.ts'
 
 export function createProgram(): Command {
   const program = new Command()
@@ -19,8 +19,7 @@ export function createProgram(): Command {
     .command('init')
     .description('install the palettes and wire your terminal configs')
     .option('--yes', 'accept every default without prompting')
-    .option('--link', 'symlink from this checkout instead of copying')
-    .action((opts: { yes?: boolean; link?: boolean }) => runInit(opts))
+    .action((opts: { yes?: boolean }) => runInit(opts))
 
   program
     .command('browse')
@@ -44,6 +43,12 @@ export function createProgram(): Command {
     .argument('<palette...>')
     .description('uninstall palettes')
     .action((names: string[]) => runRemove(names))
+
+  program
+    .command('default')
+    .argument('<palette>')
+    .description('make an installed palette the one new tabs open with')
+    .action((name: string) => runDefault(name))
 
   program
     .command('update')

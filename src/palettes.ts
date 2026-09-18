@@ -11,7 +11,6 @@ const EMITTERS: Record<InitTerminal, Emitter> = { ghostty, kitty, alacritty }
 
 export interface Installed {
   terminals: InitTerminal[]
-  tabPalette: 'seq' | 'off'
   startup?: string
   palettes: string[]
 }
@@ -31,7 +30,6 @@ export function readInstalled(configHome: string): Installed {
   }
   return {
     terminals: doc.terminals.filter((t): t is InitTerminal => INIT_TERMINALS.includes(t)),
-    tabPalette: doc.tabPalette === 'off' ? 'off' : 'seq',
     ...(doc.startup ? { startup: doc.startup } : {}),
     palettes: doc.palettes,
   }
@@ -96,10 +94,10 @@ export function startupPalette(state: Installed): string | undefined {
   return state.startup && state.palettes.includes(state.startup) ? state.startup : state.palettes[0]
 }
 
-function blockFor(terminal: InitTerminal, configHome: string, startup: string | undefined, state: Installed) {
+function blockFor(terminal: InitTerminal, configHome: string, startup: string | undefined) {
   const tthemeDir = join(configHome, 'ttheme')
   if (terminal === 'ghostty') {
-    return { file: join(configHome, 'ghostty', 'config'), body: ghosttyBlock(tthemeDir, startup, state.tabPalette) }
+    return { file: join(configHome, 'ghostty', 'config'), body: ghosttyBlock(tthemeDir, startup) }
   }
   if (terminal === 'kitty') {
     return { file: join(configHome, 'kitty', 'kitty.conf'), body: kittyBlock(startup) }
@@ -124,7 +122,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed): s
         write(join(configHome, terminal, 'themes', file), content)
       }
     }
-    const { file, body } = blockFor(terminal, configHome, startup, state)
+    const { file, body } = blockFor(terminal, configHome, startup)
     const current = existsSync(file) ? readFileSync(file, 'utf8') : ''
     if (terminal === 'alacritty' && current !== '' && !current.includes('# ttheme begin')) {
       continue

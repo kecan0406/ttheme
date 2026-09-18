@@ -46,14 +46,17 @@ fixture_home() {
 }
 
 command_for() {
-  local target=$1 home=$2 inner
+  local target=$1 home=$2
   case $target in
-    browse|list|add|remove) inner="node $ROOT/bin/ttheme.js $target" ;;
-    preview) inner="source $home/ttheme/ttheme.zsh; ttheme preview" ;;
-    menu) inner="source $home/ttheme/ttheme.zsh; ttheme" ;;
+    browse|list|add|remove) print -r -- "node $ROOT/bin/ttheme.js $target" ;;
+    preview) print -r -- "source $home/ttheme/ttheme.zsh; ttheme preview" ;;
+    menu) print -r -- "source $home/ttheme/ttheme.zsh; ttheme" ;;
     *) print -u2 "unknown target $target"; return 1 ;;
   esac
-  print -r -- "zsh -f -c '${inner}; sleep 60'"
+}
+
+scenario_env() {
+  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0)
 }
 
 settle() {
@@ -74,13 +77,13 @@ normalize() {
 capture() {
   local state=$1 target=$2; shift 2
   local home cmd key
+  local -a reply
   home=$(fixture_home $state)
   cmd=$(command_for $target $home)
+  scenario_env $home
   tmux -L $SOCKET kill-server 2>/dev/null || true
   tmux -L $SOCKET new-session -d -x $COLS -y $ROWS \
-    -e XDG_CONFIG_HOME=$home -e HOME=$home -e NO_COLOR=1 \
-    -e TTHEME_FORCE=1 -e TTHEME_SORT=abc -e TTHEME_ANNOUNCE=0 \
-    "$cmd"
+    "env $reply NO_COLOR=1 zsh -f -c '${cmd}; sleep 60'"
   settle
   for key in "$@"; do
     tmux -L $SOCKET send-keys -- "$key"
@@ -135,17 +138,13 @@ demo() {
     for l in $SCENARIOS; do print -u2 "  ${${=l}[1]}"; done
     return 1
   fi
-  local -a parts=(${=line})
-  local home
+  local -a parts=(${=line}) reply
+  local home cmd
   home=$(fixture_home $parts[2])
+  cmd=$(command_for $parts[3] $home)
+  scenario_env $home
   print "$parts[1] — state '$parts[2]' in $home"
-  XDG_CONFIG_HOME=$home HOME=$home NO_COLOR=$NO_COLOR TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0 \
-    zsh -f -c "$(case $parts[3] in
-      browse|list) print -r -- "node $ROOT/bin/ttheme.js $parts[3]" ;;
-      preview) print -r -- "source $home/ttheme/ttheme.zsh; ttheme preview" ;;
-      menu) print -r -- "source $home/ttheme/ttheme.zsh; ttheme" ;;
-    esac)"
-  rm -rf $home
+  { env $reply zsh -f -c $cmd } always { rm -rf $home }
 }
 
 case ${1:-check} in

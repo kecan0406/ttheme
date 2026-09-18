@@ -1,6 +1,8 @@
 export XDG_CONFIG_HOME=$(mktemp -d)
 trap "rm -rf $XDG_CONFIG_HOME" EXIT
-source shell/ttheme.zsh
+mkdir -p $XDG_CONFIG_HOME/ttheme
+cp -R shell/ttheme.zsh shell/adapters dist/shell/palettes.zsh $XDG_CONFIG_HOME/ttheme/
+source $XDG_CONFIG_HOME/ttheme/ttheme.zsh
 (( ${#TTHEME_PALETTE} > 0 )) || { print -u2 "no palettes loaded"; exit 1 }
 (( ${#TTHEME_ORDER} + 1 == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
 __tt_menu > /dev/null || exit 1
@@ -15,15 +17,7 @@ ttheme --frobnicate 2>/dev/null && { print -u2 "ttheme took an unknown option"; 
 out=$(ttheme preview </dev/null 2>&1) && { print -u2 "ttheme preview ran without a tty"; exit 1 }
 [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }
 EDITOR=true ttheme config > /dev/null || { print -u2 "ttheme config broke"; exit 1 }
-source shell/adapters/ghostty.zsh
-killall() { :; }; pkill() { :; }
-mkdir -p $XDG_CONFIG_HOME/ghostty
-print -l "font-size = 14" "# ttheme begin" "theme = magi" "config-file = x" "config-file = ?/cfg/ttheme/backgrounds/magi.conf" "# ttheme end" > $XDG_CONFIG_HOME/ghostty/config
-__tt_persist homura || { print -u2 "__tt_persist failed"; exit 1 }
-[[ "$(<$XDG_CONFIG_HOME/ghostty/config)" == "$(print -l "font-size = 14" "# ttheme begin" "theme = homura" "config-file = x" "config-file = ?/cfg/ttheme/backgrounds/homura.conf" "# ttheme end")" ]] ||
-  { print -u2 "__tt_persist rewrote the config wrong:"; cat $XDG_CONFIG_HOME/ghostty/config; exit 1 }
-print "theme = magi" > $XDG_CONFIG_HOME/ghostty/config
-__tt_persist homura 2>/dev/null && { print -u2 "__tt_persist touched a theme line outside the block"; exit 1 }
+source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
 REPLY=; __tt_b64 26 22 29
 [[ $REPLY == GhYd ]] || { print -u2 "__tt_b64 broke on 3 bytes: $REPLY"; exit 1 }
 REPLY=; __tt_b64 26 22 29 204

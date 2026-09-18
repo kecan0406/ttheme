@@ -38,8 +38,8 @@ export function detectTerminal(env: Record<string, string | undefined>): string 
   return 'unknown'
 }
 
-export function ghosttyBlock(tthemeDir: string, palette: string | undefined, tabPalette: 'seq' | 'off'): string {
-  const lines = tabPalette === 'seq' ? [`command = ${tthemeDir}/launch-tab.zsh`, 'shell-integration = zsh'] : []
+export function ghosttyBlock(tthemeDir: string, palette: string | undefined): string {
+  const lines = [`command = ${tthemeDir}/launch-tab.zsh`, 'shell-integration = zsh']
   if (palette) {
     lines.push(`theme = ${palette}`)
   }

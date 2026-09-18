@@ -104,8 +104,9 @@ from the palette), and the font + shader — identical across themes — ship as
 one shared `ttheme.conf` you include once with `config-file`.
 
 Building from a checkout works too: `mise install && bun install && mise run
-build` writes the same tree to `dist/`, and `bun src/bin.ts init --link`
-symlinks the checkout into place so palette edits land live.
+build` writes the same tree to `dist/`, `mise run sandbox` tries it in a
+throwaway home, and `mise run bin:build && node bin/ttheme.js init` installs
+it for real.
 
 ## Use
 
@@ -147,8 +148,9 @@ columns) and the gap between them takes the rest; the tuning panel takes the
 sample's place while open, and so does the key list once the sample is 48
 columns wide.
 Under Ghostty with `TTHEME_TAB_PALETTE=off`, enter asks **this tab** or
-**default**: default rewrites `theme =` in the `# ttheme begin` block of your
-Ghostty config and sends `SIGUSR2`, so new tabs — and open tabs you have not
+**default**: default records the palette as your startup palette (so a later
+`add` or `remove` keeps it), rewrites `theme =` in the `# ttheme begin` block of
+your Ghostty config and sends `SIGUSR2` to the Ghostty that owns the tab, so new tabs — and open tabs you have not
 painted by hand — take the palette without a restart. Painting is per surface
 otherwise: a new tab starts from the configured theme, not from what the last
 tab was painted.

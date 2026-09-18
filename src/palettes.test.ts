@@ -70,7 +70,6 @@ test('sync writes a theme file per terminal and the zsh table', () => {
   const home = fixture()
   const written = sync(home, catalog, {
     terminals: ['ghostty', 'kitty'],
-    tabPalette: 'seq',
     palettes: ['neutral', 'gojo'],
   })
   assert.ok(existsSync(join(home, 'ghostty', 'themes', 'gojo')))
@@ -86,7 +85,7 @@ test('sync writes a theme file per terminal and the zsh table', () => {
 
 test('sync writes an empty but valid table when nothing is installed', () => {
   const home = fixture()
-  sync(home, catalog, { terminals: ['ghostty'], tabPalette: 'seq', palettes: [] })
+  sync(home, catalog, { terminals: ['ghostty'], palettes: [] })
   const table = readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8')
   assert.match(table, /TTHEME_ORDER=\(\)/)
   assert.doesNotMatch(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = /m)
@@ -94,22 +93,19 @@ test('sync writes an empty but valid table when nothing is installed', () => {
 
 test('sync points the terminal at the startup palette once one is installed', () => {
   const home = fixture()
-  sync(home, catalog, { terminals: ['ghostty'], tabPalette: 'seq', palettes: ['gojo'] })
+  sync(home, catalog, { terminals: ['ghostty'], palettes: ['gojo'] })
   assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = gojo$/m)
 })
 
 test('startupPalette keeps an explicit choice and falls to the first otherwise', () => {
-  assert.equal(
-    startupPalette({ terminals: [], tabPalette: 'seq', startup: 'geto', palettes: ['gojo', 'geto'] }),
-    'geto',
-  )
-  assert.equal(startupPalette({ terminals: [], tabPalette: 'seq', startup: 'gone', palettes: ['gojo'] }), 'gojo')
-  assert.equal(startupPalette({ terminals: [], tabPalette: 'seq', palettes: [] }), undefined)
+  assert.equal(startupPalette({ terminals: [], startup: 'geto', palettes: ['gojo', 'geto'] }), 'geto')
+  assert.equal(startupPalette({ terminals: [], startup: 'gone', palettes: ['gojo'] }), 'gojo')
+  assert.equal(startupPalette({ terminals: [], palettes: [] }), undefined)
 })
 
 test('forget removes only the named palettes', () => {
   const home = fixture()
-  sync(home, catalog, { terminals: ['ghostty'], tabPalette: 'seq', palettes: ['neutral', 'gojo', 'geto'] })
+  sync(home, catalog, { terminals: ['ghostty'], palettes: ['neutral', 'gojo', 'geto'] })
   const removed = forget(home, catalog, ['ghostty'], ['geto'])
   assert.deepEqual(removed, [join(home, 'ghostty', 'themes', 'geto')])
   assert.ok(existsSync(join(home, 'ghostty', 'themes', 'gojo')))
