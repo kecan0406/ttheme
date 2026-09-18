@@ -11,6 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
-      - run: sudo apt-get update && sudo apt-get install -y zsh
+      - run: sudo apt-get update && sudo apt-get install -y zsh tmux
       - run: bun install --frozen-lockfile
       - run: mise run ci

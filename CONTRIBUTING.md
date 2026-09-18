@@ -49,3 +49,24 @@ check and the node bundle check — exactly what CI runs.
 
 `.claude/skills/character-palette/SKILL.md` documents how the existing palettes
 were measured and harmonized, if you want to build one the same way.
+
+## Working on the TUIs
+
+Every screen `ttheme` draws is captured and compared against `tests/screens/`.
+The scenarios run in tmux at a fixed 100×24 against `tests/fixture.json` — six
+palettes across two series, pinned so that adding a palette never rewrites a
+screen.
+
+```sh
+mise run tui                  # compare (part of `mise run ci`)
+mise run tui:update           # accept what the TUIs draw now
+mise run demo preview-open    # open one scenario for real, in its fixture
+```
+
+`mise run demo` is also the fastest way to reproduce a bug: it builds the
+fixture state, hands you the real TUI, and throws the directory away after.
+
+Counts on screen come from the catalog, never from the rows being drawn. A
+folded series still reports how many of its palettes are picked, and the
+filtered total counts what matches, not what fits on screen. The cursor and the
+scroll window are the only things allowed to read the drawn rows.

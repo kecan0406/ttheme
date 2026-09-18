@@ -16,7 +16,7 @@
     }
   },
   "files": {
-    "includes": ["**", "!site/app/globals.css"]
+    "includes": ["**", "!site/app/globals.css", "!tests/fixture.json", "!tests/screens"]
   },
   "overrides": [
     {

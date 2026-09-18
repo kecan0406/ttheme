@@ -1,0 +1,1 @@
+ttheme: no palettes installed yet — run `ttheme browse` to pick some

@@ -101,6 +101,21 @@ echo "bin:check ok"
 {% endraw %}
 '''
 
+[tasks.tui]
+description = "compare every TUI screen against tests/screens/"
+depends = ["build", "bin:build"]
+run = "zsh tests/tui.zsh"
+
+[tasks."tui:update"]
+description = "rewrite tests/screens/ from what the TUIs draw now"
+depends = ["build", "bin:build"]
+run = "zsh tests/tui.zsh --update"
+
+[tasks.demo]
+description = "open one TUI scenario for real, in its fixture — `mise run demo browse-filter`"
+depends = ["build", "bin:build"]
+run = "zsh tests/tui.zsh demo"
+
 [tasks."site:dev"]
 description = "dev server for the showcase site"
 dir = "{{config_root}}/site"
@@ -124,4 +139,4 @@ bun publish --access public
 
 [tasks.ci]
 description = "everything the ci workflow runs"
-depends = ["lint", "check", "test", "shell:check", "ghostty:check", "bin:check"]
+depends = ["lint", "check", "test", "shell:check", "ghostty:check", "bin:check", "tui"]

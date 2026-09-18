@@ -1,0 +1,377 @@
+{
+  "version": "0.0.0-fixture",
+  "gate": [
+    {
+      "rule": "foreground",
+      "label": "foreground on background",
+      "unit": "ratio",
+      "min": 7
+    },
+    {
+      "rule": "accents",
+      "label": "weakest accent on background",
+      "unit": "ratio",
+      "min": 3
+    },
+    {
+      "rule": "ansi0-dark",
+      "label": "ansi0 luminance",
+      "unit": "luminance",
+      "max": 0.15
+    },
+    {
+      "rule": "light-ansi",
+      "label": "ansi7 and ansi15 on background",
+      "unit": "ratio",
+      "min": 7
+    },
+    {
+      "rule": "ansi8-visible",
+      "label": "ansi8 on background",
+      "unit": "ratio",
+      "min": 1.6
+    }
+  ],
+  "font": {
+    "family": "JetBrainsMono Nerd Font",
+    "size": 14,
+    "codepointMap": [
+      {
+        "range": "U+AC00-U+D7A3",
+        "family": "D2Coding"
+      },
+      {
+        "range": "U+3130-U+318F",
+        "family": "D2Coding"
+      }
+    ]
+  },
+  "shader": "cursor_tail.glsl",
+  "palettes": [
+    {
+      "name": "neutral",
+      "group": "Default",
+      "lead": true,
+      "order": 1,
+      "ansiSource": "Nvim Dark",
+      "default": true,
+      "background": "#17171f",
+      "foreground": "#e3e0f3",
+      "cursor": "#cdcdff",
+      "selection": "#3e3c4c",
+      "signature": [
+        "#cdcdff",
+        "#72a7c9",
+        "#c796c8"
+      ],
+      "signatureSlots": [
+        "cursor",
+        "ansi4",
+        "ansi5"
+      ],
+      "ansi": [
+        "#23232b",
+        "#ca8fb2",
+        "#5db9c3",
+        "#f7a895",
+        "#72a7c9",
+        "#c796c8",
+        "#65bbe3",
+        "#c7c5d0",
+        "#777680",
+        "#edaed3",
+        "#7fdae5",
+        "#ffd3c9",
+        "#a1c3f2",
+        "#dabaf5",
+        "#95dbff",
+        "#eeecfe"
+      ],
+      "gate": [
+        13.762,
+        6.857,
+        0.017,
+        10.456,
+        3.977
+      ]
+    },
+    {
+      "name": "konata",
+      "group": "Lucky☆Star",
+      "native": "らき☆すた",
+      "lead": true,
+      "order": 25,
+      "ansiSource": "Dark Modern + Ryouou",
+      "background": "#13181e",
+      "foreground": "#dae3f1",
+      "cursor": "#5f95ca",
+      "selection": "#3b3e42",
+      "signature": [
+        "#5f95ca",
+        "#64be79",
+        "#8fc6ff"
+      ],
+      "signatureSlots": [
+        "cursor",
+        "ansi2",
+        "ansi12"
+      ],
+      "ansi": [
+        "#1f242a",
+        "#e07ae5",
+        "#64be79",
+        "#9bc976",
+        "#63a5e8",
+        "#d187ff",
+        "#4abcee",
+        "#c2c7cf",
+        "#73777f",
+        "#fca1ff",
+        "#00e3e4",
+        "#37f9b8",
+        "#8fc6ff",
+        "#d0bcff",
+        "#97daff",
+        "#e6effc"
+      ],
+      "gate": [
+        13.796,
+        6.863,
+        0.017,
+        10.504,
+        3.971
+      ]
+    },
+    {
+      "name": "kagami",
+      "group": "Lucky☆Star",
+      "native": "らき☆すた",
+      "order": 26,
+      "ansiSource": "Nightfox + Ryouou",
+      "background": "#19161e",
+      "foreground": "#e8dff1",
+      "cursor": "#9b86c8",
+      "selection": "#2f3f55",
+      "signature": [
+        "#9b86c8",
+        "#9099f2",
+        "#d58c98"
+      ],
+      "signatureSlots": [
+        "cursor",
+        "ansi4",
+        "ansi1"
+      ],
+      "ansi": [
+        "#25222a",
+        "#d58c98",
+        "#76b4c9",
+        "#f7a895",
+        "#9099f2",
+        "#b49cd1",
+        "#70b8e8",
+        "#cbc4cf",
+        "#7a757f",
+        "#ffa3e6",
+        "#97d5eb",
+        "#ffd3c8",
+        "#b0bff9",
+        "#d4bbfe",
+        "#a2d8ff",
+        "#f4eafd"
+      ],
+      "gate": [
+        13.837,
+        6.83,
+        0.017,
+        10.5,
+        3.982
+      ]
+    },
+    {
+      "name": "tsukasa",
+      "group": "Lucky☆Star",
+      "native": "らき☆すた",
+      "order": 27,
+      "ansiSource": "Sublette + Ryouou",
+      "background": "#1b161d",
+      "foreground": "#eddeef",
+      "cursor": "#c8a6da",
+      "selection": "#3b3e40",
+      "signature": [
+        "#c8a6da",
+        "#eede89",
+        "#8b9bf1"
+      ],
+      "signatureSlots": [
+        "cursor",
+        "ansi11",
+        "ansi4"
+      ],
+      "ansi": [
+        "#27222a",
+        "#f374c0",
+        "#00bdd0",
+        "#faa78d",
+        "#8b9bf1",
+        "#b999d4",
+        "#53b9ff",
+        "#cdc3ce",
+        "#7c747e",
+        "#ffa8c5",
+        "#00e2e8",
+        "#eede89",
+        "#b1bdff",
+        "#d7baff",
+        "#85ddff",
+        "#f8e9fb"
+      ],
+      "gate": [
+        13.82,
+        6.833,
+        0.017,
+        10.426,
+        3.949
+      ]
+    },
+    {
+      "name": "bocchi",
+      "group": "Bocchi the Rock!",
+      "native": "ぼっち・ざ・ろっく!",
+      "lead": true,
+      "order": 29,
+      "ansiSource": "Sakura + Kessoku",
+      "background": "#201517",
+      "foreground": "#fadbe1",
+      "cursor": "#feabc0",
+      "selection": "#51344e",
+      "signature": [
+        "#feabc0",
+        "#86a1d3",
+        "#ffa7ca"
+      ],
+      "signatureSlots": [
+        "cursor",
+        "ansi4",
+        "ansi9"
+      ],
+      "ansi": [
+        "#2c2123",
+        "#fd729f",
+        "#daa200",
+        "#fea49a",
+        "#86a1d3",
+        "#f979c8",
+        "#abb772",
+        "#d6c2c5",
+        "#847376",
+        "#ffa7ca",
+        "#ffc30f",
+        "#ffd3ce",
+        "#e5abff",
+        "#ffaeda",
+        "#ccd890",
+        "#ffe8ec"
+      ],
+      "gate": [
+        13.788,
+        6.818,
+        0.017,
+        10.484,
+        3.975
+      ]
+    },
+    {
+      "name": "kita",
+      "group": "Bocchi the Rock!",
+      "native": "ぼっち・ざ・ろっく!",
+      "order": 32,
+      "ansiSource": "Wild Cherry + Kessoku",
+      "background": "#201513",
+      "foreground": "#fddbd6",
+      "cursor": "#ee6555",
+      "selection": "#5a323b",
+      "signature": [
+        "#ee6555",
+        "#49c262",
+        "#e1b557"
+      ],
+      "signatureSlots": [
+        "cursor",
+        "ansi2",
+        "ansi3"
+      ],
+      "ansi": [
+        "#2e211f",
+        "#ff728d",
+        "#49c262",
+        "#e1b557",
+        "#eb76d2",
+        "#d792a9",
+        "#abb772",
+        "#d8c2be",
+        "#857370",
+        "#ffaca2",
+        "#fdc083",
+        "#ffd5b2",
+        "#c7b7ff",
+        "#ffb3b2",
+        "#b5d6ec",
+        "#ffe9e6"
+      ],
+      "gate": [
+        13.819,
+        6.828,
+        0.018,
+        10.509,
+        3.976
+      ]
+    },
+    {
+      "name": "ryo",
+      "group": "Bocchi the Rock!",
+      "native": "ぼっち・ざ・ろっく!",
+      "order": 31,
+      "ansiSource": "TokyoNight Storm",
+      "background": "#19180d",
+      "foreground": "#e7e3c8",
+      "cursor": "#d6d233",
+      "selection": "#333d5b",
+      "signature": [
+        "#d6d233",
+        "#779ff4",
+        "#67bae9"
+      ],
+      "signatureSlots": [
+        "cursor",
+        "ansi4",
+        "ansi6"
+      ],
+      "ansi": [
+        "#252419",
+        "#f38235",
+        "#9bb649",
+        "#d8b86a",
+        "#779ff4",
+        "#f184a3",
+        "#67bae9",
+        "#cac7b6",
+        "#797769",
+        "#ffae7e",
+        "#bbd766",
+        "#fbd987",
+        "#38d3e4",
+        "#ffb1c4",
+        "#75e4d4",
+        "#f2efd3"
+      ],
+      "gate": [
+        13.771,
+        6.835,
+        0.017,
+        10.491,
+        3.953
+      ]
+    }
+  ]
+}
