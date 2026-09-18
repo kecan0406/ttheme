@@ -68,8 +68,10 @@ It detects your terminal, asks which ones to wire, places the zsh layer under
 left alone. Running it again updates in place; `--yes` skips every prompt and
 takes the defaults.
 
-**`init` installs no palettes.** It sets the machinery up and then opens the
-catalog so you pick the ones you want; `ttheme browse` reopens it any time.
+**`init` installs no palettes.** It sets the machinery up and then offers the
+catalog a series at a time — `tab` marks a series, enter installs every palette
+in it; `ttheme browse` opens the full catalog any time, to add or drop single
+palettes.
 
 **WezTerm and iTerm2** — one archive per terminal in the
 [latest release](https://github.com/kecan0406/ttheme/releases/latest):

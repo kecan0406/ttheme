@@ -3,7 +3,7 @@ import * as p from '@clack/prompts'
 import { catalogPath, fetchCatalog, REGISTRY_URL, readCatalog, search, writeCatalog } from './catalog.ts'
 import { listed } from './emit/manifest.ts'
 import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
-import { PalettePrompt, promptFx } from './palette-prompt.ts'
+import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { configHome, forget, readInstalled, sync, writeInstalled } from './palettes.ts'
 import { alphabetical } from './theme.ts'
 
@@ -85,7 +85,7 @@ export async function runUpdate(): Promise<void> {
   console.log(`catalog ${catalog.version} — ${catalog.palettes.length} palettes${added > 0 ? ` (+${added})` : ''}`)
 }
 
-export async function runBrowse(): Promise<void> {
+export async function runBrowse(scope: PickerScope = 'palette'): Promise<void> {
   const home = configHome()
   const catalog = readCatalog(home)
   const state = readInstalled(home)
@@ -94,8 +94,7 @@ export async function runBrowse(): Promise<void> {
   const saved = live ? await queryTerminalColors() : new Map<string, string>()
   const prompt = new PalettePrompt({
     entries,
-    title: 'catalog',
-    multi: true,
+    scope,
     installed: state.palettes,
     color: !process.env.NO_COLOR,
     fx: promptFx(process.env.TTHEME_FX),

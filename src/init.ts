@@ -212,9 +212,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   if (!interactive) {
     return
   }
-  const browse = accepted(await p.confirm({ message: 'pick your palettes now?', initialValue: true }))
+  const browse = accepted(await p.confirm({ message: 'pick the series to install now?', initialValue: true }))
   if (browse) {
-    await runBrowse()
+    await runBrowse('series')
   } else {
     p.outro('run `ttheme browse` when you are ready')
   }
