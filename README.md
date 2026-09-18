@@ -62,16 +62,17 @@ came from — `ttheme` prints it, and it is in the theme's TOML.
 npx @kecan0406/ttheme@latest init
 ```
 
-It detects your terminal, asks which ones to wire, places the zsh layer under
-`~/.config/ttheme`, and edits your terminal config and `~/.zshrc` between
-`# ttheme begin` / `# ttheme end` markers — everything outside the markers is
-left alone. Running it again updates in place; `--yes` skips every prompt and
-takes the defaults.
-
-**`init` installs no palettes.** It sets the machinery up and then offers the
-catalog a series at a time — `tab` marks a series, enter installs every palette
-in it; `ttheme browse` opens the full catalog any time, to add or drop single
-palettes.
+It asks which terminals to wire and which series to install — `space` marks
+one, enter moves on, and `select all` takes the lot — then shows what it is
+about to change and writes it all at once, so cancelling before that touches
+nothing. It places the zsh layer under `~/.config/ttheme` and edits your
+terminal config and `~/.zshrc` between `# ttheme begin` / `# ttheme end`
+markers — everything outside the markers is left alone. It ends with a receipt,
+paints the first palette onto the tab you ran it in and lists what to do next
+(`exec zsh` for the `ttheme` command here, a terminal restart for new tabs).
+Running it again updates in place; `--yes` skips every prompt and installs no
+palettes — `ttheme browse` opens the full catalog any time, to add or drop
+single palettes.
 
 **WezTerm and iTerm2** — one archive per terminal in the
 [latest release](https://github.com/kecan0406/ttheme/releases/latest):
@@ -267,8 +268,8 @@ New tabs take the next palette in group order, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather
 than rolling the same one twice.
 
-Settings live in `~/.config/ttheme/config.zsh` — `init` seeds it from your
-answers, `ttheme config` opens it in `$EDITOR` and alt-c in `preview` edits it in place. Each line is a plain zsh
+Settings live in `~/.config/ttheme/config.zsh` — `init` seeds it with the
+defaults and never overwrites a line you changed, `ttheme config` opens it in `$EDITOR` and alt-c in `preview` edits it in place. Each line is a plain zsh
 `: ${VAR:=value}` assignment, so a variable exported before the layer loads
 still wins:
 
@@ -281,20 +282,23 @@ still wins:
 
 ## The catalog
 
-A fresh install carries no palettes at all. `ttheme browse` opens the catalog as
-a live picker — groups fold and unfold, typing filters, the tab repaints as the
-cursor lands on a palette, `tab` marks one (or a whole series from its header),
-and enter installs exactly what is marked and removes what is not:
+The catalog is not installed wholesale: `init` installs the series you pick, and
+`init --yes` none at all. `ttheme browse` opens the catalog as a live picker —
+groups fold and unfold, typing filters (a query has no spaces, `space` is the
+pick key), the tab repaints as the cursor lands on a palette, `space` marks one
+(a series from its header, everything shown from `select all`), and enter
+installs exactly what is marked and removes what is not:
 
 ```
 ◆ catalog (4/107 · 2 picked)
 │ ⌕ bo_
+│   ○ select all (4)
 │ ▾ Bocchi the Rock! (2/4) ぼっち・ざ・ろっく!
 │   ▶ ● bocchi        ● ▁▁▁▁▁▁  Sakura + Kessoku
 │     ● kita          ● ▁▁▁▁▁▁  Wild Cherry + Kessoku
 │     ○ nijika        ● ▁▁▁▁▁▁  Medallion
 │     ○ ryo           ● ▁▁▁▁▁▁  TokyoNight Storm
-└ ↑↓ move · ←→ fold · tab pick · type to filter · enter install · esc cancel
+└ ↑↓ move · ←→ fold · space pick · type to filter · enter install · esc cancel
 ```
 
 The counts stay honest: `4/107` is what the filter matched out of the catalog,

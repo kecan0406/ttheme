@@ -59,7 +59,7 @@ function makeFixture(): InitPaths {
 }
 
 function options(partial: Partial<InitOptions> = {}): InitOptions {
-  return { terminals: ['ghostty'], tabPalette: 'seq', announce: true, ...partial }
+  return { terminals: ['ghostty'], palettes: [], ...partial }
 }
 
 test('planInit places the runtime layer and touches only .zshrc', () => {
@@ -117,18 +117,22 @@ test('applyInit creates the layout, marks the launcher executable and wires conf
   assert.match(config, /^: \$\{TTHEME_TAB_PALETTE:=seq\}$/m)
 })
 
-test('applyInit lands non-default settings in config.zsh and keeps user edits on rerun', () => {
+test('applyInit seeds config.zsh once and keeps user edits on rerun', () => {
   const paths = makeFixture()
-  applyInit(planInit(options({ tabPalette: 'off', announce: false }), paths))
+  applyInit(planInit(options(), paths))
   const configPath = join(paths.configHome, 'ttheme', 'config.zsh')
   const first = readFileSync(configPath, 'utf8')
-  assert.match(first, /^: \$\{TTHEME_TAB_PALETTE:=off\}$/m)
-  assert.match(first, /^: \$\{TTHEME_ANNOUNCE:=0\}$/m)
-  writeFileSync(configPath, first.replace(/^: \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}'))
+  assert.match(first, /^: \$\{TTHEME_TAB_PALETTE:=seq\}$/m)
+  assert.match(first, /^: \$\{TTHEME_ANNOUNCE:=1\}$/m)
+  writeFileSync(
+    configPath,
+    first
+      .replace(/^: \$\{TTHEME_TAB_PALETTE[^\n]*$/m, ': ${TTHEME_TAB_PALETTE:=off}')
+      .replace(/^: \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}'),
+  )
   applyInit(planInit(options(), paths))
   const second = readFileSync(configPath, 'utf8')
-  assert.match(second, /^: \$\{TTHEME_TAB_PALETTE:=seq\}$/m)
-  assert.match(second, /^: \$\{TTHEME_ANNOUNCE:=1\}$/m)
+  assert.match(second, /^: \$\{TTHEME_TAB_PALETTE:=off\}$/m)
   assert.match(second, /^: \$\{TTHEME_FX:=glitch\}$/m)
 })
 

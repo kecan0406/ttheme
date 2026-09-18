@@ -56,7 +56,7 @@ test('zshrcBlock only sources the layer', () => {
 })
 
 test('configFile seeds the template with every default spelled out', () => {
-  const out = configFile('', { tabPalette: 'seq', announce: true })
+  const out = configFile('')
   assert.equal(out, configTemplate())
   assert.equal(
     out,
@@ -79,29 +79,17 @@ test('configFile seeds the template with every default spelled out', () => {
   )
 })
 
-test('configFile writes chosen values and reverts them to defaults', () => {
-  const off = configFile('', { tabPalette: 'off', announce: false })
-  assert.match(off, /^: \$\{TTHEME_TAB_PALETTE:=off\}$/m)
-  assert.match(off, /^: \$\{TTHEME_ANNOUNCE:=0\}$/m)
-  const back = configFile(off, { tabPalette: 'seq', announce: true })
-  assert.match(back, /^: \$\{TTHEME_TAB_PALETTE:=seq\}$/m)
-  assert.match(back, /^: \$\{TTHEME_ANNOUNCE:=1\}$/m)
-})
-
 test('configFile is idempotent and preserves user edits', () => {
-  const edited = configFile('', { tabPalette: 'off', announce: true }).replace(
-    /^: \$\{TTHEME_FX[^\n]*$/m,
-    ': ${TTHEME_FX:=glitch}',
-  )
-  const rerun = configFile(edited, { tabPalette: 'off', announce: true })
+  const edited = configFile('').replace(/^: \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}')
+  const rerun = configFile(edited)
   assert.equal(rerun, edited)
   assert.match(rerun, /^: \$\{TTHEME_FX:=glitch\}$/m)
 })
 
 test('configFile appends a documented line when a setting is missing', () => {
-  const out = configFile('TTHEME_CUSTOM=1\n', { tabPalette: 'off', announce: true })
+  const out = configFile('TTHEME_CUSTOM=1\n')
   assert.ok(out.startsWith('TTHEME_CUSTOM=1\n'))
-  assert.match(out, /^# new tabs: .*\n: \$\{TTHEME_TAB_PALETTE:=off\}$/m)
+  assert.match(out, /^# new tabs: .*\n: \$\{TTHEME_TAB_PALETTE:=seq\}$/m)
   assert.match(out, /^# the palette notice .*\n: \$\{TTHEME_ANNOUNCE:=1\}$/m)
   assert.match(out, /^# search hint animation: .*\n: \$\{TTHEME_FX:=typewriter\}$/m)
   assert.match(out, /^# series and palettes .*\n: \$\{TTHEME_SORT:=abc\}$/m)

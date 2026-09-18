@@ -101,7 +101,7 @@ test('series rows are folded headers matched through any member', () => {
 
 async function drive(
   keys: string[],
-  opts: { color?: boolean; maxItems?: number; installed?: string[]; scope?: PickerScope } = {},
+  opts: { color?: boolean; maxItems?: number; installed?: string[]; scope?: PickerScope; required?: boolean } = {},
 ): Promise<{ result: string | symbol | undefined; frames: string; focused: string[]; picked: string[] }> {
   const input = new PassThrough()
   const output = new PassThrough()
@@ -127,37 +127,37 @@ async function drive(
   return { result, frames, focused, picked: [...prompt.picked] }
 }
 
-test('right unfolds a group and tab picks the palette under the cursor', async () => {
-  const { picked, frames, focused } = await drive(['\x1b[C', '\x1b[B', '\t', '\r'])
+test('right unfolds a group and space picks the palette under the cursor', async () => {
+  const { picked, frames, focused } = await drive(['\x1b[C', '\x1b[B', ' ', '\r'])
   assert.deepEqual(picked, ['miku'])
   assert.deepEqual(focused, ['miku'])
   assert.match(frames, /▾\[Vocaloid\] \(0\/2\)/)
   assert.match(frames, /▸ Madoka Magica \(0\/2\)/)
   assert.match(frames, /catalog \(4\/4 · 0 picked\)/)
   assert.match(frames, /⌕ search…/)
-  assert.match(frames, /tab pick · type to filter · enter install/)
+  assert.match(frames, /space pick · type to filter · enter install/)
 })
 
 test('groups fold back and cursor moves across them', async () => {
-  const { picked, focused } = await drive(['\x1b[C', '\x1b[B', '\x1b[D', '\x1b[B', '\x1b[C', '\x1b[B', '\t', '\r'])
+  const { picked, focused } = await drive(['\x1b[C', '\x1b[B', '\x1b[D', '\x1b[B', '\x1b[C', '\x1b[B', ' ', '\r'])
   assert.deepEqual(picked, ['madoka'])
   assert.deepEqual(focused, ['miku', 'madoka'])
 })
 
 test('typing filters and the cursor lands on the first match', async () => {
-  const { picked, frames } = await drive(['m', 'a', 'd', 'o', '\t', '\r'])
+  const { picked, frames } = await drive(['m', 'a', 'd', 'o', ' ', '\r'])
   assert.deepEqual(picked, ['madoka'])
   assert.match(frames, /⌕ mado_/)
   assert.match(frames, /catalog \(2\/4 · 0 picked\)/)
 })
 
 test('editing the filter keeps the focused palette when it still matches', async () => {
-  const { picked } = await drive(['\x1b[C', '\x1b[B', '\x1b[B', 'i', '\t', '\r'])
+  const { picked } = await drive(['\x1b[C', '\x1b[B', '\x1b[B', 'i', ' ', '\r'])
   assert.deepEqual(picked, ['rin'])
 })
 
 test('the cursor snaps to the first match when the focused palette is filtered out', async () => {
-  const { picked } = await drive(['\x1b[C', '\x1b[B', '\x1b[B', 'k', '\t', '\r'])
+  const { picked } = await drive(['\x1b[C', '\x1b[B', '\x1b[B', 'k', ' ', '\r'])
   assert.deepEqual(picked, ['miku'])
 })
 
@@ -182,8 +182,8 @@ test('installed palettes start out picked', async () => {
   assert.deepEqual(picked, ['rin'])
 })
 
-test('tab on a folded group picks its palettes without expanding it first', async () => {
-  const { picked, frames } = await drive(['\t', '\r'])
+test('space on a folded group picks its palettes without expanding it first', async () => {
+  const { picked, frames } = await drive([' ', '\r'])
   assert.deepEqual(picked.sort(), ['miku', 'rin'])
   assert.match(frames, /▸\[Vocaloid\] \(0\/2\)/)
 })
@@ -198,15 +198,15 @@ test('the filtered count comes from the catalog, not from the drawn rows', async
   assert.match(frames, /catalog \(1\/4 · 0 picked\)/)
 })
 
-test('tab on a group row picks every palette under it, and again drops them', async () => {
-  const all = await drive(['\x1b[C', '\t', '\r'])
+test('space on a group row picks every palette under it, and again drops them', async () => {
+  const all = await drive(['\x1b[C', ' ', '\r'])
   assert.deepEqual(all.picked.sort(), ['miku', 'rin'])
-  const none = await drive(['\x1b[C', '\t', '\t', '\r'])
+  const none = await drive(['\x1b[C', ' ', ' ', '\r'])
   assert.deepEqual(none.picked, [])
 })
 
 test('series scope lists series only, previews each lead and never unfolds', async () => {
-  const { picked, frames, focused } = await drive(['\x1b[C', '\x1b[B', '\x1b[C', '\t', '\r'], { scope: 'series' })
+  const { picked, frames, focused } = await drive(['\x1b[C', '\x1b[B', '\x1b[C', ' ', '\r'], { scope: 'series' })
   assert.deepEqual(picked.sort(), ['homura', 'madoka'])
   assert.deepEqual(focused, ['miku', 'homura'])
   assert.match(frames, /series \(2\/2 · 0 picked\)/)
@@ -217,8 +217,28 @@ test('series scope lists series only, previews each lead and never unfolds', asy
 })
 
 test('series scope picks the whole series even when a member name filtered it', async () => {
-  const { picked, frames } = await drive(['h', 'o', '\t', '\r'], { scope: 'series' })
+  const { picked, frames } = await drive(['h', 'o', ' ', '\r'], { scope: 'series' })
   assert.deepEqual(picked.sort(), ['homura', 'madoka'])
   assert.match(frames, /series \(1\/2 · 0 picked\)/)
   assert.match(frames, /▶ ● Madoka Magica \(2\) 魔法少女まどか☆マギカ/)
+})
+
+test('space toggles the row and never lands in the filter', async () => {
+  const { picked, frames } = await drive(['m', 'i', ' ', 'k', '\r'])
+  assert.deepEqual(picked, ['miku'])
+  assert.match(frames, /⌕ mik_/)
+  assert.doesNotMatch(frames, /⌕ mi k/)
+})
+
+test('the select all row picks every shown series, and again drops them', async () => {
+  const all = await drive(['\x1b[A', ' ', '\r'], { scope: 'series' })
+  assert.deepEqual(all.picked.sort(), ['homura', 'madoka', 'miku', 'rin'])
+  const none = await drive(['\x1b[A', ' ', ' ', '\r'], { scope: 'series' })
+  assert.deepEqual(none.picked, [])
+})
+
+test('a required picker refuses to continue with nothing picked', async () => {
+  const { picked, frames } = await drive(['\r', ' ', '\r'], { scope: 'series', required: true })
+  assert.match(frames, /pick at least one series/)
+  assert.deepEqual(picked.sort(), ['miku', 'rin'])
 })

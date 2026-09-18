@@ -83,20 +83,12 @@ function settingPattern(name: string): RegExp {
   return new RegExp(String.raw`^#? ?: \$\{${name}[^\n]*$`, 'm')
 }
 
-function appendSetting(content: string, name: keyof typeof CONFIG_SETTINGS, value: string): string {
-  return `${content.replace(/\n*$/, '\n')}\n${CONFIG_SETTINGS[name].doc}\n${settingLine(name, value)}\n`
-}
-
-function applySetting(content: string, name: keyof typeof CONFIG_SETTINGS, value: string): string {
-  const pattern = settingPattern(name)
-  if (pattern.test(content)) {
-    return content.replace(pattern, () => settingLine(name, value))
-  }
-  return appendSetting(content, name, value)
-}
-
 function ensureSetting(content: string, name: keyof typeof CONFIG_SETTINGS): string {
-  return settingPattern(name).test(content) ? content : appendSetting(content, name, CONFIG_SETTINGS[name].default)
+  if (settingPattern(name).test(content)) {
+    return content
+  }
+  const setting = CONFIG_SETTINGS[name]
+  return `${content.replace(/\n*$/, '\n')}\n${setting.doc}\n${settingLine(name, setting.default)}\n`
 }
 
 export function configTemplate(): string {
@@ -104,11 +96,11 @@ export function configTemplate(): string {
   return `${[CONFIG_HEADER, ...sections].join('\n\n')}\n`
 }
 
-export function configFile(content: string, opts: { tabPalette: 'seq' | 'off'; announce: boolean }): string {
-  const seeded = content === '' ? configTemplate() : content
-  const tabbed = applySetting(seeded, 'TTHEME_TAB_PALETTE', opts.tabPalette)
-  const announced = applySetting(tabbed, 'TTHEME_ANNOUNCE', opts.announce ? '1' : '0')
-  return ensureSetting(ensureSetting(announced, 'TTHEME_FX'), 'TTHEME_SORT')
+export function configFile(content: string): string {
+  if (content === '') {
+    return configTemplate()
+  }
+  return (Object.keys(CONFIG_SETTINGS) as (keyof typeof CONFIG_SETTINGS)[]).reduce(ensureSetting, content)
 }
 
 export function kittyBlock(palette: string | undefined): string {

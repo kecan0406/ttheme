@@ -14,14 +14,14 @@ import * as p from '@clack/prompts'
 import { build } from './build.ts'
 import { writeCatalog } from './catalog.ts'
 import type { Manifest } from './emit/manifest.ts'
-import { runBrowse } from './market.ts'
-import { type Installed, sync, writeInstalled } from './palettes.ts'
+import { pickPalettes } from './market.ts'
+import { paletteOsc } from './osc.ts'
+import { type Installed, startupPalette, sync, writeInstalled } from './palettes.ts'
 import { configFile, detectTerminal, INIT_TERMINALS, type InitTerminal, upsertBlock, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {
   terminals: InitTerminal[]
-  tabPalette: 'seq' | 'off'
-  announce: boolean
+  palettes: string[]
 }
 
 export interface InitPaths {
@@ -46,6 +46,10 @@ function copyDir(copies: InitPlan['copies'], from: string, to: string): void {
   }
 }
 
+export function loadManifest(root: string): Manifest {
+  return JSON.parse(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
+}
+
 export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const dist = join(paths.root, 'dist')
   const home = join(paths.configHome, 'ttheme')
@@ -60,7 +64,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const configPath = join(home, 'config.zsh')
   const settings = {
     file: configPath,
-    content: configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : '', opts),
+    content: configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : ''),
   }
   const notes: string[] = []
   if (opts.terminals.includes('ghostty')) {
@@ -73,9 +77,8 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     }
   }
   notes.push('wezterm and iterm2: import the palettes you install from the release archive')
-  const catalog: Manifest = JSON.parse(readFileSync(join(dist, 'manifest.json'), 'utf8'))
-  const installed: Installed = { terminals: opts.terminals, palettes: [] }
-  return { copies, edits, settings, catalog, installed, notes }
+  const installed: Installed = { terminals: opts.terminals, palettes: opts.palettes }
+  return { copies, edits, settings, catalog: loadManifest(paths.root), installed, notes }
 }
 
 export function applyInit(plan: InitPlan): void {
@@ -108,9 +111,8 @@ function accepted<T>(value: T | symbol): T {
   return value as T
 }
 
-async function ask(detected: string, preselected: InitTerminal[]): Promise<InitOptions> {
-  p.intro('ttheme init')
-  const terminals = accepted(
+async function askTerminals(detected: string, preselected: InitTerminal[]): Promise<InitTerminal[]> {
+  return accepted(
     await p.multiselect({
       message: 'wire which terminals?',
       options: INIT_TERMINALS.map((t) => ({ value: t, hint: t === detected ? 'detected' : undefined })),
@@ -118,23 +120,9 @@ async function ask(detected: string, preselected: InitTerminal[]): Promise<InitO
       required: true,
     }),
   )
-  const tabPalette = accepted(
-    await p.select<'seq' | 'off'>({
-      message: 'new tabs',
-      options: [
-        { value: 'seq', label: 'rotate through the palettes', hint: 'default' },
-        { value: 'off', label: 'inherit the window colors' },
-      ],
-      initialValue: 'seq',
-    }),
-  )
-  const announce = accepted(
-    await p.confirm({ message: 'show the palette name under "Last login:"?', initialValue: true }),
-  )
-  return { terminals, tabPalette, announce }
 }
 
-function report(plan: InitPlan, opts: InitOptions, interactive: boolean): void {
+function verify(plan: InitPlan): void {
   const missing = [
     ...plan.copies.filter((c) => !existsSync(c.to)).map((c) => c.to),
     ...(existsSync(plan.settings.file) ? [] : [plan.settings.file]),
@@ -143,6 +131,45 @@ function report(plan: InitPlan, opts: InitOptions, interactive: boolean): void {
   if (missing.length > 0) {
     throw new Error(`init left gaps:\n${missing.join('\n')}`)
   }
+}
+
+function seriesOf(catalog: Manifest, names: string[]): string[] {
+  return [...new Set(catalog.palettes.filter((e) => names.includes(e.name)).map((e) => e.group))]
+}
+
+function paintStartup(catalog: Manifest, installed: Installed): boolean {
+  const startup = catalog.palettes.find((e) => e.name === startupPalette(installed))
+  const live = process.stdout.isTTY === true && !process.env.NO_COLOR && !process.env.TMUX
+  if (!startup || !live) {
+    return false
+  }
+  process.stdout.write(paletteOsc(startup))
+  return true
+}
+
+function receipt(plan: InitPlan, opts: InitOptions, painted: boolean): void {
+  const series = seriesOf(plan.catalog, opts.palettes)
+  const startup = startupPalette(plan.installed)
+  p.note(
+    [
+      `${series.join(', ')} (${opts.palettes.length})`,
+      `startup    ${startup}${painted ? ' — this tab wears it already' : ''}`,
+      'new tabs   rotate through the palettes — change with `ttheme config`',
+    ].join('\n'),
+    `installed ${opts.palettes.length} palettes`,
+  )
+  const next = ['exec zsh          the ttheme command in this tab']
+  if (opts.terminals.includes('ghostty')) {
+    next.push('restart ghostty   new tabs pick up its config')
+  }
+  if (opts.terminals.includes('kitty')) {
+    next.push('new kitty window  picks up its config')
+  }
+  p.note([...next, ...plan.notes].join('\n'), 'next')
+  p.outro('done')
+}
+
+function report(plan: InitPlan, opts: InitOptions): void {
   const lines = [
     `placed ${plan.copies.length} files`,
     `settings in ${plan.settings.file} — edit later with \`ttheme config\``,
@@ -155,13 +182,8 @@ function report(plan: InitPlan, opts: InitOptions, interactive: boolean): void {
     lines.push('open a new kitty window to pick up its config')
   }
   lines.push(...plan.notes)
-  lines.push('no palettes yet — `ttheme browse` picks them from the catalog')
-  if (interactive) {
-    p.note(lines.join('\n'), 'done')
-  } else {
-    console.log(lines.join('\n'))
-    console.log('run `ttheme browse` to pick your palettes')
-  }
+  lines.push('no palettes yet — open a new shell (`exec zsh`), then `ttheme browse` picks them from the catalog')
+  console.log(lines.join('\n'))
 }
 
 export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
@@ -182,40 +204,40 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const detected = detectTerminal(process.env)
   const preselected = INIT_TERMINALS.filter((t) => t === detected || existsSync(join(configHome, t)))
   const interactive = !flags.yes && process.stdin.isTTY === true && process.stdout.isTTY === true
-  let opts: InitOptions
-  if (interactive) {
-    opts = await ask(detected, preselected)
-  } else {
+  if (!interactive) {
     if (preselected.length === 0) {
       throw new Error('no supported terminal detected — run this inside ghostty, kitty or alacritty')
     }
-    opts = { terminals: preselected, tabPalette: 'seq', announce: true }
-  }
-  const plan = planInit(opts, paths)
-  if (interactive) {
-    p.note(
-      [
-        `copy ${plan.copies.length} files under ${configHome}`,
-        `write ${plan.settings.file}`,
-        ...plan.edits.map((e) => `edit ${e.file}`),
-      ].join('\n'),
-      `wiring ${opts.terminals.join(', ')}`,
-    )
-    const go = accepted(await p.confirm({ message: 'apply these changes?' }))
-    if (!go) {
-      p.cancel('nothing changed')
-      process.exit(1)
-    }
-  }
-  applyInit(plan)
-  report(plan, opts, interactive)
-  if (!interactive) {
+    const opts: InitOptions = { terminals: preselected, palettes: [] }
+    const plan = planInit(opts, paths)
+    applyInit(plan)
+    verify(plan)
+    report(plan, opts)
     return
   }
-  const browse = accepted(await p.confirm({ message: 'pick the series to install now?', initialValue: true }))
-  if (browse) {
-    await runBrowse('series')
-  } else {
-    p.outro('run `ttheme browse` when you are ready')
+  p.intro('ttheme init')
+  const terminals = await askTerminals(detected, preselected)
+  const palettes = await pickPalettes(loadManifest(root), [], 'series', true)
+  if (!palettes) {
+    p.cancel('nothing changed')
+    process.exit(1)
   }
+  const opts: InitOptions = { terminals, palettes }
+  const plan = planInit(opts, paths)
+  p.note(
+    [
+      `install ${palettes.length} palettes — ${seriesOf(plan.catalog, palettes).join(', ')}`,
+      `copy ${plan.copies.length} files under ${configHome}`,
+      `write ${plan.settings.file}`,
+      ...plan.edits.map((e) => `edit ${e.file}`),
+    ].join('\n'),
+    `wiring ${terminals.join(', ')}`,
+  )
+  if (!accepted(await p.confirm({ message: 'apply these changes?' }))) {
+    p.cancel('nothing changed')
+    process.exit(1)
+  }
+  applyInit(plan)
+  verify(plan)
+  receipt(plan, opts, paintStartup(plan.catalog, plan.installed))
 }

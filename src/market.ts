@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import * as p from '@clack/prompts'
 import { catalogPath, fetchCatalog, REGISTRY_URL, readCatalog, search, writeCatalog } from './catalog.ts'
-import { listed } from './emit/manifest.ts'
+import { listed, type Manifest } from './emit/manifest.ts'
 import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { configHome, forget, readInstalled, sync, writeInstalled } from './palettes.ts'
@@ -85,17 +85,20 @@ export async function runUpdate(): Promise<void> {
   console.log(`catalog ${catalog.version} — ${catalog.palettes.length} palettes${added > 0 ? ` (+${added})` : ''}`)
 }
 
-export async function runBrowse(scope: PickerScope = 'palette'): Promise<void> {
-  const home = configHome()
-  const catalog = readCatalog(home)
-  const state = readInstalled(home)
+export async function pickPalettes(
+  catalog: Manifest,
+  installed: string[],
+  scope: PickerScope,
+  required = false,
+): Promise<string[] | undefined> {
   const entries = process.env.TTHEME_SORT === 'series' ? catalog.palettes : alphabetical(catalog.palettes)
   const live = process.stdout.isTTY === true && !process.env.NO_COLOR
   const saved = live ? await queryTerminalColors() : new Map<string, string>()
   const prompt = new PalettePrompt({
     entries,
     scope,
-    installed: state.palettes,
+    installed,
+    required,
     color: !process.env.NO_COLOR,
     fx: promptFx(process.env.TTHEME_FX),
     onFocus: live ? (entry) => process.stdout.write(paletteOsc(entry)) : undefined,
@@ -103,11 +106,21 @@ export async function runBrowse(scope: PickerScope = 'palette'): Promise<void> {
   const done = await prompt.prompt()
   process.stdout.write(restoreOsc(saved))
   if (p.isCancel(done)) {
+    return undefined
+  }
+  return catalog.palettes.filter((e) => prompt.picked.has(e.name)).map((e) => e.name)
+}
+
+export async function runBrowse(): Promise<void> {
+  const home = configHome()
+  const catalog = readCatalog(home)
+  const state = readInstalled(home)
+  const wanted = await pickPalettes(catalog, state.palettes, 'palette')
+  if (!wanted) {
     console.log('nothing changed')
     return
   }
-  const wanted = catalog.palettes.filter((e) => prompt.picked.has(e.name)).map((e) => e.name)
-  const dropped = state.palettes.filter((n) => !prompt.picked.has(n))
+  const dropped = state.palettes.filter((n) => !wanted.includes(n))
   const added = wanted.filter((n) => !state.palettes.includes(n))
   if (added.length === 0 && dropped.length === 0) {
     console.log('nothing changed')
