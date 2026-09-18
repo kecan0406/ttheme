@@ -170,6 +170,22 @@ test('multi mode marks installed palettes as already picked', async () => {
   assert.deepEqual(picked, ['rin'])
 })
 
+test('tab on a folded group picks its palettes without expanding it first', async () => {
+  const { picked, frames } = await drive(['\t', '\r'], { multi: true, title: 'catalog' })
+  assert.deepEqual(picked.sort(), ['miku', 'rin'])
+  assert.match(frames, /▸\[Vocaloid\] \(0\/2\)/)
+})
+
+test('a folded group still reports how many of its palettes are picked', async () => {
+  const { frames } = await drive(['\x1b[B', '\r'], { multi: true, installed: ['miku'] })
+  assert.match(frames, /▸ Vocaloid \(1\/2\)/)
+})
+
+test('the filtered count comes from the catalog, not from the drawn rows', async () => {
+  const { frames } = await drive(['m', 'i', '\r'], { multi: true, title: 'catalog' })
+  assert.match(frames, /catalog \(1\/4 · 0 picked\)/)
+})
+
 test('tab on a group row picks every palette under it, and again drops them', async () => {
   const all = await drive(['\x1b[C', '\t', '\r'], { multi: true })
   assert.deepEqual(all.picked.sort(), ['miku', 'rin'])

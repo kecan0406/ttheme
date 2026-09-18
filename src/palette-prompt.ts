@@ -149,12 +149,17 @@ export class PalettePrompt extends Prompt<string> {
     return this.multi || this.rows[this.cursor]?.kind === 'palette'
   }
 
+  private members(group: string): PaletteEntry[] {
+    const filter = this.userInput.trim()
+    return this.entries.filter((e) => !e.default && e.group === group && (filter === '' || matchesPalette(e, filter)))
+  }
+
   private pick(row: PickerRow | undefined): void {
     const names =
       row?.kind === 'palette'
         ? [row.entry.name]
         : row?.kind === 'group'
-          ? this.rows.flatMap((r) => (r.kind === 'palette' && r.entry.group === row.name ? [r.entry.name] : []))
+          ? this.members(row.name).map((e) => e.name)
           : []
     if (names.length === 0) {
       return
@@ -170,8 +175,7 @@ export class PalettePrompt extends Prompt<string> {
   }
 
   private pickedIn(group: string): number {
-    return this.rows.filter((r) => r.kind === 'palette' && r.entry.group === group && this.picked.has(r.entry.name))
-      .length
+    return this.members(group).filter((e) => this.picked.has(e.name)).length
   }
 
   private rollExample(): void {
@@ -319,7 +323,10 @@ export class PalettePrompt extends Prompt<string> {
     if (this.state === 'cancel') {
       return `${dim(`◇ ${this.title} · cancelled`)}`
     }
-    const matched = this.userInput ? this.rows.filter((r) => r.kind === 'palette').length : this.paletteTotal
+    const filter = this.userInput.trim()
+    const matched = filter
+      ? this.entries.filter((e) => !e.default && matchesPalette(e, filter)).length
+      : this.paletteTotal
     const tally = this.multi
       ? `${matched}/${this.paletteTotal} · ${this.picked.size} picked`
       : `${matched}/${this.paletteTotal}`
