@@ -292,7 +292,12 @@ __tt_help() {
   ttheme update   refresh the catalog from the registry'
 }
 
-__tt_cli() { node $TTHEME_HOME/ttheme.js "$@" }
+__tt_cli() {
+  TTHEME_FIND_RATING=$TTHEME_FIND_RATING TTHEME_FIND_TAGS=$TTHEME_FIND_TAGS \
+    TTHEME_FIND_POSTS=$TTHEME_FIND_POSTS TTHEME_FIND_ORDER=$TTHEME_FIND_ORDER TTHEME_FIND_SETS=$TTHEME_FIND_SETS \
+    TTHEME_FIND_HOSTS=$TTHEME_FIND_HOSTS TTHEME_FIND_UNBLOCK=$TTHEME_FIND_UNBLOCK \
+    node $TTHEME_HOME/ttheme.js "$@"
+}
 
 __tt_catalog() {
   __tt_cli "$@" || return
@@ -696,7 +701,7 @@ __tt_pv_help() {
   )
   if (( bgcw )); then
     hk+=("tune bg" "" "" "")
-    hv+=("tab  ·  finds one on safebooru if none" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "space hides  ·  = default  ·  f replaces" "enter keeps  ·  esc undoes")
+    hv+=("tab  ·  finds one on the boorus if none" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "space hides  ·  = default  ·  f replaces" "enter keeps  ·  esc undoes")
   fi
   hk+=(config "")
   hv+=("alt-c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")

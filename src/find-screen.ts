@@ -1,13 +1,32 @@
-import { SITES } from './booru.ts'
+import { type Rating, SITES } from './booru.ts'
 import { type Hex, rgb } from './color.ts'
 
 export type Preset = 'cutouts' | 'all'
+export type Order = 'newest' | 'score'
+export type Tags = 'block' | 'allow'
+export type Sets = 'fold' | 'show'
+
+export interface Setting {
+  name: string
+  label: string
+  choices: string[]
+}
+
+export interface Row {
+  label: string
+  choices: string[]
+  value: string
+}
 
 export interface Tile {
   id: number
   width: number
   height: number
+  reduced: boolean
   owner: string
+  artist: string
+  score: number
+  variants: number
   origin: string
   mates: string[]
   thumb?: string
@@ -27,6 +46,13 @@ export interface FindView {
   siteAnsi: number
   nextSite: string
   preset: Preset
+  order: Order
+  rating: Rating
+  tags: Tags
+  sets: Sets
+  unblocked: boolean
+  settings: Row[]
+  panel?: number
   colors: { cursor: Hex; selection: Hex; ansi: Hex[] }
   tiles: Tile[]
   checked: number
@@ -40,7 +66,10 @@ export interface FindView {
   preparing?: number
   installing?: number
   shown?: Shown
+  editing?: string
+  note?: string
   error?: string
+  waiting?: number
 }
 
 export interface Placement {
@@ -58,7 +87,7 @@ export interface Frame {
   images: Placement[]
 }
 
-export const TILE = { pitch: 25, cols: 22, rows: 9, height: 12 }
+export const TILE = { pitch: 25, cols: 22, rows: 9, height: 13 }
 export const MIN = { cols: 25, rows: 16 }
 export const TRY_ID = 2 ** 31
 const BELOW_BG = -1073741826
@@ -98,13 +127,23 @@ export function decodeKeys(input: string): string[] {
       if (m) {
         keys.push(CSI[`${m[1] ?? ''}${m[2] ?? m[3] ?? ''}`] ?? 'nop')
         i += 1 + m[0].length
-      } else {
-        keys.push('esc')
-        i++
+        continue
       }
+      keys.push('esc')
+      i++
       continue
     }
-    keys.push(c === '\r' || c === '\n' ? 'enter' : c === '\t' ? 'tab' : c === '\x03' ? 'ctrl-c' : c)
+    keys.push(
+      c === '\r' || c === '\n'
+        ? 'enter'
+        : c === '\t'
+          ? 'tab'
+          : c === '\x03'
+            ? 'ctrl-c'
+            : c === '\x7f' || c === '\b'
+              ? 'backspace'
+              : c,
+    )
     i++
   }
   return keys
@@ -196,8 +235,15 @@ function progress(got: number, size: number): string {
     : `${Math.round(got / 1e3)}/${Math.round(size / 1e3)} KB`
 }
 
+export function plain(artist: string): string {
+  return artist.replace(/_\([^)]*\)?$/, '')
+}
+
 function dims(tile: Tile): Part {
-  return [`${tile.width}×${tile.height}`, Math.max(tile.width, tile.height) < SMALL ? YELLOW : D]
+  return [
+    `${tile.reduced ? '↓' : ''}${tile.width}×${tile.height}`,
+    Math.max(tile.width, tile.height) < SMALL ? YELLOW : D,
+  ]
 }
 
 interface Foot {
@@ -332,18 +378,44 @@ function frameBox(lines: Line[], r0: number, c0: number, h: number, w: number, s
   lines[r0 + h - 1]?.put(c0, `╰${'─'.repeat(w - 2)}╯`, sgr)
 }
 
-function badge(view: FindView): Part {
-  return [` ${view.site} `, `\x1b[7;${30 + view.siteAnsi}m`]
+function badge(view: FindView, label = view.site): Part {
+  return [` ${label} `, `\x1b[7;${30 + view.siteAnsi}m`]
+}
+
+function tabs(line: Line, cols: number, view: FindView): void {
+  const strip = SITES.flatMap((site, i): Part[] => {
+    const label = `${site.name}${site.moved ? '*' : ''}`
+    const tab: Part = site.name === view.site ? badge(view, label) : [` ${label} `, D]
+    return i ? [[' ', ''], tab] : [tab]
+  })
+  const fits = strip.reduce((n, [text]) => n + width(text), 0) <= cols
+  line.run(0, fits ? strip : [badge(view)])
 }
 
 function query(line: Line, cols: number, view: FindView, accent: string): void {
+  if (view.editing !== undefined) {
+    const c = line.run(0, [
+      ['⌕ ', accent],
+      [view.editing, ''],
+      ['█', accent],
+    ])
+    line.put(c, view.editing ? '  enter searches' : `  a tag, a post url or an id — ${view.tag || 'esc leaves'}`, D)
+    return
+  }
   const c = line.run(0, [
     ['⌕ ', accent],
-    [view.tag, ''],
+    [view.tag || 'nothing yet — / searches', view.tag ? '' : D],
   ])
-  line.put(c, `  ${view.preset}`, D)
+  const state = [
+    view.preset,
+    view.order,
+    ...(view.rating === 'safe' ? [] : [view.rating]),
+    ...(view.tags === 'allow' ? ['tags allowed'] : []),
+    ...(view.unblocked ? ['unblock'] : []),
+  ]
+  line.put(c, `  ${state.join('  ')}`, D)
   if (view.total > 0 || !view.searching) {
-    const counter: Part[] = [badge(view), [`  ${view.tiles.length}/${view.checked}`, '']]
+    const counter: Part[] = [[`${view.tiles.length}/${view.checked}`, '']]
     if (view.checked < view.total) {
       counter.push([` of ${view.total}`, D])
     }
@@ -358,11 +430,17 @@ function status(view: FindView): Part | undefined {
   if (view.error) {
     return [view.error, YELLOW]
   }
+  if (view.waiting !== undefined) {
+    return [`${view.site} asked to slow down · ${view.waiting}s`, YELLOW]
+  }
   if (view.fetching) {
     return [`fetching ${view.fetching.id} · ${progress(view.fetching.got, view.fetching.size)}`, YELLOW]
   }
   if (view.preparing !== undefined) {
     return [`preparing ${view.preparing}`, YELLOW]
+  }
+  if (view.note) {
+    return [view.note, D]
   }
   return undefined
 }
@@ -370,7 +448,7 @@ function status(view: FindView): Part | undefined {
 function grid(lines: Line[], images: Placement[], cols: number, rows: number, view: FindView, accent: string): void {
   const { perRow, rowsVis } = gridShape(cols, rows)
   query(lines[0] as Line, cols, view, accent)
-  lines[1]?.put(0, '─'.repeat(Math.min(48, cols)), D)
+  tabs(lines[1] as Line, cols, view)
   for (let k = 0; k < perRow * rowsVis; k++) {
     const i = view.top * perRow + k
     const tile = view.tiles[i]
@@ -390,6 +468,20 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
     if (tile.mates.length > 0) {
       lines[r0 + 10]?.put(c0 + TILE.cols, '≈', accent)
     }
+    const credit = tile.artist ? plain(tile.artist) : tile.owner && `@${tile.owner}`
+    if (credit) {
+      lines[r0 + 11]?.put(c0 + 1, credit.slice(0, TILE.cols - 8), D)
+    }
+    const marks: Part[] = []
+    if (tile.score > 0) {
+      marks.push([`★${tile.score}`, D])
+    }
+    if (tile.variants > 1) {
+      marks.push([` ×${tile.variants}`, accent])
+    }
+    if (marks.length > 0) {
+      lines[r0 + 11]?.right(c0 + TILE.cols + 1, marks)
+    }
   }
   const above = view.top * perRow
   const below = view.tiles.length - (view.top + rowsVis) * perRow
@@ -401,8 +493,8 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
     lines[3]?.put(
       0,
       view.preset === 'cutouts'
-        ? `no transparent cutouts of ${view.tag} on ${view.site} — tab searches every post, p tries ${view.nextSite}`
-        : `no posts of ${view.tag} on ${view.site} — p tries ${view.nextSite}`,
+        ? `no transparent cutouts of ${view.tag} on ${view.site} — c searches every post, tab tries ${view.nextSite}`
+        : `no posts of ${view.tag} on ${view.site} — tab tries ${view.nextSite}`,
       D,
     )
   }
@@ -422,8 +514,9 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
     keys: [
       ['←↑↓→', 'move'],
       ['enter', 'try on'],
-      ['tab', view.preset === 'cutouts' ? 'all' : 'cutouts'],
-      ['p', view.nextSite],
+      ['tab', 'site'],
+      ['s', 'settings'],
+      ['/', 'search'],
       ['?', 'keys'],
     ],
     right: ['esc', 'back'],
@@ -437,6 +530,12 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   }
   const shown = view.shown?.id === tile.id ? view.shown : undefined
   const meta: Part[] = [badge(view), ['  ', ''], [String(tile.id), B], ['  ', ''], dims(tile)]
+  if (tile.artist) {
+    meta.push([` · ${plain(tile.artist)}`, ''])
+  }
+  if (tile.score > 0) {
+    meta.push([` · ★${tile.score}`, D])
+  }
   if (shown) {
     meta.push([` · ${megabytes(shown.bytes)}`, D])
   }
@@ -478,17 +577,54 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
   grid: [
     ['move', '←↑↓→  home  end  pgup  pgdn'],
     ['try on', 'enter'],
-    ['posts', 'tab  cutouts or every post'],
-    ['site', `p  ${SITES.map((site) => site.name).join(', ')}`],
+    ['site', `tab  ${SITES.map((site) => site.name).join(', ')}`],
+    ['posts', 'c  cutouts or every post'],
+    ['search', '/  a tag, a post url or an id'],
+    ['unfold', 'space  a set of ×N'],
+    ['open', 'o  the post page in a browser'],
+    ['settings', 's  rating, tags, posts, order, sets'],
     ['back', 'esc returns to preview'],
     ['close', '?  esc'],
   ],
   try: [
     ['browse', '←→'],
     ['install', 'enter'],
+    ['open', 'o  the post page in a browser'],
     ['grid', 'esc'],
     ['close', '?  esc'],
   ],
+}
+
+function panel(lines: Line[], cols: number, rows: number, view: FindView, accent: string): void {
+  const at = view.panel ?? 0
+  const label = Math.max(...view.settings.map((row) => row.label.length))
+  const widest = Math.max(...view.settings.map((row) => row.choices.reduce((n, c) => n + c.length + 3, 0)))
+  const w = Math.min(cols - 2, Math.max(28, label + widest + 8))
+  const h = view.settings.length + 4
+  const x = Math.floor((cols - w) / 2)
+  const y = Math.max(2, Math.floor((rows - h) / 2))
+  lines[y]?.put(x, `╭─ settings ${'─'.repeat(Math.max(0, w - 13))}╮`)
+  for (let r = y + 1; r < y + h - 1; r++) {
+    lines[r]?.put(x, `│${' '.repeat(w - 2)}│`)
+  }
+  view.settings.forEach((row, i) => {
+    const line = lines[y + 2 + i] as Line
+    line.put(x + 3, row.label, i === at ? B : D)
+    let c = x + 5 + label
+    for (const choice of row.choices) {
+      c = line.put(c, ` ${choice} `, choice === row.value ? `\x1b[7;${30 + view.siteAnsi}m` : D) + 1
+    }
+  })
+  lines[y + h - 1]?.put(x, `╰${'─'.repeat(w - 2)}╯`)
+  foot(lines[rows - 1] as Line, cols, accent, {
+    badge: 'SET',
+    keys: [
+      ['↑↓', 'setting'],
+      ['←→', 'value'],
+      ['enter', 'save'],
+    ],
+    right: ['esc', 'undo'],
+  })
 }
 
 function help(lines: Line[], cols: number, rows: number, view: FindView, accent: string): void {
@@ -524,12 +660,16 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
   } else {
     grid(lines, images, cols, rows, view, accent)
   }
-  if (view.help) {
+  if (view.help || view.panel !== undefined) {
     const keep = view.mode === 'try' ? images : []
     for (let r = 0; r < rows; r++) {
       lines[r] = new Line(cols)
     }
-    help(lines, cols, rows, view, accent)
+    if (view.help) {
+      help(lines, cols, rows, view, accent)
+    } else {
+      panel(lines, cols, rows, view, accent)
+    }
     return { lines: lines.map((l) => l.render()), images: keep }
   }
   return { lines: lines.map((l) => l.render()), images }

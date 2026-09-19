@@ -178,28 +178,65 @@ rather than the palette painted on one tab.
 A palette with no background yet can find one: on it in `preview`, tab opens
 **find**, which searches a booru for the palette's character tag
 (`meta.booru`) and lays the results out as a grid of thumbnails. It starts on
-safebooru; `p` moves to yande.re, then konachan, then back — the three share
-one tag vocabulary, so the same tag works on each. The site you are on sits in
-a colored badge at the top right, and again at the start of the line above a
-picture you try on, next to the site the artwork itself came from when the post
-records one (`pixiv.net`, `deviantart.com`). The grid starts
+safebooru; tab moves to yande.re, then konachan, then danbooru, then back — they
+share one tag vocabulary, so the same tag works on each, and danbooru here is
+`safebooru.donmai.us`, the mirror that carries general-rated posts only. The
+sites sit in a strip of tabs under the query, the one you are on lit in its own
+color, and it comes again as a badge at the start of the line above a picture
+you try on, next to the site the artwork itself came from when the post records
+one (`pixiv.net`, `deviantart.com`). The grid starts
 with **cutouts** — posts carrying the site's transparency tags
 (`transparent_background` or `vector_trace` on safebooru, `transparent_png` on
-yande.re, `transparent` or `vector` on konachan) whose PNG header says they have
+yande.re, `transparent` or `vector` on konachan, `transparent_background` on
+danbooru) whose PNG header says they have
 an alpha channel; yande.re's `transparent_png` already means exactly that, so
 its posts skip the header check, which its slow file server would drag out —
-and the counter reads shown out of checked, `13/33`. Pictures by the uploader of the backgrounds you already have
-in the same series come first and carry `≈`, so a series keeps one hand;
-anything under 1600 px on its long edge shows its size in yellow. Enter tries
-the picture on: ttheme downloads the original and paints the whole window with
-it the way the installed background will look — tinted with the palette,
-cropped with headroom above the face, at the opacity the contrast gate allows —
-over a sample of shell output, with the share of transparent pixels next to its
-size (`opaque` when there are none). `←`/`→` try the neighbours, enter installs,
-and the preview carries on straight into the tuning panel below. Tab switches to
+and the counter reads shown out of checked, `13/33`. find checks only as far as
+the grid reaches and checks more as you scroll; each answer is remembered, so
+coming back to a site or a palette never asks its file server again, and a site
+you have already seen comes back the moment you tab to it.
+
+Under each thumbnail is its post id and size, and under that whoever made it:
+the artist where the site names one — yande.re, konachan and danbooru answer
+with the tag types, so it costs no extra request — and the uploader as
+`@name` where it does not, which is every safebooru post. A score follows as
+`★22` on the sites that keep one. When the same hand uploads the same picture at
+the same size over and over, find folds that run into one tile marked `×9`;
+space unfolds it and folds it again. Pictures by the uploader of the backgrounds
+you already have in the same series come first and carry `≈`, so a series keeps
+one hand; anything under 1600 px on its long edge shows its size in yellow.
+
+`s` opens the settings — rating, the nudity and underwear tags, cutouts or
+all, newest or score, and whether runs fold — with ↑↓ on the setting, ←→ on the
+value, enter to save them to `config.zsh` and esc to put them back. Whatever is
+not the default shows next to the query, so the screen never hides what it is
+filtering by.
+
+`/` opens the query for editing — type a tag to search for something else, or paste a post url or id
+(`https://yande.re/post/show/214705`, `konachan:244200`, `7159377`) to go
+straight to that one picture. A palette with no `meta.booru` tag at all opens
+find on that empty query, so it can have a background too. `o` opens the post's
+page in a browser.
+
+Enter tries the picture on: ttheme downloads the original and paints the whole
+window with it the way the installed background will look — tinted with the
+palette, cropped with headroom above the face, at the opacity the contrast gate
+allows — over a sample of shell output, with the share of transparent pixels
+next to its size (`opaque` when there are none). A post over 25 megapixels is
+fetched as the site's own smaller copy instead — up to 3500 px on yande.re and
+konachan, 850 px on safebooru and danbooru — and its size carries `↓`; those
+copies are JPEGs, so a cutout tried on that way comes out opaque. `←`/`→` try
+the neighbours, which find fetches ahead of you two at a time, enter installs,
+and the preview carries on straight into the tuning panel below. `c` switches to
 every post of the character, esc goes back. Only `safe` and `general` posts are
-ever shown — yande.re and konachan are always asked for `rating:s`, whatever
-else is searched — and downloads stay in `~/.cache/ttheme/<site>/`. ttheme keeps no
+ever shown, and none tagged with nudity or underwear (`nude`, `panties` and each
+site's own spelling of them) — yande.re and konachan are always asked for
+`rating:s`, whatever else is searched. danbooru takes only two tags from a
+signed-out search, so on it a cutout search leaves the score order out and says
+so. Thumbnails and header checks stay in
+`~/.cache/ttheme/<site>/`; the pictures you try on last only while find is open.
+When a site asks ttheme to slow down, find waits as long as it names, up to a
+minute, with a countdown at the bottom. ttheme keeps no
 list of images — the tag is all it knows about a character.
 
 An install writes `<palette>.png` (the tinted figure), `<palette>@fill-<focus>.png`
@@ -279,6 +316,13 @@ still wins:
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
 | `TTHEME_SORT` | `abc` | `series` lists series and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |
+| `TTHEME_FIND_RATING` | `safe` | how far `find` goes: `safe` keeps to what each booru calls safe, `questionable` and `all` step past that. Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe). The level shows next to the query whenever it is not `safe` |
+| `TTHEME_FIND_TAGS` | `block` | posts tagged with nudity or underwear (`nude`, `panties` and each site's own spelling): `block` drops them, `allow` keeps them |
+| `TTHEME_FIND_POSTS` | `cutouts` | what `find` opens on — the transparent cutouts or every post of the character |
+| `TTHEME_FIND_ORDER` | `newest` | the order `find` lists posts in — `newest` or `score` |
+| `TTHEME_FIND_SETS` | `fold` | a run of the same picture at the same size from one uploader: `fold` shows it as one tile marked `×N`, `show` lists every one |
+| `TTHEME_FIND_UNBLOCK` | `0` | `1` sends `find`'s own requests through a proxy it runs on `127.0.0.1`, which splits the TLS handshake across two records so a network that blocks boorus by hostname cannot read the name. It is not a VPN: the address you reach is unchanged and nothing else on the machine is affected. Needs node 22.21 or newer, and the query line says `unblock` while it is on |
+| `TTHEME_FIND_HOSTS` | — | send a `find` site somewhere else, as `key=https://host` pairs (`konachan=https://konachan.com danbooru=https://danbooru.donmai.us`). The tab keeps its name and carries `*`. ttheme ships the safe mirrors only; the hosts that serve everything are yours to name, and plenty of networks block them |
 
 ## The catalog
 

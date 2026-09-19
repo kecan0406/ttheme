@@ -6,7 +6,7 @@ import { listed, type PaletteEntry, paletteEntry } from './manifest.ts'
 
 export function palettesZsh(palettes: PaletteEntry[]): string {
   for (const p of palettes) {
-    for (const field of [p.name, p.group, p.native ?? '', p.ansiSource, p.booru ?? '']) {
+    for (const field of [p.name, p.group, p.native ?? '', p.ansiSource]) {
       if (/["$`\\]/.test(field)) {
         throw new Error(`${p.name}: "${field}" contains a character that breaks zsh quoting`)
       }
@@ -49,11 +49,6 @@ export function palettesZsh(palettes: PaletteEntry[]): string {
     "# where each palette's 16 ANSI colors came from",
     'typeset -gA TTHEME_SRC=(',
     ...palettes.map((p) => entry(p, p.ansiSource)),
-    ')',
-    '',
-    '# the safebooru tag preview searches when a palette has no background yet',
-    'typeset -gA TTHEME_BOORU=(',
-    ...palettes.filter((p) => p.booru).map((p) => entry(p, p.booru ?? '')),
     ')',
     '',
   ].join('\n')

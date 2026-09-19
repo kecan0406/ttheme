@@ -36,12 +36,21 @@ export function decodePng(bytes: Uint8Array): Rgba {
   return { width: png.width, height: png.height, data: new Uint8Array(png.data) }
 }
 
-export function decodeImage(bytes: Uint8Array): Rgba {
+export function decodeImage(bytes: Uint8Array, limit: number): Rgba {
   if (isPng(bytes)) {
+    const head = pngHead(bytes)
+    if (head && head.width * head.height > limit) {
+      throw new Error(`${head.width}×${head.height} is over ${limit / 1e6} megapixels`)
+    }
     return decodePng(bytes)
   }
   if (bytes[0] === 0xff && bytes[1] === 0xd8) {
-    const jpeg = decodeJpegData(bytes, { useTArray: true, formatAsRGBA: true, maxMemoryUsageInMB: 1024 })
+    const jpeg = decodeJpegData(bytes, {
+      useTArray: true,
+      formatAsRGBA: true,
+      maxResolutionInMP: limit / 1e6,
+      maxMemoryUsageInMB: 1024,
+    })
     return { width: jpeg.width, height: jpeg.height, data: jpeg.data }
   }
   throw new Error('not a PNG or JPEG image')
@@ -84,9 +93,8 @@ export function pngHead(bytes: Uint8Array): { width: number; height: number; alp
   if (bytes[25] === 4 || bytes[25] === 6) {
     return { width, height, alpha: true }
   }
-  const trns = find(bytes, 'tRNS')
   const idat = find(bytes, 'IDAT')
-  return { width, height, alpha: trns !== -1 && (idat === -1 || trns < idat) }
+  return { width, height, alpha: find(idat === -1 ? bytes : bytes.subarray(0, idat), 'tRNS') !== -1 }
 }
 
 export function alphaBox(image: Rgba, threshold = CLEAR): Box | null {

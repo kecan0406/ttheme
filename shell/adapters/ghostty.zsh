@@ -398,7 +398,7 @@ __tt_pv_bg_state() {
 }
 
 __tt_pv_bg_findable() {
-  (( bgcw )) && [[ -n ${TTHEME_BOORU[$1]} ]]
+  (( bgcw ))
 }
 
 __tt_pv_bg_find() {

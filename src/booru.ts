@@ -1,42 +1,83 @@
+import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import pkg from '../package.json' with { type: 'json' }
 import { pngHead } from './png.ts'
 
 export const PAGE = 100
+export const MAX_PIXELS = 25_000_000
 
-const SAFE = new Set(['safe', 'general', 's', 'g'])
+export type Rating = 'safe' | 'questionable' | 'all'
+
+const LEVELS: Rating[] = ['safe', 'questionable', 'all']
+
+const EXPOSED = new Set([
+  'nude',
+  'naked',
+  'topless',
+  'bottomless',
+  'nipples',
+  'naked_towel',
+  'underwear',
+  'panties',
+  'pantsu',
+  'bra',
+  'lingerie',
+  'pantyshot',
+  'undressing',
+])
 const MIRRORS = new Set(['danbooru', 'gelbooru', 'konachan', 'yande.re', 'sankaku'])
 const HEAD = 8191
 const TIMEOUT = 20_000
+const CONNECT = 3_000
+const MAX_WAIT = 60_000
+const TRIES = 3
 const AGENT = `ttheme/${pkg.version} (+${pkg.homepage})`
 
-export interface Post {
-  id: number
+const paused = new Map<string, number>()
+const HOSTS = hostMap(process.env.TTHEME_FIND_HOSTS)
+
+setDefaultAutoSelectFamilyAttemptTimeout(CONNECT)
+
+export interface Rendition {
+  file: string
   width: number
   height: number
-  file: string
-  preview: string
   ext: string
+}
+
+export interface Post extends Rendition {
+  id: number
+  preview: string
   owner: string
+  artist: string
+  score: number
   rating: string
   md5: string
   source: string
   tags: string[]
+  smaller: Rendition[]
 }
 
 export interface Site {
   key: string
   name: string
   origin: string
+  moved: boolean
   cutouts: string
+  best: string
+  tagBudget: number
   vouched: boolean
   ansi: number
+  ratings: Record<Rating, Set<string>>
+  rate(level: Rating): string
   postsUrl(tags: string, page: number): string
   countUrl(tags: string): string
   postUrl(id: number): string
   pageUrl(id: number): string
   parse(text: string): Post[]
+  count(text: string): number
 }
 
 function absolute(url: string): string {
@@ -53,29 +94,59 @@ function records(text: string): Record<string, unknown>[] {
     return []
   }
   const raw: unknown = JSON.parse(body)
-  return Array.isArray(raw) ? (raw as Record<string, unknown>[]) : []
+  if (Array.isArray(raw)) {
+    return raw as Record<string, unknown>[]
+  }
+  const posts = (raw as { posts?: unknown }).posts
+  return Array.isArray(posts) ? (posts as Record<string, unknown>[]) : []
 }
 
-function post(p: Record<string, unknown>, file: string, ext: string, owner: unknown, md5: unknown): Post[] {
-  const preview = absolute(String(p.preview_url ?? ''))
-  if (!file || !preview || !Number(p.id)) {
+function tagTypes(text: string): Map<string, string> {
+  const body = text.trim()
+  const raw: unknown = body ? JSON.parse(body) : {}
+  const tags = (raw as { tags?: Record<string, unknown> }).tags ?? {}
+  return new Map(Object.entries(tags).map(([name, type]) => [name, String(type)]))
+}
+
+function version(url: unknown, width: unknown, height: unknown): Rendition {
+  const file = absolute(String(url ?? ''))
+  return { file, width: Number(width) || 0, height: Number(height) || 0, ext: extension(file) }
+}
+
+interface Raw {
+  preview: unknown
+  file: string
+  ext: string
+  owner: unknown
+  artist: string
+  md5: unknown
+  tags: string
+  versions: Rendition[]
+}
+
+function post(p: Record<string, unknown>, raw: Raw): Post[] {
+  const preview = absolute(String(raw.preview ?? ''))
+  if (!raw.file || !preview || !Number(p.id)) {
     return []
   }
+  const width = Number(p.width ?? p.image_width) || 0
+  const height = Number(p.height ?? p.image_height) || 0
   return [
     {
       id: Number(p.id),
-      width: Number(p.width) || 0,
-      height: Number(p.height) || 0,
-      file,
+      width,
+      height,
+      file: raw.file,
       preview,
-      ext,
-      owner: String(owner ?? ''),
+      ext: raw.ext,
+      owner: String(raw.owner ?? ''),
+      artist: raw.artist,
+      score: Number(p.score) || 0,
       rating: String(p.rating ?? ''),
-      md5: String(md5 ?? ''),
+      md5: String(raw.md5 ?? ''),
       source: String(p.source ?? ''),
-      tags: String(p.tags ?? '')
-        .split(/\s+/)
-        .filter(Boolean),
+      tags: raw.tags.split(/\s+/).filter(Boolean),
+      smaller: raw.versions.filter((v) => v.file && v.width > 0 && v.height > 0 && v.width * v.height < width * height),
     },
   ]
 }
@@ -84,14 +155,57 @@ export function parseGelbooru(text: string, origin = 'https://safebooru.org'): P
   return records(text).flatMap((p) => {
     const stored = p.directory && p.image ? `${origin}/images/${p.directory}/${p.image}` : ''
     const file = absolute(String(p.file_url || stored))
-    return post(p, file, extension(file), p.owner, p.hash ?? p.md5)
+    return post(p, {
+      preview: p.preview_url,
+      file,
+      ext: extension(file),
+      owner: p.owner,
+      artist: '',
+      md5: p.hash ?? p.md5,
+      tags: String(p.tags ?? ''),
+      versions: [version(p.sample_url, p.sample_width, p.sample_height)],
+    })
   })
 }
 
 export function parseMoebooru(text: string): Post[] {
+  const types = tagTypes(text)
   return records(text).flatMap((p) => {
     const file = absolute(String(p.file_url ?? ''))
-    return post(p, file, String(p.file_ext || extension(file)).toLowerCase(), p.author, p.md5)
+    const tags = String(p.tags ?? '')
+    return post(p, {
+      preview: p.preview_url,
+      file,
+      ext: String(p.file_ext || extension(file)).toLowerCase(),
+      owner: p.author,
+      artist: tags.split(/\s+/).find((tag) => types.get(tag) === 'artist') ?? '',
+      md5: p.md5,
+      tags,
+      versions: [
+        version(p.jpeg_url, p.jpeg_width, p.jpeg_height),
+        version(p.sample_url, p.sample_width, p.sample_height),
+      ],
+    })
+  })
+}
+
+export function parseDanbooru(text: string): Post[] {
+  return records(text).flatMap((p) => {
+    const file = absolute(String(p.file_url ?? ''))
+    const asset = (p.media_asset ?? {}) as { variants?: { type: string; width: number; height: number; url: string }[] }
+    return post(p, {
+      preview: p.preview_file_url,
+      file,
+      ext: String(p.file_ext || extension(file)).toLowerCase(),
+      owner: '',
+      artist: String(p.tag_string_artist ?? '').split(/\s+/)[0] ?? '',
+      md5: p.md5,
+      tags: String(p.tag_string ?? ''),
+      versions: (asset.variants ?? [])
+        .map((v) => version(v.url, v.width, v.height))
+        .filter((v) => v.ext === 'jpg' || v.ext === 'png')
+        .sort((a, b) => b.width * b.height - a.width * a.height),
+    })
   })
 }
 
@@ -99,50 +213,170 @@ export function parseCount(xml: string): number {
   return Number(/count="(\d+)"/.exec(xml)?.[1] ?? 0)
 }
 
-function gelbooru(key: string, name: string, origin: string, cutouts: string, vouched: boolean, ansi: number): Site {
-  const api = (params: Record<string, string>) =>
-    `${origin}/index.php?${new URLSearchParams({ page: 'dapi', s: 'post', q: 'index', ...params })}`
+export function parseCounts(text: string): number {
+  const raw: unknown = text.trim() ? JSON.parse(text) : {}
+  return Number((raw as { counts?: { posts?: unknown } }).counts?.posts) || 0
+}
+
+interface Spec {
+  key: string
+  name: string
+  origin: string
+  cutouts: string
+  vouched: boolean
+  ansi: number
+}
+
+export function hostMap(spec: string | undefined): Map<string, string> {
+  const hosts = new Map<string, string>()
+  for (const entry of (spec ?? '').split(/[\s,]+/).filter(Boolean)) {
+    const at = entry.indexOf('=')
+    const key = entry.slice(0, at)
+    try {
+      const url = new URL(entry.slice(at + 1))
+      if (key && url.protocol === 'https:') {
+        hosts.set(key, url.origin)
+      }
+    } catch {}
+  }
+  return hosts
+}
+
+export function ratingLevel(value: string | undefined): Rating {
+  return LEVELS.find((level) => level === value) ?? 'safe'
+}
+
+function ladder(steps: string[][]): Record<Rating, Set<string>> {
   return {
-    key,
-    name,
-    origin,
-    cutouts,
-    vouched,
-    ansi,
-    postsUrl: (tags, page) => api({ json: '1', limit: String(PAGE), pid: String(page), tags }),
-    countUrl: (tags) => api({ limit: '0', tags }),
-    postUrl: (id) => api({ json: '1', id: String(id) }),
-    pageUrl: (id) => `${origin}/index.php?page=post&s=view&id=${id}`,
-    parse: (text) => parseGelbooru(text, origin),
+    safe: new Set(steps[0]),
+    questionable: new Set(steps.slice(0, 2).flat()),
+    all: new Set(steps.flat()),
   }
 }
 
-function moebooru(key: string, name: string, origin: string, cutouts: string, vouched: boolean, ansi: number): Site {
-  const safe = (tags: string) => `${tags} rating:s`
+function based(spec: Spec): Spec & { moved: boolean } {
+  const origin = HOSTS.get(spec.key)
+  return { ...spec, origin: origin ?? spec.origin, moved: origin !== undefined && origin !== spec.origin }
+}
+
+function gelbooru(raw: Spec): Site {
+  const spec = based(raw)
+  const api = (params: Record<string, string>) =>
+    `${spec.origin}/index.php?${new URLSearchParams({ page: 'dapi', s: 'post', q: 'index', ...params })}`
   return {
-    key,
-    name,
-    origin,
-    cutouts,
-    vouched,
-    ansi,
+    ...spec,
+    ratings: ladder([['safe', 'general'], ['questionable'], ['explicit']]),
+    rate: () => '',
+    best: 'sort:score:desc',
+    tagBudget: Number.POSITIVE_INFINITY,
+    postsUrl: (tags, page) => api({ json: '1', limit: String(PAGE), pid: String(page), tags }),
+    countUrl: (tags) => api({ limit: '0', tags }),
+    postUrl: (id) => api({ json: '1', id: String(id) }),
+    pageUrl: (id) => `${spec.origin}/index.php?page=post&s=view&id=${id}`,
+    parse: (text) => parseGelbooru(text, spec.origin),
+    count: parseCount,
+  }
+}
+
+function moebooru(raw: Spec): Site {
+  const spec = based(raw)
+  const params = (rest: Record<string, string>) => new URLSearchParams({ api_version: '2', include_tags: '1', ...rest })
+  return {
+    ...spec,
+    ratings: ladder([['s'], ['q'], ['e']]),
+    rate: (level) => (level === 'safe' ? 'rating:s' : level === 'questionable' ? '-rating:e' : ''),
+    best: 'order:score',
+    tagBudget: Number.POSITIVE_INFINITY,
     postsUrl: (tags, page) =>
-      `${origin}/post.json?${new URLSearchParams({ limit: String(PAGE), page: String(page + 1), tags: safe(tags) })}`,
-    countUrl: (tags) => `${origin}/post.xml?${new URLSearchParams({ limit: '1', tags: safe(tags) })}`,
-    postUrl: (id) => `${origin}/post.json?${new URLSearchParams({ tags: `id:${id}` })}`,
-    pageUrl: (id) => `${origin}/post/show/${id}`,
+      `${spec.origin}/post.json?${params({ limit: String(PAGE), page: String(page + 1), tags })}`,
+    countUrl: (tags) => `${spec.origin}/post.xml?${new URLSearchParams({ limit: '1', tags })}`,
+    postUrl: (id) => `${spec.origin}/post.json?${params({ tags: `id:${id}` })}`,
+    pageUrl: (id) => `${spec.origin}/post/show/${id}`,
     parse: parseMoebooru,
+    count: parseCount,
+  }
+}
+
+function danbooru(raw: Spec): Site {
+  const spec = based(raw)
+  return {
+    ...spec,
+    ratings: ladder([['g'], ['s', 'q'], ['e']]),
+    rate: () => '',
+    best: 'order:score',
+    tagBudget: 2,
+    postsUrl: (tags, page) =>
+      `${spec.origin}/posts.json?${new URLSearchParams({ limit: String(PAGE), page: String(page + 1), tags })}`,
+    countUrl: (tags) => `${spec.origin}/counts/posts.json?${new URLSearchParams({ tags })}`,
+    postUrl: (id) => `${spec.origin}/posts.json?${new URLSearchParams({ limit: '1', tags: `id:${id}` })}`,
+    pageUrl: (id) => `${spec.origin}/posts/${id}`,
+    parse: parseDanbooru,
+    count: parseCounts,
   }
 }
 
 export function siteNamed(name: string): Site | undefined {
-  return SITES.find((site) => site.name === name || new URL(site.origin).host === name)
+  return SITES.find((site) => site.key === name || site.name === name || new URL(site.origin).host === name)
+}
+
+export function tagsOf(query: string): number {
+  return query.split(/\s+/).filter(Boolean).length
+}
+
+export function postRef(text: string, fallback: Site): { site: Site; id: number } | undefined {
+  const query = text.trim()
+  if (/^\d+$/.test(query)) {
+    return { site: fallback, id: Number(query) }
+  }
+  const named = /^([\w.]+):(\d+)$/.exec(query)
+  if (named) {
+    const site = SITES.find((s) => s.key === named[1] || s.name === named[1])
+    return site && { site, id: Number(named[2]) }
+  }
+  let url: URL
+  try {
+    url = new URL(query)
+  } catch {
+    return undefined
+  }
+  const site = siteNamed(url.host)
+  const id = Number(url.searchParams.get('id') ?? url.pathname.split('/').filter(Boolean).at(-1))
+  return site && id > 0 ? { site, id } : undefined
 }
 
 export const SITES: Site[] = [
-  gelbooru('safebooru', 'safebooru', 'https://safebooru.org', '( transparent_background ~ vector_trace )', false, 4),
-  moebooru('yande', 'yande.re', 'https://yande.re', 'transparent_png', true, 5),
-  moebooru('konachan', 'konachan', 'https://konachan.net', '~transparent ~vector', false, 6),
+  gelbooru({
+    key: 'safebooru',
+    name: 'safebooru',
+    origin: 'https://safebooru.org',
+    cutouts: '( transparent_background ~ vector_trace )',
+    vouched: false,
+    ansi: 4,
+  }),
+  moebooru({
+    key: 'yande',
+    name: 'yande.re',
+    origin: 'https://yande.re',
+    cutouts: 'transparent_png',
+    vouched: true,
+    ansi: 5,
+  }),
+  moebooru({
+    key: 'konachan',
+    name: 'konachan',
+    origin: 'https://konachan.net',
+    cutouts: '~transparent ~vector',
+    vouched: false,
+    ansi: 6,
+  }),
+  danbooru({
+    key: 'danbooru',
+    name: 'danbooru',
+    origin: 'https://safebooru.donmai.us',
+    cutouts: 'transparent_background',
+    vouched: false,
+    ansi: 2,
+  }),
 ]
 
 export function originHost(source: string): string {
@@ -155,8 +389,20 @@ export function originHost(source: string): string {
   return host.split('.').slice(-2).join('.')
 }
 
-export function safe(post: Pick<Post, 'rating'>): boolean {
-  return SAFE.has(post.rating)
+export function exposed(post: Pick<Post, 'tags'>): string[] {
+  return post.tags.filter((tag) => EXPOSED.has(tag))
+}
+
+export function rated(site: Site, post: Pick<Post, 'rating'>, level: Rating = 'safe'): boolean {
+  return site.ratings[level].has(post.rating)
+}
+
+export function rendition(post: Post): Rendition | undefined {
+  return [post, ...post.smaller].find((v) => v.width * v.height <= MAX_PIXELS)
+}
+
+export function mirrored(owner: string): boolean {
+  return MIRRORS.has(owner)
 }
 
 export function mates(owners: ReadonlyMap<string, string>): Map<string, string[]> {
@@ -174,6 +420,25 @@ export function cacheDir(site: Site): string {
   return join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), 'ttheme', site.key)
 }
 
+export function retryAfter(value: string | null, now: number): number {
+  if (value !== null && /^\s*\d+\s*$/.test(value)) {
+    return Number(value) * 1000
+  }
+  const at = value === null ? Number.NaN : Date.parse(value)
+  return Number.isNaN(at) ? MAX_WAIT : Math.max(0, at - now)
+}
+
+export function pausedUntil(site: Site): number {
+  return paused.get(site.key) ?? 0
+}
+
+function challenged(response: Response): boolean {
+  return (
+    (response.headers.get('server') ?? '').startsWith('cloudflare') &&
+    response.headers.get('cf-mitigated') === 'challenge'
+  )
+}
+
 async function get(
   site: Site,
   url: string,
@@ -181,14 +446,34 @@ async function get(
   headers: Record<string, string> = {},
   timeout = TIMEOUT,
 ) {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': AGENT, Referer: `${site.origin}/`, ...headers },
-    signal: timeout ? AbortSignal.any([signal, AbortSignal.timeout(timeout)]) : signal,
-  })
-  if (!response.ok) {
-    throw new Error(`${site.name} answered ${response.status}`)
+  for (let tries = 1; ; tries++) {
+    const wait = pausedUntil(site) - Date.now()
+    if (wait > 0) {
+      await sleep(wait, undefined, { signal })
+    }
+    const response = await fetch(url, {
+      headers: { 'User-Agent': AGENT, Referer: `${site.origin}/`, ...headers },
+      signal: timeout ? AbortSignal.any([signal, AbortSignal.timeout(timeout)]) : signal,
+    })
+    if (response.status === 429 && tries < TRIES) {
+      await response.body?.cancel()
+      const delay = retryAfter(response.headers.get('retry-after'), Date.now())
+      if (delay > MAX_WAIT) {
+        throw new Error(`${site.name} asks to wait ${Math.ceil(delay / 1000)}s`)
+      }
+      paused.set(site.key, Math.max(pausedUntil(site), Date.now() + delay))
+      continue
+    }
+    if (!response.ok) {
+      await response.body?.cancel()
+      throw new Error(
+        challenged(response)
+          ? `${site.name} is behind a Cloudflare challenge`
+          : `${site.name} answered ${response.status}`,
+      )
+    }
+    return response
   }
-  return response
 }
 
 export async function fetchPosts(site: Site, tags: string, page: number, signal: AbortSignal): Promise<Post[]> {
@@ -196,7 +481,7 @@ export async function fetchPosts(site: Site, tags: string, page: number, signal:
 }
 
 export async function fetchCount(site: Site, tags: string, signal: AbortSignal): Promise<number> {
-  return parseCount(await (await get(site, site.countUrl(tags), signal)).text())
+  return site.count(await (await get(site, site.countUrl(tags), signal)).text())
 }
 
 export async function fetchPost(site: Site, id: number, signal: AbortSignal): Promise<Post | undefined> {

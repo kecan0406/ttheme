@@ -73,6 +73,34 @@ const CONFIG_SETTINGS = {
     doc: '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
     default: 'abc',
   },
+  TTHEME_FIND_RATING: {
+    doc: '# how far find goes: safe, questionable or all, each booru read in its own rating vocabulary (default safe)',
+    default: 'safe',
+  },
+  TTHEME_FIND_TAGS: {
+    doc: '# posts tagged with nudity or underwear: block drops them, allow keeps them (default block)',
+    default: 'block',
+  },
+  TTHEME_FIND_POSTS: {
+    doc: '# what find lists first: cutouts are the transparent ones, all is every post of the character (default cutouts)',
+    default: 'cutouts',
+  },
+  TTHEME_FIND_ORDER: {
+    doc: '# the order find lists posts in: newest or score (default newest)',
+    default: 'newest',
+  },
+  TTHEME_FIND_SETS: {
+    doc: '# runs of the same picture at the same size from one uploader: fold shows them as one tile, show lists each (default fold)',
+    default: 'fold',
+  },
+  TTHEME_FIND_UNBLOCK: {
+    doc: '# when a network blocks a booru by name, 1 sends find through a local proxy that splits the TLS handshake (default 0)',
+    default: '0',
+  },
+  TTHEME_FIND_HOSTS: {
+    doc: '# send a find site somewhere else, as key=https://host pairs — e.g. "konachan=https://konachan.com danbooru=https://danbooru.donmai.us" (default none)',
+    default: '',
+  },
 } as const
 
 function settingLine(name: string, value: string): string {
@@ -94,6 +122,15 @@ function ensureSetting(content: string, name: keyof typeof CONFIG_SETTINGS): str
 export function configTemplate(): string {
   const sections = Object.entries(CONFIG_SETTINGS).map(([name, s]) => `${s.doc}\n${settingLine(name, s.default)}`)
   return `${[CONFIG_HEADER, ...sections].join('\n\n')}\n`
+}
+
+export function withSetting(content: string, name: string, value: string): string {
+  const line = settingLine(name, value)
+  const pattern = settingPattern(name)
+  if (pattern.test(content)) {
+    return content.replace(pattern, line)
+  }
+  return `${content.replace(/\n*$/, '\n')}\n${line}\n`
 }
 
 export function configFile(content: string): string {

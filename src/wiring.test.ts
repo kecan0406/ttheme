@@ -9,6 +9,7 @@ import {
   ghosttyBlock,
   kittyBlock,
   upsertBlock,
+  withSetting,
   zshrcBlock,
 } from './wiring.ts'
 
@@ -75,6 +76,27 @@ test('configFile seeds the template with every default spelled out', () => {
       '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
       ': ${TTHEME_SORT:=abc}',
       '',
+      '# how far find goes: safe, questionable or all, each booru read in its own rating vocabulary (default safe)',
+      ': ${TTHEME_FIND_RATING:=safe}',
+      '',
+      '# posts tagged with nudity or underwear: block drops them, allow keeps them (default block)',
+      ': ${TTHEME_FIND_TAGS:=block}',
+      '',
+      '# what find lists first: cutouts are the transparent ones, all is every post of the character (default cutouts)',
+      ': ${TTHEME_FIND_POSTS:=cutouts}',
+      '',
+      '# the order find lists posts in: newest or score (default newest)',
+      ': ${TTHEME_FIND_ORDER:=newest}',
+      '',
+      '# runs of the same picture at the same size from one uploader: fold shows them as one tile, show lists each (default fold)',
+      ': ${TTHEME_FIND_SETS:=fold}',
+      '',
+      '# when a network blocks a booru by name, 1 sends find through a local proxy that splits the TLS handshake (default 0)',
+      ': ${TTHEME_FIND_UNBLOCK:=0}',
+      '',
+      '# send a find site somewhere else, as key=https://host pairs — e.g. "konachan=https://konachan.com danbooru=https://danbooru.donmai.us" (default none)',
+      ': ${TTHEME_FIND_HOSTS:=}',
+      '',
     ].join('\n'),
   )
 })
@@ -100,5 +122,19 @@ test('kitty and alacritty blocks reference the chosen palette', () => {
   assert.equal(
     alacrittyBlock('/cfg/alacritty/themes/miku.toml'),
     '[general]\nimport = ["/cfg/alacritty/themes/miku.toml"]',
+  )
+})
+
+test('withSetting rewrites the line a setting already has, and adds one when it is missing', () => {
+  const file = configTemplate()
+  const changed = withSetting(file, 'TTHEME_FIND_RATING', 'questionable')
+  assert.match(changed, /: \$\{TTHEME_FIND_RATING:=questionable\}/)
+  assert.equal(changed.split('TTHEME_FIND_RATING').length - 1, 1)
+  assert.equal(changed.replace(':=questionable}', ':=safe}'), file)
+  const added = withSetting('# mine\n', 'TTHEME_FIND_TAGS', 'allow')
+  assert.equal(added, '# mine\n\n: ${TTHEME_FIND_TAGS:=allow}\n')
+  assert.match(
+    withSetting('#: ${TTHEME_FIND_SETS:=fold}\n', 'TTHEME_FIND_SETS', 'show'),
+    /^: \$\{TTHEME_FIND_SETS:=show\}\n$/,
   )
 })
