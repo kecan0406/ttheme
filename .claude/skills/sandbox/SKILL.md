@@ -5,7 +5,7 @@ description: Drive ttheme for real inside the throwaway sandbox (`mise run sandb
 
 # Driving the ttheme sandbox
 
-`mise run sandbox` rebuilds, then wires this checkout into a throwaway home at `$TMPDIR/ttheme-sandbox` exactly as `init` would for a new user — wiped on every run, left in place afterwards. The two scripts here drive it and hand back evidence (screens, measured colors, reload counts, a screenshot) so a runtime claim rests on something observed.
+`mise run sandbox` rebuilds, then wires this checkout into a throwaway home at `$TMPDIR/ttheme-sandbox` exactly as `init` would for a new user and installs every palette on top — wiped on every run, left in place afterwards. The two scripts here drive it and hand back evidence (screens, measured colors, reload counts, a screenshot) so a runtime claim rests on something observed.
 
 ## Is this a runtime question?
 
@@ -25,6 +25,7 @@ A flow that needs both — "keep from preview, then does only this Ghostty reloa
 ```zsh
 S=.claude/skills/sandbox/scripts/shell.zsh
 zsh $S start gojo konata          # build, wire, install these palettes, print the first screen
+                                  # no palettes installs all of them; --empty none (init's new-user state)
 zsh $S send 'ttheme list' Enter   # tmux key names; prints the screen once it settles
 zsh $S send Down Right Enter
 zsh $S show -e                    # current screen with SGR colors — shows which option is highlighted
@@ -42,7 +43,7 @@ G=.claude/skills/sandbox/scripts/ghostty.zsh
 zsh $G --shot <scratchpad>/paint.png gojo konata -- 'ttheme gojo' 'sb_report "fg $(sb_color fg) ansi1 $(sb_color 1)"'
 ```
 
-The script starts a fresh sandbox with those palettes and opens a second Ghostty instance on it — its own config only, no saved window state — then hands focus back to whatever the user had in front as soon as the window exists. The commands after `--` run once, at the first prompt of that first window. Then it prints the results and closes the instance; `--keep` leaves it open. Anything longer than a line or two goes in a file in the scratchpad, passed as `-- "source <file>"`; the arguments are joined with `; ` and nested quotes get painful fast.
+The script starts a fresh sandbox with those palettes (every palette when none are named, none with `--empty`) and opens a second Ghostty instance on it — its own config only, no saved window state — then hands focus back to whatever the user had in front as soon as the window exists. The commands after `--` run once, at the first prompt of that first window. Then it prints the results and closes the instance; `--keep` leaves it open. Anything longer than a line or two goes in a file in the scratchpad, passed as `-- "source <file>"`; the arguments are joined with `; ` and nested quotes get painful fast.
 
 That first window is what a new tab gets: Ghostty started it through `launch-tab.zsh`, so the tab rotation, the `theme =` line and background confs apply as they would for a new tab.
 
@@ -74,7 +75,8 @@ In this mode the shell's `HOME` is the user's real home, because macOS `login` r
 
 ## Rules of the road
 
-- One sandbox at a time. Every start wipes the directory and closes a previous sandbox Ghostty, so never run two drives in parallel — subagents included.
+- Go through the two scripts, never `mise run sandbox` bare: bare is the user's mode and opens a Ghostty window in front of them. `shell.zsh` passes `--here`, `ghostty.zsh` passes `--behind`.
+- One sandbox at a time. Every start wipes the directory and closes a previous sandbox Ghostty, so never run two drives in parallel — subagents included. A user's own `mise run sandbox` window counts: a drive closes it.
 - A leftover instance: `pkill -f -- "--config-file=${TMPDIR%/}/ttheme-sandbox/"`. That pattern only matches the sandbox, never the user's Ghostty.
 - `pgrep ghostty` from Claude's shell misses the user's Ghostty (BSD pgrep skips its own ancestors) — that does not mean it is not running.
 - Ghostty's full log: `/usr/bin/log show --info --last 2m --predicate 'process == "ghostty"'` — `log` alone is a zsh builtin.

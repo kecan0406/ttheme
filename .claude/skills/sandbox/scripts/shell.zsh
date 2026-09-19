@@ -25,7 +25,7 @@ settle() {
 start() {
   local i
   tmux -L $SOCKET kill-server 2>/dev/null || :
-  tmux -L $SOCKET new-session -d -x $COLS -y $ROWS -c $ROOT "mise run sandbox --zshenv $HERE/quiet.zsh $*"
+  tmux -L $SOCKET new-session -d -x $COLS -y $ROWS -c $ROOT "mise run sandbox --here --zshenv $HERE/quiet.zsh $*"
   for i in {1..300}; do
     tmux -L $SOCKET capture-pane -p 2>/dev/null | grep -q '^sandbox .*%' && break
     sleep 0.2

@@ -6,7 +6,7 @@ typeset -g HERE=${${(%):-%x}:A:h}
 typeset -g ROOT=${HERE:h:h:h:h}
 typeset -g SANDBOX=${${TMPDIR:-/tmp}%/}/ttheme-sandbox
 
-usage() { print -u2 "usage: ghostty.zsh [--shot FILE] [--keep] [palette…] -- 'zsh commands'" }
+usage() { print -u2 "usage: ghostty.zsh [--shot FILE] [--keep] [--empty | palette…] -- 'zsh commands'" }
 
 instance() { pgrep -f -- "--config-file=$SANDBOX/" }
 
@@ -27,8 +27,8 @@ reloads() {
 }
 
 main() {
-  local -a shot keep
-  zparseopts -D -E -F -- -shot:=shot -keep=keep || { usage; return 1 }
+  local -a shot keep empty
+  zparseopts -D -E -F -- -shot:=shot -keep=keep -empty=empty || { usage; return 1 }
   local split=${@[(i)--]}
   (( split <= $# )) || { usage; return 1 }
   local -a palettes=(${@[1,split-1]})
@@ -36,7 +36,7 @@ main() {
   hook=$(mktemp -t ttheme-hook)
   start=$(date '+%Y-%m-%d %H:%M:%S')
   { <$HERE/probe.zsh; print -rl -- '__sb_commands() {' "${(j:; :)@[split+1,-1]}" '}' } > $hook
-  if ! out=$(cd $ROOT && mise run sandbox --ghostty --behind --zshenv $hook $palettes 2>&1); then
+  if ! out=$(cd $ROOT && mise run sandbox --behind --zshenv $hook $empty $palettes 2>&1); then
     rm -f $hook
     print -r -- $out
     return 1
