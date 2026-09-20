@@ -58,8 +58,8 @@ const CONFIG_HEADER = '# ttheme settings — exported variables win over this fi
 
 const CONFIG_SETTINGS = {
   TTHEME_TAB_PALETTE: {
-    doc: '# new tabs: seq rotates through the palettes, off keeps the configured terminal theme (default seq)',
-    default: 'seq',
+    doc: '# new tabs: off keeps the configured terminal theme, seq rotates through the palettes (default off)',
+    default: 'off',
   },
   TTHEME_ANNOUNCE: {
     doc: '# the palette notice under "Last login:": 1 shows it, 0 silences it (default 1)',

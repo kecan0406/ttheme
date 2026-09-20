@@ -36,7 +36,7 @@ __tt_pins_load() {
 
 __tt_pins_load
 
-: ${TTHEME_TAB_PALETTE:=seq}
+: ${TTHEME_TAB_PALETTE:=off}
 
 : ${TTHEME_ANNOUNCE:=1}
 
@@ -225,11 +225,16 @@ __tt_unpin() {
 
 __tt_keep() {
   __tt_cli default "$1" > /dev/null || return 1
-  __tt_reload
-  if __tt_color; then
-    printf '\033[2mdefault · new tabs open with %s\033[0m\n' "$1"
+  local note="default · new tabs open with $1"
+  if (( $+functions[__tt_reload] )); then
+    __tt_reload
   else
-    print -r -- "default · new tabs open with $1"
+    note+=" — reload your terminal config to pick it up"
+  fi
+  if __tt_color; then
+    printf '\033[2m%s\033[0m\n' "$note"
+  else
+    print -r -- "$note"
   fi
 }
 
@@ -281,6 +286,7 @@ __tt_help() {
   ttheme homura   paint this tab (a unique prefix works: ttheme ho)
   ttheme preview  browse live — focus repaints, enter keeps (this tab or default), esc restores, ? lists keys
   ttheme next     advance this tab to the next palette
+  ttheme default  make a palette the one new tabs open with
   ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
   ttheme unpin    drop the palette pinned to this directory
   ttheme config   edit settings in $EDITOR — they apply in new tabs
@@ -383,10 +389,6 @@ __tt_next() {
 }
 
 __tt_rotate() {
-  if [[ $TTHEME_TAB_PALETTE == off ]]; then
-    print -u2 "ttheme next: TTHEME_TAB_PALETTE is off"
-    return 1
-  fi
   local REPLY
   __tt_next
   __tt_apply "$REPLY"
@@ -619,9 +621,9 @@ __tt_pv_foot() {
     if (( bgoff[$tune] )); then kl+=(show default keep); else kl+=(hide default keep); fi
     __tt_pv_bg_images $tune
     (( REPLY > 1 )) && { kk+=(', .' D); kl+=("image ×$REPLY" remove) }
+    __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
     right=$b"esc"$z$d" undo"$z
   elif (( conf )); then
-    __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
     badge=CONFIG kk=(↑↓ ←→ enter) kl=(setting value save)
     right=$b"esc"$z$d" undo"$z
   else
@@ -1355,7 +1357,7 @@ __tt_preview() {
   local conf=0 cf=1
   local -a plabel=(" this tab " " default ") csnap=()
   local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT) clabel=("new tabs" announce "search fx" sort)
-  local -a cchoice=("seq off" "1 0" "typewriter decode glitch" "abc series") cshow=("seq off" "on off" "typewriter decode glitch" "abc series")
+  local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc series") cshow=("off seq" "on off" "typewriter decode glitch" "abc series")
   local -A cnote=(
     seq "new tabs rotate through palettes" off "new tabs keep the terminal theme"
     1 "shows the palette notice" 0 "silences the palette notice"
@@ -1432,6 +1434,12 @@ ttheme() {
 
   case $1 in
     next) __tt_rotate; return ;;
+    default)
+      [[ -n $2 ]] || { print -u2 "ttheme default: name a palette — see \`ttheme help\`"; return 1 }
+      local REPLY
+      __tt_resolve "$2" || return 1
+      __tt_keep "$REPLY"
+      return ;;
     preview) __tt_preview; return ;;
     pin) __tt_preview pin; return ;;
     unpin) __tt_unpin; return ;;
@@ -1448,7 +1456,7 @@ ttheme() {
 
 if (( $+functions[compdef] )); then
   __tt_complete() {
-    (( CURRENT == 2 )) && compadd -- preview next pin unpin config help browse list add remove update
+    (( CURRENT == 2 )) && compadd -- preview next default pin unpin config help browse list add remove update
     compadd -- $TTHEME_ORDER
   }
   compdef __tt_complete ttheme

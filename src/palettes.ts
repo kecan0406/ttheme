@@ -13,6 +13,7 @@ const EMITTERS: Record<InitTerminal, Emitter> = { ghostty, kitty, alacritty }
 export interface Installed {
   terminals: InitTerminal[]
   startup?: string
+  keepTheme?: true
   palettes: string[]
 }
 
@@ -36,6 +37,7 @@ export function readInstalled(configHome: string): Installed {
   return {
     terminals: doc.terminals.filter((t): t is InitTerminal => INIT_TERMINALS.includes(t)),
     ...(doc.startup ? { startup: doc.startup } : {}),
+    ...(doc.keepTheme ? { keepTheme: true as const } : {}),
     palettes: doc.palettes,
   }
 }
@@ -121,7 +123,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed): s
     written.push(path)
   }
 
-  const startup = startupPalette(state)
+  const startup = state.keepTheme ? undefined : startupPalette(state)
   for (const terminal of state.terminals) {
     for (const entry of entries) {
       for (const { file, content } of themeFiles(terminal, toTheme(entry, catalog))) {

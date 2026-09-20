@@ -97,6 +97,14 @@ test('sync points the terminal at the startup palette once one is installed', ()
   assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = gojo$/m)
 })
 
+test('sync leaves the terminal theme alone when the install keeps it', () => {
+  const home = fixture()
+  sync(home, catalog, { terminals: ['ghostty', 'kitty'], keepTheme: true, palettes: ['gojo'] })
+  assert.doesNotMatch(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = /m)
+  assert.doesNotMatch(readFileSync(join(home, 'kitty', 'kitty.conf'), 'utf8'), /^include /m)
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'gojo')))
+})
+
 test('startupPalette keeps an explicit choice and falls to the first otherwise', () => {
   assert.equal(startupPalette({ terminals: [], startup: 'geto', palettes: ['gojo', 'geto'] }), 'geto')
   assert.equal(startupPalette({ terminals: [], startup: 'gone', palettes: ['gojo'] }), 'gojo')

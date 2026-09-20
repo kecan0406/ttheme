@@ -7,7 +7,8 @@ Steins;Gate, Lucky☆Star, Bocchi the Rock!, Monogatari, Sailor Moon, Serial
 Experiments Lain, VA-11 Hall-A, Persona 5, Undertale, Call of the Night,
 Higurashi, Doki Doki Literature Club, Umineko, K-On!, Cyberpunk: Edgerunners,
 Touhou Project, Chuunibyou and Jujutsu Kaisen, built for **Ghostty, kitty, Alacritty,
-WezTerm and iTerm2**, plus a zsh layer that rotates through them as you open tabs.
+WezTerm and iTerm2**, plus a zsh layer that repaints tabs at runtime — one palette everywhere, or
+the next one on every new tab.
 
 Two things separate this from the usual color-scheme dump:
 
@@ -63,13 +64,16 @@ npx @kecan0406/ttheme@latest init
 ```
 
 It asks which terminals to wire and which series to install — `space` marks
-one, enter moves on, and `select all` takes the lot — then shows what it is
-about to change and writes it all at once, so cancelling before that touches
-nothing. It places the zsh layer under `~/.config/ttheme` and edits your
-terminal config and `~/.zshrc` between `# ttheme begin` / `# ttheme end`
-markers — everything outside the markers is left alone. It ends with a receipt,
-paints the first palette onto the tab you ran it in and lists what to do next
-(`exec zsh` for the `ttheme` command here, a terminal restart for new tabs).
+one, enter moves on, and `select all` takes the lot — and how the terminal
+should wear them: `default` (preselected) puts one palette on every tab,
+`rotate` gives every new tab the next palette, `keep` leaves your terminal colors
+alone and only installs. Then it shows what it is about to change and writes it all at once,
+so cancelling before that touches nothing. It places the zsh layer under
+`~/.config/ttheme` and edits your terminal config and `~/.zshrc` between
+`# ttheme begin` / `# ttheme end` markers — everything outside the markers is
+left alone. It ends with a receipt, paints the first palette onto the tab you
+ran it in (not under `keep`) and lists what to do next (`exec zsh` for the
+`ttheme` command here, a terminal restart for new tabs).
 Running it again updates in place; `--yes` skips every prompt and installs no
 palettes — `ttheme browse` opens the full catalog any time, to add or drop
 single palettes.
@@ -115,9 +119,10 @@ it for real.
 
 ```
 ttheme          list every palette, grouped, with previews
-ttheme homura   pin this tab      (a unique prefix works: ttheme ho)
+ttheme homura   paint this tab    (a unique prefix works: ttheme ho)
 ttheme preview  browse live — focus repaints the tab, enter keeps it (this tab or default)
 ttheme next     advance this tab to the next palette
+ttheme default  make a palette the one new tabs open with
 ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
 ttheme unpin    drop the palette pinned to this directory
 ttheme config   edit settings in $EDITOR — they apply in new tabs
@@ -150,8 +155,8 @@ the cursor. The list and the sample widen with the window (the sample up to 64
 columns) and the gap between them takes the rest; the tuning panel takes the
 sample's place while open, and so does the key list once the sample is 48
 columns wide.
-Under Ghostty with `TTHEME_TAB_PALETTE=off`, enter asks **this tab** or
-**default**: default records the palette as your startup palette (so a later
+Under Ghostty with `TTHEME_TAB_PALETTE=off` (the default), enter asks **this tab** or
+**default**: default records the palette as your default palette (so a later
 `add` or `remove` keeps it), rewrites `theme =` in the `# ttheme begin` block of
 your Ghostty config and sends `SIGUSR2` to the Ghostty that owns the tab, so new tabs — and open tabs you have not
 painted by hand — take the palette without a restart. Painting is per surface
@@ -307,23 +312,24 @@ case your pick stays. The nearest pinned ancestor wins, so a project can pin
 one palette and a subfolder another. Open tabs pick up a changed pins file on
 their next `cd`; `unpin` drops the pin on the current directory.
 
-`preview`, `next`, `pin`, `unpin`, `config` and `help` match exactly; every other first argument is read
+`preview`, `next`, `default`, `pin`, `unpin`, `config` and `help` match exactly; every other first argument is read
 as a palette name, where a unique prefix is enough. Mistyped names get a "did
 you mean" suggestion instead of a wall of output. Piped output drops color and
 turns tab-separated, and `NO_COLOR` is respected.
 
-New tabs take the next palette in group order, with the counter shared across
+With `TTHEME_TAB_PALETTE=seq`, new tabs take the next palette in group order, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather
 than rolling the same one twice.
 
 Settings live in `~/.config/ttheme/config.zsh` — `init` seeds it with the
-defaults and never overwrites a line you changed, `ttheme config` opens it in `$EDITOR` and alt-c in `preview` edits it in place. Each line is a plain zsh
+defaults and never overwrites a line you changed — bar `TTHEME_TAB_PALETTE`, which its
+default/rotate/keep question sets — `ttheme config` opens it in `$EDITOR` and alt-c in `preview` edits it in place. Each line is a plain zsh
 `: ${VAR:=value}` assignment, so a variable exported before the layer loads
 still wins:
 
 | Setting | Default | |
 |---|---|---|
-| `TTHEME_TAB_PALETTE` | `seq` | `off` keeps new tabs on the terminal's configured theme (`preview` → default changes it) |
+| `TTHEME_TAB_PALETTE` | `off` | `off` keeps new tabs on the terminal's configured theme (`preview` → default changes it); `seq` gives every new tab the next palette. `init` writes `seq` for rotate and `off` for default and keep |
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
 | `TTHEME_SORT` | `abc` | `series` lists series and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |

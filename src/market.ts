@@ -56,7 +56,8 @@ export function runDefault(name: string): void {
   if (!state.palettes.includes(name)) {
     throw new Error(`${name} is not installed — \`ttheme add ${name}\` first`)
   }
-  const next = { ...state, startup: name }
+  const { keepTheme: _, ...rest } = state
+  const next = { ...rest, startup: name }
   sync(home, catalog, next)
   writeInstalled(home, next)
   console.log(`new tabs open with ${name} — reload your terminal config to pick it up`)

@@ -2,7 +2,7 @@
 
 source ${0:A:h}/ttheme.zsh
 
-if [[ ${TTHEME_TAB_PALETTE:-seq} != off ]]; then
+if [[ ${TTHEME_TAB_PALETTE:-off} != off ]]; then
   __tt_next
   __tt_apply "$REPLY"
   export TTHEME_SPEC=$REPLY

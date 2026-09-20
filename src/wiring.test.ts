@@ -64,8 +64,8 @@ test('configFile seeds the template with every default spelled out', () => {
     [
       '# ttheme settings — exported variables win over this file',
       '',
-      '# new tabs: seq rotates through the palettes, off keeps the configured terminal theme (default seq)',
-      ': ${TTHEME_TAB_PALETTE:=seq}',
+      '# new tabs: off keeps the configured terminal theme, seq rotates through the palettes (default off)',
+      ': ${TTHEME_TAB_PALETTE:=off}',
       '',
       '# the palette notice under "Last login:": 1 shows it, 0 silences it (default 1)',
       ': ${TTHEME_ANNOUNCE:=1}',
@@ -117,7 +117,7 @@ test('configFile is idempotent and preserves user edits', () => {
 test('configFile appends a documented line when a setting is missing', () => {
   const out = configFile('TTHEME_CUSTOM=1\n')
   assert.ok(out.startsWith('TTHEME_CUSTOM=1\n'))
-  assert.match(out, /^# new tabs: .*\n: \$\{TTHEME_TAB_PALETTE:=seq\}$/m)
+  assert.match(out, /^# new tabs: .*\n: \$\{TTHEME_TAB_PALETTE:=off\}$/m)
   assert.match(out, /^# the palette notice .*\n: \$\{TTHEME_ANNOUNCE:=1\}$/m)
   assert.match(out, /^# search hint animation: .*\n: \$\{TTHEME_FX:=typewriter\}$/m)
   assert.match(out, /^# series and palettes .*\n: \$\{TTHEME_SORT:=abc\}$/m)

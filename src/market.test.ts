@@ -70,6 +70,14 @@ test('a kept default survives a later add', () => {
   assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = geto$/m)
 })
 
+test('default takes the terminal out of keep', () => {
+  const home = installedHome(['gojo', 'geto'])
+  writeInstalled(home, { terminals: ['ghostty'], keepTheme: true, palettes: ['gojo', 'geto'] })
+  inHome(home, () => runDefault('geto'))
+  assert.equal(readInstalled(home).keepTheme, undefined)
+  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = geto$/m)
+})
+
 test('default refuses a palette that is not installed', () => {
   const home = installedHome(['gojo'])
   assert.throws(() => inHome(home, () => runDefault('geto')), /geto is not installed/)
