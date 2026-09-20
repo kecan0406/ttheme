@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import {
+  blockSet,
+  cutoutMap,
   exposed,
   hostMap,
   mates,
@@ -13,7 +15,7 @@ import {
   parseMoebooru,
   postRef,
   rated,
-  ratingLevel,
+  ratingSet,
   rendition,
   retryAfter,
   SITES,
@@ -78,28 +80,63 @@ test('only the ratings a site calls safe pass, each site read in its own vocabul
   assert.equal(rated(moe, { rating: 's' }), true, 'moebooru s means safe')
 })
 
-test('each level lets through what that site calls by that name', () => {
+test('each ticked rating lets through what that site calls by that name, and only that', () => {
   const [gel, moe, , dan] = SITES as [Site, Site, Site, Site]
-  assert.equal(rated(moe, { rating: 'q' }, 'questionable'), true)
-  assert.equal(rated(moe, { rating: 'e' }, 'questionable'), false)
-  assert.equal(rated(moe, { rating: 'e' }, 'all'), true)
-  assert.equal(rated(dan, { rating: 's' }, 'questionable'), true)
-  assert.equal(rated(gel, { rating: 'questionable' }, 'questionable'), true)
+  assert.equal(rated(moe, { rating: 'q' }, ['questionable']), true)
+  assert.equal(rated(moe, { rating: 's' }, ['questionable']), false, 'questionable alone leaves safe out')
+  assert.equal(rated(moe, { rating: 'e' }, ['safe', 'questionable']), false)
+  assert.equal(rated(moe, { rating: 'e' }, ['safe', 'explicit']), true)
+  assert.equal(rated(dan, { rating: 's' }, ['questionable']), true)
+  assert.equal(rated(gel, { rating: 'questionable' }, ['questionable']), true)
 })
 
-test('the nudity and underwear tags are named in every site spelling, apart from the rating', () => {
-  assert.deepEqual(exposed({ tags: ['hiiragi_kagami', 'pantsu'] }), ['pantsu'])
-  assert.deepEqual(exposed({ tags: ['hiiragi_kagami', 'naked'] }), ['naked'])
-  assert.deepEqual(exposed({ tags: ['hiiragi_kagami', 'swimsuit'] }), [])
+test('nudity and underwear are blocked apart, in every site spelling', () => {
+  const tags = ['hiiragi_kagami', 'pantsu', 'naked', 'swimsuit']
+  assert.deepEqual(exposed({ tags }), ['pantsu', 'naked'])
+  assert.deepEqual(exposed({ tags }, ['underwear']), ['pantsu'])
+  assert.deepEqual(exposed({ tags }, ['nudity']), ['naked'])
+  assert.deepEqual(exposed({ tags }, []), [])
 })
 
-test('the rating a site asks for in the query follows the level, where the site takes one', () => {
+test('the rating a site asks for in the query follows the ticked set, where the site takes one', () => {
   const [gel, moe, , dan] = SITES as [Site, Site, Site, Site]
-  assert.deepEqual([moe.rate('safe'), moe.rate('questionable'), moe.rate('all')], ['rating:s', '-rating:e', ''])
-  assert.deepEqual([gel.rate('all'), dan.rate('all')], ['', ''])
-  assert.equal(ratingLevel(undefined), 'safe')
-  assert.equal(ratingLevel('nonsense'), 'safe')
-  assert.equal(ratingLevel('all'), 'all')
+  assert.deepEqual(
+    [
+      moe.rate(['safe']),
+      moe.rate(['questionable']),
+      moe.rate(['explicit']),
+      moe.rate(['safe', 'questionable']),
+      moe.rate(['safe', 'explicit']),
+      moe.rate(['questionable', 'explicit']),
+      moe.rate(['safe', 'questionable', 'explicit']),
+    ],
+    ['rating:s', 'rating:q', 'rating:e', '-rating:e', '-rating:q', '-rating:s', ''],
+  )
+  assert.deepEqual([gel.rate(['safe']), dan.rate(['safe'])], ['', ''])
+})
+
+test('the settings read back as ticked sets, falling to the safe default when nothing valid is named', () => {
+  assert.deepEqual(ratingSet(undefined), ['safe'])
+  assert.deepEqual(ratingSet('all'), ['safe'])
+  assert.deepEqual(ratingSet('explicit safe'), ['safe', 'explicit'])
+  assert.deepEqual(blockSet(''), ['nudity', 'underwear'])
+  assert.deepEqual(blockSet('underwear'), ['underwear'])
+  assert.deepEqual(blockSet('none'), [])
+})
+
+test('cutout tags are named per site, a site left empty asks for none, and unnamed sites keep their own', () => {
+  assert.deepEqual(
+    [...cutoutMap('safebooru=transparent_background,vector_trace yande=transparent_png danbooru= bogus')],
+    [
+      ['safebooru', ['transparent_background', 'vector_trace']],
+      ['yande', ['transparent_png']],
+      ['danbooru', []],
+    ],
+  )
+  assert.deepEqual(
+    SITES.map((site) => site.cutouts),
+    ['( transparent_background ~ vector_trace )', 'transparent_png', '~transparent ~vector', 'transparent_background'],
+  )
 })
 
 test('a host override moves a site without renaming it, and only over https', () => {

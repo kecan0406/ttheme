@@ -76,14 +76,17 @@ test('configFile seeds the template with every default spelled out', () => {
       '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
       ': ${TTHEME_SORT:=abc}',
       '',
-      '# how far find goes: safe, questionable or all, each booru read in its own rating vocabulary (default safe)',
+      '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',
       ': ${TTHEME_FIND_RATING:=safe}',
       '',
-      '# posts tagged with nudity or underwear: block drops them, allow keeps them (default block)',
-      ': ${TTHEME_FIND_TAGS:=block}',
+      '# the posts find drops by tag: nudity, underwear, both, or none to keep them all (default "nudity underwear")',
+      ': ${TTHEME_FIND_BLOCK:=nudity underwear}',
       '',
-      '# what find lists first: cutouts are the transparent ones, all is every post of the character (default cutouts)',
-      ': ${TTHEME_FIND_POSTS:=cutouts}',
+      '# what find lists first: all is every post of the character, cutouts are the transparent ones (default all)',
+      ': ${TTHEME_FIND_POSTS:=all}',
+      '',
+      '# the tags find calls a transparent cutout, per site as key=tag,tag pairs — e.g. "safebooru=transparent_background yande=transparent_png,vector" (default the built-in tags)',
+      ': ${TTHEME_FIND_CUTOUTS:=}',
       '',
       '# the order find lists posts in: newest or score (default newest)',
       ': ${TTHEME_FIND_ORDER:=newest}',
@@ -127,12 +130,12 @@ test('kitty and alacritty blocks reference the chosen palette', () => {
 
 test('withSetting rewrites the line a setting already has, and adds one when it is missing', () => {
   const file = configTemplate()
-  const changed = withSetting(file, 'TTHEME_FIND_RATING', 'questionable')
-  assert.match(changed, /: \$\{TTHEME_FIND_RATING:=questionable\}/)
+  const changed = withSetting(file, 'TTHEME_FIND_RATING', 'safe questionable')
+  assert.match(changed, /: \$\{TTHEME_FIND_RATING:=safe questionable\}/)
   assert.equal(changed.split('TTHEME_FIND_RATING').length - 1, 1)
-  assert.equal(changed.replace(':=questionable}', ':=safe}'), file)
-  const added = withSetting('# mine\n', 'TTHEME_FIND_TAGS', 'allow')
-  assert.equal(added, '# mine\n\n: ${TTHEME_FIND_TAGS:=allow}\n')
+  assert.equal(changed.replace(':=safe questionable}', ':=safe}'), file)
+  const added = withSetting('# mine\n', 'TTHEME_FIND_BLOCK', 'none')
+  assert.equal(added, '# mine\n\n: ${TTHEME_FIND_BLOCK:=none}\n')
   assert.match(
     withSetting('#: ${TTHEME_FIND_SETS:=fold}\n', 'TTHEME_FIND_SETS', 'show'),
     /^: \$\{TTHEME_FIND_SETS:=show\}\n$/,

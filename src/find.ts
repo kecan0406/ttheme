@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { backdropTone, installBackdrop, origins, type Tone, tryOn } from './backdrop.ts'
 import {
+  BLOCKS,
+  blockSet,
   cacheDir,
   exposed,
   extension,
@@ -20,9 +22,9 @@ import {
   type Post,
   pausedUntil,
   postRef,
-  type Rating,
+  RATINGS,
   rated,
-  ratingLevel,
+  ratingSet,
   rendition,
   SITES,
   type Site,
@@ -49,12 +51,19 @@ import { tunnel } from './unblock.ts'
 import { withSetting } from './wiring.ts'
 
 const SETTINGS: Setting[] = [
-  { name: 'TTHEME_FIND_RATING', label: 'rating', choices: ['safe', 'questionable', 'all'] },
-  { name: 'TTHEME_FIND_TAGS', label: 'tags', choices: ['block', 'allow'] },
-  { name: 'TTHEME_FIND_POSTS', label: 'posts', choices: ['cutouts', 'all'] },
+  { name: 'TTHEME_FIND_RATING', label: 'rating', choices: RATINGS, multi: { read: ratingSet } },
+  { name: 'TTHEME_FIND_BLOCK', label: 'block', choices: BLOCKS, multi: { read: blockSet, none: 'none' } },
+  { name: 'TTHEME_FIND_POSTS', label: 'posts', choices: ['all', 'cutouts'] },
   { name: 'TTHEME_FIND_ORDER', label: 'order', choices: ['newest', 'score'] },
   { name: 'TTHEME_FIND_SETS', label: 'sets', choices: ['fold', 'show'] },
 ]
+
+function initial(setting: Setting, raw: string | undefined): string {
+  if (setting.multi) {
+    return setting.multi.read(raw).join(' ') || (setting.multi.none as string)
+  }
+  return setting.choices.find((choice) => choice === raw) ?? (setting.choices[0] as string)
+}
 
 const WORKERS = 4
 const PRELOAD = 2
@@ -172,10 +181,7 @@ class Finder {
   private readonly thumbPath = new Map<string, string>()
   private siteIndex = 0
   private readonly values = new Map<string, string>(
-    SETTINGS.map((setting) => [
-      setting.name,
-      setting.choices.find((choice) => choice === process.env[setting.name]) ?? (setting.choices[0] as string),
-    ]),
+    SETTINGS.map((setting) => [setting.name, initial(setting, process.env[setting.name])]),
   )
   private direction = 1
   private prefetching = 0
@@ -214,14 +220,16 @@ class Finder {
       nextSite: this.nextSite.name,
       preset: this.setting('TTHEME_FIND_POSTS') === 'all' ? 'all' : 'cutouts',
       order: this.setting('TTHEME_FIND_ORDER') === 'score' ? 'score' : 'newest',
-      rating: ratingLevel(this.setting('TTHEME_FIND_RATING')),
-      tags: this.setting('TTHEME_FIND_TAGS') === 'allow' ? 'allow' : 'block',
+      rating: ratingSet(this.setting('TTHEME_FIND_RATING')),
+      block: blockSet(this.setting('TTHEME_FIND_BLOCK')),
       sets: this.setting('TTHEME_FIND_SETS') === 'show' ? 'show' : 'fold',
       unblocked: process.env.TTHEME_FIND_PROXY !== undefined,
       settings: SETTINGS.map((setting) => ({
         label: setting.label,
         choices: [...setting.choices],
         value: this.setting(setting.name),
+        multi: setting.multi && { none: setting.multi.none },
+        cursor: 0,
       })),
       colors: { cursor: entry.cursor, selection: entry.selection, ansi: entry.ansi },
       tiles: [],
@@ -252,10 +260,6 @@ class Finder {
 
   private setting(name: string): string {
     return this.values.get(name) as string
-  }
-
-  private get level(): Rating {
-    return ratingLevel(this.view.rating)
   }
 
   private get boardKey(): string {
@@ -529,9 +533,23 @@ class Finder {
     }
     if ((key === 'left' || key === 'right') && row) {
       const step = key === 'left' ? -1 : 1
-      const index = row.choices.indexOf(row.value)
-      row.value = row.choices[(index + step + row.choices.length) % row.choices.length] as string
+      if (row.multi) {
+        row.cursor = (row.cursor + step + row.choices.length) % row.choices.length
+      } else {
+        const index = row.choices.indexOf(row.value)
+        row.value = row.choices[(index + step + row.choices.length) % row.choices.length] as string
+      }
       this.draw()
+      return
+    }
+    if (key === ' ' && row?.multi) {
+      const on = row.value.split(' ')
+      const next = row.choices.filter((choice, k) => (k === row.cursor ? !on.includes(choice) : on.includes(choice)))
+      const empty = row.multi.none
+      if (next.length > 0 || empty !== undefined) {
+        row.value = next.length > 0 ? next.join(' ') : (empty as string)
+        this.draw()
+      }
       return
     }
     if (key === 'esc') {
@@ -563,8 +581,8 @@ class Finder {
       return
     }
     this.save(changed)
-    view.rating = ratingLevel(this.setting('TTHEME_FIND_RATING'))
-    view.tags = this.setting('TTHEME_FIND_TAGS') === 'allow' ? 'allow' : 'block'
+    view.rating = ratingSet(this.setting('TTHEME_FIND_RATING'))
+    view.block = blockSet(this.setting('TTHEME_FIND_BLOCK'))
     view.sets = this.setting('TTHEME_FIND_SETS') === 'show' ? 'show' : 'fold'
     view.preset = this.setting('TTHEME_FIND_POSTS') === 'all' ? 'all' : 'cutouts'
     view.order = this.setting('TTHEME_FIND_ORDER') === 'score' ? 'score' : 'newest'
@@ -790,7 +808,7 @@ class Finder {
     const view = this.view
     const wanted = [
       view.tag,
-      site.rate(this.level),
+      site.rate(this.view.rating),
       view.preset === 'cutouts' ? site.cutouts : '',
       view.order === 'score' ? site.best : '',
     ].filter(Boolean)
@@ -914,8 +932,7 @@ class Finder {
 
   private async passes(site: Site, post: Post): Promise<boolean> {
     const version = rendition(post)
-    const blocked = this.view.tags === 'block' && exposed(post).length > 0
-    if (!rated(site, post, this.level) || blocked || !version) {
+    if (!rated(site, post, this.view.rating) || exposed(post, this.view.block).length > 0 || !version) {
       return false
     }
     if (this.view.preset === 'all') {

@@ -8,25 +8,17 @@ import { pngHead } from './png.ts'
 export const PAGE = 100
 export const MAX_PIXELS = 25_000_000
 
-export type Rating = 'safe' | 'questionable' | 'all'
+export type Rating = 'safe' | 'questionable' | 'explicit'
+export type Block = 'nudity' | 'underwear'
 
-const LEVELS: Rating[] = ['safe', 'questionable', 'all']
+export const RATINGS: Rating[] = ['safe', 'questionable', 'explicit']
+export const BLOCKS: Block[] = ['nudity', 'underwear']
 
-const EXPOSED = new Set([
-  'nude',
-  'naked',
-  'topless',
-  'bottomless',
-  'nipples',
-  'naked_towel',
-  'underwear',
-  'panties',
-  'pantsu',
-  'bra',
-  'lingerie',
-  'pantyshot',
-  'undressing',
-])
+const EXPOSED: Record<Block, Set<string>> = {
+  nudity: new Set(['nude', 'naked', 'topless', 'bottomless', 'nipples', 'naked_towel', 'undressing']),
+  underwear: new Set(['underwear', 'panties', 'pantsu', 'bra', 'lingerie', 'pantyshot']),
+}
+const MOEBOORU: Record<Rating, string> = { safe: 's', questionable: 'q', explicit: 'e' }
 const MIRRORS = new Set(['danbooru', 'gelbooru', 'konachan', 'yande.re', 'sankaku'])
 const HEAD = 8191
 const TIMEOUT = 20_000
@@ -37,6 +29,7 @@ const AGENT = `ttheme/${pkg.version} (+${pkg.homepage})`
 
 const paused = new Map<string, number>()
 const HOSTS = hostMap(process.env.TTHEME_FIND_HOSTS)
+const CUTOUTS = cutoutMap(process.env.TTHEME_FIND_CUTOUTS)
 
 setDefaultAutoSelectFamilyAttemptTimeout(CONNECT)
 
@@ -71,7 +64,7 @@ export interface Site {
   vouched: boolean
   ansi: number
   ratings: Record<Rating, Set<string>>
-  rate(level: Rating): string
+  rate(levels: readonly Rating[]): string
   postsUrl(tags: string, page: number): string
   countUrl(tags: string): string
   postUrl(id: number): string
@@ -222,9 +215,26 @@ interface Spec {
   key: string
   name: string
   origin: string
-  cutouts: string
+  cutouts: string[]
   vouched: boolean
   ansi: number
+}
+
+export function cutoutMap(spec: string | undefined): Map<string, string[]> {
+  const cutouts = new Map<string, string[]>()
+  for (const entry of (spec ?? '').split(/\s+/).filter(Boolean)) {
+    const at = entry.indexOf('=')
+    if (at > 0) {
+      cutouts.set(
+        entry.slice(0, at),
+        entry
+          .slice(at + 1)
+          .split(',')
+          .filter(Boolean),
+      )
+    }
+  }
+  return cutouts
 }
 
 export function hostMap(spec: string | undefined): Map<string, string> {
@@ -242,21 +252,49 @@ export function hostMap(spec: string | undefined): Map<string, string> {
   return hosts
 }
 
-export function ratingLevel(value: string | undefined): Rating {
-  return LEVELS.find((level) => level === value) ?? 'safe'
+function chosen<T extends string>(
+  value: string | undefined,
+  all: readonly T[],
+  fallback: readonly T[],
+  none?: string,
+): T[] {
+  const words = (value ?? '').split(/\s+/)
+  if (none !== undefined && words.includes(none)) {
+    return []
+  }
+  const picked = all.filter((item) => words.includes(item))
+  return picked.length > 0 ? picked : [...fallback]
 }
 
-function ladder(steps: string[][]): Record<Rating, Set<string>> {
-  return {
-    safe: new Set(steps[0]),
-    questionable: new Set(steps.slice(0, 2).flat()),
-    all: new Set(steps.flat()),
-  }
+export function ratingSet(value: string | undefined): Rating[] {
+  return chosen(value, RATINGS, ['safe'])
+}
+
+export function blockSet(value: string | undefined): Block[] {
+  return chosen(value, BLOCKS, BLOCKS, 'none')
+}
+
+function tiers(safe: string[], questionable: string[], explicit: string[]): Record<Rating, Set<string>> {
+  return { safe: new Set(safe), questionable: new Set(questionable), explicit: new Set(explicit) }
 }
 
 function based(spec: Spec): Spec & { moved: boolean } {
   const origin = HOSTS.get(spec.key)
-  return { ...spec, origin: origin ?? spec.origin, moved: origin !== undefined && origin !== spec.origin }
+  const cutouts = CUTOUTS.get(spec.key)
+  return {
+    ...spec,
+    origin: origin ?? spec.origin,
+    moved: origin !== undefined && origin !== spec.origin,
+    cutouts: cutouts ?? spec.cutouts,
+    vouched: spec.vouched && cutouts === undefined,
+  }
+}
+
+function anyOf(tags: string[], grouped: boolean): string {
+  if (tags.length < 2) {
+    return tags.join('')
+  }
+  return grouped ? `( ${tags.join(' ~ ')} )` : tags.map((tag) => `~${tag}`).join(' ')
 }
 
 function gelbooru(raw: Spec): Site {
@@ -265,7 +303,8 @@ function gelbooru(raw: Spec): Site {
     `${spec.origin}/index.php?${new URLSearchParams({ page: 'dapi', s: 'post', q: 'index', ...params })}`
   return {
     ...spec,
-    ratings: ladder([['safe', 'general'], ['questionable'], ['explicit']]),
+    cutouts: anyOf(spec.cutouts, true),
+    ratings: tiers(['safe', 'general'], ['questionable'], ['explicit']),
     rate: () => '',
     best: 'sort:score:desc',
     tagBudget: Number.POSITIVE_INFINITY,
@@ -283,8 +322,17 @@ function moebooru(raw: Spec): Site {
   const params = (rest: Record<string, string>) => new URLSearchParams({ api_version: '2', include_tags: '1', ...rest })
   return {
     ...spec,
-    ratings: ladder([['s'], ['q'], ['e']]),
-    rate: (level) => (level === 'safe' ? 'rating:s' : level === 'questionable' ? '-rating:e' : ''),
+    cutouts: anyOf(spec.cutouts, false),
+    ratings: tiers([MOEBOORU.safe], [MOEBOORU.questionable], [MOEBOORU.explicit]),
+    rate: (levels) => {
+      const [only] = levels
+      if (levels.length === 1 && only) {
+        return `rating:${MOEBOORU[only]}`
+      }
+      const missing = RATINGS.filter((level) => !levels.includes(level))
+      const [left] = missing
+      return missing.length === 1 && left ? `-rating:${MOEBOORU[left]}` : ''
+    },
     best: 'order:score',
     tagBudget: Number.POSITIVE_INFINITY,
     postsUrl: (tags, page) =>
@@ -301,7 +349,8 @@ function danbooru(raw: Spec): Site {
   const spec = based(raw)
   return {
     ...spec,
-    ratings: ladder([['g'], ['s', 'q'], ['e']]),
+    cutouts: anyOf(spec.cutouts, false),
+    ratings: tiers(['g'], ['s', 'q'], ['e']),
     rate: () => '',
     best: 'order:score',
     tagBudget: 2,
@@ -349,7 +398,7 @@ export const SITES: Site[] = [
     key: 'safebooru',
     name: 'safebooru',
     origin: 'https://safebooru.org',
-    cutouts: '( transparent_background ~ vector_trace )',
+    cutouts: ['transparent_background', 'vector_trace'],
     vouched: false,
     ansi: 4,
   }),
@@ -357,7 +406,7 @@ export const SITES: Site[] = [
     key: 'yande',
     name: 'yande.re',
     origin: 'https://yande.re',
-    cutouts: 'transparent_png',
+    cutouts: ['transparent_png'],
     vouched: true,
     ansi: 5,
   }),
@@ -365,7 +414,7 @@ export const SITES: Site[] = [
     key: 'konachan',
     name: 'konachan',
     origin: 'https://konachan.net',
-    cutouts: '~transparent ~vector',
+    cutouts: ['transparent', 'vector'],
     vouched: false,
     ansi: 6,
   }),
@@ -373,7 +422,7 @@ export const SITES: Site[] = [
     key: 'danbooru',
     name: 'danbooru',
     origin: 'https://safebooru.donmai.us',
-    cutouts: 'transparent_background',
+    cutouts: ['transparent_background'],
     vouched: false,
     ansi: 2,
   }),
@@ -389,12 +438,12 @@ export function originHost(source: string): string {
   return host.split('.').slice(-2).join('.')
 }
 
-export function exposed(post: Pick<Post, 'tags'>): string[] {
-  return post.tags.filter((tag) => EXPOSED.has(tag))
+export function exposed(post: Pick<Post, 'tags'>, blocks: readonly Block[] = BLOCKS): string[] {
+  return post.tags.filter((tag) => blocks.some((block) => EXPOSED[block].has(tag)))
 }
 
-export function rated(site: Site, post: Pick<Post, 'rating'>, level: Rating = 'safe'): boolean {
-  return site.ratings[level].has(post.rating)
+export function rated(site: Site, post: Pick<Post, 'rating'>, levels: readonly Rating[] = ['safe']): boolean {
+  return levels.some((level) => site.ratings[level].has(post.rating))
 }
 
 export function rendition(post: Post): Rendition | undefined {

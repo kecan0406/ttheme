@@ -74,16 +74,20 @@ const CONFIG_SETTINGS = {
     default: 'abc',
   },
   TTHEME_FIND_RATING: {
-    doc: '# how far find goes: safe, questionable or all, each booru read in its own rating vocabulary (default safe)',
+    doc: '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',
     default: 'safe',
   },
-  TTHEME_FIND_TAGS: {
-    doc: '# posts tagged with nudity or underwear: block drops them, allow keeps them (default block)',
-    default: 'block',
+  TTHEME_FIND_BLOCK: {
+    doc: '# the posts find drops by tag: nudity, underwear, both, or none to keep them all (default "nudity underwear")',
+    default: 'nudity underwear',
   },
   TTHEME_FIND_POSTS: {
-    doc: '# what find lists first: cutouts are the transparent ones, all is every post of the character (default cutouts)',
-    default: 'cutouts',
+    doc: '# what find lists first: all is every post of the character, cutouts are the transparent ones (default all)',
+    default: 'all',
+  },
+  TTHEME_FIND_CUTOUTS: {
+    doc: '# the tags find calls a transparent cutout, per site as key=tag,tag pairs — e.g. "safebooru=transparent_background yande=transparent_png,vector" (default the built-in tags)',
+    default: '',
   },
   TTHEME_FIND_ORDER: {
     doc: '# the order find lists posts in: newest or score (default newest)',

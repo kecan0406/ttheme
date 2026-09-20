@@ -185,16 +185,18 @@ sites sit in a strip of tabs under the query, the one you are on lit in its own
 color, and it comes again as a badge at the start of the line above a picture
 you try on, next to the site the artwork itself came from when the post records
 one (`pixiv.net`, `deviantart.com`). The grid starts
-with **cutouts** — posts carrying the site's transparency tags
-(`transparent_background` or `vector_trace` on safebooru, `transparent_png` on
-yande.re, `transparent` or `vector` on konachan, `transparent_background` on
-danbooru) whose PNG header says they have
+with every post of the character; `c` narrows it to **cutouts** — posts carrying
+the site's transparency tags (`transparent_background` or `vector_trace` on
+safebooru, `transparent_png` on yande.re, `transparent` or `vector` on konachan,
+`transparent_background` on danbooru) whose PNG header says they have
 an alpha channel; yande.re's `transparent_png` already means exactly that, so
 its posts skip the header check, which its slow file server would drag out —
 and the counter reads shown out of checked, `13/33`. find checks only as far as
 the grid reaches and checks more as you scroll; each answer is remembered, so
 coming back to a site or a palette never asks its file server again, and a site
-you have already seen comes back the moment you tab to it.
+you have already seen comes back the moment you tab to it. Newer series carry
+few of those tags, so `TTHEME_FIND_CUTOUTS` names the ones to look for, site by
+site.
 
 Under each thumbnail is its post id and size, and under that whoever made it:
 the artist where the site names one — yande.re, konachan and danbooru answer
@@ -206,11 +208,14 @@ space unfolds it and folds it again. Pictures by the uploader of the backgrounds
 you already have in the same series come first and carry `≈`, so a series keeps
 one hand; anything under 1600 px on its long edge shows its size in yellow.
 
-`s` opens the settings — rating, the nudity and underwear tags, cutouts or
-all, newest or score, and whether runs fold — with ↑↓ on the setting, ←→ on the
-value, enter to save them to `config.zsh` and esc to put them back. Whatever is
-not the default shows next to the query, so the screen never hides what it is
-filtering by.
+`s` opens the settings — the ratings to list, the nudity and underwear tags to
+block, cutouts or all, newest or score, and whether runs fold — with ↑↓ on the
+setting, enter to save them to `config.zsh` and esc to put them back. ←→ change
+a value; on the two rows of checkboxes (rating and block) they move between the
+boxes and space ticks one, so `safe` and `explicit` can be listed without
+`questionable`, or underwear let through while nudity stays blocked. At least
+one rating stays ticked. Whatever is not the default shows next to the query, so
+the screen never hides what it is filtering by.
 
 `/` opens the query for editing — type a tag to search for something else, or paste a post url or id
 (`https://yande.re/post/show/214705`, `konachan:244200`, `7159377`) to go
@@ -227,11 +232,12 @@ fetched as the site's own smaller copy instead — up to 3500 px on yande.re and
 konachan, 850 px on safebooru and danbooru — and its size carries `↓`; those
 copies are JPEGs, so a cutout tried on that way comes out opaque. `←`/`→` try
 the neighbours, which find fetches ahead of you two at a time, enter installs,
-and the preview carries on straight into the tuning panel below. `c` switches to
-every post of the character, esc goes back. Only `safe` and `general` posts are
-ever shown, and none tagged with nudity or underwear (`nude`, `panties` and each
-site's own spelling of them) — yande.re and konachan are always asked for
-`rating:s`, whatever else is searched. danbooru takes only two tags from a
+and the preview carries on straight into the tuning panel below. `c` switches
+between every post and the cutouts, esc goes back. Unless the settings say otherwise,
+only `safe` and `general` posts are shown, and none tagged with nudity or
+underwear (`nude`, `panties` and each site's own spelling of them) — with only
+`safe` ticked yande.re and konachan are asked for `rating:s`, whatever else is
+searched; ticking more ratings or unticking a block in the `s` panel widen it. danbooru takes only two tags from a
 signed-out search, so on it a cutout search leaves the score order out and says
 so. Thumbnails and header checks stay in
 `~/.cache/ttheme/<site>/`; the pictures you try on last only while find is open.
@@ -316,9 +322,10 @@ still wins:
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
 | `TTHEME_SORT` | `abc` | `series` lists series and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |
-| `TTHEME_FIND_RATING` | `safe` | how far `find` goes: `safe` keeps to what each booru calls safe, `questionable` and `all` step past that. Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe). The level shows next to the query whenever it is not `safe` |
-| `TTHEME_FIND_TAGS` | `block` | posts tagged with nudity or underwear (`nude`, `panties` and each site's own spelling): `block` drops them, `allow` keeps them |
-| `TTHEME_FIND_POSTS` | `cutouts` | what `find` opens on — the transparent cutouts or every post of the character |
+| `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe). The set shows next to the query whenever it is not just `safe` |
+| `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
+| `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |
+| `TTHEME_FIND_CUTOUTS` | — | the tags `find` calls a transparent cutout, as `key=tag,tag` pairs separated by spaces, keyed by `safebooru`, `yande`, `konachan` or `danbooru` (`safebooru=transparent_background yande=transparent_png,vector`). A site with several tags matches any of them; `danbooru=` names none, so its cutouts are the posts whose PNG header has an alpha channel. A site named here loses yande.re's shortcut of skipping that header check. Sites left out keep the built-in tags |
 | `TTHEME_FIND_ORDER` | `newest` | the order `find` lists posts in — `newest` or `score` |
 | `TTHEME_FIND_SETS` | `fold` | a run of the same picture at the same size from one uploader: `fold` shows it as one tile marked `×N`, `show` lists every one |
 | `TTHEME_FIND_UNBLOCK` | `0` | `1` sends `find`'s own requests through a proxy it runs on `127.0.0.1`, which splits the TLS handshake across two records so a network that blocks boorus by hostname cannot read the name. It is not a VPN: the address you reach is unchanged and nothing else on the machine is affected. Needs node 22.21 or newer, and the query line says `unblock` while it is on |

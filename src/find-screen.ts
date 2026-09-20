@@ -1,21 +1,23 @@
-import { type Rating, SITES } from './booru.ts'
+import { BLOCKS, type Block, type Rating, SITES } from './booru.ts'
 import { type Hex, rgb } from './color.ts'
 
 export type Preset = 'cutouts' | 'all'
 export type Order = 'newest' | 'score'
-export type Tags = 'block' | 'allow'
 export type Sets = 'fold' | 'show'
 
 export interface Setting {
   name: string
   label: string
   choices: string[]
+  multi?: { read(raw: string | undefined): string[]; none?: string }
 }
 
 export interface Row {
   label: string
   choices: string[]
   value: string
+  multi?: { none?: string }
+  cursor: number
 }
 
 export interface Tile {
@@ -47,8 +49,8 @@ export interface FindView {
   nextSite: string
   preset: Preset
   order: Order
-  rating: Rating
-  tags: Tags
+  rating: Rating[]
+  block: Block[]
   sets: Sets
   unblocked: boolean
   settings: Row[]
@@ -406,11 +408,12 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
     ['⌕ ', accent],
     [view.tag || 'nothing yet — / searches', view.tag ? '' : D],
   ])
+  const allowed = BLOCKS.filter((block) => !view.block.includes(block))
   const state = [
     view.preset,
     view.order,
-    ...(view.rating === 'safe' ? [] : [view.rating]),
-    ...(view.tags === 'allow' ? ['tags allowed'] : []),
+    ...(view.rating.join('+') === 'safe' ? [] : [view.rating.join('+')]),
+    ...(allowed.length > 0 ? [`allows ${allowed.join('+')}`] : []),
     ...(view.unblocked ? ['unblock'] : []),
   ]
   line.put(c, `  ${state.join('  ')}`, D)
@@ -582,7 +585,7 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
     ['search', '/  a tag, a post url or an id'],
     ['unfold', 'space  a set of ×N'],
     ['open', 'o  the post page in a browser'],
-    ['settings', 's  rating, tags, posts, order, sets'],
+    ['settings', 's  rating, block, posts, order, sets'],
     ['back', 'esc returns to preview'],
     ['close', '?  esc'],
   ],
@@ -598,7 +601,9 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
 function panel(lines: Line[], cols: number, rows: number, view: FindView, accent: string): void {
   const at = view.panel ?? 0
   const label = Math.max(...view.settings.map((row) => row.label.length))
-  const widest = Math.max(...view.settings.map((row) => row.choices.reduce((n, c) => n + c.length + 3, 0)))
+  const widest = Math.max(
+    ...view.settings.map((row) => row.choices.reduce((n, c) => n + c.length + (row.multi ? 6 : 3), 0)),
+  )
   const w = Math.min(cols - 2, Math.max(28, label + widest + 8))
   const h = view.settings.length + 4
   const x = Math.floor((cols - w) / 2)
@@ -611,9 +616,13 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
     const line = lines[y + 2 + i] as Line
     line.put(x + 3, row.label, i === at ? B : D)
     let c = x + 5 + label
-    for (const choice of row.choices) {
-      c = line.put(c, ` ${choice} `, choice === row.value ? `\x1b[7;${30 + view.siteAnsi}m` : D) + 1
-    }
+    const on = row.value.split(' ')
+    row.choices.forEach((choice, k) => {
+      const lit = on.includes(choice)
+      const under = row.multi && i === at && k === row.cursor ? '4;' : ''
+      const text = row.multi ? ` ${lit ? '[x]' : '[ ]'} ${choice} ` : ` ${choice} `
+      c = line.put(c, text, lit ? `\x1b[${under}7;${30 + view.siteAnsi}m` : under ? `\x1b[4m${D}` : D) + 1
+    })
   })
   lines[y + h - 1]?.put(x, `╰${'─'.repeat(w - 2)}╯`)
   foot(lines[rows - 1] as Line, cols, accent, {
@@ -621,6 +630,7 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
     keys: [
       ['↑↓', 'setting'],
       ['←→', 'value'],
+      ['space', 'toggle'],
       ['enter', 'save'],
     ],
     right: ['esc', 'undo'],
