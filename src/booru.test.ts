@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 
 import {
@@ -20,6 +23,7 @@ import {
   retryAfter,
   SITES,
   type Site,
+  sweepCache,
 } from './booru.ts'
 
 const RAW = [
@@ -363,4 +367,28 @@ test('postRef turns a pasted post page, a site:id or a bare number into one post
   assert.deepEqual(postRef('7159377', safebooru as never), { site: safebooru, id: 7159377 })
   assert.equal(postRef('hakurei_reimu', safebooru as never), undefined)
   assert.equal(postRef('https://danbooru.donmai.us/posts/1', safebooru as never), undefined)
+})
+
+test('sweepCache drops the oldest cached files until the tree fits its budget', () => {
+  const root = mkdtempSync(join(tmpdir(), 'ttheme-sweep-'))
+  const made = ['orig/old.png', 'tile/middle.png', 'thumb/new.jpg']
+  made.forEach((name, age) => {
+    const path = join(root, 'safebooru', name)
+    mkdirSync(dirname(path), { recursive: true })
+    writeFileSync(path, new Uint8Array(100))
+    utimesSync(path, 0, age)
+  })
+  const kept = join(root, 'safebooru', 'probes.json')
+  writeFileSync(kept, '{}')
+
+  sweepCache(250, root)
+  assert.equal(existsSync(join(root, 'safebooru', 'orig/old.png')), false, 'the oldest goes first')
+  assert.equal(existsSync(join(root, 'safebooru', 'tile/middle.png')), true)
+  assert.equal(existsSync(join(root, 'safebooru', 'thumb/new.jpg')), true)
+  assert.equal(existsSync(kept), true, 'probes and owners are not image cache')
+
+  sweepCache(0, root)
+  assert.equal(existsSync(join(root, 'safebooru', 'thumb/new.jpg')), false, 'a zero budget clears the images')
+  assert.equal(existsSync(kept), true)
+  rmSync(root, { recursive: true, force: true })
 })

@@ -70,6 +70,18 @@ head -1 bin/ttheme.js | grep -q '^#!/usr/bin/env node' ||
 node bin/ttheme.js --help > /dev/null
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
+cat > "$tmp/worker.cjs" <<'JS'
+const { Worker } = require('node:worker_threads')
+const { resolve } = require('node:path')
+const worker = new Worker(resolve(process.argv[2]))
+worker.on('message', (answer) => process.exit(typeof answer.error === 'string' ? 0 : 1))
+worker.on('error', () => process.exit(1))
+worker.on('exit', () => process.exit(1))
+worker.postMessage({ id: 1, job: 'thumb', from: '/nonexistent.png', to: '/dev/null', width: 8, height: 8 })
+setTimeout(() => process.exit(1), 10000)
+JS
+node "$tmp/worker.cjs" bin/ttheme.js ||
+  { echo "bin:check failed: the bundle does not serve renders as a worker"; exit 1; }
 sandboxed() {
   env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" "$@"
 }

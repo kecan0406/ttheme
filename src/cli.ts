@@ -2,6 +2,7 @@ import { Command, CommanderError, Option } from 'commander'
 import pkg from '../package.json' with { type: 'json' }
 import { build, TERMINALS } from './build.ts'
 import { runFind } from './find.ts'
+import { runImage } from './images.ts'
 import { runInit } from './init.ts'
 import { runAdd, runBrowse, runDefault, runList, runRemove, runUpdate } from './market.ts'
 
@@ -57,6 +58,15 @@ export function createProgram(): Command {
     .description('pick a safebooru background for a palette — preview opens this on tab')
     .action(async (name: string) => {
       process.exitCode = await runFind(name)
+    })
+
+  program
+    .command('image', { hidden: true })
+    .argument('<palette>')
+    .argument('<action>', 'next, prev or drop')
+    .description('switch a palette between its saved backgrounds, or remove the one shown — preview calls this')
+    .action((name: string, action: string) => {
+      process.exitCode = runImage(name, action)
     })
 
   program

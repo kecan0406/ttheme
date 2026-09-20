@@ -1,14 +1,18 @@
-import { mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type Hex, luminance, rgb } from './color.ts'
 import { check } from './contrast.ts'
-import { alphaBox, type Box, encodePng, type Rgba, resample } from './png.ts'
+import { alphaBox, type Box, encodePng, type Rgba, resample, transparency } from './png.ts'
 
 export const FILL = { width: 2560, height: 1550 }
 const FIGURE = 2560
 const FAINT = 0.1
 const HEADROOM = 0.15
+const KEEP = 0.55
+const PLACE = 0.65
+const STANDS = 3
 const PEAK = luminance(mix('#19161e', '#9b86c8', 0.2))
+const SHELF = 'shelf'
 
 export interface Colors {
   name: string
@@ -150,11 +154,15 @@ export function headAnchor(box: Box): number {
   return Math.min(0.5, (HEADROOM + 0.5) * ((box.w * FILL.height) / FILL.width / box.h))
 }
 
+function band(box: Box, h: number, anchor: number): Box {
+  const top = Math.min(Math.max(0, anchor * box.h - h / 2), box.h - h)
+  return { x: box.x, y: box.y + top, w: box.w, h }
+}
+
 export function fillBox(box: Box, width: number, height: number, anchor: number): Box {
   const h = (box.w * height) / width
   if (h <= box.h) {
-    const top = Math.min(Math.max(0, anchor * box.h - h / 2), box.h - h)
-    return { x: box.x, y: box.y + top, w: box.w, h }
+    return band(box, h, anchor)
   }
   const w = (box.h * width) / height
   return { x: box.x + (box.w - w) / 2, y: box.y, w, h: box.h }
@@ -174,27 +182,84 @@ export function figure(image: Rgba, box: Box): Rgba {
   return resample(image, box, Math.round(box.w * k), Math.round(box.h * k))
 }
 
-export function fill(image: Rgba, box: Box, anchor: number): Rgba {
-  return resample(image, fillBox(box, FILL.width, FILL.height, anchor), FILL.width, FILL.height)
+export interface Frame {
+  crop: Box
+  at: Box
+  inset: boolean
 }
 
-export function tryOn(image: Rgba, colors: Colors, tone: Tone, width: number, height: number): Rgba {
+export function fillFrame(box: Box, width: number, height: number, anchor: number, clear: number): Frame {
+  const keep = KEEP * box.h
+  const span = (box.w * height) / width
+  if (clear < STANDS || span > keep) {
+    return { crop: fillBox(box, width, height, anchor), at: { x: 0, y: 0, w: width, h: height }, inset: false }
+  }
+  const short = 1 - span / keep
+  const h = height * (1 - HEADROOM * short)
+  const w = (box.w * h) / keep
+  return {
+    crop: band(box, keep, anchor),
+    at: { x: (width - w) * PLACE, y: height - h, w, h },
+    inset: true,
+  }
+}
+
+function paint(image: Rgba, frame: Frame, width: number, height: number): Rgba {
+  const w = Math.max(1, Math.round(frame.at.w))
+  const h = Math.max(1, Math.round(frame.at.h))
+  const cut = resample(image, frame.crop, w, h)
+  const out = new Uint8Array(width * height * 4)
+  const ox = Math.round(frame.at.x)
+  const oy = Math.round(frame.at.y)
+  for (let y = 0; y < h; y++) {
+    const ty = oy + y
+    const from = Math.max(0, -ox)
+    const to = Math.min(w, width - ox)
+    if (ty < 0 || ty >= height || to <= from) {
+      continue
+    }
+    out.set(cut.data.subarray((y * w + from) * 4, (y * w + to) * 4), (ty * width + ox + from) * 4)
+  }
+  return { width, height, data: out }
+}
+
+export function fill(image: Rgba, box: Box, anchor: number, clear: number): Rgba {
+  const frame = fillFrame(box, FILL.width, FILL.height, anchor, clear)
+  return frame.inset
+    ? paint(image, frame, FILL.width, FILL.height)
+    : resample(image, frame.crop, FILL.width, FILL.height)
+}
+
+export function tryOn(image: Rgba, colors: Colors, tone: Tone, width: number, height: number, clear: number): Rgba {
   const box = figureBox(image)
-  const view = coverBox(fillBox(box, FILL.width, FILL.height, headAnchor(box)), width, height)
-  return composite(
-    tint(resample(image, view, width, height), colors.background, tone.color),
-    colors.background,
-    tone.opacity,
-  )
+  const frame = fillFrame(box, FILL.width, FILL.height, headAnchor(box), clear)
+  let shown: Rgba
+  if (frame.inset) {
+    const view = coverBox({ x: 0, y: 0, w: FILL.width, h: FILL.height }, width, height)
+    const k = width / view.w
+    shown = paint(
+      image,
+      {
+        ...frame,
+        at: { x: (frame.at.x - view.x) * k, y: (frame.at.y - view.y) * k, w: frame.at.w * k, h: frame.at.h * k },
+      },
+      width,
+      height,
+    )
+  } else {
+    shown = resample(image, coverBox(frame.crop, width, height), width, height)
+  }
+  return composite(tint(shown, colors.background, tone.color), colors.background, tone.opacity)
 }
 
 export function backgroundsDir(configHome: string): string {
   return join(configHome, 'ttheme', 'backgrounds')
 }
 
-export function backdropConf(name: string, fillPath: string, opacity: number, from?: string): string {
+export function backdropConf(name: string, fillPath: string, opacity: number, from?: string, key?: string): string {
   return [
     ...(from ? [`# from ${from}`] : []),
+    ...(key ? [`# image ${key}`] : []),
     `background-image = ${fillPath}`,
     'background-image-fit = cover',
     'background-image-position = center',
@@ -217,6 +282,130 @@ export function clearBackdrop(dir: string, name: string): void {
   }
 }
 
+export function imageKey(origin: Origin): string {
+  return `${origin.site}_${origin.id}`
+}
+
+function shelfDir(dir: string, name: string): string {
+  return join(dir, SHELF, name)
+}
+
+function belongs(file: string, name: string): boolean {
+  const rest = file.slice(name.length)
+  return file.startsWith(name) && (rest === '.png' || rest === '.conf' || /^@fill-\d+\.png$/.test(rest))
+}
+
+function activeKey(dir: string, name: string): string | undefined {
+  try {
+    return /^# image (\S+)$/m.exec(readFileSync(join(dir, `${name}.conf`), 'utf8'))?.[1]
+  } catch {
+    return undefined
+  }
+}
+
+function shelved(dir: string, name: string): string[] {
+  try {
+    return readdirSync(shelfDir(dir, name))
+  } catch {
+    return []
+  }
+}
+
+export function imageKeys(dir: string, name: string): string[] {
+  const active = activeKey(dir, name)
+  return [...(active ? [active] : []), ...shelved(dir, name)].sort()
+}
+
+function shelve(dir: string, name: string): void {
+  const key = activeKey(dir, name)
+  if (!key) {
+    return
+  }
+  const to = join(shelfDir(dir, name), key)
+  rmSync(to, { recursive: true, force: true })
+  mkdirSync(to, { recursive: true })
+  for (const file of readdirSync(dir)) {
+    if (belongs(file, name)) {
+      renameSync(join(dir, file), join(to, file.slice(name.length)))
+    }
+  }
+  clearBackdrop(dir, name)
+}
+
+function unshelve(dir: string, name: string, key: string): void {
+  const from = join(shelfDir(dir, name), key)
+  for (const file of readdirSync(from)) {
+    renameSync(join(from, file), join(dir, `${name}${file}`))
+  }
+  rmSync(from, { recursive: true })
+}
+
+function originalOf(dir: string, name: string, key: string): string | undefined {
+  try {
+    return readdirSync(join(dir, 'originals')).find((file) => file.startsWith(`${name}-${key}.`))
+  } catch {
+    return undefined
+  }
+}
+
+function newest(dir: string, name: string, key: string): void {
+  const file = originalOf(dir, name, key)
+  if (file) {
+    const now = new Date()
+    utimesSync(join(dir, 'originals', file), now, now)
+  }
+}
+
+export function switchImage(configHome: string, name: string, step: 1 | -1): { key: string; at: number; of: number } {
+  const dir = backgroundsDir(configHome)
+  const keys = imageKeys(dir, name)
+  const now = activeKey(dir, name)
+  if (!now || keys.length < 2) {
+    throw new Error(`${name} has no other image`)
+  }
+  const at = (keys.indexOf(now) + step + keys.length) % keys.length
+  const key = keys[at] as string
+  shelve(dir, name)
+  unshelve(dir, name, key)
+  newest(dir, name, key)
+  return { key, at: at + 1, of: keys.length }
+}
+
+export function dropImage(configHome: string, name: string): { key?: string; left: number } {
+  const dir = backgroundsDir(configHome)
+  const files = readdirSync(dir).filter((file) => belongs(file, name))
+  if (files.length === 0) {
+    throw new Error(`${name} has no image`)
+  }
+  const keys = imageKeys(dir, name)
+  const now = activeKey(dir, name)
+  const original = now && originalOf(dir, name, now)
+  if (original) {
+    rmSync(join(dir, 'originals', original))
+  }
+  for (const file of files) {
+    rmSync(join(dir, file))
+  }
+  clearBackdrop(dir, name)
+  const rest = keys.filter((key) => key !== now)
+  const next = rest[(now ? keys.indexOf(now) : 0) % rest.length]
+  if (next) {
+    unshelve(dir, name, next)
+    newest(dir, name, next)
+  }
+  return { key: now, left: rest.length }
+}
+
+export function retire(dir: string, name: string, key?: string): void {
+  if (activeKey(dir, name) !== key) {
+    shelve(dir, name)
+  }
+  if (key) {
+    rmSync(join(shelfDir(dir, name), key), { recursive: true, force: true })
+  }
+  clearBackdrop(dir, name)
+}
+
 export function installBackdrop(
   configHome: string,
   colors: Colors,
@@ -226,17 +415,19 @@ export function installBackdrop(
 ): string[] {
   const dir = backgroundsDir(configHome)
   const name = colors.name
+  const key = imageKey(original)
   mkdirSync(join(dir, 'originals'), { recursive: true })
-  clearBackdrop(dir, name)
+  retire(dir, name, key)
   const box = figureBox(image)
   const anchor = headAnchor(box)
+  const clear = transparency(image)
   const whole = join(dir, `${name}.png`)
   const fillPath = join(dir, `${name}@fill-${Math.round(anchor * 100)}.png`)
   const conf = join(dir, `${name}.conf`)
   const source = join(dir, 'originals', `${name}-${original.site}_${original.id}.${original.ext}`)
   writeFileSync(whole, encodePng(tint(figure(image, box), colors.background, tone.color)))
-  writeFileSync(fillPath, encodePng(tint(fill(image, box, anchor), colors.background, tone.color)))
-  writeFileSync(conf, backdropConf(name, fillPath, tone.opacity, original.from))
+  writeFileSync(fillPath, encodePng(tint(fill(image, box, anchor, clear), colors.background, tone.color)))
+  writeFileSync(conf, backdropConf(name, fillPath, tone.opacity, original.from, key))
   writeFileSync(source, original.bytes)
   return [whole, fillPath, conf, source]
 }

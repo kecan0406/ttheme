@@ -420,6 +420,32 @@ __tt_pv_bg_find() {
   return 0
 }
 
+__tt_pv_bg_images() {
+  local -a shelf=(${TTHEME_CONFIG:h}/backgrounds/shelf/$1/*(N/))
+  REPLY=$(( ${#shelf} + 1 ))
+}
+
+__tt_pv_bg_image() {
+  local name=$tune act=$1 err REPLY
+  local -i rc
+  if [[ $act != drop ]]; then
+    __tt_pv_bg_images $name
+    (( REPLY > 1 )) || { msg="$name has one image" msgt=200; return 0 }
+  fi
+  __tt_pv_untune
+  __tt_pv_bg_close
+  err=$(__tt_cli image $name $act 2>&1)
+  rc=$?
+  err=${${err//$'\n'/ }## #}
+  resized=1 bgname="" bgshown="" bgsent=() bgdim=()
+  unset "bgsrc[$name]"
+  __tt_bg_load $name
+  bgload[$name]="" bgedit[$name]=1
+  msg=${err:-"background · $name"} msgt=$(( rc ? 300 : 200 ))
+  [[ -r ${TTHEME_CONFIG:h}/backgrounds/$name.conf ]] || return 0
+  tune=$name tf=1 tsnap="${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}"
+}
+
 __tt_pv_bg_panel() {
   local name=$1 z=$'\e[0m' b=$'\e[1m' d=$'\e[2m' c=$ac val sty REPLY
   local -a labs=(size position opacity) at=(0 3 6)

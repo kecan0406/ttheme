@@ -1,8 +1,8 @@
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { backdropTone, installBackdrop, origins, type Tone, tryOn } from './backdrop.ts'
+import { backdropTone, origins, type Tone } from './backdrop.ts'
 import {
   BLOCKS,
   blockSet,
@@ -14,7 +14,6 @@ import {
   fetchPost,
   fetchPosts,
   headOf,
-  MAX_PIXELS,
   mates,
   mirrored,
   originHost,
@@ -28,6 +27,7 @@ import {
   rendition,
   SITES,
   type Site,
+  sweepCache,
   tagsOf,
 } from './booru.ts'
 import { find, readCatalog } from './catalog.ts'
@@ -47,7 +47,7 @@ import {
   transmit,
 } from './find-screen.ts'
 import { configHome } from './palettes.ts'
-import { contain, decodeImage, encodePng, type Rgba, transparency } from './png.ts'
+import { Renderer } from './render.ts'
 import { tunnel } from './unblock.ts'
 import { withSetting } from './wiring.ts'
 
@@ -67,12 +67,13 @@ function initial(setting: Setting, raw: string | undefined): string {
   return setting.choices.find((choice) => choice === raw) ?? (setting.choices[0] as string)
 }
 
-const WORKERS = 4
+const PROBE = 12
+const THUMB = 12
 const PRELOAD = 2
 const SETTLE = 150
 const ESCAPE = 30
 const TRY_WIDTH = 1280
-const LOOKAHEAD = 1
+const LOOKAHEAD = 2
 
 interface Source {
   tags: string
@@ -118,13 +119,12 @@ function blank(key: string, searching: boolean): Board {
 interface Current {
   site: Site
   id: number
-  image: Rgba
-  plain: Rgba
-  cut?: Rgba
-  failed: boolean
-  bytes: Uint8Array
+  path: string
   ext: string
-  clear: number
+  size: number
+  cut?: string
+  using: 'plain' | 'cut'
+  failed: boolean
 }
 
 function describe(error: unknown): string {
@@ -152,10 +152,6 @@ function reason(site: Site, error: unknown): string {
 function incomplete(input: string): boolean {
   const at = input.lastIndexOf('\u001b')
   return at !== -1 && /^\[?[0-9;]*$/.test(input.slice(at + 1))
-}
-
-function tick(): Promise<void> {
-  return new Promise((resolve) => setImmediate(resolve))
 }
 
 function readCache<T>(site: Site, name: string): Record<string, T> {
@@ -190,12 +186,14 @@ class Finder {
   )
   private direction = 1
   private prefetching = 0
-  private readonly inflight = new Map<string, Promise<Uint8Array>>()
+  private readonly inflight = new Map<string, Promise<number>>()
   private readonly owners = new Map<string, Map<string, string[]>>()
   private readonly probed = new Map<string, Record<string, boolean>>()
   private readonly unsaved = new Set<string>()
   private thumbQueue: { site: Site; post: Post }[] = []
   private thumbing = 0
+  private readonly clarity = new Map<string, number>()
+  private readonly renders = new Renderer()
   private readonly sent = new Map<number, string>()
   private readonly placed = new Map<number, string>()
   private current?: Current
@@ -276,7 +274,7 @@ class Finder {
   }
 
   private origPath(site: Site, id: number, ext: string): string {
-    return join(this.scratch, 'orig', `${site.key}-${id}.${ext}`)
+    return join(cacheDir(site), 'orig', `${id}.${ext}`)
   }
 
   private tileOf(site: Site, post: Post, variants: number): Tile {
@@ -353,7 +351,10 @@ class Finder {
     this.write('\x1b_Ga=d,d=A,q=2\x1b\\\x1b[H\x1b[J')
     stdin.setRawMode(false)
     stdin.pause()
+    this.saveProbes()
+    this.renders.close()
     rmSync(this.scratch, { recursive: true, force: true })
+    sweepCache()
     return code
   }
 
@@ -421,7 +422,7 @@ class Finder {
     this.rows = process.stdout.rows || this.rows
     this.scroll()
     if (this.view.mode === 'try' && this.current) {
-      this.present()
+      this.reveal()
     }
     void this.pump()
     this.draw()
@@ -845,12 +846,12 @@ class Finder {
     this.show()
     this.draw()
     const tags = this.query(site)
+    void this.tally(gen, site, board, tags)
     try {
-      const [total, owners] = await Promise.all([fetchCount(site, tags, this.signal), this.mateOwners(site)])
+      const owners = await this.mateOwners(site)
       if (gen !== this.gen) {
         return
       }
-      board.total = total
       const room = tagsOf(tags) + 1 <= site.tagBudget
       board.sources = [
         ...(room ? [...owners.keys()].map((owner) => ({ tags: `${tags} user:${owner}`, page: 0, done: false })) : []),
@@ -862,6 +863,17 @@ class Finder {
     } catch (error) {
       this.fail(gen, error)
     }
+  }
+
+  private async tally(gen: number, site: Site, board: Board, tags: string): Promise<void> {
+    try {
+      const total = await fetchCount(site, tags, this.signal)
+      if (gen === this.gen) {
+        board.total = total
+        this.show()
+        this.draw()
+      }
+    } catch {}
   }
 
   private fail(gen: number, error: unknown): void {
@@ -880,6 +892,25 @@ class Finder {
     return this.view.tiles.length < (this.board.top + rowsVis + LOOKAHEAD) * perRow
   }
 
+  private async nextPage(site: Site, board: Board, gen: number): Promise<void> {
+    const source = board.sources.find((s) => !s.done)
+    if (!source) {
+      return
+    }
+    const posts = await fetchPosts(site, source.tags, source.page, this.signal)
+    if (gen !== this.gen) {
+      return
+    }
+    source.page++
+    source.done = posts.length < PAGE
+    for (const post of posts) {
+      if (!board.seen.has(post.id)) {
+        board.seen.add(post.id)
+        board.queue.push(post)
+      }
+    }
+  }
+
   private async pump(): Promise<void> {
     const gen = this.gen
     const board = this.board
@@ -888,40 +919,40 @@ class Finder {
     }
     this.pumping = gen
     const site = this.site
+    const flight: { post: Post; passed: Promise<boolean> }[] = []
+    let page: Promise<void> | undefined
     try {
       board.searching = true
-      while (gen === this.gen && this.wants()) {
-        if (board.queue.length === 0) {
-          const source = board.sources.find((s) => !s.done)
-          if (!source) {
+      while (gen === this.gen) {
+        while (flight.length < PROBE && board.queue.length > 0 && this.wants()) {
+          const post = board.queue.shift() as Post
+          flight.push({ post, passed: this.passes(site, post) })
+        }
+        if (!page && board.queue.length < PROBE && board.sources.some((s) => !s.done) && this.wants()) {
+          const job = this.nextPage(site, board, gen).then(() => {
+            if (page === job) {
+              page = undefined
+            }
+          })
+          job.catch(() => {})
+          page = job
+        }
+        const head = flight.shift()
+        if (!head) {
+          if (!page) {
             break
           }
-          const posts = await fetchPosts(site, source.tags, source.page, this.signal)
-          if (gen !== this.gen) {
-            return
-          }
-          source.page++
-          source.done = posts.length < PAGE
-          for (const post of posts) {
-            if (!board.seen.has(post.id)) {
-              board.seen.add(post.id)
-              board.queue.push(post)
-            }
-          }
+          await page
           continue
         }
-        const batch = board.queue.splice(0, WORKERS)
-        const passed = await Promise.all(batch.map((post) => this.passes(site, post)))
-        this.saveProbes(site)
+        const passed = await head.passed
         if (gen !== this.gen) {
           return
         }
-        batch.forEach((post, i) => {
-          board.checked++
-          if (passed[i]) {
-            this.admit(site, post)
-          }
-        })
+        board.checked++
+        if (passed) {
+          this.admit(site, head.post)
+        }
         this.show()
         this.draw()
       }
@@ -933,6 +964,7 @@ class Finder {
     } catch (error) {
       this.fail(gen, error)
     } finally {
+      this.saveProbes()
       if (this.pumping === gen) {
         this.pumping = 0
       }
@@ -978,10 +1010,14 @@ class Finder {
     }
   }
 
-  private saveProbes(site: Site): void {
-    if (this.unsaved.delete(site.key)) {
-      writeCache(site, 'probes.json', this.probes(site))
+  private saveProbes(): void {
+    for (const key of this.unsaved) {
+      const site = SITES.find((s) => s.key === key)
+      if (site) {
+        writeCache(site, 'probes.json', this.probes(site))
+      }
     }
+    this.unsaved.clear()
   }
 
   private admit(site: Site, post: Post): void {
@@ -1016,22 +1052,31 @@ class Finder {
     }
     const found = origins(this.home)
     const known = readCache<string>(site, 'owners.json')
-    const byPalette = new Map<string, string>()
-    for (const sibling of this.catalog.palettes) {
+    const siblings = this.catalog.palettes.flatMap((sibling) => {
       const origin = found.get(sibling.name)
-      if (sibling.group !== this.entry.group || sibling.name === this.entry.name || origin?.site !== site.key) {
-        continue
-      }
-      let owner = known[origin.id]
-      if (owner === undefined) {
-        try {
-          owner = (await fetchPost(site, origin.id, this.signal))?.owner ?? ''
-          known[origin.id] = owner
-        } catch {
-          continue
+      return sibling.group === this.entry.group && sibling.name !== this.entry.name && origin?.site === site.key
+        ? [{ name: sibling.name, id: origin.id }]
+        : []
+    })
+    const asked = await Promise.all(
+      siblings.map(async (sibling) => {
+        const owner = known[sibling.id]
+        if (owner !== undefined) {
+          return { ...sibling, owner }
         }
+        try {
+          return { ...sibling, owner: (await fetchPost(site, sibling.id, this.signal))?.owner ?? '' }
+        } catch {
+          return undefined
+        }
+      }),
+    )
+    const byPalette = new Map<string, string>()
+    for (const sibling of asked) {
+      if (sibling) {
+        known[sibling.id] = sibling.owner
+        byPalette.set(sibling.name, sibling.owner)
       }
-      byPalette.set(sibling.name, owner)
     }
     writeCache(site, 'owners.json', known)
     const owners = mates(byPalette)
@@ -1044,9 +1089,9 @@ class Finder {
     path: string,
     url: string,
     progress?: (got: number, size: number) => void,
-  ): Promise<Uint8Array> {
+  ): Promise<number> {
     if (existsSync(path)) {
-      return new Uint8Array(readFileSync(path))
+      return statSync(path).size
     }
     const running = this.inflight.get(path)
     if (running) {
@@ -1056,7 +1101,7 @@ class Finder {
       const bytes = await fetchBytes(site, url, this.signal, progress)
       mkdirSync(dirname(path), { recursive: true })
       writeFileSync(path, bytes)
-      return bytes
+      return bytes.length
     })()
     this.inflight.set(path, job)
     try {
@@ -1067,7 +1112,7 @@ class Finder {
   }
 
   private thumbs(): void {
-    while (this.thumbing < WORKERS && this.thumbQueue.length > 0) {
+    while (this.thumbing < THUMB && this.thumbQueue.length > 0) {
       const { site, post } = this.thumbQueue.shift() as { site: Site; post: Post }
       this.thumbing++
       this.thumb(site, post)
@@ -1082,12 +1127,11 @@ class Finder {
   private async thumb(site: Site, post: Post): Promise<void> {
     const w = TILE.cols * this.cell.w
     const h = TILE.rows * this.cell.h
-    const path = join(this.scratch, 'tile', `${site.key}-${post.id}-${w}x${h}.png`)
+    const path = join(cacheDir(site), 'tile', `${post.id}-${w}x${h}.png`)
     if (!existsSync(path)) {
       const thumb = join(cacheDir(site), 'thumb', `${post.id}.${extension(post.preview)}`)
-      const bytes = await this.cached(site, thumb, post.preview)
-      mkdirSync(dirname(path), { recursive: true })
-      writeFileSync(path, encodePng(contain(decodeImage(bytes, MAX_PIXELS), w, h)))
+      await this.cached(site, thumb, post.preview)
+      await this.renders.run({ job: 'thumb', from: thumb, to: path, width: w, height: h })
     }
     this.thumbPath.set(this.mark(site, post.id), path)
     this.show()
@@ -1104,8 +1148,7 @@ class Finder {
       return
     }
     if (this.current?.id === tile.id) {
-      this.present()
-      this.draw()
+      this.reveal()
       return
     }
     this.settle = setTimeout(() => void this.load(tile), SETTLE)
@@ -1128,9 +1171,9 @@ class Finder {
         view.fetching = { id: tile.id, got: 0, size: 0 }
         this.draw()
       }
-      const bytes = await this.cached(site, path, version.file, (got, size) => {
+      const size = await this.cached(site, path, version.file, (got, total) => {
         if (view.fetching?.id === tile.id) {
-          view.fetching = { id: tile.id, got, size }
+          view.fetching = { id: tile.id, got, size: total }
           this.draw()
         }
       })
@@ -1138,42 +1181,46 @@ class Finder {
         return
       }
       view.fetching = undefined
-      view.preparing = tile.id
-      this.flush()
-      await tick()
-      const image = decodeImage(bytes, MAX_PIXELS)
       if (site !== this.site) {
         return
       }
-      const current: Current = {
-        site,
-        id: tile.id,
-        image,
-        plain: image,
-        failed: false,
-        bytes,
-        ext: version.ext,
-        clear: transparency(image),
+      const current: Current = { site, id: tile.id, path, ext: version.ext, size, using: 'plain', failed: false }
+      view.preparing = tile.id
+      this.flush()
+      const plain = await this.render(current, 'plain')
+      if (control.signal.aborted || site !== this.site) {
+        return
       }
-      if (current.clear === 0 && canRemoveBackground() && this.setting('TTHEME_FIND_REMOVE_BG') !== 'off') {
+      if (plain.clear === 0 && canRemoveBackground() && this.setting('TTHEME_FIND_REMOVE_BG') !== 'off') {
         view.preparing = undefined
         view.cutting = tile.id
         this.flush()
-        const cut = await this.cutOut(site, tile.id, path, control.signal)
+        current.cut = await this.cutOut(site, tile.id, path, control.signal)
         if (control.signal.aborted || site !== this.site) {
           return
         }
-        if (cut) {
-          current.cut = cut
-          current.image = cut
-          current.clear = transparency(cut)
+        view.cutting = undefined
+        if (current.cut) {
+          view.preparing = tile.id
+          this.flush()
+          const made = await this.render(current, 'cut').catch(() => undefined)
+          if (control.signal.aborted || site !== this.site) {
+            return
+          }
+          if (made && keepable(made.clear)) {
+            current.using = 'cut'
+          } else {
+            rmSync(current.cut, { force: true })
+            current.cut = undefined
+            current.failed = true
+          }
         } else {
           current.failed = true
         }
       }
       this.current = current
       if (view.tiles[view.focus]?.id === tile.id) {
-        this.present()
+        await this.present()
       }
       this.preload()
     } catch (error) {
@@ -1194,14 +1241,15 @@ class Finder {
     }
   }
 
-  private async cutOut(site: Site, id: number, path: string, signal: AbortSignal): Promise<Rgba | undefined> {
-    const out = join(this.scratch, 'cut', `${site.key}-${id}.png`)
+  private async cutOut(site: Site, id: number, path: string, signal: AbortSignal): Promise<string | undefined> {
+    const out = join(cacheDir(site), 'cut', `${id}.png`)
+    if (existsSync(out)) {
+      return out
+    }
     try {
       mkdirSync(dirname(out), { recursive: true })
-      const cut = existsSync(out)
-        ? decodeImage(new Uint8Array(readFileSync(out)), MAX_PIXELS)
-        : await removeBackground(path, out, signal)
-      return keepable(transparency(cut)) ? cut : undefined
+      await removeBackground(path, out, signal)
+      return out
     } catch {
       rmSync(out, { force: true })
       return undefined
@@ -1213,10 +1261,8 @@ class Finder {
     if (!current?.cut || this.view.shown?.id !== current.id) {
       return
     }
-    current.image = current.image === current.cut ? current.plain : current.cut
-    current.clear = transparency(current.image)
-    this.present()
-    this.draw()
+    current.using = current.using === 'cut' ? 'plain' : 'cut'
+    this.reveal()
   }
 
   private preload(): void {
@@ -1236,11 +1282,11 @@ class Finder {
         continue
       }
       const path = this.origPath(site, post.id, version.ext)
-      if (existsSync(path)) {
-        continue
-      }
       this.prefetching++
       void this.cached(site, path, version.file)
+        .then(() =>
+          this.render({ site, id: post.id, path, ext: version.ext, size: 0, using: 'plain', failed: false }, 'plain'),
+        )
         .catch(() => {})
         .finally(() => {
           this.prefetching--
@@ -1248,21 +1294,66 @@ class Finder {
     }
   }
 
-  private present(): void {
-    const current = this.current
-    if (!current) {
-      return
-    }
+  private async render(current: Current, using: 'plain' | 'cut'): Promise<{ clear: number; path: string }> {
     const W = this.cols * this.cell.w
     const H = this.rows * this.cell.h
     const width = Math.min(W, TRY_WIDTH)
     const height = Math.max(1, Math.round((H * width) / W))
-    const cut = current.cut ? (current.image === current.cut ? 'on' : 'off') : current.failed ? 'failed' : 'none'
-    const path = join(this.scratch, `${current.id}${cut === 'on' ? 'c' : ''}-${width}x${height}.png`)
-    if (!existsSync(path)) {
-      writeFileSync(path, encodePng(tryOn(current.image, this.entry, this.tone, width, height)))
+    const path = join(
+      this.scratch,
+      `${current.site.key}-${current.id}${using === 'cut' ? 'c' : ''}-${width}x${height}.png`,
+    )
+    const key = `${current.site.key}:${current.id}:${using}`
+    const known = this.clarity.get(key)
+    if (known !== undefined && existsSync(path)) {
+      return { clear: known, path }
     }
-    this.view.shown = { id: current.id, clear: current.clear, bytes: current.bytes.length, path, cut }
+    const clear = await this.renders.run({
+      job: 'show',
+      from: using === 'cut' ? (current.cut as string) : current.path,
+      to: path,
+      width,
+      height,
+      colors: this.entry,
+      tone: this.tone,
+    })
+    this.clarity.set(key, clear)
+    return { clear, path }
+  }
+
+  private async present(): Promise<void> {
+    const current = this.current
+    if (!current) {
+      return
+    }
+    const using = current.using
+    const { clear, path } = await this.render(current, using)
+    if (this.current !== current || current.using !== using) {
+      return
+    }
+    this.view.shown = {
+      id: current.id,
+      clear,
+      bytes: current.size,
+      path,
+      cut: current.cut ? (using === 'cut' ? 'on' : 'off') : current.failed ? 'failed' : 'none',
+    }
+  }
+
+  private reveal(): void {
+    const view = this.view
+    view.preparing = this.current?.id
+    this.flush()
+    void this.present()
+      .catch((error: unknown) => {
+        view.error = error instanceof Error ? error.message : String(error)
+      })
+      .finally(() => {
+        if (view.preparing === this.current?.id) {
+          view.preparing = undefined
+        }
+        this.draw()
+      })
   }
 
   private async install(): Promise<void> {
@@ -1275,15 +1366,24 @@ class Finder {
     view.installing = tile.id
     view.error = undefined
     this.flush()
-    await tick()
     try {
-      installBackdrop(this.home, this.entry, this.tone, current.image, {
-        site: current.site.key,
-        id: current.id,
-        ext: current.ext,
-        bytes: current.bytes,
-        from: `${current.site.name} ${current.id} ${current.site.pageUrl(current.id)}`,
+      await this.renders.run({
+        job: 'backdrop',
+        from: current.using === 'cut' ? (current.cut as string) : current.path,
+        source: current.path,
+        home: this.home,
+        colors: this.entry,
+        tone: this.tone,
+        origin: {
+          site: current.site.key,
+          id: current.id,
+          ext: current.ext,
+          from: `${current.site.name} ${current.id} ${current.site.pageUrl(current.id)}`,
+        },
       })
+      const known = readCache<string>(current.site, 'owners.json')
+      known[current.id] = this.posts.get(this.mark(current.site, current.id))?.owner ?? ''
+      writeCache(current.site, 'owners.json', known)
       process.stderr.write(`background · ${this.entry.name} ← ${current.site.name} ${current.id}\n`)
       this.finish(0)
     } catch (error) {

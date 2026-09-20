@@ -46,7 +46,7 @@ test('the catalog verbs are registered alongside build and init', () => {
     makeProgram()
       .commands.map((cmd) => cmd.name())
       .sort(),
-    ['add', 'browse', 'build', 'default', 'find', 'init', 'list', 'remove', 'update'],
+    ['add', 'browse', 'build', 'default', 'find', 'image', 'init', 'list', 'remove', 'update'],
   )
 })
 

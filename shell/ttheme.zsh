@@ -618,6 +618,8 @@ __tt_pv_foot() {
     kk+=(space '=' enter)
     if (( bgoff[$tune] )); then kl+=(show default keep); else kl+=(hide default keep); fi
     __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
+    __tt_pv_bg_images $tune
+    (( REPLY > 1 )) && { kk+=(', .' D); kl+=("image ×$REPLY" remove) }
     right=$b"esc"$z$d" undo"$z
   elif (( conf )); then
     badge=CONFIG kk=(↑↓ ←→ enter) kl=(setting value save)
@@ -700,8 +702,8 @@ __tt_pv_help() {
     "enter  ·  esc restores $back"
   )
   if (( bgcw )); then
-    hk+=("tune bg" "" "" "")
-    hv+=("tab  ·  finds one on the boorus if none" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "space hides  ·  = default  ·  f replaces" "enter keeps  ·  esc undoes")
+    hk+=("tune bg" "" "" "" "")
+    hv+=("tab  ·  finds one on the boorus if none" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "space hides  ·  = default  ·  f adds one" "enter keeps  ·  esc undoes" ",  .  other saved images  ·  D removes this one")
   fi
   hk+=(config "")
   hv+=("alt-c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")
@@ -782,6 +784,9 @@ __tt_pv_tune() {
       ;;
     ' ') __tt_pv_bg_adjust on ;;
     '=') __tt_pv_bg_adjust def ;;
+    ',') __tt_pv_bg_image prev ;;
+    '.') __tt_pv_bg_image next ;;
+    D) __tt_pv_bg_image drop ;;
     f)
       __tt_pv_bg_findable $tune || return 0
       name=$tune

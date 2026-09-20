@@ -30,6 +30,10 @@ __tt_pv_bg_findable() { return 1 }
 
 __tt_pv_bg_find() { return 1 }
 
+__tt_pv_bg_images() { REPLY=1 }
+
+__tt_pv_bg_image() { : }
+
 __tt_pv_bg_panel() { : }
 
 __tt_pv_bg_close() { : }

@@ -1,6 +1,4 @@
 import { spawn } from 'node:child_process'
-import { readFileSync } from 'node:fs'
-import { decodePng, type Rgba } from './png.ts'
 
 const TIMEOUT = 30_000
 const LEAST = 3
@@ -35,7 +33,7 @@ export function keepable(clear: number): boolean {
   return clear >= LEAST && clear <= MOST
 }
 
-export function removeBackground(input: string, output: string, signal: AbortSignal): Promise<Rgba> {
+export function removeBackground(input: string, output: string, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn('osascript', ['-l', 'JavaScript', '-e', SCRIPT, input, output], {
       stdio: ['ignore', 'ignore', 'pipe'],
@@ -47,15 +45,11 @@ export function removeBackground(input: string, output: string, signal: AbortSig
     })
     child.on('error', reject)
     child.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(failure.trim().split('\n').at(-1) || `osascript exited ${code}`))
+      if (code === 0) {
+        resolve()
         return
       }
-      try {
-        resolve(decodePng(new Uint8Array(readFileSync(output))))
-      } catch (error) {
-        reject(error)
-      }
+      reject(new Error(failure.trim().split('\n').at(-1) || `osascript exited ${code}`))
     })
   })
 }

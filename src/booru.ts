@@ -1,3 +1,4 @@
+import { readdirSync, rmSync, statSync } from 'node:fs'
 import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -7,6 +8,7 @@ import { pngHead } from './png.ts'
 
 export const PAGE = 100
 export const MAX_PIXELS = 25_000_000
+export const CACHE_BYTES = 512 * 1024 * 1024
 
 export type Rating = 'safe' | 'questionable' | 'explicit'
 export type Block = 'nudity' | 'underwear'
@@ -26,6 +28,8 @@ const CONNECT = 3_000
 const MAX_WAIT = 60_000
 const TRIES = 3
 const AGENT = `ttheme/${pkg.version} (+${pkg.homepage})`
+
+const HELD = ['orig', 'tile', 'thumb', 'cut']
 
 const paused = new Map<string, number>()
 const HOSTS = hostMap(process.env.TTHEME_FIND_HOSTS)
@@ -71,6 +75,14 @@ export interface Site {
   pageUrl(id: number): string
   parse(text: string): Post[]
   count(text: string): number
+}
+
+function listing(dir: string): string[] {
+  try {
+    return readdirSync(dir)
+  } catch {
+    return []
+  }
 }
 
 function absolute(url: string): string {
@@ -465,8 +477,40 @@ export function mates(owners: ReadonlyMap<string, string>): Map<string, string[]
   return byOwner
 }
 
+function cacheRoot(): string {
+  return join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), 'ttheme')
+}
+
 export function cacheDir(site: Site): string {
-  return join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), 'ttheme', site.key)
+  return join(cacheRoot(), site.key)
+}
+
+export function sweepCache(limit = CACHE_BYTES, root = cacheRoot()): void {
+  const files: { path: string; size: number; at: number }[] = []
+  let total = 0
+  for (const site of listing(root)) {
+    for (const kind of HELD) {
+      const dir = join(root, site, kind)
+      for (const name of listing(dir)) {
+        const path = join(dir, name)
+        try {
+          const { size, mtimeMs } = statSync(path)
+          files.push({ path, size, at: mtimeMs })
+          total += size
+        } catch {}
+      }
+    }
+  }
+  files.sort((a, b) => a.at - b.at)
+  for (const file of files) {
+    if (total <= limit) {
+      return
+    }
+    try {
+      rmSync(file.path, { force: true })
+      total -= file.size
+    } catch {}
+  }
 }
 
 export function retryAfter(value: string | null, now: number): number {
