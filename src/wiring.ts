@@ -97,6 +97,10 @@ const CONFIG_SETTINGS = {
     doc: '# runs of the same picture at the same size from one uploader: fold shows them as one tile, show lists each (default fold)',
     default: 'fold',
   },
+  TTHEME_FIND_REMOVE_BG: {
+    doc: '# an opaque picture tried on in find: on cuts the character out with macOS Vision, off leaves it as it is (default on)',
+    default: 'on',
+  },
   TTHEME_FIND_UNBLOCK: {
     doc: '# when a network blocks a booru by name, 1 sends find through a local proxy that splits the TLS handshake (default 0)',
     default: '0',

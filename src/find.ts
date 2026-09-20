@@ -31,6 +31,7 @@ import {
   tagsOf,
 } from './booru.ts'
 import { find, readCatalog } from './catalog.ts'
+import { canRemoveBackground, keepable, removeBackground } from './cutout.ts'
 import type { Manifest, PaletteEntry } from './emit/manifest.ts'
 import {
   decodeKeys,
@@ -56,6 +57,7 @@ const SETTINGS: Setting[] = [
   { name: 'TTHEME_FIND_POSTS', label: 'posts', choices: ['all', 'cutouts'] },
   { name: 'TTHEME_FIND_ORDER', label: 'order', choices: ['newest', 'score'] },
   { name: 'TTHEME_FIND_SETS', label: 'sets', choices: ['fold', 'show'] },
+  ...(canRemoveBackground() ? [{ name: 'TTHEME_FIND_REMOVE_BG', label: 'remove bg', choices: ['on', 'off'] }] : []),
 ]
 
 function initial(setting: Setting, raw: string | undefined): string {
@@ -117,6 +119,9 @@ interface Current {
   site: Site
   id: number
   image: Rgba
+  plain: Rgba
+  cut?: Rgba
+  failed: boolean
   bytes: Uint8Array
   ext: string
   clear: number
@@ -758,6 +763,10 @@ class Finder {
       this.openPage()
       return
     }
+    if (key === 'x') {
+      this.swap()
+      return
+    }
     if (key === 'enter') {
       void this.install()
       return
@@ -1136,7 +1145,33 @@ class Finder {
       if (site !== this.site) {
         return
       }
-      this.current = { site, id: tile.id, image, bytes, ext: version.ext, clear: transparency(image) }
+      const current: Current = {
+        site,
+        id: tile.id,
+        image,
+        plain: image,
+        failed: false,
+        bytes,
+        ext: version.ext,
+        clear: transparency(image),
+      }
+      if (current.clear === 0 && canRemoveBackground() && this.setting('TTHEME_FIND_REMOVE_BG') !== 'off') {
+        view.preparing = undefined
+        view.cutting = tile.id
+        this.flush()
+        const cut = await this.cutOut(site, tile.id, path, control.signal)
+        if (control.signal.aborted || site !== this.site) {
+          return
+        }
+        if (cut) {
+          current.cut = cut
+          current.image = cut
+          current.clear = transparency(cut)
+        } else {
+          current.failed = true
+        }
+      }
+      this.current = current
       if (view.tiles[view.focus]?.id === tile.id) {
         this.present()
       }
@@ -1152,8 +1187,36 @@ class Finder {
       if (view.preparing === tile.id) {
         view.preparing = undefined
       }
+      if (view.cutting === tile.id) {
+        view.cutting = undefined
+      }
       this.draw()
     }
+  }
+
+  private async cutOut(site: Site, id: number, path: string, signal: AbortSignal): Promise<Rgba | undefined> {
+    const out = join(this.scratch, 'cut', `${site.key}-${id}.png`)
+    try {
+      mkdirSync(dirname(out), { recursive: true })
+      const cut = existsSync(out)
+        ? decodeImage(new Uint8Array(readFileSync(out)), MAX_PIXELS)
+        : await removeBackground(path, out, signal)
+      return keepable(transparency(cut)) ? cut : undefined
+    } catch {
+      rmSync(out, { force: true })
+      return undefined
+    }
+  }
+
+  private swap(): void {
+    const current = this.current
+    if (!current?.cut || this.view.shown?.id !== current.id) {
+      return
+    }
+    current.image = current.image === current.cut ? current.plain : current.cut
+    current.clear = transparency(current.image)
+    this.present()
+    this.draw()
   }
 
   private preload(): void {
@@ -1194,11 +1257,12 @@ class Finder {
     const H = this.rows * this.cell.h
     const width = Math.min(W, TRY_WIDTH)
     const height = Math.max(1, Math.round((H * width) / W))
-    const path = join(this.scratch, `${current.id}-${width}x${height}.png`)
+    const cut = current.cut ? (current.image === current.cut ? 'on' : 'off') : current.failed ? 'failed' : 'none'
+    const path = join(this.scratch, `${current.id}${cut === 'on' ? 'c' : ''}-${width}x${height}.png`)
     if (!existsSync(path)) {
       writeFileSync(path, encodePng(tryOn(current.image, this.entry, this.tone, width, height)))
     }
-    this.view.shown = { id: current.id, clear: current.clear, bytes: current.bytes.length, path }
+    this.view.shown = { id: current.id, clear: current.clear, bytes: current.bytes.length, path, cut }
   }
 
   private async install(): Promise<void> {

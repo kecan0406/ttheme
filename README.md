@@ -227,7 +227,12 @@ Enter tries the picture on: ttheme downloads the original and paints the whole
 window with it the way the installed background will look — tinted with the
 palette, cropped with headroom above the face, at the opacity the contrast gate
 allows — over a sample of shell output, with the share of transparent pixels
-next to its size (`opaque` when there are none). A post over 25 megapixels is
+next to its size (`opaque` when there are none). On macOS an opaque picture is
+cut out first: ttheme asks the system's own Vision framework (macOS 14 or newer,
+through `osascript` — nothing is installed or uploaded) for the character alone,
+marks the picture `cut out`, and `x` switches between the cut-out and the picture
+as it is. When Vision finds no character, or would leave almost nothing or
+remove almost nothing, the picture stays opaque; elsewhere it always does. A post over 25 megapixels is
 fetched as the site's own smaller copy instead — up to 3500 px on yande.re and
 konachan, 850 px on safebooru and danbooru — and its size carries `↓`; those
 copies are JPEGs, so a cutout tried on that way comes out opaque. `←`/`→` try
@@ -328,6 +333,7 @@ still wins:
 | `TTHEME_FIND_CUTOUTS` | — | the tags `find` calls a transparent cutout, as `key=tag,tag` pairs separated by spaces, keyed by `safebooru`, `yande`, `konachan` or `danbooru` (`safebooru=transparent_background yande=transparent_png,vector`). A site with several tags matches any of them; `danbooru=` names none, so its cutouts are the posts whose PNG header has an alpha channel. A site named here loses yande.re's shortcut of skipping that header check. Sites left out keep the built-in tags |
 | `TTHEME_FIND_ORDER` | `newest` | the order `find` lists posts in — `newest` or `score` |
 | `TTHEME_FIND_SETS` | `fold` | a run of the same picture at the same size from one uploader: `fold` shows it as one tile marked `×N`, `show` lists every one |
+| `TTHEME_FIND_REMOVE_BG` | `on` | on macOS, `on` cuts the character out of an opaque picture `find` tries on, with the system's Vision framework; `off` leaves it as it is. The row is in the `s` panel as `remove bg` |
 | `TTHEME_FIND_UNBLOCK` | `0` | `1` sends `find`'s own requests through a proxy it runs on `127.0.0.1`, which splits the TLS handshake across two records so a network that blocks boorus by hostname cannot read the name. It is not a VPN: the address you reach is unchanged and nothing else on the machine is affected. Needs node 22.21 or newer, and the query line says `unblock` while it is on |
 | `TTHEME_FIND_HOSTS` | — | send a `find` site somewhere else, as `key=https://host` pairs (`konachan=https://konachan.com danbooru=https://danbooru.donmai.us`). The tab keeps its name and carries `*`. ttheme ships the safe mirrors only; the hosts that serve everything are yours to name, and plenty of networks block them |
 

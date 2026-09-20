@@ -39,6 +39,7 @@ export interface Shown {
   clear: number
   bytes: number
   path: string
+  cut: 'on' | 'off' | 'failed' | 'none'
 }
 
 export interface FindView {
@@ -66,6 +67,7 @@ export interface FindView {
   help: boolean
   fetching?: { id: number; got: number; size: number }
   preparing?: number
+  cutting?: number
   installing?: number
   shown?: Shown
   editing?: string
@@ -426,6 +428,19 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
   }
 }
 
+function transparent(shown: Shown): Part[] {
+  if (shown.cut === 'on') {
+    return [[`cut out · ${shown.clear}% transparent`, GREEN]]
+  }
+  if (shown.cut === 'off') {
+    return [['opaque · x cuts out', YELLOW]]
+  }
+  if (shown.cut === 'failed') {
+    return [['opaque · no cut-out', YELLOW]]
+  }
+  return [shown.clear > 0 ? [`${shown.clear}% transparent`, GREEN] : ['opaque', YELLOW]]
+}
+
 function status(view: FindView): Part | undefined {
   if (view.installing !== undefined) {
     return [`installing ${view.palette} ← ${view.site} ${view.installing}`, YELLOW]
@@ -438,6 +453,9 @@ function status(view: FindView): Part | undefined {
   }
   if (view.fetching) {
     return [`fetching ${view.fetching.id} · ${progress(view.fetching.got, view.fetching.size)}`, YELLOW]
+  }
+  if (view.cutting !== undefined) {
+    return [`cutting out ${view.cutting}`, YELLOW]
   }
   if (view.preparing !== undefined) {
     return [`preparing ${view.preparing}`, YELLOW]
@@ -547,7 +565,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
     meta.push([` · ${tile.origin}`, D])
   }
   if (shown) {
-    meta.push(['  ', ''], shown.clear > 0 ? [`${shown.clear}% transparent`, GREEN] : ['opaque', YELLOW])
+    meta.push(['  ', ''], ...transparent(shown))
   }
   lines[0]?.run(0, meta)
   if (tile.mates.length > 0) {
@@ -569,6 +587,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
         ? [
             ['←→', 'browse'],
             ['enter', 'install'],
+            ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
             ['?', 'keys'],
           ]
         : [],
@@ -585,13 +604,14 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
     ['search', '/  a tag, a post url or an id'],
     ['unfold', 'space  a set of ×N'],
     ['open', 'o  the post page in a browser'],
-    ['settings', 's  rating, block, posts, order, sets'],
+    ['settings', 's  rating, block, posts, order, sets, remove bg'],
     ['back', 'esc returns to preview'],
     ['close', '?  esc'],
   ],
   try: [
     ['browse', '←→'],
     ['install', 'enter'],
+    ['cut out', 'x  the background off or on, on an opaque picture'],
     ['open', 'o  the post page in a browser'],
     ['grid', 'esc'],
     ['close', '?  esc'],
