@@ -583,9 +583,9 @@ __tt_pv_head() {
 
 __tt_pv_foot() {
   setopt localoptions extendedglob
-  local b=$'\e[1m' d=$'\e[2m' z=$'\e[0m' y=$'\e[33m' on=$'\e[7;1m'$ac badge="" lead="" note="" right="" line plain
+  local b=$'\e[1m' d=$'\e[2m' z=$'\e[0m' y=$'\e[33m' on=$'\e[7;1m'$ac badge="" lead="" note="" right="" text line plain
   local -a kk=() kl=() seg=()
-  local -i end=$1 i lwid rwid
+  local -i end=$1 i lwid rwid room
   (( color )) || b= d= z= y= on=
   if (( help )); then
     badge=KEYS right=$b"? esc"$z$d" close"$z
@@ -617,11 +617,11 @@ __tt_pv_foot() {
     fi
     kk+=(space '=' enter)
     if (( bgoff[$tune] )); then kl+=(show default keep); else kl+=(hide default keep); fi
-    __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
     __tt_pv_bg_images $tune
     (( REPLY > 1 )) && { kk+=(', .' D); kl+=("image ×$REPLY" remove) }
     right=$b"esc"$z$d" undo"$z
   elif (( conf )); then
+    __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
     badge=CONFIG kk=(↑↓ ←→ enter) kl=(setting value save)
     right=$b"esc"$z$d" undo"$z
   else
@@ -653,7 +653,13 @@ __tt_pv_foot() {
     fi
   fi
   if (( msgt > 0 )) && [[ -z $pick ]]; then
-    lead=$y$msg$z note="" kk=() kl=()
+    text=$msg
+    room=$(( end - (${#badge} ? ${#badge} + 4 : 0) ))
+    if (( ${(m)#text} > room )); then
+      while [[ -n $text ]] && (( ${(m)#text} > room - 1 )); do text=${text[1,-2]}; done
+      text+=…
+    fi
+    lead=$y$text$z note="" kk=() kl=()
   fi
   while :; do
     seg=()

@@ -58,6 +58,13 @@ __tt_bg_load wall
 [[ $bgsize[wall] == fill && $bgfill[wall] == "$bgd/wall.png" && $bgfocus[wall] == 50 && $bgdef[wall] == "fill 5 1" ]] ||
   { print -u2 "a plain cover image did not load as fill: $bgsize[wall] $bgfill[wall]@$bgfocus[wall] ($bgdef[wall])"; exit 1 }
 [[ "$(<$TTHEME_CONFIG)" == "$TTHEME_CONFIG_TEMPLATE" ]] || { print -u2 "config seed drifted from the template"; exit 1 }
+mkdir -p $bgd/shelf/kagami/a $bgd/shelf/kagami/b
+bgcw=8 tune=kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
+out=; __tt_pv_foot 80
+[[ $out == *"f find"* ]] || { print -u2 "a TUNE bar with several images dropped the find key: $out"; exit 1 }
+msg=${(l:200::x:)} msgt=100 out=; __tt_pv_foot 80
+plain=${out//$'\e[K'/}
+(( ${(m)#plain} <= 80 )) || { print -u2 "a long preview message overran the bar: ${(m)#plain} columns"; exit 1 }
 proj=$XDG_CONFIG_HOME/proj
 mkdir -p $proj/sub/deep $proj-sibling
 ln -s $proj/sub $XDG_CONFIG_HOME/link

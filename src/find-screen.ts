@@ -259,9 +259,10 @@ interface Foot {
 
 function foot(line: Line, cols: number, accent: string, spec: Foot): void {
   const keys = [...(spec.keys ?? [])]
+  let lead = spec.lead
   let right = spec.right
   const size = () => {
-    const segs = [...(spec.lead ? [width(spec.lead[0])] : []), ...keys.map(([k, l]) => width(k) + 1 + width(l))]
+    const segs = [...(lead ? [width(lead[0])] : []), ...keys.map(([k, l]) => width(k) + 1 + width(l))]
     const left =
       (spec.badge ? width(spec.badge) + 4 : 0) + segs.reduce((n, w) => n + w, 0) + 3 * Math.max(0, segs.length - 1)
     return left + (right ? 3 + width(right[0]) + 1 + width(right[1]) : 0)
@@ -277,12 +278,16 @@ function foot(line: Line, cols: number, accent: string, spec: Foot): void {
       break
     }
   }
+  if (lead && size() > cols) {
+    const keep = Math.max(0, width(lead[0]) - (size() - cols) - 1)
+    lead = [`${Array.from(lead[0]).slice(0, keep).join('')}…`, lead[1]]
+  }
   let c = 0
   if (spec.badge) {
     c = line.put(0, ` ${spec.badge} `, `\x1b[7;1m${accent}`) + 2
   }
   const segs: Part[][] = [
-    ...(spec.lead ? [[spec.lead]] : []),
+    ...(lead ? [[lead]] : []),
     ...keys.map(([k, l]): Part[] => [
       [k, B],
       [` ${l}`, D],
