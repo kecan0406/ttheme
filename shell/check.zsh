@@ -89,6 +89,13 @@ cd $proj/sub; __tt_dir_sync > /dev/null
 TTHEME_SPEC=$TTHEME_PALETTE[rei]
 cd $XDG_CONFIG_HOME; __tt_dir_sync > /dev/null
 [[ $TTHEME_SPEC == "$TTHEME_PALETTE[rei]" ]] || { print -u2 "leaving overrode a hand-painted tab"; exit 1 }
+TTHEME_SPEC= TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+resets=0 reset_fn=$functions[__tt_osc_reset]
+__tt_osc_reset() { (( resets++ )) }
+cd $proj/sub; __tt_dir_sync > /dev/null
+cd $XDG_CONFIG_HOME; __tt_dir_sync > /dev/null
+functions[__tt_osc_reset]=$reset_fn
+[[ -z $TTHEME_SPEC && $resets == 1 ]] || { print -u2 "leaving a pin from a tab of unknown colors did not reset it: spec=[$TTHEME_SPEC] resets=$resets"; exit 1 }
 cd $proj/sub
 __tt_unpin > /dev/null || { print -u2 "__tt_unpin failed"; exit 1 }
 TTHEME_PINS_RAW=; __tt_pins_load

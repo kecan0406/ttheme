@@ -143,6 +143,7 @@ __tt_dir_sync() {
     spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
   elif [[ $TTHEME_SPEC == "$TTHEME_PIN_SPEC" ]]; then
     spec=$TTHEME_BASE_SPEC
+    [[ -n $spec ]] || { __tt_osc_reset; TTHEME_SPEC= }
   fi
   TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
   [[ -n $spec && $spec != "$TTHEME_SPEC" ]] || return 0
@@ -1472,9 +1473,6 @@ if __tt_active; then
         for k in ${(k)TTHEME_PALETTE}; do
           [[ ${TTHEME_PALETTE[$k]%% *} == "$REPLY" ]] && { TTHEME_SPEC=$TTHEME_PALETTE[$k]; break }
         done
-        [[ -n $TTHEME_SPEC ]] || TTHEME_SPEC="$REPLY ${TTHEME_PALETTE[neutral]#* }"
-      else
-        TTHEME_SPEC="- ${TTHEME_PALETTE[neutral]#* }"
       fi
     else
       __tt_next
