@@ -256,16 +256,12 @@ __tt_unpin() {
 }
 
 __tt_keep() {
-  __tt_cli default "$1" > /dev/null || return 1
-  local note="default · new tabs open with $1"
+  local note
+  note=$(__tt_cli default "$1") || return 1
   __tt_shown "$1"
-  if (( $+functions[__tt_reload] )); then
-    __tt_reload
-  else
-    note+=" — reload your terminal config to pick it up"
-  fi
+  (( $+functions[__tt_reload] )) && __tt_reload
   if __tt_color; then
-    printf '\033[2m%s\033[0m\n' "$note"
+    printf '\033[2m%s\033[0m\n' "${(@f)note}"
   else
     print -r -- "$note"
   fi

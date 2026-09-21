@@ -6,6 +6,7 @@ import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { configHome, forget, readInstalled, sync, writeInstalled } from './palettes.ts'
 import { alphabetical } from './theme.ts'
+import type { InitTerminal } from './wiring.ts'
 
 function reload(count: number): void {
   console.log(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
@@ -60,7 +61,21 @@ export function runDefault(name: string): void {
   const next = { ...rest, startup: name }
   sync(home, catalog, next)
   writeInstalled(home, next)
-  console.log(`new tabs open with ${name} — reload your terminal config to pick it up`)
+  console.log(defaultNote(name, next.terminals).join('\n'))
+}
+
+function defaultNote(name: string, terminals: InitTerminal[]): string[] {
+  const wearing = terminals.filter((t) => t !== 'iterm2')
+  const lines =
+    wearing.length > 0
+      ? [`default ${name} · ${wearing.join(', ')} open new tabs with it once their config reloads`]
+      : []
+  if (terminals.includes('iterm2')) {
+    lines.push(`iterm2 keeps its own default · Set as Default on "ttheme · ${name}" in Settings › Profiles`)
+  }
+  return lines.length > 0
+    ? lines
+    : [`default ${name} · no terminal is wired to open with it — \`ttheme init\` wires one`]
 }
 
 export function runList(query?: string): void {
