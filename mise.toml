@@ -91,8 +91,7 @@ cli() {
 layer() {
   sandboxed zsh -c 'source "$HOME/.config/ttheme/ttheme.zsh"; __tt_reload() { :; }; '"$1"
 }
-bun pm pack --filename "$tmp/ttheme.tgz" --quiet > /dev/null
-tar -xzf "$tmp/ttheme.tgz" -C "$tmp"
+tar -xzf "$tmp/$(npm pack --pack-destination "$tmp" --silent)" -C "$tmp"
 run_init() {
   sandboxed GHOSTTY_RESOURCES_DIR=x node "$tmp/package/bin/ttheme.js" init --yes < /dev/null > /dev/null
 }
@@ -161,10 +160,15 @@ dir = "{{config_root}}/site"
 depends = ["build"]
 run = "bun install && bun run build"
 
-[tasks.publish]
-description = "verify everything — ci rebuilds dist and the bundle — then publish to npm"
+[tasks.release]
+description = "verify everything, then bump the version, tag it and push — the release workflow publishes to npm and cuts the GitHub release — `mise run release 1.0.0`"
 depends = ["ci"]
-run = "bun publish --access public"
+usage = 'arg "<version>" help="x.y.z, or patch | minor | major"'
+run = '''
+set -e
+npm version "${usage_version}" -m "Bump version to %s"
+git push --atomic --follow-tags origin main
+'''
 
 [tasks.ci]
 description = "everything the ci workflow runs"

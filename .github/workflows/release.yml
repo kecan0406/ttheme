@@ -6,16 +6,28 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: jdx/mise-action@v2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: sudo apt-get update && sudo apt-get install -y zsh tmux
       - run: bun install --frozen-lockfile
-      - run: mise run test
-      - run: mise run build
+
+      - name: the tag names the package version
+        run: test "v$(jq -r .version package.json)" = "$GITHUB_REF_NAME"
+
+      - run: mise run ci
 
       - name: package
         run: |
@@ -24,7 +36,16 @@ jobs:
             tar -czf "release/ttheme-$term.tar.gz" -C dist "$term"
           done
           tar -czf release/ttheme-all.tar.gz dist shell ghostty/shaders README.md
+
+      - name: notes
+        run: |
+          prev=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          git log --no-merges --invert-grep --grep='^Bump version to ' --format='- %s' \
+            "${prev:+$prev..}$GITHUB_REF_NAME" > notes.md
+
+      - run: npm publish --access public
+
       - uses: softprops/action-gh-release@v2
         with:
           files: release/*
-          generate_release_notes: true
+          body_path: notes.md
