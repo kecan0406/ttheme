@@ -30,7 +30,7 @@ fresh() {
 
 isolate() {
   unset ${(M)${(k)parameters}:#TTHEME_*} XDG_CONFIG_HOME XDG_STATE_HOME XDG_CACHE_HOME ZDOTDIR
-  export HOME=$SANDBOX
+  export HOME=$SANDBOX TTHEME_ITERM_SUITE=$SUITE
 }
 
 wire() {
@@ -53,16 +53,16 @@ open_ghostty() {
 open_iterm() {
   local legacy=$1 trust=$2 behind=$3
   local dp="$SANDBOX/Library/Application Support/iTerm2/DynamicProfiles"
-  local shell="/usr/bin/env HOME=$SANDBOX ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache /bin/zsh -il"
+  local shell="/usr/bin/env HOME=$SANDBOX TTHEME_ITERM_SUITE=$SUITE ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache /bin/zsh -il"
   mkdir -p $dp
   jq -n --arg cmd $shell --arg dir $SANDBOX '{Profiles: [{
-      Name: "ttheme sandbox", Guid: "ttheme-sandbox",
+      Name: "ttheme sandbox", Guid: "sandbox",
       "Custom Command": "Yes", Command: $cmd,
       "Custom Directory": "Yes", "Working Directory": $dir,
       "Close Sessions On End": true
     }]}' > $dp/sandbox.json
   defaults write $SUITE DynamicProfilesPath -string $dp
-  defaults write $SUITE "Default Bookmark Guid" -string ttheme-sandbox
+  defaults write $SUITE "Default Bookmark Guid" -string sandbox
   defaults write $SUITE EnableAPIServer -bool true
   defaults write $SUITE SetCookie -bool true
   defaults write $SUITE SetIT2AppPath -bool true

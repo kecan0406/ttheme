@@ -5,7 +5,17 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import type { Manifest, PaletteEntry } from './emit/manifest.ts'
-import { forget, itermProfilesPath, resolve, startupPalette, sync, toTheme } from './palettes.ts'
+import {
+  forget,
+  type ItermDefaults,
+  itermProfilesPath,
+  pointItermDefault,
+  resolve,
+  startupPalette,
+  sync,
+  toTheme,
+  withItermBase,
+} from './palettes.ts'
 
 function entry(name: string, order: number, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
@@ -113,9 +123,15 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
   const home = fixture()
   const profiles = itermProfilesPath(home)
   const read = () => JSON.parse(readFileSync(profiles, 'utf8')).Profiles
-  sync(configHome, catalog, { terminals: ['iterm2'], startup: 'geto', palettes: ['neutral', 'gojo', 'geto'] }, home)
+  sync(
+    configHome,
+    catalog,
+    { terminals: ['iterm2'], startup: 'geto', itermBase: 'BASE', palettes: ['neutral', 'gojo', 'geto'] },
+    home,
+  )
   const written = read()
   const gojo = written[1]
+  assert.ok(written.every((p: Record<string, unknown>) => p['Dynamic Profile Parent GUID'] === 'BASE'))
   assert.deepEqual(
     written.map((p: { Name: string; Guid: string }) => [p.Name, p.Guid]),
     [
@@ -186,4 +202,42 @@ test('forget removes only the named palettes', () => {
   assert.deepEqual(removed, [join(home, 'ghostty', 'themes', 'geto')])
   assert.ok(existsSync(join(home, 'ghostty', 'themes', 'gojo')))
   assert.ok(!existsSync(join(home, 'ghostty', 'themes', 'geto')))
+})
+
+function prefsAt(initial: string | undefined): { prefs: ItermDefaults; writes: string[] } {
+  let value = initial
+  const writes: string[] = []
+  return {
+    prefs: {
+      read: () => value,
+      write: (guid) => {
+        value = guid
+        writes.push(guid)
+      },
+      running: () => false,
+    },
+    writes,
+  }
+}
+
+test('iTerm2 takes ttheme · default as its default profile and gives the one it replaced back under keep', () => {
+  const { prefs, writes } = prefsAt('USER')
+  const state = withItermBase({ terminals: ['iterm2'], palettes: ['gojo'] }, prefs)
+  assert.equal(state.itermBase, 'USER')
+  assert.equal(pointItermDefault(state, prefs), true)
+  assert.equal(pointItermDefault(state, prefs), false)
+  assert.equal(withItermBase(state, prefs).itermBase, 'USER')
+  assert.equal(pointItermDefault({ ...state, keepTheme: true }, prefs), true)
+  assert.deepEqual(writes, ['ttheme-default', 'USER'])
+})
+
+test('iTerm2 keeps its default profile when nothing is worn or it is not wired', () => {
+  const { prefs, writes } = prefsAt('USER')
+  assert.equal(pointItermDefault({ terminals: ['iterm2'], palettes: [] }, prefs), false)
+  assert.equal(pointItermDefault({ terminals: ['ghostty'], palettes: ['gojo'] }, prefs), false)
+  assert.equal(
+    withItermBase({ terminals: ['iterm2'], palettes: ['gojo'] }, prefsAt('ttheme-gojo').prefs).itermBase,
+    undefined,
+  )
+  assert.deepEqual(writes, [])
 })

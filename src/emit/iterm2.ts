@@ -54,10 +54,12 @@ export function itermProfiles(
   themes: Theme[],
   pictures: ReadonlyMap<string, ProfileBackground>,
   startup: Theme | undefined,
+  parent?: string,
 ): string {
   const profile = (theme: Theme, id: string) => ({
     Name: `ttheme · ${id}`,
     Guid: `ttheme-${id}`,
+    ...(parent ? { 'Dynamic Profile Parent GUID': parent } : {}),
     'Use Separate Colors for Light and Dark Mode': false,
     'Harmonize 256 Colors': true,
     ...background(pictures.get(theme.name)),

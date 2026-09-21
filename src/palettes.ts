@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -16,7 +17,69 @@ export interface Installed {
   terminals: InitTerminal[]
   startup?: string
   keepTheme?: true
+  itermBase?: string
   palettes: string[]
+}
+
+export const ITERM_DEFAULT = 'ttheme-default'
+
+export interface ItermDefaults {
+  read(): string | undefined
+  write(guid: string): void
+  running(): boolean
+}
+
+export function itermDefaults(suite = process.env.TTHEME_ITERM_SUITE ?? 'com.googlecode.iterm2'): ItermDefaults {
+  const run = (command: string, args: string[]) =>
+    execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
+  return {
+    read: () => {
+      try {
+        return process.platform === 'darwin'
+          ? run('defaults', ['read', suite, 'Default Bookmark Guid']) || undefined
+          : undefined
+      } catch {
+        return undefined
+      }
+    },
+    write: (guid) => {
+      if (process.platform === 'darwin') {
+        run('defaults', ['write', suite, 'Default Bookmark Guid', '-string', guid])
+      }
+    },
+    running: () => {
+      try {
+        return run('pgrep', ['-x', 'iTerm2']) !== ''
+      } catch {
+        return false
+      }
+    },
+  }
+}
+
+export function worn(state: Installed): string | undefined {
+  return state.keepTheme ? undefined : startupPalette(state)
+}
+
+export function withItermBase(state: Installed, prefs: ItermDefaults): Installed {
+  if (!state.terminals.includes('iterm2')) {
+    return state
+  }
+  const current = prefs.read()
+  return current && !current.startsWith('ttheme-') ? { ...state, itermBase: current } : state
+}
+
+export function pointItermDefault(state: Installed, prefs: ItermDefaults): boolean {
+  if (!state.terminals.includes('iterm2')) {
+    return false
+  }
+  const current = prefs.read()
+  const want = worn(state) ? ITERM_DEFAULT : current === ITERM_DEFAULT ? state.itermBase : undefined
+  if (!want || want === current) {
+    return false
+  }
+  prefs.write(want)
+  return true
 }
 
 export function configHome(): string {
@@ -44,6 +107,7 @@ export function readInstalled(configHome: string): Installed {
     terminals: doc.terminals.filter((t): t is InitTerminal => INIT_TERMINALS.includes(t)),
     ...(doc.startup ? { startup: doc.startup } : {}),
     ...(doc.keepTheme ? { keepTheme: true as const } : {}),
+    ...(doc.itermBase ? { itermBase: doc.itermBase } : {}),
     palettes: doc.palettes,
   }
 }
@@ -124,7 +188,7 @@ function itermFile(
   configHome: string,
   catalog: Manifest,
   entries: PaletteEntry[],
-  startup: string | undefined,
+  state: Installed,
   home: string,
 ): string {
   const dir = backgroundsDir(configHome)
@@ -140,7 +204,8 @@ function itermFile(
   return itermProfiles(
     themes.filter((theme) => shown.has(theme.name)),
     pictures,
-    themes.find((theme) => theme.name === startup),
+    themes.find((theme) => theme.name === worn(state)),
+    state.itermBase,
   )
 }
 
@@ -151,9 +216,8 @@ export function refreshProfiles(configHome: string, home = homedir()): void {
   }
   const catalog = readCatalog(configHome)
   const path = itermProfilesPath(home)
-  const startup = state.keepTheme ? undefined : startupPalette(state)
   mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, itermFile(configHome, catalog, resolve(catalog, state.palettes), startup, home))
+  writeFileSync(path, itermFile(configHome, catalog, resolve(catalog, state.palettes), state, home))
 }
 
 export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
@@ -165,10 +229,10 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
     written.push(path)
   }
 
-  const startup = state.keepTheme ? undefined : startupPalette(state)
+  const startup = worn(state)
   for (const terminal of state.terminals) {
     if (terminal === 'iterm2') {
-      write(itermProfilesPath(home), itermFile(configHome, catalog, entries, startup, home))
+      write(itermProfilesPath(home), itermFile(configHome, catalog, entries, state, home))
       continue
     }
     for (const entry of entries) {

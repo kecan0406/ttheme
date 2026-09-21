@@ -16,7 +16,17 @@ import { writeCatalog } from './catalog.ts'
 import type { Manifest } from './emit/manifest.ts'
 import { pickPalettes } from './market.ts'
 import { paletteOsc } from './osc.ts'
-import { type Installed, startupPalette, sync, writeInstalled } from './palettes.ts'
+import {
+  type Installed,
+  type ItermDefaults,
+  itermDefaults,
+  pointItermDefault,
+  readInstalled,
+  startupPalette,
+  sync,
+  withItermBase,
+  writeInstalled,
+} from './palettes.ts'
 import {
   configFile,
   detectTerminal,
@@ -98,7 +108,15 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   return { home: paths.home, copies, edits, settings, catalog: loadManifest(paths.root), installed, notes }
 }
 
-export function applyInit(plan: InitPlan): void {
+function keptBase(configHome: string): string | undefined {
+  try {
+    return readInstalled(configHome).itermBase
+  } catch {
+    return undefined
+  }
+}
+
+export function applyInit(plan: InitPlan, prefs: ItermDefaults = itermDefaults()): boolean {
   for (const c of plan.copies) {
     mkdirSync(dirname(c.to), { recursive: true })
     rmSync(c.to, { force: true })
@@ -111,14 +129,17 @@ export function applyInit(plan: InitPlan): void {
   mkdirSync(dirname(plan.settings.file), { recursive: true })
   writeFileSync(plan.settings.file, plan.settings.content)
   const configHome = dirname(dirname(plan.settings.file))
+  const base = keptBase(configHome)
+  const installed = withItermBase(base ? { ...plan.installed, itermBase: base } : plan.installed, prefs)
   writeCatalog(configHome, plan.catalog)
-  writeInstalled(configHome, plan.installed)
-  sync(configHome, plan.catalog, plan.installed, plan.home)
+  writeInstalled(configHome, installed)
+  sync(configHome, plan.catalog, installed, plan.home)
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''
     writeFileSync(e.file, upsertBlock(current, e.block))
   }
+  return pointItermDefault(installed, prefs)
 }
 
 function accepted<T>(value: T | symbol): T {
@@ -213,7 +234,7 @@ function wearLines(wear: Wear, startup: string | undefined, painted: boolean): s
   ]
 }
 
-function receipt(plan: InitPlan, opts: InitOptions, wear: Wear, painted: boolean): void {
+function receipt(plan: InitPlan, opts: InitOptions, wear: Wear, painted: boolean, restart: boolean): void {
   const series = seriesOf(plan.catalog, opts.palettes)
   p.note(
     [
@@ -230,17 +251,19 @@ function receipt(plan: InitPlan, opts: InitOptions, wear: Wear, painted: boolean
     next.push('new kitty window  picks up its config')
   }
   if (opts.terminals.includes('iterm2')) {
-    next.push(...itermLines(wear === 'default' ? startupPalette(plan.installed) : undefined))
+    next.push(...itermLines(wear === 'default' ? startupPalette(plan.installed) : undefined, restart))
   }
   p.note([...next, ...plan.notes].join('\n'), 'next')
   p.outro('done')
 }
 
-function itermLines(startup: string | undefined): string[] {
+function itermLines(startup: string | undefined, restart: boolean): string[] {
   const lines = ['iterm2 profiles   a "ttheme · <palette>" per palette in Settings › Profiles']
   if (startup) {
     lines.push(
-      `                  Set as Default on "ttheme · default" once — it wears ${startup} and follows \`ttheme default\``,
+      restart
+        ? `restart iterm2    new tabs open on "ttheme · default", which wears ${startup}`
+        : `iterm2 default    "ttheme · default" wears ${startup} and follows \`ttheme default\``,
     )
   }
   return lines
@@ -313,6 +336,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       `write ${plan.settings.file}`,
       ...plan.edits.map((e) => `edit ${e.file}`),
       wearSummary(wear, startup),
+      ...(terminals.includes('iterm2') && wear !== 'keep'
+        ? ['make "ttheme · default" the iTerm2 default profile']
+        : []),
     ].join('\n'),
     `wiring ${terminals.join(', ')}`,
   )
@@ -320,7 +346,8 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     p.cancel('nothing changed')
     process.exit(1)
   }
-  applyInit(plan)
+  const prefs = itermDefaults()
+  const moved = applyInit(plan, prefs)
   verify(plan)
-  receipt(plan, opts, wear, wear !== 'keep' && paintStartup(plan.catalog, plan.installed))
+  receipt(plan, opts, wear, wear !== 'keep' && paintStartup(plan.catalog, plan.installed), moved && prefs.running())
 }

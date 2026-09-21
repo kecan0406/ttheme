@@ -4,9 +4,31 @@ import { catalogPath, fetchCatalog, REGISTRY_URL, readCatalog, search, writeCata
 import { listed, type Manifest } from './emit/manifest.ts'
 import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
-import { configHome, forget, readInstalled, sync, writeInstalled } from './palettes.ts'
+import {
+  configHome,
+  forget,
+  type Installed,
+  itermDefaults,
+  pointItermDefault,
+  readInstalled,
+  sync,
+  withItermBase,
+  worn,
+  writeInstalled,
+} from './palettes.ts'
 import { alphabetical } from './theme.ts'
 import type { InitTerminal } from './wiring.ts'
+
+function commit(home: string, catalog: Manifest, before: Installed, after: Installed): void {
+  const prefs = itermDefaults()
+  const moves = Boolean(worn(before)) !== Boolean(worn(after))
+  const next = moves ? withItermBase(after, prefs) : after
+  sync(home, catalog, next)
+  writeInstalled(home, next)
+  if (moves) {
+    pointItermDefault(next, prefs)
+  }
+}
 
 function reload(count: number): void {
   console.log(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
@@ -23,8 +45,7 @@ export function runAdd(names: string[]): void {
     return
   }
   const next = { ...state, palettes: [...state.palettes, ...fresh] }
-  sync(home, catalog, next)
-  writeInstalled(home, next)
+  commit(home, catalog, state, next)
   for (const name of fresh) {
     console.log(`  + ${name}`)
   }
@@ -41,9 +62,8 @@ export function runRemove(names: string[]): void {
     return
   }
   const next = { ...state, palettes: state.palettes.filter((n) => !gone.includes(n)) }
-  sync(home, catalog, next)
+  commit(home, catalog, state, next)
   forget(home, catalog, state.terminals, gone)
-  writeInstalled(home, next)
   for (const name of gone) {
     console.log(`  - ${name}`)
   }
@@ -58,13 +78,15 @@ export function runDefault(name: string): void {
     throw new Error(`${name} is not installed — \`ttheme add ${name}\` first`)
   }
   const { keepTheme: _, ...rest } = state
-  const next = { ...rest, startup: name }
+  const prefs = itermDefaults()
+  const next = withItermBase({ ...rest, startup: name }, prefs)
   sync(home, catalog, next)
   writeInstalled(home, next)
-  console.log(defaultNote(name, next.terminals).join('\n'))
+  const moved = pointItermDefault(next, prefs)
+  console.log(defaultNote(name, next.terminals, moved && prefs.running()).join('\n'))
 }
 
-function defaultNote(name: string, terminals: InitTerminal[]): string[] {
+function defaultNote(name: string, terminals: InitTerminal[], restart: boolean): string[] {
   const wearing = terminals.filter((t) => t !== 'iterm2')
   const lines =
     wearing.length > 0
@@ -72,7 +94,9 @@ function defaultNote(name: string, terminals: InitTerminal[]): string[] {
       : []
   if (terminals.includes('iterm2')) {
     lines.push(
-      `iterm2 new tabs open with it while "ttheme · default" is the default profile · Set as Default on it once in Settings › Profiles`,
+      restart
+        ? `iterm2 new tabs open with it once iTerm2 restarts — "ttheme · default" is now its default profile`
+        : `iterm2 new tabs open with it — "ttheme · default" is its default profile`,
     )
   }
   return lines.length > 0
@@ -145,9 +169,8 @@ export async function runBrowse(): Promise<void> {
     return
   }
   const next = { ...state, palettes: wanted }
-  sync(home, catalog, next)
+  commit(home, catalog, state, next)
   forget(home, catalog, state.terminals, dropped)
-  writeInstalled(home, next)
   for (const name of added) {
     console.log(`  + ${name}`)
   }
