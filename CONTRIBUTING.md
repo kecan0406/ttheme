@@ -52,7 +52,7 @@ mise run ci
 That runs lint, typecheck, tests, the build with its contrast gate, the shell
 check and the node bundle check — exactly what CI runs.
 
-`.claude/skills/character-palette/SKILL.md` documents how the existing palettes
+`.claude/skills/palette/SKILL.md` documents how the existing palettes
 were measured and harmonized, if you want to build one the same way.
 
 ## Working on the TUIs

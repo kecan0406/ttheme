@@ -1,9 +1,9 @@
 ---
-name: character-palette
+name: palette
 description: Build or refine character-based themes in themes/*.toml from measured colors instead of remembered ones. Use when adding themes for a new series or improving existing character palettes. Covers anchor sampling from official art, real base-scheme sourcing, the harmonizer that gives every palette one readability envelope, the contrast-gate loop, and a swatch-board eyeball check.
 ---
 
-# Character palette pipeline
+# Palette pipeline
 
 Every color in a character theme must be traceable: anchors are measured from official art, the ANSI ramp's hues come from a real terminal scheme, and the harmonizer folds both into one shared tone/chroma envelope so all palettes read the same way. The contrast gate is the success criterion.
 
@@ -26,7 +26,7 @@ The envelope is modeled on illogical-impulse's Material You terminal theming: a 
   - AniList / Jikan character images are manga color-page crops, not anime color, and they are cropped too tight to carry a costume anchor. Use them only to confirm a cast list.
   - Download to the scratchpad, never into the repo.
 - Flatten alpha before sampling. `sips` composites transparent PNGs onto black, which swamps every cluster: `ffmpeg -y -i <in>.png -filter_complex "color=white:s=<W>x<H>:d=1[bg];[bg][0]overlay=format=auto:shortest=1" -frames:v 1 <out>.png` (without `-frames:v 1` the color source never ends and the muxer errors out).
-- Sample dominant colors: `bun .claude/skills/character-palette/scripts/sample-colors.ts <image> [k]` (k defaults to 8; decodes via macOS sips, prints hex + share, largest cluster first).
+- Sample dominant colors: `bun .claude/skills/palette/scripts/sample-colors.ts <image> [k]` (k defaults to 8; decodes via macOS sips, prints hex + share, largest cluster first).
 - k-means only works on art big enough that the flats outweigh their own edges. A settei under ~400px wide returns antialiasing averages — every cluster comes back desaturated mush. Cel art is drawn in exact RGB over wide areas, so count exact pixel values instead and read the flats straight off the histogram.
 - Record 3-4 anchors per character: hair, eyes, signature item. A full-body settei puts the head in the top tenth, so crop before sampling — `ffmpeg -y -i <in>.png -vf "crop=<w>:<h>:<x>:<y>,scale=760:-1:flags=neighbor"` keeps the flat cel fills unblended and large enough to read coordinates off.
 - Portrait backgrounds (white/gray clusters) are noise; ignore them.
@@ -52,7 +52,7 @@ The envelope is modeled on illogical-impulse's Material You terminal theming: a 
 
 ## 5. Harmonize
 
-- `bun .claude/skills/character-palette/scripts/harmonize.ts --write themes/<name>.toml [...]` rewrites the `[colors]` block in place (omit `--write` to only report). It reads `meta.signature[0]` as the seed and:
+- `bun .claude/skills/palette/scripts/harmonize.ts --write themes/<name>.toml [...]` rewrites the `[colors]` block in place (omit `--write` to only report). It reads `meta.signature[0]` as the seed and:
   - background / foreground: seed hue, chroma ≤ 8 / ≤ 12, tone 8 / 90 (light palettes: 98 / 12, detected from the input background).
   - ANSI 0/7/8/15: the same tinted neutral at tones 14 / 80 / 50 / 94.
   - selection: the input's hue, chroma ≤ 24, tone 26.
@@ -66,7 +66,7 @@ The envelope is modeled on illogical-impulse's Material You terminal theming: a 
 - `mise run build` until clean; src/contrast.ts is the success criterion (foreground 7:1, accents 3:1, ANSI 0 luminance <= 0.15, ANSI 7/15 7:1, ANSI 8 1.6:1). The harmonizer prints the same violations before writing.
 - The envelope is tuned to pass the gate, so a violation points at a signature slot: a measured anchor that is too dark for its role. Fix it by choosing a different anchor or slot for the identity, never by waiving and never by hand-editing derived slots.
 - Finish with `mise run ci`.
-- When several palette agents run in parallel, skip `mise run build` (it gates every theme, including files another agent is mid-edit) and loop on `bun .claude/skills/character-palette/scripts/check-theme.ts themes/<name>.toml [...]` until it prints `gate clean`; whoever coordinates runs the global build + ci once at the end.
+- When several palette agents run in parallel, skip `mise run build` (it gates every theme, including files another agent is mid-edit) and loop on `bun .claude/skills/palette/scripts/check-theme.ts themes/<name>.toml [...]` until it prints `gate clean`; whoever coordinates runs the global build + ci once at the end.
 
 ## 7. Eyeball check
 
