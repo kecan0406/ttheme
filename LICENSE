@@ -19,12 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Shaders under ghostty/shaders/ are from sahaj-b/ghostty-cursor-shaders and
-carry their own MIT license; see ghostty/shaders/LICENSE.
-
-Palettes are inspired by characters from third-party works. This project is
-unaffiliated with their rights holders and redistributes no character art,
-audio or trademarked asset — only color values.
