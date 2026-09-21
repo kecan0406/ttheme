@@ -143,7 +143,7 @@ interactive = true
 run = "zsh tests/tui.zsh demo"
 
 [tasks.sandbox]
-description = "a throwaway home wired with this checkout and every palette, in its own Ghostty — `mise run sandbox [--here] [--empty | palette…]`"
+description = "a throwaway home wired with this checkout and every palette, in its own Ghostty or (`--iterm`) iTerm2 — `mise run sandbox [--here | --iterm] [--empty | palette…]`"
 depends = ["build", "bin:build"]
 interactive = true
 run = "zsh tests/sandbox.zsh"

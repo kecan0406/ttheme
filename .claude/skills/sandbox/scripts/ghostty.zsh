@@ -2,22 +2,11 @@
 emulate -L zsh
 setopt err_return pipe_fail
 
-typeset -g HERE=${${(%):-%x}:A:h}
-typeset -g ROOT=${HERE:h:h:h:h}
-typeset -g SANDBOX=${${TMPDIR:-/tmp}%/}/ttheme-sandbox
+source ${${(%):-%x}:A:h}/lib.zsh
 
-usage() { print -u2 "usage: ghostty.zsh [--shot FILE] [--keep] [--empty | palette…] -- 'zsh commands'" }
+usage() { print -u2 "usage: ghostty.zsh [--shots DIR] [--keep] [--empty | palette…] -- 'zsh commands'" }
 
 instance() { pgrep -f -- "--config-file=$SANDBOX/" }
-
-window_of() {
-  osascript -l JavaScript -e "ObjC.import('CoreGraphics');
-    const w = ObjC.castRefToObject(\$.CGWindowListCopyWindowInfo(\$.kCGWindowListOptionOnScreenOnly, 0)).js
-      .map(d => d.js)
-      .filter(d => d.kCGWindowOwnerPID.js === $1 && d.kCGWindowLayer.js === 0)
-      .sort((a, b) => b.kCGWindowBounds.js.Height.js - a.kCGWindowBounds.js.Height.js)[0];
-    w ? w.kCGWindowNumber.js : ''"
-}
 
 reloads() {
   local -a seen=(${(f)"$(/usr/bin/log show --info --style compact --start $1 \
@@ -27,43 +16,34 @@ reloads() {
 }
 
 main() {
-  local -a shot keep empty
-  zparseopts -D -E -F -- -shot:=shot -keep=keep -empty=empty || { usage; return 1 }
+  local -a shots keep empty
+  zparseopts -D -E -F -- -shots:=shots -keep=keep -empty=empty || { usage; return 1 }
   local split=${@[(i)--]}
   (( split <= $# )) || { usage; return 1 }
   local -a palettes=(${@[1,split-1]})
-  local hook out i wid pid start
+  local dir=${shots[-1]:+${shots[-1]:A}} hook out pid start
+  [[ -z $dir ]] || mkdir -p $dir
   hook=$(mktemp -t ttheme-hook)
   start=$(date '+%Y-%m-%d %H:%M:%S')
-  { <$HERE/probe.zsh; print -rl -- '__sb_commands() {' "${(j:; :)@[split+1,-1]}" '}' } > $hook
+  write_hook $hook $HERE/probe.zsh -- ${@[split+1,-1]}
   if ! out=$(cd $ROOT && mise run sandbox --behind --zshenv $hook $empty $palettes 2>&1); then
     rm -f $hook
     print -r -- $out
     return 1
   fi
   rm -f $hook
-  for i in {1..150}; do
-    [[ -s $SANDBOX/run.status ]] && break
-    sleep 0.2
-  done
-  if [[ ! -s $SANDBOX/run.status ]]; then
-    print -u2 "the first prompt never ran the commands — the window may have failed to open (see $SANDBOX)"
+  pid=$(instance)
+  if ! await_run $pid $dir; then
+    print -u2 "the first prompt never finished the commands — the window may have failed to open (see $SANDBOX)"
     (( $#keep )) || pkill -f -- "--config-file=$SANDBOX/" || :
     return 1
   fi
   sleep 0.6
-  pid=$(instance)
   print -r -- "instance  $pid"
-  print -r -- "status    $(<$SANDBOX/run.status)"
-  print -r -- "$(<$SANDBOX/run.out)"
+  report
   print -r -- "reloads   $(reloads $start)"
-  [[ -s $SANDBOX/run.err ]] && print -r -- "stderr" "$(<$SANDBOX/run.err)"
-  if (( $#shot )); then
-    wid=$(window_of $pid)
-    screencapture -x -o -l $wid $shot[-1]
-    sips -Z 1200 $shot[-1] > /dev/null
-    print -r -- "screenshot $shot[-1]"
-  fi
+  [[ -z $dir ]] || { capture $pid $dir/end.png && print -r -- "shot      $dir/end.png" >> $SANDBOX/shots.list }
+  tail_report
   (( $#keep )) || pkill -f -- "--config-file=$SANDBOX/" || :
 }
 

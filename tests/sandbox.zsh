@@ -4,10 +4,26 @@ setopt err_return pipe_fail
 
 typeset -g ROOT=${${(%):-%x}:A:h:h}
 typeset -g SANDBOX=${${TMPDIR:-/tmp}%/}/ttheme-sandbox
+typeset -g SUITE=ttheme-sandbox
+typeset -g SUITE_DIR="$HOME/Library/Application Support/$SUITE"
+typeset -g ITERM_APP="^[^ ]*/iTerm2 -suite $SUITE( |$)"
+typeset -g ITERM_SERVER="^$SUITE_DIR/iTermServer"
+
+quit_iterm() {
+  local i
+  pkill -f -- $ITERM_APP 2>/dev/null || :
+  for i in {1..30}; do
+    pgrep -f -- $ITERM_APP > /dev/null || break
+    sleep 0.1
+  done
+  pkill -f -- $ITERM_SERVER 2>/dev/null || :
+}
 
 fresh() {
   pkill -f -- "--config-file=$SANDBOX/" 2>/dev/null || :
-  rm -rf -- $SANDBOX
+  quit_iterm
+  defaults delete $SUITE 2>/dev/null || :
+  rm -rf -- $SANDBOX $SUITE_DIR
   mkdir -p $SANDBOX
   print -rl -- 'autoload -Uz compinit && compinit' "PROMPT='%F{8}sandbox%f %~ %# '" > $SANDBOX/.zshrc
 }
@@ -34,21 +50,53 @@ open_ghostty() {
     --working-directory=$SANDBOX
 }
 
-hand_back() {
-  local pid i
-  for i in {1..50}; do
-    pid=$(pgrep -f -- "--config-file=$SANDBOX/") && pgrep -P $pid > /dev/null && break
-    sleep 0.1
-  done
-  osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($1).activateWithOptions(0)" > /dev/null
+open_iterm() {
+  local legacy=$1 trust=$2 behind=$3
+  local dp="$SANDBOX/Library/Application Support/iTerm2/DynamicProfiles"
+  local shell="/usr/bin/env HOME=$SANDBOX ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache /bin/zsh -il"
+  mkdir -p $dp
+  jq -n --arg cmd $shell --arg dir $SANDBOX '{Profiles: [{
+      Name: "ttheme sandbox", Guid: "ttheme-sandbox",
+      "Custom Command": "Yes", Command: $cmd,
+      "Custom Directory": "Yes", "Working Directory": $dir,
+      "Close Sessions On End": true
+    }]}' > $dp/sandbox.json
+  defaults write $SUITE DynamicProfilesPath -string $dp
+  defaults write $SUITE "Default Bookmark Guid" -string ttheme-sandbox
+  defaults write $SUITE EnableAPIServer -bool true
+  defaults write $SUITE SetCookie -bool true
+  defaults write $SUITE SetIT2AppPath -bool true
+  defaults write $SUITE PromptOnQuit -bool false
+  defaults write $SUITE NoSyncVariablesToReport -string allow:id,allow:tab.id,allow:tab.window.id,allow:profileName,allow:user.ttheme_bg
+  (( legacy )) && defaults write $SUITE UseMetal -bool false
+  if (( trust )); then
+    defaults write $SUITE PreventEscapeSequenceFromChangingProfile -bool false
+    local key
+    for key in Blend "Background Image Mode" "Background Image Location"; do
+      defaults write $SUITE "NoSyncSetProfileProperty_$key" -int 0
+    done
+  fi
+  env -u GHOSTTY_RESOURCES_DIR -u GHOSTTY_BIN_DIR -u GHOSTTY_SHELL_FEATURES -u TERM_PROGRAM -u TERM_PROGRAM_VERSION \
+    -u COLORTERM -u TERMINFO -u KITTY_WINDOW_ID -u ITERM_SESSION_ID \
+    open ${behind:+-g} -na iTerm --args -suite $SUITE \
+    -ApplePersistenceIgnoreState YES -NSQuitAlwaysKeepsWindows NO -SUHasLaunchedBefore YES -SUEnableAutomaticChecks NO
 }
 
-usage() { print -u2 "usage: sandbox [--here | --behind] [--zshenv FILE] [--empty | palette…]" }
+hand_back() {
+  local front=$1 parent=$2 pid i
+  for i in {1..50}; do
+    pid=$(pgrep -f -- $parent) && pgrep -P ${pid%%$'\n'*} > /dev/null && break
+    sleep 0.1
+  done
+  osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($front).activateWithOptions(0)" > /dev/null
+}
+
+usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust]] [--zshenv FILE] [--empty | palette…]" }
 
 main() {
-  local -a here behind empty zshenv
-  zparseopts -D -E -F -- -here=here -behind=behind -empty=empty -zshenv:=zshenv || { usage; return 1 }
-  (( $#here && $#behind || $#empty && $# )) && { usage; return 1 }
+  local -a here behind iterm legacy trust empty zshenv
+  zparseopts -D -E -F -- -here=here -behind=behind -iterm=iterm -legacy=legacy -trust=trust -empty=empty -zshenv:=zshenv || { usage; return 1 }
+  (( $#here && ($#behind || $#iterm) || ($#legacy || $#trust) && ! $#iterm || $#empty && $# )) && { usage; return 1 }
   local -a palettes=($@)
   local label=${(j: :)palettes}
   if (( $#empty )); then
@@ -67,10 +115,17 @@ main() {
     exec zsh -il
   fi
   export XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache ZDOTDIR=$SANDBOX
-  GHOSTTY_RESOURCES_DIR=${GHOSTTY_RESOURCES_DIR:-x} wire $label $palettes
   local front=${$(lsappinfo info -only pid "$(lsappinfo front)")##*=}
+  if (( $#iterm )); then
+    ( unset GHOSTTY_RESOURCES_DIR TERM_PROGRAM KITTY_WINDOW_ID; ITERM_SESSION_ID=w0 wire $label $palettes )
+    open_iterm $#legacy $#trust "${behind:+1}" || { print -u2 "no iTerm2 to open"; return 1 }
+    (( $#behind )) && hand_back $front $ITERM_SERVER
+    print -r -- "opened a separate iTerm2 (settings suite $SUITE) on it — ⌘Q quits only that one; files stay until the next run"
+    return
+  fi
+  GHOSTTY_RESOURCES_DIR=${GHOSTTY_RESOURCES_DIR:-x} wire $label $palettes
   open_ghostty || { print -u2 "no Ghostty to open — \`mise run sandbox --here\` runs it in this tab"; return 1 }
-  (( $#behind )) && hand_back $front
+  (( $#behind )) && hand_back $front "--config-file=$SANDBOX/"
   print -r -- "opened a separate Ghostty on it — ⌘Q quits only that one; files stay until the next run"
 }
 
