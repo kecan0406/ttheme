@@ -259,7 +259,7 @@ __tt_keep() {
   local note
   note=$(__tt_cli default "$1") || return 1
   TTHEME_STARTUP=$1
-  __tt_shown "$1"
+  __tt_shown "$1" force
   (( $+functions[__tt_reload] )) && __tt_reload
   if __tt_color; then
     printf '\033[2m%s\033[0m\n' "${(@f)note}"
@@ -425,7 +425,7 @@ __tt_rotate() {
   __tt_apply "$spec"
   TTHEME_SPEC=$spec
   __tt_name_of "$spec"
-  __tt_shown "$REPLY" && __tt_reload
+  __tt_shown "$REPLY" force && __tt_reload
   __tt_announce
 }
 
@@ -1442,7 +1442,7 @@ __tt_preview() {
       elif (( picked == 2 )); then
         __tt_keep "$sel"
       else
-        __tt_shown "$sel" && __tt_reload
+        __tt_shown "$sel" force && __tt_reload
       fi
     else
       if [[ -z $orig && -n $applied ]]; then
@@ -1490,7 +1490,7 @@ ttheme() {
   local spec=${TTHEME_PALETTE[$REPLY]}
   __tt_apply "$spec"
   TTHEME_SPEC=$spec
-  __tt_shown "$REPLY" && __tt_reload
+  __tt_shown "$REPLY" force && __tt_reload
   __tt_announce
 }
 

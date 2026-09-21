@@ -17,7 +17,7 @@ __tt_bg_shown() {
 
 __tt_shown() {
   local dir=${TTHEME_CONFIG:h}/backgrounds was=$TTHEME_ITERM_SHOWN
-  [[ $was == $1 ]] && return 1
+  [[ $2 != force && $was == $1 ]] && return 1
   [[ -r $dir/$1.conf || ( -n $was && -r $dir/$was.conf ) ]] || return 1
   (( ${TTHEME_ORDER[(Ie)$1]} )) || return 1
   printf '\e]1337;SetProfile=ttheme · %s\a' $1

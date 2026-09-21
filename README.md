@@ -200,8 +200,9 @@ contain as the image mode, rewritten whenever the picture or its tuning
 changes — and putting a palette with a picture on, or taking one off, moves the
 tab to that palette's profile with `OSC 1337 SetProfile`. The first time,
 iTerm2 asks at the top of the tab whether a control sequence may change the
-profile: Always Allow lets every later switch through, and a tab it refuses
-still wears the palette's colors, only without the picture. iTerm2 has no
+profile: Always Allow lets every later switch through — put the palette on once
+more for the one that asked — and a tab it refuses still wears the palette's
+colors, only without the picture. iTerm2 has no
 position setting, so a picture that does not fill the window sits centered.
 
 A palette with no background yet can find one: on it in `preview`, tab opens
