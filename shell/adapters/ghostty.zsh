@@ -1,13 +1,19 @@
+typeset -g TTHEME_GHOSTTY_PID=""
+
 __tt_reload() {
   local pid=$PPID ppid comm
-  while (( pid > 1 )); do
-    read -r ppid comm <<< "$(ps -o ppid=,comm= -p $pid)"
-    if [[ ${comm:t} == ghostty ]]; then
-      kill -USR2 $pid
-      return
-    fi
-    pid=$ppid
-  done
+  if [[ -z $TTHEME_GHOSTTY_PID ]]; then
+    TTHEME_GHOSTTY_PID=0
+    while (( pid > 1 )); do
+      read -r ppid comm <<< "$(ps -o ppid=,comm= -p $pid)"
+      if [[ ${comm:t} == ghostty ]]; then
+        TTHEME_GHOSTTY_PID=$pid
+        break
+      fi
+      pid=$ppid
+    done
+  fi
+  (( TTHEME_GHOSTTY_PID )) && kill -USR2 $TTHEME_GHOSTTY_PID 2>/dev/null && return
   pkill -USR2 -x ghostty 2>/dev/null
 }
 
@@ -178,7 +184,8 @@ __tt_shown() {
   was=$REPLY
   [[ $was == $1 ]] && return 1
   [[ -r $dir/$1.conf || ( -n $was && -r $dir/$was.conf ) ]] || return 1
-  mkdir -p $dir && print -r -- "config-file = ?$1.conf" > $dir/shown.conf
+  [[ -d $dir ]] || mkdir -p $dir || return 1
+  print -r -- "config-file = ?$1.conf" > $dir/shown.conf
 }
 
 __tt_bg_include() {

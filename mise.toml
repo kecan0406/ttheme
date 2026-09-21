@@ -53,10 +53,10 @@ echo "ghostty:check ok"
 
 [tasks."bin:build"]
 description = "bundle the node cli into bin/ttheme.js"
-run = "bun build src/bin.ts --target=node --outfile=bin/ttheme.js"
+run = "bun build src/bin.ts --target=node --minify --outfile=bin/ttheme.js"
 
 [tasks."bin:check"]
-description = "smoke-test the node bundle: help, non-interactive init, the installed CLI copy, keep surviving an add, idempotency"
+description = "smoke-test the node bundle: help, non-interactive init from the packed tarball, the installed CLI copy, keep surviving an add, idempotency"
 depends = ["build", "bin:build"]
 run = '''
 {% raw %}
@@ -91,8 +91,10 @@ cli() {
 layer() {
   sandboxed zsh -c 'source "$HOME/.config/ttheme/ttheme.zsh"; __tt_reload() { :; }; '"$1"
 }
+bun pm pack --filename "$tmp/ttheme.tgz" --quiet > /dev/null
+tar -xzf "$tmp/ttheme.tgz" -C "$tmp"
 run_init() {
-  sandboxed GHOSTTY_RESOURCES_DIR=x node bin/ttheme.js init --yes < /dev/null > /dev/null
+  sandboxed GHOSTTY_RESOURCES_DIR=x node "$tmp/package/bin/ttheme.js" init --yes < /dev/null > /dev/null
 }
 run_init
 for f in ttheme/ttheme.js ttheme/ttheme.zsh ttheme/palettes.zsh ttheme/ttheme.conf ttheme/config.zsh ttheme/adapters/_osc.zsh ghostty/config; do
@@ -160,13 +162,9 @@ depends = ["build"]
 run = "bun install && bun run build"
 
 [tasks.publish]
-description = "verify everything, rebuild dist and the bundle, publish to npm"
+description = "verify everything — ci rebuilds dist and the bundle — then publish to npm"
 depends = ["ci"]
-run = '''
-set -e
-bun build src/bin.ts --target=node --outfile=bin/ttheme.js
-bun publish --access public
-'''
+run = "bun publish --access public"
 
 [tasks.ci]
 description = "everything the ci workflow runs"

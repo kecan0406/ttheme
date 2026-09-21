@@ -1,56 +1,45 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { CommanderError } from 'commander'
 import { TERMINALS } from './build.ts'
-import { createProgram } from './cli.ts'
+import { parse, UsageError, VERBS } from './cli.ts'
 
-function makeProgram() {
-  const program = createProgram()
-  for (const cmd of [program, ...program.commands]) {
-    cmd.configureOutput({ writeOut() {}, writeErr() {} })
-  }
-  return program
-}
-
-async function parseError(argv: string[]): Promise<CommanderError> {
-  try {
-    await makeProgram().parseAsync(argv, { from: 'user' })
-  } catch (error) {
-    assert.ok(error instanceof CommanderError)
-    return error
-  }
-  assert.fail('expected a CommanderError')
-}
-
-test('build --only rejects unknown terminals', async () => {
-  const error = await parseError(['build', '--only', 'vscode'])
-  assert.equal(error.code, 'commander.invalidArgument')
+test('build --only rejects unknown terminals', () => {
+  assert.throws(() => parse(['build', '--only', 'vscode']), UsageError)
 })
 
 test('build --only offers every terminal', () => {
   assert.deepEqual(TERMINALS, ['ghostty', 'kitty', 'alacritty', 'wezterm', 'iterm2'])
+  assert.deepEqual(parse(['build', '--only', 'kitty', '--only', 'iterm2']), {
+    kind: 'run',
+    verb: VERBS.find((v) => v.name === 'build'),
+    args: [],
+    flags: { only: ['kitty', 'iterm2'] },
+  })
 })
 
-test('unknown commands fail with a usage error', async () => {
-  const error = await parseError(['paint'])
-  assert.equal(error.code, 'commander.unknownCommand')
+test('unknown commands fail with a usage error', () => {
+  assert.throws(() => parse(['paint']), UsageError)
 })
 
-test('--version exits cleanly through exitOverride', async () => {
-  const error = await parseError(['--version'])
-  assert.equal(error.exitCode, 0)
+test('--version is its own invocation', () => {
+  assert.deepEqual(parse(['--version']), { kind: 'version' })
 })
 
 test('the catalog verbs are registered alongside build and init', () => {
-  assert.deepEqual(
-    makeProgram()
-      .commands.map((cmd) => cmd.name())
-      .sort(),
-    ['add', 'browse', 'build', 'default', 'find', 'image', 'init', 'list', 'remove', 'update'],
-  )
+  assert.deepEqual(VERBS.map((v) => v.name).sort(), [
+    'add',
+    'browse',
+    'build',
+    'default',
+    'find',
+    'image',
+    'init',
+    'list',
+    'remove',
+    'update',
+  ])
 })
 
-test('init rejects unknown options', async () => {
-  const error = await parseError(['init', '--frobnicate'])
-  assert.equal(error.code, 'commander.unknownOption')
+test('init rejects unknown options', () => {
+  assert.throws(() => parse(['init', '--frobnicate']), UsageError)
 })

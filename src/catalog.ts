@@ -4,6 +4,7 @@ import { GATE_RULES } from './contrast.ts'
 import type { Manifest, PaletteEntry } from './emit/manifest.ts'
 
 export const REGISTRY_URL = 'https://kecan0406.github.io/ttheme/manifest.json'
+const TIMEOUT = 20_000
 
 export function catalogPath(configHome: string): string {
   return join(configHome, 'ttheme', 'catalog.json')
@@ -45,7 +46,7 @@ export function parseCatalog(source: string): Manifest {
 export async function fetchCatalog(url: string): Promise<Manifest> {
   let response: Response
   try {
-    response = await fetch(url)
+    response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT) })
   } catch (error) {
     throw new Error(`cannot reach the registry at ${url} — ${error instanceof Error ? error.message : String(error)}`)
   }

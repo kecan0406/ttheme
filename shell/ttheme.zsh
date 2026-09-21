@@ -1532,3 +1532,12 @@ if __tt_active; then
   fi
   __tt_announce
 fi
+
+() {
+  local f
+  for f in $TTHEME_HOME/ttheme.zsh $TTHEME_HOME/palettes.zsh $TTHEME_HOME/adapters/_osc.zsh $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh; do
+    [[ -r $f && ! $f.zwc -nt $f ]] || continue
+    zcompile -UR -- $f.$$.zwc $f 2>/dev/null && command mv -f -- $f.$$.zwc $f.zwc 2>/dev/null
+    [[ ! -e $f.$$.zwc ]] || command rm -f -- $f.$$.zwc
+  done
+}

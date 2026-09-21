@@ -140,7 +140,9 @@ export function sync(configHome: string, catalog: Manifest, state: Installed): s
     written.push(file)
   }
 
-  write(join(configHome, 'ttheme', 'palettes.zsh'), palettesZsh(entries))
+  const table = join(configHome, 'ttheme', 'palettes.zsh')
+  write(table, palettesZsh(entries))
+  rmSync(`${table}.zwc`, { force: true })
   return written
 }
 

@@ -101,6 +101,7 @@ export function applyInit(plan: InitPlan): void {
   for (const c of plan.copies) {
     mkdirSync(dirname(c.to), { recursive: true })
     rmSync(c.to, { force: true })
+    rmSync(`${c.to}.zwc`, { force: true })
     copyFileSync(c.from, c.to)
     if (c.executable) {
       chmodSync(c.to, 0o755)
