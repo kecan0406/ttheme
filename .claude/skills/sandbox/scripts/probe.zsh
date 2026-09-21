@@ -47,6 +47,8 @@ sb_query() {
 
 sb_report() { print -r -- "$*" >> ${ZDOTDIR:-$HOME}/run.out }
 
+sb_drive() { python3 $SB_HERE/drive.py "$@" }
+
 sb_shot() {
   local dir=${ZDOTDIR:-$HOME}/shots i
   mkdir -p $dir

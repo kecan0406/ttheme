@@ -53,6 +53,10 @@ Inside the commands (both window modes):
 - `sb_color bg|fg|cursor|0-255` prints the `#rrggbb` the terminal is showing, measured with an OSC query.
 - `sb_query SEQ` writes a raw sequence and prints whatever the terminal answers, escapes made visible (`^[`) — `sb_query $'\e[16t'`, `sb_query $'\e_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\e\\'`. It appends a DSR and reads up to its reply, so an unanswered query comes back empty instead of hanging.
 - `sb_shot NAME` has the driver screenshot the window right now into `--shots DIR/NAME.png` and waits for it — for before/after pairs inside one run.
+- `sb_drive COMMAND STEP…` plays keys into a TUI in the real window: it runs `zsh -i -c COMMAND` (`'ttheme preview'`, `'ttheme browse'`) on a pty of its own sized like the window, relays its output to the window and the window's replies back — so OSC colors, kitty graphics and cell-size queries all work — and takes the steps in order: a key name (`up` `down` `left` `right` `shift-left`… `home` `end` `pgup` `pgdn` `enter` `esc` `tab` `space` `bs` `ctrl-c` `ctrl-u` `alt-c`), a single character, `text:miku` typed one character at a time, a number of seconds to wait, or `shot:NAME` (as `sb_shot`). Keys go 0.25 s apart, and the child is killed 10 s after the last step. The child's shell variables do not come back: read the outcome from files, `sb_var`, `sb_color` or a screenshot. The commands' own shell still believes in its old palette, so its next prompt may put that palette's picture back (one extra Ghostty reload) — the product never does this, since preview runs in the shell that wears the result.
+  ```zsh
+  sb_drive 'ttheme preview' 2 text:miku 1 shot:on-miku tab 1 down down right enter 0.5 enter right enter 3
+  ```
 - `sb_report text…` adds a line to the results.
 - All of ttheme is loaded: `ttheme <name>`, the adapter functions, and the pieces preview runs on enter. Preview's "keep as default" is `__tt_apply`, `__tt_announce`, then `__tt_keep <name>`, and it is only offered when `TTHEME_TAB_PALETTE=off` — `__tt_keep` alone records the default through `ttheme default` (`installed.json`, then every wired terminal's config) and reloads, but leaves the window's colors alone.
 - stdout stays on the window because ttheme paints through stdout — redirecting it would paint a file, so never `ttheme <name> > /dev/null` when the colors matter. stderr is collected and shown.
@@ -66,7 +70,7 @@ The output, in order:
 - `reloads` (Ghostty only): every `pid×count` that logged "reloading configuration in response to SIGUSR2" since launch. The instance's own pid alone means the reload stayed in the sandbox.
 - Any stderr, then every screenshot path; `end.png` is taken 0.6 s after the commands.
 
-`pixel.zsh FILE X Y [X Y…]` reads colors back out of a screenshot, in Display P3 and sRGB (the screenshots carry the display's profile; ttheme's iTerm2 profiles are P3). Screenshots are downscaled to 1200 px wide, so pick coordinates on that image and sample flat areas.
+`pixel.zsh FILE X Y [X Y…]` reads colors back out of a screenshot, in Display P3 and sRGB (the screenshots carry the display's profile; ttheme's iTerm2 profiles are P3). Screenshots are downscaled to 1200 px wide — Ghostty's window is wider than tall, so its shots are about 1200×655 — so pick coordinates on that image and sample flat areas; a point outside it says so.
 
 Log lines such as "config reload notification" also show up at launch and are not reloads.
 
@@ -85,7 +89,7 @@ I=.claude/skills/sandbox/scripts/iterm.zsh
 zsh $I --shots <scratchpad>/it gojo miku -- 'ttheme gojo' 'sb_wear miku' 'sleep 1' 'sb_report "bg $(sb_color bg)"'
 ```
 
-`mise run sandbox --iterm` wires the sandbox as `init` does for iTerm2 (`ttheme · <palette>` profiles in `$SANDBOX/Library/Application Support/iTerm2/DynamicProfiles/ttheme.json`) and starts a second iTerm2 with `-suite ttheme-sandbox`: its own preferences (`~/Library/Preferences/ttheme-sandbox.plist`), its own `~/Library/Application Support/ttheme-sandbox/` with its own `iTermServer`, so the user's iTerm2 — running or not — is never touched. Every run deletes both and rebuilds. The launch arguments keep Sparkle and window restoration out of the user's `com.googlecode.iterm2` domain; check that domain is unchanged after a series (`defaults read com.googlecode.iterm2`). It opens behind the front app and needs no focus.
+`mise run sandbox --iterm` wires the sandbox as `init` does for iTerm2 (`ttheme · <palette>` profiles in `$SANDBOX/Library/Application Support/iTerm2/DynamicProfiles/ttheme.json`) and starts a second iTerm2 with `-suite ttheme-sandbox`: its own preferences (`~/Library/Preferences/ttheme-sandbox.plist`), its own `~/Library/Application Support/ttheme-sandbox/` with its own `iTermServer`, so the user's iTerm2 — running or not — is never touched. Every run deletes both and rebuilds. The launch arguments keep Sparkle and window restoration out of the user's `com.googlecode.iterm2` domain; check that domain is unchanged after a series (`defaults read com.googlecode.iterm2`). It comes to the front for about a quarter second at launch and hands focus straight back; nothing after that takes focus, SetProfile and kitty graphics included.
 
 The window's profile is `ttheme sandbox` (`sandbox.json` next to `ttheme.json`), the suite's default. Its command sets `HOME` to the sandbox as well, so a `ttheme add` inside writes the sandbox's profiles, not the user's. The suite is seeded with the Python API on, a per-session cookie, and `ReportVariable` allowed for `id`, `tab.id`, `tab.window.id`, `profileName` and `user.ttheme_bg`.
 

@@ -20,7 +20,7 @@ capture() {
 
 write_hook() {
   local out=$1 split=${@[(i)--]}
-  { cat -- ${@[2,split-1]}; print -rl -- '__sb_commands() {' "${(j:; :)@[split+1,-1]}" '}' } > $out
+  { print -r -- "typeset -g SB_HERE=${(q)HERE}"; cat -- ${@[2,split-1]}; print -rl -- '__sb_commands() {' "${(j:; :)@[split+1,-1]}" '}' } > $out
 }
 
 serve() {
