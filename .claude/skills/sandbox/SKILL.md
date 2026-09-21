@@ -106,6 +106,7 @@ Measured on 3.7.2, 2026-09-22 — know these before reading results:
 
 - `CSI 16t` gets no answer; `OSC 1337;ReportCellSize` answers `height;width;scale` in points.
 - kitty graphics work (Metal and legacy), with Ghostty's layer order, but placement ids are shared across images: `p=1` on a second image removes the first image's `p=1`. Give each image its own `p`. `\e[2J` keeps image data and scrolls placements away rather than deleting them.
+- `ED 2`, and `CSI H CSI J` in the alternate screen, push the screen into scrollback with its kitty placements; a scroll thumb showing up in a screenshot of a full-screen TUI is the tell.
 - `Blend` is the image's opacity: 0 hides it, 1 shows it whole.
 - A tab that painted colors keeps them through a profile rewrite; `__tt_osc_reset` returns it to the profile's colors as they were when it was painted, not the current ones.
 - `Harmonize 256 Colors` applies only to sessions created after it is set.

@@ -326,7 +326,7 @@ class Finder {
     stdin.resume()
     stdin.on('data', this.onData)
     stdout.on('resize', this.onResize)
-    this.write('\x1b[?25l\x1b[?7l\x1b[H\x1b[J')
+    this.write('\x1b[?25l\x1b[?7l\x1b[H\x1b[K\x1b[2H\x1b[J\x1b[H')
     const exit = new Promise<number>((resolve) => {
       this.done = resolve
     })
@@ -350,7 +350,7 @@ class Finder {
     clearInterval(clock)
     stdin.off('data', this.onData)
     stdout.off('resize', this.onResize)
-    this.write('\x1b_Ga=d,d=A,q=2\x1b\\\x1b[H\x1b[J')
+    this.write('\x1b_Ga=d,d=A,q=2\x1b\\\x1b[H\x1b[K\x1b[2H\x1b[J\x1b[H')
     stdin.setRawMode(false)
     stdin.pause()
     this.saveProbes()

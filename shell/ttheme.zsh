@@ -1020,7 +1020,8 @@ __tt_pv_draw() {
   cnt="$mt/${#TTHEME_ORDER}"
   out=$'\e[H'
   if (( resized )); then
-    out+=$'\e[2J'
+    out+=$'\e[K\e[2H\e[J\e[H'
+    (( bgcw )) && out+=$'\e_Ga=d,d=A,q=2\e\\'
     resized=0 wiped=1
   fi
   if (( pw < 40 || ph < 12 )); then
