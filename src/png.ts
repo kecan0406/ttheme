@@ -1,4 +1,3 @@
-import { readFileSync, writeFileSync } from 'node:fs'
 import { decode as decodeJpegData } from 'jpeg-js'
 import { PNG } from 'pngjs'
 
@@ -17,15 +16,6 @@ export interface Box {
 
 const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10]
 const CLEAR = 13
-
-const LINEAR = Array.from({ length: 256 }, (_, i) => {
-  const c = i / 255
-  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-})
-
-export function luma(r: number, g: number, b: number): number {
-  return 0.2126 * (LINEAR[r] ?? 0) + 0.7152 * (LINEAR[g] ?? 0) + 0.0722 * (LINEAR[b] ?? 0)
-}
 
 export function isPng(bytes: Uint8Array): boolean {
   return bytes.length >= SIGNATURE.length && SIGNATURE.every((b, i) => bytes[i] === b)
@@ -60,14 +50,6 @@ export function encodePng(image: Rgba): Buffer {
   const png = new PNG({ width: image.width, height: image.height })
   png.data = Buffer.from(image.data)
   return PNG.sync.write(png)
-}
-
-export function readPng(path: string): Rgba {
-  return decodePng(readFileSync(path))
-}
-
-export function writePng(path: string, image: Rgba): void {
-  writeFileSync(path, encodePng(image))
 }
 
 function find(bytes: Uint8Array, word: string): number {
@@ -125,7 +107,7 @@ export function transparency(image: Rgba): number {
   return Math.round((clear * 100) / (image.width * image.height))
 }
 
-export function shrinkBy(image: Rgba, k: number): Rgba {
+function shrinkBy(image: Rgba, k: number): Rgba {
   if (k <= 1) {
     return image
   }
@@ -159,10 +141,6 @@ export function shrinkBy(image: Rgba, k: number): Rgba {
     }
   }
   return { width, height, data: out }
-}
-
-export function shrink(image: Rgba, maxSide: number): Rgba {
-  return shrinkBy(image, Math.ceil(Math.max(image.width, image.height) / maxSide))
 }
 
 export function contain(image: Rgba, width: number, height: number): Rgba {

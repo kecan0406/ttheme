@@ -376,7 +376,7 @@ function danbooru(raw: Spec): Site {
   }
 }
 
-export function siteNamed(name: string): Site | undefined {
+function siteNamed(name: string): Site | undefined {
   return SITES.find((site) => site.key === name || site.name === name || new URL(site.origin).host === name)
 }
 

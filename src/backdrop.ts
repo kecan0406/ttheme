@@ -58,7 +58,7 @@ export function mix(a: Hex, b: Hex, t: number): Hex {
     .join('')}`
 }
 
-export function slotColor(colors: Colors, slot: string): Hex {
+function slotColor(colors: Colors, slot: string): Hex {
   if (slot === 'background' || slot === 'foreground' || slot === 'cursor') {
     return colors[slot]
   }
@@ -146,7 +146,7 @@ export function composite(image: Rgba, background: Hex, opacity: number): Rgba {
   return { width: image.width, height: image.height, data: out }
 }
 
-export function figureBox(image: Rgba): Box {
+function figureBox(image: Rgba): Box {
   return alphaBox(image) ?? { x: 0, y: 0, w: image.width, h: image.height }
 }
 
@@ -256,7 +256,7 @@ export function backgroundsDir(configHome: string): string {
   return join(configHome, 'ttheme', 'backgrounds')
 }
 
-export function backdropConf(name: string, fillPath: string, opacity: number, from?: string, key?: string): string {
+function backdropConf(name: string, fillPath: string, opacity: number, from?: string, key?: string): string {
   return [
     ...(from ? [`# from ${from}`] : []),
     ...(key ? [`# image ${key}`] : []),
@@ -401,7 +401,7 @@ export function dropImage(configHome: string, name: string): { key?: string; lef
   return { key: now, left: rest.length }
 }
 
-export function retire(dir: string, name: string, key?: string): void {
+function retire(dir: string, name: string, key?: string): void {
   if (activeKey(dir, name) !== key) {
     shelve(dir, name)
   }
