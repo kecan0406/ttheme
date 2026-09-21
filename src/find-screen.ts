@@ -153,6 +153,33 @@ export function decodeKeys(input: string): string[] {
   return keys
 }
 
+export const CELL_QUERY = '\x1b]1337;ReportCellSize\x07\x1b[16t'
+
+const ITERM_CELL = '\x1b]1337;ReportCellSize='
+
+export function cellReport(input: string): { cell: { w: number; h: number }; rest: string } | null {
+  const at = input.indexOf(ITERM_CELL)
+  if (at !== -1) {
+    const body = input.slice(at + ITERM_CELL.length)
+    const ends = [body.indexOf('\x07'), body.indexOf('\x1b\\')].filter((i) => i !== -1)
+    const end = ends.length > 0 ? Math.min(...ends) : -1
+    const m = end === -1 ? null : /^([\d.]+);([\d.]+);([\d.]+)$/.exec(body.slice(0, end))
+    if (m) {
+      const scale = Number(m[3])
+      return {
+        cell: { h: Math.round(Number(m[1]) * scale), w: Math.round(Number(m[2]) * scale) },
+        rest: input.slice(0, at) + body.slice(end + (body[end] === '\x07' ? 1 : 2)),
+      }
+    }
+  }
+  const x = input.indexOf('\x1b[6;')
+  const m = x === -1 ? null : /^\[6;(\d+);(\d+)t/.exec(input.slice(x + 1))
+  if (!m) {
+    return null
+  }
+  return { cell: { h: Number(m[1]), w: Number(m[2]) }, rest: input.slice(0, x) + input.slice(x + 1 + m[0].length) }
+}
+
 export function gridShape(cols: number, rows: number): { perRow: number; rowsVis: number } {
   return {
     perRow: Math.max(1, Math.floor((cols + 1) / TILE.pitch)),
@@ -165,7 +192,7 @@ export function transmit(p: Placement): string {
 }
 
 export function place(p: Placement): string {
-  return `\x1b[${p.row + 1};${p.col + 1}H\x1b_Ga=p,i=${p.id},p=1,c=${p.cols},r=${p.rows},C=1,z=${p.z},q=2\x1b\\`
+  return `\x1b[${p.row + 1};${p.col + 1}H\x1b_Ga=p,i=${p.id},p=${p.id},c=${p.cols},r=${p.rows},C=1,z=${p.z},q=2\x1b\\`
 }
 
 export function release(id: number): string {

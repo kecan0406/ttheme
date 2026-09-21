@@ -66,11 +66,11 @@ __tt_bg_place() {
 
 __tt_bg_at() {
   local src=""
-  (( $# > 7 )) && src=",x=$8,y=$9,w=${10},h=${11}"
+  (( $# > 6 )) && src=",x=$7,y=$8,w=$9,h=${10}"
   if (( bgrel )); then
-    printf '\e_Ga=p,i=%d,p=%d,P=999999,Q=1,H=%d,V=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $1 $2 $(( $4 - bgmx )) $(( $5 - bgmy )) $6 $7 "$src" $3
+    printf '\e_Ga=p,i=%d,p=%d,P=999999,Q=999999,H=%d,V=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $1 $1 $(( $3 - bgmx )) $(( $4 - bgmy )) $5 $6 "$src" $2
   else
-    printf '\e[%d;%dH\e_Ga=p,i=%d,p=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $(( $5 + 1 )) $(( $4 + 1 )) $1 $2 $6 $7 "$src" $3
+    printf '\e[%d;%dH\e_Ga=p,i=%d,p=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $(( $4 + 1 )) $(( $3 + 1 )) $1 $1 $5 $6 "$src" $2
   fi
 }
 
@@ -312,15 +312,15 @@ __tt_pv_bg_show() {
   local -i r=$(( 16#${bg:0:2} )) g=$(( 16#${bg:2:2} )) b=$(( 16#${bg:4:2} )) a=$(( (1.0 - op) * 255 + 0.5 ))
   (( a < 0 )) && a=0
   if (( bgrel && ! bganchor )); then
-    printf '\e_Ga=t,f=32,s=1,v=1,i=999999,q=2;AAAAAA==\e\\\e[H\e_Ga=p,i=999999,p=1,c=1,r=1,C=1,z=-1073741828,q=2\e\\'
+    printf '\e_Ga=t,f=32,s=1,v=1,i=999999,q=2;AAAAAA==\e\\\e[H\e_Ga=p,i=999999,p=999999,c=1,r=1,C=1,z=-1073741828,q=2\e\\'
     bganchor=1
   fi
   __tt_b64 $r $g $b
   printf '\e_Ga=t,f=24,s=1,v=1,i=1,q=2;%s\e\\' "$REPLY"
-  __tt_bg_at 1 1 -1073741827 0 0 $cols $rows
+  __tt_bg_at 1 -1073741827 0 0 $cols $rows
   __tt_b64 $r $g $b $a
   printf '\e_Ga=t,f=32,s=1,v=1,i=2,q=2;%s\e\\' "$REPLY"
-  __tt_bg_at 2 1 -1073741825 0 0 $cols $rows
+  __tt_bg_at 2 -1073741825 0 0 $cols $rows
   __tt_bg_dim "$img" || img=""
   if [[ -n $bgshown && $bgshown != "$img" ]]; then
     printf '\e_Ga=d,d=i,i=%d,q=2\e\\' ${bgsent[$bgshown]}
@@ -334,7 +334,7 @@ __tt_pv_bg_show() {
   wh=(${=bgdim[$img]})
   if __tt_bg_place $wh[1] $wh[2] $cols $rows $bgcw $bgch $size ${bgpos[$name]} $fit $focus; then
     at=(${=REPLY})
-    __tt_bg_at ${bgsent[$img]} 1 -1073741826 $(( at[1] - 1 )) $(( at[2] - 1 )) $at[3] $at[4] $at[5] $at[6] $at[7] $at[8]
+    __tt_bg_at ${bgsent[$img]} -1073741826 $(( at[1] - 1 )) $(( at[2] - 1 )) $at[3] $at[4] $at[5] $at[6] $at[7] $at[8]
   else
     printf '\e_Ga=d,d=i,i=%d,q=2\e\\' ${bgsent[$img]}
   fi

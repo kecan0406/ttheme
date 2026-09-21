@@ -34,6 +34,8 @@ import { find, readCatalog } from './catalog.ts'
 import { canRemoveBackground, keepable, removeBackground } from './cutout.ts'
 import type { Manifest, PaletteEntry } from './emit/manifest.ts'
 import {
+  CELL_QUERY,
+  cellReport,
   decodeKeys,
   type FindView,
   gridShape,
@@ -377,20 +379,18 @@ class Finder {
         this.probeWait = undefined
         resolve(cell)
       }
-      this.write('\x1b[16t')
+      this.write(CELL_QUERY)
     })
   }
 
   private readonly onData = (chunk: Buffer): void => {
     this.input += chunk.toString('utf8')
+    for (let report = cellReport(this.input); report; report = cellReport(this.input)) {
+      this.input = report.rest
+      this.probeWait?.(report.cell)
+    }
     if (this.probeWait) {
-      const at = this.input.indexOf('\x1b[6;')
-      const m = at === -1 ? null : /^\[6;(\d+);(\d+)t/.exec(this.input.slice(at + 1))
-      if (!m) {
-        return
-      }
-      this.input = this.input.slice(0, at) + this.input.slice(at + 1 + m[0].length)
-      this.probeWait({ h: Number(m[1]), w: Number(m[2]) })
+      return
     }
     clearTimeout(this.partial)
     if (incomplete(this.input)) {
