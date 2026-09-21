@@ -258,6 +258,7 @@ __tt_unpin() {
 __tt_keep() {
   local note
   note=$(__tt_cli default "$1") || return 1
+  TTHEME_STARTUP=$1
   __tt_shown "$1"
   (( $+functions[__tt_reload] )) && __tt_reload
   if __tt_color; then
@@ -638,7 +639,7 @@ __tt_pv_foot() {
     elif (( pk == 1 )); then
       note="until this tab closes"
     else
-      note="new tabs · ghostty config"
+      note="new tabs · the default palette"
     fi
     kk=(enter) kl=(confirm)
     right=$b"esc"$z$d" back"$z
@@ -1147,7 +1148,7 @@ __tt_pv_canpick() {
   canpick=0
   if [[ $mode == pin ]]; then
     canpick=1
-  elif (( $+functions[__tt_reload] )) && [[ $TTHEME_TAB_PALETTE == off ]]; then
+  elif __tt_keepable && [[ $TTHEME_TAB_PALETTE == off ]]; then
     canpick=1
   fi
 }

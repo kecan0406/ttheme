@@ -50,15 +50,23 @@ function background(picture: ProfileBackground | undefined) {
     : { 'Background Image Location': '' }
 }
 
-export function itermProfiles(themes: Theme[], pictures: ReadonlyMap<string, ProfileBackground>): string {
-  const profiles = themes.map((theme) => ({
-    Name: `ttheme · ${theme.name}`,
-    Guid: `ttheme-${theme.name}`,
+export function itermProfiles(
+  themes: Theme[],
+  pictures: ReadonlyMap<string, ProfileBackground>,
+  startup: Theme | undefined,
+): string {
+  const profile = (theme: Theme, id: string) => ({
+    Name: `ttheme · ${id}`,
+    Guid: `ttheme-${id}`,
     'Use Separate Colors for Light and Dark Mode': false,
     'Harmonize 256 Colors': true,
     ...background(pictures.get(theme.name)),
     ...itermColors(theme),
-  }))
+  })
+  const profiles = [
+    ...(startup ? [profile(startup, 'default')] : []),
+    ...themes.map((theme) => profile(theme, theme.name)),
+  ]
   return `${JSON.stringify({ Profiles: profiles }, null, 2)}\n`
 }
 

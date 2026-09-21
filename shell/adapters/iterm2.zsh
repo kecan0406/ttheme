@@ -2,8 +2,13 @@ source $TTHEME_HOME/adapters/_bg.zsh
 
 if (( ! ${+TTHEME_ITERM_SHOWN} )); then
   typeset -gx TTHEME_ITERM_SHOWN=""
-  [[ $ITERM_PROFILE == 'ttheme · '* ]] && TTHEME_ITERM_SHOWN=${ITERM_PROFILE#ttheme · }
+  case $ITERM_PROFILE in
+    'ttheme · default') TTHEME_ITERM_SHOWN=$TTHEME_STARTUP ;;
+    'ttheme · '*) TTHEME_ITERM_SHOWN=${ITERM_PROFILE#ttheme · } ;;
+  esac
 fi
+
+__tt_keepable() { return 0 }
 
 __tt_bg_shown() {
   REPLY=$TTHEME_ITERM_SHOWN

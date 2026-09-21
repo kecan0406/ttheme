@@ -19,6 +19,8 @@ __tt_reload() {
 
 source $TTHEME_HOME/adapters/_bg.zsh
 
+__tt_keepable() { return 0 }
+
 __tt_bg_shown() {
   local f=${TTHEME_CONFIG:h}/backgrounds/shown.conf
   REPLY=""

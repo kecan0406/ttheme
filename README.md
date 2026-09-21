@@ -74,9 +74,10 @@ so cancelling before that touches nothing. It places the zsh layer under
 left alone. iTerm2 has no config file to edit, so it gets one profile per
 installed palette instead — `ttheme · miku` and so on, in
 `~/Library/Application Support/iTerm2/DynamicProfiles/ttheme.json`, which
-iTerm2 reloads by itself whenever `ttheme browse` adds or drops one. iTerm2
-keeps its own default profile: Set as Default on one under Settings › Profiles
-and every new tab wears it. It ends with a receipt, paints the first palette onto the tab you
+iTerm2 reloads by itself whenever `ttheme browse` adds or drops one. One more,
+`ttheme · default`, always wears your default palette (none under `keep`): Set
+as Default on it once under Settings › Profiles and new tabs follow `ttheme
+default` from then on. It ends with a receipt, paints the first palette onto the tab you
 ran it in (not under `keep`) and lists what to do next (`exec zsh` for the
 `ttheme` command here, a terminal restart for new tabs).
 Running it again updates in place; `--yes` skips every prompt and installs no
@@ -160,11 +161,12 @@ the cursor. The list and the sample widen with the window (the sample up to 64
 columns) and the gap between them takes the rest; the tuning panel takes the
 sample's place while open, and so does the key list once the sample is 48
 columns wide.
-Under Ghostty with `TTHEME_TAB_PALETTE=off` (the default), enter asks **this tab** or
+Under Ghostty or iTerm2 with `TTHEME_TAB_PALETTE=off` (the default), enter asks **this tab** or
 **default**: default records the palette as your default palette (so a later
 `add` or `remove` keeps it), rewrites `theme =` in the `# ttheme begin` block of
-your Ghostty config and sends `SIGUSR2` to the Ghostty that owns the tab, so new tabs — and open tabs you have not
-painted by hand — take the palette without a restart. Painting is per surface
+your Ghostty config and sends `SIGUSR2` to the Ghostty that owns the tab, and
+rewrites iTerm2's `ttheme · default` profile, which iTerm2 reloads by itself — so new tabs, and open tabs you have not
+painted by hand, take the palette without a restart. Painting is per surface
 otherwise: a new tab starts from the configured theme, not from what the last
 tab was painted.
 

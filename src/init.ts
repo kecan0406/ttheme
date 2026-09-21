@@ -239,7 +239,9 @@ function receipt(plan: InitPlan, opts: InitOptions, wear: Wear, painted: boolean
 function itermLines(startup: string | undefined): string[] {
   const lines = ['iterm2 profiles   a "ttheme · <palette>" per palette in Settings › Profiles']
   if (startup) {
-    lines.push(`                  Set as Default on "ttheme · ${startup}" and every new tab wears it`)
+    lines.push(
+      `                  Set as Default on "ttheme · default" once — it wears ${startup} and follows \`ttheme default\``,
+    )
   }
   return lines
 }

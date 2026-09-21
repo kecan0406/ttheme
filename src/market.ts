@@ -71,7 +71,9 @@ function defaultNote(name: string, terminals: InitTerminal[]): string[] {
       ? [`default ${name} · ${wearing.join(', ')} open new tabs with it once their config reloads`]
       : []
   if (terminals.includes('iterm2')) {
-    lines.push(`iterm2 keeps its own default · Set as Default on "ttheme · ${name}" in Settings › Profiles`)
+    lines.push(
+      `iterm2 new tabs open with it while "ttheme · default" is the default profile · Set as Default on it once in Settings › Profiles`,
+    )
   }
   return lines.length > 0
     ? lines

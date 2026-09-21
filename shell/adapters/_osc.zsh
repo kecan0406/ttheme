@@ -20,6 +20,8 @@ __tt_apply() { __tt_osc_apply "$@" }
 
 __tt_shown() { return 1 }
 
+__tt_keepable() { return 1 }
+
 __tt_pv_bg_open() { : }
 
 __tt_pv_bg_show() { : }

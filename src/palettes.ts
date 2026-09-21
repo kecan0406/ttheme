@@ -120,9 +120,15 @@ function blockFor(terminal: Exclude<InitTerminal, 'iterm2'>, configHome: string,
   return { file: join(configHome, 'alacritty', 'alacritty.toml'), body: alacrittyBlock(themePath) }
 }
 
-function itermFile(configHome: string, catalog: Manifest, entries: PaletteEntry[], home: string): string {
+function itermFile(
+  configHome: string,
+  catalog: Manifest,
+  entries: PaletteEntry[],
+  startup: string | undefined,
+  home: string,
+): string {
   const dir = backgroundsDir(configHome)
-  const themes = listed(entries).map((entry) => toTheme(entry, catalog))
+  const themes = entries.map((entry) => toTheme(entry, catalog))
   const pictures = new Map<string, ProfileBackground>()
   for (const theme of themes) {
     const picture = readBackdrop(dir, theme.name, home)
@@ -130,7 +136,12 @@ function itermFile(configHome: string, catalog: Manifest, entries: PaletteEntry[
       pictures.set(theme.name, picture)
     }
   }
-  return itermProfiles(themes, pictures)
+  const shown = new Set(listed(entries).map((entry) => entry.name))
+  return itermProfiles(
+    themes.filter((theme) => shown.has(theme.name)),
+    pictures,
+    themes.find((theme) => theme.name === startup),
+  )
 }
 
 export function refreshProfiles(configHome: string, home = homedir()): void {
@@ -140,8 +151,9 @@ export function refreshProfiles(configHome: string, home = homedir()): void {
   }
   const catalog = readCatalog(configHome)
   const path = itermProfilesPath(home)
+  const startup = state.keepTheme ? undefined : startupPalette(state)
   mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, itermFile(configHome, catalog, resolve(catalog, state.palettes), home))
+  writeFileSync(path, itermFile(configHome, catalog, resolve(catalog, state.palettes), startup, home))
 }
 
 export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
@@ -156,7 +168,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
   const startup = state.keepTheme ? undefined : startupPalette(state)
   for (const terminal of state.terminals) {
     if (terminal === 'iterm2') {
-      write(itermProfilesPath(home), itermFile(configHome, catalog, entries, home))
+      write(itermProfilesPath(home), itermFile(configHome, catalog, entries, startup, home))
       continue
     }
     for (const entry of entries) {
@@ -175,7 +187,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
   }
 
   const table = join(configHome, 'ttheme', 'palettes.zsh')
-  write(table, palettesZsh(entries))
+  write(table, palettesZsh(entries, startup))
   rmSync(`${table}.zwc`, { force: true })
   return written
 }

@@ -112,16 +112,19 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
   const home = fixture()
   const profiles = itermProfilesPath(home)
   const read = () => JSON.parse(readFileSync(profiles, 'utf8')).Profiles
-  sync(configHome, catalog, { terminals: ['iterm2'], palettes: ['neutral', 'gojo', 'geto'] }, home)
+  sync(configHome, catalog, { terminals: ['iterm2'], startup: 'geto', palettes: ['neutral', 'gojo', 'geto'] }, home)
   const written = read()
-  const gojo = written[0]
+  const gojo = written[1]
   assert.deepEqual(
     written.map((p: { Name: string; Guid: string }) => [p.Name, p.Guid]),
     [
+      ['ttheme · default', 'ttheme-default'],
       ['ttheme · gojo', 'ttheme-gojo'],
       ['ttheme · geto', 'ttheme-geto'],
     ],
   )
+  assert.deepEqual({ ...written[0], Name: 0, Guid: 0 }, { ...written[2], Name: 0, Guid: 0 })
+  assert.match(readFileSync(join(configHome, 'ttheme', 'palettes.zsh'), 'utf8'), /^typeset -g TTHEME_STARTUP=geto$/m)
   assert.equal(gojo['Use Separate Colors for Light and Dark Mode'], false)
   assert.equal(gojo['Harmonize 256 Colors'], true)
   assert.equal(gojo['Background Image Location'], '')
@@ -132,7 +135,7 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
     'Green Component': 0x19 / 255,
     'Red Component': 0x11 / 255,
   })
-  sync(configHome, catalog, { terminals: ['iterm2'], palettes: ['gojo'] }, home)
+  sync(configHome, catalog, { terminals: ['iterm2'], keepTheme: true, palettes: ['gojo'] }, home)
   assert.deepEqual(
     read().map((p: { Name: string }) => p.Name),
     ['ttheme · gojo'],
@@ -163,6 +166,7 @@ test("sync gives a palette's iTerm2 profile its picture, tuning and off switch",
     p.Blend,
   ]
   assert.deepEqual(JSON.parse(readFileSync(itermProfilesPath(home), 'utf8')).Profiles.map(pick), [
+    ['ttheme · default', join(home, 'gojo@60-center.png'), 3, 0.2],
     ['ttheme · gojo', join(home, 'gojo@60-center.png'), 3, 0.2],
     ['ttheme · geto', '', undefined, undefined],
   ])
