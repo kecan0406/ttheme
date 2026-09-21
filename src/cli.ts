@@ -76,7 +76,8 @@ export const VERBS: Verb[] = [
   {
     name: 'image',
     args: ['<palette>', '<action>'],
-    about: 'switch a palette between its saved backgrounds, or remove the one shown — preview calls this',
+    about:
+      'switch a palette between its saved backgrounds, remove the one shown, or pass on tuning — preview calls this',
     hidden: true,
     run: ([name, action]) => runImage(name as string, action as string),
   },

@@ -34,12 +34,29 @@ export function itermColors(theme: Theme): Record<string, ItermColor> {
   }
 }
 
-export function itermProfiles(themes: Theme[]): string {
+export interface ProfileBackground {
+  image: string
+  opacity: number
+  cover: boolean
+}
+
+function background(picture: ProfileBackground | undefined) {
+  return picture
+    ? {
+        'Background Image Location': picture.image,
+        'Background Image Mode': picture.cover ? 2 : 3,
+        Blend: picture.opacity,
+      }
+    : { 'Background Image Location': '' }
+}
+
+export function itermProfiles(themes: Theme[], pictures: ReadonlyMap<string, ProfileBackground>): string {
   const profiles = themes.map((theme) => ({
     Name: `ttheme · ${theme.name}`,
     Guid: `ttheme-${theme.name}`,
     'Use Separate Colors for Light and Dark Mode': false,
     'Harmonize 256 Colors': true,
+    ...background(pictures.get(theme.name)),
     ...itermColors(theme),
   }))
   return `${JSON.stringify({ Profiles: profiles }, null, 2)}\n`

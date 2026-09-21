@@ -192,6 +192,16 @@ none. A tab busy with a command catches up at its next prompt, focus reporting
 is off while that command runs, and a tab whose colors are not a ttheme palette
 leaves the picture where it is.
 
+iTerm2 keeps a picture per tab. There the picture lives in the palette's own
+profile — `ttheme · kagami` carries the file, its opacity as Blend and cover or
+contain as the image mode, rewritten whenever the picture or its tuning
+changes — and putting a palette with a picture on, or taking one off, moves the
+tab to that palette's profile with `OSC 1337 SetProfile`. The first time,
+iTerm2 asks at the top of the tab whether a control sequence may change the
+profile: Always Allow lets every later switch through, and a tab it refuses
+still wears the palette's colors, only without the picture. iTerm2 has no
+position setting, so a picture that does not fill the window sits centered.
+
 A palette with no background yet can find one: on it in `preview`, tab opens
 **find**, which searches a booru for the palette's character tag
 (`meta.booru`) and lays the results out as a grid of thumbnails. It starts on
@@ -276,8 +286,8 @@ conf opens with where the picture came from —
 panel shows it next to the palette's name.
 
 `preview` shows the background of the palette under the cursor while you
-browse: through the kitty graphics protocol it draws that palette's
-`background-image` where Ghostty would place it, faded by
+browse: through the kitty graphics protocol (Ghostty, and iTerm2 3.7 or newer)
+it draws that palette's `background-image` where Ghostty would place it, faded by
 `background-image-opacity`, behind the list — or just its plain background when
 it has no file. Only PNG images preview.
 

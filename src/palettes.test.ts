@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -124,6 +124,7 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
   )
   assert.equal(gojo['Use Separate Colors for Light and Dark Mode'], false)
   assert.equal(gojo['Harmonize 256 Colors'], true)
+  assert.equal(gojo['Background Image Location'], '')
   assert.deepEqual(gojo['Background Color'], {
     'Alpha Component': 1,
     'Blue Component': 0x1c / 255,
@@ -137,6 +138,34 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
     ['ttheme · gojo'],
   )
   assert.ok(!existsSync(join(configHome, 'iterm2')))
+})
+
+test("sync gives a palette's iTerm2 profile its picture, tuning and off switch", () => {
+  const configHome = fixture()
+  const home = fixture()
+  const dir = join(configHome, 'ttheme', 'backgrounds')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(
+    join(dir, 'gojo.conf'),
+    'background-image = gojo@fill-40.png\nbackground-image-fit = cover\nbackground-image-opacity = 0.2\n',
+  )
+  writeFileSync(
+    join(dir, 'gojo.tune.conf'),
+    'background-image = ~/gojo@60-center.png\nbackground-image-fit = contain\n',
+  )
+  writeFileSync(join(dir, 'geto.conf'), `background-image = ${join(dir, 'geto.png')}\n`)
+  writeFileSync(join(dir, 'geto.off.conf'), 'background-image =\n')
+  sync(configHome, catalog, { terminals: ['iterm2'], palettes: ['gojo', 'geto'] }, home)
+  const pick = ({ Name, ...p }: Record<string, unknown>) => [
+    Name,
+    p['Background Image Location'],
+    p['Background Image Mode'],
+    p.Blend,
+  ]
+  assert.deepEqual(JSON.parse(readFileSync(itermProfilesPath(home), 'utf8')).Profiles.map(pick), [
+    ['ttheme · gojo', join(home, 'gojo@60-center.png'), 3, 0.2],
+    ['ttheme · geto', '', undefined, undefined],
+  ])
 })
 
 test('startupPalette keeps an explicit choice and falls to the first otherwise', () => {

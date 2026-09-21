@@ -1,9 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { gateFailures } from './catalog.ts'
+import { backgroundsDir, readBackdrop } from './backdrop.ts'
+import { gateFailures, readCatalog } from './catalog.ts'
 import { alacritty, type Emitter, ghostty, iterm2, kitty } from './emit/index.ts'
-import { itermProfiles } from './emit/iterm2.ts'
+import { itermProfiles, type ProfileBackground } from './emit/iterm2.ts'
 import { listed, type Manifest, type PaletteEntry } from './emit/manifest.ts'
 import { palettesZsh } from './emit/shell.ts'
 import type { Theme } from './theme.ts'
@@ -119,6 +120,30 @@ function blockFor(terminal: Exclude<InitTerminal, 'iterm2'>, configHome: string,
   return { file: join(configHome, 'alacritty', 'alacritty.toml'), body: alacrittyBlock(themePath) }
 }
 
+function itermFile(configHome: string, catalog: Manifest, entries: PaletteEntry[], home: string): string {
+  const dir = backgroundsDir(configHome)
+  const themes = listed(entries).map((entry) => toTheme(entry, catalog))
+  const pictures = new Map<string, ProfileBackground>()
+  for (const theme of themes) {
+    const picture = readBackdrop(dir, theme.name, home)
+    if (picture) {
+      pictures.set(theme.name, picture)
+    }
+  }
+  return itermProfiles(themes, pictures)
+}
+
+export function refreshProfiles(configHome: string, home = homedir()): void {
+  const state = readInstalled(configHome)
+  if (!state.terminals.includes('iterm2')) {
+    return
+  }
+  const catalog = readCatalog(configHome)
+  const path = itermProfilesPath(home)
+  mkdirSync(dirname(path), { recursive: true })
+  writeFileSync(path, itermFile(configHome, catalog, resolve(catalog, state.palettes), home))
+}
+
 export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
   const entries = resolve(catalog, state.palettes)
   const written: string[] = []
@@ -131,7 +156,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
   const startup = state.keepTheme ? undefined : startupPalette(state)
   for (const terminal of state.terminals) {
     if (terminal === 'iterm2') {
-      write(itermProfilesPath(home), itermProfiles(listed(entries).map((entry) => toTheme(entry, catalog))))
+      write(itermProfilesPath(home), itermFile(configHome, catalog, entries, home))
       continue
     }
     for (const entry of entries) {

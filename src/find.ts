@@ -48,7 +48,7 @@ import {
   type Tile,
   transmit,
 } from './find-screen.ts'
-import { configHome } from './palettes.ts'
+import { configHome, refreshProfiles } from './palettes.ts'
 import { Renderer } from './render.ts'
 import { tunnel } from './unblock.ts'
 import { withSetting } from './wiring.ts'
@@ -1384,6 +1384,7 @@ class Finder {
       const known = readCache<string>(current.site, 'owners.json')
       known[current.id] = this.posts.get(this.mark(current.site, current.id))?.owner ?? ''
       writeCache(current.site, 'owners.json', known)
+      refreshProfiles(this.home)
       process.stderr.write(`background · ${this.entry.name} ← ${current.site.name} ${current.id}\n`)
       this.finish(0)
     } catch (error) {

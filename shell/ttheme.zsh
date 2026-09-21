@@ -1525,13 +1525,15 @@ if __tt_active; then
     add-zsh-hook precmd __tt_precmd
     add-zsh-hook preexec __tt_preexec
     __tt_bind_focus
+  else
+    __tt_sync
   fi
   __tt_announce
 fi
 
 () {
   local f
-  for f in $TTHEME_HOME/ttheme.zsh $TTHEME_HOME/palettes.zsh $TTHEME_HOME/adapters/_osc.zsh $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh; do
+  for f in $TTHEME_HOME/ttheme.zsh $TTHEME_HOME/palettes.zsh $TTHEME_HOME/adapters/_osc.zsh $TTHEME_HOME/adapters/_bg.zsh $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh; do
     [[ -r $f && ! $f.zwc -nt $f ]] || continue
     zcompile -UR -- $f.$$.zwc $f 2>/dev/null && command mv -f -- $f.$$.zwc $f.zwc 2>/dev/null
     [[ ! -e $f.$$.zwc ]] || command rm -f -- $f.$$.zwc

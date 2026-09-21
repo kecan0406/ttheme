@@ -1,7 +1,8 @@
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { isAbsolute, join } from 'node:path'
 import { type Hex, luminance, rgb } from './color.ts'
 import { check } from './contrast.ts'
+import type { ProfileBackground } from './emit/iterm2.ts'
 import { alphaBox, type Box, encodePng, type Rgba, resample, transparency } from './png.ts'
 
 export const FILL = { width: 2560, height: 1550 }
@@ -268,6 +269,37 @@ function backdropConf(name: string, fillPath: string, opacity: number, from?: st
     `config-file = ?${name}.off.conf`,
     '',
   ].join('\n')
+}
+
+export function readBackdrop(dir: string, name: string, home: string): ProfileBackground | undefined {
+  const set = new Map<string, string>()
+  for (const file of [`${name}.conf`, `${name}.tune.conf`, `${name}.off.conf`]) {
+    let text: string
+    try {
+      text = readFileSync(join(dir, file), 'utf8')
+    } catch {
+      if (file === `${name}.conf`) {
+        return undefined
+      }
+      continue
+    }
+    for (const line of text.split('\n')) {
+      const m = /^(background-image(?:-fit|-opacity)?)\s*=\s*(.*?)\s*$/.exec(line)
+      if (m) {
+        set.set(m[1] as string, m[2] as string)
+      }
+    }
+  }
+  const image = set.get('background-image') ?? ''
+  if (image === '') {
+    return undefined
+  }
+  const opacity = Number(set.get('background-image-opacity') ?? 1)
+  return {
+    image: image.startsWith('~/') ? join(home, image.slice(2)) : isAbsolute(image) ? image : join(dir, image),
+    opacity: Number.isFinite(opacity) ? opacity : 1,
+    cover: set.get('background-image-fit') === 'cover',
+  }
 }
 
 export function clearBackdrop(dir: string, name: string): void {
