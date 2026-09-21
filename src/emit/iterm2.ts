@@ -39,6 +39,7 @@ export function itermProfiles(themes: Theme[]): string {
     Name: `ttheme · ${theme.name}`,
     Guid: `ttheme-${theme.name}`,
     'Use Separate Colors for Light and Dark Mode': false,
+    'Harmonize 256 Colors': true,
     ...itermColors(theme),
   }))
   return `${JSON.stringify({ Profiles: profiles }, null, 2)}\n`

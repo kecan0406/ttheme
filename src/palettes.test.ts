@@ -123,6 +123,7 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
     ],
   )
   assert.equal(gojo['Use Separate Colors for Light and Dark Mode'], false)
+  assert.equal(gojo['Harmonize 256 Colors'], true)
   assert.deepEqual(gojo['Background Color'], {
     'Alpha Component': 1,
     'Blue Component': 0x1c / 255,
