@@ -45,3 +45,27 @@ __tt_bg_cells() {
 }
 
 __tt_bg_saved() { __tt_cli image $1 tuned }
+
+__tt_bg_aligns() { return 1 }
+
+__tt_bg_crop() {
+  local img=$1 band
+  local -i iw=$2 ih=$3 y=$4 h=$5 d=$(( 2 * $4 + $5 - $3 ))
+  if (( d * d <= 1 || ! $+commands[sips] )); then
+    __tt_bg_send $img
+    REPLY="$REPLY $y"
+    return 0
+  fi
+  [[ -n $bgcut ]] || bgcut=$(mktemp -d) || return 1
+  band=$bgcut/${${img:t}%.png}-$y-$h.png
+  if [[ ! -r $band ]]; then
+    if (( y )); then
+      sips -c $h $iw --cropOffset $y 0 $img --out $band >/dev/null 2>&1 || return 1
+    else
+      sips -p $(( ih + 2 )) $(( iw + 2 )) $img --out $bgcut/pad.png >/dev/null 2>&1 &&
+        sips -c $h $iw --cropOffset 1 1 $bgcut/pad.png --out $band >/dev/null 2>&1 || return 1
+    fi
+  fi
+  printf '\e_Ga=t,t=f,f=100,i=999997,q=2;%s\e\\' "$(print -rn -- $band | base64 | tr -d '\n')"
+  REPLY="999997 0"
+}

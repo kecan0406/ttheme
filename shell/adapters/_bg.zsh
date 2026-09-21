@@ -1,5 +1,6 @@
 typeset -ga TTHEME_BG_POSITIONS=(top-left top-center top-right center-left center center-right bottom-left bottom-center bottom-right)
 
+
 __tt_b64() {
   local t=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/ out="" i n
   local -a b=("$@")
@@ -88,7 +89,7 @@ __tt_bg_load() {
     size=100 stem=""
     case $REPLY in
       *@fill-<0-100>.png) stem=${REPLY%@fill-*} size=fill ;;
-      *@<101-999>-*-<->x<->.png|*@<20-99>-*.png) stem=${REPLY%@*} size=${${REPLY##*@}%%-*} ;;
+      *@<20-999>-*-<->x<->.png|*@<20-99>-*.png) stem=${REPLY%@*} size=${${REPLY##*@}%%-*} ;;
       *.png) stem=${REPLY%.png}; [[ $fit == cover ]] && size=fill ;;
     esac
     [[ $f == *.tune.conf ]] || bgdef[$name]="$size $at $op" bgbase[$name]=$REPLY
@@ -96,7 +97,7 @@ __tt_bg_load() {
   bgsize[$name]=$size bgpos[$name]=$at bgop[$name]=$op bgoff[$name]=0 bgshot[$name]="" bgshotkey[$name]="" bgfocus[$name]=50
   [[ -e $dir/$name.off.conf ]] && bgoff[$name]=1
   bgload[$name]="$size $at $op ${bgoff[$name]}"
-  [[ $size == <101-> ]] && bgshot[$name]=$REPLY bgshotkey[$name]="$size $at"
+  [[ $REPLY == *@<20-999>-*-<->x<->.png ]] && bgshot[$name]=$REPLY bgshotkey[$name]="$size $at"
   if [[ -n $stem ]]; then
     bgsrc[$name]=$stem.png bgfill[$name]=$stem.png
     fills=($stem@fill-<0-100>.png(N))
@@ -163,7 +164,7 @@ __tt_bg_include() {
 }
 
 __tt_bg_write() {
-  local name=$1 dir=${TTHEME_CONFIG:h}/backgrounds src=${bgsrc[$1]} size=${bgsize[$1]} img="" fit=contain f REPLY
+  local name=$1 dir=${TTHEME_CONFIG:h}/backgrounds src=${bgsrc[$1]} size=${bgsize[$1]} shape img="" fit=contain f REPLY
   local pos=${TTHEME_BG_POSITIONS[${bgpos[$1]}]}
   local -i W=$(( (pw + 2 * bgmx) * bgcw )) H=$(( (ph + 2 * bgmy) * bgch ))
   local -a wh fr
@@ -171,7 +172,9 @@ __tt_bg_write() {
   if [[ "$size ${bgpos[$1]} ${bgop[$1]}" == "${bgdef[$1]}" ]]; then
     rm -f -- $dir/$name.tune.conf
   else
-    case $size in
+    shape=$size
+    [[ $size == <20-100> && $pos != center ]] && ! __tt_bg_aligns && shape=window
+    case $shape in
       fill) img=${bgfill[$1]} fit=cover ;;
       100) img=$src ;;
       <20-99>)
@@ -230,14 +233,14 @@ __tt_pv_bg_show() {
   __tt_bg_load $name
   if (( ! bgrel )) && [[ $name == "$bginc" && "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" == "${bgload[$name]}" ]]; then
     printf '\e_Ga=d,d=i,i=1,q=2\e\\\e_Ga=d,d=i,i=2,q=2\e\\'
-    [[ -n $bgshown ]] && printf '\e_Ga=d,d=i,i=%d,q=2\e\\' ${bgsent[$bgshown]}
+    [[ -n $bgshown ]] && printf '\e_Ga=d,d=i,i=%d,q=2\e\\' $bgshown
     bgshown=""
     return 0
   fi
   op=${bgop[$name]} size=${bgsize[$name]}
   if [[ $size == fill ]]; then
     img=${bgfill[$name]} size=100 fit=cover
-  elif [[ $size == <101-> && "$size ${bgpos[$name]}" == "${bgshotkey[$name]}" && -r ${bgshot[$name]} ]]; then
+  elif [[ "$size ${bgpos[$name]}" == "${bgshotkey[$name]}" && -r ${bgshot[$name]} ]]; then
     img=${bgshot[$name]} size=100 fit=cover
   else
     img=${bgsrc[$name]} focus=${bgfocus[$name]}
@@ -256,24 +259,26 @@ __tt_pv_bg_show() {
   __tt_b64 $r $g $b $a
   printf '\e_Ga=t,f=32,s=1,v=1,i=2,q=2;%s\e\\' "$REPLY"
   __tt_bg_at 2 -1073741825 0 0 $cols $rows
-  __tt_bg_dim "$img" || img=""
-  if [[ -n $bgshown && $bgshown != "$img" ]]; then
-    printf '\e_Ga=d,d=i,i=%d,q=2\e\\' ${bgsent[$bgshown]}
-    bgshown=""
+  local id=""
+  if __tt_bg_dim "$img"; then
+    wh=(${=bgdim[$img]})
+    if __tt_bg_place $wh[1] $wh[2] $cols $rows $bgcw $bgch $size ${bgpos[$name]} $fit $focus; then
+      at=(${=REPLY})
+      __tt_bg_crop $img $wh[1] $wh[2] $at[6] $at[8] && id=${REPLY% *} at[6]=${REPLY##* }
+    fi
   fi
-  [[ -n $img ]] || return 0
-  if [[ -z ${bgsent[$img]} ]]; then
-    bgsent[$img]=$(( ${#bgsent} + 3 ))
-    printf '\e_Ga=t,t=f,f=100,i=%d,q=2;%s\e\\' ${bgsent[$img]} "$(print -rn -- $img | base64 | tr -d '\n')"
+  [[ -n $bgshown && $bgshown != "$id" ]] && printf '\e_Ga=d,d=i,i=%d,q=2\e\\' $bgshown
+  bgshown=$id
+  [[ -n $id ]] || return 0
+  __tt_bg_at $id -1073741826 $(( at[1] - 1 )) $(( at[2] - 1 )) $at[3] $at[4] $at[5] $at[6] $at[7] $at[8]
+}
+
+__tt_bg_send() {
+  if [[ -z ${bgsent[$1]} ]]; then
+    bgsent[$1]=$(( ${#bgsent} + 3 ))
+    printf '\e_Ga=t,t=f,f=100,i=%d,q=2;%s\e\\' ${bgsent[$1]} "$(print -rn -- $1 | base64 | tr -d '\n')"
   fi
-  wh=(${=bgdim[$img]})
-  if __tt_bg_place $wh[1] $wh[2] $cols $rows $bgcw $bgch $size ${bgpos[$name]} $fit $focus; then
-    at=(${=REPLY})
-    __tt_bg_at ${bgsent[$img]} -1073741826 $(( at[1] - 1 )) $(( at[2] - 1 )) $at[3] $at[4] $at[5] $at[6] $at[7] $at[8]
-  else
-    printf '\e_Ga=d,d=i,i=%d,q=2\e\\' ${bgsent[$img]}
-  fi
-  bgshown=$img
+  REPLY=${bgsent[$1]}
 }
 
 __tt_pv_bg_fs() {
@@ -467,6 +472,7 @@ __tt_pv_bg_panel() {
 
 __tt_pv_bg_close() {
   (( bgcw )) && printf '\e_Ga=d,d=A,q=2\e\\'
+  [[ -z $bgcut ]] || { rm -rf -- $bgcut; bgcut="" }
 }
 
 __tt_pv_bg_save() {

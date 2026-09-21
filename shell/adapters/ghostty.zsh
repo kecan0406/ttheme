@@ -76,3 +76,10 @@ __tt_bg_saved() {
   (( ${@[(Ie)$bginc]} )) && __tt_reload
   return 0
 }
+
+__tt_bg_aligns() { return 0 }
+
+__tt_bg_crop() {
+  __tt_bg_send $1
+  REPLY="$REPLY $4"
+}
