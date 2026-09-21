@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { type Hex, luminance, rgb } from './color.ts'
@@ -304,11 +305,7 @@ export function readBackdrop(dir: string, name: string, home: string): ProfileBa
 
 export function clearBackdrop(dir: string, name: string): void {
   for (const file of readdirSync(dir)) {
-    if (
-      (file.startsWith(`${name}@`) && file.endsWith('.png')) ||
-      file === `${name}.tune.conf` ||
-      file === `${name}.off.conf`
-    ) {
+    if (belongs(file, name)) {
       rmSync(join(dir, file))
     }
   }
@@ -326,11 +323,10 @@ function belongs(file: string, name: string): boolean {
   const rest = file.slice(name.length)
   return (
     file.startsWith(name) &&
-    (rest === '.png' ||
-      rest === '.conf' ||
+    (rest === '.conf' ||
       rest === '.tune.conf' ||
       rest === '.off.conf' ||
-      /^@[a-z0-9-]+\.png$/.test(rest))
+      /^(\.[0-9a-f]{8})?(@[a-z0-9-]+)?\.png$/.test(rest))
   )
 }
 
@@ -458,12 +454,15 @@ export function installBackdrop(
   const box = figureBox(image)
   const anchor = headAnchor(box)
   const clear = transparency(image)
-  const whole = join(dir, `${name}.png`)
-  const fillPath = join(dir, `${name}@fill-${Math.round(anchor * 100)}.png`)
+  const figurePng = encodePng(tint(figure(image, box), colors.background, tone.color))
+  const fillPng = encodePng(tint(fill(image, box, anchor, clear), colors.background, tone.color))
+  const stem = join(dir, `${name}.${createHash('sha1').update(figurePng).update(fillPng).digest('hex').slice(0, 8)}`)
+  const whole = `${stem}.png`
+  const fillPath = `${stem}@fill-${Math.round(anchor * 100)}.png`
   const conf = join(dir, `${name}.conf`)
   const source = join(dir, 'originals', `${name}-${original.site}_${original.id}.${original.ext}`)
-  writeFileSync(whole, encodePng(tint(figure(image, box), colors.background, tone.color)))
-  writeFileSync(fillPath, encodePng(tint(fill(image, box, anchor, clear), colors.background, tone.color)))
+  writeFileSync(whole, figurePng)
+  writeFileSync(fillPath, fillPng)
   writeFileSync(conf, backdropConf(name, fillPath, tone.opacity, original.from, key))
   writeFileSync(source, original.bytes)
   return [whole, fillPath, conf, source]

@@ -133,7 +133,7 @@ test('an opaque picture is a wallpaper: it is covered, never stood in the frame'
 })
 
 function install(configHome: string, id: number): void {
-  const image = { width: 4, height: 4, data: new Uint8Array(64).fill(200) }
+  const image = { width: 4, height: 4, data: new Uint8Array(64).fill(200 + id) }
   installBackdrop(configHome, KAGAMI, toneFor(KAGAMI, 'cursor'), image, {
     site: 'safebooru',
     id,
@@ -146,6 +146,22 @@ function install(configHome: string, id: number): void {
 function shown(dir: string): string | undefined {
   return /^# image (\S+)$/m.exec(readFileSync(join(dir, 'kagami.conf'), 'utf8'))?.[1]
 }
+
+function shownPath(dir: string): string | undefined {
+  return /^background-image = (.+)$/m.exec(readFileSync(join(dir, 'kagami.conf'), 'utf8'))?.[1]
+}
+
+test('each picture shows under a path of its own, since terminals reload a background only when its path changes', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  install(configHome, 1)
+  const first = shownPath(dir)
+  install(configHome, 2)
+  assert.notEqual(shownPath(dir), first)
+  switchImage(configHome, 'kagami', 1)
+  assert.equal(shownPath(dir), first)
+  assert.ok(existsSync(first as string))
+})
 
 test('installing another picture keeps the one shown, and installing the shown one again does not duplicate it', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
@@ -195,12 +211,12 @@ test('each saved picture keeps its own tuning, off switch and baked sizes', () =
   writeFileSync(join(dir, 'kagami@60-center.png'), 'baked')
   install(configHome, 2)
   const shelf = join(dir, 'shelf', 'kagami', 'safebooru_1')
+  const kept = readdirSync(shelf).sort()
   assert.deepEqual(
-    readdirSync(shelf)
-      .filter((f) => !f.startsWith('@fill-'))
-      .sort(),
-    ['.conf', '.off.conf', '.png', '.tune.conf', '@60-center.png'],
+    kept.filter((f) => !/^\.[0-9a-f]{8}/.test(f)),
+    ['.conf', '.off.conf', '.tune.conf', '@60-center.png'],
   )
+  assert.equal(kept.filter((f) => /^\.[0-9a-f]{8}(@fill-\d+)?\.png$/.test(f)).length, 2)
   assert.ok(!existsSync(join(dir, 'kagami.tune.conf')))
   assert.ok(!existsSync(join(dir, 'kagami.off.conf')))
   assert.ok(!existsSync(join(dir, 'kagami@60-center.png')))
