@@ -75,9 +75,12 @@ left alone. iTerm2 has no config file to edit, so it gets one profile per
 installed palette instead — `ttheme · miku` and so on, in
 `~/Library/Application Support/iTerm2/DynamicProfiles/ttheme.json`, which
 iTerm2 reloads by itself whenever `ttheme browse` adds or drops one. One more,
-`ttheme · default`, always wears your default palette (none under `keep`): Set
-as Default on it once under Settings › Profiles and new tabs follow `ttheme
-default` from then on. It ends with a receipt, paints the first palette onto the tab you
+`ttheme · default`, always wears your default palette (none under `keep`), and
+init makes it iTerm2's default profile, so new tabs and windows open wearing the
+palette and its picture from their first frame and follow `ttheme default` from
+then on. iTerm2 reads its default profile only when it starts, so quit and
+reopen it once after init. The profile it replaces stays the parent of every
+ttheme profile, so your font and keys carry over, and `keep` gives it back. It ends with a receipt, paints the first palette onto the tab you
 ran it in (not under `keep`) and lists what to do next (`exec zsh` for the
 `ttheme` command here, a terminal restart for new tabs).
 Running it again updates in place; `--yes` skips every prompt and installs no
@@ -203,7 +206,8 @@ iTerm2 asks at the top of the tab whether a control sequence may change the
 profile: Always Allow lets every later switch through — put the palette on once
 more for the one that asked — and a tab it refuses still wears the palette's
 colors, only without the picture. iTerm2 has no
-position setting, so a picture that does not fill the window sits centered.
+position setting, so a tuned picture that is not centered is baked onto a canvas
+the size of the window, as the sizes above 100% are.
 
 A palette with no background yet can find one: on it in `preview`, tab opens
 **find**, which searches a booru for the palette's character tag
@@ -280,8 +284,10 @@ When a site asks ttheme to slow down, find waits as long as it names, up to a
 minute, with a countdown at the bottom. ttheme keeps no
 list of images — the tag is all it knows about a character.
 
-An install writes `<palette>.png` (the tinted figure), `<palette>@fill-<focus>.png`
-(the window-shaped crop), `<palette>.conf` and the untouched original under
+An install writes `<palette>.<hash>.png` (the tinted figure),
+`<palette>.<hash>@fill-<focus>.png` (the window-shaped crop) — the hash is of
+their content, because Ghostty and iTerm2 reload a background only when its path
+changes, so no two pictures may share a name — `<palette>.conf` and the untouched original under
 `backgrounds/originals/`, and starts it untuned — the picture it replaces moves
 to the shelf with the tuning it had. The
 conf opens with where the picture came from —
@@ -300,7 +306,7 @@ steps at a time). Size walks 1% at a time, shown large in the middle of the
 screen as it changes: 100% is the whole image fitted into the window
 (`contain`), below that it shrinks to 20%, above it the image grows around the
 face until it covers the window, and the top step is **fill** (`cover`). Fill
-uses `<palette>@fill-<focus>.png` when it sits beside the image — a crop made
+uses `<palette>.<hash>@fill-<focus>.png` when it sits beside the image — a crop made
 to fill the window, whose name carries the height of the face in percent, which
 the sizes above 100% zoom around — and the image itself otherwise. Position
 steps through the nine `background-image-position` anchors, or `1`–`9` jump to
@@ -320,13 +326,16 @@ picture before `,` or `.` moves off it.
 The palette's `.conf` holds those defaults; the preview only appends two
 optional includes to it and keeps everything else in `<palette>.tune.conf` (the
 tuning) and `<palette>.off.conf` (the off switch), which Ghostty loads after
-the conf. Kept changes are written when the preview closes, by whichever key, and
-Ghostty reloads when that palette is the default. Ghostty has no scale setting,
+the conf. Kept changes are written when the preview closes, by whichever key,
+and reach both terminals from whichever one ran the preview: Ghostty reloads
+when it is showing that palette, and iTerm2's profiles are rewritten. Ghostty has no scale setting,
 so every size but 100% and fill is baked into a copy beside the image and the
 tuning points at it: below 100% onto a transparent canvas of the image's own
-size (`kagami@60-bottom-right.png`, fitted with `contain`), above it onto one of
-the window's size at the time (`kagami@130-center-2880x1800.png`, with
-`cover`). Baking runs `sips`, so those sizes are offered on macOS only.
+size (`kagami.1a2b3c4d@60-bottom-right.png`, fitted with `contain`), above it onto
+one of the window's size at the time (`kagami.1a2b3c4d@130-center-2880x1800.png`,
+with `cover`). With iTerm2 wired, a size of 100% or less that is not centered
+goes onto the window-sized canvas too, since iTerm2 cannot place an image.
+Baking runs `sips`, so those sizes are offered on macOS only.
 
 The preview draws inside the cell grid, and Ghostty's `window-padding` around
 it keeps showing the configured background. While the cursor rests on the
