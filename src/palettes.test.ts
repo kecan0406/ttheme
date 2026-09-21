@@ -80,6 +80,7 @@ test('sync writes a theme file per terminal and the zsh table', () => {
 
   const table = readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8')
   assert.match(table, /TTHEME_ORDER=\(gojo\)/)
+  assert.match(table, /^typeset -ga TTHEME_TERMINALS=\(ghostty kitty\)$/m)
   assert.doesNotMatch(table, /geto/)
 })
 

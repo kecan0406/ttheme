@@ -1,7 +1,23 @@
-typeset -g TTHEME_HOME=${${(%):-%x}:A:h}
+typeset -g TTHEME_HOME=${${(%):-%x}:A:h} TTHEME_PALETTES_AT=""
+
+zmodload -F zsh/stat b:zstat 2>/dev/null
+
+__tt_palettes_load() {
+  local -a at
+  unset TTHEME_PALETTE TTHEME_GROUP TTHEME_NATIVE TTHEME_SRC
+  source $TTHEME_HOME/palettes.zsh || return 1
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null
+  TTHEME_PALETTES_AT=$at[1]
+}
+
+__tt_fresh() {
+  local -a at
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null || return 0
+  [[ $at[1] == "$TTHEME_PALETTES_AT" ]] || __tt_palettes_load
+}
 
 if [[ -r $TTHEME_HOME/palettes.zsh ]]; then
-  source $TTHEME_HOME/palettes.zsh
+  __tt_palettes_load
 else
   print -u2 "ttheme: palettes.zsh not found — run \`npx @kecan0406/ttheme@latest init\`"
   return 1
@@ -61,6 +77,26 @@ elif [[ $TERM == foot* ]]; then
 else
   typeset -g TTHEME_ADAPTER=unknown
 fi
+
+typeset -g TTHEME_GHOSTTY_PID=""
+
+__tt_reload() {
+  (( ${TTHEME_TERMINALS[(Ie)ghostty]} )) || return 0
+  local pid=$PPID ppid comm
+  if [[ -z $TTHEME_GHOSTTY_PID ]]; then
+    TTHEME_GHOSTTY_PID=0
+    while (( pid > 1 )); do
+      read -r ppid comm <<< "$(ps -o ppid=,comm= -p $pid)"
+      if [[ ${comm:t} == ghostty ]]; then
+        TTHEME_GHOSTTY_PID=$pid
+        break
+      fi
+      pid=$ppid
+    done
+  fi
+  (( TTHEME_GHOSTTY_PID )) && kill -USR2 $TTHEME_GHOSTTY_PID 2>/dev/null && return
+  pkill -USR2 -x ghostty 2>/dev/null
+}
 
 source $TTHEME_HOME/adapters/_osc.zsh
 [[ -r $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh ]] &&
@@ -173,7 +209,10 @@ __tt_precmd() {
 
 __tt_preexec() { printf '\e[?1004l' }
 
-__tt_focus() { __tt_sync }
+__tt_focus() {
+  __tt_fresh
+  __tt_sync
+}
 
 __tt_blur() { : }
 
@@ -260,7 +299,7 @@ __tt_keep() {
   note=$(__tt_cli default "$1") || return 1
   TTHEME_STARTUP=$1
   __tt_shown "$1" force
-  (( $+functions[__tt_reload] )) && __tt_reload
+  __tt_reload
   if __tt_color; then
     printf '\033[2m%s\033[0m\n' "${(@f)note}"
   else
@@ -336,11 +375,13 @@ __tt_cli() {
 }
 
 __tt_catalog() {
+  local was
   __tt_cli "$@" || return
   [[ $1 == list ]] && return 0
   [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
-  unset TTHEME_PALETTE TTHEME_GROUP TTHEME_NATIVE TTHEME_SRC
-  source $TTHEME_HOME/palettes.zsh
+  was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
+  __tt_palettes_load
+  [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$was" ]] || __tt_reload
 }
 
 __tt_config() {
@@ -1523,7 +1564,8 @@ if __tt_active; then
   }
   autoload -Uz add-zsh-hook
   add-zsh-hook chpwd __tt_chpwd
-  if (( $+functions[__tt_reload] )); then
+  add-zsh-hook precmd __tt_fresh
+  if [[ $TTHEME_ADAPTER == ghostty ]]; then
     add-zsh-hook precmd __tt_precmd
     add-zsh-hook preexec __tt_preexec
     __tt_bind_focus

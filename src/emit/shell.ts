@@ -4,7 +4,7 @@ import { configTemplate } from '../wiring.ts'
 import type { Emitter, Output } from './index.ts'
 import { listed, type PaletteEntry, paletteEntry } from './manifest.ts'
 
-export function palettesZsh(palettes: PaletteEntry[], startup?: string): string {
+export function palettesZsh(palettes: PaletteEntry[], startup?: string, terminals: readonly string[] = []): string {
   for (const p of palettes) {
     for (const field of [p.name, p.group, p.native ?? '', p.ansiSource]) {
       if (/["$`\\]/.test(field)) {
@@ -26,6 +26,9 @@ export function palettesZsh(palettes: PaletteEntry[], startup?: string): string 
     '',
     '# the palette new tabs open with, which the iTerm2 "ttheme · default" profile wears',
     `typeset -g TTHEME_STARTUP=${startup ?? ''}`,
+    '',
+    '# the terminals ttheme is wired into: a picture change reaches every one of them, from whichever runs the shell',
+    `typeset -ga TTHEME_TERMINALS=(${terminals.join(' ')})`,
     '',
     '# seed for `ttheme config` when no config.zsh exists yet',
     `typeset -g TTHEME_CONFIG_TEMPLATE='${configTemplate().trimEnd().replaceAll("'", "'\\''")}'`,

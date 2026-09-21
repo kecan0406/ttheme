@@ -86,6 +86,12 @@ TTHEME_SPEC=; __tt_sync
   { print -u2 "a tab of unknown colors moved the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
 [[ "$(__tt_precmd)" == $'\e[?1004h' && "$(__tt_preexec)" == $'\e[?1004l' ]] ||
   { print -u2 "the prompt did not turn focus reporting on and off"; exit 1 }
+__tt_bg_saved kagami
+(( reloads == 5 )) || { print -u2 "saving a picture Ghostty does not show reloaded it: reloads=$reloads"; exit 1 }
+__tt_bg_saved kagami rei
+(( reloads == 6 )) || { print -u2 "saving the picture Ghostty shows did not reload it: reloads=$reloads"; exit 1 }
+bgsrc=(); __tt_bg_load homura; bgsize[homura]=60
+__tt_bg_write homura && [[ ! -e $bgd/homura.conf ]] || { print -u2 "tuning a palette with no picture left a conf behind"; ls $bgd; exit 1 }
 mkdir -p $bgd/shelf/kagami/a $bgd/shelf/kagami/b
 bgcw=8 tune=kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
 out=; __tt_pv_foot 80
@@ -140,4 +146,14 @@ cd $proj-sibling; __tt_chpwd > /dev/null
 REPLY=; __tt_tilde $HOME/proj-home
 [[ $REPLY == "~/proj-home" ]] || { print -u2 "__tt_tilde kept the home prefix: $REPLY"; exit 1 }
 cd $OLDPWD
-print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$TTHEME_ADAPTER"
+print -r -- 'typeset -g TTHEME_STARTUP=rei' >> $TTHEME_HOME/palettes.zsh
+touch -t 203001010000 $TTHEME_HOME/palettes.zsh
+__tt_fresh
+[[ $TTHEME_STARTUP == rei && -n ${TTHEME_PALETTE[miku]} ]] || { print -u2 "a rewritten palettes.zsh did not reload: startup=$TTHEME_STARTUP"; exit 1 }
+adapter=$TTHEME_ADAPTER
+TTHEME_ITERM_SHOWN=default TTHEME_STARTUP=miku
+source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
+REPLY=; __tt_bg_shown && [[ $REPLY == miku ]] || { print -u2 "a tab on ttheme · default did not read the startup picture: $REPLY"; exit 1 }
+TTHEME_STARTUP=rei
+REPLY=; __tt_bg_shown && [[ $REPLY == rei ]] || { print -u2 "a tab on ttheme · default did not follow a new default: $REPLY"; exit 1 }
+print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$adapter"

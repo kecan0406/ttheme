@@ -1,5 +1,21 @@
 typeset -ga TTHEME_BG_POSITIONS=(top-left top-center top-right center-left center center-right bottom-left bottom-center bottom-right)
 
+__tt_ghostty_shown() {
+  local f=${TTHEME_CONFIG:h}/backgrounds/shown.conf
+  REPLY=""
+  [[ -r $f ]] || return 1
+  REPLY=${${"$(<$f)"}##*\?}
+  REPLY=${REPLY%.conf}
+}
+
+__tt_bg_saved() {
+  local REPLY
+  (( ${TTHEME_TERMINALS[(Ie)iterm2]} )) && __tt_cli image $1 tuned
+  __tt_ghostty_shown && (( ${@[(Ie)$REPLY]} )) && __tt_reload
+  return 0
+}
+
+__tt_bg_aligns() { (( ! ${TTHEME_TERMINALS[(Ie)iterm2]} )) }
 
 __tt_b64() {
   local t=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/ out="" i n
@@ -168,6 +184,7 @@ __tt_bg_write() {
   local pos=${TTHEME_BG_POSITIONS[${bgpos[$1]}]}
   local -i W=$(( (pw + 2 * bgmx) * bgcw )) H=$(( (ph + 2 * bgmy) * bgch ))
   local -a wh fr
+  [[ -r $dir/$name.conf ]] || return 0
   __tt_bg_include $name || return 1
   if [[ "$size ${bgpos[$1]} ${bgop[$1]}" == "${bgdef[$1]}" ]]; then
     rm -f -- $dir/$name.tune.conf
@@ -485,7 +502,9 @@ __tt_pv_bg_save() {
       continue
     fi
     saved+=($name)
-    if (( bgoff[$name] )); then
+    if [[ ! -r ${TTHEME_CONFIG:h}/backgrounds/$name.conf ]]; then
+      msg="background · $name none"
+    elif (( bgoff[$name] )); then
       msg="background · $name off"
     else
       __tt_bg_label $name

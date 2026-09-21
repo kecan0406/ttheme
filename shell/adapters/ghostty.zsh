@@ -1,33 +1,8 @@
-typeset -g TTHEME_GHOSTTY_PID=""
-
-__tt_reload() {
-  local pid=$PPID ppid comm
-  if [[ -z $TTHEME_GHOSTTY_PID ]]; then
-    TTHEME_GHOSTTY_PID=0
-    while (( pid > 1 )); do
-      read -r ppid comm <<< "$(ps -o ppid=,comm= -p $pid)"
-      if [[ ${comm:t} == ghostty ]]; then
-        TTHEME_GHOSTTY_PID=$pid
-        break
-      fi
-      pid=$ppid
-    done
-  fi
-  (( TTHEME_GHOSTTY_PID )) && kill -USR2 $TTHEME_GHOSTTY_PID 2>/dev/null && return
-  pkill -USR2 -x ghostty 2>/dev/null
-}
-
 source $TTHEME_HOME/adapters/_bg.zsh
 
 __tt_keepable() { return 0 }
 
-__tt_bg_shown() {
-  local f=${TTHEME_CONFIG:h}/backgrounds/shown.conf
-  REPLY=""
-  [[ -r $f ]] || return 1
-  REPLY=${${"$(<$f)"}##*\?}
-  REPLY=${REPLY%.conf}
-}
+__tt_bg_shown() { __tt_ghostty_shown }
 
 __tt_shown() {
   local dir=${TTHEME_CONFIG:h}/backgrounds was REPLY
@@ -71,13 +46,6 @@ __tt_bg_cells() {
   (( bgrel )) || return 0
   bgmx=$(( (px * sc + bgcw - 1) / bgcw + 1 )) bgmy=$(( (py * sc + bgch - 1) / bgch + 1 ))
 }
-
-__tt_bg_saved() {
-  (( ${@[(Ie)$bginc]} )) && __tt_reload
-  return 0
-}
-
-__tt_bg_aligns() { return 0 }
 
 __tt_bg_crop() {
   __tt_bg_send $1
