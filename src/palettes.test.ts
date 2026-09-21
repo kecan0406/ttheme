@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import type { Manifest, PaletteEntry } from './emit/manifest.ts'
-import { forget, resolve, startupPalette, sync, toTheme } from './palettes.ts'
+import { forget, itermProfilesPath, resolve, startupPalette, sync, toTheme } from './palettes.ts'
 
 function entry(name: string, order: number, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
@@ -105,6 +105,37 @@ test('sync leaves the terminal theme alone when the install keeps it', () => {
   assert.match(config, /^config-file = \?.*\/backgrounds\/shown\.conf$/m)
   assert.doesNotMatch(readFileSync(join(home, 'kitty', 'kitty.conf'), 'utf8'), /^include /m)
   assert.ok(existsSync(join(home, 'ghostty', 'themes', 'gojo')))
+})
+
+test('sync writes an iTerm2 profile per listed palette, in P3 with one color set for both modes', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const profiles = itermProfilesPath(home)
+  const read = () => JSON.parse(readFileSync(profiles, 'utf8')).Profiles
+  sync(configHome, catalog, { terminals: ['iterm2'], palettes: ['neutral', 'gojo', 'geto'] }, home)
+  const written = read()
+  const gojo = written[0]
+  assert.deepEqual(
+    written.map((p: { Name: string; Guid: string }) => [p.Name, p.Guid]),
+    [
+      ['ttheme · gojo', 'ttheme-gojo'],
+      ['ttheme · geto', 'ttheme-geto'],
+    ],
+  )
+  assert.equal(gojo['Use Separate Colors for Light and Dark Mode'], false)
+  assert.deepEqual(gojo['Background Color'], {
+    'Alpha Component': 1,
+    'Blue Component': 0x1c / 255,
+    'Color Space': 'P3',
+    'Green Component': 0x19 / 255,
+    'Red Component': 0x11 / 255,
+  })
+  sync(configHome, catalog, { terminals: ['iterm2'], palettes: ['gojo'] }, home)
+  assert.deepEqual(
+    read().map((p: { Name: string }) => p.Name),
+    ['ttheme · gojo'],
+  )
+  assert.ok(!existsSync(join(configHome, 'iterm2')))
 })
 
 test('startupPalette keeps an explicit choice and falls to the first otherwise', () => {

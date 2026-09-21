@@ -2,13 +2,14 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { gateFailures } from './catalog.ts'
-import { alacritty, type Emitter, ghostty, kitty } from './emit/index.ts'
-import type { Manifest, PaletteEntry } from './emit/manifest.ts'
+import { alacritty, type Emitter, ghostty, iterm2, kitty } from './emit/index.ts'
+import { itermProfiles } from './emit/iterm2.ts'
+import { listed, type Manifest, type PaletteEntry } from './emit/manifest.ts'
 import { palettesZsh } from './emit/shell.ts'
 import type { Theme } from './theme.ts'
 import { alacrittyBlock, ghosttyBlock, INIT_TERMINALS, type InitTerminal, kittyBlock, upsertBlock } from './wiring.ts'
 
-const EMITTERS: Record<InitTerminal, Emitter> = { ghostty, kitty, alacritty }
+const EMITTERS: Record<InitTerminal, Emitter> = { ghostty, kitty, alacritty, iterm2 }
 
 export interface Installed {
   terminals: InitTerminal[]
@@ -19,6 +20,10 @@ export interface Installed {
 
 export function configHome(): string {
   return process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config')
+}
+
+export function itermProfilesPath(home: string): string {
+  return join(home, 'Library', 'Application Support', 'iTerm2', 'DynamicProfiles', 'ttheme.json')
 }
 
 export function installedPath(configHome: string): string {
@@ -102,7 +107,7 @@ export function startupPalette(state: Installed): string | undefined {
   return state.startup && state.palettes.includes(state.startup) ? state.startup : state.palettes[0]
 }
 
-function blockFor(terminal: InitTerminal, configHome: string, startup: string | undefined) {
+function blockFor(terminal: Exclude<InitTerminal, 'iterm2'>, configHome: string, startup: string | undefined) {
   const tthemeDir = join(configHome, 'ttheme')
   if (terminal === 'ghostty') {
     return { file: join(configHome, 'ghostty', 'config'), body: ghosttyBlock(tthemeDir, startup) }
@@ -114,7 +119,7 @@ function blockFor(terminal: InitTerminal, configHome: string, startup: string | 
   return { file: join(configHome, 'alacritty', 'alacritty.toml'), body: alacrittyBlock(themePath) }
 }
 
-export function sync(configHome: string, catalog: Manifest, state: Installed): string[] {
+export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
   const entries = resolve(catalog, state.palettes)
   const written: string[] = []
   const write = (path: string, content: string) => {
@@ -125,6 +130,10 @@ export function sync(configHome: string, catalog: Manifest, state: Installed): s
 
   const startup = state.keepTheme ? undefined : startupPalette(state)
   for (const terminal of state.terminals) {
+    if (terminal === 'iterm2') {
+      write(itermProfilesPath(home), itermProfiles(listed(entries).map((entry) => toTheme(entry, catalog))))
+      continue
+    }
     for (const entry of entries) {
       for (const { file, content } of themeFiles(terminal, toTheme(entry, catalog))) {
         write(join(configHome, terminal, 'themes', file), content)

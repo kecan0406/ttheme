@@ -57,7 +57,7 @@ came from — `ttheme` prints it, and it is in the theme's TOML.
 
 ## Install
 
-**Ghostty, kitty or Alacritty** — one command, no clone:
+**Ghostty, kitty, Alacritty or iTerm2** — one command, no clone:
 
 ```sh
 npx @kecan0406/ttheme@latest init
@@ -71,14 +71,19 @@ alone and only installs. Then it shows what it is about to change and writes it 
 so cancelling before that touches nothing. It places the zsh layer under
 `~/.config/ttheme` and edits your terminal config and `~/.zshrc` between
 `# ttheme begin` / `# ttheme end` markers — everything outside the markers is
-left alone. It ends with a receipt, paints the first palette onto the tab you
+left alone. iTerm2 has no config file to edit, so it gets one profile per
+installed palette instead — `ttheme · miku` and so on, in
+`~/Library/Application Support/iTerm2/DynamicProfiles/ttheme.json`, which
+iTerm2 reloads by itself whenever `ttheme browse` adds or drops one. iTerm2
+keeps its own default profile: Set as Default on one under Settings › Profiles
+and every new tab wears it. It ends with a receipt, paints the first palette onto the tab you
 ran it in (not under `keep`) and lists what to do next (`exec zsh` for the
 `ttheme` command here, a terminal restart for new tabs).
 Running it again updates in place; `--yes` skips every prompt and installs no
 palettes — `ttheme browse` opens the full catalog any time, to add or drop
 single palettes.
 
-**WezTerm and iTerm2** — one archive per terminal in the
+**WezTerm, or any of them by hand** — one archive per terminal in the
 [latest release](https://github.com/kecan0406/ttheme/releases/latest):
 
 ```sh
@@ -100,12 +105,12 @@ curl -L $REL/ttheme-wezterm.tar.gz | tar xz
 cp wezterm/colors/miku.toml ~/.config/wezterm/colors/
 #   wezterm.lua:  config.color_scheme = "miku"
 
-# iTerm2 — import the .itermcolors under Settings > Profiles > Colors
+# iTerm2 — open a .itermcolors to add it to Settings > Profiles > Colors presets
 curl -L $REL/ttheme-iterm2.tar.gz | tar xz
 ```
 
-Each archive also carries a `config/` file per theme with that theme's font —
-separate so you can take the colors without the rest. Ghostty is laid out
+The kitty, Alacritty and WezTerm archives also carry a `config/` file per theme
+with that theme's font — separate so you can take the colors without the rest. Ghostty is laid out
 differently: the dock-icon colors travel inside each theme file (they derive
 from the palette), and the font + shader — identical across themes — ship as
 one shared `ttheme.conf` you include once with `config-file`.
@@ -417,12 +422,17 @@ get it.
 | **kitty** | ✅ | ✅ native adapter | family + size | ✗ |
 | **WezTerm** | ✅ | OSC — per window, never per pane | family + size | ✗ |
 | **Alacritty** | ✅ | OSC only (no runtime color API exists) | family + size | ✗ |
-| **iTerm2** | ✅ | OSC, minus the cursor (it ignores OSC 12) | profile-only | ✗ |
+| **iTerm2** | ✅ a profile per palette | OSC | profile-only | ✗ |
 | anything else | — | OSC, if it speaks it | — | ✗ |
 
 Ghostty is the only terminal here with GLSL shaders, and the only one with
 per-codepoint font mapping — which is why the Hangul→D2Coding rule survives only
 in its build.
+
+iTerm2 reads the colors an OSC sets as Display P3 — its default color space — so
+its profiles and `.itermcolors` files are written in P3 too: a tab opened on a
+`ttheme · <palette>` profile and a tab repainted to that palette land on the
+same colors, and ttheme recognizes the palette either way.
 
 ## Adding a palette
 

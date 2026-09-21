@@ -154,7 +154,7 @@ export function SheetSidebar({
       <div className="grid gap-2 border-t px-4 pt-3 pb-3.5 text-[11.5px] text-muted-foreground">
         <CopyCommand command={command} />
         <p>
-          ghostty · kitty · alacritty. wezterm and iterm2 get an archive in the{' '}
+          ghostty · kitty · alacritty · iterm2. wezterm gets an archive in the{' '}
           <a
             href="https://github.com/kecan0406/ttheme/releases/latest"
             className="text-foreground underline decoration-border underline-offset-[3px] hover:decoration-primary"

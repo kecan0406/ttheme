@@ -1,4 +1,4 @@
-export const INIT_TERMINALS = ['ghostty', 'kitty', 'alacritty'] as const
+export const INIT_TERMINALS = ['ghostty', 'kitty', 'alacritty', 'iterm2'] as const
 export type InitTerminal = (typeof INIT_TERMINALS)[number]
 
 const BEGIN = '# ttheme begin'

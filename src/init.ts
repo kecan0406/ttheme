@@ -43,6 +43,7 @@ export interface InitPaths {
 }
 
 export interface InitPlan {
+  home: string
   copies: { from: string; to: string; executable?: boolean }[]
   edits: { file: string; block: string }[]
   settings: { file: string; content: string }
@@ -88,13 +89,13 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
       notes.push('alacritty.toml already exists — ttheme left it alone; add its themes/ import yourself')
     }
   }
-  notes.push('wezterm and iterm2: import the palettes you install from the release archive')
+  notes.push('wezterm: import the palettes you install from the release archive')
   const installed: Installed = {
     terminals: opts.terminals,
     palettes: opts.palettes,
     ...(opts.wear === 'keep' ? { keepTheme: true as const } : {}),
   }
-  return { copies, edits, settings, catalog: loadManifest(paths.root), installed, notes }
+  return { home: paths.home, copies, edits, settings, catalog: loadManifest(paths.root), installed, notes }
 }
 
 export function applyInit(plan: InitPlan): void {
@@ -112,7 +113,7 @@ export function applyInit(plan: InitPlan): void {
   const configHome = dirname(dirname(plan.settings.file))
   writeCatalog(configHome, plan.catalog)
   writeInstalled(configHome, plan.installed)
-  sync(configHome, plan.catalog, plan.installed)
+  sync(configHome, plan.catalog, plan.installed, plan.home)
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''
@@ -128,11 +129,21 @@ function accepted<T>(value: T | symbol): T {
   return value as T
 }
 
+function offered(): InitTerminal[] {
+  return INIT_TERMINALS.filter((t) => t !== 'iterm2' || process.platform === 'darwin')
+}
+
+function present(terminal: InitTerminal, paths: InitPaths): boolean {
+  return terminal === 'iterm2'
+    ? existsSync(join(paths.home, 'Library', 'Application Support', 'iTerm2'))
+    : existsSync(join(paths.configHome, terminal))
+}
+
 async function askTerminals(detected: string, preselected: InitTerminal[]): Promise<InitTerminal[]> {
   return accepted(
     await p.multiselect({
       message: 'wire which terminals?',
-      options: INIT_TERMINALS.map((t) => ({ value: t, hint: t === detected ? 'detected' : undefined })),
+      options: offered().map((t) => ({ value: t, hint: t === detected ? 'detected' : undefined })),
       initialValues: preselected,
       required: true,
     }),
@@ -218,8 +229,19 @@ function receipt(plan: InitPlan, opts: InitOptions, wear: Wear, painted: boolean
   if (opts.terminals.includes('kitty')) {
     next.push('new kitty window  picks up its config')
   }
+  if (opts.terminals.includes('iterm2')) {
+    next.push(...itermLines(wear === 'default' ? startupPalette(plan.installed) : undefined))
+  }
   p.note([...next, ...plan.notes].join('\n'), 'next')
   p.outro('done')
+}
+
+function itermLines(startup: string | undefined): string[] {
+  const lines = ['iterm2 profiles   a "ttheme · <palette>" per palette in Settings › Profiles']
+  if (startup) {
+    lines.push(`                  Set as Default on "ttheme · ${startup}" and every new tab wears it`)
+  }
+  return lines
 }
 
 function report(plan: InitPlan, opts: InitOptions): void {
@@ -233,6 +255,9 @@ function report(plan: InitPlan, opts: InitOptions): void {
   }
   if (opts.terminals.includes('kitty')) {
     lines.push('open a new kitty window to pick up its config')
+  }
+  if (opts.terminals.includes('iterm2')) {
+    lines.push('iterm2 gets a "ttheme · <palette>" profile per palette under Settings › Profiles')
   }
   lines.push(...plan.notes)
   lines.push('no palettes yet — open a new shell (`exec zsh`), then `ttheme browse` picks them from the catalog')
@@ -255,11 +280,11 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const zdotdir = process.env.ZDOTDIR ?? home
   const paths: InitPaths = { root, home, configHome, zdotdir }
   const detected = detectTerminal(process.env)
-  const preselected = INIT_TERMINALS.filter((t) => t === detected || existsSync(join(configHome, t)))
+  const preselected = offered().filter((t) => t === detected || present(t, paths))
   const interactive = !flags.yes && process.stdin.isTTY === true && process.stdout.isTTY === true
   if (!interactive) {
     if (preselected.length === 0) {
-      throw new Error('no supported terminal detected — run this inside ghostty, kitty or alacritty')
+      throw new Error('no supported terminal detected — run this inside ghostty, kitty, alacritty or iterm2')
     }
     const opts: InitOptions = { terminals: preselected, palettes: [] }
     const plan = planInit(opts, paths)
