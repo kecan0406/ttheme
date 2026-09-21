@@ -27,7 +27,7 @@ __sb_ask() {
   REPLY=""
   exec {fd}<>/dev/tty || return 1
   saved=$(stty -g <&$fd)
-  stty raw -echo min 0 time 10 <&$fd
+  stty raw -echo min 0 time ${2:-10} <&$fd
   printf '%s\e[5n' "$1" >&$fd
   while IFS= read -r -k 1 -u $fd c; do
     REPLY+=$c

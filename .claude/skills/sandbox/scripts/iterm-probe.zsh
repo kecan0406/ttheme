@@ -21,7 +21,7 @@ sb_wear() {
 
 sb_var() {
   local REPLY
-  __sb_ask $'\e]1337;ReportVariable='"$(print -rn -- $1 | base64)"$'\a' || return 1
+  __sb_ask $'\e]1337;ReportVariable='"$(print -rn -- $1 | base64)"$'\a' 30 || return 1
   REPLY=${${REPLY#*ReportVariable=}%%($'\a'|$'\e\\')*}
   print -r -- "$(print -rn -- $REPLY | base64 -d)"
 }
@@ -34,7 +34,7 @@ sb_tab() {
   local -a taken=($dir/*.(zsh|run)(N))
   local n=$(( $#taken + 1 ))
   print -r -- "$1" > $dir/$n.zsh
-  sb_it2 tab new --window $(sb_var tab.window.id) > /dev/null
+  sb_it2 tab new --window $(sb_var tab.window.id) ${2:+--profile} ${2:+$2} > /dev/null
   REPLY=$n
 }
 
