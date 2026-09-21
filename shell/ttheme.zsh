@@ -149,11 +149,42 @@ __tt_dir_sync() {
   [[ -n $spec && $spec != "$TTHEME_SPEC" ]] || return 0
   __tt_apply "$spec"
   TTHEME_SPEC=$spec
+  __tt_name_of "$spec"
+  __tt_shown "$REPLY" && __tt_reload
 }
 
 __tt_chpwd() {
   __tt_pins_load
   __tt_dir_sync
+}
+
+__tt_sync() {
+  local REPLY
+  [[ -n $TTHEME_SPEC ]] || return 0
+  __tt_name_of "$TTHEME_SPEC"
+  [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || return 0
+  __tt_shown "$REPLY" && __tt_reload
+}
+
+__tt_precmd() {
+  printf '\e[?1004h'
+  __tt_sync
+}
+
+__tt_preexec() { printf '\e[?1004l' }
+
+__tt_focus() { __tt_sync }
+
+__tt_blur() { : }
+
+__tt_bind_focus() {
+  local k
+  zle -N __tt_focus
+  zle -N __tt_blur
+  for k in emacs viins vicmd; do
+    bindkey -M $k '^[[I' __tt_focus
+    bindkey -M $k '^[[O' __tt_blur
+  done
 }
 
 __tt_pins_write() {
@@ -227,6 +258,7 @@ __tt_unpin() {
 __tt_keep() {
   __tt_cli default "$1" > /dev/null || return 1
   local note="default · new tabs open with $1"
+  __tt_shown "$1"
   if (( $+functions[__tt_reload] )); then
     __tt_reload
   else
@@ -390,10 +422,13 @@ __tt_next() {
 }
 
 __tt_rotate() {
-  local REPLY
+  local REPLY spec
   __tt_next
-  __tt_apply "$REPLY"
-  TTHEME_SPEC=$REPLY
+  spec=$REPLY
+  __tt_apply "$spec"
+  TTHEME_SPEC=$spec
+  __tt_name_of "$spec"
+  __tt_shown "$REPLY" && __tt_reload
   __tt_announce
 }
 
@@ -1406,13 +1441,19 @@ __tt_preview() {
       __tt_announce
       if [[ $mode == pin ]]; then
         __tt_pin_save "$sel" $picked "$orig"
+        __tt_shown "$sel" && __tt_reload
       elif (( picked == 2 )); then
         __tt_keep "$sel"
+      else
+        __tt_shown "$sel" && __tt_reload
       fi
-    elif [[ -z $orig && -n $applied ]]; then
-      __tt_osc_reset
-    elif [[ $orig != "$applied" ]]; then
-      __tt_apply "$orig"
+    else
+      if [[ -z $orig && -n $applied ]]; then
+        __tt_osc_reset
+      elif [[ $orig != "$applied" ]]; then
+        __tt_apply "$orig"
+      fi
+      (( ${#bgedit} )) && [[ -n ${TTHEME_PALETTE[$cn]} ]] && { __tt_shown "$cn" && __tt_reload }
     fi
   }
   return 0
@@ -1452,6 +1493,7 @@ ttheme() {
   local spec=${TTHEME_PALETTE[$REPLY]}
   __tt_apply "$spec"
   TTHEME_SPEC=$spec
+  __tt_shown "$REPLY" && __tt_reload
   __tt_announce
 }
 
@@ -1483,5 +1525,10 @@ if __tt_active; then
   }
   autoload -Uz add-zsh-hook
   add-zsh-hook chpwd __tt_chpwd
+  if (( $+functions[__tt_reload] )); then
+    add-zsh-hook precmd __tt_precmd
+    add-zsh-hook preexec __tt_preexec
+    __tt_bind_focus
+  fi
   __tt_announce
 fi

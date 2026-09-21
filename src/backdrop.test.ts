@@ -186,6 +186,46 @@ test('switching walks the saved pictures around and puts each one back as it was
   assert.deepEqual(readdirSync(join(dir, 'shelf', 'kagami')), ['safebooru_1'])
 })
 
+test('each saved picture keeps its own tuning, off switch and baked sizes', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  install(configHome, 1)
+  writeFileSync(join(dir, 'kagami.tune.conf'), 'background-image-opacity = 0.42\n')
+  writeFileSync(join(dir, 'kagami.off.conf'), 'background-image =\n')
+  writeFileSync(join(dir, 'kagami@60-center.png'), 'baked')
+  install(configHome, 2)
+  const shelf = join(dir, 'shelf', 'kagami', 'safebooru_1')
+  assert.deepEqual(
+    readdirSync(shelf)
+      .filter((f) => !f.startsWith('@fill-'))
+      .sort(),
+    ['.conf', '.off.conf', '.png', '.tune.conf', '@60-center.png'],
+  )
+  assert.ok(!existsSync(join(dir, 'kagami.tune.conf')))
+  assert.ok(!existsSync(join(dir, 'kagami.off.conf')))
+  assert.ok(!existsSync(join(dir, 'kagami@60-center.png')))
+  switchImage(configHome, 'kagami', 1)
+  assert.equal(shown(dir), 'safebooru_1')
+  assert.equal(readFileSync(join(dir, 'kagami.tune.conf'), 'utf8'), 'background-image-opacity = 0.42\n')
+  assert.ok(existsSync(join(dir, 'kagami.off.conf')))
+  assert.ok(existsSync(join(dir, 'kagami@60-center.png')))
+  assert.ok(!existsSync(join(dir, 'shelf', 'kagami', 'safebooru_2', '.tune.conf')))
+  switchImage(configHome, 'kagami', 1)
+  assert.equal(shown(dir), 'safebooru_2')
+  assert.ok(!existsSync(join(dir, 'kagami.tune.conf')))
+  assert.ok(!existsSync(join(dir, 'kagami@60-center.png')))
+})
+
+test('dropping a picture takes its tuning with it', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  install(configHome, 1)
+  install(configHome, 2)
+  writeFileSync(join(dir, 'kagami.tune.conf'), 'background-image-opacity = 0.42\n')
+  assert.deepEqual(dropImage(configHome, 'kagami'), { key: 'safebooru_2', left: 1 })
+  assert.ok(!existsSync(join(dir, 'kagami.tune.conf')))
+})
+
 test('removing the shown picture shows the next one, and the last one leaves the palette bare', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)

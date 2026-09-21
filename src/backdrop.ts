@@ -292,7 +292,14 @@ function shelfDir(dir: string, name: string): string {
 
 function belongs(file: string, name: string): boolean {
   const rest = file.slice(name.length)
-  return file.startsWith(name) && (rest === '.png' || rest === '.conf' || /^@fill-\d+\.png$/.test(rest))
+  return (
+    file.startsWith(name) &&
+    (rest === '.png' ||
+      rest === '.conf' ||
+      rest === '.tune.conf' ||
+      rest === '.off.conf' ||
+      /^@[a-z0-9-]+\.png$/.test(rest))
+  )
 }
 
 function activeKey(dir: string, name: string): string | undefined {
@@ -329,7 +336,6 @@ function shelve(dir: string, name: string): void {
       renameSync(join(dir, file), join(to, file.slice(name.length)))
     }
   }
-  clearBackdrop(dir, name)
 }
 
 function unshelve(dir: string, name: string, key: string): void {
@@ -386,7 +392,6 @@ export function dropImage(configHome: string, name: string): { key?: string; lef
   for (const file of files) {
     rmSync(join(dir, file))
   }
-  clearBackdrop(dir, name)
   const rest = keys.filter((key) => key !== now)
   const next = rest[(now ? keys.indexOf(now) : 0) % rest.length]
   if (next) {

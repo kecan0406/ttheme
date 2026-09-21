@@ -164,6 +164,23 @@ __tt_bg_bake() {
   return $rc
 }
 
+__tt_bg_shown() {
+  local f=${TTHEME_CONFIG:h}/backgrounds/shown.conf
+  REPLY=""
+  [[ -r $f ]] || return 1
+  REPLY=${${"$(<$f)"}##*\?}
+  REPLY=${REPLY%.conf}
+}
+
+__tt_shown() {
+  local dir=${TTHEME_CONFIG:h}/backgrounds was REPLY
+  __tt_bg_shown
+  was=$REPLY
+  [[ $was == $1 ]] && return 1
+  [[ -r $dir/$1.conf || ( -n $was && -r $dir/$was.conf ) ]] || return 1
+  mkdir -p $dir && print -r -- "config-file = ?$1.conf" > $dir/shown.conf
+}
+
 __tt_bg_include() {
   local conf=${TTHEME_CONFIG:h}/backgrounds/$1.conf line
   local -a lines=() add=()
@@ -227,14 +244,14 @@ __tt_bg_write() {
 
 __tt_pv_bg_open() {
   bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bganchor=0
-  local fd saved resp="" line c v f
+  local fd saved resp="" line c v f REPLY
   local -i px=2 py=2 fs=0 sc=2
+  __tt_bg_shown && bginc=$REPLY
   for f in ${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config ${TTHEME_CONFIG:h}/ttheme.conf; do
     [[ -r $f ]] || continue
     for line in "${(@f)$(<$f)}"; do
       v=${${line#*=}// /}
       case $line in
-        'config-file = ?'*'/backgrounds/'*'.conf') bginc=${${line:t}%.conf} ;;
         window-padding-x*=*) [[ $v == <->(|,<->) ]] && px=$(( ${v%%,*} > ${v##*,} ? ${v%%,*} : ${v##*,} )) ;;
         window-padding-y*=*) [[ $v == <->(|,<->) ]] && py=$(( ${v%%,*} > ${v##*,} ? ${v%%,*} : ${v##*,} )) ;;
         font-size*=*) [[ $v == <->(|.<->) ]] && fs=${v%%.*} ;;
@@ -431,8 +448,9 @@ __tt_pv_bg_image() {
   if [[ $act != drop ]]; then
     __tt_pv_bg_images $name
     (( REPLY > 1 )) || { msg="$name has one image" msgt=200; return 0 }
+    [[ "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" == "$tsnap" ]] || __tt_bg_write $name
   fi
-  __tt_pv_untune
+  bgname="" tune=""
   __tt_pv_bg_close
   err=$(__tt_cli image $name $act 2>&1)
   rc=$?

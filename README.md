@@ -164,10 +164,12 @@ otherwise: a new tab starts from the configured theme, not from what the last
 tab was painted.
 
 A palette can also bring a Ghostty background image. The block `init` writes
-includes `~/.config/ttheme/backgrounds/<palette>.conf` for the configured
-theme with an optional `config-file = ?…`, and choosing **default** points that
-include at the new palette — so whatever Ghostty settings you put in that file
-follow the default, and palettes without one show no image:
+includes `~/.config/ttheme/backgrounds/shown.conf` with an optional
+`config-file = ?…`, and that one line names the palette whose picture is up.
+Putting a palette on — `ttheme <name>`, enter in `preview`, `ttheme next`,
+`ttheme default`, cd into a pinned directory — rewrites the line and sends
+`SIGUSR2`, so whatever Ghostty settings you put in `<palette>.conf` arrive with
+the palette, and palettes without a file show no image:
 
 ```
 # ~/.config/ttheme/backgrounds/kagami.conf
@@ -177,8 +179,13 @@ background-image-opacity = 0.2
 ```
 
 ttheme ships no images; they stay on your machine. A background is Ghostty
-config, not an escape sequence, so it follows the default for every window
-rather than the palette painted on one tab.
+config, not an escape sequence, and Ghostty keeps one background for the whole
+app, so one picture is up at a time, in every window. Moving to another tab
+brings its own: while a tab sits at its prompt it asks for focus events, and
+taking focus puts that tab's picture up — or clears it, when its palette has
+none. A tab busy with a command catches up at its next prompt, focus reporting
+is off while that command runs, and a tab whose colors are not a ttheme palette
+leaves the picture where it is.
 
 A palette with no background yet can find one: on it in `preview`, tab opens
 **find**, which searches a booru for the palette's character tag
@@ -257,7 +264,8 @@ list of images — the tag is all it knows about a character.
 
 An install writes `<palette>.png` (the tinted figure), `<palette>@fill-<focus>.png`
 (the window-shaped crop), `<palette>.conf` and the untouched original under
-`backgrounds/originals/`, and removes any earlier tuning of that palette. The
+`backgrounds/originals/`, and starts it untuned — the picture it replaces moves
+to the shelf with the tuning it had. The
 conf opens with where the picture came from —
 `# from yande.re 214705 https://yande.re/post/show/214705` — and the tuning
 panel shows it next to the palette's name.
@@ -282,6 +290,14 @@ one in reading order; opacity moves by 0.01. Space turns the palette's
 background off and on, `=` returns it to its defaults, enter keeps the change
 and esc puts back what the panel opened with. `f` in the panel opens find again
 to replace the picture.
+
+A palette holds every picture installed on it: an install shelves the one on
+screen rather than dropping it, `,` and `.` walk the saved pictures, and `D`
+removes the one shown. Each picture carries its own settings — size, position,
+opacity, the off switch and the baked crops travel with it under
+`backgrounds/shelf/<palette>/<post>/`, so walking back to a picture puts it
+back the way you left it, and tuning you have not confirmed is written to the
+picture before `,` or `.` moves off it.
 
 The palette's `.conf` holds those defaults; the preview only appends two
 optional includes to it and keeps everything else in `<palette>.tune.conf` (the

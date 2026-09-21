@@ -48,7 +48,14 @@ test('detectTerminal mirrors the shell adapter detection', () => {
 test('ghosttyBlock routes every new tab through the launcher', () => {
   assert.equal(
     ghosttyBlock('/cfg/ttheme', 'miku'),
-    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = miku\nconfig-file = /cfg/ttheme/ttheme.conf\nconfig-file = ?/cfg/ttheme/backgrounds/miku.conf',
+    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = miku\nconfig-file = /cfg/ttheme/ttheme.conf\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
+  )
+})
+
+test('ghosttyBlock includes the shown background even with no startup palette', () => {
+  assert.equal(
+    ghosttyBlock('/cfg/ttheme', undefined),
+    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\nconfig-file = /cfg/ttheme/ttheme.conf\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
   )
 })
 

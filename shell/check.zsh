@@ -58,6 +58,34 @@ __tt_bg_load wall
 [[ $bgsize[wall] == fill && $bgfill[wall] == "$bgd/wall.png" && $bgfocus[wall] == 50 && $bgdef[wall] == "fill 5 1" ]] ||
   { print -u2 "a plain cover image did not load as fill: $bgsize[wall] $bgfill[wall]@$bgfocus[wall] ($bgdef[wall])"; exit 1 }
 [[ "$(<$TTHEME_CONFIG)" == "$TTHEME_CONFIG_TEMPLATE" ]] || { print -u2 "config seed drifted from the template"; exit 1 }
+reloads=0
+__tt_reload() { (( ++reloads )) }
+__tt_shown kagami && __tt_reload || { print -u2 "__tt_shown did not move the picture to kagami"; exit 1 }
+[[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" ]] || { print -u2 "shown.conf named the wrong palette: $(<$bgd/shown.conf)"; exit 1 }
+__tt_shown kagami && { print -u2 "__tt_shown asked for a reload with nothing to change"; exit 1 }
+__tt_shown miku && __tt_reload || { print -u2 "__tt_shown kept a picture the palette does not have"; exit 1 }
+[[ "$(<$bgd/shown.conf)" == "config-file = ?miku.conf" ]] || { print -u2 "shown.conf did not follow miku: $(<$bgd/shown.conf)"; exit 1 }
+__tt_shown rei && { print -u2 "__tt_shown reloaded between two palettes with no picture"; exit 1 }
+(( reloads == 2 )) || { print -u2 "__tt_shown asked for $reloads reloads"; exit 1 }
+REPLY=; __tt_bg_shown || { print -u2 "__tt_bg_shown did not read shown.conf"; exit 1 }
+[[ $REPLY == miku ]] || { print -u2 "shown.conf did not read back as miku: $REPLY"; exit 1 }
+TTHEME_SPEC=$TTHEME_PALETTE[kagami]; __tt_sync
+[[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" && $reloads == 3 ]] ||
+  { print -u2 "taking the tab did not put its picture up: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+__tt_focus
+(( reloads == 3 )) || { print -u2 "focus reloaded with the right picture already up"; exit 1 }
+print -r -- "config-file = ?miku.conf" > $bgd/shown.conf
+__tt_focus
+[[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" && $reloads == 4 ]] ||
+  { print -u2 "focus did not take the picture back: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+TTHEME_SPEC=$TTHEME_PALETTE[rei]; __tt_sync
+[[ "$(<$bgd/shown.conf)" == "config-file = ?rei.conf" && $reloads == 5 ]] ||
+  { print -u2 "a tab kept another palette's picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+TTHEME_SPEC=; __tt_sync
+[[ "$(<$bgd/shown.conf)" == "config-file = ?rei.conf" && $reloads == 5 ]] ||
+  { print -u2 "a tab of unknown colors moved the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+[[ "$(__tt_precmd)" == $'\e[?1004h' && "$(__tt_preexec)" == $'\e[?1004l' ]] ||
+  { print -u2 "the prompt did not turn focus reporting on and off"; exit 1 }
 mkdir -p $bgd/shelf/kagami/a $bgd/shelf/kagami/b
 bgcw=8 tune=kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
 out=; __tt_pv_foot 80

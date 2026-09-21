@@ -43,10 +43,7 @@ export function ghosttyBlock(tthemeDir: string, palette: string | undefined): st
   if (palette) {
     lines.push(`theme = ${palette}`)
   }
-  lines.push(`config-file = ${tthemeDir}/ttheme.conf`)
-  if (palette) {
-    lines.push(`config-file = ?${tthemeDir}/backgrounds/${palette}.conf`)
-  }
+  lines.push(`config-file = ${tthemeDir}/ttheme.conf`, `config-file = ?${tthemeDir}/backgrounds/shown.conf`)
   return lines.join('\n')
 }
 

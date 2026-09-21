@@ -18,6 +18,8 @@ __tt_osc_reset() { printf '\033]104\033\\\033]110\033\\\033]111\033\\\033]112\03
 
 __tt_apply() { __tt_osc_apply "$@" }
 
+__tt_shown() { return 1 }
+
 __tt_pv_bg_open() { : }
 
 __tt_pv_bg_show() { : }
