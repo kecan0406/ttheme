@@ -1,0 +1,32 @@
+[meta]
+name = "sinon"
+group = "Sword Art Online"
+order = 129
+ansi_source = "Catppuccin Macchiato + Aincrad"
+booru = "sinon"
+signature = ["cursor", "ansi3", "ansi4"]
+
+[colors]
+background = "#111916"
+foreground = "#d5e7dd"
+cursor = "#9edfc4"
+selection_background = "#4a3a37"
+ansi = [
+  "#1d2622",
+  "#d69337",
+  "#77ba85",
+  "#b9c266",
+  "#74a6cb",
+  "#9aa3d7",
+  "#76bead",
+  "#bfc9c3",
+
+  "#707974",
+  "#eeb777",
+  "#a4d8ad",
+  "#d6e49c",
+  "#8ec9e4",
+  "#bcc2ff",
+  "#9adfcf",
+  "#e0f2e8",
+]

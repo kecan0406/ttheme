@@ -1,0 +1,32 @@
+[meta]
+name = "kirito"
+group = "Sword Art Online"
+order = 127
+ansi_source = "Karasu Night + Aincrad"
+booru = "kirito"
+signature = ["cursor", "ansi2", "foreground"]
+
+[colors]
+background = "#16171f"
+foreground = "#e3e2e2"
+cursor = "#848dc8"
+selection_background = "#3e3d3d"
+ansi = [
+  "#22232b",
+  "#dc81cd",
+  "#76b8a4",
+  "#f8a794",
+  "#86a2cf",
+  "#a89fd6",
+  "#7eb9d2",
+  "#c7c5d0",
+
+  "#767680",
+  "#ffa3e5",
+  "#7cdcd8",
+  "#ffd3c6",
+  "#a6c2f6",
+  "#c8bffb",
+  "#9ddaf5",
+  "#edecfe",
+]

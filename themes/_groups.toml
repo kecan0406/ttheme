@@ -121,3 +121,8 @@ lead = "lelouch"
 name = "Black Bullet"
 native = "ブラック・ブレット"
 lead = "enju"
+
+[[group]]
+name = "Sword Art Online"
+native = "ソードアート・オンライン"
+lead = "sinon"

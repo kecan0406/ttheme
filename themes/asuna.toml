@@ -1,0 +1,32 @@
+[meta]
+name = "asuna"
+group = "Sword Art Online"
+order = 128
+ansi_source = "Melange Dark + Aincrad"
+booru = "asuna_(sao)"
+signature = ["cursor", "ansi1", "foreground"]
+
+[colors]
+background = "#1f160d"
+foreground = "#e3e2e7"
+cursor = "#e9ac73"
+selection_background = "#433d36"
+ansi = [
+  "#2c2219",
+  "#ff7767",
+  "#aab06a",
+  "#f6ac6a",
+  "#ba93c4",
+  "#df909e",
+  "#94bb87",
+  "#d5c3b6",
+
+  "#837469",
+  "#ffae8a",
+  "#c6d38c",
+  "#ffd6a1",
+  "#e7b0dc",
+  "#ffb2ba",
+  "#b0ddaa",
+  "#ffeadb",
+]

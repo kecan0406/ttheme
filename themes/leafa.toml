@@ -1,0 +1,32 @@
+[meta]
+name = "leafa"
+group = "Sword Art Online"
+order = 130
+ansi_source = "Kanagawa Wave + Aincrad"
+booru = "leafa"
+signature = ["cursor", "ansi11", "ansi6"]
+
+[colors]
+background = "#141911"
+foreground = "#dbe6d2"
+cursor = "#60aa4f"
+selection_background = "#413e29"
+ansi = [
+  "#20251d",
+  "#e18e00",
+  "#90b681",
+  "#c5be73",
+  "#53acc1",
+  "#7aabd4",
+  "#69c296",
+  "#c3c8bc",
+
+  "#73796e",
+  "#ffb142",
+  "#add98b",
+  "#f2dd79",
+  "#87cec8",
+  "#9bcdef",
+  "#a0dfc0",
+  "#e6f1dd",
+]
