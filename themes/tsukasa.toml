@@ -4,13 +4,13 @@ group = "Lucky☆Star"
 order = 27
 ansi_source = "Sublette + Ryouou"
 booru = "hiiragi_tsukasa"
-signature = ["cursor", "ansi11", "ansi4"]
+signature = ["cursor", "ansi11", "selection"]
 
 [colors]
 background = "#1b161d"
 foreground = "#eddeef"
 cursor = "#c8a6da"
-selection_background = "#3b3e40"
+selection_background = "#2f4090"
 ansi = [
   "#27222a",
   "#f374c0",

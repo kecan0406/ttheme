@@ -4,13 +4,13 @@ group = "Lucky☆Star"
 order = 28
 ansi_source = "Tinacious Design Dark + Ryouou"
 booru = "takara_miyuki"
-signature = ["cursor", "ansi5", "ansi1"]
+signature = ["cursor", "selection", "ansi1"]
 
 [colors]
 background = "#201517"
 foreground = "#fadbe1"
 cursor = "#ffc1d0"
-selection_background = "#593240"
+selection_background = "#6e00ab"
 ansi = [
   "#2c2123",
   "#dd8895",

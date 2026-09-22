@@ -4,13 +4,13 @@ group = "Lucky☆Star"
 order = 26
 ansi_source = "Nightfox + Ryouou"
 booru = "hiiragi_kagami"
-signature = ["cursor", "ansi4", "ansi1"]
+signature = ["cursor", "ansi4", "selection"]
 
 [colors]
 background = "#19161e"
 foreground = "#e8dff1"
-cursor = "#9b86c8"
-selection_background = "#2f3f55"
+cursor = "#8974b5"
+selection_background = "#45282d"
 ansi = [
   "#25222a",
   "#d58c98",
