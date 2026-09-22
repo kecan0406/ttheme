@@ -1,0 +1,32 @@
+[meta]
+name = "tet"
+group = "No Game No Life"
+order = 144
+ansi_source = "Peppermint + Blank"
+booru = "teto_(no_game_no_life)"
+signature = ["cursor", "ansi1", "ansi12"]
+
+[colors]
+background = "#131913"
+foreground = "#d9e6d5"
+cursor = "#aedeae"
+selection_background = "#3c3e3e"
+ansi = [
+  "#1f251e",
+  "#ff7197",
+  "#72bc75",
+  "#bbc262",
+  "#29b1b8",
+  "#ff8164",
+  "#79bdae",
+  "#c1c9be",
+
+  "#727970",
+  "#ffb061",
+  "#a8d8a8",
+  "#cbe795",
+  "#99c3ff",
+  "#ffb4a4",
+  "#9bdfcb",
+  "#e4f2e0",
+]

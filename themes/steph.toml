@@ -1,0 +1,32 @@
+[meta]
+name = "steph"
+group = "No Game No Life"
+order = 141
+ansi_source = "Catppuccin Mocha + Blank"
+booru = "stephanie_dora"
+signature = ["cursor", "ansi4", "ansi12"]
+
+[colors]
+background = "#201516"
+foreground = "#fbdbde"
+cursor = "#ec627e"
+selection_background = "#483b38"
+ansi = [
+  "#2d2122",
+  "#e9819a",
+  "#c8a847",
+  "#efae7a",
+  "#7e9cff",
+  "#d393b2",
+  "#a5b872",
+  "#d7c1c3",
+
+  "#847374",
+  "#f8acbd",
+  "#e5ca7d",
+  "#ffd5b7",
+  "#95c7e9",
+  "#ffafd3",
+  "#c5da97",
+  "#ffe9ea",
+]

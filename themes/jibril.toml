@@ -1,0 +1,32 @@
+[meta]
+name = "jibril"
+group = "No Game No Life"
+order = 142
+ansi_source = "Andromeda + Blank"
+booru = "jibril_(no_game_no_life)"
+signature = ["cursor", "ansi3", "ansi12"]
+
+[colors]
+background = "#1e151a"
+foreground = "#f5dce8"
+cursor = "#dc65b9"
+selection_background = "#3b3e43"
+ansi = [
+  "#2b2126",
+  "#ff7293",
+  "#c2ab00",
+  "#ffa67d",
+  "#a392fc",
+  "#ef7cdd",
+  "#92aeff",
+  "#d3c2c9",
+
+  "#81737a",
+  "#ffa9b9",
+  "#e6cc1e",
+  "#ffd5b4",
+  "#babcfa",
+  "#ffabed",
+  "#c3d0ff",
+  "#ffe8f3",
+]

@@ -1,0 +1,32 @@
+[meta]
+name = "shiro"
+group = "No Game No Life"
+order = 140
+ansi_source = "Duskfox + Blank"
+booru = "shiro_(no_game_no_life)"
+signature = ["cursor", "ansi1", "ansi13"]
+
+[colors]
+background = "#11191c"
+foreground = "#d5e5ec"
+cursor = "#9ddbf2"
+selection_background = "#403956"
+ansi = [
+  "#1d2528",
+  "#ff738a",
+  "#78b89f",
+  "#a5c585",
+  "#61aac5",
+  "#93a4e0",
+  "#79baca",
+  "#bfc8cc",
+
+  "#70787c",
+  "#d4b2ff",
+  "#99d9bf",
+  "#c8e7a8",
+  "#7fcbe8",
+  "#e9b3ff",
+  "#9adcec",
+  "#e1f0f8",
+]

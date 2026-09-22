@@ -1,0 +1,32 @@
+[meta]
+name = "sora"
+group = "No Game No Life"
+order = 139
+ansi_source = "Citruszest + Blank"
+booru = "sora_(no_game_no_life)"
+signature = ["cursor", "ansi1", "ansi5"]
+
+[colors]
+background = "#1a180d"
+foreground = "#eae3c7"
+cursor = "#e5d359"
+selection_background = "#583618"
+ansi = [
+  "#262418",
+  "#fe7298",
+  "#76bd43",
+  "#d9ba00",
+  "#00b59e",
+  "#c88cfa",
+  "#68c389",
+  "#ccc6b5",
+
+  "#7b7768",
+  "#ffae86",
+  "#92e064",
+  "#ebe22d",
+  "#35d8b5",
+  "#ffb3ad",
+  "#6cea98",
+  "#f5eed2",
+]
