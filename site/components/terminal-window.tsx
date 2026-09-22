@@ -68,11 +68,17 @@ function Session({ theme, focus }: { theme: Theme; focus: Slot | null }) {
       </Line>
       <Line>
         {' '}
-        {theme.signatureSlots.map((slot) => (
-          <span key={slot} style={{ color: `var(--${slotOf(slot)})` }}>
-            ●
-          </span>
-        ))}
+        {theme.signatureSlots.map((slot) =>
+          slot === 'selection' ? (
+            <span key={slot} className="term-on-se">
+              {' sel '}
+            </span>
+          ) : (
+            <span key={slot} style={{ color: `var(--${slotOf(slot)})` }}>
+              ●
+            </span>
+          ),
+        )}
         {'  '}
         <Paint slot="a7" focus={focus} className="term-c7">
           {theme.signatureSlots.join(' ')}

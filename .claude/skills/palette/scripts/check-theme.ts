@@ -3,7 +3,7 @@ import type { Theme } from '../../../../src/theme.ts'
 
 interface ThemeDoc {
   meta: { name: string }
-  colors: { background: string; foreground: string; ansi: string[] }
+  colors: { background: string; foreground: string; selection_background: string; ansi: string[] }
 }
 
 const files = Bun.argv.slice(2)
@@ -19,6 +19,7 @@ for (const file of files) {
     name: doc.meta.name,
     background: doc.colors.background,
     foreground: doc.colors.foreground,
+    selectionBackground: doc.colors.selection_background,
     ansi: doc.colors.ansi,
     waive: [],
   } as unknown as Theme

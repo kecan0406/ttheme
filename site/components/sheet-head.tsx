@@ -48,13 +48,23 @@ export function SheetHead({
       <div className="flex flex-wrap items-center gap-x-[26px] gap-y-2.5 text-xs text-muted-foreground">
         <span className="flex items-center gap-[9px]">
           <span className="flex gap-1">
-            {theme.signatureSlots.map((slot) => (
-              <i
-                key={slot}
-                className="size-[18px] rounded-full border"
-                style={{ background: `var(--${slotOf(slot)})` }}
-              />
-            ))}
+            {theme.signatureSlots.map((slot) =>
+              slot === 'selection' ? (
+                <b
+                  key={slot}
+                  className="flex h-[18px] items-center rounded-full border px-1.5 font-normal text-[10px]"
+                  style={{ background: 'var(--se)', color: 'var(--fg)' }}
+                >
+                  sel
+                </b>
+              ) : (
+                <i
+                  key={slot}
+                  className="size-[18px] rounded-full border"
+                  style={{ background: `var(--${slotOf(slot)})` }}
+                />
+              ),
+            )}
           </span>
           {theme.signatureSlots.join(' · ')}
         </span>

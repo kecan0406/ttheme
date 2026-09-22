@@ -15,7 +15,8 @@ export interface Violation {
   detail: string
 }
 
-export type Gated = Pick<Theme, 'name' | 'background' | 'foreground' | 'ansi' | 'waive'>
+export type Gated = Pick<Theme, 'name' | 'background' | 'foreground' | 'ansi' | 'waive'> &
+  Partial<Pick<Theme, 'selectionBackground'>>
 
 export interface GateRule {
   rule: string
@@ -96,6 +97,20 @@ const CHECKS: Check[] = [
     min: ANSI8_MIN,
     measure: (theme) => contrast(at(theme, 8), theme.background),
     check: (theme) => belowMin(theme, [8], ANSI8_MIN),
+  },
+  {
+    rule: 'selection',
+    label: 'foreground on selection',
+    unit: 'ratio',
+    min: BODY_MIN,
+    measure: ({ foreground, selectionBackground }) =>
+      selectionBackground === undefined ? Number.NaN : contrast(foreground, selectionBackground),
+    check: ({ foreground, selectionBackground }) =>
+      selectionBackground !== undefined && contrast(foreground, selectionBackground) < BODY_MIN
+        ? [
+            `foreground ${foreground} on selection ${selectionBackground} is ${ratio(foreground, selectionBackground)}:1, needs ${BODY_MIN}:1`,
+          ]
+        : [],
   },
 ]
 

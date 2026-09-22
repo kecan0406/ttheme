@@ -35,13 +35,21 @@ function Row({
     >
       <span className="text-[10.5px] text-[color-mix(in_oklab,var(--pf)_50%,var(--pb))] tabular-nums">{number}</span>
       <span aria-hidden="true" className="flex">
-        {theme.signature.map((color, index) => (
-          <i
-            key={theme.signatureSlots[index]}
-            className="size-2.5 rounded-full shadow-[0_0_0_2px_var(--pb)] not-first:-ml-0.5"
-            style={{ background: color }}
-          />
-        ))}
+        {theme.signature.map((color, index) =>
+          theme.signatureSlots[index] === 'selection' ? (
+            <i
+              key="selection"
+              className="h-2.5 w-4 rounded-full shadow-[0_0_0_2px_var(--pb),inset_0_0_0_1px_color-mix(in_oklab,var(--pf)_55%,transparent)] not-first:-ml-0.5"
+              style={{ background: color }}
+            />
+          ) : (
+            <i
+              key={theme.signatureSlots[index]}
+              className="size-2.5 rounded-full shadow-[0_0_0_2px_var(--pb)] not-first:-ml-0.5"
+              style={{ background: color }}
+            />
+          ),
+        )}
       </span>
       <span className="truncate">{theme.name}</span>
     </button>
