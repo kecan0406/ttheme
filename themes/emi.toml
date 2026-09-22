@@ -1,0 +1,32 @@
+[meta]
+name = "emi"
+group = "The Devil Is a Part-Timer!"
+order = 134
+ansi_source = "Paraiso Dark + Ente Isla"
+booru = "yusa_emi"
+signature = ["cursor", "ansi10", "ansi5"]
+
+[colors]
+background = "#201516"
+foreground = "#fbdbdf"
+cursor = "#ea6384"
+selection_background = "#463a44"
+ansi = [
+  "#2d2122",
+  "#ff757a",
+  "#bbad35",
+  "#ffa763",
+  "#9695fe",
+  "#b89acf",
+  "#81b4ee",
+  "#d6c2c4",
+
+  "#847375",
+  "#ffabab",
+  "#c5d568",
+  "#ffd5b8",
+  "#bcbbff",
+  "#f9aef0",
+  "#b2d5ff",
+  "#ffe9eb",
+]

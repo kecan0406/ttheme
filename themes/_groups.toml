@@ -126,3 +126,8 @@ lead = "enju"
 name = "Sword Art Online"
 native = "ソードアート・オンライン"
 lead = "sinon"
+
+[[group]]
+name = "The Devil Is a Part-Timer!"
+native = "はたらく魔王さま!"
+lead = "urushihara"

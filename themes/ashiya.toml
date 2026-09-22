@@ -1,0 +1,32 @@
+[meta]
+name = "ashiya"
+group = "The Devil Is a Part-Timer!"
+order = 136
+ansi_source = "Apple System Colors + Ente Isla"
+booru = "ashiya_shirou"
+signature = ["cursor", "foreground", "ansi2"]
+
+[colors]
+background = "#1d170c"
+foreground = "#e9e2cb"
+cursor = "#bd9852"
+selection_background = "#283f59"
+ansi = [
+  "#292318",
+  "#fa7e28",
+  "#9eb464",
+  "#e4b61b",
+  "#00b2ba",
+  "#ff7c98",
+  "#66c1a0",
+  "#d1c5b4",
+
+  "#807667",
+  "#ffae80",
+  "#bdd83b",
+  "#ffd972",
+  "#eda8ff",
+  "#ffb2be",
+  "#7fe5be",
+  "#feebd0",
+]

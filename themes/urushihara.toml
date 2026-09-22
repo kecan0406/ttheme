@@ -1,0 +1,32 @@
+[meta]
+name = "urushihara"
+group = "The Devil Is a Part-Timer!"
+order = 137
+ansi_source = "Abernathy + Ente Isla"
+booru = "urushihara_hanzou"
+signature = ["cursor", "ansi5", "ansi12"]
+
+[colors]
+background = "#1a161e"
+foreground = "#e9dff1"
+cursor = "#9d87bc"
+selection_background = "#3c3e3d"
+ansi = [
+  "#26222a",
+  "#f872b1",
+  "#00bec6",
+  "#ffa76d",
+  "#819bff",
+  "#c992d7",
+  "#4dbafa",
+  "#cbc4cf",
+
+  "#7b757f",
+  "#ffa7cb",
+  "#00e2ec",
+  "#ffd4bc",
+  "#c4baf2",
+  "#f0b0ff",
+  "#a3d8ff",
+  "#f5eafc",
+]

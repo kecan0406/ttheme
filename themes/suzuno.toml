@@ -1,0 +1,32 @@
+[meta]
+name = "suzuno"
+group = "The Devil Is a Part-Timer!"
+order = 138
+ansi_source = "owl + Ente Isla"
+booru = "kamazuki_suzuno"
+signature = ["cursor", "ansi3", "ansi1"]
+
+[colors]
+background = "#12181d"
+foreground = "#d9e4f0"
+cursor = "#6896b9"
+selection_background = "#3c3e3e"
+ansi = [
+  "#1e242a",
+  "#ff7483",
+  "#79b89d",
+  "#f0b03e",
+  "#73a7c6",
+  "#af9dd4",
+  "#76bcc3",
+  "#c1c7ce",
+
+  "#72787e",
+  "#ffa2ed",
+  "#9ad9bd",
+  "#c2e8ae",
+  "#93c8e8",
+  "#d0bdf6",
+  "#97dde5",
+  "#e4effb",
+]
