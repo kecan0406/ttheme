@@ -1,0 +1,32 @@
+[meta]
+name = "yuigahama"
+group = "Oregairu"
+order = 111
+ansi_source = "Snazzy Soft + Service Club"
+booru = "yuigahama_yui"
+signature = ["cursor", "ansi13", "ansi1"]
+
+[colors]
+background = "#201511"
+foreground = "#fddbd1"
+cursor = "#f7a98f"
+selection_background = "#1a4252"
+ansi = [
+  "#2d211d",
+  "#eb8473",
+  "#b9af00",
+  "#e0b55e",
+  "#a593f3",
+  "#ff7c96",
+  "#83be8c",
+  "#d8c2bb",
+
+  "#85736d",
+  "#ffac9d",
+  "#dcd010",
+  "#ffd88c",
+  "#c6b7ff",
+  "#ffb3b2",
+  "#a3e0ab",
+  "#ffe9e3",
+]

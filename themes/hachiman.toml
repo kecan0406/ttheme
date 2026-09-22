@@ -1,0 +1,32 @@
+[meta]
+name = "hachiman"
+group = "Oregairu"
+order = 109
+ansi_source = "Smyck + Service Club"
+booru = "hikigaya_hachiman"
+signature = ["cursor", "ansi3", "ansi4"]
+
+[colors]
+background = "#17171f"
+foreground = "#e2e1f2"
+cursor = "#898dc1"
+selection_background = "#15434c"
+ansi = [
+  "#23232b",
+  "#ef76c5",
+  "#00c0b0",
+  "#d6ba52",
+  "#70a8c4",
+  "#b599e1",
+  "#82b6de",
+  "#c7c5d0",
+
+  "#777680",
+  "#f2acd8",
+  "#00e5cd",
+  "#ffd3c4",
+  "#99c5f5",
+  "#dcb8ff",
+  "#89ddff",
+  "#eeecfe",
+]

@@ -1,0 +1,32 @@
+[meta]
+name = "haruno"
+group = "Oregairu"
+order = 114
+ansi_source = "Whimsy + Service Club"
+booru = "yukinoshita_haruno"
+signature = ["cursor", "foreground", "ansi13"]
+
+[colors]
+background = "#201516"
+foreground = "#e9e0e8"
+cursor = "#dd939d"
+selection_background = "#3c3b57"
+ansi = [
+  "#2d2122",
+  "#ff7292",
+  "#c5aa1f",
+  "#f8aa6a",
+  "#ab91ef",
+  "#d593ae",
+  "#7cb4f6",
+  "#d7c1c3",
+
+  "#847374",
+  "#ffa9b8",
+  "#e8cb42",
+  "#ffd5b6",
+  "#cab6ff",
+  "#eab4f4",
+  "#b4d4ff",
+  "#ffe9ea",
+]

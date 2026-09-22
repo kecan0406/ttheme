@@ -1,0 +1,32 @@
+[meta]
+name = "komachi"
+group = "Oregairu"
+order = 113
+ansi_source = "Catppuccin Frappe + Service Club"
+booru = "hikigaya_komachi"
+signature = ["cursor", "ansi13", "ansi11"]
+
+[colors]
+background = "#16171f"
+foreground = "#e0e1f3"
+cursor = "#9da9dd"
+selection_background = "#4c3935"
+ansi = [
+  "#22232b",
+  "#d288c5",
+  "#59bab5",
+  "#f7a79d",
+  "#869fe4",
+  "#b99ad0",
+  "#7bbacf",
+  "#c6c5d0",
+
+  "#767680",
+  "#e7b0db",
+  "#92d9d4",
+  "#f3dd80",
+  "#aec0f3",
+  "#cebef7",
+  "#9ddbf2",
+  "#ecedfe",
+]

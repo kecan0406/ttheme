@@ -106,3 +106,8 @@ lead = "rikka"
 name = "Jujutsu Kaisen"
 native = "呪術廻戦"
 lead = "gojo"
+
+[[group]]
+name = "Oregairu"
+native = "やはり俺の青春ラブコメはまちがっている。"
+lead = "iroha"

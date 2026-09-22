@@ -1,0 +1,32 @@
+[meta]
+name = "iroha"
+group = "Oregairu"
+order = 112
+ansi_source = "Andromeda + Service Club"
+booru = "isshiki_iroha"
+signature = ["cursor", "ansi1", "foreground"]
+
+[colors]
+background = "#1e160d"
+foreground = "#f3dfcd"
+cursor = "#eab774"
+selection_background = "#3b3e43"
+ansi = [
+  "#2b2218",
+  "#d88e79",
+  "#92b834",
+  "#dfb664",
+  "#ca86e6",
+  "#ff7e8c",
+  "#59c491",
+  "#d3c4b4",
+
+  "#817567",
+  "#ffae88",
+  "#b2da53",
+  "#ffda47",
+  "#e8aaff",
+  "#ffb2b8",
+  "#7ce6b1",
+  "#ffebd5",
+]

@@ -1,0 +1,32 @@
+[meta]
+name = "yukino"
+group = "Oregairu"
+order = 110
+ansi_source = "Mariana + Service Club"
+booru = "yukinoshita_yukino"
+signature = ["cursor", "ansi1", "foreground"]
+
+[colors]
+background = "#12181d"
+foreground = "#e0e3e5"
+cursor = "#7faed1"
+selection_background = "#333f49"
+ansi = [
+  "#1e242a",
+  "#e78582",
+  "#6fb8ab",
+  "#a9c66b",
+  "#6da6d6",
+  "#a89fd9",
+  "#6dbcce",
+  "#c1c7ce",
+
+  "#71787e",
+  "#ffa0f6",
+  "#93d9cd",
+  "#b1eca2",
+  "#9ac6ee",
+  "#c8c0f8",
+  "#9adcec",
+  "#e3effb",
+]
