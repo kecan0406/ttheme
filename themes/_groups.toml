@@ -111,3 +111,8 @@ lead = "gojo"
 name = "Oregairu"
 native = "やはり俺の青春ラブコメはまちがっている。"
 lead = "iroha"
+
+[[group]]
+name = "Code Geass"
+native = "コードギアス 反逆のルルーシュ"
+lead = "lelouch"

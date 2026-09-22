@@ -1,0 +1,32 @@
+[meta]
+name = "euphemia"
+group = "Code Geass"
+order = 120
+ansi_source = "Whimsy + Geass"
+booru = "euphemia_li_britannia"
+signature = ["cursor", "ansi5", "ansi13"]
+
+[colors]
+background = "#1e1519"
+foreground = "#f6dbe6"
+cursor = "#e38dbb"
+selection_background = "#3c3b57"
+ansi = [
+  "#2b2126",
+  "#fc72a5",
+  "#c6aa1e",
+  "#fca874",
+  "#9f95f3",
+  "#bb97db",
+  "#7cb4f6",
+  "#d4c2c8",
+
+  "#827379",
+  "#ffa8c3",
+  "#e9cb41",
+  "#ffd4bd",
+  "#c1b9ff",
+  "#e2b8ec",
+  "#b4d4ff",
+  "#ffe8f1",
+]

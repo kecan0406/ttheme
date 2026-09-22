@@ -1,0 +1,32 @@
+[meta]
+name = "nunnally"
+group = "Code Geass"
+order = 119
+ansi_source = "London Embankment Dusk + Geass"
+booru = "nunnally_lamperouge"
+signature = ["cursor", "ansi12", "ansi5"]
+
+[colors]
+background = "#1f160d"
+foreground = "#f8dec7"
+cursor = "#c69057"
+selection_background = "#303e56"
+ansi = [
+  "#2c2219",
+  "#f38245",
+  "#96b47a",
+  "#e7b358",
+  "#b494ce",
+  "#f582a1",
+  "#82bd9e",
+  "#d5c3b5",
+
+  "#837568",
+  "#ffae83",
+  "#b5d69b",
+  "#ffd795",
+  "#cdb7ef",
+  "#fbb2cc",
+  "#a3dfbc",
+  "#ffead9",
+]

@@ -1,0 +1,32 @@
+[meta]
+name = "suzaku"
+group = "Code Geass"
+order = 116
+ansi_source = "Eclipse + Geass"
+booru = "kururugi_suzaku"
+signature = ["cursor", "ansi2", "ansi4"]
+
+[colors]
+background = "#211512"
+foreground = "#fddbd3"
+cursor = "#c67e6d"
+selection_background = "#313e56"
+ansi = [
+  "#2e211e",
+  "#ff766a",
+  "#90b581",
+  "#f9ab52",
+  "#979be1",
+  "#e189c7",
+  "#a2bb46",
+  "#d8c2bd",
+
+  "#85736f",
+  "#ffaba3",
+  "#eec925",
+  "#ffd5ac",
+  "#cdb5ff",
+  "#f6b2df",
+  "#c4dc6f",
+  "#ffe9e4",
+]

@@ -1,0 +1,32 @@
+[meta]
+name = "kallen"
+group = "Code Geass"
+order = 118
+ansi_source = "Kolorit + Geass"
+booru = "kallen_stadtfeld"
+signature = ["cursor", "ansi4", "ansi12"]
+
+[colors]
+background = "#201516"
+foreground = "#fbdbde"
+cursor = "#d87184"
+selection_background = "#59351c"
+ansi = [
+  "#2d2122",
+  "#ff728f",
+  "#b8ae1c",
+  "#fcaa3c",
+  "#6aaabc",
+  "#f979c8",
+  "#7ab3ff",
+  "#d7c2c3",
+
+  "#847374",
+  "#ffa9b7",
+  "#dbd03f",
+  "#ffd6a9",
+  "#c6b9f2",
+  "#ffaedb",
+  "#b7d3ff",
+  "#ffe9ea",
+]

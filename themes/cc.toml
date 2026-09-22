@@ -1,0 +1,32 @@
+[meta]
+name = "cc"
+group = "Code Geass"
+order = 117
+ansi_source = "Nebula Drift + Geass"
+booru = "c.c."
+signature = ["cursor", "ansi3", "ansi12"]
+
+[colors]
+background = "#151910"
+foreground = "#dfe5ce"
+cursor = "#a8d966"
+selection_background = "#41395a"
+ansi = [
+  "#21251b",
+  "#f58209",
+  "#60bf6f",
+  "#eeb05b",
+  "#00b0cc",
+  "#ff7e8b",
+  "#42c5a2",
+  "#c5c8b9",
+
+  "#75796c",
+  "#ffaf73",
+  "#81e18d",
+  "#ffd793",
+  "#91c8e6",
+  "#ffb2b7",
+  "#69e7c2",
+  "#eaf1d9",
+]

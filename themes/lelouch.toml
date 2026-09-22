@@ -1,0 +1,32 @@
+[meta]
+name = "lelouch"
+group = "Code Geass"
+order = 115
+ansi_source = "SilkCircuit Glow + Geass"
+booru = "lelouch_lamperouge"
+signature = ["ansi5", "cursor", "ansi1"]
+
+[colors]
+background = "#19161e"
+foreground = "#e8dff1"
+cursor = "#bd7baf"
+selection_background = "#4f3450"
+ansi = [
+  "#25222a",
+  "#ff766e",
+  "#00bec6",
+  "#ffa76d",
+  "#7e9cff",
+  "#b792ff",
+  "#35bbff",
+  "#cbc4cf",
+
+  "#7a757f",
+  "#ffa6d4",
+  "#00e1ef",
+  "#ffd4bc",
+  "#9ec2ff",
+  "#ecb1ff",
+  "#a2d8ff",
+  "#f4eafd",
+]
