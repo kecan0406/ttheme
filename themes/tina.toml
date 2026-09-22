@@ -4,13 +4,13 @@ group = "Black Bullet"
 order = 124
 ansi_source = "Galizur + Varanium"
 booru = "tina_sprout"
-signature = ["cursor", "ansi6", "ansi4"]
+signature = ["cursor", "ansi6", "selection"]
 
 [colors]
 background = "#1b170c"
 foreground = "#eee2c5"
 cursor = "#ead082"
-selection_background = "#334044"
+selection_background = "#2c4a5e"
 ansi = [
   "#282318",
   "#f97f22",

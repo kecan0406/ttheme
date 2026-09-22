@@ -4,13 +4,13 @@ group = "Black Bullet"
 order = 126
 ansi_source = "Patina Dark + Varanium"
 booru = "hiruko_kagetane"
-signature = ["cursor", "foreground", "ansi5"]
+signature = ["cursor", "foreground", "selection"]
 
 [colors]
 background = "#201515"
 foreground = "#e2e2ec"
-cursor = "#d77476"
-selection_background = "#3f3d3a"
+cursor = "#a24a4e"
+selection_background = "#4f4258"
 ansi = [
   "#2d2120",
   "#e1888c",

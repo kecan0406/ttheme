@@ -4,13 +4,13 @@ group = "The Devil Is a Part-Timer!"
 order = 133
 ansi_source = "Electron Highlighter + Ente Isla"
 booru = "maou_sadao"
-signature = ["cursor", "ansi1", "ansi3"]
+signature = ["cursor", "selection", "ansi3"]
 
 [colors]
 background = "#211512"
 foreground = "#fddbd4"
 cursor = "#df7259"
-selection_background = "#353c5b"
+selection_background = "#842329"
 ansi = [
   "#2e211e",
   "#f87a7c",

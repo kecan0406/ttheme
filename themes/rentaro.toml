@@ -4,13 +4,13 @@ group = "Black Bullet"
 order = 121
 ansi_source = "Tomorrow Night + Varanium"
 booru = "satomi_rentarou"
-signature = ["cursor", "ansi4", "foreground"]
+signature = ["cursor", "selection", "foreground"]
 
 [colors]
 background = "#14181e"
 foreground = "#dfe3e7"
-cursor = "#7991bf"
-selection_background = "#3a3e44"
+cursor = "#4e6692"
+selection_background = "#3c4568"
 ansi = [
   "#21242b",
   "#d386cd",

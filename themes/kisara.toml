@@ -4,13 +4,13 @@ group = "Black Bullet"
 order = 123
 ansi_source = "London Soho Night + Varanium"
 booru = "tendou_kisara"
-signature = ["cursor", "ansi1", "ansi4"]
+signature = ["cursor", "selection", "ansi4"]
 
 [colors]
 background = "#1c151c"
 foreground = "#f1ddec"
-cursor = "#af82af"
-selection_background = "#473c30"
+cursor = "#a478a4"
+selection_background = "#753135"
 ansi = [
   "#292128",
   "#e1888a",

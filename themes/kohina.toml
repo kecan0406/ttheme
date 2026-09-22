@@ -4,13 +4,13 @@ group = "Black Bullet"
 order = 125
 ansi_source = "Spacegray Bright + Varanium"
 booru = "hiruko_kohina"
-signature = ["cursor", "ansi1", "ansi9"]
+signature = ["cursor", "selection", "ansi9"]
 
 [colors]
 background = "#12181d"
 foreground = "#d9e4f0"
 cursor = "#74a2c6"
-selection_background = "#3c3e3e"
+selection_background = "#891a2d"
 ansi = [
   "#1e242a",
   "#ff7480",

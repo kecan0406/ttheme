@@ -4,13 +4,13 @@ group = "Code Geass"
 order = 116
 ansi_source = "Eclipse + Geass"
 booru = "kururugi_suzaku"
-signature = ["cursor", "ansi2", "ansi4"]
+signature = ["cursor", "ansi2", "selection"]
 
 [colors]
 background = "#211512"
 foreground = "#fddbd3"
-cursor = "#c67e6d"
-selection_background = "#313e56"
+cursor = "#945545"
+selection_background = "#252968"
 ansi = [
   "#2e211e",
   "#ff766a",

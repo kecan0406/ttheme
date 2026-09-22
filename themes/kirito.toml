@@ -4,13 +4,13 @@ group = "Sword Art Online"
 order = 127
 ansi_source = "Karasu Night + Aincrad"
 booru = "kirito"
-signature = ["cursor", "ansi2", "foreground"]
+signature = ["cursor", "ansi2", "selection"]
 
 [colors]
 background = "#16171f"
-foreground = "#e3e2e2"
-cursor = "#848dc8"
-selection_background = "#3e3d3d"
+foreground = "#e1e1f3"
+cursor = "#828bc6"
+selection_background = "#2e2f35"
 ansi = [
   "#22232b",
   "#dc81cd",

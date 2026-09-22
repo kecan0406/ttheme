@@ -4,13 +4,13 @@ group = "Sword Art Online"
 order = 131
 ansi_source = "Cobalt Next Dark + Aincrad"
 booru = "alice_zuberg"
-signature = ["cursor", "ansi4", "ansi5"]
+signature = ["cursor", "selection", "ansi5"]
 
 [colors]
 background = "#1b170c"
 foreground = "#ede2c6"
 cursor = "#e8d082"
-selection_background = "#134444"
+selection_background = "#10409c"
 ansi = [
   "#272318",
   "#fb7d2e",

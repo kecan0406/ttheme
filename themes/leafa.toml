@@ -4,13 +4,13 @@ group = "Sword Art Online"
 order = 130
 ansi_source = "Kanagawa Wave + Aincrad"
 booru = "leafa"
-signature = ["cursor", "ansi11", "ansi6"]
+signature = ["cursor", "ansi11", "selection"]
 
 [colors]
 background = "#141911"
 foreground = "#dbe6d2"
 cursor = "#60aa4f"
-selection_background = "#413e29"
+selection_background = "#005236"
 ansi = [
   "#20251d",
   "#e18e00",

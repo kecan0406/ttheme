@@ -4,13 +4,13 @@ group = "Sword Art Online"
 order = 132
 ansi_source = "Catppuccin Mocha + Aincrad"
 booru = "yuuki_(sao)"
-signature = ["cursor", "ansi1", "ansi13"]
+signature = ["cursor", "selection", "ansi13"]
 
 [colors]
 background = "#1b161d"
 foreground = "#eddeef"
-cursor = "#a784b6"
-selection_background = "#483b38"
+cursor = "#7a5a88"
+selection_background = "#8f1115"
 ansi = [
   "#282229",
   "#ff766c",

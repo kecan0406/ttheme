@@ -4,13 +4,13 @@ group = "Code Geass"
 order = 118
 ansi_source = "Kolorit + Geass"
 booru = "kallen_stadtfeld"
-signature = ["cursor", "ansi4", "ansi12"]
+signature = ["cursor", "selection", "ansi12"]
 
 [colors]
 background = "#201516"
 foreground = "#fbdbde"
-cursor = "#d87184"
-selection_background = "#59351c"
+cursor = "#a3485a"
+selection_background = "#2e4b54"
 ansi = [
   "#2d2122",
   "#ff728f",

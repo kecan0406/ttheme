@@ -4,13 +4,13 @@ group = "Code Geass"
 order = 115
 ansi_source = "SilkCircuit Glow + Geass"
 booru = "lelouch_lamperouge"
-signature = ["ansi5", "cursor", "ansi1"]
+signature = ["selection", "cursor", "ansi1"]
 
 [colors]
 background = "#19161e"
 foreground = "#e8dff1"
-cursor = "#bd7baf"
-selection_background = "#4f3450"
+cursor = "#bb7aae"
+selection_background = "#562c9d"
 ansi = [
   "#25222a",
   "#ff766e",

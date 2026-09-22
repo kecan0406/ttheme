@@ -4,13 +4,13 @@ group = "No Game No Life"
 order = 139
 ansi_source = "Citruszest + Blank"
 booru = "sora_(no_game_no_life)"
-signature = ["cursor", "ansi1", "ansi5"]
+signature = ["cursor", "ansi1", "selection"]
 
 [colors]
 background = "#1a180d"
 foreground = "#eae3c7"
 cursor = "#e5d359"
-selection_background = "#583618"
+selection_background = "#622892"
 ansi = [
   "#262418",
   "#fe7298",
