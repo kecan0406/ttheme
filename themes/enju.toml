@@ -1,0 +1,32 @@
+[meta]
+name = "enju"
+group = "Black Bullet"
+order = 122
+ansi_source = "Dogxi Misty + Varanium"
+booru = "aihara_enju"
+signature = ["cursor", "ansi11", "ansi3"]
+
+[colors]
+background = "#201512"
+foreground = "#fddbd3"
+cursor = "#db8068"
+selection_background = "#1a4252"
+ansi = [
+  "#2e211d",
+  "#ff7764",
+  "#cba800",
+  "#ffa76f",
+  "#8d9edb",
+  "#ff7c9a",
+  "#7ac17a",
+  "#d8c2bc",
+
+  "#85736f",
+  "#ffac9f",
+  "#f1c800",
+  "#ffd87f",
+  "#aebffd",
+  "#ffb2bf",
+  "#a2e0a8",
+  "#ffe9e4",
+]

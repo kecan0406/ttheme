@@ -1,0 +1,32 @@
+[meta]
+name = "rentaro"
+group = "Black Bullet"
+order = 121
+ansi_source = "Tomorrow Night + Varanium"
+booru = "satomi_rentarou"
+signature = ["cursor", "ansi4", "foreground"]
+
+[colors]
+background = "#14181e"
+foreground = "#dfe3e7"
+cursor = "#7991bf"
+selection_background = "#3a3e44"
+ansi = [
+  "#21242b",
+  "#d386cd",
+  "#66bba2",
+  "#fba59d",
+  "#929ed1",
+  "#ac9ed5",
+  "#7abacd",
+  "#c4c6d0",
+
+  "#74777f",
+  "#f7a6ef",
+  "#87dcc2",
+  "#ffd3ce",
+  "#9fc4ef",
+  "#cdbef7",
+  "#9bdbef",
+  "#e9eefe",
+]

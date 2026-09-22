@@ -1,0 +1,32 @@
+[meta]
+name = "kisara"
+group = "Black Bullet"
+order = 123
+ansi_source = "London Soho Night + Varanium"
+booru = "tendou_kisara"
+signature = ["cursor", "ansi1", "ansi4"]
+
+[colors]
+background = "#1c151c"
+foreground = "#f1ddec"
+cursor = "#af82af"
+selection_background = "#473c30"
+ansi = [
+  "#292128",
+  "#e1888a",
+  "#df9e4c",
+  "#ffa589",
+  "#6ea8c2",
+  "#ec82cc",
+  "#7fb8d3",
+  "#d0c3cc",
+
+  "#7f747c",
+  "#ffa9bd",
+  "#ffc078",
+  "#ffd3c5",
+  "#b8bdf4",
+  "#ffade2",
+  "#9cdbf0",
+  "#fce8f8",
+]

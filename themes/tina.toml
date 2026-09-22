@@ -1,0 +1,32 @@
+[meta]
+name = "tina"
+group = "Black Bullet"
+order = 124
+ansi_source = "Galizur + Varanium"
+booru = "tina_sprout"
+signature = ["cursor", "ansi6", "ansi4"]
+
+[colors]
+background = "#1b170c"
+foreground = "#eee2c5"
+cursor = "#ead082"
+selection_background = "#334044"
+ansi = [
+  "#282318",
+  "#f97f22",
+  "#9ab719",
+  "#dcb831",
+  "#76a6c8",
+  "#f185a0",
+  "#76bcc2",
+  "#cec6b4",
+
+  "#7d7667",
+  "#ffaf7d",
+  "#b9d93f",
+  "#ffdb42",
+  "#00d4eb",
+  "#ffb1c3",
+  "#62e9b5",
+  "#f9edd0",
+]

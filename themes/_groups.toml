@@ -116,3 +116,8 @@ lead = "iroha"
 name = "Code Geass"
 native = "コードギアス 反逆のルルーシュ"
 lead = "lelouch"
+
+[[group]]
+name = "Black Bullet"
+native = "ブラック・ブレット"
+lead = "enju"

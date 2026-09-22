@@ -1,0 +1,32 @@
+[meta]
+name = "kohina"
+group = "Black Bullet"
+order = 125
+ansi_source = "Spacegray Bright + Varanium"
+booru = "hiruko_kohina"
+signature = ["cursor", "ansi1", "ansi9"]
+
+[colors]
+background = "#12181d"
+foreground = "#d9e4f0"
+cursor = "#74a2c6"
+selection_background = "#3c3e3e"
+ansi = [
+  "#1e242a",
+  "#ff7480",
+  "#6eba9f",
+  "#a4c58c",
+  "#81a3ce",
+  "#ad9ed4",
+  "#76bcc3",
+  "#c1c7ce",
+
+  "#72787e",
+  "#ffabab",
+  "#8edbbf",
+  "#c5e7ab",
+  "#91c8e6",
+  "#cfbef7",
+  "#97dde5",
+  "#e4effb",
+]

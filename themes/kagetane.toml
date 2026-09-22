@@ -1,0 +1,32 @@
+[meta]
+name = "kagetane"
+group = "Black Bullet"
+order = 126
+ansi_source = "Patina Dark + Varanium"
+booru = "hiruko_kagetane"
+signature = ["cursor", "foreground", "ansi5"]
+
+[colors]
+background = "#201515"
+foreground = "#e2e2ec"
+cursor = "#d77476"
+selection_background = "#3f3d3a"
+ansi = [
+  "#2d2120",
+  "#e1888c",
+  "#b4ae5d",
+  "#efae6f",
+  "#909fd3",
+  "#ba9ace",
+  "#9aba7d",
+  "#d7c1c1",
+
+  "#857372",
+  "#ffabaa",
+  "#d6cf7a",
+  "#ffd5b0",
+  "#b1bff6",
+  "#ffb4ab",
+  "#bbdc9c",
+  "#ffe9e8",
+]
