@@ -29,7 +29,7 @@ const SUGGESTED = 8
 const CONNECT = 3_000
 const MAX_WAIT = 60_000
 const TRIES = 3
-const AGENT = `ttheme/${pkg.version} (+${pkg.homepage})`
+export const AGENT = `ttheme/${pkg.version} (+${pkg.homepage})`
 
 const HELD = ['orig', 'tile', 'thumb', 'cut']
 
@@ -431,7 +431,8 @@ export const SITES: Site[] = [
 export const KEY_SPAN = 2 ** 27
 
 export function postKey(site: Site, id: number): number {
-  return SITES.indexOf(site) * KEY_SPAN + id
+  const at = SITES.indexOf(site)
+  return (at === -1 ? SITES.length : at) * KEY_SPAN + id
 }
 
 export function originHost(source: string): string {

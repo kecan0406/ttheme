@@ -826,7 +826,7 @@ __tt_pv_help() {
   )
   if (( bgcw )); then
     hk+=("tune bg" "" "" "" "")
-    hv+=("tab  ·  finds one on the boorus if none" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "space hides  ·  = default  ·  f adds one" "enter keeps  ·  esc undoes" ",  .  other saved images  ·  D removes this one")
+    hv+=("tab  ·  finds one on the boorus, or takes your own, if none" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "space hides  ·  = default  ·  f adds one from the boorus or your own" "enter keeps  ·  esc undoes" ",  .  other saved images  ·  D removes this one")
   fi
   hk+=(config "")
   hv+=("alt-c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")

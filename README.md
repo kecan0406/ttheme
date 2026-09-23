@@ -334,6 +334,26 @@ half remember; `↑`/`↓` pick one and enter searches it. A palette with no `me
 find on that empty query, so it can have a background too. `o` opens the post's
 page in a browser.
 
+A picture of your own goes in the same way. Drop an image file on the window
+while find is open, or paste it — a file copied in Finder, its path, or a link
+to the image — and find tries it on as if it were a post. `ctrl+v` (or `v`
+outside the search field, `alt+v` on Windows) reads the clipboard itself, which
+is how a screenshot or a browser's "Copy Image" gets in, since no terminal
+pastes picture data as text — on macOS ctrl+shift+cmd+4 takes a screenshot
+straight to the clipboard. When the window comes back into focus with a picture
+on the clipboard, find says so for a few seconds; text on the clipboard that is
+neither a file nor a link goes into the search field instead. Every terminal hands a dropped
+file over as its path, each quoted its own way, and find reads them all; kitty
+and iTerm2 3.7 also deliver the dropped picture itself through kitty's
+drag-and-drop protocol, so a picture dragged out of a browser works there too,
+and kitty's clipboard protocol makes Cmd+V with a picture on the clipboard work
+directly, over ssh as well. PNG and JPEG work everywhere; macOS converts any
+other picture (HEIC, WebP, GIF, TIFF…) and shrinks one over 25 megapixels. The
+installed picture is named `local` in the conf's `# from` line, with the file or
+link it came from, and keeps its original under `backgrounds/originals/` like a
+booru post. Over ssh `ctrl+v` can only reach the clipboard through kitty's protocol,
+since the clipboard is on your own machine.
+
 Enter tries the picture on: ttheme downloads the original and paints the whole
 window with it the way the installed background will look — tinted with the
 palette, cropped with headroom above the face, at the opacity the contrast gate

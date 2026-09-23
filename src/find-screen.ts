@@ -81,6 +81,7 @@ export interface FindView {
   asking?: string
   saved?: string
   note?: string
+  hint?: string
   error?: string
   waiting?: number
   slow?: string
@@ -129,6 +130,8 @@ const CSI: Record<string, string> = {
   '8~': 'end',
   '5~': 'pgup',
   '6~': 'pgdn',
+  I: 'focus-in',
+  O: 'focus-out',
 }
 
 export function decodeKeys(input: string): string[] {
@@ -143,6 +146,12 @@ export function decodeKeys(input: string): string[] {
         i += 1 + m[0].length
         continue
       }
+      const next = input[i + 1] ?? ''
+      if (/^[a-z]$/.test(next)) {
+        keys.push(`alt-${next}`)
+        i += 2
+        continue
+      }
       keys.push('esc')
       i++
       continue
@@ -154,9 +163,11 @@ export function decodeKeys(input: string): string[] {
           ? 'tab'
           : c === '\x03'
             ? 'ctrl-c'
-            : c === '\x7f' || c === '\b'
-              ? 'backspace'
-              : c,
+            : c === '\x16'
+              ? 'ctrl-v'
+              : c === '\x7f' || c === '\b'
+                ? 'backspace'
+                : c,
     )
     i++
   }
@@ -429,7 +440,7 @@ function badge(view: FindView, label = view.site, ansi = view.siteAnsi): Part {
 }
 
 function named(key: number): string {
-  return `${SITES[Math.floor(key / KEY_SPAN)]?.name ?? ''} ${key % KEY_SPAN}`
+  return `${SITES[Math.floor(key / KEY_SPAN)]?.name ?? 'local'} ${key % KEY_SPAN}`
 }
 
 function tabs(line: Line, cols: number, view: FindView): void {
@@ -459,12 +470,16 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
       ['█', accent],
     ])
     const hint = view.suggest?.length ? '  ↑↓ pick  enter searches' : '  enter searches'
-    line.put(c, view.editing ? hint : `  a tag, a post url or an id — ${view.tag || 'esc leaves'}`, D)
+    line.put(
+      c,
+      view.editing ? hint : `  a tag, a post url or an id, or drop a picture or ctrl+v — ${view.tag || 'esc leaves'}`,
+      D,
+    )
     return
   }
   const c = line.run(0, [
     ['⌕ ', accent],
-    [view.tag || 'nothing yet — / searches', view.tag ? '' : D],
+    [view.tag || 'nothing yet — / searches, ctrl+v pastes a picture', view.tag ? '' : D],
   ])
   const allowed = BLOCKS.filter((block) => !view.block.includes(block))
   const state = [
@@ -505,6 +520,9 @@ function where(view: FindView): string {
 function status(view: FindView): Part | undefined {
   if (view.installing !== undefined) {
     return [`installing ${view.palette} ← ${named(view.installing)}`, YELLOW]
+  }
+  if (view.hint) {
+    return [view.hint, GREEN]
   }
   if (view.error) {
     return [view.error, YELLOW]
@@ -609,6 +627,7 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
             ['←↑↓→', 'move'],
             ['enter', 'try on'],
             ['tab', 'site'],
+            ['ctrl+v', 'picture'],
             ['s', 'settings'],
             ['/', 'search'],
             ['?', 'keys'],
@@ -633,7 +652,9 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   if (shown) {
     meta.push([` · ${megabytes(shown.bytes)}`, D])
   }
-  meta.push([` · ${tile.owner}`, D])
+  if (tile.owner) {
+    meta.push([` · ${tile.owner}`, D])
+  }
   if (tile.origin) {
     meta.push([` · ${tile.origin}`, D])
   }
@@ -675,6 +696,7 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
     ['site', `tab  all, ${SITES.map((site) => site.name).join(', ')}`],
     ['posts', 'c  cutouts or every post'],
     ['search', '/  a tag, a post url or an id'],
+    ['your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window or paste its link'],
     ['unfold', 'space  a set of ×N'],
     ['open', 'o  the post page in a browser'],
     ['settings', 's  rating, block, posts, solo, order, sets, remove bg'],
@@ -686,6 +708,7 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
     ['install', 'enter'],
     ['cut out', 'x  the background off or on, on an opaque picture'],
     ['open', 'o  the post page in a browser'],
+    ['your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window'],
     ['grid', 'esc'],
     ['close', '?  esc'],
   ],

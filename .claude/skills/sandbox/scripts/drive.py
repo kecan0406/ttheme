@@ -28,6 +28,10 @@ KEYS = {
     'ctrl-c': '\x03',
     'ctrl-u': '\x15',
     'alt-c': '\x1bc',
+    'ctrl-v': '\x16',
+    'alt-v': '\x1bv',
+    'focus-in': '\x1b[I',
+    'focus-out': '\x1b[O',
 }
 
 GAP = 0.25
@@ -37,6 +41,8 @@ LINGER = 10.0
 def keys(step):
     if step.startswith('text:'):
         return list(step[5:])
+    if step.startswith('paste:'):
+        return [f'\x1b[200~{step[6:]}\x1b[201~']
     if step in KEYS:
         return [KEYS[step]]
     if len(step) == 1:
@@ -63,7 +69,7 @@ def spawn(command, size):
 
 def main():
     if len(sys.argv) < 2:
-        raise SystemExit('usage: drive.py COMMAND [STEP…]  — a step is a key, text:…, seconds or shot:NAME')
+        raise SystemExit('usage: drive.py COMMAND [STEP…]  — a step is a key, text:…, paste:…, seconds or shot:NAME')
     command, steps = sys.argv[1], sys.argv[2:]
     shots = os.path.join(os.environ.get('ZDOTDIR') or os.environ['HOME'], 'shots')
     term = os.open('/dev/tty', os.O_RDWR)

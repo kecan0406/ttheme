@@ -3,6 +3,25 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import {
+  type Clip,
+  type Got,
+  Grabber,
+  type Inbound,
+  LOCAL,
+  type Loaded,
+  loadRef,
+  localId,
+  normalize,
+  pastedRefs,
+  peekClipboard,
+  readClipboard,
+  remember,
+  remote,
+  sourceLabel,
+  takeInbound,
+} from './attach.ts'
 import { backdropTone, origins, type Tone } from './backdrop.ts'
 import {
   BLOCKS,
@@ -95,6 +114,11 @@ const THUMB = 12
 const PRELOAD = 2
 const SETTLE = 150
 const ESCAPE = 30
+const NOTICE = 4000
+const PEEK = 8000
+const PICTURE = /\.(png|jpe?g|gif|webp|heic|tiff?|bmp)$/i
+const PASTE_KEY = process.platform === 'win32' ? 'alt+v' : 'ctrl+v'
+const SCREENSHOT = process.platform === 'darwin' ? 'ctrl+shift+cmd+4 copies a screenshot' : 'copy a picture first'
 const TRY_WIDTH = 1280
 const LOOKAHEAD = 2
 const KNOWN = 3
@@ -257,6 +281,16 @@ class Finder {
   private suggestTimer?: NodeJS.Timeout
   private suggesting?: AbortController
   private input = ''
+  private typed = ''
+  private readonly grabber = new Grabber(
+    (text) => this.write(text),
+    (got) => void this.got(got),
+  )
+  private featureWait?: () => void
+  private noticeTimer?: NodeJS.Timeout
+  private peekTimer?: NodeJS.Timeout
+  private peeked?: string
+  private attaching?: AbortController
   private probeWait?: (cell: { w: number; h: number } | null) => void
   private done?: (code: number) => void
   private dirty = false
@@ -366,7 +400,7 @@ class Finder {
       height: version.height,
       reduced: version !== post,
       owner: post.owner,
-      artist: post.artist,
+      artist: site === LOCAL ? sourceLabel(post.source) : post.artist,
       score: post.score,
       variants,
       origin: originHost(post.source),
@@ -419,8 +453,17 @@ class Finder {
       this.view.searching = false
       this.view.error = 'this terminal does not report its cell size — find needs kitty graphics'
     }
+    await this.features()
+    this.grabber.start()
+    this.write('\x1b[?1004h')
+    void this.peek()
     this.draw()
     const code = await exit
+    this.grabber.stop()
+    this.write('\x1b[?1004l')
+    this.attaching?.abort()
+    clearTimeout(this.noticeTimer)
+    clearTimeout(this.peekTimer)
     this.session.abort()
     this.fetch?.abort()
     clearTimeout(this.settle)
@@ -475,8 +518,18 @@ class Finder {
     if (this.probeWait) {
       return
     }
+    const taken = takeInbound(this.input)
+    this.input = taken.pending
+    if (this.view.editing === undefined && taken.keys.length > 8 && /^(?:\/|~\/|file:|https?:)/.test(taken.keys)) {
+      this.pasted(taken.keys)
+      taken.keys = ''
+    }
+    this.typed += taken.keys
+    for (const event of taken.events) {
+      this.inbound(event)
+    }
     clearTimeout(this.partial)
-    if (incomplete(this.input)) {
+    if (incomplete(this.typed)) {
       this.partial = setTimeout(this.flushKeys, ESCAPE)
       return
     }
@@ -484,11 +537,263 @@ class Finder {
   }
 
   private readonly flushKeys = (): void => {
-    const keys = decodeKeys(this.input)
-    this.input = ''
+    const keys = decodeKeys(this.typed)
+    this.typed = ''
     for (const key of keys) {
       this.key(key)
     }
+  }
+
+  private features(): Promise<void> {
+    if (process.env.TMUX) {
+      return Promise.resolve()
+    }
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        this.featureWait = undefined
+        resolve()
+      }, 500)
+      this.featureWait = () => {
+        clearTimeout(timer)
+        this.featureWait = undefined
+        resolve()
+      }
+      this.write('\x1b[?5522$p\x1b]72;t=q\x1b\\\x1b[c')
+    })
+  }
+
+  private inbound(event: Inbound): void {
+    if (event.kind === 'mode') {
+      if (event.mode === 5522) {
+        this.grabber.clipboard = event.value !== 0 && event.value !== 4
+      }
+      return
+    }
+    if (event.kind === 'attributes') {
+      this.featureWait?.()
+      return
+    }
+    if (event.kind === 'osc') {
+      if (event.code === '72' && event.meta.t === 'q') {
+        this.grabber.drops = true
+        return
+      }
+      this.grabber.take(event)
+      return
+    }
+    this.pasted(event.text)
+  }
+
+  private pasted(text: string): void {
+    const view = this.view
+    if (view.editing !== undefined && text.trim() !== '' && !this.picture(text)) {
+      view.editing += text.replace(/[\r\n]+/g, ' ')
+      this.suggest()
+      this.draw()
+      return
+    }
+    if (view.installing !== undefined || view.asking !== undefined || view.panel !== undefined || view.help) {
+      return
+    }
+    if (text.trim() === '') {
+      void this.fromClipboard()
+      return
+    }
+    void this.attach(text)
+  }
+
+  private picture(text: string): boolean {
+    const trimmed = text.trim()
+    if (/^https?:\/\/\S+$/i.test(trimmed)) {
+      return !postRef(trimmed, this.site ?? (SITES[0] as Site))
+    }
+    return pastedRefs(trimmed).length > 0
+  }
+
+  private async got(got: Got): Promise<void> {
+    if (got.kind === 'error') {
+      this.notice(got.message)
+      return
+    }
+    if (got.kind === 'text') {
+      if (got.text.trim() === '') {
+        this.notice(`no picture on the clipboard — ${SCREENSHOT}`)
+        return
+      }
+      this.pasted(got.text)
+      return
+    }
+    await this.bring(() => normalize(got.bytes, got.source))
+  }
+
+  private notice(text: string, ms = NOTICE): void {
+    const view = this.view
+    view.error = text
+    clearTimeout(this.noticeTimer)
+    this.noticeTimer = setTimeout(() => {
+      if (view.error === text) {
+        view.error = undefined
+        this.draw()
+      }
+    }, ms)
+    this.draw()
+  }
+
+  private async peek(): Promise<void> {
+    const view = this.view
+    let seen: Awaited<ReturnType<typeof peekClipboard>>
+    try {
+      seen = await peekClipboard()
+    } catch {
+      return
+    }
+    if (!seen || seen.stamp === this.peeked) {
+      return
+    }
+    this.peeked = seen.stamp
+    if (!seen.picture || view.installing !== undefined || view.asking !== undefined) {
+      return
+    }
+    view.hint = `picture on the clipboard · ${PASTE_KEY} uses it`
+    clearTimeout(this.peekTimer)
+    this.peekTimer = setTimeout(() => {
+      view.hint = undefined
+      this.draw()
+    }, PEEK)
+    this.draw()
+  }
+
+  private async fromClipboard(): Promise<void> {
+    const view = this.view
+    if (remote()) {
+      if (this.grabber.clipboard) {
+        this.grabber.ask()
+        return
+      }
+      this.notice('over ssh the clipboard is not here — drop the file')
+      return
+    }
+    let clip: Clip
+    try {
+      clip = await readClipboard(join(this.scratch, `clipboard-${Date.now()}.png`))
+    } catch (error) {
+      this.notice(`could not read the clipboard: ${describe(error)}`)
+      return
+    }
+    clearTimeout(this.peekTimer)
+    view.hint = undefined
+    if ('image' in clip) {
+      await this.bring(async (signal) => ({ ...(await loadRef(clip.image, signal)), source: 'clipboard' }))
+      return
+    }
+    const text = clip.text.trim()
+    if (!text) {
+      this.notice(`no picture on the clipboard — ${SCREENSHOT}`)
+      return
+    }
+    if (this.picture(text)) {
+      await this.attach(text)
+      return
+    }
+    if (view.editing === undefined) {
+      view.editing = ''
+    }
+    this.pasted(text)
+  }
+
+  private async attach(text: string): Promise<void> {
+    const trimmed = text.trim()
+    if (/^https?:\/\//i.test(trimmed)) {
+      const ref = postRef(trimmed, this.site ?? (SITES[0] as Site))
+      if (ref) {
+        await this.jump(ref.site, ref.id)
+        return
+      }
+    }
+    const [first, ...more] = pastedRefs(trimmed).sort((a, b) => Number(!PICTURE.test(a)) - Number(!PICTURE.test(b)))
+    if (!first) {
+      this.notice('nothing to use in that — drop a picture, or paste one or its link')
+      return
+    }
+    await this.bring((signal) => loadRef(first, signal), more.length)
+  }
+
+  private async bring(load: (signal: AbortSignal) => Promise<Loaded>, skipped = 0): Promise<void> {
+    const view = this.view
+    this.attaching?.abort()
+    const control = new AbortController()
+    this.attaching = control
+    view.error = undefined
+    view.saved = undefined
+    view.note = 'reading the picture…'
+    this.draw()
+    let image: Loaded
+    try {
+      image = await load(AbortSignal.any([control.signal, this.signal]))
+    } catch (error) {
+      if (!control.signal.aborted) {
+        view.note = undefined
+        this.notice(describe(error), 8000)
+      }
+      return
+    }
+    if (control.signal.aborted) {
+      return
+    }
+    view.note = skipped > 0 ? `the first picture of ${skipped + 1} — drop one at a time to try the others` : undefined
+    this.quietSuggest()
+    view.editing = undefined
+    view.suggest = undefined
+    view.pick = undefined
+    const id = localId(image.bytes)
+    remember(id, image.source)
+    const orig = this.origPath(LOCAL, id, image.ext)
+    mkdirSync(dirname(orig), { recursive: true })
+    writeFileSync(orig, image.bytes)
+    const url = pathToFileURL(orig).href
+    const post: Post = {
+      id,
+      file: url,
+      width: image.width,
+      height: image.height,
+      ext: image.ext,
+      preview: url,
+      owner: '',
+      artist: '',
+      score: 0,
+      rating: 's',
+      md5: createHash('md5').update(image.bytes).digest('hex'),
+      source: image.source,
+      tags: [],
+      solo: undefined,
+      family: 0,
+      smaller: [],
+    }
+    const pick = { site: LOCAL, post }
+    const preview = this.previewPath(pick)
+    mkdirSync(dirname(preview), { recursive: true })
+    writeFileSync(preview, image.bytes)
+    ++this.gen
+    this.current = undefined
+    view.shown = undefined
+    const board = blank(`local|post:${id}`, false)
+    this.board = board
+    this.boards.set(board.key, board)
+    this.single(board, pick)
+  }
+
+  private single(board: Board, pick: Pick): void {
+    board.searching = false
+    this.posts.set(postKey(pick.site, pick.post.id), pick)
+    board.groups = [{ posts: [pick], open: false }]
+    board.checked = 1
+    board.total = 1
+    this.thumbQueue.push(pick)
+    this.thumbs()
+    this.view.mode = 'try'
+    this.show()
+    this.select()
+    this.draw()
   }
 
   private readonly onClock = (): void => {
@@ -524,6 +829,17 @@ class Finder {
     }
     if (view.asking !== undefined) {
       this.askKey(key)
+      return
+    }
+    if (key === 'focus-in') {
+      void this.peek()
+      return
+    }
+    if (key === 'focus-out' || key === 'nop') {
+      return
+    }
+    if ((key === 'ctrl-v' || key === 'alt-v') && view.panel === undefined) {
+      void this.fromClipboard()
       return
     }
     if (view.editing !== undefined) {
@@ -581,6 +897,10 @@ class Finder {
       view.mode = 'try'
       view.error = undefined
       this.select()
+      return
+    }
+    if (key === 'v') {
+      void this.fromClipboard()
       return
     }
     if (key === 'c') {
@@ -828,6 +1148,10 @@ class Finder {
       await this.jump(ref.site, ref.id)
       return
     }
+    if (this.picture(text)) {
+      await this.attach(text)
+      return
+    }
     this.view.tag = text
     this.boards.clear()
     await this.search()
@@ -850,25 +1174,15 @@ class Finder {
       if (gen !== this.gen) {
         return
       }
-      board.searching = false
       if (!post) {
+        board.searching = false
         board.error = `${site.name} has no post ${id}`
         this.view.error = board.error
-      } else {
-        const pick = { site, post }
-        this.posts.set(postKey(site, post.id), pick)
-        board.groups = [{ posts: [pick], open: false }]
-        board.checked = 1
-        board.total = 1
-        this.thumbQueue.push(pick)
-        this.thumbs()
-        this.view.mode = 'try'
+        this.show()
+        this.draw()
+        return
       }
-      this.show()
-      if (post) {
-        this.select()
-      }
-      this.draw()
+      this.single(board, { site, post })
     } catch (error) {
       this.fail(gen, error, site)
     }
@@ -942,6 +1256,10 @@ class Finder {
     }
     if (key === 'x') {
       this.swap()
+      return
+    }
+    if (key === 'v') {
+      void this.fromClipboard()
       return
     }
     if (key === 'enter') {

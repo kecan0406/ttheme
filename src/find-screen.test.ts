@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { cellReport } from './find-screen.ts'
+import { cellReport, decodeKeys } from './find-screen.ts'
 
 test('cellReport reads the xterm cell size in pixels', () => {
   assert.deepEqual(cellReport('x\x1b[6;34;14ty'), { cell: { h: 34, w: 14 }, rest: 'xy' })
@@ -14,4 +14,8 @@ test('cellReport scales iTerm2 ReportCellSize points to pixels, with either term
 test('cellReport waits for a report that has not fully arrived', () => {
   assert.equal(cellReport('\x1b]1337;ReportCellSize=17.0;7'), null)
   assert.equal(cellReport('\x1b[6;34'), null)
+})
+
+test('decodeKeys reads the picture paste keys and focus reports', () => {
+  assert.deepEqual(decodeKeys('\x16\x1bv\x1b[I\x1b[O\x1b'), ['ctrl-v', 'alt-v', 'focus-in', 'focus-out', 'esc'])
 })
