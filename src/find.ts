@@ -294,6 +294,7 @@ class Finder {
       })),
       colors: { cursor: entry.cursor, selection: entry.selection, ansi: entry.ansi },
       tiles: [],
+      installed: [],
       checked: 0,
       total: 0,
       searching: tag !== '',
@@ -442,8 +443,12 @@ class Finder {
     process.stdout.write(text)
   }
 
+  get saved(): string | undefined {
+    return this.view.saved
+  }
+
   private finish(code: number): void {
-    this.done?.(code)
+    this.done?.(code === 2 && this.saved ? 0 : code)
   }
 
   private probe(): Promise<{ w: number; h: number } | null> {
@@ -1831,13 +1836,17 @@ class Finder {
       known[current.id] = this.posts.get(current.key)?.post.owner ?? ''
       writeCache(current.site, 'owners.json', known)
       refreshProfiles(this.home)
-      process.stderr.write(`background · ${this.entry.name} ← ${current.site.name} ${current.id}\n`)
-      this.finish(0)
+      view.saved = `background · ${this.entry.name} ← ${current.site.name} ${current.id}`
+      view.installed.push(tile.key)
+      this.fetch?.abort()
+      clearTimeout(this.settle)
+      view.fetching = undefined
+      view.mode = 'grid'
     } catch (error) {
-      view.installing = undefined
       view.error = error instanceof Error ? error.message : String(error)
-      this.draw()
     }
+    view.installing = undefined
+    this.draw()
   }
 
   private draw(): void {
@@ -1924,5 +1933,10 @@ export async function runFind(name: string): Promise<number> {
   }
   const finder = new Finder(home, catalog, entry, entry.booru ?? '')
   const code = await finder.run()
-  return finder.unblock ? relaunch() : code
+  const next = finder.unblock ? await relaunch() : code
+  if (finder.saved && next !== 0) {
+    process.stderr.write(`${finder.saved}\n`)
+    return 0
+  }
+  return next
 }

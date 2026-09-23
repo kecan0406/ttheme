@@ -279,8 +279,10 @@ remove almost nothing, the picture stays opaque; elsewhere it always does. A pos
 fetched as the site's own smaller copy instead — up to 3500 px on yande.re and
 konachan, 850 px on danbooru — and its size carries `↓`; those
 copies are JPEGs, so a cutout tried on that way comes out opaque. `←`/`→` try
-the neighbours, which find fetches ahead of you two at a time, enter installs,
-and the preview carries on straight into the tuning panel below. `c` switches
+the neighbours, which find fetches ahead of you two at a time, and enter installs
+and returns to the grid with the tile marked `✓`, the tab, search and scroll as
+you left them; esc then hands the last one installed to the preview, which
+carries on straight into the tuning panel below. `c` switches
 between every post and the cutouts, esc goes back. Unless the settings say otherwise,
 only `safe` and `general` posts are shown, and none tagged with nudity or
 underwear (`nude`, `panties` and each site's own spelling of them) — with only

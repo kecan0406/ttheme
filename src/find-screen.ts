@@ -62,6 +62,7 @@ export interface FindView {
   panel?: number
   colors: { cursor: Hex; selection: Hex; ansi: Hex[] }
   tiles: Tile[]
+  installed: number[]
   checked: number
   total: number
   searching: boolean
@@ -78,6 +79,7 @@ export interface FindView {
   suggest?: { value: string; count: number; palette?: string }[]
   pick?: number
   asking?: string
+  saved?: string
   note?: string
   error?: string
   waiting?: number
@@ -519,6 +521,9 @@ function status(view: FindView): Part | undefined {
   if (view.preparing !== undefined) {
     return [`preparing ${view.preparing % KEY_SPAN}`, YELLOW]
   }
+  if (view.saved) {
+    return [view.saved, GREEN]
+  }
   if (view.note) {
     return [view.note, D]
   }
@@ -545,6 +550,7 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
       images.push({ id: tile.key, path: tile.thumb, row: r0 + 1, col: c0 + 1, cols: TILE.cols, rows: TILE.rows, z: -1 })
     }
     lines[r0 + 10]?.run(c0 + 1, [
+      ...(view.installed.includes(tile.key) ? ([['✓ ', GREEN]] as Part[]) : []),
       ...(view.site === 'all' ? ([['● ', `\x1b[${30 + tile.siteAnsi}m`]] as Part[]) : []),
       [String(tile.id), on ? B : ''],
       [' ', ''],
