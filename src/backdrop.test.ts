@@ -8,11 +8,9 @@ import {
   backdropTone,
   backgroundsDir,
   type Colors,
-  coverBox,
   dropImage,
-  fillBox,
   fillFrame,
-  headAnchor,
+  fillSize,
   imageKeys,
   installBackdrop,
   switchImage,
@@ -59,88 +57,64 @@ test('a cursor too faint to show moves the tint to the signature slot that shows
   assert.equal(backdropTone(tight, ['cursor', 'ansi0', 'ansi4']).slot, 'ansi4')
 })
 
-test('a tall figure keeps its head: the fill starts a little below the top of the figure', () => {
-  const tall = { x: 10, y: 20, w: 1000, h: 3000 }
-  const crop = fillBox(tall, 2560, 1550, headAnchor(tall))
-  assert.equal(crop.w, tall.w)
-  assert.ok(Math.abs(crop.h - (1000 * 1550) / 2560) < 1e-9)
-  assert.ok(Math.abs(crop.y - (tall.y + 0.15 * crop.h)) < 1e-9)
-})
-
-test('the anchor lands where kagami was measured by hand on a bust-up', () => {
-  assert.equal(Math.round(headAnchor({ x: 49, y: 10, w: 2045, h: 1994 }) * 100), 40)
-})
-
-test('a figure wider than the fill keeps its full height and centers horizontally', () => {
-  const wide = { x: 0, y: 0, w: 4000, h: 1000 }
-  const crop = fillBox(wide, 2560, 1550, headAnchor(wide))
-  assert.equal(crop.h, 1000)
-  assert.ok(Math.abs(crop.x + crop.w / 2 - 2000) < 1e-9)
-})
-
-test('the try-on crops the fill the way ghostty covers a window of another shape', () => {
-  const fill = { x: 0, y: 0, w: 2560, h: 1550 }
-  const tall = coverBox(fill, 1000, 1000)
-  assert.deepEqual([tall.w, tall.h, tall.x], [1550, 1550, 505])
-  const wide = coverBox(fill, 3000, 1000)
-  assert.ok(Math.abs(wide.h - 2560 / 3) < 1e-9)
-  assert.ok(Math.abs(wide.y - (1550 - 2560 / 3) / 2) < 1e-9)
-})
-
-test('a figure too narrow to fill the band stands in the frame instead of being cropped to its head', () => {
-  const tall = { x: 10, y: 20, w: 1000, h: 3000 }
-  const frame = fillFrame(tall, 2560, 1550, headAnchor(tall), 60)
-  assert.equal(frame.inset, true)
-  assert.equal(frame.crop.y, tall.y, 'a head anchor this high cannot trim the top of the figure')
-  assert.ok(Math.abs(frame.crop.h - 0.55 * tall.h) < 1e-9, 'it keeps 55% of the figure')
-  assert.ok(frame.at.y > 0 && frame.at.y + frame.at.h === 1550, 'the headroom is above it')
-  assert.ok(frame.at.x > 1550 * 0.5 && frame.at.x + frame.at.w < 2560, 'it sits right of centre, clear of the edge')
-})
-
-test('the frame grows into the covering crop as the figure widens, with no jump at the switch', () => {
-  const shape = (ratio: number) => {
-    const box = { x: 0, y: 0, w: ratio * 1000, h: 1000 }
-    const frame = fillFrame(box, 2560, 1550, headAnchor(box), 60)
-    return { inset: frame.inset, w: frame.at.w, y: frame.at.y, top: frame.crop.y }
-  }
-  const under = shape(0.908)
-  const over = shape(0.91)
-  assert.deepEqual([under.inset, over.inset], [true, false], 'they sit on either side of the switch')
-  assert.ok(Math.abs(under.w - over.w) < 2560 * 0.01, 'the figure does not resize across it')
-  assert.ok(Math.abs(under.y - over.y) < 1550 * 0.01, 'the headroom does not appear across it')
-  assert.ok(Math.abs(under.top - over.top) < 1000 * 0.01, 'the crop does not slide across it')
-
-  const widths = [0.2, 0.4, 0.6, 0.8, 0.9].map((r) => shape(r).w)
-  assert.deepEqual(
-    widths,
-    [...widths].sort((a, b) => a - b),
-    'a wider figure always fills more of the frame',
+test('a cut-out stands whole from its head down, right of centre, a little taller than the window', () => {
+  const bust = { x: 49, y: 10, w: 2045, h: 1994 }
+  const frame = fillFrame(bust, 1880, 1008, 40)
+  assert.deepEqual(frame.crop, { ...bust, h: frame.crop.h }, 'the crop keeps the top and both sides of the figure')
+  assert.ok(Math.abs(frame.at.y - 0.04 * 1008) < 1e-9, 'the head sits under a little headroom')
+  assert.ok(Math.abs(frame.at.x + frame.at.w - 0.97 * 1880) < 1e-9, 'it stands against the right edge')
+  assert.ok(
+    Math.abs(frame.at.h / (frame.crop.h / bust.h) - 1.15 * 1008) < 1e-6,
+    'the whole figure is 115% of the window',
   )
 })
 
-test('a wide enough figure keeps the crop it always had', () => {
-  const bust = { x: 49, y: 10, w: 2045, h: 1994 }
-  const frame = fillFrame(bust, 2560, 1550, headAnchor(bust), 60)
-  assert.equal(frame.inset, false)
-  assert.deepEqual(frame.crop, fillBox(bust, 2560, 1550, headAnchor(bust)))
+test('a tall narrow figure grows until it spans 40% of the window, so a full body shows its upper half', () => {
+  const tall = { x: 10, y: 20, w: 1000, h: 3000 }
+  const frame = fillFrame(tall, 1880, 1008, 40)
+  assert.ok(Math.abs(frame.at.w - 0.4 * 1880) < 1e-9)
+  assert.equal(frame.crop.y, tall.y)
+  assert.ok(frame.crop.h < tall.h * 0.6)
 })
 
-test('an opaque picture is a wallpaper: it is covered, never stood in the frame', () => {
-  const tall = { x: 0, y: 0, w: 1000, h: 3000 }
-  assert.equal(fillFrame(tall, 2560, 1550, headAnchor(tall), 0).inset, false)
-  assert.equal(fillFrame(tall, 2560, 1550, headAnchor(tall), 2).inset, false)
-  assert.equal(fillFrame(tall, 2560, 1550, headAnchor(tall), 3).inset, true)
+test('a figure wider than the window shrinks to fit its width instead of losing its sides', () => {
+  const wide = { x: 0, y: 0, w: 4000, h: 1000 }
+  const frame = fillFrame(wide, 1880, 1008, 40)
+  assert.ok(Math.abs(frame.at.w - 0.95 * 1880) < 1e-9)
+  assert.equal(frame.crop.w, wide.w)
+})
+
+test('a picture that fills its box is a wallpaper: it covers the window from its top', () => {
+  const tall = { x: 0, y: 5, w: 1000, h: 3000 }
+  const frame = fillFrame(tall, 1880, 1008, 11)
+  assert.deepEqual(frame.at, { x: 0, y: 0, w: 1880, h: 1008 })
+  assert.equal(frame.crop.y, tall.y)
+  assert.equal(fillFrame(tall, 1880, 1008, 12).at.w < 1880, true)
+  const wide = { x: 0, y: 0, w: 4000, h: 1000 }
+  assert.ok(Math.abs(fillFrame(wide, 1880, 1008, 0).crop.x + fillFrame(wide, 1880, 1008, 0).crop.w / 2 - 2000) < 1e-9)
+})
+
+test("the fill is made at the window's shape, no wider than 2560", () => {
+  assert.deepEqual(fillSize(3760, 2016), { width: 2560, height: 1373 })
+  assert.deepEqual(fillSize(1200, 800), { width: 1200, height: 800 })
 })
 
 function install(configHome: string, id: number): void {
   const image = { width: 4, height: 4, data: new Uint8Array(64).fill(200 + id) }
-  installBackdrop(configHome, KAGAMI, toneFor(KAGAMI, 'cursor'), image, {
-    site: 'safebooru',
-    id,
-    ext: 'png',
-    bytes: new Uint8Array([id]),
-    from: `safebooru ${id} https://example.test/${id}`,
-  })
+  installBackdrop(
+    configHome,
+    KAGAMI,
+    toneFor(KAGAMI, 'cursor'),
+    image,
+    {
+      site: 'safebooru',
+      id,
+      ext: 'png',
+      bytes: new Uint8Array([id]),
+      from: `safebooru ${id} https://example.test/${id}`,
+    },
+    { width: 40, height: 20 },
+  )
 }
 
 function shown(dir: string): string | undefined {

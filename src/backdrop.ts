@@ -6,13 +6,10 @@ import { check } from './contrast.ts'
 import type { ProfileBackground } from './emit/iterm2.ts'
 import { alphaBox, type Box, encodePng, type Rgba, resample, transparency } from './png.ts'
 
-export const FILL = { width: 2560, height: 1550 }
+const FILL = { width: 2560, height: 1550 }
 const FIGURE = 2560
 const FAINT = 0.1
-const HEADROOM = 0.15
-const KEEP = 0.55
-const PLACE = 0.65
-const STANDS = 3
+export const PLACEMENT = { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 }
 const PEAK = luminance(mix('#19161e', '#9b86c8', 0.2))
 const SHELF = 'shelf'
 
@@ -152,31 +149,12 @@ function figureBox(image: Rgba): Box {
   return alphaBox(image) ?? { x: 0, y: 0, w: image.width, h: image.height }
 }
 
-export function headAnchor(box: Box): number {
-  return Math.min(0.5, (HEADROOM + 0.5) * ((box.w * FILL.height) / FILL.width / box.h))
-}
-
-function band(box: Box, h: number, anchor: number): Box {
-  const top = Math.min(Math.max(0, anchor * box.h - h / 2), box.h - h)
-  return { x: box.x, y: box.y + top, w: box.w, h }
-}
-
-export function fillBox(box: Box, width: number, height: number, anchor: number): Box {
-  const h = (box.w * height) / width
-  if (h <= box.h) {
-    return band(box, h, anchor)
+export function fillSize(width: number, height: number): { width: number; height: number } {
+  if (width <= 0 || height <= 0) {
+    return FILL
   }
-  const w = (box.h * width) / height
-  return { x: box.x + (box.w - w) / 2, y: box.y, w, h: box.h }
-}
-
-export function coverBox(box: Box, width: number, height: number): Box {
-  if (box.w * height > box.h * width) {
-    const w = (box.h * width) / height
-    return { x: box.x + (box.w - w) / 2, y: box.y, w, h: box.h }
-  }
-  const h = (box.w * height) / width
-  return { x: box.x, y: box.y + (box.h - h) / 2, w: box.w, h }
+  const k = Math.min(1, FILL.width / Math.max(width, height))
+  return { width: Math.round(width * k), height: Math.round(height * k) }
 }
 
 export function figure(image: Rgba, box: Box): Rgba {
@@ -187,22 +165,29 @@ export function figure(image: Rgba, box: Box): Rgba {
 export interface Frame {
   crop: Box
   at: Box
-  inset: boolean
+  focus: number
 }
 
-export function fillFrame(box: Box, width: number, height: number, anchor: number, clear: number): Frame {
-  const keep = KEEP * box.h
-  const span = (box.w * height) / width
-  if (clear < STANDS || span > keep) {
-    return { crop: fillBox(box, width, height, anchor), at: { x: 0, y: 0, w: width, h: height }, inset: false }
+export function fillFrame(box: Box, width: number, height: number, clear: number): Frame {
+  if (clear < PLACEMENT.stands) {
+    const crop =
+      box.w * height > box.h * width
+        ? { x: box.x + (box.w - (box.h * width) / height) / 2, y: box.y, w: (box.h * width) / height, h: box.h }
+        : { x: box.x, y: box.y, w: box.w, h: (box.w * height) / width }
+    return { crop, at: { x: 0, y: 0, w: width, h: height }, focus: (crop.y - box.y + crop.h / 2) / box.h }
   }
-  const short = 1 - span / keep
-  const h = height * (1 - HEADROOM * short)
-  const w = (box.w * h) / keep
+  let h = Math.max(PLACEMENT.tall * height, (PLACEMENT.reach * width * box.h) / box.w)
+  let w = (h * box.w) / box.h
+  if (w > PLACEMENT.widest * width) {
+    w = PLACEMENT.widest * width
+    h = (w * box.h) / box.w
+  }
+  const y = PLACEMENT.headroom * height
+  const shown = Math.min(1, (height - y) / h)
   return {
-    crop: band(box, keep, anchor),
-    at: { x: (width - w) * PLACE, y: height - h, w, h },
-    inset: true,
+    crop: { x: box.x, y: box.y, w: box.w, h: box.h * shown },
+    at: { x: width * (1 - PLACEMENT.margin) - w, y, w, h: h * shown },
+    focus: Math.min(1, (height / 2 - y) / h),
   }
 }
 
@@ -225,32 +210,9 @@ function paint(image: Rgba, frame: Frame, width: number, height: number): Rgba {
   return { width, height, data: out }
 }
 
-export function fill(image: Rgba, box: Box, anchor: number, clear: number): Rgba {
-  const frame = fillFrame(box, FILL.width, FILL.height, anchor, clear)
-  return frame.inset
-    ? paint(image, frame, FILL.width, FILL.height)
-    : resample(image, frame.crop, FILL.width, FILL.height)
-}
-
-export function tryOn(image: Rgba, colors: Colors, tone: Tone, width: number, height: number, clear: number): Rgba {
+export function tryOn(image: Rgba, colors: Colors, tone: Tone, width: number, height: number): Rgba {
   const box = figureBox(image)
-  const frame = fillFrame(box, FILL.width, FILL.height, headAnchor(box), clear)
-  let shown: Rgba
-  if (frame.inset) {
-    const view = coverBox({ x: 0, y: 0, w: FILL.width, h: FILL.height }, width, height)
-    const k = width / view.w
-    shown = paint(
-      image,
-      {
-        ...frame,
-        at: { x: (frame.at.x - view.x) * k, y: (frame.at.y - view.y) * k, w: frame.at.w * k, h: frame.at.h * k },
-      },
-      width,
-      height,
-    )
-  } else {
-    shown = resample(image, coverBox(frame.crop, width, height), width, height)
-  }
+  const shown = paint(image, fillFrame(box, width, height, transparency(image, box)), width, height)
   return composite(tint(shown, colors.background, tone.color), colors.background, tone.opacity)
 }
 
@@ -264,7 +226,7 @@ function backdropConf(name: string, fillPath: string, opacity: number, from?: st
     ...(key ? [`# image ${key}`] : []),
     `background-image = ${fillPath}`,
     'background-image-fit = cover',
-    'background-image-position = center',
+    'background-image-position = top-right',
     `background-image-opacity = ${opacity}`,
     `config-file = ?${name}.tune.conf`,
     `config-file = ?${name}.off.conf`,
@@ -445,6 +407,7 @@ export function installBackdrop(
   tone: Tone,
   image: Rgba,
   original: Original,
+  window: { width: number; height: number },
 ): string[] {
   const dir = backgroundsDir(configHome)
   const name = colors.name
@@ -452,13 +415,13 @@ export function installBackdrop(
   mkdirSync(join(dir, 'originals'), { recursive: true })
   retire(dir, name, key)
   const box = figureBox(image)
-  const anchor = headAnchor(box)
-  const clear = transparency(image)
+  const { width, height } = fillSize(window.width, window.height)
+  const frame = fillFrame(box, width, height, transparency(image, box))
   const figurePng = encodePng(tint(figure(image, box), colors.background, tone.color))
-  const fillPng = encodePng(tint(fill(image, box, anchor, clear), colors.background, tone.color))
+  const fillPng = encodePng(tint(paint(image, frame, width, height), colors.background, tone.color))
   const stem = join(dir, `${name}.${createHash('sha1').update(figurePng).update(fillPng).digest('hex').slice(0, 8)}`)
   const whole = `${stem}.png`
-  const fillPath = `${stem}@fill-${Math.round(anchor * 100)}.png`
+  const fillPath = `${stem}@fill-${Math.round(frame.focus * 100)}.png`
   const conf = join(dir, `${name}.conf`)
   const source = join(dir, 'originals', `${name}-${original.site}_${original.id}.${original.ext}`)
   writeFileSync(whole, figurePng)

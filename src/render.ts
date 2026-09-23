@@ -40,6 +40,8 @@ interface Backdrop {
   colors: Colors
   tone: Tone
   origin: { site: string; id: number; ext: string; from: string }
+  width: number
+  height: number
 }
 
 export interface Look {
@@ -56,10 +58,17 @@ const LANES: Record<Task['job'], Lane> = { thumb: 'tile', match: 'tile', show: '
 function work(task: Task): number | Look {
   const image = decodeImage(new Uint8Array(readFileSync(task.from)), MAX_PIXELS)
   if (task.job === 'backdrop') {
-    installBackdrop(task.home, task.colors, task.tone, image, {
-      ...task.origin,
-      bytes: new Uint8Array(readFileSync(task.source)),
-    })
+    installBackdrop(
+      task.home,
+      task.colors,
+      task.tone,
+      image,
+      {
+        ...task.origin,
+        bytes: new Uint8Array(readFileSync(task.source)),
+      },
+      task,
+    )
     return 0
   }
   if (task.job === 'match') {
@@ -72,7 +81,7 @@ function work(task: Task): number | Look {
   }
   const clear = transparency(image)
   mkdirSync(dirname(task.to), { recursive: true })
-  writeFileSync(task.to, encodePng(tryOn(image, task.colors, task.tone, task.width, task.height, clear)))
+  writeFileSync(task.to, encodePng(tryOn(image, task.colors, task.tone, task.width, task.height)))
   return clear
 }
 

@@ -97,14 +97,16 @@ export function alphaBox(image: Rgba, threshold = CLEAR): Box | null {
   return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 }
 }
 
-export function transparency(image: Rgba): number {
+export function transparency(image: Rgba, box: Box = { x: 0, y: 0, w: image.width, h: image.height }): number {
   let clear = 0
-  for (let i = 3; i < image.data.length; i += 4) {
-    if ((image.data[i] ?? 0) < CLEAR) {
-      clear++
+  for (let y = box.y; y < box.y + box.h; y++) {
+    for (let x = box.x; x < box.x + box.w; x++) {
+      if ((image.data[(y * image.width + x) * 4 + 3] ?? 0) < CLEAR) {
+        clear++
+      }
     }
   }
-  return Math.round((clear * 100) / (image.width * image.height))
+  return Math.round((clear * 100) / (box.w * box.h))
 }
 
 function shrinkBy(image: Rgba, k: number): Rgba {

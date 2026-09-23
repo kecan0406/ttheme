@@ -296,7 +296,9 @@ minute, with a countdown at the bottom. ttheme keeps no
 list of images — the tag is all it knows about a character.
 
 An install writes `<palette>.<hash>.png` (the tinted figure),
-`<palette>.<hash>@fill-<focus>.png` (the window-shaped crop) — the hash is of
+`<palette>.<hash>@fill-<focus>.png` (the picture made at the shape of the window
+find ran in: a cut-out stands whole from its head down against the right edge, a
+little taller than the window, and a wallpaper covers it from its top) — the hash is of
 their content, because Ghostty and iTerm2 reload a background only when its path
 changes, so no two pictures may share a name — `<palette>.conf` and the untouched original under
 `backgrounds/originals/`, and starts it untuned — the picture it replaces moves
@@ -318,7 +320,7 @@ screen as it changes: 100% is the whole image fitted into the window
 (`contain`), below that it shrinks to 20%, above it the image grows around the
 face until it covers the window, and the top step is **fill** (`cover`). Fill
 uses `<palette>.<hash>@fill-<focus>.png` when it sits beside the image — a crop made
-to fill the window, whose name carries the height of the face in percent, which
+to fill the window, whose name carries the height of the figure at the window's middle, which
 the sizes above 100% zoom around — and the image itself otherwise. Position
 steps through the nine `background-image-position` anchors, or `1`–`9` jump to
 one in reading order; opacity moves by 0.01. Space turns the palette's

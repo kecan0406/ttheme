@@ -1831,6 +1831,8 @@ class Finder {
           ext: current.ext,
           from: `${current.site.name} ${current.id} ${current.site.pageUrl(current.id)}`,
         },
+        width: this.cols * this.cell.w,
+        height: this.rows * this.cell.h,
       })
       const known = readCache<string>(current.site, 'owners.json')
       known[current.id] = this.posts.get(current.key)?.post.owner ?? ''
