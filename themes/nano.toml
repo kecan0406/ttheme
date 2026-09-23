@@ -1,0 +1,32 @@
+[meta]
+name = "nano"
+group = "Nichijou"
+order = 148
+ansi_source = "Tomorrow Night Eighties + Nichijou"
+booru = "shinonome_nano"
+signature = ["cursor", "ansi1", "selection"]
+
+[colors]
+background = "#171819"
+foreground = "#e3e2e4"
+cursor = "#707072"
+selection_background = "#353432"
+ansi = [
+  "#232425",
+  "#df8988",
+  "#85b786",
+  "#e5b451",
+  "#72a5d8",
+  "#c895c8",
+  "#59c0c0",
+  "#c7c6c8",
+
+  "#777779",
+  "#ffabaa",
+  "#a5d9a5",
+  "#ffd78e",
+  "#93c5fb",
+  "#ebb5ea",
+  "#7de2e2",
+  "#efedef",
+]

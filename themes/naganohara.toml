@@ -1,0 +1,32 @@
+[meta]
+name = "naganohara"
+group = "Nichijou"
+order = 146
+ansi_source = "Oceanic Next + Nichijou"
+booru = "naganohara_mio"
+signature = ["cursor", "selection", "ansi3"]
+
+[colors]
+background = "#13181e"
+foreground = "#dae3f1"
+cursor = "#9cc2ec"
+selection_background = "#354660"
+ansi = [
+  "#1f242a",
+  "#dc7bea",
+  "#6eb8af",
+  "#e9b173",
+  "#72a5d8",
+  "#ac9dd8",
+  "#70bbd1",
+  "#c2c7cf",
+
+  "#73777f",
+  "#f6a4ff",
+  "#8fd9d0",
+  "#b1eca3",
+  "#93c5fb",
+  "#cdbefa",
+  "#91ddf3",
+  "#e6effc",
+]

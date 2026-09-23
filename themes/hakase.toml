@@ -1,0 +1,36 @@
+[meta]
+name = "hakase"
+group = "Nichijou"
+order = 149
+ansi_source = "GitHub Dark Default + Nichijou"
+booru = "professor_shinonome"
+signature = ["cursor", "selection", "ansi1"]
+
+[meta.booru_sites]
+konachan = "hakase_(nichijou)"
+yande = "hakase"
+
+[colors]
+background = "#1f160d"
+foreground = "#f9dec8"
+cursor = "#febf84"
+selection_background = "#204776"
+ansi = [
+  "#2c2219",
+  "#eb8283",
+  "#acb200",
+  "#f6ad3f",
+  "#c786ec",
+  "#f77db9",
+  "#79c179",
+  "#d5c3b6",
+
+  "#837469",
+  "#ffad8e",
+  "#cdd428",
+  "#ffd79d",
+  "#d6b2ff",
+  "#ffb0cf",
+  "#9ce399",
+  "#ffeada",
+]

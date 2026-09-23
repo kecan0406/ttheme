@@ -1,0 +1,35 @@
+[meta]
+name = "yukko"
+group = "Nichijou"
+order = 145
+ansi_source = "Graphite + Nichijou"
+booru = "aioi_yuuko"
+signature = ["cursor", "selection", "ansi9"]
+
+[meta.booru_sites]
+yande = "aioi_yuko"
+
+[colors]
+background = "#1f160e"
+foreground = "#faddc9"
+cursor = "#d09261"
+selection_background = "#443c34"
+ansi = [
+  "#2c2219",
+  "#e3896f",
+  "#b1af67",
+  "#dcb66d",
+  "#a798cf",
+  "#d393b1",
+  "#81bd9f",
+  "#d6c3b6",
+
+  "#847469",
+  "#ffaab0",
+  "#d2d084",
+  "#ffd6a4",
+  "#c8b9f1",
+  "#f7b3d3",
+  "#a2dfbe",
+  "#ffeadc",
+]

@@ -1,0 +1,32 @@
+[meta]
+name = "mai"
+group = "Nichijou"
+order = 147
+ansi_source = "Spacegray Eighties + Nichijou"
+booru = "minakami_mai"
+signature = ["cursor", "selection", "ansi1"]
+
+[colors]
+background = "#1b1713"
+foreground = "#ebe1d9"
+cursor = "#766f69"
+selection_background = "#383430"
+ansi = [
+  "#28231e",
+  "#dd898f",
+  "#90b672",
+  "#ecb245",
+  "#72a4df",
+  "#ce91d0",
+  "#55c1c0",
+  "#cec5be",
+
+  "#7d7670",
+  "#ffabac",
+  "#9adc9a",
+  "#ffd976",
+  "#9ec2ff",
+  "#ffaaf6",
+  "#7ce2dd",
+  "#f6ece4",
+]

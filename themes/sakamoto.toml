@@ -1,0 +1,35 @@
+[meta]
+name = "sakamoto"
+group = "Nichijou"
+order = 150
+ansi_source = "Red Sands + Nichijou"
+booru = "sakamoto_(nichijou)"
+signature = ["selection", "cursor", "foreground"]
+
+[meta.booru_sites]
+yande = "sakamoto"
+
+[colors]
+background = "#171818"
+foreground = "#e2e2e2"
+cursor = "#ef7576"
+selection_background = "#474747"
+ansi = [
+  "#242424",
+  "#ff7855",
+  "#63bf52",
+  "#ebb308",
+  "#729eff",
+  "#ec7de2",
+  "#21c4c4",
+  "#c8c6c6",
+
+  "#787777",
+  "#ffaca1",
+  "#84e26f",
+  "#ffd882",
+  "#87c7ff",
+  "#ffaaf6",
+  "#30e8e8",
+  "#f0eded",
+]
