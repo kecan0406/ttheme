@@ -1,24 +1,47 @@
+__tt_out() {
+  if (( TTHEME_TMUX )); then
+    printf '\ePtmux;%s\e\\' "${1//$'\e'/$'\e\e'}"
+  else
+    printf '%s' "$1"
+  fi
+}
+
 __tt_osc_apply() {
   local -a p=(${=1})
   (( ${#p} >= 20 )) || return 1
+  local out i
 
   if [[ $p[1] == - ]]; then
-    printf '\033]111\033\\'
+    out=$'\e]111\e\\'
   else
-    printf '\033]11;%s\033\\' "$p[1]"
+    out=$'\e]11;'$p[1]$'\e\\'
   fi
-  printf '\033]10;%s\033\\\033]12;%s\033\\\033]17;%s\033\\' "$p[2]" "$p[3]" "$p[4]"
-
-  local osc4="" i
-  for i in {0..15}; do osc4+=";$i;$p[i+5]"; done
-  printf '\033]4%s\033\\' "$osc4"
+  out+=$'\e]10;'$p[2]$'\e\\\e]12;'$p[3]$'\e\\\e]17;'$p[4]$'\e\\\e]4'
+  for i in {0..15}; do out+=";$i;$p[i+5]"; done
+  __tt_out "$out"$'\e\\'
+  (( TTHEME_TMUX )) && tmux set -q @ttheme_bg "$p[1]" 2>/dev/null
+  return 0
 }
 
-__tt_osc_reset() { printf '\033]104\033\\\033]110\033\\\033]111\033\\\033]112\033\\\033]117\033\\' }
+__tt_osc_reset() {
+  __tt_out $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'
+  (( TTHEME_TMUX )) && tmux set -qu @ttheme_bg 2>/dev/null
+  return 0
+}
+
+__tt_repaint() {
+  if [[ -n $TTHEME_SPEC ]]; then
+    __tt_apply "$TTHEME_SPEC"
+  else
+    __tt_osc_reset
+  fi
+}
 
 __tt_apply() { __tt_osc_apply "$@" }
 
 __tt_shown() { return 1 }
+
+__tt_unshown() { : }
 
 __tt_keepable() { return 1 }
 
@@ -47,6 +70,11 @@ __tt_pv_bg_save() { : }
 __tt_query_bg() {
   local saved resp="" c fd
   REPLY=""
+  if (( TTHEME_TMUX )); then
+    REPLY=$(tmux show -qv @ttheme_bg 2>/dev/null)
+    [[ $REPLY == \#* ]] && return 0
+    REPLY=""
+  fi
   exec {fd}<>/dev/tty 2>/dev/null || return 1
 
   saved=$(stty -g <&$fd 2>/dev/null)

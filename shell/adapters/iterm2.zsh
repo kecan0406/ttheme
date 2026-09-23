@@ -8,7 +8,9 @@ fi
 __tt_keepable() { return 0 }
 
 __tt_bg_shown() {
-  REPLY=$TTHEME_ITERM_SHOWN
+  REPLY=""
+  (( TTHEME_TMUX )) && REPLY=$(tmux show -qv @ttheme_shown 2>/dev/null)
+  [[ -n $REPLY ]] || REPLY=$TTHEME_ITERM_SHOWN
   [[ $REPLY == default ]] && REPLY=$TTHEME_STARTUP
   [[ -n $REPLY ]]
 }
@@ -18,11 +20,22 @@ __tt_shown() {
   __tt_bg_shown
   was=$REPLY
   [[ $2 != force && $was == $1 ]] && return 1
-  [[ -r $dir/$1.conf || ( -n $was && -r $dir/$was.conf ) ]] || return 1
+  [[ -r $dir/$1.conf || ( -n $was && -r $dir/$was.conf ) ]] || (( TTHEME_MUXED )) || return 1
   (( ${TTHEME_ORDER[(Ie)$1]} )) || return 1
-  printf '\e]1337;SetProfile=ttheme · %s\a' $1
+  __tt_out $'\e]1337;SetProfile=ttheme · '$1$'\a'
   TTHEME_ITERM_SHOWN=$1
+  (( TTHEME_TMUX )) && tmux set -q @ttheme_shown $1 2>/dev/null
   return 1
+}
+
+__tt_unshown() {
+  local want=${TTHEME_STARTUP:+default} was=$TTHEME_ITERM_SHOWN
+  (( TTHEME_TMUX )) && was=$(tmux show -qv @ttheme_shown 2>/dev/null)
+  [[ $1 != force && $was == "$want" ]] && return 0
+  __tt_out $'\e]1337;SetProfile=\a'
+  TTHEME_ITERM_SHOWN=$want
+  (( TTHEME_TMUX )) && tmux set -q @ttheme_shown "$want" 2>/dev/null
+  return 0
 }
 
 __tt_bg_cells() {

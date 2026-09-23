@@ -236,7 +236,7 @@ __tt_pv_bg_open() {
   bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bganchor=0
   local REPLY
   __tt_bg_shown && bginc=$REPLY
-  __tt_bg_cells
+  (( TTHEME_TMUX )) || __tt_bg_cells
 }
 
 __tt_pv_bg_show() {

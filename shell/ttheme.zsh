@@ -78,24 +78,31 @@ else
   typeset -g TTHEME_ADAPTER=unknown
 fi
 
-typeset -g TTHEME_GHOSTTY_PID=""
+typeset -g TTHEME_GHOSTTY_PID="" TTHEME_TMUX=0 TTHEME_MUXED=0
 
 __tt_reload() {
   (( ${TTHEME_TERMINALS[(Ie)ghostty]} )) || return 0
-  local pid=$PPID ppid comm
-  if [[ -z $TTHEME_GHOSTTY_PID ]]; then
-    TTHEME_GHOSTTY_PID=0
+  local pid=$PPID ppid comm owner=$TTHEME_GHOSTTY_PID
+  (( TTHEME_TMUX )) && { pid=$(tmux display -p '#{client_pid}' 2>/dev/null) owner="" }
+  if [[ -z $owner ]]; then
+    owner=0
     while (( pid > 1 )); do
       read -r ppid comm <<< "$(ps -o ppid=,comm= -p $pid)"
       if [[ ${comm:t} == ghostty ]]; then
-        TTHEME_GHOSTTY_PID=$pid
+        owner=$pid
         break
       fi
       pid=$ppid
     done
+    (( TTHEME_TMUX )) || TTHEME_GHOSTTY_PID=$owner
   fi
-  (( TTHEME_GHOSTTY_PID )) && kill -USR2 $TTHEME_GHOSTTY_PID 2>/dev/null && return
+  (( owner )) && kill -USR2 $owner 2>/dev/null && return
   pkill -USR2 -x ghostty 2>/dev/null
+}
+
+__tt_tmux() {
+  [[ $(tmux if -t "$TMUX_PANE" -F '#{==:#{allow-passthrough},off}' 'set -p allow-passthrough on' \; set -sq focus-events on \; display -p '#{client_control_mode}' 2>/dev/null) == 1 ]] && return 0
+  TTHEME_TMUX=1 TTHEME_SPEC=
 }
 
 source $TTHEME_HOME/adapters/_osc.zsh
@@ -209,9 +216,30 @@ __tt_precmd() {
 
 __tt_preexec() { printf '\e[?1004l' }
 
+__tt_rewear() {
+  local REPLY
+  __tt_repaint
+  [[ -n $TTHEME_SPEC ]] || { __tt_unshown $1; return 0 }
+  __tt_name_of "$TTHEME_SPEC"
+  [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || return 0
+  __tt_shown "$REPLY" $1 && __tt_reload
+}
+
 __tt_focus() {
   __tt_fresh
-  __tt_sync
+  if (( TTHEME_TMUX )); then
+    __tt_rewear
+  else
+    __tt_sync
+  fi
+}
+
+__tt_mux() { [[ ${${(z)3}[1]:t} == tmux ]] && TTHEME_MUXED=1 }
+
+__tt_unmux() {
+  (( TTHEME_MUXED )) || return 0
+  __tt_rewear force
+  TTHEME_MUXED=0
 }
 
 __tt_blur() { : }
@@ -1552,6 +1580,7 @@ if (( $+functions[compdef] )); then
 fi
 
 if __tt_active; then
+  [[ -n $TMUX ]] && __tt_tmux
   () {
     local REPLY k
     if [[ -n $TTHEME_SPEC ]]; then
@@ -1572,7 +1601,11 @@ if __tt_active; then
   autoload -Uz add-zsh-hook
   add-zsh-hook chpwd __tt_chpwd
   add-zsh-hook precmd __tt_fresh
-  if [[ $TTHEME_ADAPTER == ghostty ]]; then
+  if (( ! TTHEME_TMUX )); then
+    add-zsh-hook preexec __tt_mux
+    add-zsh-hook precmd __tt_unmux
+  fi
+  if [[ $TTHEME_ADAPTER == ghostty ]] || (( TTHEME_TMUX )); then
     add-zsh-hook precmd __tt_precmd
     add-zsh-hook preexec __tt_preexec
     __tt_bind_focus
