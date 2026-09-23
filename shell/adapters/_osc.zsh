@@ -31,6 +31,8 @@ __tt_osc_reset() {
   return 0
 }
 
+__tt_reset_reloaded() { __tt_osc_reset }
+
 __tt_repaint() {
   if [[ -n $TTHEME_SPEC ]]; then
     __tt_apply "$TTHEME_SPEC"

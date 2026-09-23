@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { contrast, luminance } from './color.ts'
 import { check, RULES } from './contrast.ts'
-import { loadThemes, RESERVED_NAMES, rotation } from './theme.ts'
+import { loadThemes, rotation } from './theme.ts'
 
 const themes = loadThemes(join(import.meta.dirname, '..', 'themes'))
 
@@ -39,12 +39,6 @@ test('palette data is structurally sound', () => {
     assert.equal(theme.ansi.length, 16, `${theme.name} needs 16 ANSI colors`)
     assert.ok(theme.font.family.length > 0, `${theme.name} has no font family`)
     assert.ok(Number.isFinite(theme.font.size), `${theme.name} has no font size`)
-  }
-})
-
-test('no palette name collides with a ttheme subcommand', () => {
-  for (const theme of themes) {
-    assert.ok(!RESERVED_NAMES.has(theme.name), `${theme.name} shadows the ttheme subcommand of the same name`)
   }
 })
 

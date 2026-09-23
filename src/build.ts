@@ -22,11 +22,11 @@ const DIST = join(root, 'dist')
 const TERMINAL_EMITTERS: Emitter[] = [ghostty, kitty, alacritty, wezterm, iterm2, windowsTerminal, warp]
 const SHARED_EMITTERS: Emitter[] = [shell, meta]
 
-export const TERMINALS = TERMINAL_EMITTERS.map((e) => e.id)
+export const EMITTED = TERMINAL_EMITTERS.map((e) => e.id)
 
 export async function build({ only }: { only?: string[] } = {}): Promise<void> {
   if (typeof Bun === 'undefined') {
-    throw new Error('ttheme build needs bun — run it from a checkout: bun src/bin.ts build')
+    throw new Error('needs bun — run it from a checkout: bun src/bin.ts build')
   }
   const terminals = only && only.length > 0 ? TERMINAL_EMITTERS.filter((e) => only.includes(e.id)) : TERMINAL_EMITTERS
 

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync 
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { backgroundsDir, readBackdrop } from './backdrop.ts'
-import { gateFailures, readCatalog } from './catalog.ts'
+import { gateFailures, nearest, readCatalog } from './catalog.ts'
 import { alacritty, type Emitter, ghostty, iterm2, kitty, warp, wezterm, windowsTerminal } from './emit/index.ts'
 import { itermProfiles, type ProfileBackground } from './emit/iterm2.ts'
 import { kittyWatcher } from './emit/kitty.ts'
@@ -177,7 +177,7 @@ export function resolve(catalog: Manifest, names: string[]): PaletteEntry[] {
   const known = new Map(catalog.palettes.map((p) => [p.name, p]))
   const missing = names.filter((n) => !known.has(n))
   if (missing.length > 0) {
-    throw new Error(`not in the catalog: ${missing.join(', ')} — \`ttheme list\` shows what is there`)
+    throw new Error(`not in the catalog: ${missing.join(', ')} — ${nearest(listed(catalog.palettes), missing)}`)
   }
   const failed = names.flatMap((name) => {
     const failures = gateFailures(known.get(name) as PaletteEntry)

@@ -41,7 +41,7 @@ tmux swallows palette OSCs, so colors on this screen mean nothing — measure th
 
 ```zsh
 G=.claude/skills/sandbox/scripts/ghostty.zsh
-zsh $G --shots <scratchpad>/paint gojo konata -- 'ttheme gojo' 'sb_report "fg $(sb_color fg) ansi1 $(sb_color 1)"'
+zsh $G --shots <scratchpad>/paint gojo konata -- 'ttheme use gojo' 'sb_report "fg $(sb_color fg) ansi1 $(sb_color 1)"'
 ```
 
 The script starts a fresh sandbox with those palettes (every palette when none are named, none with `--empty`) and opens a second Ghostty instance on it — its own config only, no saved window state — then hands focus back to whatever the user had in front as soon as the window exists. The commands after `--` run once, at the first prompt of that first window. Then it prints the results and closes the instance; `--keep` leaves it open. Anything longer than a line or two goes in a file in the scratchpad, passed as `-- "source <file>"`; the arguments are joined with `; ` and nested quotes get painful fast.
@@ -58,8 +58,8 @@ Inside the commands (both window modes):
   sb_drive 'ttheme preview' 2 text:miku 1 shot:on-miku tab 1 down down right enter 0.5 enter right enter 3
   ```
 - `sb_report text…` adds a line to the results.
-- All of ttheme is loaded: `ttheme <name>`, the adapter functions, and the pieces preview runs on enter. Preview's "keep as default" is `__tt_apply`, `__tt_announce`, then `__tt_keep <name>`, and it is only offered when `TTHEME_TAB_PALETTE=off` — `__tt_keep` alone records the default through `ttheme default` (`installed.json`, then every wired terminal's config) and reloads, but leaves the window's colors alone.
-- stdout stays on the window because ttheme paints through stdout — redirecting it would paint a file, so never `ttheme <name> > /dev/null` when the colors matter. stderr is collected and shown.
+- All of ttheme is loaded: `ttheme use <name>`, the adapter functions, and the pieces preview runs on enter. Preview's "keep as default" is `__tt_apply`, `__tt_announce`, then `__tt_keep <name>`, and it is only offered when `TTHEME_TAB_PALETTE=off` — `__tt_keep` alone records the default through `ttheme default` (`installed.json`, then every wired terminal's config) and reloads, but leaves the window's colors alone.
+- stdout stays on the window because ttheme paints through stdout — redirecting it would paint a file, so never `ttheme use <name> > /dev/null` when the colors matter. stderr is collected and shown.
 
 The output, in order:
 
@@ -74,7 +74,7 @@ The output, in order:
 
 Log lines such as "config reload notification" also show up at launch and are not reloads.
 
-What a window shows after a reload: an existing window keeps its colors. After `__tt_osc_reset` and a keep that rewrote `theme =`, the background was still the old theme two seconds after the reload. The config line and the next run's first window are where a kept default shows. Measured colors are only meaningful against the theme file at `$TMPDIR/ttheme-sandbox/.config/ghostty/themes/<name>`. Painted (OSC) colors hide the config's, so call `__tt_osc_reset` first when the question is about the config.
+What a window shows after a reload: an existing window keeps its colors. After `__tt_osc_reset` and a keep that rewrote `theme =`, the background was still the old theme two seconds after the reload — the reset landed before Ghostty applied the reload; another `__tt_osc_reset` once it has shows the new default (`__tt_reset_reloaded` does that for `ttheme off`). Calling `__tt_precmd` inside the commands turns focus reporting on outside a prompt, so the window losing focus prints `^[[O`; that is the harness, not ttheme. The config line and the next run's first window are where a kept default shows. Measured colors are only meaningful against the theme file at `$TMPDIR/ttheme-sandbox/.config/ghostty/themes/<name>`. Painted (OSC) colors hide the config's, so call `__tt_osc_reset` first when the question is about the config.
 
 Keep screenshots in the session scratchpad, never the repo, and read them with the Read tool. The window is unfocused, so the cursor is drawn hollow. A colored smear on the prompt's first cell shows up on every Ghostty run; it is most likely the cursor-tail shader stalling in an unfocused window, not ttheme output.
 
@@ -86,7 +86,7 @@ In Ghostty mode the shell's `HOME` is the user's real home, because macOS `login
 
 ```zsh
 I=.claude/skills/sandbox/scripts/iterm.zsh
-zsh $I --shots <scratchpad>/it gojo miku -- 'ttheme gojo' 'sb_wear miku' 'sleep 1' 'sb_report "bg $(sb_color bg)"'
+zsh $I --shots <scratchpad>/it gojo miku -- 'ttheme use gojo' 'sb_wear miku' 'sleep 1' 'sb_report "bg $(sb_color bg)"'
 ```
 
 `mise run sandbox --iterm` wires the sandbox as `init` does for iTerm2 (`ttheme · <palette>` profiles in `$SANDBOX/Library/Application Support/iTerm2/DynamicProfiles/ttheme.json`) and starts a second iTerm2 with `-suite ttheme-sandbox`: its own preferences (`~/Library/Preferences/ttheme-sandbox.plist`), its own `~/Library/Application Support/ttheme-sandbox/` with its own `iTermServer`, so the user's iTerm2 — running or not — is never touched. Every run deletes both and rebuilds. The launch arguments keep Sparkle and window restoration out of the user's `com.googlecode.iterm2` domain; check that domain is unchanged after a series (`defaults read com.googlecode.iterm2`). It comes to the front for about a quarter second at launch and hands focus straight back; nothing after that takes focus, SetProfile and kitty graphics included.
@@ -118,7 +118,7 @@ Measured on 3.7.2, 2026-09-22 — know these before reading results:
 
 ```zsh
 W=.claude/skills/sandbox/scripts/window.zsh
-TTHEME_KITTY_APP=<kitty.app> zsh $W --kitty --shots <scratchpad>/k asuka gojo -- 'ttheme gojo' 'sb_report "ansi1 $(sb_color 1)"'
+TTHEME_KITTY_APP=<kitty.app> zsh $W --kitty --shots <scratchpad>/k asuka gojo -- 'ttheme use gojo' 'sb_report "ansi1 $(sb_color 1)"'
 ```
 
 `--kitty`, `--alacritty` or `--wezterm` picks the terminal; `TTHEME_KITTY_APP`, `TTHEME_ALACRITTY_APP` and `TTHEME_WEZTERM_APP` name an app outside `/Applications` (none of the three is installed on the user's machine — download the release into the scratchpad and point at it). Everything else is Ghostty mode's: the commands run at the first prompt with `sb_color`, `sb_query`, `sb_report` and `sb_shot`, and the same report comes back.

@@ -13,7 +13,7 @@
     "!shell/check.zsh",
     "ghostty/shaders"
   ],
-  "description": "Character terminal palettes for ghostty, kitty, alacritty, wezterm and iTerm2",
+  "description": "Character terminal palettes for Ghostty, kitty, Alacritty, WezTerm, iTerm2, Windows Terminal and Warp",
   "license": "MIT",
   "author": "kecan0406",
   "repository": {

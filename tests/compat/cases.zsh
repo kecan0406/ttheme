@@ -138,16 +138,16 @@ __cc_cases() {
   (( $+functions[__tt_name_of] )) && __tt_name_of "$TTHEME_SPEC"
   other=${${TTHEME_ORDER:#$REPLY}[1]}
   if (( $+functions[ttheme] )) && [[ -n $other ]]; then
-    ttheme $other
+    ttheme use $other
     spec=${${=TTHEME_PALETTE[$other]}[1]}
     local ansi=${${=TTHEME_PALETTE[$other]}[6]} got=""
     REPLY=""
     __cc_color '4;1' && got=$REPLY
     REPLY=""
     if [[ $TTHEME_SPEC == ${TTHEME_PALETTE[$other]} ]] && __cc_color 11 && __cc_near $spec $REPLY && __cc_near $ansi $got; then
-      __cc_report wear pass "ttheme $other reads back $REPLY, ansi 1 $got"
+      __cc_report wear pass "ttheme use $other reads back $REPLY, ansi 1 $got"
     else
-      __cc_report wear fail "ttheme $other left the tab on ${REPLY:-its own colors} and ansi 1 ${got:-unread}, wanted $spec and $ansi"
+      __cc_report wear fail "ttheme use $other left the tab on ${REPLY:-its own colors} and ansi 1 ${got:-unread}, wanted $spec and $ansi"
     fi
     __cc_painted wear-painted $spec $start
   else

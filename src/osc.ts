@@ -4,6 +4,10 @@ import type { PaletteEntry } from './emit/manifest.ts'
 
 const QUERY_CODES = ['10', '11', '12', '17', ...Array.from({ length: 16 }, (_, i) => `4;${i}`)]
 
+export function colorless(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(env.NO_COLOR) || env.TERM === 'dumb'
+}
+
 export function paletteOsc(entry: PaletteEntry): string {
   return [
     `\x1b]11;${entry.background}\x1b\\`,

@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { TERMINALS } from './build.ts'
+import { EMITTED } from './build.ts'
 import { parse, UsageError, VERBS } from './cli.ts'
+import { TERMINALS } from './verbs.ts'
 
 test('build --only rejects unknown terminals', () => {
   assert.throws(() => parse(['build', '--only', 'vscode']), UsageError)
 })
 
 test('build --only offers every terminal', () => {
-  assert.deepEqual(TERMINALS, ['ghostty', 'kitty', 'alacritty', 'wezterm', 'iterm2', 'windows-terminal', 'warp'])
+  assert.deepEqual(EMITTED, [...TERMINALS])
   assert.deepEqual(parse(['build', '--only', 'kitty', '--only', 'iterm2']), {
     kind: 'run',
     verb: VERBS.find((v) => v.name === 'build'),
@@ -25,21 +26,12 @@ test('--version is its own invocation', () => {
   assert.deepEqual(parse(['--version']), { kind: 'version' })
 })
 
-test('the catalog verbs are registered alongside build and init', () => {
-  assert.deepEqual(VERBS.map((v) => v.name).sort(), [
-    'add',
-    'browse',
-    'build',
-    'default',
-    'find',
-    'image',
-    'init',
-    'list',
-    'off',
-    'on',
-    'remove',
-    'update',
-  ])
+test('every verb either runs here or belongs to the shell layer', () => {
+  assert.deepEqual(
+    VERBS.filter((v) => !v.run).map((v) => v.name),
+    ['use', 'preview', 'next', 'pin', 'unpin', 'config'],
+  )
+  assert.ok(VERBS.filter((v) => v.shell).every((v) => !v.run))
 })
 
 test('init rejects unknown options', () => {

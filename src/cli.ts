@@ -1,95 +1,38 @@
 import { type ParseArgsOptionsConfig, parseArgs } from 'node:util'
 import pkg from '../package.json' with { type: 'json' }
-import { build, TERMINALS } from './build.ts'
+import { build } from './build.ts'
 import { runFind } from './find.ts'
 import { runImage } from './images.ts'
-import { runInit } from './init.ts'
+import { Cancelled, runInit } from './init.ts'
 import { runAdd, runBrowse, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './market.ts'
+import { type Section, VERB_SPECS, type VerbSpec } from './verbs.ts'
 
 export interface Flags {
   yes?: boolean
   only?: string[]
+  json?: boolean
 }
 
-interface Flag {
-  type: 'boolean' | 'string'
-  multiple?: true
-  value?: string
-  choices?: readonly string[]
-  about: string
+export interface Verb extends VerbSpec {
+  run?(args: string[], flags: Flags): unknown
 }
 
-export interface Verb {
-  name: string
-  args: string[]
-  about: string
-  hidden?: true
-  flags?: Record<string, Flag>
-  run(args: string[], flags: Flags): unknown
+const RUNS: Record<string, Verb['run']> = {
+  default: ([name]) => runDefault(name as string),
+  on: () => runOn(),
+  off: () => runOff(),
+  browse: () => runBrowse(),
+  list: ([query], { json }) => runList(query, json),
+  add: (names) => runAdd(names),
+  remove: (names) => runRemove(names),
+  update: () => runUpdate(),
+  init: (_, { yes }) => runInit({ yes }),
+  build: (_, { only }) => build({ only }),
+  find: ([name]) => runFind(name as string),
+  image: ([name, action]) => runImage(name as string, action as string),
 }
 
-export const VERBS: Verb[] = [
-  {
-    name: 'build',
-    args: [],
-    about: 'emit dist/ for every terminal, plus the zsh palette table',
-    flags: {
-      only: {
-        type: 'string',
-        multiple: true,
-        value: '<terminal>',
-        choices: TERMINALS,
-        about: 'rebuild just this terminal — repeat it for more',
-      },
-    },
-    run: (_, { only }) => build({ only }),
-  },
-  {
-    name: 'init',
-    args: [],
-    about: 'install the palettes and wire your terminal configs',
-    flags: { yes: { type: 'boolean', about: 'accept every default without prompting' } },
-    run: (_, { yes }) => runInit({ yes }),
-  },
-  { name: 'browse', args: [], about: 'pick palettes from the catalog in a live picker', run: () => runBrowse() },
-  {
-    name: 'list',
-    args: ['[query]'],
-    about: 'show the catalog, marking what is installed',
-    run: ([query]) => runList(query),
-  },
-  { name: 'add', args: ['<palette...>'], about: 'install palettes from the catalog', run: (names) => runAdd(names) },
-  { name: 'remove', args: ['<palette...>'], about: 'uninstall palettes', run: (names) => runRemove(names) },
-  {
-    name: 'default',
-    args: ['<palette>'],
-    about: 'make an installed palette the one new tabs open with',
-    run: ([name]) => runDefault(name as string),
-  },
-  { name: 'on', args: [], about: 'wear the default palette in new tabs again', run: () => runOn() },
-  {
-    name: 'off',
-    args: [],
-    about: "open new tabs in the terminal's own colors until `ttheme on`",
-    run: () => runOff(),
-  },
-  {
-    name: 'find',
-    args: ['<palette>'],
-    about: 'pick a booru background for a palette — preview opens this on tab',
-    hidden: true,
-    run: ([name]) => runFind(name as string),
-  },
-  {
-    name: 'image',
-    args: ['<palette>', '<action>'],
-    about:
-      'switch a palette between its saved backgrounds, remove the one shown, or pass on tuning — preview calls this',
-    hidden: true,
-    run: ([name, action]) => runImage(name as string, action as string),
-  },
-  { name: 'update', args: [], about: 'refresh the catalog from the registry', run: () => runUpdate() },
-]
+export const VERBS: Verb[] = VERB_SPECS.map((spec) => ({ ...spec, run: RUNS[spec.name] }))
 
 export type Invocation =
   | { kind: 'help'; verb?: Verb; code: number }
@@ -115,8 +58,8 @@ function verbNamed(name: string): Verb {
 
 function parseFlags(verb: Verb, args: string[]) {
   const options: ParseArgsOptionsConfig = { help: { type: 'boolean', short: 'h' } }
-  for (const [name, { type, multiple }] of Object.entries(verb.flags ?? {})) {
-    options[name] = { type, multiple: multiple === true }
+  for (const [name, { type, short, multiple }] of Object.entries(verb.flags ?? {})) {
+    options[name] = { type, multiple: multiple === true, ...(short ? { short } : {}) }
   }
   try {
     return parseArgs({ args, options, allowPositionals: true })
@@ -170,15 +113,16 @@ function usage(verb: Verb): string {
   return [verb.name, ...flags, ...verb.args].join(' ')
 }
 
-function columns(rows: [string, string][]): string[] {
-  const width = Math.max(...rows.map(([left]) => left.length))
+function columns(rows: [string, string][], width = Math.max(...rows.map(([left]) => left.length))): string[] {
   return rows.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`)
 }
 
+const SECTIONS: Section[] = ['tab', 'catalog', 'setup']
+
 export function help(verb?: Verb): string {
   if (verb) {
-    const flags = Object.entries(verb.flags ?? {}).map(([name, { value, about }]): [string, string] => [
-      `--${name}${value ? ` ${value}` : ''}`,
+    const flags = Object.entries(verb.flags ?? {}).map(([name, { short, value, about }]): [string, string] => [
+      `${short ? `-${short}, ` : ''}--${name}${value ? ` ${value}` : ''}`,
       about,
     ])
     return [
@@ -188,19 +132,31 @@ export function help(verb?: Verb): string {
       ...(flags.length > 0 ? ['', 'Options:', ...columns(flags)] : []),
     ].join('\n')
   }
+  const shown = VERBS.filter((v) => !v.hidden)
+  const commands = (section: Section) =>
+    shown.filter((v) => v.section === section).map((v): [string, string] => [usage(v), v.about])
+  const width = Math.max(...shown.map((v) => usage(v).length))
   return [
     'Usage: ttheme <command>',
     '',
     pkg.description,
     '',
     'Commands:',
-    ...columns(VERBS.filter((v) => !v.hidden).map((v): [string, string] => [usage(v), v.about])),
+    ...SECTIONS.flatMap((section, i) => [...(i > 0 ? [''] : []), ...columns(commands(section), width)]),
+    '',
+    'Examples:',
+    '  npx @kecan0406/ttheme init -y   wire the terminals found here, no prompts',
+    '  ttheme add homura madoka        install two palettes',
+    '  ttheme use homura              paint this tab with one',
+    '  ttheme list --json madoka       the madoka series as JSON',
     '',
     'ttheme <command> --help describes one command · ttheme --version prints the version',
+    'https://kecan0406.github.io/ttheme',
   ].join('\n')
 }
 
 export async function runCli(argv: readonly string[]): Promise<number> {
+  let running: Verb | undefined
   try {
     const call = parse(argv)
     if (call.kind === 'version') {
@@ -215,6 +171,10 @@ export async function runCli(argv: readonly string[]): Promise<number> {
       }
       return call.code
     }
+    running = call.verb
+    if (!call.verb.run) {
+      throw new Error('runs in the shell layer — open a new tab once `ttheme init` has wired it')
+    }
     const code = await call.verb.run(call.args, call.flags)
     return typeof code === 'number' ? code : 0
   } catch (error) {
@@ -222,7 +182,13 @@ export async function runCli(argv: readonly string[]): Promise<number> {
       console.error(`ttheme${error.verb ? ` ${error.verb.name}` : ''}: ${error.message}\n\n${help(error.verb)}`)
       return 1
     }
-    console.error(`\n${error instanceof Error ? error.message : String(error)}`)
+    if (error instanceof Cancelled) {
+      return 1
+    }
+    const detail = process.env.TTHEME_DEBUG && error instanceof Error ? error.stack : undefined
+    console.error(
+      `\nttheme${running ? ` ${running.name}` : ''}: ${detail ?? (error instanceof Error ? error.message : String(error))}`,
+    )
     return 1
   }
 }

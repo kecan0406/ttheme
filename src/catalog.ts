@@ -76,9 +76,17 @@ export function gateFailures(palette: PaletteEntry): string[] {
 export function find(palettes: PaletteEntry[], name: string): PaletteEntry {
   const hit = palettes.find((p) => p.name === name)
   if (!hit) {
-    throw new Error(`no palette named ${name} in the catalog — \`ttheme list\` shows what is there`)
+    throw new Error(`no palette named ${name} in the catalog — ${nearest(palettes, [name])}`)
   }
   return hit
+}
+
+export function nearest(palettes: PaletteEntry[], names: string[]): string {
+  const needles = names.map((n) => n.toLowerCase())
+  const named = palettes.filter((p) => needles.some((n) => p.name.includes(n)))
+  const grouped = palettes.filter((p) => !named.includes(p) && needles.some((n) => p.group.toLowerCase().includes(n)))
+  const near = [...named, ...grouped].map((p) => p.name).slice(0, 3)
+  return near.length > 0 ? `did you mean: ${near.join(', ')}?` : '`ttheme list` shows what is there'
 }
 
 export function search(palettes: PaletteEntry[], query: string): PaletteEntry[] {

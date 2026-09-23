@@ -23,8 +23,7 @@ entirely, and this project stays out of distributing it.
 
 One palette per pull request. At most three open at a time.
 
-- `themes/<name>.toml`, where `<name>` matches `meta.name`, is lowercase, and is
-  not one of the reserved words in `RESERVED_NAMES` (`src/theme.ts`).
+- `themes/<name>.toml`, where `<name>` matches `meta.name` and is lowercase.
 - `meta.group` needs a matching `[[group]]` in `themes/_groups.toml`. Adding a
   new series means adding that table, with its `native` title and the `lead`
   palette whose signature colors the group. A theme file never repeats them.

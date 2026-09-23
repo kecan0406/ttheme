@@ -12,8 +12,21 @@ __tt_palettes_load() {
 
 __tt_fresh() {
   local -a at
+  local was=$TTHEME_STARTUP
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null || return 0
-  [[ $at[1] == "$TTHEME_PALETTES_AT" ]] || { __tt_palettes_load && __tt_reloaded }
+  [[ $at[1] == "$TTHEME_PALETTES_AT" ]] && return 0
+  __tt_palettes_load && __tt_reloaded
+  [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
+}
+
+__tt_off_here() {
+  local bg=${TTHEME_SPEC%% *}
+  TTHEME_SPEC=
+  if __tt_shown "" || [[ $1 == reload ]]; then
+    __tt_reload
+  fi
+  __tt_unshown force
+  __tt_reset_reloaded $bg
 }
 
 if [[ -r $TTHEME_HOME/palettes.zsh ]]; then
@@ -134,7 +147,7 @@ __tt_spec() {
 
 __tt_name_of() { REPLY=${${(k)TTHEME_PALETTE[(re)$1]}:-custom} }
 
-__tt_color() { [[ -t 1 && -z $NO_COLOR ]] }
+__tt_color() { [[ -t 1 && -z $NO_COLOR && $TERM != dumb ]] }
 
 __tt_palette_line() {
   local name=$1 marker=$2
@@ -379,34 +392,60 @@ __tt_menu() {
     [[ $k == $cur ]] && mark=$gutter
     __tt_palette_line "$k" "$mark"
   done
-  printf '\n\033[2mttheme <name> paints this tab · ttheme preview · ttheme help\033[0m\n'
+  printf '\n\033[2mttheme use <palette> paints this tab · ttheme preview · ttheme help\033[0m\n'
 }
 
 __tt_help() {
-  print -r -- 'ttheme — character terminal palettes
+  local v
+  print -r -- $'ttheme — character terminal palettes\n'
+  print -r -- "  ${(r:16:):-ttheme}list every palette, grouped, with previews"
+  for v in $TTHEME_VERBS; do
+    if [[ $v == - ]]; then
+      print
+    else
+      print -r -- "  ${(r:16:)${:-ttheme $v}}$TTHEME_VERB_ABOUT[$v]"
+    fi
+  done
+  print -r -- $'\nttheme <command> --help describes one command · ttheme --version prints the version'
+}
 
-  ttheme          list every palette, grouped, with previews
-  ttheme homura   paint this tab (a unique prefix works: ttheme ho)
-  ttheme preview  browse live — focus repaints, enter keeps (this tab or default), esc restores, ? lists keys
-  ttheme next     advance this tab to the next palette
-  ttheme default  make a palette the one new tabs open with
-  ttheme off      open new tabs in the terminal'"'"'s own colors — ttheme on wears the default again
-  ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
-  ttheme unpin    drop the palette pinned to this directory
-  ttheme config   edit settings in $EDITOR — they apply in new tabs
+__tt_usage() {
+  print -r -- "Usage: ttheme ${${:-$1 $TTHEME_VERB_ARGS[$1]}% }"$'\n\n'"$TTHEME_VERB_ABOUT[$1]"
+}
 
-  ttheme browse   pick palettes from the catalog in a live picker
-  ttheme list     show the catalog, marking what is installed
-  ttheme add      install palettes from the catalog
-  ttheme remove   uninstall palettes
-  ttheme update   refresh the catalog from the registry'
+__tt_verb_help() {
+  if (( ${TTHEME_SHELL_VERBS[(Ie)$1]} )); then
+    __tt_usage $1
+  elif [[ -n $1 && -n ${TTHEME_VERB_ABOUT[$1]} ]]; then
+    __tt_cli $1 --help
+  else
+    __tt_help
+  fi
+}
+
+__tt_misuse() {
+  print -u2 -r -- "ttheme $1: $2"$'\n'
+  __tt_usage $1 >&2
+  return 1
+}
+
+__tt_arity() {
+  local verb=$1
+  shift
+  local -a want=(${=TTHEME_VERB_ARGS[$verb]})
+  local least=${#${(M)want:#\<*}} most=${#want}
+  (( ${#${(M)want:#*...*}} )) && most=$#
+  (( $# >= least )) || { __tt_misuse $verb "missing $want[$# + 1]"; return }
+  (( $# <= most )) || { __tt_misuse $verb "too many arguments: ${argv[most + 1, -1]}"; return }
 }
 
 __tt_cli() {
-  TTHEME_FIND_RATING=$TTHEME_FIND_RATING TTHEME_FIND_BLOCK=$TTHEME_FIND_BLOCK \
-    TTHEME_FIND_POSTS=$TTHEME_FIND_POSTS TTHEME_FIND_SOLO=$TTHEME_FIND_SOLO TTHEME_FIND_ORDER=$TTHEME_FIND_ORDER TTHEME_FIND_SETS=$TTHEME_FIND_SETS \
-    TTHEME_FIND_HOSTS=$TTHEME_FIND_HOSTS TTHEME_FIND_UNBLOCK=$TTHEME_FIND_UNBLOCK TTHEME_FIND_CUTOUTS=$TTHEME_FIND_CUTOUTS TTHEME_FIND_REMOVE_BG=$TTHEME_FIND_REMOVE_BG \
-    node $TTHEME_HOME/ttheme.js "$@"
+  local k
+  local -a pass=()
+  for k in $TTHEME_SETTINGS; do
+    (( $+parameters[$k] )) && pass+=("$k=${(P)k}")
+  done
+  env $pass node $TTHEME_HOME/ttheme.js "$@"
 }
 
 __tt_catalog() {
@@ -421,18 +460,20 @@ __tt_catalog() {
 
 __tt_switch() {
   local spec
-  __tt_catalog $1 || return
-  __tt_active || return 0
+  __tt_cli "$@" || return
+  [[ -r $TTHEME_HOME/palettes.zsh ]] && __tt_palettes_load && __tt_reloaded
+  if ! __tt_active; then
+    __tt_reload
+    return 0
+  fi
   if [[ $1 == off ]]; then
-    __tt_osc_reset
-    TTHEME_SPEC=
-    __tt_shown "" && __tt_reload
-    __tt_unshown force
+    __tt_off_here reload
   elif [[ -n $TTHEME_STARTUP ]]; then
     spec=${TTHEME_PALETTE[$TTHEME_STARTUP]}
     __tt_apply "$spec"
     TTHEME_SPEC=$spec
-    __tt_shown "$TTHEME_STARTUP" force && __tt_reload
+    __tt_shown "$TTHEME_STARTUP" force
+    __tt_reload
   fi
 }
 
@@ -1559,7 +1600,21 @@ __tt_preview() {
 }
 
 ttheme() {
-  if [[ $TTHEME_ADAPTER == warp && $1 != (-h|--help|help|browse|list|add|remove|update|config|default|on|off) ]]; then
+  if (( $# > 1 && ${${argv[2,-1]}[(I)(-h|--help)]} )); then
+    __tt_verb_help $1
+    return
+  fi
+  case $1 in
+    -h|--help) __tt_help; return 0 ;;
+    -V|--version) __tt_cli --version; return ;;
+    help) __tt_verb_help $2; return 0 ;;
+    -*) print -u2 "ttheme: unknown option $1 — see \`ttheme help\`"; return 1 ;;
+  esac
+  if (( $# )) && [[ -z ${TTHEME_VERB_ABOUT[$1]} ]]; then
+    print -u2 "ttheme: unknown command '$1' — see \`ttheme help\`"
+    return 1
+  fi
+  if [[ $TTHEME_ADAPTER == warp && $1 != (browse|list|add|remove|update|config|default|on|off) ]]; then
     print -u2 "ttheme: Warp wears one theme app-wide and paints no tab background of its own — \`ttheme default <palette>\` puts one on every Warp window"
     return 1
   fi
@@ -1570,41 +1625,43 @@ ttheme() {
   fi
 
   case $1 in
-    -h|--help|help) __tt_help; return 0 ;;
     browse|list|add|remove|update) __tt_catalog "$@"; return ;;
-    config) __tt_config; return ;;
+    on|off) __tt_switch "$@"; return ;;
   esac
-
+  __tt_arity "$@" || return
+  [[ $1 == config ]] && { __tt_config; return }
   (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
 
+  local REPLY spec
   case $1 in
-    next) __tt_rotate; return ;;
-    default)
-      [[ -n $2 ]] || { print -u2 "ttheme default: name a palette — see \`ttheme help\`"; return 1 }
-      local REPLY
+    use)
       __tt_resolve "$2" || return 1
-      __tt_keep "$REPLY"
-      return ;;
-    on|off) __tt_switch $1; return ;;
-    preview) __tt_preview; return ;;
-    pin) __tt_preview pin; return ;;
-    unpin) __tt_unpin; return ;;
-    -*) print -u2 "ttheme: unknown option $1 — see \`ttheme help\`"; return 1 ;;
+      spec=${TTHEME_PALETTE[$REPLY]}
+      __tt_apply "$spec"
+      TTHEME_SPEC=$spec
+      __tt_shown "$REPLY" force && __tt_reload
+      __tt_announce ;;
+    next) __tt_rotate ;;
+    default)
+      __tt_resolve "$2" || return 1
+      __tt_keep "$REPLY" ;;
+    preview) __tt_preview ;;
+    pin) __tt_preview pin ;;
+    unpin) __tt_unpin ;;
   esac
-
-  local REPLY
-  __tt_resolve "$1" || return 1
-  local spec=${TTHEME_PALETTE[$REPLY]}
-  __tt_apply "$spec"
-  TTHEME_SPEC=$spec
-  __tt_shown "$REPLY" force && __tt_reload
-  __tt_announce
 }
 
 if (( $+functions[compdef] )); then
   __tt_complete() {
-    (( CURRENT == 2 )) && compadd -- preview next default on off pin unpin config help browse list add remove update
-    compadd -- $TTHEME_ORDER
+    local -a reply
+    if (( CURRENT == 2 )); then
+      compadd -- ${TTHEME_VERBS:#-} help
+    elif [[ $words[2] == remove || ( $words[2] == (use|default) && CURRENT == 3 ) ]]; then
+      compadd -- $TTHEME_ORDER
+    elif [[ $words[2] == add ]]; then
+      reply=(${${${(M)${(f)"$(__tt_cli list --json 2>/dev/null)"}:#*\"name\": *}#*\"name\": \"}%%\"*})
+      compadd -- ${reply:|TTHEME_ORDER}
+    fi
   }
   compdef __tt_complete ttheme
 fi

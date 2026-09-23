@@ -147,6 +147,8 @@ function ensureSetting(content: string, name: keyof typeof CONFIG_SETTINGS): str
   return `${content.replace(/\n*$/, '\n')}\n${setting.doc}\n${settingLine(name, setting.default)}\n`
 }
 
+export const SETTING_NAMES = Object.keys(CONFIG_SETTINGS)
+
 export function configTemplate(): string {
   const sections = Object.entries(CONFIG_SETTINGS).map(([name, s]) => `${s.doc}\n${settingLine(name, s.default)}`)
   return `${[CONFIG_HEADER, ...sections].join('\n\n')}\n`

@@ -4,6 +4,19 @@ __tt_keepable() { return 0 }
 
 __tt_bg_shown() { __tt_ghostty_shown }
 
+__tt_reset_reloaded() {
+  local REPLY
+  integer i
+  __tt_osc_reset
+  [[ -n $1 ]] && (( ${TTHEME_TERMINALS[(Ie)ghostty]} && ! TTHEME_TMUX )) || return 0
+  for (( i = 0; i < 20; i++ )); do
+    __tt_query_bg || return 0
+    [[ ${(L)REPLY} == ${(L)1} ]] || return 0
+    sleep 0.05
+    __tt_osc_reset
+  done
+}
+
 __tt_shown() {
   local dir=${TTHEME_CONFIG:h}/backgrounds was REPLY
   __tt_bg_shown

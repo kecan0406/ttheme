@@ -48,7 +48,7 @@ get it.
   Terminal.app takes every OSC color but no OSC reset, so ttheme reads its
   colors when the shell starts and puts them back itself. Warp answers OSC
   color queries but paints one theme app-wide and never the background an OSC
-  sets, so the shell layer stays off there and `ttheme <palette>` points you at
+  sets, so the shell layer stays off there and `ttheme use <palette>` points you at
   `ttheme default <palette>`, which puts the palette on every Warp window; any other terminal that speaks OSC 4/10/11 (foot, Konsole,
   VTE-based terminals…) gets repainting and nothing else.
 - **Font** — family and size everywhere it is marked; Ghostty also maps
@@ -142,7 +142,7 @@ palette as the one `theme` key of `[appearance.themes]` in `~/.warp/settings.tom
 It ends with a receipt, paints the first palette onto the tab you
 ran it in (not under `keep`) and lists what to do next (`exec zsh` for the
 `ttheme` command here, a terminal restart for new tabs).
-Running it again updates in place; `--yes` skips every prompt and installs no
+Running it again updates in place; `--yes` (`-y`) skips every prompt and installs no
 palettes — `ttheme browse` opens the full catalog any time, to add or drop
 single palettes.
 
@@ -196,22 +196,27 @@ it for real.
 
 ```
 ttheme          list every palette, grouped, with previews
-ttheme homura   paint this tab    (a unique prefix works: ttheme ho)
+ttheme use      paint this tab    (a unique prefix works: ttheme use ho)
 ttheme preview  browse live — focus repaints the tab, enter keeps it (this tab or default)
 ttheme next     advance this tab to the next palette
 ttheme default  make a palette the one new tabs open with
-ttheme off      open new tabs in the terminal's own colors — ttheme on wears the default again
+ttheme on       wear the default palette in new tabs again
+ttheme off      take the palette and picture off every tab — the terminal's own colors until ttheme on
 ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
 ttheme unpin    drop the palette pinned to this directory
 ttheme config   edit settings in $EDITOR — they apply in new tabs
 ttheme help     the list above, in your terminal
 
 ttheme browse   pick palettes from the catalog in a live picker
-ttheme list     the catalog, ● installed and ○ not (a query filters it)
+ttheme list     the catalog, ● installed and ○ not (a query filters it, --json prints it as JSON)
 ttheme add      install palettes from the catalog
 ttheme remove   uninstall palettes
 ttheme update   refresh the catalog from the registry
 ```
+
+`ttheme <command> --help` (or `ttheme help <command>`) describes one command
+without running it, and `ttheme --version` prints the version. `TTHEME_DEBUG=1`
+in front of any command prints where an error came from, for a bug report.
 
 In `preview`, series and palettes are listed by name (`TTHEME_SORT=series`
 keeps the order they were added), groups start folded with the cursor on the
@@ -245,7 +250,7 @@ tab was painted.
 A palette can also bring a Ghostty background image. The block `init` writes
 includes `~/.config/ttheme/backgrounds/shown.conf` with an optional
 `config-file = ?…`, and that one line names the palette whose picture is up.
-Putting a palette on — `ttheme <name>`, enter in `preview`, `ttheme next`,
+Putting a palette on — `ttheme use <name>`, enter in `preview`, `ttheme next`,
 `ttheme default`, cd into a pinned directory — rewrites the line and sends
 `SIGUSR2`, so whatever Ghostty settings you put in `<palette>.conf` arrive with
 the palette, and palettes without a file show no image:
@@ -612,7 +617,7 @@ mise run compat               # the terminal compatibility cases, in each instal
 `mise run compat` opens each installed terminal behind your windows on a
 throwaway home (`mise run sandbox`), runs the cases in `tests/compat/cases.zsh`
 inside it — adapter detection, OSC set/query/reset, what the window really
-paints (read off a screenshot), `ttheme <palette>` and its restore, cell size,
+paints (read off a screenshot), `ttheme use <palette>` and its restore, cell size,
 kitty graphics, synchronized output and focus reporting — and compares them
 with `tests/compat/expect.tsv`: a case that used to pass and fails is a
 regression and fails the run, and `--update` records what was measured.

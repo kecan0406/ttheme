@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import * as p from '@clack/prompts'
 import { catalogPath, fetchCatalog, REGISTRY_URL, readCatalog, search, writeCatalog } from './catalog.ts'
 import { listed, type Manifest } from './emit/manifest.ts'
-import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
+import { colorless, paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import {
   configHome,
@@ -134,18 +134,25 @@ function defaultNote(name: string, terminals: InitTerminal[], restart: boolean):
     : [`default ${name} · no terminal is wired to open with it — \`ttheme init\` wires one`]
 }
 
-export function runList(query?: string): void {
+export function runList(query: string | undefined, json = false): void {
   const home = configHome()
   const catalog = readCatalog(home)
   const installed = new Set(readInstalled(home).palettes)
   const all = listed(catalog.palettes)
   const hits = alphabetical(query ? search(all, query) : all)
+  if (json) {
+    const rows = hits.map((p) => ({ name: p.name, group: p.group, installed: installed.has(p.name) }))
+    console.log(JSON.stringify(rows, null, 2))
+    return
+  }
   const pad = Math.max(...hits.map((p) => p.name.length), 0)
   for (const p of hits) {
     console.log(`  ${installed.has(p.name) ? '●' : '○'} ${p.name.padEnd(pad)}  ${p.group}`)
   }
-  const shown = query ? `${hits.length} of ${all.length}` : `${all.length}`
-  console.log(`\n${shown} palettes — ${hits.filter((p) => installed.has(p.name)).length} installed`)
+  if (process.stdout.isTTY) {
+    const shown = query ? `${hits.length} of ${all.length}` : `${all.length}`
+    console.log(`\n${shown} palettes — ${hits.filter((p) => installed.has(p.name)).length} installed`)
+  }
 }
 
 export async function runUpdate(): Promise<void> {
@@ -164,14 +171,14 @@ export async function pickPalettes(
   required = false,
 ): Promise<string[] | undefined> {
   const entries = process.env.TTHEME_SORT === 'series' ? catalog.palettes : alphabetical(catalog.palettes)
-  const live = process.stdout.isTTY === true && !process.env.NO_COLOR
+  const live = process.stdout.isTTY === true && !colorless()
   const saved = live ? await queryTerminalColors() : new Map<string, string>()
   const prompt = new PalettePrompt({
     entries,
     scope,
     installed,
     required,
-    color: !process.env.NO_COLOR,
+    color: !colorless(),
     fx: promptFx(process.env.TTHEME_FX),
     onFocus: live ? (entry) => process.stdout.write(paletteOsc(entry)) : undefined,
   })

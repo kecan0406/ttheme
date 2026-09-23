@@ -16,9 +16,10 @@ import { build } from './build.ts'
 import { writeCatalog } from './catalog.ts'
 import type { Manifest } from './emit/manifest.ts'
 import { pickPalettes } from './market.ts'
-import { paletteOsc } from './osc.ts'
+import { colorless, paletteOsc } from './osc.ts'
 import {
   alacrittyConfig,
+  configHome as configDir,
   type Installed,
   type ItermDefaults,
   itermDefaults,
@@ -83,6 +84,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const home = join(paths.configHome, 'ttheme')
   const copies: InitPlan['copies'] = [
     { from: join(paths.root, 'bin', 'ttheme.js'), to: join(home, 'ttheme.js') },
+    { from: join(paths.root, 'bin', 'ttheme.js.map'), to: join(home, 'ttheme.js.map') },
     { from: join(paths.root, 'shell', 'ttheme.zsh'), to: join(home, 'ttheme.zsh') },
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
     { from: join(dist, 'ghostty', 'ttheme.conf'), to: join(home, 'ttheme.conf') },
@@ -167,10 +169,12 @@ export function applyInit(plan: InitPlan, prefs: ItermDefaults = itermDefaults()
   return pointItermDefault(installed, prefs)
 }
 
+export class Cancelled extends Error {}
+
 function accepted<T>(value: T | symbol): T {
   if (p.isCancel(value)) {
     p.cancel('nothing changed')
-    process.exit(1)
+    throw new Cancelled()
   }
   return value as T
 }
@@ -248,10 +252,7 @@ function seriesOf(catalog: Manifest, names: string[]): string[] {
 function paintStartup(catalog: Manifest, installed: Installed): boolean {
   const startup = catalog.palettes.find((e) => e.name === worn(installed))
   const live =
-    process.stdout.isTTY === true &&
-    !process.env.NO_COLOR &&
-    !process.env.TMUX &&
-    detectTerminal(process.env) !== 'warp'
+    process.stdout.isTTY === true && !colorless() && !process.env.TMUX && detectTerminal(process.env) !== 'warp'
   if (!startup || !live) {
     return false
   }
@@ -358,7 +359,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     await build()
   }
   const home = homedir()
-  const configHome = process.env.XDG_CONFIG_HOME ?? join(home, '.config')
+  const configHome = configDir()
   const zdotdir = process.env.ZDOTDIR ?? home
   const wtHome = windowsAppData()
   const wtProfile = process.env.WT_PROFILE_ID
@@ -392,7 +393,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const palettes = await pickPalettes(catalog, [], 'series', true)
   if (!palettes) {
     p.cancel('nothing changed')
-    process.exit(1)
+    throw new Cancelled()
   }
   const first = palettes[0]
   const choose = palettes.length > 1 && detectTerminal(process.env) !== 'warp'
@@ -420,7 +421,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   )
   if (!accepted(await p.confirm({ message: 'apply these changes?' }))) {
     p.cancel('nothing changed')
-    process.exit(1)
+    throw new Cancelled()
   }
   const prefs = itermDefaults()
   const moved = applyInit(plan, prefs)

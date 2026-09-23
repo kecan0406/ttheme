@@ -14,7 +14,7 @@ All scripts live in `.claude/skills/palette/scripts/` and run with `bun`. Scratc
 ## 0. Batches
 
 - A batch is one or more series. Per series pick 5–7 characters: the protagonists and the characters the series is known by, including designed pairs (siblings, twins, partners) — they are what tests separation.
-- Theme names are the names the series and its fans use (`gojo`, `nanami`); codenames or avatar names where that is how a character is known (Persona 5, SAO: `kirito`, `sinon`). When a name collides with an existing theme, or would sit next to one (`shiro`/`shirou`), use the surname or alias (`yuigahama`, `ashiya`). Never a `RESERVED_NAMES` entry.
+- Theme names are the names the series and its fans use (`gojo`, `nanami`); codenames or avatar names where that is how a character is known (Persona 5, SAO: `kirito`, `sinon`). When a name collides with an existing theme, or would sit next to one (`shiro`/`shirou`), use the surname or alias (`yuigahama`, `ashiya`).
 - `meta.order` must stay unique: give each series a contiguous block after the current maximum.
 - Parallel mode: one agent per series. An agent writes only its own theme files and its anchors file, and loops on `check-theme.ts`. The coordinator owns `themes/_groups.toml`, runs `tags.ts`, `leads.ts`, `audit.ts` and the review board across the whole batch, then `mise run build` and `mise run ci` once.
 - Every measurement goes into the batch's anchors file (JSON, scratchpad). The board, the audit and the commit record read it:

@@ -10,10 +10,13 @@ ttheme help > /dev/null || { print -u2 "ttheme help broke"; exit 1 }
 ttheme -h > /dev/null || { print -u2 "ttheme -h broke"; exit 1 }
 REPLY=; __tt_resolve ho || exit 1
 [[ $REPLY == homura ]] || { print -u2 "prefix resolve broke: $REPLY"; exit 1 }
-ttheme nosuchpalette 2>/dev/null && { print -u2 "ttheme took a bad name"; exit 1 }
-out=$(ttheme city 2>&1) && { print -u2 "ttheme took a bad name"; exit 1 }
+ttheme homura 2>/dev/null && { print -u2 "ttheme took a palette name as a command"; exit 1 }
+ttheme use nosuchpalette 2>/dev/null && { print -u2 "ttheme use took a bad name"; exit 1 }
+out=$(ttheme use city 2>&1) && { print -u2 "ttheme use took a bad name"; exit 1 }
 [[ $out == *"did you mean"*nightcity* ]] || { print -u2 "did-you-mean broke: $out"; exit 1 }
 ttheme --frobnicate 2>/dev/null && { print -u2 "ttheme took an unknown option"; exit 1 }
+ttheme next extra 2>/dev/null && { print -u2 "ttheme next took an extra argument"; exit 1 }
+[[ $(ttheme pin --help) == "Usage: ttheme pin"* ]] || { print -u2 "ttheme pin --help did not describe pin"; exit 1 }
 out=$(ttheme preview </dev/null 2>&1) && { print -u2 "ttheme preview ran without a tty"; exit 1 }
 [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }
 EDITOR=true ttheme config > /dev/null || { print -u2 "ttheme config broke"; exit 1 }

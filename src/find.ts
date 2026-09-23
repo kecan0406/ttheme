@@ -2249,7 +2249,7 @@ export async function runFind(name: string): Promise<number> {
   const catalog = readCatalog(home)
   const entry = find(catalog.palettes, name)
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    throw new Error('ttheme find needs a terminal')
+    throw new Error('needs a terminal')
   }
   const finder = new Finder(home, catalog, entry, entry.booru ?? '')
   const code = await finder.run()

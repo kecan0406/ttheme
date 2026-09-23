@@ -35,6 +35,7 @@ function makeFixture(): InitPaths {
   const root = join(base, 'repo')
   const files: Record<string, string> = {
     'bin/ttheme.js': 'cli',
+    'bin/ttheme.js.map': 'map',
     'shell/ttheme.zsh': 'ttheme layer',
     'shell/launch-tab.zsh': '#!/bin/zsh -f',
     'shell/adapters/_osc.zsh': 'osc',

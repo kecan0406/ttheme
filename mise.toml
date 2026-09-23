@@ -53,7 +53,10 @@ echo "ghostty:check ok"
 
 [tasks."bin:build"]
 description = "bundle the node cli into bin/ttheme.js"
-run = "bun build src/bin.ts --target=node --minify --outfile=bin/ttheme.js"
+run = '''
+bun build src/bin.ts --target=node --minify --sourcemap=linked --outdir=bin --entry-naming=ttheme.js
+bun -e 'const f = "bin/ttheme.js.map"; const m = await Bun.file(f).json(); delete m.sourcesContent; await Bun.write(f, JSON.stringify(m))'
+'''
 
 [tasks."bin:check"]
 description = "smoke-test the node bundle: help, non-interactive init from the packed tarball, the installed CLI copy, keep surviving an add, idempotency"

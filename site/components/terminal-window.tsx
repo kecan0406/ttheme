@@ -56,7 +56,7 @@ function Session({ theme, focus }: { theme: Theme; focus: Slot | null }) {
     <>
       <Line>
         <Prompt focus={focus} branch="a1" />
-        {`ttheme ${theme.name}`}
+        {`ttheme use ${theme.name}`}
       </Line>
       <Line>
         <Paint slot="se" focus={focus} className="term-on-se">{` ${theme.group} `}</Paint>
