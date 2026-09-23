@@ -200,6 +200,7 @@ ttheme homura   paint this tab    (a unique prefix works: ttheme ho)
 ttheme preview  browse live — focus repaints the tab, enter keeps it (this tab or default)
 ttheme next     advance this tab to the next palette
 ttheme default  make a palette the one new tabs open with
+ttheme off      open new tabs in the terminal's own colors — ttheme on wears the default again
 ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
 ttheme unpin    drop the palette pinned to this directory
 ttheme config   edit settings in $EDITOR — they apply in new tabs

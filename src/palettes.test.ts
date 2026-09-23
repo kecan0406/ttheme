@@ -113,9 +113,9 @@ test('sync points the terminal at the startup palette once one is installed', ()
   assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = gojo$/m)
 })
 
-test('sync leaves the terminal theme alone when the install keeps it', () => {
+test('sync leaves the terminal theme alone while ttheme is off', () => {
   const home = fixture()
-  sync(home, catalog, { terminals: ['ghostty', 'kitty'], keepTheme: true, palettes: ['gojo'] })
+  sync(home, catalog, { terminals: ['ghostty', 'kitty'], off: true, palettes: ['gojo'] })
   const config = readFileSync(join(home, 'ghostty', 'config'), 'utf8')
   assert.doesNotMatch(config, /^theme = /m)
   assert.match(config, /^config-file = \?.*\/backgrounds\/shown\.conf$/m)
@@ -169,7 +169,7 @@ test('sync gives Windows Terminal a fragment that dresses the zsh profile, and n
   sync(configHome, catalog, {
     terminals: ['windows-terminal'],
     palettes: ['gojo'],
-    keepTheme: true,
+    off: true,
     wtHome,
     wtProfile: '{00000000-0000-0000-0000-000000000001}',
   })
@@ -186,7 +186,7 @@ test('sync drops Warp themes into its themes folder and wires nothing else', () 
   assert.deepEqual(written, [join(warpThemes(home), 'ttheme-gojo.yaml'), join(configHome, 'ttheme', 'palettes.zsh')])
 })
 
-test('sync puts the startup palette on Warp through its settings file, and gives the old theme back under keep', () => {
+test('sync puts the startup palette on Warp through its settings file, and gives the old theme back while off', () => {
   const configHome = fixture()
   const home = fixture()
   sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo', 'geto'] }, home)
@@ -201,11 +201,11 @@ test('sync puts the startup palette on Warp through its settings file, and gives
   )
   sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo', 'geto'], startup: 'geto' }, home)
   assert.match(readFileSync(settings, 'utf8'), /name = "geto"/)
-  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'], keepTheme: true }, home)
+  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'], off: true }, home)
   assert.equal(readFileSync(settings, 'utf8'), mine)
 })
 
-test('sync adds the Warp theme table when there is none, gives Warp its default back under keep, and leaves Warp alone without a settings file', () => {
+test('sync adds the Warp theme table when there is none, gives Warp its default back while off, and leaves Warp alone without a settings file', () => {
   const configHome = fixture()
   const home = fixture()
   sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'] }, home)
@@ -218,7 +218,7 @@ test('sync adds the Warp theme table when there is none, gives Warp its default 
     readFileSync(settings, 'utf8'),
     /^default_session_mode = "agent"\n\n\[appearance\.themes\]\ntheme = \{ custom/m,
   )
-  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'], keepTheme: true }, home)
+  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'], off: true }, home)
   assert.match(readFileSync(settings, 'utf8'), /^theme = "dark"$/m)
 })
 
@@ -256,7 +256,7 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
     'Green Component': 0x19 / 255,
     'Red Component': 0x11 / 255,
   })
-  sync(configHome, catalog, { terminals: ['iterm2'], keepTheme: true, palettes: ['gojo'] }, home)
+  sync(configHome, catalog, { terminals: ['iterm2'], off: true, palettes: ['gojo'] }, home)
   assert.deepEqual(
     read().map((p: { Name: string }) => p.Name),
     ['ttheme · gojo'],
@@ -324,14 +324,14 @@ function prefsAt(initial: string | undefined): { prefs: ItermDefaults; writes: s
   }
 }
 
-test('iTerm2 takes ttheme · default as its default profile and gives the one it replaced back under keep', () => {
+test('iTerm2 takes ttheme · default as its default profile and gives the one it replaced back while off', () => {
   const { prefs, writes } = prefsAt('USER')
   const state = withItermBase({ terminals: ['iterm2'], palettes: ['gojo'] }, prefs)
   assert.equal(state.itermBase, 'USER')
   assert.equal(pointItermDefault(state, prefs), true)
   assert.equal(pointItermDefault(state, prefs), false)
   assert.equal(withItermBase(state, prefs).itermBase, 'USER')
-  assert.equal(pointItermDefault({ ...state, keepTheme: true }, prefs), true)
+  assert.equal(pointItermDefault({ ...state, off: true }, prefs), true)
   assert.deepEqual(writes, ['ttheme-default', 'USER'])
 })
 

@@ -4,7 +4,7 @@ import { build, TERMINALS } from './build.ts'
 import { runFind } from './find.ts'
 import { runImage } from './images.ts'
 import { runInit } from './init.ts'
-import { runAdd, runBrowse, runDefault, runList, runRemove, runUpdate } from './market.ts'
+import { runAdd, runBrowse, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './market.ts'
 
 export interface Flags {
   yes?: boolean
@@ -65,6 +65,13 @@ export const VERBS: Verb[] = [
     args: ['<palette>'],
     about: 'make an installed palette the one new tabs open with',
     run: ([name]) => runDefault(name as string),
+  },
+  { name: 'on', args: [], about: 'wear the default palette in new tabs again', run: () => runOn() },
+  {
+    name: 'off',
+    args: [],
+    about: "open new tabs in the terminal's own colors until `ttheme on`",
+    run: () => runOff(),
   },
   {
     name: 'find',

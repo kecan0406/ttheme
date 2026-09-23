@@ -136,31 +136,12 @@ test('applyInit seeds config.zsh once and keeps user edits on rerun', () => {
   assert.match(second, /^: \$\{TTHEME_FX:=glitch\}$/m)
 })
 
-test('init wears the terminal by the chosen mode and keeps it on a rerun', () => {
+test('init wears the first palette and leaves the new-tab setting at its default', () => {
   const paths = makeFixture()
-  const ghostty = join(paths.configHome, 'ghostty', 'config')
   const tab = /^(?:# )?: \$\{TTHEME_TAB_PALETTE:=(\w+)\}$/m
-  const tabSetting = () => readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8').match(tab)?.[1]
-  const installed = () => JSON.parse(readFileSync(join(paths.configHome, 'ttheme', 'installed.json'), 'utf8'))
-
-  applyInit(planInit(options({ palettes: ['neutral', 'miku'], wear: 'default' }), paths))
-  assert.match(readFileSync(ghostty, 'utf8'), /^theme = neutral$/m)
-  assert.equal(tabSetting(), 'off')
-  assert.equal(installed().keepTheme, undefined)
-
-  applyInit(planInit(options({ palettes: ['neutral', 'miku'], wear: 'keep' }), paths))
-  assert.doesNotMatch(readFileSync(ghostty, 'utf8'), /^theme = /m)
-  assert.equal(tabSetting(), 'off')
-  assert.equal(installed().keepTheme, true)
-
-  applyInit(planInit(options({ palettes: ['neutral', 'miku'], wear: 'rotate' }), paths))
-  assert.match(readFileSync(ghostty, 'utf8'), /^theme = neutral$/m)
-  assert.equal(tabSetting(), 'seq')
-  assert.equal(installed().keepTheme, undefined)
-
-  applyInit(planInit(options({ palettes: ['neutral', 'miku'], wear: 'default', startup: 'miku' }), paths))
-  assert.match(readFileSync(ghostty, 'utf8'), /^theme = miku$/m)
-  assert.equal(installed().startup, 'miku')
+  applyInit(planInit(options({ palettes: ['neutral', 'miku'] }), paths))
+  assert.match(readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8'), /^theme = neutral$/m)
+  assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8').match(tab)?.[1], 'off')
 })
 
 test('applyInit is idempotent', () => {

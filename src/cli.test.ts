@@ -35,6 +35,8 @@ test('the catalog verbs are registered alongside build and init', () => {
     'image',
     'init',
     'list',
+    'off',
+    'on',
     'remove',
     'update',
   ])

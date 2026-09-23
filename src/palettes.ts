@@ -39,7 +39,7 @@ const EMITTERS: Record<InitTerminal, Emitter> = {
 export interface Installed {
   terminals: InitTerminal[]
   startup?: string
-  keepTheme?: true
+  off?: true
   itermBase?: string
   wtHome?: string
   wtProfile?: string
@@ -83,7 +83,7 @@ export function itermDefaults(suite = process.env.TTHEME_ITERM_SUITE ?? 'com.goo
 }
 
 export function worn(state: Installed): string | undefined {
-  return state.keepTheme ? undefined : startupPalette(state)
+  return state.off ? undefined : startupPalette(state)
 }
 
 export function withItermBase(state: Installed, prefs: ItermDefaults): Installed {
@@ -131,7 +131,7 @@ export function readInstalled(configHome: string): Installed {
   return {
     terminals: doc.terminals.filter((t): t is InitTerminal => INIT_TERMINALS.includes(t)),
     ...(doc.startup ? { startup: doc.startup } : {}),
-    ...(doc.keepTheme ? { keepTheme: true as const } : {}),
+    ...(doc.off ? { off: true as const } : {}),
     ...(doc.itermBase ? { itermBase: doc.itermBase } : {}),
     ...(doc.wtHome ? { wtHome: doc.wtHome } : {}),
     ...(doc.wtProfile ? { wtProfile: doc.wtProfile } : {}),

@@ -390,6 +390,7 @@ __tt_help() {
   ttheme preview  browse live — focus repaints, enter keeps (this tab or default), esc restores, ? lists keys
   ttheme next     advance this tab to the next palette
   ttheme default  make a palette the one new tabs open with
+  ttheme off      open new tabs in the terminal'"'"'s own colors — ttheme on wears the default again
   ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
   ttheme unpin    drop the palette pinned to this directory
   ttheme config   edit settings in $EDITOR — they apply in new tabs
@@ -416,6 +417,23 @@ __tt_catalog() {
   was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   __tt_palettes_load && __tt_reloaded
   [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$was" ]] || __tt_reload
+}
+
+__tt_switch() {
+  local spec
+  __tt_catalog $1 || return
+  __tt_active || return 0
+  if [[ $1 == off ]]; then
+    __tt_osc_reset
+    TTHEME_SPEC=
+    __tt_shown "" && __tt_reload
+    __tt_unshown force
+  elif [[ -n $TTHEME_STARTUP ]]; then
+    spec=${TTHEME_PALETTE[$TTHEME_STARTUP]}
+    __tt_apply "$spec"
+    TTHEME_SPEC=$spec
+    __tt_shown "$TTHEME_STARTUP" force && __tt_reload
+  fi
 }
 
 __tt_config() {
@@ -1481,6 +1499,7 @@ __tt_preview() {
     abc "series and palettes by name" series "series in the order added"
   )
   [[ $mode == pin ]] && pkdef=2 plabel=(" this directory " " and below ")
+  [[ $mode == init ]] && pkdef=2
   __tt_pv_canpick
   __tt_pv_size
   local -a groups=() rtype=() rval=() rcnt=() reply=()
@@ -1540,7 +1559,7 @@ __tt_preview() {
 }
 
 ttheme() {
-  if [[ $TTHEME_ADAPTER == warp && $1 != (-h|--help|help|browse|list|add|remove|update|config|default) ]]; then
+  if [[ $TTHEME_ADAPTER == warp && $1 != (-h|--help|help|browse|list|add|remove|update|config|default|on|off) ]]; then
     print -u2 "ttheme: Warp wears one theme app-wide and paints no tab background of its own — \`ttheme default <palette>\` puts one on every Warp window"
     return 1
   fi
@@ -1566,6 +1585,7 @@ ttheme() {
       __tt_resolve "$2" || return 1
       __tt_keep "$REPLY"
       return ;;
+    on|off) __tt_switch $1; return ;;
     preview) __tt_preview; return ;;
     pin) __tt_preview pin; return ;;
     unpin) __tt_unpin; return ;;
@@ -1583,7 +1603,7 @@ ttheme() {
 
 if (( $+functions[compdef] )); then
   __tt_complete() {
-    (( CURRENT == 2 )) && compadd -- preview next default pin unpin config help browse list add remove update
+    (( CURRENT == 2 )) && compadd -- preview next default on off pin unpin config help browse list add remove update
     compadd -- $TTHEME_ORDER
   }
   compdef __tt_complete ttheme

@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import {
   chmodSync,
   copyFileSync,
@@ -15,7 +15,7 @@ import * as p from '@clack/prompts'
 import { build } from './build.ts'
 import { writeCatalog } from './catalog.ts'
 import type { Manifest } from './emit/manifest.ts'
-import { pickPalettes, pickStartup } from './market.ts'
+import { pickPalettes } from './market.ts'
 import { paletteOsc } from './osc.ts'
 import {
   alacrittyConfig,
@@ -29,6 +29,7 @@ import {
   warpThemes,
   weztermConfig,
   withItermBase,
+  worn,
   writeInstalled,
 } from './palettes.ts'
 import {
@@ -39,17 +40,13 @@ import {
   upsertAlacrittyImport,
   upsertBlock,
   upsertLuaBlock,
-  withSetting,
   zshrcBlock,
 } from './wiring.ts'
-
-export type Wear = 'default' | 'rotate' | 'keep'
 
 export interface InitOptions {
   terminals: InitTerminal[]
   palettes: string[]
-  wear?: Wear
-  startup?: string
+  off?: boolean
 }
 
 export interface InitPaths {
@@ -94,10 +91,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const edits: InitPlan['edits'] = [{ file: join(paths.zdotdir, '.zshrc'), block: zshrcBlock(home) }]
   const configPath = join(home, 'config.zsh')
   const seeded = configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : '')
-  const settings = {
-    file: configPath,
-    content: opts.wear ? withSetting(seeded, 'TTHEME_TAB_PALETTE', opts.wear === 'rotate' ? 'seq' : 'off') : seeded,
-  }
+  const settings = { file: configPath, content: seeded }
   const notes: string[] = []
   if (opts.terminals.includes('ghostty')) {
     copyDir(copies, join(paths.root, 'ghostty', 'shaders'), join(paths.configHome, 'ghostty', 'shaders'))
@@ -132,10 +126,9 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const installed: Installed = {
     terminals: opts.terminals,
     palettes: opts.palettes,
-    ...(opts.startup ? { startup: opts.startup } : {}),
-    ...(opts.wear === 'keep' ? { keepTheme: true as const } : {}),
     ...(wt && paths.wtHome ? { wtHome: paths.wtHome } : {}),
     ...(wt && paths.wtProfile ? { wtProfile: paths.wtProfile } : {}),
+    ...(opts.off ? { off: true as const } : {}),
   }
   return { home: paths.home, copies, edits, settings, catalog: loadManifest(paths.root), installed, notes }
 }
@@ -237,33 +230,6 @@ async function askTerminals(detected: string, preselected: InitTerminal[], paths
   )
 }
 
-function wearSummary(wear: Wear, startup: string | undefined): string {
-  if (wear === 'keep') {
-    return 'leave the terminal colors as they are'
-  }
-  return wear === 'rotate'
-    ? `paint every new tab with the next palette, this tab with ${startup} now`
-    : `paint every tab with ${startup}, this one now`
-}
-
-async function askWear(palettes: string[]): Promise<Wear> {
-  return accepted(
-    await p.select<Wear>({
-      message: 'how should the terminal wear them?',
-      options: [
-        {
-          value: 'default',
-          label: 'default',
-          hint: palettes.length > 1 ? 'every tab wears one palette — pick it next' : `every tab wears ${palettes[0]}`,
-        },
-        { value: 'rotate', label: 'rotate', hint: 'every new tab wears the next palette' },
-        { value: 'keep', label: 'keep', hint: 'leave my terminal colors alone' },
-      ],
-      initialValue: 'default',
-    }),
-  )
-}
-
 function verify(plan: InitPlan): void {
   const missing = [
     ...plan.copies.filter((c) => !existsSync(c.to)).map((c) => c.to),
@@ -280,7 +246,7 @@ function seriesOf(catalog: Manifest, names: string[]): string[] {
 }
 
 function paintStartup(catalog: Manifest, installed: Installed): boolean {
-  const startup = catalog.palettes.find((e) => e.name === startupPalette(installed))
+  const startup = catalog.palettes.find((e) => e.name === worn(installed))
   const live =
     process.stdout.isTTY === true &&
     !process.env.NO_COLOR &&
@@ -293,28 +259,30 @@ function paintStartup(catalog: Manifest, installed: Installed): boolean {
   return true
 }
 
-function wearLines(wear: Wear, startup: string | undefined, painted: boolean): string[] {
-  if (wear === 'keep') {
+function startupLines(installed: Installed, painted: boolean): string[] {
+  const startup = worn(installed)
+  if (!startup) {
     return [
-      'terminal   colors left alone — paint a tab with `ttheme <palette>`',
-      '           `ttheme default <palette>` sets the terminal default',
+      'default    none — new tabs keep the terminal colors',
+      `turn on    \`ttheme on\` wears ${startupPalette(installed)}`,
     ]
   }
   return [
     `default    ${startup}${painted ? ' — this tab wears it already' : ''}`,
-    wear === 'rotate'
-      ? 'new tabs   rotate through the palettes — change with `ttheme config`'
-      : `new tabs   all wear ${startup} — change with \`ttheme config\``,
+    'change it  `ttheme preview`, enter on a palette, then default',
   ]
 }
 
-function receipt(plan: InitPlan, opts: InitOptions, wear: Wear, painted: boolean, restart: boolean): void {
+function pickDefault(configHome: string): void {
+  spawnSync('zsh', ['-c', 'source "$1" && __tt_preview init', 'zsh', join(configHome, 'ttheme', 'ttheme.zsh')], {
+    stdio: 'inherit',
+  })
+}
+
+function receipt(plan: InitPlan, opts: InitOptions, painted: boolean, restart: boolean): void {
   const series = seriesOf(plan.catalog, opts.palettes)
   p.note(
-    [
-      `${series.join(', ')} (${opts.palettes.length})`,
-      ...wearLines(wear, startupPalette(plan.installed), painted),
-    ].join('\n'),
+    [`${series.join(', ')} (${opts.palettes.length})`, ...startupLines(plan.installed, painted)].join('\n'),
     `installed ${opts.palettes.length} palettes`,
   )
   const next = ['exec zsh          the ttheme command in this tab']
@@ -334,7 +302,7 @@ function receipt(plan: InitPlan, opts: InitOptions, wear: Wear, painted: boolean
     next.push('windows terminal  reloads its settings by itself')
   }
   if (opts.terminals.includes('iterm2')) {
-    next.push(...itermLines(wear === 'default' ? startupPalette(plan.installed) : undefined, restart))
+    next.push(...itermLines(worn(plan.installed), restart))
   }
   p.note([...next, ...plan.notes].join('\n'), 'next')
   p.outro('done')
@@ -426,15 +394,14 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     p.cancel('nothing changed')
     process.exit(1)
   }
-  const wear = await askWear(palettes)
-  const ask = wear === 'default' && palettes.length > 1
-  const chosen = ask ? await pickStartup(catalog, palettes) : undefined
-  if (ask && !chosen) {
-    p.cancel('nothing changed')
-    process.exit(1)
-  }
-  const startup = startupPalette({ terminals, palettes, startup: chosen })
-  const opts: InitOptions = { terminals, palettes, wear, startup: chosen }
+  const first = palettes[0]
+  const choose = palettes.length > 1 && detectTerminal(process.env) !== 'warp'
+  const wear = accepted(
+    await p.confirm({
+      message: choose ? 'pick a default palette in ttheme preview once installed?' : `wear ${first} in every tab?`,
+    }),
+  )
+  const opts: InitOptions = { terminals, palettes, off: !wear }
   const plan = planInit(opts, paths)
   p.note(
     [
@@ -442,10 +409,12 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       `copy ${plan.copies.length} files under ${configHome}`,
       `write ${plan.settings.file}`,
       ...plan.edits.map((e) => `edit ${e.file}`),
-      wearSummary(wear, startup),
-      ...(terminals.includes('iterm2') && wear !== 'keep'
-        ? ['make "ttheme · default" the iTerm2 default profile']
-        : []),
+      wear
+        ? choose
+          ? `open ttheme preview — every tab wears the palette picked there, ${first} until then`
+          : `paint every tab with ${first}, this one now`
+        : 'leave the terminal colors as they are — `ttheme on` wears a palette later',
+      ...(terminals.includes('iterm2') && wear ? ['make "ttheme · default" the iTerm2 default profile'] : []),
     ].join('\n'),
     `wiring ${terminals.join(', ')}`,
   )
@@ -456,5 +425,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const prefs = itermDefaults()
   const moved = applyInit(plan, prefs)
   verify(plan)
-  receipt(plan, opts, wear, wear !== 'keep' && paintStartup(plan.catalog, plan.installed), moved && prefs.running())
+  if (wear && choose) {
+    pickDefault(configHome)
+  }
+  const installed = readInstalled(configHome)
+  receipt({ ...plan, installed }, opts, paintStartup(plan.catalog, installed), moved && prefs.running())
 }

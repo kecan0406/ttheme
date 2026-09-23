@@ -3,7 +3,7 @@ import * as p from '@clack/prompts'
 import { catalogPath, fetchCatalog, REGISTRY_URL, readCatalog, search, writeCatalog } from './catalog.ts'
 import { listed, type Manifest } from './emit/manifest.ts'
 import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
-import { PalettePrompt, type PickerScope, promptFx, StartupPrompt } from './palette-prompt.ts'
+import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import {
   configHome,
   forget,
@@ -11,6 +11,7 @@ import {
   itermDefaults,
   pointItermDefault,
   readInstalled,
+  startupPalette,
   sync,
   withItermBase,
   worn,
@@ -19,15 +20,13 @@ import {
 import { alphabetical } from './theme.ts'
 import type { InitTerminal } from './wiring.ts'
 
-function commit(home: string, catalog: Manifest, before: Installed, after: Installed): void {
+function commit(home: string, catalog: Manifest, before: Installed, after: Installed): boolean {
   const prefs = itermDefaults()
   const moves = Boolean(worn(before)) !== Boolean(worn(after))
   const next = moves ? withItermBase(after, prefs) : after
   sync(home, catalog, next)
   writeInstalled(home, next)
-  if (moves) {
-    pointItermDefault(next, prefs)
-  }
+  return moves && pointItermDefault(next, prefs) && prefs.running()
 }
 
 function reload(count: number): void {
@@ -77,13 +76,44 @@ export function runDefault(name: string): void {
   if (!state.palettes.includes(name)) {
     throw new Error(`${name} is not installed — \`ttheme add ${name}\` first`)
   }
-  const { keepTheme: _, ...rest } = state
+  const { off: _, ...rest } = state
   const prefs = itermDefaults()
   const next = withItermBase({ ...rest, startup: name }, prefs)
   sync(home, catalog, next)
   writeInstalled(home, next)
   const moved = pointItermDefault(next, prefs)
   console.log(defaultNote(name, next.terminals, moved && prefs.running()).join('\n'))
+}
+
+export function runOn(): void {
+  const home = configHome()
+  const state = readInstalled(home)
+  const name = startupPalette(state)
+  if (!name) {
+    throw new Error('no palettes installed — `ttheme browse` picks some')
+  }
+  if (!state.off) {
+    console.log(`already on · ${name}`)
+    return
+  }
+  const { off: _, ...next } = state
+  const restart = commit(home, readCatalog(home), state, next)
+  console.log(defaultNote(name, next.terminals, restart).join('\n'))
+}
+
+export function runOff(): void {
+  const home = configHome()
+  const state = readInstalled(home)
+  if (state.off) {
+    console.log('already off')
+    return
+  }
+  const restart = commit(home, readCatalog(home), state, { ...state, off: true })
+  const name = startupPalette(state)
+  console.log(`off · new tabs open in the terminal's own colors${name ? ` — \`ttheme on\` wears ${name} again` : ''}`)
+  if (restart) {
+    console.log('iterm2 new tabs open on your own profile once iTerm2 restarts')
+  }
 }
 
 function defaultNote(name: string, terminals: InitTerminal[], restart: boolean): string[] {
@@ -151,19 +181,6 @@ export async function pickPalettes(
     return undefined
   }
   return catalog.palettes.filter((e) => prompt.picked.has(e.name)).map((e) => e.name)
-}
-
-export async function pickStartup(catalog: Manifest, names: string[]): Promise<string | undefined> {
-  const live = process.stdout.isTTY === true && !process.env.NO_COLOR
-  const saved = live ? await queryTerminalColors() : new Map<string, string>()
-  const prompt = new StartupPrompt({
-    entries: catalog.palettes.filter((e) => names.includes(e.name)),
-    color: !process.env.NO_COLOR,
-    onFocus: live ? (entry) => process.stdout.write(paletteOsc(entry)) : undefined,
-  })
-  const done = await prompt.prompt()
-  process.stdout.write(restoreOsc(saved))
-  return p.isCancel(done) ? undefined : done
 }
 
 export async function runBrowse(): Promise<void> {
