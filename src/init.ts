@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import {
   chmodSync,
   copyFileSync,
@@ -24,6 +25,8 @@ import {
   readInstalled,
   startupPalette,
   sync,
+  warpThemes,
+  weztermConfig,
   withItermBase,
   writeInstalled,
 } from './palettes.ts'
@@ -33,6 +36,7 @@ import {
   INIT_TERMINALS,
   type InitTerminal,
   upsertBlock,
+  upsertLuaBlock,
   withSetting,
   zshrcBlock,
 } from './wiring.ts'
@@ -50,6 +54,8 @@ export interface InitPaths {
   home: string
   configHome: string
   zdotdir: string
+  wtHome?: string
+  wtProfile?: string
 }
 
 export interface InitPlan {
@@ -99,11 +105,31 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
       notes.push('alacritty.toml already exists — ttheme left it alone; add its themes/ import yourself')
     }
   }
-  notes.push('wezterm: import the palettes you install from the release archive')
+  if (opts.terminals.includes('wezterm')) {
+    const config = weztermConfig(paths.configHome, paths.home)
+    if (existsSync(config) && upsertLuaBlock(readFileSync(config, 'utf8'), '') === undefined) {
+      notes.push(
+        `${config} has no \`return config\` line — ttheme left it alone; call \`dofile("${join(home, 'wezterm.lua')}")(config)\` from it yourself`,
+      )
+    }
+  }
+  const wt = opts.terminals.includes('windows-terminal')
+  if (wt && !paths.wtHome) {
+    notes.push(
+      'windows terminal: %LOCALAPPDATA% was not found — drop the release fragment into its Fragments folder yourself',
+    )
+  }
+  if (opts.terminals.includes('warp')) {
+    notes.push(
+      'warp: wears the default palette app-wide through its settings.toml — the shell layer stays off in it, since Warp paints no tab background of its own',
+    )
+  }
   const installed: Installed = {
     terminals: opts.terminals,
     palettes: opts.palettes,
     ...(opts.wear === 'keep' ? { keepTheme: true as const } : {}),
+    ...(wt && paths.wtHome ? { wtHome: paths.wtHome } : {}),
+    ...(wt && paths.wtProfile ? { wtProfile: paths.wtProfile } : {}),
   }
   return { home: paths.home, copies, edits, settings, catalog: loadManifest(paths.root), installed, notes }
 }
@@ -150,21 +176,55 @@ function accepted<T>(value: T | symbol): T {
   return value as T
 }
 
-function offered(): InitTerminal[] {
-  return INIT_TERMINALS.filter((t) => t !== 'iterm2' || process.platform === 'darwin')
+function offered(paths: InitPaths): InitTerminal[] {
+  return INIT_TERMINALS.filter((t) => {
+    if (t === 'iterm2') {
+      return process.platform === 'darwin'
+    }
+    if (t === 'windows-terminal') {
+      return paths.wtHome !== undefined
+    }
+    return t !== 'warp' || process.platform !== 'win32'
+  })
 }
 
 function present(terminal: InitTerminal, paths: InitPaths): boolean {
-  return terminal === 'iterm2'
-    ? existsSync(join(paths.home, 'Library', 'Application Support', 'iTerm2'))
-    : existsSync(join(paths.configHome, terminal))
+  if (terminal === 'iterm2') {
+    return existsSync(join(paths.home, 'Library', 'Application Support', 'iTerm2'))
+  }
+  if (terminal === 'windows-terminal') {
+    return paths.wtHome !== undefined
+  }
+  if (terminal === 'warp') {
+    return existsSync(dirname(warpThemes(paths.home)))
+  }
+  if (terminal === 'wezterm') {
+    return existsSync(join(paths.configHome, 'wezterm')) || existsSync(join(paths.home, '.wezterm.lua'))
+  }
+  return existsSync(join(paths.configHome, terminal))
 }
 
-async function askTerminals(detected: string, preselected: InitTerminal[]): Promise<InitTerminal[]> {
+function windowsAppData(): string | undefined {
+  if (process.platform === 'win32') {
+    return process.env.LOCALAPPDATA
+  }
+  if (!process.env.WSL_DISTRO_NAME) {
+    return undefined
+  }
+  const run = (command: string, args: string[]) =>
+    execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
+  try {
+    return run('wslpath', ['-u', run('cmd.exe', ['/d', '/c', 'echo %LOCALAPPDATA%'])]) || undefined
+  } catch {
+    return undefined
+  }
+}
+
+async function askTerminals(detected: string, preselected: InitTerminal[], paths: InitPaths): Promise<InitTerminal[]> {
   return accepted(
     await p.multiselect({
       message: 'wire which terminals?',
-      options: offered().map((t) => ({ value: t, hint: t === detected ? 'detected' : undefined })),
+      options: offered(paths).map((t) => ({ value: t, hint: t === detected ? 'detected' : undefined })),
       initialValues: preselected,
       required: true,
     }),
@@ -211,7 +271,11 @@ function seriesOf(catalog: Manifest, names: string[]): string[] {
 
 function paintStartup(catalog: Manifest, installed: Installed): boolean {
   const startup = catalog.palettes.find((e) => e.name === startupPalette(installed))
-  const live = process.stdout.isTTY === true && !process.env.NO_COLOR && !process.env.TMUX
+  const live =
+    process.stdout.isTTY === true &&
+    !process.env.NO_COLOR &&
+    !process.env.TMUX &&
+    detectTerminal(process.env) !== 'warp'
   if (!startup || !live) {
     return false
   }
@@ -250,6 +314,12 @@ function receipt(plan: InitPlan, opts: InitOptions, wear: Wear, painted: boolean
   if (opts.terminals.includes('kitty')) {
     next.push('new kitty window  picks up its config')
   }
+  if (opts.terminals.includes('wezterm')) {
+    next.push('wezterm           reloads its config by itself')
+  }
+  if (opts.terminals.includes('windows-terminal')) {
+    next.push('windows terminal  reloads its settings by itself')
+  }
   if (opts.terminals.includes('iterm2')) {
     next.push(...itermLines(wear === 'default' ? startupPalette(plan.installed) : undefined, restart))
   }
@@ -281,6 +351,9 @@ function report(plan: InitPlan, opts: InitOptions): void {
   if (opts.terminals.includes('kitty')) {
     lines.push('open a new kitty window to pick up its config')
   }
+  if (opts.terminals.includes('wezterm') || opts.terminals.includes('windows-terminal')) {
+    lines.push('wezterm and windows terminal reload their config by themselves')
+  }
   if (opts.terminals.includes('iterm2')) {
     lines.push('iterm2 gets a "ttheme · <palette>" profile per palette under Settings › Profiles')
   }
@@ -303,13 +376,24 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const home = homedir()
   const configHome = process.env.XDG_CONFIG_HOME ?? join(home, '.config')
   const zdotdir = process.env.ZDOTDIR ?? home
-  const paths: InitPaths = { root, home, configHome, zdotdir }
+  const wtHome = windowsAppData()
+  const wtProfile = process.env.WT_PROFILE_ID
+  const paths: InitPaths = {
+    root,
+    home,
+    configHome,
+    zdotdir,
+    ...(wtHome ? { wtHome } : {}),
+    ...(wtProfile ? { wtProfile } : {}),
+  }
   const detected = detectTerminal(process.env)
-  const preselected = offered().filter((t) => t === detected || present(t, paths))
+  const preselected = offered(paths).filter((t) => t === detected || present(t, paths))
   const interactive = !flags.yes && process.stdin.isTTY === true && process.stdout.isTTY === true
   if (!interactive) {
     if (preselected.length === 0) {
-      throw new Error('no supported terminal detected — run this inside ghostty, kitty, alacritty or iterm2')
+      throw new Error(
+        'no supported terminal detected — run this inside ghostty, kitty, alacritty, wezterm, iterm2, windows terminal or warp',
+      )
     }
     const opts: InitOptions = { terminals: preselected, palettes: [] }
     const plan = planInit(opts, paths)
@@ -319,7 +403,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     return
   }
   p.intro('ttheme init')
-  const terminals = await askTerminals(detected, preselected)
+  const terminals = await askTerminals(detected, preselected, paths)
   const palettes = await pickPalettes(loadManifest(root), [], 'series', true)
   if (!palettes) {
     p.cancel('nothing changed')

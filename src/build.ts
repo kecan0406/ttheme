@@ -1,14 +1,25 @@
 import { rmSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { checkAll } from './contrast.ts'
-import { alacritty, type Emitter, ghostty, iterm2, kitty, meta, shell, wezterm } from './emit/index.ts'
+import {
+  alacritty,
+  type Emitter,
+  ghostty,
+  iterm2,
+  kitty,
+  meta,
+  shell,
+  warp,
+  wezterm,
+  windowsTerminal,
+} from './emit/index.ts'
 import { loadThemes, rotation } from './theme.ts'
 
 const root = join(import.meta.dirname, '..')
 const THEMES = join(root, 'themes')
 const DIST = join(root, 'dist')
 
-const TERMINAL_EMITTERS: Emitter[] = [ghostty, kitty, alacritty, wezterm, iterm2]
+const TERMINAL_EMITTERS: Emitter[] = [ghostty, kitty, alacritty, wezterm, iterm2, windowsTerminal, warp]
 const SHARED_EMITTERS: Emitter[] = [shell, meta]
 
 export const TERMINALS = TERMINAL_EMITTERS.map((e) => e.id)
@@ -51,7 +62,7 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
       perTheme.length > 0
         ? `${themes.length} themes${emitter.limits ? `  (${emitter.limits})` : ''}`
         : sharedOutputs.map((out) => basename(out.path)).join(' ')
-    console.log(`  ${emitter.id.padEnd(10)} ${label}`)
+    console.log(`  ${emitter.id.padEnd(16)} ${label}`)
   }
 
   console.log(

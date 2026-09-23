@@ -8,7 +8,7 @@ test('build --only rejects unknown terminals', () => {
 })
 
 test('build --only offers every terminal', () => {
-  assert.deepEqual(TERMINALS, ['ghostty', 'kitty', 'alacritty', 'wezterm', 'iterm2'])
+  assert.deepEqual(TERMINALS, ['ghostty', 'kitty', 'alacritty', 'wezterm', 'iterm2', 'windows-terminal', 'warp'])
   assert.deepEqual(parse(['build', '--only', 'kitty', '--only', 'iterm2']), {
     kind: 'run',
     verb: VERBS.find((v) => v.name === 'build'),

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -14,7 +14,10 @@ import {
   startupPalette,
   sync,
   toTheme,
+  warpSettings,
+  warpThemes,
   withItermBase,
+  wtFragmentPath,
 } from './palettes.ts'
 
 function entry(name: string, order: number, partial: Partial<PaletteEntry> = {}): PaletteEntry {
@@ -118,6 +121,105 @@ test('sync leaves the terminal theme alone when the install keeps it', () => {
   assert.match(config, /^config-file = \?.*\/backgrounds\/shown\.conf$/m)
   assert.doesNotMatch(readFileSync(join(home, 'kitty', 'kitty.conf'), 'utf8'), /^include /m)
   assert.ok(existsSync(join(home, 'ghostty', 'themes', 'gojo')))
+})
+
+test('sync wires WezTerm through a module its config runs, and creates the config when there is none', () => {
+  const configHome = fixture()
+  const home = fixture()
+  sync(configHome, catalog, { terminals: ['wezterm'], palettes: ['gojo'] }, home)
+  const module = join(configHome, 'ttheme', 'wezterm.lua')
+  assert.ok(existsSync(join(configHome, 'wezterm', 'colors', 'gojo.toml')))
+  assert.match(readFileSync(module, 'utf8'), /^local STARTUP = "gojo"$/m)
+  assert.match(readFileSync(module, 'utf8'), /^ {2}\["gojo"\] = "#11191c",$/m)
+  const config = readFileSync(join(configHome, 'wezterm', 'wezterm.lua'), 'utf8')
+  assert.match(
+    config,
+    new RegExp(`-- ttheme begin\\ndofile\\("${module}"\\)\\(config\\)\\n-- ttheme end\\n\\nreturn config\\n$`),
+  )
+})
+
+test('sync wires an existing wezterm.lua before its last return, and leaves one without it alone', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const dotfile = join(home, '.wezterm.lua')
+  writeFileSync(dotfile, 'local config = {}\nconfig.font_size = 13\nreturn config\n')
+  sync(configHome, catalog, { terminals: ['wezterm'], palettes: ['gojo'] }, home)
+  assert.match(readFileSync(dotfile, 'utf8'), /font_size = 13\n-- ttheme begin\n.*\n-- ttheme end\n\nreturn config\n$/)
+  assert.ok(!existsSync(join(configHome, 'wezterm', 'wezterm.lua')))
+
+  writeFileSync(dotfile, 'return { font_size = 13 }\n')
+  sync(configHome, catalog, { terminals: ['wezterm'], palettes: ['gojo'] }, home)
+  assert.equal(readFileSync(dotfile, 'utf8'), 'return { font_size = 13 }\n')
+})
+
+test('sync gives Windows Terminal a fragment that dresses the zsh profile, and nudges it to reload', () => {
+  const configHome = fixture()
+  const wtHome = fixture()
+  const settings = join(wtHome, 'Packages', 'Microsoft.WindowsTerminal_8wekyb3d8bbwe', 'LocalState', 'settings.json')
+  mkdirSync(join(settings, '..'), { recursive: true })
+  writeFileSync(settings, '{\n  // mine\n  "defaultProfile": "{2c4de342-38b7-51cf-b940-2309a097f518}",\n}\n')
+  utimesSync(settings, new Date(0), new Date(0))
+  sync(configHome, catalog, { terminals: ['windows-terminal'], palettes: ['gojo'], wtHome })
+  const fragment = JSON.parse(readFileSync(wtFragmentPath(wtHome), 'utf8'))
+  assert.deepEqual(fragment.profiles, [{ updates: '{2c4de342-38b7-51cf-b940-2309a097f518}', colorScheme: 'gojo' }])
+  assert.equal(fragment.schemes[0].name, 'gojo')
+  assert.equal(fragment.schemes[0].brightPurple, '#808080')
+  assert.ok(statSync(settings).mtimeMs > 0)
+
+  sync(configHome, catalog, {
+    terminals: ['windows-terminal'],
+    palettes: ['gojo'],
+    keepTheme: true,
+    wtHome,
+    wtProfile: '{00000000-0000-0000-0000-000000000001}',
+  })
+  assert.equal(JSON.parse(readFileSync(wtFragmentPath(wtHome), 'utf8')).profiles, undefined)
+})
+
+test('sync drops Warp themes into its themes folder and wires nothing else', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const written = sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'] }, home)
+  const theme = readFileSync(join(warpThemes(home), 'ttheme-gojo.yaml'), 'utf8')
+  assert.match(theme, /^background: "#11191c"$/m)
+  assert.match(theme, /^details: darker$/m)
+  assert.deepEqual(written, [join(warpThemes(home), 'ttheme-gojo.yaml'), join(configHome, 'ttheme', 'palettes.zsh')])
+})
+
+test('sync puts the startup palette on Warp through its settings file, and gives the old theme back under keep', () => {
+  const configHome = fixture()
+  const home = fixture()
+  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo', 'geto'] }, home)
+  const settings = warpSettings(home, configHome)
+  mkdirSync(join(settings, '..'), { recursive: true })
+  const mine = '[appearance]\n\n[appearance.themes]\ntheme = "Dracula"\n\n[appearance.vertical_tabs]\nenabled = true\n'
+  writeFileSync(settings, mine)
+  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'] }, home)
+  assert.match(
+    readFileSync(settings, 'utf8'),
+    /^\[appearance\.themes\]\ntheme = \{ custom = \{ name = "gojo", path = "ttheme-gojo\.yaml" \} \}\n\n\[appearance\.vertical_tabs\]/m,
+  )
+  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo', 'geto'], startup: 'geto' }, home)
+  assert.match(readFileSync(settings, 'utf8'), /name = "geto"/)
+  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'], keepTheme: true }, home)
+  assert.equal(readFileSync(settings, 'utf8'), mine)
+})
+
+test('sync adds the Warp theme table when there is none, gives Warp its default back under keep, and leaves Warp alone without a settings file', () => {
+  const configHome = fixture()
+  const home = fixture()
+  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'] }, home)
+  assert.ok(!existsSync(warpSettings(home, configHome)))
+  const settings = warpSettings(home, configHome)
+  mkdirSync(join(settings, '..'), { recursive: true })
+  writeFileSync(settings, '[general]\ndefault_session_mode = "agent"\n')
+  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'] }, home)
+  assert.match(
+    readFileSync(settings, 'utf8'),
+    /^default_session_mode = "agent"\n\n\[appearance\.themes\]\ntheme = \{ custom/m,
+  )
+  sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'], keepTheme: true }, home)
+  assert.match(readFileSync(settings, 'utf8'), /^theme = "dark"$/m)
 })
 
 test('sync writes an iTerm2 profile per listed palette, in P3 with one color set for both modes', () => {

@@ -32,7 +32,7 @@ jobs:
       - name: package
         run: |
           mkdir -p release
-          for term in ghostty kitty alacritty wezterm iterm2; do
+          for term in ghostty kitty alacritty wezterm iterm2 windows-terminal warp; do
             tar -czf "release/ttheme-$term.tar.gz" -C dist "$term"
           done
           tar -czf release/ttheme-all.tar.gz dist shell ghostty/shaders README.md

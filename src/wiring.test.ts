@@ -42,6 +42,10 @@ test('detectTerminal mirrors the shell adapter detection', () => {
   assert.equal(detectTerminal({ ITERM_SESSION_ID: 'w0' }), 'iterm2')
   assert.equal(detectTerminal({ TERM_PROGRAM: 'iTerm.app' }), 'iterm2')
   assert.equal(detectTerminal({ TERM: 'foot-extra' }), 'foot')
+  assert.equal(detectTerminal({ TERM_PROGRAM: 'WarpTerminal', GHOSTTY_RESOURCES_DIR: '/x' }), 'warp')
+  assert.equal(detectTerminal({ WT_SESSION: 'a-b' }), 'windows-terminal')
+  assert.equal(detectTerminal({ TERM_PROGRAM: 'Apple_Terminal' }), 'terminal-app')
+  assert.equal(detectTerminal({ WT_SESSION: 'a-b', TERM_PROGRAM: 'vscode' }), 'unknown')
   assert.equal(detectTerminal({}), 'unknown')
 })
 

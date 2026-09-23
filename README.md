@@ -18,6 +18,49 @@ Two things separate this from the usual color-scheme dump:
 - **Colors switch at runtime, not just at startup.** Tabs get different palettes
   in the same window, and any tab can be repainted at any time.
 
+## Terminal support
+
+Nothing is emulated — a terminal that cannot express something simply does not
+get it.
+
+| Feature | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Terminal.app | Other |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Setup with `init`** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
+| **Palette files** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
+| **Runtime repaint** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Done][done] | ![Partial][partial] |
+| **Font** | ![Done][done] | ![No][no] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] | ![No][no] | ![No][no] |
+| **Shader** | ![Done][done] | ![No][no] | ![No][no] | ![No][no] | ![No][no] | ![No][no] | ![No][no] | ![No][no] | ![No][no] |
+| **Background pictures** | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] | ![Partial][partial] | ![No][no] | ![No][no] | ![No][no] | ![No][no] |
+
+- **Setup with `init`** — iTerm2 is offered on macOS only, Windows Terminal
+  from WSL (or a native Windows zsh), where init writes a settings fragment on
+  the Windows side. Warp gets its themes, and the default palette through its
+  `settings.toml` (the Warp builds that have one).
+- **Palette files** — iTerm2 gets one dynamic profile per palette, plus
+  `.itermcolors` in the archive; Windows Terminal gets one fragment carrying
+  every installed scheme.
+- **Runtime repaint** — Ghostty and kitty through native adapters, the rest
+  through OSC escape sequences, per pane in WezTerm and Windows Terminal.
+  Terminal.app takes every OSC color but no OSC reset, so ttheme reads its
+  colors when the shell starts and puts them back itself. Warp answers OSC
+  color queries but paints one theme app-wide and never the background an OSC
+  sets, so the shell layer stays off there and `ttheme <palette>` points you at
+  `ttheme default <palette>`, which puts the palette on every Warp window; any other terminal that speaks OSC 4/10/11 (foot, Konsole,
+  VTE-based terminals…) gets repainting and nothing else.
+- **Font** — family and size everywhere it is marked; Ghostty also maps
+  codepoints to fonts. iTerm2 keeps the font of your own profile, Windows
+  Terminal and Warp the one you set in them.
+- **Background pictures** — `find`, `ttheme image` and `preview`'s live
+  backdrop. Ghostty shows one picture app-wide, following the focused tab;
+  iTerm2 (3.7 or newer) shows one per tab. WezTerm shows the picture of the
+  active tab per window and switches it as `preview` moves, but has no
+  in-terminal preview or tuning — find and tune from Ghostty or iTerm2. Cut-outs
+  and baked crops need macOS.
+
+[done]: https://img.shields.io/badge/Done-2ea44f?style=flat-square
+[partial]: https://img.shields.io/badge/Partial-e3b341?style=flat-square
+[no]: https://img.shields.io/badge/Not%20supported-d0d7de?style=flat-square
+
 ## Palettes
 
 | Group | Palettes |
@@ -57,7 +100,7 @@ came from — `ttheme` prints it, and it is in the theme's TOML.
 
 ## Install
 
-**Ghostty, kitty, Alacritty or iTerm2** — one command, no clone:
+**Ghostty, kitty, Alacritty, WezTerm, iTerm2, Windows Terminal or Warp** — one command, no clone:
 
 ```sh
 npx @kecan0406/ttheme@latest init
@@ -80,14 +123,25 @@ init makes it iTerm2's default profile, so new tabs and windows open wearing the
 palette and its picture from their first frame and follow `ttheme default` from
 then on. iTerm2 reads its default profile only when it starts, so quit and
 reopen it once after init. The profile it replaces stays the parent of every
-ttheme profile, so your font and keys carry over, and `keep` gives it back. It ends with a receipt, paints the first palette onto the tab you
+ttheme profile, so your font and keys carry over, and `keep` gives it back.
+WezTerm's config is Lua, so init puts a two-line block that runs
+`~/.config/ttheme/wezterm.lua` just before your config's `return config` (or
+writes a small `wezterm.lua` when there is none); WezTerm reloads it by itself.
+Windows Terminal gets a fragment,
+`%LOCALAPPDATA%\Microsoft\Windows Terminal\Fragments\ttheme\ttheme.json`,
+with every installed scheme and the default palette on the profile init ran in —
+`settings.json` is never edited, only touched so the terminal reloads. Warp gets
+a theme per palette, `~/.warp/themes/ttheme-<palette>.yaml`, and the default
+palette as the one `theme` key of `[appearance.themes]` in `~/.warp/settings.toml`
+— Warp applies it within a few seconds, and `keep` puts back the theme you had.
+It ends with a receipt, paints the first palette onto the tab you
 ran it in (not under `keep`) and lists what to do next (`exec zsh` for the
 `ttheme` command here, a terminal restart for new tabs).
 Running it again updates in place; `--yes` skips every prompt and installs no
 palettes — `ttheme browse` opens the full catalog any time, to add or drop
 single palettes.
 
-**WezTerm, or any of them by hand** — one archive per terminal in the
+**Any of them by hand** — one archive per terminal in the
 [latest release](https://github.com/kecan0406/ttheme/releases/latest):
 
 ```sh
@@ -111,6 +165,15 @@ cp wezterm/colors/miku.toml ~/.config/wezterm/colors/
 
 # iTerm2 — open a .itermcolors to add it to Settings > Profiles > Colors presets
 curl -L $REL/ttheme-iterm2.tar.gz | tar xz
+
+# windows terminal — every scheme in one fragment
+curl -L $REL/ttheme-windows-terminal.tar.gz | tar xz
+#   copy windows-terminal/ttheme.json into
+#   %LOCALAPPDATA%\Microsoft\Windows Terminal\Fragments\ttheme\
+
+# warp
+curl -L $REL/ttheme-warp.tar.gz | tar xz
+cp warp/themes/ttheme-miku.yaml ~/.warp/themes/
 ```
 
 The kitty, Alacritty and WezTerm archives also carry a `config/` file per theme
@@ -449,23 +512,17 @@ writes anything.
 Installed palettes are listed in `~/.config/ttheme/installed.json`, and the
 catalog is cached in `~/.config/ttheme/catalog.json`.
 
-## What each terminal can actually do
-
-Nothing is emulated — a terminal that cannot express something simply does not
-get it.
-
-| | palette file | runtime switching | font | shader |
-|---|---|---|---|---|
-| **Ghostty** | ✅ | ✅ native adapter | ✅ incl. per-codepoint map | ✅ |
-| **kitty** | ✅ | ✅ native adapter | family + size | ✗ |
-| **WezTerm** | ✅ | OSC — per window, never per pane | family + size | ✗ |
-| **Alacritty** | ✅ | OSC only (no runtime color API exists) | family + size | ✗ |
-| **iTerm2** | ✅ a profile per palette | OSC | profile-only | ✗ |
-| anything else | — | OSC, if it speaks it | — | ✗ |
+## Terminal notes
 
 Ghostty is the only terminal here with GLSL shaders, and the only one with
 per-codepoint font mapping — which is why the Hangul→D2Coding rule survives only
 in its build.
+
+WezTerm keeps an OSC-set palette per pane, but a picture belongs to the window:
+the Lua module ttheme runs follows the active pane's `ttheme_shown` user var,
+which the shell layer sets whenever the tab's palette changes, and reads the
+picture from `backgrounds/<palette>.conf` itself — so a picture installed or
+tuned from Ghostty or iTerm2 reaches WezTerm within a second.
 
 iTerm2 reads the colors an OSC sets as Display P3 — its default color space — so
 its profiles and `.itermcolors` files are written in P3 too: a tab opened on a
@@ -500,10 +557,19 @@ never in a theme file. `[font]` and `[ghostty]` are inherited from
 `themes/_defaults.toml` unless the theme overrides them. Then:
 
 ```sh
-mise run build                # regenerates dist/ for all five terminals — fails on bad contrast
+mise run build                # regenerates dist/ for every terminal — fails on bad contrast
 mise run build --only kitty   # just one terminal's subtree
 mise run test
+mise run compat               # the terminal compatibility cases, in each installed terminal
 ```
+
+`mise run compat` opens each installed terminal behind your windows on a
+throwaway home (`mise run sandbox`), runs the cases in `tests/compat/cases.zsh`
+inside it — adapter detection, OSC set/query/reset, what the window really
+paints (read off a screenshot), `ttheme <palette>` and its restore, cell size,
+kitty graphics, synchronized output and focus reporting — and compares them
+with `tests/compat/expect.tsv`: a case that used to pass and fails is a
+regression and fails the run, and `--update` records what was measured.
 
 All one hundred and eight currently pass unwaived — `kyubey` runs tightest at
 4.28:1 where accents need 3:1: it is the one light palette, so every accent has

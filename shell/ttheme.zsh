@@ -62,7 +62,9 @@ __tt_pins_load
 
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
-if [[ -n $GHOSTTY_RESOURCES_DIR || $TERM_PROGRAM == ghostty ]]; then
+if [[ $TERM_PROGRAM == WarpTerminal ]]; then
+  typeset -g TTHEME_ADAPTER=warp
+elif [[ -n $GHOSTTY_RESOURCES_DIR || $TERM_PROGRAM == ghostty ]]; then
   typeset -g TTHEME_ADAPTER=ghostty
 elif [[ -n $KITTY_WINDOW_ID ]]; then
   typeset -g TTHEME_ADAPTER=kitty
@@ -72,6 +74,10 @@ elif [[ -n $ALACRITTY_WINDOW_ID ]]; then
   typeset -g TTHEME_ADAPTER=alacritty
 elif [[ -n $ITERM_SESSION_ID || $TERM_PROGRAM == iTerm.app ]]; then
   typeset -g TTHEME_ADAPTER=iterm2
+elif [[ $TERM_PROGRAM == Apple_Terminal ]]; then
+  typeset -g TTHEME_ADAPTER=terminal-app
+elif [[ -n $WT_SESSION && -z $TERM_PROGRAM ]]; then
+  typeset -g TTHEME_ADAPTER=windows-terminal
 elif [[ $TERM == foot* ]]; then
   typeset -g TTHEME_ADAPTER=foot
 else
@@ -112,7 +118,7 @@ source $TTHEME_HOME/adapters/_osc.zsh
 __tt_active() {
   [[ -o interactive ]] || return 1
   (( ${#TTHEME_PALETTE} )) || return 1
-  [[ $TTHEME_ADAPTER != unknown || -n $TTHEME_FORCE ]]
+  [[ $TTHEME_ADAPTER != (unknown|warp) || -n $TTHEME_FORCE ]]
 }
 
 __tt_empty() {
@@ -1534,6 +1540,10 @@ __tt_preview() {
 }
 
 ttheme() {
+  if [[ $TTHEME_ADAPTER == warp && $1 != (-h|--help|help|browse|list|add|remove|update|config|default) ]]; then
+    print -u2 "ttheme: Warp wears one theme app-wide and paints no tab background of its own — \`ttheme default <palette>\` puts one on every Warp window"
+    return 1
+  fi
   if (( ! $# )); then
     (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
     __tt_menu

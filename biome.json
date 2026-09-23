@@ -20,6 +20,16 @@
   },
   "overrides": [
     {
+      "includes": ["tests/compat/sample.js"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/**/*.test.ts"],
       "linter": {
         "rules": {

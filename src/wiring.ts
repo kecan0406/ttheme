@@ -1,4 +1,12 @@
-export const INIT_TERMINALS = ['ghostty', 'kitty', 'alacritty', 'iterm2'] as const
+export const INIT_TERMINALS = [
+  'ghostty',
+  'kitty',
+  'alacritty',
+  'wezterm',
+  'iterm2',
+  'windows-terminal',
+  'warp',
+] as const
 export type InitTerminal = (typeof INIT_TERMINALS)[number]
 
 const BEGIN = '# ttheme begin'
@@ -17,6 +25,9 @@ export function upsertBlock(content: string, body: string): string {
 }
 
 export function detectTerminal(env: Record<string, string | undefined>): string {
+  if (env.TERM_PROGRAM === 'WarpTerminal') {
+    return 'warp'
+  }
   if (env.GHOSTTY_RESOURCES_DIR || env.TERM_PROGRAM === 'ghostty') {
     return 'ghostty'
   }
@@ -31,6 +42,12 @@ export function detectTerminal(env: Record<string, string | undefined>): string 
   }
   if (env.ITERM_SESSION_ID || env.TERM_PROGRAM === 'iTerm.app') {
     return 'iterm2'
+  }
+  if (env.TERM_PROGRAM === 'Apple_Terminal') {
+    return 'terminal-app'
+  }
+  if (env.WT_SESSION && !env.TERM_PROGRAM) {
+    return 'windows-terminal'
   }
   if (env.TERM?.startsWith('foot')) {
     return 'foot'
@@ -159,6 +176,64 @@ export function alacrittyBlock(themePath: string | undefined): string {
   return themePath ? `[general]\nimport = ["${themePath}"]` : ''
 }
 
-export function weztermSnippet(palette: string): string {
-  return `config.color_scheme = "${palette}"`
+const LUA_BLOCK = /-- ttheme begin\n[\s\S]*?-- ttheme end\n?/
+const LUA_RETURN = /^return config[ \t]*$/gm
+
+export function weztermBlock(module: string): string {
+  return `dofile(${JSON.stringify(module)})(config)`
+}
+
+export function upsertLuaBlock(content: string, body: string): string | undefined {
+  const block = `-- ttheme begin\n${body}\n-- ttheme end\n`
+  if (LUA_BLOCK.test(content)) {
+    return content.replace(LUA_BLOCK, block)
+  }
+  if (content === '') {
+    return `local wezterm = require 'wezterm'\nlocal config = wezterm.config_builder()\n\n${block}\nreturn config\n`
+  }
+  const last = [...content.matchAll(LUA_RETURN)].at(-1)
+  if (last?.index === undefined) {
+    return undefined
+  }
+  return `${content.slice(0, last.index)}${block}\n${content.slice(last.index)}`
+}
+
+const WARP_SECTION = '[appearance.themes]'
+
+function warpSection(lines: string[]): [number, number] | undefined {
+  const start = lines.findIndex((line) => line.trim() === WARP_SECTION)
+  if (start < 0) {
+    return undefined
+  }
+  const next = lines.findIndex((line, i) => i > start && line.trimStart().startsWith('['))
+  return [start, next < 0 ? lines.length : next]
+}
+
+export function warpThemeOf(content: string): string | undefined {
+  const lines = content.split('\n')
+  const section = warpSection(lines)
+  if (!section) {
+    return undefined
+  }
+  const line = lines.slice(section[0] + 1, section[1]).find((l) => /^theme\s*=/.test(l))
+  return line?.replace(/^theme\s*=\s*/, '').trim()
+}
+
+export function warpThemeValue(palette: string): string {
+  return `{ custom = { name = "${palette}", path = "ttheme-${palette}.yaml" } }`
+}
+
+export function withWarpTheme(content: string, value: string | undefined): string {
+  const lines = content.split('\n')
+  const section = warpSection(lines)
+  if (!section) {
+    return value === undefined ? content : `${content.replace(/\n*$/, '\n')}\n${WARP_SECTION}\ntheme = ${value}\n`
+  }
+  const at = lines.findIndex((l, i) => i > section[0] && i < section[1] && /^theme\s*=/.test(l))
+  if (at >= 0) {
+    lines.splice(at, 1, ...(value === undefined ? [] : [`theme = ${value}`]))
+  } else if (value !== undefined) {
+    lines.splice(section[0] + 1, 0, `theme = ${value}`)
+  }
+  return lines.join('\n')
 }

@@ -1,23 +1,47 @@
-import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { execFileSync, spawn } from 'node:child_process'
+import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { backgroundsDir, readBackdrop } from './backdrop.ts'
 import { gateFailures, readCatalog } from './catalog.ts'
-import { alacritty, type Emitter, ghostty, iterm2, kitty } from './emit/index.ts'
+import { alacritty, type Emitter, ghostty, iterm2, kitty, warp, wezterm, windowsTerminal } from './emit/index.ts'
 import { itermProfiles, type ProfileBackground } from './emit/iterm2.ts'
 import { listed, type Manifest, type PaletteEntry } from './emit/manifest.ts'
 import { palettesZsh } from './emit/shell.ts'
+import { weztermModule } from './emit/wezterm.ts'
+import { wtFragment } from './emit/windows-terminal.ts'
 import type { Theme } from './theme.ts'
-import { alacrittyBlock, ghosttyBlock, INIT_TERMINALS, type InitTerminal, kittyBlock, upsertBlock } from './wiring.ts'
+import {
+  alacrittyBlock,
+  ghosttyBlock,
+  INIT_TERMINALS,
+  type InitTerminal,
+  kittyBlock,
+  upsertBlock,
+  upsertLuaBlock,
+  warpThemeOf,
+  warpThemeValue,
+  weztermBlock,
+  withWarpTheme,
+} from './wiring.ts'
 
-const EMITTERS: Record<InitTerminal, Emitter> = { ghostty, kitty, alacritty, iterm2 }
+const EMITTERS: Record<InitTerminal, Emitter> = {
+  ghostty,
+  kitty,
+  alacritty,
+  wezterm,
+  iterm2,
+  'windows-terminal': windowsTerminal,
+  warp,
+}
 
 export interface Installed {
   terminals: InitTerminal[]
   startup?: string
   keepTheme?: true
   itermBase?: string
+  wtHome?: string
+  wtProfile?: string
   palettes: string[]
 }
 
@@ -108,6 +132,8 @@ export function readInstalled(configHome: string): Installed {
     ...(doc.startup ? { startup: doc.startup } : {}),
     ...(doc.keepTheme ? { keepTheme: true as const } : {}),
     ...(doc.itermBase ? { itermBase: doc.itermBase } : {}),
+    ...(doc.wtHome ? { wtHome: doc.wtHome } : {}),
+    ...(doc.wtProfile ? { wtProfile: doc.wtProfile } : {}),
     palettes: doc.palettes,
   }
 }
@@ -163,17 +189,104 @@ export function resolve(catalog: Manifest, names: string[]): PaletteEntry[] {
 }
 
 function themeFiles(terminal: InitTerminal, theme: Theme): { file: string; content: string }[] {
+  const wanted = terminal === 'wezterm' ? 'colors' : 'themes'
   return (EMITTERS[terminal].emit?.(theme) ?? []).flatMap((out) => {
     const [, section, file] = out.path.split('/')
-    return section === 'themes' && file !== undefined ? [{ file, content: out.content }] : []
+    return section === wanted && file !== undefined ? [{ file, content: out.content }] : []
   })
+}
+
+export function warpThemes(home: string): string {
+  return process.platform === 'darwin'
+    ? join(home, '.warp', 'themes')
+    : join(process.env.XDG_DATA_HOME ?? join(home, '.local', 'share'), 'warp-terminal', 'themes')
+}
+
+function themeDir(terminal: InitTerminal, configHome: string, home: string): string {
+  if (terminal === 'warp') {
+    return warpThemes(home)
+  }
+  return join(configHome, terminal, terminal === 'wezterm' ? 'colors' : 'themes')
+}
+
+export function warpSettings(home: string, configHome: string): string {
+  return process.platform === 'darwin'
+    ? join(home, '.warp', 'settings.toml')
+    : join(configHome, 'warp-terminal', 'settings.toml')
+}
+
+const WARP_DEFAULT = '"dark"'
+
+const WARP_LATER =
+  "setTimeout(() => { const fs = require('node:fs'); const [file, next, seen] = process.argv.slice(-3); if (fs.readFileSync(file, 'utf8') === seen) fs.writeFileSync(file, next) }, 1500)"
+
+function wearWarp(configHome: string, home: string, startup: string | undefined, later: boolean): string | undefined {
+  const file = warpSettings(home, configHome)
+  if (!existsSync(file)) {
+    return undefined
+  }
+  const base = join(configHome, 'ttheme', 'warp.base')
+  const content = readFileSync(file, 'utf8')
+  const current = warpThemeOf(content)
+  const ours = current?.includes('path = "ttheme-') === true
+  let value: string
+  if (startup) {
+    if (!ours && !existsSync(base)) {
+      mkdirSync(dirname(base), { recursive: true })
+      writeFileSync(base, current ?? '')
+    }
+    value = warpThemeValue(startup)
+  } else {
+    if (!ours) {
+      return undefined
+    }
+    value = (existsSync(base) && readFileSync(base, 'utf8')) || WARP_DEFAULT
+    rmSync(base, { force: true })
+  }
+  const next = withWarpTheme(content, value)
+  if (next === content) {
+    return undefined
+  }
+  if (later) {
+    spawn(process.execPath, ['-e', WARP_LATER, file, next, content], { detached: true, stdio: 'ignore' }).unref()
+  } else {
+    writeFileSync(file, next)
+  }
+  return file
+}
+
+export function weztermConfig(configHome: string, home: string): string {
+  const dotfile = join(home, '.wezterm.lua')
+  return existsSync(dotfile) ? dotfile : join(configHome, 'wezterm', 'wezterm.lua')
+}
+
+export function wtFragmentPath(wtHome: string): string {
+  return join(wtHome, 'Microsoft', 'Windows Terminal', 'Fragments', 'ttheme', 'ttheme.json')
+}
+
+export function wtSettings(wtHome: string): string[] {
+  return [
+    join(wtHome, 'Packages', 'Microsoft.WindowsTerminal_8wekyb3d8bbwe', 'LocalState', 'settings.json'),
+    join(wtHome, 'Packages', 'Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe', 'LocalState', 'settings.json'),
+    join(wtHome, 'Microsoft', 'Windows Terminal', 'settings.json'),
+  ].filter((file) => existsSync(file))
+}
+
+function wtDefaultProfile(settings: string[]): string | undefined {
+  for (const file of settings) {
+    const guid = /"defaultProfile"\s*:\s*"(\{[0-9a-fA-F-]+\})"/.exec(readFileSync(file, 'utf8'))?.[1]
+    if (guid) {
+      return guid
+    }
+  }
+  return undefined
 }
 
 export function startupPalette(state: Installed): string | undefined {
   return state.startup && state.palettes.includes(state.startup) ? state.startup : state.palettes[0]
 }
 
-function blockFor(terminal: Exclude<InitTerminal, 'iterm2'>, configHome: string, startup: string | undefined) {
+function blockFor(terminal: 'ghostty' | 'kitty' | 'alacritty', configHome: string, startup: string | undefined) {
   const tthemeDir = join(configHome, 'ttheme')
   if (terminal === 'ghostty') {
     return { file: join(configHome, 'ghostty', 'config'), body: ghosttyBlock(tthemeDir, startup) }
@@ -236,10 +349,50 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
       write(itermProfilesPath(home), itermFile(configHome, catalog, entries, state, home))
       continue
     }
+    if (terminal === 'windows-terminal') {
+      if (state.wtHome) {
+        const settings = wtSettings(state.wtHome)
+        const themes = entries.map((entry) => toTheme(entry, catalog))
+        write(wtFragmentPath(state.wtHome), wtFragment(themes, state.wtProfile ?? wtDefaultProfile(settings), startup))
+        const now = new Date()
+        for (const file of settings) {
+          utimesSync(file, now, now)
+        }
+      }
+      continue
+    }
+    const fresh =
+      startup !== undefined && terminal === 'warp' && !existsSync(join(warpThemes(home), `ttheme-${startup}.yaml`))
+    const warpFile = terminal === 'warp' ? wearWarp(configHome, home, startup, fresh) : undefined
     for (const entry of entries) {
       for (const { file, content } of themeFiles(terminal, toTheme(entry, catalog))) {
-        write(join(configHome, terminal, 'themes', file), content)
+        write(join(themeDir(terminal, configHome, home), file), content)
       }
+    }
+    if (terminal === 'warp') {
+      if (warpFile) {
+        written.push(warpFile)
+      }
+      continue
+    }
+    if (terminal === 'wezterm') {
+      const module = join(configHome, 'ttheme', 'wezterm.lua')
+      write(
+        module,
+        weztermModule({
+          path: module,
+          colors: themeDir('wezterm', configHome, home),
+          backgrounds: backgroundsDir(configHome),
+          ...(startup ? { startup } : {}),
+          palettes: entries.map((entry) => toTheme(entry, catalog)),
+        }),
+      )
+      const config = weztermConfig(configHome, home)
+      const wired = upsertLuaBlock(existsSync(config) ? readFileSync(config, 'utf8') : '', weztermBlock(module))
+      if (wired !== undefined) {
+        write(config, wired)
+      }
+      continue
     }
     const { file, body } = blockFor(terminal, configHome, startup)
     const current = existsSync(file) ? readFileSync(file, 'utf8') : ''
@@ -257,12 +410,18 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
   return written
 }
 
-export function forget(configHome: string, catalog: Manifest, terminals: InitTerminal[], names: string[]): string[] {
+export function forget(
+  configHome: string,
+  catalog: Manifest,
+  terminals: InitTerminal[],
+  names: string[],
+  home = homedir(),
+): string[] {
   const removed: string[] = []
   for (const terminal of terminals) {
     for (const entry of catalog.palettes.filter((p) => names.includes(p.name))) {
       for (const { file } of themeFiles(terminal, toTheme(entry, catalog))) {
-        const path = join(configHome, terminal, 'themes', file)
+        const path = join(themeDir(terminal, configHome, home), file)
         if (existsSync(path)) {
           rmSync(path, { force: true })
           removed.push(path)

@@ -148,6 +148,11 @@ depends = ["build", "bin:build"]
 interactive = true
 run = "zsh tests/sandbox.zsh"
 
+[tasks.compat]
+description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv — `mise run compat [--update] [ghostty iterm2 wezterm warp terminal-app…]`"
+depends = ["build", "bin:build"]
+run = "zsh tests/compat.zsh"
+
 [tasks."site:dev"]
 description = "dev server for the showcase site"
 dir = "{{config_root}}/site"
