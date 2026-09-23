@@ -1,31 +1,54 @@
-if (( $+commands[kitten] )); then
-  __tt_kitty() { kitten @ "$@" }
-elif (( $+commands[kitty] )); then
-  __tt_kitty() { kitty @ "$@" }
-else
-  __tt_kitty() { return 1 }
-fi
+source $TTHEME_HOME/adapters/_bg.zsh
 
-__tt_kitty_args() {
-  local -a p=(${=1})
-  (( ${#p} >= 20 )) || return 1
-  reply=(
-    foreground=$p[2]
-    background=$p[1]
-    cursor=$p[3]
-    cursor_text_color=$p[1]
-    selection_background=$p[4]
-    selection_foreground=$p[2]
-  )
-  local i
-  for i in {0..15}; do reply+=("color$i=$p[i+5]"); done
+typeset -g TTHEME_KITTY_SHOWN=""
+
+__tt_keepable() { (( ${TTHEME_TERMINALS[(Ie)kitty]} )) }
+
+__tt_kitty_var() { __tt_out $'\e]1337;SetUserVar='$1'='"$(print -rn -- $2 | base64)"$'\a' }
+
+__tt_shown() {
+  [[ $2 != force && $TTHEME_KITTY_SHOWN == $1 ]] && return 1
+  TTHEME_KITTY_SHOWN=$1
+  __tt_kitty_var ttheme_shown $1
+  return 1
 }
 
-__tt_apply() {
-  local -a reply
-  if [[ ${1%% *} != - ]] && __tt_kitty_args "$1"; then
-    __tt_kitty set-colors -- "${reply[@]}" 2>/dev/null && return 0
-  fi
+__tt_unshown() {
+  TTHEME_KITTY_SHOWN=""
+  __tt_kitty_var ttheme_shown ""
+}
 
-  __tt_osc_apply "$1"
+__tt_worn() {
+  local REPLY=""
+  [[ -n $1 ]] && __tt_name_of "$1"
+  [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || REPLY=""
+  __tt_kitty_var ttheme_worn $REPLY
+}
+
+__tt_reloaded() { [[ -n $TTHEME_STARTUP ]] && __tt_kitty_var ttheme_startup $TTHEME_STARTUP }
+
+__tt_bg_shown() { REPLY=$TTHEME_KITTY_SHOWN }
+
+__tt_bg_refresh() { (( ${@[(Ie)$TTHEME_KITTY_SHOWN]} )) && __tt_kitty_var ttheme_shown $TTHEME_KITTY_SHOWN }
+
+__tt_bg_cells() {
+  local fd saved resp="" c
+  exec {fd}<>/dev/tty 2>/dev/null || return 0
+  saved=$(stty -g <&$fd 2>/dev/null)
+  stty raw -echo min 0 time 3 <&$fd 2>/dev/null
+  printf '\e[16t' >&$fd
+  while IFS= read -r -s -k 1 -t 1 -u $fd c 2>/dev/null; do
+    resp+=$c
+    [[ $resp == *'[6;'<1->';'<1->t ]] && break
+  done
+  stty "$saved" <&$fd 2>/dev/null
+  exec {fd}>&-
+  [[ $resp == *'[6;'<1->';'<1->t ]] || return 0
+  resp=${${resp##*\[6;}%t}
+  bgch=${resp%;*} bgcw=${resp#*;}
+}
+
+__tt_bg_crop() {
+  __tt_bg_send $1
+  REPLY="$REPLY $4"
 }

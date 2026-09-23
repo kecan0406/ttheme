@@ -181,7 +181,7 @@ test('applyInit preserves existing zshrc content', () => {
   assert.match(zshrc, /# ttheme begin/)
 })
 
-test('init writes its own alacritty block but never edits a foreign alacritty.toml', () => {
+test('init writes its own alacritty block but never edits an alacritty.toml that imports already', () => {
   const paths = makeFixture()
   const config = join(paths.configHome, 'alacritty', 'alacritty.toml')
   applyInit(planInit(options({ terminals: ['alacritty'] }), paths))
@@ -190,7 +190,7 @@ test('init writes its own alacritty block but never edits a foreign alacritty.to
   mkdirSync(join(paths.configHome, 'alacritty'), { recursive: true })
   writeFileSync(config, '[general]\nimport = ["mine.toml"]\n')
   const foreign = planInit(options({ terminals: ['alacritty'] }), paths)
-  assert.ok(foreign.notes.some((n) => n.includes('alacritty.toml already exists')))
+  assert.ok(foreign.notes.some((n) => n.includes('already imports files under [general]')))
   applyInit(foreign)
   assert.equal(readFileSync(config, 'utf8'), '[general]\nimport = ["mine.toml"]\n')
 })

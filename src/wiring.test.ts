@@ -2,12 +2,12 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import {
-  alacrittyBlock,
   configFile,
   configTemplate,
   detectTerminal,
   ghosttyBlock,
   kittyBlock,
+  upsertAlacrittyImport,
   upsertBlock,
   withSetting,
   zshrcBlock,
@@ -137,12 +137,41 @@ test('configFile appends a documented line when a setting is missing', () => {
   assert.match(out, /^# series and palettes .*\n# : \$\{TTHEME_SORT:=abc\}$/m)
 })
 
-test('kitty and alacritty blocks reference the chosen palette', () => {
-  assert.equal(kittyBlock('miku'), 'include themes/miku.conf')
+test('the kitty block wears the chosen palette and loads the watcher', () => {
   assert.equal(
-    alacrittyBlock('/cfg/alacritty/themes/miku.toml'),
-    '[general]\nimport = ["/cfg/alacritty/themes/miku.toml"]',
+    kittyBlock('miku', '/cfg/ttheme/kitty.py'),
+    'include themes/miku.conf\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\nwindow_logo_alpha 1',
   )
+  assert.doesNotMatch(kittyBlock(undefined, '/cfg/ttheme/kitty.py'), /include/)
+})
+
+test('upsertAlacrittyImport appends a [general] block to a config without one', () => {
+  const theme = '/cfg/alacritty/themes/miku.toml'
+  assert.equal(upsertAlacrittyImport('', theme), `# ttheme begin\n[general]\nimport = ["${theme}"]\n# ttheme end\n`)
+  const own = upsertAlacrittyImport('[font]\nsize = 14\n', theme)
+  assert.equal(own, `[font]\nsize = 14\n\n# ttheme begin\n[general]\nimport = ["${theme}"]\n# ttheme end\n`)
+  assert.equal(upsertAlacrittyImport(own ?? '', theme), own)
+})
+
+test('upsertAlacrittyImport joins an existing [general] table and keeps it on rewrite', () => {
+  const theme = '/cfg/alacritty/themes/miku.toml'
+  const wired = upsertAlacrittyImport('[general]\nlive_config_reload = true\n\n[font]\nsize = 14\n', theme)
+  assert.equal(
+    wired,
+    `[general]\n# ttheme begin\nimport = ["${theme}"]\n# ttheme end\nlive_config_reload = true\n\n[font]\nsize = 14\n`,
+  )
+  assert.equal(upsertAlacrittyImport(wired ?? '', theme), wired)
+  assert.equal(
+    upsertAlacrittyImport(wired ?? '', undefined),
+    '[general]\n# ttheme begin\n# ttheme end\nlive_config_reload = true\n\n[font]\nsize = 14\n',
+  )
+})
+
+test('upsertAlacrittyImport leaves a config alone when it already imports or defines general otherwise', () => {
+  const theme = '/cfg/alacritty/themes/miku.toml'
+  assert.equal(upsertAlacrittyImport('[general]\nimport = ["mine.toml"]\n', theme), undefined)
+  assert.equal(upsertAlacrittyImport('import = ["mine.toml"]\n', theme), undefined)
+  assert.equal(upsertAlacrittyImport('general.live_config_reload = true\n', theme), undefined)
 })
 
 test('withSetting rewrites the line a setting already has, and adds one when it is missing', () => {

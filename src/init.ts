@@ -18,6 +18,7 @@ import type { Manifest } from './emit/manifest.ts'
 import { pickPalettes } from './market.ts'
 import { paletteOsc } from './osc.ts'
 import {
+  alacrittyConfig,
   type Installed,
   type ItermDefaults,
   itermDefaults,
@@ -35,6 +36,7 @@ import {
   detectTerminal,
   INIT_TERMINALS,
   type InitTerminal,
+  upsertAlacrittyImport,
   upsertBlock,
   upsertLuaBlock,
   withSetting,
@@ -100,9 +102,11 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     copyDir(copies, join(paths.root, 'ghostty', 'shaders'), join(paths.configHome, 'ghostty', 'shaders'))
   }
   if (opts.terminals.includes('alacritty')) {
-    const config = join(paths.configHome, 'alacritty', 'alacritty.toml')
-    if (existsSync(config) && !readFileSync(config, 'utf8').includes('# ttheme begin')) {
-      notes.push('alacritty.toml already exists — ttheme left it alone; add its themes/ import yourself')
+    const config = alacrittyConfig(paths.configHome)
+    if (existsSync(config) && upsertAlacrittyImport(readFileSync(config, 'utf8'), undefined) === undefined) {
+      notes.push(
+        `${config} already imports files under [general] — ttheme left it alone; add ${join(paths.configHome, 'alacritty', 'themes')}/<palette>.toml to that import list yourself`,
+      )
     }
   }
   if (opts.terminals.includes('wezterm')) {
@@ -312,7 +316,10 @@ function receipt(plan: InitPlan, opts: InitOptions, wear: Wear, painted: boolean
     next.push('restart ghostty   new tabs pick up its config')
   }
   if (opts.terminals.includes('kitty')) {
-    next.push('new kitty window  picks up its config')
+    next.push('new kitty window  pictures follow it — kitty reloads its colors by itself')
+  }
+  if (opts.terminals.includes('alacritty')) {
+    next.push('alacritty         reloads its config by itself')
   }
   if (opts.terminals.includes('wezterm')) {
     next.push('wezterm           reloads its config by itself')
@@ -349,7 +356,10 @@ function report(plan: InitPlan, opts: InitOptions): void {
     lines.push('restart ghostty to pick up its config')
   }
   if (opts.terminals.includes('kitty')) {
-    lines.push('open a new kitty window to pick up its config')
+    lines.push('kitty reloads its colors by itself; pictures show in kitty windows opened from now on')
+  }
+  if (opts.terminals.includes('alacritty')) {
+    lines.push('alacritty reloads its config by itself')
   }
   if (opts.terminals.includes('wezterm') || opts.terminals.includes('windows-terminal')) {
     lines.push('wezterm and windows terminal reload their config by themselves')

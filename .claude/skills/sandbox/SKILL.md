@@ -114,6 +114,21 @@ Measured on 3.7.2, 2026-09-22 — know these before reading results:
 - `Harmonize 256 Colors` applies only to sessions created after it is set.
 - Twice in thirteen runs a session stopped answering queries (and drawing) after a `\(user.…)`-interpolated `Background Image Location` got its variable; it did not reproduce on demand. A literal path never did.
 
+## kitty, Alacritty and WezTerm: a window on the sandbox's own config
+
+```zsh
+W=.claude/skills/sandbox/scripts/window.zsh
+TTHEME_KITTY_APP=<kitty.app> zsh $W --kitty --shots <scratchpad>/k asuka gojo -- 'ttheme gojo' 'sb_report "ansi1 $(sb_color 1)"'
+```
+
+`--kitty`, `--alacritty` or `--wezterm` picks the terminal; `TTHEME_KITTY_APP`, `TTHEME_ALACRITTY_APP` and `TTHEME_WEZTERM_APP` name an app outside `/Applications` (none of the three is installed on the user's machine — download the release into the scratchpad and point at it). Everything else is Ghostty mode's: the commands run at the first prompt with `sb_color`, `sb_query`, `sb_report` and `sb_shot`, and the same report comes back.
+
+Measured on kitty 0.49.0 and Alacritty 0.17.0, 2026-09-24:
+
+- kitty draws nothing while its window is covered or the screen is locked, so its screenshots come out blank behind the user's windows; queries, user vars and the watcher all work regardless. Alacritty and Ghostty keep drawing.
+- kitty reloads `kitty.conf` and every file it includes by itself (`auto_reload_config`), and the reload resets every OSC color; the ttheme watcher puts them back. Alacritty keeps OSC colors through its own reload.
+- kitty answers `CSI 16t` and `ENOPARENT` for a relative placement; Alacritty has no graphics and no `CSI 16t`.
+
 ## Rules of the road
 
 - Go through the scripts, never `mise run sandbox` bare: bare is the user's mode and opens a window in front of them. `shell.zsh` passes `--here`, `ghostty.zsh` and `iterm.zsh` pass `--behind`.

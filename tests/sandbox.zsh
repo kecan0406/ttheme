@@ -11,6 +11,10 @@ typeset -g ITERM_APP="^[^ ]*/iTerm2 -suite $SUITE( |$)"
 typeset -g ITERM_SERVER="^$SUITE_DIR/iTermServer"
 typeset -g WEZTERM_APP=${TTHEME_WEZTERM_APP:-/Applications/WezTerm.app}
 typeset -g WEZTERM_GUI="wezterm-gui --config-file $SANDBOX/"
+typeset -g KITTY_APP=${TTHEME_KITTY_APP:-/Applications/kitty.app}
+typeset -g KITTY_GUI="kitty --config $SANDBOX/"
+typeset -g ALACRITTY_APP=${TTHEME_ALACRITTY_APP:-/Applications/Alacritty.app}
+typeset -g ALACRITTY_GUI="alacritty --config-file $SANDBOX/"
 typeset -g WARP_LAUNCH=$HOME/.warp/launch_configurations/ttheme-sandbox.yaml
 typeset -ga FOREIGN=(GHOSTTY_RESOURCES_DIR GHOSTTY_BIN_DIR GHOSTTY_SHELL_FEATURES TERM_PROGRAM TERM_PROGRAM_VERSION
   COLORTERM TERMINFO KITTY_WINDOW_ID ITERM_SESSION_ID ITERM_PROFILE WEZTERM_PANE WEZTERM_EXECUTABLE WEZTERM_UNIX_SOCKET
@@ -29,6 +33,8 @@ quit_iterm() {
 fresh() {
   pkill -f -- "--config-file=$SANDBOX/" 2>/dev/null || :
   pkill -f -- $WEZTERM_GUI 2>/dev/null || :
+  pkill -f -- $KITTY_GUI 2>/dev/null || :
+  pkill -f -- $ALACRITTY_GUI 2>/dev/null || :
   quit_iterm
   defaults delete $SUITE 2>/dev/null || :
   rm -rf -- $SANDBOX $SUITE_DIR
@@ -100,6 +106,18 @@ open_wezterm() {
     start --always-new-process --cwd $SANDBOX -- /bin/zsh -il > /dev/null 2>&1 &!
 }
 
+open_kitty() {
+  [[ -x $KITTY_APP/Contents/MacOS/kitty ]] || return 1
+  env ${FOREIGN/#/-u} KITTY_CONFIG_DIRECTORY=$SANDBOX/.config/kitty $KITTY_APP/Contents/MacOS/kitty \
+    --config $SANDBOX/.config/kitty/kitty.conf --directory $SANDBOX /bin/zsh -il > /dev/null 2>&1 &!
+}
+
+open_alacritty() {
+  [[ -x $ALACRITTY_APP/Contents/MacOS/alacritty ]] || return 1
+  env ${FOREIGN/#/-u} $ALACRITTY_APP/Contents/MacOS/alacritty --config-file $SANDBOX/.config/alacritty/alacritty.toml \
+    --working-directory $SANDBOX -e /bin/zsh -il > /dev/null 2>&1 &!
+}
+
 open_warp() {
   local behind=$1 REPLY
   [[ -d /Applications/Warp.app ]] || return 1
@@ -127,13 +145,13 @@ hand_back() {
   osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($front).activateWithOptions(0)" > /dev/null
 }
 
-usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --warp | --terminal-app] [--zshenv FILE] [--empty | palette…]" }
+usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app] [--zshenv FILE] [--empty | palette…]" }
 
 main() {
-  local -a here behind iterm wezterm warp tapp legacy trust empty zshenv
-  zparseopts -D -E -F -- -here=here -behind=behind -iterm=iterm -wezterm=wezterm -warp=warp -terminal-app=tapp \
+  local -a here behind iterm wezterm kitty alacritty warp tapp legacy trust empty zshenv
+  zparseopts -D -E -F -- -here=here -behind=behind -iterm=iterm -wezterm=wezterm -kitty=kitty -alacritty=alacritty -warp=warp -terminal-app=tapp \
     -legacy=legacy -trust=trust -empty=empty -zshenv:=zshenv || { usage; return 1 }
-  local -i other=$(( $#iterm + $#wezterm + $#warp + $#tapp ))
+  local -i other=$(( $#iterm + $#wezterm + $#kitty + $#alacritty + $#warp + $#tapp ))
   (( other > 1 || $#here && ($#behind || other) || ($#legacy || $#trust) && ! $#iterm || $#empty && $# )) && { usage; return 1 }
   local -a palettes=($@)
   local label=${(j: :)palettes}
@@ -166,6 +184,20 @@ main() {
     open_wezterm || { print -u2 "no WezTerm at $WEZTERM_APP — TTHEME_WEZTERM_APP names another WezTerm.app"; return 1 }
     (( $#behind )) && hand_back $front $WEZTERM_GUI
     print -r -- "opened a separate WezTerm on it — ⌘Q quits only that one; files stay until the next run"
+    return
+  fi
+  if (( $#kitty )); then
+    ( unset $FOREIGN; KITTY_WINDOW_ID=1 wire $label $palettes )
+    open_kitty || { print -u2 "no kitty at $KITTY_APP — TTHEME_KITTY_APP names another kitty.app"; return 1 }
+    (( $#behind )) && hand_back $front $KITTY_GUI
+    print -r -- "opened a separate kitty on it — ⌘Q quits only that one; files stay until the next run"
+    return
+  fi
+  if (( $#alacritty )); then
+    ( unset $FOREIGN; ALACRITTY_WINDOW_ID=1 wire $label $palettes )
+    open_alacritty || { print -u2 "no Alacritty at $ALACRITTY_APP — TTHEME_ALACRITTY_APP names another Alacritty.app"; return 1 }
+    (( $#behind )) && hand_back $front $ALACRITTY_GUI
+    print -r -- "opened a separate Alacritty on it — ⌘Q quits only that one; files stay until the next run"
     return
   fi
   if (( $#warp )); then

@@ -16,16 +16,18 @@ __tt_osc_apply() {
   else
     out=$'\e]11;'$p[1]$'\e\\'
   fi
-  out+=$'\e]10;'$p[2]$'\e\\\e]12;'$p[3]$'\e\\\e]17;'$p[4]$'\e\\\e]4'
-  for i in {0..15}; do out+=";$i;$p[i+5]"; done
-  __tt_out "$out"$'\e\\'
+  out+=$'\e]10;'$p[2]$'\e\\\e]12;'$p[3]$'\e\\\e]17;'$p[4]$'\e\\'
+  for i in {0..15}; do out+=$'\e]4;'$i';'$p[i+5]$'\e\\'; done
+  __tt_out "$out"
   (( TTHEME_TMUX )) && tmux set -q @ttheme_bg "$p[1]" 2>/dev/null
+  __tt_worn "$1"
   return 0
 }
 
 __tt_osc_reset() {
   __tt_out $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'
   (( TTHEME_TMUX )) && tmux set -qu @ttheme_bg 2>/dev/null
+  __tt_worn ""
   return 0
 }
 
@@ -42,6 +44,10 @@ __tt_apply() { __tt_osc_apply "$@" }
 __tt_shown() { return 1 }
 
 __tt_unshown() { : }
+
+__tt_reloaded() { : }
+
+__tt_worn() { : }
 
 __tt_keepable() { return 1 }
 

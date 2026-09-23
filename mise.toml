@@ -143,13 +143,13 @@ interactive = true
 run = "zsh tests/tui.zsh demo"
 
 [tasks.sandbox]
-description = "a throwaway home wired with this checkout and every palette, in its own Ghostty or (`--iterm`) iTerm2 — `mise run sandbox [--here | --iterm] [--empty | palette…]`"
+description = "a throwaway home wired with this checkout and every palette, in its own Ghostty or another terminal — `mise run sandbox [--here | --iterm | --wezterm | --kitty | --alacritty | --warp | --terminal-app] [--empty | palette…]`"
 depends = ["build", "bin:build"]
 interactive = true
 run = "zsh tests/sandbox.zsh"
 
 [tasks.compat]
-description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv — `mise run compat [--update] [ghostty iterm2 wezterm warp terminal-app…]`"
+description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv — `mise run compat [--update] [ghostty iterm2 wezterm kitty alacritty warp terminal-app…]`"
 depends = ["build", "bin:build"]
 run = "zsh tests/compat.zsh"
 

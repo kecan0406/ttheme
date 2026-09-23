@@ -6,15 +6,17 @@ typeset -g ROOT=${${(%):-%x}:A:h:h}
 typeset -g SANDBOX=${${TMPDIR:-/tmp}%/}/ttheme-sandbox
 typeset -g OUT=${${TMPDIR:-/tmp}%/}/ttheme-compat
 typeset -g EXPECT=$ROOT/tests/compat/expect.tsv
-typeset -ga TERMINALS=(ghostty iterm2 wezterm warp terminal-app)
-typeset -gA FLAG=(ghostty '' iterm2 --iterm wezterm --wezterm warp --warp terminal-app --terminal-app)
-typeset -gA ADAPTER=(ghostty ghostty iterm2 iterm2 wezterm wezterm warp warp terminal-app terminal-app)
+typeset -ga TERMINALS=(ghostty iterm2 wezterm kitty alacritty warp terminal-app)
+typeset -gA FLAG=(ghostty '' iterm2 --iterm wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app --terminal-app)
+typeset -gA ADAPTER=(ghostty ghostty iterm2 iterm2 wezterm wezterm kitty kitty alacritty alacritty warp warp terminal-app terminal-app)
 
 installed() {
   case $1 in
     ghostty) [[ -d /Applications/Ghostty.app ]] ;;
     iterm2) [[ -d /Applications/iTerm.app ]] ;;
     wezterm) [[ -x ${TTHEME_WEZTERM_APP:-/Applications/WezTerm.app}/Contents/MacOS/wezterm-gui ]] ;;
+    kitty) [[ -x ${TTHEME_KITTY_APP:-/Applications/kitty.app}/Contents/MacOS/kitty ]] ;;
+    alacritty) [[ -x ${TTHEME_ALACRITTY_APP:-/Applications/Alacritty.app}/Contents/MacOS/alacritty ]] ;;
     warp) [[ -d /Applications/Warp.app ]] ;;
     terminal-app) [[ -d /System/Applications/Utilities/Terminal.app ]] ;;
     *) return 1 ;;
@@ -26,6 +28,8 @@ pids_of() {
     ghostty) pgrep -f -- "--config-file=$SANDBOX/" ;;
     iterm2) pgrep -f -- "iTerm2 -suite ttheme-sandbox" ;;
     wezterm) pgrep -f -- "wezterm-gui --config-file $SANDBOX/" ;;
+    kitty) pgrep -f -- "kitty --config $SANDBOX/" ;;
+    alacritty) pgrep -f -- "alacritty --config-file $SANDBOX/" ;;
     warp) pgrep -f -- "/Applications/Warp.app/Contents/MacOS/" ;;
     terminal-app) pgrep -x Terminal ;;
   esac | tr '\n' ' '
@@ -75,6 +79,8 @@ quit() {
     ghostty) pkill -f -- "--config-file=$SANDBOX/" 2>/dev/null || : ;;
     iterm2) pkill -f -- "iTerm2 -suite ttheme-sandbox" 2>/dev/null || : ;;
     wezterm) pkill -f -- "wezterm-gui --config-file $SANDBOX/" 2>/dev/null || : ;;
+    kitty) pkill -f -- "kitty --config $SANDBOX/" 2>/dev/null || : ;;
+    alacritty) pkill -f -- "alacritty --config-file $SANDBOX/" 2>/dev/null || : ;;
     warp) rm -f -- $HOME/.warp/launch_configurations/ttheme-sandbox.yaml ;;
   esac
   return 0

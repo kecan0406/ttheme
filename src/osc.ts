@@ -5,13 +5,12 @@ import type { PaletteEntry } from './emit/manifest.ts'
 const QUERY_CODES = ['10', '11', '12', '17', ...Array.from({ length: 16 }, (_, i) => `4;${i}`)]
 
 export function paletteOsc(entry: PaletteEntry): string {
-  const osc4 = entry.ansi.map((c, i) => `;${i};${c}`).join('')
   return [
     `\x1b]11;${entry.background}\x1b\\`,
     `\x1b]10;${entry.foreground}\x1b\\`,
     `\x1b]12;${entry.cursor}\x1b\\`,
     `\x1b]17;${entry.selection}\x1b\\`,
-    `\x1b]4${osc4}\x1b\\`,
+    ...entry.ansi.map((c, i) => `\x1b]4;${i};${c}\x1b\\`),
   ].join('')
 }
 

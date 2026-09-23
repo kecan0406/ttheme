@@ -23,14 +23,7 @@ const miku: PaletteEntry = {
 test('paletteOsc emits the same sequences as the zsh osc adapter', () => {
   const osc = paletteOsc(miku)
   assert.ok(osc.startsWith('\x1b]11;#0e2124\x1b\\\x1b]10;#e0f4f2\x1b\\\x1b]12;#39c5bb\x1b\\\x1b]17;#1b3b3e\x1b\\'))
-  assert.ok(
-    osc.endsWith(
-      `\x1b]4;0;#000000${miku.ansi
-        .slice(1)
-        .map((c, i) => `;${i + 1};${c}`)
-        .join('')}\x1b\\`,
-    ),
-  )
+  assert.ok(osc.endsWith(miku.ansi.map((c, i) => `\x1b]4;${i};${c}\x1b\\`).join('')))
 })
 
 test('parseOscColors reads terminal replies with ST and BEL terminators', () => {

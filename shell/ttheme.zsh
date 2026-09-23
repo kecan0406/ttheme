@@ -13,7 +13,7 @@ __tt_palettes_load() {
 __tt_fresh() {
   local -a at
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null || return 0
-  [[ $at[1] == "$TTHEME_PALETTES_AT" ]] || __tt_palettes_load
+  [[ $at[1] == "$TTHEME_PALETTES_AT" ]] || { __tt_palettes_load && __tt_reloaded }
 }
 
 if [[ -r $TTHEME_HOME/palettes.zsh ]]; then
@@ -414,7 +414,7 @@ __tt_catalog() {
   [[ $1 == list ]] && return 0
   [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
   was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
-  __tt_palettes_load
+  __tt_palettes_load && __tt_reloaded
   [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$was" ]] || __tt_reload
 }
 
@@ -1615,7 +1615,7 @@ if __tt_active; then
     add-zsh-hook preexec __tt_mux
     add-zsh-hook precmd __tt_unmux
   fi
-  if [[ $TTHEME_ADAPTER == ghostty ]] || (( TTHEME_TMUX )); then
+  if [[ $TTHEME_ADAPTER == (ghostty|kitty|windows-terminal) ]] || (( TTHEME_TMUX )); then
     add-zsh-hook precmd __tt_precmd
     add-zsh-hook preexec __tt_preexec
     __tt_bind_focus

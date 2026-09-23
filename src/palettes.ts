@@ -6,17 +6,18 @@ import { backgroundsDir, readBackdrop } from './backdrop.ts'
 import { gateFailures, readCatalog } from './catalog.ts'
 import { alacritty, type Emitter, ghostty, iterm2, kitty, warp, wezterm, windowsTerminal } from './emit/index.ts'
 import { itermProfiles, type ProfileBackground } from './emit/iterm2.ts'
+import { kittyWatcher } from './emit/kitty.ts'
 import { listed, type Manifest, type PaletteEntry } from './emit/manifest.ts'
 import { palettesZsh } from './emit/shell.ts'
 import { weztermModule } from './emit/wezterm.ts'
 import { wtFragment } from './emit/windows-terminal.ts'
 import type { Theme } from './theme.ts'
 import {
-  alacrittyBlock,
   ghosttyBlock,
   INIT_TERMINALS,
   type InitTerminal,
   kittyBlock,
+  upsertAlacrittyImport,
   upsertBlock,
   upsertLuaBlock,
   warpThemeOf,
@@ -255,6 +256,10 @@ function wearWarp(configHome: string, home: string, startup: string | undefined,
   return file
 }
 
+export function kittyWatcherPath(configHome: string): string {
+  return join(configHome, 'ttheme', 'kitty.py')
+}
+
 export function weztermConfig(configHome: string, home: string): string {
   const dotfile = join(home, '.wezterm.lua')
   return existsSync(dotfile) ? dotfile : join(configHome, 'wezterm', 'wezterm.lua')
@@ -286,16 +291,19 @@ export function startupPalette(state: Installed): string | undefined {
   return state.startup && state.palettes.includes(state.startup) ? state.startup : state.palettes[0]
 }
 
-function blockFor(terminal: 'ghostty' | 'kitty' | 'alacritty', configHome: string, startup: string | undefined) {
-  const tthemeDir = join(configHome, 'ttheme')
+function blockFor(terminal: 'ghostty' | 'kitty', configHome: string, startup: string | undefined) {
   if (terminal === 'ghostty') {
-    return { file: join(configHome, 'ghostty', 'config'), body: ghosttyBlock(tthemeDir, startup) }
+    return { file: join(configHome, 'ghostty', 'config'), body: ghosttyBlock(join(configHome, 'ttheme'), startup) }
   }
-  if (terminal === 'kitty') {
-    return { file: join(configHome, 'kitty', 'kitty.conf'), body: kittyBlock(startup) }
-  }
-  const themePath = startup ? join(configHome, 'alacritty', 'themes', `${startup}.toml`) : undefined
-  return { file: join(configHome, 'alacritty', 'alacritty.toml'), body: alacrittyBlock(themePath) }
+  return { file: join(configHome, 'kitty', 'kitty.conf'), body: kittyBlock(startup, kittyWatcherPath(configHome)) }
+}
+
+export function alacrittyConfig(configHome: string): string {
+  return join(configHome, 'alacritty', 'alacritty.toml')
+}
+
+export function alacrittyTheme(configHome: string, palette: string | undefined): string | undefined {
+  return palette ? join(configHome, 'alacritty', 'themes', `${palette}.toml`) : undefined
 }
 
 function itermFile(
@@ -337,10 +345,14 @@ export function refreshProfiles(configHome: string, home = homedir()): void {
 export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
   const entries = resolve(catalog, state.palettes)
   const written: string[] = []
-  const write = (path: string, content: string) => {
+  const write = (path: string, content: string): boolean => {
+    written.push(path)
+    if (existsSync(path) && readFileSync(path, 'utf8') === content) {
+      return false
+    }
     mkdirSync(dirname(path), { recursive: true })
     writeFileSync(path, content)
-    written.push(path)
+    return true
   }
 
   const startup = worn(state)
@@ -353,10 +365,12 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
       if (state.wtHome) {
         const settings = wtSettings(state.wtHome)
         const themes = entries.map((entry) => toTheme(entry, catalog))
-        write(wtFragmentPath(state.wtHome), wtFragment(themes, state.wtProfile ?? wtDefaultProfile(settings), startup))
-        const now = new Date()
-        for (const file of settings) {
-          utimesSync(file, now, now)
+        const fragment = wtFragment(themes, state.wtProfile ?? wtDefaultProfile(settings), startup)
+        if (write(wtFragmentPath(state.wtHome), fragment)) {
+          const now = new Date()
+          for (const file of settings) {
+            utimesSync(file, now, now)
+          }
         }
       }
       continue
@@ -394,18 +408,31 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
       }
       continue
     }
-    const { file, body } = blockFor(terminal, configHome, startup)
-    const current = existsSync(file) ? readFileSync(file, 'utf8') : ''
-    if (terminal === 'alacritty' && current !== '' && !current.includes('# ttheme begin')) {
+    if (terminal === 'alacritty') {
+      const config = alacrittyConfig(configHome)
+      const wired = upsertAlacrittyImport(
+        existsSync(config) ? readFileSync(config, 'utf8') : '',
+        alacrittyTheme(configHome, startup),
+      )
+      if (wired !== undefined) {
+        write(config, wired)
+      }
       continue
     }
-    mkdirSync(dirname(file), { recursive: true })
-    writeFileSync(file, upsertBlock(current, body))
-    written.push(file)
+    if (terminal === 'kitty') {
+      write(
+        kittyWatcherPath(configHome),
+        kittyWatcher({ themes: themeDir('kitty', configHome, home), backgrounds: backgroundsDir(configHome) }),
+      )
+    }
+    const { file, body } = blockFor(terminal, configHome, startup)
+    write(file, upsertBlock(existsSync(file) ? readFileSync(file, 'utf8') : '', body))
   }
 
   const table = join(configHome, 'ttheme', 'palettes.zsh')
-  write(table, palettesZsh(entries, startup, state.terminals))
+  mkdirSync(dirname(table), { recursive: true })
+  writeFileSync(table, palettesZsh(entries, startup, state.terminals))
+  written.push(table)
   rmSync(`${table}.zwc`, { force: true })
   return written
 }

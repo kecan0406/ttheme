@@ -11,9 +11,12 @@ __tt_ghostty_shown() {
 __tt_bg_saved() {
   local REPLY
   (( ${TTHEME_TERMINALS[(Ie)iterm2]} )) && __tt_cli image $1 tuned
+  __tt_bg_refresh "$@"
   __tt_ghostty_shown && (( ${@[(Ie)$REPLY]} )) && __tt_reload
   return 0
 }
+
+__tt_bg_refresh() { : }
 
 __tt_bg_aligns() { (( ! ${TTHEME_TERMINALS[(Ie)iterm2]} )) }
 

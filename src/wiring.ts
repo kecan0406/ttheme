@@ -168,12 +168,43 @@ export function configFile(content: string): string {
   return (Object.keys(CONFIG_SETTINGS) as (keyof typeof CONFIG_SETTINGS)[]).reduce(ensureSetting, content)
 }
 
-export function kittyBlock(palette: string | undefined): string {
-  return palette ? `include themes/${palette}.conf` : ''
+export function kittyBlock(palette: string | undefined, watcher: string): string {
+  return [
+    ...(palette ? [`include themes/${palette}.conf`] : []),
+    `watcher ${watcher}`,
+    'window_logo_scale 100',
+    'window_logo_alpha 1',
+  ].join('\n')
 }
 
-export function alacrittyBlock(themePath: string | undefined): string {
+const TOML_GENERAL = /^[ \t]*\[general\][ \t]*(?:#.*)?$/m
+const TOML_TABLE = /^[ \t]*\[/m
+const TOML_IMPORT = /^[ \t]*import[ \t]*=/m
+const TOML_GENERAL_KEY = /^[ \t]*general[ \t]*[.=]/m
+
+function alacrittyBlock(themePath: string | undefined): string {
   return themePath ? `[general]\nimport = ["${themePath}"]` : ''
+}
+
+export function upsertAlacrittyImport(content: string, themePath: string | undefined): string | undefined {
+  const outside = content.replace(BLOCK, '')
+  const general = TOML_GENERAL.exec(outside)
+  if (!general) {
+    const first = outside.search(TOML_TABLE)
+    const root = first < 0 ? outside : outside.slice(0, first)
+    if (TOML_GENERAL_KEY.test(outside) || TOML_IMPORT.test(root)) {
+      return undefined
+    }
+    return upsertBlock(content, alacrittyBlock(themePath))
+  }
+  const at = general.index + general[0].length
+  const rest = outside.slice(at)
+  const next = rest.search(TOML_TABLE)
+  if (TOML_IMPORT.test(next < 0 ? rest : rest.slice(0, next))) {
+    return undefined
+  }
+  const line = themePath ? `import = ["${themePath}"]\n` : ''
+  return `${outside.slice(0, at)}\n${BEGIN}\n${line}${END}${rest}`
 }
 
 const LUA_BLOCK = /-- ttheme begin\n[\s\S]*?-- ttheme end\n?/
