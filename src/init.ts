@@ -15,7 +15,7 @@ import * as p from '@clack/prompts'
 import { build } from './build.ts'
 import { writeCatalog } from './catalog.ts'
 import type { Manifest } from './emit/manifest.ts'
-import { pickPalettes } from './market.ts'
+import { pickPalettes, pickStartup } from './market.ts'
 import { paletteOsc } from './osc.ts'
 import {
   alacrittyConfig,
@@ -49,6 +49,7 @@ export interface InitOptions {
   terminals: InitTerminal[]
   palettes: string[]
   wear?: Wear
+  startup?: string
 }
 
 export interface InitPaths {
@@ -131,6 +132,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const installed: Installed = {
     terminals: opts.terminals,
     palettes: opts.palettes,
+    ...(opts.startup ? { startup: opts.startup } : {}),
     ...(opts.wear === 'keep' ? { keepTheme: true as const } : {}),
     ...(wt && paths.wtHome ? { wtHome: paths.wtHome } : {}),
     ...(wt && paths.wtProfile ? { wtProfile: paths.wtProfile } : {}),
@@ -244,12 +246,16 @@ function wearSummary(wear: Wear, startup: string | undefined): string {
     : `paint every tab with ${startup}, this one now`
 }
 
-async function askWear(startup: string | undefined): Promise<Wear> {
+async function askWear(palettes: string[]): Promise<Wear> {
   return accepted(
     await p.select<Wear>({
       message: 'how should the terminal wear them?',
       options: [
-        { value: 'default', label: 'default', hint: `every tab wears ${startup}` },
+        {
+          value: 'default',
+          label: 'default',
+          hint: palettes.length > 1 ? 'every tab wears one palette — pick it next' : `every tab wears ${palettes[0]}`,
+        },
         { value: 'rotate', label: 'rotate', hint: 'every new tab wears the next palette' },
         { value: 'keep', label: 'keep', hint: 'leave my terminal colors alone' },
       ],
@@ -414,14 +420,21 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   }
   p.intro('ttheme init')
   const terminals = await askTerminals(detected, preselected, paths)
-  const palettes = await pickPalettes(loadManifest(root), [], 'series', true)
+  const catalog = loadManifest(root)
+  const palettes = await pickPalettes(catalog, [], 'series', true)
   if (!palettes) {
     p.cancel('nothing changed')
     process.exit(1)
   }
-  const startup = startupPalette({ terminals, palettes })
-  const wear = await askWear(startup)
-  const opts: InitOptions = { terminals, palettes, wear }
+  const wear = await askWear(palettes)
+  const ask = wear === 'default' && palettes.length > 1
+  const chosen = ask ? await pickStartup(catalog, palettes) : undefined
+  if (ask && !chosen) {
+    p.cancel('nothing changed')
+    process.exit(1)
+  }
+  const startup = startupPalette({ terminals, palettes, startup: chosen })
+  const opts: InitOptions = { terminals, palettes, wear, startup: chosen }
   const plan = planInit(opts, paths)
   p.note(
     [

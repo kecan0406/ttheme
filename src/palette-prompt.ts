@@ -1,5 +1,5 @@
 import type { Readable, Writable } from 'node:stream'
-import { Prompt } from '@clack/core'
+import { Prompt, SelectPrompt } from '@clack/core'
 import { ansiChip, ansiDot, ansiFg, ansiSwatch } from './ansi.ts'
 import type { PaletteEntry } from './emit/manifest.ts'
 
@@ -408,5 +408,78 @@ export class PalettePrompt extends Prompt<string> {
         ? `${bar('└')} ${this.color ? `${YELLOW}${this.error}${RESET}` : this.error}`
         : `${bar('└')} ${dim(`↑↓ move${fold} · space pick · type to filter · enter ${go} · esc cancel`)}`
     return [head, search, ...body, more, hint].join('\n')
+  }
+}
+
+export interface StartupPromptOptions {
+  entries: PaletteEntry[]
+  maxItems?: number
+  color?: boolean
+  input?: Readable
+  output?: Writable
+  onFocus?: (entry: PaletteEntry) => void
+}
+
+export class StartupPrompt extends SelectPrompt<{ value: string }> {
+  private entries: PaletteEntry[]
+  private top = 0
+  private maxItems: number
+  private color: boolean
+  private namePad: number
+
+  constructor(opts: StartupPromptOptions) {
+    super({
+      options: opts.entries.map((e) => ({ value: e.name })),
+      input: opts.input,
+      output: opts.output,
+      render: () => this.draw(),
+    })
+    this.entries = opts.entries
+    this.maxItems = opts.maxItems ?? 12
+    this.color = opts.color ?? true
+    this.namePad = Math.max(0, ...opts.entries.map((e) => e.name.length))
+    const focus = () => {
+      const entry = this.entries[this.cursor]
+      if (entry) {
+        opts.onFocus?.(entry)
+      }
+    }
+    focus()
+    this.on('cursor', focus)
+  }
+
+  private row(e: PaletteEntry, focused: boolean): string {
+    const marker = focused ? '▶ ' : '  '
+    const name = e.name.padEnd(this.namePad)
+    if (!this.color) {
+      return `${marker}${name}  ${e.group}`
+    }
+    const label = focused ? `${BOLD}${name}${RESET}` : name
+    return `${marker}${label} ${ansiDot(e.background, e.cursor)}${ansiSwatch(e.ansi.slice(1, 7), e.background)}  ${DIM}${e.group}${RESET}`
+  }
+
+  private draw(): string {
+    const dim = (s: string) => (this.color ? `${DIM}${s}${RESET}` : s)
+    const bar = (s: string) => (this.color ? `${CYAN}${s}${RESET}` : s)
+    const chosen = this.entries[this.cursor]?.name ?? ''
+    if (this.state === 'submit') {
+      return `${dim('◇')} default palette ${dim(`· ${chosen}`)}`
+    }
+    if (this.state === 'cancel') {
+      return `${dim('◇ default palette · cancelled')}`
+    }
+    if (this.cursor < this.top) {
+      this.top = this.cursor
+    }
+    if (this.cursor >= this.top + this.maxItems) {
+      this.top = this.cursor - this.maxItems + 1
+    }
+    const window = this.entries.slice(this.top, this.top + this.maxItems)
+    const head = `${bar('◆')} default palette ${dim(`(${this.cursor + 1}/${this.entries.length})`)}`
+    const body = window.map((e, i) => `${bar('│')} ${this.row(e, this.top + i === this.cursor)}`)
+    const below = this.entries.length - this.top - window.length
+    const more = below > 0 ? `${bar('│')} ${dim(`↓ ${below} more`)}` : bar('│')
+    const hint = `${bar('└')} ${dim('↑↓ try on · enter choose · esc cancel')}`
+    return [head, ...body, more, hint].join('\n')
   }
 }

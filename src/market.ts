@@ -3,7 +3,7 @@ import * as p from '@clack/prompts'
 import { catalogPath, fetchCatalog, REGISTRY_URL, readCatalog, search, writeCatalog } from './catalog.ts'
 import { listed, type Manifest } from './emit/manifest.ts'
 import { paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
-import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
+import { PalettePrompt, type PickerScope, promptFx, StartupPrompt } from './palette-prompt.ts'
 import {
   configHome,
   forget,
@@ -151,6 +151,19 @@ export async function pickPalettes(
     return undefined
   }
   return catalog.palettes.filter((e) => prompt.picked.has(e.name)).map((e) => e.name)
+}
+
+export async function pickStartup(catalog: Manifest, names: string[]): Promise<string | undefined> {
+  const live = process.stdout.isTTY === true && !process.env.NO_COLOR
+  const saved = live ? await queryTerminalColors() : new Map<string, string>()
+  const prompt = new StartupPrompt({
+    entries: catalog.palettes.filter((e) => names.includes(e.name)),
+    color: !process.env.NO_COLOR,
+    onFocus: live ? (entry) => process.stdout.write(paletteOsc(entry)) : undefined,
+  })
+  const done = await prompt.prompt()
+  process.stdout.write(restoreOsc(saved))
+  return p.isCancel(done) ? undefined : done
 }
 
 export async function runBrowse(): Promise<void> {

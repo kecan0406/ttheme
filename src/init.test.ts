@@ -157,6 +157,10 @@ test('init wears the terminal by the chosen mode and keeps it on a rerun', () =>
   assert.match(readFileSync(ghostty, 'utf8'), /^theme = neutral$/m)
   assert.equal(tabSetting(), 'seq')
   assert.equal(installed().keepTheme, undefined)
+
+  applyInit(planInit(options({ palettes: ['neutral', 'miku'], wear: 'default', startup: 'miku' }), paths))
+  assert.match(readFileSync(ghostty, 'utf8'), /^theme = miku$/m)
+  assert.equal(installed().startup, 'miku')
 })
 
 test('applyInit is idempotent', () => {
