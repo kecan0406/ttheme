@@ -6,6 +6,9 @@ ansi_source = "Nord"
 booru = "kitagawa_yuusuke"
 signature = ["cursor", "foreground", "ansi1"]
 
+[meta.booru_sites]
+konachan = "kitagawa_yusuke"
+
 [colors]
 background = "#12181d"
 foreground = "#e0e3e8"

@@ -6,6 +6,9 @@ ansi_source = "Birds Of Paradise"
 booru = "kikyou_seri"
 signature = ["cursor", "ansi12", "ansi9"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#1e160d"
 foreground = "#f6dfc6"

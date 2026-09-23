@@ -114,7 +114,7 @@ test('applyInit creates the layout, marks the launcher executable and wires conf
   assert.match(zshrc, /source .*ttheme\.zsh/)
   assert.ok(!zshrc.includes('export TTHEME_'))
   const config = readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8')
-  assert.match(config, /^: \$\{TTHEME_TAB_PALETTE:=off\}$/m)
+  assert.match(config, /^# : \$\{TTHEME_TAB_PALETTE:=off\}$/m)
 })
 
 test('applyInit seeds config.zsh once and keeps user edits on rerun', () => {
@@ -122,13 +122,13 @@ test('applyInit seeds config.zsh once and keeps user edits on rerun', () => {
   applyInit(planInit(options(), paths))
   const configPath = join(paths.configHome, 'ttheme', 'config.zsh')
   const first = readFileSync(configPath, 'utf8')
-  assert.match(first, /^: \$\{TTHEME_TAB_PALETTE:=off\}$/m)
-  assert.match(first, /^: \$\{TTHEME_ANNOUNCE:=1\}$/m)
+  assert.match(first, /^# : \$\{TTHEME_TAB_PALETTE:=off\}$/m)
+  assert.match(first, /^# : \$\{TTHEME_ANNOUNCE:=1\}$/m)
   writeFileSync(
     configPath,
     first
-      .replace(/^: \$\{TTHEME_TAB_PALETTE[^\n]*$/m, ': ${TTHEME_TAB_PALETTE:=seq}')
-      .replace(/^: \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}'),
+      .replace(/^# : \$\{TTHEME_TAB_PALETTE[^\n]*$/m, ': ${TTHEME_TAB_PALETTE:=seq}')
+      .replace(/^# : \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}'),
   )
   applyInit(planInit(options(), paths))
   const second = readFileSync(configPath, 'utf8')
@@ -139,7 +139,7 @@ test('applyInit seeds config.zsh once and keeps user edits on rerun', () => {
 test('init wears the terminal by the chosen mode and keeps it on a rerun', () => {
   const paths = makeFixture()
   const ghostty = join(paths.configHome, 'ghostty', 'config')
-  const tab = /^: \$\{TTHEME_TAB_PALETTE:=(\w+)\}$/m
+  const tab = /^(?:# )?: \$\{TTHEME_TAB_PALETTE:=(\w+)\}$/m
   const tabSetting = () => readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8').match(tab)?.[1]
   const installed = () => JSON.parse(readFileSync(join(paths.configHome, 'ttheme', 'installed.json'), 'utf8'))
 

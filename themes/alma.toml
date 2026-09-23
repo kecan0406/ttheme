@@ -6,6 +6,9 @@ ansi_source = "Belafonte Night + Glitch City"
 booru = "alma_armas"
 signature = ["cursor", "ansi12", "ansi9"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#1e160d"
 foreground = "#f6dfc6"

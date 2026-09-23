@@ -6,6 +6,9 @@ ansi_source = "GitLab Dark"
 booru = "souryuu_asuka_langley"
 signature = ["cursor", "ansi11", "ansi4"]
 
+[meta.booru_sites]
+konachan = "soryu_asuka_langley"
+
 [colors]
 background = "#211513"
 foreground = "#fddbd5"

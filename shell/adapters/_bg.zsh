@@ -383,11 +383,15 @@ __tt_pv_bg_findable() {
 }
 
 __tt_pv_bg_find() {
-  local name=$1 err
+  local name=$1 err var
   local -i rc
   __tt_pv_bg_close
   err=$(__tt_cli find $name 2>&1 >/dev/tty)
   rc=$?
+  for var in ${(k)parameters[(I)TTHEME_FIND_*]}; do
+    [[ ${parameters[$var]} == *export* ]] || unset $var
+  done
+  [[ -r $TTHEME_CONFIG ]] && source $TTHEME_CONFIG
   err=${${err//$'\n'/ }## #}
   resized=1 bgname="" bgshown="" bgsent=() bgdim=()
   if (( rc == 1 )); then

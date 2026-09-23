@@ -6,6 +6,9 @@ ansi_source = "Blue Matrix"
 booru = "sei_asagiri"
 signature = ["cursor", "ansi12", "ansi9"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#101916"
 foreground = "#d4e7df"

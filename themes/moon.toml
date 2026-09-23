@@ -6,6 +6,10 @@ ansi_source = "Starlight"
 booru = "sailor_moon"
 signature = ["cursor", "ansi3", "ansi12"]
 
+[meta.booru_sites]
+konachan = ["tsukino_usagi", "sailor_moon_(character)"]
+yande = "tsukino_usagi"
+
 [colors]
 background = "#1f1518"
 foreground = "#f9dbe2"

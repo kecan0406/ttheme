@@ -6,6 +6,9 @@ ansi_source = "Cyberpunk + Glitch City"
 booru = "dorothy_haze"
 signature = ["cursor", "ansi4", "ansi5"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#201515"
 foreground = "#fbdbdc"

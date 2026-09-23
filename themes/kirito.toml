@@ -6,6 +6,9 @@ ansi_source = "Karasu Night + Aincrad"
 booru = "kirito"
 signature = ["cursor", "ansi2", "selection"]
 
+[meta.booru_sites]
+konachan = "kirigaya_kazuto"
+
 [colors]
 background = "#16171f"
 foreground = "#e1e1f3"

@@ -6,6 +6,9 @@ ansi_source = "Royal + Jujutsu"
 booru = "getou_suguru"
 signature = ["cursor", "ansi3", "ansi2"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#16171f"
 foreground = "#e1e1f3"

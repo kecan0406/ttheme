@@ -6,6 +6,10 @@ ansi_source = "Sundried + Crypton"
 booru = "meiko_(vocaloid)"
 signature = ["cursor", "ansi11", "ansi14"]
 
+[meta.booru_sites]
+konachan = "meiko"
+yande = "meiko"
+
 [colors]
 background = "#201514"
 foreground = "#fcdbda"

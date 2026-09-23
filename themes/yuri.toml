@@ -6,6 +6,10 @@ ansi_source = "Purple Portal + DDLC"
 booru = "yuri_(doki_doki_literature_club)"
 signature = ["cursor", "ansi11", "ansi9"]
 
+[meta.booru_sites]
+konachan = "yuri_(ddlc)"
+yande = "yuri_(doki_doki_literature_club!)"
+
 [colors]
 background = "#1b161d"
 foreground = "#eddeef"

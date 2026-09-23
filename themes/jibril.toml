@@ -6,6 +6,9 @@ ansi_source = "Andromeda + Blank"
 booru = "jibril_(no_game_no_life)"
 signature = ["cursor", "ansi3", "ansi12"]
 
+[meta.booru_sites]
+konachan = "jibril"
+
 [colors]
 background = "#1e151a"
 foreground = "#f5dce8"

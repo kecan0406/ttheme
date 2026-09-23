@@ -6,6 +6,10 @@ ansi_source = "Catppuccin Mocha + Aincrad"
 booru = "yuuki_(sao)"
 signature = ["cursor", "selection", "ansi13"]
 
+[meta.booru_sites]
+konachan = "konno_yuuki"
+yande = "konno_yuuki"
+
 [colors]
 background = "#1b161d"
 foreground = "#eddeef"

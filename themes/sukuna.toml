@@ -6,6 +6,10 @@ ansi_source = "Hurtado + Jujutsu"
 booru = "ryoumen_sukuna_(jujutsu_kaisen)"
 signature = ["cursor", "foreground", "ansi9"]
 
+[meta.booru_sites]
+konachan = []
+yande = []
+
 [colors]
 background = "#211513"
 foreground = "#e0e3e6"

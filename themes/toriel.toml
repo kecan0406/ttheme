@@ -6,6 +6,9 @@ ansi_source = "Shades Of Purple + Determination"
 booru = "toriel"
 signature = ["cursor", "ansi4", "foreground"]
 
+[meta.booru_sites]
+konachan = "toriel_(undertale)"
+
 [colors]
 background = "#1a180d"
 foreground = "#e6e1e6"

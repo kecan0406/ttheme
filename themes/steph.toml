@@ -6,6 +6,9 @@ ansi_source = "Catppuccin Mocha + Blank"
 booru = "stephanie_dora"
 signature = ["cursor", "ansi4", "ansi12"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#201516"
 foreground = "#fbdbde"

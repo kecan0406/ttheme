@@ -69,7 +69,7 @@ export const VERBS: Verb[] = [
   {
     name: 'find',
     args: ['<palette>'],
-    about: 'pick a safebooru background for a palette — preview opens this on tab',
+    about: 'pick a booru background for a palette — preview opens this on tab',
     hidden: true,
     run: ([name]) => runFind(name as string),
   },

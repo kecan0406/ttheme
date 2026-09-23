@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
+import { SITES } from './booru.ts'
 import { type Hex, isHex } from './color.ts'
 
 export interface CodepointMap {
@@ -34,6 +35,7 @@ export interface Theme {
   role?: 'default'
   ansiSource: string
   booru?: string
+  booruSites?: Record<string, string[]>
   background: Hex
   foreground: Hex
   cursor: Hex
@@ -161,6 +163,38 @@ function readSignature(file: string, value: unknown, slots: Slots): Signature {
   return { names, colors }
 }
 
+export function readBooruSites(
+  file: string,
+  raw: unknown,
+  booru: string | undefined,
+): Record<string, string[]> | undefined {
+  if (raw === undefined) {
+    return undefined
+  }
+  if (!booru) {
+    fail(file, 'meta.booru_sites renames meta.booru per site, so it needs meta.booru')
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    fail(file, 'meta.booru_sites must be a table of site = "tag" or site = ["tag", ...]')
+  }
+  const sites: Record<string, string[]> = {}
+  for (const [key, value] of Object.entries(raw)) {
+    const site = SITES.find((s) => s.key === key)
+    if (!site) {
+      fail(file, `meta.booru_sites.${key} is not a find site — use ${SITES.map((s) => s.key).join(', ')}`)
+    }
+    const names = typeof value === 'string' ? [value] : Array.isArray(value) ? value : undefined
+    if (!names || names.some((name) => typeof name !== 'string' || name === '' || /\s/.test(name))) {
+      fail(file, `meta.booru_sites.${key} must be one tag or a list of tags, got ${JSON.stringify(value)}`)
+    }
+    if (names.length > 1 && Number.isFinite(site.tagBudget)) {
+      fail(file, `meta.booru_sites.${key} takes one tag — ${site.name} searches ${site.tagBudget} tags at a time`)
+    }
+    sites[key] = names as string[]
+  }
+  return sites
+}
+
 function readGroups(dir: string): Group[] {
   const doc = Bun.TOML.parse(readFileSync(join(dir, GROUPS_FILE), 'utf8')) as Record<string, unknown>
   const raw = doc.group
@@ -227,6 +261,7 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
   if (booru !== undefined && /\s/.test(booru)) {
     fail(file, `meta.booru must be a single booru tag, got ${JSON.stringify(booru)}`)
   }
+  const booruSites = readBooruSites(file, meta.booru_sites, booru)
   const waive = Array.isArray(contrastRules.waive) ? contrastRules.waive.map(String) : []
   if (waive.length > 0 && typeof contrastRules.reason !== 'string') {
     fail(file, 'contrast.waive needs a contrast.reason explaining why')
@@ -241,6 +276,7 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
     role,
     ansiSource: str(file, 'meta.ansi_source', meta.ansi_source),
     ...(booru ? { booru } : {}),
+    ...(booruSites ? { booruSites } : {}),
     background,
     foreground,
     cursor,

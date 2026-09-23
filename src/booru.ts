@@ -21,9 +21,11 @@ const EXPOSED: Record<Block, Set<string>> = {
   underwear: new Set(['underwear', 'panties', 'pantsu', 'bra', 'lingerie', 'pantyshot']),
 }
 const MOEBOORU: Record<Rating, string> = { safe: 's', questionable: 'q', explicit: 'e' }
-const MIRRORS = new Set(['danbooru', 'gelbooru', 'konachan', 'yande.re', 'sankaku'])
 const HEAD = 8191
 const TIMEOUT = 20_000
+const LEND_TIMEOUT = 5_000
+const SUGGEST_TIMEOUT = 3_000
+const SUGGESTED = 8
 const CONNECT = 3_000
 const MAX_WAIT = 60_000
 const TRIES = 3
@@ -54,6 +56,8 @@ export interface Post extends Rendition {
   md5: string
   source: string
   tags: string[]
+  solo: boolean | undefined
+  family: number
   smaller: Rendition[]
 }
 
@@ -66,6 +70,7 @@ export interface Site {
   best: string
   tagBudget: number
   vouched: boolean
+  tunneled: boolean
   ansi: number
   ratings: Record<Rating, Set<string>>
   rate(levels: readonly Rating[]): string
@@ -126,6 +131,7 @@ interface Raw {
   artist: string
   md5: unknown
   tags: string
+  solo: boolean | undefined
   versions: Rendition[]
 }
 
@@ -151,26 +157,11 @@ function post(p: Record<string, unknown>, raw: Raw): Post[] {
       md5: String(raw.md5 ?? ''),
       source: String(p.source ?? ''),
       tags: raw.tags.split(/\s+/).filter(Boolean),
+      solo: raw.solo,
+      family: Number(p.parent_id) || (p.has_children === true ? Number(p.id) : 0),
       smaller: raw.versions.filter((v) => v.file && v.width > 0 && v.height > 0 && v.width * v.height < width * height),
     },
   ]
-}
-
-export function parseGelbooru(text: string, origin = 'https://safebooru.org'): Post[] {
-  return records(text).flatMap((p) => {
-    const stored = p.directory && p.image ? `${origin}/images/${p.directory}/${p.image}` : ''
-    const file = absolute(String(p.file_url || stored))
-    return post(p, {
-      preview: p.preview_url,
-      file,
-      ext: extension(file),
-      owner: p.owner,
-      artist: '',
-      md5: p.hash ?? p.md5,
-      tags: String(p.tags ?? ''),
-      versions: [version(p.sample_url, p.sample_width, p.sample_height)],
-    })
-  })
 }
 
 export function parseMoebooru(text: string): Post[] {
@@ -186,6 +177,7 @@ export function parseMoebooru(text: string): Post[] {
       artist: tags.split(/\s+/).find((tag) => types.get(tag) === 'artist') ?? '',
       md5: p.md5,
       tags,
+      solo: undefined,
       versions: [
         version(p.jpeg_url, p.jpeg_width, p.jpeg_height),
         version(p.sample_url, p.sample_width, p.sample_height),
@@ -197,20 +189,41 @@ export function parseMoebooru(text: string): Post[] {
 export function parseDanbooru(text: string): Post[] {
   return records(text).flatMap((p) => {
     const file = absolute(String(p.file_url ?? ''))
+    const tags = String(p.tag_string ?? '')
     const asset = (p.media_asset ?? {}) as { variants?: { type: string; width: number; height: number; url: string }[] }
     return post(p, {
-      preview: p.preview_file_url,
+      preview: asset.variants?.find((v) => v.type === '360x360')?.url ?? p.preview_file_url,
       file,
       ext: String(p.file_ext || extension(file)).toLowerCase(),
       owner: '',
       artist: String(p.tag_string_artist ?? '').split(/\s+/)[0] ?? '',
       md5: p.md5,
-      tags: String(p.tag_string ?? ''),
+      tags,
+      solo: tags.split(/\s+/).includes('solo'),
       versions: (asset.variants ?? [])
         .map((v) => version(v.url, v.width, v.height))
         .filter((v) => v.ext === 'jpg' || v.ext === 'png')
         .sort((a, b) => b.width * b.height - a.width * a.height),
     })
+  })
+}
+
+export interface Suggestion {
+  value: string
+  count: number
+}
+
+export function parseSuggestions(text: string): Suggestion[] {
+  return records(text).flatMap((item) => {
+    const value = String(item.value ?? '')
+    return value ? [{ value, count: Number(item.post_count) || 0 }] : []
+  })
+}
+
+export function parseTagList(text: string): Suggestion[] {
+  return records(text).flatMap((item) => {
+    const value = String(item.name ?? '')
+    return value ? [{ value, count: Number(item.count) || 0 }] : []
   })
 }
 
@@ -229,6 +242,7 @@ interface Spec {
   origin: string
   cutouts: string[]
   vouched: boolean
+  tunneled: boolean
   ansi: number
 }
 
@@ -302,31 +316,8 @@ function based(spec: Spec): Spec & { moved: boolean } {
   }
 }
 
-function anyOf(tags: string[], grouped: boolean): string {
-  if (tags.length < 2) {
-    return tags.join('')
-  }
-  return grouped ? `( ${tags.join(' ~ ')} )` : tags.map((tag) => `~${tag}`).join(' ')
-}
-
-function gelbooru(raw: Spec): Site {
-  const spec = based(raw)
-  const api = (params: Record<string, string>) =>
-    `${spec.origin}/index.php?${new URLSearchParams({ page: 'dapi', s: 'post', q: 'index', ...params })}`
-  return {
-    ...spec,
-    cutouts: anyOf(spec.cutouts, true),
-    ratings: tiers(['safe', 'general'], ['questionable'], ['explicit']),
-    rate: () => '',
-    best: 'sort:score:desc',
-    tagBudget: Number.POSITIVE_INFINITY,
-    postsUrl: (tags, page) => api({ json: '1', limit: String(PAGE), pid: String(page), tags }),
-    countUrl: (tags) => api({ limit: '0', tags }),
-    postUrl: (id) => api({ json: '1', id: String(id) }),
-    pageUrl: (id) => `${spec.origin}/index.php?page=post&s=view&id=${id}`,
-    parse: (text) => parseGelbooru(text, spec.origin),
-    count: parseCount,
-  }
+function anyOf(tags: string[]): string {
+  return tags.length < 2 ? tags.join('') : tags.map((tag) => `~${tag}`).join(' ')
 }
 
 function moebooru(raw: Spec): Site {
@@ -334,7 +325,7 @@ function moebooru(raw: Spec): Site {
   const params = (rest: Record<string, string>) => new URLSearchParams({ api_version: '2', include_tags: '1', ...rest })
   return {
     ...spec,
-    cutouts: anyOf(spec.cutouts, false),
+    cutouts: anyOf(spec.cutouts),
     ratings: tiers([MOEBOORU.safe], [MOEBOORU.questionable], [MOEBOORU.explicit]),
     rate: (levels) => {
       const [only] = levels
@@ -359,11 +350,13 @@ function moebooru(raw: Spec): Site {
 
 function danbooru(raw: Spec): Site {
   const spec = based(raw)
+  const ratings = tiers(['g'], ['s', 'q'], ['e'])
   return {
     ...spec,
-    cutouts: anyOf(spec.cutouts, false),
-    ratings: tiers(['g'], ['s', 'q'], ['e']),
-    rate: () => '',
+    cutouts: anyOf(spec.cutouts),
+    ratings,
+    rate: (levels) =>
+      levels.length === RATINGS.length ? '' : `rating:${levels.flatMap((level) => [...ratings[level]]).join(',')}`,
     best: 'order:score',
     tagBudget: 2,
     postsUrl: (tags, page) =>
@@ -381,7 +374,7 @@ function siteNamed(name: string): Site | undefined {
 }
 
 export function tagsOf(query: string): number {
-  return query.split(/\s+/).filter(Boolean).length
+  return query.split(/\s+/).filter((tag) => tag && !tag.startsWith('rating:')).length
 }
 
 export function postRef(text: string, fallback: Site): { site: Site; id: number } | undefined {
@@ -406,21 +399,14 @@ export function postRef(text: string, fallback: Site): { site: Site; id: number 
 }
 
 export const SITES: Site[] = [
-  gelbooru({
-    key: 'safebooru',
-    name: 'safebooru',
-    origin: 'https://safebooru.org',
-    cutouts: ['transparent_background', 'vector_trace'],
+  danbooru({
+    key: 'danbooru',
+    name: 'danbooru',
+    origin: 'https://danbooru.donmai.us',
+    cutouts: ['transparent_background'],
     vouched: false,
-    ansi: 4,
-  }),
-  moebooru({
-    key: 'yande',
-    name: 'yande.re',
-    origin: 'https://yande.re',
-    cutouts: ['transparent_png'],
-    vouched: true,
-    ansi: 5,
+    tunneled: true,
+    ansi: 2,
   }),
   moebooru({
     key: 'konachan',
@@ -428,17 +414,25 @@ export const SITES: Site[] = [
     origin: 'https://konachan.net',
     cutouts: ['transparent', 'vector'],
     vouched: false,
+    tunneled: false,
     ansi: 6,
   }),
-  danbooru({
-    key: 'danbooru',
-    name: 'danbooru',
-    origin: 'https://safebooru.donmai.us',
-    cutouts: ['transparent_background'],
-    vouched: false,
-    ansi: 2,
+  moebooru({
+    key: 'yande',
+    name: 'yande.re',
+    origin: 'https://yande.re',
+    cutouts: ['transparent_png'],
+    vouched: true,
+    tunneled: false,
+    ansi: 5,
   }),
 ]
+
+export const KEY_SPAN = 2 ** 27
+
+export function postKey(site: Site, id: number): number {
+  return SITES.indexOf(site) * KEY_SPAN + id
+}
 
 export function originHost(source: string): string {
   let host: string
@@ -448,6 +442,13 @@ export function originHost(source: string): string {
     return ''
   }
   return host.split('.').slice(-2).join('.')
+}
+
+export function untunneled(): string {
+  return SITES.filter((site) => !site.tunneled)
+    .map((site) => originHost(site.origin))
+    .flatMap((domain) => [domain, `.${domain}`])
+    .join(',')
 }
 
 export function exposed(post: Pick<Post, 'tags'>, blocks: readonly Block[] = BLOCKS): string[] {
@@ -462,14 +463,10 @@ export function rendition(post: Post): Rendition | undefined {
   return [post, ...post.smaller].find((v) => v.width * v.height <= MAX_PIXELS)
 }
 
-export function mirrored(owner: string): boolean {
-  return MIRRORS.has(owner)
-}
-
 export function mates(owners: ReadonlyMap<string, string>): Map<string, string[]> {
   const byOwner = new Map<string, string[]>()
   for (const [palette, owner] of [...owners].sort(([a], [b]) => (a < b ? -1 : 1))) {
-    if (owner === '' || MIRRORS.has(owner)) {
+    if (owner === '') {
       continue
     }
     byOwner.set(owner, [...(byOwner.get(owner) ?? []), palette])
@@ -525,6 +522,15 @@ export function pausedUntil(site: Site): number {
   return paused.get(site.key) ?? 0
 }
 
+function reset(error: unknown): boolean {
+  for (let at: unknown = error; at instanceof Error; at = at.cause) {
+    if ((at as NodeJS.ErrnoException).code === 'ECONNRESET') {
+      return true
+    }
+  }
+  return false
+}
+
 function challenged(response: Response): boolean {
   return (
     (response.headers.get('server') ?? '').startsWith('cloudflare') &&
@@ -544,10 +550,18 @@ async function get(
     if (wait > 0) {
       await sleep(wait, undefined, { signal })
     }
-    const response = await fetch(url, {
-      headers: { 'User-Agent': AGENT, Referer: `${site.origin}/`, ...headers },
-      signal: timeout ? AbortSignal.any([signal, AbortSignal.timeout(timeout)]) : signal,
-    })
+    let response: Response
+    try {
+      response = await fetch(url, {
+        headers: { 'User-Agent': AGENT, Referer: `${site.origin}/`, ...headers },
+        signal: timeout ? AbortSignal.any([signal, AbortSignal.timeout(timeout)]) : signal,
+      })
+    } catch (error) {
+      if (tries < TRIES && !signal.aborted && reset(error)) {
+        continue
+      }
+      throw error
+    }
     if (response.status === 429 && tries < TRIES) {
       await response.body?.cancel()
       const delay = retryAfter(response.headers.get('retry-after'), Date.now())
@@ -580,6 +594,79 @@ export async function fetchCount(site: Site, tags: string, signal: AbortSignal):
 export async function fetchPost(site: Site, id: number, signal: AbortSignal): Promise<Post | undefined> {
   const [found] = site.parse(await (await get(site, site.postUrl(id), signal)).text())
   return found
+}
+
+export function lentUrl(md5s: readonly string[]): string {
+  const site = SITES.find((s) => s.key === 'danbooru') as Site
+  const params = new URLSearchParams({ limit: String(2 * PAGE), only: 'md5,tag_string', tags: `md5:${md5s.join(',')}` })
+  return `${site.origin}/posts.json?${params}`
+}
+
+export function parseLent(text: string): Map<string, string[]> {
+  return new Map(
+    records(text).flatMap((p) => {
+      const md5 = String(p.md5 ?? '')
+      return md5
+        ? [
+            [
+              md5,
+              String(p.tag_string ?? '')
+                .split(/\s+/)
+                .filter(Boolean),
+            ] as [string, string[]],
+          ]
+        : []
+    }),
+  )
+}
+
+export function lend(posts: readonly Post[], lent: ReadonlyMap<string, string[]>): void {
+  for (const post of posts) {
+    const tags = lent.get(post.md5)
+    if (tags) {
+      post.tags = [...new Set([...post.tags, ...tags])]
+      post.solo = tags.includes('solo')
+    }
+  }
+}
+
+export async function fetchLent(md5s: readonly string[], signal: AbortSignal): Promise<Map<string, string[]>> {
+  const site = SITES.find((s) => s.key === 'danbooru') as Site
+  const lent = new Map<string, string[]>()
+  if (pausedUntil(site) > Date.now()) {
+    return lent
+  }
+  for (let at = 0; at < md5s.length; at += PAGE) {
+    const text = await (await get(site, lentUrl(md5s.slice(at, at + PAGE)), signal, {}, LEND_TIMEOUT)).text()
+    for (const [md5, tags] of parseLent(text)) {
+      lent.set(md5, tags)
+    }
+  }
+  return lent
+}
+
+export async function fetchSuggestions(prefix: string, signal: AbortSignal): Promise<Suggestion[]> {
+  const danbooru = SITES.find((s) => s.key === 'danbooru') as Site
+  if (pausedUntil(danbooru) <= Date.now()) {
+    try {
+      const params = new URLSearchParams({
+        'search[query]': prefix,
+        'search[type]': 'tag_query',
+        limit: String(SUGGESTED),
+      })
+      const url = `${danbooru.origin}/autocomplete.json?${params}`
+      return parseSuggestions(await (await get(danbooru, url, signal, {}, SUGGEST_TIMEOUT)).text())
+    } catch (error) {
+      if (signal.aborted) {
+        throw error
+      }
+    }
+  }
+  const yande = SITES.find((s) => s.key === 'yande') as Site
+  const params = new URLSearchParams({ name: prefix, order: 'count', limit: String(SUGGESTED) })
+  return parseTagList(
+    await (await get(yande, `${yande.origin}/tag.json?${params}`, signal, {}, SUGGEST_TIMEOUT)).text(),
+  )
 }
 
 export async function headOf(site: Site, url: string, signal: AbortSignal): Promise<ReturnType<typeof pngHead>> {

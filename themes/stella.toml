@@ -6,6 +6,9 @@ ansi_source = "Scarlet Protocol + Glitch City"
 booru = "stella_hoshii"
 signature = ["cursor", "ansi2", "ansi13"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#201515"
 foreground = "#fcdbdb"

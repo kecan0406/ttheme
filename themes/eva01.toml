@@ -6,6 +6,9 @@ ansi_source = "Aura"
 booru = "eva_01"
 signature = ["cursor", "ansi4", "ansi3"]
 
+[meta.booru_sites]
+konachan = "eva-01"
+
 [colors]
 background = "#151910"
 foreground = "#dde6d0"

@@ -31,9 +31,9 @@ One palette per pull request. At most three open at a time.
 - `meta.signature` names three palette slots that must resolve to three
   different colors — they are what the site draws as the palette's identity.
 - `meta.booru` is the character's booru tag (`kaname_madoka`,
-  `lucy_(cyberpunk)`), which `preview` searches on safebooru, yande.re,
-  konachan and danbooru when someone looks for a background. Check it on
-  safebooru first — it should be a character tag with posts. Leave it out for
+  `lucy_(cyberpunk)`), which `preview` searches on danbooru, konachan and
+  yande.re when someone looks for a background. Check it on danbooru first —
+  it should be a character tag with posts. Leave it out for
   palettes that are not one character (a place, a concept). It is a search
   term, never a post id or a link to an image.
 - `meta.ansi_source` records what the ANSI ramp was actually derived from, and

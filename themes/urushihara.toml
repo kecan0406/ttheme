@@ -6,6 +6,9 @@ ansi_source = "Abernathy + Ente Isla"
 booru = "urushihara_hanzou"
 signature = ["cursor", "ansi5", "ansi12"]
 
+[meta.booru_sites]
+konachan = ["hanzou_urushihara", "urushihara_hanzo"]
+
 [colors]
 background = "#1a161e"
 foreground = "#e9dff1"

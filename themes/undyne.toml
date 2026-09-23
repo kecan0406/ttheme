@@ -6,6 +6,9 @@ ansi_source = "Sea Shells + Determination"
 booru = "undyne"
 signature = ["cursor", "ansi2", "ansi3"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#201513"
 foreground = "#fddbd6"

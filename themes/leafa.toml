@@ -3,8 +3,12 @@ name = "leafa"
 group = "Sword Art Online"
 order = 130
 ansi_source = "Kanagawa Wave + Aincrad"
-booru = "leafa"
+booru = "leafa_(sao)"
 signature = ["cursor", "ansi11", "selection"]
+
+[meta.booru_sites]
+konachan = "leafa"
+yande = "leafa"
 
 [colors]
 background = "#141911"

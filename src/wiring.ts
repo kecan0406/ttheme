@@ -51,7 +51,7 @@ export function zshrcBlock(tthemeDir: string): string {
   return `source ${tthemeDir}/ttheme.zsh`
 }
 
-const CONFIG_HEADER = '# ttheme settings — exported variables win over this file'
+const CONFIG_HEADER = '# ttheme settings — uncomment a line to change it; exported variables win over this file'
 
 const CONFIG_SETTINGS = {
   TTHEME_TAB_PALETTE: {
@@ -82,13 +82,17 @@ const CONFIG_SETTINGS = {
     doc: '# what find lists first: all is every post of the character, cutouts are the transparent ones (default all)',
     default: 'all',
   },
+  TTHEME_FIND_SOLO: {
+    doc: '# on keeps the danbooru posts tagged solo, the character alone; off lists every post (default on)',
+    default: 'on',
+  },
   TTHEME_FIND_CUTOUTS: {
-    doc: '# the tags find calls a transparent cutout, per site as key=tag,tag pairs — e.g. "safebooru=transparent_background yande=transparent_png,vector" (default the built-in tags)',
+    doc: '# the tags find calls a transparent cutout, per site as key=tag,tag pairs — e.g. "konachan=transparent,vector yande=transparent_png" (default the built-in tags)',
     default: '',
   },
   TTHEME_FIND_ORDER: {
-    doc: '# the order find lists posts in: newest or score (default newest)',
-    default: 'newest',
+    doc: '# the order find lists posts in: fit ranks each page by how well it makes a backdrop, newest or score (default fit)',
+    default: 'fit',
   },
   TTHEME_FIND_SETS: {
     doc: '# runs of the same picture at the same size from one uploader: fold shows them as one tile, show lists each (default fold)',
@@ -99,17 +103,19 @@ const CONFIG_SETTINGS = {
     default: 'on',
   },
   TTHEME_FIND_UNBLOCK: {
-    doc: '# when a network blocks a booru by name, 1 sends find through a local proxy that splits the TLS handshake (default 0)',
+    doc: '# when a network blocks a booru by name, 1 sends find through a local proxy that splits the TLS handshake — find offers to turn it on (default 0)',
     default: '0',
   },
   TTHEME_FIND_HOSTS: {
-    doc: '# send a find site somewhere else, as key=https://host pairs — e.g. "konachan=https://konachan.com danbooru=https://danbooru.donmai.us" (default none)',
+    doc: '# send a find site somewhere else, as key=https://host pairs — e.g. "danbooru=https://safebooru.donmai.us" (default none)',
     default: '',
   },
 } as const
 
 function settingLine(name: string, value: string): string {
-  return `: \${${name}:=${value}}`
+  const line = `: \${${name}:=${value}}`
+  const setting = CONFIG_SETTINGS[name as keyof typeof CONFIG_SETTINGS]
+  return setting?.default === value ? `# ${line}` : line
 }
 
 function settingPattern(name: string): RegExp {

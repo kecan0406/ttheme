@@ -369,7 +369,7 @@ __tt_help() {
 
 __tt_cli() {
   TTHEME_FIND_RATING=$TTHEME_FIND_RATING TTHEME_FIND_BLOCK=$TTHEME_FIND_BLOCK \
-    TTHEME_FIND_POSTS=$TTHEME_FIND_POSTS TTHEME_FIND_ORDER=$TTHEME_FIND_ORDER TTHEME_FIND_SETS=$TTHEME_FIND_SETS \
+    TTHEME_FIND_POSTS=$TTHEME_FIND_POSTS TTHEME_FIND_SOLO=$TTHEME_FIND_SOLO TTHEME_FIND_ORDER=$TTHEME_FIND_ORDER TTHEME_FIND_SETS=$TTHEME_FIND_SETS \
     TTHEME_FIND_HOSTS=$TTHEME_FIND_HOSTS TTHEME_FIND_UNBLOCK=$TTHEME_FIND_UNBLOCK TTHEME_FIND_CUTOUTS=$TTHEME_FIND_CUTOUTS TTHEME_FIND_REMOVE_BG=$TTHEME_FIND_REMOVE_BG \
     node $TTHEME_HOME/ttheme.js "$@"
 }
@@ -393,6 +393,11 @@ __tt_config() {
   print -r -- "settings apply in new tabs — $TTHEME_CONFIG"
 }
 
+__tt_config_line() {
+  REPLY=": \${$1:=$2}"
+  [[ -n ${(M)${(@f)TTHEME_CONFIG_TEMPLATE}:#"# $REPLY"} ]] && REPLY="# $REPLY"
+}
+
 __tt_config_write() {
   local line name doc
   local -a out=()
@@ -406,7 +411,8 @@ __tt_config_write() {
   for line in "${(@f)$(<$TTHEME_CONFIG)}"; do
     for name in ${(k)want}; do
       [[ $line == (|\#)(| )': ${'${name}[:=}]* ]] || continue
-      line=": \${$name:=${want[$name]}}"
+      __tt_config_line $name ${want[$name]}
+      line=$REPLY
       unset "want[$name]"
       break
     done
@@ -417,10 +423,11 @@ __tt_config_write() {
     (( ${+want[$name]} )) || continue
     doc=""
     for line in "${(@f)TTHEME_CONFIG_TEMPLATE}"; do
-      [[ $line == ": \${$name:="* ]] && break
+      [[ $line == (|'# ')": \${$name:="* ]] && break
       doc=$line
     done
-    out+=("" "$doc" ": \${$name:=${want[$name]}}")
+    __tt_config_line $name ${want[$name]}
+    out+=("" "$doc" "$REPLY")
   done
   print -rl -- "${out[@]}" 2>/dev/null > $TTHEME_CONFIG
 }

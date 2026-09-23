@@ -128,6 +128,7 @@ export function toTheme(entry: PaletteEntry, catalog: Manifest): Theme {
     ...(entry.default ? { role: 'default' as const } : {}),
     ansiSource: entry.ansiSource,
     ...(entry.booru ? { booru: entry.booru } : {}),
+    ...(entry.booruSites ? { booruSites: entry.booruSites } : {}),
     background: entry.background,
     foreground: entry.foreground,
     cursor: entry.cursor,

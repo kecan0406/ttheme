@@ -6,6 +6,10 @@ ansi_source = "Aardvark Blue + Crypton"
 booru = "kaito_(vocaloid)"
 signature = ["cursor", "ansi4", "ansi3"]
 
+[meta.booru_sites]
+konachan = "kaito"
+yande = "kaito"
+
 [colors]
 background = "#15171e"
 foreground = "#dfe2f2"

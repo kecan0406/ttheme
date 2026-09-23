@@ -3,7 +3,10 @@ import { dirname } from 'node:path'
 import { isMainThread, parentPort, Worker } from 'node:worker_threads'
 import { type Colors, installBackdrop, type Tone, tryOn } from './backdrop.ts'
 import { MAX_PIXELS } from './booru.ts'
+import type { Hex } from './color.ts'
+import { paletteMatch } from './fit.ts'
 import { contain, decodeImage, encodePng, transparency } from './png.ts'
+import { shape } from './works.ts'
 
 interface Thumb {
   job: 'thumb'
@@ -11,6 +14,12 @@ interface Thumb {
   to: string
   width: number
   height: number
+}
+
+interface Match {
+  job: 'match'
+  from: string
+  colors: Hex[]
 }
 
 interface Show {
@@ -33,12 +42,18 @@ interface Backdrop {
   origin: { site: string; id: number; ext: string; from: string }
 }
 
-type Task = Thumb | Show | Backdrop
+export interface Look {
+  match: number
+  hash: string
+}
+
+type Task = Thumb | Match | Show | Backdrop
 type Lane = 'tile' | 'view'
+type Result<T extends Task> = T extends Match ? Look : number
 
-const LANES: Record<Task['job'], Lane> = { thumb: 'tile', show: 'view', backdrop: 'view' }
+const LANES: Record<Task['job'], Lane> = { thumb: 'tile', match: 'tile', show: 'view', backdrop: 'view' }
 
-function work(task: Task): number {
+function work(task: Task): number | Look {
   const image = decodeImage(new Uint8Array(readFileSync(task.from)), MAX_PIXELS)
   if (task.job === 'backdrop') {
     installBackdrop(task.home, task.colors, task.tone, image, {
@@ -46,6 +61,9 @@ function work(task: Task): number {
       bytes: new Uint8Array(readFileSync(task.source)),
     })
     return 0
+  }
+  if (task.job === 'match') {
+    return { match: paletteMatch(image, task.colors), hash: shape(image) }
   }
   if (task.job === 'thumb') {
     mkdirSync(dirname(task.to), { recursive: true })
@@ -71,9 +89,9 @@ export function serveRenders(port: NonNullable<typeof parentPort>): void {
 class Line {
   private worker?: Worker
   private next = 1
-  private readonly waiting = new Map<number, { ok: (value: number) => void; no: (error: Error) => void }>()
+  private readonly waiting = new Map<number, { ok: (value: unknown) => void; no: (error: Error) => void }>()
 
-  send(task: Task): Promise<number> {
+  send(task: Task): Promise<unknown> {
     const id = this.next++
     return new Promise((ok, no) => {
       const worker = this.open()
@@ -95,7 +113,7 @@ class Line {
     }
     const worker = new Worker(import.meta.filename)
     worker.unref()
-    worker.on('message', ({ id, value, error }: { id: number; value?: number; error?: string }) => {
+    worker.on('message', ({ id, value, error }: { id: number; value?: unknown; error?: string }) => {
       const held = this.waiting.get(id)
       this.waiting.delete(id)
       if (this.waiting.size === 0) {
@@ -104,7 +122,7 @@ class Line {
       if (error !== undefined) {
         held?.no(new Error(error))
       } else {
-        held?.ok(value as number)
+        held?.ok(value)
       }
     })
     const lost = (error: unknown) => {
@@ -130,14 +148,14 @@ class Line {
 export class Renderer {
   private readonly lines = new Map<Lane, Line>()
 
-  run(task: Task): Promise<number> {
+  run<T extends Task>(task: T): Promise<Result<T>> {
     const lane = LANES[task.job]
     let line = this.lines.get(lane)
     if (!line) {
       line = new Line()
       this.lines.set(lane, line)
     }
-    return line.send(task)
+    return line.send(task) as Promise<Result<T>>
   }
 
   close(): void {

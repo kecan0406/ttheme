@@ -1,8 +1,8 @@
-import { BLOCKS, type Block, type Rating, SITES } from './booru.ts'
+import { BLOCKS, type Block, KEY_SPAN, type Rating, SITES } from './booru.ts'
 import { type Hex, rgb } from './color.ts'
 
 export type Preset = 'cutouts' | 'all'
-export type Order = 'newest' | 'score'
+export type Order = 'fit' | 'newest' | 'score'
 export type Sets = 'fold' | 'show'
 
 export interface Setting {
@@ -22,6 +22,9 @@ export interface Row {
 
 export interface Tile {
   id: number
+  key: number
+  site: string
+  siteAnsi: number
   width: number
   height: number
   reduced: boolean
@@ -50,6 +53,7 @@ export interface FindView {
   nextSite: string
   preset: Preset
   order: Order
+  solo: boolean
   rating: Rating[]
   block: Block[]
   sets: Sets
@@ -71,9 +75,13 @@ export interface FindView {
   installing?: number
   shown?: Shown
   editing?: string
+  suggest?: { value: string; count: number; palette?: string }[]
+  pick?: number
+  asking?: string
   note?: string
   error?: string
   waiting?: number
+  slow?: string
 }
 
 export interface Placement {
@@ -414,18 +422,31 @@ function frameBox(lines: Line[], r0: number, c0: number, h: number, w: number, s
   lines[r0 + h - 1]?.put(c0, `╰${'─'.repeat(w - 2)}╯`, sgr)
 }
 
-function badge(view: FindView, label = view.site): Part {
-  return [` ${label} `, `\x1b[7;${30 + view.siteAnsi}m`]
+function badge(view: FindView, label = view.site, ansi = view.siteAnsi): Part {
+  return [` ${label} `, `\x1b[7;${30 + ansi}m`]
+}
+
+function named(key: number): string {
+  return `${SITES[Math.floor(key / KEY_SPAN)]?.name ?? ''} ${key % KEY_SPAN}`
 }
 
 function tabs(line: Line, cols: number, view: FindView): void {
-  const strip = SITES.flatMap((site, i): Part[] => {
+  const strip = [{ name: 'all', moved: false }, ...SITES].flatMap((site, i): Part[] => {
     const label = `${site.name}${site.moved ? '*' : ''}`
     const tab: Part = site.name === view.site ? badge(view, label) : [` ${label} `, D]
     return i ? [[' ', ''], tab] : [tab]
   })
   const fits = strip.reduce((n, [text]) => n + width(text), 0) <= cols
-  line.run(0, fits ? strip : [badge(view)])
+  const end = line.run(0, fits ? strip : [badge(view)])
+  if (view.asking !== undefined) {
+    line.run(end, [
+      [`  ${view.asking} was cut off — this network may block it. turn on the unblock proxy?  `, YELLOW],
+      ['y', B],
+      [' turn on  ', D],
+      ['n', B],
+      [' not now', D],
+    ])
+  }
 }
 
 function query(line: Line, cols: number, view: FindView, accent: string): void {
@@ -435,7 +456,8 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
       [view.editing, ''],
       ['█', accent],
     ])
-    line.put(c, view.editing ? '  enter searches' : `  a tag, a post url or an id — ${view.tag || 'esc leaves'}`, D)
+    const hint = view.suggest?.length ? '  ↑↓ pick  enter searches' : '  enter searches'
+    line.put(c, view.editing ? hint : `  a tag, a post url or an id — ${view.tag || 'esc leaves'}`, D)
     return
   }
   const c = line.run(0, [
@@ -445,6 +467,7 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
   const allowed = BLOCKS.filter((block) => !view.block.includes(block))
   const state = [
     view.preset,
+    ...(view.solo ? ['solo'] : []),
     view.order,
     ...(view.rating.join('+') === 'safe' ? [] : [view.rating.join('+')]),
     ...(allowed.length > 0 ? [`allows ${allowed.join('+')}`] : []),
@@ -473,24 +496,28 @@ function transparent(shown: Shown): Part[] {
   return [shown.clear > 0 ? [`${shown.clear}% transparent`, GREEN] : ['opaque', YELLOW]]
 }
 
+function where(view: FindView): string {
+  return view.site === 'all' ? 'any site' : view.site
+}
+
 function status(view: FindView): Part | undefined {
   if (view.installing !== undefined) {
-    return [`installing ${view.palette} ← ${view.site} ${view.installing}`, YELLOW]
+    return [`installing ${view.palette} ← ${named(view.installing)}`, YELLOW]
   }
   if (view.error) {
     return [view.error, YELLOW]
   }
   if (view.waiting !== undefined) {
-    return [`${view.site} asked to slow down · ${view.waiting}s`, YELLOW]
+    return [`${view.slow ?? view.site} asked to slow down · ${view.waiting}s`, YELLOW]
   }
   if (view.fetching) {
-    return [`fetching ${view.fetching.id} · ${progress(view.fetching.got, view.fetching.size)}`, YELLOW]
+    return [`fetching ${view.fetching.id % KEY_SPAN} · ${progress(view.fetching.got, view.fetching.size)}`, YELLOW]
   }
   if (view.cutting !== undefined) {
-    return [`cutting out ${view.cutting}`, YELLOW]
+    return [`cutting out ${view.cutting % KEY_SPAN}`, YELLOW]
   }
   if (view.preparing !== undefined) {
-    return [`preparing ${view.preparing}`, YELLOW]
+    return [`preparing ${view.preparing % KEY_SPAN}`, YELLOW]
   }
   if (view.note) {
     return [view.note, D]
@@ -515,9 +542,14 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
       frameBox(lines, r0, c0, TILE.height, TILE.pitch - 1, accent)
     }
     if (tile.thumb) {
-      images.push({ id: tile.id, path: tile.thumb, row: r0 + 1, col: c0 + 1, cols: TILE.cols, rows: TILE.rows, z: -1 })
+      images.push({ id: tile.key, path: tile.thumb, row: r0 + 1, col: c0 + 1, cols: TILE.cols, rows: TILE.rows, z: -1 })
     }
-    lines[r0 + 10]?.run(c0 + 1, [[String(tile.id), on ? B : ''], [' ', ''], dims(tile)])
+    lines[r0 + 10]?.run(c0 + 1, [
+      ...(view.site === 'all' ? ([['● ', `\x1b[${30 + tile.siteAnsi}m`]] as Part[]) : []),
+      [String(tile.id), on ? B : ''],
+      [' ', ''],
+      dims(tile),
+    ])
     if (tile.mates.length > 0) {
       lines[r0 + 10]?.put(c0 + TILE.cols, '≈', accent)
     }
@@ -546,8 +578,8 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
     lines[3]?.put(
       0,
       view.preset === 'cutouts'
-        ? `no transparent cutouts of ${view.tag} on ${view.site} — c searches every post, tab tries ${view.nextSite}`
-        : `no posts of ${view.tag} on ${view.site} — tab tries ${view.nextSite}`,
+        ? `no transparent cutouts of ${view.tag} on ${where(view)} — c searches every post, tab tries ${view.nextSite}`
+        : `no posts of ${view.tag} on ${where(view)} — tab tries ${view.nextSite}`,
       D,
     )
   }
@@ -564,15 +596,18 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
   foot(line, cols, accent, {
     badge: 'FIND',
     lead,
-    keys: [
-      ['←↑↓→', 'move'],
-      ['enter', 'try on'],
-      ['tab', 'site'],
-      ['s', 'settings'],
-      ['/', 'search'],
-      ['?', 'keys'],
-    ],
-    right: ['esc', 'back'],
+    keys:
+      view.asking !== undefined
+        ? []
+        : [
+            ['←↑↓→', 'move'],
+            ['enter', 'try on'],
+            ['tab', 'site'],
+            ['s', 'settings'],
+            ['/', 'search'],
+            ['?', 'keys'],
+          ],
+    right: view.asking !== undefined ? undefined : ['esc', 'back'],
   })
 }
 
@@ -581,8 +616,8 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   if (!tile) {
     return
   }
-  const shown = view.shown?.id === tile.id ? view.shown : undefined
-  const meta: Part[] = [badge(view), ['  ', ''], [String(tile.id), B], ['  ', ''], dims(tile)]
+  const shown = view.shown?.id === tile.key ? view.shown : undefined
+  const meta: Part[] = [badge(view, tile.site, tile.siteAnsi), ['  ', ''], [String(tile.id), B], ['  ', ''], dims(tile)]
   if (tile.artist) {
     meta.push([` · ${plain(tile.artist)}`, ''])
   }
@@ -631,12 +666,12 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
   grid: [
     ['move', '←↑↓→  home  end  pgup  pgdn'],
     ['try on', 'enter'],
-    ['site', `tab  ${SITES.map((site) => site.name).join(', ')}`],
+    ['site', `tab  all, ${SITES.map((site) => site.name).join(', ')}`],
     ['posts', 'c  cutouts or every post'],
     ['search', '/  a tag, a post url or an id'],
     ['unfold', 'space  a set of ×N'],
     ['open', 'o  the post page in a browser'],
-    ['settings', 's  rating, block, posts, order, sets, remove bg'],
+    ['settings', 's  rating, block, posts, solo, order, sets, remove bg'],
     ['back', 'esc returns to preview'],
     ['close', '?  esc'],
   ],
@@ -707,6 +742,22 @@ function help(lines: Line[], cols: number, rows: number, view: FindView, accent:
   foot(lines[rows - 1] as Line, cols, accent, { badge: 'KEYS', right: ['? esc', 'close'] })
 }
 
+function suggestions(lines: Line[], view: FindView, accent: string): void {
+  const list = view.suggest ?? []
+  const said = list.map((item) => (item.count > 0 ? String(item.count) : (item.palette ?? '0')))
+  const wide = Math.max(...list.map((item) => width(item.value)))
+  const note = Math.max(7, ...said.map(width))
+  list.forEach((item, i) => {
+    const on = i === view.pick
+    const line = lines[1 + i]
+    line?.run(0, [
+      [on ? '▸ ' : '  ', accent],
+      [item.value, on ? B + accent : ''],
+    ])
+    line?.right(2 + wide + 2 + note, [[said[i] as string, D]])
+  })
+}
+
 export function renderFind(view: FindView, cols: number, rows: number): Frame {
   const lines = Array.from({ length: rows }, () => new Line(cols))
   const images: Placement[] = []
@@ -721,6 +772,13 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
     trial(lines, images, cols, rows, view, accent)
   } else {
     grid(lines, images, cols, rows, view, accent)
+  }
+  if (view.mode === 'grid' && view.editing !== undefined && view.suggest?.length) {
+    for (let r = 1; r < rows - 1; r++) {
+      lines[r] = new Line(cols)
+    }
+    suggestions(lines, view, accent)
+    return { lines: lines.map((l) => l.render()), images: [] }
   }
   if (view.help || view.panel !== undefined) {
     const keep = view.mode === 'try' ? images : []

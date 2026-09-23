@@ -6,6 +6,10 @@ ansi_source = "Galaxy"
 booru = "sans_(undertale)"
 signature = ["cursor", "foreground", "ansi11"]
 
+[meta.booru_sites]
+konachan = "sans"
+yande = "sans"
+
 [colors]
 background = "#12181d"
 foreground = "#dee3eb"

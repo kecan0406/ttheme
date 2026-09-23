@@ -6,6 +6,9 @@ ansi_source = "Laser"
 booru = "mettaton"
 signature = ["cursor", "ansi13", "ansi3"]
 
+[meta.booru_sites]
+yande = []
+
 [colors]
 background = "#1d151b"
 foreground = "#f3dceb"

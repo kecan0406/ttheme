@@ -6,6 +6,9 @@ ansi_source = "Ubuntu + Determination"
 booru = "papyrus_(undertale)"
 signature = ["cursor", "foreground", "ansi4"]
 
+[meta.booru_sites]
+yande = "papyrus"
+
 [colors]
 background = "#201512"
 foreground = "#e6e2d9"

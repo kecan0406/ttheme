@@ -212,17 +212,21 @@ the size of the window, as the sizes above 100% are.
 A palette with no background yet can find one: on it in `preview`, tab opens
 **find**, which searches a booru for the palette's character tag
 (`meta.booru`) and lays the results out as a grid of thumbnails. It starts on
-safebooru; tab moves to yande.re, then konachan, then danbooru, then back — they
-share one tag vocabulary, so the same tag works on each, and danbooru here is
-`safebooru.donmai.us`, the mirror that carries general-rated posts only. The
+danbooru; tab moves to konachan, then yande.re, then back — they share one tag
+vocabulary, so the same tag works on each. danbooru and yande.re carry every
+rating and `TTHEME_FIND_RATING` picks which come through; konachan is
+`konachan.net`, the mirror that carries safe posts only, since `konachan.com`
+answers with a Cloudflare challenge. When a site's connection is cut off — the
+way a network that blocks boorus by name drops danbooru — find asks whether to
+turn on the unblock proxy (`TTHEME_FIND_UNBLOCK`); `y` saves the setting and
+opens find again through it, `n` leaves it off. The
 sites sit in a strip of tabs under the query, the one you are on lit in its own
 color, and it comes again as a badge at the start of the line above a picture
 you try on, next to the site the artwork itself came from when the post records
 one (`pixiv.net`, `deviantart.com`). The grid starts
 with every post of the character; `c` narrows it to **cutouts** — posts carrying
-the site's transparency tags (`transparent_background` or `vector_trace` on
-safebooru, `transparent_png` on yande.re, `transparent` or `vector` on konachan,
-`transparent_background` on danbooru) whose PNG header says they have
+the site's transparency tags (`transparent_background` on danbooru,
+`transparent` or `vector` on konachan, `transparent_png` on yande.re) whose PNG header says they have
 an alpha channel; yande.re's `transparent_png` already means exactly that, so
 its posts skip the header check, which its slow file server would drag out —
 and the counter reads shown out of checked, `13/33`. find checks only as far as
@@ -233,12 +237,14 @@ few of those tags, so `TTHEME_FIND_CUTOUTS` names the ones to look for, site by
 site.
 
 Under each thumbnail is its post id and size, and under that whoever made it:
-the artist where the site names one — yande.re, konachan and danbooru answer
-with the tag types, so it costs no extra request — and the uploader as
-`@name` where it does not, which is every safebooru post. A score follows as
+the artist, which every site names through its tag types at no extra
+request, and the uploader as `@name` where a post has no artist tag. A score follows as
 `★22` on the sites that keep one. When the same hand uploads the same picture at
-the same size over and over, find folds that run into one tile marked `×9`;
-space unfolds it and folds it again. Pictures by the uploader of the backgrounds
+the same size over and over, find folds that run into one tile marked `×9`,
+wherever the order puts its pictures, and folds in the same way a picture
+another site holds too — re-encoded at the same shape, cut from the post its
+source names, or hung under the same parent; space unfolds it and folds it
+again. Pictures by the uploader of the backgrounds
 you already have in the same series come first and carry `≈`, so a series keeps
 one hand; anything under 1600 px on its long edge shows its size in yellow.
 
@@ -253,7 +259,10 @@ the screen never hides what it is filtering by.
 
 `/` opens the query for editing — type a tag to search for something else, or paste a post url or id
 (`https://yande.re/post/show/214705`, `konachan:244200`, `7159377`) to go
-straight to that one picture. A palette with no `meta.booru` tag at all opens
+straight to that one picture. While you type, danbooru's tag completion lists
+up to eight tags that start like the last word, each with its post count — the
+way to find a costume variant such as `amane_suzuha_(beta)` or a tag you only
+half remember; `↑`/`↓` pick one and enter searches it. A palette with no `meta.booru` tag at all opens
 find on that empty query, so it can have a background too. `o` opens the post's
 page in a browser.
 
@@ -268,7 +277,7 @@ marks the picture `cut out`, and `x` switches between the cut-out and the pictur
 as it is. When Vision finds no character, or would leave almost nothing or
 remove almost nothing, the picture stays opaque; elsewhere it always does. A post over 25 megapixels is
 fetched as the site's own smaller copy instead — up to 3500 px on yande.re and
-konachan, 850 px on safebooru and danbooru — and its size carries `↓`; those
+konachan, 850 px on danbooru — and its size carries `↓`; those
 copies are JPEGs, so a cutout tried on that way comes out opaque. `←`/`→` try
 the neighbours, which find fetches ahead of you two at a time, enter installs,
 and the preview carries on straight into the tuning panel below. `c` switches
@@ -364,9 +373,11 @@ With `TTHEME_TAB_PALETTE=seq`, new tabs take the next palette in group order, wi
 tabs — so opening four tabs walks you through four different characters rather
 than rolling the same one twice.
 
-Settings live in `~/.config/ttheme/config.zsh` — `init` seeds it with the
-defaults and never overwrites a line you changed — bar `TTHEME_TAB_PALETTE`, which its
-default/rotate/keep question sets — `ttheme config` opens it in `$EDITOR` and alt-c in `preview` edits it in place. Each line is a plain zsh
+Settings live in `~/.config/ttheme/config.zsh` — `init` seeds it with every
+setting at its default on a commented line, so a default a later version changes
+reaches you, and never overwrites a line you changed — bar `TTHEME_TAB_PALETTE`, which its
+default/rotate/keep question sets — `ttheme config` opens it in `$EDITOR` and alt-c in `preview` edits it in place. Only a value that differs from the default
+is left uncommented; setting one back comments it out again. Each line is a plain zsh
 `: ${VAR:=value}` assignment, so a variable exported before the layer loads
 still wins:
 
@@ -379,12 +390,13 @@ still wins:
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe). The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
 | `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |
-| `TTHEME_FIND_CUTOUTS` | — | the tags `find` calls a transparent cutout, as `key=tag,tag` pairs separated by spaces, keyed by `safebooru`, `yande`, `konachan` or `danbooru` (`safebooru=transparent_background yande=transparent_png,vector`). A site with several tags matches any of them; `danbooru=` names none, so its cutouts are the posts whose PNG header has an alpha channel. A site named here loses yande.re's shortcut of skipping that header check. Sites left out keep the built-in tags |
-| `TTHEME_FIND_ORDER` | `newest` | the order `find` lists posts in — `newest` or `score` |
-| `TTHEME_FIND_SETS` | `fold` | a run of the same picture at the same size from one uploader: `fold` shows it as one tile marked `×N`, `show` lists every one |
+| `TTHEME_FIND_CUTOUTS` | — | the tags `find` calls a transparent cutout, as `key=tag,tag` pairs separated by spaces, keyed by `danbooru`, `konachan` or `yande` (`konachan=transparent,vector yande=transparent_png`). A site with several tags matches any of them; `danbooru=` names none, so its cutouts are the posts whose PNG header has an alpha channel. A site named here loses yande.re's shortcut of skipping that header check. Sites left out keep the built-in tags |
+| `TTHEME_FIND_SOLO` | `on` | `on` keeps only the posts tagged `solo` — the character alone, which is what a backdrop needs. konachan and yande.re do not tag how many people a picture shows, so their posts borrow the tags danbooru holds for the same file, one request per page; a post danbooru does not have is left alone. The query line says `solo` while it is on |
+| `TTHEME_FIND_ORDER` | `fit` | the order `find` lists posts in — `fit` ranks each page it fetches by how well a post makes a backdrop (solo, resolution against the window, a cutout or an aspect close to the window's, score within the page, the palette's colors in its preview; comics, monochrome, sketches and landscapes sink) and appends it below what is already shown, so nothing moves under you; `newest`; or `score` |
+| `TTHEME_FIND_SETS` | `fold` | a run of the same picture at the same size from one uploader, and a picture another site holds too: `fold` shows it as one tile marked `×N`, `show` lists every one |
 | `TTHEME_FIND_REMOVE_BG` | `on` | on macOS, `on` cuts the character out of an opaque picture `find` tries on, with the system's Vision framework; `off` leaves it as it is. The row is in the `s` panel as `remove bg` |
-| `TTHEME_FIND_UNBLOCK` | `0` | `1` sends `find`'s own requests through a proxy it runs on `127.0.0.1`, which splits the TLS handshake across two records so a network that blocks boorus by hostname cannot read the name. It is not a VPN: the address you reach is unchanged and nothing else on the machine is affected. Needs node 22.21 or newer, and the query line says `unblock` while it is on |
-| `TTHEME_FIND_HOSTS` | — | send a `find` site somewhere else, as `key=https://host` pairs (`konachan=https://konachan.com danbooru=https://danbooru.donmai.us`). The tab keeps its name and carries `*`. ttheme ships the safe mirrors only; the hosts that serve everything are yours to name, and plenty of networks block them |
+| `TTHEME_FIND_UNBLOCK` | `0` | find offers to turn it on when a site's connection is cut off. `1` sends `find`'s requests to danbooru through a proxy it runs on `127.0.0.1`, which splits the TLS handshake across two records so a network that blocks it by hostname cannot read the name; konachan and yande.re, which no network is known to block, still go direct. It is not a VPN: the address you reach is unchanged and nothing else on the machine is affected. Needs node 22.21 or newer, and the query line says `unblock` while it is on |
+| `TTHEME_FIND_HOSTS` | — | send a `find` site somewhere else, as `key=https://host` pairs (`danbooru=https://safebooru.donmai.us`, the general-rated mirror, reachable where danbooru is blocked). The tab keeps its name and carries `*` |
 
 ## The catalog
 
@@ -468,7 +480,7 @@ name = "madoka"                            # must match the filename
 group = "Madoka Magica"                    # needs a [[group]] in themes/_groups.toml
 order = 15                                 # position in the rotation
 ansi_source = "Elegant + Magica"           # what the harmonizer was fed
-booru = "kaname_madoka"                    # safebooru character tag find searches
+booru = "kaname_madoka"                    # booru character tag find searches
 signature = ["cursor", "ansi1", "ansi3"]   # the three slots the site draws as identity
 
 [colors]

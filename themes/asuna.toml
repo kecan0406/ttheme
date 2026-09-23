@@ -6,6 +6,10 @@ ansi_source = "Melange Dark + Aincrad"
 booru = "asuna_(sao)"
 signature = ["cursor", "ansi1", "foreground"]
 
+[meta.booru_sites]
+konachan = "yuuki_asuna"
+yande = "asuna_(sword_art_online)"
+
 [colors]
 background = "#1f160d"
 foreground = "#e3e2e7"

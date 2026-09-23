@@ -6,6 +6,10 @@ ansi_source = "0x96f"
 booru = "sayori_(doki_doki_literature_club)"
 signature = ["cursor", "ansi9", "ansi4"]
 
+[meta.booru_sites]
+konachan = "sayori_(ddlc)"
+yande = "sayori_(doki_doki_literature_club!)"
+
 [colors]
 background = "#211512"
 foreground = "#fddbd4"

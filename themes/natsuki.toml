@@ -6,6 +6,10 @@ ansi_source = "Fairyfloss"
 booru = "natsuki_(doki_doki_literature_club)"
 signature = ["cursor", "ansi9", "ansi3"]
 
+[meta.booru_sites]
+konachan = "natsuki_(ddlc)"
+yande = "natsuki_(doki_doki_literature_club!)"
+
 [colors]
 background = "#1f1518"
 foreground = "#f8dbe3"

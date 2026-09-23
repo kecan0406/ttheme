@@ -63,59 +63,62 @@ test('zshrcBlock only sources the layer', () => {
   assert.equal(zshrcBlock('/cfg/ttheme'), 'source /cfg/ttheme/ttheme.zsh')
 })
 
-test('configFile seeds the template with every default spelled out', () => {
+test('configFile seeds the template with every default spelled out on a commented line', () => {
   const out = configFile('')
   assert.equal(out, configTemplate())
   assert.equal(
     out,
     [
-      '# ttheme settings — exported variables win over this file',
+      '# ttheme settings — uncomment a line to change it; exported variables win over this file',
       '',
       '# new tabs: off keeps the configured terminal theme, seq rotates through the palettes (default off)',
-      ': ${TTHEME_TAB_PALETTE:=off}',
+      '# : ${TTHEME_TAB_PALETTE:=off}',
       '',
       '# the palette notice under "Last login:": 1 shows it, 0 silences it (default 1)',
-      ': ${TTHEME_ANNOUNCE:=1}',
+      '# : ${TTHEME_ANNOUNCE:=1}',
       '',
       '# search hint animation: typewriter, decode or glitch (default typewriter)',
-      ': ${TTHEME_FX:=typewriter}',
+      '# : ${TTHEME_FX:=typewriter}',
       '',
       '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
-      ': ${TTHEME_SORT:=abc}',
+      '# : ${TTHEME_SORT:=abc}',
       '',
       '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',
-      ': ${TTHEME_FIND_RATING:=safe}',
+      '# : ${TTHEME_FIND_RATING:=safe}',
       '',
       '# the posts find drops by tag: nudity, underwear, both, or none to keep them all (default "nudity underwear")',
-      ': ${TTHEME_FIND_BLOCK:=nudity underwear}',
+      '# : ${TTHEME_FIND_BLOCK:=nudity underwear}',
       '',
       '# what find lists first: all is every post of the character, cutouts are the transparent ones (default all)',
-      ': ${TTHEME_FIND_POSTS:=all}',
+      '# : ${TTHEME_FIND_POSTS:=all}',
       '',
-      '# the tags find calls a transparent cutout, per site as key=tag,tag pairs — e.g. "safebooru=transparent_background yande=transparent_png,vector" (default the built-in tags)',
-      ': ${TTHEME_FIND_CUTOUTS:=}',
+      '# on keeps the danbooru posts tagged solo, the character alone; off lists every post (default on)',
+      '# : ${TTHEME_FIND_SOLO:=on}',
       '',
-      '# the order find lists posts in: newest or score (default newest)',
-      ': ${TTHEME_FIND_ORDER:=newest}',
+      '# the tags find calls a transparent cutout, per site as key=tag,tag pairs — e.g. "konachan=transparent,vector yande=transparent_png" (default the built-in tags)',
+      '# : ${TTHEME_FIND_CUTOUTS:=}',
+      '',
+      '# the order find lists posts in: fit ranks each page by how well it makes a backdrop, newest or score (default fit)',
+      '# : ${TTHEME_FIND_ORDER:=fit}',
       '',
       '# runs of the same picture at the same size from one uploader: fold shows them as one tile, show lists each (default fold)',
-      ': ${TTHEME_FIND_SETS:=fold}',
+      '# : ${TTHEME_FIND_SETS:=fold}',
       '',
       '# an opaque picture tried on in find: on cuts the character out with macOS Vision, off leaves it as it is (default on)',
-      ': ${TTHEME_FIND_REMOVE_BG:=on}',
+      '# : ${TTHEME_FIND_REMOVE_BG:=on}',
       '',
-      '# when a network blocks a booru by name, 1 sends find through a local proxy that splits the TLS handshake (default 0)',
-      ': ${TTHEME_FIND_UNBLOCK:=0}',
+      '# when a network blocks a booru by name, 1 sends find through a local proxy that splits the TLS handshake — find offers to turn it on (default 0)',
+      '# : ${TTHEME_FIND_UNBLOCK:=0}',
       '',
-      '# send a find site somewhere else, as key=https://host pairs — e.g. "konachan=https://konachan.com danbooru=https://danbooru.donmai.us" (default none)',
-      ': ${TTHEME_FIND_HOSTS:=}',
+      '# send a find site somewhere else, as key=https://host pairs — e.g. "danbooru=https://safebooru.donmai.us" (default none)',
+      '# : ${TTHEME_FIND_HOSTS:=}',
       '',
     ].join('\n'),
   )
 })
 
 test('configFile is idempotent and preserves user edits', () => {
-  const edited = configFile('').replace(/^: \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}')
+  const edited = configFile('').replace(/^# : \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}')
   const rerun = configFile(edited)
   assert.equal(rerun, edited)
   assert.match(rerun, /^: \$\{TTHEME_FX:=glitch\}$/m)
@@ -124,10 +127,10 @@ test('configFile is idempotent and preserves user edits', () => {
 test('configFile appends a documented line when a setting is missing', () => {
   const out = configFile('TTHEME_CUSTOM=1\n')
   assert.ok(out.startsWith('TTHEME_CUSTOM=1\n'))
-  assert.match(out, /^# new tabs: .*\n: \$\{TTHEME_TAB_PALETTE:=off\}$/m)
-  assert.match(out, /^# the palette notice .*\n: \$\{TTHEME_ANNOUNCE:=1\}$/m)
-  assert.match(out, /^# search hint animation: .*\n: \$\{TTHEME_FX:=typewriter\}$/m)
-  assert.match(out, /^# series and palettes .*\n: \$\{TTHEME_SORT:=abc\}$/m)
+  assert.match(out, /^# new tabs: .*\n# : \$\{TTHEME_TAB_PALETTE:=off\}$/m)
+  assert.match(out, /^# the palette notice .*\n# : \$\{TTHEME_ANNOUNCE:=1\}$/m)
+  assert.match(out, /^# search hint animation: .*\n# : \$\{TTHEME_FX:=typewriter\}$/m)
+  assert.match(out, /^# series and palettes .*\n# : \$\{TTHEME_SORT:=abc\}$/m)
 })
 
 test('kitty and alacritty blocks reference the chosen palette', () => {
@@ -141,9 +144,9 @@ test('kitty and alacritty blocks reference the chosen palette', () => {
 test('withSetting rewrites the line a setting already has, and adds one when it is missing', () => {
   const file = configTemplate()
   const changed = withSetting(file, 'TTHEME_FIND_RATING', 'safe questionable')
-  assert.match(changed, /: \$\{TTHEME_FIND_RATING:=safe questionable\}/)
+  assert.match(changed, /^: \$\{TTHEME_FIND_RATING:=safe questionable\}$/m)
   assert.equal(changed.split('TTHEME_FIND_RATING').length - 1, 1)
-  assert.equal(changed.replace(':=safe questionable}', ':=safe}'), file)
+  assert.equal(withSetting(changed, 'TTHEME_FIND_RATING', 'safe'), file, 'the default goes back to a commented line')
   const added = withSetting('# mine\n', 'TTHEME_FIND_BLOCK', 'none')
   assert.equal(added, '# mine\n\n: ${TTHEME_FIND_BLOCK:=none}\n')
   assert.match(

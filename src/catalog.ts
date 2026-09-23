@@ -87,3 +87,17 @@ export function search(palettes: PaletteEntry[], query: string): PaletteEntry[] 
     [p.name, p.group, p.native ?? '', p.ansiSource].some((field) => field.toLowerCase().includes(needle)),
   )
 }
+
+export function booruTags(palettes: PaletteEntry[], near: PaletteEntry, token: string): PaletteEntry[] {
+  const needle = token.toLowerCase()
+  const rank = (p: PaletteEntry) => (p.name === near.name ? 0 : p.group === near.group ? 1 : 2)
+  return palettes
+    .filter((p) => p.booru?.toLowerCase().includes(needle))
+    .map((p, at) => ({ p, at }))
+    .sort((a, b) => rank(a.p) - rank(b.p) || a.at - b.at)
+    .map(({ p }) => p)
+}
+
+export function siteTags(entry: PaletteEntry, site: string): string[] {
+  return entry.booruSites?.[site] ?? (entry.booru ? [entry.booru] : [])
+}

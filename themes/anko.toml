@@ -6,6 +6,9 @@ ansi_source = "Arthur"
 booru = "uguisu_anko"
 signature = ["cursor", "ansi4", "ansi2"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#201511"
 foreground = "#fddcd0"

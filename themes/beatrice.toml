@@ -6,6 +6,10 @@ ansi_source = "Batman + Truth"
 booru = "beatrice_(umineko)"
 signature = ["cursor", "foreground", "ansi9"]
 
+[meta.booru_sites]
+konachan = "beatrice"
+yande = "beatrice"
+
 [colors]
 background = "#19180d"
 foreground = "#f4e1b0"

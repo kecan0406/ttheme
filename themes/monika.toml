@@ -6,6 +6,10 @@ ansi_source = "Hipster Green + DDLC"
 booru = "monika_(doki_doki_literature_club)"
 signature = ["cursor", "foreground", "ansi3"]
 
+[meta.booru_sites]
+konachan = "monika_(ddlc)"
+yande = "monika_(doki_doki_literature_club!)"
+
 [colors]
 background = "#141911"
 foreground = "#d4e8cc"

@@ -8,14 +8,19 @@ import {
   blockSet,
   cutoutMap,
   exposed,
+  fetchPosts,
   hostMap,
+  lend,
+  lentUrl,
   mates,
   originHost,
   parseCount,
   parseCounts,
   parseDanbooru,
-  parseGelbooru,
+  parseLent,
   parseMoebooru,
+  parseSuggestions,
+  parseTagList,
   postRef,
   rated,
   ratingSet,
@@ -24,74 +29,27 @@ import {
   SITES,
   type Site,
   sweepCache,
+  tagsOf,
+  untunneled,
 } from './booru.ts'
 
-const RAW = [
-  {
-    id: 416805,
-    width: 2160,
-    height: 2004,
-    file_url: 'https://safebooru.org/images/416/6a65.png',
-    preview_url: 'https://safebooru.org/thumbnails/416/thumbnail_6a65.jpg',
-    owner: 'moeimouto',
-    rating: 'safe',
-    tags: 'hiiragi_kagami  transparent_background vector_trace',
-  },
-  {
-    id: 2054214,
-    width: 4000,
-    height: 3768,
-    directory: '2054',
-    image: 'b1c2.PNG',
-    preview_url: '//safebooru.org/thumbnails/2054/thumbnail_b1c2.jpg',
-    owner: 'gelbooru',
-    rating: 'questionable',
-    tags: 'hiiragi_kagami',
-  },
-  { id: 0, file_url: 'https://safebooru.org/images/1/x.png', preview_url: 'https://x/t.jpg' },
-]
-
-test('parseGelbooru keeps every rating so each post counts as checked, and drops posts with no id', () => {
-  const posts = parseGelbooru(JSON.stringify(RAW))
-  assert.deepEqual(
-    posts.map((p) => [p.id, p.rating]),
-    [
-      [416805, 'safe'],
-      [2054214, 'questionable'],
-    ],
-  )
-  assert.deepEqual(posts[0]?.tags, ['hiiragi_kagami', 'transparent_background', 'vector_trace'])
-})
-
-test('parseGelbooru rebuilds a missing file url and makes protocol-relative urls absolute', () => {
-  const [, post] = parseGelbooru(JSON.stringify(RAW))
-  assert.equal(post?.file, 'https://safebooru.org/images/2054/b1c2.PNG')
-  assert.equal(post?.ext, 'png')
-  assert.equal(post?.preview, 'https://safebooru.org/thumbnails/2054/thumbnail_b1c2.jpg')
-})
-
-test('parseGelbooru reads an empty answer as no posts', () => {
-  assert.deepEqual(parseGelbooru(''), [])
-  assert.deepEqual(parseGelbooru('  \n'), [])
-})
+const site = (key: string) => SITES.find((s) => s.key === key) as Site
+const [dan, kona, yande] = [site('danbooru'), site('konachan'), site('yande')]
 
 test('only the ratings a site calls safe pass, each site read in its own vocabulary', () => {
-  const [gel, moe, , dan] = SITES as [Site, Site, Site, Site]
-  const [kept, dropped] = parseGelbooru(JSON.stringify(RAW))
-  assert.equal(kept && rated(gel, kept), true)
-  assert.equal(dropped && rated(gel, dropped), false)
+  assert.equal(rated(dan, { rating: 'g' }), true)
   assert.equal(rated(dan, { rating: 's' }), false, 'danbooru s means sensitive, not safe')
-  assert.equal(rated(moe, { rating: 's' }), true, 'moebooru s means safe')
+  assert.equal(rated(yande, { rating: 's' }), true, 'moebooru s means safe')
 })
 
 test('each ticked rating lets through what that site calls by that name, and only that', () => {
-  const [gel, moe, , dan] = SITES as [Site, Site, Site, Site]
+  const moe = yande
   assert.equal(rated(moe, { rating: 'q' }, ['questionable']), true)
   assert.equal(rated(moe, { rating: 's' }, ['questionable']), false, 'questionable alone leaves safe out')
   assert.equal(rated(moe, { rating: 'e' }, ['safe', 'questionable']), false)
   assert.equal(rated(moe, { rating: 'e' }, ['safe', 'explicit']), true)
   assert.equal(rated(dan, { rating: 's' }, ['questionable']), true)
-  assert.equal(rated(gel, { rating: 'questionable' }, ['questionable']), true)
+  assert.equal(rated(dan, { rating: 'e' }, ['questionable']), false)
 })
 
 test('nudity and underwear are blocked apart, in every site spelling', () => {
@@ -103,7 +61,7 @@ test('nudity and underwear are blocked apart, in every site spelling', () => {
 })
 
 test('the rating a site asks for in the query follows the ticked set, where the site takes one', () => {
-  const [gel, moe, , dan] = SITES as [Site, Site, Site, Site]
+  const moe = yande
   assert.deepEqual(
     [
       moe.rate(['safe']),
@@ -116,7 +74,20 @@ test('the rating a site asks for in the query follows the ticked set, where the 
     ],
     ['rating:s', 'rating:q', 'rating:e', '-rating:e', '-rating:q', '-rating:s', ''],
   )
-  assert.deepEqual([gel.rate(['safe']), dan.rate(['safe'])], ['', ''])
+  assert.deepEqual(
+    [
+      dan.rate(['safe']),
+      dan.rate(['questionable']),
+      dan.rate(['questionable', 'explicit']),
+      dan.rate(['safe', 'questionable', 'explicit']),
+    ],
+    ['rating:g', 'rating:s,q', 'rating:s,q,e', ''],
+  )
+})
+
+test('a rating does not count against a tag budget, since danbooru lets it through free', () => {
+  assert.equal(tagsOf('amane_suzuha transparent_background rating:s,q,e'), 2)
+  assert.equal(tagsOf('amane_suzuha order:score'), 2)
 })
 
 test('the settings read back as ticked sets, falling to the safe default when nothing valid is named', () => {
@@ -130,16 +101,16 @@ test('the settings read back as ticked sets, falling to the safe default when no
 
 test('cutout tags are named per site, a site left empty asks for none, and unnamed sites keep their own', () => {
   assert.deepEqual(
-    [...cutoutMap('safebooru=transparent_background,vector_trace yande=transparent_png danbooru= bogus')],
+    [...cutoutMap('konachan=transparent,vector yande=transparent_png danbooru= bogus')],
     [
-      ['safebooru', ['transparent_background', 'vector_trace']],
+      ['konachan', ['transparent', 'vector']],
       ['yande', ['transparent_png']],
       ['danbooru', []],
     ],
   )
   assert.deepEqual(
     SITES.map((site) => site.cutouts),
-    ['( transparent_background ~ vector_trace )', 'transparent_png', '~transparent ~vector', 'transparent_background'],
+    ['transparent_background', '~transparent ~vector', 'transparent_png'],
   )
 })
 
@@ -190,17 +161,15 @@ test('a post over the pixel cap is fetched as the largest smaller copy the site 
     ext: 'jpg',
   })
   assert.equal(small && rendition(small), small)
-  const [unsampled] = parseGelbooru(
+  const [unsampled] = parseMoebooru(
     JSON.stringify([
       {
         id: 7,
         width: 20000,
         height: 21750,
-        file_url: 'https://safebooru.org/images/1/huge.png',
-        sample_url: 'https://safebooru.org/images/1/huge.png',
-        sample_width: 0,
-        sample_height: 0,
-        preview_url: 'https://safebooru.org/thumbnails/1/huge.jpg',
+        file_url: 'https://files.yande.re/image/c/7.png',
+        file_ext: 'png',
+        preview_url: 'https://assets.yande.re/data/preview/c.jpg',
       },
     ]),
   )
@@ -220,12 +189,10 @@ test('parseCount reads the count attribute of the post list', () => {
   assert.equal(parseCount('<html>'), 0)
 })
 
-test('mates groups palettes by uploader and skips the accounts that mirror other boorus', () => {
+test('mates groups palettes by uploader and skips posts with none', () => {
   const owners = new Map([
     ['tsukasa', 'moeimouto'],
     ['miyuki', 'moeimouto'],
-    ['konata', 'danbooru'],
-    ['patchouli', 'gelbooru'],
     ['reimu', ''],
   ])
   assert.deepEqual([...mates(owners)], [['moeimouto', ['miyuki', 'tsukasa']]])
@@ -248,7 +215,7 @@ test('parseMoebooru takes the extension from file_ext and the uploader from auth
     ]),
   )
   assert.deepEqual(
-    [found?.id, found?.ext, found?.owner, found && rated(SITES[1] as Site, found)],
+    [found?.id, found?.ext, found?.owner, found && rated(yande, found)],
     [214705, 'png', 'gnarf1975', true],
   )
 })
@@ -261,24 +228,22 @@ test('the url builders pass the tags through as given, rating included', () => {
   }
 })
 
-test('the danbooru site is the mirror that carries general-rated posts only, and it counts tags', () => {
-  const site = SITES.find((s) => s.key === 'danbooru')
-  assert.equal(new URL(site?.postsUrl('x', 0) ?? '').host, 'safebooru.donmai.us')
-  assert.equal(site?.tagBudget, 2)
+test('danbooru is searched on the main site, which carries every rating, and it counts tags', () => {
+  assert.equal(new URL(dan.postsUrl('x', 0)).host, 'danbooru.donmai.us')
+  assert.equal(dan.tagBudget, 2)
   assert.equal(SITES.filter((s) => Number.isFinite(s.tagBudget)).length, 1)
 })
 
 test('every site names the tag that sorts by score', () => {
   assert.deepEqual(
     SITES.map((s) => s.best),
-    ['sort:score:desc', 'order:score', 'order:score', 'order:score'],
+    ['order:score', 'order:score', 'order:score'],
   )
 })
 
 test('pages are counted from zero everywhere, whichever way each site numbers them', () => {
-  const [gel, moe] = [SITES[0], SITES[1]]
-  assert.equal(new URL(gel?.postsUrl('x', 0) ?? '').searchParams.get('pid'), '0')
-  assert.equal(new URL(moe?.postsUrl('x', 0) ?? '').searchParams.get('page'), '1')
+  assert.equal(new URL(dan.postsUrl('x', 0)).searchParams.get('page'), '1')
+  assert.equal(new URL(yande.postsUrl('x', 0)).searchParams.get('page'), '1')
 })
 
 test('originHost keeps the site a source url points at and drops free-text sources', () => {
@@ -312,7 +277,7 @@ test('parseMoebooru reads the artist out of the tag types the same answer carrie
   assert.equal(found?.score, 42)
 })
 
-test('parseDanbooru takes the artist, the score and only the variants ttheme can decode', () => {
+test('parseDanbooru takes the artist, the score, the 360 px preview and only the variants ttheme can decode', () => {
   const [found] = parseDanbooru(
     JSON.stringify([
       {
@@ -328,6 +293,7 @@ test('parseDanbooru takes the artist, the score and only the variants ttheme can
         media_asset: {
           variants: [
             { type: '180x180', width: 180, height: 180, file_ext: 'jpg', url: 'https://cdn.donmai.us/180x180/e.jpg' },
+            { type: '360x360', width: 360, height: 360, file_ext: 'jpg', url: 'https://cdn.donmai.us/360x360/e.jpg' },
             { type: '720x720', width: 720, height: 720, file_ext: 'webp', url: 'https://cdn.donmai.us/720x720/e.webp' },
             { type: 'sample', width: 850, height: 850, file_ext: 'jpg', url: 'https://cdn.donmai.us/sample/e.jpg' },
           ],
@@ -341,10 +307,12 @@ test('parseDanbooru takes the artist, the score and only the variants ttheme can
     found?.smaller.map((v) => [v.width, v.ext]),
     [
       [850, 'jpg'],
+      [360, 'jpg'],
       [180, 'jpg'],
     ],
   )
   assert.equal(found && rendition(found)?.width, 850)
+  assert.equal(found?.preview, 'https://cdn.donmai.us/360x360/e.jpg', 'the tile preview is the 360 px one')
 })
 
 test('parseCounts reads the number danbooru answers a count query with', () => {
@@ -353,42 +321,122 @@ test('parseCounts reads the number danbooru answers a count query with', () => {
 })
 
 test('postRef turns a pasted post page, a site:id or a bare number into one post to jump to', () => {
-  const [safebooru, yande] = [SITES[0], SITES[1]]
-  assert.deepEqual(postRef('https://yande.re/post/show/214705', safebooru as never), { site: yande, id: 214705 })
-  assert.deepEqual(postRef('https://safebooru.donmai.us/posts/12223134', safebooru as never), {
-    site: SITES[3],
-    id: 12223134,
-  })
-  assert.deepEqual(postRef('https://safebooru.org/index.php?page=post&s=view&id=7159377', safebooru as never), {
-    site: safebooru,
-    id: 7159377,
-  })
-  assert.deepEqual(postRef('konachan:244200', safebooru as never), { site: SITES[2], id: 244200 })
-  assert.deepEqual(postRef('7159377', safebooru as never), { site: safebooru, id: 7159377 })
-  assert.equal(postRef('hakurei_reimu', safebooru as never), undefined)
-  assert.equal(postRef('https://danbooru.donmai.us/posts/1', safebooru as never), undefined)
+  assert.deepEqual(postRef('https://yande.re/post/show/214705', dan), { site: yande, id: 214705 })
+  assert.deepEqual(postRef('https://danbooru.donmai.us/posts/12223134', yande), { site: dan, id: 12223134 })
+  assert.deepEqual(postRef('konachan:244200', dan), { site: kona, id: 244200 })
+  assert.deepEqual(postRef('7159377', dan), { site: dan, id: 7159377 })
+  assert.equal(postRef('hakurei_reimu', dan), undefined)
+  assert.equal(postRef('https://safebooru.org/index.php?page=post&s=view&id=7159377', dan), undefined)
 })
 
 test('sweepCache drops the oldest cached files until the tree fits its budget', () => {
   const root = mkdtempSync(join(tmpdir(), 'ttheme-sweep-'))
   const made = ['orig/old.png', 'tile/middle.png', 'thumb/new.jpg']
   made.forEach((name, age) => {
-    const path = join(root, 'safebooru', name)
+    const path = join(root, 'danbooru', name)
     mkdirSync(dirname(path), { recursive: true })
     writeFileSync(path, new Uint8Array(100))
     utimesSync(path, 0, age)
   })
-  const kept = join(root, 'safebooru', 'probes.json')
+  const kept = join(root, 'danbooru', 'probes.json')
   writeFileSync(kept, '{}')
 
   sweepCache(250, root)
-  assert.equal(existsSync(join(root, 'safebooru', 'orig/old.png')), false, 'the oldest goes first')
-  assert.equal(existsSync(join(root, 'safebooru', 'tile/middle.png')), true)
-  assert.equal(existsSync(join(root, 'safebooru', 'thumb/new.jpg')), true)
+  assert.equal(existsSync(join(root, 'danbooru', 'orig/old.png')), false, 'the oldest goes first')
+  assert.equal(existsSync(join(root, 'danbooru', 'tile/middle.png')), true)
+  assert.equal(existsSync(join(root, 'danbooru', 'thumb/new.jpg')), true)
   assert.equal(existsSync(kept), true, 'probes and owners are not image cache')
 
   sweepCache(0, root)
-  assert.equal(existsSync(join(root, 'safebooru', 'thumb/new.jpg')), false, 'a zero budget clears the images')
+  assert.equal(existsSync(join(root, 'danbooru', 'thumb/new.jpg')), false, 'a zero budget clears the images')
   assert.equal(existsSync(kept), true)
   rmSync(root, { recursive: true, force: true })
+})
+
+test('parseSuggestions keeps each completed tag with its post count', () => {
+  assert.deepEqual(
+    parseSuggestions(
+      JSON.stringify([
+        { type: 'tag-word', label: 'amane suzuha', value: 'amane_suzuha', category: 4, post_count: 937 },
+        { type: 'tag-word', label: 'x', value: '', post_count: 1 },
+      ]),
+    ),
+    [{ value: 'amane_suzuha', count: 937 }],
+  )
+  assert.deepEqual(parseSuggestions(''), [])
+})
+
+const listed = (fields: Record<string, unknown>) => ({
+  id: 7,
+  width: 1600,
+  height: 1000,
+  file_url: 'https://x/7.png',
+  preview_url: 'https://x/p7.jpg',
+  preview_file_url: 'https://x/p7.jpg',
+  ...fields,
+})
+
+test('danbooru knows whether a picture shows one person, the moebooru sites leave it unknown', () => {
+  const [alone] = parseDanbooru(JSON.stringify([listed({ tag_string: 'amane_suzuha solo' })]))
+  const [crowd] = parseDanbooru(JSON.stringify([listed({ tag_string: 'amane_suzuha 2girls' })]))
+  const [moe] = parseMoebooru(JSON.stringify([listed({ tags: 'amane_suzuha solo' })]))
+  assert.deepEqual([alone?.solo, crowd?.solo, moe?.solo], [true, false, undefined])
+})
+
+test('a post names its family by the parent it hangs under, or by itself when it has children', () => {
+  const [child] = parseMoebooru(JSON.stringify([listed({ parent_id: 3, tags: '' })]))
+  const [parent] = parseDanbooru(JSON.stringify([listed({ has_children: true, tag_string: '' })]))
+  const [alone] = parseDanbooru(JSON.stringify([listed({ parent_id: null, has_children: false, tag_string: '' })]))
+  assert.deepEqual([child?.family, parent?.family, alone?.family], [3, 7, 0])
+})
+
+test('a moebooru post borrows the tags danbooru holds for the same file, headcount included', () => {
+  const posts = parseMoebooru(
+    JSON.stringify([listed({ id: 1, md5: 'aa', tags: 'x' }), listed({ id: 2, md5: 'bb', tags: 'x' })]),
+  )
+  lend(posts, parseLent(JSON.stringify([{ md5: 'aa', tag_string: 'x solo comic' }])))
+  assert.deepEqual(
+    posts.map((p) => [p.tags, p.solo]),
+    [
+      [['x', 'solo', 'comic'], true],
+      [['x'], undefined],
+    ],
+  )
+})
+
+test('the files to borrow for go to danbooru as one md5 list', () => {
+  const url = new URL(lentUrl(['aa', 'bb']))
+  assert.equal(url.host, 'danbooru.donmai.us')
+  assert.equal(url.searchParams.get('tags'), 'md5:aa,bb')
+})
+
+test('parseTagList reads a moebooru tag search as completions with their post counts', () => {
+  assert.deepEqual(
+    parseTagList(
+      JSON.stringify([{ id: 33398, name: 'amane_suzuha', count: 86, type: 4, ambiguous: false }, { id: 1 }]),
+    ),
+    [{ value: 'amane_suzuha', count: 86 }],
+  )
+})
+
+test('only danbooru rides the unblock proxy, the other sites and their file hosts go direct', () => {
+  assert.equal(untunneled(), 'konachan.net,.konachan.net,yande.re,.yande.re')
+})
+
+test('a request cut off by a connection reset is tried again', async () => {
+  const real = globalThis.fetch
+  let calls = 0
+  globalThis.fetch = (async () => {
+    calls++
+    if (calls === 1) {
+      throw new TypeError('fetch failed', { cause: Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' }) })
+    }
+    return new Response('[]')
+  }) as unknown as typeof fetch
+  try {
+    assert.deepEqual(await fetchPosts(yande, 'x', 0, new AbortController().signal), [])
+    assert.equal(calls, 2)
+  } finally {
+    globalThis.fetch = real
+  }
 })

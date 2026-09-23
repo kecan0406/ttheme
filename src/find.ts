@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -11,15 +12,18 @@ import {
   extension,
   fetchBytes,
   fetchCount,
+  fetchLent,
   fetchPost,
   fetchPosts,
+  fetchSuggestions,
   headOf,
+  lend,
   mates,
-  mirrored,
   originHost,
   PAGE,
   type Post,
   pausedUntil,
+  postKey,
   postRef,
   RATINGS,
   rated,
@@ -29,8 +33,9 @@ import {
   type Site,
   sweepCache,
   tagsOf,
+  untunneled,
 } from './booru.ts'
-import { find, readCatalog } from './catalog.ts'
+import { booruTags, find, readCatalog, siteTags } from './catalog.ts'
 import { canRemoveBackground, keepable, removeBackground } from './cutout.ts'
 import type { Manifest, PaletteEntry } from './emit/manifest.ts'
 import {
@@ -40,6 +45,7 @@ import {
   type FindView,
   gridShape,
   MIN,
+  type Order,
   place,
   release,
   renderFind,
@@ -48,16 +54,19 @@ import {
   type Tile,
   transmit,
 } from './find-screen.ts'
+import { type Frame, fitOrder, interleave, type Pick } from './fit.ts'
 import { configHome, refreshProfiles } from './palettes.ts'
-import { Renderer } from './render.ts'
+import { type Look, Renderer } from './render.ts'
 import { tunnel } from './unblock.ts'
 import { withSetting } from './wiring.ts'
+import { kinKeys, near, type Shape, sameKeys, sameSet } from './works.ts'
 
 const SETTINGS: Setting[] = [
   { name: 'TTHEME_FIND_RATING', label: 'rating', choices: RATINGS, multi: { read: ratingSet } },
   { name: 'TTHEME_FIND_BLOCK', label: 'block', choices: BLOCKS, multi: { read: blockSet, none: 'none' } },
   { name: 'TTHEME_FIND_POSTS', label: 'posts', choices: ['all', 'cutouts'] },
-  { name: 'TTHEME_FIND_ORDER', label: 'order', choices: ['newest', 'score'] },
+  { name: 'TTHEME_FIND_SOLO', label: 'solo', choices: ['on', 'off'] },
+  { name: 'TTHEME_FIND_ORDER', label: 'order', choices: ['fit', 'newest', 'score'] },
   { name: 'TTHEME_FIND_SETS', label: 'sets', choices: ['fold', 'show'] },
   ...(canRemoveBackground() ? [{ name: 'TTHEME_FIND_REMOVE_BG', label: 'remove bg', choices: ['on', 'off'] }] : []),
 ]
@@ -69,22 +78,37 @@ function initial(setting: Setting, raw: string | undefined): string {
   return setting.choices.find((choice) => choice === raw) ?? (setting.choices[0] as string)
 }
 
+const ORDERS: Order[] = ['fit', 'newest', 'score']
+
+function orderOf(value: string): Order {
+  return ORDERS.find((order) => order === value) ?? 'fit'
+}
+
+function completable(token: string): boolean {
+  return token.length >= 2 && !/^\d+$/.test(token) && !token.includes('://') && !/^[\w.]+:\d+$/.test(token)
+}
+
 const PROBE = 12
+const ALL_ANSI = 4
+const SUGGEST_WAIT = 150
 const THUMB = 12
 const PRELOAD = 2
 const SETTLE = 150
 const ESCAPE = 30
 const TRY_WIDTH = 1280
 const LOOKAHEAD = 2
+const KNOWN = 3
+const SUGGESTED = 8
 
 interface Source {
+  site: Site
   tags: string
   page: number
   done: boolean
 }
 
 interface Group {
-  posts: Post[]
+  posts: Pick[]
   open: boolean
 }
 
@@ -92,8 +116,15 @@ interface Board {
   key: string
   groups: Group[]
   sources: Source[]
-  queue: Post[]
+  queue: Pick[]
+  rounds: number
+  roundOf: Map<Pick, number>
+  last: Map<Source, { post: Post; set: string }>
+  kin: Map<Pick, string[]>
+  kindred: Map<string, Group>
+  shapes: { shape: Shape; group: Group }[]
   seen: Set<number>
+  same: Map<string, Pick>
   checked: number
   total: number
   focus: number
@@ -109,7 +140,14 @@ function blank(key: string, searching: boolean): Board {
     groups: [],
     sources: [],
     queue: [],
+    rounds: 0,
+    roundOf: new Map(),
+    last: new Map(),
+    kin: new Map(),
+    kindred: new Map(),
+    shapes: [],
     seen: new Set(),
+    same: new Map(),
     checked: 0,
     total: 0,
     focus: 0,
@@ -121,6 +159,7 @@ function blank(key: string, searching: boolean): Board {
 interface Current {
   site: Site
   id: number
+  key: number
   path: string
   ext: string
   size: number
@@ -147,8 +186,16 @@ function describe(error: unknown): string {
   return first.length > 56 ? `${first.slice(0, 55)}…` : first
 }
 
-function reason(site: Site, error: unknown): string {
-  return `${site.name}: ${describe(error)}`
+function reason(name: string, error: unknown): string {
+  return `${name}: ${describe(error)}`
+}
+
+function area(post: Post): number {
+  return post.width * post.height
+}
+
+function previewStem(post: Post): string {
+  return `${post.id}-${createHash('sha1').update(post.preview).digest('hex').slice(0, 8)}`
 }
 
 function incomplete(input: string): boolean {
@@ -180,9 +227,14 @@ class Finder {
   private pumping = 0
   private readonly boards = new Map<string, Board>()
   private board: Board
-  private readonly posts = new Map<string, Post>()
-  private readonly thumbPath = new Map<string, string>()
-  private siteIndex = 0
+  private readonly posts = new Map<number, Pick>()
+  private readonly thumbPath = new Map<number, string>()
+  private readonly looking = new Map<number, Promise<Look | undefined>>()
+  private readonly looked = new Map<number, Look>()
+  private readonly matched = new Map<Post, number>()
+  private aheading = false
+  private readonly pages = new Map<string, Promise<Post[]>>()
+  private tab = 0
   private readonly values = new Map<string, string>(
     SETTINGS.map((setting) => [setting.name, initial(setting, process.env[setting.name])]),
   )
@@ -192,7 +244,7 @@ class Finder {
   private readonly owners = new Map<string, Map<string, string[]>>()
   private readonly probed = new Map<string, Record<string, boolean>>()
   private readonly unsaved = new Set<string>()
-  private thumbQueue: { site: Site; post: Post }[] = []
+  private thumbQueue: Pick[] = []
   private thumbing = 0
   private readonly clarity = new Map<string, number>()
   private readonly renders = new Renderer()
@@ -202,10 +254,13 @@ class Finder {
   private fetch?: AbortController
   private settle?: NodeJS.Timeout
   private partial?: NodeJS.Timeout
+  private suggestTimer?: NodeJS.Timeout
+  private suggesting?: AbortController
   private input = ''
   private probeWait?: (cell: { w: number; h: number } | null) => void
   private done?: (code: number) => void
   private dirty = false
+  unblock = false
   private readonly scratch = mkdtempSync(join(tmpdir(), 'ttheme-find-'))
 
   private readonly home: string
@@ -220,11 +275,12 @@ class Finder {
     this.view = {
       palette: entry.name,
       tag,
-      site: this.site.name,
-      siteAnsi: this.site.ansi,
-      nextSite: this.nextSite.name,
+      site: this.tabName,
+      siteAnsi: this.tabAnsi,
+      nextSite: this.nextTabName,
       preset: this.setting('TTHEME_FIND_POSTS') === 'all' ? 'all' : 'cutouts',
-      order: this.setting('TTHEME_FIND_ORDER') === 'score' ? 'score' : 'newest',
+      order: orderOf(this.setting('TTHEME_FIND_ORDER')),
+      solo: this.setting('TTHEME_FIND_SOLO') === 'on',
       rating: ratingSet(this.setting('TTHEME_FIND_RATING')),
       block: blockSet(this.setting('TTHEME_FIND_BLOCK')),
       sets: this.setting('TTHEME_FIND_SETS') === 'show' ? 'show' : 'fold',
@@ -255,12 +311,29 @@ class Finder {
     return this.session.signal
   }
 
-  private get site(): Site {
-    return SITES[this.siteIndex] as Site
+  private get site(): Site | undefined {
+    return this.tab === 0 ? undefined : SITES[this.tab - 1]
   }
 
-  private get nextSite(): Site {
-    return SITES[(this.siteIndex + 1) % SITES.length] as Site
+  private get sites(): Site[] {
+    return this.site ? [this.site] : SITES
+  }
+
+  private get tabName(): string {
+    return this.site?.name ?? 'all'
+  }
+
+  private get tabAnsi(): number {
+    return this.site?.ansi ?? ALL_ANSI
+  }
+
+  private get nextTabName(): string {
+    const next = (this.tab + 1) % (SITES.length + 1)
+    return next === 0 ? 'all' : (SITES[next - 1] as Site).name
+  }
+
+  private frame(): Frame {
+    return { w: this.cols * (this.cell.w || 10), h: this.rows * (this.cell.h || 20) }
   }
 
   private setting(name: string): string {
@@ -268,42 +341,46 @@ class Finder {
   }
 
   private get boardKey(): string {
-    return `${this.site.key}|${this.view.preset}|${this.view.order}`
-  }
-
-  private mark(site: Site, id: number): string {
-    return `${site.key}:${id}`
+    return `${this.site?.key ?? 'all'}|${this.view.preset}|${this.view.order}`
   }
 
   private origPath(site: Site, id: number, ext: string): string {
     return join(cacheDir(site), 'orig', `${id}.${ext}`)
   }
 
-  private tileOf(site: Site, post: Post, variants: number): Tile {
+  private previewPath(pick: Pick): string {
+    return join(cacheDir(pick.site), 'thumb', `${previewStem(pick.post)}.${extension(pick.post.preview)}`)
+  }
+
+  private tileOf(pick: Pick, variants: number): Tile {
+    const { site, post } = pick
+    const key = postKey(site, post.id)
     const version = rendition(post) ?? post
     return {
       id: post.id,
+      key,
+      site: site.name,
+      siteAnsi: site.ansi,
       width: version.width,
       height: version.height,
       reduced: version !== post,
-      owner: mirrored(post.owner) ? '' : post.owner,
+      owner: post.owner,
       artist: post.artist,
       score: post.score,
       variants,
       origin: originHost(post.source),
       mates: this.owners.get(site.key)?.get(post.owner) ?? [],
-      thumb: this.thumbPath.get(this.mark(site, post.id)),
+      thumb: this.thumbPath.get(key),
     }
   }
 
   private show(): void {
-    const site = this.site
     const view = this.view
     const board = this.board
     view.tiles = board.groups.flatMap((group) =>
       group.open
-        ? group.posts.map((post) => this.tileOf(site, post, 0))
-        : [this.tileOf(site, group.posts[0] as Post, group.posts.length)],
+        ? group.posts.map((pick) => this.tileOf(pick, 0))
+        : [this.tileOf(group.posts[0] as Pick, group.posts.length)],
     )
     view.checked = board.checked
     view.total = board.total
@@ -315,9 +392,9 @@ class Finder {
 
   private syncSite(): void {
     const view = this.view
-    view.site = this.site.name
-    view.siteAnsi = this.site.ansi
-    view.nextSite = this.nextSite.name
+    view.site = this.tabName
+    view.siteAnsi = this.tabAnsi
+    view.nextSite = this.nextTabName
   }
 
   async run(): Promise<number> {
@@ -347,6 +424,7 @@ class Finder {
     this.fetch?.abort()
     clearTimeout(this.settle)
     clearTimeout(this.partial)
+    this.quietSuggest()
     clearInterval(clock)
     stdin.off('data', this.onData)
     stdout.off('resize', this.onResize)
@@ -409,10 +487,12 @@ class Finder {
   }
 
   private readonly onClock = (): void => {
-    const left = Math.ceil((pausedUntil(this.site) - Date.now()) / 1000)
+    const slow = this.sites.reduce((a, b) => (pausedUntil(b) > pausedUntil(a) ? b : a))
+    const left = Math.ceil((pausedUntil(slow) - Date.now()) / 1000)
     const waiting = left > 0 ? left : undefined
     if (waiting !== this.view.waiting) {
       this.view.waiting = waiting
+      this.view.slow = slow.name
       this.draw()
     }
   }
@@ -435,6 +515,10 @@ class Finder {
       return
     }
     if (view.installing !== undefined) {
+      return
+    }
+    if (view.asking !== undefined) {
+      this.askKey(key)
       return
     }
     if (view.editing !== undefined) {
@@ -500,7 +584,7 @@ class Finder {
       return
     }
     if (key === 'tab') {
-      this.siteIndex = (this.siteIndex + 1) % SITES.length
+      this.tab = (this.tab + 1) % (SITES.length + 1)
       this.syncSite()
       void this.turn()
       return
@@ -591,7 +675,8 @@ class Finder {
     view.block = blockSet(this.setting('TTHEME_FIND_BLOCK'))
     view.sets = this.setting('TTHEME_FIND_SETS') === 'show' ? 'show' : 'fold'
     view.preset = this.setting('TTHEME_FIND_POSTS') === 'all' ? 'all' : 'cutouts'
-    view.order = this.setting('TTHEME_FIND_ORDER') === 'score' ? 'score' : 'newest'
+    view.order = orderOf(this.setting('TTHEME_FIND_ORDER'))
+    view.solo = this.setting('TTHEME_FIND_SOLO') === 'on'
     this.boards.clear()
     this.current = undefined
     view.shown = undefined
@@ -600,22 +685,56 @@ class Finder {
   }
 
   private save(changed: Setting[]): void {
+    this.store(changed.map((setting) => [setting.name, this.setting(setting.name)]))
+  }
+
+  private store(pairs: [string, string][]): boolean {
     const path = join(this.home, 'ttheme', 'config.zsh')
     try {
       const before = existsSync(path) ? readFileSync(path, 'utf8') : ''
-      const after = changed.reduce(
-        (text, setting) => withSetting(text, setting.name, this.setting(setting.name)),
-        before,
+      writeFileSync(
+        path,
+        pairs.reduce((text, [name, value]) => withSetting(text, name, value), before),
       )
-      writeFileSync(path, after)
+      return true
     } catch (error) {
       this.view.error = error instanceof Error ? error.message : String(error)
+      return false
+    }
+  }
+
+  private askKey(key: string): void {
+    const view = this.view
+    if (key === 'y') {
+      view.asking = undefined
+      if (this.store([['TTHEME_FIND_UNBLOCK', '1']])) {
+        this.unblock = true
+        this.finish(0)
+        return
+      }
+      this.draw()
+      return
+    }
+    if (key === 'n' || key === 'esc') {
+      view.asking = undefined
+      this.draw()
     }
   }
 
   private editKey(key: string): void {
     const view = this.view
     const text = view.editing ?? ''
+    const shown = view.suggest ?? []
+    if ((key === 'up' || key === 'down') && shown.length > 0) {
+      const at = view.pick ?? -1
+      const next = key === 'down' ? Math.min(shown.length - 1, at + 1) : at - 1
+      view.pick = next < 0 ? undefined : next
+      this.draw()
+      return
+    }
+    if (key === 'esc' || key === 'enter') {
+      this.quietSuggest()
+    }
     if (key === 'esc') {
       view.editing = undefined
       if (view.tag === '') {
@@ -626,9 +745,13 @@ class Finder {
       return
     }
     if (key === 'enter') {
+      const picked = view.pick === undefined ? undefined : shown[view.pick]
+      const chosen = picked ? text.replace(/\S*$/, picked.value) : text
       view.editing = undefined
-      if (text.trim()) {
-        void this.commit(text.trim())
+      view.suggest = undefined
+      view.pick = undefined
+      if (chosen.trim()) {
+        void this.commit(chosen.trim())
         return
       }
       if (view.tag === '') {
@@ -640,17 +763,62 @@ class Finder {
     }
     if (key === 'backspace') {
       view.editing = text.slice(0, -1)
+      this.suggest()
       this.draw()
       return
     }
     if (key.length === 1 && key >= ' ') {
       view.editing = text + key
+      this.suggest()
       this.draw()
     }
   }
 
+  private quietSuggest(): void {
+    clearTimeout(this.suggestTimer)
+    this.suggesting?.abort()
+    this.suggesting = undefined
+  }
+
+  private suggest(): void {
+    this.quietSuggest()
+    const view = this.view
+    view.pick = undefined
+    const token = /\S*$/.exec(view.editing ?? '')?.[0] ?? ''
+    if (!completable(token)) {
+      view.suggest = undefined
+      return
+    }
+    const known = [
+      ...new Map(
+        booruTags(this.catalog.palettes, this.entry, token).map((p) => [
+          p.booru as string,
+          { value: p.booru as string, count: 0, palette: p.name },
+        ]),
+      ).values(),
+    ].slice(0, KNOWN)
+    view.suggest = known.length > 0 ? known : undefined
+    const asked = new AbortController()
+    this.suggesting = asked
+    this.suggestTimer = setTimeout(async () => {
+      try {
+        const found = await fetchSuggestions(token, AbortSignal.any([this.signal, asked.signal]))
+        if (this.suggesting === asked && view.editing !== undefined) {
+          const counts = new Map(found.map((item) => [item.value, item.count]))
+          const names = new Set(known.map((item) => item.value))
+          view.suggest = [
+            ...known.map((item) => ({ ...item, count: counts.get(item.value) ?? 0 })),
+            ...found.filter((item) => !names.has(item.value)),
+          ].slice(0, SUGGESTED)
+          view.pick = view.pick !== undefined && view.pick < known.length ? view.pick : undefined
+          this.draw()
+        }
+      } catch {}
+    }, SUGGEST_WAIT)
+  }
+
   private async commit(text: string): Promise<void> {
-    const ref = postRef(text, this.site)
+    const ref = postRef(text, this.site ?? (SITES[0] as Site))
     if (ref) {
       await this.jump(ref.site, ref.id)
       return
@@ -662,7 +830,7 @@ class Finder {
 
   private async jump(site: Site, id: number): Promise<void> {
     const gen = ++this.gen
-    this.siteIndex = SITES.indexOf(site)
+    this.tab = SITES.indexOf(site) + 1
     this.syncSite()
     this.current = undefined
     this.view.shown = undefined
@@ -682,11 +850,12 @@ class Finder {
         board.error = `${site.name} has no post ${id}`
         this.view.error = board.error
       } else {
-        this.posts.set(this.mark(site, post.id), post)
-        board.groups = [{ posts: [post], open: false }]
+        const pick = { site, post }
+        this.posts.set(postKey(site, post.id), pick)
+        board.groups = [{ posts: [pick], open: false }]
         board.checked = 1
         board.total = 1
-        this.thumbQueue.push({ site, post })
+        this.thumbQueue.push(pick)
         this.thumbs()
         this.view.mode = 'try'
       }
@@ -696,11 +865,12 @@ class Finder {
       }
       this.draw()
     } catch (error) {
-      this.fail(gen, error)
+      this.fail(gen, error, site)
     }
   }
 
   private async turn(): Promise<void> {
+    this.fetch?.abort()
     this.current = undefined
     this.view.shown = undefined
     const known = this.boards.get(this.boardKey)
@@ -727,9 +897,9 @@ class Finder {
         }
         group.open = !group.open
         this.board.focus = index
-        for (const post of group.posts) {
-          if (!this.thumbPath.has(this.mark(this.site, post.id))) {
-            this.thumbQueue.push({ site: this.site, post })
+        for (const pick of group.posts) {
+          if (!this.thumbPath.has(postKey(pick.site, pick.post.id))) {
+            this.thumbQueue.push(pick)
           }
         }
         this.thumbs()
@@ -744,12 +914,13 @@ class Finder {
 
   private openPage(): void {
     const tile = this.view.tiles[this.view.focus]
-    if (!tile) {
+    const pick = tile && this.posts.get(tile.key)
+    if (!pick) {
       return
     }
     const opener = process.platform === 'darwin' ? 'open' : 'xdg-open'
     try {
-      spawn(opener, [this.site.pageUrl(tile.id)], { stdio: 'ignore', detached: true }).unref()
+      spawn(opener, [pick.site.pageUrl(pick.post.id)], { stdio: 'ignore', detached: true }).unref()
     } catch {}
   }
 
@@ -814,12 +985,19 @@ class Finder {
     this.board.top = view.top
   }
 
-  private query(site: Site): string {
+  private query(site: Site): { tags: string; notes: string[] } | undefined {
     const view = this.view
+    const names = view.tag === this.entry.booru ? siteTags(this.entry, site.key) : [view.tag]
+    if (names.length === 0) {
+      return undefined
+    }
+    const either = names.length > 1
+    const cutouts = view.preset === 'cutouts' ? site.cutouts : ''
+    const clash = either && cutouts.includes('~')
     const wanted = [
-      view.tag,
+      either ? names.map((name) => `~${name}`).join(' ') : (names[0] as string),
       site.rate(this.view.rating),
-      view.preset === 'cutouts' ? site.cutouts : '',
+      clash ? '' : cutouts,
       view.order === 'score' ? site.best : '',
     ].filter(Boolean)
     const kept: string[] = []
@@ -831,32 +1009,50 @@ class Finder {
         dropped.push(part)
       }
     }
-    this.board.note =
-      dropped.length > 0 ? `${site.name} takes ${site.tagBudget} tags — ${dropped.join(' ')} left out` : undefined
-    return kept.join(' ')
+    return {
+      tags: kept.join(' '),
+      notes: [
+        ...(dropped.length > 0 ? [`${site.name} takes ${site.tagBudget} tags — ${dropped.join(' ')} left out`] : []),
+        ...(clash ? [`${site.name} ORs the names, so cutouts are told by the file`] : []),
+      ],
+    }
   }
 
   private async search(): Promise<void> {
     const gen = ++this.gen
-    const site = this.site
     const board = blank(this.boardKey, true)
     this.board = board
     this.boards.set(board.key, board)
     this.view.error = undefined
+    const plans = this.sites.flatMap((site) => {
+      const query = this.query(site)
+      return query ? [{ site, ...query }] : []
+    })
+    const missing = this.sites.filter((site) => !plans.some((plan) => plan.site === site))
+    const notes = [
+      ...plans.flatMap(({ notes }) => notes),
+      ...(missing.length > 0
+        ? [`${this.entry.name} has no tag on ${missing.map((site) => site.name).join(', ')}`]
+        : []),
+    ]
+    board.note = notes.length > 0 ? notes.join(' · ') : undefined
+    if (plans.length === 0) {
+      board.searching = false
+    }
     this.show()
     this.draw()
-    const tags = this.query(site)
-    void this.tally(gen, site, board, tags)
+    void this.tally(gen, board, plans)
     try {
-      const owners = await this.mateOwners(site)
+      const owned = await Promise.all(plans.map(async (plan) => ({ plan, owners: await this.mateOwners(plan.site) })))
       if (gen !== this.gen) {
         return
       }
-      const room = tagsOf(tags) + 1 <= site.tagBudget
-      board.sources = [
-        ...(room ? [...owners.keys()].map((owner) => ({ tags: `${tags} user:${owner}`, page: 0, done: false })) : []),
-        { tags, page: 0, done: false },
-      ]
+      board.sources = owned.flatMap(({ plan: { site, tags }, owners }) => [
+        ...(tagsOf(tags) + 1 <= site.tagBudget
+          ? [...owners.keys()].map((owner) => ({ site, tags: `${tags} user:${owner}`, page: 0, done: false }))
+          : []),
+        { site, tags, page: 0, done: false },
+      ])
       this.show()
       this.draw()
       await this.pump()
@@ -865,26 +1061,41 @@ class Finder {
     }
   }
 
-  private async tally(gen: number, site: Site, board: Board, tags: string): Promise<void> {
-    try {
-      const total = await fetchCount(site, tags, this.signal)
-      if (gen === this.gen) {
-        board.total = total
-        this.show()
-        this.draw()
-      }
-    } catch {}
+  private async tally(gen: number, board: Board, plans: { site: Site; tags: string }[]): Promise<void> {
+    const counts = await Promise.allSettled(plans.map(({ site, tags }) => fetchCount(site, tags, this.signal)))
+    if (gen === this.gen) {
+      board.total = counts.reduce((sum, count) => sum + (count.status === 'fulfilled' ? count.value : 0), 0)
+      this.show()
+      this.draw()
+    }
   }
 
-  private fail(gen: number, error: unknown): void {
+  private fail(gen: number, error: unknown, site = this.site): void {
     if (gen !== this.gen || this.signal.aborted) {
       return
     }
-    this.board.error = reason(this.site, error)
+    this.board.error = reason(site?.name ?? this.tabName, error)
     this.board.searching = false
     this.view.error = this.board.error
+    this.offer(site, error)
     this.show()
     this.draw()
+  }
+
+  private offer(site: Site | undefined, error: unknown): void {
+    if (site && !this.view.unblocked && routable() && describe(error) === 'ECONNRESET') {
+      this.view.asking = site.name
+    }
+  }
+
+  private drop(board: Board, site: Site, error: unknown): void {
+    for (const source of board.sources) {
+      if (source.site === site) {
+        source.done = true
+      }
+    }
+    board.note = [board.note, reason(site.name, error)].filter(Boolean).join(' · ')
+    this.offer(site, error)
   }
 
   private wants(): boolean {
@@ -892,23 +1103,215 @@ class Finder {
     return this.view.tiles.length < (this.board.top + rowsVis + LOOKAHEAD) * perRow
   }
 
-  private async nextPage(site: Site, board: Board, gen: number): Promise<void> {
-    const source = board.sources.find((s) => !s.done)
-    if (!source) {
+  private need(): number {
+    const { perRow, rowsVis } = gridShape(this.cols, this.rows)
+    return (rowsVis + LOOKAHEAD) * perRow
+  }
+
+  private live(board: Board): boolean {
+    return this.boards.get(board.key) === board
+  }
+
+  private page(site: Site, tags: string, page: number): Promise<Post[]> {
+    const key = `${site.key}|${tags}|${page}`
+    let job = this.pages.get(key)
+    if (!job) {
+      job = fetchPosts(site, tags, page, this.signal).then((posts) => this.borrow(posts))
+      this.pages.set(key, job)
+      job.catch(() => this.pages.delete(key))
+    }
+    return job
+  }
+
+  private async borrow(posts: Post[]): Promise<Post[]> {
+    const asking = posts.filter((post) => post.solo === undefined && post.md5 !== '')
+    if (asking.length > 0) {
+      try {
+        lend(
+          asking,
+          await fetchLent(
+            asking.map((post) => post.md5),
+            this.signal,
+          ),
+        )
+      } catch {}
+    }
+    return posts
+  }
+
+  private async round(board: Board): Promise<void> {
+    const due = SITES.flatMap((site) => {
+      const source = board.sources.find((s) => s.site === site && !s.done)
+      return source ? [source] : []
+    })
+    const got = await Promise.all(
+      due.map(async (source) => {
+        try {
+          return { source, posts: await this.page(source.site, source.tags, source.page) }
+        } catch (error) {
+          if (board.sources.every((s) => s.site === source.site) || this.signal.aborted) {
+            throw error
+          }
+          this.drop(board, source.site, error)
+          return { source, posts: undefined }
+        }
+      }),
+    )
+    if (!this.live(board)) {
       return
     }
-    const posts = await fetchPosts(site, source.tags, source.page, this.signal)
-    if (gen !== this.gen) {
-      return
-    }
-    source.page++
-    source.done = posts.length < PAGE
-    for (const post of posts) {
-      if (!board.seen.has(post.id)) {
-        board.seen.add(post.id)
-        board.queue.push(post)
+    const picks: Pick[] = []
+    for (const { source, posts } of got) {
+      if (!posts) {
+        continue
+      }
+      source.page++
+      source.done = posts.length < PAGE
+      let last = board.last.get(source)
+      for (const post of posts) {
+        const set = last && sameSet(last.post, post) ? last.set : `set:${source.site.key}:${post.id}`
+        last = { post, set }
+        const key = postKey(source.site, post.id)
+        if (board.seen.has(key)) {
+          continue
+        }
+        board.seen.add(key)
+        const pick = { site: source.site, post }
+        if (this.eligible(pick)) {
+          board.kin.set(pick, [set, ...kinKeys(source.site, post)])
+          picks.push(pick)
+        } else {
+          board.checked++
+        }
+      }
+      if (last) {
+        board.last.set(source, last)
       }
     }
+    const kept = this.dedupe(board, picks)
+    const round = ++board.rounds
+    let ordered: Pick[]
+    if (this.view.order !== 'fit') {
+      ordered = due.length > 1 ? interleave(kept) : kept
+    } else {
+      const rough = fitOrder(kept, this.frame(), this.matched)
+      const head = rough.slice(0, this.need())
+      await this.looks(head)
+      if (!this.live(board)) {
+        return
+      }
+      ordered = [...fitOrder(head, this.frame(), this.matched), ...rough.slice(head.length)]
+    }
+    for (const pick of ordered) {
+      board.roundOf.set(pick, round)
+    }
+    board.queue.push(...ordered)
+    this.ahead(board)
+  }
+
+  private ahead(board: Board): void {
+    if (this.aheading || this.view.order !== 'fit' || !this.live(board)) {
+      return
+    }
+    const next = board.queue.slice(0, this.need()).filter((pick) => !this.looking.has(postKey(pick.site, pick.post.id)))
+    if (next.length === 0) {
+      return
+    }
+    this.aheading = true
+    void this.looks(next).then(() => {
+      this.aheading = false
+      for (const round of new Set(next.map((pick) => board.roundOf.get(pick) ?? 0))) {
+        this.resort(board, round)
+      }
+      this.ahead(board)
+    })
+  }
+
+  private resort(board: Board, round: number): void {
+    const at = board.queue.flatMap((pick, i) => (board.roundOf.get(pick) === round ? [i] : []))
+    const sorted = fitOrder(
+      at.map((i) => board.queue[i] as Pick),
+      this.frame(),
+      this.matched,
+    )
+    at.forEach((i, k) => {
+      board.queue[i] = sorted[k] as Pick
+    })
+  }
+
+  private dedupe(board: Board, picks: Pick[]): Pick[] {
+    const out: Pick[] = []
+    for (const pick of picks) {
+      const keys = sameKeys(pick.post)
+      const held = keys.map((key) => board.same.get(key)).find(Boolean)
+      if (!held) {
+        for (const key of keys) {
+          board.same.set(key, pick)
+        }
+        out.push(pick)
+        continue
+      }
+      board.checked++
+      if (area(pick.post) <= area(held.post)) {
+        continue
+      }
+      for (const key of [...keys, ...sameKeys(held.post)]) {
+        board.same.set(key, pick)
+      }
+      const within = out.indexOf(held)
+      if (within >= 0) {
+        out[within] = pick
+        continue
+      }
+      this.replace(board, held, pick)
+    }
+    return out
+  }
+
+  private replace(board: Board, held: Pick, pick: Pick): void {
+    board.roundOf.set(pick, board.roundOf.get(held) ?? 0)
+    const queued = board.queue.indexOf(held)
+    if (queued >= 0) {
+      board.queue[queued] = pick
+      return
+    }
+    for (const group of board.groups) {
+      const at = group.posts.indexOf(held)
+      if (at >= 0) {
+        group.posts[at] = pick
+        this.posts.set(postKey(pick.site, pick.post.id), pick)
+        this.thumbQueue.push(pick)
+        this.thumbs()
+        return
+      }
+    }
+  }
+
+  private async looks(picks: Pick[]): Promise<void> {
+    let next = 0
+    const lane = async () => {
+      while (next < picks.length) {
+        await this.look(picks[next++] as Pick)
+      }
+    }
+    await Promise.all(Array.from({ length: THUMB }, lane))
+  }
+
+  private look(pick: Pick): Promise<Look | undefined> {
+    const key = postKey(pick.site, pick.post.id)
+    let job = this.looking.get(key)
+    if (!job) {
+      job = (async () => {
+        const path = this.previewPath(pick)
+        await this.cached(pick.site, path, pick.post.preview)
+        const look = await this.renders.run({ job: 'match', from: path, colors: this.entry.signature })
+        this.looked.set(key, look)
+        this.matched.set(pick.post, look.match)
+        return look
+      })().catch(() => undefined)
+      this.looking.set(key, job)
+    }
+    return job
   }
 
   private async pump(): Promise<void> {
@@ -918,18 +1321,18 @@ class Finder {
       return
     }
     this.pumping = gen
-    const site = this.site
-    const flight: { post: Post; passed: Promise<boolean> }[] = []
+    const flight: { pick: Pick; passed: Promise<boolean> }[] = []
     let page: Promise<void> | undefined
     try {
       board.searching = true
       while (gen === this.gen) {
         while (flight.length < PROBE && board.queue.length > 0 && this.wants()) {
-          const post = board.queue.shift() as Post
-          flight.push({ post, passed: this.passes(site, post) })
+          const pick = board.queue.shift() as Pick
+          flight.push({ pick, passed: this.vet(pick) })
         }
+        this.ahead(board)
         if (!page && board.queue.length < PROBE && board.sources.some((s) => !s.done) && this.wants()) {
-          const job = this.nextPage(site, board, gen).then(() => {
+          const job = this.round(board).then(() => {
             if (page === job) {
               page = undefined
             }
@@ -943,6 +1346,8 @@ class Finder {
             break
           }
           await page
+          this.show()
+          this.draw()
           continue
         }
         const passed = await head.passed
@@ -951,7 +1356,7 @@ class Finder {
         }
         board.checked++
         if (passed) {
-          this.admit(site, head.post)
+          this.admit(head.pick)
         }
         this.show()
         this.draw()
@@ -971,18 +1376,24 @@ class Finder {
     }
   }
 
-  private async passes(site: Site, post: Post): Promise<boolean> {
+  private eligible({ site, post }: Pick): boolean {
     const version = rendition(post)
     if (!rated(site, post, this.view.rating) || exposed(post, this.view.block).length > 0 || !version) {
       return false
     }
-    if (this.view.preset === 'all') {
-      return ['png', 'jpg', 'jpeg'].includes(version.ext)
-    }
-    if (post.ext !== 'png') {
+    if (this.view.solo && post.solo === false) {
       return false
     }
-    return site.vouched || this.transparent(site, post)
+    return this.view.preset === 'all' ? ['png', 'jpg', 'jpeg'].includes(version.ext) : post.ext === 'png'
+  }
+
+  private async vet(pick: Pick): Promise<boolean> {
+    const [passed] = await Promise.all([this.passes(pick), this.look(pick)])
+    return passed
+  }
+
+  private async passes({ site, post }: Pick): Promise<boolean> {
+    return this.view.preset === 'all' || site.vouched || this.transparent(site, post)
   }
 
   private probes(site: Site): Record<string, boolean> {
@@ -1020,29 +1431,50 @@ class Finder {
     this.unsaved.clear()
   }
 
-  private admit(site: Site, post: Post): void {
-    this.posts.set(this.mark(site, post.id), post)
-    const last = this.view.sets === 'fold' ? this.board.groups.at(-1) : undefined
-    const head = last?.posts[0]
-    const credit = post.owner || post.artist
-    if (
-      last &&
-      head &&
-      credit &&
-      (head.owner || head.artist) === credit &&
-      head.width === post.width &&
-      head.height === post.height
-    ) {
-      last.posts.push(post)
-      if (last.open) {
-        this.thumbQueue.push({ site, post })
+  private admit(pick: Pick): void {
+    const { site, post } = pick
+    const board = this.board
+    const key = postKey(site, post.id)
+    this.posts.set(key, pick)
+    const keys = board.kin.get(pick) ?? []
+    const look = this.looked.get(key)
+    const shape = look && { hash: look.hash, width: post.width, height: post.height }
+    const kindred = this.view.sets === 'fold' ? this.kindred(board, keys, shape) : undefined
+    if (kindred) {
+      kindred.posts.push(pick)
+      this.register(board, kindred, keys, shape)
+      if (kindred.open) {
+        this.thumbQueue.push(pick)
         this.thumbs()
       }
       return
     }
-    this.board.groups.push({ posts: [post], open: false })
-    this.thumbQueue.push({ site, post })
+    const group = { posts: [pick], open: false }
+    board.groups.push(group)
+    this.register(board, group, keys, shape)
+    this.thumbQueue.push(pick)
     this.thumbs()
+  }
+
+  private kindred(board: Board, keys: string[], shape: Shape | undefined): Group | undefined {
+    for (const key of keys) {
+      const group = board.kindred.get(key)
+      if (group) {
+        return group
+      }
+    }
+    return shape && board.shapes.find((held) => near(held.shape, shape))?.group
+  }
+
+  private register(board: Board, group: Group, keys: string[], shape: Shape | undefined): void {
+    for (const key of keys) {
+      if (!board.kindred.has(key)) {
+        board.kindred.set(key, group)
+      }
+    }
+    if (shape) {
+      board.shapes.push({ shape, group })
+    }
   }
 
   private async mateOwners(site: Site): Promise<Map<string, string[]>> {
@@ -1113,9 +1545,9 @@ class Finder {
 
   private thumbs(): void {
     while (this.thumbing < THUMB && this.thumbQueue.length > 0) {
-      const { site, post } = this.thumbQueue.shift() as { site: Site; post: Post }
+      const pick = this.thumbQueue.shift() as Pick
       this.thumbing++
-      this.thumb(site, post)
+      this.thumb(pick)
         .catch(() => {})
         .finally(() => {
           this.thumbing--
@@ -1124,16 +1556,17 @@ class Finder {
     }
   }
 
-  private async thumb(site: Site, post: Post): Promise<void> {
+  private async thumb(pick: Pick): Promise<void> {
+    const { site, post } = pick
     const w = TILE.cols * this.cell.w
     const h = TILE.rows * this.cell.h
-    const path = join(cacheDir(site), 'tile', `${post.id}-${w}x${h}.png`)
+    const path = join(cacheDir(site), 'tile', `${previewStem(post)}-${w}x${h}.png`)
     if (!existsSync(path)) {
-      const thumb = join(cacheDir(site), 'thumb', `${post.id}.${extension(post.preview)}`)
+      const thumb = this.previewPath(pick)
       await this.cached(site, thumb, post.preview)
       await this.renders.run({ job: 'thumb', from: thumb, to: path, width: w, height: h })
     }
-    this.thumbPath.set(this.mark(site, post.id), path)
+    this.thumbPath.set(postKey(site, post.id), path)
     this.show()
     this.draw()
   }
@@ -1147,7 +1580,7 @@ class Finder {
     if (!tile) {
       return
     }
-    if (this.current?.id === tile.id) {
+    if (this.current?.key === tile.key) {
       this.reveal()
       return
     }
@@ -1157,23 +1590,24 @@ class Finder {
 
   private async load(tile: Tile): Promise<void> {
     const view = this.view
-    const post = this.posts.get(this.mark(this.site, tile.id))
-    const version = post && rendition(post)
-    if (!version) {
+    const pick = this.posts.get(tile.key)
+    const version = pick && rendition(pick.post)
+    if (!pick || !version) {
       return
     }
-    const site = this.site
+    const { site } = pick
+    const board = this.board
     const control = new AbortController()
     this.fetch = control
     try {
       const path = this.origPath(site, tile.id, version.ext)
       if (!existsSync(path)) {
-        view.fetching = { id: tile.id, got: 0, size: 0 }
+        view.fetching = { id: tile.key, got: 0, size: 0 }
         this.draw()
       }
       const size = await this.cached(site, path, version.file, (got, total) => {
-        if (view.fetching?.id === tile.id) {
-          view.fetching = { id: tile.id, got, size: total }
+        if (view.fetching?.id === tile.key) {
+          view.fetching = { id: tile.key, got, size: total }
           this.draw()
         }
       })
@@ -1181,30 +1615,39 @@ class Finder {
         return
       }
       view.fetching = undefined
-      if (site !== this.site) {
+      if (board !== this.board) {
         return
       }
-      const current: Current = { site, id: tile.id, path, ext: version.ext, size, using: 'plain', failed: false }
-      view.preparing = tile.id
+      const current: Current = {
+        site,
+        id: tile.id,
+        key: tile.key,
+        path,
+        ext: version.ext,
+        size,
+        using: 'plain',
+        failed: false,
+      }
+      view.preparing = tile.key
       this.flush()
       const plain = await this.render(current, 'plain')
-      if (control.signal.aborted || site !== this.site) {
+      if (control.signal.aborted || board !== this.board) {
         return
       }
       if (plain.clear === 0 && canRemoveBackground() && this.setting('TTHEME_FIND_REMOVE_BG') !== 'off') {
         view.preparing = undefined
-        view.cutting = tile.id
+        view.cutting = tile.key
         this.flush()
         current.cut = await this.cutOut(site, tile.id, path, control.signal)
-        if (control.signal.aborted || site !== this.site) {
+        if (control.signal.aborted || board !== this.board) {
           return
         }
         view.cutting = undefined
         if (current.cut) {
-          view.preparing = tile.id
+          view.preparing = tile.key
           this.flush()
           const made = await this.render(current, 'cut').catch(() => undefined)
-          if (control.signal.aborted || site !== this.site) {
+          if (control.signal.aborted || board !== this.board) {
             return
           }
           if (made && keepable(made.clear)) {
@@ -1219,22 +1662,22 @@ class Finder {
         }
       }
       this.current = current
-      if (view.tiles[view.focus]?.id === tile.id) {
+      if (view.tiles[view.focus]?.key === tile.key) {
         await this.present()
       }
       this.preload()
     } catch (error) {
       if (!control.signal.aborted && !this.signal.aborted) {
-        view.error = reason(site, error)
+        view.error = reason(site.name, error)
       }
     } finally {
-      if (view.fetching?.id === tile.id) {
+      if (view.fetching?.id === tile.key) {
         view.fetching = undefined
       }
-      if (view.preparing === tile.id) {
+      if (view.preparing === tile.key) {
         view.preparing = undefined
       }
-      if (view.cutting === tile.id) {
+      if (view.cutting === tile.key) {
         view.cutting = undefined
       }
       this.draw()
@@ -1258,7 +1701,7 @@ class Finder {
 
   private swap(): void {
     const current = this.current
-    if (!current?.cut || this.view.shown?.id !== current.id) {
+    if (!current?.cut || this.view.shown?.id !== current.key) {
       return
     }
     current.using = current.using === 'cut' ? 'plain' : 'cut'
@@ -1270,22 +1713,25 @@ class Finder {
     if (view.mode !== 'try') {
       return
     }
-    const site = this.site
     for (const index of [view.focus + this.direction, view.focus - this.direction]) {
       if (this.prefetching >= PRELOAD) {
         return
       }
       const tile = view.tiles[index]
-      const post = tile && this.posts.get(this.mark(site, tile.id))
-      const version = post && rendition(post)
-      if (!version) {
+      const pick = tile && this.posts.get(tile.key)
+      const version = pick && rendition(pick.post)
+      if (!pick || !version) {
         continue
       }
+      const { site, post } = pick
       const path = this.origPath(site, post.id, version.ext)
       this.prefetching++
       void this.cached(site, path, version.file)
         .then(() =>
-          this.render({ site, id: post.id, path, ext: version.ext, size: 0, using: 'plain', failed: false }, 'plain'),
+          this.render(
+            { site, id: post.id, key: tile.key, path, ext: version.ext, size: 0, using: 'plain', failed: false },
+            'plain',
+          ),
         )
         .catch(() => {})
         .finally(() => {
@@ -1332,7 +1778,7 @@ class Finder {
       return
     }
     this.view.shown = {
-      id: current.id,
+      id: current.key,
       clear,
       bytes: current.size,
       path,
@@ -1342,14 +1788,14 @@ class Finder {
 
   private reveal(): void {
     const view = this.view
-    view.preparing = this.current?.id
+    view.preparing = this.current?.key
     this.flush()
     void this.present()
       .catch((error: unknown) => {
         view.error = error instanceof Error ? error.message : String(error)
       })
       .finally(() => {
-        if (view.preparing === this.current?.id) {
+        if (view.preparing === this.current?.key) {
           view.preparing = undefined
         }
         this.draw()
@@ -1360,10 +1806,10 @@ class Finder {
     const view = this.view
     const tile = view.tiles[view.focus]
     const current = this.current
-    if (!tile || current?.id !== tile.id || view.preparing !== undefined || view.shown?.id !== tile.id) {
+    if (!tile || current?.key !== tile.key || view.preparing !== undefined || view.shown?.id !== tile.key) {
       return
     }
-    view.installing = tile.id
+    view.installing = tile.key
     view.error = undefined
     this.flush()
     try {
@@ -1382,7 +1828,7 @@ class Finder {
         },
       })
       const known = readCache<string>(current.site, 'owners.json')
-      known[current.id] = this.posts.get(this.mark(current.site, current.id))?.owner ?? ''
+      known[current.id] = this.posts.get(current.key)?.post.owner ?? ''
       writeCache(current.site, 'owners.json', known)
       refreshProfiles(this.home)
       process.stderr.write(`background · ${this.entry.name} ← ${current.site.name} ${current.id}\n`)
@@ -1457,6 +1903,7 @@ async function relaunch(): Promise<number> {
       NODE_USE_ENV_PROXY: '1',
       NODE_NO_WARNINGS: '1',
       HTTPS_PROXY: `http://127.0.0.1:${proxy.port}`,
+      NO_PROXY: [process.env.NO_PROXY, untunneled()].filter(Boolean).join(','),
       TTHEME_FIND_PROXY: String(proxy.port),
     },
   })
@@ -1475,5 +1922,7 @@ export async function runFind(name: string): Promise<number> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error('ttheme find needs a terminal')
   }
-  return new Finder(home, catalog, entry, entry.booru ?? '').run()
+  const finder = new Finder(home, catalog, entry, entry.booru ?? '')
+  const code = await finder.run()
+  return finder.unblock ? relaunch() : code
 }

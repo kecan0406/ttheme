@@ -3,8 +3,12 @@ name = "nazuna"
 group = "Call of the Night"
 order = 62
 ansi_source = "Purplepeter"
-booru = "nanakusa_nazuna"
+booru = "nanakusa_nazuna_(yofukashi_no_uta)"
 signature = ["cursor", "ansi1", "ansi13"]
+
+[meta.booru_sites]
+konachan = "nanakusa_nazuna"
+yande = "nanakusa_nazuna"
 
 [colors]
 background = "#1e151a"

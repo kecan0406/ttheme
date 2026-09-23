@@ -6,6 +6,9 @@ ansi_source = "Under The Sea"
 booru = "yamori_kou"
 signature = ["cursor", "ansi5", "ansi9"]
 
+[meta.booru_sites]
+konachan = []
+
 [colors]
 background = "#211513"
 foreground = "#fddbd5"

@@ -6,6 +6,9 @@ ansi_source = "Catppuccin Macchiato + Aincrad"
 booru = "sinon"
 signature = ["cursor", "ansi3", "ansi4"]
 
+[meta.booru_sites]
+konachan = "shinon_(sao)"
+
 [colors]
 background = "#111916"
 foreground = "#d5e7dd"

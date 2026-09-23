@@ -11,6 +11,7 @@ export interface PaletteEntry {
   order: number
   ansiSource: string
   booru?: string
+  booruSites?: Record<string, string[]>
   default?: boolean
   background: string
   foreground: string
@@ -40,6 +41,7 @@ export function paletteEntry(t: Theme): PaletteEntry {
     order: t.order,
     ansiSource: t.ansiSource,
     ...(t.booru ? { booru: t.booru } : {}),
+    ...(t.booruSites ? { booruSites: t.booruSites } : {}),
     ...(t.role === 'default' ? { default: true } : {}),
     background: t.background,
     foreground: t.foreground,
