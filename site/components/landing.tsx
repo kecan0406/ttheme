@@ -1,9 +1,11 @@
 'use client'
 
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
-import type { GateRule, Theme } from '@/lib/themes'
+import type { Picture } from '@/lib/backdrop'
+import type { GateRule, Placement, Theme } from '@/lib/themes'
+import { BackdropStage } from './backdrop-stage'
 import { Designation } from './designation'
-import { SheetHead } from './sheet-head'
+import { type Mode, SheetHead } from './sheet-head'
 import { SheetLegend } from './sheet-legend'
 import { SheetSidebar } from './sheet-sidebar'
 import type { Tab } from './terminal-window'
@@ -33,7 +35,19 @@ function ownsArrows(target: EventTarget | null): boolean {
   )
 }
 
-export function Landing({ themes, gate, version }: { themes: Theme[]; gate: GateRule[]; version: string }) {
+export function Landing({
+  themes,
+  gate,
+  placement,
+  version,
+}: {
+  themes: Theme[]
+  gate: GateRule[]
+  placement: Placement
+  version: string
+}) {
+  const [mode, setMode] = useState<Mode>('designation')
+  const [picture, setPicture] = useState<Picture | null>(null)
   const [openTabs, setOpenTabs] = useState<OpenTab[]>(() => themes.slice(0, 3).map((_, id) => ({ id, index: id })))
   const [active, setActive] = useState(0)
   const [drawer, setDrawer] = useState(false)
@@ -89,9 +103,32 @@ export function Landing({ themes, gate, version }: { themes: Theme[]; gate: Gate
         />
       ) : null}
       <main className="grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto]">
-        <SheetHead theme={current} themes={themes} gate={gate} onStep={step} onOpenSheets={() => setDrawer(true)} />
-        <Designation theme={current} gate={gate} tabs={tabs} active={active} onSelect={setActive} onOpen={openTab} />
-        <SheetLegend />
+        <SheetHead
+          theme={current}
+          themes={themes}
+          gate={gate}
+          mode={mode}
+          onMode={setMode}
+          onStep={step}
+          onOpenSheets={() => setDrawer(true)}
+        />
+        {mode === 'designation' ? (
+          <Designation theme={current} gate={gate} tabs={tabs} active={active} onSelect={setActive} onOpen={openTab} />
+        ) : (
+          <BackdropStage
+            theme={current}
+            themes={themes}
+            placement={placement}
+            picture={picture}
+            tabs={tabs}
+            active={active}
+            onSelect={setActive}
+            onOpen={openTab}
+            onPicture={setPicture}
+            onPick={(theme) => paint(themes.indexOf(theme))}
+          />
+        )}
+        <SheetLegend mode={mode} />
       </main>
     </div>
   )

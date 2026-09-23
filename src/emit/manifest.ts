@@ -1,4 +1,5 @@
 import pkg from '../../package.json' with { type: 'json' }
+import { backdropTone, PLACEMENT } from '../backdrop.ts'
 import { GATE_RULES, type GateRule, measure } from '../contrast.ts'
 import type { Font, Theme } from '../theme.ts'
 import type { Emitter, Output } from './index.ts'
@@ -22,17 +23,31 @@ export interface PaletteEntry {
   ansi: string[]
   gate: number[]
   waived?: string[]
+  backdrop: { slot: string; color: string; opacity: number }
 }
 
 export interface Manifest {
   version: string
   gate: GateRule[]
+  placement: typeof PLACEMENT
   font: Font
   shader?: string
   palettes: PaletteEntry[]
 }
 
 export function paletteEntry(t: Theme): PaletteEntry {
+  const { slot, color, opacity } = backdropTone(
+    {
+      name: t.name,
+      background: t.background,
+      foreground: t.foreground,
+      cursor: t.cursor,
+      selection: t.selectionBackground,
+      ansi: t.ansi,
+      waived: t.waive,
+    },
+    t.signatureSlots,
+  )
   return {
     name: t.name,
     group: t.group,
@@ -52,6 +67,7 @@ export function paletteEntry(t: Theme): PaletteEntry {
     ansi: t.ansi,
     gate: measure(t),
     ...(t.waive.length > 0 ? { waived: t.waive } : {}),
+    backdrop: { slot, color, opacity },
   }
 }
 
@@ -67,6 +83,7 @@ export function manifest(themes: Theme[]): Manifest {
   return {
     version: pkg.version,
     gate: GATE_RULES,
+    placement: PLACEMENT,
     font: first.font,
     ...(first.ghostty.shader ? { shader: first.ghostty.shader } : {}),
     palettes: themes.map(paletteEntry),

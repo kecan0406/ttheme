@@ -31,6 +31,7 @@ function entry(name: string, order: number, partial: Partial<PaletteEntry> = {})
     signatureSlots: ['cursor', 'foreground', 'ansi13'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
     gate: [13.8, 6.8, 0.02, 10.4, 4.0],
+    backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
     ...partial,
   }
 }
@@ -38,6 +39,7 @@ function entry(name: string, order: number, partial: Partial<PaletteEntry> = {})
 const catalog: Manifest = {
   version: '0.1.0',
   gate: [],
+  placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
   font: { family: 'JetBrainsMono Nerd Font', size: 14, codepointMap: [] },
   shader: 'cursor_tail.glsl',
   palettes: [entry('neutral', 1, { default: true }), entry('gojo', 2), entry('geto', 3)],

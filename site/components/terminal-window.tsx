@@ -153,6 +153,7 @@ export function TerminalWindow({
   onOpen,
   windowRef,
   viewportRef,
+  backdrop,
 }: {
   theme: Theme
   tabs: Tab[]
@@ -160,8 +161,9 @@ export function TerminalWindow({
   focus: Slot | null
   onSelect: (id: number) => void
   onOpen: () => void
-  windowRef: Ref<HTMLDivElement>
-  viewportRef: Ref<HTMLDivElement>
+  windowRef?: Ref<HTMLDivElement>
+  viewportRef?: Ref<HTMLDivElement>
+  backdrop?: ReactNode
 }) {
   return (
     <Card ref={windowRef} className="gap-0 rounded-lg py-0 shadow-[0_40px_80px_-52px_rgb(0_0_0/.75)] ring-input">
@@ -186,13 +188,16 @@ export function TerminalWindow({
           </Button>
         </div>
       </Tabs>
-      <ScrollArea
-        viewportRef={viewportRef}
-        orientation="horizontal"
-        contentClassName="term w-max min-w-full px-[18px] pt-3.5 pb-4"
-      >
-        <Session theme={theme} focus={focus} />
-      </ScrollArea>
+      <div className="relative">
+        {backdrop}
+        <ScrollArea
+          viewportRef={viewportRef}
+          orientation="horizontal"
+          contentClassName="term w-max min-w-full px-[18px] pt-3.5 pb-4"
+        >
+          <Session theme={theme} focus={focus} />
+        </ScrollArea>
+      </div>
     </Card>
   )
 }

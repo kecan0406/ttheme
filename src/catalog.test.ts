@@ -18,6 +18,7 @@ function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
     signatureSlots: ['cursor', 'foreground', 'ansi13'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
     gate: [13.8, 6.8, 0.02, 10.4, 4.0],
+    backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
     ...partial,
   }
 }

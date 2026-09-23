@@ -1,20 +1,28 @@
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { gatePassed, sheetNumber, slotOf } from '@/lib/sheet'
 import type { GateRule, Theme } from '@/lib/themes'
 
 const LINE = 'rounded-[2px]'
 const FLIP = `${LINE} size-[26px] text-[15px]`
+const MODES = ['designation', 'backdrop'] as const
+
+export type Mode = (typeof MODES)[number]
 
 export function SheetHead({
   theme,
   themes,
   gate,
+  mode,
+  onMode,
   onStep,
   onOpenSheets,
 }: {
   theme: Theme
   themes: Theme[]
   gate: GateRule[]
+  mode: Mode
+  onMode: (mode: Mode) => void
   onStep: (delta: number) => void
   onOpenSheets: () => void
 }) {
@@ -46,6 +54,15 @@ export function SheetHead({
       </div>
 
       <div className="flex flex-wrap items-center gap-x-[26px] gap-y-2.5 text-xs text-muted-foreground">
+        <Tabs value={mode} onValueChange={(value) => onMode(value as Mode)}>
+          <TabsList aria-label="sheet view" className={`${LINE} overflow-hidden border`}>
+            {MODES.map((name) => (
+              <TabsTrigger key={name} value={name} className="border-r-0 px-2.5 py-[3px] data-active:bg-muted">
+                {name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
         <span className="flex items-center gap-[9px]">
           <span className="flex gap-1">
             {theme.signatureSlots.map((slot) =>
