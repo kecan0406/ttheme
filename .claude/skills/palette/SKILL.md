@@ -96,7 +96,7 @@ Sample the whole cast in one pass and compare anchors across it before assigning
 
 - `bun audit.ts --anchors <file> themes/<a>.toml [...]` prints the owner review list: signature triplets closer than ΔE2000 13 to a castmate, cursors closer than 3 to any other series' cursor, cursor/selection departures above ΔE2000 10, hue shifts above 12°, and every anchors `note`.
 - `bun board.ts --anchors <file> --out <board.html> [--variants <variants.json>] [--art <theme>=<image> ...] [--title "<Series> palettes"] themes/<a>.toml [...]` renders the series board — cast strip, per-character art and anchors beside the palette card and a terminal mock, measured → final table, a two-at-a-time chooser for the characters in `--variants` (`{ "<theme>": { "<key>": { "label", "colors", "signature" } } }`), and a sign-off per series. Publish it as a private Artifact with `capabilities: {db: {}}` (load the artifact-design and artifact-capabilities skills first). The owner signs off each series (`signoff/<series-slug>`) and, for each flagged character, picks between measured variants — other measured parts or slots, never invented colors — or "neither" (`picks/<theme>`). Read them back with ArtifactData, apply them, and re-run the audit.
-- A vision model is not the judge: blind matching measures whether palettes can be told apart, not whether each is faithful (a wrong but unique palette passes), and VLMs score 57–60 % on fine color tasks (ColorBench, 2025).
+- A vision model is not the judge: blind matching measures whether palettes can be told apart, not whether each is faithful (a wrong but unique palette passes).
 
 ## 10. Record
 
