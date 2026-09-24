@@ -88,7 +88,8 @@ Sample the whole cast in one pass and compare anchors across it before assigning
 
 ## 8. Gate
 
-- `mise run build` until clean (or, in parallel mode, `bun check-theme.ts themes/<name>.toml [...]` until `gate clean`). src/contrast.ts is the readability criterion: foreground 7:1, accents 3:1, ANSI 0 luminance ≤ 0.15, ANSI 7/15 7:1, ANSI 8 1.6:1, foreground on selection 7:1.
+- `mise run build` until clean (or, in parallel mode, `bun check-theme.ts themes/<name>.toml [...]` until `gate clean`). src/contrast.ts is the readability criterion: foreground 7:1, accents 3:1, ANSI 0 luminance ≤ 0.15, ANSI 7/15 7:1, ANSI 8 1.6:1, foreground on selection 7:1. It is also the function criterion, in OKLCH: each accent's hue stays in its ANSI role's band (`ROLE_HUES`, red 19±25°, green 132±35°, yellow 88±35°, blue 250±60°, magenta 329±40°, cyan 197±60° — centred on ten well-known schemes, all of which pass), each bright stays within 25° of its normal, and no two accents in a row sit within 15° hue and 0.08 lightness. An ANSI slot in `meta.signature`, and its normal/bright twin, is exempt from the band, since the character's color lives there.
+- A role violation is fixed by `bun ansi-roles.ts [--write] [--report <file.json>] themes/<a>.toml [...]`: it turns the hue only (lightness and chroma kept, chroma cut back when out of gamut) — to just inside the band, a bright to within 20° of its normal, a look-alike pair to the nearest clear hues — then re-runs the whole gate. Its report feeds the review board; a turn of ΔE2000 15 or more goes to the owner.
 - The envelope is tuned to pass, so a violation points at an anchor or slot choice. Fix it there — never by waiving, never by hand-editing derived slots.
 
 ## 9. Review

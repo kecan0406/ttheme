@@ -17,7 +17,7 @@ selection_background = "#52344d"
 ansi = [
   "#2a2128",
   "#f37b98",
-  "#e99b00",
+  "#b3b620",
   "#dbb92a",
   "#829df1",
   "#ea7ee5",
@@ -26,8 +26,8 @@ ansi = [
 
   "#80747b",
   "#f8acbd",
-  "#f6c478",
-  "#ffd5b6",
+  "#dbd079",
+  "#f8d9b1",
   "#acbfff",
   "#fbacf6",
   "#a7d8f7",

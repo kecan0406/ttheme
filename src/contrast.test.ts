@@ -45,3 +45,16 @@ test('the rotation excludes the default role', () => {
   assert.ok(!names.includes('neutral'), 'neutral must sit out of the rotation')
   assert.ok(names.length >= 1)
 })
+
+test('an accent outside its ANSI role fails unless the signature names it', () => {
+  const [theme] = themes
+  assert.ok(theme)
+  const ansi = [...theme.ansi]
+  ansi[1] = theme.ansi[2] as string
+  const roles = (signatureSlots: string[]) =>
+    check({ ...theme, ansi, signatureSlots })
+      .filter((v) => v.rule === 'ansi-role')
+      .map((v) => v.detail)
+  assert.equal(roles(['cursor', 'foreground', 'background']).length, 1)
+  assert.deepEqual(roles(['cursor', 'foreground', 'ansi1']), [])
+})

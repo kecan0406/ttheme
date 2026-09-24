@@ -13,16 +13,16 @@ cursor = "#9bd5f0"
 selection_background = "#2b3f57"
 ansi = [
   "#1d2529",
-  "#c48bdc",
+  "#e581a3",
   "#7db897",
   "#bcc078",
   "#79a5ca",
-  "#93a5d7",
+  "#9aa3d6",
   "#7abacd",
   "#c0c8cd",
 
   "#70787d",
-  "#e1aff6",
+  "#ffa7c3",
   "#9dd9b7",
   "#dde297",
   "#9ac6ec",

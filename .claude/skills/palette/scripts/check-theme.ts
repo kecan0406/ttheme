@@ -2,7 +2,7 @@ import { check } from '../../../../src/contrast.ts'
 import type { Theme } from '../../../../src/theme.ts'
 
 interface ThemeDoc {
-  meta: { name: string }
+  meta: { name: string; signature: string[] }
   colors: { background: string; foreground: string; selection_background: string; ansi: string[] }
 }
 
@@ -21,6 +21,7 @@ for (const file of files) {
     foreground: doc.colors.foreground,
     selectionBackground: doc.colors.selection_background,
     ansi: doc.colors.ansi,
+    signatureSlots: doc.meta.signature,
     waive: [],
   } as unknown as Theme
   for (const v of check(theme)) {

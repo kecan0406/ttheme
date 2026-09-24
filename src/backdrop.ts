@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { type Hex, luminance, rgb } from './color.ts'
-import { check } from './contrast.ts'
+import { checkReadability } from './contrast.ts'
 import type { ProfileBackground } from './emit/iterm2.ts'
 import { alphaBox, type Box, encodePng, type Rgba, resample, transparency } from './png.ts'
 
@@ -92,7 +92,7 @@ function highest(ok: (o: number) => boolean): number {
 export function toneFor(colors: Colors, slot: string): Tone {
   const color = slotColor(colors, slot)
   const gated = (o: number) =>
-    check({
+    checkReadability({
       name: colors.name,
       background: mix(colors.background, color, o),
       foreground: colors.foreground,

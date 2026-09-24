@@ -241,7 +241,7 @@ for (const name of corpus) {
     dropped.set(name, `harmonizer: ${(e as Error).message}`)
     continue
   }
-  const problems = violations(theme.meta.name, palette)
+  const problems = violations(theme.meta.name, theme.meta.signature, palette)
   if (problems.length > 0) dropped.set(name, `gate: ${problems.join('; ')}`)
   else ranked.push(score(name, signatureAnsi, palette))
 }

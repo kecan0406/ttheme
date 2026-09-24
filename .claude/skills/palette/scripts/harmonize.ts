@@ -1,5 +1,5 @@
 import { argbFromHex, Hct, hexFromArgb } from '@material/material-color-utilities'
-import { check } from '../../../../src/contrast.ts'
+import { check, ROLE_HUES } from '../../../../src/contrast.ts'
 import type { Theme } from '../../../../src/theme.ts'
 import { deltaE } from './delta.ts'
 
@@ -33,7 +33,6 @@ const OWN_CHROMA = 16
 const DARK_ANCHOR_TONE = 42.6
 const NORMAL_TONE: Record<number, number> = { 1: 66, 2: 70, 3: 76, 4: 66, 5: 68, 6: 72 }
 const LIGHT_TONE: Record<number, number> = { 1: 46, 2: 44, 3: 50, 4: 46, 5: 46, 6: 44 }
-const FALLBACK_HUE: Record<number, number> = { 1: 27, 2: 120, 3: 80, 4: 230, 5: 340, 6: 180 }
 
 const hct = (hex: string) => Hct.fromInt(argbFromHex(hex))
 const hex = (h: Hct) => hexFromArgb(h.toInt()).toLowerCase()
@@ -68,7 +67,7 @@ function selection(own: string, light: boolean): string {
 function accent(own: string, index: number, seedHue: number, light: boolean, rotate = true): string {
   const o = hct(own)
   const base = index % 8
-  const hue = o.chroma < GREY_CHROMA ? (FALLBACK_HUE[base] as number) : o.hue
+  const hue = o.chroma < GREY_CHROMA ? (ROLE_HUES[base]?.center as number) : o.hue
   const chroma = Math.max(CHROMA_MIN, Math.min(CHROMA_MAX, o.chroma))
   const tone = light
     ? (LIGHT_TONE[base] as number) - (index > 8 ? BRIGHT_LIFT / 2 : 0)
@@ -167,13 +166,14 @@ export function harmonizePalette(doc: ThemeDoc): Palette {
   return palette
 }
 
-export function violations(name: string, p: Palette): string[] {
+export function violations(name: string, signature: string[], p: Palette): string[] {
   const theme = {
     name,
     background: p.background,
     foreground: p.foreground,
     selectionBackground: p.selection,
     ansi: p.ansi,
+    signatureSlots: signature,
     waive: [],
   } as unknown as Theme
   return check(theme).map((v) => `${v.rule} — ${v.detail}`)
@@ -230,7 +230,7 @@ if (import.meta.main) {
     const palette = harmonizePalette(doc)
     console.log(`${doc.meta.name}: signature, measured → written`)
     for (const line of departures(doc, palette)) console.log(line)
-    const problems = violations(doc.meta.name, palette)
+    const problems = violations(doc.meta.name, doc.meta.signature, palette)
     if (problems.length > 0) {
       failed++
       for (const p of problems) console.log(`${doc.meta.name}: ${p}`)
