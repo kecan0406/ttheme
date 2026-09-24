@@ -3,19 +3,7 @@ import { basename, join } from 'node:path'
 import { SITES } from './booru.ts'
 import { type Hex, isHex } from './color.ts'
 
-export interface CodepointMap {
-  range: string
-  family: string
-}
-
-export interface Font {
-  family: string
-  size: number
-  codepointMap: CodepointMap[]
-}
-
 export interface GhosttyExtras {
-  shader?: string
   iconGhost: Hex
   iconScreen: Hex[]
 }
@@ -43,13 +31,11 @@ export interface Theme {
   ansi: Hex[]
   signature: Hex[]
   signatureSlots: string[]
-  font: Font
   ghostty: GhosttyExtras
   waive: string[]
   waiveReason?: string
 }
 
-const DEFAULTS_FILE = '_defaults.toml'
 const GROUPS_FILE = '_groups.toml'
 const SIGNATURE_SIZE = 3
 const NAMED_SLOTS = ['background', 'foreground', 'cursor', 'selection'] as const
@@ -78,24 +64,6 @@ function table(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
 }
 
-function readFont(file: string, own: unknown, base: unknown): Font {
-  const font = { ...table(base), ...table(own) }
-  const raw = font.codepoint_map ?? []
-  if (!Array.isArray(raw)) fail(file, 'font.codepoint_map must be an array')
-
-  return {
-    family: str(file, 'font.family', font.family),
-    size: Number(font.size),
-    codepointMap: raw.map((entry) => {
-      const e = table(entry)
-      return {
-        range: str(file, 'font.codepoint_map[].range', e.range),
-        family: str(file, 'font.codepoint_map[].family', e.family),
-      }
-    }),
-  }
-}
-
 interface IconColors {
   background: Hex
   cursor: Hex
@@ -111,11 +79,10 @@ function readIconScreen(file: string, value: unknown, colors: IconColors): Hex[]
   return raw.map((c, i) => hex(file, `ghostty.icon_screen[${i}]`, c))
 }
 
-function readGhostty(file: string, own: unknown, base: unknown, colors: IconColors): GhosttyExtras {
-  const g = { ...table(base), ...table(own) }
+function readGhostty(file: string, own: unknown, colors: IconColors): GhosttyExtras {
+  const g = table(own)
 
   return {
-    shader: g.shader === undefined ? undefined : str(file, 'ghostty.shader', g.shader),
     iconGhost: g.icon_ghost === undefined ? colors.cursor : hex(file, 'ghostty.icon_ghost', g.icon_ghost),
     iconScreen: readIconScreen(file, g.icon_screen, colors),
   }
@@ -209,7 +176,7 @@ function readGroups(dir: string): Group[] {
   })
 }
 
-function readTheme(file: string, source: string, defaults: Record<string, unknown>, groups: Map<string, Group>): Theme {
+function readTheme(file: string, source: string, groups: Map<string, Group>): Theme {
   const doc = Bun.TOML.parse(source) as Record<string, unknown>
   const meta = table(doc.meta)
   const colors = table(doc.colors)
@@ -279,8 +246,7 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
     ansi,
     signature: signature.colors,
     signatureSlots: signature.names,
-    font: readFont(file, doc.font, defaults.font),
-    ghostty: readGhostty(file, doc.ghostty, defaults.ghostty, {
+    ghostty: readGhostty(file, doc.ghostty, {
       background,
       cursor,
       selectionBackground,
@@ -291,7 +257,6 @@ function readTheme(file: string, source: string, defaults: Record<string, unknow
 }
 
 export function loadThemes(dir: string): Theme[] {
-  const defaults = Bun.TOML.parse(readFileSync(join(dir, DEFAULTS_FILE), 'utf8')) as Record<string, unknown>
   const groups = readGroups(dir)
   const byName = new Map(groups.map((g) => [g.name, g]))
   if (byName.size !== groups.length) {
@@ -300,7 +265,7 @@ export function loadThemes(dir: string): Theme[] {
 
   const themes = readdirSync(dir)
     .filter((f) => f.endsWith('.toml') && !f.startsWith('_'))
-    .map((f) => readTheme(f, readFileSync(join(dir, f), 'utf8'), defaults, byName))
+    .map((f) => readTheme(f, readFileSync(join(dir, f), 'utf8'), byName))
     .sort((a, b) => a.order - b.order)
 
   const orders = new Set(themes.map((t) => t.order))

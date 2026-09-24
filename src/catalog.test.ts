@@ -24,7 +24,7 @@ function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
 }
 
 function catalogJson(palettes: PaletteEntry[]): string {
-  return JSON.stringify({ version: '0.1.0', gate: [], font: { family: 'Mono', size: 14, codepointMap: [] }, palettes })
+  return JSON.stringify({ version: '0.1.0', gate: [], palettes })
 }
 
 test('parseCatalog rejects a document without palettes', () => {

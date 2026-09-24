@@ -1,6 +1,6 @@
 import { type Hex, rgb } from '../color.ts'
 import type { Theme } from '../theme.ts'
-import type { Emitter, Output } from './index.ts'
+import { type Emitter, type Output, owned } from './index.ts'
 
 export interface ItermColor {
   'Alpha Component': number
@@ -86,7 +86,7 @@ function plistColor(key: string, c: ItermColor): string {
 
 export const iterm2: Emitter = {
   id: 'iterm2',
-  limits: 'colors only — font lives in the profile; colors are Display P3, the space iTerm2 reads OSC colors in',
+  limits: 'colors are Display P3, the space iTerm2 reads OSC colors in',
 
   emit(theme: Theme): Output[] {
     const content = [
@@ -100,6 +100,6 @@ export const iterm2: Emitter = {
       '',
     ].join('\n')
 
-    return [{ path: `iterm2/${theme.name}.itermcolors`, content }]
+    return [{ path: `iterm2/${owned(theme.name)}.itermcolors`, content }]
   },
 }

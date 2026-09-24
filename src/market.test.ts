@@ -31,8 +31,6 @@ const catalog: Manifest = {
   version: '0.1.0',
   gate: [],
   placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
-  font: { family: 'JetBrainsMono Nerd Font', size: 14, codepointMap: [] },
-  shader: 'cursor_tail.glsl',
   palettes: [entry('gojo', 1), entry('geto', 2), entry('sukuna', 3)],
 }
 
@@ -69,7 +67,7 @@ test('a kept default survives a later add', () => {
     runAdd(['sukuna'])
   })
   assert.equal(readInstalled(home).startup, 'geto')
-  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = geto$/m)
+  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-geto$/m)
 })
 
 test('default turns ttheme back on', () => {
@@ -77,7 +75,7 @@ test('default turns ttheme back on', () => {
   writeInstalled(home, { terminals: ['ghostty'], off: true, palettes: ['gojo', 'geto'] })
   inHome(home, () => runDefault('geto'))
   assert.equal(readInstalled(home).off, undefined)
-  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = geto$/m)
+  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-geto$/m)
 })
 
 test('default refuses a palette that is not installed', () => {

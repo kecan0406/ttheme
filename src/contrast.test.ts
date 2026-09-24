@@ -37,8 +37,6 @@ test('palette data is structurally sound', () => {
   assert.ok(themes.length > 0, 'no themes loaded')
   for (const theme of themes) {
     assert.equal(theme.ansi.length, 16, `${theme.name} needs 16 ANSI colors`)
-    assert.ok(theme.font.family.length > 0, `${theme.name} has no font family`)
-    assert.ok(Number.isFinite(theme.font.size), `${theme.name} has no font size`)
   }
 })
 

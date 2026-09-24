@@ -2,13 +2,17 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import {
+  alacrittyColors,
   configFile,
   configTemplate,
   detectTerminal,
   ghosttyBlock,
   kittyBlock,
+  removeBlock,
+  removeLuaBlock,
   upsertAlacrittyImport,
   upsertBlock,
+  upsertLuaBlock,
   withSetting,
   zshrcBlock,
 } from './wiring.ts'
@@ -52,14 +56,14 @@ test('detectTerminal mirrors the shell adapter detection', () => {
 test('ghosttyBlock routes every new tab through the launcher', () => {
   assert.equal(
     ghosttyBlock('/cfg/ttheme', 'miku'),
-    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = miku\nconfig-file = /cfg/ttheme/ttheme.conf\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
+    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = ttheme-miku\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
   )
 })
 
 test('ghosttyBlock includes the shown background even with no startup palette', () => {
   assert.equal(
     ghosttyBlock('/cfg/ttheme', undefined),
-    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\nconfig-file = /cfg/ttheme/ttheme.conf\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
+    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
   )
 })
 
@@ -140,7 +144,7 @@ test('configFile appends a documented line when a setting is missing', () => {
 test('the kitty block wears the chosen palette and loads the watcher', () => {
   assert.equal(
     kittyBlock('miku', '/cfg/ttheme/kitty.py'),
-    'include themes/miku.conf\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\nwindow_logo_alpha 1',
+    'include themes/ttheme-miku.conf\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\nwindow_logo_alpha 1',
   )
   assert.doesNotMatch(kittyBlock(undefined, '/cfg/ttheme/kitty.py'), /include/)
 })
@@ -186,4 +190,45 @@ test('withSetting rewrites the line a setting already has, and adds one when it 
     withSetting('#: ${TTHEME_FIND_SETS:=fold}\n', 'TTHEME_FIND_SETS', 'show'),
     /^: \$\{TTHEME_FIND_SETS:=show\}\n$/,
   )
+})
+
+test('ghosttyBlock leaves a command and shell-integration the user set to the user', () => {
+  const block = ghosttyBlock('/cfg/ttheme', 'miku', 'font-size = 13\ncommand = /opt/homebrew/bin/fish\n')
+  assert.equal(block, 'theme = ttheme-miku\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf')
+  assert.equal(
+    ghosttyBlock('/cfg/ttheme', undefined, 'shell-integration = none\n'),
+    'command = /cfg/ttheme/launch-tab.zsh\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
+  )
+  const ours = upsertBlock('', ghosttyBlock('/cfg/ttheme', 'miku'))
+  assert.match(ghosttyBlock('/cfg/ttheme', 'miku', ours), /^command = /m)
+  assert.match(ghosttyBlock('/cfg/ttheme', 'miku', '# command = zsh\ncommand-palette-entry = x\n'), /^command = /m)
+})
+
+test('the kitty block leaves the logo settings the user set to the user', () => {
+  assert.equal(
+    kittyBlock(undefined, '/cfg/ttheme/kitty.py', 'window_logo_alpha 0.4\n'),
+    'watcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100',
+  )
+})
+
+test('removeBlock gives back the content upsertBlock started from', () => {
+  for (const mine of ['', 'font-size = 14\n', 'font-size = 14\n\n\n']) {
+    assert.equal(removeBlock(upsertBlock(mine, 'a = 1')), mine.replace(/\n+$/, '\n'))
+  }
+  assert.equal(removeBlock('font-size = 14\n'), 'font-size = 14\n')
+  const general = '[general]\nlive_config_reload = true\n\n[font]\nsize = 14\n'
+  assert.equal(removeBlock(upsertAlacrittyImport(general, '/t.toml') ?? ''), general)
+  assert.equal(removeBlock(upsertAlacrittyImport(general, undefined) ?? ''), general)
+})
+
+test('removeLuaBlock gives back the config upsertLuaBlock wired, and empties the one it created', () => {
+  const mine = 'local config = {}\nconfig.font_size = 13\nreturn config\n'
+  assert.equal(removeLuaBlock(upsertLuaBlock(mine, 'x') ?? ''), mine)
+  assert.equal(removeLuaBlock(upsertLuaBlock('', 'x') ?? ''), '')
+})
+
+test('alacrittyColors spots colors the user set outside the ttheme block', () => {
+  assert.ok(alacrittyColors('[colors.primary]\nbackground = "#000000"\n'))
+  assert.ok(alacrittyColors('colors.primary.background = "#000000"\n'))
+  assert.ok(!alacrittyColors(upsertAlacrittyImport('[font]\nsize = 14\n', '/t.toml') ?? ''))
 })

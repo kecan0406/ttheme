@@ -12,6 +12,10 @@ export interface Emitter {
   emitShared?(themes: Theme[]): Output[]
 }
 
+export function owned(name: string): string {
+  return `ttheme-${name}`
+}
+
 export function banner(theme: Theme): string[] {
   return [`# ${theme.name} — ${theme.group}${theme.native ? ` (${theme.native})` : ''}`, `# ANSI: ${theme.ansiSource}`]
 }

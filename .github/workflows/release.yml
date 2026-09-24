@@ -35,7 +35,7 @@ jobs:
           for term in ghostty kitty alacritty wezterm iterm2 windows-terminal warp; do
             tar -czf "release/ttheme-$term.tar.gz" -C dist "$term"
           done
-          tar -czf release/ttheme-all.tar.gz dist shell ghostty/shaders README.md
+          tar -czf release/ttheme-all.tar.gz dist shell README.md
 
       - name: notes
         run: |

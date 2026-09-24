@@ -30,7 +30,7 @@ __tt_shown() {
 __tt_bg_cells() {
   local fd saved resp="" line c v f
   local -i px=2 py=2 fs=0 sc=2
-  for f in ${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config ${TTHEME_CONFIG:h}/ttheme.conf; do
+  for f in ${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config; do
     [[ -r $f ]] || continue
     for line in "${(@f)$(<$f)}"; do
       v=${${line#*=}// /}

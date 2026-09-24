@@ -1,10 +1,11 @@
 import { execFileSync, spawn } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { backgroundsDir, readBackdrop } from './backdrop.ts'
 import { gateFailures, nearest, readCatalog } from './catalog.ts'
-import { alacritty, type Emitter, ghostty, iterm2, kitty, warp, wezterm, windowsTerminal } from './emit/index.ts'
+import { backupOnce, editUserFile } from './edits.ts'
+import { alacritty, type Emitter, ghostty, iterm2, kitty, owned, warp, wezterm, windowsTerminal } from './emit/index.ts'
 import { itermProfiles, type ProfileBackground } from './emit/iterm2.ts'
 import { kittyWatcher } from './emit/kitty.ts'
 import { listed, type Manifest, type PaletteEntry } from './emit/manifest.ts'
@@ -13,6 +14,7 @@ import { weztermModule } from './emit/wezterm.ts'
 import { wtFragment } from './emit/windows-terminal.ts'
 import type { Theme } from './theme.ts'
 import {
+  alacrittyColors,
   ghosttyBlock,
   INIT_TERMINALS,
   type InitTerminal,
@@ -20,6 +22,7 @@ import {
   upsertAlacrittyImport,
   upsertBlock,
   upsertLuaBlock,
+  userSets,
   warpThemeOf,
   warpThemeValue,
   weztermBlock,
@@ -145,7 +148,7 @@ export function writeInstalled(configHome: string, state: Installed): void {
   writeFileSync(path, `${JSON.stringify(state, null, 2)}\n`)
 }
 
-export function toTheme(entry: PaletteEntry, catalog: Manifest): Theme {
+export function toTheme(entry: PaletteEntry): Theme {
   return {
     name: entry.name,
     group: entry.group,
@@ -163,9 +166,7 @@ export function toTheme(entry: PaletteEntry, catalog: Manifest): Theme {
     ansi: entry.ansi,
     signature: entry.signature,
     signatureSlots: entry.signatureSlots,
-    font: catalog.font,
     ghostty: {
-      ...(catalog.shader ? { shader: catalog.shader } : {}),
       iconGhost: entry.cursor,
       iconScreen: [entry.cursor, entry.selection, entry.background],
     },
@@ -203,7 +204,7 @@ export function warpThemes(home: string): string {
     : join(process.env.XDG_DATA_HOME ?? join(home, '.local', 'share'), 'warp-terminal', 'themes')
 }
 
-function themeDir(terminal: InitTerminal, configHome: string, home: string): string {
+export function themeDir(terminal: InitTerminal, configHome: string, home: string): string {
   if (terminal === 'warp') {
     return warpThemes(home)
   }
@@ -216,20 +217,24 @@ export function warpSettings(home: string, configHome: string): string {
     : join(configHome, 'warp-terminal', 'settings.toml')
 }
 
-const WARP_DEFAULT = '"dark"'
+export const WARP_DEFAULT = '"dark"'
+
+export function warpBasePath(configHome: string): string {
+  return join(configHome, 'ttheme', 'warp.base')
+}
 
 const WARP_LATER =
-  "setTimeout(() => { const fs = require('node:fs'); const [file, next, seen] = process.argv.slice(-3); if (fs.readFileSync(file, 'utf8') === seen) fs.writeFileSync(file, next) }, 1500)"
+  "setTimeout(() => { const fs = require('node:fs'); const [file, next, seen] = process.argv.slice(-3); if (fs.readFileSync(file, 'utf8') !== seen) return; const tmp = file + '.ttheme-' + process.pid; fs.writeFileSync(tmp, next); fs.chmodSync(tmp, fs.statSync(file).mode & 0o7777); fs.renameSync(tmp, file) }, 1500)"
 
 function wearWarp(configHome: string, home: string, startup: string | undefined, later: boolean): string | undefined {
   const file = warpSettings(home, configHome)
   if (!existsSync(file)) {
     return undefined
   }
-  const base = join(configHome, 'ttheme', 'warp.base')
+  const base = warpBasePath(configHome)
   const content = readFileSync(file, 'utf8')
   const current = warpThemeOf(content)
-  const ours = current?.includes('path = "ttheme-') === true
+  const ours = current?.includes(`path = "${owned('')}`) === true
   let value: string
   if (startup) {
     if (!ours && !existsSync(base)) {
@@ -249,9 +254,13 @@ function wearWarp(configHome: string, home: string, startup: string | undefined,
     return undefined
   }
   if (later) {
-    spawn(process.execPath, ['-e', WARP_LATER, file, next, content], { detached: true, stdio: 'ignore' }).unref()
+    backupOnce(file)
+    spawn(process.execPath, ['-e', WARP_LATER, realpathSync(file), next, content], {
+      detached: true,
+      stdio: 'ignore',
+    }).unref()
   } else {
-    writeFileSync(file, next)
+    editUserFile(file, next)
   }
   return file
 }
@@ -291,11 +300,18 @@ export function startupPalette(state: Installed): string | undefined {
   return state.startup && state.palettes.includes(state.startup) ? state.startup : state.palettes[0]
 }
 
-function blockFor(terminal: 'ghostty' | 'kitty', configHome: string, startup: string | undefined) {
-  if (terminal === 'ghostty') {
-    return { file: join(configHome, 'ghostty', 'config'), body: ghosttyBlock(join(configHome, 'ttheme'), startup) }
-  }
-  return { file: join(configHome, 'kitty', 'kitty.conf'), body: kittyBlock(startup, kittyWatcherPath(configHome)) }
+export function blockFile(terminal: 'ghostty' | 'kitty', configHome: string): string {
+  return terminal === 'ghostty' ? join(configHome, 'ghostty', 'config') : join(configHome, 'kitty', 'kitty.conf')
+}
+
+function blockBody(terminal: 'ghostty' | 'kitty', configHome: string, startup: string | undefined, user: string) {
+  return terminal === 'ghostty'
+    ? ghosttyBlock(join(configHome, 'ttheme'), startup, user)
+    : kittyBlock(startup, kittyWatcherPath(configHome), user)
+}
+
+function readText(path: string): string {
+  return existsSync(path) ? readFileSync(path, 'utf8') : ''
 }
 
 export function alacrittyConfig(configHome: string): string {
@@ -303,18 +319,12 @@ export function alacrittyConfig(configHome: string): string {
 }
 
 export function alacrittyTheme(configHome: string, palette: string | undefined): string | undefined {
-  return palette ? join(configHome, 'alacritty', 'themes', `${palette}.toml`) : undefined
+  return palette ? join(configHome, 'alacritty', 'themes', `${owned(palette)}.toml`) : undefined
 }
 
-function itermFile(
-  configHome: string,
-  catalog: Manifest,
-  entries: PaletteEntry[],
-  state: Installed,
-  home: string,
-): string {
+function itermFile(configHome: string, entries: PaletteEntry[], state: Installed, home: string): string {
   const dir = backgroundsDir(configHome)
-  const themes = entries.map((entry) => toTheme(entry, catalog))
+  const themes = entries.map(toTheme)
   const pictures = new Map<string, ProfileBackground>()
   for (const theme of themes) {
     const picture = readBackdrop(dir, theme.name, home)
@@ -339,7 +349,7 @@ export function refreshProfiles(configHome: string, home = homedir()): void {
   const catalog = readCatalog(configHome)
   const path = itermProfilesPath(home)
   mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, itermFile(configHome, catalog, resolve(catalog, state.palettes), state, home))
+  writeFileSync(path, itermFile(configHome, resolve(catalog, state.palettes), state, home))
 }
 
 export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
@@ -354,17 +364,21 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
     writeFileSync(path, content)
     return true
   }
+  const wire = (path: string, content: string): void => {
+    written.push(path)
+    editUserFile(path, content)
+  }
 
   const startup = worn(state)
   for (const terminal of state.terminals) {
     if (terminal === 'iterm2') {
-      write(itermProfilesPath(home), itermFile(configHome, catalog, entries, state, home))
+      write(itermProfilesPath(home), itermFile(configHome, entries, state, home))
       continue
     }
     if (terminal === 'windows-terminal') {
       if (state.wtHome) {
         const settings = wtSettings(state.wtHome)
-        const themes = entries.map((entry) => toTheme(entry, catalog))
+        const themes = entries.map(toTheme)
         const fragment = wtFragment(themes, state.wtProfile ?? wtDefaultProfile(settings), startup)
         if (write(wtFragmentPath(state.wtHome), fragment)) {
           const now = new Date()
@@ -379,7 +393,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
       startup !== undefined && terminal === 'warp' && !existsSync(join(warpThemes(home), `ttheme-${startup}.yaml`))
     const warpFile = terminal === 'warp' ? wearWarp(configHome, home, startup, fresh) : undefined
     for (const entry of entries) {
-      for (const { file, content } of themeFiles(terminal, toTheme(entry, catalog))) {
+      for (const { file, content } of themeFiles(terminal, toTheme(entry))) {
         write(join(themeDir(terminal, configHome, home), file), content)
       }
     }
@@ -398,24 +412,21 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
           colors: themeDir('wezterm', configHome, home),
           backgrounds: backgroundsDir(configHome),
           ...(startup ? { startup } : {}),
-          palettes: entries.map((entry) => toTheme(entry, catalog)),
+          palettes: entries.map(toTheme),
         }),
       )
       const config = weztermConfig(configHome, home)
-      const wired = upsertLuaBlock(existsSync(config) ? readFileSync(config, 'utf8') : '', weztermBlock(module))
+      const wired = upsertLuaBlock(readText(config), weztermBlock(module))
       if (wired !== undefined) {
-        write(config, wired)
+        wire(config, wired)
       }
       continue
     }
     if (terminal === 'alacritty') {
       const config = alacrittyConfig(configHome)
-      const wired = upsertAlacrittyImport(
-        existsSync(config) ? readFileSync(config, 'utf8') : '',
-        alacrittyTheme(configHome, startup),
-      )
+      const wired = upsertAlacrittyImport(readText(config), alacrittyTheme(configHome, startup))
       if (wired !== undefined) {
-        write(config, wired)
+        wire(config, wired)
       }
       continue
     }
@@ -425,8 +436,9 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
         kittyWatcher({ themes: themeDir('kitty', configHome, home), backgrounds: backgroundsDir(configHome) }),
       )
     }
-    const { file, body } = blockFor(terminal, configHome, startup)
-    write(file, upsertBlock(existsSync(file) ? readFileSync(file, 'utf8') : '', body))
+    const file = blockFile(terminal, configHome)
+    const user = readText(file)
+    wire(file, upsertBlock(user, blockBody(terminal, configHome, startup, user)))
   }
 
   const table = join(configHome, 'ttheme', 'palettes.zsh')
@@ -435,6 +447,86 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
   written.push(table)
   rmSync(`${table}.zwc`, { force: true })
   return written
+}
+
+function tilde(path: string, home: string): string {
+  return path.startsWith(`${home}/`) ? `~${path.slice(home.length)}` : path
+}
+
+function blockKeys(body: string): string {
+  return [...new Set(body.split('\n').map((line) => line.split(/[ =]/)[0]))].join(', ')
+}
+
+export function wiringPlan(configHome: string, state: Installed, home = homedir()): string[] {
+  const startup = worn(state)
+  const at = (path: string) => tilde(path, home)
+  const lines: string[] = []
+  for (const terminal of state.terminals) {
+    if (terminal === 'iterm2') {
+      lines.push(`write ${at(itermProfilesPath(home))} — a "ttheme · <palette>" profile per palette`)
+      continue
+    }
+    if (terminal === 'windows-terminal') {
+      if (state.wtHome) {
+        lines.push(`write ${wtFragmentPath(state.wtHome)} — its schemes, and touch settings.json so it reloads`)
+      }
+      continue
+    }
+    lines.push(`write ${at(themeDir(terminal, configHome, home))}/${owned('*')} — a theme file per palette`)
+    if (terminal === 'warp') {
+      const file = warpSettings(home, configHome)
+      if (startup && existsSync(file)) {
+        lines.push(`edit ${at(file)} — [appearance.themes] theme; \`ttheme off\` puts yours back`)
+      }
+      continue
+    }
+    if (terminal === 'wezterm') {
+      const config = weztermConfig(configHome, home)
+      if (upsertLuaBlock(readText(config), '') !== undefined) {
+        lines.push(
+          `edit ${at(config)} — a ttheme block before \`return config\`: color_scheme_dirs, color_scheme, pictures`,
+        )
+      }
+      continue
+    }
+    if (terminal === 'alacritty') {
+      const config = alacrittyConfig(configHome)
+      if (upsertAlacrittyImport(readText(config), undefined) !== undefined) {
+        lines.push(`edit ${at(config)} — a ttheme block: general.import`)
+      }
+      continue
+    }
+    const file = blockFile(terminal, configHome)
+    const user = readText(file)
+    lines.push(`edit ${at(file)} — a ttheme block: ${blockKeys(blockBody(terminal, configHome, startup, user))}`)
+  }
+  return lines
+}
+
+export function wiringNotes(configHome: string, terminals: InitTerminal[], home = homedir()): string[] {
+  const notes: string[] = []
+  const at = (path: string) => tilde(path, home)
+  if (terminals.includes('ghostty')) {
+    const file = blockFile('ghostty', configHome)
+    if (userSets(readText(file), 'command')) {
+      notes.push(`${at(file)} sets its own command — ttheme leaves it, so a new tab takes its palette once zsh starts`)
+    }
+  }
+  if (terminals.includes('kitty')) {
+    const user = readText(blockFile('kitty', configHome))
+    if (userSets(user, 'window_logo_scale') || userSets(user, 'window_logo_alpha')) {
+      notes.push('kitty.conf sets its own window_logo_scale or window_logo_alpha — pictures are drawn with them')
+    }
+  }
+  if (terminals.includes('alacritty')) {
+    const config = alacrittyConfig(configHome)
+    if (alacrittyColors(readText(config))) {
+      notes.push(
+        `${at(config)} sets its own colors, which win over an imported palette — remove them to open with ttheme's`,
+      )
+    }
+  }
+  return notes
 }
 
 export function forget(
@@ -447,7 +539,7 @@ export function forget(
   const removed: string[] = []
   for (const terminal of terminals) {
     for (const entry of catalog.palettes.filter((p) => names.includes(p.name))) {
-      for (const { file } of themeFiles(terminal, toTheme(entry, catalog))) {
+      for (const { file } of themeFiles(terminal, toTheme(entry))) {
         const path = join(themeDir(terminal, configHome, home), file)
         if (existsSync(path)) {
           rmSync(path, { force: true })

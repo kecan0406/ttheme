@@ -25,7 +25,6 @@ function manifestFixture() {
   return {
     version: '0.0.0',
     gate: [],
-    font: { family: 'Fixture Mono', size: 14, codepointMap: [] },
     palettes: [palette('neutral', 1, 'default'), palette('miku', 2)],
   }
 }
@@ -40,8 +39,6 @@ function makeFixture(): InitPaths {
     'shell/launch-tab.zsh': '#!/bin/zsh -f',
     'shell/adapters/_osc.zsh': 'osc',
     'shell/adapters/kitty.zsh': 'kitty adapter',
-    'ghostty/shaders/cursor.glsl': 'shader',
-    'dist/ghostty/ttheme.conf': 'font',
     'dist/ghostty/themes/neutral': 'neutral theme',
     'dist/ghostty/themes/miku': 'miku theme',
     'dist/kitty/themes/neutral.conf': 'neutral kitty',
@@ -72,9 +69,7 @@ test('planInit places the runtime layer and touches only .zshrc', () => {
     join(tthemeDir, 'ttheme.js'),
     join(tthemeDir, 'ttheme.zsh'),
     join(tthemeDir, 'launch-tab.zsh'),
-    join(tthemeDir, 'ttheme.conf'),
     join(tthemeDir, 'adapters', '_osc.zsh'),
-    join(paths.configHome, 'ghostty', 'shaders', 'cursor.glsl'),
   ]) {
     assert.ok(targets.includes(expected), `missing copy target ${expected}`)
   }
@@ -141,7 +136,7 @@ test('init wears the first palette and leaves the new-tab setting at its default
   const paths = makeFixture()
   const tab = /^(?:# )?: \$\{TTHEME_TAB_PALETTE:=(\w+)\}$/m
   applyInit(planInit(options({ palettes: ['neutral', 'miku'] }), paths))
-  assert.match(readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8'), /^theme = neutral$/m)
+  assert.match(readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-neutral$/m)
   assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8').match(tab)?.[1], 'off')
 })
 

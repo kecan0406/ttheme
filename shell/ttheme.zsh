@@ -13,10 +13,25 @@ __tt_palettes_load() {
 __tt_fresh() {
   local -a at
   local was=$TTHEME_STARTUP
-  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null || return 0
+  if ! zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null; then
+    [[ -e $TTHEME_HOME ]] || __tt_gone
+    return 0
+  fi
   [[ $at[1] == "$TTHEME_PALETTES_AT" ]] && return 0
   __tt_palettes_load && __tt_reloaded
   [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
+}
+
+__tt_gone() {
+  local bg=${TTHEME_SPEC%% *} hook
+  TTHEME_SPEC=
+  __tt_reload
+  __tt_reset_reloaded $bg
+  print -n $'\e[?1004l'
+  for hook in precmd:__tt_fresh precmd:__tt_precmd precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_mux chpwd:__tt_chpwd; do
+    add-zsh-hook -d ${hook%%:*} ${hook#*:}
+  done
+  unfunction ttheme
 }
 
 __tt_off_here() {

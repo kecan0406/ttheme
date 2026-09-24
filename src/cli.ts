@@ -5,6 +5,7 @@ import { runFind } from './find.ts'
 import { runImage } from './images.ts'
 import { Cancelled, runInit } from './init.ts'
 import { runAdd, runBrowse, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './market.ts'
+import { runUninstall } from './uninstall.ts'
 import { type Section, VERB_SPECS, type VerbSpec } from './verbs.ts'
 
 export interface Flags {
@@ -27,6 +28,7 @@ const RUNS: Record<string, Verb['run']> = {
   remove: (names) => runRemove(names),
   update: () => runUpdate(),
   init: (_, { yes }) => runInit({ yes }),
+  uninstall: (_, { yes }) => runUninstall(yes),
   build: (_, { only }) => build({ only }),
   find: ([name]) => runFind(name as string),
   image: ([name, action]) => runImage(name as string, action as string),

@@ -14,6 +14,7 @@ import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import { build } from './build.ts'
 import { writeCatalog } from './catalog.ts'
+import { editUserFile } from './edits.ts'
 import type { Manifest } from './emit/manifest.ts'
 import { pickPalettes } from './market.ts'
 import { colorless, paletteOsc } from './osc.ts'
@@ -29,6 +30,8 @@ import {
   sync,
   warpThemes,
   weztermConfig,
+  wiringNotes,
+  wiringPlan,
   withItermBase,
   worn,
   writeInstalled,
@@ -80,14 +83,12 @@ export function loadManifest(root: string): Manifest {
 }
 
 export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
-  const dist = join(paths.root, 'dist')
   const home = join(paths.configHome, 'ttheme')
   const copies: InitPlan['copies'] = [
     { from: join(paths.root, 'bin', 'ttheme.js'), to: join(home, 'ttheme.js') },
     { from: join(paths.root, 'bin', 'ttheme.js.map'), to: join(home, 'ttheme.js.map') },
     { from: join(paths.root, 'shell', 'ttheme.zsh'), to: join(home, 'ttheme.zsh') },
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
-    { from: join(dist, 'ghostty', 'ttheme.conf'), to: join(home, 'ttheme.conf') },
   ]
   copyDir(copies, join(paths.root, 'shell', 'adapters'), join(home, 'adapters'))
   const edits: InitPlan['edits'] = [{ file: join(paths.zdotdir, '.zshrc'), block: zshrcBlock(home) }]
@@ -95,9 +96,6 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const seeded = configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : '')
   const settings = { file: configPath, content: seeded }
   const notes: string[] = []
-  if (opts.terminals.includes('ghostty')) {
-    copyDir(copies, join(paths.root, 'ghostty', 'shaders'), join(paths.configHome, 'ghostty', 'shaders'))
-  }
   if (opts.terminals.includes('alacritty')) {
     const config = alacrittyConfig(paths.configHome)
     if (existsSync(config) && upsertAlacrittyImport(readFileSync(config, 'utf8'), undefined) === undefined) {
@@ -132,6 +130,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     ...(wt && paths.wtProfile ? { wtProfile: paths.wtProfile } : {}),
     ...(opts.off ? { off: true as const } : {}),
   }
+  notes.push(...wiringNotes(paths.configHome, opts.terminals, paths.home))
   return { home: paths.home, copies, edits, settings, catalog: loadManifest(paths.root), installed, notes }
 }
 
@@ -164,7 +163,7 @@ export function applyInit(plan: InitPlan, prefs: ItermDefaults = itermDefaults()
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''
-    writeFileSync(e.file, upsertBlock(current, e.block))
+    editUserFile(e.file, upsertBlock(current, e.block))
   }
   return pointItermDefault(installed, prefs)
 }
@@ -373,8 +372,12 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   }
   const detected = detectTerminal(process.env)
   const preselected = offered(paths).filter((t) => t === detected || present(t, paths))
-  const interactive = !flags.yes && process.stdin.isTTY === true && process.stdout.isTTY === true
-  if (!interactive) {
+  if (!flags.yes && (process.stdin.isTTY !== true || process.stdout.isTTY !== true)) {
+    throw new Error(
+      'init asks before it edits your configs — run it in a terminal, or pass --yes to accept the defaults',
+    )
+  }
+  if (flags.yes) {
     if (preselected.length === 0) {
       throw new Error(
         'no supported terminal detected — run this inside ghostty, kitty, alacritty, wezterm, iterm2, windows terminal or warp',
@@ -409,7 +412,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       `install ${palettes.length} palettes — ${seriesOf(plan.catalog, palettes).join(', ')}`,
       `copy ${plan.copies.length} files under ${configHome}`,
       `write ${plan.settings.file}`,
-      ...plan.edits.map((e) => `edit ${e.file}`),
+      ...plan.edits.map((e) => `edit ${e.file} — a ttheme block: source ttheme.zsh`),
+      ...wiringPlan(configHome, plan.installed, home),
+      'each config is backed up once to <file>.ttheme.bak before the first edit — `npx @kecan0406/ttheme uninstall` takes it all out',
       wear
         ? choose
           ? `open ttheme preview — every tab wears the palette picked there, ${first} until then`

@@ -1,7 +1,7 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { backdropTone, PLACEMENT } from '../backdrop.ts'
 import { GATE_RULES, type GateRule, measure } from '../contrast.ts'
-import type { Font, Theme } from '../theme.ts'
+import type { Theme } from '../theme.ts'
 import type { Emitter, Output } from './index.ts'
 
 export interface PaletteEntry {
@@ -30,8 +30,6 @@ export interface Manifest {
   version: string
   gate: GateRule[]
   placement: typeof PLACEMENT
-  font: Font
-  shader?: string
   palettes: PaletteEntry[]
 }
 
@@ -84,8 +82,6 @@ export function manifest(themes: Theme[]): Manifest {
     version: pkg.version,
     gate: GATE_RULES,
     placement: PLACEMENT,
-    font: first.font,
-    ...(first.ghostty.shader ? { shader: first.ghostty.shader } : {}),
     palettes: themes.map(paletteEntry),
   }
 }

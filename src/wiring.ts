@@ -1,3 +1,5 @@
+import { owned } from './emit/index.ts'
+
 export const INIT_TERMINALS = [
   'ghostty',
   'kitty',
@@ -22,6 +24,19 @@ export function upsertBlock(content: string, body: string): string {
     return block
   }
   return `${content.replace(/\n*$/, '\n')}\n${block}`
+}
+
+export function removeBlock(content: string): string {
+  const out = content.replace(/\n?# ttheme begin\n[\s\S]*?# ttheme end(?=\n|$)/, '')
+  if (out === content) {
+    return content
+  }
+  return out.trim() === '' ? '' : out.replace(/\n*$/, '\n')
+}
+
+export function userSets(content: string, key: string): boolean {
+  const outside = content.replace(BLOCK, '')
+  return new RegExp(String.raw`^[ \t]*${key}(?:[ \t]*=|[ \t]+\S)`, 'm').test(outside)
 }
 
 export function detectTerminal(env: Record<string, string | undefined>): string {
@@ -55,12 +70,18 @@ export function detectTerminal(env: Record<string, string | undefined>): string 
   return 'unknown'
 }
 
-export function ghosttyBlock(tthemeDir: string, palette: string | undefined): string {
-  const lines = [`command = ${tthemeDir}/launch-tab.zsh`, 'shell-integration = zsh']
-  if (palette) {
-    lines.push(`theme = ${palette}`)
+export function ghosttyBlock(tthemeDir: string, palette: string | undefined, user = ''): string {
+  const lines: string[] = []
+  if (!userSets(user, 'command')) {
+    lines.push(`command = ${tthemeDir}/launch-tab.zsh`)
+    if (!userSets(user, 'shell-integration')) {
+      lines.push('shell-integration = zsh')
+    }
   }
-  lines.push(`config-file = ${tthemeDir}/ttheme.conf`, `config-file = ?${tthemeDir}/backgrounds/shown.conf`)
+  if (palette) {
+    lines.push(`theme = ${owned(palette)}`)
+  }
+  lines.push(`config-file = ?${tthemeDir}/backgrounds/shown.conf`)
   return lines.join('\n')
 }
 
@@ -170,13 +191,17 @@ export function configFile(content: string): string {
   return (Object.keys(CONFIG_SETTINGS) as (keyof typeof CONFIG_SETTINGS)[]).reduce(ensureSetting, content)
 }
 
-export function kittyBlock(palette: string | undefined, watcher: string): string {
+export function kittyBlock(palette: string | undefined, watcher: string, user = ''): string {
   return [
-    ...(palette ? [`include themes/${palette}.conf`] : []),
+    ...(palette ? [`include themes/${owned(palette)}.conf`] : []),
     `watcher ${watcher}`,
-    'window_logo_scale 100',
-    'window_logo_alpha 1',
+    ...['window_logo_scale 100', 'window_logo_alpha 1'].filter((line) => !userSets(user, line.split(' ')[0] as string)),
   ].join('\n')
+}
+
+export function alacrittyColors(content: string): boolean {
+  const outside = content.replace(BLOCK, '')
+  return /^[ \t]*\[colors[\].]/m.test(outside) || /^[ \t]*colors[ \t]*[.=]/m.test(outside)
 }
 
 const TOML_GENERAL = /^[ \t]*\[general\][ \t]*(?:#.*)?$/m
@@ -216,13 +241,20 @@ export function weztermBlock(module: string): string {
   return `dofile(${JSON.stringify(module)})(config)`
 }
 
+const WEZTERM_SKELETON = "local wezterm = require 'wezterm'\nlocal config = wezterm.config_builder()\n\n"
+
+export function removeLuaBlock(content: string): string {
+  const out = content.replace(/-- ttheme begin\n[\s\S]*?-- ttheme end\n\n?/, '')
+  return out === `${WEZTERM_SKELETON}return config\n` ? '' : out
+}
+
 export function upsertLuaBlock(content: string, body: string): string | undefined {
   const block = `-- ttheme begin\n${body}\n-- ttheme end\n`
   if (LUA_BLOCK.test(content)) {
     return content.replace(LUA_BLOCK, block)
   }
   if (content === '') {
-    return `local wezterm = require 'wezterm'\nlocal config = wezterm.config_builder()\n\n${block}\nreturn config\n`
+    return `${WEZTERM_SKELETON}${block}\nreturn config\n`
   }
   const last = [...content.matchAll(LUA_RETURN)].at(-1)
   if (last?.index === undefined) {
@@ -253,7 +285,7 @@ export function warpThemeOf(content: string): string | undefined {
 }
 
 export function warpThemeValue(palette: string): string {
-  return `{ custom = { name = "${palette}", path = "ttheme-${palette}.yaml" } }`
+  return `{ custom = { name = "${palette}", path = "${owned(palette)}.yaml" } }`
 }
 
 export function withWarpTheme(content: string, value: string | undefined): string {

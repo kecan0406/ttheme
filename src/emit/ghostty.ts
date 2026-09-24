@@ -1,6 +1,5 @@
-import { isDeepStrictEqual } from 'node:util'
 import type { Theme } from '../theme.ts'
-import { banner, type Emitter, type Output } from './index.ts'
+import { banner, type Emitter, type Output, owned } from './index.ts'
 
 export const ghostty: Emitter = {
   id: 'ghostty',
@@ -23,33 +22,6 @@ export const ghostty: Emitter = {
       '',
     ].join('\n')
 
-    return [{ path: `ghostty/themes/${theme.name}`, content: colors }]
-  },
-
-  emitShared(themes: Theme[]): Output[] {
-    const [first] = themes
-    if (!first) return []
-
-    for (const t of themes) {
-      if (!isDeepStrictEqual(t.font, first.font) || t.ghostty.shader !== first.ghostty.shader) {
-        throw new Error(
-          `${t.name}: per-theme font/shader overrides cannot be expressed in the shared ghostty/ttheme.conf`,
-        )
-      }
-    }
-
-    const config = [
-      '# ttheme — shared font and shader, identical for every palette.',
-      '# Pick colors with:  theme = <palette>',
-      `font-family = ${first.font.family}`,
-      `font-size = ${first.font.size}`,
-      ...first.font.codepointMap.map((m) => `font-codepoint-map = ${m.range}=${m.family}`),
-      ...(first.ghostty.shader
-        ? ['', `custom-shader = ~/.config/ghostty/shaders/${first.ghostty.shader}`, 'custom-shader-animation = true']
-        : []),
-      '',
-    ].join('\n')
-
-    return [{ path: 'ghostty/ttheme.conf', content: config }]
+    return [{ path: `ghostty/themes/${owned(theme.name)}`, content: colors }]
   },
 }

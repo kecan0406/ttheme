@@ -1,16 +1,16 @@
 import type { Theme } from '../theme.ts'
-import type { Emitter, Output } from './index.ts'
+import { type Emitter, type Output, owned } from './index.ts'
 
 const list = (colors: readonly string[]) => `[${colors.map((c) => `"${c}"`).join(', ')}]`
 
 export const wezterm: Emitter = {
   id: 'wezterm',
-  limits: 'no shaders; OSC repaints per pane, pictures show per window',
+  limits: 'OSC repaints per pane, pictures show per window',
 
   emit(theme: Theme): Output[] {
     const colors = [
       '[metadata]',
-      `name = "${theme.name}"`,
+      `name = "${owned(theme.name)}"`,
       `origin_url = "${theme.ansiSource}"`,
       '',
       '[colors]',
@@ -27,24 +27,7 @@ export const wezterm: Emitter = {
       '',
     ].join('\n')
 
-    const config = [
-      `-- ${theme.name} — font settings.`,
-      `-- Merge into your wezterm.lua config table:`,
-      `--   local t = require("ttheme.${theme.name}")`,
-      `--   config.color_scheme = "${theme.name}"`,
-      `--   config.font = t.font`,
-      `--   config.font_size = t.font_size`,
-      'return {',
-      `  font = require("wezterm").font("${theme.font.family}"),`,
-      `  font_size = ${theme.font.size},`,
-      '}',
-      '',
-    ].join('\n')
-
-    return [
-      { path: `wezterm/colors/${theme.name}.toml`, content: colors },
-      { path: `wezterm/config/${theme.name}.lua`, content: config },
-    ]
+    return [{ path: `wezterm/colors/${owned(theme.name)}.toml`, content: colors }]
   },
 }
 
@@ -66,7 +49,7 @@ export function weztermModule(m: WeztermModule): string {
     `local MODULE = ${lua(m.path)}`,
     `local COLORS = ${lua(m.colors)}`,
     `local BACKGROUNDS = ${lua(m.backgrounds)}`,
-    `local STARTUP = ${m.startup ? lua(m.startup) : 'nil'}`,
+    `local STARTUP = ${m.startup ? lua(owned(m.startup)) : 'nil'}`,
     'local PALETTES = {',
     ...m.palettes.map((t) => `  [${lua(t.name)}] = ${lua(t.background)},`),
     '}',

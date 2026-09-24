@@ -8,10 +8,8 @@
   "files": [
     "bin",
     "dist/manifest.json",
-    "dist/ghostty/ttheme.conf",
     "shell",
-    "!shell/check.zsh",
-    "ghostty/shaders"
+    "!shell/check.zsh"
   ],
   "description": "Character terminal palettes for Ghostty, kitty, Alacritty, WezTerm, iTerm2, Windows Terminal and Warp",
   "license": "MIT",

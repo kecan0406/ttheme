@@ -73,6 +73,13 @@ export const VERB_SPECS: VerbSpec[] = [
     flags: { yes: { type: 'boolean', short: 'y', about: 'accept every default without prompting' } },
   },
   {
+    name: 'uninstall',
+    args: [],
+    about: 'take ttheme out of every terminal config and delete what it wrote',
+    section: 'setup',
+    flags: { yes: { type: 'boolean', short: 'y', about: 'remove without asking' } },
+  },
+  {
     name: 'build',
     args: [],
     about: 'emit dist/ for every terminal, plus the zsh palette table — from a checkout',

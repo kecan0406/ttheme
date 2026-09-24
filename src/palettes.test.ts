@@ -43,8 +43,6 @@ const catalog: Manifest = {
   version: '0.1.0',
   gate: [],
   placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
-  font: { family: 'JetBrainsMono Nerd Font', size: 14, codepointMap: [] },
-  shader: 'cursor_tail.glsl',
   palettes: [entry('neutral', 1, { default: true }), entry('gojo', 2), entry('geto', 3)],
 }
 
@@ -53,16 +51,15 @@ function fixture(): string {
 }
 
 test('toTheme derives the ghostty icon colors from the palette', () => {
-  const theme = toTheme(entry('gojo', 2), catalog)
+  const theme = toTheme(entry('gojo', 2))
   assert.equal(theme.ghostty.iconGhost, '#7cc1d6')
   assert.deepEqual(theme.ghostty.iconScreen, ['#7cc1d6', '#383b5b', '#11191c'])
-  assert.equal(theme.ghostty.shader, 'cursor_tail.glsl')
   assert.equal(theme.selectionBackground, '#383b5b')
 })
 
 test('toTheme carries the default role through as a role, not a flag', () => {
-  assert.equal(toTheme(entry('neutral', 1, { default: true }), catalog).role, 'default')
-  assert.equal(toTheme(entry('gojo', 2), catalog).role, undefined)
+  assert.equal(toTheme(entry('neutral', 1, { default: true })).role, 'default')
+  assert.equal(toTheme(entry('gojo', 2)).role, undefined)
 })
 
 test('resolve rejects a name the catalog does not carry', () => {
@@ -87,8 +84,8 @@ test('sync writes a theme file per terminal and the zsh table', () => {
     terminals: ['ghostty', 'kitty'],
     palettes: ['neutral', 'gojo'],
   })
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'gojo')))
-  assert.ok(existsSync(join(home, 'kitty', 'themes', 'gojo.conf')))
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo')))
+  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-gojo.conf')))
   assert.ok(existsSync(join(home, 'ttheme', 'palettes.zsh')))
   assert.ok(written.includes(join(home, 'ghostty', 'config')))
   assert.ok(written.includes(join(home, 'kitty', 'kitty.conf')))
@@ -110,7 +107,7 @@ test('sync writes an empty but valid table when nothing is installed', () => {
 test('sync points the terminal at the startup palette once one is installed', () => {
   const home = fixture()
   sync(home, catalog, { terminals: ['ghostty'], palettes: ['gojo'] })
-  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = gojo$/m)
+  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-gojo$/m)
 })
 
 test('sync leaves the terminal theme alone while ttheme is off', () => {
@@ -120,7 +117,7 @@ test('sync leaves the terminal theme alone while ttheme is off', () => {
   assert.doesNotMatch(config, /^theme = /m)
   assert.match(config, /^config-file = \?.*\/backgrounds\/shown\.conf$/m)
   assert.doesNotMatch(readFileSync(join(home, 'kitty', 'kitty.conf'), 'utf8'), /^include /m)
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'gojo')))
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo')))
 })
 
 test('sync wires WezTerm through a module its config runs, and creates the config when there is none', () => {
@@ -128,8 +125,8 @@ test('sync wires WezTerm through a module its config runs, and creates the confi
   const home = fixture()
   sync(configHome, catalog, { terminals: ['wezterm'], palettes: ['gojo'] }, home)
   const module = join(configHome, 'ttheme', 'wezterm.lua')
-  assert.ok(existsSync(join(configHome, 'wezterm', 'colors', 'gojo.toml')))
-  assert.match(readFileSync(module, 'utf8'), /^local STARTUP = "gojo"$/m)
+  assert.ok(existsSync(join(configHome, 'wezterm', 'colors', 'ttheme-gojo.toml')))
+  assert.match(readFileSync(module, 'utf8'), /^local STARTUP = "ttheme-gojo"$/m)
   assert.match(readFileSync(module, 'utf8'), /^ {2}\["gojo"\] = "#11191c",$/m)
   const config = readFileSync(join(configHome, 'wezterm', 'wezterm.lua'), 'utf8')
   assert.match(
@@ -161,8 +158,10 @@ test('sync gives Windows Terminal a fragment that dresses the zsh profile, and n
   utimesSync(settings, new Date(0), new Date(0))
   sync(configHome, catalog, { terminals: ['windows-terminal'], palettes: ['gojo'], wtHome })
   const fragment = JSON.parse(readFileSync(wtFragmentPath(wtHome), 'utf8'))
-  assert.deepEqual(fragment.profiles, [{ updates: '{2c4de342-38b7-51cf-b940-2309a097f518}', colorScheme: 'gojo' }])
-  assert.equal(fragment.schemes[0].name, 'gojo')
+  assert.deepEqual(fragment.profiles, [
+    { updates: '{2c4de342-38b7-51cf-b940-2309a097f518}', colorScheme: 'ttheme-gojo' },
+  ])
+  assert.equal(fragment.schemes[0].name, 'ttheme-gojo')
   assert.equal(fragment.schemes[0].brightPurple, '#808080')
   assert.ok(statSync(settings).mtimeMs > 0)
 
@@ -303,9 +302,9 @@ test('forget removes only the named palettes', () => {
   const home = fixture()
   sync(home, catalog, { terminals: ['ghostty'], palettes: ['neutral', 'gojo', 'geto'] })
   const removed = forget(home, catalog, ['ghostty'], ['geto'])
-  assert.deepEqual(removed, [join(home, 'ghostty', 'themes', 'geto')])
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'gojo')))
-  assert.ok(!existsSync(join(home, 'ghostty', 'themes', 'geto')))
+  assert.deepEqual(removed, [join(home, 'ghostty', 'themes', 'ttheme-geto')])
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo')))
+  assert.ok(!existsSync(join(home, 'ghostty', 'themes', 'ttheme-geto')))
 })
 
 function prefsAt(initial: string | undefined): { prefs: ItermDefaults; writes: string[] } {

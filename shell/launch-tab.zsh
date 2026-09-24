@@ -8,4 +8,4 @@ if [[ ${TTHEME_TAB_PALETTE:-off} != off ]]; then
   export TTHEME_SPEC=$REPLY
 fi
 
-exec /bin/zsh -l
+exec ${SHELL:-/bin/zsh} -l

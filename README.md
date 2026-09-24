@@ -28,8 +28,6 @@ get it.
 | **Setup with `init`** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 | **Palette files** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 | **Runtime repaint** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Done][done] | ![Partial][partial] |
-| **Font** | ![Done][done] | ![No][no] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] | ![No][no] | ![No][no] |
-| **Shader** | ![Done][done] | ![No][no] | ![No][no] | ![No][no] | ![No][no] | ![No][no] | ![No][no] | ![No][no] | ![No][no] |
 | **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Partial][partial] | ![No][no] | ![No][no] | ![No][no] | ![No][no] |
 
 - **Setup with `init`** — iTerm2 is offered on macOS only, Windows Terminal
@@ -51,9 +49,8 @@ get it.
   sets, so the shell layer stays off there and `ttheme use <palette>` points you at
   `ttheme default <palette>`, which puts the palette on every Warp window; any other terminal that speaks OSC 4/10/11 (foot, Konsole,
   VTE-based terminals…) gets repainting and nothing else.
-- **Font** — family and size everywhere it is marked; Ghostty also maps
-  codepoints to fonts. iTerm2 keeps the font of your own profile, Windows
-  Terminal and Warp the one you set in them.
+- **Colors only** — ttheme sets no font, font size or shader anywhere; those
+  stay what you configured in your terminal.
 - **Background pictures** — `find`, `ttheme image` and `preview`'s live
   backdrop. Ghostty shows one picture app-wide, following the focused tab;
   iTerm2 (3.7 or newer) shows one per tab and kitty one per window (a split
@@ -119,7 +116,14 @@ alone and only installs. Then it shows what it is about to change and writes it 
 so cancelling before that touches nothing. It places the zsh layer under
 `~/.config/ttheme` and edits your terminal config and `~/.zshrc` between
 `# ttheme begin` / `# ttheme end` markers — everything outside the markers is
-left alone. iTerm2 has no config file to edit, so it gets one profile per
+left alone, and what goes in is colors only. Before its first edit of a file it
+keeps a copy beside it, `<file>.ttheme.bak`, and it writes through symlinks, so a
+dotfiles repo keeps its links. A key you set yourself stays yours: a Ghostty
+`command` or `shell-integration`, kitty's `window_logo_scale` and
+`window_logo_alpha`. Every file it adds to a terminal's own folders is named
+`ttheme-<palette>`, so a theme of yours is never overwritten. Alacritty lets its
+own config win over an import, so colors set in `alacritty.toml` hide the
+default palette — init says so when it finds them. iTerm2 has no config file to edit, so it gets one profile per
 installed palette instead — `ttheme · miku` and so on, in
 `~/Library/Application Support/iTerm2/DynamicProfiles/ttheme.json`, which
 iTerm2 reloads by itself whenever `ttheme browse` adds or drops one. One more,
@@ -143,8 +147,20 @@ It ends with a receipt, paints the first palette onto the tab you
 ran it in (not under `keep`) and lists what to do next (`exec zsh` for the
 `ttheme` command here, a terminal restart for new tabs).
 Running it again updates in place; `--yes` (`-y`) skips every prompt and installs no
-palettes — `ttheme browse` opens the full catalog any time, to add or drop
-single palettes.
+palettes, and init refuses to run without a terminal unless it is given —
+`ttheme browse` opens the full catalog any time, to add or drop single palettes.
+
+```sh
+npx @kecan0406/ttheme@latest uninstall
+```
+
+takes it all back out, after listing what it will do: every ttheme block
+leaves its config, Warp gets its theme back and iTerm2 its own default profile,
+and the `ttheme-*` theme files, `~/.config/ttheme` (installed pictures
+included), the cache and the iTerm2 and Windows Terminal files are deleted. A
+config you did not touch since ttheme first edited it comes back byte for byte
+and its backup goes; one you edited since keeps `<file>.ttheme.bak`. Open shells
+drop the layer at their next prompt.
 
 **Any of them by hand** — one archive per terminal in the
 [latest release](https://github.com/kecan0406/ttheme/releases/latest):
@@ -154,19 +170,19 @@ REL=https://github.com/kecan0406/ttheme/releases/latest/download
 
 # kitty
 curl -L $REL/ttheme-kitty.tar.gz | tar xz
-cp kitty/themes/miku.conf ~/.config/kitty/themes/
-#   kitty.conf:  include themes/miku.conf
+cp kitty/themes/ttheme-miku.conf ~/.config/kitty/themes/
+#   kitty.conf:  include themes/ttheme-miku.conf
 
 # alacritty
 curl -L $REL/ttheme-alacritty.tar.gz | tar xz
-cp alacritty/themes/miku.toml ~/.config/alacritty/themes/
+cp alacritty/themes/ttheme-miku.toml ~/.config/alacritty/themes/
 #   alacritty.toml:  [general]
-#                    import = ["~/.config/alacritty/themes/miku.toml"]
+#                    import = ["~/.config/alacritty/themes/ttheme-miku.toml"]
 
 # wezterm
 curl -L $REL/ttheme-wezterm.tar.gz | tar xz
-cp wezterm/colors/miku.toml ~/.config/wezterm/colors/
-#   wezterm.lua:  config.color_scheme = "miku"
+cp wezterm/colors/ttheme-miku.toml ~/.config/wezterm/colors/
+#   wezterm.lua:  config.color_scheme = "ttheme-miku"
 
 # iTerm2 — open a .itermcolors to add it to Settings > Profiles > Colors presets
 curl -L $REL/ttheme-iterm2.tar.gz | tar xz
@@ -181,11 +197,8 @@ curl -L $REL/ttheme-warp.tar.gz | tar xz
 cp warp/themes/ttheme-miku.yaml ~/.warp/themes/
 ```
 
-The kitty, Alacritty and WezTerm archives also carry a `config/` file per theme
-with that theme's font — separate so you can take the colors without the rest. Ghostty is laid out
-differently: the dock-icon colors travel inside each theme file (they derive
-from the palette), and the font + shader — identical across themes — ship as
-one shared `ttheme.conf` you include once with `config-file`.
+Each Ghostty theme file also carries the dock-icon colors, derived from the
+palette.
 
 Building from a checkout works too: `mise install && bun install && mise run
 build` writes the same tree to `dist/`, `mise run sandbox` tries it in a
@@ -545,10 +558,6 @@ catalog is cached in `~/.config/ttheme/catalog.json`.
 
 ## Terminal notes
 
-Ghostty is the only terminal here with GLSL shaders, and the only one with
-per-codepoint font mapping — which is why the Hangul→D2Coding rule survives only
-in its build.
-
 WezTerm keeps an OSC-set palette per pane, but a picture belongs to the window:
 the Lua module ttheme runs follows the active pane's `ttheme_shown` user var,
 which the shell layer sets whenever the tab's palette changes, and reads the
@@ -604,8 +613,7 @@ ansi = [ ... 16 colors ... ]
 ```
 
 The series title and its `native` reading live once in `themes/_groups.toml`,
-never in a theme file. `[font]` and `[ghostty]` are inherited from
-`themes/_defaults.toml` unless the theme overrides them. Then:
+never in a theme file. Then:
 
 ```sh
 mise run build                # regenerates dist/ for every terminal — fails on bad contrast
@@ -645,9 +653,7 @@ and `magi` from [lotap/magi-theme](https://github.com/lotap/magi-theme) (MIT).
 Every palette records its input in `meta.ansi_source`, and only that input's
 hues survive: the harmonizer normalizes lightness and saturation away and
 rotates each non-signature hue toward the palette's own seed, so no scheme is
-reproduced here. Shaders come from
-[sahaj-b/ghostty-cursor-shaders](https://github.com/sahaj-b/ghostty-cursor-shaders)
-(MIT), see `ghostty/shaders/`.
+reproduced here.
 
 Palettes are inspired by characters from the listed works; this project is
 unaffiliated with and unendorsed by their rights holders. No character art,

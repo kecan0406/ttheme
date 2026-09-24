@@ -1,9 +1,8 @@
 import type { Theme } from '../theme.ts'
-import { banner, type Emitter, type Output } from './index.ts'
+import { banner, type Emitter, type Output, owned } from './index.ts'
 
 export const kitty: Emitter = {
   id: 'kitty',
-  limits: 'no GLSL shaders, no per-codepoint font mapping',
 
   emit(theme: Theme): Output[] {
     const colors = [
@@ -18,18 +17,7 @@ export const kitty: Emitter = {
       '',
     ].join('\n')
 
-    const config = [
-      `# ${theme.name} — font settings.`,
-      `# Pair with the palette:  include themes/${theme.name}.conf`,
-      `font_family ${theme.font.family}`,
-      `font_size ${theme.font.size}`,
-      '',
-    ].join('\n')
-
-    return [
-      { path: `kitty/themes/${theme.name}.conf`, content: colors },
-      { path: `kitty/config/${theme.name}.conf`, content: config },
-    ]
+    return [{ path: `kitty/themes/${owned(theme.name)}.conf`, content: colors }]
   },
 }
 
@@ -126,7 +114,7 @@ export function kittyWatcher(m: KittyWatcher): string {
     '',
     '',
     'def theme(palette):',
-    "    path = os.path.join(THEMES, palette + '.conf')",
+    "    path = os.path.join(THEMES, 'ttheme-' + palette + '.conf')",
     '    if not palette or not os.path.exists(path):',
     '        return None',
     '    from kitty.colors import parse_colors',

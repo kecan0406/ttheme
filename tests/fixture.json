@@ -32,21 +32,6 @@
       "min": 1.6
     }
   ],
-  "font": {
-    "family": "JetBrainsMono Nerd Font",
-    "size": 14,
-    "codepointMap": [
-      {
-        "range": "U+AC00-U+D7A3",
-        "family": "D2Coding"
-      },
-      {
-        "range": "U+3130-U+318F",
-        "family": "D2Coding"
-      }
-    ]
-  },
-  "shader": "cursor_tail.glsl",
   "palettes": [
     {
       "name": "neutral",

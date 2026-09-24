@@ -475,7 +475,7 @@ export function mates(owners: ReadonlyMap<string, string>): Map<string, string[]
   return byOwner
 }
 
-function cacheRoot(): string {
+export function cacheRoot(): string {
   return join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), 'ttheme')
 }
 
