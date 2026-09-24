@@ -31,6 +31,7 @@ __tt_gone() {
   for hook in precmd:__tt_fresh precmd:__tt_precmd precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_mux chpwd:__tt_chpwd; do
     add-zsh-hook -d ${hook%%:*} ${hook#*:}
   done
+  (( $+functions[add-zle-hook-widget] )) && add-zle-hook-widget -d line-init __tt_focus_on
   unfunction ttheme
 }
 
@@ -243,10 +244,9 @@ __tt_sync() {
   __tt_shown "$REPLY" && __tt_reload
 }
 
-__tt_precmd() {
-  printf '\e[?1004h'
-  __tt_sync
-}
+__tt_precmd() { __tt_sync }
+
+__tt_focus_on() { printf '\e[?1004h' }
 
 __tt_preexec() { printf '\e[?1004l' }
 
@@ -282,6 +282,9 @@ __tt_bind_focus() {
   local k
   zle -N __tt_focus
   zle -N __tt_blur
+  zle -N __tt_focus_on
+  autoload -Uz add-zle-hook-widget
+  add-zle-hook-widget line-init __tt_focus_on
   for k in emacs viins vicmd; do
     bindkey -M $k '^[[I' __tt_focus
     bindkey -M $k '^[[O' __tt_blur
