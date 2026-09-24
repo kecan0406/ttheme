@@ -5,6 +5,7 @@ export interface Theme {
   name: string
   group: string
   native: string | null
+  lead: boolean
   ansiSource: string
   background: string
   foreground: string
@@ -44,6 +45,7 @@ interface ManifestEntry {
   name: string
   group: string
   native?: string
+  lead?: boolean
   ansiSource: string
   default?: boolean
   background: string
@@ -78,6 +80,7 @@ export function loadManifest(): { version: string; gate: GateRule[]; placement: 
         name: entry.name,
         group: entry.group,
         native: entry.native ?? null,
+        lead: entry.lead ?? false,
         ansiSource: entry.ansiSource,
         background: entry.background,
         foreground: entry.foreground,

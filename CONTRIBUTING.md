@@ -19,6 +19,30 @@ That line is deliberate. Color values carry no copyright, so a palette named
 after a character is safe to share. A character image is a different thing
 entirely, and this project stays out of distributing it.
 
+## The file
+
+One file — copy any of `themes/*.toml`:
+
+```toml
+[meta]
+name = "madoka"                            # must match the filename
+group = "Madoka Magica"                    # needs a [[group]] in themes/_groups.toml
+order = 15                                 # position in the rotation
+ansi_source = "Elegant + Magica"           # what the harmonizer was fed
+booru = "kaname_madoka"                    # booru character tag find searches
+signature = ["cursor", "ansi1", "ansi3"]   # the three slots the site draws as identity
+
+[colors]
+background = "#201516"
+foreground = "#fbdbdd"
+cursor = "#ffc1c6"
+selection_background = "#553444"
+ansi = [ ... 16 colors ... ]
+```
+
+The series title and its `native` reading live once in `themes/_groups.toml`,
+never in a theme file.
+
 ## Rules
 
 One palette per pull request. At most three open at a time.
@@ -51,6 +75,31 @@ mise run ci
 
 That runs lint, typecheck, tests, the build with its contrast gate, the shell
 check and the node bundle check — exactly what CI runs.
+
+```sh
+mise run build                # regenerates dist/ for every terminal — fails on bad contrast
+mise run build --only kitty   # just one terminal's subtree
+mise run compat               # the terminal compatibility cases, in each installed terminal
+```
+
+`mise run compat` opens each installed terminal behind your windows on a
+throwaway home (`mise run sandbox`), runs the cases in `tests/compat/cases.zsh`
+inside it — adapter detection, OSC set/query/reset, what the window really
+paints (read off a screenshot), `ttheme use <palette>` and its restore, cell size,
+kitty graphics, synchronized output and focus reporting — and compares them
+with `tests/compat/expect.tsv`: a case that used to pass and fails is a
+regression and fails the run, and `--update` records what was measured.
+
+Every palette in the catalog passes the gate unwaived — `kyubey` runs tightest,
+since as the one light palette every accent has to darken enough to hold
+against a near-white background. If a palette genuinely has to break a rule,
+waive it by name and say why:
+
+```toml
+[contrast]
+waive = ["foreground"]     # foreground | accents | ansi0-dark | light-ansi | ansi8-visible
+reason = "why this palette is the exception"
+```
 
 `.claude/skills/palette/SKILL.md` documents how the existing palettes
 were measured and harmonized, if you want to build one the same way.

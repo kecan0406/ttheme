@@ -12,3 +12,4 @@ next-env.d.ts
 *.webp
 *.avif
 *.gif
+!docs/demo.gif
