@@ -14,6 +14,7 @@ trap 'zpty -d sh 2>/dev/null; rm -rf $WORK' EXIT
 home() {
   local h=$WORK/$1 tab=$2 src=${3:-$ROOT/shell}
   mkdir -p $h
+  print -r -- 'print -rn -- UP_$((2*3))' > $h/.zshenv
   print -rl -- 'autoload -Uz compinit && compinit -u -d $HOME/.zcompdump' "PROMPT='bench> '" > $h/.zshrc
   [[ -n $tab ]] || return 0
   mkdir -p $h/.config/ttheme
@@ -57,47 +58,54 @@ start() {
   typeset -gF T0=$EPOCHREALTIME
   zpty -b sh env -i ${(q)env} zsh -i
   FD=$REPLY
+  upto '[[ $BUF == *UP_6* ]]' 5 $name || { fail "$name: the shell never started"; return 1 }
   zpty -w -n sh $'print -r -- TYPED_$((6*7))\r'
+}
+
+fail() {
+  print -u2 "$1"
+  print -ru2 -- "the terminal saw: ${(V)BUF[-2000,-1]}"
+  return 1
 }
 
 measure() {
   local name=$1 REPLY n m
   local -F t
   start $name
-  upto '[[ $BUF == *"bench> "* ]]' 5 $name || { print -u2 "$name: no prompt within 5s"; return 1 }
+  upto '[[ $BUF == *"bench> "* ]]' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
   typeset -gF fp=$(( (EPOCHREALTIME - T0) * 1000 ))
   zpty -w -n sh $'print -r -- SYNC_$((1+1))\r'
-  upto '[[ $BUF == *(TYPED_42|SYNC_2)* ]]' 2 $name || { print -u2 "$name: the shell stopped answering"; return 1 }
+  upto '[[ $BUF == *(TYPED_42|SYNC_2)* ]]' 2 $name || { fail "$name: the shell stopped answering"; return 1 }
   typeset -g fc=lost
   if [[ $BUF == *TYPED_42* ]]; then
     fc=$(( (EPOCHREALTIME - T0) * 1000 ))
     n=3
   elif [[ -n $2 ]]; then
-    print -u2 "$name: a command typed before the first prompt never ran"
+    fail "$name: a command typed before the first prompt never ran"
     return 1
   else
     n=2
   fi
-  upto '[[ $BUF == *SYNC_2* ]] && prompts && (( REPLY >= n ))' 2 $name || { print -u2 "$name: no prompt after the commands typed so far"; return 1 }
+  upto '[[ $BUF == *SYNC_2* ]] && prompts && (( REPLY >= n ))' 2 $name || { fail "$name: no prompt after the commands typed so far"; return 1 }
   typeset -ga cl=() il=()
   repeat $3; do
     prompts; n=$REPLY
     t=$EPOCHREALTIME
     zpty -w -n sh $'\r'
-    upto 'prompts; (( REPLY > n ))' 2 $name || { print -u2 "$name: an empty command never came back"; return 1 }
+    upto 'prompts; (( REPLY > n ))' 2 $name || { fail "$name: an empty command never came back"; return 1 }
     cl+=$(( (EPOCHREALTIME - t) * 1000 ))
   done
   repeat $3; do
     m=${#BUF}
     t=$EPOCHREALTIME
     zpty -w -n sh x
-    upto '[[ ${BUF[m+1,-1]} == *x* ]]' 2 $name || { print -u2 "$name: a key never showed"; return 1 }
+    upto '[[ ${BUF[m+1,-1]} == *x* ]]' 2 $name || { fail "$name: a key never showed"; return 1 }
     il+=$(( (EPOCHREALTIME - t) * 1000 ))
   done
   (( $3 )) && zpty -w -n sh $'\C-u'
   if [[ -n $2 ]]; then
     zpty -w -n sh $'print -u2 ERR_$((6*7))\r'
-    upto '[[ $BUF == *ERR_42* ]]' 2 $name || { print -u2 "$name: stderr no longer reaches the terminal"; return 1 }
+    upto '[[ $BUF == *ERR_42* ]]' 2 $name || { fail "$name: stderr no longer reaches the terminal"; return 1 }
   fi
   zpty -d sh
 }
@@ -113,14 +121,15 @@ median() { quantile 50 $@ }
 
 check() {
   local name
+  home base
   home off off
   home seq seq
   home terminal-app off
-  for name in off seq terminal-app; do
+  for name in base off seq terminal-app; do
     measure $name stderr 0
-    [[ $name == seq ]] || (( ASKED[$name] )) || { print -u2 "$name: the layer asked the terminal nothing, so nothing was tested"; return 1 }
+    [[ $name == (base|seq) ]] || (( ASKED[$name] )) || { fail "$name: the layer asked the terminal nothing, so nothing was tested"; return 1 }
   done
-  print "latency check ok — typeahead and stderr survive the startup queries (off, seq, terminal-app)"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app)"
 }
 
 bench() {
