@@ -14,7 +14,7 @@ trap 'zpty -d sh 2>/dev/null; rm -rf $WORK' EXIT
 home() {
   local h=$WORK/$1 tab=$2 src=${3:-$ROOT/shell}
   mkdir -p $h
-  print -r -- 'print -rn -- UP_$((2*3))' > $h/.zshenv
+  print -rl -- 'skip_global_compinit=1' 'print -rn -- UP_$((2*3))' > $h/.zshenv
   print -rl -- 'autoload -Uz compinit && compinit -u -d $HOME/.zcompdump' "PROMPT='bench> '" > $h/.zshrc
   [[ -n $tab ]] || return 0
   mkdir -p $h/.config/ttheme
