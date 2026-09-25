@@ -1,0 +1,38 @@
+[meta]
+name = "kecan0406/dusk"
+base = "madoka"
+group = "Madoka Magica"
+ansi_source = "madoka"
+booru = "kaname_madoka"
+signature = ["cursor", "ansi1", "ansi3"]
+
+[colors]
+background = "#201516"
+foreground = "#aaa1a1"
+cursor = "#ffc1c6"
+selection_background = "#2a0e1d"
+ansi = [
+  "#2d2021",
+  "#ff7386",
+  "#baad4b",
+  "#e6b271",
+  "#af95d2",
+  "#d892a9",
+  "#81b7f3",
+  "#d7c1c2",
+
+  "#857374",
+  "#ffaab2",
+  "#dcce68",
+  "#ffd4be",
+  "#d1b5f5",
+  "#fbb2cb",
+  "#b4d7ff",
+  "#ffe9e9",
+]
+
+[[picture]]
+site = "yande"
+id = 825034
+size = 60
+position = "center"
