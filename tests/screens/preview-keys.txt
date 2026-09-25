@@ -1,8 +1,8 @@
-⌕ search… ‹hint›
-────────────────────────────────────────────────
+   search… ‹hint›
 
-▸ Bocchi the Rock!                             1
-▸ Lucky☆Star                                   1
+
+▌  ▸ Bocchi the Rock!                         1
+   ▸ Lucky☆Star                               1
                      ╭─ keys ─────────────────────────────────────────────────╮
                      │                                                        │
                      │  move      ↑↓  home  end  pgup  pgdn                   │

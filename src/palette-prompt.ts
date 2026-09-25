@@ -1,7 +1,7 @@
 import type { Readable, Writable } from 'node:stream'
 import { Prompt } from '@clack/core'
-import { ansiChip, ansiDot, ansiFg, ansiSwatch } from './ansi.ts'
-import type { PaletteEntry } from './emit/manifest.ts'
+import { ansiBar, ansiFg, ansiSquares } from './ansi.ts'
+import { type PaletteEntry, swatch } from './emit/manifest.ts'
 
 export type PickerRow =
   | { kind: 'palette'; entry: PaletteEntry }
@@ -71,7 +71,7 @@ export function firstPalette(rows: PickerRow[]): number {
 const RESET = '\x1b[0m'
 const DIM = '\x1b[2m'
 const BOLD = '\x1b[1m'
-const BOLD_INVERSE = '\x1b[1;7m'
+const NORMAL = '\x1b[22m'
 const CYAN = '\x1b[36m'
 const YELLOW = '\x1b[33m'
 
@@ -101,6 +101,7 @@ export class PalettePrompt extends Prompt<string> {
   private named: PaletteEntry[]
   private series: string[]
   private seriesPad: number
+  private namePad: number
   private expanded = new Set<string>()
   private rows: Row[] = []
   private cursor = 0
@@ -134,6 +135,7 @@ export class PalettePrompt extends Prompt<string> {
     this.named = opts.entries.filter((e) => !e.default)
     this.series = [...new Set(this.named.map((e) => e.group))]
     this.seriesPad = Math.max(0, ...this.series.map((g) => g.length))
+    this.namePad = Math.max(0, ...this.named.map((e) => e.name.length))
     this.maxItems = opts.maxItems ?? 12
     this.color = opts.color ?? true
     this.fx = opts.fx ?? 'typewriter'
@@ -335,51 +337,42 @@ export class PalettePrompt extends Prompt<string> {
   }
 
   private renderRow(row: Row, focused: boolean): string {
-    const marker = focused ? '▶ ' : '  '
     if (row.kind === 'rule') {
       const line = '── markets ──────────'
-      return this.color ? `${DIM}${line}${RESET}` : line
+      return `   ${this.color ? `${DIM}${line}${RESET}` : line}`
     }
+    const entry = row.kind === 'palette' ? row.entry : row.kind === 'group' ? row.lead : undefined
+    const lit = this.color && focused && entry !== undefined
+    const dim = (s: string) => (this.color ? `${DIM}${s}${NORMAL}` : s)
+    const bold = (s: string) => (this.color ? `${BOLD}${s}${NORMAL}` : s)
+    const squares = (e: PaletteEntry) =>
+      this.color ? `  ${ansiSquares(swatch(e), lit ? ansiFg(e.foreground) : '\x1b[39m')}` : ''
+    const gutter = focused ? (lit ? `${ansiFg(entry.cursor)}▌\x1b[39m ` : '▌ ') : '  '
+    const bar = (text: string) =>
+      lit ? `${gutter}${ansiBar(entry.selection, entry.foreground)} ${text} ${RESET}` : `${gutter} ${text}`
     if (row.kind === 'all') {
-      const box = this.everyone(this.rows).every((e) => this.picked.has(e.name)) ? '● ' : '○ '
-      const tail = `(${row.count})`
-      return `${marker}${box}select all ${this.color ? `${DIM}${tail}${RESET}` : tail}`
+      const box = this.everyone(this.rows).every((e) => this.picked.has(e.name)) ? '●' : '○'
+      return bar(`${box} select all ${dim(`(${row.count})`)}`)
     }
     if (row.kind === 'group' && this.scope === 'series') {
-      const box = this.pickedIn(row.name) === row.count ? '● ' : '○ '
-      const name = row.name.padEnd(this.seriesPad)
+      const box = this.pickedIn(row.name) === row.count ? '●' : '○'
       const tail = `(${row.count})${row.native ? ` ${row.native}` : ''}`
-      if (!this.color) {
-        return `${marker}${box}${name} ${tail}`
-      }
-      const lead = row.lead
-      return `${marker}${box}${name} ${ansiDot(lead.background, lead.cursor)}${ansiSwatch(lead.ansi.slice(1, 7), lead.background)}  ${DIM}${tail}${RESET}`
+      return bar(
+        `${box} ${bold(row.name.padEnd(this.seriesPad))}${squares(row.lead)}${this.color ? '  ' : ' '}${dim(tail)}`,
+      )
     }
     if (row.kind === 'group') {
-      const arrow = row.expanded ? '▾' : '▸'
       const at = this.rows[this.cursor]
       const held = at?.kind === 'palette' && at.entry.group === row.name ? at.entry : undefined
-      const name = this.color
-        ? focused
-          ? `${BOLD_INVERSE} ${row.name} ${RESET}`
-          : held
-            ? `${BOLD_INVERSE}${ansiFg(held.cursor)} ${row.name} ${RESET}`
-            : ` ${BOLD}${row.name}${RESET} `
-        : focused
-          ? `[${row.name}]`
-          : ` ${row.name}`
-      const chip = this.color ? ansiChip('●', row.lead.selection) : ''
-      const tally = `${this.pickedIn(row.name)}/${row.count}`
-      const count = this.color ? ` ${DIM}(${tally})${RESET}` : ` (${tally})`
-      const native = row.native ? (this.color ? ` ${DIM}${row.native}${RESET}` : ` ${row.native}`) : ''
-      return `${arrow}${name}${chip}${count}${native}`
+      const name = this.color && held ? `${BOLD}${ansiFg(held.cursor)}${row.name}${NORMAL}\x1b[39m` : bold(row.name)
+      const native = row.native ? ` ${dim(row.native)}` : ''
+      return bar(`${row.expanded ? '▾' : '▸'} ${name} ${dim(`(${this.pickedIn(row.name)}/${row.count})`)}${native}`)
     }
     const e = row.entry
-    const box = this.picked.has(e.name) ? '● ' : '○ '
-    if (!this.color) {
-      return `  ${marker}${box}${e.name.padEnd(13)} ● · ${e.ansiSource}`
-    }
-    return `  ${marker}${box}${e.name.padEnd(13)} ${ansiDot(e.background, e.cursor)}${ansiSwatch(e.ansi.slice(1, 7), e.background)}  ${DIM}${e.ansiSource}${RESET}`
+    const box = this.picked.has(e.name) ? '●' : '○'
+    const padded = this.color ? e.name.padEnd(this.namePad) : e.name
+    const name = focused ? bold(padded) : padded
+    return bar(`  ${box} ${name}${squares(e)}`)
   }
 
   private draw(): string {
@@ -401,7 +394,7 @@ export class PalettePrompt extends Prompt<string> {
           ? this.named.filter((e) => matchesPalette(e, filter)).length
           : total
     const head = `${bar('◆')} ${title} ${dim(`(${matched}/${total} · ${this.pickedCount()} picked)`)}`
-    const search = `${bar('│')} ${this.userInput ? `⌕ ${this.userInput}_` : dim(`⌕ search…${this.example ? ` e.g. ${this.animatedExample()}` : ''}`)}`
+    const search = `${bar('│')}    ${this.userInput ? `${this.userInput}_` : dim(`search…${this.example ? ` e.g. ${this.animatedExample()}` : ''}`)}`
     if (this.cursor < this.top) {
       this.top = this.cursor
     }

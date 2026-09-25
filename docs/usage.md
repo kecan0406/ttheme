@@ -136,20 +136,22 @@ installs exactly what is marked and removes what is not:
 
 ```
 ◆ catalog (4/150 · 2 picked)
-│ ⌕ bo_
-│   ○ select all (4)
-│ ▾ Bocchi the Rock! (2/4) ぼっち・ざ・ろっく!
-│   ▶ ● bocchi        ● ▁▁▁▁▁▁  Sakura + Kessoku
-│     ● kita          ● ▁▁▁▁▁▁  Wild Cherry + Kessoku
-│     ○ nijika        ● ▁▁▁▁▁▁  Medallion
-│     ○ ryo           ● ▁▁▁▁▁▁  TokyoNight Storm
+│    bo_
+│    ○ select all (4)
+│    ▾ Bocchi the Rock! (2/4) ぼっち・ざ・ろっく!
+│ ▌    ● bocchi   ■ ■ ■ ■ ■ ■
+│      ● kita     ■ ■ ■ ■ ■ ■
+│      ○ nijika   ■ ■ ■ ■ ■ ■
+│      ○ ryo      ■ ■ ■ ■ ■ ■
 └ ↑↓ move · ←→ fold · space pick · type to filter · enter install · esc cancel
 ```
 
 The counts stay honest: `4/150` is what the filter matched out of the catalog,
 `2 picked` is the install set, and `(2/4)` on the series header is how many of
-its shown palettes are in it. The dot and the bar are the palette's real cursor
-and its ANSI colors.
+its shown palettes are in it. The six squares are the palette's own colors — its
+foreground, the three that identify the character, then its red and green — and
+the focused row is drawn in the palette's selection color, which `ttheme`,
+`preview` and `browse` all share.
 
 The same four verbs work without the picker:
 

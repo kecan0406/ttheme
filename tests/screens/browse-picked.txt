@@ -1,11 +1,11 @@
 ◆ catalog (6/6 · 3 picked)
-│ ⌕ search… ‹hint›
-│   ○ select all (6)
-│ ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっく!
-│   ▶ ● bocchi        ● · Sakura + Kessoku
-│     ● kita          ● · Wild Cherry + Kessoku
-│     ○ ryo           ● · TokyoNight Storm
-│ ▸ Lucky☆Star (1/3) らき☆すた
+│    search… ‹hint›
+│    ○ select all (6)
+│    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっく!
+│ ▌    ● bocchi
+│      ● kita
+│      ○ ryo
+│    ▸ Lucky☆Star (1/3) らき☆すた
 │
 │
 │

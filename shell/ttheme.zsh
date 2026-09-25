@@ -169,15 +169,22 @@ __tt_name_of() { REPLY=${${(k)TTHEME_PALETTE[(re)$1]}:-custom} }
 __tt_color() { [[ -t 1 && -z $NO_COLOR && $TERM != dumb ]] }
 
 __tt_palette_line() {
-  local name=$1 marker=$2
-  local -a p=(${=TTHEME_PALETTE[$name]})
+  local name=$1 width=$2 on=$3 hex cell="" bar=""
+  local -a p=(${=TTHEME_PALETTE[$name]}) sw=(${=TTHEME_SWATCH[$name]})
   (( ${#p} >= 20 )) || return 1
-  local bg=${p[1]#\#} cur=${p[3]#\#}
-  printf '%s\033[48;2;%d;%d;%d;38;2;%d;%d;%dm ● \033[0m %-8s \033[2m· ANSI %s\033[0m\n' \
-    "$marker" \
-    $((16#${bg:0:2})) $((16#${bg:2:2})) $((16#${bg:4:2})) \
-    $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2})) \
-    "$name" "${TTHEME_SRC[$name]:-unknown}"
+  for hex in $sw; do
+    hex=${hex#\#}
+    cell+=$'\e[38;2;'$((16#${hex:0:2}))';'$((16#${hex:2:2}))';'$((16#${hex:4:2}))'m■ '
+  done
+  if [[ -n $on ]]; then
+    local cur=${p[3]#\#} sel=${p[4]#\#} fg=${p[2]#\#} ac
+    printf -v ac '\e[38;2;%d;%d;%dm' $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2}))
+    printf -v bar '\e[48;2;%d;%d;%d;38;2;%d;%d;%dm' \
+      $((16#${sel:0:2})) $((16#${sel:2:2})) $((16#${sel:4:2})) $((16#${fg:0:2})) $((16#${fg:2:2})) $((16#${fg:4:2}))
+    printf '%s▌\e[39m %s %s■\e[39m \e[1m%-*s\e[22m  %s\e[0m\n' "$ac" "$bar" "$ac" "$width" "$name" "$cell"
+  else
+    printf '     %-*s  %s\e[0m\n' "$width" "$name" "$cell"
+  fi
 }
 
 __tt_announce() {
@@ -384,8 +391,9 @@ __tt_order() {
 }
 
 __tt_menu() {
-  local k cur="" mark grp last_grp="" REPLY
+  local k cur="" grp last_grp="" REPLY
   local -a reply
+  local -i width=0
   __tt_order
   if ! __tt_color; then
     for k in $reply; do
@@ -394,27 +402,21 @@ __tt_menu() {
     return 0
   fi
   [[ -n $TTHEME_SPEC ]] && __tt_name_of "$TTHEME_SPEC" && cur=$REPLY
-  local gutter=""
-  if [[ -n ${TTHEME_PALETTE[$cur]} ]]; then
-    local -a cp=(${=TTHEME_PALETTE[$cur]})
-    local ch=${cp[3]#\#}
-    printf -v gutter '\033[38;2;%d;%d;%dm◆\033[0m ' \
-      $((16#${ch:0:2})) $((16#${ch:2:2})) $((16#${ch:4:2}))
-  fi
+  for k in $reply; do
+    (( ${#k} > width )) && width=${#k}
+  done
   for k in $reply; do
     grp=${TTHEME_GROUP[$k]:-Other}
     if [[ $grp != $last_grp ]]; then
-      [[ $grp == *@* && $last_grp != *@* && -n $last_grp ]] && printf '\033[2m── markets ──────────\033[0m\n'
-      printf '\033[1m%s\033[0m' "$grp"
+      [[ $grp == *@* && $last_grp != *@* && -n $last_grp ]] && printf '  \033[2m── markets ──────────\033[0m\n'
+      printf '  \033[1m%s\033[0m' "$grp"
       [[ -n ${TTHEME_NATIVE[$k]} ]] && printf ' \033[2m%s\033[0m' "${TTHEME_NATIVE[$k]}"
       printf '\n'
       last_grp=$grp
     fi
-    mark="  "
-    [[ $k == $cur ]] && mark=$gutter
-    __tt_palette_line "$k" "$mark"
+    __tt_palette_line "$k" $width ${${(M)k:#$cur}:+1}
   done
-  printf '\n\033[2mttheme use <palette> paints this tab · ttheme preview · ttheme help\033[0m\n'
+  printf '\n  \033[2mttheme use <palette> paints this tab · ttheme preview · ttheme help\033[0m\n'
 }
 
 __tt_help() {
@@ -734,19 +736,22 @@ __tt_pv_hl() {
 }
 
 __tt_pv_row() {
-  local t=${rval[$1]} b=$'\e[1m' d=$'\e[2m' r=$'\e[22;24;39m' z=$'\e[0m' on="" base="" lead=$'\e[2m' mark=" " name arrow=▸
+  local t=${rval[$1]} b=$'\e[1m' d=$'\e[2m' r=$'\e[22;24;39m' z=$'\e[0m' on="" gut="  " base="" lead=$'\e[2m' mark=" " name arrow=▸
   local -i w
   (( color )) || b= d= r= z= lead=
-  (( $1 == cur && color )) && on=$sb
+  if (( $1 == cur )); then
+    gut=$ac"▌"$r" "
+    (( color )) && on=$sb
+  fi
   if [[ ${rtype[$1]} == rule ]]; then
     name='── markets '
-    REPLY=$d$name${(l:lw - 2 - ${#name}::─:)}$z
+    REPLY="   "$d$name${(l:lw - 4 - ${#name}::─:)}$z
     return 0
   fi
   if [[ ${rtype[$1]} == hdr ]]; then
     [[ -n $flt || -n ${exp[$t]} ]] && arrow=▾
     name=$t
-    (( ${(m)#name} > lw - 8 )) && name="${name[1,lw-9]}…"
+    (( ${(m)#name} > lw - 10 )) && name="${name[1,lw-11]}…"
     base=$b
     if (( color )) && [[ $t == "$ag" ]]; then
       base+=$ac lead=$ac
@@ -754,24 +759,24 @@ __tt_pv_row() {
       lead=""
     fi
     __tt_pv_hl "$name" "$base"
-    w=$(( lw - 2 - ${(m)#name} - ${#rcnt[$1]} ))
+    w=$(( lw - 6 - ${(m)#name} - ${#rcnt[$1]} ))
     (( w < 1 )) && w=1
-    REPLY=$on$lead$arrow$r" "$base$REPLY$r${(l:w:: :)}$d${rcnt[$1]}$z
+    REPLY=$gut$on" "$lead$arrow$r" "$base$REPLY$r${(l:w:: :)}$d${rcnt[$1]}$r" "$z
     return 0
   fi
   if (( $1 == cur )); then
-    mark=$cmark base=$b
+    mark=$ac"■"$r base=$b
   elif [[ -n $cdot && $t == "$cn" ]]; then
     mark=$cdot
   fi
   __tt_pv_hl "$t" "$base"
   if (( color )); then
     [[ -n ${tstrip[$t]} ]] || __tt_pv_strip $t
-    w=$(( lw - 20 - ${#t} ))
+    w=$(( lw - 19 - ${#t} ))
     (( w < 1 )) && w=1
-    REPLY="$on  $mark $base$REPLY$r${(l:w:: :)}${tstrip[$t]}"
+    REPLY=$gut$on"   $mark $base$REPLY$r${(l:w:: :)}${tstrip[$t]} "$z
   else
-    REPLY="  $mark $REPLY"
+    REPLY="$gut   $mark $REPLY"
   fi
 }
 
@@ -1151,8 +1156,8 @@ __tt_pv_flush() {
 }
 
 __tt_pv_draw() {
-  local out line cnt ex ag="" ac="" sb="" cmark="▶" rthumb="#" rtrack="." dd="" zz="" state=on src="" REPLY
-  local -i lw sw split sc se=$(( pw - 2 )) h k i N=${#rval} rail=0 rl=0 rs=0 mt=${#TTHEME_ORDER} wiped=0
+  local out line cnt ex ag="" ac="" sb="" dd="" zz="" state=on src="" REPLY
+  local -i lw sw split sc se=$(( pw - 2 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0
   __tt_pv_lw
   lw=$reply[1] sw=$reply[2]
   split=$(( sw > 0 )) sc=$(( pw - 1 - sw ))
@@ -1164,21 +1169,14 @@ __tt_pv_draw() {
   (( cur >= top + h )) && top=$(( cur - h + 1 ))
   (( top < 1 )) && top=1
   (( N > h && top > N - h + 1 )) && top=$(( N - h + 1 ))
-  if (( N > h )); then
-    rail=1
-    rl=$(( h * h / N ))
-    (( rl < 1 )) && rl=1
-    rs=$(( 1 + (top - 1) * (h - rl) / (N - h) ))
-  fi
   if (( color )); then
-    dd=$'\e[2m' zz=$'\e[0m' rtrack=$'\e[2m░\e[0m'
+    dd=$'\e[2m' zz=$'\e[0m'
     if [[ -n $applied ]]; then
       local -a ap=(${=applied})
       local acx=${ap[3]#\#} sbx=${ap[4]#\#}
       printf -v ac '\e[38;2;%d;%d;%dm' $((16#${acx:0:2})) $((16#${acx:2:2})) $((16#${acx:4:2}))
       printf -v sb '\e[48;2;%d;%d;%dm' $((16#${sbx:0:2})) $((16#${sbx:2:2})) $((16#${sbx:4:2}))
     fi
-    rthumb=$ac"█"$zz cmark=$ac"▶"$'\e[39m'
     [[ ${rtype[cur]} == thm ]] && ag=${TTHEME_GROUP[${rval[cur]}]:-Other}
   fi
   if [[ -n $flt ]]; then
@@ -1204,13 +1202,13 @@ __tt_pv_draw() {
   fi
   if [[ -n $flt ]]; then
     if (( color )); then
-      line="⌕ "$'\e[1m'$flt$zz$ac$'\e[7m \e[0m'
+      line="   "$'\e[1m'$flt$zz$ac$'\e[7m \e[0m'
     else
-      line="⌕ ${flt}_"
+      line="   ${flt}_"
     fi
   else
     ex="$expal | $exgrp"
-    (( ${#ex} > lw - 17 - ${#cnt} )) && ex="${ex[1,lw-18-${#cnt}]}…"
+    (( ${#ex} > lw - 19 - ${#cnt} )) && ex="${ex[1,lw-20-${#cnt}]}…"
     if (( gstep > 0 )); then
       local gkeep=$(( ${#ex} * (8 - gstep) / 8 ))
       if [[ $TTHEME_FX == (decode|glitch) ]]; then
@@ -1228,39 +1226,34 @@ __tt_pv_draw() {
         ex="${ex[1,gkeep]}▏"
       fi
     fi
-    line="⌕ "$dd"search… e.g. $ex"$zz
+    line="   "$dd"search… e.g. $ex"$zz
   fi
-  out+=$line$'\e[K\e['$(( lw - ${#cnt} + 1 ))'G'
+  out+=$line$'\e[K\e['$(( lw - ${#cnt} ))'G'
   if [[ -n $flt ]]; then
-    out+=$cnt$'\n'$ac
+    out+=$cnt
   else
-    out+=$dd$cnt$zz$'\n'$dd
+    out+=$dd$cnt$zz
   fi
-  out+=${(l:lw::─:)}$zz$'\e[K\n\e[K\n'
+  out+=$'\n\e[K\n'
+  (( N > h && top > 1 )) && out+="   "$dd"…"$zz
+  out+=$'\e[K\n'
   for (( k = 0; k < ph - 4; k++ )); do
     i=$(( top + k ))
     line=""
     if (( k < h )); then
       if (( ! N )); then
-        (( k == 0 )) && line="  ${dd}no palettes match '$flt'$zz"
+        (( k == 0 )) && line="   ${dd}no palettes match '$flt'$zz"
       elif (( i <= N )); then
         __tt_pv_row $i
         line=$REPLY
       fi
+    elif (( k == h && N > h && top + h <= N )); then
+      line="   "$dd"…"$zz
     fi
-    out+=$line$'\e[K'
-    if (( rail && k < h )); then
-      if (( k + 1 >= rs && k + 1 < rs + rl )); then
-        out+=$'\e['$(( lw + 2 ))'G'$rthumb
-      else
-        out+=$'\e['$(( lw + 2 ))'G'$rtrack
-      fi
-    fi
-    out+=$'\n'
+    out+=$line$'\e[K\n'
   done
   __tt_pv_foot $(( split ? se : pw ))
   if (( split )); then
-    out+=$'\e[2;'$sc'H'$dd${(l:$(( se - sc + 1 ))::─:)}$zz
     if (( help && sw >= 48 )); then
       __tt_pv_head 1 $sc $se keys
       __tt_pv_help
@@ -1323,15 +1316,19 @@ __tt_pv_canpick() {
 }
 
 __tt_pv_strip() {
-  local lo hi cell
-  local -a tp=(${=TTHEME_PALETTE[$1]}) v=()
+  local hex cell=""
+  local -a sw=(${=TTHEME_SWATCH[$1]})
   local -i j
-  for (( j = 5; j <= 12; j++ )); do
-    lo=${tp[j]#\#} hi=${tp[j+8]#\#}
-    v+=($((16#${lo:0:2})) $((16#${lo:2:2})) $((16#${lo:4:2})) $((16#${hi:0:2})) $((16#${hi:2:2})) $((16#${hi:4:2})))
+  for (( j = 1; j <= 6; j++ )); do
+    hex=${sw[j]#\#}
+    (( j > 1 )) && cell+=" "
+    if [[ -n $hex ]]; then
+      cell+=$'\e[38;2;'$((16#${hex:0:2}))';'$((16#${hex:2:2}))';'$((16#${hex:4:2}))'m■'
+    else
+      cell+=" "
+    fi
   done
-  printf -v cell '\e[38;2;%d;%d;%d;48;2;%d;%d;%dm▀▀' $v
-  tstrip[$1]=$cell$'\e[0m'
+  tstrip[$1]=$cell$'\e[39m'
 }
 
 __tt_pv_init() {

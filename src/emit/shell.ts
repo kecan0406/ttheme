@@ -3,7 +3,7 @@ import { alphabetical } from '../theme.ts'
 import { helpText, VERB_SPECS } from '../verbs.ts'
 import { configTemplate, SETTING_NAMES } from '../wiring.ts'
 import type { Emitter, Output } from './index.ts'
-import { listed, type PaletteEntry, paletteEntry } from './manifest.ts'
+import { listed, type PaletteEntry, paletteEntry, swatch } from './manifest.ts'
 
 export function palettesZsh(palettes: PaletteEntry[], startup?: string, terminals: readonly string[] = []): string {
   for (const p of palettes) {
@@ -71,6 +71,11 @@ export function palettesZsh(palettes: PaletteEntry[], startup?: string, terminal
     '# original-language title, rendered dim next to the group',
     'typeset -gA TTHEME_NATIVE=(',
     ...palettes.filter((p) => p.native).map((p) => entry(p, p.native ?? '')),
+    ')',
+    '',
+    '# the six colors a list row shows: foreground, the signature, then red and green',
+    'typeset -gA TTHEME_SWATCH=(',
+    ...palettes.map((p) => entry(p, swatch(p).join(' '))),
     ')',
     '',
     "# where each palette's 16 ANSI colors came from",

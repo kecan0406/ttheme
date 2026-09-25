@@ -101,6 +101,36 @@ export function toTheme(entry: PaletteEntry): Theme {
   }
 }
 
+const SWATCH_SIZE = 6
+const SWATCH_FILL = ['ansi1', 'ansi2', 'ansi4', 'ansi3', 'ansi5', 'ansi6']
+
+type Swatched = Pick<PaletteEntry, 'foreground' | 'cursor' | 'selection' | 'ansi' | 'signatureSlots'>
+
+export function swatch(entry: Swatched): string[] {
+  const color = (slot: string) =>
+    slot.startsWith('ansi')
+      ? entry.ansi[Number(slot.slice(4))]
+      : slot === 'foreground'
+        ? entry.foreground
+        : slot === 'cursor'
+          ? entry.cursor
+          : slot === 'selection'
+            ? entry.selection
+            : undefined
+  const role = (slot: string) => (slot.startsWith('ansi') ? `ansi${Number(slot.slice(4)) % 8}` : slot)
+  const roles = new Set<string>()
+  const colors: string[] = []
+  for (const slot of ['foreground', ...entry.signatureSlots, ...SWATCH_FILL]) {
+    const hex = color(slot)
+    if (colors.length === SWATCH_SIZE || !hex || roles.has(role(slot)) || colors.includes(hex)) {
+      continue
+    }
+    roles.add(role(slot))
+    colors.push(hex)
+  }
+  return colors
+}
+
 export function listed(palettes: PaletteEntry[]): PaletteEntry[] {
   return palettes.filter((p) => p.default !== true)
 }

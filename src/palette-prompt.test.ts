@@ -132,10 +132,10 @@ test('right unfolds a group and space picks the palette under the cursor', async
   const { picked, frames, focused } = await drive(['\x1b[C', '\x1b[B', ' ', '\r'])
   assert.deepEqual(picked, ['miku'])
   assert.deepEqual(focused, ['miku'])
-  assert.match(frames, /▾\[Vocaloid\] \(0\/2\)/)
+  assert.match(frames, /▌ {2}▾ Vocaloid \(0\/2\)/)
   assert.match(frames, /▸ Madoka Magica \(0\/2\)/)
   assert.match(frames, /catalog \(4\/4 · 0 picked\)/)
-  assert.match(frames, /⌕ search…/)
+  assert.match(frames, /│ {4}search…/)
   assert.match(frames, /space pick · type to filter · enter install/)
 })
 
@@ -148,7 +148,7 @@ test('groups fold back and cursor moves across them', async () => {
 test('typing filters and the cursor lands on the first match', async () => {
   const { picked, frames } = await drive(['m', 'a', 'd', 'o', ' ', '\r'])
   assert.deepEqual(picked, ['madoka'])
-  assert.match(frames, /⌕ mado_/)
+  assert.match(frames, /│ {4}mado_/)
   assert.match(frames, /catalog \(2\/4 · 0 picked\)/)
 })
 
@@ -162,9 +162,9 @@ test('the cursor snaps to the first match when the focused palette is filtered o
   assert.deepEqual(picked, ['miku'])
 })
 
-test('color rows carry six swatch cells and drop the ANSI prefix', async () => {
+test('color rows carry the swatch squares and drop the ANSI source', async () => {
   const { frames } = await drive(['m', 'i', 'k', '\r'], { color: true })
-  assert.ok(frames.includes('\x1b[38;2;128;128;128m▄'.repeat(6)))
+  assert.ok(frames.includes('\x1b[38;2;238;238;238m■ \x1b[38;2;255;255;255m■ \x1b[38;2;128;128;128m■'))
   assert.doesNotMatch(frames, /ANSI/)
 })
 
@@ -186,7 +186,7 @@ test('installed palettes start out picked', async () => {
 test('space on a folded group picks its palettes without expanding it first', async () => {
   const { picked, frames } = await drive([' ', '\r'])
   assert.deepEqual(picked.sort(), ['miku', 'rin'])
-  assert.match(frames, /▸\[Vocaloid\] \(0\/2\)/)
+  assert.match(frames, /▌ {2}▸ Vocaloid \(0\/2\)/)
 })
 
 test('a folded group still reports how many of its palettes are picked', async () => {
@@ -211,7 +211,7 @@ test('series scope lists series only, previews each lead and never unfolds', asy
   assert.deepEqual(picked.sort(), ['homura', 'madoka'])
   assert.deepEqual(focused, ['miku', 'homura'])
   assert.match(frames, /series \(2\/2 · 0 picked\)/)
-  assert.match(frames, /▶ ○ Vocaloid +\(2\)/)
+  assert.match(frames, /▌ {2}○ Vocaloid +\(2\)/)
   assert.match(frames, /series \(2\/2 · 1 picked\)/)
   assert.doesNotMatch(frames, /←→ fold/)
   assert.doesNotMatch(frames, /▾/)
@@ -221,14 +221,14 @@ test('series scope picks the whole series even when a member name filtered it', 
   const { picked, frames } = await drive(['h', 'o', ' ', '\r'], { scope: 'series' })
   assert.deepEqual(picked.sort(), ['homura', 'madoka'])
   assert.match(frames, /series \(1\/2 · 0 picked\)/)
-  assert.match(frames, /▶ ● Madoka Magica \(2\) 魔法少女まどか☆マギカ/)
+  assert.match(frames, /▌ {2}● Madoka Magica \(2\) 魔法少女まどか☆マギカ/)
 })
 
 test('space toggles the row and never lands in the filter', async () => {
   const { picked, frames } = await drive(['m', 'i', ' ', 'k', '\r'])
   assert.deepEqual(picked, ['miku'])
-  assert.match(frames, /⌕ mik_/)
-  assert.doesNotMatch(frames, /⌕ mi k/)
+  assert.match(frames, /│ {4}mik_/)
+  assert.doesNotMatch(frames, /│ {4}mi k/)
 })
 
 test('the select all row picks every shown series, and again drops them', async () => {

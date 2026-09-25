@@ -4,7 +4,7 @@ import { test } from 'node:test'
 
 import pkg from '../../package.json' with { type: 'json' }
 import { loadThemes } from '../theme.ts'
-import { manifest, type PaletteEntry } from './manifest.ts'
+import { manifest, type PaletteEntry, swatch } from './manifest.ts'
 
 const {
   version,
@@ -103,4 +103,21 @@ test('manifest carries the booru tag find searches, and leaves it off palettes w
   const byName = new Map(entries.map((e) => [e.name, e]))
   assert.equal(byName.get('kagami')?.booru, 'hiiragi_kagami')
   assert.equal(byName.get('neutral')?.booru, undefined)
+})
+
+test('a swatch shows six different colors: the foreground, the signature, then red and green', () => {
+  for (const e of entries) {
+    const colors = swatch(e)
+    assert.equal(new Set(colors).size, 6, `${e.name}: ${colors.join(' ')}`)
+    assert.equal(colors[0], e.foreground)
+  }
+  const ansi = Array.from({ length: 16 }, (_, i) => `#0000${i.toString(16).padStart(2, '0')}`)
+  const twin = swatch({
+    foreground: '#eeeeee',
+    cursor: '#ff00ff',
+    selection: '#333333',
+    ansi,
+    signatureSlots: ['cursor', 'foreground', 'ansi9'],
+  })
+  assert.deepEqual(twin, ['#eeeeee', '#ff00ff', ansi[9], ansi[2], ansi[4], ansi[3]])
 })

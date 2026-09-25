@@ -1,8 +1,8 @@
 ◆ catalog (6/6 · 0 picked)
-│ ⌕ search… ‹hint›
-│   ○ select all (6)
-│ ▸[Bocchi the Rock!] (0/3) ぼっち・ざ・ろっく!
-│ ▸ Lucky☆Star (0/3) らき☆すた
+│    search… ‹hint›
+│    ○ select all (6)
+│ ▌  ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっく!
+│    ▸ Lucky☆Star (0/3) らき☆すた
 │
 │
 │
