@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import { test } from 'node:test'
 
-import { applyInit, type InitOptions, type InitPaths, planInit } from './init.ts'
+import { applyInit, type InitOptions, type InitPaths, installedState, planInit, planUpgrade } from './init.ts'
 
 function manifestFixture() {
   const palette = (name: string, order: number, role?: 'default') => ({
@@ -174,4 +174,40 @@ test('init writes its own alacritty block but never edits an alacritty.toml that
   assert.ok(foreign.notes.some((n) => n.includes('already imports files under [general]')))
   applyInit(foreign)
   assert.equal(readFileSync(config, 'utf8'), '[general]\nimport = ["mine.toml"]\n')
+})
+
+test('an upgrade keeps what is installed and only replaces the layer', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options({ palettes: ['neutral', 'miku'] }), paths))
+  const installedPath = join(paths.configHome, 'ttheme', 'installed.json')
+  const state = { ...JSON.parse(readFileSync(installedPath, 'utf8')), startup: 'miku', off: true }
+  writeFileSync(installedPath, JSON.stringify(state))
+  const configPath = join(paths.configHome, 'ttheme', 'config.zsh')
+  writeFileSync(
+    configPath,
+    readFileSync(configPath, 'utf8').replace(/^# : \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}'),
+  )
+  writeFileSync(join(paths.root, 'shell', 'ttheme.zsh'), 'ttheme layer, next version')
+  const current = installedState(paths.configHome)
+  assert.ok(current)
+  applyInit(planUpgrade(current, paths))
+  assert.deepEqual(installedState(paths.configHome), {
+    terminals: ['ghostty'],
+    startup: 'miku',
+    off: true,
+    palettes: ['neutral', 'miku'],
+  })
+  assert.match(readFileSync(configPath, 'utf8'), /^: \$\{TTHEME_FX:=glitch\}$/m)
+  assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'ttheme.zsh'), 'utf8'), 'ttheme layer, next version')
+})
+
+test('an upgrade drops palettes the catalog no longer has, and a default among them', () => {
+  const paths = makeFixture()
+  const plan = planUpgrade({ terminals: ['ghostty'], startup: 'gone', palettes: ['miku', 'gone'] }, paths)
+  assert.deepEqual(plan.installed, { terminals: ['ghostty'], palettes: ['miku'] })
+  assert.match(plan.notes[0] ?? '', /^dropped gone/)
+})
+
+test('there is no install to upgrade before the first init', () => {
+  assert.equal(installedState(makeFixture().configHome), undefined)
 })

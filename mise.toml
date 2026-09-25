@@ -60,7 +60,7 @@ bun -e 'const f = "bin/ttheme.js.map"; const m = await Bun.file(f).json(); delet
 '''
 
 [tasks."bin:check"]
-description = "smoke-test the node bundle: help, non-interactive init from the packed tarball, the installed CLI copy, keep surviving an add, idempotency, uninstall"
+description = "smoke-test the node bundle: help, non-interactive init from the packed tarball, the installed CLI copy, keep surviving an add and an upgrade, idempotency, uninstall"
 depends = ["build", "bin:build"]
 run = '''
 {% raw %}
@@ -118,6 +118,11 @@ layer '__tt_keep geto > /dev/null' ||
 cli add sukuna
 grep -q '^theme = ttheme-geto$' "$tmp/.config/ghostty/config" ||
   { echo "bin:check failed: an add undid the default keep saved"; exit 1; }
+run_init
+layer '(( ${#TTHEME_PALETTE} == 3 ))' ||
+  { echo "bin:check failed: init --yes over an install dropped its palettes"; exit 1; }
+grep -q '^theme = ttheme-geto$' "$tmp/.config/ghostty/config" ||
+  { echo "bin:check failed: init --yes over an install lost its default"; exit 1; }
 cli remove gojo geto sukuna
 layer '(( ${#TTHEME_PALETTE} == 0 ))' ||
   { echo "bin:check failed: remove did not reach the installed layer"; exit 1; }

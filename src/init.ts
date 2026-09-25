@@ -12,6 +12,7 @@ import {
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
+import pkg from '../package.json' with { type: 'json' }
 import { build } from './build.ts'
 import { writeCatalog } from './catalog.ts'
 import { editUserFile } from './edits.ts'
@@ -132,6 +133,50 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   }
   notes.push(...wiringNotes(paths.configHome, opts.terminals, paths.home))
   return { home: paths.home, copies, edits, settings, catalog: loadManifest(paths.root), installed, notes }
+}
+
+export function installedState(configHome: string): Installed | undefined {
+  try {
+    return readInstalled(configHome)
+  } catch {
+    return undefined
+  }
+}
+
+export function planUpgrade(state: Installed, paths: InitPaths): InitPlan {
+  const plan = planInit({ terminals: state.terminals, palettes: state.palettes, off: state.off }, paths)
+  const known = new Set(plan.catalog.palettes.map((e) => e.name))
+  const palettes = state.palettes.filter((n) => known.has(n))
+  const gone = state.palettes.filter((n) => !known.has(n))
+  const { startup, ...rest } = state
+  const installed: Installed = {
+    ...rest,
+    palettes,
+    ...(startup && palettes.includes(startup) ? { startup } : {}),
+  }
+  const notes = gone.length > 0 ? [`dropped ${gone.join(', ')} — no longer in the catalog`, ...plan.notes] : plan.notes
+  return { ...plan, installed, notes }
+}
+
+function installedVersion(configHome: string): string | undefined {
+  try {
+    const out = execFileSync(process.execPath, [join(configHome, 'ttheme', 'ttheme.js'), '--version'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+    return out.trim() || undefined
+  } catch {
+    return undefined
+  }
+}
+
+function summary(state: Installed): string {
+  const startup = worn(state)
+  return [
+    state.terminals.join(', '),
+    `${state.palettes.length} palettes`,
+    startup ? `default ${startup}` : 'no default — ttheme is off',
+  ].join(' · ')
 }
 
 function keptBase(configHome: string): string | undefined {
@@ -285,26 +330,51 @@ function receipt(plan: InitPlan, opts: InitOptions, painted: boolean, restart: b
     [`${series.join(', ')} (${opts.palettes.length})`, ...startupLines(plan.installed, painted)].join('\n'),
     `installed ${opts.palettes.length} palettes`,
   )
-  const next = ['exec zsh          the ttheme command in this tab']
-  if (opts.terminals.includes('ghostty')) {
+  p.note(
+    ['exec zsh          the ttheme command in this tab', ...nextLines(opts.terminals, plan, restart)].join('\n'),
+    'next',
+  )
+  p.outro('done')
+}
+
+function nextLines(terminals: InitTerminal[], plan: InitPlan, restart: boolean): string[] {
+  const next: string[] = []
+  if (terminals.includes('ghostty')) {
     next.push('restart ghostty   new tabs pick up its config')
   }
-  if (opts.terminals.includes('kitty')) {
+  if (terminals.includes('kitty')) {
     next.push('new kitty window  pictures follow it — kitty reloads its colors by itself')
   }
-  if (opts.terminals.includes('alacritty')) {
+  if (terminals.includes('alacritty')) {
     next.push('alacritty         reloads its config by itself')
   }
-  if (opts.terminals.includes('wezterm')) {
+  if (terminals.includes('wezterm')) {
     next.push('wezterm           reloads its config by itself')
   }
-  if (opts.terminals.includes('windows-terminal')) {
+  if (terminals.includes('windows-terminal')) {
     next.push('windows terminal  reloads its settings by itself')
   }
-  if (opts.terminals.includes('iterm2')) {
+  if (terminals.includes('iterm2')) {
     next.push(...itermLines(worn(plan.installed), restart))
   }
-  p.note([...next, ...plan.notes].join('\n'), 'next')
+  return [...next, ...plan.notes]
+}
+
+function upgrade(state: Installed, paths: InitPaths, interactive: boolean): void {
+  const plan = planUpgrade(state, paths)
+  const prefs = itermDefaults()
+  const moved = applyInit(plan, prefs)
+  verify(plan)
+  const lines = [
+    'exec zsh          open tabs run the new layer — new tabs already do',
+    ...nextLines(plan.installed.terminals, plan, moved && prefs.running()),
+  ]
+  const title = `updated to ${pkg.version} — kept ${summary(plan.installed)}`
+  if (!interactive) {
+    console.log([title, ...lines].join('\n'))
+    return
+  }
+  p.note(lines.join('\n'), title)
   p.outro('done')
 }
 
@@ -377,6 +447,11 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       'init asks before it edits your configs — run it in a terminal, or pass --yes to accept the defaults',
     )
   }
+  const existing = installedState(configHome)
+  if (flags.yes && existing) {
+    upgrade(existing, paths, false)
+    return
+  }
   if (flags.yes) {
     if (preselected.length === 0) {
       throw new Error(
@@ -391,22 +466,43 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     return
   }
   p.intro('ttheme init')
-  const terminals = await askTerminals(detected, preselected, paths)
+  if (existing) {
+    const from = installedVersion(configHome)
+    const keep = accepted(
+      await p.confirm({
+        message: `ttheme${from ? ` ${from}` : ''} is installed — ${summary(existing)}\n${from === pkg.version ? 'reinstall' : 'update to'} ${pkg.version} and keep all of it?`,
+        active: 'yes',
+        inactive: 'no, set it up again',
+        initialValue: true,
+      }),
+    )
+    if (keep) {
+      upgrade(existing, paths, true)
+      return
+    }
+  }
+  const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths)
   const catalog = loadManifest(root)
-  const palettes = await pickPalettes(catalog, [], 'series', true)
+  const palettes = existing
+    ? await pickPalettes(catalog, existing.palettes, 'palette', true)
+    : await pickPalettes(catalog, [], 'series', true)
   if (!palettes) {
     p.cancel('nothing changed')
     throw new Cancelled()
   }
-  const first = palettes[0]
+  const was = existing && startupPalette(existing)
+  const kept = was && palettes.includes(was) ? was : undefined
+  const first = kept ?? palettes[0]
   const choose = palettes.length > 1 && detectTerminal(process.env) !== 'warp'
   const wear = accepted(
     await p.confirm({
       message: choose ? 'pick a default palette in ttheme preview once installed?' : `wear ${first} in every tab?`,
+      initialValue: existing ? !existing.off : true,
     }),
   )
   const opts: InitOptions = { terminals, palettes, off: !wear }
-  const plan = planInit(opts, paths)
+  const fresh = planInit(opts, paths)
+  const plan = kept ? { ...fresh, installed: { ...fresh.installed, startup: kept } } : fresh
   p.note(
     [
       `install ${palettes.length} palettes — ${seriesOf(plan.catalog, palettes).join(', ')}`,
