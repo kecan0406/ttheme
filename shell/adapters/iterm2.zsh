@@ -39,18 +39,10 @@ __tt_unshown() {
 }
 
 __tt_bg_cells() {
-  local fd saved resp="" c
+  local REPLY resp
   local -a p
-  exec {fd}<>/dev/tty 2>/dev/null || return 0
-  saved=$(stty -g <&$fd 2>/dev/null)
-  stty raw -echo min 0 time 3 <&$fd 2>/dev/null
-  printf '\e]1337;ReportCellSize\a' >&$fd
-  while IFS= read -r -s -k 1 -t 1 -u $fd c 2>/dev/null; do
-    resp+=$c
-    [[ $resp == *ReportCellSize=*($'\a'|$'\e\\') ]] && break
-  done
-  stty "$saved" <&$fd 2>/dev/null
-  exec {fd}>&-
+  __tt_ask $'\e]1337;ReportCellSize\a' || return 0
+  resp=$REPLY
   [[ $resp == *ReportCellSize=*($'\a'|$'\e\\') ]] || return 0
   p=(${(s:;:)${${resp##*ReportCellSize=}%%($'\a'|$'\e\\')*}})
   (( ${#p} == 3 )) || return 0

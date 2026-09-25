@@ -12,6 +12,9 @@ painted	pass	pass	pass	?	pass	fail	pass
 wear	pass	pass	pass	pass	pass	fail	pass
 wear-painted	pass	pass	pass	?	pass	fail	pass
 restore	pass	pass	pass	pass	pass	pass	pass
+layer-query	pass	pass	?	?	?	?	pass
+layer-cells	pass	pass	?	?	?	?	skip
+layer-base	skip	skip	?	?	?	?	pass
 cell-size	pass	pass	pass	pass	fail	fail	fail
 kitty-graphics	pass	pass	pass	pass	fail	pass	fail
 sync-output	pass	pass	pass	pass	pass	pass	fail

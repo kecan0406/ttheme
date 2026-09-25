@@ -94,7 +94,7 @@ __cc_roundtrip() {
 }
 
 __cc_cases() {
-  local start REPLY spec other
+  local start REPLY spec other bgcw=0 bgch=0 bgrel=0 bgmx=0 bgmy=0
   printf '\e]0;%s\a' ${CC_TITLE:-ttheme-compat}
 
   if [[ $TTHEME_ADAPTER == $CC_ADAPTER ]]; then
@@ -164,6 +164,30 @@ __cc_cases() {
     else
       __cc_report restore fail "wanted $start, read ${REPLY:-no answer}"
     fi
+  fi
+
+  if (( ! $+functions[__tt_query_bg] )) || [[ -z $start ]]; then
+    __cc_report layer-query skip "no layer or no starting color"
+  elif __tt_query_bg && __cc_near $start $REPLY; then
+    __cc_report layer-query pass "__tt_query_bg read $REPLY"
+  else
+    __cc_report layer-query fail "wanted $start, __tt_query_bg read ${REPLY:-nothing}"
+  fi
+
+  if (( ! $+functions[__tt_bg_cells] )); then
+    __cc_report layer-cells skip "the $TTHEME_ADAPTER adapter asks for no cell size"
+  elif __tt_bg_cells && (( bgcw > 0 && bgch > 0 )); then
+    __cc_report layer-cells pass "__tt_bg_cells read ${bgcw}×${bgch}"
+  else
+    __cc_report layer-cells fail "__tt_bg_cells read ${bgcw}×${bgch}"
+  fi
+
+  if [[ $TTHEME_ADAPTER != terminal-app ]]; then
+    __cc_report layer-base skip "only Terminal.app reads its colors at startup"
+  elif (( ${#${=TTHEME_TERMINAL_BASE}} == 20 )); then
+    __cc_report layer-base pass "read 20 colors, bg ${${=TTHEME_TERMINAL_BASE}[1]}"
+  else
+    __cc_report layer-base fail "read ${#${=TTHEME_TERMINAL_BASE}} of 20 colors"
   fi
 
   if __cc_ask $'\e[16t' && [[ $REPLY == *$'\e[6;'<1->';'<1->t* ]]; then

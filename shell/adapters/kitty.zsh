@@ -32,17 +32,9 @@ __tt_bg_shown() { REPLY=$TTHEME_KITTY_SHOWN }
 __tt_bg_refresh() { (( ${@[(Ie)$TTHEME_KITTY_SHOWN]} )) && __tt_kitty_var ttheme_shown $TTHEME_KITTY_SHOWN }
 
 __tt_bg_cells() {
-  local fd saved resp="" c
-  exec {fd}<>/dev/tty 2>/dev/null || return 0
-  saved=$(stty -g <&$fd 2>/dev/null)
-  stty raw -echo min 0 time 3 <&$fd 2>/dev/null
-  printf '\e[16t' >&$fd
-  while IFS= read -r -s -k 1 -t 1 -u $fd c 2>/dev/null; do
-    resp+=$c
-    [[ $resp == *'[6;'<1->';'<1->t ]] && break
-  done
-  stty "$saved" <&$fd 2>/dev/null
-  exec {fd}>&-
+  local REPLY resp
+  __tt_ask $'\e[16t' || return 0
+  resp=$REPLY
   [[ $resp == *'[6;'<1->';'<1->t ]] || return 0
   resp=${${resp##*\[6;}%t}
   bgch=${resp%;*} bgcw=${resp#*;}

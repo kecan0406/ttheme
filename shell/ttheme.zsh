@@ -31,7 +31,10 @@ __tt_gone() {
   for hook in precmd:__tt_fresh precmd:__tt_precmd precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_mux chpwd:__tt_chpwd; do
     add-zsh-hook -d ${hook%%:*} ${hook#*:}
   done
-  (( $+functions[add-zle-hook-widget] )) && add-zle-hook-widget -d line-init __tt_focus_on
+  if (( $+functions[add-zle-hook-widget] )); then
+    add-zle-hook-widget -d line-init __tt_focus_on
+    add-zle-hook-widget -d line-init __tt_typed
+  fi
   unfunction ttheme
 }
 
@@ -1691,7 +1694,7 @@ if __tt_active; then
     if [[ -n $TTHEME_SPEC ]]; then
       :
     elif [[ $TTHEME_TAB_PALETTE == off ]]; then
-      if __tt_query_bg; then
+      if __tt_start_bg; then
         for k in ${(k)TTHEME_PALETTE}; do
           [[ ${TTHEME_PALETTE[$k]%% *} == "$REPLY" ]] && { TTHEME_SPEC=$TTHEME_PALETTE[$k]; break }
         done
@@ -1703,7 +1706,9 @@ if __tt_active; then
     fi
     __tt_dir_sync
   }
-  autoload -Uz add-zsh-hook
+  autoload -Uz add-zsh-hook add-zle-hook-widget
+  zle -N __tt_typed
+  add-zle-hook-widget line-init __tt_typed
   add-zsh-hook chpwd __tt_chpwd
   add-zsh-hook precmd __tt_fresh
   if (( ! TTHEME_TMUX )); then

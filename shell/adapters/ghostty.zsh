@@ -28,7 +28,7 @@ __tt_shown() {
 }
 
 __tt_bg_cells() {
-  local fd saved resp="" line c v f
+  local REPLY resp line v f
   local -i px=2 py=2 fs=0 sc=2
   for f in ${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config; do
     [[ -r $f ]] || continue
@@ -41,16 +41,8 @@ __tt_bg_cells() {
       esac
     done
   done
-  exec {fd}<>/dev/tty 2>/dev/null || return 0
-  saved=$(stty -g <&$fd 2>/dev/null)
-  stty raw -echo min 0 time 3 <&$fd 2>/dev/null
-  printf '\e_Ga=t,f=24,s=1,v=1,i=1,q=2;AAAA\e\\\e_Ga=p,i=1,p=9,P=999998,Q=1,C=1,q=1\e\\\e_Ga=d,d=i,i=1,p=9,q=2\e\\\e[16t' >&$fd
-  while IFS= read -r -s -k 1 -t 1 -u $fd c 2>/dev/null; do
-    resp+=$c
-    [[ $resp == *'[6;'<1->';'<1->t ]] && break
-  done
-  stty "$saved" <&$fd 2>/dev/null
-  exec {fd}>&-
+  __tt_ask $'\e_Ga=t,f=24,s=1,v=1,i=1,q=2;AAAA\e\\\e_Ga=p,i=1,p=9,P=999998,Q=1,C=1,q=1\e\\\e_Ga=d,d=i,i=1,p=9,q=2\e\\\e[16t' || return 0
+  resp=$REPLY
   [[ $resp == *'[6;'<1->';'<1->t ]] || return 0
   [[ $resp == *$'\e_G'*';E'* ]] && bgrel=1
   resp=${${resp##*\[6;}%t}

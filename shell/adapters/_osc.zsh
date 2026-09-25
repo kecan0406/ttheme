@@ -75,32 +75,55 @@ __tt_pv_bg_close() { : }
 
 __tt_pv_bg_save() { : }
 
+zmodload zsh/system
+
+typeset -g TTHEME_TYPED=""
+
+__tt_ask() {
+  setopt localoptions extendedglob
+  local fd saved buf="" chunk seqs=$'\e[]_P][^\a\e]#(\a|\e\\\\)|\e\\[[0-?]#[ -/]#[@-~]|\e[^][_P]'
+  local -a match mbegin mend
+  REPLY=""
+  { exec {fd}<>/dev/tty } 2>/dev/null || return 1
+  saved=$(stty -g <&$fd 2>/dev/null && stty raw -echo min 0 time 3 <&$fd 2>/dev/null)
+  if [[ -z $saved ]]; then
+    exec {fd}>&-
+    return 1
+  fi
+  printf '%s\e[5n' "$1" >&$fd
+  while sysread -i $fd -s 4096 chunk 2>/dev/null; do
+    buf+=$chunk
+    [[ $buf == *$'\e[0n'* ]] && break
+    (( ${#buf} < 16384 )) || break
+  done
+  stty "$saved" <&$fd 2>/dev/null
+  exec {fd}>&-
+  while [[ $buf == (#b)([^$'\e']#)(${~seqs})(*) ]]; do
+    TTHEME_TYPED+=$match[1] REPLY+=$match[2] buf=$match[-1]
+  done
+  [[ $buf == $'\e'* ]] || TTHEME_TYPED+=$buf
+  REPLY=${REPLY%$'\e[0n'}
+}
+
+__tt_typed() {
+  [[ -n $TTHEME_TYPED ]] || return 0
+  zle -U -- "$TTHEME_TYPED"
+  TTHEME_TYPED=
+}
+
+__tt_start_bg() { __tt_query_bg }
+
 __tt_query_bg() {
-  local saved resp="" c fd
+  local resp
   REPLY=""
   if (( TTHEME_TMUX )); then
     REPLY=$(tmux show -qv @ttheme_bg 2>/dev/null)
     [[ $REPLY == \#* ]] && return 0
     REPLY=""
   fi
-  exec {fd}<>/dev/tty 2>/dev/null || return 1
-
-  saved=$(stty -g <&$fd 2>/dev/null)
-  if [[ -z $saved ]]; then
-    exec {fd}>&-
-    return 1
-  fi
-
-  stty raw -echo min 0 time 3 <&$fd 2>/dev/null
-  printf '\033]11;?\033\\' >&$fd
-  while IFS= read -r -k 1 -u $fd c 2>/dev/null; do
-    resp+=$c
-    [[ $resp == *$'\e\\' || $resp == *$'\a' ]] && break
-    (( ${#resp} < 64 )) || break
-  done
-  stty "$saved" <&$fd 2>/dev/null
-  exec {fd}>&-
-
+  __tt_ask $'\e]11;?\e\\' || return 1
+  resp=$REPLY
+  REPLY=""
   [[ $resp == *rgb:* ]] || return 1
   local -a parts=(${(s:/:)${${resp#*rgb:}%%[^0-9A-Fa-f/]*}})
   (( ${#parts} >= 3 )) || return 1

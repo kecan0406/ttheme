@@ -33,6 +33,7 @@ for f in shell/*.zsh shell/adapters/*.zsh; do
   zsh -n "$f"
 done
 zsh shell/check.zsh
+zsh tests/latency.zsh check
 '''
 
 [tasks."ghostty:check"]
@@ -156,6 +157,11 @@ description = "a throwaway home wired with this checkout and every palette, in i
 depends = ["build", "bin:build"]
 interactive = true
 run = "zsh tests/sandbox.zsh"
+
+[tasks.bench]
+description = "shell latency with and without ttheme, zsh-bench's four metrics against its thresholds, and with --against the working tree's layer against a commit's — `mise run bench [--against <ref>] [runs]`"
+depends = ["build"]
+run = "zsh tests/latency.zsh bench"
 
 [tasks.compat]
 description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv — `mise run compat [--update] [ghostty iterm2 wezterm kitty alacritty warp terminal-app…]`"
