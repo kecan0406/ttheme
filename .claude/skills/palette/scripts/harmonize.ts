@@ -198,7 +198,7 @@ function departures(doc: ThemeDoc, p: Palette): string[] {
   })
 }
 
-function colorsBlock(p: Palette): string {
+export function colorsBlock(p: Palette): string {
   const quote = (s: string) => `  "${s}",`
   return [
     '[colors]',

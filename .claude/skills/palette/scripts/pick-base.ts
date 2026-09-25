@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { argbFromHex, Hct } from '@material/material-color-utilities'
 import { deltaE } from './delta.ts'
-import { harmonizePalette, violations } from './harmonize.ts'
+import { colorsBlock, harmonizePalette, violations } from './harmonize.ts'
 
 type ThemeDoc = Parameters<typeof harmonizePalette>[0]
 type Palette = ReturnType<typeof harmonizePalette>
@@ -46,7 +46,8 @@ const GROUPS = [
 ]
 const COLLISION_WEIGHT = 4
 const SLOTS = ['cursor', 'foreground', 'background', 'selection', ...Array.from({ length: 16 }, (_, i) => `ansi${i}`)]
-const USAGE = 'usage: bun pick-base.ts themes/<name>.toml [--top N] [--schemes <dir>] [--include <name> ...]'
+const USAGE =
+  'usage: bun pick-base.ts themes/<name>.toml [--top N] [--schemes <dir>] [--include <name> ...] [--apply <scheme> [--codename <name>]]'
 
 const hct = (hex: string) => Hct.fromInt(argbFromHex(hex))
 const hueDiff = (a: number, b: number) => {
@@ -200,6 +201,8 @@ const { values, positionals } = (() => {
         top: { type: 'string', default: '10' },
         schemes: { type: 'string', default: join(tmpdir(), 'ttheme-schemes') },
         include: { type: 'string', multiple: true, default: [] },
+        apply: { type: 'string' },
+        codename: { type: 'string' },
       },
     })
   } catch (e) {
@@ -216,8 +219,31 @@ if (signature.length !== 3 || signature.some((s) => !SLOTS.includes(s)))
   fail(`${file}: meta.signature must name 3 of ${SLOTS.join(', ')}`)
 const seed = hct(read(theme.colors, signature[0] as string))
 const signatureAnsi = new Set(signature.filter((s) => s.startsWith('ansi')).map((s) => Number(s.slice(4))))
-const code = await codename(file, theme)
+const code = values.codename ?? (await codename(file, theme))
 const current = theme.meta.ansi_source?.split(' + ')[0]
+
+if (values.apply !== undefined) {
+  if (code === '<codename>')
+    fail(`${theme.meta.name}: no sibling names a codename for ${theme.meta.group}; pass --codename`)
+  const path = join(values.schemes, values.apply)
+  if (!(await Bun.file(path).exists())) await sync(values.schemes)
+  if (!(await Bun.file(path).exists())) fail(`${values.apply}: not in ${values.schemes}`)
+  const scheme = parseScheme(await Bun.file(path).text())
+  if (!scheme) fail(`${values.apply}: fewer than 16 palette entries`)
+  const draft = candidate(theme, scheme).colors
+  const source = await Bun.file(file).text()
+  const start = source.indexOf('[colors]')
+  if (start === -1) fail(`${file}: no [colors] section`)
+  const line = `ansi_source = "${values.apply} + ${code}"`
+  const head = source.slice(0, start)
+  const meta = /^ansi_source = .*$/m.test(head)
+    ? head.replace(/^ansi_source = .*$/m, line)
+    : head.replace(/^order = .*$/m, (order) => `${order}\n${line}`)
+  if (!meta.includes(line)) fail(`${file}: no ansi_source or order line to place ${line}`)
+  await Bun.write(file, meta + colorsBlock({ ...draft, selection: draft.selection_background }))
+  console.log(`${theme.meta.name}: ${line}, signature kept, rest from the scheme; harmonize it next`)
+  process.exit(0)
+}
 
 const corpus = await sync(values.schemes)
 const ranked: Ranked[] = []

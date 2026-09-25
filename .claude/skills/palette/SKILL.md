@@ -9,7 +9,7 @@ Every color in a character theme must be traceable: anchors are measured from of
 
 The envelope is modeled on illogical-impulse's Material You terminal theming: a dark near-neutral surface tinted by the seed color, text at a fixed light tone, and accents whose hues lean toward the seed while their lightness stays in a narrow band. Where Material's Fidelity scheme keeps a source color at its own tone in `primaryContainer`, ttheme keeps a dark identity color in `selection`.
 
-All scripts live in `.claude/skills/palette/scripts/` and run with `bun`. Scratch work (downloads, crops, drafts, anchors files, boards) goes in the scratchpad, never the repo.
+All scripts live in `.claude/skills/palette/scripts/` and run with `bun`; each one that needs arguments prints its usage when run without them, and this file documents every input format, so reading a script's source is never needed. Scratch work (downloads, crops, drafts, anchors files, boards) goes in the scratchpad, never the repo.
 
 ## 0. Batches
 
@@ -33,12 +33,14 @@ All scripts live in `.claude/skills/palette/scripts/` and run with `bun`. Scratc
 Work down this ladder and stop at the first source that gives a clean, evenly lit render of the anime's own design:
 
 1. The anime's official site character pages — often transparent PNGs of the design itself (Oregairu S2 at tbs.co.jp, Black Bullet at black-bullet.net).
-2. The series' Fandom wiki settei: `<Name>_(Anime).png`, `<Name>-design.jpg`, `<Name>_Anime_HQ.png`. List files with `curl -s -G 'https://<wiki>.fandom.com/api.php' --data-urlencode 'action=query' --data-urlencode 'format=json' --data-urlencode 'list=allimages' --data-urlencode 'aiprefix=<Name>' --data-urlencode 'ailimit=60' --data-urlencode 'aiprop=url|dimensions'`. `static.wikia.nocookie.net` needs a browser `User-Agent`, `Referer: https://<wiki>.fandom.com/`, `Sec-Fetch-Dest: image`, `Sec-Fetch-Mode: no-cors`, `Sec-Fetch-Site: cross-site` and the path `images/<md5[0]>/<md5[0:2]>/<File>/revision/latest/scale-to-width-down/1000?format=original` (build it from the file name's md5; the API's URL already carries `/revision/latest?cb=`). Episode stills (1920×1080) are not settei.
-3. Other wikis that host settei scans (Code Geass: geass.miraheze.org, files on `static.wikitide.net`).
+2. The series' Fandom wiki settei: `<Name>_(Anime).png`, `<Name>-design.jpg`, `<Name>_Anime_HQ.png`. `bun settei.ts list <wiki> <prefix> [...]` lists the files starting with each prefix (try the given name, the family name and the nickname), hiding GIFs, images under 400 px and 16:9 frames — episode stills (1920×1080) are not settei. `bun settei.ts get <wiki> <file> [...] --out <dir>` downloads each through the headers `static.wikia.nocookie.net` needs, at most 1000 px wide, rejects anything that is not a PNG, JPEG or WebP (a Cloudflare challenge arrives as HTML), says whether a PNG has alpha, and writes a copy at most 800 px on its long side into `<dir>/sm/`.
+3. Other wikis that host settei scans (Code Geass: geass.miraheze.org, files on `static.wikitide.net`) — `settei.ts` takes the host in place of a fandom subdomain.
 4. Anime stills or key visuals only when the character's skin measures exactly the settei skin — then the scene lighting did not move the colors. Reject graded stills.
 5. safebooru.donmai.us `posts.json?tags=<tag> official_art` (two tags anonymously), keeping posts whose `tag_string` has `solo`. Manga and light-novel covers are duotone-graded — reject them.
 
-AniList and Jikan images are manga color-page crops: use them to confirm a cast list only. Check every download with `file` — a Cloudflare challenge arrives as HTML. Use one production's design for the whole cast and say which.
+AniList and Jikan images are manga color-page crops: use them to confirm a cast list only. Check every download that did not come through `settei.ts` with `file`. Use one production's design for the whole cast and say which.
+
+Look at images through the `sm/` copies (`sips -Z 800` for any other download), never at full size: an image stays in the context for the rest of the session and costs tokens by its pixel count. Read coordinates off the copy and scale them by the original's width over the copy's before passing `--crop` to `flats.ts`, which measures the original.
 
 ## 3. Measure
 
@@ -73,6 +75,7 @@ Sample the whole cast in one pass and compare anchors across it before assigning
 - Write the anchors into a draft toml (any scheme's values elsewhere) and run `bun pick-base.ts <draft>.toml [--include <name>]`. It harmonizes the draft against every dark scheme in mbadolato/iTerm2-Color-Schemes and ranks them by how far ANSI 1–6/9–14 drift from their function hues (the corpus medians: red 22, green 143, yellow 90, blue 253, magenta 332, cyan 200) and by the closest pair of function colors. Choose among the top for mood.
 - A seed far from the function hues drifts with any scheme (the rotation cap is 60°); the ranking picks the least bad, it cannot remove it.
 - `ansi_source = "<Scheme> + <group codename>"` — one codename per group. It records what the harmonizer was fed.
+- `bun pick-base.ts <draft>.toml --apply "<Scheme>" [--codename <name>]` writes that feed: the scheme's colors with the signature slots kept, and the `ansi_source` line (the codename comes from a sibling in the group; the first theme of a new group passes `--codename`). Harmonize right after it, once — applying and harmonizing reproduces a shipped theme byte for byte.
 
 ## 7. Harmonize
 
@@ -95,7 +98,7 @@ Sample the whole cast in one pass and compare anchors across it before assigning
 ## 9. Review
 
 - `bun audit.ts --anchors <file> themes/<a>.toml [...]` prints the owner review list: signature triplets closer than ΔE2000 13 to a castmate, cursors closer than 3 to any other series' cursor, cursor/selection departures above ΔE2000 10, hue shifts above 12°, and every anchors `note`.
-- `bun board.ts --anchors <file> --out <board.html> [--variants <variants.json>] [--art <theme>=<image> ...] [--title "<Series> palettes"] themes/<a>.toml [...]` renders the series board — cast strip, per-character art and anchors beside the palette card and a terminal mock, measured → final table, a two-at-a-time chooser for the characters in `--variants` (`{ "<theme>": { "<key>": { "label", "colors", "signature" } } }`), and a sign-off per series. Publish it as a private Artifact with `capabilities: {db: {}}` (load the artifact-design and artifact-capabilities skills first). The owner signs off each series (`signoff/<series-slug>`) and, for each flagged character, picks between measured variants — other measured parts or slots, never invented colors — or "neither" (`picks/<theme>`). Read them back with ArtifactData, apply them, and re-run the audit.
+- `bun board.ts --anchors <file> --out <board.html> [--variants <variants.json>] [--art <theme>=<image> ...] [--title "<Series> palettes"] themes/<a>.toml [...]` renders the series board — cast strip, per-character art and anchors beside the palette card and a terminal mock, measured → final table, a two-at-a-time chooser for the characters in `--variants` (`{ "<theme>": { "<key>": { "label", "colors", "signature" } } }`, where `colors` is a whole harmonized `[colors]` table as JSON — `background`, `foreground`, `cursor`, `selection_background` and 16 `ansi` — made by harmonizing a scratch copy of the theme with the variant's anchors, and `signature` defaults to the theme's), and a sign-off per series. Publish it as a private Artifact with `capabilities: {db: {}}` (load the artifact-design and artifact-capabilities skills first). The owner signs off each series (`signoff/<series-slug>`) and, for each flagged character, picks between measured variants — other measured parts or slots, never invented colors — or "neither" (`picks/<theme>`). Read them back with ArtifactData, apply them, and re-run the audit.
 - A vision model is not the judge: blind matching measures whether palettes can be told apart, not whether each is faithful (a wrong but unique palette passes).
 
 ## 10. Record
