@@ -84,37 +84,51 @@ through `ttheme update` without waiting for a release.
 
 ### Markets
 
-Anyone can publish palettes from a GitHub repository. `ttheme market add alice`
-adds `github.com/alice/ttheme-palettes`, and its palettes join the catalog as
-`<palette>@alice`, next to the palette each one varies:
+Anyone can publish palettes from a GitHub repository. A market is named
+`<owner>@<name>` — its repository's owner and the name its index gives — and
+sits below the series in `ttheme preview` and `ttheme browse`, past a line:
+
+```
+▾ Evangelion
+    rei
+    asuka
+── markets ──────────
+▾ alice@pastel
+    dusk
+    rei
+```
 
 ```sh
-ttheme market search            # repositories with the ttheme-market topic
-ttheme market add alice         # or alice/<repo>, or a folder
-ttheme add dusk@alice
+ttheme market search                  # repositories with the ttheme-market topic
+ttheme market add alice/ttheme-pastel # or a folder
+ttheme add alice@pastel/dusk
 ```
 
 Nobody reviews a market. Its palettes are colors and post numbers, never code,
 and the contrast gate's numbers are shown for them but never enforced — only
 the official catalog is held to the gate. `ttheme update` refreshes every
-market; `ttheme market remove alice` drops one, and the palettes you installed
-from it keep working. The official catalog is a market too (`official`).
-[The markets page](https://kecan0406.github.io/ttheme/markets) lists the public ones.
+market; `ttheme market remove alice@pastel` drops one, and the palettes you
+installed from it keep working. The official catalog is a market too
+(`official`). [The markets page](https://kecan0406.github.io/ttheme/markets)
+lists the public ones.
 
 ### Your own palettes
 
-`ttheme new dusk --from madoka` makes `dusk@<you>`, named after your GitHub
-handle, in your local market at `~/.config/ttheme/market` (the first `new`
-creates it) and installs it. `ttheme edit` opens it in `$EDITOR`; `ttheme check
---fix` suggests colors that pass the gate.
+`ttheme new rei --from rei` makes `<you>@<market>/rei`, named after your GitHub
+handle and a market name the first `new` asks for, in
+`~/.config/ttheme/market/<market>`, and installs it. `ttheme edit rei` opens it
+in `$EDITOR`; `ttheme check --fix` suggests colors that pass the gate.
 
-The local market is already a repository layout: `palettes/*.toml`, the
+A local market is already a repository layout: `palettes/*.toml`, the
 `ttheme-market.json` index and a workflow that rebuilds the index on every
-push. Publishing it is two commands, which `ttheme market init` prints:
+push. `ttheme market init <name>` makes one and prints the commands that
+publish it:
 
 ```sh
-gh repo create <you>/ttheme-palettes --public --source ~/.config/ttheme/market --push
-gh repo edit <you>/ttheme-palettes --add-topic ttheme-market
+cd ~/.config/ttheme/market/<name>
+git init -b main && git add -A && git commit -m "<you>@<name>"
+gh repo create <you>/ttheme-<name> --public --source . --push
+gh repo edit <you>/ttheme-<name> --add-topic ttheme-market
 ```
 
 `ttheme share <palette>` prints a code — `tt1:…`, about 200 characters — that
@@ -132,7 +146,7 @@ from the booru the way `find` does.
 | `ttheme default <palette>` | the palette new tabs open with |
 | `ttheme pin` / `unpin` | a palette for this directory — `cd` in repaints, `cd` out restores |
 | `ttheme browse` | pick palettes from the catalog |
-| `ttheme market add <owner>` | add someone's market — `ttheme market` lists yours; `search`, `remove` too |
+| `ttheme market add <owner/repo>` | add someone's market — `ttheme market` lists yours; `search`, `remove` too |
 | `ttheme new <name> --from <palette>` | make a palette of your own; `edit`, `check`, `share` follow |
 | `ttheme on` / `off` | wear the default again / give the terminal its own colors back |
 | `ttheme config` | settings in `$EDITOR` |

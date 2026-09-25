@@ -13,7 +13,7 @@ import { palettesZsh } from './emit/shell.ts'
 import { weztermModule } from './emit/wezterm.ts'
 import { wtFragment } from './emit/windows-terminal.ts'
 import { installedPath } from './sources.ts'
-import { ownerOf, type Theme } from './theme.ts'
+import { marketOf, type Theme } from './theme.ts'
 import {
   alacrittyColors,
   ghosttyBlock,
@@ -151,12 +151,12 @@ export function resolve(catalog: Manifest, names: string[]): PaletteEntry[] {
   const known = new Map(catalog.palettes.map((p) => [p.name, p]))
   const missing = names.filter((n) => !known.has(n))
   if (missing.length > 0) {
-    const owners = [...new Set(missing.flatMap((n) => ownerOf(n) ?? []))].filter(
-      (owner) => !catalog.palettes.some((p) => ownerOf(p.name) === owner),
+    const markets = [...new Set(missing.flatMap((n) => marketOf(n) ?? []))].filter(
+      (market) => !catalog.palettes.some((p) => marketOf(p.name) === market),
     )
     const hint =
-      owners.length > 0
-        ? owners.map((owner) => `\`ttheme market add ${owner}\``).join(', ')
+      markets.length > 0
+        ? `add ${markets.join(', ')} first — \`ttheme market search\` finds a market's repository`
         : nearest(listed(catalog.palettes), missing)
     throw new Error(`not in any market: ${missing.join(', ')} — ${hint}`)
   }

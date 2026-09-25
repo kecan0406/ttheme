@@ -5,15 +5,14 @@ import { test } from 'node:test'
 
 import { OFFICIAL, parseSource, shownSource } from './sources.ts'
 
-test('a market is named by a handle, a repository, a path or official', () => {
-  assert.equal(parseSource('Alice'), 'alice/ttheme-palettes')
-  assert.equal(parseSource('alice/anime'), 'alice/anime')
+test('a market is added by its repository, a path or official', () => {
+  assert.equal(parseSource('Alice/anime'), 'alice/anime')
   assert.equal(parseSource('https://github.com/alice/anime.git'), 'alice/anime')
   assert.equal(parseSource('./mine', '/work'), '/work/mine')
   assert.equal(parseSource('/srv/market'), '/srv/market')
   assert.equal(parseSource('~/market'), join(homedir(), 'market'))
   assert.equal(parseSource('official'), OFFICIAL)
-  for (const bad of ['a/b/c', '-alice', 'al ice', 'alice/../x']) {
+  for (const bad of ['alice', 'a/b/c', '-alice/x', 'al ice/x', 'alice/../x']) {
     assert.throws(() => parseSource(bad), /is not a market/, bad)
   }
 })

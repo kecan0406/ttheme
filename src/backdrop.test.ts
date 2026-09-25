@@ -336,10 +336,10 @@ test('a shared framing written for a picture reads back the same, and the defaul
   }
 })
 
-test("a market's palette keeps its pictures in files named with -- for the @", () => {
+test("a market's palette keeps its pictures in files named with -- for the @ and the /", () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-slash-'))
   const image = { width: 4, height: 4, data: new Uint8Array(64).fill(90) }
-  const colors = { ...KAGAMI, name: 'dusk@kec' }
+  const colors = { ...KAGAMI, name: 'kec@dust/rei' }
   installBackdrop(
     configHome,
     colors,
@@ -349,7 +349,7 @@ test("a market's palette keeps its pictures in files named with -- for the @", (
     { width: 40, height: 20 },
   )
   const files = readdirSync(backgroundsDir(configHome))
-  assert.ok(files.includes('dusk--kec.conf'))
-  assert.ok(files.some((f) => /^dusk--kec\.[0-9a-f]{8}\.png$/.test(f)))
-  assert.ok(readBackdrop(backgroundsDir(configHome), 'dusk@kec', configHome))
+  assert.ok(files.includes('kec--dust--rei.conf'))
+  assert.ok(files.some((f) => /^kec--dust--rei\.[0-9a-f]{8}\.png$/.test(f)))
+  assert.ok(readBackdrop(backgroundsDir(configHome), 'kec@dust/rei', configHome))
 })

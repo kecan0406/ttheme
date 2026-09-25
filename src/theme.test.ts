@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { nameProblem, ORIGINAL, ownerOf, readBooruSites, readTheme, slugOf, stem, textProblem } from './theme.ts'
+import { marketOf, nameProblem, ORIGINAL, readBooruSites, readTheme, slugOf, stem, textProblem } from './theme.ts'
 
 test('booru_sites renames the tag per site, as one tag or a list, and an empty list skips the site', () => {
   assert.deepEqual(
@@ -23,16 +23,28 @@ test('booru_sites refuses an unknown site, a tag with a space, a list where the 
   assert.throws(() => readBooruSites('x.toml', { yande: 'y' }, undefined), /needs meta.booru/)
 })
 
-test('a palette name is a slug, or a slug and the GitHub handle of its market', () => {
+test('a palette name is a slug, or a market and a slug', () => {
   assert.equal(nameProblem('madoka'), undefined)
-  assert.equal(nameProblem('dusk-2@kecan0406'), undefined)
-  for (const bad of ['Madoka', '-madoka', 'a--b', 'a@b@c', 'a/b', '../x', 'a b', 'x@', `x@${'a'.repeat(40)}`, 'a"b']) {
+  assert.equal(nameProblem('kecan0406@dust/rei-2'), undefined)
+  for (const bad of [
+    'Madoka',
+    '-madoka',
+    'a--b',
+    'a/b',
+    'a@b',
+    'a@b/c/d',
+    '../x',
+    'a b',
+    `${'a'.repeat(40)}@b/c`,
+    'a"b',
+  ]) {
     assert.notEqual(nameProblem(bad), undefined, bad)
   }
-  assert.equal(stem('dusk@kecan0406'), 'dusk--kecan0406')
-  assert.equal(ownerOf('dusk@kecan0406'), 'kecan0406')
-  assert.equal(ownerOf('madoka'), undefined)
-  assert.equal(slugOf('dusk@kecan0406'), 'dusk')
+  assert.equal(stem('kecan0406@dust/rei'), 'kecan0406--dust--rei')
+  assert.equal(marketOf('kecan0406@dust/rei'), 'kecan0406@dust')
+  assert.equal(marketOf('madoka'), undefined)
+  assert.equal(slugOf('kecan0406@dust/rei'), 'rei')
+  assert.equal(slugOf('madoka'), 'madoka')
 })
 
 test('free text that would break a config line or zsh quoting is refused', () => {

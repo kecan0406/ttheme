@@ -102,17 +102,17 @@ export const VERB_SPECS: VerbSpec[] = [
     about: 'the markets you added — add, remove and search them; init makes one of your own',
     actions: [
       ['(none)', 'list the markets you added, with how many palettes each holds'],
-      ['add <source>', 'add one: a GitHub handle (alice/ttheme-palettes), owner/repo, a folder, or official'],
-      ['remove <name>', 'drop one — the palettes you installed from it keep working'],
+      ['add <source>', 'add one: a repository (alice/ttheme-pastel), a folder, or official'],
+      ['remove <market>', 'drop one by its name (alice@pastel) — the palettes you installed from it keep working'],
       ['search [query]', 'repositories on GitHub with the ttheme-market topic'],
-      ['init [folder]', 'make a market of your own, ~/.config/ttheme/market when no folder is given'],
+      ['init [name]', 'make a market of your own, <you>@<name>, in ~/.config/ttheme/market/<name> (or give a folder)'],
     ],
     section: 'catalog',
   },
   {
     name: 'new',
     args: ['<name>'],
-    about: 'make a palette of your own, <name>@<you>, in your local market — installed at once',
+    about: 'make a palette of your own, <you>@<market>/<name>, in your local market — installed at once',
     section: 'own',
     flags: {
       from: { type: 'string', value: '<palette>', about: 'the palette to start from — the default one when left out' },
@@ -199,8 +199,8 @@ const EXAMPLES: [string, string][] = [
   ['ttheme add homura madoka', 'install two palettes'],
   ['ttheme use homura', 'paint this tab with one'],
   ['ttheme list --json madoka', 'the madoka series as JSON'],
-  ['ttheme market add alice', "palettes from alice's market — ttheme add dusk@alice"],
-  ['ttheme new dusk --from madoka', 'your own palette, dusk@<you>, to edit and share'],
+  ['ttheme market add alice/ttheme-pastel', "alice's market, alice@pastel — ttheme add alice@pastel/dusk"],
+  ['ttheme new rei --from rei', 'your own rei, <you>@<market>/rei, to edit and share'],
 ]
 
 export function helpText(all: boolean, shell = false): string {

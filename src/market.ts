@@ -20,7 +20,7 @@ import {
   writeInstalled,
 } from './palettes.ts'
 import { bringPictures, since } from './pictures.ts'
-import { installedPath, marketName, marketSources, shownSource } from './sources.ts'
+import { installedPath, marketSources, shownSource } from './sources.ts'
 import { alphabetical } from './theme.ts'
 import type { InitTerminal } from './wiring.ts'
 
@@ -190,13 +190,7 @@ export async function runUpdate(): Promise<void> {
     try {
       console.log(`  ${await refresh(home, source)}`)
     } catch (error) {
-      const name = (() => {
-        try {
-          return marketName(source)
-        } catch {
-          return shownSource(source)
-        }
-      })()
+      const name = shownSource(source)
       console.log(`  ${name}: ${(error as Error).message} — kept the copy from the last update`)
     }
   }

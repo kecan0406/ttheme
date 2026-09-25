@@ -4,11 +4,11 @@ import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure, RULES } from './contrast.ts'
 import { type PaletteEntry, paletteEntry, toTheme } from './emit/manifest.ts'
-import { isLocal, localOwner, marketSources } from './sources.ts'
+import { type Identity, isLocal, localIdentity, marketId, marketSources } from './sources.ts'
 import {
   type Group,
+  marketOf,
   ORIGINAL,
-  ownerOf,
   type Place,
   POSITIONS,
   readTheme,
@@ -38,9 +38,9 @@ export interface Draft {
   pictures?: SharedPicture[]
 }
 
-export interface LocalMarket {
+export interface LocalMarket extends Identity {
   dir: string
-  owner: string
+  id: string
 }
 
 export function localMarkets(configHome: string, warn = true): LocalMarket[] {
@@ -48,7 +48,8 @@ export function localMarkets(configHome: string, warn = true): LocalMarket[] {
     .filter(isLocal)
     .flatMap((dir) => {
       try {
-        return [{ dir, owner: localOwner(dir) }]
+        const identity = localIdentity(dir)
+        return [{ dir, ...identity, id: marketId(identity) }]
       } catch (error) {
         if (warn) {
           process.stderr.write(`ttheme: skipping the market at ${dir} — ${(error as Error).message}\n`)
@@ -63,15 +64,15 @@ export function palettesDir(dir: string): string {
 }
 
 export function ownPath(configHome: string, name: string): string {
-  const owner = ownerOf(name)
-  if (!owner) {
-    throw new Error(`${name} is an official palette — yours are named <palette>@<you>`)
-  }
-  const market = localMarkets(configHome, false).find((m) => m.owner === owner)
+  const market = marketOf(name)
   if (!market) {
-    throw new Error(`${name} is not in a local market — \`ttheme market add <dir>\` adds the folder that holds it`)
+    throw new Error(`${name} is an official palette — yours are named <you>@<market>/<palette>`)
   }
-  return join(palettesDir(market.dir), `${slugOf(name)}.toml`)
+  const local = localMarkets(configHome, false).find((m) => m.id === market)
+  if (!local) {
+    throw new Error(`${market} is not a local market — \`ttheme market add <dir>\` adds the folder that holds it`)
+  }
+  return join(palettesDir(local.dir), `${slugOf(name)}.toml`)
 }
 
 export function placeFor(name: string, entries: PaletteEntry[]): Place {
@@ -83,24 +84,26 @@ export function placeFor(name: string, entries: PaletteEntry[]): Place {
     }
   }
   const bases = new Map(
-    entries.filter((e) => !e.default && !ownerOf(e.name)).map((e) => [e.name, { group: e.group, order: e.order }]),
+    entries.filter((e) => !e.default && !marketOf(e.name)).map((e) => [e.name, { group: e.group, order: e.order }]),
   )
   return { name, groups, bases, open: true }
 }
 
 export function readOwnText(name: string, source: string, entries: PaletteEntry[]): Theme {
   const slug = slugOf(name)
-  return { ...readTheme(`${slug}.toml`, source, placeFor(slug, entries)), name }
+  const { native: _, ...theme } = readTheme(`${slug}.toml`, source, placeFor(slug, entries))
+  const market = marketOf(name)
+  return { ...theme, name, ...(market ? { group: market, lead: false } : {}) }
 }
 
-export function readMarketDir(dir: string, owner: string, entries: PaletteEntry[], warn = true): PaletteEntry[] {
+export function readMarketDir(dir: string, id: string, entries: PaletteEntry[], warn = true): PaletteEntry[] {
   const folder = palettesDir(dir)
   return (existsSync(folder) ? readdirSync(folder).sort() : [])
     .filter((file) => file.endsWith('.toml'))
     .flatMap((file) => {
       try {
         const text = readFileSync(join(folder, file), 'utf8')
-        return [paletteEntry(readOwnText(`${basename(file, '.toml')}@${owner}`, text, entries))]
+        return [paletteEntry(readOwnText(`${id}/${basename(file, '.toml')}`, text, entries))]
       } catch (error) {
         if (warn) {
           process.stderr.write(`ttheme: skipping ${join(folder, file)} — ${(error as Error).message}\n`)
@@ -111,7 +114,7 @@ export function readMarketDir(dir: string, owner: string, entries: PaletteEntry[
 }
 
 export function readLocal(configHome: string, entries: PaletteEntry[], warn = true): PaletteEntry[] {
-  return localMarkets(configHome, warn).flatMap(({ dir, owner }) => readMarketDir(dir, owner, entries, warn))
+  return localMarkets(configHome, warn).flatMap(({ dir, id }) => readMarketDir(dir, id, entries, warn))
 }
 
 export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string): Draft {

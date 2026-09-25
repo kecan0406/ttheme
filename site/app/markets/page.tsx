@@ -23,13 +23,13 @@ export default async function Markets() {
         </nav>
         <h1 className="text-lg font-bold">markets</h1>
         <p className="max-w-[64ch] text-muted-foreground">
-          A market is a GitHub repository of palettes. Add one and its palettes join the catalog as{' '}
-          <code className="text-foreground">name@owner</code>. Nobody reviews them: each one is measured against the
-          contrast gate and shown, never refused.
+          A market is a GitHub repository of palettes, named <code className="text-foreground">owner@market</code>. Add
+          one and it joins the catalog below the series. Nobody reviews them: each one is measured against the contrast
+          gate and shown, never refused.
         </p>
         <div className="grid max-w-[520px] gap-1.5">
           <CopyCommand command="ttheme market search" />
-          <CopyCommand command="ttheme market init" />
+          <CopyCommand command="ttheme market init <name>" />
         </div>
       </header>
 
@@ -44,7 +44,7 @@ export default async function Markets() {
             <li key={m.repo} className="grid gap-2.5 rounded-[3px] border bg-card p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <a href={`https://github.com/${m.repo}`} className="font-bold transition-colors hover:text-primary">
-                  {m.repo}
+                  {m.id}
                 </a>
                 <span className="text-xs text-muted-foreground">
                   {m.palettes.length} palette{m.palettes.length === 1 ? '' : 's'} · ★{m.stars}

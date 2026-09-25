@@ -11,7 +11,9 @@ import {
   parseCatalog,
   parseIndex,
   REGISTRY_URL,
+  readCachedIndex,
   readCatalog,
+  remoteId,
   writeCatalog,
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
@@ -21,21 +23,20 @@ import { configHome, type Installed, readInstalled, sync, writeInstalled } from 
 import {
   cachePath,
   defaultLocal,
+  type Identity,
   INDEX,
   isLocal,
   isRemote,
-  localOwner,
-  marketName,
+  localIdentity,
+  marketId,
   marketsOf,
   OFFICIAL,
   parseSource,
-  REPO,
   rawUrl,
-  remoteOwner,
   shownSource,
   TOPIC,
 } from './sources.ts'
-import { ownerOf, type Theme } from './theme.ts'
+import { marketOf, nameProblem, type Theme } from './theme.ts'
 
 const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const ACTIONS = ['add', 'remove', 'search', 'init']
@@ -71,7 +72,7 @@ export async function handle(home: string, state: Installed): Promise<string> {
       )
     }
     const typed = await p.text({
-      message: 'your GitHub handle — your palettes are named <palette>@<handle>',
+      message: 'your GitHub handle — your palettes are named <handle>@<market>/<palette>',
       validate: (value) =>
         HANDLE.test((value ?? '').toLowerCase()) && (value ?? '').length <= 39
           ? undefined
@@ -83,7 +84,7 @@ export async function handle(home: string, state: Installed): Promise<string> {
     author = typed.toLowerCase()
   }
   writeInstalled(home, { ...state, author })
-  console.log(`your palettes are named <palette>@${author}`)
+  console.log(`your palettes are named ${author}@<market>/<palette>`)
   return author
 }
 
@@ -91,16 +92,27 @@ function counted(n: number): string {
   return `${n} palette${n === 1 ? '' : 's'}`
 }
 
-function nameOf(source: string): string | undefined {
+function idOf(home: string, source: string): string {
+  if (source === OFFICIAL) {
+    return OFFICIAL
+  }
+  return isLocal(source) ? marketId(localIdentity(source)) : remoteId(source, readCachedIndex(home, source))
+}
+
+function nameOf(home: string, source: string): string | undefined {
   try {
-    return marketName(source)
+    return idOf(home, source)
   } catch {
     return undefined
   }
 }
 
+function marketOfPalette(name: string): string {
+  return marketOf(name) ?? OFFICIAL
+}
+
 function official(home: string): PaletteEntry[] {
-  return readCatalog(home).palettes.filter((e) => ownerOf(e.name) === undefined)
+  return readCatalog(home).palettes.filter((e) => marketOf(e.name) === undefined)
 }
 
 function officialFor(home: string): PaletteEntry[] {
@@ -122,7 +134,7 @@ async function fetchIndex(source: string): Promise<MarketIndex> {
 function register(home: string, source: string, name: string): string[] {
   const state = readInstalled(home)
   const sources = marketsOf(state.markets)
-  const taken = sources.find((s) => s !== source && nameOf(s) === name)
+  const taken = sources.find((s) => s !== source && nameOf(home, s) === name)
   if (taken) {
     throw new Error(
       `${name} already names the market at ${shownSource(taken)} — \`ttheme market remove ${name}\` first`,
@@ -149,31 +161,32 @@ async function addMarket(arg: string): Promise<void> {
     return
   }
   if (isLocal(source)) {
-    const owner = localOwner(source)
-    register(home, source, owner)
-    const count = readMarketDir(source, owner, official(home)).length
-    console.log(`added ${owner} · ${source} — ${counted(count)}, read in place`)
+    const id = marketId(localIdentity(source))
+    register(home, source, id)
+    const count = readMarketDir(source, id, official(home)).length
+    console.log(`added ${id} · ${shownSource(source)} — ${counted(count)}, read in place`)
     console.log('\n`ttheme browse` picks them · `ttheme market build` there writes the index others fetch')
     return
   }
   const index = await fetchIndex(source)
-  const owner = remoteOwner(source)
-  register(home, source, owner)
+  const id = remoteId(source, index)
+  register(home, source, id)
   mkdirSync(join(home, 'ttheme', 'markets'), { recursive: true })
   writeAtomic(cachePath(home, source), `${JSON.stringify(index, null, 2)}\n`)
-  console.log(`added ${owner} · ${shownSource(source)} — ${counted(index.palettes.length)}`)
-  console.log(`\n\`ttheme browse\` picks them, or \`ttheme add <palette>@${owner}\``)
+  console.log(`added ${id} · ${shownSource(source)} — ${counted(index.palettes.length)}`)
+  console.log(`\n\`ttheme browse\` picks them, or \`ttheme add ${id}/<palette>\``)
 }
 
 function removeMarket(name: string): void {
   const home = configHome()
   const state = readInstalled(home)
   const sources = marketsOf(state.markets)
-  const source = sources.find((s) => nameOf(s) === name) ?? sources.find((s) => s === parseSourceOrNot(name))
+  const source = sources.find((s) => nameOf(home, s) === name) ?? sources.find((s) => s === parseSourceOrNot(name))
   if (!source) {
     throw new Error(`no market named ${name} — \`ttheme market\` lists them`)
   }
-  const kept = state.palettes.filter((n) => (ownerOf(n) ?? OFFICIAL) === nameOf(source))
+  const id = nameOf(home, source)
+  const kept = state.palettes.filter((n) => marketOfPalette(n) === id)
   const next = { ...state, markets: sources.filter((s) => s !== source) }
   writeInstalled(home, next)
   if (source === OFFICIAL) {
@@ -182,7 +195,7 @@ function removeMarket(name: string): void {
     rmSync(cachePath(home, source), { force: true })
   }
   sync(home, readCatalog(home), next)
-  console.log(`removed ${name} · ${shownSource(source)}`)
+  console.log(`removed ${id ?? name} · ${shownSource(source)}`)
   if (kept.length > 0) {
     console.log(`${counted(kept.length)} installed from it keep working — \`ttheme remove\` drops them`)
   }
@@ -202,9 +215,9 @@ function countOf(home: string, source: string): number | undefined {
       return listed(parseCatalog(readFileSync(catalogPath(home), 'utf8')).palettes).length
     }
     if (isLocal(source)) {
-      return readMarketDir(source, localOwner(source), official(home), false).length
+      return readMarketDir(source, idOf(home, source), official(home), false).length
     }
-    return parseIndex(readFileSync(cachePath(home, source), 'utf8')).palettes.length
+    return readCachedIndex(home, source).palettes.length
   } catch {
     return undefined
   }
@@ -219,9 +232,9 @@ function listMarkets(): void {
     return
   }
   const rows = sources.map((source) => {
-    const name = nameOf(source) ?? '?'
+    const name = nameOf(home, source) ?? '?'
     const count = countOf(home, source)
-    const installed = state.palettes.filter((n) => (ownerOf(n) ?? OFFICIAL) === name).length
+    const installed = state.palettes.filter((n) => marketOfPalette(n) === name).length
     return {
       name,
       where: shownSource(source),
@@ -272,7 +285,7 @@ async function searchMarkets(query: string | undefined): Promise<void> {
   const rows = items.map((r) => {
     const owner = r.owner.login.toLowerCase()
     return {
-      arg: r.name === REPO ? owner : `${owner}/${r.name}`,
+      arg: `${owner}/${r.name}`,
       added: added.has(`${owner}/${r.name}`),
       stars: `★${r.stargazers_count}`,
       about: r.description ?? '',
@@ -302,28 +315,49 @@ jobs:
       - uses: kecan0406/ttheme/market@v1
 `
 
-function scaffold(dir: string, owner: string): void {
+function repoFor({ name }: Identity): string {
+  return `ttheme-${name}`
+}
+
+function scaffold(dir: string, identity: Identity): void {
   mkdirSync(palettesDir(dir), { recursive: true })
   mkdirSync(join(dir, '.github', 'workflows'), { recursive: true })
-  writeIndex(dir, owner, [])
+  writeIndex(dir, identity, [])
   writeAtomic(join(dir, '.github', 'workflows', 'ttheme.yml'), WORKFLOW)
   writeAtomic(
     join(dir, 'README.md'),
-    `# ${owner}'s ttheme palettes\n\nPalettes for [ttheme](https://github.com/kecan0406/ttheme):\n\n\`\`\`sh\nttheme market add ${owner}\nttheme browse\n\`\`\`\n`,
+    `# ${marketId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) market:\n\n\`\`\`sh\nttheme market add ${identity.owner}/${repoFor(identity)}\nttheme browse\n\`\`\`\n`,
   )
 }
 
-function writeIndex(dir: string, owner: string, palettes: PaletteEntry[]): void {
+function writeIndex(dir: string, { owner, name }: Identity, palettes: PaletteEntry[]): void {
   const { version, gate, placement } = emptyManifest()
-  const index: MarketIndex = { version, gate, placement, owner, palettes }
+  const index: MarketIndex = { version, gate, placement, owner, name, palettes }
   writeAtomic(join(dir, INDEX), `${JSON.stringify(index, null, 2)}\n`)
+}
+
+function nameProblemOf(name: string): string | undefined {
+  return nameProblem(`x@${name}/x`) ? 'takes lowercase letters, digits and single hyphens' : undefined
+}
+
+async function askName(): Promise<string> {
+  if (!tty()) {
+    throw new Error('name the market: ttheme market init <name>, or --in <name> on new')
+  }
+  const typed = await p.text({
+    message: "your market's name — its palettes are <you>@<name>/<palette>",
+    validate: (value) => nameProblemOf((value ?? '').toLowerCase()),
+  })
+  if (p.isCancel(typed)) {
+    throw new Error('no market name given')
+  }
+  return typed.toLowerCase()
 }
 
 export async function ensureLocal(home: string, into?: string): Promise<LocalMarket> {
   const locals = localMarkets(home)
   if (into) {
-    const dir = parseSource(into)
-    const hit = locals.find((m) => m.dir === dir || m.owner === into)
+    const hit = locals.find((m) => m.name === into || m.id === into || m.dir === parseSourceOrNot(into))
     if (!hit) {
       throw new Error(`${into} is not one of your local markets — \`ttheme market init ${into}\` makes it one`)
     }
@@ -334,44 +368,60 @@ export async function ensureLocal(home: string, into?: string): Promise<LocalMar
     return only
   }
   if (only) {
-    throw new Error(`you have ${locals.length} local markets — --in names one: ${locals.map((m) => m.dir).join(', ')}`)
+    throw new Error(`you have ${locals.length} local markets — --in names one: ${locals.map((m) => m.name).join(', ')}`)
   }
-  return initLocal(home, defaultLocal(home))
+  const name = await askName()
+  return initLocal(home, defaultLocal(home, name), name)
 }
 
-async function initLocal(home: string, dir: string): Promise<LocalMarket> {
+async function initLocal(home: string, dir: string, name: string): Promise<LocalMarket> {
   const fresh = !existsSync(join(dir, INDEX))
-  const owner = fresh ? await handle(home, readInstalled(home)) : localOwner(dir)
+  let identity: Identity
   if (fresh) {
+    const problem = nameProblemOf(name)
+    if (problem) {
+      throw new Error(`the market name ${name} ${problem}`)
+    }
     if (existsSync(dir) && readdirSync(dir).length > 0) {
       throw new Error(`${dir} is not empty — pick a new folder for the market`)
     }
-    scaffold(dir, owner)
+    identity = { owner: await handle(home, readInstalled(home)), name }
+    scaffold(dir, identity)
+  } else {
+    identity = localIdentity(dir)
   }
-  register(home, dir, owner)
-  console.log(`${fresh ? 'made' : 'added'} your market ${owner} · ${dir}`)
-  return { dir, owner }
+  const id = marketId(identity)
+  register(home, dir, id)
+  console.log(`${fresh ? 'made' : 'added'} your market ${id} · ${shownSource(dir)}`)
+  return { dir, ...identity, id }
+}
+
+function pathLike(arg: string): boolean {
+  return arg.startsWith('.') || arg.startsWith('/') || arg.startsWith('~')
 }
 
 async function initMarket(arg: string | undefined): Promise<void> {
   const home = configHome()
-  const dir = arg ? parseSource(arg) : defaultLocal(home)
-  if (!isLocal(dir)) {
-    throw new Error('market init takes a folder: ttheme market init ./my-palettes')
-  }
-  const { owner } = await initLocal(home, dir)
+  const name =
+    arg && !pathLike(arg) ? arg.toLowerCase() : arg ? basename(parseSource(arg)).toLowerCase() : await askName()
+  const dir = arg && pathLike(arg) ? parseSource(arg) : defaultLocal(home, name)
+  const market = await initLocal(home, dir, name)
+  const repo = `${market.owner}/${repoFor(market)}`
   console.log(`
-\`ttheme new <name> --from <palette>\` puts palettes in it — others see them once it is on GitHub:
+\`ttheme new <palette> --from <palette>\` puts palettes in it — others see them once it is on GitHub:
 
-  gh repo create ${owner}/${REPO} --public --source ${dir} --push
-  gh repo edit ${owner}/${REPO} --add-topic ${TOPIC}
+  cd ${shownSource(dir)}
+  git init -b main && git add -A && git commit -m "${market.id}"
+  gh repo create ${repo} --public --source . --push
+  gh repo edit ${repo} --add-topic ${TOPIC}
 
-its action rebuilds ${INDEX} on every push; then \`ttheme market add ${owner}\` works anywhere`)
+its action rebuilds ${INDEX} on every push; then \`ttheme market add ${repo}\` works anywhere`)
 }
 
 function buildMarket(arg: string | undefined): number {
   const dir = arg ? parseSource(arg) : process.cwd()
-  const owner = localOwner(dir)
+  const identity = localIdentity(dir)
+  const id = marketId(identity)
   const entries = officialFor(configHome())
   const folder = palettesDir(dir)
   const files = (existsSync(folder) ? readdirSync(folder).sort() : []).filter((f) => f.endsWith('.toml'))
@@ -380,7 +430,7 @@ function buildMarket(arg: string | undefined): number {
   for (const file of files) {
     const slug = basename(file, '.toml')
     try {
-      themes.push({ ...readOwnText(`${slug}@${owner}`, readFileSync(join(folder, file), 'utf8'), entries), name: slug })
+      themes.push({ ...readOwnText(`${id}/${slug}`, readFileSync(join(folder, file), 'utf8'), entries), name: slug })
     } catch (error) {
       broken.push(`  ${join('palettes', file)}: ${(error as Error).message}`)
     }
@@ -395,8 +445,8 @@ function buildMarket(arg: string | undefined): number {
     const failing = lines.filter((l) => l.startsWith('  ✗'))
     console.log(`  ${entry.name}${failing.length > 0 ? `\n${failing.join('\n')}` : '  passes the gate'}`)
   }
-  writeIndex(dir, owner, palettes)
-  console.log(`\n${owner} · ${counted(palettes.length)} → ${join(dir, INDEX)}`)
+  writeIndex(dir, identity, palettes)
+  console.log(`\n${id} · ${counted(palettes.length)} → ${join(dir, INDEX)}`)
   return 0
 }
 
@@ -428,7 +478,7 @@ function required(action: string, arg: string | undefined): string {
   if (!arg) {
     throw new Error(
       action === 'add'
-        ? 'market add takes a GitHub handle, a repository or a folder: ttheme market add alice'
+        ? 'market add takes a repository or a folder: ttheme market add alice/ttheme-dust'
         : 'market remove takes a market name — `ttheme market` lists them',
     )
   }
@@ -446,11 +496,11 @@ export async function refresh(home: string, source: string): Promise<string> {
     return `${OFFICIAL} ${catalog.version} — ${counted(count)}${count > before ? ` (+${count - before})` : ''}`
   }
   if (isLocal(source)) {
-    const owner = localOwner(source)
-    return `${owner} — ${counted(readMarketDir(source, owner, official(home), false).length)}, read in place`
+    const id = idOf(home, source)
+    return `${id} — ${counted(readMarketDir(source, id, official(home), false).length)}, read in place`
   }
   const index = await fetchIndex(source)
   mkdirSync(join(home, 'ttheme', 'markets'), { recursive: true })
   writeAtomic(cachePath(home, source), `${JSON.stringify(index, null, 2)}\n`)
-  return `${remoteOwner(source)} — ${counted(index.palettes.length)}`
+  return `${remoteId(source, index)} — ${counted(index.palettes.length)}`
 }

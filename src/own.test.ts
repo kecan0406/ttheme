@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { type Draft, fromCode, paletteToml, readOwnText, recolor, shareCode } from './own.ts'
 
 const draft: Draft = {
-  name: 'dusk@kecan0406',
+  name: 'kecan0406@dust/rei',
   base: 'alice',
   group: 'Sword Art Online',
   booru: 'alice_zuberg',
@@ -55,7 +55,7 @@ test('a share code that was cut, padded or retyped is refused', () => {
 
 test('the TOML a draft writes reads back as the same palette', () => {
   const theme = readOwnText(draft.name, paletteToml(draft), [])
-  assert.equal(theme.name, 'dusk@kecan0406')
+  assert.equal(theme.name, 'kecan0406@dust/rei')
   assert.equal(theme.base, 'alice')
   assert.equal(theme.waiveReason, 'the red is the character')
   assert.deepEqual(theme.pictures, draft.pictures)

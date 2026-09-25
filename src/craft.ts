@@ -17,6 +17,7 @@ import {
   gateLines,
   localMarkets,
   ownPath,
+  palettesDir,
   paletteToml,
   readOwnText,
   recolor,
@@ -24,18 +25,20 @@ import {
 } from './own.ts'
 import { commit, configHome, type Installed, readInstalled, startupPalette, sync } from './palettes.ts'
 import { bringPictures, heldPictures, since } from './pictures.ts'
-import { nameProblem, ownerOf } from './theme.ts'
+import { marketOf, nameProblem } from './theme.ts'
 
 function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
 }
 
 function mine(name: string, home: string): string {
-  if (name.includes('@')) {
+  if (name.includes('/')) {
     return name
   }
-  const [only, ...more] = localMarkets(home, false)
-  return only && more.length === 0 ? `${name}@${only.owner}` : name
+  const locals = localMarkets(home, false)
+  const holding = locals.filter((m) => existsSync(join(palettesDir(m.dir), `${name}.toml`)))
+  const [hit] = holding.length === 1 ? holding : locals.length === 1 ? locals : []
+  return hit ? `${hit.id}/${name}` : name
 }
 
 function install(home: string, catalog: Manifest, names: string[]): { state: Installed; fresh: string[] } {
@@ -60,7 +63,7 @@ export function adopt(home: string, code: string, catalog: Manifest): string {
   const known = available(home, catalog, false).palettes.find((e) => e.name === entry.name)
   if (known && JSON.stringify(known) !== JSON.stringify(entry)) {
     throw new Error(
-      `${entry.name} is already in ${ownerOf(entry.name) ?? 'the ttheme catalog'} and differs — \`ttheme add ${entry.name}\` wears that one`,
+      `${entry.name} is already in ${marketOf(entry.name) ?? 'the ttheme catalog'} and differs — \`ttheme add ${entry.name}\` wears that one`,
     )
   }
   if (!known) {
@@ -74,13 +77,13 @@ export async function runNew(name: string, from: string | undefined, into: strin
   const catalog = readCatalog(home)
   const state = readInstalled(home)
   const market = await ensureLocal(home, into)
-  const full = name.includes('@') ? name : `${name}@${market.owner}`
+  const full = name.includes('/') ? name : `${market.id}/${name}`
   const problem = nameProblem(full)
   if (problem) {
     throw new Error(`${full} ${problem}`)
   }
-  if (ownerOf(full) !== market.owner) {
-    throw new Error(`palettes in ${market.dir} are named <palette>@${market.owner} — ${full} is someone else's`)
+  if (marketOf(full) !== market.id) {
+    throw new Error(`palettes in ${market.dir} are named ${market.id}/<palette> — ${full} belongs elsewhere`)
   }
   const path = ownPath(home, full)
   if (existsSync(path)) {
@@ -92,8 +95,8 @@ export async function runNew(name: string, from: string | undefined, into: strin
     throw new Error('--from names the palette to start from')
   }
   const source = find(view.palettes, origin)
-  const base = ownerOf(source.name) ? source.base : source.default ? undefined : source.name
-  const { base: _, ansiSource: __, ...rest } = draftOf(source, full, `kept from ${source.name}`)
+  const base = marketOf(source.name) ? source.base : source.default ? undefined : source.name
+  const { base: _, ansiSource: __, group: ___, ...rest } = draftOf(source, full, `kept from ${source.name}`)
   const held = heldPictures(home, source.name) ?? source.pictures
   const content = paletteToml({ ...rest, ...(base ? { base } : {}), ...(held ? { pictures: held } : {}) })
   readOwnText(full, content, catalog.palettes)
@@ -127,7 +130,9 @@ export async function runEdit(name: string): Promise<void> {
   const catalog = readCatalog(home)
   const state = readInstalled(home)
   const view = available(home, catalog, false)
-  const full = view.palettes.some((e) => e.name === name) ? name : mine(name, home)
+  const own = mine(name, home)
+  const ownFile = mineAt(home, own)
+  const full = ownFile && existsSync(ownFile) ? own : view.palettes.some((e) => e.name === name) ? name : own
   const path = mineAt(home, full)
   if (!path || !existsSync(path)) {
     const known = view.palettes.some((e) => e.name === full)
@@ -236,8 +241,8 @@ export function runCheck(name: string, fix = false): number {
 }
 
 function mineAt(home: string, name: string): string | undefined {
-  const owner = ownerOf(name)
-  return owner && localMarkets(home, false).some((m) => m.owner === owner) ? ownPath(home, name) : undefined
+  const market = marketOf(name)
+  return market && localMarkets(home, false).some((m) => m.id === market) ? ownPath(home, name) : undefined
 }
 
 function draftFor(home: string, entry: PaletteEntry): Draft {

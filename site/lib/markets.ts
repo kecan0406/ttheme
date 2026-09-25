@@ -1,5 +1,4 @@
 const TOPIC = 'ttheme-market'
-const REPO = 'ttheme-palettes'
 
 interface Repository {
   full_name: string
@@ -16,6 +15,7 @@ interface IndexEntry {
 }
 
 export interface Market {
+  id: string
   repo: string
   add: string
   about: string
@@ -42,20 +42,21 @@ export async function loadMarkets(): Promise<Market[]> {
   )
   const markets = await Promise.all(
     (found?.items ?? []).map(async (r): Promise<Market | undefined> => {
-      const index = await json<{ owner?: string; palettes?: IndexEntry[] }>(
+      const index = await json<{ name?: string; palettes?: IndexEntry[] }>(
         `https://raw.githubusercontent.com/${r.full_name}/HEAD/ttheme-market.json`,
       )
-      if (!Array.isArray(index?.palettes) || index.palettes.length === 0) {
+      if (typeof index?.name !== 'string' || !Array.isArray(index.palettes) || index.palettes.length === 0) {
         return undefined
       }
-      const owner = r.owner.login.toLowerCase()
+      const id = `${r.owner.login.toLowerCase()}@${index.name}`
       return {
+        id,
         repo: r.full_name,
-        add: r.name === REPO ? owner : `${owner}/${r.name}`,
+        add: r.full_name.toLowerCase(),
         about: r.description ?? '',
         stars: r.stargazers_count,
         palettes: index.palettes.map((p) => ({
-          name: `${p.name}@${owner}`,
+          name: `${id}/${p.name}`,
           background: p.background,
           signature: p.signature,
         })),

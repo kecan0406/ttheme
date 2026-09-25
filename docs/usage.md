@@ -32,7 +32,7 @@ ttheme update   refresh every market you added
 ttheme market   the markets you added — add, remove and search them; init makes one of your own
 
 Your own
-ttheme new      make a palette of your own, <name>@<you>, from another one (--from, --in)
+ttheme new      make a palette of your own, <you>@<market>/<name>, from another one (--from, --in)
 ttheme edit     change one of your palettes in $EDITOR — the gate advises, never refuses
 ttheme check    measure a palette against the contrast gate (--fix writes colors that pass)
 ttheme share    print a share code — the colors and the pictures' post numbers
@@ -178,16 +178,16 @@ repository with a `ttheme-market.json` at its root is another:
 
 ```sh
 ttheme market search              # repositories with the ttheme-market topic
-ttheme market add alice           # github.com/alice/ttheme-palettes
-ttheme market add alice/anime     # another repository name
+ttheme market add alice/ttheme-pastel   # a repository — its index names it: alice@pastel
 ttheme market add ./my-market     # a folder, read in place on every command
 ttheme market                     # what you added, with counts
-ttheme market remove alice        # installed palettes from it keep working
+ttheme market remove alice@pastel # installed palettes from it keep working
 ```
 
-A market's palettes are `<palette>@<owner>`, named after the owner of the
-repository, so two markets never collide; each varies an official palette
-(`list` and `browse` put it right after that one) or joins a series. Only the
+A market is `<owner>@<name>`: the repository's owner and the name its index
+gives. Its palettes are `<owner>@<name>/<palette>` (`ttheme add
+alice@pastel/dusk`), and the market is their group: `preview`, `browse` and the
+bare `ttheme` list it below every series, past a `── markets` line. Only the
 official catalog is held to the contrast gate — a market palette installs
 whatever its numbers, and `ttheme check` shows them. `ttheme market remove
 official` drops the official catalog too; `ttheme market add official` brings
@@ -196,32 +196,32 @@ it back.
 Installed palettes and the markets you added are listed in
 `~/.config/ttheme/installed.json`; the official catalog is cached in
 `~/.config/ttheme/catalog.json` and each other market in
-`~/.config/ttheme/markets/<owner>.json`.
+`~/.config/ttheme/markets/<owner>--<repository>.json`.
 
 ## Your own palettes
 
 ```sh
-ttheme new dusk --from madoka    # dusk@kecan0406, installed at once
-ttheme edit dusk                 # $EDITOR; the name without @<you> works for yours
-ttheme check --fix dusk          # colors that pass the gate, written in
-ttheme share dusk                # tt1:… — anyone runs ttheme add tt1:…
+ttheme new rei --from rei        # kecan0406@dust/rei, installed at once
+ttheme edit rei                  # $EDITOR; the bare name works for yours
+ttheme check --fix rei           # colors that pass the gate, written in
+ttheme share rei                 # tt1:… — anyone runs ttheme add tt1:…
 ```
 
-Your palettes are files in a local market: `new` creates
-`~/.config/ttheme/market` the first time (or `ttheme market init <folder>`
-makes one elsewhere, and `--in` picks between several). Each is
+Your palettes are files in a local market: the first `new` asks for its name and
+creates `~/.config/ttheme/market/<name>` (`ttheme market init <name>` makes one
+up front, or in a folder you give, and `--in <name>` picks between several). Each is
 `palettes/<name>.toml`, in the same format as `themes/*.toml` (see
 CONTRIBUTING.md) with a bare `meta.name`; the market's `ttheme-market.json`
-carries `<you>`, your GitHub handle — read from `gh` when it is logged in, asked
+carries its name and `<you>`, your GitHub handle — read from `gh` when it is logged in, asked
 once otherwise, and kept in `installed.json`. A file you break stays out of the
 list (every command says why on stderr) until you fix it; `edit` keeps a palette
 that misses the gate and prints the numbers, and `check --fix` writes colors that
 pass.
 
 The folder is a repository layout already, with a workflow that rebuilds the
-index on every push. `ttheme market init` prints the `gh` commands that publish
-it as `<you>/ttheme-palettes` with the `ttheme-market` topic; after that, anyone
-runs `ttheme market add <you>`.
+index on every push. `ttheme market init` prints the `git` and `gh` commands
+that publish it as `<you>/ttheme-<name>` with the `ttheme-market` topic; after
+that, anyone runs `ttheme market add <you>/ttheme-<name>`.
 
 A palette can list background posts by number with their framing, in
 `[[picture]]` tables. `new` and `share` fill them in from the pictures you have
@@ -231,5 +231,5 @@ machine through your own rating and block settings, cut them out and tint them a
 were installed with, so after changing a palette's colors, reinstall a picture
 from `find` to retint it.
 
-`uninstall` deletes `~/.config/ttheme/market` along with the rest of
+`uninstall` deletes your markets under `~/.config/ttheme/market` along with the rest of
 `~/.config/ttheme` — push it first, or keep it in a folder of your own.

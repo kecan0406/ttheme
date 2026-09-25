@@ -87,7 +87,7 @@ export function weztermModule(m: WeztermModule): string {
     'local function layers(palette)',
     '  local color = PALETTES[palette]',
     '  local c = {}',
-    "  if not color or not read(BACKGROUNDS .. '/' .. (palette:gsub('@', '--', 1)) .. '.conf', c) then",
+    "  if not color or not read(BACKGROUNDS .. '/' .. ((palette:gsub('@', '--', 1)):gsub('/', '--', 1)) .. '.conf', c) then",
     "    return nil, 'none'",
     '  end',
     "  local image = c['background-image'] or ''",

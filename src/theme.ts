@@ -72,7 +72,7 @@ const GROUPS_FILE = '_groups.toml'
 const SIGNATURE_SIZE = 3
 const MAX_PICTURES = 8
 const SLUG = '[a-z0-9]+(?:-[a-z0-9]+)*'
-const NAME = new RegExp(`^(${SLUG})(?:@(${SLUG}))?$`)
+const NAME = new RegExp(`^(?:(${SLUG})@(${SLUG})/)?(${SLUG})$`)
 const NAMED_SLOTS = ['background', 'foreground', 'cursor', 'selection'] as const
 
 type NamedSlot = (typeof NAMED_SLOTS)[number]
@@ -96,28 +96,27 @@ function str(file: string, field: string, value: unknown): string {
 }
 
 export function stem(name: string): string {
-  return name.replace('@', '--')
+  return name.replace('@', '--').replace('/', '--')
 }
 
-export function ownerOf(name: string): string | undefined {
-  const at = name.indexOf('@')
-  return at < 0 ? undefined : name.slice(at + 1)
+export function marketOf(name: string): string | undefined {
+  const at = name.indexOf('/')
+  return at < 0 ? undefined : name.slice(0, at)
 }
 
 export function slugOf(name: string): string {
-  const at = name.indexOf('@')
-  return at < 0 ? name : name.slice(0, at)
+  return name.slice(name.indexOf('/') + 1)
 }
 
 export function nameProblem(name: string): string | undefined {
   const m = NAME.exec(name)
   if (!m) {
-    return 'takes lowercase letters, digits and single hyphens, as <palette> or <palette>@<owner>'
+    return 'takes lowercase letters, digits and single hyphens, as <palette> or <owner>@<market>/<palette>'
   }
-  if ((m[2]?.length ?? 0) > 39) {
+  if ((m[1]?.length ?? 0) > 39) {
     return 'has an owner longer than a GitHub handle can be'
   }
-  return (m[1]?.length ?? 0) > 40 ? 'is longer than 40 characters' : undefined
+  return (m[2]?.length ?? 0) > 40 || (m[3]?.length ?? 0) > 40 ? 'is longer than 40 characters' : undefined
 }
 
 export function textProblem(value: string): string | undefined {
@@ -441,9 +440,10 @@ export function rotation(themes: Theme[]): Theme[] {
 
 export function alphabetical<T extends { group: string; name: string; base?: string }>(items: T[]): T[] {
   const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
-  const root = (t: T) => t.base ?? t.name
+  const root = (t: T) => (marketOf(t.name) ? t.name : (t.base ?? t.name))
   return [...items].sort(
     (a, b) =>
+      Number(marketOf(a.name) !== undefined) - Number(marketOf(b.name) !== undefined) ||
       cmp(a.group.toLowerCase(), b.group.toLowerCase()) ||
       cmp(root(a), root(b)) ||
       Number(a.base !== undefined) - Number(b.base !== undefined) ||

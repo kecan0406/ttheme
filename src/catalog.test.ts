@@ -118,7 +118,10 @@ test('parseCatalog refuses an entry whose name or text would reach a path or a c
   assert.throws(() => parseCatalog(catalogJson([entry({ name: '../../x' })])), /lowercase letters/)
   assert.throws(() => parseCatalog(catalogJson([entry({ ansiSource: 'x\ncommand = rm' })])), /control character/)
   assert.throws(() => parseCatalog(catalogJson([entry({ background: 'red' })])), /#rrggbb/)
-  assert.equal(parseCatalog(catalogJson([entry({ name: 'dusk@kec', base: 'gojo' })])).palettes[0]?.name, 'dusk@kec')
+  assert.equal(
+    parseCatalog(catalogJson([entry({ name: 'kec@dust/rei', base: 'gojo' })])).palettes[0]?.name,
+    'kec@dust/rei',
+  )
 })
 
 test('gateFailures measures an entry that carries no gate', () => {
@@ -126,7 +129,7 @@ test('gateFailures measures an entry that carries no gate', () => {
   assert.match(gateFailures(bare as PaletteEntry)[0] ?? '', /foreground on background/)
 })
 
-test('readCatalog lays each added market after the base its palettes vary, and available adds local markets and kept ones', () => {
+test('readCatalog puts each added market after the series under its own name, and available adds local markets and kept ones', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-available-'))
   const skeleton = {
     version: '0.1.0',
@@ -138,19 +141,23 @@ test('readCatalog lays each added market after the base its palettes vary, and a
   mkdirSync(join(local, 'palettes'), { recursive: true })
   writeFileSync(
     join(home, 'ttheme', 'installed.json'),
-    JSON.stringify({ terminals: [], palettes: [], markets: ['official', 'ann/ttheme-palettes', local] }),
+    JSON.stringify({ terminals: [], palettes: [], markets: ['official', 'ann/ttheme-pastel', local] }),
   )
   writeCatalog(home, { ...skeleton, palettes: [entry({ name: 'gojo' }), entry({ name: 'geto', order: 2 })] })
   writeFileSync(
-    join(home, 'ttheme', 'markets', 'ann.json'),
-    JSON.stringify({ ...skeleton, owner: 'ann', palettes: [entry({ name: 'old', base: 'gojo' })] }),
+    join(home, 'ttheme', 'markets', 'ann--ttheme-pastel.json'),
+    JSON.stringify({ ...skeleton, owner: 'someone', name: 'pastel', palettes: [entry({ name: 'old', base: 'gojo' })] }),
   )
-  writeFileSync(join(local, 'ttheme-market.json'), JSON.stringify({ ...skeleton, owner: 'kec', palettes: [] }))
   writeFileSync(
-    join(local, 'palettes', 'dusk.toml'),
+    join(local, 'ttheme-market.json'),
+    JSON.stringify({ ...skeleton, owner: 'kec', name: 'dust', palettes: [] }),
+  )
+  writeFileSync(
+    join(local, 'palettes', 'rei.toml'),
     paletteToml({
-      name: 'dusk@kec',
+      name: 'kec@dust/rei',
       base: 'gojo',
+      group: 'Jujutsu Kaisen',
       signature: ['cursor', 'foreground', 'background'],
       background: '#101010',
       foreground: '#f0f0f0',
@@ -159,21 +166,28 @@ test('readCatalog lays each added market after the base its palettes vary, and a
       ansi: Array.from({ length: 16 }, () => '#808080'),
     }),
   )
-  writeKept(home, [entry({ name: 'gone@bob' })])
+  writeKept(home, [entry({ name: 'bob@x/gone', group: 'bob@x' })])
   const catalog = readCatalog(home)
   assert.deepEqual(
-    catalog.palettes.map((p) => p.name),
-    ['gojo', 'old@ann', 'geto'],
+    catalog.palettes.map((p) => [p.name, p.group]),
+    [
+      ['gojo', 'Jujutsu Kaisen'],
+      ['geto', 'Jujutsu Kaisen'],
+      ['ann@pastel/old', 'ann@pastel'],
+    ],
   )
+  const all = available(home, catalog).palettes
   assert.deepEqual(
-    available(home, catalog).palettes.map((p) => p.name),
-    ['gojo', 'old@ann', 'dusk@kec', 'geto', 'gone@bob'],
+    all.map((p) => p.name),
+    ['gojo', 'geto', 'ann@pastel/old', 'kec@dust/rei', 'bob@x/gone'],
   )
+  assert.equal(all.find((p) => p.name === 'kec@dust/rei')?.group, 'kec@dust')
 })
 
-test('a market index names its palettes bare — the owner comes from where it is added', () => {
-  const index = (name: string) => JSON.stringify({ ...JSON.parse(catalogJson([entry({ name })])), owner: 'ann' })
-  assert.equal(parseIndex(index('dusk')).owner, 'ann')
-  assert.throws(() => parseIndex(index('dusk@bob')), /bare palette names/)
-  assert.throws(() => parseIndex(catalogJson([entry({ name: 'dusk' })])), /no "owner"/)
+test("a market index names itself and its palettes bare — the owner of an added one is its repository's", () => {
+  const index = (name: string) =>
+    JSON.stringify({ ...JSON.parse(catalogJson([entry({ name })])), owner: 'ann', name: 'pastel' })
+  assert.equal(parseIndex(index('dusk')).name, 'pastel')
+  assert.throws(() => parseIndex(index('bob@x/dusk')), /bare palette names/)
+  assert.throws(() => parseIndex(catalogJson([entry({ name: 'dusk' })])), /needs an "owner"/)
 })

@@ -404,6 +404,7 @@ __tt_menu() {
   for k in $reply; do
     grp=${TTHEME_GROUP[$k]:-Other}
     if [[ $grp != $last_grp ]]; then
+      [[ $grp == *@* && $last_grp != *@* && -n $last_grp ]] && printf '\033[2m── markets ──────────\033[0m\n'
       printf '\033[1m%s\033[0m' "$grp"
       [[ -n ${TTHEME_NATIVE[$k]} ]] && printf ' \033[2m%s\033[0m' "${TTHEME_NATIVE[$k]}"
       printf '\n'
@@ -589,7 +590,7 @@ __tt_rotate() {
 
 __tt_pv_rows() {
   rtype=() rval=() rcnt=()
-  local g t gm
+  local g t gm ruled=""
   local -a ts
   for g in $groups; do
     ts=()
@@ -599,6 +600,10 @@ __tt_pv_rows() {
       [[ -z $flt || -n $gm || $t == *$flt* ]] && ts+=($t)
     done
     [[ -n $flt ]] && (( ! ${#ts} )) && continue
+    if [[ $g == *@* && -z $ruled ]]; then
+      ruled=1
+      (( ${#rtype} )) && { rtype+=(rule); rval+=(''); rcnt+=(0) }
+    fi
     rtype+=(hdr); rval+=($g); rcnt+=(${#ts})
     if [[ -n $flt || -n ${exp[$g]} ]]; then
       for t in $ts; do rtype+=(thm); rval+=($t); rcnt+=(0); done
@@ -733,6 +738,11 @@ __tt_pv_row() {
   local -i w
   (( color )) || b= d= r= z= lead=
   (( $1 == cur && color )) && on=$sb
+  if [[ ${rtype[$1]} == rule ]]; then
+    name='── markets '
+    REPLY=$d$name${(l:lw - 2 - ${#name}::─:)}$z
+    return 0
+  fi
   if [[ ${rtype[$1]} == hdr ]]; then
     [[ -n $flt || -n ${exp[$t]} ]] && arrow=▾
     name=$t
@@ -1479,8 +1489,8 @@ __tt_pv_handle() {
         __tt_pv_toggle
       fi
       ;;
-    up) (( cur > 1 )) && cur=$(( cur - 1 )) ;;
-    down) (( cur < ${#rval} )) && cur=$(( cur + 1 )) ;;
+    up) (( cur > 1 )) && cur=$(( cur - 1 )); [[ ${rtype[cur]} == rule ]] && cur=$(( cur - 1 )) ;;
+    down) (( cur < ${#rval} )) && cur=$(( cur + 1 )); [[ ${rtype[cur]} == rule ]] && cur=$(( cur + 1 )) ;;
     right) [[ ${rtype[cur]} == hdr && -z ${exp[${rval[cur]}]} ]] && __tt_pv_toggle ;;
     left) __tt_pv_left ;;
     home) cur=1 ;;
@@ -1488,11 +1498,13 @@ __tt_pv_handle() {
     pgup)
       cur=$(( cur - ph + 5 ))
       (( cur < 1 )) && cur=1
+      [[ ${rtype[cur]} == rule ]] && cur=$(( cur - 1 ))
       ;;
     pgdn)
       cur=$(( cur + ph - 5 ))
       (( cur > ${#rval} )) && cur=${#rval}
       (( cur < 1 )) && cur=1
+      [[ ${rtype[cur]} == rule ]] && cur=$(( cur + 1 ))
       ;;
     ' ') [[ ${rtype[cur]} == hdr ]] && __tt_pv_toggle ;;
     $'\t')

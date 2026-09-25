@@ -9,19 +9,20 @@ You do not need this repository to share a palette. Every palette you make
 lives in a market of your own, and anyone can add it:
 
 ```sh
-ttheme new dusk --from madoka     # dusk@<you>, in ~/.config/ttheme/market/palettes/
-ttheme edit dusk                  # $EDITOR; the gate's numbers are shown, never enforced
-ttheme market init                # prints the two gh commands that publish it
+ttheme market init dust           # <you>@dust, in ~/.config/ttheme/market/dust — prints how to publish it
+ttheme new rei --from rei         # <you>@dust/rei
+ttheme edit rei                   # $EDITOR; the gate's numbers are shown, never enforced
 ```
 
 A market is a repository with `palettes/<palette>.toml`, a `ttheme-market.json`
-index and a workflow that runs `kecan0406/ttheme/market@v1` on every push to
-rebuild the index. `ttheme market build` does the same by hand. The market's
-name is its owner's GitHub handle, so its palettes are `<palette>@<owner>`;
-the TOML files name them bare (`name = "dusk"`). A market palette has no
-`order` and no `role`: `meta.base` names the official palette it varies, and
-its series and place in the list follow that one (without a base, `meta.group`
-names an existing series, or it lands under Original). Give the repository the
+index that names it (`"owner"`, `"name"`) and a workflow that runs
+`kecan0406/ttheme/market@v1` on every push to rebuild the index; `ttheme market
+build` does the same by hand. Added from GitHub, a market is
+`<repository owner>@<name>` and its palettes are `<owner>@<name>/<palette>`;
+the TOML files name them bare (`name = "rei"`). The market is their group in
+every list, below the series, so `meta.group` is not read. A market palette has
+no `order` and no `role`; `meta.base` names the official palette it varies,
+which only says where its ANSI colors came from. Give the repository the
 `ttheme-market` topic and `ttheme market search` and the
 [markets page](https://kecan0406.github.io/ttheme/markets) find it.
 

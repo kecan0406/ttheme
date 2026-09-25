@@ -347,12 +347,12 @@ test('a palette that leaves the catalog keeps working from the copy the last syn
   assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(gojo geto\)/)
 })
 
-test("a market's palette gets theme files and a startup line with -- for the @", () => {
+test("a market's palette gets theme files and a startup line with -- for the @ and the /", () => {
   const home = fixture()
-  const shared: Manifest = { ...catalog, palettes: [...catalog.palettes, entry('dusk@kec', 2, { base: 'gojo' })] }
-  sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['dusk@kec'] })
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-dusk--kec')))
-  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-dusk--kec.conf')))
-  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-dusk--kec$/m)
-  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(dusk@kec\)/)
+  const shared: Manifest = { ...catalog, palettes: [...catalog.palettes, entry('kec@dust/rei', 2, { base: 'gojo' })] }
+  sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['kec@dust/rei'] })
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-kec--dust--rei')))
+  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-kec--dust--rei.conf')))
+  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-kec--dust--rei$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(kec@dust\/rei\)/)
 })

@@ -5,8 +5,8 @@ import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
 import { emptyManifest, type Manifest, type PaletteEntry, toTheme } from './emit/manifest.ts'
 import { readLocal } from './own.ts'
-import { cachePath, isRemote, marketSources, OFFICIAL, remoteOwner } from './sources.ts'
-import { nameProblem, ownerOf, textProblem } from './theme.ts'
+import { cachePath, isRemote, marketId, marketProblem, marketSources, OFFICIAL, remoteOwner } from './sources.ts'
+import { marketOf, nameProblem, textProblem } from './theme.ts'
 
 export const REGISTRY_URL = 'https://kecan0406.github.io/ttheme/manifest.json'
 const TIMEOUT = 20_000
@@ -21,6 +21,7 @@ export function writeCatalog(configHome: string, catalog: Manifest): void {
 
 export interface MarketIndex extends Manifest {
   owner: string
+  name: string
 }
 
 export function readCatalog(configHome: string): Manifest {
@@ -34,7 +35,15 @@ export function readCatalog(configHome: string): Manifest {
     base = parseCatalog(readFileSync(path, 'utf8'))
   }
   const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source))
-  return { ...base, palettes: joined(base.palettes, remote) }
+  return { ...base, palettes: [...base.palettes, ...remote] }
+}
+
+export function readCachedIndex(configHome: string, source: string): MarketIndex {
+  return parseIndex(readFileSync(cachePath(configHome, source), 'utf8'))
+}
+
+export function remoteId(source: string, index: MarketIndex): string {
+  return marketId({ owner: remoteOwner(source), name: index.name })
 }
 
 function readCached(configHome: string, source: string): PaletteEntry[] {
@@ -43,7 +52,8 @@ function readCached(configHome: string, source: string): PaletteEntry[] {
     return []
   }
   try {
-    return marketEntries(parseIndex(readFileSync(path, 'utf8')), remoteOwner(source))
+    const index = readCachedIndex(configHome, source)
+    return marketEntries(index, remoteId(source, index))
   } catch (error) {
     process.stderr.write(`ttheme: skipping ${path} — ${(error as Error).message}\n`)
     return []
@@ -52,28 +62,23 @@ function readCached(configHome: string, source: string): PaletteEntry[] {
 
 export function parseIndex(source: string): MarketIndex {
   const index = parseCatalog(source) as MarketIndex
-  if (typeof index.owner !== 'string' || nameProblem(`x@${index.owner}`)) {
-    throw new Error('market index has no "owner"')
+  const problem = marketProblem(index.owner, index.name)
+  if (problem) {
+    throw new Error(`market index ${problem}`)
   }
-  const named = index.palettes.find((p) => ownerOf(p.name) !== undefined)
+  const named = index.palettes.find((p) => marketOf(p.name) !== undefined)
   if (named) {
-    throw new Error(`market index names ${named.name} with its owner — its entries are bare palette names`)
+    throw new Error(`market index names ${named.name} with its market — its entries are bare palette names`)
   }
   return index
 }
 
-export function marketEntries(index: Manifest, owner: string): PaletteEntry[] {
-  return index.palettes.map(({ lead: _, default: __, ...entry }) => ({ ...entry, name: `${entry.name}@${owner}` }))
-}
-
-export function joined(base: PaletteEntry[], extra: PaletteEntry[]): PaletteEntry[] {
-  const palettes = [...base]
-  for (const o of extra) {
-    const kin = palettes.findLastIndex((p) => o.base !== undefined && (p.name === o.base || p.base === o.base))
-    const at = kin >= 0 ? kin : palettes.findLastIndex((p) => p.group === o.group)
-    palettes.splice(at < 0 ? palettes.length : at + 1, 0, o)
-  }
-  return palettes
+export function marketEntries(index: Manifest, id: string): PaletteEntry[] {
+  return index.palettes.map(({ lead: _, default: __, native: ___, ...entry }) => ({
+    ...entry,
+    name: `${id}/${entry.name}`,
+    group: id,
+  }))
 }
 
 export function parseCatalog(source: string): Manifest {
@@ -134,7 +139,7 @@ export function readKept(configHome: string): PaletteEntry[] {
 }
 
 export function available(configHome: string, catalog: Manifest, warn = true): Manifest {
-  const palettes = joined(catalog.palettes, readLocal(configHome, catalog.palettes, warn))
+  const palettes = [...catalog.palettes, ...readLocal(configHome, catalog.palettes, warn)]
   const known = new Set(palettes.map((p) => p.name))
   return { ...catalog, palettes: [...palettes, ...readKept(configHome).filter((p) => !known.has(p.name))] }
 }

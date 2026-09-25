@@ -1,11 +1,10 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
-import { nameProblem, ownerOf } from './theme.ts'
+import { nameProblem } from './theme.ts'
 
 export const OFFICIAL = 'official'
 export const INDEX = 'ttheme-market.json'
-export const REPO = 'ttheme-palettes'
 export const TOPIC = 'ttheme-market'
 
 const OWNER = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i
@@ -50,12 +49,10 @@ export function parseSource(arg: string, cwd = process.cwd()): string {
     .replace(/^https:\/\/github\.com\//, '')
     .replace(/\.git$/, '')
     .split('/')
-  if (!owner || !OWNER.test(owner) || rest.length > 0 || (repo !== undefined && !REPO_NAME.test(repo))) {
-    throw new Error(
-      `${arg} is not a market — give a GitHub handle (alice), a repository (alice/palettes) or a path (./my-market)`,
-    )
+  if (!owner || !OWNER.test(owner) || !repo || !REPO_NAME.test(repo) || rest.length > 0) {
+    throw new Error(`${arg} is not a market — give a repository (alice/ttheme-dust) or a path (./my-market)`)
   }
-  return `${owner.toLowerCase()}/${repo ?? REPO}`
+  return `${owner.toLowerCase()}/${repo}`
 }
 
 export function rawUrl(source: string): string {
@@ -71,32 +68,49 @@ export function marketsDir(configHome: string): string {
 }
 
 export function cachePath(configHome: string, source: string): string {
-  return join(marketsDir(configHome), `${remoteOwner(source)}.json`)
+  return join(marketsDir(configHome), `${source.replace('/', '--')}.json`)
 }
 
-export function defaultLocal(configHome: string): string {
+export function localRoot(configHome: string): string {
   return join(configHome, 'ttheme', 'market')
 }
 
-export function localOwner(dir: string): string {
+export function defaultLocal(configHome: string, name: string): string {
+  return join(localRoot(configHome), name)
+}
+
+export function marketProblem(owner: unknown, name: unknown): string | undefined {
+  if (typeof owner !== 'string' || typeof name !== 'string') {
+    return 'needs an "owner" (the GitHub handle) and a "name"'
+  }
+  return nameProblem(`${owner}@${name}/x`)
+}
+
+export interface Identity {
+  owner: string
+  name: string
+}
+
+export function marketId({ owner, name }: Identity): string {
+  return `${owner}@${name}`
+}
+
+export function localIdentity(dir: string): Identity {
   const path = join(dir, INDEX)
   if (!existsSync(path)) {
     throw new Error(`${dir} has no ${INDEX} — \`ttheme market init ${dir}\` makes one`)
   }
-  let owner: unknown
+  let doc: { owner?: unknown; name?: unknown }
   try {
-    owner = (JSON.parse(readFileSync(path, 'utf8')) as { owner?: unknown }).owner
+    doc = JSON.parse(readFileSync(path, 'utf8')) as { owner?: unknown; name?: unknown }
   } catch {
     throw new Error(`${path} is not valid JSON`)
   }
-  if (typeof owner !== 'string' || nameProblem(`x@${owner}`) || ownerOf(`x@${owner}`) !== owner) {
-    throw new Error(`${path} has no "owner" — the GitHub handle its palettes are named after`)
+  const problem = marketProblem(doc.owner, doc.name)
+  if (problem) {
+    throw new Error(`${path} ${problem}`)
   }
-  return owner
-}
-
-export function marketName(source: string): string {
-  return source === OFFICIAL ? OFFICIAL : isLocal(source) ? localOwner(source) : remoteOwner(source)
+  return { owner: doc.owner as string, name: doc.name as string }
 }
 
 export function shownSource(source: string): string {

@@ -7,7 +7,7 @@ export type PickerRow =
   | { kind: 'palette'; entry: PaletteEntry }
   | { kind: 'group'; name: string; native?: string; lead: PaletteEntry; expanded: boolean; count: number }
 
-type Row = PickerRow | { kind: 'all'; count: number }
+type Row = PickerRow | { kind: 'all'; count: number } | { kind: 'rule' }
 
 export type PickerScope = 'palette' | 'series'
 
@@ -50,6 +50,17 @@ export function seriesRows(entries: PaletteEntry[], filter: string): PickerRow[]
   const q = filter.trim()
   const hit = new Set(entries.filter((e) => !e.default && (q === '' || matchesPalette(e, q))).map((e) => e.group))
   return pickerRows(entries, new Set(), '').filter((r) => r.kind === 'group' && hit.has(r.name))
+}
+
+export function isMarket(group: string): boolean {
+  return group.includes('@')
+}
+
+function ruled(rows: Row[]): Row[] {
+  const at = rows.findIndex((r) => r.kind === 'group' && isMarket(r.name))
+  return at > 0 && rows.slice(0, at).some((r) => r.kind === 'group')
+    ? [...rows.slice(0, at), { kind: 'rule' }, ...rows.slice(at)]
+    : rows
 }
 
 export function firstPalette(rows: PickerRow[]): number {
@@ -264,8 +275,8 @@ export class PalettePrompt extends Prompt<string> {
       this.scope === 'series'
         ? seriesRows(this.entries, this.userInput)
         : pickerRows(this.entries, this.expanded, this.userInput)
-    const start = body.length > 0 ? firstPalette(body) + 1 : 0
-    this.rows = body.length > 0 ? [{ kind: 'all', count: this.allCount(body) }, ...body] : []
+    this.rows = body.length > 0 ? ruled([{ kind: 'all', count: this.allCount(body) }, ...body]) : []
+    const start = body.length > 0 ? this.rows.indexOf(body[firstPalette(body)] as Row) : 0
     if (snap === 'first') {
       this.cursor = start
     } else if (snap === 'keep') {
@@ -283,7 +294,10 @@ export class PalettePrompt extends Prompt<string> {
   }
 
   private move(delta: number): void {
-    const next = this.cursor + delta
+    let next = this.cursor + delta
+    if (this.rows[next]?.kind === 'rule') {
+      next += delta
+    }
     if (next >= 0 && next < this.rows.length) {
       this.cursor = next
     }
@@ -322,6 +336,10 @@ export class PalettePrompt extends Prompt<string> {
 
   private renderRow(row: Row, focused: boolean): string {
     const marker = focused ? '▶ ' : '  '
+    if (row.kind === 'rule') {
+      const line = '── markets ──────────'
+      return this.color ? `${DIM}${line}${RESET}` : line
+    }
     if (row.kind === 'all') {
       const box = this.everyone(this.rows).every((e) => this.picked.has(e.name)) ? '● ' : '○ '
       const tail = `(${row.count})`
