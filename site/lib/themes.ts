@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 export interface Theme {
+  id: string
+  market: string | null
   name: string
   group: string
   native: string | null
@@ -15,22 +17,6 @@ export interface Theme {
   signatureSlots: string[]
   ansi: string[]
   gate: number[]
-  backdrop: Tone
-}
-
-export interface Tone {
-  slot: string
-  color: string
-  opacity: number
-}
-
-export interface Placement {
-  tall: number
-  reach: number
-  widest: number
-  headroom: number
-  margin: number
-  stands: number
 }
 
 export interface GateRule {
@@ -41,7 +27,7 @@ export interface GateRule {
   max?: number
 }
 
-interface ManifestEntry {
+export interface ManifestEntry {
   name: string
   group: string
   native?: string
@@ -56,41 +42,41 @@ interface ManifestEntry {
   signatureSlots: string[]
   ansi: string[]
   gate: number[]
-  backdrop: Tone
 }
 
 interface Manifest {
   version: string
   gate: GateRule[]
-  placement: Placement
   palettes: ManifestEntry[]
 }
 
 const manifestPath = join(process.cwd(), '..', 'dist', 'manifest.json')
 
-export function loadManifest(): { version: string; gate: GateRule[]; placement: Placement; themes: Theme[] } {
-  const { version, gate, placement, palettes }: Manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+export function toTheme(entry: ManifestEntry, market: string | null = null): Theme {
+  return {
+    id: market ? `${market}/${entry.name}` : entry.name,
+    market,
+    name: entry.name,
+    group: market ?? entry.group,
+    native: market ? null : (entry.native ?? null),
+    lead: market ? false : (entry.lead ?? false),
+    ansiSource: entry.ansiSource,
+    background: entry.background,
+    foreground: entry.foreground,
+    cursor: entry.cursor,
+    selectionBackground: entry.selection,
+    signature: entry.signature,
+    signatureSlots: entry.signatureSlots,
+    ansi: entry.ansi,
+    gate: entry.gate,
+  }
+}
+
+export function loadManifest(): { version: string; gate: GateRule[]; themes: Theme[] } {
+  const { version, gate, palettes }: Manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
   return {
     version,
     gate,
-    placement,
-    themes: palettes
-      .filter((entry) => !entry.default)
-      .map((entry) => ({
-        name: entry.name,
-        group: entry.group,
-        native: entry.native ?? null,
-        lead: entry.lead ?? false,
-        ansiSource: entry.ansiSource,
-        background: entry.background,
-        foreground: entry.foreground,
-        cursor: entry.cursor,
-        selectionBackground: entry.selection,
-        signature: entry.signature,
-        signatureSlots: entry.signatureSlots,
-        ansi: entry.ansi,
-        gate: entry.gate,
-        backdrop: entry.backdrop,
-      })),
+    themes: palettes.filter((entry) => !entry.default).map((entry) => toTheme(entry)),
   }
 }

@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
-import { DotGothic16 } from 'next/font/google'
+import { BIZ_UDGothic, Inter, Nunito } from 'next/font/google'
 import localFont from 'next/font/local'
+import Script from 'next/script'
 import type { ReactNode } from 'react'
+import { THEME_KEY } from '@/lib/theme-mode'
 import './globals.css'
 
 const jetbrains = localFont({
@@ -13,7 +15,13 @@ const jetbrains = localFont({
   display: 'swap',
 })
 
-const dotgothic = DotGothic16({ weight: '400', subsets: ['latin'], variable: '--font-dotgothic', display: 'swap' })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
+
+const nunito = Nunito({ weight: ['800', '900'], subsets: ['latin'], variable: '--font-nunito', display: 'swap' })
+
+const bizud = BIZ_UDGothic({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-bizud', display: 'swap' })
+
+const THEME_SCRIPT = `try{var m=localStorage.getItem('${THEME_KEY}');document.documentElement.classList.toggle('dark',m==='dark'||(m!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches))}catch(e){document.documentElement.classList.add('dark')}`
 
 export const metadata: Metadata = {
   title: 'ttheme — character terminal palettes',
@@ -22,8 +30,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`dark ${jetbrains.variable} ${dotgothic.variable}`}>
-      <body className="font-mono antialiased">{children}</body>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${nunito.variable} ${bizud.variable} ${jetbrains.variable}`}
+    >
+      <body>
+        <Script id="theme-mode" strategy="beforeInteractive">
+          {THEME_SCRIPT}
+        </Script>
+        {children}
+      </body>
     </html>
   )
 }

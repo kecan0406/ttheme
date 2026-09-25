@@ -1,8 +1,15 @@
-import { Landing } from '@/components/landing'
+import type { Metadata } from 'next'
+import { Home } from '@/components/home'
+import { seriesOf } from '@/lib/sheet'
 import { loadManifest } from '@/lib/themes'
 
-export default function Page() {
-  const { version, gate, placement, themes } = loadManifest()
+export const metadata: Metadata = {
+  title: 'ttheme — wear your favorite character',
+  description: 'Character color palettes for ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal and Warp',
+}
 
-  return <Landing themes={themes} gate={gate} placement={placement} version={version} />
+export default function Page() {
+  const { themes } = loadManifest()
+
+  return <Home themes={themes} series={seriesOf(themes).length} />
 }
