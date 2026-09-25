@@ -1,81 +1,41 @@
-import { execFileSync, spawn, spawnSync } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
-import pkg from '../package.json' with { type: 'json' }
 import { rackOf } from './backdrop.ts'
-import { available, find, gateFailures, readCatalog } from './catalog.ts'
+import { available, find, gateFailures, readCatalog, readKept, writeKept } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
 import { type Manifest, type PaletteEntry, paletteEntry, toTheme } from './emit/manifest.ts'
 import { fixGate, type Move } from './fix.ts'
+import { ensureLocal } from './markets.ts'
 import {
   CODE,
   type Draft,
   draftOf,
   fromCode,
   gateLines,
+  localMarkets,
   ownPath,
   paletteToml,
   readOwnText,
   recolor,
   shareCode,
 } from './own.ts'
-import { commit, configHome, type Installed, readInstalled, startupPalette, sync, writeInstalled } from './palettes.ts'
+import { commit, configHome, type Installed, readInstalled, startupPalette, sync } from './palettes.ts'
 import { bringPictures, heldPictures, since } from './pictures.ts'
-import { authorOf, nameProblem, type Theme } from './theme.ts'
-
-const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+import { nameProblem, ownerOf } from './theme.ts'
 
 function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
 }
 
-function fromGh(): string | undefined {
-  try {
-    const login = execFileSync('gh', ['api', 'user', '--jq', '.login'], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-      timeout: 10_000,
-    })
-      .trim()
-      .toLowerCase()
-    return HANDLE.test(login) ? login : undefined
-  } catch {
-    return undefined
+function mine(name: string, home: string): string {
+  if (name.includes('@')) {
+    return name
   }
-}
-
-async function handle(home: string, state: Installed): Promise<string> {
-  if (state.author) {
-    return state.author
-  }
-  let author = fromGh()
-  if (!author) {
-    if (!tty()) {
-      throw new Error(
-        'your palettes are named after your GitHub handle — log in with `gh auth login`, or run this in a terminal',
-      )
-    }
-    const typed = await p.text({
-      message: 'your GitHub handle — your palettes are named <handle>/<palette>',
-      validate: (value) =>
-        HANDLE.test((value ?? '').toLowerCase()) && (value ?? '').length <= 39
-          ? undefined
-          : 'that is not a GitHub handle',
-    })
-    if (p.isCancel(typed)) {
-      throw new Error('no handle given')
-    }
-    author = typed.toLowerCase()
-  }
-  writeInstalled(home, { ...state, author })
-  console.log(`your palettes are named ${author}/<palette>`)
-  return author
-}
-
-function mine(name: string, state: Installed): string {
-  return name.includes('/') || !state.author ? name : `${state.author}/${name}`
+  const [only, ...more] = localMarkets(home, false)
+  return only && more.length === 0 ? `${name}@${only.owner}` : name
 }
 
 function install(home: string, catalog: Manifest, names: string[]): { state: Installed; fresh: string[] } {
@@ -96,36 +56,31 @@ function movesText(moves: Move[]): string[] {
 
 export function adopt(home: string, code: string, catalog: Manifest): string {
   const draft = fromCode(code)
-  const source = paletteToml(draft)
-  const theme = readOwnText(draft.name, source, catalog.palettes)
-  const failures = gateFailures(paletteEntry(theme))
-  if (failures.length > 0) {
-    throw new Error(`${draft.name} fails the contrast gate: ${failures.join(', ')}`)
+  const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), catalog.palettes))
+  const known = available(home, catalog, false).palettes.find((e) => e.name === entry.name)
+  if (known && JSON.stringify(known) !== JSON.stringify(entry)) {
+    throw new Error(
+      `${entry.name} is already in ${ownerOf(entry.name) ?? 'the ttheme catalog'} and differs — \`ttheme add ${entry.name}\` wears that one`,
+    )
   }
-  const path = ownPath(home, draft.name)
-  if (existsSync(path) && readFileSync(path, 'utf8') !== source) {
-    throw new Error(`${draft.name} is already at ${path} and differs — move it away to take this one`)
+  if (!known) {
+    writeKept(home, [...readKept(home), entry])
   }
-  mkdirSync(dirname(path), { recursive: true })
-  writeAtomic(path, source)
-  if (catalog.palettes.some((e) => e.name === draft.name)) {
-    console.log(`  ${draft.name} from the code stands in for the catalog's`)
-  }
-  return draft.name
+  return entry.name
 }
 
-export async function runNew(name: string, from: string | undefined): Promise<void> {
+export async function runNew(name: string, from: string | undefined, into: string | undefined): Promise<void> {
   const home = configHome()
   const catalog = readCatalog(home)
   const state = readInstalled(home)
-  const author = await handle(home, state)
-  const full = name.includes('/') ? name : `${author}/${name}`
+  const market = await ensureLocal(home, into)
+  const full = name.includes('@') ? name : `${name}@${market.owner}`
   const problem = nameProblem(full)
   if (problem) {
     throw new Error(`${full} ${problem}`)
   }
-  if (authorOf(full) !== author) {
-    throw new Error(`your palettes are named ${author}/<palette> — ${full} is someone else's`)
+  if (ownerOf(full) !== market.owner) {
+    throw new Error(`palettes in ${market.dir} are named <palette>@${market.owner} — ${full} is someone else's`)
   }
   const path = ownPath(home, full)
   if (existsSync(path)) {
@@ -137,7 +92,7 @@ export async function runNew(name: string, from: string | undefined): Promise<vo
     throw new Error('--from names the palette to start from')
   }
   const source = find(view.palettes, origin)
-  const base = authorOf(source.name) ? source.base : source.default ? undefined : source.name
+  const base = ownerOf(source.name) ? source.base : source.default ? undefined : source.name
   const { base: _, ansiSource: __, ...rest } = draftOf(source, full, `kept from ${source.name}`)
   const held = heldPictures(home, source.name) ?? source.pictures
   const content = paletteToml({ ...rest, ...(base ? { base } : {}), ...(held ? { pictures: held } : {}) })
@@ -162,32 +117,20 @@ function editor(path: string): void {
   }
 }
 
-function problemOf(name: string, source: string, catalog: Manifest): { problem?: string; fixed?: string } {
-  let theme: Theme
-  try {
-    theme = readOwnText(name, source, catalog.palettes)
-  } catch (error) {
-    return { problem: (error as Error).message }
-  }
-  const failures = gateFailures(paletteEntry(theme))
-  if (failures.length === 0) {
-    return {}
-  }
-  const { theme: fixed, moves, left } = fixGate(theme)
-  return {
-    problem: [`it fails the contrast gate: ${failures.join(', ')}`, ...movesText(moves)].join('\n'),
-    ...(left.length === 0 && moves.length > 0 ? { fixed: recolor(source, fixed) } : {}),
-  }
+function failuresOf(name: string, source: string, catalog: Manifest): string[] {
+  const entry = paletteEntry(readOwnText(name, source, catalog.palettes))
+  return gateFailures(entry).length > 0 ? gateLines(entry).filter((l) => l.startsWith('  ✗')) : []
 }
 
 export async function runEdit(name: string): Promise<void> {
   const home = configHome()
   const catalog = readCatalog(home)
   const state = readInstalled(home)
-  const full = mine(name, state)
-  const path = ownPath(home, full)
-  if (!existsSync(path)) {
-    const known = available(home, catalog, false).palettes.some((e) => e.name === full)
+  const view = available(home, catalog, false)
+  const full = view.palettes.some((e) => e.name === name) ? name : mine(name, home)
+  const path = mineAt(home, full)
+  if (!path || !existsSync(path)) {
+    const known = view.palettes.some((e) => e.name === full)
     throw new Error(
       known
         ? `${full} is not one of yours — \`ttheme new <name> --from ${full}\` makes your own copy`
@@ -200,6 +143,7 @@ export async function runEdit(name: string): Promise<void> {
   const before = readFileSync(path, 'utf8')
   const draft = join(mkdtempSync(join(tmpdir(), 'ttheme-edit-')), basename(path))
   writeFileSync(draft, before)
+  let failing: string[] = []
   try {
     for (;;) {
       editor(draft)
@@ -208,28 +152,19 @@ export async function runEdit(name: string): Promise<void> {
         console.log('nothing changed')
         return
       }
-      const { problem, fixed } = problemOf(full, after, catalog)
-      if (!problem) {
-        writeAtomic(path, after)
-        break
+      try {
+        failing = failuresOf(full, after, catalog)
+      } catch (error) {
+        console.log(`\n${(error as Error).message}\n`)
+        const again = await p.confirm({ message: `${full} cannot be read like this — edit it again?` })
+        if (p.isCancel(again) || !again) {
+          console.log('kept the old one')
+          return
+        }
+        continue
       }
-      console.log(`\n${problem}\n`)
-      const choice = await p.select({
-        message: `${full} cannot be worn like this`,
-        options: [
-          ...(fixed ? [{ value: 'fix', label: 'take the colors above' }] : []),
-          { value: 'again', label: 'edit it again' },
-          { value: 'back', label: 'keep the old one' },
-        ],
-      })
-      if (p.isCancel(choice) || choice === 'back') {
-        console.log('kept the old one')
-        return
-      }
-      if (choice === 'fix' && fixed) {
-        writeAtomic(path, fixed)
-        break
-      }
+      writeAtomic(path, after)
+      break
     }
   } finally {
     rmSync(dirname(draft), { recursive: true, force: true })
@@ -240,6 +175,11 @@ export async function runEdit(name: string): Promise<void> {
   console.log(
     `saved ${full}${state.palettes.includes(full) ? ' — new tabs and `ttheme use` wear it' : ` — \`ttheme add ${full}\` installs it`}`,
   )
+  if (failing.length > 0) {
+    console.log(
+      `\nit misses the contrast gate:\n${failing.join('\n')}\n\`ttheme check --fix ${full}\` suggests colors that pass`,
+    )
+  }
   const entry = available(home, catalog).palettes.find((e) => e.name === full)
   const old = paletteEntry(readOwnText(full, before, catalog.palettes))
   if (
@@ -254,15 +194,15 @@ export async function runEdit(name: string): Promise<void> {
   }
 }
 
-function named(view: Manifest, name: string, state: Installed): PaletteEntry {
-  return find(view.palettes, view.palettes.some((e) => e.name === name) ? name : mine(name, state))
+function named(view: Manifest, name: string, home: string): PaletteEntry {
+  return find(view.palettes, view.palettes.some((e) => e.name === name) ? name : mine(name, home))
 }
 
 export function runCheck(name: string, fix = false): number {
   const home = configHome()
   const catalog = readCatalog(home)
   const state = readInstalled(home)
-  const entry = named(available(home, catalog), name, state)
+  const entry = named(available(home, catalog), name, home)
   console.log(`${entry.name} · ${entry.group}\n`)
   console.log(gateLines(entry).join('\n'))
   const failures = gateFailures(entry)
@@ -278,7 +218,7 @@ export function runCheck(name: string, fix = false): number {
   console.log(
     `\n${left.length === 0 ? 'these colors pass' : 'these colors come closer'}:\n${movesText(moves).join('\n')}`,
   )
-  const path = authorOf(entry.name) ? ownPath(home, entry.name) : undefined
+  const path = mineAt(home, entry.name)
   if (!path || !existsSync(path)) {
     console.log(`\n\`ttheme new <name> --from ${entry.name}\` makes a copy you can fix`)
     return 1
@@ -295,8 +235,13 @@ export function runCheck(name: string, fix = false): number {
   return left.length === 0 ? 0 : 1
 }
 
+function mineAt(home: string, name: string): string | undefined {
+  const owner = ownerOf(name)
+  return owner && localMarkets(home, false).some((m) => m.owner === owner) ? ownPath(home, name) : undefined
+}
+
 function draftFor(home: string, entry: PaletteEntry): Draft {
-  const path = authorOf(entry.name) ? ownPath(home, entry.name) : undefined
+  const path = mineAt(home, entry.name)
   const reason =
     path && existsSync(path) ? readOwnText(entry.name, readFileSync(path, 'utf8'), [entry]).waiveReason : undefined
   const held = heldPictures(home, entry.name) ?? entry.pictures
@@ -306,53 +251,9 @@ function draftFor(home: string, entry: PaletteEntry): Draft {
 
 export function runShare(name: string): void {
   const home = configHome()
-  const state = readInstalled(home)
-  const code = shareCode(draftFor(home, named(available(home, readCatalog(home)), name, state)))
+  const code = shareCode(draftFor(home, named(available(home, readCatalog(home)), name, home)))
   console.log(code)
   if (process.stdout.isTTY) {
     console.error(`\nanyone with ttheme wears it with: ttheme add ${CODE}…`)
-  }
-}
-
-function openUrl(url: string): void {
-  const opener = process.platform === 'darwin' ? 'open' : process.env.WSL_DISTRO_NAME ? 'wslview' : 'xdg-open'
-  try {
-    spawn(opener, [url], { stdio: 'ignore', detached: true })
-      .on('error', () => {})
-      .unref()
-  } catch {}
-}
-
-export async function runSubmit(name: string): Promise<void> {
-  const home = configHome()
-  const catalog = readCatalog(home)
-  const state = readInstalled(home)
-  const author = await handle(home, state)
-  const full = mine(name, { ...state, author })
-  const path = ownPath(home, full)
-  if (!existsSync(path)) {
-    throw new Error(`no palette of yours called ${full} — \`ttheme new\` makes one`)
-  }
-  if (authorOf(full) !== author) {
-    throw new Error(`${full} is ${authorOf(full)}'s — only its author submits it`)
-  }
-  const theme = readOwnText(full, readFileSync(path, 'utf8'), catalog.palettes)
-  const failures = gateFailures(paletteEntry(theme))
-  if (failures.length > 0) {
-    throw new Error(`${full} fails the contrast gate — \`ttheme check --fix ${full}\` first`)
-  }
-  const content = paletteToml(draftFor(home, paletteEntry(theme)))
-  const updating = catalog.palettes.some((e) => e.name === full)
-  const url = `${pkg.bugs}/new?${new URLSearchParams({
-    template: 'palette.yml',
-    title: `palette: ${full}`,
-    palette: content,
-  })}`
-  console.log(
-    `${updating ? 'updates' : 'adds'} ${full} in the catalog — a GitHub issue carries it, and a bot turns it into a pull request`,
-  )
-  console.log(`\n${url}\n`)
-  if (tty()) {
-    openUrl(url)
   }
 }

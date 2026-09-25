@@ -1,25 +1,16 @@
 import { existsSync } from 'node:fs'
 import * as p from '@clack/prompts'
-import {
-  available,
-  catalogPath,
-  fetchCatalog,
-  REGISTRY_URL,
-  readCatalog,
-  readKept,
-  search,
-  writeCatalog,
-} from './catalog.ts'
+import { available, readCatalog, readKept, search } from './catalog.ts'
 import { adopt } from './craft.ts'
 import { listed, type Manifest } from './emit/manifest.ts'
+import { refresh } from './markets.ts'
 import { colorless, paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
-import { CODE, readOwn } from './own.ts'
+import { CODE, readLocal } from './own.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import {
   commit,
   configHome,
   forget,
-  installedPath,
   itermDefaults,
   pointItermDefault,
   readInstalled,
@@ -29,6 +20,7 @@ import {
   writeInstalled,
 } from './palettes.ts'
 import { bringPictures, since } from './pictures.ts'
+import { installedPath, marketName, marketSources, shownSource } from './sources.ts'
 import { alphabetical } from './theme.ts'
 import type { InitTerminal } from './wiring.ts'
 
@@ -61,14 +53,14 @@ export async function runAdd(given: string[]): Promise<void> {
   reload(next.palettes.length)
 }
 
-export function runRemove(names: string[]): void {
+export function runRemove(names: string[]): number {
   const home = configHome()
   const catalog = readCatalog(home)
   const state = readInstalled(home)
   const gone = names.filter((n) => state.palettes.includes(n))
+  const absent = names.filter((n) => !state.palettes.includes(n))
   if (gone.length === 0) {
-    console.log(`not installed: ${names.join(', ')}`)
-    return
+    throw new Error(`not installed: ${absent.join(', ')} — \`ttheme list\` marks what is`)
   }
   const next = { ...state, palettes: state.palettes.filter((n) => !gone.includes(n)) }
   commit(home, catalog, state, next)
@@ -77,6 +69,11 @@ export function runRemove(names: string[]): void {
     console.log(`  - ${name}`)
   }
   reload(next.palettes.length)
+  if (absent.length > 0) {
+    console.error(`ttheme remove: not installed: ${absent.join(', ')}`)
+    return 1
+  }
+  return 0
 }
 
 export function runDefault(name: string): void {
@@ -144,11 +141,11 @@ function defaultNote(name: string, terminals: InitTerminal[], restart: boolean):
     : [`default ${name} · no terminal is wired to open with it — \`ttheme init\` wires one`]
 }
 
-type Source = 'catalog' | 'mine' | 'kept'
+type Source = 'market' | 'mine' | 'kept'
 
 function sources(home: string, catalog: Manifest): Map<string, Source> {
-  const out = new Map<string, Source>(catalog.palettes.map((p) => [p.name, 'catalog']))
-  for (const p of readOwn(home, catalog.palettes, false)) {
+  const out = new Map<string, Source>(catalog.palettes.map((p) => [p.name, 'market']))
+  for (const p of readLocal(home, catalog.palettes, false)) {
     out.set(p.name, 'mine')
   }
   return out
@@ -173,7 +170,7 @@ export function runList(query: string | undefined, json = false): void {
     return
   }
   const pad = Math.max(...hits.map((p) => p.name.length), 0)
-  const note: Record<Source, string> = { catalog: '', mine: '  · yours', kept: '  · no longer in the catalog' }
+  const note: Record<Source, string> = { market: '', mine: '  · yours', kept: '  · in no market you added' }
   for (const p of hits) {
     console.log(`  ${installed.has(p.name) ? '●' : '○'} ${p.name.padEnd(pad)}  ${p.group}${note[source(p.name)]}`)
   }
@@ -185,21 +182,35 @@ export function runList(query: string | undefined, json = false): void {
 
 export async function runUpdate(): Promise<void> {
   const home = configHome()
-  const before = existsSync(catalogPath(home)) ? readCatalog(home).palettes.length : 0
-  const catalog = await fetchCatalog(REGISTRY_URL)
-  writeCatalog(home, catalog)
-  const added = catalog.palettes.length - before
-  console.log(`catalog ${catalog.version} — ${catalog.palettes.length} palettes${added > 0 ? ` (+${added})` : ''}`)
+  const markets = marketSources(home)
+  if (markets.length === 0) {
+    console.log('no markets to update — `ttheme market add official` brings the ttheme catalog back')
+  }
+  for (const source of markets) {
+    try {
+      console.log(`  ${await refresh(home, source)}`)
+    } catch (error) {
+      const name = (() => {
+        try {
+          return marketName(source)
+        } catch {
+          return shownSource(source)
+        }
+      })()
+      console.log(`  ${name}: ${(error as Error).message} — kept the copy from the last update`)
+    }
+  }
   if (!existsSync(installedPath(home))) {
     return
   }
+  const catalog = readCatalog(home)
   const state = readInstalled(home)
   const from = sources(home, catalog)
   const gone = state.palettes.filter((name) => !from.has(name))
   const was = new Map(readKept(home).map((e) => [e.name, e.pictures]))
   sync(home, catalog, state)
   for (const name of gone) {
-    console.log(`  ${name} left the catalog — ttheme keeps the copy you have`)
+    console.log(`  ${name} left its market — ttheme keeps the copy you have`)
   }
   await bringPictures(
     home,

@@ -4,14 +4,16 @@ import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure, RULES } from './contrast.ts'
 import { type PaletteEntry, paletteEntry, toTheme } from './emit/manifest.ts'
+import { isLocal, localOwner, marketSources } from './sources.ts'
 import {
-  authorOf,
   type Group,
   ORIGINAL,
+  ownerOf,
   type Place,
   POSITIONS,
   readTheme,
   type SharedPicture,
+  slugOf,
   type Theme,
 } from './theme.ts'
 
@@ -36,16 +38,40 @@ export interface Draft {
   pictures?: SharedPicture[]
 }
 
-export function ownDir(configHome: string): string {
-  return join(configHome, 'ttheme', 'palettes')
+export interface LocalMarket {
+  dir: string
+  owner: string
+}
+
+export function localMarkets(configHome: string, warn = true): LocalMarket[] {
+  return marketSources(configHome)
+    .filter(isLocal)
+    .flatMap((dir) => {
+      try {
+        return [{ dir, owner: localOwner(dir) }]
+      } catch (error) {
+        if (warn) {
+          process.stderr.write(`ttheme: skipping the market at ${dir} — ${(error as Error).message}\n`)
+        }
+        return []
+      }
+    })
+}
+
+export function palettesDir(dir: string): string {
+  return join(dir, 'palettes')
 }
 
 export function ownPath(configHome: string, name: string): string {
-  const author = authorOf(name)
-  if (!author) {
-    throw new Error(`${name} is an official palette — your own are named <you>/<palette>`)
+  const owner = ownerOf(name)
+  if (!owner) {
+    throw new Error(`${name} is an official palette — yours are named <palette>@<you>`)
   }
-  return join(ownDir(configHome), author, `${name.slice(author.length + 1)}.toml`)
+  const market = localMarkets(configHome, false).find((m) => m.owner === owner)
+  if (!market) {
+    throw new Error(`${name} is not in a local market — \`ttheme market add <dir>\` adds the folder that holds it`)
+  }
+  return join(palettesDir(market.dir), `${slugOf(name)}.toml`)
 }
 
 export function placeFor(name: string, entries: PaletteEntry[]): Place {
@@ -57,33 +83,35 @@ export function placeFor(name: string, entries: PaletteEntry[]): Place {
     }
   }
   const bases = new Map(
-    entries.filter((e) => !e.default && !authorOf(e.name)).map((e) => [e.name, { group: e.group, order: e.order }]),
+    entries.filter((e) => !e.default && !ownerOf(e.name)).map((e) => [e.name, { group: e.group, order: e.order }]),
   )
   return { name, groups, bases, open: true }
 }
 
 export function readOwnText(name: string, source: string, entries: PaletteEntry[]): Theme {
-  return readTheme(`${name}.toml`, source, placeFor(name, entries))
+  const slug = slugOf(name)
+  return { ...readTheme(`${slug}.toml`, source, placeFor(slug, entries)), name }
 }
 
-export function readOwn(configHome: string, entries: PaletteEntry[], warn = true): PaletteEntry[] {
-  const dir = ownDir(configHome)
-  const listing = (path: string) => (existsSync(path) ? readdirSync(path).sort() : [])
-  return listing(dir).flatMap((author) =>
-    listing(join(dir, author))
-      .filter((file) => file.endsWith('.toml'))
-      .flatMap((file) => {
-        const name = `${author}/${basename(file, '.toml')}`
-        try {
-          return [paletteEntry(readOwnText(name, readFileSync(join(dir, author, file), 'utf8'), entries))]
-        } catch (error) {
-          if (warn) {
-            process.stderr.write(`ttheme: skipping ${join(dir, author, file)} — ${(error as Error).message}\n`)
-          }
-          return []
+export function readMarketDir(dir: string, owner: string, entries: PaletteEntry[], warn = true): PaletteEntry[] {
+  const folder = palettesDir(dir)
+  return (existsSync(folder) ? readdirSync(folder).sort() : [])
+    .filter((file) => file.endsWith('.toml'))
+    .flatMap((file) => {
+      try {
+        const text = readFileSync(join(folder, file), 'utf8')
+        return [paletteEntry(readOwnText(`${basename(file, '.toml')}@${owner}`, text, entries))]
+      } catch (error) {
+        if (warn) {
+          process.stderr.write(`ttheme: skipping ${join(folder, file)} — ${(error as Error).message}\n`)
         }
-      }),
-  )
+        return []
+      }
+    })
+}
+
+export function readLocal(configHome: string, entries: PaletteEntry[], warn = true): PaletteEntry[] {
+  return localMarkets(configHome, warn).flatMap(({ dir, owner }) => readMarketDir(dir, owner, entries, warn))
 }
 
 export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string): Draft {
@@ -112,7 +140,7 @@ const q = (value: string) => JSON.stringify(value)
 export function paletteToml(d: Draft): string {
   const lines = [
     '[meta]',
-    `name = ${q(d.name)}`,
+    `name = ${q(slugOf(d.name))}`,
     ...(d.base ? [`base = ${q(d.base)}`] : []),
     ...(d.group ? [`group = ${q(d.group)}`] : []),
     ...(d.ansiSource ? [`ansi_source = ${q(d.ansiSource)}`] : []),

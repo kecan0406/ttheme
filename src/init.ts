@@ -14,9 +14,9 @@ import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
 import { build } from './build.ts'
-import { writeCatalog } from './catalog.ts'
+import { available, readCatalog, writeCatalog } from './catalog.ts'
 import { editUserFile } from './edits.ts'
-import type { Manifest } from './emit/manifest.ts'
+import type { Manifest, PaletteEntry } from './emit/manifest.ts'
 import { pickPalettes } from './market.ts'
 import { colorless, paletteOsc } from './osc.ts'
 import {
@@ -37,6 +37,7 @@ import {
   worn,
   writeInstalled,
 } from './palettes.ts'
+import { marketsOf, OFFICIAL } from './sources.ts'
 import {
   configFile,
   detectTerminal,
@@ -143,9 +144,17 @@ export function installedState(configHome: string): Installed | undefined {
   }
 }
 
+function currentPalettes(configHome: string): PaletteEntry[] {
+  try {
+    return available(configHome, readCatalog(configHome), false).palettes
+  } catch {
+    return []
+  }
+}
+
 export function planUpgrade(state: Installed, paths: InitPaths): InitPlan {
   const plan = planInit({ terminals: state.terminals, palettes: state.palettes, off: state.off }, paths)
-  const known = new Set(plan.catalog.palettes.map((e) => e.name))
+  const known = new Set([...plan.catalog.palettes, ...currentPalettes(paths.configHome)].map((e) => e.name))
   const palettes = state.palettes.filter((n) => known.has(n))
   const gone = state.palettes.filter((n) => !known.has(n))
   const { startup, ...rest } = state
@@ -202,9 +211,11 @@ export function applyInit(plan: InitPlan, prefs: ItermDefaults = itermDefaults()
   const configHome = dirname(dirname(plan.settings.file))
   const base = keptBase(configHome)
   const installed = withItermBase(base ? { ...plan.installed, itermBase: base } : plan.installed, prefs)
-  writeCatalog(configHome, plan.catalog)
+  if (marketsOf(installed.markets).includes(OFFICIAL)) {
+    writeCatalog(configHome, plan.catalog)
+  }
   writeInstalled(configHome, installed)
-  sync(configHome, plan.catalog, installed, plan.home)
+  sync(configHome, readCatalog(configHome), installed, plan.home)
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''

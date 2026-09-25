@@ -6,7 +6,7 @@
 
 Skip this section if the pull request adds no palette.
 
-- [ ] One palette, in `themes/<name>.toml` (or `themes/community/<you>/<name>.toml`), where the path matches `meta.name`
+- [ ] One palette, in `themes/<name>.toml`, where the path matches `meta.name`
 - [ ] `meta.group` has a `[[group]]` table in `themes/_groups.toml`
 - [ ] `meta.signature` names three slots that resolve to three different colors
 - [ ] `meta.booru` is a character tag with posts on danbooru, or is left out

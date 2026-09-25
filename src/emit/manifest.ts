@@ -105,17 +105,16 @@ export function listed(palettes: PaletteEntry[]): PaletteEntry[] {
   return palettes.filter((p) => p.default !== true)
 }
 
+export function emptyManifest(): Manifest {
+  return { version: pkg.version, gate: GATE_RULES, placement: PLACEMENT, palettes: [] }
+}
+
 export function manifest(themes: Theme[]): Manifest {
   const [first] = themes
   if (!first) {
     throw new Error('manifest needs at least one theme')
   }
-  return {
-    version: pkg.version,
-    gate: GATE_RULES,
-    placement: PLACEMENT,
-    palettes: themes.map(paletteEntry),
-  }
+  return { ...emptyManifest(), palettes: themes.map(paletteEntry) }
 }
 
 export const meta: Emitter = {

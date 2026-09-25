@@ -82,21 +82,45 @@ Both images are drawn from the live catalog, so they always match what
 adds or drops single palettes any time, and a merged palette reaches everyone
 through `ttheme update` without waiting for a release.
 
+### Markets
+
+Anyone can publish palettes from a GitHub repository. `ttheme market add alice`
+adds `github.com/alice/ttheme-palettes`, and its palettes join the catalog as
+`<palette>@alice`, next to the palette each one varies:
+
+```sh
+ttheme market search            # repositories with the ttheme-market topic
+ttheme market add alice         # or alice/<repo>, or a folder
+ttheme add dusk@alice
+```
+
+Nobody reviews a market. Its palettes are colors and post numbers, never code,
+and the contrast gate's numbers are shown for them but never enforced — only
+the official catalog is held to the gate. `ttheme update` refreshes every
+market; `ttheme market remove alice` drops one, and the palettes you installed
+from it keep working. The official catalog is a market too (`official`).
+[The markets page](https://kecan0406.github.io/ttheme/markets) lists the public ones.
+
 ### Your own palettes
 
-`ttheme new dusk --from madoka` copies a palette into
-`~/.config/ttheme/palettes/<you>/dusk.toml`, named after your GitHub handle
-(`<you>/dusk`), and installs it. `ttheme edit` opens it in `$EDITOR` and
-refuses a result that fails the contrast gate, offering colors that pass;
-`ttheme check --fix` does the same for any palette of yours.
+`ttheme new dusk --from madoka` makes `dusk@<you>`, named after your GitHub
+handle, in your local market at `~/.config/ttheme/market` (the first `new`
+creates it) and installs it. `ttheme edit` opens it in `$EDITOR`; `ttheme check
+--fix` suggests colors that pass the gate.
+
+The local market is already a repository layout: `palettes/*.toml`, the
+`ttheme-market.json` index and a workflow that rebuilds the index on every
+push. Publishing it is two commands, which `ttheme market init` prints:
+
+```sh
+gh repo create <you>/ttheme-palettes --public --source ~/.config/ttheme/market --push
+gh repo edit <you>/ttheme-palettes --add-topic ttheme-market
+```
 
 `ttheme share <palette>` prints a code — `tt1:…`, about 200 characters — that
 carries the colors and the numbers of its background posts with their framing.
-`ttheme add tt1:…` installs it anywhere, fetching those posts from the booru the
-way `find` does. `ttheme submit <palette>` opens a filled-in GitHub issue; a bot
-checks it and turns it into a pull request for the catalog, where it appears
-as `<you>/<palette>` next to the palette it came from. A palette that leaves the
-catalog keeps working for whoever installed it.
+`ttheme add tt1:…` installs it anywhere without a market, fetching those posts
+from the booru the way `find` does.
 
 ## Usage
 
@@ -108,11 +132,13 @@ catalog keeps working for whoever installed it.
 | `ttheme default <palette>` | the palette new tabs open with |
 | `ttheme pin` / `unpin` | a palette for this directory — `cd` in repaints, `cd` out restores |
 | `ttheme browse` | pick palettes from the catalog |
-| `ttheme new <name> --from <palette>` | make a palette of your own; `edit`, `check`, `share`, `submit` follow |
+| `ttheme market add <owner>` | add someone's market — `ttheme market` lists yours; `search`, `remove` too |
+| `ttheme new <name> --from <palette>` | make a palette of your own; `edit`, `check`, `share` follow |
 | `ttheme on` / `off` | wear the default again / give the terminal its own colors back |
 | `ttheme config` | settings in `$EDITOR` |
 
-`ttheme help` lists everything. Preview's keys, directory pins, rotating new
+`ttheme help` shows the three to start with and the rest by task; `ttheme help
+all` lists every command. Preview's keys, directory pins, rotating new
 tabs and every setting are in [docs/usage.md](docs/usage.md).
 
 ## Terminal support
@@ -139,9 +165,9 @@ window. See [docs/backgrounds.md](docs/backgrounds.md).
 ## Contributing
 
 A palette is one TOML file of color values and post numbers — never images.
-`ttheme submit` sends one of yours without a checkout;
-[CONTRIBUTING.md](CONTRIBUTING.md) has the rules, the file format and the
-checks it must pass.
+Your own go in your own market, with no review; the official catalog takes pull
+requests, and [CONTRIBUTING.md](CONTRIBUTING.md) has its rules, the file format
+and the checks a palette must pass.
 
 ## Credits
 

@@ -20,7 +20,7 @@ __tt_shown() {
   __tt_bg_shown
   was=$REPLY
   [[ $2 != force && $was == $1 ]] && return 1
-  [[ -r $dir/${1/\//--}.conf || ( -n $was && -r $dir/${was/\//--}.conf ) ]] || (( TTHEME_MUXED )) || return 1
+  [[ -r $dir/${1/@/--}.conf || ( -n $was && -r $dir/${was/@/--}.conf ) ]] || (( TTHEME_MUXED )) || return 1
   (( ${TTHEME_ORDER[(Ie)$1]} )) || return 1
   __tt_out $'\e]1337;SetProfile=ttheme · '$1$'\a'
   TTHEME_ITERM_SHOWN=$1

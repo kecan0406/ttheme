@@ -1,0 +1,25 @@
+name: ttheme market
+description: Rebuild ttheme-market.json from palettes/*.toml and commit it, so `ttheme market add <owner>` fetches the palettes
+branding:
+  icon: droplet
+  color: purple
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "24"
+    - name: build the index
+      shell: bash
+      run: npx -y @kecan0406/ttheme@latest market build .
+    - name: commit it
+      shell: bash
+      run: |
+        git diff --quiet -- ttheme-market.json && exit 0
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        git add ttheme-market.json
+        git commit -m 'Rebuild the market index'
+        git push

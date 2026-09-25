@@ -3,9 +3,10 @@ import { join } from 'node:path'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
-import { type Manifest, type PaletteEntry, toTheme } from './emit/manifest.ts'
-import { readOwn } from './own.ts'
-import { nameProblem, textProblem } from './theme.ts'
+import { emptyManifest, type Manifest, type PaletteEntry, toTheme } from './emit/manifest.ts'
+import { readLocal } from './own.ts'
+import { cachePath, isRemote, marketSources, OFFICIAL, remoteOwner } from './sources.ts'
+import { nameProblem, ownerOf, textProblem } from './theme.ts'
 
 export const REGISTRY_URL = 'https://kecan0406.github.io/ttheme/manifest.json'
 const TIMEOUT = 20_000
@@ -18,12 +19,61 @@ export function writeCatalog(configHome: string, catalog: Manifest): void {
   writeAtomic(catalogPath(configHome), `${JSON.stringify(catalog, null, 2)}\n`)
 }
 
+export interface MarketIndex extends Manifest {
+  owner: string
+}
+
 export function readCatalog(configHome: string): Manifest {
+  const sources = marketSources(configHome)
   const path = catalogPath(configHome)
-  if (!existsSync(path)) {
-    throw new Error(`no catalog at ${path} — run \`ttheme init\` first`)
+  let base = emptyManifest()
+  if (sources.includes(OFFICIAL)) {
+    if (!existsSync(path)) {
+      throw new Error(`no catalog at ${path} — run \`ttheme init\` first`)
+    }
+    base = parseCatalog(readFileSync(path, 'utf8'))
   }
-  return parseCatalog(readFileSync(path, 'utf8'))
+  const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source))
+  return { ...base, palettes: joined(base.palettes, remote) }
+}
+
+function readCached(configHome: string, source: string): PaletteEntry[] {
+  const path = cachePath(configHome, source)
+  if (!existsSync(path)) {
+    return []
+  }
+  try {
+    return marketEntries(parseIndex(readFileSync(path, 'utf8')), remoteOwner(source))
+  } catch (error) {
+    process.stderr.write(`ttheme: skipping ${path} — ${(error as Error).message}\n`)
+    return []
+  }
+}
+
+export function parseIndex(source: string): MarketIndex {
+  const index = parseCatalog(source) as MarketIndex
+  if (typeof index.owner !== 'string' || nameProblem(`x@${index.owner}`)) {
+    throw new Error('market index has no "owner"')
+  }
+  const named = index.palettes.find((p) => ownerOf(p.name) !== undefined)
+  if (named) {
+    throw new Error(`market index names ${named.name} with its owner — its entries are bare palette names`)
+  }
+  return index
+}
+
+export function marketEntries(index: Manifest, owner: string): PaletteEntry[] {
+  return index.palettes.map(({ lead: _, default: __, ...entry }) => ({ ...entry, name: `${entry.name}@${owner}` }))
+}
+
+export function joined(base: PaletteEntry[], extra: PaletteEntry[]): PaletteEntry[] {
+  const palettes = [...base]
+  for (const o of extra) {
+    const kin = palettes.findLastIndex((p) => o.base !== undefined && (p.name === o.base || p.base === o.base))
+    const at = kin >= 0 ? kin : palettes.findLastIndex((p) => p.group === o.group)
+    palettes.splice(at < 0 ? palettes.length : at + 1, 0, o)
+  }
+  return palettes
 }
 
 export function parseCatalog(source: string): Manifest {
@@ -84,13 +134,7 @@ export function readKept(configHome: string): PaletteEntry[] {
 }
 
 export function available(configHome: string, catalog: Manifest, warn = true): Manifest {
-  const own = readOwn(configHome, catalog.palettes, warn)
-  const palettes = catalog.palettes.map((p) => own.find((o) => o.name === p.name) ?? p)
-  for (const o of own.filter((o) => !palettes.includes(o))) {
-    const kin = palettes.findLastIndex((p) => o.base !== undefined && (p.name === o.base || p.base === o.base))
-    const at = kin >= 0 ? kin : palettes.findLastIndex((p) => p.group === o.group)
-    palettes.splice(at < 0 ? palettes.length : at + 1, 0, o)
-  }
+  const palettes = joined(catalog.palettes, readLocal(configHome, catalog.palettes, warn))
   const known = new Set(palettes.map((p) => p.name))
   return { ...catalog, palettes: [...palettes, ...readKept(configHome).filter((p) => !known.has(p.name))] }
 }
@@ -99,17 +143,29 @@ export function readAvailable(configHome: string): Manifest {
   return available(configHome, readCatalog(configHome))
 }
 
-export async function fetchCatalog(url: string): Promise<Manifest> {
+export class Missing extends Error {}
+
+export class Limited extends Error {}
+
+export async function fetchParsed<T>(url: string, parse: (source: string) => T): Promise<T> {
   let response: Response
   try {
     response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT) })
   } catch (error) {
-    throw new Error(`cannot reach the registry at ${url} — ${error instanceof Error ? error.message : String(error)}`)
+    throw new Error(`cannot reach ${url} — ${error instanceof Error ? error.message : String(error)}`)
+  }
+  if (response.status === 404) {
+    throw new Missing(`nothing at ${url}`)
+  }
+  if (response.status === 403 || response.status === 429) {
+    throw new Limited(
+      `${new URL(url).host} is turning requests away for now (${response.status}) — try again in a minute`,
+    )
   }
   if (!response.ok) {
-    throw new Error(`registry at ${url} answered ${response.status}`)
+    throw new Error(`${url} answered ${response.status}`)
   }
-  return parseCatalog(await response.text())
+  return parse(await response.text())
 }
 
 export function gateFailures(palette: PaletteEntry): string[] {

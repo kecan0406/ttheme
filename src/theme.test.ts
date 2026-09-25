@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { nameProblem, ORIGINAL, placed, readBooruSites, readTheme, stem, textProblem } from './theme.ts'
+import { nameProblem, ORIGINAL, ownerOf, readBooruSites, readTheme, slugOf, stem, textProblem } from './theme.ts'
 
 test('booru_sites renames the tag per site, as one tag or a list, and an empty list skips the site', () => {
   assert.deepEqual(
@@ -23,13 +23,16 @@ test('booru_sites refuses an unknown site, a tag with a space, a list where the 
   assert.throws(() => readBooruSites('x.toml', { yande: 'y' }, undefined), /needs meta.booru/)
 })
 
-test('a palette name is a slug, or a GitHub handle and a slug', () => {
+test('a palette name is a slug, or a slug and the GitHub handle of its market', () => {
   assert.equal(nameProblem('madoka'), undefined)
-  assert.equal(nameProblem('kecan0406/dusk-2'), undefined)
-  for (const bad of ['Madoka', '-madoka', 'a--b', 'a/b/c', '../x', 'a b', 'x/', `${'a'.repeat(40)}/x`, 'a"b']) {
+  assert.equal(nameProblem('dusk-2@kecan0406'), undefined)
+  for (const bad of ['Madoka', '-madoka', 'a--b', 'a@b@c', 'a/b', '../x', 'a b', 'x@', `x@${'a'.repeat(40)}`, 'a"b']) {
     assert.notEqual(nameProblem(bad), undefined, bad)
   }
-  assert.equal(stem('kecan0406/dusk'), 'kecan0406--dusk')
+  assert.equal(stem('dusk@kecan0406'), 'dusk--kecan0406')
+  assert.equal(ownerOf('dusk@kecan0406'), 'kecan0406')
+  assert.equal(ownerOf('madoka'), undefined)
+  assert.equal(slugOf('dusk@kecan0406'), 'dusk')
 })
 
 test('free text that would break a config line or zsh quoting is refused', () => {
@@ -51,33 +54,27 @@ selection_background = "#303060"
 ansi = [${Array.from({ length: 16 }, () => '"#808080"').join(', ')}]
 `
 
-test('a shared palette follows its base: group and order come from it, and its own order is refused', () => {
+test('a market palette follows its base: group and order come from it, and its own order is refused', () => {
   const groups = new Map([['Madoka Magica', { name: 'Madoka Magica', lead: 'madoka' }]])
   const bases = new Map([['madoka', { group: 'Madoka Magica', order: 15 }]])
-  const place = { name: 'kec/dusk', groups, bases }
-  const theme = readTheme('dusk.toml', shared('name = "kec/dusk"\nbase = "madoka"'), place)
+  const place = { name: 'dusk', groups, bases, open: true as const }
+  const theme = readTheme('dusk.toml', shared('name = "dusk"\nbase = "madoka"'), place)
   assert.equal(theme.group, 'Madoka Magica')
   assert.equal(theme.order, 15)
   assert.equal(theme.ansiSource, 'madoka')
-  assert.equal(readTheme('d.toml', shared('name = "kec/dusk"'), place).group, ORIGINAL)
+  assert.equal(readTheme('d.toml', shared('name = "dusk"'), place).group, ORIGINAL)
+  assert.throws(() => readTheme('d.toml', shared('name = "dusk"\norder = 3'), place), /meta.order is for the official/)
+  assert.throws(() => readTheme('d.toml', shared('name = "other"'), place), /does not match its file/)
+  assert.equal(readTheme('d.toml', shared('name = "dusk"\nbase = "homura"'), place).base, 'homura')
   assert.throws(
-    () => readTheme('d.toml', shared('name = "kec/dusk"\norder = 3'), place),
-    /meta.order is for the official/,
-  )
-  assert.throws(
-    () => readTheme('d.toml', shared('name = "kec/dusk"\nbase = "homura"'), place),
-    /not an official palette/,
-  )
-  assert.throws(() => readTheme('d.toml', shared('name = "kec/other"'), place), /does not match its file/)
-  assert.equal(
-    readTheme('d.toml', shared('name = "kec/dusk"\nbase = "homura"'), { ...place, open: true }).base,
-    'homura',
+    () => readTheme('d.toml', shared('name = "dusk"\nbase = "madoka"'), { name: 'dusk', groups }),
+    /meta.base is for market palettes/,
   )
 })
 
 test('[[picture]] takes a known site, a post number and an optional framing', () => {
-  const place = { name: 'kec/dusk', groups: new Map() }
-  const withPicture = (table: string) => `${shared('name = "kec/dusk"')}\n[[picture]]\n${table}\n`
+  const place = { name: 'dusk', groups: new Map(), open: true as const }
+  const withPicture = (table: string) => `${shared('name = "dusk"')}\n[[picture]]\n${table}\n`
   assert.deepEqual(readTheme('d.toml', withPicture('site = "danbooru"\nid = 12\nsize = 130'), place).pictures, [
     { site: 'danbooru', id: 12, size: 130 },
   ])
@@ -87,15 +84,5 @@ test('[[picture]] takes a known site, a post number and an optional framing', ()
   assert.throws(
     () => readTheme('d.toml', withPicture('site = "danbooru"\nid = 12\nposition = "left"'), place),
     /position/,
-  )
-})
-
-test('placed puts a variant right after its base and a baseless one after its series', () => {
-  const t = (name: string, group: string, base?: string) => ({ name, group, ...(base ? { base } : {}) })
-  const official = [t('madoka', 'M'), t('homura', 'M'), t('gojo', 'J')]
-  const community = [t('a/x', 'J'), t('b/y', 'M', 'madoka'), t('c/z', ORIGINAL)]
-  assert.deepEqual(
-    placed(official, community).map((x) => x.name),
-    ['madoka', 'b/y', 'homura', 'gojo', 'a/x', 'c/z'],
   )
 })

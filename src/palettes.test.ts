@@ -62,12 +62,7 @@ test('toTheme carries the default role through as a role, not a flag', () => {
 })
 
 test('resolve rejects a name the catalog does not carry', () => {
-  assert.throws(() => resolve(catalog, ['gojo', 'nobody']), /not in the catalog: nobody/)
-})
-
-test('resolve rejects a palette that fails the contrast gate', () => {
-  const failing: Manifest = { ...catalog, palettes: [entry('dim', 4, { gate: [2, 1, 0.9, 2, 0.5] })] }
-  assert.throws(() => resolve(failing, ['dim']), /fail the contrast gate/)
+  assert.throws(() => resolve(catalog, ['gojo', 'nobody']), /not in any market: nobody/)
 })
 
 test('resolve returns catalog order, not the order asked for', () => {
@@ -352,12 +347,12 @@ test('a palette that leaves the catalog keeps working from the copy the last syn
   assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(gojo geto\)/)
 })
 
-test("an author's palette gets theme files and a startup line with -- for the slash", () => {
+test("a market's palette gets theme files and a startup line with -- for the @", () => {
   const home = fixture()
-  const shared: Manifest = { ...catalog, palettes: [...catalog.palettes, entry('kec/dusk', 2, { base: 'gojo' })] }
-  sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['kec/dusk'] })
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-kec--dusk')))
-  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-kec--dusk.conf')))
-  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-kec--dusk$/m)
-  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(kec\/dusk\)/)
+  const shared: Manifest = { ...catalog, palettes: [...catalog.palettes, entry('dusk@kec', 2, { base: 'gojo' })] }
+  sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['dusk@kec'] })
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-dusk--kec')))
+  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-dusk--kec.conf')))
+  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-dusk--kec$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(dusk@kec\)/)
 })

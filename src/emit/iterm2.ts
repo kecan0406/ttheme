@@ -58,7 +58,7 @@ export function itermProfiles(
 ): string {
   const profile = (theme: Theme, id: string) => ({
     Name: `ttheme · ${id}`,
-    Guid: `ttheme-${id}`,
+    Guid: owned(id),
     ...(parent ? { 'Dynamic Profile Parent GUID': parent } : {}),
     'Use Separate Colors for Light and Dark Mode': false,
     'Harmonize 256 Colors': true,

@@ -1,15 +1,15 @@
 import { type ParseArgsOptionsConfig, parseArgs } from 'node:util'
 import pkg from '../package.json' with { type: 'json' }
 import { build } from './build.ts'
-import { runCheck, runEdit, runNew, runShare, runSubmit } from './craft.ts'
+import { runCheck, runEdit, runNew, runShare } from './craft.ts'
 import { runFind } from './find.ts'
 import { runImage } from './images.ts'
 import { Cancelled, runInit } from './init.ts'
-import { runIntake } from './intake.ts'
 import { runAdd, runBrowse, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './market.ts'
+import { runMarket } from './markets.ts'
 import { relaunch, routable, unblocking } from './unblock.ts'
 import { runUninstall } from './uninstall.ts'
-import { type Section, VERB_SPECS, type VerbSpec } from './verbs.ts'
+import { helpText, usageOf, VERB_SPECS, type VerbSpec } from './verbs.ts'
 
 export interface Flags {
   yes?: boolean
@@ -17,6 +17,7 @@ export interface Flags {
   json?: boolean
   fix?: boolean
   from?: string
+  in?: string
 }
 
 export interface Verb extends VerbSpec {
@@ -37,23 +38,22 @@ const RUNS: Record<string, Verb['run']> = {
   add: tunneled((names: string[]) => runAdd(names)),
   remove: (names) => runRemove(names),
   update: tunneled(() => runUpdate()),
-  new: tunneled(([name]: string[], { from }: Flags) => runNew(name as string, from)),
+  market: tunneled(([action, arg]: string[]) => runMarket(action, arg)),
+  new: tunneled(([name]: string[], { from, in: into }: Flags) => runNew(name as string, from, into)),
   edit: tunneled(([name]: string[]) => runEdit(name as string)),
   check: ([name], { fix }) => runCheck(name as string, fix),
   share: ([name]) => runShare(name as string),
-  submit: ([name]) => runSubmit(name as string),
   init: (_, { yes }) => runInit({ yes }),
   uninstall: (_, { yes }) => runUninstall(yes),
   build: (_, { only }) => build({ only }),
   find: ([name]) => runFind(name as string),
   image: ([name, action]) => runImage(name as string, action as string),
-  intake: ([file, login]) => runIntake(file as string, login as string),
 }
 
 export const VERBS: Verb[] = VERB_SPECS.map((spec) => ({ ...spec, run: RUNS[spec.name] }))
 
 export type Invocation =
-  | { kind: 'help'; verb?: Verb; code: number }
+  | { kind: 'help'; verb?: Verb; all?: boolean; code: number }
   | { kind: 'version' }
   | { kind: 'run'; verb: Verb; args: string[]; flags: Flags }
 
@@ -99,7 +99,10 @@ export function parse(argv: readonly string[]): Invocation {
     return { kind: 'version' }
   }
   if (first === 'help') {
-    return rest[0] === undefined ? { kind: 'help', code: 0 } : { kind: 'help', verb: verbNamed(rest[0]), code: 0 }
+    if (rest[0] === undefined || rest[0] === 'all') {
+      return { kind: 'help', all: rest[0] === 'all', code: 0 }
+    }
+    return { kind: 'help', verb: verbNamed(rest[0]), code: 0 }
   }
   const verb = verbNamed(first)
   const parsed = parseFlags(verb, rest)
@@ -126,51 +129,25 @@ export function parse(argv: readonly string[]): Invocation {
   return { kind: 'run', verb, args, flags: given as Flags }
 }
 
-function usage(verb: Verb): string {
-  const flags = Object.entries(verb.flags ?? {}).map(([name, { value }]) => `[--${name}${value ? ` ${value}` : ''}]`)
-  return [verb.name, ...flags, ...verb.args].join(' ')
+function rows(pairs: [string, string][]): string[] {
+  const width = Math.max(0, ...pairs.map(([left]) => left.length))
+  return pairs.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`)
 }
 
-function columns(rows: [string, string][], width = Math.max(...rows.map(([left]) => left.length))): string[] {
-  return rows.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`)
-}
-
-const SECTIONS: Section[] = ['tab', 'catalog', 'own', 'setup']
-
-export function help(verb?: Verb): string {
-  if (verb) {
-    const flags = Object.entries(verb.flags ?? {}).map(([name, { short, value, about }]): [string, string] => [
-      `${short ? `-${short}, ` : ''}--${name}${value ? ` ${value}` : ''}`,
-      about,
-    ])
-    return [
-      `Usage: ttheme ${usage(verb)}`,
-      '',
-      verb.about,
-      ...(flags.length > 0 ? ['', 'Options:', ...columns(flags)] : []),
-    ].join('\n')
+export function help(verb?: Verb, all = false): string {
+  if (!verb) {
+    return helpText(all)
   }
-  const shown = VERBS.filter((v) => !v.hidden)
-  const commands = (section: Section) =>
-    shown.filter((v) => v.section === section).map((v): [string, string] => [usage(v), v.about])
-  const width = Math.max(...shown.map((v) => usage(v).length))
+  const flags = Object.entries(verb.flags ?? {}).map(([name, { short, value, about }]): [string, string] => [
+    `${short ? `-${short}, ` : ''}--${name}${value ? ` ${value}` : ''}`,
+    about,
+  ])
   return [
-    'Usage: ttheme <command>',
+    `Usage: ttheme ${usageOf(verb)}`,
     '',
-    pkg.description,
-    '',
-    'Commands:',
-    ...SECTIONS.flatMap((section, i) => [...(i > 0 ? [''] : []), ...columns(commands(section), width)]),
-    '',
-    'Examples:',
-    '  npx @kecan0406/ttheme init -y   wire the terminals found here, no prompts',
-    '  ttheme add homura madoka        install two palettes',
-    '  ttheme use homura              paint this tab with one',
-    '  ttheme list --json madoka       the madoka series as JSON',
-    '  ttheme new dusk --from madoka   your own palette, <you>/dusk, to edit and share',
-    '',
-    'ttheme <command> --help describes one command · ttheme --version prints the version',
-    'https://kecan0406.github.io/ttheme',
+    verb.about,
+    ...(verb.actions ? ['', 'Actions:', ...rows(verb.actions)] : []),
+    ...(flags.length > 0 ? ['', 'Options:', ...rows(flags)] : []),
   ].join('\n')
 }
 
@@ -184,9 +161,9 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     }
     if (call.kind === 'help') {
       if (call.code === 0) {
-        console.log(help(call.verb))
+        console.log(help(call.verb, call.all))
       } else {
-        console.error(help(call.verb))
+        console.error(help(call.verb, call.all))
       }
       return call.code
     }
@@ -198,7 +175,11 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     return typeof code === 'number' ? code : 0
   } catch (error) {
     if (error instanceof UsageError) {
-      console.error(`ttheme${error.verb ? ` ${error.verb.name}` : ''}: ${error.message}\n\n${help(error.verb)}`)
+      console.error(
+        error.verb
+          ? `ttheme ${error.verb.name}: ${error.message}\n\n${help(error.verb)}`
+          : `ttheme: ${error.message} — see \`ttheme help\``,
+      )
       return 1
     }
     if (error instanceof Cancelled) {

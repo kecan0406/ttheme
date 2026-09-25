@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse } from 'smol-toml'
 import { SITES } from './booru.ts'
@@ -67,13 +67,12 @@ export interface Place {
 }
 
 export const ORIGINAL = 'Original'
-export const COMMUNITY = 'community'
 const SHARED_ORDER = 1_000_000
 const GROUPS_FILE = '_groups.toml'
 const SIGNATURE_SIZE = 3
 const MAX_PICTURES = 8
 const SLUG = '[a-z0-9]+(?:-[a-z0-9]+)*'
-const NAME = new RegExp(`^(?:(${SLUG})/)?(${SLUG})$`)
+const NAME = new RegExp(`^(${SLUG})(?:@(${SLUG}))?$`)
 const NAMED_SLOTS = ['background', 'foreground', 'cursor', 'selection'] as const
 
 type NamedSlot = (typeof NAMED_SLOTS)[number]
@@ -97,23 +96,28 @@ function str(file: string, field: string, value: unknown): string {
 }
 
 export function stem(name: string): string {
-  return name.replace('/', '--')
+  return name.replace('@', '--')
 }
 
-export function authorOf(name: string): string | undefined {
-  const at = name.indexOf('/')
-  return at < 0 ? undefined : name.slice(0, at)
+export function ownerOf(name: string): string | undefined {
+  const at = name.indexOf('@')
+  return at < 0 ? undefined : name.slice(at + 1)
+}
+
+export function slugOf(name: string): string {
+  const at = name.indexOf('@')
+  return at < 0 ? name : name.slice(0, at)
 }
 
 export function nameProblem(name: string): string | undefined {
   const m = NAME.exec(name)
   if (!m) {
-    return 'takes lowercase letters, digits and single hyphens, as <palette> or <author>/<palette>'
+    return 'takes lowercase letters, digits and single hyphens, as <palette> or <palette>@<owner>'
   }
-  if ((m[1]?.length ?? 0) > 39) {
-    return 'has an author longer than a GitHub handle can be'
+  if ((m[2]?.length ?? 0) > 39) {
+    return 'has an owner longer than a GitHub handle can be'
   }
-  return (m[2]?.length ?? 0) > 40 ? 'is longer than 40 characters' : undefined
+  return (m[1]?.length ?? 0) > 40 ? 'is longer than 40 characters' : undefined
 }
 
 export function textProblem(value: string): string | undefined {
@@ -324,10 +328,10 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   if (name !== place.name) {
     fail(file, `meta.name "${name}" does not match its file — it lives at ${place.name}`)
   }
-  const shared = authorOf(name) !== undefined
+  const shared = place.open === true
   for (const key of ['order', 'role']) {
     if (shared && meta[key] !== undefined) {
-      fail(file, `meta.${key} is for the official palettes — a shared palette follows its base`)
+      fail(file, `meta.${key} is for the official palettes — a market palette follows its base`)
     }
   }
 
@@ -338,10 +342,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
 
   const base = meta.base === undefined ? undefined : paletteName(file, 'meta.base', meta.base)
   if (base !== undefined && !shared) {
-    fail(file, 'meta.base is for shared palettes')
-  }
-  if (base !== undefined && !place.open && place.bases && !place.bases.has(base)) {
-    fail(file, `meta.base "${base}" is not an official palette`)
+    fail(file, 'meta.base is for market palettes')
   }
   const from = base === undefined ? undefined : place.bases?.get(base)
 
@@ -380,7 +381,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
     ...(base ? { base } : {}),
     group: groupName,
     native: group?.native,
-    lead: group?.lead === name,
+    lead: !shared && group?.lead === name,
     order: shared ? (from?.order ?? SHARED_ORDER) : Number(meta.order),
     role,
     ansiSource:
@@ -407,36 +408,6 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   }
 }
 
-function listing(dir: string): string[] {
-  return existsSync(dir) ? readdirSync(dir).sort() : []
-}
-
-function loadCommunity(dir: string, place: Omit<Place, 'name'>): Theme[] {
-  return listing(dir).flatMap((author) =>
-    listing(join(dir, author))
-      .filter((f) => f.endsWith('.toml'))
-      .map((f) => {
-        const file = `${COMMUNITY}/${author}/${f}`
-        return readTheme(file, readFileSync(join(dir, author, f), 'utf8'), {
-          ...place,
-          name: `${author}/${basename(f, '.toml')}`,
-        })
-      }),
-  )
-}
-
-export function placed<T extends { name: string; base?: string; group: string }>(official: T[], shared: T[]): T[] {
-  const out: T[] = []
-  for (const t of official) {
-    out.push(t, ...shared.filter((s) => s.base === t.name))
-  }
-  for (const s of shared.filter((s) => s.base === undefined || !official.some((t) => t.name === s.base))) {
-    const at = out.findLastIndex((t) => t.group === s.group)
-    out.splice(at < 0 ? out.length : at + 1, 0, s)
-  }
-  return out
-}
-
 export function loadThemes(dir: string): Theme[] {
   const groups = readGroups(dir)
   const byName = new Map(groups.map((g) => [g.name, g]))
@@ -461,8 +432,7 @@ export function loadThemes(dir: string): Theme[] {
       fail(GROUPS_FILE, `group "${group.name}" lead "${group.lead}" is not one of its themes`)
     }
   }
-  const bases = new Map(themes.filter((t) => t.role === undefined).map((t) => [t.name, t]))
-  return placed(themes, loadCommunity(join(dir, COMMUNITY), { groups: byName, bases }))
+  return themes
 }
 
 export function rotation(themes: Theme[]): Theme[] {

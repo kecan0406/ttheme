@@ -417,17 +417,11 @@ __tt_menu() {
 }
 
 __tt_help() {
-  local v
-  print -r -- $'ttheme — character terminal palettes\n'
-  print -r -- "  ${(r:16:):-ttheme}list every palette, grouped, with previews"
-  for v in $TTHEME_VERBS; do
-    if [[ $v == - ]]; then
-      print
-    else
-      print -r -- "  ${(r:16:)${:-ttheme $v}}$TTHEME_VERB_ABOUT[$v]"
-    fi
-  done
-  print -r -- $'\nttheme <command> --help describes one command · ttheme --version prints the version'
+  if [[ $1 == all ]]; then
+    print -r -- $TTHEME_HELP_ALL
+  else
+    print -r -- $TTHEME_HELP
+  fi
 }
 
 __tt_usage() {
@@ -435,7 +429,9 @@ __tt_usage() {
 }
 
 __tt_verb_help() {
-  if (( ${TTHEME_SHELL_VERBS[(Ie)$1]} )); then
+  if [[ -z $1 || $1 == all ]]; then
+    __tt_help $1
+  elif (( ${TTHEME_SHELL_VERBS[(Ie)$1]} )); then
     __tt_usage $1
   elif [[ -n $1 && -n ${TTHEME_VERB_ABOUT[$1]} ]]; then
     __tt_cli $1 --help
@@ -472,7 +468,7 @@ __tt_cli() {
 __tt_catalog() {
   local was
   __tt_cli "$@" || return
-  [[ $1 == (list|share|submit) ]] && return 0
+  [[ $1 == (list|share|market) ]] && return 0
   [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
   was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   __tt_palettes_load && __tt_reloaded
@@ -1635,7 +1631,7 @@ ttheme() {
     print -u2 "ttheme: unknown command '$1' — see \`ttheme help\`"
     return 1
   fi
-  if [[ $TTHEME_ADAPTER == warp && $1 != (browse|list|add|remove|update|new|edit|check|share|submit|config|default|on|off) ]]; then
+  if [[ $TTHEME_ADAPTER == warp && $1 != (browse|list|add|remove|update|market|new|edit|check|share|config|default|on|off) ]]; then
     print -u2 "ttheme: Warp wears one theme app-wide and paints no tab background of its own — \`ttheme default <palette>\` puts one on every Warp window"
     return 1
   fi
@@ -1646,7 +1642,7 @@ ttheme() {
   fi
 
   case $1 in
-    browse|list|add|remove|update|new|edit|check|share|submit) __tt_catalog "$@"; return ;;
+    browse|list|add|remove|update|market|new|edit|check|share) __tt_catalog "$@"; return ;;
     on|off) __tt_switch "$@"; return ;;
   esac
   __tt_arity "$@" || return
@@ -1676,13 +1672,19 @@ if (( $+functions[compdef] )); then
   __tt_complete() {
     local -a reply
     if (( CURRENT == 2 )); then
-      compadd -- ${TTHEME_VERBS:#-} help
-    elif [[ $words[2] == remove || ( $words[2] == (use|default|edit|check|share|submit) && CURRENT == 3 ) ]]; then
+      compadd -- $TTHEME_VERBS help
+    elif [[ $words[2] == remove || ( $words[2] == (use|default|edit|check|share) && CURRENT == 3 ) ]]; then
       compadd -- $TTHEME_ORDER
     elif [[ $words[2] == new && $words[CURRENT-1] == --from ]]; then
       compadd -- $TTHEME_ORDER
+    elif [[ $words[2] == new && $words[CURRENT-1] == --in ]]; then
+      _files -/
     elif [[ $words[2] == new ]]; then
-      compadd -- --from
+      compadd -- --from --in
+    elif [[ $words[2] == market && CURRENT == 3 ]]; then
+      compadd -- add remove search init
+    elif [[ $words[2] == market && $words[3] == (add|init) && CURRENT == 4 ]]; then
+      _files -/
     elif [[ $words[2] == add ]]; then
       reply=(${${${(M)${(f)"$(__tt_cli list --json 2>/dev/null)"}:#*\"name\": *}#*\"name\": \"}%%\"*})
       compadd -- ${reply:|TTHEME_ORDER}

@@ -1,3 +1,5 @@
+import pkg from '../package.json' with { type: 'json' }
+
 export const TERMINALS = ['ghostty', 'kitty', 'alacritty', 'wezterm', 'iterm2', 'windows-terminal', 'warp'] as const
 
 export interface Flag {
@@ -9,13 +11,23 @@ export interface Flag {
   about: string
 }
 
-export type Section = 'tab' | 'catalog' | 'own' | 'setup'
+export type Section = 'tab' | 'startup' | 'catalog' | 'own' | 'setup'
+
+export const SECTIONS: { section: Section; title: string }[] = [
+  { section: 'tab', title: 'This tab' },
+  { section: 'startup', title: 'New tabs' },
+  { section: 'catalog', title: 'Palettes' },
+  { section: 'own', title: 'Your own' },
+  { section: 'setup', title: 'Setup' },
+]
 
 export interface VerbSpec {
   name: string
   args: string[]
   about: string
   section: Section
+  start?: string
+  actions?: [string, string][]
   shell?: true
   hidden?: true
   flags?: Record<string, Flag>
@@ -23,27 +35,29 @@ export interface VerbSpec {
 
 export const VERB_SPECS: VerbSpec[] = [
   {
-    name: 'use',
-    args: ['<palette>'],
-    about: 'paint this tab — a unique prefix works: ttheme use ho',
-    section: 'tab',
-    shell: true,
-  },
-  {
     name: 'preview',
     args: [],
     about: 'browse live — focus repaints, enter keeps (this tab or default), esc restores, ? lists keys',
     section: 'tab',
+    start: 'try every palette live — enter keeps the one you land on',
+    shell: true,
+  },
+  {
+    name: 'use',
+    args: ['<palette>'],
+    about: 'paint this tab — a unique prefix works: ttheme use ho',
+    section: 'tab',
+    start: 'paint this tab with one — ttheme use homura',
     shell: true,
   },
   { name: 'next', args: [], about: 'advance this tab to the next palette', section: 'tab', shell: true },
-  { name: 'default', args: ['<palette>'], about: 'make a palette the one new tabs open with', section: 'tab' },
-  { name: 'on', args: [], about: 'wear the default palette in new tabs again', section: 'tab' },
+  { name: 'default', args: ['<palette>'], about: 'make a palette the one new tabs open with', section: 'startup' },
+  { name: 'on', args: [], about: 'wear the default palette in new tabs again', section: 'startup' },
   {
     name: 'off',
     args: [],
     about: "take the palette and picture off every tab — the terminal's own colors until `ttheme on`",
-    section: 'tab',
+    section: 'startup',
   },
   {
     name: 'pin',
@@ -53,8 +67,20 @@ export const VERB_SPECS: VerbSpec[] = [
     shell: true,
   },
   { name: 'unpin', args: [], about: 'drop the palette pinned to this directory', section: 'tab', shell: true },
-  { name: 'config', args: [], about: 'edit settings in $EDITOR — they apply in new tabs', section: 'tab', shell: true },
-  { name: 'browse', args: [], about: 'pick palettes from the catalog in a live picker', section: 'catalog' },
+  {
+    name: 'config',
+    args: [],
+    about: 'edit settings in $EDITOR — they apply in new tabs',
+    section: 'startup',
+    shell: true,
+  },
+  {
+    name: 'browse',
+    args: [],
+    about: 'pick palettes from the catalog in a live picker',
+    section: 'catalog',
+    start: 'install or drop palettes — every market you added, in one picker',
+  },
   {
     name: 'list',
     args: ['[query]'],
@@ -69,20 +95,34 @@ export const VERB_SPECS: VerbSpec[] = [
     section: 'catalog',
   },
   { name: 'remove', args: ['<palette...>'], about: 'uninstall palettes', section: 'catalog' },
-  { name: 'update', args: [], about: 'refresh the catalog from the registry', section: 'catalog' },
+  { name: 'update', args: [], about: 'refresh every market you added', section: 'catalog' },
+  {
+    name: 'market',
+    args: ['[action]', '[source]'],
+    about: 'the markets you added — add, remove and search them; init makes one of your own',
+    actions: [
+      ['(none)', 'list the markets you added, with how many palettes each holds'],
+      ['add <source>', 'add one: a GitHub handle (alice/ttheme-palettes), owner/repo, a folder, or official'],
+      ['remove <name>', 'drop one — the palettes you installed from it keep working'],
+      ['search [query]', 'repositories on GitHub with the ttheme-market topic'],
+      ['init [folder]', 'make a market of your own, ~/.config/ttheme/market when no folder is given'],
+    ],
+    section: 'catalog',
+  },
   {
     name: 'new',
     args: ['<name>'],
-    about: 'make a palette of your own, <you>/<name>, from another one — installed at once',
+    about: 'make a palette of your own, <name>@<you>, in your local market — installed at once',
     section: 'own',
     flags: {
       from: { type: 'string', value: '<palette>', about: 'the palette to start from — the default one when left out' },
+      in: { type: 'string', value: '<market>', about: 'the local market to put it in, when you have more than one' },
     },
   },
   {
     name: 'edit',
     args: ['<palette>'],
-    about: 'change one of your palettes in $EDITOR — checked against the gate before it is kept',
+    about: 'change one of your palettes in $EDITOR — the contrast gate advises, never refuses',
     section: 'own',
   },
   {
@@ -96,12 +136,6 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'share',
     args: ['<palette>'],
     about: 'print a share code — ttheme add <code> installs it anywhere, pictures included',
-    section: 'own',
-  },
-  {
-    name: 'submit',
-    args: ['<palette>'],
-    about: 'offer one of your palettes to the catalog, through a GitHub issue',
     section: 'own',
   },
   {
@@ -142,13 +176,6 @@ export const VERB_SPECS: VerbSpec[] = [
     hidden: true,
   },
   {
-    name: 'intake',
-    args: ['<issue-body-file>', '<login>'],
-    about: "turn a palette issue into a community palette file — the submission bot's step, from a checkout",
-    section: 'setup',
-    hidden: true,
-  },
-  {
     name: 'image',
     args: ['<palette>', '<action>'],
     about:
@@ -157,3 +184,74 @@ export const VERB_SPECS: VerbSpec[] = [
     hidden: true,
   },
 ]
+
+export function usageOf(verb: VerbSpec): string {
+  const flags = Object.entries(verb.flags ?? {}).map(([name, { value }]) => `[--${name}${value ? ` ${value}` : ''}]`)
+  return [verb.name, ...flags, ...verb.args].join(' ')
+}
+
+function columns(rows: [string, string][], width = Math.max(...rows.map(([left]) => left.length))): string[] {
+  return rows.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`)
+}
+
+const EXAMPLES: [string, string][] = [
+  ['npx @kecan0406/ttheme init -y', 'wire the terminals found here, no prompts'],
+  ['ttheme add homura madoka', 'install two palettes'],
+  ['ttheme use homura', 'paint this tab with one'],
+  ['ttheme list --json madoka', 'the madoka series as JSON'],
+  ['ttheme market add alice', "palettes from alice's market — ttheme add dusk@alice"],
+  ['ttheme new dusk --from madoka', 'your own palette, dusk@<you>, to edit and share'],
+]
+
+export function helpText(all: boolean, shell = false): string {
+  const shown = VERB_SPECS.filter((v) => !v.hidden && !(shell && v.section === 'setup'))
+  const sections = SECTIONS.filter(({ section }) => shown.some((v) => v.section === section))
+  const footer = [
+    ...(shell ? ['ttheme alone lists every installed palette, grouped, with previews'] : []),
+    all
+      ? 'ttheme help <command> describes one command · ttheme --version prints the version'
+      : 'ttheme help <command> describes one · ttheme help all lists every command with what it does',
+    'https://kecan0406.github.io/ttheme',
+  ]
+  if (!all) {
+    const start = shown.filter((v) => v.start)
+    const width = Math.max(...sections.map(({ title }) => title.length))
+    return [
+      'Usage: ttheme <command>',
+      '',
+      pkg.description,
+      '',
+      'Start here',
+      ...columns(start.map((v): [string, string] => [usageOf(v), v.start as string])),
+      '',
+      ...sections.map(
+        ({ section, title }) =>
+          `${title.padEnd(width)}  ${shown
+            .filter((v) => v.section === section)
+            .map((v) => v.name)
+            .join(' · ')}`,
+      ),
+      '',
+      ...footer,
+    ].join('\n')
+  }
+  const width = Math.max(...shown.map((v) => usageOf(v).length))
+  return [
+    'Usage: ttheme <command>',
+    '',
+    pkg.description,
+    ...sections.flatMap(({ section, title }) => [
+      '',
+      title,
+      ...columns(
+        shown.filter((v) => v.section === section).map((v): [string, string] => [usageOf(v), v.about]),
+        width,
+      ),
+    ]),
+    '',
+    'Examples',
+    ...columns(EXAMPLES),
+    '',
+    ...footer,
+  ].join('\n')
+}

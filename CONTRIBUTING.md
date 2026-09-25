@@ -1,29 +1,32 @@
 # Contributing a palette
 
-`themes/*.toml` is the catalog: the official palettes at the top, the
-community's under `themes/community/<author>/<palette>.toml`. A merged palette
-reaches everyone through `ttheme update`, without waiting for an npm release.
+`themes/*.toml` is the official catalog. A merged palette reaches everyone
+through `ttheme update`, without waiting for an npm release.
 
-## The short way: `ttheme submit`
+## Your own market first
+
+You do not need this repository to share a palette. Every palette you make
+lives in a market of your own, and anyone can add it:
 
 ```sh
-ttheme new dusk --from madoka     # <you>/dusk, in ~/.config/ttheme/palettes/
-ttheme edit dusk                  # $EDITOR; a result that fails the gate is refused
-ttheme submit dusk                # opens a filled-in GitHub issue
+ttheme new dusk --from madoka     # dusk@<you>, in ~/.config/ttheme/market/palettes/
+ttheme edit dusk                  # $EDITOR; the gate's numbers are shown, never enforced
+ttheme market init                # prints the two gh commands that publish it
 ```
 
-A bot takes the palette out of the issue, checks that its name carries the
-issue author's handle, runs `mise run ci` with it and opens a pull request, with
-the gate's numbers and a `ttheme add tt1:…` line to wear it before merging. An
-error goes back to the issue as a comment; edit the issue (or submit again) and
-it runs again. Submitting the same name later updates it.
+A market is a repository with `palettes/<palette>.toml`, a `ttheme-market.json`
+index and a workflow that runs `kecan0406/ttheme/market@v1` on every push to
+rebuild the index. `ttheme market build` does the same by hand. The market's
+name is its owner's GitHub handle, so its palettes are `<palette>@<owner>`;
+the TOML files name them bare (`name = "dusk"`). A market palette has no
+`order` and no `role`: `meta.base` names the official palette it varies, and
+its series and place in the list follow that one (without a base, `meta.group`
+names an existing series, or it lands under Original). Give the repository the
+`ttheme-market` topic and `ttheme market search` and the
+[markets page](https://kecan0406.github.io/ttheme/markets) find it.
 
-A community palette belongs to its author: CI refuses a pull request that
-touches `themes/community/<someone>/` from anyone else. It has no `order` and no
-`role`; `meta.base` names the official palette it varies, and its series and
-place in the list follow that one (without a base, `meta.group` names an
-existing series, or it lands under Original). If a palette leaves the catalog,
-everyone who installed it keeps the copy they have.
+Open a pull request here when a palette belongs in the official catalog: it
+then has to pass the contrast gate and everything below.
 
 ## What this project accepts
 
@@ -56,7 +59,7 @@ opacity = 0.2           # optional: the palette's own tint strength by default
 
 `ttheme add` fetches each post from the site itself on the user's machine,
 checks it against their own rating and block settings, cuts it out and tints it
-there, as `find` would. `ttheme share` and `ttheme submit` fill this in from
+there, as `find` would. `ttheme new` and `ttheme share` fill this in from
 the pictures you have up.
 
 ## The file

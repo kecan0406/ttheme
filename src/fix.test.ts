@@ -5,7 +5,7 @@ import { check } from './contrast.ts'
 import { fixGate } from './fix.ts'
 
 const failing = {
-  name: 'kec/dim',
+  name: 'dim@kec',
   background: '#1b170c',
   foreground: '#6a6458',
   selectionBackground: '#10409c',

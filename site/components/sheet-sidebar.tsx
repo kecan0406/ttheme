@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -102,6 +103,9 @@ export function SheetSidebar({
           <b className="text-[13px] text-foreground">ttheme</b> {version}
         </span>
         <nav className="flex gap-3.5">
+          <Link href="/markets" className={LINK}>
+            markets
+          </Link>
           <a href="https://github.com/kecan0406/ttheme" className={LINK}>
             github
           </a>

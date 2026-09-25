@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, utimesSync, 
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { backgroundsDir, readBackdrop, readStore } from './backdrop.ts'
-import { available, gateFailures, nearest, readAvailable, writeKept } from './catalog.ts'
+import { available, nearest, readAvailable, writeKept } from './catalog.ts'
 import { backupOnce, editUserFile, writeAtomic } from './edits.ts'
 import { alacritty, type Emitter, ghostty, iterm2, kitty, owned, warp, wezterm, windowsTerminal } from './emit/index.ts'
 import { itermProfiles, type ProfileBackground } from './emit/iterm2.ts'
@@ -12,7 +12,8 @@ import { listed, type Manifest, type PaletteEntry, toTheme } from './emit/manife
 import { palettesZsh } from './emit/shell.ts'
 import { weztermModule } from './emit/wezterm.ts'
 import { wtFragment } from './emit/windows-terminal.ts'
-import type { Theme } from './theme.ts'
+import { installedPath } from './sources.ts'
+import { ownerOf, type Theme } from './theme.ts'
 import {
   alacrittyColors,
   ghosttyBlock,
@@ -47,6 +48,7 @@ export interface Installed {
   itermBase?: string
   wtHome?: string
   wtProfile?: string
+  markets?: string[]
   palettes: string[]
 }
 
@@ -119,10 +121,6 @@ export function itermProfilesPath(home: string): string {
   return join(home, 'Library', 'Application Support', 'iTerm2', 'DynamicProfiles', 'ttheme.json')
 }
 
-export function installedPath(configHome: string): string {
-  return join(configHome, 'ttheme', 'installed.json')
-}
-
 export function readInstalled(configHome: string): Installed {
   const path = installedPath(configHome)
   if (!existsSync(path)) {
@@ -140,6 +138,7 @@ export function readInstalled(configHome: string): Installed {
     ...(doc.itermBase ? { itermBase: doc.itermBase } : {}),
     ...(doc.wtHome ? { wtHome: doc.wtHome } : {}),
     ...(doc.wtProfile ? { wtProfile: doc.wtProfile } : {}),
+    ...(Array.isArray(doc.markets) ? { markets: doc.markets.filter((m) => typeof m === 'string') } : {}),
     palettes: doc.palettes,
   }
 }
@@ -152,14 +151,14 @@ export function resolve(catalog: Manifest, names: string[]): PaletteEntry[] {
   const known = new Map(catalog.palettes.map((p) => [p.name, p]))
   const missing = names.filter((n) => !known.has(n))
   if (missing.length > 0) {
-    throw new Error(`not in the catalog: ${missing.join(', ')} — ${nearest(listed(catalog.palettes), missing)}`)
-  }
-  const failed = names.flatMap((name) => {
-    const failures = gateFailures(known.get(name) as PaletteEntry)
-    return failures.length > 0 ? [`${name}: ${failures.join(', ')}`] : []
-  })
-  if (failed.length > 0) {
-    throw new Error(`these palettes fail the contrast gate:\n  ${failed.join('\n  ')}`)
+    const owners = [...new Set(missing.flatMap((n) => ownerOf(n) ?? []))].filter(
+      (owner) => !catalog.palettes.some((p) => ownerOf(p.name) === owner),
+    )
+    const hint =
+      owners.length > 0
+        ? owners.map((owner) => `\`ttheme market add ${owner}\``).join(', ')
+        : nearest(listed(catalog.palettes), missing)
+    throw new Error(`not in any market: ${missing.join(', ')} — ${hint}`)
   }
   return catalog.palettes.filter((p) => names.includes(p.name))
 }
@@ -365,7 +364,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
       continue
     }
     const fresh =
-      startup !== undefined && terminal === 'warp' && !existsSync(join(warpThemes(home), `ttheme-${startup}.yaml`))
+      startup !== undefined && terminal === 'warp' && !existsSync(join(warpThemes(home), `${owned(startup)}.yaml`))
     const warpFile = terminal === 'warp' ? wearWarp(configHome, home, startup, fresh) : undefined
     for (const entry of entries) {
       for (const { file, content } of themeFiles(terminal, toTheme(entry))) {

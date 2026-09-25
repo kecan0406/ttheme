@@ -4,7 +4,18 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { available, booruTags, gateFailures, parseCatalog, search, siteTags, writeKept } from './catalog.ts'
+import {
+  available,
+  booruTags,
+  gateFailures,
+  parseCatalog,
+  parseIndex,
+  readCatalog,
+  search,
+  siteTags,
+  writeCatalog,
+  writeKept,
+} from './catalog.ts'
 import type { PaletteEntry } from './emit/manifest.ts'
 import { paletteToml } from './own.ts'
 
@@ -107,7 +118,7 @@ test('parseCatalog refuses an entry whose name or text would reach a path or a c
   assert.throws(() => parseCatalog(catalogJson([entry({ name: '../../x' })])), /lowercase letters/)
   assert.throws(() => parseCatalog(catalogJson([entry({ ansiSource: 'x\ncommand = rm' })])), /control character/)
   assert.throws(() => parseCatalog(catalogJson([entry({ background: 'red' })])), /#rrggbb/)
-  assert.equal(parseCatalog(catalogJson([entry({ name: 'kec/dusk', base: 'gojo' })])).palettes[0]?.name, 'kec/dusk')
+  assert.equal(parseCatalog(catalogJson([entry({ name: 'dusk@kec', base: 'gojo' })])).palettes[0]?.name, 'dusk@kec')
 })
 
 test('gateFailures measures an entry that carries no gate', () => {
@@ -115,30 +126,54 @@ test('gateFailures measures an entry that carries no gate', () => {
   assert.match(gateFailures(bare as PaletteEntry)[0] ?? '', /foreground on background/)
 })
 
-test('available puts your palettes after their base, lets yours stand in, and keeps what left the catalog', () => {
+test('readCatalog lays each added market after the base its palettes vary, and available adds local markets and kept ones', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-available-'))
-  const catalog = {
+  const skeleton = {
     version: '0.1.0',
     gate: [],
     placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
-    palettes: [entry({ name: 'gojo' }), entry({ name: 'kec/old', base: 'gojo' }), entry({ name: 'geto', order: 2 })],
   }
-  const own = (name: string, base: string) =>
+  const local = join(home, 'mine')
+  mkdirSync(join(home, 'ttheme', 'markets'), { recursive: true })
+  mkdirSync(join(local, 'palettes'), { recursive: true })
+  writeFileSync(
+    join(home, 'ttheme', 'installed.json'),
+    JSON.stringify({ terminals: [], palettes: [], markets: ['official', 'ann/ttheme-palettes', local] }),
+  )
+  writeCatalog(home, { ...skeleton, palettes: [entry({ name: 'gojo' }), entry({ name: 'geto', order: 2 })] })
+  writeFileSync(
+    join(home, 'ttheme', 'markets', 'ann.json'),
+    JSON.stringify({ ...skeleton, owner: 'ann', palettes: [entry({ name: 'old', base: 'gojo' })] }),
+  )
+  writeFileSync(join(local, 'ttheme-market.json'), JSON.stringify({ ...skeleton, owner: 'kec', palettes: [] }))
+  writeFileSync(
+    join(local, 'palettes', 'dusk.toml'),
     paletteToml({
-      name,
-      base,
+      name: 'dusk@kec',
+      base: 'gojo',
       signature: ['cursor', 'foreground', 'background'],
       background: '#101010',
       foreground: '#f0f0f0',
       cursor: '#e0c060',
       selection: '#303060',
       ansi: Array.from({ length: 16 }, () => '#808080'),
-    })
-  mkdirSync(join(home, 'ttheme', 'palettes', 'kec'), { recursive: true })
-  writeFileSync(join(home, 'ttheme', 'palettes', 'kec', 'dusk.toml'), own('kec/dusk', 'gojo'))
-  writeFileSync(join(home, 'ttheme', 'palettes', 'kec', 'old.toml'), own('kec/old', 'gojo'))
-  writeKept(home, [entry({ name: 'kec/gone' })])
-  const names = available(home, catalog).palettes.map((p) => p.name)
-  assert.deepEqual(names, ['gojo', 'kec/old', 'kec/dusk', 'geto', 'kec/gone'])
-  assert.equal(available(home, catalog).palettes.find((p) => p.name === 'kec/old')?.background, '#101010')
+    }),
+  )
+  writeKept(home, [entry({ name: 'gone@bob' })])
+  const catalog = readCatalog(home)
+  assert.deepEqual(
+    catalog.palettes.map((p) => p.name),
+    ['gojo', 'old@ann', 'geto'],
+  )
+  assert.deepEqual(
+    available(home, catalog).palettes.map((p) => p.name),
+    ['gojo', 'old@ann', 'dusk@kec', 'geto', 'gone@bob'],
+  )
+})
+
+test('a market index names its palettes bare — the owner comes from where it is added', () => {
+  const index = (name: string) => JSON.stringify({ ...JSON.parse(catalogJson([entry({ name })])), owner: 'ann' })
+  assert.equal(parseIndex(index('dusk')).owner, 'ann')
+  assert.throws(() => parseIndex(index('dusk@bob')), /bare palette names/)
+  assert.throws(() => parseIndex(catalogJson([entry({ name: 'dusk' })])), /no "owner"/)
 })

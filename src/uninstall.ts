@@ -6,7 +6,6 @@ import { cacheRoot } from './booru.ts'
 import { restoreUserFile } from './edits.ts'
 import { owned } from './emit/index.ts'
 import { Cancelled } from './init.ts'
-import { ownDir } from './own.ts'
 import {
   alacrittyConfig,
   blockFile,
@@ -25,6 +24,7 @@ import {
   wtFragmentPath,
   wtSettings,
 } from './palettes.ts'
+import { defaultLocal } from './sources.ts'
 import { removeBlock, removeLuaBlock, warpThemeOf, withWarpTheme } from './wiring.ts'
 
 export interface UninstallPaths {
@@ -158,7 +158,7 @@ export async function runUninstall(yes = false): Promise<void> {
         ...plan.edits.map((e) => `take ttheme out of ${e.file}`),
         ...plan.removals.map((r) =>
           r === tthemeDir
-            ? `delete ${r} — settings, pins, every installed picture${existsSync(ownDir(paths.configHome)) ? ', and the palettes you made (`ttheme share` prints a code that keeps one)' : ''}`
+            ? `delete ${r} — settings, pins, every installed picture${existsSync(defaultLocal(paths.configHome)) ? `, and your market at ${defaultLocal(paths.configHome)} (push it to GitHub first to keep it)` : ''}`
             : `delete ${r}`,
         ),
       ].join('\n'),

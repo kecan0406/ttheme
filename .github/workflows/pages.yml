@@ -3,6 +3,8 @@ name: pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "17 3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -27,6 +29,7 @@ jobs:
       - run: mise run site:build
         env:
           PAGES_BASE_PATH: /ttheme
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: publish the catalog beside the site
         run: cp dist/manifest.json site/out/manifest.json

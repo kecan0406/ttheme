@@ -2,30 +2,40 @@
 
 ## Commands
 
+Three cover most days: `ttheme preview` tries every palette live and keeps the
+one you land on, `ttheme browse` installs or drops palettes, and `ttheme use
+<palette>` paints this tab. `ttheme help` shows those and the rest by task;
+`ttheme help all` lists every command with what it does:
+
 ```
 ttheme          list every palette, grouped, with previews
+
+This tab
 ttheme use      paint this tab    (a unique prefix works: ttheme use ho)
 ttheme preview  browse live — focus repaints the tab, enter keeps it (this tab or default)
 ttheme next     advance this tab to the next palette
+ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
+ttheme unpin    drop the palette pinned to this directory
+
+New tabs
 ttheme default  make a palette the one new tabs open with
 ttheme on       wear the default palette in new tabs again
 ttheme off      take the palette and picture off every tab — the terminal's own colors until ttheme on
-ttheme pin      pick a palette for this directory — cd into it repaints, cd out restores
-ttheme unpin    drop the palette pinned to this directory
 ttheme config   edit settings in $EDITOR — they apply in new tabs
-ttheme help     the list above, in your terminal
 
+Palettes
 ttheme browse   pick palettes from the catalog in a live picker
 ttheme list     the catalog, ● installed and ○ not (a query filters it, --json prints it as JSON)
 ttheme add      install palettes from the catalog, or from a share code (ttheme add tt1:…)
 ttheme remove   uninstall palettes
-ttheme update   refresh the catalog from the registry
+ttheme update   refresh every market you added
+ttheme market   the markets you added — add, remove and search them; init makes one of your own
 
-ttheme new      make a palette of your own, <you>/<name>, from another one (--from)
-ttheme edit     change one of your palettes in $EDITOR — checked against the gate before it is kept
+Your own
+ttheme new      make a palette of your own, <name>@<you>, from another one (--from, --in)
+ttheme edit     change one of your palettes in $EDITOR — the gate advises, never refuses
 ttheme check    measure a palette against the contrast gate (--fix writes colors that pass)
 ttheme share    print a share code — the colors and the pictures' post numbers
-ttheme submit   offer one of your palettes to the catalog, through a GitHub issue
 ```
 
 `ttheme <command> --help` (or `ttheme help <command>`) describes one command
@@ -155,43 +165,71 @@ ttheme update           # new palettes, without an npm release
 them — the change is live in the tab you ran it in. The first palette you install
 becomes the one new windows open with.
 
-`update` refetches the catalog from the registry, rewrites what you installed
-from it and fetches any picture a palette newly lists; every palette in it has
-already passed the contrast gate in CI, and `add` checks the numbers again before
-it writes anything. A palette that leaves the catalog stays installed from the
-copy the last change kept (`~/.config/ttheme/kept.json`); `list` marks it.
+`update` refetches every market you added, rewrites what you installed from
+them and fetches any picture a palette newly lists. A palette that leaves its
+market stays installed from the copy the last change kept
+(`~/.config/ttheme/kept.json`); `list` marks it.
 
-Palettes named `<someone>/<name>` come from the community: each varies an
-official one (`list` and `browse` put it right after that one) and only its
-author changes it.
+## Markets
 
-Installed palettes are listed in `~/.config/ttheme/installed.json`, and the
-catalog is cached in `~/.config/ttheme/catalog.json`.
+The catalog is every market you added, laid together. The official one
+(`official`, the palettes in this repository) is there from `init`; any GitHub
+repository with a `ttheme-market.json` at its root is another:
+
+```sh
+ttheme market search              # repositories with the ttheme-market topic
+ttheme market add alice           # github.com/alice/ttheme-palettes
+ttheme market add alice/anime     # another repository name
+ttheme market add ./my-market     # a folder, read in place on every command
+ttheme market                     # what you added, with counts
+ttheme market remove alice        # installed palettes from it keep working
+```
+
+A market's palettes are `<palette>@<owner>`, named after the owner of the
+repository, so two markets never collide; each varies an official palette
+(`list` and `browse` put it right after that one) or joins a series. Only the
+official catalog is held to the contrast gate — a market palette installs
+whatever its numbers, and `ttheme check` shows them. `ttheme market remove
+official` drops the official catalog too; `ttheme market add official` brings
+it back.
+
+Installed palettes and the markets you added are listed in
+`~/.config/ttheme/installed.json`; the official catalog is cached in
+`~/.config/ttheme/catalog.json` and each other market in
+`~/.config/ttheme/markets/<owner>.json`.
 
 ## Your own palettes
 
 ```sh
-ttheme new dusk --from madoka    # kecan0406/dusk, installed at once
-ttheme edit dusk                 # $EDITOR; the name without <you>/ works for yours
+ttheme new dusk --from madoka    # dusk@kecan0406, installed at once
+ttheme edit dusk                 # $EDITOR; the name without @<you> works for yours
 ttheme check --fix dusk          # colors that pass the gate, written in
 ttheme share dusk                # tt1:… — anyone runs ttheme add tt1:…
-ttheme submit dusk               # a filled-in GitHub issue for the catalog
 ```
 
-Your palettes are files, `~/.config/ttheme/palettes/<you>/<name>.toml`, in the
-same format as `themes/*.toml` (see CONTRIBUTING.md). `<you>` is your GitHub
-handle — read from `gh` when it is logged in, asked once otherwise, and kept in
-`installed.json`. A file you break stays out of the list (every command says
-why on stderr) until you fix it; `edit` never keeps one that does not parse or
-fails the gate, and offers the colors `check --fix` would write.
+Your palettes are files in a local market: `new` creates
+`~/.config/ttheme/market` the first time (or `ttheme market init <folder>`
+makes one elsewhere, and `--in` picks between several). Each is
+`palettes/<name>.toml`, in the same format as `themes/*.toml` (see
+CONTRIBUTING.md) with a bare `meta.name`; the market's `ttheme-market.json`
+carries `<you>`, your GitHub handle — read from `gh` when it is logged in, asked
+once otherwise, and kept in `installed.json`. A file you break stays out of the
+list (every command says why on stderr) until you fix it; `edit` keeps a palette
+that misses the gate and prints the numbers, and `check --fix` writes colors that
+pass.
+
+The folder is a repository layout already, with a workflow that rebuilds the
+index on every push. `ttheme market init` prints the `gh` commands that publish
+it as `<you>/ttheme-palettes` with the `ttheme-market` topic; after that, anyone
+runs `ttheme market add <you>`.
 
 A palette can list background posts by number with their framing, in
-`[[picture]]` tables. `new`, `share` and `submit` fill them in from the pictures
-you have up; `add`, a new `[[picture]]` in `edit`, and `update` fetch the posts on
-your machine through your own rating and block settings, cut them out and tint
-them as `find` does. A picture you drop is not fetched again. Pictures keep the
-tint they were installed with, so after changing a palette's colors, reinstall a
-picture from `find` to retint it.
+`[[picture]]` tables. `new` and `share` fill them in from the pictures you have
+up; `add`, a new `[[picture]]` in `edit`, and `update` fetch the posts on your
+machine through your own rating and block settings, cut them out and tint them as
+`find` does. A picture you drop is not fetched again. Pictures keep the tint they
+were installed with, so after changing a palette's colors, reinstall a picture
+from `find` to retint it.
 
-`uninstall` deletes these files along with the rest of `~/.config/ttheme`;
-`ttheme share` prints a code that keeps one.
+`uninstall` deletes `~/.config/ttheme/market` along with the rest of
+`~/.config/ttheme` — push it first, or keep it in a folder of your own.

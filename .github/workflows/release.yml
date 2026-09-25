@@ -2,7 +2,7 @@ name: release
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["v*.*.*"]
 
 permissions:
   contents: write
@@ -39,7 +39,7 @@ jobs:
 
       - name: notes
         run: |
-          prev=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          prev=$(git describe --tags --abbrev=0 --match 'v*.*.*' "$GITHUB_REF_NAME^" 2>/dev/null || true)
           git log --no-merges --invert-grep --grep='^Bump version to ' --format='- %s' \
             "${prev:+$prev..}$GITHUB_REF_NAME" > notes.md
 
@@ -49,3 +49,9 @@ jobs:
         with:
           files: release/*
           body_path: notes.md
+
+      - name: point the major tag the market action is used by at this release
+        run: |
+          major=${GITHUB_REF_NAME%%.*}
+          git tag -f "$major" "$GITHUB_REF_NAME"
+          git push -f origin "refs/tags/$major"
