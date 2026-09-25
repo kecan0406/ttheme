@@ -25,7 +25,7 @@ export function backupOnce(path: string): void {
   }
 }
 
-export function writeAtomic(path: string, content: string): void {
+export function writeAtomic(path: string, content: string | Uint8Array): void {
   const real = existsSync(path) ? realpathSync(path) : path
   mkdirSync(dirname(real), { recursive: true })
   const tmp = `${real}.ttheme-${process.pid}`

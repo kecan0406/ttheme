@@ -1,6 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { GATE_RULES } from './contrast.ts'
+import { writeAtomic } from './edits.ts'
 import type { Manifest, PaletteEntry } from './emit/manifest.ts'
 
 export const REGISTRY_URL = 'https://kecan0406.github.io/ttheme/manifest.json'
@@ -11,9 +12,7 @@ export function catalogPath(configHome: string): string {
 }
 
 export function writeCatalog(configHome: string, catalog: Manifest): void {
-  const path = catalogPath(configHome)
-  mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, `${JSON.stringify(catalog, null, 2)}\n`)
+  writeAtomic(catalogPath(configHome), `${JSON.stringify(catalog, null, 2)}\n`)
 }
 
 export function readCatalog(configHome: string): Manifest {

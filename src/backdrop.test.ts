@@ -11,8 +11,8 @@ import {
   dropImage,
   fillFrame,
   fillSize,
-  imageKeys,
   installBackdrop,
+  readStore,
   switchImage,
   toneFor,
 } from './backdrop.ts'
@@ -118,11 +118,22 @@ function install(configHome: string, id: number): void {
 }
 
 function shown(dir: string): string | undefined {
-  return /^# image (\S+)$/m.exec(readFileSync(join(dir, 'kagami.conf'), 'utf8'))?.[1]
+  return /^# image (\S+)/m.exec(readFileSync(join(dir, 'kagami.conf'), 'utf8'))?.[1]
 }
 
 function shownPath(dir: string): string | undefined {
   return /^background-image = (.+)$/m.exec(readFileSync(join(dir, 'kagami.conf'), 'utf8'))?.[1]
+}
+
+function keys(dir: string): string[] {
+  return readStore(dir).palettes.kagami?.pictures.map((picture) => picture.key) ?? []
+}
+
+function tuning(dir: string): string {
+  return join(
+    dir,
+    /^config-file = \?(.+\.tune\.conf)$/m.exec(readFileSync(join(dir, 'kagami.conf'), 'utf8'))?.[1] ?? '',
+  )
 }
 
 test('each picture shows under a path of its own, since terminals reload a background only when its path changes', () => {
@@ -142,89 +153,150 @@ test('installing another picture keeps the one shown, and installing the shown o
   const dir = backgroundsDir(configHome)
   install(configHome, 1)
   install(configHome, 2)
-  assert.deepEqual(imageKeys(dir, 'kagami'), ['safebooru_1', 'safebooru_2'])
+  assert.deepEqual(keys(dir), ['safebooru_1', 'safebooru_2'])
   assert.equal(shown(dir), 'safebooru_2')
-  assert.ok(existsSync(join(dir, 'shelf', 'kagami', 'safebooru_1', '.conf')))
   install(configHome, 2)
-  assert.deepEqual(imageKeys(dir, 'kagami'), ['safebooru_1', 'safebooru_2'])
+  assert.deepEqual(keys(dir), ['safebooru_1', 'safebooru_2'])
+  assert.match(readFileSync(join(dir, 'kagami.conf'), 'utf8'), /^# image safebooru_2 2\/2$/m)
 })
 
-test('a picture without a key is replaced by the next install, and can still be removed', () => {
+test('a picture installed before pictures had keys is kept when another one is installed', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)
   mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'kagami.png'), 'old')
-  writeFileSync(join(dir, 'kagami.conf'), 'background-image = kagami@fill-9.png\n')
-  writeFileSync(join(dir, 'kagami@fill-9.png'), 'old')
-  assert.throws(() => switchImage(configHome, 'kagami', 1), /no other image/)
-  assert.deepEqual(dropImage(configHome, 'kagami'), { key: undefined, left: 0 })
-  assert.deepEqual(readdirSync(dir), [])
-  writeFileSync(join(dir, 'kagami.conf'), 'background-image = kagami@fill-9.png\n')
+  writeFileSync(join(dir, 'kagami.1a2b3c4d.png'), 'old')
+  writeFileSync(join(dir, 'kagami.1a2b3c4d@fill-9.png'), 'old')
+  writeFileSync(join(dir, 'kagami.conf'), `background-image = ${join(dir, 'kagami.1a2b3c4d@fill-9.png')}\n`)
   install(configHome, 1)
-  assert.deepEqual(imageKeys(dir, 'kagami'), ['safebooru_1'])
+  assert.deepEqual(keys(dir), ['picture_1a2b3c4d', 'safebooru_1'])
+  assert.ok(existsSync(join(dir, 'kagami.1a2b3c4d@fill-9.png')))
+  assert.deepEqual(switchImage(configHome, 'kagami', 1), { key: 'picture_1a2b3c4d', at: 1, of: 2 })
 })
 
-test('switching walks the saved pictures around and puts each one back as it was', () => {
+test('a conf ttheme did not write stays as it is and out of the store', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'kagami.conf'), 'background-image = ~/walls/kagami.png\n')
+  assert.deepEqual(readStore(dir).palettes, {})
+  assert.equal(readFileSync(join(dir, 'kagami.conf'), 'utf8'), 'background-image = ~/walls/kagami.png\n')
+})
+
+test('the shelf layout moves into the store once, each picture keeping its tuning, bakes and original', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  const shelf = join(dir, 'shelf', 'kagami', 'safebooru_1')
+  mkdirSync(shelf, { recursive: true })
+  mkdirSync(join(dir, 'originals'))
+  writeFileSync(join(dir, 'originals', 'kagami-safebooru_1.png'), 'one')
+  writeFileSync(join(dir, 'originals', 'kagami-safebooru_2.png'), 'two')
+  writeFileSync(
+    join(dir, 'kagami.conf'),
+    `# from safebooru 2 x\n# image safebooru_2\nbackground-image = ${join(dir, 'kagami.bbbbbbbb@fill-30.png')}\nbackground-image-opacity = 0.3\nconfig-file = ?kagami.tune.conf\n`,
+  )
+  writeFileSync(join(dir, 'kagami.bbbbbbbb@fill-30.png'), 'two')
+  writeFileSync(join(dir, 'kagami.tune.conf'), 'background-image-opacity = 0.5\n')
+  writeFileSync(
+    join(shelf, '.conf'),
+    `# image safebooru_1\nbackground-image = ${join(dir, 'kagami.aaaaaaaa@fill-20.png')}\nbackground-image-opacity = 0.2\n`,
+  )
+  writeFileSync(join(shelf, '.aaaaaaaa@fill-20.png'), 'one')
+  writeFileSync(join(shelf, '.aaaaaaaa@60-center.png'), 'baked')
+  writeFileSync(join(shelf, '.off.conf'), 'background-image =\n')
+  assert.deepEqual(readStore(dir).palettes.kagami, {
+    active: 'safebooru_2',
+    pictures: [
+      {
+        key: 'safebooru_1',
+        stem: 'kagami.aaaaaaaa',
+        fill: 'kagami.aaaaaaaa@fill-20.png',
+        opacity: 0.2,
+        original: join('originals', 'kagami-safebooru_1.png'),
+      },
+      {
+        key: 'safebooru_2',
+        stem: 'kagami.bbbbbbbb',
+        fill: 'kagami.bbbbbbbb@fill-30.png',
+        opacity: 0.3,
+        from: 'safebooru 2 x',
+        original: join('originals', 'kagami-safebooru_2.png'),
+      },
+    ],
+  })
+  assert.ok(!existsSync(join(dir, 'shelf')))
+  assert.deepEqual(
+    readdirSync(dir)
+      .filter((file) => file.startsWith('kagami.'))
+      .sort(),
+    [
+      'kagami.aaaaaaaa.off.conf',
+      'kagami.aaaaaaaa@60-center.png',
+      'kagami.aaaaaaaa@fill-20.png',
+      'kagami.bbbbbbbb.tune.conf',
+      'kagami.bbbbbbbb@fill-30.png',
+      'kagami.conf',
+    ],
+  )
+  assert.match(readFileSync(join(dir, 'kagami.conf'), 'utf8'), /^config-file = \?kagami\.bbbbbbbb\.tune\.conf$/m)
+})
+
+test('switching walks the saved pictures around without moving a file', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)
   install(configHome, 1)
   install(configHome, 2)
+  const files = readdirSync(dir).sort()
   assert.deepEqual(switchImage(configHome, 'kagami', 1), { key: 'safebooru_1', at: 1, of: 2 })
   assert.equal(shown(dir), 'safebooru_1')
   assert.deepEqual(switchImage(configHome, 'kagami', -1), { key: 'safebooru_2', at: 2, of: 2 })
   assert.equal(shown(dir), 'safebooru_2')
-  assert.deepEqual(readdirSync(join(dir, 'shelf', 'kagami')), ['safebooru_1'])
+  assert.deepEqual(readdirSync(dir).sort(), files)
 })
 
-test('each saved picture keeps its own tuning, off switch and baked sizes', () => {
+test('each saved picture keeps its own tuning and off switch', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)
   install(configHome, 1)
-  writeFileSync(join(dir, 'kagami.tune.conf'), 'background-image-opacity = 0.42\n')
-  writeFileSync(join(dir, 'kagami.off.conf'), 'background-image =\n')
-  writeFileSync(join(dir, 'kagami@60-center.png'), 'baked')
+  const first = tuning(dir)
+  writeFileSync(first, 'background-image-opacity = 0.42\n')
   install(configHome, 2)
-  const shelf = join(dir, 'shelf', 'kagami', 'safebooru_1')
-  const kept = readdirSync(shelf).sort()
-  assert.deepEqual(
-    kept.filter((f) => !/^\.[0-9a-f]{8}/.test(f)),
-    ['.conf', '.off.conf', '.tune.conf', '@60-center.png'],
-  )
-  assert.equal(kept.filter((f) => /^\.[0-9a-f]{8}(@fill-\d+)?\.png$/.test(f)).length, 2)
-  assert.ok(!existsSync(join(dir, 'kagami.tune.conf')))
-  assert.ok(!existsSync(join(dir, 'kagami.off.conf')))
-  assert.ok(!existsSync(join(dir, 'kagami@60-center.png')))
+  assert.notEqual(tuning(dir), first)
+  assert.ok(existsSync(first))
   switchImage(configHome, 'kagami', 1)
-  assert.equal(shown(dir), 'safebooru_1')
-  assert.equal(readFileSync(join(dir, 'kagami.tune.conf'), 'utf8'), 'background-image-opacity = 0.42\n')
-  assert.ok(existsSync(join(dir, 'kagami.off.conf')))
-  assert.ok(existsSync(join(dir, 'kagami@60-center.png')))
-  assert.ok(!existsSync(join(dir, 'shelf', 'kagami', 'safebooru_2', '.tune.conf')))
-  switchImage(configHome, 'kagami', 1)
-  assert.equal(shown(dir), 'safebooru_2')
-  assert.ok(!existsSync(join(dir, 'kagami.tune.conf')))
-  assert.ok(!existsSync(join(dir, 'kagami@60-center.png')))
+  assert.equal(tuning(dir), first)
+  assert.equal(readFileSync(first, 'utf8'), 'background-image-opacity = 0.42\n')
 })
 
-test('dropping a picture takes its tuning with it', () => {
+test('installing the shown post again starts it from the defaults', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  install(configHome, 1)
+  writeFileSync(tuning(dir), 'background-image-opacity = 0.42\n')
+  install(configHome, 1)
+  assert.ok(!existsSync(tuning(dir)))
+})
+
+test('dropping a picture takes its files, tuning and original with it', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)
   install(configHome, 1)
   install(configHome, 2)
-  writeFileSync(join(dir, 'kagami.tune.conf'), 'background-image-opacity = 0.42\n')
+  const gone = tuning(dir)
+  writeFileSync(gone, 'background-image-opacity = 0.42\n')
   assert.deepEqual(dropImage(configHome, 'kagami'), { key: 'safebooru_2', left: 1 })
-  assert.ok(!existsSync(join(dir, 'kagami.tune.conf')))
-})
-
-test('removing the shown picture shows the next one, and the last one leaves the palette bare', () => {
-  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
-  const dir = backgroundsDir(configHome)
-  install(configHome, 1)
-  install(configHome, 2)
-  assert.deepEqual(dropImage(configHome, 'kagami'), { key: 'safebooru_2', left: 1 })
+  assert.ok(!existsSync(gone))
   assert.equal(shown(dir), 'safebooru_1')
   assert.deepEqual(readdirSync(join(dir, 'originals')), ['kagami-safebooru_1.png'])
+  assert.equal(readdirSync(dir).filter((file) => file.startsWith('kagami.') && file.endsWith('.png')).length, 2)
+})
+
+test('removing the last picture leaves the palette bare', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  install(configHome, 1)
   assert.deepEqual(dropImage(configHome, 'kagami'), { key: 'safebooru_1', left: 0 })
-  assert.deepEqual(imageKeys(dir, 'kagami'), [])
+  assert.deepEqual(keys(dir), [])
+  assert.ok(!existsSync(join(dir, 'kagami.conf')))
   assert.throws(() => switchImage(configHome, 'kagami', 1), /no other image/)
+  assert.throws(() => dropImage(configHome, 'kagami'), /has no image/)
 })

@@ -157,10 +157,11 @@ An install writes `<palette>.<hash>.png` (the tinted figure),
 find ran in: a cut-out stands whole from its head down against the right edge, a
 little taller than the window, and a wallpaper covers it from its top) — the hash is of
 their content, because Ghostty and iTerm2 reload a background only when its path
-changes, so no two pictures may share a name — `<palette>.conf` and the untouched original under
-`backgrounds/originals/`, and starts it untuned — the picture it replaces moves
-to the shelf with the tuning it had. The
-conf opens with where the picture came from —
+changes, so no two pictures may share a name — and the untouched original under
+`backgrounds/originals/`, records it in `backgrounds/images.json`, and starts it
+untuned; the picture that was up stays saved with the tuning it had. The
+palette's `<palette>.conf` is rewritten from `images.json` to point at the
+picture on screen, and opens with where it came from —
 `# from yande.re 214705 https://yande.re/post/show/214705` — and the tuning
 panel shows it next to the palette's name.
 
@@ -189,18 +190,23 @@ to replace the picture.
 
 ## Several pictures per palette
 
-A palette holds every picture installed on it: an install shelves the one on
+A palette holds every picture installed on it: an install keeps the one on
 screen rather than dropping it, `,` and `.` walk the saved pictures, and `D`
-removes the one shown. Each picture carries its own settings — size, position,
-opacity, the off switch and the baked crops travel with it under
-`backgrounds/shelf/<palette>/<post>/`, so walking back to a picture puts it
-back the way you left it, and tuning you have not confirmed is written to the
-picture before `,` or `.` moves off it.
+removes the one shown with its files. `backgrounds/images.json` lists each
+palette's pictures and which one is up; only ttheme writes it, and the pictures'
+files never move — walking to another picture only rewrites `<palette>.conf` to
+point at it. Each picture carries its own settings — size, position, opacity,
+the off switch and the baked crops sit beside it under its own name
+(`kagami.1a2b3c4d.tune.conf`), so walking back to a picture puts it back the way
+you left it, and tuning you have not confirmed is written to the picture before
+`,` or `.` moves off it.
 
-The palette's `.conf` holds those defaults; the preview only appends two
-optional includes to it and keeps everything else in `<palette>.tune.conf` (the
-tuning) and `<palette>.off.conf` (the off switch), which Ghostty loads after
-the conf. Kept changes are written when the preview closes, by whichever key,
+The palette's `.conf` holds the shown picture's defaults and includes that
+picture's `<palette>.<hash>.tune.conf` (the tuning) and
+`<palette>.<hash>.off.conf` (the off switch), which Ghostty loads after the
+conf. A `<palette>.conf` you write yourself is left alone; the preview appends
+`<palette>.tune.conf` and `<palette>.off.conf` includes to it instead.
+Kept changes are written when the preview closes, by whichever key,
 and reach both terminals from whichever one ran the preview: Ghostty reloads
 when it is showing that palette, and iTerm2's profiles are rewritten. Ghostty has no scale setting,
 so every size but 100% and fill is baked into a copy beside the image and the

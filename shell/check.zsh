@@ -31,7 +31,7 @@ REPLY=; __tt_bg_place 2045 1994 100 40 8 16 60 9 contain
 [[ $REPLY == "52 17 49 24 5 0 2039 1994" ]] || { print -u2 "__tt_bg_place broke on a sized corner: $REPLY"; exit 1 }
 REPLY=; __tt_bg_frame 2056 2560 1600 1000 199 5 contain 62
 [[ $REPLY == "1598 1990 1 -733" ]] || { print -u2 "__tt_bg_frame broke on a zoom around the face: $REPLY"; exit 1 }
-typeset -A bgfrom=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgdim=()
+typeset -A bgfrom=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgdim=() bgtunef=() bgofff=() bgimages=()
 bgd=$XDG_CONFIG_HOME/ttheme/backgrounds
 mkdir -p $bgd && : > $bgd/kagami@fill-42.png && : > $bgd/kagami@60-bottom-right.png && : > $bgd/kagami@130-bottom-right-1600x1000.png
 base=("# from safebooru 416805 https://safebooru.org/index.php?page=post&s=view&id=416805" "background-image = kagami@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2")
@@ -95,10 +95,17 @@ __tt_bg_saved kagami rei
 (( reloads == 6 )) || { print -u2 "saving the picture Ghostty shows did not reload it: reloads=$reloads"; exit 1 }
 bgsrc=(); __tt_bg_load homura; bgsize[homura]=60
 __tt_bg_write homura && [[ ! -e $bgd/homura.conf ]] || { print -u2 "tuning a palette with no picture left a conf behind"; ls $bgd; exit 1 }
-mkdir -p $bgd/shelf/kagami/a $bgd/shelf/kagami/b
+print -l "# image safebooru_2 2/3" "background-image = kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" "config-file = ?kagami.1a2b3c4d.tune.conf" "config-file = ?kagami.1a2b3c4d.off.conf" > $bgd/kagami.conf
+: > $bgd/kagami.1a2b3c4d.png && : > $bgd/kagami.1a2b3c4d@fill-42.png
+bgsrc=(); __tt_bg_load kagami; bgsize[kagami]=100 bgoff[kagami]=1
+__tt_bg_write kagami || { print -u2 "__tt_bg_write (a picture's own tuning) failed"; exit 1 }
+[[ -e $bgd/kagami.1a2b3c4d.tune.conf && -e $bgd/kagami.1a2b3c4d.off.conf && ! -e $bgd/kagami.tune.conf && $(grep -c config-file $bgd/kagami.conf) == 2 ]] ||
+  { print -u2 "tuning did not go to the picture the conf names:"; ls $bgd; cat $bgd/kagami.conf; exit 1 }
 bgcw=8 tune=kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
 out=; __tt_pv_foot 80
 [[ $out == *"f find"* ]] || { print -u2 "a TUNE bar with several images dropped the find key: $out"; exit 1 }
+out=; __tt_pv_foot 200
+[[ $out == *"image ×3"* ]] || { print -u2 "the TUNE bar did not count the palette's pictures: $out"; exit 1 }
 msg=${(l:200::x:)} msgt=100 out=; __tt_pv_foot 80
 plain=${out//$'\e[K'/}
 (( ${(m)#plain} <= 80 )) || { print -u2 "a long preview message overran the bar: ${(m)#plain} columns"; exit 1 }

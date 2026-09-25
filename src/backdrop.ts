@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto'
-import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
-import { isAbsolute, join } from 'node:path'
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from 'node:fs'
+import { basename, isAbsolute, join } from 'node:path'
 import { type Hex, luminance, rgb } from './color.ts'
 import { checkReadability } from './contrast.ts'
+import { writeAtomic } from './edits.ts'
 import type { ProfileBackground } from './emit/iterm2.ts'
 import { alphaBox, type Box, encodePng, type Rgba, resample, transparency } from './png.ts'
 
@@ -12,6 +13,9 @@ const FAINT = 0.1
 export const PLACEMENT = { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 }
 const PEAK = luminance(mix('#19161e', '#9b86c8', 0.2))
 const SHELF = 'shelf'
+const ORIGINALS = 'originals'
+const STORE = 'images.json'
+const VERSION = 1
 
 export interface Colors {
   name: string
@@ -220,38 +224,194 @@ export function backgroundsDir(configHome: string): string {
   return join(configHome, 'ttheme', 'backgrounds')
 }
 
-function backdropConf(name: string, fillPath: string, opacity: number, from?: string, key?: string): string {
+export interface Picture {
+  key: string
+  stem: string
+  fill: string
+  opacity: number
+  from?: string
+  original?: string
+}
+
+interface Rack {
+  active: string
+  pictures: Picture[]
+}
+
+export interface Store {
+  version: number
+  palettes: Record<string, Rack>
+}
+
+function storePath(dir: string): string {
+  return join(dir, STORE)
+}
+
+function readText(path: string): string | undefined {
+  try {
+    return readFileSync(path, 'utf8')
+  } catch {
+    return undefined
+  }
+}
+
+function listing(dir: string): string[] {
+  try {
+    return readdirSync(dir)
+  } catch {
+    return []
+  }
+}
+
+export function readStore(dir: string): Store {
+  const text = readText(storePath(dir))
+  if (text === undefined) {
+    return migrate(dir)
+  }
+  const store = JSON.parse(text) as Store
+  if (store.version !== VERSION) {
+    throw new Error(`${storePath(dir)} is version ${store.version} — this ttheme reads version ${VERSION}`)
+  }
+  return store
+}
+
+function confText(dir: string, rack: Rack): string {
+  const at = rack.pictures.findIndex((picture) => picture.key === rack.active)
+  const picture = rack.pictures[at] as Picture
   return [
-    ...(from ? [`# from ${from}`] : []),
-    ...(key ? [`# image ${key}`] : []),
-    `background-image = ${fillPath}`,
+    ...(picture.from ? [`# from ${picture.from}`] : []),
+    `# image ${picture.key} ${at + 1}/${rack.pictures.length}`,
+    `background-image = ${join(dir, picture.fill)}`,
     'background-image-fit = cover',
     'background-image-position = top-right',
-    `background-image-opacity = ${opacity}`,
-    `config-file = ?${name}.tune.conf`,
-    `config-file = ?${name}.off.conf`,
+    `background-image-opacity = ${picture.opacity}`,
+    `config-file = ?${picture.stem}.tune.conf`,
+    `config-file = ?${picture.stem}.off.conf`,
     '',
   ].join('\n')
 }
 
+function save(dir: string, store: Store, names: string[]): void {
+  writeAtomic(storePath(dir), `${JSON.stringify(store, null, 2)}\n`)
+  for (const name of names) {
+    const rack = store.palettes[name]
+    const conf = join(dir, `${name}.conf`)
+    if (rack) {
+      writeAtomic(conf, confText(dir, rack))
+    } else {
+      rmSync(conf, { force: true })
+    }
+  }
+}
+
+function discard(dir: string, picture: Picture): void {
+  for (const file of listing(dir)) {
+    if (file.startsWith(`${picture.stem}.`) || file.startsWith(`${picture.stem}@`)) {
+      rmSync(join(dir, file), { force: true })
+    }
+  }
+  if (picture.original) {
+    rmSync(join(dir, picture.original), { force: true })
+  }
+}
+
+function legacyPicture(name: string, text: string | undefined, originals: string[], key?: string): Picture | undefined {
+  const fill = basename(/^background-image\s*=\s*(.*?)\s*$/m.exec(text ?? '')?.[1] ?? '')
+  if (!fill.startsWith(`${name}.`) || !/^\.[0-9a-f]{8}@fill-\d+\.png$/.test(fill.slice(name.length))) {
+    return undefined
+  }
+  const stem = fill.slice(0, fill.indexOf('@'))
+  const known = key ?? /^# image (\S+)$/m.exec(text ?? '')?.[1] ?? `picture_${stem.slice(name.length + 1)}`
+  const from = /^# from (.+)$/m.exec(text ?? '')?.[1]
+  const opacity = Number(/^background-image-opacity\s*=\s*(\S+)/m.exec(text ?? '')?.[1] ?? 1)
+  const original = originals.find((file) => file.startsWith(`${name}-${known}.`))
+  return {
+    key: known,
+    stem,
+    fill,
+    opacity: Number.isFinite(opacity) ? opacity : 1,
+    ...(from ? { from } : {}),
+    ...(original ? { original: join(ORIGINALS, original) } : {}),
+  }
+}
+
+function adopt(from: string, to: string): void {
+  if (existsSync(from)) {
+    renameSync(from, to)
+  }
+}
+
+function migrate(dir: string): Store {
+  const store: Store = { version: VERSION, palettes: {} }
+  if (!existsSync(dir)) {
+    return store
+  }
+  const originals = listing(join(dir, ORIGINALS))
+  const confs = listing(dir)
+    .filter((file) => file.endsWith('.conf') && file !== 'shown.conf' && !/\.(tune|off)\.conf$/.test(file))
+    .map((file) => file.slice(0, -'.conf'.length))
+  const shelf = join(dir, SHELF)
+  for (const name of new Set([...confs, ...listing(shelf)])) {
+    const pictures: Picture[] = []
+    const shown = legacyPicture(name, readText(join(dir, `${name}.conf`)), originals)
+    if (shown) {
+      adopt(join(dir, `${name}.tune.conf`), join(dir, `${shown.stem}.tune.conf`))
+      adopt(join(dir, `${name}.off.conf`), join(dir, `${shown.stem}.off.conf`))
+      pictures.push(shown)
+    }
+    for (const key of listing(join(shelf, name))) {
+      const from = join(shelf, name, key)
+      const picture = legacyPicture(name, readText(join(from, '.conf')), originals, key)
+      if (!picture) {
+        continue
+      }
+      for (const file of listing(from)) {
+        const to = file === '.tune.conf' || file === '.off.conf' ? `${picture.stem}${file}` : `${name}${file}`
+        if (file !== '.conf') {
+          renameSync(join(from, file), join(dir, to))
+        }
+      }
+      rmSync(from, { recursive: true })
+      pictures.push(picture)
+    }
+    if (listing(join(shelf, name)).length === 0) {
+      rmSync(join(shelf, name), { recursive: true, force: true })
+    }
+    if (pictures.length > 0) {
+      pictures.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+      store.palettes[name] = { active: (shown ?? (pictures[0] as Picture)).key, pictures }
+    }
+  }
+  if (listing(shelf).length === 0) {
+    rmSync(shelf, { recursive: true, force: true })
+  }
+  save(dir, store, Object.keys(store.palettes))
+  return store
+}
+
+function locate(dir: string, path: string, home: string): string {
+  return path.startsWith('~/') ? join(home, path.slice(2)) : isAbsolute(path) ? path : join(dir, path)
+}
+
 export function readBackdrop(dir: string, name: string, home: string): ProfileBackground | undefined {
   const set = new Map<string, string>()
-  for (const file of [`${name}.conf`, `${name}.tune.conf`, `${name}.off.conf`]) {
-    let text: string
-    try {
-      text = readFileSync(join(dir, file), 'utf8')
-    } catch {
-      if (file === `${name}.conf`) {
-        return undefined
-      }
-      continue
+  const read = (file: string, depth: number): boolean => {
+    const text = readText(file)
+    if (text === undefined) {
+      return false
     }
     for (const line of text.split('\n')) {
-      const m = /^(background-image(?:-fit|-opacity)?)\s*=\s*(.*?)\s*$/.exec(line)
-      if (m) {
+      const m = /^([a-z-]+)\s*=\s*(.*?)\s*$/.exec(line)
+      if (m?.[1] === 'config-file' && depth < 4) {
+        read(locate(dir, (m[2] as string).replace(/^\?/, ''), home), depth + 1)
+      } else if (m && /^background-image(?:-fit|-opacity)?$/.test(m[1] as string)) {
         set.set(m[1] as string, m[2] as string)
       }
     }
+    return true
+  }
+  if (!read(join(dir, `${name}.conf`), 0)) {
+    return undefined
   }
   const image = set.get('background-image') ?? ''
   if (image === '') {
@@ -259,17 +419,9 @@ export function readBackdrop(dir: string, name: string, home: string): ProfileBa
   }
   const opacity = Number(set.get('background-image-opacity') ?? 1)
   return {
-    image: image.startsWith('~/') ? join(home, image.slice(2)) : isAbsolute(image) ? image : join(dir, image),
+    image: locate(dir, image, home),
     opacity: Number.isFinite(opacity) ? opacity : 1,
     cover: set.get('background-image-fit') === 'cover',
-  }
-}
-
-export function clearBackdrop(dir: string, name: string): void {
-  for (const file of readdirSync(dir)) {
-    if (belongs(file, name)) {
-      rmSync(join(dir, file))
-    }
   }
 }
 
@@ -277,128 +429,38 @@ export function imageKey(origin: Origin): string {
   return `${origin.site}_${origin.id}`
 }
 
-function shelfDir(dir: string, name: string): string {
-  return join(dir, SHELF, name)
-}
-
-function belongs(file: string, name: string): boolean {
-  const rest = file.slice(name.length)
-  return (
-    file.startsWith(name) &&
-    (rest === '.conf' ||
-      rest === '.tune.conf' ||
-      rest === '.off.conf' ||
-      /^(\.[0-9a-f]{8})?(@[a-z0-9-]+)?\.png$/.test(rest))
-  )
-}
-
-function activeKey(dir: string, name: string): string | undefined {
-  try {
-    return /^# image (\S+)$/m.exec(readFileSync(join(dir, `${name}.conf`), 'utf8'))?.[1]
-  } catch {
-    return undefined
-  }
-}
-
-function shelved(dir: string, name: string): string[] {
-  try {
-    return readdirSync(shelfDir(dir, name))
-  } catch {
-    return []
-  }
-}
-
-export function imageKeys(dir: string, name: string): string[] {
-  const active = activeKey(dir, name)
-  return [...(active ? [active] : []), ...shelved(dir, name)].sort()
-}
-
-function shelve(dir: string, name: string): void {
-  const key = activeKey(dir, name)
-  if (!key) {
-    return
-  }
-  const to = join(shelfDir(dir, name), key)
-  rmSync(to, { recursive: true, force: true })
-  mkdirSync(to, { recursive: true })
-  for (const file of readdirSync(dir)) {
-    if (belongs(file, name)) {
-      renameSync(join(dir, file), join(to, file.slice(name.length)))
-    }
-  }
-}
-
-function unshelve(dir: string, name: string, key: string): void {
-  const from = join(shelfDir(dir, name), key)
-  for (const file of readdirSync(from)) {
-    renameSync(join(from, file), join(dir, `${name}${file}`))
-  }
-  rmSync(from, { recursive: true })
-}
-
-function originalOf(dir: string, name: string, key: string): string | undefined {
-  try {
-    return readdirSync(join(dir, 'originals')).find((file) => file.startsWith(`${name}-${key}.`))
-  } catch {
-    return undefined
-  }
-}
-
-function newest(dir: string, name: string, key: string): void {
-  const file = originalOf(dir, name, key)
-  if (file) {
-    const now = new Date()
-    utimesSync(join(dir, 'originals', file), now, now)
-  }
-}
-
 export function switchImage(configHome: string, name: string, step: 1 | -1): { key: string; at: number; of: number } {
   const dir = backgroundsDir(configHome)
-  const keys = imageKeys(dir, name)
-  const now = activeKey(dir, name)
-  if (!now || keys.length < 2) {
+  const store = readStore(dir)
+  const rack = store.palettes[name]
+  if (!rack || rack.pictures.length < 2) {
     throw new Error(`${name} has no other image`)
   }
-  const at = (keys.indexOf(now) + step + keys.length) % keys.length
-  const key = keys[at] as string
-  shelve(dir, name)
-  unshelve(dir, name, key)
-  newest(dir, name, key)
-  return { key, at: at + 1, of: keys.length }
+  const of = rack.pictures.length
+  const at = (rack.pictures.findIndex((picture) => picture.key === rack.active) + step + of) % of
+  rack.active = (rack.pictures[at] as Picture).key
+  save(dir, store, [name])
+  return { key: rack.active, at: at + 1, of }
 }
 
-export function dropImage(configHome: string, name: string): { key?: string; left: number } {
+export function dropImage(configHome: string, name: string): { key: string; left: number } {
   const dir = backgroundsDir(configHome)
-  const files = readdirSync(dir).filter((file) => belongs(file, name))
-  if (files.length === 0) {
+  const store = readStore(dir)
+  const rack = store.palettes[name]
+  if (!rack) {
     throw new Error(`${name} has no image`)
   }
-  const keys = imageKeys(dir, name)
-  const now = activeKey(dir, name)
-  const original = now && originalOf(dir, name, now)
-  if (original) {
-    rmSync(join(dir, 'originals', original))
-  }
-  for (const file of files) {
-    rmSync(join(dir, file))
-  }
-  const rest = keys.filter((key) => key !== now)
-  const next = rest[(now ? keys.indexOf(now) : 0) % rest.length]
+  const at = rack.pictures.findIndex((picture) => picture.key === rack.active)
+  const [gone] = rack.pictures.splice(at, 1) as [Picture]
+  discard(dir, gone)
+  const next = rack.pictures[at % Math.max(rack.pictures.length, 1)]
   if (next) {
-    unshelve(dir, name, next)
-    newest(dir, name, next)
+    rack.active = next.key
+  } else {
+    delete store.palettes[name]
   }
-  return { key: now, left: rest.length }
-}
-
-function retire(dir: string, name: string, key?: string): void {
-  if (activeKey(dir, name) !== key) {
-    shelve(dir, name)
-  }
-  if (key) {
-    rmSync(join(shelfDir(dir, name), key), { recursive: true, force: true })
-  }
-  clearBackdrop(dir, name)
+  save(dir, store, [name])
+  return { key: gone.key, left: rack.pictures.length }
 }
 
 export function installBackdrop(
@@ -412,45 +474,45 @@ export function installBackdrop(
   const dir = backgroundsDir(configHome)
   const name = colors.name
   const key = imageKey(original)
-  mkdirSync(join(dir, 'originals'), { recursive: true })
-  retire(dir, name, key)
+  const store = readStore(dir)
+  const rack = store.palettes[name] ?? { active: key, pictures: [] }
   const box = figureBox(image)
   const { width, height } = fillSize(window.width, window.height)
   const frame = fillFrame(box, width, height, transparency(image, box))
   const figurePng = encodePng(tint(figure(image, box), colors.background, tone.color))
   const fillPng = encodePng(tint(paint(image, frame, width, height), colors.background, tone.color))
-  const stem = join(dir, `${name}.${createHash('sha1').update(figurePng).update(fillPng).digest('hex').slice(0, 8)}`)
-  const whole = `${stem}.png`
-  const fillPath = `${stem}@fill-${Math.round(frame.focus * 100)}.png`
-  const conf = join(dir, `${name}.conf`)
-  const source = join(dir, 'originals', `${name}-${original.site}_${original.id}.${original.ext}`)
-  writeFileSync(whole, figurePng)
-  writeFileSync(fillPath, fillPng)
-  writeFileSync(conf, backdropConf(name, fillPath, tone.opacity, original.from, key))
-  writeFileSync(source, original.bytes)
-  return [whole, fillPath, conf, source]
+  const stem = `${name}.${createHash('sha1').update(figurePng).update(fillPng).digest('hex').slice(0, 8)}`
+  const picture: Picture = {
+    key,
+    stem,
+    fill: `${stem}@fill-${Math.round(frame.focus * 100)}.png`,
+    opacity: tone.opacity,
+    ...(original.from ? { from: original.from } : {}),
+    original: join(ORIGINALS, `${name}-${key}.${original.ext}`),
+  }
+  const old = rack.pictures.find((kept) => kept.key === key)
+  if (old) {
+    discard(dir, old)
+  }
+  const written = [join(dir, `${stem}.png`), join(dir, picture.fill), join(dir, picture.original as string)]
+  mkdirSync(join(dir, ORIGINALS), { recursive: true })
+  writeAtomic(written[0] as string, figurePng)
+  writeAtomic(written[1] as string, fillPng)
+  writeAtomic(written[2] as string, original.bytes)
+  rack.pictures = old ? rack.pictures.map((kept) => (kept === old ? picture : kept)) : [...rack.pictures, picture]
+  rack.active = key
+  store.palettes[name] = rack
+  save(dir, store, [name])
+  return [...written, join(dir, `${name}.conf`)]
 }
 
 export function origins(configHome: string): Map<string, Origin> {
-  const dir = join(backgroundsDir(configHome), 'originals')
-  const newest = new Map<string, Origin & { at: number }>()
-  let files: string[]
-  try {
-    files = readdirSync(dir)
-  } catch {
-    return new Map()
-  }
-  for (const file of files) {
-    const match = /^(.+)-([a-z.]+)_(\d+)\.[a-z]+$/.exec(file)
-    const [, name, site, id] = match ?? []
-    if (!name || !site || !id) {
-      continue
-    }
-    const at = statSync(join(dir, file)).mtimeMs
-    const known = newest.get(name)
-    if (!known || at > known.at) {
-      newest.set(name, { site, id: Number(id), at })
+  const found = new Map<string, Origin>()
+  for (const [name, rack] of Object.entries(readStore(backgroundsDir(configHome)).palettes)) {
+    const [, site, id] = /^([a-z.]+)_(\d+)$/.exec(rack.active) ?? []
+    if (site && id) {
+      found.set(name, { site, id: Number(id) })
     }
   }
-  return new Map([...newest].map(([name, { site, id }]) => [name, { site, id }]))
+  return found
 }

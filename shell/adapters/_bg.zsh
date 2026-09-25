@@ -8,6 +8,14 @@ __tt_ghostty_shown() {
   REPLY=${REPLY%.conf}
 }
 
+__tt_put() {
+  local f=$1
+  shift
+  print -rl -- "$@" > $f.$$ && mv -f -- $f.$$ $f && return 0
+  rm -f -- $f.$$
+  return 1
+}
+
 __tt_bg_saved() {
   local REPLY
   (( ${TTHEME_TERMINALS[(Ie)iterm2]} )) && __tt_cli image $1 tuned
@@ -85,10 +93,18 @@ __tt_bg_path() {
 __tt_bg_load() {
   local name=$1 dir=${TTHEME_CONFIG:h}/backgrounds img="" fit=contain op=1 pos=center f line stem="" size=100 REPLY
   local -i at=5
-  local -a fills
+  local -a fills lines
   (( ${+bgsrc[$name]} )) && return 0
-  bgfrom[$name]=""
-  for f in $dir/$name.conf $dir/$name.tune.conf; do
+  bgfrom[$name]="" bgtunef[$name]=$name.tune.conf bgofff[$name]=$name.off.conf bgimages[$name]=1
+  [[ -r $dir/$name.conf ]] && lines=("${(@f)$(<$dir/$name.conf)}")
+  for line in $lines; do
+    case $line in
+      'config-file = ?'*.tune.conf) bgtunef[$name]=${line#config-file = \?} ;;
+      'config-file = ?'*.off.conf) bgofff[$name]=${line#config-file = \?} ;;
+      '# image '*/<->) bgimages[$name]=${line##*/} ;;
+    esac
+  done
+  for f in $dir/$name.conf $dir/${bgtunef[$name]}; do
     if [[ -r $f ]]; then
       for line in "${(@f)$(<$f)}"; do
         case $line in
@@ -114,7 +130,7 @@ __tt_bg_load() {
     [[ $f == *.tune.conf ]] || bgdef[$name]="$size $at $op" bgbase[$name]=$REPLY
   done
   bgsize[$name]=$size bgpos[$name]=$at bgop[$name]=$op bgoff[$name]=0 bgshot[$name]="" bgshotkey[$name]="" bgfocus[$name]=50
-  [[ -e $dir/$name.off.conf ]] && bgoff[$name]=1
+  [[ -e $dir/${bgofff[$name]} ]] && bgoff[$name]=1
   bgload[$name]="$size $at $op ${bgoff[$name]}"
   [[ $REPLY == *@<20-999>-*-<->x<->.png ]] && bgshot[$name]=$REPLY bgshotkey[$name]="$size $at"
   if [[ -n $stem ]]; then
@@ -175,11 +191,11 @@ __tt_bg_include() {
   local conf=${TTHEME_CONFIG:h}/backgrounds/$1.conf line
   local -a lines=() add=()
   [[ -r $conf ]] && lines=("${(@f)$(<$conf)}")
-  for line in "config-file = ?$1.tune.conf" "config-file = ?$1.off.conf"; do
+  for line in "config-file = ?${bgtunef[$1]:-$1.tune.conf}" "config-file = ?${bgofff[$1]:-$1.off.conf}"; do
     (( ${lines[(Ie)$line]} )) || add+=("$line")
   done
   (( ${#add} )) || return 0
-  mkdir -p ${conf:h} && print -rl -- "${lines[@]}" "${add[@]}" > $conf
+  mkdir -p ${conf:h} && __tt_put $conf "${lines[@]}" "${add[@]}"
 }
 
 __tt_bg_write() {
@@ -190,7 +206,7 @@ __tt_bg_write() {
   [[ -r $dir/$name.conf ]] || return 0
   __tt_bg_include $name || return 1
   if [[ "$size ${bgpos[$1]} ${bgop[$1]}" == "${bgdef[$1]}" ]]; then
-    rm -f -- $dir/$name.tune.conf
+    rm -f -- $dir/${bgtunef[$1]}
   else
     shape=$size
     [[ $size == <20-100> && $pos != center ]] && ! __tt_bg_aligns && shape=window
@@ -220,12 +236,12 @@ __tt_bg_write() {
         ;;
     esac
     __tt_tilde "$img"
-    print -rl -- "background-image = $REPLY" "background-image-fit = $fit" "background-image-position = $pos" "background-image-opacity = ${bgop[$1]}" > $dir/$name.tune.conf || return 1
+    __tt_put $dir/${bgtunef[$1]} "background-image = $REPLY" "background-image-fit = $fit" "background-image-position = $pos" "background-image-opacity = ${bgop[$1]}" || return 1
   fi
   if (( bgoff[$1] )); then
-    print -r -- "background-image =" > $dir/$name.off.conf || return 1
+    __tt_put $dir/${bgofff[$1]} "background-image =" || return 1
   else
-    rm -f -- $dir/$name.off.conf
+    rm -f -- $dir/${bgofff[$1]}
   fi
   if [[ $src == /*.png ]]; then
     for f in ${src%.png}@<20-999>-*.png(N); do
@@ -409,8 +425,8 @@ __tt_pv_bg_find() {
 }
 
 __tt_pv_bg_images() {
-  local -a shelf=(${TTHEME_CONFIG:h}/backgrounds/shelf/$1/*(N/))
-  REPLY=$(( ${#shelf} + 1 ))
+  __tt_bg_load $1
+  REPLY=${bgimages[$1]:-1}
 }
 
 __tt_pv_bg_image() {

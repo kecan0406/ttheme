@@ -2,9 +2,9 @@ import { execFileSync, spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { backgroundsDir, readBackdrop } from './backdrop.ts'
+import { backgroundsDir, readBackdrop, readStore } from './backdrop.ts'
 import { gateFailures, nearest, readCatalog } from './catalog.ts'
-import { backupOnce, editUserFile } from './edits.ts'
+import { backupOnce, editUserFile, writeAtomic } from './edits.ts'
 import { alacritty, type Emitter, ghostty, iterm2, kitty, owned, warp, wezterm, windowsTerminal } from './emit/index.ts'
 import { itermProfiles, type ProfileBackground } from './emit/iterm2.ts'
 import { kittyWatcher } from './emit/kitty.ts'
@@ -143,9 +143,7 @@ export function readInstalled(configHome: string): Installed {
 }
 
 export function writeInstalled(configHome: string, state: Installed): void {
-  const path = installedPath(configHome)
-  mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, `${JSON.stringify(state, null, 2)}\n`)
+  writeAtomic(installedPath(configHome), `${JSON.stringify(state, null, 2)}\n`)
 }
 
 export function toTheme(entry: PaletteEntry): Theme {
@@ -347,12 +345,11 @@ export function refreshProfiles(configHome: string, home = homedir()): void {
     return
   }
   const catalog = readCatalog(configHome)
-  const path = itermProfilesPath(home)
-  mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, itermFile(configHome, resolve(catalog, state.palettes), state, home))
+  writeAtomic(itermProfilesPath(home), itermFile(configHome, resolve(catalog, state.palettes), state, home))
 }
 
 export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
+  readStore(backgroundsDir(configHome))
   const entries = resolve(catalog, state.palettes)
   const written: string[] = []
   const write = (path: string, content: string): boolean => {
@@ -360,8 +357,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
     if (existsSync(path) && readFileSync(path, 'utf8') === content) {
       return false
     }
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, content)
+    writeAtomic(path, content)
     return true
   }
   const wire = (path: string, content: string): void => {
@@ -442,8 +438,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
   }
 
   const table = join(configHome, 'ttheme', 'palettes.zsh')
-  mkdirSync(dirname(table), { recursive: true })
-  writeFileSync(table, palettesZsh(entries, startup, state.terminals))
+  writeAtomic(table, palettesZsh(entries, startup, state.terminals))
   written.push(table)
   rmSync(`${table}.zwc`, { force: true })
   return written

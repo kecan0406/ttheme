@@ -14,7 +14,7 @@ export function runImage(name: string, action: string): number {
   if (action === 'drop') {
     const { key, left } = dropImage(home, name)
     refreshProfiles(home)
-    process.stderr.write(`background · ${name} removed ${key ?? 'the picture'} · ${left} left\n`)
+    process.stderr.write(`background · ${name} removed ${key} · ${left} left\n`)
     return 0
   }
   if (action === 'tuned') {

@@ -270,13 +270,13 @@ test("sync gives a palette's iTerm2 profile its picture, tuning and off switch",
   mkdirSync(dir, { recursive: true })
   writeFileSync(
     join(dir, 'gojo.conf'),
-    'background-image = gojo@fill-40.png\nbackground-image-fit = cover\nbackground-image-opacity = 0.2\n',
+    'background-image = gojo@fill-40.png\nbackground-image-fit = cover\nbackground-image-opacity = 0.2\nconfig-file = ?gojo.tune.conf\n',
   )
   writeFileSync(
     join(dir, 'gojo.tune.conf'),
     'background-image = ~/gojo@60-center.png\nbackground-image-fit = contain\n',
   )
-  writeFileSync(join(dir, 'geto.conf'), `background-image = ${join(dir, 'geto.png')}\n`)
+  writeFileSync(join(dir, 'geto.conf'), `background-image = ${join(dir, 'geto.png')}\nconfig-file = ?geto.off.conf\n`)
   writeFileSync(join(dir, 'geto.off.conf'), 'background-image =\n')
   sync(configHome, catalog, { terminals: ['iterm2'], palettes: ['gojo', 'geto'] }, home)
   const pick = ({ Name, ...p }: Record<string, unknown>) => [
