@@ -34,7 +34,13 @@ for f in shell/*.zsh shell/adapters/*.zsh; do
 done
 zsh shell/check.zsh
 zsh tests/latency.zsh check
+zsh tests/latency.zsh forks
 '''
+
+[tasks.forks]
+description = "the fork ratchet: processes a shell with ttheme starts beyond a bare zsh, per journey and terminal, against tests/forks.tsv — `mise run forks [--update]`"
+depends = ["build"]
+run = "zsh tests/latency.zsh forks"
 
 [tasks."ghostty:check"]
 description = "validate emitted ghostty files with ghostty +validate-config"

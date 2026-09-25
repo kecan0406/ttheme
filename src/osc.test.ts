@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import type { PaletteEntry } from './emit/manifest.ts'
-import { paletteOsc, parseOscColors, restoreOsc } from './osc.ts'
+import { answered, COLOR_QUERY, paletteOsc, parseOscColors, restoreOsc } from './osc.ts'
 
 const miku: PaletteEntry = {
   name: 'miku',
@@ -41,6 +41,19 @@ test('restoreOsc replays captured colors as set sequences', () => {
     ['4;3', 'rgb:aaaa/bbbb/cccc'],
   ])
   assert.equal(restoreOsc(saved), '\x1b]11;rgb:1e1e/2222/2828\x1b\\\x1b]4;3;rgb:aaaa/bbbb/cccc\x1b\\')
+})
+
+test('the color query ends at a DSR, so a terminal that leaves OSC 17 unanswered does not hold it to its deadline', () => {
+  assert.ok(COLOR_QUERY.endsWith('\x1b[5n'))
+  const codes = COLOR_QUERY.split('\x1b').flatMap((part) => part.match(/^\](\d+(?:;\d+)?);\?/)?.[1] ?? [])
+  assert.equal(codes.length, 20)
+  const ghostty = codes
+    .filter((code) => code !== '17')
+    .map((code) => `\x1b]${code};rgb:1717/1717/1f1f\x1b\\`)
+    .join('')
+  assert.equal(answered(ghostty), false)
+  assert.equal(answered(`${ghostty}\x1b[0n`), true)
+  assert.equal(parseOscColors(`${ghostty}\x1b[0n`).size, 19)
 })
 
 test('a restore round-trips through the parser', () => {

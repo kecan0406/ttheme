@@ -67,6 +67,7 @@ __tt_bg_crop() {
         sips -c $h $iw --cropOffset 1 1 $bgcut/pad.png --out $band >/dev/null 2>&1 || return 1
     fi
   fi
-  printf '\e_Ga=t,t=f,f=100,i=999997,q=2;%s\e\\' "$(print -rn -- $band | base64 | tr -d '\n')"
+  __tt_b64s "$band"
+  printf '\e_Ga=t,t=f,f=100,i=999997,q=2;%s\e\\' "$REPLY"
   REPLY="999997 0"
 }

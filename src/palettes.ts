@@ -344,6 +344,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
   }
 
   const startup = worn(state)
+  let repaint = false
   for (const terminal of state.terminals) {
     if (terminal === 'iterm2') {
       write(itermProfilesPath(home), itermFile(configHome, entries, state, home))
@@ -359,6 +360,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
           for (const file of settings) {
             utimesSync(file, now, now)
           }
+          repaint = settings.length > 0
         }
       }
       continue
@@ -416,9 +418,12 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
   }
 
   const table = join(configHome, 'ttheme', 'palettes.zsh')
-  writeAtomic(table, palettesZsh(entries, startup, state.terminals))
+  const content = palettesZsh(entries, startup, state.terminals)
+  if (repaint || readText(table) !== content) {
+    writeAtomic(table, content)
+    rmSync(`${table}.zwc`, { force: true })
+  }
   written.push(table)
-  rmSync(`${table}.zwc`, { force: true })
   return written
 }
 

@@ -166,4 +166,56 @@ source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
 REPLY=; __tt_bg_shown && [[ $REPLY == miku ]] || { print -u2 "a tab on ttheme · default did not read the startup picture: $REPLY"; exit 1 }
 TTHEME_STARTUP=rei
 REPLY=; __tt_bg_shown && [[ $REPLY == rei ]] || { print -u2 "a tab on ttheme · default did not follow a new default: $REPLY"; exit 1 }
+forks_of() {
+  local log=$XDG_CONFIG_HOME/xtrace.log
+  local -a pids
+  ( zmodload zsh/system; setopt prompt_subst; PS4='+${sysparams[pid]}> '; setopt xtrace; "$@" ) 2>$log >/dev/null
+  pids=(${(u)${(f)"$(grep -oE '\+[0-9]+> ' $log | tr -dc '0-9\n')"}})
+  REPLY=$(( ${#pids} - 1 ))
+}
+for pair in 'gojo Z29qbw==' 'owner@market/slug b3duZXJAbWFya2V0L3NsdWc=' '日本/é 5pel5pysL8Op' 'ab YWI='; do
+  REPLY=; __tt_b64s ${pair% *}
+  [[ $REPLY == ${pair##* } ]] || { print -u2 "__tt_b64s broke on ${pair% *}: $REPLY"; exit 1 }
+done
+typeset -A bgsent=()
+forks_of __tt_bg_send $bgd/kagami.png
+(( REPLY == 0 )) || { print -u2 "sending a picture to preview forks again ($REPLY processes)"; exit 1 }
+(
+  source $XDG_CONFIG_HOME/ttheme/adapters/kitty.zsh
+  forks_of __tt_apply "$TTHEME_PALETTE[miku]"
+  (( REPLY == 0 )) || { print -u2 "a kitty paint forks again ($REPLY processes) — every preview hover pays it"; exit 1 }
+  source $XDG_CONFIG_HOME/ttheme/adapters/wezterm.zsh
+  forks_of __tt_shown miku force
+  (( REPLY == 0 )) || { print -u2 "a WezTerm picture change forks again ($REPLY processes)"; exit 1 }
+) || exit 1
+mkdir -p $XDG_CONFIG_HOME/fakebin
+print -rl -- '#!/bin/sh' 'printf %s "$NODE_COMPILE_CACHE"' > $XDG_CONFIG_HOME/fakebin/node
+chmod +x $XDG_CONFIG_HOME/fakebin/node
+out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
+[[ $out == /c/ttheme/node ]] || { print -u2 "the layer no longer hands node its compile cache: [$out]"; exit 1 }
+(
+  TTHEME_STATE_DIR=$XDG_CONFIG_HOME/state TTHEME_TAB_PALETTE=off TTHEME_STARTUP=miku TTHEME_ADAPTER=ghostty TTHEME_TMUX=0
+  unset TTHEME_PAINTED
+  __tt_osc_apply "$TTHEME_PALETTE[kaito]" > /dev/null
+  [[ ${(t)TTHEME_PAINTED} == *export* ]] || { print -u2 "a paint no longer tells the shells it starts that the tab is painted"; exit 1 }
+  __tt_remember '#123456'
+  [[ ! -e $TTHEME_STATE_DIR/colors.ghostty ]] || { print -u2 "a painted tab kept its paint as the terminal's own colors"; exit 1 }
+  __tt_osc_reset > /dev/null
+  [[ -z ${TTHEME_PAINTED+x} ]] || { print -u2 "a reset left the tab marked painted"; exit 1 }
+  stale=${TTHEME_PALETTE[miku]%% *} fresh=${TTHEME_PALETTE[kaito]%% *} synced=0
+  __tt_hear() { REPLY=$fresh }
+  __tt_sync() { synced=1 }
+  TTHEME_HEARD=$stale TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_PIN=
+  __tt_recheck
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[kaito]" && $TTHEME_HEARD == $fresh && $synced == 1 && "$(<$TTHEME_STATE_DIR/colors.ghostty)" == "miku $fresh" ]] ||
+    { print -u2 "a recheck did not move the tab off a stale remembered color: spec=${TTHEME_SPEC%% *} heard=$TTHEME_HEARD synced=$synced"; exit 1 }
+  TTHEME_HEARD=$stale TTHEME_PIN=/pinned TTHEME_BASE_SPEC=$TTHEME_PALETTE[miku] TTHEME_SPEC=$TTHEME_PALETTE[homura]
+  __tt_recheck
+  [[ $TTHEME_BASE_SPEC == "$TTHEME_PALETTE[kaito]" && $TTHEME_SPEC == "$TTHEME_PALETTE[homura]" ]] ||
+    { print -u2 "a recheck under a pin moved the wrong spec: base=${TTHEME_BASE_SPEC%% *} spec=${TTHEME_SPEC%% *}"; exit 1 }
+  TTHEME_HEARD=$stale TTHEME_PIN= TTHEME_SPEC=$TTHEME_PALETTE[miku]
+  export TTHEME_PAINTED=1
+  __tt_recheck
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && $TTHEME_HEARD == $stale ]] || { print -u2 "a recheck trusted a painted tab's colors"; exit 1 }
+) || exit 1
 print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$adapter"

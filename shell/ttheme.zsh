@@ -31,10 +31,7 @@ __tt_gone() {
   for hook in precmd:__tt_fresh precmd:__tt_precmd precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_mux chpwd:__tt_chpwd; do
     add-zsh-hook -d ${hook%%:*} ${hook#*:}
   done
-  if (( $+functions[add-zle-hook-widget] )); then
-    add-zle-hook-widget -d line-init __tt_focus_on
-    add-zle-hook-widget -d line-init __tt_typed
-  fi
+  (( $+functions[add-zle-hook-widget] )) && add-zle-hook-widget -d line-init __tt_line_init
   unfunction ttheme
 }
 
@@ -143,15 +140,78 @@ __tt_tmux() {
   TTHEME_TMUX=1 TTHEME_SPEC=
 }
 
-source $TTHEME_HOME/adapters/_osc.zsh
-[[ -r $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh ]] &&
-  source $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh
-
 __tt_active() {
   [[ -o interactive ]] || return 1
   (( ${#TTHEME_PALETTE} )) || return 1
   [[ $TTHEME_ADAPTER != (unknown|warp) || -n $TTHEME_FORCE ]]
 }
+
+typeset -g TTHEME_HEARD=""
+typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0
+
+__tt_recall() {
+  local f=$TTHEME_STATE_DIR/colors.$TTHEME_ADAPTER line
+  REPLY=""
+  [[ -o zle && -r $f && -z $TTHEME_PAINTED && $TTHEME_TAB_PALETTE == off ]] && (( ! TTHEME_TMUX )) && __tt_active || return 1
+  line=$(<$f)
+  [[ $line == "${TTHEME_STARTUP:--} "?* ]] || return 1
+  REPLY=${line#* }
+}
+
+__tt_remember() {
+  local f=$TTHEME_STATE_DIR/colors.$TTHEME_ADAPTER line="${TTHEME_STARTUP:--} $1"
+  [[ -n $1 && -z $TTHEME_PAINTED ]] && (( ! TTHEME_TMUX )) || return 0
+  [[ -r $f && "$(<$f)" == "$line" ]] && return 0
+  [[ -d $TTHEME_STATE_DIR ]] || mkdir -p $TTHEME_STATE_DIR 2>/dev/null
+  print -r -- "$line" 2>/dev/null > $f
+}
+
+__tt_listen() {
+  local REPLY
+  if __tt_recall; then
+    TTHEME_RECHECK=1
+  else
+    __tt_hear || return 1
+    __tt_remember "$REPLY"
+  fi
+  TTHEME_HEARD=$REPLY
+  __tt_heard "$REPLY"
+}
+
+__tt_wearing() {
+  local k
+  [[ -n $1 ]] || return 1
+  [[ -n $TTHEME_STARTUP && ${TTHEME_PALETTE[$TTHEME_STARTUP]%% *} == "$1" ]] && { REPLY=$TTHEME_PALETTE[$TTHEME_STARTUP]; return 0 }
+  for k in ${(k)TTHEME_PALETTE}; do
+    [[ ${TTHEME_PALETTE[$k]%% *} == "$1" ]] && { REPLY=$TTHEME_PALETTE[$k]; return 0 }
+  done
+  return 1
+}
+
+__tt_recheck() {
+  local REPLY heard=$TTHEME_HEARD was="" now
+  TTHEME_RECHECK=0
+  [[ -z $TTHEME_PAINTED ]] && __tt_hear || return 0
+  [[ $REPLY == "$heard" ]] && return 0
+  now=$REPLY
+  __tt_remember "$now"
+  TTHEME_HEARD=$now
+  __tt_heard "$now"
+  [[ $TTHEME_TAB_PALETTE == off ]] || return 0
+  __tt_wearing "${heard%% *}" && was=$REPLY
+  REPLY=""
+  __tt_wearing "${now%% *}"
+  if [[ -n $TTHEME_PIN ]]; then
+    [[ $TTHEME_BASE_SPEC == "$was" ]] && TTHEME_BASE_SPEC=$REPLY
+  elif [[ $TTHEME_SPEC == "$was" ]]; then
+    TTHEME_SPEC=$REPLY
+    __tt_sync
+  fi
+}
+
+source $TTHEME_HOME/adapters/_osc.zsh
+[[ -r $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh ]] &&
+  source $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh
 
 __tt_empty() {
   print -u2 'ttheme: no palettes installed yet — run `ttheme browse` to pick some'
@@ -288,13 +348,17 @@ __tt_unmux() {
 
 __tt_blur() { : }
 
+__tt_line_init() {
+  (( TTHEME_RECHECK )) && __tt_recheck
+  __tt_typed
+  (( TTHEME_FOCUS )) && __tt_focus_on
+}
+
 __tt_bind_focus() {
   local k
   zle -N __tt_focus
   zle -N __tt_blur
-  zle -N __tt_focus_on
-  autoload -Uz add-zle-hook-widget
-  add-zle-hook-widget line-init __tt_focus_on
+  TTHEME_FOCUS=1
   for k in emacs viins vicmd; do
     bindkey -M $k '^[[I' __tt_focus
     bindkey -M $k '^[[O' __tt_blur
@@ -461,7 +525,7 @@ __tt_arity() {
 
 __tt_cli() {
   local k
-  local -a pass=()
+  local -a pass=(NODE_COMPILE_CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/ttheme/node)
   for k in $TTHEME_SETTINGS; do
     (( $+parameters[$k] )) && pass+=("$k=${(P)k}")
   done
@@ -1228,13 +1292,14 @@ __tt_pv_draw() {
     fi
     line="   "$dd"search… e.g. $ex"$zz
   fi
-  out+=$line$'\e[K\e['$(( lw - ${#cnt} ))'G'
-  if [[ -n $flt ]]; then
-    out+=$cnt
-  else
-    out+=$dd$cnt$zz
+  local tail=$'\e['$(( lw - ${#cnt} ))'G'$dd$cnt$zz
+  [[ -n $flt ]] && tail=$'\e['$(( lw - ${#cnt} ))'G'$cnt
+  if [[ $1 == hint ]] && (( ! wiped )); then
+    print -rn -- $'\e[H\e[0m\e['$lw'X'$line$tail
+    printf '\e[?2026l'
+    return 0
   fi
-  out+=$'\n\e[K\n'
+  out+=$line$'\e[K'$tail$'\n\e[K\n'
   (( N > h && top > 1 )) && out+="   "$dd"…"$zz
   out+=$'\e[K\n'
   for (( k = 0; k < ph - 4; k++ )); do
@@ -1377,8 +1442,8 @@ __tt_pv_getch() {
       (( msgt -= gstep ? 6 : 20 ))
       (( msgt > 0 )) || return 1
     fi
-    (( gstep )) && { gstep=$(( gstep - 1 )); return 1 }
-    (( SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; return 1 }
+    (( gstep )) && { gstep=$(( gstep - 1 )); tick=1; return 1 }
+    (( SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; tick=1; return 1 }
   done
   return 0
 }
@@ -1551,7 +1616,7 @@ __tt_preview() {
     print -u2 "ttheme ${mode:-preview}: needs a terminal"
     return 1
   fi
-  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0
+  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0 tick=0
   local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown="" bginc="" osd="" osdt=0
   local tune="" tsnap="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bganchor=0 bgcut=""
   local -A bgfrom=() bgsent=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
@@ -1576,14 +1641,23 @@ __tt_preview() {
   __tt_pv_roll
   __tt_pv_rows
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && __tt_pv_goto "$cn"
-  printf '\e[?2026h\e[?1049h\e[?7l\e[?25l'
-  __tt_pv_bg_open
+  local tty=""
+  local -i TTHEME_RAW=0
   {
+    tty=$(stty -g 2>/dev/null && stty -echo -icanon min 1 time 0 2>/dev/null)
+    TTHEME_RAW=$(( ${#tty} > 0 ))
+    printf '\e[?2026h\e[?1049h\e[?7l\e[?25l'
+    __tt_pv_bg_open
     while :; do
       printf '\e[?2026h'
-      __tt_pv_focus
-      [[ ${rtype[cur]} == thm ]] && an=${rval[cur]}
-      __tt_pv_draw
+      if (( tick )); then
+        __tt_pv_draw hint
+      else
+        __tt_pv_focus
+        [[ ${rtype[cur]} == thm ]] && an=${rval[cur]}
+        __tt_pv_draw
+      fi
+      tick=0
       if ! __tt_pv_read; then
         [[ -t 0 ]] && continue
         break
@@ -1597,6 +1671,8 @@ __tt_preview() {
     printf '\e[?2026h'
     __tt_pv_bg_close
     printf '\e[?7h\e[?1049l\e[?25h\e[?2026l'
+    [[ -n $tty ]] && stty "$tty" 2>/dev/null
+    TTHEME_RAW=0
     [[ -n $tune ]] && __tt_pv_untune
     (( conf )) && __tt_pv_unconf
     __tt_pv_bg_save
@@ -1705,15 +1781,12 @@ fi
 if __tt_active; then
   [[ -n $TMUX ]] && __tt_tmux
   () {
-    local REPLY k
+    local REPLY
     if [[ -n $TTHEME_SPEC ]]; then
       :
     elif [[ $TTHEME_TAB_PALETTE == off ]]; then
-      if __tt_start_bg; then
-        for k in ${(k)TTHEME_PALETTE}; do
-          [[ ${TTHEME_PALETTE[$k]%% *} == "$REPLY" ]] && { TTHEME_SPEC=$TTHEME_PALETTE[$k]; break }
-        done
-      fi
+      [[ -n $TTHEME_HEARD ]] || __tt_listen
+      __tt_start_bg && __tt_wearing $REPLY && TTHEME_SPEC=$REPLY
     else
       __tt_next
       TTHEME_SPEC=$REPLY
@@ -1722,8 +1795,8 @@ if __tt_active; then
     __tt_dir_sync
   }
   autoload -Uz add-zsh-hook add-zle-hook-widget
-  zle -N __tt_typed
-  add-zle-hook-widget line-init __tt_typed
+  zle -N __tt_line_init
+  add-zle-hook-widget line-init __tt_line_init
   add-zsh-hook chpwd __tt_chpwd
   add-zsh-hook precmd __tt_fresh
   if (( ! TTHEME_TMUX )); then

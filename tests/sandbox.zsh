@@ -142,6 +142,7 @@ hand_back() {
     pid=$(pgrep -f -- $parent) && pgrep -P ${pid%%$'\n'*} > /dev/null && break
     sleep 0.1
   done
+  [[ $front == <-> ]] || return 0
   osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($front).activateWithOptions(0)" > /dev/null
 }
 
@@ -171,7 +172,8 @@ main() {
     exec zsh -il
   fi
   export XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache ZDOTDIR=$SANDBOX
-  local front=${$(lsappinfo info -only pid "$(lsappinfo front)")##*=}
+  local front=""
+  [[ $(lsappinfo info -only pid "$(lsappinfo front)") =~ 'pid"?[[:space:]]*=[[:space:]]*([0-9]+)' ]] && front=$match[1]
   if (( $#iterm )); then
     ( unset GHOSTTY_RESOURCES_DIR TERM_PROGRAM KITTY_WINDOW_ID; ITERM_SESSION_ID=w0 wire $label $palettes )
     open_iterm $#legacy $#trust "${behind:+1}" || { print -u2 "no iTerm2 to open"; return 1 }

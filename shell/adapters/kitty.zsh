@@ -4,7 +4,11 @@ typeset -g TTHEME_KITTY_SHOWN=""
 
 __tt_keepable() { (( ${TTHEME_TERMINALS[(Ie)kitty]} )) }
 
-__tt_kitty_var() { __tt_out $'\e]1337;SetUserVar='$1'='"$(print -rn -- $2 | base64)"$'\a' }
+__tt_kitty_var() {
+  local REPLY
+  __tt_b64s "$2"
+  __tt_out $'\e]1337;SetUserVar='$1'='$REPLY$'\a'
+}
 
 __tt_shown() {
   [[ $2 != force && $TTHEME_KITTY_SHOWN == $1 ]] && return 1

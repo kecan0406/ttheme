@@ -7,6 +7,7 @@ import { test } from 'node:test'
 import { type Manifest, type PaletteEntry, toTheme } from './emit/manifest.ts'
 import {
   forget,
+  type Installed,
   type ItermDefaults,
   itermProfilesPath,
   pointItermDefault,
@@ -88,6 +89,42 @@ test('sync writes a theme file per terminal and the zsh table', () => {
   assert.match(table, /TTHEME_ORDER=\(gojo\)/)
   assert.match(table, /^typeset -ga TTHEME_TERMINALS=\(ghostty kitty\)$/m)
   assert.doesNotMatch(table, /geto/)
+})
+
+test('sync leaves palettes.zsh and its compiled copy alone when nothing it holds changed', () => {
+  const home = fixture()
+  const state: Installed = { terminals: ['ghostty'], palettes: ['gojo', 'geto'] }
+  sync(home, catalog, state)
+  const table = join(home, 'ttheme', 'palettes.zsh')
+  writeFileSync(`${table}.zwc`, '')
+  utimesSync(table, new Date(0), new Date(0))
+  sync(home, catalog, state)
+  assert.equal(statSync(table).mtimeMs, 0)
+  assert.ok(existsSync(`${table}.zwc`))
+  sync(home, catalog, { ...state, startup: 'geto' })
+  assert.ok(statSync(table).mtimeMs > 0)
+  assert.ok(!existsSync(`${table}.zwc`))
+})
+
+test('sync moves palettes.zsh whenever it touches Windows Terminal settings, so open tabs repaint after the reset', () => {
+  const configHome = fixture()
+  const wtHome = fixture()
+  const settings = join(wtHome, 'Microsoft', 'Windows Terminal', 'settings.json')
+  mkdirSync(join(settings, '..'), { recursive: true })
+  writeFileSync(settings, '{}\n')
+  const state: Installed = {
+    terminals: ['windows-terminal'],
+    palettes: ['gojo'],
+    wtHome,
+    wtProfile: '{00000000-0000-0000-0000-000000000001}',
+  }
+  sync(configHome, catalog, state)
+  const table = join(configHome, 'ttheme', 'palettes.zsh')
+  utimesSync(table, new Date(0), new Date(0))
+  sync(configHome, catalog, state)
+  assert.equal(statSync(table).mtimeMs, 0)
+  sync(configHome, catalog, { ...state, wtProfile: '{00000000-0000-0000-0000-000000000002}' })
+  assert.ok(statSync(table).mtimeMs > 0)
 })
 
 test('sync writes an empty but valid table when nothing is installed', () => {

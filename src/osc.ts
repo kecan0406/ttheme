@@ -34,6 +34,12 @@ export function restoreOsc(saved: ReadonlyMap<string, string>): string {
   return [...saved].map(([code, value]) => `\x1b]${code};${value}\x1b\\`).join('')
 }
 
+export const COLOR_QUERY = `${QUERY_CODES.map((code) => `\x1b]${code};?\x1b\\`).join('')}\x1b[5n`
+
+export function answered(replies: string): boolean {
+  return replies.includes('\x1b[0n')
+}
+
 export async function queryTerminalColors(): Promise<Map<string, string>> {
   let fd: number
   let stream: ReadStream
@@ -45,13 +51,13 @@ export async function queryTerminalColors(): Promise<Map<string, string>> {
     return new Map()
   }
   try {
-    writeSync(fd, QUERY_CODES.map((code) => `\x1b]${code};?\x1b\\`).join(''))
+    writeSync(fd, COLOR_QUERY)
     let buffer = ''
     await new Promise<void>((resolve) => {
       const deadline = setTimeout(resolve, 120)
       stream.on('data', (chunk: Buffer) => {
         buffer += chunk.toString()
-        if (parseOscColors(buffer).size >= QUERY_CODES.length) {
+        if (answered(buffer)) {
           clearTimeout(deadline)
           resolve()
         }

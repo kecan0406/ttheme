@@ -29,18 +29,6 @@ __tt_bg_refresh() { : }
 
 __tt_bg_aligns() { (( ! ${TTHEME_TERMINALS[(Ie)iterm2]} )) }
 
-__tt_b64() {
-  local t=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/ out="" i n
-  local -a b=("$@")
-  for (( i = 1; i <= ${#b}; i += 3 )); do
-    n=$(( (b[i] << 16) | (${b[i+1]:-0} << 8) | ${b[i+2]:-0} ))
-    out+=${t:$(( (n >> 18) & 63 )):1}${t:$(( (n >> 12) & 63 )):1}
-    if (( i + 1 <= ${#b} )); then out+=${t:$(( (n >> 6) & 63 )):1}; else out+='='; fi
-    if (( i + 2 <= ${#b} )); then out+=${t:$(( n & 63 )):1}; else out+='='; fi
-  done
-  REPLY=$out
-}
-
 __tt_bg_frame() {
   local -i iw=$1 ih=$2 W=$3 H=$4 s=$5 ax=$(( ($6 - 1) % 3 )) ay=$(( ($6 - 1) / 3 )) f=${8:--1} wide dw dh ox oy
   wide=$(( W * ih >= H * iw ))
@@ -314,7 +302,8 @@ __tt_pv_bg_show() {
 __tt_bg_send() {
   if [[ -z ${bgsent[$1]} ]]; then
     bgsent[$1]=$(( ${#bgsent} + 3 ))
-    printf '\e_Ga=t,t=f,f=100,i=%d,q=2;%s\e\\' ${bgsent[$1]} "$(print -rn -- $1 | base64 | tr -d '\n')"
+    __tt_b64s "$1"
+    printf '\e_Ga=t,t=f,f=100,i=%d,q=2;%s\e\\' ${bgsent[$1]} "$REPLY"
   fi
   REPLY=${bgsent[$1]}
 }
