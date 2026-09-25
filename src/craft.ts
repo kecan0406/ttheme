@@ -1,8 +1,10 @@
 import { execFileSync, spawn, spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname } from 'node:path'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { basename, dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
+import { rackOf } from './backdrop.ts'
 import { available, find, gateFailures, readCatalog } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
 import { type Manifest, type PaletteEntry, paletteEntry, toTheme } from './emit/manifest.ts'
@@ -196,35 +198,41 @@ export async function runEdit(name: string): Promise<void> {
     throw new Error('edit opens your editor — run it in a terminal')
   }
   const before = readFileSync(path, 'utf8')
-  for (;;) {
-    editor(path)
-    const after = readFileSync(path, 'utf8')
-    if (after === before) {
-      console.log('nothing changed')
-      return
+  const draft = join(mkdtempSync(join(tmpdir(), 'ttheme-edit-')), basename(path))
+  writeFileSync(draft, before)
+  try {
+    for (;;) {
+      editor(draft)
+      const after = readFileSync(draft, 'utf8')
+      if (after === before) {
+        console.log('nothing changed')
+        return
+      }
+      const { problem, fixed } = problemOf(full, after, catalog)
+      if (!problem) {
+        writeAtomic(path, after)
+        break
+      }
+      console.log(`\n${problem}\n`)
+      const choice = await p.select({
+        message: `${full} cannot be worn like this`,
+        options: [
+          ...(fixed ? [{ value: 'fix', label: 'take the colors above' }] : []),
+          { value: 'again', label: 'edit it again' },
+          { value: 'back', label: 'keep the old one' },
+        ],
+      })
+      if (p.isCancel(choice) || choice === 'back') {
+        console.log('kept the old one')
+        return
+      }
+      if (choice === 'fix' && fixed) {
+        writeAtomic(path, fixed)
+        break
+      }
     }
-    const { problem, fixed } = problemOf(full, after, catalog)
-    if (!problem) {
-      break
-    }
-    console.log(`\n${problem}\n`)
-    const choice = await p.select({
-      message: `${full} cannot be worn like this`,
-      options: [
-        ...(fixed ? [{ value: 'fix', label: 'take the colors above' }] : []),
-        { value: 'again', label: 'edit it again' },
-        { value: 'back', label: 'put the old one back' },
-      ],
-    })
-    if (p.isCancel(choice) || choice === 'back') {
-      writeFileSync(path, before)
-      console.log('put the old one back')
-      return
-    }
-    if (choice === 'fix' && fixed) {
-      writeAtomic(path, fixed)
-      break
-    }
+  } finally {
+    rmSync(dirname(draft), { recursive: true, force: true })
   }
   if (state.palettes.includes(full)) {
     sync(home, catalog, state)
@@ -233,8 +241,16 @@ export async function runEdit(name: string): Promise<void> {
     `saved ${full}${state.palettes.includes(full) ? ' — new tabs and `ttheme use` wear it' : ` — \`ttheme add ${full}\` installs it`}`,
   )
   const entry = available(home, catalog).palettes.find((e) => e.name === full)
+  const old = paletteEntry(readOwnText(full, before, catalog.palettes))
+  if (
+    entry &&
+    rackOf(home, full).length > 0 &&
+    (entry.background !== old.background || entry.backdrop.color !== old.backdrop.color)
+  ) {
+    console.log('its pictures keep the old tint — reinstall one from `ttheme preview` → tab to retint it')
+  }
   if (entry && state.palettes.includes(full)) {
-    await bringPictures(home, [since(entry, readOwnText(full, before, catalog.palettes).pictures)], state.terminals)
+    await bringPictures(home, [since(entry, old.pictures)], state.terminals)
   }
 }
 

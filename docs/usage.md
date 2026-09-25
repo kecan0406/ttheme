@@ -17,9 +17,15 @@ ttheme help     the list above, in your terminal
 
 ttheme browse   pick palettes from the catalog in a live picker
 ttheme list     the catalog, ● installed and ○ not (a query filters it, --json prints it as JSON)
-ttheme add      install palettes from the catalog
+ttheme add      install palettes from the catalog, or from a share code (ttheme add tt1:…)
 ttheme remove   uninstall palettes
 ttheme update   refresh the catalog from the registry
+
+ttheme new      make a palette of your own, <you>/<name>, from another one (--from)
+ttheme edit     change one of your palettes in $EDITOR — checked against the gate before it is kept
+ttheme check    measure a palette against the contrast gate (--fix writes colors that pass)
+ttheme share    print a share code — the colors and the pictures' post numbers
+ttheme submit   offer one of your palettes to the catalog, through a GitHub issue
 ```
 
 `ttheme <command> --help` (or `ttheme help <command>`) describes one command
@@ -149,9 +155,43 @@ ttheme update           # new palettes, without an npm release
 them — the change is live in the tab you ran it in. The first palette you install
 becomes the one new windows open with.
 
-`update` refetches the catalog from the registry; every palette in it has already
-passed the contrast gate in CI, and `add` checks the numbers again before it
-writes anything.
+`update` refetches the catalog from the registry, rewrites what you installed
+from it and fetches any picture a palette newly lists; every palette in it has
+already passed the contrast gate in CI, and `add` checks the numbers again before
+it writes anything. A palette that leaves the catalog stays installed from the
+copy the last change kept (`~/.config/ttheme/kept.json`); `list` marks it.
+
+Palettes named `<someone>/<name>` come from the community: each varies an
+official one (`list` and `browse` put it right after that one) and only its
+author changes it.
 
 Installed palettes are listed in `~/.config/ttheme/installed.json`, and the
 catalog is cached in `~/.config/ttheme/catalog.json`.
+
+## Your own palettes
+
+```sh
+ttheme new dusk --from madoka    # kecan0406/dusk, installed at once
+ttheme edit dusk                 # $EDITOR; the name without <you>/ works for yours
+ttheme check --fix dusk          # colors that pass the gate, written in
+ttheme share dusk                # tt1:… — anyone runs ttheme add tt1:…
+ttheme submit dusk               # a filled-in GitHub issue for the catalog
+```
+
+Your palettes are files, `~/.config/ttheme/palettes/<you>/<name>.toml`, in the
+same format as `themes/*.toml` (see CONTRIBUTING.md). `<you>` is your GitHub
+handle — read from `gh` when it is logged in, asked once otherwise, and kept in
+`installed.json`. A file you break stays out of the list (every command says
+why on stderr) until you fix it; `edit` never keeps one that does not parse or
+fails the gate, and offers the colors `check --fix` would write.
+
+A palette can list background posts by number with their framing, in
+`[[picture]]` tables. `new`, `share` and `submit` fill them in from the pictures
+you have up; `add`, a new `[[picture]]` in `edit`, and `update` fetch the posts on
+your machine through your own rating and block settings, cut them out and tint
+them as `find` does. A picture you drop is not fetched again. Pictures keep the
+tint they were installed with, so after changing a palette's colors, reinstall a
+picture from `find` to retint it.
+
+`uninstall` deletes these files along with the rest of `~/.config/ttheme`;
+`ttheme share` prints a code that keeps one.
