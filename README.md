@@ -82,6 +82,22 @@ Both images are drawn from the live catalog, so they always match what
 adds or drops single palettes any time, and a merged palette reaches everyone
 through `ttheme update` without waiting for a release.
 
+### Your own palettes
+
+`ttheme new dusk --from madoka` copies a palette into
+`~/.config/ttheme/palettes/<you>/dusk.toml`, named after your GitHub handle
+(`<you>/dusk`), and installs it. `ttheme edit` opens it in `$EDITOR` and
+refuses a result that fails the contrast gate, offering colors that pass;
+`ttheme check --fix` does the same for any palette of yours.
+
+`ttheme share <palette>` prints a code — `tt1:…`, about 200 characters — that
+carries the colors and the numbers of its background posts with their framing.
+`ttheme add tt1:…` installs it anywhere, fetching those posts from the booru the
+way `find` does. `ttheme submit <palette>` opens a filled-in GitHub issue; a bot
+checks it and turns it into a pull request for the catalog, where it appears
+as `<you>/<palette>` next to the palette it came from. A palette that leaves the
+catalog keeps working for whoever installed it.
+
 ## Usage
 
 | Command | |
@@ -92,6 +108,7 @@ through `ttheme update` without waiting for a release.
 | `ttheme default <palette>` | the palette new tabs open with |
 | `ttheme pin` / `unpin` | a palette for this directory — `cd` in repaints, `cd` out restores |
 | `ttheme browse` | pick palettes from the catalog |
+| `ttheme new <name> --from <palette>` | make a palette of your own; `edit`, `check`, `share`, `submit` follow |
 | `ttheme on` / `off` | wear the default again / give the terminal its own colors back |
 | `ttheme config` | settings in `$EDITOR` |
 
@@ -121,7 +138,8 @@ window. See [docs/backgrounds.md](docs/backgrounds.md).
 
 ## Contributing
 
-A palette is one TOML file of color values — never images.
+A palette is one TOML file of color values and post numbers — never images.
+`ttheme submit` sends one of yours without a checkout;
 [CONTRIBUTING.md](CONTRIBUTING.md) has the rules, the file format and the
 checks it must pass.
 

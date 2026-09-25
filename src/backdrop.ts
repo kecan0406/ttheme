@@ -5,7 +5,8 @@ import { type Hex, luminance, rgb } from './color.ts'
 import { checkReadability } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
 import type { ProfileBackground } from './emit/iterm2.ts'
-import { alphaBox, type Box, encodePng, type Rgba, resample, transparency } from './png.ts'
+import { alphaBox, type Box, decodePng, encodePng, type Rgba, resample, transparency } from './png.ts'
+import { stem as fileStem, POSITIONS, type SharedPicture } from './theme.ts'
 
 const FILL = { width: 2560, height: 1550 }
 const FIGURE = 2560
@@ -195,7 +196,7 @@ export function fillFrame(box: Box, width: number, height: number, clear: number
   }
 }
 
-function paint(image: Rgba, frame: Frame, width: number, height: number): Rgba {
+export function paint(image: Rgba, frame: Frame, width: number, height: number): Rgba {
   const w = Math.max(1, Math.round(frame.at.w))
   const h = Math.max(1, Math.round(frame.at.h))
   const cut = resample(image, frame.crop, w, h)
@@ -295,7 +296,7 @@ function save(dir: string, store: Store, names: string[]): void {
   writeAtomic(storePath(dir), `${JSON.stringify(store, null, 2)}\n`)
   for (const name of names) {
     const rack = store.palettes[name]
-    const conf = join(dir, `${name}.conf`)
+    const conf = join(dir, `${fileStem(name)}.conf`)
     if (rack) {
       writeAtomic(conf, confText(dir, rack))
     } else {
@@ -410,7 +411,7 @@ export function readBackdrop(dir: string, name: string, home: string): ProfileBa
     }
     return true
   }
-  if (!read(join(dir, `${name}.conf`), 0)) {
+  if (!read(join(dir, `${fileStem(name)}.conf`), 0)) {
     return undefined
   }
   const image = set.get('background-image') ?? ''
@@ -481,14 +482,14 @@ export function installBackdrop(
   const frame = fillFrame(box, width, height, transparency(image, box))
   const figurePng = encodePng(tint(figure(image, box), colors.background, tone.color))
   const fillPng = encodePng(tint(paint(image, frame, width, height), colors.background, tone.color))
-  const stem = `${name}.${createHash('sha1').update(figurePng).update(fillPng).digest('hex').slice(0, 8)}`
+  const stem = `${fileStem(name)}.${createHash('sha1').update(figurePng).update(fillPng).digest('hex').slice(0, 8)}`
   const picture: Picture = {
     key,
     stem,
     fill: `${stem}@fill-${Math.round(frame.focus * 100)}.png`,
     opacity: tone.opacity,
     ...(original.from ? { from: original.from } : {}),
-    original: join(ORIGINALS, `${name}-${key}.${original.ext}`),
+    original: join(ORIGINALS, `${fileStem(name)}-${key}.${original.ext}`),
   }
   const old = rack.pictures.find((kept) => kept.key === key)
   if (old) {
@@ -503,7 +504,133 @@ export function installBackdrop(
   rack.active = key
   store.palettes[name] = rack
   save(dir, store, [name])
-  return [...written, join(dir, `${name}.conf`)]
+  return [...written, join(dir, `${fileStem(name)}.conf`)]
+}
+
+export function showImage(configHome: string, name: string, key: string): void {
+  const dir = backgroundsDir(configHome)
+  const store = readStore(dir)
+  const rack = store.palettes[name]
+  if (rack?.pictures.some((picture) => picture.key === key) && rack.active !== key) {
+    rack.active = key
+    save(dir, store, [name])
+  }
+}
+
+export function rackOf(configHome: string, name: string): Picture[] {
+  const rack = readStore(backgroundsDir(configHome)).palettes[name]
+  if (!rack) {
+    return []
+  }
+  const active = rack.pictures.filter((picture) => picture.key === rack.active)
+  return [...active, ...rack.pictures.filter((picture) => picture.key !== rack.active)]
+}
+
+export type Tune = Pick<SharedPicture, 'size' | 'position' | 'opacity'>
+
+const DEFAULT_POSITION = 'top-right'
+
+export function frameAt(
+  iw: number,
+  ih: number,
+  W: number,
+  H: number,
+  size: number,
+  at: number,
+  cover: boolean,
+  focus = -1,
+): Box {
+  const t = Math.trunc
+  const ax = (at - 1) % 3
+  const ay = t((at - 1) / 3)
+  const wide = W * ih >= H * iw !== !cover
+  const dw = wide ? t((size * W) / 100) : t((size * H * iw) / (100 * ih))
+  const dh = wide ? t((size * W * ih) / (100 * iw)) : t((size * H) / 100)
+  let x = t((ax * (W - dw)) / 2)
+  let y = t((ay * (H - dh)) / 2)
+  if (focus >= 0) {
+    if (dw > W) {
+      x = t((W - dw) / 2)
+    }
+    if (dh > H) {
+      y = Math.max(H - dh, Math.min(0, t(H / 2) - t((focus * dh) / 100)))
+    }
+  }
+  return { x, y, w: dw, h: dh }
+}
+
+export function tuneOf(dir: string, picture: Picture): Tune {
+  const text = readText(join(dir, `${picture.stem}.tune.conf`))
+  if (text === undefined) {
+    return {}
+  }
+  const value = (key: string) => new RegExp(`^${key}\\s*=\\s*(.*?)\\s*$`, 'm').exec(text)?.[1] ?? ''
+  const image = basename(value('background-image'))
+  const scaled = /@(\d+)-/.exec(image)?.[1]
+  const size = /@fill-\d+\.png$/.test(image)
+    ? 'fill'
+    : scaled
+      ? Number(scaled)
+      : value('background-image-fit') === 'cover'
+        ? 'fill'
+        : 100
+  const position = value('background-image-position').replace('center-center', 'center') || 'center'
+  const opacity = Number(value('background-image-opacity') || 1)
+  return {
+    ...(size !== 'fill' ? { size } : {}),
+    ...(position !== DEFAULT_POSITION ? { position } : {}),
+    ...(Number.isFinite(opacity) && opacity !== picture.opacity ? { opacity } : {}),
+  }
+}
+
+export function writeTune(
+  dir: string,
+  picture: Picture,
+  tune: Tune,
+  aligns: boolean,
+  home: string,
+): string | undefined {
+  const size = tune.size ?? 'fill'
+  const position = tune.position ?? DEFAULT_POSITION
+  const opacity = tune.opacity ?? picture.opacity
+  if (size === 'fill' && position === DEFAULT_POSITION && opacity === picture.opacity) {
+    return undefined
+  }
+  const at = (POSITIONS as readonly string[]).indexOf(position) + 1
+  const figurePath = join(dir, `${picture.stem}.png`)
+  let image = join(dir, picture.fill)
+  let cover = true
+  const window = typeof size === 'number' && (size > 100 || (!aligns && position !== 'center'))
+  if (size === 100 && !window) {
+    image = figurePath
+    cover = false
+  } else if (typeof size === 'number') {
+    const figure = decodePng(new Uint8Array(readFileSync(figurePath)))
+    const { width, height } = window ? FILL : figure
+    const focus = window ? Number(/@fill-(\d+)\.png$/.exec(picture.fill)?.[1] ?? 50) : -1
+    const box = frameAt(figure.width, figure.height, width, height, size, at, false, focus)
+    image = join(dir, `${picture.stem}@${size}-${position}${window ? `-${width}x${height}` : ''}.png`)
+    const baked = paint(
+      figure,
+      { crop: { x: 0, y: 0, w: figure.width, h: figure.height }, at: box, focus },
+      width,
+      height,
+    )
+    writeAtomic(image, encodePng(baked))
+    cover = window
+  }
+  const conf = join(dir, `${picture.stem}.tune.conf`)
+  writeAtomic(
+    conf,
+    [
+      `background-image = ${image.startsWith(`${home}/`) ? `~${image.slice(home.length)}` : image}`,
+      `background-image-fit = ${cover ? 'cover' : 'contain'}`,
+      `background-image-position = ${position}`,
+      `background-image-opacity = ${opacity}`,
+      '',
+    ].join('\n'),
+  )
+  return conf
 }
 
 export function origins(configHome: string): Map<string, Origin> {

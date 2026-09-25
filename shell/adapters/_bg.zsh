@@ -6,6 +6,7 @@ __tt_ghostty_shown() {
   [[ -r $f ]] || return 1
   REPLY=${${"$(<$f)"}##*\?}
   REPLY=${REPLY%.conf}
+  REPLY=${REPLY/--//}
 }
 
 __tt_put() {
@@ -91,12 +92,12 @@ __tt_bg_path() {
 }
 
 __tt_bg_load() {
-  local name=$1 dir=${TTHEME_CONFIG:h}/backgrounds img="" fit=contain op=1 pos=center f line stem="" size=100 REPLY
+  local name=$1 file=${1/\//--} dir=${TTHEME_CONFIG:h}/backgrounds img="" fit=contain op=1 pos=center f line stem="" size=100 REPLY
   local -i at=5
   local -a fills lines
   (( ${+bgsrc[$name]} )) && return 0
-  bgfrom[$name]="" bgtunef[$name]=$name.tune.conf bgofff[$name]=$name.off.conf bgimages[$name]=1
-  [[ -r $dir/$name.conf ]] && lines=("${(@f)$(<$dir/$name.conf)}")
+  bgfrom[$name]="" bgtunef[$name]=$file.tune.conf bgofff[$name]=$file.off.conf bgimages[$name]=1
+  [[ -r $dir/$file.conf ]] && lines=("${(@f)$(<$dir/$file.conf)}")
   for line in $lines; do
     case $line in
       'config-file = ?'*.tune.conf) bgtunef[$name]=${line#config-file = \?} ;;
@@ -104,7 +105,7 @@ __tt_bg_load() {
       '# image '*/<->) bgimages[$name]=${line##*/} ;;
     esac
   done
-  for f in $dir/$name.conf $dir/${bgtunef[$name]}; do
+  for f in $dir/$file.conf $dir/${bgtunef[$name]}; do
     if [[ -r $f ]]; then
       for line in "${(@f)$(<$f)}"; do
         case $line in
@@ -188,10 +189,11 @@ __tt_bg_bake() {
 }
 
 __tt_bg_include() {
-  local conf=${TTHEME_CONFIG:h}/backgrounds/$1.conf line
+  local file=${1/\//--}
+  local conf=${TTHEME_CONFIG:h}/backgrounds/$file.conf line
   local -a lines=() add=()
   [[ -r $conf ]] && lines=("${(@f)$(<$conf)}")
-  for line in "config-file = ?${bgtunef[$1]:-$1.tune.conf}" "config-file = ?${bgofff[$1]:-$1.off.conf}"; do
+  for line in "config-file = ?${bgtunef[$1]:-$file.tune.conf}" "config-file = ?${bgofff[$1]:-$file.off.conf}"; do
     (( ${lines[(Ie)$line]} )) || add+=("$line")
   done
   (( ${#add} )) || return 0
@@ -203,7 +205,7 @@ __tt_bg_write() {
   local pos=${TTHEME_BG_POSITIONS[${bgpos[$1]}]}
   local -i W=$(( (pw + 2 * bgmx) * bgcw )) H=$(( (ph + 2 * bgmy) * bgch ))
   local -a wh fr
-  [[ -r $dir/$name.conf ]] || return 0
+  [[ -r $dir/${name/\//--}.conf ]] || return 0
   __tt_bg_include $name || return 1
   if [[ "$size ${bgpos[$1]} ${bgop[$1]}" == "${bgdef[$1]}" ]]; then
     rm -f -- $dir/${bgtunef[$1]}
@@ -447,7 +449,7 @@ __tt_pv_bg_image() {
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
   msg=${err:-"background · $name"} msgt=$(( rc ? 300 : 200 ))
-  [[ -r ${TTHEME_CONFIG:h}/backgrounds/$name.conf ]] || return 0
+  [[ -r ${TTHEME_CONFIG:h}/backgrounds/${name/\//--}.conf ]] || return 0
   tune=$name tf=1 tsnap="${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}"
 }
 
@@ -525,7 +527,7 @@ __tt_pv_bg_save() {
       continue
     fi
     saved+=($name)
-    if [[ ! -r ${TTHEME_CONFIG:h}/backgrounds/$name.conf ]]; then
+    if [[ ! -r ${TTHEME_CONFIG:h}/backgrounds/${name/\//--}.conf ]]; then
       msg="background · $name none"
     elif (( bgoff[$name] )); then
       msg="background · $name off"

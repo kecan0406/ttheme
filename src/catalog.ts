@@ -1,8 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { GATE_RULES } from './contrast.ts'
+import { isHex } from './color.ts'
+import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
-import type { Manifest, PaletteEntry } from './emit/manifest.ts'
+import { type Manifest, type PaletteEntry, toTheme } from './emit/manifest.ts'
+import { readOwn } from './own.ts'
+import { nameProblem, textProblem } from './theme.ts'
 
 export const REGISTRY_URL = 'https://kecan0406.github.io/ttheme/manifest.json'
 const TIMEOUT = 20_000
@@ -35,11 +38,65 @@ export function parseCatalog(source: string): Manifest {
     throw new Error('catalog has no version or palettes')
   }
   for (const p of catalog.palettes) {
-    if (typeof p?.name !== 'string' || !Array.isArray(p.ansi) || p.ansi.length !== 16) {
-      throw new Error(`catalog entry ${JSON.stringify(p?.name)} is missing name or its 16 ANSI colors`)
+    const problem = entryProblem(p)
+    if (problem) {
+      throw new Error(`catalog entry ${JSON.stringify(p?.name)} ${problem}`)
     }
   }
   return catalog
+}
+
+function entryProblem(p: PaletteEntry): string | undefined {
+  if (typeof p?.name !== 'string' || !Array.isArray(p.ansi) || p.ansi.length !== 16) {
+    return 'is missing name or its 16 ANSI colors'
+  }
+  const named = nameProblem(p.name) ?? (p.base === undefined ? undefined : nameProblem(p.base))
+  if (named) {
+    return named
+  }
+  if (![p.background, p.foreground, p.cursor, p.selection, ...p.ansi].every((c) => typeof c === 'string' && isHex(c))) {
+    return 'holds a color that is not "#rrggbb"'
+  }
+  for (const field of [p.group, p.native ?? '-', p.ansiSource]) {
+    const problem = typeof field === 'string' ? textProblem(field) : 'has a field that is not text'
+    if (problem) {
+      return problem
+    }
+  }
+  return undefined
+}
+
+export function keptPath(configHome: string): string {
+  return join(configHome, 'ttheme', 'kept.json')
+}
+
+export function writeKept(configHome: string, entries: PaletteEntry[]): void {
+  writeAtomic(keptPath(configHome), `${JSON.stringify({ palettes: entries }, null, 2)}\n`)
+}
+
+export function readKept(configHome: string): PaletteEntry[] {
+  try {
+    const { palettes } = JSON.parse(readFileSync(keptPath(configHome), 'utf8')) as { palettes: PaletteEntry[] }
+    return Array.isArray(palettes) ? palettes.filter((p) => entryProblem(p) === undefined) : []
+  } catch {
+    return []
+  }
+}
+
+export function available(configHome: string, catalog: Manifest, warn = true): Manifest {
+  const own = readOwn(configHome, catalog.palettes, warn)
+  const palettes = catalog.palettes.map((p) => own.find((o) => o.name === p.name) ?? p)
+  for (const o of own.filter((o) => !palettes.includes(o))) {
+    const kin = palettes.findLastIndex((p) => o.base !== undefined && (p.name === o.base || p.base === o.base))
+    const at = kin >= 0 ? kin : palettes.findLastIndex((p) => p.group === o.group)
+    palettes.splice(at < 0 ? palettes.length : at + 1, 0, o)
+  }
+  const known = new Set(palettes.map((p) => p.name))
+  return { ...catalog, palettes: [...palettes, ...readKept(configHome).filter((p) => !known.has(p.name))] }
+}
+
+export function readAvailable(configHome: string): Manifest {
+  return available(configHome, readCatalog(configHome))
 }
 
 export async function fetchCatalog(url: string): Promise<Manifest> {
@@ -57,9 +114,10 @@ export async function fetchCatalog(url: string): Promise<Manifest> {
 
 export function gateFailures(palette: PaletteEntry): string[] {
   const waived = new Set(palette.waived ?? [])
+  const gate = palette.gate ?? measure(toTheme(palette))
   return GATE_RULES.flatMap((rule, i) => {
-    const value = palette.gate?.[i]
-    if (waived.has(rule.rule) || typeof value !== 'number') {
+    const value = gate[i]
+    if (waived.has(rule.rule) || typeof value !== 'number' || Number.isNaN(value)) {
       return []
     }
     if (rule.min !== undefined && value < rule.min) {

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import type { Manifest, PaletteEntry } from './emit/manifest.ts'
+import { type Manifest, type PaletteEntry, toTheme } from './emit/manifest.ts'
 import {
   forget,
   type ItermDefaults,
@@ -13,7 +13,6 @@ import {
   resolve,
   startupPalette,
   sync,
-  toTheme,
   warpSettings,
   warpThemes,
   withItermBase,
@@ -343,4 +342,22 @@ test('iTerm2 keeps its default profile when nothing is worn or it is not wired',
     undefined,
   )
   assert.deepEqual(writes, [])
+})
+
+test('a palette that leaves the catalog keeps working from the copy the last sync kept', () => {
+  const home = fixture()
+  sync(home, catalog, { terminals: ['ghostty'], palettes: ['gojo', 'geto'] })
+  const without: Manifest = { ...catalog, palettes: catalog.palettes.filter((p) => p.name !== 'geto') }
+  sync(home, without, { terminals: ['ghostty'], palettes: ['gojo', 'geto'] })
+  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(gojo geto\)/)
+})
+
+test("an author's palette gets theme files and a startup line with -- for the slash", () => {
+  const home = fixture()
+  const shared: Manifest = { ...catalog, palettes: [...catalog.palettes, entry('kec/dusk', 2, { base: 'gojo' })] }
+  sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['kec/dusk'] })
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-kec--dusk')))
+  assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-kec--dusk.conf')))
+  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-kec--dusk$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(kec\/dusk\)/)
 })

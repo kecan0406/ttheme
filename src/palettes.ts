@@ -3,12 +3,12 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, utimesSync, 
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { backgroundsDir, readBackdrop, readStore } from './backdrop.ts'
-import { gateFailures, nearest, readCatalog } from './catalog.ts'
+import { available, gateFailures, nearest, readAvailable, writeKept } from './catalog.ts'
 import { backupOnce, editUserFile, writeAtomic } from './edits.ts'
 import { alacritty, type Emitter, ghostty, iterm2, kitty, owned, warp, wezterm, windowsTerminal } from './emit/index.ts'
 import { itermProfiles, type ProfileBackground } from './emit/iterm2.ts'
 import { kittyWatcher } from './emit/kitty.ts'
-import { listed, type Manifest, type PaletteEntry } from './emit/manifest.ts'
+import { listed, type Manifest, type PaletteEntry, toTheme } from './emit/manifest.ts'
 import { palettesZsh } from './emit/shell.ts'
 import { weztermModule } from './emit/wezterm.ts'
 import { wtFragment } from './emit/windows-terminal.ts'
@@ -41,6 +41,7 @@ const EMITTERS: Record<InitTerminal, Emitter> = {
 
 export interface Installed {
   terminals: InitTerminal[]
+  author?: string
   startup?: string
   off?: true
   itermBase?: string
@@ -133,6 +134,7 @@ export function readInstalled(configHome: string): Installed {
   }
   return {
     terminals: doc.terminals.filter((t): t is InitTerminal => INIT_TERMINALS.includes(t)),
+    ...(doc.author ? { author: doc.author } : {}),
     ...(doc.startup ? { startup: doc.startup } : {}),
     ...(doc.off ? { off: true as const } : {}),
     ...(doc.itermBase ? { itermBase: doc.itermBase } : {}),
@@ -144,32 +146,6 @@ export function readInstalled(configHome: string): Installed {
 
 export function writeInstalled(configHome: string, state: Installed): void {
   writeAtomic(installedPath(configHome), `${JSON.stringify(state, null, 2)}\n`)
-}
-
-export function toTheme(entry: PaletteEntry): Theme {
-  return {
-    name: entry.name,
-    group: entry.group,
-    ...(entry.native ? { native: entry.native } : {}),
-    lead: entry.lead === true,
-    order: entry.order,
-    ...(entry.default ? { role: 'default' as const } : {}),
-    ansiSource: entry.ansiSource,
-    ...(entry.booru ? { booru: entry.booru } : {}),
-    ...(entry.booruSites ? { booruSites: entry.booruSites } : {}),
-    background: entry.background,
-    foreground: entry.foreground,
-    cursor: entry.cursor,
-    selectionBackground: entry.selection,
-    ansi: entry.ansi,
-    signature: entry.signature,
-    signatureSlots: entry.signatureSlots,
-    ghostty: {
-      iconGhost: entry.cursor,
-      iconScreen: [entry.cursor, entry.selection, entry.background],
-    },
-    waive: entry.waived ?? [],
-  }
 }
 
 export function resolve(catalog: Manifest, names: string[]): PaletteEntry[] {
@@ -344,13 +320,16 @@ export function refreshProfiles(configHome: string, home = homedir()): void {
   if (!state.terminals.includes('iterm2')) {
     return
   }
-  const catalog = readCatalog(configHome)
-  writeAtomic(itermProfilesPath(home), itermFile(configHome, resolve(catalog, state.palettes), state, home))
+  writeAtomic(
+    itermProfilesPath(home),
+    itermFile(configHome, resolve(readAvailable(configHome), state.palettes), state, home),
+  )
 }
 
 export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
   readStore(backgroundsDir(configHome))
-  const entries = resolve(catalog, state.palettes)
+  const entries = resolve(available(configHome, catalog), state.palettes)
+  writeKept(configHome, entries)
   const written: string[] = []
   const write = (path: string, content: string): boolean => {
     written.push(path)
@@ -532,8 +511,9 @@ export function forget(
   home = homedir(),
 ): string[] {
   const removed: string[] = []
+  const known = available(configHome, catalog, false).palettes
   for (const terminal of terminals) {
-    for (const entry of catalog.palettes.filter((p) => names.includes(p.name))) {
+    for (const entry of known.filter((p) => names.includes(p.name))) {
       for (const { file } of themeFiles(terminal, toTheme(entry))) {
         const path = join(themeDir(terminal, configHome, home), file)
         if (existsSync(path)) {
@@ -544,4 +524,13 @@ export function forget(
     }
   }
   return removed
+}
+
+export function commit(home: string, catalog: Manifest, before: Installed, after: Installed): boolean {
+  const prefs = itermDefaults()
+  const moves = Boolean(worn(before)) !== Boolean(worn(after))
+  const next = moves ? withItermBase(after, prefs) : after
+  sync(home, catalog, next)
+  writeInstalled(home, next)
+  return moves && pointItermDefault(next, prefs) && prefs.running()
 }

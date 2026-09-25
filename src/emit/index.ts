@@ -1,4 +1,4 @@
-import type { Theme } from '../theme.ts'
+import { stem, type Theme } from '../theme.ts'
 
 export interface Output {
   path: string
@@ -13,7 +13,7 @@ export interface Emitter {
 }
 
 export function owned(name: string): string {
-  return `ttheme-${name}`
+  return `ttheme-${stem(name)}`
 }
 
 export function banner(theme: Theme): string[] {

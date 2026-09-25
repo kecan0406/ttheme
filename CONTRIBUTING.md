@@ -1,12 +1,36 @@
 # Contributing a palette
 
-`themes/*.toml` is the catalog. A merged palette reaches everyone through
-`ttheme update`, without waiting for an npm release.
+`themes/*.toml` is the catalog: the official palettes at the top, the
+community's under `themes/community/<author>/<palette>.toml`. A merged palette
+reaches everyone through `ttheme update`, without waiting for an npm release.
+
+## The short way: `ttheme submit`
+
+```sh
+ttheme new dusk --from madoka     # <you>/dusk, in ~/.config/ttheme/palettes/
+ttheme edit dusk                  # $EDITOR; a result that fails the gate is refused
+ttheme submit dusk                # opens a filled-in GitHub issue
+```
+
+A bot takes the palette out of the issue, checks that its name carries the
+issue author's handle, runs `mise run ci` with it and opens a pull request, with
+the gate's numbers and a `ttheme add tt1:…` line to wear it before merging. An
+error goes back to the issue as a comment; edit the issue (or submit again) and
+it runs again. Submitting the same name later updates it.
+
+A community palette belongs to its author: CI refuses a pull request that
+touches `themes/community/<someone>/` from anyone else. It has no `order` and no
+`role`; `meta.base` names the official palette it varies, and its series and
+place in the list follow that one (without a base, `meta.group` names an
+existing series, or it lands under Original). If a palette leaves the catalog,
+everyone who installed it keeps the copy they have.
 
 ## What this project accepts
 
-**Color values only.** A palette is twenty hex colors, a name, and the series it
-belongs to. That is the whole contribution.
+**Color values and post numbers only.** A palette is twenty hex colors, a
+name, the series it belongs to and, optionally, the numbers of booru posts
+that suit it as a background. That is the whole contribution, released under the
+project's MIT license.
 
 **No images.** This repository does not accept, host or redistribute character
 art, wallpapers, vector traces, icons, audio, fonts or any other asset —
@@ -18,6 +42,22 @@ never enter this repository or the npm package.
 That line is deliberate. Color values carry no copyright, so a palette named
 after a character is safe to share. A character image is a different thing
 entirely, and this project stays out of distributing it.
+
+A palette may name posts by number, with how to frame them:
+
+```toml
+[[picture]]
+site = "yande"          # danbooru, konachan or yande
+id = 825034             # the post's number on that site — never a URL
+size = 60               # optional: "fill" (the default) or a percentage, 20-999
+position = "center"     # optional: top-left … bottom-right, top-right by default
+opacity = 0.2           # optional: the palette's own tint strength by default
+```
+
+`ttheme add` fetches each post from the site itself on the user's machine,
+checks it against their own rating and block settings, cuts it out and tints it
+there, as `find` would. `ttheme share` and `ttheme submit` fill this in from
+the pictures you have up.
 
 ## The file
 
@@ -58,7 +98,7 @@ One palette per pull request. At most three open at a time.
   yande.re when someone looks for a background. Check it on danbooru first —
   it should be a character tag with posts. Leave it out for
   palettes that are not one character (a place, a concept). It is a search
-  term, never a post id or a link to an image.
+  term; posts go in `[[picture]]`, by number.
 - `meta.ansi_source` records what the ANSI ramp was actually derived from, and
   must stay accurate. Take base schemes from
   [mbadolato/iTerm2-Color-Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes),

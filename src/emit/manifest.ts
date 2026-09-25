@@ -1,11 +1,12 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { backdropTone, PLACEMENT } from '../backdrop.ts'
 import { GATE_RULES, type GateRule, measure } from '../contrast.ts'
-import type { Theme } from '../theme.ts'
+import type { SharedPicture, Theme } from '../theme.ts'
 import type { Emitter, Output } from './index.ts'
 
 export interface PaletteEntry {
   name: string
+  base?: string
   group: string
   native?: string
   lead?: boolean
@@ -24,6 +25,7 @@ export interface PaletteEntry {
   gate: number[]
   waived?: string[]
   backdrop: { slot: string; color: string; opacity: number }
+  pictures?: SharedPicture[]
 }
 
 export interface Manifest {
@@ -48,6 +50,7 @@ export function paletteEntry(t: Theme): PaletteEntry {
   )
   return {
     name: t.name,
+    ...(t.base ? { base: t.base } : {}),
     group: t.group,
     ...(t.native ? { native: t.native } : {}),
     ...(t.lead ? { lead: true } : {}),
@@ -66,6 +69,35 @@ export function paletteEntry(t: Theme): PaletteEntry {
     gate: measure(t),
     ...(t.waive.length > 0 ? { waived: t.waive } : {}),
     backdrop: { slot, color, opacity },
+    ...(t.pictures ? { pictures: t.pictures } : {}),
+  }
+}
+
+export function toTheme(entry: PaletteEntry): Theme {
+  return {
+    name: entry.name,
+    ...(entry.base ? { base: entry.base } : {}),
+    group: entry.group,
+    ...(entry.native ? { native: entry.native } : {}),
+    lead: entry.lead === true,
+    order: entry.order,
+    ...(entry.default ? { role: 'default' as const } : {}),
+    ansiSource: entry.ansiSource,
+    ...(entry.booru ? { booru: entry.booru } : {}),
+    ...(entry.booruSites ? { booruSites: entry.booruSites } : {}),
+    background: entry.background,
+    foreground: entry.foreground,
+    cursor: entry.cursor,
+    selectionBackground: entry.selection,
+    ansi: entry.ansi,
+    signature: entry.signature,
+    signatureSlots: entry.signatureSlots,
+    ghostty: {
+      iconGhost: entry.cursor,
+      iconScreen: [entry.cursor, entry.selection, entry.background],
+    },
+    waive: entry.waived ?? [],
+    ...(entry.pictures ? { pictures: entry.pictures } : {}),
   }
 }
 

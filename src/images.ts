@@ -1,10 +1,10 @@
 import { dropImage, switchImage } from './backdrop.ts'
-import { find, readCatalog } from './catalog.ts'
+import { find, readAvailable } from './catalog.ts'
 import { configHome, refreshProfiles } from './palettes.ts'
 
 export function runImage(name: string, action: string): number {
   const home = configHome()
-  find(readCatalog(home).palettes, name)
+  find(readAvailable(home).palettes, name)
   if (action === 'next' || action === 'prev') {
     const { key, at, of } = switchImage(home, name, action === 'next' ? 1 : -1)
     refreshProfiles(home)

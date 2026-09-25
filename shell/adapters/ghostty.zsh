@@ -22,9 +22,9 @@ __tt_shown() {
   __tt_bg_shown
   was=$REPLY
   [[ $was == $1 ]] && return 1
-  [[ -r $dir/$1.conf || ( -n $was && -r $dir/$was.conf ) ]] || return 1
+  [[ -r $dir/${1/\//--}.conf || ( -n $was && -r $dir/${was/\//--}.conf ) ]] || return 1
   [[ -d $dir ]] || mkdir -p $dir || return 1
-  __tt_put $dir/shown.conf "config-file = ?$1.conf"
+  __tt_put $dir/shown.conf "config-file = ?${1/\//--}.conf"
 }
 
 __tt_bg_cells() {

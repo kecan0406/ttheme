@@ -1,4 +1,6 @@
+import { spawn } from 'node:child_process'
 import { type AddressInfo, connect, createServer, type Server, type Socket } from 'node:net'
+import { untunneled } from './booru.ts'
 
 const SPLIT = 20
 const HANDSHAKE = 0x16
@@ -122,4 +124,38 @@ export function tunnel(): Promise<Tunnel> {
       })
     })
   })
+}
+
+export function routable(): boolean {
+  if (process.versions.bun) {
+    return true
+  }
+  const [major = 0, minor = 0] = process.versions.node.split('.').map(Number)
+  return major > 22 || (major === 22 && minor >= 21)
+}
+
+export async function relaunch(): Promise<number> {
+  if (!routable()) {
+    process.stderr.write(`unblock needs node 22.21 or newer — this is ${process.versions.node}\n`)
+    return 1
+  }
+  const proxy = await tunnel()
+  const child = spawn(process.execPath, process.argv.slice(1), {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_USE_ENV_PROXY: '1',
+      NODE_NO_WARNINGS: '1',
+      HTTPS_PROXY: `http://127.0.0.1:${proxy.port}`,
+      NO_PROXY: [process.env.NO_PROXY, untunneled()].filter(Boolean).join(','),
+      TTHEME_FIND_PROXY: String(proxy.port),
+    },
+  })
+  const code = await new Promise<number>((resolve) => child.on('exit', (status) => resolve(status ?? 1)))
+  proxy.close()
+  return code
+}
+
+export function unblocking(): boolean {
+  return process.env.TTHEME_FIND_UNBLOCK === '1' && !process.env.TTHEME_FIND_PROXY
 }

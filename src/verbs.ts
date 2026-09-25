@@ -9,7 +9,7 @@ export interface Flag {
   about: string
 }
 
-export type Section = 'tab' | 'catalog' | 'setup'
+export type Section = 'tab' | 'catalog' | 'own' | 'setup'
 
 export interface VerbSpec {
   name: string
@@ -62,9 +62,48 @@ export const VERB_SPECS: VerbSpec[] = [
     section: 'catalog',
     flags: { json: { type: 'boolean', about: 'print the matches as JSON: name, group, installed' } },
   },
-  { name: 'add', args: ['<palette...>'], about: 'install palettes from the catalog', section: 'catalog' },
+  {
+    name: 'add',
+    args: ['<palette...>'],
+    about: 'install palettes from the catalog, or from a share code: ttheme add tt1:…',
+    section: 'catalog',
+  },
   { name: 'remove', args: ['<palette...>'], about: 'uninstall palettes', section: 'catalog' },
   { name: 'update', args: [], about: 'refresh the catalog from the registry', section: 'catalog' },
+  {
+    name: 'new',
+    args: ['<name>'],
+    about: 'make a palette of your own, <you>/<name>, from another one — installed at once',
+    section: 'own',
+    flags: {
+      from: { type: 'string', value: '<palette>', about: 'the palette to start from — the default one when left out' },
+    },
+  },
+  {
+    name: 'edit',
+    args: ['<palette>'],
+    about: 'change one of your palettes in $EDITOR — checked against the gate before it is kept',
+    section: 'own',
+  },
+  {
+    name: 'check',
+    args: ['<palette>'],
+    about: 'measure a palette against the contrast gate and suggest colors that pass',
+    section: 'own',
+    flags: { fix: { type: 'boolean', about: 'write the suggested colors into your palette' } },
+  },
+  {
+    name: 'share',
+    args: ['<palette>'],
+    about: 'print a share code — ttheme add <code> installs it anywhere, pictures included',
+    section: 'own',
+  },
+  {
+    name: 'submit',
+    args: ['<palette>'],
+    about: 'offer one of your palettes to the catalog, through a GitHub issue',
+    section: 'own',
+  },
   {
     name: 'init',
     args: [],
@@ -99,6 +138,13 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'find',
     args: ['<palette>'],
     about: 'pick a booru background for a palette — preview opens this on tab',
+    section: 'setup',
+    hidden: true,
+  },
+  {
+    name: 'intake',
+    args: ['<issue-body-file>', '<login>'],
+    about: "turn a palette issue into a community palette file — the submission bot's step, from a checkout",
     section: 'setup',
     hidden: true,
   },

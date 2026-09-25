@@ -1,0 +1,103 @@
+name: palette
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: palette-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  intake:
+    if: startsWith(github.event.issue.title, 'palette:')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: sudo apt-get update && sudo apt-get install -y zsh tmux
+      - run: bun install --frozen-lockfile
+
+      - name: take the palette out of the issue
+        id: intake
+        env:
+          BODY: ${{ github.event.issue.body }}
+          LOGIN: ${{ github.event.issue.user.login }}
+        run: |
+          printf '%s' "$BODY" > "$RUNNER_TEMP/body.md"
+          if bun src/bin.ts intake "$RUNNER_TEMP/body.md" "$LOGIN" > "$RUNNER_TEMP/intake.json" 2> "$RUNNER_TEMP/why.txt"; then
+            echo "name=$(jq -r .name "$RUNNER_TEMP/intake.json")" >> "$GITHUB_OUTPUT"
+            echo "path=$(jq -r .path "$RUNNER_TEMP/intake.json")" >> "$GITHUB_OUTPUT"
+            echo "updating=$(jq -r .updating "$RUNNER_TEMP/intake.json")" >> "$GITHUB_OUTPUT"
+          else
+            echo "failed=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: run ci with it
+        id: ci
+        if: steps.intake.outputs.failed != '1'
+        run: |
+          if ! mise run ci > "$RUNNER_TEMP/ci.log" 2>&1; then
+            tail -40 "$RUNNER_TEMP/ci.log" > "$RUNNER_TEMP/why.txt"
+            echo "failed=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: say what stopped it
+        if: steps.intake.outputs.failed == '1' || steps.ci.outputs.failed == '1'
+        run: |
+          {
+            echo 'The palette could not go in yet:'
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/why.txt"
+            echo '```'
+            echo
+            echo 'Fix it and edit this issue (or run `ttheme submit` again) — the check runs on every edit.'
+          } > "$RUNNER_TEMP/comment.md"
+          gh issue comment "$ISSUE" --body-file "$RUNNER_TEMP/comment.md"
+          exit 1
+
+      - name: open the pull request
+        env:
+          NAME: ${{ steps.intake.outputs.name }}
+          FILE: ${{ steps.intake.outputs.path }}
+          UPDATING: ${{ steps.intake.outputs.updating }}
+        run: |
+          branch="palette/${NAME/\//-}"
+          verb=$([ "$UPDATING" = true ] && echo Update || echo Add)
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$branch"
+          git add -- "$FILE"
+          git commit -m "$verb the $NAME palette" -m "Closes #$ISSUE"
+          git push --force origin "$branch"
+          {
+            echo "$verb \`$NAME\` from #$ISSUE — it passed the contrast gate and \`mise run ci\` in the bot's run."
+            echo
+            echo '```'
+            jq -r '.gate[]' "$RUNNER_TEMP/intake.json"
+            echo '```'
+            echo
+            echo 'Wear it before merging:'
+            echo
+            echo '```sh'
+            echo "ttheme add $(jq -r .code "$RUNNER_TEMP/intake.json")"
+            echo '```'
+            echo
+            echo "Closes #$ISSUE"
+          } > "$RUNNER_TEMP/pr.md"
+          if gh pr view "$branch" > /dev/null 2>&1; then
+            gh pr edit "$branch" --body-file "$RUNNER_TEMP/pr.md"
+            url=$(gh pr view "$branch" --json url --jq .url)
+          else
+            url=$(gh pr create --head "$branch" --title "palette: $NAME" --body-file "$RUNNER_TEMP/pr.md")
+          fi
+          gh issue comment "$ISSUE" --body "The palette passed — $url"

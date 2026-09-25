@@ -1,45 +1,50 @@
 import { existsSync } from 'node:fs'
 import * as p from '@clack/prompts'
-import { catalogPath, fetchCatalog, REGISTRY_URL, readCatalog, search, writeCatalog } from './catalog.ts'
+import {
+  available,
+  catalogPath,
+  fetchCatalog,
+  REGISTRY_URL,
+  readCatalog,
+  readKept,
+  search,
+  writeCatalog,
+} from './catalog.ts'
+import { adopt } from './craft.ts'
 import { listed, type Manifest } from './emit/manifest.ts'
 import { colorless, paletteOsc, queryTerminalColors, restoreOsc } from './osc.ts'
+import { CODE, readOwn } from './own.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import {
+  commit,
   configHome,
   forget,
-  type Installed,
+  installedPath,
   itermDefaults,
   pointItermDefault,
   readInstalled,
   startupPalette,
   sync,
   withItermBase,
-  worn,
   writeInstalled,
 } from './palettes.ts'
+import { bringPictures, since } from './pictures.ts'
 import { alphabetical } from './theme.ts'
 import type { InitTerminal } from './wiring.ts'
-
-function commit(home: string, catalog: Manifest, before: Installed, after: Installed): boolean {
-  const prefs = itermDefaults()
-  const moves = Boolean(worn(before)) !== Boolean(worn(after))
-  const next = moves ? withItermBase(after, prefs) : after
-  sync(home, catalog, next)
-  writeInstalled(home, next)
-  return moves && pointItermDefault(next, prefs) && prefs.running()
-}
 
 function reload(count: number): void {
   console.log(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
 }
 
-export function runAdd(names: string[]): void {
+export async function runAdd(given: string[]): Promise<void> {
   const home = configHome()
   const catalog = readCatalog(home)
+  const names = [...new Set(given.map((n) => (n.startsWith(CODE) ? adopt(home, n, catalog) : n)))]
   const state = readInstalled(home)
   const already = names.filter((n) => state.palettes.includes(n))
   const fresh = names.filter((n) => !state.palettes.includes(n))
   if (fresh.length === 0) {
+    sync(home, catalog, state)
     console.log(`already installed: ${already.join(', ')}`)
     return
   }
@@ -48,6 +53,11 @@ export function runAdd(names: string[]): void {
   for (const name of fresh) {
     console.log(`  + ${name}`)
   }
+  await bringPictures(
+    home,
+    available(home, catalog, false).palettes.filter((e) => fresh.includes(e.name)),
+    next.terminals,
+  )
   reload(next.palettes.length)
 }
 
@@ -134,20 +144,38 @@ function defaultNote(name: string, terminals: InitTerminal[], restart: boolean):
     : [`default ${name} · no terminal is wired to open with it — \`ttheme init\` wires one`]
 }
 
+type Source = 'catalog' | 'mine' | 'kept'
+
+function sources(home: string, catalog: Manifest): Map<string, Source> {
+  const out = new Map<string, Source>(catalog.palettes.map((p) => [p.name, 'catalog']))
+  for (const p of readOwn(home, catalog.palettes, false)) {
+    out.set(p.name, 'mine')
+  }
+  return out
+}
+
 export function runList(query: string | undefined, json = false): void {
   const home = configHome()
   const catalog = readCatalog(home)
   const installed = new Set(readInstalled(home).palettes)
-  const all = listed(catalog.palettes)
+  const from = sources(home, catalog)
+  const all = listed(available(home, catalog).palettes)
   const hits = alphabetical(query ? search(all, query) : all)
+  const source = (name: string): Source => from.get(name) ?? 'kept'
   if (json) {
-    const rows = hits.map((p) => ({ name: p.name, group: p.group, installed: installed.has(p.name) }))
+    const rows = hits.map((p) => ({
+      name: p.name,
+      group: p.group,
+      installed: installed.has(p.name),
+      source: source(p.name),
+    }))
     console.log(JSON.stringify(rows, null, 2))
     return
   }
   const pad = Math.max(...hits.map((p) => p.name.length), 0)
+  const note: Record<Source, string> = { catalog: '', mine: '  · yours', kept: '  · no longer in the catalog' }
   for (const p of hits) {
-    console.log(`  ${installed.has(p.name) ? '●' : '○'} ${p.name.padEnd(pad)}  ${p.group}`)
+    console.log(`  ${installed.has(p.name) ? '●' : '○'} ${p.name.padEnd(pad)}  ${p.group}${note[source(p.name)]}`)
   }
   if (process.stdout.isTTY) {
     const shown = query ? `${hits.length} of ${all.length}` : `${all.length}`
@@ -162,6 +190,24 @@ export async function runUpdate(): Promise<void> {
   writeCatalog(home, catalog)
   const added = catalog.palettes.length - before
   console.log(`catalog ${catalog.version} — ${catalog.palettes.length} palettes${added > 0 ? ` (+${added})` : ''}`)
+  if (!existsSync(installedPath(home))) {
+    return
+  }
+  const state = readInstalled(home)
+  const from = sources(home, catalog)
+  const gone = state.palettes.filter((name) => !from.has(name))
+  const was = new Map(readKept(home).map((e) => [e.name, e.pictures]))
+  sync(home, catalog, state)
+  for (const name of gone) {
+    console.log(`  ${name} left the catalog — ttheme keeps the copy you have`)
+  }
+  await bringPictures(
+    home,
+    available(home, catalog, false)
+      .palettes.filter((e) => state.palettes.includes(e.name) && was.has(e.name))
+      .map((e) => since(e, was.get(e.name))),
+    state.terminals,
+  )
 }
 
 export async function pickPalettes(
@@ -194,7 +240,7 @@ export async function runBrowse(): Promise<void> {
   const home = configHome()
   const catalog = readCatalog(home)
   const state = readInstalled(home)
-  const wanted = await pickPalettes(catalog, state.palettes, 'palette')
+  const wanted = await pickPalettes(available(home, catalog), state.palettes, 'palette')
   if (!wanted) {
     console.log('nothing changed')
     return
@@ -214,5 +260,10 @@ export async function runBrowse(): Promise<void> {
   for (const name of dropped) {
     console.log(`  - ${name}`)
   }
+  await bringPictures(
+    home,
+    available(home, catalog, false).palettes.filter((e) => added.includes(e.name)),
+    next.terminals,
+  )
   reload(next.palettes.length)
 }

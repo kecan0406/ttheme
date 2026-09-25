@@ -11,10 +11,15 @@ import {
   dropImage,
   fillFrame,
   fillSize,
+  frameAt,
   installBackdrop,
+  rackOf,
+  readBackdrop,
   readStore,
   switchImage,
   toneFor,
+  tuneOf,
+  writeTune,
 } from './backdrop.ts'
 
 const KAGAMI: Colors = {
@@ -299,4 +304,52 @@ test('removing the last picture leaves the palette bare', () => {
   assert.ok(!existsSync(join(dir, 'kagami.conf')))
   assert.throws(() => switchImage(configHome, 'kagami', 1), /no other image/)
   assert.throws(() => dropImage(configHome, 'kagami'), /has no image/)
+})
+
+test('frameAt places a picture exactly as the shell layer does', () => {
+  const box = (a: [number, number, number, number, number, number, boolean, number?]) => {
+    const { w, h, x, y } = frameAt(...a)
+    return `${w} ${h} ${x} ${y}`
+  }
+  assert.equal(box([1000, 1500, 1000, 1500, 60, 3, false]), '600 900 400 0')
+  assert.equal(box([1000, 1500, 2560, 1550, 130, 3, false, 42]), '1343 2015 1217 -71')
+  assert.equal(box([1600, 900, 2560, 1550, 150, 9, false, 30]), '3840 2160 -640 0')
+  assert.equal(box([800, 1200, 800, 1200, 45, 5, false]), '360 540 220 330')
+})
+
+test('a shared framing written for a picture reads back the same, and the default writes nothing', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-tune-'))
+  const dir = backgroundsDir(configHome)
+  install(configHome, 3)
+  const [picture] = rackOf(configHome, 'kagami')
+  assert.ok(picture)
+  assert.equal(writeTune(dir, picture, {}, true, configHome), undefined)
+  assert.deepEqual(tuneOf(dir, picture), {})
+  for (const tune of [
+    { size: 60, position: 'center' },
+    { size: 130 },
+    { size: 100, opacity: 0.3 },
+    { position: 'bottom-left' },
+  ]) {
+    writeTune(dir, picture, tune, true, configHome)
+    assert.deepEqual(tuneOf(dir, picture), tune)
+  }
+})
+
+test('a palette named after its author keeps its pictures in files named with -- for the slash', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-slash-'))
+  const image = { width: 4, height: 4, data: new Uint8Array(64).fill(90) }
+  const colors = { ...KAGAMI, name: 'kec/dusk' }
+  installBackdrop(
+    configHome,
+    colors,
+    toneFor(colors, 'cursor'),
+    image,
+    { site: 'yande', id: 9, ext: 'png', bytes: new Uint8Array([9]) },
+    { width: 40, height: 20 },
+  )
+  const files = readdirSync(backgroundsDir(configHome))
+  assert.ok(files.includes('kec--dusk.conf'))
+  assert.ok(files.some((f) => /^kec--dusk\.[0-9a-f]{8}\.png$/.test(f)))
+  assert.ok(readBackdrop(backgroundsDir(configHome), 'kec/dusk', configHome))
 })

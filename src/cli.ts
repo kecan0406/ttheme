@@ -1,10 +1,13 @@
 import { type ParseArgsOptionsConfig, parseArgs } from 'node:util'
 import pkg from '../package.json' with { type: 'json' }
 import { build } from './build.ts'
+import { runCheck, runEdit, runNew, runShare, runSubmit } from './craft.ts'
 import { runFind } from './find.ts'
 import { runImage } from './images.ts'
 import { Cancelled, runInit } from './init.ts'
+import { runIntake } from './intake.ts'
 import { runAdd, runBrowse, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './market.ts'
+import { relaunch, routable, unblocking } from './unblock.ts'
 import { runUninstall } from './uninstall.ts'
 import { type Section, VERB_SPECS, type VerbSpec } from './verbs.ts'
 
@@ -12,26 +15,39 @@ export interface Flags {
   yes?: boolean
   only?: string[]
   json?: boolean
+  fix?: boolean
+  from?: string
 }
 
 export interface Verb extends VerbSpec {
   run?(args: string[], flags: Flags): unknown
 }
 
+const tunneled =
+  <A extends unknown[]>(run: (...args: A) => unknown) =>
+  (...args: A) =>
+    unblocking() && routable() ? relaunch() : run(...args)
+
 const RUNS: Record<string, Verb['run']> = {
   default: ([name]) => runDefault(name as string),
   on: () => runOn(),
   off: () => runOff(),
-  browse: () => runBrowse(),
+  browse: tunneled(() => runBrowse()),
   list: ([query], { json }) => runList(query, json),
-  add: (names) => runAdd(names),
+  add: tunneled((names: string[]) => runAdd(names)),
   remove: (names) => runRemove(names),
-  update: () => runUpdate(),
+  update: tunneled(() => runUpdate()),
+  new: tunneled(([name]: string[], { from }: Flags) => runNew(name as string, from)),
+  edit: tunneled(([name]: string[]) => runEdit(name as string)),
+  check: ([name], { fix }) => runCheck(name as string, fix),
+  share: ([name]) => runShare(name as string),
+  submit: ([name]) => runSubmit(name as string),
   init: (_, { yes }) => runInit({ yes }),
   uninstall: (_, { yes }) => runUninstall(yes),
   build: (_, { only }) => build({ only }),
   find: ([name]) => runFind(name as string),
   image: ([name, action]) => runImage(name as string, action as string),
+  intake: ([file, login]) => runIntake(file as string, login as string),
 }
 
 export const VERBS: Verb[] = VERB_SPECS.map((spec) => ({ ...spec, run: RUNS[spec.name] }))
@@ -119,7 +135,7 @@ function columns(rows: [string, string][], width = Math.max(...rows.map(([left])
   return rows.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`)
 }
 
-const SECTIONS: Section[] = ['tab', 'catalog', 'setup']
+const SECTIONS: Section[] = ['tab', 'catalog', 'own', 'setup']
 
 export function help(verb?: Verb): string {
   if (verb) {
@@ -151,6 +167,7 @@ export function help(verb?: Verb): string {
     '  ttheme add homura madoka        install two palettes',
     '  ttheme use homura              paint this tab with one',
     '  ttheme list --json madoka       the madoka series as JSON',
+    '  ttheme new dusk --from madoka   your own palette, <you>/dusk, to edit and share',
     '',
     'ttheme <command> --help describes one command · ttheme --version prints the version',
     'https://kecan0406.github.io/ttheme',

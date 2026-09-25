@@ -52,9 +52,8 @@ import {
   type Site,
   sweepCache,
   tagsOf,
-  untunneled,
 } from './booru.ts'
-import { booruTags, find, readCatalog, siteTags } from './catalog.ts'
+import { booruTags, find, readAvailable, siteTags } from './catalog.ts'
 import { canRemoveBackground, keepable, removeBackground } from './cutout.ts'
 import type { Manifest, PaletteEntry } from './emit/manifest.ts'
 import {
@@ -76,7 +75,7 @@ import {
 import { type Frame, fitOrder, interleave, type Pick } from './fit.ts'
 import { configHome, refreshProfiles } from './palettes.ts'
 import { type Look, Renderer } from './render.ts'
-import { tunnel } from './unblock.ts'
+import { relaunch, routable, unblocking } from './unblock.ts'
 import { withSetting } from './wiring.ts'
 import { kinKeys, near, type Shape, sameKeys, sameSet } from './works.ts'
 
@@ -2211,42 +2210,12 @@ class Finder {
   }
 }
 
-function routable(): boolean {
-  if (process.versions.bun) {
-    return true
-  }
-  const [major = 0, minor = 0] = process.versions.node.split('.').map(Number)
-  return major > 22 || (major === 22 && minor >= 21)
-}
-
-async function relaunch(): Promise<number> {
-  if (!routable()) {
-    process.stderr.write(`unblock needs node 22.21 or newer — this is ${process.versions.node}\n`)
-    return 1
-  }
-  const proxy = await tunnel()
-  const child = spawn(process.execPath, process.argv.slice(1), {
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      NODE_USE_ENV_PROXY: '1',
-      NODE_NO_WARNINGS: '1',
-      HTTPS_PROXY: `http://127.0.0.1:${proxy.port}`,
-      NO_PROXY: [process.env.NO_PROXY, untunneled()].filter(Boolean).join(','),
-      TTHEME_FIND_PROXY: String(proxy.port),
-    },
-  })
-  const code = await new Promise<number>((resolve) => child.on('exit', (status) => resolve(status ?? 1)))
-  proxy.close()
-  return code
-}
-
 export async function runFind(name: string): Promise<number> {
-  if (process.env.TTHEME_FIND_UNBLOCK === '1' && !process.env.TTHEME_FIND_PROXY) {
+  if (unblocking()) {
     return relaunch()
   }
   const home = configHome()
-  const catalog = readCatalog(home)
+  const catalog = readAvailable(home)
   const entry = find(catalog.palettes, name)
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error('needs a terminal')

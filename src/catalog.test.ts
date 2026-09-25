@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { booruTags, gateFailures, parseCatalog, search, siteTags } from './catalog.ts'
+import { available, booruTags, gateFailures, parseCatalog, search, siteTags, writeKept } from './catalog.ts'
 import type { PaletteEntry } from './emit/manifest.ts'
+import { paletteToml } from './own.ts'
 
 function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
@@ -97,4 +101,44 @@ test('siteTags reads the names a site goes by, else the one booru tag, else none
   assert.deepEqual(siteTags(moon, 'konachan'), [])
   assert.deepEqual(siteTags(moon, 'danbooru'), ['sailor_moon'])
   assert.deepEqual(siteTags(entry(), 'danbooru'), [])
+})
+
+test('parseCatalog refuses an entry whose name or text would reach a path or a config line', () => {
+  assert.throws(() => parseCatalog(catalogJson([entry({ name: '../../x' })])), /lowercase letters/)
+  assert.throws(() => parseCatalog(catalogJson([entry({ ansiSource: 'x\ncommand = rm' })])), /control character/)
+  assert.throws(() => parseCatalog(catalogJson([entry({ background: 'red' })])), /#rrggbb/)
+  assert.equal(parseCatalog(catalogJson([entry({ name: 'kec/dusk', base: 'gojo' })])).palettes[0]?.name, 'kec/dusk')
+})
+
+test('gateFailures measures an entry that carries no gate', () => {
+  const { gate: _, ...bare } = entry({ foreground: '#20282c' })
+  assert.match(gateFailures(bare as PaletteEntry)[0] ?? '', /foreground on background/)
+})
+
+test('available puts your palettes after their base, lets yours stand in, and keeps what left the catalog', () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-available-'))
+  const catalog = {
+    version: '0.1.0',
+    gate: [],
+    placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
+    palettes: [entry({ name: 'gojo' }), entry({ name: 'kec/old', base: 'gojo' }), entry({ name: 'geto', order: 2 })],
+  }
+  const own = (name: string, base: string) =>
+    paletteToml({
+      name,
+      base,
+      signature: ['cursor', 'foreground', 'background'],
+      background: '#101010',
+      foreground: '#f0f0f0',
+      cursor: '#e0c060',
+      selection: '#303060',
+      ansi: Array.from({ length: 16 }, () => '#808080'),
+    })
+  mkdirSync(join(home, 'ttheme', 'palettes', 'kec'), { recursive: true })
+  writeFileSync(join(home, 'ttheme', 'palettes', 'kec', 'dusk.toml'), own('kec/dusk', 'gojo'))
+  writeFileSync(join(home, 'ttheme', 'palettes', 'kec', 'old.toml'), own('kec/old', 'gojo'))
+  writeKept(home, [entry({ name: 'kec/gone' })])
+  const names = available(home, catalog).palettes.map((p) => p.name)
+  assert.deepEqual(names, ['gojo', 'kec/old', 'kec/dusk', 'geto', 'kec/gone'])
+  assert.equal(available(home, catalog).palettes.find((p) => p.name === 'kec/old')?.background, '#101010')
 })

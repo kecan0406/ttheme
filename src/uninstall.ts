@@ -6,6 +6,7 @@ import { cacheRoot } from './booru.ts'
 import { restoreUserFile } from './edits.ts'
 import { owned } from './emit/index.ts'
 import { Cancelled } from './init.ts'
+import { ownDir } from './own.ts'
 import {
   alacrittyConfig,
   blockFile,
@@ -156,7 +157,9 @@ export async function runUninstall(yes = false): Promise<void> {
       [
         ...plan.edits.map((e) => `take ttheme out of ${e.file}`),
         ...plan.removals.map((r) =>
-          r === tthemeDir ? `delete ${r} — settings, pins and every installed picture` : `delete ${r}`,
+          r === tthemeDir
+            ? `delete ${r} — settings, pins, every installed picture${existsSync(ownDir(paths.configHome)) ? ', and the palettes you made (`ttheme share` prints a code that keeps one)' : ''}`
+            : `delete ${r}`,
         ),
       ].join('\n'),
       'uninstall',

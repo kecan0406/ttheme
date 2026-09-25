@@ -10,6 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: community palettes change only by their authors
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login != github.repository_owner
+        env:
+          LOGIN: ${{ github.event.pull_request.user.login }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE"
+          login=$(printf '%s' "$LOGIN" | tr '[:upper:]' '[:lower:]')
+          git diff --name-only "$BASE" HEAD -- themes/community | while read -r file; do
+            author=${file#themes/community/}
+            author=${author%%/*}
+            if [ "$author" != "$login" ]; then
+              echo "::error file=$file::$file is $author's palette — only $author changes it"
+              exit 1
+            fi
+          done
       - uses: jdx/mise-action@v2
       - run: sudo apt-get update && sudo apt-get install -y zsh tmux
       - run: bun install --frozen-lockfile
