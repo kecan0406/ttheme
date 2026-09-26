@@ -45,6 +45,8 @@ __tt_repaint() {
 
 __tt_apply() { __tt_osc_apply "$@" }
 
+__tt_pv_paint() { __tt_apply "$1" && painted=$1 }
+
 __tt_shown() { return 1 }
 
 __tt_unshown() { : }

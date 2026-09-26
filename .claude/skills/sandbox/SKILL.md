@@ -113,6 +113,7 @@ Measured on 3.7.2, 2026-09-22 — know these before reading results:
 - A tab that painted colors keeps them through a profile rewrite; `__tt_osc_reset` returns it to the profile's colors as they were when it was painted, not the current ones.
 - `Harmonize 256 Colors` applies only to sessions created after it is set.
 - Twice in thirteen runs a session stopped answering queries (and drawing) after a `\(user.…)`-interpolated `Background Image Location` got its variable; it did not reproduce on demand. A literal path never did.
+- Timing (3.7.3, 2026-09-26): the suite turns App Nap off (`DisableAppNap`), because the instance sits behind the user's windows and, napping, a bare DSR round trip took about 200 ms instead of 20. Even awake, a DSR answer waits for iTerm2's side-effect tick (1/30 s), so time a frame by what a held key leaves behind — how long after the last key the terminal answers — rather than by one round trip. To time a bigger window, give the `sandbox.json` profile `Columns`/`Rows` before launch: `CSI 8;rows;cols t` did not resize it, even after `sb_profile '."Disable Window Resizing" = false'`.
 
 ## kitty, Alacritty and WezTerm: a window on the sandbox's own config
 

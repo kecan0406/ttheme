@@ -179,12 +179,36 @@ typing() {
   [[ $session != *('^[['|$'\e[B')* ]] || { fail "$name: keys typed while preview drew were echoed into it"; return 1 }
 }
 
+hovering() {
+  local name=$1 REPLY session
+  local -i from
+  TERMINAL=iterm2
+  start $name
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
+  zpty -w -n sh $'ttheme preview\r'
+  upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
+  from=${#BUF}
+  zpty -w -n sh $'\e[C'
+  repeat 8; do
+    zpty -w -n sh $'\e[B'
+    upto false 0.05 $name || :
+  done
+  session=${BUF[from+1,-1]}
+  zpty -w -n sh $'\e'
+  upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
+  zpty -d sh
+  TERMINAL=""
+  [[ $session == *$'\e]11;#'* ]] || { fail "$name: hovering palettes in iTerm2 never painted one, so nothing was tested"; return 1 }
+  [[ $session != *$'\e]4;'* ]] || { fail "$name: a preview hover in iTerm2 paints the ANSI colors again — each OSC color is a profile change there that holds its parser, and twenty per hover made every arrow key lag"; return 1 }
+}
+
 check() {
   local name
   home base
   home off off
   home seq seq
   home terminal-app off
+  home iterm2 off
   for name in base off seq terminal-app; do
     measure $name stderr 0
     [[ $name == (base|seq) ]] || (( ASKED[$name] )) || { fail "$name: the layer asked the terminal nothing, so nothing was tested"; return 1 }
@@ -195,7 +219,8 @@ check() {
     [[ ${BUF%%$'\e]11;?'*} == *"bench> "* ]] || { fail "$name: a second tab asked the terminal before its first prompt"; return 1 }
   done
   typing off
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, and its idle hint redraws one row"
+  hovering iterm2
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, and its hover in iTerm2 leaves the ANSI colors alone"
 }
 
 bench() {

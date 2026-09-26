@@ -7,6 +7,17 @@ fi
 
 __tt_keepable() { return 0 }
 
+__tt_pv_paint() {
+  local -a p=(${=1})
+  if (( ${#p} < 20 )); then
+    __tt_out $'\e]110\e\\\e]111\e\\'
+  elif [[ $p[1] == - ]]; then
+    __tt_out $'\e]111\e\\\e]10;'$p[2]$'\e\\'
+  else
+    __tt_out $'\e]11;'$p[1]$'\e\\\e]10;'$p[2]$'\e\\'
+  fi
+}
+
 __tt_bg_shown() {
   REPLY=""
   (( TTHEME_TMUX )) && REPLY=$(tmux show -qv @ttheme_shown 2>/dev/null)
@@ -67,7 +78,6 @@ __tt_bg_crop() {
         sips -c $h $iw --cropOffset 1 1 $bgcut/pad.png --out $band >/dev/null 2>&1 || return 1
     fi
   fi
-  __tt_b64s "$band"
-  printf '\e_Ga=t,t=f,f=100,i=999997,q=2;%s\e\\' "$REPLY"
-  REPLY="999997 0"
+  __tt_bg_send $band
+  REPLY="$REPLY 0"
 }

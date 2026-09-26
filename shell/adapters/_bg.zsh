@@ -143,11 +143,22 @@ __tt_bg_label() {
 }
 
 __tt_bg_dim() {
-  local img=$1
-  local -a d
+  setopt localoptions nomultibyte
+  local img=$1 fd hdr="" c
+  local -a d=()
+  local -i i n
   [[ -n $img && -r $img ]] || return 1
   if [[ -z ${bgdim[$img]} ]]; then
-    d=($(od -An -N24 -tu1 -- $img 2>/dev/null))
+    if { exec {fd}<$img } 2>/dev/null; then
+      sysread -s 24 -i $fd hdr
+      exec {fd}<&-
+    fi
+    for (( i = 1; i <= ${#hdr}; i++ )); do
+      c=${hdr[i]}
+      n=$(( #c ))
+      (( n < 0 )) && (( n += 256 ))
+      d+=($n)
+    done
     if (( ${#d} == 24 && d[1] == 137 && d[2] == 80 && d[3] == 78 && d[4] == 71 )); then
       bgdim[$img]="$(( (d[17] << 24) | (d[18] << 16) | (d[19] << 8) | d[20] )) $(( (d[21] << 24) | (d[22] << 16) | (d[23] << 8) | d[24] ))"
     else
@@ -395,6 +406,7 @@ __tt_pv_bg_findable() {
 __tt_pv_bg_find() {
   local name=$1 err var
   local -i rc
+  [[ $applied == "$painted" ]] || { __tt_apply "$applied" && painted=$applied }
   __tt_pv_bg_close
   err=$(__tt_cli find $name 2>&1 >/dev/tty)
   rc=$?

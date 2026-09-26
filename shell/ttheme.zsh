@@ -706,7 +706,7 @@ __tt_pv_focus() {
   (( resized )) || [[ ${rval[cur]} == "$bgname" ]] || __tt_pv_bg_show "${rval[cur]}"
   local spec=${TTHEME_PALETTE[${rval[cur]}]}
   [[ $spec == "$applied" ]] && return 0
-  __tt_apply "$spec"
+  __tt_pv_paint "$spec"
   applied=$spec
 }
 
@@ -855,10 +855,14 @@ __tt_pv_head() {
 
 __tt_pv_foot() {
   setopt localoptions extendedglob
-  local b=$'\e[1m' d=$'\e[2m' z=$'\e[0m' y=$'\e[33m' on=$'\e[7;1m'$ac badge="" lead="" note="" right="" text line plain
+  local b=$'\e[1m' d=$'\e[2m' z=$'\e[0m' y=$'\e[33m' on=$'\e[7;1m'$ac badge="" lead="" note="" right="" text line plain hex
   local -a kk=() kl=() seg=()
   local -i end=$1 i lwid rwid room
   (( color )) || b= d= z= y= on=
+  if (( color )) && [[ -n $applied && $applied != "$painted" ]]; then
+    hex=${${=applied}[8]#\#}
+    printf -v y '\e[38;2;%d;%d;%dm' $((16#${hex:0:2})) $((16#${hex:2:2})) $((16#${hex:4:2}))
+  fi
   if (( help )); then
     badge=KEYS right=$b"? esc"$z$d" close"$z
   elif [[ -n $pick ]]; then
@@ -1013,10 +1017,21 @@ __tt_pv_help() {
 }
 
 __tt_pv_specimen() {
-  local -a sp=(${=applied}) ln=()
+  local -a sp=(${=applied}) ln=() fg=()
   (( ${#sp} >= 20 )) || return 0
-  local z=$'\e[0m' d=$'\e[2m' pr=$'\e[32m❯\e[0m ' sel cu cell line="" lo hi
+  local z=$'\e[0m' d=$'\e[2m' sel cu cell line="" lo hi pr bd
   local -i i r cw=4
+  if [[ $applied == "$painted" ]]; then
+    fg=($'\e[31m' $'\e[32m' $'\e[33m' $'\e[34m' $'\e[35m') bd=$'\e[1;34m'
+  else
+    for i in 6 7 8 9 10 17; do
+      lo=${sp[i]#\#}
+      printf -v cell '\e[38;2;%d;%d;%dm' $((16#${lo:0:2})) $((16#${lo:2:2})) $((16#${lo:4:2}))
+      fg+=($cell)
+    done
+    bd=$'\e[1m'$fg[6]
+  fi
+  pr=$fg[2]'❯'$z' '
   (( sw < 44 )) && cw=3
   (( sw >= 56 )) && cw=$(( (sw + 1) / 8 - 1 ))
   (( cw > 7 )) && cw=7
@@ -1030,12 +1045,12 @@ __tt_pv_specimen() {
     line+=$cell
   done
   out+=$'\e[4;'$sc'H'$line
-  ln=($'\e[1;34m~/code/demo\e[0m'$d' on '$z$'\e[35mmain\e[32m +2\e[33m ~1\e[0m' "${pr}git status -sb")
-  (( sw >= 44 )) && ln+=($'## \e[32mmain\e[0m...\e[31morigin/main\e[33m [ahead 1]\e[0m')
-  ln+=($'\e[31m M\e[0m src/main.rs' $'\e[31m??\e[0m notes.md' "")
-  (( sw >= 44 )) && ln+=("${pr}ls" $'\e[1;34mdocs\e[0m  \e[1;34msrc\e[0m  \e[1;34mtests\e[0m  Cargo.toml  README.md' "")
-  ln+=("${pr}cargo test" $'\e[32m ✓\e[0m parses config' $'\e[31m ✗\e[0m renders frame')
-  (( sw >= 44 )) && ln[-1]+=$d'  expected '$z$'\e[32m3\e[0m'$d', received '$z$'\e[31m2\e[0m'
+  ln=($bd'~/code/demo'$z$d' on '$z$fg[5]'main'$fg[2]' +2'$fg[3]' ~1'$z "${pr}git status -sb")
+  (( sw >= 44 )) && ln+=('## '$fg[2]'main'$z'...'$fg[1]'origin/main'$fg[3]' [ahead 1]'$z)
+  ln+=($fg[1]' M'$z' src/main.rs' $fg[1]'??'$z' notes.md' "")
+  (( sw >= 44 )) && ln+=("${pr}ls" $bd'docs'$z'  '$bd'src'$z'  '$bd'tests'$z'  Cargo.toml  README.md' "")
+  ln+=("${pr}cargo test" $fg[2]' ✓'$z' parses config' $fg[1]' ✗'$z' renders frame')
+  (( sw >= 44 )) && ln[-1]+=$d'  expected '$z$fg[2]'3'$z$d', received '$z$fg[1]'2'$z
   ln+=("" "${pr}echo ${sel}selected text${z} ${cu} ${z}")
   for (( r = 1; r <= ${#ln}; r++ )); do
     (( r + 5 < ph )) || break
@@ -1616,7 +1631,7 @@ __tt_preview() {
     print -u2 "ttheme ${mode:-preview}: needs a terminal"
     return 1
   fi
-  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0 tick=0
+  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC painted=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0 tick=0
   local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown="" bginc="" osd="" osdt=0
   local tune="" tsnap="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bganchor=0 bgcut=""
   local -A bgfrom=() bgsent=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
@@ -1668,17 +1683,27 @@ __tt_preview() {
       done
     done
   } always {
+    local spec=${sel:+${TTHEME_PALETTE[$sel]}}
     printf '\e[?2026h'
     __tt_pv_bg_close
+    if [[ -n $spec ]]; then
+      [[ $spec == "$painted" ]] || __tt_apply "$spec"
+    elif [[ $painted != "$orig" ]]; then
+      if [[ -z $orig ]]; then
+        __tt_osc_reset
+      else
+        __tt_apply "$orig"
+      fi
+    elif [[ $applied != "$orig" ]]; then
+      __tt_pv_paint "${TTHEME_PAINTED:+$orig}"
+    fi
     printf '\e[?7h\e[?1049l\e[?25h\e[?2026l'
     [[ -n $tty ]] && stty "$tty" 2>/dev/null
     TTHEME_RAW=0
     [[ -n $tune ]] && __tt_pv_untune
     (( conf )) && __tt_pv_unconf
     __tt_pv_bg_save
-    if [[ -n $sel ]]; then
-      local spec=${TTHEME_PALETTE[$sel]}
-      [[ $spec == "$applied" ]] || __tt_apply "$spec"
+    if [[ -n $spec ]]; then
       TTHEME_SPEC=$spec
       __tt_announce
       if [[ $mode == pin ]]; then
@@ -1690,11 +1715,6 @@ __tt_preview() {
         __tt_shown "$sel" force && __tt_reload
       fi
     else
-      if [[ -z $orig && -n $applied ]]; then
-        __tt_osc_reset
-      elif [[ $orig != "$applied" ]]; then
-        __tt_apply "$orig"
-      fi
       (( ${#bgedit} )) && [[ -n ${TTHEME_PALETTE[$cn]} ]] && { __tt_shown "$cn" && __tt_reload }
     fi
   }

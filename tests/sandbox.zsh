@@ -81,6 +81,7 @@ open_iterm() {
   defaults write $SUITE SetCookie -bool true
   defaults write $SUITE SetIT2AppPath -bool true
   defaults write $SUITE PromptOnQuit -bool false
+  defaults write $SUITE DisableAppNap -bool true
   defaults write $SUITE NoSyncVariablesToReport -string allow:id,allow:tab.id,allow:tab.window.id,allow:profileName,allow:user.ttheme_bg
   (( legacy )) && defaults write $SUITE UseMetal -bool false
   if (( trust )); then

@@ -180,6 +180,12 @@ done
 typeset -A bgsent=()
 forks_of __tt_bg_send $bgd/kagami.png
 (( REPLY == 0 )) || { print -u2 "sending a picture to preview forks again ($REPLY processes)"; exit 1 }
+print -rn -- $'\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x07\x58\0\0\x03\xf0\x08\x06' > $bgd/dim.png
+bgdim=()
+forks_of __tt_bg_dim $bgd/dim.png
+(( REPLY == 0 )) || { print -u2 "reading a picture's size forks again ($REPLY processes) — preview's first hover of every picture pays it"; exit 1 }
+__tt_bg_dim $bgd/dim.png && [[ $bgdim[$bgd/dim.png] == "1880 1008" ]] || { print -u2 "__tt_bg_dim misread a PNG header: ${bgdim[$bgd/dim.png]}"; exit 1 }
+__tt_bg_dim $bgd/kagami@fill-42.png && { print -u2 "__tt_bg_dim took an empty file for a picture"; exit 1 }
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/kitty.zsh
   forks_of __tt_apply "$TTHEME_PALETTE[miku]"
