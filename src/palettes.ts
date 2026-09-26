@@ -2,7 +2,7 @@ import { execFileSync, spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { backgroundsDir, readBackdrop, readStore } from './backdrop.ts'
+import { backgroundsDir, readBackdrop, readStore, retint } from './backdrop.ts'
 import { available, nearest, readAvailable, writeKept } from './catalog.ts'
 import { backupOnce, editUserFile, writeAtomic } from './edits.ts'
 import { alacritty, type Emitter, ghostty, iterm2, kitty, owned, warp, wezterm, windowsTerminal } from './emit/index.ts'
@@ -328,6 +328,7 @@ export function refreshProfiles(configHome: string, home = homedir()): void {
 export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
   readStore(backgroundsDir(configHome))
   const entries = resolve(available(configHome, catalog), state.palettes)
+  retint(configHome, new Map(entries.map((entry) => [entry.name, entry.backdrop])))
   writeKept(configHome, entries)
   const written: string[] = []
   const write = (path: string, content: string): boolean => {

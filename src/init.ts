@@ -37,6 +37,7 @@ import {
   worn,
   writeInstalled,
 } from './palettes.ts'
+import { redrawPictures } from './redraw.ts'
 import { marketsOf, OFFICIAL } from './sources.ts'
 import {
   configFile,
@@ -371,11 +372,16 @@ function nextLines(terminals: InitTerminal[], plan: InitPlan, restart: boolean):
   return [...next, ...plan.notes]
 }
 
-function upgrade(state: Installed, paths: InitPaths, interactive: boolean): void {
+function say(interactive: boolean): (line: string) => void {
+  return interactive ? (line) => p.log.step(line) : (line) => console.log(line)
+}
+
+async function upgrade(state: Installed, paths: InitPaths, interactive: boolean): Promise<void> {
   const plan = planUpgrade(state, paths)
   const prefs = itermDefaults()
   const moved = applyInit(plan, prefs)
   verify(plan)
+  await redrawPictures(paths.configHome, say(interactive), paths.home)
   const lines = [
     'exec zsh          open tabs run the new layer — new tabs already do',
     ...nextLines(plan.installed.terminals, plan, moved && prefs.running()),
@@ -460,7 +466,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   }
   const existing = installedState(configHome)
   if (flags.yes && existing) {
-    upgrade(existing, paths, false)
+    await upgrade(existing, paths, false)
     return
   }
   if (flags.yes) {
@@ -488,7 +494,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       }),
     )
     if (keep) {
-      upgrade(existing, paths, true)
+      await upgrade(existing, paths, true)
       return
     }
   }
@@ -538,6 +544,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const prefs = itermDefaults()
   const moved = applyInit(plan, prefs)
   verify(plan)
+  await redrawPictures(configHome, say(true), home)
   if (wear && choose) {
     pickDefault(configHome)
   }

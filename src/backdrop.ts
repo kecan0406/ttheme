@@ -1,16 +1,34 @@
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import { type Hex, luminance, rgb } from './color.ts'
 import { checkReadability } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
 import type { ProfileBackground } from './emit/iterm2.ts'
-import { alphaBox, type Box, decodePng, encodePng, type Rgba, resample, transparency } from './png.ts'
+import {
+  alphaBox,
+  alphaOf,
+  type Box,
+  blur,
+  decodePng,
+  encodeGray,
+  encodeMask,
+  type Mask,
+  type Plane,
+  pngHead,
+  quantize,
+  type Rgba,
+  resamplePlane,
+  retone,
+  transparency,
+} from './png.ts'
 import { stem as fileStem, POSITIONS, type SharedPicture } from './theme.ts'
 
 const FILL = { width: 2560, height: 1550 }
 const FIGURE = 2560
 const FAINT = 0.1
+const WHITE = 0.99
+const LIFT = 2
 export const PLACEMENT = { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 }
 const PEAK = luminance(mix('#19161e', '#9b86c8', 0.2))
 const SHELF = 'shelf'
@@ -37,12 +55,15 @@ export interface Tone {
   reach: number
 }
 
+export type Hue = Pick<Tone, 'color' | 'opacity'>
+
 export interface Original {
   site: string
   id: number
   ext: string
   bytes: Uint8Array
   from?: string
+  cut?: boolean
 }
 
 export interface Origin {
@@ -123,33 +144,6 @@ export function backdropTone(colors: Colors, signature: string[]): Tone {
     .reduce((best, tone) => (tone.reach > best.reach ? tone : best), cursor)
 }
 
-export function tint(image: Rgba, background: Hex, tone: Hex): Rgba {
-  const bg = rgb(background)
-  const to = rgb(tone)
-  const d = image.data
-  for (let i = 0; i < d.length; i += 4) {
-    const gray = (0.299 * (d[i] ?? 0) + 0.587 * (d[i + 1] ?? 0) + 0.114 * (d[i + 2] ?? 0)) / 255
-    for (let c = 0; c < 3; c++) {
-      d[i + c] = Math.round((bg[c] ?? 0) + ((to[c] ?? 0) - (bg[c] ?? 0)) * gray)
-    }
-  }
-  return image
-}
-
-export function composite(image: Rgba, background: Hex, opacity: number): Rgba {
-  const bg = rgb(background)
-  const d = image.data
-  const out = new Uint8Array(d.length)
-  for (let i = 0; i < d.length; i += 4) {
-    const k = ((d[i + 3] ?? 0) / 255) * opacity
-    for (let c = 0; c < 3; c++) {
-      out[i + c] = Math.round((bg[c] ?? 0) * (1 - k) + (d[i + c] ?? 0) * k)
-    }
-    out[i + 3] = 255
-  }
-  return { width: image.width, height: image.height, data: out }
-}
-
 function figureBox(image: Rgba): Box {
   return alphaBox(image) ?? { x: 0, y: 0, w: image.width, h: image.height }
 }
@@ -160,11 +154,6 @@ export function fillSize(width: number, height: number): { width: number; height
   }
   const k = Math.min(1, FILL.width / Math.max(width, height))
   return { width: Math.round(width * k), height: Math.round(height * k) }
-}
-
-export function figure(image: Rgba, box: Box): Rgba {
-  const k = Math.min(1, FIGURE / Math.max(box.w, box.h))
-  return resample(image, box, Math.round(box.w * k), Math.round(box.h * k))
 }
 
 export interface Frame {
@@ -196,29 +185,107 @@ export function fillFrame(box: Box, width: number, height: number, clear: number
   }
 }
 
-export function paint(image: Rgba, frame: Frame, width: number, height: number): Rgba {
-  const w = Math.max(1, Math.round(frame.at.w))
-  const h = Math.max(1, Math.round(frame.at.h))
-  const cut = resample(image, frame.crop, w, h)
-  const out = new Uint8Array(width * height * 4)
-  const ox = Math.round(frame.at.x)
-  const oy = Math.round(frame.at.y)
-  for (let y = 0; y < h; y++) {
-    const ty = oy + y
-    const from = Math.max(0, -ox)
-    const to = Math.min(w, width - ox)
-    if (ty < 0 || ty >= height || to <= from) {
-      continue
-    }
-    out.set(cut.data.subarray((y * w + from) * 4, (y * w + to) * 4), (ty * width + ox + from) * 4)
-  }
-  return { width, height, data: out }
+function luma(data: Uint8Array, at: number): number {
+  return 0.299 * (data[at] ?? 0) + 0.587 * (data[at + 1] ?? 0) + 0.114 * (data[at + 2] ?? 0)
 }
 
-export function tryOn(image: Rgba, colors: Colors, tone: Tone, width: number, height: number): Rgba {
+export function liftOf(image: Rgba, box: Box): number {
+  const counts = new Uint32Array(256)
+  const step = Math.max(1, Math.floor((box.w * box.h) / 400_000))
+  let seen = 0
+  for (let i = 0; i < box.w * box.h; i += step) {
+    const at = ((box.y + Math.floor(i / box.w)) * image.width + box.x + (i % box.w)) * 4
+    if ((image.data[at + 3] ?? 0) >= 128) {
+      const level = Math.round(luma(image.data, at))
+      counts[level] = (counts[level] ?? 0) + 1
+      seen++
+    }
+  }
+  let below = 0
+  for (let level = 0; level < 256 && seen > 0; level++) {
+    below += counts[level] ?? 0
+    if (below >= seen * WHITE) {
+      return Math.min(LIFT, Math.max(1, 255 / Math.max(1, level)))
+    }
+  }
+  return 1
+}
+
+function inkOf(image: Rgba, lift: number): Mask {
+  const data = new Uint8Array(image.width * image.height)
+  for (let i = 0; i < data.length; i++) {
+    const at = i * 4
+    data[i] = Math.round((Math.min(255, luma(image.data, at) * lift) * (image.data[at + 3] ?? 0)) / 255)
+  }
+  return { width: image.width, height: image.height, data }
+}
+
+function place(source: Mask | Plane, frame: Frame, width: number, height: number): Plane {
+  const data = new Float32Array(width * height)
+  const x0 = Math.max(0, Math.round(frame.at.x))
+  const y0 = Math.max(0, Math.round(frame.at.y))
+  const x1 = Math.min(width, Math.round(frame.at.x + frame.at.w))
+  const y1 = Math.min(height, Math.round(frame.at.y + frame.at.h))
+  if (x1 > x0 && y1 > y0) {
+    const kx = frame.crop.w / frame.at.w
+    const ky = frame.crop.h / frame.at.h
+    const box = {
+      x: frame.crop.x + (x0 - frame.at.x) * kx,
+      y: frame.crop.y + (y0 - frame.at.y) * ky,
+      w: (x1 - x0) * kx,
+      h: (y1 - y0) * ky,
+    }
+    const part = resamplePlane(source, box, x1 - x0, y1 - y0)
+    for (let y = y0; y < y1; y++) {
+      data.set(part.data.subarray((y - y0) * (x1 - x0), (y - y0 + 1) * (x1 - x0)), y * width + x0)
+    }
+  }
+  return { width, height, data }
+}
+
+function inked(image: Rgba): { box: Box; clear: number; ink: Mask } {
   const box = figureBox(image)
-  const shown = paint(image, fillFrame(box, width, height, transparency(image, box)), width, height)
-  return composite(tint(shown, colors.background, tone.color), colors.background, tone.opacity)
+  return { box, clear: transparency(image, box), ink: inkOf(image, liftOf(image, box)) }
+}
+
+interface Drawing {
+  figure: Mask
+  fill: Mask
+  focus: number
+}
+
+function draw(image: Rgba, width: number, height: number, blurring: number): Drawing {
+  const { box, clear, ink } = inked(image)
+  const frame = fillFrame(box, width, height, clear)
+  const k = Math.min(1, FIGURE / Math.max(box.w, box.h))
+  const at = { x: 0, y: 0, w: Math.round(box.w * k), h: Math.round(box.h * k) }
+  const figure = place(ink, { crop: box, at, focus: frame.focus }, at.w, at.h)
+  const fill = place(ink, frame, width, height)
+  return {
+    figure: quantize(blur(figure, (blurring * at.w * frame.crop.w) / (box.w * frame.at.w))),
+    fill: quantize(blur(fill, blurring)),
+    focus: frame.focus,
+  }
+}
+
+function shade(mask: Mask, background: Hex, tone: Hex, opacity: number): Rgba {
+  const bg = rgb(background)
+  const to = rgb(tone)
+  const data = new Uint8Array(mask.width * mask.height * 4)
+  for (let i = 0; i < mask.data.length; i++) {
+    const k = ((mask.data[i] ?? 0) / 255) * opacity
+    for (let c = 0; c < 3; c++) {
+      data[i * 4 + c] = Math.round((bg[c] ?? 0) + ((to[c] ?? 0) - (bg[c] ?? 0)) * k)
+    }
+    data[i * 4 + 3] = 255
+  }
+  return { width: mask.width, height: mask.height, data }
+}
+
+export function tryOn(image: Rgba, colors: Colors, tone: Hue, width: number, height: number, blurring: number): Rgba {
+  const { box, clear, ink } = inked(image)
+  const fill = place(ink, fillFrame(box, width, height, clear), width, height)
+  return shade(quantize(blur(fill, blurring)), colors.background, tone.color, tone.opacity)
 }
 
 export function backgroundsDir(configHome: string): string {
@@ -230,8 +297,12 @@ export interface Picture {
   stem: string
   fill: string
   opacity: number
+  tone?: Hex
+  blur?: number
+  window?: { width: number; height: number }
   from?: string
   original?: string
+  cut?: string
 }
 
 interface Rack {
@@ -305,14 +376,22 @@ function save(dir: string, store: Store, names: string[]): void {
   }
 }
 
-function discard(dir: string, picture: Picture): void {
-  for (const file of listing(dir)) {
-    if (file.startsWith(`${picture.stem}.`) || file.startsWith(`${picture.stem}@`)) {
-      rmSync(join(dir, file), { force: true })
-    }
+function stemFiles(dir: string, stem: string): string[] {
+  return listing(dir).filter((file) => file.startsWith(`${stem}.`) || file.startsWith(`${stem}@`))
+}
+
+function forget(dir: string, stem: string): void {
+  for (const file of stemFiles(dir, stem)) {
+    rmSync(join(dir, file), { force: true })
   }
-  if (picture.original) {
-    rmSync(join(dir, picture.original), { force: true })
+}
+
+function discard(dir: string, picture: Picture): void {
+  forget(dir, picture.stem)
+  for (const kept of [picture.original, picture.cut]) {
+    if (kept) {
+      rmSync(join(dir, kept), { force: true })
+    }
   }
 }
 
@@ -464,43 +543,79 @@ export function dropImage(configHome: string, name: string): { key: string; left
   return { key: gone.key, left: rack.pictures.length }
 }
 
+interface Made {
+  stem: string
+  fill: string
+  files: [string, Buffer][]
+}
+
+function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
+  const figure = encodeMask(drawing.figure, tone)
+  const fill = encodeMask(drawing.fill, tone)
+  const stem = `${fileStem(name)}.${createHash('sha1').update(key).update(figure).update(fill).digest('hex').slice(0, 8)}`
+  const named = `${stem}@fill-${Math.round(drawing.focus * 100)}.png`
+  return {
+    stem,
+    fill: named,
+    files: [
+      [`${stem}.png`, figure],
+      [named, fill],
+    ],
+  }
+}
+
+function kept(name: string, key: string): string {
+  return join(ORIGINALS, `${fileStem(name)}-${key}`)
+}
+
+function lay(dir: string, files: [string, Uint8Array][]): string[] {
+  return files.map(([file, bytes]) => {
+    const path = join(dir, file)
+    writeAtomic(path, bytes)
+    return path
+  })
+}
+
 export function installBackdrop(
   configHome: string,
   colors: Colors,
-  tone: Tone,
+  tone: Hue,
   image: Rgba,
-  original: Original,
+  source: Original,
   window: { width: number; height: number },
+  blurring: number,
 ): string[] {
   const dir = backgroundsDir(configHome)
   const name = colors.name
-  const key = imageKey(original)
+  const key = imageKey(source)
   const store = readStore(dir)
   const rack = store.palettes[name] ?? { active: key, pictures: [] }
-  const box = figureBox(image)
-  const { width, height } = fillSize(window.width, window.height)
-  const frame = fillFrame(box, width, height, transparency(image, box))
-  const figurePng = encodePng(tint(figure(image, box), colors.background, tone.color))
-  const fillPng = encodePng(tint(paint(image, frame, width, height), colors.background, tone.color))
-  const stem = `${fileStem(name)}.${createHash('sha1').update(figurePng).update(fillPng).digest('hex').slice(0, 8)}`
+  const size = fillSize(window.width, window.height)
+  const drawn = made(name, key, draw(image, size.width, size.height, blurring), tone.color)
+  const original = kept(name, key)
   const picture: Picture = {
     key,
-    stem,
-    fill: `${stem}@fill-${Math.round(frame.focus * 100)}.png`,
+    stem: drawn.stem,
+    fill: drawn.fill,
     opacity: tone.opacity,
-    ...(original.from ? { from: original.from } : {}),
-    original: join(ORIGINALS, `${fileStem(name)}-${key}.${original.ext}`),
+    tone: tone.color,
+    blur: blurring,
+    window: size,
+    ...(source.from ? { from: source.from } : {}),
+    original: `${original}.${source.ext}`,
+    ...(source.cut ? { cut: `${original}.cut.png` } : {}),
   }
-  const old = rack.pictures.find((kept) => kept.key === key)
+  const old = rack.pictures.find((held) => held.key === key)
   if (old) {
     discard(dir, old)
   }
-  const written = [join(dir, `${stem}.png`), join(dir, picture.fill), join(dir, picture.original as string)]
   mkdirSync(join(dir, ORIGINALS), { recursive: true })
-  writeAtomic(written[0] as string, figurePng)
-  writeAtomic(written[1] as string, fillPng)
-  writeAtomic(written[2] as string, original.bytes)
-  rack.pictures = old ? rack.pictures.map((kept) => (kept === old ? picture : kept)) : [...rack.pictures, picture]
+  const written = lay(dir, [
+    ...drawn.files,
+    [picture.original as string, source.bytes],
+    ...(picture.cut ? [[picture.cut, encodeGray(alphaOf(image))] as [string, Uint8Array]] : []),
+  ])
+  rack.pictures = old ? rack.pictures.map((held) => (held === old ? picture : held)) : [...rack.pictures, picture]
   rack.active = key
   store.palettes[name] = rack
   save(dir, store, [name])
@@ -605,18 +720,16 @@ export function writeTune(
     image = figurePath
     cover = false
   } else if (typeof size === 'number') {
-    const figure = decodePng(new Uint8Array(readFileSync(figurePath)))
+    if (!picture.tone) {
+      throw new Error(`${picture.stem} was drawn before pictures kept their tone — init draws it again`)
+    }
+    const figure = alphaOf(decodePng(new Uint8Array(readFileSync(figurePath))))
     const { width, height } = window ? FILL : figure
     const focus = window ? Number(/@fill-(\d+)\.png$/.exec(picture.fill)?.[1] ?? 50) : -1
     const box = frameAt(figure.width, figure.height, width, height, size, at, false, focus)
     image = join(dir, `${picture.stem}@${size}-${position}${window ? `-${width}x${height}` : ''}.png`)
-    const baked = paint(
-      figure,
-      { crop: { x: 0, y: 0, w: figure.width, h: figure.height }, at: box, focus },
-      width,
-      height,
-    )
-    writeAtomic(image, encodePng(baked))
+    const crop = { x: 0, y: 0, w: figure.width, h: figure.height }
+    writeAtomic(image, encodeMask(quantize(place(figure, { crop, at: box, focus }, width, height)), picture.tone))
     cover = window
   }
   const conf = join(dir, `${picture.stem}.tune.conf`)
@@ -642,4 +755,158 @@ export function origins(configHome: string): Map<string, Origin> {
     }
   }
   return found
+}
+
+function sizeOf(path: string): { width: number; height: number } | undefined {
+  try {
+    const head = pngHead(new Uint8Array(readFileSync(path)))
+    return head ? { width: head.width, height: head.height } : undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function redrawn(
+  configHome: string,
+  name: string,
+  picture: Picture,
+  image: Rgba,
+  hue: Hue,
+  blurring: number,
+  aligns: boolean,
+  home: string,
+  cut: boolean,
+): Picture {
+  const dir = backgroundsDir(configHome)
+  const size = picture.window ?? sizeOf(join(dir, picture.fill)) ?? FILL
+  const drawn = made(name, picture.key, draw(image, size.width, size.height, blurring), hue.color)
+  const next: Picture = {
+    ...picture,
+    stem: drawn.stem,
+    fill: drawn.fill,
+    opacity: hue.opacity,
+    tone: hue.color,
+    blur: blurring,
+    window: size,
+    ...(cut ? { cut: `${kept(name, picture.key)}.cut.png` } : {}),
+  }
+  if (cut) {
+    writeAtomic(join(dir, `${kept(name, picture.key)}.cut.png`), encodeGray(alphaOf(image)))
+  }
+  if (drawn.stem === picture.stem) {
+    return next
+  }
+  lay(dir, drawn.files)
+  writeTune(dir, next, tuneOf(dir, picture), aligns, home)
+  const off = join(dir, `${picture.stem}.off.conf`)
+  if (existsSync(off)) {
+    copyFileSync(off, join(dir, `${next.stem}.off.conf`))
+  }
+  return next
+}
+
+export function applyRedraw(configHome: string, drawn: { name: string; picture: Picture }[]): void {
+  const dir = backgroundsDir(configHome)
+  const store = readStore(dir)
+  const names = new Set<string>()
+  const stale: string[] = []
+  for (const { name, picture } of drawn) {
+    const rack = store.palettes[name]
+    const at = rack?.pictures.findIndex((held) => held.key === picture.key) ?? -1
+    const old = rack?.pictures[at]
+    if (!rack || !old) {
+      continue
+    }
+    rack.pictures[at] = picture
+    names.add(name)
+    if (old.stem !== picture.stem) {
+      stale.push(old.stem)
+    }
+  }
+  if (names.size === 0) {
+    return
+  }
+  save(dir, store, [...names])
+  for (const stem of stale) {
+    forget(dir, stem)
+  }
+}
+
+function recolor(dir: string, name: string, picture: Picture, hue: Hue): Picture {
+  const follow = (text: string) =>
+    text.replace(/^background-image-opacity = (\S+)$/m, (line, value: string) =>
+      Number(value) === picture.opacity ? `background-image-opacity = ${hue.opacity}` : line,
+    )
+  if (picture.tone === hue.color) {
+    const tune = join(dir, `${picture.stem}.tune.conf`)
+    const text = readText(tune)
+    if (text !== undefined) {
+      writeAtomic(tune, follow(text))
+    }
+    return { ...picture, opacity: hue.opacity }
+  }
+  const painted = stemFiles(dir, picture.stem)
+    .filter((file) => file.endsWith('.png'))
+    .map((file): [string, Uint8Array] => {
+      const bytes = new Uint8Array(readFileSync(join(dir, file)))
+      return [file, retone(bytes, hue.color) ?? encodeMask(alphaOf(decodePng(bytes)), hue.color)]
+    })
+  const bytesOf = (file: string) => painted.find(([held]) => held === file)?.[1] ?? new Uint8Array()
+  const stem = `${fileStem(name)}.${createHash('sha1')
+    .update(picture.key)
+    .update(bytesOf(`${picture.stem}.png`))
+    .update(bytesOf(picture.fill))
+    .digest('hex')
+    .slice(0, 8)}`
+  lay(
+    dir,
+    painted.map(([file, bytes]) => [stem + file.slice(picture.stem.length), bytes]),
+  )
+  for (const kind of ['tune', 'off']) {
+    const text = readText(join(dir, `${picture.stem}.${kind}.conf`))
+    if (text !== undefined) {
+      writeAtomic(join(dir, `${stem}.${kind}.conf`), follow(text.split(picture.stem).join(stem)))
+    }
+  }
+  return {
+    ...picture,
+    stem,
+    fill: stem + picture.fill.slice(picture.stem.length),
+    opacity: hue.opacity,
+    tone: hue.color,
+  }
+}
+
+export function retint(configHome: string, hues: ReadonlyMap<string, Hue>): string[] {
+  const dir = backgroundsDir(configHome)
+  const store = readStore(dir)
+  const names: string[] = []
+  const stale: string[] = []
+  for (const [name, rack] of Object.entries(store.palettes)) {
+    const hue = hues.get(name)
+    const due = rack.pictures.filter(
+      (picture) => hue && picture.tone && (picture.tone !== hue.color || picture.opacity !== hue.opacity),
+    )
+    if (!hue || due.length === 0) {
+      continue
+    }
+    rack.pictures = rack.pictures.map((picture) => {
+      if (!due.includes(picture)) {
+        return picture
+      }
+      const next = recolor(dir, name, picture, hue)
+      if (next.stem !== picture.stem) {
+        stale.push(picture.stem)
+      }
+      return next
+    })
+    names.push(name)
+  }
+  if (names.length > 0) {
+    save(dir, store, names)
+    for (const stem of stale) {
+      forget(dir, stem)
+    }
+  }
+  return names
 }

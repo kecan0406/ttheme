@@ -22,7 +22,7 @@ import {
   sourceLabel,
   takeInbound,
 } from './attach.ts'
-import { backdropTone, origins, type Tone } from './backdrop.ts'
+import { backdropTone, fillSize, origins, type Tone } from './backdrop.ts'
 import {
   BLOCKS,
   blockSet,
@@ -76,7 +76,7 @@ import { type Frame, fitOrder, interleave, type Pick } from './fit.ts'
 import { configHome, refreshProfiles } from './palettes.ts'
 import { type Look, Renderer } from './render.ts'
 import { relaunch, routable, unblocking } from './unblock.ts'
-import { withSetting } from './wiring.ts'
+import { blurOf, withSetting } from './wiring.ts'
 import { kinKeys, near, type Shape, sameKeys, sameSet } from './works.ts'
 
 const SETTINGS: Setting[] = [
@@ -299,12 +299,14 @@ class Finder {
   private readonly home: string
   private readonly catalog: Manifest
   private readonly entry: PaletteEntry
+  private readonly blurring: number
 
   constructor(home: string, catalog: Manifest, entry: PaletteEntry, tag: string) {
     this.home = home
     this.catalog = catalog
     this.entry = entry
     this.tone = backdropTone(entry, entry.signatureSlots)
+    this.blurring = blurOf(home)
     this.view = {
       palette: entry.name,
       tag,
@@ -2084,6 +2086,7 @@ class Finder {
       height,
       colors: this.entry,
       tone: this.tone,
+      blur: (this.blurring * width) / fillSize(W, H).width,
     })
     this.clarity.set(key, clear)
     return { clear, path }
@@ -2150,6 +2153,7 @@ class Finder {
         },
         width: this.cols * this.cell.w,
         height: this.rows * this.cell.h,
+        blur: this.blurring,
       })
       const known = readCache<string>(current.site, 'owners.json')
       known[current.id] = this.posts.get(current.key)?.post.owner ?? ''

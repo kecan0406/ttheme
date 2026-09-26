@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { owned } from './emit/index.ts'
 
 export const INIT_TERMINALS = [
@@ -108,6 +110,10 @@ const CONFIG_SETTINGS = {
     doc: '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
     default: 'abc',
   },
+  TTHEME_BG_BLUR: {
+    doc: '# soften the background pictures behind the text: a blur radius in screen pixels, 0 keeps them sharp — changing it draws every picture again (default 0)',
+    default: '0',
+  },
   TTHEME_FIND_RATING: {
     doc: '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',
     default: 'safe',
@@ -169,6 +175,18 @@ function ensureSetting(content: string, name: keyof typeof CONFIG_SETTINGS): str
 }
 
 export const SETTING_NAMES = Object.keys(CONFIG_SETTINGS)
+
+export const BLUR_MOST = 8
+
+export function blurOf(configHome: string): number {
+  let text = ''
+  try {
+    text = readFileSync(join(configHome, 'ttheme', 'config.zsh'), 'utf8')
+  } catch {}
+  const raw = /^: \$\{TTHEME_BG_BLUR:=([^}\n]*)\}/m.exec(text)?.[1] ?? CONFIG_SETTINGS.TTHEME_BG_BLUR.default
+  const value = Number(raw.replace(/^(["'])(.*)\1$/, '$2'))
+  return Number.isFinite(value) ? Math.min(BLUR_MOST, Math.max(0, value)) : 0
+}
 
 export function configTemplate(): string {
   const sections = Object.entries(CONFIG_SETTINGS).map(([name, s]) => `${s.doc}\n${settingLine(name, s.default)}`)

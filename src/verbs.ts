@@ -183,6 +183,13 @@ export const VERB_SPECS: VerbSpec[] = [
     section: 'setup',
     hidden: true,
   },
+  {
+    name: 'redraw',
+    args: [],
+    about: 'draw the background pictures again after TTHEME_BG_BLUR changed — ttheme config and preview call this',
+    section: 'setup',
+    hidden: true,
+  },
 ]
 
 export function usageOf(verb: VerbSpec): string {

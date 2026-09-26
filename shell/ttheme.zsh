@@ -89,6 +89,8 @@ __tt_pins_load
 
 : ${TTHEME_SORT:=abc}
 
+: ${TTHEME_BG_BLUR:=0}
+
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
 if [[ $TERM_PROGRAM == WarpTerminal ]]; then
@@ -562,12 +564,25 @@ __tt_switch() {
 }
 
 __tt_config() {
+  local blur
   if [[ ! -e $TTHEME_CONFIG ]]; then
     mkdir -p ${TTHEME_CONFIG:h} || return 1
     print -r -- "$TTHEME_CONFIG_TEMPLATE" > $TTHEME_CONFIG
   fi
+  blur=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*}
   ${=${VISUAL:-${EDITOR:-vi}}} $TTHEME_CONFIG || return
+  [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*} == "$blur" ]] || __tt_redraw
   print -r -- "settings apply in new tabs — $TTHEME_CONFIG"
+}
+
+__tt_redraw() {
+  local out
+  out=$(__tt_cli redraw 2>&1) || { [[ -n $out ]] && print -ru2 -- "$out"; return 1 }
+  [[ -n $out ]] || return 0
+  print -r -- "$out"
+  __tt_reload
+  (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER
+  return 0
 }
 
 __tt_config_line() {
@@ -1170,10 +1185,30 @@ __tt_pv_conf_save() {
   __tt_tilde "$TTHEME_CONFIG"
   if __tt_config_write "${pairs[@]}"; then
     conf=0 msg="saved · $REPLY" msgt=200
+    (( ${pairs[(Ie)TTHEME_BG_BLUR]} )) && __tt_pv_redraw
   else
     __tt_pv_unconf
     msg="could not write $REPLY" msgt=200
   fi
+}
+
+__tt_pv_redraw() {
+  local name out
+  if (( $+functions[__tt_bg_write] )); then
+    for name in ${(k)bgedit}; do
+      __tt_bg_write $name
+    done
+  fi
+  bgedit=()
+  msg="drawing the background pictures again" msgt=300
+  printf '\e[?2026h'
+  __tt_pv_draw
+  __tt_pv_bg_close
+  out=$(__tt_cli redraw 2>&1)
+  bgsrc=() resized=1 bgname="" bgshown="" bgdim=()
+  __tt_reload
+  (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER
+  msg=${${out//$'\n'/ }:-"saved · no background pictures to draw"} msgt=300
 }
 
 __tt_pv_conf_panel() {
@@ -1219,7 +1254,7 @@ __tt_pv_conf_panel() {
     done
   done
   var=${cvars[cf]}
-  note=${cnote[${(P)var}]}
+  note=${cnote[$var:${(P)var}]}
   [[ -n $note ]] && out+=$'\e['$(( r0 + ${#cvars} + 1 ))';'$col'H'$d${note[1,end-col+1]}$z
   return 0
 }
@@ -1638,13 +1673,16 @@ __tt_preview() {
   local -A bgfrom=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
   local conf=0 cf=1
   local -a plabel=(" this tab " " default ") csnap=()
-  local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT) clabel=("new tabs" announce "search fx" sort)
-  local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc series") cshow=("off seq" "on off" "typewriter decode glitch" "abc series")
+  local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_BG_BLUR) clabel=("new tabs" announce "search fx" sort blur)
+  local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc series" "0 1 2 3 4") cshow=("off seq" "on off" "typewriter decode glitch" "abc series" "off 1px 2px 3px 4px")
   local -A cnote=(
-    seq "new tabs rotate through palettes" off "new tabs keep the terminal theme"
-    1 "shows the palette notice" 0 "silences the palette notice"
-    typewriter "the search hint types itself" decode "the search hint decodes" glitch "the search hint glitches in"
-    abc "series and palettes by name" series "series in the order added"
+    TTHEME_TAB_PALETTE:seq "new tabs rotate through palettes" TTHEME_TAB_PALETTE:off "new tabs keep the terminal theme"
+    TTHEME_ANNOUNCE:1 "shows the palette notice" TTHEME_ANNOUNCE:0 "silences the palette notice"
+    TTHEME_FX:typewriter "the search hint types itself" TTHEME_FX:decode "the search hint decodes" TTHEME_FX:glitch "the search hint glitches in"
+    TTHEME_SORT:abc "series and palettes by name" TTHEME_SORT:series "series in the order added"
+    TTHEME_BG_BLUR:0 "pictures stay sharp" TTHEME_BG_BLUR:1 "pictures soften a little behind the text"
+    TTHEME_BG_BLUR:2 "pictures soften behind the text" TTHEME_BG_BLUR:3 "pictures blur behind the text"
+    TTHEME_BG_BLUR:4 "pictures blur well behind the text"
   )
   [[ $mode == pin ]] && pkdef=2 plabel=(" this directory " " and below ")
   [[ $mode == init ]] && pkdef=2

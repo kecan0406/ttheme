@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import {
+  applyRedraw,
   backdropTone,
   backgroundsDir,
   type Colors,
@@ -13,14 +14,19 @@ import {
   fillSize,
   frameAt,
   installBackdrop,
+  liftOf,
+  type Picture,
   rackOf,
   readBackdrop,
   readStore,
+  retint,
   switchImage,
   toneFor,
   tuneOf,
   writeTune,
 } from './backdrop.ts'
+import { redrawOne } from './pictures.ts'
+import { decodePng, encodeMask, encodePng, type Rgba, retone } from './png.ts'
 
 const KAGAMI: Colors = {
   name: 'kagami',
@@ -119,6 +125,7 @@ function install(configHome: string, id: number): void {
       from: `safebooru ${id} https://example.test/${id}`,
     },
     { width: 40, height: 20 },
+    0,
   )
 }
 
@@ -347,9 +354,116 @@ test("a market's palette keeps its pictures in files named with -- for the @ and
     image,
     { site: 'yande', id: 9, ext: 'png', bytes: new Uint8Array([9]) },
     { width: 40, height: 20 },
+    0,
   )
   const files = readdirSync(backgroundsDir(configHome))
   assert.ok(files.includes('kec--dust--rei.conf'))
   assert.ok(files.some((f) => /^kec--dust--rei\.[0-9a-f]{8}\.png$/.test(f)))
   assert.ok(readBackdrop(backgroundsDir(configHome), 'kec@dust/rei', configHome))
+})
+
+function figure(): Rgba {
+  const data = new Uint8Array(16 * 16 * 4)
+  for (let y = 2; y < 14; y++) {
+    for (let x = 4; x < 12; x++) {
+      data.set([40 + y * 12, 40 + y * 12, 40 + y * 12, 255], (y * 16 + x) * 4)
+    }
+  }
+  return { width: 16, height: 16, data }
+}
+
+function installFigure(configHome: string, id: number): Picture {
+  const image = figure()
+  installBackdrop(
+    configHome,
+    KAGAMI,
+    { color: '#9b86c8', opacity: 0.2 },
+    image,
+    { site: 'safebooru', id, ext: 'png', bytes: encodePng(image) },
+    { width: 40, height: 20 },
+    0,
+  )
+  return rackOf(configHome, 'kagami')[0] as Picture
+}
+
+test('a picture file is the tone with the ink as its alpha, so a terminal lays the tint over the background itself', () => {
+  const mask = { width: 3, height: 1, data: Uint8Array.from([0, 128, 255]) }
+  const tone = [0x9b, 0x86, 0xc8]
+  assert.deepEqual([...decodePng(encodeMask(mask, '#9b86c8')).data], [...tone, 0, ...tone, 128, ...tone, 255])
+  const again = retone(encodeMask(mask, '#9b86c8'), '#123456')
+  assert.ok(again)
+  assert.deepEqual([...decodePng(again).data.subarray(4, 8)], [0x12, 0x34, 0x56, 128])
+})
+
+test('a dim picture is lifted until its brightest part reaches the tone, at most twice, and a bright one is left alone', () => {
+  const flat = (level: number) => ({
+    width: 10,
+    height: 10,
+    data: new Uint8Array(400).map((_, i) => (i % 4 === 3 ? 255 : level)),
+  })
+  const box = { x: 0, y: 0, w: 10, h: 10 }
+  assert.equal(liftOf(flat(60), box), 2)
+  assert.equal(liftOf(flat(170), box), 1.5)
+  assert.equal(liftOf(flat(255), box), 1)
+})
+
+test('a palette that changes its tone paints its pictures again, under new names, with their tuning', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-retint-'))
+  const dir = backgroundsDir(configHome)
+  const before = installFigure(configHome, 5)
+  writeTune(dir, before, { size: 60, position: 'center' }, true, configHome)
+  assert.deepEqual(retint(configHome, new Map([['kagami', { color: '#9b86c8', opacity: 0.2 }]])), [])
+  assert.deepEqual(retint(configHome, new Map([['kagami', { color: '#5fa8d3', opacity: 0.15 }]])), ['kagami'])
+  const after = rackOf(configHome, 'kagami')[0] as Picture
+  assert.notEqual(after.stem, before.stem)
+  assert.deepEqual([after.tone, after.opacity], ['#5fa8d3', 0.15])
+  for (const file of [`${after.stem}.png`, after.fill, `${after.stem}@60-center.png`]) {
+    assert.deepEqual(
+      [...decodePng(new Uint8Array(readFileSync(join(dir, file)))).data.subarray(0, 3)],
+      [0x5f, 0xa8, 0xd3],
+    )
+  }
+  assert.deepEqual(
+    readdirSync(dir).filter((file) => file.startsWith(before.stem)),
+    [],
+  )
+  assert.deepEqual(tuneOf(dir, after), { size: 60, position: 'center' })
+  assert.equal(shownPath(dir), join(dir, after.fill))
+})
+
+test('a picture drawn before its tone was kept is drawn again from its original, with its tuning and off switch', async () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-redraw-'))
+  const dir = backgroundsDir(configHome)
+  const legacy = installFigure(configHome, 6)
+  const store = readStore(dir)
+  store.palettes.kagami = {
+    active: legacy.key,
+    pictures: [{ key: legacy.key, stem: legacy.stem, fill: legacy.fill, opacity: 0.2, original: legacy.original }],
+  }
+  writeFileSync(join(dir, 'images.json'), JSON.stringify(store))
+  writeFileSync(
+    join(dir, `${legacy.stem}.tune.conf`),
+    `background-image = ${join(dir, legacy.fill)}\nbackground-image-fit = cover\nbackground-image-position = bottom-left\nbackground-image-opacity = 0.3\n`,
+  )
+  writeFileSync(join(dir, `${legacy.stem}.off.conf`), 'background-image =\n')
+  const picture = await redrawOne(
+    configHome,
+    'kagami',
+    legacy.key,
+    { color: '#9b86c8', opacity: 0.2 },
+    2,
+    true,
+    configHome,
+  )
+  assert.ok(picture)
+  applyRedraw(configHome, [{ name: 'kagami', picture }])
+  const after = rackOf(configHome, 'kagami')[0] as Picture
+  assert.notEqual(after.stem, legacy.stem)
+  assert.deepEqual([after.tone, after.blur, after.window], ['#9b86c8', 2, { width: 40, height: 20 }])
+  assert.deepEqual(tuneOf(dir, after), { position: 'bottom-left', opacity: 0.3 })
+  assert.ok(existsSync(join(dir, `${after.stem}.off.conf`)))
+  assert.deepEqual(
+    readdirSync(dir).filter((file) => file.startsWith(legacy.stem)),
+    [],
+  )
 })

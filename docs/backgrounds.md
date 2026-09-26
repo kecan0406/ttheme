@@ -152,18 +152,38 @@ When a site asks ttheme to slow down, find waits as long as it names, up to a
 minute, with a countdown at the bottom. ttheme keeps no
 list of images — the tag is all it knows about a character.
 
-An install writes `<palette>.<hash>.png` (the tinted figure),
+An install writes `<palette>.<hash>.png` (the figure),
 `<palette>.<hash>@fill-<focus>.png` (the picture made at the shape of the window
 find ran in: a cut-out stands whole from its head down against the right edge, a
 little taller than the window, and a wallpaper covers it from its top) — the hash is of
-their content, because Ghostty and iTerm2 reload a background only when its path
+the post and their content, because Ghostty and iTerm2 reload a background only when its path
 changes, so no two pictures may share a name — and the untouched original under
-`backgrounds/originals/`, records it in `backgrounds/images.json`, and starts it
-untuned; the picture that was up stays saved with the tuning it had. The
-palette's `<palette>.conf` is rewritten from `images.json` to point at the
-picture on screen, and opens with where it came from —
-`# from yande.re 214705 https://yande.re/post/show/214705` — and the tuning
-panel shows it next to the palette's name.
+`backgrounds/originals/`, with the cut-out's alpha beside it as
+`<palette>-<post>.cut.png` when Vision cut the character out, records it in
+`backgrounds/images.json`, and starts it untuned; the picture that was up stays
+saved with the tuning it had. The palette's `<palette>.conf` is rewritten from
+`images.json` to point at the picture on screen, and opens with where it came
+from — `# from yande.re 214705 https://yande.re/post/show/214705` — and the
+tuning panel shows it next to the palette's name.
+
+Both files are one color, the palette's tone, with the picture's brightness as
+their alpha: an 8-bit indexed PNG, about 40% of the size of a full-color one. The
+terminal lays that over its own background at the picture's opacity, so what
+shows is the background moving toward the tone as far as the picture is bright —
+the tint, without the background baked into any pixel. A picture whose brightest
+percent stops short of white is lifted until it reaches the tone, at most twice
+over, so a dark picture still shows; the contrast gate's opacity is worked out
+for the tone itself, so the lift never takes text past it. Resizing uses a
+Mitchell filter that averages every source pixel when it shrinks, so fine lines
+neither break up nor alias, and stays smooth when a small picture is enlarged.
+`TTHEME_BG_BLUR` softens every picture by that many screen pixels.
+
+When a palette's colors change (`edit`, `update`, a new catalog), the next sync
+paints its pictures in the new tone and default opacity under new names, carrying
+their tuning — an opacity you set yourself stays yours. Changing
+`TTHEME_BG_BLUR` in `ttheme config` or preview's alt-c panel draws every picture
+again from its original, as does the first `init` of a version that draws them
+differently; a picture whose original is gone is left as it was, and init says so.
 
 ## Tuning
 

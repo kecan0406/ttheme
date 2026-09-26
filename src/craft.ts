@@ -3,7 +3,6 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
-import { rackOf } from './backdrop.ts'
 import { available, find, gateFailures, readCatalog, readKept, writeKept } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
 import { type Manifest, type PaletteEntry, paletteEntry, toTheme } from './emit/manifest.ts'
@@ -187,13 +186,6 @@ export async function runEdit(name: string): Promise<void> {
   }
   const entry = available(home, catalog).palettes.find((e) => e.name === full)
   const old = paletteEntry(readOwnText(full, before, catalog.palettes))
-  if (
-    entry &&
-    rackOf(home, full).length > 0 &&
-    (entry.background !== old.background || entry.backdrop.color !== old.backdrop.color)
-  ) {
-    console.log('its pictures keep the old tint — reinstall one from `ttheme preview` → tab to retint it')
-  }
   if (entry && state.palettes.includes(full)) {
     await bringPictures(home, [since(entry, old.pictures)], state.terminals)
   }

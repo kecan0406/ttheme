@@ -7,6 +7,7 @@ import { runImage } from './images.ts'
 import { Cancelled, runInit } from './init.ts'
 import { runAdd, runBrowse, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './market.ts'
 import { runMarket } from './markets.ts'
+import { runRedraw } from './redraw.ts'
 import { relaunch, routable, unblocking } from './unblock.ts'
 import { runUninstall } from './uninstall.ts'
 import { helpText, usageOf, VERB_SPECS, type VerbSpec } from './verbs.ts'
@@ -48,6 +49,7 @@ const RUNS: Record<string, Verb['run']> = {
   build: (_, { only }) => build({ only }),
   find: ([name]) => runFind(name as string),
   image: ([name, action]) => runImage(name as string, action as string),
+  redraw: () => runRedraw(),
 }
 
 export const VERBS: Verb[] = VERB_SPECS.map((spec) => ({ ...spec, run: RUNS[spec.name] }))

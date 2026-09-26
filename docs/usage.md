@@ -114,6 +114,7 @@ still wins:
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
 | `TTHEME_SORT` | `abc` | `series` lists series and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |
+| `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe). The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
 | `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |
@@ -229,9 +230,9 @@ A palette can list background posts by number with their framing, in
 `[[picture]]` tables. `new` and `share` fill them in from the pictures you have
 up; `add`, a new `[[picture]]` in `edit`, and `update` fetch the posts on your
 machine through your own rating and block settings, cut them out and tint them as
-`find` does. A picture you drop is not fetched again. Pictures keep the tint they
-were installed with, so after changing a palette's colors, reinstall a picture
-from `find` to retint it.
+`find` does. A picture you drop is not fetched again. When a palette's colors
+change — `edit`, `update` — its pictures take the new tone at once, keeping their
+framing and tuning.
 
 `uninstall` deletes your markets under `~/.config/ttheme/market` along with the rest of
 `~/.config/ttheme` — push it first, or keep it in a folder of your own.

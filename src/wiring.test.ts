@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { test } from 'node:test'
 
 import {
   alacrittyColors,
+  blurOf,
   configFile,
   configTemplate,
   detectTerminal,
@@ -90,6 +94,9 @@ test('configFile seeds the template with every default spelled out on a commente
       '',
       '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
       '# : ${TTHEME_SORT:=abc}',
+      '',
+      '# soften the background pictures behind the text: a blur radius in screen pixels, 0 keeps them sharp — changing it draws every picture again (default 0)',
+      '# : ${TTHEME_BG_BLUR:=0}',
       '',
       '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',
       '# : ${TTHEME_FIND_RATING:=safe}',
@@ -231,4 +238,19 @@ test('alacrittyColors spots colors the user set outside the ttheme block', () =>
   assert.ok(alacrittyColors('[colors.primary]\nbackground = "#000000"\n'))
   assert.ok(alacrittyColors('colors.primary.background = "#000000"\n'))
   assert.ok(!alacrittyColors(upsertAlacrittyImport('[font]\nsize = 14\n', '/t.toml') ?? ''))
+})
+
+test('the blur comes from config.zsh itself, commented out meaning the default and out of range held to it', () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-blur-'))
+  const at = (text: string) => {
+    mkdirSync(join(home, 'ttheme'), { recursive: true })
+    writeFileSync(join(home, 'ttheme', 'config.zsh'), text)
+    return blurOf(home)
+  }
+  assert.equal(blurOf(join(home, 'nowhere')), 0)
+  assert.equal(at(configFile('')), 0)
+  assert.equal(at(withSetting(configFile(''), 'TTHEME_BG_BLUR', '2.5')), 2.5)
+  assert.equal(at(': ${TTHEME_BG_BLUR:="3"}\n'), 3)
+  assert.equal(at(': ${TTHEME_BG_BLUR:=40}\n'), 8)
+  assert.equal(at(': ${TTHEME_BG_BLUR:=soft}\n'), 0)
 })

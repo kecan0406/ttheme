@@ -5,10 +5,13 @@ import {
   backdropTone,
   backgroundsDir,
   type Colors,
+  type Hue,
   imageKey,
   installBackdrop,
+  type Picture,
   rackOf,
   readStore,
+  redrawn,
   showImage,
   tuneOf,
   writeTune,
@@ -16,6 +19,7 @@ import {
 import {
   blockSet,
   cacheDir,
+  cacheRoot,
   exposed,
   fetchBytes,
   fetchPost,
@@ -28,9 +32,10 @@ import {
 import { canRemoveBackground, keepable, removeBackground } from './cutout.ts'
 import type { PaletteEntry } from './emit/manifest.ts'
 import { refreshProfiles } from './palettes.ts'
-import { decodeImage, transparency } from './png.ts'
+import { decodeImage, decodePng, type Rgba, transparency } from './png.ts'
 import type { SharedPicture } from './theme.ts'
 import { unblocking } from './unblock.ts'
+import { blurOf } from './wiring.ts'
 
 const TIMEOUT = 90_000
 
@@ -104,16 +109,18 @@ async function install(
     writeFileSync(orig, bytes)
   }
   let image = decodeImage(bytes, MAX_PIXELS)
+  let cut = false
   if (transparency(image) === 0 && canRemoveBackground() && process.env.TTHEME_FIND_REMOVE_BG !== 'off') {
-    const cut = join(cacheDir(site), 'cut', `${shared.id}.png`)
+    const path = join(cacheDir(site), 'cut', `${shared.id}.png`)
     try {
-      if (!existsSync(cut)) {
-        mkdirSync(dirname(cut), { recursive: true })
-        await removeBackground(orig, cut, signal)
+      if (!existsSync(path)) {
+        mkdirSync(dirname(path), { recursive: true })
+        await removeBackground(orig, path, signal)
       }
-      const figure = decodeImage(new Uint8Array(readFileSync(cut)), MAX_PIXELS)
+      const figure = decodeImage(new Uint8Array(readFileSync(path)), MAX_PIXELS)
       if (keepable(transparency(figure))) {
         image = figure
+        cut = true
       }
     } catch {}
   }
@@ -129,8 +136,10 @@ async function install(
       ext: version.ext,
       bytes,
       from: `${site.name} ${shared.id} ${site.pageUrl(shared.id)}`,
+      cut,
     },
     { width: 0, height: 0 },
+    blurOf(configHome),
   )
   const picture = rackOf(configHome, entry.name).find((p) => p.key === imageKey(shared))
   if (picture) {
@@ -174,4 +183,67 @@ export async function bringPictures(
   if (got > 0) {
     refreshProfiles(configHome)
   }
+}
+
+function cutAlpha(image: Rgba, cut: Rgba, channel: number): boolean {
+  if (cut.width !== image.width || cut.height !== image.height) {
+    return false
+  }
+  for (let i = 0; i < image.width * image.height; i++) {
+    image.data[i * 4 + 3] = cut.data[i * 4 + channel] ?? 0
+  }
+  return true
+}
+
+async function cutOut(key: string, source: string): Promise<Rgba | undefined> {
+  const [, site, id] = /^(.+)_(\d+)$/.exec(key) ?? []
+  const path = join(cacheRoot(), site ?? 'local', 'cut', `${id ?? key}.png`)
+  if (!existsSync(path)) {
+    if (!canRemoveBackground()) {
+      return undefined
+    }
+    mkdirSync(dirname(path), { recursive: true })
+    await removeBackground(source, path, AbortSignal.timeout(TIMEOUT))
+  }
+  return decodeImage(new Uint8Array(readFileSync(path)), MAX_PIXELS)
+}
+
+function wasCut(dir: string, picture: Picture): boolean {
+  try {
+    return transparency(decodePng(new Uint8Array(readFileSync(join(dir, `${picture.stem}.png`))))) > 0
+  } catch {
+    return false
+  }
+}
+
+export async function redrawOne(
+  configHome: string,
+  name: string,
+  key: string,
+  hue: Hue,
+  blurring: number,
+  aligns: boolean,
+  home: string,
+): Promise<Picture | null> {
+  const dir = backgroundsDir(configHome)
+  const picture = readStore(dir).palettes[name]?.pictures.find((held) => held.key === key)
+  if (!picture?.original) {
+    return null
+  }
+  const source = join(dir, picture.original)
+  const image = decodeImage(new Uint8Array(readFileSync(source)), MAX_PIXELS)
+  if (picture.cut) {
+    if (!cutAlpha(image, decodePng(new Uint8Array(readFileSync(join(dir, picture.cut)))), 0)) {
+      return null
+    }
+    return redrawn(configHome, name, picture, image, hue, blurring, aligns, home, false)
+  }
+  if (picture.tone === undefined && transparency(image) === 0 && wasCut(dir, picture)) {
+    const cut = await cutOut(key, source)
+    if (!cut || !cutAlpha(image, cut, 3)) {
+      return null
+    }
+    return redrawn(configHome, name, picture, image, hue, blurring, aligns, home, true)
+  }
+  return redrawn(configHome, name, picture, image, hue, blurring, aligns, home, false)
 }
