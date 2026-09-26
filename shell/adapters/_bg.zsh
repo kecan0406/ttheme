@@ -265,12 +265,12 @@ __tt_pv_bg_show() {
   local -a p=(${=TTHEME_PALETTE[$name]}) wh at
   local -i cols=$(( pw + 2 * bgmx )) rows=$(( ph + 2 * bgmy ))
   (( ${#p} >= 20 )) || return 0
-  (( $2 )) && { bgsent=(); bgshown="" bganchor=0 }
+  (( $2 )) && { __tt_bg_forget; bgshown="" bganchor=0 }
   bgname=$name
   __tt_bg_load $name
   if (( ! bgrel )) && [[ $name == "$bginc" && "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" == "${bgload[$name]}" ]]; then
     printf '\e_Ga=d,d=i,i=1,q=2\e\\\e_Ga=d,d=i,i=2,q=2\e\\'
-    [[ -n $bgshown ]] && printf '\e_Ga=d,d=i,i=%d,q=2\e\\' $bgshown
+    [[ -n $bgshown ]] && printf '\e_Ga=d,d=i,i=%d,p=%d,q=2\e\\' $bgshown $bgshown
     bgshown=""
     return 0
   fi
@@ -304,19 +304,39 @@ __tt_pv_bg_show() {
       __tt_bg_crop $img $wh[1] $wh[2] $at[6] $at[8] && id=${REPLY% *} at[6]=${REPLY##* }
     fi
   fi
-  [[ -n $bgshown && $bgshown != "$id" ]] && printf '\e_Ga=d,d=i,i=%d,q=2\e\\' $bgshown
+  [[ -n $bgshown && $bgshown != "$id" ]] && printf '\e_Ga=d,d=i,i=%d,p=%d,q=2\e\\' $bgshown $bgshown
   bgshown=$id
   [[ -n $id ]] || return 0
   __tt_bg_at $id -1073741826 $(( at[1] - 1 )) $(( at[2] - 1 )) $at[3] $at[4] $at[5] $at[6] $at[7] $at[8]
 }
 
 __tt_bg_send() {
-  if [[ -z ${bgsent[$1]} ]]; then
-    bgsent[$1]=$(( ${#bgsent} + 3 ))
+  local -i cost=0
+  if [[ -n ${bgsent[$1]} ]]; then
+    bgorder=("${(@)bgorder:#${(b)1}}" "$1")
+  else
+    __tt_bg_dim "$1" && cost=$(( ${bgdim[$1]% *} * ${bgdim[$1]#* } * 4 ))
+    bgsent[$1]=$(( ++bgnext + 2 )) bgcost[$1]=$cost
+    (( bgbytes += cost ))
+    bgorder+=("$1")
     __tt_b64s "$1"
     printf '\e_Ga=t,t=f,f=100,i=%d,q=2;%s\e\\' ${bgsent[$1]} "$REPLY"
+    while (( ${#bgorder} > 1 && bgbytes > 134217728 )); do
+      printf '\e_Ga=d,d=I,i=%d,q=2\e\\' ${bgsent[$bgorder[1]]}
+      (( bgbytes -= bgcost[$bgorder[1]] ))
+      unset "bgsent[$bgorder[1]]" "bgcost[$bgorder[1]]"
+      shift bgorder
+    done
   fi
   REPLY=${bgsent[$1]}
+}
+
+__tt_bg_forget() {
+  local id
+  for id in $bgsent; do
+    printf '\e_Ga=d,d=I,i=%d,q=2\e\\' $id
+  done
+  bgsent=() bgcost=() bgorder=() bgbytes=0
 }
 
 __tt_pv_bg_fs() {
@@ -415,7 +435,7 @@ __tt_pv_bg_find() {
   done
   [[ -r $TTHEME_CONFIG ]] && source $TTHEME_CONFIG
   err=${${err//$'\n'/ }## #}
-  resized=1 bgname="" bgshown="" bgsent=() bgdim=()
+  resized=1 bgname="" bgshown="" bgdim=()
   if (( rc == 1 )); then
     msg=${err:-"find failed for $name"} msgt=300
   fi
@@ -445,7 +465,7 @@ __tt_pv_bg_image() {
   err=$(__tt_cli image $name $act 2>&1)
   rc=$?
   err=${${err//$'\n'/ }## #}
-  resized=1 bgname="" bgshown="" bgsent=() bgdim=()
+  resized=1 bgname="" bgshown="" bgdim=()
   unset "bgsrc[$name]"
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
@@ -514,7 +534,7 @@ __tt_pv_bg_panel() {
 }
 
 __tt_pv_bg_close() {
-  (( bgcw )) && printf '\e_Ga=d,d=A,q=2\e\\'
+  (( bgcw )) && { printf '\e_Ga=d,d=A,q=2\e\\'; __tt_bg_forget }
   [[ -z $bgcut ]] || { rm -rf -- $bgcut; bgcut="" }
 }
 

@@ -180,6 +180,23 @@ done
 typeset -A bgsent=()
 forks_of __tt_bg_send $bgd/kagami.png
 (( REPLY == 0 )) || { print -u2 "sending a picture to preview forks again ($REPLY processes)"; exit 1 }
+(
+  typeset -A bgsent=() bgcost=()
+  typeset -a bgorder=()
+  integer bgnext=0 bgbytes=0
+  for i in {1..10}; do print -rn -- $'\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x0f\xa0\0\0\x07\xd0\x08\x06' > $bgd/p$i.png; done
+  for i in {1..10}; do __tt_bg_send $bgd/p$i.png; done > $bgd/sent.out
+  out=$(<$bgd/sent.out)
+  [[ ${#bgsent} == 4 && bgbytes -eq 128000000 && -z $bgsent[$bgd/p6.png] && $bgsent[$bgd/p10.png] == 12 && ${#${(M)${(ps:\e_G:)out}:#a=d,d=I,*}} == 6 ]] ||
+    { print -u2 "preview holds more than 128 MB of pictures in the terminal, or frees the wrong ones: $bgbytes ${(kv)bgsent}"; exit 1 }
+  __tt_bg_send $bgd/p7.png > $bgd/sent.out
+  [[ $REPLY == 9 && ! -s $bgd/sent.out ]] || { print -u2 "a picture preview still holds was sent again"; exit 1 }
+  __tt_bg_send $bgd/p1.png > /dev/null
+  [[ -z $bgsent[$bgd/p8.png] && $bgsent[$bgd/p7.png] == 9 && $bgsent[$bgd/p1.png] == 13 ]] ||
+    { print -u2 "a picture shown again was not kept over older ones: ${(kv)bgsent}"; exit 1 }
+  [[ ${functions[__tt_pv_bg_show]} != *'d=i,i=%d,q'* ]] ||
+    { print -u2 "preview deletes a picture by image id alone — iTerm2 frees its data then, and the picture never comes back"; exit 1 }
+) || exit 1
 print -rn -- $'\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x07\x58\0\0\x03\xf0\x08\x06' > $bgd/dim.png
 bgdim=()
 forks_of __tt_bg_dim $bgd/dim.png
