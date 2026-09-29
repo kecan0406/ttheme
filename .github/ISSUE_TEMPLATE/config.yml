@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a vulnerability
+    url: https://github.com/kecan0406/ttheme/security/advisories/new
+    about: Report it privately here, not in a public issue. See SECURITY.md.

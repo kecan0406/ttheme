@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest something ttheme could do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you want to do
+      description: The situation you are in, before any solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind
+      description: How it could work, and anything you tried instead. Optional.

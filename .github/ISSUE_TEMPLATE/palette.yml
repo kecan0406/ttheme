@@ -1,0 +1,19 @@
+name: Palette request
+description: Ask for a character palette in the official catalog
+labels: [palette]
+body:
+  - type: input
+    id: character
+    attributes:
+      label: Character and series
+      description: For example Homura, Puella Magi Madoka Magica.
+    validations:
+      required: true
+  - type: textarea
+    id: colors
+    attributes:
+      label: What identifies them
+      description: The colors fans know them by. Color values and post numbers only, no images or links to art.
+  - type: markdown
+    attributes:
+      value: To make the palette yourself, see the palette section of CONTRIBUTING.md, or publish it in your own market.
