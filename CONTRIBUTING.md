@@ -165,6 +165,16 @@ reason = "why this palette is the exception"
 `.claude/skills/palette/SKILL.md` documents how the existing palettes
 were measured and harmonized, if you want to build one the same way.
 
+## Using AI tools
+
+Use whatever tools you like. You are the author of what you submit, whichever
+tool wrote it: read all of it before you ask for a review, run `mise run ci`
+yourself, and be ready to answer questions about it in the review.
+
+If a tool wrote a substantial part, add an `Assisted-by: <tool>` line to the
+commit message. It only helps the review; nothing is refused for having it or
+for leaving it out. The repository's own agent rules are in `AGENTS.md`.
+
 ## Working on the TUIs
 
 Every screen `ttheme` draws is captured and compared against `tests/screens/`.
