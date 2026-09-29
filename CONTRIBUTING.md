@@ -131,6 +131,12 @@ mise run ci
 That runs lint, typecheck, tests, the build with its contrast gate, the shell
 check and the node bundle check — exactly what CI runs.
 
+CI runs on Ubuntu, so the tools are GNU's; macOS ships BSD's, which forgive
+more. If a shell step passes for you and fails there, look at those first —
+`base64` wraps its output at 76 columns (`base64 -w0` is GNU only, and BSD
+never wraps), and `sed -i`, `date` and `stat` differ too. Shell code that has to
+work on both should not lean on either's output format.
+
 ```sh
 mise run build                # regenerates dist/ for every terminal — fails on bad contrast
 mise run build --only kitty   # just one terminal's subtree

@@ -6,6 +6,11 @@ unset TERM_PROGRAM GHOSTTY_RESOURCES_DIR KITTY_WINDOW_ID WEZTERM_PANE ALACRITTY_
 mkdir -p $XDG_CONFIG_HOME/ttheme
 cp -R shell/ttheme.zsh shell/adapters dist/shell/palettes.zsh $XDG_CONFIG_HOME/ttheme/
 source $XDG_CONFIG_HOME/ttheme/ttheme.zsh
+b64d() {
+  local in=$(cat)
+  [[ $in != *[^A-Za-z0-9+/=]* ]] || { print -u2 "not base64: ${(V)in}"; return 1 }
+  print -rn -- $in | base64 --decode
+}
 (( ${#TTHEME_PALETTE} > 0 )) || { print -u2 "no palettes loaded"; exit 1 }
 (( ${#TTHEME_ORDER} + 1 == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
 __tt_menu > /dev/null || exit 1
@@ -491,7 +496,7 @@ done
   __tt_pv_bg_show homura > $bgd/view.out
   REPLY=; __tt_bg_frame 1880 1008 1120 768 100 5 cover
   want="${${=TTHEME_PALETTE[homura]}[1]}|$bgd/homura@fill-50.png|0.3|1120|768|${REPLY// /|}|5"
-  [[ $(<$bgd/view.out) == $'\e]1337;SetUserVar=ttheme_view='*$'\a' && "$(print -rn -- ${${$(<$bgd/view.out)#*=ttheme_view=}%$'\a'} | base64 --decode)" == "$want" ]] ||
+  [[ $(<$bgd/view.out) == $'\e]1337;SetUserVar=ttheme_view='*$'\a' && "$(print -rn -- ${${$(<$bgd/view.out)#*=ttheme_view=}%$'\a'} | b64d)" == "$want" ]] ||
     { print -u2 "a WezTerm preview hover sent the wrong view: ${(V)$(<$bgd/view.out)}, wanted $want"; exit 1 }
   __tt_pv_bg_show homura > $bgd/view.out
   [[ ! -s $bgd/view.out ]] || { print -u2 "a WezTerm preview hover sent an unchanged view again"; exit 1 }
