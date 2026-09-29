@@ -61,8 +61,11 @@ outside the markers is left alone, and what goes in is colors only.
   in — `settings.json` is never edited, only touched so the terminal reloads.
 - **Warp** gets a theme per palette, `~/.warp/themes/ttheme-<palette>.yaml`, and
   the default palette as the one `theme` key of `[appearance.themes]` in
-  `~/.warp/settings.toml` — Warp applies it within a few seconds, and
-  `ttheme off` puts back the theme you had.
+  `~/.warp/settings.toml` — Warp applies it within a second, and `ttheme off`
+  puts back the theme you had. That key is also how a tab wears a palette of its
+  own there, so following the tab in front needs `sqlite3`, which macOS ships
+  and most Linux systems have: without it a tab puts its palette back at its
+  next prompt instead of the moment you switch to it.
 - **Konsole** gets a color scheme and a `ttheme · <palette>` profile per
   palette in `~/.local/share/konsole`, each profile on top of your own default
   profile (its parent), so your font and keys carry over, and the default

@@ -63,6 +63,10 @@ __tt_unpainted() { : }
 
 __tt_follows_focus() { return 1 }
 
+__tt_follows_prompt() { return 1 }
+
+__tt_prompted() { : }
+
 __tt_pv_bg_open() { : }
 
 __tt_pv_bg_show() { : }

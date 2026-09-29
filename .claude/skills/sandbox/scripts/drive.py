@@ -35,18 +35,23 @@ KEYS = {
 }
 
 GAP = 0.25
+REPEAT = 0.03
 LINGER = 10.0
 
 
 def keys(step):
     if step.startswith('text:'):
-        return list(step[5:])
+        return list(step[5:]), GAP
     if step.startswith('paste:'):
-        return [f'\x1b[200~{step[6:]}\x1b[201~']
+        return [f'\x1b[200~{step[6:]}\x1b[201~'], GAP
     if step in KEYS:
-        return [KEYS[step]]
+        return [KEYS[step]], GAP
+    if step.startswith('hold:'):
+        key, _, count = step[5:].rpartition(':')
+        if key in KEYS and count.isdigit():
+            return [KEYS[key]] * int(count), REPEAT
     if len(step) == 1:
-        return [step]
+        return [step], GAP
     raise SystemExit(f'drive.py: unknown step {step!r}')
 
 
@@ -81,6 +86,7 @@ def main():
     try:
         at = time.monotonic() + GAP
         pending = []
+        gap = GAP
         shot = None
         done = None
         while True:
@@ -91,7 +97,7 @@ def main():
                     at = now
             elif pending and now >= at:
                 os.write(master, pending.pop(0).encode())
-                at = now + GAP
+                at = now + (gap if pending else GAP)
             elif steps and now >= at:
                 step = steps.pop(0)
                 if step.startswith('shot:'):
@@ -102,7 +108,7 @@ def main():
                     try:
                         at = now + float(step)
                     except ValueError:
-                        pending = keys(step)
+                        pending, gap = keys(step)
             elif not steps and not pending and not shot and done is None:
                 done = now
             if done is not None and now - done > LINGER:

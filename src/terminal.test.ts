@@ -203,23 +203,27 @@ test('every function the shell calls on its own runs under zsh defaults, whateve
   }
 })
 
-test('a terminal shows pictures only where mise run compat never saw its kitty layering fail', () => {
+test('a terminal shows pictures only where mise run compat never saw kitty graphics fail, and layers them under cells only where it saw that work', () => {
   const [head = [], ...rows] = read('tests', 'compat', 'expect.tsv')
     .trim()
     .split('\n')
     .map((line) => line.split('\t'))
   const measured = (terminal: Terminal, id: string) => rows.find((row) => row[0] === id)?.[head.indexOf(terminal)]
   for (const terminal of Object.keys(TRAITS) as Terminal[]) {
-    const { pictures, bands } = TRAITS[terminal]
+    const { pictures, bands, layers } = TRAITS[terminal]
     if (!pictures) {
       continue
     }
-    for (const id of ['kitty-graphics', 'kitty-under-bg', 'kitty-el']) {
+    for (const id of ['kitty-graphics', 'kitty-el']) {
       assert.notEqual(
         measured(terminal, id),
         'fail',
         `${terminal} shows pictures, but compat measured ${id} failing there`,
       )
+    }
+    const under = measured(terminal, 'kitty-under-bg')
+    if (under === 'pass' || under === 'fail') {
+      assert.equal(layers, under === 'pass', `${terminal}: compat measured kitty-under-bg ${under}`)
     }
     const crop = measured(terminal, 'kitty-crop')
     if (crop === 'pass' || crop === 'fail') {

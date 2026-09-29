@@ -7,8 +7,8 @@ get it.
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Setup with `init`** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 | **Palette files** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
-| **Runtime repaint** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Done][done] | ![Done][done] | ![Partial][partial] |
-| **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Partial][partial] | ![No][no] | ![No][no] | ![No][no] | ![No][no] | ![No][no] |
+| **Runtime repaint** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Partial][partial] |
+| **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Partial][partial] | ![No][no] | ![Done][done] | ![No][no] | ![No][no] | ![No][no] |
 
 - **Setup with `init`** — iTerm2 is offered on macOS only, Windows Terminal
   from WSL (or a native Windows zsh), where init writes a settings fragment on
@@ -27,8 +27,12 @@ get it.
   Terminal.app takes every OSC color but no OSC reset, so ttheme reads its
   colors when the shell starts and puts them back itself. Warp answers OSC
   color queries but paints one theme app-wide and never the background an OSC
-  sets, so the shell layer stays off there and `ttheme use <palette>` points you at
-  `ttheme default <palette>`, which puts the palette on every Warp window.
+  sets, so a Warp tab wears its palette through that theme: `ttheme use`,
+  `next`, a pin, preview and browse switch it, and switching tabs or windows
+  puts on the palette of the one in front, about 0.7 s later — most of it
+  Warp's own wait before it reloads its settings. Warp records no switch
+  between split panes, so the panes of a tab share the palette the tab came to
+  the front with.
   Konsole draws a background and foreground an OSC sets but never an OSC 4, so
   a Konsole tab repaints by switching to the palette's own color scheme (OSC 50)
   — the scheme init wrote, which is why the shell layer paints Konsole only once
@@ -42,7 +46,9 @@ get it.
   pane included), both with the same preview, tuning and find. WezTerm shows the
   picture of the active tab per window and switches it as `preview` moves, but
   has no in-terminal preview or tuning — find and tune from Ghostty, iTerm2 or
-  kitty. Alacritty has no graphics at all. Konsole passes the kitty graphics
+  kitty. Warp shows one picture for the whole app, through its theme, with
+  find, preview and tuning as in Ghostty — a tuning step reaches the window
+  about a second after the key. Alacritty has no graphics at all. Konsole passes the kitty graphics
   cases, but keeps a color scheme's wallpaper for as long as any tab shows the
   scheme, so a picture tuned elsewhere could not reach an open tab — it shows
   none. Cut-outs and baked crops need macOS.
@@ -94,6 +100,20 @@ to the tuned opacity instead. kitty reloads its config by itself whenever
 OSC set; the watcher wraps the reload and puts each window's palette back, and
 `sync` writes a file only when its content changed, so installing palettes
 reloads nothing. The watcher reaches kitty windows opened after `init`.
+
+Warp wears one theme for the whole app, the `theme` key of its
+`settings.toml`, so a tab's palette is one it puts on that key. Every tab
+records the palette it wears in `~/.local/state/ttheme/warp/`, under the id
+Warp gives its shell (`WARP_TERMINAL_SESSION_UUID`), and one small background
+process — the first tab's prompt starts it, and it leaves with the last ttheme
+tab — watches the session database Warp rewrites on every tab and window
+switch, reads the tab in front with `sqlite3`, and puts that tab's palette on.
+A tab that never took a palette follows the default, and after `ttheme off` a
+tab painted before shows your own theme again, as Ghostty's tabs turn off at
+their next focus. Without `sqlite3`, or in a Warp too old to name its sessions,
+a tab puts its palette back at its next prompt instead. With Warp's settings
+sync on, the theme setting goes to your account too, so moving between tabs
+that wear different palettes is a preference change there as well.
 
 Alacritty reloads its config by itself and keeps OSC colors through a reload.
 `sync` puts its import in the config's own `[general]` table when there is one —

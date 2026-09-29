@@ -40,6 +40,34 @@ colors, only without the picture. iTerm2 has no
 position setting, so a tuned picture that is not centered is baked onto a canvas
 the size of the window, as the sizes above 100% are.
 
+## Warp
+
+Warp keeps one theme for the whole app, and a theme can carry a
+`background_image`. So a palette with a picture gets a second theme file,
+`~/.warp/themes/ttheme-<palette>.<hash>.yaml`, next to its plain one, showing
+the picture laid whole on the palette's background at the picture's opacity —
+laid on it because Warp's opacity lays the background color over the picture,
+so a picture with see-through parts would let the desktop through. The hash
+changes with the picture and its opacity, because Warp reads a theme file once
+and never again: `ttheme default`, and a tab that wears the palette, put on its
+newest one, and a picture changed anywhere moves Warp to its new file within a
+second while Warp wears that palette. Warp has no position or size setting and draws every picture as
+cover, so with Warp wired a tuned picture that is not a fill is baked onto a
+canvas the size of the window, centered or not.
+
+`preview` tunes and finds pictures in Warp too. While the tuning panel is open,
+each step lays the picture on the background in one pass (about 0.2 s), writes a
+short-lived theme and switches Warp to it; a held key does this once, when it is
+let go, and an opacity step keeps the same picture, so it draws nothing. Warp
+takes another 0.6–0.7 s to show any theme change, and the first time it loads a
+picture it draws one frame of the background color alone, which the picture's
+opacity shows through (faint at 0.2, a grey flash at 1). Each step's picture is
+written where saving it would put it, so applying a tuning shows the very
+picture already on screen, and closing preview removes the short-lived theme
+and the pictures no theme uses. Warp draws every picture layer above colored
+cells, so find draws no cover there and preview puts the palette's plain theme
+on while find runs.
+
 ## Finding one
 
 A palette with no background yet can find one: on it in `preview`, tab opens
@@ -269,8 +297,8 @@ stop you at the gate. Switching a picture between tone and original keeps its
 size and position and puts its opacity back to the new default. When the
 palette's text colors change, the default follows without drawing the picture
 again. The terminals take these files as they take a tone's, since each only lays
-a file over its background at an opacity; Ghostty, iTerm2, kitty and WezTerm are
-the ones that show pictures at all.
+a file over its background at an opacity; Ghostty, iTerm2, kitty, WezTerm and
+Warp are the ones that show pictures at all.
 
 When a palette's colors change (`edit`, `update`, a new catalog), the next sync
 paints its pictures in the new tone and default opacity under new names, carrying

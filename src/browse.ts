@@ -40,6 +40,7 @@ import {
 } from './sources.ts'
 import { livePaint } from './terminal.ts'
 import { alphabetical, marketOf } from './theme.ts'
+import { warpLive } from './warp-live.ts'
 
 function marketState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Market {
   let id: string
@@ -271,7 +272,8 @@ export async function runBrowse(): Promise<void> {
   const kept = was.filter((e) => state.palettes.includes(e.name) && !names.has(e.name))
   const fetched = new Map<string, Fetched>()
   const lookups = new AbortController()
-  const live = livePaint(process.env, process.stdout.isTTY === true)
+  const tty = process.stdout.isTTY === true
+  const live = livePaint(process.env, tty) ?? warpLive(process.env, tty, home)
   const saved = live ? await live.saved() : new Map<string, string>()
   const startup = worn(state)
   const panel = new BrowsePanel({

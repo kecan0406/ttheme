@@ -1,6 +1,6 @@
 case	ghostty	iterm2	wezterm	kitty	alacritty	warp	terminal-app	konsole
 detect	pass	pass	pass	pass	pass	pass	pass	pass
-layer	pass	pass	pass	pass	pass	fail	pass	pass
+layer	pass	pass	pass	pass	pass	pass	pass	pass
 osc-query	pass	pass	pass	pass	pass	pass	pass	pass
 osc-bg	pass	pass	pass	pass	pass	pass	pass	pass
 osc-fg	pass	pass	pass	pass	pass	pass	pass	pass
@@ -13,14 +13,14 @@ wear	pass	pass	pass	pass	pass	fail	pass	fail
 wear-painted	pass	pass	pass	?	pass	fail	pass	pass
 wear-ansi	?	?	?	?	?	?	?	pass
 restore	pass	pass	pass	pass	pass	pass	pass	pass
-layer-query	pass	pass	pass	?	?	?	pass	pass
-layer-cells	pass	pass	pass	?	?	?	skip	skip
-layer-base	skip	skip	skip	?	?	?	pass	skip
+layer-query	pass	pass	pass	?	?	pass	pass	pass
+layer-cells	pass	pass	pass	?	?	pass	skip	skip
+layer-base	skip	skip	skip	?	?	skip	pass	skip
 cell-size	pass	pass	pass	pass	fail	fail	fail	pass
 kitty-graphics	pass	pass	pass	pass	fail	pass	fail	pass
 kitty-under-bg	pass	pass	fail	?	?	?	?	pass
 kitty-el	pass	pass	fail	?	?	?	?	pass
 kitty-crop	pass	fail	pass	?	?	?	?	pass
 sync-output	pass	pass	pass	pass	pass	pass	fail	fail
-sync-query	pass	pass	fail	?	?	?	?	pass
+sync-query	pass	pass	fail	?	?	pass	?	pass
 focus-report	pass	pass	fail	pass	pass	fail	fail	fail

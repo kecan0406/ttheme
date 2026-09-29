@@ -3,12 +3,15 @@ typeset -g ROOT=${HERE:h:h:h:h}
 typeset -g SANDBOX=${${TMPDIR:-/tmp}%/}/ttheme-sandbox
 
 window_of() {
+  local order='b.kCGWindowBounds.js.Height.js - a.kCGWindowBounds.js.Height.js'
+  [[ -n $SB_NEWEST ]] && order='b.kCGWindowNumber - a.kCGWindowNumber'
   osascript -l JavaScript -e "ObjC.import('CoreGraphics');
     const w = ObjC.castRefToObject(\$.CGWindowListCopyWindowInfo(\$.kCGWindowListOptionOnScreenOnly, 0)).js
       .map(d => d.js)
       .filter(d => d.kCGWindowOwnerPID.js === $1 && d.kCGWindowLayer.js === 0)
-      .sort((a, b) => b.kCGWindowBounds.js.Height.js - a.kCGWindowBounds.js.Height.js)[0];
-    w ? w.kCGWindowNumber.js : ''"
+      .map(d => Object.assign(d, { kCGWindowNumber: d.kCGWindowNumber.js }))
+      .sort((a, b) => $order)[0];
+    w ? w.kCGWindowNumber : ''"
 }
 
 capture() {

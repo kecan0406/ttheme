@@ -16,6 +16,7 @@ import { livePaint } from './terminal.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
 import { alphabetical, marketOf } from './theme.ts'
+import { warpLive } from './warp-live.ts'
 
 export function reload(count: number): void {
   console.log(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
@@ -264,7 +265,8 @@ export async function pickPalettes(
   required = false,
 ): Promise<string[] | undefined> {
   const entries = process.env.TTHEME_SORT === 'series' ? catalog.palettes : alphabetical(catalog.palettes)
-  const live = livePaint(process.env, process.stdout.isTTY === true)
+  const tty = process.stdout.isTTY === true
+  const live = livePaint(process.env, tty) ?? warpLive(process.env, tty, configHome())
   const saved = live ? await live.saved() : new Map<string, string>()
   const prompt = new PalettePrompt({
     entries,

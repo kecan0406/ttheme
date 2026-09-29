@@ -103,12 +103,13 @@ import {
   type TunePanel,
   type Tuning,
   transmit,
+  unplace,
 } from './find-screen.ts'
 import { type Frame, fitOrder, interleave, type Pick } from './fit.ts'
 import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from './palettes.ts'
 import { type Look, Renderer, type Shown } from './render.ts'
 import { SCENES } from './scenes.ts'
-import { CLEAR, cropsInBands } from './terminal.ts'
+import { CLEAR, cropsInBands, layersUnderCells, movesPlacements, readsFiles } from './terminal.ts'
 import { POSITIONS } from './theme.ts'
 import { blurOf, coloringFor, settingDefault, withSetting } from './wiring.ts'
 import { kinKeys, near, type Shape, sameKeys, sameSet } from './works.ts'
@@ -479,6 +480,9 @@ class Finder {
   private showing?: Board
   private readonly thumbless = new Set<number>()
   private readonly bands = cropsInBands(process.env)
+  private readonly files = readsFiles(process.env)
+  private readonly moves = movesPlacements(process.env)
+  private readonly layers = layersUnderCells(process.env)
   private readonly bandFiles = new Map<string, { id: number; path: string; ready: boolean }>()
   private nextBand = BAND_ID
   private current?: Current
@@ -2888,12 +2892,19 @@ class Finder {
       }
       keep.add(p.id)
       if (this.sent.get(p.id) !== p.path) {
-        out += transmit(p)
+        const data = transmit(p, this.files)
+        if (data === undefined) {
+          continue
+        }
+        out += data
         this.sent.set(p.id, p.path)
         this.placed.delete(p.id)
       }
       const at = `${p.row};${p.col};${p.cols};${p.rows};${p.crop};${p.z}`
       if (this.placed.get(p.id) !== at) {
+        if (!this.moves && this.placed.has(p.id)) {
+          out += unplace(p.id)
+        }
         out += place(p, this.cell)
         this.placed.set(p.id, at)
       }
@@ -2915,7 +2926,7 @@ class Finder {
 
   private cover(): string {
     const at = `${this.cols};${this.rows}`
-    if (this.covered === at) {
+    if (!this.layers || this.covered === at) {
       return ''
     }
     let out = ''
@@ -2925,6 +2936,8 @@ class Finder {
       if (MARGIN) {
         out += `\x1b_Ga=t,f=32,s=1,v=1,i=${ANCHOR_ID},q=2;AAAAAA==\x1b\\\x1b[H\x1b_Ga=p,i=${ANCHOR_ID},p=${ANCHOR_ID},c=1,r=1,C=1,z=${ANCHOR_Z},q=2\x1b\\`
       }
+    } else if (!this.moves) {
+      out += unplace(COVER_ID)
     }
     this.covered = at
     if (MARGIN) {

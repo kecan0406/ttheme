@@ -4,7 +4,7 @@ import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
 import { runCheck, runEdit, runNew, runShare } from './craft.ts'
 import { runFind } from './find.ts'
-import { runImage } from './images.ts'
+import { runBake, runFlatten, runImage } from './images.ts'
 import { Cancelled, runInit } from './init.ts'
 import { runAdd, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './market.ts'
 import { runMarket } from './markets.ts'
@@ -49,6 +49,9 @@ const RUNS: Record<string, Verb['run']> = {
   find: ([name]) => runFind(name as string),
   image: ([name, action, key]) => runImage(name as string, action as string, key),
   redraw: () => runRedraw(),
+  flatten: ([source, out, background, opacity, canvas, place]) =>
+    runFlatten(source as string, out as string, background as string, opacity as string, canvas, place),
+  bake: ([source, out, canvas, place]) => runBake(source as string, out as string, canvas as string, place as string),
 }
 
 export const VERBS: Verb[] = VERB_SPECS.map((spec) => ({ ...spec, run: RUNS[spec.name] }))

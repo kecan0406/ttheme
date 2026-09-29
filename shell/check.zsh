@@ -1,5 +1,8 @@
 export XDG_CONFIG_HOME=$(mktemp -d)
 trap "rm -rf $XDG_CONFIG_HOME" EXIT
+export HOME=$XDG_CONFIG_HOME/home
+mkdir -p $HOME
+unset TERM_PROGRAM GHOSTTY_RESOURCES_DIR KITTY_WINDOW_ID WEZTERM_PANE ALACRITTY_WINDOW_ID KONSOLE_VERSION ITERM_SESSION_ID WT_SESSION WARP_TERMINAL_SESSION_UUID XDG_STATE_HOME
 mkdir -p $XDG_CONFIG_HOME/ttheme
 cp -R shell/ttheme.zsh shell/adapters dist/shell/palettes.zsh $XDG_CONFIG_HOME/ttheme/
 source $XDG_CONFIG_HOME/ttheme/ttheme.zsh
@@ -74,6 +77,26 @@ print -l "background-image = wall.png" "background-image-fit = cover" > $bgd/wal
 __tt_bg_load wall
 [[ $bgsize[wall] == fill && $bgfill[wall] == "$bgd/wall.png" && $bgfocus[wall] == 50 && $bgdef[wall] == "fill 5 1" ]] ||
   { print -u2 "a plain cover image did not load as fill: $bgsize[wall] $bgfill[wall]@$bgfocus[wall] ($bgdef[wall])"; exit 1 }
+(
+  TTHEME_TERMINALS=(warp)
+  ! __tt_bg_aligns && __tt_bg_covers || { print -u2 "with Warp wired a tuned picture was not baked for it"; exit 1 }
+  printf '\x89PNG\r\n\x1a\n\0\0\0\x0dIHDR\0\0\x06\x5a\0\0\x07\x60' >| $bgd/kagami.png
+  __tt_bg_bake() { print -r -- "$*" >| $XDG_CONFIG_HOME/bake.log; : >| $2 }
+  pw=80 ph=24 bgcw=20 bgch=40 bgmx=0 bgmy=0
+  bgsrc=(); __tt_bg_load kagami
+  bgsize[kagami]=60 bgpos[kagami]=5 bgop[kagami]=0.3
+  __tt_bg_write kagami || { print -u2 "__tt_bg_write (Warp wired) failed"; exit 1 }
+  [[ "$(<$bgd/kagami.tune.conf)" == "$(print -l "background-image = $bgd/kagami@60-center-1600x960.png" "background-image-fit = cover" "background-image-position = center" "background-image-opacity = 0.3")" &&
+    "$(<$XDG_CONFIG_HOME/bake.log)" == "$bgd/kagami.png $bgd/kagami@60-center-1600x960.png 1600 960 "* ]] ||
+    { print -u2 "a centered picture tuned with Warp wired was not baked on the window, which Warp covers:"; cat $bgd/kagami.tune.conf; exit 1 }
+  __tt_cli() { print -r -- "$*" >> $XDG_CONFIG_HOME/cli.log }
+  __tt_pictured kagami
+  TTHEME_TERMINALS=(iterm2 warp)
+  __tt_pictured kagami
+  [[ "$(<$XDG_CONFIG_HOME/cli.log)" == "$(print -l "image kagami tuned" "image kagami tuned")" ]] ||
+    { print -u2 "a picture saved with Warp wired did not refresh Warp's themes once:"; cat $XDG_CONFIG_HOME/cli.log; exit 1 }
+  rm -f $bgd/kagami.png $bgd/kagami.tune.conf $bgd/kagami@60-center-1600x960.png $XDG_CONFIG_HOME/bake.log $XDG_CONFIG_HOME/cli.log
+) || exit 1
 [[ "$(<$TTHEME_CONFIG)" == "$TTHEME_CONFIG_TEMPLATE" ]] || { print -u2 "config seed drifted from the template"; exit 1 }
 reloads=0
 TTHEME_TERMINALS=(ghostty)
@@ -503,10 +526,252 @@ done
 ) || exit 1
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
-  out=$(ttheme use kaito 2>&1) && { print -u2 "ttheme use ran in Warp"; exit 1 }
-  [[ $out == *"Warp wears one theme app-wide"* ]] || { print -u2 "Warp refused ttheme use without its reason: $out"; exit 1 }
-  ttheme 2>/dev/null && { print -u2 "the palette menu ran in Warp"; exit 1 }
-  ! __tt_paints || { print -u2 "the layer claimed it can paint Warp's tabs"; exit 1 }
+  TTHEME_TERMINALS=()
+  out=$(ttheme use kaito 2>&1) && { print -u2 "ttheme use ran in a Warp ttheme does not wire"; exit 1 }
+  [[ $out == *"wire it with"* ]] || { print -u2 "an unwired Warp refused ttheme use without saying how to wire it: $out"; exit 1 }
+  ttheme 2>/dev/null && { print -u2 "the palette menu ran in an unwired Warp"; exit 1 }
+  TTHEME_TERMINALS=(warp) TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/nowarp/settings.toml
+  ! __tt_paints || { print -u2 "the layer claimed it can paint a Warp that has no settings.toml"; exit 1 }
+) || exit 1
+(
+  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  mkdir -p $XDG_CONFIG_HOME/warp $XDG_CONFIG_HOME/dotwarp $XDG_CONFIG_HOME/warpthemes
+  TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/warp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/warpthemes TTHEME_TERMINALS=(warp)
+  TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_WARP_FOLLOWS=0 WARP_TERMINAL_SESSION_UUID=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  unset TTHEME_PAINTED
+  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.yaml; done
+  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
+  tab=$TTHEME_WARP_TABS/$WARP_TERMINAL_SESSION_UUID
+  ours() { __tt_warp_value $1; print -r -- "theme = $REPLY" }
+  mine=('[appearance]' 'font = 1' '' '[appearance.themes]' 'system_theme = false' 'theme = "dark_city"' '' '[other]' 'x = 2')
+  print -rl -- "${mine[@]}" > $XDG_CONFIG_HOME/dotwarp/settings.toml
+  ln -s $XDG_CONFIG_HOME/dotwarp/settings.toml $TTHEME_WARP_SETTINGS
+  __tt_paints && __tt_keepable || { print -u2 "a wired Warp with a settings.toml refused to paint, or to keep a palette as the default"; exit 1 }
+  __tt_prompted
+  [[ "$(<$tab)" == "$$ miku - -" && "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours miku)"* ]] ||
+    { print -u2 "a Warp tab that took no palette did not follow the default: $(<$tab)"; exit 1 }
+  ttheme use kaito > /dev/null || { print -u2 "ttheme use failed in a wired Warp"; exit 1 }
+  [[ -L $TTHEME_WARP_SETTINGS && "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- "${(@)mine[1,5]}" "$(ours kaito)" "${(@)mine[7,-1]}")" ]] ||
+    { print -u2 "ttheme use in Warp did not put the palette in settings.toml alone, or replaced the link:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
+  [[ "$(<$TTHEME_HOME/warp.base)" == '"dark_city"' && "$(<$TTHEME_WARP_SETTINGS.ttheme.bak)" == "$(print -rl -- "${mine[@]}")" && ${(t)TTHEME_PAINTED} == *export* ]] ||
+    { print -u2 "a Warp paint did not keep the user's theme where ttheme off finds it, or did not mark the tab painted"; exit 1 }
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[kaito]" && "$(<$tab)" == "$$ miku kaito -" ]] ||
+    { print -u2 "a Warp tab did not record the palette it wears where tab switches read it: $(<$tab)"; exit 1 }
+  forks_of __tt_apply "$TTHEME_PALETTE[homura]"
+  (( REPLY == 0 )) || { print -u2 "a Warp paint forks again ($REPLY processes) — every preview hover pays it"; exit 1 }
+  forks_of __tt_prompted
+  (( REPLY == 0 )) || { print -u2 "a Warp prompt forks again ($REPLY processes)"; exit 1 }
+  __tt_osc_reset
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours miku)"* && "$(<$tab)" == "$$ miku - -" && -z ${TTHEME_PAINTED+x} ]] ||
+    { print -u2 "a Warp reset did not put on the default palette new tabs open with: $(<$tab)"; exit 1 }
+  TTHEME_STARTUP=
+  __tt_osc_reset
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- "${mine[@]}")" && ! -e $TTHEME_HOME/warp.base ]] ||
+    { print -u2 "a Warp reset while ttheme is off did not give the user's theme back as it was:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
+  __tt_hear && { print -u2 "a new Warp tab heard a palette while ttheme is off: $REPLY"; exit 1 }
+  TTHEME_STARTUP=miku
+  REPLY=; __tt_hear
+  [[ $REPLY == ${TTHEME_PALETTE[miku]%% *} ]] || { print -u2 "a new Warp tab did not take the default palette for the one it wears: $REPLY"; exit 1 }
+  __tt_apply "$TTHEME_PALETTE[homura]"
+  REPLY=; __tt_hear
+  [[ $REPLY == ${TTHEME_PALETTE[homura]%% *} ]] || { print -u2 "a shell started in a painted Warp tab did not take the palette Warp wears: $REPLY"; exit 1 }
+  TTHEME_WARP_FOLLOWS=1 TTHEME_SPEC=$TTHEME_PALETTE[kaito]
+  __tt_shown kaito
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours homura)"* && "$(<$tab)" == "$$ miku kaito -" ]] ||
+    { print -u2 "a Warp prompt moved the app-wide theme itself where tab switches are followed, or did not record its palette"; exit 1 }
+  __tt_shown kaito force
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours kaito)"* ]] || { print -u2 "a Warp tab that took a palette did not put it on"; exit 1 }
+  print -rl -- "${(@)mine[1,5]}" 'theme = "dark_city"' "${(@)mine[7,-1]}" >| $XDG_CONFIG_HOME/dotwarp/settings.toml
+  __tt_reloaded
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours kaito)"* ]] || { print -u2 "a Warp tab did not put its palette back over the theme a command's sync wrote"; exit 1 }
+  TTHEME_WARP_FOLLOWS=0
+  : >| $TTHEME_WARP_TABS/.follow
+  print -r -- bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb >| $TTHEME_WARP_TABS/.active
+  zsh -c 'zmodload zsh/system; zsystem flock -f fd $1 && : >| $2 && sleep 5' zsh $TTHEME_WARP_TABS/.follow $XDG_CONFIG_HOME/held >/dev/null 2>&1 &
+  holder=$!
+  for (( i = 0; i < 100; i++ )); do [[ -e $XDG_CONFIG_HOME/held ]] && break; sleep 0.05; done
+  __tt_apply "$TTHEME_PALETTE[miku]"
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours kaito)"* && "$(<$tab)" == "$$ miku miku -" ]] ||
+    { print -u2 "a Warp tab behind another one moved the app-wide theme, or did not record its palette"; exit 1 }
+  kill $holder 2>/dev/null
+  wait $holder 2>/dev/null
+  __tt_apply "$TTHEME_PALETTE[miku]"
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours miku)"* ]] || { print -u2 "a Warp tab stayed off the theme after the follower that put another tab in front was gone"; exit 1 }
+  rm -f $TTHEME_WARP_TABS/.active $TTHEME_WARP_TABS/.follow $XDG_CONFIG_HOME/held
+  print -r -- 'name: "kaito"' >| $TTHEME_WARP_THEMES/ttheme-kaito.0123abcd.yaml
+  at=$EPOCHREALTIME
+  __tt_apply "$TTHEME_PALETTE[kaito]"
+  (( EPOCHREALTIME - at >= 0.25 )) && [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-kaito.0123abcd.yaml"'* ]] ||
+    { print -u2 "Warp was pointed at a theme file too new for it to know yet"; exit 1 }
+  rm -f $TTHEME_WARP_THEMES/ttheme-kaito.0123abcd.yaml $TTHEME_HOME/warp.base
+  print -rl -- '[general]' 'x = 1' >| $XDG_CONFIG_HOME/dotwarp/settings.toml
+  __tt_apply "$TTHEME_PALETTE[miku]"
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- '[general]' 'x = 1' '' '[appearance.themes]' "$(ours miku)")" ]] ||
+    { print -u2 "a Warp paint did not add the theme table:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
+  TTHEME_STARTUP=
+  __tt_osc_reset
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *$'\ntheme = "dark"' && ! -e $TTHEME_HOME/warp.base ]] ||
+    { print -u2 "a Warp reset while ttheme is off, over no theme of the user's, did not leave Warp's default"; cat $TTHEME_WARP_SETTINGS; exit 1 }
+  __tt_apply "custom" && { print -u2 "Warp wore a spec that is no palette"; exit 1 }
+  : > $TTHEME_WARP_THEMES/ttheme-miku.0123abcd.yaml
+  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-miku.0123abcd.yaml
+  : > $TTHEME_WARP_THEMES/ttheme-miku.89abcdef.yaml
+  REPLY=; __tt_warp_value miku
+  [[ $REPLY == '{ custom = { name = "miku", path = "ttheme-miku.89abcdef.yaml" } }' ]] ||
+    { print -u2 "a Warp palette with a picture did not wear its newest pictured theme: $REPLY"; exit 1 }
+  rm -rf $TTHEME_WARP_TABS
+) || exit 1
+(
+  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  (( $+commands[sqlite3] )) || { print -u2 "sqlite3 is missing — Warp's tab switches are read with it"; exit 1 }
+  mkdir -p $XDG_CONFIG_HOME/fwarp $XDG_CONFIG_HOME/fwarpthemes
+  TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/fwarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/fwarpthemes TTHEME_TERMINALS=(warp)
+  TTHEME_STARTUP=miku TTHEME_WARP_DB=$XDG_CONFIG_HOME/fwarp/warp.sqlite
+  print -rl -- '[appearance.themes]' 'theme = "Dracula"' > $TTHEME_WARP_SETTINGS
+  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.yaml; done
+  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
+  sqlite3 $TTHEME_WARP_DB "
+    create table app (id integer primary key, active_window_id integer references windows(id));
+    create table windows (id integer primary key not null, active_tab_index integer not null);
+    create table tabs (id integer primary key not null, window_id integer not null, custom_title text);
+    create table pane_nodes (id integer primary key not null, tab_id integer not null, parent_pane_node_id integer, flex float, is_leaf boolean not null);
+    create table pane_leaves (pane_node_id integer not null unique, kind text not null, is_focused boolean not null default false);
+    create table terminal_panes (id integer primary key not null, kind text not null default 'terminal', uuid blob not null unique, cwd text, is_active boolean not null default false);
+    insert into app values (1, 2);
+    insert into windows values (1, 0), (2, 1);
+    insert into tabs values (1, 1, null), (2, 1, null), (3, 2, null), (4, 2, null);
+    insert into pane_nodes values (1, 1, null, null, 1), (2, 2, null, null, 1), (3, 3, null, null, 0), (4, 3, 3, 0.5, 1), (5, 3, 3, 0.5, 1), (6, 4, null, null, 1);
+    insert into pane_leaves values (1, 'terminal', 1), (2, 'terminal', 1), (4, 'terminal', 0), (5, 'terminal', 1), (6, 'terminal', 1);
+    insert into terminal_panes (id, uuid) values (1, x'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'), (2, x'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'), (4, x'cccccccccccccccccccccccccccccccc'), (5, x'dddddddddddddddddddddddddddddddd'), (6, x'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')"
+  active() { sqlite3 $TTHEME_WARP_DB "$1"; REPLY=; __tt_warp_active; print -r -- $REPLY }
+  [[ $(active '') == eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee && $(active 'update windows set active_tab_index = 0 where id = 2') == dddddddddddddddddddddddddddddddd &&
+     $(active 'update app set active_window_id = null') == '' && $(active 'update app set active_window_id = 1') == aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ]] ||
+    { print -u2 "Warp's front tab was misread from its session database"; exit 1 }
+  mkdir -p $TTHEME_WARP_TABS
+  sleep 30 >/dev/null 2>&1 &
+  alive=$!
+  print -r -- "$alive miku kaito -" > $TTHEME_WARP_TABS/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  print -r -- "$alive miku homura -" > $TTHEME_WARP_TABS/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  print -r -- "$alive miku - -" > $TTHEME_WARP_TABS/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  ours() { __tt_warp_value $1; print -r -- "theme = $REPLY" }
+  worn() { grep '^theme' $TTHEME_WARP_SETTINGS }
+  __tt_warp_tick
+  [[ "$(<$TTHEME_WARP_TABS/.active)" == aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa && "$(worn)" == "$(ours kaito)" && "$(<$TTHEME_HOME/warp.base)" == '"Dracula"' ]] ||
+    { print -u2 "the follower did not put on the palette of Warp's front tab: $(worn)"; exit 1 }
+  : > $XDG_CONFIG_HOME/wrote
+  __tt_warp_set() { print -r -- "$1" >> $XDG_CONFIG_HOME/wrote; }
+  __tt_warp_tick
+  [[ ! -s $XDG_CONFIG_HOME/wrote ]] || { print -u2 "the follower wrote Warp's settings again with nothing changed"; exit 1 }
+  unfunction __tt_warp_set
+  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/fwarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/fwarpthemes TTHEME_WARP_DB=$XDG_CONFIG_HOME/fwarp/warp.sqlite
+  sqlite3 $TTHEME_WARP_DB 'update windows set active_tab_index = 1 where id = 1'
+  __tt_warp_tick
+  [[ "$(<$TTHEME_WARP_TABS/.active)" == bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb && "$(worn)" == "$(ours homura)" ]] ||
+    { print -u2 "switching tabs did not put on the palette of the tab in front: $(worn)"; exit 1 }
+  sqlite3 $TTHEME_WARP_DB 'update app set active_window_id = 2; update windows set active_tab_index = 1 where id = 2'
+  __tt_warp_tick
+  [[ "$(worn)" == "$(ours miku)" ]] || { print -u2 "a tab that wears no palette of its own did not get the default: $(worn)"; exit 1 }
+  sqlite3 $TTHEME_WARP_DB 'update app set active_window_id = null'
+  __tt_warp_tick
+  [[ "$(<$TTHEME_WARP_TABS/.active)" == eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ]] || { print -u2 "Warp going to the background moved the front tab"; exit 1 }
+  print -r -- "$alive miku kaito -" > $TTHEME_WARP_TABS/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  __tt_warp_tick
+  [[ "$(worn)" == "$(ours kaito)" ]] || { print -u2 "a palette the front tab took did not follow: $(worn)"; exit 1 }
+  TTHEME_STARTUP= TTHEME_WARP_LAST=
+  __tt_warp_tick
+  [[ "$(worn)" == 'theme = "Dracula"' && ! -e $TTHEME_HOME/warp.base ]] ||
+    { print -u2 "a tab painted before ttheme went off kept its palette in front: $(worn)"; exit 1 }
+  print -r -- "$alive - kaito -" > $TTHEME_WARP_TABS/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  __tt_warp_tick
+  [[ "$(worn)" == "$(ours kaito)" && "$(<$TTHEME_HOME/warp.base)" == '"Dracula"' ]] ||
+    { print -u2 "a palette a tab took while ttheme is off did not follow: $(worn)"; exit 1 }
+  print -r -- "$alive - - -" > $TTHEME_WARP_TABS/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  __tt_warp_tick
+  [[ "$(worn)" == 'theme = "Dracula"' ]] || { print -u2 "a tab with no palette while ttheme is off did not get the user's theme back: $(worn)"; exit 1 }
+  __tt_warp_live || { print -u2 "the follower found no live tab"; exit 1 }
+  kill $alive
+  wait $alive 2>/dev/null
+  __tt_warp_live && { print -u2 "the follower kept going with every tab closed"; exit 1 }
+  [[ -z $(print -r $TTHEME_WARP_TABS/[0-9a-f]*(N)) ]] || { print -u2 "the follower left closed tabs behind"; exit 1 }
+  rm -rf $TTHEME_WARP_TABS $TTHEME_HOME/warp.base
+) || exit 1
+(
+  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  mkdir -p $XDG_CONFIG_HOME/warpview $XDG_CONFIG_HOME/warpviewthemes
+  TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/warpview/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/warpviewthemes TTHEME_TERMINALS=(warp)
+  print -rl -- '[appearance.themes]' 'theme = "Dracula"' > $TTHEME_WARP_SETTINGS
+  head -c 6000 /dev/urandom > $XDG_CONFIG_HOME/big.png
+  out=$(base64() { if (( $# )); then command base64 "$@"; else command base64 | fold -w 76; fi }; __tt_bg_transmit 7 $XDG_CONFIG_HOME/big.png)
+  sent=${(j::)${${${(ps:\e_G:)out}#*;}%$'\e\\'}}
+  [[ $out == $'\e_Ga=t,f=100,i=7,m=1,q=2;'* && ${#${(M)${(ps:\e_G:)out}:#m=0,*}} == 1 && $sent != *[^A-Za-z0-9+/=]* && "$(print -rn -- $sent | base64 --decode | shasum)" == "$(shasum < $XDG_CONFIG_HOME/big.png)" ]] ||
+    { print -u2 "a picture sent to Warp did not arrive whole in its chunks"; exit 1 }
+  print -rl -- 'name: "miku"' 'details: darker' 'terminal_colors:' >| $TTHEME_WARP_THEMES/ttheme-miku.yaml
+  : >| $TTHEME_WARP_THEMES/ttheme-miku.89abcdef.yaml
+  printf '\x89PNG\r\n\x1a\n\0\0\0\x0dIHDR\0\0\x06\x5a\0\0\x07\x60' >| $bgd/miku.0a1b2c3d.png
+  : >| $bgd/miku.0a1b2c3d@fill-40.png
+  print -rl -- 'background-image = miku.0a1b2c3d@fill-40.png' 'background-image-fit = cover' 'background-image-opacity = 0.19' >| $bgd/miku.conf
+  __tt_pv_draw() { : }
+  __tt_cli() { print -r -- "$*" >> $XDG_CONFIG_HOME/cli.log; [[ $1 == flatten ]] && : >| $3 }
+  bgsrc=() bgcut="" pw=91 ph=51 bgcw=32 bgch=40 msg="" msgt=0
+  __tt_bg_load miku
+  bgsize[miku]=140 bgpos[miku]=6
+  __tt_warp_view miku > /dev/null
+  view=$TTHEME_WARP_SHOWING
+  __tt_warp_laid miku $bgd/miku.0a1b2c3d@140-center-right-2912x2040.png
+  out=$REPLY
+  [[ $out == $TTHEME_WARP_THEMES/ttheme-miku.????????.png && "$(<$XDG_CONFIG_HOME/cli.log)" == "flatten $bgd/miku.0a1b2c3d.png $out ${TTHEME_PALETTE[miku]%% *} 1 2912x2040 2459x2856+453-122" && $TTHEME_WARP_LAID == "$out" ]] ||
+    { print -u2 "a Warp view did not lay its picture whole on the grid's canvas, into the file saving it shows: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
+  [[ "$(<$TTHEME_WARP_THEMES/$view)" == *$'details: darker\nbackground_image:\n  path: "'$out$'"\n  opacity: 19\nterminal_colors:'* && "$(<$TTHEME_WARP_SETTINGS)" == *"path = \"$view\""* ]] ||
+    { print -u2 "Warp was not put on a view of the laid picture at its opacity:"; cat $TTHEME_WARP_THEMES/$view; exit 1 }
+  [[ "$(<$TTHEME_HOME/warp.base)" == '"Dracula"' ]] || { print -u2 "a Warp view did not keep the user's theme where ttheme off finds it"; exit 1 }
+  : >| $XDG_CONFIG_HOME/cli.log
+  bgop[miku]=0.3
+  __tt_warp_view miku > /dev/null
+  [[ ! -s $XDG_CONFIG_HOME/cli.log && ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_THEMES/$TTHEME_WARP_SHOWING)" == *$'  path: "'$out$'"\n  opacity: 30\n'* ]] ||
+    { print -u2 "a Warp view that only changed its opacity drew its picture again or moved to another file: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
+  bgop[miku]=0.19 view=$TTHEME_WARP_SHOWING
+  bgsize[miku]=141
+  __tt_warp_view miku > /dev/null
+  [[ ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_SETTINGS)" == *"path = \"$TTHEME_WARP_SHOWING\""* ]] ||
+    { print -u2 "a new Warp view left the one before it behind"; exit 1 }
+  : >| $XDG_CONFIG_HOME/cli.log
+  bgsize[miku]=140
+  __tt_warp_view miku > /dev/null
+  [[ ! -s $XDG_CONFIG_HOME/cli.log && "$(<$TTHEME_WARP_SETTINGS)" == *"path = \"$TTHEME_WARP_SHOWING\""* ]] ||
+    { print -u2 "a Warp view drew a picture it had drawn already: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
+  : >| $XDG_CONFIG_HOME/cli.log
+  bgsize[miku]=fill bgpos[miku]=5
+  __tt_warp_view miku > /dev/null
+  __tt_warp_laid miku $bgd/miku.0a1b2c3d@fill-40.png
+  [[ "$(<$XDG_CONFIG_HOME/cli.log)" == "flatten $bgd/miku.0a1b2c3d@fill-40.png $REPLY ${TTHEME_PALETTE[miku]%% *} 1" ]] ||
+    { print -u2 "a Warp view of the fill did not lay the fill itself into the file its theme shows: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
+  bgsize[miku]=140 bgpos[miku]=6
+  __tt_warp_view miku > /dev/null
+  view=$TTHEME_WARP_SHOWING bgname=miku bgedit[miku]=1 applied=$TTHEME_PALETTE[miku]
+  __tt_pv_bg_close > /dev/null
+  [[ ${#TTHEME_WARP_LAID} == 0 ]] || { print -u2 "closing preview kept its list of laid pictures to sweep"; exit 1 }
+  [[ $TTHEME_WARP_SHOWING == "$view" && "$(<$TTHEME_WARP_SETTINGS)" == *"path = \"$view\""* ]] ||
+    { print -u2 "closing preview took Warp off the view of a tuning about to be saved"; exit 1 }
+  __tt_bg_refresh miku
+  [[ -z $TTHEME_WARP_SHOWING && ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_SETTINGS)" == *"path = \"$view\""* ]] ||
+    { print -u2 "a saved tuning moved Warp itself where the CLI puts its new picture on, or left the view file"; exit 1 }
+  : >| $XDG_CONFIG_HOME/cli.log
+  __tt_bg_bake $bgd/miku.0a1b2c3d.png $bgd/miku.0a1b2c3d@140-center-right-2912x2040.png 2912 2040 2459 2856 453 -122
+  [[ "$(<$XDG_CONFIG_HOME/cli.log)" == "bake $bgd/miku.0a1b2c3d.png $bgd/miku.0a1b2c3d@140-center-right-2912x2040.png 2912x2040 2459x2856+453-122" ]] ||
+    { print -u2 "Warp baked a tuned picture without the CLI: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
+  bgedit=() bgsize[miku]=144
+  __tt_warp_view miku > /dev/null
+  view=$TTHEME_WARP_SHOWING bgname=miku:k2 bgview[miku]=miku:k2
+  __tt_pv_bg_close > /dev/null
+  [[ $TTHEME_WARP_SHOWING == "$view" ]] || { print -u2 "closing preview took Warp off the view of a picture chosen to be shown"; exit 1 }
+  bgname=miku bgview=()
+  __tt_pv_bg_close > /dev/null
+  [[ -z $TTHEME_WARP_SHOWING && ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-miku.89abcdef.yaml"'* ]] ||
+    { print -u2 "closing preview left up the view of a picture nobody kept"; exit 1 }
+  __tt_bg_hide miku
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-miku.yaml"'* ]] || { print -u2 "find opened over Warp's picture, which covers its loading bar"; exit 1 }
+  rm -f $bgd/miku.0a1b2c3d.png $bgd/miku.0a1b2c3d@fill-40.png $bgd/miku.conf $XDG_CONFIG_HOME/cli.log
 ) || exit 1
 mkdir -p $XDG_CONFIG_HOME/fakebin
 print -rl -- '#!/bin/sh' 'printf %s "$NODE_COMPILE_CACHE"' > $XDG_CONFIG_HOME/fakebin/node

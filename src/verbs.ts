@@ -211,6 +211,21 @@ export const VERB_SPECS: VerbSpec[] = [
     hidden: true,
   },
   {
+    name: 'flatten',
+    args: ['<source>', '<out>', '<background>', '<opacity>', '[canvas]', '[place]'],
+    about:
+      'Lay a picture on a background color at an opacity, placed on a canvas when given one, for Warp, which fades the window instead — preview calls this',
+    section: 'setup',
+    hidden: true,
+  },
+  {
+    name: 'bake',
+    args: ['<source>', '<out>', '<canvas>', '<place>'],
+    about: "Place a picture on a transparent canvas the way sips bakes preview's tuning — preview in Warp calls this",
+    section: 'setup',
+    hidden: true,
+  },
+  {
     name: 'redraw',
     args: [],
     about: 'Draw the background pictures again after TTHEME_BG_BLUR changed — ttheme config and preview call this',

@@ -449,6 +449,7 @@ export function renderEditor(e: PaletteEditor, cols: number, rows: number, color
 
 export interface Screen {
   only?: readonly number[]
+  look?: (shown: readonly Hex[]) => void
   color: boolean
 }
 
@@ -459,11 +460,20 @@ export async function runEditor(options: EditorOptions, screen: Screen): Promise
   let rows = stdout.rows || MIN_ROWS
   let drawn: string[] = []
   const painted: (Hex | undefined)[] = []
+  let looked = ''
   let input = ''
   let timer: NodeJS.Timeout | undefined
   const write = (text: string) => stdout.write(text)
   const paint = () => {
     timer = undefined
+    if (screen.look) {
+      const shown = editor.shown()
+      if (shown.join(' ') !== looked) {
+        looked = shown.join(' ')
+        screen.look(shown)
+      }
+      return
+    }
     let out = ''
     editor.shown().forEach((hex, slot) => {
       if (painted[slot] !== hex && screen.only?.includes(slot)) {
@@ -487,7 +497,7 @@ export async function runEditor(options: EditorOptions, screen: Screen): Promise
     if (out) {
       write(`\x1b[?2026h${out}\x1b[0m\x1b[?2026l`)
     }
-    if (screen.only) {
+    if (screen.only || screen.look) {
       timer ??= setTimeout(paint, 33)
     }
   }
@@ -529,6 +539,7 @@ export async function runEditor(options: EditorOptions, screen: Screen): Promise
         rows = stdout.rows || rows
         drawn = []
         painted.length = 0
+        looked = ''
         draw()
       }
       onResize = () => {

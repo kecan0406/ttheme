@@ -34,8 +34,9 @@ import {
 } from './backdrop.ts'
 import { luminance, mix } from './color.ts'
 import { checkReadability } from './contrast.ts'
+import { canvasOf } from './images.ts'
 import { redrawOne } from './pictures.ts'
-import { decodePng, encodeMask, encodePng, type Rgba, retone } from './png.ts'
+import { decodePng, encodeMask, encodePng, encodeRgb, encodeRgba, flatten, lay, type Rgba, retone } from './png.ts'
 
 const KAGAMI: Colors = {
   name: 'kagami',
@@ -457,6 +458,33 @@ test('a picture file is the tone with the ink as its alpha, so a terminal lays t
   const again = retone(encodeMask(mask, '#9b86c8'), '#123456')
   assert.ok(again)
   assert.deepEqual([...decodePng(again).data.subarray(4, 8)], [0x12, 0x34, 0x56, 128])
+})
+
+test('Warp gets a picture laid whole on the background, so no transparent part lets the window show through', () => {
+  const image: Rgba = { width: 2, height: 1, data: Uint8Array.from([255, 0, 0, 255, 0, 255, 0, 0]) }
+  const laid = flatten(image, '#204060', 0.5)
+  assert.deepEqual([...laid.data], [144, 32, 48, 32, 64, 96])
+  assert.deepEqual([...decodePng(encodeRgb(laid)).data], [144, 32, 48, 255, 32, 64, 96, 255])
+})
+
+test('Warp gets a picture laid on the background where preview frames it, at its own size when Warp would enlarge it', () => {
+  const image: Rgba = {
+    width: 2,
+    height: 2,
+    data: Uint8Array.from([255, 0, 0, 255, 255, 0, 0, 0, 255, 0, 0, 255, 255, 0, 0, 255]),
+  }
+  const laid = flatten(image, '#000000', 0.5, { width: 3, height: 2, at: { x: 2, y: -1, w: 2, h: 2 } })
+  assert.deepEqual([...laid.data], [0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+  assert.deepEqual(canvasOf(image, '2912x2040', '4x4+10-20'), {
+    width: 1456,
+    height: 1020,
+    at: { x: 5, y: -10, w: 2, h: 2 },
+  })
+  assert.deepEqual(canvasOf(image, '100x50', '1x1+3+4'), { width: 100, height: 50, at: { x: 3, y: 4, w: 1, h: 1 } })
+  assert.throws(() => canvasOf(image, '100x50', '1x1'))
+  const baked = lay(image, { width: 3, height: 2, at: { x: 2, y: -1, w: 2, h: 2 } })
+  assert.deepEqual([...baked.data], [0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+  assert.deepEqual([...decodePng(encodeRgba(baked)).data], [...baked.data])
 })
 
 test('a dim picture is lifted until its brightest part reaches the tone, at most twice, and a bright one is left alone', () => {

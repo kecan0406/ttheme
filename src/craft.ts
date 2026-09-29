@@ -32,6 +32,7 @@ import { bringPictures, heldPictures } from './pictures.ts'
 import { grow, SEEDS } from './seeds.ts'
 import { livePaint, showsPictures } from './terminal.ts'
 import { marketOf, nameProblem, type SharedPicture, type Theme } from './theme.ts'
+import { warpLive } from './warp-live.ts'
 
 function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
@@ -155,10 +156,16 @@ function finder(
 }
 
 async function editColors(options: EditorOptions): Promise<Edited | undefined> {
-  const live = livePaint(process.env, process.stdout.isTTY === true)
+  const tty = process.stdout.isTTY === true
+  const live = livePaint(process.env, tty) ?? warpLive(process.env, tty, configHome())
   const saved = live ? await live.saved() : new Map<string, string>()
+  const screen = live?.look
+    ? { look: (shown: readonly string[]) => live.look?.(options.name, shown) }
+    : live
+      ? { only: live.slots }
+      : {}
   try {
-    return await runEditor(options, { color: !colorless(), ...(live ? { only: live.slots } : {}) })
+    return await runEditor(options, { color: !colorless(), ...screen })
   } finally {
     if (live) {
       process.stdout.write(live.restore(saved))

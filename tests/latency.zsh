@@ -22,6 +22,7 @@ typeset -gA IDENTITY=(
   windows-terminal 'WT_SESSION=x'
   konsole 'KONSOLE_VERSION=230805'
   terminal-app 'TERM_PROGRAM=Apple_Terminal'
+  warp 'TERM_PROGRAM=WarpTerminal'
 )
 trap 'zpty -d sh 2>/dev/null; rm -rf $WORK' EXIT
 
@@ -35,7 +36,12 @@ home() {
   [[ -n $tab ]] || return 0
   mkdir -p $h/.config/ttheme
   cp -R $src/ttheme.zsh $src/adapters $ROOT/dist/shell/palettes.zsh $h/.config/ttheme/
-  print -rl -- 'typeset -ga TTHEME_TERMINALS=(konsole)' "typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'" >> $h/.config/ttheme/palettes.zsh
+  print -rl -- 'typeset -ga TTHEME_TERMINALS=(konsole warp)' "typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'" >> $h/.config/ttheme/palettes.zsh
+  mkdir -p $h/.warp/themes $h/.config/warp-terminal $h/.local/share/warp-terminal/themes
+  print -rl -- '[appearance.themes]' 'theme = "dark"' | tee $h/.warp/settings.toml > $h/.config/warp-terminal/settings.toml
+  ( source $h/.config/ttheme/palettes.zsh; for n in $TTHEME_ORDER; do : > $h/.warp/themes/ttheme-${${n/@/--}/\//--}.yaml; done )
+  cp $h/.warp/themes/*.yaml $h/.local/share/warp-terminal/themes/
+  touch -t 202001010000 $h/.warp/themes/*.yaml $h/.local/share/warp-terminal/themes/*.yaml
   print -r -- ": \${TTHEME_TAB_PALETTE:=$tab}" > $h/.config/ttheme/config.zsh
   print -r -- 'source $XDG_CONFIG_HOME/ttheme/ttheme.zsh' >> $h/.zshrc
 }

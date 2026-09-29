@@ -8,6 +8,8 @@ __tt_bg_saved() {
 
 __tt_bg_refresh() { : }
 
+__tt_bg_hide() { : }
+
 __tt_bg_lasting() { : }
 
 __tt_bg_frame() {
@@ -220,7 +222,7 @@ __tt_bg_write() {
     rm -f -- $dir/${bgtunef[$1]}
   else
     shape=$size
-    [[ $size == <20-100> && $pos != center ]] && ! __tt_bg_aligns && shape=window
+    [[ $size == <20-100> ]] && { [[ $pos != center ]] || __tt_bg_covers } && ! __tt_bg_aligns && shape=window
     case $shape in
       fill) img=${bgfill[$1]} fit=cover ;;
       100) img=$src ;;
@@ -320,6 +322,12 @@ __tt_pv_bg_show() {
   __tt_bg_at $id -1073741826 $(( at[1] - 1 )) $(( at[2] - 1 )) $at[3] $at[4] $at[5] $at[6] $at[7] $at[8]
 }
 
+__tt_bg_transmit() {
+  local REPLY
+  __tt_b64s "$2"
+  printf '\e_Ga=t,t=f,f=100,i=%d,q=2;%s\e\\' $1 "$REPLY"
+}
+
 __tt_bg_send() {
   local -i cost=0
   if [[ -n ${bgsent[$1]} ]]; then
@@ -329,8 +337,7 @@ __tt_bg_send() {
     bgsent[$1]=$(( ++bgnext + 2 )) bgcost[$1]=$cost
     (( bgbytes += cost ))
     bgorder+=("$1")
-    __tt_b64s "$1"
-    printf '\e_Ga=t,t=f,f=100,i=%d,q=2;%s\e\\' ${bgsent[$1]} "$REPLY"
+    __tt_bg_transmit ${bgsent[$1]} "$1"
     while (( ${#bgorder} > 1 && bgbytes > 134217728 )); do
       printf '\e_Ga=d,d=I,i=%d,q=2\e\\' ${bgsent[$bgorder[1]]}
       (( bgbytes -= bgcost[$bgorder[1]] ))
@@ -449,6 +456,7 @@ __tt_pv_bg_find() {
   [[ $applied == "$painted" ]] || { __tt_apply "$applied" && painted=$applied }
   __tt_pv_bg_commit $name
   __tt_pv_bg_close
+  __tt_bg_hide $name
   err=$(__tt_cli find $name 2>&1 >/dev/tty)
   rc=$?
   for var in ${(k)parameters[(I)TTHEME_FIND_*]}; do

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import columns from 'fast-string-width'
 import { LINK, linked } from './ansi.ts'
 import type { Framing } from './backdrop.ts'
@@ -250,7 +251,7 @@ export function decodeKeys(input: string): string[] {
   return keys
 }
 
-export const CELL_QUERY = '\x1b]1337;ReportCellSize\x07\x1b[16t'
+export const CELL_QUERY = '\x1b]1337;ReportCellSize\x07\x1b[16t\x1b[14t\x1b[18t'
 
 const ITERM_CELL = '\x1b]1337;ReportCellSize='
 
@@ -271,10 +272,24 @@ export function cellReport(input: string): { cell: { w: number; h: number }; res
   }
   const x = input.indexOf('\x1b[6;')
   const m = x === -1 ? null : /^\[6;(\d+);(\d+)t/.exec(input.slice(x + 1))
-  if (!m) {
+  if (m) {
+    return { cell: { h: Number(m[1]), w: Number(m[2]) }, rest: input.slice(0, x) + input.slice(x + 1 + m[0].length) }
+  }
+  const window = xtermReport(input, 4)
+  const grid = xtermReport(input, 8)
+  if (!window || !grid || grid.a === 0 || grid.b === 0) {
     return null
   }
-  return { cell: { h: Number(m[1]), w: Number(m[2]) }, rest: input.slice(0, x) + input.slice(x + 1 + m[0].length) }
+  return {
+    cell: { h: Math.floor(window.a / grid.a), w: Math.floor(window.b / grid.b) },
+    rest: input.replace(window.text, '').replace(grid.text, ''),
+  }
+}
+
+function xtermReport(input: string, code: number): { a: number; b: number; text: string } | null {
+  const x = input.indexOf(`\x1b[${code};`)
+  const m = x === -1 ? null : new RegExp(`^\\[${code};(\\d+);(\\d+)t`).exec(input.slice(x + 1))
+  return m ? { a: Number(m[1]), b: Number(m[2]), text: `\x1b${m[0]}` } : null
 }
 
 export function gridShape(cols: number, rows: number): { perRow: number; rowsVis: number; height: number } {
@@ -286,13 +301,32 @@ export function gridShape(cols: number, rows: number): { perRow: number; rowsVis
   }
 }
 
-export function transmit(p: Placement): string {
-  return `\x1b_Ga=t,t=f,f=100,i=${p.id},q=2;${Buffer.from(p.path).toString('base64')}\x1b\\`
+export function transmit(p: Placement, files = true): string | undefined {
+  if (files) {
+    return `\x1b_Ga=t,t=f,f=100,i=${p.id},q=2;${Buffer.from(p.path).toString('base64')}\x1b\\`
+  }
+  let data: string
+  try {
+    data = readFileSync(p.path).toString('base64')
+  } catch {
+    return undefined
+  }
+  const chunks = data.match(/.{1,4096}/g) ?? ['']
+  return chunks
+    .map((chunk, i) => {
+      const more = i < chunks.length - 1 ? 1 : 0
+      return i === 0 ? `\x1b_Ga=t,f=100,i=${p.id},m=${more},q=2;${chunk}\x1b\\` : `\x1b_Gm=${more},q=2;${chunk}\x1b\\`
+    })
+    .join('')
 }
 
 export function place(p: Placement, cell: { w: number; h: number }): string {
   const crop = p.crop === undefined ? '' : `,x=0,y=${p.crop * cell.h},w=${p.cols * cell.w},h=${p.rows * cell.h}`
   return `\x1b[${p.row + 1};${p.col + 1}H\x1b_Ga=p,i=${p.id},p=${p.id}${crop},c=${p.cols},r=${p.rows},C=1,z=${p.z},q=2\x1b\\`
+}
+
+export function unplace(id: number): string {
+  return `\x1b_Ga=d,d=i,i=${id},p=${id},q=2\x1b\\`
 }
 
 export function release(id: number): string {

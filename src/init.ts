@@ -29,8 +29,10 @@ import { detectTerminal, livePaint, TRAITS } from './terminal.ts'
 import { systemHost } from './terminals/common.ts'
 import { WIRED, WIRINGS, type Wired, wirings } from './terminals/index.ts'
 import type { Host, Pointed, Setup } from './terminals/types.ts'
+import { warpSettings } from './terminals/warp.ts'
 import { windowsAppData } from './terminals/windows-terminal.ts'
 import { marketOf } from './theme.ts'
+import { warpLive } from './warp-live.ts'
 import { configFile, upsertBlock, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {
@@ -255,10 +257,13 @@ function seriesOf(catalog: Manifest, names: string[]): string[] {
   return [...new Set(catalog.palettes.filter((e) => names.includes(e.name)).map((e) => e.group))]
 }
 
-function paintStartup(catalog: Manifest, installed: Installed): boolean {
+function paintStartup(catalog: Manifest, installed: Installed, configHome: string): boolean {
   const startup = catalog.palettes.find((e) => e.name === worn(installed))
-  const wear = startup && livePaint(process.env, process.stdout.isTTY === true)?.wear(startup, installed.terminals)
-  if (!wear) {
+  const tty = process.stdout.isTTY === true
+  const wear =
+    startup &&
+    (livePaint(process.env, tty) ?? warpLive(process.env, tty, configHome))?.wear(startup, installed.terminals)
+  if (wear === undefined) {
     return false
   }
   process.stdout.write(wear)
@@ -408,7 +413,10 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     throw new Cancelled()
   }
   const first = (existing && keptStartup(existing, palettes)) ?? palettes[0]
-  const choose = palettes.length > 1 && TRAITS[detectTerminal(process.env)].paints
+  const choose =
+    palettes.length > 1 &&
+    (TRAITS[detected].paints ||
+      (detected === 'warp' && terminals.includes('warp') && existsSync(warpSettings(home, configHome))))
   const wear = accepted(
     await p.confirm({
       message: choose ? 'Pick a default palette in ttheme preview once installed?' : `Wear ${first} in every tab?`,
@@ -451,5 +459,5 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     pickDefault(configHome)
   }
   const installed = readInstalled(configHome)
-  receipt({ ...plan, catalog, installed }, opts, paintStartup(catalog, installed), pointed)
+  receipt({ ...plan, catalog, installed }, opts, paintStartup(catalog, installed, configHome), pointed)
 }

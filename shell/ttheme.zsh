@@ -30,7 +30,7 @@ __tt_gone() {
   __tt_reload
   __tt_reset_reloaded $bg
   print -n $'\e[?1004l'
-  for hook in precmd:__tt_fresh precmd:__tt_precmd precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_mux chpwd:__tt_chpwd; do
+  for hook in precmd:__tt_fresh precmd:__tt_precmd precmd:__tt_prompted precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_mux chpwd:__tt_chpwd; do
     add-zsh-hook -d ${hook%%:*} ${hook#*:}
   done
   (( $+functions[add-zle-hook-widget] )) && add-zle-hook-widget -d line-init __tt_line_init
@@ -2653,7 +2653,7 @@ __tt_preview() {
   local tty=""
   local -i TTHEME_RAW=0
   {
-    tty=$(stty -g 2>/dev/null && stty -echo -icanon min 1 time 0 2>/dev/null)
+    tty=$(stty -g 2>/dev/null) && stty -echo -icanon min 1 time 0 2>/dev/null || tty=""
     TTHEME_RAW=$(( ${#tty} > 0 ))
     __tt_pv_bg_open
     printf '\e[?2026h\e[?1049h\e[?7l\e[?25l'
@@ -2841,6 +2841,7 @@ fi
   else
     __tt_sync
   fi
+  __tt_follows_prompt && add-zsh-hook precmd __tt_prompted
   __tt_announce
 }
 

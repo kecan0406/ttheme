@@ -45,6 +45,9 @@ export interface Traits {
   links: boolean
   pictures: boolean
   bands: boolean
+  files: boolean
+  moves: boolean
+  layers: boolean
   paints: boolean
   repaint?: readonly number[]
   hex?: true
@@ -52,17 +55,45 @@ export interface Traits {
 }
 
 export const TRAITS: Record<Terminal, Traits> = {
-  ghostty: { links: true, pictures: true, bands: false, paints: true },
-  kitty: { links: true, pictures: true, bands: false, paints: true },
-  iterm2: { links: true, pictures: true, bands: true, paints: true, repaint: [0, 1] },
-  wezterm: { links: true, pictures: false, bands: false, paints: true },
-  alacritty: { links: true, pictures: false, bands: false, paints: true },
-  'windows-terminal': { links: true, pictures: false, bands: false, paints: true },
-  konsole: { links: false, pictures: false, bands: false, paints: true, repaint: [0, 1], hex: true, schemes: true },
-  foot: { links: true, pictures: false, bands: false, paints: true },
-  'terminal-app': { links: false, pictures: false, bands: false, paints: true },
-  warp: { links: false, pictures: false, bands: false, paints: false },
-  unknown: { links: false, pictures: false, bands: false, paints: true },
+  ghostty: { links: true, pictures: true, bands: false, files: true, moves: true, layers: true, paints: true },
+  kitty: { links: true, pictures: true, bands: false, files: true, moves: true, layers: true, paints: true },
+  iterm2: {
+    links: true,
+    pictures: true,
+    bands: true,
+    files: true,
+    moves: true,
+    layers: true,
+    paints: true,
+    repaint: [0, 1],
+  },
+  wezterm: { links: true, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
+  alacritty: { links: true, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
+  'windows-terminal': {
+    links: true,
+    pictures: false,
+    bands: false,
+    files: true,
+    moves: true,
+    layers: true,
+    paints: true,
+  },
+  konsole: {
+    links: false,
+    pictures: false,
+    bands: false,
+    files: true,
+    moves: true,
+    layers: true,
+    paints: true,
+    repaint: [0, 1],
+    hex: true,
+    schemes: true,
+  },
+  foot: { links: true, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
+  'terminal-app': { links: false, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
+  warp: { links: false, pictures: true, bands: true, files: false, moves: false, layers: false, paints: false },
+  unknown: { links: false, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
 }
 
 export function linkable(env: Env): boolean {
@@ -77,11 +108,24 @@ export function cropsInBands(env: Env): boolean {
   return TRAITS[detectTerminal(env)].bands
 }
 
+export function readsFiles(env: Env): boolean {
+  return TRAITS[detectTerminal(env)].files
+}
+
+export function layersUnderCells(env: Env): boolean {
+  return TRAITS[detectTerminal(env)].layers
+}
+
+export function movesPlacements(env: Env): boolean {
+  return TRAITS[detectTerminal(env)].moves
+}
+
 export const CLEAR = '\x1b[H\x1b[K\x1b[2H\x1b[J\x1b[H'
 
 export interface Live {
   slots: readonly number[]
   paint(entry: PaletteEntry): string
+  look?(name: string, shown: readonly string[]): void
   wear(entry: PaletteEntry, wired: readonly string[]): string | undefined
   saved(): Promise<Map<string, string>>
   restore(saved: ReadonlyMap<string, string>): string
