@@ -4,6 +4,8 @@ typeset -g TTHEME_WEZTERM_SHOWN="" TTHEME_WEZTERM_VIEW=""
 
 __tt_keepable() { (( ${TTHEME_TERMINALS[(Ie)wezterm]} )) }
 
+__tt_follows_focus() { return 0 }
+
 __tt_wezterm_var() {
   local REPLY
   __tt_b64s "$2"

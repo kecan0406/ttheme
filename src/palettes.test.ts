@@ -432,6 +432,17 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
     'Green Component': 0x19 / 255,
     'Red Component': 0x11 / 255,
   })
+  sync(configHome, catalog, { terminals: ['iterm2'], off: true, itermBase: 'BASE', palettes: ['gojo'] }, home)
+  assert.deepEqual(
+    read().map((p: { Name: string }) => p.Name),
+    ['ttheme · default', 'ttheme · gojo'],
+  )
+  assert.deepEqual(read()[0], {
+    Name: 'ttheme · default',
+    Guid: 'ttheme-default',
+    'Dynamic Profile Parent GUID': 'BASE',
+    'Background Image Location': '',
+  })
   sync(configHome, catalog, { terminals: ['iterm2'], off: true, palettes: ['gojo'] }, home)
   assert.deepEqual(
     read().map((p: { Name: string }) => p.Name),
@@ -507,14 +518,15 @@ function defaultsAt(initial: string | undefined): { host: Host; writes: string[]
   }
 }
 
-test('iTerm2 takes ttheme · default as its default profile and gives the one it replaced back while off', () => {
+test('iTerm2 takes ttheme · default as its default profile, keeps it while off and gives the one it replaced back once nothing is installed', () => {
   const { host, writes } = defaultsAt('USER')
   const state = withBases('/nowhere', { terminals: ['iterm2'], palettes: ['gojo'] }, host)
   assert.equal(state.itermBase, 'USER')
   assert.ok(pointDefaults('/nowhere', state, true, host).has('iterm2'))
   assert.ok(!pointDefaults('/nowhere', state, true, host).has('iterm2'))
   assert.equal(withBases('/nowhere', state, host).itermBase, 'USER')
-  assert.ok(pointDefaults('/nowhere', { ...state, off: true }, false, host).has('iterm2'))
+  assert.ok(!pointDefaults('/nowhere', { ...state, off: true }, false, host).has('iterm2'))
+  assert.ok(pointDefaults('/nowhere', { ...state, palettes: [] }, false, host).has('iterm2'))
   assert.deepEqual(writes, ['ttheme-default', 'USER'])
 })
 

@@ -1,17 +1,35 @@
 source $TTHEME_HOME/adapters/_bg.zsh
 
 if (( ! ${+TTHEME_ITERM_SHOWN} )); then
-  typeset -gx TTHEME_ITERM_SHOWN=""
+  typeset -gx TTHEME_ITERM_SHOWN="" TTHEME_ITERM_DYED=0
   [[ $ITERM_PROFILE == 'ttheme · '* ]] && TTHEME_ITERM_SHOWN=${ITERM_PROFILE#ttheme · }
 fi
 
 __tt_keepable() { return 0 }
 
+__tt_follows_focus() { return 0 }
+
+__tt_takes_default() {
+  local REPLY was=$TTHEME_ITERM_SHOWN
+  (( ! TTHEME_ITERM_DYED )) || return 1
+  (( TTHEME_TMUX )) && was=$(tmux show -qv @ttheme_shown 2>/dev/null)
+  [[ $was == default ]] && return 0
+  [[ -z $was ]] && __tt_hear && [[ $REPLY == ${TTHEME_PALETTE[$TTHEME_STARTUP]%% *} ]] || return 1
+  TTHEME_ITERM_SHOWN=default
+  (( TTHEME_TMUX )) && tmux set -q @ttheme_shown default 2>/dev/null
+  return 0
+}
+
+__tt_worn() { [[ -z $1 ]] || TTHEME_ITERM_DYED=1 }
+
 __tt_pv_paint() {
   local -a p=(${=1})
   if (( ${#p} < 20 )); then
     __tt_out $'\e]110\e\\\e]111\e\\'
-  elif [[ $p[1] == - ]]; then
+    return 0
+  fi
+  TTHEME_ITERM_DYED=1
+  if [[ $p[1] == - ]]; then
     __tt_out $'\e]111\e\\\e]10;'$p[2]$'\e\\'
   else
     __tt_out $'\e]11;'$p[1]$'\e\\\e]10;'$p[2]$'\e\\'
@@ -34,7 +52,7 @@ __tt_shown() {
   [[ -r $dir/${${1/@/--}/\//--}.conf || ( -n $was && -r $dir/${${was/@/--}/\//--}.conf ) ]] || (( TTHEME_MUXED )) || return 1
   (( ${TTHEME_ORDER[(Ie)$1]} )) || return 1
   __tt_out $'\e]1337;SetProfile=ttheme · '$1$'\a'
-  TTHEME_ITERM_SHOWN=$1
+  TTHEME_ITERM_SHOWN=$1 TTHEME_ITERM_DYED=0
   (( TTHEME_TMUX )) && tmux set -q @ttheme_shown $1 2>/dev/null
   return 1
 }
@@ -44,7 +62,7 @@ __tt_unshown() {
   (( TTHEME_TMUX )) && was=$(tmux show -qv @ttheme_shown 2>/dev/null)
   [[ $1 != force && $was == "$want" ]] && return 0
   __tt_out $'\e]1337;SetProfile=\a'
-  TTHEME_ITERM_SHOWN=$want
+  TTHEME_ITERM_SHOWN=$want TTHEME_ITERM_DYED=0
   (( TTHEME_TMUX )) && tmux set -q @ttheme_shown "$want" 2>/dev/null
   return 0
 }

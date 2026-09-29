@@ -51,7 +51,11 @@ outside the markers is left alone, and what goes in is colors only.
   its picture from their first frame and follow `ttheme default` from then on.
   iTerm2 reads its default profile only when it starts, so quit and reopen it
   once after init. The profile it replaces stays the parent of every ttheme
-  profile, so your font and keys carry over, and `ttheme off` gives it back.
+  profile, so your font and keys carry over. While ttheme is off,
+  `ttheme · default` sets nothing of its own and shows that profile, so open
+  tabs turn off at once and `ttheme on` brings the palette back without a
+  restart; removing your last palette, or uninstalling, makes your own profile
+  iTerm2's default again.
 - **WezTerm**'s config is Lua, so init puts a two-line block that runs
   `~/.config/ttheme/wezterm.lua` just before your config's `return config` (or
   writes a small `wezterm.lua` when there is none); WezTerm reloads it by itself.

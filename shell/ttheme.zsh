@@ -14,14 +14,20 @@ __tt_palettes_load() {
 __tt_fresh() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at
-  local was=$TTHEME_STARTUP
+  local was=$TTHEME_STARTUP start="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   if ! zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null; then
     [[ -e $TTHEME_HOME ]] || __tt_gone
     return 0
   fi
   [[ $at[1] == "$TTHEME_PALETTES_AT" ]] && return 0
-  __tt_palettes_load && __tt_reloaded
+  __tt_palettes_load && { __tt_follow "$start" && __tt_sync; __tt_reloaded }
   [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
+}
+
+__tt_follow() {
+  [[ -n $TTHEME_STARTUP && "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" != "$1" && -z $TTHEME_PAINTED ]] || return 1
+  __tt_active && __tt_takes_default || return 1
+  TTHEME_SPEC=${TTHEME_PALETTE[$TTHEME_STARTUP]}
 }
 
 __tt_gone() {
@@ -304,8 +310,7 @@ __tt_dir_sync() {
   [[ -n $spec && $spec != "$TTHEME_SPEC" ]] || return 0
   __tt_apply "$spec"
   TTHEME_SPEC=$spec
-  __tt_name_of "$spec"
-  __tt_shown "$REPLY" && __tt_reload
+  __tt_sync
 }
 
 __tt_chpwd() {
@@ -314,13 +319,15 @@ __tt_chpwd() {
   __tt_dir_sync
 }
 
-__tt_sync() {
+__tt_worn_shown() {
   local REPLY
-  [[ -n $TTHEME_SPEC ]] || return 0
+  [[ -n $TTHEME_SPEC ]] || return 1
   __tt_name_of "$TTHEME_SPEC"
-  [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || return 0
-  __tt_shown "$REPLY" && __tt_reload
+  [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || return 1
+  __tt_shown "$REPLY" $1
 }
+
+__tt_sync() { ! __tt_worn_shown || __tt_reload }
 
 __tt_precmd() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
@@ -335,12 +342,13 @@ __tt_preexec() {
 }
 
 __tt_rewear() {
-  local REPLY
   __tt_repaint
-  [[ -n $TTHEME_SPEC ]] || { __tt_unshown $1; return 0 }
-  __tt_name_of "$TTHEME_SPEC"
-  [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || return 0
-  __tt_shown "$REPLY" $1 && __tt_reload
+  if [[ -n $TTHEME_SPEC ]]; then
+    __tt_worn_shown $1 && __tt_reload
+  else
+    __tt_unshown $1
+  fi
+  return 0
 }
 
 __tt_focus() {
@@ -1074,10 +1082,11 @@ __tt_pins_map() {
 }
 
 __tt_keep() {
-  local note
+  local note was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   note=$(__tt_cli default "$1") || return 1
-  TTHEME_STARTUP=$1
-  __tt_shown "$1" force
+  [[ -r $TTHEME_HOME/palettes.zsh ]] && __tt_palettes_load && __tt_reloaded
+  __tt_follow "$was"
+  __tt_worn_shown $2
   __tt_reload
   if __tt_color; then
     printf '\033[2m%s\033[0m\n' "${(@f)note}"
@@ -1189,7 +1198,10 @@ __tt_catalog() {
   [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
   was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   __tt_palettes_load && __tt_reloaded
-  [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$was" ]] || __tt_reload
+  [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$was" ]] && return 0
+  __tt_follow "$was"
+  __tt_worn_shown
+  __tt_reload
 }
 
 __tt_switch() {
@@ -1307,13 +1319,11 @@ __tt_next() {
 }
 
 __tt_rotate() {
-  local REPLY spec
+  local REPLY
   __tt_next
-  spec=$REPLY
-  __tt_apply "$spec"
-  TTHEME_SPEC=$spec
-  __tt_name_of "$spec"
-  __tt_shown "$REPLY" force && __tt_reload
+  __tt_apply "$REPLY"
+  TTHEME_SPEC=$REPLY
+  __tt_worn_shown force && __tt_reload
   __tt_announce
 }
 
@@ -2705,7 +2715,7 @@ __tt_preview() {
         __tt_sync
       elif (( picked == 2 )); then
         __tt_announce
-        __tt_keep "$sel"
+        __tt_keep "$sel" force
       else
         __tt_announce
         __tt_shown "$sel" force && __tt_reload
@@ -2733,6 +2743,8 @@ ttheme() {
     print -u2 "ttheme: unknown command '$1' — see \`ttheme help\`"
     return 1
   fi
+  __tt_fresh
+  (( $+functions[ttheme] )) || { print -u2 "ttheme: uninstalled — \`npx @kecan0406/ttheme@latest init\` sets it up again"; return 1 }
   if ! __tt_paints && (( ! $# || ${TTHEME_TAB_VERBS[(Ie)$1]} )); then
     __tt_unpainted
     return 1

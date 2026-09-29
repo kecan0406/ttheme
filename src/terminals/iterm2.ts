@@ -4,6 +4,7 @@ import { backgroundsDir, readBackdrop } from '../backdrop.ts'
 import { iterm2 as emitter } from '../emit/index.ts'
 import { itermProfiles, type ProfileBackground } from '../emit/iterm2.ts'
 import { listed } from '../emit/manifest.ts'
+import type { Installed } from '../palettes.ts'
 import { tilde } from './common.ts'
 import type { Ctx, Defaults, Host, Moment, Wiring } from './types.ts'
 
@@ -11,6 +12,10 @@ export const ITERM_DEFAULT = 'ttheme-default'
 
 export function itermProfilesPath(home: string): string {
   return join(home, 'Library', 'Application Support', 'iTerm2', 'DynamicProfiles', 'ttheme.json')
+}
+
+function keeps(state: Installed): boolean {
+  return state.itermBase !== undefined && state.palettes.length > 0
 }
 
 function profiles(ctx: Ctx): string {
@@ -28,6 +33,7 @@ function profiles(ctx: Ctx): string {
     pictures,
     ctx.themes.find((theme) => theme.name === ctx.startup),
     ctx.state.itermBase,
+    keeps(ctx.state),
   )
 }
 
@@ -36,9 +42,7 @@ function suite(host: Host): string {
 }
 
 function current(host: Host): string | undefined {
-  return host.platform === 'darwin'
-    ? host.run('defaults', ['read', suite(host), 'Default Bookmark Guid']) || undefined
-    : undefined
+  return host.run('defaults', ['read', suite(host), 'Default Bookmark Guid']) || undefined
 }
 
 const defaults: Defaults = {
@@ -54,15 +58,13 @@ const defaults: Defaults = {
       ? take || now === ITERM_DEFAULT
         ? ITERM_DEFAULT
         : undefined
-      : now === ITERM_DEFAULT
+      : now === ITERM_DEFAULT && !keeps(moment.state)
         ? moment.state.itermBase
         : undefined
     if (!want || want === now) {
       return undefined
     }
-    if (moment.host.platform === 'darwin') {
-      moment.host.run('defaults', ['write', suite(moment.host), 'Default Bookmark Guid', '-string', want])
-    }
+    moment.host.run('defaults', ['write', suite(moment.host), 'Default Bookmark Guid', '-string', want])
     return { restart: Boolean(moment.host.run('pgrep', ['-x', 'iTerm2'])) }
   },
 }

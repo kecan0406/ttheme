@@ -67,7 +67,7 @@ export function applyUninstall(plan: UninstallPlan, paths: UninstallPaths, host:
     )
   }
   if (plan.state) {
-    const pointed = pointDefaults(paths.configHome, { ...plan.state, off: true }, false, host, paths.home)
+    const pointed = pointDefaults(paths.configHome, { ...plan.state, off: true, palettes: [] }, false, host, paths.home)
     for (const wiring of wirings(plan.state.terminals)) {
       if (pointed.has(wiring.id)) {
         done.push(`Gave ${wiring.name} its own default profile back — it takes it at its next start`)

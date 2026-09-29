@@ -55,6 +55,7 @@ export function itermProfiles(
   pictures: ReadonlyMap<string, ProfileBackground>,
   startup: Theme | undefined,
   parent?: string,
+  plain = false,
 ): string {
   const profile = (theme: Theme, id: string) => ({
     Name: `ttheme · ${id}`,
@@ -65,8 +66,14 @@ export function itermProfiles(
     ...background(pictures.get(theme.name)),
     ...itermColors(theme),
   })
+  const bare = {
+    Name: 'ttheme · default',
+    Guid: owned('default'),
+    'Dynamic Profile Parent GUID': parent,
+    ...background(undefined),
+  }
   const profiles = [
-    ...(startup ? [profile(startup, 'default')] : []),
+    ...(startup ? [profile(startup, 'default')] : plain && parent ? [bare] : []),
     ...themes.map((theme) => profile(theme, theme.name)),
   ]
   return `${JSON.stringify({ Profiles: profiles }, null, 2)}\n`

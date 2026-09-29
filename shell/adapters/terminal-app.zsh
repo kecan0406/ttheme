@@ -21,6 +21,8 @@ __tt_hear() {
 
 __tt_heard() { TTHEME_TERMINAL_BASE=$1 }
 
+__tt_takes_default() { return 1 }
+
 __tt_osc_reset() {
   [[ -n $TTHEME_TERMINAL_BASE ]] && __tt_osc_apply "$TTHEME_TERMINAL_BASE"
   unset TTHEME_PAINTED

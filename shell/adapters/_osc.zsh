@@ -63,6 +63,8 @@ __tt_unpainted() { : }
 
 __tt_follows_focus() { return 1 }
 
+__tt_takes_default() { return 0 }
+
 __tt_follows_prompt() { return 1 }
 
 __tt_prompted() { : }

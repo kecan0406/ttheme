@@ -6,6 +6,10 @@ __tt_unpainted() {
 
 __tt_keepable() { __tt_paints }
 
+__tt_takes_default() { __tt_osc_reset }
+
+__tt_follows_focus() { return 0 }
+
 __tt_scheme() {
   local -a p=(${=TTHEME_PALETTE[$1]})
   REPLY="ColorScheme=ttheme-${${1/@/--}/\//--};UseCustomCursorColor=true;customCursorColor=$p[3]"
