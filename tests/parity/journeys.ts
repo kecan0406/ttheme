@@ -199,6 +199,29 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'program-reset',
+    about:
+      'a program that resets the tab’s colors on its way out, as nvim does its cursor, leaves the tab in its palette at the next prompt',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use rei')
+      await p.type(a, 'ttheme use miku')
+      await p.type(a, "print -n '\\e]112\\e\\\\\\e]111\\e\\\\'")
+      await p.look('after')
+    },
+  },
+  {
+    id: 'editor-terminal',
+    about:
+      'a shell in an editor’s terminal leaves the tab and its picture alone, and says why ttheme use does nothing there',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use kita')
+      await p.type(a, 'clear; NVIM=/tmp/nvim.sock zsh -ic "ttheme use konata"')
+      await p.look('after', { text: true })
+    },
+  },
+  {
     id: 'preview-hover',
     about: 'preview repaints the tab as the cursor moves, and esc puts everything back',
     async run(p) {

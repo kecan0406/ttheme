@@ -9,7 +9,7 @@ typeset -g WORK=$(mktemp -d)
 typeset -g BUF="" FD="" MAIN="" TERMINAL=""
 typeset -gi MARK=0
 typeset -ga EXTRA=()
-typeset -gA ASKED=()
+typeset -gA ASKED=() SHOWN=()
 typeset -ga METRICS=(first_prompt first_command command input)
 typeset -gA LIMIT=(first_prompt 50 first_command 150 command 10 input 20)
 typeset -g FORKS=$ROOT/tests/forks.tsv
@@ -47,10 +47,16 @@ home() {
 }
 
 answer() {
-  local p out=""
+  local p out="" c k
   for p in "${(@ps:\e:)1}"; do
     case $p in
-      \](<->|4\;<->)\;\?*) out+=$'\e'"${p%%\?*}rgb:1e1e/1e1e/2e2e"$'\e\\'; ASKED[$2]=1 ;;
+      \](<->|4\;<->)\;\?*)
+        c=${${SHOWN[${${p#\]}%%\;\?*}]:-#1e1e2e}#\#}
+        out+=$'\e'"${p%%\?*}rgb:${c[1,2]}${c[1,2]}/${c[3,4]}${c[3,4]}/${c[5,6]}${c[5,6]}"$'\e\\'
+        ASKED[$2]=1 ;;
+      \](<->|4\;<->)\;\#[[:xdigit:]](#c6)*) SHOWN[${${p#\]}%%\;\#*}]=\#${(L)${p##*\#}[1,6]} ;;
+      \]1(10|11|12|17)*) unset "SHOWN[${${p#\]1}[1,2]}]" ;;
+      \]104*) for k in ${(k)SHOWN[(I)4;*]}; do unset "SHOWN[$k]"; done ;;
       \[5n*) out+=$'\e[0n' ;;
       \[16t*) out+=$'\e[6;16;8t' ;;
     esac
@@ -77,7 +83,7 @@ start() {
   local -a env=(PATH=$PATH HOME=$h ZDOTDIR=$h XDG_CONFIG_HOME=$h/.config XDG_STATE_HOME=$h/.state XDG_CACHE_HOME=$h/.cache TERM=xterm-256color $EXTRA)
   [[ -n $term ]] || { [[ $name == (ref-|)terminal-app ]] && term=terminal-app || term=ghostty }
   env+=(${=IDENTITY[$term]})
-  BUF="" ASKED[$name]=0
+  BUF="" ASKED[$name]=0 SHOWN=()
   zpty -d sh 2>/dev/null || :
   typeset -gF T0=$EPOCHREALTIME
   zpty -b sh env -i ${(q)env} zsh -i
@@ -358,6 +364,12 @@ traced() {
       forked $name
       counts+=($REPLY)
     done
+  else
+    mark $name
+    step "print -n '\\e]112\\e\\\\'"$'\r' $name
+    step $'\r' $name
+    forked $name
+    counts+=($REPLY)
   fi
   zpty -d sh
   TERMINAL="" EXTRA=()
@@ -367,7 +379,7 @@ traced() {
 focused() { grep -qxF '__tt_follows_focus() { return 0 }' $ROOT/shell/adapters/$1.zsh }
 
 forks() {
-  local -a upd head terms journeys base counts row out
+  local -a upd head terms journeys base painted counts row out
   local -A want got
   local term journey line cell expect mark focus
   local -i i more=0 less=0
@@ -383,6 +395,8 @@ forks() {
   home fork off
   traced fork-base ghostty off || return 1
   base=($reply)
+  traced fork-base ghostty seq || return 1
+  painted=($reply)
   for term in $terms; do
     focus=""
     focused $term && focus=1
@@ -395,6 +409,7 @@ forks() {
     got[cd.$term]=$(( counts[-1] - base[3] ))
     traced fork $term seq || return 1
     got[start-seq.$term]=$(( reply[1] - base[1] ))
+    got[mend.$term]=$(( reply[2] - painted[2] ))
   done
   if (( $#upd )); then
     out=("${(pj:\t:)head}")
@@ -425,7 +440,7 @@ forks() {
     done
     print
   done
-  print -r -- "processes a shell with ttheme starts beyond a bare zsh, counted from its xtrace: a warm new tab (start, start-seq), an empty command, a focus-in, a cd"
+  print -r -- "processes a shell with ttheme starts beyond a bare zsh, counted from its xtrace: a warm new tab (start, start-seq), an empty command, a focus-in, a cd, and a command that resets a painted tab's cursor (mend)"
   (( more )) && print -u2 "✗: a hot path starts a process again that $FORKS says it does not — find the new \$(…) or external command"
   (( less )) && print -u2 "+: fewer processes than $FORKS — lock the win in with \`mise run forks --update\`"
   (( more + less == 0 ))

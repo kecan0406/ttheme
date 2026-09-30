@@ -26,6 +26,8 @@ __tt_unpainted() {
 
 __tt_keepable() { return 0 }
 
+__tt_reverts() { return 1 }
+
 __tt_follows_prompt() { return 0 }
 
 __tt_prompted() {

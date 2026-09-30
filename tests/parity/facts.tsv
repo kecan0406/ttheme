@@ -91,6 +91,15 @@ prompt-behind.front.colors	konata	=	=	=	=	=	=	=	own
 prompt-behind.front.picture	konata	=	=	none	=	none	=	none	none
 prompt-behind.front.wears	konata	=	=	=	=	=	=	=	none
 prompt-behind.front.issue	-	=	=	=	=	=	=	=	=
+program-reset.after.colors	miku	bg:rei fg:miku cursor:rei ansi:miku	=	=	=	=	=	=	=
+program-reset.after.picture	none	=	=	=	=	=	=	=	=
+program-reset.after.wears	miku	=	=	=	=	=	=	=	=
+program-reset.after.issue	-	=	=	=	=	=	=	=	=
+editor-terminal.after.colors	kita	=	=	=	=	=	=	=	=
+editor-terminal.after.picture	kita	=	=	none	=	none	=	none	none
+editor-terminal.after.wears	kita	=	=	=	=	=	=	=	=
+editor-terminal.after.text	txt:1b7974a0e0	=	=	=	=	=	=	=	=
+editor-terminal.after.issue	-	=	=	=	=	=	=	=	=
 preview-hover.hover.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
 preview-hover.hover.picture	kita	=	=	none	=	none	=	none	none
 preview-hover.hover.text	txt:f1eff9d4c5	=	=	txt:206a6958b4	=	txt:206a6958b4	=	txt:206a6958b4	txt:206a6958b4

@@ -89,6 +89,50 @@ with its reason in
 [`tests/parity/gaps.tsv`](../tests/parity/gaps.tsv): what the terminal cannot
 express, what ttheme could still close, and what was left out on purpose.
 
+## Editors
+
+An editor's colorscheme and ttheme share the screen without overlapping.
+Neovim 0.10 or newer turns `termguicolors` on wherever the terminal speaks
+truecolor and then paints every cell of its window itself, so its colorscheme
+decides what the editor looks like and the palette shows only around it — in
+the window's padding, and behind a colorscheme with a transparent background,
+whose text colors were chosen for a background of its own. Neovim also asks the
+terminal for its background when it starts and sets `background` to `dark` or
+`light` from it, so a colorscheme with both variants follows the palette the
+tab wears.
+
+- **Resets** — Neovim resets the cursor color (OSC 112) whenever you enter or
+  leave a `:terminal`, with its default settings, and on its way out when
+  `guicursor` names a colored highlight; a background sync such as mini.nvim's
+  `setup_termbg_sync()` resets the background (OSC 111) on its way out. A
+  reset takes a tab back to the terminal's own colors, so after each command a
+  tab that wears a palette asks the terminal for its background and cursor and
+  repaints itself when either changed — in Ghostty, kitty, Alacritty, WezTerm
+  and Windows Terminal, about a quarter of a millisecond in Ghostty.
+  Terminal.app and Konsole ignore the resets. iTerm2 is left out, since it
+  answers only on its next frame (up to 20 ms after a command, measured): a
+  reset there takes the tab back to its profile's colors until the next
+  `ttheme use`. mini.nvim's `setup_termbg_sync({ explicit_reset = true })`
+  puts back the exact background it found instead, which is the palette's.
+- **A shell in an editor's terminal** — a shell started in Neovim's or Vim's
+  `:terminal`, in Emacs or in VS Code inherits the variables that name your
+  terminal, but the editor draws that terminal in its own theme. The shell
+  layer recognizes it (`$NVIM`, `$VIM_TERMINAL`, `$INSIDE_EMACS`,
+  `TERM_PROGRAM=vscode`) and stays out: it paints nothing, leaves the picture
+  of the tab around it alone, and `ttheme use` there says to use a tab outside
+  the editor.
+- **256 colors** — ttheme sets a palette's 16 ANSI colors and leaves the other
+  240 at the values every terminal ships, so a colorscheme written for the
+  256-color palette (Vim without `termguicolors`, tmux's `colour` numbers)
+  looks the way its author made it.
+- **The frame** — with an opaque colorscheme, the window's padding still shows
+  the palette's background and picture. In Ghostty,
+  `window-padding-color = extend` carries the editor's edge colors into the
+  padding instead.
+- **Following the palette** — Neovim's default colorscheme uses only the 16
+  ANSI colors once truecolor is off, so `set notermguicolors` makes the editor
+  wear the tab's palette, a different one per tab, with the picture behind it.
+
 ## Notes per terminal
 
 WezTerm keeps an OSC-set palette per pane, but a picture belongs to the window:

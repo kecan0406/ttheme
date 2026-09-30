@@ -74,6 +74,8 @@ __tt_paints() { return 0 }
 
 __tt_unpainted() { : }
 
+__tt_reverts() { return 0 }
+
 __tt_follows_focus() { return 1 }
 
 __tt_takes_default() { return 0 }
@@ -188,8 +190,18 @@ __tt_start_bg() {
   [[ -n $REPLY ]]
 }
 
+__tt_colors() {
+  local e
+  local -a p
+  for e in ${(ps:\e]:)1}; do
+    [[ $e == *';rgb:'* ]] || continue
+    p=(${(s:/:)${${e#*rgb:}%%[^0-9A-Fa-f/]*}})
+    (( ${#p} >= 3 )) && got[${e%%;rgb:*}]="#${(L)p[1][1,2]}${(L)p[2][1,2]}${(L)p[3][1,2]}"
+  done
+}
+
 __tt_query_bg() {
-  local resp
+  local -A got
   REPLY=""
   if (( TTHEME_TMUX )); then
     REPLY=$(tmux show -qv @ttheme_bg 2>/dev/null)
@@ -197,10 +209,7 @@ __tt_query_bg() {
     REPLY=""
   fi
   __tt_ask $'\e]11;?\e\\' || return 1
-  resp=$REPLY
-  REPLY=""
-  [[ $resp == *rgb:* ]] || return 1
-  local -a parts=(${(s:/:)${${resp#*rgb:}%%[^0-9A-Fa-f/]*}})
-  (( ${#parts} >= 3 )) || return 1
-  REPLY="#${(L)parts[1]:0:2}${(L)parts[2]:0:2}${(L)parts[3]:0:2}"
+  __tt_colors "$REPLY"
+  REPLY=$got[11]
+  [[ -n $REPLY ]]
 }

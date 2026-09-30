@@ -5,9 +5,25 @@ import { owned } from './theme.ts'
 
 type Env = Record<string, string | undefined>
 
-export type Terminal = Wired | 'terminal-app' | 'foot' | 'unknown'
+export type Terminal = Wired | 'terminal-app' | 'foot' | 'editor' | 'unknown'
+
+export function editorOf(env: Env): string | undefined {
+  if (env.NVIM) {
+    return 'nvim'
+  }
+  if (env.VIM_TERMINAL) {
+    return 'vim'
+  }
+  if (env.INSIDE_EMACS) {
+    return 'emacs'
+  }
+  return env.TERM_PROGRAM === 'vscode' ? 'vscode' : undefined
+}
 
 export function detectTerminal(env: Env): Terminal {
+  if (editorOf(env)) {
+    return 'editor'
+  }
   if (env.TERM_PROGRAM === 'WarpTerminal') {
     return 'warp'
   }
@@ -93,6 +109,7 @@ export const TRAITS: Record<Terminal, Traits> = {
   foot: { links: true, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
   'terminal-app': { links: false, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
   warp: { links: false, pictures: true, bands: true, files: false, moves: false, layers: false, paints: false },
+  editor: { links: false, pictures: false, bands: false, files: true, moves: true, layers: true, paints: false },
   unknown: { links: false, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
 }
 

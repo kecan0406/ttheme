@@ -27,7 +27,14 @@ test('Konsole spells its version out of KONSOLE_VERSION', () => {
 
 test('an unknown terminal names its TERM_PROGRAM and an ssh session says so', () => {
   assert.equal(
-    describeTerminal({ TERM_PROGRAM: 'vscode', SSH_TTY: '/dev/pts/0' }),
-    'unknown (TERM_PROGRAM=vscode) · tmux no · ssh yes',
+    describeTerminal({ TERM_PROGRAM: 'Hyper', SSH_TTY: '/dev/pts/0' }),
+    'unknown (TERM_PROGRAM=Hyper) · tmux no · ssh yes',
+  )
+})
+
+test('a shell in an editor’s terminal names the editor, not the terminal whose variables it inherited', () => {
+  assert.equal(
+    describeTerminal({ NVIM: '/tmp/nvim.sock', TERM_PROGRAM: 'ghostty', GHOSTTY_RESOURCES_DIR: '/x' }),
+    'editor (nvim) · tmux no · ssh no',
   )
 })

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { arch, platform, release } from 'node:os'
 import pkg from '../package.json' with { type: 'json' }
 import { configHome, readInstalled } from './palettes.ts'
-import { detectTerminal, type Terminal } from './terminal.ts'
+import { detectTerminal, editorOf, type Terminal } from './terminal.ts'
 import { SETTING_NAMES, settingDefault } from './wiring.ts'
 
 type Env = Record<string, string | undefined>
@@ -31,7 +31,9 @@ export function describeTerminal(env: Env): string {
   const name =
     terminal === 'unknown'
       ? `unknown${program ? ` (TERM_PROGRAM=${program})` : ''}`
-      : `${terminal} ${terminalVersion(terminal, env) ?? '(version unknown)'}`
+      : terminal === 'editor'
+        ? `editor (${editorOf(env)})`
+        : `${terminal} ${terminalVersion(terminal, env) ?? '(version unknown)'}`
   const tmuxVersion = env.TERM_PROGRAM === 'tmux' ? env.TERM_PROGRAM_VERSION : undefined
   return [
     name,

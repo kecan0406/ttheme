@@ -423,7 +423,7 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
   assert.deepEqual({ ...written[0], Name: 0, Guid: 0 }, { ...written[2], Name: 0, Guid: 0 })
   assert.match(readFileSync(join(configHome, 'ttheme', 'palettes.zsh'), 'utf8'), /^typeset -g TTHEME_STARTUP=geto$/m)
   assert.equal(gojo['Use Separate Colors for Light and Dark Mode'], false)
-  assert.equal(gojo['Harmonize 256 Colors'], true)
+  assert.equal('Harmonize 256 Colors' in gojo, false)
   assert.equal(gojo['Background Image Location'], '')
   assert.deepEqual(gojo['Background Color'], {
     'Alpha Component': 1,

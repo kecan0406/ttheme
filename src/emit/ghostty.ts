@@ -13,7 +13,6 @@ export const ghostty: Emitter = {
       `selection-background = ${theme.selectionBackground}`,
       `selection-foreground = ${theme.foreground}`,
       ...theme.ansi.map((c, i) => `palette = ${i}=${c}`),
-      'palette-generate = true',
       '',
       'macos-icon = custom-style',
       `macos-icon-ghost-color = ${theme.ghostty.iconGhost}`,

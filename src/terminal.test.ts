@@ -47,11 +47,16 @@ const ENVS: Record<string, string>[] = [
   { KONSOLE_VERSION: '230805', WT_SESSION: 'a-b' },
   { KONSOLE_VERSION: '230805', ITERM_SESSION_ID: 'w0' },
   { ALACRITTY_WINDOW_ID: '2', KONSOLE_VERSION: '230805' },
+  { NVIM: '/tmp/nvim.sock', TERM_PROGRAM: 'ghostty', GHOSTTY_RESOURCES_DIR: '/x' },
+  { VIM_TERMINAL: '901', KITTY_WINDOW_ID: '1' },
+  { INSIDE_EMACS: 'vterm', ITERM_SESSION_ID: 'w0', TERM_PROGRAM: 'iTerm.app' },
+  { TERM_PROGRAM: 'vscode', GHOSTTY_RESOURCES_DIR: '/x' },
+  { WT_SESSION: 'a-b', TERM_PROGRAM: 'Hyper' },
 ]
 
 test('detectTerminal answers what the shell layer detects, for every terminal and their overlaps', () => {
   const layer = read('shell', 'ttheme.zsh')
-  const from = layer.indexOf('if [[ $TERM_PROGRAM == WarpTerminal ]]')
+  const from = layer.indexOf('if [[ -n $NVIM ')
   const indent = layer.slice(layer.lastIndexOf('\n', from) + 1, from)
   const block = layer.slice(from, layer.indexOf(`\n${indent}fi\n`, from) + indent.length + 3)
   assert.ok(from >= 0 && block.endsWith(`\n${indent}fi`), 'the adapter detection block moved')
@@ -63,7 +68,11 @@ test('detectTerminal answers what the shell layer detects, for every terminal an
     assert.equal(shell.stdout, detectTerminal(env), JSON.stringify(env))
   }
   assert.equal(detectTerminal({ TERM_PROGRAM: 'WarpTerminal', GHOSTTY_RESOURCES_DIR: '/x' }), 'warp')
-  assert.equal(detectTerminal({ WT_SESSION: 'a-b', TERM_PROGRAM: 'vscode' }), 'unknown')
+  assert.equal(detectTerminal({ WT_SESSION: 'a-b', TERM_PROGRAM: 'Hyper' }), 'unknown')
+  assert.equal(
+    detectTerminal({ NVIM: '/tmp/nvim.sock', TERM_PROGRAM: 'ghostty', GHOSTTY_RESOURCES_DIR: '/x' }),
+    'editor',
+  )
 })
 
 test('the shell adapters open find and repaint in part exactly where TRAITS says', () => {
@@ -100,7 +109,7 @@ test('the shared layer names a terminal only to detect it, and an adapter names 
   const terminals = Object.keys(TRAITS).filter((t) => t !== 'unknown')
   const named = (text: string) => terminals.filter((t) => new RegExp(String.raw`(?<![\w-])${t}(?![\w-])`).test(text))
   const layer = read('shell', 'ttheme.zsh')
-  const from = layer.indexOf('if [[ $TERM_PROGRAM == WarpTerminal ]]')
+  const from = layer.indexOf('if [[ -n $NVIM ')
   const to = layer.indexOf('typeset -g TTHEME_ADAPTER=unknown')
   assert.deepEqual(named(layer.slice(0, from) + layer.slice(to)), [])
   for (const shared of ['_osc.zsh', '_bg.zsh']) {

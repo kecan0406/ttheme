@@ -180,6 +180,9 @@ Nothing is emulated — a terminal that cannot express something does not get it
 Any other terminal that speaks OSC 4/10/11 gets runtime repainting. A default
 set, a palette added or a picture tuned in one terminal reaches every other one
 you wired. Why each cell is what it is: [docs/terminals.md](docs/terminals.md).
+An editor such as Neovim keeps its own colorscheme inside its window — how the
+two share the screen, and how to let Neovim wear the palette instead:
+[docs/terminals.md#editors](docs/terminals.md#editors).
 
 ## Background pictures
 

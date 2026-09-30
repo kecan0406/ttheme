@@ -48,7 +48,7 @@ __tt_gone() {
   __tt_reload
   __tt_reset_reloaded $bg
   print -n $'\e[?1004l'
-  for hook in precmd:__tt_prompt precmd:__tt_precmd precmd:__tt_prompted precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_mux chpwd:__tt_chpwd; do
+  for hook in precmd:__tt_prompt precmd:__tt_precmd precmd:__tt_prompted precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_ran chpwd:__tt_chpwd; do
     add-zsh-hook -d ${hook%%:*} ${hook#*:}
   done
   (( $+functions[add-zle-hook-widget] )) && add-zle-hook-widget -d line-init __tt_line_init
@@ -124,7 +124,9 @@ typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
 () {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  if [[ $TERM_PROGRAM == WarpTerminal ]]; then
+  if [[ -n $NVIM || -n $VIM_TERMINAL || -n $INSIDE_EMACS || $TERM_PROGRAM == vscode ]]; then
+    typeset -g TTHEME_ADAPTER=editor
+  elif [[ $TERM_PROGRAM == WarpTerminal ]]; then
     typeset -g TTHEME_ADAPTER=warp
   elif [[ -n $GHOSTTY_RESOURCES_DIR || $TERM_PROGRAM == ghostty ]]; then
     typeset -g TTHEME_ADAPTER=ghostty
@@ -163,7 +165,7 @@ __tt_active() {
 }
 
 typeset -g TTHEME_HEARD=""
-typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0 TTHEME_FRONT=-1
+typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0 TTHEME_FRONT=-1 TTHEME_RAN=0
 
 __tt_put() {
   local f=${1:A}
@@ -235,6 +237,18 @@ __tt_recheck() {
     TTHEME_SPEC=$REPLY
     __tt_sync
   fi
+}
+
+__tt_mend() {
+  local REPLY
+  local -a p=(${(L)=TTHEME_SPEC})
+  local -A got
+  TTHEME_RAN=0
+  [[ -n $TTHEME_PAINTED ]] && (( ${#p} >= 20 )) && __tt_reverts || return 0
+  __tt_ask $'\e]11;?\e\\\e]12;?\e\\' || return 0
+  __tt_colors "$REPLY"
+  [[ $p[1] == - || ${got[11]:-$p[1]} == $p[1] ]] && [[ ${got[12]:-$p[3]} == $p[3] ]] && return 0
+  __tt_apply "$TTHEME_SPEC"
 }
 
 source $TTHEME_HOME/adapters/_osc.zsh
@@ -381,8 +395,9 @@ __tt_focus() {
   fi
 }
 
-__tt_mux() {
+__tt_ran() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  TTHEME_RAN=1
   [[ ${${(z)3}[1]:t} == tmux ]] && TTHEME_MUXED=1
 }
 
@@ -402,6 +417,7 @@ __tt_blur() {
 __tt_line_init() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   (( TTHEME_RECHECK )) && __tt_recheck
+  (( TTHEME_RAN )) && __tt_mend
   __tt_typed
   (( TTHEME_FOCUS )) && __tt_focus_on
 }
@@ -2859,7 +2875,7 @@ fi
   add-zsh-hook chpwd __tt_chpwd
   add-zsh-hook precmd __tt_prompt
   if (( ! TTHEME_TMUX )); then
-    add-zsh-hook preexec __tt_mux
+    add-zsh-hook preexec __tt_ran
     add-zsh-hook precmd __tt_unmux
   fi
   if __tt_follows_focus || (( TTHEME_TMUX )); then

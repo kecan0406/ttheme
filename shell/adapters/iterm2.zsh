@@ -7,6 +7,8 @@ fi
 
 __tt_keepable() { return 0 }
 
+__tt_reverts() { return 1 }
+
 __tt_follows_focus() { return 0 }
 
 __tt_takes_default() {

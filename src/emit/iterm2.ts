@@ -62,7 +62,6 @@ export function itermProfiles(
     Guid: owned(id),
     ...(parent ? { 'Dynamic Profile Parent GUID': parent } : {}),
     'Use Separate Colors for Light and Dark Mode': false,
-    'Harmonize 256 Colors': true,
     ...background(pictures.get(theme.name)),
     ...itermColors(theme),
   })
