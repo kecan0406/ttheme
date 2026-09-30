@@ -33,12 +33,13 @@ import { warpSettings } from './terminals/warp.ts'
 import { windowsAppData } from './terminals/windows-terminal.ts'
 import { marketOf } from './theme.ts'
 import { warpLive } from './warp-live.ts'
-import { configFile, upsertBlock, zshrcBlock } from './wiring.ts'
+import { configFile, settingValue, upsertBlock, withSetting, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {
   terminals: Wired[]
   palettes: string[]
   off?: boolean
+  warpFast?: boolean
 }
 
 export interface InitPaths extends Setup {
@@ -80,7 +81,11 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const edits: InitPlan['edits'] = [{ file: join(paths.zdotdir, '.zshrc'), block: zshrcBlock(home) }]
   const configPath = join(home, 'config.zsh')
   const seeded = configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : '')
-  const settings = { file: configPath, content: seeded }
+  const settings = {
+    file: configPath,
+    content:
+      opts.warpFast === undefined ? seeded : withSetting(seeded, 'TTHEME_WARP_FAST', opts.warpFast ? 'on' : 'off'),
+  }
   const installed: Installed = {
     terminals: opts.terminals,
     palettes: opts.palettes,
@@ -248,6 +253,16 @@ async function askTerminals(detected: string, preselected: Wired[], paths: InitP
   )
 }
 
+async function askWarpFast(configHome: string): Promise<boolean> {
+  return accepted(
+    await p.confirm({
+      message:
+        "Switch Warp to each tab's palette in about 0.2 s instead of 0.6 s?\nAbout 8% CPU while Warp is in front with tabs of different palettes — `ttheme config` changes it",
+      initialValue: settingValue(configHome, 'TTHEME_WARP_FAST') !== 'off',
+    }),
+  )
+}
+
 function verify(plan: InitPlan): void {
   const missing = [
     ...plan.copies.filter((c) => !existsSync(c.to)).map((c) => c.to),
@@ -411,6 +426,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     }
   }
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
+  const warpFast = terminals.includes('warp') ? await askWarpFast(configHome) : undefined
   const catalog = existing ? againCatalog(existing, paths) : loadManifest(root)
   const palettes = existing
     ? await pickPalettes(catalog, existing.palettes, 'palette', true)
@@ -430,7 +446,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       initialValue: existing ? !existing.off : true,
     }),
   )
-  const opts: InitOptions = { terminals, palettes, off: !wear }
+  const opts: InitOptions = { terminals, palettes, off: !wear, warpFast }
   const plan = existing ? planAgain(existing, opts, paths) : planInit(opts, paths)
   p.note(
     [

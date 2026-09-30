@@ -118,6 +118,8 @@ __tt_pins_load
 
 : ${TTHEME_BG_COLORS:=tone}
 
+: ${TTHEME_WARP_FAST:=on}
+
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
 () {
@@ -2202,7 +2204,7 @@ __tt_pv_draw() {
   split=$(( sw > 0 )) sc=$(( pw - 1 - sw ))
   h=$(( ph - 5 ))
   [[ -n $tune ]] && (( ! split )) && h=$(( ph - 14 ))
-  (( conf && ! split )) && h=$(( ph - 12 ))
+  (( conf && ! split )) && h=$(( ph - 6 - ${#cvars} ))
   reach=()
   if [[ -n $pick && $mode == pin ]]; then
     if (( split )); then
@@ -2351,8 +2353,8 @@ __tt_pv_draw() {
       __tt_pv_head $(( ph - 10 )) 1 $lw $tune "$REPLY" $state
       __tt_pv_bg_panel $tpick $(( ph - 9 )) 1 $lw
     elif (( conf )); then
-      __tt_pv_head $(( ph - 8 )) 1 $lw Config
-      __tt_pv_conf_panel $(( ph - 7 )) 1 $lw
+      __tt_pv_head $(( ph - 2 - ${#cvars} )) 1 $lw Config
+      __tt_pv_conf_panel $(( ph - 1 - ${#cvars} )) 1 $lw
     fi
     (( help )) && __tt_pv_help
   fi
@@ -2663,6 +2665,7 @@ __tt_preview() {
     TTHEME_BG_COLORS:tone "New pictures are tinted in one color of the palette"
     TTHEME_BG_COLORS:original "New pictures keep their own colors"
   )
+  __tt_pv_conf_rows
   [[ $mode == pin ]] && __tt_pin_scopes "$pdir"
   [[ $mode == init ]] && pkdef=2
   __tt_pv_canpick

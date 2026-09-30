@@ -82,6 +82,8 @@ __tt_follows_prompt() { return 1 }
 
 __tt_prompted() { : }
 
+__tt_pv_conf_rows() { : }
+
 __tt_pv_bg_open() { : }
 
 __tt_pv_bg_show() { : }

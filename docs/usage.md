@@ -72,12 +72,16 @@ there, always names the mode (`PREVIEW`, `PREVIEW (FILTER)`, `IMAGE EDIT`,
 `CONFIG`, `PREVIEW (APPLY)`, `PREVIEW (PIN)`, `HELP`) and pins where esc goes
 to the right; `?` shows all of them.
 In Warp, which wears one theme for the whole app, the tab in front decides it:
-preview switches that theme as the focus moves — every Warp window at once,
-about 0.6 s behind — and so do `ttheme use`, `next` and a pin, while switching
-tabs or windows puts on the palette of the one you switch to.
+preview switches that theme as the focus moves — every Warp window at once —
+and so do `ttheme use`, `next` and a pin, while switching tabs or windows puts
+on the palette of the one you switch to. Warp itself takes about 0.6 s to show
+a change; with `TTHEME_WARP_FAST` on (the default) it takes about 0.2 s while
+your tabs wear different palettes, and for 3 s after the tab in front changes
+its own, so preview's second palette onwards shows that fast too.
 alt-c opens the [settings](#settings) in place — `↑`/`↓` pick one, `←`/`→` change it
 (the sort and the search hint animation change live), enter writes the changed
-lines to `config.zsh`, esc puts every value back. From 76
+lines to `config.zsh`, esc puts every value back. In Warp, a `Warp tabs` row
+turns `TTHEME_WARP_FAST` on and off. From 76
 columns on, a sample sits against the right edge of the window in the palette
 under the cursor — the 16 colors over one of five scenes, a shell session, code,
 a diff, logs and a process monitor, named in a strip above it; ⇧←→ switch
@@ -208,6 +212,7 @@ still wins:
 | `TTHEME_SORT` | `abc` | `series` lists series and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `tone` | the colors a new background picture is drawn in: `tone` tints it in one color of its palette, `original` keeps its own colors. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `tone` and `original`. Like the blur, it is read from `config.zsh` itself |
+| `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and alt-c in `preview`, run in Warp, has a `Warp tabs` row for it |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
 | `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |

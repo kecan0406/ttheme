@@ -125,7 +125,7 @@ preview-tune.back.wears	konata	=	=	=	=	=	=	=	none
 preview-tune.back.issue	-	=	=	=	=	=	=	=	=
 preview-config.panel.colors	konata	=	=	=	=	=	=	=	own
 preview-config.panel.picture	konata	=	=	none	=	none	=	none	none
-preview-config.panel.text	txt:28af58028a	=	=	=	=	=	=	=	txt:d34f9a0e16
+preview-config.panel.text	txt:28af58028a	=	=	=	=	=	txt:65b4d4041c	=	txt:d34f9a0e16
 preview-config.panel.issue	-	=	=	=	=	=	=	=	=
 preview-config.back.colors	konata	=	=	=	=	=	=	=	own
 preview-config.back.picture	konata	=	=	none	=	none	=	none	none

@@ -36,3 +36,4 @@ terminal-app	new-tab.open.text	deferred	ttheme does not wire Terminal.app, so a 
 terminal-app	browse.hover.text	deferred	ttheme does not wire Terminal.app, so the tab browse opens in wears no palette to announce above it
 terminal-app	picture-tune.other.opacity	cannot	Terminal.app has no graphics protocol, so it shows no picture
 terminal-app	reach-picture.ghostty.opacity	cannot	Terminal.app preview has no picture tuning, so no tuned picture leaves it for Ghostty
+warp	preview-config.panel.text	cannot	Warp reloads its settings only half a second after they change, so its config panel carries a Warp tabs row for TTHEME_WARP_FAST, which keeps that reload warm

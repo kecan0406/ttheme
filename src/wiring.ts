@@ -61,6 +61,10 @@ const CONFIG_SETTINGS = {
     doc: '# the colors new background pictures are drawn in: tone tints a picture in one color of its palette, original keeps its own — preview switches each picture later (default tone)',
     default: 'tone',
   },
+  TTHEME_WARP_FAST: {
+    doc: '# Warp tab switches: on keeps Warp rereading its settings while it is in front with tabs of different palettes, so the tab you switch to shows its palette in about 0.2 s instead of 0.6 s — about 8% CPU meanwhile; off leaves it to Warp (default on)',
+    default: 'on',
+  },
   TTHEME_FIND_RATING: {
     doc: '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',
     default: 'safe',
@@ -148,23 +152,22 @@ export const SETTING_NAMES = Object.keys(CONFIG_SETTINGS)
 
 export const BLUR_MOST = 8
 
-export function blurOf(configHome: string): number {
+export function settingValue(configHome: string, name: keyof typeof CONFIG_SETTINGS): string {
   let text = ''
   try {
     text = readFileSync(join(configHome, 'ttheme', 'config.zsh'), 'utf8')
   } catch {}
-  const raw = /^: \$\{TTHEME_BG_BLUR:=([^}\n]*)\}/m.exec(text)?.[1] ?? CONFIG_SETTINGS.TTHEME_BG_BLUR.default
-  const value = Number(raw.replace(/^(["'])(.*)\1$/, '$2'))
+  const raw = new RegExp(String.raw`^: \$\{${name}:=([^}\n]*)\}`, 'm').exec(text)?.[1] ?? CONFIG_SETTINGS[name].default
+  return raw.replace(/^(["'])(.*)\1$/, '$2')
+}
+
+export function blurOf(configHome: string): number {
+  const value = Number(settingValue(configHome, 'TTHEME_BG_BLUR'))
   return Number.isFinite(value) ? Math.min(BLUR_MOST, Math.max(0, value)) : 0
 }
 
 export function coloringFor(configHome: string): Coloring {
-  let text = ''
-  try {
-    text = readFileSync(join(configHome, 'ttheme', 'config.zsh'), 'utf8')
-  } catch {}
-  const raw = /^: \$\{TTHEME_BG_COLORS:=([^}\n]*)\}/m.exec(text)?.[1] ?? CONFIG_SETTINGS.TTHEME_BG_COLORS.default
-  return raw.replace(/^(["'])(.*)\1$/, '$2') === 'original' ? 'original' : 'tone'
+  return settingValue(configHome, 'TTHEME_BG_COLORS') === 'original' ? 'original' : 'tone'
 }
 
 export function configTemplate(): string {

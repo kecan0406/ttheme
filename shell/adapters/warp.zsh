@@ -2,8 +2,9 @@ source $TTHEME_HOME/adapters/_bg.zsh
 
 typeset -g TTHEME_WARP_SETTINGS=$HOME/.warp/settings.toml TTHEME_WARP_THEMES=$HOME/.warp/themes TTHEME_WARP_WORN=""
 typeset -g TTHEME_WARP_TABS=$TTHEME_STATE_DIR/warp TTHEME_WARP_DB="" TTHEME_WARP_ID="" TTHEME_WARP_LAST="" TTHEME_WARP_SEEN=""
-typeset -g TTHEME_WARP_SHOWING="" TTHEME_WARP_VIEW=""
-typeset -gi TTHEME_WARP_VIEWS=0 TTHEME_WARP_BUSY=0 TTHEME_WARP_FOLLOWS=-1 TTHEME_WARP_TICK=0
+typeset -g TTHEME_WARP_SHOWING="" TTHEME_WARP_VIEW="" TTHEME_WARP_CODE="" TTHEME_WARP_RECORDS=""
+typeset -gi TTHEME_WARP_VIEWS=0 TTHEME_WARP_BUSY=0 TTHEME_WARP_FOLLOWS=-1 TTHEME_WARP_UP=0 TTHEME_WARP_SQLPID=0 TTHEME_WARP_MIXED=0
+typeset -gF TTHEME_WARP_WARM=0 TTHEME_WARP_PRIMED=0 TTHEME_WARP_LIVED=0
 typeset -ga TTHEME_WARP_LAID=()
 typeset -g TTHEME_WARP_SQL='with t as (select id, window_id, row_number() over (partition by window_id order by id) - 1 as ix from tabs) select lower(hex(p.uuid)) from app a join windows w on w.id = a.active_window_id join t on t.window_id = w.id and t.ix = w.active_tab_index join pane_nodes n on n.tab_id = t.id and n.is_leaf join pane_leaves l on l.pane_node_id = n.id and l.is_focused join terminal_panes p on p.id = n.id'
 if [[ $OSTYPE != darwin* ]]; then
@@ -194,8 +195,48 @@ __tt_warp_follow() {
 
 __tt_warp_active() {
   setopt localoptions extendedglob
-  REPLY=$(sqlite3 -readonly -cmd '.timeout 300' $TTHEME_WARP_DB $TTHEME_WARP_SQL 2>/dev/null)
-  [[ $REPLY == [0-9a-f](#c32) ]]
+  local line
+  REPLY=""
+  if (( ! TTHEME_WARP_SQLPID )) || ! kill -0 $TTHEME_WARP_SQLPID 2>/dev/null; then
+    coproc sqlite3 -readonly -batch -cmd '.timeout 300' $TTHEME_WARP_DB 2>/dev/null
+    TTHEME_WARP_SQLPID=$!
+  fi
+  if print -rp -- "$TTHEME_WARP_SQL; select 'end';" 2>/dev/null; then
+    while read -rp -t 1 line; do
+      [[ $line == end ]] && { [[ $REPLY == [0-9a-f](#c32) ]]; return }
+      REPLY=$line
+    done
+  fi
+  TTHEME_WARP_SQLPID=0 REPLY=""
+  return 1
+}
+
+__tt_warp_stamp() {
+  local -a at
+  zstat -F %s.%N -A at +mtime -- $TTHEME_WARP_DB-wal 2>/dev/null || zstat -F %s.%N -A at +mtime -- $TTHEME_WARP_DB 2>/dev/null || return 1
+  REPLY=$at[1]
+}
+
+__tt_warp_mixed() {
+  setopt localoptions extendedglob
+  local f pal view
+  local -a rec
+  local -A looks
+  for f in $TTHEME_WARP_TABS/[0-9a-f](#c32)(N); do
+    rec=(${=${"$(<$f)"}})
+    pal=${rec[3]#-} view=${rec[4]#-}
+    [[ $rec[2] != - && -z $TTHEME_STARTUP ]] && pal="" view=""
+    pal="${pal:-$TTHEME_STARTUP} $view"
+    looks[$pal]=1
+  done
+  (( ${#looks} > 1 ))
+}
+
+__tt_warp_prime() {
+  local fd byte
+  sysopen -rw -u fd $TTHEME_WARP_SETTINGS 2>/dev/null || return 0
+  sysread -s 1 -i $fd byte && sysseek -u $fd 0 && syswrite -o $fd -- $byte
+  exec {fd}>&-
 }
 
 __tt_warp_line() {
@@ -207,18 +248,28 @@ __tt_warp_line() {
 __tt_warp_tick() {
   local line="" REPLY
   local -a at
-  if zstat -F %s.%N -A at +mtime -- $TTHEME_WARP_DB-wal 2>/dev/null || zstat -F %s.%N -A at +mtime -- $TTHEME_WARP_DB 2>/dev/null; then
-    if [[ $at[1] != "$TTHEME_WARP_SEEN" ]]; then
-      TTHEME_WARP_SEEN=$at[1]
-      if __tt_warp_active && [[ $REPLY != "$TTHEME_WARP_ID" ]]; then
-        TTHEME_WARP_ID=$REPLY
+  integer recount=0
+  if __tt_warp_stamp && [[ $REPLY != "$TTHEME_WARP_SEEN" ]]; then
+    TTHEME_WARP_SEEN=$REPLY
+    if __tt_warp_active; then
+      TTHEME_WARP_UP=1
+      if [[ $REPLY != "$TTHEME_WARP_ID" ]]; then
+        TTHEME_WARP_ID=$REPLY recount=1
         __tt_put $TTHEME_WARP_TABS/.active $REPLY 2>/dev/null
       fi
+    else
+      TTHEME_WARP_UP=0
     fi
   fi
-  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load && recount=1
+  zstat -F %s.%N -A at +mtime -- $TTHEME_WARP_TABS 2>/dev/null && [[ $at[1] != "$TTHEME_WARP_RECORDS" ]] && TTHEME_WARP_RECORDS=$at[1] recount=1
+  if (( recount )); then
+    __tt_warp_mixed
+    TTHEME_WARP_MIXED=$(( ! $? ))
+  fi
   [[ -n $TTHEME_WARP_ID && -r $TTHEME_WARP_TABS/$TTHEME_WARP_ID ]] && line=$(<$TTHEME_WARP_TABS/$TTHEME_WARP_ID)
   [[ "$TTHEME_WARP_ID $line $TTHEME_PALETTES_AT" == "$TTHEME_WARP_LAST" ]] && return 0
+  [[ ${TTHEME_WARP_LAST%% *} == "$TTHEME_WARP_ID" ]] && TTHEME_WARP_WARM=$(( EPOCHREALTIME + 3 ))
   TTHEME_WARP_LAST="$TTHEME_WARP_ID $line $TTHEME_PALETTES_AT"
   [[ -n $line ]] && __tt_warp_line ${=line} && __tt_warp_wear "$REPLY"
   return 0
@@ -239,15 +290,64 @@ __tt_warp_live() {
   (( live ))
 }
 
+__tt_pv_conf_rows() {
+  cvars+=(TTHEME_WARP_FAST) clabel+=("Warp tabs") cchoice+=("on off") cshow+=("on off")
+  cnote+=(
+    TTHEME_WARP_FAST:on "About 0.2 s per switch, for about 8% CPU"
+    TTHEME_WARP_FAST:off "About 0.6 s per switch"
+  )
+}
+
+__tt_warp_warming() {
+  [[ $TTHEME_WARP_FAST == on ]] && (( TTHEME_WARP_UP && ( TTHEME_WARP_MIXED || EPOCHREALTIME < TTHEME_WARP_WARM ) ))
+}
+
+__tt_warp_wait() {
+  local REPLY
+  local -F now=$EPOCHREALTIME end=$(( EPOCHREALTIME + 0.1 ))
+  if ! __tt_warp_warming; then
+    zselect -t 10
+    return 0
+  fi
+  while (( now < end )); do
+    if (( now - TTHEME_WARP_PRIMED >= 0.25 )); then
+      __tt_warp_prime
+      TTHEME_WARP_PRIMED=$now
+    fi
+    zselect -t 2
+    __tt_warp_stamp && [[ $REPLY != "$TTHEME_WARP_SEEN" ]] && return 0
+    now=$EPOCHREALTIME
+  done
+  return 0
+}
+
+__tt_warp_code() {
+  local -a at conf
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/adapters/warp.zsh 2>/dev/null
+  zstat -F %s.%N -A conf +mtime -- $TTHEME_CONFIG 2>/dev/null
+  REPLY="$at[1] $conf[1]"
+}
+
 __tt_warp_follower() {
   emulate -L zsh
-  local fd
+  local fd REPLY
   __tt_warp_db && zsystem flock -t 0 -f fd $TTHEME_WARP_TABS/.follow 2>/dev/null || return 0
-  trap '' HUP
+  trap '' HUP PIPE
+  __tt_warp_code
+  TTHEME_WARP_CODE=$REPLY TTHEME_WARP_LIVED=$EPOCHREALTIME
   while [[ -e $TTHEME_HOME/palettes.zsh && -e $TTHEME_WARP_DB ]]; do
     __tt_warp_tick
-    (( ++TTHEME_WARP_TICK % 50 )) || __tt_warp_live || break
-    zselect -t 10
+    if (( EPOCHREALTIME - TTHEME_WARP_LIVED >= 5 )); then
+      TTHEME_WARP_LIVED=$EPOCHREALTIME
+      __tt_warp_live || break
+      __tt_warp_code
+      if [[ $REPLY != "$TTHEME_WARP_CODE" ]]; then
+        coproc :
+        zsystem flock -u $fd
+        exec zsh -fc 'source $1; __tt_warp_follower' zsh $TTHEME_HOME/ttheme.zsh
+      fi
+    fi
+    __tt_warp_wait
   done
   zf_rm -f -- $TTHEME_WARP_TABS/.active 2>/dev/null
 }

@@ -146,6 +146,7 @@ interface Kind {
   launch(app: App): void
   opening(app: App): Opening
   watched?(app: App): string[]
+  unchanged?(app: App): boolean
   changed?(app: App): void
   osc?(app: App, tab: Tab, code: number, data: string): void
   focused?(app: App, tab: Tab): void
@@ -426,6 +427,7 @@ const windowsTerminal = (): Kind => {
 
 const warp = (): Kind => {
   let theme = warpLook('', '')
+  let settings = ''
   let db: Database | undefined
   const paths = (app: App) => warpPaths(app.place)
   const front = (app: App, tab: Tab) => {
@@ -433,6 +435,7 @@ const warp = (): Kind => {
   }
   return {
     launch(app) {
+      settings = read(paths(app).settings)
       theme = warpLook(paths(app).settings, paths(app).themes)
       db = existsSync(paths(app).db) ? new Database(paths(app).db) : undefined
     },
@@ -449,7 +452,9 @@ const warp = (): Kind => {
       front(app, tab)
     },
     watched: (app) => [paths(app).settings],
+    unchanged: (app) => read(paths(app).settings) === settings,
     changed(app) {
+      settings = read(paths(app).settings)
       theme = warpLook(paths(app).settings, paths(app).themes)
       for (const tab of app.tabs) {
         app.rebase(tab, theme.colors)
@@ -589,6 +594,9 @@ export class App {
       return
     }
     this.restamp()
+    if (this.kind.unchanged?.(this)) {
+      return
+    }
     this.activity = performance.now()
     const delay = this.kind.delay ?? 0
     if (delay === 0) {

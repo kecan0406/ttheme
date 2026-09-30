@@ -718,6 +718,25 @@ done
   __tt_warp_tick
   [[ "$(<$TTHEME_WARP_TABS/.active)" == bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb && "$(worn)" == "$(ours homura)" ]] ||
     { print -u2 "switching tabs did not put on the palette of the tab in front: $(worn)"; exit 1 }
+  (( TTHEME_WARP_MIXED )) && __tt_warp_warming || { print -u2 "tabs of different palettes did not keep Warp's settings reload warm"; exit 1 }
+  TTHEME_WARP_FAST=off
+  __tt_warp_warming && { print -u2 "TTHEME_WARP_FAST=off still warmed Warp's settings reload"; exit 1 }
+  TTHEME_WARP_FAST=on
+  sum=$(shasum < $TTHEME_WARP_SETTINGS)
+  zstat -F %s.%N -A was +mtime -- $TTHEME_WARP_SETTINGS
+  sleep 0.01
+  __tt_warp_prime
+  zstat -F %s.%N -A at +mtime -- $TTHEME_WARP_SETTINGS
+  [[ "$(shasum < $TTHEME_WARP_SETTINGS)" == "$sum" && $at[1] != "$was[1]" ]] ||
+    { print -u2 "warming Warp's settings reload changed the file, or left it untouched"; exit 1 }
+  (
+    TTHEME_WARP_TABS=$XDG_CONFIG_HOME/fwarpsame
+    mkdir -p $TTHEME_WARP_TABS
+    print -r -- "$alive miku - -" > $TTHEME_WARP_TABS/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    print -r -- "$alive miku miku -" > $TTHEME_WARP_TABS/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    __tt_warp_mixed && { print -u2 "tabs that all show the default palette counted as different palettes"; exit 1 }
+    rm -rf $TTHEME_WARP_TABS
+  ) || exit 1
   sqlite3 $TTHEME_WARP_DB 'update app set active_window_id = 2; update windows set active_tab_index = 1 where id = 2'
   __tt_warp_tick
   [[ "$(worn)" == "$(ours miku)" ]] || { print -u2 "a tab that wears no palette of its own did not get the default: $(worn)"; exit 1 }
@@ -727,6 +746,7 @@ done
   print -r -- "$alive miku kaito -" > $TTHEME_WARP_TABS/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
   __tt_warp_tick
   [[ "$(worn)" == "$(ours kaito)" ]] || { print -u2 "a palette the front tab took did not follow: $(worn)"; exit 1 }
+  (( TTHEME_WARP_WARM > EPOCHREALTIME )) || { print -u2 "a palette the front tab took did not warm Warp's settings reload for the next"; exit 1 }
   TTHEME_STARTUP= TTHEME_WARP_LAST=
   __tt_warp_tick
   [[ "$(worn)" == 'theme = "Dracula"' && ! -e $TTHEME_HOME/warp.base ]] ||
