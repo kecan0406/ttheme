@@ -1,10 +1,11 @@
 source $TTHEME_HOME/adapters/_bg.zsh
 
-typeset -g TTHEME_GHOSTTY_TABS=$TTHEME_STATE_DIR/ghostty TTHEME_GHOSTTY_FRONT="" TTHEME_GHOSTTY_BLUR=""
-typeset -gF TTHEME_GHOSTTY_ASKED=0 TTHEME_GHOSTTY_WANT=0 TTHEME_GHOSTTY_HUSH=0
-typeset -gi TTHEME_GHOSTTY_IDLE=1 TTHEME_GHOSTTY_TICK=0 TTHEME_GHOSTTY_NONE=0 TTHEME_GHOSTTY_FOLLOWS=-1
+typeset -g TTHEME_GHOSTTY_TABS=$TTHEME_STATE_DIR/ghostty TTHEME_GHOSTTY_FRONT="" TTHEME_GHOSTTY_BLUR="" TTHEME_GHOSTTY_HEARD="" TTHEME_GHOSTTY_CODE=""
+typeset -gF TTHEME_GHOSTTY_ASKED=0 TTHEME_GHOSTTY_WANT=0 TTHEME_GHOSTTY_HUSH=0 TTHEME_GHOSTTY_TOLD=0
+typeset -gi TTHEME_GHOSTTY_IDLE=1 TTHEME_GHOSTTY_TICK=0 TTHEME_GHOSTTY_NONE=0 TTHEME_GHOSTTY_FOLLOWS=-1 TTHEME_GHOSTTY_WFD=0 TTHEME_GHOSTTY_WATCHER=0
 typeset -gA TTHEME_GHOSTTY_SEEN=() TTHEME_GHOSTTY_RUN=()
 typeset -g TTHEME_GHOSTTY_JS='ObjC.import("AppKit");function run(v){var p=+v[0],E=$.NSAppleEventDescriptor,G="com.mitchellh.ghostty",f=function(s){return(s.charCodeAt(0)<<24)|(s.charCodeAt(1)<<16)|(s.charCodeAt(2)<<8)|s.charCodeAt(3)},a=p?$.NSRunningApplication.runningApplicationWithProcessIdentifier(p):$.NSRunningApplication.runningApplicationsWithBundleIdentifier(G).firstObject;if(!a||a.isNil())return"none";var s=$.NSString.stringWithContentsOfFileEncodingError(a.bundleURL.path.js+"/Contents/Resources/Ghostty.sdef",4,null);if(s.isNil()||s.js.indexOf("code=\"Gtty\"")<0)return"blind";var t=E.descriptorWithProcessIdentifier(a.processIdentifier);function q(c,o){var d=E.recordDescriptor;d.setDescriptorForKeyword(E.descriptorWithTypeCode(f("prop")),f("want"));d.setDescriptorForKeyword(o,f("from"));d.setDescriptorForKeyword(E.descriptorWithEnumCode(f("prop")),f("form"));d.setDescriptorForKeyword(E.descriptorWithTypeCode(f(c)),f("seld"));return d.coerceToDescriptorType(f("obj "))}function g(o){var e=E.appleEventWithEventClassEventIDTargetDescriptorReturnIDTransactionID(f("core"),f("getd"),t,-1,0);e.setParamDescriptorForKeyword(o,f("----"));var r=e.sendEventWithOptionsTimeoutError(3,5,null);return!r||r.isNil()||!r.paramDescriptorForKeyword(f("errn")).isNil()?null:r.paramDescriptorForKeyword(f("----"))}var n=E.nullDescriptor,m=q("GTfT",q("GWsT",q("GFWn",n))),w=g(q("pisf",n)),y=g(q("Gtty",m)),i=g(q("Gpid",m));if(!w||!y||!i||w.isNil()||y.isNil()||i.isNil())return"none";return(w.booleanValue?1:0)+" "+y.stringValue.js+" "+i.int32Value}'
+typeset -g TTHEME_GHOSTTY_WATCH='ObjC.import("AppKit");ObjC.import("CoreGraphics");ObjC.import("unistd");function run(v){var p=+v[0],u=$.getppid(),E=$.NSAppleEventDescriptor,W=$.NSWorkspace.sharedWorkspace,L=$.NSRunLoop.currentRunLoop,o=$.NSFileHandle.fileHandleWithStandardOutput,a=$.NSRunningApplication.runningApplicationWithProcessIdentifier(p),f=function(s){return(s.charCodeAt(0)<<24)|(s.charCodeAt(1)<<16)|(s.charCodeAt(2)<<8)|s.charCodeAt(3)},S=$.kCGWindowListOptionOnScreenOnly|$.kCGWindowListExcludeDesktopElements,A=$.kCGWindowListOptionOnScreenAboveWindow,w=0,b=-1,h=false,z=0,k=0,c={};if(!a||a.isNil())return;var t=E.descriptorWithProcessIdentifier(p);function q(y,x){var d=E.recordDescriptor;d.setDescriptorForKeyword(E.descriptorWithTypeCode(f("prop")),f("want"));d.setDescriptorForKeyword(x,f("from"));d.setDescriptorForKeyword(E.descriptorWithEnumCode(f("prop")),f("form"));d.setDescriptorForKeyword(E.descriptorWithTypeCode(f(y)),f("seld"));return d.coerceToDescriptorType(f("obj "))}function g(x){var e=E.appleEventWithEventClassEventIDTargetDescriptorReturnIDTransactionID(f("core"),f("getd"),t,-1,0);e.setParamDescriptorForKeyword(x,f("----"));var r=e.sendEventWithOptionsTimeoutError(3,5,null);return!r||r.isNil()||!r.paramDescriptorForKeyword(f("errn")).isNil()?null:r.paramDescriptorForKeyword(f("----"))}var m=q("GTfT",q("GWsT",q("GFWn",E.nullDescriptor)));function mine(d){return d.objectForKey("kCGWindowOwnerPID").intValue===p&&d.objectForKey("kCGWindowLayer").intValue===0}function top(){var l=ObjC.castRefToObject($.CGWindowListCopyWindowInfo(S,0));for(var j=0;j<+l.count;j++){var d=l.objectAtIndex(j);if(mine(d))return d.objectForKey("kCGWindowNumber").intValue}return 0}function n(k,x){return+$.CFArrayGetCount($.CGWindowListCreate(k,x))}function idle(){return Math.min($.CGEventSourceSecondsSinceLastEventType(0,1),$.CGEventSourceSecondsSinceLastEventType(0,10),$.CGEventSourceSecondsSinceLastEventType(0,12))}function now(){return $.NSDate.date.timeIntervalSince1970.toFixed(6)}function say(s){o.writeData($(s+"\n").dataUsingEncoding(4))}while(!a.terminated&&$.getppid()===u){var x=w?n(A,w):-2,v=!w||x!==b||!n($.kCGWindowListOptionIncludingWindow,w);if(v||z++%40===0){L.runUntilDate($.NSDate.date);h=W.frontmostApplication.processIdentifier===p;var e=top();w=e;b=e?n(A,e):-1;if(h&&e&&e!==k){k=e;var at=now();if(c[e])say("1 "+c[e]+" "+at);var y=g(q("Gtty",m)),i=g(q("Gpid",m));if(y&&i&&!y.isNil()&&!i.isNil()){var r=y.stringValue.js+" "+i.int32Value;if(r!==c[e])say("1 "+r+" "+now());if(top()===e)c[e]=r}}}if(!h)k=0;delay(!w?1:!h?0.25:idle()<1.5?0.05:0.15)}}'
 
 __tt_follows_focus() { return 0 }
 
@@ -95,8 +96,8 @@ __tt_ghostty_ask() {
 }
 
 __tt_ghostty_check() {
-  local REPLY shown key pal conf=${TTHEME_CONFIG:h}/backgrounds/shown.conf
-  local -a at ans rec
+  local REPLY shown conf=${TTHEME_CONFIG:h}/backgrounds/shown.conf
+  local -a at
   integer n
   __tt_ghostty_modules
   for (( n = 0; n < 3; n++ )); do
@@ -108,16 +109,27 @@ __tt_ghostty_check() {
     zstat -F %s.%N -A at +mtime -- $conf 2>/dev/null
     [[ $at[1] == "$shown" ]] && break
   done
-  if [[ $REPLY == blind ]] || { [[ $REPLY == none ]] && (( ++TTHEME_GHOSTTY_NONE >= 5 )) }; then
+  __tt_ghostty_take "$REPLY"
+}
+
+__tt_ghostty_take() {
+  local REPLY key pal
+  local -a ans rec at
+  if [[ $1 == blind ]] || { [[ $1 == none ]] && (( ++TTHEME_GHOSTTY_NONE >= 5 )) }; then
     __tt_put $TTHEME_GHOSTTY_TABS/.blind "${TERM_PROGRAM_VERSION:--}" 2>/dev/null
     return 1
   fi
-  [[ $REPLY == none ]] && return 0
+  [[ $1 == none ]] && return 0
   TTHEME_GHOSTTY_NONE=0
-  ans=(${=REPLY})
+  ans=(${=1})
   if [[ $ans[1] != 1 || -z $ans[2] ]]; then
     TTHEME_GHOSTTY_FRONT=""
     return 0
+  fi
+  if [[ -n $ans[4] ]]; then
+    at=("")
+    zstat -F %s.%N -A at +mtime -- ${TTHEME_CONFIG:h}/backgrounds/shown.conf 2>/dev/null
+    [[ -n $at[1] ]] && (( at[1] > ans[4] )) && return 0
   fi
   __tt_ghostty_key $ans[2]
   key=$REPLY
@@ -137,9 +149,10 @@ __tt_ghostty_tick() {
   local -a at rec
   local -F now=$EPOCHREALTIME
   integer seen
+  [[ -n $TTHEME_GHOSTTY_CODE ]] && zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/adapters/ghostty.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_GHOSTTY_CODE" ]] && return 1
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load
   if zstat -F %s.%N -A at +mtime -- $TTHEME_GHOSTTY_TABS/.blur 2>/dev/null && [[ $at[1] != "$TTHEME_GHOSTTY_BLUR" ]]; then
-    [[ -n $TTHEME_GHOSTTY_BLUR ]] && TTHEME_GHOSTTY_WANT=$now
+    [[ -n $TTHEME_GHOSTTY_BLUR ]] && (( now - TTHEME_GHOSTTY_TOLD >= 1 )) && TTHEME_GHOSTTY_WANT=$now
     TTHEME_GHOSTTY_BLUR=$at[1]
   fi
   for f in $TTHEME_GHOSTTY_TABS/[^.]*(N); do
@@ -155,14 +168,14 @@ __tt_ghostty_tick() {
     (( seen )) || continue
     if [[ $key == "$TTHEME_GHOSTTY_FRONT" ]]; then
       TTHEME_GHOSTTY_HUSH=$now
-    elif (( ++TTHEME_GHOSTTY_RUN[$key] < 5 )); then
+    elif (( ++TTHEME_GHOSTTY_RUN[$key] < 5 && now - TTHEME_GHOSTTY_TOLD >= 1 )); then
       TTHEME_GHOSTTY_WANT=$now
     fi
   done
-  if (( TTHEME_GHOSTTY_HUSH && now - TTHEME_GHOSTTY_HUSH >= 0.3 && now - TTHEME_GHOSTTY_ASKED >= (TTHEME_GHOSTTY_IDLE ? 10 : 2) )); then
+  if (( ! TTHEME_GHOSTTY_WFD && TTHEME_GHOSTTY_HUSH && now - TTHEME_GHOSTTY_HUSH >= 0.3 && now - TTHEME_GHOSTTY_ASKED >= (TTHEME_GHOSTTY_IDLE ? 10 : 2) )); then
     TTHEME_GHOSTTY_HUSH=0 TTHEME_GHOSTTY_WANT=$now
   fi
-  (( TTHEME_GHOSTTY_WANT && now - TTHEME_GHOSTTY_ASKED >= 0.2 )) || return 0
+  (( TTHEME_GHOSTTY_WANT && now - TTHEME_GHOSTTY_ASKED >= 0.2 && ( ! TTHEME_GHOSTTY_WFD || now - TTHEME_GHOSTTY_WANT >= 0.4 ) )) || return 0
   TTHEME_GHOSTTY_WANT=0
   __tt_ghostty_check
 }
@@ -183,20 +196,56 @@ __tt_ghostty_live() {
   (( live ))
 }
 
+__tt_ghostty_watch() {
+  (( TTHEME_GHOSTTY_PID )) || return 0
+  coproc osascript -l JavaScript -e $TTHEME_GHOSTTY_WATCH $TTHEME_GHOSTTY_PID 2>/dev/null
+  TTHEME_GHOSTTY_WATCHER=$!
+  exec {TTHEME_GHOSTTY_WFD}<&p
+}
+
+__tt_ghostty_heard() {
+  local chunk line
+  integer rc
+  sysread -t 0 -i $TTHEME_GHOSTTY_WFD chunk 2>/dev/null
+  rc=$?
+  if (( rc == 2 || rc == 5 )); then
+    exec {TTHEME_GHOSTTY_WFD}<&-
+    TTHEME_GHOSTTY_WFD=0 TTHEME_GHOSTTY_HEARD=""
+    return 0
+  fi
+  TTHEME_GHOSTTY_HEARD+=$chunk
+  while [[ $TTHEME_GHOSTTY_HEARD == *$'\n'* ]]; do
+    line=${TTHEME_GHOSTTY_HEARD%%$'\n'*}
+    TTHEME_GHOSTTY_HEARD=${TTHEME_GHOSTTY_HEARD#*$'\n'}
+    TTHEME_GHOSTTY_TOLD=$EPOCHREALTIME TTHEME_GHOSTTY_WANT=0
+    __tt_ghostty_take "$line" || return 1
+  done
+  return 0
+}
+
 __tt_ghostty_follower() {
   emulate -L zsh
   local fd REPLY
+  local -a at
   __tt_ghostty_modules
   zsystem flock -t 0 -f fd $TTHEME_GHOSTTY_TABS/.follow 2>/dev/null || return 0
   trap '' HUP
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/adapters/ghostty.zsh 2>/dev/null && TTHEME_GHOSTTY_CODE=$at[1]
   __tt_ghostty_owner $PPID
   TTHEME_GHOSTTY_PID=$REPLY
   __tt_ghostty_check || return 0
+  __tt_ghostty_watch
   while [[ -e $TTHEME_HOME/palettes.zsh ]]; do
     __tt_ghostty_tick || break
     (( ++TTHEME_GHOSTTY_TICK % 50 )) || __tt_ghostty_live || break
-    zselect -t 10
+    if (( TTHEME_GHOSTTY_WFD )); then
+      zselect -t 50 -r $TTHEME_GHOSTTY_WFD && { __tt_ghostty_heard || break }
+    else
+      zselect -t 10
+    fi
   done
+  (( TTHEME_GHOSTTY_WATCHER )) && kill $TTHEME_GHOSTTY_WATCHER 2>/dev/null
+  return 0
 }
 
 __tt_reset_reloaded() {
@@ -222,6 +271,41 @@ __tt_shown() {
   [[ -r $dir/${${1/@/--}/\//--}.conf || ( -n $was && -r $dir/${${was/@/--}/\//--}.conf ) ]] || return 1
   [[ -d $dir ]] || mkdir -p $dir || return 1
   __tt_put $dir/shown.conf "config-file = ?${${1/@/--}/\//--}.conf"
+}
+
+__tt_ghostty_took() {
+  local f=${TTHEME_CONFIG:h}/backgrounds/shown.conf
+  local -A st
+  local -F t
+  zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
+  t=$EPOCHREALTIME
+  while zstat -H st -F %s.%N -- $f 2>/dev/null && [[ ! $st[atime] > $st[mtime] ]]; do
+    (( EPOCHREALTIME - t < 0.1 )) || return 0
+  done
+  t=$EPOCHREALTIME
+  while (( EPOCHREALTIME - t < 0.003 )); do :; done
+}
+
+__tt_wear() {
+  local REPLY=$2 name
+  [[ -n $REPLY ]] || __tt_name_of "$1"
+  name=$REPLY
+  TTHEME_SPEC=$1
+  if [[ -n ${TTHEME_PALETTE[$name]} ]] && __tt_shown "$name" $3; then
+    TTHEME_GHOSTTY_SENT=0
+    __tt_reload
+    (( TTHEME_GHOSTTY_SENT )) && __tt_ghostty_took
+    __tt_apply "$1"
+    return 0
+  fi
+  __tt_apply "$1"
+  return 1
+}
+
+__tt_pv_claim() {
+  TTHEME_GHOSTTY_SENT=0
+  __tt_shown "$1" force && __tt_reload && (( TTHEME_GHOSTTY_SENT )) && __tt_ghostty_took
+  return 0
 }
 
 __tt_bg_cells() {

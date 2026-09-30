@@ -986,4 +986,76 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   [[ -z $(print -r $TTHEME_GHOSTTY_TABS/[^.]*(N)) ]] || { print -u2 "the follower left closed tabs behind"; exit 1 }
   rm -rf $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys
 ) || exit 1
+(
+  source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
+  __tt_ghostty_modules
+  TTHEME_TERMINALS=(ghostty) TTHEME_STARTUP=miku TTHEME_TMUX=0 TTHEME_FRONT=1 TERM_PROGRAM_VERSION=1.3.2
+  reloads=0 asks=$XDG_CONFIG_HOME/asks
+  __tt_reload_ghostty() { (( ++reloads )) }
+  mkdir -p $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys
+  sleep 30 >/dev/null 2>&1 &
+  alive=$!
+  : > $XDG_CONFIG_HOME/ttys/a
+  ttya=$XDG_CONFIG_HOME/ttys/a
+  __tt_ghostty_key $ttya
+  keya=$REPLY
+  print -r -- "$alive miku kagami $ttya" > $TTHEME_GHOSTTY_TABS/$keya
+  print -r -- "config-file = ?rei.conf" >| $bgd/shown.conf
+  __tt_ghostty_take "1 $ttya 999 $(( EPOCHREALTIME - 5 ))"
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?rei.conf" && $reloads == 0 ]] ||
+    { print -u2 "the follower took a watcher's answer older than the last claim: $(<$bgd/shown.conf)"; exit 1 }
+  __tt_ghostty_take "1 $ttya 999 $(( EPOCHREALTIME + 5 ))"
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" && $reloads == 1 ]] ||
+    { print -u2 "the follower did not take a watcher's answer made after the last claim: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+  print -r -- "config-file = ?rei.conf" >| $bgd/shown.conf
+  exec {TTHEME_GHOSTTY_WFD}< <(print -r -- "1 $ttya 999")
+  zselect -t 200 -r $TTHEME_GHOSTTY_WFD
+  __tt_ghostty_heard
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" && $reloads == 2 ]] && (( TTHEME_GHOSTTY_TOLD > 0 )) ||
+    { print -u2 "a line from the watcher did not put up its tab's picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+  zselect -t 200 -r $TTHEME_GHOSTTY_WFD
+  __tt_ghostty_heard
+  (( TTHEME_GHOSTTY_WFD == 0 )) || { print -u2 "the follower kept reading a watcher that is gone"; exit 1 }
+  osascript() { print >> $asks; print -r -- "1 $ttya 999" }
+  : > $asks
+  : > $TTHEME_GHOSTTY_TABS/.blur
+  TTHEME_GHOSTTY_WFD=99 TTHEME_GHOSTTY_TOLD=$EPOCHREALTIME TTHEME_GHOSTTY_BLUR=x TTHEME_GHOSTTY_ASKED=0 TTHEME_GHOSTTY_WANT=0
+  __tt_ghostty_tick
+  [[ ! -s $asks ]] || { print -u2 "a tab losing focus made the follower ask right after the watcher named the tab in front"; exit 1 }
+  TTHEME_GHOSTTY_FRONT=$keya TTHEME_GHOSTTY_IDLE=0 TTHEME_GHOSTTY_HUSH=$(( EPOCHREALTIME - 5 ))
+  __tt_ghostty_tick
+  [[ ! -s $asks ]] || { print -u2 "the follower asked about a quiet busy tab in front with a watcher running"; exit 1 }
+  TTHEME_GHOSTTY_WFD=0
+  __tt_ghostty_tick
+  [[ -s $asks ]] || { print -u2 "without a watcher, a quiet busy tab in front was never checked"; exit 1 }
+  TTHEME_GHOSTTY_CODE=1.0
+  __tt_ghostty_tick && { print -u2 "a follower kept running on code that has changed since it started"; exit 1 }
+  TTHEME_GHOSTTY_CODE=
+  __tt_apply() { painted=$EPOCHREALTIME }
+  __tt_reload_ghostty() { TTHEME_GHOSTTY_SENT=1; ( sleep 0.05; print -r -- $EPOCHREALTIME > $XDG_CONFIG_HOME/read; print -r -- "$(<$bgd/shown.conf)" > /dev/null ) & reader=$! }
+  print -r -- "config-file = ?rei.conf" >| $bgd/shown.conf
+  painted=0
+  __tt_wear "$TTHEME_PALETTE[kagami]" kagami force || { print -u2 "__tt_wear did not claim a picture it changes"; exit 1 }
+  wait $reader
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" && $TTHEME_SPEC == "$TTHEME_PALETTE[kagami]" ]] ||
+    { print -u2 "__tt_wear did not put the palette and its picture on: $(<$bgd/shown.conf)"; exit 1 }
+  (( painted > $(<$XDG_CONFIG_HOME/read) )) ||
+    { print -u2 "a palette was painted before Ghostty read the picture that goes with it"; exit 1 }
+  __tt_reload_ghostty() { TTHEME_GHOSTTY_SENT=1 }
+  print -r -- "config-file = ?rei.conf" >| $bgd/shown.conf
+  start=$EPOCHREALTIME
+  __tt_wear "$TTHEME_PALETTE[kagami]" kagami force
+  (( painted - start < 1 )) || { print -u2 "a claim Ghostty never read held the palette back $(( painted - start )) s"; exit 1 }
+  __tt_ghostty_took() { print -u2 "a palette whose picture is already up waited for Ghostty"; exit 1 }
+  painted=0
+  __tt_wear "$TTHEME_PALETTE[kagami]" kagami force && { print -u2 "__tt_wear reloaded with the picture already up"; exit 1 }
+  (( painted )) || { print -u2 "a palette whose picture is already up was not painted"; exit 1 }
+  TTHEME_FRONT=0
+  print -r -- "config-file = ?rei.conf" >| $bgd/shown.conf
+  __tt_wear "$TTHEME_PALETTE[kagami]" && { print -u2 "a pin reached behind took the picture"; exit 1 }
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?rei.conf" ]] || { print -u2 "a pin reached behind moved the picture: $(<$bgd/shown.conf)"; exit 1 }
+  kill $alive
+  wait $alive 2>/dev/null
+  rm -rf $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys $XDG_CONFIG_HOME/read $asks
+) || exit 1
 print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$adapter"

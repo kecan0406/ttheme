@@ -45,7 +45,18 @@ __tt_repaint() {
 
 __tt_apply() { __tt_osc_apply "$@" }
 
+__tt_wear() {
+  local REPLY=$2 name
+  [[ -n $REPLY ]] || __tt_name_of "$1"
+  name=$REPLY
+  TTHEME_SPEC=$1
+  __tt_apply "$1"
+  [[ -n ${TTHEME_PALETTE[$name]} ]] && __tt_shown "$name" $3 && __tt_reload
+}
+
 __tt_pv_paint() { __tt_apply "$1" && painted=$1 }
+
+__tt_pv_claim() { : }
 
 __tt_shown() { return 1 }
 

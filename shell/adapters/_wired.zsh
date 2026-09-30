@@ -1,4 +1,5 @@
 typeset -g TTHEME_GHOSTTY_PID=""
+typeset -gi TTHEME_GHOSTTY_SENT=0
 
 __tt_reload() {
   local wired
@@ -39,8 +40,8 @@ __tt_reload_ghostty() {
     __tt_ghostty_owner $PPID
     owner=$REPLY TTHEME_GHOSTTY_PID=$REPLY
   fi
-  (( owner )) && kill -USR2 $owner 2>/dev/null && return
-  pkill -USR2 -x ghostty 2>/dev/null
+  (( owner )) && kill -USR2 $owner 2>/dev/null && { TTHEME_GHOSTTY_SENT=1; return 0 }
+  pkill -USR2 -x ghostty 2>/dev/null && TTHEME_GHOSTTY_SENT=1
 }
 
 __tt_ghostty_shown() {

@@ -326,9 +326,8 @@ __tt_dir_sync() {
   fi
   TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
   [[ -n $spec && $spec != "$TTHEME_SPEC" ]] || return 0
-  __tt_apply "$spec"
-  TTHEME_SPEC=$spec
-  __tt_sync
+  __tt_wear "$spec"
+  return 0
 }
 
 __tt_chpwd() {
@@ -520,11 +519,11 @@ __tt_pin_save() {
   fi
   if [[ $spec != "$TTHEME_SPEC" ]]; then
     if [[ -n $spec ]]; then
-      __tt_apply "$spec"
+      __tt_wear "$spec"
     else
       __tt_osc_reset
+      TTHEME_SPEC=
     fi
-    TTHEME_SPEC=$spec
   fi
   __tt_dir_label "$base"
   k=$REPLY
@@ -1227,7 +1226,6 @@ __tt_catalog() {
 }
 
 __tt_switch() {
-  local spec
   __tt_cli "$@" || return
   [[ -r $TTHEME_HOME/palettes.zsh ]] && __tt_palettes_load && __tt_reloaded
   if ! __tt_active; then
@@ -1237,11 +1235,7 @@ __tt_switch() {
   if [[ $1 == off ]]; then
     __tt_off_here reload
   elif [[ -n $TTHEME_STARTUP ]]; then
-    spec=${TTHEME_PALETTE[$TTHEME_STARTUP]}
-    __tt_apply "$spec"
-    TTHEME_SPEC=$spec
-    __tt_shown "$TTHEME_STARTUP" force
-    __tt_reload
+    __tt_wear "${TTHEME_PALETTE[$TTHEME_STARTUP]}" "$TTHEME_STARTUP" force || __tt_reload
   fi
 }
 
@@ -1343,9 +1337,7 @@ __tt_next() {
 __tt_rotate() {
   local REPLY
   __tt_next
-  __tt_apply "$REPLY"
-  TTHEME_SPEC=$REPLY
-  __tt_worn_shown force && __tt_reload
+  __tt_wear "$REPLY" "" force
   __tt_announce
 }
 
@@ -2710,6 +2702,7 @@ __tt_preview() {
     done
   } always {
     local spec=${sel:+${TTHEME_PALETTE[$sel]}}
+    [[ -n $spec && $mode != pin ]] && (( ! ${#bgedit} && ! ${#bgswap} )) && __tt_pv_claim "$sel"
     printf '\e[?2026h'
     __tt_pv_bg_close
     if [[ -n $spec ]]; then
@@ -2786,14 +2779,11 @@ ttheme() {
   [[ $1 == config ]] && { __tt_config; return }
   (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
 
-  local REPLY spec
+  local REPLY
   case $1 in
     use)
       __tt_resolve "$2" || return 1
-      spec=${TTHEME_PALETTE[$REPLY]}
-      __tt_apply "$spec"
-      TTHEME_SPEC=$spec
-      __tt_shown "$REPLY" force && __tt_reload
+      __tt_wear "${TTHEME_PALETTE[$REPLY]}" "$REPLY" force
       __tt_announce ;;
     next) __tt_rotate ;;
     default)
