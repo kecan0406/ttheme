@@ -35,4 +35,4 @@ kitty-crop	pass	fail	pass	skip	skip	?	skip	pass
 sync-output	pass	pass	pass	pass	pass	pass	skip	skip
 sync-query	pass	pass	fail	pass	pass	pass	pass	pass
 focus-report	pass	pass	pass	pass	pass	fail	skip	skip
-focus-event	?	?	?	?	?	?	?	pass
+focus-event	skip	skip	skip	skip	skip	?	skip	pass

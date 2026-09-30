@@ -1,23 +1,12 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { TRAITS } from '../../src/terminal.ts'
 import { WIRED } from '../../src/terminals/types.ts'
-import { FACTS, glob, KINDS, readGaps, readTable } from './facts.ts'
+import { BRIDGES, FACTS, glob, KINDS, readCompat, readGaps, readTable } from './facts.ts'
 import { JOURNEYS } from './journeys.ts'
 import { BEHAVIOR, MEASURED, REFERENCE, TERMS, WIRING } from './terms.ts'
-
-const root = join(import.meta.dirname, '..', '..')
-
-function compat(): (term: string, id: string) => string | undefined {
-  const [head = [], ...rows] = readFileSync(join(root, 'tests', 'compat', 'expect.tsv'), 'utf8')
-    .trim()
-    .split('\n')
-    .map((line) => line.split('\t'))
-  return (term, id) => rows.find((row) => row[0] === id)?.[head.indexOf(term)]
-}
 
 test('every terminal ttheme knows runs the journeys, the reference first', () => {
   assert.equal(TERMS[0], REFERENCE)
@@ -31,10 +20,10 @@ test('every terminal ttheme knows runs the journeys, the reference first', () =>
 })
 
 test("the model's terminals behave the way mise run compat measured them", () => {
-  const measured = compat()
+  const compat = readCompat()
   for (const term of TERMS) {
     for (const { id, holds } of MEASURED) {
-      const result = measured(term, id)
+      const result = compat.result(term, id)
       if (result === 'pass' || result === 'fail') {
         assert.equal(holds(BEHAVIOR[term]), result === 'pass', `${term} ${id}: compat measured ${result}`)
       }
@@ -43,37 +32,24 @@ test("the model's terminals behave the way mise run compat measured them", () =>
 })
 
 test('every measured case the model leans on is one mise run compat records', () => {
-  const cases = new Set(
-    readFileSync(join(root, 'tests', 'compat', 'expect.tsv'), 'utf8')
-      .trim()
-      .split('\n')
-      .slice(1)
-      .map((line) => line.split('\t')[0]),
-  )
-  for (const { id } of MEASURED) {
-    assert.ok(cases.has(id), `compat records no ${id}`)
+  const { cases } = readCompat()
+  for (const { id } of [...MEASURED, ...BRIDGES]) {
+    assert.ok(cases.includes(id), `compat records no ${id}`)
   }
 })
 
 test('the journeys compat also walks in a real window end as compat measured them there', () => {
-  const measured = compat()
+  const compat = readCompat()
   const table = readTable()
-  const fact = (id: string, term: string) => {
-    const cell = table.get(id)?.get(term as (typeof TERMS)[number])
-    return cell === '=' ? table.get(id)?.get(REFERENCE) : cell
-  }
-  const bridges: { id: string; holds: (term: string) => boolean }[] = [
-    { id: 'follow-default', holds: (term) => fact('default-here.here.colors', term) === 'miku' },
-    { id: 'follow-belief', holds: (term) => !(fact('default-here.here.issue', term) ?? '').includes('wears') },
-    { id: 'keep-painted', holds: (term) => fact('default-keeps.here.colors', term) === 'rei' },
-    { id: 'on-follow', holds: (term) => fact('on.other.colors', term) === 'konata' },
-    { id: 'on-belief', holds: (term) => !(fact('on.other.issue', term) ?? '').includes('wears') },
-  ]
   for (const term of TERMS) {
-    for (const { id, holds } of bridges) {
-      const result = measured(term, id)
+    const fact = (id: string) => {
+      const cell = table.get(id)?.get(term)
+      return cell === '=' ? table.get(id)?.get(REFERENCE) : cell
+    }
+    for (const { id, holds } of BRIDGES) {
+      const result = compat.result(term, id)
       if (result === 'pass' || result === 'fail') {
-        assert.equal(holds(term), result === 'pass', `${term} ${id}: compat measured ${result}`)
+        assert.equal(holds(fact), result === 'pass', `${term} ${id}: compat measured ${result}`)
       }
     }
   }

@@ -12,10 +12,12 @@ import {
   KINDS,
   merged,
   owed,
+  readCompat,
   readGaps,
   readTable,
   type Table,
   tableOf,
+  unmeasured,
   writeTable,
 } from './facts.ts'
 import { build, cli, type Fixture, reap, restore, shims, workDir } from './home.ts'
@@ -335,6 +337,20 @@ function report(fresh: Table, old: Table): boolean {
   console.log(
     `\n${MARK.same} same as Ghostty  ${MARK.gap} a gap gaps.tsv explains  ${MARK.changed} a fact changed  ${MARK.broken} unexplained — cannot: the terminal cannot express it · layer: ttheme could close it · deferred: left out on purpose`,
   )
+  const compat = readCompat()
+  const open = terms.flatMap((term) => {
+    const ids = unmeasured(compat, term)
+    if (ids === undefined) {
+      return [`${term.padEnd(18)}every case — compat cannot open it, so the model follows its source`]
+    }
+    return ids.length > 0 ? [`${term.padEnd(18)}${ids.join(' ')}`] : []
+  })
+  if (open.length > 0) {
+    console.log('\nnot decided by mise run compat (? or skip in tests/compat/expect.tsv), so the model assumes them:')
+    for (const line of open) {
+      console.log(`  ${line}`)
+    }
+  }
   if (values.verbose) {
     for (const note of notes) {
       console.log(`  ${note}`)

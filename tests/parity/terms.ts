@@ -150,6 +150,8 @@ export const BEHAVIOR: Record<Term, Behavior> = {
   },
 }
 
+const reportsFocus = (b: Behavior) => b.focus !== 'none'
+
 export const MEASURED: { id: string; holds: (b: Behavior) => boolean }[] = [
   { id: 'painted', holds: (b) => b.draws.includes('11') },
   { id: 'fg-painted', holds: (b) => b.draws.includes('10') },
@@ -164,8 +166,8 @@ export const MEASURED: { id: string; holds: (b: Behavior) => boolean }[] = [
   { id: 'cell-points', holds: (b) => b.cells.includes('points') },
   { id: 'kitty-graphics', holds: (b) => b.graphics },
   { id: 'sync-query', holds: (b) => b.syncQuery },
-  { id: 'focus-report', holds: (b) => b.focus !== 'none' },
-  { id: 'focus-event', holds: (b) => b.focus !== 'none' },
+  { id: 'focus-report', holds: reportsFocus },
+  { id: 'focus-event', holds: reportsFocus },
   { id: 'focus-answer', holds: (b) => b.focus === 'answer' },
 ]
 
