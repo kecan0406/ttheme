@@ -44,6 +44,7 @@ export interface InitOptions {
 export interface InitPaths extends Setup {
   root: string
   zdotdir: string
+  stateDir?: string
 }
 
 export interface InitPlan {
@@ -51,6 +52,7 @@ export interface InitPlan {
   copies: { from: string; to: string; executable?: boolean }[]
   edits: { file: string; block: string }[]
   settings: { file: string; content: string }
+  forget: string[]
   catalog: Manifest
   installed: Installed
   notes: string[]
@@ -90,7 +92,8 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     ...(opts.off ? { off: true as const } : {}),
   }
   const notes = wiringNotes(paths.configHome, installed, paths.home)
-  return { home: paths.home, copies, edits, settings, catalog: loadManifest(paths.root), installed, notes }
+  const forget = paths.stateDir ? [join(paths.stateDir, 'ghostty', '.blind')] : []
+  return { home: paths.home, copies, edits, settings, forget, catalog: loadManifest(paths.root), installed, notes }
 }
 
 export function installedState(configHome: string): Installed | undefined {
@@ -190,6 +193,9 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     }
   }
   writeAtomic(plan.settings.file, plan.settings.content)
+  for (const f of plan.forget) {
+    rmSync(f, { force: true })
+  }
   const configHome = dirname(dirname(plan.settings.file))
   const kept = installedState(configHome)
   const carried = Object.fromEntries(
@@ -356,6 +362,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     home,
     configHome,
     zdotdir,
+    stateDir: join(process.env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme'),
     ...(wtHome ? { wtHome } : {}),
     ...(wtProfile ? { wtProfile } : {}),
   }

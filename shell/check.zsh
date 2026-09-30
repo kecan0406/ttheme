@@ -930,9 +930,22 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   [[ "$(<$TTHEME_GHOSTTY_TABS/.blind)" == 1.3.2 ]] || { print -u2 "a blind Ghostty was not remembered by its version"; exit 1 }
   rm -f $TTHEME_GHOSTTY_TABS/.blind
   answer none
-  for i in {1..4}; do __tt_ghostty_check || { print -u2 "the follower gave up after $i answers naming no terminal"; exit 1 }; done
-  __tt_ghostty_check && { print -u2 "the follower kept asking a Ghostty that never names a terminal"; exit 1 }
+  for i in {1..6}; do __tt_ghostty_check || { print -u2 "the follower gave up after $i answers naming no terminal within seconds"; exit 1 }; done
+  [[ ! -e $TTHEME_GHOSTTY_TABS/.blind ]] || { print -u2 "a few seconds of answers naming no terminal marked Ghostty blind"; exit 1 }
+  TTHEME_GHOSTTY_NONE_AT=$(( EPOCHREALTIME - 31 ))
+  __tt_ghostty_check && { print -u2 "the follower kept asking a Ghostty that named no terminal for half a minute"; exit 1 }
   rm -f $TTHEME_GHOSTTY_TABS/.blind
+  TTHEME_GHOSTTY_NONE=0
+  answer gone
+  __tt_ghostty_check && { print -u2 "a follower kept going after its Ghostty quit"; exit 1 }
+  sleep 0 &
+  dead=$!
+  wait $dead
+  answer none
+  TTHEME_GHOSTTY_PID=$dead TTHEME_GHOSTTY_NONE=4 TTHEME_GHOSTTY_NONE_AT=$(( EPOCHREALTIME - 60 ))
+  __tt_ghostty_check && { print -u2 "a follower kept asking after its Ghostty quit"; exit 1 }
+  [[ ! -e $TTHEME_GHOSTTY_TABS/.blind ]] || { print -u2 "a Ghostty that quit was remembered as blind"; exit 1 }
+  TTHEME_GHOSTTY_PID= TTHEME_GHOSTTY_NONE=0
   answer 1 $ttya 999
   TTHEME_GHOSTTY_SEEN=() TTHEME_GHOSTTY_RUN=() TTHEME_GHOSTTY_BLUR="" TTHEME_GHOSTTY_ASKED=0 TTHEME_GHOSTTY_WANT=0 TTHEME_GHOSTTY_HUSH=0 TTHEME_GHOSTTY_NONE=0
   TTHEME_GHOSTTY_FRONT=$keyb TTHEME_GHOSTTY_IDLE=1

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import { test } from 'node:test'
@@ -242,6 +242,21 @@ test('an upgrade keeps what is installed and only replaces the layer', () => {
   })
   assert.match(readFileSync(configPath, 'utf8'), /^: \$\{TTHEME_FX:=glitch\}$/m)
   assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'ttheme.zsh'), 'utf8'), 'ttheme layer, next version')
+})
+
+test('an upgrade lets the new layer ask again whether Ghostty names the terminal in front', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options({ palettes: ['miku'] }), paths))
+  const stateDir = join(paths.home, '.local', 'state', 'ttheme')
+  const blind = join(stateDir, 'ghostty', '.blind')
+  mkdirSync(join(stateDir, 'ghostty'), { recursive: true })
+  writeFileSync(blind, '1.3.2\n')
+  writeFileSync(join(stateDir, 'ghostty', 'ttys001'), '1 miku miku /dev/ttys001\n')
+  const current = installedState(paths.configHome)
+  assert.ok(current)
+  applyInit(planUpgrade(current, { ...paths, stateDir }))
+  assert.equal(existsSync(blind), false)
+  assert.equal(existsSync(join(stateDir, 'ghostty', 'ttys001')), true)
 })
 
 test('an upgrade drops palettes the catalog no longer has, and a default among them', () => {
