@@ -106,7 +106,15 @@ __tt_bg_load wall
 reloads=0
 TTHEME_TERMINALS=(ghostty)
 __tt_reload_ghostty() { (( ++reloads )) }
-__tt_shown kagami && __tt_reload || { print -u2 "__tt_shown did not move the picture to kagami"; exit 1 }
+__tt_blur
+__tt_shown kagami && { print -u2 "a tab the terminal said is behind took the picture"; exit 1 }
+[[ ! -e $bgd/shown.conf ]] || { print -u2 "a tab behind wrote shown.conf: $(<$bgd/shown.conf)"; exit 1 }
+TTHEME_FRONT=-1
+__tt_prompt
+(( TTHEME_FRONT == -1 )) || { print -u2 "a prompt decided where focus is for a shell that never heard"; exit 1 }
+__tt_shown kagami && __tt_reload ||
+  { print -u2 "a tab that never heard where focus is did not take the picture — a shell whose line-init never turns focus reporting on would never show one"; exit 1 }
+TTHEME_FRONT=1
 [[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" ]] || { print -u2 "shown.conf named the wrong palette: $(<$bgd/shown.conf)"; exit 1 }
 __tt_shown kagami && { print -u2 "__tt_shown asked for a reload with nothing to change"; exit 1 }
 __tt_shown miku && __tt_reload || { print -u2 "__tt_shown kept a picture the palette does not have"; exit 1 }
@@ -130,12 +138,25 @@ TTHEME_SPEC=$TTHEME_PALETTE[rei]; __tt_sync
 TTHEME_SPEC=; __tt_sync
 [[ "$(<$bgd/shown.conf)" == "config-file = ?rei.conf" && $reloads == 5 ]] ||
   { print -u2 "a tab of unknown colors moved the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+__tt_blur
+TTHEME_SPEC=$TTHEME_PALETTE[kagami]; __tt_sync
+[[ "$(<$bgd/shown.conf)" == "config-file = ?rei.conf" && $reloads == 5 ]] ||
+  { print -u2 "a tab that lost focus still took the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+__tt_focus
+TTHEME_SPEC=$TTHEME_PALETTE[rei]
+__tt_prompt
+__tt_precmd
+[[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" && $reloads == 6 && $TTHEME_FRONT == 0 ]] ||
+  { print -u2 "a prompt took the picture before the terminal said the tab is in front — a command that ends in a tab behind would take it: $(<$bgd/shown.conf) reloads=$reloads front=$TTHEME_FRONT"; exit 1 }
+__tt_focus
+[[ "$(<$bgd/shown.conf)" == "config-file = ?rei.conf" && $reloads == 7 && $TTHEME_FRONT == 1 ]] ||
+  { print -u2 "the focus answer at a prompt did not take the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
 [[ -z "$(__tt_precmd)" && "$(__tt_focus_on)" == $'\e[?1004h' && "$(__tt_preexec)" == $'\e[?1004l' ]] ||
   { print -u2 "the prompt did not turn focus reporting on and off"; exit 1 }
 __tt_bg_saved kagami
-(( reloads == 5 )) || { print -u2 "saving a picture Ghostty does not show reloaded it: reloads=$reloads"; exit 1 }
+(( reloads == 7 )) || { print -u2 "saving a picture Ghostty does not show reloaded it: reloads=$reloads"; exit 1 }
 __tt_bg_saved kagami rei
-(( reloads == 6 )) || { print -u2 "saving the picture Ghostty shows did not reload it: reloads=$reloads"; exit 1 }
+(( reloads == 8 )) || { print -u2 "saving the picture Ghostty shows did not reload it: reloads=$reloads"; exit 1 }
 bgsrc=(); __tt_bg_load homura; bgsize[homura]=60
 __tt_bg_write homura && [[ ! -e $bgd/homura.conf ]] || { print -u2 "tuning a palette with no picture left a conf behind"; ls $bgd; exit 1 }
 print -l "# image safebooru_2 2/3" "background-image = kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" "config-file = ?kagami.1a2b3c4d.tune.conf" "config-file = ?kagami.1a2b3c4d.off.conf" > $bgd/kagami.conf

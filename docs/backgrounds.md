@@ -22,9 +22,10 @@ config, not an escape sequence, and Ghostty keeps one background for the whole
 app, so one picture is up at a time, in every window. Moving to another tab
 brings its own: while a tab sits at its prompt it asks for focus events, and
 taking focus puts that tab's picture up — or clears it, when its palette has
-none. A tab busy with a command catches up at its next prompt, focus reporting
-is off while that command runs, and a tab whose colors are not a ttheme palette
-leaves the picture where it is.
+none — while a command that ends in a tab behind leaves the picture of the tab
+in front alone. A tab busy with a command catches up at its next prompt, focus
+reporting is off while that command runs, and a tab whose colors are not a
+ttheme palette leaves the picture where it is.
 
 ## iTerm2
 

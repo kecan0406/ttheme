@@ -169,6 +169,18 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'prompt-behind',
+    about: 'a command that ends in a tab behind leaves the picture of the tab in front alone',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use kita')
+      await p.launch(a, "printf 'wait>'; sleep 2", 'wait>')
+      await p.open()
+      await p.back(a)
+      await p.look('front')
+    },
+  },
+  {
     id: 'preview-hover',
     about: 'preview repaints the tab as the cursor moves, and esc puts everything back',
     async run(p) {

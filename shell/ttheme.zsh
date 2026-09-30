@@ -30,6 +30,12 @@ __tt_fresh() {
   __tt_active && __tt_dir_sync
 }
 
+__tt_prompt() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  (( TTHEME_FRONT < 0 )) || TTHEME_FRONT=0
+  __tt_fresh
+}
+
 __tt_follow() {
   [[ -n $TTHEME_STARTUP && "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" != "$1" && -z $TTHEME_PAINTED ]] || return 1
   __tt_active && __tt_takes_default || return 1
@@ -42,7 +48,7 @@ __tt_gone() {
   __tt_reload
   __tt_reset_reloaded $bg
   print -n $'\e[?1004l'
-  for hook in precmd:__tt_fresh precmd:__tt_precmd precmd:__tt_prompted precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_mux chpwd:__tt_chpwd; do
+  for hook in precmd:__tt_prompt precmd:__tt_precmd precmd:__tt_prompted precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_mux chpwd:__tt_chpwd; do
     add-zsh-hook -d ${hook%%:*} ${hook#*:}
   done
   (( $+functions[add-zle-hook-widget] )) && add-zle-hook-widget -d line-init __tt_line_init
@@ -155,7 +161,7 @@ __tt_active() {
 }
 
 typeset -g TTHEME_HEARD=""
-typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0
+typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0 TTHEME_FRONT=-1
 
 __tt_put() {
   local f=${1:A}
@@ -365,6 +371,7 @@ __tt_rewear() {
 
 __tt_focus() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  TTHEME_FRONT=1
   __tt_fresh
   if (( TTHEME_TMUX )); then
     __tt_rewear
@@ -387,7 +394,7 @@ __tt_unmux() {
 
 __tt_blur() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  :
+  TTHEME_FRONT=0
 }
 
 __tt_line_init() {
@@ -2856,7 +2863,7 @@ fi
   zle -N __tt_line_init
   add-zle-hook-widget line-init __tt_line_init
   add-zsh-hook chpwd __tt_chpwd
-  add-zsh-hook precmd __tt_fresh
+  add-zsh-hook precmd __tt_prompt
   if (( ! TTHEME_TMUX )); then
     add-zsh-hook preexec __tt_mux
     add-zsh-hook precmd __tt_unmux

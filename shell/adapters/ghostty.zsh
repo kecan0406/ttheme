@@ -21,6 +21,7 @@ __tt_reset_reloaded() {
 
 __tt_shown() {
   local dir=${TTHEME_CONFIG:h}/backgrounds was REPLY
+  [[ $2 == force ]] || (( TTHEME_FRONT || TTHEME_TMUX )) || return 1
   __tt_bg_shown
   was=$REPLY
   [[ $was == $1 ]] && return 1
