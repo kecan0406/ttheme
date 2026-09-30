@@ -80,6 +80,13 @@ focus.b.colors	konata	=	=	=	=	=	=	=	=
 focus.b.picture	konata	=	=	none	=	none	=	none	none
 focus.b.wears	konata	=	=	=	=	=	=	=	=
 focus.b.issue	-	=	=	=	=	=	=	=	=
+focus-busy.busy.colors	kita	=	=	=	=	=	=	=	=
+focus-busy.busy.picture	kita	=	=	none	=	none	=	none	none
+focus-busy.busy.issue	-	=	=	=	=	=	=	=	=
+focus-busy.back.colors	konata	=	=	=	=	=	=	=	own
+focus-busy.back.picture	konata	=	=	none	=	none	=	none	none
+focus-busy.back.wears	konata	=	=	=	=	=	=	=	none
+focus-busy.back.issue	-	=	=	=	=	=	=	=	=
 prompt-behind.front.colors	konata	=	=	=	=	=	=	=	own
 prompt-behind.front.picture	konata	=	=	none	=	none	=	none	none
 prompt-behind.front.wears	konata	=	=	=	=	=	=	=	none

@@ -8,7 +8,7 @@ osc-cursor	pass	pass	pass	pass	pass	pass	pass	fail
 osc-selection	fail	pass	pass	pass	fail	fail	pass	fail
 osc-ansi	pass	pass	pass	pass	pass	fail	pass	pass
 osc-reset	pass	pass	pass	pass	pass	pass	fail	fail
-drawn	?	pass	pass	fail	?	?	pass	pass
+drawn	pass	pass	pass	fail	?	?	pass	pass
 painted	pass	pass	pass	skip	pass	fail	pass	pass
 fg-painted	pass	pass	pass	skip	pass	pass	pass	pass
 ansi-painted	pass	pass	pass	skip	pass	pass	pass	fail
@@ -36,3 +36,4 @@ sync-output	pass	pass	pass	pass	pass	pass	skip	skip
 sync-query	pass	pass	fail	pass	pass	pass	pass	pass
 focus-report	pass	pass	pass	pass	pass	fail	skip	skip
 focus-event	skip	skip	skip	skip	skip	?	skip	pass
+front-tty	pass	fail	fail	fail	fail	fail	fail	fail

@@ -101,6 +101,33 @@ __cc_focus() {
   fi
 }
 
+__cc_front() {
+  local REPLY fg
+  local -a ans
+  if [[ $TTHEME_ADAPTER != ghostty ]]; then
+    __cc_report front-tty fail "ttheme asks only Ghostty, whose picture is app-wide, which terminal is in front"
+    return
+  fi
+  if (( ! $+functions[__tt_ghostty_ask] )); then
+    __cc_report front-tty skip "no layer"
+    return
+  fi
+  if (( ! $+commands[osascript] )); then
+    __cc_report front-tty skip "no osascript, so nothing asks Ghostty which terminal is in front"
+    return
+  fi
+  __tt_ghostty_owner $PPID
+  TTHEME_GHOSTTY_PID=$REPLY
+  __tt_ghostty_ask
+  ans=(${=REPLY})
+  fg=${$(ps -o tpgid= -p $$)// /}
+  if [[ $ans[2] == "$TTY" && $ans[3] == "$fg" ]]; then
+    __cc_report front-tty pass "Ghostty named this terminal's tty and the process in front of it: $ans[2] $ans[3]"
+  else
+    __cc_report front-tty fail "Ghostty answered ${REPLY:-nothing}, where this terminal is $TTY with $fg in front"
+  fi
+}
+
 __cc_shot() {
   local i
   : > $CC_DIR/$1.req
@@ -450,6 +477,7 @@ __cc_cases() {
 
   __cc_decrqm focus-report 1004
   __cc_focus
+  __cc_front
 
   __cc_follow
   __cc_keep

@@ -862,4 +862,128 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   [[ -L $TTHEME_CONFIG && "$(<$XDG_CONFIG_HOME/dotfiles/config.zsh)" == *': ${TTHEME_SORT:=series}'* ]] ||
     { print -u2 "saving a setting replaced a linked config.zsh, or never reached it"; exit 1 }
 ) || exit 1
+(
+  source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
+  TTHEME_TERMINALS=(ghostty) TTHEME_STARTUP=miku TTHEME_TMUX=0 TERM_PROGRAM_VERSION=1.3.2
+  reloads=0 asks=$XDG_CONFIG_HOME/asks
+  __tt_reload_ghostty() { (( ++reloads )) }
+  mkdir -p $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys
+  sleep 30 >/dev/null 2>&1 &
+  alive=$!
+  for t in a b c; do
+    : > $XDG_CONFIG_HOME/ttys/$t
+    touch -a -t 203001010000 $XDG_CONFIG_HOME/ttys/$t
+    __tt_ghostty_key $XDG_CONFIG_HOME/ttys/$t
+    typeset key$t=$REPLY
+  done
+  ttya=$XDG_CONFIG_HOME/ttys/a ttyb=$XDG_CONFIG_HOME/ttys/b ttyc=$XDG_CONFIG_HOME/ttys/c
+  print -r -- "$alive miku kagami $ttya" > $TTHEME_GHOSTTY_TABS/$keya
+  print -r -- "$alive miku rei $ttyb" > $TTHEME_GHOSTTY_TABS/$keyb
+  print -r -- "$alive miku - $ttyc" > $TTHEME_GHOSTTY_TABS/$keyc
+  print -r -- "config-file = ?rei.conf" >| $bgd/shown.conf
+  answer() { print -r -- "$*" >| $XDG_CONFIG_HOME/answer }
+  osascript() { print >> $asks; print -r -- "$(<$XDG_CONFIG_HOME/answer)" }
+  shown() { print -r -- "$(<$bgd/shown.conf)" }
+  answer 1 $ttya 999
+  __tt_ghostty_check || { print -u2 "the follower went blind on a Ghostty that names the terminal in front"; exit 1 }
+  [[ "$(shown)" == "config-file = ?kagami.conf" && $reloads == 1 && $TTHEME_GHOSTTY_FRONT == $keya && $TTHEME_GHOSTTY_IDLE == 0 ]] ||
+    { print -u2 "the follower did not put up the picture of a busy tab in front: $(shown) reloads=$reloads front=$TTHEME_GHOSTTY_FRONT idle=$TTHEME_GHOSTTY_IDLE"; exit 1 }
+  __tt_ghostty_check
+  (( reloads == 1 )) || { print -u2 "the follower reloaded Ghostty with the right picture already up"; exit 1 }
+  answer 1 $ttyb $alive
+  __tt_ghostty_check
+  [[ "$(shown)" == "config-file = ?rei.conf" && $reloads == 2 && $TTHEME_GHOSTTY_IDLE == 1 ]] ||
+    { print -u2 "the follower left another tab's picture over a tab at its prompt in front: $(shown) reloads=$reloads"; exit 1 }
+  answer 0 $ttya 999
+  __tt_ghostty_check
+  [[ "$(shown)" == "config-file = ?rei.conf" && -z $TTHEME_GHOSTTY_FRONT ]] ||
+    { print -u2 "the follower moved the picture while Ghostty was behind another app: $(shown)"; exit 1 }
+  answer 1 $ttyc 999
+  __tt_ghostty_check
+  answer 1 /dev/ttys999 999
+  __tt_ghostty_check
+  [[ "$(shown)" == "config-file = ?rei.conf" && $reloads == 2 ]] ||
+    { print -u2 "a tab that wears no palette, or no ttheme at all, moved the picture: $(shown)"; exit 1 }
+  TTHEME_STARTUP=
+  answer 1 $ttya 999
+  __tt_ghostty_check
+  [[ "$(shown)" == "config-file = ?rei.conf" ]] || { print -u2 "a busy tab painted before ttheme went off put its picture back up: $(shown)"; exit 1 }
+  TTHEME_STARTUP=miku
+  osascript() {
+    print >> $asks
+    if [[ ! -e $XDG_CONFIG_HOME/claimed ]]; then
+      : > $XDG_CONFIG_HOME/claimed
+      print -r -- "config-file = ?kagami.conf" >| $bgd/shown.conf
+      touch -t 203201010000 $bgd/shown.conf
+      print -r -- "1 $ttya 999"
+    else
+      print -r -- "1 $ttyb $alive"
+    fi
+  }
+  : > $asks
+  __tt_ghostty_check
+  [[ "$(shown)" == "config-file = ?rei.conf" && $(wc -l < $asks) -eq 2 ]] ||
+    { print -u2 "the follower acted on an answer a tab's own claim made stale: $(shown), asked $(wc -l < $asks) times"; exit 1 }
+  osascript() { print >> $asks; print -r -- "$(<$XDG_CONFIG_HOME/answer)" }
+  answer blind
+  __tt_ghostty_check && { print -u2 "the follower kept going on a Ghostty that cannot name the terminal in front"; exit 1 }
+  [[ "$(<$TTHEME_GHOSTTY_TABS/.blind)" == 1.3.2 ]] || { print -u2 "a blind Ghostty was not remembered by its version"; exit 1 }
+  rm -f $TTHEME_GHOSTTY_TABS/.blind
+  answer none
+  for i in {1..4}; do __tt_ghostty_check || { print -u2 "the follower gave up after $i answers naming no terminal"; exit 1 }; done
+  __tt_ghostty_check && { print -u2 "the follower kept asking a Ghostty that never names a terminal"; exit 1 }
+  rm -f $TTHEME_GHOSTTY_TABS/.blind
+  answer 1 $ttya 999
+  TTHEME_GHOSTTY_SEEN=() TTHEME_GHOSTTY_RUN=() TTHEME_GHOSTTY_BLUR="" TTHEME_GHOSTTY_ASKED=0 TTHEME_GHOSTTY_WANT=0 TTHEME_GHOSTTY_HUSH=0 TTHEME_GHOSTTY_NONE=0
+  TTHEME_GHOSTTY_FRONT=$keyb TTHEME_GHOSTTY_IDLE=1
+  print -r -- "config-file = ?rei.conf" >| $bgd/shown.conf
+  : > $asks
+  __tt_ghostty_tick
+  [[ ! -s $asks ]] || { print -u2 "the follower asked Ghostty before any tab took input"; exit 1 }
+  touch -a -t 203301010000 $ttya
+  __tt_ghostty_tick
+  [[ $(wc -l < $asks) -eq 1 && "$(shown)" == "config-file = ?kagami.conf" ]] ||
+    { print -u2 "a busy tab behind that took input — the focus report a switch to it sends — did not bring its picture up: $(shown)"; exit 1 }
+  : > $asks
+  TTHEME_GHOSTTY_ASKED=0
+  touch -a -t 203302010000 $ttya
+  __tt_ghostty_tick
+  [[ ! -s $asks && $TTHEME_GHOSTTY_HUSH != 0 ]] || { print -u2 "typing into the busy tab in front made the follower ask at once"; exit 1 }
+  TTHEME_GHOSTTY_HUSH=$(( EPOCHREALTIME - 0.5 ))
+  __tt_ghostty_tick
+  [[ $(wc -l < $asks) -eq 1 ]] ||
+    { print -u2 "a busy tab in front that went quiet after taking input was not checked — a switch to a tab that reports no focus would be missed"; exit 1 }
+  : > $asks
+  TTHEME_GHOSTTY_IDLE=1 TTHEME_GHOSTTY_FRONT=$keya TTHEME_GHOSTTY_ASKED=$(( EPOCHREALTIME - 5 ))
+  touch -a -t 203302020000 $ttya
+  __tt_ghostty_tick
+  TTHEME_GHOSTTY_HUSH=$(( EPOCHREALTIME - 0.5 ))
+  __tt_ghostty_tick
+  [[ ! -s $asks ]] || { print -u2 "typing at the prompt of the tab in front made the follower ask within 10 s of its last question"; exit 1 }
+  TTHEME_GHOSTTY_ASKED=$(( EPOCHREALTIME - 11 ))
+  __tt_ghostty_tick
+  [[ $(wc -l < $asks) -eq 1 ]] ||
+    { print -u2 "a tab in front last seen at its prompt was never checked again — a program started there would hide a switch to a tab that reports no focus"; exit 1 }
+  : > $TTHEME_GHOSTTY_TABS/.blur
+  TTHEME_GHOSTTY_ASKED=0
+  __tt_ghostty_tick
+  : > $asks
+  touch -t 203303010000 $TTHEME_GHOSTTY_TABS/.blur
+  TTHEME_GHOSTTY_ASKED=0
+  __tt_ghostty_tick
+  [[ $(wc -l < $asks) -eq 1 ]] || { print -u2 "a tab at its prompt losing focus did not make the follower ask which tab took it"; exit 1 }
+  : > $asks
+  for i in {1..7}; do
+    TTHEME_GHOSTTY_ASKED=0
+    touch -a -t 20340101000$i $ttyc
+    __tt_ghostty_tick
+  done
+  [[ $(wc -l < $asks) -eq 4 ]] || { print -u2 "a tab behind that reads its input all the time kept the follower asking: $(wc -l < $asks) times"; exit 1 }
+  __tt_ghostty_live || { print -u2 "the follower found no live tab"; exit 1 }
+  kill $alive
+  wait $alive 2>/dev/null
+  __tt_ghostty_live && { print -u2 "the follower kept going with every tab closed"; exit 1 }
+  [[ -z $(print -r $TTHEME_GHOSTTY_TABS/[^.]*(N)) ]] || { print -u2 "the follower left closed tabs behind"; exit 1 }
+  rm -rf $TTHEME_GHOSTTY_TABS $XDG_CONFIG_HOME/ttys
+) || exit 1
 print "shell layer ok — ${#TTHEME_PALETTE} palettes, adapter=$adapter"

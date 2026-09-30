@@ -129,7 +129,7 @@ function issues(
   term: Term,
   seen: Look,
   wears: string | undefined,
-  layered: boolean,
+  pictured: boolean,
   text: string | undefined,
   fixture: Fixture,
 ): string {
@@ -141,7 +141,7 @@ function issues(
       out.push('wears')
     }
   }
-  if (BEHAVIOR[term].pictures !== 'none' && whole && seen.colors !== 'own' && (wears !== undefined || layered)) {
+  if (BEHAVIOR[term].pictures !== 'none' && whole && seen.colors !== 'own' && (wears !== undefined || pictured)) {
     const want = pictureOf(backgrounds(fixture.place), seen.colors)
     if (seen.picture !== want) {
       out.push('picture')
@@ -203,7 +203,7 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       put(label, 'colors', seen.colors)
       put(label, 'picture', seen.picture)
       let wears: string | undefined
-      if (options.wears !== false) {
+      if (options.wears !== false && !options.busy) {
         wears = await app.wears(tab)
         put(label, 'wears', wears)
       }
@@ -227,7 +227,14 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       put(
         label,
         'issue',
-        issues(app.term, seen, wears, app.layered(tab) !== undefined, text ?? tab.screen(fixture.place.home), fixture),
+        issues(
+          app.term,
+          seen,
+          wears,
+          app.layered(tab) !== undefined || options.busy === true,
+          text ?? tab.screen(fixture.place.home),
+          fixture,
+        ),
       )
     },
     config(line) {

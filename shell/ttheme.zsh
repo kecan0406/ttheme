@@ -395,6 +395,7 @@ __tt_unmux() {
 __tt_blur() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   TTHEME_FRONT=0
+  __tt_blurred
 }
 
 __tt_line_init() {

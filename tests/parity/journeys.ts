@@ -3,6 +3,7 @@ import type { Tab } from './model.ts'
 export interface LookOptions {
   text?: boolean
   wears?: boolean
+  busy?: boolean
   repaints?: boolean
   opacity?: boolean
 }
@@ -33,6 +34,8 @@ export interface Journey {
   unwired?: true
   run(p: Probe): Promise<void>
 }
+
+const BUSY = `zsh -fc 'stty raw -echo; printf "\\e[?1004hbusy>"; exec cat >/dev/null'`
 
 export const JOURNEYS: Journey[] = [
   {
@@ -166,6 +169,21 @@ export const JOURNEYS: Journey[] = [
       await p.look('a')
       await p.focus(b)
       await p.look('b')
+    },
+  },
+  {
+    id: 'focus-busy',
+    about: 'the picture follows the tab in front while a program that takes focus reports runs in it',
+    async run(p) {
+      p.pin('work', 'kita')
+      const a = await p.open()
+      await p.type(a, 'cd ~/work')
+      await p.launch(a, BUSY, 'busy>')
+      const b = await p.open()
+      await p.focus(a)
+      await p.look('busy', { busy: true })
+      await p.focus(b)
+      await p.look('back')
     },
   },
   {

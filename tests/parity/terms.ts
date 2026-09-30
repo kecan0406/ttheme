@@ -34,6 +34,7 @@ export interface Behavior {
   syncQuery: boolean
   reload: 'keep' | 'reset' | 'none'
   pictures: 'app' | 'tab' | 'window' | 'none'
+  front: 'tty' | 'none'
 }
 
 const EVERY = SLOT_CODES
@@ -51,6 +52,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     syncQuery: true,
     reload: 'keep',
     pictures: 'app',
+    front: 'tty',
   },
   iterm2: {
     draws: EVERY,
@@ -63,6 +65,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     syncQuery: true,
     reload: 'keep',
     pictures: 'tab',
+    front: 'none',
   },
   kitty: {
     draws: EVERY,
@@ -75,6 +78,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     syncQuery: true,
     reload: 'reset',
     pictures: 'window',
+    front: 'none',
   },
   alacritty: {
     draws: NO_SELECTION,
@@ -87,6 +91,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     syncQuery: true,
     reload: 'keep',
     pictures: 'none',
+    front: 'none',
   },
   wezterm: {
     draws: EVERY,
@@ -99,6 +104,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     syncQuery: false,
     reload: 'keep',
     pictures: 'window',
+    front: 'none',
   },
   'windows-terminal': {
     draws: EVERY,
@@ -111,6 +117,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     syncQuery: true,
     reload: 'reset',
     pictures: 'none',
+    front: 'none',
   },
   warp: {
     draws: ['10', ...ANSI],
@@ -123,6 +130,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     syncQuery: true,
     reload: 'none',
     pictures: 'app',
+    front: 'none',
   },
   konsole: {
     draws: ['11', '10'],
@@ -135,6 +143,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     syncQuery: true,
     reload: 'none',
     pictures: 'none',
+    front: 'none',
   },
   'terminal-app': {
     draws: EVERY,
@@ -147,6 +156,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     syncQuery: true,
     reload: 'none',
     pictures: 'none',
+    front: 'none',
   },
 }
 
@@ -169,6 +179,7 @@ export const MEASURED: { id: string; holds: (b: Behavior) => boolean }[] = [
   { id: 'focus-report', holds: reportsFocus },
   { id: 'focus-event', holds: reportsFocus },
   { id: 'focus-answer', holds: (b) => b.focus === 'answer' },
+  { id: 'front-tty', holds: (b) => b.front === 'tty' },
 ]
 
 export const WIRING: Record<Term, Wired | undefined> = {

@@ -1,6 +1,6 @@
 import { Database } from 'bun:sqlite'
 import { randomUUID } from 'node:crypto'
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Terminal } from '@xterm/headless'
 import {
@@ -92,6 +92,7 @@ export class Tab {
   readonly placements = new Map<string, { image: string; z: number }>()
   exited = false
   bgs: string[] = []
+  tty = ''
   proc: ReturnType<typeof Bun.spawn> | undefined
   readonly n: number
   readonly session: string
@@ -109,8 +110,14 @@ export class Tab {
   }
 
   write(data: string): void {
-    if (!this.exited) {
-      this.proc?.terminal?.write(data)
+    if (this.exited) {
+      return
+    }
+    this.proc?.terminal?.write(data)
+    if (this.tty && process.platform !== 'darwin') {
+      try {
+        utimesSync(this.tty, new Date(), statSync(this.tty).mtime)
+      } catch {}
     }
   }
 
@@ -931,8 +938,14 @@ export class App {
       this.blur(was)
     }
     await this.until(() => tab.prompts() >= 1, 20000, `the ${this.term} tab never drew its first prompt`)
+    tab.tty = read(join(this.place.home, '.parity', `tty.${n}`)).trim()
+    this.aim(tab)
     await this.settle()
     return tab
+  }
+
+  private aim(tab: Tab): void {
+    writeFileSync(join(this.place.home, '.parity', 'front'), `${tab.tty}\n`)
   }
 
   private blur(tab: Tab): void {
@@ -948,6 +961,7 @@ export class App {
     }
     const was = this.front
     this.front = tab
+    this.aim(tab)
     if (was) {
       this.blur(was)
     }

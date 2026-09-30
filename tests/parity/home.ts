@@ -12,6 +12,13 @@ export const STARTUP = 'konata'
 
 const SHIMS: Record<string, string> = {
   ps: 'exit 0',
+  osascript: [
+    'front="$HOME/.parity/front"',
+    '[ -s "$front" ] || { echo none; exit 0; }',
+    'read -r tty < "$front"',
+    'for ps in /bin/ps /usr/bin/ps; do [ -x "$ps" ] && break; done',
+    'echo "1 $tty $("$ps" -o tpgid= -t "${tty#/dev/}" 2>/dev/null | awk \'NR == 1 { print $1 }\')"',
+  ].join('\n'),
   pkill: 'case " $* " in *" -USR2 "*" ghostty "*) printf \'reload\\n\' >> "$HOME/.parity/reloads" ;; esac\nexit 0',
   defaults: [
     'dir="$HOME/.parity/defaults/$2"',
@@ -200,6 +207,7 @@ function picture(place: Place, entry: PaletteEntry, id: number): void {
 export const HARNESS = [
   "PROMPT='pt> '",
   "RPROMPT=''",
+  'print -r -- $TTY >| $HOME/.parity/tty.$PT_TAB',
   '__pt_dump() { print -r -- "${TTHEME_SPEC}|${TTHEME_PAINTED}|${TTHEME_STARTUP}" >| $HOME/.parity/wears.$PT_TAB }',
   'zle -N __pt_dump',
   "bindkey '^[[5555~' __pt_dump",

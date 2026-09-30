@@ -23,9 +23,12 @@ app, so one picture is up at a time, in every window. Moving to another tab
 brings its own: while a tab sits at its prompt it asks for focus events, and
 taking focus puts that tab's picture up — or clears it, when its palette has
 none — while a command that ends in a tab behind leaves the picture of the tab
-in front alone. A tab busy with a command catches up at its next prompt, focus
-reporting is off while that command runs, and a tab whose colors are not a
-ttheme palette leaves the picture where it is.
+in front alone. A tab busy with a program — Claude Code, vim, ssh, a dev server —
+cannot hear its focus, so on macOS a small helper asks Ghostty which terminal is
+in front and puts that tab's picture up about 0.2 s after you switch to it. It
+needs a Ghostty whose AppleScript names a terminal's tty (builds after 1.3.1);
+with an older one, or on Linux, a busy tab catches up at its next prompt. A tab
+whose colors are not a ttheme palette leaves the picture where it is.
 
 ## iTerm2
 

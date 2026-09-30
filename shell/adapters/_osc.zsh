@@ -55,6 +55,8 @@ __tt_reloaded() { : }
 
 __tt_worn() { : }
 
+__tt_blurred() { : }
+
 __tt_keepable() { return 1 }
 
 __tt_paints() { return 0 }

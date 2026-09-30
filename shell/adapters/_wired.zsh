@@ -16,20 +16,28 @@ __tt_pictured() {
   return 0
 }
 
+__tt_ghostty_owner() {
+  local pid=$1 ppid comm
+  REPLY=0
+  while (( pid > 1 )); do
+    read -r ppid comm <<< "$(ps -o ppid=,comm= -p $pid)"
+    if [[ ${comm:t} == ghostty ]]; then
+      REPLY=$pid
+      return 0
+    fi
+    pid=$ppid
+  done
+  return 1
+}
+
 __tt_reload_ghostty() {
-  local pid=$PPID ppid comm owner=$TTHEME_GHOSTTY_PID
-  (( TTHEME_TMUX )) && { pid=$(tmux display -p '#{client_pid}' 2>/dev/null) owner="" }
-  if [[ -z $owner ]]; then
-    owner=0
-    while (( pid > 1 )); do
-      read -r ppid comm <<< "$(ps -o ppid=,comm= -p $pid)"
-      if [[ ${comm:t} == ghostty ]]; then
-        owner=$pid
-        break
-      fi
-      pid=$ppid
-    done
-    (( TTHEME_TMUX )) || TTHEME_GHOSTTY_PID=$owner
+  local REPLY owner=$TTHEME_GHOSTTY_PID
+  if (( TTHEME_TMUX )); then
+    __tt_ghostty_owner "$(tmux display -p '#{client_pid}' 2>/dev/null)"
+    owner=$REPLY
+  elif [[ -z $owner ]]; then
+    __tt_ghostty_owner $PPID
+    owner=$REPLY TTHEME_GHOSTTY_PID=$REPLY
   fi
   (( owner )) && kill -USR2 $owner 2>/dev/null && return
   pkill -USR2 -x ghostty 2>/dev/null
