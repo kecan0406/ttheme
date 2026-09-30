@@ -174,10 +174,20 @@ description = "shell latency with and without ttheme, zsh-bench's four metrics a
 depends = ["build"]
 run = "zsh tests/latency.zsh bench"
 
+[tasks.parity]
+description = "walk every journey in a model of each terminal against Ghostty's and hold the differences to tests/parity/facts.tsv and gaps.tsv — `mise run parity [--update] [--only <terminal,…>] [--journey <id,…>] [--show <journey.label>] [-v]`"
+depends = ["build", "bin:build"]
+run = "bun tests/parity/run.ts"
+
 [tasks.compat]
 description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv — `mise run compat [--update] [ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole…]`"
 depends = ["build", "bin:build"]
 run = "zsh tests/compat.zsh"
+
+[tasks."compat:konsole"]
+description = "run the compat cases in Konsole from a container (Ubuntu 24.04, Konsole 23.08 on Xvfb) — `mise run compat:konsole [--update]`"
+depends = ["build", "bin:build"]
+run = "docker build -q -t ttheme-konsole -f tests/compat/konsole.Dockerfile tests/compat > /dev/null && docker run --rm -v \"$PWD\":/work ttheme-konsole zsh tests/compat.zsh"
 
 [tasks."site:dev"]
 description = "dev server for the showcase site"
@@ -203,4 +213,4 @@ git push --atomic --follow-tags origin main
 
 [tasks.ci]
 description = "everything the ci workflow runs"
-depends = ["lint", "check", "test", "shell:check", "ghostty:check", "bin:check", "tui"]
+depends = ["lint", "check", "test", "shell:check", "ghostty:check", "bin:check", "tui", "parity"]

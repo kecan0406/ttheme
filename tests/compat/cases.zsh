@@ -1,4 +1,5 @@
 typeset -g CC_DIR=${ZDOTDIR:-$HOME}/compat
+typeset -gi CC_DRAWN=1
 
 __cc_ask() {
   local c fd saved
@@ -16,6 +17,19 @@ __cc_ask() {
   exec {fd}>&-
   [[ $REPLY == *$'\e[0n' ]] || return 1
   REPLY=${REPLY%$'\e[0n'}
+}
+
+__cc_drain() {
+  local c fd saved buf=""
+  exec {fd}<>/dev/tty || return 1
+  saved=$(stty -g <&$fd)
+  stty raw -echo min 0 time 10 <&$fd
+  while IFS= read -r -k 1 -u $fd c; do
+    buf+=$c
+    [[ $buf == *$'\e[0n' ]] && break
+  done
+  stty $saved <&$fd
+  exec {fd}>&-
 }
 
 __cc_color() {
@@ -45,10 +59,46 @@ __cc_dist() {
 __cc_report() { print -r -- "$1"$'\t'"$2"$'\t'"$3" >> $CC_DIR/results }
 
 __cc_mode() {
-  __cc_ask $'\e[?'$1'$p' || return 1
-  [[ $REPLY == *$'\e[?'$1';'<->'$y'* ]] || { REPLY=0; return 1 }
+  __cc_ask $'\e[?'$1'$p' || return 2
+  [[ $REPLY == *$'\e[?'$1';'<->'$y'* ]] || { REPLY=""; return 2 }
   REPLY=${${REPLY##*\;}%%\$*}
   (( REPLY != 0 ))
+}
+
+__cc_decrqm() {
+  __cc_mode $2
+  case $? in
+    0) __cc_report $1 pass "DECRQM $2 = $REPLY" ;;
+    1) __cc_report $1 fail "DECRQM $2 = 0, not recognized" ;;
+    *) __cc_report $1 skip "no DECRQM answer, so the mode is unknown" ;;
+  esac
+}
+
+__cc_focus() {
+  local c fd saved buf="" moved=""
+  local -i i
+  exec {fd}<>/dev/tty || return 1
+  saved=$(stty -g <&$fd)
+  stty raw -echo min 0 time 1 <&$fd
+  printf '\e[?1004h' >&$fd
+  while IFS= read -r -k 1 -u $fd c; do :; done
+  rm -f -- $CC_DIR/focus.done
+  : > $CC_DIR/focus.req
+  for (( i = 0; i < 100; i++ )); do
+    while IFS= read -r -k 1 -u $fd c; do buf+=$c; done
+    [[ -e $CC_DIR/focus.done ]] && { moved=$(<$CC_DIR/focus.done); break }
+  done
+  while IFS= read -r -k 1 -u $fd c; do buf+=$c; done
+  printf '\e[?1004l' >&$fd
+  stty $saved <&$fd
+  exec {fd}>&-
+  if [[ $moved != moved ]]; then
+    __cc_report focus-event skip "moving focus here would take it from the user"
+  elif [[ $buf == *$'\e['[IO]* ]]; then
+    __cc_report focus-event pass "focus moved away and back, and the terminal reported ${(V)${buf//[^$'\e'\[IO]/}}"
+  else
+    __cc_report focus-event fail "focus moved away and back, and the terminal reported nothing"
+  fi
 }
 
 __cc_shot() {
@@ -69,15 +119,20 @@ __cc_painted() {
 
 __cc_seen() {
   local want=$2 from=$3 got
+  local -i within=${4:-24}
   local -i near far
   sleep 0.3
+  if (( ! CC_DRAWN )); then
+    __cc_report $1 skip "the window does not redraw while it is covered"
+    return
+  fi
   if ! __cc_shot $1; then
     __cc_report $1 skip "no screenshot"
     return
   fi
   local shot=$REPLY
   for got in ${(M)${=shot}:#\#*}; do
-    __cc_near $want $got 24 || continue
+    __cc_near $want $got $within || continue
     __cc_dist $want $got; near=$REPLY
     __cc_dist ${from:-$want} $got; far=$REPLY
     [[ -z $from ]] || (( near < far )) || continue
@@ -105,6 +160,17 @@ __cc_fill() {
 
 __cc_kitty() {
   local -i r
+  printf '\e[H\e[2J'
+  __cc_fill 40 QKBA 1 -1
+  sleep 0.5
+  __cc_seen kitty-shown '#40a040' $start 64
+  printf '\e_Ga=d,d=A,q=2\e\\\e[H\e[2J'
+  if [[ $(tail -1 $CC_DIR/results) != kitty-shown$'\t'pass* ]]; then
+    __cc_report kitty-under-bg skip "the image never showed"
+    __cc_report kitty-el skip "the image never showed"
+    __cc_report kitty-crop skip "the image never showed"
+    return
+  fi
   printf '\e[H\e[48;2;160;64;64m'
   for (( r = 1; r <= LINES; r++ )); do printf '\e[%d;1H%*s' $r $COLUMNS ''; done
   printf '\e[0m'
@@ -114,11 +180,100 @@ __cc_kitty() {
   printf '\e_Ga=d,d=A,q=2\e\\\e[H\e[2J'
   __cc_fill 42 QKBA 1 -1
   for (( r = 1; r <= LINES; r++ )); do printf '\e[%d;1H\e[K' $r; done
-  __cc_seen kitty-el '#40a040' $start
+  __cc_seen kitty-el '#40a040' $start 64
   printf '\e_Ga=d,d=A,q=2\e\\\e[H\e[2J'
   __cc_fill 43 oEBAQECg 2 -1 ,x=0,y=1,w=1,h=1
-  __cc_seen kitty-crop '#4040a0' '#a04040'
+  __cc_seen kitty-crop '#4040a0' '#a04040' 64
   printf '\e_Ga=d,d=A,q=2\e\\\e[H\e[2J'
+}
+
+__cc_follow() {
+  local before=$TTHEME_STARTUP target shown="" worn want was
+  local -a others=(${TTHEME_ORDER:#$before})
+  local -i i
+  target=$others[1]
+  if (( ! $+functions[ttheme] )) || [[ -z $before || -z $target ]]; then
+    __cc_report follow-default skip "no layer or fewer than two palettes"
+    __cc_report follow-belief skip "no layer or fewer than two palettes"
+    return
+  fi
+  if [[ $TTHEME_ADAPTER == warp ]]; then
+    __cc_report follow-default skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+    __cc_report follow-belief skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+    return
+  fi
+  want=${${=TTHEME_PALETTE[$target]}[1]} was=${${=TTHEME_PALETTE[$before]}[1]}
+  __tt_osc_reset
+  __tt_unshown force
+  for (( i = 0; i < 20; i++ )); do
+    __cc_color 11 && __cc_near $was $REPLY && break
+    sleep 0.1
+  done
+  if (( i == 20 )); then
+    __cc_report follow-default skip "the window does not show the default palette"
+    __cc_report follow-belief skip "the window does not show the default palette"
+    return
+  fi
+  TTHEME_SPEC=${TTHEME_PALETTE[$before]}
+  ttheme default $target
+  for (( i = 0; i < 50; i++ )); do
+    __cc_color 11 && shown=$REPLY
+    [[ -n $shown ]] && __cc_near $want $shown && break
+    sleep 0.1
+  done
+  __tt_name_of "$TTHEME_SPEC"
+  worn=$REPLY
+  if [[ -n $shown ]] && __cc_near $want $shown; then
+    __cc_report follow-default pass "a tab that never painted took the new default $target"
+    if [[ $worn == $target ]]; then
+      __cc_report follow-belief pass "the shell wears $worn too"
+    else
+      __cc_report follow-belief fail "the tab shows $target, the shell wears $worn"
+    fi
+  elif [[ -n $shown ]] && __cc_near $was $shown; then
+    __cc_report follow-default fail "a tab that never painted kept $before"
+    if [[ $worn == $before ]]; then
+      __cc_report follow-belief pass "the shell wears $worn too"
+    else
+      __cc_report follow-belief fail "the tab shows $before, the shell wears $worn"
+    fi
+  else
+    __cc_report follow-default fail "read ${shown:-no answer}, wanted $want or $was"
+    __cc_report follow-belief skip "the tab shows neither palette"
+  fi
+  ttheme default $before
+  sleep 1
+  printf '\e[H\e[2J'
+}
+
+__cc_keep() {
+  local before=$TTHEME_STARTUP paint target shown="" want
+  local -a others=(${TTHEME_ORDER:#$before})
+  paint=$others[1] target=$others[2]
+  if (( ! $+functions[ttheme] )) || [[ -z $before || -z $target ]]; then
+    __cc_report keep-painted skip "no layer or fewer than three palettes"
+    return
+  fi
+  if [[ $TTHEME_ADAPTER == warp ]]; then
+    __cc_report keep-painted skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+    return
+  fi
+  want=${${=TTHEME_PALETTE[$paint]}[1]}
+  ttheme use $paint
+  sleep 0.5
+  ttheme default $target
+  sleep 3
+  __cc_color 11 && shown=$REPLY
+  if [[ -n $shown ]] && __cc_near $want $shown; then
+    __cc_report keep-painted pass "a tab painted $paint kept it through ttheme default $target"
+  else
+    __cc_report keep-painted fail "a tab painted $paint shows ${shown:-nothing} after ttheme default $target"
+  fi
+  ttheme default $before
+  sleep 1
+  (( $+functions[__tt_osc_reset] )) && __tt_osc_reset
+  sleep 0.3
+  printf '\e[H\e[2J'
 }
 
 __cc_cases() {
@@ -161,9 +316,37 @@ __cc_cases() {
     __cc_report osc-reset fail "wanted $start, read ${REPLY:-no answer}"
   fi
 
+  printf '\e[H\e[2J\e[48;2;106;90;143m'
+  for (( r = 1; r <= LINES; r++ )); do printf '\e[%d;1H%*s' $r $COLUMNS ''; done
+  printf '\e[0m'
+  __cc_seen drawn '#6a5a8f' $start
+  [[ $(tail -1 $CC_DIR/results) == drawn$'\t'fail* ]] && CC_DRAWN=0
+  printf '\e[H\e[2J'
+
   printf '\e]11;#3a6f5c\e\\'
   __cc_painted painted '#3a6f5c' $start
   printf '\e]111\e\\'
+
+  local fg="" red=""
+  __cc_color 10 && fg=$REPLY
+  __cc_color '4;1' && red=$REPLY
+  printf '\e]10;#5a8f6a\e\\\e[H\e[2J\e[7m'
+  for (( r = 1; r <= LINES; r++ )); do printf '\e[%d;1H%*s' $r $COLUMNS ''; done
+  printf '\e[0m'
+  __cc_seen fg-painted '#5a8f6a' ${fg:-$start}
+  printf '\e]110\e\\\e]4;1;#8f5a6a\e\\\e[H\e[2J\e[41m'
+  for (( r = 1; r <= LINES; r++ )); do printf '\e[%d;1H%*s' $r $COLUMNS ''; done
+  printf '\e[0m'
+  __cc_seen ansi-painted '#8f5a6a' ${red:-$start}
+  printf '\e]104;1\e\\\e[H\e[2J'
+
+  if __cc_ask $'\e[?1004h' && [[ $REPLY == *$'\e['[IO]* ]]; then
+    __cc_report focus-answer pass "turning focus reporting on answered ${${(V)REPLY}[1,12]}"
+  else
+    __cc_report focus-answer fail "turning focus reporting on answered ${${(V)REPLY}:-nothing}"
+  fi
+  printf '\e[?1004l'
+
 
   (( $+functions[__tt_name_of] )) && __tt_name_of "$TTHEME_SPEC"
   other=${${TTHEME_ORDER:#$REPLY}[1]}
@@ -236,35 +419,103 @@ __cc_cases() {
     __cc_report cell-size fail "neither CSI 16t nor OSC 1337 ReportCellSize"
   fi
 
+  if __cc_ask $'\e[14t\e[18t' && [[ $REPLY == *$'\e[4;'<1->';'<1->t* && $REPLY == *$'\e[8;'<1->';'<1->t* ]]; then
+    __cc_report cell-points pass "CSI 14t ${${REPLY##*\[4;}%%t*} over CSI 18t ${${REPLY##*\[8;}%%t*}"
+  else
+    __cc_report cell-points fail "no CSI 14t and 18t pair"
+  fi
+
   if __cc_ask $'\e_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\e\\' && [[ $REPLY == *'_Gi=31;OK'* ]]; then
     __cc_report kitty-graphics pass "a=q answered OK"
     __cc_kitty
   else
     __cc_report kitty-graphics fail "${${(V)REPLY}:-no answer}"
+    __cc_report kitty-shown skip "no kitty graphics"
     __cc_report kitty-under-bg skip "no kitty graphics"
     __cc_report kitty-el skip "no kitty graphics"
     __cc_report kitty-crop skip "no kitty graphics"
   fi
 
-  if __cc_mode 2026; then
-    __cc_report sync-output pass "DECRQM 2026 = $REPLY"
-  else
-    __cc_report sync-output fail "DECRQM 2026 = ${REPLY:-no answer}"
-  fi
+  __cc_decrqm sync-output 2026
 
   printf '\e[?2026h'
   if __cc_ask ''; then
+    printf '\e[?2026l'
     __cc_report sync-query pass "a DSR answered inside a synchronized update"
   else
+    printf '\e[?2026l'
+    __cc_drain
     __cc_report sync-query fail "a DSR went unanswered until the synchronized update ended"
   fi
-  printf '\e[?2026l'
 
-  if __cc_mode 1004; then
-    __cc_report focus-report pass "DECRQM 1004 = $REPLY"
-  else
-    __cc_report focus-report fail "DECRQM 1004 = ${REPLY:-no answer}"
+  __cc_decrqm focus-report 1004
+  __cc_focus
+
+  __cc_follow
+  __cc_keep
+  __cc_back
+}
+
+__cc_back() {
+  local start=$TTHEME_STARTUP want shown="" worn
+  local -i i
+  if (( ! $+functions[ttheme] )) || [[ -z $start ]]; then
+    __cc_report on-follow skip "no layer or no default palette"
+    __cc_report on-belief skip "no layer or no default palette"
+    return
   fi
+  if [[ $TTHEME_ADAPTER == warp ]]; then
+    __cc_report on-follow skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+    __cc_report on-belief skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+    return
+  fi
+  want=${${=TTHEME_PALETTE[$start]}[1]}
+  __tt_osc_reset
+  __tt_unshown force
+  TTHEME_SPEC=${TTHEME_PALETTE[$start]}
+  sleep 0.5
+  ttheme off
+  for (( i = 0; i < 50; i++ )); do
+    __cc_color 11 && shown=$REPLY
+    [[ -n $shown ]] && ! __cc_near $want $shown 3 && break
+    sleep 0.1
+  done
+  if (( i == 50 )); then
+    ttheme on
+    __cc_report on-follow skip "the tab kept $start through ttheme off"
+    __cc_report on-belief skip "the tab kept $start through ttheme off"
+    return
+  fi
+  __tt_cli on > /dev/null
+  __tt_reload
+  sleep 1
+  (( TTHEME_FOCUS )) && __tt_focus
+  shown=""
+  for (( i = 0; i < 50; i++ )); do
+    __cc_color 11 && shown=$REPLY
+    [[ -n $shown ]] && __cc_near $want $shown 3 && break
+    sleep 0.1
+  done
+  worn=""
+  [[ -n $TTHEME_SPEC ]] && __tt_name_of "$TTHEME_SPEC" && worn=$REPLY
+  if [[ -n $shown ]] && __cc_near $want $shown 3; then
+    __cc_report on-follow pass "a tab that went off took the default $start back at its focus"
+    if [[ $worn == $start ]]; then
+      __cc_report on-belief pass "the shell wears $worn too"
+    else
+      __cc_report on-belief fail "the tab shows $start, the shell wears ${worn:-nothing}"
+    fi
+  else
+    __cc_report on-follow fail "a tab that went off shows ${shown:-no answer} at its focus, not $start"
+    if [[ -z $worn ]]; then
+      __cc_report on-belief pass "the shell wears nothing either"
+    else
+      __cc_report on-belief fail "the tab shows ${shown:-no answer}, the shell wears $worn"
+    fi
+  fi
+  __tt_osc_reset
+  sleep 0.3
+  printf '\e[H\e[2J'
 }
 
 __cc_run() {

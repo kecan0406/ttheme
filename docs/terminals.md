@@ -23,7 +23,9 @@ get it.
   carrying more than seven). kitty and Windows Terminal reset every OSC color
   when their config reloads, so a changed default would undo the palettes open
   tabs wear: kitty's watcher puts each window's palette back as the reload ends,
-  and a Windows Terminal tab repaints itself at its next prompt or focus.
+  and a Windows Terminal tab repaints itself once the reset reaches it — the
+  tab that changed the default at once, every other one at its next prompt or
+  focus.
   Terminal.app takes every OSC color but no OSC reset, so ttheme reads its
   colors when the shell starts and puts them back itself. Warp answers OSC
   color queries but paints one theme app-wide and never the background an OSC
@@ -77,6 +79,14 @@ layer sends to the Ghostty that owns the tab, Windows Terminal by a touch of its
 `settings.json`, Konsole over D-Bus. Open tabs catch up at their next prompt —
 the shell layer re-reads `palettes.zsh` when it moves — and a tab only ever
 repaints itself, so a palette you painted by hand stays until you change it.
+
+Ghostty is the reference. Every change runs the same journeys — new tabs,
+`use`, `default`, `off` and `on` across tabs, preview, pins, browse, pictures
+tuned elsewhere — against a model of each terminal built from what was measured
+in the real one, and every place a terminal still differs from Ghostty is listed
+with its reason in
+[`tests/parity/gaps.tsv`](../tests/parity/gaps.tsv): what the terminal cannot
+express, what ttheme could still close, and what was left out on purpose.
 
 ## Notes per terminal
 

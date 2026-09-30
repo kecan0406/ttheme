@@ -7,16 +7,13 @@ sb_itc() {
     $(( 16#${h[1,2]} / 255.0 )) $(( 16#${h[3,4]} / 255.0 )) $(( 16#${h[5,6]} / 255.0 ))
 }
 
-sb_profile() {
-  local f=$SB_PROFILES/sandbox.json
-  jq ".Profiles[0] |= ($1)" $f > $f.tmp && command mv -f -- $f.tmp $f
-}
+sb_profile() { sb_ttheme default "$1" }
 
 sb_wear() {
-  local f=$SB_PROFILES/sandbox.json
-  jq --arg name "ttheme · $1" --slurpfile t $SB_PROFILES/ttheme.json \
-    '.Profiles[0] += ($t[0].Profiles[] | select(.Name == $name) | del(.Name, .Guid))' $f > $f.tmp &&
-    command mv -f -- $f.tmp $f
+  local f=$SB_PROFILES/ttheme.json
+  jq --arg name "ttheme · $1" \
+    '(.Profiles[] | select(.Name == $name) | del(.Name, .Guid)) as $w | (.Profiles[] | select(.Guid == "ttheme-default")) += $w' \
+    $f > $f.tmp && command mv -f -- $f.tmp $f
 }
 
 sb_var() {

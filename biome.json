@@ -30,7 +30,7 @@
       }
     },
     {
-      "includes": ["src/**/*.test.ts"],
+      "includes": ["src/**/*.test.ts", "tests/parity/**"],
       "linter": {
         "rules": {
           "suspicious": {

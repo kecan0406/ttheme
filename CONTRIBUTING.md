@@ -129,7 +129,8 @@ mise run ci
 ```
 
 That runs lint, typecheck, tests, the build with its contrast gate, the shell
-check and the node bundle check — exactly what CI runs.
+check, the node bundle check, the TUI screens and the parity walk — exactly
+what CI runs.
 
 CI runs on Ubuntu, so the tools are GNU's; macOS ships BSD's, which forgive
 more. If a shell step passes for you and fails there, look at those first —
@@ -141,15 +142,32 @@ work on both should not lean on either's output format.
 mise run build                # regenerates dist/ for every terminal — fails on bad contrast
 mise run build --only kitty   # just one terminal's subtree
 mise run compat               # the terminal compatibility cases, in each installed terminal
+mise run compat:konsole       # the same cases in Konsole, from a Linux container (needs Docker)
+mise run parity               # every journey in a model of every terminal, held to Ghostty's
 ```
 
 `mise run compat` opens each installed terminal behind your windows on a
 throwaway home (`mise run sandbox`), runs the cases in `tests/compat/cases.zsh`
 inside it — adapter detection, OSC set/query/reset, what the window really
 paints (read off a screenshot), `ttheme use <palette>` and its restore, cell size,
-kitty graphics, synchronized output and focus reporting — and compares them
-with `tests/compat/expect.tsv`: a case that used to pass and fails is a
-regression and fails the run, and `--update` records what was measured.
+kitty graphics, synchronized output, focus reporting, and whether a tab that
+never painted follows a new default and a tab that went off takes it back —
+and compares them with `tests/compat/expect.tsv`: a case that used to pass and
+fails is a regression and fails the run, and `--update` records what was
+measured. Konsole runs on Linux alone, so `mise run compat:konsole` runs its
+cases on a private display in a container, where moving focus takes nothing
+from you.
+
+Ghostty is the reference for how every terminal should look and behave.
+`mise run parity` (part of CI) walks the same journeys — a new tab, `ttheme
+use`, `default`, `off` and `on` across tabs, preview, pins, browse, pictures
+tuned or dropped in another tab, a default reaching Ghostty — in a model of
+each terminal built from what `mise run compat` measured, and compares what
+every tab shows with Ghostty in `tests/parity/facts.tsv`. Each difference needs
+a line in `tests/parity/gaps.tsv` saying whether the terminal cannot express it,
+ttheme could close it, or it was left out on purpose, and why. A change that
+moves a fact fails until `mise run parity --update` records it; `--only`,
+`--journey` and `--show journey.label` narrow a run and print what a tab shows.
 
 Every palette in the catalog passes the gate unwaived — `kyubey` runs tightest,
 since as the one light palette every accent has to darken enough to hold

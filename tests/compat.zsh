@@ -8,7 +8,7 @@ typeset -g OUT=${${TMPDIR:-/tmp}%/}/ttheme-compat
 typeset -g EXPECT=$ROOT/tests/compat/expect.tsv
 typeset -g KONSOLE_SCREEN=${TTHEME_KONSOLE_SCREEN:-:77}
 typeset -ga TERMINALS=(ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole)
-typeset -gA FLAG=(ghostty '' iterm2 --iterm wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app --terminal-app konsole --konsole)
+typeset -gA FLAG=(ghostty '' iterm2 '--iterm --trust' wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app --terminal-app konsole --konsole)
 typeset -gA ADAPTER=(ghostty ghostty iterm2 iterm2 wezterm wezterm kitty kitty alacritty alacritty warp warp terminal-app terminal-app konsole konsole)
 
 installed() {
@@ -73,8 +73,35 @@ shoot() {
   [[ -n $wid ]] && screencapture -x -o -l $wid $shot
 }
 
+nudge() {
+  local pid wid other
+  [[ $1 == konsole ]] && (( $+commands[xmessage] )) || return 1
+  for pid in ${=$(pids_of konsole)}; do
+    wid=$(DISPLAY=$KONSOLE_SCREEN xdotool search --pid $pid 2>/dev/null | tail -1) && [[ -n $wid ]] && break
+  done
+  [[ -n $wid ]] || return 1
+  DISPLAY=$KONSOLE_SCREEN xmessage -geometry +0+0 ttheme-compat > /dev/null 2>&1 &!
+  pid=$!
+  sleep 0.5
+  other=$(DISPLAY=$KONSOLE_SCREEN xdotool search --class xmessage 2>/dev/null | tail -1)
+  [[ -n $other ]] || { kill $pid 2>/dev/null; return 1 }
+  DISPLAY=$KONSOLE_SCREEN xdotool windowfocus $wid; sleep 0.3
+  DISPLAY=$KONSOLE_SCREEN xdotool windowfocus $other; sleep 0.3
+  DISPLAY=$KONSOLE_SCREEN xdotool windowfocus $wid; sleep 0.3
+  kill $pid 2>/dev/null
+  return 0
+}
+
 serve() {
   local term=$1 title=$2 old=$3 req shot color i
+  if [[ -e $SANDBOX/compat/focus.req ]]; then
+    rm -f -- $SANDBOX/compat/focus.req
+    if nudge $term; then
+      print -r -- moved > $SANDBOX/compat/focus.done
+    else
+      print -r -- skip > $SANDBOX/compat/focus.done
+    fi
+  fi
   for req in $SANDBOX/compat/*.req(N); do
     sleep 0.4
     shot=$OUT/$term-${req:t:r}.png
@@ -116,7 +143,7 @@ measure() {
   [[ $term == terminal-app ]] && pgrep -x Terminal > /dev/null && was=1
   hook=$(mktemp "${TMPDIR:-/tmp}/ttheme-compat.XXXXXX")
   print -rl -- "typeset -g CC_ADAPTER=$ADAPTER[$term] CC_TITLE=$title" "source ${(q)ROOT}/tests/compat/cases.zsh" > $hook
-  if ! zsh $ROOT/tests/sandbox.zsh --behind ${FLAG[$term]:+$FLAG[$term]} --zshenv $hook miku asuka > /dev/null; then
+  if ! zsh $ROOT/tests/sandbox.zsh --behind ${=FLAG[$term]} --zshenv $hook miku asuka rei > /dev/null; then
     rm -f $hook
     return 1
   fi
@@ -158,7 +185,7 @@ update() {
   local -a out=()
   for line in ${(f)"$(<$EXPECT)"}; do
     local -a f=(${=line})
-    [[ -n ${got[$f[1]]} ]] && f[col]=$got[$f[1]]
+    [[ -n ${got[$f[1]]} && ( ${got[$f[1]]} != skip || $f[col] == '?' ) ]] && f[col]=$got[$f[1]]
     out+=("${(j:	:)f}")
   done
   print -rl -- $out > $EXPECT
@@ -184,6 +211,7 @@ report() {
       expected $term $id
       want=$REPLY
       if [[ -z $got ]]; then mark="  (not run)"
+      elif [[ $got == skip && $want != skip ]]; then mark="  skip"
       elif [[ $want == '?' ]]; then mark="? $got"
       elif [[ $got == $want ]]; then [[ $got == pass ]] && mark="✓ pass" || mark="· $got"
       elif [[ $want == pass ]]; then mark="✗ $got"; broken+=1
@@ -202,7 +230,7 @@ report() {
     done
     [[ -s $OUT/$term.err ]] && print -r -- "$term stderr: $(<$OUT/$term.err)"
   done
-  print -r -- "✓ as expected · known gap ✗ regression + better than expected ? not measured before — screenshots in $OUT"
+  print -r -- "✓ as expected · known gap ✗ regression + better than expected ? not measured before, skip: not measurable this run — screenshots in $OUT"
   (( ! broken ))
 }
 

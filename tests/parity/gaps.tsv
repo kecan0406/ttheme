@@ -1,0 +1,37 @@
+terminal	fact	kind	reason
+ghostty	unwired.used.issue	cannot	a Ghostty config init never wired includes no picture, so a palette's picture cannot show
+iterm2	*.hover.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
+iterm2	preview-tab.pick.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
+iterm2	preview-tune.tune.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
+iterm2	unwired.used.issue	cannot	an iTerm2 init never wired has no ttheme profiles, so a palette's picture cannot show
+kitty	unwired.used.issue	cannot	a kitty init never wired loads no watcher, so a palette's picture cannot show
+alacritty	*.picture	cannot	Alacritty has no graphics protocol, so it shows no picture
+alacritty	*.text	cannot	Alacritty has no graphics protocol, so preview offers no picture tuning
+alacritty	picture-tune.other.opacity	cannot	Alacritty has no graphics protocol, so it shows no picture
+alacritty	reach-picture.ghostty.opacity	cannot	Alacritty preview has no picture tuning, so no tuned picture leaves it for Ghostty
+wezterm	preview-tune.tune.text	cannot	WezTerm attaches kitty images to the cells they cover, so preview has no find and its tuning footer lists other keys
+wezterm	unwired.used.issue	cannot	a WezTerm init never wired runs no ttheme module, so a palette's picture cannot show
+windows-terminal	*.picture	cannot	Windows Terminal draws no kitty graphics, so ttheme gives it no picture
+windows-terminal	*.text	cannot	Windows Terminal draws no kitty graphics, so preview offers no picture tuning
+windows-terminal	picture-tune.other.opacity	cannot	Windows Terminal draws no kitty graphics, so ttheme gives it no picture
+windows-terminal	reach-picture.ghostty.opacity	cannot	Windows Terminal preview has no picture tuning, so no tuned picture leaves it for Ghostty
+warp	default.unpainted.*	layer	Warp tells an idle prompt nothing when its tab comes to the front, so a tab that never painted takes the new default while its shell learns it only at its next prompt
+warp	off.other.*	layer	Warp tells an idle prompt nothing when its tab comes to the front, so a tab turns off while its shell learns it only at its next prompt
+warp	on.other.*	layer	Warp tells an idle prompt nothing when its tab comes to the front, so a tab that went off takes the default back while its shell learns it only at its next prompt
+warp	preview-tune.tune.text	cannot	Warp opens no OSC 8 links, so the tuning title names the post without linking it
+warp	browse.hover.picture	cannot	Warp paints a tab only through its one theme, so a live repaint puts on the palette's picture along with its colors
+warp	unwired.used.*	cannot	Warp paints a tab only through the settings.toml init wires, so a Warp init never wired refuses ttheme use
+konsole	*.picture	cannot	Konsole keeps a color scheme's wallpaper cached while any tab shows the scheme, so ttheme shows no picture there
+konsole	*.text	cannot	no pictures in Konsole, so preview offers no picture tuning
+konsole	browse.hover.colors	cannot	Konsole draws no OSC 4, so a live repaint sends the background and foreground alone
+konsole	unwired.used.*	cannot	Konsole draws a palette's 16 colors only from the schemes init writes, so a Konsole init never wired refuses ttheme use
+konsole	picture-tune.other.opacity	cannot	Konsole keeps a color scheme's wallpaper cached while any tab shows the scheme, so ttheme shows no picture there
+konsole	reach-picture.ghostty.opacity	cannot	Konsole preview has no picture tuning, so no tuned picture leaves it for Ghostty
+terminal-app	*.picture	cannot	Terminal.app has no graphics protocol, so it shows no picture
+terminal-app	preview-*.text	cannot	Terminal.app has no graphics protocol and no default for new tabs, so preview offers neither picture tuning nor Default
+terminal-app	*.colors	deferred	ttheme does not wire Terminal.app, so a new tab opens in its own profile rather than the default palette and a reset goes back to that profile
+terminal-app	*.wears	deferred	ttheme does not wire Terminal.app, so a new tab opens in its own profile rather than the default palette and a reset goes back to that profile
+terminal-app	new-tab.open.text	deferred	ttheme does not wire Terminal.app, so a new tab wears no palette to announce
+terminal-app	browse.hover.text	deferred	ttheme does not wire Terminal.app, so the tab browse opens in wears no palette to announce above it
+terminal-app	picture-tune.other.opacity	cannot	Terminal.app has no graphics protocol, so it shows no picture
+terminal-app	reach-picture.ghostty.opacity	cannot	Terminal.app preview has no picture tuning, so no tuned picture leaves it for Ghostty

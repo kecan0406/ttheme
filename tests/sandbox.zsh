@@ -68,13 +68,14 @@ open_ghostty() {
     --working-directory=$SANDBOX
 }
 
-open_iterm() {
-  local legacy=$1 trust=$2 behind=$3
+iterm_suite() {
+  local legacy=$1 trust=$2
   local dp="$SANDBOX/Library/Application Support/iTerm2/DynamicProfiles"
   local shell="/usr/bin/env HOME=$SANDBOX TTHEME_ITERM_SUITE=$SUITE ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache /bin/zsh -il"
   mkdir -p $dp
   jq -n --arg cmd $shell --arg dir $SANDBOX '{Profiles: [{
       Name: "ttheme sandbox", Guid: "sandbox",
+      "Dynamic Profile Parent Name": "Default",
       "Custom Command": "Yes", Command: $cmd,
       "Custom Directory": "Yes", "Working Directory": $dir,
       "Close Sessions On End": true
@@ -100,6 +101,10 @@ open_iterm() {
       defaults write $SUITE "NoSyncSetProfileProperty_$key" -int 0
     done
   fi
+}
+
+open_iterm() {
+  local behind=$1
   env -u GHOSTTY_RESOURCES_DIR -u GHOSTTY_BIN_DIR -u GHOSTTY_SHELL_FEATURES -u TERM_PROGRAM -u TERM_PROGRAM_VERSION \
     -u COLORTERM -u TERMINFO -u KITTY_WINDOW_ID -u ITERM_SESSION_ID \
     open ${behind:+-g} -na iTerm --args -suite $SUITE \
@@ -189,7 +194,9 @@ main() {
     label="all $#palettes"
   fi
   fresh
-  (( $#zshenv )) && cp -- $zshenv[-1] $SANDBOX/.zshenv
+  local node
+  node=$(node -p process.execPath 2>/dev/null) && print -r -- "path=(${(q)node:h} \$path)" > $SANDBOX/.zshenv
+  (( $#zshenv )) && cat -- $zshenv[-1] >> $SANDBOX/.zshenv
   isolate
   if (( $#here )); then
     wire $label $palettes
@@ -201,8 +208,9 @@ main() {
   local front=""
   (( $+commands[lsappinfo] )) && [[ $(lsappinfo info -only pid "$(lsappinfo front)") =~ 'pid"?[[:space:]]*=[[:space:]]*([0-9]+)' ]] && front=$match[1]
   if (( $#iterm )); then
+    iterm_suite $#legacy $#trust
     ( unset GHOSTTY_RESOURCES_DIR TERM_PROGRAM KITTY_WINDOW_ID; ITERM_SESSION_ID=w0 wire $label $palettes )
-    open_iterm $#legacy $#trust "${behind:+1}" || { print -u2 "no iTerm2 to open"; return 1 }
+    open_iterm "${behind:+1}" || { print -u2 "no iTerm2 to open"; return 1 }
     (( $#behind )) && hand_back $front $ITERM_SERVER
     print -r -- "opened a separate iTerm2 (settings suite $SUITE) on it — ⌘Q quits only that one; files stay until the next run"
     return
@@ -229,6 +237,8 @@ main() {
     return
   fi
   if (( $#warp )); then
+    mkdir -p $SANDBOX/.warp
+    print -rl -- '[appearance.themes]' 'theme = "dark"' > $SANDBOX/.warp/settings.toml
     ( unset $FOREIGN; TERM_PROGRAM=WarpTerminal wire $label $palettes )
     open_warp "${behind:+1}" || { print -u2 "no Warp to open"; return 1 }
     print -r -- "opened a Warp tab on it through ${WARP_LAUNCH/#$REAL_HOME/~} — exit leaves; files stay until the next run"
