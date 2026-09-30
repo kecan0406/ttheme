@@ -141,6 +141,14 @@ pin.out.colors	konata	=	=	=	=	=	=	=	own
 pin.out.picture	konata	=	=	none	=	none	=	none	none
 pin.out.wears	konata	=	=	=	=	=	=	=	none
 pin.out.issue	-	=	=	=	=	=	=	=	=
+pin-reach.pinned.colors	kita	=	=	=	=	=	konata	=	own
+pin-reach.pinned.picture	kita	=	=	none	=	none	konata	none	none
+pin-reach.pinned.wears	kita	=	=	=	=	=	konata	=	none
+pin-reach.pinned.issue	-	=	=	=	=	=	=	=	=
+pin-reach.moved.colors	miku	=	=	=	=	=	konata	=	own
+pin-reach.moved.picture	none	=	=	=	=	=	konata	=	=
+pin-reach.moved.wears	miku	=	=	=	=	=	konata	=	none
+pin-reach.moved.issue	-	=	=	=	=	=	=	=	=
 browse.hover.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
 browse.hover.picture	konata	=	=	none	=	none	kita	none	none
 browse.hover.text	txt:e630649408	=	=	=	=	=	=	=	txt:0c52740325

@@ -289,6 +289,29 @@ REPLY=; __tt_tilde $HOME/proj-home
 [[ $REPLY == "~/proj-home" ]] || { print -u2 "__tt_tilde kept the home prefix: $REPLY"; exit 1 }
 cd $OLDPWD
 (
+  __tt_active() { return 0 }
+  mkdir -p $XDG_CONFIG_HOME/reach
+  cd $XDG_CONFIG_HOME/reach
+  rm -f $TTHEME_PINS_FILE
+  TTHEME_PINS_RAW=; __tt_pins_load
+  TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  __tt_fresh > /dev/null
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" ]] || { print -u2 "a prompt repainted a tab with no pin changed"; exit 1 }
+  print -r -- "$XDG_CONFIG_HOME/reach  homura" > $TTHEME_PINS_FILE
+  __tt_fresh > /dev/null
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[homura]" && $TTHEME_PIN == "$XDG_CONFIG_HOME/reach" ]] ||
+    { print -u2 "a pin set in another tab did not reach a tab already in its directory at its next prompt: pin=$TTHEME_PIN"; exit 1 }
+  print -r -- "$XDG_CONFIG_HOME/reach  kaito" > $TTHEME_PINS_FILE
+  touch -t 203101010000 $TTHEME_PINS_FILE
+  __tt_fresh > /dev/null
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[kaito]" && $TTHEME_BASE_SPEC == "$TTHEME_PALETTE[miku]" ]] ||
+    { print -u2 "a pin moved to another palette in another tab did not repaint a tab under it, or lost the palette it wore before"; exit 1 }
+  rm -f $TTHEME_PINS_FILE
+  __tt_fresh > /dev/null
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && -z $TTHEME_PIN ]] ||
+    { print -u2 "a pin dropped in another tab did not give a tab under it its palette back: pin=$TTHEME_PIN"; exit 1 }
+) || exit 1
+(
   HOME=$XDG_CONFIG_HOME/home
   mkdir -p $HOME/work/api/v2 $HOME/work/site/x $HOME/notes
   print -r -- "//**  rei" > $TTHEME_PINS_FILE

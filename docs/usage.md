@@ -124,7 +124,9 @@ before, unless you painted it by hand in between, in which case your pick stays.
 The nearest pinned ancestor wins, so a project can pin one palette and a
 subfolder another, and where a directory has both a pin of its own and one for
 everything below, its own one wins there. Open tabs pick up a changed pins file
-on their next `cd`.
+at their next prompt, and in a terminal that reports focus as soon as they come
+to the front: a tab already in a directory you pin elsewhere repaints then, and
+one under a pin you drop goes back to what it had before.
 
 `unpin` works from wherever you are and offers what can go:
 

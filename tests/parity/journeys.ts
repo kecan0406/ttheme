@@ -272,6 +272,22 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'pin-reach',
+    about: 'a pin set or moved in another tab reaches a tab already in its directory once it comes to the front',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'mkdir -p ~/work && cd ~/work')
+      const b = await p.open()
+      p.pin('work', 'kita')
+      await p.focus(a)
+      await p.look('pinned')
+      await p.focus(b)
+      p.pin('work', 'miku')
+      await p.focus(a)
+      await p.look('moved')
+    },
+  },
+  {
     id: 'browse',
     about: 'browse repaints the tab as the cursor moves over palettes, and puts the tab back when it closes',
     async run(p) {

@@ -19,9 +19,15 @@ __tt_fresh() {
     [[ -e $TTHEME_HOME ]] || __tt_gone
     return 0
   fi
-  [[ $at[1] == "$TTHEME_PALETTES_AT" ]] && return 0
-  __tt_palettes_load && { __tt_follow "$start" && __tt_sync; __tt_reloaded }
-  [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
+  if [[ $at[1] != "$TTHEME_PALETTES_AT" ]]; then
+    __tt_palettes_load && { __tt_follow "$start" && __tt_sync; __tt_reloaded }
+    [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
+  fi
+  at=("")
+  zstat -F %s.%N -A at +mtime -- $TTHEME_PINS_FILE 2>/dev/null
+  [[ $at[1] == "$TTHEME_PINS_AT" ]] && return 0
+  __tt_pins_load
+  __tt_active && __tt_dir_sync
 }
 
 __tt_follow() {
@@ -65,7 +71,7 @@ typeset -g TTHEME_CONFIG=${XDG_CONFIG_HOME:-$HOME/.config}/ttheme/config.zsh
 [[ -r $TTHEME_CONFIG ]] && source $TTHEME_CONFIG
 
 typeset -g TTHEME_PINS_FILE=${TTHEME_CONFIG:h}/pins
-typeset -g TTHEME_PINS_RAW=""
+typeset -g TTHEME_PINS_RAW="" TTHEME_PINS_AT=""
 typeset -gA TTHEME_PINS=()
 typeset -g TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_SPEC=""
 
@@ -75,6 +81,9 @@ __tt_pins_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   setopt localoptions extendedglob
   local raw="" line key name
+  local -a at=("")
+  zstat -F %s.%N -A at +mtime -- $TTHEME_PINS_FILE 2>/dev/null
+  TTHEME_PINS_AT=$at[1]
   [[ -r $TTHEME_PINS_FILE ]] && raw="$(<$TTHEME_PINS_FILE)"
   [[ $raw == "$TTHEME_PINS_RAW" ]] && return 0
   TTHEME_PINS_RAW=$raw
@@ -298,13 +307,16 @@ __tt_dir_rule() {
 __tt_dir_sync() {
   local REPLY="" spec=""
   __tt_dir_rule "$PWD" || REPLY=""
-  [[ $REPLY == "$TTHEME_PIN" ]] && return 0
   if [[ -n $REPLY ]]; then
-    [[ -n $TTHEME_PIN ]] || TTHEME_BASE_SPEC=$TTHEME_SPEC
     spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
-  elif [[ $TTHEME_SPEC == "$TTHEME_PIN_SPEC" ]]; then
-    spec=$TTHEME_BASE_SPEC
-    [[ -n $spec ]] || { __tt_osc_reset; TTHEME_SPEC= }
+    [[ $REPLY == "$TTHEME_PIN" && $spec == "$TTHEME_PIN_SPEC" ]] && return 0
+    [[ -n $TTHEME_PIN ]] || TTHEME_BASE_SPEC=$TTHEME_SPEC
+  else
+    [[ -n $TTHEME_PIN ]] || return 0
+    if [[ $TTHEME_SPEC == "$TTHEME_PIN_SPEC" ]]; then
+      spec=$TTHEME_BASE_SPEC
+      [[ -n $spec ]] || { __tt_osc_reset; TTHEME_SPEC= }
+    fi
   fi
   TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
   [[ -n $spec && $spec != "$TTHEME_SPEC" ]] || return 0
@@ -410,12 +422,14 @@ __tt_pins_write() {
   done
   if (( ! ${#lines} )); then
     rm -f $TTHEME_PINS_FILE || return 1
-    TTHEME_PINS_RAW=""
+    TTHEME_PINS_RAW="" TTHEME_PINS_AT=""
     return 0
   fi
   mkdir -p ${TTHEME_PINS_FILE:h} || return 1
   __tt_put $TTHEME_PINS_FILE "${lines[@]}" || return 1
   TTHEME_PINS_RAW="$(<$TTHEME_PINS_FILE)"
+  local -a at
+  zstat -F %s.%N -A at +mtime -- $TTHEME_PINS_FILE 2>/dev/null && TTHEME_PINS_AT=$at[1]
 }
 
 __tt_pin_base() { REPLY=${${${1%/\*\*}:-/}:a} }

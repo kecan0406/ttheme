@@ -18,6 +18,7 @@ windows-terminal	reach-picture.ghostty.opacity	cannot	Windows Terminal preview h
 warp	default.unpainted.*	layer	Warp tells an idle prompt nothing when its tab comes to the front, so a tab that never painted takes the new default while its shell learns it only at its next prompt
 warp	off.other.*	layer	Warp tells an idle prompt nothing when its tab comes to the front, so a tab turns off while its shell learns it only at its next prompt
 warp	on.other.*	layer	Warp tells an idle prompt nothing when its tab comes to the front, so a tab that went off takes the default back while its shell learns it only at its next prompt
+warp	pin-reach.*	layer	Warp tells an idle prompt nothing when its tab comes to the front, so a tab already under a pin set or moved in another tab repaints only at its next prompt
 warp	preview-tune.tune.text	cannot	Warp opens no OSC 8 links, so the tuning title names the post without linking it
 warp	browse.hover.picture	cannot	Warp paints a tab only through its one theme, so a live repaint puts on the palette's picture along with its colors
 warp	unwired.used.*	cannot	Warp paints a tab only through the settings.toml init wires, so a Warp init never wired refuses ttheme use
