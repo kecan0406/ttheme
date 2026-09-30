@@ -3,6 +3,8 @@ import { appendFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from '
 import { availableParallelism } from 'node:os'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
+import { colorless } from '../../src/osc.ts'
+import { pending } from '../../src/pending.ts'
 import {
   cellValue,
   explained,
@@ -64,6 +66,51 @@ journeyOrder(JOURNEYS.map((j) => j.id))
 const screens = new Map<string, string>()
 const shows = split(values.show) ?? []
 const journals = new Map<string, string[]>()
+
+const live = Boolean(process.stdout.isTTY) && process.env.TERM !== 'dumb'
+const line = pending()
+const clock = performance.now()
+const progress = { phase: '', done: 0, total: 0, latest: '' }
+const running = new Set<string>()
+
+function seconds(since = clock): string {
+  return `${((performance.now() - since) / 1000).toFixed(1)}s`
+}
+
+function describe(): string {
+  const { phase, done, total, latest } = progress
+  const detail = total - done <= 3 && running.size > 0 ? `waiting on ${[...running].join(', ')}` : latest
+  return `${phase} ${done}/${total}${detail ? ` · ${detail}` : ''} · ${seconds()}`
+}
+
+function begin(phase: string, total: number): void {
+  Object.assign(progress, { phase, done: 0, total, latest: '' })
+  if (live) {
+    line.set(describe())
+  } else {
+    console.log(describe().toLowerCase())
+  }
+}
+
+function step(latest: string): void {
+  progress.done++
+  progress.latest = latest
+  if (live) {
+    line.set(describe())
+  }
+}
+
+const beat = setInterval(
+  () => {
+    if (live) {
+      line.set(describe())
+    } else if (progress.done < progress.total) {
+      console.log(describe().toLowerCase())
+    }
+  },
+  live ? 1000 : 10000,
+)
+beat.unref()
 
 function normalized(text: string): string {
   return text
@@ -173,7 +220,7 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
         screens.set(`${app.term} ${journey.id}.${label}`, text)
       }
       if (shows.some((pattern) => glob(pattern, `${journey.id}.${label}`))) {
-        console.log(
+        line.say(
           `--- ${app.term} ${journey.id}.${label}\n${tab.screen(fixture.place.home)}\n--- journal: ${app.journal.join(' · ')}`,
         )
       }
@@ -222,6 +269,8 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
 }
 
 async function walk(fixture: Fixture, journey: Journey): Promise<Facts> {
+  const name = `${fixture.term} ${journey.id}`
+  running.add(name)
   await restore(fixture)
   const facts: Facts = {}
   const app = new App(fixture.term, fixture.place)
@@ -231,7 +280,7 @@ async function walk(fixture: Fixture, journey: Journey): Promise<Facts> {
   } catch (error) {
     facts[`${journey.id}.error`] = (error instanceof Error ? error.message : String(error)).split('\n')[0] ?? 'error'
     if (values.verbose) {
-      console.error(`${fixture.term} ${journey.id}: ${error instanceof Error ? error.message : error}`)
+      line.say(`${fixture.term} ${journey.id}: ${error instanceof Error ? error.message : error}`)
     }
   } finally {
     await app.close()
@@ -239,7 +288,8 @@ async function walk(fixture: Fixture, journey: Journey): Promise<Facts> {
       await other.close()
     }
     await reap(fixture.place)
-    journals.set(`${fixture.term} ${journey.id}`, app.journal)
+    journals.set(name, app.journal)
+    running.delete(name)
   }
   return facts
 }
@@ -268,16 +318,66 @@ function fixtureFor(lane: Lane, journey: Journey): Fixture {
   return journey.unwired ? (lane.unwired ?? lane.wired) : lane.wired
 }
 
-const MARK = { same: '✓', gap: '·', broken: '✗', changed: '!' } as const
+const MARK = { same: '✓', gap: '·', changed: '!', broken: '✗' } as const
+
+type Mark = keyof typeof MARK
+
+const TINT: Record<Mark, string> = { same: '32', gap: '2', changed: '33', broken: '31' }
+
+const SHORT: Partial<Record<Term, string>> = {
+  alacritty: 'alac',
+  'windows-terminal': 'wt',
+  konsole: 'kons',
+  'terminal-app': 'tapp',
+}
+
+const colors = {
+  out: live && !colorless(),
+  err: Boolean(process.stderr.isTTY) && process.env.TERM !== 'dumb' && !colorless(),
+}
+
+function tint(code: string, text: string, to: keyof typeof colors = 'out'): string {
+  return colors[to] && code && text ? `\x1b[${code}m${text}\x1b[0m` : text
+}
+
+function columns(rows: string[][]): number[] {
+  return (rows[0] ?? []).map((_, at) => Math.max(...rows.map((row) => (row[at] ?? '').length)) + 2)
+}
+
+interface Change {
+  term: Term
+  id: string
+  before: string
+  cell: string
+}
+
+interface Loose {
+  term: Term
+  id: string
+  value: string
+  reference?: string
+}
+
+function section(title: string, code: string, rows: string[][]): void {
+  if (rows.length === 0) {
+    return
+  }
+  const widths = columns(rows)
+  console.error(`\n${tint(code, title, 'err')}`)
+  for (const row of rows) {
+    console.error(`  ${row.map((cell, at) => (at < row.length - 1 ? cell.padEnd(widths[at] ?? 0) : cell)).join('')}`)
+  }
+}
 
 function report(fresh: Table, old: Table): boolean {
   const gaps = readGaps()
   const used = new Set<string>()
-  const problems: string[] = []
+  const changed: Change[] = []
+  const loose: Loose[] = []
   const notes: string[] = []
-  const status = new Map<string, keyof typeof MARK>()
+  const status = new Map<string, Mark>()
   const kinds = new Map<string, number>()
-  const worse = (key: string, mark: keyof typeof MARK) => {
+  const worse = (key: string, mark: Mark) => {
     const rank = ['same', 'gap', 'changed', 'broken']
     if (rank.indexOf(mark) > rank.indexOf(status.get(key) ?? 'same')) {
       status.set(key, mark)
@@ -292,10 +392,10 @@ function report(fresh: Table, old: Table): boolean {
       const before = old.get(id)?.get(term)
       if (before !== undefined && before !== cell) {
         worse(key, 'changed')
-        problems.push(`${term} ${id}: was ${before}, now ${cell}`)
+        changed.push({ term, id, before, cell })
       } else if (before === undefined && old.size > 0) {
         worse(key, 'changed')
-        problems.push(`${term} ${id}: new fact ${cell}`)
+        changed.push({ term, id, before: '(new)', cell })
       }
       if (!owed(term, id, value, cell)) {
         continue
@@ -309,80 +409,153 @@ function report(fresh: Table, old: Table): boolean {
         kinds.set(counted, (kinds.get(counted) ?? 0) + 1)
       } else {
         worse(key, 'broken')
-        problems.push(
-          term === REFERENCE || id.endsWith('.issue')
-            ? `${term} ${id}: ${value} — unexplained; fix it or give it a reason in tests/parity/gaps.tsv`
-            : `${term} ${id}: ${value}, ghostty ${cellValue(fresh, id, REFERENCE)} — unexplained; fix it or give it a reason in tests/parity/gaps.tsv`,
-        )
+        loose.push({
+          term,
+          id,
+          value,
+          ...(term === REFERENCE || id.endsWith('.issue') ? {} : { reference: cellValue(fresh, id, REFERENCE) }),
+        })
       }
     }
   }
-  for (const gap of gaps) {
-    const ran = terms.includes(gap.term) && journeys.length === JOURNEYS.length
-    if (ran && !used.has(`${gap.term}\t${gap.fact}`)) {
-      problems.push(`gaps.tsv: ${gap.term} ${gap.fact} explains nothing any more — remove it`)
-    }
-  }
-  const width = Math.max(...journeys.map((j) => j.id.length)) + 2
-  console.log(`${'journey'.padEnd(width)}${terms.map((t) => t.padEnd(18)).join('')}`)
-  for (const journey of journeys) {
-    const cells = terms.map((term) => MARK[status.get(`${journey.id} ${term}`) ?? 'same'].padEnd(18))
-    console.log(`${journey.id.padEnd(width)}${cells.join('')}`)
-  }
-  console.log('─'.repeat(width + 18 * terms.length))
-  for (const kind of KINDS) {
-    const cells = terms.map((term) => String(kinds.get(`${term}\t${kind}`) ?? '').padEnd(18))
-    console.log(`${`${kind}`.padEnd(width)}${cells.join('')}`)
-  }
+  const complete = journeys.length === JOURNEYS.length
+  const stale = gaps.filter((gap) => complete && terms.includes(gap.term) && !used.has(`${gap.term}\t${gap.fact}`))
+  const same = (term: Term) => journeys.filter((j) => (status.get(`${j.id} ${term}`) ?? 'same') === 'same').length
+  const lead = Math.max(...journeys.map((j) => j.id.length), 'deferred'.length) + 2
+  const room = live ? process.stdout.columns || Number.POSITIVE_INFINITY : Number.POSITIVE_INFINITY
+  const spaced = (labels: string[], gap: number) => labels.map((label) => Math.max(label.length, 5) + gap)
+  const roomy = spaced(terms, 2)
+  const wide = lead + roomy.reduce((sum, width) => sum + width, 0) <= room
+  const labels = wide ? [...terms] : terms.map((term) => SHORT[term] ?? term)
+  const widths = wide ? roomy : spaced(labels, 1)
+  const row = (head: string, cells: [string, string][], code = '') =>
+    `${tint(code, head.padEnd(lead))}${cells.map(([text, tone], at) => `${tint(tone, text)}${' '.repeat(Math.max(0, (widths[at] ?? 0) - text.length))}`).join('')}`.trimEnd()
   console.log(
-    `\n${MARK.same} same as Ghostty  ${MARK.gap} a gap gaps.tsv explains  ${MARK.changed} a fact changed  ${MARK.broken} unexplained — cannot: the terminal cannot express it · layer: ttheme could close it · deferred: left out on purpose`,
+    row(
+      'journey',
+      labels.map((label) => [label, '1'] as [string, string]),
+      '1',
+    ),
+  )
+  for (const journey of journeys) {
+    console.log(
+      row(
+        journey.id,
+        terms.map((term) => {
+          const mark = status.get(`${journey.id} ${term}`) ?? 'same'
+          return [MARK[mark], TINT[mark]] as [string, string]
+        }),
+      ),
+    )
+  }
+  console.log(tint('2', '─'.repeat(lead + widths.reduce((sum, width) => sum + width, 0))))
+  console.log(
+    row(
+      'same',
+      terms.map((term) => {
+        const n = same(term)
+        return [`${n}/${journeys.length}`, n === journeys.length ? TINT.same : ''] as [string, string]
+      }),
+    ),
+  )
+  for (const kind of KINDS) {
+    console.log(
+      row(
+        kind,
+        terms.map((term) => {
+          const n = kinds.get(`${term}\t${kind}`) ?? 0
+          return [n ? String(n) : '', kind === 'layer' ? TINT.changed : TINT.gap] as [string, string]
+        }),
+      ),
+    )
+  }
+  const short = terms.filter((term, at) => labels[at] !== term)
+  console.log(
+    tint(
+      '2',
+      [
+        `\n${MARK.same} same as Ghostty  ${MARK.gap} explained in gaps.tsv  ${MARK.changed} a fact changed  ${MARK.broken} unexplained`,
+        'same: journeys same as Ghostty; cannot, layer, deferred: facts gaps.tsv explains',
+        '  cannot    the terminal cannot express it',
+        '  layer     ttheme could close it',
+        '  deferred  left out on purpose',
+        ...(short.length > 0 ? [short.map((term) => `${SHORT[term]} ${term}`).join(' · ')] : []),
+      ].join('\n'),
+    ),
   )
   const compat = readCompat()
-  const open = terms.flatMap((term) => {
+  const open = terms.flatMap((term): [string, string[]][] => {
     const ids = unmeasured(compat, term)
     if (ids === undefined) {
-      return [`${term.padEnd(18)}every case — compat cannot open it, so the model follows its source`]
+      return [[term, ['every case — the model follows its source']]]
     }
-    return ids.length > 0 ? [`${term.padEnd(18)}${ids.join(' ')}`] : []
+    return ids.length > 0 ? [[term, ids]] : []
   })
   if (open.length > 0) {
-    console.log('\nnot decided by mise run compat (? or skip in tests/compat/expect.tsv), so the model assumes them:')
-    for (const line of open) {
-      console.log(`  ${line}`)
+    const width = Math.max(...open.map(([term]) => term.length)) + 2
+    console.log('\nthe model assumes these, since mise run compat left them ? or skip:')
+    for (const [term, ids] of open) {
+      const lines = ids.reduce<string[]>((out, id) => {
+        const last = out.at(-1)
+        if (last !== undefined && 2 + width + last.length + 1 + id.length <= room) {
+          out[out.length - 1] = `${last} ${id}`
+        } else {
+          out.push(id)
+        }
+        return out
+      }, [])
+      lines.forEach((text, at) => {
+        console.log(`  ${(at === 0 ? term : '').padEnd(width)}${text}`)
+      })
     }
   }
   if (values.verbose) {
+    console.log('')
     for (const note of notes) {
       console.log(`  ${note}`)
     }
   }
-  if (problems.length > 0) {
-    console.error('')
-    for (const problem of problems) {
-      console.error(problem)
-    }
-    for (const line of problems) {
-      const match = /^(\S+) ([\w-]+)\.([\w-]+)\.text/.exec(line)
-      if (match) {
-        const [, term, journey, label] = match
-        const mine = screens.get(`${term} ${journey}.${label}`)
-        const theirs = screens.get(`${REFERENCE} ${journey}.${label}`)
-        if (mine !== undefined) {
-          console.error(
-            `--- ${REFERENCE} ${journey}.${label}\n${theirs ?? '(not run)'}\n--- ${term} ${journey}.${label}\n${mine}`,
-          )
-        }
-      }
-    }
-    if (values.verbose) {
-      for (const [key, journal] of journals) {
-        if (journal.length > 0) {
-          console.error(`${key}: ${journal.join(' · ')}`)
-        }
+  section(
+    'changed facts — mise run parity --update records them once they are right',
+    TINT.changed,
+    changed.map(({ term, id, before, cell }) => [term, id, `${before} → ${cell}`]),
+  )
+  section(
+    'unexplained — fix each, or give it a reason in tests/parity/gaps.tsv',
+    TINT.broken,
+    loose.map(({ term, id, value, reference }) => [
+      term,
+      id,
+      reference === undefined ? value : `${value}, ghostty ${reference}`,
+    ]),
+  )
+  section(
+    'stale gaps — remove them from tests/parity/gaps.tsv, they explain nothing now',
+    TINT.changed,
+    stale.map((gap) => [gap.term, gap.fact]),
+  )
+  for (const { term, id } of [...changed, ...loose]) {
+    const match = /^([\w-]+)\.([\w-]+)\.text$/.exec(id)
+    if (match) {
+      const [, journey, label] = match
+      const mine = screens.get(`${term} ${journey}.${label}`)
+      const theirs = screens.get(`${REFERENCE} ${journey}.${label}`)
+      if (mine !== undefined) {
+        console.error(
+          `\n--- ${REFERENCE} ${journey}.${label}\n${theirs ?? '(not run)'}\n--- ${term} ${journey}.${label}\n${mine}`,
+        )
       }
     }
   }
-  return problems.length === 0
+  const ok = changed.length + loose.length + stale.length === 0
+  if (!ok && values.verbose) {
+    for (const [key, journal] of journals) {
+      if (journal.length > 0) {
+        console.error(`${key}: ${journal.join(' · ')}`)
+      }
+    }
+  }
+  return ok
 }
 
 async function main(): Promise<void> {
@@ -392,23 +565,37 @@ async function main(): Promise<void> {
     const started = performance.now()
     const slots = Math.max(1, Math.min(Number(values.slots), journeys.length))
     const bare = journeys.some((journey) => journey.unwired)
+    const built = async (term: Term, slot: string, wiring: boolean) => {
+      const fixture = await build(term, work, bin, REPO, slot, wiring)
+      step(term)
+      return fixture
+    }
+    begin('Building fixture homes', terms.length * (slots + (bare ? 1 : 0)))
     const lanes = await Promise.all(
       terms.flatMap((term) =>
         Array.from({ length: slots }, async (_, slot): Promise<Lane> => {
           const [wired, unwired] = await Promise.all([
-            build(term, work, bin, REPO, String(slot), true),
-            bare ? build(term, work, bin, REPO, `${slot}-bare`, false) : undefined,
+            built(term, String(slot), true),
+            bare && slot === 0 ? built(term, 'bare', false) : undefined,
           ])
           return { term, wired, ...(unwired ? { unwired } : {}) }
         }),
       ),
     )
+    const walkable = (lane: Lane, journey: Journey) => !journey.unwired || lane.unwired !== undefined
     const results = new Map<Term, Facts>(terms.map((term) => [term, {}]))
     const queues = new Map<Term, Journey[]>(terms.map((term) => [term, [...journeys]]))
+    begin('Walking journeys', terms.length * journeys.length)
     await pool(lanes, Math.max(lanes.length, availableParallelism()), async (lane) => {
       const queue = queues.get(lane.term) ?? []
-      for (let journey = queue.shift(); journey; journey = queue.shift()) {
+      for (
+        let at = queue.findIndex((j) => walkable(lane, j));
+        at >= 0;
+        at = queue.findIndex((j) => walkable(lane, j))
+      ) {
+        const [journey] = queue.splice(at, 1) as [Journey]
         Object.assign(results.get(lane.term) ?? {}, await walk(fixtureFor(lane, journey), journey))
+        step(`${lane.term} ${journey.id}`)
       }
     })
     const old = readTable()
@@ -429,10 +616,11 @@ async function main(): Promise<void> {
               .map((journey) => ({ term, journey })),
           )
     if (moved.length > Math.max(3, Math.ceil(terms.length * journeys.length * 0.15))) {
-      console.log(`${moved.length} journeys moved — too many to be a loaded machine, so none is walked again`)
+      line.say(`${moved.length} journeys moved — too many to be a loaded machine, so none is walked again`)
     } else if (moved.length > 0) {
+      begin('Walking again, one at a time', moved.length)
       for (const { term, journey } of moved) {
-        const lane = lanes.find((l) => l.term === term) as Lane
+        const lane = lanes.find((l) => l.term === term && walkable(l, journey)) as Lane
         const facts = results.get(term) ?? {}
         const { ids, moved: still } = moves(term, journey)
         for (let attempt = 0; attempt < 2; attempt++) {
@@ -445,11 +633,15 @@ async function main(): Promise<void> {
             break
           }
         }
+        step(`${term} ${journey.id}`)
       }
-      console.log(
-        `walked again, one at a time: ${moved.map(({ term, journey }) => `${term} ${journey.id}`).join(', ')}`,
+      const one = moved.length === 1
+      line.say(
+        `walked ${moved.length} ${one ? 'journey' : 'journeys'} again, one at a time, since ${one ? 'its' : 'their'} facts moved${values.verbose ? `: ${moved.map(({ term, journey }) => `${term} ${journey.id}`).join(', ')}` : ` (-v lists ${one ? 'it' : 'them'})`}`,
       )
     }
+    line.done()
+    clearInterval(beat)
     const fresh = tableOf(results, old)
     const scoped: Table = new Map([...old].filter(([id]) => journeys.some((j) => id.split('.')[0] === j.id)))
     if (values.update) {
@@ -461,13 +653,13 @@ async function main(): Promise<void> {
           journeys.map((j) => j.id),
         ),
       )
-      console.log(`wrote tests/parity/facts.tsv (${((performance.now() - started) / 1000).toFixed(1)}s)`)
+      console.log(`wrote tests/parity/facts.tsv (${seconds(started)})`)
       report(fresh, fresh)
       return
     }
     const ok = report(fresh, scoped)
     console.log(
-      `\nparity ${ok ? 'ok' : 'failed'} — ${journeys.length} journeys × ${terms.length} terminals in ${((performance.now() - started) / 1000).toFixed(1)}s`,
+      `\n${ok ? tint(TINT.same, MARK.same) : tint(TINT.broken, MARK.broken)} parity ${ok ? 'ok' : 'failed'} — ${journeys.length} journeys × ${terms.length} terminals in ${seconds(started)}`,
     )
     if (!ok) {
       process.exitCode = 1
