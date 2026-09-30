@@ -112,7 +112,9 @@ open_iterm() {
 }
 
 sandbox_shell() {
-  REPLY="/usr/bin/env HOME=$SANDBOX ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache /bin/zsh -il"
+  print -rl -- '#!/bin/zsh -f' 'unset ${(M)${(k)parameters}:#TTHEME_*} XDG_DATA_HOME' \
+    "exec /usr/bin/env HOME=$SANDBOX ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache /bin/zsh -il" > $SANDBOX/sandbox.command
+  chmod +x $SANDBOX/sandbox.command
 }
 
 open_wezterm() {
@@ -150,21 +152,19 @@ open_konsole() {
 }
 
 open_warp() {
-  local behind=$1 REPLY
+  local behind=$1
   [[ -d /Applications/Warp.app ]] || return 1
   sandbox_shell
   mkdir -p ${WARP_LAUNCH:h}
   print -rl -- "name: ${WARP_LAUNCH:t:r}" 'windows:' '  - tabs:' '      - title: ttheme sandbox' '        layout:' \
-    "          cwd: $SANDBOX" '        commands:' "          - exec: exec $REPLY" > $WARP_LAUNCH
-  env ${FOREIGN/#/-u} open ${behind:+-g} "warp://launch/${WARP_LAUNCH:t}"
+    "          cwd: $SANDBOX" '        commands:' "          - exec: exec $SANDBOX/sandbox.command" > $WARP_LAUNCH
+  env -i /usr/bin/open ${behind:+-g} "warp://launch/${WARP_LAUNCH:t}"
 }
 
 open_terminal_app() {
-  local behind=$1 REPLY
+  local behind=$1
   sandbox_shell
-  print -rl -- '#!/bin/zsh -f' "exec $REPLY" > $SANDBOX/sandbox.command
-  chmod +x $SANDBOX/sandbox.command
-  env ${FOREIGN/#/-u} open ${behind:+-g} -a Terminal $SANDBOX/sandbox.command --args -ApplePersistenceIgnoreState YES
+  env -i /usr/bin/open ${behind:+-g} -a Terminal $SANDBOX/sandbox.command --args -ApplePersistenceIgnoreState YES
 }
 
 hand_back() {
