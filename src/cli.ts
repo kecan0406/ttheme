@@ -5,6 +5,7 @@ import { build } from './build.ts'
 import { runCheck, runEdit, runNew, runShare } from './craft.ts'
 import { runFind } from './find.ts'
 import { runBake, runFlatten, runImage } from './images.ts'
+import { runInfo } from './info.ts'
 import { Cancelled, runInit } from './init.ts'
 import { runAdd, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './market.ts'
 import { runMarket } from './markets.ts'
@@ -45,6 +46,7 @@ const RUNS: Record<string, Verb['run']> = {
   share: ([name]) => runShare(name as string),
   init: (_, { yes }) => runInit({ yes }),
   uninstall: (_, { yes }) => runUninstall(yes),
+  info: () => runInfo(),
   build: (_, { only }) => build({ only }),
   find: ([name]) => runFind(name as string),
   image: ([name, action, key]) => runImage(name as string, action as string, key),
@@ -155,6 +157,12 @@ export function help(verb?: Verb, all = false): string {
   ].join('\n')
 }
 
+const CRASHES = [TypeError, RangeError, ReferenceError, SyntaxError]
+
+export function isCrash(error: unknown): boolean {
+  return CRASHES.some((kind) => error instanceof kind) || (error instanceof Error && 'code' in error)
+}
+
 export async function runCli(argv: readonly string[]): Promise<number> {
   let running: Verb | undefined
   try {
@@ -194,7 +202,7 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     }
     const detail = process.env.TTHEME_DEBUG && error instanceof Error ? error.stack : undefined
     console.error(
-      `\nttheme${running ? ` ${running.name}` : ''}: ${detail ?? (error instanceof Error ? error.message : String(error))}`,
+      `\nttheme${running ? ` ${running.name}` : ''}: ${detail ?? (error instanceof Error ? error.message : String(error))}${isCrash(error) ? '\nReport a bug with the output of `ttheme info`' : ''}`,
     )
     return 1
   }

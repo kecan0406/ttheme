@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { EMITTED } from './build.ts'
-import { parse, UsageError, VERBS } from './cli.ts'
+import { Missing } from './catalog.ts'
+import { isCrash, parse, UsageError, VERBS } from './cli.ts'
 import { WIRED } from './terminals/types.ts'
 
 test('build --only rejects unknown terminals', () => {
@@ -32,6 +33,14 @@ test('every verb either runs here or belongs to the shell layer', () => {
     ['preview', 'use', 'next', 'pin', 'unpin', 'pins', 'config'],
   )
   assert.ok(VERBS.filter((v) => v.shell).every((v) => !v.run))
+})
+
+test('only a crash points to ttheme info, never a message written for the user', () => {
+  assert.ok(isCrash(new TypeError("Cannot read properties of undefined (reading 'ansi')")))
+  assert.ok(isCrash(Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' })))
+  assert.ok(!isCrash(new Error('not installed: kita')))
+  assert.ok(!isCrash(new Missing('nothing at https://example.com')))
+  assert.ok(!isCrash('a string'))
 })
 
 test('init rejects unknown options', () => {

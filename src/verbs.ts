@@ -10,7 +10,7 @@ export interface Flag {
   about: string
 }
 
-export type Section = 'tab' | 'startup' | 'catalog' | 'own' | 'setup'
+export type Section = 'tab' | 'startup' | 'catalog' | 'own' | 'setup' | 'support'
 
 export const SECTIONS: { section: Section; title: string }[] = [
   { section: 'tab', title: 'This tab' },
@@ -18,6 +18,7 @@ export const SECTIONS: { section: Section; title: string }[] = [
   { section: 'catalog', title: 'Palettes' },
   { section: 'own', title: 'Your own' },
   { section: 'setup', title: 'Setup' },
+  { section: 'support', title: 'Support' },
 ]
 
 export interface VerbSpec {
@@ -178,6 +179,12 @@ export const VERB_SPECS: VerbSpec[] = [
     about: 'Take ttheme out of every terminal config and delete what it wrote',
     section: 'setup',
     flags: { yes: { type: 'boolean', short: 'y', about: 'Remove without asking' } },
+  },
+  {
+    name: 'info',
+    args: [],
+    about: 'Print what a bug report needs — version, OS, shell, terminal and the settings you changed',
+    section: 'support',
   },
   {
     name: 'build',

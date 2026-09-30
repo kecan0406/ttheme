@@ -39,11 +39,16 @@ Your own
 Setup
   init [--yes]                                   Install the shell layer and wire your terminal configs
   uninstall [--yes]                              Take ttheme out of every terminal config and delete what it wrote
+
+Support
+  info                                           Print what a bug report needs — version, OS, shell, terminal and the settings you changed
 ```
 
 `ttheme <command> --help` (or `ttheme help <command>`) describes one command
-without running it, and `ttheme --version` prints the version. `TTHEME_DEBUG=1`
-in front of any command prints where an error came from, for a bug report.
+without running it, and `ttheme --version` prints the version. A bug report
+takes the output of `ttheme info` (`npx @kecan0406/ttheme@latest info` when
+ttheme is not set up), and `TTHEME_DEBUG=1` in front of any command prints
+where an error came from.
 
 ## Preview
 

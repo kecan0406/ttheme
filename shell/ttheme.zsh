@@ -2758,6 +2758,7 @@ ttheme() {
   case $1 in
     browse|list|add|remove|update|market|new|edit|check|share) __tt_catalog "$@"; return ;;
     on|off) __tt_switch "$@"; return ;;
+    info) TTHEME_ZSH=$ZSH_VERSION __tt_cli "$@"; return ;;
   esac
   __tt_arity "$@" || return
   [[ $1 == config ]] && { __tt_config; return }

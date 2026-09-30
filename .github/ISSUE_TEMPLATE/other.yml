@@ -1,0 +1,10 @@
+name: Something else
+description: A question or a note that is not a bug, a feature or a palette
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What is on your mind
+      description: The question or the note, with whatever context helps.
+    validations:
+      required: true
