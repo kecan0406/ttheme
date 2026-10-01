@@ -16,10 +16,17 @@ test('booru_sites renames the tag per site, as one tag or a list, and an empty l
   assert.equal(readBooruSites('x.toml', undefined, 'x'), undefined)
 })
 
-test('booru_sites refuses an unknown site, a tag with a space, a list where the site counts tags, and no meta.booru', () => {
+test('booru_sites lets danbooru OR the two tags it searches at a time, and no more', () => {
+  assert.deepEqual(readBooruSites('x.toml', { danbooru: ['version', 'cast'] }, 'version'), {
+    danbooru: ['version', 'cast'],
+  })
+  assert.throws(() => readBooruSites('x.toml', { danbooru: ['a', 'b', 'c'] }, 'x'), /takes 2 tags at most/)
+})
+
+test('booru_sites refuses an unknown site, a tag with a space, a list where the site cannot OR, and no meta.booru', () => {
   assert.throws(() => readBooruSites('x.toml', { gelbooru: 'x' }, 'x'), /not a find site/)
   assert.throws(() => readBooruSites('x.toml', { yande: 'two words' }, 'x'), /one tag or a list/)
-  assert.throws(() => readBooruSites('x.toml', { danbooru: ['a', 'b'] }, 'x'), /takes one tag/)
+  assert.throws(() => readBooruSites('x.toml', { zerochan: ['a', 'b'] }, 'x'), /takes one tag/)
   assert.throws(() => readBooruSites('x.toml', { yande: 'y' }, undefined), /needs meta.booru/)
 })
 

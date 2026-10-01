@@ -194,6 +194,7 @@ export const LOCAL: Site = {
   cutouts: '',
   best: '',
   tagBudget: 0,
+  ors: false,
   vouched: true,
   scored: false,
   ansi: 7,

@@ -241,8 +241,14 @@ export function readBooruSites(
     if (!names || names.some((name) => typeof name !== 'string' || name === '' || /\s/.test(name))) {
       fail(file, `meta.booru_sites.${key} must be one tag or a list of tags, got ${JSON.stringify(value)}`)
     }
-    if (names.length > 1 && Number.isFinite(site.tagBudget)) {
-      fail(file, `meta.booru_sites.${key} takes one tag — ${site.name} searches ${site.tagBudget} tags at a time`)
+    if (names.length > 1 && !site.ors) {
+      fail(file, `meta.booru_sites.${key} takes one tag — ${site.name} does not OR tags`)
+    }
+    if (names.length > site.tagBudget) {
+      fail(
+        file,
+        `meta.booru_sites.${key} takes ${site.tagBudget} tags at most — ${site.name} searches that many at a time`,
+      )
     }
     sites[key] = names as string[]
   }

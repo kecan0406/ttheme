@@ -106,6 +106,7 @@ export interface Site {
   cutouts: string
   best: string
   tagBudget: number
+  ors: boolean
   vouched: boolean
   scored: boolean
   ansi: number
@@ -517,6 +518,7 @@ function moebooru(raw: Spec): Site {
     },
     best: 'order:score',
     tagBudget: Number.POSITIVE_INFINITY,
+    ors: true,
     postsUrl: (tags, page) =>
       `${spec.origin}/post.json?${params({ limit: String(PAGE), page: String(page + 1), tags })}`,
     countUrl: (tags) => `${spec.origin}/post.xml?${new URLSearchParams({ limit: '1', tags })}`,
@@ -545,6 +547,7 @@ function danbooru(raw: Spec): Site {
       levels.length === RATINGS.length ? '' : `rating:${levels.flatMap((level) => [...ratings[level]]).join(',')}`,
     best: 'order:score',
     tagBudget: 2,
+    ors: true,
     postsUrl: (tags, page) =>
       `${spec.origin}/posts.json?${new URLSearchParams({ limit: String(PAGE), page: String(page + 1), tags })}`,
     countUrl: (tags) => `${spec.origin}/counts/posts.json?${new URLSearchParams({ tags })}`,
@@ -581,6 +584,7 @@ function zerochan(raw: Spec): Site {
     rate: () => '',
     best: 'order:fav',
     tagBudget: 3,
+    ors: false,
     missing: 404,
     postsUrl: (tags, page) =>
       `${spec.origin}/${zerochanPath(tags)}?${new URLSearchParams({

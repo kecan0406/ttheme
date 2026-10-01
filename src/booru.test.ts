@@ -292,6 +292,13 @@ test('danbooru is searched on shima, the name of its own that networks blocking 
   )
 })
 
+test('danbooru and the moebooru sites OR a list of tags, zerochan does not', () => {
+  assert.deepEqual(
+    SITES.filter((s) => s.ors).map((s) => s.key),
+    ['danbooru', 'konachan', 'yande'],
+  )
+})
+
 test('every site names the tag that sorts by score', () => {
   assert.deepEqual(
     SITES.map((s) => s.best),
