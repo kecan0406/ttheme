@@ -22,11 +22,13 @@ import {
   parseDanbooru,
   parseLent,
   parseMoebooru,
+  parseRelated,
   parseSuggestions,
   parseTagList,
   parseZerochan,
   parseZerochanCount,
   parseZerochanPage,
+  pickedNames,
   postRef,
   rated,
   ratingSet,
@@ -297,6 +299,27 @@ test('danbooru and the moebooru sites OR a list of tags, zerochan does not', () 
     SITES.filter((s) => s.ors).map((s) => s.key),
     ['danbooru', 'konachan', 'yande'],
   )
+})
+
+test('a chosen list is cut to what each site can OR: its budget, or one where it cannot OR', () => {
+  assert.deepEqual(pickedNames(dan, ['a', 'b', 'c']), ['a', 'b'])
+  assert.deepEqual(pickedNames(zero, ['a', 'b']), ['a'])
+  assert.deepEqual(pickedNames(yande, ['a', 'b', 'c']), ['a', 'b', 'c'])
+})
+
+test('related tags are the characters danbooru names, and a challenge page names none', () => {
+  const body = JSON.stringify({
+    related_tags: [
+      { tag: { name: 'rche_(beatmania)', post_count: 90 }, frequency: 0.5 },
+      { tag: { name: 'cuvelia', post_count: 34 }, frequency: 0.19 },
+      { tag: {} },
+    ],
+  })
+  assert.deepEqual(parseRelated(body), [
+    { value: 'rche_(beatmania)', count: 90 },
+    { value: 'cuvelia', count: 34 },
+  ])
+  assert.deepEqual(parseRelated('<html>Just a moment...</html>'), [])
 })
 
 test('every site names the tag that sorts by score', () => {

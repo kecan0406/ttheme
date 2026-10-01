@@ -183,6 +183,14 @@ method composes in the query itself. A palette with no `meta.booru` tag at all o
 find on that empty query, so it can have a background too. `o` opens the post's
 page in a browser.
 
+The row under the site tabs lists the tags the search uses and, after them, the
+characters danbooru says share posts with the first one (up to nine in all, so
+a palette for a game's version also offers its cast). `1`–`9` turns one on or
+off, and the search runs again at once with the tags that are on ORed together.
+Danbooru searches two tags at a time and zerochan one, so a longer list is cut
+there and the line above the grid names what was left out; konachan, yande.re
+and zerochan are asked for the same names once you turn one on.
+
 ## Your own pictures
 
 A picture of your own goes in the same way. Drop an image file on the window

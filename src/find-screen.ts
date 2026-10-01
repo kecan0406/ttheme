@@ -141,6 +141,8 @@ export interface FindView {
   installing?: number
   shown?: Shown
   editing?: string
+  chosen?: string[]
+  chips: TagChip[]
   suggest?: { value: string; count: number; palette?: string }[]
   pick?: number
   saved?: { text: string; key: number }
@@ -149,6 +151,11 @@ export interface FindView {
   error?: string
   waiting?: number
   slow?: string
+}
+
+export interface TagChip {
+  name: string
+  on: boolean
 }
 
 export interface Placement {
@@ -171,6 +178,7 @@ export interface Frame {
 
 export const TILE = { pitch: 25, cols: 22, rows: 9, height: 13 }
 export const MIN = { cols: 25, rows: 16 }
+export const GRID_TOP = 3
 export const TRY_ID = 2 ** 31
 const BELOW_BG = -1073741826
 const SMALL = 1600
@@ -184,6 +192,7 @@ const TIPS: [string, string][] = [
   ['o', 'opens the post page in a browser'],
   ['c', 'switches between cutouts and every post'],
   ['a', 'opens the advanced filters'],
+  ['1-9', 'turn a tag of the tags row on or off'],
   ['ctrl+v', 'tries on a picture from the clipboard — or drop one on the window'],
 ]
 
@@ -295,7 +304,7 @@ function xtermReport(input: string, code: number): { a: number; b: number; text:
 }
 
 export function gridShape(cols: number, rows: number): { perRow: number; rowsVis: number; height: number } {
-  const height = rows - 4
+  const height = rows - GRID_TOP - 2
   return {
     perRow: Math.max(1, Math.floor((cols - 1) / TILE.pitch)),
     rowsVis: Math.max(1, Math.floor(height / TILE.height)),
@@ -794,6 +803,28 @@ function tabs(line: Line, cols: number, view: FindView): void {
   line.run(0, fits ? strip : [badge(view)])
 }
 
+function tagRow(line: Line, cols: number, view: FindView, accent: string): void {
+  if (view.chips.length === 0) {
+    return
+  }
+  const parts: Part[] = [['tags ', D]]
+  let used = width('tags ')
+  let left = view.chips.length
+  for (const [i, chip] of view.chips.entries()) {
+    const text = ` ${i + 1} ${chip.name} `
+    if (used + width(text) + 1 > cols - 2) {
+      break
+    }
+    parts.push([text, chip.on ? `\x1b[7m${accent}` : D], [' ', ''])
+    used += width(text) + 1
+    left--
+  }
+  if (left > 0) {
+    parts.push([`+${left}`, D])
+  }
+  line.run(0, parts)
+}
+
 function query(line: Line, cols: number, view: FindView, accent: string): void {
   if (view.editing !== undefined) {
     const c = line.run(0, [
@@ -955,7 +986,7 @@ function rail(lines: Line[], cols: number, view: FindView, height: number, conte
   const at = Math.max(0, Math.min(height - size, Math.round((view.scroll * height) / content)))
   for (let r = 0; r < height; r++) {
     const on = r >= at && r < at + size
-    lines[2 + r]?.put(cols - 1, on ? '┃' : '│', on ? accent : D)
+    lines[GRID_TOP + r]?.put(cols - 1, on ? '┃' : '│', on ? accent : D)
   }
 }
 
@@ -972,12 +1003,13 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
   const { perRow, rowsVis, height } = gridShape(cols, rows)
   query(lines[0] as Line, cols, view, accent)
   tabs(lines[1] as Line, cols, view)
-  const inside = lines.map((line, r) => (r >= 2 && r < 2 + height ? line : undefined))
+  tagRow(lines[2] as Line, cols, view, accent)
+  const inside = lines.map((line, r) => (r >= GRID_TOP && r < GRID_TOP + height ? line : undefined))
   const first = Math.floor(view.scroll / TILE.height)
   const last = Math.floor((view.scroll + height - 1) / TILE.height)
   const shown: Tile[] = []
   for (let t = first; t <= last; t++) {
-    const r0 = 2 + t * TILE.height - view.scroll
+    const r0 = GRID_TOP + t * TILE.height - view.scroll
     for (let c = 0; c < perRow; c++) {
       const i = t * perRow + c
       const c0 = c * TILE.pitch
@@ -991,8 +1023,8 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
         frameBox(inside, r0, c0, TILE.height, TILE.pitch - 1, accent)
       }
       const top = r0 + 1
-      const from = Math.max(top, 2)
-      const to = Math.min(top + TILE.rows, 2 + height)
+      const from = Math.max(top, GRID_TOP)
+      const to = Math.min(top + TILE.rows, GRID_TOP + height)
       if (tile.thumb && to > from) {
         images.push({
           id: tile.key,
@@ -1039,8 +1071,8 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
   }
   const filled = Math.ceil(view.tiles.length / perRow) * TILE.height
   rail(lines, cols, view, height, filled, accent)
-  const below = Math.max(2, 2 + filled - view.scroll)
-  const room = 2 + height - below
+  const below = Math.max(GRID_TOP, GRID_TOP + filled - view.scroll)
+  const room = GRID_TOP + height - below
   const waiting = view.searching && room >= 2
   if (waiting) {
     loader(inside, below, room, cols - 1, view)
@@ -1061,7 +1093,7 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
     lines[rows - 2]?.put(0, scroll.join('   '), D)
   }
   if (!view.searching && view.tiles.length === 0 && !view.error && view.tag) {
-    lines[3]?.put(
+    lines[GRID_TOP + 1]?.put(
       0,
       view.preset === 'cutouts'
         ? `No transparent cutouts of ${view.tag} on ${where(view)} — c searches every post, tab tries ${view.nextSite}`
@@ -1190,6 +1222,7 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
     ['Site', `tab  shift+tab  all, ${SITES.map((site) => site.name).join(', ')}`],
     ['Posts', 'c  cutouts or every post'],
     ['Search', '/  a tag, a post URL or an id'],
+    ['Tags', "1-9  turn a tag of the tags row on or off — the palette's own, then danbooru's related characters"],
     ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window or paste its link'],
     ['Unfold', 'space  a set of ×N'],
     ['Open', 'o  the post page in a browser'],

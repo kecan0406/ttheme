@@ -38,6 +38,7 @@ import {
   fetchLent,
   fetchPost,
   fetchPosts,
+  fetchRelated,
   fetchSuggestions,
   fileOf,
   headOf,
@@ -53,6 +54,7 @@ import {
   PAGE,
   type Post,
   pausedUntil,
+  pickedNames,
   postKey,
   postRef,
   previewOf,
@@ -230,6 +232,7 @@ function initial(setting: Setting, raw: string | undefined): string {
 
 interface Terms {
   tag: string
+  chosen?: string[]
   preset: FindView['preset']
   order: FindView['order']
   rating: FindView['rating']
@@ -313,6 +316,7 @@ const BAND_ID = 3 * 2 ** 30
 const BANDS_HELD = 256
 const KNOWN = 3
 const SUGGESTED = 8
+const CHIPS = 9
 
 interface Source {
   site: Site
@@ -462,6 +466,9 @@ class Finder {
   private readonly inflight = new Map<string, Promise<number>>()
   private readonly owners = new Map<string, Map<string, string[]>>()
   private readonly kept = new Map<string, Record<string, unknown>>()
+  private readonly related = new Map<string, string[]>()
+  private pool: string[] = []
+  private relating?: AbortController
   private readonly unsaved = new Set<string>()
   private readonly crediting = new Map<number, Promise<void>>()
   private thumbQueue: Pick[] = []
@@ -580,7 +587,10 @@ class Finder {
       untuned,
       coloring: coloringFor(home),
       editing: tag === '' ? '' : undefined,
+      chips: [],
     }
+    this.pool = this.selected(this.view)
+    this.syncChips()
     this.board = blank(this.boardKey, tag !== '')
     this.boards.set(this.board.key, this.board)
   }
@@ -712,6 +722,7 @@ class Finder {
       this.cell = cell
       if (this.view.tag) {
         void this.search()
+        void this.relate(this.view.tag)
       }
     } else {
       this.view.searching = false
@@ -1168,6 +1179,10 @@ class Finder {
       this.focus(view.focus + move)
       return
     }
+    if (/^[1-9]$/.test(key)) {
+      this.toggle(Number(key) - 1)
+      return
+    }
     if (key === 'enter' && view.tiles[view.focus]) {
       view.mode = 'try'
       view.error = undefined
@@ -1335,6 +1350,7 @@ class Finder {
       this.view.settings[SETTINGS.findIndex((setting) => setting.name === name)]?.value ?? this.setting(name)
     return {
       tag: this.view.tag,
+      chosen: this.view.chosen,
       preset: value('TTHEME_FIND_POSTS') === 'all' ? 'all' : 'cutouts',
       order: orderOf(value('TTHEME_FIND_ORDER')),
       rating: ratingSet(value('TTHEME_FIND_RATING')),
@@ -1528,6 +1544,8 @@ class Finder {
       return
     }
     this.view.tag = text
+    this.view.chosen = undefined
+    void this.relate(text)
     this.boards.clear()
     await this.search()
   }
@@ -1868,11 +1886,77 @@ class Finder {
     }
   }
 
+  private selected(terms: { tag: string; chosen?: string[] }): string[] {
+    if (terms.chosen) {
+      return terms.chosen
+    }
+    if (!terms.tag) {
+      return []
+    }
+    return terms.tag === this.entry.booru ? siteTags(this.entry, 'danbooru') : [terms.tag]
+  }
+
+  private syncChips(): void {
+    const on = this.selected(this.view)
+    this.view.chips = this.pool.slice(0, CHIPS).map((name) => ({ name, on: on.includes(name) }))
+  }
+
+  private toggle(at: number): void {
+    const view = this.view
+    const chip = view.chips[at]
+    if (!chip) {
+      return
+    }
+    const on = this.selected(view)
+    const chosen = chip.on ? on.filter((name) => name !== chip.name) : [...on, chip.name]
+    if (chosen.length === 0) {
+      return
+    }
+    view.chosen = chosen
+    view.tag = chosen.join(' or ')
+    this.syncChips()
+    this.boards.clear()
+    void this.search()
+  }
+
+  private async relate(tag: string): Promise<void> {
+    this.relating?.abort()
+    const names = this.selected({ tag, chosen: undefined })
+    this.pool = names
+    this.syncChips()
+    this.draw()
+    if (!tag || /\s/.test(tag)) {
+      return
+    }
+    let found = this.related.get(tag)
+    if (!found) {
+      const asked = new AbortController()
+      this.relating = asked
+      try {
+        found = (await fetchRelated(tag, AbortSignal.any([this.signal, asked.signal]))).map((item) => item.value)
+      } catch {
+        return
+      }
+      if (this.relating !== asked) {
+        return
+      }
+      this.related.set(tag, found)
+    }
+    this.pool = [...new Set([...names, ...found])]
+    this.syncChips()
+    this.draw()
+  }
+
   private query(site: Site, view: Terms = this.view): { tags: string; notes: string[] } | undefined {
-    const names = view.tag === this.entry.booru ? siteTags(this.entry, site.key) : [view.tag]
+    const names = view.chosen
+      ? pickedNames(site, view.chosen)
+      : view.tag === this.entry.booru
+        ? siteTags(this.entry, site.key)
+        : [view.tag]
     if (names.length === 0) {
       return undefined
     }
+    const left = view.chosen?.slice(names.length) ?? []
     const either = names.length > 1
     const cutouts = view.preset === 'cutouts' ? site.cutouts : ''
     const clash = either && cutouts.includes('~')
@@ -1896,6 +1980,9 @@ class Finder {
       tags: kept.join(' '),
       notes: [
         ...(dropped.length > 0 ? [`${site.name} takes ${site.tagBudget} tags — ${dropped.join(' ')} left out`] : []),
+        ...(left.length > 0
+          ? [`${site.name} takes ${names.length} tag${names.length === 1 ? '' : 's'} — ${left.join(' ')} left out`]
+          : []),
         ...(clash ? [`${site.name} ORs the names, so cutouts are told by the file`] : []),
         ...(view.narrow.score > 0 && !site.scored ? [`${site.name} keeps no score`] : []),
         ...(view.narrow.png && site.guesses

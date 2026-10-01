@@ -37,6 +37,8 @@ const TIMEOUT = 20_000
 const LEND_TIMEOUT = 5_000
 const SUGGEST_TIMEOUT = 3_000
 const SUGGESTED = 8
+const RELATED = 8
+const RELATED_TIMEOUT = 8_000
 const CONNECT = 3_000
 const MAX_WAIT = 60_000
 const TRIES = 3
@@ -1042,6 +1044,35 @@ export async function fetchSuggestions(prefix: string, signal: AbortSignal): Pro
   return parseTagList(
     await (await get(yande, `${yande.origin}/tag.json?${params}`, signal, {}, SUGGEST_TIMEOUT)).text(),
   )
+}
+
+export function parseRelated(text: string): Suggestion[] {
+  try {
+    const body = JSON.parse(text) as { related_tags?: { tag?: { name?: string; post_count?: number } }[] }
+    return (body.related_tags ?? []).flatMap(({ tag }) =>
+      tag?.name ? [{ value: tag.name, count: Number(tag.post_count) || 0 }] : [],
+    )
+  } catch {
+    return []
+  }
+}
+
+export async function fetchRelated(tag: string, signal: AbortSignal): Promise<Suggestion[]> {
+  if (pausedUntil(LENDER) > Date.now()) {
+    return []
+  }
+  const params = new URLSearchParams({
+    'search[query]': tag,
+    'search[category]': 'character',
+    limit: String(RELATED),
+  })
+  return parseRelated(
+    await (await get(LENDER, `${LENDER.origin}/related_tag.json?${params}`, signal, {}, RELATED_TIMEOUT)).text(),
+  )
+}
+
+export function pickedNames(site: Pick<Site, 'ors' | 'tagBudget'>, chosen: readonly string[]): string[] {
+  return chosen.slice(0, site.ors ? site.tagBudget : 1)
 }
 
 export async function headOf(site: Site, url: string, signal: AbortSignal): Promise<ReturnType<typeof pngHead>> {
