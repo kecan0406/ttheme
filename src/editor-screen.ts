@@ -94,11 +94,11 @@ function checkMark(p: Paint, ok: boolean | undefined): string {
   return ok === undefined ? p.dim('·') : ok ? p.dim('✓') : p.bold('✗')
 }
 
-function gateLines(p: Paint, e: PaletteEditor, room: number): string[] {
+function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): string[] {
   const rows = gateRows(e.list, e.signature, e.waive).sort((a, b) => Number(a.ok !== false) - Number(b.ok !== false))
   const failing = rows.filter((r) => r.ok === false).length
   const head = `  ${p.dim('Gate')}  ${failing === 0 ? p.dim('passes') : p.bold(`${failing} ${failing === 1 ? 'miss' : 'misses'}`)}`
-  const width = LEFT - 4
+  const width = wide - 4
   return [
     head,
     ...rows.slice(0, Math.max(0, room - 1)).map((r) => {
@@ -108,7 +108,7 @@ function gateLines(p: Paint, e: PaletteEditor, room: number): string[] {
   ]
 }
 
-function slotPane(p: Paint, e: PaletteEditor, height: number): string[] {
+function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): string[] {
   const bad = e.misses()
   const c = colorsOf(e.list)
   const focus = e.slot()
@@ -120,7 +120,7 @@ function slotPane(p: Paint, e: PaletteEditor, height: number): string[] {
     const ratio =
       slot === 0 ? undefined : slot === 3 ? contrast(c.foreground, c.selection) : contrast(hex, c.background)
     const shown = ratio === undefined ? '' : ratio.toFixed(1)
-    const mark = bad.has(slot) ? '✗' : ' '
+    const mark = bad.has(slot) ? '✗' : e.theme && e.offDefault(slot) ? '↺' : ' '
     const sw = p.color ? `${p.fg(hex)}${glyph}${focused ? p.fg(c.foreground) : '\x1b[39m'} ` : `${glyph} `
     const text = `${sw}${hex} ${shown.padStart(4)}${mark}`
     return focused ? lit(` ${text} `) : ` ${text} `
@@ -139,7 +139,7 @@ function slotPane(p: Paint, e: PaletteEditor, height: number): string[] {
     lines.push(`${gutter(here)}${here ? p.bold(label) : label}${cell(row)}${cell(row + 8)}`)
   }
   lines.push('')
-  return [...lines, ...gateLines(p, e, height - lines.length)]
+  return [...lines, ...gateLines(p, e, height - lines.length, wide)]
 }
 
 function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
@@ -406,6 +406,143 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
     }
     keys = [...keys.slice(0, -2), ...keys.slice(-1)]
   }
+}
+
+export const TONE_COLS = 50
+export const TONE_ROWS = 22
+
+interface ToneFooter {
+  mode: 'list' | 'tune' | 'type' | 'compare'
+  keys: [string, string][]
+  note: string
+}
+
+export function toneFooter(e: PaletteEditor): ToneFooter {
+  const note = e.notice ?? ''
+  if (e.typing !== undefined) {
+    return {
+      mode: 'type',
+      keys: [
+        ['enter', 'set'],
+        ['ctrl+u', 'clear'],
+        ['esc', 'back'],
+      ],
+      note,
+    }
+  }
+  if (e.compare) {
+    return {
+      mode: 'compare',
+      keys: [
+        ['space', 'back to yours'],
+        ['esc', 'back'],
+      ],
+      note,
+    }
+  }
+  if (e.mode === 'tune') {
+    return {
+      mode: 'tune',
+      keys: [
+        ['↑↓', 'lightness, chroma, hue'],
+        ['←→', 'step'],
+        ['⇧←→', '×5'],
+        ['0-9', 'jump'],
+        ['enter', 'keep'],
+        ['esc', 'undo'],
+      ],
+      note,
+    }
+  }
+  return {
+    mode: 'list',
+    keys: [
+      ['↑↓←→', 'slot'],
+      ['tab', 'tune'],
+      ['r', 'reset slot'],
+      ['R', 'reset all'],
+      ['#', 'type a color'],
+      ['space', 'before'],
+    ],
+    note,
+  }
+}
+
+function toneDetail(p: Paint, e: PaletteEditor, width: number, room: number): string[] {
+  const slot = e.slot()
+  const hex = e.list[slot] as Hex
+  const want = e.lch[slot] as Oklch
+  const real = oklch(hex)
+  const was = e.start[slot] as Hex
+  const base = e.original[slot] as Hex
+  const { name, about } = slotLabel(slot)
+  const sig = e.signature.includes(SLOT_NAMES[slot] as string)
+  const block = p.color ? `${p.fg(hex)}${'█'.repeat(4)}\x1b[39m  ` : ''
+  const typed = e.typing !== undefined ? p.bold(`${e.typing}▏`) : undefined
+  const marks = [
+    was !== hex ? `was ${p.color ? `${p.fg(was)}■\x1b[39m ` : ''}${was}` : '',
+    base !== hex ? `default ${p.color ? `${p.fg(base)}■\x1b[39m ` : ''}${base}` : '',
+  ].filter(Boolean)
+  const lines = [
+    spread(`${p.bold(name)}  ${p.dim(about)}`, sig ? p.dim('◆ signature') : '', width),
+    `${block}${typed ?? p.bold(hex)}  ${p.dim(`oklch ${real.l.toFixed(3)} ${real.c.toFixed(3)} ${real.h.toFixed(0)}°`)}`,
+    ...(room >= 7 ? [`${block}${p.dim(marks.length > 0 ? marks.join('   ') : 'as the palette has it')}`] : []),
+  ]
+  const barWidth = Math.max(8, Math.min(40, width - 12))
+  CHANNELS.forEach((channel, i) => {
+    const here = e.mode === 'tune' && i === e.channel
+    const value = want[channel.key]
+    const shown = `${value.toFixed(channel.digits)}${channel.wraps ? '°' : ''}`.padStart(6)
+    const bar = gradient(
+      p,
+      channelSamples(want, channel, barWidth),
+      position(value, channel.min, channel.max, barWidth),
+      here,
+    )
+    const label = channel.key.toUpperCase()
+    lines.push(`${here ? p.bold(`▸${label}`) : p.dim(` ${label}`)} ${bar} ${here ? p.bold(shown) : p.dim(shown)}`)
+  })
+  const checks = slotChecks(e.list, e.signature, e.waive, slot)
+  if (real.c < want.c - 0.005) {
+    checks.push({ ok: undefined, text: `Chroma held at the sRGB edge — ${real.c.toFixed(3)} of ${want.c.toFixed(3)}` })
+  }
+  for (const check of checks) {
+    for (const [i, line] of wrapText(check.text, width - 2).entries()) {
+      if (lines.length >= room) {
+        return lines
+      }
+      lines.push(`${i === 0 ? checkMark(p, check.ok) : ' '} ${check.ok === false ? line : p.dim(line)}`)
+    }
+  }
+  return lines
+}
+
+export function renderTone(
+  e: PaletteEditor,
+  width: number,
+  height: number,
+  color: boolean,
+  focused: boolean,
+): string[] {
+  const p = painter(color)
+  const failing = e.failing().length
+  const gate = failing === 0 ? 'passes the gate' : `${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
+  const off = e.list.filter((_, i) => e.offDefault(i)).length
+  const head = spread(
+    `${focused ? p.bold('Tone') : p.dim('Tone')}${off > 0 ? p.dim(`  ${off} off its default`) : ''}`,
+    p.dim(gate),
+    width - 2,
+  )
+  const grid = slotPane(p, e, 0, width).slice(1, -2)
+  const lines = [`  ${head}`, ...grid]
+  if (height - lines.length >= 9) {
+    lines.push('')
+  }
+  const room = height - lines.length
+  if (room >= 5) {
+    lines.push(...toneDetail(p, e, width - 2, room).map((line) => `  ${line}`))
+  }
+  return Array.from({ length: height }, (_, i) => fit(lines[i] ?? '', width))
 }
 
 export function renderEditor(e: PaletteEditor, cols: number, rows: number, color: boolean): string[] {

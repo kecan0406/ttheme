@@ -2,7 +2,7 @@ import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { backgroundsDir, freshenConfs, paintFor, readStore, retint } from './backdrop.ts'
-import { available, nearest, readAvailable, writeKept } from './catalog.ts'
+import { available, nearest, readAvailable, untuned, writeKept } from './catalog.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { owned } from './emit/index.ts'
 import { listed, type Manifest, type PaletteEntry, toTheme } from './emit/manifest.ts'
@@ -12,6 +12,7 @@ import { readText, systemHost, themeFiles, tilde } from './terminals/common.ts'
 import { WIRED, type Wired, wirings } from './terminals/index.ts'
 import type { Ctx, Host, Moment, Now, Out, Pointed } from './terminals/types.ts'
 import { marketOf } from './theme.ts'
+import { readTone, tuned } from './tone.ts'
 
 export interface Installed {
   terminals: Wired[]
@@ -156,10 +157,11 @@ function layer(at: Now): Record<string, string> {
 
 export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
   readStore(backgroundsDir(configHome))
-  const entries = resolve(available(configHome, catalog), state.palettes)
+  const kept = resolve(untuned(configHome, catalog), state.palettes)
+  const entries = tuned(kept, readTone(configHome))
   retint(configHome, new Map(entries.map((entry) => [entry.name, paintFor(entry)])))
   freshenConfs(configHome)
-  writeKept(configHome, entries)
+  writeKept(configHome, kept)
   const ctx = context(configHome, entries, state, home)
   const out = writer(ctx)
   for (const wiring of wirings(state.terminals)) {

@@ -11,6 +11,7 @@ import { runAdd, runDefault, runList, runOff, runOn, runRemove, runUpdate } from
 import { runMarket } from './markets.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
+import { runTone } from './tone-server.ts'
 import { runUninstall } from './uninstall.ts'
 import { helpText, usageOf, VERB_SPECS, type VerbSpec } from './verbs.ts'
 
@@ -22,6 +23,7 @@ export interface Flags {
   from?: string
   in?: string
   market?: string
+  tone?: string
 }
 
 const REFRESHES = new Set(['add', 'remove', 'market', 'default', 'on', 'off'])
@@ -43,7 +45,7 @@ const RUNS: Record<string, Verb['run']> = {
   new: ([name], { from, in: into }) => runNew(name as string, from, into),
   edit: ([name]) => runEdit(name as string),
   check: ([name], { fix }) => runCheck(name as string, fix),
-  share: ([name]) => runShare(name as string),
+  share: ([name], { tone }) => runShare(name as string, tone as 'tuned' | 'original' | undefined),
   init: (_, { yes }) => runInit({ yes }),
   uninstall: (_, { yes }) => runUninstall(yes),
   info: () => runInfo(),
@@ -51,6 +53,7 @@ const RUNS: Record<string, Verb['run']> = {
   find: ([name]) => runFind(name as string),
   image: ([name, action, key]) => runImage(name as string, action as string, key),
   redraw: () => runRedraw(),
+  tone: ([name]) => runTone(name as string),
   flatten: ([source, out, background, opacity, canvas, place]) =>
     runFlatten(source as string, out as string, background as string, opacity as string, canvas, place),
   bake: ([source, out, canvas, place]) => runBake(source as string, out as string, canvas as string, place as string),

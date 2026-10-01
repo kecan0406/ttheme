@@ -1,12 +1,14 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname } from 'node:path'
+import * as p from '@clack/prompts'
 import { dropImage, imageKey, rackOf, showImage } from './backdrop.ts'
-import { available, find, gateFailures, readCatalog, readKept, writeKept } from './catalog.ts'
+import { available, find, gateFailures, readCatalog, readKept, untuned, writeKept } from './catalog.ts'
 import { runEditor } from './editor-screen.ts'
 import { writeAtomic } from './edits.ts'
 import { type Manifest, type PaletteEntry, paletteEntry, toTheme } from './emit/manifest.ts'
 import { findFor } from './find.ts'
 import { fixGate, type Move } from './fix.ts'
+import { Cancelled } from './init.ts'
 import { ensureLocal } from './markets.ts'
 import { colorless } from './osc.ts'
 import {
@@ -32,6 +34,7 @@ import { bringPictures, heldPictures } from './pictures.ts'
 import { grow, SEEDS } from './seeds.ts'
 import { livePaint, showsPictures } from './terminal.ts'
 import { marketOf, nameProblem, type SharedPicture, type Theme } from './theme.ts'
+import { readTone, tonedEntry } from './tone.ts'
 import { warpLive } from './warp-live.ts'
 
 function tty(): boolean {
@@ -360,11 +363,54 @@ function draftFor(home: string, entry: PaletteEntry): Draft {
   return { ...draft, ...(held ? { pictures: held } : {}) }
 }
 
-export function runShare(name: string): void {
+async function sharing(tuned: PaletteEntry, original: PaletteEntry, asked: 'tuned' | 'original' | undefined) {
+  if (tuned === original) {
+    return original
+  }
+  let which = asked
+  if (which === undefined) {
+    if (!tty()) {
+      which = 'tuned'
+    } else {
+      const answer = await p.select({
+        message: `Share ${original.name} as…`,
+        options: [
+          { value: 'tuned', label: 'Your tone', hint: `named ${tunedName(original.name)}` },
+          { value: 'original', label: 'The original' },
+        ],
+      })
+      if (p.isCancel(answer)) {
+        throw new Cancelled()
+      }
+      which = answer as 'tuned' | 'original'
+    }
+  }
+  return which === 'original' ? original : tuned
+}
+
+function tunedName(name: string): string {
+  return `${name}-tuned`
+}
+
+export async function runShare(name: string, tone?: 'tuned' | 'original'): Promise<void> {
   const home = configHome()
-  const code = shareCode(draftFor(home, named(available(home, readCatalog(home)), name, home)))
-  console.log(code)
+  const catalog = readCatalog(home)
+  const original = named(untuned(home, catalog), name, home)
+  const tuned = tonedEntry(original, readTone(home)[original.name])
+  const entry = await sharing(tuned, original, tone)
+  const draft = draftFor(home, entry)
+  const renamed = entry === tuned && tuned !== original
+  if (renamed) {
+    const problem = nameProblem(tunedName(entry.name))
+    if (problem) {
+      throw new Error(`${tunedName(entry.name)} ${problem} — share the original, or tune a palette with a shorter name`)
+    }
+    draft.name = tunedName(entry.name)
+  }
+  console.log(shareCode(draft))
   if (process.stdout.isTTY) {
-    console.error(`\nAnyone with ttheme wears it with: ttheme add ${CODE}…`)
+    console.error(
+      `\nAnyone with ttheme wears it with: ttheme add ${CODE}…${renamed ? `\nIt carries your tone, named ${draft.name} so it does not clash with ${entry.name}` : ''}`,
+    )
   }
 }

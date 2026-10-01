@@ -1,5 +1,6 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { SITES } from '../booru.ts'
+import { HUB_CLOSED, HUB_SWITCH, HUB_TABS } from '../hub.ts'
 import { SCENES } from '../scenes.ts'
 import { TRAITS } from '../terminal.ts'
 import { alphabetical } from '../theme.ts'
@@ -72,6 +73,11 @@ export function palettesZsh(
     ')',
     `typeset -g TTHEME_HELP=${quote(helpText(false, true))}`,
     `typeset -g TTHEME_HELP_ALL=${quote(helpText(true, true))}`,
+    '',
+    '# the screens the bare ttheme switches between (src/hub.ts): the exit status of a screen run by the CLI says where it went',
+    `typeset -ga TTHEME_HUB_TABS=(${HUB_TABS.map((tab) => tab.name).join(' ')})`,
+    `typeset -ga TTHEME_HUB_TITLES=(${HUB_TABS.map((tab) => tab.title).join(' ')})`,
+    `typeset -gi TTHEME_HUB_CLOSED=${HUB_CLOSED} TTHEME_HUB_SWITCH=${HUB_SWITCH}`,
     '',
     '# the settings config.zsh holds, handed to the CLI on every call',
     `typeset -ga TTHEME_SETTINGS=(${SETTING_NAMES.join(' ')})`,

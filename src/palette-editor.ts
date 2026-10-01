@@ -71,6 +71,8 @@ export interface EditorOptions {
   title: string
   name: string
   colors?: Colors
+  variant?: 'theme'
+  original?: Colors
   signature: string[]
   waive?: string[]
   palettes?: Choice[]
@@ -326,7 +328,7 @@ export function gateRows(list: Hex[], signature: string[], waive: string[]): Gat
   })
 }
 
-const ALWAYS = new Set(['reset', 'hex', 'paste', 'fix', 'open', 'seeds', 'tune', 'sig', 'follow'])
+const ALWAYS = new Set(['reset', 'reset-all', 'hex', 'paste', 'fix', 'open', 'seeds', 'tune', 'sig', 'follow'])
 
 export class PaletteEditor {
   mode: Mode
@@ -347,11 +349,14 @@ export class PaletteEditor {
   filter = ''
   pick = 0
   result: 'saved' | 'cancelled' | undefined
+  act: 'save' | 'apply' | 'cancel' | undefined
   wants: { start?: Start } | undefined
   pictures: number
   readonly startPictures: number
   readonly options: EditorOptions
   readonly fresh: boolean
+  readonly theme: boolean
+  readonly original: Hex[]
   private readonly startSignature: string[]
   private seeded = false
   private seedsBack = false
@@ -363,15 +368,28 @@ export class PaletteEditor {
 
   constructor(options: EditorOptions) {
     this.options = options
+    this.theme = options.variant === 'theme'
     this.fresh = options.colors === undefined
     this.mode = this.fresh ? 'seeds' : 'list'
     this.list = listOf(options.colors ?? grow(this.seeds))
     this.lch = this.list.map(oklch)
     this.start = [...this.list]
+    this.original = options.original ? listOf(options.original) : [...this.list]
     this.signature = [...options.signature]
     this.startSignature = [...options.signature]
     this.pictures = options.pictures ?? 0
     this.startPictures = this.pictures
+  }
+
+  markSaved(): void {
+    this.start = [...this.list]
+    this.history = []
+    this.future = []
+    this.lastEdit = undefined
+  }
+
+  offDefault(slot: number): boolean {
+    return this.list[slot] !== this.original[slot]
   }
 
   get added(): number {
@@ -467,7 +485,11 @@ export class PaletteEditor {
   press(key: string): void {
     this.notice = undefined
     if (key === 'ctrl-c') {
-      this.result = 'cancelled'
+      if (this.theme) {
+        this.act = 'cancel'
+      } else {
+        this.result = 'cancelled'
+      }
       return
     }
     if (this.quitting) {
@@ -491,6 +513,9 @@ export class PaletteEditor {
     }
     if (key === '?') {
       this.overlay = 'keys'
+      return
+    }
+    if (this.theme && (key === 'ctrl-v' || key === 'alt-v' || key === 'p')) {
       return
     }
     if (key === 'ctrl-v' || key === 'alt-v') {
@@ -574,7 +599,31 @@ export class PaletteEditor {
     }
   }
 
+  private themeKey(key: string): boolean {
+    if (key === 's' || key === '\x13') {
+      this.act = 'save'
+    } else if (key === 'enter') {
+      this.act = 'apply'
+    } else if (key === 'esc') {
+      this.act = 'cancel'
+    } else if (key === 'r') {
+      this.set(this.slot(), this.original[this.slot()] as Hex, 'reset')
+    } else if (key === 'R') {
+      this.remember('reset-all')
+      this.list = [...this.original]
+      this.lch = this.list.map(oklch)
+    } else if (key === '*' || key === 'o' || key === '?') {
+      return true
+    } else {
+      return false
+    }
+    return true
+  }
+
   private listKey(key: string): void {
+    if (this.theme && this.themeKey(key)) {
+      return
+    }
     if (key === 'up' || key === 'down') {
       this.row = (this.row + (key === 'up' ? ROWS - 1 : 1)) % ROWS
       this.lastEdit = undefined

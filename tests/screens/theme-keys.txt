@@ -1,0 +1,24 @@
+ ◆ konata · Lucky☆Star
+  Tone                        7 misses in the gate │ Image
+▌ Background[   #13181e       ]                    │
+  Foreground╭─ Help ───────────────────────────────────────────────────────────────────╮
+  Cursor    │                                                                          │
+  Selection │  Panels    [  left, the tone  ·  ]  right, the picture                   │
+            │  Tone      ↑↓←→  slot  ·  tab  tune it  ·  #  type a color               │
+  ANSI      │            r  resets a slot  ·  R  all  ·  space  the colors before      │
+  Black     │            c  copies  ·  v  pastes  ·  =  bright follows normal          │
+  Red       │            f  moves the colors the gate misses  ·  u  undo               │
+  Green     │  Image     ↑↓ field  ←→ step  ⇧←→ ×10  1-9 place                         │
+  Yellow    │            =  resets a field  ·  +  all  ·  space  hides  ·  c  colors   │
+  Blue      │            ,  .  other pictures  ·  D removes one  ·  f  finds one       │
+  Magenta   │  Apply     enter  ·  asks where, saving what you changed                 │
+  Cyan      │  Save      s  ·  keeps the tone and the picture                          │
+  White     │  Cancel    esc  ·  drops what you changed since the last save            │
+  Background│  Close     ?  esc                                                        │
+  #13181e  o│                                                                          │
+  as the pal╰──────────────────────────────────────────────────────────────────────────╯
+   L ───────●────────────────────────────   0.21   │
+   C ─●──────────────────────────────────  0.014   │
+   H ─────────────────────────●──────────   253°   │
+  ✓ Foreground on it 13.80:1 · ≥ 7                 │
+[HELP]                                                                                   ? esc close

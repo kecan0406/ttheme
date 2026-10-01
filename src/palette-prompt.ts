@@ -166,7 +166,7 @@ export interface PaletteListOptions {
 export class PaletteList {
   readonly picked: Set<string>
   readonly scope: PickerScope
-  readonly maxItems: number
+  maxItems: number
   named: PaletteEntry[] = []
   series: string[] = []
   private readonly color: boolean

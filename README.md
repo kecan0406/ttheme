@@ -45,7 +45,7 @@ is about to change, and writes nothing until you confirm. Then:
 
 ```sh
 exec zsh               # the ttheme command in this tab
-ttheme preview         # browse live — the tab repaints as the cursor moves
+ttheme                 # preview and browse as tabs — tab switches
 ```
 
 <details>
@@ -105,7 +105,7 @@ the folders under its `palettes/` as catalogs:
 ```sh
 ttheme add dusk --market alice/ttheme-pastel  # add alice's market and install from it
 ttheme market add alice/ttheme-pastel#v1      # or add it alone, pinned to a tag
-ttheme browse                                 # tab to Markets: add, remove, auto-update
+ttheme browse                                 # shift+→ to Markets: add, remove, auto-update
 ```
 
 `ttheme browse` handles markets the way it handles palettes: its Markets tab
@@ -152,13 +152,14 @@ from the booru the way `find` does.
 
 | Command | |
 |---|---|
+| `ttheme` | Preview and browse as tabs of one screen — `tab` and `shift+tab` switch |
 | `ttheme preview` | Browse live — the tab repaints as the cursor moves, enter applies it to this tab or makes it the default |
 | `ttheme use <palette>` | Paint this tab (a unique prefix works) |
 | `ttheme next` | Advance this tab to the next palette |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` | A palette for this directory, everything below it or its repository — a panel shows what each choice reaches; `cd` in repaints, `cd` out restores |
 | `ttheme pins` | Map every pinned directory as a tree, in each palette's colors, with where you are marked |
-| `ttheme browse` | Pick palettes and markets — tab moves between Catalog, Installed, Markets and Errors |
+| `ttheme browse` | Pick palettes and markets — `shift+←/→` moves between Catalog, Installed, Markets and Errors |
 | `ttheme market add <owner/repo>` | Add someone's market (`#v1` pins it) — `ttheme market` lists yours; `search`, `remove` too |
 | `ttheme new <name>` | Make a palette of your own in the palette editor (`--from <palette>` starts from its colors); `edit`, `check`, `share` follow |
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |
@@ -187,7 +188,7 @@ two share the screen, and how to let Neovim wear the palette instead:
 ## Background pictures
 
 A palette can wear a picture behind the text. ttheme ships none: `ttheme
-preview` → tab searches danbooru, konachan, yande.re and zerochan for the character live
+preview` → enter, then `f` in the picture panel searches danbooru, konachan, yande.re and zerochan for the character live
 (safe-rated by default), or takes a picture you paste or drop, cuts the
 character out on macOS, tints it to the palette — or keeps its own colors — and
 installs it on your machine only. Ghostty shows the focused tab's picture, iTerm2 one per tab, kitty one per
@@ -224,7 +225,7 @@ Every background picture belongs to the artist who drew it. ttheme never passes
 one on: a palette or a share code names a booru post by its number, and each
 machine fetches it from that booru itself. `find` names who drew each post and
 links the post and the artwork's own page, an installed picture keeps its
-artist and source, and `preview` names the artist over its tuning panel. The
+artist and source, and theme edit names the artist over its picture panel. The
 pictures are for your own terminal — when you show one off, credit the artist
 and link the artwork's page, not the booru's copy.
 

@@ -209,6 +209,56 @@ mise run demo preview-open    # open one scenario for real, in its fixture
 `mise run demo` is also the fastest way to reproduce a bug: it builds the
 fixture state, hands you the real TUI, and throws the directory away after.
 
+### Keys a screen takes
+
+Preview and browse filter as you type, so a letter or a digit is never a
+command there, and an input method composes letters before the terminal hands
+them over. An action takes a key the filter never sees — `tab`, `shift+tab`,
+the arrows alone or with `shift`, `enter`, `space`, `esc`, or `ctrl` or `alt`
+with a letter — and this table is where to look before binding one. A binding
+on a key already in it is a collision: move one of them, or pick another key.
+
+| Key | Preview | Browse |
+|---|---|---|
+| any character | filters | filters (each tab keeps its own) |
+| `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
+| `←` `→` | close or open a series | fold a series; on a market, auto-update |
+| `enter` | open theme edit on the palette | apply every pick and market change |
+| `esc` | clear the filter, then restore and close | cancel |
+| `space` | fold or open a series | pick |
+| `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
+| `?` | keys | — |
+| `alt-c` | settings | — |
+| `ctrl+r` | — | update the market |
+| `shift+←` `shift+→` | example scene | previous or next of its four tabs |
+| `tab` `shift+tab` | next or previous screen of the bare `ttheme` | next or previous screen of the bare `ttheme` |
+| `ctrl+c` | quit | cancel |
+
+The settings panel preview opens over its list and the questions browse asks
+take the keys they list on their own last line while they are open. `find`
+and the palette editor are screens of their own and keep their own keys.
+
+Theme edit (`enter` in preview) has no filter, so its two panels use letters
+too — one panel takes the keys while it has the focus, and the three that
+leave the panel are the same in both:
+
+| Key | Tone panel | Picture panel |
+|---|---|---|
+| `↑` `↓` | slot (while tuning, lightness, chroma or hue) | field |
+| `←` `→` | normal or bright (while tuning, a step) | step |
+| `⇧←` `⇧→` | while tuning, ×5 | ×10 |
+| `tab` | tune the slot | — |
+| `1`-`9` | while tuning, jump | place |
+| `#` `c` `v` `u` `ctrl+r` `space` | type a color, copy, paste, undo, redo, show the colors before | — |
+| `f` | move the colors the gate misses | find a picture |
+| `r` `R` | reset a slot, all of them | — |
+| `=` `+` | the bright follows its normal, — | reset a field, all |
+| `c` `space` `,` `.` `D` | — | colors, hide, other pictures, remove one |
+| `[` `]` | focus the tone panel, the picture panel | same |
+| `s` | save | save |
+| `enter` | apply, asking where | apply, asking where |
+| `esc` | cancel, dropping what changed since the last save | cancel |
+
 ### Writing the text
 
 Every screen and message is written in sentence case: the first word and proper
@@ -232,7 +282,7 @@ look, and never Title Case.
   and error messages, which read the same after the `ttheme:` prefix
   (`ttheme: not installed: kita`) and in a status line. A notice written for
   the screen (`No picture on the clipboard`) is not an error.
-- **Capitals**: only a mode badge (`PREVIEW`, `IMAGE SEARCH`, `IMAGE PREVIEW`, `IMAGE EDIT`, `HELP`, `CONFIG`).
+- **Capitals**: only a mode badge (`PREVIEW`, `THEME EDIT`, `IMAGE SEARCH`, `IMAGE PREVIEW`, `HELP`, `CONFIG`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
 
 Counts on screen come from the catalog, never from the rows being drawn. A
 folded series still reports how many of its palettes are picked, and the

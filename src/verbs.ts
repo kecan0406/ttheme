@@ -37,9 +37,10 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'preview',
     args: [],
-    about: 'Browse live — focus repaints, enter keeps (this tab or default), esc restores, ? lists keys',
+    about:
+      'Try palettes live — focus repaints, enter edits its tone and picture and applies it, esc restores, ? lists keys',
     section: 'tab',
-    start: 'Try every palette live — enter keeps the one you land on',
+    start: 'Try every palette live — enter tunes the one you land on and applies it',
     shell: true,
   },
   {
@@ -90,7 +91,8 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'browse',
     args: [],
-    about: 'Pick palettes and markets in a live picker — tab moves between Catalog, Installed, Markets and Errors',
+    about:
+      'Pick palettes and markets in a live picker — shift+←/→ moves between Catalog, Installed, Markets and Errors',
     section: 'catalog',
     start: 'Install or drop palettes, add markets — every change applies at once on enter',
   },
@@ -165,6 +167,14 @@ export const VERB_SPECS: VerbSpec[] = [
     args: ['<palette>'],
     about: 'Print a share code — ttheme add <code> installs it anywhere, pictures included',
     section: 'own',
+    flags: {
+      tone: {
+        type: 'string',
+        value: '<tuned|original>',
+        choices: ['tuned', 'original'],
+        about: 'Share the palette as you tuned its colors, or as it was — asked when you tuned it and omit this',
+      },
+    },
   },
   {
     name: 'init',
@@ -233,6 +243,13 @@ export const VERB_SPECS: VerbSpec[] = [
     hidden: true,
   },
   {
+    name: 'tone',
+    args: ['<palette>'],
+    about: "Serve a palette's tone editor over stdin and stdout — preview's theme edit screen runs it",
+    section: 'setup',
+    hidden: true,
+  },
+  {
     name: 'redraw',
     args: [],
     about: 'Draw the background pictures again after TTHEME_BG_BLUR changed — ttheme config and preview call this',
@@ -264,7 +281,7 @@ export function helpText(all: boolean, shell = false): string {
   const shown = VERB_SPECS.filter((v) => !v.hidden && !(shell && v.section === 'setup'))
   const sections = SECTIONS.filter(({ section }) => shown.some((v) => v.section === section))
   const footer = [
-    ...(shell ? ['ttheme alone lists every installed palette, grouped, with previews'] : []),
+    ...(shell ? ['ttheme alone opens preview and browse as tabs — tab and shift+tab move between them'] : []),
     all
       ? 'ttheme help <command> describes one command · ttheme --version prints the version'
       : 'ttheme help <command> describes one · ttheme help all lists every command with what it does',

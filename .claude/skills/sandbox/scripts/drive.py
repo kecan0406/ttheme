@@ -27,6 +27,7 @@ KEYS = {
     'bs': '\x7f',
     'ctrl-c': '\x03',
     'ctrl-u': '\x15',
+    'shift-tab': '\x1b[Z',
     'alt-c': '\x1bc',
     'ctrl-v': '\x16',
     'alt-v': '\x1bv',

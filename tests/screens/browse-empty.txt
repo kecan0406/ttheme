@@ -13,4 +13,12 @@
 │                                                              │
 │                                                              │
 │                                                              │
-└ tab switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
+│                                                              │
+│                                                              │
+│                                                              │
+│                                                              │
+│                                                              │
+│                                                              │
+│                                                              │
+│                                                              │
+└ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel

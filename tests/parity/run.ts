@@ -174,6 +174,10 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       await app.settle()
     },
     keys: (tab, ...keys) => app.keys(tab, keys),
+    async expect(tab, marker) {
+      await app.until(() => tab.screen(fixture.place.home).includes(marker), 15000, `${marker} never showed`)
+      await app.settle()
+    },
     async back(tab) {
       const mark = marks.get(tab) ?? 0
       await app.until(

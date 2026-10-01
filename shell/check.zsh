@@ -165,13 +165,13 @@ bgsrc=(); __tt_bg_load kagami; bgsize[kagami]=100 bgoff[kagami]=1
 __tt_bg_write kagami || { print -u2 "__tt_bg_write (a picture's own tuning) failed"; exit 1 }
 [[ -e $bgd/kagami.1a2b3c4d.tune.conf && -e $bgd/kagami.1a2b3c4d.off.conf && ! -e $bgd/kagami.tune.conf && $(grep -c config-file $bgd/kagami.conf) == 2 ]] ||
   { print -u2 "tuning did not go to the picture the conf names:"; ls $bgd; cat $bgd/kagami.conf; exit 1 }
-bgcw=8 tune=kagami tpick=kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
+te=1 tfocus=1 tename=kagami bgcw=8 tune=kagami tpick=kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
 out=; __tt_pv_foot 80
-[[ $out == *"f find"* ]] || { print -u2 "an IMAGE EDIT bar with several images dropped the find key: $out"; exit 1 }
+[[ $out == *"f find"* && $out == *"s save"* ]] || { print -u2 "a THEME EDIT bar with several images dropped the find or save key: $out"; exit 1 }
 out=; __tt_pv_foot 200
-[[ $out == *"image ×3"* ]] || { print -u2 "the IMAGE EDIT bar did not count the palette's pictures: $out"; exit 1 }
+[[ $out == *"image ×3"* ]] || { print -u2 "the THEME EDIT bar did not count the palette's pictures: $out"; exit 1 }
 [[ $out == *"space show"* && $out != *"c colors"* ]] ||
-  { print -u2 "the IMAGE EDIT bar of a hidden picture offered the colors key: $out"; exit 1 }
+  { print -u2 "the THEME EDIT bar of a hidden picture offered the colors key: $out"; exit 1 }
 msg=${(l:200::x:)} msgt=100 out=; __tt_pv_foot 80
 plain=${out//$'\e[K'/}
 (( ${(m)#plain} <= 80 )) || { print -u2 "a long preview message overran the bar: ${(m)#plain} columns"; exit 1 }
@@ -207,7 +207,7 @@ REPLY=; __tt_bg_coloring kagami; first=$REPLY
 REPLY=; __tt_bg_coloring kagami:safebooru_3
 [[ $first == tone && $REPLY == original ]] ||
   { print -u2 "the conf's colors line did not reach its picture: active=$first other=$REPLY (${(kv)bgcolors})"; exit 1 }
-bgcw=8 tune=kagami tpick=kagami:safebooru_3 tf=4 color=0 out= off=0 msgt=0 help=0 pick= conf=0 flt=
+te=1 tfocus=1 tename=kagami bgcw=8 tune=kagami tpick=kagami:safebooru_3 tf=4 color=0 out= off=0 msgt=0 help=0 pick= conf=0 flt=
 __tt_pv_bg_panel kagami:safebooru_3 4 1 60
 [[ $out == *Colors* && $out == *"[original]"* && $out == *" tone "* ]] ||
   { print -u2 "the tuning panel did not show the picture's colors: $out"; exit 1 }
@@ -222,7 +222,7 @@ bgsrc=(); __tt_bg_load kagami
 REPLY=; __tt_bg_coloring kagami:safebooru_3
 [[ $REPLY == tone && ${#bgcolors} == 0 ]] ||
   { print -u2 "a picture drawn in tone again kept its colors mark: $REPLY (${(kv)bgcolors})"; exit 1 }
-tune= tpick= bgcw=0 out=
+te=0 tune= tpick= bgcw=0 out=
 (
   __tt_pv_draw() { : }
   __tt_pv_bg_close() { : }
@@ -237,14 +237,14 @@ tune= tpick= bgcw=0 out=
     "background-image = kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
     "config-file = ?kagami.1a2b3c4d.tune.conf" "config-file = ?kagami.1a2b3c4d.off.conf" > $bgd/kagami.conf
   bgsrc=() bgcolors=() bgedit=() bgview=() bgswap=() tsnaps=()
-  bgcw=8 color=0 msgt=0 help=0 pick= conf=0 flt=
+  te=1 tfocus=1 tename=kagami bgcw=8 color=0 msgt=0 help=0 pick= conf=0 flt=
   __tt_pv_tune_open kagami
   bgoff[kagami]=1 tf=1 key=c
   rm -f $bgd/cli.log
   __tt_pv_tune > /dev/null
   [[ ! -e $bgd/cli.log ]] || { print -u2 "c drew a hidden picture again"; exit 1 }
   bgoff[kagami]=0 out=; __tt_pv_foot 200
-  [[ $out == *"c colors"* ]] || { print -u2 "the IMAGE EDIT bar did not offer the colors key: $out"; exit 1 }
+  [[ $out == *"c colors"* ]] || { print -u2 "the THEME EDIT bar did not offer the colors key: $out"; exit 1 }
   __tt_pv_tune > /dev/null
   REPLY=; __tt_bg_coloring $tpick
   [[ "$(<$bgd/cli.log)" == "image kagami original safebooru_2" && $REPLY == original && $tf == 1 && $tune == kagami && $bgsrc[kagami] == *5e5e5e5e* ]] ||
@@ -257,9 +257,9 @@ tune= tpick= bgcw=0 out=
 ) || exit 1
 tune= tpick= bgcw=0 out=
 (
-  bgcw=8 color=0 split=1 sw=60 sc=40 se=100 pw=100 ph=24 help=1 out=
+  te=1 bgcw=8 color=0 split=0 sw=0 pw=100 ph=30 help=1 out=
   __tt_pv_help
-  [[ $out == *"c  tone  ↔  the picture's own colors"* ]] ||
+  [[ $out == *"c  colors"* ]] ||
     { print -u2 "the help did not name the colors key: $out"; exit 1 }
 ) || exit 1
 proj=$XDG_CONFIG_HOME/proj

@@ -5,6 +5,7 @@ import { ansiBar, ansiFg, fit, spread, wrapText } from './ansi.ts'
 import { gateFailures } from './catalog.ts'
 import { GATE_RULES } from './contrast.ts'
 import type { PaletteEntry } from './emit/manifest.ts'
+import { type HubTab, hubBar, hubGoto } from './hub.ts'
 import { type Repository, repositorySource } from './markets.ts'
 import {
   BOLD,
@@ -58,7 +59,7 @@ export interface BrowseOptions {
   due: string[]
   io: BrowseIo
   order?: (entries: PaletteEntry[]) => PaletteEntry[]
-  maxItems?: number
+  hub?: HubTab
   color?: boolean
   fx?: PromptFx
   input?: Readable
@@ -96,6 +97,9 @@ const TABS: { tab: Tab; title: string }[] = [
 const RIGHT = 34
 const LEFT_MAX = 72
 const WIDE = 94
+const MIN_COLS = 40
+const MIN_ROWS = 10
+const MIN_ITEMS = 3
 const EMPTY: Detail = { title: '', lines: [], brief: '' }
 
 function typedSource(text: string): string | undefined {
@@ -135,12 +139,16 @@ export class BrowsePanel extends Prompt<string> {
   private readonly io: BrowseIo
   private readonly order: (entries: PaletteEntry[]) => PaletteEntry[]
   private readonly color: boolean
-  private readonly maxItems: number
+  private readonly hub: HubTab | undefined
+  private maxItems = 12
   private readonly paint: ((entry: PaletteEntry) => void) | undefined
   private readonly catalog: PaletteList
   private readonly mine: PaletteList
   private readonly hint: SearchHint
   private asking: Market | undefined
+  private leaving: number | undefined
+  private shifted = false
+  private goto: number | undefined
   private repos: Repository[] | undefined
   private searching = false
   private searchError: string | undefined
@@ -148,6 +156,7 @@ export class BrowsePanel extends Prompt<string> {
 
   constructor(opts: BrowseOptions) {
     super({ render: () => this.draw(), input: opts.input, output: opts.output }, true)
+    Object.assign(this, { render: () => this.screen() })
     this.markets = opts.markets
     this.problems = opts.problems
     this.kept = opts.kept
@@ -156,7 +165,7 @@ export class BrowsePanel extends Prompt<string> {
     this.io = opts.io
     this.order = opts.order ?? ((entries) => entries)
     this.color = opts.color ?? true
-    this.maxItems = opts.maxItems ?? 12
+    this.hub = opts.hub
     this.paint = opts.onFocus
     this.picked = new Set(opts.installed)
     const entries = this.entries()
@@ -179,9 +188,16 @@ export class BrowsePanel extends Prompt<string> {
       () => paletteExample(this.tab === 'installed' ? this.mine : this.catalog),
       () => this.redraw(),
     )
-    this.once('finalize', () => this.hint.stop())
+    const shift = (_char: string | undefined, key: Key | undefined) => {
+      this.shifted = key?.shift === true
+    }
+    this.input.on('keypress', shift)
+    this.once('finalize', () => {
+      this.hint.stop()
+      this.input.off('keypress', shift)
+    })
     this.on('cursor', (action) => {
-      if (this.asking) {
+      if (this.asking || this.leaving !== undefined || this.shifted) {
         return
       }
       if (action === 'up' || action === 'down') {
@@ -204,11 +220,17 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   protected override _isActionKey(char: string | undefined): boolean {
-    return char === '\t' || char === ' ' || (this.asking !== undefined && char !== undefined)
+    return (
+      char === '\t' || char === ' ' || ((this.asking !== undefined || this.leaving !== undefined) && char !== undefined)
+    )
   }
 
   protected override _shouldSubmit(): boolean {
-    return this.asking === undefined
+    return this.asking === undefined && this.leaving === undefined
+  }
+
+  next(): number | undefined {
+    return this.goto
   }
 
   async idle(): Promise<void> {
@@ -227,6 +249,21 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   private key(char: string | undefined, key: Key | undefined): void {
+    if (this.leaving !== undefined) {
+      if (key?.name === 'escape') {
+        this.leaving = undefined
+        Object.assign(key, { name: 'answered', sequence: '' })
+      } else if (char && /^[yn]$/i.test(char)) {
+        if (char.toLowerCase() === 'y') {
+          this.state = 'submit'
+        } else {
+          this.goto = this.leaving
+          this.state = 'cancel'
+        }
+        this.leaving = undefined
+      }
+      return
+    }
     if (this.asking) {
       if (key?.name === 'escape') {
         this.asking = undefined
@@ -240,7 +277,11 @@ export class BrowsePanel extends Prompt<string> {
     if (page !== undefined) {
       this.move(page)
     } else if (key?.name === 'tab') {
-      this.switchTab(key.shift ? -1 : 1)
+      if (this.hub) {
+        this.leave(hubGoto(this.hub, key.shift ? -1 : 1))
+      }
+    } else if (key?.shift && (key.name === 'left' || key.name === 'right')) {
+      this.switchTab(key.name === 'right' ? 1 : -1)
     } else if (key?.name === 'space') {
       this.activate()
     } else if (key?.ctrl && key.name === 'r') {
@@ -640,6 +681,20 @@ export class BrowsePanel extends Prompt<string> {
     return this.adds.size + this.removes.size + this.want.size
   }
 
+  private dirty(): boolean {
+    const { picked } = this.result()
+    return this.changes() > 0 || picked.size !== this.installed.size || [...picked].some((n) => !this.installed.has(n))
+  }
+
+  private leave(code: number): void {
+    if (this.dirty()) {
+      this.leaving = code
+      return
+    }
+    this.goto = code
+    this.state = 'cancel'
+  }
+
   private counts(): string {
     const updating = [...this.busy.values()].includes('Updating…') ? 'Updating… · ' : ''
     const list = this.list()
@@ -846,38 +901,62 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   private footer(bar: (s: string) => string, wide: boolean): string {
+    if (this.leaving !== undefined) {
+      return `${bar('└')} Apply your changes before you leave? ${this.dim('y apply · n discard · esc stay')}`
+    }
     if (this.asking) {
       return `${bar('└')} Update ${this.asking.id} on its own when its author changes it? ${this.dim('y yes · n no · esc back')}`
     }
     const keys = {
-      catalog: ['tab switch', '↑↓ move', '←→ fold', 'space pick', wide ? 'type to filter' : ''],
-      installed: ['tab switch', '↑↓ move', '←→ fold', 'space pick', wide ? 'type to filter' : ''],
-      markets: ['tab switch', 'space add/remove', '←→ auto-update', wide ? 'ctrl+r update' : ''],
-      errors: ['tab switch', '↑↓ move', 'type to filter'],
+      catalog: ['⇧←→ switch', '↑↓ move', '←→ fold', 'space pick', wide ? 'type to filter' : ''],
+      installed: ['⇧←→ switch', '↑↓ move', '←→ fold', 'space pick', wide ? 'type to filter' : ''],
+      markets: ['⇧←→ switch', 'space add/remove', '←→ auto-update', wide ? 'ctrl+r update' : ''],
+      errors: ['⇧←→ switch', '↑↓ move', 'type to filter'],
     }[this.tab]
     return `${bar('└')} ${this.dim([...keys.filter(Boolean), 'enter apply', 'esc cancel'].join(' · '))}`
-  }
-
-  private summary(): string {
-    const changes = this.changes()
-    return `${this.catalog.pickedCount()} picked${changes > 0 ? ` · ${changes} market change${changes === 1 ? '' : 's'}` : ''}`
   }
 
   private columns(): number {
     return (this.output as { columns?: number }).columns ?? 100
   }
 
+  private rows(): number {
+    return (this.output as { rows?: number }).rows ?? 24
+  }
+
+  private fitItems(cols: number): void {
+    const items = Math.max(MIN_ITEMS, this.rows() - 4 - (cols >= WIDE ? 0 : 1) - (this.hub ? 1 : 0))
+    this.maxItems = items
+    this.catalog.maxItems = items
+    this.mine.maxItems = items
+  }
+
+  private screen(): void {
+    if (this.state === 'submit' || this.state === 'cancel') {
+      return
+    }
+    const rows = this.rows()
+    const lines = this.draw().split('\n')
+    const hide = this.state === 'initial' ? '\x1b[?25l' : ''
+    let out = `\x1b[?2026h${hide}`
+    for (let row = 0; row < rows; row++) {
+      out += `\x1b[${row + 1};1H${lines[row] ?? ''}\x1b[K`
+    }
+    this.output.write(`${out}\x1b[H\x1b[?2026l`)
+    if (this.state === 'initial') {
+      this.state = 'active'
+    }
+  }
+
   private draw(): string {
-    const bar = (s: string) => (this.color ? `${CYAN}${s}${RESET}` : s)
-    if (this.state === 'submit') {
-      return `${this.dim('◇')} Browse ${this.dim(`· ${this.summary()}`)}`
-    }
-    if (this.state === 'cancel') {
-      return this.dim('◇ Browse · cancelled')
-    }
     const cols = this.columns()
+    if (cols < MIN_COLS || this.rows() < MIN_ROWS) {
+      return `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${this.rows()}\n${this.dim('esc cancels')}`
+    }
+    const bar = (s: string) => (this.color ? `${CYAN}${s}${RESET}` : s)
     const wide = cols >= WIDE
     const left = wide ? Math.min(cols - RIGHT - 4, LEFT_MAX) : cols - 1
+    this.fitItems(cols)
     const { lines, below, empty } = this.body()
     const body = lines.length > 0 ? lines.map((line) => `${bar('│')} ${line}`) : [`${bar('│')} ${this.dim(empty)}`]
     while (body.length < this.maxItems) {
@@ -896,6 +975,10 @@ export class BrowsePanel extends Prompt<string> {
             `${fit(row, left)} ${this.dim('│')} ${fit(i === 0 ? detail.title : (detail.lines[i - 1] ?? ''), RIGHT, false)}`,
         )
       : [...rows.map((row) => fit(row, left, false)), fit(`${bar('│')} ${this.dim(detail.brief)}`, left, false)]
-    return [...frame, fit(this.footer(bar, wide), cols - 1, false)].join('\n')
+    return [
+      ...(this.hub ? [fit(hubBar(this.hub, this.color), cols - 1, false)] : []),
+      ...frame,
+      fit(this.footer(bar, wide), cols - 1, false),
+    ].join('\n')
   }
 }

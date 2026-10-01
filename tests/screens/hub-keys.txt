@@ -1,5 +1,5 @@
+ [Preview]  Browse   tab next
    Search… ‹hint›
-
 
 ▌  ▸ Bocchi the Rock!                         1
    ▸ Lucky☆Star      ╭─ Help ─────────────────────────────────────────────────╮
@@ -12,10 +12,10 @@
                      │  Apply     enter  edits  ·  esc restores the tab       │
                      │  Config    alt-c  ·  ↑↓ setting  ←→ value              │
                      │            enter saves  ·  esc undoes                  │
+                     │  Screens   tab  shift+tab  ·  Preview · Browse         │
                      │  Close     ?  esc                                      │
                      │                                                        │
                      ╰────────────────────────────────────────────────────────╯
-
 
 
 

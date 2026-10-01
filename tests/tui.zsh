@@ -25,23 +25,30 @@ typeset -ga SCENARIOS=(
   'browse-filter   few    browse   k i'
   'browse-picked   few    browse   Right Down Space'
   'browse-series   few    browse   Space'
-  'browse-installed few   browse   Tab Right Down'
-  'browse-markets  few    browse   Tab Tab'
-  'browse-errors   few    browse   Tab Tab Tab'
+  'browse-installed few   browse   S-Right Right Down'
+  'browse-markets  few    browse   S-Right S-Right'
+  'browse-errors   few    browse   S-Right S-Right S-Right'
   'list-few        few    list'
-  'menu-few        few    menu'
-  'menu-empty      empty  menu'
+  'hub-few         few    hub'
+  'hub-empty       empty  hub'
+  'hub-browse      few    hub      Tab@Catalog'
+  'hub-ask         few    hub      Tab@Catalog Right Down Space Tab@Apply'
+  'hub-back        few    hub      Down Right Tab@Catalog BTab@PREVIEW'
+  'hub-keys        few    hub      ?'
   'preview-folded  few    preview'
   'preview-open    few    preview  Down Right'
   'preview-keys    few    preview  ?'
   'preview-config  few    preview  M-c'
   'preview-colors  few    preview  M-c Down Down Down Down Down Right'
+  'theme-edit      few    preview  Down Right Down Enter@Tone'
+  'theme-tune      few    preview  Down Right Down Enter@Tone Down Down Tab Right Right Right Enter@unsaved'
+  'theme-keys      few    preview  Down Right Down Enter@Tone ?'
   'browse-market   market browse   Down Down Right Down Right Down'
   'preview-market  market preview  Down Right Down Right Down'
-  'menu-market     market menu'
+  'hub-market      market hub'
   'pins-map        pinned pins'
-  'pin-scope       pinned pin      Right Down Enter Left'
-  'pin-repo        pinned pin-deep Right Down Enter Right'
+  'pin-scope       pinned pin      Right Down Enter@Tone Enter@PIN Left'
+  'pin-repo        pinned pin-deep Right Down Enter@Tone Enter@PIN Right'
   'unpin-choose    pinned unpin    Right'
 )
 
@@ -73,7 +80,7 @@ command_for() {
   case $target in
     browse|list|add|remove) print -r -- "node $ROOT/bin/ttheme.js $target" ;;
     preview) print -r -- "source $home/ttheme/ttheme.zsh; ttheme preview" ;;
-    menu) print -r -- "source $home/ttheme/ttheme.zsh; ttheme" ;;
+    hub) print -r -- "source $home/ttheme/ttheme.zsh; ttheme" ;;
     pins) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work/api/v2; ttheme pins" ;;
     pin) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work; ttheme pin" ;;
     pin-deep) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work/api/v2; ttheme pin" ;;
@@ -96,6 +103,14 @@ settle() {
   done
 }
 
+await() {
+  local i
+  for i in {1..150}; do
+    tmux -L $SOCKET capture-pane -p 2>/dev/null | grep -qF -- "$1" && return 0
+    sleep 0.1
+  done
+}
+
 normalize() {
   expand -t 8 |
     sed -E -e 's/Search…[^│]*( [0-9]+\/[0-9]+[^│]*│)/Search… ‹hint›\1/' -e t -e 's/Search….*/Search… ‹hint›/' |
@@ -115,7 +130,8 @@ capture() {
     "env -u GHOSTTY_RESOURCES_DIR -u KITTY_WINDOW_ID -u WEZTERM_PANE -u ALACRITTY_WINDOW_ID -u ITERM_SESSION_ID $reply NO_COLOR=1 zsh -f -c '${cmd}; sleep 60'"
   settle
   for key in "$@"; do
-    tmux -L $SOCKET send-keys -- "$key"
+    tmux -L $SOCKET send-keys -- "${key%%@*}"
+    [[ $key == *@* ]] && await "${key#*@}"
     settle
   done
   tmux -L $SOCKET capture-pane -p | normalize

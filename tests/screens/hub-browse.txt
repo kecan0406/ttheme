@@ -1,6 +1,9 @@
-◆  Catalog   Installed   Markets  [Errors]                     │
-│    Search… ‹hint› 0/0 │
-│ No problems                                                  │
+  Preview  [Browse]  tab next
+◆ [Catalog]  Installed   Markets   Errors                      │ Bocchi the Rock!
+│    Search… ‹hint› 6/6 · 2 picked │ ぼっち・ざ・ろっく!
+│    ○ Select all (6)                                          │ The ttheme catalog
+│ ▌  ▸ Bocchi the Rock! (1/3) ぼっち・ざ・ろっく!              │ 3 palettes · 1 installed
+│    ▸ Lucky☆Star (1/3) らき☆すた                              │
 │                                                              │
 │                                                              │
 │                                                              │
@@ -18,7 +21,4 @@
 │                                                              │
 │                                                              │
 │                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-└ ⇧←→ switch · ↑↓ move · type to filter · enter apply · esc cancel
+└ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel

@@ -271,25 +271,6 @@ __tt_name_of() { REPLY=${${(k)TTHEME_PALETTE[(re)$1]}:-custom} }
 
 __tt_color() { [[ -t 1 && -z $NO_COLOR && $TERM != dumb ]] }
 
-__tt_palette_line() {
-  local name=$1 width=$2 on=$3 label=${4:-$1} hex cell="" bar=""
-  local -a p=(${=TTHEME_PALETTE[$name]}) sw=(${=TTHEME_SWATCH[$name]})
-  (( ${#p} >= 20 )) || return 1
-  for hex in $sw; do
-    hex=${hex#\#}
-    cell+=$'\e[38;2;'$((16#${hex:0:2}))';'$((16#${hex:2:2}))';'$((16#${hex:4:2}))'m■ '
-  done
-  if [[ -n $on ]]; then
-    local cur=${p[3]#\#} sel=${p[4]#\#} fg=${p[2]#\#} ac
-    printf -v ac '\e[38;2;%d;%d;%dm' $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2}))
-    printf -v bar '\e[48;2;%d;%d;%d;38;2;%d;%d;%dm' \
-      $((16#${sel:0:2})) $((16#${sel:2:2})) $((16#${sel:4:2})) $((16#${fg:0:2})) $((16#${fg:2:2})) $((16#${fg:4:2}))
-    printf '%s▌\e[39m %s %s■\e[39m \e[1m%-*s\e[22m  %s\e[0m\n' "$ac" "$bar" "$ac" "$width" "$label" "$cell"
-  else
-    printf '     %-*s  %s\e[0m\n' "$width" "$label" "$cell"
-  fi
-}
-
 __tt_announce() {
   (( TTHEME_ANNOUNCE )) || return 0
   local -a p=(${=TTHEME_SPEC})
@@ -1143,42 +1124,12 @@ __tt_order() {
 }
 
 __tt_menu() {
-  local k cur="" grp last_grp="" shelf last_shelf="" label REPLY
+  local k
   local -a reply
-  local -i width=0
   __tt_order
-  if ! __tt_color; then
-    for k in $reply; do
-      printf '%s\t%s\t%s\n' "$k" "${TTHEME_GROUP[$k]:-Other}" "${TTHEME_SRC[$k]:-unknown}"
-    done
-    return 0
-  fi
-  [[ -n $TTHEME_SPEC ]] && __tt_name_of "$TTHEME_SPEC" && cur=$REPLY
   for k in $reply; do
-    label=${k##*/}
-    [[ -n ${TTHEME_CATALOG[$k]} && ${TTHEME_GROUP[$k]} == *@* ]] && label="  $label"
-    (( ${#label} > width )) && width=${#label}
+    printf '%s\t%s\t%s\n' "$k" "${TTHEME_GROUP[$k]:-Other}" "${TTHEME_SRC[$k]:-unknown}"
   done
-  for k in $reply; do
-    grp=${TTHEME_GROUP[$k]:-Other}
-    if [[ $grp != $last_grp ]]; then
-      [[ $grp == *@* && $last_grp != *@* && -n $last_grp ]] && printf '  \033[2m── Markets ──────────\033[0m\n'
-      printf '  \033[1m%s\033[0m' "$grp"
-      [[ -n ${TTHEME_NATIVE[$k]} ]] && printf ' \033[2m%s\033[0m' "${TTHEME_NATIVE[$k]}"
-      printf '\n'
-      last_grp=$grp last_shelf=""
-    fi
-    shelf=""
-    [[ $grp == *@* ]] && shelf=${TTHEME_CATALOG[$k]}
-    if [[ -n $shelf && $shelf != "$last_shelf" ]]; then
-      printf '    \033[1m%s\033[0m\n' "$shelf"
-      last_shelf=$shelf
-    fi
-    label=${k##*/}
-    [[ -n $shelf ]] && label="  $label"
-    __tt_palette_line "$k" $width "${${(M)k:#$cur}:+1}" "$label"
-  done
-  printf '\n  \033[2mttheme use <palette> paints this tab · ttheme preview · ttheme help\033[0m\n'
 }
 
 __tt_help() {
@@ -1231,14 +1182,17 @@ __tt_cli() {
 }
 
 __tt_catalog() {
-  local was
+  local was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   __tt_cli "$@" || return
   [[ $1 == (list|share) ]] && return 0
+  __tt_catalog_done "$was"
+}
+
+__tt_catalog_done() {
   [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
-  was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   __tt_palettes_load && __tt_reloaded
-  [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$was" ]] && return 0
-  __tt_follow "$was"
+  [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$1" ]] && return 0
+  __tt_follow "$1"
   __tt_worn_shown
   __tt_reload
 }
@@ -1669,6 +1623,28 @@ __tt_pv_bg_title() {
   return 0
 }
 
+__tt_pv_bar() {
+  local z=$'\e[0m' d=$'\e[2m' on=$'\e[7;1m'$ac line=" " title
+  local -i i at=${TTHEME_HUB_TABS[(Ie)preview]} len=${#TTHEME_HUB_TITLES}
+  (( color )) || z= d= on=
+  for title in $TTHEME_HUB_TITLES; do
+    (( len += ${#title} + 2 ))
+  done
+  for (( i = 1; i <= ${#TTHEME_HUB_TITLES}; i++ )); do
+    title=${TTHEME_HUB_TITLES[i]}
+    (( i > 1 )) && line+=" "
+    if (( i != at )); then
+      line+=$d" $title "$z
+    elif (( color )); then
+      line+=$on" $title "$z
+    else
+      line+="[$title]"
+    fi
+  done
+  (( len + 10 <= $1 )) && line+="  "$d"tab next"$z
+  REPLY=$line
+}
+
 __tt_pv_head() {
   local b=$'\e[1m' d=$'\e[2m' z=$'\e[0m' right=$6
   (( color )) || b= d= z=
@@ -1692,6 +1668,7 @@ __tt_pv_foot() {
     badge=HELP right=$b"? esc"$z$d" close"$z
   elif [[ -n $pick ]]; then
     badge='PREVIEW (APPLY)' lead="$pick →"
+    (( te )) && badge='THEME EDIT (APPLY)'
     for (( i = 1; i <= ${#plabel}; i++ )); do
       if (( i != pk )); then
         lead+=" "$d${plabel[i]}$z
@@ -1703,34 +1680,46 @@ __tt_pv_foot() {
     done
     if [[ $mode == pin ]]; then
       badge='PREVIEW (PIN)'
+      (( te )) && badge='THEME EDIT (PIN)'
       __tt_pin_base "${pkeys[pk]}"
       __tt_dir_label "$REPLY"
       note=$REPLY
-    elif (( pk == 1 )); then
+    elif (( pk == 2 )); then
       note="Until this tab closes"
     else
       note="New tabs · the default palette"
     fi
     kk=(enter) kl=(confirm)
     right=$b"esc"$z$d" back"$z
-  elif [[ -n $tune ]]; then
-    badge='IMAGE EDIT' kk=(↑↓ ←→ '=' +) kl=(field step reset "reset all")
-    if (( tf == 2 )); then
-      kl[2]=move kk+=(1-9) kl+=(place)
-    elif (( tf == 4 )); then
-      kl[2]=switch kk=(${kk:#'='}) kl=("${(@)kl[1,2]}" "reset all")
-    else
-      kk+=(⇧←→) kl+=(×10)
+  elif (( te && tfocus == 0 )); then
+    badge='THEME EDIT'
+    kk=("${(@ps:\x1e:)teframe[6]}") kl=("${(@ps:\x1e:)teframe[7]}")
+    right=$b"esc"$z$d" cancel"$z
+    if [[ $temode == list ]]; then
+      kk=("${kk[1]}" s "${(@)kk[2,-1]}" '[ ]' enter) kl=("${kl[1]}" save "${(@)kl[2,-1]}" panel apply)
+    elif [[ $temode == tune ]]; then
+      right=$b"esc"$z$d" undo"$z
     fi
-    if (( bgoff[$tpick] )); then
-      kk+=(space enter) kl+=(show keep)
+  elif (( te )); then
+    badge='THEME EDIT'
+    kk=(↑↓ ←→ s) kl=(field step save)
+    if [[ -n $tune ]]; then
+      __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
+      if (( tf == 2 )); then
+        kl[2]=move kk+=(1-9 '=' +) kl+=(place reset "reset all")
+      elif (( tf == 4 )); then
+        kl[2]=switch kk+=(+) kl+=("reset all")
+      else
+        kk+=('=' + ⇧←→) kl+=(reset "reset all" ×10)
+      fi
+      (( bgoff[$tpick] )) && { kk+=(space); kl+=(show) } || { kk+=(c space); kl+=(colors hide) }
+      __tt_pv_bg_images $tune
+      (( REPLY > 1 )) && { kk+=(', .' D); kl+=("image ×$REPLY" remove) }
     else
-      kk+=(c space enter) kl+=(colors hide keep)
+      __tt_pv_bg_findable $tename && { kk+=(f); kl+=(find) }
     fi
-    __tt_pv_bg_images $tune
-    (( REPLY > 1 )) && { kk+=(', .' D); kl+=("image ×$REPLY" remove) }
-    __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
-    right=$b"esc"$z$d" undo"$z
+    kk+=('[ ]' enter) kl+=(panel apply)
+    right=$b"esc"$z$d" cancel"$z
   elif (( conf )); then
     badge=CONFIG kk=(↑↓ ←→ enter) kl=(setting value save)
     right=$b"esc"$z$d" undo"$z
@@ -1746,13 +1735,7 @@ __tt_pv_foot() {
         kk=(→) kl=(open)
       fi
     else
-      kk=(enter) kl=(apply)
-      [[ $mode == pin ]] && kl[1]=pin
-      if __tt_pv_bg_state ${rval[cur]}; then
-        kk+=(tab) kl+=("tune bg")
-      elif __tt_pv_bg_findable ${rval[cur]}; then
-        kk+=(tab) kl+=("find bg")
-      fi
+      kk=(enter) kl=(edit)
       (( split )) && { kk+=(⇧←→); kl+=(example) }
       [[ -n $flt ]] && { kk+=(bksp); kl+=(edit) }
     fi
@@ -1813,20 +1796,36 @@ __tt_pv_foot() {
 __tt_pv_help() {
   local back="the tab" z=$'\e[0m' b=$'\e[1m' blank
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && back=$cn
-  local -a hk=(Move Series Filter "" Example Apply) hv=(
-    "↑↓  home  end  pgup  pgdn"
-    "←→  ·  enter or space on a series"
-    "Any text  ·  bksp  ·  ctrl-u clears"
-    "Names and titles, in Japanese too"
-    "⇧←→  ${(Lj:, :)TTHEME_SCENES}"
-    "enter  ·  esc restores $back"
-  )
-  if (( bgcw )); then
-    hk+=("Tune bg" "" "" "" "" "" "")
-    hv+=("tab  ·  finds one on the boorus, or takes your own, if none" "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place" "=  resets a field  ·  +  resets all" "space hides  ·  enter keeps  ·  esc undoes" "c  tone  ↔  the picture's own colors" ",  .  other pictures  ·  D removes one" "f  adds one from the boorus or your own")
+  local -a hk=() hv=()
+  if (( te )); then
+    hk=(Panels Tone "" "" "" Image "" "" Apply Save Cancel)
+    hv=(
+      "[  left, the tone  ·  ]  right, the picture"
+      "↑↓←→  slot  ·  tab  tune it  ·  #  type a color"
+      "r  resets a slot  ·  R  all  ·  space  the colors before"
+      "c  copies  ·  v  pastes  ·  =  bright follows normal"
+      "f  moves the colors the gate misses  ·  u  undo"
+      "↑↓ field  ←→ step  ⇧←→ ×10  1-9 place"
+      "=  resets a field  ·  +  all  ·  space  hides  ·  c  colors"
+      ",  .  other pictures  ·  D removes one  ·  f  finds one"
+      "enter  ·  asks where, saving what you changed"
+      "s  ·  keeps the tone and the picture"
+      "esc  ·  drops what you changed since the last save"
+    )
+  else
+    hk=(Move Series Filter "" Example Apply)
+    hv=(
+      "↑↓  home  end  pgup  pgdn"
+      "←→  ·  enter or space on a series"
+      "Any text  ·  bksp  ·  ctrl-u clears"
+      "Names and titles, in Japanese too"
+      "⇧←→  ${(Lj:, :)TTHEME_SCENES}"
+      "enter  edits  ·  esc restores $back"
+    )
+    hk+=(Config "")
+    hv+=("alt-c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")
+    (( hub )) && { hk+=(Screens); hv+=("tab  shift+tab  ·  ${(j: · :)TTHEME_HUB_TITLES}") }
   fi
-  hk+=(Config "")
-  hv+=("alt-c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")
   hk+=(Close)
   hv+=("?  esc")
   (( color )) || z= b=
@@ -1840,6 +1839,7 @@ __tt_pv_help() {
     return 0
   fi
   w=$(( pw - 2 < 58 ? pw - 2 : 58 )) hh=$(( ${#hk} + 4 ))
+  (( te )) && w=$(( pw - 2 < 76 ? pw - 2 : 76 ))
   x=$(( (pw - w) / 2 + 1 )) y=$(( (ph - hh) / 2 ))
   (( y < 4 )) && y=4
   blank=${(l:w:: :)}
@@ -1961,16 +1961,6 @@ __tt_pv_tune() {
     ',') __tt_pv_bg_pick -1 ;;
     '.') __tt_pv_bg_pick 1 ;;
     D) __tt_pv_bg_drop ;;
-    f)
-      __tt_pv_bg_findable $tune || return 0
-      name=$tune
-      __tt_pv_untune
-      __tt_pv_bg_find $name
-      __tt_pv_tune_open $name
-      ;;
-    $'\r'|$'\n') __tt_pv_tune_keep ;;
-    esc) __tt_pv_untune ;;
-    '?') help=1 ;;
   esac
   return 0
 }
@@ -2219,7 +2209,6 @@ __tt_pv_draw() {
   lw=$reply[1] sw=$reply[2]
   split=$(( sw > 0 )) sc=$(( pw - 1 - sw ))
   h=$(( ph - 5 ))
-  [[ -n $tune ]] && (( ! split )) && h=$(( ph - 14 ))
   (( conf && ! split )) && h=$(( ph - 6 - ${#cvars} ))
   reach=()
   if [[ -n $pick && $mode == pin ]]; then
@@ -2269,6 +2258,10 @@ __tt_pv_draw() {
     __tt_pv_flush
     return 0
   fi
+  if (( te )); then
+    __tt_pv_te_draw
+    return 0
+  fi
   if [[ -n $flt ]]; then
     if (( color )); then
       line="   "$'\e[1m'$flt$zz$ac$'\e[7m \e[0m'
@@ -2300,11 +2293,16 @@ __tt_pv_draw() {
   local tail=$'\e['$(( lw - ${#cnt} ))'G'$dd$cnt$zz
   [[ -n $flt ]] && tail=$'\e['$(( lw - ${#cnt} ))'G'$cnt
   if [[ $1 == hint ]] && (( ! wiped )); then
-    print -rn -- $'\e[H\e[0m\e['$lw'X'$line$tail
-    printf '\e[1;%dH\e[?2026l' $(( 4 + ${(m)#flt} ))
+    print -rn -- $'\e['$(( 1 + hub ))$'H\e[0m\e['$lw'X'$line$tail
+    printf '\e[%d;%dH\e[?2026l' $(( 1 + hub )) $(( 4 + ${(m)#flt} ))
     return 0
   fi
-  out+=$line$'\e[K'$tail$'\n\e[K\n'
+  if (( hub )); then
+    __tt_pv_bar $(( split ? sc - 2 : pw - 1 ))
+    out+=$REPLY$'\e[K\n'$line$'\e[K'$tail$'\n'
+  else
+    out+=$line$'\e[K'$tail$'\n\e[K\n'
+  fi
   (( N > h && top > 1 )) && out+="   "$dd"…"$zz
   out+=$'\e[K\n'
   for (( k = 0; k < ph - 4; k++ )); do
@@ -2332,11 +2330,6 @@ __tt_pv_draw() {
       for (( k = 1; k <= ${#reach} && k + 2 < ph; k++ )); do
         out+=$'\e['$(( k + 2 ))';'$sc'H'${reach[k]}
       done
-    elif [[ -n $tune ]]; then
-      (( bgoff[$tpick] )) && state=off
-      __tt_pv_bg_title $(( sw - ${#tune} - 6 ))
-      __tt_pv_head 1 $sc $se $tune "$REPLY" $state
-      __tt_pv_bg_panel $tpick 4 $sc $se
     elif (( conf )); then
       __tt_tilde "$TTHEME_CONFIG"
       src=$REPLY
@@ -2356,18 +2349,6 @@ __tt_pv_draw() {
       for (( k = 1; k <= ${#reach}; k++ )); do
         out+=$'\e['$(( ph - 1 - ${#reach} + k ))';1H'${reach[k]}
       done
-    elif [[ -n $tune ]]; then
-      (( bgoff[$tpick] )) && state=off
-      held=(${=bgpics[$tune]})
-      src=""
-      if (( ${#held} > 1 )); then
-        k=${held[(Ie)${${tpick#$tune}#:}]}
-        (( k )) || k=${held[(Ie)${bgact[$tune]}]}
-        src=" · $k/${#held}"
-      fi
-      __tt_pv_bg_title $(( lw - ${#tune} - 6 )) "$src"
-      __tt_pv_head $(( ph - 10 )) 1 $lw $tune "$REPLY" $state
-      __tt_pv_bg_panel $tpick $(( ph - 9 )) 1 $lw
     elif (( conf )); then
       __tt_pv_head $(( ph - 2 - ${#cvars} )) 1 $lw Config
       __tt_pv_conf_panel $(( ph - 1 - ${#cvars} )) 1 $lw
@@ -2461,7 +2442,7 @@ __tt_pv_getch() {
       (( msgt > 0 )) || return 1
     fi
     (( gstep )) && { gstep=$(( gstep - 1 )); tick=1; return 1 }
-    (( SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; tick=1; return 1 }
+    (( ! te && SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; tick=1; return 1 }
   done
   return 0
 }
@@ -2520,6 +2501,285 @@ __tt_pv_pick() {
   return 0
 }
 
+__tt_pv_screen() {
+  local err
+  local -i at=${TTHEME_HUB_TABS[(Ie)preview]} n=${#TTHEME_HUB_TABS} rc
+  local -i to=$(( (at - 1 + $1 + n) % n + 1 ))
+  __tt_pv_bg_close
+  while (( to != at )); do
+    hubwas="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
+    err=$(TTHEME_HUB=${TTHEME_HUB_TABS[to]} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)
+    rc=$?
+    if (( rc == TTHEME_HUB_CLOSED )); then
+      hubleft=1
+      return 1
+    elif (( rc > TTHEME_HUB_SWITCH && rc <= TTHEME_HUB_SWITCH + n )); then
+      to=$(( rc - TTHEME_HUB_SWITCH ))
+    else
+      err=${${err//$'\n'/ }## #}
+      msg=${err:-"${TTHEME_HUB_TITLES[to]} failed"} msgt=300
+      to=$at
+    fi
+  done
+  printf '\e[?2026h\e[?25l'
+  if [[ -n $applied ]]; then
+    __tt_pv_paint "$applied"
+  else
+    __tt_osc_reset
+    painted=""
+  fi
+  resized=1 bgname="" bgshown="" bgdim=()
+  return 0
+}
+
+__tt_te_stop() {
+  setopt localoptions nomonitor nonotify
+  (( TE_IN )) && { print -r -u $TE_IN -- quit 2>/dev/null; exec {TE_IN}>&- }
+  (( TE_OUT )) && exec {TE_OUT}<&-
+  TE_IN=0 TE_OUT=0
+  (( TE_PID )) && { kill $TE_PID 2>/dev/null; wait $TE_PID 2>/dev/null }
+  TE_PID=0
+  return 0
+}
+
+__tt_te_ask() {
+  local line
+  (( TE_IN && TE_OUT )) || return 1
+  print -r -u $TE_IN -- "$1" 2>/dev/null || { __tt_te_stop; return 1 }
+  if ! IFS= read -r -u $TE_OUT -t 5 line 2>/dev/null; then
+    __tt_te_stop
+    msg="The tone panel stopped" msgt=300
+    return 1
+  fi
+  teframe=("${(@ps:\x1f:)line}")
+  temode=${teframe[3]:-list}
+  tedirty=${teframe[4]:-0}
+  [[ ${teframe[1]} == error ]] && { msg=${teframe[8]:-"Could not save the tone"} msgt=300 }
+  [[ -n ${teframe[5]} ]] && tespec=${teframe[5]}
+  return 0
+}
+
+__tt_te_unsaved_image() {
+  local img
+  for img in ${(k)tsnaps}; do
+    [[ "${bgsize[$img]} ${bgpos[$img]} ${bgop[$img]} ${bgoff[$img]}" == "${tsnaps[$img]}" ]] || return 0
+  done
+  [[ -n $tune && $tpick != "${bgview[$tune]:-$tune}" ]] && return 0
+  return 1
+}
+
+__tt_te_unsaved() {
+  (( tedirty )) && return 0
+  __tt_te_unsaved_image
+}
+
+__tt_te_save_image() {
+  __tt_te_unsaved_image || return 0
+  __tt_pv_tune_keep
+  __tt_pv_bg_save > /dev/null 2>&1
+  bgedit=() bgswap=() bgview=()
+  __tt_pv_bg_reset $tename
+  bgload[$tename]=""
+  __tt_pv_tune_open $tename
+}
+
+__tt_te_open() {
+  local name=$1
+  local -i rfd wfd
+  setopt localoptions nomonitor nonotify
+  coproc __tt_cli tone $name 2>/dev/null
+  exec {rfd}<&p {wfd}>&p
+  TE_OUT=$rfd TE_IN=$wfd TE_PID=$!
+  tename=$name tfocus=0 tespec="" tesz="" teframe=() tedirty=0 temode=list
+  if ! __tt_te_ask "focus 1"; then
+    msg="Could not start the tone panel for $name" msgt=300
+    __tt_te_stop
+    return 0
+  fi
+  te=1
+  (( bgcw )) && __tt_pv_bg_state $name && __tt_pv_tune_open $name
+  resized=1
+  return 0
+}
+
+__tt_te_close() {
+  [[ -n $tune ]] && __tt_pv_untune
+  __tt_te_stop
+  te=0 tfocus=0 tename="" tespec="" tesz="" teframe=() help=0 pick=""
+  resized=1 bgname=""
+  return 0
+}
+
+__tt_te_save() {
+  __tt_te_save_image
+  if (( tedirty )); then
+    __tt_te_ask save || return 1
+    if [[ ${teframe[1]} == saved ]]; then
+      __tt_palettes_load && __tt_reloaded
+      __tt_reload
+      applied=${TTHEME_PALETTE[$tename]:-$applied}
+      tespec=$applied
+    else
+      return 1
+    fi
+  fi
+  msg="Saved" msgt=200
+  return 0
+}
+
+__tt_te_apply() {
+  if __tt_te_unsaved; then
+    __tt_te_save || return 0
+  fi
+  if (( canpick )); then
+    pick=$tename pk=$pkdef
+    return 0
+  fi
+  sel=$tename
+  return 1
+}
+
+__tt_te_key() {
+  local m
+  case $key in
+    up|down|left|right|home|end|pgup|pgdn|esc) m="key $key" ;;
+    sleft) m="key shift-left" ;;
+    sright) m="key shift-right" ;;
+    stab) m="key shift-tab" ;;
+    $'\t') m="key tab" ;;
+    $'\r'|$'\n') m="key enter" ;;
+    $'\x7f'|$'\x08') m="key backspace" ;;
+    $'\x03') m="key ctrl-c" ;;
+    nop|altc) return 0 ;;
+    *)
+      (( ${#key} == 1 )) || return 0
+      m="ch $(( #key ))"
+      ;;
+  esac
+  __tt_te_ask "$m" || { __tt_te_close; return 0 }
+  case ${teframe[2]} in
+    save) __tt_te_save ;;
+    apply) __tt_te_apply; return $? ;;
+    cancel) __tt_te_close ;;
+  esac
+  return 0
+}
+
+__tt_pv_te_image() {
+  local name=$tename
+  case $key in
+    s) __tt_te_save ;;
+    $'\r'|$'\n') __tt_te_apply; return $? ;;
+    esc) __tt_te_close ;;
+    f)
+      __tt_pv_bg_findable $name || return 0
+      __tt_te_save_image
+      __tt_pv_untune
+      __tt_pv_bg_find $name
+      __tt_pv_bg_state $name && __tt_pv_tune_open $name
+      ;;
+    *) [[ -n $tune ]] && __tt_pv_tune ;;
+  esac
+  return 0
+}
+
+__tt_pv_te() {
+  case $key in
+    $'\x03') return 1 ;;
+    '?') help=1; return 0 ;;
+    '[') tfocus=0; __tt_te_ask "focus 1"; return 0 ;;
+    ']') tfocus=1; __tt_te_ask "focus 0"; return 0 ;;
+  esac
+  if (( tfocus == 0 )); then
+    __tt_te_key
+  else
+    __tt_pv_te_image
+  fi
+  return $?
+}
+
+__tt_pv_te_draw() {
+  local line st plain tt
+  local -a held
+  local -i tw=50 th=$(( ph - 2 )) both=1 col ee i split=1 sw=0 tfs=$tf
+  local z=$'\e[0m' d=$'\e[2m' b=$'\e[1m'
+  (( color )) || z= d= b=
+  if (( ph < 24 || pw < 54 )); then
+    out+=$'\e[H'"ttheme theme edit"$'\e[K\n'"Needs 54×24 — now ${pw}×${ph}"$'\e[K\n'"esc cancels"$'\e[K\e[J'
+    __tt_pv_flush
+    return 0
+  fi
+  (( pw < 100 )) && both=0
+  if [[ -n $tespec && $tespec != "$applied" ]]; then
+    __tt_pv_paint "$tespec"
+    applied=$tespec
+  fi
+  if [[ "$tw $th" != "$tesz" ]]; then
+    tesz="$tw $th"
+    __tt_te_ask "size $tw $th"
+  fi
+  (( both )) && col=$(( tw + 4 )) || col=1
+  ee=$(( pw - 2 ))
+  line=" "$b$ac"◆"$z" "$b$tename$z
+  [[ -n ${TTHEME_GROUP[$tename]} ]] && line+=" "$d"· ${TTHEME_GROUP[$tename]}"$z
+  out+=$'\e[1;1H'$line$'\e[K'
+  __tt_te_unsaved && out+=$'\e[1;'$(( pw - 9 ))'H'$'\e[33m'"●"$z" "$d"unsaved"$z
+  for (( i = 2; i < ph; i++ )); do
+    out+=$'\e['$i$';1H\e[K'
+  done
+  if (( both || tfocus == 0 )); then
+    for (( i = 1; i <= th; i++ )); do
+      out+=$'\e['$(( i + 1 ))';1H'${teframe[8 + i]}$z
+    done
+  fi
+  if (( both )); then
+    for (( i = 2; i < ph; i++ )); do
+      out+=$'\e['$i';'$(( tw + 2 ))'H'$d"│"$z
+    done
+  fi
+  if (( both || tfocus == 1 )); then
+    tt=$d
+    (( tfocus == 1 )) && tt=$b$ac
+    out+=$'\e[2;'$col'H'$tt"Image"$z
+    if [[ -n $tune ]]; then
+      (( bgoff[$tpick] )) && st=off || st=on
+      held=(${=bgpics[$tune]})
+      tt=""
+      if (( ${#held} > 1 )); then
+        i=${held[(Ie)${${tpick#$tune}#:}]}
+        (( i )) || i=${held[(Ie)${bgact[$tune]}]}
+        tt=" · $i/${#held}"
+      fi
+      __tt_pv_bg_title $(( ee - col + 1 - 14 )) "$tt"
+      out+="  "$d$REPLY$z$'\e[2;'$(( ee - ${#st} + 1 ))'H'$d$st$z
+      (( tfocus == 0 )) && tf=0
+      __tt_pv_bg_panel $tpick 4 $col $ee
+      tf=$tfs
+    elif (( bgcw )); then
+      out+=$'\e[4;'$col'H'$d"No picture yet"$z
+      __tt_pv_bg_findable $tename && out+=$'\e[5;'$col'H'$d"f finds one on the boorus, or takes your own"$z
+    else
+      out+=$'\e[4;'$col'H'$d"This terminal shows no pictures"$z
+    fi
+  fi
+  split=0
+  reach=()
+  if [[ -n $pick && $mode == pin ]]; then
+    __tt_pv_reach $ee $(( ph - 13 ))
+    if (( ${#reach} )); then
+      __tt_pv_head $(( ph - 1 - ${#reach} )) 1 $ee "$pick" "$rsub"
+      for (( i = 1; i <= ${#reach}; i++ )); do
+        out+=$'\e['$(( ph - 1 - ${#reach} + i ))$';1H\e[K'${reach[i]}
+      done
+    fi
+  fi
+  (( help )) && __tt_pv_help
+  out+=$'\e['$ph';1H'
+  __tt_pv_foot $pw
+  (( osdt > 0 )) && __tt_pv_osd
+  __tt_pv_flush
+}
+
 __tt_pv_handle() {
   local name
   if (( help )); then
@@ -2531,6 +2791,10 @@ __tt_pv_handle() {
   fi
   if [[ -n $pick ]]; then
     __tt_pv_pick
+    return
+  fi
+  if (( te )); then
+    __tt_pv_te
     return
   fi
   if [[ -n $tune ]]; then
@@ -2561,12 +2825,7 @@ __tt_pv_handle() {
       ;;
     $'\r'|$'\n')
       if [[ ${rtype[cur]} == thm ]]; then
-        if (( canpick )); then
-          pick=${rval[cur]} pk=$pkdef
-        else
-          sel=${rval[cur]}
-          return 1
-        fi
+        __tt_te_open ${rval[cur]}
       elif [[ ${rtype[cur]} == (hdr|cat) ]]; then
         __tt_pv_toggle
       fi
@@ -2610,17 +2869,8 @@ __tt_pv_handle() {
       fi
       ;;
     ' ') [[ ${rtype[cur]} == (hdr|cat) ]] && __tt_pv_toggle ;;
-    $'\t')
-      [[ ${rtype[cur]} == thm ]] || return 0
-      name=${rval[cur]}
-      if __tt_pv_bg_state $name || { __tt_pv_bg_findable $name && __tt_pv_bg_find $name }; then
-        __tt_pv_tune_open $name
-      elif __tt_pv_bg_findable $name; then
-        :
-      elif (( bgcw )); then
-        msg="No background image for $name" msgt=200
-      fi
-      ;;
+    $'\t') (( hub )) && { __tt_pv_screen 1 || return 1 } ;;
+    stab) (( hub )) && { __tt_pv_screen -1 || return 1 } ;;
     altc)
       conf=1 cf=1 csnap=()
       for name in $cvars; do
@@ -2654,7 +2904,9 @@ __tt_pv_handle() {
 
 __tt_preview() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  local mode=$1 pdir=${2:-$PWD}
+  local mode=$1 pdir=${2:-$PWD} hubwas=""
+  local -i hub=0 hubleft=0
+  [[ $mode == hub ]] && hub=1
   if [[ ! -t 0 || ! -t 1 ]]; then
     print -u2 "ttheme ${mode:-preview}: needs a terminal"
     return 1
@@ -2667,7 +2919,9 @@ __tt_preview() {
   local -A bgfrom=() bgurl=() bgby=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
   local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=()
   local conf=0 cf=1
-  local -a plabel=(" This tab " " Default ") pkeys=() reach=() csnap=()
+  local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
+  local te=0 tfocus=0 tename="" tedirty=0 temode=list tespec="" tesz=""
+  local -i TE_IN=0 TE_OUT=0 TE_PID=0
   local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=("New tabs" Announce "Search fx" Sort Blur Colors)
   local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc series" "0 1 2 3 4" "tone original") cshow=("off seq" "on off" "typewriter decode glitch" "abc series" "off 1px 2px 3px 4px" "tone original")
   local -A cnote=(
@@ -2683,7 +2937,6 @@ __tt_preview() {
   )
   __tt_pv_conf_rows
   [[ $mode == pin ]] && __tt_pin_scopes "$pdir"
-  [[ $mode == init ]] && pkdef=2
   __tt_pv_canpick
   __tt_pv_size
   local -a groups=() rtype=() rval=() rcnt=() reply=()
@@ -2702,10 +2955,10 @@ __tt_preview() {
     printf '\e[?2026h\e[?1049h\e[?7l\e[?25l'
     while :; do
       printf '\e[?2026h'
-      if (( tick )); then
+      if (( tick && ! te )); then
         __tt_pv_draw hint
       else
-        __tt_pv_focus
+        (( te )) || __tt_pv_focus
         [[ ${rtype[cur]} == thm ]] && an=${rval[cur]}
         __tt_pv_draw
       fi
@@ -2735,10 +2988,13 @@ __tt_preview() {
     elif [[ $applied != "$orig" ]]; then
       __tt_pv_paint "${TTHEME_PAINTED:+$orig}"
     fi
-    printf '\e[?7h\e[?1049l\e[?25h\e[?2026l'
+    printf '\e[?7h'
+    (( hubleft )) || printf '\e[?1049l'
+    printf '\e[?25h\e[?2026l'
     [[ -n $tty ]] && stty "$tty" 2>/dev/null
     TTHEME_RAW=0
     [[ -n $tune ]] && __tt_pv_untune
+    (( TE_IN )) && __tt_te_stop
     (( conf )) && __tt_pv_unconf
     __tt_pv_bg_save
     if [[ -n $spec ]]; then
@@ -2747,7 +3003,7 @@ __tt_preview() {
         __tt_pin_save "$sel" "${pkeys[picked]}" "$orig"
         [[ $TTHEME_SPEC == "$orig" ]] || __tt_announce
         __tt_sync
-      elif (( picked == 2 )); then
+      elif (( picked == 1 )); then
         __tt_announce
         __tt_keep "$sel" force
       else
@@ -2757,6 +3013,7 @@ __tt_preview() {
     else
       (( ${#bgedit} + ${#bgswap} )) && [[ -n ${TTHEME_PALETTE[$cn]} ]] && { __tt_shown "$cn" && __tt_reload }
     fi
+    (( hubleft )) && __tt_catalog_done "$hubwas"
   }
   return 0
 }
@@ -2785,7 +3042,11 @@ ttheme() {
   fi
   if (( ! $# )); then
     (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
-    __tt_menu
+    if [[ -t 0 && -t 1 ]]; then
+      __tt_preview hub
+    else
+      __tt_menu
+    fi
     return 0
   fi
 

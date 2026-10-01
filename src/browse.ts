@@ -3,6 +3,7 @@ import * as p from '@clack/prompts'
 import { type BrowseIo, BrowsePanel, type BrowseResult, type Market, type Problem } from './browse-panel.ts'
 import { available, catalogPath, parseCatalog, readCachedIndex, readCatalog, readKept } from './catalog.ts'
 import { listed, type PaletteEntry } from './emit/manifest.ts'
+import { HUB_CLOSED, hubOf } from './hub.ts'
 import { reload } from './market.ts'
 import { dropCache, findMarkets, idOf, keptNote, lastUpdate, withMarkets } from './markets.ts'
 import { colorless } from './osc.ts'
@@ -262,7 +263,8 @@ async function applyBrowse(
   }
 }
 
-export async function runBrowse(): Promise<void> {
+export async function runBrowse(): Promise<number> {
+  const hub = hubOf(process.env)
   const home = configHome()
   const state = readInstalled(home)
   const was = readKept(home)
@@ -274,13 +276,17 @@ export async function runBrowse(): Promise<void> {
   const lookups = new AbortController()
   const tty = process.stdout.isTTY === true
   const live = livePaint(process.env, tty) ?? warpLive(process.env, tty, home)
-  const saved = live ? await live.saved() : new Map<string, string>()
+  const saved = live && !hub ? await live.saved() : new Map<string, string>()
   const startup = worn(state)
+  if (hub) {
+    process.stdout.write('\x1b[?2026h')
+  }
   const panel = new BrowsePanel({
     markets,
     kept,
     installed: state.palettes,
     ...(startup ? { startup } : {}),
+    ...(hub ? { hub } : {}),
     problems: problemsOf(home, state, tries, markets),
     due: dueSources(home, state),
     io: browseIo(home, state, fetched, lookups.signal),
@@ -289,13 +295,29 @@ export async function runBrowse(): Promise<void> {
     fx: promptFx(process.env.TTHEME_FX),
     ...(live ? { onFocus: (entry: PaletteEntry) => process.stdout.write(live.paint(entry)) } : {}),
   })
-  const done = await panel.prompt()
-  if (live) {
-    process.stdout.write(live.restore(saved))
+  if (tty && !hub) {
+    process.stdout.write('\x1b[?1049h')
   }
-  lookups.abort()
+  let done: string | symbol | undefined
+  try {
+    done = await panel.prompt()
+  } finally {
+    if (live && !hub) {
+      process.stdout.write(live.restore(saved))
+    }
+    lookups.abort()
+  }
   await panel.idle()
   const result = panel.result()
+  const go = panel.next()
+  if (hub && go !== undefined) {
+    process.stdout.write('\x1b[?25l')
+    await applyRefreshed(home, readInstalled(home), was, result.refreshed)
+    return go
+  }
+  if (tty) {
+    process.stdout.write('\x1b[?1049l\x1b[?25h')
+  }
   for (const refreshed of result.refreshed) {
     const note = updateNote(refreshed)
     if (note) {
@@ -305,7 +327,8 @@ export async function runBrowse(): Promise<void> {
   if (p.isCancel(done)) {
     await applyRefreshed(home, readInstalled(home), was, result.refreshed)
     console.log('Nothing changed')
-    return
+  } else {
+    await applyBrowse(home, was, markets, result, fetched)
   }
-  await applyBrowse(home, was, markets, result, fetched)
+  return hub ? HUB_CLOSED : 0
 }

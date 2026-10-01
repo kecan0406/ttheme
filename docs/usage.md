@@ -4,12 +4,13 @@
 
 Three cover most days: `ttheme preview` tries every palette live and keeps the
 one you land on, `ttheme browse` installs or drops palettes, and `ttheme use
-<palette>` paints this tab. `ttheme help` shows those and the rest by task;
-`ttheme help all` lists every command with what it does:
+<palette>` paints this tab. `ttheme` alone opens the first two as tabs of one
+screen. `ttheme help` shows those and the rest by task; `ttheme help all` lists
+every command with what it does:
 
 ```
 This tab
-  preview                                        Browse live — focus repaints, enter keeps (this tab or default), esc restores, ? lists keys
+  preview                                        Try palettes live — focus repaints, enter edits its tone and picture and applies it, esc restores, ? lists keys
   use <palette>                                  Paint this tab — a unique prefix works: ttheme use ho
   next                                           Advance this tab to the next palette
   pin [directory]                                Pick a palette for this directory, everything below it or its repository — cd in repaints, cd out restores
@@ -23,7 +24,7 @@ New tabs
   config                                         Edit settings in $EDITOR — they apply in new tabs
 
 Palettes
-  browse                                         Pick palettes and markets in a live picker — tab moves between Catalog, Installed, Markets and Errors
+  browse                                         Pick palettes and markets in a live picker — shift+←/→ moves between Catalog, Installed, Markets and Errors
   list [--json] [query]                          Show the catalog, marking what is installed
   add [--market <source>] <palette...>           Install palettes from the catalog, or from a share code: ttheme add tt1:…
   remove <palette...>                            Uninstall palettes
@@ -34,7 +35,7 @@ Your own
   new [--from <palette>] [--in <market>] <name>  Make a palette of your own, <you>@<market>/<name>, from blank in the palette editor — installed at once
   edit <palette>                                 Change one of your palettes in the palette editor — the contrast gate advises, never refuses
   check [--fix] <palette>                        Measure a palette against the contrast gate and suggest colors that pass
-  share <palette>                                Print a share code — ttheme add <code> installs it anywhere, pictures included
+  share [--tone <tuned|original>] <palette>      Print a share code — ttheme add <code> installs it anywhere, pictures included
 
 Setup
   init [--yes]                                   Install the shell layer and wire your terminal configs
@@ -49,6 +50,26 @@ without running it, and `ttheme --version` prints the version. A bug report
 takes the output of `ttheme info` (`npx @kecan0406/ttheme@latest info` when
 ttheme is not set up), and `TTHEME_DEBUG=1` in front of any command prints
 where an error came from.
+
+## The tabs
+
+`ttheme` alone opens preview and browse as two tabs of one full screen, on
+preview, with the tabs named in the top row. `tab` moves to the next tab and
+`shift+tab` to the previous one. Both screens filter as you type, so a letter is
+never a command here: what they do besides typing sits on `tab`, the arrows,
+`enter`, `space`, `esc` and `ctrl` or `alt` with a key ([the keys each screen
+takes](../CONTRIBUTING.md#keys-a-screen-takes) are listed for anyone adding one).
+Preview keeps its filter, its open series and its cursor while you are in
+browse, and comes back repainted in the colors it was showing. A browse tab
+starts fresh each time: with picks or market changes staged, `tab` asks
+whether to apply them first — `y` applies and closes, `n` discards and moves
+on, `esc` stays. Inside browse, its own four tabs move with `shift+←`/`shift+→`.
+
+`esc` closes the tabs from either screen, and `enter` does what it does on that
+screen: preview applies the palette it landed on, browse applies its picks and
+closes. `ttheme preview` and `ttheme browse` open one screen on its own, with
+no tab row; `ttheme pin` is preview alone as well. Piped, `ttheme` prints the
+palettes, one per line, as name, series and source separated by tabs.
 
 ## Preview
 
@@ -65,12 +86,13 @@ spells them, ignoring case and punctuation, so `ひとり` or `hitori` finds `bo
 and `らきすた` finds Lucky☆Star; a row that matched on one of those other names
 shows it dimmed beside its own, and a Japanese input method composes in the
 search field itself.
-Enter applies, and esc steps back — first out of the filter, then out of the
+Enter opens the [theme edit](#theme-edit) screen on the palette, where it is
+tuned and applied, and esc steps back — first out of the filter, then out of the
 preview with the original colors restored. Each palette row carries its 16
 colors, normal over bright. The last line lists only the keys that work right
-there, always names the mode (`PREVIEW`, `PREVIEW (FILTER)`, `IMAGE EDIT`,
-`CONFIG`, `PREVIEW (APPLY)`, `PREVIEW (PIN)`, `HELP`) and pins where esc goes
-to the right; `?` shows all of them.
+there, always names the mode (`PREVIEW`, `PREVIEW (FILTER)`, `THEME EDIT`,
+`THEME EDIT (APPLY)`, `THEME EDIT (PIN)`, `CONFIG`, `HELP`) and pins where esc
+goes to the right; `?` shows all of them.
 In Warp, which wears one theme for the whole app, the tab in front decides it:
 preview switches that theme as the focus moves — every Warp window at once —
 and so do `ttheme use`, `next` and a pin, while switching tabs or windows puts
@@ -86,14 +108,48 @@ columns on, a sample sits against the right edge of the window in the palette
 under the cursor — the 16 colors over one of five scenes, a shell session, code,
 a diff, logs and a process monitor, named in a strip above it; ⇧←→ switch
 scenes, and find's try-on opens on the one preview showed. The list and the sample widen with the window (the sample up to 64
-columns) and the gap between them takes the rest; the tuning panel takes the
-sample's place while open, and so does the key list once the sample is 48
-columns wide.
-With `TTHEME_TAB_PALETTE=off` (the default), in a terminal init wired — and
-always in Ghostty and iTerm2 — enter asks **this tab** or **default**: default
-records the palette as your default palette (so a later `add` or `remove` keeps
-it) and hands it to every terminal you wired, whichever one you are in. It
-rewrites `theme =` in the `# ttheme begin` block of your Ghostty config and sends
+columns) and the gap between them takes the rest; the key list takes the
+sample's place while open, once the sample is 48 columns wide.
+
+## Theme edit
+
+`enter` on a palette in `preview` opens **theme edit**, a full screen of two
+panels side by side: the palette's **tone** on the left and its background
+**picture** on the right, both live — the tab is painted with the colors as you
+change them, and the picture moves behind the text. It needs 54×24, and from 100
+columns shows both panels; narrower, one panel at a time, with `[` for the tone
+and `]` for the picture.
+
+The tone panel is the palette editor `ttheme new` opens, without its seeds:
+`↑`/`↓` pick a slot, `←`/`→` switch between its normal and bright colors, `tab`
+tunes the slot in OKLCH — `↑`/`↓` pick lightness, chroma or hue, `←`/`→` step —
+`#` types a color, `c` and `v` copy and paste one, `f` moves the colors the
+contrast gate misses, `u` undoes and `space` shows the colors before. A slot off
+its palette's own color carries `↺`: `r` puts the slot back and `R` all of them.
+The contrast gate advises here, never refuses. The picture panel is the one
+[Tuning](backgrounds.md#tuning) describes — size, position, opacity, colors,
+the strip of pictures — with `f` to find one.
+
+`s` saves, and nothing else does: what you changed is kept only from then on,
+the tone as an override of the palette's own colors (`tone.json`, beside
+`installed.json`, naming just the slots you moved, so the palette itself and
+`kept.json` stay as the market gave them) and the picture as its own tuning.
+`sync` lays the tone over the palette before it writes anything, so every
+terminal's theme file, the zsh table and the pictures' tint follow it, and
+`ttheme update` leaves it be. `esc` closes the screen and drops what you changed
+since the last save, without asking.
+
+`enter` applies the palette as it is on screen — saving what you changed first
+— and asks where: **default** or **this tab**. Default records the palette as
+your default palette (so a later `add` or `remove` keeps it) and hands it to
+every terminal you wired, whichever one you are in, and this tab keeps it for
+the tab alone; `←`/`→` move between them, starting on default. In `ttheme pin`
+it asks how far the pin reaches instead (see [Directory pins](#directory-pins)),
+and without the choice — `TTHEME_TAB_PALETTE=seq`, or a terminal init did not
+wire — enter applies to this tab at once.
+
+The question is asked with `TTHEME_TAB_PALETTE=off` (the default), in a
+terminal init wired — and always in Ghostty and iTerm2. Default rewrites `theme =` in the `# ttheme begin` block of your Ghostty config and sends
 `SIGUSR2` to the Ghostty that owns the tab, rewrites iTerm2's `ttheme · default`
 profile, which iTerm2 reloads by itself, and makes the palette's
 `ttheme · <palette>` profile Konsole's default, which every running Konsole
@@ -103,7 +159,7 @@ starts from the configured theme, not from what the last tab was painted.
 
 ## Directory pins
 
-`pin` opens the same browser, and enter on a palette asks how far it reaches:
+`pin` opens the same browser, and enter on a palette opens its theme edit, where enter asks how far it reaches:
 
 - **This directory** — the directory alone; `cd` into a folder below it and the
   tab takes back whatever covers that folder.
@@ -232,8 +288,8 @@ still wins:
 ## The catalog
 
 The catalog is not installed wholesale: `init` installs the series you pick, and
-`init --yes` none at all. `ttheme browse` opens it as a live picker in four
-tabs — `tab` moves on, `shift+tab` back, and each tab keeps its own filter;
+`init --yes` none at all. `ttheme browse` opens it as a full-screen live picker in
+four tabs — `shift+→` moves on, `shift+←` back, and each tab keeps its own filter;
 `↑`/`↓`, page up/down and home/end move through a list as they do in preview:
 
 - **Catalog** is every palette of every market you added. Groups fold and
@@ -267,7 +323,7 @@ list:
 │ ▌    ● kita   ■ ■ ■ ■ ■ ■                                    │ Installed
 │                                                              │
 │                                                              │ Gate 9/9 · passes
-└ tab switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
+└ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
 ```
 
 The counts stay honest: `1/6` is what the filter matched out of the catalog,
@@ -327,8 +383,8 @@ keeping its auto-update.
 
 A market is `<owner>@<name>`: the repository's owner and the name its index
 gives. Its palettes are `<owner>@<name>/<palette>` (`ttheme add
-alice@pastel/dusk`), and `preview`, `browse` and the bare `ttheme` list the
-market below every series, past a `── Markets` line: the market, then its
+alice@pastel/dusk`), and `preview` and `browse` — the two tabs of the bare
+`ttheme` — list the market below every series, past a `── Markets` line: the market, then its
 catalogs — the folders under its `palettes/` — then their palettes by their
 own names, and a palette filed straight under `palettes/` after the catalogs.
 
@@ -365,7 +421,14 @@ ttheme new rei --from rei        # the same, starting from rei's colors and pict
 ttheme edit rei                  # the same editor; the bare name works for yours
 ttheme check --fix rei           # colors that pass the gate, written in
 ttheme share rei                 # tt1:… — anyone runs ttheme add tt1:…
+ttheme share rei --tone original # the palette as it was, when you tuned it in theme edit
 ```
+
+`share` prints a palette as you wear it. When you tuned its tone in [theme
+edit](#theme-edit) it asks which to share, your tone or the original;
+`--tone tuned` or `--tone original` answers for it, and without a terminal it
+shares the tuned one. A tuned palette goes out as `<name>-tuned`, since its own
+name belongs to the original wherever that is installed.
 
 `new` opens the palette editor full screen on a blank palette (it needs 80×24).
 It starts on the seeds: the lightness of the background and the foreground, a

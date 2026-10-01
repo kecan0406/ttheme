@@ -38,6 +38,14 @@ function market(source: string, id: string, names: string[], auto = false): Mark
 const official = market('official', 'official', ['miku', 'rin'], true)
 const pastel = market('alice/ttheme-pastel', 'alice@pastel', ['dusk', 'dawn'])
 
+const ESC = '\x1b'
+const STEERING = new RegExp(`${ESC}\\[K|${ESC}\\[\\?(?:2026|25)[hl]|${ESC}\\[H`, 'g')
+const ROW = new RegExp(`${ESC}\\[\\d+;1H`, 'g')
+
+function shown(raw: string): string {
+  return raw.replace(STEERING, '').replace(ROW, '\n')
+}
+
 function io(overrides: Partial<BrowseIo> = {}): BrowseIo {
   return {
     refresh: () => Promise.reject(new Error('offline')),
@@ -49,14 +57,21 @@ function io(overrides: Partial<BrowseIo> = {}): BrowseIo {
 
 async function drive(
   keys: string[],
-  opts: { columns?: number; markets?: Market[]; installed?: string[]; due?: string[]; io?: BrowseIo } = {},
+  opts: {
+    columns?: number
+    markets?: Market[]
+    installed?: string[]
+    due?: string[]
+    io?: BrowseIo
+    hub?: 'browse'
+  } = {},
 ) {
   const input = new PassThrough()
   const output = new PassThrough() as PassThrough & { columns?: number }
   output.columns = opts.columns ?? 100
   let frames = ''
   output.on('data', (chunk: Buffer) => {
-    frames += chunk.toString()
+    frames += shown(chunk.toString())
   })
   const saved = Object.getOwnPropertyDescriptor(process.stdout, 'columns')
   Object.defineProperty(process.stdout, 'columns', { value: 400, configurable: true, writable: true })
@@ -69,6 +84,7 @@ async function drive(
       due: opts.due ?? [],
       io: opts.io ?? io(),
       color: false,
+      ...(opts.hub ? { hub: opts.hub } : {}),
       input,
       output,
     })
@@ -81,7 +97,7 @@ async function drive(
     }
     const result = await pending
     const last = frames.slice(frames.lastIndexOf('◆'))
-    return { result, frames, last, panel: panel.result() }
+    return { result, frames, last, panel: panel.result(), next: panel.next() }
   } finally {
     if (saved) {
       Object.defineProperty(process.stdout, 'columns', saved)
@@ -91,13 +107,15 @@ async function drive(
   }
 }
 
-const TAB = '\t'
-const BACK_TAB = '\x1b[Z'
+const TAB = '\x1b[1;2C'
+const BACK_TAB = '\x1b[1;2D'
+const PLAIN_TAB = '\t'
+const SHIFT_TAB = '\x1b[Z'
 const DOWN = '\x1b[B'
 const RIGHT = '\x1b[C'
 const LEFT = '\x1b[D'
 
-test('tab moves between the four tabs and each keeps its own filter', async () => {
+test('shift+right and shift+left move between the four tabs and each keeps its own filter', async () => {
   const { frames } = await drive(['k', 'i', TAB, TAB, BACK_TAB, BACK_TAB, '\r'])
   assert.match(frames, /\[Catalog\] {2}Installed {3}Markets {3}Errors/)
   assert.match(frames, / Catalog {2}\[Installed\] {2}Markets/)
@@ -192,4 +210,34 @@ test('a failed update shows up under Errors with its reason', async () => {
   const { frames } = await drive([TAB, TAB, TAB, '\r'], { due: ['alice/ttheme-pastel'] })
   assert.match(frames, /\[Errors 1\]/)
   assert.match(frames, /✗ alice@pastel {2}Update failed: offline/)
+})
+
+test('inside the tabs, tab asks for the next screen at once, or first asks about what is staged', async () => {
+  const clean = await drive([PLAIN_TAB], { hub: 'browse' })
+  assert.ok(isCancel(clean.result))
+  assert.equal(clean.next, 21)
+  const back = await drive([SHIFT_TAB], { hub: 'browse' })
+  assert.equal(back.next, 21)
+
+  const stay = await drive([RIGHT, DOWN, ' ', PLAIN_TAB, '\x1b', '\r'], { hub: 'browse', installed: [] })
+  assert.match(stay.frames, /Apply your changes before you leave\?/)
+  assert.ok(!isCancel(stay.result))
+  assert.equal(stay.next, undefined)
+
+  const discard = await drive([RIGHT, DOWN, ' ', PLAIN_TAB, 'n'], { hub: 'browse', installed: [] })
+  assert.ok(isCancel(discard.result))
+  assert.equal(discard.next, 21)
+
+  const apply = await drive([RIGHT, DOWN, ' ', PLAIN_TAB, 'y'], { hub: 'browse', installed: [] })
+  assert.ok(!isCancel(apply.result))
+  assert.equal(apply.next, undefined)
+  assert.equal(apply.panel.picked.size, 1)
+})
+
+test('tab does nothing in browse on its own, and shift+arrows switch tabs without acting on the row', async () => {
+  const plain = await drive([PLAIN_TAB, '\r'])
+  assert.match(plain.last, /\[Catalog\]/)
+  const moved = await drive([TAB, TAB, BACK_TAB, '\r'])
+  assert.match(moved.last, /\[Installed\]/)
+  assert.deepEqual(moved.panel.auto, {})
 })

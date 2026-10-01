@@ -1,0 +1,24 @@
+ ◆ konata · Lucky☆Star
+  Tone                        7 misses in the gate │ Image
+▌ Background[   #13181e       ]                    │
+  Foreground   #dae3f1 13.8                        │ This terminal shows no pictures
+  Cursor     ◆ #5f95ca  5.6                        │
+  Selection    #3b3e42  8.3                        │
+                                                   │
+  ANSI        Normal           Bright              │
+  Black        #1f242a  1.1     #73777f  4.0       │
+  Red          #e07ae5  6.9✗    #fca1ff  9.9✗      │
+  Green      ◆ #64be79  7.8     #00e3e4 11.1✗      │
+  Yellow       #9bc976  9.4✗    #37f9b8 13.1✗      │
+  Blue         #63a5e8  6.9   ◆ #8fc6ff  9.9       │
+  Magenta      #d187ff  7.3✗    #d0bcff 10.5       │
+  Cyan         #4abcee  8.3     #97daff 11.7       │
+  White        #c2c7cf 10.5     #e6effc 15.4       │
+  Background  background                           │
+  #13181e  oklch 0.207 0.014 253°                  │
+  as the palette has it                            │
+   L ───────●────────────────────────────   0.21   │
+   C ─●──────────────────────────────────  0.014   │
+   H ─────────────────────────●──────────   253°   │
+  ✓ Foreground on it 13.80:1 · ≥ 7                 │
+[THEME EDIT] ↑↓←→ slot   s save   tab tune   r reset slot   R reset all   enter apply     esc cancel

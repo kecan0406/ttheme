@@ -7,6 +7,7 @@ import { emptyManifest, type Manifest, type PaletteEntry, toTheme } from './emit
 import { readLocal } from './own.ts'
 import { cachePath, isRemote, marketId, marketProblem, marketSources, OFFICIAL, remoteOwner } from './sources.ts'
 import { marketOf, nameProblem, textProblem } from './theme.ts'
+import { readTone, tuned } from './tone.ts'
 
 export const REGISTRY_URL = 'https://kecan0406.github.io/ttheme/manifest.json'
 const TIMEOUT = 20_000
@@ -140,10 +141,15 @@ export function readKept(configHome: string): PaletteEntry[] {
   }
 }
 
-export function available(configHome: string, catalog: Manifest, warn = true): Manifest {
+export function untuned(configHome: string, catalog: Manifest, warn = true): Manifest {
   const palettes = [...catalog.palettes, ...readLocal(configHome, catalog.palettes, warn)]
   const known = new Set(palettes.map((p) => p.name))
   return { ...catalog, palettes: [...palettes, ...readKept(configHome).filter((p) => !known.has(p.name))] }
+}
+
+export function available(configHome: string, catalog: Manifest, warn = true): Manifest {
+  const view = untuned(configHome, catalog, warn)
+  return { ...view, palettes: tuned(view.palettes, readTone(configHome)) }
 }
 
 export function readAvailable(configHome: string): Manifest {

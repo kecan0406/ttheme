@@ -1090,5 +1090,8 @@ const KEYS: Record<string, string> = {
   bs: '\x7f',
   'ctrl-c': '\x03',
   'ctrl-u': '\x15',
+  'shift-tab': '\x1b[Z',
+  'shift-left': '\x1b[1;2D',
+  'shift-right': '\x1b[1;2C',
   'alt-c': '\x1bc',
 }

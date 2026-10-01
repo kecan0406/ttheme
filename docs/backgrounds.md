@@ -63,7 +63,7 @@ second while Warp wears that palette. Warp has no position or size setting and d
 cover, so with Warp wired a tuned picture that is not a fill is baked onto a
 canvas the size of the window, centered or not.
 
-`preview` tunes and finds pictures in Warp too. While the tuning panel is open,
+Theme edit tunes and finds pictures in Warp too. While the picture panel is open,
 each step lays the picture on the background in one pass (about 0.2 s), writes a
 short-lived theme and switches Warp to it; a held key does this once, when it is
 let go, and an opacity step keeps the same picture, so it draws nothing. Warp
@@ -78,8 +78,8 @@ on while find runs.
 
 ## Finding one
 
-A palette with no background yet can find one: on it in `preview`, tab opens
-**find**, which searches for the palette's character tag (`meta.booru`) and lays
+A palette with no background yet can find one: on it in `preview`, `enter` opens
+theme edit and `f` in its picture panel opens **find**, which searches for the palette's character tag (`meta.booru`) and lays
 the results out as a grid of thumbnails, over the palette's own background — the
 picture the terminal shows for another palette stays out of sight while find is
 open. It opens on **all**, every site's posts
@@ -115,7 +115,7 @@ site.
 Under each thumbnail is its post id — a link to the post's page, marked `⧉` in
 the site's color the way Claude Code marks a link, and opened with a click
 (cmd+click in Ghostty and iTerm2); the same mark sets off every post number
-find, preview's tuning panel and `ttheme add` show — and size, and under that the artist: named
+find, theme edit's picture panel and `ttheme add` show — and size, and under that the artist: named
 by the site's own tag types, by danbooru's tags for the same file, or, on a
 zerochan post danbooru does not hold, by the post's page once you have tried it
 or the post beside it on — a `—` until one is known. A score follows as
@@ -222,7 +222,7 @@ scene back. They come with the posts' own answers, except on zerochan, whose
 list types no tags: a post danbooru holds takes danbooru's names and leaves its
 uploader and day at `—`, and one it does not fetches its page once — beside the
 picture, and ahead of time for the posts on either side — for its artist,
-characters, series, uploader and day. `t` opens the same tuning panel preview has (see
+characters, series, uploader and day. `t` opens the same tuning panel theme edit has (see
 [Tuning](#tuning)) over the picture: size, position and opacity change what you
 see in place, stay as you move to the next post, and are installed with the
 picture, so preview opens it the way you left it. On macOS an opaque picture is
@@ -283,7 +283,7 @@ neither break up nor alias, and stays smooth when a small picture is enlarged.
 
 A picture can also keep its own colors. `TTHEME_BG_COLORS=original` (in `ttheme
 config`, or alt-c in `preview`) draws every picture installed from then on that
-way, and the `Colors` row of the tuning panel switches one picture at a time,
+way, and the `Colors` row of theme edit's picture panel switches one picture at a time,
 whatever the setting is — `←`/`→` on it, or `c` from any field, draw that picture
 again from its original, in the palette's tone or in its own colors, which takes
 a moment and is kept at once: esc undoes the tuning, not the colors, and `c`
@@ -323,7 +323,8 @@ it draws that palette's `background-image` where Ghostty would place it, faded b
 `background-image-opacity`, behind the list — or just its plain background when
 it has no file. Only PNG images preview.
 
-On a palette with a background, tab opens a panel that tunes it in place:
+On a palette with a background, theme edit (`enter` in `preview`) has a panel on
+its right that tunes it in place — `]` moves to it, `[` back to the tone:
 `↑`/`↓` pick size, position, opacity or colors, and `←`/`→` change it (with
 shift, ten steps at a time; `c` switches the colors from any field — see
 [Original colors](#original-colors)). Size walks 1% at a time, shown large in the middle of the
@@ -337,9 +338,9 @@ steps through the nine `background-image-position` anchors, or `1`–`9` jump to
 one in reading order; opacity moves by 0.01. A field that is not at its
 default carries `↺` at the panel's right edge, lit on the field the cursor is on:
 `=` puts that one field back, `+` all three of size, position and opacity (and
-shows the picture again if it was off). Space turns the palette's background off and on, enter keeps the
-change and esc puts back what the panel opened with. `f` in the panel opens
-find again to add a picture.
+shows the picture again if it was off). Space turns the palette's background off and on, `s` saves
+the change — with the tone, see [Theme edit](usage.md#theme-edit) — and esc drops what you changed
+since the last save. `f` in the panel opens find to add a picture, keeping what you tuned so far.
 
 ## Several pictures per palette
 
@@ -348,7 +349,7 @@ screen rather than dropping it. In the tuning panel, below the three fields, a
 strip of up to five thumbnails shows the palette's pictures with the one on
 screen framed and its place (`2/3`) beside them; `,` and `.` move along it, the
 strip sliding round when there are more, and the background shows that picture
-with its own tuning at once — nothing is saved until enter, which makes it the
+with its own tuning at once — nothing is saved until `s`, which makes it the
 palette's picture, and esc goes back to the one the panel opened with. `D`
 removes the picture the strip is on, with its files. `backgrounds/images.json` lists each
 palette's pictures and which one is up; only ttheme writes it, and the pictures'
@@ -364,7 +365,7 @@ picture's `<palette>.<hash>.tune.conf` (the tuning) and
 `<palette>.<hash>.off.conf` (the off switch), which Ghostty loads after the
 conf. A `<palette>.conf` you write yourself is left alone; the preview appends
 `<palette>.tune.conf` and `<palette>.off.conf` includes to it instead.
-Kept changes are written when the preview closes, by whichever key,
+Saved changes are written at once, by `s`,
 and reach both terminals from whichever one ran the preview: Ghostty reloads
 when it is showing that palette, and iTerm2's profiles are rewritten. Ghostty has no scale setting,
 so every size but 100% and fill is baked into a copy beside the image and the

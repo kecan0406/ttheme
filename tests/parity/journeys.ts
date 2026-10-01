@@ -19,6 +19,7 @@ export interface Probe {
   type(tab: Tab, line: string): Promise<void>
   launch(tab: Tab, line: string, marker?: string): Promise<void>
   keys(tab: Tab, ...keys: string[]): Promise<void>
+  expect(tab: Tab, marker: string): Promise<void>
   back(tab: Tab): Promise<void>
   quit(tab: Tab): Promise<void>
   focus(tab: Tab): Promise<void>
@@ -83,13 +84,21 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
-    id: 'menu',
-    about: 'the bare ttheme lists the palettes and marks the one the tab wears',
+    id: 'hub',
+    about:
+      'the bare ttheme opens preview and browse as tabs: tab moves between them, each repaints the tab as its cursor moves, and esc puts the tab back',
     async run(p) {
       const a = await p.open()
       await p.type(a, 'ttheme use kita')
-      await p.type(a, 'clear; ttheme')
-      await p.look('menu', { text: true })
+      await p.launch(a, 'ttheme', 'tab next')
+      await p.keys(a, 'k', 'o', 'n')
+      await p.look('preview', { text: true, wears: false })
+      await p.keys(a, 'tab', 'k', 'i', 't', 'a')
+      await p.look('browse', { text: true, wears: false })
+      await p.keys(a, 'tab')
+      await p.look('back', { text: true, wears: false })
+      await p.quit(a)
+      await p.look('closed')
     },
   },
   {
@@ -235,13 +244,15 @@ export const JOURNEYS: Journey[] = [
   },
   {
     id: 'preview-tab',
-    about: 'enter in preview keeps the palette for this tab',
+    about: 'enter in preview opens the theme edit screen, and enter there keeps the palette for this tab',
     async run(p) {
       const a = await p.open()
       await p.launch(a, 'ttheme preview')
       await p.keys(a, 'k', 'i', 't', 'a', 'enter')
-      await p.look('pick', { text: true, wears: false })
+      await p.expect(a, 'Tone')
       await p.keys(a, 'enter')
+      await p.look('pick', { text: true, wears: false })
+      await p.keys(a, 'right', 'enter')
       await p.back(a)
       await p.look('kept')
     },
@@ -252,7 +263,9 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       await p.launch(a, 'ttheme preview')
-      await p.keys(a, 'm', 'i', 'k', 'u', 'enter', 'right', 'enter')
+      await p.keys(a, 'm', 'i', 'k', 'u', 'enter')
+      await p.expect(a, 'Tone')
+      await p.keys(a, 'enter', 'enter')
       await p.back(a)
       await p.look('here')
       await p.open()
@@ -261,11 +274,12 @@ export const JOURNEYS: Journey[] = [
   },
   {
     id: 'preview-tune',
-    about: 'tab in preview opens the picture’s tuning panel, and esc leaves it all as it was',
+    about: 'enter in preview opens the tone and the picture’s tuning side by side, and esc leaves it all as it was',
     async run(p) {
       const a = await p.open()
       await p.launch(a, 'ttheme preview')
-      await p.keys(a, 'k', 'i', 't', 'a', 'tab')
+      await p.keys(a, 'k', 'i', 't', 'a', 'enter')
+      await p.expect(a, 'Tone')
       await p.look('tune', { text: true, wears: false })
       await p.quit(a)
       await p.look('back')
@@ -291,7 +305,9 @@ export const JOURNEYS: Journey[] = [
       await p.type(a, 'ttheme use kita')
       const b = await p.open()
       await p.launch(b, 'ttheme preview')
-      await p.keys(b, 'k', 'i', 't', 'a', 'tab', 'D', '1s')
+      await p.keys(b, 'k', 'i', 't', 'a', 'enter')
+      await p.expect(b, 'Tone')
+      await p.keys(b, ']', 'D', '1s')
       await p.quit(b)
       await p.look('here')
       await p.focus(a)
@@ -306,7 +322,9 @@ export const JOURNEYS: Journey[] = [
       await p.type(a, 'ttheme use kita')
       const b = await p.open()
       await p.launch(b, 'ttheme preview')
-      await p.keys(b, 'k', 'i', 't', 'a', 'tab', 'down', 'down', 'right', 'right', 'right', 'enter')
+      await p.keys(b, 'k', 'i', 't', 'a', 'enter')
+      await p.expect(b, 'Tone')
+      await p.keys(b, ']', 'down', 'down', 'right', 'right', 'right', 's', '1s')
       await p.quit(b)
       await p.focus(a)
       await p.look('other', { opacity: true })
@@ -381,7 +399,9 @@ export const JOURNEYS: Journey[] = [
       const ghostty = await p.wire('ghostty')
       const a = await p.open()
       await p.launch(a, 'ttheme preview')
-      await p.keys(a, 'k', 'i', 't', 'a', 'tab', 'down', 'down', 'right', 'right', 'right', 'enter')
+      await p.keys(a, 'k', 'i', 't', 'a', 'enter')
+      await p.expect(a, 'Tone')
+      await p.keys(a, ']', 'down', 'down', 'right', 'right', 'right', 's', '1s')
       await p.quit(a)
       const g = await ghostty.open()
       await ghostty.type(g, 'ttheme use kita')
