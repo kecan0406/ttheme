@@ -333,12 +333,88 @@ cd $OLDPWD
     { print -u2 "a pin dropped in another tab did not give a tab under it its palette back: pin=$TTHEME_PIN"; exit 1 }
 ) || exit 1
 (
+  __tt_apply() { : }
+  __tt_fresh() { : }
+  TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  for line want in \
+    'ssh tusa' tusa \
+    'ssh bob@Tusa' tusa \
+    'ssh -p 2222 -A tusa' tusa \
+    'ssh tusa -p 2222' tusa \
+    'ssh -p2222 -lbob -o ServerAliveInterval=30 tusa' tusa \
+    'TERM=xterm-256color command ssh tusa' tusa \
+    "ssh 'tusa'" tusa \
+    'ssh ssh://bob@tusa:2200' tusa \
+    'ssh -J jump -t tusa tmux attach' tusa \
+    'ssh tusa -t htop' tusa \
+    'ssh -- tusa' tusa \
+    'ssh tusa 2>/dev/null' tusa \
+    'ssh tusa; echo done' tusa \
+    '/usr/bin/ssh tusa' tusa \
+    'ssh tusa uptime' - \
+    'ssh tusa htop -t' - \
+    'ssh -N -L 8080:localhost:80 tusa' - \
+    'ssh -fN tusa' - \
+    'ssh -T git@github.com' - \
+    'ssh -G tusa' - \
+    'ssh tusa | tee log' - \
+    'ssh tusa < script' - \
+    'ssh tusa > log' - \
+    'ssh tusa &' - \
+    'sshfs tusa:/ mnt' - \
+    'echo ssh tusa' - \
+    'ssh -p 22' -
+  do
+    REPLY=-
+    __tt_ssh_host "$line" || REPLY=-
+    [[ $REPLY == "$want" ]] || { print -u2 "ssh read ${(q+)line} as ${(q+)REPLY}, not $want"; exit 1 }
+  done
+  print -l "ssh:Tusa  homura" "ssh:*.prod  kaito" "ssh:db?.prod  rei" "ssh:gone  nosuchpalette" "ssh:bad host  mio" "ssh:  mio" > $TTHEME_PINS_FILE
+  TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
+  [[ ${(j: :)${(ok)TTHEME_PINS}} == 'ssh:*.prod ssh:db?.prod ssh:gone ssh:tusa' ]] || { print -u2 "ssh pins did not load: ${(kv)TTHEME_PINS}"; exit 1 }
+  for host want in tusa ssh:tusa db1.prod 'ssh:db?.prod' db10.prod 'ssh:*.prod' gone - tusa2 -; do
+    REPLY=-
+    __tt_ssh_rule $host || REPLY=-
+    [[ $REPLY == "$want" ]] || { print -u2 "ssh to $host took the pin ${(q+)REPLY}, not $want"; exit 1 }
+  done
+  TTHEME_SPEC=$TTHEME_PALETTE[miku]
+  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa'
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[homura]" ]] || { print -u2 "ssh to a pinned host did not paint its palette"; exit 1 }
+  __tt_prompt
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "the prompt after ssh did not put the palette back"; exit 1 }
+  __tt_ran 'ssh web.prod' 'ssh web.prod' 'ssh web.prod'
+  TTHEME_SPEC=$TTHEME_PALETTE[rei]
+  __tt_prompt
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[rei]" ]] || { print -u2 "the prompt after ssh overrode a palette painted by hand"; exit 1 }
+  __tt_ran 'ssh tusa uptime' 'ssh tusa uptime' 'ssh tusa uptime'
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[rei]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "a remote command painted the tab"; exit 1 }
+  TTHEME_SPEC= resets=0
+  __tt_osc_reset() { (( ++resets )) }
+  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa'
+  __tt_prompt
+  [[ -z $TTHEME_SPEC && $resets == 1 ]] || { print -u2 "the prompt after ssh did not reset a tab of unknown colors: spec=[$TTHEME_SPEC] resets=$resets"; exit 1 }
+  TTHEME_SPEC=$TTHEME_PALETTE[kaito]
+  out=$(__tt_pin_save kaito ssh:tusa "$TTHEME_PALETTE[miku]"; [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" ]] && print back)
+  [[ $out == "Pinned · kaito → ssh tusa · while connected"$'\n'back ]] || { print -u2 "pinning a host broke: $out"; exit 1 }
+  TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
+  [[ $TTHEME_PINS[ssh:tusa] == kaito && ${#TTHEME_PINS} == 4 ]] || { print -u2 "a host pin did not round-trip: ${(kv)TTHEME_PINS}"; exit 1 }
+  out=$(__tt_unpin ssh:TUSA)
+  [[ $out == "Unpinned · kaito on ssh tusa · while connected" ]] || { print -u2 "unpinning a host broke: $out"; exit 1 }
+  TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
+  [[ -z $TTHEME_PINS[ssh:tusa] ]] || { print -u2 "unpin left the host pin in the file"; exit 1 }
+  out=$(__tt_unpin ssh:tusa 2>&1) && { print -u2 "unpin dropped a host pin that was gone"; exit 1 }
+  [[ $out == "ttheme unpin: nothing pinned to ssh tusa" ]] || { print -u2 "unpin of a missing host said: $out"; exit 1 }
+  out=$(ttheme pin ssh:bob@tusa 2>&1) && { print -u2 "ttheme pin took a user in a host pin"; exit 1 }
+  [[ $out == "ttheme pin: an ssh pin names the host alone — ssh:tusa" ]] || { print -u2 "ttheme pin ssh:bob@tusa said: $out"; exit 1 }
+  rm -f $TTHEME_PINS_FILE
+) || exit 1
+(
   HOME=$XDG_CONFIG_HOME/home
   mkdir -p $HOME/work/api/v2 $HOME/work/site/x $HOME/notes
   print -r -- "//**  rei" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load
   REPLY=; __tt_dir_rule $HOME/work && [[ $REPLY == "//**" ]] || { print -u2 "a pin on / and below skipped what is below it: $REPLY"; exit 1 }
-  print -l "~/work/**  homura" "~/work/site  kaito" "~/work/site/**  miku" "~/notes/**  nosuchpalette" "/nonexistent-ttheme/place/**  rei" "~  mio" > $TTHEME_PINS_FILE
+  print -l "~/work/**  homura" "~/work/site  kaito" "~/work/site/**  miku" "~/notes/**  nosuchpalette" "/nonexistent-ttheme/place/**  rei" "~  mio" "ssh:tusa  kaito" "ssh:*.prod  nosuchpalette" > $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=; __tt_pins_load 2>/dev/null
   REPLY=; __tt_dir_rule $HOME && [[ $REPLY == "$HOME" ]] || { print -u2 "a pin on ~ alone did not cover the home directory: $REPLY"; exit 1 }
   REPLY=; __tt_dir_rule $HOME/work/site && [[ $REPLY == "$HOME/work/site" ]] || { print -u2 "a directory's own pin lost to its pin on everything below: $REPLY"; exit 1 }
@@ -353,6 +429,8 @@ cd $OLDPWD
     "   ├─ api/v2 ← here"
     "   └─ site                 kaito          this directory · miku below"
     "/nonexistent-ttheme/place  rei            and below · no such directory"
+    "ssh *.prod                 nosuchpalette  while connected · not installed"
+    "ssh tusa                   kaito          while connected"
     ""
     "Here · homura pinned to ~/work and below"
     "ttheme pin picks one here · ttheme unpin drops one · $TTHEME_PINS_FILE"
@@ -368,7 +446,7 @@ cd $OLDPWD
   [[ ${${(f)"$(color=0 __tt_map_tree)"}[-2]} == "Here · kaito pinned to this directory" ]] ||
     { print -u2 "the pins map named the wrong pin here: ${${(f)"$(color=0 __tt_map_tree)"}[-2]}"; exit 1 }
   out=$(__tt_pins_map)
-  want=("/nonexistent-ttheme/place/**"$'\t'rei "$HOME"$'\t'mio "~/notes/**"$'\t'nosuchpalette "~/work/**"$'\t'homura "~/work/site"$'\t'kaito "~/work/site/**"$'\t'miku)
+  want=("/nonexistent-ttheme/place/**"$'\t'rei "$HOME"$'\t'mio "~/notes/**"$'\t'nosuchpalette "~/work/**"$'\t'homura "~/work/site"$'\t'kaito "~/work/site/**"$'\t'miku "ssh:*.prod"$'\t'nosuchpalette "ssh:tusa"$'\t'kaito)
   [[ $out == ${(F)want} ]] || { print -u2 "piped, pins did not print path and palette per line:"; print -ru2 -- $out; exit 1 }
   rm -f $TTHEME_PINS_FILE
   TTHEME_PINS_RAW=x

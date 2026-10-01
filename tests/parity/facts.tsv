@@ -180,6 +180,16 @@ pin-reach.moved.colors	miku	=	=	=	=	=	konata	=	own
 pin-reach.moved.picture	none	=	=	=	=	=	konata	=	=
 pin-reach.moved.wears	miku	=	=	=	=	=	konata	=	none
 pin-reach.moved.issue	-	=	=	=	=	=	=	=	=
+ssh.in.colors	kita	=	=	=	=	=	=	=	=
+ssh.in.picture	kita	=	=	none	=	none	=	none	none
+ssh.in.issue	-	=	=	=	=	=	=	=	=
+ssh.front.colors	kita	=	=	=	=	=	=	=	=
+ssh.front.picture	kita	=	=	none	=	none	=	none	none
+ssh.front.issue	-	=	=	=	=	=	=	=	=
+ssh.out.colors	konata	=	=	=	=	=	=	=	own
+ssh.out.picture	konata	=	=	none	=	none	=	none	none
+ssh.out.wears	konata	=	=	=	=	=	=	=	none
+ssh.out.issue	-	=	=	=	=	=	=	=	=
 browse.hover.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
 browse.hover.picture	konata	=	=	none	=	none	kita	none	none
 browse.hover.text	txt:55ac9d3e03	=	=	=	=	=	=	=	=

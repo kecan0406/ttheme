@@ -62,22 +62,24 @@ export const VERB_SPECS: VerbSpec[] = [
   },
   {
     name: 'pin',
-    args: ['[directory]'],
-    about: 'Pick a palette for this directory, everything below it or its repository — cd in repaints, cd out restores',
+    args: ['[directory|ssh:<host>]'],
+    about:
+      'Pick a palette for this directory, everything below it, its repository or an ssh host — cd or ssh in repaints, leaving restores',
     section: 'tab',
     shell: true,
   },
   {
     name: 'unpin',
-    args: ['[directory]'],
-    about: "Drop a pin — this directory's, every one below it, or the one above that paints it",
+    args: ['[directory|ssh:<host>]'],
+    about: "Drop a pin — this directory's, every one below it, the one above that paints it, or an ssh host's",
     section: 'tab',
     shell: true,
   },
   {
     name: 'pins',
     args: [],
-    about: "Map every pinned directory as a tree in its palette's colors, and the pin that covers this one",
+    about:
+      "Map every pinned directory as a tree in its palette's colors, every ssh host, and the pin that covers this one",
     section: 'tab',
     shell: true,
   },

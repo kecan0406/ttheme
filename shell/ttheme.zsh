@@ -33,6 +33,7 @@ __tt_fresh() {
 __tt_prompt() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   (( TTHEME_FRONT < 0 )) || TTHEME_FRONT=0
+  [[ -n $TTHEME_SSH_SPEC ]] && __tt_ssh_back
   __tt_fresh
 }
 
@@ -80,8 +81,14 @@ typeset -g TTHEME_PINS_FILE=${TTHEME_CONFIG:h}/pins
 typeset -g TTHEME_PINS_RAW="" TTHEME_PINS_AT=""
 typeset -gA TTHEME_PINS=()
 typeset -g TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_SPEC=""
+typeset -g TTHEME_SSH_SPEC="" TTHEME_SSH_BACK=""
 
 __tt_tilde() { REPLY=${1/#$HOME\//\~/} }
+
+__tt_ssh_ok() {
+  setopt localoptions extendedglob
+  [[ $1 == ssh:[[:alnum:]._*?:-]## ]]
+}
 
 __tt_pins_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
@@ -96,10 +103,16 @@ __tt_pins_load() {
   TTHEME_PINS=()
   for line in "${(@f)raw}"; do
     line=${line%%[[:space:]]##}
-    [[ $line == [~/]*[[:space:]]* ]] || continue
+    [[ $line == ([~/]|ssh:)*[[:space:]]* ]] || continue
     name=${line##*[[:space:]]} key=${${line%[[:space:]]*}%%[[:space:]]##}
-    [[ $key == \~ ]] && key=$HOME
-    TTHEME_PINS[${key/#\~\//$HOME/}]=$name
+    if [[ $key == ssh:* ]]; then
+      key=ssh:${(L)key#ssh:}
+      __tt_ssh_ok $key || continue
+      TTHEME_PINS[$key]=$name
+    else
+      [[ $key == \~ ]] && key=$HOME
+      TTHEME_PINS[${key/#\~\//$HOME/}]=$name
+    fi
     [[ -n ${TTHEME_PALETTE[$name]} ]] || print -u2 "ttheme: unknown palette '$name' pinned to $key"
   done
 }
@@ -293,7 +306,7 @@ __tt_announce() {
 __tt_dir_rule() {
   local k base best="" bestlen=-1 p=${1:A}
   for k in ${(k)TTHEME_PINS}; do
-    [[ -n ${TTHEME_PALETTE[$TTHEME_PINS[$k]]} ]] || continue
+    [[ $k == /* && -n ${TTHEME_PALETTE[$TTHEME_PINS[$k]]} ]] || continue
     base=${${k%/\*\*}:A}
     if [[ $k == *"/**" ]]; then
       [[ $p == "$base" || $p == "${base%/}"/* ]] || continue
@@ -376,10 +389,77 @@ __tt_focus() {
   fi
 }
 
+__tt_ssh_host() {
+  setopt localoptions extendedglob
+  local w o host=""
+  local -a words=(${(z)1})
+  local -i i=1 tty=0 ended=0
+  while [[ ${words[i]} == ([[:alpha:]_][[:alnum:]_]#=*|command|exec|noglob|nocorrect|-) ]]; do (( ++i )); done
+  [[ ${${(Q)words[i]}:t} == ssh ]] || return 1
+  for (( ++i; i <= ${#words}; i++ )); do
+    case ${words[i]} in
+      ('&&'|'||'|';'|';;'|';&'|';|') break ;;
+      ('2>'|'2>>'|'2>|'|'2>&') (( ++i )); continue ;;
+      ('&'|'&!'|'&|'|'|'|'|&'|[0-9]#[\<\>]*|'&>'*) return 1 ;;
+    esac
+    w=${(Q)words[i]}
+    if (( ! ended )) && [[ $w == -?* ]]; then
+      [[ $w == -- ]] && { ended=1; continue }
+      o=${w#-}
+      while [[ -n $o ]]; do
+        case ${o[1]} in
+          (t) (( ++tty )) ;;
+          ([fGNnsTVOQW]) return 1 ;;
+          ([BbcDEeFIiJLlmoPpRSw]) [[ -n ${o[2,-1]} ]] || (( ++i )); break ;;
+        esac
+        o=${o[2,-1]}
+      done
+      continue
+    fi
+    if [[ -n $host ]]; then
+      (( tty )) || return 1
+      break
+    fi
+    host=$w
+  done
+  [[ $host == ssh://* ]] && host=${${host#ssh://}%:<->}
+  REPLY=${(L)${${host##*@}#\[}%\]}
+  [[ -n $REPLY ]]
+}
+
+__tt_ssh_rule() {
+  local k best=""
+  [[ -n ${TTHEME_PALETTE[${TTHEME_PINS[ssh:$1]}]} ]] && { REPLY=ssh:$1; return 0 }
+  for k in ${(k)TTHEME_PINS}; do
+    [[ $k == ssh:*[*?]* && -n ${TTHEME_PALETTE[$TTHEME_PINS[$k]]} && $1 == ${~k#ssh:} ]] || continue
+    (( ${#k} > ${#best} )) && best=$k
+  done
+  [[ -n $best ]] || return 1
+  REPLY=$best
+}
+
+__tt_ssh_back() {
+  local back=$TTHEME_SSH_BACK worn=$TTHEME_SSH_SPEC
+  TTHEME_SSH_BACK="" TTHEME_SSH_SPEC=""
+  [[ $TTHEME_SPEC == "$worn" && $back != "$worn" ]] || return 0
+  if [[ -n $back ]]; then
+    __tt_wear "$back"
+  else
+    __tt_osc_reset
+    TTHEME_SPEC=
+  fi
+}
+
 __tt_ran() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  local REPLY name
   TTHEME_RAN=1
   [[ ${${(z)3}[1]:t} == tmux ]] && TTHEME_MUXED=1
+  [[ $3 == *ssh* ]] && __tt_ssh_host "$3" && __tt_ssh_rule "$REPLY" || return 0
+  name=$TTHEME_PINS[$REPLY]
+  TTHEME_SSH_BACK=$TTHEME_SPEC TTHEME_SSH_SPEC=$TTHEME_PALETTE[$name]
+  [[ $TTHEME_SSH_SPEC == "$TTHEME_SPEC" ]] || __tt_wear "$TTHEME_SSH_SPEC" "$name"
+  return 0
 }
 
 __tt_unmux() {
@@ -449,10 +529,21 @@ __tt_dir_label() {
 }
 
 __tt_pin_scope() {
-  if [[ $1 == *"/**" ]]; then
+  if [[ $1 == ssh:* ]]; then
+    REPLY="while connected"
+  elif [[ $1 == *"/**" ]]; then
     REPLY="and below"
   else
     REPLY="this directory"
+  fi
+}
+
+__tt_pin_where() {
+  if [[ $1 == ssh:* ]]; then
+    REPLY="ssh ${1#ssh:}"
+  else
+    __tt_pin_base "$1"
+    __tt_dir_label "$REPLY"
   fi
 }
 
@@ -482,6 +573,11 @@ __tt_pin_cover() {
 
 __tt_pin_scopes() {
   local d=${1:a} k
+  if [[ $1 == ssh:* ]]; then
+    plabel=(" This host ") pkeys=("$1") pkdef=1
+    [[ $1 == *[*?]* ]] && plabel=(" Every match ")
+    return 0
+  fi
   plabel=(" This directory " " And below ") pkeys=("$d" "${d%/}/**") pkdef=2
   if __tt_repo "$d" && [[ $REPLY != "$d" ]]; then
     plabel+=(" Repository ") pkeys+=("$REPLY/**")
@@ -495,26 +591,30 @@ __tt_pin_scopes() {
 }
 
 __tt_pin_save() {
-  local name=$1 key=$2 k base spec REPLY
-  __tt_pin_base "$key"
-  base=$REPLY
-  for k in ${(k)TTHEME_PINS}; do
-    [[ $k == /* ]] || continue
-    __tt_pin_base "$k"
-    [[ $REPLY == "$base" ]] && unset "TTHEME_PINS[$k]"
-  done
+  local name=$1 key=$2 k base spec=$3 REPLY
+  if [[ $key == /* ]]; then
+    __tt_pin_base "$key"
+    base=$REPLY
+    for k in ${(k)TTHEME_PINS}; do
+      [[ $k == /* ]] || continue
+      __tt_pin_base "$k"
+      [[ $REPLY == "$base" ]] && unset "TTHEME_PINS[$k]"
+    done
+  fi
   TTHEME_PINS[$key]=$name
   if ! __tt_pins_write; then
     print -u2 "ttheme pin: could not write $TTHEME_PINS_FILE"
     return 1
   fi
-  [[ -n $TTHEME_PIN ]] || TTHEME_BASE_SPEC=$3
-  if __tt_dir_rule "$PWD"; then
-    spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
-    TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
-  else
-    spec=$TTHEME_BASE_SPEC
-    TTHEME_PIN="" TTHEME_PIN_SPEC=""
+  if [[ $key == /* ]]; then
+    [[ -n $TTHEME_PIN ]] || TTHEME_BASE_SPEC=$3
+    if __tt_dir_rule "$PWD"; then
+      spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
+      TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
+    else
+      spec=$TTHEME_BASE_SPEC
+      TTHEME_PIN="" TTHEME_PIN_SPEC=""
+    fi
   fi
   if [[ $spec != "$TTHEME_SPEC" ]]; then
     if [[ -n $spec ]]; then
@@ -524,7 +624,7 @@ __tt_pin_save() {
       TTHEME_SPEC=
     fi
   fi
-  __tt_dir_label "$base"
+  __tt_pin_where "$key"
   k=$REPLY
   __tt_pin_scope "$key"
   if __tt_color; then
@@ -532,7 +632,7 @@ __tt_pin_save() {
   else
     print -r -- "Pinned · $name → $k · $REPLY"
   fi
-  if [[ $TTHEME_PIN != "$key" ]]; then
+  if [[ $key == /* && $TTHEME_PIN != "$key" ]]; then
     __tt_here_line Here
     print -r -- "$REPLY"
   fi
@@ -541,10 +641,11 @@ __tt_pin_save() {
 __tt_unpin_drop() {
   local k REPLY where
   local -a gone=()
+  local -i dirs=0
   for k in "$@"; do
     [[ -n ${TTHEME_PINS[$k]} ]] || continue
-    __tt_pin_base "$k"
-    __tt_dir_label "$REPLY"
+    [[ $k == /* ]] && dirs=1
+    __tt_pin_where "$k"
     where=$REPLY
     __tt_pin_scope "$k"
     gone+=("Unpinned · ${TTHEME_PINS[$k]} on $where · $REPLY")
@@ -562,6 +663,7 @@ __tt_unpin_drop() {
       print -r -- "$k"
     fi
   done
+  (( dirs )) || return 0
   __tt_here_line Here
   print -r -- "$REPLY"
 }
@@ -716,6 +818,15 @@ __tt_unpin() {
   local -i chosen=0 color=0
   __tt_color && color=1
   __tt_pins_load
+  if [[ $1 == ssh:* ]]; then
+    k=ssh:${(L)1#ssh:}
+    if [[ -z ${TTHEME_PINS[$k]} ]]; then
+      print -u2 -r -- "ttheme unpin: nothing pinned to ssh ${k#ssh:}"
+      return 1
+    fi
+    __tt_unpin_drop $k
+    return
+  fi
   if (( $# )); then
     d=$1
     [[ $d == \~ || $d == \~/* ]] && d=$HOME${d#\~}
@@ -1060,12 +1171,22 @@ __tt_map_fit() {
   done
 }
 
+__tt_map_ssh() {
+  local k name flag
+  for k in ${(oi)${(M)${(k)TTHEME_PINS}:#ssh:*}}; do
+    name=$TTHEME_PINS[$k] flag=""
+    [[ -n ${TTHEME_PALETTE[$name]} ]] || flag="not installed"
+    lp+=("") lpw+=(0) ll+=("ssh ${k#ssh:}") lat+=("$k") lpal+=("$name") lnote+=("while connected") lflag+=("$flag")
+  done
+}
+
 __tt_map_tree() {
   local home=${HOME:a} here=${PWD:a} htip="" REPLY
   local -A own=() below=() parent=() mark=() tstrip=()
   local -a roots=() lp=() lpw=() ll=() lat=() lpal=() lnote=() lflag=() reply
   local -i width=$(( COLUMNS > 0 ? COLUMNS : 80 ))
   __tt_map_build ""
+  __tt_map_ssh
   __tt_map_fit $width
   print -rl -- "${reply[@]}"
   print
@@ -1681,8 +1802,7 @@ __tt_pv_foot() {
     if [[ $mode == pin ]]; then
       badge='PREVIEW (PIN)'
       (( te )) && badge='THEME EDIT (PIN)'
-      __tt_pin_base "${pkeys[pk]}"
-      __tt_dir_label "$REPLY"
+      __tt_pin_where "${pkeys[pk]}"
       note=$REPLY
     elif (( pk == 2 )); then
       note="Until this tab closes"
@@ -2163,27 +2283,36 @@ __tt_pv_reach() {
   local -i room=$2
   (( color )) || d= z=
   (( room < 2 )) && room=2
-  __tt_pin_base "$key"
-  base=$REPLY
-  for k in ${(k)TTHEME_PINS}; do
-    [[ $k == /* ]] || continue
-    __tt_pin_base "$k"
-    [[ $REPLY == "$base" ]] || continue
-    if [[ $k != "$key" || $TTHEME_PINS[$k] != "$pick" ]]; then
-      __tt_pin_scope "$k"
-      was+=("${TTHEME_PINS[$k]} · $REPLY")
-    fi
-    unset "TTHEME_PINS[$k]"
-  done
-  TTHEME_PINS[$key]=$pick
-  top=$base
-  [[ $base != / ]] && __tt_pin_cover "${base:h}" && __tt_pin_base "$REPLY" && top=$REPLY
-  mark[$base]=new
-  __tt_map_build "$top"
+  if [[ $key == ssh:* ]]; then
+    __tt_pin_scope "$key"
+    [[ -n ${TTHEME_PINS[$key]} && $TTHEME_PINS[$key] != "$pick" ]] && was+=("${TTHEME_PINS[$key]} · $REPLY")
+    TTHEME_PINS[$key]=$pick
+    mark[$key]=new
+    __tt_map_ssh
+  else
+    __tt_pin_base "$key"
+    base=$REPLY
+    for k in ${(k)TTHEME_PINS}; do
+      [[ $k == /* ]] || continue
+      __tt_pin_base "$k"
+      [[ $REPLY == "$base" ]] || continue
+      if [[ $k != "$key" || $TTHEME_PINS[$k] != "$pick" ]]; then
+        __tt_pin_scope "$k"
+        was+=("${TTHEME_PINS[$k]} · $REPLY")
+      fi
+      unset "TTHEME_PINS[$k]"
+    done
+    TTHEME_PINS[$key]=$pick
+    top=$base
+    [[ $base != / ]] && __tt_pin_cover "${base:h}" && __tt_pin_base "$REPLY" && top=$REPLY
+    mark[$base]=new
+    __tt_map_build "$top"
+  fi
   __tt_map_fit $1
   (( ${#reply} > room )) && reply=("${(@)reply[1,room-1]}" "   …")
-  reach=("${reply[@]}" "")
-  __tt_dir_label "$base"
+  reach=("${reply[@]}")
+  [[ $key == /* || ${#was} -gt 0 ]] && reach+=("")
+  __tt_pin_where "$key"
   base=$REPLY
   for k in $was; do
     __tt_clip "${d}Replaces ${k% · *} on $base · ${k##* · }$z" $1
@@ -2192,6 +2321,7 @@ __tt_pv_reach() {
   __tt_pin_scope "$key"
   __tt_clip "→ $base · $REPLY" $(( $1 - ${(m)#pick} - 2 ))
   rsub=$REPLY
+  [[ $key == /* ]] || return 0
   __tt_here_fit "Then here" $1
   reach+=("${reply[@]}")
 }
@@ -3080,12 +3210,18 @@ ttheme() {
       __tt_keep "$REPLY" ;;
     preview) __tt_preview ;;
     pin)
-      if [[ -n $2 ]]; then
+      if [[ $2 == ssh:* ]]; then
+        REPLY=ssh:${(L)2#ssh:}
+        [[ $REPLY != ssh: ]] || { __tt_misuse pin "missing the host after ssh:"; return }
+        [[ $REPLY != *@* ]] || { print -u2 -r -- "ttheme pin: an ssh pin names the host alone — ssh:${REPLY##*@}"; return 1 }
+        __tt_ssh_ok $REPLY || { print -u2 -r -- "ttheme pin: not a host: ${2#ssh:} — letters, digits, . - : and the wildcards * ?"; return 1 }
+      elif [[ -n $2 ]]; then
         REPLY=$2
         [[ $REPLY == \~ || $REPLY == \~/* ]] && REPLY=$HOME${REPLY#\~}
         [[ -d $REPLY ]] || { print -u2 -r -- "ttheme pin: no such directory: $2"; return 1 }
+        REPLY=${REPLY:a}
       fi
-      __tt_preview pin ${REPLY:+${REPLY:a}} ;;
+      __tt_preview pin ${REPLY:+$REPLY} ;;
     unpin) __tt_unpin "${@:2}" ;;
     pins) __tt_pins_map ;;
   esac
@@ -3110,7 +3246,17 @@ if (( ${+functions[compdef]} )); then
     elif [[ $words[2] == market && $words[3] == (add|init) && $CURRENT == 4 ]]; then
       _files -/
     elif [[ $words[2] == (pin|unpin) && $CURRENT == 3 ]]; then
-      _files -/
+      reply=(${${(M)${(k)TTHEME_PINS}:#ssh:*}#ssh:})
+      if compset -P 'ssh:'; then
+        if [[ $words[2] == unpin ]]; then
+          compadd -- $reply
+        elif (( $+functions[_ssh_hosts] )); then
+          _ssh_hosts
+        fi
+      else
+        _files -/
+        [[ $words[2] == pin || ${#reply} -gt 0 ]] && compadd -S '' -- ssh:
+      fi
     elif [[ $words[2] == add && $words[CURRENT-1] == --market ]]; then
       _files -/
     elif [[ $words[2] == add ]]; then

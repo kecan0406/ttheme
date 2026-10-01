@@ -26,6 +26,7 @@ export interface Probe {
   look(label: string, options?: LookOptions): Promise<void>
   config(line: string): void
   pin(dir: string, palette: string): void
+  pinHost(host: string, palette: string): void
   wire(terminal: 'ghostty'): Promise<Elsewhere>
 }
 
@@ -356,6 +357,23 @@ export const JOURNEYS: Journey[] = [
       p.pin('work', 'miku')
       await p.focus(a)
       await p.look('moved')
+    },
+  },
+  {
+    id: 'ssh',
+    about:
+      'ssh to a pinned host repaints the tab while it runs, follows it to the front, and its prompt puts the palette back',
+    async run(p) {
+      p.pinHost('tusa', 'kita')
+      const a = await p.open()
+      await p.launch(a, 'ssh tusa', 'remote>')
+      await p.look('in', { busy: true })
+      await p.open()
+      await p.focus(a)
+      await p.look('front', { busy: true })
+      await p.keys(a, 'q')
+      await p.back(a)
+      await p.look('out')
     },
   },
   {

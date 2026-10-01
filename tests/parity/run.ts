@@ -276,6 +276,9 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       mkdirSync(join(fixture.place.home, dir), { recursive: true })
       writeFileSync(join(fixture.place.configHome, 'ttheme', 'pins'), `~/${dir}/**  ${palette}\n`)
     },
+    pinHost(host, palette) {
+      writeFileSync(join(fixture.place.configHome, 'ttheme', 'pins'), `ssh:${host}  ${palette}\n`)
+    },
   }
 }
 

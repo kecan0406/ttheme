@@ -13,9 +13,9 @@ This tab
   preview                                        Try palettes live — focus repaints, enter edits its tone and picture and applies it, esc restores, ? lists keys
   use <palette>                                  Paint this tab — a unique prefix works: ttheme use ho
   next                                           Advance this tab to the next palette
-  pin [directory]                                Pick a palette for this directory, everything below it or its repository — cd in repaints, cd out restores
-  unpin [directory]                              Drop a pin — this directory's, every one below it, or the one above that paints it
-  pins                                           Map every pinned directory as a tree in its palette's colors, and the pin that covers this one
+  pin [directory|ssh:<host>]                     Pick a palette for this directory, everything below it, its repository or an ssh host — cd or ssh in repaints, leaving restores
+  unpin [directory|ssh:<host>]                   Drop a pin — this directory's, every one below it, the one above that paints it, or an ssh host's
+  pins                                           Map every pinned directory as a tree in its palette's colors, every ssh host, and the pin that covers this one
 
 New tabs
   default <palette>                              Make a palette the one new tabs open with
@@ -236,6 +236,35 @@ ttheme pin picks one here · ttheme unpin drops one · ~/.config/ttheme/pins
 A pin whose palette is not installed, or whose directory is gone, stays in the
 file and does nothing; the map says which. Piped, `pins` prints one line per pin
 instead: its path, a tab and its palette.
+
+## SSH host pins
+
+`ttheme pin ssh:<host>` pins a palette to a host instead of a directory: the
+tab wears it from the moment you run `ssh <host>` until the prompt comes back,
+then takes back what it wore before — unless you painted it by hand in
+between, in which case your pick stays. The host is the name you type after
+`ssh`, so a `Host` from `~/.ssh/config` works as is, without the user; `*` and
+`?` match as they do there, so `ssh:*.prod` covers every host ending in
+`.prod`. A host's own pin wins over a pattern, and a longer pattern over a
+shorter one. It opens the same browser and theme edit as a directory's pin,
+where enter offers **This host** (**Every match** for a pattern) and the panel
+lists the host pins as they will be. The pin lands in the same `pins` file as
+`ssh:<host>  <palette>`; `pins` lists it below the directories, and
+`ttheme unpin ssh:<host>` drops it.
+
+```
+[THEME EDIT (PIN)] kita → [This host]   ssh tusa   enter confirm          esc back
+```
+
+Only a session counts: `ssh tusa`, `ssh -p 2222 bob@tusa`, `ssh tusa -A`, an
+alias that expands to one, and a remote command only with `-t`
+(`ssh -t tusa tmux attach`). A remote command without it (`ssh tusa uptime`),
+`-N`, `-f`, `-T`, a pipe, a redirect or `&` leave the tab alone, as do an `ssh`
+inside a script or a function, `scp`, `rsync` and `git`. Inside tmux the tab
+keeps its palette, since the colors belong to the terminal tab rather than the
+pane. While the session runs, a remote program that resets the terminal's
+colors (`reset`, some Neovim setups) puts the terminal's own colors back until
+the prompt returns.
 
 ## Names and output
 

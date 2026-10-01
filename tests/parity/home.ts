@@ -12,6 +12,14 @@ export const STARTUP = 'konata'
 
 const SHIMS: Record<string, string> = {
   ps: 'exit 0',
+  ssh: [
+    's=$(stty -g)',
+    'stty raw -echo',
+    'printf "\\033[?1004hremote> "',
+    'while [ "$(dd bs=1 count=1 2>/dev/null)" != q ]; do :; done',
+    'printf "\\033[?1004l"',
+    'stty "$s"',
+  ].join('\n'),
   osascript: [
     'front="$HOME/.parity/front"',
     'for ps in /bin/ps /usr/bin/ps; do [ -x "$ps" ] && break; done',
