@@ -225,7 +225,7 @@ Every background picture belongs to the artist who drew it. ttheme never passes
 one on: a palette or a share code names a booru post by its number, and each
 machine fetches it from that booru itself. `find` names who drew each post and
 links the post and the artwork's own page, an installed picture keeps its
-artist and source, and theme edit names the artist over its picture panel. The
+artist and source, and preview's image edit names the artist over the picture. The
 pictures are for your own terminal — when you show one off, credit the artist
 and link the artwork's page, not the booru's copy.
 

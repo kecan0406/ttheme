@@ -9,13 +9,13 @@
                      │  Filter    Any text  ·  bksp  ·  ctrl-u clears         │
                      │            Names and titles, in Japanese too           │
                      │  Example   ⇧←→  shell, code, diff, logs, monitor       │
-                     │  Apply     enter  edits  ·  esc restores the tab       │
+                     │  Apply     enter  applies  ·  esc restores the tab     │
+                     │  Edit      tab  →  ctrl+e  ·  its colors and picture   │
                      │  Config    alt-c  ·  ↑↓ setting  ←→ value              │
                      │            enter saves  ·  esc undoes                  │
                      │  Close     ?  esc                                      │
                      │                                                        │
                      ╰────────────────────────────────────────────────────────╯
-
 
 
 

@@ -217,47 +217,52 @@ them over. An action takes a key the filter never sees — `tab`, `shift+tab`,
 the arrows alone or with `shift`, `enter`, `space`, `esc`, or `ctrl` or `alt`
 with a letter — and this table is where to look before binding one. A binding
 on a key already in it is a collision: move one of them, or pick another key.
+`j` and `k` move like `↓` and `↑` only on the screens that have no filter: the
+panel below, preview's settings, the palette editor and find's grid.
 
 | Key | Preview | Browse |
 |---|---|---|
 | any character | filters | filters (each tab keeps its own) |
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
-| `←` `→` | close or open a series | fold a series; on a market, auto-update |
-| `enter` | open theme edit on the palette | apply every pick and market change |
+| `←` `→` | close or open a series; `→` on a palette opens its panel | fold a series; on a market, auto-update |
+| `enter` | apply the palette, asking where | apply every pick and market change |
 | `esc` | clear the filter, then restore and close | cancel |
 | `space` | fold or open a series | pick |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
 | `?` | keys | — |
 | `alt-c` | settings | — |
+| `ctrl+e` | open the palette's panel | — |
 | `ctrl+r` | — | update the market |
 | `shift+←` `shift+→` | example scene | previous or next of its four tabs |
-| `tab` `shift+tab` | next or previous screen of the bare `ttheme` | next or previous screen of the bare `ttheme` |
+| `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
+| `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |
 | `ctrl+c` | quit | cancel |
 
 The settings panel preview opens over its list and the questions browse asks
 take the keys they list on their own last line while they are open. `find`
 and the palette editor are screens of their own and keep their own keys.
 
-Theme edit (`enter` in preview) has no filter, so its two panels use letters
-too — one panel takes the keys while it has the focus, and the three that
-leave the panel are the same in both:
+Preview's panel (`tab`, `→` or `ctrl+e` on a palette) has no filter, so it uses
+letters too. It is one list — the picture's fields, the palette's slots, then an
+Apply button — and the part the cursor is in takes the keys:
 
-| Key | Tone panel | Picture panel |
-|---|---|---|
-| `↑` `↓` | slot (while tuning, lightness, chroma or hue) | field |
-| `←` `→` | normal or bright (while tuning, a step) | step |
-| `⇧←` `⇧→` | while tuning, ×5 | ×10 |
-| `tab` | tune the slot | — |
-| `1`-`9` | while tuning, jump | place |
-| `#` `c` `v` `u` `ctrl+r` `space` | type a color, copy, paste, undo, redo, show the colors before | — |
-| `f` | move the colors the gate misses | find a picture |
-| `r` `R` | reset a slot, all of them | — |
-| `=` `+` | the bright follows its normal, — | reset a field, all |
-| `c` `space` `,` `.` `D` | — | colors, hide, other pictures, remove one |
-| `[` `]` | focus the tone panel, the picture panel | same |
-| `s` | save | save |
-| `enter` | apply, asking where | apply, asking where |
-| `esc` | cancel, dropping what changed since the last save | cancel |
+| Key | Image | Palette | Apply |
+|---|---|---|---|
+| `↑` `↓` `j` `k` | Images, then colors, size, position, opacity, and past the last one the palette | slot, and past the last one Apply (while tuning, lightness, chroma or hue) | the last slot, the top |
+| `home` `end` | the top, Apply | same | same |
+| `←` `→` | on Images, another picture; on a field, a step | normal or bright (while tuning, a step) | — |
+| `⇧←` `⇧→` | ×10 | while tuning, ×5 | — |
+| `enter` | on the empty frame under Images of a palette with no picture, find one | tune the slot (while tuning, keep it) | apply, saving first and asking where |
+| `tab` | — | tune the slot | — |
+| `1`-`9` | place | while tuning, jump | — |
+| `#` `c` `v` `u` `ctrl+r` `space` | — | type a color, copy, paste, undo, redo, show the colors before | — |
+| `f` | find a picture | move the colors the gate misses | — |
+| `r` `R` | — | reset a slot, all of them | — |
+| `=` `+` | reset a field, all | the bright follows its normal, — | — |
+| `c` `space` `,` `.` `D` | colors, hide, other pictures, remove one | — | — |
+| `shift+enter` | apply | apply | apply |
+| `s` | save | save | save |
+| `esc` | back to the list, dropping what changed since the last save | same (while tuning, undo) | same |
 
 ### Writing the text
 
@@ -282,7 +287,7 @@ look, and never Title Case.
   and error messages, which read the same after the `ttheme:` prefix
   (`ttheme: not installed: kita`) and in a status line. A notice written for
   the screen (`No picture on the clipboard`) is not an error.
-- **Capitals**: only a mode badge (`PREVIEW`, `THEME EDIT`, `IMAGE SEARCH`, `IMAGE PREVIEW`, `HELP`, `CONFIG`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
+- **Capitals**: only a mode badge (`PREVIEW`, `EDIT`, `IMAGE SEARCH`, `IMAGE PREVIEW`, `HELP`, `CONFIG`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
 
 Counts on screen come from the catalog, never from the rows being drawn. A
 folded series still reports how many of its palettes are picked, and the

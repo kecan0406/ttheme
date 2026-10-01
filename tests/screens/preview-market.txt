@@ -21,4 +21,4 @@
 
 
 
-[PREVIEW] enter edit   ? keys                                                            esc restore
+[PREVIEW] enter apply   tab edit   ? keys                                                esc restore

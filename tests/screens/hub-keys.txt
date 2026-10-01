@@ -1,18 +1,18 @@
  [Preview]  Browse   tab next
    Search… ‹hint›
 
-▌  ▸ Bocchi the Rock!                         1
-   ▸ Lucky☆Star      ╭─ Help ─────────────────────────────────────────────────╮
-                     │                                                        │
+▌  ▸ Bocchi the Rock!╭─ Help ─────────────────────────────────────────────────╮
+   ▸ Lucky☆Star      │                                                        │
                      │  Move      ↑↓  home  end  pgup  pgdn                   │
                      │  Series    ←→  ·  enter or space on a series           │
                      │  Filter    Any text  ·  bksp  ·  ctrl-u clears         │
                      │            Names and titles, in Japanese too           │
                      │  Example   ⇧←→  shell, code, diff, logs, monitor       │
-                     │  Apply     enter  edits  ·  esc restores the tab       │
+                     │  Apply     enter  applies  ·  esc restores the tab     │
+                     │  Edit      tab  →  ctrl+e  ·  its colors and picture   │
                      │  Config    alt-c  ·  ↑↓ setting  ←→ value              │
                      │            enter saves  ·  esc undoes                  │
-                     │  Screens   tab  shift+tab  ·  Preview · Browse         │
+                     │  Screens   shift+tab  ·  tab on a series               │
                      │  Close     ?  esc                                      │
                      │                                                        │
                      ╰────────────────────────────────────────────────────────╯

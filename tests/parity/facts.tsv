@@ -25,7 +25,7 @@ next.next.wears	miku	=	=	=	=	=	=	=	=
 next.next.issue	-	=	=	=	=	=	=	=	=
 hub.preview.colors	konata	bg:konata fg:konata cursor:kita ansi:kita	=	=	=	=	=	=	=
 hub.preview.picture	konata	=	=	none	=	none	=	none	none
-hub.preview.text	txt:63c4ac152c	=	=	=	=	=	=	=	=
+hub.preview.text	txt:376928daa2	=	=	=	=	=	=	=	=
 hub.preview.issue	-	=	=	=	=	=	=	=	=
 hub.browse.colors	kita	=	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
 hub.browse.picture	kita	=	=	none	=	none	=	none	none
@@ -33,7 +33,7 @@ hub.browse.text	txt:fe6ce54e6c	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=
 hub.back.colors	konata	bg:konata fg:konata cursor:kita ansi:kita	=	=	=	=	=	=	=
 hub.back.picture	konata	=	=	none	=	none	=	none	none
-hub.back.text	txt:63c4ac152c	=	=	=	=	=	=	=	=
+hub.back.text	txt:376928daa2	=	=	=	=	=	=	=	=
 hub.back.issue	-	=	=	=	=	=	=	=	=
 hub.closed.colors	kita	=	=	=	=	=	=	=	=
 hub.closed.picture	kita	=	=	none	=	none	=	none	none
@@ -113,7 +113,7 @@ editor-terminal.after.text	txt:1b7974a0e0	=	=	=	=	=	=	=	=
 editor-terminal.after.issue	-	=	=	=	=	=	=	=	=
 preview-hover.hover.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
 preview-hover.hover.picture	kita	=	=	none	=	none	=	none	none
-preview-hover.hover.text	txt:b2710e0425	=	=	=	=	=	=	=	=
+preview-hover.hover.text	txt:2e75a93caa	=	=	=	=	=	=	=	=
 preview-hover.hover.issue	-	=	=	=	=	=	=	=	=
 preview-hover.back.colors	konata	=	=	=	=	=	=	=	own
 preview-hover.back.picture	konata	=	=	none	=	none	=	none	none
@@ -121,7 +121,7 @@ preview-hover.back.wears	konata	=	=	=	=	=	=	=	none
 preview-hover.back.issue	-	=	=	=	=	=	=	=	=
 preview-tab.pick.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
 preview-tab.pick.picture	kita	=	=	none	=	none	=	none	none
-preview-tab.pick.text	txt:2182a15b51	=	=	txt:f0a5308d67	=	txt:f0a5308d67	txt:a13e6f1b5e	txt:f0a5308d67	txt:d8ee1f96ab
+preview-tab.pick.text	txt:593207782a	=	=	=	=	=	=	=	txt:d8ee1f96ab
 preview-tab.pick.issue	-	=	=	=	=	=	=	=	=
 preview-tab.kept.colors	kita	=	=	=	=	=	=	=	=
 preview-tab.kept.picture	kita	=	=	none	=	none	=	none	none
@@ -137,7 +137,7 @@ preview-default.new.wears	miku	=	=	=	=	=	=	=	none
 preview-default.new.issue	-	=	=	=	=	=	=	=	=
 preview-tune.tune.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
 preview-tune.tune.picture	kita	=	=	none	=	none	=	none	none
-preview-tune.tune.text	txt:44752225fe	=	=	txt:6297e28fe6	=	txt:6297e28fe6	txt:f81edab17b	txt:6297e28fe6	txt:6297e28fe6
+preview-tune.tune.text	txt:44de821722	=	=	txt:ca05fb91a3	txt:4b727964fe	txt:ca05fb91a3	txt:25b4d4704f	txt:ca05fb91a3	txt:0ad5718316
 preview-tune.tune.issue	-	=	=	=	=	=	=	=	=
 preview-tune.back.colors	konata	=	=	=	=	=	=	=	own
 preview-tune.back.picture	konata	=	=	none	=	none	=	none	none

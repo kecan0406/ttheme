@@ -63,7 +63,7 @@ second while Warp wears that palette. Warp has no position or size setting and d
 cover, so with Warp wired a tuned picture that is not a fill is baked onto a
 canvas the size of the window, centered or not.
 
-Theme edit tunes and finds pictures in Warp too. While the picture panel is open,
+Preview's image edit tunes and finds pictures in Warp too. While you are in it,
 each step lays the picture on the background in one pass (about 0.2 s), writes a
 short-lived theme and switches Warp to it; a held key does this once, when it is
 let go, and an opacity step keeps the same picture, so it draws nothing. Warp
@@ -78,12 +78,13 @@ on while find runs.
 
 ## Finding one
 
-A palette with no background yet can find one: on it in `preview`, `enter` opens
-theme edit and `f` in its picture panel opens **find**, which searches for the palette's character tag (`meta.booru`) and lays
+A palette with no background yet can find one: on it in `preview`, `tab` opens its
+panel on an empty frame where the picture would be, and `enter` there (or `f`)
+opens **find**, which searches for the palette's character tag (`meta.booru`) and lays
 the results out as a grid of thumbnails, over the palette's own background — the
 picture the terminal shows for another palette stays out of sight while find is
-open. It opens on **all**, every site's posts
-ranked together; tab moves to danbooru, konachan, yande.re and zerochan alone,
+open. The arrows move through it, and `j`/`k` down and up a row. It opens on
+**all**, every site's posts ranked together; tab moves to danbooru, konachan, yande.re and zerochan alone,
 then back, and shift+tab goes the other way. The boorus share one tag vocabulary, and zerochan names characters in
 words (`Gotou Hitori`), which find asks for with underscores (`gotou_hitori`);
 where a site calls the character something else, the palette names it there in
@@ -115,7 +116,7 @@ site.
 Under each thumbnail is its post id — a link to the post's page, marked `⧉` in
 the site's color the way Claude Code marks a link, and opened with a click
 (cmd+click in Ghostty and iTerm2); the same mark sets off every post number
-find, theme edit's picture panel and `ttheme add` show — and size, and under that the artist: named
+find, preview's image edit and `ttheme add` show — and size, and under that the artist: named
 by the site's own tag types, by danbooru's tags for the same file, or, on a
 zerochan post danbooru does not hold, by the post's page once you have tried it
 or the post beside it on — a `—` until one is known. A score follows as
@@ -222,7 +223,7 @@ scene back. They come with the posts' own answers, except on zerochan, whose
 list types no tags: a post danbooru holds takes danbooru's names and leaves its
 uploader and day at `—`, and one it does not fetches its page once — beside the
 picture, and ahead of time for the posts on either side — for its artist,
-characters, series, uploader and day. `t` opens the same tuning panel theme edit has (see
+characters, series, uploader and day. `t` opens the same tuning panel preview's image edit has (see
 [Tuning](#tuning)) over the picture: size, position and opacity change what you
 see in place, stay as you move to the next post, and are installed with the
 picture, so preview opens it the way you left it. On macOS an opaque picture is
@@ -283,7 +284,7 @@ neither break up nor alias, and stays smooth when a small picture is enlarged.
 
 A picture can also keep its own colors. `TTHEME_BG_COLORS=original` (in `ttheme
 config`, or alt-c in `preview`) draws every picture installed from then on that
-way, and the `Colors` row of theme edit's picture panel switches one picture at a time,
+way, and the `Colors` row of preview's image edit switches one picture at a time,
 whatever the setting is — `←`/`→` on it, or `c` from any field, draw that picture
 again from its original, in the palette's tone or in its own colors, which takes
 a moment and is kept at once: esc undoes the tuning, not the colors, and `c`
@@ -323,9 +324,11 @@ it draws that palette's `background-image` where Ghostty would place it, faded b
 `background-image-opacity`, behind the list — or just its plain background when
 it has no file. Only PNG images preview.
 
-On a palette with a background, theme edit (`enter` in `preview`) has a panel on
-its right that tunes it in place — `]` moves to it, `[` back to the tone:
-`↑`/`↓` pick size, position, opacity or colors, and `←`/`→` change it (with
+On a palette with a background, the panel `tab`, `→` or `ctrl+e` opens in `preview` tunes it
+in place, above the palette's colors — the panel opens on it, and `↓` past its
+last field moves on to the slots. Its first row is **Images**, the palette's
+pictures as thumbnails (see [Several pictures](#several-pictures-per-palette)),
+and under it `↑`/`↓` (or `j`/`k`) pick colors, size, position or opacity, and `←`/`→` change it (with
 shift, ten steps at a time; `c` switches the colors from any field — see
 [Original colors](#original-colors)). Size walks 1% at a time, shown large in the middle of the
 screen as it changes: 100% is the whole image fitted into the window
@@ -339,15 +342,16 @@ one in reading order; opacity moves by 0.01. A field that is not at its
 default carries `↺` at the panel's right edge, lit on the field the cursor is on:
 `=` puts that one field back, `+` all three of size, position and opacity (and
 shows the picture again if it was off). Space turns the palette's background off and on, `s` saves
-the change — with the tone, see [Theme edit](usage.md#theme-edit) — and esc drops what you changed
-since the last save. `f` in the panel opens find to add a picture, keeping what you tuned so far.
+the change — with the tone, see [Palette edit](usage.md#palette-edit) — and esc goes back to the list,
+dropping what you changed since the last save. `f` in the panel opens find to add a picture, keeping what you tuned so far.
 
 ## Several pictures per palette
 
 A palette holds every picture installed on it: an install keeps the one on
-screen rather than dropping it. In the tuning panel, below the three fields, a
-strip of up to five thumbnails shows the palette's pictures with the one on
-screen framed and its place (`2/3`) beside them; `,` and `.` move along it, the
+screen rather than dropping it. At the top of the tuning panel, **Images** shows
+up to five of the palette's pictures as thumbnails, with the one on screen
+framed and its place (`2/3`) beside them; `←`/`→` on that row, or `,` and `.`
+from any, move along it, the
 strip sliding round when there are more, and the background shows that picture
 with its own tuning at once — nothing is saved until `s`, which makes it the
 palette's picture, and esc goes back to the one the panel opened with. `D`

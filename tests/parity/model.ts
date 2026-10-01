@@ -89,7 +89,7 @@ export class Tab {
   logo = 'none'
   logoOpacity = '-'
   readonly images = new Map<string, string>()
-  readonly placements = new Map<string, { image: string; z: number }>()
+  readonly placements = new Map<string, { image: string; z: number; rows: number }>()
   exited = false
   bgs: string[] = []
   tty = ''
@@ -728,7 +728,11 @@ export class App {
           return
         }
       }
-      tab.placements.set(`${id}:${keys.get('p') ?? '0'}`, { image: id, z: Number(keys.get('z') ?? '0') })
+      tab.placements.set(`${id}:${keys.get('p') ?? '0'}`, {
+        image: id,
+        z: Number(keys.get('z') ?? '0'),
+        rows: Number(keys.get('r') ?? ROWS),
+      })
     }
     if (action === 'd') {
       const what = keys.get('d') ?? 'a'
@@ -749,12 +753,11 @@ export class App {
   }
 
   layered(tab: Tab): string | undefined {
-    if (tab.placements.size === 0) {
+    const layers = [...tab.placements.values()].filter((placed) => placed.rows * 2 >= ROWS)
+    if (layers.length === 0) {
       return undefined
     }
-    const pictures = [...tab.placements.values()]
-      .filter((placed) => (tab.images.get(placed.image) ?? '') !== '')
-      .sort((a, b) => b.z - a.z)
+    const pictures = layers.filter((placed) => (tab.images.get(placed.image) ?? '') !== '').sort((a, b) => b.z - a.z)
     const top = pictures[0]
     return top ? imageName(tab.images.get(top.image) ?? '') : 'none'
   }
@@ -1083,6 +1086,8 @@ const KEYS: Record<string, string> = {
   down: '\x1b[B',
   right: '\x1b[C',
   left: '\x1b[D',
+  home: '\x1b[H',
+  end: '\x1b[F',
   enter: '\r',
   esc: '\x1b',
   tab: '\t',

@@ -167,11 +167,19 @@ __tt_bg_write kagami || { print -u2 "__tt_bg_write (a picture's own tuning) fail
   { print -u2 "tuning did not go to the picture the conf names:"; ls $bgd; cat $bgd/kagami.conf; exit 1 }
 te=1 tfocus=1 tename=kagami bgcw=8 tune=kagami tpick=kagami tf=1 help=0 pick= conf=0 msgt=0 flt= color=0
 out=; __tt_pv_foot 80
-[[ $out == *"f find"* && $out == *"s save"* ]] || { print -u2 "a THEME EDIT bar with several images dropped the find or save key: $out"; exit 1 }
+[[ $out == *"f find"* && $out == *"s save"* ]] || { print -u2 "an EDIT bar on a picture with several images dropped the find or save key: $out"; exit 1 }
 out=; __tt_pv_foot 200
-[[ $out == *"image ×3"* ]] || { print -u2 "the THEME EDIT bar did not count the palette's pictures: $out"; exit 1 }
+[[ $out == *"image ×3"* ]] || { print -u2 "the EDIT bar did not count the palette's pictures: $out"; exit 1 }
 [[ $out == *"space show"* && $out != *"c colors"* ]] ||
-  { print -u2 "the THEME EDIT bar of a hidden picture offered the colors key: $out"; exit 1 }
+  { print -u2 "the EDIT bar of a hidden picture offered the colors key: $out"; exit 1 }
+(
+  shown=""
+  __tt_pv_bg_show() { shown=$1 }
+  __tt_pv_paint() { print -u2 "a picture tweak in the panel repainted the list's palette over the tone"; exit 1 }
+  rtype=(thm) rval=(konata) cur=1 resized=0 bgname=""
+  __tt_pv_focus
+  [[ $shown == kagami ]] || { print -u2 "a size or position step in the panel never showed the picture again: '$shown'"; exit 1 }
+) || exit 1
 msg=${(l:200::x:)} msgt=100 out=; __tt_pv_foot 80
 plain=${out//$'\e[K'/}
 (( ${(m)#plain} <= 80 )) || { print -u2 "a long preview message overran the bar: ${(m)#plain} columns"; exit 1 }
@@ -244,7 +252,7 @@ te=0 tune= tpick= bgcw=0 out=
   __tt_pv_tune > /dev/null
   [[ ! -e $bgd/cli.log ]] || { print -u2 "c drew a hidden picture again"; exit 1 }
   bgoff[kagami]=0 out=; __tt_pv_foot 200
-  [[ $out == *"c colors"* ]] || { print -u2 "the THEME EDIT bar did not offer the colors key: $out"; exit 1 }
+  [[ $out == *"c colors"* ]] || { print -u2 "the EDIT bar did not offer the colors key: $out"; exit 1 }
   __tt_pv_tune > /dev/null
   REPLY=; __tt_bg_coloring $tpick
   [[ "$(<$bgd/cli.log)" == "image kagami original safebooru_2" && $REPLY == original && $tf == 1 && $tune == kagami && $bgsrc[kagami] == *5e5e5e5e* ]] ||

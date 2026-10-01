@@ -588,7 +588,7 @@ __tt_pv_bg_recolor() {
 
 __tt_pv_bg_panel() {
   local name=$1 z=$'\e[0m' b=$'\e[1m' d=$'\e[2m' c=$ac val sty mark choice REPLY
-  local -a labs=(Size Position Opacity Colors) at=(0 3 6 7) def=(${=bgdef[$1]})
+  local -a labs=(Size Position Opacity Colors) at=(1 4 7 0) def=(${=bgdef[$1]})
   local -i r0=$2 col=$3 end=$4 off=${bgoff[$1]} T=$(( $4 - $3 - 21 )) lo=100 hi=100 k i r knob pos=${bgpos[$1]} o tuned
   (( color )) || z= b= d= c=
   (( T < 8 )) && T=8
@@ -624,7 +624,7 @@ __tt_pv_bg_panel() {
     fi
     if (( k == 2 )); then
       for (( i = 1; i <= 9; i++ )); do
-        out+=$'\e['$(( r0 + 2 + (i - 1) / 3 ))';'$(( col + 12 + (i - 1) % 3 * 3 ))'H'
+        out+=$'\e['$(( r0 + at[2] - 1 + (i - 1) / 3 ))';'$(( col + 12 + (i - 1) % 3 * 3 ))'H'
         if (( ! color )); then
           if (( i == pos )); then out+="#"; else out+="."; fi
         elif (( i == pos && ! off )); then
@@ -669,14 +669,13 @@ __tt_pv_bg_panel() {
       out+=$'\e['$r';'$end'H'$mark"↺"$z
     fi
   done
-  (( split )) && bgstrip="$(( r0 + 9 )) $col $end"
 }
 
 __tt_pv_bg_strip() {
   local pal=$tune dir=${TTHEME_CONFIG:h}/backgrounds cur fill want sty top side bot cmd buf="" z=$'\e[0m' d=$'\e[2m' REPLY
   local -a keys=(${=bgpics[$tune]}) wh pd
   local -i r0=$1 col=$2 end=$3 n=${#keys} at show tc tr=3 i k x r id slot first
-  if (( n < 2 )); then
+  if (( n < 1 )); then
     __tt_pv_bg_strip_off
     return 0
   fi
@@ -684,10 +683,8 @@ __tt_pv_bg_strip() {
   [[ $tpick == *:* ]] || cur=${bgact[$pal]}
   at=${keys[(Ie)$cur]}
   (( at )) || at=1
-  buf+=$'\e['$r0';'$(( col + 2 ))'H'$d"Images"$z$'\e['$r0';'$(( end - ${#at} - ${#n} ))'H'$d"$at/$n"$z
   pd=(${=bgpic[$pal:$keys[at]]})
   if (( r0 + tr + 3 >= ph )) || ! __tt_bg_dim $dir/$pd[2]; then
-    print -rn -- "$buf"
     __tt_pv_bg_strip_off
     return 0
   fi

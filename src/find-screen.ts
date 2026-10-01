@@ -1177,7 +1177,7 @@ const TUNE_KEYS: [string, string][] = [
 
 const KEYS: Record<FindView['mode'], [string, string][]> = {
   grid: [
-    ['Move', '←↑↓→  home  end  pgup  pgdn'],
+    ['Move', '←↑↓→  j k  home  end  pgup  pgdn'],
     ['Try on', 'enter'],
     ['Site', `tab  shift+tab  all, ${SITES.map((site) => site.name).join(', ')}`],
     ['Posts', 'c  cutouts or every post'],

@@ -12,6 +12,7 @@ alacritty	*.text	cannot	Alacritty has no graphics protocol, so preview offers no
 alacritty	picture-tune.other.opacity	cannot	Alacritty has no graphics protocol, so it shows no picture
 alacritty	reach-picture.ghostty.opacity	cannot	Alacritty preview has no picture tuning, so no tuned picture leaves it for Ghostty
 wezterm	unwired.used.issue	cannot	a WezTerm init never wired runs no ttheme module, so a palette's picture cannot show
+wezterm	preview-tune.tune.text	cannot	find stays off in WezTerm, so the key bar of a picture in the edit panel has room for ⇧←→ ×10 where Ghostty shows f find
 windows-terminal	*.picture	cannot	Windows Terminal draws no kitty graphics, so ttheme gives it no picture
 windows-terminal	*.text	cannot	Windows Terminal draws no kitty graphics, so preview offers no picture tuning
 windows-terminal	picture-tune.other.opacity	cannot	Windows Terminal draws no kitty graphics, so ttheme gives it no picture
@@ -21,7 +22,6 @@ warp	off.other.*	layer	Warp tells an idle prompt nothing when its tab comes to t
 warp	on.other.*	layer	Warp tells an idle prompt nothing when its tab comes to the front, so a tab that went off takes the default back while its shell learns it only at its next prompt
 warp	pin-reach.*	layer	Warp tells an idle prompt nothing when its tab comes to the front, so a tab already under a pin set or moved in another tab repaints only at its next prompt
 warp	preview-tune.tune.text	cannot	Warp opens no OSC 8 links, so the tuning title names the post without linking it
-warp	preview-tab.pick.text	cannot	Warp opens no OSC 8 links, so the title of the picture panel names the post without linking it
 warp	browse.hover.picture	cannot	Warp paints a tab only through its one theme, so a live repaint puts on the palette's picture along with its colors
 warp	unwired.used.*	cannot	Warp paints a tab only through the settings.toml init wires, so a Warp init never wired refuses ttheme use
 konsole	*.picture	cannot	Konsole keeps a color scheme's wallpaper cached while any tab shows the scheme, so ttheme shows no picture there

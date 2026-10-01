@@ -55,7 +55,9 @@ where an error came from.
 
 `ttheme` alone opens preview and browse as two tabs of one full screen, on
 preview, with the tabs named in the top row. `tab` moves to the next tab and
-`shift+tab` to the previous one. Both screens filter as you type, so a letter is
+`shift+tab` to the previous one — except on a palette in preview, where `tab`
+opens its [panel](#palette-edit) and `shift+tab` is the way to browse. Both
+screens filter as you type, so a letter is
 never a command here: what they do besides typing sits on `tab`, the arrows,
 `enter`, `space`, `esc` and `ctrl` or `alt` with a key ([the keys each screen
 takes](../CONTRIBUTING.md#keys-a-screen-takes) are listed for anyone adding one).
@@ -86,13 +88,14 @@ spells them, ignoring case and punctuation, so `ひとり` or `hitori` finds `bo
 and `らきすた` finds Lucky☆Star; a row that matched on one of those other names
 shows it dimmed beside its own, and a Japanese input method composes in the
 search field itself.
-Enter opens the [theme edit](#theme-edit) screen on the palette, where it is
-tuned and applied, and esc steps back — first out of the filter, then out of the
-preview with the original colors restored. Each palette row carries its 16
-colors, normal over bright. The last line lists only the keys that work right
-there, always names the mode (`PREVIEW`, `PREVIEW (FILTER)`, `THEME EDIT`,
-`THEME EDIT (APPLY)`, `THEME EDIT (PIN)`, `CONFIG`, `HELP`) and pins where esc
-goes to the right; `?` shows all of them.
+Enter [applies](#applying) the palette, and `tab`, `→` or `ctrl+e` moves into its
+[palette and picture panel](#palette-edit) beside the list; esc steps back — out of the
+panel, then out of the filter, then out of the preview with the original colors
+restored. Each palette row carries its 16 colors, normal over bright. The last
+line lists only the keys that work right there, always names the mode
+(`PREVIEW`, `PREVIEW (FILTER)`, `PREVIEW (APPLY)`,
+`PREVIEW (PIN)`, `EDIT`, `EDIT (APPLY)`, `CONFIG`, `HELP`) and pins where
+esc goes to the right; `?` shows all of them.
 In Warp, which wears one theme for the whole app, the tab in front decides it:
 preview switches that theme as the focus moves — every Warp window at once —
 and so do `ttheme use`, `next` and a pin, while switching tabs or windows puts
@@ -100,7 +103,7 @@ on the palette of the one you switch to. Warp itself takes about 0.6 s to show
 a change; with `TTHEME_WARP_FAST` on (the default) it takes about 0.2 s while
 your tabs wear different palettes, and for 3 s after the tab in front changes
 its own, so preview's second palette onwards shows that fast too.
-alt-c opens the [settings](#settings) in place — `↑`/`↓` pick one, `←`/`→` change it
+alt-c opens the [settings](#settings) in place — `↑`/`↓` (or `j`/`k`) pick one, `←`/`→` change it
 (the sort and the search hint animation change live), enter writes the changed
 lines to `config.zsh`, esc puts every value back. In Warp, a `Warp tabs` row
 turns `TTHEME_WARP_FAST` on and off. From 76
@@ -111,24 +114,35 @@ scenes, and find's try-on opens on the one preview showed. The list and the samp
 columns) and the gap between them takes the rest; the key list takes the
 sample's place while open, once the sample is 48 columns wide.
 
-## Theme edit
+## Palette edit
 
-`enter` on a palette in `preview` opens **theme edit**, a full screen of two
-panels side by side: the palette's **tone** on the left and its background
-**picture** on the right, both live — the tab is painted with the colors as you
-change them, and the picture moves behind the text. It needs 54×24, and from 100
-columns shows both panels; narrower, one panel at a time, with `[` for the tone
-and `]` for the picture.
+`tab`, `→` or `ctrl+e` on a palette in `preview` moves into a panel (**EDIT**)
+that takes the sample's place beside the list: the palette's background
+picture on top, its colors under it and an **Apply** button at the bottom, all
+live — the tab is painted with the colors as you change them, and the picture
+moves behind the text. It is one list, starting on the picture: `↓` past the
+picture's last field goes on into the slots and past the last slot to Apply,
+both ends wrap around, and `home`/`end` jump to the top and to Apply; `j`/`k`
+work as `↓`/`↑` throughout. The picture half starts with **Images**, the
+palette's pictures as thumbnails, where `←`/`→` pick one; a palette with none
+shows an empty frame there, and `enter` on it opens
+[find](backgrounds.md#finding-one), with the fields under it dimmed until a
+picture arrives. While
+you move through the slots the palette half shows the slots alone so
+everything fits; tuning one opens its lightness, chroma and hue bars, and a
+window too short for it all scrolls with the cursor. A window too narrow for
+the sample gives the panel the whole screen.
 
-The tone panel is the palette editor `ttheme new` opens, without its seeds:
-`↑`/`↓` pick a slot, `←`/`→` switch between its normal and bright colors, `tab`
-tunes the slot in OKLCH — `↑`/`↓` pick lightness, chroma or hue, `←`/`→` step —
+The palette half is the palette editor `ttheme new` opens, without its seeds:
+`↑`/`↓` pick a slot, `←`/`→` switch between its normal and bright colors, `enter`
+or `tab` tunes the slot in OKLCH — `↑`/`↓` pick lightness, chroma or hue, `←`/`→`
+step, `enter` keeps it —
 `#` types a color, `c` and `v` copy and paste one, `f` moves the colors the
 contrast gate misses, `u` undoes and `space` shows the colors before. A slot off
 its palette's own color carries `↺`: `r` puts the slot back and `R` all of them.
-The contrast gate advises here, never refuses. The picture panel is the one
-[Tuning](backgrounds.md#tuning) describes — size, position, opacity, colors,
-the strip of pictures — with `f` to find one.
+The contrast gate advises here, never refuses. The picture half is the one
+[Tuning](backgrounds.md#tuning) describes — the pictures, then colors, size,
+position and opacity — with `f` to find one.
 
 `s` saves, and nothing else does: what you changed is kept only from then on,
 the tone as an override of the palette's own colors (`tone.json`, beside
@@ -136,11 +150,16 @@ the tone as an override of the palette's own colors (`tone.json`, beside
 `kept.json` stay as the market gave them) and the picture as its own tuning.
 `sync` lays the tone over the palette before it writes anything, so every
 terminal's theme file, the zsh table and the pictures' tint follow it, and
-`ttheme update` leaves it be. `esc` closes the screen and drops what you changed
-since the last save, without asking.
+`ttheme update` leaves it be. `esc` goes back to the list and drops what you
+changed since the last save, without asking.
 
-`enter` applies the palette as it is on screen — saving what you changed first
-— and asks where: **default** or **this tab**. Default records the palette as
+## Applying
+
+`enter` on a palette in the list, or on its panel's Apply button — which saves
+what you changed first, as `shift+enter` anywhere in the panel does in a
+terminal that tells it from `enter`, such as Ghostty — applies it as it is on
+screen and asks
+where: **default** or **this tab**. Default records the palette as
 your default palette (so a later `add` or `remove` keeps it) and hands it to
 every terminal you wired, whichever one you are in, and this tab keeps it for
 the tab alone; `←`/`→` move between them, starting on default. In `ttheme pin`
@@ -159,7 +178,7 @@ starts from the configured theme, not from what the last tab was painted.
 
 ## Directory pins
 
-`pin` opens the same browser, and enter on a palette opens its theme edit, where enter asks how far it reaches:
+`pin` opens the same browser, and enter on a palette — or in its panel — asks how far it reaches:
 
 - **This directory** — the directory alone; `cd` into a folder below it and the
   tab takes back whatever covers that folder.
@@ -246,14 +265,14 @@ between, in which case your pick stays. The host is the name you type after
 `ssh`, so a `Host` from `~/.ssh/config` works as is, without the user; `*` and
 `?` match as they do there, so `ssh:*.prod` covers every host ending in
 `.prod`. A host's own pin wins over a pattern, and a longer pattern over a
-shorter one. It opens the same browser and theme edit as a directory's pin,
-where enter offers **This host** (**Every match** for a pattern) and the panel
+shorter one. It opens the same browser as a directory's pin, where enter
+offers **This host** (**Every match** for a pattern) and the panel
 lists the host pins as they will be. The pin lands in the same `pins` file as
 `ssh:<host>  <palette>`; `pins` lists it below the directories, and
 `ttheme unpin ssh:<host>` drops it.
 
 ```
-[THEME EDIT (PIN)] kita → [This host]   ssh tusa   enter confirm          esc back
+[PREVIEW (PIN)] kita → [This host]   ssh tusa   enter confirm             esc back
 ```
 
 Only a session counts: `ssh tusa`, `ssh -p 2222 bob@tusa`, `ssh tusa -A`, an
@@ -450,11 +469,11 @@ ttheme new rei --from rei        # the same, starting from rei's colors and pict
 ttheme edit rei                  # the same editor; the bare name works for yours
 ttheme check --fix rei           # colors that pass the gate, written in
 ttheme share rei                 # tt1:… — anyone runs ttheme add tt1:…
-ttheme share rei --tone original # the palette as it was, when you tuned it in theme edit
+ttheme share rei --tone original # the palette as it was, when you tuned it in palette edit
 ```
 
-`share` prints a palette as you wear it. When you tuned its tone in [theme
-edit](#theme-edit) it asks which to share, your tone or the original;
+`share` prints a palette as you wear it. When you tuned its tone in [palette
+edit](#palette-edit) it asks which to share, your tone or the original;
 `--tone tuned` or `--tone original` answers for it, and without a terminal it
 shares the tuned one. A tuned palette goes out as `<name>-tuned`, since its own
 name belongs to the original wherever that is installed.
@@ -468,7 +487,7 @@ grow pass the gate. enter moves to the slots, where `edit` opens too:
 
 - The left side lists the twenty colors, normal and bright side by side, each with
   its contrast on the background and ✗ where the gate misses, and the gate's nine
-  rules under them. `↑↓` picks a slot, `←→` its normal or bright.
+  rules under them. `↑↓` (or `j`/`k`) picks a slot, `←→` its normal or bright.
 - The right side shows the slot: hex, rgb and OKLCH, the color it started as, a
   gradient for lightness, chroma and hue that is the color each step would give
   (`░` past the sRGB edge), what the gate says about it — its contrast, its ANSI

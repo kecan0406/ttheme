@@ -247,7 +247,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'tone',
     args: ['<palette>'],
-    about: "Serve a palette's tone editor over stdin and stdout — preview's theme edit screen runs it",
+    about: "Serve a palette's tone editor over stdin and stdout — preview's palette panel runs it",
     section: 'setup',
     hidden: true,
   },

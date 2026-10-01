@@ -349,7 +349,7 @@ export class PaletteEditor {
   filter = ''
   pick = 0
   result: 'saved' | 'cancelled' | undefined
-  act: 'save' | 'apply' | 'cancel' | undefined
+  act: 'save' | 'cancel' | 'above' | 'below' | undefined
   wants: { start?: Start } | undefined
   pictures: number
   readonly startPictures: number
@@ -534,12 +534,13 @@ export class PaletteEditor {
       this.compare = false
       return
     }
+    const step = key === 'j' ? 'down' : key === 'k' ? 'up' : key
     if (this.mode === 'seeds') {
-      this.seedKey(key)
+      this.seedKey(step)
     } else if (this.mode === 'tune') {
-      this.tuneKey(key)
+      this.tuneKey(step)
     } else {
-      this.listKey(key)
+      this.listKey(step)
     }
   }
 
@@ -603,7 +604,7 @@ export class PaletteEditor {
     if (key === 's' || key === '\x13') {
       this.act = 'save'
     } else if (key === 'enter') {
-      this.act = 'apply'
+      this.tune()
     } else if (key === 'esc') {
       this.act = 'cancel'
     } else if (key === 'r') {
@@ -625,7 +626,11 @@ export class PaletteEditor {
       return
     }
     if (key === 'up' || key === 'down') {
-      this.row = (this.row + (key === 'up' ? ROWS - 1 : 1)) % ROWS
+      if (this.theme && this.row === (key === 'up' ? 0 : ROWS - 1)) {
+        this.act = key === 'up' ? 'above' : 'below'
+      } else {
+        this.row = (this.row + (key === 'up' ? ROWS - 1 : 1)) % ROWS
+      }
       this.lastEdit = undefined
     } else if (key === 'home' || key === 'end') {
       this.row = key === 'home' ? 0 : ROWS - 1

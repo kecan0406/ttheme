@@ -1,24 +1,24 @@
  ◆ konata · Lucky☆Star
-  Tone                        7 misses in the gate │ Image
-▌ Background[   #13181e       ]                    │
-  Foreground╭─ Help ───────────────────────────────────────────────────────────────────╮
-  Cursor    │                                                                          │
-  Selection │  Panels    [  left, the tone  ·  ]  right, the picture                   │
-            │  Tone      ↑↓←→  slot  ·  tab  tune it  ·  #  type a color               │
-  ANSI      │            r  resets a slot  ·  R  all  ·  space  the colors before      │
-  Black     │            c  copies  ·  v  pastes  ·  =  bright follows normal          │
-  Red       │            f  moves the colors the gate misses  ·  u  undo               │
-  Green     │  Image     ↑↓ field  ←→ step  ⇧←→ ×10  1-9 place                         │
-  Yellow    │            =  resets a field  ·  +  all  ·  space  hides  ·  c  colors   │
-  Blue      │            ,  .  other pictures  ·  D removes one  ·  f  finds one       │
-  Magenta   │  Apply     enter  ·  asks where, saving what you changed                 │
-  Cyan      │  Save      s  ·  keeps the tone and the picture                          │
-  White     │  Cancel    esc  ·  drops what you changed since the last save            │
-  Background│  Close     ?  esc                                                        │
-  #13181e  o│                                                                          │
-  as the pal╰──────────────────────────────────────────────────────────────────────────╯
-   L ───────●────────────────────────────   0.21   │
-   C ─●──────────────────────────────────  0.014   │
-   H ─────────────────────────●──────────   253°   │
-  ✓ Foreground on it 13.80:1 · ≥ 7                 │
+
+   Image
+            ╭─ Help ───────────────────────────────────────────────────────────────────╮
+   This term│                                                                          │
+            │  Move      ↑↓ j k  the image, the palette, then Apply  ·  home  end      │
+   Palette  │  Image     Images  ←→  , .  pick one  ·  D removes it  ·  f  finds one   │
+ ▌ Backgroun│            enter on the empty frame  ·  finds the first one              │
+   Foregroun│            ←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all          │
+   Cursor   │            space  hides  ·  c  colors                                    │
+   Selection│  Palette   ←→  normal or bright  ·  enter tab  tune it  ·  #  a color    │
+            │            r  resets a slot  ·  R  all  ·  space  the colors before      │
+   ANSI     │            c  copies  ·  v  pastes  ·  =  bright follows normal          │
+   Black    │            f  moves the colors the gate misses  ·  u  undo               │
+   Red      │  Apply     enter on Apply, or ⇧enter anywhere  ·  saves, asks where      │
+   Green    │  Save      s  ·  keeps the picture and the palette                       │
+   Yellow   │  Cancel    esc  ·  back to the list, dropping what changed since s       │
+   Blue     │  Close     ?  esc                                                        │
+   Magenta  │                                                                          │
+   Cyan     ╰──────────────────────────────────────────────────────────────────────────╯
+   White        #c2c7cf 10.5     #e6effc 15.4
+
+    Apply   saves and wears it in this tab
 [HELP]                                                                                   ? esc close

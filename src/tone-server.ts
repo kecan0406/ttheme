@@ -85,6 +85,7 @@ export class ToneSession {
     const footer = toneFooter(this.editor)
     const act = this.editor.act ?? '-'
     this.editor.act = undefined
+    const { lines, at } = renderTone(this.editor, this.cols, this.rows, this.color, this.focused)
     return [
       status,
       act,
@@ -94,7 +95,8 @@ export class ToneSession {
       footer.keys.map(([key]) => key).join(ITEM),
       footer.keys.map(([, label]) => label).join(ITEM),
       note ?? footer.note,
-      ...renderTone(this.editor, this.cols, this.rows, this.color, this.focused),
+      String(at),
+      ...lines,
     ].join(FIELD)
   }
 

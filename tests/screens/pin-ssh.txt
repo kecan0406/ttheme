@@ -1,24 +1,24 @@
- ◆ kita · Bocchi the Rock!
-  Tone                        8 misses in the gate │ Image
-▌ Background[   #201513       ]                    │
-  Foreground   #fddbd6 13.8                        │ This terminal shows no pictures
-  Cursor     ◆ #ee6555  5.6                        │
-  Selection    #5a323b  8.3                        │
-                                                   │
-  ANSI        Normal           Bright              │
-  Black        #2e211f  1.1     #857370  4.0       │
-  Red          #ff728d  6.8✗    #ffaca2  9.9✗      │
-  Green      ◆ #49c262  7.8     #fdc083 11.1✗      │
-  Yellow     ◆ #e1b557  9.3     #ffd5b2 13.1       │
-  Blue         #eb76d2  6.8✗    #c7b7ff  9.9✗      │
-  Magenta      #d792a9  7.3✗    #ffb3b2 10.5✗      │
-  Cyan         #abb772  8.3✗    #b5d6ec 11.7✗      │
-  White        #d8c2be 10.5     #ffe9e6 15.3       │
-  Background  background                           │
-  #201513  oklch 0.209 0.019 30°                   │
-kita  → ssh tusa · while connected                 │
+   Search… ‹hint›
+
+
+   ▾ Bocchi the Rock!                         1
+▌    ■ kita
+   ▸ Lucky☆Star                               1
+
+
+
+
+
+
+
+
+
+
+
+
+kita  → ssh tusa · while connected
 ssh *.prod  kita  while connected
 ssh tusa    kita  while connected  new
 
 Replaces konata on ssh tusa · while connected
-[THEME EDIT (PIN)] kita → [This host]   ssh tusa   enter confirm                            esc back
+[PREVIEW (PIN)] kita → [This host]   ssh tusa   enter confirm                               esc back

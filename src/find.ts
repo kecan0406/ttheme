@@ -1157,6 +1157,8 @@ class Finder {
       right: 1,
       up: -perRow,
       down: perRow,
+      k: -perRow,
+      j: perRow,
       pgup: -perRow * rowsVis,
       pgdn: perRow * rowsVis,
       home: -view.focus,

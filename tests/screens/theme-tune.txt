@@ -1,24 +1,24 @@
- ◆ konata · Lucky☆Star                                                                    ● unsaved
-  Tone  1 off its default     7 misses in the gate │ Image
-  Background   #13181e                             │
-  Foreground   #dae3f1 13.8                        │ This terminal shows no pictures
-▌ Cursor    [ ◆ #689ed4  6.3↺ ]                    │
-  Selection    #3b3e42  8.3                        │
-                                                   │
-  ANSI        Normal           Bright              │
-  Black        #1f242a  1.1     #73777f  4.0       │
-  Red          #e07ae5  6.9✗    #fca1ff  9.9✗      │
-  Green      ◆ #64be79  7.8     #00e3e4 11.1✗      │
-  Yellow       #9bc976  9.4✗    #37f9b8 13.1✗      │
-  Blue         #63a5e8  6.9   ◆ #8fc6ff  9.9       │
-  Magenta      #d187ff  7.3✗    #d0bcff 10.5       │
-  Cyan         #4abcee  8.3     #97daff 11.7       │
-  White        #c2c7cf 10.5     #e6effc 15.4       │
-  Cursor  cursor                       ◆ signature │
-  #689ed4  oklch 0.683 0.099 249°                  │
-  was #5f95ca   default #5f95ca                    │
-   L ────────────────────────●───────────   0.68   │
-   C ─────────●──────────────────────────  0.098   │
-   H ────────────────────────●───────────   249°   │
-  · On background 6.31:1                           │
-[THEME EDIT] ↑↓←→ slot   s save   tab tune   r reset slot   R reset all   enter apply     esc cancel
+ ◆ konata · Lucky☆Star                                   ● unsaved
+
+   Image
+
+   This terminal shows no pictures
+
+   Palette  1 off its default                 7 misses in the gate
+   Background   #13181e
+   Foreground   #dae3f1 13.8
+ ▌ Cursor    [ ◆ #689ed4  6.3↺ ]
+   Selection    #3b3e42  8.3
+
+   ANSI        Normal           Bright
+   Black        #1f242a  1.1     #73777f  4.0
+   Red          #e07ae5  6.9✗    #fca1ff  9.9✗
+   Green      ◆ #64be79  7.8     #00e3e4 11.1✗
+   Yellow       #9bc976  9.4✗    #37f9b8 13.1✗
+   Blue         #63a5e8  6.9   ◆ #8fc6ff  9.9
+   Magenta      #d187ff  7.3✗    #d0bcff 10.5
+   Cyan         #4abcee  8.3     #97daff 11.7
+   White        #c2c7cf 10.5     #e6effc 15.4
+
+    Apply   saves and wears it in this tab
+[EDIT] ↑↓←→ slot   s save   enter tune   r reset slot   R reset all   ⇧enter apply        esc cancel

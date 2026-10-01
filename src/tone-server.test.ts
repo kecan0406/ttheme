@@ -56,15 +56,21 @@ test('a frame tells the host the status, the signal, the mode, the dirt, the col
   assert.equal(f[2], 'list')
   assert.equal(f[3], '0')
   assert.equal((f[4] ?? '').split(' ').length, 20)
-  assert.ok((f[5] ?? '').split('\x1e').includes('tab'))
-  assert.equal(f.length, 8 + 24)
+  assert.ok((f[5] ?? '').split('\x1e').includes('enter'))
+  assert.equal(f[8], '2')
+  assert.equal(f.length, 9 + 24)
+  assert.equal(fields(tone.handle('key up'))[1], 'above')
+  assert.equal(fields(tone.handle('ch 107'))[1], 'above')
+  tone.handle('key end')
+  assert.equal(fields(tone.handle('key down'))[1], 'below')
+  assert.equal(fields(tone.handle('render'))[8], '15')
 })
 
-test('tuning a slot shows in the colors and the dirt, r puts it back and s saves the tone', () => {
+test('enter tunes a slot, which shows in the colors and the dirt, r puts it back and s saves the tone', () => {
   const { home, tone } = session()
   tone.handle('key down')
   tone.handle('key down')
-  tone.handle('key tab')
+  assert.equal(fields(tone.handle('key enter'))[2], 'tune')
   tone.handle('key right')
   tone.handle('key right')
   tone.handle('key enter')
@@ -85,10 +91,9 @@ test('tuning a slot shows in the colors and the dirt, r puts it back and s saves
   assert.deepEqual(readTone(home), {})
 })
 
-test('s, enter and esc outside a tuning are signals for the host, and inside one they stay the editor’s', () => {
+test('s and esc outside a tuning are signals for the host, and inside one esc stays the editor’s', () => {
   const { tone } = session()
   assert.equal(fields(tone.handle('ch 115'))[1], 'save')
-  assert.equal(fields(tone.handle('key enter'))[1], 'apply')
   assert.equal(fields(tone.handle('key esc'))[1], 'cancel')
   assert.equal(fields(tone.handle('key down'))[1], '-')
   tone.handle('key tab')

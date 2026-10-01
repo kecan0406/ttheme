@@ -108,10 +108,10 @@ function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): strin
   ]
 }
 
-function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): string[] {
+function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT, cursor = true): string[] {
   const bad = e.misses()
   const c = colorsOf(e.list)
-  const focus = e.slot()
+  const focus = cursor ? e.slot() : -1
   const lit = (text: string) => (p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)}${text}\x1b[39;49m` : `[${text}]`)
   const cell = (slot: number) => {
     const hex = e.list[slot] as Hex
@@ -128,13 +128,13 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
   const gutter = (here: boolean) => (here ? (p.color ? `${p.fg(c.cursor)}▌\x1b[39m ` : '▌ ') : '  ')
   const lines = [`  ${p.dim('Base')}`]
   for (let row = 0; row < BASE.length; row++) {
-    const here = row === e.row
+    const here = cursor && row === e.row
     const label = (BASE[row] as string).padEnd(10)
     lines.push(`${gutter(here)}${here ? p.bold(label) : label}${cell(row)}`)
   }
   lines.push('', `  ${p.dim(`${'ANSI'.padEnd(10)}  Normal${' '.repeat(11)}Bright`)}`)
   for (let row = BASE.length; row < ROWS; row++) {
-    const here = row === e.row
+    const here = cursor && row === e.row
     const label = (PAIRS[row - BASE.length] as string).padEnd(10)
     lines.push(`${gutter(here)}${here ? p.bold(label) : label}${cell(row)}${cell(row + 8)}`)
   }
@@ -458,7 +458,7 @@ export function toneFooter(e: PaletteEditor): ToneFooter {
     mode: 'list',
     keys: [
       ['↑↓←→', 'slot'],
-      ['tab', 'tune'],
+      ['enter', 'tune'],
       ['r', 'reset slot'],
       ['R', 'reset all'],
       ['#', 'type a color'],
@@ -523,26 +523,33 @@ export function renderTone(
   height: number,
   color: boolean,
   focused: boolean,
-): string[] {
+): { lines: string[]; at: number } {
   const p = painter(color)
   const failing = e.failing().length
   const gate = failing === 0 ? 'passes the gate' : `${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
   const off = e.list.filter((_, i) => e.offDefault(i)).length
   const head = spread(
-    `${focused ? p.bold('Tone') : p.dim('Tone')}${off > 0 ? p.dim(`  ${off} off its default`) : ''}`,
+    `${focused ? p.bold('Palette') : p.dim('Palette')}${off > 0 ? p.dim(`  ${off} off its default`) : ''}`,
     p.dim(gate),
     width - 2,
   )
-  const grid = slotPane(p, e, 0, width).slice(1, -2)
+  const grid = slotPane(p, e, 0, width, focused).slice(1, -2)
   const lines = [`  ${head}`, ...grid]
+  let at = e.row < BASE.length ? e.row + 2 : e.row + 4
   if (height - lines.length >= 9) {
     lines.push('')
   }
   const room = height - lines.length
   if (room >= 5) {
+    const top = lines.length
     lines.push(...toneDetail(p, e, width - 2, room).map((line) => `  ${line}`))
+    if (e.mode === 'tune') {
+      at = top + 3 + (room >= 7 ? 1 : 0) + e.channel
+    } else if (e.typing !== undefined) {
+      at = top + 2
+    }
   }
-  return Array.from({ length: height }, (_, i) => fit(lines[i] ?? '', width))
+  return { lines: Array.from({ length: height }, (_, i) => fit(lines[i] ?? '', width)), at }
 }
 
 export function renderEditor(e: PaletteEditor, cols: number, rows: number, color: boolean): string[] {

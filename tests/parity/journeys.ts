@@ -91,10 +91,10 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       await p.type(a, 'ttheme use kita')
-      await p.launch(a, 'ttheme', 'tab next')
+      await p.launch(a, 'ttheme', 'Browse')
       await p.keys(a, 'k', 'o', 'n')
       await p.look('preview', { text: true, wears: false })
-      await p.keys(a, 'tab', 'k', 'i', 't', 'a')
+      await p.keys(a, 'shift-tab', 'k', 'i', 't', 'a')
       await p.look('browse', { text: true, wears: false })
       await p.keys(a, 'tab')
       await p.look('back', { text: true, wears: false })
@@ -245,13 +245,11 @@ export const JOURNEYS: Journey[] = [
   },
   {
     id: 'preview-tab',
-    about: 'enter in preview opens the theme edit screen, and enter there keeps the palette for this tab',
+    about: 'enter in preview asks where to keep the palette, and This tab keeps it for this tab',
     async run(p) {
       const a = await p.open()
       await p.launch(a, 'ttheme preview')
       await p.keys(a, 'k', 'i', 't', 'a', 'enter')
-      await p.expect(a, 'Tone')
-      await p.keys(a, 'enter')
       await p.look('pick', { text: true, wears: false })
       await p.keys(a, 'right', 'enter')
       await p.back(a)
@@ -264,9 +262,7 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const a = await p.open()
       await p.launch(a, 'ttheme preview')
-      await p.keys(a, 'm', 'i', 'k', 'u', 'enter')
-      await p.expect(a, 'Tone')
-      await p.keys(a, 'enter', 'enter')
+      await p.keys(a, 'm', 'i', 'k', 'u', 'enter', 'enter')
       await p.back(a)
       await p.look('here')
       await p.open()
@@ -275,12 +271,13 @@ export const JOURNEYS: Journey[] = [
   },
   {
     id: 'preview-tune',
-    about: 'enter in preview opens the tone and the picture’s tuning side by side, and esc leaves it all as it was',
+    about:
+      'right in preview opens the palette and its picture’s tuning beside the list, and esc leaves it all as it was',
     async run(p) {
       const a = await p.open()
       await p.launch(a, 'ttheme preview')
-      await p.keys(a, 'k', 'i', 't', 'a', 'enter')
-      await p.expect(a, 'Tone')
+      await p.keys(a, 'k', 'i', 't', 'a', 'right')
+      await p.expect(a, 'Palette')
       await p.look('tune', { text: true, wears: false })
       await p.quit(a)
       await p.look('back')
@@ -306,9 +303,9 @@ export const JOURNEYS: Journey[] = [
       await p.type(a, 'ttheme use kita')
       const b = await p.open()
       await p.launch(b, 'ttheme preview')
-      await p.keys(b, 'k', 'i', 't', 'a', 'enter')
-      await p.expect(b, 'Tone')
-      await p.keys(b, ']', 'D', '1s')
+      await p.keys(b, 'k', 'i', 't', 'a', 'right')
+      await p.expect(b, 'Palette')
+      await p.keys(b, 'D', '1s')
       await p.quit(b)
       await p.look('here')
       await p.focus(a)
@@ -323,9 +320,9 @@ export const JOURNEYS: Journey[] = [
       await p.type(a, 'ttheme use kita')
       const b = await p.open()
       await p.launch(b, 'ttheme preview')
-      await p.keys(b, 'k', 'i', 't', 'a', 'enter')
-      await p.expect(b, 'Tone')
-      await p.keys(b, ']', 'down', 'down', 'right', 'right', 'right', 's', '1s')
+      await p.keys(b, 'k', 'i', 't', 'a', 'right')
+      await p.expect(b, 'Palette')
+      await p.keys(b, 'down', 'down', 'down', 'down', 'right', 'right', 'right', 's', '1s')
       await p.quit(b)
       await p.focus(a)
       await p.look('other', { opacity: true })
@@ -417,9 +414,9 @@ export const JOURNEYS: Journey[] = [
       const ghostty = await p.wire('ghostty')
       const a = await p.open()
       await p.launch(a, 'ttheme preview')
-      await p.keys(a, 'k', 'i', 't', 'a', 'enter')
-      await p.expect(a, 'Tone')
-      await p.keys(a, ']', 'down', 'down', 'right', 'right', 'right', 's', '1s')
+      await p.keys(a, 'k', 'i', 't', 'a', 'right')
+      await p.expect(a, 'Palette')
+      await p.keys(a, 'down', 'down', 'down', 'down', 'right', 'right', 'right', 's', '1s')
       await p.quit(a)
       const g = await ghostty.open()
       await ghostty.type(g, 'ttheme use kita')
