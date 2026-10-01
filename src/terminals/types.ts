@@ -1,5 +1,5 @@
-import type { Emitter } from '../emit/index.ts'
-import type { PaletteEntry } from '../emit/manifest.ts'
+import type { Emitter } from '../emit/types.ts'
+import type { PaletteEntry } from '../manifest.ts'
 import type { Installed } from '../palettes.ts'
 import type { Theme } from '../theme.ts'
 

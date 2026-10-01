@@ -18,7 +18,7 @@ import {
   writeCatalog,
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
-import { listed, type Manifest, type PaletteEntry } from './emit/manifest.ts'
+import { listed, type Manifest, type PaletteEntry } from './manifest.ts'
 import { configHome, type Installed, readInstalled, sync } from './palettes.ts'
 import { pending } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'

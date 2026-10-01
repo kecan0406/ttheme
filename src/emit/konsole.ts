@@ -1,6 +1,7 @@
 import { type Hex, mix, rgb } from '../color.ts'
 import type { Theme } from '../theme.ts'
-import { banner, type Emitter, type Output, owned } from './index.ts'
+import { owned } from '../theme.ts'
+import { banner, type Emitter, type Output } from './types.ts'
 
 function entry(group: string, color: Hex): string[] {
   return [`[${group}]`, `Color=${rgb(color).join(',')}`, '']

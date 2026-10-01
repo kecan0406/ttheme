@@ -16,7 +16,7 @@ import {
   writeCatalog,
   writeKept,
 } from './catalog.ts'
-import type { PaletteEntry } from './emit/manifest.ts'
+import type { PaletteEntry } from './manifest.ts'
 import { paletteToml } from './own.ts'
 
 function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {

@@ -13,7 +13,7 @@ import {
   remoteId,
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
-import { emptyManifest, listed, type PaletteEntry, paletteEntry } from './emit/manifest.ts'
+import { emptyManifest, listed, type PaletteEntry, paletteEntry } from './manifest.ts'
 import {
   gateLines,
   type LocalMarket,

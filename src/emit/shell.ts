@@ -1,13 +1,13 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { SITES } from '../booru.ts'
 import { HUB_CLOSED, HUB_SWITCH, HUB_TABS } from '../hub.ts'
+import { listed, type PaletteEntry, paletteEntry, swatch } from '../manifest.ts'
 import { SCENES } from '../scenes.ts'
 import { TRAITS } from '../terminal.ts'
 import { alphabetical } from '../theme.ts'
 import { helpText, VERB_SPECS } from '../verbs.ts'
 import { configTemplate, SETTING_NAMES } from '../wiring.ts'
-import type { Emitter, Output } from './index.ts'
-import { listed, type PaletteEntry, paletteEntry, swatch } from './manifest.ts'
+import type { Emitter, Output } from './types.ts'
 
 const UNQUOTABLE = /["$`\\]/
 

@@ -2,7 +2,6 @@ import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { editUserFile, writeAtomic } from './edits.ts'
-import { owned } from './emit/index.ts'
 import { type WarpLook, warpTheme } from './emit/warp.ts'
 import { colorless } from './osc.ts'
 import { readInstalled } from './palettes.ts'
@@ -16,6 +15,7 @@ import {
   warpThemeValue,
   withWarpTheme,
 } from './terminals/warp.ts'
+import { owned } from './theme.ts'
 
 type Env = Record<string, string | undefined>
 

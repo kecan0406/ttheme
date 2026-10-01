@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { isCancel } from '@clack/core'
 
 import { type BrowseIo, BrowsePanel, type Market } from './browse-panel.ts'
-import type { PaletteEntry } from './emit/manifest.ts'
+import type { PaletteEntry } from './manifest.ts'
 
 function entry(name: string, group: string): PaletteEntry {
   return {

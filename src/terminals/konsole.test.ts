@@ -6,7 +6,7 @@ import { test } from 'node:test'
 
 import { backupPath } from '../edits.ts'
 import { konsoleScheme } from '../emit/konsole.ts'
-import { type Manifest, type PaletteEntry, toTheme } from '../emit/manifest.ts'
+import { type Manifest, type PaletteEntry, toTheme } from '../manifest.ts'
 import { commit, type Installed, sync, wiringNext, wiringPlan, writeInstalled } from '../palettes.ts'
 import { applyUninstall, planUninstall } from '../uninstall.ts'
 import { baseLook, iniValue, konsole, konsoleData, konsoleProfile, konsolerc, withDefaultProfile } from './konsole.ts'

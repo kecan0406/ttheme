@@ -5,9 +5,10 @@ import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
 import { build } from './build.ts'
+import { Cancelled } from './cancelled.ts'
 import { available, readCatalog, writeCatalog } from './catalog.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
-import type { Manifest, PaletteEntry } from './emit/manifest.ts'
+import type { Manifest, PaletteEntry } from './manifest.ts'
 import { pickPalettes } from './market.ts'
 import {
   configHome as configDir,
@@ -223,8 +224,6 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
   }
   return pointDefaults(configHome, installed, true, host, plan.home)
 }
-
-export class Cancelled extends Error {}
 
 function accepted<T>(value: T | symbol): T {
   if (p.isCancel(value)) {

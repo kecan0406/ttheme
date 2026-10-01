@@ -1,7 +1,7 @@
 import type { Readable, Writable } from 'node:stream'
 import { Prompt } from '@clack/core'
 import { ansiBar, ansiFg, ansiSquares } from './ansi.ts'
-import { type PaletteEntry, swatch } from './emit/manifest.ts'
+import { type PaletteEntry, swatch } from './manifest.ts'
 import { marketOf, slugOf } from './theme.ts'
 
 export type PickerRow =

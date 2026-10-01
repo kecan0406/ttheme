@@ -1,22 +1,3 @@
-import type { Theme } from '../theme.ts'
-
-export interface Output {
-  path: string
-  content: string
-}
-
-export interface Emitter {
-  id: string
-  limits?: string
-  emit?(theme: Theme): Output[]
-  emitShared?(themes: Theme[]): Output[]
-}
-
-export function banner(theme: Theme): string[] {
-  return [`# ${theme.name} — ${theme.group}${theme.native ? ` (${theme.native})` : ''}`, `# ANSI: ${theme.ansiSource}`]
-}
-
-export { owned } from '../theme.ts'
 export { alacritty } from './alacritty.ts'
 export { ghostty } from './ghostty.ts'
 export { iterm2 } from './iterm2.ts'

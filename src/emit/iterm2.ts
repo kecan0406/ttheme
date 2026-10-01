@@ -1,6 +1,7 @@
 import { type Hex, rgb } from '../color.ts'
 import type { Theme } from '../theme.ts'
-import { type Emitter, type Output, owned } from './index.ts'
+import { owned } from '../theme.ts'
+import type { Emitter, Output } from './types.ts'
 
 export interface ItermColor {
   'Alpha Component': number

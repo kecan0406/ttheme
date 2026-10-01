@@ -1,5 +1,6 @@
 import type { Theme } from '../theme.ts'
-import { banner, type Emitter, type Output, owned } from './index.ts'
+import { owned } from '../theme.ts'
+import { banner, type Emitter, type Output } from './types.ts'
 
 export const ghostty: Emitter = {
   id: 'ghostty',

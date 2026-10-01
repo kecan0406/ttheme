@@ -3,8 +3,9 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import pkg from '../../package.json' with { type: 'json' }
+import { type PaletteEntry, swatch } from '../manifest.ts'
 import { loadThemes } from '../theme.ts'
-import { manifest, type PaletteEntry, swatch } from './manifest.ts'
+import { manifest } from './manifest.ts'
 
 const {
   version,

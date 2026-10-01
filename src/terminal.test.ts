@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import type { PaletteEntry } from './emit/manifest.ts'
+import type { PaletteEntry } from './manifest.ts'
 import { CLEAR, detectTerminal, livePaint, type Terminal, TRAITS } from './terminal.ts'
 
 const root = join(import.meta.dirname, '..')

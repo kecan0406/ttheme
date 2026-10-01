@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto'
 import { luminance } from '../color.ts'
 import type { Theme } from '../theme.ts'
-import { type Emitter, type Output, owned } from './index.ts'
+import { owned } from '../theme.ts'
+import type { Emitter, Output } from './types.ts'
 
 const NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
 

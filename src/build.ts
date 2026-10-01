@@ -1,7 +1,8 @@
 import { rmSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { checkAll } from './contrast.ts'
-import { type Emitter, meta, shell } from './emit/index.ts'
+import { meta, shell } from './emit/index.ts'
+import type { Emitter } from './emit/types.ts'
 import { WIRED, WIRINGS } from './terminals/index.ts'
 import { loadThemes, rotation } from './theme.ts'
 

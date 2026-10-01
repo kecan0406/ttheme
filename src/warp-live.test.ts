@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 
-import type { PaletteEntry } from './emit/manifest.ts'
+import type { PaletteEntry } from './manifest.ts'
 import { writeInstalled } from './palettes.ts'
 import type { Wired } from './terminals/index.ts'
 import { warpBasePath, warpSettings, warpThemeOf, warpThemes, warpThemeValue } from './terminals/warp.ts'

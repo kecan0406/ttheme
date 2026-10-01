@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { writeCatalog } from './catalog.ts'
-import type { Manifest, PaletteEntry } from './emit/manifest.ts'
+import type { Manifest, PaletteEntry } from './manifest.ts'
 import { writeInstalled } from './palettes.ts'
 import { readTone } from './tone.ts'
 import { ToneSession } from './tone-server.ts'

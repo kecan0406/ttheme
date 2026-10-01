@@ -1,5 +1,6 @@
 import type { Theme } from '../theme.ts'
-import { type Emitter, type Output, owned } from './index.ts'
+import { owned } from '../theme.ts'
+import type { Emitter, Output } from './types.ts'
 
 const list = (colors: readonly string[]) => `[${colors.map((c) => `"${c}"`).join(', ')}]`
 
