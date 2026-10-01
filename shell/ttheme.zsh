@@ -2111,7 +2111,7 @@ __tt_pv_tune() {
   return 0
 }
 
-__tt_pv_tune_keep() {
+__tt_pv_tune_stage() {
   local img was=${bgview[$tune]:-$tune}
   local -i changed=0
   for img in ${(k)tsnaps}; do
@@ -2127,8 +2127,12 @@ __tt_pv_tune_keep() {
     fi
   fi
   (( changed )) && msg="Kept · saved when preview closes" msgt=200
-  __tt_pv_bg_strip_off
   tune="" tpick="" tsnaps=() bgname=""
+}
+
+__tt_pv_tune_keep() {
+  __tt_pv_bg_strip_off
+  __tt_pv_tune_stage
 }
 
 __tt_pv_untune() {
@@ -2226,7 +2230,6 @@ __tt_pv_redraw() {
   msg="Drawing the background pictures again" msgt=300
   printf '\e[?2026h'
   __tt_pv_draw
-  __tt_pv_bg_close
   out=$(__tt_cli redraw 2>&1)
   bgsrc=() resized=1 bgname="" bgshown="" bgdim=()
   __tt_reload

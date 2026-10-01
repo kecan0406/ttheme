@@ -560,14 +560,13 @@ __tt_pv_bg_recolor() {
   __tt_bg_coloring $tpick
   want=original
   [[ $REPLY == original ]] && want=tone
-  __tt_pv_tune_keep
-  __tt_pv_bg_commit $name
   msg="Drawing in its own colors"
   [[ $want == tone ]] && msg="Drawing in the palette's tone"
   msgt=300
   printf '\e[?2026h'
   __tt_pv_draw
-  __tt_pv_bg_close
+  __tt_pv_tune_stage
+  __tt_pv_bg_commit $name
   err=$(__tt_cli image $name $want $key 2>&1)
   rc=$?
   err=${${err//$'\n'/ }## #}

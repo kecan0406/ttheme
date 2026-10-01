@@ -23,7 +23,7 @@ import {
   sourceLabel,
   takeInbound,
 } from './attach.ts'
-import { backdropTone, type Coloring, fillSize, origins, type Tone, type Tune } from './backdrop.ts'
+import { backdropTone, fillSize, origins, type Tone, type Tune } from './backdrop.ts'
 import {
   BLOCKS,
   blockSet,
@@ -513,7 +513,6 @@ class Finder {
   private readonly catalog: Manifest
   private readonly entry: PaletteEntry
   private readonly blurring: number
-  private readonly coloring: Coloring
   private readonly start: Start | undefined
 
   constructor(home: string, catalog: Manifest, entry: PaletteEntry, tag: string, start?: Start) {
@@ -523,7 +522,6 @@ class Finder {
     this.entry = entry
     this.tone = backdropTone(entry, entry.signatureSlots)
     this.blurring = blurOf(home)
-    this.coloring = coloringFor(home)
     const untuned: Tuning = { size: 'fill', at: TOP_RIGHT, opacity: this.tone.opacity }
     this.view = {
       palette: entry.name,
@@ -580,6 +578,7 @@ class Finder {
       details: false,
       tune: { ...untuned },
       untuned,
+      coloring: coloringFor(home),
       editing: tag === '' ? '' : undefined,
     }
     this.board = blank(this.boardKey, tag !== '')
@@ -1644,8 +1643,12 @@ class Finder {
       return
     }
     if (key === 't') {
-      view.tuning = { field: 0, held: { ...view.tune }, fill: this.current?.fill ?? 0 }
+      view.tuning = { field: 0, held: { ...view.tune }, fill: this.current?.fill ?? 0, coloring: view.coloring }
       this.draw()
+      return
+    }
+    if (key === 'c') {
+      this.recolor()
       return
     }
     if (key === 'o') {
@@ -1723,11 +1726,26 @@ class Finder {
       this.draw()
       return
     }
+    if (key === 'c') {
+      this.recolor()
+      return
+    }
     if (key === 'esc') {
-      view.tune = { ...panel.held }
+      view.tune = { ...panel.held, ...(panel.coloring === view.coloring ? {} : { opacity: view.untuned.opacity }) }
       view.tuning = undefined
       this.retune()
     }
+  }
+
+  private recolor(): void {
+    const view = this.view
+    if (!this.current || view.shown?.id !== this.current.key) {
+      return
+    }
+    view.coloring = view.coloring === 'tone' ? 'original' : 'tone'
+    view.tune.opacity = view.untuned.opacity
+    this.draw()
+    this.reveal()
   }
 
   private retune(): void {
@@ -2706,14 +2724,15 @@ class Finder {
     const width = Math.min(W, TRY_WIDTH)
     const height = Math.max(1, Math.round((H * width) / W))
     const tune = { ...this.view.tune }
+    const { coloring } = this.view
     const tuned = !sameTuning(tune, this.view.untuned)
     const touched = tune.opacity !== this.view.untuned.opacity
     const mark = tuned ? `-${tune.size}-${tune.at}${touched ? `-${Math.round(tune.opacity * 100)}` : ''}` : ''
     const path = join(
       this.scratch,
-      `${current.site.key}-${current.id}${using === 'cut' ? 'c' : ''}-${width}x${height}${mark}.png`,
+      `${current.site.key}-${current.id}${using === 'cut' ? 'c' : ''}${coloring === 'original' ? 'o' : ''}-${width}x${height}${mark}.png`,
     )
-    const key = `${current.site.key}:${current.id}:${using}:${width}x${height}`
+    const key = `${current.site.key}:${current.id}:${using}:${coloring}:${width}x${height}`
     const known = this.clarity.get(key)
     if (known && existsSync(path)) {
       current.fill = known.fill
@@ -2728,7 +2747,7 @@ class Finder {
       colors: this.entry,
       tone: this.tone,
       blur: (this.blurring * width) / fillSize(W, H).width,
-      coloring: this.coloring,
+      coloring,
       ...(tuned ? { tune: { size: tune.size, at: tune.at, ...(touched ? { opacity: tune.opacity } : {}) } } : {}),
     })
     this.clarity.set(key, made)
@@ -2756,9 +2775,10 @@ class Finder {
       return
     }
     const using = current.using
+    const { coloring } = this.view
     const asked = this.view.tune.opacity
     const { clear, path, opacity, touched } = await this.render(current, using)
-    if (this.current !== current || current.using !== using) {
+    if (this.current !== current || current.using !== using || this.view.coloring !== coloring) {
       return
     }
     if (!touched && this.view.tune.opacity === asked) {
@@ -2835,7 +2855,7 @@ class Finder {
         width: this.cols * this.cell.w,
         height: this.rows * this.cell.h,
         blur: this.blurring,
-        coloring: this.coloring,
+        coloring: view.coloring,
         ...(tune ? { tune, aligns: alignsFor(readInstalled(this.home).terminals), user: homedir() } : {}),
       })
       this.keep<string>(current.site, 'owners.json')[current.id] = post?.owner ?? ''

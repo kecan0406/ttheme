@@ -209,7 +209,7 @@ since the clipboard is on your own machine.
 
 Enter tries the picture on: ttheme downloads the original and paints the whole
 window with it the way the installed background will look — tinted with the
-palette (or in its own colors, with `TTHEME_BG_COLORS=original`), cropped with
+palette (or in its own colors, with `TTHEME_BG_COLORS=original`, and `c` switches between the two), cropped with
 headroom above the face, at the opacity the contrast gate allows — over one of preview's five sample scenes (⇧←→ switch them), with the
 share of transparent pixels next to its size (`opaque` when there are none).
 Under that line the post's page, the source the artwork came from and its artist
@@ -226,7 +226,11 @@ picture, and ahead of time for the posts on either side — for its artist,
 characters, series, uploader and day. `t` opens the same tuning panel preview's image edit has (see
 [Tuning](#tuning)) over the picture: size, position and opacity change what you
 see in place, stay as you move to the next post, and are installed with the
-picture, so preview opens it the way you left it. On macOS an opaque picture is
+picture, so preview opens it the way you left it. `c` draws the picture in the palette's tone or in its own
+colors, from the picture or from the tuning panel: the setting only names where
+find starts, the choice stays as you move to the next post and is what enter
+installs, and the opacity goes back to the new coloring's default (esc in the
+panel undoes the tuning, not the colors). On macOS an opaque picture is
 cut out first: ttheme asks the system's own Vision framework (macOS 14 or newer,
 through `osascript` — nothing is installed or uploaded) for the character alone,
 marks the picture `cut out`, and `x` switches between the cut-out and the picture
@@ -241,7 +245,7 @@ the neighbours, which find fetches ahead of you two at a time, and enter install
 panel's title names (`Background · akoiro · danbooru 12267381`) — and returns
 to the grid with the tile marked `✓`, the tab, search and scroll as
 you left them; esc then hands the last one installed to the preview, which
-carries on straight into the tuning panel below. `c` switches
+carries on straight into the tuning panel below. In the grid `c` switches
 between every post and the cutouts, esc goes back. Unless the settings say otherwise,
 only `safe` and `general` posts are shown, and none tagged with nudity or
 underwear (`nude`, `panties` and each site's own spelling of them) — with only
@@ -284,7 +288,8 @@ neither break up nor alias, and stays smooth when a small picture is enlarged.
 
 A picture can also keep its own colors. `TTHEME_BG_COLORS=original` (in `ttheme
 config`, or alt-c in `preview`) draws every picture installed from then on that
-way, and the `Colors` row of preview's image edit switches one picture at a time,
+way, and the `Colors` row of preview's image edit (or `c` in find's try view, for the
+picture about to be installed) switches one picture at a time,
 whatever the setting is — `←`/`→` on it, or `c` from any field, draw that picture
 again from its original, in the palette's tone or in its own colors, which takes
 a moment and is kept at once: esc undoes the tuning, not the colors, and `c`

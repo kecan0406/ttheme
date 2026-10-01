@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import columns from 'fast-string-width'
 import { LINK, linked } from './ansi.ts'
-import type { Framing } from './backdrop.ts'
+import type { Coloring, Framing } from './backdrop.ts'
 import { BLOCKS, type Block, KEY_SPAN, type Kind, type Narrow, type Rating, SITES } from './booru.ts'
 import { type Hex, mix, rgb } from './color.ts'
 import { megabytes, progress } from './pending.ts'
@@ -88,6 +88,7 @@ export interface TunePanel {
   field: number
   held: Tuning
   fill: number
+  coloring: Coloring
 }
 
 export interface FindView {
@@ -132,6 +133,7 @@ export interface FindView {
   info?: Info
   tune: Tuning
   untuned: Tuning
+  coloring: Coloring
   tuning?: TunePanel
   fetching?: { id: number; got: number; size: number }
   preparing?: number
@@ -1110,6 +1112,9 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   }
   if (shown) {
     meta.push(['  ', ''], ...transparent(shown))
+    if (view.coloring === 'original') {
+      meta.push([' · own colors', D])
+    }
   }
   lines[0]?.run(0, meta)
   if (tile.mates.length > 0) {
@@ -1139,6 +1144,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
         ['=', 'reset'],
         ['+', 'reset all'],
         view.tuning.field === 1 ? ['1-9', 'place'] : ['⇧←→', '×10'],
+        ['c', 'colors'],
         ['enter', 'keep'],
       ],
       right: ['esc', 'undo'],
@@ -1155,6 +1161,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
             ['←→', 'browse'],
             ['enter', 'install'],
             ['t', 'tune'],
+            ['c', 'colors'],
             ['i', 'details'],
             ...(view.details ? [] : [['⇧←→', 'example'] as [string, string]]),
             ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
@@ -1170,6 +1177,7 @@ const TUNE_KEYS: [string, string][] = [
   ['Step', '←→  ·  ⇧←→ ×10'],
   ['Place', '1-9  the nine positions'],
   ['Reset', '=  this field back to its default  ·  +  every field'],
+  ['Colors', "c  the palette's tone or its own colors, opacity back to its default"],
   ['Keep', 'enter  back to try, installed with the picture'],
   ['Undo', 'esc'],
   ['Close', '?  esc'],
@@ -1194,6 +1202,7 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
     ['Browse', '←→'],
     ['Install', 'enter'],
     ['Tune', 't  size, position and opacity, installed with the picture'],
+    ['Colors', "c  the palette's tone or its own colors, installed with the picture"],
     ['Details', 'i  characters, series, tags, rating and file, under Post, Source and Artist'],
     ['Example', `⇧←→  ${SCENES.map((scene) => scene.name.toLowerCase()).join(', ')}`],
     ['Cut out', 'x  the background off or on, on an opaque picture'],

@@ -233,8 +233,10 @@ REPLY=; __tt_bg_coloring kagami:safebooru_3
 te=0 tune= tpick= bgcw=0 out=
 (
   __tt_pv_draw() { : }
-  __tt_pv_bg_close() { : }
+  __tt_pv_bg_close() { print closed >> $bgd/closed.log }
+  __tt_pv_bg_strip_off() { print stripped >> $bgd/closed.log }
   __tt_cli() {
+    [[ -e $bgd/closed.log ]] && print closed-before-cli > $bgd/early.log
     print -r -- "$*" > $bgd/cli.log
     print -l "# image safebooru_2 1/1" "# picture safebooru_2 kagami.5e5e5e5e kagami.5e5e5e5e@fill-42.png 0.1 -" "# colors safebooru_2 original" \
       "background-image = kagami.5e5e5e5e@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.1" \
@@ -257,6 +259,8 @@ te=0 tune= tpick= bgcw=0 out=
   REPLY=; __tt_bg_coloring $tpick
   [[ "$(<$bgd/cli.log)" == "image kagami original safebooru_2" && $REPLY == original && $tf == 1 && $tune == kagami && $bgsrc[kagami] == *5e5e5e5e* ]] ||
     { print -u2 "c did not draw the picture again through the CLI, on the row it was pressed on: $(<$bgd/cli.log) coloring=$REPLY tf=$tf tune=$tune src=$bgsrc[kagami]"; exit 1 }
+  [[ ! -e $bgd/early.log ]] ||
+    { print -u2 "c took the picture or the panel's thumbnails off the screen while the CLI drew it again, so they were gone until the next frame"; exit 1 }
   rm -f $bgd/cli.log
   tf=4 key=right
   __tt_pv_tune > /dev/null
