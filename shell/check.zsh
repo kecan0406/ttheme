@@ -1179,7 +1179,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   __tt_ghostty_tick && { print -u2 "a follower kept running on code that has changed since it started"; exit 1 }
   TTHEME_GHOSTTY_CODE=
   __tt_apply() { painted=$EPOCHREALTIME }
-  __tt_reload_ghostty() { TTHEME_GHOSTTY_SENT=1; ( sleep 0.05; print -r -- $EPOCHREALTIME > $XDG_CONFIG_HOME/read; print -r -- "$(<$bgd/shown.conf)" > /dev/null ) & reader=$! }
+  __tt_reload_ghostty() { TTHEME_GHOSTTY_SENT=1; ( zselect -t 2; print -r -- $EPOCHREALTIME > $XDG_CONFIG_HOME/read; print -r -- "$(<$bgd/shown.conf)" > /dev/null ) & reader=$! }
   print -r -- "config-file = ?rei.conf" >| $bgd/shown.conf
   painted=0
   __tt_wear "$TTHEME_PALETTE[kagami]" kagami force || { print -u2 "__tt_wear did not claim a picture it changes"; exit 1 }
