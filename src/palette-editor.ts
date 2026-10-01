@@ -1,4 +1,3 @@
-import { pastedRefs } from './attach.ts'
 import { contrast, type Hex, isHex, luminance, type Oklch, oklch } from './color.ts'
 import {
   ACHROMATIC,
@@ -18,7 +17,8 @@ import {
   roleOf,
   type Violation,
 } from './contrast.ts'
-import type { Start } from './find.ts'
+import { pastedRefs } from './find/attach.ts'
+import type { Start } from './find/find.ts'
 import { fixGate, inGamut } from './fix.ts'
 import { type Colors, grow, nudge, SEED_FIELDS, SEEDS, type Seeds } from './seeds.ts'
 

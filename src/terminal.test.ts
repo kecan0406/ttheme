@@ -181,7 +181,7 @@ test('a restore puts back every color a repaint sent, resetting the ones the ter
 test('every screen clear goes through CLEAR, which iTerm2 does not push into its scrollback', () => {
   assert.ok(!CLEAR.includes('\x1b[2J') && !CLEAR.includes('\x1b[H\x1b[J'))
   const sources = [
-    ...readdirSync(join(root, 'src'))
+    ...readdirSync(join(root, 'src'), { recursive: true, encoding: 'utf8' })
       .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
       .map((file) => join('src', file)),
     ...['ttheme.zsh', 'preview.zsh', 'launch-tab.zsh'].map((file) => join('shell', file)),

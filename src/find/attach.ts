@@ -5,9 +5,9 @@ import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
-import { AGENT, KEY_SPAN, MAX_PIXELS, type Site } from './booru.ts'
-import { jpegSize } from './jpeg.ts'
-import { isPng, pngHead } from './png.ts'
+import { AGENT, KEY_SPAN, MAX_PIXELS, type Site } from '../booru.ts'
+import { jpegSize } from '../jpeg.ts'
+import { isPng, pngHead } from '../png.ts'
 
 const run = promisify(execFile)
 const LIMIT = 64 * 1024 * 1024

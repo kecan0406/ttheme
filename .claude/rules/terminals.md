@@ -3,7 +3,7 @@ paths:
   - "shell/**"
   - "src/emit/**"
   - "src/terminals/**"
-  - "src/{wiring,palettes,backdrop,images,init,uninstall,osc,edits,terminal}*.ts"
+  - "src/{wiring,palettes,backdrop,drawn,images,redraw,init,uninstall,osc,edits,terminal,warp-live}*.ts"
   - "tests/{compat,sandbox,tui}*"
   - "tests/compat/**"
   - "tests/parity/**"
