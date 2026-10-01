@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { jpegSize } from '../jpeg.ts'
 import { type Got, Grabber, pastedRefs, takeInbound } from './attach.ts'
-import { jpegSize } from './jpeg.ts'
 
 const files = new Set(['/pics/a.png', '/pics/my pic.png', '/pics/b.jpg'])
 const exists = (path: string) => files.has(path)

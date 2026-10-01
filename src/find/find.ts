@@ -5,25 +5,7 @@ import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import cells from 'fast-string-width'
-import {
-  type Clip,
-  type Got,
-  Grabber,
-  type Inbound,
-  LOCAL,
-  type Loaded,
-  loadRef,
-  localId,
-  normalize,
-  pastedRefs,
-  peekClipboard,
-  readClipboard,
-  remember,
-  remote,
-  sourceLabel,
-  takeInbound,
-} from './attach.ts'
-import { backdropTone, fillSize, origins, type Tone, type Tune } from './backdrop.ts'
+import { backdropTone, fillSize, origins, type Tone, type Tune } from '../backdrop.ts'
 import {
   BLOCKS,
   blockSet,
@@ -74,11 +56,38 @@ import {
   tagList,
   tagsOf,
   uncredited,
-} from './booru.ts'
-import { booruTags, find, readAvailable, siteTags } from './catalog.ts'
-import { rgb } from './color.ts'
-import { canRemoveBackground, keepable, removeBackground } from './cutout.ts'
-import { writeAtomic } from './edits.ts'
+} from '../booru.ts'
+import { booruTags, find, readAvailable, siteTags } from '../catalog.ts'
+import { rgb } from '../color.ts'
+import { canRemoveBackground, keepable, removeBackground } from '../cutout.ts'
+import { writeAtomic } from '../edits.ts'
+import { type Frame, fitOrder, interleave, type Pick } from '../fit.ts'
+import type { Manifest, PaletteEntry } from '../manifest.ts'
+import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from '../palettes.ts'
+import { type Look, Renderer, type Shown } from '../render.ts'
+import { SCENES } from '../scenes.ts'
+import { CLEAR, cropsInBands, layersUnderCells, movesPlacements, readsFiles } from '../terminal.ts'
+import { POSITIONS } from '../theme.ts'
+import { blurOf, coloringFor, settingDefault, withSetting } from '../wiring.ts'
+import { kinKeys, near, type Shape, sameKeys, sameSet } from '../works.ts'
+import {
+  type Clip,
+  type Got,
+  Grabber,
+  type Inbound,
+  LOCAL,
+  type Loaded,
+  loadRef,
+  localId,
+  normalize,
+  pastedRefs,
+  peekClipboard,
+  readClipboard,
+  remember,
+  remote,
+  sourceLabel,
+  takeInbound,
+} from './attach.ts'
 import {
   CELL_QUERY,
   type Count,
@@ -105,16 +114,7 @@ import {
   type Tuning,
   transmit,
   unplace,
-} from './find-screen.ts'
-import { type Frame, fitOrder, interleave, type Pick } from './fit.ts'
-import type { Manifest, PaletteEntry } from './manifest.ts'
-import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from './palettes.ts'
-import { type Look, Renderer, type Shown } from './render.ts'
-import { SCENES } from './scenes.ts'
-import { CLEAR, cropsInBands, layersUnderCells, movesPlacements, readsFiles } from './terminal.ts'
-import { POSITIONS } from './theme.ts'
-import { blurOf, coloringFor, settingDefault, withSetting } from './wiring.ts'
-import { kinKeys, near, type Shape, sameKeys, sameSet } from './works.ts'
+} from './screen.ts'
 
 const SETTINGS: Setting[] = [
   {

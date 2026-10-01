@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { cellReport, decodeKeys, stepped, transmit } from './find-screen.ts'
+import { cellReport, decodeKeys, stepped, transmit } from './screen.ts'
 
 test('cellReport reads the xterm cell size in pixels', () => {
   assert.deepEqual(cellReport('x\x1b[6;34;14ty'), { cell: { h: 34, w: 14 }, rest: 'xy' })

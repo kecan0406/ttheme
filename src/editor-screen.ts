@@ -1,8 +1,8 @@
 import { ansiFg, cells, fit, spread, wrapText } from './ansi.ts'
-import { takeInbound } from './attach.ts'
 import { contrast, type Hex, luminance, type Oklch, oklch, rgb } from './color.ts'
-import type { Start } from './find.ts'
-import { decodeKeys } from './find-screen.ts'
+import { takeInbound } from './find/attach.ts'
+import type { Start } from './find/find.ts'
+import { decodeKeys } from './find/screen.ts'
 import { inGamut, srgb } from './fix.ts'
 import { slotOsc } from './osc.ts'
 import {
