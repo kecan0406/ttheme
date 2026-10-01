@@ -17,7 +17,6 @@ windows-terminal	*.picture	cannot	Windows Terminal draws no kitty graphics, so t
 windows-terminal	*.text	cannot	Windows Terminal draws no kitty graphics, so preview offers no picture tuning
 windows-terminal	picture-tune.other.opacity	cannot	Windows Terminal draws no kitty graphics, so ttheme gives it no picture
 windows-terminal	reach-picture.ghostty.opacity	cannot	Windows Terminal preview has no picture tuning, so no tuned picture leaves it for Ghostty
-warp	preview-tune.tune.text	cannot	Warp opens no OSC 8 links, so the tuning title names the post without linking it
 warp	browse.hover.picture	cannot	Warp paints a tab only through its one theme, so a live repaint puts on the palette's picture along with its colors
 warp	unwired.used.*	cannot	Warp paints a tab only through the settings.toml init wires, so a Warp init never wired refuses ttheme use
 konsole	*.picture	cannot	Konsole keeps a color scheme's wallpaper cached while any tab shows the scheme, so ttheme shows no picture there

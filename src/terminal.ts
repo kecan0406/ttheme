@@ -108,7 +108,7 @@ export const TRAITS: Record<Terminal, Traits> = {
   },
   foot: { links: true, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
   'terminal-app': { links: false, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
-  warp: { links: false, pictures: true, bands: true, files: false, moves: false, layers: false, paints: false },
+  warp: { links: true, pictures: true, bands: true, files: false, moves: false, layers: false, paints: false },
   editor: { links: false, pictures: false, bands: false, files: true, moves: true, layers: true, paints: false },
   unknown: { links: false, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
 }
