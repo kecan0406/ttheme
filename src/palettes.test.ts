@@ -29,7 +29,7 @@ import {
   withBases,
   writeInstalled,
 } from './palettes.ts'
-import { decodePng, encodePng } from './png.ts'
+import { decodePng, encodeRgba } from './png.ts'
 import { itermProfilesPath } from './terminals/iterm2.ts'
 import type { Host } from './terminals/types.ts'
 import { warpSettings, warpThemes, warpThemeValue } from './terminals/warp.ts'
@@ -273,7 +273,7 @@ function pictured(configHome: string, opacity: number): void {
   writeFileSync(join(dir, 'gojo.conf'), `background-image = gojo@fill-40.png\nbackground-image-opacity = ${opacity}\n`)
   writeFileSync(
     join(dir, 'gojo@fill-40.png'),
-    encodePng({ width: 2, height: 1, data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 0]) }),
+    encodeRgba({ width: 2, height: 1, data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 0]) }),
   )
 }
 

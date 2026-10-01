@@ -13,7 +13,7 @@ import {
   decodePng,
   encodeGray,
   encodeMask,
-  encodePng,
+  encodeRgba,
   type Mask,
   type Plane,
   pngHead,
@@ -260,10 +260,16 @@ export function peakOf(image: Rgba, box: Box): Hex {
 }
 
 function inkOf(image: Rgba, lift: number): Mask {
+  const src = image.data
   const data = new Uint8Array(image.width * image.height)
-  for (let i = 0; i < data.length; i++) {
-    const at = i * 4
-    data[i] = Math.round((Math.min(255, luma(image.data, at) * lift) * (image.data[at + 3] ?? 0)) / 255)
+  for (let i = 0, at = 0; i < data.length; i++, at += 4) {
+    const a = src[at + 3] as number
+    if (a === 0) {
+      continue
+    }
+    const level =
+      (0.299 * (src[at] as number) + 0.587 * (src[at + 1] as number) + 0.114 * (src[at + 2] as number)) * lift
+    data[i] = ((level > 255 ? 255 : level) * a) / 255 + 0.5
   }
   return { width: image.width, height: image.height, data }
 }
@@ -363,12 +369,20 @@ export interface Inked {
 
 export function inked(image: Rgba): Inked {
   const box = figureBox(image)
+  let ink: Mask | undefined
+  let peak: Hex | undefined
   return {
     box,
     clear: transparency(image, box),
-    ink: inkOf(image, liftOf(image, box)),
+    get ink() {
+      ink ??= inkOf(image, liftOf(image, box))
+      return ink
+    },
     image,
-    peak: peakOf(image, box),
+    get peak() {
+      peak ??= peakOf(image, box)
+      return peak
+    },
   }
 }
 
@@ -780,8 +794,8 @@ interface Made {
 }
 
 function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
-  const figure = drawing.coloring === 'original' ? encodePng(drawing.figure) : encodeMask(drawing.figure, tone)
-  const fill = drawing.coloring === 'original' ? encodePng(drawing.fill) : encodeMask(drawing.fill, tone)
+  const figure = drawing.coloring === 'original' ? encodeRgba(drawing.figure) : encodeMask(drawing.figure, tone)
+  const fill = drawing.coloring === 'original' ? encodeRgba(drawing.fill) : encodeMask(drawing.fill, tone)
   const stem = `${fileStem(name)}.${createHash('sha1').update(key).update(figure).update(fill).digest('hex').slice(0, 8)}`
   const named = `${stem}@fill-${Math.round(drawing.focus * 100)}.png`
   return {
@@ -978,7 +992,7 @@ export function writeTune(
       image,
       picture.tone
         ? encodeMask(quantize(place(alphaOf(source), frame, width, height)), picture.tone)
-        : encodePng(placeColors(source, frame, width, height)),
+        : encodeRgba(placeColors(source, frame, width, height)),
     )
     cover = window
   }

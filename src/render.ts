@@ -23,7 +23,7 @@ import type { Hex } from './color.ts'
 import { writeAtomic } from './edits.ts'
 import { paletteMatch } from './fit.ts'
 import { redrawOne } from './pictures.ts'
-import { contain, decodeImage, encodePng, transparency } from './png.ts'
+import { contain, decodeImage, encodeRgba, transparency } from './png.ts'
 import { shape } from './works.ts'
 
 interface Thumb {
@@ -141,7 +141,7 @@ async function work(task: Task): Promise<number | Look | Picture | Shown | null>
       task.coloring,
     )
     mkdirSync(dirname(task.to), { recursive: true })
-    writeFileSync(task.to, encodePng(image))
+    writeFileSync(task.to, encodeRgba(image))
     return { clear: held.clear, fill, opacity }
   }
   const image = decodeImage(new Uint8Array(readFileSync(task.from)), MAX_PIXELS)
@@ -170,11 +170,11 @@ async function work(task: Task): Promise<number | Look | Picture | Shown | null>
     return { match: paletteMatch(image, task.colors), hash: shape(image) }
   }
   if (task.job === 'thumb') {
-    writeAtomic(task.to, encodePng(contain(image, task.width, task.height)))
+    writeAtomic(task.to, encodeRgba(contain(image, task.width, task.height)))
     return 0
   }
   const data = image.data.subarray(task.y * image.width * 4, (task.y + task.height) * image.width * 4)
-  writeFileSync(task.to, encodePng({ width: image.width, height: task.height, data }))
+  writeFileSync(task.to, encodeRgba({ width: image.width, height: task.height, data }))
   return 0
 }
 

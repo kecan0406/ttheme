@@ -1,4 +1,4 @@
-import { deflateSync } from 'node:zlib'
+import { constants, deflateSync, inflateSync } from 'node:zlib'
 import { decode as decodeJpegData } from 'jpeg-js'
 import { PNG } from 'pngjs'
 import { type Hex, rgb } from './color.ts'
@@ -48,7 +48,135 @@ export function isPng(bytes: Uint8Array): boolean {
   return bytes.length >= SIGNATURE.length && SIGNATURE.every((b, i) => bytes[i] === b)
 }
 
+const CHANNELS: Record<number, number> = { 0: 1, 2: 3, 4: 2, 6: 4 }
+
+interface Scan {
+  width: number
+  height: number
+  type: number
+  idat: Buffer[]
+}
+
+function scanned(bytes: Uint8Array): Scan | undefined {
+  if (bytes.length < 33 || !isPng(bytes)) {
+    return undefined
+  }
+  const png = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  const width = png.readUInt32BE(16)
+  const height = png.readUInt32BE(20)
+  const type = png[25] as number
+  if (png[24] !== 8 || png[28] !== 0 || CHANNELS[type] === undefined) {
+    return undefined
+  }
+  const idat: Buffer[] = []
+  for (let at = 8; at + 12 <= png.length; ) {
+    const size = png.readUInt32BE(at)
+    const kind = png.toString('latin1', at + 4, at + 8)
+    if (kind === 'IDAT') {
+      idat.push(png.subarray(at + 8, at + 8 + size))
+    } else if (kind === 'tRNS' || kind === 'IEND') {
+      if (kind === 'tRNS' && type !== 4 && type !== 6) {
+        return undefined
+      }
+      break
+    }
+    at += 12 + size
+  }
+  return idat.length > 0 ? { width, height, type, idat } : undefined
+}
+
+function unfilter(raw: Uint8Array, stride: number, height: number, bpp: number): void {
+  const none = new Uint8Array(stride)
+  for (let y = 0; y < height; y++) {
+    const o = y * (stride + 1)
+    const type = raw[o] as number
+    const row = o + 1
+    const up = y > 0 ? raw : none
+    const above = y > 0 ? row - stride - 1 : 0
+    if (type === 1) {
+      for (let i = bpp; i < stride; i++) {
+        raw[row + i] = (raw[row + i] as number) + (raw[row + i - bpp] as number)
+      }
+    } else if (type === 2) {
+      for (let i = 0; i < stride; i++) {
+        raw[row + i] = (raw[row + i] as number) + (up[above + i] as number)
+      }
+    } else if (type === 3) {
+      for (let i = 0; i < bpp; i++) {
+        raw[row + i] = (raw[row + i] as number) + ((up[above + i] as number) >> 1)
+      }
+      for (let i = bpp; i < stride; i++) {
+        raw[row + i] = (raw[row + i] as number) + (((raw[row + i - bpp] as number) + (up[above + i] as number)) >> 1)
+      }
+    } else if (type === 4) {
+      for (let i = 0; i < bpp; i++) {
+        raw[row + i] = (raw[row + i] as number) + (up[above + i] as number)
+      }
+      for (let i = bpp; i < stride; i++) {
+        const a = raw[row + i - bpp] as number
+        const b = up[above + i] as number
+        const c = up[above + i - bpp] as number
+        const pa = Math.abs(b - c)
+        const pb = Math.abs(a - c)
+        const pc = Math.abs(a + b - 2 * c)
+        raw[row + i] = (raw[row + i] as number) + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)
+      }
+    } else if (type !== 0) {
+      throw new Error(`bad PNG filter ${type}`)
+    }
+  }
+}
+
+function inflated(scan: Scan): Rgba {
+  const { width, height, type } = scan
+  const bpp = CHANNELS[type] as number
+  const stride = width * bpp
+  const raw = inflateSync(Buffer.concat(scan.idat), {
+    chunkSize: Math.min(1 << 28, Math.max(1 << 16, height * (stride + 1))),
+  })
+  if (raw.length < height * (stride + 1)) {
+    throw new Error('truncated PNG')
+  }
+  unfilter(raw, stride, height, bpp)
+  const data = new Uint8Array(width * height * 4)
+  for (let y = 0; y < height; y++) {
+    const from = y * (stride + 1) + 1
+    const to = y * width * 4
+    if (type === 6) {
+      data.set(raw.subarray(from, from + stride), to)
+    } else if (type === 2) {
+      for (let x = 0, i = from, o = to; x < width; x++, i += 3, o += 4) {
+        data[o] = raw[i] as number
+        data[o + 1] = raw[i + 1] as number
+        data[o + 2] = raw[i + 2] as number
+        data[o + 3] = 255
+      }
+    } else if (type === 0) {
+      for (let x = 0, o = to; x < width; x++, o += 4) {
+        const v = raw[from + x] as number
+        data[o] = v
+        data[o + 1] = v
+        data[o + 2] = v
+        data[o + 3] = 255
+      }
+    } else {
+      for (let x = 0, i = from, o = to; x < width; x++, i += 2, o += 4) {
+        const v = raw[i] as number
+        data[o] = v
+        data[o + 1] = v
+        data[o + 2] = v
+        data[o + 3] = raw[i + 1] as number
+      }
+    }
+  }
+  return { width, height, data }
+}
+
 export function decodePng(bytes: Uint8Array): Rgba {
+  const scan = scanned(bytes)
+  if (scan) {
+    return inflated(scan)
+  }
   const png = PNG.sync.read(Buffer.from(bytes))
   return { width: png.width, height: png.height, data: new Uint8Array(png.data) }
 }
@@ -148,12 +276,6 @@ export function flatten(
   return { width, height, data }
 }
 
-export function encodePng(image: Rgba): Buffer {
-  const png = new PNG({ width: image.width, height: image.height })
-  png.data = Buffer.from(image.data)
-  return PNG.sync.write(png)
-}
-
 function find(bytes: Uint8Array, word: string): number {
   for (let i = 0; i + word.length <= bytes.length; i++) {
     let hit = true
@@ -182,21 +304,44 @@ export function pngHead(bytes: Uint8Array): { width: number; height: number; alp
 }
 
 export function alphaBox(image: Rgba, threshold = CLEAR): Box | null {
-  let x0 = image.width
-  let y0 = image.height
+  const { width, height, data } = image
+  const filled = (y: number): boolean => {
+    for (let at = y * width * 4 + 3, end = at + width * 4; at < end; at += 4) {
+      if ((data[at] as number) >= threshold) {
+        return true
+      }
+    }
+    return false
+  }
+  let y0 = 0
+  while (y0 < height && !filled(y0)) {
+    y0++
+  }
+  if (y0 === height) {
+    return null
+  }
+  let y1 = height - 1
+  while (!filled(y1)) {
+    y1--
+  }
+  let x0 = width
   let x1 = -1
-  let y1 = -1
-  for (let y = 0; y < image.height; y++) {
-    for (let x = 0; x < image.width; x++) {
-      if ((image.data[(y * image.width + x) * 4 + 3] ?? 0) >= threshold) {
-        x0 = Math.min(x0, x)
-        x1 = Math.max(x1, x)
-        y0 = Math.min(y0, y)
-        y1 = Math.max(y1, y)
+  for (let y = y0; y <= y1; y++) {
+    const row = y * width * 4 + 3
+    for (let x = 0; x < x0; x++) {
+      if ((data[row + x * 4] as number) >= threshold) {
+        x0 = x
+        break
+      }
+    }
+    for (let x = width - 1; x > x1; x--) {
+      if ((data[row + x * 4] as number) >= threshold) {
+        x1 = x
+        break
       }
     }
   }
-  return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 }
+  return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 }
 }
 
 export function transparency(image: Rgba, box: Box = { x: 0, y: 0, w: image.width, h: image.height }): number {
@@ -282,93 +427,225 @@ function sweep(
   height: number,
   channels: number,
   across: (y: number, into: Float32Array) => void,
-): Float32Array {
+  emit: (y: number, sums: Float32Array) => void,
+): void {
   const ty = taps(sourceHeight, box.y, box.h, height)
   const span = width * channels
-  const out = new Float32Array(span * height)
-  const rows = new Map<number, Float32Array>()
+  const ring = ty.size + 1
+  const rows = Array.from({ length: ring }, () => new Float32Array(span))
+  const held = new Int32Array(ring).fill(-1)
+  const sums = new Float32Array(span)
+  const slots: Float32Array[] = []
+  const weights: number[] = []
   for (let y = 0; y < height; y++) {
-    const from = ty.first[y] ?? 0
-    for (const kept of rows.keys()) {
-      if (kept < from) {
-        rows.delete(kept)
-      }
-    }
-    const o = y * span
+    slots.length = 0
+    weights.length = 0
+    const from = ty.first[y] as number
     for (let k = 0; k < ty.size; k++) {
-      const w = ty.weights[y * ty.size + k] ?? 0
+      const w = ty.weights[y * ty.size + k] as number
       if (w === 0) {
         continue
       }
-      let row = rows.get(from + k)
-      if (!row) {
-        row = new Float32Array(span)
-        across(from + k, row)
-        rows.set(from + k, row)
+      const at = from + k
+      const slot = at % ring
+      const row = rows[slot] as Float32Array
+      if (held[slot] !== at) {
+        across(at, row)
+        held[slot] = at
       }
-      for (let x = 0; x < span; x++) {
-        out[o + x] = (out[o + x] ?? 0) + (row[x] ?? 0) * w
+      slots.push(row)
+      weights.push(w)
+    }
+    let k = 0
+    while (k < slots.length) {
+      const r0 = slots[k] as Float32Array
+      const w0 = weights[k] as number
+      if (slots.length - k >= 4) {
+        const r1 = slots[k + 1] as Float32Array
+        const r2 = slots[k + 2] as Float32Array
+        const r3 = slots[k + 3] as Float32Array
+        const w1 = weights[k + 1] as number
+        const w2 = weights[k + 2] as number
+        const w3 = weights[k + 3] as number
+        if (k === 0) {
+          for (let x = 0; x < span; x++) {
+            sums[x] = (r0[x] as number) * w0 + (r1[x] as number) * w1 + (r2[x] as number) * w2 + (r3[x] as number) * w3
+          }
+        } else {
+          for (let x = 0; x < span; x++) {
+            sums[x] =
+              (sums[x] as number) +
+              ((r0[x] as number) * w0 + (r1[x] as number) * w1 + (r2[x] as number) * w2 + (r3[x] as number) * w3)
+          }
+        }
+        k += 4
+      } else {
+        if (k === 0) {
+          for (let x = 0; x < span; x++) {
+            sums[x] = (r0[x] as number) * w0
+          }
+        } else {
+          for (let x = 0; x < span; x++) {
+            sums[x] = (sums[x] as number) + (r0[x] as number) * w0
+          }
+        }
+        k += 1
       }
     }
+    if (slots.length === 0) {
+      sums.fill(0)
+    }
+    emit(y, sums)
   }
-  return out
+}
+
+function reached(first: Int32Array, size: number, count: number, low: number, high: number): [number, number] {
+  let a = 0
+  let b = count
+  while (a < b) {
+    const mid = (a + b) >> 1
+    if ((first[mid] as number) + size - 1 < low) {
+      a = mid + 1
+    } else {
+      b = mid
+    }
+  }
+  const from = a
+  b = count
+  while (a < b) {
+    const mid = (a + b) >> 1
+    if ((first[mid] as number) <= high) {
+      a = mid + 1
+    } else {
+      b = mid
+    }
+  }
+  return [from, a]
 }
 
 export function resample(image: Rgba, box: Box, width: number, height: number): Rgba {
   const tx = taps(image.width, box.x, box.w, width)
   const d = image.data
-  const sums = sweep(image.height, box, width, height, 4, (y, into) => {
-    const row = y * image.width
-    for (let x = 0; x < width; x++) {
-      const f = row + (tx.first[x] ?? 0)
-      const wi = x * tx.size
-      let r = 0
-      let g = 0
-      let b = 0
-      let a = 0
-      for (let k = 0; k < tx.size; k++) {
-        const p = (f + k) * 4
-        const w = (tx.weights[wi + k] ?? 0) * (d[p + 3] ?? 0)
-        r += (d[p] ?? 0) * w
-        g += (d[p + 1] ?? 0) * w
-        b += (d[p + 2] ?? 0) * w
-        a += w
-      }
-      into[x * 4] = r
-      into[x * 4 + 1] = g
-      into[x * 4 + 2] = b
-      into[x * 4 + 3] = a
-    }
-  })
+  const sw = image.width
+  const pre = new Float32Array(sw * 4)
   const out = new Uint8Array(width * height * 4)
-  for (let i = 0; i < width * height; i++) {
-    const a = sums[i * 4 + 3] ?? 0
-    if (a <= 0) {
-      continue
-    }
-    for (let c = 0; c < 3; c++) {
-      out[i * 4 + c] = Math.min(255, Math.max(0, Math.round((sums[i * 4 + c] ?? 0) / a)))
-    }
-    out[i * 4 + 3] = Math.min(255, Math.round(a))
-  }
+  sweep(
+    image.height,
+    box,
+    width,
+    height,
+    4,
+    (y, into) => {
+      const row = y * sw * 4
+      let low = sw
+      let high = -1
+      for (let i = 0, px = 0; i < sw * 4; i += 4, px++) {
+        const a = d[row + i + 3] as number
+        if (a === 0) {
+          pre[i] = 0
+          pre[i + 1] = 0
+          pre[i + 2] = 0
+          pre[i + 3] = 0
+          continue
+        }
+        if (px < low) {
+          low = px
+        }
+        high = px
+        pre[i] = (d[row + i] as number) * a
+        pre[i + 1] = (d[row + i + 1] as number) * a
+        pre[i + 2] = (d[row + i + 2] as number) * a
+        pre[i + 3] = a
+      }
+      into.fill(0)
+      if (high < 0) {
+        return
+      }
+      const [from, to] = reached(tx.first, tx.size, width, low, high)
+      for (let x = from; x < to; x++) {
+        const f = (tx.first[x] as number) * 4
+        const wi = x * tx.size
+        let r = 0
+        let g = 0
+        let b = 0
+        let a = 0
+        for (let k = 0; k < tx.size; k++) {
+          const w = tx.weights[wi + k] as number
+          const p = f + k * 4
+          r += (pre[p] as number) * w
+          g += (pre[p + 1] as number) * w
+          b += (pre[p + 2] as number) * w
+          a += (pre[p + 3] as number) * w
+        }
+        into[x * 4] = r
+        into[x * 4 + 1] = g
+        into[x * 4 + 2] = b
+        into[x * 4 + 3] = a
+      }
+    },
+    (y, sums) => {
+      const o = y * width * 4
+      for (let x = 0; x < width; x++) {
+        const i = x * 4
+        const a = sums[i + 3] as number
+        if (a <= 0) {
+          continue
+        }
+        let v = (sums[i] as number) / a
+        out[o + i] = (v < 0 ? 0 : v > 255 ? 255 : v) + 0.5
+        v = (sums[i + 1] as number) / a
+        out[o + i + 1] = (v < 0 ? 0 : v > 255 ? 255 : v) + 0.5
+        v = (sums[i + 2] as number) / a
+        out[o + i + 2] = (v < 0 ? 0 : v > 255 ? 255 : v) + 0.5
+        out[o + i + 3] = (a > 255 ? 255 : a) + 0.5
+      }
+    },
+  )
   return { width, height, data: out }
 }
 
 export function resamplePlane(source: Plane | Mask, box: Box, width: number, height: number): Plane {
   const tx = taps(source.width, box.x, box.w, width)
   const d = source.data
-  const data = sweep(source.height, box, width, height, 1, (y, into) => {
-    const row = y * source.width
-    for (let x = 0; x < width; x++) {
-      const f = row + (tx.first[x] ?? 0)
-      const wi = x * tx.size
-      let acc = 0
-      for (let k = 0; k < tx.size; k++) {
-        acc += (d[f + k] ?? 0) * (tx.weights[wi + k] ?? 0)
+  const sw = source.width
+  const data = new Float32Array(width * height)
+  sweep(
+    source.height,
+    box,
+    width,
+    height,
+    1,
+    (y, into) => {
+      const row = y * sw
+      let low = sw
+      let high = -1
+      for (let x = 0; x < sw; x++) {
+        if ((d[row + x] as number) !== 0) {
+          if (x < low) {
+            low = x
+          }
+          high = x
+        }
       }
-      into[x] = acc
-    }
-  })
+      into.fill(0)
+      if (high < 0) {
+        return
+      }
+      const [from, to] = reached(tx.first, tx.size, width, low, high)
+      for (let x = from; x < to; x++) {
+        const f = row + (tx.first[x] as number)
+        const wi = x * tx.size
+        let acc = 0
+        for (let k = 0; k < tx.size; k++) {
+          acc += (d[f + k] as number) * (tx.weights[wi + k] as number)
+        }
+        into[x] = acc
+      }
+    },
+    (y, sums) => {
+      data.set(sums, y * width)
+    },
+  )
   return { width, height, data }
 }
 
@@ -408,7 +685,8 @@ export function blur(plane: Plane, sigma: number): Plane {
 export function quantize(plane: Plane): Mask {
   const data = new Uint8Array(plane.data.length)
   for (let i = 0; i < data.length; i++) {
-    data[i] = Math.min(255, Math.max(0, Math.round(plane.data[i] ?? 0)))
+    const v = plane.data[i] as number
+    data[i] = (v < 0 ? 0 : v > 255 ? 255 : v) + 0.5
   }
   return { width: plane.width, height: plane.height, data }
 }
@@ -446,25 +724,23 @@ function chunk(type: string, data: Uint8Array): Buffer {
   return out
 }
 
-function scanlines(data: Uint8Array, width: number, height: number): Uint8Array {
-  const stride = width + 1
-  const raw = new Uint8Array(height * stride)
-  for (let y = 0; y < height; y++) {
-    const o = y * stride
-    const cur = y * width
-    const up = cur - width
-    raw[o] = 4
-    for (let x = 0; x < width; x++) {
-      const a = x > 0 ? (data[cur + x - 1] ?? 0) : 0
-      const b = y > 0 ? (data[up + x] ?? 0) : 0
-      const c = x > 0 && y > 0 ? (data[up + x - 1] ?? 0) : 0
-      const pa = Math.abs(b - c)
-      const pb = Math.abs(a - c)
-      const pc = Math.abs(a + b - 2 * c)
-      raw[o + 1 + x] = ((data[cur + x] ?? 0) - (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)) & 0xff
+function rows(data: Uint8Array, stride: number, height: number): Uint8Array {
+  const raw = new Uint8Array(height * (stride + 1))
+  raw.set(data.subarray(0, stride), 1)
+  for (let y = 1; y < height; y++) {
+    const o = y * (stride + 1)
+    const cur = y * stride
+    const up = cur - stride
+    raw[o] = 2
+    for (let x = 0; x < stride; x++) {
+      raw[o + 1 + x] = (data[cur + x] as number) - (data[up + x] as number)
     }
   }
   return raw
+}
+
+function squeeze(raw: Uint8Array): Buffer {
+  return deflateSync(raw, { level: 1, strategy: constants.Z_RLE })
 }
 
 function pngOf(mask: Mask, colorType: number, extra: Buffer[]): Buffer {
@@ -477,7 +753,7 @@ function pngOf(mask: Mask, colorType: number, extra: Buffer[]): Buffer {
     Buffer.from(SIGNATURE),
     chunk('IHDR', head),
     ...extra,
-    chunk('IDAT', deflateSync(scanlines(mask.data, mask.width, mask.height))),
+    chunk('IDAT', squeeze(rows(mask.data, mask.width, mask.height))),
     chunk('IEND', new Uint8Array()),
   ])
 }
@@ -497,15 +773,10 @@ function packed(width: number, height: number, colorType: number, channels: numb
   head.writeUInt32BE(height, 4)
   head[8] = 8
   head[9] = colorType
-  const stride = width * channels
-  const raw = new Uint8Array(height * (stride + 1))
-  for (let y = 0; y < height; y++) {
-    raw.set(data.subarray(y * stride, (y + 1) * stride), y * (stride + 1) + 1)
-  }
   return Buffer.concat([
     Buffer.from(SIGNATURE),
     chunk('IHDR', head),
-    chunk('IDAT', deflateSync(raw, { level: 1 })),
+    chunk('IDAT', squeeze(rows(data, width * channels, height))),
     chunk('IEND', new Uint8Array()),
   ])
 }

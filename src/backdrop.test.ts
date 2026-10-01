@@ -36,7 +36,7 @@ import { luminance, mix } from './color.ts'
 import { checkReadability } from './contrast.ts'
 import { canvasOf } from './images.ts'
 import { redrawOne } from './pictures.ts'
-import { decodePng, encodeMask, encodePng, encodeRgb, encodeRgba, flatten, lay, type Rgba, retone } from './png.ts'
+import { decodePng, encodeMask, encodeRgb, encodeRgba, flatten, lay, type Rgba, retone } from './png.ts'
 
 const KAGAMI: Colors = {
   name: 'kagami',
@@ -444,7 +444,7 @@ function installFigure(configHome: string, id: number): Picture {
     KAGAMI,
     { color: '#9b86c8', opacity: 0.2 },
     image,
-    { site: 'safebooru', id, ext: 'png', bytes: encodePng(image) },
+    { site: 'safebooru', id, ext: 'png', bytes: encodeRgba(image) },
     { width: 40, height: 20 },
     0,
   )
@@ -571,7 +571,7 @@ function installColorful(configHome: string, id: number): Picture {
     KAGAMI,
     PAINT.hue,
     image,
-    { site: 'safebooru', id, ext: 'png', bytes: encodePng(image) },
+    { site: 'safebooru', id, ext: 'png', bytes: encodeRgba(image) },
     { width: 40, height: 20 },
     0,
     'original',
@@ -713,7 +713,7 @@ test('blurring a picture in its own colors softens its edge without dimming the 
     KAGAMI,
     PAINT.hue,
     image,
-    { site: 'safebooru', id: 24, ext: 'png', bytes: encodePng(image) },
+    { site: 'safebooru', id: 24, ext: 'png', bytes: encodeRgba(image) },
     { width: 40, height: 20 },
     1.5,
     'original',
