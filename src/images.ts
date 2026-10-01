@@ -5,7 +5,7 @@ import { isHex } from './color.ts'
 import { writeAtomic } from './edits.ts'
 import { configHome, refreshPictures } from './palettes.ts'
 import { type Canvas, decodePng, encodeRgb, encodeRgba, flatten, lay, type Rgba } from './png.ts'
-import { redrawColoring } from './redraw.ts'
+import { prepareColoring, redrawColoring } from './redraw.ts'
 
 export async function runImage(name: string, action: string, key?: string): Promise<number> {
   const home = configHome()
@@ -30,11 +30,18 @@ export async function runImage(name: string, action: string, key?: string): Prom
     process.stderr.write(`Background · ${name} ${drawn.key} ${action === 'tone' ? 'tinted' : 'in its own colors'}\n`)
     return 0
   }
+  if (action === 'prepare') {
+    const { key: ready, coloring } = prepareColoring(home, name, key)
+    process.stderr.write(
+      `Background · ${name} ${ready} ready in ${coloring === 'tone' ? 'its tone' : 'its own colors'}\n`,
+    )
+    return 0
+  }
   if (action === 'tuned') {
     refreshPictures(home)
     return 0
   }
-  throw new Error(`unknown image action ${action} — show, drop, tone, original or tuned`)
+  throw new Error(`unknown image action ${action} — show, drop, tone, original, prepare or tuned`)
 }
 
 function geometry(canvas: string, place: string): Canvas {

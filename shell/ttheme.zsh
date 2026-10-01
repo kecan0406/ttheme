@@ -3282,11 +3282,11 @@ __tt_preview() {
   local -i scene=0
   local -a bgorder=()
   local -A bgfrom=() bgurl=() bgby=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
-  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=()
+  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgprep=()
   local conf=0 cf=1
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
   local te=0 tfocus=0 tetop=0 tename="" tedirty=0 temode=list tespec="" tesz=""
-  local -i TE_IN=0 TE_OUT=0 TE_PID=0 pvgone=0
+  local -i TE_IN=0 TE_OUT=0 TE_PID=0 pvgone=0 bgprepid=0
   local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=("New tabs" Announce "Search fx" Sort Blur Colors)
   local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc series" "0 1 2 3 4" "tone original") cshow=("off seq" "on off" "typewriter decode glitch" "abc series" "off 1px 2px 3px 4px" "tone original")
   local -A cnote=(

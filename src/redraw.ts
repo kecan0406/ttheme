@@ -11,7 +11,7 @@ import {
 } from './backdrop.ts'
 import { readAvailable } from './catalog.ts'
 import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from './palettes.ts'
-import { redrawOne } from './pictures.ts'
+import { prepareOne, redrawOne } from './pictures.ts'
 import { Pool } from './render.ts'
 import { blurOf } from './wiring.ts'
 
@@ -93,6 +93,23 @@ export async function redrawColoring(
   applyRedraw(home, [{ name, picture: drawn }])
   refreshPictures(home, user)
   return { key: picture.key, changed: true }
+}
+
+export function prepareColoring(home: string, name: string, key?: string): { key: string; coloring: Coloring } {
+  const rack = readStore(backgroundsDir(home)).palettes[name]
+  const picture = rack?.pictures.find((held) => held.key === (key ?? rack.active))
+  if (!rack || !picture) {
+    throw new Error(`${name} has no picture ${key ?? 'shown'}`)
+  }
+  const entry = readAvailable(home).palettes.find((held) => held.name === name)
+  if (!entry) {
+    throw new Error(`no palette called ${name}`)
+  }
+  const coloring = coloringOf(picture) === 'original' ? 'tone' : 'original'
+  if (!prepareOne(home, name, picture.key, paintFor(entry), blurOf(home), coloring)) {
+    throw new Error(`${name} ${picture.key} has no original to draw it from`)
+  }
+  return { key: picture.key, coloring }
 }
 
 export async function runRedraw(): Promise<number> {

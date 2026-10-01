@@ -293,7 +293,12 @@ picture about to be installed) switches one picture at a time,
 whatever the setting is — `←`/`→` on it, or `c` from any field, draw that picture
 again from its original, in the palette's tone or in its own colors, which takes
 a moment and is kept at once: esc undoes the tuning, not the colors, and `c`
-again switches back. The
+again switches back. While image edit sits on a picture, ttheme draws the other
+coloring in the background (`ttheme image <palette> prepare`), and every drawing
+is kept in `~/.cache/ttheme/drawn/` (the twelve latest, however many pictures
+there are), so `c` and going back to the coloring you left both just move the
+files in place, in a few hundredths of a second, as long as the picture's
+original and the palette's tone are as they were. The
 files are then ordinary RGBA PNGs: the picture's colors and its own alpha (the
 cut-out's, or none), bigger than a tone picture's indexed file, and the terminal
 lays them over its background at the picture's opacity, exactly as it does a

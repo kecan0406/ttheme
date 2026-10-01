@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto'
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import { type Hex, luminance, mix, rgb } from './color.ts'
 import { checkReadability } from './contrast.ts'
+import { keyOf, known, recall, remember } from './drawn.ts'
 import { writeAtomic } from './edits.ts'
 import type { ProfileBackground } from './emit/iterm2.ts'
 import {
@@ -27,6 +28,7 @@ import {
 import { stem as fileStem, POSITIONS, type SharedPicture } from './theme.ts'
 
 const FILL = { width: 2560, height: 1550 }
+const DRAWING = 1
 const FIGURE = 2560
 const FAINT = 0.1
 const WHITE = 0.99
@@ -808,9 +810,14 @@ function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
   }
 }
 
-function paintOf(colors: Colors, hue: Hue, drawing: Drawing): Pick<Picture, 'coloring' | 'opacity' | 'tone' | 'peak'> {
-  return drawing.coloring === 'original'
-    ? { coloring: 'original', opacity: originalOpacity(colors, drawing.peak), peak: drawing.peak }
+function paintOf(
+  colors: Colors,
+  hue: Hue,
+  coloring: Coloring,
+  peak: Hex | undefined,
+): Pick<Picture, 'coloring' | 'opacity' | 'tone' | 'peak'> {
+  return coloring === 'original' && peak
+    ? { coloring: 'original', opacity: originalOpacity(colors, peak), peak }
     : { coloring: 'tone', opacity: hue.opacity, tone: hue.color }
 }
 
@@ -849,7 +856,7 @@ export function installBackdrop(
     key,
     stem: drawn.stem,
     fill: drawn.fill,
-    ...paintOf(colors, tone, drawing),
+    ...paintOf(colors, tone, drawing.coloring, drawing.coloring === 'original' ? drawing.peak : undefined),
     blur: blurring,
     window: size,
     ...(source.from ? { from: source.from } : {}),
@@ -1030,41 +1037,154 @@ function sizeOf(path: string): { width: number; height: number } | undefined {
   }
 }
 
+function drawnKey(
+  dir: string,
+  name: string,
+  picture: Picture,
+  size: { width: number; height: number },
+  blurring: number,
+  coloring: Coloring,
+  tone: string,
+): string | undefined {
+  const files = [picture.original, picture.cut].map((file) => {
+    if (!file) {
+      return ''
+    }
+    try {
+      const { size: bytes, mtimeMs } = statSync(join(dir, file))
+      return `${file}:${bytes}:${mtimeMs}`
+    } catch {
+      return undefined
+    }
+  })
+  if (!picture.original || files.includes(undefined)) {
+    return undefined
+  }
+  return keyOf([
+    DRAWING,
+    fileStem(name),
+    picture.key,
+    ...(files as string[]),
+    size.width,
+    size.height,
+    blurring,
+    coloring,
+    coloring === 'tone' ? tone : '',
+  ])
+}
+
+function remembered(dir: string, name: string, picture: Picture): void {
+  if (!picture.window || picture.blur === undefined) {
+    return
+  }
+  const key = drawnKey(dir, name, picture, picture.window, picture.blur, coloringOf(picture), picture.tone ?? '')
+  if (!key || known(key)) {
+    return
+  }
+  try {
+    remember(key, {
+      stem: picture.stem,
+      fill: picture.fill,
+      ...(picture.peak ? { peak: picture.peak } : {}),
+      figure: readFileSync(join(dir, `${picture.stem}.png`)),
+      picture: readFileSync(join(dir, picture.fill)),
+    })
+  } catch {}
+}
+
+interface Drawn {
+  made: Made
+  peak: Hex | undefined
+  image: Rgba | undefined
+}
+
+function drawnFor(
+  dir: string,
+  name: string,
+  picture: Picture,
+  size: { width: number; height: number },
+  load: () => Rgba | null,
+  paint: Paint,
+  blurring: number,
+  coloring: Coloring,
+  cut: boolean,
+): Drawn | null {
+  const key = cut ? undefined : drawnKey(dir, name, picture, size, blurring, coloring, paint.hue.color)
+  const held = key ? recall(key) : undefined
+  if (held) {
+    return {
+      made: {
+        stem: held.stem,
+        fill: held.fill,
+        files: [
+          [`${held.stem}.png`, held.figure],
+          [held.fill, held.picture],
+        ],
+      },
+      peak: held.peak,
+      image: undefined,
+    }
+  }
+  const image = load()
+  if (!image) {
+    return null
+  }
+  const drawing = draw(image, size.width, size.height, blurring, coloring)
+  const result = made(name, picture.key, drawing, paint.hue.color)
+  const peak = drawing.coloring === 'original' ? drawing.peak : undefined
+  if (key) {
+    remember(key, {
+      stem: result.stem,
+      fill: result.fill,
+      ...(peak ? { peak } : {}),
+      figure: result.files[0]?.[1] as Buffer,
+      picture: result.files[1]?.[1] as Buffer,
+    })
+  }
+  return { made: result, peak, image }
+}
+
 export function redrawn(
   configHome: string,
   name: string,
   picture: Picture,
-  image: Rgba,
+  load: () => Rgba | null,
   paint: Paint,
   blurring: number,
   aligns: boolean,
   home: string,
   cut: boolean,
   coloring: Coloring = coloringOf(picture),
-): Picture {
+): Picture | null {
   const dir = backgroundsDir(configHome)
   const size = picture.window ?? sizeOf(join(dir, picture.fill)) ?? FILL
-  const drawing = draw(image, size.width, size.height, blurring, coloring)
-  const drawn = made(name, picture.key, drawing, paint.hue.color)
+  const got = drawnFor(dir, name, picture, size, load, paint, blurring, coloring, cut)
+  if (!got) {
+    return null
+  }
+  const { made: drawn, peak, image } = got
   const next: Picture = {
     ...picture,
     stem: drawn.stem,
     fill: drawn.fill,
-    ...paintOf(paint.colors, paint.hue, drawing),
+    ...paintOf(paint.colors, paint.hue, coloring, peak),
     blur: blurring,
     window: size,
     ...(cut ? { cut: `${kept(name, picture.key)}.cut.png` } : {}),
   }
-  if (drawing.coloring === 'original') {
+  if (coloring === 'original') {
     delete next.tone
   } else {
     delete next.peak
   }
-  if (cut) {
+  if (cut && image) {
     writeAtomic(join(dir, `${kept(name, picture.key)}.cut.png`), encodeGray(alphaOf(image)))
   }
   if (drawn.stem === picture.stem) {
     return next
+  }
+  if (coloringOf(picture) !== coloring) {
+    remembered(dir, name, picture)
   }
   lay(dir, drawn.files)
   const tune = tuneOf(dir, picture)
@@ -1074,6 +1194,20 @@ export function redrawn(
     copyFileSync(off, join(dir, `${next.stem}.off.conf`))
   }
   return next
+}
+
+export function prepared(
+  configHome: string,
+  name: string,
+  picture: Picture,
+  load: () => Rgba | null,
+  paint: Paint,
+  blurring: number,
+  coloring: Coloring,
+): boolean {
+  const dir = backgroundsDir(configHome)
+  const size = picture.window ?? sizeOf(join(dir, picture.fill)) ?? FILL
+  return drawnFor(dir, name, picture, size, load, paint, blurring, coloring, false) !== null
 }
 
 export function applyRedraw(configHome: string, drawn: { name: string; picture: Picture }[]): void {

@@ -225,7 +225,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'image',
     args: ['<palette>', '<action>', '[picture]'],
     about:
-      "Show one of a palette's saved backgrounds, remove one, draw one in its palette's tone or its own colors, or pass on tuning — preview calls this",
+      "Show one of a palette's saved backgrounds, remove one, draw one in its palette's tone or its own colors (or get the other ready before it is asked for), or pass on tuning — preview calls this",
     section: 'setup',
     hidden: true,
   },

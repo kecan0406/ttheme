@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -35,8 +35,10 @@ import {
 import { luminance, mix } from './color.ts'
 import { checkReadability } from './contrast.ts'
 import { canvasOf } from './images.ts'
-import { redrawOne } from './pictures.ts'
+import { prepareOne, redrawOne } from './pictures.ts'
 import { decodePng, encodeMask, encodeRgb, encodeRgba, flatten, lay, type Rgba, retone } from './png.ts'
+
+process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-cache-'))
 
 const KAGAMI: Colors = {
   name: 'kagami',
@@ -683,6 +685,36 @@ test('drawing a picture in its other colors keeps its tuning, drops its opacity 
   const tinted = rackOf(configHome, 'kagami')[0] as Picture
   assert.deepEqual([tinted.coloring, tinted.tone, tinted.peak, tinted.opacity], ['tone', '#9b86c8', undefined, 0.2])
   assert.ok(!readFileSync(join(dir, 'kagami.conf'), 'utf8').includes('# colors'))
+})
+
+test('a coloring drawn once is kept, so the other one can be got ready and going back needs no original', async () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-drawn-'))
+  const dir = backgroundsDir(configHome)
+  const before = installFigure(configHome, 31)
+  const original = join(dir, before.original as string)
+  assert.equal(prepareOne(configHome, 'kagami', before.key, PAINT, 0, 'original'), true)
+  chmodSync(original, 0o000)
+  try {
+    const own = await redrawOne(configHome, 'kagami', before.key, PAINT, 0, true, configHome, 'original')
+    assert.ok(own)
+    assert.equal(own.coloring, 'original')
+    applyRedraw(configHome, [{ name: 'kagami', picture: own }])
+    const back = await redrawOne(configHome, 'kagami', before.key, PAINT, 0, true, configHome, 'tone')
+    assert.ok(back)
+    assert.deepEqual([back.stem, back.fill, back.coloring], [before.stem, before.fill, 'tone'])
+    applyRedraw(configHome, [{ name: 'kagami', picture: back }])
+    assert.ok(existsSync(join(dir, `${before.stem}.png`)) && existsSync(join(dir, before.fill)))
+    assert.ok(!existsSync(join(dir, `${own.stem}.png`)))
+  } finally {
+    chmodSync(original, 0o644)
+  }
+  const own = await redrawOne(configHome, 'kagami', before.key, PAINT, 0, true, configHome, 'original')
+  assert.ok(own)
+  applyRedraw(configHome, [{ name: 'kagami', picture: own }])
+  const bluer = { ...PAINT, hue: { color: '#336699', opacity: 0.2 } }
+  const recolored = await redrawOne(configHome, 'kagami', before.key, bluer, 0, true, configHome, 'tone')
+  assert.ok(recolored)
+  assert.deepEqual([recolored.tone, recolored.stem === before.stem], ['#336699', false])
 })
 
 test('trying a picture on in its own colors lays it over the background at the default opacity, straight alpha', () => {

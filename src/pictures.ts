@@ -11,6 +11,7 @@ import {
   installBackdrop,
   type Paint,
   type Picture,
+  prepared,
   rackOf,
   readStore,
   redrawn,
@@ -251,6 +252,19 @@ function wasCut(dir: string, picture: Picture): boolean {
   }
 }
 
+function originalOf(dir: string, picture: Picture): () => Rgba {
+  return () => decodeImage(new Uint8Array(readFileSync(join(dir, picture.original as string))), MAX_PIXELS)
+}
+
+function cutOf(dir: string, picture: Picture): () => Rgba | null {
+  const decoded = originalOf(dir, picture)
+  return () => {
+    const image = decoded()
+    const cut = decodePng(new Uint8Array(readFileSync(join(dir, picture.cut as string))))
+    return cutAlpha(image, cut, 0) ? image : null
+  }
+}
+
 export async function redrawOne(
   configHome: string,
   name: string,
@@ -266,20 +280,36 @@ export async function redrawOne(
   if (!picture?.original) {
     return null
   }
-  const source = join(dir, picture.original)
-  const image = decodeImage(new Uint8Array(readFileSync(source)), MAX_PIXELS)
   if (picture.cut) {
-    if (!cutAlpha(image, decodePng(new Uint8Array(readFileSync(join(dir, picture.cut)))), 0)) {
-      return null
-    }
-    return redrawn(configHome, name, picture, image, paint, blurring, aligns, home, false, coloring)
+    return redrawn(configHome, name, picture, cutOf(dir, picture), paint, blurring, aligns, home, false, coloring)
   }
-  if (undrawn(picture) && transparency(image) === 0 && wasCut(dir, picture)) {
-    const cut = await cutOut(key, source)
-    if (!cut || !cutAlpha(image, cut, 3)) {
-      return null
+  if (undrawn(picture)) {
+    const image = originalOf(dir, picture)()
+    if (transparency(image) === 0 && wasCut(dir, picture)) {
+      const cut = await cutOut(key, join(dir, picture.original))
+      if (!cut || !cutAlpha(image, cut, 3)) {
+        return null
+      }
+      return redrawn(configHome, name, picture, () => image, paint, blurring, aligns, home, true, coloring)
     }
-    return redrawn(configHome, name, picture, image, paint, blurring, aligns, home, true, coloring)
+    return redrawn(configHome, name, picture, () => image, paint, blurring, aligns, home, false, coloring)
   }
-  return redrawn(configHome, name, picture, image, paint, blurring, aligns, home, false, coloring)
+  return redrawn(configHome, name, picture, originalOf(dir, picture), paint, blurring, aligns, home, false, coloring)
+}
+
+export function prepareOne(
+  configHome: string,
+  name: string,
+  key: string,
+  paint: Paint,
+  blurring: number,
+  coloring: Coloring,
+): boolean {
+  const dir = backgroundsDir(configHome)
+  const picture = readStore(dir).palettes[name]?.pictures.find((held) => held.key === key)
+  if (!picture?.original || undrawn(picture)) {
+    return false
+  }
+  const load = picture.cut ? cutOf(dir, picture) : originalOf(dir, picture)
+  return prepared(configHome, name, picture, load, paint, blurring, coloring)
 }
