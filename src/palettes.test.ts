@@ -250,6 +250,28 @@ test('sync puts the startup palette on Warp through its settings file, and gives
   assert.equal(readFileSync(settings, 'utf8'), mine)
 })
 
+test('sync keeps Warp on the palette of the painted tab that ran the command, unless that palette went or ttheme went off', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const state: Installed = { terminals: ['warp'], palettes: ['gojo', 'geto'], startup: 'gojo' }
+  sync(configHome, catalog, state, home)
+  const settings = warpSettings(home, configHome)
+  mkdirSync(join(settings, '..'), { recursive: true })
+  writeFileSync(settings, `[appearance.themes]\ntheme = ${warpThemeValue('geto')}\n`)
+  process.env.TTHEME_WARP_WEARS = 'geto'
+  try {
+    sync(configHome, catalog, state, home)
+    assert.match(readFileSync(settings, 'utf8'), /name = "geto"/)
+    sync(configHome, catalog, { ...state, palettes: ['gojo'] }, home)
+    assert.match(readFileSync(settings, 'utf8'), /name = "gojo"/)
+    writeFileSync(settings, `[appearance.themes]\ntheme = ${warpThemeValue('geto')}\n`)
+    sync(configHome, catalog, { ...state, off: true }, home)
+    assert.match(readFileSync(settings, 'utf8'), /^theme = "dark"$/m)
+  } finally {
+    delete process.env.TTHEME_WARP_WEARS
+  }
+})
+
 test('sync adds the Warp theme table when there is none, gives Warp its default back while off, and leaves Warp alone without a settings file', () => {
   const configHome = fixture()
   const home = fixture()

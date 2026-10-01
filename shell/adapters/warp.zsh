@@ -52,6 +52,12 @@ __tt_warp_poked() {
   __tt_warp_publish
 }
 
+__tt_cli_env() {
+  local REPLY
+  __tt_warp_tab
+  [[ -n $REPLY ]] && __tt_warp_here && pass+=(TTHEME_WARP_WEARS=$REPLY)
+}
+
 __tt_hear() {
   if [[ -n $TTHEME_PAINTED ]] && __tt_warp_wearing && [[ -n ${TTHEME_PALETTE[$REPLY]} ]]; then
     REPLY=${TTHEME_PALETTE[$REPLY]%% *}

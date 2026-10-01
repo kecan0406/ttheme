@@ -155,6 +155,11 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
   }
 }
 
+function kept(startup: string | undefined, laid: Laid): string | undefined {
+  const tab = process.env.TTHEME_WARP_WEARS
+  return startup !== undefined && tab !== undefined && laid.files.has(tab) ? tab : startup
+}
+
 function wearWarp(at: At, startup: string | undefined, laid: Laid, keep = false): string | undefined {
   const file = warpSettings(at.home, at.configHome)
   if (!existsSync(file)) {
@@ -209,7 +214,7 @@ export const warp: Wiring = {
     const laid = laidFiles(ctx)
     out.themes(warp)
     writePictures(ctx, out, laid.files)
-    const file = wearWarp(ctx, ctx.startup, laid)
+    const file = wearWarp(ctx, kept(ctx.startup, laid), laid)
     if (file) {
       out.note(file)
     }

@@ -1293,6 +1293,7 @@ __tt_cli() {
   for k in $TTHEME_SETTINGS; do
     (( $+parameters[$k] )) && pass+=("$k=${(P)k}")
   done
+  __tt_cli_env
   env $pass node $TTHEME_HOME/ttheme.js "$@"
 }
 
