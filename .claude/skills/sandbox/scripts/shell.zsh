@@ -22,9 +22,18 @@ settle() {
   done
 }
 
+stop() {
+  local pane
+  for pane in ${(f)"$(tmux -L $SOCKET list-panes -a -F '#{pane_pid}' 2>/dev/null)"}; do
+    pkill -KILL -P $pane 2>/dev/null || :
+    kill -KILL $pane 2>/dev/null || :
+  done
+  tmux -L $SOCKET kill-server 2>/dev/null || :
+}
+
 start() {
   local i
-  tmux -L $SOCKET kill-server 2>/dev/null || :
+  stop
   tmux -L $SOCKET new-session -d -x $COLS -y $ROWS -c $ROOT "mise run sandbox --here --zshenv $HERE/quiet.zsh $*"
   for i in {1..300}; do
     tmux -L $SOCKET capture-pane -p 2>/dev/null | grep -q '^sandbox .*%' && break
@@ -38,6 +47,6 @@ case $1 in
   start) shift; start $@ ;;
   send) shift; tmux -L $SOCKET send-keys -- $@; settle; show ;;
   show) shift; show $@ ;;
-  stop) tmux -L $SOCKET kill-server 2>/dev/null || : ;;
+  stop) stop ;;
   *) print -u2 "usage: shell.zsh start [palette…] | send <tmux keys…> | show [-e] | stop"; return 1 ;;
 esac

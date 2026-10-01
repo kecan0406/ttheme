@@ -2428,9 +2428,17 @@ __tt_pv_getch() {
     read -sk 1 -t $1 2>/dev/null
     return
   fi
-  local t=0.2
+  local -F t=0.2 at
+  local -i quick=0
   (( gstep )) && t=0.06
-  while ! read -sk 1 -t $t 2>/dev/null; do
+  while :; do
+    at=$EPOCHREALTIME
+    read -sk 1 -t $t 2>/dev/null && return 0
+    if (( EPOCHREALTIME - at < t / 4 )); then
+      (( ++quick >= 5 )) && { pvgone=1; return 1 }
+    else
+      quick=0
+    fi
     [[ -t 0 ]] || return 1
     __tt_pv_size && return 1
     if (( osdt > 0 )); then
@@ -2444,7 +2452,6 @@ __tt_pv_getch() {
     (( gstep )) && { gstep=$(( gstep - 1 )); tick=1; return 1 }
     (( ! te && SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; tick=1; return 1 }
   done
-  return 0
 }
 
 __tt_pv_read() {
@@ -2904,6 +2911,7 @@ __tt_pv_handle() {
 
 __tt_preview() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
   local mode=$1 pdir=${2:-$PWD} hubwas=""
   local -i hub=0 hubleft=0
   [[ $mode == hub ]] && hub=1
@@ -2921,7 +2929,7 @@ __tt_preview() {
   local conf=0 cf=1
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
   local te=0 tfocus=0 tename="" tedirty=0 temode=list tespec="" tesz=""
-  local -i TE_IN=0 TE_OUT=0 TE_PID=0
+  local -i TE_IN=0 TE_OUT=0 TE_PID=0 pvgone=0
   local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=("New tabs" Announce "Search fx" Sort Blur Colors)
   local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc series" "0 1 2 3 4" "tone original") cshow=("off seq" "on off" "typewriter decode glitch" "abc series" "off 1px 2px 3px 4px" "tone original")
   local -A cnote=(
@@ -2964,6 +2972,7 @@ __tt_preview() {
       fi
       tick=0
       if ! __tt_pv_read; then
+        (( pvgone )) && break
         [[ -t 0 ]] && continue
         break
       fi
