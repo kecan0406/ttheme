@@ -438,18 +438,21 @@ const warp = (): Kind => {
       settings = read(paths(app).settings)
       theme = warpLook(paths(app).settings, paths(app).themes)
       db = existsSync(paths(app).db) ? new Database(paths(app).db) : undefined
+      db?.run('pragma busy_timeout = 1000')
     },
     opening: (app) => ({ argv: login(app), env: {}, colors: theme.colors }),
     opened(app, tab) {
       const id = app.tabs.indexOf(tab) + 1
-      db?.run('insert into tabs (id, window_id) values (?, 1)', [id])
-      db?.run('insert into pane_nodes (id, tab_id, is_leaf) values (?, ?, 1)', [id, id])
-      db?.run('insert into pane_leaves (pane_node_id, is_focused) values (?, 1)', [id])
-      db?.run('insert into terminal_panes (id, uuid) values (?, ?)', [
-        id,
-        Buffer.from(tab.session.replaceAll('-', ''), 'hex'),
-      ])
-      front(app, tab)
+      db?.transaction(() => {
+        db?.run('insert into tabs (id, window_id) values (?, 1)', [id])
+        db?.run('insert into pane_nodes (id, tab_id, is_leaf) values (?, ?, 1)', [id, id])
+        db?.run('insert into pane_leaves (pane_node_id, is_focused) values (?, 1)', [id])
+        db?.run('insert into terminal_panes (id, uuid) values (?, ?)', [
+          id,
+          Buffer.from(tab.session.replaceAll('-', ''), 'hex'),
+        ])
+        front(app, tab)
+      })()
     },
     watched: (app) => [paths(app).settings],
     unchanged: (app) => read(paths(app).settings) === settings,

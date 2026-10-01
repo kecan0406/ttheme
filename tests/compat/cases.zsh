@@ -209,7 +209,7 @@ __cc_kitty() {
   for (( r = 1; r <= LINES; r++ )); do printf '\e[%d;1H\e[K' $r; done
   __cc_seen kitty-el '#40a040' $start 64
   printf '\e_Ga=d,d=A,q=2\e\\\e[H\e[2J'
-  __cc_fill 43 oEBAQECg 2 -1 ,x=0,y=1,w=1,h=1
+  __cc_fill 43 QECgoEBAoEBAoEBA 4 -1 ,x=0,y=0,w=1,h=1
   __cc_seen kitty-crop '#4040a0' '#a04040' 64
   printf '\e_Ga=d,d=A,q=2\e\\\e[H\e[2J'
 }
@@ -546,13 +546,37 @@ __cc_back() {
   printf '\e[H\e[2J'
 }
 
+__cc_idle() {
+  local -i shell=$$
+  TRAPURG() {
+    kill $CC_WAITER 2>/dev/null
+    if (( ${#zsh_eval_context} == 1 )); then
+      __cc_report prompt-trap pass "a signal to the shell idle at its prompt ran its trap at once"
+    else
+      __cc_report prompt-trap fail "a signal to the shell idle at its prompt ran its trap inside ${zsh_eval_context[1,-2]}"
+    fi
+    : > $CC_DIR/done
+    kill -HUP $$
+    return 0
+  }
+  {
+    sleep 1
+    kill -URG $shell
+    sleep 3
+    kill -0 $shell 2>/dev/null || exit 0
+    __cc_report prompt-trap fail "a signal to the shell idle at its prompt ran no trap within 3 s"
+    : > $CC_DIR/done
+    kill -HUP $shell
+  } &!
+  typeset -gi CC_WAITER=$!
+}
+
 __cc_run() {
   precmd_functions=(${precmd_functions:#__cc_run})
   mkdir -p $CC_DIR
   mkdir $CC_DIR/started 2>/dev/null || return
   __cc_cases 2>> $CC_DIR/errors
-  : > $CC_DIR/done
-  exit
+  __cc_idle
 }
 
 precmd_functions+=(__cc_run)

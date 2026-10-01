@@ -205,6 +205,7 @@ test('every function the shell calls on its own runs under zsh defaults, whateve
     ...[...layer.matchAll(/(?:add-zsh-hook [a-z]+|zle -N|add-zle-hook-widget [a-z-]+|compdef) (__tt_\w+)/g)].map(
       ([, name]) => name ?? '',
     ),
+    ...[...layer.matchAll(/^\s*(TRAP[A-Z]+)\(\) \{/gm)].map(([, name]) => name ?? ''),
   ]
   assert.ok(called.length > 8)
   for (const name of new Set(called)) {

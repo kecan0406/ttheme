@@ -171,8 +171,13 @@ be reloaded, and the palette of a tab you switch to rides on it — about 0.2 s
 instead of 0.6 s, for about 8% CPU while it lasts. Nothing in the file changes.
 A tab that never took a palette follows the default, and after `ttheme off` a
 tab painted before shows your own theme again, as Ghostty's tabs turn off at
-their next focus. Without `sqlite3`, or in a Warp too old to name its sessions,
-a tab puts its palette back at its next prompt instead. With Warp's settings
+their next focus. Warp tells a shell waiting at its prompt nothing when its tab
+comes to the front, so the same process does: when the tab in front last read
+older palettes or pins than there are now, it sends that tab's shell a signal
+(SIGURG, which every program ignores unless it asks for it), and a pin set in
+another tab, a new default, `ttheme off` or `ttheme on` reach the tab as it
+comes to the front. Without `sqlite3`, or in a Warp too old to name its
+sessions, a tab puts its palette back at its next prompt instead. With Warp's settings
 sync on, the theme setting goes to your account too, so moving between tabs
 that wear different palettes is a preference change there as well.
 

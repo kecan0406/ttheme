@@ -150,8 +150,9 @@ mise run parity               # every journey in a model of every terminal, held
 throwaway home (`mise run sandbox`), runs the cases in `tests/compat/cases.zsh`
 inside it — adapter detection, OSC set/query/reset, what the window really
 paints (read off a screenshot), `ttheme use <palette>` and its restore, cell size,
-kitty graphics, synchronized output, focus reporting, and whether a tab that
-never painted follows a new default and a tab that went off takes it back —
+kitty graphics, synchronized output, focus reporting, whether a shell idle at
+its prompt runs a signal's trap at once, and whether a tab that never painted
+follows a new default and a tab that went off takes it back —
 and compares them with `tests/compat/expect.tsv`: a case that used to pass and
 fails is a regression and fails the run, and `--update` records what was
 measured. Konsole runs on Linux alone, so `mise run compat:konsole` runs its

@@ -35,6 +35,7 @@ export interface Behavior {
   reload: 'keep' | 'reset' | 'none'
   pictures: 'app' | 'tab' | 'window' | 'none'
   front: 'tty' | 'none'
+  promptTrap: boolean
 }
 
 const EVERY = SLOT_CODES
@@ -53,6 +54,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     reload: 'keep',
     pictures: 'app',
     front: 'tty',
+    promptTrap: true,
   },
   iterm2: {
     draws: EVERY,
@@ -66,6 +68,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     reload: 'keep',
     pictures: 'tab',
     front: 'none',
+    promptTrap: true,
   },
   kitty: {
     draws: EVERY,
@@ -79,6 +82,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     reload: 'reset',
     pictures: 'window',
     front: 'none',
+    promptTrap: true,
   },
   alacritty: {
     draws: NO_SELECTION,
@@ -92,6 +96,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     reload: 'keep',
     pictures: 'none',
     front: 'none',
+    promptTrap: true,
   },
   wezterm: {
     draws: EVERY,
@@ -105,6 +110,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     reload: 'keep',
     pictures: 'window',
     front: 'none',
+    promptTrap: true,
   },
   'windows-terminal': {
     draws: EVERY,
@@ -118,6 +124,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     reload: 'reset',
     pictures: 'none',
     front: 'none',
+    promptTrap: true,
   },
   warp: {
     draws: ['10', ...ANSI],
@@ -131,6 +138,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     reload: 'none',
     pictures: 'app',
     front: 'none',
+    promptTrap: true,
   },
   konsole: {
     draws: ['11', '10'],
@@ -144,6 +152,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     reload: 'none',
     pictures: 'none',
     front: 'none',
+    promptTrap: true,
   },
   'terminal-app': {
     draws: EVERY,
@@ -157,6 +166,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     reload: 'none',
     pictures: 'none',
     front: 'none',
+    promptTrap: true,
   },
 }
 
@@ -180,6 +190,7 @@ export const MEASURED: { id: string; holds: (b: Behavior) => boolean }[] = [
   { id: 'focus-event', holds: reportsFocus },
   { id: 'focus-answer', holds: (b) => b.focus === 'answer' },
   { id: 'front-tty', holds: (b) => b.front === 'tty' },
+  { id: 'prompt-trap', holds: (b) => b.promptTrap },
 ]
 
 export const WIRING: Record<Term, Wired | undefined> = {

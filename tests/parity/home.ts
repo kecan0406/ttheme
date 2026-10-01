@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { colorsOf, installBackdrop, toneFor } from '../../src/backdrop.ts'
 import type { PaletteEntry } from '../../src/manifest.ts'
 import { ITERM_SUITE, type Place, warpPaths } from './model.ts'
-import { OWN, type Term, WIRING, WT_PROFILE } from './terms.ts'
+import { BEHAVIOR, OWN, type Term, WIRING, WT_PROFILE } from './terms.ts'
 
 export const PALETTES = ['konata', 'kita', 'miku', 'rei']
 export const PICTURED = ['konata', 'kita']
@@ -175,6 +175,7 @@ function prepare(place: Place, term: Term): void {
     mkdirSync(warp.themes, { recursive: true })
     mkdirSync(dirname(warp.db), { recursive: true })
     const db = new Database(warp.db)
+    db.run('pragma journal_mode = wal')
     db.run('create table app (id integer primary key, active_window_id integer)')
     db.run('create table windows (id integer primary key, active_tab_index integer)')
     db.run('create table tabs (id integer primary key, window_id integer)')
@@ -274,7 +275,10 @@ export async function build(
     picture(place, entry, 1000 + i)
   })
   await cli(place, 'default', STARTUP)
-  writeFileSync(join(place.home, '.zshrc'), `${readFileSync(join(place.home, '.zshrc'), 'utf8')}${HARNESS}`)
+  writeFileSync(
+    join(place.home, '.zshrc'),
+    `${readFileSync(join(place.home, '.zshrc'), 'utf8')}${HARNESS}${BEHAVIOR[term].promptTrap ? '' : "trap '' URG\n"}`,
+  )
   await run(place, ['zsh', '-i', '-c', 'exit'], { GHOSTTY_RESOURCES_DIR: '' })
   const snapshot = join(place.root, 'snapshot')
   await run(place, ['cp', '-a', place.home, snapshot])
