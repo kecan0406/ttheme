@@ -8,8 +8,8 @@ import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
 import { available, readCatalog, writeCatalog } from './catalog.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
+import { pickPalettes } from './installs.ts'
 import type { Manifest, PaletteEntry } from './manifest.ts'
-import { pickPalettes } from './market.ts'
 import {
   configHome as configDir,
   type Installed,
