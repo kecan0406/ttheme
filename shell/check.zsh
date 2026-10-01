@@ -4,7 +4,7 @@ export HOME=$XDG_CONFIG_HOME/home
 mkdir -p $HOME
 unset TERM_PROGRAM GHOSTTY_RESOURCES_DIR KITTY_WINDOW_ID WEZTERM_PANE ALACRITTY_WINDOW_ID KONSOLE_VERSION ITERM_SESSION_ID WT_SESSION WARP_TERMINAL_SESSION_UUID XDG_STATE_HOME
 mkdir -p $XDG_CONFIG_HOME/ttheme
-cp -R shell/ttheme.zsh shell/adapters dist/shell/palettes.zsh $XDG_CONFIG_HOME/ttheme/
+cp -R shell/ttheme.zsh shell/preview.zsh shell/adapters dist/shell/palettes.zsh $XDG_CONFIG_HOME/ttheme/
 source $XDG_CONFIG_HOME/ttheme/ttheme.zsh
 b64d() {
   local in=$(cat)

@@ -111,7 +111,7 @@ test('the shared layer names a terminal only to detect it, and an adapter names 
   const layer = read('shell', 'ttheme.zsh')
   const from = layer.indexOf('if [[ -n $NVIM ')
   const to = layer.indexOf('typeset -g TTHEME_ADAPTER=unknown')
-  assert.deepEqual(named(layer.slice(0, from) + layer.slice(to)), [])
+  assert.deepEqual(named(layer.slice(0, from) + layer.slice(to) + read('shell', 'preview.zsh')), [])
   for (const shared of ['_osc.zsh', '_bg.zsh']) {
     assert.deepEqual(named(read('shell', 'adapters', shared)), [], shared)
   }
@@ -184,7 +184,7 @@ test('every screen clear goes through CLEAR, which iTerm2 does not push into its
     ...readdirSync(join(root, 'src'))
       .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
       .map((file) => join('src', file)),
-    ...['ttheme.zsh', 'launch-tab.zsh'].map((file) => join('shell', file)),
+    ...['ttheme.zsh', 'preview.zsh', 'launch-tab.zsh'].map((file) => join('shell', file)),
     ...readdirSync(join(root, 'shell', 'adapters')).map((file) => join('shell', 'adapters', file)),
   ]
   const clears = /(?:\\x1b|\\e|\\033)\[2J|(?:\\x1b|\\e|\\033)\[H(?:\\x1b|\\e|\\033)\[J/
@@ -197,6 +197,7 @@ test('every screen clear goes through CLEAR, which iTerm2 does not push into its
 test('every function the shell calls on its own runs under zsh defaults, whatever options a .zshrc set', () => {
   const layer = [
     read('shell', 'ttheme.zsh'),
+    read('shell', 'preview.zsh'),
     ...readdirSync(join(root, 'shell', 'adapters')).map((file) => read('shell', 'adapters', file)),
   ].join('\n')
   const called = [

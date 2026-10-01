@@ -76,6 +76,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     { from: join(paths.root, 'bin', 'ttheme.js'), to: join(home, 'ttheme.js') },
     { from: join(paths.root, 'bin', 'ttheme.js.map'), to: join(home, 'ttheme.js.map') },
     { from: join(paths.root, 'shell', 'ttheme.zsh'), to: join(home, 'ttheme.zsh') },
+    { from: join(paths.root, 'shell', 'preview.zsh'), to: join(home, 'preview.zsh') },
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
   ]
   copyDir(copies, join(paths.root, 'shell', 'adapters'), join(home, 'adapters'))

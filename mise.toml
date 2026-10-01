@@ -107,7 +107,7 @@ run_init() {
   sandboxed GHOSTTY_RESOURCES_DIR=x node "$tmp/package/bin/ttheme.js" init --yes < /dev/null > /dev/null
 }
 run_init
-for f in ttheme/ttheme.js ttheme/ttheme.zsh ttheme/palettes.zsh ttheme/config.zsh ttheme/adapters/_osc.zsh ghostty/config; do
+for f in ttheme/ttheme.js ttheme/ttheme.zsh ttheme/preview.zsh ttheme/palettes.zsh ttheme/config.zsh ttheme/adapters/_osc.zsh ghostty/config; do
   [ -e "$tmp/.config/$f" ] || { echo "bin:check failed: missing $f"; exit 1; }
 done
 layer '(( ${#TTHEME_PALETTE} == 0 ))' ||

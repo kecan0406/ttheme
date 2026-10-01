@@ -275,7 +275,9 @@ test('new pictures are drawn in the colors config.zsh names, tone unless it says
 })
 
 test('the shell layer falls back to the same default config.zsh documents for every setting it reads', () => {
-  const layer = readFileSync(join(import.meta.dirname, '..', 'shell', 'ttheme.zsh'), 'utf8')
+  const layer = ['ttheme.zsh', 'preview.zsh']
+    .map((file) => readFileSync(join(import.meta.dirname, '..', 'shell', file), 'utf8'))
+    .join('\n')
   const defaults = [...layer.matchAll(/^: \$\{(TTHEME_\w+):=(.*)\}$/gm)]
   assert.ok(defaults.length > 0)
   for (const [, name = '', value] of defaults) {
