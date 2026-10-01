@@ -1,6 +1,6 @@
 import { openSync, writeSync } from 'node:fs'
 import { ReadStream } from 'node:tty'
-import type { PaletteEntry } from './emit/manifest.ts'
+import type { PaletteEntry } from './manifest.ts'
 
 export const SLOT_CODES: readonly string[] = ['11', '10', '12', '17', ...Array.from({ length: 16 }, (_, i) => `4;${i}`)]
 

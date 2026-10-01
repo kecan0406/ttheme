@@ -2,7 +2,7 @@ import { Database } from 'bun:sqlite'
 import { chmodSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { colorsOf, installBackdrop, toneFor } from '../../src/backdrop.ts'
-import type { PaletteEntry } from '../../src/emit/manifest.ts'
+import type { PaletteEntry } from '../../src/manifest.ts'
 import { ITERM_SUITE, type Place, warpPaths } from './model.ts'
 import { OWN, type Term, WIRING, WT_PROFILE } from './terms.ts'
 

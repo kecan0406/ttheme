@@ -274,12 +274,6 @@ __tt_empty() {
   return 1
 }
 
-__tt_spec() {
-  local spec=${TTHEME_PALETTE[$1]}
-  [[ -n $spec ]] || return 1
-  print -r -- "$spec"
-}
-
 __tt_name_of() { REPLY=${${(k)TTHEME_PALETTE[(re)$1]}:-custom} }
 
 __tt_color() { [[ -t 1 && -z $NO_COLOR && $TERM != dumb ]] }

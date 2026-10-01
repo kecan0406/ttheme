@@ -4,8 +4,8 @@ import { Prompt } from '@clack/core'
 import { ansiBar, ansiFg, fit, spread, wrapText } from './ansi.ts'
 import { gateFailures } from './catalog.ts'
 import { GATE_RULES } from './contrast.ts'
-import type { PaletteEntry } from './emit/manifest.ts'
 import { type HubTab, hubBar, hubGoto } from './hub.ts'
+import type { PaletteEntry } from './manifest.ts'
 import { type Repository, repositorySource } from './markets.ts'
 import {
   BOLD,

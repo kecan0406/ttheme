@@ -3,7 +3,7 @@ import { basename, join } from 'node:path'
 import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure, RULES } from './contrast.ts'
-import { type PaletteEntry, paletteEntry, toTheme } from './emit/manifest.ts'
+import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import type { Colors } from './seeds.ts'
 import { type Identity, isLocal, localIdentity, marketId, marketSources } from './sources.ts'
 import {

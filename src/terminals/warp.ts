@@ -3,11 +3,12 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync,
 import { dirname, join } from 'node:path'
 import { backgroundsDir, readBackdrop } from '../backdrop.ts'
 import { backupOnce, editUserFile, writeAtomic } from '../edits.ts'
-import { warp as emitter, owned } from '../emit/index.ts'
+import { warp as emitter } from '../emit/index.ts'
 import type { ProfileBackground } from '../emit/iterm2.ts'
 import { type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from '../emit/warp.ts'
 import { decodePng, encodeRgb, flatten } from '../png.ts'
 import type { Theme } from '../theme.ts'
+import { owned } from '../theme.ts'
 import { dataHome, readText, tilde } from './common.ts'
 import type { At, Ctx, Out, Wiring } from './types.ts'
 

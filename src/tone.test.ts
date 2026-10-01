@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { available, readKept, untuned } from './catalog.ts'
-import type { Manifest, PaletteEntry } from './emit/manifest.ts'
+import type { Manifest, PaletteEntry } from './manifest.ts'
 import { sync } from './palettes.ts'
 import { overrideOf, readTone, slotColors, tonedEntry, tonePath, tuned, withTone, writeTone } from './tone.ts'
 

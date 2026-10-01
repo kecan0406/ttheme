@@ -79,7 +79,6 @@ import { booruTags, find, readAvailable, siteTags } from './catalog.ts'
 import { rgb } from './color.ts'
 import { canRemoveBackground, keepable, removeBackground } from './cutout.ts'
 import { writeAtomic } from './edits.ts'
-import type { Manifest, PaletteEntry } from './emit/manifest.ts'
 import {
   CELL_QUERY,
   type Count,
@@ -108,6 +107,7 @@ import {
   unplace,
 } from './find-screen.ts'
 import { type Frame, fitOrder, interleave, type Pick } from './fit.ts'
+import type { Manifest, PaletteEntry } from './manifest.ts'
 import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from './palettes.ts'
 import { type Look, Renderer, type Shown } from './render.ts'
 import { SCENES } from './scenes.ts'

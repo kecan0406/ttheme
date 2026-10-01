@@ -1,4 +1,4 @@
-import type { PaletteEntry } from './emit/manifest.ts'
+import type { PaletteEntry } from './manifest.ts'
 import { colorless, paletteOsc, queryTerminalColors, restoreOsc, SLOT_CODES, schemeOsc } from './osc.ts'
 import type { Wired } from './terminals/types.ts'
 import { owned } from './theme.ts'

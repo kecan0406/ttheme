@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { writeCatalog } from './catalog.ts'
-import type { Manifest, PaletteEntry } from './emit/manifest.ts'
+import type { Manifest, PaletteEntry } from './manifest.ts'
 import { inMarket, runAdd, runDefault } from './market.ts'
 import { withMarkets } from './markets.ts'
 import { readInstalled, sync, writeInstalled } from './palettes.ts'

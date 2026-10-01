@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { backupPath } from './edits.ts'
-import type { Manifest, PaletteEntry } from './emit/manifest.ts'
+import type { Manifest, PaletteEntry } from './manifest.ts'
 import { type Installed, sync, writeInstalled } from './palettes.ts'
 import type { Host } from './terminals/types.ts'
 import { applyUninstall, planUninstall, type UninstallPaths } from './uninstall.ts'

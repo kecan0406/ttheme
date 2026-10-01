@@ -43,7 +43,7 @@ import {
 } from './booru.ts'
 import { canRemoveBackground, keepable, removeBackground } from './cutout.ts'
 import { writeAtomic } from './edits.ts'
-import type { PaletteEntry } from './emit/manifest.ts'
+import type { PaletteEntry } from './manifest.ts'
 import { colorless } from './osc.ts'
 import { aligns as alignsFor, refreshPictures } from './palettes.ts'
 import { pending, progress } from './pending.ts'

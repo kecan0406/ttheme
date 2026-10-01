@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { owned } from '../emit/index.ts'
 import type { Theme } from '../theme.ts'
+import { owned } from '../theme.ts'
 import type { Host, Unwired, Wiring } from './types.ts'
 
 export function readText(path: string): string {

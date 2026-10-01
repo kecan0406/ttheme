@@ -15,8 +15,8 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { writeCatalog } from './catalog.ts'
-import { type Manifest, type PaletteEntry, toTheme } from './emit/manifest.ts'
 import { warpPictureFile } from './emit/warp.ts'
+import { type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
 import {
   forget,
   type Installed,

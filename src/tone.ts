@@ -4,7 +4,7 @@ import { backdropTone } from './backdrop.ts'
 import { isHex } from './color.ts'
 import { measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
-import { type PaletteEntry, toTheme } from './emit/manifest.ts'
+import { type PaletteEntry, toTheme } from './manifest.ts'
 
 export const TONE_SLOTS = [
   'background',
