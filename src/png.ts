@@ -1,7 +1,7 @@
 import { constants, deflateSync, inflateSync } from 'node:zlib'
-import { decode as decodeJpegData } from 'jpeg-js'
 import { PNG } from 'pngjs'
 import { type Hex, rgb } from './color.ts'
+import { decodeJpeg } from './jpeg.ts'
 
 export interface Rgba {
   width: number
@@ -190,13 +190,7 @@ export function decodeImage(bytes: Uint8Array, limit: number): Rgba {
     return decodePng(bytes)
   }
   if (bytes[0] === 0xff && bytes[1] === 0xd8) {
-    const jpeg = decodeJpegData(bytes, {
-      useTArray: true,
-      formatAsRGBA: true,
-      maxResolutionInMP: limit / 1e6,
-      maxMemoryUsageInMB: 1024,
-    })
-    return { width: jpeg.width, height: jpeg.height, data: jpeg.data }
+    return decodeJpeg(bytes, limit)
   }
   throw new Error('not a PNG or JPEG image')
 }

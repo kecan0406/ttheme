@@ -214,6 +214,12 @@ hues survive: the harmonizer normalizes lightness and saturation away and
 rotates each non-signature hue toward the palette's own seed, so no scheme is
 reproduced here.
 
+JPEG pictures are decoded by [mozjpeg](https://github.com/mozilla/mozjpeg),
+compiled to WebAssembly and packaged as
+[@jsquash/jpeg](https://github.com/jamsinclair/jSquash) (Apache-2.0), which the
+npm package carries inside `bin/ttheme.js`. This software is based in part on
+the work of the Independent JPEG Group.
+
 Palettes are inspired by characters from the listed works; this project is
 unaffiliated with and unendorsed by their rights holders. No character art,
 audio or trademarked asset is redistributed here — only color values.

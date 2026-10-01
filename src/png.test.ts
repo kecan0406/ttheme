@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { PNG } from 'pngjs'
-import { decodePng } from './png.ts'
+import { decodeImage, decodePng } from './png.ts'
 
 function sample(width: number, height: number, alpha: boolean, smooth: boolean): PNG {
   const png = new PNG({ width, height })
@@ -46,4 +46,20 @@ test('the native decode reads every filter and color layout the way pngjs does, 
   }
   const deep = PNG.sync.write(sample(4, 4, true, true), { bitDepth: 16, colorType: 6, inputColorType: 6 })
   assert.deepEqual([...decodePng(new Uint8Array(deep)).data], [...PNG.sync.read(deep).data])
+})
+
+const TWO_COLORS =
+  '/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAACAAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgACAAQAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAQEBAQEBAgEBAgICAgICAwICAgIDBAMDAwMDBAUEBAQEBAQFBQUFBQUFBQYGBgYGBgcHBwcHCAgICAgICAgICP/bAEMBAQEBAgICAwICAwgFBQUICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICP/dAAQAAf/aAAwDAQACEQMRAD8A/L+uPrsK4+v6g/ZVf81R/wByv/uwf2R+2P8A+aQ/7nP/AHVP/9k='
+
+test('a JPEG decodes to its own size and colors, keeps each decode apart, and is refused over the pixel limit', () => {
+  const bytes = new Uint8Array(Buffer.from(TWO_COLORS, 'base64'))
+  const first = decodeImage(bytes, 1e6)
+  const near = (at: number, want: number[]) => want.every((v, i) => Math.abs((first.data[at + i] as number) - v) <= 12)
+  assert.deepEqual([first.width, first.height, first.data.length], [16, 8, 16 * 8 * 4])
+  assert.ok(near(3 * 4, [200, 40, 40]) && near(12 * 4, [40, 80, 200]))
+  assert.equal(first.data[3], 255)
+  const kept = Uint8Array.from(first.data)
+  decodeImage(bytes, 1e6)
+  assert.deepEqual([...first.data], [...kept])
+  assert.throws(() => decodeImage(bytes, 100), /16×8 is over 0.0001 megapixels/)
 })

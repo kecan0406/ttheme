@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { AGENT, KEY_SPAN, MAX_PIXELS, type Site } from './booru.ts'
+import { jpegSize } from './jpeg.ts'
 import { isPng, pngHead } from './png.ts'
 
 const run = promisify(execFile)
@@ -120,33 +121,6 @@ export function pastedRefs(text: string, exists: (path: string) => boolean = isF
     }
   }
   return refs
-}
-
-export function jpegSize(bytes: Uint8Array): { width: number; height: number } | null {
-  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) {
-    return null
-  }
-  let at = 2
-  while (at + 9 < bytes.length) {
-    if (bytes[at] !== 0xff) {
-      at++
-      continue
-    }
-    const marker = bytes[at + 1] as number
-    if (marker === 0xff) {
-      at++
-      continue
-    }
-    const length = ((bytes[at + 2] as number) << 8) | (bytes[at + 3] as number)
-    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
-      return {
-        height: ((bytes[at + 5] as number) << 8) | (bytes[at + 6] as number),
-        width: ((bytes[at + 7] as number) << 8) | (bytes[at + 8] as number),
-      }
-    }
-    at += 2 + length
-  }
-  return null
 }
 
 function sniff(bytes: Uint8Array): { ext: 'png' | 'jpg'; width: number; height: number } | undefined {
