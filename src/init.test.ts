@@ -79,6 +79,7 @@ function makeFixture(): InitPaths {
     'bin/ttheme.js': 'cli',
     'bin/ttheme.js.map': 'map',
     'shell/ttheme.zsh': 'ttheme layer',
+    'shell/preview.zsh': 'preview',
     'shell/launch-tab.zsh': '#!/bin/zsh -f',
     'shell/adapters/_osc.zsh': 'osc',
     'shell/adapters/kitty.zsh': 'kitty adapter',
@@ -111,6 +112,7 @@ test('planInit places the runtime layer and touches only .zshrc', () => {
   for (const expected of [
     join(tthemeDir, 'ttheme.js'),
     join(tthemeDir, 'ttheme.zsh'),
+    join(tthemeDir, 'preview.zsh'),
     join(tthemeDir, 'launch-tab.zsh'),
     join(tthemeDir, 'adapters', '_osc.zsh'),
   ]) {
