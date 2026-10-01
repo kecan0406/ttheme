@@ -1,36 +1,29 @@
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import cells from 'fast-string-width'
-import { backdropTone, fillSize, origins, type Tone, type Tune } from '../backdrop.ts'
+import { backdropTone, fillSize, type Tone, type Tune } from '../backdrop.ts'
 import {
   BLOCKS,
   blockSet,
-  type Credit,
   cacheDir,
-  credit,
   exposed,
   extension,
-  fetchBytes,
   fetchCount,
-  fetchCredits,
   fetchLent,
   fetchPost,
   fetchPosts,
   fetchRelated,
   fetchSuggestions,
   fileOf,
-  headOf,
   hidden,
   KINDS,
   kindSet,
   LENDER,
   lend,
   locate,
-  mates,
   type Narrow,
   narrowOf,
   PAGE,
@@ -55,10 +48,8 @@ import {
   sweepCache,
   tagList,
   tagsOf,
-  uncredited,
 } from '../booru.ts'
 import { booruTags, find, readAvailable, siteTags } from '../catalog.ts'
-import { rgb } from '../color.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../cutout.ts'
 import { writeAtomic } from '../edits.ts'
 import { type Frame, fitOrder, interleave, type Pick } from '../fit.ts'
@@ -66,7 +57,7 @@ import type { Manifest, PaletteEntry } from '../manifest.ts'
 import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from '../palettes.ts'
 import { type Look, Renderer, type Shown } from '../render.ts'
 import { SCENES } from '../scenes.ts'
-import { CLEAR, cropsInBands, layersUnderCells, movesPlacements, readsFiles } from '../terminal.ts'
+import { CLEAR } from '../terminal.ts'
 import { POSITIONS } from '../theme.ts'
 import { blurOf, coloringFor, settingDefault, withSetting } from '../wiring.ts'
 import { kinKeys, near, type Shape, sameKeys, sameSet } from '../works.ts'
@@ -88,6 +79,8 @@ import {
   sourceLabel,
   takeInbound,
 } from './attach.ts'
+import { Kept } from './kept.ts'
+import { Paint } from './paint.ts'
 import {
   CELL_QUERY,
   type Count,
@@ -99,12 +92,8 @@ import {
   type Info,
   MIN,
   type Order,
-  type Placement,
   pageOf,
-  place,
   type Row,
-  release,
-  renderFind,
   type Setting,
   type Stage,
   stepped,
@@ -112,8 +101,6 @@ import {
   type Tile,
   type TunePanel,
   type Tuning,
-  transmit,
-  unplace,
 } from './screen.ts'
 
 const SETTINGS: Setting[] = [
@@ -248,13 +235,6 @@ function orderOf(value: string): Order {
 
 const STEPS: Record<string, number> = { left: -1, right: 1, 'shift-left': -10, 'shift-right': 10 }
 
-function marginOf(raw: string | undefined): { x: number; y: number } | undefined {
-  const m = /^(\d+) (\d+)$/.exec(raw ?? '')
-  return m && (Number(m[1]) > 0 || Number(m[2]) > 0) ? { x: Number(m[1]), y: Number(m[2]) } : undefined
-}
-
-const MARGIN = marginOf(process.env.TTHEME_BG_MARGIN)
-
 function resized(size: Tuning['size'], step: number, fill: number): Tuning['size'] {
   if (step < 0) {
     if (size !== 'fill') {
@@ -304,16 +284,7 @@ const TRY_WIDTH = 1280
 const TUNED_HELD = 16
 const TOP_RIGHT = POSITIONS.indexOf('top-right') + 1
 const SMALLEST = 20
-const COVER_ID = 2 ** 31 - 3
-const ANCHOR_ID = 2 ** 31 - 2
-const COVER_Z = -1073741827
-const ANCHOR_Z = -1073741828
 const LOOKAHEAD = 2
-const TICK = 80
-const GLIDE = 16
-const GLIDE_SHARE = 0.4
-const BAND_ID = 3 * 2 ** 30
-const BANDS_HELD = 256
 const KNOWN = 3
 const SUGGESTED = 8
 const CHIPS = 9
@@ -427,18 +398,6 @@ function incomplete(input: string): boolean {
   return at !== -1 && /^\[?[0-9;]*$/.test(input.slice(at + 1))
 }
 
-function readCache<T>(site: Site, name: string): Record<string, T> {
-  try {
-    return JSON.parse(readFileSync(join(cacheDir(site), name), 'utf8')) as Record<string, T>
-  } catch {
-    return {}
-  }
-}
-
-function writeCache(site: Site, name: string, data: Record<string, unknown>): void {
-  writeAtomic(join(cacheDir(site), name), `${JSON.stringify(data)}\n`)
-}
-
 class Finder {
   readonly view: FindView
   private readonly tone: Tone
@@ -463,35 +422,18 @@ class Finder {
   )
   private direction = 1
   private prefetching = 0
-  private readonly inflight = new Map<string, Promise<number>>()
-  private readonly owners = new Map<string, Map<string, string[]>>()
-  private readonly kept = new Map<string, Record<string, unknown>>()
   private readonly related = new Map<string, string[]>()
   private pool: string[] = []
   private relating?: AbortController
-  private readonly unsaved = new Set<string>()
-  private readonly crediting = new Map<number, Promise<void>>()
   private thumbQueue: Pick[] = []
   private thumbing = 0
   private readonly clarity = new Map<string, Shown>()
   private readonly tunedFiles: string[] = []
   private presenting = false
   private again = false
-  private covered = ''
   private readonly renders = new Renderer()
-  private readonly sent = new Map<number, string>()
-  private readonly placed = new Map<number, string>()
-  private screen: string[] = []
-  private ticking?: NodeJS.Timeout
-  private gliding?: NodeJS.Timeout
   private showing?: Board
   private readonly thumbless = new Set<number>()
-  private readonly bands = cropsInBands(process.env)
-  private readonly files = readsFiles(process.env)
-  private readonly moves = movesPlacements(process.env)
-  private readonly layers = layersUnderCells(process.env)
-  private readonly bandFiles = new Map<string, { id: number; path: string; ready: boolean }>()
-  private nextBand = BAND_ID
   private current?: Current
   private fetch?: AbortController
   private settle?: NodeJS.Timeout
@@ -513,7 +455,6 @@ class Finder {
   private attaching?: AbortController
   private probeWait?: (cell: { w: number; h: number } | null) => void
   private done?: (code: number) => void
-  private dirty = false
   private readonly scratch = mkdtempSync(join(tmpdir(), 'ttheme-find-'))
 
   private readonly home: string
@@ -521,6 +462,8 @@ class Finder {
   private readonly entry: PaletteEntry
   private readonly blurring: number
   private readonly start: Start | undefined
+  private readonly paint: Paint
+  private readonly kept: Kept
 
   constructor(home: string, catalog: Manifest, entry: PaletteEntry, tag: string, start?: Start) {
     this.start = start
@@ -589,6 +532,26 @@ class Finder {
       editing: tag === '' ? '' : undefined,
       chips: [],
     }
+    this.paint = new Paint({
+      view: this.view,
+      grid: () => ({ cols: this.cols, rows: this.rows, cell: this.cell }),
+      background: entry.background,
+      renders: this.renders,
+      scratch: this.scratch,
+      signal: this.signal,
+      write: (text) => this.write(text),
+    })
+    this.kept = new Kept({
+      home,
+      catalog,
+      entry,
+      signal: this.signal,
+      credited: () => {
+        this.show()
+        this.inform()
+        this.paint.draw()
+      },
+    })
     this.pool = this.selected(this.view)
     this.syncChips()
     this.board = blank(this.boardKey, tag !== '')
@@ -665,7 +628,7 @@ class Finder {
       artist: site === LOCAL ? sourceLabel(post.source) : (post.named.artist[0] ?? ''),
       score: post.score,
       variants,
-      mates: this.owners.get(site.key)?.get(post.owner) ?? [],
+      mates: this.kept.matesOf(site, post.owner),
       thumb: this.thumbPath.get(key),
       missing: this.thumbless.has(key),
     }
@@ -688,7 +651,7 @@ class Finder {
     view.top = board.top
     if (this.showing !== board) {
       this.showing = board
-      this.snap()
+      this.paint.snap()
     }
   }
 
@@ -738,7 +701,7 @@ class Finder {
     } else {
       void this.peek()
     }
-    this.draw()
+    this.paint.draw()
     const code = await exit
     this.session.abort()
     this.grabber.stop()
@@ -752,14 +715,13 @@ class Finder {
     this.quietSuggest()
     this.quietCount()
     clearInterval(clock)
-    clearInterval(this.ticking)
-    clearTimeout(this.gliding)
+    this.paint.stop()
     stdin.off('data', this.onData)
     stdout.off('resize', this.onResize)
     this.write(`\x1b_Ga=d,d=A,q=2\x1b\\${CLEAR}`)
     stdin.setRawMode(false)
     stdin.pause()
-    this.saveKept()
+    this.kept.save()
     this.renders.close()
     rmSync(this.scratch, { recursive: true, force: true })
     sweepCache()
@@ -877,7 +839,7 @@ class Finder {
     if (view.editing !== undefined && text.trim() !== '' && !this.picture(text)) {
       view.editing += text.replace(/[\r\n]+/g, ' ')
       this.suggest()
-      this.draw()
+      this.paint.draw()
       return
     }
     if (view.installing !== undefined || view.panel !== undefined || view.help) {
@@ -921,10 +883,10 @@ class Finder {
     this.noticeTimer = setTimeout(() => {
       if (view.error === text) {
         view.error = undefined
-        this.draw()
+        this.paint.draw()
       }
     }, ms)
-    this.draw()
+    this.paint.draw()
   }
 
   private async peek(): Promise<void> {
@@ -946,9 +908,9 @@ class Finder {
     clearTimeout(this.peekTimer)
     this.peekTimer = setTimeout(() => {
       view.hint = undefined
-      this.draw()
+      this.paint.draw()
     }, PEEK)
-    this.draw()
+    this.paint.draw()
   }
 
   private async fromClipboard(): Promise<void> {
@@ -1014,7 +976,7 @@ class Finder {
     view.error = undefined
     view.saved = undefined
     view.note = 'Reading the picture…'
-    this.draw()
+    this.paint.draw()
     let image: Loaded
     try {
       image = await load(AbortSignal.any([control.signal, this.signal]))
@@ -1079,7 +1041,7 @@ class Finder {
     this.view.mode = 'try'
     this.show()
     this.select()
-    this.draw()
+    this.paint.draw()
   }
 
   private readonly onClock = (): void => {
@@ -1089,21 +1051,21 @@ class Finder {
     if (waiting !== this.view.waiting) {
       this.view.waiting = waiting
       this.view.slow = slow.name
-      this.draw()
+      this.paint.draw()
     }
   }
 
   private readonly onResize = (): void => {
     this.cols = process.stdout.columns || this.cols
     this.rows = process.stdout.rows || this.rows
-    this.screen = []
+    this.paint.resized()
     this.scroll()
-    this.snap()
+    this.paint.snap()
     if (this.view.mode === 'try' && this.current) {
       this.reveal()
     }
     void this.pump()
-    this.draw()
+    this.paint.draw()
   }
 
   private key(key: string): void {
@@ -1137,7 +1099,7 @@ class Finder {
     if (view.help) {
       if (key === '?' || key === 'esc') {
         view.help = false
-        this.draw()
+        this.paint.draw()
       }
       return
     }
@@ -1149,7 +1111,7 @@ class Finder {
     }
     if (key === '?') {
       view.help = true
-      this.draw()
+      this.paint.draw()
       return
     }
     if (view.mode === 'try') {
@@ -1207,7 +1169,7 @@ class Finder {
     }
     if (key === '/') {
       view.editing = ''
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === ' ') {
@@ -1222,7 +1184,7 @@ class Finder {
       view.panel = 0
       view.advanced = false
       this.recount()
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'esc') {
@@ -1242,18 +1204,18 @@ class Finder {
     if (key === 'up' || key === 'down') {
       const k = page.indexOf(at) + (key === 'up' ? -1 : 1)
       view.panel = page[(k + page.length) % page.length] ?? at
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'a' || (key === 'enter' && at === view.settings.length)) {
       view.advanced = !view.advanced
       view.panel = pageOf(view)[0] ?? 0
-      this.draw()
+      this.paint.draw()
       return
     }
     if (row?.entry && (key === 'enter' || (row.entry === 'number' && /^[0-9]$/.test(key)))) {
       view.typing = key === 'enter' ? (row.entry === 'text' ? row.value : '') : key
-      this.draw()
+      this.paint.draw()
       return
     }
     if ((key === 'left' || key === 'right') && row && row.entry !== 'text') {
@@ -1264,7 +1226,7 @@ class Finder {
         row.value = stepped(row.choices, row.value, step)
         this.recount()
       }
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === ' ' && row?.multi) {
@@ -1274,7 +1236,7 @@ class Finder {
       if (next.length > 0 || empty !== undefined) {
         row.value = next.length > 0 ? next.join(' ') : (empty as string)
         this.recount()
-        this.draw()
+        this.paint.draw()
       }
       return
     }
@@ -1285,7 +1247,7 @@ class Finder {
       view.panel = undefined
       view.advanced = false
       this.quietCount()
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'enter' || key === 's' || key === 'alt-c') {
@@ -1301,7 +1263,7 @@ class Finder {
     const typed = view.typing ?? ''
     if (key === 'esc') {
       view.typing = undefined
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'enter' || key === 'up' || key === 'down') {
@@ -1310,7 +1272,7 @@ class Finder {
       view.typing = undefined
       this.recount()
       if (key === 'enter') {
-        this.draw()
+        this.paint.draw()
         return
       }
       this.panelKey(key)
@@ -1318,13 +1280,13 @@ class Finder {
     }
     if (key === 'backspace') {
       view.typing = typed.slice(0, -1)
-      this.draw()
+      this.paint.draw()
       return
     }
     const fits = row.entry === 'number' ? /^[0-9]$/.test(key) && typed.length < DIGITS : /^[\x20-\x7e]$/.test(key)
     if (fits) {
       view.typing = typed + key
-      this.draw()
+      this.paint.draw()
     }
   }
 
@@ -1382,7 +1344,7 @@ class Finder {
     )
     if (this.counting === asked && this.view.panel !== undefined) {
       this.view.counts = counts
-      this.draw()
+      this.paint.draw()
     }
   }
 
@@ -1397,7 +1359,7 @@ class Finder {
     })
     const changed = SETTINGS.filter((setting, i) => this.setting(setting.name) !== before[i])
     if (changed.length === 0) {
-      this.draw()
+      this.paint.draw()
       return
     }
     this.save(changed)
@@ -1445,7 +1407,7 @@ class Finder {
       const at = view.pick ?? shown.length
       const next = (at + (key === 'down' ? 1 : shown.length)) % (shown.length + 1)
       view.pick = next === shown.length ? undefined : next
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'esc' || key === 'enter') {
@@ -1457,7 +1419,7 @@ class Finder {
         this.finish(2)
         return
       }
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'enter') {
@@ -1474,19 +1436,19 @@ class Finder {
         this.finish(2)
         return
       }
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'backspace') {
       view.editing = text.slice(0, -1)
       this.suggest()
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key.length === 1 && key >= ' ') {
       view.editing = text + key
       this.suggest()
-      this.draw()
+      this.paint.draw()
     }
   }
 
@@ -1527,7 +1489,7 @@ class Finder {
             ...found.filter((item) => !names.has(item.value)),
           ].slice(0, SUGGESTED)
           view.pick = view.pick !== undefined && view.pick < known.length ? view.pick : undefined
-          this.draw()
+          this.paint.draw()
         }
       } catch {}
     }, SUGGEST_WAIT)
@@ -1561,7 +1523,7 @@ class Finder {
     this.board = board
     this.boards.set(board.key, board)
     this.show()
-    this.draw()
+    this.paint.draw()
     try {
       const post = await fetchPost(site, id, this.signal)
       if (gen !== this.gen) {
@@ -1572,7 +1534,7 @@ class Finder {
         board.error = `${site.name} has no post ${id}`
         this.view.error = board.error
         this.show()
-        this.draw()
+        this.paint.draw()
         return
       }
       this.single(board, { site, post })
@@ -1594,7 +1556,7 @@ class Finder {
     this.board = known
     this.view.error = known.error
     this.show()
-    this.draw()
+    this.paint.draw()
     await this.pump()
   }
 
@@ -1617,8 +1579,8 @@ class Finder {
         this.thumbs()
         this.show()
         this.scroll()
-        this.glide()
-        this.draw()
+        this.paint.glide()
+        this.paint.draw()
         return
       }
       index += size
@@ -1651,18 +1613,18 @@ class Finder {
     if (key === 'shift-left' || key === 'shift-right') {
       view.scene += key === 'shift-left' ? -1 : 1
       view.details = false
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'i') {
       view.details = !view.details
       this.inform()
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 't') {
       view.tuning = { field: 0, held: { ...view.tune }, fill: this.current?.fill ?? 0, coloring: view.coloring }
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'c') {
@@ -1691,7 +1653,7 @@ class Finder {
       view.fetching = undefined
       view.mode = 'grid'
       view.error = undefined
-      this.draw()
+      this.paint.draw()
     }
   }
 
@@ -1701,7 +1663,7 @@ class Finder {
     const tune = view.tune
     if (key === 'up' || key === 'down') {
       panel.field = (panel.field + (key === 'up' ? 2 : 1)) % 3
-      this.draw()
+      this.paint.draw()
       return
     }
     const step = STEPS[key]
@@ -1741,7 +1703,7 @@ class Finder {
     }
     if (key === 'enter') {
       view.tuning = undefined
-      this.draw()
+      this.paint.draw()
       return
     }
     if (key === 'c') {
@@ -1762,12 +1724,12 @@ class Finder {
     }
     view.coloring = view.coloring === 'tone' ? 'original' : 'tone'
     view.tune.opacity = view.untuned.opacity
-    this.draw()
+    this.paint.draw()
     this.reveal()
   }
 
   private retune(): void {
-    this.draw()
+    this.paint.draw()
     if (this.current && this.view.shown?.id === this.current.key) {
       this.reveal()
     }
@@ -1818,12 +1780,12 @@ class Finder {
     view.focus = next
     this.board.focus = next
     this.scroll()
-    this.glide()
+    this.paint.glide()
     void this.pump()
     if (view.mode === 'try') {
       this.select()
     }
-    this.draw()
+    this.paint.draw()
   }
 
   private scroll(): void {
@@ -1837,53 +1799,6 @@ class Finder {
       view.top = row - rowsVis + 1
     }
     this.board.top = view.top
-  }
-
-  private glide(): void {
-    if (this.bands) {
-      this.prebake()
-    }
-    if (this.gliding) {
-      return
-    }
-    const span = gridShape(this.cols, this.rows).height
-    const step = (): void => {
-      const view = this.view
-      const target = view.top * TILE.height
-      let d = target - view.scroll
-      if (d === 0 || view.mode !== 'grid') {
-        view.scroll = target
-        const settled = this.gliding !== undefined
-        this.gliding = undefined
-        if (settled) {
-          this.draw()
-        }
-        return
-      }
-      if (Math.abs(d) > 2 * span) {
-        view.scroll = target - Math.sign(d) * span
-        d = target - view.scroll
-      }
-      view.scroll += Math.sign(d) * Math.max(1, Math.round(Math.abs(d) * GLIDE_SHARE))
-      this.draw()
-      this.gliding = setTimeout(step, GLIDE)
-    }
-    step()
-  }
-
-  private snap(): void {
-    clearTimeout(this.gliding)
-    this.gliding = undefined
-    this.view.scroll = this.view.top * TILE.height
-  }
-
-  private prebake(): void {
-    const view = this.view
-    for (const p of renderFind({ ...view, scroll: view.top * TILE.height }, this.cols, this.rows).images) {
-      if (p.crop !== undefined) {
-        this.band(p.path, p.crop, p.rows)
-      }
-    }
   }
 
   private selected(terms: { tag: string; chosen?: string[] }): string[] {
@@ -1924,7 +1839,7 @@ class Finder {
     const names = this.selected({ tag, chosen: undefined })
     this.pool = names
     this.syncChips()
-    this.draw()
+    this.paint.draw()
     if (!tag || /\s/.test(tag)) {
       return
     }
@@ -1944,7 +1859,7 @@ class Finder {
     }
     this.pool = [...new Set([...names, ...found])]
     this.syncChips()
-    this.draw()
+    this.paint.draw()
   }
 
   private query(site: Site, view: Terms = this.view): { tags: string; notes: string[] } | undefined {
@@ -2014,10 +1929,12 @@ class Finder {
       board.searching = false
     }
     this.show()
-    this.draw()
+    this.paint.draw()
     void this.tally(gen, board, plans)
     try {
-      const owned = await Promise.all(plans.map(async (plan) => ({ plan, owners: await this.mateOwners(plan.site) })))
+      const owned = await Promise.all(
+        plans.map(async (plan) => ({ plan, owners: await this.kept.mateOwners(plan.site) })),
+      )
       if (gen !== this.gen) {
         return
       }
@@ -2031,7 +1948,7 @@ class Finder {
         ]
       })
       this.show()
-      this.draw()
+      this.paint.draw()
       await this.pump()
     } catch (error) {
       this.fail(gen, error)
@@ -2046,7 +1963,7 @@ class Finder {
         0,
       )
       this.show()
-      this.draw()
+      this.paint.draw()
     }
   }
 
@@ -2058,7 +1975,7 @@ class Finder {
     this.board.searching = false
     this.view.error = this.board.error
     this.show()
-    this.draw()
+    this.paint.draw()
   }
 
   private drop(board: Board, site: Site, error: unknown): void {
@@ -2114,7 +2031,7 @@ class Finder {
   private staged(board: Board): void {
     if (board === this.board) {
       this.stageOf(board)
-      this.draw()
+      this.paint.draw()
     }
   }
 
@@ -2298,7 +2215,7 @@ class Finder {
       job = (async () => {
         const path = this.previewPath(pick)
         const from = previewOf(pick.site, pick.post)
-        await this.cached(from.site, path, from.url)
+        await this.kept.cached(from.site, path, from.url)
         const look = await this.renders.run({ job: 'match', from: path, colors: this.entry.signature })
         this.looked.set(key, look)
         this.matched.set(pick.post, look.match)
@@ -2342,7 +2259,7 @@ class Finder {
           }
           await page
           this.show()
-          this.draw()
+          this.paint.draw()
           continue
         }
         const passed = await head.passed
@@ -2354,17 +2271,17 @@ class Finder {
           this.admit(head.pick)
         }
         this.show()
-        this.draw()
+        this.paint.draw()
       }
       if (gen === this.gen) {
         board.searching = false
         this.show()
-        this.draw()
+        this.paint.draw()
       }
     } catch (error) {
       this.fail(gen, error)
     } finally {
-      this.saveKept()
+      this.kept.save()
       if (this.pumping === gen) {
         this.pumping = 0
       }
@@ -2400,46 +2317,7 @@ class Finder {
   }
 
   private async passes({ site, post }: Pick): Promise<boolean> {
-    return this.view.preset === 'all' || site.vouched || this.transparent(site, post)
-  }
-
-  private keep<T>(site: Site, name: string): Record<string, T> {
-    const at = `${site.key}/${name}`
-    let known = this.kept.get(at)
-    if (!known) {
-      known = readCache<T>(site, name)
-      this.kept.set(at, known)
-    }
-    return known as Record<string, T>
-  }
-
-  private async transparent(site: Site, post: Post): Promise<boolean> {
-    const known = this.keep<boolean>(site, 'probes.json')
-    const cached = known[post.id]
-    if (cached !== undefined) {
-      return cached
-    }
-    try {
-      const found = await locate(site, post, this.signal)
-      const from = fileOf(site, post)
-      const alpha = (found === undefined ? await headOf(from.site, from.url, this.signal) : found)?.alpha === true
-      known[post.id] = alpha
-      this.unsaved.add(`${site.key}/probes.json`)
-      return alpha
-    } catch {
-      return false
-    }
-  }
-
-  private saveKept(): void {
-    for (const at of this.unsaved) {
-      const [key, name] = at.split('/') as [string, string]
-      const site = SITES.find((s) => s.key === key)
-      if (site) {
-        writeCache(site, name, this.keep(site, name))
-      }
-    }
-    this.unsaved.clear()
+    return this.view.preset === 'all' || site.vouched || this.kept.transparent(site, post)
   }
 
   private admit(pick: Pick): void {
@@ -2488,106 +2366,6 @@ class Finder {
     }
   }
 
-  private credit(pick: Pick, signal: AbortSignal): Promise<void> {
-    const { site, post } = pick
-    if (!uncredited(site, post)) {
-      return Promise.resolve()
-    }
-    const key = postKey(site, post.id)
-    let job = this.crediting.get(key)
-    if (!job) {
-      job = this.credits(pick, signal).finally(() => this.crediting.delete(key))
-      this.crediting.set(key, job)
-    }
-    return job
-  }
-
-  private async credits({ site, post }: Pick, signal: AbortSignal): Promise<void> {
-    const known = this.keep<Credit>(site, 'credits.json')
-    let found = known[post.id]
-    if (!found) {
-      try {
-        found = await fetchCredits(site, post.id, signal)
-      } catch {
-        return
-      }
-      if (!found?.owner) {
-        return
-      }
-      known[post.id] = found
-      this.unsaved.add(`${site.key}/credits.json`)
-    }
-    credit(post, found)
-    this.show()
-    this.inform()
-    this.draw()
-  }
-
-  private async mateOwners(site: Site): Promise<Map<string, string[]>> {
-    const cached = this.owners.get(site.key)
-    if (cached) {
-      return cached
-    }
-    const found = origins(this.home)
-    const known = this.keep<string>(site, 'owners.json')
-    const siblings = this.catalog.palettes.flatMap((sibling) => {
-      const origin = found.get(sibling.name)
-      return sibling.group === this.entry.group && sibling.name !== this.entry.name && origin?.site === site.key
-        ? [{ name: sibling.name, id: origin.id }]
-        : []
-    })
-    const asked = await Promise.all(
-      siblings.map(async (sibling) => {
-        const owner = known[sibling.id]
-        if (owner !== undefined) {
-          return { ...sibling, owner }
-        }
-        try {
-          return { ...sibling, owner: (await fetchPost(site, sibling.id, this.signal))?.owner ?? '' }
-        } catch {
-          return undefined
-        }
-      }),
-    )
-    const byPalette = new Map<string, string>()
-    for (const sibling of asked) {
-      if (sibling) {
-        known[sibling.id] = sibling.owner
-        byPalette.set(sibling.name, sibling.owner)
-      }
-    }
-    this.unsaved.add(`${site.key}/owners.json`)
-    const owners = mates(byPalette)
-    this.owners.set(site.key, owners)
-    return owners
-  }
-
-  private async cached(
-    site: Site,
-    path: string,
-    url: string,
-    progress?: (got: number, size: number) => void,
-  ): Promise<number> {
-    if (existsSync(path)) {
-      return statSync(path).size
-    }
-    const running = this.inflight.get(path)
-    if (running) {
-      return running
-    }
-    const job = (async () => {
-      const bytes = await fetchBytes(site, url, this.signal, progress)
-      writeAtomic(path, bytes)
-      return bytes.length
-    })()
-    this.inflight.set(path, job)
-    try {
-      return await job
-    } finally {
-      this.inflight.delete(path)
-    }
-  }
-
   private thumbs(): void {
     while (!this.signal.aborted && this.thumbing < THUMB && this.thumbQueue.length > 0) {
       const pick = this.thumbQueue.shift() as Pick
@@ -2596,7 +2374,7 @@ class Finder {
         .catch(() => {
           this.thumbless.add(postKey(pick.site, pick.post.id))
           this.show()
-          this.draw()
+          this.paint.draw()
         })
         .finally(() => {
           this.thumbing--
@@ -2613,7 +2391,7 @@ class Finder {
     const path = join(cacheDir(site), 'tile', `${previewStem(post.id, from.url)}-${w}x${h}.png`)
     if (!existsSync(path)) {
       const thumb = this.previewPath(pick)
-      await this.cached(from.site, thumb, from.url)
+      await this.kept.cached(from.site, thumb, from.url)
       if (this.signal.aborted) {
         return
       }
@@ -2621,7 +2399,7 @@ class Finder {
     }
     this.thumbPath.set(postKey(site, post.id), path)
     this.show()
-    this.draw()
+    this.paint.draw()
   }
 
   private select(): void {
@@ -2639,7 +2417,7 @@ class Finder {
       return
     }
     this.settle = setTimeout(() => void this.load(tile), SETTLE)
-    this.draw()
+    this.paint.draw()
   }
 
   private async load(tile: Tile): Promise<void> {
@@ -2650,7 +2428,7 @@ class Finder {
     }
     const control = new AbortController()
     this.fetch = control
-    void this.credit(pick, control.signal)
+    void this.kept.credit(pick, control.signal)
     if (!rendition(pick.post)) {
       return
     }
@@ -2662,13 +2440,13 @@ class Finder {
       const path = this.origPath(site, tile.id, version.ext)
       if (!existsSync(path)) {
         view.fetching = { id: tile.key, got: 0, size: 0 }
-        this.draw()
+        this.paint.draw()
       }
       const from = fileOf(site, pick.post, version)
-      const size = await this.cached(from.site, path, from.url, (got, total) => {
+      const size = await this.kept.cached(from.site, path, from.url, (got, total) => {
         if (view.fetching?.id === tile.key) {
           view.fetching = { id: tile.key, got, size: total }
-          this.draw()
+          this.paint.draw()
         }
       })
       if (control.signal.aborted) {
@@ -2689,7 +2467,7 @@ class Finder {
         failed: false,
       }
       view.preparing = tile.key
-      this.flush()
+      this.paint.flush()
       const plain = await this.render(current, 'plain')
       if (control.signal.aborted || board !== this.board) {
         return
@@ -2697,7 +2475,7 @@ class Finder {
       if (plain.clear === 0 && canRemoveBackground() && this.setting('TTHEME_FIND_REMOVE_BG') !== 'off') {
         view.preparing = undefined
         view.cutting = tile.key
-        this.flush()
+        this.paint.flush()
         current.cut = await this.cutOut(site, tile.id, path, control.signal)
         if (control.signal.aborted || board !== this.board) {
           return
@@ -2705,7 +2483,7 @@ class Finder {
         view.cutting = undefined
         if (current.cut) {
           view.preparing = tile.key
-          this.flush()
+          this.paint.flush()
           const made = await this.render(current, 'cut').catch(() => undefined)
           if (control.signal.aborted || board !== this.board) {
             return
@@ -2740,7 +2518,7 @@ class Finder {
       if (view.cutting === tile.key) {
         view.cutting = undefined
       }
-      this.draw()
+      this.paint.draw()
     }
   }
 
@@ -2777,7 +2555,7 @@ class Finder {
       const tile = view.tiles[index]
       const pick = tile && this.posts.get(tile.key)
       if (pick) {
-        void this.credit(pick, this.signal)
+        void this.kept.credit(pick, this.signal)
       }
       if (this.prefetching >= PRELOAD || !pick || !rendition(pick.post)) {
         continue
@@ -2789,7 +2567,7 @@ class Finder {
           const version = rendition(post) as Rendition
           const path = this.origPath(site, post.id, version.ext)
           const from = fileOf(site, post, version)
-          await this.cached(from.site, path, from.url)
+          await this.kept.cached(from.site, path, from.url)
           return this.render(
             { site, id: post.id, key: tile.key, path, ext: version.ext, size: 0, using: 'plain', failed: false },
             'plain',
@@ -2892,7 +2670,7 @@ class Finder {
     }
     this.presenting = true
     view.preparing = this.current?.key
-    this.flush()
+    this.paint.flush()
     void this.present()
       .catch((error: unknown) => {
         view.error = error instanceof Error ? error.message : String(error)
@@ -2907,7 +2685,7 @@ class Finder {
         if (view.preparing === this.current?.key) {
           view.preparing = undefined
         }
-        this.draw()
+        this.paint.draw()
       })
   }
 
@@ -2920,7 +2698,7 @@ class Finder {
     }
     view.installing = tile.key
     view.error = undefined
-    this.flush()
+    this.paint.flush()
     const tune = toTune(view.tune, view.untuned)
     const post = this.posts.get(current.key)?.post
     try {
@@ -2945,8 +2723,7 @@ class Finder {
         coloring: view.coloring,
         ...(tune ? { tune, aligns: alignsFor(readInstalled(this.home).terminals), user: homedir() } : {}),
       })
-      this.keep<string>(current.site, 'owners.json')[current.id] = post?.owner ?? ''
-      this.unsaved.add(`${current.site.key}/owners.json`)
+      this.kept.owned(current.site, current.id, post?.owner ?? '')
       refreshPictures(this.home)
       const { size, at, opacity } = view.tune
       const framing = tune
@@ -2966,155 +2743,7 @@ class Finder {
       view.error = error instanceof Error ? error.message : String(error)
     }
     view.installing = undefined
-    this.draw()
-  }
-
-  private draw(): void {
-    if (this.dirty || this.signal.aborted) {
-      return
-    }
-    this.dirty = true
-    setImmediate(() => {
-      this.dirty = false
-      this.flush()
-    })
-  }
-
-  private flush(): void {
-    if (this.signal.aborted) {
-      return
-    }
-    const frame = renderFind(this.view, this.cols, this.rows)
-    this.view.loaderFrom = frame.loader ? (this.view.loaderFrom ?? this.view.beat) : undefined
-    let out = ''
-    frame.lines.forEach((line, r) => {
-      if (this.screen[r] !== line) {
-        out += `\x1b[${r + 1};1H\x1b[K${line}`
-        this.screen[r] = line
-      }
-    })
-    const keep = new Set<number>()
-    for (const wanted of frame.images) {
-      const p = this.bands ? this.banded(wanted) : wanted
-      if (!p) {
-        continue
-      }
-      keep.add(p.id)
-      if (this.sent.get(p.id) !== p.path) {
-        const data = transmit(p, this.files)
-        if (data === undefined) {
-          continue
-        }
-        out += data
-        this.sent.set(p.id, p.path)
-        this.placed.delete(p.id)
-      }
-      const at = `${p.row};${p.col};${p.cols};${p.rows};${p.crop};${p.z}`
-      if (this.placed.get(p.id) !== at) {
-        if (!this.moves && this.placed.has(p.id)) {
-          out += unplace(p.id)
-        }
-        out += place(p, this.cell)
-        this.placed.set(p.id, at)
-      }
-    }
-    for (const id of this.sent.keys()) {
-      if (!keep.has(id)) {
-        out += release(id)
-        this.sent.delete(id)
-        this.placed.delete(id)
-      }
-    }
-    out += this.cover()
-    const caret = this.view.mode === 'grid' && this.view.editing !== undefined ? this.caret() : ''
-    if (out || caret) {
-      this.write(`\x1b[?2026h${out}${caret}\x1b[?2026l`)
-    }
-    this.pace(frame.tick)
-  }
-
-  private cover(): string {
-    const at = `${this.cols};${this.rows}`
-    if (!this.layers || this.covered === at) {
-      return ''
-    }
-    let out = ''
-    if (!this.covered) {
-      const pixel = Buffer.from(rgb(this.entry.background)).toString('base64')
-      out += `\x1b_Ga=t,f=24,s=1,v=1,i=${COVER_ID},q=2;${pixel}\x1b\\`
-      if (MARGIN) {
-        out += `\x1b_Ga=t,f=32,s=1,v=1,i=${ANCHOR_ID},q=2;AAAAAA==\x1b\\\x1b[H\x1b_Ga=p,i=${ANCHOR_ID},p=${ANCHOR_ID},c=1,r=1,C=1,z=${ANCHOR_Z},q=2\x1b\\`
-      }
-    } else if (!this.moves) {
-      out += unplace(COVER_ID)
-    }
-    this.covered = at
-    if (MARGIN) {
-      const { x, y } = MARGIN
-      return `${out}\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},P=${ANCHOR_ID},Q=${ANCHOR_ID},H=${-x},V=${-y},c=${this.cols + 2 * x},r=${this.rows + 2 * y},C=1,z=${COVER_Z},q=2\x1b\\`
-    }
-    return `${out}\x1b[H\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},c=${this.cols},r=${this.rows},C=1,z=${COVER_Z},q=2\x1b\\`
-  }
-
-  private caret(): string {
-    return `\x1b[1;${Math.min(this.cols, cells(`⌕ ${this.view.editing ?? ''}`) + 1)}H`
-  }
-
-  private pace(tick: boolean): void {
-    if (tick) {
-      this.ticking ??= setInterval(() => {
-        this.view.beat++
-        this.draw()
-      }, TICK)
-    } else if (this.ticking) {
-      clearInterval(this.ticking)
-      this.ticking = undefined
-    }
-  }
-
-  private banded(p: Placement): Placement | undefined {
-    if (p.crop === undefined) {
-      return p
-    }
-    const band = this.band(p.path, p.crop, p.rows, !this.gliding)
-    return band?.ready ? { ...p, id: band.id, path: band.path, crop: undefined } : undefined
-  }
-
-  private band(
-    from: string,
-    crop: number,
-    rows: number,
-    make = true,
-  ): { id: number; path: string; ready: boolean } | undefined {
-    const key = `${from}|${crop}|${rows}`
-    const held = this.bandFiles.get(key)
-    if (held || !make) {
-      return held
-    }
-    const id = this.nextBand++
-    const made = { id, path: join(this.scratch, `band-${id}.png`), ready: false }
-    this.bandFiles.set(key, made)
-    this.renders
-      .run({ job: 'band', from, to: made.path, y: crop * this.cell.h, height: rows * this.cell.h })
-      .then(() => {
-        made.ready = true
-        this.draw()
-      })
-      .catch(() => {})
-    this.trimBands()
-    return made
-  }
-
-  private trimBands(): void {
-    for (const [key, band] of this.bandFiles) {
-      if (this.bandFiles.size <= BANDS_HELD) {
-        return
-      }
-      if (band.ready && !this.sent.has(band.id)) {
-        this.bandFiles.delete(key)
-        rmSync(band.path, { force: true })
-      }
-    }
+    this.paint.draw()
   }
 }
 
