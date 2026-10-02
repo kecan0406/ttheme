@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { MEASURED, REFERENCE, TERMS, type Term } from './terms.ts'
+import { CAPABILITIES, type Capability, MEASURED, REFERENCE, TERMS, type Term } from './terms.ts'
 
 const HERE = import.meta.dirname
 export const FACTS = join(HERE, 'facts.tsv')
@@ -9,41 +9,42 @@ const EXPECT = join(HERE, '..', 'compat', 'expect.tsv')
 
 export type Facts = Record<string, string>
 
-export type Table = Map<string, Map<Term, string>>
+export const SPEC = 'spec'
+
+export type Column = Term | typeof SPEC
+
+export const COLUMNS: readonly Column[] = [SPEC, ...TERMS]
+
+export type Table = Map<string, Map<Column, string>>
 
 export const SAME = '='
 
-export function tableOf(results: ReadonlyMap<Term, Facts>, known: Table = new Map()): Table {
+const packed = (value: string, spec: string) => (value === spec ? SAME : value)
+
+export function tableOf(results: ReadonlyMap<Term, Facts>, wanted: Facts, known: Table = new Map()): Table {
   const ids = new Set<string>()
   for (const facts of results.values()) {
     for (const id of Object.keys(facts)) {
       ids.add(id)
     }
   }
-  const table: Table = new Map()
-  if (!results.has(REFERENCE)) {
-    for (const [id, row] of known) {
-      if (
-        row.has(REFERENCE) &&
-        [...results.values()].some((facts) => Object.keys(facts).some((k) => k.split('.')[0] === id.split('.')[0]))
-      ) {
+  if (TERMS.some((term) => !results.has(term))) {
+    const walked = new Set([...ids].map((id) => id.split('.')[0]))
+    for (const id of known.keys()) {
+      if (walked.has(id.split('.')[0])) {
         ids.add(id)
       }
     }
   }
+  const table: Table = new Map()
   for (const id of [...ids].sort(byJourney)) {
-    const reference = results.get(REFERENCE)?.[id] ?? known.get(id)?.get(REFERENCE) ?? '-'
-    const row = new Map<Term, string>()
+    const spec = wanted[id] ?? results.get(REFERENCE)?.[id] ?? known.get(id)?.get(SPEC) ?? '-'
+    const row = new Map<Column, string>([[SPEC, spec]])
     for (const term of TERMS) {
       const facts = results.get(term)
-      if (!facts) {
-        if (term === REFERENCE && known.get(id)?.has(REFERENCE)) {
-          row.set(term, reference)
-        }
-        continue
+      if (facts) {
+        row.set(term, packed(facts[id] ?? '-', spec))
       }
-      const value = facts[id] ?? '-'
-      row.set(term, term === REFERENCE || value !== reference ? value : SAME)
     }
     table.set(id, row)
   }
@@ -70,18 +71,18 @@ export function readTable(file = FACTS): Table {
     return table
   }
   const [head = '', ...lines] = readFileSync(file, 'utf8').trimEnd().split('\n')
-  const terms = head.split('\t').slice(1) as Term[]
+  const columns = head.split('\t').slice(1) as Column[]
   for (const line of lines) {
     const [id = '', ...cells] = line.split('\t')
-    table.set(id, new Map(terms.map((term, i) => [term, cells[i] ?? '-'])))
+    table.set(id, new Map(columns.map((column, i) => [column, cells[i] ?? '-'])))
   }
   return table
 }
 
 export function writeTable(table: Table, file = FACTS): void {
-  const lines = [['fact', ...TERMS].join('\t')]
+  const lines = [['fact', ...COLUMNS].join('\t')]
   for (const [id, row] of table) {
-    lines.push([id, ...TERMS.map((term) => row.get(term) ?? '-')].join('\t'))
+    lines.push([id, ...COLUMNS.map((column) => row.get(column) ?? '-')].join('\t'))
   }
   writeFileSync(file, `${lines.join('\n')}\n`)
 }
@@ -94,16 +95,30 @@ export function merged(old: Table, fresh: Table, terms: readonly Term[], journey
     if (ran && !fresh.has(id)) {
       continue
     }
-    const row = new Map<Term, string>()
+    const spec = specOf(ran ? fresh : old, id)
+    const row = new Map<Column, string>([[SPEC, spec]])
     for (const term of TERMS) {
-      const value = ran && terms.includes(term) ? fresh.get(id)?.get(term) : old.get(id)?.get(term)
-      if (value !== undefined) {
-        row.set(term, value)
+      const from = ran && terms.includes(term) ? fresh : old
+      if (from.get(id)?.has(term)) {
+        row.set(term, packed(cellValue(from, id, term), spec))
       }
     }
     out.set(id, row)
   }
   return out
+}
+
+export function specOf(table: Table, id: string): string {
+  return table.get(id)?.get(SPEC) ?? '-'
+}
+
+export function cellValue(table: Table, id: string, term: Term): string {
+  const cell = table.get(id)?.get(term) ?? '-'
+  return cell === SAME ? specOf(table, id) : cell
+}
+
+export function owed(table: Table, id: string, term: Term): boolean {
+  return cellValue(table, id, term) !== specOf(table, id)
 }
 
 export const KINDS = ['cannot', 'layer', 'deferred'] as const
@@ -128,22 +143,27 @@ export function readGaps(file = GAPS): Gap[] {
   })
 }
 
+export function lacking(gap: Gap): Capability | undefined {
+  return gap.fact.startsWith('@') ? (gap.fact.slice(1) as Capability) : undefined
+}
+
 export function glob(pattern: string, id: string): boolean {
-  const re = new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^\\t]*')}$`)
-  return re.test(id)
+  const source = pattern
+    .replace(/[.+^$()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '[^\\t]*')
+    .replace(/\{([^{}]*)\}/g, (_, alternatives: string) => `(?:${alternatives.split(',').join('|')})`)
+  return new RegExp(`^${source}$`).test(id)
 }
 
-export function explained(gaps: readonly Gap[], term: Term, id: string): Gap | undefined {
-  return gaps.find((gap) => gap.term === term && glob(gap.fact, id))
-}
-
-export function owed(term: Term, id: string, value: string, cell: string): boolean {
-  return id.endsWith('.issue') ? value !== '-' : term !== REFERENCE && cell !== SAME
-}
-
-export function cellValue(table: Table, id: string, term: Term): string {
-  const cell = table.get(id)?.get(term) ?? '-'
-  return cell === SAME ? (table.get(id)?.get(REFERENCE) ?? '-') : cell
+export function explained(gaps: readonly Gap[], term: Term, id: string, needs: readonly Capability[]): Gap | undefined {
+  return (
+    gaps.find((gap) => {
+      const capability = lacking(gap)
+      return (
+        gap.term === term && capability !== undefined && needs.includes(capability) && !CAPABILITIES[capability](term)
+      )
+    }) ?? gaps.find((gap) => gap.term === term && lacking(gap) === undefined && glob(gap.fact, id))
+  )
 }
 
 export interface Compat {

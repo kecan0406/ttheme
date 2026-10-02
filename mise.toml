@@ -176,7 +176,7 @@ depends = ["build"]
 run = "zsh tests/latency.zsh bench"
 
 [tasks.parity]
-description = "walk every journey in a model of each terminal against Ghostty's and hold the differences to tests/parity/facts.tsv and gaps.tsv — `mise run parity [--update] [--only <terminal,…>] [--journey <id,…>] [--show <journey.label>] [-v]`"
+description = "walk every journey in a model of each terminal, hold every terminal, Ghostty included, to the spec journeys.ts states, and the misses to tests/parity/facts.tsv and gaps.tsv — `mise run parity [--update] [--only <terminal,…>] [--journey <id,…>] [--show <journey.label>] [-v]`"
 depends = ["build", "bin:build"]
 run = "bun tests/parity/run.ts"
 

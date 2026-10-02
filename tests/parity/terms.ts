@@ -205,6 +205,13 @@ export const WIRING: Record<Term, Wired | undefined> = {
   'terminal-app': undefined,
 }
 
+export const CAPABILITIES = {
+  pictures: (term: Term) => BEHAVIOR[term].pictures !== 'none',
+  wired: (term: Term) => WIRING[term] !== undefined,
+} as const
+
+export type Capability = keyof typeof CAPABILITIES
+
 export function identity(term: Term, n: number, session: string): Record<string, string> {
   switch (term) {
     case 'ghostty':

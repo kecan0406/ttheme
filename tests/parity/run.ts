@@ -6,27 +6,31 @@ import { parseArgs } from 'node:util'
 import { colorless } from '../../src/osc.ts'
 import { pending } from '../../src/pending.ts'
 import {
+  type Column,
   cellValue,
   explained,
   type Facts,
+  type Gap,
   glob,
   journeyOrder,
   KINDS,
+  lacking,
   merged,
   owed,
   readCompat,
   readGaps,
   readTable,
+  SPEC,
+  specOf,
   type Table,
   tableOf,
   unmeasured,
   writeTable,
 } from './facts.ts'
-import { build, cli, type Fixture, reap, restore, shims, workDir } from './home.ts'
-import { JOURNEYS, type Journey, type LookOptions, type Probe } from './journeys.ts'
-import { pictureOf } from './looks.ts'
-import { App, backgrounds, type Look, type Tab } from './model.ts'
-import { BEHAVIOR, REFERENCE, TERMS, type Term } from './terms.ts'
+import { build, cli, type Fixture, PICTURED, reap, restore, shims, workDir } from './home.ts'
+import { JOURNEYS, type Journey, type Probe, type Want } from './journeys.ts'
+import { App, type Look, type Tab } from './model.ts'
+import { CAPABILITIES, type Capability, REFERENCE, TERMS, type Term } from './terms.ts'
 
 const REPO = join(import.meta.dirname, '..', '..')
 
@@ -66,6 +70,8 @@ journeyOrder(JOURNEYS.map((j) => j.id))
 const screens = new Map<string, string>()
 const shows = split(values.show) ?? []
 const journals = new Map<string, string[]>()
+const wanted: Facts = {}
+const needs = new Map<string, readonly Capability[]>()
 
 const live = Boolean(process.stdout.isTTY) && process.env.TERM !== 'dumb'
 const line = pending()
@@ -125,38 +131,37 @@ function digest(text: string): string {
   return `txt:${createHash('sha1').update(text).digest('hex').slice(0, 10)}`
 }
 
-function issues(
-  term: Term,
-  seen: Look,
-  wears: string | undefined,
-  pictured: boolean,
-  text: string | undefined,
-  fixture: Fixture,
-): string {
+function issues(seen: Look, wears: string | undefined, text: string): string {
   const out: string[] = []
-  const whole = !seen.colors.includes(':')
-  if (wears !== undefined && whole) {
-    const want = seen.colors === 'own' ? 'none' : seen.colors
-    if (wears !== want) {
-      out.push('wears')
-    }
+  if (wears !== undefined && !seen.colors.includes(':') && wears !== (seen.colors === 'own' ? 'none' : seen.colors)) {
+    out.push('wears')
   }
-  if (BEHAVIOR[term].pictures !== 'none' && whole && seen.colors !== 'own' && (wears !== undefined || pictured)) {
-    const want = pictureOf(backgrounds(fixture.place), seen.colors)
-    if (seen.picture !== want) {
-      out.push('picture')
-    }
-  }
-  if (text?.includes('^[')) {
+  if (text.includes('^[')) {
     out.push('echo')
   }
   return out.length > 0 ? out.join(',') : '-'
 }
 
+function expected({ want, picture, opacity }: Want) {
+  return {
+    colors: want,
+    wears: want === 'own' ? 'none' : want,
+    picture: picture ?? (PICTURED.includes(want) ? want : 'none'),
+    opacity,
+  }
+}
+
 function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra: App[]): Probe {
   const marks = new Map<Tab, number>()
-  const put = (label: string, key: string, value: string) => {
-    facts[`${journey.id}.${label}.${key}`] = value
+  const put = (label: string, key: string, value: string, want?: string, depends: readonly Capability[] = []) => {
+    const id = `${journey.id}.${label}.${key}`
+    facts[id] = value
+    if (want !== undefined) {
+      wanted[id] = want
+    }
+    if (depends.length > 0) {
+      needs.set(id, depends)
+    }
   }
   return {
     open: () => app.open(),
@@ -198,24 +203,26 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       await app.settle()
     },
     focus: (tab) => app.focus(tab),
-    async look(label: string, options: LookOptions = {}) {
+    async look(label, options) {
       const tab = app.front
       if (!tab) {
         throw new Error(`look ${label}: no tab`)
       }
       const seen = app.look(tab)
-      put(label, 'colors', seen.colors)
-      put(label, 'picture', seen.picture)
+      const want = expected(options)
+      const fresh: Capability[] = options.unpainted ? ['wired'] : []
+      put(label, 'colors', seen.colors, want.colors, fresh)
+      put(label, 'picture', seen.picture, want.picture, ['pictures', ...fresh])
       let wears: string | undefined
       if (options.wears !== false && !options.busy) {
         wears = await app.wears(tab)
-        put(label, 'wears', wears)
+        put(label, 'wears', wears, want.wears, fresh)
       }
-      if (options.repaints) {
-        put(label, 'repaints', String(tab.bgs.length - 1))
+      if (options.repaints !== undefined) {
+        put(label, 'repaints', String(tab.bgs.length - 1), String(options.repaints))
       }
-      if (options.opacity) {
-        put(label, 'opacity', seen.opacity)
+      if (want.opacity !== undefined) {
+        put(label, 'opacity', seen.opacity, want.opacity, ['pictures'])
       }
       let text: string | undefined
       if (options.text) {
@@ -228,18 +235,7 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
           `--- ${app.term} ${journey.id}.${label}\n${tab.screen(fixture.place.home)}\n--- journal: ${app.journal.join(' · ')}`,
         )
       }
-      put(
-        label,
-        'issue',
-        issues(
-          app.term,
-          seen,
-          wears,
-          app.layered(tab) !== undefined || options.busy === true,
-          text ?? tab.screen(fixture.place.home),
-          fixture,
-        ),
-      )
+      put(label, 'issue', issues(seen, wears, text ?? tab.screen(fixture.place.home)), '-')
     },
     config(line) {
       appendFileSync(join(fixture.place.configHome, 'ttheme', 'config.zsh'), `${line}\n`)
@@ -259,16 +255,19 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       return {
         open: () => other.open(),
         type: (tab, line) => other.type(tab, line),
-        async look(label) {
+        async look(label, options) {
           const tab = other.front
           if (!tab) {
             throw new Error(`look ${label}: no ${terminal} tab`)
           }
           const seen = other.look(tab)
-          put(label, 'colors', seen.colors)
-          put(label, 'picture', seen.picture)
-          put(label, 'opacity', seen.opacity)
-          put(label, 'wears', await other.wears(tab))
+          const want = expected(options)
+          put(label, 'colors', seen.colors, want.colors)
+          put(label, 'picture', seen.picture, want.picture)
+          put(label, 'wears', await other.wears(tab), want.wears)
+          if (want.opacity !== undefined) {
+            put(label, 'opacity', seen.opacity, want.opacity, ['pictures'])
+          }
         },
       }
     },
@@ -332,11 +331,13 @@ function fixtureFor(lane: Lane, journey: Journey): Fixture {
   return journey.unwired ? (lane.unwired ?? lane.wired) : lane.wired
 }
 
-const MARK = { same: '✓', gap: '·', changed: '!', broken: '✗' } as const
+const MARK = { same: '✓', lacks: '○', gap: '·', changed: '!', broken: '✗' } as const
 
 type Mark = keyof typeof MARK
 
-const TINT: Record<Mark, string> = { same: '32', gap: '2', changed: '33', broken: '31' }
+const RANK: readonly Mark[] = ['same', 'lacks', 'gap', 'changed', 'broken']
+
+const TINT: Record<Mark, string> = { same: '32', lacks: '32', gap: '2', changed: '33', broken: '31' }
 
 const SHORT: Partial<Record<Term, string>> = {
   alacritty: 'alac',
@@ -359,17 +360,17 @@ function columns(rows: string[][]): number[] {
 }
 
 interface Change {
-  term: Term
+  column: Column
   id: string
   before: string
   cell: string
 }
 
-interface Loose {
+interface Unexplained {
   term: Term
   id: string
   value: string
-  reference?: string
+  spec: string
 }
 
 function section(title: string, code: string, rows: string[][]): void {
@@ -385,69 +386,96 @@ function section(title: string, code: string, rows: string[][]): void {
 
 function report(fresh: Table, old: Table): boolean {
   const gaps = readGaps()
-  const used = new Set<string>()
+  const used = new Set<Gap>()
   const changed: Change[] = []
-  const loose: Loose[] = []
+  const unexplained: Unexplained[] = []
   const notes: string[] = []
   const status = new Map<string, Mark>()
-  const kinds = new Map<string, number>()
+  const counts = new Map<string, number>()
   const worse = (key: string, mark: Mark) => {
-    const rank = ['same', 'gap', 'changed', 'broken']
-    if (rank.indexOf(mark) > rank.indexOf(status.get(key) ?? 'same')) {
+    if (RANK.indexOf(mark) > RANK.indexOf(status.get(key) ?? 'same')) {
       status.set(key, mark)
     }
   }
-  for (const [id, row] of fresh) {
+  const count = (term: Term, label: string) => {
+    counts.set(`${term}\t${label}`, (counts.get(`${term}\t${label}`) ?? 0) + 1)
+  }
+  for (const id of fresh.keys()) {
     const journey = id.split('.')[0] ?? ''
+    const spec = specOf(fresh, id)
+    const known = old.get(id)
+    if (known !== undefined && specOf(old, id) !== spec) {
+      changed.push({ column: SPEC, id, before: specOf(old, id), cell: spec })
+      for (const term of terms) {
+        worse(`${journey} ${term}`, 'changed')
+      }
+    }
     for (const term of terms) {
-      const cell = row.get(term) ?? '-'
       const value = cellValue(fresh, id, term)
       const key = `${journey} ${term}`
-      const before = old.get(id)?.get(term)
-      if (before !== undefined && before !== cell) {
+      const before = known ? cellValue(old, id, term) : old.size > 0 ? '(new)' : undefined
+      if (before !== undefined && before !== value) {
         worse(key, 'changed')
-        changed.push({ term, id, before, cell })
-      } else if (before === undefined && old.size > 0) {
-        worse(key, 'changed')
-        changed.push({ term, id, before: '(new)', cell })
+        changed.push({ column: term, id, before, cell: value })
       }
-      if (!owed(term, id, value, cell)) {
+      if (!owed(fresh, id, term)) {
         continue
       }
-      const gap = explained(gaps, term, id)
-      if (gap) {
-        used.add(`${gap.term}\t${gap.fact}`)
-        worse(key, 'gap')
-        notes.push(`${term} ${id}: ${value} (ghostty ${cellValue(fresh, id, REFERENCE)}) — ${gap.kind}: ${gap.reason}`)
-        const counted = `${term}\t${gap.kind}`
-        kinds.set(counted, (kinds.get(counted) ?? 0) + 1)
-      } else {
+      const gap = explained(gaps, term, id, needs.get(id) ?? [])
+      if (!gap) {
         worse(key, 'broken')
-        loose.push({
-          term,
-          id,
-          value,
-          ...(term === REFERENCE || id.endsWith('.issue') ? {} : { reference: cellValue(fresh, id, REFERENCE) }),
-        })
+        unexplained.push({ term, id, value, spec })
+        continue
       }
+      used.add(gap)
+      const capability = lacking(gap)
+      worse(key, capability ? 'lacks' : 'gap')
+      count(term, capability ? `@${capability}` : gap.kind)
+      notes.push(`${term} ${id}: ${value} (spec ${spec}) — ${capability ? `@${capability}` : gap.kind}: ${gap.reason}`)
     }
   }
   const complete = journeys.length === JOURNEYS.length
-  const stale = gaps.filter((gap) => complete && terms.includes(gap.term) && !used.has(`${gap.term}\t${gap.fact}`))
-  const same = (term: Term) => journeys.filter((j) => (status.get(`${j.id} ${term}`) ?? 'same') === 'same').length
-  const lead = Math.max(...journeys.map((j) => j.id.length), 'deferred'.length) + 2
+  const walked = (id: string) => journeys.some((journey) => journey.id === id.split('.')[0])
+  const ids = [...new Set([...fresh.keys(), ...old.keys()])]
+  const wide: string[][] = []
+  const stale: Gap[] = []
+  for (const gap of gaps.filter((g) => terms.includes(g.term))) {
+    if (lacking(gap)) {
+      if (complete && !used.has(gap)) {
+        stale.push(gap)
+      }
+      continue
+    }
+    const covered = ids.filter((id) => glob(gap.fact, id))
+    const idle = covered.filter(
+      (id) =>
+        fresh.has(id) && !(owed(fresh, id, gap.term) && explained(gaps, gap.term, id, needs.get(id) ?? []) === gap),
+    )
+    if (!used.has(gap) && covered.every(walked)) {
+      stale.push(gap)
+    } else if (idle.length > 0) {
+      wide.push([
+        gap.term,
+        gap.fact,
+        `${idle.slice(0, 3).join(' ')}${idle.length > 3 ? ` and ${idle.length - 3} more` : ''}`,
+      ])
+    }
+  }
+  const meets = (term: Term, journey: Journey) => RANK.indexOf(status.get(`${journey.id} ${term}`) ?? 'same') <= 1
+  const labels = [...Object.keys(CAPABILITIES).map((capability) => `@${capability}`), ...KINDS]
+  const lead = Math.max(...journeys.map((j) => j.id.length), ...labels.map((label) => label.length)) + 2
   const room = live ? process.stdout.columns || Number.POSITIVE_INFINITY : Number.POSITIVE_INFINITY
-  const spaced = (labels: string[], gap: number) => labels.map((label) => Math.max(label.length, 5) + gap)
+  const spaced = (names: string[], gap: number) => names.map((name) => Math.max(name.length, 5) + gap)
   const roomy = spaced(terms, 2)
-  const wide = lead + roomy.reduce((sum, width) => sum + width, 0) <= room
-  const labels = wide ? [...terms] : terms.map((term) => SHORT[term] ?? term)
-  const widths = wide ? roomy : spaced(labels, 1)
+  const wideOut = lead + roomy.reduce((sum, width) => sum + width, 0) <= room
+  const names = wideOut ? [...terms] : terms.map((term) => SHORT[term] ?? term)
+  const widths = wideOut ? roomy : spaced(names, 1)
   const row = (head: string, cells: [string, string][], code = '') =>
     `${tint(code, head.padEnd(lead))}${cells.map(([text, tone], at) => `${tint(tone, text)}${' '.repeat(Math.max(0, (widths[at] ?? 0) - text.length))}`).join('')}`.trimEnd()
   console.log(
     row(
       'journey',
-      labels.map((label) => [label, '1'] as [string, string]),
+      names.map((name) => [name, '1'] as [string, string]),
       '1',
     ),
   )
@@ -465,51 +493,59 @@ function report(fresh: Table, old: Table): boolean {
   console.log(tint('2', '─'.repeat(lead + widths.reduce((sum, width) => sum + width, 0))))
   console.log(
     row(
-      'same',
+      'meets',
       terms.map((term) => {
-        const n = same(term)
+        const n = journeys.filter((journey) => meets(term, journey)).length
         return [`${n}/${journeys.length}`, n === journeys.length ? TINT.same : ''] as [string, string]
       }),
     ),
   )
-  for (const kind of KINDS) {
+  for (const label of labels) {
     console.log(
       row(
-        kind,
+        label,
         terms.map((term) => {
-          const n = kinds.get(`${term}\t${kind}`) ?? 0
-          return [n ? String(n) : '', kind === 'layer' ? TINT.changed : TINT.gap] as [string, string]
+          const n = counts.get(`${term}\t${label}`) ?? 0
+          return [n ? String(n) : '', label === 'layer' ? TINT.changed : TINT.gap] as [string, string]
         }),
       ),
     )
   }
-  const short = terms.filter((term, at) => labels[at] !== term)
+  const everywhere = journeys.filter((journey) => terms.every((term) => meets(term, journey)))
+  const whole = everywhere.filter((journey) =>
+    terms.every((term) => (status.get(`${journey.id} ${term}`) ?? 'same') === 'same'),
+  )
+  console.log(
+    `\n${everywhere.length}/${journeys.length} journeys meet the spec in every terminal${terms.length < TERMS.length ? ' walked' : ''}, ${whole.length} with nothing missing`,
+  )
+  const short = terms.filter((term, at) => names[at] !== term)
   console.log(
     tint(
       '2',
       [
-        `\n${MARK.same} same as Ghostty  ${MARK.gap} explained in gaps.tsv  ${MARK.changed} a fact changed  ${MARK.broken} unexplained`,
-        'same: journeys same as Ghostty; cannot, layer, deferred: facts gaps.tsv explains',
+        `\n${MARK.same} meets the spec  ${MARK.lacks} meets it but for a capability the terminal lacks  ${MARK.gap} explained in gaps.tsv  ${MARK.changed} a fact changed  ${MARK.broken} unexplained`,
+        'meets: journeys ✓ or ○; @capability: facts a capability the terminal lacks explains; cannot, layer, deferred: facts gaps.tsv explains',
         '  cannot    the terminal cannot express it',
         '  layer     ttheme could close it',
         '  deferred  left out on purpose',
+        `the spec: what each look in journeys.ts says the tab shows; a screen is ${REFERENCE}'s, approved with --update`,
         ...(short.length > 0 ? [short.map((term) => `${SHORT[term]} ${term}`).join(' · ')] : []),
       ].join('\n'),
     ),
   )
   const compat = readCompat()
   const open = terms.flatMap((term): [string, string[]][] => {
-    const ids = unmeasured(compat, term)
-    if (ids === undefined) {
+    const cases = unmeasured(compat, term)
+    if (cases === undefined) {
       return [[term, ['every case — the model follows its source']]]
     }
-    return ids.length > 0 ? [[term, ids]] : []
+    return cases.length > 0 ? [[term, cases]] : []
   })
   if (open.length > 0) {
     const width = Math.max(...open.map(([term]) => term.length)) + 2
     console.log('\nthe model assumes these, since mise run compat left them ? or skip:')
-    for (const [term, ids] of open) {
-      const lines = ids.reduce<string[]>((out, id) => {
+    for (const [term, cases] of open) {
+      const lines = cases.reduce<string[]>((out, id) => {
         const last = out.at(-1)
         if (last !== undefined && 2 + width + last.length + 1 + id.length <= room) {
           out[out.length - 1] = `${last} ${id}`
@@ -532,36 +568,34 @@ function report(fresh: Table, old: Table): boolean {
   section(
     'changed facts — mise run parity --update records them once they are right',
     TINT.changed,
-    changed.map(({ term, id, before, cell }) => [term, id, `${before} → ${cell}`]),
+    changed.map(({ column, id, before, cell }) => [column, id, `${before} → ${cell}`]),
   )
   section(
     'unexplained — fix each, or give it a reason in tests/parity/gaps.tsv',
     TINT.broken,
-    loose.map(({ term, id, value, reference }) => [
-      term,
-      id,
-      reference === undefined ? value : `${value}, ghostty ${reference}`,
-    ]),
+    unexplained.map(({ term, id, value, spec }) => [term, id, `${value}, spec ${spec}`]),
   )
+  section('loose gaps — narrow each in tests/parity/gaps.tsv to the facts it explains', TINT.changed, wide)
   section(
     'stale gaps — remove them from tests/parity/gaps.tsv, they explain nothing now',
     TINT.changed,
     stale.map((gap) => [gap.term, gap.fact]),
   )
-  for (const { term, id } of [...changed, ...loose]) {
+  for (const { column, id } of [...changed, ...unexplained.map(({ term, id }) => ({ column: term, id }))]) {
     const match = /^([\w-]+)\.([\w-]+)\.text$/.exec(id)
-    if (match) {
-      const [, journey, label] = match
-      const mine = screens.get(`${term} ${journey}.${label}`)
-      const theirs = screens.get(`${REFERENCE} ${journey}.${label}`)
-      if (mine !== undefined) {
-        console.error(
-          `\n--- ${REFERENCE} ${journey}.${label}\n${theirs ?? '(not run)'}\n--- ${term} ${journey}.${label}\n${mine}`,
-        )
-      }
+    if (column === SPEC || !match) {
+      continue
+    }
+    const [, journey, label] = match
+    const mine = screens.get(`${column} ${journey}.${label}`)
+    const theirs = screens.get(`${REFERENCE} ${journey}.${label}`)
+    if (mine !== undefined) {
+      console.error(
+        `${column === REFERENCE ? '' : `\n--- spec (${REFERENCE}) ${journey}.${label}\n${theirs ?? '(not run)'}`}\n--- ${column} ${journey}.${label}\n${mine}`,
+      )
     }
   }
-  const ok = changed.length + loose.length + stale.length === 0
+  const ok = changed.length + unexplained.length + wide.length + stale.length === 0
   if (!ok && values.verbose) {
     for (const [key, journal] of journals) {
       if (journal.length > 0) {
@@ -613,24 +647,29 @@ async function main(): Promise<void> {
       }
     })
     const old = readTable()
+    const gaps = readGaps()
     const moves = (term: Term, journey: Journey) => {
       const facts = results.get(term) ?? {}
       const ids = [...new Set([...Object.keys(facts), ...old.keys()])].filter((id) => id.split('.')[0] === journey.id)
+      const astray = (seen: Facts, id: string) =>
+        wanted[id] !== undefined &&
+        (seen[id] ?? '-') !== wanted[id] &&
+        explained(gaps, term, id, needs.get(id) ?? []) === undefined
       return {
         ids,
-        moved: (seen: Facts) => ids.some((id) => old.has(id) && (seen[id] ?? '-') !== cellValue(old, id, term)),
+        moved: (seen: Facts) =>
+          ids.some((id) => (old.has(id) && (seen[id] ?? '-') !== cellValue(old, id, term)) || astray(seen, id)),
       }
     }
-    const moved =
-      old.size === 0
-        ? []
-        : terms.flatMap((term) =>
-            journeys
-              .filter((journey) => moves(term, journey).moved(results.get(term) ?? {}))
-              .map((journey) => ({ term, journey })),
-          )
+    const moved = terms.flatMap((term) =>
+      journeys
+        .filter((journey) => moves(term, journey).moved(results.get(term) ?? {}))
+        .map((journey) => ({ term, journey })),
+    )
     if (moved.length > Math.max(3, Math.ceil(terms.length * journeys.length * 0.15))) {
-      line.say(`${moved.length} journeys moved — too many to be a loaded machine, so none is walked again`)
+      line.say(
+        `${moved.length} journeys moved or missed the spec — too many to be a loaded machine, so none is walked again`,
+      )
     } else if (moved.length > 0) {
       begin('Walking again, one at a time', moved.length)
       for (const { term, journey } of moved) {
@@ -651,12 +690,12 @@ async function main(): Promise<void> {
       }
       const one = moved.length === 1
       line.say(
-        `walked ${moved.length} ${one ? 'journey' : 'journeys'} again, one at a time, since ${one ? 'its' : 'their'} facts moved${values.verbose ? `: ${moved.map(({ term, journey }) => `${term} ${journey.id}`).join(', ')}` : ` (-v lists ${one ? 'it' : 'them'})`}`,
+        `walked ${moved.length} ${one ? 'journey' : 'journeys'} again, one at a time, since ${one ? 'its' : 'their'} facts moved or missed the spec${values.verbose ? `: ${moved.map(({ term, journey }) => `${term} ${journey.id}`).join(', ')}` : ` (-v lists ${one ? 'it' : 'them'})`}`,
       )
     }
     line.done()
     clearInterval(beat)
-    const fresh = tableOf(results, old)
+    const fresh = tableOf(results, wanted, old)
     const scoped: Table = new Map([...old].filter(([id]) => journeys.some((j) => id.split('.')[0] === j.id)))
     if (values.update) {
       writeTable(

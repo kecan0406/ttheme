@@ -143,7 +143,7 @@ mise run build                # regenerates dist/ for every terminal — fails o
 mise run build --only kitty   # just one terminal's subtree
 mise run compat               # the terminal compatibility cases, in each installed terminal
 mise run compat:konsole       # the same cases in Konsole, from a Linux container (needs Docker)
-mise run parity               # every journey in a model of every terminal, held to Ghostty's
+mise run parity               # every journey in a model of every terminal, held to one spec
 ```
 
 `mise run compat` opens each installed terminal behind your windows on a
@@ -159,16 +159,21 @@ measured. Konsole runs on Linux alone, so `mise run compat:konsole` runs its
 cases on a private display in a container, where moving focus takes nothing
 from you.
 
-Ghostty is the reference for how every terminal should look and behave.
-`mise run parity` (part of CI) walks the same journeys — a new tab, `ttheme
-use`, `default`, `off` and `on` across tabs, preview, pins, browse, pictures
-tuned or dropped in another tab, a default reaching Ghostty — in a model of
-each terminal built from what `mise run compat` measured, and compares what
-every tab shows with Ghostty in `tests/parity/facts.tsv`. Each difference needs
-a line in `tests/parity/gaps.tsv` saying whether the terminal cannot express it,
-ttheme could close it, or it was left out on purpose, and why. A change that
-moves a fact fails until `mise run parity --update` records it; `--only`,
-`--journey` and `--show journey.label` narrow a run and print what a tab shows.
+Every terminal is held to one spec, Ghostty included. Each journey in
+`tests/parity/journeys.ts` says what the tab in front shows at every look —
+which palette, which picture — and `mise run parity` (part of CI) walks the
+journeys — a new tab, `ttheme use`, `default`, `off` and `on` across tabs,
+preview, pins, browse, pictures tuned or dropped in another tab, a default
+reaching Ghostty — in a model of each terminal built from what `mise run
+compat` measured, and records what every tab shows against that spec in
+`tests/parity/facts.tsv` (a screen's spec is the one Ghostty drew). Each miss
+needs a line in `tests/parity/gaps.tsv` saying whether the terminal cannot
+express it, ttheme could close it, or it was left out on purpose, and why; a
+terminal that lacks a whole capability — pictures, or ttheme's wiring — says
+so once, in an `@pictures` or `@wired` line. A line must explain every fact it
+names, and one that explains nothing fails. A change that moves a fact fails
+until `mise run parity --update` records it; `--only`, `--journey` and `--show
+journey.label` narrow a run and print what a tab shows.
 
 Every palette in the catalog passes the gate unwaived — `kyubey` runs tightest,
 since as the one light palette every accent has to darken enough to hold

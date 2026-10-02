@@ -1,36 +1,26 @@
 terminal	fact	kind	reason
-ghostty	unwired.used.issue	cannot	a Ghostty config init never wired includes no picture, so a palette's picture cannot show
 iterm2	*.hover.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
-iterm2	hub.*.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
+iterm2	hub.{preview,back}.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
 iterm2	preview-tab.pick.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
 iterm2	preview-tune.tune.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
-iterm2	unwired.used.issue	cannot	an iTerm2 init never wired has no ttheme profiles, so a palette's picture cannot show
 iterm2	program-reset.after.colors	deferred	a program's OSC reset takes a painted tab back to its profile's colors, and the layer does not ask after every command there, since iTerm2 answers a query on its 1/30 s tick (1.7–20 ms after an idle 0.2 s, measured, against 0.25 ms in Ghostty)
-kitty	unwired.used.issue	cannot	a kitty init never wired loads no watcher, so a palette's picture cannot show
-alacritty	*.picture	cannot	Alacritty has no graphics protocol, so it shows no picture
-alacritty	*.text	cannot	Alacritty has no graphics protocol, so preview offers no picture tuning
-alacritty	picture-tune.other.opacity	cannot	Alacritty has no graphics protocol, so it shows no picture
-alacritty	reach-picture.ghostty.opacity	cannot	Alacritty preview has no picture tuning, so no tuned picture leaves it for Ghostty
-wezterm	unwired.used.issue	cannot	a WezTerm init never wired runs no ttheme module, so a palette's picture cannot show
+alacritty	@pictures	cannot	Alacritty has no graphics protocol, so it shows no picture
+alacritty	preview-tune.tune.text	cannot	Alacritty has no graphics protocol, so preview offers no picture tuning
 wezterm	preview-tune.tune.text	cannot	find stays off in WezTerm, so the key bar of a picture in the edit panel has room for ⇧←→ ×10 where Ghostty shows f find
-windows-terminal	*.picture	cannot	Windows Terminal draws no kitty graphics, so ttheme gives it no picture
-windows-terminal	*.text	cannot	Windows Terminal draws no kitty graphics, so preview offers no picture tuning
-windows-terminal	picture-tune.other.opacity	cannot	Windows Terminal draws no kitty graphics, so ttheme gives it no picture
-windows-terminal	reach-picture.ghostty.opacity	cannot	Windows Terminal preview has no picture tuning, so no tuned picture leaves it for Ghostty
+windows-terminal	@pictures	cannot	Windows Terminal draws no kitty graphics, so ttheme gives it no picture
+windows-terminal	preview-tune.tune.text	cannot	Windows Terminal draws no kitty graphics, so preview offers no picture tuning
 warp	browse.hover.picture	cannot	Warp paints a tab only through its one theme, so a live repaint puts on the palette's picture along with its colors
-warp	unwired.used.*	cannot	Warp paints a tab only through the settings.toml init wires, so a Warp init never wired refuses ttheme use
-konsole	*.picture	cannot	Konsole keeps a color scheme's wallpaper cached while any tab shows the scheme, so ttheme shows no picture there
-konsole	*.text	cannot	no pictures in Konsole, so preview offers no picture tuning
-konsole	browse.hover.colors	cannot	Konsole draws no OSC 4, so a live repaint sends the background and foreground alone
-konsole	hub.browse.colors	cannot	Konsole draws no OSC 4, so a live repaint sends the background and foreground alone
-konsole	unwired.used.*	cannot	Konsole draws a palette's 16 colors only from the schemes init writes, so a Konsole init never wired refuses ttheme use
-konsole	picture-tune.other.opacity	cannot	Konsole keeps a color scheme's wallpaper cached while any tab shows the scheme, so ttheme shows no picture there
-konsole	reach-picture.ghostty.opacity	cannot	Konsole preview has no picture tuning, so no tuned picture leaves it for Ghostty
-terminal-app	*.picture	cannot	Terminal.app has no graphics protocol, so it shows no picture
-terminal-app	preview-*.text	cannot	Terminal.app has no graphics protocol and no default for new tabs, so preview offers neither picture tuning nor Default
-terminal-app	*.colors	deferred	ttheme does not wire Terminal.app, so a new tab opens in its own profile rather than the default palette and a reset goes back to that profile
-terminal-app	*.wears	deferred	ttheme does not wire Terminal.app, so a new tab opens in its own profile rather than the default palette and a reset goes back to that profile
-terminal-app	new-tab.open.text	deferred	ttheme does not wire Terminal.app, so a new tab wears no palette to announce
-terminal-app	picture-tune.other.opacity	cannot	Terminal.app has no graphics protocol, so it shows no picture
-terminal-app	reach-picture.ghostty.opacity	cannot	Terminal.app preview has no picture tuning, so no tuned picture leaves it for Ghostty
+warp	unwired.used.{colors,wears,text}	cannot	Warp paints a tab only through the settings.toml init wires, so a Warp init never wired refuses ttheme use
 warp	preview-config.panel.text	cannot	Warp reloads its settings only half a second after they change, so its config panel carries a Warp tabs row for TTHEME_WARP_FAST, which keeps that reload warm
+konsole	@pictures	cannot	Konsole keeps a color scheme's wallpaper cached while any tab shows the scheme, so ttheme shows no picture there
+konsole	preview-tune.tune.text	cannot	no pictures in Konsole, so preview offers no picture tuning
+konsole	{browse.hover,hub.browse}.colors	cannot	Konsole draws no OSC 4, so a live repaint sends the background and foreground alone
+konsole	unwired.used.{colors,wears,text}	cannot	Konsole draws a palette's 16 colors only from the schemes init writes, so a Konsole init never wired refuses ttheme use
+terminal-app	@pictures	cannot	Terminal.app has no graphics protocol, so it shows no picture
+terminal-app	@wired	deferred	ttheme does not wire Terminal.app, so a tab that never painted shows its own profile rather than the default palette, and a reset goes back to that profile
+terminal-app	new-tab.open.{colors,wears}	deferred	ttheme does not wire Terminal.app, so a new tab opens in its own profile rather than the default palette
+terminal-app	new-tab.open.text	deferred	ttheme does not wire Terminal.app, so a new tab wears no palette to announce
+terminal-app	pin-reach.*.{colors,wears}	deferred	the layer follows no focus in Terminal.app, so a pin set in another tab reaches a tab already in its directory only at that tab's next prompt
+terminal-app	preview-tab.pick.text	deferred	ttheme does not wire Terminal.app, so preview has no Default to offer and enter wears the palette in this tab at once
+terminal-app	preview-tune.tune.text	cannot	Terminal.app has no graphics protocol and ttheme does not wire it, so preview's edit panel has no picture rows and its Apply wears the palette in this tab without asking where
+terminal-app	preview-config.panel.text	deferred	ttheme does not wire Terminal.app, so a tab that never painted wears no palette for preview's list to open on

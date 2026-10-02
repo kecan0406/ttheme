@@ -1,221 +1,220 @@
-fact	ghostty	iterm2	kitty	alacritty	wezterm	windows-terminal	warp	konsole	terminal-app
-new-tab.open.colors	konata	=	=	=	=	=	=	=	own
-new-tab.open.picture	konata	=	=	none	=	none	=	none	none
-new-tab.open.wears	konata	=	=	=	=	=	=	=	none
-new-tab.open.repaints	0	=	=	=	=	=	=	=	=
-new-tab.open.text	txt:bbdbfcc9d3	=	=	=	=	=	=	=	txt:c20baa3564
-new-tab.open.issue	-	=	=	=	=	=	=	=	=
-new-tab-seq.open.colors	miku	=	=	=	=	=	=	=	=
-new-tab-seq.open.picture	none	=	=	=	=	=	=	=	=
-new-tab-seq.open.wears	miku	=	=	=	=	=	=	=	=
-new-tab-seq.open.text	txt:d055c3e8e2	=	=	=	=	=	=	=	=
-new-tab-seq.open.issue	-	=	=	=	=	=	=	=	=
-use.used.colors	kita	=	=	=	=	=	=	=	=
-use.used.picture	kita	=	=	none	=	none	=	none	none
-use.used.wears	kita	=	=	=	=	=	=	=	=
-use.used.text	txt:14a3958f69	=	=	=	=	=	=	=	=
-use.used.issue	-	=	=	=	=	=	=	=	=
-use-plain.used.colors	miku	=	=	=	=	=	=	=	=
-use-plain.used.picture	none	=	=	=	=	=	=	=	=
-use-plain.used.wears	miku	=	=	=	=	=	=	=	=
-use-plain.used.issue	-	=	=	=	=	=	=	=	=
-next.next.colors	miku	=	=	=	=	=	=	=	=
-next.next.picture	none	=	=	=	=	=	=	=	=
-next.next.wears	miku	=	=	=	=	=	=	=	=
-next.next.issue	-	=	=	=	=	=	=	=	=
-hub.preview.colors	konata	bg:konata fg:konata cursor:kita ansi:kita	=	=	=	=	=	=	=
-hub.preview.picture	konata	=	=	none	=	none	=	none	none
-hub.preview.text	txt:376928daa2	=	=	=	=	=	=	=	=
-hub.preview.issue	-	=	=	=	=	=	=	=	=
-hub.browse.colors	kita	=	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
-hub.browse.picture	kita	=	=	none	=	none	=	none	none
-hub.browse.text	txt:fe6ce54e6c	=	=	=	=	=	=	=	=
-hub.browse.issue	-	=	=	=	=	=	=	=	=
-hub.back.colors	konata	bg:konata fg:konata cursor:kita ansi:kita	=	=	=	=	=	=	=
-hub.back.picture	konata	=	=	none	=	none	=	none	none
-hub.back.text	txt:376928daa2	=	=	=	=	=	=	=	=
-hub.back.issue	-	=	=	=	=	=	=	=	=
-hub.closed.colors	kita	=	=	=	=	=	=	=	=
-hub.closed.picture	kita	=	=	none	=	none	=	none	none
-hub.closed.wears	kita	=	=	=	=	=	=	=	=
-hub.closed.issue	-	=	=	=	=	=	=	=	=
-default-here.here.colors	miku	=	=	=	=	=	=	=	own
-default-here.here.picture	none	=	=	=	=	=	=	=	=
-default-here.here.wears	miku	=	=	=	=	=	=	=	none
-default-here.here.issue	-	=	=	=	=	=	=	=	=
-default-keeps.here.colors	rei	=	=	=	=	=	=	=	=
-default-keeps.here.picture	none	=	=	=	=	=	=	=	=
-default-keeps.here.wears	rei	=	=	=	=	=	=	=	=
-default-keeps.here.issue	-	=	=	=	=	=	=	=	=
-default.painted.colors	kita	=	=	=	=	=	=	=	=
-default.painted.picture	kita	=	=	none	=	none	=	none	none
-default.painted.wears	kita	=	=	=	=	=	=	=	=
-default.painted.issue	-	=	=	=	=	=	=	=	=
-default.unpainted.colors	miku	=	=	=	=	=	=	=	own
-default.unpainted.picture	none	=	=	=	=	=	=	=	=
-default.unpainted.wears	miku	=	=	=	=	=	=	=	none
-default.unpainted.issue	-	=	=	=	=	=	=	=	=
-default.new.colors	miku	=	=	=	=	=	=	=	own
-default.new.picture	none	=	=	=	=	=	=	=	=
-default.new.wears	miku	=	=	=	=	=	=	=	none
-default.new.issue	-	=	=	=	=	=	=	=	=
-off.here.colors	own	=	=	=	=	=	=	=	=
-off.here.picture	none	=	=	=	=	=	=	=	=
-off.here.wears	none	=	=	=	=	=	=	=	=
-off.here.issue	-	=	=	=	=	=	=	=	=
-off.other.colors	own	=	=	=	=	=	=	=	=
-off.other.picture	none	=	=	=	=	=	=	=	=
-off.other.wears	none	=	=	=	=	=	=	=	=
-off.other.issue	-	=	=	=	=	=	=	=	=
-off.new.colors	own	=	=	=	=	=	=	=	=
-off.new.picture	none	=	=	=	=	=	=	=	=
-off.new.wears	none	=	=	=	=	=	=	=	=
-off.new.issue	-	=	=	=	=	=	=	=	=
-on.here.colors	konata	=	=	=	=	=	=	=	=
-on.here.picture	konata	=	=	none	=	none	=	none	none
-on.here.wears	konata	=	=	=	=	=	=	=	=
-on.here.issue	-	=	=	=	=	=	=	=	=
-on.other.colors	konata	=	=	=	=	=	=	=	own
-on.other.picture	konata	=	=	none	=	none	=	none	none
-on.other.wears	konata	=	=	=	=	=	=	=	none
-on.other.issue	-	=	=	=	=	=	=	=	=
-on.new.colors	konata	=	=	=	=	=	=	=	own
-on.new.picture	konata	=	=	none	=	none	=	none	none
-on.new.wears	konata	=	=	=	=	=	=	=	none
-on.new.issue	-	=	=	=	=	=	=	=	=
-focus.a.colors	kita	=	=	=	=	=	=	=	=
-focus.a.picture	kita	=	=	none	=	none	=	none	none
-focus.a.wears	kita	=	=	=	=	=	=	=	=
-focus.a.issue	-	=	=	=	=	=	=	=	=
-focus.b.colors	konata	=	=	=	=	=	=	=	=
-focus.b.picture	konata	=	=	none	=	none	=	none	none
-focus.b.wears	konata	=	=	=	=	=	=	=	=
-focus.b.issue	-	=	=	=	=	=	=	=	=
-focus-busy.busy.colors	kita	=	=	=	=	=	=	=	=
-focus-busy.busy.picture	kita	=	=	none	=	none	=	none	none
-focus-busy.busy.issue	-	=	=	=	=	=	=	=	=
-focus-busy.back.colors	konata	=	=	=	=	=	=	=	own
-focus-busy.back.picture	konata	=	=	none	=	none	=	none	none
-focus-busy.back.wears	konata	=	=	=	=	=	=	=	none
-focus-busy.back.issue	-	=	=	=	=	=	=	=	=
-prompt-behind.front.colors	konata	=	=	=	=	=	=	=	own
-prompt-behind.front.picture	konata	=	=	none	=	none	=	none	none
-prompt-behind.front.wears	konata	=	=	=	=	=	=	=	none
-prompt-behind.front.issue	-	=	=	=	=	=	=	=	=
-program-reset.after.colors	miku	bg:rei fg:miku cursor:rei ansi:miku	=	=	=	=	=	=	=
-program-reset.after.picture	none	=	=	=	=	=	=	=	=
-program-reset.after.wears	miku	=	=	=	=	=	=	=	=
-program-reset.after.issue	-	=	=	=	=	=	=	=	=
-editor-terminal.after.colors	kita	=	=	=	=	=	=	=	=
-editor-terminal.after.picture	kita	=	=	none	=	none	=	none	none
-editor-terminal.after.wears	kita	=	=	=	=	=	=	=	=
-editor-terminal.after.text	txt:1b7974a0e0	=	=	=	=	=	=	=	=
-editor-terminal.after.issue	-	=	=	=	=	=	=	=	=
-preview-hover.hover.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
-preview-hover.hover.picture	kita	=	=	none	=	none	=	none	none
-preview-hover.hover.text	txt:2e75a93caa	=	=	=	=	=	=	=	=
-preview-hover.hover.issue	-	=	=	=	=	=	=	=	=
-preview-hover.back.colors	konata	=	=	=	=	=	=	=	own
-preview-hover.back.picture	konata	=	=	none	=	none	=	none	none
-preview-hover.back.wears	konata	=	=	=	=	=	=	=	none
-preview-hover.back.issue	-	=	=	=	=	=	=	=	=
-preview-tab.pick.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
-preview-tab.pick.picture	kita	=	=	none	=	none	=	none	none
-preview-tab.pick.text	txt:593207782a	=	=	=	=	=	=	=	txt:d8ee1f96ab
-preview-tab.pick.issue	-	=	=	=	=	=	=	=	=
-preview-tab.kept.colors	kita	=	=	=	=	=	=	=	=
-preview-tab.kept.picture	kita	=	=	none	=	none	=	none	none
-preview-tab.kept.wears	kita	=	=	=	=	=	=	=	=
-preview-tab.kept.issue	-	=	=	=	=	=	=	=	=
-preview-default.here.colors	miku	=	=	=	=	=	=	=	=
-preview-default.here.picture	none	=	=	=	=	=	=	=	=
-preview-default.here.wears	miku	=	=	=	=	=	=	=	=
-preview-default.here.issue	-	=	=	=	=	=	=	=	=
-preview-default.new.colors	miku	=	=	=	=	=	=	=	own
-preview-default.new.picture	none	=	=	=	=	=	=	=	=
-preview-default.new.wears	miku	=	=	=	=	=	=	=	none
-preview-default.new.issue	-	=	=	=	=	=	=	=	=
-preview-tune.tune.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
-preview-tune.tune.picture	kita	=	=	none	=	none	=	none	none
-preview-tune.tune.text	txt:44de821722	=	=	txt:ca05fb91a3	txt:4b727964fe	txt:ca05fb91a3	=	txt:ca05fb91a3	txt:0ad5718316
-preview-tune.tune.issue	-	=	=	=	=	=	=	=	=
-preview-tune.back.colors	konata	=	=	=	=	=	=	=	own
-preview-tune.back.picture	konata	=	=	none	=	none	=	none	none
-preview-tune.back.wears	konata	=	=	=	=	=	=	=	none
-preview-tune.back.issue	-	=	=	=	=	=	=	=	=
-preview-config.panel.colors	konata	=	=	=	=	=	=	=	own
-preview-config.panel.picture	konata	=	=	none	=	none	=	none	none
-preview-config.panel.text	txt:28af58028a	=	=	=	=	=	txt:65b4d4041c	=	txt:d34f9a0e16
-preview-config.panel.issue	-	=	=	=	=	=	=	=	=
-preview-config.back.colors	konata	=	=	=	=	=	=	=	own
-preview-config.back.picture	konata	=	=	none	=	none	=	none	none
-preview-config.back.wears	konata	=	=	=	=	=	=	=	none
-preview-config.back.issue	-	=	=	=	=	=	=	=	=
-picture-drop.here.colors	konata	=	=	=	=	=	=	=	own
-picture-drop.here.picture	konata	=	=	none	=	none	=	none	none
-picture-drop.here.wears	konata	=	=	=	=	=	=	=	none
-picture-drop.here.issue	-	=	=	=	=	=	=	=	=
-picture-drop.other.colors	kita	=	=	=	=	=	=	=	=
-picture-drop.other.picture	none	=	=	=	=	=	=	=	=
-picture-drop.other.wears	kita	=	=	=	=	=	=	=	=
-picture-drop.other.issue	-	=	=	=	=	=	=	=	=
-picture-tune.other.colors	kita	=	=	=	=	=	=	=	=
-picture-tune.other.picture	kita	=	=	none	=	none	=	none	none
-picture-tune.other.wears	kita	=	=	=	=	=	=	=	=
-picture-tune.other.opacity	0.23	=	=	-	=	-	=	-	-
-picture-tune.other.issue	-	=	=	=	=	=	=	=	=
-pin.in.colors	kita	=	=	=	=	=	=	=	=
-pin.in.picture	kita	=	=	none	=	none	=	none	none
-pin.in.wears	kita	=	=	=	=	=	=	=	=
-pin.in.issue	-	=	=	=	=	=	=	=	=
-pin.out.colors	konata	=	=	=	=	=	=	=	own
-pin.out.picture	konata	=	=	none	=	none	=	none	none
-pin.out.wears	konata	=	=	=	=	=	=	=	none
-pin.out.issue	-	=	=	=	=	=	=	=	=
-pin-reach.pinned.colors	kita	=	=	=	=	=	=	=	own
-pin-reach.pinned.picture	kita	=	=	none	=	none	=	none	none
-pin-reach.pinned.wears	kita	=	=	=	=	=	=	=	none
-pin-reach.pinned.issue	-	=	=	=	=	=	=	=	=
-pin-reach.moved.colors	miku	=	=	=	=	=	=	=	own
-pin-reach.moved.picture	none	=	=	=	=	=	=	=	=
-pin-reach.moved.wears	miku	=	=	=	=	=	=	=	none
-pin-reach.moved.issue	-	=	=	=	=	=	=	=	=
-ssh.in.colors	kita	=	=	=	=	=	=	=	=
-ssh.in.picture	kita	=	=	none	=	none	=	none	none
-ssh.in.issue	-	=	=	=	=	=	=	=	=
-ssh.front.colors	kita	=	=	=	=	=	=	=	=
-ssh.front.picture	kita	=	=	none	=	none	=	none	none
-ssh.front.issue	-	=	=	=	=	=	=	=	=
-ssh.out.colors	konata	=	=	=	=	=	=	=	own
-ssh.out.picture	konata	=	=	none	=	none	=	none	none
-ssh.out.wears	konata	=	=	=	=	=	=	=	none
-ssh.out.issue	-	=	=	=	=	=	=	=	=
-browse.hover.colors	kita	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
-browse.hover.picture	konata	=	=	none	=	none	kita	none	none
-browse.hover.text	txt:55ac9d3e03	=	=	=	=	=	=	=	=
-browse.hover.issue	-	=	=	=	=	=	=	=	=
-browse.back.colors	konata	=	=	=	=	=	=	=	own
-browse.back.picture	konata	=	=	none	=	none	=	none	none
-browse.back.wears	konata	=	=	=	=	=	=	=	none
-browse.back.issue	-	=	=	=	=	=	=	=	=
-unwired.open.colors	own	=	=	=	=	=	=	=	=
-unwired.open.picture	none	=	=	=	=	=	=	=	=
-unwired.open.wears	none	=	=	=	=	=	=	=	=
-unwired.open.issue	-	=	=	=	=	=	=	=	=
-unwired.used.colors	kita	=	=	=	=	=	own	own	=
-unwired.used.picture	none	=	=	=	=	=	=	=	=
-unwired.used.wears	kita	=	=	=	=	=	none	none	=
-unwired.used.text	txt:14a3958f69	=	=	=	=	=	txt:d912f86536	txt:9fdc3b8244	=
-unwired.used.issue	picture	=	=	-	=	-	-	-	-
-reach.ghostty.colors	miku	=	=	=	=	=	=	=	=
-reach.ghostty.picture	none	=	=	=	=	=	=	=	=
-reach.ghostty.wears	miku	=	=	=	=	=	=	=	=
-reach.ghostty.opacity	-	=	=	=	=	=	=	=	=
-reach-picture.ghostty.colors	kita	=	=	=	=	=	=	=	=
-reach-picture.ghostty.picture	kita	=	=	=	=	=	=	=	=
-reach-picture.ghostty.opacity	0.23	=	=	0.2	=	0.2	=	0.2	0.2
-reach-picture.ghostty.wears	kita	=	=	=	=	=	=	=	=
-palettes.added.colors	asuka	=	=	=	=	=	=	=	=
-palettes.added.picture	none	=	=	=	=	=	=	=	=
-palettes.added.wears	asuka	=	=	=	=	=	=	=	=
-palettes.added.issue	-	=	=	=	=	=	=	=	=
+fact	spec	ghostty	iterm2	kitty	alacritty	wezterm	windows-terminal	warp	konsole	terminal-app
+new-tab.open.colors	konata	=	=	=	=	=	=	=	=	own
+new-tab.open.picture	konata	=	=	=	none	=	none	=	none	none
+new-tab.open.wears	konata	=	=	=	=	=	=	=	=	none
+new-tab.open.repaints	0	=	=	=	=	=	=	=	=	=
+new-tab.open.text	txt:bbdbfcc9d3	=	=	=	=	=	=	=	=	txt:c20baa3564
+new-tab.open.issue	-	=	=	=	=	=	=	=	=	=
+new-tab-seq.open.colors	miku	=	=	=	=	=	=	=	=	=
+new-tab-seq.open.picture	none	=	=	=	=	=	=	=	=	=
+new-tab-seq.open.wears	miku	=	=	=	=	=	=	=	=	=
+new-tab-seq.open.text	txt:d055c3e8e2	=	=	=	=	=	=	=	=	=
+new-tab-seq.open.issue	-	=	=	=	=	=	=	=	=	=
+use.used.colors	kita	=	=	=	=	=	=	=	=	=
+use.used.picture	kita	=	=	=	none	=	none	=	none	none
+use.used.wears	kita	=	=	=	=	=	=	=	=	=
+use.used.text	txt:14a3958f69	=	=	=	=	=	=	=	=	=
+use.used.issue	-	=	=	=	=	=	=	=	=	=
+use-plain.used.colors	miku	=	=	=	=	=	=	=	=	=
+use-plain.used.picture	none	=	=	=	=	=	=	=	=	=
+use-plain.used.wears	miku	=	=	=	=	=	=	=	=	=
+use-plain.used.issue	-	=	=	=	=	=	=	=	=	=
+next.next.colors	miku	=	=	=	=	=	=	=	=	=
+next.next.picture	none	=	=	=	=	=	=	=	=	=
+next.next.wears	miku	=	=	=	=	=	=	=	=	=
+next.next.issue	-	=	=	=	=	=	=	=	=	=
+hub.preview.colors	konata	=	bg:konata fg:konata cursor:kita ansi:kita	=	=	=	=	=	=	=
+hub.preview.picture	konata	=	=	=	none	=	none	=	none	none
+hub.preview.text	txt:376928daa2	=	=	=	=	=	=	=	=	=
+hub.preview.issue	-	=	=	=	=	=	=	=	=	=
+hub.browse.colors	kita	=	=	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
+hub.browse.picture	kita	=	=	=	none	=	none	=	none	none
+hub.browse.text	txt:fe6ce54e6c	=	=	=	=	=	=	=	=	=
+hub.browse.issue	-	=	=	=	=	=	=	=	=	=
+hub.back.colors	konata	=	bg:konata fg:konata cursor:kita ansi:kita	=	=	=	=	=	=	=
+hub.back.picture	konata	=	=	=	none	=	none	=	none	none
+hub.back.text	txt:376928daa2	=	=	=	=	=	=	=	=	=
+hub.back.issue	-	=	=	=	=	=	=	=	=	=
+hub.closed.colors	kita	=	=	=	=	=	=	=	=	=
+hub.closed.picture	kita	=	=	=	none	=	none	=	none	none
+hub.closed.wears	kita	=	=	=	=	=	=	=	=	=
+hub.closed.issue	-	=	=	=	=	=	=	=	=	=
+default-here.here.colors	miku	=	=	=	=	=	=	=	=	own
+default-here.here.picture	none	=	=	=	=	=	=	=	=	=
+default-here.here.wears	miku	=	=	=	=	=	=	=	=	none
+default-here.here.issue	-	=	=	=	=	=	=	=	=	=
+default-keeps.here.colors	rei	=	=	=	=	=	=	=	=	=
+default-keeps.here.picture	none	=	=	=	=	=	=	=	=	=
+default-keeps.here.wears	rei	=	=	=	=	=	=	=	=	=
+default-keeps.here.issue	-	=	=	=	=	=	=	=	=	=
+default.painted.colors	kita	=	=	=	=	=	=	=	=	=
+default.painted.picture	kita	=	=	=	none	=	none	=	none	none
+default.painted.wears	kita	=	=	=	=	=	=	=	=	=
+default.painted.issue	-	=	=	=	=	=	=	=	=	=
+default.unpainted.colors	miku	=	=	=	=	=	=	=	=	own
+default.unpainted.picture	none	=	=	=	=	=	=	=	=	=
+default.unpainted.wears	miku	=	=	=	=	=	=	=	=	none
+default.unpainted.issue	-	=	=	=	=	=	=	=	=	=
+default.new.colors	miku	=	=	=	=	=	=	=	=	own
+default.new.picture	none	=	=	=	=	=	=	=	=	=
+default.new.wears	miku	=	=	=	=	=	=	=	=	none
+default.new.issue	-	=	=	=	=	=	=	=	=	=
+off.here.colors	own	=	=	=	=	=	=	=	=	=
+off.here.picture	none	=	=	=	=	=	=	=	=	=
+off.here.wears	none	=	=	=	=	=	=	=	=	=
+off.here.issue	-	=	=	=	=	=	=	=	=	=
+off.other.colors	own	=	=	=	=	=	=	=	=	=
+off.other.picture	none	=	=	=	=	=	=	=	=	=
+off.other.wears	none	=	=	=	=	=	=	=	=	=
+off.other.issue	-	=	=	=	=	=	=	=	=	=
+off.new.colors	own	=	=	=	=	=	=	=	=	=
+off.new.picture	none	=	=	=	=	=	=	=	=	=
+off.new.wears	none	=	=	=	=	=	=	=	=	=
+off.new.issue	-	=	=	=	=	=	=	=	=	=
+on.here.colors	konata	=	=	=	=	=	=	=	=	=
+on.here.picture	konata	=	=	=	none	=	none	=	none	none
+on.here.wears	konata	=	=	=	=	=	=	=	=	=
+on.here.issue	-	=	=	=	=	=	=	=	=	=
+on.other.colors	konata	=	=	=	=	=	=	=	=	own
+on.other.picture	konata	=	=	=	none	=	none	=	none	none
+on.other.wears	konata	=	=	=	=	=	=	=	=	none
+on.other.issue	-	=	=	=	=	=	=	=	=	=
+on.new.colors	konata	=	=	=	=	=	=	=	=	own
+on.new.picture	konata	=	=	=	none	=	none	=	none	none
+on.new.wears	konata	=	=	=	=	=	=	=	=	none
+on.new.issue	-	=	=	=	=	=	=	=	=	=
+focus.a.colors	kita	=	=	=	=	=	=	=	=	=
+focus.a.picture	kita	=	=	=	none	=	none	=	none	none
+focus.a.wears	kita	=	=	=	=	=	=	=	=	=
+focus.a.issue	-	=	=	=	=	=	=	=	=	=
+focus.b.colors	konata	=	=	=	=	=	=	=	=	=
+focus.b.picture	konata	=	=	=	none	=	none	=	none	none
+focus.b.wears	konata	=	=	=	=	=	=	=	=	=
+focus.b.issue	-	=	=	=	=	=	=	=	=	=
+focus-busy.busy.colors	kita	=	=	=	=	=	=	=	=	=
+focus-busy.busy.picture	kita	=	=	=	none	=	none	=	none	none
+focus-busy.busy.issue	-	=	=	=	=	=	=	=	=	=
+focus-busy.back.colors	konata	=	=	=	=	=	=	=	=	own
+focus-busy.back.picture	konata	=	=	=	none	=	none	=	none	none
+focus-busy.back.wears	konata	=	=	=	=	=	=	=	=	none
+focus-busy.back.issue	-	=	=	=	=	=	=	=	=	=
+prompt-behind.front.colors	konata	=	=	=	=	=	=	=	=	own
+prompt-behind.front.picture	konata	=	=	=	none	=	none	=	none	none
+prompt-behind.front.wears	konata	=	=	=	=	=	=	=	=	none
+prompt-behind.front.issue	-	=	=	=	=	=	=	=	=	=
+program-reset.after.colors	miku	=	bg:rei fg:miku cursor:rei ansi:miku	=	=	=	=	=	=	=
+program-reset.after.picture	none	=	=	=	=	=	=	=	=	=
+program-reset.after.wears	miku	=	=	=	=	=	=	=	=	=
+program-reset.after.issue	-	=	=	=	=	=	=	=	=	=
+editor-terminal.after.colors	kita	=	=	=	=	=	=	=	=	=
+editor-terminal.after.picture	kita	=	=	=	none	=	none	=	none	none
+editor-terminal.after.wears	kita	=	=	=	=	=	=	=	=	=
+editor-terminal.after.text	txt:1b7974a0e0	=	=	=	=	=	=	=	=	=
+editor-terminal.after.issue	-	=	=	=	=	=	=	=	=	=
+preview-hover.hover.colors	kita	=	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
+preview-hover.hover.picture	kita	=	=	=	none	=	none	=	none	none
+preview-hover.hover.text	txt:2e75a93caa	=	=	=	=	=	=	=	=	=
+preview-hover.hover.issue	-	=	=	=	=	=	=	=	=	=
+preview-hover.back.colors	konata	=	=	=	=	=	=	=	=	own
+preview-hover.back.picture	konata	=	=	=	none	=	none	=	none	none
+preview-hover.back.wears	konata	=	=	=	=	=	=	=	=	none
+preview-hover.back.issue	-	=	=	=	=	=	=	=	=	=
+preview-tab.pick.colors	kita	=	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
+preview-tab.pick.picture	kita	=	=	=	none	=	none	=	none	none
+preview-tab.pick.text	txt:593207782a	=	=	=	=	=	=	=	=	txt:d8ee1f96ab
+preview-tab.pick.issue	-	=	=	=	=	=	=	=	=	=
+preview-tab.kept.colors	kita	=	=	=	=	=	=	=	=	=
+preview-tab.kept.picture	kita	=	=	=	none	=	none	=	none	none
+preview-tab.kept.wears	kita	=	=	=	=	=	=	=	=	=
+preview-tab.kept.issue	-	=	=	=	=	=	=	=	=	=
+preview-default.here.colors	miku	=	=	=	=	=	=	=	=	=
+preview-default.here.picture	none	=	=	=	=	=	=	=	=	=
+preview-default.here.wears	miku	=	=	=	=	=	=	=	=	=
+preview-default.here.issue	-	=	=	=	=	=	=	=	=	=
+preview-default.new.colors	miku	=	=	=	=	=	=	=	=	own
+preview-default.new.picture	none	=	=	=	=	=	=	=	=	=
+preview-default.new.wears	miku	=	=	=	=	=	=	=	=	none
+preview-default.new.issue	-	=	=	=	=	=	=	=	=	=
+preview-tune.tune.colors	kita	=	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
+preview-tune.tune.picture	kita	=	=	=	none	=	none	=	none	none
+preview-tune.tune.text	txt:44de821722	=	=	=	txt:ca05fb91a3	txt:4b727964fe	txt:ca05fb91a3	=	txt:ca05fb91a3	txt:0ad5718316
+preview-tune.tune.issue	-	=	=	=	=	=	=	=	=	=
+preview-tune.back.colors	konata	=	=	=	=	=	=	=	=	own
+preview-tune.back.picture	konata	=	=	=	none	=	none	=	none	none
+preview-tune.back.wears	konata	=	=	=	=	=	=	=	=	none
+preview-tune.back.issue	-	=	=	=	=	=	=	=	=	=
+preview-config.panel.colors	konata	=	=	=	=	=	=	=	=	own
+preview-config.panel.picture	konata	=	=	=	none	=	none	=	none	none
+preview-config.panel.text	txt:28af58028a	=	=	=	=	=	=	txt:65b4d4041c	=	txt:d34f9a0e16
+preview-config.panel.issue	-	=	=	=	=	=	=	=	=	=
+preview-config.back.colors	konata	=	=	=	=	=	=	=	=	own
+preview-config.back.picture	konata	=	=	=	none	=	none	=	none	none
+preview-config.back.wears	konata	=	=	=	=	=	=	=	=	none
+preview-config.back.issue	-	=	=	=	=	=	=	=	=	=
+picture-drop.here.colors	konata	=	=	=	=	=	=	=	=	own
+picture-drop.here.picture	konata	=	=	=	none	=	none	=	none	none
+picture-drop.here.wears	konata	=	=	=	=	=	=	=	=	none
+picture-drop.here.issue	-	=	=	=	=	=	=	=	=	=
+picture-drop.other.colors	kita	=	=	=	=	=	=	=	=	=
+picture-drop.other.picture	none	=	=	=	=	=	=	=	=	=
+picture-drop.other.wears	kita	=	=	=	=	=	=	=	=	=
+picture-drop.other.issue	-	=	=	=	=	=	=	=	=	=
+picture-tune.other.colors	kita	=	=	=	=	=	=	=	=	=
+picture-tune.other.picture	kita	=	=	=	none	=	none	=	none	none
+picture-tune.other.wears	kita	=	=	=	=	=	=	=	=	=
+picture-tune.other.opacity	0.23	=	=	=	-	=	-	=	-	-
+picture-tune.other.issue	-	=	=	=	=	=	=	=	=	=
+pin.in.colors	kita	=	=	=	=	=	=	=	=	=
+pin.in.picture	kita	=	=	=	none	=	none	=	none	none
+pin.in.wears	kita	=	=	=	=	=	=	=	=	=
+pin.in.issue	-	=	=	=	=	=	=	=	=	=
+pin.out.colors	konata	=	=	=	=	=	=	=	=	own
+pin.out.picture	konata	=	=	=	none	=	none	=	none	none
+pin.out.wears	konata	=	=	=	=	=	=	=	=	none
+pin.out.issue	-	=	=	=	=	=	=	=	=	=
+pin-reach.pinned.colors	kita	=	=	=	=	=	=	=	=	own
+pin-reach.pinned.picture	kita	=	=	=	none	=	none	=	none	none
+pin-reach.pinned.wears	kita	=	=	=	=	=	=	=	=	none
+pin-reach.pinned.issue	-	=	=	=	=	=	=	=	=	=
+pin-reach.moved.colors	miku	=	=	=	=	=	=	=	=	own
+pin-reach.moved.picture	none	=	=	=	=	=	=	=	=	=
+pin-reach.moved.wears	miku	=	=	=	=	=	=	=	=	none
+pin-reach.moved.issue	-	=	=	=	=	=	=	=	=	=
+ssh.in.colors	kita	=	=	=	=	=	=	=	=	=
+ssh.in.picture	kita	=	=	=	none	=	none	=	none	none
+ssh.in.issue	-	=	=	=	=	=	=	=	=	=
+ssh.front.colors	kita	=	=	=	=	=	=	=	=	=
+ssh.front.picture	kita	=	=	=	none	=	none	=	none	none
+ssh.front.issue	-	=	=	=	=	=	=	=	=	=
+ssh.out.colors	konata	=	=	=	=	=	=	=	=	own
+ssh.out.picture	konata	=	=	=	none	=	none	=	none	none
+ssh.out.wears	konata	=	=	=	=	=	=	=	=	none
+ssh.out.issue	-	=	=	=	=	=	=	=	=	=
+browse.hover.colors	kita	=	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
+browse.hover.picture	konata	=	=	=	none	=	none	kita	none	none
+browse.hover.text	txt:55ac9d3e03	=	=	=	=	=	=	=	=	=
+browse.hover.issue	-	=	=	=	=	=	=	=	=	=
+browse.back.colors	konata	=	=	=	=	=	=	=	=	own
+browse.back.picture	konata	=	=	=	none	=	none	=	none	none
+browse.back.wears	konata	=	=	=	=	=	=	=	=	none
+browse.back.issue	-	=	=	=	=	=	=	=	=	=
+unwired.open.colors	own	=	=	=	=	=	=	=	=	=
+unwired.open.picture	none	=	=	=	=	=	=	=	=	=
+unwired.open.wears	none	=	=	=	=	=	=	=	=	=
+unwired.open.issue	-	=	=	=	=	=	=	=	=	=
+unwired.used.colors	kita	=	=	=	=	=	=	own	own	=
+unwired.used.picture	none	=	=	=	=	=	=	=	=	=
+unwired.used.wears	kita	=	=	=	=	=	=	none	none	=
+unwired.used.text	txt:14a3958f69	=	=	=	=	=	=	txt:d912f86536	txt:9fdc3b8244	=
+unwired.used.issue	-	=	=	=	=	=	=	=	=	=
+reach.ghostty.colors	miku	=	=	=	=	=	=	=	=	=
+reach.ghostty.picture	none	=	=	=	=	=	=	=	=	=
+reach.ghostty.wears	miku	=	=	=	=	=	=	=	=	=
+reach-picture.ghostty.colors	kita	=	=	=	=	=	=	=	=	=
+reach-picture.ghostty.picture	kita	=	=	=	=	=	=	=	=	=
+reach-picture.ghostty.opacity	0.23	=	=	=	0.2	=	0.2	=	0.2	0.2
+reach-picture.ghostty.wears	kita	=	=	=	=	=	=	=	=	=
+palettes.added.colors	asuka	=	=	=	=	=	=	=	=	=
+palettes.added.picture	none	=	=	=	=	=	=	=	=	=
+palettes.added.wears	asuka	=	=	=	=	=	=	=	=	=
+palettes.added.issue	-	=	=	=	=	=	=	=	=	=
