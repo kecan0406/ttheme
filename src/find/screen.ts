@@ -115,6 +115,7 @@ export interface FindView {
   colors: { cursor: Hex; selection: Hex; background: Hex; foreground: Hex; ansi: Hex[] }
   tiles: Tile[]
   installed: number[]
+  held: Held[]
   checked: number
   total: number
   searching: boolean
@@ -158,6 +159,13 @@ export interface TagChip {
   on: boolean
 }
 
+export interface Held {
+  label: string
+  ansi: number
+  page?: string
+  up: boolean
+}
+
 export interface Placement {
   id: number
   path: string
@@ -178,7 +186,7 @@ export interface Frame {
 
 export const TILE = { pitch: 25, cols: 22, rows: 9, height: 13 }
 export const MIN = { cols: 25, rows: 16 }
-export const GRID_TOP = 3
+export const GRID_TOP = 4
 export const TRY_ID = 2 ** 31
 const BELOW_BG = -1073741826
 const SMALL = 1600
@@ -825,6 +833,32 @@ function tagRow(line: Line, cols: number, view: FindView, accent: string): void 
   line.run(0, parts)
 }
 
+function shelf(line: Line, cols: number, view: FindView): void {
+  const parts: Part[] = [['Installed  ', D]]
+  if (view.held.length === 0) {
+    line.run(0, [...parts, ['none yet', D]])
+    return
+  }
+  let used = partsWidth(parts)
+  let left = view.held.length
+  for (const [i, held] of view.held.entries()) {
+    const item: Part[] = [
+      ...(i ? ([['  ', '']] as Part[]) : []),
+      ...reference(held.label, held.up ? B : '', held.page, siteColor(held.ansi)),
+    ]
+    if (used + partsWidth(item) > cols - 2 - (i < view.held.length - 1 ? width('  +99') : 0)) {
+      break
+    }
+    parts.push(...item)
+    used += partsWidth(item)
+    left--
+  }
+  if (left > 0) {
+    parts.push([`${left < view.held.length ? '  ' : ''}+${left}`, D])
+  }
+  line.run(0, parts)
+}
+
 function query(line: Line, cols: number, view: FindView, accent: string): void {
   if (view.editing !== undefined) {
     const c = line.run(0, [
@@ -1004,6 +1038,7 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
   query(lines[0] as Line, cols, view, accent)
   tabs(lines[1] as Line, cols, view)
   tagRow(lines[2] as Line, cols, view, accent)
+  shelf(lines[3] as Line, cols, view)
   const inside = lines.map((line, r) => (r >= GRID_TOP && r < GRID_TOP + height ? line : undefined))
   const first = Math.floor(view.scroll / TILE.height)
   const last = Math.floor((view.scroll + height - 1) / TILE.height)

@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:f
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { backdropTone, fillSize, type Tone, type Tune } from '../backdrop.ts'
+import { backdropTone, fillSize, rackOf, type Tone, type Tune } from '../backdrop.ts'
 import {
   BLOCKS,
   blockSet,
@@ -89,6 +89,7 @@ import {
   decodeKeys,
   type FindView,
   gridShape,
+  type Held,
   type Info,
   MIN,
   type Order,
@@ -261,6 +262,24 @@ function toTune(tune: Tuning, untuned: Tuning): Tune | undefined {
     ...(tune.at !== untuned.at ? { position: POSITIONS[tune.at - 1] } : {}),
     ...(tune.opacity !== untuned.opacity ? { opacity: tune.opacity } : {}),
   }
+}
+
+function heldOf(home: string, name: string): Held[] {
+  return rackOf(home, name).flatMap((picture, i): Held[] => {
+    const [, key, id] = /^([a-z.]+)_(\d+)$/.exec(picture.key) ?? []
+    const site = [...SITES, LOCAL].find((s) => s.key === key)
+    if (!site || !id) {
+      return []
+    }
+    return [
+      {
+        label: `${site.name} ${id}`,
+        ansi: site.ansi,
+        ...(site === LOCAL ? {} : { page: site.pageUrl(Number(id)) }),
+        up: i === 0,
+      },
+    ]
+  })
 }
 
 function completable(token: string): boolean {
@@ -510,6 +529,7 @@ class Finder {
       },
       tiles: [],
       installed: [],
+      held: heldOf(home, entry.name),
       checked: 0,
       total: 0,
       searching: tag !== '',
@@ -2725,6 +2745,7 @@ class Finder {
       })
       this.kept.owned(current.site, current.id, post?.owner ?? '')
       refreshPictures(this.home)
+      view.held = heldOf(this.home, this.entry.name)
       const { size, at, opacity } = view.tune
       const framing = tune
         ? ` · ${size === 'fill' ? 'fill' : `${size}%`} · ${POSITIONS[at - 1]} · ${opacity.toFixed(2)}`
