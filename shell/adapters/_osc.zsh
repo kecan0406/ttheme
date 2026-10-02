@@ -6,19 +6,25 @@ __tt_out() {
   fi
 }
 
+__tt_osc_colors() {
+  local -a p=(${=1})
+  local i
+  if [[ $p[1] == - ]]; then
+    REPLY=$'\e]111\e\\'
+  else
+    REPLY=$'\e]11;'$p[1]$'\e\\'
+  fi
+  REPLY+=$'\e]10;'$p[2]$'\e\\\e]12;'$p[3]$'\e\\\e]17;'$p[4]$'\e\\'
+  for i in {0..15}; do REPLY+=$'\e]4;'$i';'$p[i+5]$'\e\\'; done
+}
+
 __tt_osc_apply() {
   local -a p=(${=1})
   (( ${#p} >= 20 )) || return 1
-  local out i
+  local REPLY
 
-  if [[ $p[1] == - ]]; then
-    out=$'\e]111\e\\'
-  else
-    out=$'\e]11;'$p[1]$'\e\\'
-  fi
-  out+=$'\e]10;'$p[2]$'\e\\\e]12;'$p[3]$'\e\\\e]17;'$p[4]$'\e\\'
-  for i in {0..15}; do out+=$'\e]4;'$i';'$p[i+5]$'\e\\'; done
-  __tt_out "$out"
+  __tt_osc_colors "$1"
+  __tt_out "$REPLY"
   export TTHEME_PAINTED=1
   (( TTHEME_TMUX )) && tmux set -q @ttheme_bg "$p[1]" 2>/dev/null
   __tt_worn "$1"
@@ -57,6 +63,8 @@ __tt_wear() {
 __tt_pv_paint() { __tt_apply "$1" && painted=$1 }
 
 __tt_pv_claim() { : }
+
+__tt_pv_leave() { : }
 
 __tt_shown() { return 1 }
 

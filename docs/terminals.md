@@ -36,6 +36,12 @@ get it.
   reloads its settings. Warp records no switch
   between split panes, so the panes of a tab share the palette the tab came to
   the front with.
+  iTerm2 turns every OSC color into a change to the tab's profile, so once it
+  lets a control sequence switch profiles (its Always Allow) a tab wears a
+  palette by switching to that palette's `ttheme · <palette>` profile — every
+  color and the picture in one step, and a program's reset lands on the palette
+  — while browse and init's picker repaint the background and foreground at
+  once and the other colors once the cursor rests.
   Konsole draws a background and foreground an OSC sets but never an OSC 4, so
   a Konsole tab repaints by switching to the palette's own color scheme (OSC 50)
   — the scheme init wrote, which is why the shell layer paints Konsole only once
@@ -109,10 +115,12 @@ tab wears.
   tab that wears a palette asks the terminal for its background and cursor and
   repaints itself when either changed — in Ghostty, kitty, Alacritty, WezTerm
   and Windows Terminal, about a quarter of a millisecond in Ghostty.
-  Terminal.app and Konsole ignore the resets. iTerm2 is left out, since it
-  answers only on its next frame (up to 20 ms after a command, measured): a
-  reset there takes the tab back to its profile's colors until the next
-  `ttheme use`. mini.nvim's `setup_termbg_sync({ explicit_reset = true })`
+  Terminal.app and Konsole ignore the resets. iTerm2 needs no asking: a tab
+  there sits on its palette's own profile, so a reset lands on the palette —
+  once iTerm2 lets the shell switch profiles; until then the tab is painted in
+  OSC colors and a reset takes it back to its profile's colors until the next
+  `ttheme use`, since iTerm2 answers a question only on its next frame (up to
+  20 ms after a command, measured). mini.nvim's `setup_termbg_sync({ explicit_reset = true })`
   puts back the exact background it found instead, which is the palette's.
 - **A shell in an editor's terminal** — a shell started in Neovim's or Vim's
   `:terminal`, in Emacs or in VS Code inherits the variables that name your
@@ -190,6 +198,23 @@ iTerm2 reads the colors an OSC sets as Display P3 — its default color space �
 its profiles and `.itermcolors` files are written in P3 too: a tab opened on a
 `ttheme · <palette>` profile and a tab repainted to that palette land on the
 same colors, and ttheme recognizes the palette either way.
+
+iTerm2 handles each OSC color as a change to the tab's profile, one at a time,
+so a palette's twenty colors kept it busy for about 0.2 s, where one switch to
+the palette's profile carries all of them and the picture in about 40 ms
+(measured on 3.7.3 at 80×25). So once iTerm2 lets a control sequence switch
+the profile — Always Allow on the bar it shows the first time, which ttheme
+reads at its next `add`, `remove`, `browse`, `default`, `on` or `off` — every palette
+goes on that way: `ttheme use`, `next`, a pin, preview as the cursor moves, and
+the tab's way back to its default, which is iTerm2's own default profile. A tab
+that sits on its palette's profile follows a tuned picture or tone at once and
+keeps its palette through a program's color reset. Browse and init's picker
+repaint the background and foreground as the cursor moves and the other colors
+once it has rested for 120 ms, a few at a time, since moving to a palette's
+profile there would also put up that palette's picture, and they put the tab
+back on its profile when they close. For a second after ttheme rewrites its
+profiles, which iTerm2 takes about 0.3 s to read, a palette goes on in OSC
+colors instead.
 
 Konsole reads its profiles and `konsolerc` once, when it starts, and draws a
 palette's 16 colors only from a color scheme. init writes a scheme and a

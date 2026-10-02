@@ -27,6 +27,7 @@ export interface Behavior {
   draws: readonly string[]
   answers: readonly string[]
   resets: boolean
+  baseline: boolean
   focus: 'answer' | 'change' | 'none'
   cells: readonly ('pixels' | 'points' | 'iterm')[]
   graphics: boolean
@@ -46,6 +47,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     draws: NO_SELECTION,
     answers: NO_SELECTION,
     resets: true,
+    baseline: false,
     focus: 'answer',
     cells: ['pixels', 'points'],
     graphics: true,
@@ -60,6 +62,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     draws: EVERY,
     answers: EVERY,
     resets: true,
+    baseline: true,
     focus: 'change',
     cells: ['iterm', 'points'],
     graphics: true,
@@ -74,6 +77,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     draws: EVERY,
     answers: EVERY,
     resets: true,
+    baseline: false,
     focus: 'change',
     cells: ['pixels', 'points'],
     graphics: true,
@@ -88,6 +92,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     draws: NO_SELECTION,
     answers: NO_SELECTION,
     resets: true,
+    baseline: false,
     focus: 'change',
     cells: ['points'],
     graphics: false,
@@ -102,6 +107,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     draws: EVERY,
     answers: EVERY,
     resets: true,
+    baseline: false,
     focus: 'change',
     cells: ['pixels', 'points'],
     graphics: true,
@@ -116,6 +122,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     draws: EVERY,
     answers: EVERY,
     resets: true,
+    baseline: false,
     focus: 'change',
     cells: [],
     graphics: false,
@@ -130,6 +137,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     draws: ['10', ...ANSI],
     answers: ['11', '10', '12'],
     resets: true,
+    baseline: false,
     focus: 'none',
     cells: ['points'],
     graphics: true,
@@ -144,6 +152,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     draws: ['11', '10'],
     answers: ['11', '10', ...ANSI],
     resets: false,
+    baseline: false,
     focus: 'change',
     cells: ['pixels', 'points'],
     graphics: true,
@@ -158,6 +167,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     draws: EVERY,
     answers: EVERY,
     resets: false,
+    baseline: false,
     focus: 'none',
     cells: ['points'],
     graphics: false,
@@ -182,6 +192,7 @@ export const MEASURED: { id: string; holds: (b: Behavior) => boolean }[] = [
   { id: 'osc-selection', holds: (b) => b.answers.includes('17') },
   { id: 'osc-ansi', holds: (b) => b.answers.includes('4;1') },
   { id: 'osc-reset', holds: (b) => b.resets },
+  { id: 'reset-baseline', holds: (b) => b.baseline },
   { id: 'cell-size', holds: (b) => b.cells.includes('pixels') || b.cells.includes('iterm') },
   { id: 'cell-points', holds: (b) => b.cells.includes('points') },
   { id: 'kitty-graphics', holds: (b) => b.graphics },

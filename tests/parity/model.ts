@@ -216,7 +216,6 @@ const iterm2 = (): Kind => {
     for (const [code, slot] of tab.slots) {
       slot.base = (card?.colors ?? OWN).get(code) ?? slot.base
       delete slot.over
-      delete slot.kept
     }
     app.log(`profile ${card?.name ?? 'own'}`)
   }
@@ -658,7 +657,7 @@ export class App {
       return
     }
     if (slot.kept === undefined) {
-      slot.kept = slot.base
+      slot.kept = slot.over ?? slot.base
     }
     slot.over = color
     this.painted(tab)
@@ -673,8 +672,9 @@ export class App {
       if (!slot) {
         continue
       }
-      if (this.term === 'iterm2' && slot.kept !== undefined) {
+      if (this.behavior.baseline && slot.kept !== undefined) {
         slot.over = slot.kept
+        delete slot.kept
       } else {
         delete slot.over
       }

@@ -150,11 +150,17 @@ function writer(ctx: Ctx): Out & { written: string[]; repainted: boolean } {
   return out
 }
 
-function layer(at: Now): Record<string, string> {
-  return Object.assign({}, ...wirings(at.state.terminals).map((wiring) => wiring.layer?.(at) ?? {}))
+function layer(at: Now, host: Host): Record<string, string> {
+  return Object.assign({}, ...wirings(at.state.terminals).map((wiring) => wiring.layer?.(at, host) ?? {}))
 }
 
-export function sync(configHome: string, catalog: Manifest, state: Installed, home = homedir()): string[] {
+export function sync(
+  configHome: string,
+  catalog: Manifest,
+  state: Installed,
+  home = homedir(),
+  host: Host = systemHost(),
+): string[] {
   readStore(backgroundsDir(configHome))
   const kept = resolve(untuned(configHome, catalog), state.palettes)
   const entries = tuned(kept, readTone(configHome))
@@ -167,7 +173,7 @@ export function sync(configHome: string, catalog: Manifest, state: Installed, ho
     wiring.sync(ctx, out)
   }
   const table = join(configHome, 'ttheme', 'palettes.zsh')
-  const content = palettesZsh(entries, ctx.startup, state.terminals, layer(ctx))
+  const content = palettesZsh(entries, ctx.startup, state.terminals, layer(ctx, host))
   if (out.repainted || readText(table) !== content) {
     writeAtomic(table, content)
     rmSync(`${table}.zwc`, { force: true })
@@ -279,7 +285,7 @@ export function commit(
 ): Map<Wired, Pointed> {
   const taking = take || (!worn(before) && worn(after) !== undefined)
   const next = taking ? withBases(configHome, after, host, home) : after
-  sync(configHome, catalog, next, home)
+  sync(configHome, catalog, next, home, host)
   writeInstalled(configHome, next)
   return taking || worn(before) !== worn(after) ? pointDefaults(configHome, next, taking, host, home) : new Map()
 }

@@ -473,6 +473,27 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
   assert.ok(!existsSync(join(configHome, 'iterm2')))
 })
 
+test('palettes.zsh tells the iTerm2 adapter whether iTerm2 lets a control sequence switch the profile, and where the profiles are', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const table = () => readFileSync(join(configHome, 'ttheme', 'palettes.zsh'), 'utf8')
+  const prefs = (value: string | undefined): Host => ({
+    platform: 'darwin',
+    env: { TTHEME_ITERM_SUITE: 'suite' },
+    run: (command, args) =>
+      command === 'defaults' && args.join(' ') === 'read suite PreventEscapeSequenceFromChangingProfile'
+        ? value
+        : undefined,
+  })
+  sync(configHome, catalog, { terminals: ['iterm2'], palettes: ['gojo'] }, home, prefs('0'))
+  assert.match(table(), /^typeset -g TTHEME_ITERM_SWITCH='1'$/m)
+  assert.ok(table().includes(`\ntypeset -g TTHEME_ITERM_PROFILES='${itermProfilesPath(home)}'\n`))
+  for (const value of ['1', undefined]) {
+    sync(configHome, catalog, { terminals: ['iterm2'], palettes: ['gojo'] }, home, prefs(value))
+    assert.match(table(), /^typeset -g TTHEME_ITERM_SWITCH=''$/m)
+  }
+})
+
 test("sync gives a palette's iTerm2 profile its picture, tuning and off switch", () => {
   const configHome = fixture()
   const home = fixture()

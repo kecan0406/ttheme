@@ -45,6 +45,10 @@ function current(host: Host): string | undefined {
   return host.run('defaults', ['read', suite(host), 'Default Bookmark Guid']) || undefined
 }
 
+function switches(host: Host): boolean {
+  return host.run('defaults', ['read', suite(host), 'PreventEscapeSequenceFromChangingProfile']) === '0'
+}
+
 const defaults: Defaults = {
   key: 'itermBase',
   profile: () => 'ttheme · default',
@@ -82,6 +86,10 @@ export const iterm2: Wiring = {
   pictures(ctx, out) {
     out.write(itermProfilesPath(ctx.home), profiles(ctx))
   },
+  layer: (now, host) => ({
+    TTHEME_ITERM_SWITCH: switches(host) ? '1' : '',
+    TTHEME_ITERM_PROFILES: itermProfilesPath(now.home),
+  }),
   plan: (ctx) => [`Write ${tilde(itermProfilesPath(ctx.home), ctx.home)} — a "ttheme · <palette>" profile per palette`],
   notes: () => [],
   next(ctx, pointed) {

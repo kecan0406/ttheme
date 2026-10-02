@@ -23,7 +23,7 @@ next.next.colors	miku	=	=	=	=	=	=	=	=	=
 next.next.picture	none	=	=	=	=	=	=	=	=	=
 next.next.wears	miku	=	=	=	=	=	=	=	=	=
 next.next.issue	-	=	=	=	=	=	=	=	=	=
-hub.preview.colors	konata	=	bg:konata fg:konata cursor:kita ansi:kita	=	=	=	=	=	=	=
+hub.preview.colors	konata	=	=	=	=	=	=	=	=	=
 hub.preview.picture	konata	=	=	=	none	=	none	=	none	none
 hub.preview.text	txt:376928daa2	=	=	=	=	=	=	=	=	=
 hub.preview.issue	-	=	=	=	=	=	=	=	=	=
@@ -31,7 +31,7 @@ hub.browse.colors	kita	=	=	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
 hub.browse.picture	kita	=	=	=	none	=	none	=	none	none
 hub.browse.text	txt:fe6ce54e6c	=	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=	=
-hub.back.colors	konata	=	bg:konata fg:konata cursor:kita ansi:kita	=	=	=	=	=	=	=
+hub.back.colors	konata	=	=	=	=	=	=	=	=	=
 hub.back.picture	konata	=	=	=	none	=	none	=	none	none
 hub.back.text	txt:376928daa2	=	=	=	=	=	=	=	=	=
 hub.back.issue	-	=	=	=	=	=	=	=	=	=
@@ -102,7 +102,7 @@ prompt-behind.front.colors	konata	=	=	=	=	=	=	=	=	own
 prompt-behind.front.picture	konata	=	=	=	none	=	none	=	none	none
 prompt-behind.front.wears	konata	=	=	=	=	=	=	=	=	none
 prompt-behind.front.issue	-	=	=	=	=	=	=	=	=	=
-program-reset.after.colors	miku	=	bg:rei fg:miku cursor:rei ansi:miku	=	=	=	=	=	=	=
+program-reset.after.colors	miku	=	=	=	=	=	=	=	=	=
 program-reset.after.picture	none	=	=	=	=	=	=	=	=	=
 program-reset.after.wears	miku	=	=	=	=	=	=	=	=	=
 program-reset.after.issue	-	=	=	=	=	=	=	=	=	=
@@ -111,7 +111,7 @@ editor-terminal.after.picture	kita	=	=	=	none	=	none	=	none	none
 editor-terminal.after.wears	kita	=	=	=	=	=	=	=	=	=
 editor-terminal.after.text	txt:1b7974a0e0	=	=	=	=	=	=	=	=	=
 editor-terminal.after.issue	-	=	=	=	=	=	=	=	=	=
-preview-hover.hover.colors	kita	=	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
+preview-hover.hover.colors	kita	=	=	=	=	=	=	=	=	=
 preview-hover.hover.picture	kita	=	=	=	none	=	none	=	none	none
 preview-hover.hover.text	txt:2e75a93caa	=	=	=	=	=	=	=	=	=
 preview-hover.hover.issue	-	=	=	=	=	=	=	=	=	=
@@ -119,7 +119,7 @@ preview-hover.back.colors	konata	=	=	=	=	=	=	=	=	own
 preview-hover.back.picture	konata	=	=	=	none	=	none	=	none	none
 preview-hover.back.wears	konata	=	=	=	=	=	=	=	=	none
 preview-hover.back.issue	-	=	=	=	=	=	=	=	=	=
-preview-tab.pick.colors	kita	=	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
+preview-tab.pick.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tab.pick.picture	kita	=	=	=	none	=	none	=	none	none
 preview-tab.pick.text	txt:593207782a	=	=	=	=	=	=	=	=	txt:d8ee1f96ab
 preview-tab.pick.issue	-	=	=	=	=	=	=	=	=	=
@@ -135,7 +135,7 @@ preview-default.new.colors	miku	=	=	=	=	=	=	=	=	own
 preview-default.new.picture	none	=	=	=	=	=	=	=	=	=
 preview-default.new.wears	miku	=	=	=	=	=	=	=	=	none
 preview-default.new.issue	-	=	=	=	=	=	=	=	=	=
-preview-tune.tune.colors	kita	=	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	=	=
+preview-tune.tune.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tune.tune.picture	kita	=	=	=	none	=	none	=	none	none
 preview-tune.tune.text	txt:44de821722	=	=	=	txt:ca05fb91a3	txt:4b727964fe	txt:ca05fb91a3	=	txt:ca05fb91a3	txt:0ad5718316
 preview-tune.tune.issue	-	=	=	=	=	=	=	=	=	=
@@ -190,7 +190,7 @@ ssh.out.colors	konata	=	=	=	=	=	=	=	=	own
 ssh.out.picture	konata	=	=	=	none	=	none	=	none	none
 ssh.out.wears	konata	=	=	=	=	=	=	=	=	none
 ssh.out.issue	-	=	=	=	=	=	=	=	=	=
-browse.hover.colors	kita	=	bg:kita fg:kita cursor:konata ansi:konata	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
+browse.hover.colors	kita	=	=	=	=	=	=	=	bg:kita fg:kita cursor:konata ansi:konata	=
 browse.hover.picture	konata	=	=	=	none	=	none	kita	none	none
 browse.hover.text	txt:55ac9d3e03	=	=	=	=	=	=	=	=	=
 browse.hover.issue	-	=	=	=	=	=	=	=	=	=
@@ -198,6 +198,10 @@ browse.back.colors	konata	=	=	=	=	=	=	=	=	own
 browse.back.picture	konata	=	=	=	none	=	none	=	none	none
 browse.back.wears	konata	=	=	=	=	=	=	=	=	none
 browse.back.issue	-	=	=	=	=	=	=	=	=	=
+browse-reset.after.colors	miku	=	=	=	=	=	=	=	=	=
+browse-reset.after.picture	none	=	=	=	=	=	=	=	=	=
+browse-reset.after.wears	miku	=	=	=	=	=	=	=	=	=
+browse-reset.after.issue	-	=	=	=	=	=	=	=	=	=
 unwired.open.colors	own	=	=	=	=	=	=	=	=	=
 unwired.open.picture	none	=	=	=	=	=	=	=	=	=
 unwired.open.wears	none	=	=	=	=	=	=	=	=	=

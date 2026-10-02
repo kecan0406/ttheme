@@ -1244,6 +1244,7 @@ __tt_pv_screen() {
   local -i at=${TTHEME_HUB_TABS[(Ie)preview]} n=${#TTHEME_HUB_TABS} rc
   local -i to=$(( (at - 1 + $1 + n) % n + 1 ))
   __tt_pv_bg_close
+  __tt_pv_leave
   while (( to != at )); do
     hubwas="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
     err=$(TTHEME_HUB=${TTHEME_HUB_TABS[to]} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)

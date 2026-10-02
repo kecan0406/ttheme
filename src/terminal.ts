@@ -146,13 +146,77 @@ export interface Live {
   wear(entry: PaletteEntry, wired: readonly string[]): string | undefined
   saved(): Promise<Map<string, string>>
   restore(saved: ReadonlyMap<string, string>): string
+  stop?(): void
 }
 
-export function livePaint(env: Env, tty: boolean): Live | undefined {
+export const SETTLE_MS = 120
+const SLICE = 4
+const PACE_MS = 40
+
+function itermProfileOf(env: Env): string | undefined {
+  const shown = env.TTHEME_ITERM_SHOWN
+  return env.TTHEME_ITERM_SWITCH === '1' && env.TTHEME_ITERM_DYED === '0' && shown ? `ttheme · ${shown}` : undefined
+}
+
+function itermLive(env: Env, write: (text: string) => void): Live {
+  const slots = TRAITS.iterm2.repaint ?? []
+  const rest = SLOT_CODES.map((_, slot) => slot).filter((slot) => !slots.includes(slot))
+  const sent = new Set(slots)
+  const profile = itermProfileOf(env)
+  let timers: ReturnType<typeof setTimeout>[] = []
+  const stop = () => {
+    for (const timer of timers) {
+      clearTimeout(timer)
+    }
+    timers = []
+  }
+  return {
+    slots,
+    paint(entry) {
+      stop()
+      for (let at = 0; at < rest.length; at += SLICE) {
+        const part = rest.slice(at, at + SLICE)
+        const timer = setTimeout(
+          () => {
+            for (const slot of part) {
+              sent.add(slot)
+            }
+            write(paletteOsc(entry, part))
+          },
+          SETTLE_MS + (at / SLICE) * PACE_MS,
+        )
+        timer.unref?.()
+        timers.push(timer)
+      }
+      return paletteOsc(entry, slots)
+    },
+    wear: (entry) => paletteOsc(entry),
+    saved: () => queryTerminalColors(),
+    restore(saved) {
+      stop()
+      const codes = SLOT_CODES.filter((_, slot) => sent.has(slot))
+      return profile
+        ? `\x1b[?2026h${restoreOsc(new Map(), codes)}\x1b]1337;SetProfile=${profile}\x07\x1b[?2026l`
+        : restoreOsc(saved, codes)
+    },
+    stop,
+  }
+}
+
+export function livePaint(
+  env: Env,
+  tty: boolean,
+  write: (text: string) => void = (text) => {
+    process.stdout.write(text)
+  },
+): Live | undefined {
   const terminal = detectTerminal(env)
   const traits = TRAITS[terminal]
   if (!tty || colorless(env) || env.TMUX || !traits.paints) {
     return undefined
+  }
+  if (terminal === 'iterm2') {
+    return itermLive(env, write)
   }
   const slots = traits.repaint ?? SLOT_CODES.map((_, slot) => slot)
   const codes = SLOT_CODES.filter((_, slot) => slots.includes(slot))

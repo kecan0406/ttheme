@@ -21,6 +21,8 @@ on-belief	pass	pass	pass	pass	pass	skip	pass	pass
 wear	pass	pass	pass	pass	pass	skip	pass	pass
 wear-painted	pass	pass	pass	pass	pass	skip	pass	pass
 wear-ansi	pass	pass	pass	pass	pass	skip	pass	pass
+reset-worn	pass	pass	pass	pass	pass	skip	pass	pass
+reset-baseline	fail	pass	fail	fail	fail	fail	fail	fail
 restore	pass	pass	pass	pass	pass	pass	pass	pass
 layer-query	pass	pass	pass	pass	pass	pass	pass	pass
 layer-cells	pass	pass	pass	pass	skip	pass	skip	skip

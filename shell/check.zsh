@@ -688,6 +688,47 @@ done
   EDITOR=true ttheme config > /dev/null || { print -u2 "an unwired Konsole refused a verb that paints no tab"; exit 1 }
 ) || exit 1
 (
+  TTHEME_TERMINALS=(iterm2) TTHEME_STARTUP=miku TTHEME_TMUX=0 TTHEME_ITERM_SWITCH=1 TTHEME_ITERM_SHOWN=default TTHEME_ITERM_DYED=0
+  TTHEME_ITERM_PROFILES=$XDG_CONFIG_HOME/ttheme.json
+  print -r -- '{}' > $TTHEME_ITERM_PROFILES
+  touch -t 202001010000 $TTHEME_ITERM_PROFILES
+  source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
+  [[ "$(__tt_apply "$TTHEME_PALETTE[kaito]")" == $'\e]1337;SetProfile=ttheme · kaito\a' ]] ||
+    { print -u2 "an iTerm2 that lets the shell switch profiles was painted rather than moved to the palette's profile: ${(V)$(__tt_apply "$TTHEME_PALETTE[kaito]")}"; exit 1 }
+  forks_of __tt_apply "$TTHEME_PALETTE[kaito]"
+  (( REPLY == 0 )) || { print -u2 "an iTerm2 profile switch forks again ($REPLY processes) — every preview hover pays it"; exit 1 }
+  painted=""
+  __tt_pv_paint "$TTHEME_PALETTE[kaito]" > /dev/null
+  [[ $painted == "$TTHEME_PALETTE[kaito]" && $TTHEME_ITERM_SHOWN == kaito && $TTHEME_ITERM_DYED == 0 ]] ||
+    { print -u2 "a preview hover in iTerm2 did not hold the whole palette through its profile: shown=$TTHEME_ITERM_SHOWN dyed=$TTHEME_ITERM_DYED"; exit 1 }
+  [[ -z "$(__tt_shown kaito force)" ]] || { print -u2 "a tab already on its palette's profile was switched to it again"; exit 1 }
+  forks_of __tt_shown kaito force
+  (( REPLY == 0 )) || { print -u2 "an iTerm2 picture check forks again ($REPLY processes) — every prompt and focus pays it"; exit 1 }
+  TTHEME_ITERM_DYED=1
+  [[ "$(__tt_shown kaito)" == $'\e[?2026h\e]104;0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\\e]1337;SetProfile=ttheme · kaito\a\e[?2026l' ]] ||
+    { print -u2 "a dyed iTerm2 tab was not reset and moved back onto its palette's profile in one update at its next prompt — iTerm2 keeps what a reset goes back to across a switch: ${(V)$(__tt_shown kaito)}"; exit 1 }
+  TTHEME_ITERM_DYED=2
+  [[ "$(__tt_shown kaito)" == $'\e[?2026h\e]110\e\\\e]111\e\\\e]1337;SetProfile=ttheme · kaito\a\e[?2026l' ]] ||
+    { print -u2 "a tab preview dyed in its background and foreground alone was not reset in those before its switch: ${(V)$(__tt_shown kaito)}"; exit 1 }
+  TTHEME_ITERM_DYED=1 TTHEME_ITERM_SWITCH=
+  [[ "$(__tt_unshown force)" == $'\e]1337;SetProfile=\a' ]] ||
+    { print -u2 "iTerm2 reset a tab's colors before a switch it may refuse: ${(V)$(__tt_unshown force)}"; exit 1 }
+  TTHEME_ITERM_DYED=0 TTHEME_ITERM_SWITCH=1
+  [[ "$(__tt_apply "$TTHEME_PALETTE[neutral]")" == $'\e]11;'*$'\e]4;15;'* ]] ||
+    { print -u2 "iTerm2 switched to a profile ttheme never writes, for a palette outside the rotation"; exit 1 }
+  touch $TTHEME_ITERM_PROFILES
+  [[ "$(__tt_apply "$TTHEME_PALETTE[kaito]")" == $'\e]11;'*$'\e]4;15;'* ]] ||
+    { print -u2 "iTerm2 switched to a profile in the second it may still be reading the profiles file"; exit 1 }
+  touch -t 202001010000 $TTHEME_ITERM_PROFILES
+  [[ "$(__tt_osc_reset)" == $'\e]1337;SetProfile=\a' ]] ||
+    { print -u2 "an iTerm2 reset did not go back to the default profile new tabs open on: ${(V)$(__tt_osc_reset)}"; exit 1 }
+  TTHEME_ITERM_SHOWN=default
+  [[ -z "$(__tt_osc_reset)" ]] || { print -u2 "an iTerm2 reset switched a tab already on the default profile again"; exit 1 }
+  TTHEME_ITERM_SWITCH=
+  [[ "$(__tt_apply "$TTHEME_PALETTE[kaito]")" == $'\e]11;'*$'\e]4;15;'* && "$(__tt_osc_reset)" == $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\' ]] ||
+    { print -u2 "an iTerm2 that may not let the shell switch profiles was not painted and reset in OSC colors"; exit 1 }
+) || exit 1
+(
   source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
   TTHEME_TERMINALS=()
   out=$(ttheme use kaito 2>&1) && { print -u2 "ttheme use ran in a Warp ttheme does not wire"; exit 1 }

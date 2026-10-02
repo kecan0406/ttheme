@@ -393,6 +393,20 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'browse-reset',
+    about:
+      'a palette worn after browse repainted the tab survives a program that resets the tab’s colors, as one worn in a fresh tab does',
+    async run(p) {
+      const a = await p.open()
+      await p.launch(a, 'ttheme browse', 'Catalog')
+      await p.keys(a, 'k', 'i', 't', 'a')
+      await p.quit(a)
+      await p.type(a, 'ttheme use miku')
+      await p.type(a, "print -n '\\e]112\\e\\\\\\e]111\\e\\\\'")
+      await p.look('after', { want: 'miku' })
+    },
+  },
+  {
     id: 'unwired',
     about:
       'in a terminal init never wired, a tab opens in its own colors and ttheme use still paints it, with no picture, which only the wiring shows',

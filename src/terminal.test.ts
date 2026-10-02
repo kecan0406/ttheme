@@ -5,7 +5,8 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import type { PaletteEntry } from './manifest.ts'
-import { CLEAR, detectTerminal, livePaint, type Terminal, TRAITS } from './terminal.ts'
+import { paletteOsc } from './osc.ts'
+import { CLEAR, detectTerminal, livePaint, SETTLE_MS, type Terminal, TRAITS } from './terminal.ts'
 
 const root = join(import.meta.dirname, '..')
 const read = (...path: string[]) => readFileSync(join(root, ...path), 'utf8')
@@ -158,15 +159,56 @@ test('a live repaint goes nowhere the shell layer keeps its colors off', () => {
   assert.equal(livePaint({ TERM_PROGRAM: 'WarpTerminal' }, true), undefined)
 })
 
-test('iTerm2 is repainted and restored in its background and foreground alone, each OSC color being a profile change', () => {
-  const live = livePaint({ ITERM_SESSION_ID: 'w0' }, true)
+test('iTerm2 is repainted in its background and foreground at once and in the rest once the cursor settles, a few colors at a time, each OSC color being a profile change', async () => {
+  const written: string[] = []
+  const live = livePaint({ ITERM_SESSION_ID: 'w0' }, true, (text) => written.push(text))
   assert.ok(live)
+  assert.equal(live.paint({ ...miku, background: '#000000' }), '\x1b]11;#000000\x1b\\\x1b]10;#e0f4f2\x1b\\')
   assert.equal(live.paint(miku), '\x1b]11;#0e2124\x1b\\\x1b]10;#e0f4f2\x1b\\')
+  await new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 300))
+  assert.deepEqual(
+    written.map((text) => text.split('\x1b\\').length - 1),
+    [4, 4, 4, 4, 2],
+  )
+  assert.equal(written.join(''), paletteOsc(miku).replace('\x1b]11;#0e2124\x1b\\\x1b]10;#e0f4f2\x1b\\', ''))
   const saved = new Map([
     ['11', 'rgb:1111/1111/1111'],
     ['10', 'rgb:eeee/eeee/eeee'],
   ])
-  assert.equal(live.restore(saved), '\x1b]11;rgb:1111/1111/1111\x1b\\\x1b]10;rgb:eeee/eeee/eeee\x1b\\')
+  assert.ok(
+    live.restore(saved).startsWith('\x1b]11;rgb:1111/1111/1111\x1b\\\x1b]10;rgb:eeee/eeee/eeee\x1b\\\x1b]112\x1b\\'),
+  )
+  assert.ok(live.restore(saved).endsWith('\x1b]104;15\x1b\\'))
+})
+
+test('an iTerm2 repaint that never settled restores the background and foreground alone, and nothing it meant to send arrives after', async () => {
+  const written: string[] = []
+  const live = livePaint({ ITERM_SESSION_ID: 'w0' }, true, (text) => written.push(text))
+  assert.ok(live)
+  live.paint(miku)
+  assert.equal(live.restore(new Map([['11', 'rgb:1111/1111/1111']])), '\x1b]11;rgb:1111/1111/1111\x1b\\\x1b]110\x1b\\')
+  await new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 300))
+  assert.deepEqual(written, [])
+})
+
+test('iTerm2 is put back on the profile the tab wore when the shell switches profiles and the tab is not dyed, its colors reset first, since iTerm2 keeps what a reset goes back to across a switch', () => {
+  const tab = { ITERM_SESSION_ID: 'w0', TTHEME_ITERM_SWITCH: '1', TTHEME_ITERM_DYED: '0' }
+  const reset = '\x1b]111\x1b\\\x1b]110\x1b\\'
+  assert.equal(
+    livePaint({ ...tab, TTHEME_ITERM_SHOWN: 'kita' }, true)?.restore(new Map()),
+    `\x1b[?2026h${reset}\x1b]1337;SetProfile=ttheme · kita\x07\x1b[?2026l`,
+  )
+  assert.equal(
+    livePaint({ ...tab, TTHEME_ITERM_SHOWN: 'default' }, true)?.restore(new Map()),
+    `\x1b[?2026h${reset}\x1b]1337;SetProfile=ttheme · default\x07\x1b[?2026l`,
+  )
+  for (const env of [
+    { ...tab, TTHEME_ITERM_SHOWN: '' },
+    { ...tab, TTHEME_ITERM_SHOWN: 'kita', TTHEME_ITERM_DYED: '1' },
+    { ...tab, TTHEME_ITERM_SHOWN: 'kita', TTHEME_ITERM_SWITCH: '' },
+  ]) {
+    assert.equal(livePaint(env, true)?.restore(new Map()), reset)
+  }
 })
 
 test('a restore puts back every color a repaint sent, resetting the ones the terminal never reported', () => {

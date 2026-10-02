@@ -1,9 +1,4 @@
 terminal	fact	kind	reason
-iterm2	*.hover.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
-iterm2	hub.{preview,back}.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
-iterm2	preview-tab.pick.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
-iterm2	preview-tune.tune.colors	cannot	iTerm2 makes each OSC color a profile change, so a live repaint sends the background and foreground alone and the frame spells its ANSI colors out in truecolor
-iterm2	program-reset.after.colors	deferred	a program's OSC reset takes a painted tab back to its profile's colors, and the layer does not ask after every command there, since iTerm2 answers a query on its 1/30 s tick (1.7–20 ms after an idle 0.2 s, measured, against 0.25 ms in Ghostty)
 alacritty	@pictures	cannot	Alacritty has no graphics protocol, so it shows no picture
 alacritty	preview-tune.tune.text	cannot	Alacritty has no graphics protocol, so preview offers no picture tuning
 wezterm	preview-tune.tune.text	cannot	find stays off in WezTerm, so the key bar of a picture in the edit panel has room for ⇧←→ ×10 where Ghostty shows f find

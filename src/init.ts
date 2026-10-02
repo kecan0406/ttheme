@@ -217,7 +217,7 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     writeCatalog(configHome, plan.catalog)
   }
   writeInstalled(configHome, installed)
-  sync(configHome, readCatalog(configHome), installed, plan.home)
+  sync(configHome, readCatalog(configHome), installed, plan.home, host)
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''

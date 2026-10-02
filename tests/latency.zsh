@@ -214,6 +214,13 @@ hovering() {
   upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
   zpty -d sh
   TERMINAL=""
+  if [[ $name == *-switch ]]; then
+    [[ $session == *$'\e]1337;SetProfile=ttheme · '* ]] ||
+      { fail "$name: hovering palettes in an iTerm2 that lets the shell switch profiles never switched one, so nothing was tested"; return 1 }
+    [[ $session != *($'\e]4;'|$'\e]10;#'|$'\e]11;#')* ]] ||
+      { fail "$name: a preview hover in iTerm2 painted OSC colors where one profile switch carries the whole palette in a fraction of the time"; return 1 }
+    return 0
+  fi
   [[ $session == *$'\e]11;#'* ]] || { fail "$name: hovering palettes in iTerm2 never painted one, so nothing was tested"; return 1 }
   [[ $session != *$'\e]4;'* ]] || { fail "$name: a preview hover in iTerm2 paints the ANSI colors again — each OSC color is a profile change there that holds its parser, and twenty per hover made every arrow key lag"; return 1 }
 }
@@ -243,6 +250,10 @@ check() {
   home seq seq
   home terminal-app off
   home iterm2 off
+  home iterm2-switch off
+  print -rl -- 'typeset -g TTHEME_ITERM_SWITCH=1' "typeset -g TTHEME_ITERM_PROFILES=$WORK/iterm2-switch/profiles.json" >> $WORK/iterm2-switch/.config/ttheme/palettes.zsh
+  print -r -- '{}' > $WORK/iterm2-switch/profiles.json
+  touch -t 202001010000 $WORK/iterm2-switch/profiles.json
   for name in base off seq terminal-app; do
     measure $name stderr 0
     [[ $name == (base|seq) ]] || (( ASKED[$name] )) || { fail "$name: the layer asked the terminal nothing, so nothing was tested"; return 1 }
@@ -254,8 +265,9 @@ check() {
   done
   typing off
   hovering iterm2
+  hovering iterm2-switch
   hostile options
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 leaves the ANSI colors alone, and a .zshrc's own options break none of it"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, and a .zshrc's own options break none of it"
 }
 
 bench() {

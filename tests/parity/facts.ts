@@ -190,6 +190,7 @@ export const BRIDGES: { id: string; holds: (fact: (id: string) => string | undef
   { id: 'keep-painted', holds: (fact) => fact('default-keeps.here.colors') === 'rei' },
   { id: 'on-follow', holds: (fact) => fact('on.other.colors') === 'konata' },
   { id: 'on-belief', holds: (fact) => !(fact('on.other.issue') ?? '').includes('wears') },
+  { id: 'reset-worn', holds: (fact) => fact('program-reset.after.colors') === 'miku' },
 ]
 
 export function unmeasured(compat: Compat, term: Term): string[] | undefined {

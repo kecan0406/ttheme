@@ -164,6 +164,7 @@ function prepare(place: Place, term: Term): void {
   mkdirSync(join(place.home, '.parity'), { recursive: true })
   mkdirSync(join(place.root, 'tmp'), { recursive: true })
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'Default Bookmark Guid'), 'own\n')
+  write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'PreventEscapeSequenceFromChangingProfile'), '0\n')
   if (term === 'konsole') {
     write(join(place.dataHome, 'konsole', 'Own.colorscheme'), OWN_SCHEME)
     write(join(place.dataHome, 'konsole', 'Own.profile'), '[Appearance]\nColorScheme=Own\n\n[General]\nName=Own\n')

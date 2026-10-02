@@ -302,6 +302,7 @@ export async function runBrowse(): Promise<number> {
   try {
     done = await panel.prompt()
   } finally {
+    live?.stop?.()
     if (live && !hub) {
       process.stdout.write(live.restore(saved))
     }
