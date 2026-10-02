@@ -206,10 +206,10 @@ unwired.open.colors	own	=	=	=	=	=	=	=	=	=
 unwired.open.picture	none	=	=	=	=	=	=	=	=	=
 unwired.open.wears	none	=	=	=	=	=	=	=	=	=
 unwired.open.issue	-	=	=	=	=	=	=	=	=	=
-unwired.used.colors	kita	=	=	=	=	=	=	own	=	=
-unwired.used.picture	none	=	=	=	=	=	=	=	=	=
-unwired.used.wears	kita	=	=	=	=	=	=	none	=	=
-unwired.used.text	txt:14a3958f69	=	=	=	=	=	=	txt:d912f86536	=	=
+unwired.used.colors	kita	=	=	=	=	=	=	=	=	=
+unwired.used.picture	none	=	=	=	=	=	=	kita	=	=
+unwired.used.wears	kita	=	=	=	=	=	=	=	=	=
+unwired.used.text	txt:14a3958f69	=	=	=	=	=	=	txt:314183575c	=	=
 unwired.used.issue	-	=	=	=	=	=	=	=	=	=
 reach.ghostty.colors	miku	=	=	=	=	=	=	=	=	=
 reach.ghostty.picture	none	=	=	=	=	=	=	=	=	=

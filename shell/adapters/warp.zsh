@@ -22,7 +22,12 @@ __tt_paints() { __tt_warp_wired }
 __tt_warp_wired() { (( ${TTHEME_TERMINALS[(Ie)warp]} )) && [[ -r $TTHEME_WARP_SETTINGS ]] }
 
 __tt_unpainted() {
+  if [[ -t 0 && -t 1 && -r $TTHEME_WARP_SETTINGS ]] && (( ! ${TTHEME_TERMINALS[(Ie)warp]} )) && __tt_cli wire warp; then
+    __tt_palettes_load && __tt_hook
+    return 0
+  fi
   print -u2 "ttheme: Warp takes a palette only through the settings.toml init wires — wire it with \`npx @kecan0406/ttheme@latest init\`"
+  return 1
 }
 
 __tt_keepable() { return 0 }

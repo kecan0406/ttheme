@@ -179,6 +179,20 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       await app.settle()
     },
     keys: (tab, ...keys) => app.keys(tab, keys),
+    async answer(tab, line, question, keys) {
+      const before = tab.prompts()
+      tab.write(`${line}\r`)
+      await app.until(
+        () => tab.prompts() > before || tab.screen(fixture.place.home).includes(question),
+        30000,
+        `${line} never asked or gave its prompt back`,
+      )
+      if (tab.prompts() <= before) {
+        await app.keys(tab, keys)
+        await app.until(() => tab.prompts() > before, 30000, `${line} never gave its prompt back`)
+      }
+      await app.settle()
+    },
     async expect(tab, marker) {
       await app.until(() => tab.screen(fixture.place.home).includes(marker), 15000, `${marker} never showed`)
       await app.settle()

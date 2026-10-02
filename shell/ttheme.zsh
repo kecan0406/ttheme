@@ -1431,6 +1431,27 @@ __tt_rotate() {
 
 source $TTHEME_HOME/preview.zsh
 
+__tt_hook() {
+  autoload -Uz add-zsh-hook add-zle-hook-widget
+  zle -N __tt_line_init
+  add-zle-hook-widget line-init __tt_line_init
+  add-zsh-hook chpwd __tt_chpwd
+  add-zsh-hook precmd __tt_prompt
+  if (( ! TTHEME_TMUX )); then
+    add-zsh-hook preexec __tt_ran
+    add-zsh-hook precmd __tt_unmux
+  fi
+  if __tt_follows_focus || (( TTHEME_TMUX )); then
+    add-zsh-hook precmd __tt_precmd
+    add-zsh-hook preexec __tt_preexec
+    __tt_bind_focus
+  else
+    __tt_sync
+  fi
+  __tt_follows_prompt && add-zsh-hook precmd __tt_prompted
+  return 0
+}
+
 ttheme() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   if (( $# > 1 && ${${argv[2,-1]}[(I)(-h|--help)]} )); then
@@ -1450,8 +1471,7 @@ ttheme() {
   __tt_fresh
   (( $+functions[ttheme] )) || { print -u2 "ttheme: uninstalled — \`npx @kecan0406/ttheme@latest init\` sets it up again"; return 1 }
   if ! __tt_paints && (( ! $# || ${TTHEME_TAB_VERBS[(Ie)$1]} )); then
-    __tt_unpainted
-    return 1
+    __tt_unpainted && __tt_paints || return 1
   fi
   if (( ! $# )); then
     (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
@@ -1559,23 +1579,7 @@ fi
     fi
     __tt_dir_sync
   }
-  autoload -Uz add-zsh-hook add-zle-hook-widget
-  zle -N __tt_line_init
-  add-zle-hook-widget line-init __tt_line_init
-  add-zsh-hook chpwd __tt_chpwd
-  add-zsh-hook precmd __tt_prompt
-  if (( ! TTHEME_TMUX )); then
-    add-zsh-hook preexec __tt_ran
-    add-zsh-hook precmd __tt_unmux
-  fi
-  if __tt_follows_focus || (( TTHEME_TMUX )); then
-    add-zsh-hook precmd __tt_precmd
-    add-zsh-hook preexec __tt_preexec
-    __tt_bind_focus
-  else
-    __tt_sync
-  fi
-  __tt_follows_prompt && add-zsh-hook precmd __tt_prompted
+  __tt_hook
   __tt_announce
 }
 

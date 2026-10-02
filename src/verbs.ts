@@ -193,6 +193,14 @@ export const VERB_SPECS: VerbSpec[] = [
     flags: { yes: { type: 'boolean', short: 'y', about: 'Remove without asking' } },
   },
   {
+    name: 'wire',
+    args: ['<terminal>'],
+    about:
+      'Wire one more terminal into this setup, after showing what it edits — the shell offers it in a terminal that paints only through the config init would have wired',
+    section: 'setup',
+    hidden: true,
+  },
+  {
     name: 'info',
     args: [],
     about: 'Print what a bug report needs — version, OS, shell, terminal and the settings you changed',

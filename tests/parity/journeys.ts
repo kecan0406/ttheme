@@ -28,6 +28,7 @@ export interface Probe {
   keys(tab: Tab, ...keys: string[]): Promise<void>
   expect(tab: Tab, marker: string): Promise<void>
   back(tab: Tab): Promise<void>
+  answer(tab: Tab, line: string, question: string, keys: readonly string[]): Promise<void>
   quit(tab: Tab): Promise<void>
   focus(tab: Tab): Promise<void>
   look(label: string, options: LookOptions): Promise<void>
@@ -410,12 +411,12 @@ export const JOURNEYS: Journey[] = [
   {
     id: 'unwired',
     about:
-      'in a terminal init never wired, a tab opens in its own colors and ttheme use still paints it, with no picture, which only the wiring shows',
+      'in a terminal init never wired, a tab opens in its own colors and ttheme use still paints it — asking to wire it first where only the wiring can paint — with no picture, which only the wiring shows',
     unwired: true,
     async run(p) {
       const a = await p.open()
       await p.look('open', { want: 'own' })
-      await p.type(a, 'clear; ttheme use kita')
+      await p.answer(a, 'clear; ttheme use kita', 'now?', ['y'])
       await p.look('used', { want: 'kita', picture: 'none', text: true })
     },
   },

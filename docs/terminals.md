@@ -47,7 +47,9 @@ get it.
   `TTHEME_WARP_FAST` on, 0.6 s with it off, which is Warp's own wait before it
   reloads its settings. Warp records no switch
   between split panes, so the panes of a tab share the palette the tab came to
-  the front with.
+  the front with. Where init did not wire Warp, `ttheme use` in a Warp tab shows
+  what wiring it would edit and asks first; yes wires Warp then and there and
+  puts the palette on.
   iTerm2 turns every OSC color into a change to the tab's profile, so once it
   lets a control sequence switch profiles (its Always Allow) a tab wears a
   palette by switching to that palette's `ttheme · <palette>` profile — every

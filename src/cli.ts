@@ -15,6 +15,7 @@ import { autoRefresh } from './refresh.ts'
 import { runTone } from './tone-server.ts'
 import { runUninstall } from './uninstall.ts'
 import { helpText, usageOf, VERB_SPECS, type VerbSpec } from './verbs.ts'
+import { runWire } from './wire.ts'
 
 export interface Flags {
   yes?: boolean
@@ -49,6 +50,7 @@ const RUNS: Record<string, Verb['run']> = {
   share: ([name], { tone }) => runShare(name as string, tone as 'tuned' | 'original' | undefined),
   init: (_, { yes }) => runInit({ yes }),
   uninstall: (_, { yes }) => runUninstall(yes),
+  wire: ([name]) => runWire(name as string),
   info: () => runInfo(),
   build: (_, { only }) => build({ only }),
   find: ([name]) => runFind(name as string),
