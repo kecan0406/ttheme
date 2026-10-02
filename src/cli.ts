@@ -55,8 +55,8 @@ const RUNS: Record<string, Verb['run']> = {
   image: ([name, action, key]) => runImage(name as string, action as string, key),
   redraw: () => runRedraw(),
   tone: ([name]) => runTone(name as string),
-  flatten: ([source, out, background, opacity, canvas, place]) =>
-    runFlatten(source as string, out as string, background as string, opacity as string, canvas, place),
+  flatten: ([source, out, background, opacity, canvas, place, into]) =>
+    runFlatten(source as string, out as string, background as string, opacity as string, canvas, place, into),
   bake: ([source, out, canvas, place]) => runBake(source as string, out as string, canvas as string, place as string),
 }
 

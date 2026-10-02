@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import * as p from '@clack/prompts'
 import { available, readCatalog, readKept, search } from './catalog.ts'
 import { adopt } from './craft.ts'
+import { liveOf } from './live.ts'
 import { listed, type Manifest } from './manifest.ts'
 import { addSource, localLine } from './markets.ts'
 import { colorless } from './osc.ts'
@@ -12,11 +13,9 @@ import { pending } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
 import { refreshLine, refreshMarket } from './refresh.ts'
 import { installedPath, isLocal, marketSources, OFFICIAL, shownSource } from './sources.ts'
-import { livePaint } from './terminal.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
 import { alphabetical, marketOf } from './theme.ts'
-import { warpLive } from './warp-live.ts'
 
 export function reload(count: number): void {
   console.log(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
@@ -266,7 +265,7 @@ export async function pickPalettes(
 ): Promise<string[] | undefined> {
   const entries = process.env.TTHEME_SORT === 'series' ? catalog.palettes : alphabetical(catalog.palettes)
   const tty = process.stdout.isTTY === true
-  const live = livePaint(process.env, tty) ?? warpLive(process.env, tty, configHome())
+  const live = liveOf(process.env, tty, configHome())
   const saved = live ? await live.saved() : new Map<string, string>()
   const prompt = new PalettePrompt({
     entries,

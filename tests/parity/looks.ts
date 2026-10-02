@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, isAbsolute, join } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
+import { readBackdrop } from '../../src/backdrop.ts'
 import { SLOT_CODES } from '../../src/osc.ts'
+import { decodePng, type Rgba } from '../../src/png.ts'
 import { type Colors, OWN, SEEN } from './terms.ts'
 
 export function read(path: string): string {
@@ -571,4 +573,53 @@ export function konsoleProfile(dataHome: string, file: string): { scheme: string
       ? hex(value('Cursor Options', 'CustomCursorColor'))
       : undefined
   return { scheme, ...(cursor ? { cursor } : {}) }
+}
+
+export interface TerminalPicture {
+  palette: string
+  opacity: string
+  background: string
+}
+
+function toneOf(backgrounds: string, palette: string, home: string): number[] | undefined {
+  const picture = readBackdrop(backgrounds, palette, home)
+  if (!picture || !existsSync(picture.image)) {
+    return undefined
+  }
+  const image = decodePng(new Uint8Array(readFileSync(picture.image)))
+  let at = -1
+  for (let i = 3; i < image.data.length; i += 4) {
+    if (at < 0 || (image.data[i] as number) > (image.data[at] as number)) {
+      at = i
+    }
+  }
+  return at < 0 ? undefined : [...image.data.subarray(at - 3, at)]
+}
+
+export function terminalPicture(file: string, backgrounds: string, home: string): TerminalPicture | undefined {
+  let image: Rgba
+  try {
+    image = decodePng(new Uint8Array(readFileSync(file)))
+  } catch {
+    return undefined
+  }
+  const palette = stemName((file.split('/').at(-1) ?? '').replace(/^ttheme-/, '').replace(/\..*$/, ''))
+  const corner = (image.height - 1) * image.width * 4
+  const bg = [...image.data.subarray(corner, corner + 3)]
+  const tone = toneOf(backgrounds, palette, home) ?? bg
+  const span = tone.map((value, c) => value - (bg[c] as number))
+  const length = span.reduce((sum, value) => sum + value * value, 0)
+  let most = 0
+  for (let i = 0; length > 0 && i < image.data.length; i += 4) {
+    let along = 0
+    for (let c = 0; c < 3; c++) {
+      along += ((image.data[i + c] as number) - (bg[c] as number)) * (span[c] as number)
+    }
+    most = Math.max(most, along / length)
+  }
+  return {
+    palette,
+    opacity: String(Math.round(most * 100) / 100),
+    background: `#${bg.map((value) => value.toString(16).padStart(2, '0')).join('')}`,
+  }
 }

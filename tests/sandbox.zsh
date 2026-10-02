@@ -18,6 +18,7 @@ typeset -g ALACRITTY_GUI="alacritty --config-file $SANDBOX/"
 typeset -g WARP_LAUNCH=$HOME/.warp/launch_configurations/ttheme-sandbox.yaml
 typeset -g KONSOLE_GUI="konsole --separate --workdir $SANDBOX"
 typeset -g KONSOLE_SCREEN=${TTHEME_KONSOLE_SCREEN:-:77}
+typeset -gi PICTURED=0
 typeset -ga FOREIGN=(GHOSTTY_RESOURCES_DIR GHOSTTY_BIN_DIR GHOSTTY_SHELL_FEATURES TERM_PROGRAM TERM_PROGRAM_VERSION
   COLORTERM TERMINFO KITTY_WINDOW_ID ITERM_SESSION_ID ITERM_PROFILE WEZTERM_PANE WEZTERM_EXECUTABLE WEZTERM_UNIX_SOCKET
   WT_SESSION WT_PROFILE_ID ALACRITTY_WINDOW_ID KONSOLE_VERSION KONSOLE_DBUS_SERVICE KONSOLE_DBUS_SESSION KONSOLE_DBUS_WINDOW)
@@ -56,6 +57,10 @@ wire() {
   shift
   node $ROOT/bin/ttheme.js init --yes > /dev/null
   (( $# == 0 )) || node $SANDBOX/.config/ttheme/ttheme.js add $@ > /dev/null
+  if (( PICTURED && $# )); then
+    bun $ROOT/tests/picture.ts $SANDBOX/.config ${@[-1]}
+    node $SANDBOX/.config/ttheme/ttheme.js image ${@[-1]} tuned > /dev/null
+  fi
   print -r -- "ttheme sandbox — $SANDBOX"
   print -r -- "palettes: $label"
 }
@@ -178,15 +183,16 @@ hand_back() {
   osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($front).activateWithOptions(0)" > /dev/null
 }
 
-usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole] [--zshenv FILE] [--empty | palette…]" }
+usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole] [--pictured] [--zshenv FILE] [--empty | palette…]" }
 
 main() {
-  local -a here behind iterm wezterm kitty alacritty warp tapp konsole legacy trust empty zshenv
+  local -a here behind iterm wezterm kitty alacritty warp tapp konsole legacy trust empty pictured zshenv
   zparseopts -D -E -F -- -here=here -behind=behind -iterm=iterm -wezterm=wezterm -kitty=kitty -alacritty=alacritty -warp=warp -terminal-app=tapp \
-    -konsole=konsole -legacy=legacy -trust=trust -empty=empty -zshenv:=zshenv || { usage; return 1 }
+    -konsole=konsole -legacy=legacy -trust=trust -empty=empty -pictured=pictured -zshenv:=zshenv || { usage; return 1 }
   local -i other=$(( $#iterm + $#wezterm + $#kitty + $#alacritty + $#warp + $#tapp + $#konsole ))
   (( other > 1 || $#here && ($#behind || other) || ($#legacy || $#trust) && ! $#iterm || $#empty && $# )) && { usage; return 1 }
   local -a palettes=($@)
+  PICTURED=$#pictured
   local label=${(j: :)palettes}
   if (( $#empty )); then
     label="none, \`ttheme browse\` picks them"

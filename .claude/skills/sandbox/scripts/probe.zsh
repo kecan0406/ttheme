@@ -47,7 +47,7 @@ sb_query() {
 
 sb_report() { print -r -- "$*" >> ${ZDOTDIR:-$HOME}/run.out }
 
-sb_drive() { python3 $SB_HERE/drive.py "$@" }
+sb_drive() { SB_TTY=$TTY python3 $SB_HERE/drive.py "$@" }
 
 sb_shot() {
   local dir=${ZDOTDIR:-$HOME}/shots i
@@ -80,3 +80,5 @@ __sb_run() {
 }
 
 precmd_functions+=(__sb_run)
+
+[[ -n $SB_TTY && $TERM_PROGRAM == Apple_Terminal ]] && TTY=$SB_TTY

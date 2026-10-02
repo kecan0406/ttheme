@@ -8,6 +8,7 @@ import { runEditor } from './editor-screen.ts'
 import { writeAtomic } from './edits.ts'
 import { findFor } from './find/find.ts'
 import { fixGate, type Move } from './fix.ts'
+import { liveOf } from './live.ts'
 import { type Manifest, type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import { ensureLocal } from './markets.ts'
 import { colorless } from './osc.ts'
@@ -32,10 +33,9 @@ import type { Choice, Edited, EditorOptions } from './palette-editor.ts'
 import { commit, configHome, type Installed, readInstalled, refreshPictures, sync } from './palettes.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
 import { grow, SEEDS } from './seeds.ts'
-import { livePaint, showsPictures } from './terminal.ts'
+import { showsPictures } from './terminal.ts'
 import { marketOf, nameProblem, type SharedPicture, type Theme } from './theme.ts'
 import { readTone, tonedEntry } from './tone.ts'
-import { warpLive } from './warp-live.ts'
 
 function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
@@ -160,7 +160,7 @@ function finder(
 
 async function editColors(options: EditorOptions): Promise<Edited | undefined> {
   const tty = process.stdout.isTTY === true
-  const live = livePaint(process.env, tty) ?? warpLive(process.env, tty, configHome())
+  const live = liveOf(process.env, tty, configHome())
   const saved = live ? await live.saved() : new Map<string, string>()
   const screen = live?.look
     ? { look: (shown: readonly string[]) => live.look?.(options.name, shown) }

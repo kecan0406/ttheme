@@ -9,6 +9,7 @@ import { Cancelled } from './cancelled.ts'
 import { available, readCatalog, writeCatalog } from './catalog.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { pickPalettes } from './installs.ts'
+import { liveOf } from './live.ts'
 import type { Manifest, PaletteEntry } from './manifest.ts'
 import {
   configHome as configDir,
@@ -26,14 +27,13 @@ import {
 } from './palettes.ts'
 import { redrawPictures } from './redraw.ts'
 import { marketsOf, OFFICIAL } from './sources.ts'
-import { detectTerminal, livePaint, TRAITS } from './terminal.ts'
+import { detectTerminal, TRAITS } from './terminal.ts'
 import { systemHost } from './terminals/common.ts'
 import { WIRED, WIRINGS, type Wired, wirings } from './terminals/index.ts'
 import type { Host, Pointed, Setup } from './terminals/types.ts'
 import { warpSettings } from './terminals/warp.ts'
 import { windowsAppData } from './terminals/windows-terminal.ts'
 import { marketOf } from './theme.ts'
-import { warpLive } from './warp-live.ts'
 import { configFile, settingValue, upsertBlock, withSetting, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {
@@ -281,9 +281,7 @@ function seriesOf(catalog: Manifest, names: string[]): string[] {
 function paintStartup(catalog: Manifest, installed: Installed, configHome: string): boolean {
   const startup = catalog.palettes.find((e) => e.name === worn(installed))
   const tty = process.stdout.isTTY === true
-  const wear =
-    startup &&
-    (livePaint(process.env, tty) ?? warpLive(process.env, tty, configHome))?.wear(startup, installed.terminals)
+  const wear = startup && liveOf(process.env, tty, configHome)?.wear(startup, installed.terminals)
   if (wear === undefined) {
     return false
   }

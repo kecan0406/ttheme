@@ -231,9 +231,9 @@ export const VERB_SPECS: VerbSpec[] = [
   },
   {
     name: 'flatten',
-    args: ['<source>', '<out>', '<background>', '<opacity>', '[canvas]', '[place]'],
+    args: ['<source>', '<out>', '<background>', '<opacity>', '[canvas]', '[place]', '[into]'],
     about:
-      'Lay a picture on a background color at an opacity, placed on a canvas when given one, for Warp, which fades the window instead — preview calls this',
+      'Lay a picture on a background color at an opacity, placed on a canvas when given one, for Warp, which fades the window instead, and Terminal.app, which takes it written into the file its profile points at and renamed to the out — preview calls this',
     section: 'setup',
     hidden: true,
   },

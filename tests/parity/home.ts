@@ -1,10 +1,10 @@
 import { Database } from 'bun:sqlite'
 import { chmodSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { colorsOf, installBackdrop, toneFor } from '../../src/backdrop.ts'
 import type { PaletteEntry } from '../../src/manifest.ts'
 import { TERMINAL_DOMAIN } from '../../src/terminals/terminal-app.ts'
-import { ITERM_SUITE, type Place, warpPaths } from './model.ts'
+import { installTestPicture } from '../picture.ts'
+import { COLS, ITERM_SUITE, type Place, ROWS, warpPaths } from './model.ts'
 import { BEHAVIOR, OWN, type Term, WIRING, WT_PROFILE } from './terms.ts'
 
 export const PALETTES = ['konata', 'kita', 'miku', 'rei']
@@ -26,27 +26,11 @@ const SHIMS: Record<string, string> = {
     "enc() { printf '%s' \"$1\" | sed 's|/|--|g'; }",
     'case "$*" in',
     '  *terminal-app.js*)',
-    '    shift 3; verb=$1; shift',
-    '    case $verb in',
-    '      write)',
-    '        shift; rm -rf "$term/prefs"; mkdir -p "$term/prefs"',
-    '        while [ $# -ge 21 ]; do',
-    '          name=$1; shift',
-    '          printf \'%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\\n\' "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" > "$term/prefs/$(enc "$name")"',
-    '          shift 20',
-    '        done',
-    '        echo wrote ;;',
-    '      drop) rm -rf "$term/prefs"; echo wrote ;;',
-    '      loaded) [ -f "$term/loaded/$(enc "$1")" ] && echo 1 || echo 0 ;;',
-    '    esac',
-    '    exit 0 ;;',
+    `    shift 3; exec '${process.execPath}' '${join(import.meta.dirname, 'apple.ts')}' "$@" ;;`,
     "  *'on run argv'*)",
     '    while [ "$1" = -e ]; do shift 2; done',
     '    [ -f "$term/loaded/$(enc "$2")" ] || { echo missing; exit 0; }',
-    '    case $1 in',
-    '      default) printf \'%s\\n\' "$2" > "$term/default" ;;',
-    '      tab) printf \'%s\\t%s\\n\' "$3" "$2" >> "$term/switch" ;;',
-    '    esac',
+    '    [ "$1" = default ] && printf \'%s\\n\' "$2" > "$term/default"',
     '    echo ok',
     '    exit 0 ;;',
     'esac',
@@ -199,6 +183,7 @@ function prepare(place: Place, term: Term): void {
   if (term === 'terminal-app') {
     write(join(place.home, '.parity', 'defaults', TERMINAL_DOMAIN, 'Default Window Settings'), 'Own\n')
     write(join(place.home, '.parity', 'defaults', TERMINAL_DOMAIN, 'Startup Window Settings'), 'Own\n')
+    write(join(place.stateHome, 'ttheme', 'terminal-app.window'), `${(COLS * 8) / 2}x${(ROWS * 17) / 2}\n`)
   }
   if (term === 'konsole') {
     write(join(place.dataHome, 'konsole', 'Own.colorscheme'), OWN_SCHEME)
@@ -228,34 +213,6 @@ function prepare(place: Place, term: Term): void {
       `${JSON.stringify({ defaultProfile: WT_PROFILE, profiles: { list: [{ guid: WT_PROFILE, name: 'zsh' }] } }, null, 2)}\n`,
     )
   }
-}
-
-function picture(place: Place, entry: PaletteEntry, id: number): void {
-  const size = 32
-  const data = new Uint8Array(size * size * 4)
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const at = (y * size + x) * 4
-      const inside = Math.hypot(x - size / 2, y - size / 2) < size / 3
-      data.set([220, 220, 220, inside ? 255 : 0], at)
-    }
-  }
-  const colors = colorsOf(entry)
-  installBackdrop(
-    place.configHome,
-    colors,
-    toneFor(colors, entry.backdrop?.slot ?? 'cursor'),
-    { width: size, height: size, data },
-    {
-      site: 'danbooru',
-      id,
-      ext: 'png',
-      bytes: new Uint8Array([id]),
-      from: `danbooru ${id} https://example.test/${id}`,
-    },
-    { width: 800, height: 510 },
-    0,
-  )
 }
 
 export const HARNESS = [
@@ -308,7 +265,7 @@ export async function build(
     if (!entry) {
       throw new Error(`no ${name} in the catalog`)
     }
-    picture(place, entry, 1000 + i)
+    installTestPicture(place.configHome, entry, 1000 + i, { width: 800, height: 510 })
   })
   await cli(place, 'default', STARTUP)
   writeFileSync(

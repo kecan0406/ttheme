@@ -8,7 +8,7 @@ typeset -g OUT=${${TMPDIR:-/tmp}%/}/ttheme-compat
 typeset -g EXPECT=$ROOT/tests/compat/expect.tsv
 typeset -g KONSOLE_SCREEN=${TTHEME_KONSOLE_SCREEN:-:77}
 typeset -ga TERMINALS=(ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole)
-typeset -gA FLAG=(ghostty '' iterm2 '--iterm --trust' wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app --terminal-app konsole --konsole)
+typeset -gA FLAG=(ghostty '' iterm2 '--iterm --trust' wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app '--terminal-app --pictured' konsole --konsole)
 typeset -gA ADAPTER=(ghostty ghostty iterm2 iterm2 wezterm wezterm kitty kitty alacritty alacritty warp warp terminal-app terminal-app konsole konsole)
 
 installed() {

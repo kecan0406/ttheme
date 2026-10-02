@@ -253,6 +253,52 @@ __cc_schemes() {
   printf '\e[H\e[2J'
 }
 
+__cc_profiles() {
+  local id dir laid stem pal bg green=iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4AWNwWOAAAAJEASFujDCPAAAAAElFTkSuQmCC
+  local blue=iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4AWNwcFgAAAHkASGcSLolAAAAAElFTkSuQmCC REPLY
+  local -a held
+  if [[ $TTHEME_ADAPTER != terminal-app ]]; then
+    for id in profile-picture picture-held picture-renamed picture-gone; do
+      __cc_report $id fail "only Terminal.app keeps a tab's picture in its profile, read from a file the profile bookmarks"
+    done
+    return
+  fi
+  dir=${TTHEME_CONFIG:h}/terminal-app
+  held=($dir/ttheme-*.png(N))
+  if (( ! $+functions[__tt_terminal_switch] || ! ${#held} )); then
+    for id in profile-picture picture-held picture-renamed picture-gone; do
+      __cc_report $id skip "no palette here carries a picture in its profile — the sandbox puts one on with --pictured"
+    done
+    return
+  fi
+  laid=$held[1]
+  stem=${${laid:t}#ttheme-}
+  stem=${stem%%.*}
+  pal=${${stem/--/@}/--//}
+  bg=${${=TTHEME_PALETTE[$pal]}[1]}
+  printf '\e[H\e[2J'
+  print -rn -- $green | base64 -d > $laid
+  mv -f -- $laid $dir/ttheme-$stem.compat1.png
+  laid=$dir/ttheme-$stem.compat1.png
+  __tt_terminal_switch "ttheme · $pal"
+  printf '\e]11;#a04040\a'
+  __cc_seen profile-picture '#40a040' '#a04040'
+  print -rn -- $blue | base64 -d > $laid
+  __tt_terminal_switch "ttheme · $pal"
+  __cc_seen picture-held '#40a040' '#4040a0'
+  mv -f -- $laid $dir/ttheme-$stem.compat2.png
+  laid=$dir/ttheme-$stem.compat2.png
+  __tt_terminal_switch "ttheme · $pal"
+  __cc_seen picture-renamed '#4040a0' '#40a040'
+  rm -f -- $laid
+  __tt_terminal_switch "ttheme · $pal"
+  __cc_seen picture-gone $bg '#4040a0'
+  TTHEME_TERMINAL_SHOWN=""
+  __tt_osc_reset
+  sleep 0.3
+  printf '\e[H\e[2J'
+}
+
 __cc_follow() {
   local before=$TTHEME_STARTUP target shown="" worn want was
   local -a others=(${TTHEME_ORDER:#$before})
@@ -575,6 +621,7 @@ __cc_cases() {
   __cc_focus
   __cc_front
   __cc_schemes
+  __cc_profiles
 
   __cc_follow
   __cc_keep

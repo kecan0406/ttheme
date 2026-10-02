@@ -78,6 +78,31 @@ and the pictures no theme uses. Warp draws every picture layer above colored
 cells, so find draws no cover there and preview puts the palette's plain theme
 on while find runs.
 
+## Terminal.app
+
+Terminal.app keeps a picture per tab, in the palette's own profile, as iTerm2
+does — `ttheme · kagami` carries the picture, and putting a palette on moves the
+tab to that palette's profile through Terminal.app's own scripting, which macOS
+lets a Terminal.app tab do without asking. Terminal.app has no graphics
+protocol and stretches a profile's picture over the whole window, and it shows
+whatever a picture leaves see-through as light grey rather than the background.
+So the profile carries the picture laid whole on the palette's background at the
+picture's opacity, placed as Ghostty places it on a canvas the shape of your
+Terminal.app windows — the layer notes that shape from the first tab it starts
+in, and lays the pictures again when a window of another shape turns up. A
+profile with a picture is opaque, whatever your own profile's transparency.
+
+Terminal.app reads a profile once a session, and a picture file once per name,
+but finds the file again by its identity each time a tab takes the profile. So a
+picture tuned, replaced or removed while Terminal.app runs is written into the
+file the profile already points at, under a new name, and every tab wearing
+that palette takes its profile again at its next prompt or focus; only a
+palette's first picture, whose profile Terminal.app read without one, waits for
+its next start. Preview's image edit shows each tuning step the same way, in
+the tab you tune in, and puts the saved picture back when you leave without
+saving. The picture strip shows empty frames and find is not offered, since
+both need pictures drawn in the text area.
+
 ## Finding one
 
 A palette with no background yet can find one: on it in `preview`, `tab` opens its
@@ -326,8 +351,9 @@ stop you at the gate. Switching a picture between tone and original keeps its
 size and position and puts its opacity back to the new default. When the
 palette's text colors change, the default follows without drawing the picture
 again. The terminals take these files as they take a tone's, since each only lays
-a file over its background at an opacity; Ghostty, iTerm2, kitty, WezTerm,
-Warp and Konsole are the ones that show pictures at all.
+a file over its background at an opacity — Warp and Terminal.app through a copy
+laid on the background first; Ghostty, iTerm2, kitty, WezTerm, Warp, Konsole and
+Terminal.app are the ones that show pictures at all.
 
 When a palette's colors change (`edit`, `update`, a new catalog), the next sync
 paints its pictures in the new tone and default opacity under new names, carrying

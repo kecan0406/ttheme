@@ -175,7 +175,7 @@ tabs and every setting are in [docs/usage.md](docs/usage.md).
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Setup with `init`** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Runtime repaint** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Background pictures** | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | — |
+| **Background pictures** | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ |
 
 Nothing is emulated — a terminal that cannot express something does not get it.
 Any other terminal that speaks OSC 4/10/11 gets runtime repainting. A default
@@ -191,7 +191,7 @@ A palette can wear a picture behind the text. ttheme ships none: `ttheme
 preview` → enter, then `f` in the picture panel searches danbooru, konachan, yande.re and zerochan for the character live
 (safe-rated by default), or takes a picture you paste or drop, cuts the
 character out on macOS, tints it to the palette — or keeps its own colors — and
-installs it on your machine only. Ghostty shows the focused tab's picture, iTerm2 and Konsole one per tab, kitty one per
+installs it on your machine only. Ghostty shows the focused tab's picture, iTerm2, Konsole and Terminal.app one per tab, kitty one per
 window, WezTerm the active tab's per window, Warp the tab in front's, through its one app-wide theme. See [docs/backgrounds.md](docs/backgrounds.md).
 
 ## Contributing

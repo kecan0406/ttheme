@@ -84,8 +84,9 @@ test('sync writes a profile per listed palette over the user’s own, and the sc
     rest.filter((arg) => arg.startsWith('ttheme')),
     ['ttheme · gojo', 'ttheme · geto'],
   )
-  assert.equal(rest.length, 42)
+  assert.equal(rest.length, 44)
   assert.equal(rest[1], '#101010')
+  assert.equal(rest[21], '-')
 })
 
 test('Terminal.app opens new windows on the default palette’s profile, gives the user’s own back while off and drops every profile once nothing is installed', () => {

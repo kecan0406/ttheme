@@ -3,7 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Terminal } from '@xterm/headless'
-import { TERMINAL_DOMAIN } from '../../src/terminals/terminal-app.ts'
+import { TERMINAL_DOMAIN, terminalPictures } from '../../src/terminals/terminal-app.ts'
+import { type Bookmark, prefsOf, tabFile } from './apple.ts'
 import {
   alacrittyColors,
   alacrittyFiles,
@@ -27,6 +28,8 @@ import {
   specName,
   stamp,
   strengthOf,
+  type TerminalPicture,
+  terminalPicture,
   warpLook,
   weztermColors,
   wtColors,
@@ -147,6 +150,7 @@ interface Opening {
 
 interface Kind {
   delay?: number
+  eager?: true
   launch(app: App): void
   opening(app: App): Opening
   watched?(app: App): string[]
@@ -156,6 +160,7 @@ interface Kind {
   focused?(app: App, tab: Tab): void
   picture(app: App, tab: Tab): string
   opacity?(app: App, tab: Tab): string
+  background?(app: App, tab: Tab): string | undefined
   opened?(app: App, tab: Tab): void
   closed?(): void
 }
@@ -561,35 +566,67 @@ const konsole = (): Kind => {
 }
 
 const terminalApp = (): Kind => {
-  const loaded = new Map<string, Colors>([['Own', OWN]])
+  const loaded = new Map<string, { colors: Colors; image?: Bookmark }>([['Own', { colors: OWN }]])
+  const cache = new Map<string, TerminalPicture | undefined>()
+  const shows = new WeakMap<Tab, TerminalPicture | undefined>()
   let fallback = 'Own'
   let switched = 0
   const dir = (app: App) => join(app.place.home, '.parity', 'terminal')
   const file = (name: string) => name.replaceAll('/', '--')
   const prefs = (app: App, key: string) =>
     read(join(app.place.home, '.parity', 'defaults', TERMINAL_DOMAIN, key)).trim() || 'Own'
+  const resolve = (app: App, image: Bookmark | undefined): string | undefined => {
+    if (!image) {
+      return undefined
+    }
+    const laid = terminalPictures(app.place.configHome)
+    const moved = existsSync(laid)
+      ? readdirSync(laid)
+          .map((name) => join(laid, name))
+          .find((path) => statSync(path).ino === image.ino)
+      : undefined
+    return moved ?? (existsSync(image.path) ? image.path : undefined)
+  }
+  const shown = (app: App, tab: Tab) => {
+    const path = resolve(app, loaded.get(tab.profile)?.image)
+    if (path && !cache.has(path)) {
+      cache.set(path, terminalPicture(path, backgrounds(app.place), app.place.home))
+    }
+    shows.set(tab, path ? cache.get(path) : undefined)
+  }
   return {
+    eager: true,
     launch(app) {
-      const from = join(dir(app), 'prefs')
-      if (existsSync(from)) {
-        for (const name of readdirSync(from)) {
-          const colors = read(join(from, name)).trim().split(' ')
-          loaded.set(
-            name.replaceAll('--', '/'),
-            new Map(SEEN_ORDER.map((code, i): [string, string] => [code, colors[i] ?? ''])),
-          )
-        }
+      for (const [name, profile] of Object.entries(prefsOf(app.place.home))) {
+        const image =
+          profile.image && existsSync(profile.image.path)
+            ? { path: profile.image.path, ino: statSync(profile.image.path).ino }
+            : profile.image
+        loaded.set(name, {
+          colors: new Map(SEEN_ORDER.map((code, i): [string, string] => [code, profile.colors[i] ?? ''])),
+          ...(image ? { image } : {}),
+        })
       }
       fallback = loaded.has(prefs(app, 'Default Window Settings')) ? prefs(app, 'Default Window Settings') : 'Own'
       mkdirSync(join(dir(app), 'loaded'), { recursive: true })
       for (const name of loaded.keys()) {
         writeFileSync(join(dir(app), 'loaded', file(name)), '')
       }
+      writeFileSync(join(dir(app), 'started'), `${Date.now()}\n`)
       writeFileSync(join(app.place.home, '.parity', 'terminal.running'), '')
       rmSync(join(dir(app), 'default'), { force: true })
       rmSync(join(dir(app), 'switch'), { force: true })
     },
-    opening: (app) => ({ argv: login(app), env: {}, colors: loaded.get(fallback) ?? OWN, profile: fallback }),
+    opening: (app) => ({
+      argv: login(app),
+      env: {},
+      colors: loaded.get(fallback)?.colors ?? OWN,
+      profile: fallback,
+    }),
+    opened(app, tab) {
+      shown(app, tab)
+      writeFileSync(tabFile(app.place.home, String(tab.n)), `${tab.profile}\n`)
+    },
     watched: (app) => [join(dir(app), 'default'), join(dir(app), 'switch')],
     changed(app) {
       const want = read(join(dir(app), 'default')).trim()
@@ -601,22 +638,25 @@ const terminalApp = (): Kind => {
         .split('\n')
         .filter(Boolean)
       for (const line of lines.slice(switched)) {
-        const [tty = '', name = ''] = line.split('\t')
-        const tab = app.tabs.find((t) => t.tty === tty)
-        const colors = loaded.get(name)
-        if (tab && colors) {
+        const [tty = '', name = '', n = ''] = line.split('\t')
+        const tab = app.tabs.find((t) => t.tty === tty) ?? (n === '' ? undefined : app.tabs[Number(n)])
+        const profile = loaded.get(name)
+        if (tab && profile) {
           tab.profile = name
           for (const [code, slot] of tab.slots) {
-            slot.base = colors.get(code) ?? slot.base
+            slot.base = profile.colors.get(code) ?? slot.base
             delete slot.over
             delete slot.kept
           }
+          shown(app, tab)
           app.log(`tab profile ${name}`)
         }
       }
       switched = lines.length
     },
-    picture: () => 'none',
+    picture: (_, tab) => shows.get(tab)?.palette ?? 'none',
+    opacity: (_, tab) => shows.get(tab)?.opacity ?? '-',
+    background: (_, tab) => shows.get(tab)?.background,
   }
 }
 
@@ -700,6 +740,10 @@ export class App {
   }
 
   shown(tab: Tab, code: string): string {
+    const covered = code === '11' ? this.kind.background?.(this, tab) : undefined
+    if (covered) {
+      return covered
+    }
     const slot = tab.slots.get(code) as Slot
     return this.behavior.draws.includes(code) ? (slot.over ?? slot.base) : slot.base
   }
@@ -990,6 +1034,9 @@ export class App {
   }
 
   private feed(tab: Tab, chunk: string): void {
+    if (this.kind.eager) {
+      this.poll()
+    }
     this.scan(tab, chunk)
     tab.pending++
     tab.xterm.write(chunk, () => {

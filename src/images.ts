@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dropImage, showImage } from './backdrop.ts'
 import { find, readAvailable } from './catalog.ts'
 import { isHex } from './color.ts'
-import { writeAtomic } from './edits.ts'
+import { rewrite, writeAtomic } from './edits.ts'
 import { configHome, refreshPictures } from './palettes.ts'
 import { type Canvas, decodePng, encodeRgb, encodeRgba, flatten, lay, type Rgba } from './png.ts'
 import { prepareColoring, redrawColoring } from './redraw.ts'
@@ -81,13 +81,19 @@ export function runFlatten(
   opacity: string,
   canvas?: string,
   place?: string,
+  into?: string,
 ): number {
   const level = Number(opacity)
   if (!isHex(background) || !Number.isFinite(level)) {
     throw new Error('flatten needs a #rrggbb background and an opacity from 0 to 1')
   }
   const image = decodePng(new Uint8Array(readFileSync(source)))
-  const frame = canvas === undefined ? undefined : canvasOf(image, canvas, place ?? '')
-  writeAtomic(out, encodeRgb(flatten(image, background, Math.max(0, Math.min(1, level)), frame)))
+  const frame = canvas ? canvasOf(image, canvas, place ?? '') : undefined
+  const bytes = encodeRgb(flatten(image, background, Math.max(0, Math.min(1, level)), frame))
+  if (into && existsSync(into)) {
+    rewrite(into, out, bytes)
+  } else {
+    writeAtomic(out, bytes)
+  }
   return 0
 }

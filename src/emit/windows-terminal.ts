@@ -28,7 +28,7 @@ export function wtFragment(themes: Theme[], profile?: string, startup?: string):
 
 export const windowsTerminal: Emitter = {
   id: 'windows-terminal',
-  limits: 'no kitty graphics, so no pictures; OSC repaints per pane',
+  limits: 'a picture belongs to a profile, which a pane cannot change, so none; OSC repaints per pane',
 
   emit(theme: Theme): Output[] {
     return [

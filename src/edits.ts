@@ -36,6 +36,13 @@ export function writeAtomic(path: string, content: string | Uint8Array): void {
   renameSync(tmp, real)
 }
 
+export function rewrite(from: string, to: string, content: Uint8Array): void {
+  writeFileSync(from, content)
+  if (from !== to) {
+    renameSync(from, to)
+  }
+}
+
 export function editUserFile(path: string, content: string): boolean {
   const before = existsSync(path) ? readFileSync(path, 'utf8') : undefined
   if (before === content) {

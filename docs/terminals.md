@@ -8,7 +8,7 @@ get it.
 | **Setup with `init`** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] |
 | **Palette files** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] |
 | **Runtime repaint** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Partial][partial] |
-| **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Done][done] | ![No][no] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
+| **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Done][done] | ![No][no] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] |
 
 - **Setup with `init`** — iTerm2 and Terminal.app are offered on macOS only,
   Windows Terminal from WSL (or a native Windows zsh), where init writes a
@@ -20,8 +20,8 @@ get it.
   every installed scheme; Konsole gets a color scheme and a `ttheme · <palette>`
   profile per palette; Terminal.app gets a `ttheme · <palette>` profile per
   palette in its own settings — a copy of your profile, its font, window and
-  transparency included, in the palette's colors — and the default palette's
-  becomes the one new windows and tabs open with.
+  transparency included, in the palette's colors and with its picture — and the
+  default palette's becomes the one new windows and tabs open with.
 - **Runtime repaint** — OSC escape sequences everywhere, per pane in kitty,
   WezTerm and Windows Terminal, one color per sequence (Alacritty drops an OSC 4
   carrying more than seven). kitty and Windows Terminal reset every OSC color
@@ -31,10 +31,15 @@ get it.
   tab that changed the default at once, every other one at its next prompt or
   focus.
   Terminal.app takes every OSC color but no OSC reset, so ttheme reads its
-  colors when the shell starts and puts them back itself; once init wired it,
-  `ttheme off` moves a tab onto your own profile, which drops every color an OSC
-  set, and a `ttheme default` run in any terminal reaches a running
-  Terminal.app at the next prompt one of its tabs shows. Warp answers OSC
+  colors when the shell starts and puts them back itself. Once init wired it, a
+  tab wears an installed palette by switching to that palette's profile — its
+  colors and its picture in one step — through Terminal's own scripting, about
+  0.17 s for `ttheme use` and 16–33 ms a hover in preview; `ttheme off` moves a tab
+  onto your own profile, which drops every color an OSC set, and a `ttheme
+  default` run in any terminal reaches a running Terminal.app at the next prompt
+  one of its tabs shows. A palette added while Terminal.app runs gets its
+  profile at Terminal.app's next start and is painted with OSC colors until
+  then. Warp answers OSC
   color queries but paints one theme app-wide and never the background an OSC
   sets, so a Warp tab wears its palette through that theme: `ttheme use`,
   `next`, a pin, preview and browse switch it, and switching tabs or windows
@@ -69,8 +74,19 @@ get it.
   draws a wallpaper only where a compositor runs; 24.02 and later always).
   Warp shows one picture for the whole app, through its theme, with find,
   preview and tuning as in Ghostty — a tuning step reaches the window about a
-  second after the key. Alacritty has no graphics at all. Cut-outs and baked
-  crops need macOS.
+  second after the key. Terminal.app shows one per tab, through the tab's
+  profile: Terminal.app has no graphics protocol, so a profile carries its
+  palette's picture laid on the palette's background, framed for the shape of
+  your Terminal.app windows (it stretches a picture over the whole window), and
+  a picture's profile is opaque even where your own is translucent. A picture
+  tuned, replaced or removed while it runs reaches every tab at its next prompt
+  or focus, and preview's tuning shows each step in the tab once the picture
+  is laid again; find is not offered there, since its results are pictures,
+  and a palette's first picture shows from Terminal.app's next start. Alacritty
+  has no graphics and no background image at all, and Windows Terminal keeps a
+  picture in a profile, which a pane cannot change, while the settings reload
+  that changes a profile puts every pane back on its scheme's colors — so
+  neither shows one. Cut-outs and baked crops need macOS.
 
 [done]: https://img.shields.io/badge/Done-2ea44f?style=flat-square
 [partial]: https://img.shields.io/badge/Partial-e3b341?style=flat-square

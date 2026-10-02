@@ -4,6 +4,7 @@ import { type BrowseIo, BrowsePanel, type BrowseResult, type Market, type Proble
 import { available, catalogPath, parseCatalog, readCachedIndex, readCatalog, readKept } from './catalog.ts'
 import { HUB_CLOSED, hubOf } from './hub.ts'
 import { reload } from './installs.ts'
+import { liveOf } from './live.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
 import { dropCache, findMarkets, idOf, keptNote, lastUpdate, withMarkets } from './markets.ts'
 import { colorless } from './osc.ts'
@@ -39,9 +40,7 @@ import {
   repoOf,
   shownSource,
 } from './sources.ts'
-import { livePaint } from './terminal.ts'
 import { alphabetical, marketOf } from './theme.ts'
-import { warpLive } from './warp-live.ts'
 
 function marketState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Market {
   let id: string
@@ -275,7 +274,7 @@ export async function runBrowse(): Promise<number> {
   const fetched = new Map<string, Fetched>()
   const lookups = new AbortController()
   const tty = process.stdout.isTTY === true
-  const live = livePaint(process.env, tty) ?? warpLive(process.env, tty, home)
+  const live = liveOf(process.env, tty, home)
   const saved = live && !hub ? await live.saved() : new Map<string, string>()
   const startup = worn(state)
   if (hub) {

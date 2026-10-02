@@ -972,7 +972,7 @@ __tt_pv_draw() {
   out=$'\e[H'
   if (( resized )); then
     out+=$'\e[K\e[2H\e[J\e[H'
-    (( bgcw )) && out+=$'\e_Ga=d,d=A,q=2\e\\'
+    (( bgcw )) && { __tt_bg_wipe; out+=$REPLY }
     resized=0 wiped=1
   fi
   if (( pw < 40 || ph < 12 )); then

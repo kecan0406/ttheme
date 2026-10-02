@@ -12,6 +12,8 @@ __tt_bg_hide() { : }
 
 __tt_bg_lasting() { : }
 
+__tt_bg_wipe() { REPLY=$'\e_Ga=d,d=A,q=2\e\\' }
+
 __tt_bg_frame() {
   local -i iw=$1 ih=$2 W=$3 H=$4 s=$5 ax=$(( ($6 - 1) % 3 )) ay=$(( ($6 - 1) / 3 )) f=${8:--1} wide dw dh ox oy
   wide=$(( W * ih >= H * iw ))
@@ -729,7 +731,7 @@ __tt_pv_bg_strip() {
     pd=(${=bgpic[$pal:$keys[k]]})
     fill=$dir/$pd[2]
     [[ -r $fill ]] || continue
-    __tt_bg_send $fill
+    __tt_bg_send $fill || continue
     id=$REPLY
     want="$id $(( r0 + 2 )) $(( x + 1 )) $tc $tr"
     __tt_bg_lasting && [[ ${bgthumb[$slot]} == "$want" ]] && continue
