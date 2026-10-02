@@ -741,7 +741,7 @@ export function readBackdrop(dir: string, name: string, home: string): ProfileBa
       const m = /^([a-z-]+)\s*=\s*(.*?)\s*$/.exec(line)
       if (m?.[1] === 'config-file' && depth < 4) {
         read(locate(dir, (m[2] as string).replace(/^\?/, ''), home), depth + 1)
-      } else if (m && /^background-image(?:-fit|-opacity)?$/.test(m[1] as string)) {
+      } else if (m && /^background-image(?:-fit|-opacity|-position)?$/.test(m[1] as string)) {
         set.set(m[1] as string, m[2] as string)
       }
     }
@@ -759,6 +759,7 @@ export function readBackdrop(dir: string, name: string, home: string): ProfileBa
     image: locate(dir, image, home),
     opacity: Number.isFinite(opacity) ? opacity : 1,
     cover: set.get('background-image-fit') === 'cover',
+    position: set.get('background-image-position') ?? 'center',
   }
 }
 

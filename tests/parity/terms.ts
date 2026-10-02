@@ -37,6 +37,7 @@ export interface Behavior {
   pictures: 'app' | 'tab' | 'window' | 'none'
   front: 'tty' | 'none'
   promptTrap: boolean
+  cache: 'weak' | 'none'
 }
 
 const EVERY = SLOT_CODES
@@ -57,6 +58,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     pictures: 'app',
     front: 'tty',
     promptTrap: true,
+    cache: 'none',
   },
   iterm2: {
     draws: EVERY,
@@ -72,6 +74,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     pictures: 'tab',
     front: 'none',
     promptTrap: true,
+    cache: 'none',
   },
   kitty: {
     draws: EVERY,
@@ -87,6 +90,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     pictures: 'window',
     front: 'none',
     promptTrap: true,
+    cache: 'none',
   },
   alacritty: {
     draws: NO_SELECTION,
@@ -102,6 +106,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     pictures: 'none',
     front: 'none',
     promptTrap: true,
+    cache: 'none',
   },
   wezterm: {
     draws: EVERY,
@@ -117,6 +122,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     pictures: 'window',
     front: 'none',
     promptTrap: true,
+    cache: 'none',
   },
   'windows-terminal': {
     draws: EVERY,
@@ -132,6 +138,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     pictures: 'none',
     front: 'none',
     promptTrap: true,
+    cache: 'none',
   },
   warp: {
     draws: ['10', ...ANSI],
@@ -147,6 +154,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     pictures: 'app',
     front: 'none',
     promptTrap: true,
+    cache: 'none',
   },
   konsole: {
     draws: ['11', '10'],
@@ -159,9 +167,10 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     relative: false,
     syncQuery: true,
     reload: 'none',
-    pictures: 'none',
+    pictures: 'tab',
     front: 'none',
     promptTrap: true,
+    cache: 'weak',
   },
   'terminal-app': {
     draws: EVERY,
@@ -177,6 +186,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     pictures: 'none',
     front: 'none',
     promptTrap: true,
+    cache: 'none',
   },
 }
 
@@ -202,6 +212,10 @@ export const MEASURED: { id: string; holds: (b: Behavior) => boolean }[] = [
   { id: 'focus-answer', holds: (b) => b.focus === 'answer' },
   { id: 'front-tty', holds: (b) => b.front === 'tty' },
   { id: 'prompt-trap', holds: (b) => b.promptTrap },
+  { id: 'scheme-picture', holds: (b) => b.pictures !== 'none' && b.cache !== 'none' },
+  { id: 'scheme-held', holds: (b) => b.cache !== 'none' },
+  { id: 'scheme-released', holds: (b) => b.cache === 'weak' },
+  { id: 'scheme-fresh', holds: (b) => b.cache !== 'none' },
 ]
 
 export const WIRING: Record<Term, Wired | undefined> = {

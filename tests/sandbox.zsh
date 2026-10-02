@@ -146,6 +146,7 @@ open_konsole() {
       DISPLAY=$KONSOLE_SCREEN xdotool getdisplaygeometry > /dev/null 2>&1 && break
       sleep 0.1
     done
+    (( $+commands[xcompmgr] )) && DISPLAY=$KONSOLE_SCREEN xcompmgr > /dev/null 2>&1 &!
     env+=(-u WAYLAND_DISPLAY DISPLAY=$KONSOLE_SCREEN QT_QPA_PLATFORM=xcb)
   fi
   env $env dbus-run-session -- ${=KONSOLE_GUI} -e zsh -il > /dev/null 2>&1 &!

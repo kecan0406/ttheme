@@ -39,6 +39,7 @@ export interface ProfileBackground {
   image: string
   opacity: number
   cover: boolean
+  position: string
 }
 
 function background(picture: ProfileBackground | undefined) {

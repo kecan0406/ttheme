@@ -110,6 +110,16 @@ test('a color scheme carries all thirty of Konsole entries: normal, intense from
   assert.equal(iniValue(scheme, 'ForegroundIntense', 'Color'), '227,226,231')
   assert.equal(iniValue(scheme, 'General', 'Description'), 'ttheme · gojo')
   assert.equal(iniValue(scheme, 'General', 'Wallpaper'), '')
+  const pictured = konsoleScheme(theme, { image: '/p/gojo.png', opacity: 0.3, cover: true, position: 'top-right' })
+  assert.equal(iniValue(pictured, 'General', 'Wallpaper'), '/p/gojo.png')
+  assert.equal(iniValue(pictured, 'General', 'FillStyle'), 'Crop')
+  assert.equal(iniValue(pictured, 'General', 'Anchor'), '1,0')
+  assert.equal(iniValue(pictured, 'General', 'WallpaperOpacity'), '0.3')
+  const contained = konsoleScheme(theme, { image: '/p/gojo.png', opacity: 0.3, cover: false, position: 'center' })
+  assert.equal(iniValue(contained, 'General', 'FillStyle'), 'Adapt')
+  assert.equal(iniValue(contained, 'General', 'Anchor'), '0.5,0.5')
+  const hidden = konsoleScheme(theme, { image: '/p/gojo.png', opacity: 0, cover: true, position: 'center' })
+  assert.equal(iniValue(hidden, 'General', 'Wallpaper'), '')
 })
 
 test('sync gives every listed palette and the default a profile on top of the user’s own, and drops the rest', () => {
@@ -121,16 +131,34 @@ test('sync gives every listed palette and the default a profile on top of the us
   }
   sync(configHome, catalog, state, home)
   const dir = konsoleData(home)
-  assert.deepEqual(readdirSync(dir).sort(), [
-    'ttheme-geto.colorscheme',
-    'ttheme-geto.profile',
-    'ttheme-gojo.colorscheme',
-    'ttheme-gojo.profile',
-    'ttheme-kec--dust--fern.colorscheme',
-    'ttheme-kec--dust--fern.profile',
-    'ttheme-neutral.colorscheme',
-    'ttheme-neutral.profile',
-  ])
+  const versioned = (file: string) => /\.[0-9a-f]{8}\.colorscheme$/.test(file)
+  assert.deepEqual(
+    readdirSync(dir)
+      .filter((file) => !versioned(file))
+      .sort(),
+    [
+      'ttheme-geto.colorscheme',
+      'ttheme-geto.profile',
+      'ttheme-gojo.colorscheme',
+      'ttheme-gojo.profile',
+      'ttheme-kec--dust--fern.colorscheme',
+      'ttheme-kec--dust--fern.profile',
+      'ttheme-neutral.colorscheme',
+      'ttheme-neutral.profile',
+    ],
+  )
+  for (const stem of ['geto', 'gojo', 'kec--dust--fern', 'neutral']) {
+    const [file, ...more] = readdirSync(dir).filter((f) => versioned(f) && f.startsWith(`ttheme-${stem}.`))
+    assert.ok(file && more.length === 0, stem)
+    assert.equal(readFileSync(join(dir, file), 'utf8'), readFileSync(join(dir, `ttheme-${stem}.colorscheme`), 'utf8'))
+    assert.match(
+      readFileSync(join(configHome, 'ttheme', 'palettes.zsh'), 'utf8'),
+      new RegExp(
+        `^typeset -g TTHEME_KONSOLE_SCHEMES='.*\\b${stem} ${file.slice(`ttheme-${stem}.`.length, -'.colorscheme'.length)}\\b`,
+        'm',
+      ),
+    )
+  }
   const gojo = readFileSync(join(dir, 'ttheme-gojo.profile'), 'utf8')
   assert.equal(gojo, konsoleProfile(toTheme(catalog.palettes[1] as PaletteEntry), 'Mine.profile'))
   assert.equal(iniValue(gojo, 'Appearance', 'ColorScheme'), 'ttheme-gojo')
@@ -141,6 +169,12 @@ test('sync gives every listed palette and the default a profile on top of the us
   sync(configHome, catalog, { ...state, palettes: ['gojo'], konsoleBase: undefined }, home)
   assert.ok(!existsSync(join(dir, 'ttheme-geto.profile')))
   assert.ok(!existsSync(join(dir, 'ttheme-neutral.profile')))
+  assert.deepEqual(
+    readdirSync(dir)
+      .filter(versioned)
+      .map((file) => file.split('.')[0]),
+    ['ttheme-gojo'],
+  )
   assert.equal(iniValue(readFileSync(join(dir, 'ttheme-gojo.profile'), 'utf8'), 'General', 'Parent'), 'FALLBACK/')
   assert.match(
     readFileSync(join(configHome, 'ttheme', 'palettes.zsh'), 'utf8'),

@@ -1,13 +1,16 @@
+import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { isAbsolute, join } from 'node:path'
+import { basename, isAbsolute, join } from 'node:path'
+import { backgroundsDir, readBackdrop } from '../backdrop.ts'
 import { type Hex, isHex, rgb } from '../color.ts'
 import { editUserFile } from '../edits.ts'
 import { konsole as emitter } from '../emit/index.ts'
+import { konsoleScheme } from '../emit/konsole.ts'
 import { listed } from '../manifest.ts'
 import type { Theme } from '../theme.ts'
 import { owned } from '../theme.ts'
 import { dataHome, ownedIn, readText, tilde } from './common.ts'
-import type { At, Ctx, Defaults, Host, Moment, Wiring } from './types.ts'
+import type { At, Ctx, Defaults, Host, Moment, Out, Wiring } from './types.ts'
 
 export function konsoleData(home: string): string {
   return join(dataHome(home), 'konsole')
@@ -140,6 +143,40 @@ export function konsoleProfile(theme: Theme, parent: string): string {
   ].join('\n')
 }
 
+const VERSIONED = /^ttheme-(.+)\.([0-9a-f]{8})\.colorscheme$/
+
+export function versionOf(text: string): string {
+  return createHash('sha1').update(text).digest('hex').slice(0, 8)
+}
+
+function schemes(ctx: Ctx, out: Out): void {
+  const dir = konsoleData(ctx.home)
+  const pictures = backgroundsDir(ctx.configHome)
+  const keep = new Set<string>()
+  for (const theme of ctx.themes) {
+    const text = konsoleScheme(theme, readBackdrop(pictures, theme.name, ctx.home))
+    const versioned = join(dir, `${owned(theme.name)}.${versionOf(text)}.colorscheme`)
+    keep.add(versioned)
+    out.write(join(dir, `${owned(theme.name)}.colorscheme`), text)
+    out.write(versioned, text)
+  }
+  for (const file of ownedIn(dir)) {
+    if (VERSIONED.test(basename(file)) && !keep.has(file)) {
+      out.remove(file)
+    }
+  }
+}
+
+export function schemeVersions(dir: string): string {
+  return ownedIn(dir)
+    .flatMap((file) => {
+      const [, stem, version] = VERSIONED.exec(basename(file)) ?? []
+      return stem && version ? [`${stem} ${version}`] : []
+    })
+    .sort()
+    .join(' ')
+}
+
 function profiled(ctx: Ctx): Theme[] {
   const shown = new Set(listed(ctx.entries).map((entry) => entry.name))
   return ctx.themes.filter((theme) => shown.has(theme.name) || theme.name === ctx.startup)
@@ -222,7 +259,7 @@ export const konsole: Wiring = {
   offered: (_, host) => host.platform !== 'darwin' && host.platform !== 'win32',
   present: (setup) => existsSync(konsoleData(setup.home)) || existsSync(konsolerc(setup.configHome)),
   sync(ctx, out) {
-    out.themes(konsole)
+    schemes(ctx, out)
     const dir = konsoleData(ctx.home)
     const parent = ctx.state.konsoleBase ?? 'FALLBACK/'
     const keep = new Set<string>()
@@ -237,7 +274,11 @@ export const konsole: Wiring = {
       }
     }
   },
-  layer: (ctx) => ({ TTHEME_KONSOLE_BASE: baseLook(ctx, ctx.state.konsoleBase) }),
+  pictures: schemes,
+  layer: (ctx) => ({
+    TTHEME_KONSOLE_BASE: baseLook(ctx, ctx.state.konsoleBase),
+    TTHEME_KONSOLE_SCHEMES: schemeVersions(konsoleData(ctx.home)),
+  }),
   plan(ctx) {
     return [
       `Write ${tilde(konsoleData(ctx.home), ctx.home)}/${owned('*')}.profile — a "ttheme · <palette>" profile per palette, on top of your own`,

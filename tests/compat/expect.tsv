@@ -25,7 +25,7 @@ reset-worn	pass	pass	pass	pass	pass	skip	pass	pass
 reset-baseline	fail	pass	fail	fail	fail	fail	fail	fail
 restore	pass	pass	pass	pass	pass	pass	pass	pass
 layer-query	pass	pass	pass	pass	pass	pass	pass	pass
-layer-cells	pass	pass	pass	pass	skip	pass	skip	skip
+layer-cells	pass	pass	pass	pass	skip	pass	skip	pass
 layer-base	skip	skip	skip	skip	skip	skip	pass	skip
 cell-size	pass	pass	pass	pass	fail	fail	fail	pass
 cell-points	pass	pass	pass	pass	pass	pass	pass	pass
@@ -34,6 +34,10 @@ kitty-shown	pass	pass	pass	pass	skip	pass	skip	pass
 kitty-under-bg	pass	pass	fail	pass	skip	fail	skip	pass
 kitty-el	pass	pass	fail	pass	skip	pass	skip	pass
 kitty-crop	pass	fail	pass	pass	skip	fail	skip	pass
+scheme-picture	fail	fail	fail	fail	fail	fail	fail	pass
+scheme-held	fail	fail	fail	fail	fail	fail	fail	pass
+scheme-released	fail	fail	fail	fail	fail	fail	fail	pass
+scheme-fresh	fail	fail	fail	fail	fail	fail	fail	pass
 sync-output	pass	pass	pass	pass	pass	pass	skip	skip
 sync-query	pass	pass	fail	pass	pass	pass	pass	pass
 focus-report	pass	pass	pass	pass	pass	fail	skip	skip

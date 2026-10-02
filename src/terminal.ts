@@ -1,3 +1,9 @@
+import { createHash } from 'node:crypto'
+import { existsSync, readFileSync, rmSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import { writeAtomic } from './edits.ts'
+import { type SchemeColors, schemeLines } from './emit/konsole.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { colorless, paletteOsc, queryTerminalColors, restoreOsc, SLOT_CODES, schemeOsc } from './osc.ts'
 import type { Wired } from './terminals/types.ts'
@@ -96,7 +102,7 @@ export const TRAITS: Record<Terminal, Traits> = {
   },
   konsole: {
     links: false,
-    pictures: false,
+    pictures: true,
     bands: false,
     files: true,
     moves: true,
@@ -203,6 +209,72 @@ function itermLive(env: Env, write: (text: string) => void): Live {
   }
 }
 
+const KONSOLE_VIEWS = 3
+
+const WALLPAPER = /^(Wallpaper|FillStyle|Anchor|WallpaperOpacity|WallpaperFlipType)=/
+
+function konsoleDirs(env: Env): string[] {
+  return [
+    env.XDG_DATA_HOME ?? join(homedir(), '.local', 'share'),
+    ...(env.XDG_DATA_DIRS || '/usr/local/share:/usr/share').split(':'),
+  ].map((dir) => join(dir, 'konsole'))
+}
+
+function wallpaperOf(dirs: readonly string[], look: string): string[] {
+  const scheme = /(?:^|;)ColorScheme=([^;]+)/.exec(look)?.[1]
+  const file = scheme && dirs.map((dir) => join(dir, `${scheme}.colorscheme`)).find((path) => existsSync(path))
+  if (!file) {
+    return ['Wallpaper=']
+  }
+  const lines = readFileSync(file, 'utf8').split('\n')
+  const at = lines.findIndex((line) => line.trim() === '[General]')
+  const end = lines.findIndex((line, i) => i > at && line.trimStart().startsWith('['))
+  const general = at < 0 ? [] : lines.slice(at + 1, end < 0 ? undefined : end).filter((line) => WALLPAPER.test(line))
+  return general.length > 0 ? general : ['Wallpaper=']
+}
+
+function konsoleLive(env: Env, look: string, write: (text: string) => void): Live {
+  const dirs = konsoleDirs(env)
+  const dir = dirs[0] as string
+  const general = wallpaperOf(dirs, look)
+  const views: string[] = []
+  const show = (name: string, colors: SchemeColors, cursor: string) => {
+    const text = schemeLines(colors, `ttheme · ${name}`, general).join('\n')
+    const scheme = `${owned('view')}.${createHash('sha1').update(text).digest('hex').slice(0, 10)}`
+    const file = join(dir, `${scheme}.colorscheme`)
+    if (!existsSync(file)) {
+      writeAtomic(file, text)
+    }
+    if (!views.includes(file)) {
+      views.push(file)
+    }
+    for (const old of views.splice(0, Math.max(0, views.length - KONSOLE_VIEWS))) {
+      rmSync(old, { force: true })
+    }
+    return schemeOsc(scheme, cursor)
+  }
+  const sweep = () => {
+    for (const file of views.splice(0)) {
+      rmSync(file, { force: true })
+    }
+  }
+  return {
+    slots: [],
+    paint: (entry) => show(entry.name, entry, entry.cursor),
+    look: (name, shown) => {
+      const [background = '', foreground = '', cursor = '', , ...ansi] = shown
+      write(show(name, { background, foreground, ansi }, cursor))
+    },
+    wear: (entry, wired) => (wired.includes('konsole') ? schemeOsc(owned(entry.name), entry.cursor) : undefined),
+    saved: async () => new Map(),
+    restore: () => {
+      sweep()
+      return `\x1b]50;${look}\x07`
+    },
+    stop: sweep,
+  }
+}
+
 export function livePaint(
   env: Env,
   tty: boolean,
@@ -217,6 +289,9 @@ export function livePaint(
   }
   if (terminal === 'iterm2') {
     return itermLive(env, write)
+  }
+  if (terminal === 'konsole' && env.TTHEME_KONSOLE_LOOK) {
+    return konsoleLive(env, env.TTHEME_KONSOLE_LOOK, write)
   }
   const slots = traits.repaint ?? SLOT_CODES.map((_, slot) => slot)
   const codes = SLOT_CODES.filter((_, slot) => slots.includes(slot))

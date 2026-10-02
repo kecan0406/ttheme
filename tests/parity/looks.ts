@@ -536,6 +536,26 @@ export function konsoleScheme(dataHome: string, scheme: string): Colors | undefi
   return filled(new Map([...colors, ['12', colors.get('10') ?? (OWN.get('12') as string)]]))
 }
 
+export interface KonsoleLook {
+  colors: Colors
+  picture: string
+  opacity: string
+}
+
+export function konsoleLook(dataHome: string, scheme: string): KonsoleLook | undefined {
+  const colors = konsoleScheme(dataHome, scheme)
+  if (!colors) {
+    return undefined
+  }
+  const text = read(join(dataHome, 'konsole', `${scheme}.colorscheme`))
+  const general = text.split(/^\[/m).find((part) => part.startsWith('General]')) ?? ''
+  const image = /^Wallpaper=(.*)$/m.exec(general)?.[1]?.trim() ?? ''
+  const opacity = Number(/^WallpaperOpacity=(.*)$/m.exec(general)?.[1] ?? '1')
+  return image === '' || !(opacity > 0)
+    ? { colors, picture: 'none', opacity: '-' }
+    : { colors, picture: imageName(image), opacity: String(opacity) }
+}
+
 export function konsoleProfile(dataHome: string, file: string): { scheme: string; cursor?: string } | undefined {
   const text = read(join(dataHome, 'konsole', file.endsWith('.profile') ? file : `${file}.profile`))
   if (!text) {

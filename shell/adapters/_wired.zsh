@@ -63,6 +63,8 @@ __tt_pictured_iterm2() { __tt_cli image $1 tuned }
 
 __tt_pictured_warp() { (( ${TTHEME_TERMINALS[(Ie)iterm2]} )) || __tt_cli image $1 tuned }
 
+__tt_pictured_konsole() { (( ${TTHEME_TERMINALS[(Ie)iterm2]} || ${TTHEME_TERMINALS[(Ie)warp]} )) || __tt_cli image $1 tuned }
+
 __tt_bg_aligns() { (( ! ${TTHEME_TERMINALS[(Ie)iterm2]} && ! ${TTHEME_TERMINALS[(Ie)warp]} )) }
 
 __tt_bg_covers() { (( ${TTHEME_TERMINALS[(Ie)warp]} )) }

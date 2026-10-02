@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    konsole xvfb xdotool imagemagick dbus dbus-x11 x11-utils zsh sqlite3 procps \
+    konsole xvfb xcompmgr xdotool imagemagick dbus dbus-x11 x11-utils zsh sqlite3 procps \
     curl ca-certificates xz-utils unzip fonts-dejavu-core \
   && rm -rf /var/lib/apt/lists/*
 ARG NODE=v22.23.3

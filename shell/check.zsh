@@ -673,19 +673,39 @@ done
     { print -u2 "a Konsole paint did not switch the tab to the palette's color scheme: ${(V)$(__tt_apply "$TTHEME_PALETTE[kaito]")}"; exit 1 }
   forks_of __tt_apply "$TTHEME_PALETTE[kaito]"
   (( REPLY == 0 )) || { print -u2 "a Konsole paint forks again ($REPLY processes) — every preview hover pays it"; exit 1 }
-  [[ "$(__tt_apply "#123456 ${TTHEME_PALETTE[kaito]#* }")" == $'\e]11;#123456\e\\\e]10;'${${=TTHEME_PALETTE[kaito]}[2]}$'\e\\' ]] ||
-    { print -u2 "Konsole painted colors no scheme holds with more than the background and foreground it can draw"; exit 1 }
+  export XDG_DATA_HOME=$HOME/.local/share
+  kd=$XDG_DATA_HOME/konsole
+  __tt_apply "#123456 ${TTHEME_PALETTE[kaito]#* }" > $bgd/view.out
+  view=${${$(<$bgd/view.out)#*ColorScheme=}%%;*}
+  [[ $view == ttheme-view.$$.<-> && -r $kd/$view.colorscheme ]] ||
+    { print -u2 "Konsole painted colors no palette's scheme holds with something else than a view scheme of its own: ${(V)$(<$bgd/view.out)}"; exit 1 }
+  [[ "$(<$kd/$view.colorscheme)" == *$'[Background]\nColor=18,52,86\n'* ]] || { print -u2 "a Konsole view scheme does not carry the background it was painted with"; exit 1 }
+  forks_of __tt_apply "#123457 ${TTHEME_PALETTE[kaito]#* }"
+  (( REPLY == 0 )) || { print -u2 "a Konsole view scheme forks again ($REPLY processes) — every tone edit pays it"; exit 1 }
+  __tt_apply "#123458 ${TTHEME_PALETTE[kaito]#* }" > /dev/null
+  __tt_apply "#123459 ${TTHEME_PALETTE[kaito]#* }" > /dev/null
+  [[ ! -e $kd/$view.colorscheme ]] || { print -u2 "a Konsole view scheme two paints old was left behind"; exit 1 }
+  views=($kd/ttheme-view.$$.*.colorscheme(N))
+  (( ${#views} == 2 )) || { print -u2 "Konsole keeps other than the two latest view schemes: $views"; exit 1 }
   [[ "$(__tt_osc_reset)" == $'\e]50;ColorScheme=ttheme-miku;UseCustomCursorColor=true;customCursorColor='${${=TTHEME_PALETTE[miku]}[3]}$'\a' ]] ||
     { print -u2 "a Konsole reset did not go back to the default palette's scheme, which new tabs open with"; exit 1 }
   TTHEME_STARTUP=
   [[ "$(__tt_osc_reset)" == $'\e]50;ColorScheme=Breeze;UseCustomCursorColor=false\a' ]] ||
     { print -u2 "a Konsole reset while ttheme is off did not go back to the user's own scheme"; exit 1 }
   __tt_keepable || { print -u2 "a wired Konsole did not offer to keep a palette as the default"; exit 1 }
-  TTHEME_TERMINALS=()
-  ! __tt_paints || { print -u2 "an unwired Konsole, which has no ttheme color schemes, claimed the layer can paint it"; exit 1 }
-  out=$(ttheme use kaito 2>&1) && { print -u2 "ttheme use ran in an unwired Konsole"; exit 1 }
-  [[ $out == *"wire it with"* ]] || { print -u2 "an unwired Konsole refused ttheme use without saying how to wire it: $out"; exit 1 }
-  EDITOR=true ttheme config > /dev/null || { print -u2 "an unwired Konsole refused a verb that paints no tab"; exit 1 }
+  TTHEME_TERMINALS=() TTHEME_STARTUP=miku
+  ! __tt_keepable || { print -u2 "an unwired Konsole offered to keep a palette as the default its new tabs never open with"; exit 1 }
+  ! __tt_takes_default || { print -u2 "an unwired Konsole tab that never painted took a default its profile never shows"; exit 1 }
+  print -l '[Desktop Entry]' 'DefaultProfile=Mine.profile' > $XDG_CONFIG_HOME/konsolerc
+  print -l '[Appearance]' 'ColorScheme=Solarized' '' '[Cursor Options]' 'CustomCursorColor=255,128,0' 'UseCustomCursorColor=true' > $kd/Mine.profile
+  [[ "$(__tt_osc_reset)" == $'\e]50;ColorScheme=Solarized;UseCustomCursorColor=true;customCursorColor=#ff8000\a' ]] ||
+    { print -u2 "a reset in an unwired Konsole did not go back to the scheme and cursor of the user's own profile: ${(V)$(__tt_osc_reset)}"; exit 1 }
+  rm -f $XDG_CONFIG_HOME/konsolerc $kd/Mine.profile
+  ttheme use kaito > $bgd/use.out 2>&1 || { print -u2 "ttheme use failed in an unwired Konsole: $(<$bgd/use.out)"; exit 1 }
+  [[ $(<$bgd/use.out) == *$'\e]50;ColorScheme=ttheme-view.'* ]] || { print -u2 "ttheme use painted an unwired Konsole through something else than a view scheme: ${(V)$(<$bgd/use.out)}"; exit 1 }
+  __tt_konsole_bye
+  views=($kd/ttheme-view.$$.*.colorscheme(N))
+  (( ! ${#views} )) || { print -u2 "a Konsole shell left its view schemes behind when it exited: $views"; exit 1 }
 ) || exit 1
 (
   TTHEME_TERMINALS=(iterm2) TTHEME_STARTUP=miku TTHEME_TMUX=0 TTHEME_ITERM_SWITCH=1 TTHEME_ITERM_SHOWN=default TTHEME_ITERM_DYED=0

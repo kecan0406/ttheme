@@ -172,17 +172,21 @@ export function sync(
   for (const wiring of wirings(state.terminals)) {
     wiring.sync(ctx, out)
   }
-  const table = join(configHome, 'ttheme', 'palettes.zsh')
-  const content = palettesZsh(entries, ctx.startup, state.terminals, layer(ctx, host))
-  if (out.repainted || readText(table) !== content) {
-    writeAtomic(table, content)
-    rmSync(`${table}.zwc`, { force: true })
-  }
-  out.written.push(table)
+  out.written.push(writeTable(ctx, host, out.repainted))
   return out.written
 }
 
-export function refreshPictures(configHome: string, home = homedir()): void {
+function writeTable(ctx: Ctx, host: Host, repainted: boolean): string {
+  const table = join(ctx.configHome, 'ttheme', 'palettes.zsh')
+  const content = palettesZsh(ctx.entries, ctx.startup, ctx.state.terminals, layer(ctx, host))
+  if (repainted || readText(table) !== content) {
+    writeAtomic(table, content)
+    rmSync(`${table}.zwc`, { force: true })
+  }
+  return table
+}
+
+export function refreshPictures(configHome: string, home = homedir(), host: Host = systemHost()): void {
   const state = readInstalled(configHome)
   const pictured = wirings(state.terminals).filter((wiring) => wiring.pictures)
   if (pictured.length === 0) {
@@ -193,6 +197,7 @@ export function refreshPictures(configHome: string, home = homedir()): void {
   for (const wiring of pictured) {
     wiring.pictures?.(ctx, out)
   }
+  writeTable(ctx, host, false)
 }
 
 export function aligns(terminals: readonly Wired[]): boolean {

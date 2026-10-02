@@ -326,8 +326,8 @@ stop you at the gate. Switching a picture between tone and original keeps its
 size and position and puts its opacity back to the new default. When the
 palette's text colors change, the default follows without drawing the picture
 again. The terminals take these files as they take a tone's, since each only lays
-a file over its background at an opacity; Ghostty, iTerm2, kitty, WezTerm and
-Warp are the ones that show pictures at all.
+a file over its background at an opacity; Ghostty, iTerm2, kitty, WezTerm,
+Warp and Konsole are the ones that show pictures at all.
 
 When a palette's colors change (`edit`, `update`, a new catalog), the next sync
 paints its pictures in the new tone and default opacity under new names, carrying

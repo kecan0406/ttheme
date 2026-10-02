@@ -13,10 +13,11 @@ import {
   type ItermProfile,
   imageName,
   itermProfiles,
+  type KonsoleLook,
   kittyColors,
   kittyTheme,
+  konsoleLook,
   konsoleProfile,
-  konsoleScheme,
   named,
   palettesOf,
   pictureOf,
@@ -478,14 +479,17 @@ const warp = (): Kind => {
 
 const konsole = (): Kind => {
   let profile = 'Own.profile'
+  let opening: { name: string; look: KonsoleLook } | undefined
+  const held = new Map<Tab, { name: string; look: KonsoleLook }>()
+  const builtin: KonsoleLook = { colors: OWN, picture: 'none', opacity: '-' }
   const wanted = (app: App) => join(app.place.home, '.parity', 'konsole.default')
-  const look = (app: App, file: string): Colors => {
-    const found = konsoleProfile(app.place.dataHome, file)
-    const colors = new Map(konsoleScheme(app.place.dataHome, found?.scheme ?? 'Own') ?? OWN)
-    if (found?.cursor) {
-      colors.set('12', found.cursor)
+  const lookup = (app: App, name: string): KonsoleLook => {
+    for (const [tab, worn] of held) {
+      if (app.behavior.cache === 'weak' && !tab.exited && worn.name === name) {
+        return worn.look
+      }
     }
-    return colors
+    return konsoleLook(app.place.dataHome, name) ?? builtin
   }
   return {
     launch(app) {
@@ -494,7 +498,23 @@ const konsole = (): Kind => {
       writeFileSync(join(app.place.home, '.parity', 'konsole.running'), 'org.kde.konsole-4242\n')
       rmSync(wanted(app), { force: true })
     },
-    opening: (app) => ({ argv: login(app), env: {}, colors: look(app, profile), profile }),
+    opening(app) {
+      const found = konsoleProfile(app.place.dataHome, profile)
+      const name = found?.scheme ?? 'Own'
+      const look = lookup(app, name)
+      opening = { name, look }
+      const colors = new Map(look.colors)
+      if (found?.cursor) {
+        colors.set('12', found.cursor)
+      }
+      return { argv: login(app), env: {}, colors, profile }
+    },
+    opened(_, tab) {
+      if (opening) {
+        held.set(tab, opening)
+        opening = undefined
+      }
+    },
     watched: (app) => [wanted(app)],
     changed(app) {
       const name = read(wanted(app)).trim()
@@ -517,20 +537,23 @@ const konsole = (): Kind => {
           return at > 0 ? [[part.slice(0, at), part.slice(at + 1)]] : []
         }),
       )
-      const scheme = konsoleScheme(app.place.dataHome, fields.get('ColorScheme') ?? '')
-      if (!scheme) {
+      const name = fields.get('ColorScheme')
+      if (!name) {
         return
       }
+      const look = lookup(app, name)
+      held.set(tab, { name, look })
       const cursor = fields.get('UseCustomCursorColor') === 'true' ? hex(fields.get('customCursorColor')) : undefined
       for (const [code, slot] of tab.slots) {
-        slot.base = code === '12' && cursor ? cursor : (scheme.get(code) ?? slot.base)
+        slot.base = code === '12' && cursor ? cursor : (look.colors.get(code) ?? slot.base)
         if (!code.startsWith('4;')) {
           delete slot.over
         }
       }
-      app.log(`scheme ${fields.get('ColorScheme')}`)
+      app.log(`scheme ${name}`)
     },
-    picture: () => 'none',
+    picture: (_, tab) => held.get(tab)?.look.picture ?? 'none',
+    opacity: (_, tab) => held.get(tab)?.look.opacity ?? '-',
   }
 }
 

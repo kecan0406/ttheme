@@ -8,7 +8,7 @@ get it.
 | **Setup with `init`** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 | **Palette files** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 | **Runtime repaint** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Partial][partial] |
-| **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Partial][partial] | ![No][no] | ![Done][done] | ![No][no] | ![No][no] | ![No][no] |
+| **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Partial][partial] | ![No][no] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 
 - **Setup with `init`** — iTerm2 is offered on macOS only, Windows Terminal
   from WSL (or a native Windows zsh), where init writes a settings fragment on
@@ -43,9 +43,10 @@ get it.
   — while browse and init's picker repaint the background and foreground at
   once and the other colors once the cursor rests.
   Konsole draws a background and foreground an OSC sets but never an OSC 4, so
-  a Konsole tab repaints by switching to the palette's own color scheme (OSC 50)
-  — the scheme init wrote, which is why the shell layer paints Konsole only once
-  init wired it. Any other terminal that speaks OSC 4/10/11 (foot, VTE-based
+  a Konsole tab repaints by switching color scheme (OSC 50) — the palette's own
+  scheme where init wired Konsole, and otherwise, or for colors no palette
+  holds (a tone being tuned, browse's catalog), a short-lived scheme the shell
+  writes and deletes again. Any other terminal that speaks OSC 4/10/11 (foot, VTE-based
   terminals…) gets repainting and nothing else.
 - **Colors only** — ttheme sets no font, font size or shader anywhere; those
   stay what you configured in your terminal.
@@ -57,10 +58,12 @@ get it.
   has no in-terminal preview or tuning — find and tune from Ghostty, iTerm2 or
   kitty. Warp shows one picture for the whole app, through its theme, with
   find, preview and tuning as in Ghostty — a tuning step reaches the window
-  about a second after the key. Alacritty has no graphics at all. Konsole passes the kitty graphics
-  cases, but keeps a color scheme's wallpaper for as long as any tab shows the
-  scheme, so a picture tuned elsewhere could not reach an open tab — it shows
-  none. Cut-outs and baked crops need macOS.
+  about a second after the key. Konsole shows one per tab, through the
+  wallpaper of the tab's color scheme, with the same preview, tuning and find —
+  every change of a picture writes the scheme under a new name, since Konsole
+  keeps a scheme as it read it for as long as a tab shows it (Konsole 23.08
+  draws a wallpaper only where a compositor runs; 24.02 and later always).
+  Alacritty has no graphics at all. Cut-outs and baked crops need macOS.
 
 [done]: https://img.shields.io/badge/Done-2ea44f?style=flat-square
 [partial]: https://img.shields.io/badge/Partial-e3b341?style=flat-square

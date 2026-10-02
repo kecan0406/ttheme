@@ -214,6 +214,45 @@ __cc_kitty() {
   printf '\e_Ga=d,d=A,q=2\e\\\e[H\e[2J'
 }
 
+__cc_scheme() {
+  print -l '[Background]' 'Color=160,64,64' '' '[Foreground]' 'Color=230,230,230' '' '[General]' \
+    'Description=ttheme compat' 'Opacity=1' "Wallpaper=$2" 'FillStyle=Stretch' 'WallpaperOpacity=1' > $1
+}
+
+__cc_schemes() {
+  local dir=${XDG_DATA_HOME:-$HOME/.local/share}/konsole green blue
+  if [[ $TTHEME_ADAPTER != konsole ]]; then
+    __cc_report scheme-picture fail "only Konsole switches a tab's color scheme from the shell, so no scheme carries a picture here"
+    __cc_report scheme-held fail "only Konsole switches a tab's color scheme from the shell, so there is no scheme to hold"
+    __cc_report scheme-released fail "only Konsole switches a tab's color scheme from the shell, so there is no scheme to read again"
+    __cc_report scheme-fresh fail "only Konsole switches a tab's color scheme from the shell, so there is no scheme to read"
+    return
+  fi
+  mkdir -p $dir
+  green=$dir/ttheme-compat-green.png blue=$dir/ttheme-compat-blue.png
+  print -rn -- iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4AWNwWOAAAAJEASFujDCPAAAAAElFTkSuQmCC | base64 -d > $green
+  print -rn -- iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4AWNwcFgAAAHkASGcSLolAAAAAElFTkSuQmCC | base64 -d > $blue
+  printf '\e[H\e[2J'
+  __cc_scheme $dir/ttheme-compat-a.colorscheme $green
+  printf '\e]50;ColorScheme=ttheme-compat-a\a'
+  __cc_seen scheme-picture '#40a040' '#a04040'
+  __cc_scheme $dir/ttheme-compat-a.colorscheme $blue
+  printf '\e]50;ColorScheme=ttheme-compat-a\a'
+  __cc_seen scheme-held '#40a040' '#4040a0'
+  __cc_scheme $dir/ttheme-compat-b.colorscheme $green
+  printf '\e]50;ColorScheme=ttheme-compat-b\a'
+  sleep 0.3
+  printf '\e]50;ColorScheme=ttheme-compat-a\a'
+  __cc_seen scheme-released '#4040a0' '#40a040'
+  __cc_scheme $dir/ttheme-compat-c.colorscheme $green
+  printf '\e]50;ColorScheme=ttheme-compat-c\a'
+  __cc_seen scheme-fresh '#40a040' '#4040a0'
+  (( $+functions[__tt_osc_reset] )) && __tt_osc_reset
+  sleep 0.3
+  rm -f $dir/ttheme-compat-*
+  printf '\e[H\e[2J'
+}
+
 __cc_follow() {
   local before=$TTHEME_STARTUP target shown="" worn want was
   local -a others=(${TTHEME_ORDER:#$before})
@@ -535,6 +574,7 @@ __cc_cases() {
   __cc_decrqm focus-report 1004
   __cc_focus
   __cc_front
+  __cc_schemes
 
   __cc_follow
   __cc_keep
