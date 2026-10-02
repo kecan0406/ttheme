@@ -8,7 +8,7 @@ osc-cursor	pass	pass	pass	pass	pass	pass	pass	fail
 osc-selection	fail	pass	pass	pass	fail	fail	pass	fail
 osc-ansi	pass	pass	pass	pass	pass	fail	pass	pass
 osc-reset	pass	pass	pass	pass	pass	pass	fail	fail
-drawn	pass	pass	pass	pass	?	pass	pass	pass
+drawn	pass	pass	pass	pass	skip	pass	pass	pass
 painted	pass	pass	pass	pass	pass	fail	pass	pass
 fg-painted	pass	pass	pass	pass	pass	pass	pass	pass
 ansi-painted	pass	pass	pass	pass	pass	pass	pass	fail
@@ -18,9 +18,9 @@ follow-belief	pass	pass	pass	pass	pass	skip	skip	pass
 keep-painted	pass	pass	pass	pass	pass	skip	pass	pass
 on-follow	pass	pass	pass	pass	pass	skip	fail	pass
 on-belief	pass	pass	pass	pass	pass	skip	pass	pass
-wear	pass	pass	pass	pass	pass	fail	pass	fail
-wear-painted	pass	pass	pass	pass	pass	fail	pass	pass
-wear-ansi	pass	pass	pass	pass	pass	fail	pass	pass
+wear	pass	pass	pass	pass	pass	skip	pass	pass
+wear-painted	pass	pass	pass	pass	pass	skip	pass	pass
+wear-ansi	pass	pass	pass	pass	pass	skip	pass	pass
 restore	pass	pass	pass	pass	pass	pass	pass	pass
 layer-query	pass	pass	pass	pass	pass	pass	pass	pass
 layer-cells	pass	pass	pass	pass	skip	pass	skip	skip
@@ -37,4 +37,4 @@ sync-query	pass	pass	fail	pass	pass	pass	pass	pass
 focus-report	pass	pass	pass	pass	pass	fail	skip	skip
 focus-event	skip	skip	skip	skip	skip	skip	skip	pass
 front-tty	pass	fail	fail	fail	fail	fail	fail	fail
-prompt-trap	pass	pass	?	pass	?	pass	pass	pass
+prompt-trap	pass	pass	pass	pass	pass	pass	pass	pass

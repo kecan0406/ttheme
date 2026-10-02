@@ -145,7 +145,7 @@ __cc_painted() {
 }
 
 __cc_seen() {
-  local want=$2 from=$3 got
+  local want=$2 from=$3 miss=${5:-fail} got
   local -i within=${4:-24}
   local -i near far
   sleep 0.3
@@ -166,7 +166,7 @@ __cc_seen() {
     __cc_report $1 pass "$want painted as $got"
     return
   done
-  __cc_report $1 fail "wanted $want over ${from:-?}, the window shows ${shot:-nothing}"
+  __cc_report $1 $miss "${${miss:#fail}:+the window does not redraw while it is covered: }wanted $want over ${from:-?}, the window shows ${shot:-nothing}"
 }
 
 __cc_roundtrip() {
@@ -346,8 +346,8 @@ __cc_cases() {
   printf '\e[H\e[2J\e[48;2;106;90;143m'
   for (( r = 1; r <= LINES; r++ )); do printf '\e[%d;1H%*s' $r $COLUMNS ''; done
   printf '\e[0m'
-  __cc_seen drawn '#6a5a8f' $start
-  [[ $(tail -1 $CC_DIR/results) == drawn$'\t'fail* ]] && CC_DRAWN=0
+  __cc_seen drawn '#6a5a8f' $start 24 skip
+  [[ $(tail -1 $CC_DIR/results) == drawn$'\t'skip$'\t'the\ window* ]] && CC_DRAWN=0
   printf '\e[H\e[2J'
 
   printf '\e]11;#3a6f5c\e\\'
@@ -377,18 +377,25 @@ __cc_cases() {
 
   (( $+functions[__tt_name_of] )) && __tt_name_of "$TTHEME_SPEC"
   other=${${TTHEME_ORDER:#$REPLY}[1]}
-  if (( $+functions[ttheme] )) && [[ -n $other ]]; then
+  if [[ $TTHEME_ADAPTER == warp ]]; then
+    __cc_report wear skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+    __cc_report wear-painted skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+    __cc_report wear-ansi skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+  elif (( $+functions[ttheme] )) && [[ -n $other ]]; then
     ttheme use $other
     sleep 0.1
     spec=${${=TTHEME_PALETTE[$other]}[1]}
-    local ansi=${${=TTHEME_PALETTE[$other]}[6]} got=""
-    REPLY=""
+    local ansi=${${=TTHEME_PALETTE[$other]}[6]} got="" bg=""
+    local -i blind=0
+    [[ -n ${(M)${(f)"$(<$CC_DIR/results)"}:#ansi-painted$'\t'fail*} ]] && blind=1
     __cc_color '4;1' && got=$REPLY
-    REPLY=""
-    if [[ $TTHEME_SPEC == ${TTHEME_PALETTE[$other]} ]] && __cc_color 11 && __cc_near $spec $REPLY && __cc_near $ansi $got; then
-      __cc_report wear pass "ttheme use $other reads back $REPLY, ansi 1 $got"
+    __cc_color 11 && bg=$REPLY
+    if [[ $TTHEME_SPEC == ${TTHEME_PALETTE[$other]} ]] && __cc_near $spec $bg && (( blind )); then
+      __cc_report wear pass "ttheme use $other reads back $bg; ansi 1 is wear-ansi's to judge, since this terminal answers OSC 4 with what was set, not what it draws ($got)"
+    elif [[ $TTHEME_SPEC == ${TTHEME_PALETTE[$other]} ]] && __cc_near $spec $bg && __cc_near $ansi $got; then
+      __cc_report wear pass "ttheme use $other reads back $bg, ansi 1 $got"
     else
-      __cc_report wear fail "ttheme use $other left the tab on ${REPLY:-its own colors} and ansi 1 ${got:-unread}, wanted $spec and $ansi"
+      __cc_report wear fail "ttheme use $other left the tab on ${bg:-its own colors} and ansi 1 ${got:-unread}, wanted $spec and $ansi"
     fi
     __cc_painted wear-painted $spec $start
     printf '\e[H\e[2J\e[41m'
