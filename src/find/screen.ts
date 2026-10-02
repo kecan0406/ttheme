@@ -160,10 +160,13 @@ export interface TagChip {
 }
 
 export interface Held {
-  label: string
+  key: string
+  id: number
   ansi: number
   page?: string
   up: boolean
+  from: string
+  thumb?: string
 }
 
 export interface Placement {
@@ -185,8 +188,10 @@ export interface Frame {
 }
 
 export const TILE = { pitch: 25, cols: 22, rows: 9, height: 13 }
-export const MIN = { cols: 25, rows: 16 }
-export const GRID_TOP = 4
+export const MIN = { cols: 25, rows: 21 }
+export const HELD = { cols: 10, rows: 3, pitch: 12, top: 4 }
+export const GRID_TOP = HELD.top + HELD.rows + 1
+export const HELD_ID = 2 ** 30
 export const TRY_ID = 2 ** 31
 const BELOW_BG = -1073741826
 const SMALL = 1600
@@ -309,6 +314,10 @@ function xtermReport(input: string, code: number): { a: number; b: number; text:
   const x = input.indexOf(`\x1b[${code};`)
   const m = x === -1 ? null : new RegExp(`^\\[${code};(\\d+);(\\d+)t`).exec(input.slice(x + 1))
   return m ? { a: Number(m[1]), b: Number(m[2]), text: `\x1b${m[0]}` } : null
+}
+
+export function heldFit(cols: number): number {
+  return Math.max(0, Math.floor((cols - 1) / HELD.pitch))
 }
 
 export function gridShape(cols: number, rows: number): { perRow: number; rowsVis: number; height: number } {
@@ -833,30 +842,43 @@ function tagRow(line: Line, cols: number, view: FindView, accent: string): void 
   line.run(0, parts)
 }
 
-function shelf(line: Line, cols: number, view: FindView): void {
-  const parts: Part[] = [['Installed  ', D]]
-  if (view.held.length === 0) {
-    line.run(0, [...parts, ['none yet', D]])
-    return
-  }
-  let used = partsWidth(parts)
-  let left = view.held.length
-  for (const [i, held] of view.held.entries()) {
-    const item: Part[] = [
-      ...(i ? ([['  ', '']] as Part[]) : []),
-      ...reference(held.label, held.up ? B : '', held.page, siteColor(held.ansi)),
-    ]
-    if (used + partsWidth(item) > cols - 2 - (i < view.held.length - 1 ? width('  +99') : 0)) {
-      break
+function shelf(lines: Line[], images: Placement[], cols: number, view: FindView, accent: string): void {
+  lines[GRID_TOP - 1]?.put(0, '─'.repeat(cols - 1), D)
+  const head = lines[HELD.top - 1] as Line
+  const fit = heldFit(cols)
+  const shown = view.held.length > fit ? Math.max(0, fit - 1) : view.held.length
+  for (const [i, held] of view.held.slice(0, shown).entries()) {
+    const x = i * HELD.pitch
+    const sgr = held.up ? B : ''
+    head.run(
+      x + 1,
+      held.page
+        ? reference(String(held.id), sgr, held.page, siteColor(held.ansi))
+        : [
+            ['● ', siteColor(held.ansi)],
+            [String(held.id), sgr],
+          ],
+    )
+    if (held.up) {
+      for (let r = 0; r < HELD.rows; r++) {
+        lines[HELD.top + r]?.put(x, '▌', accent)
+      }
     }
-    parts.push(...item)
-    used += partsWidth(item)
-    left--
+    if (held.thumb) {
+      images.push({
+        id: HELD_ID + i,
+        path: held.thumb,
+        row: HELD.top,
+        col: x + 1,
+        cols: HELD.cols,
+        rows: HELD.rows,
+        z: -1,
+      })
+    }
   }
-  if (left > 0) {
-    parts.push([`${left < view.held.length ? '  ' : ''}+${left}`, D])
+  if (shown < view.held.length) {
+    head.put(shown * HELD.pitch + 1, `+${view.held.length - shown}`, D)
   }
-  line.run(0, parts)
 }
 
 function query(line: Line, cols: number, view: FindView, accent: string): void {
@@ -1038,7 +1060,7 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
   query(lines[0] as Line, cols, view, accent)
   tabs(lines[1] as Line, cols, view)
   tagRow(lines[2] as Line, cols, view, accent)
-  shelf(lines[3] as Line, cols, view)
+  shelf(lines, images, cols, view, accent)
   const inside = lines.map((line, r) => (r >= GRID_TOP && r < GRID_TOP + height ? line : undefined))
   const first = Math.floor(view.scroll / TILE.height)
   const last = Math.floor((view.scroll + height - 1) / TILE.height)

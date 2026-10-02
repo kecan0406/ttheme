@@ -218,10 +218,11 @@ Danbooru searches two tags at a time and zerochan one, so a longer list is cut
 there and the line above the grid names what was left out; konachan, yande.re
 and zerochan are asked for the same names once you turn one on.
 
-The line under the tags, `Installed`, lists the pictures the palette already has
-— the one on show first — as post links, with `+3` for those that do not fit. It
-stays where it is while the grid scrolls under it, and a picture you install
-joins it at once.
+Under the tags, a strip of thumbnails shows the pictures the palette already has
+— the one on show first marked with a bar — with each post number above it as a
+link, and `+3` for those that do not fit. A line under it marks where the grid
+begins. The strip stays where it is while the grid scrolls under it, and a
+picture you install joins it at once.
 
 ## Your own pictures
 

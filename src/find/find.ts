@@ -2,9 +2,9 @@ import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { backdropTone, fillSize, rackOf, type Tone, type Tune } from '../backdrop.ts'
+import { backdropTone, backgroundsDir, fillSize, rackOf, type Tone, type Tune } from '../backdrop.ts'
 import {
   BLOCKS,
   blockSet,
@@ -89,7 +89,9 @@ import {
   decodeKeys,
   type FindView,
   gridShape,
+  HELD,
   type Held,
+  heldFit,
   type Info,
   MIN,
   type Order,
@@ -265,6 +267,7 @@ function toTune(tune: Tuning, untuned: Tuning): Tune | undefined {
 }
 
 function heldOf(home: string, name: string): Held[] {
+  const dir = backgroundsDir(home)
   return rackOf(home, name).flatMap((picture, i): Held[] => {
     const [, key, id] = /^([a-z.]+)_(\d+)$/.exec(picture.key) ?? []
     const site = [...SITES, LOCAL].find((s) => s.key === key)
@@ -273,10 +276,12 @@ function heldOf(home: string, name: string): Held[] {
     }
     return [
       {
-        label: `${site.name} ${id}`,
+        key: picture.key,
+        id: Number(id),
         ansi: site.ansi,
         ...(site === LOCAL ? {} : { page: site.pageUrl(Number(id)) }),
         up: i === 0,
+        from: join(dir, picture.original ?? picture.fill),
       },
     ]
   })
@@ -445,6 +450,8 @@ class Finder {
   private pool: string[] = []
   private relating?: AbortController
   private thumbQueue: Pick[] = []
+  private readonly heldFiles = new Map<string, string>()
+  private readonly heldAsked = new Set<string>()
   private thumbing = 0
   private readonly clarity = new Map<string, Shown>()
   private readonly tunedFiles: string[] = []
@@ -703,6 +710,7 @@ class Finder {
     const cell = await this.probe()
     if (cell) {
       this.cell = cell
+      this.holdThumbs()
       if (this.view.tag) {
         void this.search()
         void this.relate(this.view.tag)
@@ -1079,6 +1087,7 @@ class Finder {
     this.cols = process.stdout.columns || this.cols
     this.rows = process.stdout.rows || this.rows
     this.paint.resized()
+    this.holdThumbs()
     this.scroll()
     this.paint.snap()
     if (this.view.mode === 'try' && this.current) {
@@ -2386,6 +2395,37 @@ class Finder {
     }
   }
 
+  private holds(): void {
+    this.view.held = heldOf(this.home, this.entry.name).map((held) => {
+      const thumb = this.heldFiles.get(held.from)
+      return thumb ? { ...held, thumb } : held
+    })
+    this.holdThumbs()
+  }
+
+  private holdThumbs(): void {
+    const w = HELD.cols * this.cell.w
+    const h = HELD.rows * this.cell.h
+    if (w === 0 || h === 0) {
+      return
+    }
+    for (const held of this.view.held.slice(0, heldFit(this.cols))) {
+      if (held.thumb || this.heldAsked.has(held.from)) {
+        continue
+      }
+      this.heldAsked.add(held.from)
+      const to = join(this.scratch, `held-${basename(held.from)}-${w}x${h}.png`)
+      this.renders
+        .run({ job: 'thumb', from: held.from, to, width: w, height: h })
+        .then(() => {
+          this.heldFiles.set(held.from, to)
+          this.holds()
+          this.paint.draw()
+        })
+        .catch(() => {})
+    }
+  }
+
   private thumbs(): void {
     while (!this.signal.aborted && this.thumbing < THUMB && this.thumbQueue.length > 0) {
       const pick = this.thumbQueue.shift() as Pick
@@ -2745,7 +2785,7 @@ class Finder {
       })
       this.kept.owned(current.site, current.id, post?.owner ?? '')
       refreshPictures(this.home)
-      view.held = heldOf(this.home, this.entry.name)
+      this.holds()
       const { size, at, opacity } = view.tune
       const framing = tune
         ? ` · ${size === 'fill' ? 'fill' : `${size}%`} · ${POSITIONS[at - 1]} · ${opacity.toFixed(2)}`
