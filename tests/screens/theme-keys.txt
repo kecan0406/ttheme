@@ -9,16 +9,16 @@
    Foregroun│            ←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all          │
    Cursor   │            space  hides  ·  c  colors                                    │
    Selection│  Palette   ←→  normal or bright  ·  enter tab  tune it  ·  #  a color    │
-            │            r  resets a slot  ·  R  all  ·  space  the colors before      │
-   ANSI     │            c  copies  ·  v  pastes  ·  =  bright follows normal          │
-   Black    │            f  moves the colors the gate misses  ·  u  undo               │
-   Red      │  Apply     enter on Apply, or ⇧enter anywhere  ·  saves, asks where      │
-   Green    │  Save      s  ·  keeps the picture and the palette                       │
-   Yellow   │  Cancel    esc  ·  back to the list, dropping what changed since s       │
-   Blue     │  Close     ?  esc                                                        │
-   Magenta  │                                                                          │
-   Cyan     ╰──────────────────────────────────────────────────────────────────────────╯
-   White        #c2c7cf 10.5     #e6effc 15.4
-
+            │            tuning: ↑↓ L C H ◐  ·  ◐ home  the floor  ·  a  scope         │
+   ANSI     │            g  relations  ·  n N  the next and last miss                  │
+   Black    │            r  resets a slot  ·  R  all  ·  space  the colors before      │
+   Red      │            c  copies  ·  v  pastes  ·  =  bright follows normal          │
+   Green    │            f  moves the colors the gate misses  ·  u  undo               │
+   Yellow   │  Apply     enter on Apply, or ⇧enter anywhere  ·  saves, asks where      │
+   Blue     │  Save      s  ·  keeps the picture and the palette                       │
+   Magenta  │  Cancel    esc  ·  back to the list, dropping what changed since s       │
+   Cyan     │  Close     ?  esc                                                        │
+   White    │                                                                          │
+            ╰──────────────────────────────────────────────────────────────────────────╯
     Apply   saves and wears it in this tab
 [HELP]                                                                                   ? esc close

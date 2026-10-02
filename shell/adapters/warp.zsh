@@ -441,6 +441,8 @@ __tt_reloaded() {
   return 0
 }
 
+__tt_bg_tints() { return 1 }
+
 __tt_bg_shown() { __tt_warp_wearing }
 
 __tt_bg_refresh() { __tt_warp_unview }

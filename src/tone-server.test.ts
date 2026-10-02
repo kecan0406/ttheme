@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
+import { backgroundsDir } from './backdrop.ts'
 import { writeCatalog } from './catalog.ts'
 import type { Manifest, PaletteEntry } from './manifest.ts'
 import { writeInstalled } from './palettes.ts'
+import { encodeMask } from './png.ts'
 import { readTone } from './tone.ts'
 import { ToneSession } from './tone-server.ts'
 
@@ -58,7 +60,9 @@ test('a frame tells the host the status, the signal, the mode, the dirt, the col
   assert.equal((f[4] ?? '').split(' ').length, 20)
   assert.ok((f[5] ?? '').split('\x1e').includes('enter'))
   assert.equal(f[8], '2')
-  assert.equal(f.length, 9 + 24)
+  assert.equal(f[9], '0')
+  assert.equal(f[10], '')
+  assert.equal(f.length, 11 + 24)
   assert.equal(fields(tone.handle('key up'))[1], 'above')
   assert.equal(fields(tone.handle('ch 107'))[1], 'above')
   tone.handle('key end')
@@ -100,4 +104,31 @@ test('s and esc outside a tuning are signals for the host, and inside one esc st
   assert.equal(fields(tone.handle('render'))[2], 'tune')
   assert.equal(fields(tone.handle('key esc'))[1], '-')
   assert.equal(fields(tone.handle('render'))[2], 'list')
+})
+
+test('a frame says the colors being tuned would recolor the shown picture, and names a copy tinted that way', () => {
+  const { home, tone } = session()
+  const dir = backgroundsDir(home)
+  mkdirSync(dir, { recursive: true })
+  const image = join(dir, 'a.png')
+  writeFileSync(image, encodeMask({ width: 2, height: 2, data: Uint8Array.from([0, 64, 128, 255]) }, '#7cc1d6'))
+  const picture = { key: 'a', stem: 'a', fill: 'a.png', opacity: 0.2, tone: '#7cc1d6' }
+  writeFileSync(
+    join(dir, 'images.json'),
+    JSON.stringify({ version: 1, palettes: { gojo: { active: 'a', pictures: [picture] } } }),
+  )
+  const same = fields(tone.handle(`show ${image}`))
+  assert.equal(same[9], '0')
+  assert.equal(same[10]?.split('\x1e')[0], image)
+  for (const key of ['down', 'down', 'enter', 'right', 'right', 'right', 'enter']) {
+    tone.handle(`key ${key}`)
+  }
+  const tuned = fields(tone.handle('render'))
+  const [tinted = '', opacity] = (tuned[10] ?? '').split('\x1e')
+  assert.equal(tuned[9], '1')
+  assert.notEqual(tinted, image)
+  assert.ok(existsSync(tinted))
+  assert.match(opacity ?? '', /^\d+(\.\d+)?$/)
+  tone.close()
+  assert.ok(!existsSync(tinted))
 })

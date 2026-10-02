@@ -110,7 +110,10 @@ __tt_pv_shows() {
 __tt_pv_focus() {
   if (( te )); then
     __tt_pv_shows $tename
-    (( resized )) || [[ $REPLY == "$bgname" ]] || __tt_pv_bg_show "$REPLY"
+    if (( ! resized )) && [[ $REPLY != "$bgname" || "${tespec%% *} ${teframe[11]}" != "$telook" ]]; then
+      __tt_pv_bg_show "$REPLY"
+      telook="${tespec%% *} ${teframe[11]}"
+    fi
     return 0
   fi
   [[ ${rtype[cur]} == thm ]] || return 0
@@ -395,9 +398,11 @@ __tt_pv_foot() {
     if [[ $temode == list ]]; then
       kk=("${kk[1]}" s "${(@)kk[2,-1]}" ⇧enter) kl=("${kl[1]}" save "${(@)kl[2,-1]}" apply)
     elif [[ $temode == tune ]]; then
-      right=$b"esc"$z$d" undo"$z
-    elif [[ $temode == (type|compare) ]]; then
-      right=$b"esc"$z$d" back"$z
+      badge="$tb (TUNE)" right=$b"esc"$z$d" undo"$z
+    elif [[ $temode == type ]]; then
+      badge="$tb (TYPE)" right=$b"esc"$z$d" back"$z
+    elif [[ $temode == compare ]]; then
+      badge="$tb (BEFORE)" right=$b"esc"$z$d" back"$z
     fi
   elif (( te && tfocus == 2 )); then
     badge=$tb kk=(enter ↑↓ s) kl=(apply move save)
@@ -506,7 +511,7 @@ __tt_pv_help() {
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && back=$cn
   local -a hk=() hv=()
   if (( te )); then
-    hk=(Move Image "" "" "" Palette "" "" "" Apply Save Cancel)
+    hk=(Move Image "" "" "" Palette "" "" "" "" "" Apply Save Cancel)
     hv=(
       "↑↓ j k  the image, the palette, then Apply  ·  home  end"
       "Images  ←→  , .  pick one  ·  D removes it  ·  f  finds one"
@@ -514,6 +519,8 @@ __tt_pv_help() {
       "←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all"
       "space  hides  ·  c  colors"
       "←→  normal or bright  ·  enter tab  tune it  ·  #  a color"
+      "tuning: ↑↓ L C H ◐  ·  ◐ home  the floor  ·  a  scope"
+      "g  relations  ·  n N  the next and last miss"
       "r  resets a slot  ·  R  all  ·  space  the colors before"
       "c  copies  ·  v  pastes  ·  =  bright follows normal"
       "f  moves the colors the gate misses  ·  u  undo"
@@ -1329,7 +1336,7 @@ __tt_te_open() {
   coproc __tt_cli tone $name 2>/dev/null
   exec {rfd}<&p {wfd}>&p
   TE_OUT=$rfd TE_IN=$wfd TE_PID=$!
-  tename=$name tfocus=0 tespec="" tesz="" teframe=() tedirty=0 temode=list tetop=0 msgt=0
+  tename=$name tfocus=0 tespec="" tesz="" teframe=() tedirty=0 temode=list tetop=0 msgt=0 teshown="" telook=""
   if ! __tt_te_ask "focus 1"; then
     msg="Could not start the palette panel for $name" msgt=300
     __tt_te_stop
@@ -1345,7 +1352,7 @@ __tt_te_open() {
 __tt_te_close() {
   [[ -n $tune ]] && __tt_pv_untune
   __tt_te_stop
-  te=0 tfocus=0 tename="" tespec="" tesz="" teframe=() tetop=0 help=0 pick=""
+  te=0 tfocus=0 tename="" tespec="" tesz="" teframe=() tetop=0 help=0 pick="" teshown="" telook=""
   resized=1 bgname=""
   return 0
 }
@@ -1583,14 +1590,13 @@ __tt_pv_te_ghost() {
 __tt_pv_te_panel() {
   local z=$'\e[0m' d=$'\e[2m' b=$'\e[1m' tt st note REPLY
   local -a held
-  local -i col=$1 end=$2 r0=$3 r1=$4 R W T I=3 V at i n y tfs=$tf lo=15
+  local -i col=$1 end=$2 r0=$3 r1=$4 R W T I=3 V at i n y tfs=$tf
   (( color )) || z= d= b=
   R=$(( r1 - r0 + 1 )) W=$(( end - col + 1 ))
-  [[ $temode == list ]] || lo=21
   [[ -n $tune ]] || __tt_pv_bg_findable $tename && I=17
   T=$(( R - I - 3 ))
   (( T > 26 )) && T=26
-  (( T < 21 )) && T=$lo
+  (( T < 21 )) && T=15
   if [[ "$W $T" != "$tesz" ]]; then
     tesz="$W $T"
     __tt_te_ask "size $W $T"
@@ -1613,7 +1619,8 @@ __tt_pv_te_panel() {
     out+=$'\e['$y';'$(( col + 2 ))'H'$tt"Image"$z
     if [[ -n $tune ]]; then
       (( bgoff[$tpick] )) && st=off || st=on
-      __tt_pv_bg_title $(( W - 14 ))
+      [[ ${teframe[10]} == 1 ]] && ! __tt_bg_tints && st="recolors on save  $st"
+      __tt_pv_bg_title $(( W - 12 - ${#st} ))
       out+="  "$d$REPLY$z$'\e['$y';'$(( end - ${#st} + 1 ))'H'$d$st$z
     fi
     if (( I == 17 )); then
@@ -1646,7 +1653,7 @@ __tt_pv_te_panel() {
   for (( i = 1; i <= T; i++ )); do
     y=$(( r0 + I + i - tetop ))
     (( y >= r0 && y <= r1 )) || continue
-    out+=$'\e['$y';'$col'H'${teframe[9 + i]}$z
+    out+=$'\e['$y';'$col'H'${teframe[11 + i]}$z
   done
   y=$(( r0 + V - 1 - tetop ))
   (( y >= r0 && y <= r1 )) || return 0
@@ -1850,7 +1857,7 @@ __tt_preview() {
   local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgprep=()
   local conf=0 cf=1
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
-  local te=0 tfocus=0 tetop=0 tename="" tedirty=0 temode=list tespec="" tesz=""
+  local te=0 tfocus=0 tetop=0 tename="" tedirty=0 temode=list tespec="" tesz="" teshown="" telook=""
   local -i TE_IN=0 TE_OUT=0 TE_PID=0 pvgone=0 bgprepid=0
   local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=("New tabs" Announce "Search fx" Sort Blur Colors)
   local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc series" "0 1 2 3 4" "tone original") cshow=("off seq" "on off" "typewriter decode glitch" "abc series" "off 1px 2px 3px 4px" "tone original")

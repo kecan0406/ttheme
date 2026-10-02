@@ -167,6 +167,8 @@ __tt_pv_leave() {
   painted=$orig
 }
 
+__tt_bg_tints() { return 1 }
+
 __tt_bg_shown() {
   REPLY=${TTHEME_TERMINAL_SHOWN%% *}
   [[ -n $REPLY ]]

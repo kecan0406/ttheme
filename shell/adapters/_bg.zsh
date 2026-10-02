@@ -12,6 +12,8 @@ __tt_bg_hide() { : }
 
 __tt_bg_lasting() { : }
 
+__tt_bg_tints() { : }
+
 __tt_bg_wipe() { REPLY=$'\e_Ga=d,d=A,q=2\e\\' }
 
 __tt_bg_frame() {
@@ -276,13 +278,13 @@ __tt_pv_bg_open() {
 __tt_pv_bg_show() {
   (( bgcw )) || return 0
   local name=$1 img="" op size fit=contain focus=-1 REPLY
-  local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh at
+  local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh at reply
   local -i cols=$(( pw + 2 * bgmx )) rows=$(( ph + 2 * bgmy ))
   (( ${#p} >= 20 )) || return 0
   (( $2 )) && { __tt_bg_forget; bgshown="" bganchor=0 }
   bgname=$name
   __tt_bg_load $name
-  if (( ! bgrel )) && [[ $name == "$bginc" && "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" == "${bgload[$name]}" ]]; then
+  if (( ! bgrel && ! (te && tedirty) )) && [[ $name == "$bginc" && "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" == "${bgload[$name]}" ]]; then
     printf '\e_Ga=d,d=i,i=1,q=2\e\\\e_Ga=d,d=i,i=2,q=2\e\\'
     [[ -n $bgshown ]] && printf '\e_Ga=d,d=i,i=%d,p=%d,q=2\e\\' $bgshown $bgshown
     bgshown=""
@@ -297,6 +299,9 @@ __tt_pv_bg_show() {
     img=${bgsrc[$name]} focus=${bgfocus[$name]}
   fi
   (( bgoff[$name] )) && img=""
+  __tt_pv_bg_draft $name "$img"
+  [[ -n $reply[1] ]] && p=(${=reply[1]})
+  img=$reply[2] op=$reply[3]
   local bg=${p[1]#\#}
   local -i r=$(( 16#${bg:0:2} )) g=$(( 16#${bg:2:2} )) b=$(( 16#${bg:4:2} )) a=$(( (1.0 - op) * 255 + 0.5 ))
   (( a < 0 )) && a=0
@@ -322,6 +327,22 @@ __tt_pv_bg_show() {
   bgshown=$id
   [[ -n $id ]] || return 0
   __tt_bg_at $id -1073741826 $(( at[1] - 1 )) $(( at[2] - 1 )) $at[3] $at[4] $at[5] $at[6] $at[7] $at[8]
+}
+
+__tt_pv_bg_draft() {
+  local name=$1
+  local -a look
+  reply=("" "$2" "${bgop[$name]}")
+  (( te )) && [[ ${name%:*} == "$tename" && -n $tespec ]] || return 0
+  if [[ $2 != "$teshown" ]]; then
+    teshown=$2
+    __tt_te_ask "show $2" || return 0
+  fi
+  look=("${(@ps:\x1e:)teframe[11]}")
+  reply[1]=$tespec
+  [[ -n $2 && -n $look[1] ]] && reply[2]=$look[1]
+  [[ -n $look[2] && ${bgop[$name]} == ${${=bgdef[$name]}[3]} ]] && reply[3]=$look[2]
+  return 0
 }
 
 __tt_bg_transmit() {
@@ -664,9 +685,11 @@ __tt_pv_bg_panel() {
         tuned=0
         [[ ${bgsize[$name]} == "$def[1]" ]] || tuned=1
       else
-        o=$(( ${bgop[$name]} * 100 + 0.5 ))
-        knob=$(( o * (T - 1) / 100 )) val=${bgop[$name]}
         tuned=$(( ${bgop[$name]} * 1000 + 0.5 != ${def[3]:-1} * 1000 + 0.5 ))
+        val=${bgop[$name]}
+        (( te && ! tuned )) && [[ ${name%:*} == "$tename" && -n ${${(@ps:\x1e:)teframe[11]}[2]} ]] && val=${${(@ps:\x1e:)teframe[11]}[2]}
+        o=$(( val * 100 + 0.5 ))
+        knob=$(( o * (T - 1) / 100 ))
       fi
       (( knob < 0 )) && knob=0
       (( knob > T - 1 )) && knob=$(( T - 1 ))

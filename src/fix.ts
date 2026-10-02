@@ -54,17 +54,20 @@ export function srgb(l: number, c: number, h: number): number[] | undefined {
   })
 }
 
-export function inGamut(l: number, c: number, h: number): Hex {
+export function edgeChroma(l: number, h: number, c: number): number {
+  if (srgb(l, c, h) !== undefined) return c
   let lo = 0
   let hi = c
-  if (srgb(l, c, h) === undefined) {
-    for (let i = 0; i < 24; i++) {
-      const mid = (lo + hi) / 2
-      if (srgb(l, mid, h) === undefined) hi = mid
-      else lo = mid
-    }
-  } else lo = c
-  const rgb = srgb(l, lo, h) ?? [0, 0, 0]
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2
+    if (srgb(l, mid, h) === undefined) hi = mid
+    else lo = mid
+  }
+  return lo
+}
+
+export function inGamut(l: number, c: number, h: number): Hex {
+  const rgb = srgb(l, edgeChroma(l, h, c), h) ?? [0, 0, 0]
   return `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`
 }
 

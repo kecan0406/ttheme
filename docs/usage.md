@@ -94,7 +94,7 @@ panel, then out of the filter, then out of the preview with the original colors
 restored. Each palette row carries its 16 colors, normal over bright. The last
 line lists only the keys that work right there, always names the mode
 (`PREVIEW`, `PREVIEW (FILTER)`, `PREVIEW (APPLY)`,
-`PREVIEW (PIN)`, `EDIT`, `EDIT (APPLY)`, `CONFIG`, `HELP`) and pins where
+`PREVIEW (PIN)`, `EDIT`, `EDIT (TUNE)`, `EDIT (APPLY)`, `CONFIG`, `HELP`) and pins where
 esc goes to the right; `?` shows all of them.
 In Warp, which wears one theme for the whole app, the tab in front decides it:
 preview switches that theme as the focus moves — every Warp window at once —
@@ -128,17 +128,34 @@ shows an empty frame there, and `enter` on it opens
 [find](backgrounds.md#finding-one), with the fields under it dimmed until a
 picture arrives. While
 you move through the slots the palette half shows the slots alone so
-everything fits; tuning one opens its lightness, chroma and hue bars, and a
-window too short for it all scrolls with the cursor. A window too narrow for
+everything fits, with what the gate says against the slot under the cursor
+when it misses; tuning one shows that slot alone in the same rows — its
+lightness, chroma and hue bars and its checks — until enter or esc brings the
+slots back, so nothing under it moves. A taller window keeps the slots and the
+bars together, and a window too short for it all scrolls with the cursor. A window too narrow for
 the sample gives the panel the whole screen.
 
-The palette half is the palette editor `ttheme new` opens, without its seeds:
-`↑`/`↓` pick a slot, `←`/`→` switch between its normal and bright colors, `enter`
+The palette half is the palette editor `ttheme new` opens, without its seeds,
+and takes the same keys:
+every slot is shown in OKLCH — lightness, chroma, hue — with its hex beside the
+one being tuned; `↑`/`↓` pick a slot, `←`/`→` switch between its normal and bright colors, `enter`
 or `tab` tunes the slot in OKLCH — `↑`/`↓` pick lightness, chroma or hue, `←`/`→`
-step, `enter` keeps it —
+step, `enter` keeps it; chroma stops at the sRGB edge, and what lightness or
+hue takes away while you tune comes back where it fits again, marked `○` on
+the bar —
 `#` types a color, `c` and `v` copy and paste one, `f` moves the colors the
 contrast gate misses, `u` undoes and `space` shows the colors before. A slot off
 its palette's own color carries `↺`: `r` puts the slot back and `R` all of them.
+`✗` marks every slot whose own checks miss — a background too light carries
+it along with the colors that read on it — and `n`/`N` walk them. While tuning,
+`◐` is a fourth channel beside lightness, chroma and hue: `←`/`→` move the
+slot's lightness until its contrast with the color it is read against (the
+background, or the foreground for the background and the selection) changes,
+`home` sets it to the gate's floor and `1`–`9` to that ratio; `a` widens what
+moves — this slot, its pair, the six normal or bright accents, or all twelve —
+and every slot in it moves by the same step, keeping its own color. `g` swaps the
+slots for their relations: every ANSI color's lightness, normal over bright, the
+gate's misses between them named under it.
 The contrast gate advises here, never refuses. The picture half is the one
 [Tuning](backgrounds.md#tuning) describes — the pictures, then colors, size,
 position and opacity — with `f` to find one.
@@ -149,8 +166,13 @@ the tone as an override of the palette's own colors (`tone.json`, beside
 `kept.json` stay as the market gave them) and the picture as its own tuning.
 `sync` lays the tone over the palette before it writes anything, so every
 terminal's theme file, the zsh table and the pictures' tint follow it, and
-`ttheme update` leaves it be. `esc` goes back to the list and drops what you
-changed since the last save, without asking.
+`ttheme update` leaves it be. The picture behind follows the colors as you
+change them — the background under it, its tint, and its opacity, which moves
+with the palette as saving would set it unless you set it yourself — in
+Ghostty, kitty, iTerm2, Konsole and WezTerm. Terminal.app and Warp show the
+new tint once you save, and the picture's title line says `recolors on save`
+until then. `esc` goes back to the list and drops
+what you changed since the last save, without asking.
 
 ## Applying
 
@@ -483,25 +505,46 @@ It starts on the seeds: the lightness of the background and the foreground, a
 hue and a tint for the neutrals and the cursor, and one lightness and chroma the
 accents share, each accent on the hue its ANSI role reads as. Every slider is
 drawn in the colors it would give, and whatever the seeds, the twenty colors they
-grow pass the gate. enter moves to the slots, where `edit` opens too:
+grow pass the gate. enter moves on to the slots, and the seeds stay behind;
+`edit` and `--from` open on the slots. The slots take the keys of
+[preview's panel](#palette-edit), so a key means the same in both:
 
-- The left side lists the twenty colors, normal and bright side by side, each with
-  its contrast on the background and ✗ where the gate misses, and the gate's nine
-  rules under them. `↑↓` (or `j`/`k`) picks a slot, `←→` its normal or bright.
-- The right side shows the slot: hex, rgb and OKLCH, the color it started as, a
+- The left side lists the twenty colors, normal and bright side by side, each as
+  its OKLCH lightness, chroma and hue (the hex a terminal gets is in the slot's
+  details), with ✗ on every slot whose own checks miss (`n`/`N` walk them), and
+  the gate's nine
+  rules under them, each miss naming its slots. `↑↓` (or `j`/`k`) picks a slot
+  and keeps its column through the base colors, `←→` its normal or bright.
+- The right side shows the slot: its OKLCH first, then hex and rgb, the color it started as, a
   gradient for lightness, chroma and hue that is the color each step would give
-  (`░` past the sRGB edge), what the gate says about it — its contrast, its ANSI
-  role's hue band, how far its bright drifts, what it reads as — and a specimen
-  of a shell session in the draft's colors.
-- `tab` tunes the slot, as preview tunes a picture: `↑↓` lightness, chroma or hue,
-  `←→` a step, `⇧←→` five (ten degrees of hue), `0`–`9` a jump along the range,
-  enter keeps and esc puts it back. `#` takes `#rrggbb`, `rgb(r g b)` or
+  (`░` past the sRGB edge), its contrast against the color it is read against
+  with the gate's floor marked (`◐`), what the gate says about it — its contrast,
+  its ANSI role's hue band, how far its bright drifts, what it reads as — with
+  the key that fixes a miss, and preview's five scenes in the draft's colors
+  (`⇧←→`), the slot underlined wherever it is used. `g` turns it into the
+  palette's relations: the lightness and chroma of every ANSI color, normal and
+  bright, its hue over the role bands, and the misses between them.
+- enter or `tab` tunes the slot, as preview tunes a picture: `↑↓` lightness,
+  chroma, hue or `◐` contrast, `←→` a step, `⇧←→` five (ten degrees of hue),
+  `home`/`end` the ends, `0`–`9` a jump along the range, enter keeps and esc puts
+  back every slot the tune moved. On `◐`, `←→` move lightness until the contrast
+  with the color the slot is read against changes, `home` sets the gate's floor
+  and `1`–`9` that ratio. `a` widens what moves — this slot, its pair, the six
+  normal or bright accents, or all twelve — and each moves by the same step,
+  keeping its own color, as palette tools that shift a group at once do. Chroma stops at the sRGB
+  edge, and what lightness or hue takes away while you tune comes back where it
+  fits again (`○` on the bar); once you keep, the color is what you see. `#` takes `#rrggbb`, `rgb(r g b)` or
   `oklch(l c h)`, and so does a paste.
 - `c` and `v` copy a color between slots, `=` makes a bright follow its normal,
-  `r` puts a slot back, `*` marks a signature color, `f` moves the colors the gate
-  misses, `o` takes another palette's colors, `s` goes back to the seeds, `u` and
-  ctrl+r undo and redo, and space shows the colors you started from. `?` lists
-  the keys; enter saves and esc asks before it throws changes away.
+  `r` puts a slot back as it opened and `R` all of them, `*` marks a signature
+  color (a fourth drops the oldest, and says so), `f` moves the colors the gate
+  misses, `o` takes another palette's colors, `u` and ctrl+r undo and redo, and
+  space shows the colors you started from. `?` lists the keys; `s` saves and
+  esc asks before it throws changes away.
+- Behind the editor lies the palette's own picture, framed as the terminal
+  shows it and tinted with the colors being edited, so a change to the
+  background, the cursor or a signature color shows on it at once (Ghostty,
+  kitty, iTerm2, Konsole and WezTerm).
 - Pictures come in without leaving the editor: `p` opens `find` on the colors
   being edited, and a picture dropped on the window or pasted — the file, its
   path or its link, or the clipboard's with ctrl+v or an empty paste — opens

@@ -5,20 +5,20 @@
    This terminal shows no pictures
 
    Palette                                    7 misses in the gate
- ▌ Background[   #13181e       ]
-   Foreground   #dae3f1 13.8
-   Cursor     ◆ #5f95ca  5.6
-   Selection    #3b3e42  8.3
+ ▌ Background›  0.21 0.014 253°
+   Foreground   0.91 0.021 259°
+   Cursor     ◆ 0.65 0.098 249°
+   Selection    0.36 0.008 256°
 
-   ANSI        Normal           Bright
-   Black        #1f242a  1.1     #73777f  4.0
-   Red          #e07ae5  6.9✗    #fca1ff  9.9✗
-   Green      ◆ #64be79  7.8     #00e3e4 11.1✗
-   Yellow       #9bc976  9.4✗    #37f9b8 13.1✗
-   Blue         #63a5e8  6.9   ◆ #8fc6ff  9.9
-   Magenta      #d187ff  7.3✗    #d0bcff 10.5
-   Cyan         #4abcee  8.3     #97daff 11.7
-   White        #c2c7cf 10.5     #e6effc 15.4
+   ANSI       Normal             Bright
+   Black        0.26 0.013 253°    0.57 0.013 264°
+   Red          0.73 0.182 326°✗   0.83 0.159 326°✗
+   Green      ◆ 0.73 0.132 150°✗   0.83 0.141 195°✗
+   Yellow       0.78 0.121 132°✗   0.88 0.174 165°✗
+   Blue         0.71 0.120 250°  ◆ 0.81 0.099 250°
+   Magenta      0.75 0.181 311°✗   0.83 0.095 298°
+   Cyan         0.75 0.124 231°    0.86 0.085 233°
+   White        0.83 0.012 260°    0.95 0.020 257°
 
     Apply   saves and wears it in this tab
-[EDIT] ↑↓←→ slot   s save   enter tune   r reset slot   R reset all   ⇧enter apply        esc cancel
+[EDIT] ↑↓←→ slot   s save   enter tune   g relations   n next miss   ⇧enter apply         esc cancel

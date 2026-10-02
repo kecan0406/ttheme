@@ -1292,7 +1292,7 @@ function recolor(dir: string, name: string, picture: Picture, hue: Hue): Picture
   }
 }
 
-function due(picture: Picture, paint: Paint): boolean {
+export function due(picture: Picture, paint: Paint): boolean {
   if (coloringOf(picture) === 'original') {
     return picture.peak !== undefined && originalOpacity(paint.colors, picture.peak) !== picture.opacity
   }

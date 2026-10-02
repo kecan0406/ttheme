@@ -4,6 +4,7 @@ import * as p from '@clack/prompts'
 import { dropImage, imageKey, rackOf, showImage } from './backdrop.ts'
 import { Cancelled } from './cancelled.ts'
 import { available, find, gateFailures, readCatalog, readKept, untuned, writeKept } from './catalog.ts'
+import { Backdrop } from './editor-backdrop.ts'
 import { runEditor } from './editor-screen.ts'
 import { writeAtomic } from './edits.ts'
 import { findFor } from './find/find.ts'
@@ -160,15 +161,17 @@ function finder(
 
 async function editColors(options: EditorOptions): Promise<Edited | undefined> {
   const tty = process.stdout.isTTY === true
-  const live = liveOf(process.env, tty, configHome())
+  const home = configHome()
+  const live = liveOf(process.env, tty, home)
   const saved = live ? await live.saved() : new Map<string, string>()
   const screen = live?.look
     ? { look: (shown: readonly string[]) => live.look?.(options.name, shown) }
     : live
       ? { only: live.slots }
       : {}
+  const backdrop = tty ? Backdrop.of(process.env, home, options.name, readInstalled(home).terminals) : undefined
   try {
-    return await runEditor(options, { color: !colorless(), ...screen })
+    return await runEditor(options, { color: !colorless(), ...screen, ...(backdrop ? { backdrop } : {}) })
   } finally {
     if (live) {
       process.stdout.write(live.restore(saved))
