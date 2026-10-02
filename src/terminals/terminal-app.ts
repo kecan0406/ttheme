@@ -132,7 +132,7 @@ function serve(T) {
   let buf = ''
   for (;;) {
     const data = input.availableData
-    if (data.length === 0) {
+    if (+data.length === 0) {
       return ''
     }
     buf += $.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding).js

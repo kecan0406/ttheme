@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -130,4 +131,14 @@ test('Terminal.app keeps a default the user picked, and asks for a restart only 
     ),
     { restart: false },
   )
+})
+
+test('the Terminal.app script preview keeps open ends when its input does', {
+  skip: process.platform !== 'darwin',
+}, () => {
+  const file = join(mkdtempSync(join(tmpdir(), 'ttheme-terminal-serve-')), 'terminal-app.js')
+  writeFileSync(file, TERMINAL_JS)
+  const run = spawnSync('osascript', ['-l', 'JavaScript', file, 'serve'], { input: '', timeout: 10000 })
+  assert.equal(run.error, undefined)
+  assert.equal(run.status, 0)
 })
