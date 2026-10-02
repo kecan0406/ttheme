@@ -34,7 +34,13 @@ __tt_bg_cells() {
   bgch=${resp%;*} bgcw=${resp#*;}
 }
 
-__tt_pv_bg_findable() { return 1 }
+__tt_pv_bg_findable() { (( bgcw )) && __tt_keepable }
+
+__tt_bg_hide() {
+  local -a p=(${=TTHEME_PALETTE[${1%:*}]})
+  __tt_wezterm_var ttheme_view "$p[1]||1|1|1|0|0|0|0|5"
+  TTHEME_WEZTERM_VIEW=find
+}
 
 __tt_pv_bg_show() {
   (( bgcw )) || return 0

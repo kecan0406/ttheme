@@ -57,7 +57,7 @@ import type { Manifest, PaletteEntry } from '../manifest.ts'
 import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from '../palettes.ts'
 import { type Look, Renderer, type Shown } from '../render.ts'
 import { SCENES } from '../scenes.ts'
-import { CLEAR } from '../terminal.ts'
+import { CLEAR, viewsInWindow, viewVar } from '../terminal.ts'
 import { POSITIONS } from '../theme.ts'
 import { blurOf, coloringFor, settingDefault, withSetting } from '../wiring.ts'
 import { kinKeys, near, type Shape, sameKeys, sameSet } from '../works.ts'
@@ -2756,6 +2756,9 @@ export async function findFor(
 ): Promise<{ saved: string | undefined; installs: number }> {
   const finder = new Finder(home, readAvailable(home), entry, entry.booru ?? '', start)
   await finder.run()
+  if (viewsInWindow(process.env)) {
+    process.stdout.write(viewVar(''))
+  }
   return { saved: finder.saved, installs: finder.installs }
 }
 

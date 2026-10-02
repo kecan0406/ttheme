@@ -8,7 +8,7 @@ get it.
 | **Setup with `init`** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 | **Palette files** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 | **Runtime repaint** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Partial][partial] |
-| **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Partial][partial] | ![No][no] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
+| **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Done][done] | ![No][no] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 
 - **Setup with `init`** — iTerm2 is offered on macOS only, Windows Terminal
   from WSL (or a native Windows zsh), where init writes a settings fragment on
@@ -54,9 +54,8 @@ get it.
   backdrop. Ghostty shows one picture app-wide, following the focused tab;
   iTerm2 (3.7 or newer) shows one per tab and kitty one per window (a split
   pane included), both with the same preview, tuning and find. WezTerm shows the
-  picture of the active tab per window and switches it as `preview` moves, but
-  has no in-terminal preview or tuning — find and tune from Ghostty, iTerm2 or
-  kitty. Warp shows one picture for the whole app, through its theme, with
+  picture of the active tab per window, and its preview, tuning and find draw
+  through the window's background. Warp shows one picture for the whole app, through its theme, with
   find, preview and tuning as in Ghostty — a tuning step reaches the window
   about a second after the key. Konsole shows one per tab, through the
   wallpaper of the tab's color scheme, with the same preview, tuning and find —

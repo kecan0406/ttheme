@@ -74,6 +74,8 @@ export interface Traits {
   repaint?: readonly number[]
   hex?: true
   schemes?: true
+  wipes?: true
+  views?: true
 }
 
 export const TRAITS: Record<Terminal, Traits> = {
@@ -89,7 +91,17 @@ export const TRAITS: Record<Terminal, Traits> = {
     paints: true,
     repaint: [0, 1],
   },
-  wezterm: { links: true, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
+  wezterm: {
+    links: true,
+    pictures: true,
+    bands: false,
+    files: true,
+    moves: true,
+    layers: false,
+    paints: true,
+    wipes: true,
+    views: true,
+  },
   alacritty: { links: true, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
   'windows-terminal': {
     links: true,
@@ -123,8 +135,10 @@ export function linkable(env: Env): boolean {
   return TRAITS[detectTerminal(env)].links
 }
 
-export function showsPictures(env: Env): boolean {
-  return TRAITS[detectTerminal(env)].pictures && !env.TMUX
+export function showsPictures(env: Env, wired: readonly string[]): boolean {
+  const terminal = detectTerminal(env)
+  const traits = TRAITS[terminal]
+  return traits.pictures && !env.TMUX && (!traits.views || wired.includes(terminal))
 }
 
 export function cropsInBands(env: Env): boolean {
@@ -141,6 +155,18 @@ export function layersUnderCells(env: Env): boolean {
 
 export function movesPlacements(env: Env): boolean {
   return TRAITS[detectTerminal(env)].moves
+}
+
+export function wipesPlacements(env: Env): boolean {
+  return TRAITS[detectTerminal(env)].wipes === true
+}
+
+export function viewsInWindow(env: Env): boolean {
+  return TRAITS[detectTerminal(env)].views === true
+}
+
+export function viewVar(view: string): string {
+  return `\x1b]1337;SetUserVar=ttheme_view=${Buffer.from(view).toString('base64')}\x07`
 }
 
 export const CLEAR = '\x1b[H\x1b[K\x1b[2H\x1b[J\x1b[H'

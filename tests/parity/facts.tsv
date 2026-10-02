@@ -137,7 +137,7 @@ preview-default.new.wears	miku	=	=	=	=	=	=	=	=	none
 preview-default.new.issue	-	=	=	=	=	=	=	=	=	=
 preview-tune.tune.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tune.tune.picture	kita	=	=	=	none	=	none	=	=	none
-preview-tune.tune.text	txt:44de821722	=	=	=	txt:ca05fb91a3	txt:4b727964fe	txt:ca05fb91a3	=	txt:25b4d4704f	txt:0ad5718316
+preview-tune.tune.text	txt:44de821722	=	=	=	txt:ca05fb91a3	=	txt:ca05fb91a3	=	txt:25b4d4704f	txt:0ad5718316
 preview-tune.tune.issue	-	=	=	=	=	=	=	=	=	=
 preview-tune.back.colors	konata	=	=	=	=	=	=	=	=	own
 preview-tune.back.picture	konata	=	=	=	none	=	none	=	=	none
@@ -145,7 +145,7 @@ preview-tune.back.wears	konata	=	=	=	=	=	=	=	=	none
 preview-tune.back.issue	-	=	=	=	=	=	=	=	=	=
 preview-config.panel.colors	konata	=	=	=	=	=	=	=	=	own
 preview-config.panel.picture	konata	=	=	=	none	=	none	=	=	none
-preview-config.panel.text	txt:28af58028a	=	=	=	=	=	=	txt:65b4d4041c	=	txt:d34f9a0e16
+preview-config.panel.text	txt:28af58028a	=	=	=	=	=	=	=	=	txt:d34f9a0e16
 preview-config.panel.issue	-	=	=	=	=	=	=	=	=	=
 preview-config.back.colors	konata	=	=	=	=	=	=	=	=	own
 preview-config.back.picture	konata	=	=	=	none	=	none	=	=	none
@@ -191,7 +191,7 @@ ssh.out.picture	konata	=	=	=	none	=	none	=	=	none
 ssh.out.wears	konata	=	=	=	=	=	=	=	=	none
 ssh.out.issue	-	=	=	=	=	=	=	=	=	=
 browse.hover.colors	kita	=	=	=	=	=	=	=	=	=
-browse.hover.picture	konata	=	=	=	none	=	none	kita	=	none
+browse.hover.picture	konata	=	=	=	none	=	none	=	=	none
 browse.hover.text	txt:55ac9d3e03	=	=	=	=	=	=	=	=	=
 browse.hover.issue	-	=	=	=	=	=	=	=	=	=
 browse.back.colors	konata	=	=	=	=	=	=	=	=	own

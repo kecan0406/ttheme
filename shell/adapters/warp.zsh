@@ -338,14 +338,6 @@ __tt_warp_live() {
   (( live ))
 }
 
-__tt_pv_conf_rows() {
-  cvars+=(TTHEME_WARP_FAST) clabel+=("Warp tabs") cchoice+=("on off") cshow+=("on off")
-  cnote+=(
-    TTHEME_WARP_FAST:on "About 0.2 s per switch, for about 8% CPU"
-    TTHEME_WARP_FAST:off "About 0.6 s per switch"
-  )
-}
-
 __tt_warp_warming() {
   [[ $TTHEME_WARP_FAST == on ]] && (( TTHEME_WARP_UP && ( TTHEME_WARP_MIXED || EPOCHREALTIME < TTHEME_WARP_WARM ) ))
 }

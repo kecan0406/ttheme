@@ -256,24 +256,26 @@ test('every function the shell calls on its own runs under zsh defaults, whateve
   }
 })
 
-test('a terminal shows pictures only where mise run compat never saw kitty graphics fail, and layers them under cells only where it saw that work', () => {
+test('a terminal shows pictures only where mise run compat never saw kitty graphics fail, places them again after every erase only where it saw EL take them, and layers them under cells only where it saw that work', () => {
   const [head = [], ...rows] = read('tests', 'compat', 'expect.tsv')
     .trim()
     .split('\n')
     .map((line) => line.split('\t'))
   const measured = (terminal: Terminal, id: string) => rows.find((row) => row[0] === id)?.[head.indexOf(terminal)]
   for (const terminal of Object.keys(TRAITS) as Terminal[]) {
-    const { pictures, bands, layers } = TRAITS[terminal]
+    const { pictures, bands, layers, wipes } = TRAITS[terminal]
+    const el = measured(terminal, 'kitty-el')
+    if (el === 'pass' || el === 'fail') {
+      assert.equal(wipes === true, el === 'fail', `${terminal}: compat measured kitty-el ${el}`)
+    }
     if (!pictures) {
       continue
     }
-    for (const id of ['kitty-graphics', 'kitty-el']) {
-      assert.notEqual(
-        measured(terminal, id),
-        'fail',
-        `${terminal} shows pictures, but compat measured ${id} failing there`,
-      )
-    }
+    assert.notEqual(
+      measured(terminal, 'kitty-graphics'),
+      'fail',
+      `${terminal} shows pictures, but compat measured kitty-graphics failing there`,
+    )
     const under = measured(terminal, 'kitty-under-bg')
     if (under === 'pass' || under === 'fail') {
       assert.equal(layers, under === 'pass', `${terminal}: compat measured kitty-under-bg ${under}`)

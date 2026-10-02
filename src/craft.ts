@@ -148,7 +148,7 @@ function finder(
   catalog: Manifest,
   text: (edited: Edited) => string,
 ): EditorOptions['find'] {
-  if (!showsPictures(process.env)) {
+  if (!showsPictures(process.env, readInstalled(home).terminals)) {
     return undefined
   }
   return async (edited, start) => {

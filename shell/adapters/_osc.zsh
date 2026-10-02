@@ -94,8 +94,6 @@ __tt_prompted() { : }
 
 __tt_cli_env() { : }
 
-__tt_pv_conf_rows() { : }
-
 __tt_pv_bg_open() { : }
 
 __tt_pv_bg_show() { : }

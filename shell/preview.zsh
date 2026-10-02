@@ -1865,7 +1865,6 @@ __tt_preview() {
     TTHEME_BG_COLORS:tone "New pictures are tinted in one color of the palette"
     TTHEME_BG_COLORS:original "New pictures keep their own colors"
   )
-  __tt_pv_conf_rows
   [[ $mode == pin ]] && __tt_pin_scopes "$pdir"
   __tt_pv_canpick
   __tt_pv_size

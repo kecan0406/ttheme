@@ -3,7 +3,15 @@ import { join } from 'node:path'
 import cells from 'fast-string-width'
 import { type Hex, rgb } from '../color.ts'
 import type { Renderer } from '../render.ts'
-import { cropsInBands, layersUnderCells, movesPlacements, readsFiles } from '../terminal.ts'
+import {
+  cropsInBands,
+  layersUnderCells,
+  movesPlacements,
+  readsFiles,
+  viewsInWindow,
+  viewVar,
+  wipesPlacements,
+} from '../terminal.ts'
 import {
   type FindView,
   gridShape,
@@ -12,6 +20,7 @@ import {
   release,
   renderFind,
   TILE,
+  TRY_ID,
   transmit,
   unplace,
 } from './screen.ts'
@@ -57,10 +66,13 @@ export class Paint {
   private readonly sent = new Map<number, string>()
   private readonly placed = new Map<number, string>()
   private covered = ''
+  private viewed = ''
   private readonly bands = cropsInBands(process.env)
   private readonly files = readsFiles(process.env)
   private readonly moves = movesPlacements(process.env)
   private readonly layers = layersUnderCells(process.env)
+  private readonly wipes = wipesPlacements(process.env)
+  private readonly views = viewsInWindow(process.env)
   private readonly bandFiles = new Map<string, { id: number; path: string; ready: boolean }>()
   private nextBand = BAND_ID
 
@@ -101,17 +113,27 @@ export class Paint {
     const frame = renderFind(this.view, cols, rows)
     this.view.loaderFrom = frame.loader ? (this.view.loaderFrom ?? this.view.beat) : undefined
     let out = ''
+    const wiped = new Set<number>()
     frame.lines.forEach((line, r) => {
       if (this.screen[r] !== line) {
         out += `\x1b[${r + 1};1H\x1b[K${line}`
         this.screen[r] = line
+        wiped.add(r)
       }
     })
     const keep = new Set<number>()
+    let tried: Placement | undefined
     for (const wanted of frame.images) {
+      if (this.views && wanted.id >= TRY_ID) {
+        tried = wanted
+        continue
+      }
       const p = this.bands ? this.banded(wanted) : wanted
       if (!p) {
         continue
+      }
+      if (this.wipes && [...wiped].some((r) => r >= p.row && r < p.row + p.rows)) {
+        this.placed.delete(p.id)
       }
       keep.add(p.id)
       if (this.sent.get(p.id) !== p.path) {
@@ -139,7 +161,7 @@ export class Paint {
         this.placed.delete(id)
       }
     }
-    out += this.cover()
+    out += this.views ? this.backdrop(tried) : this.cover()
     const caret = this.view.mode === 'grid' && this.view.editing !== undefined ? this.caret() : ''
     if (out || caret) {
       this.write(`\x1b[?2026h${out}${caret}\x1b[?2026l`)
@@ -227,6 +249,20 @@ export class Paint {
       return `${out}\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},P=${ANCHOR_ID},Q=${ANCHOR_ID},H=${-x},V=${-y},c=${cols + 2 * x},r=${rows + 2 * y},C=1,z=${COVER_Z},q=2\x1b\\`
     }
     return `${out}\x1b[H\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},c=${cols},r=${rows},C=1,z=${COVER_Z},q=2\x1b\\`
+  }
+
+  private backdrop(tried: Placement | undefined): string {
+    const { cols, rows, cell } = this.grid()
+    const W = cols * cell.w
+    const H = rows * cell.h
+    const view = tried
+      ? `${this.background}|${tried.path}|1|${W}|${H}|${W}|${H}|0|0|1`
+      : `${this.background}||1|${W}|${H}|0|0|0|0|5`
+    if (view === this.viewed) {
+      return ''
+    }
+    this.viewed = view
+    return viewVar(view)
   }
 
   private caret(): string {

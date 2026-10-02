@@ -494,8 +494,8 @@ export function warpLook(settings: string, themes: string): WarpLook {
       put(`4;${i + offset}`, hex(new RegExp(`^    ${name}:\\s*(\\S+)`, 'm').exec(block)?.[1]))
     })
   }
-  const named = /^name:\s*"?([^"\n]+)"?/m.exec(yaml)?.[1]
-  const picture = /^background_image:/m.test(yaml) && named ? named : 'none'
+  const image = /^background_image:\n\s+path:\s*"([^"]+)"/m.exec(yaml)?.[1]
+  const picture = image ? imageName((image.split('/').at(-1) ?? '').replace(/^ttheme-/, '')) : 'none'
   const opacity = /^background_image:\n(?:\s+.*\n)*?\s+opacity:\s*(\d+)/m.exec(yaml)?.[1]
   return {
     colors: filled(colors),
