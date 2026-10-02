@@ -122,7 +122,10 @@ serve() {
 
 quit() {
   case $1 in
-    terminal-app) (( $2 )) || pkill -x Terminal 2>/dev/null || : ;;
+    terminal-app)
+      (( $2 )) || pkill -x Terminal 2>/dev/null || :
+      zsh $ROOT/tests/terminal-prefs.zsh restore
+      ;;
     ghostty) pkill -f -- "--config-file=$SANDBOX/" 2>/dev/null || : ;;
     iterm2) pkill -f -- "iTerm2 -suite ttheme-sandbox" 2>/dev/null || : ;;
     wezterm) pkill -f -- "wezterm-gui --config-file $SANDBOX/" 2>/dev/null || : ;;

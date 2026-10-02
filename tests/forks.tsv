@@ -2,6 +2,6 @@ journey	ghostty	kitty	wezterm	iterm2	alacritty	windows-terminal	konsole	terminal
 start	0	0	0	0	0	0	0	0	0
 start-seq	0	0	0	0	0	0	0	3	0
 command	0	0	0	0	0	0	0	0	0
-focus	0	0	0	0	0	0	0	-	-
+focus	0	0	0	0	0	0	0	0	-
 cd	0	0	0	0	0	0	0	0	0
 mend	0	0	0	0	0	0	0	0	0

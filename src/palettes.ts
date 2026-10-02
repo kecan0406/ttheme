@@ -20,6 +20,7 @@ export interface Installed {
   off?: true
   itermBase?: string
   konsoleBase?: string
+  terminalBase?: string
   wtHome?: string
   wtProfile?: string
   markets?: string[]
@@ -49,6 +50,7 @@ const OPTIONAL: { [K in Optional]-?: (value: unknown) => Installed[K] } = {
   off: (value) => (value ? true : undefined),
   itermBase: text,
   konsoleBase: text,
+  terminalBase: text,
   wtHome: text,
   wtProfile: text,
   markets: (value) => (Array.isArray(value) ? value.filter((m): m is string => typeof m === 'string') : undefined),
@@ -105,8 +107,8 @@ function now(configHome: string, state: Installed, home: string): Now {
   return { configHome, home, state, startup: worn(state) }
 }
 
-function context(configHome: string, entries: PaletteEntry[], state: Installed, home: string): Ctx {
-  return { ...now(configHome, state, home), entries, themes: entries.map(toTheme) }
+function context(configHome: string, entries: PaletteEntry[], state: Installed, home: string, host: Host): Ctx {
+  return { ...now(configHome, state, home), entries, themes: entries.map(toTheme), host }
 }
 
 function writer(ctx: Ctx): Out & { written: string[]; repainted: boolean } {
@@ -167,7 +169,7 @@ export function sync(
   retint(configHome, new Map(entries.map((entry) => [entry.name, paintFor(entry)])))
   freshenConfs(configHome)
   writeKept(configHome, kept)
-  const ctx = context(configHome, entries, state, home)
+  const ctx = context(configHome, entries, state, home, host)
   const out = writer(ctx)
   for (const wiring of wirings(state.terminals)) {
     wiring.sync(ctx, out)
@@ -192,7 +194,7 @@ export function refreshPictures(configHome: string, home = homedir(), host: Host
   if (pictured.length === 0) {
     return
   }
-  const ctx = context(configHome, resolve(readAvailable(configHome), state.palettes), state, home)
+  const ctx = context(configHome, resolve(readAvailable(configHome), state.palettes), state, home, host)
   const out = writer(ctx)
   for (const wiring of pictured) {
     wiring.pictures?.(ctx, out)

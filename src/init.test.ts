@@ -349,6 +349,7 @@ test('setting it up again carries every setting it does not ask about again', ()
     off: true,
     itermBase: 'A1B2C3',
     konsoleBase: 'Mine.profile',
+    terminalBase: 'Clear Dark',
     wtHome: '/mnt/c/Users/kec/AppData/Local',
     wtProfile: '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}',
     markets: ['official', 'alice/pastel#v1'],

@@ -1,8 +1,9 @@
 import { Database } from 'bun:sqlite'
 import { randomUUID } from 'node:crypto'
-import { existsSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Terminal } from '@xterm/headless'
+import { TERMINAL_DOMAIN } from '../../src/terminals/terminal-app.ts'
 import {
   alacrittyColors,
   alacrittyFiles,
@@ -31,6 +32,8 @@ import {
   wtColors,
 } from './looks.ts'
 import { ANSI, BEHAVIOR, type Behavior, type Colors, identity, OWN, type Term, WT_PROFILE } from './terms.ts'
+
+const SEEN_ORDER = ['11', '10', '12', '17', ...ANSI]
 
 export const COLS = 100
 export const ROWS = 30
@@ -557,11 +560,65 @@ const konsole = (): Kind => {
   }
 }
 
-const terminalApp = (): Kind => ({
-  launch() {},
-  opening: (app) => ({ argv: login(app), env: {}, colors: OWN }),
-  picture: () => 'none',
-})
+const terminalApp = (): Kind => {
+  const loaded = new Map<string, Colors>([['Own', OWN]])
+  let fallback = 'Own'
+  let switched = 0
+  const dir = (app: App) => join(app.place.home, '.parity', 'terminal')
+  const file = (name: string) => name.replaceAll('/', '--')
+  const prefs = (app: App, key: string) =>
+    read(join(app.place.home, '.parity', 'defaults', TERMINAL_DOMAIN, key)).trim() || 'Own'
+  return {
+    launch(app) {
+      const from = join(dir(app), 'prefs')
+      if (existsSync(from)) {
+        for (const name of readdirSync(from)) {
+          const colors = read(join(from, name)).trim().split(' ')
+          loaded.set(
+            name.replaceAll('--', '/'),
+            new Map(SEEN_ORDER.map((code, i): [string, string] => [code, colors[i] ?? ''])),
+          )
+        }
+      }
+      fallback = loaded.has(prefs(app, 'Default Window Settings')) ? prefs(app, 'Default Window Settings') : 'Own'
+      mkdirSync(join(dir(app), 'loaded'), { recursive: true })
+      for (const name of loaded.keys()) {
+        writeFileSync(join(dir(app), 'loaded', file(name)), '')
+      }
+      writeFileSync(join(app.place.home, '.parity', 'terminal.running'), '')
+      rmSync(join(dir(app), 'default'), { force: true })
+      rmSync(join(dir(app), 'switch'), { force: true })
+    },
+    opening: (app) => ({ argv: login(app), env: {}, colors: loaded.get(fallback) ?? OWN, profile: fallback }),
+    watched: (app) => [join(dir(app), 'default'), join(dir(app), 'switch')],
+    changed(app) {
+      const want = read(join(dir(app), 'default')).trim()
+      if (want && loaded.has(want) && want !== fallback) {
+        fallback = want
+        app.log(`default profile ${want}`)
+      }
+      const lines = read(join(dir(app), 'switch'))
+        .split('\n')
+        .filter(Boolean)
+      for (const line of lines.slice(switched)) {
+        const [tty = '', name = ''] = line.split('\t')
+        const tab = app.tabs.find((t) => t.tty === tty)
+        const colors = loaded.get(name)
+        if (tab && colors) {
+          tab.profile = name
+          for (const [code, slot] of tab.slots) {
+            slot.base = colors.get(code) ?? slot.base
+            delete slot.over
+            delete slot.kept
+          }
+          app.log(`tab profile ${name}`)
+        }
+      }
+      switched = lines.length
+    },
+    picture: () => 'none',
+  }
+}
 
 const KINDS: Record<Term, () => Kind> = {
   ghostty,

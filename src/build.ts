@@ -52,7 +52,9 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
     const label =
       perTheme.length > 0
         ? `${themes.length} themes${emitter.limits ? `  (${emitter.limits})` : ''}`
-        : sharedOutputs.map((out) => basename(out.path)).join(' ')
+        : sharedOutputs.length > 0
+          ? sharedOutputs.map((out) => basename(out.path)).join(' ')
+          : `no files  (${emitter.limits ?? 'nothing to write'})`
     console.log(`  ${emitter.id.padEnd(16)} ${label}`)
   }
 

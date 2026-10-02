@@ -3,6 +3,7 @@ import { chmodSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync
 import { dirname, join } from 'node:path'
 import { colorsOf, installBackdrop, toneFor } from '../../src/backdrop.ts'
 import type { PaletteEntry } from '../../src/manifest.ts'
+import { TERMINAL_DOMAIN } from '../../src/terminals/terminal-app.ts'
 import { ITERM_SUITE, type Place, warpPaths } from './model.ts'
 import { BEHAVIOR, OWN, type Term, WIRING, WT_PROFILE } from './terms.ts'
 
@@ -21,6 +22,34 @@ const SHIMS: Record<string, string> = {
     'stty "$s"',
   ].join('\n'),
   osascript: [
+    'term="$HOME/.parity/terminal"',
+    "enc() { printf '%s' \"$1\" | sed 's|/|--|g'; }",
+    'case "$*" in',
+    '  *terminal-app.js*)',
+    '    shift 3; verb=$1; shift',
+    '    case $verb in',
+    '      write)',
+    '        shift; rm -rf "$term/prefs"; mkdir -p "$term/prefs"',
+    '        while [ $# -ge 21 ]; do',
+    '          name=$1; shift',
+    '          printf \'%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\\n\' "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" > "$term/prefs/$(enc "$name")"',
+    '          shift 20',
+    '        done',
+    '        echo wrote ;;',
+    '      drop) rm -rf "$term/prefs"; echo wrote ;;',
+    '      loaded) [ -f "$term/loaded/$(enc "$1")" ] && echo 1 || echo 0 ;;',
+    '    esac',
+    '    exit 0 ;;',
+    "  *'on run argv'*)",
+    '    while [ "$1" = -e ]; do shift 2; done',
+    '    [ -f "$term/loaded/$(enc "$2")" ] || { echo missing; exit 0; }',
+    '    case $1 in',
+    '      default) printf \'%s\\n\' "$2" > "$term/default" ;;',
+    '      tab) printf \'%s\\t%s\\n\' "$3" "$2" >> "$term/switch" ;;',
+    '    esac',
+    '    echo ok',
+    '    exit 0 ;;',
+    'esac',
     'front="$HOME/.parity/front"',
     'for ps in /bin/ps /usr/bin/ps; do [ -x "$ps" ] && break; done',
     'answer() { read -r tty < "$front"; echo "1 $tty $("$ps" -o tpgid= -t "${tty#/dev/}" 2>/dev/null | awk \'NR == 1 { print $1 }\')"; }',
@@ -37,6 +66,8 @@ const SHIMS: Record<string, string> = {
     'answer',
   ].join('\n'),
   pkill: 'case " $* " in *" -USR2 "*" ghostty "*) printf \'reload\\n\' >> "$HOME/.parity/reloads" ;; esac\nexit 0',
+  pgrep:
+    'case " $* " in *" -x Terminal "*) [ -f "$HOME/.parity/terminal.running" ] && echo 4242 && exit 0 ;; esac\nexit 1',
   defaults: [
     'dir="$HOME/.parity/defaults/$2"',
     'case "$1" in',
@@ -165,6 +196,10 @@ function prepare(place: Place, term: Term): void {
   mkdirSync(join(place.root, 'tmp'), { recursive: true })
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'Default Bookmark Guid'), 'own\n')
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'PreventEscapeSequenceFromChangingProfile'), '0\n')
+  if (term === 'terminal-app') {
+    write(join(place.home, '.parity', 'defaults', TERMINAL_DOMAIN, 'Default Window Settings'), 'Own\n')
+    write(join(place.home, '.parity', 'defaults', TERMINAL_DOMAIN, 'Startup Window Settings'), 'Own\n')
+  }
   if (term === 'konsole') {
     write(join(place.dataHome, 'konsole', 'Own.colorscheme'), OWN_SCHEME)
     write(join(place.dataHome, 'konsole', 'Own.profile'), '[Appearance]\nColorScheme=Own\n\n[General]\nName=Own\n')

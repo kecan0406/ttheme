@@ -177,7 +177,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     answers: EVERY,
     resets: false,
     baseline: false,
-    focus: 'none',
+    focus: 'change',
     cells: ['points'],
     graphics: false,
     relative: false,
@@ -227,7 +227,7 @@ export const WIRING: Record<Term, Wired | undefined> = {
   'windows-terminal': 'windows-terminal',
   warp: 'warp',
   konsole: 'konsole',
-  'terminal-app': undefined,
+  'terminal-app': 'terminal-app',
 }
 
 export const CAPABILITIES = {

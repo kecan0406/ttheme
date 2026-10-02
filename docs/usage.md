@@ -169,10 +169,11 @@ wire — enter applies to this tab at once.
 The question is asked with `TTHEME_TAB_PALETTE=off` (the default), in a
 terminal init wired — and always in Ghostty and iTerm2. Default rewrites `theme =` in the `# ttheme begin` block of your Ghostty config and sends
 `SIGUSR2` to the Ghostty that owns the tab, rewrites iTerm2's `ttheme · default`
-profile, which iTerm2 reloads by itself, and makes the palette's
+profile, which iTerm2 reloads by itself, makes the palette's
 `ttheme · <palette>` profile Konsole's default, which every running Konsole
-takes over D-Bus — so new tabs, and open tabs you have not painted by hand, take
-the palette without a restart. Painting is per surface otherwise: a new tab
+takes over D-Bus, and Terminal.app's, which a running Terminal.app takes at the
+next prompt one of its tabs shows — so new tabs, and open tabs you have not
+painted by hand, take the palette without a restart. Painting is per surface otherwise: a new tab
 starts from the configured theme, not from what the last tab was painted.
 
 ## Directory pins

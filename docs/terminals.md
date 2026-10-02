@@ -5,19 +5,23 @@ get it.
 
 | Feature | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app | Other |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Setup with `init`** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
-| **Palette files** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
+| **Setup with `init`** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] |
+| **Palette files** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] |
 | **Runtime repaint** | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Done][done] | ![Partial][partial] |
 | **Background pictures** | ![Done][done] | ![Done][done] | ![Done][done] | ![No][no] | ![Done][done] | ![No][no] | ![Done][done] | ![Done][done] | ![No][no] | ![No][no] |
 
-- **Setup with `init`** — iTerm2 is offered on macOS only, Windows Terminal
-  from WSL (or a native Windows zsh), where init writes a settings fragment on
-  the Windows side, and Konsole on Linux. Warp gets its themes, and the default
-  palette through its `settings.toml` (the Warp builds that have one).
+- **Setup with `init`** — iTerm2 and Terminal.app are offered on macOS only,
+  Windows Terminal from WSL (or a native Windows zsh), where init writes a
+  settings fragment on the Windows side, and Konsole on Linux. Warp gets its
+  themes, and the default palette through its `settings.toml` (the Warp builds
+  that have one).
 - **Palette files** — iTerm2 gets one dynamic profile per palette, plus
   `.itermcolors` in the archive; Windows Terminal gets one fragment carrying
   every installed scheme; Konsole gets a color scheme and a `ttheme · <palette>`
-  profile per palette.
+  profile per palette; Terminal.app gets a `ttheme · <palette>` profile per
+  palette in its own settings — a copy of your profile, its font, window and
+  transparency included, in the palette's colors — and the default palette's
+  becomes the one new windows and tabs open with.
 - **Runtime repaint** — OSC escape sequences everywhere, per pane in kitty,
   WezTerm and Windows Terminal, one color per sequence (Alacritty drops an OSC 4
   carrying more than seven). kitty and Windows Terminal reset every OSC color
@@ -27,7 +31,10 @@ get it.
   tab that changed the default at once, every other one at its next prompt or
   focus.
   Terminal.app takes every OSC color but no OSC reset, so ttheme reads its
-  colors when the shell starts and puts them back itself. Warp answers OSC
+  colors when the shell starts and puts them back itself; once init wired it,
+  `ttheme off` moves a tab onto your own profile, which drops every color an OSC
+  set, and a `ttheme default` run in any terminal reaches a running
+  Terminal.app at the next prompt one of its tabs shows. Warp answers OSC
   color queries but paints one theme app-wide and never the background an OSC
   sets, so a Warp tab wears its palette through that theme: `ttheme use`,
   `next`, a pin, preview and browse switch it, and switching tabs or windows
@@ -55,14 +62,15 @@ get it.
   iTerm2 (3.7 or newer) shows one per tab and kitty one per window (a split
   pane included), both with the same preview, tuning and find. WezTerm shows the
   picture of the active tab per window, and its preview, tuning and find draw
-  through the window's background. Warp shows one picture for the whole app, through its theme, with
-  find, preview and tuning as in Ghostty — a tuning step reaches the window
-  about a second after the key. Konsole shows one per tab, through the
+  through the window's background. Konsole shows one per tab, through the
   wallpaper of the tab's color scheme, with the same preview, tuning and find —
   every change of a picture writes the scheme under a new name, since Konsole
   keeps a scheme as it read it for as long as a tab shows it (Konsole 23.08
   draws a wallpaper only where a compositor runs; 24.02 and later always).
-  Alacritty has no graphics at all. Cut-outs and baked crops need macOS.
+  Warp shows one picture for the whole app, through its theme, with find,
+  preview and tuning as in Ghostty — a tuning step reaches the window about a
+  second after the key. Alacritty has no graphics at all. Cut-outs and baked
+  crops need macOS.
 
 [done]: https://img.shields.io/badge/Done-2ea44f?style=flat-square
 [partial]: https://img.shields.io/badge/Partial-e3b341?style=flat-square

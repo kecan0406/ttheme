@@ -44,6 +44,10 @@ main() {
   if ! await_run $pid $dir; then
     print -u2 "the first prompt never finished the commands — the window may have failed to open (see $SANDBOX)"
     (( app || $#keep )) || pkill -f -- $gui || :
+    if [[ $kind[1] == --terminal-app ]] && (( ! $#keep )); then
+      (( was )) || { pkill -x Terminal 2>/dev/null || : }
+      zsh $ROOT/tests/terminal-prefs.zsh restore
+    fi
     return 1
   fi
   sleep 0.6
@@ -54,7 +58,10 @@ main() {
   (( $#keep )) && return 0
   if (( app )); then
     [[ ! -s $SANDBOX/shell.pid ]] || kill -HUP $(<$SANDBOX/shell.pid) 2>/dev/null || :
-    [[ $kind[1] == --terminal-app ]] && (( ! was )) && { pkill -x Terminal 2>/dev/null || : }
+    if [[ $kind[1] == --terminal-app ]]; then
+      (( was )) || { pkill -x Terminal 2>/dev/null || : }
+      zsh $ROOT/tests/terminal-prefs.zsh restore
+    fi
   else
     pkill -f -- $gui || :
   fi

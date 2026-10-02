@@ -13,10 +13,10 @@ painted	pass	pass	pass	pass	pass	fail	pass	pass
 fg-painted	pass	pass	pass	pass	pass	pass	pass	pass
 ansi-painted	pass	pass	pass	pass	pass	pass	pass	fail
 focus-answer	pass	fail	fail	fail	fail	fail	fail	fail
-follow-default	pass	pass	pass	pass	pass	skip	skip	pass
-follow-belief	pass	pass	pass	pass	pass	skip	skip	pass
+follow-default	pass	pass	pass	pass	pass	skip	pass	pass
+follow-belief	pass	pass	pass	pass	pass	skip	pass	pass
 keep-painted	pass	pass	pass	pass	pass	skip	pass	pass
-on-follow	pass	pass	pass	pass	pass	skip	fail	pass
+on-follow	pass	pass	pass	pass	pass	skip	pass	pass
 on-belief	pass	pass	pass	pass	pass	skip	pass	pass
 wear	pass	pass	pass	pass	pass	skip	pass	pass
 wear-painted	pass	pass	pass	pass	pass	skip	pass	pass
@@ -41,6 +41,6 @@ scheme-fresh	fail	fail	fail	fail	fail	fail	fail	pass
 sync-output	pass	pass	pass	pass	pass	pass	skip	skip
 sync-query	pass	pass	fail	pass	pass	pass	pass	pass
 focus-report	pass	pass	pass	pass	pass	fail	skip	skip
-focus-event	skip	skip	skip	skip	skip	skip	skip	pass
+focus-event	skip	skip	skip	skip	skip	skip	pass	pass
 front-tty	pass	fail	fail	fail	fail	fail	fail	fail
 prompt-trap	pass	pass	pass	pass	pass	pass	pass	pass

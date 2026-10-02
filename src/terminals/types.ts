@@ -12,6 +12,7 @@ export const WIRED = [
   'windows-terminal',
   'warp',
   'konsole',
+  'terminal-app',
 ] as const
 export type Wired = (typeof WIRED)[number]
 
@@ -33,6 +34,7 @@ export interface Now extends At {
 export interface Ctx extends Now {
   entries: PaletteEntry[]
   themes: Theme[]
+  host: Host
 }
 
 export interface Out {
@@ -65,7 +67,7 @@ export interface Pointed {
 }
 
 export interface Defaults {
-  key: 'itermBase' | 'konsoleBase'
+  key: 'itermBase' | 'konsoleBase' | 'terminalBase'
   profile(startup: string): string
   base(moment: Moment): Installed
   point(moment: Moment, take: boolean): Pointed | undefined

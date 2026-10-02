@@ -252,7 +252,8 @@ main() {
     return
   fi
   if (( $#tapp )); then
-    ( unset $FOREIGN; GHOSTTY_RESOURCES_DIR=x wire $label $palettes )
+    zsh $ROOT/tests/terminal-prefs.zsh save
+    ( unset $FOREIGN; TERM_PROGRAM=Apple_Terminal wire $label $palettes )
     open_terminal_app "${behind:+1}" || { print -u2 "Terminal.app did not open a window"; return 1 }
     print -r -- "opened a Terminal.app window on it — exit leaves; files stay until the next run"
     return
