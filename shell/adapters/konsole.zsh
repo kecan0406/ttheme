@@ -3,7 +3,7 @@ source $TTHEME_HOME/adapters/_bg.zsh
 zmodload -F zsh/files b:zf_rm b:zf_mkdir 2>/dev/null
 
 typeset -g TTHEME_KONSOLE_SHOWN="" TTHEME_KONSOLE_NAME="" TTHEME_KONSOLE_OWN="" TTHEME_KONSOLE_VIEW="" TTHEME_KONSOLE_VIEWED=""
-typeset -gi TTHEME_KONSOLE_VIEWS=0
+typeset -gi TTHEME_KONSOLE_VIEWS=0 TTHEME_KONSOLE_LINKS=-1
 
 __tt_konsole_wired() { (( ${TTHEME_TERMINALS[(Ie)konsole]} )) }
 
@@ -61,6 +61,31 @@ __tt_konsole_own() {
     printf -v REPLY '#%02x%02x%02x' $c[1] $c[2] $c[3]
     TTHEME_KONSOLE_OWN="ColorScheme=${scheme:-Breeze};UseCustomCursorColor=true;customCursorColor=$REPLY"
   fi
+}
+
+__tt_links() {
+  (( TTHEME_KONSOLE_LINKS >= 0 )) || __tt_konsole_links
+  (( TTHEME_KONSOLE_LINKS ))
+}
+
+__tt_konsole_links() {
+  local file found dir REPLY
+  local -i depth=0
+  TTHEME_KONSOLE_LINKS=0
+  __tt_konsole_ini ${XDG_CONFIG_HOME:-$HOME/.config}/konsolerc 'Desktop Entry' DefaultProfile && file=$REPLY
+  while (( depth++ < 8 )) && [[ -n $file && $file != FALLBACK/ ]]; do
+    found=""
+    for dir in ${XDG_DATA_HOME:-$HOME/.local/share} ${(s.:.)${XDG_DATA_DIRS:-/usr/local/share:/usr/share}}; do
+      [[ -r $dir/konsole/${file%.profile}.profile ]] && { found=$dir/konsole/${file%.profile}.profile; break }
+    done
+    [[ -n $found ]] || return 0
+    if __tt_konsole_ini $found 'Interaction Options' AllowEscapedLinks; then
+      [[ $REPLY == true ]] && TTHEME_KONSOLE_LINKS=1
+      return 0
+    fi
+    file=""
+    __tt_konsole_ini $found General Parent && file=$REPLY
+  done
 }
 
 __tt_konsole_new() {

@@ -58,7 +58,9 @@ get it.
   a Konsole tab repaints by switching color scheme (OSC 50) — the palette's own
   scheme where init wired Konsole, and otherwise, or for colors no palette
   holds (a tone being tuned, browse's catalog), a short-lived scheme the shell
-  writes and deletes again. Any other terminal that speaks OSC 4/10/11 (foot, VTE-based
+  writes and deletes again. Konsole opens a link only where your profile allows
+  escape sequences for links (`AllowEscapedLinks`, off by default), so preview
+  marks a picture's post as a link only there. Any other terminal that speaks OSC 4/10/11 (foot, VTE-based
   terminals…) gets repainting and nothing else.
 - **Colors only** — ttheme sets no font, font size or shader anywhere; those
   stay what you configured in your terminal.

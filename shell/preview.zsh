@@ -308,7 +308,7 @@ __tt_pv_row() {
 __tt_pv_bg_title() {
   local by=${bgby[$tpick]} ref=${bgfrom[$tpick]} url=${bgurl[$tpick]} mark="" sgr=""
   local -i room=$1
-  [[ -n $ref && $url == http(s|)://* ]] && (( ${TTHEME_LINKS[(Ie)$TTHEME_ADAPTER]} )) && mark="⧉ "
+  [[ -n $ref && $url == http(s|)://* ]] && __tt_links && mark="⧉ "
   REPLY=Background${by:+ · $by}${ref:+ · $mark$ref}$2
   (( ${#REPLY} > room )) && REPLY=Background${by:+ · $by}
   (( ${#REPLY} > room )) && REPLY=Background

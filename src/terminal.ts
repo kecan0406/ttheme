@@ -131,8 +131,44 @@ export const TRAITS: Record<Terminal, Traits> = {
   unknown: { links: false, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
 }
 
+function iniValue(text: string, group: string, key: string): string | undefined {
+  let at = ''
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim()
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      at = trimmed.slice(1, -1)
+    } else if (at === group && trimmed.startsWith(`${key}=`)) {
+      return trimmed.slice(key.length + 1)
+    }
+  }
+  return undefined
+}
+
+export function konsoleLinks(env: Env): boolean {
+  const config = env.XDG_CONFIG_HOME ?? join(homedir(), '.config')
+  const rc = join(config, 'konsolerc')
+  let file = existsSync(rc) ? iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile') : undefined
+  for (let depth = 0; depth < 8 && file && file !== 'FALLBACK/'; depth++) {
+    const name = file.endsWith('.profile') ? file : `${file}.profile`
+    const path = konsoleDirs(env)
+      .map((dir) => join(dir, name))
+      .find((candidate) => existsSync(candidate))
+    if (!path) {
+      return false
+    }
+    const text = readFileSync(path, 'utf8')
+    const allow = iniValue(text, 'Interaction Options', 'AllowEscapedLinks')
+    if (allow !== undefined) {
+      return allow === 'true'
+    }
+    file = iniValue(text, 'General', 'Parent')
+  }
+  return false
+}
+
 export function linkable(env: Env): boolean {
-  return TRAITS[detectTerminal(env)].links
+  const terminal = detectTerminal(env)
+  return terminal === 'konsole' ? konsoleLinks(env) : TRAITS[terminal].links
 }
 
 export function showsPictures(env: Env, wired: readonly string[]): boolean {

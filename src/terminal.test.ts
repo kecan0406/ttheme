@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { readdirSync, readFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
 import type { PaletteEntry } from './manifest.ts'
 import { paletteOsc } from './osc.ts'
-import { CLEAR, detectTerminal, livePaint, SETTLE_MS, type Terminal, TRAITS } from './terminal.ts'
+import { CLEAR, detectTerminal, linkable, livePaint, SETTLE_MS, type Terminal, TRAITS } from './terminal.ts'
 
 const root = join(import.meta.dirname, '..')
 const read = (...path: string[]) => readFileSync(join(root, ...path), 'utf8')
@@ -285,4 +286,33 @@ test('a terminal shows pictures only where mise run compat never saw kitty graph
       assert.equal(bands, crop === 'fail', `${terminal}: compat measured kitty-crop ${crop}`)
     }
   }
+})
+
+test('Konsole opens links only where the default profile, or a profile it inherits, allows escaped links', () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-konsole-links-'))
+  const data = join(home, 'share')
+  const env = {
+    KONSOLE_VERSION: '230805',
+    XDG_CONFIG_HOME: home,
+    XDG_DATA_HOME: data,
+    XDG_DATA_DIRS: join(home, 'none'),
+  }
+  mkdirSync(join(data, 'konsole'), { recursive: true })
+  writeFileSync(join(home, 'konsolerc'), '[Desktop Entry]\nDefaultProfile=ttheme-miku.profile\n')
+  writeFileSync(
+    join(data, 'konsole', 'ttheme-miku.profile'),
+    '[Appearance]\nColorScheme=ttheme-miku\n\n[General]\nParent=Own.profile\n',
+  )
+  writeFileSync(join(data, 'konsole', 'Own.profile'), '[General]\nName=Own\n')
+  assert.equal(linkable(env), false)
+  writeFileSync(
+    join(data, 'konsole', 'Own.profile'),
+    '[General]\nName=Own\n\n[Interaction Options]\nAllowEscapedLinks=true\n',
+  )
+  assert.equal(linkable(env), true)
+  writeFileSync(
+    join(data, 'konsole', 'ttheme-miku.profile'),
+    '[General]\nParent=Own.profile\n\n[Interaction Options]\nAllowEscapedLinks=false\n',
+  )
+  assert.equal(linkable(env), false)
 })

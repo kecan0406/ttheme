@@ -2,5 +2,5 @@ terminal	fact	kind	reason
 alacritty	@pictures	cannot	Alacritty has no graphics protocol and no background image, so it shows no picture
 windows-terminal	@pictures	cannot	Windows Terminal shows a picture only as a profile’s backgroundImage, and a pane cannot change its profile, while the settings reload that changes one puts every pane back on its scheme’s colors, so ttheme gives it no picture
 warp	unwired.used.{colors,wears,text}	cannot	Warp paints a tab only through the settings.toml init wires, so a Warp init never wired refuses ttheme use
-konsole	preview-tune.tune.text	cannot	Konsole opens an OSC 8 link only where the profile allows escaped links, off by default, and ttheme writes colors only, so preview names the picture’s post without the ⧉ that marks a link
+konsole	preview-tune.tune.text	cannot	Konsole opens an OSC 8 link only where the profile allows escaped links, off by default, and ttheme writes colors only, so preview marks the post as a link only where the user’s profile allows them
 terminal-app	preview-tune.tune.text	cannot	Terminal.app opens no OSC 8 link and draws no kitty graphics, so preview marks no post with the ⧉ of a link and offers no find, whose results are pictures
