@@ -227,7 +227,7 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       let text: string | undefined
       if (options.text) {
         text = normalized(tab.screen(fixture.place.home))
-        put(label, 'text', digest(text))
+        put(label, 'text', digest(text), undefined, [...fresh, ...(options.text === true ? [] : [options.text])])
         screens.set(`${app.term} ${journey.id}.${label}`, text)
       }
       if (shows.some((pattern) => glob(pattern, `${journey.id}.${label}`))) {

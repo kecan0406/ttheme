@@ -1,4 +1,5 @@
 import type { Tab } from './model.ts'
+import type { Capability } from './terms.ts'
 
 export interface Want {
   want: string
@@ -9,7 +10,7 @@ export interface Want {
 export interface LookOptions extends Want {
   unpainted?: true
   repaints?: number
-  text?: boolean
+  text?: true | Capability
   wears?: boolean
   busy?: boolean
 }
@@ -284,7 +285,7 @@ export const JOURNEYS: Journey[] = [
       await p.launch(a, 'ttheme preview')
       await p.keys(a, 'k', 'i', 't', 'a', 'right')
       await p.expect(a, 'Palette')
-      await p.look('tune', { want: 'kita', text: true, wears: false })
+      await p.look('tune', { want: 'kita', text: 'pictures', wears: false })
       await p.quit(a)
       await p.look('back', { want: 'konata', unpainted: true })
     },
