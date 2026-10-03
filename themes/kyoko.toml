@@ -4,8 +4,13 @@ native_names = ["佐倉杏子"]
 group = "Madoka Magica"
 order = 18
 ansi_source = "Cursor Dark + Magica"
-booru = "sakura_kyouko"
+booru = "sakura_kyoko"
 signature = ["cursor", "ansi11", "foreground"]
+
+[meta.booru_sites]
+konachan = "sakura_kyouko"
+yande = "sakura_kyouko"
+zerochan = "sakura_kyouko"
 
 [colors]
 background = "#201515"

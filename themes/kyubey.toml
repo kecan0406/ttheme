@@ -4,10 +4,11 @@ native_names = ["キュゥべえ"]
 group = "Madoka Magica"
 order = 21
 ansi_source = "Rose Pine Dawn + Magica"
-booru = "kyuubee"
+booru = "kyubey"
 signature = ["cursor", "foreground", "ansi3"]
 
 [meta.booru_sites]
+konachan = "kyuubee"
 zerochan = "kyubee"
 
 [colors]

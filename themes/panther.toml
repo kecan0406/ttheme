@@ -4,8 +4,13 @@ native_names = ["高巻杏", "パンサー"]
 group = "Persona 5"
 order = 51
 ansi_source = "Warm Neon + Phantom"
-booru = "takamaki_anne"
+booru = "takamaki_ann"
 signature = ["cursor", "ansi3", "ansi4"]
+
+[meta.booru_sites]
+konachan = "takamaki_anne"
+yande = "takamaki_anne"
+zerochan = "takamaki_anne"
 
 [colors]
 background = "#201514"

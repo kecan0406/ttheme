@@ -4,8 +4,13 @@ native_names = ["山田リョウ"]
 group = "Bocchi the Rock!"
 order = 31
 ansi_source = "TokyoNight Storm"
-booru = "yamada_ryou"
+booru = "yamada_ryo"
 signature = ["cursor", "ansi4", "ansi6"]
+
+[meta.booru_sites]
+konachan = "yamada_ryou"
+yande = "yamada_ryou"
+zerochan = "yamada_ryou"
 
 [colors]
 background = "#19180d"

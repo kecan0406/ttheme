@@ -4,8 +4,13 @@ native_names = ["カレン・シュタットフェルト", "紅月カレン"]
 group = "Code Geass"
 order = 118
 ansi_source = "Kolorit + Geass"
-booru = "kallen_stadtfeld"
+booru = "kouzuki_kallen"
 signature = ["cursor", "selection", "ansi12"]
+
+[meta.booru_sites]
+konachan = "kallen_stadtfeld"
+yande = "kallen_stadtfeld"
+zerochan = "kallen_stadtfeld"
 
 [colors]
 background = "#201516"

@@ -4,8 +4,13 @@ native_names = ["ナナリー・ランペルージ"]
 group = "Code Geass"
 order = 119
 ansi_source = "London Embankment Dusk + Geass"
-booru = "nunnally_lamperouge"
+booru = "nunnally_vi_britannia"
 signature = ["cursor", "ansi12", "ansi5"]
+
+[meta.booru_sites]
+konachan = "nunnally_lamperouge"
+yande = "nunnally_lamperouge"
+zerochan = "nunnally_lamperouge"
 
 [colors]
 background = "#1f160d"

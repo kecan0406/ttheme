@@ -4,11 +4,12 @@ native_names = ["喜多川祐介", "フォックス"]
 group = "Persona 5"
 order = 52
 ansi_source = "Nord"
-booru = "kitagawa_yuusuke"
+booru = "kitagawa_yusuke"
 signature = ["cursor", "foreground", "ansi1"]
 
 [meta.booru_sites]
-konachan = "kitagawa_yusuke"
+yande = "kitagawa_yuusuke"
+zerochan = "kitagawa_yuusuke"
 
 [colors]
 background = "#12181d"

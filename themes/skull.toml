@@ -4,8 +4,13 @@ native_names = ["坂本竜司", "スカル"]
 group = "Persona 5"
 order = 50
 ansi_source = "Desert"
-booru = "sakamoto_ryuuji"
+booru = "sakamoto_ryuji"
 signature = ["cursor", "ansi1", "foreground"]
+
+[meta.booru_sites]
+konachan = "sakamoto_ryuuji"
+yande = "sakamoto_ryuuji"
+zerochan = "sakamoto_ryuuji"
 
 [colors]
 background = "#1b170c"

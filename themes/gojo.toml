@@ -4,8 +4,13 @@ native_names = ["五条悟"]
 group = "Jujutsu Kaisen"
 order = 102
 ansi_source = "Horizon + Jujutsu"
-booru = "gojou_satoru"
+booru = "gojo_satoru"
 signature = ["cursor", "foreground", "ansi13"]
+
+[meta.booru_sites]
+konachan = "gojou_satoru"
+yande = "gojou_satoru"
+zerochan = "gojou_satoru"
 
 [colors]
 background = "#11191c"

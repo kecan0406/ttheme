@@ -4,8 +4,13 @@ native_names = ["虎杖悠仁"]
 group = "Jujutsu Kaisen"
 order = 103
 ansi_source = "Rose Pine Moon + Jujutsu"
-booru = "itadori_yuuji"
+booru = "itadori_yuji"
 signature = ["cursor", "ansi3", "ansi1"]
+
+[meta.booru_sites]
+konachan = "itadori_yuuji"
+yande = "itadori_yuuji"
+zerochan = "itadori_yuuji"
 
 [colors]
 background = "#211513"
