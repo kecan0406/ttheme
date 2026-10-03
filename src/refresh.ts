@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
+import pkg from '../package.json' with { type: 'json' }
 import {
   available,
   catalogPath,
@@ -15,6 +16,7 @@ import {
   readCatalog,
   readKept,
   remoteId,
+  TooNew,
   writeCatalog,
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
@@ -227,6 +229,29 @@ export function updateNote(r: Refreshed): string | undefined {
   return changed(r.change) ? `Updated ${refreshLine(r)}` : undefined
 }
 
+const RELEASE = /^(\d+)\.(\d+)\.(\d+)$/
+
+export function isNewer(latest: string, running: string): boolean {
+  const a = RELEASE.exec(latest)
+  const b = RELEASE.exec(running)
+  if (!a || !b) {
+    return false
+  }
+  for (const part of [1, 2, 3]) {
+    const gap = Number(a[part]) - Number(b[part])
+    if (gap !== 0) {
+      return gap > 0
+    }
+  }
+  return false
+}
+
+export function outdatedNote(r: Refreshed, running: string = pkg.version): string | undefined {
+  return r.version && isNewer(r.version, running)
+    ? `ttheme ${r.version} is out, you have ${running} — \`npx @kecan0406/ttheme@latest init\` updates it`
+    : undefined
+}
+
 export async function applyRefreshed(
   home: string,
   state: Installed,
@@ -266,18 +291,27 @@ export async function autoRefresh(home = configHome()): Promise<void> {
     }
     const was = readKept(home)
     const line = pending(`Checking ${due.map(shownSource).join(', ')} for updates`)
-    const done = (await Promise.allSettled(due.map((source) => refreshMarket(home, source, AUTO_TIMEOUT)))).flatMap(
-      (r) => (r.status === 'fulfilled' ? [r.value] : []),
-    )
+    const settled = await Promise.allSettled(due.map((source) => refreshMarket(home, source, AUTO_TIMEOUT)))
     line.done()
+    const done = settled.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []))
+    const refused = due.flatMap((source, at) => {
+      const result = settled[at]
+      return result?.status === 'rejected' && result.reason instanceof TooNew
+        ? [`${shownSource(source)}: ${result.reason.message}`]
+        : []
+    })
     const notes = done.flatMap((r) => updateNote(r) ?? [])
-    if (notes.length === 0) {
-      return
-    }
     for (const note of notes) {
       console.log(note)
     }
-    await applyRefreshed(home, state, was, done)
+    if (notes.length > 0) {
+      await applyRefreshed(home, state, was, done)
+    }
+    if (process.stdout.isTTY) {
+      for (const note of [...refused, ...done.flatMap((r) => outdatedNote(r) ?? [])]) {
+        console.log(note)
+      }
+    }
   } catch {
     return
   }

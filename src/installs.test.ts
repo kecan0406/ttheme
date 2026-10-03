@@ -6,7 +6,7 @@ import { test } from 'node:test'
 
 import { writeCatalog } from './catalog.ts'
 import { inMarket, runAdd, runDefault } from './installs.ts'
-import type { Manifest, PaletteEntry } from './manifest.ts'
+import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { withMarkets } from './markets.ts'
 import { readInstalled, sync, writeInstalled } from './palettes.ts'
 
@@ -29,6 +29,7 @@ function entry(name: string, order: number): PaletteEntry {
 }
 
 const catalog: Manifest = {
+  schema: SCHEMA,
   version: '0.1.0',
   gate: [],
   placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },

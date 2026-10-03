@@ -1,8 +1,25 @@
 import assert from 'node:assert/strict'
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { test } from 'node:test'
 
-import type { PaletteEntry } from './manifest.ts'
-import { diffEntries, isDue, REFRESH_AFTER, RETRY_AFTER, refreshLine, updateNote } from './refresh.ts'
+import { TooNew } from './catalog.ts'
+import { type PaletteEntry, SCHEMA } from './manifest.ts'
+import {
+  diffEntries,
+  isDue,
+  isNewer,
+  outdatedNote,
+  REFRESH_AFTER,
+  RETRY_AFTER,
+  type Refreshed,
+  readTries,
+  refreshLine,
+  refreshMarket,
+  updateNote,
+} from './refresh.ts'
+import { cachePath, marketsDir } from './sources.ts'
 
 const now = 1_000_000_000_000
 
@@ -33,4 +50,59 @@ test('an update is noted only when something changed', () => {
     updateNote({ ...grown, change: { added: ['d'], changed: ['b'], gone: [] } }),
     'Updated official 1.0.50 — 3 palettes (1 new, 1 changed)',
   )
+})
+
+test('isNewer compares releases part by part and stays quiet about a version that is not a plain release', () => {
+  assert.equal(isNewer('1.0.51', '1.0.50'), true)
+  assert.equal(isNewer('1.1.0', '1.0.99'), true)
+  assert.equal(isNewer('2.0.0', '1.99.99'), true)
+  assert.equal(isNewer('1.0.10', '1.0.9'), true)
+  assert.equal(isNewer('1.0.50', '1.0.50'), false)
+  assert.equal(isNewer('1.0.49', '1.0.50'), false)
+  assert.equal(isNewer('1.0.51-rc.1', '1.0.50'), false)
+  assert.equal(isNewer('1.0.51', 'dev'), false)
+})
+
+const official: Refreshed = {
+  source: 'official',
+  id: 'official',
+  version: '1.0.51',
+  count: 3,
+  change: { added: [], changed: [], gone: [] },
+}
+
+test('a refreshed official catalog newer than the running ttheme says how to update, and a market never does', () => {
+  assert.equal(
+    outdatedNote(official, '1.0.50'),
+    'ttheme 1.0.51 is out, you have 1.0.50 — `npx @kecan0406/ttheme@latest init` updates it',
+  )
+  assert.equal(outdatedNote(official, '1.0.51'), undefined)
+  assert.equal(outdatedNote(official, '1.0.52'), undefined)
+  const { version: _, ...market } = official
+  assert.equal(outdatedNote(market, '1.0.50'), undefined)
+})
+
+test('a market index newer than ttheme reads leaves the cached copy alone and records why, so browse can show it', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-refresh-'))
+  const source = 'ann/ttheme-pastel'
+  const cached = `${JSON.stringify({ schema: SCHEMA, version: '1.0.0', owner: 'ann', name: 'pastel', palettes: [] })}\n`
+  mkdirSync(marketsDir(home), { recursive: true })
+  writeFileSync(cachePath(home, source), cached)
+  const newer = JSON.stringify({ schema: SCHEMA + 1, version: '9.0.0', owner: 'ann', name: 'pastel', palettes: [] })
+  const realFetch = globalThis.fetch
+  const realState = process.env.XDG_STATE_HOME
+  globalThis.fetch = (async () => new Response(newer)) as unknown as typeof fetch
+  process.env.XDG_STATE_HOME = join(home, 'state')
+  try {
+    await assert.rejects(refreshMarket(home, source), TooNew)
+    assert.equal(readFileSync(cachePath(home, source), 'utf8'), cached)
+    assert.match(readTries()[source]?.error ?? '', /newer than the schema \d+ this ttheme reads.*ttheme@latest init/)
+  } finally {
+    globalThis.fetch = realFetch
+    if (realState === undefined) {
+      delete process.env.XDG_STATE_HOME
+    } else {
+      process.env.XDG_STATE_HOME = realState
+    }
+  }
 })

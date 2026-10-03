@@ -29,7 +29,10 @@ export interface PaletteEntry {
   pictures?: SharedPicture[]
 }
 
+export const SCHEMA = 1
+
 export interface Manifest {
+  schema: number
   version: string
   gate: GateRule[]
   placement: typeof PLACEMENT
@@ -139,5 +142,5 @@ export function listed(palettes: PaletteEntry[]): PaletteEntry[] {
 }
 
 export function emptyManifest(): Manifest {
-  return { version: pkg.version, gate: GATE_RULES, placement: PLACEMENT, palettes: [] }
+  return { schema: SCHEMA, version: pkg.version, gate: GATE_RULES, placement: PLACEMENT, palettes: [] }
 }

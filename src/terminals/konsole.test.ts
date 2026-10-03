@@ -6,7 +6,7 @@ import { test } from 'node:test'
 
 import { backupPath } from '../edits.ts'
 import { konsoleScheme } from '../emit/konsole.ts'
-import { type Manifest, type PaletteEntry, toTheme } from '../manifest.ts'
+import { type Manifest, type PaletteEntry, SCHEMA, toTheme } from '../manifest.ts'
 import { commit, type Installed, sync, wiringNext, wiringPlan, writeInstalled } from '../palettes.ts'
 import { applyUninstall, planUninstall } from '../uninstall.ts'
 import { baseLook, iniValue, konsole, konsoleData, konsoleProfile, konsolerc, withDefaultProfile } from './konsole.ts'
@@ -32,6 +32,7 @@ function entry(name: string, order: number, partial: Partial<PaletteEntry> = {})
 }
 
 const catalog: Manifest = {
+  schema: SCHEMA,
   version: '0.1.0',
   gate: [],
   placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },

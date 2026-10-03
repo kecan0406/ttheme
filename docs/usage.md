@@ -480,7 +480,13 @@ A market with auto-update on does that by itself: when a copy is a day old,
 `browse` in the background while it is open, the others waiting a few seconds
 at most — and say so (`Updated official 1.0.50 — 153 palettes (3 new)`) when
 something changed. A failed try is kept quiet, shown under Errors, and tried
-again an hour later. Nothing ever runs from the shell or a new tab.
+again an hour later; the one exception is an index written in a newer schema
+than your ttheme reads, which a terminal is told about
+(`github.com/alice/ttheme-pastel: catalog is schema 2, newer than the schema 1
+this ttheme reads — npx @kecan0406/ttheme@latest init updates it`) while the
+copy from the last update stays in use. After refreshing the official catalog
+ttheme also says when a newer release than yours is out — `update` always, the
+automatic refresh in a terminal. Nothing ever runs from the shell or a new tab.
 
 ## Markets
 
@@ -535,6 +541,13 @@ only where it differs from the default; the official catalog is cached in
 `~/.config/ttheme/markets/<owner>--<repository>.json`, whose age is how auto-update
 tells a day has passed. Failed tries are kept in
 `~/.local/state/ttheme/markets.json`.
+
+Every index carries a `schema` number beside its `version` (the release that
+wrote it). It is raised only when a change would make an older ttheme misread
+the index, never for a palette or an optional field added; a ttheme that finds
+a higher one than it reads refuses the index and keeps its last copy. An index
+with no `schema` is schema 1 — the format before the field existed, which a
+market pinned to an older `#ref` still holds.
 
 ## Your own palettes
 

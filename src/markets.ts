@@ -437,8 +437,8 @@ function scaffold(dir: string, identity: Identity): void {
 }
 
 function writeIndex(dir: string, { owner, name }: Identity, palettes: PaletteEntry[]): void {
-  const { version, gate, placement } = emptyManifest()
-  const index: MarketIndex = { version, gate, placement, owner, name, palettes }
+  const { schema, version, gate, placement } = emptyManifest()
+  const index: MarketIndex = { schema, version, gate, placement, owner, name, palettes }
   writeAtomic(join(dir, INDEX), `${JSON.stringify(index, null, 2)}\n`)
 }
 

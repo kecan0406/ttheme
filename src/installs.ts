@@ -11,7 +11,7 @@ import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, readInstalled, startupPalette, sync } from './palettes.ts'
 import { pending, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
-import { refreshLine, refreshMarket } from './refresh.ts'
+import { outdatedNote, refreshLine, refreshMarket } from './refresh.ts'
 import { installedPath, isLocal, marketSources, OFFICIAL, shownSource } from './sources.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
@@ -213,6 +213,7 @@ export async function runUpdate(): Promise<void> {
   }
   const remote = markets.filter((source) => !isLocal(source))
   const waiting = new Set(remote)
+  const behind: string[] = []
   const line = pending()
   const show = (): void =>
     line.set(
@@ -223,7 +224,12 @@ export async function runUpdate(): Promise<void> {
     remote.map(async (source) => {
       let text: string
       try {
-        text = refreshLine(await refreshMarket(home, source))
+        const refreshed = await refreshMarket(home, source)
+        text = refreshLine(refreshed)
+        const note = outdatedNote(refreshed)
+        if (note) {
+          behind.push(note)
+        }
       } catch (error) {
         text = kept(source, error)
       }
@@ -237,6 +243,9 @@ export async function runUpdate(): Promise<void> {
     }),
   )
   line.done()
+  for (const note of behind) {
+    console.log(note)
+  }
   if (!existsSync(installedPath(home))) {
     return
   }

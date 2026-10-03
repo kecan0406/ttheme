@@ -13,10 +13,11 @@ import {
   readCatalog,
   search,
   siteTags,
+  TooNew,
   writeCatalog,
   writeKept,
 } from './catalog.ts'
-import type { PaletteEntry } from './manifest.ts'
+import { type PaletteEntry, SCHEMA } from './manifest.ts'
 import { paletteToml } from './own.ts'
 
 function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
@@ -39,7 +40,7 @@ function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
 }
 
 function catalogJson(palettes: PaletteEntry[]): string {
-  return JSON.stringify({ version: '0.1.0', gate: [], palettes })
+  return JSON.stringify({ schema: SCHEMA, version: '0.1.0', gate: [], palettes })
 }
 
 test('parseCatalog rejects a document without palettes', () => {
@@ -57,6 +58,34 @@ test('parseCatalog rejects an entry missing its 16 ANSI colors', () => {
 
 test('parseCatalog accepts a well formed catalog', () => {
   assert.equal(parseCatalog(catalogJson([entry()])).palettes[0]?.name, 'gojo')
+})
+
+test('parseCatalog reads a document written before schemas as schema 1, which is what a pinned old ref holds', () => {
+  const { schema: _, ...before } = JSON.parse(catalogJson([entry()]))
+  assert.equal(parseCatalog(JSON.stringify(before)).schema, 1)
+  assert.equal(parseCatalog(catalogJson([entry()])).schema, SCHEMA)
+})
+
+test('parseCatalog refuses a schema newer than it reads and says how to update', () => {
+  const newer = JSON.stringify({ ...JSON.parse(catalogJson([entry()])), schema: SCHEMA + 1 })
+  assert.throws(
+    () => parseCatalog(newer),
+    (error: Error) =>
+      error instanceof TooNew &&
+      error.message.includes(`schema ${SCHEMA + 1}`) &&
+      error.message.includes('npx @kecan0406/ttheme@latest init'),
+  )
+})
+
+test('parseCatalog judges the schema before the rest, so a shape it does not know reads as a newer ttheme and not as damage', () => {
+  assert.throws(() => parseCatalog(JSON.stringify({ schema: SCHEMA + 1, palettes: 'another shape' })), TooNew)
+})
+
+test('parseCatalog refuses a schema that is not a whole number from 1', () => {
+  const doc = JSON.parse(catalogJson([entry()]))
+  for (const schema of [0, -1, 1.5, '1', null, [1]]) {
+    assert.throws(() => parseCatalog(JSON.stringify({ ...doc, schema })), /schema is not a whole number from 1/)
+  }
 })
 
 test('gateFailures is empty when every rule is met', () => {
@@ -132,6 +161,7 @@ test('gateFailures measures an entry that carries no gate', () => {
 test('readCatalog puts each added market after the series under its own name, and available adds local markets and kept ones', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-available-'))
   const skeleton = {
+    schema: SCHEMA,
     version: '0.1.0',
     gate: [],
     placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },

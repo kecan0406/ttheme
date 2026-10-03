@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { available, readKept, untuned } from './catalog.ts'
-import type { Manifest, PaletteEntry } from './manifest.ts'
+import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { sync } from './palettes.ts'
 import { overrideOf, readTone, slotColors, tonedEntry, tonePath, tuned, withTone, writeTone } from './tone.ts'
 
@@ -29,6 +29,7 @@ function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry 
 }
 
 const catalog: Manifest = {
+  schema: SCHEMA,
   version: '0.1.0',
   gate: [],
   placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },

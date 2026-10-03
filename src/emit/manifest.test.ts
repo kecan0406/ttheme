@@ -3,11 +3,12 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import pkg from '../../package.json' with { type: 'json' }
-import { type PaletteEntry, swatch } from '../manifest.ts'
+import { type PaletteEntry, SCHEMA, swatch } from '../manifest.ts'
 import { loadThemes } from '../theme.ts'
 import { manifest } from './manifest.ts'
 
 const {
+  schema,
   version,
   gate: rules,
   palettes: entries,
@@ -15,6 +16,34 @@ const {
 
 test('manifest states which build produced it', () => {
   assert.equal(version, pkg.version)
+})
+
+test('manifest states the schema it is written in', () => {
+  assert.equal(schema, SCHEMA)
+})
+
+const SCHEMA_1_FIELDS = [
+  'name',
+  'group',
+  'order',
+  'ansiSource',
+  'background',
+  'foreground',
+  'cursor',
+  'selection',
+  'signature',
+  'signatureSlots',
+  'ansi',
+  'gate',
+  'backdrop',
+]
+
+test('every entry keeps the fields a schema 1 reader needs — dropping or renaming one is a new SCHEMA', () => {
+  for (const e of entries) {
+    for (const field of SCHEMA_1_FIELDS) {
+      assert.ok(field in e, `${e.name}: ${field} is gone, so older ttheme would misread it — raise SCHEMA`)
+    }
+  }
 })
 
 test('manifest carries every theme in display order', () => {
