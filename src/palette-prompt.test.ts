@@ -67,6 +67,16 @@ test('matchesPalette filters by name, group and native title', () => {
   assert.ok(!matchesPalette(madoka, 'rin'))
 })
 
+test('matchesPalette ignores spaces and symbols on both sides, since a typed space never reaches the filter', () => {
+  const madoka = entries[3]
+  assert.ok(madoka)
+  assert.ok(matchesPalette(madoka, 'madokamagica'))
+  assert.ok(matchesPalette(madoka, 'Madoka Magica'))
+  assert.ok(matchesPalette(madoka, '魔法少女まどかマギカ'))
+  assert.ok(matchesPalette(madoka, '☆'))
+  assert.ok(!matchesPalette(madoka, 'madokarin'))
+})
+
 test('folded rows show group headers only, without the default palette', () => {
   const rows = pickerRows(entries, new Set(), '')
   assert.deepEqual(

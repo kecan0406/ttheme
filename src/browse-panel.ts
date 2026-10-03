@@ -20,6 +20,7 @@ import { GATE_RULES } from './contrast.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { type Repository, repositorySource } from './markets.ts'
+import { containsText } from './names.ts'
 import {
   type ListRow,
   PaletteList,
@@ -905,8 +906,7 @@ export class BrowsePanel {
   }
 
   private marketRows(): MarketRow[] {
-    const query = this.fields.markets.value.trim().toLowerCase()
-    const hit = (...fields: string[]) => query === '' || fields.some((f) => f.toLowerCase().includes(query))
+    const hit = (...fields: string[]) => containsText(fields, this.fields.markets.value)
     const known = [...this.markets, ...this.adds.values()]
     const rows: MarketRow[] = known
       .filter((m) => hit(m.id, m.shown, m.source))
@@ -941,8 +941,7 @@ export class BrowsePanel {
   }
 
   private problemRows(): Problem[] {
-    const query = this.fields.errors.value.trim().toLowerCase()
-    return this.problemList().filter((p) => query === '' || `${p.where} ${p.message}`.toLowerCase().includes(query))
+    return this.problemList().filter((p) => containsText([`${p.where} ${p.message}`], this.fields.errors.value))
   }
 
   private at<T>(rows: T[], key: 'markets' | 'errors', rule: (row: T | undefined) => boolean = () => false): number {

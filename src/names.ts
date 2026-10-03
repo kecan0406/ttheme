@@ -61,6 +61,15 @@ export function searchKey(text: string): string {
     .replace(SPACE, '')
 }
 
+export function containsText(fields: readonly string[], query: string): boolean {
+  const key = searchKey(query)
+  if (key === '') {
+    const raw = query.toLowerCase()
+    return fields.some((field) => field.toLowerCase().includes(raw))
+  }
+  return fields.some((field) => searchKey(field).includes(key))
+}
+
 function long(key: string): boolean {
   return key.length >= 2 || /[\p{Script=Han}\p{Script=Hangul}\p{Script=Hiragana}]/u.test(key)
 }

@@ -131,6 +131,10 @@ test('search matches the palette, the series and the ANSI source', () => {
     search(palettes, 'vauxe').map((p) => p.name),
     ['miku'],
   )
+  assert.deepEqual(
+    search(palettes, 'vauxemiku').map((p) => p.name),
+    ['miku'],
+  )
 })
 
 test('booruTags finds the booru tags that hold what was typed, this palette and its series first', () => {
