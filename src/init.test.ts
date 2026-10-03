@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSy
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import { test } from 'node:test'
+import { readCatalog } from './catalog.ts'
 import {
   againCatalog,
   applyInit,
@@ -13,7 +14,8 @@ import {
   planInit,
   planUpgrade,
 } from './init.ts'
-import type { Installed } from './palettes.ts'
+import { SCHEMA } from './manifest.ts'
+import { type Installed, sync } from './palettes.ts'
 
 function manifestFixture() {
   const palette = (name: string, order: number, role?: 'default') => ({
@@ -33,6 +35,7 @@ function manifestFixture() {
     gate: [21, 21, 0, 21, 21],
   })
   return {
+    schema: SCHEMA,
     version: '0.0.0',
     gate: [],
     palettes: [palette('neutral', 1, 'default'), palette('miku', 2)],
@@ -44,7 +47,7 @@ function withMarkets(paths: InitPaths): string {
   mkdirSync(join(dust, 'palettes'), { recursive: true })
   writeFileSync(
     join(dust, 'ttheme-market.json'),
-    JSON.stringify({ version: '0.0.0', owner: 'kec', name: 'moss', palettes: [] }),
+    JSON.stringify({ schema: SCHEMA, version: '0.0.0', owner: 'kec', name: 'moss', palettes: [] }),
   )
   writeFileSync(
     join(dust, 'palettes', 'fern.toml'),
@@ -326,6 +329,25 @@ test('setting it up again keeps the markets, their auto-update, the handle and w
     readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8'),
     /^theme = ttheme-alice--pastel--dusk$/m,
   )
+})
+
+test('an upgrade keeps what came from markets when the caches it finds were written before schemas existed', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options({ palettes: ['miku'] }), paths))
+  const dust = withMarkets(paths)
+  const home = join(paths.configHome, 'ttheme')
+  const palettes = ['miku', 'alice@pastel/dusk', 'kec@moss/fern']
+  const state = { terminals: ['ghostty' as const], markets: ['official', 'alice/pastel', dust], palettes }
+  writeFileSync(join(home, 'installed.json'), JSON.stringify(state))
+  sync(paths.configHome, readCatalog(paths.configHome), state)
+  for (const file of [join(home, 'catalog.json'), join(home, 'markets', 'alice--pastel.json')]) {
+    const { schema: _, ...before } = JSON.parse(readFileSync(file, 'utf8'))
+    writeFileSync(file, JSON.stringify(before))
+  }
+  assert.throws(() => readCatalog(paths.configHome, false), /no schema/)
+  const current = installedState(paths.configHome)
+  assert.ok(current)
+  assert.deepEqual(planUpgrade(current, paths).installed.palettes, palettes)
 })
 
 test('setting it up again offers no official palette once the official catalog was removed', () => {

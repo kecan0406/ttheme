@@ -6,7 +6,7 @@ import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
-import { available, readCatalog, writeCatalog } from './catalog.ts'
+import { available, parseCatalog, readCatalog, writeCatalog } from './catalog.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { pickPalettes } from './installs.ts'
 import { liveOf } from './live.ts'
@@ -67,7 +67,7 @@ function copyDir(copies: InitPlan['copies'], from: string, to: string): void {
 }
 
 export function loadManifest(root: string): Manifest {
-  return JSON.parse(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
+  return parseCatalog(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
 }
 
 export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
@@ -111,9 +111,9 @@ export function installedState(configHome: string): Installed | undefined {
   }
 }
 
-function currentPalettes(configHome: string): PaletteEntry[] {
+function currentPalettes(configHome: string, official: Manifest): PaletteEntry[] {
   try {
-    return available(configHome, readCatalog(configHome), false).palettes
+    return available(configHome, readCatalog(configHome, false, official), false).palettes
   } catch {
     return []
   }
@@ -123,7 +123,7 @@ export function againCatalog(state: Installed, paths: InitPaths): Manifest {
   const bundled = loadManifest(paths.root)
   const official = marketsOf(state.markets).includes(OFFICIAL) ? bundled.palettes : []
   const names = new Set(official.map((e) => e.name))
-  const others = currentPalettes(paths.configHome).filter(
+  const others = currentPalettes(paths.configHome, bundled).filter(
     (e) => !names.has(e.name) && (marketOf(e.name) !== undefined || state.palettes.includes(e.name)),
   )
   return { ...bundled, palettes: [...official, ...others] }
@@ -153,7 +153,9 @@ export function planAgain(state: Installed, opts: InitOptions, paths: InitPaths)
 
 export function planUpgrade(state: Installed, paths: InitPaths): InitPlan {
   const plan = planInit({ terminals: state.terminals, palettes: state.palettes, off: state.off }, paths)
-  const known = new Set([...plan.catalog.palettes, ...currentPalettes(paths.configHome)].map((e) => e.name))
+  const known = new Set(
+    [...plan.catalog.palettes, ...currentPalettes(paths.configHome, plan.catalog)].map((e) => e.name),
+  )
   const palettes = state.palettes.filter((n) => known.has(n))
   const gone = state.palettes.filter((n) => !known.has(n))
   const { startup, ...rest } = state

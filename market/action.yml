@@ -4,6 +4,11 @@ branding:
   icon: droplet
   color: purple
 
+inputs:
+  version:
+    description: The ttheme release that builds the index, such as 1.2.11, or latest
+    default: latest
+
 runs:
   using: composite
   steps:
@@ -13,7 +18,9 @@ runs:
         node-version: "24"
     - name: build the index
       shell: bash
-      run: npx -y @kecan0406/ttheme@latest market build .
+      env:
+        TTHEME_VERSION: ${{ inputs.version }}
+      run: npx -y "@kecan0406/ttheme@${TTHEME_VERSION}" market build .
     - name: commit it
       shell: bash
       run: |

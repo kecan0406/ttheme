@@ -11,7 +11,7 @@ import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, readInstalled, startupPalette, sync } from './palettes.ts'
 import { pending, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
-import { refreshLine, refreshMarket } from './refresh.ts'
+import { attempt, failureLine, outdatedNote, refreshLine } from './refresh.ts'
 import { installedPath, isLocal, marketSources, OFFICIAL, shownSource } from './sources.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
@@ -202,17 +202,18 @@ export async function runUpdate(): Promise<void> {
   if (markets.length === 0) {
     console.log('No markets to update — `ttheme market add official` brings the ttheme catalog back')
   }
-  const kept = (source: string, error: unknown): string =>
-    `${shownSource(source)}: ${(error as Error).message} — kept the copy from the last update`
+  const kept = (source: string, failure: Error): string =>
+    `${failureLine(source, failure)} — kept the copy from the last update`
   for (const source of markets.filter(isLocal)) {
     try {
       console.log(`  ${localLine(home, source)}`)
     } catch (error) {
-      console.log(`  ${kept(source, error)}`)
+      console.log(`  ${kept(source, error as Error)}`)
     }
   }
   const remote = markets.filter((source) => !isLocal(source))
   const waiting = new Set(remote)
+  const behind: string[] = []
   const line = pending()
   const show = (): void =>
     line.set(
@@ -221,11 +222,16 @@ export async function runUpdate(): Promise<void> {
   show()
   await Promise.all(
     remote.map(async (source) => {
+      const outcome = await attempt(home, source)
       let text: string
-      try {
-        text = refreshLine(await refreshMarket(home, source))
-      } catch (error) {
-        text = kept(source, error)
+      if ('refreshed' in outcome) {
+        text = refreshLine(outcome.refreshed)
+        const note = outdatedNote(outcome.refreshed)
+        if (note) {
+          behind.push(note)
+        }
+      } else {
+        text = kept(source, outcome.failure)
       }
       waiting.delete(source)
       if (waiting.size > 0) {
@@ -237,6 +243,9 @@ export async function runUpdate(): Promise<void> {
     }),
   )
   line.done()
+  for (const note of behind) {
+    console.log(note)
+  }
   if (!existsSync(installedPath(home))) {
     return
   }

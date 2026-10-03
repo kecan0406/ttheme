@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { backupPath } from './edits.ts'
-import type { Manifest, PaletteEntry } from './manifest.ts'
+import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { type Installed, sync, writeInstalled } from './palettes.ts'
 import type { Host } from './terminals/types.ts'
 import { applyUninstall, planUninstall, type UninstallPaths } from './uninstall.ts'
@@ -29,9 +29,9 @@ function entry(name: string, order: number): PaletteEntry {
 }
 
 const catalog: Manifest = {
+  schema: SCHEMA,
   version: '0.1.0',
   gate: [],
-  placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
   palettes: [entry('gojo', 1), entry('geto', 2)],
 }
 

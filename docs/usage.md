@@ -478,9 +478,15 @@ market stays installed from the copy the last change kept
 A market with auto-update on does that by itself: when a copy is a day old,
 `browse`, `add`, `remove`, `market`, `default`, `on` and `off` fetch it first —
 `browse` in the background while it is open, the others waiting a few seconds
-at most — and say so (`Updated official 1.0.50 — 153 palettes (3 new)`) when
-something changed. A failed try is kept quiet, shown under Errors, and tried
-again an hour later. Nothing ever runs from the shell or a new tab.
+at most — and say so on your terminal, never into a pipe
+(`Updated official 1.0.50 — 153 palettes (3 new)`), when something changed. A failed try is kept quiet, shown under Errors, and tried
+again an hour later; the one exception is an index written in a newer schema
+than your ttheme reads, which a terminal is told about
+(`github.com/alice/ttheme-pastel: catalog is schema 2, newer than the schema 1
+this ttheme reads — npx @kecan0406/ttheme@latest init updates it`) while the
+copy from the last update stays in use. After refreshing the official catalog
+ttheme also says when a newer release than yours is out — `update` always, the
+automatic refresh in a terminal. Nothing ever runs from the shell or a new tab.
 
 ## Markets
 
@@ -535,6 +541,14 @@ only where it differs from the default; the official catalog is cached in
 `~/.config/ttheme/markets/<owner>--<repository>.json`, whose age is how auto-update
 tells a day has passed. Failed tries are kept in
 `~/.local/state/ttheme/markets.json`.
+
+Every index carries a `schema` number beside its `version` (the release that
+wrote it). It is raised only when a change would make an older ttheme misread
+the index, never for a palette or an optional field added; a ttheme that finds
+a higher one than it reads refuses the index and keeps its last copy, and so
+does an index with none: a market written before the field existed runs its
+action once more (`ttheme market build` by hand), and `ttheme update` fetches
+it.
 
 ## Your own palettes
 
@@ -623,7 +637,7 @@ that misses the gate and prints the numbers, and `check --fix` writes colors tha
 pass.
 
 The folder is a repository layout already, with a workflow that rebuilds the
-index on every push. `ttheme market init` prints the `git` and `gh` commands
+index whenever `palettes/` changes (or by hand from the Actions tab). `ttheme market init` prints the `git` and `gh` commands
 that publish it as `<you>/ttheme-<name>` with the `ttheme-market` topic; after
 that, anyone runs `ttheme market add <you>/ttheme-<name>`.
 

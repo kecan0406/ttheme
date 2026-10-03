@@ -16,7 +16,7 @@ import { test } from 'node:test'
 
 import { writeCatalog } from './catalog.ts'
 import { warpPictureFile } from './emit/warp.ts'
-import { type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
+import { type Manifest, type PaletteEntry, SCHEMA, toTheme } from './manifest.ts'
 import {
   forget,
   type Installed,
@@ -55,9 +55,9 @@ function entry(name: string, order: number, partial: Partial<PaletteEntry> = {})
 }
 
 const catalog: Manifest = {
+  schema: SCHEMA,
   version: '0.1.0',
   gate: [],
-  placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
   palettes: [entry('neutral', 1, { default: true }), entry('gojo', 2), entry('geto', 3)],
 }
 

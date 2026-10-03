@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import type { Manifest, PaletteEntry } from '../manifest.ts'
+import { type Manifest, type PaletteEntry, SCHEMA } from '../manifest.ts'
 import { type Installed, pointDefaults, sync, withBases } from '../palettes.ts'
 import { TERMINAL_JS, terminalScript } from './terminal-app.ts'
 import type { Host } from './types.ts'
@@ -30,9 +30,9 @@ function entry(name: string, order: number, partial: Partial<PaletteEntry> = {})
 }
 
 const catalog: Manifest = {
+  schema: SCHEMA,
   version: '0.1.0',
   gate: [],
-  placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
   palettes: [entry('neutral', 1, { default: true }), entry('gojo', 2, { background: '#101010' }), entry('geto', 3)],
 }
 

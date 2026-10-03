@@ -132,8 +132,8 @@ rei's colors instead. `ttheme edit rei` opens the same editor, and `ttheme check
 
 A local market is already a repository layout: `palettes/*.toml` (a folder
 under it, such as `palettes/night/`, is a catalog), the
-`ttheme-market.json` index and a workflow that rebuilds the index on every
-push. `ttheme market init <name>` makes one and prints the commands that
+`ttheme-market.json` index and a workflow that rebuilds the index whenever
+`palettes/` changes. `ttheme market init <name>` makes one and prints the commands that
 publish it:
 
 ```sh

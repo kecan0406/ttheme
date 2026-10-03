@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
-import { emptyManifest, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
+import { emptyManifest, type Manifest, type PaletteEntry, SCHEMA, toTheme } from './manifest.ts'
 import { aliasesFor } from './names.ts'
 import { readLocal } from './own.ts'
 import { cachePath, isRemote, marketId, marketProblem, marketSources, OFFICIAL, remoteOwner } from './sources.ts'
@@ -26,15 +26,19 @@ export interface MarketIndex extends Manifest {
   name: string
 }
 
-export function readCatalog(configHome: string, warn = true): Manifest {
+export function readCatalog(configHome: string, warn = true, official?: Manifest): Manifest {
   const sources = marketSources(configHome)
   const path = catalogPath(configHome)
   let base = emptyManifest()
   if (sources.includes(OFFICIAL)) {
-    if (!existsSync(path)) {
-      throw new Error(`no catalog at ${path} — run \`ttheme init\` first`)
+    if (official) {
+      base = official
+    } else {
+      if (!existsSync(path)) {
+        throw new Error(`no catalog at ${path} — run \`ttheme init\` first`)
+      }
+      base = parseCatalog(readFileSync(path, 'utf8'))
     }
-    base = parseCatalog(readFileSync(path, 'utf8'))
   }
   const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source, warn))
   return { ...base, palettes: [...base.palettes, ...remote] }
@@ -85,6 +89,10 @@ export function marketEntries(index: Manifest, id: string): PaletteEntry[] {
   }))
 }
 
+export const UPDATE_COMMAND = 'npx @kecan0406/ttheme@latest init'
+
+export class TooNew extends Error {}
+
 export function parseCatalog(source: string): Manifest {
   let doc: unknown
   try {
@@ -92,8 +100,22 @@ export function parseCatalog(source: string): Manifest {
   } catch {
     throw new Error('catalog is not valid JSON')
   }
+  const schema = (doc as { schema?: unknown } | null)?.schema
+  if (schema === undefined) {
+    throw new Error(
+      'catalog has no schema — a market is rebuilt with `ttheme market build`, then `ttheme update` fetches it',
+    )
+  }
+  if (typeof schema !== 'number' || !Number.isInteger(schema) || schema < 1) {
+    throw new Error('catalog schema is not a whole number from 1')
+  }
+  if (schema > SCHEMA) {
+    throw new TooNew(
+      `catalog is schema ${schema}, newer than the schema ${SCHEMA} this ttheme reads — \`${UPDATE_COMMAND}\` updates it`,
+    )
+  }
   const catalog = doc as Manifest
-  if (typeof catalog?.version !== 'string' || !Array.isArray(catalog.palettes)) {
+  if (typeof catalog.version !== 'string' || !Array.isArray(catalog.palettes)) {
     throw new Error('catalog has no version or palettes')
   }
   for (const p of catalog.palettes) {

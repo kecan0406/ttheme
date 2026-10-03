@@ -1,5 +1,5 @@
 import pkg from '../package.json' with { type: 'json' }
-import { backdropTone, PLACEMENT } from './backdrop.ts'
+import { backdropTone } from './backdrop.ts'
 import { GATE_RULES, type GateRule, measure } from './contrast.ts'
 import type { SharedPicture, Theme } from './theme.ts'
 
@@ -29,10 +29,12 @@ export interface PaletteEntry {
   pictures?: SharedPicture[]
 }
 
+export const SCHEMA = 1
+
 export interface Manifest {
+  schema: number
   version: string
   gate: GateRule[]
-  placement: typeof PLACEMENT
   palettes: PaletteEntry[]
 }
 
@@ -139,5 +141,5 @@ export function listed(palettes: PaletteEntry[]): PaletteEntry[] {
 }
 
 export function emptyManifest(): Manifest {
-  return { version: pkg.version, gate: GATE_RULES, placement: PLACEMENT, palettes: [] }
+  return { schema: SCHEMA, version: pkg.version, gate: GATE_RULES, palettes: [] }
 }

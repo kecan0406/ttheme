@@ -437,8 +437,8 @@ function scaffold(dir: string, identity: Identity): void {
 }
 
 function writeIndex(dir: string, { owner, name }: Identity, palettes: PaletteEntry[]): void {
-  const { version, gate, placement } = emptyManifest()
-  const index: MarketIndex = { version, gate, placement, owner, name, palettes }
+  const { schema, version, gate } = emptyManifest()
+  const index: MarketIndex = { schema, version, gate, owner, name, palettes }
   writeAtomic(join(dir, INDEX), `${JSON.stringify(index, null, 2)}\n`)
 }
 
@@ -521,7 +521,7 @@ async function initMarket(arg: string | undefined): Promise<void> {
   gh repo create ${repo} --public --source . --push
   gh repo edit ${repo} --add-topic ${TOPIC}
 
-Its action rebuilds ${INDEX} on every push; then \`ttheme market add ${repo}\` works anywhere`)
+Its action rebuilds ${INDEX} whenever palettes/ changes; then \`ttheme market add ${repo}\` works anywhere`)
 }
 
 function buildMarket(arg: string | undefined): number {
