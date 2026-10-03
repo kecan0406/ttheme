@@ -166,8 +166,8 @@ from the booru the way `find` does.
 | `ttheme config` | Settings in `$EDITOR` |
 
 `ttheme help` shows the three to start with and the rest by task; `ttheme help
-all` lists every command. Preview's keys, directory pins, rotating new
-tabs and every setting are in [docs/usage.md](docs/usage.md).
+all` lists every command. Preview's keys and the mouse, directory pins,
+rotating new tabs and every setting are in [docs/usage.md](docs/usage.md).
 
 ## Terminal support
 

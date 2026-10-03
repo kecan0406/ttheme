@@ -34,7 +34,7 @@ export function linked(text: string, url: string | undefined): string {
   return url ? `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\` : text
 }
 
-function sequenceAt(text: string, at: number): number {
+export function sequenceAt(text: string, at: number): number {
   if (text[at] !== '\x1b') {
     return 0
   }

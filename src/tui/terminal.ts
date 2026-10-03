@@ -11,6 +11,11 @@ export const HIDE_CURSOR: Mode = { on: '\x1b[?25l', off: '\x1b[?25h' }
 export const NO_WRAP: Mode = { on: '\x1b[?7l', off: '\x1b[?7h' }
 export const PASTES: Mode = { on: '\x1b[?2004h', off: '\x1b[?2004l' }
 export const FOCUS: Mode = { on: '\x1b[?1004h', off: '\x1b[?1004l' }
+export const MOUSE: Mode = { on: '\x1b[?1000h\x1b[?1002h\x1b[?1006h', off: '\x1b[?1006l\x1b[?1002l\x1b[?1000l' }
+
+export function pointing(env: Record<string, string | undefined> = process.env): Mode[] {
+  return env.TTHEME_MOUSE === 'off' ? [] : [MOUSE]
+}
 
 const SIGNALS = { SIGHUP: 1, SIGINT: 2, SIGQUIT: 3, SIGTERM: 15 } as const
 const LINGER = 3000

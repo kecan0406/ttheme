@@ -53,6 +53,10 @@ const CONFIG_SETTINGS = {
     doc: '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
     default: 'abc',
   },
+  TTHEME_MOUSE: {
+    doc: '# clicks, the wheel and drags in preview, browse, the palette editor and find: on, or off to leave the mouse to the terminal, so a drag selects text again without a modifier (default on)',
+    default: 'on',
+  },
   TTHEME_BG_BLUR: {
     doc: '# soften the background pictures behind the text: a blur radius in screen pixels, 0 keeps them sharp — changing it draws every picture again (default 0)',
     default: '0',

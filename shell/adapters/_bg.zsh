@@ -436,6 +436,23 @@ __tt_pv_bg_adjust() {
           ;;
         pos) at=$(( ((at - 1 + n) % 9 + 9) % 9 + 1 )) ;;
         at) at=$n ;;
+        sizeat)
+          local -i lo=$(( bake ? 20 : 100 )) hi=$(( fs > 100 ? fs : 100 ))
+          m=$(( lo + n * (hi - lo + 1) / 1000 ))
+          if (( n >= 1000 || (fs && m > fs) )); then
+            size=fill
+          elif (( bake )); then
+            size=$m
+          else
+            size=100
+          fi
+          ;;
+        opto)
+          m=$n
+          (( m < 0 )) && m=0
+          (( m > 100 )) && m=100
+          (( m != o )) && printf -v op '%d.%02d' $(( m / 100 )) $(( m % 100 ))
+          ;;
         op)
           m=$(( o + n ))
           (( m < 0 )) && m=0
@@ -482,6 +499,7 @@ __tt_pv_bg_find() {
   __tt_bg_hide $name
   err=$(__tt_cli find $name 2>&1 >/dev/tty)
   rc=$?
+  printf %s "$pvmouse"
   for var in ${(k)parameters[(I)TTHEME_FIND_*]}; do
     [[ ${parameters[$var]} == *export* ]] || unset $var
   done
@@ -634,6 +652,7 @@ __tt_pv_bg_panel() {
   __tt_pv_bg_fs $name && (( REPLY > hi )) && hi=$REPLY
   for k in 1 2 3 4; do
     r=$(( r0 + at[k] ))
+    pvz+=("$r $col $(( col + 11 )) tefield $k")
     sty=$d
     (( tf == k && ! off )) && sty=$b
     out+=$'\e['$r';'$col'H'
@@ -647,6 +666,7 @@ __tt_pv_bg_panel() {
       __tt_bg_coloring $name
       val=$REPLY
       out+=$'\e['$r';'$(( col + 12 ))'H'
+      pvz+=("$r $(( col + 12 )) $(( col + 17 )) colors tone" "$r $(( col + 19 )) $(( col + 28 )) colors original")
       for choice in tone original; do
         if (( ! color )); then
           if [[ $choice == $val ]]; then out+="[$choice] "; else out+=" $choice  "; fi
@@ -662,6 +682,7 @@ __tt_pv_bg_panel() {
     fi
     if (( k == 2 )); then
       for (( i = 1; i <= 9; i++ )); do
+        pvz+=("$(( r0 + at[2] - 1 + (i - 1) / 3 )) $(( col + 11 + (i - 1) % 3 * 3 )) $(( col + 13 + (i - 1) % 3 * 3 )) place $i")
         out+=$'\e['$(( r0 + at[2] - 1 + (i - 1) / 3 ))';'$(( col + 12 + (i - 1) % 3 * 3 ))'H'
         if (( ! color )); then
           if (( i == pos )); then out+="#"; else out+="."; fi
@@ -693,6 +714,7 @@ __tt_pv_bg_panel() {
       fi
       (( knob < 0 )) && knob=0
       (( knob > T - 1 )) && knob=$(( T - 1 ))
+      pvz+=("$r $(( col + 12 )) $(( col + 11 + T )) track $k")
       out+=$'\e['$r';'$(( col + 12 ))'H'
       if (( ! color )); then
         out+=${(l:knob::=:)}"O"${(l:$(( T - 1 - knob ))::-:)}

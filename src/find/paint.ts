@@ -12,7 +12,9 @@ import {
   viewVar,
   wipesPlacements,
 } from '../terminal.ts'
+import type { Mouse } from '../tui/keys.ts'
 import { type Frame, Screen } from '../tui/screen.ts'
+import type { Hit } from '../tui/zones.ts'
 import {
   type FindView,
   gridShape,
@@ -117,6 +119,14 @@ export class Paint {
     }
   }
 
+  point(event: Mouse): Hit | undefined {
+    return this.screen.point(event)
+  }
+
+  drop(): void {
+    this.screen.drop()
+  }
+
   private frame(): Frame | undefined {
     if (this.signal.aborted) {
       return undefined
@@ -126,6 +136,7 @@ export class Paint {
     this.view.loaderFrom = frame.loader ? (this.view.loaderFrom ?? this.view.beat) : undefined
     return {
       lines: frame.lines,
+      zones: frame.zones,
       after: (wiped) => this.images(frame.images, wiped, cell),
       ...(this.view.mode === 'grid' && this.view.editing !== undefined ? { cursor: this.caret() } : {}),
       ticking: frame.tick,

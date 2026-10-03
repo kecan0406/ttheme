@@ -6,6 +6,7 @@ import { Field } from './tui/field.ts'
 import type { Inbound } from './tui/keys.ts'
 import { Inline } from './tui/screen.ts'
 import { HIDE_CURSOR, PASTES, within } from './tui/terminal.ts'
+import { zone } from './tui/zones.ts'
 
 const MIN_ITEMS = 3
 
@@ -106,7 +107,7 @@ export function isMarket(group: string): boolean {
   return group.includes('@')
 }
 
-export function stepRow(at: number, delta: number, count: number, rule: (i: number) => boolean): number {
+export function stepRow(at: number, delta: number, count: number, rule: (i: number) => boolean, wrap = true): number {
   const last = count - 1
   if (last < 0) {
     return at
@@ -115,9 +116,9 @@ export function stepRow(at: number, delta: number, count: number, rule: (i: numb
   if (!Number.isFinite(delta)) {
     next = delta > 0 ? last : 0
   } else if (delta > 0) {
-    next = at >= last ? 0 : Math.min(last, at + delta)
+    next = at >= last ? (wrap ? 0 : last) : Math.min(last, at + delta)
   } else {
-    next = at <= 0 ? last : Math.max(0, at + delta)
+    next = at <= 0 ? (wrap ? last : 0) : Math.max(0, at + delta)
   }
   return rule(next) ? next + Math.sign(delta) : next
 }
@@ -151,6 +152,16 @@ export function promptFx(value: string | undefined): PromptFx {
 }
 
 export type ListRow = Row
+
+export interface RowSpot {
+  kind: 'row'
+  at: number
+  part: 'row' | 'box' | 'fold'
+}
+
+export function rowSpot(at: number, part: RowSpot['part'], text: string): string {
+  return zone({ kind: 'row', at, part } satisfies RowSpot, text)
+}
 
 export interface PaletteListOptions {
   entries: PaletteEntry[]
@@ -318,9 +329,35 @@ export class PaletteList {
     return this.scope === 'series' ? body.length : this.everyone(body).length
   }
 
-  move(delta: number): void {
-    this.cursor = stepRow(this.cursor, delta, this.rows.length, (i) => this.rows[i]?.kind === 'rule')
+  move(delta: number, wrap = true): void {
+    this.cursor = stepRow(this.cursor, delta, this.rows.length, (i) => this.rows[i]?.kind === 'rule', wrap)
     this.sync()
+  }
+
+  point(at: number): boolean {
+    const row = this.rows[at]
+    if (!row || row.kind === 'rule') {
+      return false
+    }
+    this.cursor = at
+    this.sync()
+    return true
+  }
+
+  flip(): void {
+    const row = this.rows[this.cursor]
+    if (row?.kind === 'group' || row?.kind === 'catalog') {
+      this.fold(!row.expanded)
+    }
+  }
+
+  open(): void {
+    const row = this.rows[this.cursor]
+    if ((row?.kind === 'group' || row?.kind === 'catalog') && this.scope === 'palette' && !this.filter) {
+      this.flip()
+    } else {
+      this.pick()
+    }
   }
 
   private toggle(key: string): void {
@@ -377,17 +414,22 @@ export class PaletteList {
     this.top = Math.min(this.top, Math.max(0, this.rows.length - this.maxItems))
     const shown = this.rows.slice(this.top, this.top + this.maxItems)
     return {
-      lines: shown.map((row, i) => this.renderRow(row, this.top + i === this.cursor)),
+      lines: shown.map((row, i) => this.renderRow(row, this.top + i)),
       above: this.top,
       below: this.rows.length - this.top - shown.length,
     }
   }
 
-  private renderRow(row: Row, focused: boolean): string {
+  private renderRow(row: Row, index: number): string {
     if (row.kind === 'rule') {
       const line = '── Markets ──────────'
       return `   ${this.color ? `${DIM}${line}${RESET}` : line}`
     }
+    return rowSpot(index, 'row', this.rowText(row, index))
+  }
+
+  private rowText(row: Exclude<Row, { kind: 'rule' }>, index: number): string {
+    const focused = index === this.cursor
     const entry = row.kind === 'palette' ? row.entry : row.kind === 'all' ? undefined : row.lead
     const lit = this.color && focused && entry !== undefined
     const dim = (s: string) => (this.color ? `${DIM}${s}${NORMAL}` : s)
@@ -397,15 +439,17 @@ export class PaletteList {
     const gutter = focused ? (lit ? `${ansiFg(entry.cursor)}▌\x1b[39m ` : '▌ ') : '  '
     const bar = (text: string) =>
       lit ? `${gutter}${ansiBar(entry.selection, entry.foreground)} ${text} ${RESET}` : `${gutter} ${text}`
+    const box = (on: boolean) => rowSpot(index, 'box', `${on ? '●' : '○'} `)
+    const arrow = (open: boolean) => rowSpot(index, 'fold', `${open ? '▾' : '▸'} `)
     if (row.kind === 'all') {
-      const box = this.everyone(this.rows).every((e) => this.picked.has(e.name)) ? '●' : '○'
-      return bar(`${box} Select all ${dim(`(${row.count})`)}`)
+      return bar(
+        `${box(this.everyone(this.rows).every((e) => this.picked.has(e.name)))}Select all ${dim(`(${row.count})`)}`,
+      )
     }
     if (row.kind === 'group' && this.scope === 'series') {
-      const box = this.pickedIn(row.name) === row.count ? '●' : '○'
       const tail = `(${row.count})${row.native ? ` ${row.native}` : ''}`
       return bar(
-        `${box} ${bold(row.name.padEnd(this.seriesPad))}${squares(row.lead)}${this.color ? '  ' : ' '}${dim(tail)}`,
+        `${box(this.pickedIn(row.name) === row.count)}${bold(row.name.padEnd(this.seriesPad))}${squares(row.lead)}${this.color ? '  ' : ' '}${dim(tail)}`,
       )
     }
     const at = this.rows[this.cursor]
@@ -416,20 +460,19 @@ export class PaletteList {
     if (row.kind === 'group') {
       const name = heldBy(at?.kind === 'palette' && at.entry.group === row.name, row.name)
       const native = row.native ? ` ${dim(row.native)}` : ''
-      return bar(`${row.expanded ? '▾' : '▸'} ${name} ${dim(`(${this.pickedIn(row.name)}/${row.count})`)}${native}`)
+      return bar(`${arrow(row.expanded)}${name} ${dim(`(${this.pickedIn(row.name)}/${row.count})`)}${native}`)
     }
     if (row.kind === 'catalog') {
       const inside = at?.kind === 'palette' && shelf(at.entry) === catalogKey(row.group, row.name)
       const counts = dim(`(${this.pickedIn(row.group, row.name)}/${row.count})`)
-      return bar(`  ${row.expanded ? '▾' : '▸'} ${heldBy(inside, row.name)} ${counts}`)
+      return bar(`  ${arrow(row.expanded)}${heldBy(inside, row.name)} ${counts}`)
     }
     const e = row.entry
-    const box = this.picked.has(e.name) ? '●' : '○'
     const indent = this.indent(e)
     const label = shownName(e)
     const padded = this.color ? label.padEnd(this.namePad - indent.length) : label
     const name = focused ? bold(padded) : padded
-    return bar(`${indent}${box} ${name}${squares(e)}`)
+    return bar(`${indent}${box(this.picked.has(e.name))}${name}${squares(e)}`)
   }
 }
 

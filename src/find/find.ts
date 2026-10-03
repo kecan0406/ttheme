@@ -60,8 +60,9 @@ import { SCENES } from '../scenes.ts'
 import { CLEAR, viewsInWindow, viewVar } from '../terminal.ts'
 import { POSITIONS } from '../theme.ts'
 import { edit } from '../tui/field.ts'
-import { CELL_QUERY, CellProbe, type Inbound } from '../tui/keys.ts'
-import { FOCUS, HIDE_CURSOR, NO_WRAP, PASTES, type Terminal, within } from '../tui/terminal.ts'
+import { CELL_QUERY, CellProbe, type Inbound, type Mouse } from '../tui/keys.ts'
+import { FOCUS, HIDE_CURSOR, NO_WRAP, PASTES, pointing, type Terminal, within } from '../tui/terminal.ts'
+import type { Hit } from '../tui/zones.ts'
 import { blurOf, coloringFor, settingDefault, withSetting } from '../wiring.ts'
 import { kinKeys, near, type Shape, sameKeys, sameSet } from '../works.ts'
 import {
@@ -86,6 +87,7 @@ import { Paint } from './paint.ts'
 import {
   type Count,
   DIGITS,
+  type FindSpot,
   type FindView,
   gridShape,
   HELD,
@@ -236,6 +238,20 @@ function orderOf(value: string): Order {
 }
 
 const STEPS: Record<string, number> = { left: -1, right: 1, 'shift-left': -10, 'shift-right': 10 }
+
+function visit(url: string): void {
+  if (process.env.SSH_CONNECTION || !/^(?:https?|file):/i.test(url)) {
+    return
+  }
+  try {
+    const opener = spawn(process.platform === 'darwin' ? 'open' : 'xdg-open', [url], {
+      stdio: 'ignore',
+      detached: true,
+    })
+    opener.on('error', () => {})
+    opener.unref()
+  } catch {}
+}
 
 function resized(size: Tuning['size'], step: number, fill: number): Tuning['size'] {
   if (step < 0) {
@@ -688,7 +704,7 @@ class Finder {
 
   run(): Promise<number> {
     const burst = (typed: string) => this.view.editing === undefined && typedDrop(typed)
-    return within({ modes: [PASTES], assume: [HIDE_CURSOR, NO_WRAP], burst }, async (terminal) => {
+    return within({ modes: [PASTES, ...pointing()], assume: [HIDE_CURSOR, NO_WRAP], burst }, async (terminal) => {
       this.terminal = terminal
       terminal.onResize(this.onResize)
       terminal.listen((events) => {
@@ -770,6 +786,8 @@ class Finder {
   private inbound(event: Inbound): void {
     if (event.kind === 'key') {
       this.key(event.key)
+    } else if (event.kind === 'mouse') {
+      this.pointer(event)
     } else if (event.kind === 'paste') {
       this.pasted(event.text)
     } else if (event.kind === 'mode') {
@@ -1071,6 +1089,172 @@ class Finder {
       return
     }
     this.gridKey(key)
+  }
+
+  private pointer(event: Mouse): void {
+    const view = this.view
+    const hit = this.paint.point(event)
+    const spot = hit?.target as FindSpot | undefined
+    if (view.installing !== undefined) {
+      return
+    }
+    if (event.action === 'wheel') {
+      if (!event.sideways) {
+        this.wheel(event.wheel)
+      }
+      return
+    }
+    if ((event.action === 'press' || event.action === 'drag') && event.button !== 'left') {
+      return
+    }
+    if (spot?.kind === 'track' && hit && event.action !== 'release') {
+      this.slide(spot.field, hit)
+    } else if (event.action === 'press') {
+      this.pressed(spot)
+    } else if (event.action === 'release' && hit?.inside) {
+      this.released(spot, event)
+    }
+  }
+
+  private pressed(spot: FindSpot | undefined): void {
+    const view = this.view
+    if (view.help) {
+      this.paint.drop()
+      this.key('esc')
+    } else if (view.editing !== undefined || spot === undefined) {
+      return
+    } else if (view.panel !== undefined) {
+      if (spot.kind === 'setting' && spot.index < view.settings.length && view.typing === undefined) {
+        view.panel = spot.index
+        this.paint.draw()
+      }
+    } else if (view.mode === 'try') {
+      this.tryPoint(spot)
+    } else if (spot.kind === 'tile') {
+      this.focus(spot.index)
+    } else if (spot.kind === 'query') {
+      this.gridKey('/')
+    } else if (spot.kind === 'site') {
+      this.tab = spot.tab
+      this.syncSite()
+      void this.turn()
+    }
+  }
+
+  private released(spot: FindSpot | undefined, event: Mouse): void {
+    const view = this.view
+    if (spot?.kind === 'key') {
+      this.key(spot.key)
+    } else if (spot?.kind === 'link') {
+      if (!event.shift && !event.alt && !event.ctrl) {
+        visit(spot.url)
+      }
+    } else if (view.editing !== undefined) {
+      if (spot?.kind === 'suggest') {
+        view.pick = spot.index
+        this.editKey('enter')
+      }
+    } else if (view.panel !== undefined) {
+      this.panelPoint(spot)
+    } else if (view.mode === 'try') {
+      if (spot?.kind === 'place' && view.tuning) {
+        this.tuneKey(String(spot.at))
+      }
+    } else if (spot?.kind === 'tile' && event.count === 2) {
+      this.gridKey('enter')
+    } else if (spot?.kind === 'chip') {
+      this.toggle(spot.index)
+    }
+  }
+
+  private wheel(step: number): void {
+    const view = this.view
+    if (view.help) {
+      return
+    }
+    if (view.editing !== undefined) {
+      if (view.suggest?.length) {
+        this.editKey(step < 0 ? 'up' : 'down')
+      }
+    } else if (view.panel !== undefined) {
+      if (view.typing === undefined) {
+        this.panelKey(step < 0 ? 'up' : 'down')
+      }
+    } else if (view.tuning) {
+      this.tuneKey(step < 0 ? 'up' : 'down')
+    } else if (view.mode === 'try') {
+      this.tryKey(step < 0 ? 'left' : 'right')
+    } else {
+      this.focus(view.focus + step * gridShape(this.cols, this.rows).perRow)
+    }
+  }
+
+  private panelPoint(spot: FindSpot | undefined): void {
+    const view = this.view
+    if (spot?.kind !== 'setting' && spot?.kind !== 'choice') {
+      return
+    }
+    const row = view.settings[spot.index]
+    if (view.typing !== undefined) {
+      const typed = view.settings[view.panel ?? 0]
+      if (typed && (spot.index !== view.panel || spot.kind === 'setting')) {
+        this.typeKey(typed, 'enter')
+      } else {
+        return
+      }
+    }
+    if (spot.kind === 'setting' && spot.index === view.settings.length) {
+      view.panel = spot.index
+      this.panelKey('enter')
+      return
+    }
+    view.panel = spot.index
+    if (spot.kind === 'choice' && row) {
+      if (row.entry === 'text' || spot.choice === undefined) {
+        this.panelKey('enter')
+        return
+      }
+      if (row.multi) {
+        row.cursor = Math.max(0, row.choices.indexOf(spot.choice))
+        this.panelKey(' ')
+        return
+      }
+      if (row.value !== spot.choice) {
+        row.value = spot.choice
+        this.recount()
+      }
+    }
+    this.paint.draw()
+  }
+
+  private tryPoint(spot: FindSpot): void {
+    const view = this.view
+    if (spot.kind === 'scene') {
+      view.scene = spot.scene
+      view.details = false
+      this.paint.draw()
+    } else if (view.tuning && spot.kind === 'field') {
+      view.tuning.field = spot.field
+      this.paint.draw()
+    }
+  }
+
+  private slide(field: number, hit: Hit): void {
+    const view = this.view
+    const panel = view.tuning
+    if (!panel) {
+      return
+    }
+    const along = Math.min(1, Math.max(0, hit.width > 1 ? hit.x / (hit.width - 1) : 0))
+    panel.field = field
+    if (field === 0) {
+      const top = Math.max(100, panel.fill)
+      const size = SMALLEST + Math.round(along * (top - SMALLEST + 1))
+      view.tune.size = along === 1 || (panel.fill > 0 && size >= panel.fill) ? 'fill' : Math.min(top, size)
+    } else {
+      view.tune.opacity = Math.round(along * 100) / 100
+    }
+    this.retune()
   }
 
   private gridKey(key: string): void {
@@ -1534,13 +1718,9 @@ class Finder {
   private openPage(): void {
     const tile = this.view.tiles[this.view.focus]
     const pick = tile && this.posts.get(tile.key)
-    if (!pick) {
-      return
+    if (pick) {
+      visit(pick.site.pageUrl(pick.post.id))
     }
-    const opener = process.platform === 'darwin' ? 'open' : 'xdg-open'
-    try {
-      spawn(opener, [pick.site.pageUrl(pick.post.id)], { stdio: 'ignore', detached: true }).unref()
-    } catch {}
   }
 
   private tryKey(key: string): void {

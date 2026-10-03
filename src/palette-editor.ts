@@ -398,6 +398,11 @@ function edge(l: number, h: number): number {
   return Math.floor(edgeChroma(l, h, C_MAX) * 10_000) / 10_000
 }
 
+function alongside(range: { min: number; max: number; step: number; wraps?: boolean }, at: number): number {
+  const top = range.wraps ? range.max - range.step : range.max
+  return Math.min(top, Math.round((range.min + (range.max - range.min) * at) / range.step) * range.step)
+}
+
 export class PaletteEditor {
   mode: Mode
   seeds: Seeds = SEEDS
@@ -611,6 +616,77 @@ export class PaletteEditor {
       this.tuneKey(step)
     } else {
       this.listKey(step)
+    }
+  }
+
+  select(slot: number): void {
+    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
+      return
+    }
+    if (this.mode === 'tune') {
+      if (slot === this.slot()) {
+        return
+      }
+      this.tuneKey('enter')
+    }
+    this.notice = undefined
+    this.row = slot < BASE.length ? slot : BASE.length + ((slot - BASE.length) % 8)
+    if (slot >= BASE.length) {
+      this.col = slot - BASE.length >= 8 ? 1 : 0
+    }
+    this.lastEdit = undefined
+  }
+
+  grip(channel: number): boolean {
+    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
+      return false
+    }
+    this.notice = undefined
+    if (this.mode === 'list') {
+      this.tune()
+    }
+    this.channel = channel
+    return true
+  }
+
+  slide(channel: number, fraction: number): void {
+    if (!this.grip(channel)) {
+      return
+    }
+    const at = Math.min(1, Math.max(0, fraction))
+    if (channel === CONTRAST) {
+      this.reach(21 ** at)
+      return
+    }
+    this.put(alongside(CHANNELS[channel] as Channel, at))
+  }
+
+  sow(field: number, fraction: number): void {
+    const seed = SEED_FIELDS[field]
+    if (this.mode !== 'seeds' || this.overlay || this.quitting || !seed) {
+      return
+    }
+    this.notice = undefined
+    this.field = field
+    const at = Math.min(1, Math.max(0, fraction))
+    this.seeds = nudge({ ...this.seeds, [seed.key]: alongside(seed, at) }, seed, 0)
+    this.list = listOf(grow(this.seeds))
+    this.lch = this.lchs()
+  }
+
+  scroll(step: number): void {
+    const clamp = (value: number, last: number) => Math.min(last, Math.max(0, value + step))
+    if (this.overlay === 'open') {
+      this.pick = clamp(this.pick, Math.max(0, this.choices().length - 1))
+    } else if (this.overlay || this.quitting || this.typing !== undefined) {
+      return
+    } else if (this.mode === 'seeds') {
+      this.field = clamp(this.field, SEED_FIELDS.length - 1)
+    } else if (this.mode === 'tune') {
+      this.channel = clamp(this.channel, CONTRAST)
+    } else {
+      this.row = clamp(this.row, ROWS - 1)
+      this.lastEdit = undefined
     }
   }
 
@@ -843,10 +919,20 @@ export class PaletteEditor {
     for (let i = 1; i <= SCOPES.length; i++) {
       const next = SCOPES[(at + i) % SCOPES.length] as Scope
       if (next === 'this' || scopeSlots(next, this.slot()).length > 1) {
-        this.scope = next
-        break
+        this.scopeTo(next)
+        return
       }
     }
+  }
+
+  scopeTo(scope: Scope): void {
+    if (this.mode !== 'tune' || this.typing !== undefined || this.quitting || this.slot() < BASE.length) {
+      return
+    }
+    if (scope !== 'this' && scopeSlots(scope, this.slot()).length <= 1) {
+      return
+    }
+    this.scope = scope
     this.hold()
     const n = this.scoped().length
     this.notice = n > 1 ? `${n} slots move together` : 'This slot moves alone'

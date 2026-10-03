@@ -289,6 +289,25 @@ Apply button — and the part the cursor is in takes the keys:
 | `s` | save | save | save |
 | `esc` | back to the list, dropping what changed since the last save | same (while tuning, undo) | same |
 
+### The mouse
+
+Every screen but init's picker takes the mouse, and every mouse action has a key
+in the tables above. A press selects — it moves the cursor to a row, opens a
+tab, sets a slider to the point — and a release over what was pressed acts: a
+key hint presses its key, a ○ picks, a ▸ folds, a double click does what enter
+does. Acting on the release keeps a screen that closes on a click from leaving
+the release to the shell, and moving off before letting go cancels. The wheel
+moves the cursor a row and never wraps.
+
+A Node screen marks what can be clicked while it draws: `zone(target, text)`
+around the text (`keyZone` for a key hint), or a rectangle in `Frame.zones`;
+`screen.point(event)` hands back what was under the pointer in the frame on
+screen. The width helpers skip the marks but `.length` and `padEnd` do not, so
+pad before you mark. Let `pointing()` add the mouse mode, and never assume it
+from a program around you. In preview, append a zone to `pvz` where you draw the
+thing (`row from to action`) and act on it in `__tt_pv_press` or
+`__tt_pv_release`.
+
 ### Writing the text
 
 Every screen and message is written in sentence case: the first word and proper

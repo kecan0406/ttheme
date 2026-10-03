@@ -1,11 +1,31 @@
+import { performance } from 'node:perf_hooks'
 import { StringDecoder } from 'node:string_decoder'
 
 export const ESC_WAIT = 30
 const SEQUENCE_WAIT = 50
+export const CLICK_GAP = 500
+const WHEEL_GAP = 5
+const LEGACY = Buffer.from('\x1b[M')
 
 export interface Cell {
   w: number
   h: number
+}
+
+export type Button = 'left' | 'middle' | 'right'
+
+export interface Mouse {
+  kind: 'mouse'
+  action: 'press' | 'release' | 'drag' | 'move' | 'wheel'
+  button: Button | undefined
+  wheel: -1 | 0 | 1
+  sideways: boolean
+  row: number
+  col: number
+  shift: boolean
+  alt: boolean
+  ctrl: boolean
+  count: number
 }
 
 export type Inbound =
@@ -15,6 +35,7 @@ export type Inbound =
   | { kind: 'mode'; mode: number; value: number }
   | { kind: 'attributes' }
   | { kind: 'size'; of: 'cell' | 'window' | 'grid'; h: number; w: number }
+  | Mouse
 
 export const CELL_QUERY = '\x1b]1337;ReportCellSize\x07\x1b[16t\x1b[14t\x1b[18t'
 
@@ -91,7 +112,51 @@ function metadata(text: string): Record<string, string> {
   return out
 }
 
+const BUTTONS: (Button | undefined)[] = ['left', 'middle', 'right', undefined]
+
+function pointer(code: number, col: number, row: number, released: boolean): Mouse | undefined {
+  if (!Number.isInteger(code) || code < 0 || code >= 128 || !(col >= 0) || !(row >= 0)) {
+    return undefined
+  }
+  const low = code & 3
+  const at = {
+    kind: 'mouse' as const,
+    row,
+    col,
+    shift: (code & 4) !== 0,
+    alt: (code & 8) !== 0,
+    ctrl: (code & 16) !== 0,
+  }
+  if (code & 64) {
+    return { ...at, action: 'wheel', button: undefined, wheel: low % 2 === 0 ? -1 : 1, sideways: low >= 2, count: 0 }
+  }
+  const button = BUTTONS[low]
+  const action = code & 32 ? (button ? 'drag' : 'move') : released || !button ? 'release' : 'press'
+  return { ...at, action, button, wheel: 0, sideways: false, count: action === 'press' ? 1 : 0 }
+}
+
+function x10(input: string, stop: number, final: boolean): Step {
+  const codes: number[] = []
+  let end = stop
+  while (codes.length < 3 && end < input.length) {
+    const code = input.codePointAt(end) as number
+    codes.push(code)
+    end += code > 0xffff ? 2 : 1
+  }
+  if (codes.length < 3) {
+    return final ? { events: [], end: input.length } : undefined
+  }
+  const [code = 0, x = 0, y = 0] = codes
+  const mouse = Math.max(code, x, y) < 0x80 ? pointer(code - 32, x - 33, y - 33, false) : undefined
+  return { events: mouse ? [mouse] : [], end }
+}
+
 function report(params: string, between: string, final: string): Inbound[] {
+  if ((final === 'M' || final === 'm') && between === '' && params.startsWith('<')) {
+    const [code = -1, x = 0, y = 0] = params.slice(1).split(';').map(Number)
+    const mouse = pointer(code, x - 1, y - 1, final === 'm')
+    return mouse ? [mouse] : []
+  }
   if (final === 't' && between === '') {
     const [code, a = 0, b = 0] = params.split(';').map(Number)
     const of = code === 6 ? 'cell' : code === 4 ? 'window' : code === 8 ? 'grid' : undefined
@@ -116,6 +181,9 @@ function csi(input: string, at: number, final: boolean): Step {
   }
   const [whole, params = '', between = '', last = ''] = m
   const stop = at + 1 + whole.length
+  if (params === '' && between === '' && last === 'M') {
+    return x10(input, stop, final)
+  }
   if (params === '200' && last === '~') {
     const close = input.indexOf(PASTE_END, stop)
     if (close === -1) {
@@ -215,6 +283,26 @@ export function keysOf(input: string): string[] {
   return decode(input, true).events.flatMap((event) => (event.kind === 'key' ? [event.key] : []))
 }
 
+function legacy(bytes: Buffer): { bytes: Buffer; carry: Buffer | undefined } {
+  let at = bytes.indexOf(LEGACY)
+  if (at === -1) {
+    return { bytes, carry: undefined }
+  }
+  const parts: Buffer[] = []
+  let from = 0
+  while (at !== -1 && at + 6 <= bytes.length) {
+    parts.push(bytes.subarray(from, at))
+    const [code = 0, x = 0, y = 0] = bytes.subarray(at + 3, at + 6)
+    if (x > 32 && y > 32) {
+      parts.push(Buffer.from(`\x1b[<${code - 32};${x - 32};${y - 32}M`))
+    }
+    from = at + 6
+    at = bytes.indexOf(LEGACY, from)
+  }
+  parts.push(bytes.subarray(from, at === -1 ? bytes.length : at))
+  return { bytes: Buffer.concat(parts), carry: at === -1 ? undefined : bytes.subarray(at) }
+}
+
 function long(held: string): boolean {
   OSC_OPENED.lastIndex = 1
   return held.startsWith(PASTE_START) || (held.startsWith('\x1b]') && OSC_OPENED.test(held))
@@ -228,18 +316,63 @@ function ended(held: string, text: string): boolean {
 export class Keys {
   private held = ''
   private timer: NodeJS.Timeout | undefined
+  private carry: Buffer | undefined
+  private pressed: { at: number; button: Button; row: number; col: number; count: number } | undefined
+  private wheeled: { at: number; way: number } | undefined
   private readonly utf8 = new StringDecoder('utf8')
-  private readonly take: (events: Inbound[]) => void
   private readonly burst: (typed: string) => boolean
+  private readonly take: (events: Inbound[]) => void
 
   constructor(take: (events: Inbound[]) => void, burst: (typed: string) => boolean = () => false) {
-    this.take = take
     this.burst = burst
+    this.take = (events) => {
+      const kept = this.counted(events)
+      if (kept.length > 0) {
+        take(kept)
+      }
+    }
+  }
+
+  private counted(events: Inbound[]): Inbound[] {
+    const now = performance.now()
+    return events.filter((event) => {
+      if (event.kind !== 'mouse') {
+        return true
+      }
+      if (event.action === 'wheel') {
+        const way = event.wheel * (event.sideways ? 2 : 1)
+        const last = this.wheeled
+        if (last !== undefined && last.way === way && now - last.at < WHEEL_GAP) {
+          return false
+        }
+        this.wheeled = { at: now, way }
+        return true
+      }
+      if (event.action === 'release') {
+        event.count = this.pressed?.count ?? 0
+      }
+      if (event.action !== 'press' || !event.button) {
+        return true
+      }
+      const last = this.pressed
+      const again =
+        last !== undefined &&
+        last.button === event.button &&
+        last.row === event.row &&
+        Math.abs(last.col - event.col) <= 1 &&
+        now - last.at <= CLICK_GAP
+      event.count = again ? last.count + 1 : 1
+      this.pressed = { at: now, button: event.button, row: event.row, col: event.col, count: event.count }
+      return true
+    })
   }
 
   feed(chunk: Buffer | string): void {
     clearTimeout(this.timer)
-    const text = typeof chunk === 'string' ? chunk : this.utf8.write(chunk)
+    const text = typeof chunk === 'string' ? chunk : this.bytes(chunk)
+    if (this.carry) {
+      this.wait(SEQUENCE_WAIT)
+    }
     if (!this.held && !text.includes('\x1b') && this.burst(text)) {
       this.take([{ kind: 'paste', text }])
       return
@@ -251,15 +384,27 @@ export class Keys {
     const { events, rest } = decode(this.held + text)
     this.held = rest
     if (rest && !long(rest)) {
-      this.timer = setTimeout(() => this.flush(), rest.length === 1 ? ESC_WAIT : SEQUENCE_WAIT)
+      this.wait(rest.length === 1 ? ESC_WAIT : SEQUENCE_WAIT)
     }
     if (events.length > 0) {
       this.take(events)
     }
   }
 
+  private bytes(chunk: Buffer): string {
+    const { bytes, carry } = legacy(this.carry ? Buffer.concat([this.carry, chunk]) : chunk)
+    this.carry = carry
+    return this.utf8.write(bytes)
+  }
+
+  private wait(ms: number): void {
+    clearTimeout(this.timer)
+    this.timer = setTimeout(() => this.flush(), ms)
+  }
+
   flush(): void {
     clearTimeout(this.timer)
+    this.carry = undefined
     const { events } = decode(this.held, true)
     this.held = ''
     if (events.length > 0) {
@@ -270,6 +415,7 @@ export class Keys {
   stop(): void {
     clearTimeout(this.timer)
     this.held = ''
+    this.carry = undefined
   }
 }
 

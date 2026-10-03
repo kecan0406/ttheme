@@ -1,5 +1,7 @@
 import { performance } from 'node:perf_hooks'
 import { fit } from '../ansi.ts'
+import type { Mouse } from './keys.ts'
+import { type Hit, lifted, marking, Pointer, type Zone } from './zones.ts'
 
 const FRAME_GAP = 16
 export const BEAT = 80
@@ -12,6 +14,7 @@ export interface Frame {
   after?: (rewritten: ReadonlySet<number>) => string
   cursor?: string
   ticking?: boolean
+  zones?: Zone[]
 }
 
 export interface ScreenOptions {
@@ -22,6 +25,7 @@ export interface ScreenOptions {
 
 export class Screen {
   private shown: string[] = []
+  private readonly pointer = new Pointer()
   private cursor = ''
   private wipe = ''
   private immediate: NodeJS.Immediate | undefined
@@ -78,6 +82,14 @@ export class Screen {
     this.ticker = undefined
   }
 
+  point(event: Mouse): Hit | undefined {
+    return this.pointer.point(event)
+  }
+
+  drop(): void {
+    this.pointer.drop()
+  }
+
   private cancel(): void {
     clearImmediate(this.immediate)
     clearTimeout(this.delayed)
@@ -91,23 +103,25 @@ export class Screen {
     if (this.stopped) {
       return
     }
-    const frame = this.view()
+    const { drawn: frame, targets } = marking(() => this.view())
     if (!frame) {
       return
     }
     this.last = performance.now()
+    const { lines, zones } = lifted(frame.lines, targets)
+    this.pointer.zones = [...(frame.zones ?? []), ...zones]
     let out = this.wipe
     this.wipe = ''
     const rewritten = new Set<number>()
-    const count = Math.max(frame.lines.length, this.shown.length)
+    const count = Math.max(lines.length, this.shown.length)
     for (let row = 0; row < count; row++) {
-      const line = frame.lines[row]
+      const line = lines[row]
       if (line !== this.shown[row]) {
         out += `\x1b[${row + 1};1H\x1b[0m\x1b[2K${line ?? ''}`
         rewritten.add(row)
       }
     }
-    this.shown = [...frame.lines]
+    this.shown = lines
     const after = frame.after?.(rewritten) ?? ''
     const cursor = frame.cursor ?? ''
     const moved = cursor !== '' && (out !== '' || after !== '' || cursor !== this.cursor)

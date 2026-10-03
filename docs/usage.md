@@ -73,6 +73,31 @@ closes. `ttheme preview` and `ttheme browse` open one screen on its own, with
 no tab row; `ttheme pin` is preview alone as well. Piped, `ttheme` prints the
 palettes, one per line, as name, series and source separated by tabs.
 
+## The mouse
+
+Preview, browse, the palette editor and find take the mouse too, and every
+click has a key that does the same. A click on a row moves the cursor there —
+in preview the tab repaints, as with the arrows — and a double click does what
+enter does: preview applies the palette, browse picks it, the editor tunes the
+slot, find tries the picture on. The wheel moves the cursor a row (find's grid a
+row of tiles, its try-on to the next picture), and the burst a terminal sends
+for one notch counts once. The tabs, the market chips, a series' ▸, a palette's
+○ and the keys named on the last line are buttons: they act when you let go
+over them, so moving off first cancels. In the editor and in the panel beside a
+palette, a click on the L, C, H or ◐ bar tunes that channel to the point and a
+drag moves it, past either end of the bar too; the picture's size and opacity
+bars and its nine positions work the same way.
+
+While a screen has the mouse, the terminal selects text with a modifier: Shift
+in most terminals, Option in iTerm2. find opens a post, its page or its source
+when you click it (not over SSH, where the browser would open on the other
+machine); anywhere else a link opens with the terminal's own gesture —
+Shift-click in kitty, WezTerm and Alacritty, Shift+Cmd-click in Ghostty, Cmd-click
+in iTerm2. `TTHEME_MOUSE=off` leaves the mouse to the terminal everywhere, and
+alt-c in preview has it as `Mouse`. `init`'s picker, drawn under your prompt
+rather than over the window, never takes the mouse, so the wheel keeps
+scrolling the terminal.
+
 ## Preview
 
 In `preview`, series and palettes are listed by name (`TTHEME_SORT=series`
@@ -336,6 +361,7 @@ still wins:
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
 | `TTHEME_SORT` | `abc` | `series` lists series and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |
+| `TTHEME_MOUSE` | `on` | `off` leaves the mouse to the terminal in every screen, so a drag selects text and a click opens a link without a modifier, and the wheel scrolls the terminal ([the mouse](#the-mouse)). alt-c in `preview` has it as `Mouse`, and turning it off there lets go of the mouse at once |
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `tone` | the colors a new background picture is drawn in: `tone` tints it in one color of its palette, `original` keeps its own colors. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `tone` and `original`. Like the blur, it is read from `config.zsh` itself |
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |

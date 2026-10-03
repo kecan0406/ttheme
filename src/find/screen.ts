@@ -7,6 +7,7 @@ import { type Hex, mix, rgb } from '../color.ts'
 import { megabytes, progress } from '../pending.ts'
 import { SCENES, sceneAt, sceneParts, WIDE } from '../scenes.ts'
 import { POSITIONS } from '../theme.ts'
+import { hintKey, type KeySpot, type Zone } from '../tui/zones.ts'
 
 export type Preset = 'cutouts' | 'all'
 export type Order = 'fit' | 'newest' | 'score'
@@ -180,9 +181,25 @@ export interface Placement {
   z: number
 }
 
+export type FindSpot =
+  | KeySpot
+  | { kind: 'link'; url: string }
+  | { kind: 'tile'; index: number }
+  | { kind: 'query' }
+  | { kind: 'site'; tab: number }
+  | { kind: 'chip'; index: number }
+  | { kind: 'setting'; index: number }
+  | { kind: 'choice'; index: number; choice: string | undefined }
+  | { kind: 'suggest'; index: number }
+  | { kind: 'field'; field: number }
+  | { kind: 'track'; field: number }
+  | { kind: 'place'; at: number }
+  | { kind: 'scene'; scene: number }
+
 export interface Frame {
   lines: string[]
   images: Placement[]
+  zones: Zone[]
   loader: boolean
   tick: boolean
 }
@@ -290,7 +307,7 @@ function clip(text: string, room: number): string {
   return out
 }
 
-type Part = [string, string, string?]
+type Part = [string, string, string?, FindSpot?]
 
 function siteColor(ansi: number): string {
   return `\x1b[${30 + ansi}m`
@@ -299,10 +316,15 @@ function siteColor(ansi: number): string {
 function reference(text: string, sgr: string, url: string | undefined, mark: string): Part[] {
   return url
     ? [
-        [`${LINK} `, mark],
+        [`${LINK} `, mark, undefined, { kind: 'link', url }],
         [text, sgr, url],
       ]
     : [[text, sgr]]
+}
+
+function keyed(key: string): KeySpot | undefined {
+  const named = hintKey(key)
+  return named ? { kind: 'key', key: named } : undefined
 }
 
 function partsWidth(parts: readonly Part[]): number {
@@ -312,38 +334,57 @@ function partsWidth(parts: readonly Part[]): number {
 function clipParts(parts: readonly Part[], room: number): Part[] {
   const out: Part[] = []
   let left = room
-  for (const [text, sgr, link] of parts) {
+  for (const [text, sgr, link, spot] of parts) {
     const w = width(text)
     if (w <= left) {
-      out.push([text, sgr, link])
+      out.push([text, sgr, link, spot])
       left -= w
       continue
     }
-    out.push([`${clip(text, left)}…`, sgr, link])
+    out.push([`${clip(text, left)}…`, sgr, link, spot])
     break
   }
   return out
 }
 
 class Line {
-  private readonly parts: { col: number; text: string; sgr: string; link?: string }[] = []
+  private readonly parts: {
+    col: number
+    text: string
+    sgr: string
+    link?: string
+    spot?: FindSpot
+    hidden?: true
+  }[] = []
   private readonly cols: number
 
   constructor(cols: number) {
     this.cols = cols
   }
 
-  put(col: number, text: string, sgr = '', link?: string): number {
-    this.parts.push({ col, text, sgr, ...(link ? { link } : {}) })
+  put(col: number, text: string, sgr = '', link?: string, spot?: FindSpot): number {
+    this.parts.push({ col, text, sgr, ...(link ? { link } : {}), ...(spot ? { spot } : {}) })
     return col + width(text)
   }
 
   run(col: number, parts: Part[]): number {
     let c = col
-    for (const [text, sgr, link] of parts) {
-      c = this.put(c, text, sgr, link)
+    for (const [text, sgr, link, spot] of parts) {
+      c = this.put(c, text, sgr, link, spot)
     }
     return c
+  }
+
+  mark(col: number, span: number, spot: FindSpot): void {
+    this.parts.push({ col, text: ' '.repeat(Math.max(0, span)), sgr: '', spot, hidden: true })
+  }
+
+  zones(row: number): Zone[] {
+    return this.parts.flatMap(({ col, text, link, spot }): Zone[] => {
+      const target = spot ?? (link ? { kind: 'link', url: link } : undefined)
+      const shown = col >= 0 && col < this.cols ? width(clip(text, this.cols - col)) : 0
+      return target && shown > 0 ? [{ row, col, width: shown, height: 1, target }] : []
+    })
   }
 
   right(end: number, parts: Part[]): void {
@@ -356,8 +397,8 @@ class Line {
 
   render(): string {
     let out = ''
-    for (const { col, text, sgr, link } of this.parts) {
-      if (col >= this.cols || col < 0) {
+    for (const { col, text, sgr, link, hidden } of this.parts) {
+      if (hidden || col >= this.cols || col < 0) {
         continue
       }
       const shown = clip(text, this.cols - col)
@@ -416,17 +457,18 @@ function foot(line: Line, cols: number, accent: string, spec: Foot): void {
   const segs: Part[][] = [
     ...(lead ? [lead] : []),
     ...keys.map(([k, l]): Part[] => [
-      [k, B],
-      [` ${l}`, D],
+      [k, B, undefined, keyed(k)],
+      [` ${l}`, D, undefined, keyed(k)],
     ]),
   ]
   segs.forEach((seg, i) => {
     c = line.run(c + (i ? 3 : 0), seg)
   })
   if (right) {
+    const key = keyed(right[0].split(' ')[0] ?? '')
     line.right(cols, [
-      [right[0], B],
-      [` ${right[1]}`, D],
+      [right[0], B, undefined, key],
+      [` ${right[1]}`, D, undefined, key],
     ])
   }
 }
@@ -460,7 +502,7 @@ function sceneTabs(line: Line | undefined, col: number, room: number, view: Find
   const at = SCENES.indexOf(sceneAt(view.scene))
   const strip = SCENES.flatMap((scene, i): Part[] => [
     ...(i ? ([['  ', '']] as Part[]) : []),
-    [scene.name, i === at ? B + accent : D],
+    [scene.name, i === at ? B + accent : D, undefined, { kind: 'scene', scene: i }],
   ])
   const fits = strip.reduce((n, [text]) => n + width(text), 0) <= room
   line?.run(
@@ -632,18 +674,17 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
     const on = panel.field === k
     const style = on ? B : D
     if (on) {
-      lines[r]?.put(col, '▶', accent)
+      lines[r]?.put(col, '▶', accent, undefined, { kind: 'field', field: k })
     }
-    lines[r]?.put(col + 2, label, style)
+    lines[r]?.put(col + 2, label, style, undefined, { kind: 'field', field: k })
     let value: string
     if (k === 1) {
       for (let i = 1; i <= 9; i++) {
         const here = i === view.tune.at
-        lines[r0 + 2 + Math.floor((i - 1) / 3)]?.put(
-          col + 12 + ((i - 1) % 3) * 3,
-          here ? '■' : '·',
-          here ? B + accent : D,
-        )
+        const line = lines[r0 + 2 + Math.floor((i - 1) / 3)]
+        const at = col + 12 + ((i - 1) % 3) * 3
+        line?.mark(at - 1, 3, { kind: 'place', at: i })
+        line?.put(at, here ? '■' : '·', here ? B + accent : D)
       }
       value = POSITIONS[view.tune.at - 1] ?? 'center'
     } else {
@@ -662,6 +703,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
         ['●', B],
         ['─'.repeat(track - 1 - knob), D],
       ])
+      lines[r]?.mark(col + 12, track, { kind: 'track', field: k })
     }
     lines[r]?.right(end - 2, [[value, style]])
     if (tunedField(view, k)) {
@@ -705,7 +747,8 @@ function mention(text: string, key: number, sgr: string): Part[] {
 function tabs(line: Line, cols: number, view: FindView): void {
   const strip = [{ name: 'all', moved: false }, ...SITES].flatMap((site, i): Part[] => {
     const label = `${site.name}${site.moved ? '*' : ''}`
-    const tab: Part = site.name === view.site ? badge(view, label) : [` ${label} `, D]
+    const [text, sgr] = site.name === view.site ? badge(view, label) : [` ${label} `, D]
+    const tab: Part = [text, sgr, undefined, { kind: 'site', tab: i }]
     return i ? [[' ', ''], tab] : [tab]
   })
   const fits = strip.reduce((n, [text]) => n + width(text), 0) <= cols
@@ -724,7 +767,7 @@ function tagRow(line: Line, cols: number, view: FindView, accent: string): void 
     if (used + width(text) + 1 > cols - 2) {
       break
     }
-    parts.push([text, chip.on ? `\x1b[7m${accent}` : D], [' ', ''])
+    parts.push([text, chip.on ? `\x1b[7m${accent}` : D, undefined, { kind: 'chip', index: i }], [' ', ''])
     used += width(text) + 1
     left--
   }
@@ -789,8 +832,8 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
     return
   }
   const c = line.run(0, [
-    ['⌕ ', accent],
-    [view.tag || 'Nothing yet — / searches, ctrl+v pastes a picture', view.tag ? '' : D],
+    ['⌕ ', accent, undefined, { kind: 'query' }],
+    [view.tag || 'Nothing yet — / searches, ctrl+v pastes a picture', view.tag ? '' : D, undefined, { kind: 'query' }],
   ])
   const allowed = BLOCKS.filter((block) => !view.block.includes(block))
   const skipped = SITES.filter((site) => !view.enabled.includes(site.name)).map((site) => site.name)
@@ -947,7 +990,15 @@ function loading(view: FindView, waiting: boolean, shown: Tile[]): Part | undefi
   return ready < due.length ? [`${spin(view)} Loading thumbnails · ${ready}/${due.length}`, D] : undefined
 }
 
-function grid(lines: Line[], images: Placement[], cols: number, rows: number, view: FindView, accent: string): boolean {
+function grid(
+  lines: Line[],
+  images: Placement[],
+  tiles: Zone[],
+  cols: number,
+  rows: number,
+  view: FindView,
+  accent: string,
+): boolean {
   const { perRow, rowsVis, height } = gridShape(cols, rows)
   query(lines[0] as Line, cols, view, accent)
   tabs(lines[1] as Line, cols, view)
@@ -967,6 +1018,17 @@ function grid(lines: Line[], images: Placement[], cols: number, rows: number, vi
         continue
       }
       shown.push(tile)
+      const seen = Math.max(r0, GRID_TOP)
+      const ends = Math.min(r0 + TILE.height, GRID_TOP + height)
+      if (ends > seen) {
+        tiles.push({
+          row: seen,
+          col: c0,
+          width: TILE.pitch - 1,
+          height: ends - seen,
+          target: { kind: 'tile', index: i },
+        })
+      }
       const on = i === view.focus
       if (on) {
         frameBox(inside, r0, c0, TILE.height, TILE.pitch - 1, accent)
@@ -1242,6 +1304,7 @@ export function wrapped(text: string, room: number): string[] {
 interface Chip {
   text: string
   sgr: string
+  choice?: string
 }
 
 function ordered(row: Row): string[] {
@@ -1266,6 +1329,7 @@ function chips(row: Row, focused: boolean, typing: string | undefined, ansi: num
     return {
       text: row.multi ? ` ${shown ? '[x]' : '[ ]'} ${choice} ` : ` ${choice} `,
       sgr: shown ? (focused ? `\x1b[${under}7;${30 + ansi}m` : '') : under ? `\x1b[4m${D}` : D,
+      choice,
     }
   })
   return typed ? [...out, { text: ` ${typing}█ `, sgr: lit }] : out
@@ -1408,6 +1472,7 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
     if (focused) {
       lines[r]?.put(x + 2, '▶', accent)
     }
+    lines[r]?.mark(x + 2, lead - 3, { kind: 'setting', index: i })
     lines[r]?.put(x + 4, row.label, focused ? B : '')
     if (row.value !== row.default) {
       lines[r]?.right(x + w - 3, [[standard(row), D]])
@@ -1415,7 +1480,12 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
     pack(chips(row, focused, view.typing, view.siteAnsi), room).forEach((chipLine, k) => {
       let col = x + lead
       for (const chip of chipLine) {
-        col = (lines[r + k] as Line).put(col, chip.text, chip.sgr) + 1
+        col = (lines[r + k] as Line).put(col, chip.text, chip.sgr, undefined, {
+          kind: 'choice',
+          index: i,
+          choice: chip.choice,
+        })
+        col += 1
       }
     })
     r += held[i] as number
@@ -1425,7 +1495,10 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
   if (at === link) {
     linkLine.put(x + 2, '▶', accent)
   }
-  const end = linkLine.put(x + 3, view.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? lit : B)
+  const end = linkLine.put(x + 3, view.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? lit : B, undefined, {
+    kind: 'setting',
+    index: link,
+  })
   if (other.some((i) => view.settings[i]?.value !== view.settings[i]?.default)) {
     linkLine.put(end + 1, '•', D)
   }
@@ -1473,36 +1546,41 @@ function suggestions(lines: Line[], view: FindView, accent: string): void {
     const on = i === view.pick
     const line = lines[1 + i]
     line?.run(0, [
-      [on ? '▸ ' : '  ', accent],
-      [item.value, on ? B + accent : ''],
+      [on ? '▸ ' : '  ', accent, undefined, { kind: 'suggest', index: i }],
+      [item.value, on ? B + accent : '', undefined, { kind: 'suggest', index: i }],
     ])
     line?.right(2 + wide + 2 + note, [[said[i] as string, D]])
   })
 }
 
+function zonesOf(lines: Line[], under: Zone[] = []): Zone[] {
+  return [...under, ...lines.flatMap((line, row) => line.zones(row))]
+}
+
 export function renderFind(view: FindView, cols: number, rows: number): Frame {
   const lines = Array.from({ length: rows }, () => new Line(cols))
   const images: Placement[] = []
+  const tiles: Zone[] = []
   const accent = fg(view.colors.cursor)
   beating = false
   if (cols < MIN.cols || rows < MIN.rows) {
     lines[0]?.put(0, 'ttheme find', B + accent)
     lines[1]?.put(0, `Needs ${MIN.cols}×${MIN.rows} — now ${cols}×${rows}`)
-    lines[2]?.put(0, 'esc quits', D)
-    return { lines: lines.map((l) => l.render()), images, loader: false, tick: false }
+    lines[2]?.put(0, 'esc quits', D, undefined, { kind: 'key', key: 'esc' })
+    return { lines: lines.map((l) => l.render()), images, zones: zonesOf(lines), loader: false, tick: false }
   }
   let waiting = false
   if (view.mode === 'try') {
     trial(lines, images, cols, rows, view, accent)
   } else {
-    waiting = grid(lines, images, cols, rows, view, accent)
+    waiting = grid(lines, images, tiles, cols, rows, view, accent)
   }
   if (view.mode === 'grid' && view.editing !== undefined && view.suggest?.length) {
     for (let r = 1; r < rows - 1; r++) {
       lines[r] = new Line(cols)
     }
     suggestions(lines, view, accent)
-    return { lines: lines.map((l) => l.render()), images: [], loader: false, tick: false }
+    return { lines: lines.map((l) => l.render()), images: [], zones: zonesOf(lines), loader: false, tick: false }
   }
   if (view.help || view.panel !== undefined) {
     const keep = view.mode === 'try' ? images : []
@@ -1514,7 +1592,13 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
     } else {
       panel(lines, cols, rows, view, accent)
     }
-    return { lines: lines.map((l) => l.render()), images: keep, loader: false, tick: false }
+    return { lines: lines.map((l) => l.render()), images: keep, zones: zonesOf(lines), loader: false, tick: false }
   }
-  return { lines: lines.map((l) => l.render()), images, loader: waiting, tick: beating }
+  return {
+    lines: lines.map((l) => l.render()),
+    images,
+    zones: zonesOf(lines, tiles),
+    loader: waiting,
+    tick: beating,
+  }
 }

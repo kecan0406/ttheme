@@ -22,6 +22,7 @@ import {
   ROWS,
   ruleSlots,
   SCOPES,
+  type Scope,
   SLOT_NAMES,
   slotChecks,
   slotLabel,
@@ -30,14 +31,31 @@ import { SCENES, sceneAt, sceneParts } from './scenes.ts'
 import type { Colors } from './seeds.ts'
 import { grow, SEED_FIELDS, type Seeds } from './seeds.ts'
 import { CLEAR } from './terminal.ts'
-import { CELL_QUERY, CellProbe } from './tui/keys.ts'
+import { CELL_QUERY, CellProbe, type Mouse } from './tui/keys.ts'
 import { Screen } from './tui/screen.ts'
-import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, within } from './tui/terminal.ts'
+import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
+import { type Hit, type KeySpot, keyZone, zone } from './tui/zones.ts'
 
 export const MIN_COLS = 80
 export const MIN_ROWS = 24
 const LEFT = 50
 const SEED_BAR = 11
+
+export type EditorSpot =
+  | KeySpot
+  | { kind: 'slot'; slot: number }
+  | { kind: 'channel'; channel: number }
+  | { kind: 'bar'; channel: number }
+  | { kind: 'field'; field: number }
+  | { kind: 'seed'; field: number }
+  | { kind: 'scope'; scope: Scope }
+  | { kind: 'view'; view: PaletteEditor['view'] }
+  | { kind: 'scene'; scene: number }
+  | { kind: 'choice'; index: number }
+
+function spot(target: EditorSpot, text: string): string {
+  return zone(target, text)
+}
 
 interface Paint {
   color: boolean
@@ -113,7 +131,8 @@ function channelLines(p: Paint, e: PaletteEditor, at: Oklch, barWidth: number): 
       channel.key === 'c' && held !== undefined ? position(held, channel.min, channel.max, barWidth) : undefined,
     )
     const label = channel.key.toUpperCase()
-    return `${here ? p.bold(`▸${label}`) : p.dim(` ${label}`)} ${bar} ${here ? p.bold(shown) : p.dim(shown)}`
+    const grip: EditorSpot = { kind: 'channel', channel: i }
+    return `${spot(grip, here ? p.bold(`▸${label}`) : p.dim(` ${label}`))} ${spot({ kind: 'bar', channel: i }, bar)} ${spot(grip, here ? p.bold(shown) : p.dim(shown))}`
   })
 }
 
@@ -129,7 +148,8 @@ function contrastLine(p: Paint, e: PaletteEditor, barWidth: number): string {
     k === pos ? p.bold('●') : k === tick ? '┃' : k < tick ? p.dim(line) : line,
   ).join('')
   const shown = `${ratio.toFixed(2)}:1`.padStart(6)
-  return `${here ? p.bold('▸◐') : p.dim(' ◐')} ${bar} ${here ? p.bold(shown) : p.dim(shown)}`
+  const grip: EditorSpot = { kind: 'channel', channel: CONTRAST }
+  return `${spot(grip, here ? p.bold('▸◐') : p.dim(' ◐'))} ${spot({ kind: 'bar', channel: CONTRAST }, bar)} ${spot(grip, here ? p.bold(shown) : p.dim(shown))}`
 }
 
 function scopeLines(p: Paint, e: PaletteEditor): string[] {
@@ -138,11 +158,14 @@ function scopeLines(p: Paint, e: PaletteEditor): string[] {
   }
   const c = colorsOf(e.list)
   const items = SCOPES.map((scope) =>
-    scope !== e.scope
-      ? p.dim(scope)
-      : p.color
-        ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${scope} \x1b[39;49m`
-        : `[${scope}]`,
+    spot(
+      { kind: 'scope', scope },
+      scope !== e.scope
+        ? p.dim(scope)
+        : p.color
+          ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${scope} \x1b[39;49m`
+          : `[${scope}]`,
+    ),
   )
   const n = e.scoped().length
   return [
@@ -210,7 +233,9 @@ function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): strin
     const tail = `${r.value} ${r.bound}`
     const row = `  ${checkMark(p, r.ok)} ${spread(r.ok === false ? r.label : p.dim(r.label), p.dim(tail), width - 2)}`
     const names = [...new Set(r.slots)].map((slot) => slotLabel(slot).name)
-    return names.length > 0 ? [row, `    ${p.dim(fit(names.join(' · '), width - 2))}`] : [row]
+    const first = r.slots[0]
+    const to = (line: string) => (first === undefined ? line : spot({ kind: 'slot', slot: first }, line))
+    return names.length > 0 ? [to(row), to(`    ${p.dim(fit(names.join(' · '), width - 2))}`)] : [to(row)]
   })
   return [
     failing === 0 ? head : spread(head, `${p.bold('n')} ${p.dim('next miss')}`, wide - 2),
@@ -230,22 +255,29 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT, curso
     const sw = p.color ? `${p.fg(hex)}${glyph}${focused ? p.fg(c.foreground) : '\x1b[39m'} ` : `${glyph} `
     const text = `${sw}${lchShort(e.lch[slot] as Oklch)}${mark}`
     if (!focused) {
-      return ` ${text}`
+      return spot({ kind: 'slot', slot }, ` ${text}`)
     }
-    return p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${text}\x1b[39;49m` : `›${text}`
+    return spot(
+      { kind: 'slot', slot },
+      p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${text}\x1b[39;49m` : `›${text}`,
+    )
   }
   const gutter = (here: boolean) => (here ? (p.color ? `${p.fg(c.cursor)}▌\x1b[39m ` : '▌ ') : '  ')
   const lines = [`  ${p.dim('Base')}`]
   for (let row = 0; row < BASE.length; row++) {
     const here = cursor && row === e.row
     const label = (BASE[row] as string).padEnd(10)
-    lines.push(`${gutter(here)}${here ? p.bold(label) : label}${cell(row)}`)
+    lines.push(`${spot({ kind: 'slot', slot: row }, `${gutter(here)}${here ? p.bold(label) : label}`)}${cell(row)}`)
   }
   lines.push('', `  ${p.dim(`${'ANSI'.padEnd(10)} ${'Normal'.padEnd(18)} Bright`)}`)
   for (let row = BASE.length; row < ROWS; row++) {
     const here = cursor && row === e.row
     const label = (PAIRS[row - BASE.length] as string).padEnd(10)
-    lines.push(`${gutter(here)}${here ? p.bold(label) : label}${cell(row)}${cell(row + 8)}`)
+    const named = spot(
+      { kind: 'slot', slot: row + (e.col === 1 ? 8 : 0) },
+      `${gutter(here)}${here ? p.bold(label) : label}`,
+    )
+    lines.push(`${named}${cell(row)}${cell(row + 8)}`)
   }
   lines.push('')
   return [...lines, ...gateLines(p, e, height - lines.length, wide)]
@@ -266,8 +298,9 @@ function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
     const hex = SEED_SHOWS[field.key](c)
     const gutter = here ? (p.color ? `${p.fg(c.cursor)}▌\x1b[39m ` : '▌ ') : '  '
     const label = field.label.padEnd(17)
+    const grip: EditorSpot = { kind: 'field', field: i }
     lines.push(
-      `${gutter}${here ? p.bold(label) : label}${bar} ${shown}  ${p.color ? `${p.fg(hex)}■\x1b[39m ` : ''}${p.dim(hex)}`,
+      `${spot(grip, `${gutter}${here ? p.bold(label) : label}`)}${spot({ kind: 'seed', field: i }, bar)}${spot(grip, ` ${shown}  ${p.color ? `${p.fg(hex)}■\x1b[39m ` : ''}${p.dim(hex)}`)}`,
     )
   })
   lines.push('')
@@ -317,11 +350,14 @@ function roleSgr(p: Paint, c: Colors, role: string, mark: boolean): string {
 function sample(p: Paint, c: Colors, width: number, room: number, scene: number, slot: number): string[] {
   const at = SCENES.indexOf(sceneAt(scene))
   const tabs = SCENES.map((one, i) =>
-    i !== at
-      ? p.dim(one.name)
-      : p.color
-        ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${one.name} \x1b[39;49m`
-        : `[${one.name}]`,
+    spot(
+      { kind: 'scene', scene: i },
+      i !== at
+        ? p.dim(one.name)
+        : p.color
+          ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${one.name} \x1b[39;49m`
+          : `[${one.name}]`,
+    ),
   ).join('  ')
   const lines = [spread(tabs, p.dim('⇧←→'), width)]
   const base = `${p.bg(c.background)}${p.fg(c.foreground)}`
@@ -462,15 +498,18 @@ function relations(p: Paint, e: PaletteEditor, width: number, height: number, fu
 
 function viewTabs(p: Paint, e: PaletteEditor, width: number): string {
   const c = colorsOf(e.list)
-  const tab = (name: string, on: boolean) =>
-    !on
-      ? p.dim(` ${name} `)
-      : p.color
-        ? `${p.bg(c.selection)}${p.fg(c.foreground)}${p.bold(` ${name} `)}\x1b[39;49m`
-        : `[${name}]`
+  const tab = (name: string, view: PaletteEditor['view']) =>
+    spot(
+      { kind: 'view', view },
+      e.view !== view
+        ? p.dim(` ${name} `)
+        : p.color
+          ? `${p.bg(c.selection)}${p.fg(c.foreground)}${p.bold(` ${name} `)}\x1b[39;49m`
+          : `[${name}]`,
+    )
   return spread(
-    `${tab('Slot', e.view === 'slot')}${tab('Relations', e.view === 'relations')}`,
-    `${p.bold('g')} ${p.dim('switch')}`,
+    `${tab('Slot', 'slot')}${tab('Relations', 'relations')}`,
+    keyZone('g', `${p.bold('g')} ${p.dim('switch')}`),
     width,
   )
 }
@@ -599,7 +638,7 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
       : ''
     const gutter = here ? '▌ ' : '  '
     const label = choice.name.padEnd(nameWidth)
-    lines.push(`${gutter}${here ? p.bold(label) : label}  ${swatches}`)
+    lines.push(spot({ kind: 'choice', index: top + k }, `${gutter}${here ? p.bold(label) : label}  ${swatches}`))
   })
   if (choices.length === 0) {
     lines.push(`  ${p.dim(`No palettes match '${e.filter}'`)}`)
@@ -696,10 +735,13 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   }
   const tag = p.color ? `\x1b[7;1m${accent} ${badge} \x1b[0m  ` : `[${badge}] `
   const shownRight = right
-    ? `${p.bold(right.split(' ')[0] as string)} ${p.dim(right.split(' ').slice(1).join(' '))}`
+    ? keyZone(
+        right.split(' ')[0] as string,
+        `${p.bold(right.split(' ')[0] as string)} ${p.dim(right.split(' ').slice(1).join(' '))}`,
+      )
     : ''
   for (;;) {
-    const segments = [lead, ...keys.map(([k, label]) => `${p.bold(k)} ${p.dim(label)}`)].filter(Boolean)
+    const segments = [lead, ...keys.map(([k, label]) => keyZone(k, `${p.bold(k)} ${p.dim(label)}`))].filter(Boolean)
     const line = `${tag}${segments.join('   ')}`
     let drop = -1
     keys.forEach(([key], i) => {
@@ -824,7 +866,7 @@ export function renderTone(
   if (e.view === 'relations' && e.mode === 'list' && e.typing === undefined) {
     const label = focused ? p.bold('Palette') : p.dim('Palette')
     const body = relations(p, e, width - 2, height - 1, false).map((line) => `  ${line}`)
-    const head = spread(`${label}  ${p.dim('Relations')}`, `${p.bold('g')} ${p.dim('slots')}`, width - 2)
+    const head = spread(`${label}  ${p.dim('Relations')}`, keyZone('g', `${p.bold('g')} ${p.dim('slots')}`), width - 2)
     const all = [`  ${head}`, ...body]
     return { lines: Array.from({ length: height }, (_, i) => fit(all[i] ?? '', width)), at: 2 }
   }
@@ -899,6 +941,65 @@ export function renderEditor(e: PaletteEditor, cols: number, rows: number, color
   return lines
 }
 
+export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void {
+  if (event.action === 'wheel') {
+    if (!event.sideways) {
+      e.scroll(event.wheel)
+    }
+    return
+  }
+  if ((event.action === 'press' || event.action === 'drag') && event.button !== 'left') {
+    return
+  }
+  if (event.action === 'press' && e.overlay === 'keys') {
+    e.press('esc')
+    return
+  }
+  const target = hit?.target as EditorSpot | undefined
+  if (!hit || !target) {
+    return
+  }
+  const along = hit.width > 1 ? hit.x / (hit.width - 1) : 0
+  if (event.action === 'release') {
+    if (!hit.inside) {
+      return
+    }
+    if (target.kind === 'key') {
+      e.press(target.key)
+    } else if (event.count === 2 && target.kind === 'slot' && e.mode === 'list') {
+      e.press('enter')
+    } else if (event.count === 2 && target.kind === 'choice' && e.overlay === 'open') {
+      e.press('enter')
+    }
+    return
+  }
+  if (target.kind === 'bar') {
+    e.slide(target.channel, along)
+  } else if (target.kind === 'seed') {
+    e.sow(target.field, along)
+  } else if (event.action !== 'press') {
+    return
+  } else if (target.kind === 'slot') {
+    e.select(target.slot)
+  } else if (target.kind === 'channel') {
+    e.grip(target.channel)
+  } else if (target.kind === 'scope') {
+    e.scopeTo(target.scope)
+  } else if (target.kind === 'choice') {
+    if (e.overlay === 'open') {
+      e.pick = target.index
+    }
+  } else if (e.typing === undefined && !e.overlay && !e.quitting) {
+    if (target.kind === 'field' && e.mode === 'seeds') {
+      e.field = target.field
+    } else if (target.kind === 'view' && e.mode !== 'seeds') {
+      e.view = target.view
+    } else if (target.kind === 'scene') {
+      e.scene = target.scene
+    }
+  }
+}
+
 export interface Surface {
   only?: readonly number[]
   look?: (shown: readonly Hex[]) => void
@@ -913,7 +1014,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
   const editor = new PaletteEditor(options)
   const backdrop = surface.backdrop
   const burst = (typed: string) => editor.typing === undefined && typedDrop(typed)
-  return within({ modes: MODES, burst }, async (terminal) => {
+  return within({ modes: [...MODES, ...pointing()], burst }, async (terminal) => {
     const painted: (Hex | undefined)[] = []
     let looked = ''
     let timer: NodeJS.Timeout | undefined
@@ -1015,6 +1116,8 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
             editor.paste(event.text)
           } else if (event.kind === 'key') {
             editor.press(event.key)
+          } else if (event.kind === 'mouse') {
+            pointEditor(editor, screen.point(event), event)
           }
           if (editor.result) {
             return { edited: editor.result === 'saved' ? editor.edited() : undefined }

@@ -2,14 +2,15 @@ import { createInterface } from 'node:readline'
 import { backgroundsDir, due, type Picture, paintFor, readStore } from './backdrop.ts'
 import { find, readCatalog, untuned } from './catalog.ts'
 import type { Hex } from './color.ts'
-import { renderTone, TONE_COLS, TONE_ROWS, toneFooter } from './editor-screen.ts'
+import { pointEditor, renderTone, TONE_COLS, TONE_ROWS, toneFooter } from './editor-screen.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { PaletteEditor } from './palette-editor.ts'
 import { configHome, readInstalled, sync } from './palettes.ts'
 import type { Colors } from './seeds.ts'
 import { drafted, pictureOf, Tints } from './tints.ts'
 import { overrideOf, readTone, tonedEntry, withTone, writeTone } from './tone.ts'
-import { keyOf } from './tui/keys.ts'
+import { keyOf, type Mouse } from './tui/keys.ts'
+import { lifted, marking, Pointer } from './tui/zones.ts'
 
 const FIELD = '\x1f'
 const ITEM = '\x1e'
@@ -33,6 +34,30 @@ const NAMED = new Set([
   'ctrl-c',
 ])
 
+function mouseOf([action = '', row = '', col = '', n = '']: string[]): Mouse | undefined {
+  if (
+    (action !== 'press' && action !== 'drag' && action !== 'release' && action !== 'wheel') ||
+    !/^\d+$/.test(row) ||
+    !/^\d+$/.test(col) ||
+    !/^-?\d+$/.test(n)
+  ) {
+    return undefined
+  }
+  return {
+    kind: 'mouse',
+    action,
+    button: action === 'wheel' ? undefined : 'left',
+    wheel: action === 'wheel' ? (Number(n) < 0 ? -1 : 1) : 0,
+    sideways: false,
+    row: Number(row),
+    col: Number(col),
+    shift: false,
+    alt: false,
+    ctrl: false,
+    count: action === 'press' || action === 'release' ? Number(n) : 0,
+  }
+}
+
 function colorsOf(entry: PaletteEntry): Colors {
   return {
     background: entry.background as Hex,
@@ -55,6 +80,7 @@ export class ToneSession {
   private readonly color: boolean
   private shown = ''
   private readonly tints = new Tints()
+  private readonly pointer = new Pointer()
   private drawn = { key: '', recolors: false, look: '' }
 
   constructor(home: string, name: string, color: boolean) {
@@ -121,7 +147,9 @@ export class ToneSession {
     const footer = toneFooter(this.editor)
     const act = this.editor.act ?? '-'
     this.editor.act = undefined
-    const { lines, at } = renderTone(this.editor, this.cols, this.rows, this.color, this.focused)
+    const { drawn, targets } = marking(() => renderTone(this.editor, this.cols, this.rows, this.color, this.focused))
+    const { lines, zones } = lifted(drawn.lines, targets)
+    this.pointer.zones = zones
     const { recolors, look } = this.draft()
     return [
       status,
@@ -132,7 +160,7 @@ export class ToneSession {
       footer.keys.map(([key]) => key).join(ITEM),
       footer.keys.map(([, label]) => label).join(ITEM),
       note ?? footer.note,
-      String(at),
+      String(drawn.at),
       recolors ? '1' : '0',
       look,
       ...lines,
@@ -160,6 +188,11 @@ export class ToneSession {
       const key = Number.isInteger(code) && code > 0 && code <= 0x10ffff ? keyOf(String.fromCodePoint(code)) : undefined
       if (key) {
         this.editor.press(key)
+      }
+    } else if (verb === 'mouse') {
+      const event = mouseOf(rest)
+      if (event) {
+        pointEditor(this.editor, this.pointer.point(event), event)
       }
     } else if (verb === 'save') {
       const problem = this.save()

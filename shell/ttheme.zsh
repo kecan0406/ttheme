@@ -127,6 +127,8 @@ __tt_pins_load
 
 : ${TTHEME_SORT:=abc}
 
+: ${TTHEME_MOUSE:=on}
+
 : ${TTHEME_BG_BLUR:=0}
 
 : ${TTHEME_BG_COLORS:=tone}

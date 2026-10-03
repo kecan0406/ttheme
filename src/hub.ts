@@ -1,4 +1,5 @@
 import { DIM, RESET } from './ansi.ts'
+import { zone } from './tui/zones.ts'
 
 export const HUB_TABS = [
   { name: 'preview', title: 'Preview' },
@@ -16,9 +17,18 @@ export function hubOf(env: Record<string, string | undefined>): HubTab | undefin
   return HUB_TABS.find((tab) => tab.name === env.TTHEME_HUB)?.name
 }
 
+export interface HubSpot {
+  kind: 'hub'
+  tab: HubTab
+}
+
 export function hubGoto(active: HubTab, step: number): number {
   const at = HUB_TABS.findIndex((tab) => tab.name === active)
   return HUB_SWITCH + ((at + step + HUB_TABS.length) % HUB_TABS.length) + 1
+}
+
+export function hubTo(tab: HubTab): number {
+  return HUB_SWITCH + HUB_TABS.findIndex((one) => one.name === tab) + 1
 }
 
 export function hubTarget(code: number): HubTab | undefined {
@@ -27,10 +37,11 @@ export function hubTarget(code: number): HubTab | undefined {
 
 export function hubBar(active: HubTab, color: boolean): string {
   const tabs = HUB_TABS.map(({ name, title }) => {
+    const spot: HubSpot = { kind: 'hub', tab: name }
     if (!color) {
-      return name === active ? `[${title}]` : ` ${title} `
+      return zone(spot, name === active ? `[${title}]` : ` ${title} `)
     }
-    return name === active ? `${PILL} ${title} ${RESET}` : `${DIM} ${title} ${RESET}`
+    return name === active ? `${PILL}${zone(spot, ` ${title} `)}${RESET}` : `${DIM}${zone(spot, ` ${title} `)}${RESET}`
   })
   const hint = 'tab next'
   return ` ${tabs.join(' ')}  ${color ? `${DIM}${hint}${RESET}` : hint}`

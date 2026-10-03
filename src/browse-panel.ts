@@ -2,7 +2,7 @@ import type { Readable, Writable } from 'node:stream'
 import { ansiBar, ansiFg, BOLD, CYAN, DIM, fit, NORMAL, RESET, SPINNER, spread, wrapText, YELLOW } from './ansi.ts'
 import { gateFailures } from './catalog.ts'
 import { GATE_RULES } from './contrast.ts'
-import { type HubTab, hubBar, hubGoto } from './hub.ts'
+import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { type Repository, repositorySource } from './markets.ts'
 import {
@@ -11,6 +11,8 @@ import {
   type PromptFx,
   pageStep,
   paletteExample,
+  type RowSpot,
+  rowSpot,
   SearchHint,
   stepRow,
 } from './palette-prompt.ts'
@@ -18,8 +20,10 @@ import { counted, type Refreshed } from './refresh.ts'
 import { isLocal, OFFICIAL, parseSource, sameMarket, shownSource, TOPIC } from './sources.ts'
 import { marketOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
+import type { Mouse } from './tui/keys.ts'
 import { Screen } from './tui/screen.ts'
-import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, within } from './tui/terminal.ts'
+import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
+import { type KeySpot, keyZone, zone } from './tui/zones.ts'
 
 export type Tab = 'catalog' | 'installed' | 'markets' | 'errors'
 
@@ -94,6 +98,14 @@ interface Detail {
 }
 
 type Scoped = 'catalog' | 'installed'
+
+type Spot =
+  | RowSpot
+  | KeySpot
+  | HubSpot
+  | { kind: 'tab'; tab: Tab }
+  | { kind: 'chip'; source: string | undefined }
+  | { kind: 'page'; step: number }
 
 interface Chip {
   source: string | undefined
@@ -240,7 +252,7 @@ export class BrowsePanel {
   }
 
   run(): Promise<'submit' | 'cancel'> {
-    const modes = this.owns ? [ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES] : [PASTES]
+    const modes = [...(this.owns ? [ALT_SCREEN, HIDE_CURSOR, NO_WRAP] : []), PASTES, ...pointing()]
     const assume = this.owns ? [] : [HIDE_CURSOR, NO_WRAP]
     return within({ input: this.input, output: this.output, modes, assume }, async (terminal) => {
       const screen = new Screen({
@@ -263,6 +275,8 @@ export class BrowsePanel {
               this.key(event.key)
             } else if (event.kind === 'paste') {
               this.pasted(event.text)
+            } else if (event.kind === 'mouse') {
+              this.mouse(event, screen)
             }
             return this.state === 'active' ? undefined : this.state
           },
@@ -387,6 +401,87 @@ export class BrowsePanel {
     }
   }
 
+  private mouse(event: Mouse, screen: Screen): void {
+    const hit = screen.point(event)
+    const spot = hit?.target as Spot | undefined
+    const free = this.phase === 'browse' && this.leaving === undefined && !this.asking
+    if (event.action === 'wheel') {
+      if (!event.sideways && (free || this.phase !== 'browse')) {
+        this.wheel(event.wheel)
+      }
+      return
+    }
+    if (!spot) {
+      return
+    }
+    if (event.action === 'press' && event.button === 'left') {
+      if (!free) {
+        return
+      }
+      if (spot.kind === 'tab') {
+        this.show(spot.tab)
+      } else if (spot.kind === 'chip') {
+        this.scopeTo(spot.source)
+      } else if (spot.kind === 'row') {
+        this.pointRow(spot.at)
+      }
+    } else if (event.action === 'release' && hit?.inside) {
+      if (spot.kind === 'key') {
+        this.key(spot.key)
+      } else if (spot.kind === 'page') {
+        if (this.phase !== 'browse') {
+          this.scroll(spot.step * this.span())
+        } else if (free) {
+          this.move(spot.step * this.maxItems)
+        }
+      } else if (spot.kind === 'hub') {
+        if (free && this.hub && spot.tab !== this.hub) {
+          this.leave(hubTo(spot.tab))
+        }
+      } else if (spot.kind === 'row' && free) {
+        this.openRow(spot, event.count)
+      }
+    }
+  }
+
+  private wheel(step: number): void {
+    if (this.phase !== 'browse') {
+      this.scroll(step)
+      return
+    }
+    const list = this.list()
+    if (list) {
+      list.move(step, false)
+    } else {
+      this.move(step, false)
+    }
+  }
+
+  private pointRow(at: number): void {
+    const list = this.list()
+    if (list) {
+      list.point(at)
+      return
+    }
+    this.cursor[this.tab === 'markets' ? 'markets' : 'errors'] = at
+    this.watch()
+  }
+
+  private openRow(spot: RowSpot, count: number): void {
+    const list = this.list()
+    if (list) {
+      if (spot.part === 'box') {
+        list.pick()
+      } else if (spot.part === 'fold') {
+        list.flip()
+      } else if (count === 2) {
+        list.open()
+      }
+    } else if (spot.part === 'box' || count === 2) {
+      this.activate()
+    }
+  }
+
   private typed(): void {
     const value = this.fields[this.tab].value
     this.list()?.setFilter(value)
@@ -479,32 +574,43 @@ export class BrowsePanel {
       0,
       chips.findIndex((c) => c.source === this.scope[tab]),
     )
-    this.scope[tab] = chips[(at + 1) % chips.length]?.source
+    this.scopeTo(chips[(at + 1) % chips.length]?.source)
+  }
+
+  private scopeTo(source: string | undefined): void {
+    const tab = this.tab
+    if (tab !== 'catalog' && tab !== 'installed') {
+      return
+    }
+    this.scope[tab] = source
     this.reload()
     this.list()?.refocus()
   }
 
   private switchTab(step: number): void {
     const at = TABS.findIndex((t) => t.tab === this.tab)
-    const next = TABS[(at + step + TABS.length) % TABS.length]?.tab ?? 'catalog'
-    this.tab = next
+    this.show(TABS[(at + step + TABS.length) % TABS.length]?.tab ?? 'catalog')
+  }
+
+  private show(tab: Tab): void {
+    this.tab = tab
     this.list()?.refocus()
-    if (next === 'markets') {
+    if (tab === 'markets') {
       this.lookup()
       this.watch()
     }
   }
 
-  private move(delta: number): void {
+  private move(delta: number, wrap = true): void {
     const list = this.list()
     if (list) {
-      list.move(delta)
+      list.move(delta, wrap)
       return
     }
     const key = this.tab === 'markets' ? 'markets' : 'errors'
     const rules =
       key === 'markets' ? this.marketRows().map((r) => r.kind === 'rule') : this.problemRows().map(() => false)
-    this.cursor[key] = stepRow(this.cursor[key], delta, rules.length, (i) => rules[i] === true)
+    this.cursor[key] = stepRow(this.cursor[key], delta, rules.length, (i) => rules[i] === true, wrap)
     this.watch()
   }
 
@@ -793,7 +899,7 @@ export class BrowsePanel {
   private windowOf<T>(
     rows: T[],
     key: 'markets' | 'errors',
-    render: (row: T, focused: boolean) => string[],
+    render: (row: T, focused: boolean, at: number) => string[],
     rule: (row: T | undefined) => boolean = () => false,
   ): { lines: string[]; above: number; below: number } {
     const cursor = this.at(rows, key, rule)
@@ -821,7 +927,10 @@ export class BrowsePanel {
       used += height(i)
     }
     return {
-      lines: shown.flatMap((i) => render(rows[i] as T, i === cursor)),
+      lines: shown.flatMap((i) => {
+        const lines = render(rows[i] as T, i === cursor, i)
+        return rule(rows[i]) ? lines : lines.map((line) => rowSpot(i, 'row', line))
+      }),
       above: top,
       below: rows.length - top - shown.length,
     }
@@ -864,14 +973,14 @@ export class BrowsePanel {
     return peeked ? counted(peeked.entries.filter((e) => !e.default).length) : ''
   }
 
-  private marketLine(row: MarketRow, focused: boolean): string[] {
+  private marketLine(row: MarketRow, focused: boolean, at: number): string[] {
+    const box = (mark: string) => rowSpot(at, 'box', `${mark} `)
     if (row.kind === 'rule') {
       return [`   ${this.dim(`── On GitHub${this.searching ? ' · searching…' : ''} ──────────`)}`]
     }
     if (row.kind === 'market') {
       const m = row.market
       const status = this.status(m)
-      const box = this.removes.has(m.source) ? '○' : '●'
       const name = focused ? this.bold(m.id) : m.id
       const listed = m.entries.filter((e) => !e.default)
       const auto = !isLocal(m.source) && (this.want.get(m.source) ?? m.auto) ? `  ${this.dim('↻ auto-update')}` : ''
@@ -879,7 +988,7 @@ export class BrowsePanel {
         this.lit(
           m.entries.find((e) => !e.default),
           focused,
-          `${box} ${name}${auto}${status ? `  ${this.dim(status)}` : ''}`,
+          `${box(this.removes.has(m.source) ? '○' : '●')}${name}${auto}${status ? `  ${this.dim(status)}` : ''}`,
         ),
         this.note(
           [
@@ -896,7 +1005,7 @@ export class BrowsePanel {
       const failure = this.failed.get(row.source) ?? this.peekFailed.get(row.source)
       const peeked = this.peeked.get(row.source)
       return [
-        this.lit(undefined, focused, `+ Add ${shownSource(row.source)}${busy ? `  ${this.dim(busy)}` : ''}`),
+        this.lit(undefined, focused, `${box('+')}Add ${shownSource(row.source)}${busy ? `  ${this.dim(busy)}` : ''}`),
         failure
           ? `     ${this.warn(failure)}`
           : this.note(
@@ -924,17 +1033,16 @@ export class BrowsePanel {
               ? `No market on GitHub matches "${query}"`
               : 'No market on GitHub yet'
       return [
-        this.lit(undefined, focused, `⌕ ${text}`),
+        this.lit(undefined, focused, `${box('⌕')}${text}`),
         this.note(this.searchError ?? (this.searching ? '' : idle ? 'space searches GitHub' : 'space searches again')),
       ]
     }
     const busy = this.busy.get(row.source)
-    const box = this.known(row.source) ? '●' : '○'
     return [
       this.lit(
         undefined,
         focused,
-        `${box} ${row.source}  ${this.dim(`★${row.repo.stargazers_count}`)}${busy ? `  ${this.dim(busy)}` : ''}`,
+        `${box(this.known(row.source) ? '●' : '○')}${row.source}  ${this.dim(`★${row.repo.stargazers_count}`)}${busy ? `  ${this.dim(busy)}` : ''}`,
       ),
       this.note([this.peeking(row.source), row.repo.description ?? ''].filter(Boolean).join(' · ')),
     ]
@@ -962,7 +1070,7 @@ export class BrowsePanel {
         ...this.windowOf(
           this.marketRows(),
           'markets',
-          (r, f) => this.marketLine(r, f),
+          (r, f, at) => this.marketLine(r, f, at),
           (r) => r?.kind === 'rule',
         ),
         empty: '',
@@ -1151,11 +1259,11 @@ export class BrowsePanel {
     this.offset = top
     const shown = lines.slice(top, top + room)
     const below = lines.length - top - shown.length
-    const body = [top > 0 ? ` ${this.dim(`↑ ${top} more`)}` : '', ...shown]
+    const body = [top > 0 ? ` ${this.more(-1, `↑ ${top} more`)}` : '', ...shown]
     while (body.length < room + 1) {
       body.push('')
     }
-    body.push(below > 0 ? ` ${this.dim(`↓ ${below} more`)}` : '')
+    body.push(below > 0 ? ` ${this.more(1, `↓ ${below} more`)}` : '')
     const keys = review
       ? [...(most > 0 ? ['↑↓ scroll'] : []), 'enter apply', 'esc back']
       : this.phase === 'applying'
@@ -1165,10 +1273,18 @@ export class BrowsePanel {
       ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
       fit(` ${title}`, width, false),
       ...body.map((line) => fit(line, width, false)),
-      fit(` ${this.dim(keys.join(' · '))}`, width, false),
+      fit(` ${this.dim(this.hints(keys))}`, width, false),
     ]
       .slice(0, rows)
       .join('\n')
+  }
+
+  private hints(keys: string[]): string {
+    return keys.map((hint) => keyZone(hint.split(' ')[0] ?? '', hint)).join(' · ')
+  }
+
+  private more(step: number, text: string): string {
+    return this.dim(zone({ kind: 'page', step } satisfies Spot, text))
   }
 
   private counts(): string {
@@ -1202,10 +1318,11 @@ export class BrowsePanel {
     return TABS.map(({ tab, title }) => {
       const count = tab === 'errors' ? this.problemList().length : 0
       const label = count > 0 ? `${title} ${count}` : title
+      const spot: Spot = { kind: 'tab', tab }
       if (!this.color) {
-        return tab === this.tab ? `[${label}]` : ` ${label} `
+        return zone(spot, tab === this.tab ? `[${label}]` : ` ${label} `)
       }
-      return tab === this.tab ? `${PILL} ${label} ${RESET}` : `${DIM} ${label} ${RESET}`
+      return `${tab === this.tab ? PILL : DIM}${zone(spot, ` ${label} `)}${RESET}`
     }).join(' ')
   }
 
@@ -1258,15 +1375,16 @@ export class BrowsePanel {
     const shown = labels.slice(start, start + count)
     const left = labels.length - start - count
     const parts = shown.map((label, i) => {
+      const chip = zone({ kind: 'chip', source: chips[start + i]?.source } satisfies Spot, label)
       if (start + i === sel) {
-        return this.color ? `${BOLD}${CYAN}${label}${RESET}` : label
+        return this.color ? `${BOLD}${CYAN}${chip}${RESET}` : chip
       }
-      return this.dim(label)
+      return this.dim(chip)
     })
-    const text = `${start > 0 ? `${this.dim('…')} ` : ''}${parts.join(this.dim(sep))}${left > 0 ? this.dim(`${sep}+${left} more`) : ''}`
+    const text = `${start > 0 ? `${this.dim(keyZone('ctrl+s', '…'))} ` : ''}${parts.join(this.dim(sep))}${left > 0 ? this.dim(`${sep}${keyZone('ctrl+s', `+${left} more`)}`) : ''}`
     const plain = (start > 0 ? 2 : 0) + shown.join(sep).length + tail(left)
     const hint = 'ctrl+s market'
-    return plain + 2 + hint.length <= width ? `${text}  ${this.dim(hint)}` : text
+    return plain + 2 + hint.length <= width ? `${text}  ${this.dim(keyZone('ctrl+s', hint))}` : text
   }
 
   private sourceOf(entry: PaletteEntry): string {
@@ -1463,10 +1581,10 @@ export class BrowsePanel {
 
   private footer(wide: boolean): string {
     if (this.leaving !== undefined) {
-      return ` Apply your changes before you leave? ${this.dim('y apply · n discard · esc stay')}`
+      return ` Apply your changes before you leave? ${this.dim(this.hints(['y apply', 'n discard', 'esc stay']))}`
     }
     if (this.asking) {
-      return ` Update ${this.asking.id} on its own when its author changes it? ${this.dim('y yes · n no · esc back')}`
+      return ` Update ${this.asking.id} on its own when its author changes it? ${this.dim(this.hints(['y yes', 'n no', 'esc back']))}`
     }
     const scoped = this.active().length >= 2 ? ['ctrl+s market'] : []
     const row = this.tab === 'markets' ? this.marketRow() : undefined
@@ -1482,7 +1600,7 @@ export class BrowsePanel {
       markets: ['⇧←→ switch', '↑↓ move', ...marketKeys],
       errors: ['⇧←→ switch', '↑↓ move', 'type to filter'],
     }[this.tab]
-    return ` ${this.dim([...keys.filter(Boolean), 'enter apply', 'esc cancel'].join(' · '))}`
+    return ` ${this.dim(this.hints([...keys.filter(Boolean), 'enter apply', 'esc cancel']))}`
   }
 
   private columns(): number {
@@ -1532,9 +1650,9 @@ export class BrowsePanel {
       body.push('')
     }
     const list = [
-      above > 0 ? ` ${this.dim(`↑ ${above} more`)}` : '',
+      above > 0 ? ` ${this.more(-1, `↑ ${above} more`)}` : '',
       ...body,
-      below > 0 ? ` ${this.dim(`↓ ${below} more`)}` : '',
+      below > 0 ? ` ${this.more(1, `↓ ${below} more`)}` : '',
     ]
     const detail = this.detail(wide ? RIGHT : left - 2)
     const main = wide
