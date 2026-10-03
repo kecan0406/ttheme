@@ -4,7 +4,7 @@ __tt_pv_seek() {
   local t part key REPLY
   for t in ${(k)TTHEME_PALETTE}; do
     key=""
-    for part in "$t" "${TTHEME_GROUP[$t]:-Other}" "${TTHEME_NATIVE[$t]}" "${TTHEME_CATALOG[$t]}" "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}"; do
+    for part in "$t" "${TTHEME_GROUP[$t]:-Other}" "${TTHEME_NATIVE[$t]}" "${TTHEME_CATALOG[$t]}" "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
       [[ -n $part ]] || continue
       __tt_pv_norm "$part"
       key+="|$REPLY"
@@ -293,7 +293,7 @@ __tt_pv_row() {
   __tt_pv_hl "$name" "$base"
   hl=$REPLY
   extra=""
-  for part in "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}"; do
+  for part in "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
     __tt_pv_alias "$name" "$part"
     [[ -n $REPLY ]] && { extra=$REPLY; break }
   done

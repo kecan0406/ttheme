@@ -1,6 +1,7 @@
 import type { Readable, Writable } from 'node:stream'
 import { ansiBar, ansiFg, ansiSquares, BOLD, CYAN, DIM, NORMAL, RESET, YELLOW } from './ansi.ts'
 import { type PaletteEntry, swatch } from './manifest.ts'
+import { aliasesFor } from './names.ts'
 import { marketOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Inbound } from './tui/keys.ts'
@@ -46,7 +47,9 @@ export function rowKey(row: Row | undefined): string {
 
 export function matchesPalette(entry: PaletteEntry, search: string): boolean {
   const q = search.toLowerCase()
-  return [entry.name, entry.group, entry.native ?? '', entry.catalog ?? ''].some((s) => s.toLowerCase().includes(q))
+  return [entry.name, entry.group, entry.native ?? '', entry.catalog ?? '', ...aliasesFor(entry.booru)].some((s) =>
+    s.toLowerCase().includes(q),
+  )
 }
 
 export function pickerRows(entries: PaletteEntry[], expanded: ReadonlySet<string>, filter: string): PickerRow[] {

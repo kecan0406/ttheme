@@ -6,6 +6,7 @@ import { available, nearest, readAvailable, untuned, writeKept } from './catalog
 import { editUserFile, writeAtomic } from './edits.ts'
 import { palettesZsh } from './emit/shell.ts'
 import { listed, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
+import { paletteAliases } from './names.ts'
 import { installedPath } from './sources.ts'
 import { readText, systemHost, themeFiles, tilde } from './terminals/common.ts'
 import { WIRED, type Wired, wirings } from './terminals/index.ts'
@@ -178,9 +179,21 @@ export function sync(
   return out.written
 }
 
+function aliasesFor(ctx: Ctx): Record<string, string[]> {
+  const tags = ctx.entries.flatMap((entry) => (entry.booru ? [entry.booru] : []))
+  const known = paletteAliases(tags, ctx.home)
+  const out: Record<string, string[]> = {}
+  for (const entry of ctx.entries) {
+    const own = new Set(entry.nativeNames ?? [])
+    const names = (entry.booru ? (known.get(entry.booru) ?? []) : []).filter((name) => !own.has(name))
+    if (names.length > 0) out[entry.name] = names
+  }
+  return out
+}
+
 function writeTable(ctx: Ctx, host: Host, repainted: boolean): string {
   const table = join(ctx.configHome, 'ttheme', 'palettes.zsh')
-  const content = palettesZsh(ctx.entries, ctx.startup, ctx.state.terminals, layer(ctx, host))
+  const content = palettesZsh(ctx.entries, ctx.startup, ctx.state.terminals, layer(ctx, host), aliasesFor(ctx))
   if (repainted || readText(table) !== content) {
     writeAtomic(table, content)
     rmSync(`${table}.zwc`, { force: true })

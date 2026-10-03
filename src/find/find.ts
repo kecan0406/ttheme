@@ -54,6 +54,7 @@ import { canRemoveBackground, keepable, removeBackground } from '../cutout.ts'
 import { writeAtomic } from '../edits.ts'
 import { type Frame, fitOrder, interleave, type Pick } from '../fit.ts'
 import type { Manifest, PaletteEntry } from '../manifest.ts'
+import { nameHits, primeNames } from '../names.ts'
 import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from '../palettes.ts'
 import { type Look, Renderer, type Shown } from '../render.ts'
 import { SCENES } from '../scenes.ts'
@@ -718,6 +719,7 @@ class Finder {
         this.done = resolve
       })
       const clock = setInterval(this.onClock, 250)
+      setTimeout(primeNames, 0)
       try {
         const probe = new CellProbe()
         const cell = await terminal.ask(CELL_QUERY, (event) => probe.see(event), 1000)
@@ -1557,7 +1559,7 @@ class Finder {
     }
     if (key === 'enter') {
       const picked = view.pick === undefined ? undefined : shown[view.pick]
-      const chosen = picked ? text.replace(/\S*$/, picked.value) : text
+      const chosen = picked ? (picked.whole ? picked.value : text.replace(/\S*$/, picked.value)) : text
       view.editing = undefined
       view.suggest = undefined
       view.pick = undefined
@@ -1590,20 +1592,26 @@ class Finder {
     this.quietSuggest()
     const view = this.view
     view.pick = undefined
-    const token = /\S*$/.exec(view.editing ?? '')?.[0] ?? ''
-    if (!completable(token)) {
+    const text = view.editing ?? ''
+    const token = /\S*$/.exec(text)?.[0] ?? ''
+    const typed = completable(token)
+    const named = nameHits(text, KNOWN).map((hit) => ({ value: hit.tag, count: 0, alias: hit.name, whole: true }))
+    if (!typed && named.length === 0) {
       view.suggest = undefined
       return
     }
-    const known = [
-      ...new Map(
-        booruTags(this.catalog.palettes, this.entry, token).map((p) => [
-          p.booru as string,
-          { value: p.booru as string, count: 0, palette: p.name },
-        ]),
-      ).values(),
-    ].slice(0, KNOWN)
+    const ours = typed
+      ? booruTags(this.catalog.palettes, this.entry, token).map((p) => ({
+          value: p.booru as string,
+          count: 0,
+          palette: p.name,
+        }))
+      : []
+    const known = [...new Map([...ours.slice(0, KNOWN), ...named].map((item) => [item.value, item] as const)).values()]
     view.suggest = known.length > 0 ? known : undefined
+    if (!typed) {
+      return
+    }
     const asked = new AbortController()
     this.suggesting = asked
     this.suggestTimer = setTimeout(async () => {
@@ -1932,7 +1940,12 @@ class Finder {
     if (!terms.tag) {
       return []
     }
-    return terms.tag === this.entry.booru ? siteTags(this.entry, 'danbooru') : [terms.tag]
+    return this.namesOf(terms.tag, 'danbooru')
+  }
+
+  private namesOf(tag: string, site: string): string[] {
+    const owner = tag === this.entry.booru ? this.entry : this.catalog.palettes.find((p) => p.booru === tag)
+    return owner ? siteTags(owner, site) : [tag]
   }
 
   private syncChips(): void {
@@ -1987,11 +2000,7 @@ class Finder {
   }
 
   private query(site: Site, view: Terms = this.view): { tags: string; notes: string[] } | undefined {
-    const names = view.chosen
-      ? pickedNames(site, view.chosen)
-      : view.tag === this.entry.booru
-        ? siteTags(this.entry, site.key)
-        : [view.tag]
+    const names = view.chosen ? pickedNames(site, view.chosen) : this.namesOf(view.tag, site.key)
     if (names.length === 0) {
       return undefined
     }

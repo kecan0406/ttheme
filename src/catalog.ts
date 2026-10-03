@@ -4,6 +4,7 @@ import { isHex } from './color.ts'
 import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
 import { emptyManifest, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
+import { aliasesFor } from './names.ts'
 import { readLocal } from './own.ts'
 import { cachePath, isRemote, marketId, marketProblem, marketSources, OFFICIAL, remoteOwner } from './sources.ts'
 import { marketOf, nameProblem, textProblem } from './theme.ts'
@@ -224,7 +225,9 @@ export function nearest(palettes: PaletteEntry[], names: string[]): string {
 export function search(palettes: PaletteEntry[], query: string): PaletteEntry[] {
   const needle = query.toLowerCase()
   return palettes.filter((p) =>
-    [p.name, p.group, p.native ?? '', p.ansiSource].some((field) => field.toLowerCase().includes(needle)),
+    [p.name, p.group, p.native ?? '', p.ansiSource, ...aliasesFor(p.booru)].some((field) =>
+      field.toLowerCase().includes(needle),
+    ),
   )
 }
 

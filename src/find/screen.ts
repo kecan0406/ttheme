@@ -145,7 +145,7 @@ export interface FindView {
   editing?: string
   chosen?: string[]
   chips: TagChip[]
-  suggest?: { value: string; count: number; palette?: string }[]
+  suggest?: { value: string; count: number; palette?: string; alias?: string; whole?: boolean }[]
   pick?: number
   saved?: { text: string; key: number }
   note?: string
@@ -1539,7 +1539,7 @@ function help(lines: Line[], cols: number, rows: number, view: FindView, accent:
 
 function suggestions(lines: Line[], view: FindView, accent: string): void {
   const list = view.suggest ?? []
-  const said = list.map((item) => (item.count > 0 ? String(item.count) : (item.palette ?? '0')))
+  const said = list.map((item) => item.alias ?? (item.count > 0 ? String(item.count) : (item.palette ?? '0')))
   const wide = Math.max(...list.map((item) => width(item.value)))
   const note = Math.max(7, ...said.map(width))
   list.forEach((item, i) => {

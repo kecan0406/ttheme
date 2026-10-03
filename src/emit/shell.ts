@@ -20,6 +20,7 @@ export function palettesZsh(
   startup?: string,
   terminals: readonly string[] = [],
   layer: Readonly<Record<string, string>> = {},
+  aliases: Readonly<Record<string, readonly string[]>> = {},
 ): string {
   for (const p of palettes) {
     for (const field of [p.name, p.group, p.native ?? '', ...(p.nativeNames ?? []), p.ansiSource]) {
@@ -115,6 +116,13 @@ export function palettesZsh(
     ')',
     'typeset -gA TTHEME_CHARACTER=(',
     ...palettes.filter((p) => p.booru && !UNQUOTABLE.test(p.booru)).map((p) => entry(p, spoken(p.booru ?? ''))),
+    ')',
+    "# the character's other names in every language, |-separated, from the aninames index in the cache: preview searches them too",
+    'typeset -gA TTHEME_ALIASES=(',
+    ...palettes.flatMap((p) => {
+      const names = (aliases[p.name] ?? []).filter((name) => !UNQUOTABLE.test(name) && !name.includes('|'))
+      return names.length > 0 ? [entry(p, names.join('|'))] : []
+    }),
     ')',
     '',
     '# the example scenes preview draws beside the list (src/scenes.ts), each line as «role»text runs',
