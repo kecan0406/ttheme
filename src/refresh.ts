@@ -17,12 +17,14 @@ import {
   readKept,
   remoteId,
   TooNew,
+  UPDATE_COMMAND,
   writeCatalog,
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
 import { listed, type Manifest, type PaletteEntry } from './manifest.ts'
+import { advise } from './notice.ts'
 import { configHome, type Installed, readInstalled, sync } from './palettes.ts'
-import { pending, say } from './pending.ts'
+import { pending } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
 import {
   autoUpdates,
@@ -194,6 +196,26 @@ export async function refreshMarket(home: string, source: string, timeout?: numb
   }
 }
 
+export type Outcome = { source: string; refreshed: Refreshed } | { source: string; failure: Error }
+
+export async function attempt(home: string, source: string, timeout?: number): Promise<Outcome> {
+  try {
+    return { source, refreshed: await refreshMarket(home, source, timeout) }
+  } catch (error) {
+    return { source, failure: error instanceof Error ? error : new Error(String(error)) }
+  }
+}
+
+export function failureLine(source: string, failure: Error): string {
+  return `${shownSource(source)}: ${failure.message}`
+}
+
+export function refusal(outcome: Outcome): string | undefined {
+  return 'failure' in outcome && outcome.failure instanceof TooNew
+    ? failureLine(outcome.source, outcome.failure)
+    : undefined
+}
+
 export function counted(n: number): string {
   return `${n} palette${n === 1 ? '' : 's'}`
 }
@@ -248,7 +270,7 @@ export function isNewer(latest: string, running: string): boolean {
 
 export function outdatedNote(r: Refreshed, running: string = pkg.version): string | undefined {
   return r.version && isNewer(r.version, running)
-    ? `ttheme ${r.version} is out, you have ${running} — \`npx @kecan0406/ttheme@latest init\` updates it`
+    ? `ttheme ${r.version} is out, you have ${running} — \`${UPDATE_COMMAND}\` updates it`
     : undefined
 }
 
@@ -257,18 +279,16 @@ export async function applyRefreshed(
   state: Installed,
   was: PaletteEntry[],
   done: Refreshed[],
-): Promise<void> {
+): Promise<string[]> {
   const touched = new Set(done.flatMap((r) => [...r.change.changed, ...r.change.gone]))
   const mine = state.palettes.filter((name) => touched.has(name))
   if (mine.length === 0) {
-    return
+    return []
   }
   const catalog = readCatalog(home, false)
   sync(home, catalog, state)
   const gone = new Set(done.flatMap((r) => r.change.gone))
-  for (const name of mine.filter((n) => gone.has(n))) {
-    say(`${name} left its market — ttheme keeps the copy you have`)
-  }
+  const left = mine.filter((n) => gone.has(n)).map((name) => `${name} left its market — ttheme keeps the copy you have`)
   const pictures = new Map(was.map((e) => [e.name, e.pictures]))
   await bringPictures(
     home,
@@ -277,6 +297,7 @@ export async function applyRefreshed(
       .map((e) => since(e, pictures.get(e.name))),
     state.terminals,
   )
+  return left
 }
 
 export async function autoRefresh(home = configHome()): Promise<void> {
@@ -291,27 +312,13 @@ export async function autoRefresh(home = configHome()): Promise<void> {
     }
     const was = readKept(home)
     const line = pending(`Checking ${due.map(shownSource).join(', ')} for updates`)
-    const settled = await Promise.allSettled(due.map((source) => refreshMarket(home, source, AUTO_TIMEOUT)))
+    const outcomes = await Promise.all(due.map((source) => attempt(home, source, AUTO_TIMEOUT)))
     line.done()
-    const done = settled.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []))
-    const refused = due.flatMap((source, at) => {
-      const result = settled[at]
-      return result?.status === 'rejected' && result.reason instanceof TooNew
-        ? [`${shownSource(source)}: ${result.reason.message}`]
-        : []
-    })
+    const done = outcomes.flatMap((o) => ('refreshed' in o ? [o.refreshed] : []))
     const notes = done.flatMap((r) => updateNote(r) ?? [])
-    for (const note of notes) {
-      console.log(note)
-    }
-    if (notes.length > 0) {
-      await applyRefreshed(home, state, was, done)
-    }
-    if (process.stdout.isTTY) {
-      for (const note of [...refused, ...done.flatMap((r) => outdatedNote(r) ?? [])]) {
-        console.log(note)
-      }
-    }
+    advise(notes)
+    const left = notes.length > 0 ? await applyRefreshed(home, state, was, done) : []
+    advise([...left, ...outcomes.flatMap((o) => refusal(o) ?? []), ...done.flatMap((r) => outdatedNote(r) ?? [])])
   } catch {
     return
   }

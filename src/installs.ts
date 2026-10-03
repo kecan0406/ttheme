@@ -11,7 +11,7 @@ import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, readInstalled, startupPalette, sync } from './palettes.ts'
 import { pending, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
-import { outdatedNote, refreshLine, refreshMarket } from './refresh.ts'
+import { attempt, failureLine, outdatedNote, refreshLine } from './refresh.ts'
 import { installedPath, isLocal, marketSources, OFFICIAL, shownSource } from './sources.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
@@ -202,13 +202,13 @@ export async function runUpdate(): Promise<void> {
   if (markets.length === 0) {
     console.log('No markets to update — `ttheme market add official` brings the ttheme catalog back')
   }
-  const kept = (source: string, error: unknown): string =>
-    `${shownSource(source)}: ${(error as Error).message} — kept the copy from the last update`
+  const kept = (source: string, failure: Error): string =>
+    `${failureLine(source, failure)} — kept the copy from the last update`
   for (const source of markets.filter(isLocal)) {
     try {
       console.log(`  ${localLine(home, source)}`)
     } catch (error) {
-      console.log(`  ${kept(source, error)}`)
+      console.log(`  ${kept(source, error as Error)}`)
     }
   }
   const remote = markets.filter((source) => !isLocal(source))
@@ -222,16 +222,16 @@ export async function runUpdate(): Promise<void> {
   show()
   await Promise.all(
     remote.map(async (source) => {
+      const outcome = await attempt(home, source)
       let text: string
-      try {
-        const refreshed = await refreshMarket(home, source)
-        text = refreshLine(refreshed)
-        const note = outdatedNote(refreshed)
+      if ('refreshed' in outcome) {
+        text = refreshLine(outcome.refreshed)
+        const note = outdatedNote(outcome.refreshed)
         if (note) {
           behind.push(note)
         }
-      } catch (error) {
-        text = kept(source, error)
+      } else {
+        text = kept(source, outcome.failure)
       }
       waiting.delete(source)
       if (waiting.size > 0) {

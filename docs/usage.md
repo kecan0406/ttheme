@@ -478,8 +478,8 @@ market stays installed from the copy the last change kept
 A market with auto-update on does that by itself: when a copy is a day old,
 `browse`, `add`, `remove`, `market`, `default`, `on` and `off` fetch it first —
 `browse` in the background while it is open, the others waiting a few seconds
-at most — and say so (`Updated official 1.0.50 — 153 palettes (3 new)`) when
-something changed. A failed try is kept quiet, shown under Errors, and tried
+at most — and say so on your terminal, never into a pipe
+(`Updated official 1.0.50 — 153 palettes (3 new)`), when something changed. A failed try is kept quiet, shown under Errors, and tried
 again an hour later; the one exception is an index written in a newer schema
 than your ttheme reads, which a terminal is told about
 (`github.com/alice/ttheme-pastel: catalog is schema 2, newer than the schema 1

@@ -176,6 +176,12 @@ function browseIo(
   }
 }
 
+async function applyAndSay(...args: Parameters<typeof applyRefreshed>): Promise<void> {
+  for (const line of await applyRefreshed(...args)) {
+    say(line)
+  }
+}
+
 function marketChanges(result: BrowseResult, markets: Market[], wanted: string[]): string[] {
   const lines: string[] = []
   for (const m of result.adds) {
@@ -234,7 +240,7 @@ async function applyBrowse(
   const dropped = current.palettes.filter((n) => !wanted.includes(n))
   const added = wanted.filter((n) => !current.palettes.includes(n))
   if (!moved && added.length === 0 && dropped.length === 0) {
-    await applyRefreshed(home, current, was, result.refreshed)
+    await applyAndSay(home, current, was, result.refreshed)
     say('Nothing changed')
     return
   }
@@ -320,7 +326,7 @@ export async function runBrowse(): Promise<number> {
   const result = panel.result()
   const go = panel.next()
   if (hub && go !== undefined) {
-    await applyRefreshed(home, readInstalled(home), was, result.refreshed)
+    await applyAndSay(home, readInstalled(home), was, result.refreshed)
     return go
   }
   if (tty && hub) {
@@ -341,7 +347,7 @@ export async function runBrowse(): Promise<number> {
       throw failure
     }
   } else {
-    await applyRefreshed(home, readInstalled(home), was, result.refreshed)
+    await applyAndSay(home, readInstalled(home), was, result.refreshed)
     console.log('Nothing changed')
   }
   return hub ? HUB_CLOSED : 0

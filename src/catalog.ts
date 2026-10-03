@@ -85,6 +85,8 @@ export function marketEntries(index: Manifest, id: string): PaletteEntry[] {
   }))
 }
 
+export const UPDATE_COMMAND = 'npx @kecan0406/ttheme@latest init'
+
 export class TooNew extends Error {}
 
 export function parseCatalog(source: string): Manifest {
@@ -101,7 +103,7 @@ export function parseCatalog(source: string): Manifest {
   }
   if (schema > SCHEMA) {
     throw new TooNew(
-      `catalog is schema ${schema}, newer than the schema ${SCHEMA} this ttheme reads — \`npx @kecan0406/ttheme@latest init\` updates it`,
+      `catalog is schema ${schema}, newer than the schema ${SCHEMA} this ttheme reads — \`${UPDATE_COMMAND}\` updates it`,
     )
   }
   const catalog = { ...(doc as Manifest), schema }

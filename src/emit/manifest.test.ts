@@ -3,16 +3,13 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import pkg from '../../package.json' with { type: 'json' }
+import { parseCatalog } from '../catalog.ts'
 import { type PaletteEntry, SCHEMA, swatch } from '../manifest.ts'
 import { loadThemes } from '../theme.ts'
 import { manifest } from './manifest.ts'
 
-const {
-  schema,
-  version,
-  gate: rules,
-  palettes: entries,
-} = manifest(loadThemes(join(import.meta.dirname, '..', '..', 'themes')))
+const published = manifest(loadThemes(join(import.meta.dirname, '..', '..', 'themes')))
+const { schema, version, gate: rules, palettes: entries } = published
 
 test('manifest states which build produced it', () => {
   assert.equal(version, pkg.version)
@@ -22,28 +19,55 @@ test('manifest states the schema it is written in', () => {
   assert.equal(schema, SCHEMA)
 })
 
-const SCHEMA_1_FIELDS = [
-  'name',
-  'group',
-  'order',
-  'ansiSource',
-  'background',
+type RequiredKeys<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T]
+
+const SCHEMA_1_FIELDS = {
+  name: 1,
+  group: 1,
+  order: 1,
+  ansiSource: 1,
+  background: 1,
+  foreground: 1,
+  cursor: 1,
+  selection: 1,
+  signature: 1,
+  signatureSlots: 1,
+  ansi: 1,
+  gate: 1,
+  backdrop: 1,
+} satisfies Record<RequiredKeys<PaletteEntry>, 1>
+
+const SCHEMA_1_GATE = [
   'foreground',
-  'cursor',
+  'accents',
+  'ansi0-dark',
+  'light-ansi',
+  'ansi8-visible',
   'selection',
-  'signature',
-  'signatureSlots',
-  'ansi',
-  'gate',
-  'backdrop',
+  'ansi-role',
+  'bright-follows',
+  'distinct',
 ]
 
 test('every entry keeps the fields a schema 1 reader needs — dropping or renaming one is a new SCHEMA', () => {
   for (const e of entries) {
-    for (const field of SCHEMA_1_FIELDS) {
+    for (const field of Object.keys(SCHEMA_1_FIELDS)) {
       assert.ok(field in e, `${e.name}: ${field} is gone, so older ttheme would misread it — raise SCHEMA`)
     }
   }
+})
+
+test('gate measurements keep the order schema 1 readers index them by — a new rule goes on the end', () => {
+  assert.deepEqual(
+    rules.slice(0, SCHEMA_1_GATE.length).map((rule) => rule.rule),
+    SCHEMA_1_GATE,
+  )
+})
+
+test('the manifest the build writes is one every reader accepts', () => {
+  const read = parseCatalog(JSON.stringify(published))
+  assert.equal(read.schema, SCHEMA)
+  assert.equal(read.palettes.length, entries.length)
 })
 
 test('manifest carries every theme in display order', () => {

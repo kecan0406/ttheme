@@ -6,7 +6,7 @@ import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
-import { available, readCatalog, writeCatalog } from './catalog.ts'
+import { available, parseCatalog, readCatalog, writeCatalog } from './catalog.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { pickPalettes } from './installs.ts'
 import { liveOf } from './live.ts'
@@ -67,7 +67,7 @@ function copyDir(copies: InitPlan['copies'], from: string, to: string): void {
 }
 
 export function loadManifest(root: string): Manifest {
-  return JSON.parse(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
+  return parseCatalog(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
 }
 
 export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {

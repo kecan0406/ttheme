@@ -3,11 +3,14 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
-import { TooNew } from './catalog.ts'
-import { type PaletteEntry, SCHEMA } from './manifest.ts'
+import { readKept, TooNew, writeCatalog } from './catalog.ts'
+import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
+import { sync, writeInstalled } from './palettes.ts'
 import {
+  applyRefreshed,
+  attempt,
   diffEntries,
+  failureLine,
   isDue,
   isNewer,
   outdatedNote,
@@ -17,6 +20,7 @@ import {
   readTries,
   refreshLine,
   refreshMarket,
+  refusal,
   updateNote,
 } from './refresh.ts'
 import { cachePath, marketsDir } from './sources.ts'
@@ -82,21 +86,22 @@ test('a refreshed official catalog newer than the running ttheme says how to upd
   assert.equal(outdatedNote(market, '1.0.50'), undefined)
 })
 
-test('a market index newer than ttheme reads leaves the cached copy alone and records why, so browse can show it', async () => {
+const SOURCE = 'ann/ttheme-pastel'
+
+function index(schema: number): string {
+  return JSON.stringify({ schema, version: '9.0.0', owner: 'ann', name: 'pastel', palettes: [] })
+}
+
+async function withNetwork<T>(respond: () => Promise<Response>, run: (home: string) => Promise<T>): Promise<T> {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-refresh-'))
-  const source = 'ann/ttheme-pastel'
-  const cached = `${JSON.stringify({ schema: SCHEMA, version: '1.0.0', owner: 'ann', name: 'pastel', palettes: [] })}\n`
   mkdirSync(marketsDir(home), { recursive: true })
-  writeFileSync(cachePath(home, source), cached)
-  const newer = JSON.stringify({ schema: SCHEMA + 1, version: '9.0.0', owner: 'ann', name: 'pastel', palettes: [] })
+  writeFileSync(cachePath(home, SOURCE), `${index(SCHEMA)}\n`)
   const realFetch = globalThis.fetch
   const realState = process.env.XDG_STATE_HOME
-  globalThis.fetch = (async () => new Response(newer)) as unknown as typeof fetch
+  globalThis.fetch = (async () => respond()) as unknown as typeof fetch
   process.env.XDG_STATE_HOME = join(home, 'state')
   try {
-    await assert.rejects(refreshMarket(home, source), TooNew)
-    assert.equal(readFileSync(cachePath(home, source), 'utf8'), cached)
-    assert.match(readTries()[source]?.error ?? '', /newer than the schema \d+ this ttheme reads.*ttheme@latest init/)
+    return await run(home)
   } finally {
     globalThis.fetch = realFetch
     if (realState === undefined) {
@@ -105,4 +110,89 @@ test('a market index newer than ttheme reads leaves the cached copy alone and re
       process.env.XDG_STATE_HOME = realState
     }
   }
+}
+
+test('a market index newer than ttheme reads leaves the cached copy alone and records why, so browse can show it', async () => {
+  await withNetwork(
+    async () => new Response(index(SCHEMA + 1)),
+    async (home) => {
+      await assert.rejects(refreshMarket(home, SOURCE), TooNew)
+      assert.equal(readFileSync(cachePath(home, SOURCE), 'utf8'), `${index(SCHEMA)}\n`)
+      assert.match(readTries()[SOURCE]?.error ?? '', /newer than the schema \d+ this ttheme reads.*ttheme@latest init/)
+    },
+  )
+})
+
+test('an attempt hands back what happened instead of throwing, and only a refusal asks the user to act', async () => {
+  await withNetwork(
+    async () => new Response(index(SCHEMA + 1)),
+    async (home) => {
+      const refused = await attempt(home, SOURCE)
+      assert.ok('failure' in refused)
+      assert.equal(refusal(refused), failureLine(SOURCE, refused.failure))
+      assert.match(refusal(refused) ?? '', /^github\.com\/ann\/ttheme-pastel: catalog is schema \d+/)
+    },
+  )
+  await withNetwork(
+    async () => {
+      throw new Error('offline')
+    },
+    async (home) => {
+      const unreachable = await attempt(home, SOURCE)
+      assert.ok('failure' in unreachable)
+      assert.equal(refusal(unreachable), undefined)
+    },
+  )
+  await withNetwork(
+    async () => new Response(index(SCHEMA)),
+    async (home) => {
+      const fresh = await attempt(home, SOURCE)
+      assert.ok('refreshed' in fresh)
+      assert.equal(refusal(fresh), undefined)
+      assert.equal(fresh.refreshed.id, 'ann@pastel')
+    },
+  )
+})
+
+function installed(name: string): PaletteEntry {
+  return {
+    name,
+    group: 'Jujutsu Kaisen',
+    order: 1,
+    ansiSource: 'Horizon + Jujutsu',
+    background: '#11191c',
+    foreground: '#e3e2e7',
+    cursor: '#7cc1d6',
+    selection: '#383b5b',
+    signature: ['#7cc1d6', '#e3e2e7', '#d7bcf3'],
+    signatureSlots: ['cursor', 'foreground', 'ansi13'],
+    ansi: Array.from({ length: 16 }, () => '#808080'),
+    gate: [13.8, 6.8, 0.02, 10.4, 4.0],
+    backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
+  }
+}
+
+test('applying a refresh hands back the palettes that left their market instead of printing them', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-apply-'))
+  const catalog: Manifest = {
+    schema: SCHEMA,
+    version: '0.1.0',
+    gate: [],
+    placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
+    palettes: [installed('gojo'), installed('geto')],
+  }
+  const state = { terminals: ['ghostty' as const], palettes: ['gojo', 'geto'] }
+  writeCatalog(home, catalog)
+  writeInstalled(home, state)
+  sync(home, catalog, state)
+  const left = await applyRefreshed(home, state, readKept(home), [
+    { source: 'official', id: 'official', count: 1, change: { added: [], changed: [], gone: ['gojo'] } },
+  ])
+  assert.deepEqual(left, ['gojo left its market — ttheme keeps the copy you have'])
+  assert.deepEqual(
+    await applyRefreshed(home, state, readKept(home), [
+      { source: 'official', id: 'official', count: 1, change: { added: ['x'], changed: [], gone: [] } },
+    ]),
+    [],
+  )
 })
