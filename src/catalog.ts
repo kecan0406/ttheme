@@ -26,15 +26,19 @@ export interface MarketIndex extends Manifest {
   name: string
 }
 
-export function readCatalog(configHome: string, warn = true): Manifest {
+export function readCatalog(configHome: string, warn = true, official?: Manifest): Manifest {
   const sources = marketSources(configHome)
   const path = catalogPath(configHome)
   let base = emptyManifest()
   if (sources.includes(OFFICIAL)) {
-    if (!existsSync(path)) {
-      throw new Error(`no catalog at ${path} — run \`ttheme init\` first`)
+    if (official) {
+      base = official
+    } else {
+      if (!existsSync(path)) {
+        throw new Error(`no catalog at ${path} — run \`ttheme init\` first`)
+      }
+      base = parseCatalog(readFileSync(path, 'utf8'))
     }
-    base = parseCatalog(readFileSync(path, 'utf8'))
   }
   const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source, warn))
   return { ...base, palettes: [...base.palettes, ...remote] }
@@ -96,8 +100,12 @@ export function parseCatalog(source: string): Manifest {
   } catch {
     throw new Error('catalog is not valid JSON')
   }
-  const written = (doc as { schema?: unknown } | null)?.schema
-  const schema = written === undefined ? 1 : written
+  const schema = (doc as { schema?: unknown } | null)?.schema
+  if (schema === undefined) {
+    throw new Error(
+      'catalog has no schema — a market is rebuilt with `ttheme market build`, then `ttheme update` fetches it',
+    )
+  }
   if (typeof schema !== 'number' || !Number.isInteger(schema) || schema < 1) {
     throw new Error('catalog schema is not a whole number from 1')
   }
@@ -106,7 +114,7 @@ export function parseCatalog(source: string): Manifest {
       `catalog is schema ${schema}, newer than the schema ${SCHEMA} this ttheme reads — \`${UPDATE_COMMAND}\` updates it`,
     )
   }
-  const catalog = { ...(doc as Manifest), schema }
+  const catalog = doc as Manifest
   if (typeof catalog.version !== 'string' || !Array.isArray(catalog.palettes)) {
     throw new Error('catalog has no version or palettes')
   }

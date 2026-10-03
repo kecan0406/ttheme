@@ -545,9 +545,10 @@ tells a day has passed. Failed tries are kept in
 Every index carries a `schema` number beside its `version` (the release that
 wrote it). It is raised only when a change would make an older ttheme misread
 the index, never for a palette or an optional field added; a ttheme that finds
-a higher one than it reads refuses the index and keeps its last copy. An index
-with no `schema` is schema 1 — the format before the field existed, which a
-market pinned to an older `#ref` still holds.
+a higher one than it reads refuses the index and keeps its last copy, and so
+does an index with none: a market written before the field existed runs its
+action once more (`ttheme market build` by hand), and `ttheme update` fetches
+it.
 
 ## Your own palettes
 

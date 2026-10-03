@@ -44,7 +44,7 @@ function catalogJson(palettes: PaletteEntry[]): string {
 }
 
 test('parseCatalog rejects a document without palettes', () => {
-  assert.throws(() => parseCatalog('{"version":"0.1.0"}'), /no version or palettes/)
+  assert.throws(() => parseCatalog('{"schema":1,"version":"0.1.0"}'), /no version or palettes/)
 })
 
 test('parseCatalog rejects text that is not JSON', () => {
@@ -60,10 +60,9 @@ test('parseCatalog accepts a well formed catalog', () => {
   assert.equal(parseCatalog(catalogJson([entry()])).palettes[0]?.name, 'gojo')
 })
 
-test('parseCatalog reads a document written before schemas as schema 1, which is what a pinned old ref holds', () => {
+test('parseCatalog refuses a document with no schema and says how a market gets one', () => {
   const { schema: _, ...before } = JSON.parse(catalogJson([entry()]))
-  assert.equal(parseCatalog(JSON.stringify(before)).schema, 1)
-  assert.equal(parseCatalog(catalogJson([entry()])).schema, SCHEMA)
+  assert.throws(() => parseCatalog(JSON.stringify(before)), /no schema.*ttheme market build.*ttheme update/)
 })
 
 test('parseCatalog refuses a schema newer than it reads and says how to update', () => {
@@ -86,6 +85,20 @@ test('parseCatalog refuses a schema that is not a whole number from 1', () => {
   for (const schema of [0, -1, 1.5, '1', null, [1]]) {
     assert.throws(() => parseCatalog(JSON.stringify({ ...doc, schema })), /schema is not a whole number from 1/)
   }
+})
+
+test('readCatalog can take the bundled official catalog, so an upgrade never parses the cache it is about to replace', () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-bundled-'))
+  mkdirSync(join(home, 'ttheme'), { recursive: true })
+  writeFileSync(join(home, 'ttheme', 'installed.json'), JSON.stringify({ terminals: [], palettes: [] }))
+  const { schema: _, ...before } = JSON.parse(catalogJson([entry({ name: 'old' })]))
+  writeFileSync(join(home, 'ttheme', 'catalog.json'), JSON.stringify(before))
+  assert.throws(() => readCatalog(home, false), /no schema/)
+  const bundled = parseCatalog(catalogJson([entry({ name: 'gojo' })]))
+  assert.deepEqual(
+    readCatalog(home, false, bundled).palettes.map((p) => p.name),
+    ['gojo'],
+  )
 })
 
 test('gateFailures is empty when every rule is met', () => {
