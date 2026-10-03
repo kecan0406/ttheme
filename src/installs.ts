@@ -1,5 +1,4 @@
 import { existsSync } from 'node:fs'
-import * as p from '@clack/prompts'
 import { available, readCatalog, readKept, search } from './catalog.ts'
 import { adopt } from './craft.ts'
 import { liveOf } from './live.ts'
@@ -280,7 +279,7 @@ export async function pickPalettes(
   if (live) {
     process.stdout.write(live.restore(saved))
   }
-  if (p.isCancel(done)) {
+  if (done === 'cancel') {
     return undefined
   }
   return catalog.palettes.filter((e) => prompt.picked.has(e.name)).map((e) => e.name)

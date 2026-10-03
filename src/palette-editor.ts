@@ -21,6 +21,7 @@ import { pastedRefs } from './find/attach.ts'
 import type { Start } from './find/find.ts'
 import { edgeChroma, fixGate, inGamut } from './fix.ts'
 import { type Colors, grow, nudge, SEED_FIELDS, SEEDS, type Seeds } from './seeds.ts'
+import { edit } from './tui/field.ts'
 
 export const SLOT_COUNT = 20
 export const SLOT_NAMES = [
@@ -143,6 +144,10 @@ export function slotLabel(slot: number): { name: string; about: string } {
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+
+function lowered(key: string): string {
+  return key.length === 1 ? key.toLowerCase() : key
+}
 
 function hexOf(n: number): string {
   return clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0')
@@ -728,9 +733,9 @@ export class PaletteEditor {
       this.openPalettes()
     } else if (key === 'u') {
       this.undo()
-    } else if (key === '\x12') {
+    } else if (key === 'ctrl-r') {
       this.redo()
-    } else if (key === 's' || key === '\x13') {
+    } else if (key === 's' || key === 'ctrl-s') {
       if (this.theme) {
         this.act = 'save'
       } else {
@@ -979,12 +984,11 @@ export class PaletteEditor {
       }
       this.typing = undefined
       this.take(color, 'hex')
-    } else if (key === 'backspace') {
-      this.typing = typed.slice(0, -1)
-    } else if (key === '\x15') {
-      this.typing = ''
-    } else if (key.length === 1 && /^[0-9a-z#(),.% ]$/i.test(key) && typed.length < 28) {
-      this.typing = typed + key.toLowerCase()
+    } else {
+      const next = edit(typed, lowered(key), (ch) => /^[0-9a-z#(),.% ]$/.test(ch) && typed.length < 28)
+      if (next !== undefined) {
+        this.typing = next
+      }
     }
   }
 
@@ -998,12 +1002,6 @@ export class PaletteEditor {
       this.pick = (this.pick + (key === 'up' ? n - 1 : 1)) % n
     } else if (key === 'home' || key === 'end') {
       this.pick = key === 'home' ? 0 : Math.max(0, choices.length - 1)
-    } else if (key === 'backspace') {
-      this.filter = this.filter.slice(0, -1)
-      this.pick = 0
-    } else if (key === '\x15') {
-      this.filter = ''
-      this.pick = 0
     } else if (key === 'enter') {
       const choice = choices[this.pick]
       if (!choice) {
@@ -1018,9 +1016,12 @@ export class PaletteEditor {
       if (this.mode === 'seeds') {
         this.leaveSeeds()
       }
-    } else if (key.length === 1 && /^[a-z0-9@/-]$/i.test(key)) {
-      this.filter += key.toLowerCase()
-      this.pick = 0
+    } else {
+      const next = edit(this.filter, lowered(key), (ch) => /^[a-z0-9@/-]$/.test(ch))
+      if (next !== undefined) {
+        this.filter = next
+        this.pick = 0
+      }
     }
   }
 

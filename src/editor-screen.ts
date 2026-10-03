@@ -1,10 +1,9 @@
-import { ansiFg, cells, fit, spread, wrapText } from './ansi.ts'
+import { ansiFg, BOLD, cells, DIM, fit, NORMAL, spread, wrapText } from './ansi.ts'
 import { type Hex, luminance, type Oklch, oklch, rgb } from './color.ts'
 import { brightDrift, hueGap, lookalikes, offRole, ROLE_HUES, roleOf } from './contrast.ts'
 import type { Backdrop } from './editor-backdrop.ts'
-import { takeInbound } from './find/attach.ts'
+import { typedDrop } from './find/attach.ts'
 import type { Start } from './find/find.ts'
-import { CELL_QUERY, cellReport, decodeKeys } from './find/screen.ts'
 import { inGamut, srgb } from './fix.ts'
 import { slotOsc } from './osc.ts'
 import {
@@ -31,6 +30,9 @@ import { SCENES, sceneAt, sceneParts } from './scenes.ts'
 import type { Colors } from './seeds.ts'
 import { grow, SEED_FIELDS, type Seeds } from './seeds.ts'
 import { CLEAR } from './terminal.ts'
+import { CELL_QUERY, CellProbe } from './tui/keys.ts'
+import { Screen } from './tui/screen.ts'
+import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, within } from './tui/terminal.ts'
 
 export const MIN_COLS = 80
 export const MIN_ROWS = 24
@@ -48,8 +50,8 @@ interface Paint {
 function painter(color: boolean): Paint {
   return {
     color,
-    dim: (s) => (color ? `\x1b[2m${s}\x1b[22m` : s),
-    bold: (s) => (color ? `\x1b[1m${s}\x1b[22m` : s),
+    dim: (s) => (color ? `${DIM}${s}${NORMAL}` : s),
+    bold: (s) => (color ? `${BOLD}${s}${NORMAL}` : s),
     fg: (hex) => (color ? ansiFg(hex) : ''),
     bg: (hex) => (color ? `\x1b[48;2;${rgb(hex).join(';')}m` : ''),
   }
@@ -897,184 +899,147 @@ export function renderEditor(e: PaletteEditor, cols: number, rows: number, color
   return lines
 }
 
-export interface Screen {
+export interface Surface {
   only?: readonly number[]
   look?: (shown: readonly Hex[]) => void
   backdrop?: Backdrop
   color: boolean
 }
 
-export async function runEditor(options: EditorOptions, screen: Screen): Promise<Edited | undefined> {
+const MODES = [ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES]
+const LOOK_AFTER = 33
+
+export async function runEditor(options: EditorOptions, surface: Surface): Promise<Edited | undefined> {
   const editor = new PaletteEditor(options)
-  const { stdin, stdout } = process
-  let cols = stdout.columns || MIN_COLS
-  let rows = stdout.rows || MIN_ROWS
-  let drawn: string[] = []
-  const painted: (Hex | undefined)[] = []
-  let looked = ''
-  let input = ''
-  let timer: NodeJS.Timeout | undefined
-  const write = (text: string) => stdout.write(text)
-  const paint = () => {
-    timer = undefined
-    if (screen.look) {
-      const shown = editor.shown()
-      if (shown.join(' ') !== looked) {
-        looked = shown.join(' ')
-        screen.look(shown)
+  const backdrop = surface.backdrop
+  const burst = (typed: string) => editor.typing === undefined && typedDrop(typed)
+  return within({ modes: MODES, burst }, async (terminal) => {
+    const painted: (Hex | undefined)[] = []
+    let looked = ''
+    let timer: NodeJS.Timeout | undefined
+    let away = false
+    let over = false
+    const paint = () => {
+      timer = undefined
+      if (surface.look) {
+        const shown = editor.shown()
+        if (shown.join(' ') !== looked) {
+          looked = shown.join(' ')
+          surface.look(shown)
+        }
+        return
       }
-      return
+      let out = ''
+      editor.shown().forEach((hex, slot) => {
+        if (painted[slot] !== hex && surface.only?.includes(slot)) {
+          out += slotOsc(slot, hex)
+          painted[slot] = hex
+        }
+      })
+      terminal.write(out)
     }
-    let out = ''
-    editor.shown().forEach((hex, slot) => {
-      if (painted[slot] !== hex && screen.only?.includes(slot)) {
-        out += slotOsc(slot, hex)
-        painted[slot] = hex
-      }
+    const screen = new Screen({
+      write: (text) => terminal.write(text),
+      view: () =>
+        away
+          ? undefined
+          : {
+              lines: renderEditor(editor, terminal.cols, terminal.rows, surface.color),
+              after: () =>
+                backdrop?.draw(editor.shown(), editor.signature, editor.waive, terminal.cols, terminal.rows) ?? '',
+            },
     })
-    if (out) {
-      write(out)
-    }
-  }
-  const backdrop = screen.backdrop
-  let probing = backdrop !== undefined
-  let probe: NodeJS.Timeout | undefined
-  const draw = () => {
-    const lines = renderEditor(editor, cols, rows, screen.color)
-    let out = ''
-    lines.forEach((line, r) => {
-      if (drawn[r] !== line) {
-        out += `\x1b[${r + 1};1H\x1b[0m\x1b[2K${line}`
+    const changed = (keyed = false) => {
+      if (keyed) {
+        screen.soon()
+      } else {
+        screen.request()
       }
+      if (surface.only || surface.look) {
+        timer ??= setTimeout(paint, LOOK_AFTER)
+      }
+    }
+    const visit = async (start: Start | undefined) => {
+      const find = options.find
+      if (!find) {
+        return
+      }
+      away = true
+      clearTimeout(timer)
+      timer = undefined
+      if (backdrop) {
+        terminal.write(backdrop.clear())
+      }
+      try {
+        editor.found(await find(editor.edited(), start))
+      } catch (error) {
+        editor.notice = error instanceof Error ? error.message : String(error)
+      }
+      if (over) {
+        return
+      }
+      away = false
+      backdrop?.load()
+      painted.length = 0
+      looked = ''
+      screen.reset(CLEAR)
+      changed()
+    }
+    terminal.write(CLEAR)
+    terminal.onResize(() => {
+      backdrop?.resized()
+      screen.reset(CLEAR)
+      screen.request()
     })
-    drawn = lines
-    const behind = away ? '' : (backdrop?.draw(editor.shown(), editor.signature, editor.waive, cols, rows) ?? '')
-    if (out || behind) {
-      write(`\x1b[?2026h${out}${behind}\x1b[0m\x1b[?2026l`)
-    }
-    if (screen.only || screen.look) {
-      timer ??= setTimeout(paint, 33)
-    }
-  }
-  let onData: ((chunk: Buffer) => void) | undefined
-  let onResize: (() => void) | undefined
-  let away = false
-  const enter = () => {
-    write(`\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?2004h${CLEAR}`)
-    stdin.setRawMode(true)
-    stdin.resume()
-  }
-  const listen = (on: boolean) => {
-    if (onData && onResize) {
-      stdin[on ? 'on' : 'off']('data', onData)
-      stdout[on ? 'on' : 'off']('resize', onResize)
-    }
-  }
-  enter()
-  if (backdrop) {
-    backdrop.load()
-    backdrop.ready = () => draw()
-    write(CELL_QUERY)
-  }
-  try {
-    return await new Promise<Edited | undefined>((resolve) => {
-      const visit = async (start: Start | undefined) => {
-        const find = options.find
-        if (!find) {
-          return
-        }
-        away = true
-        listen(false)
-        clearTimeout(timer)
-        timer = undefined
-        if (backdrop) {
-          write(backdrop.clear())
-        }
-        try {
-          editor.found(await find(editor.edited(), start))
-        } catch (error) {
-          editor.notice = error instanceof Error ? error.message : String(error)
-        }
-        away = false
-        enter()
-        backdrop?.load()
-        listen(true)
-        cols = stdout.columns || cols
-        rows = stdout.rows || rows
-        drawn = []
-        painted.length = 0
-        looked = ''
-        draw()
-      }
-      onResize = () => {
-        cols = stdout.columns || cols
-        rows = stdout.rows || rows
-        drawn = []
-        backdrop?.resized()
-        write(CLEAR)
-        draw()
-      }
-      onData = (chunk: Buffer) => {
-        input += chunk.toString('utf8')
-        for (let report = cellReport(input); report; report = cellReport(input)) {
-          input = report.rest
-          backdrop?.measured(report.cell)
-          if (probing) {
-            probing = false
-            clearTimeout(probe)
-            draw()
+    if (backdrop) {
+      backdrop.load()
+      backdrop.ready = () => screen.request()
+      const probe = new CellProbe()
+      void terminal
+        .ask(CELL_QUERY, (event) => probe.see(event), 1000)
+        .then((cell) => {
+          if (cell) {
+            backdrop.measured(cell)
           }
-        }
-        if (probing) {
-          return
-        }
-        const taken = takeInbound(input)
-        input = taken.pending
-        for (const event of taken.events) {
+          screen.request()
+        })
+    }
+    changed()
+    try {
+      const { edited } = await terminal.loop(
+        (event): { edited: Edited | undefined } | undefined => {
+          if (away) {
+            return undefined
+          }
           if (event.kind === 'paste') {
             editor.paste(event.text)
+          } else if (event.kind === 'key') {
+            editor.press(event.key)
           }
-        }
-        if (taken.keys.length > 8 && /^(?:\/|~\/|file:|https?:)/.test(taken.keys) && editor.typing === undefined) {
-          editor.paste(taken.keys)
-        } else {
-          for (const key of decodeKeys(taken.keys)) {
-            editor.press(key)
-            if (editor.result || editor.wants) {
-              break
-            }
+          if (editor.result) {
+            return { edited: editor.result === 'saved' ? editor.edited() : undefined }
           }
-        }
-        if (editor.result) {
-          resolve(editor.result === 'saved' ? editor.edited() : undefined)
-          return
-        }
-        const wants = editor.wants
-        if (wants && !away) {
-          editor.wants = undefined
-          void visit(wants.start)
-          return
-        }
-        draw()
+          const wants = editor.wants
+          if (wants) {
+            editor.wants = undefined
+            void visit(wants.start)
+          }
+          return undefined
+        },
+        () => {
+          if (!away) {
+            changed(true)
+          }
+        },
+      )
+      return edited
+    } finally {
+      over = true
+      clearTimeout(timer)
+      screen.stop()
+      if (backdrop) {
+        terminal.write(backdrop.close())
       }
-      listen(true)
-      draw()
-      if (probing) {
-        probe = setTimeout(() => {
-          probing = false
-          onData?.(Buffer.alloc(0))
-        }, 1000)
-      }
-    })
-  } finally {
-    clearTimeout(timer)
-    clearTimeout(probe)
-    if (backdrop) {
-      write(backdrop.close())
     }
-    listen(false)
-    stdin.setRawMode(false)
-    stdin.pause()
-    write('\x1b[?2004l\x1b[?7h\x1b[?25h\x1b[?1049l')
-  }
+  })
 }

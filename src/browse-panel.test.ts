@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { PassThrough } from 'node:stream'
 import { test } from 'node:test'
-import { isCancel } from '@clack/core'
+import cells from 'fast-string-width'
 
 import { type BrowseIo, BrowsePanel, type Market } from './browse-panel.ts'
 import type { PaletteEntry } from './manifest.ts'
@@ -43,13 +43,95 @@ function repo(owner: string, name: string, stars: number, description: string | 
 const official = market('official', 'official', ['miku', 'rin'], true)
 const pastel = market('alice/ttheme-pastel', 'alice@pastel', ['dusk', 'dawn'])
 
-const ESC = '\x1b'
-const STEERING = new RegExp(`${ESC}\\[K|${ESC}\\[\\?(?:2026|25)[hl]|${ESC}\\[H`, 'g')
-const ROW = new RegExp(`${ESC}\\[(\\d+);1H`, 'g')
 const FRAME = '\u0001'
+const CSI = /\[([0-?]*)[ -/]*([@-~])/y
 
-function shown(raw: string): string {
-  return raw.replace(STEERING, '').replace(ROW, (_, row: string) => (row === '1' ? `\n${FRAME}` : '\n'))
+class Glass {
+  readonly frames: string[] = []
+  private readonly cells: string[][]
+  private row = 0
+  private col = 0
+  private readonly width: number
+
+  constructor(width: number, height: number) {
+    this.width = width
+    this.cells = Array.from({ length: height }, () => [])
+  }
+
+  feed(text: string): void {
+    let at = 0
+    while (at < text.length) {
+      if (text[at] === '\x1b') {
+        at = this.sequence(text, at)
+        continue
+      }
+      const ch = String.fromCodePoint(text.codePointAt(at) as number)
+      at += ch.length
+      if (ch === '\n') {
+        this.row += 1
+        this.col = 0
+      } else if (ch === '\r') {
+        this.col = 0
+      } else {
+        this.put(ch)
+      }
+    }
+  }
+
+  private put(ch: string): void {
+    const wide = cells(ch)
+    const line = this.cells[this.row]
+    if (!line || wide === 0 || this.col + wide > this.width) {
+      return
+    }
+    line[this.col] = ch
+    if (wide === 2) {
+      line[this.col + 1] = ''
+    }
+    this.col += wide
+  }
+
+  private sequence(text: string, at: number): number {
+    const next = text[at + 1]
+    if (next === ']' || next === '_') {
+      const ends = [text.indexOf('\x07', at), text.indexOf('\x1b\\', at + 2)].filter((end) => end !== -1)
+      const end = Math.min(...ends)
+      return text[end] === '\x07' ? end + 1 : end + 2
+    }
+    CSI.lastIndex = at + 1
+    const m = CSI.exec(text)
+    if (next !== '[' || !m) {
+      return at + 2
+    }
+    const [whole, params = '', final] = m
+    const [a = 0, b = 0] = params.split(';').map(Number)
+    if (final === 'H') {
+      this.row = Math.max(1, a) - 1
+      this.col = Math.max(1, b) - 1
+    } else if (final === 'G') {
+      this.col = Math.max(1, a) - 1
+    } else if (final === 'K') {
+      const line = this.cells[this.row] ?? []
+      line.length = params === '2' ? 0 : Math.min(line.length, this.col)
+    } else if (final === 'J') {
+      for (let row = this.row + 1; row < this.cells.length; row++) {
+        this.cells[row] = []
+      }
+      const line = this.cells[this.row] ?? []
+      line.length = Math.min(line.length, this.col)
+    } else if (final === 'l' && params === '?2026') {
+      this.frames.push(
+        this.cells
+          .map((line) =>
+            Array.from(line, (c) => c ?? ' ')
+              .join('')
+              .trimEnd(),
+          )
+          .join('\n'),
+      )
+    }
+    return at + 1 + whole.length
+  }
 }
 
 function io(overrides: Partial<BrowseIo> = {}): BrowseIo {
@@ -78,54 +160,41 @@ async function drive(
   const output = new PassThrough() as PassThrough & { columns?: number; rows?: number }
   output.columns = opts.columns ?? 100
   output.rows = opts.rows ?? 24
-  let frames = ''
-  output.on('data', (chunk: Buffer) => {
-    frames += shown(chunk.toString())
+  const glass = new Glass(output.columns, output.rows)
+  output.on('data', (chunk: Buffer) => glass.feed(chunk.toString()))
+  const panel = new BrowsePanel({
+    markets: opts.markets ?? [official, pastel],
+    kept: [],
+    installed: opts.installed ?? ['miku', 'alice@pastel/dusk'],
+    problems: [],
+    due: opts.due ?? [],
+    io: opts.io ?? io(),
+    color: false,
+    ...(opts.hub ? { hub: opts.hub } : {}),
+    input,
+    output,
   })
-  const saved = Object.getOwnPropertyDescriptor(process.stdout, 'columns')
-  Object.defineProperty(process.stdout, 'columns', { value: 400, configurable: true, writable: true })
-  try {
-    const panel = new BrowsePanel({
-      markets: opts.markets ?? [official, pastel],
-      kept: [],
-      installed: opts.installed ?? ['miku', 'alice@pastel/dusk'],
-      problems: [],
-      due: opts.due ?? [],
-      io: opts.io ?? io(),
-      color: false,
-      ...(opts.hub ? { hub: opts.hub } : {}),
-      input,
-      output,
-    })
-    const pending = panel.prompt()
-    let previous = ''
-    for (const key of keys) {
-      if (typeof key === 'number') {
-        await new Promise((resolve) => setTimeout(resolve, key))
-        continue
-      }
-      await new Promise((resolve) => setTimeout(resolve, previous === '\x1b' ? 80 : 5))
-      input.write(key)
-      previous = key
+  const pending = panel.run()
+  let previous = ''
+  for (const key of keys) {
+    if (typeof key === 'number') {
+      await new Promise((resolve) => setTimeout(resolve, key))
+      continue
     }
-    const result = await pending
-    const last = frames.slice(frames.lastIndexOf(FRAME) + 1)
-    return {
-      result,
-      frames,
-      last,
-      panel: panel.result(),
-      next: panel.next(),
-      ran: panel.applied(),
-      log: panel.lines(),
-      failed: panel.failure(),
-    }
-  } finally {
-    if (saved) {
-      Object.defineProperty(process.stdout, 'columns', saved)
-    } else {
-      delete (process.stdout as { columns?: number }).columns
-    }
+    await new Promise((resolve) => setTimeout(resolve, previous === '\x1b' ? 80 : 5))
+    input.write(key)
+    previous = key
+  }
+  const result = await pending
+  return {
+    result,
+    frames: glass.frames.map((frame) => `\n${FRAME}${frame}`).join(''),
+    last: glass.frames.at(-1) ?? '',
+    panel: panel.result(),
+    next: panel.next(),
+    ran: panel.applied(),
+    log: panel.lines(),
+    failed: panel.failure(),
   }
 }
 
@@ -209,13 +278,13 @@ test('esc while the question is up drops only the question', async () => {
   const { result, panel } = await drive([TAB, TAB, ...'bob/ttheme-neon', ' ', '\x1b', '\r'], {
     io: io({ fetch: () => Promise.resolve(neon) }),
   })
-  assert.ok(!isCancel(result))
+  assert.equal(result, 'submit')
   assert.deepEqual(panel.adds, [])
 })
 
 test('a market due at open refreshes in the background and its new palettes appear', async () => {
   const fresh = market('official', 'official', ['miku', 'rin', 'luka'], true)
-  const { panel, frames } = await drive(['\r'], {
+  const { panel, frames } = await drive([20, '\r'], {
     due: ['official'],
     io: io({
       refresh: (source) =>
@@ -238,22 +307,22 @@ test('a failed update shows up under Errors with its reason', async () => {
 
 test('inside the tabs, tab asks for the next screen at once, or first asks about what is staged', async () => {
   const clean = await drive([PLAIN_TAB], { hub: 'browse' })
-  assert.ok(isCancel(clean.result))
+  assert.equal(clean.result, 'cancel')
   assert.equal(clean.next, 21)
   const back = await drive([SHIFT_TAB], { hub: 'browse' })
   assert.equal(back.next, 21)
 
   const stay = await drive([RIGHT, DOWN, ' ', PLAIN_TAB, '\x1b', ...APPLY], { hub: 'browse', installed: [] })
   assert.match(stay.frames, /Apply your changes before you leave\?/)
-  assert.ok(!isCancel(stay.result))
+  assert.equal(stay.result, 'submit')
   assert.equal(stay.next, undefined)
 
   const discard = await drive([RIGHT, DOWN, ' ', PLAIN_TAB, 'n'], { hub: 'browse', installed: [] })
-  assert.ok(isCancel(discard.result))
+  assert.equal(discard.result, 'cancel')
   assert.equal(discard.next, 21)
 
   const apply = await drive([RIGHT, DOWN, ' ', PLAIN_TAB, 'y', 20, '\r'], { hub: 'browse', installed: [] })
-  assert.ok(!isCancel(apply.result))
+  assert.equal(apply.result, 'submit')
   assert.equal(apply.next, undefined)
   assert.equal(apply.panel.picked.size, 1)
   assert.ok(apply.ran)
@@ -436,13 +505,13 @@ test('enter with something staged opens a review of it, and esc goes back to the
 test('enter with nothing staged leaves at once', async () => {
   const { ran, result } = await drive(['\r'])
   assert.ok(!ran)
-  assert.ok(!isCancel(result))
+  assert.equal(result, 'submit')
 })
 
 test('applying shows what the work reports and waits for it, and done stays until enter', async () => {
   let calls = 0
   const { frames, ran, log, failed, panel } = await drive(
-    [TAB, TAB, DOWN, ' ', '\r', '\r', 30, '\x1b', '\r', 200, '\r'],
+    [TAB, TAB, DOWN, ' ', '\r', '\r', 30, '\x1b', '\r', 350, '\r'],
     {
       io: io({
         apply: async (_, report) => {
@@ -450,7 +519,7 @@ test('applying shows what the work reports and waits for it, and done stays unti
           report.status('Fetching glow · 1/2')
           report.say('Removed alice@pastel · github.com/alice/ttheme-pastel')
           report.say('\n1 palettes installed — open a new tab')
-          await new Promise((resolve) => setTimeout(resolve, 120))
+          await new Promise((resolve) => setTimeout(resolve, 250))
           report.status('')
         },
       }),

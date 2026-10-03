@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { jpegSize } from '../jpeg.ts'
-import { type Got, Grabber, pastedRefs, takeInbound } from './attach.ts'
+import { decode } from '../tui/keys.ts'
+import { type Got, Grabber, pastedRefs } from './attach.ts'
 
 const files = new Set(['/pics/a.png', '/pics/my pic.png', '/pics/b.jpg'])
 const exists = (path: string) => files.has(path)
@@ -25,21 +26,6 @@ test('jpegSize reads the frame header', () => {
   assert.equal(jpegSize(new Uint8Array([0x89, 0x50])), null)
 })
 
-test('takeInbound splits pastes and protocol replies from keys and keeps unfinished ones', () => {
-  const split = takeInbound('a\x1b[200~/pics/a')
-  assert.deepEqual(split, { events: [], keys: 'a', pending: '\x1b[200~/pics/a' })
-  const done = takeInbound(`${split.pending}.png\x1b[201~\x1b[Ab`)
-  assert.deepEqual(done.events, [{ kind: 'paste', text: '/pics/a.png' }])
-  assert.equal(done.keys, '\x1b[Ab')
-  const replies = takeInbound('\x1b[?5522;2$y\x1b]72;t=q\x1b\\\x1b[?62;22c')
-  assert.deepEqual(replies.events, [
-    { kind: 'mode', mode: 5522, value: 2 },
-    { kind: 'osc', code: '72', meta: { t: 'q' }, payload: '' },
-    { kind: 'attributes' },
-  ])
-  assert.equal(takeInbound('\x1b]5522;type=read').pending, '\x1b]5522;type=read')
-})
-
 function grabber(): { sent: string[]; got: Got[]; grab: Grabber } {
   const sent: string[] = []
   const got: Got[] = []
@@ -54,7 +40,7 @@ function grabber(): { sent: string[]; got: Got[]; grab: Grabber } {
 }
 
 function osc(text: string) {
-  const event = takeInbound(text).events[0]
+  const event = decode(text).events[0]
   assert.equal(event?.kind, 'osc')
   return event as Parameters<Grabber['take']>[0]
 }

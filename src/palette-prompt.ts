@@ -1,8 +1,13 @@
 import type { Readable, Writable } from 'node:stream'
-import { Prompt } from '@clack/core'
-import { ansiBar, ansiFg, ansiSquares } from './ansi.ts'
+import { ansiBar, ansiFg, ansiSquares, BOLD, CYAN, DIM, NORMAL, RESET, YELLOW } from './ansi.ts'
 import { type PaletteEntry, swatch } from './manifest.ts'
 import { marketOf, slugOf } from './theme.ts'
+import { Field } from './tui/field.ts'
+import type { Inbound } from './tui/keys.ts'
+import { Inline } from './tui/screen.ts'
+import { HIDE_CURSOR, PASTES, within } from './tui/terminal.ts'
+
+const MIN_ITEMS = 3
 
 export type PickerRow =
   | { kind: 'palette'; entry: PaletteEntry }
@@ -121,8 +126,8 @@ export function pageStep(name: string | undefined, size: number): number | undef
   const steps: Record<string, number> = {
     home: Number.NEGATIVE_INFINITY,
     end: Number.POSITIVE_INFINITY,
-    pageup: -size,
-    pagedown: size,
+    pgup: -size,
+    pgdn: size,
   }
   return name === undefined ? undefined : steps[name]
 }
@@ -138,13 +143,6 @@ export function firstPalette(rows: PickerRow[]): number {
   const index = rows.findIndex((r) => r.kind === 'palette')
   return index === -1 ? 0 : index
 }
-
-export const RESET = '\x1b[0m'
-export const DIM = '\x1b[2m'
-export const BOLD = '\x1b[1m'
-export const NORMAL = '\x1b[22m'
-export const CYAN = '\x1b[36m'
-export const YELLOW = '\x1b[33m'
 
 export type PromptFx = 'typewriter' | 'decode' | 'glitch'
 
@@ -514,92 +512,133 @@ export interface PalettePromptOptions {
   onFocus?: (entry: PaletteEntry) => void
 }
 
-export class PalettePrompt extends Prompt<string> {
+type PromptState = 'active' | 'error' | 'submit' | 'cancel'
+
+const FRAME_ROWS = 5
+
+export class PalettePrompt {
   readonly picked: Set<string>
   private readonly list: PaletteList
   private readonly scope: PickerScope
   private readonly color: boolean
+  private readonly required: boolean
+  private readonly most: number
   private readonly hint: SearchHint
-  private lastInput = ''
+  private readonly field = new Field()
+  private readonly input: Readable | undefined
+  private readonly output: Writable | undefined
+  private state: PromptState = 'active'
+  private error = ''
+  private redraw: () => void = () => {}
 
   constructor(opts: PalettePromptOptions) {
-    super(
-      {
-        render: () => this.draw(),
-        input: opts.input,
-        output: opts.output,
-        validate: opts.required
-          ? () => (this.picked.size === 0 ? `Pick at least one ${this.scope}` : undefined)
-          : undefined,
-      },
-      true,
-    )
     this.scope = opts.scope ?? 'palette'
     this.picked = new Set(opts.installed ?? [])
     this.color = opts.color ?? true
+    this.required = opts.required ?? false
+    this.most = opts.maxItems ?? 12
+    this.input = opts.input
+    this.output = opts.output
     this.list = new PaletteList({
       entries: opts.entries,
       picked: this.picked,
       scope: this.scope,
-      ...(opts.maxItems === undefined ? {} : { maxItems: opts.maxItems }),
+      maxItems: this.most,
       color: this.color,
       ...(opts.onFocus ? { onFocus: opts.onFocus } : {}),
     })
     this.hint = new SearchHint(
       opts.fx ?? 'typewriter',
       () => paletteExample(this.list),
-      () => this.output.emit('resize'),
+      () => this.redraw(),
     )
-    this.once('finalize', () => this.hint.stop())
-    this.on('cursor', (action) => {
-      if (action === 'up') {
-        this.list.move(-1)
-      } else if (action === 'down') {
-        this.list.move(1)
-      } else if (action === 'left') {
-        this.list.fold(false)
-      } else if (action === 'right') {
-        this.list.fold(true)
+  }
+
+  prompt(): Promise<'submit' | 'cancel'> {
+    return within({ input: this.input, output: this.output, modes: [HIDE_CURSOR, PASTES] }, async (terminal) => {
+      const inline = new Inline(
+        (text) => terminal.write(text),
+        () => terminal.cols,
+      )
+      const view = () => {
+        this.list.maxItems = Math.max(MIN_ITEMS, Math.min(this.most, terminal.rows - FRAME_ROWS))
+        return this.draw()
       }
-    })
-    this.on('userInput', (value) => {
-      if (value !== this.lastInput) {
-        this.lastInput = value
-        this.list.setFilter(value)
-      }
-    })
-    this.on('key', (_char, key) => {
-      const page = pageStep(key?.name, this.list.maxItems)
-      if (page !== undefined) {
-        this.list.move(page)
-      } else if (key?.name === 'space') {
-        this.list.pick()
+      this.redraw = () => inline.draw(view())
+      terminal.onResize(() => inline.redraw(view()))
+      this.redraw()
+      try {
+        const state = await terminal.loop(
+          (event) => {
+            this.take(event)
+            return this.state === 'submit' || this.state === 'cancel' ? this.state : undefined
+          },
+          () => this.redraw(),
+        )
+        this.redraw = () => {}
+        inline.end(this.draw())
+        return state
+      } finally {
+        this.hint.stop()
       }
     })
   }
 
-  protected override _isActionKey(char: string | undefined): boolean {
-    return char === '\t' || char === ' '
+  private take(event: Inbound): void {
+    if (event.kind === 'paste') {
+      this.field.paste(event.text)
+      this.list.setFilter(this.field.value)
+      return
+    }
+    if (event.kind !== 'key') {
+      return
+    }
+    const key = event.key
+    if (this.state === 'error') {
+      this.state = 'active'
+    }
+    const page = pageStep(key, this.list.maxItems)
+    if (key === 'esc' || key === 'ctrl-c') {
+      this.state = 'cancel'
+    } else if (key === 'enter') {
+      if (this.required && this.picked.size === 0) {
+        this.error = `Pick at least one ${this.scope}`
+        this.state = 'error'
+      } else {
+        this.state = 'submit'
+      }
+    } else if (key === 'up' || key === 'down') {
+      this.list.move(key === 'up' ? -1 : 1)
+    } else if (key === 'left' || key === 'right') {
+      this.list.fold(key === 'right')
+    } else if (page !== undefined) {
+      this.list.move(page)
+    } else if (key === ' ') {
+      this.list.pick()
+    } else if (this.field.key(key)) {
+      this.list.setFilter(this.field.value)
+    }
   }
 
-  private draw(): string {
+  private draw(): string[] {
     const dim = (s: string) => (this.color ? `${DIM}${s}${RESET}` : s)
     const bar = (s: string) => (this.color ? `${CYAN}${s}${RESET}` : s)
     const title = this.scope === 'series' ? 'Series' : 'Catalog'
     if (this.state === 'submit') {
-      return `${dim('◇')} ${title} ${dim(`· ${this.list.pickedCount()} picked`)}`
+      return [`${dim('◇')} ${title} ${dim(`· ${this.list.pickedCount()} picked`)}`]
     }
     if (this.state === 'cancel') {
-      return `${dim(`◇ ${title} · cancelled`)}`
+      return [`${dim(`◇ ${title} · cancelled`)}`]
     }
+    const typed = this.field.value
     const head = `${bar('◆')} ${title} ${dim(`(${this.list.matched()}/${this.list.total()} · ${this.list.pickedCount()} picked)`)}`
     const example = this.hint.text()
-    const search = `${bar('│')}    ${this.userInput ? `${this.userInput}_` : dim(`Search…${example ? ` e.g. ${example}` : ''}`)}`
+    const search = `${bar('│')}    ${typed ? `${typed}_` : dim(`Search…${example ? ` e.g. ${example}` : ''}`)}`
     const { lines, below } = this.list.window()
     const body =
       lines.length > 0
         ? lines.map((line) => `${bar('│')} ${line}`)
-        : [`${bar('│')} ${dim(`No ${this.scope === 'series' ? 'series' : 'palettes'} match '${this.userInput}'`)}`]
+        : [`${bar('│')} ${dim(`No ${this.scope === 'series' ? 'series' : 'palettes'} match '${typed}'`)}`]
     while (body.length < this.list.maxItems) {
       body.push(bar('│'))
     }
@@ -610,6 +649,6 @@ export class PalettePrompt extends Prompt<string> {
       this.state === 'error'
         ? `${bar('└')} ${this.color ? `${YELLOW}${this.error}${RESET}` : this.error}`
         : `${bar('└')} ${dim(`↑↓ move${fold} · space pick · type to filter · enter ${go} · esc cancel`)}`
-    return [head, search, ...body, more, hint].join('\n')
+    return [head, search, ...body, more, hint]
   }
 }

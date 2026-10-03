@@ -1,30 +1,25 @@
-import type { Key } from 'node:readline'
 import type { Readable, Writable } from 'node:stream'
-import { Prompt } from '@clack/core'
-import { ansiBar, ansiFg, fit, spread, wrapText } from './ansi.ts'
+import { ansiBar, ansiFg, BOLD, CYAN, DIM, fit, NORMAL, RESET, SPINNER, spread, wrapText, YELLOW } from './ansi.ts'
 import { gateFailures } from './catalog.ts'
 import { GATE_RULES } from './contrast.ts'
 import { type HubTab, hubBar, hubGoto } from './hub.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { type Repository, repositorySource } from './markets.ts'
 import {
-  BOLD,
-  CYAN,
-  DIM,
   type ListRow,
-  NORMAL,
   PaletteList,
   type PromptFx,
   pageStep,
   paletteExample,
-  RESET,
   SearchHint,
   stepRow,
-  YELLOW,
 } from './palette-prompt.ts'
 import { counted, type Refreshed } from './refresh.ts'
 import { isLocal, OFFICIAL, parseSource, sameMarket, shownSource, TOPIC } from './sources.ts'
 import { marketOf, slugOf } from './theme.ts'
+import { Field } from './tui/field.ts'
+import { Screen } from './tui/screen.ts'
+import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, within } from './tui/terminal.ts'
 
 export type Tab = 'catalog' | 'installed' | 'markets' | 'errors'
 
@@ -69,6 +64,7 @@ export interface BrowseOptions {
   lookups?: boolean
   color?: boolean
   fx?: PromptFx
+  owns?: boolean
   input?: Readable
   output?: Writable
   onFocus?: (entry: PaletteEntry) => void
@@ -122,8 +118,6 @@ const SEARCH_AFTER = 600
 const TYPED_AFTER = 500
 const FOCUS_AFTER = 300
 const NAMES_SHOWN = 12
-const BEAT = 80
-const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 const PILL = '\x1b[7;1m'
 const EMPTY: Detail = { title: '', lines: [], brief: '' }
 
@@ -139,18 +133,21 @@ function typedSource(text: string): string | undefined {
   }
 }
 
-function printable(text: string): string {
-  return [...text].filter((c) => c >= ' ' && c !== '\x7f').join('')
-}
-
 function cap(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
-export class BrowsePanel extends Prompt<string> {
+type State = 'active' | 'submit' | 'cancel'
+
+export class BrowsePanel {
   readonly picked: Set<string>
   private tab: Tab = 'catalog'
-  private readonly filters: Record<Tab, string> = { catalog: '', installed: '', markets: '', errors: '' }
+  private readonly fields: Record<Tab, Field> = {
+    catalog: new Field(),
+    installed: new Field(),
+    markets: new Field(),
+    errors: new Field(),
+  }
   private readonly cursor = { markets: 0, errors: 0 }
   private readonly top = { markets: 0, errors: 0 }
   private readonly adds = new Map<string, Market>()
@@ -174,11 +171,16 @@ export class BrowsePanel extends Prompt<string> {
   private readonly order: (entries: PaletteEntry[]) => PaletteEntry[]
   private readonly color: boolean
   private readonly hub: HubTab | undefined
+  private readonly owns: boolean
+  private readonly input: Readable | undefined
+  private readonly output: (Writable & { columns?: number; rows?: number }) | undefined
   private maxItems = 12
   private readonly paint: ((entry: PaletteEntry) => void) | undefined
   private readonly catalog: PaletteList
   private readonly mine: PaletteList
   private readonly hint: SearchHint
+  private screen: Screen | undefined
+  private state: State = 'active'
   private phase: Phase = 'browse'
   private offset = 0
   private started = false
@@ -186,10 +188,8 @@ export class BrowsePanel extends Prompt<string> {
   private working = ''
   private stopped: Error | undefined
   private beat = 0
-  private beating: ReturnType<typeof setInterval> | undefined
   private asking: Market | undefined
   private leaving: number | undefined
-  private shifted = false
   private goto: number | undefined
   private repos: Repository[] | undefined
   private searching = false
@@ -197,11 +197,8 @@ export class BrowsePanel extends Prompt<string> {
   private searched: string | undefined
   private asked = 0
   private readonly live: boolean
-  private lastInput = ''
 
   constructor(opts: BrowseOptions) {
-    super({ render: () => this.draw(), input: opts.input, output: opts.output }, true)
-    Object.assign(this, { render: () => this.screen() })
     this.markets = opts.markets
     this.problems = opts.problems
     this.kept = opts.kept
@@ -211,6 +208,9 @@ export class BrowsePanel extends Prompt<string> {
     this.order = opts.order ?? ((entries) => entries)
     this.color = opts.color ?? true
     this.hub = opts.hub
+    this.owns = opts.owns ?? false
+    this.input = opts.input
+    this.output = opts.output
     this.live = opts.lookups ?? true
     this.paint = opts.onFocus
     this.picked = new Set(opts.installed)
@@ -234,67 +234,50 @@ export class BrowsePanel extends Prompt<string> {
       () => paletteExample(this.tab === 'installed' ? this.mine : this.catalog),
       () => this.redraw(),
     )
-    const shift = (_char: string | undefined, key: Key | undefined) => {
-      this.shifted = key?.shift === true
-    }
-    this.input.on('keypress', shift)
-    this.once('finalize', () => {
-      this.hint.stop()
-      this.input.off('keypress', shift)
-      for (const timer of this.timers.values()) {
-        clearTimeout(timer)
-      }
-      this.timers.clear()
-      clearInterval(this.beating)
-    })
-    this.on('cursor', (action) => {
-      if (this.phase !== 'browse') {
-        if (action === 'up' || action === 'down') {
-          this.scroll(action === 'up' ? -1 : 1)
-        }
-        return
-      }
-      if (this.asking || this.leaving !== undefined || this.shifted) {
-        return
-      }
-      if (action === 'up' || action === 'down') {
-        this.move(action === 'up' ? -1 : 1)
-      } else if (action === 'left' || action === 'right') {
-        this.side(action === 'right')
-      }
-    })
-    this.on('userInput', (typed) => {
-      const value = this.phase === 'browse' ? printable(typed) : this.filters[this.tab]
-      if (value !== typed) {
-        this.scrub(value)
-      }
-      if (value !== this.lastInput) {
-        this.lastInput = value
-        this.filters[this.tab] = value
-        this.list()?.setFilter(value)
-        if (this.tab === 'markets') {
-          this.later('search', SEARCH_AFTER, () => this.lookup())
-          this.watch()
-        }
-      }
-    })
-    this.on('key', (char, key) => this.key(char, key))
     for (const source of opts.due) {
       this.update(source)
     }
   }
 
-  protected override _isActionKey(char: string | undefined): boolean {
-    return (
-      char === '\t' || char === ' ' || ((this.asking !== undefined || this.leaving !== undefined) && char !== undefined)
-    )
-  }
-
-  protected override _shouldSubmit(): boolean {
-    if (this.asking !== undefined || this.leaving !== undefined) {
-      return false
-    }
-    return this.phase === 'done' || (this.phase === 'browse' && !this.dirty())
+  run(): Promise<'submit' | 'cancel'> {
+    const modes = this.owns ? [ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES] : [PASTES]
+    const assume = this.owns ? [] : [HIDE_CURSOR, NO_WRAP]
+    return within({ input: this.input, output: this.output, modes, assume }, async (terminal) => {
+      const screen = new Screen({
+        write: (text) => terminal.write(text),
+        view: () => (this.state === 'active' ? { lines: this.view(), ticking: this.phase === 'applying' } : undefined),
+        beat: () => {
+          this.beat += 1
+        },
+      })
+      this.screen = screen
+      terminal.onResize(() => {
+        screen.reset()
+        screen.request()
+      })
+      screen.now()
+      try {
+        return await terminal.loop(
+          (event) => {
+            if (event.kind === 'key') {
+              this.key(event.key)
+            } else if (event.kind === 'paste') {
+              this.pasted(event.text)
+            }
+            return this.state === 'active' ? undefined : this.state
+          },
+          () => screen.soon(),
+        )
+      } finally {
+        screen.stop()
+        this.screen = undefined
+        this.hint.stop()
+        for (const timer of this.timers.values()) {
+          clearTimeout(timer)
+        }
+        this.timers.clear()
+      }
+    })
   }
 
   applied(): boolean {
@@ -328,13 +311,16 @@ export class BrowsePanel extends Prompt<string> {
     }
   }
 
-  private key(char: string | undefined, key: Key | undefined): void {
+  private key(key: string): void {
+    if (key === 'ctrl-c') {
+      this.state = 'cancel'
+      return
+    }
     if (this.leaving !== undefined) {
-      if (key?.name === 'escape') {
+      if (key === 'esc') {
         this.leaving = undefined
-        Object.assign(key, { name: 'answered', sequence: '' })
-      } else if (char && /^[yn]$/i.test(char)) {
-        if (char.toLowerCase() === 'y') {
+      } else if (/^[yn]$/i.test(key)) {
+        if (key.toLowerCase() === 'y') {
           this.begin()
         } else {
           this.goto = this.leaving
@@ -345,11 +331,10 @@ export class BrowsePanel extends Prompt<string> {
       return
     }
     if (this.asking) {
-      if (key?.name === 'escape') {
+      if (key === 'esc') {
         this.asking = undefined
-        Object.assign(key, { name: 'answered', sequence: '' })
-      } else if (char && /^[yn]$/i.test(char)) {
-        this.answer(char.toLowerCase() === 'y')
+      } else if (/^[yn]$/i.test(key)) {
+        this.answer(key.toLowerCase() === 'y')
       }
       return
     }
@@ -357,47 +342,63 @@ export class BrowsePanel extends Prompt<string> {
       this.steer(key)
       return
     }
-    const page = pageStep(key?.name, this.maxItems)
-    if (key?.name === 'return') {
+    const page = pageStep(key, this.maxItems)
+    if (key === 'enter') {
       if (this.dirty()) {
         this.phase = 'review'
         this.offset = 0
+      } else {
+        this.state = 'submit'
       }
+    } else if (key === 'esc') {
+      this.state = 'cancel'
     } else if (page !== undefined) {
       this.move(page)
-    } else if (key?.name === 'tab') {
+    } else if (key === 'up' || key === 'down') {
+      this.move(key === 'up' ? -1 : 1)
+    } else if (key === 'left' || key === 'right') {
+      this.side(key === 'right')
+    } else if (key === 'tab' || key === 'shift-tab') {
       if (this.hub) {
-        this.leave(hubGoto(this.hub, key.shift ? -1 : 1))
+        this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
       }
-    } else if (key?.shift && (key.name === 'left' || key.name === 'right')) {
-      this.switchTab(key.name === 'right' ? 1 : -1)
-    } else if (key?.name === 'space') {
+    } else if (key === 'shift-left' || key === 'shift-right') {
+      this.switchTab(key === 'shift-right' ? 1 : -1)
+    } else if (key === ' ') {
       this.activate()
-    } else if (key?.ctrl && key.name === 'r') {
+    } else if (key === 'ctrl-r') {
       const row = this.tab === 'markets' ? this.marketRow() : undefined
       if (row?.kind === 'market' && !this.adds.has(row.market.source)) {
         this.update(row.market.source)
       } else if (row?.kind === 'find') {
         this.search()
       }
-    } else if (key?.ctrl && key.name === 's') {
+    } else if (key === 'ctrl-s') {
       this.cycle()
+    } else if (this.fields[this.tab].key(key)) {
+      this.typed()
     }
   }
 
-  private scrub(text: string): void {
-    const rl = (this as unknown as { rl?: { line: string; cursor: number } }).rl
-    if (rl) {
-      rl.line = text
-      rl.cursor = text.length
+  private pasted(text: string): void {
+    if (this.phase === 'browse' && !this.asking && this.leaving === undefined) {
+      this.fields[this.tab].paste(text)
+      this.typed()
     }
-    this.userInput = text
-    this._cursor = text.length
+  }
+
+  private typed(): void {
+    const value = this.fields[this.tab].value
+    this.list()?.setFilter(value)
+    if (this.tab === 'markets') {
+      this.later('search', SEARCH_AFTER, () => this.lookup())
+      this.watch()
+    }
   }
 
   private redraw(): void {
-    if (this.state === 'active' || this.state === 'error') {
-      this.output.emit('resize')
+    if (this.state === 'active') {
+      this.screen?.request()
     }
   }
 
@@ -486,11 +487,7 @@ export class BrowsePanel extends Prompt<string> {
   private switchTab(step: number): void {
     const at = TABS.findIndex((t) => t.tab === this.tab)
     const next = TABS[(at + step + TABS.length) % TABS.length]?.tab ?? 'catalog'
-    const saved = this.filters[next]
     this.tab = next
-    this._clearUserInput()
-    this._setUserInput(saved, true)
-    this.lastInput = saved
     this.list()?.refocus()
     if (next === 'markets') {
       this.lookup()
@@ -643,7 +640,7 @@ export class BrowsePanel extends Prompt<string> {
     if (!this.live || this.tab !== 'markets') {
       return
     }
-    const typed = typedSource(this.filters.markets)
+    const typed = typedSource(this.fields.markets.value)
     if (typed && this.wants(typed)) {
       this.later('typed', TYPED_AFTER, () => this.load(typed, false))
     } else {
@@ -709,7 +706,7 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   private wanted(): string {
-    const query = this.filters.markets.trim()
+    const query = this.fields.markets.value.trim()
     return query && !typedSource(query) ? query : ''
   }
 
@@ -745,13 +742,13 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   private marketRows(): MarketRow[] {
-    const query = this.filters.markets.trim().toLowerCase()
+    const query = this.fields.markets.value.trim().toLowerCase()
     const hit = (...fields: string[]) => query === '' || fields.some((f) => f.toLowerCase().includes(query))
     const known = [...this.markets, ...this.adds.values()]
     const rows: MarketRow[] = known
       .filter((m) => hit(m.id, m.shown, m.source))
       .map((market) => ({ kind: 'market', market }))
-    const typed = typedSource(this.filters.markets)
+    const typed = typedSource(this.fields.markets.value)
     if (typed && !known.some((m) => sameMarket(m.source, typed))) {
       rows.push({ kind: 'add', source: typed })
     }
@@ -781,7 +778,7 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   private problemRows(): Problem[] {
-    const query = this.filters.errors.trim().toLowerCase()
+    const query = this.fields.errors.value.trim().toLowerCase()
     return this.problemList().filter((p) => query === '' || `${p.where} ${p.message}`.toLowerCase().includes(query))
   }
 
@@ -912,7 +909,7 @@ export class BrowsePanel extends Prompt<string> {
       ]
     }
     if (row.kind === 'find') {
-      const query = this.filters.markets.trim()
+      const query = this.fields.markets.value.trim()
       const named = query && !typedSource(query)
       const idle = !this.searching && !this.searchError && this.repos === undefined
       const text = this.searching
@@ -950,7 +947,7 @@ export class BrowsePanel extends Prompt<string> {
   private body(): { lines: string[]; above: number; below: number; empty: string } {
     const list = this.list()
     if (list) {
-      const filter = this.filters[this.tab]
+      const filter = this.fields[this.tab].value
       return {
         ...list.window(),
         empty: filter
@@ -971,7 +968,7 @@ export class BrowsePanel extends Prompt<string> {
         empty: '',
       }
     }
-    const filter = this.filters.errors
+    const filter = this.fields.errors.value
     return {
       ...this.windowOf(this.problemRows(), 'errors', (p, f) => this.problemLine(p, f)),
       empty: filter ? `No problems match '${filter}'` : 'No problems',
@@ -996,23 +993,17 @@ export class BrowsePanel extends Prompt<string> {
     this.state = 'cancel'
   }
 
-  private steer(key: Key | undefined): void {
-    const name = key?.name
-    const quiet = () => Object.assign(key ?? {}, { name: 'answered', sequence: '' })
+  private steer(key: string): void {
     if (this.phase === 'review') {
-      if (name === 'return') {
+      if (key === 'enter') {
         this.begin()
-      } else if (name === 'escape') {
-        quiet()
+      } else if (key === 'esc') {
         this.phase = 'browse'
       }
-    } else if (name === 'escape') {
-      quiet()
-      if (this.phase === 'done') {
-        this.state = 'submit'
-      }
+    } else if (this.phase === 'done' && (key === 'enter' || key === 'esc')) {
+      this.state = 'submit'
     }
-    const page = pageStep(name, this.span())
+    const page = key === 'up' ? -1 : key === 'down' ? 1 : pageStep(key, this.span())
     if (page !== undefined) {
       this.scroll(page)
     }
@@ -1033,10 +1024,6 @@ export class BrowsePanel extends Prompt<string> {
     this.offset = 0
     this.log = []
     this.working = ''
-    this.beating = setInterval(() => {
-      this.beat += 1
-      this.redraw()
-    }, BEAT)
     const report: Report = {
       say: (line) => {
         this.log.push(...line.split('\n'))
@@ -1054,8 +1041,6 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   private ended(error?: Error): void {
-    clearInterval(this.beating)
-    this.beating = undefined
     this.working = ''
     this.stopped = error
     this.phase = 'done'
@@ -1202,8 +1187,9 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   private searchText(): string {
-    if (this.userInput) {
-      return `${this.userInput}_`
+    const typed = this.fields[this.tab].value
+    if (typed) {
+      return `${typed}_`
     }
     if (this.tab === 'markets') {
       return this.dim('Search… or add one: owner/repo')
@@ -1411,7 +1397,7 @@ export class BrowsePanel extends Prompt<string> {
       }
     }
     if (row.kind === 'find') {
-      const query = this.filters.markets.trim()
+      const query = this.fields.markets.value.trim()
       const note =
         this.searchError ??
         (this.searching
@@ -1500,11 +1486,11 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   private columns(): number {
-    return (this.output as { columns?: number }).columns ?? 100
+    return (this.output ?? process.stdout).columns ?? 100
   }
 
   private rows(): number {
-    return (this.output as { rows?: number }).rows ?? 24
+    return (this.output ?? process.stdout).rows ?? 24
   }
 
   private fitItems(used: number): void {
@@ -1514,21 +1500,9 @@ export class BrowsePanel extends Prompt<string> {
     this.mine.maxItems = items
   }
 
-  private screen(): void {
-    if (this.state === 'submit' || this.state === 'cancel') {
-      return
-    }
-    const rows = this.rows()
+  private view(): string[] {
     const lines = this.draw().split('\n')
-    const hide = this.state === 'initial' ? '\x1b[?25l' : ''
-    let out = `\x1b[?2026h${hide}`
-    for (let row = 0; row < rows; row++) {
-      out += `\x1b[${row + 1};1H${lines[row] ?? ''}\x1b[K`
-    }
-    this.output.write(`${out}\x1b[H\x1b[?2026l`)
-    if (this.state === 'initial') {
-      this.state = 'active'
-    }
+    return Array.from({ length: this.rows() }, (_, row) => lines[row] ?? '')
   }
 
   private draw(): string {

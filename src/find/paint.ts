@@ -12,6 +12,7 @@ import {
   viewVar,
   wipesPlacements,
 } from '../terminal.ts'
+import { type Frame, Screen } from '../tui/screen.ts'
 import {
   type FindView,
   gridShape,
@@ -29,7 +30,6 @@ const COVER_ID = 2 ** 31 - 3
 const ANCHOR_ID = 2 ** 31 - 2
 const COVER_Z = -1073741827
 const ANCHOR_Z = -1073741828
-const TICK = 80
 const GLIDE = 16
 const GLIDE_SHARE = 0.4
 const BAND_ID = 3 * 2 ** 30
@@ -59,9 +59,7 @@ export interface Canvas {
 }
 
 export class Paint {
-  private screen: string[] = []
-  private dirty = false
-  private ticking?: NodeJS.Timeout
+  private readonly screen: Screen
   private gliding?: NodeJS.Timeout
   private readonly sent = new Map<number, string>()
   private readonly placed = new Map<number, string>()
@@ -92,38 +90,53 @@ export class Paint {
     this.scratch = canvas.scratch
     this.signal = canvas.signal
     this.write = canvas.write
-  }
-
-  draw(): void {
-    if (this.dirty || this.signal.aborted) {
-      return
-    }
-    this.dirty = true
-    setImmediate(() => {
-      this.dirty = false
-      this.flush()
+    this.screen = new Screen({
+      write: (text) => this.write(text),
+      view: () => this.frame(),
+      beat: () => {
+        this.view.beat++
+      },
     })
   }
 
+  draw(): void {
+    if (!this.signal.aborted) {
+      this.screen.request()
+    }
+  }
+
+  soon(): void {
+    if (!this.signal.aborted) {
+      this.screen.soon()
+    }
+  }
+
   flush(): void {
+    if (!this.signal.aborted) {
+      this.screen.now()
+    }
+  }
+
+  private frame(): Frame | undefined {
     if (this.signal.aborted) {
-      return
+      return undefined
     }
     const { cols, rows, cell } = this.grid()
     const frame = renderFind(this.view, cols, rows)
     this.view.loaderFrom = frame.loader ? (this.view.loaderFrom ?? this.view.beat) : undefined
+    return {
+      lines: frame.lines,
+      after: (wiped) => this.images(frame.images, wiped, cell),
+      ...(this.view.mode === 'grid' && this.view.editing !== undefined ? { cursor: this.caret() } : {}),
+      ticking: frame.tick,
+    }
+  }
+
+  private images(images: Placement[], wiped: ReadonlySet<number>, cell: Grid['cell']): string {
     let out = ''
-    const wiped = new Set<number>()
-    frame.lines.forEach((line, r) => {
-      if (this.screen[r] !== line) {
-        out += `\x1b[${r + 1};1H\x1b[K${line}`
-        this.screen[r] = line
-        wiped.add(r)
-      }
-    })
     const keep = new Set<number>()
     let tried: Placement | undefined
-    for (const wanted of frame.images) {
+    for (const wanted of images) {
       if (this.views && wanted.id >= TRY_ID) {
         tried = wanted
         continue
@@ -161,12 +174,7 @@ export class Paint {
         this.placed.delete(id)
       }
     }
-    out += this.views ? this.backdrop(tried) : this.cover()
-    const caret = this.view.mode === 'grid' && this.view.editing !== undefined ? this.caret() : ''
-    if (out || caret) {
-      this.write(`\x1b[?2026h${out}${caret}\x1b[?2026l`)
-    }
-    this.pace(frame.tick)
+    return out + (this.views ? this.backdrop(tried) : this.cover())
   }
 
   glide(): void {
@@ -209,11 +217,11 @@ export class Paint {
   }
 
   resized(): void {
-    this.screen = []
+    this.screen.reset()
   }
 
   stop(): void {
-    clearInterval(this.ticking)
+    this.screen.stop()
     clearTimeout(this.gliding)
   }
 
@@ -267,18 +275,6 @@ export class Paint {
 
   private caret(): string {
     return `\x1b[1;${Math.min(this.grid().cols, cells(`⌕ ${this.view.editing ?? ''}`) + 1)}H`
-  }
-
-  private pace(tick: boolean): void {
-    if (tick) {
-      this.ticking ??= setInterval(() => {
-        this.view.beat++
-        this.draw()
-      }, TICK)
-    } else if (this.ticking) {
-      clearInterval(this.ticking)
-      this.ticking = undefined
-    }
   }
 
   private banded(p: Placement): Placement | undefined {

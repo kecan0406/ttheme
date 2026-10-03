@@ -215,6 +215,18 @@ mise run demo preview-open    # open one scenario for real, in its fixture
 `mise run demo` is also the fastest way to reproduce a bug: it builds the
 fixture state, hands you the real TUI, and throws the directory away after.
 
+### Under the Node screens
+
+Browse, init's picker, the palette editor and find share one runtime in
+`src/tui/`. `Terminal` sets the terminal's modes and puts them back on every way
+out — a return, an error, a signal, the process exiting; `Keys` turns the bytes
+the terminal sends into keys, pastes and replies, however the reads split them;
+`Screen` writes only the rows that changed since the last frame. A screen is a
+model with a key handler and a `view` that returns its rows: open it with
+`within`, wait on `terminal.until(…)`, clean up in `finally`. Let `Terminal` set
+the modes a screen needs rather than writing them or calling `setRawMode` by
+hand, and never subclass clack's `Prompt`.
+
 ### Keys a screen takes
 
 Preview and browse filter as you type, so a letter or a digit is never a

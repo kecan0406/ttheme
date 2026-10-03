@@ -302,13 +302,11 @@ export async function runBrowse(): Promise<number> {
     color: !colorless(),
     lookups: process.env.TTHEME_MARKET_LOOKUP !== 'off',
     fx: promptFx(process.env.TTHEME_FX),
+    owns: tty && !hub,
     ...(live ? { onFocus: (entry: PaletteEntry) => process.stdout.write(live.paint(entry)) } : {}),
   })
-  if (tty && !hub) {
-    process.stdout.write('\x1b[?1049h')
-  }
   try {
-    await panel.prompt()
+    await panel.run()
   } finally {
     live?.stop?.()
     if (live && !hub) {
@@ -320,11 +318,10 @@ export async function runBrowse(): Promise<number> {
   const result = panel.result()
   const go = panel.next()
   if (hub && go !== undefined) {
-    process.stdout.write('\x1b[?25l')
     await applyRefreshed(home, readInstalled(home), was, result.refreshed)
     return go
   }
-  if (tty) {
+  if (tty && hub) {
     process.stdout.write('\x1b[?1049l\x1b[?25h')
   }
   for (const refreshed of result.refreshed) {

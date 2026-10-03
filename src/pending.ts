@@ -1,9 +1,8 @@
-import { fit } from './ansi.ts'
+import { DIM, fit, NORMAL, SPINNER } from './ansi.ts'
 import { colorless } from './osc.ts'
+import { BEAT } from './tui/screen.ts'
 
 const DELAY = 300
-const BEAT = 80
-const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 
 export interface Pending {
   set(text: string): void
@@ -58,7 +57,7 @@ export function pending(text = ''): Pending {
   if (!out.isTTY || process.env.TERM === 'dumb') {
     return { set() {}, say: (line) => console.log(line), done() {} }
   }
-  const [dim, undim] = colorless() ? ['', ''] : ['\x1b[2m', '\x1b[22m']
+  const [dim, undim] = colorless() ? ['', ''] : [DIM, NORMAL]
   let beat = 0
   let shown = false
   let ticker: NodeJS.Timeout | undefined

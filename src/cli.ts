@@ -13,6 +13,7 @@ import { runMarket } from './markets.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
 import { runTone } from './tone-server.ts'
+import { Signalled } from './tui/terminal.ts'
 import { runUninstall } from './uninstall.ts'
 import { helpText, usageOf, VERB_SPECS, type VerbSpec } from './verbs.ts'
 import { runWire } from './wire.ts'
@@ -205,6 +206,9 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     }
     if (error instanceof Cancelled) {
       return 1
+    }
+    if (error instanceof Signalled) {
+      return error.exit
     }
     const detail = process.env.TTHEME_DEBUG && error instanceof Error ? error.stack : undefined
     console.error(

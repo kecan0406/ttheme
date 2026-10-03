@@ -9,6 +9,7 @@ import { configHome, readInstalled, sync } from './palettes.ts'
 import type { Colors } from './seeds.ts'
 import { drafted, pictureOf, Tints } from './tints.ts'
 import { overrideOf, readTone, tonedEntry, withTone, writeTone } from './tone.ts'
+import { keyOf } from './tui/keys.ts'
 
 const FIELD = '\x1f'
 const ITEM = '\x1e'
@@ -156,8 +157,9 @@ export class ToneSession {
       this.editor.press(arg)
     } else if (verb === 'ch') {
       const code = Number(arg)
-      if (Number.isInteger(code) && code > 0) {
-        this.editor.press(String.fromCharCode(code))
+      const key = Number.isInteger(code) && code > 0 && code <= 0x10ffff ? keyOf(String.fromCodePoint(code)) : undefined
+      if (key) {
+        this.editor.press(key)
       }
     } else if (verb === 'save') {
       const problem = this.save()

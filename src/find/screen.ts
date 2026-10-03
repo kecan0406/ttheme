@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import columns from 'fast-string-width'
-import { LINK, linked } from '../ansi.ts'
+import { BOLD as B, DIM as D, GREEN, LINK, linked, RESET as R, SPINNER, YELLOW } from '../ansi.ts'
 import type { Coloring, Framing } from '../backdrop.ts'
 import { BLOCKS, type Block, KEY_SPAN, type Kind, type Narrow, type Rating, SITES } from '../booru.ts'
 import { type Hex, mix, rgb } from '../color.ts'
@@ -195,7 +195,6 @@ export const HELD_ID = 2 ** 30
 export const TRY_ID = 2 ** 31
 const BELOW_BG = -1073741826
 const SMALL = 1600
-const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 const BAR = 56
 const FADE = 4
 const SWEEP = 20
@@ -208,113 +207,6 @@ const TIPS: [string, string][] = [
   ['1-9', 'turn a tag of the tags row on or off'],
   ['ctrl+v', 'tries on a picture from the clipboard — or drop one on the window'],
 ]
-
-const R = '\x1b[0m'
-const B = '\x1b[1m'
-const D = '\x1b[2m'
-const GREEN = '\x1b[32m'
-const YELLOW = '\x1b[33m'
-
-const CSI: Record<string, string> = {
-  A: 'up',
-  B: 'down',
-  C: 'right',
-  D: 'left',
-  H: 'home',
-  F: 'end',
-  '1~': 'home',
-  '7~': 'home',
-  '4~': 'end',
-  '8~': 'end',
-  '5~': 'pgup',
-  '6~': 'pgdn',
-  I: 'focus-in',
-  O: 'focus-out',
-  Z: 'shift-tab',
-  '1;2C': 'shift-right',
-  '1;2D': 'shift-left',
-}
-
-export function decodeKeys(input: string): string[] {
-  const keys: string[] = []
-  let i = 0
-  while (i < input.length) {
-    const c = input[i] ?? ''
-    if (c === '\x1b') {
-      const m = /^(?:\[([0-9;]*)([A-Za-z~])|O([A-Za-z]))/.exec(input.slice(i + 1))
-      if (m) {
-        keys.push(CSI[`${m[1] ?? ''}${m[2] ?? m[3] ?? ''}`] ?? 'nop')
-        i += 1 + m[0].length
-        continue
-      }
-      const next = input[i + 1] ?? ''
-      if (/^[a-z]$/.test(next)) {
-        keys.push(`alt-${next}`)
-        i += 2
-        continue
-      }
-      keys.push('esc')
-      i++
-      continue
-    }
-    keys.push(
-      c === '\r' || c === '\n'
-        ? 'enter'
-        : c === '\t'
-          ? 'tab'
-          : c === '\x03'
-            ? 'ctrl-c'
-            : c === '\x16'
-              ? 'ctrl-v'
-              : c === '\x7f' || c === '\b'
-                ? 'backspace'
-                : c,
-    )
-    i++
-  }
-  return keys
-}
-
-export const CELL_QUERY = '\x1b]1337;ReportCellSize\x07\x1b[16t\x1b[14t\x1b[18t'
-
-const ITERM_CELL = '\x1b]1337;ReportCellSize='
-
-export function cellReport(input: string): { cell: { w: number; h: number }; rest: string } | null {
-  const at = input.indexOf(ITERM_CELL)
-  if (at !== -1) {
-    const body = input.slice(at + ITERM_CELL.length)
-    const ends = [body.indexOf('\x07'), body.indexOf('\x1b\\')].filter((i) => i !== -1)
-    const end = ends.length > 0 ? Math.min(...ends) : -1
-    const m = end === -1 ? null : /^([\d.]+);([\d.]+);([\d.]+)$/.exec(body.slice(0, end))
-    if (m) {
-      const scale = Number(m[3])
-      return {
-        cell: { h: Math.round(Number(m[1]) * scale), w: Math.round(Number(m[2]) * scale) },
-        rest: input.slice(0, at) + body.slice(end + (body[end] === '\x07' ? 1 : 2)),
-      }
-    }
-  }
-  const x = input.indexOf('\x1b[6;')
-  const m = x === -1 ? null : /^\[6;(\d+);(\d+)t/.exec(input.slice(x + 1))
-  if (m) {
-    return { cell: { h: Number(m[1]), w: Number(m[2]) }, rest: input.slice(0, x) + input.slice(x + 1 + m[0].length) }
-  }
-  const window = xtermReport(input, 4)
-  const grid = xtermReport(input, 8)
-  if (!window || !grid || grid.a === 0 || grid.b === 0) {
-    return null
-  }
-  return {
-    cell: { h: Math.floor(window.a / grid.a), w: Math.floor(window.b / grid.b) },
-    rest: input.replace(window.text, '').replace(grid.text, ''),
-  }
-}
-
-function xtermReport(input: string, code: number): { a: number; b: number; text: string } | null {
-  const x = input.indexOf(`\x1b[${code};`)
-  const m = x === -1 ? null : new RegExp(`^\\[${code};(\\d+);(\\d+)t`).exec(input.slice(x + 1))
-  return m ? { a: Number(m[1]), b: Number(m[2]), text: `\x1b${m[0]}` } : null
-}
 
 export function heldFit(cols: number): number {
   return Math.max(0, Math.floor((cols - 1) / HELD.pitch))

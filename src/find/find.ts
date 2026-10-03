@@ -59,13 +59,15 @@ import { type Look, Renderer, type Shown } from '../render.ts'
 import { SCENES } from '../scenes.ts'
 import { CLEAR, viewsInWindow, viewVar } from '../terminal.ts'
 import { POSITIONS } from '../theme.ts'
+import { edit } from '../tui/field.ts'
+import { CELL_QUERY, CellProbe, type Inbound } from '../tui/keys.ts'
+import { FOCUS, HIDE_CURSOR, NO_WRAP, PASTES, type Terminal, within } from '../tui/terminal.ts'
 import { blurOf, coloringFor, settingDefault, withSetting } from '../wiring.ts'
 import { kinKeys, near, type Shape, sameKeys, sameSet } from '../works.ts'
 import {
   type Clip,
   type Got,
   Grabber,
-  type Inbound,
   LOCAL,
   type Loaded,
   loadRef,
@@ -77,16 +79,13 @@ import {
   remember,
   remote,
   sourceLabel,
-  takeInbound,
+  typedDrop,
 } from './attach.ts'
 import { Kept } from './kept.ts'
 import { Paint } from './paint.ts'
 import {
-  CELL_QUERY,
   type Count,
-  cellReport,
   DIGITS,
-  decodeKeys,
   type FindView,
   gridShape,
   HELD,
@@ -298,7 +297,7 @@ const COUNT_WAIT = 300
 const THUMB = 12
 const PRELOAD = 2
 const SETTLE = 150
-const ESCAPE = 30
+const FEATURES = '\x1b[?5522$p\x1b]72;t=q\x1b\\\x1b[c'
 const NOTICE = 4000
 const PEEK = 8000
 const PICTURE = /\.(png|jpe?g|gif|webp|heic|tiff?|bmp)$/i
@@ -417,11 +416,6 @@ function previewStem(id: number, url: string): string {
   return `${id}-${createHash('sha1').update(url).digest('hex').slice(0, 8)}`
 }
 
-function incomplete(input: string): boolean {
-  const at = input.lastIndexOf('\u001b')
-  return at !== -1 && /^\[?[0-9;]*$/.test(input.slice(at + 1))
-}
-
 class Finder {
   readonly view: FindView
   private readonly tone: Tone
@@ -463,23 +457,19 @@ class Finder {
   private current?: Current
   private fetch?: AbortController
   private settle?: NodeJS.Timeout
-  private partial?: NodeJS.Timeout
   private suggestTimer?: NodeJS.Timeout
   private suggesting?: AbortController
   private countTimer?: NodeJS.Timeout
   private counting?: AbortController
-  private input = ''
-  private typed = ''
+  private terminal?: Terminal
   private readonly grabber = new Grabber(
     (text) => this.write(text),
     (got) => void this.got(got),
   )
-  private featureWait?: () => void
   private noticeTimer?: NodeJS.Timeout
   private peekTimer?: NodeJS.Timeout
   private peeked?: string
   private attaching?: AbortController
-  private probeWait?: (cell: { w: number; h: number } | null) => void
   private done?: (code: number) => void
   private readonly scratch = mkdtempSync(join(tmpdir(), 'ttheme-find-'))
 
@@ -696,68 +686,73 @@ class Finder {
     view.nextSite = this.nextTabName
   }
 
-  async run(): Promise<number> {
-    const { stdin, stdout } = process
-    stdin.setRawMode(true)
-    stdin.resume()
-    stdin.on('data', this.onData)
-    stdout.on('resize', this.onResize)
-    this.write(`\x1b[?25l\x1b[?7l${CLEAR}`)
-    const exit = new Promise<number>((resolve) => {
-      this.done = resolve
-    })
-    const clock = setInterval(this.onClock, 250)
-    const cell = await this.probe()
-    if (cell) {
-      this.cell = cell
-      this.holdThumbs()
-      if (this.view.tag) {
-        void this.search()
-        void this.relate(this.view.tag)
+  run(): Promise<number> {
+    const burst = (typed: string) => this.view.editing === undefined && typedDrop(typed)
+    return within({ modes: [PASTES], assume: [HIDE_CURSOR, NO_WRAP], burst }, async (terminal) => {
+      this.terminal = terminal
+      terminal.onResize(this.onResize)
+      terminal.listen((events) => {
+        for (const event of events) {
+          this.inbound(event)
+        }
+        this.paint.soon()
+      })
+      terminal.write(CLEAR)
+      const exit = new Promise<number>((resolve) => {
+        this.done = resolve
+      })
+      const clock = setInterval(this.onClock, 250)
+      try {
+        const probe = new CellProbe()
+        const cell = await terminal.ask(CELL_QUERY, (event) => probe.see(event), 1000)
+        if (cell) {
+          this.cell = cell
+          this.holdThumbs()
+          if (this.view.tag) {
+            void this.search()
+            void this.relate(this.view.tag)
+          }
+        } else {
+          this.view.searching = false
+          this.view.error = 'This terminal does not report its cell size — find needs kitty graphics'
+        }
+        if (!process.env.TMUX) {
+          await terminal.ask(FEATURES, (event) => (event.kind === 'attributes' ? true : undefined), 500, false)
+        }
+        this.grabber.start()
+        terminal.hold(FOCUS)
+        if (this.start && 'paste' in this.start) {
+          this.pasted(this.start.paste)
+        } else if (this.start) {
+          void this.fromClipboard()
+        } else {
+          void this.peek()
+        }
+        this.paint.draw()
+        return await terminal.until(exit)
+      } finally {
+        this.session.abort()
+        this.grabber.stop()
+        this.attaching?.abort()
+        clearTimeout(this.noticeTimer)
+        clearTimeout(this.peekTimer)
+        this.fetch?.abort()
+        clearTimeout(this.settle)
+        this.quietSuggest()
+        this.quietCount()
+        clearInterval(clock)
+        this.paint.stop()
+        terminal.write(`\x1b_Ga=d,d=A,q=2\x1b\\${CLEAR}`)
+        this.kept.save()
+        this.renders.close()
+        rmSync(this.scratch, { recursive: true, force: true })
+        sweepCache()
       }
-    } else {
-      this.view.searching = false
-      this.view.error = 'This terminal does not report its cell size — find needs kitty graphics'
-    }
-    await this.features()
-    this.grabber.start()
-    this.write('\x1b[?1004h')
-    if (this.start && 'paste' in this.start) {
-      this.pasted(this.start.paste)
-    } else if (this.start) {
-      void this.fromClipboard()
-    } else {
-      void this.peek()
-    }
-    this.paint.draw()
-    const code = await exit
-    this.session.abort()
-    this.grabber.stop()
-    this.write('\x1b[?1004l')
-    this.attaching?.abort()
-    clearTimeout(this.noticeTimer)
-    clearTimeout(this.peekTimer)
-    this.fetch?.abort()
-    clearTimeout(this.settle)
-    clearTimeout(this.partial)
-    this.quietSuggest()
-    this.quietCount()
-    clearInterval(clock)
-    this.paint.stop()
-    stdin.off('data', this.onData)
-    stdout.off('resize', this.onResize)
-    this.write(`\x1b_Ga=d,d=A,q=2\x1b\\${CLEAR}`)
-    stdin.setRawMode(false)
-    stdin.pause()
-    this.kept.save()
-    this.renders.close()
-    rmSync(this.scratch, { recursive: true, force: true })
-    sweepCache()
-    return code
+    })
   }
 
   private write(text: string): void {
-    process.stdout.write(text)
+    this.terminal?.write(text)
   }
 
   get saved(): string | undefined {
@@ -772,94 +767,22 @@ class Finder {
     this.done?.(code === 2 && this.saved ? 0 : code)
   }
 
-  private probe(): Promise<{ w: number; h: number } | null> {
-    return new Promise((resolve) => {
-      const timer = setTimeout(() => {
-        this.probeWait = undefined
-        resolve(null)
-      }, 1000)
-      this.probeWait = (cell) => {
-        clearTimeout(timer)
-        this.probeWait = undefined
-        resolve(cell)
-      }
-      this.write(CELL_QUERY)
-    })
-  }
-
-  private readonly onData = (chunk: Buffer): void => {
-    this.input += chunk.toString('utf8')
-    for (let report = cellReport(this.input); report; report = cellReport(this.input)) {
-      this.input = report.rest
-      this.probeWait?.(report.cell)
-    }
-    if (this.probeWait) {
-      return
-    }
-    const taken = takeInbound(this.input)
-    this.input = taken.pending
-    if (this.view.editing === undefined && taken.keys.length > 8 && /^(?:\/|~\/|file:|https?:)/.test(taken.keys)) {
-      this.pasted(taken.keys)
-      taken.keys = ''
-    }
-    this.typed += taken.keys
-    for (const event of taken.events) {
-      this.inbound(event)
-    }
-    clearTimeout(this.partial)
-    if (incomplete(this.typed)) {
-      this.partial = setTimeout(this.flushKeys, ESCAPE)
-      return
-    }
-    this.flushKeys()
-  }
-
-  private readonly flushKeys = (): void => {
-    const keys = decodeKeys(this.typed)
-    this.typed = ''
-    for (const key of keys) {
-      this.key(key)
-    }
-  }
-
-  private features(): Promise<void> {
-    if (process.env.TMUX) {
-      return Promise.resolve()
-    }
-    return new Promise((resolve) => {
-      const timer = setTimeout(() => {
-        this.featureWait = undefined
-        resolve()
-      }, 500)
-      this.featureWait = () => {
-        clearTimeout(timer)
-        this.featureWait = undefined
-        resolve()
-      }
-      this.write('\x1b[?5522$p\x1b]72;t=q\x1b\\\x1b[c')
-    })
-  }
-
   private inbound(event: Inbound): void {
-    if (event.kind === 'mode') {
+    if (event.kind === 'key') {
+      this.key(event.key)
+    } else if (event.kind === 'paste') {
+      this.pasted(event.text)
+    } else if (event.kind === 'mode') {
       if (event.mode === 5522) {
         this.grabber.clipboard = event.value !== 0 && event.value !== 4
       }
-      return
-    }
-    if (event.kind === 'attributes') {
-      this.featureWait?.()
-      return
-    }
-    if (event.kind === 'osc') {
+    } else if (event.kind === 'osc') {
       if (event.code === '72' && event.meta.t === 'q') {
         this.grabber.drops = true
-        return
+      } else {
+        this.grabber.take(event)
       }
-      this.grabber.take(event)
-      return
     }
-    this.pasted(event.text)
   }
 
   private pasted(text: string): void {
@@ -1110,7 +1033,7 @@ class Finder {
       void this.peek()
       return
     }
-    if (key === 'focus-out' || key === 'nop') {
+    if (key === 'focus-out') {
       return
     }
     if ((key === 'ctrl-v' || key === 'alt-v') && view.panel === undefined) {
@@ -1307,14 +1230,11 @@ class Finder {
       this.panelKey(key)
       return
     }
-    if (key === 'backspace') {
-      view.typing = typed.slice(0, -1)
-      this.paint.draw()
-      return
-    }
-    const fits = row.entry === 'number' ? /^[0-9]$/.test(key) && typed.length < DIGITS : /^[\x20-\x7e]$/.test(key)
-    if (fits) {
-      view.typing = typed + key
+    const next = edit(typed, key, (ch) =>
+      row.entry === 'number' ? /^[0-9]$/.test(ch) && typed.length < DIGITS : /^[\x20-\x7e]$/.test(ch),
+    )
+    if (next !== undefined) {
+      view.typing = next
       this.paint.draw()
     }
   }
@@ -1468,14 +1388,9 @@ class Finder {
       this.paint.draw()
       return
     }
-    if (key === 'backspace') {
-      view.editing = text.slice(0, -1)
-      this.suggest()
-      this.paint.draw()
-      return
-    }
-    if (key.length === 1 && key >= ' ') {
-      view.editing = text + key
+    const next = edit(text, key)
+    if (next !== undefined) {
+      view.editing = next
       this.suggest()
       this.paint.draw()
     }

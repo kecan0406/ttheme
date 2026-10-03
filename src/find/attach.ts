@@ -8,6 +8,7 @@ import { promisify } from 'node:util'
 import { AGENT, KEY_SPAN, MAX_PIXELS, type Site } from '../booru.ts'
 import { jpegSize } from '../jpeg.ts'
 import { isPng, pngHead } from '../png.ts'
+import type { Inbound } from '../tui/keys.ts'
 
 const run = promisify(execFile)
 const LIMIT = 64 * 1024 * 1024
@@ -28,12 +29,6 @@ export type Got =
   | { kind: 'bytes'; bytes: Uint8Array; source: string }
   | { kind: 'text'; text: string }
   | { kind: 'error'; message: string }
-
-export type Inbound =
-  | { kind: 'paste'; text: string }
-  | { kind: 'osc'; code: string; meta: Record<string, string>; payload: string }
-  | { kind: 'mode'; mode: number; value: number }
-  | { kind: 'attributes' }
 
 function isFile(path: string): boolean {
   try {
@@ -357,66 +352,8 @@ export async function peekClipboard(): Promise<{ stamp: string; picture: boolean
   return undefined
 }
 
-export function takeInbound(input: string): { events: Inbound[]; keys: string; pending: string } {
-  const events: Inbound[] = []
-  let keys = ''
-  let i = 0
-  while (i < input.length) {
-    if (input[i] !== '\x1b') {
-      keys += input[i]
-      i++
-      continue
-    }
-    if (input.startsWith('\x1b[200~', i)) {
-      const end = input.indexOf('\x1b[201~', i + 6)
-      if (end === -1) {
-        return { events, keys, pending: input.slice(i) }
-      }
-      events.push({ kind: 'paste', text: input.slice(i + 6, end) })
-      i = end + 6
-      continue
-    }
-    if (input.startsWith('\x1b]5522;', i) || input.startsWith('\x1b]72;', i)) {
-      const ends = [input.indexOf('\x1b\\', i), input.indexOf('\x07', i)].filter((at) => at !== -1)
-      if (ends.length === 0) {
-        return { events, keys, pending: input.slice(i) }
-      }
-      const end = Math.min(...ends)
-      const body = input.slice(i + 2, end)
-      const [code = '', meta = '', ...rest] = body.split(';')
-      events.push({ kind: 'osc', code, meta: metadata(meta), payload: rest.join(';') })
-      i = end + (input[end] === '\x07' ? 1 : 2)
-      continue
-    }
-    const report = /^\[\?([\d;]*)(\$y|c)/.exec(input.slice(i + 1, i + 64))
-    if (report) {
-      if (report[2] === 'c') {
-        events.push({ kind: 'attributes' })
-      } else {
-        const [mode = '0', value = '0'] = (report[1] ?? '').split(';')
-        events.push({ kind: 'mode', mode: Number(mode), value: Number(value) })
-      }
-      i += 1 + report[0].length
-      continue
-    }
-    if (/^(?:\[(?:\?[\d;$]*|2|20|200|201)?|\](?:5|55|552|5522|7|72)?)$/.test(input.slice(i + 1))) {
-      return { events, keys, pending: input.slice(i) }
-    }
-    keys += input[i]
-    i++
-  }
-  return { events, keys, pending: '' }
-}
-
-function metadata(text: string): Record<string, string> {
-  const out: Record<string, string> = {}
-  for (const pair of text.split(':')) {
-    const at = pair.indexOf('=')
-    if (at > 0) {
-      out[pair.slice(0, at)] = pair.slice(at + 1)
-    }
-  }
-  return out
+export function typedDrop(typed: string): boolean {
+  return typed.length > 8 && /^(?:\/|~\/|file:|https?:)/.test(typed)
 }
 
 const b64 = (text: string) => Buffer.from(text).toString('base64')
@@ -443,7 +380,7 @@ export class Grabber {
   }
 
   start(): void {
-    let out = '\x1b[?2004h'
+    let out = ''
     if (this.clipboard) {
       out += '\x1b[?5522h'
     }
@@ -454,7 +391,7 @@ export class Grabber {
   }
 
   stop(): void {
-    this.send(`\x1b[?2004l${this.clipboard ? '\x1b[?5522l' : ''}${this.drops ? '\x1b]72;t=A\x1b\\' : ''}`)
+    this.send(`${this.clipboard ? '\x1b[?5522l' : ''}${this.drops ? '\x1b]72;t=A\x1b\\' : ''}`)
   }
 
   ask(): void {

@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict'
 import { PassThrough } from 'node:stream'
 import { test } from 'node:test'
-import { isCancel } from '@clack/core'
 
 import type { PaletteEntry } from './manifest.ts'
 import {
@@ -134,7 +133,7 @@ test('series rows are folded headers matched through any member', () => {
 async function drive(
   keys: string[],
   opts: { color?: boolean; maxItems?: number; installed?: string[]; scope?: PickerScope; required?: boolean } = {},
-): Promise<{ result: string | symbol | undefined; frames: string; focused: string[]; picked: string[] }> {
+): Promise<{ result: 'submit' | 'cancel'; frames: string; focused: string[]; picked: string[] }> {
   const input = new PassThrough()
   const output = new PassThrough()
   let frames = ''
@@ -206,7 +205,7 @@ test('a small window counts the rows below it', async () => {
 
 test('ctrl-c cancels the picker', async () => {
   const { result } = await drive(['\x03'])
-  assert.ok(typeof result === 'symbol' && isCancel(result))
+  assert.equal(result, 'cancel')
 })
 
 test('installed palettes start out picked', async () => {

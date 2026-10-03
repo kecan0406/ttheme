@@ -19,6 +19,15 @@ export function ansiSquares(colors: string[], after = '\x1b[39m'): string {
 
 export { cells }
 
+export const RESET = '\x1b[0m'
+export const BOLD = '\x1b[1m'
+export const DIM = '\x1b[2m'
+export const NORMAL = '\x1b[22m'
+export const GREEN = '\x1b[32m'
+export const YELLOW = '\x1b[33m'
+export const CYAN = '\x1b[36m'
+export const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+
 export const LINK = '⧉'
 
 export function linked(text: string, url: string | undefined): string {
