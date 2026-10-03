@@ -473,8 +473,8 @@ export function nameHits(
     })
 }
 
-export function primeNames(): void {
-  load(homedir())
+export function primeNames(home = homedir()): void {
+  load(home)
 }
 
 export function namesOf(tag: string, home = homedir()): Known | undefined {

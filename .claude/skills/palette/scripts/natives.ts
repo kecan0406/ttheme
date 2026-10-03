@@ -15,7 +15,7 @@ const tag = toml ? String(toml.meta?.booru ?? '') : arg
 const kept = (toml?.meta?.native_names as string[] | undefined) ?? []
 const known = namesOf(tag)
 if (!known) {
-  console.error(`no names for ${tag || arg} in ${namesDir()}: copy aninames' ttheme-*.json there first`)
+  console.error(`no names for ${tag || arg} in ${namesDir()}: \`bun src/bin.ts names\` downloads them`)
   process.exit(1)
 }
 

@@ -94,7 +94,7 @@ JS
 node "$tmp/worker.cjs" bin/ttheme.js ||
   { echo "bin:check failed: the bundle does not serve renders as a worker"; exit 1; }
 sandboxed() {
-  env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" "$@"
+  env -i PATH="$PATH" HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" ZDOTDIR="$tmp" TTHEME_NAMES=off "$@"
 }
 cli() {
   sandboxed node "$tmp/.config/ttheme/ttheme.js" "$@" > /dev/null

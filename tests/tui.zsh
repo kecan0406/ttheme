@@ -59,17 +59,17 @@ typeset -ga SCENARIOS=(
 fixture_home() {
   local state=$1 home
   home=$(mktemp -d)
-  env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home ZDOTDIR=$home GHOSTTY_RESOURCES_DIR=x \
+  env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home TTHEME_NAMES=off ZDOTDIR=$home GHOSTTY_RESOURCES_DIR=x \
     node $ROOT/bin/ttheme.js init --yes < /dev/null > /dev/null
   cp $FIXTURE $home/ttheme/catalog.json
   if [[ $state == market ]]; then
     cp -R $ROOT/tests/market $home/shop
-    env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home \
+    env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home TTHEME_NAMES=off \
       node $ROOT/bin/ttheme.js market add $home/shop > /dev/null
   fi
   local -a palettes=(${=STATES[$state]})
   if (( ${#palettes} )); then
-    env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home \
+    env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home TTHEME_NAMES=off \
       node $ROOT/bin/ttheme.js add $palettes > /dev/null
   fi
   if [[ $state == pinned ]]; then
@@ -95,7 +95,7 @@ command_for() {
 }
 
 scenario_env() {
-  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0 TTHEME_MARKET_LOOKUP=off)
+  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0 TTHEME_MARKET_LOOKUP=off TTHEME_NAMES=off)
 }
 
 settle() {

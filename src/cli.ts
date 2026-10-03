@@ -10,6 +10,7 @@ import { runInfo } from './info.ts'
 import { runInit } from './init.ts'
 import { runAdd, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './installs.ts'
 import { runMarket } from './markets.ts'
+import { startNamesUpdate, updateNames } from './names-update.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
 import { runTone } from './tone-server.ts'
@@ -57,6 +58,7 @@ const RUNS: Record<string, Verb['run']> = {
   find: ([name]) => runFind(name as string),
   image: ([name, action, key]) => runImage(name as string, action as string, key),
   redraw: () => runRedraw(),
+  names: () => updateNames(),
   tone: ([name]) => runTone(name as string),
   flatten: ([source, out, background, opacity, canvas, place, into]) =>
     runFlatten(source as string, out as string, background as string, opacity as string, canvas, place, into),
@@ -194,6 +196,9 @@ export async function runCli(argv: readonly string[]): Promise<number> {
       await autoRefresh()
     }
     const code = await call.verb.run(call.args, call.flags)
+    if (!call.verb.hidden && call.verb.name !== 'uninstall') {
+      startNamesUpdate()
+    }
     return typeof code === 'number' ? code : 0
   } catch (error) {
     if (error instanceof UsageError) {

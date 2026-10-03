@@ -227,6 +227,15 @@ Terminal background images are downloaded from the booru you pick only when you
 ask `find` for one, built on your own machine and written to
 `~/.config/ttheme/backgrounds/`; none ship in this repository or on npm.
 
+Characters' names in every language — what preview, browse, `list` and
+`find`'s search box match besides the palette names — come from the weekly
+release of [aninames](https://github.com/kecan0406/aninames), which your machine
+downloads into `~/.cache/ttheme/aninames/` (about 7 MB, checked once a day in
+the background; `TTHEME_NAMES=off` in `ttheme config` leaves them as they are).
+It is built from Wikidata (CC0), anime-offline-database and VNDB (ODbL),
+Korean Wikipedia (CC BY-SA 4.0), and AniDB's titles, Bangumi, Anissia and
+Danbooru, which state no license; none of it ships on npm.
+
 Every background picture belongs to the artist who drew it. ttheme never passes
 one on: a palette or a share code names a booru post by its number, and each
 machine fetches it from that booru itself. `find` names who drew each post and

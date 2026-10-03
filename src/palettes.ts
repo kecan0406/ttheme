@@ -176,23 +176,33 @@ export function sync(
     wiring.sync(ctx, out)
   }
   out.written.push(writeTable(ctx, host, out.repainted))
-  writeAliases(ctx)
+  writeAliases(configHome, entries, home)
   return out.written
 }
 
-function writeAliases(ctx: Ctx): void {
-  const file = join(ctx.configHome, 'ttheme', 'aliases.zsh')
-  const content = aliasesZsh(aliasesFor(ctx))
+export function refreshAliases(configHome: string, home = homedir()): void {
+  if (!existsSync(join(configHome, 'ttheme', 'palettes.zsh'))) return
+  const names = new Set(readInstalled(configHome).palettes)
+  writeAliases(
+    configHome,
+    readAvailable(configHome).palettes.filter((entry) => names.has(entry.name)),
+    home,
+  )
+}
+
+function writeAliases(configHome: string, entries: PaletteEntry[], home: string): void {
+  const file = join(configHome, 'ttheme', 'aliases.zsh')
+  const content = aliasesZsh(aliasesFor(entries, home))
   if (readText(file) !== content) {
     writeAtomic(file, content)
   }
 }
 
-function aliasesFor(ctx: Ctx): Record<string, string[]> {
-  const tags = ctx.entries.flatMap((entry) => (entry.booru ? [entry.booru] : []))
-  const known = paletteAliases(tags, ctx.home)
+function aliasesFor(entries: PaletteEntry[], home: string): Record<string, string[]> {
+  const tags = entries.flatMap((entry) => (entry.booru ? [entry.booru] : []))
+  const known = paletteAliases(tags, home)
   const out: Record<string, string[]> = {}
-  for (const entry of ctx.entries) {
+  for (const entry of entries) {
     const own = new Set(entry.nativeNames ?? [])
     const names = (entry.booru ? (known.get(entry.booru) ?? []) : []).filter((name) => !own.has(name))
     if (names.length > 0) out[entry.name] = names

@@ -266,6 +266,14 @@ export const VERB_SPECS: VerbSpec[] = [
     section: 'setup',
     hidden: true,
   },
+  {
+    name: 'names',
+    args: [],
+    about:
+      "Download aninames' character names when its release changed and index them — any command starts this in the background once a day",
+    section: 'setup',
+    hidden: true,
+  },
 ]
 
 export function usageOf(verb: VerbSpec): string {

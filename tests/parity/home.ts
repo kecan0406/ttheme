@@ -129,6 +129,7 @@ export function placeFor(work: string, term: Term, bin: string, slot: string): P
     LOGNAME: process.env.USER ?? 'parity',
     TMPDIR: join(root, 'tmp'),
     TTHEME_ITERM_SUITE: ITERM_SUITE,
+    TTHEME_NAMES: 'off',
   }
   return place
 }
