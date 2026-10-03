@@ -231,14 +231,15 @@ panel below, preview's settings, the palette editor and find's grid.
 | any character | filters | filters (each tab keeps its own) |
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
 | `←` `→` | close or open a series; `→` on a palette opens its panel | fold a series; on a market, auto-update |
-| `enter` | apply the palette, asking where | apply every pick and market change |
+| `enter` | apply the palette, asking where | review every pick and market change, then apply it; close the result |
 | `esc` | clear the filter, then restore and close | cancel |
 | `space` | fold or open a series | pick |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
 | `?` | keys | — |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
-| `ctrl+r` | — | update the market |
+| `ctrl+r` | — | update the market, or search GitHub again |
+| `ctrl+s` | — | narrow Catalog and Installed to the next market, then back to all |
 | `shift+←` `shift+→` | example scene | previous or next of its four tabs |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |

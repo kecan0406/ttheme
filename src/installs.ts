@@ -9,7 +9,7 @@ import { colorless } from './osc.ts'
 import { CODE, readLocal } from './own.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, readInstalled, startupPalette, sync } from './palettes.ts'
-import { pending } from './pending.ts'
+import { pending, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
 import { refreshLine, refreshMarket } from './refresh.ts'
 import { installedPath, isLocal, marketSources, OFFICIAL, shownSource } from './sources.ts'
@@ -18,7 +18,7 @@ import type { Pointed } from './terminals/types.ts'
 import { alphabetical, marketOf } from './theme.ts'
 
 export function reload(count: number): void {
-  console.log(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
+  say(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
 }
 
 export function inMarket(given: string[], id: string): string[] {

@@ -24,7 +24,36 @@ export function progress(got: number, size: number): string {
     : `${Math.round(got / 1e3)}/${Math.round(size / 1e3)} KB`
 }
 
+export interface Sink {
+  say(line: string): void
+  set(text: string): void
+}
+
+let sink: Sink | undefined
+
+export async function into<T>(to: Sink, work: () => Promise<T>): Promise<T> {
+  sink = to
+  try {
+    return await work()
+  } finally {
+    sink = undefined
+  }
+}
+
+export function say(line: string): void {
+  if (sink) {
+    sink.say(line)
+  } else {
+    console.log(line)
+  }
+}
+
 export function pending(text = ''): Pending {
+  if (sink) {
+    const to = sink
+    to.set(text)
+    return { set: (next) => to.set(next), say: (line) => to.say(line), done: () => to.set('') }
+  }
   const out = process.stdout
   if (!out.isTTY || process.env.TERM === 'dumb') {
     return { set() {}, say: (line) => console.log(line), done() {} }

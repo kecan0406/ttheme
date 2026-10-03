@@ -1,24 +1,24 @@
-◆ [Catalog]  Installed   Markets   Errors                      │ Bocchi the Rock!
-│    Search… ‹hint› 6/6 · 0 picked │ ぼっち・ざ・ろっく!
-│    ○ Select all (6)                                          │ The ttheme catalog
-│ ▌  ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっく!              │ 3 palettes · 0 installed
-│    ▸ Lucky☆Star (0/3) らき☆すた                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-└ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
+ [Catalog]  Installed   Markets   Errors
+ Discover palettes (6/6 · 0 picked)
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                               │ Bocchi the Rock!
+    ○ Select all (6)                                           │ ぼっち・ざ・ろっく!
+ ▌  ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっく!               │ The ttheme catalog
+    ▸ Lucky☆Star (0/3) らき☆すた                               │ 3 palettes · 0 installed
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel

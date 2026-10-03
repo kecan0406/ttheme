@@ -24,7 +24,7 @@ import {
 } from './palette-prompt.ts'
 import { counted, type Refreshed } from './refresh.ts'
 import { isLocal, OFFICIAL, parseSource, sameMarket, shownSource, TOPIC } from './sources.ts'
-import { marketOf } from './theme.ts'
+import { marketOf, slugOf } from './theme.ts'
 
 export type Tab = 'catalog' | 'installed' | 'markets' | 'errors'
 
@@ -44,10 +44,16 @@ export interface Problem {
   update?: true
 }
 
+export interface Report {
+  say(line: string): void
+  status(text: string): void
+}
+
 export interface BrowseIo {
   refresh(source: string): Promise<{ market: Market; refreshed: Refreshed }>
   fetch(source: string): Promise<Market>
   search(query: string | undefined): Promise<Repository[]>
+  apply(result: BrowseResult, report: Report): Promise<void>
 }
 
 export interface BrowseOptions {
@@ -60,6 +66,7 @@ export interface BrowseOptions {
   io: BrowseIo
   order?: (entries: PaletteEntry[]) => PaletteEntry[]
   hub?: HubTab
+  lookups?: boolean
   color?: boolean
   fx?: PromptFx
   input?: Readable
@@ -75,6 +82,8 @@ export interface BrowseResult {
   refreshed: Refreshed[]
 }
 
+type Phase = 'browse' | 'review' | 'applying' | 'done'
+
 type MarketRow =
   | { kind: 'market'; market: Market }
   | { kind: 'add'; source: string }
@@ -88,18 +97,34 @@ interface Detail {
   brief: string
 }
 
-const TABS: { tab: Tab; title: string }[] = [
-  { tab: 'catalog', title: 'Catalog' },
-  { tab: 'installed', title: 'Installed' },
-  { tab: 'markets', title: 'Markets' },
-  { tab: 'errors', title: 'Errors' },
+type Scoped = 'catalog' | 'installed'
+
+interface Chip {
+  source: string | undefined
+  label: string
+  count: number
+}
+
+const TABS: { tab: Tab; title: string; heading: string }[] = [
+  { tab: 'catalog', title: 'Catalog', heading: 'Discover palettes' },
+  { tab: 'installed', title: 'Installed', heading: 'Installed palettes' },
+  { tab: 'markets', title: 'Markets', heading: 'Manage markets' },
+  { tab: 'errors', title: 'Errors', heading: 'Problems' },
 ]
 const RIGHT = 34
 const LEFT_MAX = 72
 const WIDE = 94
+const ROOMY = 22
 const MIN_COLS = 40
 const MIN_ROWS = 10
 const MIN_ITEMS = 3
+const SEARCH_AFTER = 600
+const TYPED_AFTER = 500
+const FOCUS_AFTER = 300
+const NAMES_SHOWN = 12
+const BEAT = 80
+const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+const PILL = '\x1b[7;1m'
 const EMPTY: Detail = { title: '', lines: [], brief: '' }
 
 function typedSource(text: string): string | undefined {
@@ -112,6 +137,10 @@ function typedSource(text: string): string | undefined {
   } catch {
     return undefined
   }
+}
+
+function printable(text: string): string {
+  return [...text].filter((c) => c >= ' ' && c !== '\x7f').join('')
 }
 
 function cap(text: string): string {
@@ -127,8 +156,13 @@ export class BrowsePanel extends Prompt<string> {
   private readonly adds = new Map<string, Market>()
   private readonly removes = new Set<string>()
   private readonly want = new Map<string, boolean>()
+  private readonly scope: Record<Scoped, string | undefined> = { catalog: undefined, installed: undefined }
   private readonly busy = new Map<string, string>()
   private readonly failed = new Map<string, string>()
+  private readonly peeked = new Map<string, Market>()
+  private readonly peekFailed = new Map<string, string>()
+  private readonly staging = new Set<string>()
+  private readonly timers = new Map<string, ReturnType<typeof setTimeout>>()
   private readonly refreshed: Refreshed[] = []
   private readonly inflight = new Set<Promise<unknown>>()
   private markets: Market[]
@@ -145,6 +179,14 @@ export class BrowsePanel extends Prompt<string> {
   private readonly catalog: PaletteList
   private readonly mine: PaletteList
   private readonly hint: SearchHint
+  private phase: Phase = 'browse'
+  private offset = 0
+  private started = false
+  private log: string[] = []
+  private working = ''
+  private stopped: Error | undefined
+  private beat = 0
+  private beating: ReturnType<typeof setInterval> | undefined
   private asking: Market | undefined
   private leaving: number | undefined
   private shifted = false
@@ -152,6 +194,9 @@ export class BrowsePanel extends Prompt<string> {
   private repos: Repository[] | undefined
   private searching = false
   private searchError: string | undefined
+  private searched: string | undefined
+  private asked = 0
+  private readonly live: boolean
   private lastInput = ''
 
   constructor(opts: BrowseOptions) {
@@ -166,6 +211,7 @@ export class BrowsePanel extends Prompt<string> {
     this.order = opts.order ?? ((entries) => entries)
     this.color = opts.color ?? true
     this.hub = opts.hub
+    this.live = opts.lookups ?? true
     this.paint = opts.onFocus
     this.picked = new Set(opts.installed)
     const entries = this.entries()
@@ -195,8 +241,19 @@ export class BrowsePanel extends Prompt<string> {
     this.once('finalize', () => {
       this.hint.stop()
       this.input.off('keypress', shift)
+      for (const timer of this.timers.values()) {
+        clearTimeout(timer)
+      }
+      this.timers.clear()
+      clearInterval(this.beating)
     })
     this.on('cursor', (action) => {
+      if (this.phase !== 'browse') {
+        if (action === 'up' || action === 'down') {
+          this.scroll(action === 'up' ? -1 : 1)
+        }
+        return
+      }
       if (this.asking || this.leaving !== undefined || this.shifted) {
         return
       }
@@ -206,11 +263,19 @@ export class BrowsePanel extends Prompt<string> {
         this.side(action === 'right')
       }
     })
-    this.on('userInput', (value) => {
+    this.on('userInput', (typed) => {
+      const value = this.phase === 'browse' ? printable(typed) : this.filters[this.tab]
+      if (value !== typed) {
+        this.scrub(value)
+      }
       if (value !== this.lastInput) {
         this.lastInput = value
         this.filters[this.tab] = value
         this.list()?.setFilter(value)
+        if (this.tab === 'markets') {
+          this.later('search', SEARCH_AFTER, () => this.lookup())
+          this.watch()
+        }
       }
     })
     this.on('key', (char, key) => this.key(char, key))
@@ -226,7 +291,22 @@ export class BrowsePanel extends Prompt<string> {
   }
 
   protected override _shouldSubmit(): boolean {
-    return this.asking === undefined && this.leaving === undefined
+    if (this.asking !== undefined || this.leaving !== undefined) {
+      return false
+    }
+    return this.phase === 'done' || (this.phase === 'browse' && !this.dirty())
+  }
+
+  applied(): boolean {
+    return this.started
+  }
+
+  lines(): string[] {
+    return this.log
+  }
+
+  failure(): Error | undefined {
+    return this.stopped
   }
 
   next(): number | undefined {
@@ -255,7 +335,7 @@ export class BrowsePanel extends Prompt<string> {
         Object.assign(key, { name: 'answered', sequence: '' })
       } else if (char && /^[yn]$/i.test(char)) {
         if (char.toLowerCase() === 'y') {
-          this.state = 'submit'
+          this.begin()
         } else {
           this.goto = this.leaving
           this.state = 'cancel'
@@ -273,8 +353,17 @@ export class BrowsePanel extends Prompt<string> {
       }
       return
     }
+    if (this.phase !== 'browse') {
+      this.steer(key)
+      return
+    }
     const page = pageStep(key?.name, this.maxItems)
-    if (page !== undefined) {
+    if (key?.name === 'return') {
+      if (this.dirty()) {
+        this.phase = 'review'
+        this.offset = 0
+      }
+    } else if (page !== undefined) {
       this.move(page)
     } else if (key?.name === 'tab') {
       if (this.hub) {
@@ -288,8 +377,22 @@ export class BrowsePanel extends Prompt<string> {
       const row = this.tab === 'markets' ? this.marketRow() : undefined
       if (row?.kind === 'market' && !this.adds.has(row.market.source)) {
         this.update(row.market.source)
+      } else if (row?.kind === 'find') {
+        this.search()
       }
+    } else if (key?.ctrl && key.name === 's') {
+      this.cycle()
     }
+  }
+
+  private scrub(text: string): void {
+    const rl = (this as unknown as { rl?: { line: string; cursor: number } }).rl
+    if (rl) {
+      rl.line = text
+      rl.cursor = text.length
+    }
+    this.userInput = text
+    this._cursor = text.length
   }
 
   private redraw(): void {
@@ -336,10 +439,48 @@ export class BrowsePanel extends Prompt<string> {
     return entries.filter((e) => this.installed.has(e.name))
   }
 
+  private scoped(entries: PaletteEntry[], tab: Scoped): PaletteEntry[] {
+    const source = this.scope[tab]
+    const market = source === undefined ? undefined : this.active().find((m) => m.source === source)
+    if (!market) {
+      this.scope[tab] = undefined
+      return entries
+    }
+    const names = new Set(market.entries.map((e) => e.name))
+    return entries.filter((e) => names.has(e.name))
+  }
+
   private reload(): void {
     const entries = this.entries()
-    this.catalog.setEntries(entries)
-    this.mine.setEntries(this.mineOf(entries))
+    this.catalog.setEntries(this.scoped(entries, 'catalog'))
+    this.mine.setEntries(this.scoped(this.mineOf(entries), 'installed'))
+  }
+
+  private chips(tab: Scoped): Chip[] {
+    const entries = tab === 'catalog' ? this.entries() : this.mineOf(this.entries())
+    const markets = this.active()
+      .map((m) => ({
+        source: m.source as string | undefined,
+        label: m.id,
+        count: m.entries.filter((e) => !e.default && (tab === 'catalog' || this.installed.has(e.name))).length,
+      }))
+      .filter((c) => tab === 'catalog' || c.count > 0 || c.source === this.scope[tab])
+    return [{ source: undefined, label: 'All', count: entries.filter((e) => !e.default).length }, ...markets]
+  }
+
+  private cycle(): void {
+    const tab = this.tab
+    if ((tab !== 'catalog' && tab !== 'installed') || this.active().length < 2) {
+      return
+    }
+    const chips = this.chips(tab)
+    const at = Math.max(
+      0,
+      chips.findIndex((c) => c.source === this.scope[tab]),
+    )
+    this.scope[tab] = chips[(at + 1) % chips.length]?.source
+    this.reload()
+    this.list()?.refocus()
   }
 
   private switchTab(step: number): void {
@@ -351,6 +492,10 @@ export class BrowsePanel extends Prompt<string> {
     this._setUserInput(saved, true)
     this.lastInput = saved
     this.list()?.refocus()
+    if (next === 'markets') {
+      this.lookup()
+      this.watch()
+    }
   }
 
   private move(delta: number): void {
@@ -363,6 +508,7 @@ export class BrowsePanel extends Prompt<string> {
     const rules =
       key === 'markets' ? this.marketRows().map((r) => r.kind === 'rule') : this.problemRows().map(() => false)
     this.cursor[key] = stepRow(this.cursor[key], delta, rules.length, (i) => rules[i] === true)
+    this.watch()
   }
 
   private side(right: boolean): void {
@@ -391,14 +537,14 @@ export class BrowsePanel extends Prompt<string> {
     if (row?.kind === 'market') {
       this.toggleMarket(row.market)
     } else if (row?.kind === 'add') {
-      this.fetch(row.source)
+      this.load(row.source, true)
     } else if (row?.kind === 'repo') {
       const known = this.known(row.source)
       const at = this.marketRows().findIndex((r) => r.kind === 'market' && r.market === known)
       if (known && at >= 0) {
         this.cursor.markets = at
       } else if (!known) {
-        this.fetch(row.source)
+        this.load(row.source, true)
       }
     } else if (row?.kind === 'find') {
       this.search()
@@ -421,31 +567,100 @@ export class BrowsePanel extends Prompt<string> {
     return [...this.markets, ...this.adds.values()].find((m) => sameMarket(m.source, source))
   }
 
-  private fetch(source: string): void {
+  private load(source: string, stage: boolean): void {
+    const got = this.peeked.get(source)
+    if (got) {
+      if (stage) {
+        this.arrive(source, got)
+      }
+      return
+    }
+    if (stage) {
+      this.staging.add(source)
+    }
     if (this.busy.has(source)) {
       return
     }
     this.failed.delete(source)
+    this.peekFailed.delete(source)
     this.busy.set(source, 'Fetching…')
     this.track(this.io.fetch(source)).then(
       (market) => {
         this.busy.delete(source)
-        const clash = this.active().find((m) => m.id === market.id)
-        if (clash) {
-          this.failed.set(source, `${market.id} already names the market at ${clash.shown}`)
-        } else if (isLocal(source) || source === OFFICIAL) {
-          this.stage(market, market.auto)
-        } else {
-          this.asking = market
+        this.peeked.set(source, market)
+        if (this.staging.delete(source)) {
+          this.arrive(source, market)
         }
         this.redraw()
       },
       (error: Error) => {
         this.busy.delete(source)
-        this.failed.set(source, error.message)
+        if (this.staging.delete(source)) {
+          this.failed.set(source, error.message)
+        } else {
+          this.peekFailed.set(source, error.message)
+        }
         this.redraw()
       },
     )
+  }
+
+  private arrive(source: string, market: Market): void {
+    const clash = this.active().find((m) => m.id === market.id)
+    if (clash) {
+      this.failed.set(source, `${market.id} already names the market at ${clash.shown}`)
+    } else if (isLocal(source) || source === OFFICIAL) {
+      this.stage(market, market.auto)
+    } else {
+      this.asking = market
+    }
+    this.redraw()
+  }
+
+  private later(key: string, ms: number, run: () => void): void {
+    this.cancel(key)
+    this.timers.set(
+      key,
+      setTimeout(() => {
+        this.timers.delete(key)
+        if (this.state !== 'submit' && this.state !== 'cancel') {
+          run()
+        }
+      }, ms),
+    )
+  }
+
+  private cancel(key: string): void {
+    clearTimeout(this.timers.get(key))
+    this.timers.delete(key)
+  }
+
+  private wants(source: string): boolean {
+    return !this.known(source) && !this.peeked.has(source) && !this.busy.has(source) && !this.peekFailed.has(source)
+  }
+
+  private watch(): void {
+    if (!this.live || this.tab !== 'markets') {
+      return
+    }
+    const typed = typedSource(this.filters.markets)
+    if (typed && this.wants(typed)) {
+      this.later('typed', TYPED_AFTER, () => this.load(typed, false))
+    } else {
+      this.cancel('typed')
+    }
+    const row = this.marketRow()
+    if (row?.kind === 'repo' && this.wants(row.source)) {
+      const source = row.source
+      this.later('focus', FOCUS_AFTER, () => {
+        const now = this.marketRow()
+        if (this.tab === 'markets' && now?.kind === 'repo' && now.source === source) {
+          this.load(source, false)
+        }
+      })
+    } else {
+      this.cancel('focus')
+    }
   }
 
   private answer(yes: boolean): void {
@@ -493,23 +708,38 @@ export class BrowsePanel extends Prompt<string> {
     )
   }
 
-  private search(): void {
-    if (this.searching) {
-      return
+  private wanted(): string {
+    const query = this.filters.markets.trim()
+    return query && !typedSource(query) ? query : ''
+  }
+
+  private lookup(): void {
+    if (this.live && this.searched !== this.wanted()) {
+      this.search()
     }
+  }
+
+  private search(): void {
+    const query = this.wanted()
+    const seq = ++this.asked
+    this.searched = query
     this.searching = true
     this.searchError = undefined
-    const query = this.filters.markets.trim()
-    this.track(this.io.search(query && !typedSource(query) ? query : undefined)).then(
+    this.track(this.io.search(query || undefined)).then(
       (repos) => {
-        this.searching = false
-        this.repos = repos
-        this.redraw()
+        if (seq === this.asked) {
+          this.searching = false
+          this.repos = repos
+          this.watch()
+          this.redraw()
+        }
       },
       (error: Error) => {
-        this.searching = false
-        this.searchError = error.message
-        this.redraw()
+        if (seq === this.asked) {
+          this.searching = false
+          this.searchError = error.message
+          this.redraw()
+        }
       },
     )
   }
@@ -525,19 +755,21 @@ export class BrowsePanel extends Prompt<string> {
     if (typed && !known.some((m) => sameMarket(m.source, typed))) {
       rows.push({ kind: 'add', source: typed })
     }
-    rows.push({ kind: 'find' })
     const found = (this.repos ?? [])
       .map((repo) => ({ repo, source: repositorySource(repo) }))
       .filter(({ repo, source }) => hit(source, repo.description ?? ''))
-    if (found.length > 0) {
-      rows.push({ kind: 'rule' }, ...found.map(({ repo, source }) => ({ kind: 'repo' as const, repo, source })))
-    }
+    rows.push(
+      { kind: 'rule' },
+      ...(found.length > 0
+        ? found.map(({ repo, source }) => ({ kind: 'repo' as const, repo, source }))
+        : [{ kind: 'find' as const }]),
+    )
     return rows
   }
 
   private marketRow(): MarketRow | undefined {
     const rows = this.marketRows()
-    return rows[Math.min(this.cursor.markets, rows.length - 1)]
+    return rows[this.at(rows, 'markets', (r) => r?.kind === 'rule')]
   }
 
   private problemList(): Problem[] {
@@ -553,26 +785,47 @@ export class BrowsePanel extends Prompt<string> {
     return this.problemList().filter((p) => query === '' || `${p.where} ${p.message}`.toLowerCase().includes(query))
   }
 
+  private at<T>(rows: T[], key: 'markets' | 'errors', rule: (row: T | undefined) => boolean = () => false): number {
+    const cursor = Math.min(this.cursor[key], Math.max(0, rows.length - 1))
+    if (!rule(rows[cursor])) {
+      return cursor
+    }
+    return cursor > 0 ? cursor - 1 : cursor + 1
+  }
+
   private windowOf<T>(
     rows: T[],
     key: 'markets' | 'errors',
-    render: (row: T, focused: boolean) => string,
+    render: (row: T, focused: boolean) => string[],
     rule: (row: T | undefined) => boolean = () => false,
-  ): { lines: string[]; below: number } {
-    let cursor = Math.min(this.cursor[key], Math.max(0, rows.length - 1))
-    if (rule(rows[cursor])) {
-      cursor -= 1
-    }
+  ): { lines: string[]; above: number; below: number } {
+    const cursor = this.at(rows, key, rule)
     this.cursor[key] = cursor
-    let top = Math.min(this.top[key], cursor)
-    if (cursor >= top + this.maxItems) {
-      top = cursor - this.maxItems + 1
+    const height = (i: number) => (rule(rows[i]) ? 1 : 2)
+    const span = (from: number, to: number) => {
+      let lines = 0
+      for (let i = from; i <= to; i++) {
+        lines += height(i)
+      }
+      return lines
     }
-    top = Math.max(0, Math.min(top, rows.length - this.maxItems))
+    let top = Math.min(this.top[key], cursor)
+    while (top < cursor && span(top, cursor) > this.maxItems) {
+      top += 1
+    }
+    while (top > 0 && span(top - 1, rows.length - 1) <= this.maxItems) {
+      top -= 1
+    }
     this.top[key] = top
-    const shown = rows.slice(top, top + this.maxItems)
+    const shown: number[] = []
+    let used = 0
+    for (let i = top; i < rows.length && used + height(i) <= this.maxItems; i++) {
+      shown.push(i)
+      used += height(i)
+    }
     return {
-      lines: shown.map((row, i) => render(row, top + i === cursor)),
+      lines: shown.flatMap((i) => render(rows[i] as T, i === cursor)),
+      above: top,
       below: rows.length - top - shown.length,
     }
   }
@@ -605,48 +858,96 @@ export class BrowsePanel extends Prompt<string> {
           (this.failed.has(market.source) || market.status.startsWith('update failed') ? 'Update failed' : ''))
   }
 
-  private marketLine(row: MarketRow, focused: boolean): string {
+  private note(text: string): string {
+    return `     ${this.dim(text)}`
+  }
+
+  private peeking(source: string): string {
+    const peeked = this.peeked.get(source)
+    return peeked ? counted(peeked.entries.filter((e) => !e.default).length) : ''
+  }
+
+  private marketLine(row: MarketRow, focused: boolean): string[] {
     if (row.kind === 'rule') {
-      return `   ${this.dim('── On GitHub ──────────')}`
+      return [`   ${this.dim(`── On GitHub${this.searching ? ' · searching…' : ''} ──────────`)}`]
     }
     if (row.kind === 'market') {
       const m = row.market
       const status = this.status(m)
       const box = this.removes.has(m.source) ? '○' : '●'
       const name = focused ? this.bold(m.id) : m.id
-      return this.lit(
-        m.entries.find((e) => !e.default),
-        focused,
-        `${box} ${name}${status ? `  ${this.dim(status)}` : ''}`,
-      )
+      const listed = m.entries.filter((e) => !e.default)
+      const auto = !isLocal(m.source) && (this.want.get(m.source) ?? m.auto) ? `  ${this.dim('↻ auto-update')}` : ''
+      return [
+        this.lit(
+          m.entries.find((e) => !e.default),
+          focused,
+          `${box} ${name}${auto}${status ? `  ${this.dim(status)}` : ''}`,
+        ),
+        this.note(
+          [
+            m.source === OFFICIAL ? 'The ttheme catalog' : isLocal(m.source) ? m.shown : m.source,
+            counted(listed.length),
+            `${listed.filter((e) => this.installed.has(e.name)).length} installed`,
+            m.status,
+          ].join(' · '),
+        ),
+      ]
     }
     if (row.kind === 'add') {
       const busy = this.busy.get(row.source)
-      return this.lit(undefined, focused, `+ Add ${shownSource(row.source)}${busy ? `  ${this.dim(busy)}` : ''}`)
+      const failure = this.failed.get(row.source) ?? this.peekFailed.get(row.source)
+      const peeked = this.peeked.get(row.source)
+      return [
+        this.lit(undefined, focused, `+ Add ${shownSource(row.source)}${busy ? `  ${this.dim(busy)}` : ''}`),
+        failure
+          ? `     ${this.warn(failure)}`
+          : this.note(
+              peeked
+                ? `${peeked.id} · ${this.peeking(row.source)}`
+                : this.live
+                  ? 'Fetching its index…'
+                  : 'space fetches its index',
+            ),
+      ]
     }
     if (row.kind === 'find') {
       const query = this.filters.markets.trim()
+      const named = query && !typedSource(query)
+      const idle = !this.searching && !this.searchError && this.repos === undefined
       const text = this.searching
         ? 'Searching GitHub…'
-        : query && !typedSource(query)
-          ? `Find "${query}" on GitHub`
-          : 'Find markets on GitHub'
-      return this.lit(undefined, focused, `⌕ ${text}`)
+        : this.searchError
+          ? 'GitHub search failed'
+          : idle
+            ? named
+              ? `Find "${query}" on GitHub`
+              : 'Find markets on GitHub'
+            : named
+              ? `No market on GitHub matches "${query}"`
+              : 'No market on GitHub yet'
+      return [
+        this.lit(undefined, focused, `⌕ ${text}`),
+        this.note(this.searchError ?? (this.searching ? '' : idle ? 'space searches GitHub' : 'space searches again')),
+      ]
     }
     const busy = this.busy.get(row.source)
     const box = this.known(row.source) ? '●' : '○'
-    return this.lit(
-      undefined,
-      focused,
-      `${box} ${row.source}  ${this.dim(`★${row.repo.stargazers_count}`)}${busy ? `  ${this.dim(busy)}` : ''}`,
-    )
+    return [
+      this.lit(
+        undefined,
+        focused,
+        `${box} ${row.source}  ${this.dim(`★${row.repo.stargazers_count}`)}${busy ? `  ${this.dim(busy)}` : ''}`,
+      ),
+      this.note([this.peeking(row.source), row.repo.description ?? ''].filter(Boolean).join(' · ')),
+    ]
   }
 
-  private problemLine(problem: Problem, focused: boolean): string {
-    return this.lit(undefined, focused, `${this.warn('✗')} ${problem.where}  ${this.dim(problem.message)}`)
+  private problemLine(problem: Problem, focused: boolean): string[] {
+    return [this.lit(undefined, focused, `${this.warn('✗')} ${problem.where}`), this.note(problem.message)]
   }
 
-  private body(): { lines: string[]; below: number; empty: string } {
+  private body(): { lines: string[]; above: number; below: number; empty: string } {
     const list = this.list()
     if (list) {
       const filter = this.filters[this.tab]
@@ -695,6 +996,196 @@ export class BrowsePanel extends Prompt<string> {
     this.state = 'cancel'
   }
 
+  private steer(key: Key | undefined): void {
+    const name = key?.name
+    const quiet = () => Object.assign(key ?? {}, { name: 'answered', sequence: '' })
+    if (this.phase === 'review') {
+      if (name === 'return') {
+        this.begin()
+      } else if (name === 'escape') {
+        quiet()
+        this.phase = 'browse'
+      }
+    } else if (name === 'escape') {
+      quiet()
+      if (this.phase === 'done') {
+        this.state = 'submit'
+      }
+    }
+    const page = pageStep(name, this.span())
+    if (page !== undefined) {
+      this.scroll(page)
+    }
+  }
+
+  private scroll(delta: number): void {
+    this.offset = Number.isFinite(delta) ? Math.max(0, this.offset + delta) : delta > 0 ? Number.MAX_SAFE_INTEGER : 0
+    this.redraw()
+  }
+
+  private span(): number {
+    return Math.max(MIN_ITEMS, this.rows() - (this.hub ? 1 : 0) - 4)
+  }
+
+  private begin(): void {
+    this.phase = 'applying'
+    this.started = true
+    this.offset = 0
+    this.log = []
+    this.working = ''
+    this.beating = setInterval(() => {
+      this.beat += 1
+      this.redraw()
+    }, BEAT)
+    const report: Report = {
+      say: (line) => {
+        this.log.push(...line.split('\n'))
+        this.redraw()
+      },
+      status: (text) => {
+        this.working = text
+        this.redraw()
+      },
+    }
+    this.track(this.io.apply(this.result(), report)).then(
+      () => this.ended(),
+      (error: Error) => this.ended(error),
+    )
+  }
+
+  private ended(error?: Error): void {
+    clearInterval(this.beating)
+    this.beating = undefined
+    this.working = ''
+    this.stopped = error
+    this.phase = 'done'
+    this.offset = 0
+    this.redraw()
+  }
+
+  private pending(): { names: PaletteEntry[]; dropped: PaletteEntry[] } {
+    const entries = this.entries().filter((e) => !e.default)
+    return {
+      names: entries.filter((e) => this.picked.has(e.name) && !this.installed.has(e.name)),
+      dropped: entries.filter((e) => this.installed.has(e.name) && !this.picked.has(e.name)),
+    }
+  }
+
+  private marketChanges(): string[] {
+    const rows: string[] = []
+    for (const m of this.adds.values()) {
+      const auto = m.source !== OFFICIAL && (this.want.get(m.source) ?? m.auto) ? 'updates on its own' : ''
+      rows.push(
+        `+ ${m.id}  ${this.dim([m.source === OFFICIAL ? 'The ttheme catalog' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(' · '))}`,
+      )
+    }
+    for (const source of this.removes) {
+      const m = this.markets.find((x) => x.source === source)
+      const stay = (m?.entries ?? []).filter((e) => !e.default && this.installed.has(e.name) && this.picked.has(e.name))
+      rows.push(
+        `- ${m?.id ?? source}  ${this.dim([m?.shown ?? shownSource(source), stay.length > 0 ? `its ${counted(stay.length)} installed keep working` : ''].filter(Boolean).join(' · '))}`,
+      )
+    }
+    for (const [source, on] of this.want) {
+      const m = this.markets.find((x) => x.source === source)
+      if (m && !this.removes.has(source)) {
+        rows.push(`↻ ${m.id}  ${this.dim(on ? 'updates on its own from now' : 'stops updating on its own')}`)
+      }
+    }
+    return rows
+  }
+
+  private reviewLines(): string[] {
+    const markets = this.marketChanges()
+    const { names, dropped } = this.pending()
+    const width = Math.max(0, ...[...names, ...dropped].map((e) => e.name.length))
+    const palette = (sign: string, e: PaletteEntry) =>
+      `   ${sign} ${e.name.padEnd(width)}  ${this.dim(marketOf(e.name) ? (e.catalog ?? '') : e.group)}`
+    const counts = [
+      names.length > 0 ? `${names.length} to install` : '',
+      dropped.length > 0 ? `${dropped.length} to remove` : '',
+    ].filter(Boolean)
+    return [
+      ...(markets.length > 0
+        ? [` ${this.bold('Markets')} ${this.dim(`(${markets.length})`)}`, ...markets.map((r) => `   ${r}`), '']
+        : []),
+      ...(counts.length > 0
+        ? [
+            ` ${this.bold('Palettes')} ${this.dim(`(${counts.join(' · ')})`)}`,
+            ...names.map((e) => palette('+', e)),
+            ...dropped.map((e) => palette('-', e)),
+          ]
+        : []),
+    ]
+  }
+
+  private summary(): string {
+    const { names, dropped } = this.pending()
+    const added = this.adds.size
+    return [
+      added > 0 ? `${added} market${added === 1 ? '' : 's'} added` : '',
+      this.removes.size > 0 ? `${this.removes.size} removed` : '',
+      names.length > 0 ? `${names.length} installed` : '',
+      dropped.length > 0 ? `${dropped.length} removed` : '',
+    ]
+      .filter(Boolean)
+      .join(' · ')
+  }
+
+  private progressLines(): string[] {
+    const lines = this.log.map((line) => ` ${line}`)
+    if (this.phase === 'applying') {
+      const frame = SPINNER[this.beat % SPINNER.length]
+      lines.push(` ${this.dim(`${frame} ${this.working || 'Working…'}`)}`)
+    } else if (this.stopped) {
+      lines.push(
+        '',
+        ...wrapText(this.stopped.message, Math.max(20, this.columns() - 6)).map(
+          (l, i) => ` ${i === 0 ? this.warn('✗') : ' '} ${l}`,
+        ),
+      )
+    }
+    return lines
+  }
+
+  private frame(cols: number, rows: number): string {
+    const width = cols - 1
+    const review = this.phase === 'review'
+    const lines = review ? this.reviewLines() : this.progressLines()
+    const title =
+      this.phase === 'review'
+        ? `${this.bold('Review changes')}`
+        : this.phase === 'applying'
+          ? this.bold('Applying changes')
+          : this.stopped
+            ? `${this.warn('✗')} ${this.bold('Stopped')}`
+            : `${this.bold('✓ Applied')} ${this.dim(this.summary() ? `(${this.summary()})` : '')}`
+    const room = this.span()
+    const most = Math.max(0, lines.length - room)
+    const top = this.phase === 'applying' ? most : Math.min(this.offset, most)
+    this.offset = top
+    const shown = lines.slice(top, top + room)
+    const below = lines.length - top - shown.length
+    const body = [top > 0 ? ` ${this.dim(`↑ ${top} more`)}` : '', ...shown]
+    while (body.length < room + 1) {
+      body.push('')
+    }
+    body.push(below > 0 ? ` ${this.dim(`↓ ${below} more`)}` : '')
+    const keys = review
+      ? [...(most > 0 ? ['↑↓ scroll'] : []), 'enter apply', 'esc back']
+      : this.phase === 'applying'
+        ? ['keys wait until it ends']
+        : [...(most > 0 ? ['↑↓ scroll'] : []), 'enter close']
+    return [
+      ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
+      fit(` ${title}`, width, false),
+      ...body.map((line) => fit(line, width, false)),
+      fit(` ${this.dim(keys.join(' · '))}`, width, false),
+    ]
+      .slice(0, rows)
+      .join('\n')
+  }
+
   private counts(): string {
     const updating = [...this.busy.values()].includes('Updating…') ? 'Updating… · ' : ''
     const list = this.list()
@@ -705,7 +1196,7 @@ export class BrowsePanel extends Prompt<string> {
       const all = this.markets.length + this.adds.size
       const shown = this.marketRows().filter((r) => r.kind === 'market').length
       const changes = this.changes()
-      return `${updating}${shown}/${all} markets${changes > 0 ? ` · ${changes} to apply` : ''}`
+      return `${updating}${shown}/${all}${changes > 0 ? ` · ${changes} to apply` : ''}`
     }
     return `${this.problemRows().length}/${this.problemList().length}`
   }
@@ -728,8 +1219,68 @@ export class BrowsePanel extends Prompt<string> {
       if (!this.color) {
         return tab === this.tab ? `[${label}]` : ` ${label} `
       }
-      return tab === this.tab ? this.bold(label) : this.dim(label)
-    }).join(this.color ? '  ' : ' ')
+      return tab === this.tab ? `${PILL} ${label} ${RESET}` : `${DIM} ${label} ${RESET}`
+    }).join(' ')
+  }
+
+  private heading(): string {
+    const title = TABS.find((t) => t.tab === this.tab)?.heading ?? ''
+    return `${this.bold(title)} ${this.dim(`(${this.counts()})`)}`
+  }
+
+  private searchBox(width: number): string[] {
+    const edge = (left: string, right: string) => this.dim(`${left}${'─'.repeat(width - 2)}${right}`)
+    const side = this.dim('│')
+    return [
+      edge('╭', '╮'),
+      `${side} ${fit(`${this.dim('⌕')} ${this.searchText()}`, width - 4)} ${side}`,
+      edge('╰', '╯'),
+    ]
+  }
+
+  private strip(width: number): string | undefined {
+    const tab = this.tab
+    if ((tab !== 'catalog' && tab !== 'installed') || this.active().length < 2) {
+      return undefined
+    }
+    const chips = this.chips(tab)
+    const sel = Math.max(
+      0,
+      chips.findIndex((c) => c.source === this.scope[tab]),
+    )
+    const labels = chips.map((c, i) => (i === sel && !this.color ? `[${c.label} ${c.count}]` : `${c.label} ${c.count}`))
+    const sep = ' · '
+    const tail = (more: number) => (more > 0 ? `${sep}+${more} more`.length : 0)
+    const shownFrom = (start: number): number => {
+      let used = start > 0 ? 2 : 0
+      let n = 0
+      for (let i = start; i < labels.length; i++) {
+        const grown = used + (n > 0 ? sep.length : 0) + (labels[i] as string).length
+        if (grown + tail(labels.length - i - 1) > width) {
+          break
+        }
+        used = grown
+        n += 1
+      }
+      return n
+    }
+    let start = 0
+    while (start < sel && start + shownFrom(start) <= sel) {
+      start += 1
+    }
+    const count = Math.max(1, shownFrom(start))
+    const shown = labels.slice(start, start + count)
+    const left = labels.length - start - count
+    const parts = shown.map((label, i) => {
+      if (start + i === sel) {
+        return this.color ? `${BOLD}${CYAN}${label}${RESET}` : label
+      }
+      return this.dim(label)
+    })
+    const text = `${start > 0 ? `${this.dim('…')} ` : ''}${parts.join(this.dim(sep))}${left > 0 ? this.dim(`${sep}+${left} more`) : ''}`
+    const plain = (start > 0 ? 2 : 0) + shown.join(sep).length + tail(left)
+    const hint = 'ctrl+s market'
+    return plain + 2 + hint.length <= width ? `${text}  ${this.dim(hint)}` : text
   }
 
   private sourceOf(entry: PaletteEntry): string {
@@ -848,18 +1399,26 @@ export class BrowsePanel extends Prompt<string> {
       }
     }
     if (row.kind === 'add') {
-      const note = this.busy.get(row.source) ?? this.failed.get(row.source) ?? 'space fetches its index'
+      const note =
+        this.busy.get(row.source) ??
+        this.failed.get(row.source) ??
+        this.peekFailed.get(row.source) ??
+        (this.peeked.has(row.source) ? 'space adds it' : this.live ? 'Fetching its index…' : 'space fetches its index')
       return {
         title: this.bold(shownSource(row.source)),
-        lines: ['Not added', '', ...wrapText(note, width)],
-        brief: note,
+        lines: ['Not added', ...this.peekLines(row.source, width), '', ...wrapText(note, width)],
+        brief: [this.peeking(row.source), note].filter(Boolean).join(' · '),
       }
     }
     if (row.kind === 'find') {
       const query = this.filters.markets.trim()
       const note =
         this.searchError ??
-        (this.searching ? 'Searching…' : this.repos ? `${this.repos.length} found` : 'space searches GitHub')
+        (this.searching
+          ? 'Searching…'
+          : this.repos
+            ? `${this.repos.length} found · space searches again`
+            : 'space searches GitHub')
       return {
         title: this.bold('GitHub'),
         lines: [
@@ -872,17 +1431,33 @@ export class BrowsePanel extends Prompt<string> {
       }
     }
     const known = this.known(row.source)
-    const note = known ? 'Added' : (this.busy.get(row.source) ?? this.failed.get(row.source) ?? 'space adds it')
+    const note = known
+      ? 'Added'
+      : (this.busy.get(row.source) ?? this.failed.get(row.source) ?? this.peekFailed.get(row.source) ?? 'space adds it')
     return {
       title: this.bold(row.source),
       lines: [
         `★ ${row.repo.stargazers_count}`,
         ...wrapText(row.repo.description ?? '', width),
+        ...this.peekLines(row.source, width),
         '',
         ...wrapText(note, width),
       ],
-      brief: note,
+      brief: [this.peeking(row.source), note].filter(Boolean).join(' · '),
     }
+  }
+
+  private peekLines(source: string, width: number): string[] {
+    const peeked = this.peeked.get(source)
+    if (!peeked) {
+      return []
+    }
+    const listed = peeked.entries.filter((e) => !e.default)
+    const names = `${listed
+      .slice(0, NAMES_SHOWN)
+      .map((e) => slugOf(e.name))
+      .join(', ')}${listed.length > NAMES_SHOWN ? ', …' : ''}`
+    return ['', peeked.id, counted(listed.length), ...wrapText(names, width).map((l) => this.dim(l))]
   }
 
   private detail(width: number): Detail {
@@ -900,20 +1475,28 @@ export class BrowsePanel extends Prompt<string> {
       : EMPTY
   }
 
-  private footer(bar: (s: string) => string, wide: boolean): string {
+  private footer(wide: boolean): string {
     if (this.leaving !== undefined) {
-      return `${bar('└')} Apply your changes before you leave? ${this.dim('y apply · n discard · esc stay')}`
+      return ` Apply your changes before you leave? ${this.dim('y apply · n discard · esc stay')}`
     }
     if (this.asking) {
-      return `${bar('└')} Update ${this.asking.id} on its own when its author changes it? ${this.dim('y yes · n no · esc back')}`
+      return ` Update ${this.asking.id} on its own when its author changes it? ${this.dim('y yes · n no · esc back')}`
     }
+    const scoped = this.active().length >= 2 ? ['ctrl+s market'] : []
+    const row = this.tab === 'markets' ? this.marketRow() : undefined
+    const marketKeys =
+      row?.kind === 'market'
+        ? ['space add/remove', '←→ auto-update', wide ? 'ctrl+r update' : '']
+        : row?.kind === 'find'
+          ? ['space search']
+          : ['space add']
     const keys = {
-      catalog: ['⇧←→ switch', '↑↓ move', '←→ fold', 'space pick', wide ? 'type to filter' : ''],
-      installed: ['⇧←→ switch', '↑↓ move', '←→ fold', 'space pick', wide ? 'type to filter' : ''],
-      markets: ['⇧←→ switch', 'space add/remove', '←→ auto-update', wide ? 'ctrl+r update' : ''],
+      catalog: ['⇧←→ switch', '↑↓ move', '←→ fold', 'space pick', ...scoped, wide ? 'type to filter' : ''],
+      installed: ['⇧←→ switch', '↑↓ move', '←→ fold', 'space pick', ...scoped, wide ? 'type to filter' : ''],
+      markets: ['⇧←→ switch', '↑↓ move', ...marketKeys],
       errors: ['⇧←→ switch', '↑↓ move', 'type to filter'],
     }[this.tab]
-    return `${bar('└')} ${this.dim([...keys.filter(Boolean), 'enter apply', 'esc cancel'].join(' · '))}`
+    return ` ${this.dim([...keys.filter(Boolean), 'enter apply', 'esc cancel'].join(' · '))}`
   }
 
   private columns(): number {
@@ -924,8 +1507,8 @@ export class BrowsePanel extends Prompt<string> {
     return (this.output as { rows?: number }).rows ?? 24
   }
 
-  private fitItems(cols: number): void {
-    const items = Math.max(MIN_ITEMS, this.rows() - 4 - (cols >= WIDE ? 0 : 1) - (this.hub ? 1 : 0))
+  private fitItems(used: number): void {
+    const items = Math.max(MIN_ITEMS, this.rows() - used)
     this.maxItems = items
     this.catalog.maxItems = items
     this.mine.maxItems = items
@@ -950,35 +1533,47 @@ export class BrowsePanel extends Prompt<string> {
 
   private draw(): string {
     const cols = this.columns()
-    if (cols < MIN_COLS || this.rows() < MIN_ROWS) {
-      return `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${this.rows()}\n${this.dim('esc cancels')}`
+    const rows = this.rows()
+    if (cols < MIN_COLS || rows < MIN_ROWS) {
+      return `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${rows}\n${this.dim('esc cancels')}`
     }
-    const bar = (s: string) => (this.color ? `${CYAN}${s}${RESET}` : s)
+    if (this.phase !== 'browse') {
+      return this.frame(cols, rows)
+    }
     const wide = cols >= WIDE
-    const left = wide ? Math.min(cols - RIGHT - 4, LEFT_MAX) : cols - 1
-    this.fitItems(cols)
-    const { lines, below, empty } = this.body()
-    const body = lines.length > 0 ? lines.map((line) => `${bar('│')} ${line}`) : [`${bar('│')} ${this.dim(empty)}`]
+    const width = cols - 1
+    const left = wide ? Math.min(cols - RIGHT - 4, LEFT_MAX) : width
+    const strip = this.strip(width - 1)
+    const head = [
+      ` ${this.tabBar()}`,
+      ...(rows >= ROOMY
+        ? [` ${this.heading()}`, ...this.searchBox(cols - 3).map((line) => ` ${line}`)]
+        : [spread(` ${this.dim('⌕')} ${this.searchText()}`, this.dim(this.counts()), width)]),
+      ...(strip ? [` ${strip}`] : []),
+    ]
+    this.fitItems(head.length + 3 + (wide ? 0 : 1) + (this.hub ? 1 : 0))
+    const { lines, above, below, empty } = this.body()
+    const body = lines.length > 0 ? lines.map((line) => ` ${line}`) : [` ${this.dim(empty)}`]
     while (body.length < this.maxItems) {
-      body.push(bar('│'))
+      body.push('')
     }
-    const rows = [
-      `${bar('◆')} ${this.tabBar()}`,
-      spread(`${bar('│')}    ${this.searchText()}`, this.dim(this.counts()), left),
+    const list = [
+      above > 0 ? ` ${this.dim(`↑ ${above} more`)}` : '',
       ...body,
-      below > 0 ? `${bar('│')} ${this.dim(`↓ ${below} more`)}` : bar('│'),
+      below > 0 ? ` ${this.dim(`↓ ${below} more`)}` : '',
     ]
     const detail = this.detail(wide ? RIGHT : left - 2)
-    const frame = wide
-      ? rows.map(
+    const main = wide
+      ? list.map(
           (row, i) =>
             `${fit(row, left)} ${this.dim('│')} ${fit(i === 0 ? detail.title : (detail.lines[i - 1] ?? ''), RIGHT, false)}`,
         )
-      : [...rows.map((row) => fit(row, left, false)), fit(`${bar('│')} ${this.dim(detail.brief)}`, left, false)]
+      : [...list.map((row) => fit(row, left, false)), fit(` ${this.dim(detail.brief)}`, left, false)]
     return [
-      ...(this.hub ? [fit(hubBar(this.hub, this.color), cols - 1, false)] : []),
-      ...frame,
-      fit(this.footer(bar, wide), cols - 1, false),
+      ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
+      ...head.map((line) => fit(line, width, false)),
+      ...main,
+      fit(this.footer(wide), width, false),
     ].join('\n')
   }
 }

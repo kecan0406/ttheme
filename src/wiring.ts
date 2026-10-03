@@ -65,6 +65,10 @@ const CONFIG_SETTINGS = {
     doc: '# Warp tab switches: on keeps Warp rereading its settings while it is in front with tabs of different palettes, so the tab you switch to shows its palette in about 0.2 s instead of 0.6 s — about 8% CPU meanwhile; off leaves it to Warp (default on)',
     default: 'on',
   },
+  TTHEME_MARKET_LOOKUP: {
+    doc: '# the Markets tab in browse: on looks GitHub up by itself — the markets carrying the ttheme-market topic when the tab opens or you type, and the index of a repository you type or move onto; off waits for space (default on)',
+    default: 'on',
+  },
   TTHEME_FIND_RATING: {
     doc: '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',
     default: 'safe',

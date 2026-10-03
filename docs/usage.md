@@ -339,6 +339,7 @@ still wins:
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `tone` | the colors a new background picture is drawn in: `tone` tints it in one color of its palette, `original` keeps its own colors. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `tone` and `original`. Like the blur, it is read from `config.zsh` itself |
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
+| `TTHEME_MARKET_LOOKUP` | `on` | `ttheme browse`'s Markets tab looks GitHub up by itself: the repositories carrying the `ttheme-market` topic when the tab opens and again, a moment after you stop typing, for what you typed, and the index of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
 | `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |
@@ -365,35 +366,54 @@ four tabs — `shift+→` moves on, `shift+←` back, and each tab keeps its own
 - **Catalog** is every palette of every market you added. Groups fold and
   unfold, typing filters (a query has no spaces, `space` is the pick key), the
   tab repaints as the cursor lands on a palette, and `space` marks one (a series
-  from its header, everything shown from `Select all`).
+  from its header, everything shown from `Select all`). With two markets or more
+  a strip under the search box counts each one (`All 130 · official 108 ·
+  alice@pastel 22`), and `ctrl+s` narrows the list to the next market, then
+  back to all of them.
 - **Installed** is the same list cut down to what you have, so unmarking one
-  there is how you drop it.
-- **Markets** lists the markets you added: `space` marks one for removal (its
-  installed palettes stay), `←` and `→` turn its auto-update off and on, and
-  `ctrl+r` updates it now. Type a repository (`alice/ttheme-pastel`, `#v1` pins
-  it) or a folder and an `Add` row appears; `Find markets on GitHub` lists the
-  repositories with the `ttheme-market` topic, and `space` on one adds it —
-  after asking whether it updates on its own.
+  there is how you drop it. It has its own strip, with the markets you have a
+  palette from.
+- **Markets** lists the markets you added over two lines each — where it comes
+  from, how many palettes it holds and how many of them you have, when it was
+  updated. `space` marks one for removal (its installed palettes stay), `←` and
+  `→` turn its auto-update off and on, and `ctrl+r` updates it now. Under
+  `On GitHub` it lists the repositories with the `ttheme-market` topic by
+  itself as the tab opens, and again a moment after you stop typing, for what
+  you typed; moving onto one fetches its index, so the detail panel names the
+  palettes it would bring before you add it, and `space` adds it — after asking
+  whether it updates on its own. Type a repository (`alice/ttheme-pastel`,
+  `#v1` pins it) or a folder and an `Add` row appears, looked up the same way.
+  A search GitHub turns away shows as a row that `space` or `ctrl+r` retries;
+  `TTHEME_MARKET_LOOKUP=off` leaves all of this to `space`.
 - **Errors** collects what went wrong: a market that failed to update, an index
   that cannot be read, a palette file of yours that does not parse.
 
-Nothing is written until enter, which applies every tab at once — the markets
-added and removed, the auto-update switches, and exactly the palettes marked
-(installing the new ones, removing the unmarked). esc leaves everything as it
-was. From 94 columns up, the panel on the right describes whatever the cursor is
+Nothing is written until you apply. enter opens a review of everything staged
+across the tabs — the markets added and removed, the auto-update switches, and
+exactly the palettes marked (installing the new ones, removing the unmarked);
+enter again applies it, esc goes back to the tabs. The screen stays while it
+works: what it has done so far, and one line for the step in hand (a picture
+being fetched, `Downloading kita · danbooru 1234 · 3.1/8.4 MB · 1/2`), then
+what was applied, until enter closes it — and the same lines are left in your
+scrollback. With nothing staged enter simply leaves, and esc on the tabs leaves
+everything as it was. From 94 columns up, the panel on the right describes whatever the cursor is
 on — a palette's market, its gate score and failing rules, its pictures, and
 what enter will do to it; a narrower window gets the same as one line under the
 list:
 
 ```
-◆ [Catalog]  Installed   Markets   Errors                      │ kita
-│    ki_                                        1/6 · 2 picked │ The ttheme catalog
-│    ● Select all (1)                                          │ Bocchi the Rock!
-│    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!              │ ぼっち・ざ・ろっく!
-│ ▌    ● kita   ■ ■ ■ ■ ■ ■                                    │ Installed
-│                                                              │
-│                                                              │ Gate 9/9 · passes
-└ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
+ [Catalog]  Installed   Markets   Errors
+ Discover palettes (1/6 · 2 picked)
+ ╭──────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ ki_                                                                                │
+ ╰──────────────────────────────────────────────────────────────────────────────────────╯
+                                                               │ kita
+    ● Select all (1)                                           │ The ttheme catalog
+    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!               │ Bocchi the Rock!
+ ▌    ● kita   ■ ■ ■ ■ ■ ■                                     │ ぼっち・ざ・ろっく!
+                                                               │ Installed
+                                                               │ Gate 9/9 · passes
+ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
 ```
 
 The counts stay honest: `1/6` is what the filter matched out of the catalog,

@@ -24,8 +24,10 @@ typeset -ga SCENARIOS=(
   'browse-empty    empty  browse'
   'browse-filter   few    browse   k i'
   'browse-picked   few    browse   Right Down Space'
+  'browse-review   few    browse   Right Down Space Enter'
   'browse-series   few    browse   Space'
   'browse-installed few   browse   S-Right Right Down'
+  'browse-scope   market browse   v C-s C-s'
   'browse-markets  few    browse   S-Right S-Right'
   'browse-errors   few    browse   S-Right S-Right S-Right'
   'list-few        few    list'
@@ -92,7 +94,7 @@ command_for() {
 }
 
 scenario_env() {
-  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0)
+  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0 TTHEME_MARKET_LOOKUP=off)
 }
 
 settle() {
@@ -115,7 +117,7 @@ await() {
 
 normalize() {
   expand -t 8 |
-    sed -E -e 's/Search…[^│]*( [0-9]+\/[0-9]+[^│]*│)/Search… ‹hint›\1/' -e t -e 's/Search….*/Search… ‹hint›/' |
+    sed -E -e 's/Search….*│$/Search… ‹hint› │/' |
     sed -e 's/[[:space:]]*$//' |
     awk 'BEGIN{n=0} {lines[n++]=$0} END{while(n>0 && lines[n-1]=="") n--; for(i=0;i<n;i++) print lines[i]}'
 }

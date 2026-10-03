@@ -1,24 +1,24 @@
-◆ [Catalog]  Installed   Markets   Errors                      │ fix@shop/arcade
-│    Search… ‹hint› 10/10 · 2 picked │ ~/shop
-│    ○ Select all (10)                                         │ neon
-│    ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっく!              │ Installed
-│    ▸ Lucky☆Star (1/3) らき☆すた                              │
-│    ── Markets ──────────                                     │ Gate 8/9
-│    ▾ fix@shop (1/4)                                          │ ✗ accent hue outside its ANSI role
-│      ▾ neon (1/2)                                            │   16.644 > 0
-│ ▌      ● arcade                                              │
-│        ○ volt                                                │
-│      ▸ pastel (0/1)                                          │
-│      ○ dusk                                                  │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-└ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
+ [Catalog]  Installed   Markets   Errors
+ Discover palettes (10/10 · 2 picked)
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+ [All 10] · official 6 · fix@shop 4  ctrl+s market
+                                                               │ fix@shop/arcade
+    ○ Select all (10)                                          │ ~/shop
+    ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっく!               │ neon
+    ▸ Lucky☆Star (1/3) らき☆すた                               │ Installed
+    ── Markets ──────────                                      │
+    ▾ fix@shop (1/4)                                           │ Gate 8/9
+      ▾ neon (1/2)                                             │ ✗ accent hue outside its ANSI role
+ ▌      ● arcade                                               │   16.644 > 0
+        ○ volt                                                 │
+      ▸ pastel (0/1)                                           │
+      ○ dusk                                                   │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · ctrl+s market · type to filter · enter apply · esc …

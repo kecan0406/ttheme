@@ -1,5 +1,4 @@
 import { existsSync, readFileSync } from 'node:fs'
-import * as p from '@clack/prompts'
 import { type BrowseIo, BrowsePanel, type BrowseResult, type Market, type Problem } from './browse-panel.ts'
 import { available, catalogPath, parseCatalog, readCachedIndex, readCatalog, readKept } from './catalog.ts'
 import { HUB_CLOSED, hubOf } from './hub.ts'
@@ -11,6 +10,7 @@ import { colorless } from './osc.ts'
 import { type MarketFile, marketFileProblem, marketFiles, readMarketDir, readOwnText } from './own.ts'
 import { promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, type Installed, readInstalled, worn, writeInstalled } from './palettes.ts'
+import { into, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
 import {
   AUTO_TIMEOUT,
@@ -123,7 +123,13 @@ function problemsOf(home: string, state: Installed, tries: Record<string, Tried>
   return problems
 }
 
-function browseIo(home: string, state: Installed, fetched: Map<string, Fetched>, lookups: AbortSignal): BrowseIo {
+function browseIo(
+  home: string,
+  state: Installed,
+  fetched: Map<string, Fetched>,
+  lookups: AbortSignal,
+  apply: BrowseIo['apply'],
+): BrowseIo {
   return {
     refresh: async (source) => {
       if (isLocal(source)) {
@@ -165,6 +171,7 @@ function browseIo(home: string, state: Installed, fetched: Map<string, Fetched>,
       }
     },
     search: (query) => findMarkets(query, lookups),
+    apply,
   }
 }
 
@@ -227,20 +234,20 @@ async function applyBrowse(
   const added = wanted.filter((n) => !current.palettes.includes(n))
   if (!moved && added.length === 0 && dropped.length === 0) {
     await applyRefreshed(home, current, was, result.refreshed)
-    console.log('Nothing changed')
+    say('Nothing changed')
     return
   }
   const next = { ...placed, palettes: wanted }
   commit(home, catalog, current, next)
   forget(home, catalog, current.terminals, dropped)
   for (const line of marketChanges(result, markets, wanted)) {
-    console.log(line)
+    say(line)
   }
   for (const name of added) {
-    console.log(`  + ${name}`)
+    say(`  + ${name}`)
   }
   for (const name of dropped) {
-    console.log(`  - ${name}`)
+    say(`  - ${name}`)
   }
   const pictures = new Map(was.map((e) => [e.name, e.pictures]))
   const touched = new Set(result.refreshed.flatMap((r) => [...r.change.changed, ...r.change.gone]))
@@ -288,18 +295,20 @@ export async function runBrowse(): Promise<number> {
     ...(hub ? { hub } : {}),
     problems: problemsOf(home, state, tries, markets),
     due: dueSources(home, state),
-    io: browseIo(home, state, fetched, lookups.signal),
+    io: browseIo(home, state, fetched, lookups.signal, (result, report) =>
+      into({ say: report.say, set: report.status }, () => applyBrowse(home, was, markets, result, fetched)),
+    ),
     ...(process.env.TTHEME_SORT === 'series' ? {} : { order: alphabetical }),
     color: !colorless(),
+    lookups: process.env.TTHEME_MARKET_LOOKUP !== 'off',
     fx: promptFx(process.env.TTHEME_FX),
     ...(live ? { onFocus: (entry: PaletteEntry) => process.stdout.write(live.paint(entry)) } : {}),
   })
   if (tty && !hub) {
     process.stdout.write('\x1b[?1049h')
   }
-  let done: string | symbol | undefined
   try {
-    done = await panel.prompt()
+    await panel.prompt()
   } finally {
     live?.stop?.()
     if (live && !hub) {
@@ -324,11 +333,17 @@ export async function runBrowse(): Promise<number> {
       console.log(note)
     }
   }
-  if (p.isCancel(done)) {
+  if (panel.applied()) {
+    for (const line of panel.lines()) {
+      console.log(line)
+    }
+    const failure = panel.failure()
+    if (failure) {
+      throw failure
+    }
+  } else {
     await applyRefreshed(home, readInstalled(home), was, result.refreshed)
     console.log('Nothing changed')
-  } else {
-    await applyBrowse(home, was, markets, result, fetched)
   }
   return hub ? HUB_CLOSED : 0
 }

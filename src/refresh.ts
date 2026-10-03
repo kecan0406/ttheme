@@ -20,7 +20,7 @@ import {
 import { writeAtomic } from './edits.ts'
 import { listed, type Manifest, type PaletteEntry } from './manifest.ts'
 import { configHome, type Installed, readInstalled, sync } from './palettes.ts'
-import { pending } from './pending.ts'
+import { pending, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
 import {
   autoUpdates,
@@ -242,7 +242,7 @@ export async function applyRefreshed(
   sync(home, catalog, state)
   const gone = new Set(done.flatMap((r) => r.change.gone))
   for (const name of mine.filter((n) => gone.has(n))) {
-    console.log(`${name} left its market — ttheme keeps the copy you have`)
+    say(`${name} left its market — ttheme keeps the copy you have`)
   }
   const pictures = new Map(was.map((e) => [e.name, e.pictures]))
   await bringPictures(

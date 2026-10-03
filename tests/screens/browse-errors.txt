@@ -1,24 +1,24 @@
-◆  Catalog   Installed   Markets  [Errors]                     │
-│    Search… ‹hint› 0/0 │
-│ No problems                                                  │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-└ ⇧←→ switch · ↑↓ move · type to filter · enter apply · esc cancel
+  Catalog   Installed   Markets  [Errors]
+ Problems (0/0)
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                               │
+ No problems                                                   │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+ ⇧←→ switch · ↑↓ move · type to filter · enter apply · esc cancel

@@ -1,15 +1,15 @@
  [Catalog]  Installed   Markets   Errors
- Discover palettes (6/6 · 3 picked)
+ Discover palettes (1/4 · 1 picked)
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ⌕ Search… ‹hint› │
+ │ ⌕ v_                                                                                          │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                               │ bocchi
-    ○ Select all (6)                                           │ The ttheme catalog
-    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっく!               │ Bocchi the Rock!
- ▌    ● bocchi                                                 │ ぼっち・ざ・ろっく!
-      ● kita                                                   │ Will install
-      ○ ryo                                                    │
-    ▸ Lucky☆Star (1/3) らき☆すた                               │ Gate 9/9 · passes
+ All 10 · official 6 · [fix@shop 4]  ctrl+s market
+                                                               │ fix@shop/volt
+    ○ Select all (1)                                           │ ~/shop
+    ▾ fix@shop (0/1)                                           │ neon
+      ▾ neon (0/1)                                             │ Not installed
+ ▌      ○ volt                                                 │
+                                                               │ Gate 9/9 · passes
                                                                │
                                                                │
                                                                │
@@ -21,4 +21,4 @@
                                                                │
                                                                │
                                                                │
- ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
+ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · ctrl+s market · type to filter · enter apply · esc …

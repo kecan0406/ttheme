@@ -133,6 +133,8 @@ __tt_pins_load
 
 : ${TTHEME_WARP_FAST:=on}
 
+: ${TTHEME_MARKET_LOOKUP:=on}
+
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
 () {

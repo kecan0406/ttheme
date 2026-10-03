@@ -1,24 +1,24 @@
   Preview  [Browse]  tab next
-◆ [Catalog]  Installed   Markets   Errors                      │ bocchi
-│    Search… ‹hint› 6/6 · 3 picked │ The ttheme catalog
-│    ○ Select all (6)                                          │ Bocchi the Rock!
-│    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっく!              │ ぼっち・ざ・ろっく!
-│ ▌    ● bocchi                                                │ Will install
-│      ● kita                                                  │
-│      ○ ryo                                                   │ Gate 9/9 · passes
-│    ▸ Lucky☆Star (1/3) らき☆すた                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-└ Apply your changes before you leave? y apply · n discard · esc stay
+ [Catalog]  Installed   Markets   Errors
+ Discover palettes (6/6 · 3 picked)
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                               │ bocchi
+    ○ Select all (6)                                           │ The ttheme catalog
+    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっく!               │ Bocchi the Rock!
+ ▌    ● bocchi                                                 │ ぼっち・ざ・ろっく!
+      ● kita                                                   │ Will install
+      ○ ryo                                                    │
+    ▸ Lucky☆Star (1/3) らき☆すた                               │ Gate 9/9 · passes
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+ Apply your changes before you leave? y apply · n discard · esc stay

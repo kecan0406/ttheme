@@ -369,7 +369,7 @@ export class PaletteList {
     }
   }
 
-  window(): { lines: string[]; below: number } {
+  window(): { lines: string[]; above: number; below: number } {
     if (this.cursor < this.top) {
       this.top = this.cursor
     }
@@ -380,6 +380,7 @@ export class PaletteList {
     const shown = this.rows.slice(this.top, this.top + this.maxItems)
     return {
       lines: shown.map((row, i) => this.renderRow(row, this.top + i === this.cursor)),
+      above: this.top,
       below: this.rows.length - this.top - shown.length,
     }
   }

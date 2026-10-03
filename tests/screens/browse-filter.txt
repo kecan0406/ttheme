@@ -1,24 +1,24 @@
-◆ [Catalog]  Installed   Markets   Errors                      │ kita
-│    ki_                                        1/6 · 2 picked │ The ttheme catalog
-│    ● Select all (1)                                          │ Bocchi the Rock!
-│    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!              │ ぼっち・ざ・ろっく!
-│ ▌    ● kita                                                  │ Installed
-│                                                              │
-│                                                              │ Gate 9/9 · passes
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-│                                                              │
-└ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
+ [Catalog]  Installed   Markets   Errors
+ Discover palettes (1/6 · 2 picked)
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ ki_                                                                                         │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                               │ kita
+    ● Select all (1)                                           │ The ttheme catalog
+    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!               │ Bocchi the Rock!
+ ▌    ● kita                                                   │ ぼっち・ざ・ろっく!
+                                                               │ Installed
+                                                               │
+                                                               │ Gate 9/9 · passes
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+ ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
