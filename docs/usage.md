@@ -637,7 +637,7 @@ that misses the gate and prints the numbers, and `check --fix` writes colors tha
 pass.
 
 The folder is a repository layout already, with a workflow that rebuilds the
-index on every push. `ttheme market init` prints the `git` and `gh` commands
+index whenever `palettes/` changes (or by hand from the Actions tab). `ttheme market init` prints the `git` and `gh` commands
 that publish it as `<you>/ttheme-<name>` with the `ttheme-market` topic; after
 that, anyone runs `ttheme market add <you>/ttheme-<name>`.
 

@@ -16,10 +16,11 @@ ttheme edit rei                   # the same editor; the gate's numbers are show
 
 A market is a repository with `palettes/<palette>.toml`, a `ttheme-market.json`
 index that names it (`"owner"`, `"name"`) and a workflow that runs
-`kecan0406/ttheme/market@v1` on every push to rebuild the index; `ttheme market
-build` does the same by hand; the index it writes carries the `schema` this
-ttheme speaks, and an older ttheme keeps its last copy of a market whose
-`schema` is newer than it reads. Added from GitHub, a market is
+`kecan0406/ttheme/market@v1` whenever `palettes/` changes, or by hand, to
+rebuild the index with the latest ttheme (`with: version: 1.2.11` builds it with
+that release instead); `ttheme market build` does the same locally. The index
+carries the `schema` this ttheme speaks, and a ttheme refuses one with none, or
+a newer one than it reads, and keeps its last copy. Added from GitHub, a market is
 `<repository owner>@<name>` and its palettes are `<owner>@<name>/<palette>`;
 the TOML files name them bare (`name = "rei"`). A folder under `palettes/` is a
 catalog — `palettes/neon/arcade.toml` puts arcade in the neon catalog — so every

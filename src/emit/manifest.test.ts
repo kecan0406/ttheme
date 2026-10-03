@@ -4,7 +4,7 @@ import { test } from 'node:test'
 
 import pkg from '../../package.json' with { type: 'json' }
 import { parseCatalog } from '../catalog.ts'
-import { type PaletteEntry, SCHEMA, swatch } from '../manifest.ts'
+import { type Manifest, type PaletteEntry, SCHEMA, swatch } from '../manifest.ts'
 import { loadThemes } from '../theme.ts'
 import { manifest } from './manifest.ts'
 
@@ -37,6 +37,13 @@ const SCHEMA_1_FIELDS = {
   backdrop: 1,
 } satisfies Record<RequiredKeys<PaletteEntry>, 1>
 
+const SCHEMA_1_DOCUMENT = {
+  schema: 1,
+  version: 1,
+  gate: 1,
+  palettes: 1,
+} satisfies Record<RequiredKeys<Manifest>, 1>
+
 const SCHEMA_1_GATE = [
   'foreground',
   'accents',
@@ -54,6 +61,12 @@ test('every entry keeps the fields a schema 1 reader needs — dropping or renam
     for (const field of Object.keys(SCHEMA_1_FIELDS)) {
       assert.ok(field in e, `${e.name}: ${field} is gone, so older ttheme would misread it — raise SCHEMA`)
     }
+  }
+})
+
+test('the manifest keeps the top-level fields a schema 1 reader needs — dropping or renaming one is a new SCHEMA', () => {
+  for (const field of Object.keys(SCHEMA_1_DOCUMENT)) {
+    assert.ok(field in published, `${field} is gone, so older ttheme would misread the manifest — raise SCHEMA`)
   }
 })
 

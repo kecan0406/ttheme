@@ -178,7 +178,6 @@ test('applying a refresh hands back the palettes that left their market instead 
     schema: SCHEMA,
     version: '0.1.0',
     gate: [],
-    placement: { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 },
     palettes: [installed('gojo'), installed('geto')],
   }
   const state = { terminals: ['ghostty' as const], palettes: ['gojo', 'geto'] }
