@@ -118,13 +118,20 @@ const beat = setInterval(
 )
 beat.unref()
 
+const PROMPT = /^[│◇◆├└┌]/
+
 function normalized(text: string): string {
-  return text
-    .split('\n')
-    .map((line) =>
+  const lines: string[] = []
+  for (const line of text.split('\n')) {
+    if (PROMPT.test(line)) {
+      if (lines.at(-1) !== '‹prompt›') lines.push('‹prompt›')
+      continue
+    }
+    lines.push(
       line.replace(/Search….*?\s{2,}(?=\d+\/\d+)/, 'Search… ‹hint›  ').replace(/Search… e\.g\..*$/, 'Search… ‹hint›'),
     )
-    .join('\n')
+  }
+  return lines.join('\n')
 }
 
 function digest(text: string): string {
