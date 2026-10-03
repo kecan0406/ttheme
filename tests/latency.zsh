@@ -24,7 +24,7 @@ typeset -gA IDENTITY=(
   terminal-app 'TERM_PROGRAM=Apple_Terminal'
   warp 'TERM_PROGRAM=WarpTerminal'
 )
-trap 'zpty -d sh 2>/dev/null; rm -rf $WORK' EXIT
+trap 'stop; rm -rf $WORK' EXIT
 
 home() {
   local h=$WORK/$1 tab=$2 src=${3:-$ROOT/shell}
@@ -83,14 +83,24 @@ start() {
   local -a env=(PATH=$PATH HOME=$h ZDOTDIR=$h XDG_CONFIG_HOME=$h/.config XDG_STATE_HOME=$h/.state XDG_CACHE_HOME=$h/.cache TERM=xterm-256color $EXTRA)
   [[ -n $term ]] || { [[ $name == (ref-|)terminal-app ]] && term=terminal-app || term=ghostty }
   env+=(${=IDENTITY[$term]})
+  stop
   BUF="" ASKED[$name]=0 SHOWN=()
-  zpty -d sh 2>/dev/null || :
   typeset -gF T0=$EPOCHREALTIME
   zpty -b sh env -i ${(q)env} zsh -i
   FD=$REPLY
   upto '[[ $BUF == *UP_6_<->_* ]]' 5 $name || { fail "$name: the shell never started"; return 1 }
   MAIN=${${BUF##*UP_6_}%%_*}
   zpty -w -n sh $'print -r -- TYPED_$((6*7))\r'
+}
+
+stop() {
+  local keep=$BUF
+  if [[ -n $MAIN ]] && zpty -t sh 2>/dev/null; then
+    kill -HUP $MAIN 2>/dev/null || :
+    upto '! zpty -t sh' 2 stop || :
+  fi
+  zpty -d sh 2>/dev/null || :
+  BUF=$keep MAIN=""
 }
 
 step() {
@@ -156,7 +166,7 @@ measure() {
     zpty -w -n sh $'print -u2 ERR_$((6*7))\r'
     upto '[[ $BUF == *ERR_42* ]]' 2 $name || { fail "$name: stderr no longer reaches the terminal"; return 1 }
   fi
-  zpty -d sh
+  stop
 }
 
 quantile() {
@@ -190,7 +200,7 @@ typing() {
   (( ! $#reply )) || { fail "$name: while preview sat idle, its search hint redrew the whole screen (${reply[1]} characters) instead of its first row"; return 1 }
   zpty -w -n sh $'\e'
   upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
-  zpty -d sh
+  stop
   session=${${BUF#*$'\e[?1049h'}%$'\e[?1049l'*}
   [[ $session != *('^[['|$'\e[B')* ]] || { fail "$name: keys typed while preview drew were echoed into it"; return 1 }
 }
@@ -212,7 +222,7 @@ hovering() {
   session=${BUF[from+1,-1]}
   zpty -w -n sh $'\e'
   upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
-  zpty -d sh
+  stop
   TERMINAL=""
   if [[ $name == *-switch ]]; then
     [[ $session == *$'\e]1337;SetProfile=ttheme · '* ]] ||
@@ -237,7 +247,7 @@ hostile() {
   step $'ttheme use kita\r' $name
   step $'cd /\r' $name
   step $'ttheme next\r' $name
-  zpty -d sh
+  stop
   [[ $BUF == *$'\e]11;#'* ]] || { fail "$name: ttheme use painted nothing under the user's options"; return 1 }
   [[ $BUF != *(parameter not set|file exists|bad pattern|bad output format|bad substitution|bad math|no matches found|created globally|command not found)* ]] ||
     { fail "$name: the layer broke under options a user's .zshrc sets before it"; return 1 }
@@ -361,7 +371,7 @@ traced() {
   TERMINAL=$term EXTRA=(TTHEME_TAB_PALETTE=$mode)
   start $name
   upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name ($term, $mode): no prompt after the command typed ahead"; return 1 }
-  zpty -d sh
+  stop
   EXTRA=(TTHEME_TAB_PALETTE=$mode TT_TRACE=1)
   : > $WORK/$name/trace
   start $name
@@ -383,7 +393,7 @@ traced() {
     forked $name
     counts+=($REPLY)
   fi
-  zpty -d sh
+  stop
   TERMINAL="" EXTRA=()
   reply=($counts)
 }
