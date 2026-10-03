@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { backgroundsDir, freshenConfs, paintFor, readStore, retint } from './backdrop.ts'
 import { available, nearest, readAvailable, untuned, writeKept } from './catalog.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
-import { palettesZsh } from './emit/shell.ts'
+import { aliasesZsh, palettesZsh } from './emit/shell.ts'
 import { listed, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
 import { paletteAliases } from './names.ts'
 import { installedPath } from './sources.ts'
@@ -176,7 +176,16 @@ export function sync(
     wiring.sync(ctx, out)
   }
   out.written.push(writeTable(ctx, host, out.repainted))
+  writeAliases(ctx)
   return out.written
+}
+
+function writeAliases(ctx: Ctx): void {
+  const file = join(ctx.configHome, 'ttheme', 'aliases.zsh')
+  const content = aliasesZsh(aliasesFor(ctx))
+  if (readText(file) !== content) {
+    writeAtomic(file, content)
+  }
 }
 
 function aliasesFor(ctx: Ctx): Record<string, string[]> {
@@ -193,7 +202,7 @@ function aliasesFor(ctx: Ctx): Record<string, string[]> {
 
 function writeTable(ctx: Ctx, host: Host, repainted: boolean): string {
   const table = join(ctx.configHome, 'ttheme', 'palettes.zsh')
-  const content = palettesZsh(ctx.entries, ctx.startup, ctx.state.terminals, layer(ctx, host), aliasesFor(ctx))
+  const content = palettesZsh(ctx.entries, ctx.startup, ctx.state.terminals, layer(ctx, host))
   if (repainted || readText(table) !== content) {
     writeAtomic(table, content)
     rmSync(`${table}.zwc`, { force: true })

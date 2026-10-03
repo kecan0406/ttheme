@@ -6,7 +6,7 @@ import { reload } from './installs.ts'
 import { liveOf } from './live.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
 import { dropCache, findMarkets, idOf, keptNote, lastUpdate, withMarkets } from './markets.ts'
-import { paletteAliases } from './names.ts'
+import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
 import { type MarketFile, marketFileProblem, marketFiles, readMarketDir, readOwnText } from './own.ts'
 import { promptFx } from './palette-prompt.ts'
@@ -279,7 +279,7 @@ export async function runBrowse(): Promise<number> {
   const markets = marketsOf(state.markets).map((source) => marketState(home, state, source, tries))
   const names = new Set(markets.flatMap((m) => m.entries.map((e) => e.name)))
   const kept = was.filter((e) => state.palettes.includes(e.name) && !names.has(e.name))
-  paletteAliases([...markets.flatMap((m) => m.entries), ...kept].flatMap((e) => (e.booru ? [e.booru] : [])))
+  knowAliases([...markets.flatMap((m) => m.entries), ...kept])
   const fetched = new Map<string, Fetched>()
   const lookups = new AbortController()
   const tty = process.stdout.isTTY === true

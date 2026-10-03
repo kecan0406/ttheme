@@ -2146,7 +2146,7 @@ __tt_preview() {
   local -i scene=0
   local -a bgorder=()
   local -A bgfrom=() bgurl=() bgby=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
-  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgprep=()
+  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgprep=() TTHEME_ALIASES=()
   local conf=0 cf=1
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
   local te=0 tfocus=0 tetop=0 tename="" tedirty=0 temode=list tespec="" tesz="" teshown="" telook=""
@@ -2168,6 +2168,7 @@ __tt_preview() {
     TTHEME_BG_COLORS:tone "New pictures are tinted in one color of the palette"
     TTHEME_BG_COLORS:original "New pictures keep their own colors"
   )
+  [[ -r $TTHEME_HOME/aliases.zsh ]] && source $TTHEME_HOME/aliases.zsh
   [[ $mode == pin ]] && __tt_pin_scopes "$pdir"
   __tt_pv_canpick
   __tt_pv_size

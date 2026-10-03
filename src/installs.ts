@@ -4,6 +4,7 @@ import { adopt } from './craft.ts'
 import { liveOf } from './live.ts'
 import { listed, type Manifest } from './manifest.ts'
 import { addSource, localLine } from './markets.ts'
+import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
 import { CODE, readLocal } from './own.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
@@ -169,6 +170,7 @@ export function runList(query: string | undefined, json = false): void {
   const installed = new Set(readInstalled(home).palettes)
   const from = sources(home, catalog)
   const all = listed(available(home, catalog).palettes)
+  if (query) knowAliases(all)
   const hits = alphabetical(query ? search(all, query) : all)
   const source = (name: string): Source => from.get(name) ?? 'kept'
   if (json) {
@@ -263,6 +265,7 @@ export async function pickPalettes(
   required = false,
 ): Promise<string[] | undefined> {
   const entries = process.env.TTHEME_SORT === 'series' ? catalog.palettes : alphabetical(catalog.palettes)
+  knowAliases(entries)
   const tty = process.stdout.isTTY === true
   const live = liveOf(process.env, tty, configHome())
   const saved = live ? await live.saved() : new Map<string, string>()

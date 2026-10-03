@@ -326,6 +326,7 @@ const TOP_RIGHT = POSITIONS.indexOf('top-right') + 1
 const SMALLEST = 20
 const LOOKAHEAD = 2
 const KNOWN = 3
+const SPOKEN = /[\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u
 const SUGGESTED = 8
 const CHIPS = 9
 
@@ -493,6 +494,7 @@ class Finder {
   private readonly home: string
   private readonly catalog: Manifest
   private readonly entry: PaletteEntry
+  private readonly tagged: ReadonlySet<string>
   private readonly blurring: number
   private readonly start: Start | undefined
   private readonly paint: Paint
@@ -503,6 +505,7 @@ class Finder {
     this.home = home
     this.catalog = catalog
     this.entry = entry
+    this.tagged = new Set(catalog.palettes.flatMap((p) => (p.booru ? [p.booru] : [])))
     this.tone = backdropTone(entry, entry.signatureSlots)
     this.blurring = blurOf(home)
     const untuned: Tuning = { size: 'fill', at: TOP_RIGHT, opacity: this.tone.opacity }
@@ -1595,7 +1598,12 @@ class Finder {
     const text = view.editing ?? ''
     const token = /\S*$/.exec(text)?.[0] ?? ''
     const typed = completable(token)
-    const named = nameHits(text, KNOWN).map((hit) => ({ value: hit.tag, count: 0, alias: hit.name, whole: true }))
+    const named = nameHits(text, KNOWN, this.tagged).map((hit) => ({
+      value: hit.tag,
+      count: 0,
+      alias: hit.name,
+      whole: true,
+    }))
     if (!typed && named.length === 0) {
       view.suggest = undefined
       return
@@ -1609,6 +1617,9 @@ class Finder {
       : []
     const known = [...new Map([...ours.slice(0, KNOWN), ...named].map((item) => [item.value, item] as const)).values()]
     view.suggest = known.length > 0 ? known : undefined
+    if (named.length > 0 && SPOKEN.test(text)) {
+      view.pick = known.findIndex((item) => 'whole' in item)
+    }
     if (!typed) {
       return
     }

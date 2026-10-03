@@ -47,9 +47,14 @@ export function rowKey(row: Row | undefined): string {
 
 export function matchesPalette(entry: PaletteEntry, search: string): boolean {
   const q = search.toLowerCase()
-  return [entry.name, entry.group, entry.native ?? '', entry.catalog ?? '', ...aliasesFor(entry.booru)].some((s) =>
-    s.toLowerCase().includes(q),
-  )
+  return [
+    entry.name,
+    entry.group,
+    entry.native ?? '',
+    entry.catalog ?? '',
+    ...(entry.nativeNames ?? []),
+    ...aliasesFor(entry.booru),
+  ].some((s) => s.toLowerCase().includes(q))
 }
 
 export function pickerRows(entries: PaletteEntry[], expanded: ReadonlySet<string>, filter: string): PickerRow[] {

@@ -225,7 +225,7 @@ export function nearest(palettes: PaletteEntry[], names: string[]): string {
 export function search(palettes: PaletteEntry[], query: string): PaletteEntry[] {
   const needle = query.toLowerCase()
   return palettes.filter((p) =>
-    [p.name, p.group, p.native ?? '', p.ansiSource, ...aliasesFor(p.booru)].some((field) =>
+    [p.name, p.group, p.native ?? '', p.ansiSource, ...(p.nativeNames ?? []), ...aliasesFor(p.booru)].some((field) =>
       field.toLowerCase().includes(needle),
     ),
   )
