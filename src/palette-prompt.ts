@@ -224,6 +224,18 @@ export class PaletteList {
     }
   }
 
+  clear(): void {
+    const row = this.rows[this.cursor]
+    if (row?.kind === 'palette' && !row.entry.default) {
+      this.expanded.add(row.entry.group)
+      const parent = shelf(row.entry)
+      if (parent !== undefined) {
+        this.expanded.add(parent)
+      }
+    }
+    this.setFilter('')
+  }
+
   focusedRow(): Row | undefined {
     return this.rows[this.cursor]
   }
@@ -351,9 +363,13 @@ export class PaletteList {
     }
   }
 
-  open(): void {
+  foldable(): boolean {
     const row = this.rows[this.cursor]
-    if ((row?.kind === 'group' || row?.kind === 'catalog') && this.scope === 'palette' && !this.filter) {
+    return (row?.kind === 'group' || row?.kind === 'catalog') && this.scope === 'palette' && !this.filter
+  }
+
+  open(): void {
+    if (this.foldable()) {
       this.flip()
     } else {
       this.pick()
@@ -372,6 +388,10 @@ export class PaletteList {
   private climb(key: string, row: string): void {
     this.expanded.delete(key)
     this.rebuild('clamp')
+    this.reach(row)
+  }
+
+  private reach(row: string): void {
     this.cursor = Math.max(
       0,
       this.rows.findIndex((r) => rowKey(r) === row),
@@ -392,7 +412,7 @@ export class PaletteList {
       if (open !== row.expanded) {
         this.toggle(catalogKey(row.group, row.name))
       } else if (!open) {
-        this.climb(row.group, `group ${row.group}`)
+        this.reach(`group ${row.group}`)
       }
     } else if (row?.kind === 'palette' && !open && !row.entry.default) {
       const parent = shelf(row.entry)

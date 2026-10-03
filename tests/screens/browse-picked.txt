@@ -21,4 +21,4 @@
                                                                │
                                                                │
                                                                │
- ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
+ [BROWSE] space pick   enter apply   ⇧←→ tabs   ? keys                                   esc cancel

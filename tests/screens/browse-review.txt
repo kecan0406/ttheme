@@ -21,4 +21,4 @@
 
 
 
- enter apply · esc back
+ [BROWSE (APPLY)] enter apply                                                              esc back

@@ -21,4 +21,4 @@
                                                                │
                                                                │
                                                                │
- Apply your changes before you leave? y apply · n discard · esc stay
+ [BROWSE] Apply your changes before you leave?   y apply   n discard                       esc stay

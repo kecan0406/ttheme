@@ -148,7 +148,15 @@ export interface KeySpot {
   key: string
 }
 
-const WORDS: Record<string, string> = { space: ' ', enter: 'enter', esc: 'esc', tab: 'tab', bksp: 'backspace' }
+const WORDS: Record<string, string> = {
+  space: ' ',
+  enter: 'enter',
+  esc: 'esc',
+  tab: 'tab',
+  bksp: 'backspace',
+  '←': 'left',
+  '→': 'right',
+}
 
 export function hintKey(word: string): string | undefined {
   const modified = /^(ctrl|alt)\+([a-z])$/.exec(word)

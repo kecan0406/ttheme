@@ -1,5 +1,20 @@
 import type { Readable, Writable } from 'node:stream'
-import { ansiBar, ansiFg, BOLD, CYAN, DIM, fit, NORMAL, RESET, SPINNER, spread, wrapText, YELLOW } from './ansi.ts'
+import {
+  ansiBar,
+  ansiFg,
+  BOLD,
+  CYAN,
+  cells,
+  clip,
+  DIM,
+  fit,
+  NORMAL,
+  RESET,
+  SPINNER,
+  spread,
+  wrapText,
+  YELLOW,
+} from './ansi.ts'
 import { gateFailures } from './catalog.ts'
 import { GATE_RULES } from './contrast.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
@@ -113,6 +128,16 @@ interface Chip {
   count: number
 }
 
+type Hint = [string, string]
+
+interface Bar {
+  badge: string
+  lead?: string
+  note?: string
+  keys: Hint[]
+  right?: Hint
+}
+
 const TABS: { tab: Tab; title: string; heading: string }[] = [
   { tab: 'catalog', title: 'Catalog', heading: 'Discover palettes' },
   { tab: 'installed', title: 'Installed', heading: 'Installed palettes' },
@@ -208,6 +233,8 @@ export class BrowsePanel {
   private searchError: string | undefined
   private searched: string | undefined
   private asked = 0
+  private help = false
+  private worn: PaletteEntry | undefined
   private readonly live: boolean
 
   constructor(opts: BrowseOptions) {
@@ -330,6 +357,12 @@ export class BrowsePanel {
       this.state = 'cancel'
       return
     }
+    if (this.help) {
+      if (key === '?' || key === 'esc') {
+        this.help = false
+      }
+      return
+    }
     if (this.leaving !== undefined) {
       if (key === 'esc') {
         this.leaving = undefined
@@ -357,15 +390,22 @@ export class BrowsePanel {
       return
     }
     const page = pageStep(key, this.maxItems)
+    const list = this.list()
     if (key === 'enter') {
-      if (this.dirty()) {
+      if (list?.foldable()) {
+        list.flip()
+      } else if (this.dirty()) {
         this.phase = 'review'
         this.offset = 0
       } else {
         this.state = 'submit'
       }
+    } else if ((key === 'esc' || key === 'ctrl-u') && this.fields[this.tab].value) {
+      this.clear()
     } else if (key === 'esc') {
       this.state = 'cancel'
+    } else if (key === '?') {
+      this.help = true
     } else if (page !== undefined) {
       this.move(page)
     } else if (key === 'up' || key === 'down') {
@@ -395,13 +435,19 @@ export class BrowsePanel {
   }
 
   private pasted(text: string): void {
-    if (this.phase === 'browse' && !this.asking && this.leaving === undefined) {
+    if (this.phase === 'browse' && !this.help && !this.asking && this.leaving === undefined) {
       this.fields[this.tab].paste(text)
       this.typed()
     }
   }
 
   private mouse(event: Mouse, screen: Screen): void {
+    if (this.help) {
+      if (event.action === 'release') {
+        this.help = false
+      }
+      return
+    }
     const hit = screen.point(event)
     const spot = hit?.target as Spot | undefined
     const free = this.phase === 'browse' && this.leaving === undefined && !this.asking
@@ -491,6 +537,16 @@ export class BrowsePanel {
     }
   }
 
+  private clear(): void {
+    this.fields[this.tab].value = ''
+    const list = this.list()
+    if (list) {
+      list.clear()
+    } else {
+      this.typed()
+    }
+  }
+
   private redraw(): void {
     if (this.state === 'active') {
       this.screen?.request()
@@ -499,6 +555,7 @@ export class BrowsePanel {
 
   private focus(tab: Tab, entry: PaletteEntry): void {
     if (this.tab === tab && this.state !== 'submit' && this.state !== 'cancel') {
+      this.worn = entry
       this.paint?.(entry)
     }
   }
@@ -1264,23 +1321,44 @@ export class BrowsePanel {
       body.push('')
     }
     body.push(below > 0 ? ` ${this.more(1, `↓ ${below} more`)}` : '')
-    const keys = review
-      ? [...(most > 0 ? ['↑↓ scroll'] : []), 'enter apply', 'esc back']
+    const scroll: Hint[] = most > 0 ? [['↑↓', 'scroll']] : []
+    const bar: Bar = review
+      ? { badge: 'BROWSE (APPLY)', keys: [...scroll, ['enter', 'apply']], right: ['esc', 'back'] }
       : this.phase === 'applying'
-        ? ['keys wait until it ends']
-        : [...(most > 0 ? ['↑↓ scroll'] : []), 'enter close']
+        ? { badge: 'BROWSE (APPLY)', note: 'Keys wait until it ends', keys: [] }
+        : { badge: 'BROWSE (APPLY)', keys: scroll, right: ['enter', 'close'] }
     return [
       ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
       fit(` ${title}`, width, false),
       ...body.map((line) => fit(line, width, false)),
-      fit(` ${this.dim(this.hints(keys))}`, width, false),
+      ` ${this.keyBar(bar, width - 1)}`,
     ]
       .slice(0, rows)
       .join('\n')
   }
 
-  private hints(keys: string[]): string {
-    return keys.map((hint) => keyZone(hint.split(' ')[0] ?? '', hint)).join(' · ')
+  private keyBar(bar: Bar, width: number): string {
+    const accent = this.color && this.worn ? ansiFg(this.worn.cursor) : ''
+    const badge = this.color ? `\x1b[7;1m${accent} ${bar.badge} ${RESET}  ` : `[${bar.badge}] `
+    const hint = ([key, label]: Hint) => keyZone(key.split(' ')[0] ?? '', `${this.bold(key)} ${this.dim(label)}`)
+    let { note, keys, right } = bar
+    for (;;) {
+      const line = `${badge}${[bar.lead ?? '', note ? this.dim(note) : '', ...keys.map(hint)].filter(Boolean).join('   ')}`
+      const tail = right ? hint(right) : ''
+      if (cells(line) + (right ? 3 + cells(tail) : 0) <= width) {
+        return right ? spread(line, tail, width) : fit(line, width, false)
+      }
+      if (note) {
+        note = undefined
+      } else if (keys.length > 2 || (!right && keys.length > 1)) {
+        const drop = keys.length - 2
+        keys = keys.filter((_, i) => i !== drop)
+      } else if (right) {
+        right = undefined
+      } else {
+        return fit(line, width, false)
+      }
+    }
   }
 
   private more(step: number, text: string): string {
@@ -1579,28 +1657,76 @@ export class BrowsePanel {
       : EMPTY
   }
 
-  private footer(wide: boolean): string {
+  private footer(): Bar {
+    if (this.help) {
+      return { badge: 'HELP', keys: [], right: ['? esc', 'close'] }
+    }
     if (this.leaving !== undefined) {
-      return ` Apply your changes before you leave? ${this.dim(this.hints(['y apply', 'n discard', 'esc stay']))}`
+      return {
+        badge: 'BROWSE',
+        lead: 'Apply your changes before you leave?',
+        keys: [
+          ['y', 'apply'],
+          ['n', 'discard'],
+        ],
+        right: ['esc', 'stay'],
+      }
     }
     if (this.asking) {
-      return ` Update ${this.asking.id} on its own when its author changes it? ${this.dim(this.hints(['y yes', 'n no', 'esc back']))}`
+      return {
+        badge: 'BROWSE',
+        lead: `Update ${this.asking.id} on its own when its author changes it?`,
+        keys: [
+          ['y', 'yes'],
+          ['n', 'no'],
+        ],
+        right: ['esc', 'back'],
+      }
     }
-    const scoped = this.active().length >= 2 ? ['ctrl+s market'] : []
-    const row = this.tab === 'markets' ? this.marketRow() : undefined
-    const marketKeys =
-      row?.kind === 'market'
-        ? ['space add/remove', '←→ auto-update', wide ? 'ctrl+r update' : '']
-        : row?.kind === 'find'
-          ? ['space search']
-          : ['space add']
-    const keys = {
-      catalog: ['⇧←→ switch', '↑↓ move', '←→ fold', 'space pick', ...scoped, wide ? 'type to filter' : ''],
-      installed: ['⇧←→ switch', '↑↓ move', '←→ fold', 'space pick', ...scoped, wide ? 'type to filter' : ''],
-      markets: ['⇧←→ switch', '↑↓ move', ...marketKeys],
-      errors: ['⇧←→ switch', '↑↓ move', 'type to filter'],
-    }[this.tab]
-    return ` ${this.dim(this.hints([...keys.filter(Boolean), 'enter apply', 'esc cancel']))}`
+    const filter = this.fields[this.tab].value
+    const enter: Hint = ['enter', this.dirty() ? 'apply' : 'close']
+    const tail: Hint[] = [['⇧←→', 'tabs'], ...(filter ? [['bksp', 'edit'] as Hint] : []), ['?', 'keys']]
+    return {
+      badge: filter ? 'BROWSE (FILTER)' : 'BROWSE',
+      keys: [...this.rowKeys(enter), ...tail],
+      right: filter ? ['esc', 'clear filter'] : ['esc', 'cancel'],
+    }
+  }
+
+  private rowKeys(enter: Hint): Hint[] {
+    const list = this.list()
+    if (list) {
+      const row = list.focusedRow()
+      if (!row) {
+        return [enter]
+      }
+      if (list.foldable()) {
+        const open = (row.kind === 'group' || row.kind === 'catalog') && row.expanded
+        return [open ? ['←', 'close'] : ['→', 'open'], ['space', 'pick']]
+      }
+      return [['space', 'pick'], enter]
+    }
+    if (this.tab === 'errors') {
+      return [enter]
+    }
+    const row = this.marketRow()
+    if (row?.kind === 'market') {
+      const m = row.market
+      const staged = this.adds.has(m.source) || this.removes.has(m.source)
+      return [
+        ['space', staged ? 'undo' : 'remove'],
+        ...(isLocal(m.source) ? [] : [['←→', 'auto-update'] as Hint]),
+        ...(this.adds.has(m.source) ? [] : [['ctrl+r', 'update'] as Hint]),
+        enter,
+      ]
+    }
+    if (row?.kind === 'find') {
+      return [['space', 'search'], enter]
+    }
+    if (row?.kind === 'add' || (row?.kind === 'repo' && !this.known(row.source))) {
+      return [['space', 'add'], enter]
+    }
+    return [enter]
   }
 
   private columns(): number {
@@ -1661,11 +1787,48 @@ export class BrowsePanel {
             `${fit(row, left)} ${this.dim('│')} ${fit(i === 0 ? detail.title : (detail.lines[i - 1] ?? ''), RIGHT, false)}`,
         )
       : [...list.map((row) => fit(row, left, false)), fit(` ${this.dim(detail.brief)}`, left, false)]
-    return [
+    const frame = [
       ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
       ...head.map((line) => fit(line, width, false)),
       ...main,
-      fit(this.footer(wide), width, false),
-    ].join('\n')
+      ` ${this.keyBar(this.footer(), width - 1)}`,
+    ]
+    return (this.help ? this.helpBox(frame, cols, rows, frame.length - main.length - 1) : frame).join('\n')
+  }
+
+  private helpRows(): Hint[] {
+    return [
+      ['Move', '↑↓  home  end  pgup  pgdn'],
+      ['Series', '←→  ·  enter on a series'],
+      ['Pick', 'space  ·  a palette, a series, all'],
+      ['Filter', 'Any text  ·  bksp  ·  ctrl-u clears'],
+      ['', 'Each tab keeps its own'],
+      ['Tabs', '⇧←→  Catalog, Installed, Markets, Errors'],
+      ...(this.active().length >= 2 ? [['Market', 'ctrl+s  ·  one market, then all'] as Hint] : []),
+      ['Markets', 'space  adds or removes  ·  ←→  auto-update'],
+      ['', 'ctrl+r  updates it, or searches again'],
+      ['Apply', 'enter  reviews and applies  ·  esc cancels'],
+      ...(this.hub ? [['Screens', 'tab  ·  shift+tab'] as Hint] : []),
+      ['Close', '?  esc'],
+    ]
+  }
+
+  private helpBox(lines: string[], cols: number, rows: number, top: number): string[] {
+    const items = this.helpRows()
+    const w = Math.min(cols - 2, 58)
+    const x = Math.floor((cols - w) / 2)
+    const blank = `│${' '.repeat(w - 2)}│`
+    const box = [
+      `╭─ Help ${'─'.repeat(w - 9)}╮`,
+      blank,
+      ...items.map(([label, text]) => `│${fit(`  ${this.bold(label.padEnd(10))}${text}`, w - 4)}  │`),
+      blank,
+      `╰${'─'.repeat(w - 2)}╯`,
+    ]
+    const y = Math.max(0, Math.min(Math.max(top, Math.floor((rows - box.length) / 2)), rows - 1 - box.length))
+    return lines.map((line, i) => {
+      const part = box[i - y]
+      return part === undefined ? line : `${clip(line, x)}${part}`
+    })
   }
 }

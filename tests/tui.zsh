@@ -30,6 +30,7 @@ typeset -ga SCENARIOS=(
   'browse-scope   market browse   v C-s C-s'
   'browse-markets  few    browse   S-Right S-Right'
   'browse-errors   few    browse   S-Right S-Right S-Right'
+  'browse-keys     few    browse   ?'
   'list-few        few    list'
   'hub-few         few    hub'
   'hub-empty       empty  hub'

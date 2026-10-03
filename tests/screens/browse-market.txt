@@ -21,4 +21,4 @@
                                                                │
                                                                │
                                                                │
- ⇧←→ switch · ↑↓ move · ←→ fold · space pick · ctrl+s market · type to filter · enter apply · esc …
+ [BROWSE] space pick   enter close   ⇧←→ tabs   ? keys                                   esc cancel

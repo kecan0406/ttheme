@@ -242,12 +242,12 @@ panel below, preview's settings, the palette editor and find's grid.
 |---|---|---|
 | any character | filters | filters (each tab keeps its own) |
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
-| `←` `→` | close or open a series; `→` on a palette opens its panel | fold a series; on a market, auto-update |
-| `enter` | apply the palette, asking where | review every pick and market change, then apply it; close the result |
-| `esc` | clear the filter, then restore and close | cancel |
+| `←` `→` | close or open a series; `→` on a palette opens its panel | close or open a series; on a market, auto-update |
+| `enter` | open or close a series; on a palette, apply it, asking where | open or close a series; elsewhere, review every pick and market change, then apply it; close the result |
+| `esc` | clear the filter, then restore and close | clear the filter, then cancel |
 | `space` | fold or open a series | pick |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
-| `?` | keys | — |
+| `?` | keys | keys |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
 | `ctrl+r` | — | update the market, or search GitHub again |

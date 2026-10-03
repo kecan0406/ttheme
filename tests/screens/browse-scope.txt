@@ -21,4 +21,4 @@
                                                                │
                                                                │
                                                                │
- ⇧←→ switch · ↑↓ move · ←→ fold · space pick · ctrl+s market · type to filter · enter apply · esc …
+ [BROWSE (FILTER)] space pick   enter close   ⇧←→ tabs   bksp edit   ? keys        esc clear filter

@@ -21,4 +21,4 @@
                                                                │
                                                                │
                                                                │
- ⇧←→ switch · ↑↓ move · type to filter · enter apply · esc cancel
+ [BROWSE] enter close   ⇧←→ tabs   ? keys                                                esc cancel

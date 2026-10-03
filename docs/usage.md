@@ -67,11 +67,14 @@ starts fresh each time: with picks or market changes staged, `tab` asks
 whether to apply them first — `y` applies and closes, `n` discards and moves
 on, `esc` stays. Inside browse, its own four tabs move with `shift+←`/`shift+→`.
 
-`esc` closes the tabs from either screen, and `enter` does what it does on that
-screen: preview applies the palette it landed on, browse applies its picks and
-closes. `ttheme preview` and `ttheme browse` open one screen on its own, with
-no tab row; `ttheme pin` is preview alone as well. Piped, `ttheme` prints the
-palettes, one per line, as name, series and source separated by tabs.
+The two screens share their keys wherever they do the same thing: `←`/`→`
+and `enter` open and close a series, `esc` clears the filter and, once it is
+clear, closes the tabs from either screen, and `?` lists the keys. On a palette
+`enter` does what it does on that screen: preview applies the palette it landed
+on, browse applies its picks and closes. `ttheme preview` and `ttheme browse`
+open one screen on its own, with no tab row; `ttheme pin` is preview alone as
+well. Piped, `ttheme` prints the palettes, one per line, as name, series and
+source separated by tabs.
 
 ## The mouse
 
@@ -386,8 +389,11 @@ still wins:
 
 The catalog is not installed wholesale: `init` installs the series you pick, and
 `init --yes` none at all. `ttheme browse` opens it as a full-screen live picker in
-four tabs — `shift+→` moves on, `shift+←` back, and each tab keeps its own filter;
-`↑`/`↓`, page up/down and home/end move through a list as they do in preview:
+four tabs — `shift+→` moves on, `shift+←` back, and each tab keeps its own filter.
+The rest is preview's: `↑`/`↓`, page up/down and home/end move through a list,
+`←`/`→` and `enter` open and close a series, `esc` clears the filter before it
+leaves, `?` lists the keys, and the last line names the keys of the row you are
+on:
 
 - **Catalog** is every palette of every market you added. Groups fold and
   unfold, typing filters (a query has no spaces, `space` is the pick key), the
@@ -414,18 +420,19 @@ four tabs — `shift+→` moves on, `shift+←` back, and each tab keeps its own
 - **Errors** collects what went wrong: a market that failed to update, an index
   that cannot be read, a palette file of yours that does not parse.
 
-Nothing is written until you apply. enter opens a review of everything staged
-across the tabs — the markets added and removed, the auto-update switches, and
-exactly the palettes marked (installing the new ones, removing the unmarked);
-enter again applies it, esc goes back to the tabs. The screen stays while it
-works: what it has done so far, and one line for the step in hand (a picture
-being fetched, `Downloading kita · danbooru 1234 · 3.1/8.4 MB · 1/2`), then
-what was applied, until enter closes it — and the same lines are left in your
-scrollback. With nothing staged enter simply leaves, and esc on the tabs leaves
-everything as it was. From 94 columns up, the panel on the right describes whatever the cursor is
-on — a palette's market, its gate score and failing rules, its pictures, and
-what enter will do to it; a narrower window gets the same as one line under the
-list:
+Nothing is written until you apply. enter on anything but a series opens a
+review of everything staged across the tabs — the markets added and removed, the
+auto-update switches, and exactly the palettes marked (installing the new ones,
+removing the unmarked); enter again applies it, esc goes back to the tabs. The
+screen stays while it works: what it has done so far, and one line for the step
+in hand (a picture being fetched,
+`Downloading kita · danbooru 1234 · 3.1/8.4 MB · 1/2`), then what was applied,
+until enter closes it — and the same lines are left in your scrollback. With
+nothing staged enter simply leaves, and esc on the tabs, with the filter clear,
+leaves everything as it was. From 94 columns up, the panel on the right
+describes whatever the cursor is on — a palette's market, its gate score and
+failing rules, its pictures, and what enter will do to it; a narrower window
+gets the same as one line under the list:
 
 ```
  [Catalog]  Installed   Markets   Errors
@@ -439,7 +446,7 @@ list:
  ▌    ● kita   ■ ■ ■ ■ ■ ■                                     │ ぼっち・ざ・ろっく!
                                                                │ Installed
                                                                │ Gate 9/9 · passes
- ⇧←→ switch · ↑↓ move · ←→ fold · space pick · type to filter · enter apply · esc cancel
+ [BROWSE (FILTER)] space pick   enter close   ⇧←→ tabs   ? keys          esc clear filter
 ```
 
 The counts stay honest: `1/6` is what the filter matched out of the catalog,

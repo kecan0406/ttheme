@@ -89,6 +89,11 @@ export function fit(text: string, width: number, pad = true): string {
   return `${head}${text.includes('\x1b') ? '\x1b[0m' : ''}…${pad ? ' '.repeat(width - 1 - used) : ''}`
 }
 
+export function clip(text: string, width: number): string {
+  const { head, used } = take(text, width)
+  return `${head}${text.includes('\x1b') ? RESET : ''}${' '.repeat(width - used)}`
+}
+
 export function spread(left: string, right: string, width: number): string {
   const room = width - cells(right) - 1
   return room <= 0 ? fit(left, width) : `${fit(left, room)} ${right}`

@@ -21,4 +21,4 @@
                                                                │
                                                                │
                                                                │
- ⇧←→ switch · ↑↓ move · space add/remove · ←→ auto-update · ctrl+r update · enter apply · esc canc…
+ [BROWSE] space remove   ←→ auto-update   ctrl+r update   enter close   ? keys           esc cancel
