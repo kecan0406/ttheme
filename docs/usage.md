@@ -562,24 +562,36 @@ grow pass the gate. enter moves on to the slots, and the seeds stay behind;
 `edit` and `--from` open on the slots. preview's [panel](#palette-edit) opens
 the same editor on a palette from a market, for its tone; the keys are:
 
-- From 96×28 on, the editor is a builder: the twenty slots on the left in three
-  groups (Base, Normal, Bright), each as its OKLCH lightness, chroma and hue with
+- From 96×28 on, the editor is a builder: the twenty slots on the left — the four
+  base colors, then a row for each ANSI color with its normal and bright side by
+  side and `⇠` between them while the bright follows the normal — each slot as its
+  OKLCH lightness, chroma and hue (lightness and hue below 140 columns) with
   ✗ where its own checks miss and a yellow ● where it differs from the colors it opened with — for a tone, the ones its market gives;
   the preview on the right; a bar on top. At 130×38 the preview is all five scenes
   at once — Shell, Code, Diff, Logs and Monitor — under a strip of the sixteen ANSI
   colors, the selection and the cursor, so every slot is drawn somewhere; narrower,
   it shows one scene at a time (`⇧←→`, or a click on its tab). Below 96×28 the editor keeps
   its older layout, the slots beside the slot's details.
-- `↑↓` (or `j`/`k`) picks a slot and `←→` switches to its normal or bright; a click
-  on a slot opens it, `enter` or `tab` too. The picker opens under the slot: a
-  plane of lightness (up) by chroma (right) at the slot's hue, with `░` where
-  sRGB ends and `○` for the chroma held while you tune, a hue bar, the `◐` contrast
+- `↑↓` (or `j`/`k`) picks a row and `←→` its normal or bright, as in the older
+  layout; a search or `m` keeps a row while either of its colors matches; a click
+  on a slot opens it, `enter` or `tab` too. The picker floats over the list under
+  the slot (above it when there is no room below), and the rows beneath stay where
+  they are; a click outside it keeps the color and closes it, a click on another
+  slot moves it there, and one on the slot's own row closes it. It holds a
+  square of lightness (up) by chroma (right) at the slot's hue, where right is
+  the share of the most chroma sRGB shows at that lightness and hue — so every
+  point is a color, and the right edge is as vivid as that lightness goes — a
+  hue bar, the `◐` contrast
   against the color it is read against with the gate's floor marked, the color as
-  Hex, RGB or OKLCH, and what the gate says when the slot misses. `↑↓` move
+  Hex, RGB or OKLCH (a click on it types one), the link to its normal or bright
+  (`l`), and what the gate says when the slot misses. In Ghostty, kitty, iTerm2
+  and Konsole it is drawn with pictures, as a raised panel with a smooth plane,
+  round handles, a rainbow hue bar and the formats as one segmented control;
+  elsewhere, and inside tmux, it is drawn in text. `↑↓` move
   lightness, `←→` chroma, `⇧←→` hue by five (`,` and `.` by one), `pgup`/`pgdn`
   lightness by five, `tab` goes to `◐`, `home`/`end` take the last channel
   moved to its ends, `0`–`9` jump along it, enter keeps and esc puts back every
-  slot the tune moved. On `◐`, `←→` move lightness until the contrast with the
+  slot the tune moved; `s` keeps and saves. On `◐`, `←→` move lightness until the contrast with the
   color the slot is read against changes, `home` sets the gate's floor and `1`–`9`
   that ratio. `a` widens what moves — this slot, its pair, the six normal or bright
   accents, or all twelve — and each moves by the same step, keeping its own color.
@@ -611,7 +623,9 @@ the same editor on a palette from a market, for its tone; the keys are:
 - Behind the editor lies the palette's own picture, framed as the terminal
   shows it and tinted with the colors being edited, so a change to the
   background, the cursor or a signature color shows on it at once (Ghostty,
-  kitty, iTerm2, Konsole and WezTerm); `b` hides it and brings it back.
+  kitty, iTerm2, Konsole and WezTerm); `b` hides it and brings it back. The
+  builder frames it in its preview, as if the preview were the window, and the
+  scenes leave their background to it.
 - Pictures come in without leaving the editor: `p` opens `find` on the colors
   being edited, and a picture dropped on the window or pasted — the file, its
   path or its link, or the clipboard's with ctrl+v or an empty paste — opens

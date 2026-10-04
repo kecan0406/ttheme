@@ -56,6 +56,31 @@ test('the editor lays the draft background under its picture, and tints a copy a
   backdrop.close()
 })
 
+test('the builder frames the picture in its preview and keeps it off the slot list', () => {
+  const { home: at } = home()
+  const backdrop = Backdrop.of({ TERM_PROGRAM: 'ghostty' }, at, NAME, ['ghostty'])
+  assert.ok(backdrop)
+  backdrop.load()
+  backdrop.measured({ w: 10, h: 20 })
+  const list = listOf(colors)
+  const area = { col: 30, row: 2, cols: 50, rows: 21 }
+  const framed = backdrop.draw(list, SIGNATURE, [], 80, 24, area)
+  assert.ok(framed.includes('\x1b[3;31H\x1b_Ga=p,'))
+  assert.match(framed, /,x=16,y=0,w=23,h=20,c=50,r=21,/)
+  backdrop.resized()
+  const whole = backdrop.draw(list, SIGNATURE, [], 80, 24)
+  assert.ok(whole.includes('\x1b[1;1H\x1b_Ga=p,'))
+  assert.match(whole, /,c=80,r=24,/)
+  backdrop.close()
+  const wez = Backdrop.of({ WEZTERM_PANE: '1' }, at, NAME, ['wezterm'])
+  assert.ok(wez)
+  wez.load()
+  wez.measured({ w: 10, h: 20 })
+  const view = /ttheme_view=([A-Za-z0-9+/=]+)/.exec(wez.draw(list, SIGNATURE, [], 80, 24, area))?.[1] ?? ''
+  assert.match(Buffer.from(view, 'base64').toString(), /\|800\|480\|500\|250\|300\|40\|3$/)
+  wez.close()
+})
+
 test('WezTerm gets the draft as its view, and Warp is left to its own picture', () => {
   const { home: at, image } = home()
   const backdrop = Backdrop.of({ WEZTERM_PANE: '1' }, at, NAME, ['wezterm'])

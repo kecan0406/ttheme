@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { fit } from '../ansi.ts'
-import { lift, marking, zone, zoneAt } from './zones.ts'
+import { cover, lift, marking, zone, zoneAt } from './zones.ts'
 
 function spans(line: () => string): { text: string; spans: string[] } {
   const { drawn, targets } = marking(line)
@@ -38,4 +38,16 @@ test('the smallest zone under the pointer wins, and the later of two the same si
   assert.equal(zoneAt(zones, 2, 3)?.target, 'later')
   assert.equal(zoneAt(zones, 4, 9)?.target, 'tile')
   assert.equal(zoneAt(zones, 5, 0), undefined)
+})
+
+test('cover lays one line over another, keeping the colors and zones on both sides of it', () => {
+  const got = spans(() => cover(`\x1b[31m${zone('row', 'abcdefgh')}\x1b[39m`, 2, zone('pop', 'XY')))
+  assert.equal(got.text, '\x1b[31mab\x1b[0mXY\x1b[0m\x1b[31mefgh\x1b[39m')
+  assert.deepEqual(got.spans, ['row 3:0+2', 'pop 3:2+2', 'row 3:4+4'])
+})
+
+test('cover pads a short line and blanks the half of a wide character it cuts', () => {
+  assert.equal(cover('ab', 4, 'Z'), 'ab  Z')
+  assert.equal(cover('カタカ', 1, 'x'), ' xタカ')
+  assert.equal(cover('カタカ', 2, 'x'), 'カx カ')
 })

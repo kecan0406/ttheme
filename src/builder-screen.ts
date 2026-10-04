@@ -1,6 +1,7 @@
 import { cells, fit, spread, wrapText } from './ansi.ts'
 import { type Layout, layoutOf, linesOf, type Tile, tabNames, usesSlot, validSpot } from './builder-layout.ts'
 import type { Hex } from './color.ts'
+import type { Area } from './editor-backdrop.ts'
 import {
   channelSamples,
   contrastLine,
@@ -21,6 +22,7 @@ import { srgb } from './fix.ts'
 import {
   BASE,
   CHANNELS,
+  CONTRAST,
   colorsOf,
   type Format,
   PAIRS,
@@ -28,21 +30,30 @@ import {
   SLOT_NAMES,
   slotLabel,
 } from './palette-editor.ts'
+import { type Art, PLANE_BOTTOM, PLANE_TOP, reach, shareOf } from './picker-art.ts'
 import type { Colors } from './seeds.ts'
-import { keyZone, zone } from './tui/zones.ts'
+import { cover, keyZone, zone } from './tui/zones.ts'
 
-const PLANE_TOP = 0.98
-const PLANE_BOTTOM = 0.12
-const PLANE_CHROMA = 0.37
 const RESET = '\x1b[0m'
 const YELLOW = '\x1b[33m'
 const POPOVER = 34
+const PICKER_COL = 2
+const PLANE_MOST = 6
+const PLANE_LEAST = 3
+const ART_MOST = 7
+const HINTS = '↑↓ L  ←→ C  ⇧←→ H  tab ◐'
 
-const GROUPS = [
-  { id: 'base', label: 'Base', slots: [0, 1, 2, 3] },
-  { id: 'normal', label: 'Normal', slots: [4, 5, 6, 7, 8, 9, 10, 11] },
-  { id: 'bright', label: 'Bright', slots: [12, 13, 14, 15, 16, 17, 18, 19] },
-]
+interface Part {
+  row: number
+  col: number
+  cols: number
+  rows: number
+}
+
+interface Popup {
+  lines: string[]
+  parts?: { plane: Part; hue: Part; contrast: Part; tabs: Part; field: Part; divider: number | undefined }
+}
 
 interface Piece {
   text: string
@@ -108,26 +119,25 @@ function slotShort(slot: number): string {
   return slot < BASE.length ? (BASE[slot] as string) : (PAIRS[(slot - BASE.length) % 8] as string)
 }
 
-function keyText(e: PaletteEditor, slot: number): string {
-  const normal = e.linkOf(slot)
-  if (normal !== undefined) {
-    return `⇠ ${slotShort(normal)}`
-  }
-  return slot < BASE.length ? '' : `ansi ${slot - BASE.length}`
+function swatch(e: PaletteEditor, p: Paint, slot: number, restore: string): string {
+  const glyph = e.signature.includes(SLOT_NAMES[slot] as string) ? '◆' : p.color ? '■' : ' '
+  return p.color ? `${p.fg(e.list[slot] as Hex)}${glyph}${restore}` : glyph
 }
 
-function rowText(e: PaletteEditor, p: Paint, c: Colors, slot: number, side: number, missed: Set<number>): string {
-  const hex = e.list[slot] as Hex
+function markOf(e: PaletteEditor, p: Paint, slot: number, missed: Set<number>, restore: string): string {
+  return missed.has(slot) ? p.bold('✗') : e.changed(slot) ? (p.color ? `${YELLOW}●${restore}` : '●') : ' '
+}
+
+function gutterOf(p: Paint, c: Colors, here: boolean): string {
+  return here ? (p.color ? `${p.fg(c.cursor)}▌\x1b[39m ` : '▌ ') : '  '
+}
+
+function baseRow(e: PaletteEditor, p: Paint, c: Colors, slot: number, side: number, missed: Set<number>): string {
   const here = slot === e.slot()
-  const bad = missed.has(slot)
-  const glyph = e.signature.includes(SLOT_NAMES[slot] as string) ? '◆' : p.color ? '■' : ' '
   const restore = here ? p.fg(c.foreground) : '\x1b[39m'
-  const sw = p.color ? `${p.fg(hex)}${glyph}${restore}` : glyph
-  const gutter = here ? (p.color ? `${p.fg(c.cursor)}▌${restore} ` : '▌ ') : '  '
-  const mark = bad ? p.bold('✗') : e.changed(slot) ? (p.color ? `${YELLOW}●${restore}` : '●') : ' '
-  const name = slotShort(slot).padEnd(11)
-  const key = side >= 42 ? p.dim(keyText(e, slot).padEnd(10)) : ''
-  const body = `${gutter}${sw} ${here ? p.bold(name) : name}${key}${lchShort(e.lch[slot] as { l: number; c: number; h: number })} ${mark}`
+  const name = slotShort(slot).padEnd(12)
+  const at = e.lch[slot] as { l: number; c: number; h: number }
+  const body = `${gutterOf(p, c, here)}${swatch(e, p, slot, restore)} ${here ? p.bold(name) : name}${lchShort(at)} ${markOf(e, p, slot, missed, restore)}`
   const line = fit(body, side)
   return spot(
     { kind: 'open', slot },
@@ -135,11 +145,39 @@ function rowText(e: PaletteEditor, p: Paint, c: Colors, slot: number, side: numb
   )
 }
 
-function header(e: PaletteEditor, p: Paint, group: (typeof GROUPS)[number], shown: number): string {
-  const folded = e.folded.has(group.id)
-  return spot(
-    { kind: 'fold', group: group.id },
-    `  ${p.dim(folded ? '▸' : '▾')} ${p.bold(group.label)} ${p.dim(String(shown))}`,
+const NAME = 8
+const FULL_SIDE = 44
+
+function cellWidth(side: number): number {
+  return side >= FULL_SIDE ? 16 : 11
+}
+
+function cellText(e: PaletteEditor, p: Paint, c: Colors, slot: number, side: number, missed: Set<number>): string {
+  const width = cellWidth(side)
+  if (!e.visible(slot)) {
+    return ' '.repeat(width)
+  }
+  const here = slot === e.slot()
+  const restore = here && p.color ? p.fg(c.foreground) : '\x1b[39m'
+  const at = e.lch[slot] as { l: number; c: number; h: number }
+  const short = (n: number, digits: number) => n.toFixed(digits).replace(/^0(?=\.)/, '')
+  const hue = `${at.h.toFixed(0).padStart(3)}°`
+  const value = side >= FULL_SIDE ? `${short(at.l, 2)} ${short(at.c, 3)} ${hue}` : `${short(at.l, 2)} ${hue}`
+  const text = `${swatch(e, p, slot, restore)} ${value}${markOf(e, p, slot, missed, restore)}`
+  const shown = here && p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)}${text}\x1b[39;49m` : text
+  return spot({ kind: 'open', slot }, shown)
+}
+
+function pairRow(e: PaletteEditor, p: Paint, c: Colors, row: number, side: number, missed: Set<number>): string {
+  const normal = BASE.length + row
+  const bright = normal + 8
+  const here = e.row === normal
+  const name = (PAIRS[row] as string).padEnd(NAME)
+  const link = e.linkOf(bright) !== undefined ? p.dim('⇠') : ' '
+  const first = spot({ kind: 'open', slot: normal }, `${gutterOf(p, c, here)}${here ? p.bold(name) : name}`)
+  return fit(
+    `${first}${cellText(e, p, c, normal, side, missed)}${link} ${cellText(e, p, c, bright, side, missed)}`,
+    side,
   )
 }
 
@@ -147,57 +185,47 @@ function lightnessAt(sample: number, rows: number): number {
   return PLANE_TOP - (sample * (PLANE_TOP - PLANE_BOTTOM)) / (rows * 2 - 1)
 }
 
-export function planeAt(row: number, rows: number, x: number, width: number): { lightness: number; chroma: number } {
+export function planeAt(
+  row: number,
+  rows: number,
+  x: number,
+  width: number,
+  hue: number,
+): { lightness: number; chroma: number } {
   const at = Math.max(0, Math.min(rows - 1, row))
-  return {
-    lightness: (lightnessAt(at * 2, rows) + lightnessAt(at * 2 + 1, rows)) / 2,
-    chroma: (Math.max(0, Math.min(width - 1, x)) / Math.max(1, width - 1)) * PLANE_CHROMA,
-  }
+  const lightness = (lightnessAt(at * 2, rows) + lightnessAt(at * 2 + 1, rows)) / 2
+  const share = Math.max(0, Math.min(width - 1, x)) / Math.max(1, width - 1)
+  return { lightness, chroma: share * reach(lightness, hue) }
 }
 
 function planeLines(
-  e: PaletteEditor,
   p: Paint,
   at: { l: number; c: number; h: number },
   hex: Hex,
   width: number,
   rows: number,
 ): string[] {
-  const held = e.mode === 'tune' && e.held !== undefined && e.held - at.c > 0.0005 ? e.held : undefined
   const sample = Math.max(
     0,
     Math.min(rows * 2 - 1, Math.round(((PLANE_TOP - at.l) / (PLANE_TOP - PLANE_BOTTOM)) * (rows * 2 - 1))),
   )
   const markRow = Math.floor(sample / 2)
-  const markCol = Math.round((Math.min(PLANE_CHROMA, at.c) / PLANE_CHROMA) * (width - 1))
-  const heldCol = held === undefined ? -1 : Math.round((Math.min(PLANE_CHROMA, held) / PLANE_CHROMA) * (width - 1))
+  const markCol = Math.round(shareOf(at.l, at.c, at.h) * (width - 1))
+  const color = (l: number, share: number) => {
+    const one = srgb(l, share * reach(l, at.h), at.h) ?? [0, 0, 0]
+    return `#${one.map((v) => v.toString(16).padStart(2, '0')).join('')}` as Hex
+  }
   return Array.from({ length: rows }, (_, r) => {
     let line = ''
     for (let k = 0; k < width; k++) {
-      const chroma = (k / Math.max(1, width - 1)) * PLANE_CHROMA
       if (r === markRow && k === markCol) {
         line += p.color ? `${p.bg(hex)}${p.fg(ink(hex))}●\x1b[39;49m` : '●'
         continue
       }
-      if (r === markRow && k === heldCol) {
-        line += p.color ? `${p.fg('#aaaaaa')}○\x1b[39m` : '○'
-        continue
-      }
-      const upper = srgb(lightnessAt(r * 2, rows), chroma, at.h)
-      const lower = srgb(lightnessAt(r * 2 + 1, rows), chroma, at.h)
-      if (!p.color) {
-        line += upper && lower ? '·' : '░'
-      } else if (upper && lower) {
-        const up = `#${upper.map((v) => v.toString(16).padStart(2, '0')).join('')}`
-        const down = `#${lower.map((v) => v.toString(16).padStart(2, '0')).join('')}`
-        line += `${p.fg(up)}${p.bg(down)}▀\x1b[39;49m`
-      } else if (upper || lower) {
-        const one = (upper ?? lower) as number[]
-        const color = `#${one.map((v) => v.toString(16).padStart(2, '0')).join('')}`
-        line += `${p.fg(color)}${upper ? '▀' : '▄'}\x1b[39m`
-      } else {
-        line += `${p.fg('#555555')}░\x1b[39m`
-      }
+      const share = k / Math.max(1, width - 1)
+      line += p.color
+        ? `${p.fg(color(lightnessAt(r * 2, rows), share))}${p.bg(color(lightnessAt(r * 2 + 1, rows), share))}▀\x1b[39;49m`
+        : '·'
     }
     return spot({ kind: 'plane', row: r, rows }, line)
   })
@@ -214,15 +242,9 @@ function formatText(e: PaletteEditor, hex: Hex, at: { l: number; c: number; h: n
   return hex
 }
 
-function pickerLines(e: PaletteEditor, p: Paint, c: Colors, side: number, room: number): string[] {
+function notes(e: PaletteEditor, p: Paint, width: number): string[] {
   const slot = e.slot()
   const at = e.lch[slot] as { l: number; c: number; h: number }
-  const hex = e.list[slot] as Hex
-  const width = side - 8
-  const outer = width + 4
-  const edge = p.dim('│')
-  const boxed = (content: string) => ` ${edge} ${fit(content, width)} ${edge}`
-  const pair = e.pair(slot)
   const checks = detailChecks(e, slot, at).filter((check) => check.ok === false || check.text.startsWith('Chroma ○'))
   const said = checks.flatMap((check) =>
     wrapText(check.text, width - 2).map(
@@ -230,14 +252,55 @@ function pickerLines(e: PaletteEditor, p: Paint, c: Colors, side: number, room: 
     ),
   )
   const hint = fixHint(e, slot)
-  const extra = [...said.slice(0, 3), ...(hint ? [p.dim(hint)] : [])]
-  const fixed = 6 + (pair ? 1 : 0) + extra.length
-  const rows = Math.max(3, Math.min(6, room - fixed))
+  return [...said.slice(0, 3), ...(hint ? [p.dim(hint)] : [])]
+}
+
+function linkLine(e: PaletteEditor, p: Paint, width: number): string | undefined {
+  const pair = e.pair(e.slot())
+  if (!pair) {
+    return undefined
+  }
+  const bright = e.slot() >= pair.bright
+  const other = slotShort(bright ? pair.normal : pair.bright).toLowerCase()
+  const lift = `${pair.lift >= 0 ? '+' : ''}${pair.lift.toFixed(2)}`
+  const room = width - 9
+  const choices = bright
+    ? pair.on
+      ? [`⇠ Linked to ${other} · L ${lift}`, `⇠ ${other} · L ${lift}`, `⇠ ${other}`]
+      : [`Not linked to ${other}`, `Not linked`]
+    : pair.on
+      ? [`Bright follows · L ${lift}`, `Bright follows`]
+      : ['Its bright moves on its own', 'Moves on its own']
+  const text = choices.find((choice) => cells(choice) <= room) ?? choices[choices.length - 1] ?? ''
+  return spread(p.dim(text), keyZone('l', `${p.bold('l')} ${p.dim(pair.on ? 'unlink' : 'link')}`), width)
+}
+
+function valueLine(e: PaletteEditor, p: Paint, width: number): string {
+  const slot = e.slot()
+  const hex = e.list[slot] as Hex
+  const at = e.lch[slot] as { l: number; c: number; h: number }
+  const typed = e.typing !== undefined ? p.bold(`${e.typing}▏`) : keyZone('#', p.bold(formatText(e, hex, at)))
+  const was = e.start[slot] as Hex
+  const swatch = p.color ? `${p.fg(was)}■\x1b[39m ` : ''
+  return spread(typed, was !== hex ? p.dim(`was ${swatch}${was}`) : '', width)
+}
+
+function pickerLines(e: PaletteEditor, p: Paint, c: Colors, outer: number, room: number): Popup {
+  const slot = e.slot()
+  const at = e.lch[slot] as { l: number; c: number; h: number }
+  const hex = e.list[slot] as Hex
+  const width = outer - 4
+  const edge = p.dim('│')
+  const boxed = (content: string) => `${edge} ${fit(content, width)} ${edge}`
+  const link = linkLine(e, p, width)
+  const fixed = 6 + (link ? 1 : 0)
+  const extra = notes(e, p, width).slice(0, Math.max(0, room - fixed - PLANE_LEAST))
+  const rows = Math.max(PLANE_LEAST, Math.min(PLANE_MOST, room - fixed - extra.length))
   const left = ' L × C '
   const right = ` H ${at.h.toFixed(0)}° `
   const dashes = Math.max(0, outer - 4 - cells(left) - cells(right))
-  const lines = [` ${p.dim('╭─')}${p.dim(left)}${p.dim('─'.repeat(dashes))}${p.dim(right)}${p.dim('─╮')}`]
-  for (const line of planeLines(e, p, at, hex, width, rows)) {
+  const lines = [`${p.dim('╭─')}${p.dim(left)}${p.dim('─'.repeat(dashes))}${p.dim(right)}${p.dim('─╮')}`]
+  for (const line of planeLines(p, at, hex, width, rows)) {
     lines.push(boxed(line))
   }
   const hue = CHANNELS[2] as (typeof CHANNELS)[number]
@@ -258,36 +321,155 @@ function pickerLines(e: PaletteEditor, p: Paint, c: Colors, side: number, room: 
   const tab = (label: string, format: Format) =>
     spot({ kind: 'format', format }, e.format === format ? pill(p, c, label) : p.dim(` ${label} `))
   lines.push(boxed(`${tab('Hex', 'hex')} ${tab('RGB', 'rgb')} ${tab('OKLCH', 'oklch')}`))
-  const typed = e.typing !== undefined ? p.bold(`${e.typing}▏`) : p.bold(formatText(e, hex, at))
-  const was = e.start[slot] as Hex
-  const swatch = p.color ? `${p.fg(was)}■\x1b[39m ` : ''
-  lines.push(boxed(spread(typed, was !== hex ? p.dim(`was ${swatch}${was}`) : '', width)))
-  if (pair) {
-    const bright = slot >= pair.bright
-    const other = slotShort(bright ? pair.normal : pair.bright).toLowerCase()
-    const lift = `${pair.lift >= 0 ? '+' : ''}${pair.lift.toFixed(2)}`
-    const room = width - 9
-    const choices = bright
-      ? pair.on
-        ? [`⇠ Linked to ${other} · L ${lift}`, `⇠ ${other} · L ${lift}`, `⇠ ${other}`]
-        : [`Not linked to ${other}`, `Not linked`]
-      : pair.on
-        ? [`Bright follows · L ${lift}`, `Bright follows`]
-        : ['Its bright moves on its own', 'Moves on its own']
-    const text = choices.find((choice) => cells(choice) <= room) ?? choices[choices.length - 1] ?? ''
-    lines.push(boxed(spread(p.dim(text), keyZone('l', `${p.bold('l')} ${p.dim(pair.on ? 'unlink' : 'link')}`), width)))
+  lines.push(boxed(valueLine(e, p, width)))
+  if (link) {
+    lines.push(boxed(link))
   }
   for (const line of extra) {
     lines.push(boxed(line))
   }
-  const bottom = fit(' ↑↓ L  ←→ C  ⇧←→ H  tab ◐ ', outer - 4, false)
-  lines.push(
-    ` ${p.dim('╰─')}${p.dim(bottom)}${p.dim('─'.repeat(Math.max(0, outer - 4 - cells(bottom))))}${p.dim('─╯')}`,
-  )
-  return lines
+  const bottom = fit(` ${HINTS} `, outer - 4, false)
+  lines.push(`${p.dim('╰─')}${p.dim(bottom)}${p.dim('─'.repeat(Math.max(0, outer - 4 - cells(bottom))))}${p.dim('─╯')}`)
+  return { lines: lines.map((line) => spot({ kind: 'picker' }, line)) }
 }
 
-function sidebar(e: PaletteEditor, p: Paint, c: Colors, side: number, height: number): string[] {
+const FORMATS: [string, Format][] = [
+  ['Hex', 'hex'],
+  ['RGB', 'rgb'],
+  ['OKLCH', 'oklch'],
+]
+
+function artLines(e: PaletteEditor, p: Paint, c: Colors, outer: number, room: number): Popup {
+  const at = e.lch[e.slot()] as { l: number; c: number; h: number }
+  const width = outer - 2
+  const link = linkLine(e, p, width)
+  const fixed = 6 + (link ? 1 : 0)
+  const extra = notes(e, p, width).slice(0, Math.max(0, room - fixed - PLANE_LEAST))
+  const rows = Math.max(PLANE_LEAST, Math.min(ART_MOST, room - fixed - extra.length))
+  const padded = (content: string) => ` ${fit(content, width)} `
+  const lines = [padded(spread(p.dim('L × C'), p.dim(`H ${at.h.toFixed(0)}°`), width))]
+  for (let row = 0; row < rows; row++) {
+    lines.push(padded(spot({ kind: 'plane', row, rows }, ' '.repeat(width))))
+  }
+  const hue = lines.length
+  lines.push(padded(spot({ kind: 'bar', channel: 2 }, ' '.repeat(width))))
+  const contrast = lines.length
+  const here = e.mode === 'tune' && e.channel === CONTRAST
+  const grip: EditorSpot = { kind: 'channel', channel: CONTRAST }
+  const ratio = `${e.ratio().toFixed(2)}:1`.padStart(8)
+  const track = width - 11
+  lines.push(
+    padded(
+      `${spot(grip, here ? p.bold('◐') : p.dim('◐'))} ${spot({ kind: 'bar', channel: CONTRAST }, ' '.repeat(track))} ${spot(grip, here ? p.bold(ratio) : p.dim(ratio))}`,
+    ),
+  )
+  const tabs = lines.length
+  const segment = Math.floor(width / FORMATS.length)
+  lines.push(
+    padded(
+      FORMATS.map(([label, format], i) => {
+        const room = i === FORMATS.length - 1 ? width - segment * i : segment
+        const before = Math.floor((room - cells(label)) / 2)
+        const text = `${' '.repeat(before)}${label}${' '.repeat(room - before - cells(label))}`
+        const shown =
+          e.format === format
+            ? p.color
+              ? `${p.fg(c.cursor)}${p.bold(text)}\x1b[39m`
+              : `[${label}]`.padEnd(room)
+            : p.dim(text)
+        return spot({ kind: 'format', format }, shown)
+      }).join(''),
+    ),
+  )
+  const field = lines.length
+  lines.push(padded(` ${valueLine(e, p, width - 2)} `))
+  const divider = link ? lines.length : undefined
+  if (link) {
+    lines.push(padded(link))
+  }
+  for (const line of extra) {
+    lines.push(padded(line))
+  }
+  lines.push(padded(p.dim(HINTS)))
+  return {
+    lines: lines.map((line) => spot({ kind: 'picker' }, line)),
+    parts: {
+      plane: { row: 1, col: 1, cols: width, rows },
+      hue: { row: hue, col: 1, cols: width, rows: 1 },
+      contrast: { row: contrast, col: 3, cols: track, rows: 1 },
+      tabs: { row: tabs, col: 1, cols: width, rows: 1 },
+      field: { row: field, col: 1, cols: width, rows: 1 },
+      divider,
+    },
+  }
+}
+
+function artOf(e: PaletteEditor, popup: Required<Popup>['parts'], row: number, col: number, height: number): Art {
+  const slot = e.slot()
+  const at = e.lch[slot] as { l: number; c: number; h: number }
+  const hex = e.list[slot] as Hex
+  const shown = colorsOf(e.shown())
+  const box = (part: Part) => ({ row: row + part.row, col: col + part.col, cols: part.cols, rows: part.rows })
+  const along = (ratio: number) => Math.log(Math.max(1, ratio)) / Math.log(21)
+  const floor = e.partner().floor
+  return {
+    panel: { row, col, cols: popup.plane.cols + 2, rows: height },
+    ground: shown.background,
+    ink: shown.foreground,
+    accent: shown.cursor,
+    plane: { ...box(popup.plane), h: at.h, l: at.l, c: at.c },
+    hue: { ...box(popup.hue), h: at.h, color: hex },
+    contrast: {
+      ...box(popup.contrast),
+      at: along(e.ratio()),
+      floor: floor === undefined ? undefined : along(floor),
+      color: hex,
+      lit: e.channel === CONTRAST,
+    },
+    tabs: { ...box(popup.tabs), active: FORMATS.findIndex(([, format]) => format === e.format), count: FORMATS.length },
+    field: box(popup.field),
+    divider: popup.divider === undefined ? undefined : row + popup.divider,
+  }
+}
+
+function picker(
+  e: PaletteEditor,
+  p: Paint,
+  c: Colors,
+  side: number,
+  lines: string[],
+  anchor: number | undefined,
+  height: number,
+  drawn: boolean,
+): { lines: string[]; art: Art | undefined } {
+  const top = 2
+  const at = anchor ?? top - 1
+  const below = height - 1 - at
+  const above = at - top
+  const outer = side - PICKER_COL - 1
+  const make = drawn ? artLines : pickerLines
+  const natural = make(e, p, c, outer, Number.POSITIVE_INFINITY)
+  const down = natural.lines.length <= below || (natural.lines.length > above && below >= above)
+  const room = down ? below : above
+  const pop = natural.lines.length <= room ? natural : make(e, p, c, outer, room)
+  const first = down ? at + 1 : at - pop.lines.length
+  const out = Array.from({ length: height }, (_, i) => lines[i] ?? '')
+  pop.lines.forEach((line, i) => {
+    const row = first + i
+    if (row >= 0 && row < height) {
+      out[row] = cover(out[row] as string, PICKER_COL, line)
+    }
+  })
+  return { lines: out, art: pop.parts && artOf(e, pop.parts, first, PICKER_COL, pop.lines.length) }
+}
+
+function sidebar(
+  e: PaletteEditor,
+  p: Paint,
+  c: Colors,
+  side: number,
+  height: number,
+): { lines: string[]; anchor: number | undefined } {
   const failing = e.failing().length
   const tab = (id: 'colors' | 'gate', label: string) =>
     spot({ kind: 'tab', tab: id }, e.tab === id ? pill(p, c, label) : p.dim(` ${label} `))
@@ -301,56 +483,32 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, side: number, height: nu
   )
   const body = height - 2
   if (e.tab === 'gate') {
-    return [tabs, search, ...gateLines(p, e, body, side)]
+    return { lines: [tabs, search, ...gateLines(p, e, body, side)], anchor: undefined }
   }
-  const rows: string[] = []
   const missed = e.misses()
-  let selAt = -1
-  let pickAt = -1
-  let pick: string[] = []
-  const total = GROUPS.reduce((n, g) => n + 1 + g.slots.filter((s) => e.visible(s)).length, 0)
-  const open = e.mode === 'tune' && e.visible(e.slot())
-  if (open) {
-    pick = pickerLines(e, p, c, side, Math.max(8, body - total))
-  }
-  for (const group of GROUPS) {
-    const slots = group.slots.filter((s) => e.visible(s))
-    if (slots.length === 0 && (e.changedOnly || e.search !== '')) {
-      continue
-    }
-    rows.push(header(e, p, group, slots.length))
-    if (e.folded.has(group.id)) {
-      continue
-    }
-    for (const slot of slots) {
+  const rows: string[] = []
+  let anchor: number | undefined
+  for (let slot = 0; slot < BASE.length; slot++) {
+    if (e.visible(slot)) {
       if (slot === e.slot()) {
-        selAt = rows.length
+        anchor = rows.length
       }
-      rows.push(rowText(e, p, c, slot, side, missed))
-      if (open && slot === e.slot()) {
-        pickAt = rows.length
-        rows.push(...pick)
-      }
+      rows.push(baseRow(e, p, c, slot, side, missed))
     }
   }
-  if (rows.length <= body) {
-    return [tabs, search, ...rows]
+  const pairs = PAIRS.map((_, row) => row).filter(
+    (row) => e.visible(BASE.length + row) || e.visible(BASE.length + row + 8),
+  )
+  if (pairs.length > 0) {
+    rows.push(p.dim(`${' '.repeat(2 + NAME)}${'Normal'.padEnd(cellWidth(side) + 2)}Bright`))
   }
-  const keep = pickAt >= 0 ? pick.length + 1 : 1
-  let start = Math.max(0, selAt - 2)
-  if (selAt + keep > start + body) {
-    start = selAt + keep - body
+  for (const row of pairs) {
+    if (e.row === BASE.length + row) {
+      anchor = rows.length
+    }
+    rows.push(pairRow(e, p, c, row, side, missed))
   }
-  start = Math.max(0, Math.min(start, rows.length - body))
-  const shown = rows.slice(start, start + body)
-  if (start > 0) {
-    shown[0] = p.dim(`  ↑ ${start} more`)
-  }
-  const below = rows.length - (start + body)
-  if (below > 0) {
-    shown[shown.length - 1] = p.dim(`  ↓ ${below} more`)
-  }
-  return [tabs, search, ...shown]
+  return { lines: [tabs, search, ...rows.slice(0, body)], anchor: anchor === undefined ? undefined : anchor + 2 }
 }
 
 function topBar(e: PaletteEditor, p: Paint, c: Colors, width: number): string {
@@ -397,9 +555,10 @@ function contentRows(
   layout: Layout,
   tile: Tile,
   pinned: ReturnType<typeof validSpot>,
+  behind: boolean,
 ): Cellrow[] {
   const lines = linesOf(tile.id, layout.tier, tile.width)
-  const base = p.color ? `${p.bg(c.background)}${p.fg(c.foreground)}` : ''
+  const base = p.color ? `${behind ? '\x1b[49m' : p.bg(c.background)}${p.fg(c.foreground)}` : ''
   const slot = e.slot()
   return Array.from({ length: tile.rows }, (_, i) => {
     const line = lines[i]
@@ -503,7 +662,23 @@ function tabStrip(e: PaletteEditor, p: Paint, c: Colors, width: number): Cellrow
   ]
 }
 
-export function renderBuilder(e: PaletteEditor, cols: number, rows: number, color: boolean): string[] | undefined {
+export function pictureArea(cols: number, rows: number): Area | undefined {
+  const layout = layoutOf(cols, rows, 0)
+  return layout && { col: layout.side + 1, row: 2, cols: layout.width, rows: rows - 3 }
+}
+
+export interface Look {
+  behind?: boolean
+  art?: boolean
+}
+
+export function renderBuilder(
+  e: PaletteEditor,
+  cols: number,
+  rows: number,
+  color: boolean,
+  look: Look = {},
+): { lines: string[]; art: Art | undefined } | undefined {
   const layout = layoutOf(cols, rows, e.scene)
   if (!layout) {
     return undefined
@@ -511,7 +686,14 @@ export function renderBuilder(e: PaletteEditor, cols: number, rows: number, colo
   const p = painter(color)
   const shown = e.shown()
   const c = colorsOf(shown)
-  const side = sidebar(e, p, colorsOf(e.list), layout.side, rows - 1)
+  const listed = colorsOf(e.list)
+  const bar = sidebar(e, p, listed, layout.side, rows - 1)
+  const popped =
+    e.mode === 'tune' && e.tab === 'colors'
+      ? picker(e, p, listed, layout.side, bar.lines, bar.anchor, rows - 1, color && look.art === true)
+      : { lines: bar.lines, art: undefined }
+  const side = popped.lines
+  const behind = look.behind === true
   const pinned = e.inspect ? validSpot(layout, e.spot) : undefined
   const grid: Cellrow[] = Array.from({ length: rows - 3 }, () => [{ text: ' '.repeat(layout.width), sgr: '' }])
   const put = (row: number, col: number, cellrow: Cellrow) => {
@@ -529,7 +711,7 @@ export function renderBuilder(e: PaletteEditor, cols: number, rows: number, colo
     if (tile.title >= 0) {
       put(tile.title, col, titleRow(p, tile))
     }
-    contentRows(e, p, c, layout, tile, pinned).forEach((row, i) => {
+    contentRows(e, p, c, layout, tile, pinned, behind).forEach((row, i) => {
       put(tile.row + i, col, row)
     })
     if (col > 0 && tile.width < layout.width) {
@@ -567,5 +749,5 @@ export function renderBuilder(e: PaletteEditor, cols: number, rows: number, colo
     const right = r === 0 ? top : r === 1 ? rule : drawn(grid[r - 2] ?? [], color)
     lines.push(`${fit(side[r] ?? '', layout.side)}${divider}${right}`)
   }
-  return lines
+  return { lines, art: popped.art }
 }

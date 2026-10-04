@@ -32,6 +32,7 @@ import {
 } from './own.ts'
 import { type Choice, type Edited, type EditorOptions, listOf } from './palette-editor.ts'
 import { commit, configHome, type Installed, readInstalled, refreshPictures, sync } from './palettes.ts'
+import { PickerLayer } from './picker-art.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
 import { showsPictures } from './terminal.ts'
@@ -170,12 +171,15 @@ async function editColors(options: EditorOptions, hosted = false): Promise<Edite
     : live
       ? { only: live.slots }
       : {}
-  const backdrop = tty ? Backdrop.of(process.env, home, options.name, readInstalled(home).terminals) : undefined
+  const terminals = readInstalled(home).terminals
+  const backdrop = tty ? Backdrop.of(process.env, home, options.name, terminals) : undefined
+  const layer = tty ? PickerLayer.of(process.env, terminals) : undefined
   try {
     return await runEditor(options, {
       color: !colorless(),
       ...screen,
       ...(backdrop ? { backdrop } : {}),
+      ...(layer ? { layer } : {}),
       ...(hosted ? { hosted: true as const } : {}),
     })
   } finally {

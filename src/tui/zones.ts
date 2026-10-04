@@ -109,6 +109,68 @@ export function lift(line: string, row: number, targets: readonly unknown[]): Li
   return { text, zones }
 }
 
+export function cover(line: string, col: number, over: string): string {
+  const open: string[] = []
+  const styles: string[] = []
+  let link = ''
+  const track = (sequence: string) => {
+    const mark = markOf(sequence)
+    if (mark === 0) {
+      open.pop()
+    } else if (mark !== undefined) {
+      open.push(sequence)
+    } else if (sequence.startsWith('\x1b]8;')) {
+      const uri = sequence
+        .slice(sequence.indexOf(';', 4) + 1)
+        .replace('\x07', '')
+        .replace('\x1b\\', '')
+      link = uri === '' ? '' : sequence
+    } else if (sequence.startsWith('\x1b[') && sequence.endsWith('m')) {
+      styles.push(sequence)
+    }
+  }
+  const reset = line.includes('\x1b') || over.includes('\x1b') ? '\x1b[0m' : ''
+  let head = ''
+  let x = 0
+  let i = 0
+  while (i < line.length && x < col) {
+    const sequence = sequenceAt(line, i)
+    if (sequence > 0) {
+      const text = line.slice(i, i + sequence)
+      track(text)
+      head += text
+      i += sequence
+      continue
+    }
+    const ch = String.fromCodePoint(line.codePointAt(i) as number)
+    if (x + cells(ch) > col) {
+      break
+    }
+    head += ch
+    x += cells(ch)
+    i += ch.length
+  }
+  head += ' '.repeat(col - Math.min(col, x))
+  const closing = `${'\x1b[?0y'.repeat(open.length)}${link ? '\x1b]8;;\x1b\\' : ''}${reset}`
+  const end = col + cells(over)
+  while (i < line.length && x < end) {
+    const sequence = sequenceAt(line, i)
+    if (sequence > 0) {
+      track(line.slice(i, i + sequence))
+      i += sequence
+      continue
+    }
+    const ch = String.fromCodePoint(line.codePointAt(i) as number)
+    x += cells(ch)
+    i += ch.length
+  }
+  if (i >= line.length) {
+    return `${head}${closing}${over}${reset}`
+  }
+  const resume = `${styles.join('')}${link}${open.join('')}${' '.repeat(Math.max(0, x - end))}`
+  return `${head}${closing}${over}${reset}${resume}${line.slice(i)}`
+}
+
 export function lifted(lines: readonly string[], targets: readonly unknown[]): { lines: string[]; zones: Zone[] } {
   const zones: Zone[] = []
   const texts = lines.map((line, row) => {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { oklch } from './color.ts'
+import { oklch, rgb } from './color.ts'
 import { renderEditor } from './editor-screen.ts'
 import { CONTRAST, type EditorOptions, listOf, PaletteEditor, parseColor } from './palette-editor.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
@@ -376,4 +376,29 @@ test('a share code pasted into the editor takes its colors, and a plain paste is
   assert.deepEqual(e.colors(), start)
   e.paste('#ff0000')
   assert.equal(e.colors().background, '#ff0000')
+})
+
+test('the picker floats over the slot list under its slot, and the rows under it keep their places', () => {
+  const e = editor()
+  e.viewport(140, 40)
+  press(e, ...RED)
+  const list = renderEditor(e, 140, 40, false)
+  const open = renderEditor(press(e, 'enter'), 140, 40, false)
+  const at = list.findIndex((line) => line.startsWith('▌ Red'))
+  const end = open.findIndex((line) => line.startsWith('  ╰─'))
+  assert.equal(open[at], list[at])
+  assert.match(open[at + 1] ?? '', /^ {2}╭─ L × C/)
+  assert.deepEqual(
+    open.slice(at + 1, end + 1).map((line) => line.slice(43, 44)),
+    list.slice(at + 1, end + 1).map((line) => line.slice(43, 44)),
+  )
+  assert.deepEqual(open.slice(end + 1, 39), list.slice(end + 1, 39))
+})
+
+test('a picture behind the builder shows through its preview, which leaves the background to the terminal', () => {
+  const ground = `48;2;${rgb(start.background).join(';')}m`
+  const opaque = renderEditor(editor(), 140, 40, true)
+  const clear = renderEditor(editor(), 140, 40, true, { behind: true })
+  assert.ok(opaque.slice(5, 20).some((line) => line.includes(ground)))
+  assert.ok(!clear.slice(5, 20).some((line) => line.includes(ground)))
 })

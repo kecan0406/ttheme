@@ -456,7 +456,6 @@ export class PaletteEditor {
   changedOnly = false
   search = ''
   searching = false
-  folded = new Set<string>()
   size: { cols: number; rows: number } | undefined
   copied: string | undefined
   readonly startPictures: number
@@ -727,11 +726,15 @@ export class PaletteEditor {
       this.tuneKey('enter')
     }
     this.notice = undefined
+    this.seat(slot)
+    this.lastEdit = undefined
+  }
+
+  private seat(slot: number): void {
     this.row = slot < BASE.length ? slot : BASE.length + ((slot - BASE.length) % 8)
     if (slot >= BASE.length) {
       this.col = slot - BASE.length >= 8 ? 1 : 0
     }
-    this.lastEdit = undefined
   }
 
   grip(channel: number): boolean {
@@ -858,18 +861,13 @@ export class PaletteEditor {
 
   private listKey(key: string): void {
     if (key === 'up' || key === 'down') {
-      for (let i = 0, row = this.row; i < ROWS; i++) {
-        row = (row + (key === 'up' ? ROWS - 1 : 1)) % ROWS
-        if (this.visible(this.slotAt(row, this.col))) {
-          this.row = row
-          break
-        }
-      }
+      const step = key === 'up' ? -1 : 1
+      this.land(this.row + step, step)
       this.lastEdit = undefined
     } else if (key === 'home' || key === 'end') {
-      this.row = key === 'home' ? 0 : ROWS - 1
+      this.land(key === 'home' ? 0 : ROWS - 1, key === 'home' ? 1 : -1)
     } else if (key === 'pgup' || key === 'pgdn') {
-      this.row = key === 'pgup' ? 0 : BASE.length
+      this.land(key === 'pgup' ? 0 : BASE.length, 1)
     } else if (key === 'left' || key === 'right') {
       const col = key === 'left' ? 0 : 1
       if (this.row >= BASE.length && this.visible(this.slotAt(this.row, col))) {
@@ -933,12 +931,23 @@ export class PaletteEditor {
   }
 
   private reseat(): void {
-    if (this.visible(this.slot())) {
-      return
+    if (!this.visible(this.slot())) {
+      this.land(this.row, 1)
     }
-    for (let row = 0; row < ROWS; row++) {
-      if (this.visible(this.slotAt(row, this.col))) {
-        this.row = row
+  }
+
+  private rowShown(row: number): boolean {
+    return this.visible(this.slotAt(row, 0)) || (row >= BASE.length && this.visible(this.slotAt(row, 1)))
+  }
+
+  private land(row: number, step: number): void {
+    for (let i = 0; i < ROWS; i++) {
+      const at = (((row + step * i) % ROWS) + ROWS) % ROWS
+      if (this.rowShown(at)) {
+        this.row = at
+        if (at >= BASE.length && !this.visible(this.slotAt(at, this.col))) {
+          this.col = 1 - this.col
+        }
         return
       }
     }
@@ -1096,14 +1105,6 @@ export class PaletteEditor {
     }
   }
 
-  fold(group: string): void {
-    if (this.folded.has(group)) {
-      this.folded.delete(group)
-    } else {
-      this.folded.add(group)
-    }
-  }
-
   slotsHere(): { text: number; ground: number } | undefined {
     const layout = this.layout()
     return layout && this.spot ? slotsAt(layout, this.spot) : undefined
@@ -1147,6 +1148,14 @@ export class PaletteEditor {
     }
   }
 
+  dismiss(): void {
+    if (this.mode !== 'tune' || this.overlay || this.quitting) {
+      return
+    }
+    this.typing = undefined
+    this.tuneKey('enter')
+  }
+
   plane(lightness: number, chroma: number): void {
     if (!this.grip(0)) {
       return
@@ -1166,7 +1175,9 @@ export class PaletteEditor {
     const normal = BASE.length + ((slot - BASE.length) % 8)
     const bright = normal + 8
     const names = `${slotLabel(bright).name} and ${slotLabel(normal).name.toLowerCase()}`
-    this.remember('link')
+    if (this.mode !== 'tune') {
+      this.remember('link')
+    }
     if (this.linkOf(bright) !== undefined) {
       this.unlinked.add(bright)
       this.notice = `${names} move apart`
@@ -1189,10 +1200,7 @@ export class PaletteEditor {
     for (let i = 1; i <= order.length; i++) {
       const slot = order[(((at + way * i) % order.length) + order.length) % order.length] as number
       if (bad.has(slot)) {
-        this.row = slot < BASE.length ? slot : BASE.length + ((slot - BASE.length) % 8)
-        if (slot >= BASE.length) {
-          this.col = slot - BASE.length >= 8 ? 1 : 0
-        }
+        this.seat(slot)
         return
       }
     }
@@ -1265,6 +1273,11 @@ export class PaletteEditor {
       this.rescope()
     } else if (key === '#') {
       this.typing = ''
+    } else if (key === 'l') {
+      this.linkKey()
+    } else if (key === 's' || key === 'ctrl-s') {
+      this.tuneKey('enter')
+      this.save()
     } else if (key === 'enter') {
       if (this.tuneFrom && this.list.every((c, i) => c === this.tuneFrom?.list[i])) {
         this.history.pop()
@@ -1532,7 +1545,7 @@ export class PaletteEditor {
     this.links.set(bright, normal)
     this.unlinked.delete(bright)
     this.offsets.set(bright, offsetOf(from, this.lch[bright] as Oklch))
-    this.col = 1
+    this.seat(bright)
     this.notice = `${slotLabel(bright).name} follows ${slotLabel(normal).name.toLowerCase()}`
   }
 

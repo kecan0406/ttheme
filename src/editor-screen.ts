@@ -1,5 +1,5 @@
 import { cells, fit, spread, wrapText } from './ansi.ts'
-import { planeAt, renderBuilder } from './builder-screen.ts'
+import { type Look, pictureArea, planeAt, renderBuilder } from './builder-screen.ts'
 import { type Hex, type Oklch, oklch, rgb } from './color.ts'
 import { brightDrift, hueGap, lookalikes, offRole, ROLE_HUES, roleOf } from './contrast.ts'
 import type { Backdrop } from './editor-backdrop.ts'
@@ -40,6 +40,7 @@ import {
   SLOT_NAMES,
   slotLabel,
 } from './palette-editor.ts'
+import type { Art, PickerLayer } from './picker-art.ts'
 import { SCENES, sceneAt, sceneParts } from './scenes.ts'
 import type { Colors } from './seeds.ts'
 import { grow, SEED_FIELDS, type Seeds } from './seeds.ts'
@@ -418,7 +419,7 @@ const KEYS: [string, string][] = [
   ],
   [
     'Tune',
-    'enter or tab · ↑↓ lightness · ←→ chroma · ⇧←→ hue by 5, , . by 1 · pgup pgdn lightness ×5 · tab ◐ contrast · home end the ends · 0-9 jump · enter keeps · esc undoes',
+    'enter or tab opens the picker over the list, under the slot · ↑↓ lightness · ←→ chroma · ⇧←→ hue by 5, , . by 1 · pgup pgdn lightness ×5 · tab ◐ contrast · home end the ends · 0-9 jump · enter keeps · esc undoes · a click outside it keeps',
   ],
   [
     'Contrast',
@@ -643,7 +644,17 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   }
 }
 
-export function renderEditor(e: PaletteEditor, cols: number, rows: number, color: boolean): string[] {
+export function renderEditor(e: PaletteEditor, cols: number, rows: number, color: boolean, look: Look = {}): string[] {
+  return drawEditor(e, cols, rows, color, look).lines
+}
+
+export function drawEditor(
+  e: PaletteEditor,
+  cols: number,
+  rows: number,
+  color: boolean,
+  look: Look = {},
+): { lines: string[]; art: Art | undefined } {
   const p = painter(color)
   if (cols < MIN_COLS || rows < MIN_ROWS) {
     const small = [
@@ -651,13 +662,13 @@ export function renderEditor(e: PaletteEditor, cols: number, rows: number, color
       `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${rows}`,
       p.dim('esc cancels'),
     ]
-    return Array.from({ length: rows }, (_, i) => fit(small[i] ?? '', cols))
+    return { lines: Array.from({ length: rows }, (_, i) => fit(small[i] ?? '', cols)), art: undefined }
   }
   e.viewport(cols, rows)
   if (!e.overlay && e.mode !== 'seeds') {
-    const built = renderBuilder(e, cols, rows, color)
+    const built = renderBuilder(e, cols, rows, color, look)
     if (built) {
-      return [...built, footer(p, e, cols)]
+      return { lines: [...built.lines, footer(p, e, cols)], art: built.art }
     }
   }
   const failing = e.failing().length
@@ -686,7 +697,17 @@ export function renderEditor(e: PaletteEditor, cols: number, rows: number, color
     lines.push(fit(body[i] ?? '', cols))
   }
   lines.push('', footer(p, e, cols))
-  return lines
+  return { lines, art: undefined }
+}
+
+const PICKER_KEYS = new Set(['tab', 'a', '#', 'l', 'enter', 'esc'])
+const PICKER_SPOTS = new Set(['picker', 'plane', 'bar', 'channel', 'format', 'scope', 'open', 'slot'])
+
+function closesPicker(target: EditorSpot | undefined): boolean {
+  if (!target) {
+    return true
+  }
+  return target.kind === 'key' ? !PICKER_KEYS.has(target.key) : !PICKER_SPOTS.has(target.kind)
 }
 
 export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void {
@@ -704,6 +725,9 @@ export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse
     return
   }
   const target = hit?.target as EditorSpot | undefined
+  if (event.action === 'press' && e.mode === 'tune' && e.roomy && !e.overlay && closesPicker(target)) {
+    e.dismiss()
+  }
   if (!hit || !target) {
     return
   }
@@ -724,7 +748,7 @@ export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse
     return
   }
   if (target.kind === 'plane') {
-    const at = planeAt(target.row + hit.y, target.rows, hit.x, hit.width)
+    const at = planeAt(target.row + hit.y, target.rows, hit.x, hit.width, (e.lch[e.slot()] as Oklch).h)
     e.plane(at.lightness, at.chroma)
   } else if (target.kind === 'bar') {
     e.slide(target.channel, along)
@@ -739,8 +763,6 @@ export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse
     e.openSlot(target.slot)
   } else if (target.kind === 'run') {
     e.point(target.spot)
-  } else if (target.kind === 'fold') {
-    e.fold(target.group)
   } else if (target.kind === 'entry') {
     e.entry = target.index
   } else if (target.kind === 'tab') {
@@ -770,6 +792,7 @@ export interface Surface {
   only?: readonly number[]
   look?: (shown: readonly Hex[]) => void
   backdrop?: Backdrop
+  layer?: PickerLayer
   color: boolean
   hosted?: true
 }
@@ -780,6 +803,7 @@ const LOOK_AFTER = 33
 export async function runEditor(options: EditorOptions, surface: Surface): Promise<Edited | undefined> {
   const editor = new PaletteEditor(options)
   const backdrop = surface.backdrop
+  const layer = surface.layer
   const burst = (typed: string) => editor.typing === undefined && typedDrop(typed)
   const terminalOptions = surface.hosted
     ? { modes: [PASTES, ...pointing()], assume: [HIDE_CURSOR, NO_WRAP], burst }
@@ -811,16 +835,31 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     }
     const screen = new Screen({
       write: (text) => terminal.write(text),
-      view: () =>
-        away
-          ? undefined
-          : {
-              lines: renderEditor(editor, terminal.cols, terminal.rows, surface.color),
-              after: () =>
-                (editor.pic
-                  ? backdrop?.draw(editor.shown(), editor.signature, editor.waive, terminal.cols, terminal.rows)
-                  : backdrop?.clear()) ?? '',
-            },
+      view: () => {
+        if (away) {
+          return undefined
+        }
+        const { lines, art } = drawEditor(editor, terminal.cols, terminal.rows, surface.color, {
+          behind: editor.pic && backdrop?.laid === true,
+          art: layer?.ready === true,
+        })
+        return {
+          lines,
+          after: () =>
+            `${
+              (editor.pic
+                ? backdrop?.draw(
+                    editor.shown(),
+                    editor.signature,
+                    editor.waive,
+                    terminal.cols,
+                    terminal.rows,
+                    pictureArea(terminal.cols, terminal.rows),
+                  )
+                : backdrop?.clear()) ?? ''
+            }${layer?.draw(art) ?? ''}`,
+        }
+      },
     })
     const changed = (keyed = false) => {
       if (keyed) {
@@ -840,9 +879,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
       away = true
       clearTimeout(timer)
       timer = undefined
-      if (backdrop) {
-        terminal.write(backdrop.clear())
-      }
+      terminal.write(`${backdrop?.clear() ?? ''}${layer?.clear() ?? ''}`)
       try {
         editor.found(await find(editor.edited(), start))
       } catch (error) {
@@ -861,18 +898,22 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     terminal.write(CLEAR)
     terminal.onResize(() => {
       backdrop?.resized()
+      terminal.write(layer?.clear() ?? '')
       screen.reset(CLEAR)
       screen.request()
     })
     if (backdrop) {
       backdrop.load()
       backdrop.ready = () => screen.request()
+    }
+    if (backdrop || layer) {
       const probe = new CellProbe()
       void terminal
         .ask(CELL_QUERY, (event) => probe.see(event), 1000)
         .then((cell) => {
           if (cell) {
-            backdrop.measured(cell)
+            backdrop?.measured(cell)
+            layer?.measured(cell)
           }
           screen.request()
         })
@@ -916,9 +957,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
       over = true
       clearTimeout(timer)
       screen.stop()
-      if (backdrop) {
-        terminal.write(backdrop.close())
-      }
+      terminal.write(`${backdrop?.close() ?? ''}${layer?.clear() ?? ''}`)
     }
   })
 }

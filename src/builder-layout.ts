@@ -71,7 +71,7 @@ export function tabNames(): string[] {
 
 export function layoutOf(cols: number, rows: number, scene: number): Layout | undefined {
   if (cols >= FULL_COLS && rows >= FULL_ROWS) {
-    const side = cols >= 140 ? 42 : 38
+    const side = cols >= 140 ? 44 : 38
     const width = cols - side - 1
     const left = Math.floor((width - 1) / 2)
     const right = width - 1 - left

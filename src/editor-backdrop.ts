@@ -14,9 +14,9 @@ import { drafted, pictureOf, Tints } from './tints.ts'
 const COVER_ID = 2 ** 31 - 23
 const VEIL_ID = 2 ** 31 - 22
 const PICTURE_ID = 2 ** 31 - 21
-const COVER_Z = -1073741827
-const PICTURE_Z = -1073741826
-const VEIL_Z = -1073741825
+const COVER_Z = -1073741831
+const PICTURE_Z = -1073741830
+const VEIL_Z = -1073741829
 const BANDS_HELD = 4
 
 type Env = Record<string, string | undefined>
@@ -31,6 +31,13 @@ interface Box {
   y: number
   w: number
   h: number
+}
+
+export interface Area {
+  col: number
+  row: number
+  cols: number
+  rows: number
 }
 
 export interface Rect {
@@ -61,21 +68,14 @@ interface Look {
   rect: Rect
 }
 
-export function cellRect(
-  width: number,
-  height: number,
-  cols: number,
-  rows: number,
-  cell: Cell,
-  box: Box,
-): Rect | undefined {
+export function cellRect(width: number, height: number, area: Area, cell: Cell, box: Box): Rect | undefined {
   const t = Math.trunc
-  const W = cols * cell.w
-  const H = rows * cell.h
-  const c0 = t((Math.max(box.x, 0) + cell.w - 1) / cell.w)
-  const c1 = t(Math.min(box.x + box.w, W) / cell.w)
-  const r0 = t((Math.max(box.y, 0) + cell.h - 1) / cell.h)
-  const r1 = t(Math.min(box.y + box.h, H) / cell.h)
+  const left = area.col * cell.w
+  const top = area.row * cell.h
+  const c0 = t((Math.max(box.x, left) + cell.w - 1) / cell.w)
+  const c1 = t(Math.min(box.x + box.w, left + area.cols * cell.w) / cell.w)
+  const r0 = t((Math.max(box.y, top) + cell.h - 1) / cell.h)
+  const r1 = t(Math.min(box.y + box.h, top + area.rows * cell.h) / cell.h)
   if (c1 <= c0 || r1 <= r0) {
     return undefined
   }
@@ -139,6 +139,10 @@ export class Backdrop {
     this.files = readsFiles(env)
   }
 
+  get laid(): boolean {
+    return this.cell.w > 0
+  }
+
   measured(cell: Cell): void {
     if (this.cell.w === 0 && cell.w > 0 && cell.h > 0) {
       this.cell = cell
@@ -171,12 +175,13 @@ export class Backdrop {
     waive: readonly string[],
     cols: number,
     rows: number,
+    area: Area = { col: 0, row: 0, cols, rows },
   ): string {
     if (this.cell.w === 0) {
       return ''
     }
     const background = list[0] as Hex
-    const look = this.look(list, signature, waive, cols, rows)
+    const look = this.look(list, signature, waive, area, !this.views || (area.cols === cols && area.rows === rows))
     if (this.views) {
       const W = cols * this.cell.w
       const H = rows * this.cell.h
@@ -229,8 +234,8 @@ export class Backdrop {
     list: readonly Hex[],
     signature: readonly string[],
     waive: readonly string[],
-    cols: number,
-    rows: number,
+    area: Area,
+    spills: boolean,
   ): Look | undefined {
     const held = this.held
     if (!held) {
@@ -242,8 +247,17 @@ export class Backdrop {
     if (!size) {
       return undefined
     }
-    const box = frameAt(size.width, size.height, cols * this.cell.w, rows * this.cell.h, 100, held.at, held.cover)
-    const rect = cellRect(size.width, size.height, cols, rows, this.cell, box)
+    const framed = frameAt(
+      size.width,
+      size.height,
+      area.cols * this.cell.w,
+      area.rows * this.cell.h,
+      100,
+      held.at,
+      held.cover && spills,
+    )
+    const box = { ...framed, x: framed.x + area.col * this.cell.w, y: framed.y + area.row * this.cell.h }
+    const rect = cellRect(size.width, size.height, area, this.cell, box)
     if (!rect) {
       return undefined
     }

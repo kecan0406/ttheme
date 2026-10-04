@@ -38,7 +38,7 @@ export type EditorSpot =
   | { kind: 'run'; spot: Spot }
   | { kind: 'open'; slot: number }
   | { kind: 'entry'; index: number }
-  | { kind: 'fold'; group: string }
+  | { kind: 'picker' }
 
 export function spot(target: EditorSpot, text: string): string {
   return zone(target, text)
