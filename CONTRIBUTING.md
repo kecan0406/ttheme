@@ -1,7 +1,7 @@
 # Contributing a palette
 
-`themes/*.toml` is the official catalog. A merged palette reaches everyone
-through `ttheme update`, without waiting for an npm release.
+`themes/*.toml` is the official catalog. A merged palette ships with the next
+release, and `ttheme update` brings it to everyone.
 
 ## Your own market first
 

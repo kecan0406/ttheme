@@ -342,13 +342,12 @@ test('an upgrade keeps what came from markets when the caches it finds are in a 
   const state = { terminals: ['ghostty' as const], markets: ['official', 'alice/pastel', dust], palettes }
   writeFileSync(join(home, 'installed.json'), JSON.stringify(state))
   sync(paths.configHome, readCatalog(paths.configHome), state)
-  const { schema: _, ...before } = JSON.parse(readFileSync(join(home, 'catalog.json'), 'utf8'))
-  writeFileSync(join(home, 'catalog.json'), JSON.stringify(before))
+  writeFileSync(join(home, 'catalog.json'), JSON.stringify({ schema: 1, palettes: 'another shape' }))
   writeFileSync(
     join(home, 'markets', 'alice--pastel.json'),
     JSON.stringify({ ...manifestFixture(), owner: 'alice', name: 'pastel' }),
   )
-  assert.throws(() => readCatalog(paths.configHome, false), /no schema/)
+  assert.throws(() => readCatalog(paths.configHome, false), /no version or palettes/)
   const current = installedState(paths.configHome)
   assert.ok(current)
   assert.deepEqual(planUpgrade(current, paths).installed.palettes, palettes)

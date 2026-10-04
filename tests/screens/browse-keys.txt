@@ -13,11 +13,11 @@
                      │  Tabs      ⇧←→  Catalog, Installed, Markets, Errors    │
                      │  Markets   space  adds or removes  ·  ←→  auto-update  │
                      │            ctrl+r  updates it, or searches again       │
+                     │  Update    ctrl+r  on a palette marked ↑               │
                      │  Apply     enter  reviews and applies  ·  esc cancels  │
                      │  Close     ?  esc                                      │
                      │                                                        │
                      ╰────────────────────────────────────────────────────────╯
-                                                               │
                                                                │
                                                                │
                                                                │

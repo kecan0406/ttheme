@@ -14,10 +14,12 @@ import {
   readCatalog,
   search,
   siteTags,
+  untuned,
+  updatesOf,
   writeCatalog,
   writeKept,
 } from './catalog.ts'
-import { type PaletteEntry, SCHEMA, TooNew } from './manifest.ts'
+import { type PaletteEntry, SCHEMA } from './manifest.ts'
 import { paletteToml } from './own.ts'
 
 function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
@@ -60,45 +62,45 @@ test('parseCatalog accepts a well formed catalog', () => {
   assert.equal(parseCatalog(catalogJson([entry()])).palettes[0]?.name, 'gojo')
 })
 
-test('parseCatalog refuses a document with no schema and says how to fetch it again', () => {
-  const { schema: _, ...before } = JSON.parse(catalogJson([entry()]))
-  assert.throws(() => parseCatalog(JSON.stringify(before)), /no schema.*ttheme update/)
-})
-
-test('parseCatalog refuses a schema newer than it reads and says how to update', () => {
-  const newer = JSON.stringify({ ...JSON.parse(catalogJson([entry()])), schema: SCHEMA + 1 })
-  assert.throws(
-    () => parseCatalog(newer),
-    (error: Error) =>
-      error instanceof TooNew &&
-      error.message.includes(`schema ${SCHEMA + 1}`) &&
-      error.message.includes('npx @kecan0406/ttheme@latest init'),
-  )
-})
-
-test('parseCatalog judges the schema before the rest, so a shape it does not know reads as a newer ttheme and not as damage', () => {
-  assert.throws(() => parseCatalog(JSON.stringify({ schema: SCHEMA + 1, palettes: 'another shape' })), TooNew)
-})
-
-test('parseCatalog refuses a schema that is not a whole number from 1', () => {
-  const doc = JSON.parse(catalogJson([entry()]))
-  for (const schema of [0, -1, 1.5, '1', null, [1]]) {
-    assert.throws(() => parseCatalog(JSON.stringify({ ...doc, schema })), /schema is not a whole number from 1/)
-  }
-})
-
 test('readCatalog can take the bundled official catalog, so an upgrade never parses the cache it is about to replace', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-bundled-'))
   mkdirSync(join(home, 'ttheme'), { recursive: true })
   writeFileSync(join(home, 'ttheme', 'installed.json'), JSON.stringify({ terminals: [], palettes: [] }))
-  const { schema: _, ...before } = JSON.parse(catalogJson([entry({ name: 'old' })]))
-  writeFileSync(join(home, 'ttheme', 'catalog.json'), JSON.stringify(before))
-  assert.throws(() => readCatalog(home, false), /no schema/)
+  writeFileSync(join(home, 'ttheme', 'catalog.json'), JSON.stringify({ schema: 1, palettes: 'another shape' }))
+  assert.throws(() => readCatalog(home, false), /no version or palettes/)
   const bundled = parseCatalog(catalogJson([entry({ name: 'gojo' })]))
   assert.deepEqual(
     readCatalog(home, false, bundled).palettes.map((p) => p.name),
     ['gojo'],
   )
+})
+
+test('an installed palette from a market keeps its colors until its update is taken, while an official one follows the catalog', () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-pinned-'))
+  mkdirSync(join(home, 'ttheme'), { recursive: true })
+  const was = [entry({ name: 'ann@pastel/dusk' }), entry({ name: 'gojo' })]
+  writeKept(home, was)
+  const moved = { background: '#000000' }
+  const catalog = {
+    schema: SCHEMA,
+    version: '0.1.0',
+    gate: [],
+    palettes: [
+      entry({ name: 'ann@pastel/dusk', ...moved }),
+      entry({ name: 'gojo', ...moved }),
+      entry({ name: 'ann@pastel/dawn', ...moved }),
+    ],
+  }
+  const view = new Map(untuned(home, catalog, false).palettes.map((e) => [e.name, e.background]))
+  assert.equal(view.get('ann@pastel/dusk'), '#11191c')
+  assert.equal(view.get('gojo'), '#000000')
+  assert.equal(view.get('ann@pastel/dawn'), '#000000')
+  assert.deepEqual(
+    updatesOf(home, catalog).map((e) => e.name),
+    ['ann@pastel/dusk'],
+  )
+  writeKept(home, [catalog.palettes[0] as PaletteEntry, was[1] as PaletteEntry])
+  assert.deepEqual(updatesOf(home, catalog), [])
 })
 
 test('gateFailures is empty when every rule is met', () => {

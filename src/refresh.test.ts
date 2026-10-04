@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { tarballOf } from '../tests/tarball.ts'
-import { catalogPath, readKept, writeCatalog } from './catalog.ts'
-import { type Manifest, type PaletteEntry, SCHEMA, TooNew } from './manifest.ts'
+import { writeCatalog } from './catalog.ts'
+import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { sync, writeInstalled } from './palettes.ts'
 import {
   applyRefreshed,
@@ -13,18 +13,12 @@ import {
   diffEntries,
   failureLine,
   isDue,
-  isNewer,
-  outdatedNote,
   REFRESH_AFTER,
   RETRY_AFTER,
-  type Refreshed,
-  readTries,
   refreshLine,
-  refreshMarket,
-  refusal,
   updateNote,
 } from './refresh.ts'
-import { cachePath, marketsDir, OFFICIAL } from './sources.ts'
+import { cachePath, marketsDir } from './sources.ts'
 
 const now = 1_000_000_000_000
 
@@ -50,41 +44,11 @@ test('an update is noted only when something changed', () => {
   const same = { source: 'alice/x', id: 'alice@x', count: 2, change: { added: [], changed: [], gone: [] } }
   assert.equal(refreshLine(same), 'alice@x — 2 palettes')
   assert.equal(updateNote(same), undefined)
-  const grown = { ...same, source: 'official', id: 'official', version: '1.0.50', count: 3 }
+  const grown = { ...same, count: 3 }
   assert.equal(
     updateNote({ ...grown, change: { added: ['d'], changed: ['b'], gone: [] } }),
-    'Updated official 1.0.50 — 3 palettes (1 new, 1 changed)',
+    'Updated alice@x — 3 palettes (1 new, 1 changed)',
   )
-})
-
-test('isNewer compares releases part by part and stays quiet about a version that is not a plain release', () => {
-  assert.equal(isNewer('1.0.51', '1.0.50'), true)
-  assert.equal(isNewer('1.1.0', '1.0.99'), true)
-  assert.equal(isNewer('2.0.0', '1.99.99'), true)
-  assert.equal(isNewer('1.0.10', '1.0.9'), true)
-  assert.equal(isNewer('1.0.50', '1.0.50'), false)
-  assert.equal(isNewer('1.0.49', '1.0.50'), false)
-  assert.equal(isNewer('1.0.51-rc.1', '1.0.50'), false)
-  assert.equal(isNewer('1.0.51', 'dev'), false)
-})
-
-const official: Refreshed = {
-  source: 'official',
-  id: 'official',
-  version: '1.0.51',
-  count: 3,
-  change: { added: [], changed: [], gone: [] },
-}
-
-test('a refreshed official catalog newer than the running ttheme says how to update, and a market never does', () => {
-  assert.equal(
-    outdatedNote(official, '1.0.50'),
-    'ttheme 1.0.51 is out, you have 1.0.50 — `npx @kecan0406/ttheme@latest init` updates it',
-  )
-  assert.equal(outdatedNote(official, '1.0.51'), undefined)
-  assert.equal(outdatedNote(official, '1.0.52'), undefined)
-  const { version: _, ...market } = official
-  assert.equal(outdatedNote(market, '1.0.50'), undefined)
 })
 
 const SOURCE = 'ann/ttheme-pastel'
@@ -116,31 +80,7 @@ async function withNetwork<T>(respond: () => Promise<Response>, run: (home: stri
   }
 }
 
-test('a catalog newer than ttheme reads leaves the cached copy alone and records why, so browse can show it', async () => {
-  await withNetwork(
-    async () => new Response(catalog(SCHEMA + 1)),
-    async (home) => {
-      const before = readFileSync(catalogPath(home), 'utf8')
-      await assert.rejects(refreshMarket(home, OFFICIAL), TooNew)
-      assert.equal(readFileSync(catalogPath(home), 'utf8'), before)
-      assert.match(
-        readTries()[OFFICIAL]?.error ?? '',
-        /newer than the schema \d+ this ttheme reads.*ttheme@latest init/,
-      )
-    },
-  )
-})
-
-test('an attempt hands back what happened instead of throwing, and only a refusal asks the user to act', async () => {
-  await withNetwork(
-    async () => new Response(catalog(SCHEMA + 1)),
-    async (home) => {
-      const refused = await attempt(home, OFFICIAL)
-      assert.ok('failure' in refused)
-      assert.equal(refusal(refused), failureLine(OFFICIAL, refused.failure))
-      assert.match(refusal(refused) ?? '', /^the ttheme catalog: catalog is schema \d+/)
-    },
-  )
+test('an attempt hands back what happened instead of throwing', async () => {
   await withNetwork(
     async () => {
       throw new Error('offline')
@@ -148,7 +88,7 @@ test('an attempt hands back what happened instead of throwing, and only a refusa
     async (home) => {
       const unreachable = await attempt(home, SOURCE)
       assert.ok('failure' in unreachable)
-      assert.equal(refusal(unreachable), undefined)
+      assert.match(failureLine(SOURCE, unreachable.failure), /^github\.com\/ann\/ttheme-pastel: cannot reach/)
     },
   )
   await withNetwork(
@@ -156,7 +96,6 @@ test('an attempt hands back what happened instead of throwing, and only a refusa
     async (home) => {
       const fresh = await attempt(home, SOURCE)
       assert.ok('refreshed' in fresh)
-      assert.equal(refusal(fresh), undefined)
       assert.equal(fresh.refreshed.id, 'ann@pastel')
     },
   )
@@ -192,12 +131,12 @@ test('applying a refresh hands back the palettes that left their market instead 
   writeCatalog(home, catalog)
   writeInstalled(home, state)
   sync(home, catalog, state)
-  const left = await applyRefreshed(home, state, readKept(home), [
+  const left = applyRefreshed(home, [
     { source: 'official', id: 'official', count: 1, change: { added: [], changed: [], gone: ['gojo'] } },
   ])
   assert.deepEqual(left, ['gojo left its market — ttheme keeps the copy you have'])
   assert.deepEqual(
-    await applyRefreshed(home, state, readKept(home), [
+    applyRefreshed(home, [
       { source: 'official', id: 'official', count: 1, change: { added: ['x'], changed: [], gone: [] } },
     ]),
     [],

@@ -116,8 +116,9 @@ export const VERB_SPECS: VerbSpec[] = [
   { name: 'remove', args: ['<palette...>'], about: 'Uninstall palettes', section: 'catalog' },
   {
     name: 'update',
-    args: [],
-    about: 'Refresh every market you added now — those with auto-update refresh on their own once a day',
+    args: ['[market...]'],
+    about:
+      "Update ttheme and refresh your markets — official palettes come with ttheme; an installed palette from another market keeps its colors until browse's Installed tab takes its update",
     section: 'catalog',
   },
   {
@@ -265,6 +266,13 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'redraw',
     args: [],
     about: 'Draw the background pictures again after TTHEME_BG_BLUR changed — ttheme config and preview call this',
+    section: 'setup',
+    hidden: true,
+  },
+  {
+    name: 'latest',
+    args: [],
+    about: 'Ask npm for the newest ttheme — any command starts this in the background once a day',
     section: 'setup',
     hidden: true,
   },

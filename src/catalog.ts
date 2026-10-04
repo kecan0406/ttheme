@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
-import { emptyManifest, judgeSchema, type Manifest, type PaletteEntry, SCHEMA, toTheme } from './manifest.ts'
+import { emptyManifest, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
 import { aliasesFor, containsText } from './names.ts'
 import { marketLayout, type Report, readLocal, readMarketFiles, warning } from './own.ts'
 import {
@@ -19,10 +19,9 @@ import {
   remoteOwner,
   shownSource,
 } from './sources.ts'
-import { nameProblem, textProblem } from './theme.ts'
+import { marketOf, nameProblem, textProblem } from './theme.ts'
 import { readTone, tuned } from './tone.ts'
 
-export const REGISTRY_URL = 'https://kecan0406.github.io/ttheme/manifest.json'
 const TIMEOUT = 20_000
 
 export function catalogPath(configHome: string): string {
@@ -127,13 +126,8 @@ export function parseCatalog(source: string): Manifest {
   } catch {
     throw new Error('catalog is not valid JSON')
   }
-  const schema = (doc as { schema?: unknown } | null)?.schema
-  if (schema === undefined) {
-    throw new Error('catalog has no schema — `ttheme update` fetches it again')
-  }
-  judgeSchema(schema, 'catalog', SCHEMA)
   const catalog = doc as Manifest
-  if (typeof catalog.version !== 'string' || !Array.isArray(catalog.palettes)) {
+  if (typeof catalog?.version !== 'string' || !Array.isArray(catalog.palettes)) {
     throw new Error('catalog has no version or palettes')
   }
   for (const p of catalog.palettes) {
@@ -182,10 +176,27 @@ export function readKept(configHome: string): PaletteEntry[] {
   }
 }
 
+function looks(p: PaletteEntry): string {
+  return JSON.stringify([p.background, p.foreground, p.cursor, p.selection, p.ansi, p.pictures ?? []])
+}
+
+export function updatesOf(configHome: string, catalog: Manifest): PaletteEntry[] {
+  const kept = new Map(readKept(configHome).map((p) => [p.name, p]))
+  return catalog.palettes.filter((p) => {
+    const was = kept.get(p.name)
+    return marketOf(p.name) !== undefined && was !== undefined && looks(was) !== looks(p)
+  })
+}
+
 export function untuned(configHome: string, catalog: Manifest, warn = true): Manifest {
-  const palettes = [...catalog.palettes, ...readLocal(configHome, catalog.palettes, warn)]
+  const kept = readKept(configHome)
+  const pinned = new Map(kept.filter((p) => marketOf(p.name) !== undefined).map((p) => [p.name, p]))
+  const palettes = [
+    ...catalog.palettes.map((p) => pinned.get(p.name) ?? p),
+    ...readLocal(configHome, catalog.palettes, warn),
+  ]
   const known = new Set(palettes.map((p) => p.name))
-  return { ...catalog, palettes: [...palettes, ...readKept(configHome).filter((p) => !known.has(p.name))] }
+  return { ...catalog, palettes: [...palettes, ...kept.filter((p) => !known.has(p.name))] }
 }
 
 export function available(configHome: string, catalog: Manifest, warn = true): Manifest {

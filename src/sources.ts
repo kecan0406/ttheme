@@ -64,7 +64,7 @@ export function sameMarket(a: string, b: string): boolean {
 }
 
 export function autoUpdates(source: string, updates: Readonly<Record<string, boolean>> | undefined): boolean {
-  return !isLocal(source) && (updates?.[source] ?? source === OFFICIAL)
+  return isRemote(source) && (updates?.[source] ?? false)
 }
 
 function refProblem(ref: string): boolean {

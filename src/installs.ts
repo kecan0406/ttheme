@@ -1,9 +1,9 @@
 import { existsSync } from 'node:fs'
-import { available, readCatalog, readKept, search } from './catalog.ts'
+import { available, readCatalog, readKept, search, updatesOf, writeKept } from './catalog.ts'
 import { adopt } from './craft.ts'
 import { liveOf } from './live.ts'
 import { listed, type Manifest } from './manifest.ts'
-import { addSource, localLine } from './markets.ts'
+import { addSource, idOf, localLine } from './markets.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
 import { CODE, readLocal } from './own.ts'
@@ -11,7 +11,8 @@ import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, readInstalled, startupPalette, sync } from './palettes.ts'
 import { pending, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
-import { attempt, failureLine, followMarkets, outdatedNote, refreshLine } from './refresh.ts'
+import { applyRefreshed, attempt, failureLine, type Refreshed, refreshLine, updatesLine } from './refresh.ts'
+import { newerRelease, upgradeTo } from './release.ts'
 import { installedPath, isLocal, marketSources, OFFICIAL, shownSource } from './sources.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
@@ -196,11 +197,33 @@ export function runList(query: string | undefined, json = false): void {
   }
 }
 
-export async function runUpdate(): Promise<void> {
+function marketNamed(home: string, sources: string[], name: string): string {
+  const id = (source: string) => {
+    try {
+      return idOf(home, source)
+    } catch {
+      return undefined
+    }
+  }
+  const hit = sources.find((s) => s === name || shownSource(s) === name || id(s) === name)
+  if (!hit) {
+    throw new Error(`no market named ${name} — \`ttheme market\` lists them`)
+  }
+  return hit
+}
+
+export async function runUpdate(asked: string[] = []): Promise<number> {
   const home = configHome()
-  const markets = marketSources(home)
-  if (markets.length === 0) {
-    console.log('No markets to update — `ttheme market add official` brings the ttheme catalog back')
+  const all = marketSources(home)
+  const named = asked.map((name) => marketNamed(home, all, name))
+  const release = await newerRelease()
+  if (release.latest) {
+    return upgradeTo(release.latest, asked)
+  }
+  console.log(release.note)
+  const markets = (named.length > 0 ? named : all).filter((source) => source !== OFFICIAL)
+  if (named.length === 0 && markets.length === 0) {
+    console.log('No markets to update — `ttheme market add <owner>/<repo>` adds one')
   }
   const kept = (source: string, failure: Error): string =>
     `${failureLine(source, failure)} — kept the copy from the last update`
@@ -213,7 +236,7 @@ export async function runUpdate(): Promise<void> {
   }
   const remote = markets.filter((source) => !isLocal(source))
   const waiting = new Set(remote)
-  const behind: string[] = []
+  const done: Refreshed[] = []
   const line = pending()
   const show = (): void =>
     line.set(
@@ -223,15 +246,8 @@ export async function runUpdate(): Promise<void> {
   await Promise.all(
     remote.map(async (source) => {
       const outcome = await attempt(home, source)
-      let text: string
       if ('refreshed' in outcome) {
-        text = refreshLine(outcome.refreshed)
-        const note = outdatedNote(outcome.refreshed)
-        if (note) {
-          behind.push(note)
-        }
-      } else {
-        text = kept(source, outcome.failure)
+        done.push(outcome.refreshed)
       }
       waiting.delete(source)
       if (waiting.size > 0) {
@@ -239,33 +255,46 @@ export async function runUpdate(): Promise<void> {
       } else {
         line.done()
       }
-      line.say(`  ${text}`)
+      line.say(`  ${'refreshed' in outcome ? refreshLine(outcome.refreshed) : kept(source, outcome.failure)}`)
     }),
   )
   line.done()
-  for (const note of behind) {
-    console.log(note)
-  }
   if (!existsSync(installedPath(home))) {
-    return
+    return 0
   }
-  for (const moved of followMarkets(home)) {
+  for (const moved of applyRefreshed(home, done)) {
     console.log(`  ${moved}`)
   }
-  const catalog = readCatalog(home)
-  const state = readInstalled(home)
-  const from = sources(home, catalog)
-  const gone = state.palettes.filter((name) => !from.has(name))
-  const was = new Map(readKept(home).map((e) => [e.name, e.pictures]))
-  sync(home, catalog, state)
-  for (const name of gone) {
-    console.log(`  ${name} left its market — ttheme keeps the copy you have`)
+  const updates = updatesLine(home)
+  if (updates) {
+    console.log(updates)
   }
+  return 0
+}
+
+export async function takeUpdates(home: string, names: string[]): Promise<void> {
+  const catalog = readCatalog(home, false)
+  const fresh = new Map(
+    updatesOf(home, catalog)
+      .filter((e) => names.includes(e.name))
+      .map((e) => [e.name, e]),
+  )
+  if (fresh.size === 0) {
+    return
+  }
+  const was = readKept(home)
+  writeKept(
+    home,
+    was.map((e) => fresh.get(e.name) ?? e),
+  )
+  const state = readInstalled(home)
+  sync(home, catalog, state)
+  const pictures = new Map(was.map((e) => [e.name, e.pictures]))
   await bringPictures(
     home,
     available(home, catalog, false)
-      .palettes.filter((e) => state.palettes.includes(e.name) && was.has(e.name))
-      .map((e) => since(e, was.get(e.name))),
+      .palettes.filter((e) => fresh.has(e.name))
+      .map((e) => since(e, pictures.get(e.name))),
     state.terminals,
   )
 }

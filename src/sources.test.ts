@@ -44,9 +44,9 @@ test('a repository takes a tag, branch or commit after #, which the fetch follow
   assert.ok(!sameMarket('alice/anime', 'alice/other'))
 })
 
-test('the official catalog updates on its own unless turned off, a repository only once turned on', () => {
-  assert.equal(autoUpdates(OFFICIAL, undefined), true)
-  assert.equal(autoUpdates(OFFICIAL, { official: false }), false)
+test('only a repository updates on its own, once turned on — the official catalog comes with ttheme', () => {
+  assert.equal(autoUpdates(OFFICIAL, undefined), false)
+  assert.equal(autoUpdates(OFFICIAL, { official: true }), false)
   assert.equal(autoUpdates('alice/anime', undefined), false)
   assert.equal(autoUpdates('alice/anime', { 'alice/anime': true }), true)
   assert.equal(autoUpdates('/srv/market', { '/srv/market': true }), false)

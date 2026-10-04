@@ -32,7 +32,7 @@ function market(source: string, id: string, names: string[], auto = false): Mark
     shown: source === 'official' ? 'the ttheme catalog' : `github.com/${source}`,
     entries: names.map((n) => entry(id === 'official' ? n : `${id}/${n}`, id === 'official' ? 'Vocaloid' : id)),
     auto,
-    status: 'updated just now',
+    status: source === 'official' ? 'comes with ttheme' : 'updated just now',
   }
 }
 
@@ -40,7 +40,7 @@ function repo(owner: string, name: string, stars: number, description: string | 
   return { full_name: `${owner}/${name}`, name, description, stargazers_count: stars, owner: { login: owner } }
 }
 
-const official = market('official', 'official', ['miku', 'rin'], true)
+const official = market('official', 'official', ['miku', 'rin'])
 const pastel = market('alice/ttheme-pastel', 'alice@pastel', ['dusk', 'dawn'])
 
 const FRAME = '\u0001'
@@ -151,6 +151,7 @@ async function drive(
     rows?: number
     markets?: Market[]
     installed?: string[]
+    updates?: string[]
     due?: string[]
     io?: BrowseIo
     hub?: 'browse'
@@ -166,6 +167,7 @@ async function drive(
     markets: opts.markets ?? [official, pastel],
     kept: [],
     installed: opts.installed ?? ['miku', 'alice@pastel/dusk'],
+    ...(opts.updates ? { updates: opts.updates } : {}),
     problems: [],
     due: opts.due ?? [],
     io: opts.io ?? io(),
@@ -294,6 +296,7 @@ test('a market due at open refreshes in the background and its new palettes appe
         Promise.resolve({
           market: fresh,
           refreshed: { source, id: 'official', count: 3, change: { added: ['luka'], changed: [], gone: [] } },
+          updates: [],
         }),
     }),
   })
@@ -389,10 +392,10 @@ test('a long list says how many rows lie above and below the window', async () =
 
 test('Markets lists each market over two lines: where it comes from, what it holds and when it was updated', async () => {
   const { last } = await drive([TAB, TAB, '\r'], { columns: 120 })
-  assert.match(last, /● official +↻ auto-update/)
-  assert.match(last, /^ +The ttheme catalog · 2 palettes · 1 installed · updated just now/m)
+  assert.match(last, /● official +│/)
+  assert.match(last, /^ +The ttheme catalog · 2 palettes · 1 installed · comes with ttheme/m)
   assert.match(last, /● alice@pastel +│/)
-  assert.doesNotMatch(last, /● alice@pastel +↻/)
+  assert.doesNotMatch(last, /↻/)
   assert.match(last, /^ +alice\/ttheme-pastel · 2 palettes · 1 installed · updated just now/m)
 })
 
@@ -577,4 +580,14 @@ test('a failed apply says so, keeps what it reported, and still closes on enter'
   assert.deepEqual(log, ['Removed alice@pastel'])
   assert.match(frames, /✗ Stopped/)
   assert.match(frames, /✗ cannot write installed\.json/)
+})
+
+test('ctrl+r stages the update of an installed palette marked ↑, and does nothing on one without', async () => {
+  const taken = await drive([TAB, ...'dusk', '\x12', ...APPLY], { updates: ['alice@pastel/dusk'] })
+  assert.deepEqual(taken.panel.renew, ['alice@pastel/dusk'])
+  assert.match(taken.frames, /dusk +↑ update/)
+  assert.match(taken.frames, /Palettes \(1 to update\)/)
+  assert.match(taken.frames, /Applied \(1 updated\)/)
+  const none = await drive([TAB, ...'miku', '\x12', '\r'], { updates: ['alice@pastel/dusk'] })
+  assert.deepEqual(none.panel.renew, [])
 })

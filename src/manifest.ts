@@ -31,21 +31,6 @@ export interface PaletteEntry {
 
 export const SCHEMA = 1
 
-export const UPDATE_COMMAND = 'npx @kecan0406/ttheme@latest init'
-
-export class TooNew extends Error {}
-
-export function judgeSchema(schema: unknown, what: string, reads: number): void {
-  if (typeof schema !== 'number' || !Number.isInteger(schema) || schema < 1) {
-    throw new Error(`${what} schema is not a whole number from 1`)
-  }
-  if (schema > reads) {
-    throw new TooNew(
-      `${what} is schema ${schema}, newer than the schema ${reads} this ttheme reads — \`${UPDATE_COMMAND}\` updates it`,
-    )
-  }
-}
-
 export interface Manifest {
   schema: number
   version: string

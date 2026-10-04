@@ -125,7 +125,7 @@ function officialFor(home: string): PaletteEntry[] {
 export function withMarkets(state: Installed, markets: string[], updates: Record<string, boolean>): Installed {
   const { updates: _, ...rest } = state
   const kept = Object.entries(updates).filter(
-    ([source, on]) => markets.includes(source) && on !== autoUpdates(source, {}),
+    ([source, on]) => isRemote(source) && markets.includes(source) && on !== autoUpdates(source, {}),
   )
   return { ...rest, markets, ...(kept.length > 0 ? { updates: Object.fromEntries(kept) } : {}) }
 }
@@ -247,9 +247,7 @@ async function addMarket(arg: string): Promise<void> {
 }
 
 export function dropCache(home: string, source: string): void {
-  if (source === OFFICIAL) {
-    rmSync(catalogPath(home), { force: true })
-  } else if (isRemote(source)) {
+  if (isRemote(source)) {
     rmSync(cachePath(home, source), { force: true })
   }
 }
@@ -304,6 +302,9 @@ export function countOf(home: string, source: string): number | undefined {
 export function lastUpdate(home: string, source: string, tries = readTries(), now = Date.now()): string {
   if (isLocal(source)) {
     return 'read in place'
+  }
+  if (source === OFFICIAL) {
+    return 'comes with ttheme'
   }
   const failed = tries[source]
   const at = fetchedAt(home, source)

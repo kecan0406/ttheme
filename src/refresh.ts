@@ -1,33 +1,28 @@
 import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import pkg from '../package.json' with { type: 'json' }
 import { moveRacks } from './backdrop.ts'
 import {
   type Archive,
   archiveId,
-  available,
   catalogPath,
-  fetchParsed,
   Missing,
   parseCatalog,
-  REGISTRY_URL,
   type ReadMarket,
   reach,
   readArchive,
   readCachedArchive,
   readCatalog,
-  readKept,
-  writeCatalog,
+  updatesOf,
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
-import { listed, type Manifest, type PaletteEntry, TooNew, UPDATE_COMMAND } from './manifest.ts'
+import { listed, type PaletteEntry } from './manifest.ts'
 import { advise } from './notice.ts'
 import { readMarketDir, warning } from './own.ts'
-import { commit, configHome, forget, type Installed, readInstalled, sync } from './palettes.ts'
+import { commit, configHome, forget, type Installed, readInstalled } from './palettes.ts'
 import { pending } from './pending.ts'
-import { bringPictures, since } from './pictures.ts'
 import { movePins } from './pins.ts'
+import { autoWanted, UPDATE_COMMAND } from './release.ts'
 import { type Moves, plan } from './renames.ts'
 import {
   archiveUrl,
@@ -67,7 +62,7 @@ export interface FetchedMarket {
   info: MarketInfo
 }
 
-export type Fetched = FetchedMarket | { source: string; id: string; entries: PaletteEntry[]; manifest: Manifest }
+export type Fetched = FetchedMarket | { source: string; id: string; entries: PaletteEntry[] }
 
 export interface Change {
   added: string[]
@@ -78,7 +73,6 @@ export interface Change {
 export interface Refreshed {
   source: string
   id: string
-  version?: string
   count: number
   change: Change
 }
@@ -115,7 +109,7 @@ function writeTry(source: string, error: string | undefined): void {
 }
 
 export function fetchedAt(home: string, source: string): number | undefined {
-  const path = source === OFFICIAL ? catalogPath(home) : isRemote(source) ? cachePath(home, source) : undefined
+  const path = isRemote(source) ? cachePath(home, source) : undefined
   try {
     return path ? statSync(path).mtimeMs : undefined
   } catch {
@@ -187,8 +181,10 @@ export async function fetchMarket(
   signal?: AbortSignal,
 ): Promise<Fetched> {
   if (source === OFFICIAL) {
-    const manifest = await fetchParsed(REGISTRY_URL, parseCatalog, timeout, signal)
-    return { source, id: OFFICIAL, manifest, entries: manifest.palettes }
+    if (!existsSync(catalogPath(home))) {
+      throw new Error(`the ttheme catalog is not on this machine — \`${UPDATE_COMMAND}\` puts it back`)
+    }
+    return { source, id: OFFICIAL, entries: cachedEntries(home, OFFICIAL) }
   }
   const archive = await fetchArchive(source, timeout, signal)
   if (!archive) {
@@ -198,8 +194,7 @@ export async function fetchMarket(
 }
 
 export function storeMarket(home: string, fetched: Fetched): void {
-  if ('manifest' in fetched) {
-    writeCatalog(home, fetched.manifest)
+  if (!('archive' in fetched)) {
     return
   }
   mkdirSync(marketsDir(home), { recursive: true })
@@ -264,7 +259,6 @@ export async function refreshMarket(home: string, source: string, timeout?: numb
   return {
     source,
     id: fetched?.id ?? archiveId(source, readCachedArchive(home, source)),
-    ...(fetched && 'manifest' in fetched ? { version: fetched.manifest.version } : {}),
     count: listed(entries).length,
     change: diffEntries(before, entries),
   }
@@ -282,12 +276,6 @@ export async function attempt(home: string, source: string, timeout?: number): P
 
 export function failureLine(source: string, failure: Error): string {
   return `${shownSource(source)}: ${failure.message}`
-}
-
-export function refusal(outcome: Outcome): string | undefined {
-  return 'failure' in outcome && outcome.failure instanceof TooNew
-    ? failureLine(outcome.source, outcome.failure)
-    : undefined
 }
 
 export function counted(n: number): string {
@@ -318,34 +306,11 @@ function changed({ added, changed, gone }: Change): string {
 
 export function refreshLine(r: Refreshed): string {
   const parts = changed(r.change)
-  return `${r.version ? `${r.id} ${r.version}` : r.id} — ${counted(r.count)}${parts ? ` (${parts})` : ''}`
+  return `${r.id} — ${counted(r.count)}${parts ? ` (${parts})` : ''}`
 }
 
 export function updateNote(r: Refreshed): string | undefined {
   return changed(r.change) ? `Updated ${refreshLine(r)}` : undefined
-}
-
-const RELEASE = /^(\d+)\.(\d+)\.(\d+)$/
-
-export function isNewer(latest: string, running: string): boolean {
-  const a = RELEASE.exec(latest)
-  const b = RELEASE.exec(running)
-  if (!a || !b) {
-    return false
-  }
-  for (const part of [1, 2, 3]) {
-    const gap = Number(a[part]) - Number(b[part])
-    if (gap !== 0) {
-      return gap > 0
-    }
-  }
-  return false
-}
-
-export function outdatedNote(r: Refreshed, running: string = pkg.version): string | undefined {
-  return r.version && isNewer(r.version, running)
-    ? `ttheme ${r.version} is out, you have ${running} — \`${UPDATE_COMMAND}\` updates it`
-    : undefined
 }
 
 export function cachedMarket(home: string, source: string, official = officialOf(home)): ReadMarket | undefined {
@@ -394,53 +359,42 @@ export function followMarkets(home: string): string[] {
   ]
 }
 
-export async function applyRefreshed(
-  home: string,
-  before: Installed,
-  was: PaletteEntry[],
-  done: Refreshed[],
-): Promise<string[]> {
-  const moved = followMarkets(home)
-  const state = moved.length > 0 ? readInstalled(home) : before
-  const touched = new Set(done.flatMap((r) => [...r.change.changed, ...r.change.gone]))
-  const mine = state.palettes.filter((name) => touched.has(name))
-  if (mine.length === 0) {
-    return moved
+export function updatesLine(home: string): string | undefined {
+  const names = updatesOf(home, readCatalog(home, false)).map((e) => e.name)
+  if (names.length === 0) {
+    return undefined
   }
-  const catalog = readCatalog(home, false)
-  sync(home, catalog, state)
+  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its market' : 'their markets'} — ctrl+r in \`ttheme browse\`'s Installed tab takes it`
+}
+
+export function applyRefreshed(home: string, done: Refreshed[]): string[] {
+  const moved = followMarkets(home)
+  const state = readInstalled(home)
   const gone = new Set(done.flatMap((r) => r.change.gone))
-  const left = mine.filter((n) => gone.has(n)).map((name) => `${name} left its market — ttheme keeps the copy you have`)
-  const pictures = new Map(was.map((e) => [e.name, e.pictures]))
-  await bringPictures(
-    home,
-    available(home, catalog, false)
-      .palettes.filter((e) => mine.includes(e.name) && pictures.has(e.name))
-      .map((e) => since(e, pictures.get(e.name))),
-    state.terminals,
-  )
+  const left = state.palettes
+    .filter((name) => gone.has(name))
+    .map((name) => `${name} left its market — ttheme keeps the copy you have`)
   return [...moved, ...left]
 }
 
 export async function autoRefresh(home = configHome()): Promise<void> {
   try {
-    if (!existsSync(installedPath(home))) {
+    if (!autoWanted() || !existsSync(installedPath(home))) {
       return
     }
-    const state = readInstalled(home)
-    const due = dueSources(home, state)
+    const due = dueSources(home, readInstalled(home))
     if (due.length === 0) {
       return
     }
-    const was = readKept(home)
     const line = pending(`Checking ${due.map(shownSource).join(', ')} for updates`)
     const outcomes = await Promise.all(due.map((source) => attempt(home, source, AUTO_TIMEOUT)))
     line.done()
     const done = outcomes.flatMap((o) => ('refreshed' in o ? [o.refreshed] : []))
     const notes = done.flatMap((r) => updateNote(r) ?? [])
-    advise(notes)
-    const left = notes.length > 0 ? await applyRefreshed(home, state, was, done) : []
-    advise([...left, ...outcomes.flatMap((o) => refusal(o) ?? []), ...done.flatMap((r) => outdatedNote(r) ?? [])])
+    if (notes.length === 0) {
+      return
+    }
+    advise([...notes, ...applyRefreshed(home, done), ...[updatesLine(home) ?? []].flat()])
   } catch {
     return
   }

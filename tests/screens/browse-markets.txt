@@ -4,11 +4,11 @@
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
                                                                │ official
- ▌  ● official  ↻ auto-update                                  │ The ttheme catalog
-      The ttheme catalog · 6 palettes · 2 installed · updated… │ 6 palettes · 2 installed
+ ▌  ● official                                                 │ The ttheme catalog
+      The ttheme catalog · 6 palettes · 2 installed · comes w… │ 6 palettes · 2 installed
     ── On GitHub ──────────                                    │
-    ⌕ Find markets on GitHub                                   │ Auto-update on  ←→
-      space searches GitHub                                    │ Updated just now
+    ⌕ Find markets on GitHub                                   │ Comes with ttheme
+      space searches GitHub                                    │
                                                                │
                                                                │
                                                                │
@@ -21,4 +21,4 @@
                                                                │
                                                                │
                                                                │
- [BROWSE] space remove   ←→ auto-update   ctrl+r update   enter close   ? keys           esc cancel
+ [BROWSE] space remove   enter close   ⇧←→ tabs   ? keys                                 esc cancel

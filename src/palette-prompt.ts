@@ -179,6 +179,7 @@ export interface PaletteListOptions {
   scope?: PickerScope
   maxItems?: number
   color?: boolean
+  note?: (entry: PaletteEntry) => string
   onFocus?: (entry: PaletteEntry) => void
 }
 
@@ -190,6 +191,7 @@ export class PaletteList {
   series: string[] = []
   private readonly color: boolean
   private readonly onFocus?: (entry: PaletteEntry) => void
+  private readonly note?: (entry: PaletteEntry) => string
   private entries: PaletteEntry[] = []
   private seriesPad = 0
   private namePad = 0
@@ -206,6 +208,7 @@ export class PaletteList {
     this.maxItems = opts.maxItems ?? 12
     this.color = opts.color ?? true
     this.onFocus = opts.onFocus
+    this.note = opts.note
     this.load(opts.entries)
     this.rebuild('first')
   }
@@ -502,7 +505,7 @@ export class PaletteList {
     const label = shownName(e)
     const padded = this.color ? label.padEnd(this.namePad - indent.length) : label
     const name = focused ? bold(padded) : padded
-    return bar(`${indent}${box(this.picked.has(e.name))}${name}${squares(e)}`)
+    return bar(`${indent}${box(this.picked.has(e.name))}${name}${squares(e)}${this.note?.(e) ?? ''}`)
   }
 }
 

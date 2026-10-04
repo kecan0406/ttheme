@@ -8,9 +8,10 @@ import {
   readCachedArchive,
   readCatalog,
   readKept,
+  updatesOf,
 } from './catalog.ts'
 import { HUB_CLOSED, hubOf } from './hub.ts'
-import { reload } from './installs.ts'
+import { reload, takeUpdates } from './installs.ts'
 import { liveOf } from './live.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
 import { dropCache, findMarkets, idOf, keptNote, lastUpdate, withMarkets } from './markets.ts'
@@ -20,7 +21,7 @@ import { type Report, readMarketDir, warning } from './own.ts'
 import { promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, type Installed, readInstalled, worn, writeInstalled } from './palettes.ts'
 import { into, say } from './pending.ts'
-import { bringPictures, since } from './pictures.ts'
+import { bringPictures } from './pictures.ts'
 import {
   AUTO_TIMEOUT,
   ago,
@@ -38,6 +39,7 @@ import {
   type Tried,
   updateNote,
 } from './refresh.ts'
+import { autoWanted } from './release.ts'
 import {
   autoUpdates,
   cachePath,
@@ -115,6 +117,10 @@ function problemsOf(home: string, state: Installed, tries: Record<string, Tried>
   return problems
 }
 
+function updateNames(home: string): string[] {
+  return updatesOf(home, readCatalog(home, false)).map((e) => e.name)
+}
+
 function browseIo(
   home: string,
   state: Installed,
@@ -134,10 +140,11 @@ function browseIo(
             count: listed(market.entries).length,
             change: { added: [], changed: [], gone: [] },
           },
+          updates: updateNames(home),
         }
       }
       const refreshed = await refreshMarket(home, source, AUTO_TIMEOUT)
-      return { market: marketState(home, state, source, readTries()), refreshed }
+      return { market: marketState(home, state, source, readTries()), refreshed, updates: updateNames(home) }
     },
     fetch: async (source) => {
       if (isLocal(source)) {
@@ -170,8 +177,8 @@ function browseIo(
   }
 }
 
-async function applyAndSay(...args: Parameters<typeof applyRefreshed>): Promise<void> {
-  for (const line of await applyRefreshed(...args)) {
+function applyAndSay(...args: Parameters<typeof applyRefreshed>): void {
+  for (const line of applyRefreshed(...args)) {
     say(line)
   }
 }
@@ -203,7 +210,6 @@ function marketChanges(result: BrowseResult, markets: Market[], wanted: string[]
 
 async function applyBrowse(
   home: string,
-  was: PaletteEntry[],
   markets: Market[],
   result: BrowseResult,
   fetched: Map<string, Fetched>,
@@ -233,8 +239,9 @@ async function applyBrowse(
     .map((e) => e.name)
   const dropped = current.palettes.filter((n) => !wanted.includes(n))
   const added = wanted.filter((n) => !current.palettes.includes(n))
-  if (!moved && added.length === 0 && dropped.length === 0) {
-    await applyAndSay(home, current, was, result.refreshed)
+  const renew = result.renew.filter((n) => wanted.includes(n))
+  if (!moved && added.length === 0 && dropped.length === 0 && renew.length === 0) {
+    applyAndSay(home, result.refreshed)
     say('Nothing changed')
     return
   }
@@ -250,21 +257,20 @@ async function applyBrowse(
   for (const name of dropped) {
     say(`  - ${name}`)
   }
-  const pictures = new Map(was.map((e) => [e.name, e.pictures]))
-  const touched = new Set(result.refreshed.flatMap((r) => [...r.change.changed, ...r.change.gone]))
-  const after = available(home, catalog, false).palettes
+  for (const line of applyRefreshed(home, result.refreshed)) {
+    say(line)
+  }
   await bringPictures(
     home,
-    [
-      ...after.filter((e) => added.includes(e.name)),
-      ...after
-        .filter(
-          (e) => wanted.includes(e.name) && !added.includes(e.name) && touched.has(e.name) && pictures.has(e.name),
-        )
-        .map((e) => since(e, pictures.get(e.name))),
-    ],
+    available(home, catalog, false).palettes.filter((e) => added.includes(e.name)),
     next.terminals,
   )
+  if (renew.length > 0) {
+    await takeUpdates(home, renew)
+    for (const name of renew) {
+      say(`  ↑ ${name}`)
+    }
+  }
   if (added.length > 0 || dropped.length > 0) {
     reload(next.palettes.length)
   }
@@ -276,6 +282,7 @@ export async function runBrowse(): Promise<number> {
   const state = readInstalled(home)
   const was = readKept(home)
   const tries = readTries()
+  const auto = autoWanted()
   const markets = marketsOf(state.markets).map((source) => marketState(home, state, source, tries))
   const names = new Set(markets.flatMap((m) => m.entries.map((e) => e.name)))
   const kept = was.filter((e) => state.palettes.includes(e.name) && !names.has(e.name))
@@ -293,12 +300,13 @@ export async function runBrowse(): Promise<number> {
     markets,
     kept,
     installed: state.palettes,
+    updates: updateNames(home),
     ...(startup ? { startup } : {}),
     ...(hub ? { hub } : {}),
     problems: problemsOf(home, state, tries, markets),
-    due: dueSources(home, state),
+    due: auto ? dueSources(home, state) : [],
     io: browseIo(home, state, fetched, lookups.signal, (result, report) =>
-      into({ say: report.say, set: report.status }, () => applyBrowse(home, was, markets, result, fetched)),
+      into({ say: report.say, set: report.status }, () => applyBrowse(home, markets, result, fetched)),
     ),
     ...(process.env.TTHEME_SORT === 'series' ? {} : { order: alphabetical }),
     color: !colorless(),
@@ -320,7 +328,7 @@ export async function runBrowse(): Promise<number> {
   const result = panel.result()
   const go = panel.next()
   if (hub && go !== undefined) {
-    await applyAndSay(home, readInstalled(home), was, result.refreshed)
+    applyAndSay(home, result.refreshed)
     return go
   }
   if (tty && hub) {
@@ -341,7 +349,9 @@ export async function runBrowse(): Promise<number> {
       throw failure
     }
   } else {
-    await applyAndSay(home, readInstalled(home), was, result.refreshed)
+    for (const line of applyRefreshed(home, result.refreshed)) {
+      console.log(line)
+    }
     console.log('Nothing changed')
   }
   return hub ? HUB_CLOSED : 0

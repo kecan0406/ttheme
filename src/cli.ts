@@ -13,6 +13,7 @@ import { runMarket } from './markets.ts'
 import { startNamesUpdate, updateNames } from './names-update.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
+import { checkLatest, startReleaseCheck, tellRelease } from './release.ts'
 import { Signalled } from './tui/terminal.ts'
 import { runUninstall } from './uninstall.ts'
 import { briefText, commandHelp, helpText, VERB_SPECS, type VerbSpec } from './verbs.ts'
@@ -43,7 +44,7 @@ const RUNS: Record<string, Verb['run']> = {
   list: ([query], { json }) => runList(query, json),
   add: (names, { market }) => runAdd(names, market),
   remove: (names) => runRemove(names),
-  update: () => runUpdate(),
+  update: (markets) => runUpdate(markets),
   market: ([action, arg]) => runMarket(action, arg),
   new: ([name], { from, in: into }) => runNew(name as string, from, into),
   edit: ([name]) => runEdit(name as string),
@@ -58,6 +59,7 @@ const RUNS: Record<string, Verb['run']> = {
   image: ([name, action, key]) => runImage(name as string, action as string, key),
   redraw: () => runRedraw(),
   names: () => updateNames(),
+  latest: () => checkLatest(),
   tone: ([name, action]) => runTone(name as string, action as string),
   flatten: ([source, out, background, opacity, canvas, place, into]) =>
     runFlatten(source as string, out as string, background as string, opacity as string, canvas, place, into),
@@ -176,6 +178,10 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     const code = await call.verb.run(call.args, call.flags)
     if (!call.verb.hidden && call.verb.name !== 'uninstall') {
       startNamesUpdate()
+      if (call.verb.name !== 'update' && call.verb.name !== 'init') {
+        startReleaseCheck()
+        tellRelease()
+      }
     }
     return typeof code === 'number' ? code : 0
   } catch (error) {

@@ -80,8 +80,8 @@ a checkout are in [docs/install.md](docs/install.md).
 Both images are drawn from the live catalog, so they always match what
 `ttheme browse` offers. `init` installs the series you pick; `ttheme browse`
 adds or drops single palettes any time, and a merged palette reaches everyone
-within a day of using ttheme — or at once through `ttheme update` — without
-waiting for a release.
+with the next release — `ttheme update` brings it, and ttheme says when one is
+out.
 
 ### Markets
 
@@ -111,11 +111,13 @@ ttheme browse                                 # shift+→ to Markets: add, remov
 `ttheme browse` handles markets the way it handles palettes: its Markets tab
 adds one by repository or folder, finds the public ones on GitHub, marks one for
 removal and switches its auto-update, and enter applies all of it with the
-palettes you picked. The official catalog updates on its own once a day as you
-use ttheme; a repository asks when you add it. Nobody reviews a market. Its
+palettes you picked. The official catalog comes with ttheme and updates with it;
+a repository asks when you add it whether its list updates on its own, and a
+palette you installed from it keeps its colors until you take its update —
+`ctrl+r` on a palette marked `↑` in browse's Installed tab. Nobody reviews a market. Its
 palettes are colors and post numbers, never code, and the contrast gate's
 numbers are shown for them but never enforced — only the official catalog is
-held to the gate. `ttheme update` refreshes every market now; `ttheme market
+held to the gate. `ttheme update` updates ttheme and refreshes every market now; `ttheme market
 remove alice@pastel` drops one, and the palettes you installed from it keep
 working. The official catalog is a market too (`official`). [The markets
 page](https://kecan0406.github.io/ttheme/market) lists the public ones.

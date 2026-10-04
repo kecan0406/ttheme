@@ -27,7 +27,7 @@ Palettes:
   list [query]               Show the catalog, marking what is installed
   add <palette...>           Install palettes
   remove <palette...>        Uninstall palettes
-  update                     Refresh every market you added now
+  update [market...]         Update ttheme and refresh your markets
   market [action] [source]   The markets you added
 
 Your own:
@@ -380,11 +380,13 @@ on:
   back to all of them.
 - **Installed** is the same list cut down to what you have, so unmarking one
   there is how you drop it. It has its own strip, with the markets you have a
-  palette from.
+  palette from. A palette whose market changed it since you installed it is
+  marked `↑`, and `ctrl+r` stages its update — or every one in a series.
 - **Markets** lists the markets you added over two lines each — where it comes
   from, how many palettes it holds and how many of them you have, when it was
   updated. `space` marks one for removal (its installed palettes stay), `←` and
-  `→` turn its auto-update off and on, and `ctrl+r` updates it now. Under
+  `→` turn a repository's auto-update off and on, and `ctrl+r` updates it now;
+  the official catalog comes with ttheme, so it has neither. Under
   `On GitHub` it lists the repositories with the `ttheme-market` topic by
   itself as the tab opens, and again a moment after you stop typing, for what
   you typed; moving onto one fetches its archive, so the detail panel names the
@@ -400,7 +402,7 @@ on:
 Nothing is written until you apply. enter on anything but a series opens a
 review of everything staged across the tabs — the markets added and removed, the
 auto-update switches, and exactly the palettes marked (installing the new ones,
-removing the unmarked); enter again applies it, esc goes back to the tabs. The
+removing the unmarked, updating the ones staged with `ctrl+r`); enter again applies it, esc goes back to the tabs. The
 screen stays while it works: what it has done so far, and one line for the step
 in hand (a picture being fetched,
 `Downloading kita · danbooru 1234 · 3.1/8.4 MB · 1/2`), then what was applied,
@@ -439,7 +441,7 @@ The same four verbs work without the picker:
 ttheme list jujutsu     # what the catalog has, and what you already installed
 ttheme add gojo geto    # two more, written into your terminal configs
 ttheme remove kyubey    # and one fewer
-ttheme update           # new palettes, without an npm release
+ttheme update           # a newer ttheme with its palettes, and every market's new list
 ```
 
 `browse`, `add` and `remove` rewrite `palettes.zsh`, each wired terminal's
@@ -447,27 +449,33 @@ ttheme update           # new palettes, without an npm release
 them — the change is live in the tab you ran it in. The first palette you install
 becomes the one new windows open with.
 
-`update` refetches every market you added, rewrites what you installed from
-them and fetches any picture a palette newly lists. A palette that leaves its
-market stays installed from the copy the last change kept
-(`~/.config/ttheme/kept.json`); `list` marks it.
+`update` first asks npm for the newest ttheme. When yours is older it runs
+`npx @kecan0406/ttheme@<newest> init --yes` — the same update `init` offers,
+keeping your terminals, palettes and settings — and the new ttheme carries on
+from there. The official palettes come with ttheme, so this is how they change.
+Then it refetches every other market you added; `ttheme update alice@pastel`
+refetches that one alone. A palette you installed from a market keeps the
+colors it was installed with (`~/.config/ttheme/kept.json`) until you take its
+update: `update` names the ones that have one, `browse` marks them `↑` in its
+Installed tab, and `ctrl+r` there stages one — or a whole series — for enter to
+apply, pictures it newly lists included. A palette that leaves its market stays
+installed from that copy; `list` marks it.
 
-A market with auto-update on does that by itself: when a copy is a day old,
-`browse`, `add`, `remove`, `market`, `default`, `on` and `off` fetch it first —
-`browse` in the background while it is open, the others waiting a few seconds
-at most — and say so on your terminal, never into a pipe
-(`Updated official 1.0.50 — 153 palettes (3 new)`), when something changed. A failed try is kept quiet, shown under Errors, and tried
-again an hour later; the one exception is an official catalog written in a newer
-schema than your ttheme reads, which a terminal is told about
-(`the ttheme catalog: catalog is schema 2, newer than the schema 1 this ttheme
-reads — npx @kecan0406/ttheme@latest init updates it`) while the copy from the
-last update stays in use. An update also follows a market's renames: a palette
-you installed under a name its market renamed is installed under the new name —
-with its tuning, pictures, pins and startup role — and one the market removed
-comes off (`alice@pastel/dawn is alice@pastel/dusk now — its market renamed
-it`). After refreshing the official catalog
-ttheme also says when a newer release than yours is out — `update` always, the
-automatic refresh in a terminal. Nothing ever runs from the shell or a new tab.
+Once a day ttheme also checks by itself, in the background of any command:
+whether npm has a newer ttheme, which it says once on your terminal
+(`ttheme 1.2.15 is out, you have 1.2.14 — ttheme update updates it`), and —
+for a market with auto-update on, when its copy is a day old — the market's
+list: `browse`, `add`, `remove`, `market`, `default`, `on` and `off` fetch it
+first, `browse` in the background while it is open, the others waiting a few
+seconds at most, and say so on your terminal, never into a pipe
+(`Updated alice@pastel — 12 palettes (3 new)`), when something changed. A failed
+try is kept quiet, shown under Errors, and tried again an hour later.
+`TTHEME_AUTO_UPDATE=off` in `ttheme config` stops both, and so does a `CI`
+environment; `ttheme update` still works. An update also follows a market's
+renames: a palette you installed under a name its market renamed is installed
+under the new name — with its tuning, pictures, pins and startup role — and one
+the market removed comes off (`alice@pastel/dawn is alice@pastel/dusk now — its
+market renamed it`). Nothing ever runs from the shell or a new tab.
 
 ## Markets
 
@@ -487,8 +495,8 @@ ttheme market check ./my-market   # what an install would read from a folder, be
 ```
 
 Adding a repository asks whether it updates on its own (no, without a
-terminal); the official catalog always starts with auto-update on, and a folder
-is read in place, so it needs none. `browse`'s Markets tab switches it later.
+terminal); the official catalog comes with ttheme and updates with it, and a
+folder is read in place, so neither needs one. `browse`'s Markets tab switches it later.
 Adding a repository you already have with another `#ref` moves it there,
 keeping its auto-update.
 
@@ -518,8 +526,8 @@ it back.
 
 Installed palettes and the markets you added are listed in
 `~/.config/ttheme/installed.json`, with an auto-update switch under `updates`
-only where it differs from the default; the official catalog is cached in
-`~/.config/ttheme/catalog.json` and each other market in
+only where it differs from the default; the official catalog `init` installed
+is `~/.config/ttheme/catalog.json` and each other market is cached in
 `~/.config/ttheme/markets/<owner>--<repository>.json` — the repository's
 `ttheme-market.toml` and `palettes/` files as fetched from its archive, read
 like a folder on every command — whose age is how auto-update tells a day has

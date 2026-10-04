@@ -33,7 +33,7 @@ import {
   stepRow,
 } from './palette-prompt.ts'
 import { counted, type Refreshed } from './refresh.ts'
-import { isLocal, OFFICIAL, parseSource, sameMarket, shownSource, TOPIC } from './sources.ts'
+import { isLocal, isRemote, OFFICIAL, parseSource, sameMarket, shownSource, TOPIC } from './sources.ts'
 import { marketOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Mouse } from './tui/keys.ts'
@@ -66,7 +66,7 @@ export interface Report {
 }
 
 export interface BrowseIo {
-  refresh(source: string): Promise<{ market: Market; refreshed: Refreshed }>
+  refresh(source: string): Promise<{ market: Market; refreshed: Refreshed; updates: string[] }>
   fetch(source: string): Promise<Market>
   search(query: string | undefined): Promise<Repository[]>
   apply(result: BrowseResult, report: Report): Promise<void>
@@ -76,6 +76,7 @@ export interface BrowseOptions {
   markets: Market[]
   kept: PaletteEntry[]
   installed: string[]
+  updates?: string[]
   startup?: string
   problems: Problem[]
   due: string[]
@@ -96,6 +97,7 @@ export interface BrowseResult {
   adds: Market[]
   removes: string[]
   auto: Record<string, boolean>
+  renew: string[]
   refreshed: Refreshed[]
 }
 
@@ -192,6 +194,8 @@ export class BrowsePanel {
   private readonly adds = new Map<string, Market>()
   private readonly removes = new Set<string>()
   private readonly want = new Map<string, boolean>()
+  private readonly renew = new Set<string>()
+  private updates: Set<string>
   private readonly scope: Record<Scoped, string | undefined> = { catalog: undefined, installed: undefined }
   private readonly busy = new Map<string, string>()
   private readonly failed = new Map<string, string>()
@@ -244,6 +248,7 @@ export class BrowsePanel {
     this.problems = opts.problems
     this.kept = opts.kept
     this.installed = new Set(opts.installed)
+    this.updates = new Set(opts.updates ?? [])
     this.startup = opts.startup
     this.io = opts.io
     this.order = opts.order ?? ((entries) => entries)
@@ -261,6 +266,7 @@ export class BrowsePanel {
       picked: this.picked,
       color: this.color,
       maxItems: this.maxItems,
+      note: (entry) => this.mark(entry),
       onFocus: (entry) => this.focus('catalog', entry),
     })
     this.mine = new PaletteList({
@@ -268,6 +274,7 @@ export class BrowsePanel {
       picked: this.picked,
       color: this.color,
       maxItems: this.maxItems,
+      note: (entry) => this.mark(entry),
       onFocus: (entry) => this.focus('installed', entry),
     })
     this.hint = new SearchHint(
@@ -350,6 +357,7 @@ export class BrowsePanel {
       adds: [...this.adds.values()],
       removes: [...this.removes],
       auto: Object.fromEntries(this.want),
+      renew: [...this.renew].filter((name) => this.updates.has(name) && this.picked.has(name) && names.has(name)),
       refreshed: this.refreshed,
     }
   }
@@ -422,9 +430,11 @@ export class BrowsePanel {
       this.switchTab(key === 'shift-right' ? 1 : -1)
     } else if (key === ' ') {
       this.activate()
+    } else if (key === 'ctrl-r' && list) {
+      this.toggleRenew(list)
     } else if (key === 'ctrl-r') {
       const row = this.tab === 'markets' ? this.marketRow() : undefined
-      if (row?.kind === 'market' && !this.adds.has(row.market.source)) {
+      if (row?.kind === 'market' && isRemote(row.market.source) && !this.adds.has(row.market.source)) {
         this.update(row.market.source)
       } else if (row?.kind === 'find') {
         this.search()
@@ -680,7 +690,7 @@ export class BrowsePanel {
       return
     }
     const row = this.tab === 'markets' ? this.marketRow() : undefined
-    if (row?.kind === 'market' && !isLocal(row.market.source)) {
+    if (row?.kind === 'market' && isRemote(row.market.source)) {
       if (right === row.market.auto) {
         this.want.delete(row.market.source)
       } else {
@@ -854,8 +864,9 @@ export class BrowsePanel {
     this.failed.delete(source)
     this.busy.set(source, 'Updating…')
     this.track(this.io.refresh(source)).then(
-      ({ market, refreshed }) => {
+      ({ market, refreshed, updates }) => {
         this.busy.delete(source)
+        this.updates = new Set(updates)
         this.markets = this.markets.map((m) => (m.source === source ? market : m))
         this.problems = this.problems.filter((p) => p.source !== source)
         this.refreshed.push(refreshed)
@@ -1040,7 +1051,7 @@ export class BrowsePanel {
       const status = this.status(m)
       const name = focused ? this.bold(m.id) : m.id
       const listed = m.entries.filter((e) => !e.default)
-      const auto = !isLocal(m.source) && (this.want.get(m.source) ?? m.auto) ? `  ${this.dim('↻ auto-update')}` : ''
+      const auto = isRemote(m.source) && (this.want.get(m.source) ?? m.auto) ? `  ${this.dim('↻ auto-update')}` : ''
       return [
         this.lit(
           m.entries.find((e) => !e.default),
@@ -1145,8 +1156,49 @@ export class BrowsePanel {
   }
 
   private dirty(): boolean {
-    const { picked } = this.result()
-    return this.changes() > 0 || picked.size !== this.installed.size || [...picked].some((n) => !this.installed.has(n))
+    const { picked, renew } = this.result()
+    return (
+      this.changes() > 0 ||
+      renew.length > 0 ||
+      picked.size !== this.installed.size ||
+      [...picked].some((n) => !this.installed.has(n))
+    )
+  }
+
+  private mark(entry: PaletteEntry): string {
+    if (!this.updates.has(entry.name) || !this.installed.has(entry.name)) {
+      return ''
+    }
+    return this.renew.has(entry.name) ? `  ${this.bold('↑ update')}` : `  ${this.dim('↑')}`
+  }
+
+  private toggleRenew(list: PaletteList): void {
+    const row = list.focusedRow()
+    const entries = this.entries()
+    const names = (
+      row?.kind === 'palette'
+        ? [row.entry]
+        : row?.kind === 'group'
+          ? entries.filter((e) => e.group === row.name)
+          : row?.kind === 'catalog'
+            ? entries.filter((e) => e.group === row.group && e.catalog === row.name)
+            : row?.kind === 'all'
+              ? entries
+              : []
+    )
+      .map((e) => e.name)
+      .filter((name) => this.updates.has(name) && this.installed.has(name))
+    if (names.length === 0) {
+      return
+    }
+    const on = names.some((name) => !this.renew.has(name))
+    for (const name of names) {
+      if (on) {
+        this.renew.add(name)
+      } else {
+        this.renew.delete(name)
+      }
+    }
   }
 
   private leave(code: number): void {
@@ -1248,12 +1300,15 @@ export class BrowsePanel {
   private reviewLines(): string[] {
     const markets = this.marketChanges()
     const { names, dropped } = this.pending()
-    const width = Math.max(0, ...[...names, ...dropped].map((e) => e.name.length))
+    const renew = new Set(this.result().renew)
+    const renewed = this.entries().filter((e) => renew.has(e.name))
+    const width = Math.max(0, ...[...names, ...dropped, ...renewed].map((e) => e.name.length))
     const palette = (sign: string, e: PaletteEntry) =>
       `   ${sign} ${e.name.padEnd(width)}  ${this.dim(marketOf(e.name) ? (e.catalog ?? '') : e.group)}`
     const counts = [
       names.length > 0 ? `${names.length} to install` : '',
       dropped.length > 0 ? `${dropped.length} to remove` : '',
+      renewed.length > 0 ? `${renewed.length} to update` : '',
     ].filter(Boolean)
     return [
       ...(markets.length > 0
@@ -1264,6 +1319,7 @@ export class BrowsePanel {
             ` ${this.bold('Palettes')} ${this.dim(`(${counts.join(' · ')})`)}`,
             ...names.map((e) => palette('+', e)),
             ...dropped.map((e) => palette('-', e)),
+            ...renewed.map((e) => palette('↑', e)),
           ]
         : []),
     ]
@@ -1277,6 +1333,7 @@ export class BrowsePanel {
       this.removes.size > 0 ? `${this.removes.size} removed` : '',
       names.length > 0 ? `${names.length} installed` : '',
       dropped.length > 0 ? `${dropped.length} removed` : '',
+      this.result().renew.length > 0 ? `${this.result().renew.length} updated` : '',
     ]
       .filter(Boolean)
       .join(' · ')
@@ -1477,7 +1534,13 @@ export class BrowsePanel {
     const now = this.picked.has(entry.name)
     const was = this.installed.has(entry.name)
     const state = now && was ? 'Installed' : now ? 'Will install' : was ? 'Will remove' : 'Not installed'
-    return this.startup === entry.name ? `${state} · Default` : state
+    const update =
+      now && was && this.updates.has(entry.name)
+        ? this.renew.has(entry.name)
+          ? ' · Will update'
+          : ' · Update ready'
+        : ''
+    return `${state}${update}${this.startup === entry.name ? ' · Default' : ''}`
   }
 
   private paletteDetail(row: ListRow | undefined, width: number): Detail {
@@ -1550,9 +1613,9 @@ export class BrowsePanel {
       const listed = m.entries.filter((e) => !e.default)
       const installed = listed.filter((e) => this.installed.has(e.name)).map((e) => e.name)
       const counts = `${counted(listed.length)} · ${installed.length} installed`
-      const auto = isLocal(m.source)
-        ? 'Read in place'
-        : `Auto-update ${(this.want.get(m.source) ?? m.auto) ? 'on' : 'off'}`
+      const auto = isRemote(m.source)
+        ? `Auto-update ${(this.want.get(m.source) ?? m.auto) ? 'on' : 'off'}`
+        : cap(m.status)
       const when = this.busy.get(m.source) ?? cap(m.status)
       const failure = this.failed.get(m.source)
       const staged = this.adds.has(m.source)
@@ -1573,12 +1636,12 @@ export class BrowsePanel {
           ...(m.description ? wrapText(m.description, width).map((l) => this.dim(l)) : []),
           counts,
           '',
-          isLocal(m.source) ? auto : `${auto}  ${this.dim('←→')}`,
-          ...(isLocal(m.source) ? [] : [when]),
+          isRemote(m.source) ? `${auto}  ${this.dim('←→')}` : auto,
+          ...(isRemote(m.source) ? [when] : []),
           ...(failure ? wrapText(failure, width).map((l) => this.warn(l)) : []),
           ...(staged.length > 0 ? ['', ...staged.flatMap((s) => wrapText(s, width))] : []),
         ],
-        brief: [source, auto, ...staged, ...(isLocal(m.source) ? [] : [when])].join(' · '),
+        brief: [source, auto, ...staged, ...(isRemote(m.source) ? [when] : [])].join(' · '),
       }
     }
     if (row.kind === 'add') {
@@ -1715,7 +1778,12 @@ export class BrowsePanel {
         const open = (row.kind === 'group' || row.kind === 'catalog') && row.expanded
         return [open ? ['←', 'close'] : ['→', 'open'], ['space', 'pick']]
       }
-      return [['space', 'pick'], enter]
+      const renewable = row.kind === 'palette' && this.updates.has(row.entry.name) && this.installed.has(row.entry.name)
+      return [
+        ['space', 'pick'],
+        ...(renewable ? [['ctrl+r', this.renew.has(row.entry.name) ? 'keep' : 'update'] as Hint] : []),
+        enter,
+      ]
     }
     if (this.tab === 'errors') {
       return [enter]
@@ -1726,8 +1794,8 @@ export class BrowsePanel {
       const staged = this.adds.has(m.source) || this.removes.has(m.source)
       return [
         ['space', staged ? 'undo' : 'remove'],
-        ...(isLocal(m.source) ? [] : [['←→', 'auto-update'] as Hint]),
-        ...(this.adds.has(m.source) ? [] : [['ctrl+r', 'update'] as Hint]),
+        ...(isRemote(m.source) ? [['←→', 'auto-update'] as Hint] : []),
+        ...(isRemote(m.source) && !this.adds.has(m.source) ? [['ctrl+r', 'update'] as Hint] : []),
         enter,
       ]
     }
@@ -1818,6 +1886,7 @@ export class BrowsePanel {
       ...(this.active().length >= 2 ? [['Market', 'ctrl+s  ·  one market, then all'] as Hint] : []),
       ['Markets', 'space  adds or removes  ·  ←→  auto-update'],
       ['', 'ctrl+r  updates it, or searches again'],
+      ['Update', 'ctrl+r  on a palette marked ↑'],
       ['Apply', 'enter  reviews and applies  ·  esc cancels'],
       ...(this.hub ? [['Screens', 'tab  ·  shift+tab'] as Hint] : []),
       ['Close', '?  esc'],
