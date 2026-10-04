@@ -41,7 +41,7 @@ test('the palette schema describes the keys, sites, positions, slots and gate ru
     SITES.map((s) => s.key),
   )
   assert.deepEqual(palette.properties?.picture?.items?.properties?.position?.anyOf?.[0]?.enum, [...POSITIONS])
-  assert.deepEqual(palette.properties?.contrast?.properties?.waive?.items?.enum, RULES)
+  assert.deepEqual(palette.properties?.contrast?.properties?.waive?.items?.anyOf?.[0]?.enum, RULES)
   assert.deepEqual(defs.slot?.enum, [
     'background',
     'foreground',
