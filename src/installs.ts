@@ -217,10 +217,17 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   const all = marketSources(home)
   const named = asked.map((name) => marketNamed(home, all, name))
   const release = await newerRelease()
+  let stuck = false
   if (release.latest) {
-    return upgradeTo(release.latest, asked)
+    try {
+      return upgradeTo(release.latest, asked)
+    } catch (error) {
+      stuck = true
+      console.log(`  ttheme could not update to ${release.latest}: ${(error as Error).message}`)
+    }
+  } else {
+    console.log(release.note)
   }
-  console.log(release.note)
   const markets = (named.length > 0 ? named : all).filter((source) => source !== OFFICIAL)
   if (named.length === 0 && markets.length === 0) {
     console.log('No markets to update — `ttheme market add <owner>/<repo>` adds one')
@@ -260,7 +267,7 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   )
   line.done()
   if (!existsSync(installedPath(home))) {
-    return 0
+    return stuck ? 1 : 0
   }
   for (const moved of applyRefreshed(home, done)) {
     console.log(`  ${moved}`)
@@ -269,7 +276,7 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   if (updates) {
     console.log(updates)
   }
-  return 0
+  return stuck ? 1 : 0
 }
 
 export async function takeUpdates(home: string, names: string[]): Promise<void> {

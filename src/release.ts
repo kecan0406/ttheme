@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from 'node:child_process'
+import { execFile, spawn, spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, realpathSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -7,7 +7,6 @@ import { writeAtomic } from './edits.ts'
 import { advise } from './notice.ts'
 import { configHome } from './palettes.ts'
 
-export const LATEST_URL = `https://registry.npmjs.org/${pkg.name}/latest`
 export const UPDATE_COMMAND = `npx ${pkg.name}@latest init`
 
 const DAY = 24 * 60 * 60 * 1000
@@ -63,21 +62,39 @@ function writeSeen(seen: Seen): void {
   writeAtomic(seenPath(), `${JSON.stringify(seen)}\n`)
 }
 
-export async function fetchLatest(timeout = TIMEOUT): Promise<string> {
-  let response: Response
-  try {
-    response = await fetch(LATEST_URL, { signal: AbortSignal.timeout(timeout) })
-  } catch (error) {
-    throw new Error(`cannot reach the npm registry — ${error instanceof Error ? error.message : String(error)}`)
-  }
-  if (!response.ok) {
-    throw new Error(`the npm registry answered ${response.status}`)
-  }
-  const { version } = (await response.json()) as { version?: unknown }
-  if (typeof version !== 'string' || !RELEASE.test(version)) {
-    throw new Error('the npm registry named no version')
-  }
-  return version
+export function fetchLatest(timeout = TIMEOUT): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      'npm',
+      ['view', `${pkg.name}@latest`, 'version', '--prefer-online'],
+      { cwd: tmpdir(), encoding: 'utf8', timeout, env: { ...process.env, npm_config_update_notifier: 'false' } },
+      (error, stdout, stderr) => {
+        if (error) {
+          const said = stderr
+            .split('\n')
+            .find((line) => /\S/.test(line))
+            ?.replace(/^npm (error|ERR!) /, '')
+          const { code, killed } = error as NodeJS.ErrnoException & { killed?: boolean }
+          reject(
+            new Error(
+              code === 'ENOENT'
+                ? 'cannot run npm'
+                : killed
+                  ? `npm did not answer within ${timeout / 1000} s`
+                  : `npm could not ask its registry — ${said ?? 'it gave no reason'}`,
+            ),
+          )
+          return
+        }
+        const version = stdout.trim()
+        if (!RELEASE.test(version)) {
+          reject(new Error('the npm registry named no version'))
+          return
+        }
+        resolve(version)
+      },
+    )
+  })
 }
 
 export function startReleaseCheck(now = Date.now()): void {
