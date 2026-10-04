@@ -9,7 +9,7 @@
    Foregroun│            ←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all          │
    Cursor   │            space  hides  ·  c  colors                                    │
    Selection│  Palette   ←→  normal or bright  ·  enter tab  tune it  ·  #  a color    │
-            │            tuning: ↑↓ L C H ◐  ·  ◐ home  the floor  ·  a  scope         │
+            │            tuning: ↑↓ L  ←→ C  ⇧←→ H  ·  tab ◐  ·  a  scope              │
    ANSI     │            g  relations  ·  n N  the next and last miss                  │
    Black    │            r  resets a slot  ·  R  all  ·  space  the colors before      │
    Red      │            c  copies  ·  v  pastes  ·  =  bright follows normal          │

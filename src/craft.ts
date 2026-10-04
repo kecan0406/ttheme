@@ -33,7 +33,7 @@ import {
 import type { Choice, Edited, EditorOptions } from './palette-editor.ts'
 import { commit, configHome, type Installed, readInstalled, refreshPictures, sync } from './palettes.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
-import { grow, SEEDS } from './seeds.ts'
+import { type Colors, grow, SEEDS } from './seeds.ts'
 import { showsPictures } from './terminal.ts'
 import { marketOf, nameProblem, type SharedPicture, type Theme } from './theme.ts'
 import { readTone, tonedEntry } from './tone.ts'
@@ -217,6 +217,8 @@ export async function runNew(name: string, from: string | undefined, into: strin
     palettes: choicesOf(home, catalog, full),
     pictures: shelf.count(),
     find: finder(home, full, catalog, toml),
+    exports: exportsFor(home, full, catalog, toml),
+    decode: decoded,
     check: (e) => problemOf(() => readOwnText(full, toml(e), catalog.palettes)),
   })
   if (!edited) {
@@ -284,6 +286,8 @@ export async function runEdit(name: string): Promise<void> {
     palettes: choicesOf(home, catalog, full),
     pictures: shelf.count(),
     find: finder(home, full, catalog, rewrite),
+    exports: exportsFor(home, full, catalog, rewrite),
+    decode: decoded,
     check: (e) => problemOf(() => readOwnText(full, rewrite(e), catalog.palettes)),
   })
   if (!edited) {
@@ -355,6 +359,32 @@ export function runCheck(name: string, fix = false): number {
 function mineAt(home: string, name: string): string | undefined {
   const market = marketOf(name)
   return market && localMarkets(home, false).some((m) => m.id === market) ? ownPath(home, name) : undefined
+}
+
+function decoded(text: string): Colors | undefined {
+  const code = text.trim()
+  if (!code.startsWith(CODE)) {
+    return undefined
+  }
+  try {
+    const { background, foreground, cursor, selection, ansi } = fromCode(code)
+    return { background, foreground, cursor, selection, ansi }
+  } catch {
+    return undefined
+  }
+}
+
+function exportsFor(
+  home: string,
+  full: string,
+  catalog: Manifest,
+  text: (edited: Edited) => string,
+): EditorOptions['exports'] {
+  return {
+    code: (edited) => shareCode(draftFor(home, paletteEntry(readOwnText(full, text(edited), catalog.palettes)))),
+    toml: text,
+    command: 'ttheme add',
+  }
 }
 
 function draftFor(home: string, entry: PaletteEntry): Draft {

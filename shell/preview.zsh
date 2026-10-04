@@ -545,7 +545,7 @@ __tt_pv_help() {
       "←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all"
       "space  hides  ·  c  colors"
       "←→  normal or bright  ·  enter tab  tune it  ·  #  a color"
-      "tuning: ↑↓ L C H ◐  ·  ◐ home  the floor  ·  a  scope"
+      "tuning: ↑↓ L  ←→ C  ⇧←→ H  ·  tab ◐  ·  a  scope"
       "g  relations  ·  n N  the next and last miss"
       "r  resets a slot  ·  R  all  ·  space  the colors before"
       "c  copies  ·  v  pastes  ·  =  bright follows normal"

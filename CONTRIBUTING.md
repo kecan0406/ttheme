@@ -272,12 +272,12 @@ Apply button — and the part the cursor is in takes the keys:
 
 | Key | Image | Palette | Apply |
 |---|---|---|---|
-| `↑` `↓` `j` `k` | Images, then colors, size, position, opacity, and past the last one the palette | slot, and past the last one Apply (while tuning, lightness, chroma, hue or ◐ contrast) | the last slot, the top |
-| `home` `end` | the top, Apply | same (while tuning, the channel's ends; on ◐, the gate's floor and the most it reaches) | same |
-| `←` `→` | on Images, another picture; on a field, a step | normal or bright (while tuning, a step) | — |
-| `⇧←` `⇧→` | ×10 | while tuning, ×5 | — |
+| `↑` `↓` `j` `k` | Images, then colors, size, position, opacity, and past the last one the palette | slot, and past the last one Apply (while tuning, lightness) | the last slot, the top |
+| `home` `end` | the top, Apply | same (while tuning, the ends of the channel moved last; on ◐, the gate's floor and the most it reaches) | same |
+| `←` `→` | on Images, another picture; on a field, a step | normal or bright (while tuning, chroma) | — |
+| `⇧←` `⇧→` | ×10 | while tuning, hue by 5 | — |
 | `enter` | on the empty frame under Images of a palette with no picture, find one | tune the slot (while tuning, keep it) | apply, saving first and asking where |
-| `tab` | — | tune the slot | — |
+| `tab` | — | tune the slot (while tuning, ◐ contrast and back) | — |
 | `1`-`9` | place | while tuning, jump (on ◐, that ratio) | — |
 | `#` `c` `v` `u` `ctrl+r` `space` | — | type a color, copy, paste, undo, redo, show the colors before | — |
 | `f` | find a picture | move the colors the gate misses | — |
