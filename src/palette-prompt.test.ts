@@ -58,6 +58,20 @@ test('stepRow wraps at either end, stops short of it on a page, and steps over a
   assert.equal(stepRow(0, 1, 0, none), 0)
 })
 
+test('stepRow never leaves the list over a rule at its top or bottom', () => {
+  const top = (i: number) => i === 0
+  const bottom = (i: number) => i === 2
+  assert.equal(stepRow(1, -1, 2, top), 1)
+  assert.equal(stepRow(1, -1, 2, top, false), 1)
+  assert.equal(stepRow(1, -1, 3, top), 2)
+  assert.equal(stepRow(1, Number.NEGATIVE_INFINITY, 2, top), 1)
+  assert.equal(stepRow(2, -10, 3, top), 1)
+  assert.equal(stepRow(0, Number.POSITIVE_INFINITY, 3, bottom), 1)
+  assert.equal(stepRow(0, 10, 3, bottom), 1)
+  assert.equal(stepRow(1, 1, 3, bottom), 0)
+  assert.equal(stepRow(1, 1, 3, bottom, false), 1)
+})
+
 test('matchesPalette filters by name, group and native title', () => {
   const madoka = entries[3]
   assert.ok(madoka)

@@ -130,7 +130,15 @@ export function stepRow(at: number, delta: number, count: number, rule: (i: numb
   } else {
     next = at <= 0 ? (wrap ? last : 0) : Math.max(0, at + delta)
   }
-  return rule(next) ? next + Math.sign(delta) : next
+  if (!rule(next)) {
+    return next
+  }
+  const step = Math.sign(delta)
+  const over = next + step
+  if (over >= 0 && over <= last) {
+    return over
+  }
+  return wrap && Math.abs(delta) === 1 ? (over < 0 ? last : 0) : next - step
 }
 
 export function pageStep(name: string | undefined, size: number): number | undefined {
