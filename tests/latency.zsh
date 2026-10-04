@@ -205,6 +205,25 @@ typing() {
   [[ $session != *('^[['|$'\e[B')* ]] || { fail "$name: keys typed while preview drew were echoed into it"; return 1 }
 }
 
+flow() {
+  local name=$1 REPLY
+  start $name
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
+  zpty -w -n sh $'stty ixon -ixany\r'
+  upto 'prompts && (( REPLY >= 3 ))' 5 $name || { fail "$name: no prompt after stty"; return 1 }
+  BUF=""
+  zpty -w -n sh $'ttheme preview\r'
+  upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
+  zpty -w -n sh $'\x13'
+  upto false 0.3 $name || :
+  local -i from=${#BUF}
+  zpty -w -n sh $'\e[B'
+  upto '(( ${#BUF} > from ))' 2 $name || { zpty -w -n sh $'\x11'; fail "$name: ctrl+s stopped preview's output, so the key after it drew nothing"; return 1 }
+  zpty -w -n sh $'\e'
+  upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
+  stop
+}
+
 hovering() {
   local name=$1 REPLY session
   local -i from
@@ -273,10 +292,11 @@ check() {
     [[ ${BUF%%$'\e]11;?'*} == *"bench> "* ]] || { fail "$name: a second tab asked the terminal before its first prompt"; return 1 }
   done
   typing off
+  flow off
   hovering iterm2
   hovering iterm2-switch
   hostile options
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, and a .zshrc's own options break none of it"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, and a .zshrc's own options break none of it"
 }
 
 bench() {

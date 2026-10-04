@@ -2115,7 +2115,7 @@ __tt_preview() {
   local tty=""
   local -i TTHEME_RAW=0
   {
-    tty=$(stty -g 2>/dev/null) && stty -echo -icanon min 1 time 0 2>/dev/null || tty=""
+    tty=$(stty -g 2>/dev/null) && stty -echo -icanon -ixon min 1 time 0 2>/dev/null || tty=""
     TTHEME_RAW=$(( ${#tty} > 0 ))
     __tt_pv_bg_open
     printf '\e[?2026h\e[?1049h\e[?7l\e[?25l'

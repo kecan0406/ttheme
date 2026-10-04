@@ -757,7 +757,7 @@ __tt_unpin_choose() {
   local -a block=()
   chosen=0
   {
-    tty=$(stty -g 2>/dev/null && stty -echo -icanon min 1 time 0 2>/dev/null)
+    tty=$(stty -g 2>/dev/null && stty -echo -icanon -ixon min 1 time 0 2>/dev/null)
     print -rn -- $'\e[?25l'
     while :; do
       __tt_unpin_block $at
