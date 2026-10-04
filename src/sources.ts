@@ -2,12 +2,22 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
-import { judgeSchema } from './manifest.ts'
 import { nameProblem } from './theme.ts'
 
 export const OFFICIAL = 'official'
 export const MARKET_FILE = 'ttheme-market.toml'
-export const MARKET_SCHEMA = 1
+export const MARKET_SCHEMA_URL = 'https://www.schemastore.org/ttheme-market.json'
+export const PALETTE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-palette.json'
+export const MARKET_KEYS = [
+  '$schema',
+  'name',
+  'description',
+  'owner',
+  'renames',
+  'force_remove_deleted_palettes',
+  'metadata',
+]
+export const OWNER_KEYS = ['name', 'email', 'url']
 export const TOPIC = 'ttheme-market'
 
 const OWNER = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i
@@ -119,7 +129,7 @@ export function defaultLocal(configHome: string, name: string): string {
 
 export function marketProblem(owner: unknown, name: unknown): string | undefined {
   if (typeof owner !== 'string' || typeof name !== 'string') {
-    return 'needs an "owner" (the GitHub handle) and a "name"'
+    return 'needs a "name" and an [owner] table whose name is the GitHub handle'
   }
   return nameProblem(`${owner}@${name}/x`)
 }
@@ -133,34 +143,92 @@ export function marketId({ owner, name }: Identity): string {
   return `${owner}@${name}`
 }
 
-export function marketToml({ owner, name }: Identity): string {
-  return `schema = ${MARKET_SCHEMA}\nowner = ${JSON.stringify(owner)}\nname = ${JSON.stringify(name)}\n`
+export interface Owner {
+  name: string
+  email?: string
+  url?: string
 }
 
-export function readIdentity(text: string, where: string): Identity {
+export interface MarketInfo extends Identity {
+  about: Owner
+  description?: string
+  renames: Record<string, string | false>
+  forceRemove: boolean
+}
+
+export function marketToml({ owner, name }: Identity): string {
+  return `"$schema" = ${JSON.stringify(MARKET_SCHEMA_URL)}\nname = ${JSON.stringify(name)}\n\n[owner]\nname = ${JSON.stringify(owner)}\n`
+}
+
+function shown(where: string, key: string, value: unknown, kind: string): string {
+  if (typeof value !== 'string' || value === '' || /\p{Cc}/u.test(value) || value.length > 200) {
+    throw new Error(`${where}: ${key} must be ${kind}`)
+  }
+  return value
+}
+
+function optional(where: string, key: string, value: unknown): string | undefined {
+  return value === undefined ? undefined : shown(where, key, value, 'one line of text, 200 characters at most')
+}
+
+function renamesOf(where: string, raw: unknown): Record<string, string | false> {
+  if (raw === undefined) {
+    return {}
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error(`${where}: [renames] maps an old palette name to its new name, or to false once it is gone`)
+  }
+  const renames: Record<string, string | false> = {}
+  for (const [from, to] of Object.entries(raw)) {
+    if (nameProblem(from) || (to !== false && (typeof to !== 'string' || nameProblem(to)))) {
+      throw new Error(`${where}: renames.${from} must map a palette name to a palette name, or to false`)
+    }
+    renames[from] = to
+  }
+  return renames
+}
+
+export function readMarketInfo(text: string, where: string): MarketInfo {
   let doc: Record<string, unknown>
   try {
     doc = parse(text)
   } catch (error) {
     throw new Error(`${where} is not valid TOML — ${(error as Error).message.split('\n')[0]}`)
   }
-  if (doc.schema === undefined) {
-    throw new Error(`${where} has no schema — schema = ${MARKET_SCHEMA} goes at its top`)
+  const name = shown(where, 'name', doc.name, 'the market name')
+  const raw = doc.owner
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error(`${where}: owner is a table — [owner] with name = "<GitHub handle>"`)
   }
-  judgeSchema(doc.schema, where, MARKET_SCHEMA)
-  const problem = marketProblem(doc.owner, doc.name)
+  const owner = raw as Record<string, unknown>
+  const about: Owner = { name: shown(where, 'owner.name', owner.name, 'the GitHub handle') }
+  const email = optional(where, 'owner.email', owner.email)
+  const url = optional(where, 'owner.url', owner.url)
+  const description = optional(where, 'description', doc.description)
+  const force = doc.force_remove_deleted_palettes
+  if (force !== undefined && typeof force !== 'boolean') {
+    throw new Error(`${where}: force_remove_deleted_palettes must be true or false`)
+  }
+  const problem = marketProblem(about.name, name)
   if (problem) {
     throw new Error(`${where} ${problem}`)
   }
-  return { owner: doc.owner as string, name: doc.name as string }
+  return {
+    owner: about.name,
+    name,
+    about: { ...about, ...(email ? { email } : {}), ...(url ? { url } : {}) },
+    ...(description ? { description } : {}),
+    renames: renamesOf(where, doc.renames),
+    forceRemove: force === true,
+  }
 }
 
-export function localIdentity(dir: string): Identity {
+export function localIdentity(dir: string): MarketInfo {
   const path = join(dir, MARKET_FILE)
   if (!existsSync(path)) {
     throw new Error(`${dir} has no ${MARKET_FILE} — \`ttheme market init ${dir}\` makes one`)
   }
-  return readIdentity(readFileSync(path, 'utf8'), path)
+  return readMarketInfo(readFileSync(path, 'utf8'), path)
 }
 
 export function shownSource(source: string): string {

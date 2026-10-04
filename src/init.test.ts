@@ -61,7 +61,7 @@ function paletteText(name: string): string {
 function withMarkets(paths: InitPaths): string {
   const dust = join(paths.home, 'dust')
   mkdirSync(join(dust, 'palettes'), { recursive: true })
-  writeFileSync(join(dust, 'ttheme-market.toml'), 'schema = 1\nowner = "kec"\nname = "moss"\n')
+  writeFileSync(join(dust, 'ttheme-market.toml'), 'name = "moss"\n\n[owner]\nname = "kec"\n')
   writeFileSync(join(dust, 'palettes', 'fern.toml'), paletteText('fern'))
   const cache = join(paths.configHome, 'ttheme', 'markets')
   mkdirSync(cache, { recursive: true })
@@ -69,7 +69,7 @@ function withMarkets(paths: InitPaths): string {
     join(cache, 'alice--pastel.json'),
     JSON.stringify({
       files: {
-        'ttheme-market.toml': 'schema = 1\nowner = "alice"\nname = "pastel"\n',
+        'ttheme-market.toml': 'name = "pastel"\n\n[owner]\nname = "alice"\n',
         'palettes/dusk.toml': paletteText('dusk'),
       },
     }),

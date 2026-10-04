@@ -15,11 +15,34 @@ ttheme edit rei                   # the same editor; the gate's numbers are show
 ```
 
 A market is a repository with `palettes/<palette>.toml` and a
-`ttheme-market.toml` that names it (`schema = 1`, `owner`, `name`) — nothing is
-built: ttheme fetches the repository's archive and reads the TOML files as they
-are, so every push is the market. A ttheme refuses a `ttheme-market.toml` with
-no `schema`, or a newer one than it reads, and keeps its last copy, and a
-palette file it cannot read shows in `ttheme browse`'s Errors tab. Added from GitHub, a market is
+`ttheme-market.toml` that names it — nothing is built: ttheme fetches the
+repository's archive and reads the TOML files as they are, so every push is the
+market:
+
+```toml
+"$schema" = "https://www.schemastore.org/ttheme-market.json"
+name = "dust"                              # <owner>@dust
+description = "Palettes from my favourite shows"   # browse and the market page show it
+
+[owner]
+name = "you"                               # your GitHub handle
+email = "you@example.com"                  # optional, like url
+url = "https://github.com/you"
+
+[renames]                                  # optional: installs of an old name follow it
+rei-old = "rei"                            # renamed
+gone = false                               # removed — taken off the machines that have it
+
+# force_remove_deleted_palettes = true     # also take off a palette that just disappears
+# [metadata]                               # anything of your own; ttheme does not read it
+```
+
+The `"$schema"` lines give an editor completion and checks (Even Better TOML
+reads them, and SchemaStore matches `ttheme-market.toml` by name); ttheme
+ignores them. Run `ttheme market check` in the folder before you push: it reads
+every file as an install would, warns about keys ttheme does not know, follows
+the renames and prints the gate. A palette file ttheme cannot read also shows in
+`ttheme browse`'s Errors tab. Added from GitHub, a market is
 `<repository owner>@<name>` and its palettes are `<owner>@<name>/<palette>`;
 the TOML files name them bare (`name = "rei"`). A folder under `palettes/` is a
 catalog — `palettes/neon/arcade.toml` puts arcade in the neon catalog — so every
@@ -74,6 +97,8 @@ the pictures you have up.
 One file — copy any of `themes/*.toml`:
 
 ```toml
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
 [meta]
 name = "madoka"                            # must match the filename
 native_names = ["鹿目まどか"]               # the character's names in Japanese, preview searches them

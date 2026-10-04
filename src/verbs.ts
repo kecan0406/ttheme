@@ -138,6 +138,10 @@ export const VERB_SPECS: VerbSpec[] = [
       ['remove <market>', 'Drop one by its name (alice@pastel) — the palettes you installed from it keep working'],
       ['search [query]', 'Repositories on GitHub with the ttheme-market topic'],
       ['init [name]', 'Make a market of your own, <you>@<name>, in ~/.config/ttheme/market/<name> (or give a folder)'],
+      [
+        'check [dir]',
+        "Check a market's folder before you push it — ttheme-market.toml, every palette, the renames and the gate; nothing is written",
+      ],
     ],
     section: 'catalog',
   },

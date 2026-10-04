@@ -481,11 +481,15 @@ A market with auto-update on does that by itself: when a copy is a day old,
 `browse` in the background while it is open, the others waiting a few seconds
 at most — and say so on your terminal, never into a pipe
 (`Updated official 1.0.50 — 153 palettes (3 new)`), when something changed. A failed try is kept quiet, shown under Errors, and tried
-again an hour later; the one exception is a market written in a newer schema
-than your ttheme reads, which a terminal is told about
-(`github.com/alice/ttheme-pastel: ttheme-market.toml is schema 2, newer than the
-schema 1 this ttheme reads — npx @kecan0406/ttheme@latest init updates it`) while the
-copy from the last update stays in use. After refreshing the official catalog
+again an hour later; the one exception is an official catalog written in a newer
+schema than your ttheme reads, which a terminal is told about
+(`the ttheme catalog: catalog is schema 2, newer than the schema 1 this ttheme
+reads — npx @kecan0406/ttheme@latest init updates it`) while the copy from the
+last update stays in use. An update also follows a market's renames: a palette
+you installed under a name its market renamed is installed under the new name —
+with its tuning, pictures, pins and startup role — and one the market removed
+comes off (`alice@pastel/dawn is alice@pastel/dusk now — its market renamed
+it`). After refreshing the official catalog
 ttheme also says when a newer release than yours is out — `update` always, the
 automatic refresh in a terminal. Nothing ever runs from the shell or a new tab.
 
@@ -503,6 +507,7 @@ ttheme market add ./my-market     # a folder, read in place on every command
 ttheme add dusk --market alice/ttheme-pastel  # add the market and install from it in one step
 ttheme market                     # what you added: counts, auto-update, the last update
 ttheme market remove alice@pastel # installed palettes from it keep working
+ttheme market check ./my-market   # what an install would read from a folder, before you push it
 ```
 
 Adding a repository asks whether it updates on its own (no, without a
@@ -546,10 +551,13 @@ passed; a repository that has not changed since answers the daily check
 without sending anything. Failed tries are kept in
 `~/.local/state/ttheme/markets.json`.
 
-A `ttheme-market.toml` carries a `schema` number. It is raised only when a
-change would make an older ttheme misread the market, never for a palette or an
-optional field added; a ttheme that finds a higher one than it reads refuses the
-market and keeps its last copy, and so does a `ttheme-market.toml` with none.
+A `ttheme-market.toml` names the market and says who keeps it, and may carry a
+`description` (browse, `ttheme market` and the market page show it), the
+`[renames]` above, `force_remove_deleted_palettes` (a palette that disappears
+without a rename comes off the machines that have it, instead of staying as
+their copy) and a `[metadata]` table ttheme does not read. A key ttheme does not
+know is ignored, so a market written for a newer ttheme still reads;
+`ttheme market check` warns about one (see CONTRIBUTING.md for the file).
 
 ## Your own palettes
 

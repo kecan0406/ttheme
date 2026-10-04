@@ -1,3 +1,5 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
 [meta]
 name = "alice"
 native_names = ["アリス・ツーベルク", "アリス・シンセシス・サーティ"]

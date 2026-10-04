@@ -30,7 +30,7 @@ async function shown(r: Found) {
     if (!archive) {
       return []
     }
-    const { id, entries } = fromArchive(source, archive, official)
+    const { id, entries, info } = fromArchive(source, archive, official)
     const palettes = listed(entries).map((e) => ({ ...e, name: slugOf(e.name) }))
     return palettes.length === 0
       ? []
@@ -39,7 +39,7 @@ async function shown(r: Found) {
             id,
             repo: r.full_name,
             add: source,
-            about: r.description ?? '',
+            about: info.description ?? r.description ?? '',
             stars: r.stargazers_count,
             pushedAt: r.pushed_at.slice(0, 10),
             license: r.license && r.license.spdx_id !== 'NOASSERTION' ? r.license.spdx_id : null,

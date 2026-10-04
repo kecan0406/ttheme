@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import pkg from '../package.json' with { type: 'json' }
+import { moveRacks } from './backdrop.ts'
 import {
   type Archive,
   archiveId,
@@ -11,6 +12,7 @@ import {
   Missing,
   parseCatalog,
   REGISTRY_URL,
+  type ReadMarket,
   reach,
   readArchive,
   readCachedArchive,
@@ -21,17 +23,23 @@ import {
 import { writeAtomic } from './edits.ts'
 import { listed, type Manifest, type PaletteEntry, TooNew, UPDATE_COMMAND } from './manifest.ts'
 import { advise } from './notice.ts'
-import { warning } from './own.ts'
-import { configHome, type Installed, readInstalled, sync } from './palettes.ts'
+import { readMarketDir, warning } from './own.ts'
+import { commit, configHome, forget, type Installed, readInstalled, sync } from './palettes.ts'
 import { pending } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
+import { movePins } from './pins.ts'
+import { type Moves, plan } from './renames.ts'
 import {
   archiveUrl,
   autoUpdates,
   cachePath,
   installedPath,
+  isLocal,
   isRemote,
+  localIdentity,
   MARKET_FILE,
+  type MarketInfo,
+  marketId,
   marketsDir,
   marketsOf,
   OFFICIAL,
@@ -39,6 +47,8 @@ import {
   shownSource,
 } from './sources.ts'
 import { untar } from './tarball.ts'
+import { slugOf } from './theme.ts'
+import { moveTone } from './tone.ts'
 
 export const REFRESH_AFTER = 24 * 60 * 60 * 1000
 export const RETRY_AFTER = 60 * 60 * 1000
@@ -49,10 +59,15 @@ export interface Tried {
   error: string
 }
 
-export type Fetched = { source: string; id: string; entries: PaletteEntry[] } & (
-  | { manifest: Manifest }
-  | { archive: Archive }
-)
+export interface FetchedMarket {
+  source: string
+  id: string
+  entries: PaletteEntry[]
+  archive: Archive
+  info: MarketInfo
+}
+
+export type Fetched = FetchedMarket | { source: string; id: string; entries: PaletteEntry[]; manifest: Manifest }
 
 export interface Change {
   added: string[]
@@ -156,9 +171,9 @@ export async function fetchArchive(
   return archiveOf(new Uint8Array(await response.arrayBuffer()), response.headers.get('etag'))
 }
 
-export function fromArchive(source: string, archive: Archive, official: PaletteEntry[]): Fetched {
-  const { id, entries } = readArchive(source, archive, official, warning(false))
-  return { source, id, entries, archive }
+export function fromArchive(source: string, archive: Archive, official: PaletteEntry[]): FetchedMarket {
+  const { id, info, entries } = readArchive(source, archive, official, warning(false))
+  return { source, id, entries, archive, info }
 }
 
 function officialOf(home: string): PaletteEntry[] {
@@ -333,16 +348,64 @@ export function outdatedNote(r: Refreshed, running: string = pkg.version): strin
     : undefined
 }
 
+export function cachedMarket(home: string, source: string, official = officialOf(home)): ReadMarket | undefined {
+  try {
+    if (isLocal(source)) {
+      const info = localIdentity(source)
+      const id = marketId(info)
+      return { id, info, entries: readMarketDir(source, id, official, warning(false)) }
+    }
+    return isRemote(source) ? readArchive(source, readCachedArchive(home, source), official, warning(false)) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function followMarkets(home: string): string[] {
+  if (!existsSync(installedPath(home))) {
+    return []
+  }
+  const state = readInstalled(home)
+  const official = officialOf(home)
+  const moves: Moves = { renamed: new Map(), removed: [] }
+  for (const source of marketsOf(state.markets)) {
+    const market = cachedMarket(home, source, official)
+    if (market) {
+      plan(market.id, market.info, new Set(market.entries.map((e) => slugOf(e.name))), state.palettes, moves)
+    }
+  }
+  if (moves.renamed.size === 0 && moves.removed.length === 0) {
+    return []
+  }
+  const catalog = readCatalog(home, false)
+  forget(home, catalog, state.terminals, [...moves.renamed.keys(), ...moves.removed])
+  moveTone(home, moves.renamed, moves.removed)
+  moveRacks(home, moves.renamed)
+  movePins(home, moves.renamed, moves.removed)
+  const palettes = [
+    ...new Set(state.palettes.filter((n) => !moves.removed.includes(n)).map((n) => moves.renamed.get(n) ?? n)),
+  ]
+  const { startup, ...rest } = state
+  const kept = startup && !moves.removed.includes(startup) ? (moves.renamed.get(startup) ?? startup) : undefined
+  commit(home, catalog, state, { ...rest, palettes, ...(kept ? { startup: kept } : {}) })
+  return [
+    ...[...moves.renamed].map(([from, to]) => `${from} is ${to} now — its market renamed it`),
+    ...moves.removed.map((name) => `${name} was removed from its market`),
+  ]
+}
+
 export async function applyRefreshed(
   home: string,
-  state: Installed,
+  before: Installed,
   was: PaletteEntry[],
   done: Refreshed[],
 ): Promise<string[]> {
+  const moved = followMarkets(home)
+  const state = moved.length > 0 ? readInstalled(home) : before
   const touched = new Set(done.flatMap((r) => [...r.change.changed, ...r.change.gone]))
   const mine = state.palettes.filter((name) => touched.has(name))
   if (mine.length === 0) {
-    return []
+    return moved
   }
   const catalog = readCatalog(home, false)
   sync(home, catalog, state)
@@ -356,7 +419,7 @@ export async function applyRefreshed(
       .map((e) => since(e, pictures.get(e.name))),
     state.terminals,
   )
-  return left
+  return [...moved, ...left]
 }
 
 export async function autoRefresh(home = configHome()): Promise<void> {

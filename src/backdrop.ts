@@ -633,6 +633,23 @@ function save(dir: string, store: Store, names: string[]): void {
   }
 }
 
+export function moveRacks(configHome: string, renamed: ReadonlyMap<string, string>): void {
+  const dir = backgroundsDir(configHome)
+  const store = readStore(dir)
+  const names: string[] = []
+  for (const [from, to] of renamed) {
+    const rack = store.palettes[from]
+    if (rack && !store.palettes[to]) {
+      store.palettes[to] = rack
+      delete store.palettes[from]
+      names.push(from, to)
+    }
+  }
+  if (names.length > 0) {
+    save(dir, store, names)
+  }
+}
+
 function stemFiles(dir: string, stem: string): string[] {
   return listing(dir).filter((file) => file.startsWith(`${stem}.`) || file.startsWith(`${stem}@`))
 }

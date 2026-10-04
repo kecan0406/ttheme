@@ -46,6 +46,7 @@ export type Tab = 'catalog' | 'installed' | 'markets' | 'errors'
 export interface Market {
   source: string
   id: string
+  description?: string
   shown: string
   entries: PaletteEntry[]
   auto: boolean
@@ -1569,6 +1570,7 @@ export class BrowsePanel {
         title: this.bold(m.id),
         lines: [
           ...wrapText(source, width),
+          ...(m.description ? wrapText(m.description, width).map((l) => this.dim(l)) : []),
           counts,
           '',
           isLocal(m.source) ? auto : `${auto}  ${this.dim('←→')}`,
@@ -1642,7 +1644,13 @@ export class BrowsePanel {
       .slice(0, NAMES_SHOWN)
       .map((e) => slugOf(e.name))
       .join(', ')}${listed.length > NAMES_SHOWN ? ', …' : ''}`
-    return ['', peeked.id, counted(listed.length), ...wrapText(names, width).map((l) => this.dim(l))]
+    return [
+      '',
+      peeked.id,
+      ...(peeked.description ? wrapText(peeked.description, width) : []),
+      counted(listed.length),
+      ...wrapText(names, width).map((l) => this.dim(l)),
+    ]
   }
 
   private detail(width: number): Detail {

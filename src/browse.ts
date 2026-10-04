@@ -26,6 +26,7 @@ import {
   ago,
   applyRefreshed,
   cachedEntries,
+  cachedMarket,
   counted,
   dueSources,
   type Fetched,
@@ -52,27 +53,19 @@ import {
 import { alphabetical, marketOf } from './theme.ts'
 
 function marketState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Market {
+  const market = source === OFFICIAL ? undefined : cachedMarket(home, source)
   let id: string
   try {
-    id = idOf(home, source)
+    id = market?.id ?? idOf(home, source)
   } catch {
     id = isRemote(source) ? repoOf(source) : shownSource(source)
-  }
-  let entries: PaletteEntry[] = []
-  if (isLocal(source)) {
-    try {
-      entries = readMarketDir(source, id, cachedEntries(home, OFFICIAL), warning(false))
-    } catch {
-      entries = []
-    }
-  } else {
-    entries = cachedEntries(home, source)
   }
   return {
     source,
     id,
+    ...(market?.info.description ? { description: market.info.description } : {}),
     shown: shownSource(source),
-    entries,
+    entries: source === OFFICIAL ? cachedEntries(home, source) : (market?.entries ?? []),
     auto: autoUpdates(source, state.updates),
     status: lastUpdate(home, source, tries),
   }
@@ -148,10 +141,12 @@ function browseIo(
     },
     fetch: async (source) => {
       if (isLocal(source)) {
-        const id = marketId(localIdentity(source))
+        const info = localIdentity(source)
+        const id = marketId(info)
         return {
           source,
           id,
+          ...(info.description ? { description: info.description } : {}),
           shown: shownSource(source),
           entries: readMarketDir(source, id, cachedEntries(home, OFFICIAL), warning(false)),
           auto: false,
@@ -163,6 +158,7 @@ function browseIo(
       return {
         source,
         id: got.id,
+        ...('info' in got && got.info.description ? { description: got.info.description } : {}),
         shown: shownSource(source),
         entries: got.entries,
         auto: autoUpdates(source, {}),

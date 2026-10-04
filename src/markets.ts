@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
-import { basename, join } from 'node:path'
+import { basename, join, relative } from 'node:path'
 import * as p from '@clack/prompts'
+import { parse } from 'smol-toml'
 import {
   archiveId,
   catalogPath,
@@ -14,10 +15,11 @@ import {
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
-import { type LocalMarket, localMarkets, palettesDir, readMarketDir, warning } from './own.ts'
+import { gateLines, type LocalMarket, localMarkets, marketFiles, palettesDir, readMarketDir, warning } from './own.ts'
 import { configHome, type Installed, readInstalled, sync, writeInstalled } from './palettes.ts'
 import { pending } from './pending.ts'
-import { ago, counted, type Fetched, fetchedAt, fetchMarket, readTries, storeMarket } from './refresh.ts'
+import { ago, cachedMarket, counted, type Fetched, fetchedAt, fetchMarket, readTries, storeMarket } from './refresh.ts'
+import { renameProblems } from './renames.ts'
 import {
   autoUpdates,
   cachePath,
@@ -27,10 +29,12 @@ import {
   isRemote,
   localIdentity,
   MARKET_FILE,
+  MARKET_KEYS,
   marketId,
   marketsOf,
   marketToml,
   OFFICIAL,
+  OWNER_KEYS,
   parseSource,
   refOf,
   repoOf,
@@ -38,10 +42,10 @@ import {
   shownSource,
   TOPIC,
 } from './sources.ts'
-import { marketOf, nameProblem } from './theme.ts'
+import { marketOf, nameProblem, slugOf, unknownKeys } from './theme.ts'
 
 const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-const ACTIONS = ['add', 'remove', 'search', 'init']
+const ACTIONS = ['add', 'remove', 'search', 'init', 'check']
 
 function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
@@ -111,6 +115,11 @@ function marketOfPalette(name: string): string {
 
 function official(home: string): PaletteEntry[] {
   return readCatalog(home).palettes.filter((e) => marketOf(e.name) === undefined)
+}
+
+function officialFor(home: string): PaletteEntry[] {
+  const path = join(import.meta.dirname, '..', 'dist', 'manifest.json')
+  return existsSync(path) ? parseCatalog(readFileSync(path, 'utf8')).palettes : official(home)
 }
 
 export function withMarkets(state: Installed, markets: string[], updates: Record<string, boolean>): Installed {
@@ -318,9 +327,11 @@ function listMarkets(): void {
     const count = countOf(home, source)
     const installed = state.palettes.filter((n) => marketOfPalette(n) === name).length
     const auto = isLocal(source) ? [] : [`auto-update ${autoUpdates(source, state.updates) ? 'on' : 'off'}`]
+    const about = source === OFFICIAL ? undefined : cachedMarket(home, source)?.info.description
     return {
       name,
       where: shownSource(source),
+      about,
       note: [
         count === undefined ? 'Unreadable' : counted(count),
         ...(installed > 0 ? [`${installed} installed`] : []),
@@ -333,6 +344,9 @@ function listMarkets(): void {
   const whereWidth = Math.max(...rows.map((r) => r.where.length))
   for (const r of rows) {
     console.log(`  ${r.name.padEnd(nameWidth)}  ${r.where.padEnd(whereWidth)}  ${r.note}`)
+    if (r.about) {
+      console.log(`  ${' '.repeat(nameWidth)}  ${r.about}`)
+    }
   }
 }
 
@@ -487,7 +501,70 @@ async function initMarket(arg: string | undefined): Promise<void> {
 Every push is the market: \`ttheme market add ${repo}\` works anywhere`)
 }
 
-export async function runMarket(action: string | undefined, arg: string | undefined): Promise<void> {
+function checkMarket(arg: string | undefined): number {
+  const dir = arg ? parseSource(arg) : process.cwd()
+  const path = join(dir, MARKET_FILE)
+  if (!existsSync(path)) {
+    throw new Error(`${shownSource(dir)} has no ${MARKET_FILE} — \`ttheme market init ${shownSource(dir)}\` makes one`)
+  }
+  const errors: string[] = []
+  const warnings: string[] = []
+  const text = readFileSync(path, 'utf8')
+  let info: ReturnType<typeof localIdentity>
+  try {
+    info = localIdentity(dir)
+  } catch (error) {
+    console.error(`  ✗ ${(error as Error).message}`)
+    return 1
+  }
+  const doc = parse(text) as Record<string, unknown>
+  const owner = doc.owner as Record<string, unknown>
+  for (const key of Object.keys(doc).filter((k) => !MARKET_KEYS.includes(k))) {
+    warnings.push(`${MARKET_FILE}: unknown key ${key} — ttheme ignores it`)
+  }
+  for (const key of Object.keys(owner).filter((k) => !OWNER_KEYS.includes(k))) {
+    warnings.push(`${MARKET_FILE}: unknown key owner.${key} — ttheme ignores it`)
+  }
+  if (!info.description) {
+    warnings.push(`${MARKET_FILE}: no description — browse and the market page show one`)
+  }
+  const id = marketId(info)
+  const entries = readMarketDir(dir, id, officialFor(configHome()), (where, message) =>
+    errors.push(`${relative(dir, where)}: ${message.replace(`${basename(where)}: `, '')}`),
+  )
+  for (const file of marketFiles(dir)) {
+    let keys: string[]
+    try {
+      keys = unknownKeys(file.path, readFileSync(file.path, 'utf8'))
+    } catch {
+      keys = []
+    }
+    for (const key of keys) {
+      warnings.push(`${relative(dir, file.path)}: unknown key ${key} — ttheme ignores it`)
+    }
+  }
+  const renames = renameProblems(info.renames, new Set(entries.map((e) => slugOf(e.name))))
+  errors.push(...renames.errors.map((e) => `${MARKET_FILE}: ${e}`))
+  warnings.push(...renames.warnings.map((w) => `${MARKET_FILE}: ${w}`))
+  for (const entry of entries) {
+    const failing = gateLines(entry).filter((l) => l.startsWith('  ✗'))
+    const shown = entry.catalog ? `${entry.catalog}/${slugOf(entry.name)}` : slugOf(entry.name)
+    console.log(`  ${shown}${failing.length > 0 ? `\n${failing.join('\n')}` : '  passes the gate'}`)
+  }
+  for (const line of errors) {
+    console.error(`  ✗ ${line}`)
+  }
+  for (const line of warnings) {
+    console.log(`  ! ${line}`)
+  }
+  const tally = (n: number, what: string) => `${n} ${what}${n === 1 ? '' : 's'}`
+  console.log(
+    `\n${id} · ${counted(entries.length)} · ${tally(errors.length, 'error')} · ${tally(warnings.length, 'warning')}`,
+  )
+  return errors.length > 0 ? 1 : 0
+}
+
+export async function runMarket(action: string | undefined, arg: string | undefined): Promise<number | undefined> {
   switch (action) {
     case undefined:
       listMarkets()
@@ -504,6 +581,8 @@ export async function runMarket(action: string | undefined, arg: string | undefi
     case 'init':
       await initMarket(arg)
       return
+    case 'check':
+      return checkMarket(arg)
     default:
       throw new Error(`unknown market action ${action} — ${ACTIONS.join(', ')}, or none to list them`)
   }

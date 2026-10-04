@@ -1,3 +1,5 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
 [meta]
 name = "eva01"
 native_names = ["エヴァンゲリオン初号機"]

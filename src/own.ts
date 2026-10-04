@@ -5,7 +5,7 @@ import { isHex } from './color.ts'
 import { GATE_RULES, measure, RULES } from './contrast.ts'
 import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import type { Colors } from './seeds.ts'
-import { type Identity, isLocal, localIdentity, marketId, marketSources } from './sources.ts'
+import { type Identity, isLocal, localIdentity, marketId, marketSources, PALETTE_SCHEMA_URL } from './sources.ts'
 import {
   type Group,
   marketOf,
@@ -238,6 +238,8 @@ export function withPictures(text: string, pictures: readonly SharedPicture[]): 
 
 export function paletteToml(d: Draft): string {
   const lines = [
+    `"$schema" = ${q(PALETTE_SCHEMA_URL)}`,
+    '',
     '[meta]',
     `name = ${q(slugOf(d.name))}`,
     ...(d.base ? [`base = ${q(d.base)}`] : []),

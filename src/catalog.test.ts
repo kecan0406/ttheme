@@ -6,6 +6,7 @@ import { test } from 'node:test'
 
 import {
   archiveId,
+  archiveInfo,
   available,
   booruTags,
   gateFailures,
@@ -193,7 +194,7 @@ test('readCatalog puts each added market after the series under its own name, an
     join(home, 'ttheme', 'markets', 'ann--ttheme-pastel.json'),
     JSON.stringify({
       files: {
-        'ttheme-market.toml': 'schema = 1\nowner = "someone"\nname = "pastel"\n',
+        'ttheme-market.toml': 'name = "pastel"\n\n[owner]\nname = "someone"\n',
         'palettes/old.toml': paletteToml({
           name: 'old',
           base: 'gojo',
@@ -208,7 +209,7 @@ test('readCatalog puts each added market after the series under its own name, an
       },
     }),
   )
-  writeFileSync(join(local, 'ttheme-market.toml'), 'schema = 1\nowner = "kec"\nname = "dust"\n')
+  writeFileSync(join(local, 'ttheme-market.toml'), 'name = "dust"\n\n[owner]\nname = "kec"\n')
   writeFileSync(
     join(local, 'palettes', 'rei.toml'),
     paletteToml({
@@ -243,9 +244,29 @@ test('readCatalog puts each added market after the series under its own name, an
 
 test("a market names itself in ttheme-market.toml — the owner of an added one is its repository's", () => {
   const archive = (text: string) => ({ files: { 'ttheme-market.toml': text } })
-  assert.equal(archiveId('ann/ttheme-pastel', archive('schema = 1\nowner = "bob"\nname = "pastel"\n')), 'ann@pastel')
+  const market = (rest: string) => archive(`"$schema" = "https://www.schemastore.org/ttheme-market.json"\n${rest}`)
+  assert.equal(archiveId('ann/ttheme-pastel', market('name = "pastel"\n\n[owner]\nname = "bob"\n')), 'ann@pastel')
+  assert.deepEqual(
+    archiveInfo(
+      'ann/ttheme-pastel',
+      market(
+        'name = "pastel"\ndescription = "Soft colors"\nforce_remove_deleted_palettes = true\n\n[owner]\nname = "ann"\nurl = "https://github.com/ann"\n\n[renames]\nold = "new"\ngone = false\n\n[metadata]\nmine = 1\n',
+      ),
+    ),
+    {
+      owner: 'ann',
+      name: 'pastel',
+      about: { name: 'ann', url: 'https://github.com/ann' },
+      description: 'Soft colors',
+      renames: { old: 'new', gone: false },
+      forceRemove: true,
+    },
+  )
   assert.throws(() => archiveId('ann/ttheme-pastel', { files: {} }), /has no ttheme-market\.toml/)
-  assert.throws(() => archiveId('ann/ttheme-pastel', archive('owner = "ann"\nname = "pastel"\n')), /has no schema/)
-  assert.throws(() => archiveId('ann/ttheme-pastel', archive('schema = 2\nowner = "ann"\nname = "pastel"\n')), TooNew)
-  assert.throws(() => archiveId('ann/ttheme-pastel', archive('schema = 1\nname = "pastel"\n')), /needs an "owner"/)
+  assert.throws(() => archiveId('ann/ttheme-pastel', market('name = "pastel"\nowner = "ann"\n')), /owner is a table/)
+  assert.throws(() => archiveId('ann/ttheme-pastel', market('name = "pastel"\n')), /owner is a table/)
+  assert.throws(
+    () => archiveId('ann/ttheme-pastel', market('name = "pastel"\n\n[owner]\nname = "ann"\n\n[renames]\nold = 3\n')),
+    /renames\.old/,
+  )
 })

@@ -11,10 +11,11 @@ import {
   type Identity,
   isRemote,
   MARKET_FILE,
+  type MarketInfo,
   marketId,
   marketSources,
   OFFICIAL,
-  readIdentity,
+  readMarketInfo,
   remoteOwner,
   shownSource,
 } from './sources.ts'
@@ -77,25 +78,31 @@ export function remoteId(source: string, identity: Identity): string {
   return marketId({ owner: remoteOwner(source), name: identity.name })
 }
 
-export function archiveId(source: string, archive: Archive): string {
+export function archiveInfo(source: string, archive: Archive): MarketInfo {
   const text = archive.files[MARKET_FILE]
   if (text === undefined) {
     throw new Error(`${shownSource(source)} has no ${MARKET_FILE} — \`ttheme market init\` makes one`)
   }
-  return remoteId(source, readIdentity(text, MARKET_FILE))
+  return readMarketInfo(text, MARKET_FILE)
 }
 
-export function readArchive(
-  source: string,
-  archive: Archive,
-  official: PaletteEntry[],
-  report: Report,
-): { id: string; entries: PaletteEntry[] } {
-  const id = archiveId(source, archive)
+export function archiveId(source: string, archive: Archive): string {
+  return remoteId(source, archiveInfo(source, archive))
+}
+
+export interface ReadMarket {
+  id: string
+  info: MarketInfo
+  entries: PaletteEntry[]
+}
+
+export function readArchive(source: string, archive: Archive, official: PaletteEntry[], report: Report): ReadMarket {
+  const info = archiveInfo(source, archive)
+  const id = remoteId(source, info)
   const shown = shownSource(source)
   const texts = new Map(Object.entries(archive.files).map(([path, text]) => [`${shown}/${path}`, text]))
   const files = marketLayout(Object.keys(archive.files), (path) => `${shown}/${path}`)
-  return { id, entries: readMarketFiles(files, (file) => texts.get(file.path) ?? '', id, official, report, true) }
+  return { id, info, entries: readMarketFiles(files, (file) => texts.get(file.path) ?? '', id, official, report, true) }
 }
 
 function readCached(configHome: string, source: string, official: PaletteEntry[], warn: boolean): PaletteEntry[] {

@@ -11,7 +11,7 @@ import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, readInstalled, startupPalette, sync } from './palettes.ts'
 import { pending, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
-import { attempt, failureLine, outdatedNote, refreshLine } from './refresh.ts'
+import { attempt, failureLine, followMarkets, outdatedNote, refreshLine } from './refresh.ts'
 import { installedPath, isLocal, marketSources, OFFICIAL, shownSource } from './sources.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
@@ -248,6 +248,9 @@ export async function runUpdate(): Promise<void> {
   }
   if (!existsSync(installedPath(home))) {
     return
+  }
+  for (const moved of followMarkets(home)) {
+    console.log(`  ${moved}`)
   }
   const catalog = readCatalog(home)
   const state = readInstalled(home)

@@ -145,3 +145,19 @@ export function withTone(tone: Tone, name: string, over: Override): Tone {
   }
   return next
 }
+
+export function moveTone(configHome: string, renamed: ReadonlyMap<string, string>, removed: readonly string[]): void {
+  const tone = readTone(configHome)
+  const names = Object.keys(tone)
+  if (!names.some((name) => renamed.has(name) || removed.includes(name))) {
+    return
+  }
+  writeTone(
+    configHome,
+    Object.fromEntries(
+      Object.entries(tone)
+        .filter(([name]) => !removed.includes(name))
+        .map(([name, slots]) => [renamed.get(name) ?? name, slots]),
+    ),
+  )
+}

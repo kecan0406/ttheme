@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { tarballOf } from '../tests/tarball.ts'
-import { readKept, writeCatalog } from './catalog.ts'
+import { catalogPath, readKept, writeCatalog } from './catalog.ts'
 import { type Manifest, type PaletteEntry, SCHEMA, TooNew } from './manifest.ts'
 import { sync, writeInstalled } from './palettes.ts'
 import {
@@ -24,7 +24,7 @@ import {
   refusal,
   updateNote,
 } from './refresh.ts'
-import { cachePath, MARKET_SCHEMA, marketsDir } from './sources.ts'
+import { cachePath, marketsDir, OFFICIAL } from './sources.ts'
 
 const now = 1_000_000_000_000
 
@@ -89,20 +89,17 @@ test('a refreshed official catalog newer than the running ttheme says how to upd
 
 const SOURCE = 'ann/ttheme-pastel'
 
-function market(schema: number): Record<string, string> {
-  return { 'ttheme-market.toml': `schema = ${schema}\nowner = "ann"\nname = "pastel"\n` }
-}
+const MARKET = { 'ttheme-market.toml': 'name = "pastel"\n\n[owner]\nname = "ann"\n' }
 
-const CACHED = `${JSON.stringify({ files: market(MARKET_SCHEMA) })}\n`
-
-function served(schema: number): Response {
-  return new Response(tarballOf(market(schema)))
+function catalog(schema: number): string {
+  return JSON.stringify({ schema, version: '9.0.0', gate: [], palettes: [] })
 }
 
 async function withNetwork<T>(respond: () => Promise<Response>, run: (home: string) => Promise<T>): Promise<T> {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-refresh-'))
   mkdirSync(marketsDir(home), { recursive: true })
-  writeFileSync(cachePath(home, SOURCE), CACHED)
+  writeFileSync(cachePath(home, SOURCE), `${JSON.stringify({ files: MARKET })}\n`)
+  writeCatalog(home, JSON.parse(catalog(SCHEMA)))
   const realFetch = globalThis.fetch
   const realState = process.env.XDG_STATE_HOME
   globalThis.fetch = (async () => respond()) as unknown as typeof fetch
@@ -119,25 +116,29 @@ async function withNetwork<T>(respond: () => Promise<Response>, run: (home: stri
   }
 }
 
-test('a market newer than ttheme reads leaves the cached copy alone and records why, so browse can show it', async () => {
+test('a catalog newer than ttheme reads leaves the cached copy alone and records why, so browse can show it', async () => {
   await withNetwork(
-    async () => served(MARKET_SCHEMA + 1),
+    async () => new Response(catalog(SCHEMA + 1)),
     async (home) => {
-      await assert.rejects(refreshMarket(home, SOURCE), TooNew)
-      assert.equal(readFileSync(cachePath(home, SOURCE), 'utf8'), CACHED)
-      assert.match(readTries()[SOURCE]?.error ?? '', /newer than the schema \d+ this ttheme reads.*ttheme@latest init/)
+      const before = readFileSync(catalogPath(home), 'utf8')
+      await assert.rejects(refreshMarket(home, OFFICIAL), TooNew)
+      assert.equal(readFileSync(catalogPath(home), 'utf8'), before)
+      assert.match(
+        readTries()[OFFICIAL]?.error ?? '',
+        /newer than the schema \d+ this ttheme reads.*ttheme@latest init/,
+      )
     },
   )
 })
 
 test('an attempt hands back what happened instead of throwing, and only a refusal asks the user to act', async () => {
   await withNetwork(
-    async () => served(MARKET_SCHEMA + 1),
+    async () => new Response(catalog(SCHEMA + 1)),
     async (home) => {
-      const refused = await attempt(home, SOURCE)
+      const refused = await attempt(home, OFFICIAL)
       assert.ok('failure' in refused)
-      assert.equal(refusal(refused), failureLine(SOURCE, refused.failure))
-      assert.match(refusal(refused) ?? '', /^github\.com\/ann\/ttheme-pastel: ttheme-market\.toml is schema \d+/)
+      assert.equal(refusal(refused), failureLine(OFFICIAL, refused.failure))
+      assert.match(refusal(refused) ?? '', /^the ttheme catalog: catalog is schema \d+/)
     },
   )
   await withNetwork(
@@ -151,7 +152,7 @@ test('an attempt hands back what happened instead of throwing, and only a refusa
     },
   )
   await withNetwork(
-    async () => served(MARKET_SCHEMA),
+    async () => new Response(tarballOf(MARKET)),
     async (home) => {
       const fresh = await attempt(home, SOURCE)
       assert.ok('refreshed' in fresh)

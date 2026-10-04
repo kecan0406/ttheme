@@ -1,3 +1,5 @@
-schema = 1
-owner = "fix"
+"$schema" = "https://www.schemastore.org/ttheme-market.json"
 name = "shop"
+
+[owner]
+name = "fix"
