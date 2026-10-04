@@ -344,7 +344,11 @@ class Reader {
       throw new Error('the share code is cut short')
     }
     this.at += n
-    return new TextDecoder('utf-8', { fatal: true }).decode(slice)
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(slice)
+    } catch {
+      throw new Error('the share code holds text it cannot read — was it copied whole?')
+    }
   }
 
   color(): string {

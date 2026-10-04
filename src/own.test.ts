@@ -65,6 +65,9 @@ test('a share code that was cut, padded or retyped is refused', () => {
   assert.throws(() => fromCode(`${code}AAAA`), /left over/)
   assert.throws(() => fromCode(code.replace('tt1:', 'tt2:')), /starts with tt1:/)
   assert.throws(() => fromCode(`${code}!`), /characters it never uses/)
+  const bytes = Buffer.from(code.slice(4), 'base64url')
+  bytes[1] = 0xff
+  assert.throws(() => fromCode(`tt1:${bytes.toString('base64url')}`), { name: 'Error', message: /text it cannot read/ })
 })
 
 test('the TOML a draft writes reads back as the same palette', () => {
