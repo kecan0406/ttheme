@@ -65,6 +65,7 @@ export interface Place {
   groups: ReadonlyMap<string, Group>
   bases?: ReadonlyMap<string, { group: string; order: number }>
   open?: true
+  foreign?: true
 }
 
 export const ORIGINAL = 'Original'
@@ -221,6 +222,7 @@ export function readBooruSites(
   file: string,
   raw: unknown,
   booru: string | undefined,
+  foreign = false,
 ): Record<string, string[]> | undefined {
   if (raw === undefined) {
     return undefined
@@ -235,6 +237,9 @@ export function readBooruSites(
   for (const [key, value] of Object.entries(raw)) {
     const site = SITES.find((s) => s.key === key)
     if (!site) {
+      if (foreign) {
+        continue
+      }
       fail(file, `meta.booru_sites.${key} is not a find site — use ${SITES.map((s) => s.key).join(', ')}`)
     }
     const names = typeof value === 'string' ? [value] : Array.isArray(value) ? value : undefined
@@ -255,18 +260,21 @@ export function readBooruSites(
   return sites
 }
 
-function readPictures(file: string, raw: unknown): SharedPicture[] | undefined {
+function readPictures(file: string, raw: unknown, foreign: boolean): SharedPicture[] | undefined {
   if (raw === undefined) {
     return undefined
   }
   if (!Array.isArray(raw) || raw.length === 0 || raw.length > MAX_PICTURES) {
     fail(file, `[[picture]] holds 1 to ${MAX_PICTURES} pictures`)
   }
-  return raw.map((entry, i) => {
+  const pictures = raw.flatMap((entry, i): SharedPicture[] => {
     const t = table(entry)
     const field = `picture[${i}]`
     const site = SITES.find((s) => s.key === t.site)
     if (!site) {
+      if (foreign) {
+        return []
+      }
       fail(file, `${field}.site must be one of ${SITES.map((s) => s.key).join(', ')}`)
     }
     if (typeof t.id !== 'number' || !Number.isSafeInteger(t.id) || t.id <= 0) {
@@ -280,20 +288,24 @@ function readPictures(file: string, raw: unknown): SharedPicture[] | undefined {
     ) {
       fail(file, `${field}.size must be "fill" or a percentage from 20 to 999`)
     }
-    if (position !== undefined && !(POSITIONS as readonly unknown[]).includes(position)) {
+    const known = position === undefined || (POSITIONS as readonly unknown[]).includes(position)
+    if (!known && !foreign) {
       fail(file, `${field}.position must be one of ${POSITIONS.join(', ')}`)
     }
     if (opacity !== undefined && !(typeof opacity === 'number' && opacity >= 0 && opacity <= 1)) {
       fail(file, `${field}.opacity must be a number from 0 to 1`)
     }
-    return {
-      site: site.key,
-      id: t.id,
-      ...(size !== undefined ? { size: size as 'fill' | number } : {}),
-      ...(position !== undefined ? { position: position as string } : {}),
-      ...(opacity !== undefined ? { opacity: opacity as number } : {}),
-    }
+    return [
+      {
+        site: site.key,
+        id: t.id,
+        ...(size !== undefined ? { size: size as 'fill' | number } : {}),
+        ...(position !== undefined && known ? { position: position as string } : {}),
+        ...(opacity !== undefined ? { opacity: opacity as number } : {}),
+      },
+    ]
   })
+  return pictures.length > 0 ? pictures : undefined
 }
 
 function toml(file: string, source: string): Record<string, unknown> {
@@ -392,13 +404,13 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   if (booru !== undefined && /[\s\p{Cc}]/u.test(booru)) {
     fail(file, `meta.booru must be a single booru tag, got ${JSON.stringify(booru)}`)
   }
-  const booruSites = readBooruSites(file, meta.booru_sites, booru)
+  const booruSites = readBooruSites(file, meta.booru_sites, booru, place.foreign === true)
   const nativeNames = meta.native_names === undefined ? undefined : readNativeNames(file, meta.native_names)
   const waive = Array.isArray(contrastRules.waive) ? contrastRules.waive.map(String) : []
   if (waive.length > 0 && typeof contrastRules.reason !== 'string') {
     fail(file, 'contrast.waive needs a contrast.reason explaining why')
   }
-  const pictures = readPictures(file, doc.picture)
+  const pictures = readPictures(file, doc.picture, place.foreign === true)
 
   return {
     name,

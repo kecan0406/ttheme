@@ -1,6 +1,14 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { type BrowseIo, BrowsePanel, type BrowseResult, type Market, type Problem } from './browse-panel.ts'
-import { available, catalogPath, parseCatalog, readCachedIndex, readCatalog, readKept } from './catalog.ts'
+import {
+  available,
+  catalogPath,
+  parseCatalog,
+  readArchive,
+  readCachedArchive,
+  readCatalog,
+  readKept,
+} from './catalog.ts'
 import { HUB_CLOSED, hubOf } from './hub.ts'
 import { reload } from './installs.ts'
 import { liveOf } from './live.ts'
@@ -8,7 +16,7 @@ import { listed, type PaletteEntry } from './manifest.ts'
 import { dropCache, findMarkets, idOf, keptNote, lastUpdate, withMarkets } from './markets.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
-import { type MarketFile, marketFileProblem, marketFiles, readMarketDir, readOwnText } from './own.ts'
+import { type Report, readMarketDir, warning } from './own.ts'
 import { promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, type Installed, readInstalled, worn, writeInstalled } from './palettes.ts'
 import { into, say } from './pending.ts'
@@ -53,7 +61,7 @@ function marketState(home: string, state: Installed, source: string, tries: Reco
   let entries: PaletteEntry[] = []
   if (isLocal(source)) {
     try {
-      entries = readMarketDir(source, id, cachedEntries(home, OFFICIAL), false)
+      entries = readMarketDir(source, id, cachedEntries(home, OFFICIAL), warning(false))
     } catch {
       entries = []
     }
@@ -77,6 +85,7 @@ function message(error: unknown): string {
 function problemsOf(home: string, state: Installed, tries: Record<string, Tried>, markets: Market[]): Problem[] {
   const names = new Map(markets.map((m) => [m.source, m.id]))
   const problems: Problem[] = []
+  const filed: Report = (where, text) => problems.push({ where, message: text })
   for (const source of marketsOf(state.markets)) {
     const where = names.get(source) ?? shownSource(source)
     const failed = tries[source]
@@ -92,30 +101,19 @@ function problemsOf(home: string, state: Installed, tries: Record<string, Tried>
       }
     } else if (isRemote(source)) {
       if (!existsSync(cachePath(home, source))) {
-        problems.push({ where, source, message: 'No copy of its index yet — `ttheme update` fetches it' })
+        problems.push({ where, source, message: 'No copy of it yet — `ttheme update` fetches it' })
       } else {
         try {
-          readCachedIndex(home, source)
+          readArchive(source, readCachedArchive(home, source), cachedEntries(home, OFFICIAL), filed)
         } catch (error) {
           problems.push({ where, source, message: `${shownSource(cachePath(home, source))}: ${message(error)}` })
         }
       }
     } else {
       try {
-        const id = marketId(localIdentity(source))
-        const seen = new Map<string, MarketFile>()
-        for (const file of marketFiles(source)) {
-          try {
-            const problem = marketFileProblem(file, seen)
-            if (problem) {
-              throw new Error(problem)
-            }
-            seen.set(file.slug, file)
-            readOwnText(`${id}/${file.slug}`, readFileSync(file.path, 'utf8'), cachedEntries(home, OFFICIAL))
-          } catch (error) {
-            problems.push({ where: shownSource(file.path), message: message(error) })
-          }
-        }
+        readMarketDir(source, marketId(localIdentity(source)), cachedEntries(home, OFFICIAL), (path, text) =>
+          filed(shownSource(path), text),
+        )
       } catch (error) {
         problems.push({ where, message: message(error) })
       }
@@ -155,12 +153,12 @@ function browseIo(
           source,
           id,
           shown: shownSource(source),
-          entries: readMarketDir(source, id, cachedEntries(home, OFFICIAL), false),
+          entries: readMarketDir(source, id, cachedEntries(home, OFFICIAL), warning(false)),
           auto: false,
           status: 'read in place',
         }
       }
-      const got = await fetchMarket(source, undefined, lookups)
+      const got = await fetchMarket(home, source, undefined, lookups)
       fetched.set(source, got)
       return {
         source,

@@ -10,9 +10,9 @@ export const metadata: Metadata = {
   description: 'One ttheme market: its repository, its palettes and how they measure against the contrast gate',
 }
 
-export default async function MarketStorePage() {
+export default function MarketStorePage() {
   const { gate } = loadManifest()
-  const markets = await loadMarkets()
+  const markets = loadMarkets()
 
   return (
     <div className="ground min-h-dvh">

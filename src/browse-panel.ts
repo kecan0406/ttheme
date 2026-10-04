@@ -1068,8 +1068,8 @@ export class BrowsePanel {
               peeked
                 ? `${peeked.id} · ${this.peeking(row.source)}`
                 : this.live
-                  ? 'Fetching its index…'
-                  : 'space fetches its index',
+                  ? 'Fetching its palettes…'
+                  : 'space fetches its palettes',
             ),
       ]
     }
@@ -1584,7 +1584,11 @@ export class BrowsePanel {
         this.busy.get(row.source) ??
         this.failed.get(row.source) ??
         this.peekFailed.get(row.source) ??
-        (this.peeked.has(row.source) ? 'space adds it' : this.live ? 'Fetching its index…' : 'space fetches its index')
+        (this.peeked.has(row.source)
+          ? 'space adds it'
+          : this.live
+            ? 'Fetching its palettes…'
+            : 'space fetches its palettes')
       return {
         title: this.bold(shownSource(row.source)),
         lines: ['Not added', ...this.peekLines(row.source, width), '', ...wrapText(note, width)],

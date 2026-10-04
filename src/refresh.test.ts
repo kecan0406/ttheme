@@ -3,8 +3,9 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { readKept, TooNew, writeCatalog } from './catalog.ts'
-import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
+import { tarballOf } from '../tests/tarball.ts'
+import { readKept, writeCatalog } from './catalog.ts'
+import { type Manifest, type PaletteEntry, SCHEMA, TooNew } from './manifest.ts'
 import { sync, writeInstalled } from './palettes.ts'
 import {
   applyRefreshed,
@@ -23,7 +24,7 @@ import {
   refusal,
   updateNote,
 } from './refresh.ts'
-import { cachePath, marketsDir } from './sources.ts'
+import { cachePath, MARKET_SCHEMA, marketsDir } from './sources.ts'
 
 const now = 1_000_000_000_000
 
@@ -88,14 +89,20 @@ test('a refreshed official catalog newer than the running ttheme says how to upd
 
 const SOURCE = 'ann/ttheme-pastel'
 
-function index(schema: number): string {
-  return JSON.stringify({ schema, version: '9.0.0', owner: 'ann', name: 'pastel', palettes: [] })
+function market(schema: number): Record<string, string> {
+  return { 'ttheme-market.toml': `schema = ${schema}\nowner = "ann"\nname = "pastel"\n` }
+}
+
+const CACHED = `${JSON.stringify({ files: market(MARKET_SCHEMA) })}\n`
+
+function served(schema: number): Response {
+  return new Response(tarballOf(market(schema)))
 }
 
 async function withNetwork<T>(respond: () => Promise<Response>, run: (home: string) => Promise<T>): Promise<T> {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-refresh-'))
   mkdirSync(marketsDir(home), { recursive: true })
-  writeFileSync(cachePath(home, SOURCE), `${index(SCHEMA)}\n`)
+  writeFileSync(cachePath(home, SOURCE), CACHED)
   const realFetch = globalThis.fetch
   const realState = process.env.XDG_STATE_HOME
   globalThis.fetch = (async () => respond()) as unknown as typeof fetch
@@ -112,12 +119,12 @@ async function withNetwork<T>(respond: () => Promise<Response>, run: (home: stri
   }
 }
 
-test('a market index newer than ttheme reads leaves the cached copy alone and records why, so browse can show it', async () => {
+test('a market newer than ttheme reads leaves the cached copy alone and records why, so browse can show it', async () => {
   await withNetwork(
-    async () => new Response(index(SCHEMA + 1)),
+    async () => served(MARKET_SCHEMA + 1),
     async (home) => {
       await assert.rejects(refreshMarket(home, SOURCE), TooNew)
-      assert.equal(readFileSync(cachePath(home, SOURCE), 'utf8'), `${index(SCHEMA)}\n`)
+      assert.equal(readFileSync(cachePath(home, SOURCE), 'utf8'), CACHED)
       assert.match(readTries()[SOURCE]?.error ?? '', /newer than the schema \d+ this ttheme reads.*ttheme@latest init/)
     },
   )
@@ -125,12 +132,12 @@ test('a market index newer than ttheme reads leaves the cached copy alone and re
 
 test('an attempt hands back what happened instead of throwing, and only a refusal asks the user to act', async () => {
   await withNetwork(
-    async () => new Response(index(SCHEMA + 1)),
+    async () => served(MARKET_SCHEMA + 1),
     async (home) => {
       const refused = await attempt(home, SOURCE)
       assert.ok('failure' in refused)
       assert.equal(refusal(refused), failureLine(SOURCE, refused.failure))
-      assert.match(refusal(refused) ?? '', /^github\.com\/ann\/ttheme-pastel: catalog is schema \d+/)
+      assert.match(refusal(refused) ?? '', /^github\.com\/ann\/ttheme-pastel: ttheme-market\.toml is schema \d+/)
     },
   )
   await withNetwork(
@@ -144,7 +151,7 @@ test('an attempt hands back what happened instead of throwing, and only a refusa
     },
   )
   await withNetwork(
-    async () => new Response(index(SCHEMA)),
+    async () => served(MARKET_SCHEMA),
     async (home) => {
       const fresh = await attempt(home, SOURCE)
       assert.ok('refreshed' in fresh)

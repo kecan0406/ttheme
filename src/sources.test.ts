@@ -4,11 +4,11 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import {
+  archiveUrl,
   autoUpdates,
   cachePath,
   OFFICIAL,
   parseSource,
-  rawUrl,
   refOf,
   repoOf,
   sameMarket,
@@ -37,8 +37,8 @@ test('a repository takes a tag, branch or commit after #, which the fetch follow
   assert.equal(refOf('alice/anime#v1'), 'v1')
   assert.equal(refOf('alice/anime'), undefined)
   assert.equal(repoOf('/srv/mark#et'), '/srv/mark#et')
-  assert.equal(rawUrl('alice/anime'), 'https://raw.githubusercontent.com/alice/anime/HEAD/ttheme-market.json')
-  assert.equal(rawUrl('alice/anime#v1'), 'https://raw.githubusercontent.com/alice/anime/v1/ttheme-market.json')
+  assert.equal(archiveUrl('alice/anime'), 'https://codeload.github.com/alice/anime/tar.gz/HEAD')
+  assert.equal(archiveUrl('alice/anime#release/2'), 'https://codeload.github.com/alice/anime/tar.gz/release/2')
   assert.equal(cachePath('/c', 'alice/anime#v1'), cachePath('/c', 'alice/anime'))
   assert.ok(sameMarket('alice/anime#v1', 'alice/anime'))
   assert.ok(!sameMarket('alice/anime', 'alice/other'))

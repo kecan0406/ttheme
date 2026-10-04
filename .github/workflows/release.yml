@@ -50,9 +50,3 @@ jobs:
         with:
           files: release/*
           body_path: notes.md
-
-      - name: point the major tag the market action is used by at this release
-        run: |
-          major=${GITHUB_REF_NAME%%.*}
-          git tag -f "$major" "$GITHUB_REF_NAME"
-          git push -f origin "refs/tags/$major"

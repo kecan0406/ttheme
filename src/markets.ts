@@ -1,30 +1,20 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
-import { basename, join, relative } from 'node:path'
+import { basename, join } from 'node:path'
 import * as p from '@clack/prompts'
 import {
+  archiveId,
   catalogPath,
   fetchParsed,
   Limited,
-  type MarketIndex,
   parseCatalog,
-  readCachedIndex,
+  readArchive,
+  readCachedArchive,
   readCatalog,
-  remoteId,
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
-import { emptyManifest, listed, type PaletteEntry, paletteEntry } from './manifest.ts'
-import {
-  gateLines,
-  type LocalMarket,
-  localMarkets,
-  type MarketFile,
-  marketFileProblem,
-  marketFiles,
-  palettesDir,
-  readMarketDir,
-  readOwnText,
-} from './own.ts'
+import { listed, type PaletteEntry } from './manifest.ts'
+import { type LocalMarket, localMarkets, palettesDir, readMarketDir, warning } from './own.ts'
 import { configHome, type Installed, readInstalled, sync, writeInstalled } from './palettes.ts'
 import { pending } from './pending.ts'
 import { ago, counted, type Fetched, fetchedAt, fetchMarket, readTries, storeMarket } from './refresh.ts'
@@ -33,12 +23,13 @@ import {
   cachePath,
   defaultLocal,
   type Identity,
-  INDEX,
   isLocal,
   isRemote,
   localIdentity,
+  MARKET_FILE,
   marketId,
   marketsOf,
+  marketToml,
   OFFICIAL,
   parseSource,
   refOf,
@@ -103,7 +94,7 @@ export function idOf(home: string, source: string): string {
   if (source === OFFICIAL) {
     return OFFICIAL
   }
-  return isLocal(source) ? marketId(localIdentity(source)) : remoteId(source, readCachedIndex(home, source))
+  return isLocal(source) ? marketId(localIdentity(source)) : archiveId(source, readCachedArchive(home, source))
 }
 
 function nameOf(home: string, source: string): string | undefined {
@@ -120,11 +111,6 @@ function marketOfPalette(name: string): string {
 
 function official(home: string): PaletteEntry[] {
   return readCatalog(home).palettes.filter((e) => marketOf(e.name) === undefined)
-}
-
-function officialFor(home: string): PaletteEntry[] {
-  const path = join(import.meta.dirname, '..', 'dist', 'manifest.json')
-  return existsSync(path) ? parseCatalog(readFileSync(path, 'utf8')).palettes : official(home)
 }
 
 export function withMarkets(state: Installed, markets: string[], updates: Record<string, boolean>): Installed {
@@ -166,17 +152,17 @@ async function askAuto(id: string): Promise<boolean> {
   return yes
 }
 
-async function fetching(source: string): Promise<Fetched> {
+async function fetching(home: string, source: string): Promise<Fetched> {
   const line = pending(`Fetching ${shownSource(source)}`)
   try {
-    return await fetchMarket(source)
+    return await fetchMarket(home, source)
   } finally {
     line.done()
   }
 }
 
 async function repin(home: string, was: string, source: string): Promise<Fetched> {
-  const fetched = await fetching(source)
+  const fetched = await fetching(home, source)
   const state = readInstalled(home)
   const sources = marketsOf(state.markets)
   const taken = nameTaken(home, sources, source, fetched.id)
@@ -221,7 +207,7 @@ export async function addSource(home: string, arg: string): Promise<{ source: st
     console.log(`Added ${id} · ${shownSource(source)} — ${counted(count)}, read in place`)
     return { source, id, fresh: true }
   }
-  const fetched = await fetching(source)
+  const fetched = await fetching(home, source)
   const auto = source === OFFICIAL ? undefined : await askAuto(fetched.id)
   register(home, source, fetched.id, auto)
   storeMarket(home, fetched)
@@ -241,7 +227,9 @@ async function addMarket(arg: string): Promise<void> {
     return
   }
   if (isLocal(source)) {
-    console.log('\n`ttheme browse` picks them · `ttheme market build` there writes the index others fetch')
+    console.log(
+      '\n`ttheme browse` picks them · once the folder is on GitHub, `ttheme market add <owner>/<repo>` adds it anywhere',
+    )
   } else if (source === OFFICIAL) {
     console.log('\n`ttheme browse` picks them')
   } else {
@@ -296,9 +284,9 @@ export function countOf(home: string, source: string): number | undefined {
       return listed(parseCatalog(readFileSync(catalogPath(home), 'utf8')).palettes).length
     }
     if (isLocal(source)) {
-      return readMarketDir(source, idOf(home, source), official(home), false).length
+      return readMarketDir(source, idOf(home, source), official(home), warning(false)).length
     }
-    return readCachedIndex(home, source).palettes.length
+    return readArchive(source, readCachedArchive(home, source), official(home), warning(false)).entries.length
   } catch {
     return undefined
   }
@@ -404,42 +392,17 @@ async function searchMarkets(query: string | undefined): Promise<void> {
   console.log('\n`ttheme market add <name>` adds one')
 }
 
-const WORKFLOW = `name: ttheme market
-
-on:
-  push:
-    paths: ["palettes/**"]
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  index:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: kecan0406/ttheme/market@v1
-`
-
 function repoFor({ name }: Identity): string {
   return `ttheme-${name}`
 }
 
 function scaffold(dir: string, identity: Identity): void {
   mkdirSync(palettesDir(dir), { recursive: true })
-  mkdirSync(join(dir, '.github', 'workflows'), { recursive: true })
-  writeIndex(dir, identity, [])
-  writeAtomic(join(dir, '.github', 'workflows', 'ttheme.yml'), WORKFLOW)
+  writeAtomic(join(dir, MARKET_FILE), marketToml(identity))
   writeAtomic(
     join(dir, 'README.md'),
     `# ${marketId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) market:\n\n\`\`\`sh\nttheme market add ${identity.owner}/${repoFor(identity)}\nttheme browse\n\`\`\`\n`,
   )
-}
-
-function writeIndex(dir: string, { owner, name }: Identity, palettes: PaletteEntry[]): void {
-  const { schema, version, gate } = emptyManifest()
-  const index: MarketIndex = { schema, version, gate, owner, name, palettes }
-  writeAtomic(join(dir, INDEX), `${JSON.stringify(index, null, 2)}\n`)
 }
 
 function nameProblemOf(name: string): string | undefined {
@@ -481,7 +444,7 @@ export async function ensureLocal(home: string, into?: string): Promise<LocalMar
 }
 
 async function initLocal(home: string, dir: string, name: string): Promise<LocalMarket> {
-  const fresh = !existsSync(join(dir, INDEX))
+  const fresh = !existsSync(join(dir, MARKET_FILE))
   let identity: Identity
   if (fresh) {
     const problem = nameProblemOf(name)
@@ -521,65 +484,26 @@ async function initMarket(arg: string | undefined): Promise<void> {
   gh repo create ${repo} --public --source . --push
   gh repo edit ${repo} --add-topic ${TOPIC}
 
-Its action rebuilds ${INDEX} whenever palettes/ changes; then \`ttheme market add ${repo}\` works anywhere`)
+Every push is the market: \`ttheme market add ${repo}\` works anywhere`)
 }
 
-function buildMarket(arg: string | undefined): number {
-  const dir = arg ? parseSource(arg) : process.cwd()
-  const identity = localIdentity(dir)
-  const id = marketId(identity)
-  const entries = officialFor(configHome())
-  const seen = new Map<string, MarketFile>()
-  const palettes: PaletteEntry[] = []
-  const broken: string[] = []
-  for (const file of marketFiles(dir)) {
-    try {
-      const problem = marketFileProblem(file, seen)
-      if (problem) {
-        throw new Error(problem)
-      }
-      seen.set(file.slug, file)
-      const theme = readOwnText(`${id}/${file.slug}`, readFileSync(file.path, 'utf8'), entries)
-      const entry = paletteEntry({ ...theme, name: file.slug })
-      palettes.push(file.catalog ? { ...entry, catalog: file.catalog } : entry)
-    } catch (error) {
-      broken.push(`  ${relative(dir, file.path)}: ${(error as Error).message}`)
-    }
-  }
-  if (broken.length > 0) {
-    console.error(`${broken.length} palettes cannot be read — the index was left as it was:\n${broken.join('\n')}`)
-    return 1
-  }
-  for (const entry of palettes) {
-    const lines = gateLines(entry)
-    const failing = lines.filter((l) => l.startsWith('  ✗'))
-    const shown = entry.catalog ? `${entry.catalog}/${entry.name}` : entry.name
-    console.log(`  ${shown}${failing.length > 0 ? `\n${failing.join('\n')}` : '  passes the gate'}`)
-  }
-  writeIndex(dir, identity, palettes)
-  console.log(`\n${id} · ${counted(palettes.length)} → ${join(dir, INDEX)}`)
-  return 0
-}
-
-export async function runMarket(action: string | undefined, arg: string | undefined): Promise<number | undefined> {
+export async function runMarket(action: string | undefined, arg: string | undefined): Promise<void> {
   switch (action) {
     case undefined:
       listMarkets()
-      return undefined
+      return
     case 'add':
       await addMarket(required(action, arg))
-      return undefined
+      return
     case 'remove':
       removeMarket(required(action, arg))
-      return undefined
+      return
     case 'search':
       await searchMarkets(arg)
-      return undefined
+      return
     case 'init':
       await initMarket(arg)
-      return undefined
-    case 'build':
-      return buildMarket(arg)
+      return
     default:
       throw new Error(`unknown market action ${action} — ${ACTIONS.join(', ')}, or none to list them`)
   }
@@ -598,5 +522,5 @@ function required(action: string, arg: string | undefined): string {
 
 export function localLine(home: string, source: string): string {
   const id = idOf(home, source)
-  return `${id} — ${counted(readMarketDir(source, id, official(home), false).length)}, read in place`
+  return `${id} — ${counted(readMarketDir(source, id, official(home), warning(false)).length)}, read in place`
 }

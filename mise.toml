@@ -190,16 +190,21 @@ description = "run the compat cases in Konsole from a container (Ubuntu 24.04, K
 depends = ["build", "bin:build"]
 run = "docker build -q -t ttheme-konsole -f tests/compat/konsole.Dockerfile tests/compat > /dev/null && docker run --rm -v \"$PWD\":/work ttheme-konsole zsh tests/compat.zsh"
 
+[tasks."site:markets"]
+description = "read every market on GitHub into dist/markets.json for the showcase site"
+depends = ["build"]
+run = "bun src/showcase.ts"
+
 [tasks."site:dev"]
 description = "dev server for the showcase site"
 dir = "{{config_root}}/site"
-depends = ["build"]
+depends = ["site:markets"]
 run = "bun run dev"
 
 [tasks."site:build"]
 description = "static-export the showcase site into site/out"
 dir = "{{config_root}}/site"
-depends = ["build"]
+depends = ["site:markets"]
 run = "bun install && bun run build"
 
 [tasks.release]

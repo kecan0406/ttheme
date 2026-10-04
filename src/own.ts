@@ -71,28 +71,42 @@ export interface MarketFile {
   catalog?: string
 }
 
+function byName(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0
+}
+
+export function marketLayout(paths: Iterable<string>, at: (path: string) => string): MarketFile[] {
+  const shelved: { file: MarketFile; name: string }[] = []
+  const loose: { file: MarketFile; name: string }[] = []
+  for (const path of paths) {
+    const [top, first, second, ...deeper] = path.split('/')
+    if (top !== 'palettes' || !first || first.startsWith('.') || deeper.length > 0) {
+      continue
+    }
+    if (second === undefined) {
+      if (first.endsWith('.toml')) {
+        loose.push({ file: { path: at(path), slug: basename(first, '.toml') }, name: first })
+      }
+    } else if (second.endsWith('.toml')) {
+      shelved.push({ file: { path: at(path), slug: basename(second, '.toml'), catalog: first }, name: second })
+    }
+  }
+  shelved.sort((a, b) => byName(a.file.catalog ?? '', b.file.catalog ?? '') || byName(a.name, b.name))
+  loose.sort((a, b) => byName(a.name, b.name))
+  return [...shelved, ...loose].map(({ file }) => file)
+}
+
 export function marketFiles(dir: string): MarketFile[] {
   const folder = palettesDir(dir)
   if (!existsSync(folder)) {
     return []
   }
-  const shelved: MarketFile[] = []
-  const loose: MarketFile[] = []
-  for (const item of readdirSync(folder, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
-    if (item.name.startsWith('.')) {
-      continue
-    }
-    if (item.isDirectory()) {
-      for (const file of readdirSync(join(folder, item.name)).sort()) {
-        if (file.endsWith('.toml')) {
-          shelved.push({ path: join(folder, item.name, file), slug: basename(file, '.toml'), catalog: item.name })
-        }
-      }
-    } else if (item.name.endsWith('.toml')) {
-      loose.push({ path: join(folder, item.name), slug: basename(item.name, '.toml') })
-    }
-  }
-  return [...shelved, ...loose]
+  const paths = readdirSync(folder, { withFileTypes: true }).flatMap((item) =>
+    item.isDirectory()
+      ? readdirSync(join(folder, item.name)).map((file) => `palettes/${item.name}/${file}`)
+      : [`palettes/${item.name}`],
+  )
+  return marketLayout(paths, (path) => join(dir, path))
 }
 
 export function marketFileProblem(file: MarketFile, seen: ReadonlyMap<string, MarketFile>): string | undefined {
@@ -117,7 +131,7 @@ export function ownPath(configHome: string, name: string): string {
   return marketFiles(local.dir).find((f) => f.slug === slug)?.path ?? join(palettesDir(local.dir), `${slug}.toml`)
 }
 
-export function placeFor(name: string, entries: PaletteEntry[]): Place {
+export function placeFor(name: string, entries: PaletteEntry[], foreign = false): Place {
   const groups = new Map<string, Group>()
   for (const e of entries) {
     if (e.group !== ORIGINAL && !groups.has(e.group)) {
@@ -128,38 +142,58 @@ export function placeFor(name: string, entries: PaletteEntry[]): Place {
   const bases = new Map(
     entries.filter((e) => !e.default && !marketOf(e.name)).map((e) => [e.name, { group: e.group, order: e.order }]),
   )
-  return { name, groups, bases, open: true }
+  return { name, groups, bases, open: true, ...(foreign ? { foreign: true as const } : {}) }
 }
 
-export function readOwnText(name: string, source: string, entries: PaletteEntry[]): Theme {
+export function readOwnText(name: string, source: string, entries: PaletteEntry[], foreign = false): Theme {
   const slug = slugOf(name)
-  const { native: _, ...theme } = readTheme(`${slug}.toml`, source, placeFor(slug, entries))
+  const { native: _, ...theme } = readTheme(`${slug}.toml`, source, placeFor(slug, entries, foreign))
   const market = marketOf(name)
   return { ...theme, name, ...(market ? { group: market, lead: false } : {}) }
 }
 
-export function readMarketDir(dir: string, id: string, entries: PaletteEntry[], warn = true): PaletteEntry[] {
+export type Report = (where: string, message: string) => void
+
+export function warning(warn: boolean): Report {
+  return warn ? (where, message) => process.stderr.write(`ttheme: skipping ${where} — ${message}\n`) : () => {}
+}
+
+export function readMarketFiles(
+  files: MarketFile[],
+  read: (file: MarketFile) => string,
+  id: string,
+  entries: PaletteEntry[],
+  report: Report,
+  foreign = false,
+): PaletteEntry[] {
   const seen = new Map<string, MarketFile>()
-  return marketFiles(dir).flatMap((file) => {
+  return files.flatMap((file) => {
     try {
       const problem = marketFileProblem(file, seen)
       if (problem) {
         throw new Error(problem)
       }
       seen.set(file.slug, file)
-      const entry = paletteEntry(readOwnText(`${id}/${file.slug}`, readFileSync(file.path, 'utf8'), entries))
+      const entry = paletteEntry(readOwnText(`${id}/${file.slug}`, read(file), entries, foreign))
       return [file.catalog ? { ...entry, catalog: file.catalog } : entry]
     } catch (error) {
-      if (warn) {
-        process.stderr.write(`ttheme: skipping ${file.path} — ${(error as Error).message}\n`)
-      }
+      report(file.path, (error as Error).message)
       return []
     }
   })
 }
 
+export function readMarketDir(
+  dir: string,
+  id: string,
+  entries: PaletteEntry[],
+  report: Report = warning(true),
+): PaletteEntry[] {
+  return readMarketFiles(marketFiles(dir), (file) => readFileSync(file.path, 'utf8'), id, entries, report)
+}
+
 export function readLocal(configHome: string, entries: PaletteEntry[], warn = true): PaletteEntry[] {
-  return localMarkets(configHome, warn).flatMap(({ dir, id }) => readMarketDir(dir, id, entries, warn))
+  return localMarkets(configHome, warn).flatMap(({ dir, id }) => readMarketDir(dir, id, entries, warning(warn)))
 }
 
 export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string): Draft {

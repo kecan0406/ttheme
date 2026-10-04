@@ -1,43 +1,44 @@
-import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import pkg from '../package.json' with { type: 'json' }
 import {
+  type Archive,
+  archiveId,
   available,
   catalogPath,
   fetchParsed,
-  type MarketIndex,
   Missing,
-  marketEntries,
   parseCatalog,
-  parseIndex,
   REGISTRY_URL,
-  readCachedIndex,
+  reach,
+  readArchive,
+  readCachedArchive,
   readCatalog,
   readKept,
-  remoteId,
-  TooNew,
-  UPDATE_COMMAND,
   writeCatalog,
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
-import { listed, type Manifest, type PaletteEntry } from './manifest.ts'
+import { listed, type Manifest, type PaletteEntry, TooNew, UPDATE_COMMAND } from './manifest.ts'
 import { advise } from './notice.ts'
+import { warning } from './own.ts'
 import { configHome, type Installed, readInstalled, sync } from './palettes.ts'
 import { pending } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
 import {
+  archiveUrl,
   autoUpdates,
   cachePath,
-  INDEX,
   installedPath,
   isRemote,
+  MARKET_FILE,
   marketsDir,
   marketsOf,
   OFFICIAL,
-  rawUrl,
+  refOf,
   shownSource,
 } from './sources.ts'
+import { untar } from './tarball.ts'
 
 export const REFRESH_AFTER = 24 * 60 * 60 * 1000
 export const RETRY_AFTER = 60 * 60 * 1000
@@ -48,12 +49,10 @@ export interface Tried {
   error: string
 }
 
-export interface Fetched {
-  source: string
-  id: string
-  manifest: Manifest
-  entries: PaletteEntry[]
-}
+export type Fetched = { source: string; id: string; entries: PaletteEntry[] } & (
+  | { manifest: Manifest }
+  | { archive: Archive }
+)
 
 export interface Change {
   added: string[]
@@ -124,34 +123,80 @@ export function dueSources(home: string, state: Installed, now = Date.now()): st
   )
 }
 
-export async function fetchIndex(source: string, timeout?: number, signal?: AbortSignal): Promise<MarketIndex> {
+function archiveOf(tarball: Uint8Array, etag: string | null): Archive {
+  const files: Record<string, string> = {}
+  const text = new TextDecoder()
+  for (const [path, data] of untar(tarball)) {
+    if (path === MARKET_FILE || (path.startsWith('palettes/') && path.endsWith('.toml'))) {
+      files[path] = text.decode(data)
+    }
+  }
+  return { ...(etag ? { etag } : {}), files }
+}
+
+export async function fetchArchive(
+  source: string,
+  timeout?: number,
+  signal?: AbortSignal,
+  etag?: string,
+): Promise<Archive | undefined> {
+  let response: Response
   try {
-    return await fetchParsed(rawUrl(source), parseIndex, timeout, signal)
+    response = await reach(archiveUrl(source), timeout, signal, etag ? { 'if-none-match': etag } : {})
   } catch (error) {
     if (error instanceof Missing) {
-      throw new Error(`${shownSource(source)} has no ${INDEX} — is the repository public, and has its action run?`)
+      const ref = refOf(source)
+      throw new Error(`${shownSource(source)}${ref ? ` has no ${ref}` : ' is not there'} — is the repository public?`)
     }
     throw error
   }
+  if (response.status === 304) {
+    return undefined
+  }
+  return archiveOf(new Uint8Array(await response.arrayBuffer()), response.headers.get('etag'))
 }
 
-export async function fetchMarket(source: string, timeout?: number, signal?: AbortSignal): Promise<Fetched> {
+export function fromArchive(source: string, archive: Archive, official: PaletteEntry[]): Fetched {
+  const { id, entries } = readArchive(source, archive, official, warning(false))
+  return { source, id, entries, archive }
+}
+
+function officialOf(home: string): PaletteEntry[] {
+  return cachedEntries(home, OFFICIAL)
+}
+
+export async function fetchMarket(
+  home: string,
+  source: string,
+  timeout?: number,
+  signal?: AbortSignal,
+): Promise<Fetched> {
   if (source === OFFICIAL) {
     const manifest = await fetchParsed(REGISTRY_URL, parseCatalog, timeout, signal)
     return { source, id: OFFICIAL, manifest, entries: manifest.palettes }
   }
-  const index = await fetchIndex(source, timeout, signal)
-  const id = remoteId(source, index)
-  return { source, id, manifest: index, entries: marketEntries(index, id) }
+  const archive = await fetchArchive(source, timeout, signal)
+  if (!archive) {
+    throw new Error(`${shownSource(source)} answered as if nothing had changed`)
+  }
+  return fromArchive(source, archive, officialOf(home))
 }
 
 export function storeMarket(home: string, fetched: Fetched): void {
-  if (fetched.source === OFFICIAL) {
+  if ('manifest' in fetched) {
     writeCatalog(home, fetched.manifest)
     return
   }
   mkdirSync(marketsDir(home), { recursive: true })
-  writeAtomic(cachePath(home, fetched.source), `${JSON.stringify(fetched.manifest, null, 2)}\n`)
+  writeAtomic(cachePath(home, fetched.source), `${JSON.stringify(fetched.archive)}\n`)
+}
+
+function cachedArchive(home: string, source: string): Archive | undefined {
+  try {
+    return readCachedArchive(home, source)
+  } catch {
+    return undefined
+  }
 }
 
 export function cachedEntries(home: string, source: string): PaletteEntry[] {
@@ -159,8 +204,7 @@ export function cachedEntries(home: string, source: string): PaletteEntry[] {
     if (source === OFFICIAL) {
       return parseCatalog(readFileSync(catalogPath(home), 'utf8')).palettes
     }
-    const index = readCachedIndex(home, source)
-    return marketEntries(index, remoteId(source, index))
+    return readArchive(source, readCachedArchive(home, source), officialOf(home), warning(false)).entries
   } catch {
     return []
   }
@@ -176,23 +220,38 @@ export function diffEntries(before: PaletteEntry[], after: PaletteEntry[]): Chan
   }
 }
 
+async function fetchNewer(home: string, source: string, timeout?: number): Promise<Fetched | undefined> {
+  if (!isRemote(source)) {
+    return fetchMarket(home, source, timeout)
+  }
+  const cached = cachedArchive(home, source)
+  const archive = await fetchArchive(source, timeout, undefined, cached?.etag)
+  return archive && fromArchive(source, archive, officialOf(home))
+}
+
 export async function refreshMarket(home: string, source: string, timeout?: number): Promise<Refreshed> {
   const before = cachedEntries(home, source)
-  let fetched: Fetched
+  let fetched: Fetched | undefined
   try {
-    fetched = await fetchMarket(source, timeout)
+    fetched = await fetchNewer(home, source, timeout)
   } catch (error) {
     writeTry(source, (error as Error).message)
     throw error
   }
-  storeMarket(home, fetched)
+  if (fetched) {
+    storeMarket(home, fetched)
+  } else {
+    const now = new Date()
+    utimesSync(cachePath(home, source), now, now)
+  }
   writeTry(source, undefined)
+  const entries = fetched?.entries ?? before
   return {
     source,
-    id: fetched.id,
-    ...(source === OFFICIAL ? { version: fetched.manifest.version } : {}),
-    count: listed(fetched.entries).length,
-    change: diffEntries(before, fetched.entries),
+    id: fetched?.id ?? archiveId(source, readCachedArchive(home, source)),
+    ...(fetched && 'manifest' in fetched ? { version: fetched.manifest.version } : {}),
+    count: listed(entries).length,
+    change: diffEntries(before, entries),
   }
 }
 

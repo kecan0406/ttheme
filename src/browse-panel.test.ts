@@ -450,7 +450,7 @@ test('a failed GitHub search says so, and space on that row searches again', asy
   assert.match(last, /○ bob\/ttheme-neon/)
 })
 
-test('moving onto a GitHub repository fetches its index for the detail panel, once', async () => {
+test('moving onto a GitHub repository fetches its palettes for the detail panel, once', async () => {
   const neon = market('bob/ttheme-neon', 'bob@neon', ['glow', 'haze'])
   const fetched: string[] = []
   const { frames, panel } = await drive([TAB, TAB, 20, DOWN, DOWN, 600, '\r'], {

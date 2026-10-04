@@ -13,6 +13,7 @@ import {
   recolor,
   resign,
   shareCode,
+  warning,
   withPictures,
 } from './own.ts'
 
@@ -105,7 +106,7 @@ test('a market takes its catalogs from folders, keeps loose palettes after them,
   put('pastel/arcade.toml', 'arcade')
   put('pastel/sakura.toml', 'sakura')
   put('dusk.toml', 'dusk')
-  const entries = readMarketDir(dir, 'kec@shop', [], false)
+  const entries = readMarketDir(dir, 'kec@shop', [], warning(false))
   assert.deepEqual(
     entries.map((e) => [e.name, e.catalog]),
     [

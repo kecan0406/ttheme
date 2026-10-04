@@ -14,13 +14,12 @@ ttheme new rei                    # <you>@dust/rei, from blank in the palette ed
 ttheme edit rei                   # the same editor; the gate's numbers are shown, never enforced
 ```
 
-A market is a repository with `palettes/<palette>.toml`, a `ttheme-market.json`
-index that names it (`"owner"`, `"name"`) and a workflow that runs
-`kecan0406/ttheme/market@v1` whenever `palettes/` changes, or by hand, to
-rebuild the index with the latest ttheme (`with: version: 1.2.11` builds it with
-that release instead); `ttheme market build` does the same locally. The index
-carries the `schema` this ttheme speaks, and a ttheme refuses one with none, or
-a newer one than it reads, and keeps its last copy. Added from GitHub, a market is
+A market is a repository with `palettes/<palette>.toml` and a
+`ttheme-market.toml` that names it (`schema = 1`, `owner`, `name`) — nothing is
+built: ttheme fetches the repository's archive and reads the TOML files as they
+are, so every push is the market. A ttheme refuses a `ttheme-market.toml` with
+no `schema`, or a newer one than it reads, and keeps its last copy, and a
+palette file it cannot read shows in `ttheme browse`'s Errors tab. Added from GitHub, a market is
 `<repository owner>@<name>` and its palettes are `<owner>@<name>/<palette>`;
 the TOML files name them bare (`name = "rei"`). A folder under `palettes/` is a
 catalog — `palettes/neon/arcade.toml` puts arcade in the neon catalog — so every

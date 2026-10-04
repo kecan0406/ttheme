@@ -5,19 +5,18 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import {
+  archiveId,
   available,
   booruTags,
   gateFailures,
   parseCatalog,
-  parseIndex,
   readCatalog,
   search,
   siteTags,
-  TooNew,
   writeCatalog,
   writeKept,
 } from './catalog.ts'
-import { type PaletteEntry, SCHEMA } from './manifest.ts'
+import { type PaletteEntry, SCHEMA, TooNew } from './manifest.ts'
 import { paletteToml } from './own.ts'
 
 function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
@@ -60,9 +59,9 @@ test('parseCatalog accepts a well formed catalog', () => {
   assert.equal(parseCatalog(catalogJson([entry()])).palettes[0]?.name, 'gojo')
 })
 
-test('parseCatalog refuses a document with no schema and says how a market gets one', () => {
+test('parseCatalog refuses a document with no schema and says how to fetch it again', () => {
   const { schema: _, ...before } = JSON.parse(catalogJson([entry()]))
-  assert.throws(() => parseCatalog(JSON.stringify(before)), /no schema.*ttheme market build.*ttheme update/)
+  assert.throws(() => parseCatalog(JSON.stringify(before)), /no schema.*ttheme update/)
 })
 
 test('parseCatalog refuses a schema newer than it reads and says how to update', () => {
@@ -192,12 +191,24 @@ test('readCatalog puts each added market after the series under its own name, an
   writeCatalog(home, { ...skeleton, palettes: [entry({ name: 'gojo' }), entry({ name: 'geto', order: 2 })] })
   writeFileSync(
     join(home, 'ttheme', 'markets', 'ann--ttheme-pastel.json'),
-    JSON.stringify({ ...skeleton, owner: 'someone', name: 'pastel', palettes: [entry({ name: 'old', base: 'gojo' })] }),
+    JSON.stringify({
+      files: {
+        'ttheme-market.toml': 'schema = 1\nowner = "someone"\nname = "pastel"\n',
+        'palettes/old.toml': paletteToml({
+          name: 'old',
+          base: 'gojo',
+          signature: ['cursor', 'foreground', 'background'],
+          background: '#101010',
+          foreground: '#f0f0f0',
+          cursor: '#e0c060',
+          selection: '#303060',
+          ansi: Array.from({ length: 16 }, () => '#808080'),
+        }),
+        'palettes/broken.toml': 'not toml at all',
+      },
+    }),
   )
-  writeFileSync(
-    join(local, 'ttheme-market.json'),
-    JSON.stringify({ ...skeleton, owner: 'kec', name: 'dust', palettes: [] }),
-  )
+  writeFileSync(join(local, 'ttheme-market.toml'), 'schema = 1\nowner = "kec"\nname = "dust"\n')
   writeFileSync(
     join(local, 'palettes', 'rei.toml'),
     paletteToml({
@@ -230,10 +241,11 @@ test('readCatalog puts each added market after the series under its own name, an
   assert.equal(all.find((p) => p.name === 'kec@dust/rei')?.group, 'kec@dust')
 })
 
-test("a market index names itself and its palettes bare — the owner of an added one is its repository's", () => {
-  const index = (name: string) =>
-    JSON.stringify({ ...JSON.parse(catalogJson([entry({ name })])), owner: 'ann', name: 'pastel' })
-  assert.equal(parseIndex(index('dusk')).name, 'pastel')
-  assert.throws(() => parseIndex(index('bob@x/dusk')), /bare palette names/)
-  assert.throws(() => parseIndex(catalogJson([entry({ name: 'dusk' })])), /needs an "owner"/)
+test("a market names itself in ttheme-market.toml — the owner of an added one is its repository's", () => {
+  const archive = (text: string) => ({ files: { 'ttheme-market.toml': text } })
+  assert.equal(archiveId('ann/ttheme-pastel', archive('schema = 1\nowner = "bob"\nname = "pastel"\n')), 'ann@pastel')
+  assert.throws(() => archiveId('ann/ttheme-pastel', { files: {} }), /has no ttheme-market\.toml/)
+  assert.throws(() => archiveId('ann/ttheme-pastel', archive('owner = "ann"\nname = "pastel"\n')), /has no schema/)
+  assert.throws(() => archiveId('ann/ttheme-pastel', archive('schema = 2\nowner = "ann"\nname = "pastel"\n')), TooNew)
+  assert.throws(() => archiveId('ann/ttheme-pastel', archive('schema = 1\nname = "pastel"\n')), /needs an "owner"/)
 })

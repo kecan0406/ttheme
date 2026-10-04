@@ -368,7 +368,7 @@ still wins:
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `tone` | the colors a new background picture is drawn in: `tone` tints it in one color of its palette, `original` keeps its own colors. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `tone` and `original`. Like the blur, it is read from `config.zsh` itself |
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
-| `TTHEME_MARKET_LOOKUP` | `on` | `ttheme browse`'s Markets tab looks GitHub up by itself: the repositories carrying the `ttheme-market` topic when the tab opens and again, a moment after you stop typing, for what you typed, and the index of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
+| `TTHEME_MARKET_LOOKUP` | `on` | `ttheme browse`'s Markets tab looks GitHub up by itself: the repositories carrying the `ttheme-market` topic when the tab opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
 | `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |
@@ -411,14 +411,15 @@ on:
   `→` turn its auto-update off and on, and `ctrl+r` updates it now. Under
   `On GitHub` it lists the repositories with the `ttheme-market` topic by
   itself as the tab opens, and again a moment after you stop typing, for what
-  you typed; moving onto one fetches its index, so the detail panel names the
+  you typed; moving onto one fetches its archive, so the detail panel names the
   palettes it would bring before you add it, and `space` adds it — after asking
   whether it updates on its own. Type a repository (`alice/ttheme-pastel`,
   `#v1` pins it) or a folder and an `Add` row appears, looked up the same way.
   A search GitHub turns away shows as a row that `space` or `ctrl+r` retries;
   `TTHEME_MARKET_LOOKUP=off` leaves all of this to `space`.
-- **Errors** collects what went wrong: a market that failed to update, an index
-  that cannot be read, a palette file of yours that does not parse.
+- **Errors** collects what went wrong: a market that failed to update, a
+  market whose `ttheme-market.toml` cannot be read, a palette file — yours or
+  a market's — that does not parse.
 
 Nothing is written until you apply. enter on anything but a series opens a
 review of everything staged across the tabs — the markets added and removed, the
@@ -480,10 +481,10 @@ A market with auto-update on does that by itself: when a copy is a day old,
 `browse` in the background while it is open, the others waiting a few seconds
 at most — and say so on your terminal, never into a pipe
 (`Updated official 1.0.50 — 153 palettes (3 new)`), when something changed. A failed try is kept quiet, shown under Errors, and tried
-again an hour later; the one exception is an index written in a newer schema
+again an hour later; the one exception is a market written in a newer schema
 than your ttheme reads, which a terminal is told about
-(`github.com/alice/ttheme-pastel: catalog is schema 2, newer than the schema 1
-this ttheme reads — npx @kecan0406/ttheme@latest init updates it`) while the
+(`github.com/alice/ttheme-pastel: ttheme-market.toml is schema 2, newer than the
+schema 1 this ttheme reads — npx @kecan0406/ttheme@latest init updates it`) while the
 copy from the last update stays in use. After refreshing the official catalog
 ttheme also says when a newer release than yours is out — `update` always, the
 automatic refresh in a terminal. Nothing ever runs from the shell or a new tab.
@@ -492,11 +493,11 @@ automatic refresh in a terminal. Nothing ever runs from the shell or a new tab.
 
 The catalog is every market you added, laid together. The official one
 (`official`, the palettes in this repository) is there from `init`; any GitHub
-repository with a `ttheme-market.json` at its root is another:
+repository with a `ttheme-market.toml` at its root is another:
 
 ```sh
 ttheme market search              # repositories with the ttheme-market topic
-ttheme market add alice/ttheme-pastel   # a repository — its index names it: alice@pastel
+ttheme market add alice/ttheme-pastel   # a repository — its ttheme-market.toml names it: alice@pastel
 ttheme market add alice/ttheme-pastel#v1  # the same, pinned to a tag, branch or commit
 ttheme market add ./my-market     # a folder, read in place on every command
 ttheme add dusk --market alice/ttheme-pastel  # add the market and install from it in one step
@@ -510,8 +511,8 @@ is read in place, so it needs none. `browse`'s Markets tab switches it later.
 Adding a repository you already have with another `#ref` moves it there,
 keeping its auto-update.
 
-A market is `<owner>@<name>`: the repository's owner and the name its index
-gives. Its palettes are `<owner>@<name>/<palette>` (`ttheme add
+A market is `<owner>@<name>`: the repository's owner and the name its
+`ttheme-market.toml` gives. Its palettes are `<owner>@<name>/<palette>` (`ttheme add
 alice@pastel/dusk`), and `preview` and `browse` — the two tabs of the bare
 `ttheme` — list the market below every series, past a `── Markets` line: the market, then its
 catalogs — the folders under its `palettes/` — then their palettes by their
@@ -528,7 +529,7 @@ alice/ttheme-pastel               ▾ alice@pastel
 
 The catalog is only a shelf, never part of the name — dusk stays
 `alice@pastel/dusk` wherever its file moves — so a palette name is used once in
-a market; `market build` refuses a second one. Only the
+a market; a second file with the same name is skipped and shown under Errors. Only the
 official catalog is held to the contrast gate — a market palette installs
 whatever its numbers, and `ttheme check` shows them. `ttheme market remove
 official` drops the official catalog too; `ttheme market add official` brings
@@ -538,17 +539,17 @@ Installed palettes and the markets you added are listed in
 `~/.config/ttheme/installed.json`, with an auto-update switch under `updates`
 only where it differs from the default; the official catalog is cached in
 `~/.config/ttheme/catalog.json` and each other market in
-`~/.config/ttheme/markets/<owner>--<repository>.json`, whose age is how auto-update
-tells a day has passed. Failed tries are kept in
+`~/.config/ttheme/markets/<owner>--<repository>.json` — the repository's
+`ttheme-market.toml` and `palettes/` files as fetched from its archive, read
+like a folder on every command — whose age is how auto-update tells a day has
+passed; a repository that has not changed since answers the daily check
+without sending anything. Failed tries are kept in
 `~/.local/state/ttheme/markets.json`.
 
-Every index carries a `schema` number beside its `version` (the release that
-wrote it). It is raised only when a change would make an older ttheme misread
-the index, never for a palette or an optional field added; a ttheme that finds
-a higher one than it reads refuses the index and keeps its last copy, and so
-does an index with none: a market written before the field existed runs its
-action once more (`ttheme market build` by hand), and `ttheme update` fetches
-it.
+A `ttheme-market.toml` carries a `schema` number. It is raised only when a
+change would make an older ttheme misread the market, never for a palette or an
+optional field added; a ttheme that finds a higher one than it reads refuses the
+market and keeps its last copy, and so does a `ttheme-market.toml` with none.
 
 ## Your own palettes
 
@@ -629,15 +630,15 @@ Your palettes are files in a local market: the first `new` asks for its name and
 creates `~/.config/ttheme/market/<name>` (`ttheme market init <name>` makes one
 up front, or in a folder you give, and `--in <name>` picks between several). Each is
 `palettes/<name>.toml` (move it into a folder there to shelve it in a catalog), in the same format as `themes/*.toml` (see
-CONTRIBUTING.md) with a bare `meta.name`; the market's `ttheme-market.json`
+CONTRIBUTING.md) with a bare `meta.name`; the market's `ttheme-market.toml`
 carries its name and `<you>`, your GitHub handle — read from `gh` when it is logged in, asked
 once otherwise, and kept in `installed.json`. A file you break stays out of the
 list (every command says why on stderr) until you fix it; `edit` keeps a palette
 that misses the gate and prints the numbers, and `check --fix` writes colors that
 pass.
 
-The folder is a repository layout already, with a workflow that rebuilds the
-index whenever `palettes/` changes (or by hand from the Actions tab). `ttheme market init` prints the `git` and `gh` commands
+The folder is a repository layout already, with nothing to build: ttheme reads
+the files as pushed. `ttheme market init` prints the `git` and `gh` commands
 that publish it as `<you>/ttheme-<name>` with the `ttheme-market` topic; after
 that, anyone runs `ttheme market add <you>/ttheme-<name>`.
 

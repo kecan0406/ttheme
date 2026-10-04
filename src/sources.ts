@@ -1,10 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
+import { parse } from 'smol-toml'
+import { judgeSchema } from './manifest.ts'
 import { nameProblem } from './theme.ts'
 
 export const OFFICIAL = 'official'
-export const INDEX = 'ttheme-market.json'
+export const MARKET_FILE = 'ttheme-market.toml'
+export const MARKET_SCHEMA = 1
 export const TOPIC = 'ttheme-market'
 
 const OWNER = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i
@@ -89,9 +92,9 @@ export function parseSource(arg: string, cwd = process.cwd()): string {
   return `${owner.toLowerCase()}/${repo}${ref === undefined ? '' : `#${ref}`}`
 }
 
-export function rawUrl(source: string): string {
+export function archiveUrl(source: string): string {
   const ref = refOf(source)?.split('/').map(encodeURIComponent).join('/') ?? 'HEAD'
-  return `https://raw.githubusercontent.com/${repoOf(source)}/${ref}/${INDEX}`
+  return `https://codeload.github.com/${repoOf(source)}/tar.gz/${ref}`
 }
 
 export function remoteOwner(source: string): string {
@@ -130,22 +133,34 @@ export function marketId({ owner, name }: Identity): string {
   return `${owner}@${name}`
 }
 
-export function localIdentity(dir: string): Identity {
-  const path = join(dir, INDEX)
-  if (!existsSync(path)) {
-    throw new Error(`${dir} has no ${INDEX} — \`ttheme market init ${dir}\` makes one`)
-  }
-  let doc: { owner?: unknown; name?: unknown }
+export function marketToml({ owner, name }: Identity): string {
+  return `schema = ${MARKET_SCHEMA}\nowner = ${JSON.stringify(owner)}\nname = ${JSON.stringify(name)}\n`
+}
+
+export function readIdentity(text: string, where: string): Identity {
+  let doc: Record<string, unknown>
   try {
-    doc = JSON.parse(readFileSync(path, 'utf8')) as { owner?: unknown; name?: unknown }
-  } catch {
-    throw new Error(`${path} is not valid JSON`)
+    doc = parse(text)
+  } catch (error) {
+    throw new Error(`${where} is not valid TOML — ${(error as Error).message.split('\n')[0]}`)
   }
+  if (doc.schema === undefined) {
+    throw new Error(`${where} has no schema — schema = ${MARKET_SCHEMA} goes at its top`)
+  }
+  judgeSchema(doc.schema, where, MARKET_SCHEMA)
   const problem = marketProblem(doc.owner, doc.name)
   if (problem) {
-    throw new Error(`${path} ${problem}`)
+    throw new Error(`${where} ${problem}`)
   }
   return { owner: doc.owner as string, name: doc.name as string }
+}
+
+export function localIdentity(dir: string): Identity {
+  const path = join(dir, MARKET_FILE)
+  if (!existsSync(path)) {
+    throw new Error(`${dir} has no ${MARKET_FILE} — \`ttheme market init ${dir}\` makes one`)
+  }
+  return readIdentity(readFileSync(path, 'utf8'), path)
 }
 
 export function shownSource(source: string): string {

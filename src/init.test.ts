@@ -42,35 +42,37 @@ function manifestFixture() {
   }
 }
 
+function paletteText(name: string): string {
+  return [
+    '[meta]',
+    `name = "${name}"`,
+    'signature = ["cursor", "foreground", "background"]',
+    '',
+    '[colors]',
+    'background = "#101010"',
+    'foreground = "#f0f0f0"',
+    'cursor = "#ff8800"',
+    'selection_background = "#303030"',
+    `ansi = [${Array.from({ length: 16 }, (_, i) => `"#${i.toString(16).repeat(6)}"`).join(', ')}]`,
+    '',
+  ].join('\n')
+}
+
 function withMarkets(paths: InitPaths): string {
   const dust = join(paths.home, 'dust')
   mkdirSync(join(dust, 'palettes'), { recursive: true })
-  writeFileSync(
-    join(dust, 'ttheme-market.json'),
-    JSON.stringify({ schema: SCHEMA, version: '0.0.0', owner: 'kec', name: 'moss', palettes: [] }),
-  )
-  writeFileSync(
-    join(dust, 'palettes', 'fern.toml'),
-    [
-      '[meta]',
-      'name = "fern"',
-      'signature = ["cursor", "foreground", "background"]',
-      '',
-      '[colors]',
-      'background = "#101010"',
-      'foreground = "#f0f0f0"',
-      'cursor = "#ff8800"',
-      'selection_background = "#303030"',
-      `ansi = [${Array.from({ length: 16 }, (_, i) => `"#${i.toString(16).repeat(6)}"`).join(', ')}]`,
-      '',
-    ].join('\n'),
-  )
+  writeFileSync(join(dust, 'ttheme-market.toml'), 'schema = 1\nowner = "kec"\nname = "moss"\n')
+  writeFileSync(join(dust, 'palettes', 'fern.toml'), paletteText('fern'))
   const cache = join(paths.configHome, 'ttheme', 'markets')
   mkdirSync(cache, { recursive: true })
-  const [, miku] = manifestFixture().palettes
   writeFileSync(
     join(cache, 'alice--pastel.json'),
-    JSON.stringify({ ...manifestFixture(), owner: 'alice', name: 'pastel', palettes: [{ ...miku, name: 'dusk' }] }),
+    JSON.stringify({
+      files: {
+        'ttheme-market.toml': 'schema = 1\nowner = "alice"\nname = "pastel"\n',
+        'palettes/dusk.toml': paletteText('dusk'),
+      },
+    }),
   )
   return dust
 }
@@ -331,7 +333,7 @@ test('setting it up again keeps the markets, their auto-update, the handle and w
   )
 })
 
-test('an upgrade keeps what came from markets when the caches it finds were written before schemas existed', () => {
+test('an upgrade keeps what came from markets when the caches it finds are in a shape this ttheme does not read', () => {
   const paths = makeFixture()
   applyInit(planInit(options({ palettes: ['miku'] }), paths))
   const dust = withMarkets(paths)
@@ -340,10 +342,12 @@ test('an upgrade keeps what came from markets when the caches it finds were writ
   const state = { terminals: ['ghostty' as const], markets: ['official', 'alice/pastel', dust], palettes }
   writeFileSync(join(home, 'installed.json'), JSON.stringify(state))
   sync(paths.configHome, readCatalog(paths.configHome), state)
-  for (const file of [join(home, 'catalog.json'), join(home, 'markets', 'alice--pastel.json')]) {
-    const { schema: _, ...before } = JSON.parse(readFileSync(file, 'utf8'))
-    writeFileSync(file, JSON.stringify(before))
-  }
+  const { schema: _, ...before } = JSON.parse(readFileSync(join(home, 'catalog.json'), 'utf8'))
+  writeFileSync(join(home, 'catalog.json'), JSON.stringify(before))
+  writeFileSync(
+    join(home, 'markets', 'alice--pastel.json'),
+    JSON.stringify({ ...manifestFixture(), owner: 'alice', name: 'pastel' }),
+  )
   assert.throws(() => readCatalog(paths.configHome, false), /no schema/)
   const current = installedState(paths.configHome)
   assert.ok(current)

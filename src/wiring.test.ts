@@ -94,7 +94,7 @@ test('configFile seeds the template with every default spelled out on a commente
       "# character names in every language for searching palettes and find's search box, from aninames' weekly release: on downloads them (about 7 MB) and checks once a day in the background; off leaves them as they are (default on)",
       '# : ${TTHEME_NAMES:=on}',
       '',
-      '# the Markets tab in browse: on looks GitHub up by itself — the markets carrying the ttheme-market topic when the tab opens or you type, and the index of a repository you type or move onto; off waits for space (default on)',
+      '# the Markets tab in browse: on looks GitHub up by itself — the markets carrying the ttheme-market topic when the tab opens or you type, and the palettes of a repository you type or move onto; off waits for space (default on)',
       '# : ${TTHEME_MARKET_LOOKUP:=on}',
       '',
       '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',

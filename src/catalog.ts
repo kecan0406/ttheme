@@ -3,11 +3,22 @@ import { join } from 'node:path'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
-import { emptyManifest, type Manifest, type PaletteEntry, SCHEMA, toTheme } from './manifest.ts'
+import { emptyManifest, judgeSchema, type Manifest, type PaletteEntry, SCHEMA, toTheme } from './manifest.ts'
 import { aliasesFor, containsText } from './names.ts'
-import { readLocal } from './own.ts'
-import { cachePath, isRemote, marketId, marketProblem, marketSources, OFFICIAL, remoteOwner } from './sources.ts'
-import { marketOf, nameProblem, textProblem } from './theme.ts'
+import { marketLayout, type Report, readLocal, readMarketFiles, warning } from './own.ts'
+import {
+  cachePath,
+  type Identity,
+  isRemote,
+  MARKET_FILE,
+  marketId,
+  marketSources,
+  OFFICIAL,
+  readIdentity,
+  remoteOwner,
+  shownSource,
+} from './sources.ts'
+import { nameProblem, textProblem } from './theme.ts'
 import { readTone, tuned } from './tone.ts'
 
 export const REGISTRY_URL = 'https://kecan0406.github.io/ttheme/manifest.json'
@@ -21,9 +32,9 @@ export function writeCatalog(configHome: string, catalog: Manifest): void {
   writeAtomic(catalogPath(configHome), `${JSON.stringify(catalog, null, 2)}\n`)
 }
 
-export interface MarketIndex extends Manifest {
-  owner: string
-  name: string
+export interface Archive {
+  etag?: string
+  files: Record<string, string>
 }
 
 export function readCatalog(configHome: string, warn = true, official?: Manifest): Manifest {
@@ -40,26 +51,60 @@ export function readCatalog(configHome: string, warn = true, official?: Manifest
       base = parseCatalog(readFileSync(path, 'utf8'))
     }
   }
-  const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source, warn))
+  const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source, base.palettes, warn))
   return { ...base, palettes: [...base.palettes, ...remote] }
 }
 
-export function readCachedIndex(configHome: string, source: string): MarketIndex {
-  return parseIndex(readFileSync(cachePath(configHome, source), 'utf8'))
+export function parseArchive(source: string): Archive {
+  let doc: { etag?: unknown; files?: unknown } | null
+  try {
+    doc = JSON.parse(source)
+  } catch {
+    throw new Error('is not valid JSON')
+  }
+  const files = doc?.files
+  if (!files || typeof files !== 'object' || Object.values(files).some((text) => typeof text !== 'string')) {
+    throw new Error('is not a copy of a market this ttheme fetched — `ttheme update` fetches it again')
+  }
+  return { ...(typeof doc?.etag === 'string' ? { etag: doc.etag } : {}), files: files as Record<string, string> }
 }
 
-export function remoteId(source: string, index: MarketIndex): string {
-  return marketId({ owner: remoteOwner(source), name: index.name })
+export function readCachedArchive(configHome: string, source: string): Archive {
+  return parseArchive(readFileSync(cachePath(configHome, source), 'utf8'))
 }
 
-function readCached(configHome: string, source: string, warn: boolean): PaletteEntry[] {
+export function remoteId(source: string, identity: Identity): string {
+  return marketId({ owner: remoteOwner(source), name: identity.name })
+}
+
+export function archiveId(source: string, archive: Archive): string {
+  const text = archive.files[MARKET_FILE]
+  if (text === undefined) {
+    throw new Error(`${shownSource(source)} has no ${MARKET_FILE} — \`ttheme market init\` makes one`)
+  }
+  return remoteId(source, readIdentity(text, MARKET_FILE))
+}
+
+export function readArchive(
+  source: string,
+  archive: Archive,
+  official: PaletteEntry[],
+  report: Report,
+): { id: string; entries: PaletteEntry[] } {
+  const id = archiveId(source, archive)
+  const shown = shownSource(source)
+  const texts = new Map(Object.entries(archive.files).map(([path, text]) => [`${shown}/${path}`, text]))
+  const files = marketLayout(Object.keys(archive.files), (path) => `${shown}/${path}`)
+  return { id, entries: readMarketFiles(files, (file) => texts.get(file.path) ?? '', id, official, report, true) }
+}
+
+function readCached(configHome: string, source: string, official: PaletteEntry[], warn: boolean): PaletteEntry[] {
   const path = cachePath(configHome, source)
   if (!existsSync(path)) {
     return []
   }
   try {
-    const index = readCachedIndex(configHome, source)
-    return marketEntries(index, remoteId(source, index))
+    return readArchive(source, readCachedArchive(configHome, source), official, warning(false)).entries
   } catch (error) {
     if (warn) {
       process.stderr.write(`ttheme: skipping ${path} — ${(error as Error).message}\n`)
@@ -67,31 +112,6 @@ function readCached(configHome: string, source: string, warn: boolean): PaletteE
     return []
   }
 }
-
-export function parseIndex(source: string): MarketIndex {
-  const index = parseCatalog(source) as MarketIndex
-  const problem = marketProblem(index.owner, index.name)
-  if (problem) {
-    throw new Error(`market index ${problem}`)
-  }
-  const named = index.palettes.find((p) => marketOf(p.name) !== undefined)
-  if (named) {
-    throw new Error(`market index names ${named.name} with its market — its entries are bare palette names`)
-  }
-  return index
-}
-
-export function marketEntries(index: Manifest, id: string): PaletteEntry[] {
-  return index.palettes.map(({ lead: _, default: __, native: ___, ...entry }) => ({
-    ...entry,
-    name: `${id}/${entry.name}`,
-    group: id,
-  }))
-}
-
-export const UPDATE_COMMAND = 'npx @kecan0406/ttheme@latest init'
-
-export class TooNew extends Error {}
 
 export function parseCatalog(source: string): Manifest {
   let doc: unknown
@@ -102,18 +122,9 @@ export function parseCatalog(source: string): Manifest {
   }
   const schema = (doc as { schema?: unknown } | null)?.schema
   if (schema === undefined) {
-    throw new Error(
-      'catalog has no schema — a market is rebuilt with `ttheme market build`, then `ttheme update` fetches it',
-    )
+    throw new Error('catalog has no schema — `ttheme update` fetches it again')
   }
-  if (typeof schema !== 'number' || !Number.isInteger(schema) || schema < 1) {
-    throw new Error('catalog schema is not a whole number from 1')
-  }
-  if (schema > SCHEMA) {
-    throw new TooNew(
-      `catalog is schema ${schema}, newer than the schema ${SCHEMA} this ttheme reads — \`${UPDATE_COMMAND}\` updates it`,
-    )
-  }
+  judgeSchema(schema, 'catalog', SCHEMA)
   const catalog = doc as Manifest
   if (typeof catalog.version !== 'string' || !Array.isArray(catalog.palettes)) {
     throw new Error('catalog has no version or palettes')
@@ -183,16 +194,16 @@ export class Missing extends Error {}
 
 export class Limited extends Error {}
 
-export async function fetchParsed<T>(
+export async function reach(
   url: string,
-  parse: (source: string) => T,
   timeout = TIMEOUT,
   signal?: AbortSignal,
-): Promise<T> {
+  headers: Record<string, string> = {},
+): Promise<Response> {
   let response: Response
   try {
     const limit = AbortSignal.timeout(timeout)
-    response = await fetch(url, { signal: signal ? AbortSignal.any([limit, signal]) : limit })
+    response = await fetch(url, { headers, signal: signal ? AbortSignal.any([limit, signal]) : limit })
   } catch (error) {
     throw new Error(`cannot reach ${url} — ${error instanceof Error ? error.message : String(error)}`)
   }
@@ -204,10 +215,19 @@ export async function fetchParsed<T>(
       `${new URL(url).host} is turning requests away for now (${response.status}) — try again in a minute`,
     )
   }
-  if (!response.ok) {
+  if (!response.ok && response.status !== 304) {
     throw new Error(`${url} answered ${response.status}`)
   }
-  return parse(await response.text())
+  return response
+}
+
+export async function fetchParsed<T>(
+  url: string,
+  parse: (source: string) => T,
+  timeout = TIMEOUT,
+  signal?: AbortSignal,
+): Promise<T> {
+  return parse(await (await reach(url, timeout, signal)).text())
 }
 
 export function gateFailures(palette: PaletteEntry): string[] {

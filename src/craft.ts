@@ -70,7 +70,7 @@ function movesText(moves: Move[]): string[] {
 
 export function adopt(home: string, code: string, catalog: Manifest): string {
   const draft = fromCode(code)
-  const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), catalog.palettes))
+  const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), catalog.palettes, true))
   const known = available(home, catalog, false).palettes.find((e) => e.name === entry.name)
   if (known && JSON.stringify(known) !== JSON.stringify(entry)) {
     throw new Error(

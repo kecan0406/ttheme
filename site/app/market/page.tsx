@@ -12,9 +12,9 @@ export const metadata: Metadata = {
   description: 'Every ttheme palette: the official series and the markets anyone publishes from GitHub',
 }
 
-export default async function MarketPage() {
+export default function MarketPage() {
   const { gate, themes } = loadManifest()
-  const markets = await loadMarkets()
+  const markets = loadMarkets()
   const series = seriesOf(themes)
   const sections: Section[] = [
     ...series.map((entry) => ({ key: `series:${entry.name}`, title: entry.name, themes: entry.themes })),
