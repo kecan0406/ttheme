@@ -472,7 +472,7 @@ function report(fresh: Table, old: Table): boolean {
       (id) =>
         fresh.has(id) && !(owed(fresh, id, gap.term) && explained(gaps, gap.term, id, needs.get(id) ?? []) === gap),
     )
-    if (!used.has(gap) && covered.every(walked)) {
+    if (!used.has(gap) && (covered.length > 0 ? covered.every(walked) : complete)) {
       stale.push(gap)
     } else if (idle.length > 0) {
       wide.push([
