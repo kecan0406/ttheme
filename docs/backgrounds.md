@@ -355,15 +355,15 @@ about half a tone's opacity, a dark one stronger, and either is faint: raise
 the opacity in the tuning panel as far as the text allows — the panel does not
 stop you at the gate. Switching a picture between tone and original keeps its
 size and position and puts its opacity back to the new default. When the
-palette's text colors change, the default follows without drawing the picture
-again. The terminals take these files as they take a tone's, since each only lays
+palette's colors change, the opacity stays as it is. The terminals take these files as they take a tone's, since each only lays
 a file over its background at an opacity — Warp and Terminal.app through a copy
 laid on the background first; Ghostty, iTerm2, kitty, WezTerm, Warp, Konsole and
 Terminal.app are the ones that show pictures at all.
 
 When a palette's colors change (`edit`, `update`, a new catalog), the next sync
-paints its pictures in the new tone and default opacity under new names, carrying
-their tuning — an opacity you set yourself stays yours. Changing
+paints its pictures in the new tone under new names, carrying their tuning and
+their opacity: a picture keeps the opacity it was installed with, or the one you
+set, however the colors move. Changing
 `TTHEME_BG_BLUR` in `ttheme config` or preview's alt-c panel draws every picture
 again from its original, as does the first `init` of a version that draws them
 differently; a picture whose original is gone is left as it was, and init says so.

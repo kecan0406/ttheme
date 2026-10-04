@@ -242,8 +242,8 @@ export class Backdrop {
       return undefined
     }
     const colors = { name: this.name, ...colorsOf([...list]), waived: [...waive] }
-    const draft = drafted(held.picture, held.image, colors, signature, this.tints)
-    const size = sizeOf(draft.image)
+    const image = drafted(held.picture, held.image, colors, signature, this.tints)
+    const size = sizeOf(image)
     if (!size) {
       return undefined
     }
@@ -262,8 +262,8 @@ export class Backdrop {
       return undefined
     }
     return {
-      image: draft.image,
-      opacity: held.opacity === held.picture.opacity ? draft.opacity : held.opacity,
+      image,
+      opacity: held.opacity,
       ...size,
       box,
       rect,

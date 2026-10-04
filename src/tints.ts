@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
-import { backdropTone, type Colors, coloringOf, originalOpacity, type Picture } from './backdrop.ts'
+import { backdropTone, type Colors, coloringOf, type Picture } from './backdrop.ts'
 import type { Hex } from './color.ts'
 import { alphaOf, decodePng, encodeMask, retone } from './png.ts'
 
@@ -34,23 +34,18 @@ export class Tints {
   }
 }
 
-export interface Draft {
-  image: string
-  opacity: number
-}
-
 export function drafted(
   picture: Picture,
   image: string,
   colors: Colors,
   signature: readonly string[],
   tints: Tints,
-): Draft {
+): string {
   if (coloringOf(picture) === 'original') {
-    return { image, opacity: picture.peak ? originalOpacity(colors, picture.peak) : picture.opacity }
+    return image
   }
   const tone = backdropTone(colors, [...signature])
-  return { image: tone.color === picture.tone ? image : tints.of(image, tone.color), opacity: tone.opacity }
+  return tone.color === picture.tone ? image : tints.of(image, tone.color)
 }
 
 export function pictureOf(pictures: readonly Picture[], image: string): Picture | undefined {

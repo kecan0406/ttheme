@@ -71,6 +71,11 @@ test('kagami at 0.2 is the brightness every other palette is matched to', () => 
   assert.equal(toneFor(KAGAMI, 'cursor').opacity, 0.2)
 })
 
+test('a palette that already misses the gate without a picture still gets the opacity its picture allows', () => {
+  const missing = { ...KAGAMI, ansi: KAGAMI.ansi.map((c, i) => (i === 1 ? '#2a2530' : c)) }
+  assert.equal(toneFor(missing, 'cursor').opacity, toneFor(KAGAMI, 'cursor').opacity)
+})
+
 test('the tint stays on the cursor while it leaves a visible opacity', () => {
   assert.equal(backdropTone(KAGAMI, ['cursor', 'ansi4', 'ansi1']).slot, 'cursor')
 })
@@ -512,7 +517,7 @@ test('a palette that changes its tone paints its pictures again, under new names
   ])
   const after = rackOf(configHome, 'kagami')[0] as Picture
   assert.notEqual(after.stem, before.stem)
-  assert.deepEqual([after.tone, after.opacity], ['#5fa8d3', 0.15])
+  assert.deepEqual([after.tone, after.opacity], ['#5fa8d3', before.opacity])
   for (const file of [`${after.stem}.png`, after.fill, `${after.stem}@60-center.png`]) {
     assert.deepEqual(
       [...decodePng(new Uint8Array(readFileSync(join(dir, file)))).data.subarray(0, 3)],
@@ -647,19 +652,14 @@ test('a tone picture has no colors line, and a tuned size of an original-color p
   assert.ok(pixels.includes('0,0,0,0'), 'the rest of the canvas is clear')
 })
 
-test('a palette whose text colors change moves an original-color picture to its new opacity without drawing it again', () => {
+test('a palette whose colors change leaves an original-color picture and its opacity as they are', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-colors-retint-'))
   const dir = backgroundsDir(configHome)
   const before = installColorful(configHome, 23)
-  writeTune(dir, before, { size: 60, position: 'center', opacity: before.opacity }, true, configHome)
-  assert.deepEqual(retint(configHome, new Map([['kagami', PAINT]])), [])
   const dimmer = { ...PAINT, colors: { ...KAGAMI, foreground: '#b9b1c2' } }
-  assert.deepEqual(retint(configHome, new Map([['kagami', dimmer]])), ['kagami'])
-  const after = rackOf(configHome, 'kagami')[0] as Picture
-  assert.equal(after.stem, before.stem)
-  assert.equal(after.opacity, originalOpacity(dimmer.colors, '#ffffff'))
-  assert.ok(after.opacity < before.opacity)
-  assert.equal(readBackdrop(dir, 'kagami', configHome)?.opacity, after.opacity)
+  assert.deepEqual(retint(configHome, new Map([['kagami', dimmer]])), [])
+  assert.deepEqual(rackOf(configHome, 'kagami')[0], before)
+  assert.equal(readBackdrop(dir, 'kagami', configHome)?.opacity, before.opacity)
 })
 
 test('drawing a picture in its other colors keeps its tuning, drops its opacity and takes the old files away', async () => {

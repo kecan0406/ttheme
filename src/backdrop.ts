@@ -117,15 +117,16 @@ function highest(ok: (o: number) => boolean): number {
 }
 
 function fade(colors: Colors, color: Hex): { cap: number; matched: number; opacity: number } {
-  const gated = (o: number) =>
+  const misses = (o: number) =>
     checkReadability({
       name: colors.name,
       background: mix(colors.background, color, o),
       foreground: colors.foreground,
       ansi: colors.ansi,
       waive: colors.waived ?? [],
-    }).length === 0
-  const cap = highest(gated)
+    }).map((miss) => miss.rule)
+  const already = new Set(misses(0))
+  const cap = highest((o) => misses(o).every((rule) => already.has(rule)))
   const matched = highest((o) => luminance(mix(colors.background, color, o)) <= PEAK)
   return { cap, matched, opacity: Math.floor(Math.min(cap, matched) * 100) / 100 }
 }
@@ -1255,25 +1256,7 @@ export function applyRedraw(configHome: string, drawn: { name: string; picture: 
   }
 }
 
-function follows(text: string, was: number, opacity: number): string {
-  return text.replace(/^background-image-opacity = (\S+)$/m, (line, value: string) =>
-    Number(value) === was ? `background-image-opacity = ${opacity}` : line,
-  )
-}
-
-function restrength(dir: string, picture: Picture, opacity: number): Picture {
-  const tune = join(dir, `${picture.stem}.tune.conf`)
-  const text = readText(tune)
-  if (text !== undefined) {
-    writeAtomic(tune, follows(text, picture.opacity, opacity))
-  }
-  return { ...picture, opacity }
-}
-
 function recolor(dir: string, name: string, picture: Picture, hue: Hue): Picture {
-  if (picture.tone === hue.color) {
-    return restrength(dir, picture, hue.opacity)
-  }
   const painted = stemFiles(dir, picture.stem)
     .filter((file) => file.endsWith('.png'))
     .map((file): [string, Uint8Array] => {
@@ -1294,26 +1277,19 @@ function recolor(dir: string, name: string, picture: Picture, hue: Hue): Picture
   for (const kind of ['tune', 'off']) {
     const text = readText(join(dir, `${picture.stem}.${kind}.conf`))
     if (text !== undefined) {
-      writeAtomic(
-        join(dir, `${stem}.${kind}.conf`),
-        follows(text.split(picture.stem).join(stem), picture.opacity, hue.opacity),
-      )
+      writeAtomic(join(dir, `${stem}.${kind}.conf`), text.split(picture.stem).join(stem))
     }
   }
   return {
     ...picture,
     stem,
     fill: stem + picture.fill.slice(picture.stem.length),
-    opacity: hue.opacity,
     tone: hue.color,
   }
 }
 
 export function due(picture: Picture, paint: Paint): boolean {
-  if (coloringOf(picture) === 'original') {
-    return picture.peak !== undefined && originalOpacity(paint.colors, picture.peak) !== picture.opacity
-  }
-  return picture.tone !== undefined && (picture.tone !== paint.hue.color || picture.opacity !== paint.hue.opacity)
+  return coloringOf(picture) !== 'original' && picture.tone !== undefined && picture.tone !== paint.hue.color
 }
 
 export function retint(configHome: string, paints: ReadonlyMap<string, Paint>): string[] {
@@ -1330,10 +1306,7 @@ export function retint(configHome: string, paints: ReadonlyMap<string, Paint>): 
       if (!due(picture, paint)) {
         return picture
       }
-      const next =
-        coloringOf(picture) === 'original'
-          ? restrength(dir, picture, originalOpacity(paint.colors, picture.peak as Hex))
-          : recolor(dir, name, picture, paint.hue)
+      const next = recolor(dir, name, picture, paint.hue)
       if (next.stem !== picture.stem) {
         stale.push(picture.stem)
       }
