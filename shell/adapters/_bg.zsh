@@ -8,8 +8,6 @@ __tt_bg_saved() {
 
 __tt_bg_refresh() { : }
 
-__tt_bg_hide() { : }
-
 __tt_bg_lasting() { : }
 
 __tt_bg_wipe() { REPLY=$'\e_Ga=d,d=A,q=2\e\\' }

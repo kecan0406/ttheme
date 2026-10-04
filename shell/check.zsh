@@ -13,6 +13,7 @@ b64d() {
 }
 (( ${#TTHEME_PALETTE} > 0 )) || { print -u2 "no palettes loaded"; exit 1 }
 (( ${#TTHEME_ORDER} + 1 == ${#TTHEME_PALETTE} )) || { print -u2 "order/palette mismatch"; exit 1 }
+(( $+functions[__tt_bg_hide] && $+functions[__tt_pv_bg_reset] )) || { print -u2 "preview's Edit palette calls a picture hook a terminal without pictures lacks"; exit 1 }
 __tt_menu > /dev/null || exit 1
 ttheme help > /dev/null || { print -u2 "ttheme help broke"; exit 1 }
 ttheme -h > /dev/null || { print -u2 "ttheme -h broke"; exit 1 }

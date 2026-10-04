@@ -124,6 +124,10 @@ __tt_pv_bg_strip_off() { : }
 
 __tt_pv_bg_close() { : }
 
+__tt_pv_bg_reset() { : }
+
+__tt_bg_hide() { : }
+
 __tt_pv_bg_save() { : }
 
 zmodload zsh/system
