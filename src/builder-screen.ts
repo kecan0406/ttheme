@@ -116,10 +116,10 @@ function keyText(e: PaletteEditor, slot: number): string {
   return slot < BASE.length ? '' : `ansi ${slot - BASE.length}`
 }
 
-function rowText(e: PaletteEditor, p: Paint, c: Colors, slot: number, side: number): string {
+function rowText(e: PaletteEditor, p: Paint, c: Colors, slot: number, side: number, missed: Set<number>): string {
   const hex = e.list[slot] as Hex
   const here = slot === e.slot()
-  const bad = e.misses().has(slot)
+  const bad = missed.has(slot)
   const glyph = e.signature.includes(SLOT_NAMES[slot] as string) ? '◆' : p.color ? '■' : ' '
   const restore = here ? p.fg(c.foreground) : '\x1b[39m'
   const sw = p.color ? `${p.fg(hex)}${glyph}${restore}` : glyph
@@ -304,6 +304,7 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, side: number, height: nu
     return [tabs, search, ...gateLines(p, e, body, side)]
   }
   const rows: string[] = []
+  const missed = e.misses()
   let selAt = -1
   let pickAt = -1
   let pick: string[] = []
@@ -325,7 +326,7 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, side: number, height: nu
       if (slot === e.slot()) {
         selAt = rows.length
       }
-      rows.push(rowText(e, p, c, slot, side))
+      rows.push(rowText(e, p, c, slot, side, missed))
       if (open && slot === e.slot()) {
         pickAt = rows.length
         rows.push(...pick)

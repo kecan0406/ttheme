@@ -1225,6 +1225,7 @@ export class PaletteEditor {
   }
 
   private tune(): void {
+    this.tab = 'colors'
     this.remember('tune')
     this.tuneFrom = { list: [...this.list], lch: [...this.lch] }
     this.holds = new Map()
