@@ -75,6 +75,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const copies: InitPlan['copies'] = [
     { from: join(paths.root, 'bin', 'ttheme.js'), to: join(home, 'ttheme.js') },
     { from: join(paths.root, 'bin', 'ttheme.js.map'), to: join(home, 'ttheme.js.map') },
+    { from: join(paths.root, 'bin', 'package.json'), to: join(home, 'package.json') },
     { from: join(paths.root, 'shell', 'ttheme.zsh'), to: join(home, 'ttheme.zsh') },
     { from: join(paths.root, 'shell', 'preview.zsh'), to: join(home, 'preview.zsh') },
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
@@ -357,8 +358,10 @@ function report(plan: InitPlan, pointed: ReadonlyMap<Wired, Pointed>): void {
 
 export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const root = join(import.meta.dirname, '..')
-  if (!existsSync(join(root, 'bin', 'ttheme.js'))) {
-    throw new Error('bin/ttheme.js is missing — run `mise run bin:build` first')
+  for (const file of ['ttheme.js', 'package.json']) {
+    if (!existsSync(join(root, 'bin', file))) {
+      throw new Error(`bin/${file} is missing — run \`mise run bin:build\` first`)
+    }
   }
   if (!existsSync(join(root, 'dist'))) {
     if (typeof Bun === 'undefined') {

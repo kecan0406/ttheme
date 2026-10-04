@@ -83,6 +83,7 @@ function makeFixture(): InitPaths {
   const files: Record<string, string> = {
     'bin/ttheme.js': 'cli',
     'bin/ttheme.js.map': 'map',
+    'bin/package.json': '{"type":"module"}',
     'shell/ttheme.zsh': 'ttheme layer',
     'shell/preview.zsh': 'preview',
     'shell/launch-tab.zsh': '#!/bin/zsh -f',
@@ -116,6 +117,7 @@ test('planInit places the runtime layer and touches only .zshrc', () => {
   const targets = plan.copies.map((c) => c.to)
   for (const expected of [
     join(tthemeDir, 'ttheme.js'),
+    join(tthemeDir, 'package.json'),
     join(tthemeDir, 'ttheme.zsh'),
     join(tthemeDir, 'preview.zsh'),
     join(tthemeDir, 'launch-tab.zsh'),
