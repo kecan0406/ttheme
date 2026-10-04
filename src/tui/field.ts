@@ -1,4 +1,4 @@
-const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+import { graphemes } from '../ansi.ts'
 
 function printable(key: string): boolean {
   return [...key].length === 1 && key >= ' ' && key !== '\x7f'

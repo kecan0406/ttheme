@@ -54,25 +54,53 @@ export function sequenceAt(text: string, at: number): number {
   return end < text.length ? end - at + 1 : 0
 }
 
-function take(text: string, room: number): { head: string; used: number } {
-  let head = ''
-  let used = 0
+export const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+
+export interface Piece {
+  text: string
+  start: number
+  end: number
+  width: number
+  sequence: boolean
+}
+
+export function pieces(text: string): Piece[] {
+  const out: Piece[] = []
   let i = 0
   while (i < text.length) {
     const sequence = sequenceAt(text, i)
     if (sequence > 0) {
-      head += text.slice(i, i + sequence)
+      out.push({ text: text.slice(i, i + sequence), start: i, end: i + sequence, width: 0, sequence: true })
       i += sequence
       continue
     }
-    const ch = String.fromCodePoint(text.codePointAt(i) as number)
-    const width = cells(ch)
-    if (used + width > room) {
-      break
+    const next = text.indexOf('\x1b', i + 1)
+    const stop = next === -1 ? text.length : next
+    for (const { segment, index } of graphemes.segment(text.slice(i, stop))) {
+      out.push({
+        text: segment,
+        start: i + index,
+        end: i + index + segment.length,
+        width: cells(segment),
+        sequence: false,
+      })
     }
-    head += ch
-    used += width
-    i += ch.length
+    i = stop
+  }
+  return out
+}
+
+function take(text: string, room: number): { head: string; used: number } {
+  let head = ''
+  let used = 0
+  for (const piece of pieces(text)) {
+    if (!piece.sequence) {
+      if (used + piece.width > room) {
+        break
+      }
+      used += piece.width
+    }
+    head += piece.text
   }
   return { head, used }
 }
@@ -114,7 +142,7 @@ export function wrapText(text: string, width: number): string[] {
     while (cells(word) > width) {
       const { head } = take(word, width)
       const cut = Math.max(head.lastIndexOf('/') + 1, head.lastIndexOf('#'))
-      const at = cut > 0 ? cut : head.length
+      const at = cut > 0 ? cut : head.length || (pieces(word)[0] as Piece).end
       lines.push(word.slice(0, at))
       word = word.slice(at)
     }

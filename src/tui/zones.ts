@@ -1,4 +1,4 @@
-import { cells, sequenceAt } from '../ansi.ts'
+import { cells, type Piece, pieces, sequenceAt } from '../ansi.ts'
 
 export interface Zone<T = unknown> {
   row: number
@@ -131,45 +131,39 @@ export function cover(line: string, col: number, over: string): string {
     }
   }
   const reset = line.includes('\x1b') || over.includes('\x1b') ? '\x1b[0m' : ''
+  const all = pieces(line)
   let head = ''
   let x = 0
-  let i = 0
-  while (i < line.length && x < col) {
-    const sequence = sequenceAt(line, i)
-    if (sequence > 0) {
-      const text = line.slice(i, i + sequence)
-      track(text)
-      head += text
-      i += sequence
-      continue
-    }
-    const ch = String.fromCodePoint(line.codePointAt(i) as number)
-    if (x + cells(ch) > col) {
+  let k = 0
+  while (k < all.length && x < col) {
+    const piece = all[k] as Piece
+    if (piece.sequence) {
+      track(piece.text)
+    } else if (x + piece.width > col) {
       break
+    } else {
+      x += piece.width
     }
-    head += ch
-    x += cells(ch)
-    i += ch.length
+    head += piece.text
+    k++
   }
   head += ' '.repeat(col - Math.min(col, x))
   const closing = `${'\x1b[?0y'.repeat(open.length)}${link ? '\x1b]8;;\x1b\\' : ''}${reset}`
   const end = col + cells(over)
-  while (i < line.length && x < end) {
-    const sequence = sequenceAt(line, i)
-    if (sequence > 0) {
-      track(line.slice(i, i + sequence))
-      i += sequence
-      continue
+  while (k < all.length && x < end) {
+    const piece = all[k] as Piece
+    if (piece.sequence) {
+      track(piece.text)
+    } else {
+      x += piece.width
     }
-    const ch = String.fromCodePoint(line.codePointAt(i) as number)
-    x += cells(ch)
-    i += ch.length
+    k++
   }
-  if (i >= line.length) {
+  if (k >= all.length) {
     return `${head}${closing}${over}${reset}`
   }
   const resume = `${styles.join('')}${link}${open.join('')}${' '.repeat(Math.max(0, x - end))}`
-  return `${head}${closing}${over}${reset}${resume}${line.slice(i)}`
+  return `${head}${closing}${over}${reset}${resume}${line.slice((all[k] as Piece).start)}`
 }
 
 export function lifted(lines: readonly string[], targets: readonly unknown[]): { lines: string[]; zones: Zone[] } {
