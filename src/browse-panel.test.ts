@@ -232,6 +232,11 @@ test('the right panel sits beside the list from 94 columns, and folds into one l
   )
 })
 
+test('a window too short for the tabs, the market strip and three rows says how tall it needs to be', async () => {
+  const { last } = await drive([PLAIN_TAB], { hub: 'browse', columns: 40, rows: 10 })
+  assert.match(last, /Needs 40×11 — now 40×10/)
+})
+
 test('space on a market stages its removal, and its installed palettes stay picked', async () => {
   const { panel, frames } = await drive([TAB, TAB, DOWN, ' ', ...APPLY])
   assert.deepEqual(panel.removes, ['alice/ttheme-pastel'])

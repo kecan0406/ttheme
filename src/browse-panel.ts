@@ -1828,11 +1828,15 @@ export class BrowsePanel {
     return Array.from({ length: this.rows() }, (_, row) => lines[row] ?? '')
   }
 
+  private small(cols: number, rows: number, need: number): string {
+    return `Needs ${MIN_COLS}×${need} — now ${cols}×${rows}\n${this.dim('esc cancels')}`
+  }
+
   private draw(): string {
     const cols = this.columns()
     const rows = this.rows()
     if (cols < MIN_COLS || rows < MIN_ROWS) {
-      return `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${rows}\n${this.dim('esc cancels')}`
+      return this.small(cols, rows, MIN_ROWS)
     }
     if (this.phase !== 'browse') {
       return this.frame(cols, rows)
@@ -1848,7 +1852,11 @@ export class BrowsePanel {
         : [spread(` ${this.dim('⌕')} ${this.searchText()}`, this.dim(this.counts()), width)]),
       ...(strip ? [` ${strip}`] : []),
     ]
-    this.fitItems(head.length + 3 + (wide ? 0 : 1) + (this.hub ? 1 : 0))
+    const chrome = head.length + 3 + (wide ? 0 : 1) + (this.hub ? 1 : 0)
+    if (rows < chrome + MIN_ITEMS) {
+      return this.small(cols, rows, chrome + MIN_ITEMS)
+    }
+    this.fitItems(chrome)
     const { lines, above, below, empty } = this.body()
     const body = lines.length > 0 ? lines.map((line) => ` ${line}`) : [` ${this.dim(empty)}`]
     while (body.length < this.maxItems) {
