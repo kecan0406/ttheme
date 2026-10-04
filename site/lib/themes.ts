@@ -1,5 +1,10 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+export interface GateRule {
+  rule: string
+  label: string
+  unit: string
+  min?: number
+  max?: number
+}
 
 export interface Theme {
   id: string
@@ -20,12 +25,15 @@ export interface Theme {
   gate: number[]
 }
 
-export interface GateRule {
-  rule: string
-  label: string
-  unit: 'ratio' | 'luminance'
-  min?: number
-  max?: number
+export interface Market {
+  id: string
+  repo: string
+  add: string
+  about: string
+  stars: number
+  pushedAt: string
+  license: string | null
+  palettes: Theme[]
 }
 
 export interface ManifestEntry {
@@ -35,7 +43,6 @@ export interface ManifestEntry {
   native?: string
   lead?: boolean
   ansiSource: string
-  default?: boolean
   background: string
   foreground: string
   cursor: string
@@ -45,14 +52,6 @@ export interface ManifestEntry {
   ansi: string[]
   gate: number[]
 }
-
-interface Manifest {
-  version: string
-  gate: GateRule[]
-  palettes: ManifestEntry[]
-}
-
-const manifestPath = join(process.cwd(), '..', 'dist', 'manifest.json')
 
 export function toTheme(entry: ManifestEntry, market: string | null = null): Theme {
   return {
@@ -72,14 +71,5 @@ export function toTheme(entry: ManifestEntry, market: string | null = null): The
     signatureSlots: entry.signatureSlots,
     ansi: entry.ansi,
     gate: entry.gate,
-  }
-}
-
-export function loadManifest(): { version: string; gate: GateRule[]; themes: Theme[] } {
-  const { version, gate, palettes }: Manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
-  return {
-    version,
-    gate,
-    themes: palettes.filter((entry) => !entry.default).map((entry) => toTheme(entry)),
   }
 }

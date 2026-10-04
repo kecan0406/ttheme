@@ -1,5 +1,4 @@
-import { mergeProps } from '@base-ui/react/merge-props'
-import { useRender } from '@base-ui/react/use-render'
+import type { PropsWithChildren } from '@kitajs/html'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
@@ -26,26 +25,12 @@ const badgeVariants = cva(
   },
 )
 
-function Badge({
-  className,
-  variant = 'outline',
-  render,
-  ...props
-}: useRender.ComponentProps<'span'> & VariantProps<typeof badgeVariants>) {
-  return useRender({
-    defaultTagName: 'span',
-    props: mergeProps<'span'>(
-      {
-        className: cn(badgeVariants({ variant }), className),
-      },
-      props,
-    ),
-    render,
-    state: {
-      slot: 'badge',
-      variant,
-    },
-  })
+type BadgeProps = PropsWithChildren<
+  VariantProps<typeof badgeVariants> & Omit<JSX.HtmlTag, 'class'> & { class?: string }
+>
+
+function Badge({ class: className, variant = 'outline', ...props }: BadgeProps) {
+  return <span data-slot="badge" data-variant={variant} class={cn(badgeVariants({ variant }), className)} {...props} />
 }
 
 export { Badge, badgeVariants }

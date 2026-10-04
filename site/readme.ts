@@ -1,8 +1,7 @@
-import { notFound } from 'next/navigation'
-import { loadManifest, type Theme } from '@/lib/themes'
-
-export const dynamic = 'force-static'
-export const dynamicParams = false
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { themes } from '@/lib/catalog'
+import type { Theme } from '@/lib/themes'
 
 const COLS = 3
 const CARD_W = 280
@@ -78,18 +77,7 @@ function palettes(themes: Theme[]) {
   return svg(top - 20, body)
 }
 
-const FILES: Record<string, (themes: Theme[]) => string> = {
-  'series.svg': series,
-  'palettes.svg': palettes,
-}
-
-export function generateStaticParams() {
-  return Object.keys(FILES).map((file) => ({ file }))
-}
-
-export async function GET(_request: Request, { params }: { params: Promise<{ file: string }> }) {
-  const { file } = await params
-  const render = FILES[file]
-  if (!render) notFound()
-  return new Response(render(loadManifest().themes), { headers: { 'Content-Type': 'image/svg+xml' } })
-}
+const out = join(process.argv[2] ?? '.', 'readme')
+mkdirSync(out, { recursive: true })
+writeFileSync(join(out, 'series.svg'), series(themes))
+writeFileSync(join(out, 'palettes.svg'), palettes(themes))

@@ -192,22 +192,22 @@ description = "run the compat cases in Konsole from a container (Ubuntu 24.04, K
 depends = ["build", "bin:build"]
 run = "docker build -q -t ttheme-konsole -f tests/compat/konsole.Dockerfile tests/compat > /dev/null && docker run --rm -v \"$PWD\":/work ttheme-konsole zsh tests/compat.zsh"
 
-[tasks."site:markets"]
-description = "read every market on GitHub into dist/markets.json for the showcase site"
-depends = ["build"]
-run = "bun src/showcase.ts"
-
 [tasks."site:dev"]
-description = "dev server for the showcase site"
+description = "the showcase site on http://localhost:3000 (PORT moves it), rebuilt and reloaded on every change"
 dir = "{{config_root}}/site"
-depends = ["site:markets"]
-run = "bun run dev"
+depends = ["build"]
+run = "bun install && bun --watch dev.ts"
 
 [tasks."site:build"]
-description = "static-export the showcase site into site/out"
+description = "build the showcase site's assets into site/public as Vercel does, then typecheck its server and browser code and scan it for XSS"
 dir = "{{config_root}}/site"
-depends = ["site:markets"]
-run = "bun install && bun run build"
+depends = ["build"]
+run = "bun install --frozen-lockfile && bun build.ts && ./node_modules/.bin/tsc --noEmit -p . && ./node_modules/.bin/tsc --noEmit -p client && ./node_modules/.bin/xss-scan && ./node_modules/.bin/xss-scan --cwd client -p tsconfig.json"
+
+[tasks.pages]
+description = "gather what GitHub Pages serves into pages/: dist/manifest.json, the catalog every installed CLI fetches, and the README's pictures"
+depends = ["build"]
+run = "rm -rf pages && mkdir pages && cp dist/manifest.json pages/ && bun site/readme.ts pages"
 
 [tasks.release]
 description = "verify everything, then bump the version, tag it and push — the release workflow publishes to npm and cuts the GitHub release — `mise run release 1.0.0`"

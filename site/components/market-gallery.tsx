@@ -1,29 +1,10 @@
-'use client'
-
-import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { Market } from '@/lib/markets'
-import type { GateRule, Theme } from '@/lib/themes'
-import { isLight } from '@/lib/wear'
-import { FilterBar, type Filters } from './filter-bar'
+import { escapeHtml } from '@kitajs/html'
+import { arrange, type Section } from '@/lib/gallery'
+import { json } from '@/lib/render'
+import type { GateRule, Market } from '@/lib/themes'
+import { FilterBar } from './filter-bar'
 import { PaletteCard } from './palette-card'
 import { PaletteDialog } from './palette-dialog'
-
-export interface Section {
-  key: string
-  title: string
-  subtitle?: string
-  href?: string
-  themes: Theme[]
-}
-
-function matches(theme: Theme, { query, source, ground }: Filters): boolean {
-  if (source === 'official' && theme.market) return false
-  if (source === 'markets' && !theme.market) return false
-  if (ground !== 'both' && isLight(theme) !== (ground === 'light')) return false
-  const q = query.trim().toLowerCase()
-  return !q || `${theme.id} ${theme.group} ${theme.native ?? ''}`.toLowerCase().includes(q)
-}
 
 export function MarketGallery({
   sections,
@@ -36,102 +17,79 @@ export function MarketGallery({
   gate: GateRule[]
   sources?: boolean
 }) {
-  const [filters, setFilters] = useState<Filters>({ query: '', source: 'all', ground: 'both', scene: 'shell' })
-  const [openId, setOpenId] = useState<string | null>(null)
-  const all = useMemo(() => sections.flatMap((section) => section.themes), [sections])
-  const open = all.find((theme) => theme.id === openId) ?? null
-
-  useEffect(() => {
-    const read = () => {
-      const id = decodeURIComponent(window.location.hash.slice(1))
-      setOpenId(all.some((theme) => theme.id === id) ? id : null)
-    }
-    read()
-    window.addEventListener('hashchange', read)
-    return () => window.removeEventListener('hashchange', read)
-  }, [all])
-
-  const show = useCallback((id: string | null) => {
-    setOpenId(id)
-    const url = `${window.location.pathname}${window.location.search}${id ? `#${id}` : ''}`
-    window.history.replaceState(null, '', url)
-  }, [])
-
-  const visible = sections
-    .map((section) => ({ ...section, themes: section.themes.filter((theme) => matches(theme, filters)) }))
-    .filter((section) => section.themes.length > 0)
-  const shown = visible.reduce((sum, section) => sum + section.themes.length, 0)
-  const firstMarket = visible.find((section) => section.themes[0]?.market)
-  const totals = new Map<string, number>()
-  for (const section of visible) {
-    totals.set(section.title, (totals.get(section.title) ?? 0) + section.themes.length)
-  }
+  const all = sections.flatMap((section) => section.themes)
+  const placed = arrange(
+    sections.map((section) => ({
+      title: section.title,
+      market: section.themes[0]?.market != null,
+      count: section.themes.length,
+    })),
+    sources,
+  )
 
   return (
-    <>
-      <FilterBar
-        filters={filters}
-        onChange={(next) => setFilters((current) => ({ ...current, ...next }))}
-        shown={shown}
-        total={all.length}
-        sources={sources}
-      />
-      <div className="grid gap-8 pt-5 pb-15">
-        {visible.map((section, index) => (
-          <section
-            key={section.key}
-            aria-label={section.subtitle ? `${section.title} ${section.subtitle}` : section.title}
-            className="grid gap-4"
-          >
-            {section === firstMarket && sources ? (
-              <div className="flex items-center gap-3 text-sm text-muted-foreground after:h-px after:flex-1 after:bg-border">
-                ── Markets
-              </div>
-            ) : null}
-            {visible[index - 1]?.title === section.title ? null : (
-              <h2 className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="text-base font-semibold">{section.title}</span>
-                <span className="text-xs text-muted-foreground tabular-nums">{totals.get(section.title)}</span>
+    <palette-gallery class="contents" data-sources={sources ? 'all' : 'one'}>
+      <FilterBar total={all.length} sources={sources} />
+      <div class="grid gap-8 pt-5 pb-15">
+        {sections.map((section, index) => {
+          const place = placed[index]
+          return (
+            <section
+              data-shelf={section.title}
+              data-market={section.themes[0]?.market ? '' : undefined}
+              aria-label={section.subtitle ? `${section.title} ${section.subtitle}` : section.title}
+              hidden={!place?.shown}
+              class="grid gap-4"
+            >
+              {sources ? (
+                <div
+                  data-divider
+                  hidden={!place?.divider}
+                  class="flex items-center gap-3 text-sm text-muted-foreground after:h-px after:flex-1 after:bg-border"
+                >
+                  ── Markets
+                </div>
+              ) : null}
+              <h2 data-heading hidden={!place?.heading} class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span class="text-base font-semibold" safe>
+                  {section.title}
+                </span>
+                <span data-total class="text-xs text-muted-foreground tabular-nums">
+                  {place?.total ?? 0}
+                </span>
                 {section.href ? (
-                  <Link
-                    href={section.href}
-                    className="text-xs font-medium text-primary underline-offset-4 hover:underline"
-                  >
+                  <a href={section.href} class="text-xs font-medium text-primary underline-offset-4 hover:underline">
                     market page
-                  </Link>
+                  </a>
                 ) : null}
               </h2>
-            )}
-            {section.subtitle ? (
-              <h3 className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm font-semibold text-soft-foreground">
-                {section.subtitle}
-                <span className="text-xs font-normal text-muted-foreground tabular-nums">{section.themes.length}</span>
-              </h3>
-            ) : null}
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
-              {section.themes.map((theme) => (
-                <PaletteCard key={theme.id} theme={theme} scene={filters.scene} onOpen={() => show(theme.id)} />
-              ))}
-            </div>
-          </section>
-        ))}
-        {shown === 0 ? (
-          <div className="py-15 text-center text-muted-foreground">
-            <strong className="block font-semibold text-foreground">
-              no palette matches{filters.query.trim() ? ` “${filters.query.trim()}”` : ' these filters'} ( ˘ω˘ )
-            </strong>
-            clear a filter, or search for a series instead.
-          </div>
-        ) : null}
+              {section.subtitle ? (
+                <h3 class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm font-semibold text-soft-foreground">
+                  {escapeHtml(section.subtitle)}
+                  <span data-count class="text-xs font-normal text-muted-foreground tabular-nums">
+                    {section.themes.length}
+                  </span>
+                </h3>
+              ) : null}
+              <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
+                {section.themes.map((theme) => (
+                  <PaletteCard theme={theme} scene="shell" />
+                ))}
+              </div>
+            </section>
+          )
+        })}
+        <div data-empty hidden={all.length > 0} class="py-15 text-center text-muted-foreground">
+          <strong data-empty-title class="block font-semibold text-foreground">
+            no palette matches these filters ( ˘ω˘ )
+          </strong>
+          clear a filter, or search for a series instead.
+        </div>
       </div>
-      <PaletteDialog
-        theme={open}
-        market={markets.find((market) => market.id === open?.market)}
-        gate={gate}
-        scene={filters.scene}
-        onScene={(scene) => setFilters((current) => ({ ...current, scene }))}
-        onClose={() => show(null)}
-      />
-    </>
+      <PaletteDialog />
+      <script type="application/json" data-gallery>
+        {json({ themes: all, markets, gate })}
+      </script>
+    </palette-gallery>
   )
 }

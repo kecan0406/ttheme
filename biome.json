@@ -38,37 +38,6 @@
           }
         }
       }
-    },
-    {
-      "includes": ["site/**", "!site/components/ui/**"],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": ["@base-ui/react", "@base-ui/react/**"],
-                    "message": "consume base-ui through site/components/ui"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "includes": ["site/components/ui/**"],
-      "linter": {
-        "rules": {
-          "a11y": {
-            "useSemanticElements": "off",
-            "useKeyWithClickEvents": "off"
-          }
-        }
-      }
     }
   ]
 }

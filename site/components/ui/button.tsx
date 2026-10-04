@@ -1,6 +1,5 @@
-import { Button as ButtonPrimitive } from '@base-ui/react/button'
+import type { PropsWithChildren } from '@kitajs/html'
 import { cva, type VariantProps } from 'class-variance-authority'
-
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
@@ -33,21 +32,37 @@ const buttonVariants = cva(
   },
 )
 
-function Button({
-  className,
-  variant = 'default',
-  size = 'default',
-  ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+type ButtonProps = PropsWithChildren<
+  VariantProps<typeof buttonVariants> & Omit<JSX.HtmlButtonTag, 'class'> & { class?: string }
+>
+
+function Button({ class: className, variant = 'default', size = 'default', type = 'button', ...props }: ButtonProps) {
   return (
-    <ButtonPrimitive
+    <button
+      type={type}
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      class={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
   )
 }
 
-export { Button, buttonVariants }
+type LinkButtonProps = PropsWithChildren<
+  VariantProps<typeof buttonVariants> & Omit<JSX.HtmlAnchorTag, 'class'> & { class?: string; href: string }
+>
+
+function LinkButton({ class: className, variant = 'default', size = 'default', ...props }: LinkButtonProps) {
+  return (
+    <a
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      class={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants, LinkButton }

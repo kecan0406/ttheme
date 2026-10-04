@@ -1,30 +1,31 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { type ManifestEntry, type Theme, toTheme } from '@/lib/themes'
+import { official } from '@/lib/catalog'
+import { type Market, toTheme } from '@/lib/themes'
+import { showcase } from '../../src/showcase.ts'
 
-interface Shown {
-  id: string
-  repo: string
-  add: string
-  about: string
-  stars: number
-  pushedAt: string
-  license: string | null
-  palettes: ManifestEntry[]
+const FRESH_MS = 10 * 60 * 1000
+
+let held: { at: number; markets: Market[] } | undefined
+let pending: Promise<Market[]> | undefined
+
+async function fetchMarkets(): Promise<Market[]> {
+  const shown = await showcase(official, process.env.GITHUB_TOKEN)
+  return shown.map((market) => ({
+    ...market,
+    palettes: market.palettes.map((entry) => toTheme(entry, market.id)),
+  }))
 }
 
-export interface Market extends Omit<Shown, 'palettes'> {
-  palettes: Theme[]
-}
-
-const marketsPath = join(process.cwd(), '..', 'dist', 'markets.json')
-
-export function loadMarkets(): Market[] {
-  let markets: Shown[] = []
+export async function loadMarkets(): Promise<{ markets: Market[]; fresh: boolean }> {
+  if (held && Date.now() - held.at < FRESH_MS) return { markets: held.markets, fresh: true }
+  pending ??= fetchMarkets().finally(() => {
+    pending = undefined
+  })
   try {
-    markets = (JSON.parse(readFileSync(marketsPath, 'utf8')) as { markets: Shown[] }).markets
-  } catch {
-    markets = []
+    const markets = await pending
+    held = { at: Date.now(), markets }
+    return { markets, fresh: true }
+  } catch (error) {
+    process.stderr.write(`site: no markets — ${(error as Error).message}\n`)
+    return { markets: held?.markets ?? [], fresh: false }
   }
-  return markets.map((m) => ({ ...m, palettes: m.palettes.map((entry) => toTheme(entry, m.id)) }))
 }

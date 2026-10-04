@@ -3,9 +3,10 @@ dist/
 bin/
 .DS_Store
 mise.local.toml
-.next/
-out/
-next-env.d.ts
+site/public/
+site/assets.json
+pages/
+.vercel/
 *.png
 *.jpg
 *.jpeg

@@ -1,8 +1,5 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { parseCatalog, reach } from './catalog.ts'
-import { writeAtomic } from './edits.ts'
-import { listed } from './manifest.ts'
+import { reach } from './catalog.ts'
+import { listed, type PaletteEntry } from './manifest.ts'
 import { type Repository, repositorySource } from './markets.ts'
 import { fetchArchive, fromArchive } from './refresh.ts'
 import { TOPIC } from './sources.ts'
@@ -13,17 +10,24 @@ interface Found extends Repository {
   license: { spdx_id: string } | null
 }
 
-const root = join(import.meta.dirname, '..')
-const official = parseCatalog(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8')).palettes
-const token = process.env.GITHUB_TOKEN
+export interface Shown {
+  id: string
+  repo: string
+  add: string
+  about: string
+  stars: number
+  pushedAt: string
+  license: string | null
+  palettes: PaletteEntry[]
+}
 
-async function found(): Promise<Found[]> {
+async function found(token: string | undefined): Promise<Found[]> {
   const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(`topic:${TOPIC}`)}&sort=stars&per_page=100`
   const response = await reach(url, undefined, undefined, token ? { authorization: `Bearer ${token}` } : {})
   return ((await response.json()) as { items: Found[] }).items
 }
 
-async function shown(r: Found) {
+async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {
   const source = repositorySource(r)
   try {
     const archive = await fetchArchive(source)
@@ -52,11 +56,6 @@ async function shown(r: Found) {
   }
 }
 
-let markets: Awaited<ReturnType<typeof shown>> = []
-try {
-  markets = (await Promise.all((await found()).map(shown))).flat()
-} catch (error) {
-  process.stderr.write(`showcase: no markets — ${(error as Error).message}\n`)
+export async function showcase(official: PaletteEntry[], token?: string): Promise<Shown[]> {
+  return (await Promise.all((await found(token)).map((r) => shown(r, official)))).flat()
 }
-writeAtomic(join(root, 'dist', 'markets.json'), `${JSON.stringify({ markets })}\n`)
-console.log(`${markets.length} markets → dist/markets.json`)

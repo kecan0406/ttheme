@@ -3,8 +3,6 @@ name: pages
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: "17 3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -26,17 +24,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
       - run: bun install --frozen-lockfile
-      - run: mise run site:build
-        env:
-          PAGES_BASE_PATH: /ttheme
-          GITHUB_TOKEN: ${{ github.token }}
-
-      - name: publish the catalog beside the site
-        run: cp dist/manifest.json site/out/manifest.json
+      - run: mise run pages
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site/out
+          path: pages
       - id: deploy
         uses: actions/deploy-pages@v4

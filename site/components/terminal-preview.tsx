@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { PropsWithChildren } from '@kitajs/html'
 import type { Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
@@ -10,11 +10,11 @@ export type Scene = (typeof SCENES)[number]
 const NORMAL = [0, 1, 2, 3, 4, 5, 6, 7]
 const BRIGHT = [8, 9, 10, 11, 12, 13, 14, 15]
 
-function C({ n, bold, children }: { n: number; bold?: boolean; children: ReactNode }) {
-  return <span className={cn(`term-c${n}`, bold && 'font-bold')}>{children}</span>
+function C({ n, bold, children }: PropsWithChildren<{ n: number; bold?: boolean }>) {
+  return <span class={cn(`term-c${n}`, bold && 'font-bold')}>{children}</span>
 }
 
-function L({ children }: { children?: ReactNode }) {
+function L({ children }: PropsWithChildren) {
   return <div>{children}</div>
 }
 
@@ -40,7 +40,7 @@ function Arrow() {
 }
 
 function Caret() {
-  return <span className="inline-block w-[1ch] bg-(--cu)">&nbsp;</span>
+  return <span class="inline-block w-[1ch] bg-(--cu)">&nbsp;</span>
 }
 
 function Shell({ use }: { use: string }) {
@@ -68,7 +68,10 @@ function Shell({ use }: { use: string }) {
       </L>
       <L>
         <Prompt />
-        ttheme use <C n={3}>{use}</C>
+        ttheme use{' '}
+        <span class="term-c3" safe>
+          {use}
+        </span>
       </L>
       <L>
         <C n={8}>painted this tab</C>
@@ -122,7 +125,7 @@ function Git() {
       </L>
       <L>
         <Arrow />
-        <span className="bg-(--se)">git push</span>
+        <span class="bg-(--se)">git push</span>
         <Caret />
       </L>
     </>
@@ -170,27 +173,21 @@ function Colors() {
     <>
       <L>
         {NORMAL.map((n) => (
-          <C key={n} n={n}>
-            {'███ '}
-          </C>
+          <C n={n}>{'███ '}</C>
         ))}
       </L>
       <L>
         {BRIGHT.map((n) => (
-          <C key={n} n={n}>
-            {'███ '}
-          </C>
+          <C n={n}>{'███ '}</C>
         ))}
       </L>
       <L>
         {[...NORMAL.slice(1, 7), ...BRIGHT.slice(1, 7)].map((n) => (
-          <C key={n} n={n}>
-            {'Aa '}
-          </C>
+          <C n={n}>{'Aa '}</C>
         ))}
       </L>
       <L>
-        <span className="bg-(--se)"> selection </span> cursor <Caret />
+        <span class="bg-(--se)"> selection </span> cursor <Caret />
       </L>
       <L>
         <C n={8}>comment</C> foreground <C n={7}>ansi7</C>{' '}
@@ -202,33 +199,37 @@ function Colors() {
   )
 }
 
+export function SceneLines({ theme, scene }: { theme: Theme; scene: Scene }) {
+  if (scene === 'git') return <Git />
+  if (scene === 'test') return <Test />
+  if (scene === 'colors') return <Colors />
+  return <Shell use={theme.market ? theme.id : theme.name} />
+}
+
 export function TerminalPreview({
   theme,
   scene,
   bare = false,
   worn = false,
-  className,
+  class: className,
 }: {
   theme: Theme
   scene: Scene
   bare?: boolean
   worn?: boolean
-  className?: string
+  class?: string
 }) {
   return (
     <pre
       data-slot="terminal-preview"
       style={worn ? undefined : wearStyle(theme)}
-      className={cn(
+      class={cn(
         'min-h-45 overflow-hidden font-mono text-code whitespace-pre text-(--fg)',
         bare ? 'bg-transparent' : 'bg-(--bg) px-4.5 pt-4.5 pb-4',
         className,
       )}
     >
-      {scene === 'git' ? <Git /> : null}
-      {scene === 'test' ? <Test /> : null}
-      {scene === 'colors' ? <Colors /> : null}
-      {scene === 'shell' ? <Shell use={theme.market ? theme.id : theme.name} /> : null}
+      <SceneLines theme={theme} scene={scene} />
     </pre>
   )
 }
