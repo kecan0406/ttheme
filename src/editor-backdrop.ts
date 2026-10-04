@@ -194,11 +194,11 @@ export class Backdrop {
       this.viewed = view
       return viewVar(view)
     }
-    let out = this.layer(COVER_ID, COVER_Z, 'f=24', Buffer.from(rgb(background)), cols, rows)
+    let out = this.layer(COVER_ID, COVER_Z, 'f=24', Buffer.from(rgb(background)), area)
     if (look) {
       const alpha = Math.max(0, Math.min(255, Math.round((1 - look.opacity) * 255)))
       out += this.picture(look)
-      out += this.layer(VEIL_ID, VEIL_Z, 'f=32', Buffer.from([...rgb(background), alpha]), cols, rows)
+      out += this.layer(VEIL_ID, VEIL_Z, 'f=32', Buffer.from([...rgb(background), alpha]), area)
     } else {
       out += this.drop(PICTURE_ID) + this.drop(VEIL_ID)
     }
@@ -270,15 +270,15 @@ export class Backdrop {
     }
   }
 
-  private layer(id: number, z: number, format: string, pixel: Buffer, cols: number, rows: number): string {
+  private layer(id: number, z: number, format: string, pixel: Buffer, plate: Area): string {
     const data = pixel.toString('base64')
-    const key = `${data}|${cols}|${rows}`
+    const key = `${data}|${plate.col}|${plate.row}|${plate.cols}|${plate.rows}`
     if (this.placed.get(id) === key) {
       return ''
     }
     this.sent.set(id, key)
     this.placed.set(id, key)
-    return `\x1b_Ga=t,${format},s=1,v=1,i=${id},q=2;${data}\x1b\\\x1b[H\x1b_Ga=p,i=${id},p=${id},c=${cols},r=${rows},C=1,z=${z},q=2\x1b\\`
+    return `\x1b_Ga=t,${format},s=1,v=1,i=${id},q=2;${data}\x1b\\\x1b[${plate.row + 1};${plate.col + 1}H\x1b_Ga=p,i=${id},p=${id},c=${plate.cols},r=${plate.rows},C=1,z=${z},q=2\x1b\\`
   }
 
   private picture(look: Look): string {

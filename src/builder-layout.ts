@@ -5,20 +5,31 @@ export const FULL_COLS = 130
 export const FULL_ROWS = 38
 export const TABS_COLS = 96
 export const TABS_ROWS = 28
-export const STRIP_ID = 'ansi'
 
-const STRIP = [
-  '«d»normal  «K0»  0 «» «K1»  1 «» «K2»  2 «» «K3»  3 «» «K4»  4 «» «K5»  5 «» «K6»  6 «» «K7»  7 «»   «s» selection «»  «c» «» cursor',
-  '«d»bright  «K8»  8 «» «K9»  9 «» «K10» 10 «» «K11» 11 «» «K12» 12 «» «K13» 13 «» «K14» 14 «» «K15» 15 «»',
+interface Pane {
+  id: string
+  scenes: string[]
+  name: string
+  tail: boolean
+}
+
+const PANES: Pane[] = [
+  { id: 'shell', scenes: ['Diff', 'Logs', 'Shell'], name: 'zsh', tail: true },
+  { id: 'code', scenes: ['Editor'], name: 'nvim', tail: false },
+  { id: 'monitor', scenes: ['Top'], name: 'htop', tail: false },
 ]
 
 const PICKS: Record<string, number[]> = {
-  Shell: [0, 1, 2, 3, 4, 6, 7, 9, 10, 12],
-  Code: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  Shell: [0, 1, 2, 3, 4, 6, 7, 9, 10, 12, 14],
   Diff: [0, 1, 3, 4, 6, 7, 8, 9, 10, 15],
-  Logs: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-  Monitor: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11],
+  Logs: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 }
+
+const SWATCHES = (from: number) => Array.from({ length: 8 }, (_, i) => `«K${from + i}»   «»`).join(' ')
+
+const COLORTEST = ['«2»❯ «»colortest', `«d»0-7   ${SWATCHES(0)}`, `«d»8-15  ${SWATCHES(8)}`]
+
+const MARGIN = 2
 
 export interface Part {
   text: string
@@ -30,17 +41,33 @@ export interface Tile {
   id: string
   name: string
   col: number
-  title: number
   row: number
   width: number
+  rows: number
+}
+
+export interface Rule {
+  row: number
+  col: number
+  length: number
+  down: boolean
+}
+
+export interface Box {
+  col: number
+  row: number
+  cols: number
   rows: number
 }
 
 export interface Layout {
   tier: 'full' | 'tabs'
   side: number
-  divider: number
   width: number
+  frame: Box
+  title: Box
+  inner: Box
+  rules: Rule[]
   tiles: Tile[]
 }
 
@@ -55,78 +82,207 @@ export interface Slots {
   ground: number
 }
 
-export function sceneId(index: number): string {
-  const count = SCENES.length + 1
-  const at = ((index % count) + count) % count
-  return at === SCENES.length ? STRIP_ID : (SCENES[at]?.name ?? STRIP_ID).toLowerCase()
-}
-
-export function sceneName(id: string): string {
-  return id === STRIP_ID ? 'ANSI' : (SCENES.find((s) => s.name.toLowerCase() === id)?.name ?? id)
+function paneAt(index: number): Pane {
+  const n = PANES.length
+  return PANES[((index % n) + n) % n] as Pane
 }
 
 export function tabNames(): string[] {
-  return [...SCENES.map((s) => s.name), 'ANSI']
+  return PANES.map((pane) => pane.name)
 }
 
 export function layoutOf(cols: number, rows: number, scene: number): Layout | undefined {
-  if (cols >= FULL_COLS && rows >= FULL_ROWS) {
-    const side = cols >= 140 ? 44 : 38
-    const width = cols - side - 1
-    const left = Math.floor((width - 1) / 2)
-    const right = width - 1 - left
-    const content = rows - 3 - 3 - 3
-    const half = Math.min(10, Math.floor((content * 10) / 31))
-    const last = Math.min(11, Math.max(1, content - 2 * half))
-    const at = side + 1
-    const first = 2 + 3
-    const second = first + 1 + half
-    const third = second + 1 + half
-    return {
-      tier: 'full',
-      side,
-      divider: side,
-      width,
-      tiles: [
-        { id: STRIP_ID, name: 'ANSI 16 · selection · cursor', col: at, title: 2, row: 3, width, rows: 2 },
-        { id: 'shell', name: 'Shell', col: at, title: first, row: first + 1, width: left, rows: half },
-        { id: 'code', name: 'Code', col: at + left + 1, title: first, row: first + 1, width: right, rows: half },
-        { id: 'diff', name: 'Diff', col: at, title: second, row: second + 1, width: left, rows: half },
-        { id: 'logs', name: 'Logs', col: at + left + 1, title: second, row: second + 1, width: right, rows: half },
-        { id: 'monitor', name: 'Monitor', col: at, title: third, row: third + 1, width, rows: last },
+  const tier =
+    cols >= FULL_COLS && rows >= FULL_ROWS ? 'full' : cols >= TABS_COLS && rows >= TABS_ROWS ? 'tabs' : undefined
+  if (!tier) {
+    return undefined
+  }
+  const side = tier === 'full' ? (cols >= 140 ? 47 : 38) : 37
+  const width = cols - side - 1
+  const left = side + 1 + MARGIN
+  const right = side + width - MARGIN
+  const top = 3
+  const bottom = rows - 3
+  const frame = { col: left, row: top, cols: right - left + 1, rows: bottom - top + 1 }
+  const inner = { col: left + 1, row: top + 3, cols: frame.cols - 2, rows: bottom - top - 3 }
+  const rules: Rule[] = [
+    { row: top, col: left, length: frame.cols, down: false },
+    { row: top + 2, col: left, length: frame.cols, down: false },
+    { row: bottom, col: left, length: frame.cols, down: false },
+    { row: top, col: left, length: bottom - top + 1, down: true },
+    { row: top, col: right, length: bottom - top + 1, down: true },
+  ]
+  const pane = paneAt(scene)
+  return {
+    tier,
+    side,
+    width,
+    frame,
+    title: { col: inner.col, row: top + 1, cols: inner.cols, rows: 1 },
+    inner,
+    rules,
+    tiles: [{ id: pane.id, name: pane.name, col: inner.col, row: inner.row, width: inner.cols, rows: inner.rows }],
+  }
+}
+
+const ADDED = '«2»▎ '
+const CHANGED = '«3»▎ '
+const DELETED = '«1»▁ '
+
+const SOURCE: [string, string][] = [
+  ['', "«5»import«» { «4»readFile«» } «5»from «2»'node:fs/promises'"],
+  ['', "«5»import«» { «5»type «6»Hex«», «4»contrast«» } «5»from «2»'./color.ts'"],
+  ['', ''],
+  ['', '«8»/** A palette read from disk and checked against the gate. */'],
+  [ADDED, '«5»export interface «6»Palette «»{'],
+  [ADDED, '  name: «6»string'],
+  [ADDED, '  ansi: «6»Hex«»[]'],
+  [ADDED, '  ratio?: «6»number'],
+  [ADDED, '}'],
+  ['', ''],
+  ['', '«5»const «»SIXTEEN = «3»16'],
+  ['', '«5»const «»FLOOR = «3»4.5 «8»// WCAG AA for body text'],
+  ['', ''],
+  ['', '«5»export async function «4»load«»(path: «6»string«»): «6»Promise«»<«6»Palette«»> {'],
+  [CHANGED, "  «5»const «»text = «5»await «4»readFile«»(path, «2»'utf8'«»)"],
+  [CHANGED, '  «5»const «»colors = «s»parse(text)«».colors ?? {}'],
+  ['', '  «5»if «»(colors.ansi.length !== «K3»SIXTEEN«») {  «1»● needs 16 ANSI colors'],
+  ['', "    «5»throw new «6»Error«»(«2»'expected sixteen colors, got '«» + colors.ansi.length)"],
+  ['', '  }'],
+  [DELETED, '  «5»const «»ratio = «4»contrast«»(colors.ansi[«3»0«»], colors.ansi[«3»7«»])  «3»● ratio is read once'],
+  ['', '  «5»return «»{ name: path, ...colors, ratio: «c»r«»atio }'],
+  ['', '}'],
+  ['', ''],
+  ['', '«5»export function «4»passes«»(palette: «6»Palette«»): «6»boolean «»{'],
+  ['', '  «5»return «»(palette.ratio ?? «3»0«») >= FLOOR «8»// TODO: check the bright pairs'],
+  ['', '}'],
+]
+
+const CURSOR_LINE = 21
+
+function editorLines(): string[] {
+  return [
+    '«K4» theme.ts «s» scenes.ts «s» contrast.ts ',
+    ...SOURCE.map(([sign, code], i) => {
+      const n = String(i + 1).padStart(3)
+      return `${i + 1 === CURSOR_LINE ? `«b»${n}` : `«d»${n}`} ${sign || '«»  '}«»${code}`
+    }),
+  ]
+}
+
+function meter(label: string, parts: [string, number][], text: string, width: number): string {
+  const room = Math.max(1, width - label.length - 2 - text.length)
+  let used = 0
+  let out = `«6»${label}«b»[`
+  for (const [role, share] of parts) {
+    const n = Math.min(room - used, Math.round(share * room))
+    out += `«${role}»${'|'.repeat(n)}`
+    used += n
+  }
+  return `${out}«»${' '.repeat(room - used)}${text}«b»]`
+}
+
+const CPUS: [number, number, number][] = [
+  [0.31, 0.07, 0],
+  [0.22, 0.02, 0.03],
+  [0.04, 0.01, 0],
+  [0.52, 0.12, 0],
+  [0.1, 0.02, 0],
+  [0.41, 0.11, 0],
+  [0.02, 0, 0],
+  [0.15, 0.03, 0.04],
+]
+
+const PROCESSES = [
+  '«s»   4127 kec        24   0  412G  612M «s»R  38.2  3.7  3:12.44 node dev.js',
+  '   2210 kec        31   0  411G  1.2G «2»R«»  12.0  7.5  1:02.10 «d»/Applications/«b»Ghostty',
+  '   3301 kec        31   0  409G   12M S   4.4  0.1  0:05.61 «b»zsh',
+  '   3302 kec        31   0  409G  9.8M S   0.0  0.1  0:00.42 «d»├─ «b»nvim «»src/theme.ts',
+  '   3310 kec        31   0  410G   88M S   1.2  0.5  0:03.18 «d»│  └─ «b»tsserver',
+  '   3402 kec        24   0  409G   21M «2»R«»   0.6  0.1  0:01.02 «d»└─ «b»htop',
+  '    501 kec        31  «4»10«»  409G   34M S   0.3  0.2  0:02.77 «b»bun «»test --watch',
+  '   1180 kec        31   0  409G   72M «1»D«»   0.0  0.4  0:00.91 «b»rsync «»-a ~/Pictures backup:',
+  '    812 «d»root«»       «1» 4 -20«»  410G  1.5G S   3.1  9.4  0:44.02 «d»kernel_task',
+  '    167 «d»root«»       31   0  411G  402M S   0.9  2.5  0:12.80 «d»WindowServer',
+  '    344 «d»_mdns«»      31   0  408G  5.1M S   0.0  0.0  0:00.33 «d»mDNSResponder',
+]
+
+const KEYS = ['Help', 'Setup', 'Search', 'Filter', 'Tree', 'SortBy', 'Nice -', 'Nice +', 'Kill', 'Quit']
+
+function filled(role: string, text: string, width: number): string {
+  return `«${role}»${text}${' '.repeat(Math.max(0, width - cells(text)))}`
+}
+
+function topLines(width: number): string[] {
+  const text = width - 2
+  const half = Math.floor((text - 2) / 2)
+  const cpu = (i: number) => {
+    const [user, system, nice] = CPUS[i] as [number, number, number]
+    const total = `${((user + system + nice) * 100).toFixed(1)}%`
+    return meter(
+      String(i).padStart(3),
+      [
+        ['2', user],
+        ['1', system],
+        ['4', nice],
       ],
-    }
+      total,
+      half,
+    )
   }
-  if (cols >= TABS_COLS && rows >= TABS_ROWS) {
-    const side = 36
-    const width = cols - side - 1
-    const id = sceneId(scene)
-    return {
-      tier: 'tabs',
-      side,
-      divider: side,
-      width,
-      tiles: [{ id, name: sceneName(id), col: side + 1, title: -1, row: 3, width, rows: rows - 4 }],
-    }
-  }
-  return undefined
+  return [
+    ...[0, 1, 2, 3].map((i) => `${cpu(i)}  ${cpu(i + 4)}`),
+    `${meter(
+      'Mem',
+      [
+        ['2', 0.45],
+        ['4', 0.1],
+        ['3', 0.07],
+      ],
+      '9.84G/16.0G',
+      half,
+    )}  «6»Tasks: «b»214«», 1093 thr; «B2»4«» running`,
+    `${meter('Swp', [['1', 0.15]], '0.31G/2.00G', half)}  «6»Load average: «b»2.14 «»1.87 «d»1.52`,
+    `${' '.repeat(half)}  «6»Uptime: «b»3 days, 04:12:55`,
+    '',
+    filled('K2', '    PID USER      PRI  NI  VIRT   RES S  CPU% MEM%   TIME+  Command', text),
+    ...PROCESSES.map((line) =>
+      line.startsWith('«s»') ? `${line}${' '.repeat(Math.max(0, text - cells(line.replace(/«[^»]*»/g, ''))))}` : line,
+    ),
+  ]
 }
 
-function markup(id: string, tier: Layout['tier']): string[] {
-  if (id === STRIP_ID) {
-    return STRIP
-  }
-  const scene = SCENES.find((s) => s.name.toLowerCase() === id)
-  if (!scene) {
-    return []
-  }
-  const pick = tier === 'full' ? PICKS[scene.name] : undefined
-  return pick ? pick.map((i) => scene.lines[i] ?? '') : scene.lines
+function keyBar(width: number): string {
+  const text = width - 2
+  let out = ''
+  let used = 0
+  KEYS.forEach((label, i) => {
+    const key = `F${i + 1}`
+    const piece = label.padEnd(6)
+    if (used + key.length + piece.length <= text) {
+      out += `«»${key}«K6»${piece}`
+      used += key.length + piece.length
+    }
+  })
+  return `${out}«K6»${' '.repeat(Math.max(0, text - used))}`
 }
 
-export function linesOf(id: string, tier: Layout['tier'], width: number): Part[][] {
+function sceneLines(name: string, picked: boolean, width: number): string[] {
+  if (name === 'Editor') {
+    return editorLines()
+  }
+  if (name === 'Top') {
+    return topLines(width)
+  }
+  const lines = SCENES.find((s) => s.name === name)?.lines ?? []
+  const pick = picked ? PICKS[name] : undefined
+  const chosen = pick ? pick.map((i) => lines[i] ?? '') : lines
+  return name === 'Shell' ? [...chosen.slice(0, -1), ...COLORTEST, ...chosen.slice(-1)] : chosen
+}
+
+function parsed(markup: string[], width: number): Part[][] {
   const lines: Part[][] = []
-  for (const text of markup(id, tier)) {
+  for (const text of markup) {
     const parts = sceneParts(text, width)
     if (!parts) {
       continue
@@ -141,6 +297,66 @@ export function linesOf(id: string, tier: Layout['tier'], width: number): Part[]
     )
   }
   return lines
+}
+
+function statusLine(width: number): string {
+  const left = '«K4» NORMAL «s» main  src/theme.ts [+] '
+  const right = '«K1» 1 «K3» 1 «s» utf-8  typescript  21:28 «K4» 80% '
+  const room = width - 2 - cells(left.replace(/«[^»]*»/g, '')) - cells(right.replace(/«[^»]*»/g, ''))
+  return `${left}${' '.repeat(Math.max(0, room))}${right}`
+}
+
+function footerOf(pane: Pane, width: number): string[] {
+  if (pane.id === 'code') {
+    return [statusLine(width), '«d»"src/theme.ts" 26L, 912B written']
+  }
+  return pane.id === 'monitor' ? [keyBar(width)] : []
+}
+
+function fitted(pane: Pane, width: number, rows: number): Part[][] {
+  const footer = parsed(footerOf(pane, width), width)
+  const room = Math.max(0, rows - footer.length)
+  let shown: Part[][] = []
+  for (const name of [...pane.scenes].reverse()) {
+    const whole = parsed(sceneLines(name, false, width), width)
+    const picked = parsed(sceneLines(name, true, width), width)
+    const next = [whole, picked].find((lines) => shown.length + lines.length <= room)
+    if (!next) {
+      if (shown.length === 0) {
+        shown = pane.tail ? picked.slice(picked.length - room) : picked.slice(0, room)
+      }
+      break
+    }
+    shown = [...next, ...shown]
+  }
+  if (footer.length === 0) {
+    return shown
+  }
+  const filler = parsed(
+    Array.from({ length: room - shown.length }, () => (pane.id === 'code' ? '«4»~' : '')),
+    width,
+  )
+  return [...shown, ...filler, ...footer]
+}
+
+export function paneLines(tile: Tile): Part[][] {
+  const pane = PANES.find((p) => p.id === tile.id)
+  return pane ? fitted(pane, tile.width, tile.rows) : []
+}
+
+export function lights(role: string, slot: number): boolean {
+  const { text, ground } = slotsOfRole(role)
+  return text === slot || ground === slot
+}
+
+export function usesOf(layout: Layout, slot: number): { name: string; count: number }[] {
+  const box = layout.inner
+  return PANES.map((pane) => ({
+    name: pane.name,
+    count: paneLines({ id: pane.id, name: pane.name, col: box.col, row: box.row, width: box.cols, rows: box.rows })
+      .flat()
+      .filter((part) => lights(part.role, slot)).length,
+  }))
 }
 
 export function slotsOfRole(role: string): Slots {
@@ -166,16 +382,21 @@ export function usesSlot(role: string, slot: number): boolean {
   return (slot === 3 && role === 's') || (slot === 2 && role === 'c')
 }
 
-function runsOf(layout: Layout): { spot: Spot; col: number; tile: Tile }[] {
-  const out: { spot: Spot; col: number; tile: Tile }[] = []
+interface Run {
+  spot: Spot
+  col: number
+  text: string
+  role: string
+}
+
+function runsOf(layout: Layout): Run[] {
+  const out: Run[] = []
   for (const tile of layout.tiles) {
-    linesOf(tile.id, layout.tier, tile.width)
-      .slice(0, tile.rows)
-      .forEach((line, l) => {
-        line.forEach((part, r) => {
-          out.push({ spot: { pane: tile.id, line: l, run: r }, col: part.col, tile })
-        })
+    paneLines(tile).forEach((line, l) => {
+      line.forEach((part, r) => {
+        out.push({ spot: { pane: tile.id, line: l, run: r }, col: part.col, text: part.text, role: part.role })
       })
+    })
   }
   return out
 }
@@ -186,14 +407,7 @@ function same(a: Spot, b: Spot): boolean {
 
 export function firstSpot(layout: Layout, slot: number): Spot | undefined {
   const runs = runsOf(layout)
-  const ordered = [...runs.filter((r) => r.spot.pane !== STRIP_ID), ...runs.filter((r) => r.spot.pane === STRIP_ID)]
-  for (const { spot, tile } of ordered) {
-    const part = linesOf(tile.id, layout.tier, tile.width)[spot.line]?.[spot.run]
-    if (part && usesSlot(part.role, slot)) {
-      return spot
-    }
-  }
-  return ordered[0]?.spot
+  return (runs.find((r) => usesSlot(r.role, slot)) ?? runs[0])?.spot
 }
 
 export function validSpot(layout: Layout, spot: Spot | undefined): Spot | undefined {
@@ -213,7 +427,7 @@ export function moveSpot(
   if (at < 0) {
     return runs[0]?.spot
   }
-  const here = runs[at] as (typeof runs)[number]
+  const here = runs[at] as Run
   if (way === 'left' || way === 'right') {
     return runs[(at + (way === 'left' ? runs.length - 1 : 1)) % runs.length]?.spot
   }
@@ -237,16 +451,58 @@ export function moveSpot(
     return (row.find((r) => r.col >= here.col) ?? row.at(-1))?.spot
   }
   const row = inPane.filter((r) => r.spot.line === line)
-  const exact = row.find((r) => r.col <= here.col && r.col + cells(partText(layout, r)) > here.col)
+  const exact = row.find((r) => r.col <= here.col && r.col + cells(r.text) > here.col)
   return (exact ?? row.find((r) => r.col >= here.col) ?? row.at(-1))?.spot
 }
 
-function partText(layout: Layout, r: { spot: Spot; tile: Tile }): string {
-  return linesOf(r.tile.id, layout.tier, r.tile.width)[r.spot.line]?.[r.spot.run]?.text ?? ''
+export function slotsAt(layout: Layout, spot: Spot): Slots | undefined {
+  const run = runsOf(layout).find((r) => same(r.spot, spot))
+  return run ? slotsOfRole(run.role) : undefined
 }
 
-export function slotsAt(layout: Layout, spot: Spot): Slots | undefined {
-  const tile = layout.tiles.find((t) => t.id === spot.pane)
-  const part = tile ? linesOf(tile.id, layout.tier, tile.width)[spot.line]?.[spot.run] : undefined
-  return part ? slotsOfRole(part.role) : undefined
+const JOINTS: Record<string, string> = {
+  lr: '─',
+  du: '│',
+  dr: '╭',
+  dl: '╮',
+  ru: '╰',
+  lu: '╯',
+  dlr: '┬',
+  lru: '┴',
+  dru: '├',
+  dlu: '┤',
+  dlru: '┼',
+}
+
+export function joints(rules: readonly Rule[]): Map<number, Map<number, string>> {
+  const ways = new Map<number, Map<number, Set<string>>>()
+  const mark = (row: number, col: number, way: string) => {
+    const line = ways.get(row) ?? new Map<number, Set<string>>()
+    ways.set(row, line)
+    const cell = line.get(col) ?? new Set<string>()
+    line.set(col, cell)
+    cell.add(way)
+  }
+  for (const rule of rules) {
+    for (let i = 0; i < rule.length; i++) {
+      const row = rule.down ? rule.row + i : rule.row
+      const col = rule.down ? rule.col : rule.col + i
+      if (i > 0) {
+        mark(row, col, rule.down ? 'u' : 'l')
+      }
+      if (i < rule.length - 1) {
+        mark(row, col, rule.down ? 'd' : 'r')
+      }
+    }
+  }
+  const out = new Map<number, Map<number, string>>()
+  for (const [row, line] of ways) {
+    const drawn = new Map<number, string>()
+    for (const [col, cell] of line) {
+      const key = [...cell].sort().join('')
+      drawn.set(col, JOINTS[key] ?? (cell.has('l') || cell.has('r') ? '─' : '│'))
+    }
+    out.set(row, drawn)
+  }
+  return out
 }

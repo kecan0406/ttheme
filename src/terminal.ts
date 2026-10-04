@@ -210,7 +210,6 @@ export const CLEAR = '\x1b[H\x1b[K\x1b[2H\x1b[J\x1b[H'
 export interface Live {
   slots: readonly number[]
   paint(entry: PaletteEntry): string
-  look?(name: string, shown: readonly string[]): void
   wear(entry: PaletteEntry, wired: readonly string[]): string | undefined
   saved(): Promise<Map<string, string>>
   restore(saved: ReadonlyMap<string, string>): string
@@ -295,7 +294,7 @@ function wallpaperOf(dirs: readonly string[], look: string): string[] {
   return general.length > 0 ? general : ['Wallpaper=']
 }
 
-function konsoleLive(env: Env, look: string, write: (text: string) => void): Live {
+function konsoleLive(env: Env, look: string): Live {
   const dirs = konsoleDirs(env)
   const dir = dirs[0] as string
   const general = wallpaperOf(dirs, look)
@@ -323,10 +322,6 @@ function konsoleLive(env: Env, look: string, write: (text: string) => void): Liv
   return {
     slots: [],
     paint: (entry) => show(entry.name, entry, entry.cursor),
-    look: (name, shown) => {
-      const [background = '', foreground = '', cursor = '', , ...ansi] = shown
-      write(show(name, { background, foreground, ansi }, cursor))
-    },
     wear: (entry, wired) => (wired.includes('konsole') ? schemeOsc(owned(entry.name), entry.cursor) : undefined),
     saved: async () => new Map(),
     restore: () => {
@@ -353,7 +348,7 @@ export function livePaint(
     return itermLive(env, write)
   }
   if (terminal === 'konsole' && env.TTHEME_KONSOLE_LOOK) {
-    return konsoleLive(env, env.TTHEME_KONSOLE_LOOK, write)
+    return konsoleLive(env, env.TTHEME_KONSOLE_LOOK)
   }
   const slots = traits.repaint ?? SLOT_CODES.map((_, slot) => slot)
   const codes = SLOT_CODES.filter((_, slot) => slots.includes(slot))

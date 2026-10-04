@@ -12,6 +12,7 @@ export interface Hit<T = unknown> {
   target: T
   x: number
   y: number
+  exact: { x: number; y: number }
   width: number
   height: number
   inside: boolean
@@ -181,13 +182,14 @@ export function lifted(lines: readonly string[], targets: readonly unknown[]): {
   return { lines: texts, zones }
 }
 
-export function relative<T>(zone: Zone<T>, row: number, col: number): Hit<T> {
+export function relative<T>(zone: Zone<T>, row: number, col: number, fx = 0.5, fy = 0.5): Hit<T> {
   const x = col - zone.col
   const y = row - zone.row
   return {
     target: zone.target,
     x,
     y,
+    exact: { x: x + fx, y: y + fy },
     width: zone.width,
     height: zone.height,
     inside: x >= 0 && x < zone.width && y >= 0 && y < zone.height,
@@ -238,6 +240,8 @@ export interface Pointed {
   button: string | undefined
   row: number
   col: number
+  fx?: number
+  fy?: number
 }
 
 export class Pointer {
@@ -250,13 +254,13 @@ export class Pointer {
       if (event.action === 'release') {
         this.held = undefined
       }
-      return held && relative(held, event.row, event.col)
+      return held && relative(held, event.row, event.col, event.fx, event.fy)
     }
     const found = zoneAt(this.zones, event.row, event.col)
     if (event.action === 'press') {
       this.held = event.button === 'left' ? found : undefined
     }
-    return found && relative(found, event.row, event.col)
+    return found && relative(found, event.row, event.col, event.fx, event.fy)
   }
 
   drop(): void {

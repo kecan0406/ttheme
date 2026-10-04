@@ -9,7 +9,6 @@ import { runEditor } from './editor-screen.ts'
 import { writeAtomic } from './edits.ts'
 import { findFor } from './find/find.ts'
 import { fixGate, type Move } from './fix.ts'
-import { liveOf } from './live.ts'
 import { type Manifest, type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import { ensureLocal } from './markets.ts'
 import { colorless } from './osc.ts'
@@ -164,29 +163,15 @@ function finder(
 async function editColors(options: EditorOptions, hosted = false): Promise<Edited | undefined> {
   const tty = process.stdout.isTTY === true
   const home = configHome()
-  const live = liveOf(process.env, tty, home)
-  const saved = live ? await live.saved() : new Map<string, string>()
-  const screen = live?.look
-    ? { look: (shown: readonly string[]) => live.look?.(options.name, shown) }
-    : live
-      ? { only: live.slots }
-      : {}
   const terminals = readInstalled(home).terminals
   const backdrop = tty ? Backdrop.of(process.env, home, options.name, terminals) : undefined
   const layer = tty ? PickerLayer.of(process.env, terminals) : undefined
-  try {
-    return await runEditor(options, {
-      color: !colorless(),
-      ...screen,
-      ...(backdrop ? { backdrop } : {}),
-      ...(layer ? { layer } : {}),
-      ...(hosted ? { hosted: true as const } : {}),
-    })
-  } finally {
-    if (live) {
-      process.stdout.write(live.restore(saved))
-    }
-  }
+  return runEditor(options, {
+    color: !colorless(),
+    ...(backdrop ? { backdrop } : {}),
+    ...(layer ? { layer } : {}),
+    ...(hosted ? { hosted: true as const } : {}),
+  })
 }
 
 export async function runNew(name: string, from: string | undefined, into: string | undefined): Promise<void> {

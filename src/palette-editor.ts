@@ -34,6 +34,21 @@ export const SLOT_NAMES = [
 ]
 export const BASE = ['Background', 'Foreground', 'Cursor', 'Selection']
 export const PAIRS = ['Black', 'Red', 'Green', 'Yellow', 'Blue', 'Magenta', 'Cyan', 'White']
+const USES = [
+  'Behind every cell',
+  'Plain text',
+  'The cursor block',
+  'Selected text',
+  'Text on colored bars, dark shades',
+  'Errors, deleted lines, failed tests',
+  'Success, added lines, prompts',
+  'Warnings, commit hashes, skipped tests',
+  'Directories, info, keywords',
+  'Keywords, branches, pictures in ls',
+  'Links, diff hunks, types',
+  'Light shades, text in some programs',
+  'Comments, muted text, suggestions',
+]
 export const ROWS = BASE.length + PAIRS.length
 
 export interface Channel {
@@ -99,7 +114,6 @@ export interface Exports {
   command: string
 }
 
-export type Tab = 'colors' | 'gate'
 export type Format = 'hex' | 'rgb' | 'oklch'
 export type Menu = 'export' | 'import'
 
@@ -153,8 +167,16 @@ export function slotLabel(slot: number): { name: string; about: string } {
   const ansi = slot - BASE.length
   const pair = PAIRS[ansi % 8] as string
   return ansi < 8
-    ? { name: pair, about: `ansi ${ansi}` }
-    : { name: `Bright ${pair.toLowerCase()}`, about: `ansi ${ansi}` }
+    ? { name: pair, about: `ANSI ${ansi}` }
+    : { name: `Bright ${pair.toLowerCase()}`, about: `ANSI ${ansi}` }
+}
+
+export function slotUse(slot: number): string {
+  const ansi = slot - BASE.length
+  if (ansi >= 9 && ansi <= 15) {
+    return `Bold or bright ${(PAIRS[ansi - 8] as string).toLowerCase()} text`
+  }
+  return USES[slot] as string
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
@@ -448,14 +470,12 @@ export class PaletteEditor {
   pictures: number
   inspect = false
   spot: Spot | undefined
-  tab: Tab = 'colors'
   format: Format = 'hex'
   pic = true
   menu: Menu | undefined
   entry = 0
   changedOnly = false
-  search = ''
-  searching = false
+  where = false
   size: { cols: number; rows: number } | undefined
   copied: string | undefined
   readonly startPictures: number
@@ -530,14 +550,7 @@ export class PaletteEditor {
   }
 
   visible(slot: number): boolean {
-    if (this.changedOnly && !this.changed(slot)) {
-      return false
-    }
-    if (this.search === '') {
-      return true
-    }
-    const { name, about } = slotLabel(slot)
-    return `${name} ${about} ${this.list[slot]}`.toLowerCase().includes(this.search.toLowerCase())
+    return !this.changedOnly || this.changed(slot)
   }
 
   changes(): number {
@@ -669,10 +682,6 @@ export class PaletteEditor {
     }
     if (this.menu) {
       this.menuKey(key)
-      return
-    }
-    if (this.searching) {
-      this.searchKey(key)
       return
     }
     if (key === '?') {
@@ -954,7 +963,7 @@ export class PaletteEditor {
   }
 
   private builderKey(key: string): boolean {
-    if (['i', 'm', 'G', 'ctrl-f', 'x', 'I'].includes(key) && !this.roomy) {
+    if (['i', 'm', 'w', 'x', 'I'].includes(key) && !this.roomy) {
       this.notice = 'The builder needs a window of at least 96×28'
       return true
     }
@@ -968,10 +977,8 @@ export class PaletteEditor {
       this.notice = this.changedOnly ? (this.changes() > 0 ? undefined : 'Nothing changed yet') : undefined
     } else if (key === 'b') {
       this.pic = !this.pic
-    } else if (key === 'G') {
-      this.tab = this.tab === 'gate' ? 'colors' : 'gate'
-    } else if (key === 'ctrl-f') {
-      this.searching = true
+    } else if (key === 'w') {
+      this.where = !this.where
     } else if (key === 'x' && this.options.exports) {
       this.menu = 'export'
       this.entry = 0
@@ -982,21 +989,6 @@ export class PaletteEditor {
       return false
     }
     return true
-  }
-
-  private searchKey(key: string): void {
-    if (key === 'esc') {
-      this.search = ''
-      this.searching = false
-    } else if (key === 'enter') {
-      this.searching = false
-    } else {
-      const next = edit(this.search, lowered(key), (ch) => /^[ -~]$/.test(ch) && this.search.length < 24)
-      if (next !== undefined) {
-        this.search = next
-      }
-    }
-    this.reseat()
   }
 
   private menuKey(key: string): void {
@@ -1125,9 +1117,7 @@ export class PaletteEditor {
   private show(slot: number): void {
     if (!this.visible(slot)) {
       this.changedOnly = false
-      this.search = ''
     }
-    this.tab = 'colors'
   }
 
   openSlot(slot: number): void {
@@ -1207,7 +1197,6 @@ export class PaletteEditor {
   }
 
   private tune(): void {
-    this.tab = 'colors'
     this.remember('tune')
     this.tuneFrom = { list: [...this.list], lch: [...this.lch] }
     this.holds = new Map()
@@ -1333,6 +1322,15 @@ export class PaletteEditor {
 
   ratio(): number {
     return contrast(this.list[this.slot()] as Hex, this.list[this.partner().against] as Hex)
+  }
+
+  origin(): { hex: Hex; lch: Oklch; ratio: number } | undefined {
+    const slot = this.slot()
+    const hex = this.original[slot] as Hex
+    if (hex === this.list[slot]) {
+      return undefined
+    }
+    return { hex, lch: this.lchOf(hex), ratio: contrast(hex, this.original[this.partner().against] as Hex) }
   }
 
   private reach(target: number): void {

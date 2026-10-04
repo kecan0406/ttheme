@@ -1617,12 +1617,25 @@ __tt_te_find() {
   return 0
 }
 
+__tt_pv_unpaint() {
+  if [[ $painted != "$orig" ]]; then
+    if [[ -z $orig ]]; then
+      __tt_osc_reset
+    else
+      __tt_apply "$orig"
+    fi
+  elif [[ $applied != "$orig" ]]; then
+    __tt_pv_paint "${TTHEME_PAINTED:+$orig}"
+  fi
+}
+
 __tt_te_edit() {
-  local name=$tename err
+  local name=$tename err back=$applied
   local -i rc
   __tt_te_save_image
   __tt_pv_untune
-  [[ $applied == "$painted" ]] || { __tt_apply "$applied" && painted=$applied }
+  __tt_pv_unpaint
+  painted=$orig applied=$orig
   __tt_pv_bg_close
   __tt_bg_hide $name
   err=$(__tt_cli tone $name edit 2>&1 >/dev/tty)
@@ -1633,8 +1646,11 @@ __tt_te_edit() {
   if (( rc == 0 )); then
     __tt_palettes_load && __tt_reloaded
     __tt_reload
-    applied=${TTHEME_PALETTE[$name]:-$applied}
-    __tt_pv_paint "$applied"
+    back=${TTHEME_PALETTE[$name]:-$back}
+  fi
+  __tt_pv_paint "$back"
+  applied=$back
+  if (( rc == 0 )); then
     __tt_pv_bg_reset $name
     bgload[$name]=""
     __tt_te_read
@@ -2131,14 +2147,8 @@ __tt_preview() {
     __tt_pv_bg_close
     if [[ -n $spec ]]; then
       [[ $spec == "$painted" ]] || __tt_apply "$spec"
-    elif [[ $painted != "$orig" ]]; then
-      if [[ -z $orig ]]; then
-        __tt_osc_reset
-      else
-        __tt_apply "$orig"
-      fi
-    elif [[ $applied != "$orig" ]]; then
-      __tt_pv_paint "${TTHEME_PAINTED:+$orig}"
+    else
+      __tt_pv_unpaint
     fi
     __tt_pv_pointer off
     printf '\e[?7h'

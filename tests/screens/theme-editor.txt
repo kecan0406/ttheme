@@ -1,24 +1,24 @@
 ◆ Edit palette · konata                                                       ✗ 7 misses in the gate
 
-  Base                                            │ Background  background
-▌ Background›  0.21 0.014 253°                    │
-  Foreground   0.91 0.021 259°                    │ oklch 0.207 0.014 253°
-  Cursor     ◆ 0.65 0.098 249°                    │ #13181e · rgb 19 24 30
-  Selection    0.36 0.008 256°                    │ as it opened
-                                                  │
-  ANSI       Normal             Bright            │  L ───────●────────────────────────────   0.21
-  Black        0.26 0.013 253°    0.57 0.013 264° │  C ─●──────────────────────────────────  0.014
-  Red          0.73 0.182 326°✗   0.83 0.159 326°✗│  H ─────────────────────────●──────────   253°
-  Green      ◆ 0.73 0.132 150°✗   0.83 0.141 195°✗│  ◐ ──────────────────────┃───────●───── 13.80:1
-  Yellow       0.78 0.121 132°✗   0.88 0.174 165°✗│
-  Blue         0.71 0.120 250°  ◆ 0.81 0.099 250° │ ✓ Foreground on it 13.80:1 · ≥ 7
-  Magenta      0.75 0.181 311°✗   0.83 0.095 298° │ ✓ Weakest, ANSI 4, 6.86:1 · ≥ 3
-  Cyan         0.75 0.124 231°    0.86 0.085 233° │ ✓ ANSI 8 on it 3.97:1 · ≥ 1.6
-  White        0.83 0.012 260°    0.95 0.020 257° │
-                                                  │ [Shell]  Code  Diff  Logs  Monitor           ⇧←→
-  Gate  3 misses                     n next miss  │  ~/code/demo on main +2 ~1
-  ✗ accent hue outside its ANSI role   41.56 ≤ 0  │  ❯ git status -sb
-    Red · Yellow · Bright red · Bright yellow     │  ## main...origin/main [ahead 1]
-  ✗ widest normal to bright hue gap   45.67 ≤ 25  │   M src/main.rs
+╭─ Base ─────────────────────────────────────────╮│ Background  background
+│▌ Background›  .21 .014 253°                    ││
+│  Foreground   .91 .021 259°                    ││ oklch 0.207 0.014 253°
+│  Cursor     ◆ .65 .098 249°                    ││ #13181e · rgb 19 24 30
+│  Selection    .36 .008 256°                    ││ as it opened
+├─ ANSI ──── Normal 0–7 ───── Bright 8–15 ───────┤│
+│  Black        .26 .013 253°    .57 .013 264°   ││  L ───────●────────────────────────────   0.21
+│  Red          .73 .182 326°✗   .83 .159 326°✗  ││  C ─●──────────────────────────────────  0.014
+│  Green      ◆ .73 .132 150°✗   .83 .141 195°✗  ││  H ─────────────────────────●──────────   253°
+│  Yellow       .78 .121 132°✗   .88 .174 165°✗  ││  ◐ ──────────────────────┃───────●───── 13.80:1
+│  Blue         .71 .120 250°  ◆ .81 .099 250°   ││
+│  Magenta      .75 .181 311°✗   .83 .095 298°   ││ ✓ Foreground on it 13.80:1 · ≥ 7
+│  Cyan         .75 .124 231°    .86 .085 233°   ││ ✓ Weakest, ANSI 4, 6.86:1 · ≥ 3
+│  White        .83 .012 260°    .95 .020 257°   ││ ✓ ANSI 8 on it 3.97:1 · ≥ 1.6
+╰────────────────────────────────────────────────╯│
+╭─ Gate ✗ 3 · n next ────────────────────────────╮│ [Shell]  Code  Diff  Logs  Monitor           ⇧←→
+│  ✗ accent hue outside its ANSI role  41.56 ≤ 0 ││  ~/code/demo on main +2 ~1
+│    Red · Yellow · Bright red · Bright yellow   ││  ❯ git status -sb
+│  ✗ widest normal to bright hue gap  45.67 ≤ 25 ││  ## main...origin/main [ahead 1]
+╰────────────────────────────────────────────────╯│   M src/main.rs
 
 [EDIT] ↑↓ slot   ←→ normal or bright   enter tune   g relations   s save   ? keys         esc cancel

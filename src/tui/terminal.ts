@@ -1,5 +1,5 @@
 import type { Readable, Writable } from 'node:stream'
-import { type Inbound, Keys } from './keys.ts'
+import { type Cell, type Inbound, Keys } from './keys.ts'
 
 export interface Mode {
   on: string
@@ -12,6 +12,7 @@ export const NO_WRAP: Mode = { on: '\x1b[?7l', off: '\x1b[?7h' }
 export const PASTES: Mode = { on: '\x1b[?2004h', off: '\x1b[?2004l' }
 export const FOCUS: Mode = { on: '\x1b[?1004h', off: '\x1b[?1004l' }
 export const MOUSE: Mode = { on: '\x1b[?1000h\x1b[?1002h\x1b[?1006h', off: '\x1b[?1006l\x1b[?1002l\x1b[?1000l' }
+export const PIXELS: Mode = { on: '\x1b[?1016h', off: '\x1b[?1016l\x1b[?1006h' }
 
 export function pointing(env: Record<string, string | undefined> = process.env): Mode[] {
   return env.TTHEME_MOUSE === 'off' ? [] : [MOUSE]
@@ -43,6 +44,7 @@ export class Signalled extends Error {
 const opened: Terminal[] = []
 const held = new Map<Mode, number>()
 const raw = new Map<Input, number>()
+let pixelCell: Cell | undefined
 
 function topFor(input: Input): Terminal | undefined {
   return opened.findLast((terminal) => terminal.input === input)
@@ -115,7 +117,11 @@ export class Terminal {
     this.output = options.output ?? process.stdout
     this.tty = this.output.isTTY === true && this.input.isTTY === true
     this.assumed = options.assume ?? []
-    this.keys = new Keys((events) => this.deliver(events), options.burst)
+    this.keys = new Keys(
+      (events) => this.deliver(events),
+      options.burst,
+      () => (held.has(PIXELS) ? pixelCell : undefined),
+    )
     this.failed = new Promise<never>((_, reject) => {
       this.reject = reject
     })
@@ -147,6 +153,11 @@ export class Terminal {
 
   hold(mode: Mode): void {
     this.write(this.claim(mode))
+  }
+
+  pixels(cell: Cell): void {
+    pixelCell = cell
+    this.hold(PIXELS)
   }
 
   get cols(): number {

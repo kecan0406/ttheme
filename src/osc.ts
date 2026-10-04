@@ -42,6 +42,13 @@ function hexOf(value: string): string {
   return `#${parts.map((part) => part.slice(0, 2).padStart(2, '0')).join('')}`
 }
 
+export function slotColors(saved: ReadonlyMap<string, string>): (string | undefined)[] {
+  return SLOT_CODES.map((code) => {
+    const value = saved.get(code)
+    return value ? hexOf(value) : undefined
+  })
+}
+
 export function restoreOsc(
   saved: ReadonlyMap<string, string>,
   codes: readonly string[] = [...saved.keys()],
@@ -59,8 +66,8 @@ export function schemeOsc(scheme: string, cursor: string): string {
   return `\x1b]50;ColorScheme=${scheme};UseCustomCursorColor=true;customCursorColor=${cursor}\x07`
 }
 
-export function colorQuery(codes: readonly string[] = SLOT_CODES): string {
-  return `${codes.map((code) => `\x1b]${code};?\x1b\\`).join('')}\x1b[5n`
+export function colorQuery(codes: readonly string[] = SLOT_CODES, end = '\x1b[5n'): string {
+  return `${codes.map((code) => `\x1b]${code};?\x1b\\`).join('')}${end}`
 }
 
 export function answered(replies: string): boolean {

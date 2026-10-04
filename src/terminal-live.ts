@@ -4,7 +4,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { backgroundsDir, readBackdrop } from './backdrop.ts'
 import { rewrite } from './edits.ts'
-import { colorless, paletteOsc, slotOsc } from './osc.ts'
+import { colorless, paletteOsc } from './osc.ts'
 import { readInstalled } from './palettes.ts'
 import { decodePng, encodeRgb, flatten, type Rgba } from './png.ts'
 import { detectTerminal, type Live, SETTLE_MS } from './terminal.ts'
@@ -108,9 +108,6 @@ export function terminalLive(
           : () => show(entry.background, paletteOsc(entry)),
       )
       return ''
-    },
-    look(_, shown) {
-      queue(() => show(shown[0] ?? '', shown.map((color, slot) => slotOsc(slot, color)).join('')))
     },
     wear(entry) {
       const told = spawnSync('osascript', [...args.slice(0, -1), terminalProfile(entry.name), base], {

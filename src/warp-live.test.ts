@@ -79,31 +79,16 @@ test("a hover in Warp puts on an installed palette's newest theme once the keys 
   assert.deepEqual(views(), [])
 })
 
-test('an uninstalled palette and the editor draft reach Warp through a short-lived theme, gone once the next is up', async () => {
+test('an uninstalled palette reaches Warp through a short-lived theme', async () => {
   const { home, configHome, themes, worn, views } = warp()
   const live = warpLive(env, true, configHome, home)
-  assert.ok(live?.look)
+  assert.ok(live)
   live.paint(palette('rin', '#302010'))
   await settled()
   const [rin = ''] = views()
   assert.ok(rin.startsWith('ttheme-rin.view-'))
   assert.equal(worn(), warpThemeValue('rin', rin))
   assert.match(readFileSync(join(themes, rin), 'utf8'), /^background: "#302010"$/m)
-  live.look('me@local/draft', [
-    '#102030',
-    '#f0f0f0',
-    '#ff8800',
-    '#334455',
-    ...Array.from({ length: 16 }, () => '#777777'),
-  ])
-  await settled()
-  const [draft = ''] = views()
-  assert.equal(views().length, 1)
-  assert.ok(draft.startsWith('ttheme-me--local--draft.view-'))
-  assert.equal(worn(), warpThemeValue('me@local/draft', draft))
-  const text = readFileSync(join(themes, draft), 'utf8')
-  assert.match(text, /^background: "#102030"$/m)
-  assert.match(text, /^cursor: "#ff8800"$/m)
 })
 
 test('closing a TUI in Warp puts back the theme the tab wore and takes its views away', async () => {

@@ -14,7 +14,6 @@ import {
   type Scope,
   slotChecks,
   slotLabel,
-  type Tab,
 } from './palette-editor.ts'
 import type { Colors } from './seeds.ts'
 import { type KeySpot, zone } from './tui/zones.ts'
@@ -33,7 +32,6 @@ export type EditorSpot =
   | { kind: 'scene'; scene: number }
   | { kind: 'choice'; index: number }
   | { kind: 'plane'; row: number; rows: number }
-  | { kind: 'tab'; tab: Tab }
   | { kind: 'format'; format: Format }
   | { kind: 'run'; spot: Spot }
   | { kind: 'open'; slot: number }
@@ -70,16 +68,17 @@ export function heldOf(e: PaletteEditor, at: Oklch): number | undefined {
   return e.held !== undefined && e.held - at.c > 0.0005 ? e.held : undefined
 }
 
-export function contrastLine(p: Paint, e: PaletteEditor, barWidth: number): string {
+export function contrastLine(p: Paint, e: PaletteEditor, barWidth: number, origin?: number): string {
   const here = e.mode === 'tune' && e.channel === CONTRAST
   const ratio = e.ratio()
   const { floor } = e.partner()
   const at = (r: number) => Math.round((Math.log(Math.max(1, r)) / Math.log(21)) * (barWidth - 1))
   const pos = at(ratio)
   const tick = floor === undefined ? -1 : at(floor)
+  const was = origin === undefined ? -1 : at(origin)
   const line = here ? '━' : '─'
   const bar = Array.from({ length: barWidth }, (_, k) =>
-    k === pos ? p.bold('●') : k === tick ? '┃' : k < tick ? p.dim(line) : line,
+    k === pos ? p.bold('●') : k === was ? '○' : k === tick ? '┃' : k < tick ? p.dim(line) : line,
   ).join('')
   const shown = `${ratio.toFixed(2)}:1`.padStart(6)
   const grip: EditorSpot = { kind: 'channel', channel: CONTRAST }
@@ -106,6 +105,30 @@ export function detailChecks(e: PaletteEditor, slot: number, at: Oklch): Check[]
     })
   }
   return checks
+}
+
+const CORNERS = { top: '╭╮', mid: '├┤', bottom: '╰╯' }
+
+export function boxEdge(width: number, at: keyof typeof CORNERS, labels: [number, string][] = []): string {
+  const [left, right] = [...CORNERS[at]]
+  const line = [...`${left}${'─'.repeat(Math.max(0, width - 2))}${right}`]
+  for (const [col, text] of labels) {
+    ;[...text].forEach((ch, i) => {
+      if (col + i > 0 && col + i < width - 1) {
+        line[col + i] = ch
+      }
+    })
+  }
+  return line.join('')
+}
+
+export function boxed(p: Paint, content: string, width: number): string {
+  return `${p.dim('│')}${fit(content, width - 2)}${p.dim('│')}`
+}
+
+export function lchTight(at: Oklch): string {
+  const short = (n: number, digits: number) => n.toFixed(digits).replace(/^0(?=\.)/, '')
+  return `${short(at.l, 2)} ${short(at.c, 3)} ${at.h.toFixed(0).padStart(3)}°`
 }
 
 export function lchShort(at: Oklch): string {
@@ -200,4 +223,23 @@ export function channelSamples(want: Oklch, channel: Channel, width: number): (H
 
 export function position(value: number, min: number, max: number, width: number): number {
   return Math.round(((value - min) / (max - min)) * (width - 1))
+}
+
+export function gateMisses(e: PaletteEditor): number {
+  return gateRows(e.list, e.signature, e.waive).filter((row) => row.ok === false).length
+}
+
+export function gateBox(p: Paint, e: PaletteEditor, room: number, width: number): string[] {
+  if (room < 3) {
+    return []
+  }
+  const failing = gateMisses(e)
+  const title = failing === 0 ? ' Gate ✓ passes ' : ` Gate ✗ ${failing} · n next `
+  return [
+    p.dim(boxEdge(width, 'top', [[2, title]])),
+    ...gateLines(p, e, room - 1, width - 1)
+      .slice(1)
+      .map((line) => boxed(p, line, width)),
+    p.dim(boxEdge(width, 'bottom')),
+  ]
 }

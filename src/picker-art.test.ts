@@ -24,16 +24,16 @@ test('the picker layer sends a picture only when it changes, under a spare id, a
   assert.equal(art(), undefined)
   assert.equal(layer.draw(undefined), '')
   layer.measured({ w: 8, h: 16 })
-  for (const key of ['down', 'down', 'down', 'down', 'down', 'enter']) {
+  for (const key of ['down', 'down', 'down', 'down', 'down', 'enter', 'up']) {
     e.press(key)
   }
   const first = layer.draw(art())
-  assert.equal(sent(first).length, 7)
+  assert.equal(sent(first).length, 10)
   assert.deepEqual(placed(first), sent(first))
   assert.equal(layer.draw(art()), '')
   e.press('up')
   const step = layer.draw(art())
-  assert.ok(sent(step).length > 0 && sent(step).length < 7)
+  assert.ok(sent(step).length > 0 && sent(step).length < 10)
   assert.equal(released(step).length, sent(step).length)
   assert.ok(sent(step).every((id) => !sent(first).includes(id)))
   assert.ok(released(step).every((id) => sent(first).includes(id)))

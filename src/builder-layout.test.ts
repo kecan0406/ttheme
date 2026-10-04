@@ -1,30 +1,34 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { firstSpot, layoutOf, linesOf, moveSpot, STRIP_ID, slotsAt, usesSlot } from './builder-layout.ts'
+import { firstSpot, layoutOf, moveSpot, paneLines, slotsAt, usesSlot } from './builder-layout.ts'
 
-test('the layout takes every pane at 130×38, one scene at 96×28, and nothing below', () => {
+test('the window shows one tab from 96×28, its side wider from 130×38, and nothing below', () => {
   assert.equal(layoutOf(140, 40, 0)?.tier, 'full')
   assert.deepEqual(
     layoutOf(140, 40, 0)?.tiles.map((t) => t.id),
-    [STRIP_ID, 'shell', 'code', 'diff', 'logs', 'monitor'],
+    ['shell'],
   )
   assert.equal(layoutOf(100, 30, 0)?.tier, 'tabs')
-  assert.equal(layoutOf(100, 30, 3)?.tiles[0]?.id, 'logs')
+  assert.equal(layoutOf(100, 30, 2)?.tiles[0]?.id, 'monitor')
   assert.equal(layoutOf(95, 30, 0), undefined)
   assert.equal(layoutOf(120, 24, 0), undefined)
 })
 
-test('the panes stay inside the window and the last one ends above the footer', () => {
+test('the pane stays inside the window, which ends above the footer', () => {
   for (const [cols, rows] of [
     [130, 38],
     [140, 40],
     [200, 60],
   ] as const) {
     const layout = layoutOf(cols, rows, 0)
-    for (const tile of layout?.tiles ?? []) {
-      assert.ok(tile.col + tile.width <= cols)
-      assert.ok(tile.row + tile.rows <= rows - 1)
+    assert.ok(layout)
+    const inner = layout.inner
+    for (const tile of layout.tiles) {
+      assert.ok(tile.col >= inner.col && tile.col + tile.width <= inner.col + inner.cols)
+      assert.ok(tile.row + tile.rows <= inner.row + inner.rows)
+      assert.ok(paneLines(tile).length <= tile.rows)
     }
+    assert.ok(inner.row + inner.rows < rows - 1)
   }
 })
 
@@ -38,17 +42,34 @@ test('a role names the slots it draws with, and underlines only the slot it is',
   assert.equal(usesSlot('d', 1), false)
 })
 
-test('firstSpot finds a use of the slot outside the ANSI strip, and moveSpot walks the runs', () => {
+test('firstSpot finds a use of the slot in a pane, and moveSpot walks the runs', () => {
   const layout = layoutOf(140, 40, 0)
   assert.ok(layout)
   const red = firstSpot(layout, 5)
-  assert.ok(red && red.pane !== STRIP_ID)
+  assert.ok(red && red.pane === 'shell')
   const here = slotsAt(layout, red)
   assert.equal(here?.text, 5)
   const next = moveSpot(layout, red, 'right')
   assert.notDeepEqual(next, red)
   const down = moveSpot(layout, red, 'down')
   assert.ok(down && (down.pane !== red.pane || down.line > red.line))
-  const lines = linesOf('shell', 'full', 46)
-  assert.ok(lines.length > 0)
+})
+
+test('every ANSI color, the selection and the cursor show somewhere in the window', () => {
+  for (const [cols, rows] of [
+    [130, 38],
+    [100, 30],
+  ] as const) {
+    const layout = layoutOf(cols, rows, 0)
+    assert.ok(layout)
+    for (let slot = 2; slot < 20; slot++) {
+      const spot = firstSpot(layout, slot)
+      assert.ok(spot && slotsAt(layout, spot) !== undefined)
+      const shown = layout.tiles.flatMap((tile) => paneLines(tile).flat())
+      assert.ok(
+        shown.some((part) => usesSlot(part.role, slot)),
+        `slot ${slot} at ${cols}×${rows}`,
+      )
+    }
+  }
 })

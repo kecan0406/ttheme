@@ -2,7 +2,7 @@ import { spread } from './ansi.ts'
 import type { Hex } from './color.ts'
 import { oklch } from './color.ts'
 import { check } from './contrast.ts'
-import { lchShort, painter } from './editor-paint.ts'
+import { boxEdge, boxed, lchTight, painter } from './editor-paint.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { BASE, gatedOf, listOf, misses, PAIRS, SLOT_NAMES } from './palette-editor.ts'
 import type { Colors } from './seeds.ts'
@@ -33,18 +33,28 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean)
     const glyph = worn.signatureSlots.includes(SLOT_NAMES[slot] as string) ? '◆' : color ? '■' : ' '
     const swatch = color ? `${p.fg(hex)}${glyph}\x1b[39m` : glyph
     const mark = bad.has(slot) ? p.bold('✗') : off(slot) ? (color ? '\x1b[33m●\x1b[39m' : '●') : ' '
-    return ` ${swatch} ${lchShort(oklch(hex))}${mark}`
+    return ` ${swatch} ${lchTight(oklch(hex))}${mark}`
   }
   const gate = failing === 0 ? 'passes the gate' : `${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
   const rows = [
     `  ${spread(`${p.dim('Palette')}${tuned > 0 ? p.dim(`  ${tuned} tuned`) : ''}`, p.dim(gate), WIDTH - 2)}`,
   ]
+  rows.push(p.dim(boxEdge(WIDTH, 'top', [[2, ' Base ']])))
   for (let row = 0; row < BASE.length; row++) {
-    rows.push(`  ${(BASE[row] as string).padEnd(10)}${cell(row)}`)
+    rows.push(boxed(p, ` ${(BASE[row] as string).padEnd(10)}${cell(row)}`, WIDTH))
   }
-  rows.push(`  ${p.dim(`${'ANSI'.padEnd(10)} ${'Normal'.padEnd(18)} Bright`)}`)
+  rows.push(
+    p.dim(
+      boxEdge(WIDTH, 'mid', [
+        [2, ' ANSI '],
+        [12, ' Normal 0–7 '],
+        [29, ' Bright 8–15 '],
+      ]),
+    ),
+  )
   PAIRS.forEach((name, k) => {
-    rows.push(`  ${name.padEnd(10)}${cell(BASE.length + k)}${cell(BASE.length + 8 + k)}`)
+    rows.push(boxed(p, ` ${name.padEnd(10)}${cell(BASE.length + k)}${cell(BASE.length + 8 + k)}`, WIDTH))
   })
+  rows.push(p.dim(boxEdge(WIDTH, 'bottom')))
   return rows
 }

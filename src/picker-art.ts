@@ -10,11 +10,23 @@ const PLANE_CHROMA = 0.37
 const RAINBOW_L = 0.74
 const RAINBOW_C = 0.15
 
-const PANEL_Z = -1073741827
-const ART_Z = -1073741826
+const PANEL_Z = -1073741828
+const ART_Z = -1073741827
+const ORIGIN_Z = -1073741826
 const THUMB_Z = -1073741825
 const FIRST_ID = 2 ** 31 - 64
-const NAMES = ['panel', 'plane', 'hue', 'contrast', 'mark', 'hue-thumb', 'contrast-thumb'] as const
+const NAMES = [
+  'panel',
+  'plane',
+  'hue',
+  'contrast',
+  'mark',
+  'hue-thumb',
+  'contrast-thumb',
+  'origin',
+  'hue-origin',
+  'contrast-origin',
+] as const
 const CHUNK = 4096
 
 type Env = Record<string, string | undefined>
@@ -44,6 +56,7 @@ export interface Art {
   tabs: Box & { active: number; count: number }
   field: Box
   divider: number | undefined
+  origin: { l: number; c: number; h: number; color: Hex; at: number } | undefined
 }
 
 interface Piece {
@@ -342,7 +355,15 @@ export function thumbPixels(
   return image
 }
 
-function thumb(name: Name, cx: number, cy: number, radius: number, fill: Hex | undefined, cell: Cell): Piece {
+function thumb(
+  name: Name,
+  cx: number,
+  cy: number,
+  radius: number,
+  fill: Hex | undefined,
+  cell: Cell,
+  z = THUMB_Z,
+): Piece {
   const c0 = Math.floor((cx - radius - 2) / cell.w)
   const c1 = Math.floor((cx + radius + 2) / cell.w)
   const r0 = Math.floor((cy - radius - 2) / cell.h)
@@ -354,7 +375,7 @@ function thumb(name: Name, cx: number, cy: number, radius: number, fill: Hex | u
     name,
     key: `${box.cols}x${box.rows} ${x},${y} ${radius} ${fill ?? '-'}`,
     box,
-    z: THUMB_Z,
+    z,
     paint: () => thumbPixels(box.cols, box.rows, x, y, radius, fill, cell),
   }
 }
@@ -372,8 +393,11 @@ export function piecesOf(art: Art, cell: Cell): Piece[] {
   const along = (box: Box, at: number) => (box.col + 0.5 + at * (box.cols - 1)) * cell.w
   const middle = (box: Box) => (box.row + 0.5) * cell.h
   const plane = art.plane
-  const sample = ((PLANE_TOP - plane.l) / (PLANE_TOP - PLANE_BOTTOM)) * (plane.rows * 2 - 1)
-  const markY = plane.row * cell.h + ((Math.min(plane.rows * 2 - 1, Math.max(0, sample)) + 0.5) * cell.h) / 2
+  const yOf = (l: number) => {
+    const sample = ((PLANE_TOP - l) / (PLANE_TOP - PLANE_BOTTOM)) * (plane.rows * 2 - 1)
+    return plane.row * cell.h + ((Math.min(plane.rows * 2 - 1, Math.max(0, sample)) + 0.5) * cell.h) / 2
+  }
+  const markY = yOf(plane.l)
   const pieces: Piece[] = [
     {
       name: 'panel',
@@ -414,6 +438,31 @@ export function piecesOf(art: Art, cell: Cell): Piece[] {
       cell,
     ),
   ]
+  const origin = art.origin
+  if (origin) {
+    const small = Math.max(3, Math.round(radius * 0.55))
+    pieces.push(
+      thumb(
+        'origin',
+        along(plane, shareOf(origin.l, origin.c, origin.h)),
+        yOf(origin.l),
+        small,
+        origin.color,
+        cell,
+        ORIGIN_Z,
+      ),
+      thumb('hue-origin', along(art.hue, origin.h / 360), middle(art.hue), small, origin.color, cell, ORIGIN_Z),
+      thumb(
+        'contrast-origin',
+        along(art.contrast, origin.at),
+        middle(art.contrast),
+        small,
+        origin.color,
+        cell,
+        ORIGIN_Z,
+      ),
+    )
+  }
   return pieces
 }
 

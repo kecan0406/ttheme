@@ -26,18 +26,22 @@ export interface Mouse {
   alt: boolean
   ctrl: boolean
   count: number
+  fx?: number
+  fy?: number
 }
 
 export type Inbound =
   | { kind: 'key'; key: string }
   | { kind: 'paste'; text: string }
   | { kind: 'osc'; code: string; meta: Record<string, string>; payload: string }
+  | { kind: 'color'; code: string; value: string }
   | { kind: 'mode'; mode: number; value: number }
   | { kind: 'attributes' }
   | { kind: 'size'; of: 'cell' | 'window' | 'grid'; h: number; w: number }
   | Mouse
 
 export const CELL_QUERY = '\x1b]1337;ReportCellSize\x07\x1b[16t\x1b[14t\x1b[18t'
+export const PIXEL_QUERY = '\x1b[?1016$p\x1b[16t'
 
 const CSI_KEYS: Record<string, string> = {
   A: 'up',
@@ -72,10 +76,13 @@ const NAMED: Record<string, string> = {
 
 const CSI = /\[([0-?]*)([ -/]*)([@-~])/y
 const CSI_OPEN = /^\[[0-?]*[ -/]*$/
+const SGR_MOUSE = /\[(<-?\d+;-?\d+;-?\d+)([Mm])/y
+const SGR_OPEN = /^\[<[-\d;]*$/
 const OSC_CODE = /\](\d+)/y
 const OSC_OPEN = /^\]\d*$/
 const OSC_OPENED = /\]\d+;/y
 const CELL_SIZE = /^1337;ReportCellSize=([\d.]+);([\d.]+)(?:;([\d.]+))?$/
+const COLOR = /^(1[0-2]|17|4;\d{1,3});(rgba?:[0-9a-fA-F/]+)$/
 const PASTE_START = '\x1b[200~'
 const PASTE_END = '\x1b[201~'
 
@@ -151,10 +158,19 @@ function x10(input: string, stop: number, final: boolean): Step {
   return { events: mouse ? [mouse] : [], end }
 }
 
-function report(params: string, between: string, final: string): Inbound[] {
+function pixelled(code: number, x: number, y: number, released: boolean, cell: Cell): Mouse | undefined {
+  const across = Math.max(0, x) / cell.w
+  const down = Math.max(0, y) / cell.h
+  const col = Math.floor(across)
+  const row = Math.floor(down)
+  const mouse = pointer(code, col, row, released)
+  return mouse && { ...mouse, fx: across - col, fy: down - row }
+}
+
+function report(params: string, between: string, final: string, cell: Cell | undefined): Inbound[] {
   if ((final === 'M' || final === 'm') && between === '' && params.startsWith('<')) {
     const [code = -1, x = 0, y = 0] = params.slice(1).split(';').map(Number)
-    const mouse = pointer(code, x - 1, y - 1, final === 'm')
+    const mouse = cell ? pixelled(code, x, y, final === 'm', cell) : pointer(code, x - 1, y - 1, final === 'm')
     return mouse ? [mouse] : []
   }
   if (final === 't' && between === '') {
@@ -173,11 +189,17 @@ function report(params: string, between: string, final: string): Inbound[] {
   return name ? [key(name)] : []
 }
 
-function csi(input: string, at: number, final: boolean): Step {
+function csi(input: string, at: number, final: boolean, cell: Cell | undefined): Step {
+  SGR_MOUSE.lastIndex = at + 1
+  const mouse = SGR_MOUSE.exec(input)
+  if (mouse) {
+    return { events: report(mouse[1] as string, '', mouse[2] as string, cell), end: at + 1 + mouse[0].length }
+  }
   CSI.lastIndex = at + 1
   const m = CSI.exec(input)
   if (!m) {
-    return !final && CSI_OPEN.test(input.slice(at + 1)) ? undefined : lone(at)
+    const rest = input.slice(at + 1)
+    return !final && (CSI_OPEN.test(rest) || SGR_OPEN.test(rest)) ? undefined : lone(at)
   }
   const [whole, params = '', between = '', last = ''] = m
   const stop = at + 1 + whole.length
@@ -191,7 +213,7 @@ function csi(input: string, at: number, final: boolean): Step {
     }
     return { events: [{ kind: 'paste', text: input.slice(stop, close) }], end: close + PASTE_END.length }
   }
-  return { events: report(params, between, last), end: stop }
+  return { events: report(params, between, last, cell), end: stop }
 }
 
 function oscEvents(body: string): Inbound[] {
@@ -201,6 +223,10 @@ function oscEvents(body: string): Inbound[] {
     return [
       { kind: 'size', of: 'cell', h: Math.round(Number(cell[1]) * scale), w: Math.round(Number(cell[2]) * scale) },
     ]
+  }
+  const color = COLOR.exec(body)
+  if (color) {
+    return [{ kind: 'color', code: color[1] as string, value: color[2] as string }]
   }
   const [code = '', meta = '', ...rest] = body.split(';')
   return [{ kind: 'osc', code, meta: metadata(meta), payload: rest.join(';') }]
@@ -233,13 +259,13 @@ function ss3(input: string, at: number, final: boolean): Step {
   return { events: name ? [key(name)] : [], end: at + 3 }
 }
 
-function sequence(input: string, at: number, final: boolean): Step {
+function sequence(input: string, at: number, final: boolean, cell: Cell | undefined): Step {
   const next = input[at + 1]
   if (next === undefined) {
     return final ? lone(at) : undefined
   }
   if (next === '[') {
-    return csi(input, at, final)
+    return csi(input, at, final, cell)
   }
   if (next === ']') {
     return osc(input, at, final)
@@ -256,12 +282,12 @@ function sequence(input: string, at: number, final: boolean): Step {
   return lone(at)
 }
 
-export function decode(input: string, final = false): { events: Inbound[]; rest: string } {
+export function decode(input: string, final = false, cell?: Cell): { events: Inbound[]; rest: string } {
   const events: Inbound[] = []
   let at = 0
   while (at < input.length) {
     if (input[at] === '\x1b') {
-      const step = sequence(input, at, final)
+      const step = sequence(input, at, final, cell)
       if (!step) {
         return { events, rest: input.slice(at) }
       }
@@ -321,10 +347,16 @@ export class Keys {
   private wheeled: { at: number; way: number } | undefined
   private readonly utf8 = new StringDecoder('utf8')
   private readonly burst: (typed: string) => boolean
+  private readonly cell: () => Cell | undefined
   private readonly take: (events: Inbound[]) => void
 
-  constructor(take: (events: Inbound[]) => void, burst: (typed: string) => boolean = () => false) {
+  constructor(
+    take: (events: Inbound[]) => void,
+    burst: (typed: string) => boolean = () => false,
+    cell: () => Cell | undefined = () => undefined,
+  ) {
     this.burst = burst
+    this.cell = cell
     this.take = (events) => {
       const kept = this.counted(events)
       if (kept.length > 0) {
@@ -381,7 +413,7 @@ export class Keys {
       this.held += text
       return
     }
-    const { events, rest } = decode(this.held + text)
+    const { events, rest } = decode(this.held + text, false, this.cell())
     this.held = rest
     if (rest && !long(rest)) {
       this.wait(rest.length === 1 ? ESC_WAIT : SEQUENCE_WAIT)
@@ -405,7 +437,7 @@ export class Keys {
   flush(): void {
     clearTimeout(this.timer)
     this.carry = undefined
-    const { events } = decode(this.held, true)
+    const { events } = decode(this.held, true, this.cell())
     this.held = ''
     if (events.length > 0) {
       this.take(events)
@@ -440,5 +472,21 @@ export class CellProbe {
     return shown && grid && grid.h > 0 && grid.w > 0
       ? { h: Math.floor(shown.h / grid.h), w: Math.floor(shown.w / grid.w) }
       : undefined
+  }
+}
+
+export class PixelProbe {
+  private known = false
+  private cell: Cell | undefined
+
+  see(event: Inbound): { cell: Cell | undefined } | undefined {
+    if (event.kind === 'mode' && event.mode === 1016) {
+      this.known = event.value === 1 || event.value === 2
+    } else if (event.kind === 'size' && event.of === 'cell' && event.w > 0 && event.h > 0) {
+      this.cell = { w: event.w, h: event.h }
+    } else if (event.kind === 'attributes') {
+      return { cell: this.known ? this.cell : undefined }
+    }
+    return undefined
   }
 }

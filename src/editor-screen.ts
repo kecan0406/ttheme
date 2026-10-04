@@ -1,20 +1,22 @@
 import { cells, fit, spread, wrapText } from './ansi.ts'
 import { type Look, pictureArea, planeAt, renderBuilder } from './builder-screen.ts'
-import { type Hex, type Oklch, oklch, rgb } from './color.ts'
+import { type Hex, mix, type Oklch, oklch, rgb } from './color.ts'
 import { brightDrift, hueGap, lookalikes, offRole, ROLE_HUES, roleOf } from './contrast.ts'
 import type { Backdrop } from './editor-backdrop.ts'
 import {
+  boxEdge,
+  boxed,
   channelSamples,
   checkMark,
   contrastLine,
   detailChecks,
   type EditorSpot,
   fixHint,
-  gateLines,
+  gateBox,
   gradient,
   heldOf,
   LEFT,
-  lchShort,
+  lchTight,
   type Paint,
   painter,
   position,
@@ -24,7 +26,7 @@ import {
 } from './editor-paint.ts'
 import { typedDrop } from './find/attach.ts'
 import type { Start } from './find/find.ts'
-import { slotOsc } from './osc.ts'
+import { colorQuery, SLOT_CODES, slotColors } from './osc.ts'
 import {
   BASE,
   CHANNELS,
@@ -45,7 +47,7 @@ import { SCENES, sceneAt, sceneParts } from './scenes.ts'
 import type { Colors } from './seeds.ts'
 import { grow, SEED_FIELDS, type Seeds } from './seeds.ts'
 import { CLEAR } from './terminal.ts'
-import { CELL_QUERY, CellProbe, type Mouse } from './tui/keys.ts'
+import { CELL_QUERY, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './tui/keys.ts'
 import { Screen } from './tui/screen.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
 import { type Hit, keyZone } from './tui/zones.ts'
@@ -125,7 +127,7 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
     const glyph = e.signature.includes(SLOT_NAMES[slot] as string) ? '◆' : p.color ? '■' : ' '
     const mark = bad.has(slot) ? '✗' : e.tone && e.changed(slot) ? '●' : ' '
     const sw = p.color ? `${p.fg(hex)}${glyph}${focused ? p.fg(c.foreground) : '\x1b[39m'} ` : `${glyph} `
-    const text = `${sw}${lchShort(e.lch[slot] as Oklch)}${mark}`
+    const text = `${sw}${lchTight(e.lch[slot] as Oklch)}${mark}`
     if (!focused) {
       return spot({ kind: 'slot', slot }, ` ${text}`)
     }
@@ -135,13 +137,27 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
     )
   }
   const gutter = (here: boolean) => (here ? (p.color ? `${p.fg(c.cursor)}▌\x1b[39m ` : '▌ ') : '  ')
-  const lines = [`  ${p.dim('Base')}`]
+  const lines = [p.dim(boxEdge(wide, 'top', [[2, ' Base ']]))]
   for (let row = 0; row < BASE.length; row++) {
     const here = row === e.row
     const label = (BASE[row] as string).padEnd(10)
-    lines.push(`${spot({ kind: 'slot', slot: row }, `${gutter(here)}${here ? p.bold(label) : label}`)}${cell(row)}`)
+    lines.push(
+      boxed(
+        p,
+        `${spot({ kind: 'slot', slot: row }, `${gutter(here)}${here ? p.bold(label) : label}`)}${cell(row)}`,
+        wide,
+      ),
+    )
   }
-  lines.push('', `  ${p.dim(`${'ANSI'.padEnd(10)} ${'Normal'.padEnd(18)} Bright`)}`)
+  lines.push(
+    p.dim(
+      boxEdge(wide, 'mid', [
+        [2, ' ANSI '],
+        [12, ' Normal 0–7 '],
+        [29, ' Bright 8–15 '],
+      ]),
+    ),
+  )
   for (let row = BASE.length; row < ROWS; row++) {
     const here = row === e.row
     const label = (PAIRS[row - BASE.length] as string).padEnd(10)
@@ -149,10 +165,11 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
       { kind: 'slot', slot: row + (e.col === 1 ? 8 : 0) },
       `${gutter(here)}${here ? p.bold(label) : label}`,
     )
-    lines.push(`${named}${cell(row)}${cell(row + 8)}`)
+    lines.push(boxed(p, `${named}${cell(row)}${cell(row + 8)}`, wide))
   }
-  lines.push('')
-  return [...lines, ...gateLines(p, e, height - lines.length, wide)]
+  lines.push(p.dim(boxEdge(wide, 'bottom')))
+  const gate = gateBox(p, e, height - lines.length, wide)
+  return [...lines, ...Array.from({ length: Math.max(0, height - lines.length - gate.length) }, () => ''), ...gate]
 }
 
 function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
@@ -183,7 +200,7 @@ function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
     lines.push(`  ${p.dim(line)}`)
   }
   lines.push('')
-  return [...lines, ...gateLines(p, e, height - lines.length)]
+  return [...lines, ...gateBox(p, e, height - lines.length, LEFT)]
 }
 
 function sample(p: Paint, c: Colors, width: number, room: number, scene: number, slot: number): string[] {
@@ -434,7 +451,7 @@ const KEYS: [string, string][] = [
     'a while tuning: this, pair, normals, brights or accents — the slots in it move by the same step, each keeping its own color',
   ],
   ['Relations', 'g shows the lightness, chroma and hue of every ANSI color at once, and the relations the gate checks'],
-  ['Sample', '⇧←→ another scene · the slot under the cursor is underlined where it is used'],
+  ['Sample', '⇧←→ another tab · the slot under the cursor is underlined where it is used · w dims the rest'],
   [
     'Inspect',
     'i, or a click on the sample, finds the slots a spot uses · ←→↑↓ move · enter goes to the slot · esc leaves',
@@ -443,7 +460,7 @@ const KEYS: [string, string][] = [
     'Link',
     'l makes a bright follow its normal — tuning the normal moves it, tuning the bright alone unlinks it · = snaps it to its normal',
   ],
-  ['Filter', 'm only the slots that changed · ctrl+f search the slots · G the gate on the left'],
+  ['Filter', 'm only the slots that changed · n and N walk the gate misses listed under the slots'],
   [
     'Export',
     'x copies the share code, an add command or the palette file · I takes colors from another palette or a share code',
@@ -500,8 +517,8 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
 
 const KEEP = new Set(['enter', 's', '?', 'g', 'a', 'i'])
 
-function footer(p: Paint, e: PaletteEditor, width: number): string {
-  const accent = p.fg(e.list[2] as Hex)
+function footer(p: Paint, e: PaletteEditor, width: number, chrome?: readonly Hex[]): string {
+  const accent = p.fg((chrome ?? e.list)[2] as Hex)
   let badge = 'EDIT'
   let lead = ''
   let keys: [string, string][] = []
@@ -540,14 +557,6 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['enter', 'choose'],
     ]
     right = 'esc close'
-  } else if (e.searching) {
-    badge = 'EDIT (SEARCH)'
-    lead = e.search ? p.bold(`${e.search}▏`) : p.dim('type to filter the slots')
-    keys = [
-      ['enter', 'done'],
-      ['ctrl+u', 'clear'],
-    ]
-    right = 'esc clear'
   } else if (e.compare) {
     badge = 'EDIT (BEFORE)'
     lead = 'The colors you started from'
@@ -668,7 +677,7 @@ export function drawEditor(
   if (!e.overlay && e.mode !== 'seeds') {
     const built = renderBuilder(e, cols, rows, color, look)
     if (built) {
-      return { lines: [...built.lines, footer(p, e, cols)], art: built.art }
+      return { lines: [...built.lines, footer(p, e, cols, look.chrome)], art: built.art }
     }
   }
   const failing = e.failing().length
@@ -696,7 +705,7 @@ export function drawEditor(
   for (let i = 0; i < height; i++) {
     lines.push(fit(body[i] ?? '', cols))
   }
-  lines.push('', footer(p, e, cols))
+  lines.push('', footer(p, e, cols, look.chrome))
   return { lines, art: undefined }
 }
 
@@ -731,7 +740,7 @@ export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse
   if (!hit || !target) {
     return
   }
-  const along = hit.width > 1 ? hit.x / (hit.width - 1) : 0
+  const along = hit.width > 1 ? (hit.exact.x - 0.5) / (hit.width - 1) : 0
   if (event.action === 'release') {
     if (!hit.inside) {
       return
@@ -748,7 +757,7 @@ export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse
     return
   }
   if (target.kind === 'plane') {
-    const at = planeAt(target.row + hit.y, target.rows, hit.x, hit.width, (e.lch[e.slot()] as Oklch).h)
+    const at = planeAt(target.row + hit.exact.y, target.rows, hit.exact.x, hit.width, (e.lch[e.slot()] as Oklch).h)
     e.plane(at.lightness, at.chroma)
   } else if (target.kind === 'bar') {
     e.slide(target.channel, along)
@@ -757,7 +766,6 @@ export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse
   } else if (event.action !== 'press') {
     return
   } else if (target.kind === 'slot') {
-    e.tab = 'colors'
     e.select(target.slot)
   } else if (target.kind === 'open') {
     e.openSlot(target.slot)
@@ -765,8 +773,6 @@ export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse
     e.point(target.spot)
   } else if (target.kind === 'entry') {
     e.entry = target.index
-  } else if (target.kind === 'tab') {
-    e.tab = target.tab
   } else if (target.kind === 'format') {
     e.format = target.format
   } else if (target.kind === 'channel') {
@@ -789,8 +795,6 @@ export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse
 }
 
 export interface Surface {
-  only?: readonly number[]
-  look?: (shown: readonly Hex[]) => void
   backdrop?: Backdrop
   layer?: PickerLayer
   color: boolean
@@ -798,7 +802,6 @@ export interface Surface {
 }
 
 const MODES = [ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES]
-const LOOK_AFTER = 33
 
 export async function runEditor(options: EditorOptions, surface: Surface): Promise<Edited | undefined> {
   const editor = new PaletteEditor(options)
@@ -809,29 +812,29 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     ? { modes: [PASTES, ...pointing()], assume: [HIDE_CURSOR, NO_WRAP], burst }
     : { modes: [...MODES, ...pointing()], burst }
   return within(terminalOptions, async (terminal) => {
-    const painted: (Hex | undefined)[] = []
-    let looked = ''
-    let timer: NodeJS.Timeout | undefined
     let away = false
     let over = false
-    const paint = () => {
-      timer = undefined
-      if (surface.look) {
-        const shown = editor.shown()
-        if (shown.join(' ') !== looked) {
-          looked = shown.join(' ')
-          surface.look(shown)
+    const own = new Map<string, string>()
+    const pixels = new PixelProbe()
+    const seen = await terminal.ask(
+      `${colorQuery(SLOT_CODES, '')}${pointing().length > 0 ? PIXEL_QUERY : ''}\x1b[c`,
+      (event) => {
+        if (event.kind === 'color') {
+          own.set(event.code, event.value)
+          return undefined
         }
-        return
-      }
-      let out = ''
-      editor.shown().forEach((hex, slot) => {
-        if (painted[slot] !== hex && surface.only?.includes(slot)) {
-          out += slotOsc(slot, hex)
-          painted[slot] = hex
-        }
-      })
-      terminal.write(out)
+        return pixels.see(event)
+      },
+      1000,
+    )
+    if (seen?.cell) {
+      terminal.pixels(seen.cell)
+    }
+    const answered = slotColors(own) as (Hex | undefined)[]
+    const chrome = answered.map((hex, slot) => hex ?? (editor.start[slot] as Hex))
+    const [ground, ink] = chrome as [Hex, Hex]
+    if (!answered[3]) {
+      chrome[3] = mix(ground, ink, 0.2)
     }
     const screen = new Screen({
       write: (text) => terminal.write(text),
@@ -842,6 +845,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
         const { lines, art } = drawEditor(editor, terminal.cols, terminal.rows, surface.color, {
           behind: editor.pic && backdrop?.laid === true,
           art: layer?.ready === true,
+          chrome,
         })
         return {
           lines,
@@ -867,9 +871,6 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
       } else {
         screen.request()
       }
-      if (surface.only || surface.look) {
-        timer ??= setTimeout(paint, LOOK_AFTER)
-      }
     }
     const visit = async (start: Start | undefined) => {
       const find = options.find
@@ -877,8 +878,6 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
         return
       }
       away = true
-      clearTimeout(timer)
-      timer = undefined
       terminal.write(`${backdrop?.clear() ?? ''}${layer?.clear() ?? ''}`)
       try {
         editor.found(await find(editor.edited(), start))
@@ -890,8 +889,6 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
       }
       away = false
       backdrop?.load()
-      painted.length = 0
-      looked = ''
       screen.reset(CLEAR)
       changed()
     }
@@ -955,7 +952,6 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
       return edited
     } finally {
       over = true
-      clearTimeout(timer)
       screen.stop()
       terminal.write(`${backdrop?.close() ?? ''}${layer?.clear() ?? ''}`)
     }

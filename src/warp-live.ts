@@ -135,10 +135,6 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
       }
       return ''
     },
-    look: (name, shown) => {
-      const [background = '', foreground = '', cursor = '', , ...ansi] = shown
-      show({ name, background, foreground, cursor, ansi }, undefined, picture)
-    },
     wear: (_, terminals) => (terminals.includes('warp') ? '' : undefined),
     saved: async () => new Map([['theme', warpThemeOf(readFileSync(settings, 'utf8')) ?? '']]),
     restore: (saved) => {

@@ -61,6 +61,10 @@ test('pastes and protocol replies come apart from keys, in order, and unfinished
     { kind: 'attributes' },
   ])
   assert.equal(decode('\x1b]5522;type=read').rest, '\x1b]5522;type=read')
+  assert.deepEqual(decode('\x1b]11;rgb:1111/1919/1c1c\x07\x1b]4;3;rgb:ffff/0000/8080\x1b\\').events, [
+    { kind: 'color', code: '11', value: 'rgb:1111/1919/1c1c' },
+    { kind: 'color', code: '4;3', value: 'rgb:ffff/0000/8080' },
+  ])
 })
 
 test('an escape sequence split across two reads is one key, and a lone esc is read once the wait passes', async () => {
@@ -107,6 +111,21 @@ test('an SGR mouse report reads its button, action, cell and modifiers, zero-bas
     'wheel x1 2,9',
   ])
   assert.deepEqual(mice('\x1b[<20;2;2M\x1b[<8;2;2M'), ['press left 1,1 shift ctrl', 'press left 1,1 alt'])
+})
+
+test('an SGR-Pixels report reads as the cell under it and where in that cell it fell', () => {
+  const [press, drag] = decode('\x1b[<0;189;95M\x1b[<32;-3;19M', true, { w: 18, h: 38 }).events
+  assert.deepEqual(
+    press?.kind === 'mouse' && [press.action, press.row, press.col, press.fx?.toFixed(2), press.fy?.toFixed(2)],
+    ['press', 2, 10, '0.50', '0.50'],
+  )
+  assert.deepEqual(drag?.kind === 'mouse' && [drag.action, drag.row, drag.col, drag.fx, drag.fy?.toFixed(2)], [
+    'drag',
+    0,
+    0,
+    0,
+    '0.50',
+  ])
 })
 
 test('a legacy X10 mouse report is read whole, so its bytes never land as keys', () => {

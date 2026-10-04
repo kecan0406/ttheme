@@ -140,7 +140,7 @@ test('the screen fits 80×24 and says what it needs below that', () => {
   assert.equal(lines.length, 24)
   assert.match(renderEditor(editor(), 70, 20, false).join('\n'), /Needs 80×24 — now 70×20/)
   const red = screen(press(editor(), ...RED))
-  assert.match(red, /Red {2}ansi 1/)
+  assert.match(red, /Red {2}ANSI 1/)
   assert.match(red, /Hue 19° · in red 19±25°/)
 })
 
@@ -337,26 +337,10 @@ test('editing a tone marks the slots off the original colors, and leaves signatu
   assert.equal(e.dirty(), true)
 })
 
-test('ctrl+f filters the slots as you type, esc clears the search', () => {
-  const e = editor()
-  e.viewport(140, 40)
-  press(e, 'ctrl-f', ...'blu')
-  assert.equal(e.searching, true)
-  assert.deepEqual(
-    [8, 9, 12, 20].map((slot) => e.visible(slot)),
-    [true, false, false, false],
-  )
-  press(e, 'enter')
-  assert.equal(e.searching, false)
-  assert.equal(e.visible(8), true)
-  press(e, 'ctrl-f', 'esc')
-  assert.equal(e.search, '')
-})
-
 test('a spot on the sample finds its slots, and enter goes to the slot', () => {
   const e = editor()
   e.viewport(140, 40)
-  e.point({ pane: 'shell', line: 2, run: 3 })
+  e.point({ pane: 'shell', line: 14, run: 3 })
   assert.equal(e.inspect, true)
   assert.deepEqual(e.slotsHere(), { text: 5, ground: 0 })
   press(e, 'enter')
@@ -384,13 +368,13 @@ test('the picker floats over the slot list under its slot, and the rows under it
   press(e, ...RED)
   const list = renderEditor(e, 140, 40, false)
   const open = renderEditor(press(e, 'enter'), 140, 40, false)
-  const at = list.findIndex((line) => line.startsWith('▌ Red'))
-  const end = open.findIndex((line) => line.startsWith('  ╰─'))
+  const at = list.findIndex((line) => line.startsWith('│▌ Red'))
+  const end = open.findIndex((line) => /^.{2}╰─ ↑↓/.test(line))
   assert.equal(open[at], list[at])
-  assert.match(open[at + 1] ?? '', /^ {2}╭─ L × C/)
+  assert.match(open[at + 1] ?? '', /^│ ╭─ L × C/)
   assert.deepEqual(
-    open.slice(at + 1, end + 1).map((line) => line.slice(43, 44)),
-    list.slice(at + 1, end + 1).map((line) => line.slice(43, 44)),
+    open.slice(at + 1, end + 1).map((line) => line.slice(44, 46)),
+    list.slice(at + 1, end + 1).map((line) => line.slice(44, 46)),
   )
   assert.deepEqual(open.slice(end + 1, 39), list.slice(end + 1, 39))
 })
