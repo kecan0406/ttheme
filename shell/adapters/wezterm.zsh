@@ -46,12 +46,12 @@ __tt_pv_bg_show() {
   (( bgcw )) || return 0
   local name=$1 img="" size fit=contain view="" REPLY
   local -i W=$(( pw * bgcw )) H=$(( ph * bgch )) focus=-1
-  local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh reply
+  local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh
   (( ${#p} >= 20 )) || return 0
   (( $2 )) && TTHEME_WEZTERM_VIEW=-
   bgname=$name
   __tt_bg_load $name
-  if (( te && tedirty )) || [[ $name != "$bginc" || "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" != "${bgload[$name]}" ]]; then
+  if [[ $name != "$bginc" || "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" != "${bgload[$name]}" ]]; then
     size=${bgsize[$name]}
     if [[ $size == fill ]]; then
       img=${bgfill[$name]} size=100 fit=cover
@@ -61,14 +61,11 @@ __tt_pv_bg_show() {
       img=${bgsrc[$name]} focus=${bgfocus[$name]}
     fi
     (( bgoff[$name] )) && img=""
-    __tt_pv_bg_draft $name "$img"
-    [[ -n $reply[1] ]] && p=(${=reply[1]})
-    img=$reply[2]
     view="$p[1]||1|$W|$H|0|0|0|0|5"
     if [[ -n $img ]] && __tt_bg_dim "$img"; then
       wh=(${=bgdim[$img]})
       __tt_bg_frame $wh[1] $wh[2] $W $H $size ${bgpos[$name]} $fit $focus
-      view="$p[1]|$img|$reply[3]|$W|$H|${REPLY// /|}|${bgpos[$name]}"
+      view="$p[1]|$img|${bgop[$name]}|$W|$H|${REPLY// /|}|${bgpos[$name]}"
     fi
   fi
   [[ $view == "$TTHEME_WEZTERM_VIEW" ]] && return 0

@@ -44,7 +44,7 @@ typeset -ga SCENARIOS=(
   'preview-config  few    preview  M-c'
   'preview-colors  few    preview  M-c Down Down Down Down Down Down Right'
   'theme-edit      few    preview  Down Right Down Tab@Palette'
-  'theme-tune      few    preview  Down Right Down C-e@Palette Down Down Enter Right Right Right Enter@unsaved'
+  'theme-editor    few    preview  Down Right Down Tab@Palette Enter@slot'
   'theme-keys      few    preview  Down Right Down Right@Palette ?'
   'browse-market   market browse   Down Down Right Down Right Down'
   'preview-market  market preview  Down Right Down Right Down'

@@ -1,3 +1,4 @@
+import { firstSpot, type Layout, layoutOf, moveSpot, type Spot, slotsAt, validSpot } from './builder-layout.ts'
 import { contrast, type Hex, isHex, luminance, type Oklch, oklch, rgb } from './color.ts'
 import {
   ACHROMATIC,
@@ -52,6 +53,7 @@ export const CHANNELS: Channel[] = [
 ]
 
 export const FAST = 5
+const HUE_STEP = 5
 export const CONTRAST = CHANNELS.length
 export const SCOPES = ['this', 'pair', 'normals', 'brights', 'accents'] as const
 export type Scope = (typeof SCOPES)[number]
@@ -91,16 +93,28 @@ export interface Found {
   count: number
 }
 
+export interface Exports {
+  code: (edited: Edited) => string
+  toml: (edited: Edited) => string
+  command: string
+}
+
+export type Tab = 'colors' | 'gate'
+export type Format = 'hex' | 'rgb' | 'oklch'
+export type Menu = 'export' | 'import'
+
 export interface EditorOptions {
   title: string
   name: string
   colors?: Colors
-  variant?: 'theme'
+  tone?: true
   original?: Colors
   signature: string[]
   waive?: string[]
   palettes?: Choice[]
   pictures?: number
+  exports?: Exports
+  decode?: (text: string) => Colors | undefined
   find?: (edited: Edited, start?: Start) => Promise<Found>
   check: (edited: Edited) => string | undefined
 }
@@ -398,6 +412,10 @@ function edge(l: number, h: number): number {
   return Math.floor(edgeChroma(l, h, C_MAX) * 10_000) / 10_000
 }
 
+function offsetOf(from: Oklch, to: Oklch): Oklch {
+  return { l: to.l - from.l, c: to.c - from.c, h: ((((to.h - from.h) % 360) + 540) % 360) - 180 }
+}
+
 function alongside(range: { min: number; max: number; step: number; wraps?: boolean }, at: number): number {
   const top = range.wraps ? range.max - range.step : range.max
   return Math.min(top, Math.round((range.min + (range.max - range.min) * at) / range.step) * range.step)
@@ -426,13 +444,25 @@ export class PaletteEditor {
   filter = ''
   pick = 0
   result: 'saved' | 'cancelled' | undefined
-  act: 'save' | 'cancel' | 'above' | 'below' | undefined
   wants: { start?: Start } | undefined
   pictures: number
+  inspect = false
+  spot: Spot | undefined
+  tab: Tab = 'colors'
+  format: Format = 'hex'
+  pic = true
+  menu: Menu | undefined
+  entry = 0
+  changedOnly = false
+  search = ''
+  searching = false
+  folded = new Set<string>()
+  size: { cols: number; rows: number } | undefined
+  copied: string | undefined
   readonly startPictures: number
   readonly options: EditorOptions
   readonly fresh: boolean
-  readonly theme: boolean
+  readonly tone: boolean
   private readonly startSignature: string[]
   private seeded = false
   private tuneFrom: { list: Hex[]; lch: Oklch[] } | undefined
@@ -441,10 +471,13 @@ export class PaletteEditor {
   private history: Snapshot[] = []
   private future: Snapshot[] = []
   private lastEdit: string | undefined
+  private links = new Map<number, number>()
+  private unlinked = new Set<number>()
+  private offsets = new Map<number, Oklch>()
 
   constructor(options: EditorOptions) {
     this.options = options
-    this.theme = options.variant === 'theme'
+    this.tone = options.tone === true
     this.fresh = options.colors === undefined
     this.mode = this.fresh ? 'seeds' : 'list'
     this.list = listOf(options.colors ?? grow(this.seeds))
@@ -455,17 +488,65 @@ export class PaletteEditor {
     this.startSignature = [...options.signature]
     this.pictures = options.pictures ?? 0
     this.startPictures = this.pictures
+    this.chain(this.original)
   }
 
-  markSaved(): void {
-    this.start = [...this.list]
-    this.history = []
-    this.future = []
-    this.lastEdit = undefined
+  private chain(list: Hex[]): void {
+    this.links = new Map()
+    this.unlinked = new Set()
+    this.offsets = new Map()
+    for (let k = 0; k < 8; k++) {
+      const normal = BASE.length + k
+      const bright = normal + 8
+      const a = this.lchOf(list[normal] as Hex)
+      const b = this.lchOf(list[bright] as Hex)
+      if (a.c >= ACHROMATIC && b.c >= ACHROMATIC && hueGap(a.h, b.h) <= 3) {
+        this.links.set(bright, normal)
+        this.offsets.set(bright, offsetOf(a, b))
+      }
+    }
   }
 
-  offDefault(slot: number): boolean {
+  pair(slot: number): { normal: number; bright: number; on: boolean; lift: number } | undefined {
+    if (slot < BASE.length) {
+      return undefined
+    }
+    const normal = BASE.length + ((slot - BASE.length) % 8)
+    const bright = normal + 8
+    return {
+      normal,
+      bright,
+      on: this.linkOf(bright) !== undefined,
+      lift: (this.lch[bright] as Oklch).l - (this.lch[normal] as Oklch).l,
+    }
+  }
+
+  linkOf(slot: number): number | undefined {
+    const normal = this.links.get(slot)
+    return normal !== undefined && !this.unlinked.has(slot) ? normal : undefined
+  }
+
+  changed(slot: number): boolean {
     return this.list[slot] !== this.original[slot]
+  }
+
+  visible(slot: number): boolean {
+    if (this.changedOnly && !this.changed(slot)) {
+      return false
+    }
+    if (this.search === '') {
+      return true
+    }
+    const { name, about } = slotLabel(slot)
+    return `${name} ${about} ${this.list[slot]}`.toLowerCase().includes(this.search.toLowerCase())
+  }
+
+  changes(): number {
+    return this.list.filter((_, slot) => this.changed(slot)).length
+  }
+
+  private slotAt(row: number, col: number): number {
+    return row < BASE.length ? row : row + (col === 1 ? 8 : 0)
   }
 
   get added(): number {
@@ -533,15 +614,24 @@ export class PaletteEditor {
     if (this.overlay) {
       return
     }
-    if (text.trim() === '') {
+    if (!this.tone && text.trim() === '') {
       this.findPictures({ clipboard: true })
       return
     }
-    if (isPicture(text)) {
+    if (!this.tone && isPicture(text)) {
       this.findPictures({ paste: text })
       return
     }
     if (this.mode === 'seeds') {
+      return
+    }
+    const drawn = this.options.decode?.(text)
+    if (drawn) {
+      this.remember('open')
+      this.list = listOf(drawn)
+      this.lch = this.lchs()
+      this.chain(this.list)
+      this.notice = 'Took the colors of the share code'
       return
     }
     const color = parseColor(text)
@@ -556,11 +646,7 @@ export class PaletteEditor {
   press(key: string): void {
     this.notice = undefined
     if (key === 'ctrl-c') {
-      if (this.theme) {
-        this.act = 'cancel'
-      } else {
-        this.result = 'cancelled'
-      }
+      this.result = 'cancelled'
       return
     }
     if (this.quitting) {
@@ -582,11 +668,22 @@ export class PaletteEditor {
       this.openKey(key)
       return
     }
+    if (this.menu) {
+      this.menuKey(key)
+      return
+    }
+    if (this.searching) {
+      this.searchKey(key)
+      return
+    }
     if (key === '?') {
       this.overlay = 'keys'
       return
     }
-    if (this.theme && (key === 'ctrl-v' || key === 'alt-v' || key === 'p')) {
+    if (this.inspect && this.mode === 'list' && this.inspectKey(key)) {
+      return
+    }
+    if (this.tone && (key === 'ctrl-v' || key === 'alt-v' || key === 'p')) {
       return
     }
     if (key === 'ctrl-v' || key === 'alt-v') {
@@ -683,7 +780,8 @@ export class PaletteEditor {
     } else if (this.mode === 'seeds') {
       this.field = clamp(this.field, SEED_FIELDS.length - 1)
     } else if (this.mode === 'tune') {
-      this.channel = clamp(this.channel, CONTRAST)
+      this.channel = 0
+      this.step(-step)
     } else {
       this.row = clamp(this.row, ROWS - 1)
       this.lastEdit = undefined
@@ -728,14 +826,13 @@ export class PaletteEditor {
   private leaveSeeds(): void {
     this.start = [...this.list]
     this.original = [...this.list]
+    this.chain(this.original)
     this.seeded = true
     this.mode = 'list'
   }
 
   private leave(): void {
-    if (this.theme) {
-      this.act = 'cancel'
-    } else if (this.dirty()) {
+    if (this.dirty()) {
       this.quitting = true
     } else {
       this.result = 'cancelled'
@@ -761,10 +858,12 @@ export class PaletteEditor {
 
   private listKey(key: string): void {
     if (key === 'up' || key === 'down') {
-      if (this.theme && this.row === (key === 'up' ? 0 : ROWS - 1)) {
-        this.act = key === 'up' ? 'above' : 'below'
-      } else {
-        this.row = (this.row + (key === 'up' ? ROWS - 1 : 1)) % ROWS
+      for (let i = 0, row = this.row; i < ROWS; i++) {
+        row = (row + (key === 'up' ? ROWS - 1 : 1)) % ROWS
+        if (this.visible(this.slotAt(row, this.col))) {
+          this.row = row
+          break
+        }
       }
       this.lastEdit = undefined
     } else if (key === 'home' || key === 'end') {
@@ -772,11 +871,14 @@ export class PaletteEditor {
     } else if (key === 'pgup' || key === 'pgdn') {
       this.row = key === 'pgup' ? 0 : BASE.length
     } else if (key === 'left' || key === 'right') {
-      if (this.row >= BASE.length) {
-        this.col = key === 'left' ? 0 : 1
+      const col = key === 'left' ? 0 : 1
+      if (this.row >= BASE.length && this.visible(this.slotAt(this.row, col))) {
+        this.col = col
         this.lastEdit = undefined
       }
-    } else if ((key === 'shift-left' || key === 'shift-right') && !this.theme) {
+    } else if (this.builderKey(key)) {
+      return
+    } else if (key === 'shift-left' || key === 'shift-right') {
       this.scene += key === 'shift-left' ? -1 : 1
     } else if (key === 'n' || key === 'N') {
       this.nextMiss(key === 'n' ? 1 : -1)
@@ -801,25 +903,279 @@ export class PaletteEditor {
       this.lch = this.lchs()
     } else if (key === '=') {
       this.follow()
-    } else if (key === '*' && !this.theme) {
+    } else if (key === '*' && !this.tone) {
       this.mark()
     } else if (key === 'f') {
       this.fix()
-    } else if (key === 'o' && !this.theme) {
+    } else if (key === 'o' && !this.tone) {
       this.openPalettes()
     } else if (key === 'u') {
       this.undo()
     } else if (key === 'ctrl-r') {
       this.redo()
     } else if (key === 's' || key === 'ctrl-s') {
-      if (this.theme) {
-        this.act = 'save'
-      } else {
-        this.save()
-      }
+      this.save()
     } else if (key === 'esc') {
       this.leave()
     }
+  }
+
+  viewport(cols: number, rows: number): void {
+    this.size = { cols, rows }
+  }
+
+  private layout(): Layout | undefined {
+    return this.size ? layoutOf(this.size.cols, this.size.rows, this.scene) : undefined
+  }
+
+  get roomy(): boolean {
+    return this.layout() !== undefined
+  }
+
+  private reseat(): void {
+    if (this.visible(this.slot())) {
+      return
+    }
+    for (let row = 0; row < ROWS; row++) {
+      if (this.visible(this.slotAt(row, this.col))) {
+        this.row = row
+        return
+      }
+    }
+  }
+
+  private builderKey(key: string): boolean {
+    if (['i', 'm', 'G', 'ctrl-f', 'x', 'I'].includes(key) && !this.roomy) {
+      this.notice = 'The builder needs a window of at least 96×28'
+      return true
+    }
+    if (key === 'i') {
+      this.startInspect()
+    } else if (key === 'l') {
+      this.linkKey()
+    } else if (key === 'm') {
+      this.changedOnly = !this.changedOnly
+      this.reseat()
+      this.notice = this.changedOnly ? (this.changes() > 0 ? undefined : 'Nothing changed yet') : undefined
+    } else if (key === 'b') {
+      this.pic = !this.pic
+    } else if (key === 'G') {
+      this.tab = this.tab === 'gate' ? 'colors' : 'gate'
+    } else if (key === 'ctrl-f') {
+      this.searching = true
+    } else if (key === 'x' && this.options.exports) {
+      this.menu = 'export'
+      this.entry = 0
+    } else if (key === 'I') {
+      this.menu = 'import'
+      this.entry = 0
+    } else {
+      return false
+    }
+    return true
+  }
+
+  private searchKey(key: string): void {
+    if (key === 'esc') {
+      this.search = ''
+      this.searching = false
+    } else if (key === 'enter') {
+      this.searching = false
+    } else {
+      const next = edit(this.search, lowered(key), (ch) => /^[ -~]$/.test(ch) && this.search.length < 24)
+      if (next !== undefined) {
+        this.search = next
+      }
+    }
+    this.reseat()
+  }
+
+  private menuKey(key: string): void {
+    const count = this.menu === 'export' ? 3 : 2
+    if (key === 'esc') {
+      this.menu = undefined
+    } else if (key === 'up' || key === 'down' || key === 'k' || key === 'j') {
+      this.entry = (this.entry + (key === 'up' || key === 'k' ? count - 1 : 1)) % count
+    } else if (key === 'enter') {
+      this.choose(this.entry)
+    }
+  }
+
+  choose(entry: number): void {
+    const menu = this.menu
+    this.menu = undefined
+    if (menu === 'import') {
+      if (entry === 0) {
+        this.openPalettes()
+      } else {
+        this.notice = this.options.decode ? 'Paste a tt1: share code into this window' : 'Share codes are not read here'
+      }
+      return
+    }
+    const exports = this.options.exports
+    if (menu !== 'export' || !exports) {
+      return
+    }
+    try {
+      const edited = this.edited()
+      const code = exports.code(edited)
+      this.copied = entry === 0 ? code : entry === 1 ? `${exports.command} ${code}` : exports.toml(edited)
+      this.notice = `Copied ${entry === 0 ? 'the share code' : entry === 1 ? 'the add command' : 'the palette file'} — paste it where you need it`
+    } catch (error) {
+      this.notice = error instanceof Error ? error.message : String(error)
+    }
+  }
+
+  openMenu(menu: Menu): void {
+    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
+      return
+    }
+    this.menu = this.menu === menu ? undefined : menu
+    this.entry = 0
+  }
+
+  private startInspect(): void {
+    const layout = this.layout()
+    if (!layout) {
+      this.notice = 'The builder needs a window of at least 96×28'
+      return
+    }
+    this.inspect = true
+    this.spot = firstSpot(layout, this.slot())
+  }
+
+  toggleInspect(): void {
+    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
+      return
+    }
+    if (this.inspect) {
+      this.inspect = false
+      this.spot = undefined
+    } else {
+      this.startInspect()
+    }
+  }
+
+  private inspectKey(key: string): boolean {
+    const layout = this.layout()
+    if (!layout) {
+      this.inspect = false
+      return false
+    }
+    const ways: Record<string, 'left' | 'right' | 'up' | 'down' | 'next' | 'previous'> = {
+      left: 'left',
+      right: 'right',
+      up: 'up',
+      k: 'up',
+      down: 'down',
+      j: 'down',
+      tab: 'next',
+      'shift-tab': 'previous',
+    }
+    const way = ways[key]
+    if (key === 'i' || key === 'esc') {
+      this.inspect = false
+      this.spot = undefined
+    } else if (way) {
+      this.spot = moveSpot(layout, validSpot(layout, this.spot), way)
+    } else if (key === 'shift-left' || key === 'shift-right') {
+      this.scene += key === 'shift-left' ? -1 : 1
+      this.spot = undefined
+    } else if (key === 'enter') {
+      this.jump()
+    } else {
+      return false
+    }
+    return true
+  }
+
+  point(spot: Spot): void {
+    if (this.mode !== 'seeds' && !this.overlay && !this.quitting && this.typing === undefined && this.layout()) {
+      this.inspect = true
+      this.spot = spot
+    }
+  }
+
+  fold(group: string): void {
+    if (this.folded.has(group)) {
+      this.folded.delete(group)
+    } else {
+      this.folded.add(group)
+    }
+  }
+
+  slotsHere(): { text: number; ground: number } | undefined {
+    const layout = this.layout()
+    return layout && this.spot ? slotsAt(layout, this.spot) : undefined
+  }
+
+  private jump(): void {
+    const here = this.slotsHere()
+    if (!here) {
+      return
+    }
+    const slot = here.ground !== 0 ? here.ground : here.text
+    this.inspect = false
+    this.spot = undefined
+    this.show(slot)
+    this.select(slot)
+  }
+
+  private show(slot: number): void {
+    if (!this.visible(slot)) {
+      this.changedOnly = false
+      this.search = ''
+    }
+    this.tab = 'colors'
+  }
+
+  openSlot(slot: number): void {
+    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
+      return
+    }
+    const same = this.mode === 'tune' && slot === this.slot()
+    if (this.mode === 'tune') {
+      this.tuneKey('enter')
+    }
+    if (same) {
+      return
+    }
+    this.show(slot)
+    this.select(slot)
+    if (this.mode === 'list') {
+      this.tune()
+    }
+  }
+
+  plane(lightness: number, chroma: number): void {
+    if (!this.grip(0)) {
+      return
+    }
+    this.channel = 0
+    this.put(lightness)
+    this.channel = 1
+    this.put(chroma)
+  }
+
+  private linkKey(): void {
+    const slot = this.slot()
+    if (slot < BASE.length) {
+      this.notice = 'l links a bright to its normal — pick an ANSI row'
+      return
+    }
+    const normal = BASE.length + ((slot - BASE.length) % 8)
+    const bright = normal + 8
+    const names = `${slotLabel(bright).name} and ${slotLabel(normal).name.toLowerCase()}`
+    this.remember('link')
+    if (this.linkOf(bright) !== undefined) {
+      this.unlinked.add(bright)
+      this.notice = `${names} move apart`
+      return
+    }
+    this.links.set(bright, normal)
+    this.unlinked.delete(bright)
+    this.offsets.set(bright, offsetOf(this.lch[normal] as Oklch, this.lch[bright] as Oklch))
+    this.notice = `${names} move together`
   }
 
   private nextMiss(way: number): void {
@@ -843,6 +1199,7 @@ export class PaletteEditor {
   }
 
   private tune(): void {
+    this.tab = 'colors'
     this.remember('tune')
     this.tuneFrom = { list: [...this.list], lch: [...this.lch] }
     this.holds = new Map()
@@ -863,18 +1220,31 @@ export class PaletteEditor {
   }
 
   private tuneKey(key: string): void {
-    const count = CHANNELS.length + 1
     const contrastOn = this.channel === CONTRAST
-    if (key === 'up' || key === 'down' || key === 'tab' || key === 'shift-tab') {
-      this.channel = (this.channel + (key === 'up' || key === 'shift-tab' ? count - 1 : 1)) % count
-    } else if (key === 'left' || key === 'right' || key === 'shift-left' || key === 'shift-right') {
-      const sign = key.endsWith('left') ? -1 : 1
+    if (key === 'tab' || key === 'shift-tab') {
+      this.channel = contrastOn ? 0 : CONTRAST
+    } else if (key === 'up' || key === 'down' || key === 'pgup' || key === 'pgdn') {
+      this.channel = 0
+      this.step((key === 'up' || key === 'pgup' ? 1 : -1) * (key.startsWith('pg') ? FAST : 1))
+    } else if (key === 'left' || key === 'right') {
+      const sign = key === 'left' ? -1 : 1
       if (contrastOn) {
-        this.reach(this.ratio() + sign * (key.startsWith('shift') ? 0.5 : 0.1))
+        this.reach(this.ratio() + sign * 0.1)
       } else {
-        const channel = CHANNELS[this.channel] as Channel
-        this.step(sign * (key.startsWith('shift') ? (channel.wraps ? 10 : FAST) : 1))
+        this.channel = 1
+        this.step(sign)
       }
+    } else if (key === 'shift-left' || key === 'shift-right') {
+      const sign = key === 'shift-left' ? -1 : 1
+      if (contrastOn) {
+        this.reach(this.ratio() + sign * 0.5)
+      } else {
+        this.channel = 2
+        this.step(sign * HUE_STEP)
+      }
+    } else if ((key === ',' || key === '.') && !contrastOn) {
+      this.channel = 2
+      this.step(key === ',' ? -1 : 1)
     } else if (key === 'home' || key === 'end') {
       if (contrastOn) {
         this.reach(key === 'home' ? (this.partner().floor ?? 1) : 21)
@@ -1019,6 +1389,7 @@ export class PaletteEditor {
         this.holds.set(s, want)
         this.place(s, o.l, want, o.h)
       }
+      this.trail([slot, ...others])
       return
     }
     const delta = channel.key === 'h' ? ((((rounded - at.h) % 360) + 540) % 360) - 180 : rounded - at.l
@@ -1040,6 +1411,23 @@ export class PaletteEditor {
         channel.key === 'h' ? round((((o.h + delta) % 360) + 360) % 360) : o.h,
       )
     }
+    this.trail([slot, ...others])
+  }
+
+  private trail(moved: number[]): void {
+    const among = new Set(moved)
+    for (const [bright, normal] of this.links) {
+      if (this.unlinked.has(bright)) {
+        continue
+      }
+      if (among.has(bright) && !among.has(normal)) {
+        this.unlinked.add(bright)
+      } else if (among.has(normal) && !among.has(bright)) {
+        const at = this.lch[normal] as Oklch
+        const by = this.offsets.get(bright) as Oklch
+        this.place(bright, clamp(at.l + by.l, 0, 1), Math.max(0, at.c + by.c), (((at.h + by.h) % 360) + 360) % 360)
+      }
+    }
   }
 
   private place(slot: number, l: number, c: number, h: number): void {
@@ -1053,6 +1441,7 @@ export class PaletteEditor {
       this.list[this.slot()] = color
       this.lch[this.slot()] = this.lchOf(color)
       this.holds.set(this.slot(), (this.lch[this.slot()] as Oklch).c)
+      this.trail([this.slot()])
     } else {
       this.set(this.slot(), color, edit)
     }
@@ -1096,6 +1485,7 @@ export class PaletteEditor {
       this.remember('open')
       this.list = listOf(choice.colors)
       this.lch = this.lchs()
+      this.chain(this.list)
       this.overlay = undefined
       this.filter = ''
       this.notice = `Took the colors of ${choice.name}`
@@ -1126,6 +1516,7 @@ export class PaletteEditor {
     this.remember(edit)
     this.list[slot] = color
     this.lch[slot] = this.lchOf(color)
+    this.trail([slot])
   }
 
   private follow(): void {
@@ -1138,6 +1529,9 @@ export class PaletteEditor {
     const from = this.lch[normal] as Oklch
     this.remember('follow')
     this.place(bright, clamp(from.l + 0.06, 0, 1), from.c, from.h)
+    this.links.set(bright, normal)
+    this.unlinked.delete(bright)
+    this.offsets.set(bright, offsetOf(from, this.lch[bright] as Oklch))
     this.col = 1
     this.notice = `${slotLabel(bright).name} follows ${slotLabel(normal).name.toLowerCase()}`
   }

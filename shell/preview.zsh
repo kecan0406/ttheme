@@ -110,10 +110,7 @@ __tt_pv_shows() {
 __tt_pv_focus() {
   if (( te )); then
     __tt_pv_shows $tename
-    if (( ! resized )) && [[ $REPLY != "$bgname" || "${tespec%% *} ${teframe[11]}" != "$telook" ]]; then
-      __tt_pv_bg_show "$REPLY"
-      telook="${tespec%% *} ${teframe[11]}"
-    fi
+    (( resized )) || [[ $REPLY == "$bgname" ]] || __tt_pv_bg_show "$REPLY"
     return 0
   fi
   [[ ${rtype[cur]} == thm ]] || return 0
@@ -393,20 +390,8 @@ __tt_pv_foot() {
     kk=(enter) kl=(confirm)
     right=$b"esc"$z$d" back"$z
   elif (( te && tfocus == 0 )); then
-    badge=$tb
-    kk=("${(@ps:\x1e:)teframe[6]}") kl=("${(@ps:\x1e:)teframe[7]}")
-    i=${kk[(Ie)esc]}
-    (( i )) && kk[i]=() kl[i]=()
+    badge=$tb kk=(enter ↑↓ s ⇧enter) kl=("edit palette" move save apply)
     right=$b"esc"$z$d" cancel"$z
-    if [[ $temode == list ]]; then
-      kk=("${kk[1]}" s "${(@)kk[2,-1]}" ⇧enter) kl=("${kl[1]}" save "${(@)kl[2,-1]}" apply)
-    elif [[ $temode == tune ]]; then
-      badge="$tb (TUNE)" right=$b"esc"$z$d" undo"$z
-    elif [[ $temode == type ]]; then
-      badge="$tb (TYPE)" right=$b"esc"$z$d" back"$z
-    elif [[ $temode == compare ]]; then
-      badge="$tb (BEFORE)" right=$b"esc"$z$d" back"$z
-    fi
   elif (( te && tfocus == 2 )); then
     badge=$tb kk=(enter ↑↓ s) kl=(apply move save)
     right=$b"esc"$z$d" cancel"$z
@@ -537,22 +522,18 @@ __tt_pv_help() {
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && back=$cn
   local -a hk=() hv=()
   if (( te )); then
-    hk=(Move Image "" "" "" Palette "" "" "" "" "" Apply Save Cancel)
+    hk=(Move Image "" "" "" Palette "" Apply Save Cancel)
     hv=(
       "↑↓ j k  the image, the palette, then Apply  ·  home  end"
       "Images  ←→  , .  pick one  ·  D removes it  ·  f  finds one"
       "enter on the empty frame  ·  finds the first one"
       "←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all"
       "space  hides  ·  c  colors"
-      "←→  normal or bright  ·  enter tab  tune it  ·  #  a color"
-      "tuning: ↑↓ L C H ◐  ·  ◐ home  the floor  ·  a  scope"
-      "g  relations  ·  n N  the next and last miss"
-      "r  resets a slot  ·  R  all  ·  space  the colors before"
-      "c  copies  ·  v  pastes  ·  =  bright follows normal"
-      "f  moves the colors the gate misses  ·  u  undo"
+      "enter  ·  tunes its colors full screen, keeps its own tone"
+      "?  there lists its keys  ·  esc leaves it"
       "enter on Apply, or ⇧enter anywhere  ·  saves, asks where"
-      "s  ·  keeps the picture and the palette"
-      "esc  ·  back to the list, dropping what changed since s"
+      "s  ·  keeps the picture"
+      "esc  ·  back to the list, dropping picture changes since s"
     )
   else
     hk=(Move Series Filter "" Example Apply Edit)
@@ -979,10 +960,6 @@ __tt_pv_draw() {
     __tt_pv_norm "$flt"
     nflt=$REPLY
   fi
-  if (( te )) && [[ -n $tespec && $tespec != "$applied" ]]; then
-    __tt_pv_paint "$tespec"
-    applied=$tespec
-  fi
   __tt_pv_lw
   lw=$reply[1] sw=$reply[2]
   split=$(( sw > 0 )) sc=$(( pw - 1 - sw ))
@@ -1374,10 +1351,6 @@ __tt_pv_mouse() {
   z=(${=mzone})
   (( ${#z} )) || return 0
   [[ $mact == release ]] && mzone=""
-  if [[ $z[4] == tone ]]; then
-    __tt_pv_te_mouse $z
-    return
-  fi
   case $mact in
     press) __tt_pv_press $z ;;
     drag) [[ $z[4] == track ]] && __tt_pv_bg_track $z[5] $(( mcol - z[2] )) $(( z[3] - z[2] )) ;;
@@ -1395,6 +1368,7 @@ __tt_pv_press() {
     pick) pk=$5 ;;
     conf) cf=$5 ;;
     teimg) (( tfocus == 1 )) || __tt_te_to_image ;;
+    tepal|teedit) tfocus=0 ;;
     tefield|track|place|colors)
       (( tfocus == 1 )) || __tt_te_to_image
       case $4 in
@@ -1450,6 +1424,7 @@ __tt_pv_release() {
       __tt_pv_conf_step $6
       ;;
     tefind) __tt_te_find ;;
+    teedit) __tt_te_edit ;;
     teapply) __tt_te_apply || return 1 ;;
     place) __tt_pv_bg_adjust at $5 ;;
     colors)
@@ -1458,18 +1433,6 @@ __tt_pv_release() {
       ;;
   esac
   return 0
-}
-
-__tt_pv_te_mouse() {
-  local -i li=$(( $5 + mrow - $1 )) ci=$(( mcol - $2 ))
-  if [[ $mact == press ]] && (( tfocus != 0 )); then
-    tfocus=0
-    __tt_te_ask "focus 1" || return 0
-  fi
-  (( li < 0 )) && li=0
-  (( ci < 0 )) && ci=0
-  __tt_te_ask "mouse $mact $li $ci $mclick" || { __tt_te_close; return 0 }
-  __tt_te_act
 }
 
 __tt_pv_bg_track() {
@@ -1493,14 +1456,10 @@ __tt_pv_wheel() {
     (( cf < 1 )) && cf=1
     (( cf > ${#cvars} )) && cf=${#cvars}
   elif (( te )); then
-    if (( tfocus == 0 )); then
-      __tt_te_ask "mouse wheel 0 0 $mwheel"
-    else
-      key=down
-      (( mwheel < 0 )) && key=up
-      __tt_pv_te
-      return
-    fi
+    key=down
+    (( mwheel < 0 )) && key=up
+    __tt_pv_te
+    return
   elif [[ -z $pick && -z $tune ]] && (( ${#rval} )); then
     i=$(( cur + mwheel ))
     [[ ${rtype[i]} == rule ]] && (( i += mwheel ))
@@ -1555,34 +1514,7 @@ __tt_pv_screen() {
   return 0
 }
 
-__tt_te_stop() {
-  setopt localoptions nomonitor nonotify
-  (( TE_IN )) && { print -r -u $TE_IN -- quit 2>/dev/null; exec {TE_IN}>&- }
-  (( TE_OUT )) && exec {TE_OUT}<&-
-  TE_IN=0 TE_OUT=0
-  (( TE_PID )) && { kill $TE_PID 2>/dev/null; wait $TE_PID 2>/dev/null }
-  TE_PID=0
-  return 0
-}
-
-__tt_te_ask() {
-  local line
-  (( TE_IN && TE_OUT )) || return 1
-  print -r -u $TE_IN -- "$1" 2>/dev/null || { __tt_te_stop; return 1 }
-  if ! IFS= read -r -u $TE_OUT -t 5 line 2>/dev/null; then
-    __tt_te_stop
-    msg="The palette panel stopped" msgt=300
-    return 1
-  fi
-  teframe=("${(@ps:\x1f:)line}")
-  temode=${teframe[3]:-list}
-  tedirty=${teframe[4]:-0}
-  [[ ${teframe[1]} == error ]] && { msg=${teframe[8]:-"Could not save the tone"} msgt=300 }
-  [[ -n ${teframe[5]} ]] && tespec=${teframe[5]}
-  return 0
-}
-
-__tt_te_unsaved_image() {
+__tt_te_unsaved() {
   local img
   for img in ${(k)tsnaps}; do
     [[ "${bgsize[$img]} ${bgpos[$img]} ${bgop[$img]} ${bgoff[$img]}" == "${tsnaps[$img]}" ]] || return 0
@@ -1591,13 +1523,8 @@ __tt_te_unsaved_image() {
   return 1
 }
 
-__tt_te_unsaved() {
-  (( tedirty )) && return 0
-  __tt_te_unsaved_image
-}
-
 __tt_te_save_image() {
-  __tt_te_unsaved_image || return 0
+  __tt_te_unsaved || return 0
   __tt_pv_tune_keep
   __tt_pv_bg_save > /dev/null 2>&1
   bgedit=() bgswap=() bgview=()
@@ -1606,17 +1533,19 @@ __tt_te_save_image() {
   __tt_pv_tune_open $tename
 }
 
+__tt_te_read() {
+  local rows
+  rows=$(__tt_cli tone $tename show 2>/dev/null) || return 1
+  teframe=("${(@f)rows}")
+  return 0
+}
+
 __tt_te_open() {
   local name=$1
-  local -i rfd wfd
-  setopt localoptions nomonitor nonotify
-  coproc __tt_cli tone $name 2>/dev/null
-  exec {rfd}<&p {wfd}>&p
-  TE_OUT=$rfd TE_IN=$wfd TE_PID=$!
-  tename=$name tfocus=0 tespec="" tesz="" teframe=() tedirty=0 temode=list tetop=0 msgt=0 teshown="" telook=""
-  if ! __tt_te_ask "focus 1"; then
-    msg="Could not start the palette panel for $name" msgt=300
-    __tt_te_stop
+  tename=$name tfocus=0 teframe=() tetop=0 msgt=0
+  if ! __tt_te_read; then
+    msg="Could not read the colors of $name" msgt=300
+    tename=""
     return 0
   fi
   te=1
@@ -1628,25 +1557,13 @@ __tt_te_open() {
 
 __tt_te_close() {
   [[ -n $tune ]] && __tt_pv_untune
-  __tt_te_stop
-  te=0 tfocus=0 tename="" tespec="" tesz="" teframe=() tetop=0 help=0 pick="" teshown="" telook=""
+  te=0 tfocus=0 tename="" teframe=() tetop=0 help=0 pick=""
   resized=1 bgname=""
   return 0
 }
 
 __tt_te_save() {
   __tt_te_save_image
-  if (( tedirty )); then
-    __tt_te_ask save || return 1
-    if [[ ${teframe[1]} == saved ]]; then
-      __tt_palettes_load && __tt_reloaded
-      __tt_reload
-      applied=${TTHEME_PALETTE[$tename]:-$applied}
-      tespec=$applied
-    else
-      return 1
-    fi
-  fi
   msg="Saved" msgt=200
   return 0
 }
@@ -1670,24 +1587,22 @@ __tt_te_image() {
 __tt_te_to_image() {
   tfocus=1 tf=5
   [[ $1 == last && -n $tune ]] && tf=3
-  __tt_te_ask "focus 0"
+  return 0
 }
 
 __tt_te_to_palette() {
   tfocus=0
-  __tt_te_ask "focus 1" && __tt_te_ask "key $1"
 }
 
 __tt_te_to_apply() {
   tfocus=2
-  __tt_te_ask "focus 0"
 }
 
 __tt_te_to_top() {
   if __tt_te_image; then
     __tt_te_to_image first
   else
-    __tt_te_to_palette home
+    __tt_te_to_palette
   fi
 }
 
@@ -1702,45 +1617,49 @@ __tt_te_find() {
   return 0
 }
 
-__tt_te_key() {
-  local m
-  if [[ $temode == list ]]; then
-    case $key in
-      home) __tt_te_to_top; return 0 ;;
-      end) __tt_te_to_apply; return 0 ;;
-    esac
+__tt_te_edit() {
+  local name=$tename err
+  local -i rc
+  __tt_te_save_image
+  __tt_pv_untune
+  [[ $applied == "$painted" ]] || { __tt_apply "$applied" && painted=$applied }
+  __tt_pv_bg_close
+  __tt_bg_hide $name
+  err=$(__tt_cli tone $name edit 2>&1 >/dev/tty)
+  rc=$?
+  printf %s "$pvmouse"
+  err=${${err//$'\n'/ }## #}
+  resized=1 bgname="" bgshown="" bgdim=()
+  if (( rc == 0 )); then
+    __tt_palettes_load && __tt_reloaded
+    __tt_reload
+    applied=${TTHEME_PALETTE[$name]:-$applied}
+    __tt_pv_paint "$applied"
+    __tt_pv_bg_reset $name
+    bgload[$name]=""
+    __tt_te_read
+    msg=${err:-"Saved"} msgt=200
+  elif (( rc == 1 )); then
+    msg=${err:-"Could not tune the colors of $name"} msgt=300
   fi
-  case $key in
-    up|down|left|right|home|end|pgup|pgdn|esc) m="key $key" ;;
-    sleft) m="key shift-left" ;;
-    sright) m="key shift-right" ;;
-    stab) m="key shift-tab" ;;
-    $'\t') m="key tab" ;;
-    $'\r'|$'\n') m="key enter" ;;
-    $'\x7f'|$'\x08') m="key backspace" ;;
-    $'\x03') m="key ctrl-c" ;;
-    nop|altc) return 0 ;;
-    *)
-      (( ${#key} == 1 )) || return 0
-      m="ch $(( #key ))"
-      ;;
-  esac
-  __tt_te_ask "$m" || { __tt_te_close; return 0 }
-  __tt_te_act
+  __tt_pv_bg_state $name && __tt_pv_tune_open $name
+  return 0
 }
 
-__tt_te_act() {
-  case ${teframe[2]} in
-    save) __tt_te_save ;;
-    cancel) __tt_te_close ;;
-    below) __tt_te_to_apply ;;
-    above)
+__tt_te_palette() {
+  case $key in
+    $'\r'|$'\n') __tt_te_edit ;;
+    s) __tt_te_save ;;
+    esc) __tt_te_close ;;
+    up|k)
       if __tt_te_image; then
         __tt_te_to_image last
       else
         __tt_te_to_apply
       fi
       ;;
+    down|j|end) __tt_te_to_apply ;;
+    home) __tt_te_to_top ;;
   esac
   return 0
 }
@@ -1765,7 +1684,7 @@ __tt_pv_te_image() {
       if (( i < ${#order} )); then
         tf=${order[i+1]}
       else
-        __tt_te_to_palette home
+        __tt_te_to_palette
       fi
       ;;
     home) tf=5 ;;
@@ -1797,7 +1716,7 @@ __tt_te_button() {
     $'\r'|$'\n') __tt_te_apply; return $? ;;
     s) __tt_te_save ;;
     esc) __tt_te_close ;;
-    up|k) __tt_te_to_palette end ;;
+    up|k) __tt_te_to_palette ;;
     down|j|home) __tt_te_to_top ;;
   esac
   return 0
@@ -1811,7 +1730,7 @@ __tt_pv_te() {
     '?') help=1; return 0 ;;
   esac
   case $tfocus in
-    0) __tt_te_key ;;
+    0) __tt_te_palette ;;
     1) __tt_pv_te_image ;;
     *) __tt_te_button ;;
   esac
@@ -1871,27 +1790,15 @@ __tt_pv_te_ghost() {
 __tt_pv_te_panel() {
   local z=$'\e[0m' d=$'\e[2m' b=$'\e[1m' tt st note REPLY
   local -a held
-  local -i col=$1 end=$2 r0=$3 r1=$4 R W T I=3 V at i n y tfs=$tf
+  local -i col=$1 end=$2 r0=$3 r1=$4 R W T=${#teframe} I=3 V i n y tfs=$tf
   (( color )) || z= d= b=
   R=$(( r1 - r0 + 1 )) W=$(( end - col + 1 ))
   [[ -n $tune ]] || __tt_pv_bg_findable $tename && I=17
-  T=$(( R - I - 3 ))
-  (( T > 26 )) && T=26
-  (( T < 21 )) && T=15
-  if [[ "$W $T" != "$tesz" ]]; then
-    tesz="$W $T"
-    __tt_te_ask "size $W $T"
-  fi
-  V=$(( I + T + 3 ))
+  V=$(( I + T + 4 ))
   if (( V <= R || tfocus == 1 )); then
     tetop=0
-  elif (( tfocus == 2 )); then
-    tetop=$(( V - R ))
   else
-    at=$(( I + 1 + ${teframe[9]:-2} ))
-    (( at - 2 < tetop )) && tetop=$(( at > 2 ? at - 2 : 0 ))
-    (( at > tetop + R )) && tetop=$(( at - R ))
-    (( tetop > V - R )) && tetop=$(( V - R ))
+    tetop=$(( V - R ))
   fi
   if (( tetop == 0 && I <= R )); then
     y=$r0
@@ -1901,7 +1808,6 @@ __tt_pv_te_panel() {
     pvz+=("$y $col $end teimg")
     if [[ -n $tune ]]; then
       (( bgoff[$tpick] )) && st=off || st=on
-      [[ ${teframe[10]} == 1 ]] && ! __tt_bg_tints && st="recolors on save  $st"
       __tt_pv_bg_title $(( W - 12 - ${#st} ))
       out+="  "$d$REPLY$z$'\e['$y';'$(( end - ${#st} + 1 ))'H'$d$st$z
     fi
@@ -1939,9 +1845,20 @@ __tt_pv_te_panel() {
   for (( i = 1; i <= T; i++ )); do
     y=$(( r0 + I + i - tetop ))
     (( y >= r0 && y <= r1 )) || continue
-    out+=$'\e['$y';'$col'H'${teframe[11 + i]}$z
-    pvz+=("$y $col $end tone $(( i - 1 ))")
+    out+=$'\e['$y';'$col'H'${teframe[i]}$z
+    pvz+=("$y $col $end tepal")
   done
+  y=$(( r0 + V - 2 - tetop ))
+  if (( y >= r0 && y <= r1 )); then
+    pvz+=("$y $col $end teedit")
+    out+=$'\e['$y';'$col'H'
+    if (( tfocus == 0 )); then
+      (( color )) && out+=$ac"▶"$z" "$'\e[7;1m'$ac" Edit palette "$z || out+="▶ [Edit palette]"
+    else
+      (( color )) && out+="  "$b" Edit palette "$z || out+="   Edit palette "
+    fi
+    out+="  "$d"tunes its colors full screen"$z
+  fi
   y=$(( r0 + V - 1 - tetop ))
   (( y >= r0 && y <= r1 )) || return 0
   pvz+=("$y $col $end teapply")
@@ -2149,8 +2066,8 @@ __tt_preview() {
   local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgprep=() TTHEME_ALIASES=()
   local conf=0 cf=1
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
-  local te=0 tfocus=0 tetop=0 tename="" tedirty=0 temode=list tespec="" tesz="" teshown="" telook=""
-  local -i TE_IN=0 TE_OUT=0 TE_PID=0 pvgone=0 bgprepid=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
+  local te=0 tfocus=0 tetop=0 tename=""
+  local -i pvgone=0 bgprepid=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
   local -F mlast=0
   local mact="" mzone="" pvmouse=""
   local -a pvz=()
@@ -2230,7 +2147,6 @@ __tt_preview() {
     [[ -n $tty ]] && stty "$tty" 2>/dev/null
     TTHEME_RAW=0
     [[ -n $tune ]] && __tt_pv_untune
-    (( TE_IN )) && __tt_te_stop
     (( conf )) && __tt_pv_unconf
     __tt_pv_bg_save
     if [[ -n $spec ]]; then

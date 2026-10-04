@@ -5,20 +5,20 @@
    This term│                                                                          │
             │  Move      ↑↓ j k  the image, the palette, then Apply  ·  home  end      │
    Palette  │  Image     Images  ←→  , .  pick one  ·  D removes it  ·  f  finds one   │
- ▌ Backgroun│            enter on the empty frame  ·  finds the first one              │
+   Backgroun│            enter on the empty frame  ·  finds the first one              │
    Foregroun│            ←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all          │
    Cursor   │            space  hides  ·  c  colors                                    │
-   Selection│  Palette   ←→  normal or bright  ·  enter tab  tune it  ·  #  a color    │
-            │            tuning: ↑↓ L C H ◐  ·  ◐ home  the floor  ·  a  scope         │
-   ANSI     │            g  relations  ·  n N  the next and last miss                  │
-   Black    │            r  resets a slot  ·  R  all  ·  space  the colors before      │
-   Red      │            c  copies  ·  v  pastes  ·  =  bright follows normal          │
-   Green    │            f  moves the colors the gate misses  ·  u  undo               │
-   Yellow   │  Apply     enter on Apply, or ⇧enter anywhere  ·  saves, asks where      │
-   Blue     │  Save      s  ·  keeps the picture and the palette                       │
-   Magenta  │  Cancel    esc  ·  back to the list, dropping what changed since s       │
-   Cyan     │  Close     ?  esc                                                        │
-   White    │                                                                          │
-            ╰──────────────────────────────────────────────────────────────────────────╯
+   Selection│  Palette   enter  ·  tunes its colors full screen, keeps its own tone    │
+   ANSI     │            ?  there lists its keys  ·  esc leaves it                     │
+   Black    │  Apply     enter on Apply, or ⇧enter anywhere  ·  saves, asks where      │
+   Red      │  Save      s  ·  keeps the picture                                       │
+   Green    │  Cancel    esc  ·  back to the list, dropping picture changes since s    │
+   Yellow   │  Close     ?  esc                                                        │
+   Blue     │                                                                          │
+   Magenta  ╰──────────────────────────────────────────────────────────────────────────╯
+   Cyan         0.75 0.124 231°    0.86 0.085 233°
+   White        0.83 0.012 260°    0.95 0.020 257°
+
+ ▶ [Edit palette]  tunes its colors full screen
     Apply   saves and wears it in this tab
 [HELP]                                                                                   ? esc close

@@ -30,13 +30,14 @@ import {
   shareCode,
   withPictures,
 } from './own.ts'
-import type { Choice, Edited, EditorOptions } from './palette-editor.ts'
+import { type Choice, type Edited, type EditorOptions, listOf } from './palette-editor.ts'
 import { commit, configHome, type Installed, readInstalled, refreshPictures, sync } from './palettes.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
-import { grow, SEEDS } from './seeds.ts'
+import { type Colors, grow, SEEDS } from './seeds.ts'
 import { showsPictures } from './terminal.ts'
 import { marketOf, nameProblem, type SharedPicture, type Theme } from './theme.ts'
-import { readTone, tonedEntry } from './tone.ts'
+import { overrideOf, readTone, tonedEntry, withTone, writeTone } from './tone.ts'
+import { toneRows } from './tone-view.ts'
 
 function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
@@ -159,7 +160,7 @@ function finder(
   }
 }
 
-async function editColors(options: EditorOptions): Promise<Edited | undefined> {
+async function editColors(options: EditorOptions, hosted = false): Promise<Edited | undefined> {
   const tty = process.stdout.isTTY === true
   const home = configHome()
   const live = liveOf(process.env, tty, home)
@@ -171,7 +172,12 @@ async function editColors(options: EditorOptions): Promise<Edited | undefined> {
       : {}
   const backdrop = tty ? Backdrop.of(process.env, home, options.name, readInstalled(home).terminals) : undefined
   try {
-    return await runEditor(options, { color: !colorless(), ...screen, ...(backdrop ? { backdrop } : {}) })
+    return await runEditor(options, {
+      color: !colorless(),
+      ...screen,
+      ...(backdrop ? { backdrop } : {}),
+      ...(hosted ? { hosted: true as const } : {}),
+    })
   } finally {
     if (live) {
       process.stdout.write(live.restore(saved))
@@ -217,6 +223,8 @@ export async function runNew(name: string, from: string | undefined, into: strin
     palettes: choicesOf(home, catalog, full),
     pictures: shelf.count(),
     find: finder(home, full, catalog, toml),
+    exports: exportsFor(home, full, catalog, toml),
+    decode: decoded,
     check: (e) => problemOf(() => readOwnText(full, toml(e), catalog.palettes)),
   })
   if (!edited) {
@@ -284,6 +292,8 @@ export async function runEdit(name: string): Promise<void> {
     palettes: choicesOf(home, catalog, full),
     pictures: shelf.count(),
     find: finder(home, full, catalog, rewrite),
+    exports: exportsFor(home, full, catalog, rewrite),
+    decode: decoded,
     check: (e) => problemOf(() => readOwnText(full, rewrite(e), catalog.palettes)),
   })
   if (!edited) {
@@ -309,6 +319,53 @@ export async function runEdit(name: string): Promise<void> {
       `\nIt misses the contrast gate:\n${failing.join('\n')}\n\`ttheme check --fix ${full}\` suggests colors that pass`,
     )
   }
+}
+
+const UNCHANGED = 2
+
+export async function runTone(name: string, action: string): Promise<number> {
+  const home = configHome()
+  const base = find(untuned(home, readCatalog(home), false).palettes, name)
+  const worn = tonedEntry(base, readTone(home)[name])
+  if (action === 'show') {
+    console.log(toneRows(base, worn, !colorless()).join('\n'))
+    return 0
+  }
+  if (action !== 'edit') {
+    throw new Error(`tone takes show or edit, not ${action}`)
+  }
+  if (!tty()) {
+    throw new Error('needs a terminal')
+  }
+  const edited = await editColors(
+    {
+      title: 'Edit palette',
+      name,
+      colors: colorsOfTheme(toTheme(worn)),
+      original: colorsOfTheme(toTheme(base)),
+      tone: true,
+      signature: worn.signatureSlots,
+      ...(worn.waived ? { waive: worn.waived } : {}),
+      decode: decoded,
+      check: () => undefined,
+    },
+    true,
+  )
+  if (!edited) {
+    return UNCHANGED
+  }
+  const tone = readTone(home)
+  const over = overrideOf(base, listOf(edited.colors))
+  if (JSON.stringify(over) === JSON.stringify(tone[name] ?? {})) {
+    return UNCHANGED
+  }
+  writeTone(home, withTone(tone, name, over))
+  sync(home, readCatalog(home), readInstalled(home))
+  const count = Object.keys(over).length
+  process.stderr.write(
+    count === 0 ? 'Back to the original colors' : `Saved · ${count} ${count === 1 ? 'color' : 'colors'} tuned`,
+  )
+  return 0
 }
 
 function named(view: Manifest, name: string, home: string): PaletteEntry {
@@ -355,6 +412,32 @@ export function runCheck(name: string, fix = false): number {
 function mineAt(home: string, name: string): string | undefined {
   const market = marketOf(name)
   return market && localMarkets(home, false).some((m) => m.id === market) ? ownPath(home, name) : undefined
+}
+
+function decoded(text: string): Colors | undefined {
+  const code = text.trim()
+  if (!code.startsWith(CODE)) {
+    return undefined
+  }
+  try {
+    const { background, foreground, cursor, selection, ansi } = fromCode(code)
+    return { background, foreground, cursor, selection, ansi }
+  } catch {
+    return undefined
+  }
+}
+
+function exportsFor(
+  home: string,
+  full: string,
+  catalog: Manifest,
+  text: (edited: Edited) => string,
+): EditorOptions['exports'] {
+  return {
+    code: (edited) => shareCode(draftFor(home, paletteEntry(readOwnText(full, text(edited), catalog.palettes)))),
+    toml: text,
+    command: 'ttheme add',
+  }
 }
 
 function draftFor(home: string, entry: PaletteEntry): Draft {

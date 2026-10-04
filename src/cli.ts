@@ -3,7 +3,7 @@ import pkg from '../package.json' with { type: 'json' }
 import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
-import { runCheck, runEdit, runNew, runShare } from './craft.ts'
+import { runCheck, runEdit, runNew, runShare, runTone } from './craft.ts'
 import { runFind } from './find/find.ts'
 import { runBake, runFlatten, runImage } from './images.ts'
 import { runInfo } from './info.ts'
@@ -13,7 +13,6 @@ import { runMarket } from './markets.ts'
 import { startNamesUpdate, updateNames } from './names-update.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
-import { runTone } from './tone-server.ts'
 import { Signalled } from './tui/terminal.ts'
 import { runUninstall } from './uninstall.ts'
 import { helpText, usageOf, VERB_SPECS, type VerbSpec } from './verbs.ts'
@@ -59,7 +58,7 @@ const RUNS: Record<string, Verb['run']> = {
   image: ([name, action, key]) => runImage(name as string, action as string, key),
   redraw: () => runRedraw(),
   names: () => updateNames(),
-  tone: ([name]) => runTone(name as string),
+  tone: ([name, action]) => runTone(name as string, action as string),
   flatten: ([source, out, background, opacity, canvas, place, into]) =>
     runFlatten(source as string, out as string, background as string, opacity as string, canvas, place, into),
   bake: ([source, out, canvas, place]) => runBake(source as string, out as string, canvas as string, place as string),

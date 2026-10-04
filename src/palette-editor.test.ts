@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { oklch } from './color.ts'
-import { renderEditor, renderTone } from './editor-screen.ts'
+import { renderEditor } from './editor-screen.ts'
 import { CONTRAST, type EditorOptions, listOf, PaletteEditor, parseColor } from './palette-editor.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
 
@@ -27,7 +27,7 @@ function press(e: PaletteEditor, ...keys: string[]): PaletteEditor {
   return e
 }
 
-function screen(e: PaletteEditor, cols = 100, rows = 30): string {
+function screen(e: PaletteEditor, cols = 95, rows = 30): string {
   return renderEditor(e, cols, rows, false).join('\n')
 }
 
@@ -54,11 +54,12 @@ test('edit opens on the slots and no key takes it back to the seeds', () => {
   assert.equal(e.result, 'saved')
 })
 
-test('tab tunes one channel of one slot, enter keeps it, and u takes the whole tune back', () => {
-  const e = press(editor(), ...RED, 'tab', 'down', 'down', 'right', 'shift-right', 'enter')
+test('tab tunes a slot and the bright linked to it, enter keeps them, and u takes the whole tune back', () => {
+  const e = press(editor(), ...RED, 'tab', 'shift-right', 'shift-right', '.', 'enter')
   const changed = listOf(e.colors()).flatMap((c, i) => (c === listOf(start)[i] ? [] : [i]))
-  assert.deepEqual(changed, [5])
+  assert.deepEqual(changed, [5, 13])
   assert.equal(Math.round(e.lch[5]?.h ?? 0), Math.round(oklch(start.ansi[1] as string).h) + 11)
+  assert.equal(Math.round(e.lch[13]?.h ?? 0), Math.round(oklch(start.ansi[9] as string).h) + 11)
   press(e, 'u')
   assert.deepEqual(e.colors(), start)
 })
@@ -85,7 +86,7 @@ test('c and v copy a slot, = makes the bright follow its normal, r puts a slot b
   assert.equal(e.colors().ansi[9], start.ansi[1])
   press(e, 'r')
   assert.equal(e.colors().ansi[9], start.ansi[9])
-  press(e, 'left', 'tab', 'down', 'down', '5', 'enter', '=')
+  press(e, 'left', 'tab', 'shift-right', '5', 'enter', '=')
   assert.equal(e.col, 1)
   assert.ok(Math.abs((e.lch[13]?.h ?? 0) - (e.lch[5]?.h ?? 0)) < 1)
 })
@@ -186,25 +187,22 @@ test('←→ on a base row leaves the column alone, and ↑↓ through the base 
 })
 
 test('chroma stops at the sRGB edge, and what lightness took comes back only while the tune lasts', () => {
-  const e = press(editor(), ...RED, 'tab', 'down')
-  for (let i = 0; i < 12; i++) {
-    press(e, 'shift-right')
-  }
+  const e = press(editor(), ...RED, 'tab', 'right', 'end')
   const top = e.lch[5]?.c ?? 0
   const red = e.colors().ansi[1]
-  press(e, 'shift-right')
+  press(e, 'right')
   assert.equal(e.colors().ansi[1], red)
   assert.match(e.notice ?? '', /sRGB edge/)
-  press(e, 'up', 'shift-right', 'shift-right', 'shift-right', 'shift-right')
+  press(e, 'pgup', 'pgup', 'pgup', 'pgup')
   assert.ok((e.lch[5]?.c ?? 0) < top)
   assert.equal(e.held, top)
   assert.match(screen(e), /○/)
-  press(e, 'shift-left', 'shift-left', 'shift-left', 'shift-left')
+  press(e, 'pgdn', 'pgdn', 'pgdn', 'pgdn')
   assert.equal(e.lch[5]?.c, top)
-  press(e, 'shift-right', 'shift-right', 'shift-right', 'shift-right', 'enter')
+  press(e, 'pgup', 'pgup', 'pgup', 'pgup', 'enter')
   const kept = e.lch[5]?.c ?? 0
   assert.equal(e.held, undefined)
-  press(e, 'tab', 'down', 'down')
+  press(e, 'tab')
   for (let i = 0; i < 10; i++) {
     press(e, 'shift-right')
   }
@@ -212,11 +210,14 @@ test('chroma stops at the sRGB edge, and what lightness took comes back only whi
 })
 
 test('a grey slot takes its hue from the background, so chroma grows toward the palette', () => {
-  const e = press(editor({ colors: { ...start, foreground: '#d0d0d0' } }), 'down', 'tab', 'down')
-  press(e, 'shift-right', 'shift-right')
+  const grey = { ...start, foreground: '#d0d0d0' }
+  const e = press(editor({ colors: grey }), 'down', 'tab')
+  for (let i = 0; i < 10; i++) {
+    press(e, 'right')
+  }
   const hue = oklch(start.background).h
   assert.ok(Math.abs((oklch(e.colors().foreground).h ?? 0) - hue) < 5)
-  const flat = press(editor({ colors: { ...start, foreground: '#d0d0d0' } }), 'down', 'tab', 'down', 'down', 'right')
+  const flat = press(editor({ colors: grey }), 'down', 'tab', 'shift-right')
   assert.match(flat.notice ?? '', /grey shows no hue/)
 })
 
@@ -232,7 +233,7 @@ test('✗ falls on every slot whose own checks miss, the background too', () => 
 const drifted = { ...start, ansi: start.ansi.map((c, i) => (i === 3 ? '#e4af75' : i === 11 ? '#e7df91' : c)) }
 
 test('◐ moves lightness until the ratio changes: home goes to the floor, a digit to that ratio', () => {
-  const e = press(editor(), ...RED, 'tab', 'up')
+  const e = press(editor(), ...RED, 'tab', 'tab')
   assert.equal(e.channel, CONTRAST)
   press(e, 'home')
   assert.ok(e.ratio() >= 3 && e.ratio() < 3.1)
@@ -249,7 +250,7 @@ test('a scope moves every slot in it by the same step, and esc puts them all bac
   assert.equal(e.scoped().length, 12)
   const before = listOf(e.colors())
   const lights = e.lch.map((o) => o.l)
-  press(e, 'right')
+  press(e, 'up')
   const moved = listOf(e.colors()).flatMap((c, i) => (c === before[i] ? [] : [i]))
   assert.deepEqual(moved, [5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18])
   assert.ok(Math.abs((e.lch[9]?.l ?? 0) - (lights[9] ?? 0) - 0.01) < 0.0001)
@@ -269,13 +270,110 @@ test('n and N walk the slots the gate misses, and each gate miss names its slots
   assert.match(press(editor(), 'n').notice ?? '', /gate passes/)
 })
 
-test('g shows every ANSI color’s lightness, chroma and hue, beside the slots and in the panel', () => {
+test('g shows every ANSI color’s lightness, chroma and hue beside the slots', () => {
   const e = press(editor({ colors: drifted }), 'g')
   assert.equal(e.view, 'relations')
   const shown = screen(e)
   assert.match(shown, /Lightness/)
   assert.match(shown, /Chroma/)
   assert.match(shown, /Yellow 68° → bright 103°/)
-  const panel = press(editor({ colors: drifted, variant: 'theme', original: drifted }), 'g')
-  assert.match(renderTone(panel, 50, 15, false, true).lines.join('\n'), /Palette {2}Relations/)
+})
+
+test('a bright follows its normal until it is tuned on its own, and l links it again', () => {
+  const e = press(editor(), ...RED, 'tab', 'up', 'up', 'enter')
+  const lift = (e.lch[5]?.l ?? 0) - oklch(start.ansi[1] as string).l
+  assert.ok(Math.abs(lift - 0.02) < 0.0005)
+  assert.ok(Math.abs((e.lch[13]?.l ?? 0) - oklch(start.ansi[9] as string).l - lift) < 0.002)
+  assert.equal(e.linkOf(13), 5)
+  press(e, 'right', 'tab', 'up', 'enter')
+  assert.equal(e.linkOf(13), undefined)
+  const alone = e.colors().ansi[9]
+  press(e, 'left', 'tab', 'up', 'enter')
+  assert.equal(e.colors().ansi[9], alone)
+  press(e, 'l')
+  assert.equal(e.linkOf(13), 5)
+  assert.match(e.notice ?? '', /move together/)
+  press(e, 'tab', 'up', 'enter')
+  assert.notEqual(e.colors().ansi[9], alone)
+})
+
+test('a bright that starts away from its normal’s hue is not linked until l asks', () => {
+  const e = editor({ colors: { ...start, ansi: start.ansi.map((c, i) => (i === 9 ? '#5aa0ff' : c)) as string[] } })
+  assert.equal(e.linkOf(13), undefined)
+  press(e, ...RED, 'l')
+  assert.equal(e.linkOf(13), 5)
+})
+
+test('m keeps the slots that changed, and the cursor skips the rest', () => {
+  const e = editor()
+  e.viewport(140, 40)
+  press(e, ...RED, 'tab', 'up', 'enter', 'm')
+  assert.deepEqual(
+    [5, 6, 13, 14].map((slot) => e.visible(slot)),
+    [true, false, true, false],
+  )
+  press(e, 'down')
+  assert.equal(e.slot(), 5)
+  press(e, 'right')
+  assert.equal(e.slot(), 13)
+  press(e, 'm')
+  assert.equal(e.visible(6), true)
+})
+
+test('editing a tone marks the slots off the original colors, and leaves signature, other palettes and pictures out', () => {
+  const tuned = { ...start, ansi: start.ansi.map((c, i) => (i === 1 ? '#ff6fa5' : c)) as string[] }
+  const e = editor({ colors: tuned, original: start, tone: true })
+  assert.deepEqual(
+    [5, 6, 0].map((slot) => e.changed(slot)),
+    [true, false, false],
+  )
+  assert.equal(e.dirty(), false)
+  press(e, 'p', 'ctrl-v', 'o', '*')
+  assert.equal(e.overlay, undefined)
+  assert.equal(e.wants, undefined)
+  assert.equal(e.signature.join(), 'background,foreground,cursor')
+  press(e, 'R')
+  assert.equal(e.changes(), 0)
+  assert.equal(e.dirty(), true)
+})
+
+test('ctrl+f filters the slots as you type, esc clears the search', () => {
+  const e = editor()
+  e.viewport(140, 40)
+  press(e, 'ctrl-f', ...'blu')
+  assert.equal(e.searching, true)
+  assert.deepEqual(
+    [8, 9, 12, 20].map((slot) => e.visible(slot)),
+    [true, false, false, false],
+  )
+  press(e, 'enter')
+  assert.equal(e.searching, false)
+  assert.equal(e.visible(8), true)
+  press(e, 'ctrl-f', 'esc')
+  assert.equal(e.search, '')
+})
+
+test('a spot on the sample finds its slots, and enter goes to the slot', () => {
+  const e = editor()
+  e.viewport(140, 40)
+  e.point({ pane: 'shell', line: 2, run: 3 })
+  assert.equal(e.inspect, true)
+  assert.deepEqual(e.slotsHere(), { text: 5, ground: 0 })
+  press(e, 'enter')
+  assert.equal(e.inspect, false)
+  assert.equal(e.slot(), 5)
+  e.viewport(80, 24)
+  press(e, 'i')
+  assert.equal(e.inspect, false)
+  assert.match(e.notice ?? '', /96×28/)
+})
+
+test('a share code pasted into the editor takes its colors, and a plain paste is still a color', () => {
+  const e = editor({ decode: (text) => (text === 'tt1:dawn' ? other : undefined) })
+  e.paste('tt1:dawn')
+  assert.deepEqual(e.colors(), other)
+  press(e, 'u')
+  assert.deepEqual(e.colors(), start)
+  e.paste('#ff0000')
+  assert.equal(e.colors().background, '#ff0000')
 })
