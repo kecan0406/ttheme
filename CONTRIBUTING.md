@@ -261,35 +261,29 @@ panel below, preview's settings, the palette editor and find's grid.
 
 The settings panel preview opens over its list and the questions browse asks
 take the keys they list on their own last line while they are open. `find`
-is a screen of its own and keeps its own keys. The palette editor takes the
-Palette column of the panel's table below, so a key means the same in both,
-plus its own `*`, `o`, `p` and `⇧←` `⇧→` (another scene in its sample), and its
-esc asks before it throws changes away.
+is a screen of its own and keeps its own keys, and so does the palette editor
+(`new`, `edit`, and the Edit palette button of preview's panel), whose keys
+`?` lists and docs/usage.md describes; its esc asks before it throws changes
+away.
 
 Preview's panel (`tab`, `→` or `ctrl+e` on a palette) has no filter, so it uses
-letters too. It is one list — the picture's fields, the palette's slots, then an
-Apply button — and the part the cursor is in takes the keys:
+letters too. It is one list — the picture's fields, an Edit palette button, then
+an Apply button — and the part the cursor is in takes the keys:
 
-| Key | Image | Palette | Apply |
+| Key | Image | Edit palette | Apply |
 |---|---|---|---|
-| `↑` `↓` `j` `k` | Images, then colors, size, position, opacity, and past the last one the palette | slot, and past the last one Apply (while tuning, lightness) | the last slot, the top |
-| `home` `end` | the top, Apply | same (while tuning, the ends of the channel moved last; on ◐, the gate's floor and the most it reaches) | same |
-| `←` `→` | on Images, another picture; on a field, a step | normal or bright (while tuning, chroma) | — |
-| `⇧←` `⇧→` | ×10 | while tuning, hue by 5 | — |
-| `enter` | on the empty frame under Images of a palette with no picture, find one | tune the slot (while tuning, keep it) | apply, saving first and asking where |
-| `tab` | — | tune the slot (while tuning, ◐ contrast and back) | — |
-| `1`-`9` | place | while tuning, jump (on ◐, that ratio) | — |
-| `#` `c` `v` `u` `ctrl+r` `space` | — | type a color, copy, paste, undo, redo, show the colors before | — |
-| `f` | find a picture | move the colors the gate misses | — |
-| `r` `R` | — | reset a slot, all of them | — |
-| `g` | — | the relations of every ANSI color, or back to the slots | — |
-| `n` `N` | — | the next and the last slot the gate misses | — |
-| `a` | — | while tuning, the scope: this, pair, normals, brights, accents | — |
-| `=` `+` | reset a field, all | the bright follows its normal, — | — |
+| `↑` `↓` `j` `k` | Images, then colors, size, position, opacity, and past the last one Edit palette | the picture, Apply | Edit palette, the top |
+| `home` `end` | the top, Apply | same | same |
+| `←` `→` | on Images, another picture; on a field, a step | — | — |
+| `⇧←` `⇧→` | ×10 | — | — |
+| `enter` | on the empty frame under Images of a palette with no picture, find one | open the palette editor on it | apply, saving first and asking where |
+| `1`-`9` | place | — | — |
+| `f` | find a picture | — | — |
+| `=` `+` | reset a field, all | — | — |
 | `c` `space` `,` `.` `D` | colors, hide, other pictures, remove one | — | — |
 | `shift+enter` | apply | apply | apply |
 | `s` | save | save | save |
-| `esc` | back to the list, dropping what changed since the last save | same (while tuning, undo) | same |
+| `esc` | back to the list, dropping what changed since the last save | same | same |
 
 ### The mouse
 

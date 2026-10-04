@@ -86,10 +86,9 @@ slot, find tries the picture on (in the builder a single click on a slot already
 row of tiles, its try-on to the next picture), and the burst a terminal sends
 for one notch counts once. The tabs, the market chips, a series' ▸, a palette's
 ○ and the keys named on the last line are buttons: they act when you let go
-over them, so moving off first cancels. In the editor and in the panel beside a
-palette, a click on the L, C, H or ◐ bar tunes that channel to the point and a
+over them, so moving off first cancels. In the editor, a click on the L, C, H or ◐ bar tunes that channel to the point and a
 drag moves it, past either end of the bar too; in the builder, a click or drag on
-the lightness × chroma plane sets both at once; the picture's size and opacity
+the lightness × chroma plane sets both at once; in the panel beside a palette, the picture's size and opacity
 bars and its nine positions work the same way.
 
 While a screen has the mouse, the terminal selects text with a modifier: Shift
@@ -123,7 +122,7 @@ panel, then out of the filter, then out of the preview with the original colors
 restored. Each palette row carries its 16 colors, normal over bright. The last
 line lists only the keys that work right there, always names the mode
 (`PREVIEW`, `PREVIEW (FILTER)`, `PREVIEW (APPLY)`,
-`PREVIEW (PIN)`, `EDIT`, `EDIT (TUNE)`, `EDIT (APPLY)`, `CONFIG`, `HELP`) and pins where
+`PREVIEW (PIN)`, `EDIT`, `EDIT (APPLY)`, `CONFIG`, `HELP`) and pins where
 esc goes to the right; `?` shows all of them.
 In Warp, which wears one theme for the whole app, the tab in front decides it:
 preview switches that theme as the focus moves — every Warp window at once —
@@ -146,67 +145,44 @@ sample's place while open, once the sample is 48 columns wide.
 
 `tab`, `→` or `ctrl+e` on a palette in `preview` moves into a panel (**EDIT**)
 that takes the sample's place beside the list: the palette's background
-picture on top, its colors under it and an **Apply** button at the bottom, all
-live — the tab is painted with the colors as you change them, and the picture
-moves behind the text. It is one list, starting on the picture: `↓` past the
-picture's last field goes on into the slots and past the last slot to Apply,
-both ends wrap around, and `home`/`end` jump to the top and to Apply; `j`/`k`
-work as `↓`/`↑` throughout. The picture half starts with **Images**, the
+picture on top, its colors under it, an **Edit palette** button and an
+**Apply** button at the bottom. It is one list, starting on the picture: `↓`
+past the picture's last field goes on to Edit palette and then to Apply, both
+ends wrap around, and `home`/`end` jump to the top and to Apply; `j`/`k` work
+as `↓`/`↑` throughout. The picture half starts with **Images**, the
 palette's pictures as thumbnails, where `←`/`→` pick one; a palette with none
 shows an empty frame there, and `enter` on it opens
 [find](backgrounds.md#finding-one), with the fields under it dimmed until a
-picture arrives. While
-you move through the slots the palette half shows the slots alone so
-everything fits, with what the gate says against the slot under the cursor
-when it misses; tuning one shows that slot alone in the same rows — its
-lightness, chroma and hue bars and its checks — until enter or esc brings the
-slots back, so nothing under it moves. A taller window keeps the slots and the
-bars together, and a window too short for it all scrolls with the cursor. A window too narrow for
-the sample gives the panel the whole screen.
+picture arrives. A window too short for it all scrolls with the cursor, and a
+window too narrow for the sample gives the panel the whole screen.
 
-The palette half is the palette editor `ttheme new` opens, without its seeds,
-and takes the same keys:
-every slot is shown in OKLCH — lightness, chroma, hue — with its hex beside the
-one being tuned; `↑`/`↓` pick a slot, `←`/`→` switch between its normal and bright colors, `enter`
-or `tab` tunes the slot in OKLCH — `↑`/`↓` move lightness, `←`/`→` chroma,
-`⇧←`/`⇧→` hue, `enter` keeps it; chroma stops at the sRGB edge, and what lightness or
-hue takes away while you tune comes back where it fits again, marked `○` on
-the bar —
-`#` types a color, `c` and `v` copy and paste one, `f` moves the colors the
-contrast gate misses, `u` undoes and `space` shows the colors before. A slot off
-its palette's own color carries `↺`: `r` puts the slot back and `R` all of them.
-`✗` marks every slot whose own checks miss — a background too light carries
-it along with the colors that read on it — and `n`/`N` walk them. While tuning,
-`tab` moves to `◐`, a fourth channel beside lightness, chroma and hue: `←`/`→` move the
-slot's lightness until its contrast with the color it is read against (the
-background, or the foreground for the background and the selection) changes,
-`home` sets it to the gate's floor and `1`–`9` to that ratio; `a` widens what
-moves — this slot, its pair, the six normal or bright accents, or all twelve —
-and every slot in it moves by the same step, keeping its own color. `g` swaps the
-slots for their relations: every ANSI color's lightness, normal over bright, the
-gate's misses between them named under it.
-The contrast gate advises here, never refuses. The picture half is the one
+The palette half only tells. Every slot is listed in OKLCH — lightness,
+chroma, hue — with `◆` on a signature color, `✗` on a slot whose own checks
+miss and a yellow `●` on one that differs from the color its market gives; above
+it stand how many slots you tuned and what the gate says. The picture half is the one
 [Tuning](backgrounds.md#tuning) describes — the pictures, then colors, size,
-position and opacity — with `f` to find one.
+position and opacity — with `f` to find one, and it is tuned in place.
 
-`s` saves, and nothing else does: what you changed is kept only from then on,
-the tone as an override of the palette's own colors (`tone.json`, beside
-`installed.json`, naming just the slots you moved, so the palette itself and
-`kept.json` stay as the market gave them) and the picture as its own tuning.
-`sync` lays the tone over the palette before it writes anything, so every
-terminal's theme file, the zsh table and the pictures' tint follow it, and
-`ttheme update` leaves it be. The picture behind follows the colors as you
-change them — the background under it, its tint, and its opacity, which moves
-with the palette as saving would set it unless you set it yourself — in
-Ghostty, kitty, iTerm2, Konsole and WezTerm. Terminal.app and Warp show the
-new tint once you save, and the picture's title line says `recolors on save`
-until then. `esc` goes back to the list and drops
-what you changed since the last save, without asking.
+`enter` on **Edit palette**, or a click on it, hands the whole screen to the
+[palette editor](#your-own-palettes) on this palette and takes it back when you
+leave. The editor keeps what it changes itself: `s` there saves, as a tone — an
+override of the palette's own colors (`tone.json`, beside `installed.json`,
+naming just the slots you moved, so the palette itself and `kept.json` stay as
+the market gave them) — and esc leaves, asking first when something changed.
+`R` puts every slot back, and saving that drops the tone. `sync` lays the tone over the
+palette before it writes anything, so every terminal's theme file, the zsh table
+and the pictures' tint follow it, and `ttheme update` leaves it be. The editor
+has no seeds, no signature marks, no other palette to take colors from and no
+picture search, since those belong to a palette of your own; the pictures stay in
+this panel. Back in the panel the tab wears the colors you saved.
+
+`s` in the panel keeps the picture's tuning, and esc goes back to the list and
+drops what you changed in the picture since the last save, without asking.
 
 ## Applying
 
 `enter` on a palette in the list, or on its panel's Apply button — which saves
-what you changed first, as `shift+enter` anywhere in the panel does in a
+the picture's tuning first, as `shift+enter` anywhere in the panel does in a
 terminal that tells it from `enter`, such as Ghostty — applies it as it is on
 screen and asks
 where: **default** or **this tab**. Default records the palette as
@@ -575,12 +551,12 @@ hue and a tint for the neutrals and the cursor, and one lightness and chroma the
 accents share, each accent on the hue its ANSI role reads as. Every slider is
 drawn in the colors it would give, and whatever the seeds, the twenty colors they
 grow pass the gate. enter moves on to the slots, and the seeds stay behind;
-`edit` and `--from` open on the slots. The slots take the keys of
-[preview's panel](#palette-edit), so a key means the same in both:
+`edit` and `--from` open on the slots. preview's [panel](#palette-edit) opens
+the same editor on a palette from a market, for its tone; the keys are:
 
 - From 96×28 on, the editor is a builder: the twenty slots on the left in three
   groups (Base, Normal, Bright), each as its OKLCH lightness, chroma and hue with
-  ✗ where its own checks miss and a yellow ● where it differs from how it opened;
+  ✗ where its own checks miss and a yellow ● where it differs from the colors it opened with — for a tone, the ones its market gives;
   the preview on the right; a bar on top. At 130×38 the preview is all five scenes
   at once — Shell, Code, Diff, Logs and Monitor — under a strip of the sixteen ANSI
   colors, the selection and the cursor, so every slot is drawn somewhere; narrower,

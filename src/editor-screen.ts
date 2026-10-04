@@ -38,7 +38,6 @@ import {
   ROWS,
   SCOPES,
   SLOT_NAMES,
-  slotChecks,
   slotLabel,
 } from './palette-editor.ts'
 import { SCENES, sceneAt, sceneParts } from './scenes.ts'
@@ -115,15 +114,15 @@ function lchLine(p: Paint, at: Oklch): string {
   return `${p.dim('oklch')} ${p.bold(`${at.l.toFixed(3)} ${at.c.toFixed(3)} ${at.h.toFixed(0)}°`)}`
 }
 
-function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT, cursor = true): string[] {
+function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): string[] {
   const bad = e.misses()
   const c = colorsOf(e.list)
-  const focus = cursor ? e.slot() : -1
+  const focus = e.slot()
   const cell = (slot: number) => {
     const hex = e.list[slot] as Hex
     const focused = slot === focus
     const glyph = e.signature.includes(SLOT_NAMES[slot] as string) ? '◆' : p.color ? '■' : ' '
-    const mark = bad.has(slot) ? '✗' : e.theme && e.offDefault(slot) ? '↺' : ' '
+    const mark = bad.has(slot) ? '✗' : e.tone && e.changed(slot) ? '●' : ' '
     const sw = p.color ? `${p.fg(hex)}${glyph}${focused ? p.fg(c.foreground) : '\x1b[39m'} ` : `${glyph} `
     const text = `${sw}${lchShort(e.lch[slot] as Oklch)}${mark}`
     if (!focused) {
@@ -137,13 +136,13 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT, curso
   const gutter = (here: boolean) => (here ? (p.color ? `${p.fg(c.cursor)}▌\x1b[39m ` : '▌ ') : '  ')
   const lines = [`  ${p.dim('Base')}`]
   for (let row = 0; row < BASE.length; row++) {
-    const here = cursor && row === e.row
+    const here = row === e.row
     const label = (BASE[row] as string).padEnd(10)
     lines.push(`${spot({ kind: 'slot', slot: row }, `${gutter(here)}${here ? p.bold(label) : label}`)}${cell(row)}`)
   }
   lines.push('', `  ${p.dim(`${'ANSI'.padEnd(10)} ${'Normal'.padEnd(18)} Bright`)}`)
   for (let row = BASE.length; row < ROWS; row++) {
-    const here = cursor && row === e.row
+    const here = row === e.row
     const label = (PAIRS[row - BASE.length] as string).padEnd(10)
     const named = spot(
       { kind: 'slot', slot: row + (e.col === 1 ? 8 : 0) },
@@ -644,153 +643,6 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   }
 }
 
-export const TONE_COLS = 50
-export const TONE_ROWS = 22
-
-interface ToneFooter {
-  mode: 'list' | 'tune' | 'type' | 'compare'
-  keys: [string, string][]
-  note: string
-}
-
-export function toneFooter(e: PaletteEditor): ToneFooter {
-  const note = e.notice ?? ''
-  if (e.typing !== undefined) {
-    return {
-      mode: 'type',
-      keys: [
-        ['enter', 'set'],
-        ['ctrl+u', 'clear'],
-        ['esc', 'back'],
-      ],
-      note,
-    }
-  }
-  if (e.compare) {
-    return {
-      mode: 'compare',
-      keys: [
-        ['space', 'back to yours'],
-        ['esc', 'back'],
-      ],
-      note,
-    }
-  }
-  if (e.mode === 'tune') {
-    return {
-      mode: 'tune',
-      keys: [
-        ['↑↓', 'L'],
-        ['←→', 'C'],
-        ['⇧←→', 'H'],
-        ['tab', '◐'],
-        ...(e.slot() >= BASE.length ? ([['a', 'scope']] as [string, string][]) : []),
-        ['enter', 'keep'],
-        ['esc', 'undo'],
-      ],
-      note,
-    }
-  }
-  return {
-    mode: 'list',
-    keys: [
-      ['↑↓←→', 'slot'],
-      ['enter', 'tune'],
-      ['g', e.view === 'slot' ? 'relations' : 'slots'],
-      ...(e.misses().size > 0 ? ([['n', 'next miss']] as [string, string][]) : []),
-      ['r', 'reset slot'],
-      ['R', 'reset all'],
-      ['#', 'type a color'],
-      ['space', 'before'],
-    ],
-    note,
-  }
-}
-
-function toneDetail(p: Paint, e: PaletteEditor, width: number, room: number): string[] {
-  const slot = e.slot()
-  const hex = e.list[slot] as Hex
-  const at = e.lch[slot] as Oklch
-  const was = e.start[slot] as Hex
-  const base = e.original[slot] as Hex
-  const { name, about } = slotLabel(slot)
-  const sig = e.signature.includes(SLOT_NAMES[slot] as string)
-  const block = p.color ? `${p.fg(hex)}${'█'.repeat(4)}\x1b[39m  ` : ''
-  const typed = e.typing !== undefined ? p.bold(`${e.typing}▏`) : undefined
-  const marks = [
-    was !== hex ? `was ${p.color ? `${p.fg(was)}■\x1b[39m ` : ''}${lchShort(e.lchOf(was))}` : '',
-    base !== hex ? `default ${p.color ? `${p.fg(base)}■\x1b[39m ` : ''}${lchShort(e.lchOf(base))}` : '',
-  ].filter(Boolean)
-  const lines = [
-    spread(`${p.bold(name)}  ${p.dim(about)}`, sig ? p.dim('◆ signature') : '', width),
-    `${block}${typed ?? lchLine(p, at)}  ${p.dim(hex)}`,
-    ...(room >= 7 ? [`${block}${p.dim(marks.length > 0 ? marks.join('   ') : 'as the palette has it')}`] : []),
-  ]
-  const barWidth = Math.max(8, Math.min(40, width - 12))
-  lines.push(...channelLines(p, e, at, barWidth), contrastLine(p, e, barWidth))
-  for (const line of scopeLines(p, e)) {
-    if (lines.length < room) {
-      lines.push(fit(line, width))
-    }
-  }
-  for (const check of detailChecks(e, slot, at)) {
-    for (const [i, line] of wrapText(check.text, width - 2).entries()) {
-      if (lines.length >= room) {
-        return lines
-      }
-      lines.push(`${i === 0 ? checkMark(p, check.ok) : ' '} ${check.ok === false ? line : p.dim(line)}`)
-    }
-  }
-  return lines
-}
-
-export function renderTone(
-  e: PaletteEditor,
-  width: number,
-  height: number,
-  color: boolean,
-  focused: boolean,
-): { lines: string[]; at: number } {
-  const p = painter(color)
-  if (e.view === 'relations' && e.mode === 'list' && e.typing === undefined) {
-    const label = focused ? p.bold('Palette') : p.dim('Palette')
-    const body = relations(p, e, width - 2, height - 1, false).map((line) => `  ${line}`)
-    const head = spread(`${label}  ${p.dim('Relations')}`, keyZone('g', `${p.bold('g')} ${p.dim('slots')}`), width - 2)
-    const all = [`  ${head}`, ...body]
-    return { lines: Array.from({ length: height }, (_, i) => fit(all[i] ?? '', width)), at: 2 }
-  }
-  const grid = slotPane(p, e, 0, width, focused).slice(1, -2)
-  const alone = (e.mode === 'tune' || e.typing !== undefined) && height - 1 - grid.length < 6
-  const lines = alone ? [] : [...grid]
-  let at = e.row < BASE.length ? e.row + 2 : e.row + 4
-  if (!alone && height - 1 - lines.length >= 9) {
-    lines.push('')
-  }
-  const room = height - 1 - lines.length
-  if (room >= 5) {
-    const top = lines.length + 1
-    lines.push(...toneDetail(p, e, width - 2, room).map((line) => `  ${line}`))
-    if (e.mode === 'tune') {
-      at = top + 3 + (room >= 7 ? 1 : 0) + e.channel
-    } else if (e.typing !== undefined) {
-      at = top + 2
-    }
-  }
-  const label = focused ? p.bold('Palette') : p.dim('Palette')
-  const miss =
-    focused && room < 5
-      ? slotChecks(e.list, e.signature, e.waive, e.slot()).find((check) => check.ok === false)
-      : undefined
-  const failing = e.failing().length
-  const gate = failing === 0 ? 'passes the gate' : `${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
-  const off = e.list.filter((_, i) => e.offDefault(i)).length
-  const head = miss
-    ? `${label}  ${checkMark(p, false)} ${miss.text}`
-    : spread(`${label}${off > 0 ? p.dim(`  ${off} off its default`) : ''}`, p.dim(gate), width - 2)
-  const all = [`  ${head}`, ...lines]
-  return { lines: Array.from({ length: height }, (_, i) => fit(all[i] ?? '', width)), at }
-}
-
 export function renderEditor(e: PaletteEditor, cols: number, rows: number, color: boolean): string[] {
   const p = painter(color)
   if (cols < MIN_COLS || rows < MIN_ROWS) {
@@ -919,6 +771,7 @@ export interface Surface {
   look?: (shown: readonly Hex[]) => void
   backdrop?: Backdrop
   color: boolean
+  hosted?: true
 }
 
 const MODES = [ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES]
@@ -928,7 +781,10 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
   const editor = new PaletteEditor(options)
   const backdrop = surface.backdrop
   const burst = (typed: string) => editor.typing === undefined && typedDrop(typed)
-  return within({ modes: [...MODES, ...pointing()], burst }, async (terminal) => {
+  const terminalOptions = surface.hosted
+    ? { modes: [PASTES, ...pointing()], assume: [HIDE_CURSOR, NO_WRAP], burst }
+    : { modes: [...MODES, ...pointing()], burst }
+  return within(terminalOptions, async (terminal) => {
     const painted: (Hex | undefined)[] = []
     let looked = ''
     let timer: NodeJS.Timeout | undefined

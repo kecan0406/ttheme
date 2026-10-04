@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { oklch } from './color.ts'
-import { renderEditor, renderTone } from './editor-screen.ts'
+import { renderEditor } from './editor-screen.ts'
 import { CONTRAST, type EditorOptions, listOf, PaletteEditor, parseColor } from './palette-editor.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
 
@@ -270,15 +270,13 @@ test('n and N walk the slots the gate misses, and each gate miss names its slots
   assert.match(press(editor(), 'n').notice ?? '', /gate passes/)
 })
 
-test('g shows every ANSI color’s lightness, chroma and hue, beside the slots and in the panel', () => {
+test('g shows every ANSI color’s lightness, chroma and hue beside the slots', () => {
   const e = press(editor({ colors: drifted }), 'g')
   assert.equal(e.view, 'relations')
   const shown = screen(e)
   assert.match(shown, /Lightness/)
   assert.match(shown, /Chroma/)
   assert.match(shown, /Yellow 68° → bright 103°/)
-  const panel = press(editor({ colors: drifted, variant: 'theme', original: drifted }), 'g')
-  assert.match(renderTone(panel, 50, 15, false, true).lines.join('\n'), /Palette {2}Relations/)
 })
 
 test('a bright follows its normal until it is tuned on its own, and l links it again', () => {
@@ -320,6 +318,23 @@ test('m keeps the slots that changed, and the cursor skips the rest', () => {
   assert.equal(e.slot(), 13)
   press(e, 'm')
   assert.equal(e.visible(6), true)
+})
+
+test('editing a tone marks the slots off the original colors, and leaves signature, other palettes and pictures out', () => {
+  const tuned = { ...start, ansi: start.ansi.map((c, i) => (i === 1 ? '#ff6fa5' : c)) as string[] }
+  const e = editor({ colors: tuned, original: start, tone: true })
+  assert.deepEqual(
+    [5, 6, 0].map((slot) => e.changed(slot)),
+    [true, false, false],
+  )
+  assert.equal(e.dirty(), false)
+  press(e, 'p', 'ctrl-v', 'o', '*')
+  assert.equal(e.overlay, undefined)
+  assert.equal(e.wants, undefined)
+  assert.equal(e.signature.join(), 'background,foreground,cursor')
+  press(e, 'R')
+  assert.equal(e.changes(), 0)
+  assert.equal(e.dirty(), true)
 })
 
 test('ctrl+f filters the slots as you type, esc clears the search', () => {

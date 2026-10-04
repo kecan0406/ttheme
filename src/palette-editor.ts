@@ -107,7 +107,7 @@ export interface EditorOptions {
   title: string
   name: string
   colors?: Colors
-  variant?: 'theme'
+  tone?: true
   original?: Colors
   signature: string[]
   waive?: string[]
@@ -444,7 +444,6 @@ export class PaletteEditor {
   filter = ''
   pick = 0
   result: 'saved' | 'cancelled' | undefined
-  act: 'save' | 'cancel' | 'above' | 'below' | undefined
   wants: { start?: Start } | undefined
   pictures: number
   inspect = false
@@ -463,7 +462,7 @@ export class PaletteEditor {
   readonly startPictures: number
   readonly options: EditorOptions
   readonly fresh: boolean
-  readonly theme: boolean
+  readonly tone: boolean
   private readonly startSignature: string[]
   private seeded = false
   private tuneFrom: { list: Hex[]; lch: Oklch[] } | undefined
@@ -478,7 +477,7 @@ export class PaletteEditor {
 
   constructor(options: EditorOptions) {
     this.options = options
-    this.theme = options.variant === 'theme'
+    this.tone = options.tone === true
     this.fresh = options.colors === undefined
     this.mode = this.fresh ? 'seeds' : 'list'
     this.list = listOf(options.colors ?? grow(this.seeds))
@@ -528,7 +527,7 @@ export class PaletteEditor {
   }
 
   changed(slot: number): boolean {
-    return this.list[slot] !== this.start[slot]
+    return this.list[slot] !== this.original[slot]
   }
 
   visible(slot: number): boolean {
@@ -548,17 +547,6 @@ export class PaletteEditor {
 
   private slotAt(row: number, col: number): number {
     return row < BASE.length ? row : row + (col === 1 ? 8 : 0)
-  }
-
-  markSaved(): void {
-    this.start = [...this.list]
-    this.history = []
-    this.future = []
-    this.lastEdit = undefined
-  }
-
-  offDefault(slot: number): boolean {
-    return this.list[slot] !== this.original[slot]
   }
 
   get added(): number {
@@ -626,11 +614,11 @@ export class PaletteEditor {
     if (this.overlay) {
       return
     }
-    if (text.trim() === '') {
+    if (!this.tone && text.trim() === '') {
       this.findPictures({ clipboard: true })
       return
     }
-    if (isPicture(text)) {
+    if (!this.tone && isPicture(text)) {
       this.findPictures({ paste: text })
       return
     }
@@ -658,11 +646,7 @@ export class PaletteEditor {
   press(key: string): void {
     this.notice = undefined
     if (key === 'ctrl-c') {
-      if (this.theme) {
-        this.act = 'cancel'
-      } else {
-        this.result = 'cancelled'
-      }
+      this.result = 'cancelled'
       return
     }
     if (this.quitting) {
@@ -699,7 +683,7 @@ export class PaletteEditor {
     if (this.inspect && this.mode === 'list' && this.inspectKey(key)) {
       return
     }
-    if (this.theme && (key === 'ctrl-v' || key === 'alt-v' || key === 'p')) {
+    if (this.tone && (key === 'ctrl-v' || key === 'alt-v' || key === 'p')) {
       return
     }
     if (key === 'ctrl-v' || key === 'alt-v') {
@@ -848,9 +832,7 @@ export class PaletteEditor {
   }
 
   private leave(): void {
-    if (this.theme) {
-      this.act = 'cancel'
-    } else if (this.dirty()) {
+    if (this.dirty()) {
       this.quitting = true
     } else {
       this.result = 'cancelled'
@@ -876,15 +858,11 @@ export class PaletteEditor {
 
   private listKey(key: string): void {
     if (key === 'up' || key === 'down') {
-      if (this.theme && this.row === (key === 'up' ? 0 : ROWS - 1)) {
-        this.act = key === 'up' ? 'above' : 'below'
-      } else {
-        for (let i = 0, row = this.row; i < ROWS; i++) {
-          row = (row + (key === 'up' ? ROWS - 1 : 1)) % ROWS
-          if (this.visible(this.slotAt(row, this.col))) {
-            this.row = row
-            break
-          }
+      for (let i = 0, row = this.row; i < ROWS; i++) {
+        row = (row + (key === 'up' ? ROWS - 1 : 1)) % ROWS
+        if (this.visible(this.slotAt(row, this.col))) {
+          this.row = row
+          break
         }
       }
       this.lastEdit = undefined
@@ -898,9 +876,9 @@ export class PaletteEditor {
         this.col = col
         this.lastEdit = undefined
       }
-    } else if (!this.theme && this.builderKey(key)) {
+    } else if (this.builderKey(key)) {
       return
-    } else if ((key === 'shift-left' || key === 'shift-right') && !this.theme) {
+    } else if (key === 'shift-left' || key === 'shift-right') {
       this.scene += key === 'shift-left' ? -1 : 1
     } else if (key === 'n' || key === 'N') {
       this.nextMiss(key === 'n' ? 1 : -1)
@@ -925,22 +903,18 @@ export class PaletteEditor {
       this.lch = this.lchs()
     } else if (key === '=') {
       this.follow()
-    } else if (key === '*' && !this.theme) {
+    } else if (key === '*' && !this.tone) {
       this.mark()
     } else if (key === 'f') {
       this.fix()
-    } else if (key === 'o' && !this.theme) {
+    } else if (key === 'o' && !this.tone) {
       this.openPalettes()
     } else if (key === 'u') {
       this.undo()
     } else if (key === 'ctrl-r') {
       this.redo()
     } else if (key === 's' || key === 'ctrl-s') {
-      if (this.theme) {
-        this.act = 'save'
-      } else {
-        this.save()
-      }
+      this.save()
     } else if (key === 'esc') {
       this.leave()
     }

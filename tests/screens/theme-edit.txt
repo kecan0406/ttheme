@@ -4,12 +4,11 @@
 
    This terminal shows no pictures
 
-   Palette                                    7 misses in the gate
- ▌ Background›  0.21 0.014 253°
+   Palette                     7 misses in the gate
+   Background   0.21 0.014 253°
    Foreground   0.91 0.021 259°
    Cursor     ◆ 0.65 0.098 249°
    Selection    0.36 0.008 256°
-
    ANSI       Normal             Bright
    Black        0.26 0.013 253°    0.57 0.013 264°
    Red          0.73 0.182 326°✗   0.83 0.159 326°✗
@@ -20,5 +19,6 @@
    Cyan         0.75 0.124 231°    0.86 0.085 233°
    White        0.83 0.012 260°    0.95 0.020 257°
 
+ ▶ [Edit palette]  tunes its colors full screen
     Apply   saves and wears it in this tab
-[EDIT] ↑↓←→ slot   s save   enter tune   g relations   n next miss   ⇧enter apply         esc cancel
+[EDIT] enter edit palette   ↑↓ move   s save   ⇧enter apply                               esc cancel
