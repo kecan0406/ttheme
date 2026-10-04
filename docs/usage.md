@@ -5,44 +5,43 @@
 Three cover most days: `ttheme preview` tries every palette live and keeps the
 one you land on, `ttheme browse` installs or drops palettes, and `ttheme use
 <palette>` paints this tab. `ttheme` alone opens the first two as tabs of one
-screen. `ttheme help` shows those and the rest by task; `ttheme help all` lists
-every command with what it does:
+screen. `ttheme help` lists every command by task with what it does, and `ttheme
+help all` adds each one's options and actions, and examples:
 
 ```
-This tab
-  preview                                        Try palettes live — focus repaints, enter edits its tone and picture and applies it, esc restores, ? lists keys
-  use <palette>                                  Paint this tab — a unique prefix works: ttheme use ho
-  next                                           Advance this tab to the next palette
-  pin [directory|ssh:<host>]                     Pick a palette for this directory, everything below it, its repository or an ssh host — cd or ssh in repaints, leaving restores
-  unpin [directory|ssh:<host>]                   Drop a pin — this directory's, every one below it, the one above that paints it, or an ssh host's
-  pins                                           Map every pinned directory as a tree in its palette's colors, every ssh host, and the pin that covers this one
+This tab:
+  preview                    Try palettes live
+  use <palette>              Paint this tab
+  pin [dir|ssh:<host>]       Pin a palette to a directory or an ssh host
+  unpin [dir|ssh:<host>]     Drop a pin
+  pins                       Map every pin
 
-New tabs
-  default <palette>                              Make a palette the one new tabs open with
-  on                                             Wear the default palette in new tabs again
-  off                                            Take the palette and picture off every tab — the terminal's own colors until `ttheme on`
-  config                                         Edit settings in $EDITOR — they apply in new tabs
+New tabs:
+  default <palette>          Make a palette the one new tabs open with
+  on                         Wear the default palette in new tabs again
+  off                        Take the palette and picture off every tab
+  config                     Edit settings in $EDITOR
 
-Palettes
-  browse                                         Pick palettes and markets in a live picker — shift+←/→ moves between Catalog, Installed, Markets and Errors
-  list [--json] [query]                          Show the catalog, marking what is installed
-  add [--market <source>] <palette...>           Install palettes from the catalog, or from a share code: ttheme add tt1:…
-  remove <palette...>                            Uninstall palettes
-  update                                         Refresh every market you added now — those with auto-update refresh on their own once a day
-  market [action] [source]                       The markets you added — add, remove and search them; init makes one of your own
+Palettes:
+  browse                     Pick palettes and markets in a live picker
+  list [query]               Show the catalog, marking what is installed
+  add <palette...>           Install palettes
+  remove <palette...>        Uninstall palettes
+  update                     Refresh every market you added now
+  market [action] [source]   The markets you added
 
-Your own
-  new [--from <palette>] [--in <market>] <name>  Make a palette of your own, <you>@<market>/<name>, from blank in the palette editor — installed at once
-  edit <palette>                                 Change one of your palettes in the palette editor — the contrast gate advises, never refuses
-  check [--fix] <palette>                        Measure a palette against the contrast gate and suggest colors that pass
-  share [--tone <tuned|original>] <palette>      Print a share code — ttheme add <code> installs it anywhere, pictures included
+Your own:
+  new <name>                 Make a palette of your own in the palette editor
+  edit <palette>             Change one of your palettes in the palette editor
+  check <palette>            Measure a palette against the contrast gate
+  share <palette>            Print a share code
 
-Setup
-  init [--yes]                                   Install the shell layer and wire your terminal configs
-  uninstall [--yes]                              Take ttheme out of every terminal config and delete what it wrote
+Setup:
+  init                       Install the shell layer and wire your terminals
+  uninstall                  Remove ttheme
 
-Support
-  info                                           Print what a bug report needs — version, OS, shell, terminal and the settings you changed
+Support:
+  info                       Print what a bug report needs
 ```
 
 `ttheme <command> --help` (or `ttheme help <command>`) describes one command
@@ -126,7 +125,7 @@ line lists only the keys that work right there, always names the mode
 esc goes to the right; `?` shows all of them.
 In Warp, which wears one theme for the whole app, the tab in front decides it:
 preview switches that theme as the focus moves — every Warp window at once —
-and so do `ttheme use`, `next` and a pin, while switching tabs or windows puts
+and so do `ttheme use` and a pin, while switching tabs or windows puts
 on the palette of the one you switch to. Warp itself takes about 0.6 s to show
 a change; with `TTHEME_WARP_FAST` on (the default) it takes about 0.2 s while
 your tabs wear different palettes, and for 3 s after the tab in front changes

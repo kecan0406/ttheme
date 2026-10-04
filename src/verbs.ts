@@ -26,7 +26,6 @@ export interface VerbSpec {
   args: string[]
   about: string
   section: Section
-  start?: string
   actions?: [string, string][]
   shell?: true
   hidden?: true
@@ -40,7 +39,6 @@ export const VERB_SPECS: VerbSpec[] = [
     about:
       'Try palettes live — focus repaints, enter edits its tone and picture and applies it, esc restores, ? lists keys',
     section: 'tab',
-    start: 'Try every palette live — enter tunes the one you land on and applies it',
     shell: true,
   },
   {
@@ -48,10 +46,8 @@ export const VERB_SPECS: VerbSpec[] = [
     args: ['<palette>'],
     about: 'Paint this tab — a unique prefix works: ttheme use ho',
     section: 'tab',
-    start: 'Paint this tab with one — ttheme use homura',
     shell: true,
   },
-  { name: 'next', args: [], about: 'Advance this tab to the next palette', section: 'tab', shell: true },
   { name: 'default', args: ['<palette>'], about: 'Make a palette the one new tabs open with', section: 'startup' },
   { name: 'on', args: [], about: 'Wear the default palette in new tabs again', section: 'startup' },
   {
@@ -62,15 +58,15 @@ export const VERB_SPECS: VerbSpec[] = [
   },
   {
     name: 'pin',
-    args: ['[directory|ssh:<host>]'],
+    args: ['[dir|ssh:<host>]'],
     about:
-      'Pick a palette for this directory, everything below it, its repository or an ssh host — cd or ssh in repaints, leaving restores',
+      'Pin a palette to a directory or an ssh host — the pin covers everything below it, or its whole repository; cd or ssh in repaints, leaving restores',
     section: 'tab',
     shell: true,
   },
   {
     name: 'unpin',
-    args: ['[directory|ssh:<host>]'],
+    args: ['[dir|ssh:<host>]'],
     about: "Drop a pin — this directory's, every one below it, the one above that paints it, or an ssh host's",
     section: 'tab',
     shell: true,
@@ -79,7 +75,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'pins',
     args: [],
     about:
-      "Map every pinned directory as a tree in its palette's colors, every ssh host, and the pin that covers this one",
+      "Map every pin — the pinned directories as a tree in their palettes' colors, every ssh host, and the pin that covers this one",
     section: 'tab',
     shell: true,
   },
@@ -96,19 +92,18 @@ export const VERB_SPECS: VerbSpec[] = [
     about:
       'Pick palettes and markets in a live picker — shift+←/→ moves between Catalog, Installed, Markets and Errors',
     section: 'catalog',
-    start: 'Install or drop palettes, add markets — every change applies at once on enter',
   },
   {
     name: 'list',
     args: ['[query]'],
     about: 'Show the catalog, marking what is installed',
     section: 'catalog',
-    flags: { json: { type: 'boolean', about: 'Print the matches as JSON: name, group, catalog, installed' } },
+    flags: { json: { type: 'boolean', about: 'Print the matches as JSON — name, group, catalog, installed' } },
   },
   {
     name: 'add',
     args: ['<palette...>'],
-    about: 'Install palettes from the catalog, or from a share code: ttheme add tt1:…',
+    about: 'Install palettes — from the catalog, or from a share code: ttheme add tt1:…',
     section: 'catalog',
     flags: {
       market: {
@@ -130,14 +125,17 @@ export const VERB_SPECS: VerbSpec[] = [
     args: ['[action]', '[source]'],
     about: 'The markets you added — add, remove and search them; init makes one of your own',
     actions: [
-      ['(none)', 'List the markets you added: palettes, auto-update and the last update'],
+      ['(none)', 'List the markets you added — their palettes, auto-update and last update'],
       [
         'add <source>',
-        'Add one: a repository (alice/ttheme-pastel, #v1 pins a tag or branch), a folder, or official — asks whether it updates on its own',
+        'Add a market — a repository (alice/ttheme-pastel, #v1 pins a tag or branch), a folder, or official; asks whether it updates on its own',
       ],
       ['remove <market>', 'Drop one by its name (alice@pastel) — the palettes you installed from it keep working'],
       ['search [query]', 'Repositories on GitHub with the ttheme-market topic'],
-      ['init [name]', 'Make a market of your own, <you>@<name>, in ~/.config/ttheme/market/<name> (or give a folder)'],
+      [
+        'init [name]',
+        'Make a market of your own — <you>@<name>, in ~/.config/ttheme/market/<name> or a folder you give',
+      ],
       [
         'check [dir]',
         "Check a market's folder before you push it — ttheme-market.toml, every palette, the renames and the gate; nothing is written",
@@ -148,11 +146,11 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'new',
     args: ['<name>'],
-    about: 'Make a palette of your own, <you>@<market>/<name>, from blank in the palette editor — installed at once',
+    about: 'Make a palette of your own in the palette editor — <you>@<market>/<name>, from blank, installed at once',
     section: 'own',
     flags: {
-      from: { type: 'string', value: '<palette>', about: "Open the editor on this palette's colors instead of blank" },
-      in: { type: 'string', value: '<market>', about: 'The local market to put it in, when you have more than one' },
+      from: { type: 'string', value: '<palette>', about: "Start from this palette's colors instead of blank" },
+      in: { type: 'string', value: '<market>', about: 'The local market to put it in — when you have more than one' },
     },
   },
   {
@@ -164,7 +162,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'check',
     args: ['<palette>'],
-    about: 'Measure a palette against the contrast gate and suggest colors that pass',
+    about: 'Measure a palette against the contrast gate — where it misses, suggest colors that pass',
     section: 'own',
     flags: { fix: { type: 'boolean', about: 'Write the suggested colors into your palette' } },
   },
@@ -178,21 +176,21 @@ export const VERB_SPECS: VerbSpec[] = [
         type: 'string',
         value: '<tuned|original>',
         choices: ['tuned', 'original'],
-        about: 'Share the palette as you tuned its colors, or as it was — asked when you tuned it and omit this',
+        about: 'Share it as you tuned it, or as it was — asked when you tuned it and omit this',
       },
     },
   },
   {
     name: 'init',
     args: [],
-    about: 'Install the shell layer and wire your terminal configs',
+    about: 'Install the shell layer and wire your terminals',
     section: 'setup',
     flags: { yes: { type: 'boolean', short: 'y', about: 'Accept every default without prompting' } },
   },
   {
     name: 'uninstall',
     args: [],
-    about: 'Take ttheme out of every terminal config and delete what it wrote',
+    about: 'Remove ttheme — its block comes out of every terminal config and what it wrote is deleted',
     section: 'setup',
     flags: { yes: { type: 'boolean', short: 'y', about: 'Remove without asking' } },
   },
@@ -285,9 +283,47 @@ export function usageOf(verb: VerbSpec): string {
   return [verb.name, ...flags, ...verb.args].join(' ')
 }
 
-function columns(rows: [string, string][], width = Math.max(...rows.map(([left]) => left.length))): string[] {
+function columns(rows: [string, string][], width = WIDTH): string[] {
   return rows.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`)
 }
+
+function headOf(text: string): string {
+  return text.split(' — ')[0] as string
+}
+
+function flagRows(verb: VerbSpec): [string, string][] {
+  return Object.entries(verb.flags ?? {}).map(([name, { short, value, about }]) => [
+    `${short ? `-${short}, ` : ''}--${name}${value ? ` ${value}` : ''}`,
+    about,
+  ])
+}
+
+function listed(verb: VerbSpec, all: boolean): [string, string][] {
+  const under = all ? [...(verb.actions ?? []), ...flagRows(verb)] : []
+  return [
+    [[verb.name, ...verb.args].join(' '), headOf(verb.about)],
+    ...under.map(([left, right]): [string, string] => [`  ${left}`, headOf(right)]),
+  ]
+}
+
+const BANNER = [`ttheme ${pkg.version}`, pkg.description, 'Usage: ttheme <command> [options] [args]']
+
+const GETTING_HELP: [string, string][] = [
+  ['ttheme help', 'Every command'],
+  ['ttheme help all', 'Every command with its options, and examples'],
+  ['ttheme help <command>', 'One command in full'],
+]
+
+const GLOBAL_OPTIONS: [string, string][] = [
+  ['-h, --help', "Show help — after a command, that command's"],
+  ['-v, --version', 'Print the version'],
+]
+
+const WIDTH = Math.max(
+  ...[...GETTING_HELP, ...GLOBAL_OPTIONS, ...VERB_SPECS.filter((v) => !v.hidden).flatMap((v) => listed(v, true))].map(
+    ([left]) => left.length,
+  ),
+)
 
 const EXAMPLES: [string, string][] = [
   ['npx @kecan0406/ttheme init -y', 'Wire the terminals found here, no prompts'],
@@ -299,55 +335,40 @@ const EXAMPLES: [string, string][] = [
   ['ttheme new rei --from rei', 'Your own rei, <you>@<market>/rei, to edit and share'],
 ]
 
+export function briefText(): string {
+  return [...BANNER, '', 'Use --help to list every command, or init to set ttheme up'].join('\n')
+}
+
+export function commandHelp(verb: VerbSpec): string {
+  const flags = flagRows(verb)
+  return [
+    `Usage: ttheme ${usageOf(verb)}`,
+    '',
+    verb.about,
+    ...(verb.actions ? ['', 'Actions:', ...columns(verb.actions)] : []),
+    ...(flags.length > 0 ? ['', 'Options:', ...columns(flags)] : []),
+  ].join('\n')
+}
+
 export function helpText(all: boolean, shell = false): string {
   const shown = VERB_SPECS.filter((v) => !v.hidden && !(shell && v.section === 'setup'))
   const sections = SECTIONS.filter(({ section }) => shown.some((v) => v.section === section))
-  const footer = [
-    ...(shell ? ['ttheme alone opens preview and browse as tabs — tab and shift+tab move between them'] : []),
-    all
-      ? 'ttheme help <command> describes one command · ttheme --version prints the version'
-      : 'ttheme help <command> describes one · ttheme help all lists every command with what it does',
-    'https://kecan0406.github.io/ttheme',
-  ]
-  if (!all) {
-    const start = shown.filter((v) => v.start)
-    const width = Math.max(...sections.map(({ title }) => title.length))
-    return [
-      'Usage: ttheme <command>',
-      '',
-      pkg.description,
-      '',
-      'Start here',
-      ...columns(start.map((v): [string, string] => [usageOf(v), v.start as string])),
-      '',
-      ...sections.map(
-        ({ section, title }) =>
-          `${title.padEnd(width)}  ${shown
-            .filter((v) => v.section === section)
-            .map((v) => v.name)
-            .join(' · ')}`,
-      ),
-      '',
-      ...footer,
-    ].join('\n')
-  }
-  const width = Math.max(...shown.map((v) => usageOf(v).length))
   return [
-    'Usage: ttheme <command>',
+    ...BANNER,
     '',
-    pkg.description,
+    'Getting help:',
+    ...columns(GETTING_HELP),
+    '',
+    'Global options:',
+    ...columns(GLOBAL_OPTIONS),
     ...sections.flatMap(({ section, title }) => [
       '',
-      title,
-      ...columns(
-        shown.filter((v) => v.section === section).map((v): [string, string] => [usageOf(v), v.about]),
-        width,
-      ),
+      `${title}:`,
+      ...columns(shown.filter((v) => v.section === section).flatMap((v) => listed(v, all))),
     ]),
+    ...(all ? ['', 'Examples:', ...columns(EXAMPLES, Math.max(...EXAMPLES.map(([left]) => left.length)))] : []),
     '',
-    'Examples',
-    ...columns(EXAMPLES),
-    '',
-    ...footer,
+    ...(shell ? ['ttheme alone opens preview and browse as tabs — tab and shift+tab move between them'] : []),
+    'https://kecan0406.github.io/ttheme',
   ].join('\n')
 }

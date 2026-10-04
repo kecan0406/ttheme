@@ -23,9 +23,8 @@ ttheme use nosuchpalette 2>/dev/null && { print -u2 "ttheme use took a bad name"
 out=$(ttheme use city 2>&1) && { print -u2 "ttheme use took a bad name"; exit 1 }
 [[ $out == *"did you mean"*nightcity* ]] || { print -u2 "did-you-mean broke: $out"; exit 1 }
 ttheme --frobnicate 2>/dev/null && { print -u2 "ttheme took an unknown option"; exit 1 }
-ttheme next extra 2>/dev/null && { print -u2 "ttheme next took an extra argument"; exit 1 }
 [[ $(ttheme pin --help) == "Usage: ttheme pin"* ]] || { print -u2 "ttheme pin --help did not describe pin"; exit 1 }
-[[ $(ttheme pins --help) == "Usage: ttheme pins"$'\n\n'"Map every pinned directory"* ]] || { print -u2 "ttheme pins --help did not describe pins"; exit 1 }
+[[ $(ttheme pins --help) == "Usage: ttheme pins"$'\n\n'"Map every pin — the pinned directories"* ]] || { print -u2 "ttheme pins --help did not describe pins"; exit 1 }
 ttheme pins extra 2>/dev/null && { print -u2 "ttheme pins took an extra argument"; exit 1 }
 out=$(ttheme preview </dev/null 2>&1) && { print -u2 "ttheme preview ran without a tty"; exit 1 }
 [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }

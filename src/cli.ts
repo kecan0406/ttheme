@@ -15,7 +15,7 @@ import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
 import { Signalled } from './tui/terminal.ts'
 import { runUninstall } from './uninstall.ts'
-import { helpText, usageOf, VERB_SPECS, type VerbSpec } from './verbs.ts'
+import { briefText, commandHelp, helpText, VERB_SPECS, type VerbSpec } from './verbs.ts'
 import { runWire } from './wire.ts'
 
 export interface Flags {
@@ -67,7 +67,8 @@ const RUNS: Record<string, Verb['run']> = {
 export const VERBS: Verb[] = VERB_SPECS.map((spec) => ({ ...spec, run: RUNS[spec.name] }))
 
 export type Invocation =
-  | { kind: 'help'; verb?: Verb; all?: boolean; code: number }
+  | { kind: 'brief' }
+  | { kind: 'help'; verb?: Verb; all?: boolean }
   | { kind: 'version' }
   | { kind: 'run'; verb: Verb; args: string[]; flags: Flags }
 
@@ -104,24 +105,24 @@ function parseFlags(verb: Verb, args: string[]) {
 export function parse(argv: readonly string[]): Invocation {
   const [first, ...rest] = argv
   if (first === undefined) {
-    return { kind: 'help', code: 1 }
+    return { kind: 'brief' }
   }
   if (first === '-h' || first === '--help') {
-    return { kind: 'help', code: 0 }
+    return { kind: 'help' }
   }
-  if (first === '-V' || first === '--version') {
+  if (first === '-v' || first === '--version') {
     return { kind: 'version' }
   }
   if (first === 'help') {
     if (rest[0] === undefined || rest[0] === 'all') {
-      return { kind: 'help', all: rest[0] === 'all', code: 0 }
+      return { kind: 'help', all: rest[0] === 'all' }
     }
-    return { kind: 'help', verb: verbNamed(rest[0]), code: 0 }
+    return { kind: 'help', verb: verbNamed(rest[0]) }
   }
   const verb = verbNamed(first)
   const parsed = parseFlags(verb, rest)
   if (parsed.values.help) {
-    return { kind: 'help', verb, code: 0 }
+    return { kind: 'help', verb }
   }
   for (const [name, { choices }] of Object.entries(verb.flags ?? {})) {
     for (const value of [parsed.values[name] ?? []].flat()) {
@@ -143,28 +144,6 @@ export function parse(argv: readonly string[]): Invocation {
   return { kind: 'run', verb, args, flags: given as Flags }
 }
 
-function rows(pairs: [string, string][]): string[] {
-  const width = Math.max(0, ...pairs.map(([left]) => left.length))
-  return pairs.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`)
-}
-
-export function help(verb?: Verb, all = false): string {
-  if (!verb) {
-    return helpText(all)
-  }
-  const flags = Object.entries(verb.flags ?? {}).map(([name, { short, value, about }]): [string, string] => [
-    `${short ? `-${short}, ` : ''}--${name}${value ? ` ${value}` : ''}`,
-    about,
-  ])
-  return [
-    `Usage: ttheme ${usageOf(verb)}`,
-    '',
-    verb.about,
-    ...(verb.actions ? ['', 'Actions:', ...rows(verb.actions)] : []),
-    ...(flags.length > 0 ? ['', 'Options:', ...rows(flags)] : []),
-  ].join('\n')
-}
-
 const CRASHES = [TypeError, RangeError, ReferenceError, SyntaxError]
 
 export function isCrash(error: unknown): boolean {
@@ -179,13 +158,13 @@ export async function runCli(argv: readonly string[]): Promise<number> {
       console.log(pkg.version)
       return 0
     }
+    if (call.kind === 'brief') {
+      console.error(briefText())
+      return 1
+    }
     if (call.kind === 'help') {
-      if (call.code === 0) {
-        console.log(help(call.verb, call.all))
-      } else {
-        console.error(help(call.verb, call.all))
-      }
-      return call.code
+      console.log(call.verb ? commandHelp(call.verb) : helpText(call.all === true))
+      return 0
     }
     running = call.verb
     if (!call.verb.run) {
@@ -203,7 +182,7 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     if (error instanceof UsageError) {
       console.error(
         error.verb
-          ? `ttheme ${error.verb.name}: ${error.message}\n\n${help(error.verb)}`
+          ? `ttheme ${error.verb.name}: ${error.message}\n\n${commandHelp(error.verb)}`
           : `ttheme: ${error.message} — see \`ttheme help\``,
       )
       return 1

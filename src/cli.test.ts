@@ -25,12 +25,13 @@ test('unknown commands fail with a usage error', () => {
 
 test('--version is its own invocation', () => {
   assert.deepEqual(parse(['--version']), { kind: 'version' })
+  assert.deepEqual(parse(['-v']), { kind: 'version' })
 })
 
 test('every verb either runs here or belongs to the shell layer', () => {
   assert.deepEqual(
     VERBS.filter((v) => !v.run).map((v) => v.name),
-    ['preview', 'use', 'next', 'pin', 'unpin', 'pins', 'config'],
+    ['preview', 'use', 'pin', 'unpin', 'pins', 'config'],
   )
   assert.ok(VERBS.filter((v) => v.shell).every((v) => !v.run))
 })

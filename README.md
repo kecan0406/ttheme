@@ -155,7 +155,6 @@ from the booru the way `find` does.
 | `ttheme` | Preview and browse as tabs of one screen — `tab` and `shift+tab` switch |
 | `ttheme preview` | Browse live — the tab repaints as the cursor moves, enter applies it to this tab or makes it the default |
 | `ttheme use <palette>` | Paint this tab (a unique prefix works) |
-| `ttheme next` | Advance this tab to the next palette |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` | A palette for this directory, everything below it, its repository or an ssh host (`ssh:<host>`) — a panel shows what each choice reaches; `cd` or `ssh` in repaints, leaving restores |
 | `ttheme pins` | Map every pinned directory as a tree, in each palette's colors, with where you are marked, and every pinned ssh host |
@@ -165,8 +164,8 @@ from the booru the way `find` does.
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |
 | `ttheme config` | Settings in `$EDITOR` |
 
-`ttheme help` shows the three to start with and the rest by task; `ttheme help
-all` lists every command. Preview's keys and the mouse, directory pins,
+`ttheme help` lists every command by task; `ttheme help all` adds their
+options and examples. Preview's keys and the mouse, directory pins,
 rotating new tabs and every setting are in [docs/usage.md](docs/usage.md).
 
 ## Terminal support

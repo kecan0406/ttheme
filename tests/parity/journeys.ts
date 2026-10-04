@@ -84,15 +84,6 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
-    id: 'next',
-    about: 'ttheme next moves the tab along the rotation',
-    async run(p) {
-      const a = await p.open()
-      await p.type(a, 'ttheme next')
-      await p.look('next', { want: 'miku' })
-    },
-  },
-  {
     id: 'hub',
     about:
       'the bare ttheme opens preview and browse as tabs: tab moves between them, each repaints the tab as its cursor moves, and esc puts the tab back',

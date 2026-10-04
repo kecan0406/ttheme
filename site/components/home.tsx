@@ -32,7 +32,7 @@ function features(palettes: number, series: number) {
     {
       emoji: '🗂️',
       title: 'a different one per tab',
-      text: 'ttheme use paints just this tab, ttheme next moves on, and ttheme pin keeps a palette for a folder.',
+      text: 'ttheme use paints just this tab, and ttheme pin keeps a palette for a folder.',
     },
     {
       emoji: '🖼️',

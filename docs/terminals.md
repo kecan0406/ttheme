@@ -42,7 +42,7 @@ get it.
   then. Warp answers OSC
   color queries but paints one theme app-wide and never the background an OSC
   sets, so a Warp tab wears its palette through that theme: `ttheme use`,
-  `next`, a pin, preview and browse switch it, and switching tabs or windows
+  a pin, preview and browse switch it, and switching tabs or windows
   puts on the palette of the one in front — about 0.2 s later with
   `TTHEME_WARP_FAST` on, 0.6 s with it off, which is Warp's own wait before it
   reloads its settings. Warp records no switch
@@ -235,7 +235,7 @@ the palette's profile carries all of them and the picture in about 40 ms
 (measured on 3.7.3 at 80×25). So once iTerm2 lets a control sequence switch
 the profile — Always Allow on the bar it shows the first time, which ttheme
 reads at its next `add`, `remove`, `browse`, `default`, `on` or `off` — every palette
-goes on that way: `ttheme use`, `next`, a pin, preview as the cursor moves, and
+goes on that way: `ttheme use`, a pin, preview as the cursor moves, and
 the tab's way back to its default, which is iTerm2's own default profile. A tab
 that sits on its palette's profile follows a tuned picture or tone at once and
 keeps its palette through a program's color reset. Browse and init's picker

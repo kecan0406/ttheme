@@ -246,7 +246,6 @@ hostile() {
   upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
   step $'ttheme use kita\r' $name
   step $'cd /\r' $name
-  step $'ttheme next\r' $name
   stop
   [[ $BUF == *$'\e]11;#'* ]] || { fail "$name: ttheme use painted nothing under the user's options"; return 1 }
   [[ $BUF != *(parameter not set|file exists|bad pattern|bad output format|bad substitution|bad math|no matches found|created globally|command not found)* ]] ||

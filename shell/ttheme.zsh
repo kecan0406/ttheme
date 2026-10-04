@@ -1426,13 +1426,6 @@ __tt_next() {
   REPLY=${TTHEME_PALETTE[$TTHEME_ORDER[idx]]}
 }
 
-__tt_rotate() {
-  local REPLY
-  __tt_next
-  __tt_wear "$REPLY" "" force
-  __tt_announce
-}
-
 source $TTHEME_HOME/preview.zsh
 
 __tt_hook() {
@@ -1464,7 +1457,7 @@ ttheme() {
   fi
   case $1 in
     -h|--help) __tt_help; return 0 ;;
-    -V|--version) __tt_cli --version; return ;;
+    -v|--version) __tt_cli --version; return ;;
     help) __tt_verb_help $2; return 0 ;;
     -*) print -u2 "ttheme: unknown option $1 — see \`ttheme help\`"; return 1 ;;
   esac
@@ -1502,7 +1495,6 @@ ttheme() {
       __tt_resolve "$2" || return 1
       __tt_wear "${TTHEME_PALETTE[$REPLY]}" "$REPLY" force
       __tt_announce ;;
-    next) __tt_rotate ;;
     default)
       __tt_resolve "$2" || return 1
       __tt_keep "$REPLY" ;;

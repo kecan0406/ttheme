@@ -5,7 +5,7 @@
 A palette can also bring a Ghostty background image. The block `init` writes
 includes `~/.config/ttheme/backgrounds/shown.conf` with an optional
 `config-file = ?…`, and that one line names the palette whose picture is up.
-Putting a palette on — `ttheme use <name>`, enter in `preview`, `ttheme next`,
+Putting a palette on — `ttheme use <name>`, enter in `preview`,
 `ttheme default`, cd into a pinned directory — rewrites the line and sends
 `SIGUSR2`, so whatever Ghostty settings you put in `<palette>.conf` arrive with
 the palette, and palettes without a file show no image:
@@ -29,7 +29,7 @@ in front and puts that tab's picture up about a tenth of a second after you
 switch to it. It needs a Ghostty whose AppleScript names a terminal's tty (builds
 after 1.3.1); with an older one, or on Linux, a busy tab catches up at its next
 prompt. A tab whose colors are not a ttheme palette leaves the picture where it
-is. Putting a palette on in the tab itself — `ttheme use`, `next`, a pin —
+is. Putting a palette on in the tab itself — `ttheme use`, a pin —
 changes its colors and its picture in the same frame. A tab you switch to can
 still show the last tab's picture for a frame or two before its own arrives:
 Ghostty draws a tab the moment it shows it, with the one picture it holds.

@@ -19,10 +19,6 @@ use-plain.used.colors	miku	=	=	=	=	=	=	=	=	=
 use-plain.used.picture	none	=	=	=	=	=	=	=	=	=
 use-plain.used.wears	miku	=	=	=	=	=	=	=	=	=
 use-plain.used.issue	-	=	=	=	=	=	=	=	=	=
-next.next.colors	miku	=	=	=	=	=	=	=	=	=
-next.next.picture	none	=	=	=	=	=	=	=	=	=
-next.next.wears	miku	=	=	=	=	=	=	=	=	=
-next.next.issue	-	=	=	=	=	=	=	=	=	=
 hub.preview.colors	konata	=	=	=	=	=	=	=	=	=
 hub.preview.picture	konata	=	=	=	none	=	none	=	=	=
 hub.preview.text	txt:376928daa2	=	=	=	=	=	=	=	=	=
