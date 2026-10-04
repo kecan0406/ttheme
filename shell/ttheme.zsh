@@ -218,7 +218,7 @@ __tt_listen() {
   if __tt_recall; then
     TTHEME_RECHECK=1
   else
-    __tt_hear || return 1
+    __tt_hear || { [[ -n $TTHEME_OWED ]] && TTHEME_RECHECK=1; return 1 }
     __tt_remember "$REPLY"
   fi
   TTHEME_HEARD=$REPLY
