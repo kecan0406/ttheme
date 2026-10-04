@@ -10,6 +10,8 @@ typeset -g BUF="" FD="" MAIN="" TERMINAL=""
 typeset -gi MARK=0
 typeset -ga EXTRA=()
 typeset -gA ASKED=() SHOWN=()
+typeset -gF LATE=0
+typeset -ga LATER=()
 typeset -ga METRICS=(first_prompt first_command command input)
 typeset -gA LIMIT=(first_prompt 50 first_command 150 command 10 input 20)
 typeset -g FORKS=$ROOT/tests/forks.tsv
@@ -61,7 +63,25 @@ answer() {
       \[16t*) out+=$'\e[6;16;8t' ;;
     esac
   done
-  [[ -z $out ]] || zpty -w -n sh "$out"
+  [[ -z $out ]] && return 0
+  if (( LATE )); then
+    LATER+=($(( EPOCHREALTIME + LATE )) "$out")
+  else
+    zpty -w -n sh "$out"
+  fi
+}
+
+later() {
+  local -a keep=()
+  local -i i
+  for (( i = 1; i < ${#LATER}; i += 2 )); do
+    if (( EPOCHREALTIME >= LATER[i] )); then
+      zpty -w -n sh "$LATER[i+1]" || :
+    else
+      keep+=($LATER[i] "$LATER[i+1]")
+    fi
+  done
+  LATER=($keep)
 }
 
 upto() {
@@ -69,6 +89,7 @@ upto() {
   local -F end=$(( EPOCHREALTIME + $2 ))
   until eval $1; do
     (( EPOCHREALTIME < end )) || return 1
+    (( ${#LATER} )) && later
     zselect -t 1 -r $FD || continue
     zpty -rt sh chunk || continue
     BUF+=$chunk
@@ -95,6 +116,7 @@ start() {
 
 stop() {
   local keep=$BUF
+  LATER=()
   if [[ -n $MAIN ]] && zpty -t sh 2>/dev/null; then
     kill -HUP $MAIN 2>/dev/null || :
     upto '! zpty -t sh' 2 stop || :
@@ -271,6 +293,20 @@ hostile() {
     { fail "$name: the layer broke under options a user's .zshrc sets before it"; return 1 }
 }
 
+late() {
+  local name=$1
+  home $name off
+  LATE=0.5
+  start $name
+  upto '[[ $BUF == *"bench> "* ]]' 5 $name || { LATE=0; fail "$name: no prompt within 5s"; return 1 }
+  upto '(( ! ${#LATER} ))' 2 $name || :
+  LATE=0
+  step $'print -r -- AFTER_$((5*5))\r' $name
+  [[ $BUF == *AFTER_25* && $BUF != *(command not found|no such file or directory)* ]] ||
+    { fail "$name: an answer the terminal sent after the layer stopped waiting reached the command line"; return 1 }
+  stop
+}
+
 check() {
   local name
   home base
@@ -296,7 +332,8 @@ check() {
   hovering iterm2
   hovering iterm2-switch
   hostile options
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, and a .zshrc's own options break none of it"
+  late late
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
 }
 
 bench() {

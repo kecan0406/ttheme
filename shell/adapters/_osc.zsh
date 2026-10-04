@@ -182,11 +182,37 @@ __tt_ask() {
   done
   [[ -n $saved ]] && stty "$saved" <&$fd 2>/dev/null
   exec {fd}>&-
+  [[ $buf == *$'\e[0n'* ]] || __tt_owed
   while [[ $buf == (#b)([^$'\e']#)(${~seqs})(*) ]]; do
     TTHEME_TYPED+=$match[1] REPLY+=$match[2] buf=$match[-1]
   done
   [[ $buf == $'\e'* ]] || TTHEME_TYPED+=$buf
   REPLY=${REPLY%$'\e[0n'}
+}
+
+__tt_owed() {
+  local k
+  [[ -o zle && -z $TTHEME_OWED ]] || return 0
+  typeset -g TTHEME_OWED=1
+  zle -N __tt_late
+  zle -N __tt_quiet
+  for k in emacs viins vicmd; do
+    [[ $(bindkey -M $k '^[]') == *undefined-key ]] && bindkey -M $k '^[]' __tt_late
+    [[ $(bindkey -M $k '^[[0n') == *undefined-key ]] && bindkey -M $k '^[[0n' __tt_quiet
+  done
+}
+
+__tt_late() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  local ch prev=""
+  while read -s -k 1 -t 0.2 ch; do
+    [[ $ch == $'\a' || ( $prev == $'\e' && $ch == \\ ) ]] && return 0
+    prev=$ch
+  done
+}
+
+__tt_quiet() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
 }
 
 __tt_typed() {
