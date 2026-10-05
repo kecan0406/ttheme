@@ -1,1 +1,24 @@
-ttheme: no palettes installed yet — run `ttheme browse` to pick some
+ [Catalog]  Installed   Markets   Errors
+ Discover palettes (6/6 · 0 picked)
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                               │ Bocchi the Rock!
+    ○ Select all (6)                                           │ ぼっち・ざ・ろっく!
+ ▌  ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっく!               │ The ttheme catalog
+    ▸ Lucky☆Star (0/3) らき☆すた                               │ 3 palettes · 0 installed
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+                                                               │
+ [BROWSE] → open   space pick   ⇧←→ tabs   ? keys                                        esc cancel

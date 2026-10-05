@@ -319,7 +319,7 @@ export async function runBrowse(): Promise<number> {
     await panel.run()
   } finally {
     live?.stop?.()
-    if (live && !hub) {
+    if (live && (!hub || panel.next() === undefined)) {
       process.stdout.write(live.restore(saved))
     }
     lookups.abort()

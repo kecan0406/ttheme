@@ -274,7 +274,7 @@ source $TTHEME_HOME/adapters/_wired.zsh
   source $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh
 
 __tt_empty() {
-  print -u2 'ttheme: no palettes installed yet — run `ttheme browse` to pick some'
+  print -u2 'ttheme: no palettes installed yet — run `ttheme` in a terminal to pick some, or `ttheme add <palette>`'
   return 1
 }
 
@@ -1310,7 +1310,10 @@ __tt_catalog() {
 
 __tt_catalog_done() {
   [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
-  __tt_palettes_load && __tt_reloaded
+  local was=$TTHEME_PALETTES_AT
+  if __tt_palettes_load && [[ $TTHEME_PALETTES_AT != "$was" ]]; then
+    __tt_reloaded
+  fi
   [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$1" ]] && return 0
   __tt_follow "$1"
   __tt_worn_shown
@@ -1471,17 +1474,21 @@ ttheme() {
     __tt_unpainted && __tt_paints || return 1
   fi
   if (( ! $# )); then
-    (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
     if [[ -t 0 && -t 1 ]]; then
-      __tt_preview hub
+      if (( ${#TTHEME_PALETTE} )); then
+        __tt_preview hub
+      else
+        __tt_catalog browse
+      fi
     else
+      (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
       __tt_menu
     fi
     return 0
   fi
 
   case $1 in
-    browse|list|add|remove|update|market|new|edit|check|share) __tt_catalog "$@"; return ;;
+    list|add|remove|update|market|new|edit|check|share) __tt_catalog "$@"; return ;;
     on|off) __tt_switch "$@"; return ;;
     info) TTHEME_ZSH=$ZSH_VERSION __tt_cli "$@"; return ;;
   esac
@@ -1498,7 +1505,6 @@ ttheme() {
     default)
       __tt_resolve "$2" || return 1
       __tt_keep "$REPLY" ;;
-    preview) __tt_preview ;;
     pin)
       if [[ $2 == ssh:* ]]; then
         REPLY=ssh:${(L)2#ssh:}

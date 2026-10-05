@@ -38,16 +38,14 @@ typeset -ga SCENARIOS=(
   'hub-ask         few    hub      Tab@Catalog Right Down Space Tab@Apply'
   'hub-back        few    hub      Down Right Tab@Catalog BTab@PREVIEW'
   'hub-keys        few    hub      ?'
-  'preview-folded  few    preview'
-  'preview-open    few    preview  Down Right'
-  'preview-keys    few    preview  ?'
-  'preview-config  few    preview  M-c'
-  'preview-colors  few    preview  M-c Down Down Down Down Down Down Right'
-  'theme-edit      few    preview  Down Right Down Tab@Palette'
-  'theme-editor    few    preview  Down Right Down Tab@Palette Enter@slot'
-  'theme-keys      few    preview  Down Right Down Right@Palette ?'
+  'preview-open    few    hub  Down Right'
+  'preview-config  few    hub  M-c'
+  'preview-colors  few    hub  M-c Down Down Down Down Down Down Right'
+  'theme-edit      few    hub  Down Right Down Tab@Palette'
+  'theme-editor    few    hub  Down Right Down Tab@Palette Enter@slot'
+  'theme-keys      few    hub  Down Right Down Right@Palette ?'
   'browse-market   market browse   Down Down Right Down Right Down'
-  'preview-market  market preview  Down Right Down Right Down'
+  'preview-market  market hub  Down Right Down Right Down'
   'hub-market      market hub'
   'pins-map        pinned pins'
   'pin-scope       pinned pin      Right Down Enter@PIN Left'
@@ -83,7 +81,6 @@ command_for() {
   local target=$1 home=$2
   case $target in
     browse|list|add|remove) print -r -- "node $ROOT/bin/ttheme.js $target" ;;
-    preview) print -r -- "source $home/ttheme/ttheme.zsh; ttheme preview" ;;
     hub) print -r -- "source $home/ttheme/ttheme.zsh; ttheme" ;;
     pins) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work/api/v2; ttheme pins" ;;
     pin) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work; ttheme pin" ;;

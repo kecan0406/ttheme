@@ -167,6 +167,11 @@ __tt_pv_leave() {
   painted=$orig
 }
 
+__tt_pv_forget() {
+  TTHEME_TERMINAL_SHOWN=""
+  __tt_out $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'
+}
+
 __tt_bg_shown() {
   REPLY=${TTHEME_TERMINAL_SHOWN%% *}
   [[ -n $REPLY ]]

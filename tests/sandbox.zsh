@@ -195,7 +195,7 @@ main() {
   PICTURED=$#pictured
   local label=${(j: :)palettes}
   if (( $#empty )); then
-    label="none, \`ttheme browse\` picks them"
+    label="none, \`ttheme\` picks them"
   elif (( ! $#palettes )); then
     palettes=(${(f)"$(node -p "require(process.argv[1]).palettes.map((p) => p.name).join('\\n')" $ROOT/dist/manifest.json)"})
     label="all $#palettes"

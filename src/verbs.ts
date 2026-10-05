@@ -34,14 +34,6 @@ export interface VerbSpec {
 
 export const VERB_SPECS: VerbSpec[] = [
   {
-    name: 'preview',
-    args: [],
-    about:
-      'Try palettes live — focus repaints, enter edits its tone and picture and applies it, esc restores, ? lists keys',
-    section: 'tab',
-    shell: true,
-  },
-  {
     name: 'use',
     args: ['<palette>'],
     about: 'Paint this tab — a unique prefix works: ttheme use ho',
@@ -92,6 +84,7 @@ export const VERB_SPECS: VerbSpec[] = [
     about:
       'Pick palettes and markets in a live picker — shift+←/→ moves between Catalog, Installed, Markets and Errors',
     section: 'catalog',
+    hidden: true,
   },
   {
     name: 'list',
@@ -118,7 +111,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'update',
     args: ['[market...]'],
     about:
-      "Update ttheme and refresh your markets — official palettes come with ttheme; an installed palette from another market keeps its colors until browse's Installed tab takes its update",
+      "Update ttheme and refresh your markets — official palettes come with ttheme; an installed palette from another market keeps its colors until Browse's Installed tab takes its update",
     section: 'catalog',
   },
   {
@@ -363,6 +356,7 @@ export function helpText(all: boolean, shell = false): string {
   const sections = SECTIONS.filter(({ section }) => shown.some((v) => v.section === section))
   return [
     ...BANNER,
+    'ttheme alone opens Preview and Browse as tabs — tab and shift+tab move between them',
     '',
     'Getting help:',
     ...columns(GETTING_HELP),
@@ -376,7 +370,6 @@ export function helpText(all: boolean, shell = false): string {
     ]),
     ...(all ? ['', 'Examples:', ...columns(EXAMPLES, Math.max(...EXAMPLES.map(([left]) => left.length)))] : []),
     '',
-    ...(shell ? ['ttheme alone opens preview and browse as tabs — tab and shift+tab move between them'] : []),
     'https://ttheme.vercel.app',
   ].join('\n')
 }

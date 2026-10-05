@@ -2,15 +2,14 @@
 
 ## Commands
 
-Three cover most days: `ttheme preview` tries every palette live and keeps the
-one you land on, `ttheme browse` installs or drops palettes, and `ttheme use
-<palette>` paints this tab. `ttheme` alone opens the first two as tabs of one
-screen. `ttheme help` lists every command by task with what it does, and `ttheme
-help all` adds each one's options and actions, and examples:
+Two cover most days: `ttheme` alone opens Preview and Browse as tabs of one
+screen — Preview tries every palette live and keeps the one you land on, Browse
+installs or drops palettes — and `ttheme use <palette>` paints this tab.
+`ttheme help` lists every command by task with what it does, and `ttheme help
+all` adds each one's options and actions, and examples:
 
 ```
 This tab:
-  preview                    Try palettes live
   use <palette>              Paint this tab
   pin [dir|ssh:<host>]       Pin a palette to a directory or an ssh host
   unpin [dir|ssh:<host>]     Drop a pin
@@ -23,7 +22,6 @@ New tabs:
   config                     Edit settings in $EDITOR
 
 Palettes:
-  browse                     Pick palettes and markets in a live picker
   list [query]               Show the catalog, marking what is installed
   add <palette...>           Install palettes
   remove <palette...>        Uninstall palettes
@@ -70,9 +68,9 @@ The two screens share their keys wherever they do the same thing: `←`/`→`
 and `enter` open and close a series, `esc` clears the filter and, once it is
 clear, closes the tabs from either screen, and `?` lists the keys. On a palette
 `enter` does what it does on that screen: preview applies the palette it landed
-on, browse applies its picks and closes. `ttheme preview` and `ttheme browse`
-open one screen on its own, with no tab row; `ttheme pin` is preview alone as
-well. Piped, `ttheme` prints the palettes, one per line, as name, series and
+on, browse applies its picks and closes. `ttheme pin` is preview alone, with no
+tab row, and `ttheme` opens browse alone while no palette is installed. Piped,
+`ttheme` prints the palettes, one per line, as name, series and
 source separated by tabs.
 
 ## The mouse
@@ -344,7 +342,7 @@ still wins:
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `tone` | the colors a new background picture is drawn in: `tone` tints it in one color of its palette, `original` keeps its own colors. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `tone` and `original`. Like the blur, it is read from `config.zsh` itself |
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
-| `TTHEME_MARKET_LOOKUP` | `on` | `ttheme browse`'s Markets tab looks GitHub up by itself: the repositories carrying the `ttheme-market` topic when the tab opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
+| `TTHEME_MARKET_LOOKUP` | `on` | Browse's Markets tab looks GitHub up by itself: the repositories carrying the `ttheme-market` topic when the tab opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
 | `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |
@@ -364,8 +362,8 @@ still wins:
 ## The catalog
 
 The catalog is not installed wholesale: `init` installs the series you pick, and
-`init --yes` none at all. `ttheme browse` opens it as a full-screen live picker in
-four tabs — `shift+→` moves on, `shift+←` back, and each tab keeps its own filter.
+`init --yes` none at all. Browse, the second tab of `ttheme`, is the catalog as a
+full-screen live picker in four tabs — `shift+→` moves on, `shift+←` back, and each tab keeps its own filter.
 The rest is preview's: `↑`/`↓`, page up/down and home/end move through a list,
 `←`/`→` and `enter` open and close a series, `esc` clears the filter before it
 leaves, `?` lists the keys, and the last line names the keys of the row you are
@@ -444,7 +442,7 @@ ttheme remove kyubey    # and one fewer
 ttheme update           # a newer ttheme with its palettes, and every market's new list
 ```
 
-`browse`, `add` and `remove` rewrite `palettes.zsh`, each wired terminal's
+`add`, `remove` and Browse's apply rewrite `palettes.zsh`, each wired terminal's
 `themes/` directory and the `theme =` line in its config, then the shell re-reads
 them — the change is live in the tab you ran it in. The first palette you install
 becomes the one new windows open with.
@@ -456,7 +454,7 @@ from there. The official palettes come with ttheme, so this is how they change.
 Then it refetches every other market you added; `ttheme update alice@pastel`
 refetches that one alone. A palette you installed from a market keeps the
 colors it was installed with (`~/.config/ttheme/kept.json`) until you take its
-update: `update` names the ones that have one, `browse` marks them `↑` in its
+update: `update` names the ones that have one, Browse marks them `↑` in its
 Installed tab, and `ctrl+r` there stages one — or a whole series — for enter to
 apply, pictures it newly lists included. A palette that leaves its market stays
 installed from that copy; `list` marks it.
@@ -465,8 +463,8 @@ Once a day ttheme also checks by itself, in the background of any command:
 whether npm has a newer ttheme, which it says once on your terminal
 (`ttheme 1.2.15 is out, you have 1.2.14 — ttheme update updates it`), and —
 for a market with auto-update on, when its copy is a day old — the market's
-list: `browse`, `add`, `remove`, `market`, `default`, `on` and `off` fetch it
-first, `browse` in the background while it is open, the others waiting a few
+list: `add`, `remove`, `market`, `default`, `on` and `off` fetch it
+first, Browse in the background while it is open, the others waiting a few
 seconds at most, and say so on your terminal, never into a pipe
 (`Updated alice@pastel — 12 palettes (3 new)`), when something changed. A failed
 try is kept quiet, shown under Errors, and tried again an hour later.
@@ -496,7 +494,7 @@ ttheme market check ./my-market   # what an install would read from a folder, be
 
 Adding a repository asks whether it updates on its own (no, without a
 terminal); the official catalog comes with ttheme and updates with it, and a
-folder is read in place, so neither needs one. `browse`'s Markets tab switches it later.
+folder is read in place, so neither needs one. Browse's Markets tab switches it later.
 Adding a repository you already have with another `#ref` moves it there,
 keeping its auto-update.
 

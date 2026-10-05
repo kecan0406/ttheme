@@ -363,7 +363,9 @@ __tt_pv_foot() {
     hex=${${=applied}[8]#\#}
     printf -v y '\e[38;2;%d;%d;%dm' $((16#${hex:0:2})) $((16#${hex:2:2})) $((16#${hex:4:2}))
   fi
-  if (( help )); then
+  if (( help == 2 )); then
+    badge=HELP right=$b"any key"$z$d" close"$z
+  elif (( help )); then
     badge=HELP right=$b"? esc"$z$d" close"$z
   elif [[ -n $pick ]]; then
     badge='PREVIEW (APPLY)' lead="$pick →"
@@ -551,7 +553,11 @@ __tt_pv_help() {
     (( hub )) && { hk+=(Screens); hv+=("shift+tab  ·  tab on a series") }
   fi
   hk+=(Close)
-  hv+=("?  esc")
+  if (( help == 2 )); then
+    hv+=("any key  ·  ? brings this back")
+  else
+    hv+=("?  esc")
+  fi
   (( color )) || z= b=
   local -i i r x y w hh
   if (( split && sw >= 48 )); then
@@ -1005,7 +1011,7 @@ __tt_pv_draw() {
   fi
   [[ $1 == hint ]] && (( ! wiped )) || pvz=()
   if (( pw < 40 || ph < 12 )); then
-    line="ttheme preview"
+    line="ttheme"
     (( color )) && line=$'\e[1m'$ac$line$'\e[0m'
     out+=$line$'\e[K\n'"Needs 40×12 — now ${pw}×${ph}"$'\e[K\n'
     line="esc quits"
@@ -1449,6 +1455,7 @@ __tt_pv_bg_track() {
 
 __tt_pv_wheel() {
   local -i i
+  (( help == 2 )) && help=0
   if (( help )); then
     return 0
   elif (( conf )); then
@@ -1493,7 +1500,8 @@ __tt_pv_screen() {
     err=$(TTHEME_HUB=${TTHEME_HUB_TABS[to]} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)
     rc=$?
     if (( rc == TTHEME_HUB_CLOSED )); then
-      hubleft=1
+      hubleft=1 painted=?
+      __tt_pv_forget
       return 1
     elif (( rc > TTHEME_HUB_SWITCH && rc <= TTHEME_HUB_SWITCH + n )); then
       to=$(( rc - TTHEME_HUB_SWITCH ))
@@ -1928,9 +1936,11 @@ __tt_pv_handle() {
   if (( help )); then
     case $key in
       $'\x03') return 1 ;;
-      '?'|esc) help=0 ;;
+      '?'|esc) help=0; return 0 ;;
+      nop) return 0 ;;
     esac
-    return 0
+    (( help == 2 )) || return 0
+    help=0
   fi
   if [[ -n $pick ]]; then
     __tt_pv_pick
@@ -2070,7 +2080,7 @@ __tt_preview() {
   local -i hub=0 hubleft=0
   [[ $mode == hub ]] && hub=1
   if [[ ! -t 0 || ! -t 1 ]]; then
-    print -u2 "ttheme ${mode:-preview}: needs a terminal"
+    print -u2 "ttheme $mode: needs a terminal"
     return 1
   fi
   local orig=$TTHEME_SPEC applied=$TTHEME_SPEC painted=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0 tick=0
@@ -2112,6 +2122,8 @@ __tt_preview() {
   __tt_pv_roll
   __tt_pv_rows
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && __tt_pv_goto "$cn"
+  __tt_pv_lw
+  (( reply[2] >= 48 )) && help=2
   local tty=""
   local -i TTHEME_RAW=0
   {

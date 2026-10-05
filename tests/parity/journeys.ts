@@ -235,7 +235,7 @@ export const JOURNEYS: Journey[] = [
     about: 'preview repaints the tab as the cursor moves, and esc puts everything back',
     async run(p) {
       const a = await p.open()
-      await p.launch(a, 'ttheme preview')
+      await p.launch(a, 'ttheme')
       await p.keys(a, 'k', 'i', 't', 'a')
       await p.look('hover', { want: 'kita', text: true, wears: false })
       await p.quit(a)
@@ -247,7 +247,7 @@ export const JOURNEYS: Journey[] = [
     about: 'enter in preview asks where to keep the palette, and This tab keeps it for this tab',
     async run(p) {
       const a = await p.open()
-      await p.launch(a, 'ttheme preview')
+      await p.launch(a, 'ttheme')
       await p.keys(a, 'k', 'i', 't', 'a', 'enter')
       await p.look('pick', { want: 'kita', text: true, wears: false })
       await p.keys(a, 'right', 'enter')
@@ -260,7 +260,7 @@ export const JOURNEYS: Journey[] = [
     about: 'preview’s Default makes the palette the one new tabs open with',
     async run(p) {
       const a = await p.open()
-      await p.launch(a, 'ttheme preview')
+      await p.launch(a, 'ttheme')
       await p.keys(a, 'm', 'i', 'k', 'u', 'enter', 'enter')
       await p.back(a)
       await p.look('here', { want: 'miku' })
@@ -274,7 +274,7 @@ export const JOURNEYS: Journey[] = [
       'right in preview opens the palette and its picture’s tuning beside the list, and esc leaves it all as it was',
     async run(p) {
       const a = await p.open()
-      await p.launch(a, 'ttheme preview')
+      await p.launch(a, 'ttheme')
       await p.keys(a, 'k', 'i', 't', 'a', 'right')
       await p.expect(a, 'Palette')
       await p.look('tune', { want: 'kita', text: 'pictures', wears: false })
@@ -287,7 +287,7 @@ export const JOURNEYS: Journey[] = [
     about: 'alt-c in preview opens the settings panel',
     async run(p) {
       const a = await p.open()
-      await p.launch(a, 'ttheme preview')
+      await p.launch(a, 'ttheme')
       await p.keys(a, 'alt-c')
       await p.look('panel', { want: 'konata', unpainted: true, text: true, wears: false })
       await p.quit(a)
@@ -301,7 +301,7 @@ export const JOURNEYS: Journey[] = [
       const a = await p.open()
       await p.type(a, 'ttheme use kita')
       const b = await p.open()
-      await p.launch(b, 'ttheme preview')
+      await p.launch(b, 'ttheme')
       await p.keys(b, 'k', 'i', 't', 'a', 'right')
       await p.expect(b, 'Palette')
       await p.keys(b, 'D', '1s')
@@ -318,7 +318,7 @@ export const JOURNEYS: Journey[] = [
       const a = await p.open()
       await p.type(a, 'ttheme use kita')
       const b = await p.open()
-      await p.launch(b, 'ttheme preview')
+      await p.launch(b, 'ttheme')
       await p.keys(b, 'k', 'i', 't', 'a', 'right')
       await p.expect(b, 'Palette')
       await p.keys(b, 'down', 'down', 'down', 'down', 'right', 'right', 'right', 's', '1s')
@@ -378,7 +378,9 @@ export const JOURNEYS: Journey[] = [
       'browse repaints the tab’s colors as the cursor moves over palettes, leaving its picture, and puts the tab back when it closes',
     async run(p) {
       const a = await p.open()
-      await p.launch(a, 'ttheme browse', 'Catalog')
+      await p.launch(a, 'ttheme', 'Browse')
+      await p.keys(a, 'shift-tab')
+      await p.expect(a, 'Catalog')
       await p.keys(a, 'k', 'i', 't', 'a')
       await p.look('hover', { want: 'kita', picture: 'konata', text: true, wears: false })
       await p.quit(a)
@@ -391,7 +393,9 @@ export const JOURNEYS: Journey[] = [
       'a palette worn after browse repainted the tab survives a program that resets the tab’s colors, as one worn in a fresh tab does',
     async run(p) {
       const a = await p.open()
-      await p.launch(a, 'ttheme browse', 'Catalog')
+      await p.launch(a, 'ttheme', 'Browse')
+      await p.keys(a, 'shift-tab')
+      await p.expect(a, 'Catalog')
       await p.keys(a, 'k', 'i', 't', 'a')
       await p.quit(a)
       await p.type(a, 'ttheme use miku')
@@ -428,7 +432,7 @@ export const JOURNEYS: Journey[] = [
     async run(p) {
       const ghostty = await p.wire('ghostty')
       const a = await p.open()
-      await p.launch(a, 'ttheme preview')
+      await p.launch(a, 'ttheme')
       await p.keys(a, 'k', 'i', 't', 'a', 'right')
       await p.expect(a, 'Palette')
       await p.keys(a, 'down', 'down', 'down', 'down', 'right', 'right', 'right', 's', '1s')

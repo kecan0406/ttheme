@@ -12,7 +12,7 @@ npx @kecan0406/ttheme@latest init
 2. **Which series to install** — `space` marks one, `Select all` takes the lot,
    enter moves on.
 3. **Whether to wear them** — with one palette picked, `Wear <palette> in every
-   tab?`; with several, whether to pick the default in `ttheme preview` once
+   tab?`; with several, whether to pick the default in `ttheme` once
    everything is installed. No installs ttheme off: your terminal keeps its own
    colors until `ttheme on`.
 
@@ -25,7 +25,7 @@ restart for new tabs).
 
 Running it again updates in place. `--yes` (`-y`) skips every prompt and installs
 no palettes, and init refuses to run without a terminal unless it is given —
-`ttheme browse` opens the full catalog any time, to add or drop single palettes.
+Browse, the second tab of `ttheme`, opens the full catalog any time, to add or drop single palettes.
 
 ## What init changes
 
@@ -45,7 +45,7 @@ outside the markers is left alone, and what goes in is colors only.
 - **iTerm2** has no config file to edit, so it gets one profile per installed
   palette instead — `ttheme · miku` and so on, in
   `~/Library/Application Support/iTerm2/DynamicProfiles/ttheme.json`, which
-  iTerm2 reloads by itself whenever `ttheme browse` adds or drops one. One more,
+  iTerm2 reloads by itself whenever Browse adds or drops one. One more,
   `ttheme · default`, always wears your default palette, and init makes it
   iTerm2's default profile, so new tabs and windows open wearing the palette and
   its picture from their first frame and follow `ttheme default` from then on.

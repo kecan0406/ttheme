@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="ttheme preview: typing nichi filters to the Nichijou palettes, each one repaints the tab as the cursor lands on it, then rei is picked and applied" width="860">
+  <img src="docs/demo.gif" alt="ttheme: typing nichi filters to the Nichijou palettes, each one repaints the tab as the cursor lands on it, then rei is picked and applied" width="860">
 </p>
 
 ## Why ttheme
@@ -78,8 +78,8 @@ a checkout are in [docs/install.md](docs/install.md).
 </details>
 
 Both images are drawn from the live catalog, so they always match what
-`ttheme browse` offers. `init` installs the series you pick; `ttheme browse`
-adds or drops single palettes any time, and a merged palette reaches everyone
+Browse offers. `init` installs the series you pick; Browse, the second tab of
+`ttheme`, adds or drops single palettes any time, and a merged palette reaches everyone
 with the next release — `ttheme update` brings it, and ttheme says when one is
 out.
 
@@ -87,7 +87,7 @@ out.
 
 Anyone can publish palettes from a GitHub repository. A market is named
 `<owner>@<name>` — its repository's owner and the name its `ttheme-market.toml` gives — and
-sits below the series in `ttheme preview` and `ttheme browse`, past a line, with
+sits below the series in Preview and Browse, past a line, with
 the folders under its `palettes/` as catalogs:
 
 ```
@@ -105,16 +105,16 @@ the folders under its `palettes/` as catalogs:
 ```sh
 ttheme add dusk --market alice/ttheme-pastel  # add alice's market and install from it
 ttheme market add alice/ttheme-pastel#v1      # or add it alone, pinned to a tag
-ttheme browse                                 # shift+→ to Markets: add, remove, auto-update
+ttheme                                        # shift+tab to Browse, shift+→ to Markets: add, remove, auto-update
 ```
 
-`ttheme browse` handles markets the way it handles palettes: its Markets tab
+Browse handles markets the way it handles palettes: its Markets tab
 adds one by repository or folder, finds the public ones on GitHub, marks one for
 removal and switches its auto-update, and enter applies all of it with the
 palettes you picked. The official catalog comes with ttheme and updates with it;
 a repository asks when you add it whether its list updates on its own, and a
 palette you installed from it keeps its colors until you take its update —
-`ctrl+r` on a palette marked `↑` in browse's Installed tab. Nobody reviews a market. Its
+`ctrl+r` on a palette marked `↑` in Browse's Installed tab. Nobody reviews a market. Its
 palettes are colors and post numbers, never code, and the contrast gate's
 numbers are shown for them but never enforced — only the official catalog is
 held to the gate. `ttheme update` updates ttheme and refreshes every market now; `ttheme market
@@ -154,13 +154,11 @@ from the booru the way `find` does.
 
 | Command | |
 |---|---|
-| `ttheme` | Preview and browse as tabs of one screen — `tab` and `shift+tab` switch |
-| `ttheme preview` | Browse live — the tab repaints as the cursor moves, enter applies it to this tab or makes it the default |
+| `ttheme` | Preview and Browse as tabs of one screen — `tab` and `shift+tab` switch. Preview tries palettes live: the tab repaints as the cursor moves, enter applies it to this tab or makes it the default. Browse picks palettes and markets: `shift+←/→` moves between Catalog, Installed, Markets and Errors |
 | `ttheme use <palette>` | Paint this tab (a unique prefix works) |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` | A palette for this directory, everything below it, its repository or an ssh host (`ssh:<host>`) — a panel shows what each choice reaches; `cd` or `ssh` in repaints, leaving restores |
 | `ttheme pins` | Map every pinned directory as a tree, in each palette's colors, with where you are marked, and every pinned ssh host |
-| `ttheme browse` | Pick palettes and markets — `shift+←/→` moves between Catalog, Installed, Markets and Errors |
 | `ttheme market add <owner/repo>` | Add someone's market (`#v1` pins it) — `ttheme market` lists yours; `search`, `remove` too |
 | `ttheme new <name>` | Make a palette of your own in the palette editor (`--from <palette>` starts from its colors); `edit`, `check`, `share` follow |
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |

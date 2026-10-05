@@ -42,7 +42,7 @@ reads them, and SchemaStore matches `ttheme-market.toml` by name); ttheme
 ignores them. Run `ttheme market check` in the folder before you push: it reads
 every file as an install would, warns about keys ttheme does not know, follows
 the renames and prints the gate. A palette file ttheme cannot read also shows in
-`ttheme browse`'s Errors tab. Added from GitHub, a market is
+Browse's Errors tab. Added from GitHub, a market is
 `<repository owner>@<name>` and its palettes are `<owner>@<name>/<palette>`;
 the TOML files name them bare (`name = "rei"`). A folder under `palettes/` is a
 catalog — `palettes/neon/arcade.toml` puts arcade in the neon catalog — so every
@@ -274,7 +274,7 @@ panel below, preview's settings, the palette editor and find's grid.
 | `esc` | clear the filter, then restore and close | clear the filter, then cancel |
 | `space` | fold or open a series | pick |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
-| `?` | keys | keys |
+| `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
 | `ctrl+r` | — | update the market, or search GitHub again |
@@ -343,7 +343,7 @@ look, and never Title Case.
 - **As spelled where they are typed**: anything the user types or
   `config.zsh` holds — values (`fit`, `safe`, `off`), palette and market
   names (`kita`, `kec@dust`), site names on find's tabs (`danbooru`), booru
-  tags, commands and flags (`ttheme preview`, `--yes`) and key names
+  tags, commands and flags (`ttheme use`, `--yes`) and key names
   (`enter`, `ctrl+v`). A line that starts with one keeps it as spelled.
 - **As their owners spell them**: Ghostty, iTerm2, WezTerm, kitty, Alacritty,
   Warp, Windows Terminal, Konsole, Terminal.app, macOS, GitHub; acronyms in

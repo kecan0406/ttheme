@@ -45,7 +45,7 @@ iTerm2 asks at the top of the tab whether a control sequence may change the
 profile: Always Allow lets every later switch through — put the palette on once
 more for the one that asked — and a tab it refuses still wears the palette's
 colors, only without the picture. Once ttheme has seen it allowed, at its next
-`add`, `remove`, `browse`, `default`, `on` or `off`, every palette goes on through its
+`add`, `remove`, `default`, `on` or `off`, or the apply in Browse, every palette goes on through its
 profile, colors and picture in one switch. iTerm2 has no
 position setting, so a tuned picture that is not centered is baked onto a canvas
 the size of the window, as the sizes above 100% are.

@@ -302,7 +302,7 @@ function startupLines(installed: Installed, painted: boolean): string[] {
   }
   return [
     `Default    ${startup}${painted ? ' — this tab wears it already' : ''}`,
-    'Change it  `ttheme preview`, enter on a palette, then default',
+    'Change it  `ttheme`, enter on a palette, then default',
   ]
 }
 
@@ -351,7 +351,7 @@ function report(plan: InitPlan, pointed: ReadonlyMap<Wired, Pointed>): void {
     `Settings in ${plan.settings.file} — edit later with \`ttheme config\``,
     ...plan.edits.map((e) => `Wired ${e.file}`),
     ...nextLines(plan, pointed),
-    'No palettes yet — open a new shell (`exec zsh`), then `ttheme browse` picks them from the catalog',
+    'No palettes yet — open a new shell (`exec zsh`), then `ttheme` picks them from the catalog',
   ]
   console.log(lines.join('\n'))
 }
@@ -445,7 +445,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       (detected === 'warp' && terminals.includes('warp') && existsSync(warpSettings(home, configHome))))
   const wear = accepted(
     await p.confirm({
-      message: choose ? 'Pick a default palette in ttheme preview once installed?' : `Wear ${first} in every tab?`,
+      message: choose ? 'Pick a default palette in ttheme once installed?' : `Wear ${first} in every tab?`,
       initialValue: existing ? !existing.off : true,
     }),
   )
@@ -461,7 +461,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       'Each config is backed up once to <file>.ttheme.bak before the first edit — `npx @kecan0406/ttheme uninstall` takes it all out',
       wear
         ? choose
-          ? `Open ttheme preview — every tab wears the palette picked there, ${first} until then`
+          ? `Open ttheme — every tab wears the palette picked there, ${first} until then`
           : `Paint every tab with ${first}, this one now`
         : 'Leave the terminal colors as they are — `ttheme on` wears a palette later',
       ...(wear && first

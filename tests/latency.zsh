@@ -207,7 +207,7 @@ typing() {
   zpty -w -n sh $'stty rows 50 cols 160\r'
   upto 'prompts && (( REPLY >= 3 ))' 5 $name || { fail "$name: no prompt after resizing"; return 1 }
   BUF=""
-  zpty -w -n sh $'ttheme preview\r'
+  zpty -w -n sh $'ttheme\r'
   upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
   [[ ${BUF%%$'\e[?2026h'*} == *$'\e[16t'* ]] ||
     { fail "$name: preview asked for its cell size inside a synchronized update, which WezTerm answers only once the update ends"; return 1 }
@@ -234,7 +234,7 @@ flow() {
   zpty -w -n sh $'stty ixon -ixany\r'
   upto 'prompts && (( REPLY >= 3 ))' 5 $name || { fail "$name: no prompt after stty"; return 1 }
   BUF=""
-  zpty -w -n sh $'ttheme preview\r'
+  zpty -w -n sh $'ttheme\r'
   upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
   zpty -w -n sh $'\x13'
   upto false 0.3 $name || :
@@ -252,7 +252,7 @@ hovering() {
   TERMINAL=iterm2
   start $name
   upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
-  zpty -w -n sh $'ttheme preview\r'
+  zpty -w -n sh $'ttheme\r'
   upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
   from=${#BUF}
   zpty -w -n sh $'\e[C'

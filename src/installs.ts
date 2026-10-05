@@ -104,7 +104,7 @@ export function runOn(): void {
   const state = readInstalled(home)
   const name = startupPalette(state)
   if (!name) {
-    throw new Error('no palettes installed — `ttheme browse` picks some')
+    throw new Error('no palettes installed — `ttheme` picks some')
   }
   if (!state.off) {
     console.log(`Already on · ${name}`)

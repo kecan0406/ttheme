@@ -237,12 +237,12 @@ async function addMarket(arg: string): Promise<void> {
   }
   if (isLocal(source)) {
     console.log(
-      '\n`ttheme browse` picks them · once the folder is on GitHub, `ttheme market add <owner>/<repo>` adds it anywhere',
+      '\nThe Browse tab of `ttheme` picks them · once the folder is on GitHub, `ttheme market add <owner>/<repo>` adds it anywhere',
     )
   } else if (source === OFFICIAL) {
-    console.log('\n`ttheme browse` picks them')
+    console.log('\nThe Browse tab of `ttheme` picks them')
   } else {
-    console.log(`\n\`ttheme browse\` picks them, or \`ttheme add ${id}/<palette>\``)
+    console.log(`\nThe Browse tab of \`ttheme\` picks them, or \`ttheme add ${id}/<palette>\``)
   }
 }
 
@@ -416,7 +416,7 @@ function scaffold(dir: string, identity: Identity): void {
   writeAtomic(join(dir, MARKET_FILE), marketToml(identity))
   writeAtomic(
     join(dir, 'README.md'),
-    `# ${marketId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) market:\n\n\`\`\`sh\nttheme market add ${identity.owner}/${repoFor(identity)}\nttheme browse\n\`\`\`\n`,
+    `# ${marketId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) market:\n\n\`\`\`sh\nttheme market add ${identity.owner}/${repoFor(identity)}\nttheme\n\`\`\`\n`,
   )
 }
 
@@ -527,7 +527,7 @@ function checkMarket(arg: string | undefined): number {
     warnings.push(`${MARKET_FILE}: unknown key owner.${key} — ttheme ignores it`)
   }
   if (!info.description) {
-    warnings.push(`${MARKET_FILE}: no description — browse and the market page show one`)
+    warnings.push(`${MARKET_FILE}: no description — Browse and the market page show one`)
   }
   const id = marketId(info)
   const entries = readMarketDir(dir, id, officialFor(configHome()), (where, message) =>

@@ -57,8 +57,8 @@ const STEPS = [
   },
   {
     title: 'browse',
-    text: 'Pick more from the catalog in a live picker, series by series.',
-    command: 'ttheme browse',
+    text: 'Pick more from the catalog in Browse, the second tab of ttheme, series by series.',
+    command: 'ttheme',
   },
 ]
 
