@@ -103,7 +103,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'add',
     args: ['<palette...>'],
-    about: 'Install palettes — from the catalog, or from a share code: ttheme add tt1:…',
+    about: 'Install palettes — from the catalog, or from a share code: ttheme add tt2:…',
     section: 'catalog',
     flags: {
       market: {

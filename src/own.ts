@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { SITES } from './booru.ts'
@@ -19,7 +20,8 @@ import {
   textProblem,
 } from './theme.ts'
 
-export const CODE = 'tt1:'
+export const CODE = 'tt2:'
+const SUM = 4
 const SLOTS = ['background', 'foreground', 'cursor', 'selection', ...Array.from({ length: 16 }, (_, i) => `ansi${i}`)]
 
 export interface Draft {
@@ -309,7 +311,8 @@ class Writer {
   }
 
   done(): string {
-    return Buffer.from(this.bytes).toString('base64url')
+    const body = Buffer.from(this.bytes)
+    return Buffer.concat([body, checksum(body)]).toString('base64url')
   }
 }
 
@@ -362,6 +365,14 @@ class Reader {
   }
 }
 
+function checksum(bytes: Uint8Array): Buffer {
+  return createHash('sha256').update(bytes).digest().subarray(0, SUM)
+}
+
+export function isCode(text: string): boolean {
+  return /^tt\d+:/.test(text)
+}
+
 export function shareCode(d: Draft): string {
   const w = new Writer()
   w.str(d.name)
@@ -391,13 +402,25 @@ export function shareCode(d: Draft): string {
 
 export function fromCode(code: string): Draft {
   if (!code.startsWith(CODE)) {
-    throw new Error(`a share code starts with ${CODE}`)
+    throw new Error(
+      isCode(code)
+        ? `this ttheme reads ${CODE} share codes, not ${code.slice(0, code.indexOf(':') + 1)}`
+        : `a share code starts with ${CODE}`,
+    )
   }
   const body = code.slice(CODE.length)
   if (!/^[A-Za-z0-9_-]+$/.test(body)) {
     throw new Error('the share code holds characters it never uses — was it copied whole?')
   }
-  const r = new Reader(new Uint8Array(Buffer.from(body, 'base64url')))
+  const bytes = Buffer.from(body, 'base64url')
+  if (bytes.length <= SUM) {
+    throw new Error('the share code is cut short')
+  }
+  const payload = bytes.subarray(0, -SUM)
+  if (!checksum(payload).equals(bytes.subarray(-SUM))) {
+    throw new Error('the share code does not add up — was it copied whole?')
+  }
+  const r = new Reader(new Uint8Array(payload))
   const name = r.str()
   const [background, foreground, cursor, selection, ...ansi] = Array.from({ length: 20 }, () => r.color()) as [
     string,

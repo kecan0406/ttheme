@@ -1009,7 +1009,7 @@ export class PaletteEditor {
       if (entry === 0) {
         this.openPalettes()
       } else {
-        this.notice = this.options.decode ? 'Paste a tt1: share code into this window' : 'Share codes are not read here'
+        this.notice = this.options.decode ? 'Paste a tt2: share code into this window' : 'Share codes are not read here'
       }
       return
     }

@@ -6,7 +6,7 @@ import { listed, type Manifest } from './manifest.ts'
 import { addSource, idOf, localLine } from './markets.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
-import { CODE, readLocal } from './own.ts'
+import { isCode, readLocal } from './own.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, readInstalled, startupPalette, sync } from './palettes.ts'
 import { pending, say } from './pending.ts'
@@ -24,7 +24,7 @@ export function reload(count: number): void {
 
 export function inMarket(given: string[], id: string): string[] {
   return given.map((name) => {
-    if (name.startsWith(CODE)) {
+    if (isCode(name)) {
       return name
     }
     const market = marketOf(name)
@@ -42,7 +42,7 @@ export async function runAdd(asked: string[], market?: string): Promise<void> {
   const home = configHome()
   const given = market ? inMarket(asked, (await addSource(home, market)).id) : asked
   const catalog = readCatalog(home)
-  const names = [...new Set(given.map((n) => (n.startsWith(CODE) ? adopt(home, n, catalog) : n)))]
+  const names = [...new Set(given.map((n) => (isCode(n) ? adopt(home, n, catalog) : n)))]
   const state = readInstalled(home)
   const already = names.filter((n) => state.palettes.includes(n))
   const fresh = names.filter((n) => !state.palettes.includes(n))

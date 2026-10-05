@@ -550,7 +550,7 @@ ttheme new rei                   # kecan0406@dust/rei, from blank in the palette
 ttheme new rei --from rei        # the same, starting from rei's colors and pictures
 ttheme edit rei                  # the same editor; the bare name works for yours
 ttheme check --fix rei           # colors that pass the gate, written in
-ttheme share rei                 # tt1:… — anyone runs ttheme add tt1:…
+ttheme share rei                 # tt2:… — anyone runs ttheme add tt2:…
 ttheme share rei --tone original # the palette as it was, when you tuned it in palette edit
 ```
 
@@ -604,7 +604,7 @@ the same editor on a palette from a market, for its tone; the keys are:
   accents, or all twelve — and each moves by the same step, keeping its own color.
   Chroma stops at the sRGB edge; once you keep, the color is what you see. `#`
   takes `#rrggbb`, `rgb(r g b)` or `oklch(l c h)`, and so does a paste, and a
-  pasted `tt1:` share code takes its colors.
+  pasted `tt2:` share code takes its colors.
 - A bright starts linked to its normal when their hues are within 3°: tuning the
   normal moves the bright with it, keeping its own lightness and chroma offset,
   and tuning the bright alone unlinks it (`⇠` in the list). `l` links and unlinks

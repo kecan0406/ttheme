@@ -353,8 +353,8 @@ test('a spot on the sample finds its slots, and enter goes to the slot', () => {
 })
 
 test('a share code pasted into the editor takes its colors, and a plain paste is still a color', () => {
-  const e = editor({ decode: (text) => (text === 'tt1:dawn' ? other : undefined) })
-  e.paste('tt1:dawn')
+  const e = editor({ decode: (text) => (text === 'tt2:dawn' ? other : undefined) })
+  e.paste('tt2:dawn')
   assert.deepEqual(e.colors(), other)
   press(e, 'u')
   assert.deepEqual(e.colors(), start)

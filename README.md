@@ -145,9 +145,9 @@ gh repo create <you>/ttheme-<name> --public --source . --push
 gh repo edit <you>/ttheme-<name> --add-topic ttheme-market
 ```
 
-`ttheme share <palette>` prints a code — `tt1:…`, about 200 characters — that
+`ttheme share <palette>` prints a code — `tt2:…`, about 200 characters — that
 carries the colors and the numbers of its background posts with their framing.
-`ttheme add tt1:…` installs it anywhere without a market, fetching those posts
+`ttheme add tt2:…` installs it anywhere without a market, fetching those posts
 from the booru the way `find` does.
 
 ## Usage

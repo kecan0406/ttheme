@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -55,19 +56,36 @@ const draft: Draft = {
 
 test('a share code carries the whole palette, its waiver and its pictures', () => {
   const code = shareCode(draft)
-  assert.match(code, /^tt1:[A-Za-z0-9_-]+$/)
+  assert.match(code, /^tt2:[A-Za-z0-9_-]+$/)
   assert.deepEqual(fromCode(code), draft)
 })
 
+const signed = (bytes: Buffer): string =>
+  `tt2:${Buffer.concat([bytes, createHash('sha256').update(bytes).digest().subarray(0, 4)]).toString('base64url')}`
+
 test('a share code that was cut, padded or retyped is refused', () => {
   const code = shareCode(draft)
-  assert.throws(() => fromCode(code.slice(0, -6)), /cut short|left over/)
-  assert.throws(() => fromCode(`${code}AAAA`), /left over/)
-  assert.throws(() => fromCode(code.replace('tt1:', 'tt2:')), /starts with tt1:/)
+  assert.throws(() => fromCode(code.slice(0, -6)), /does not add up/)
+  assert.throws(() => fromCode(`${code}AAAA`), /does not add up/)
+  assert.throws(() => fromCode('tt2:AAA'), /cut short/)
+  assert.throws(() => fromCode(code.replace('tt2:', 'tt1:')), /reads tt2: share codes, not tt1:/)
+  assert.throws(() => fromCode(code.replace('tt2:', 'xx:')), /starts with tt2:/)
   assert.throws(() => fromCode(`${code}!`), /characters it never uses/)
-  const bytes = Buffer.from(code.slice(4), 'base64url')
-  bytes[1] = 0xff
-  assert.throws(() => fromCode(`tt1:${bytes.toString('base64url')}`), { name: 'Error', message: /text it cannot read/ })
+  const payload = Buffer.from(code.slice(4), 'base64url').subarray(0, -4)
+  assert.throws(() => fromCode(signed(payload.subarray(0, -1))), /cut short/)
+  assert.throws(() => fromCode(signed(Buffer.concat([payload, Buffer.from([0])]))), /left over/)
+  const bad = Buffer.from(payload)
+  bad[1] = 0xff
+  assert.throws(() => fromCode(signed(bad)), { name: 'Error', message: /text it cannot read/ })
+})
+
+test('a share code with any one character changed is refused', () => {
+  const code = shareCode(draft)
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+  for (let at = 4; at < code.length - 1; at++) {
+    const other = alphabet[(alphabet.indexOf(code[at] as string) + 17) % 64]
+    assert.throws(() => fromCode(`${code.slice(0, at)}${other}${code.slice(at + 1)}`), /does not add up/)
+  }
 })
 
 test('the TOML a draft writes reads back as the same palette', () => {

@@ -86,10 +86,10 @@ test('default refuses a palette that is not installed', () => {
 })
 
 test('--market names bare palettes after the market it added, and refuses one from another market', () => {
-  assert.deepEqual(inMarket(['dusk', 'alice@pastel/dawn', 'tt1:abc'], 'alice@pastel'), [
+  assert.deepEqual(inMarket(['dusk', 'alice@pastel/dawn', 'tt2:abc'], 'alice@pastel'), [
     'alice@pastel/dusk',
     'alice@pastel/dawn',
-    'tt1:abc',
+    'tt2:abc',
   ])
   assert.deepEqual(inMarket(['kita'], 'official'), ['kita'])
   assert.throws(() => inMarket(['bob@neon/glow'], 'alice@pastel'), /bob@neon\/glow is not in alice@pastel/)
