@@ -8,7 +8,7 @@ typeset -g SUITE=ttheme-sandbox
 typeset -g ITERM_APP="^[^ ]*/iTerm2 -suite $SUITE( |$)"
 typeset -g ITERM_SERVER="^$HOME/Library/Application Support/$SUITE/iTermServer"
 
-usage() { print -u2 "usage: iterm.zsh [--shots DIR] [--keep] [--legacy] [--trust] [--empty | palette…] -- 'zsh commands'" }
+usage() { print -u2 "usage: iterm.zsh [--shots DIR] [--keep] [--legacy] [--trust] [--pictured] [--empty | palette…] -- 'zsh commands'" }
 
 quit() {
   pkill -f -- $ITERM_APP 2>/dev/null || :
@@ -17,8 +17,8 @@ quit() {
 }
 
 main() {
-  local -a shots keep legacy trust empty
-  zparseopts -D -E -F -- -shots:=shots -keep=keep -legacy=legacy -trust=trust -empty=empty || { usage; return 1 }
+  local -a shots keep legacy trust empty pictured
+  zparseopts -D -E -F -- -shots:=shots -keep=keep -legacy=legacy -trust=trust -empty=empty -pictured=pictured || { usage; return 1 }
   local split=${@[(i)--]}
   (( split <= $# )) || { usage; return 1 }
   local -a palettes=(${@[1,split-1]})
@@ -26,7 +26,7 @@ main() {
   [[ -z $dir ]] || mkdir -p $dir
   hook=$(mktemp -t ttheme-hook)
   write_hook $hook $HERE/probe.zsh $HERE/iterm-probe.zsh -- ${@[split+1,-1]}
-  if ! out=$(cd $ROOT && mise run sandbox --iterm --behind $legacy $trust --zshenv $hook $empty $palettes 2>&1); then
+  if ! out=$(cd $ROOT && mise run sandbox --iterm --behind $legacy $trust $pictured --zshenv $hook $empty $palettes 2>&1); then
     rm -f $hook
     print -r -- $out
     return 1

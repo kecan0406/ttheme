@@ -4,7 +4,7 @@ setopt err_return pipe_fail
 
 source ${${(%):-%x}:A:h}/lib.zsh
 
-usage() { print -u2 "usage: ghostty.zsh [--shots DIR] [--keep] [--empty | palette…] -- 'zsh commands'" }
+usage() { print -u2 "usage: ghostty.zsh [--shots DIR] [--keep] [--pictured] [--empty | palette…] -- 'zsh commands'" }
 
 instance() { pgrep -f -- "--config-file=$SANDBOX/" }
 
@@ -16,8 +16,8 @@ reloads() {
 }
 
 main() {
-  local -a shots keep empty
-  zparseopts -D -E -F -- -shots:=shots -keep=keep -empty=empty || { usage; return 1 }
+  local -a shots keep empty pictured
+  zparseopts -D -E -F -- -shots:=shots -keep=keep -empty=empty -pictured=pictured || { usage; return 1 }
   local split=${@[(i)--]}
   (( split <= $# )) || { usage; return 1 }
   local -a palettes=(${@[1,split-1]})
@@ -26,7 +26,7 @@ main() {
   hook=$(mktemp -t ttheme-hook)
   start=$(date '+%Y-%m-%d %H:%M:%S')
   write_hook $hook $HERE/probe.zsh -- ${@[split+1,-1]}
-  if ! out=$(cd $ROOT && mise run sandbox --behind --zshenv $hook $empty $palettes 2>&1); then
+  if ! out=$(cd $ROOT && mise run sandbox --behind $pictured --zshenv $hook $empty $palettes 2>&1); then
     rm -f $hook
     print -r -- $out
     return 1

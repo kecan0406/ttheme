@@ -18,7 +18,7 @@ capture() {
   local wid
   wid=$(window_of $1)
   [[ -n $wid ]] || return 1
-  screencapture -x -o -l $wid $2 && sips -Z 1200 $2 > /dev/null
+  screencapture -x -o -l $wid ${2:r}.full.png && sips -Z 1200 ${2:r}.full.png --out $2 > /dev/null
 }
 
 write_hook() {
@@ -37,6 +37,11 @@ serve() {
     else
       command mv -f -- $req $SANDBOX/shots/$name.skip
     fi
+  done
+  for req in $SANDBOX/shots/*.screen(N); do
+    name=${req:t:r}
+    command mv -f -- $req ${dir:-$SANDBOX/shots}/$name.txt
+    print -r -- "text      ${dir:-$SANDBOX/shots}/$name.txt" >> $SANDBOX/shots.list
   done
 }
 

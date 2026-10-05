@@ -2,6 +2,8 @@ import fcntl
 import os
 import select
 import signal
+import struct
+import subprocess
 import sys
 import termios
 import time
@@ -38,6 +40,7 @@ KEYS = {
 GAP = 0.25
 REPEAT = 0.03
 LINGER = 10.0
+WAIT = 10.0
 
 
 def keys(step):
@@ -54,6 +57,54 @@ def keys(step):
     if len(step) == 1:
         return [step], GAP
     raise SystemExit(f'drive.py: unknown step {step!r}')
+
+
+class Screen:
+    def __init__(self, size):
+        rows, cols = struct.unpack('HHHH', size)[:2]
+        helper = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'screen.mjs')
+        try:
+            self.proc = subprocess.Popen(['node', helper, str(cols), str(rows)], stdin=subprocess.PIPE,
+                                         stdout=subprocess.PIPE, bufsize=0)
+        except OSError:
+            self.proc = None
+
+    def send(self, kind, body=b''):
+        if self.proc is None:
+            return False
+        try:
+            self.proc.stdin.write(kind + struct.pack('>I', len(body)) + body)
+            return True
+        except OSError:
+            self.proc = None
+            return False
+
+    def feed(self, data):
+        self.send(b'd', data)
+
+    def text(self):
+        if not self.send(b't'):
+            return None
+        out = b''
+        fd = self.proc.stdout.fileno()
+        while not out.endswith(b'\0'):
+            if fd not in select.select([fd], [], [], 2)[0]:
+                return None
+            chunk = os.read(fd, 65536)
+            if not chunk:
+                self.proc = None
+                return None
+            out += chunk
+        return out[:-1].decode('utf-8', 'replace')
+
+    def close(self):
+        if self.proc is None:
+            return
+        try:
+            self.proc.stdin.close()
+            self.proc.wait(timeout=2)
+        except (OSError, subprocess.TimeoutExpired):
+            self.proc.kill()
 
 
 def spawn(command, size):
@@ -75,12 +126,14 @@ def spawn(command, size):
 
 def main():
     if len(sys.argv) < 2:
-        raise SystemExit('usage: drive.py COMMAND [STEP…]  — a step is a key, text:…, paste:…, seconds or shot:NAME')
+        raise SystemExit('usage: drive.py COMMAND [STEP…]  — a step is a key, text:…, paste:…, seconds, wait:TEXT or shot:NAME')
     command, steps = sys.argv[1], sys.argv[2:]
     shots = os.path.join(os.environ.get('ZDOTDIR') or os.environ['HOME'], 'shots')
     term = os.open('/dev/tty', os.O_RDWR)
     size = fcntl.ioctl(term, termios.TIOCGWINSZ, b'\0' * 8)
     pid, master = spawn(command, size)
+    screen = Screen(size)
+    failed = False
     saved = termios.tcgetattr(term)
     tty.setraw(term)
     status = None
@@ -90,12 +143,34 @@ def main():
         gap = GAP
         shot = None
         done = None
+        waiting = None
+        poll = 0.0
         while True:
             now = time.monotonic()
             if shot:
                 if os.path.exists(f'{shot}.done') or os.path.exists(f'{shot}.skip'):
+                    seen = screen.text()
+                    if seen is not None:
+                        with open(f'{shot}.screen', 'w') as out:
+                            out.write(seen + '\n')
                     shot = None
                     at = now
+            elif waiting and now >= poll:
+                seen = screen.text()
+                if seen is not None and waiting[0] in seen:
+                    waiting = None
+                    at = now
+                elif seen is None or now >= waiting[1]:
+                    why = f'not on the screen after {WAIT:g} s' if seen is not None else 'no screen text (node or @xterm/headless missing)'
+                    sys.stderr.write(f'drive.py: wait:{waiting[0]} — {why}\n{seen or ""}\n')
+                    failed = True
+                    waiting = None
+                    steps, pending = [], []
+                    done = now - LINGER
+                else:
+                    poll = now + 0.1
+            elif waiting:
+                pass
             elif pending and now >= at:
                 os.write(master, pending.pop(0).encode())
                 at = now + (gap if pending else GAP)
@@ -105,12 +180,15 @@ def main():
                     os.makedirs(shots, exist_ok=True)
                     shot = os.path.join(shots, step[5:])
                     open(f'{shot}.req', 'w').close()
+                elif step.startswith('wait:'):
+                    waiting = (step[5:], now + WAIT)
+                    poll = now
                 else:
                     try:
                         at = now + float(step)
                     except ValueError:
                         pending, gap = keys(step)
-            elif not steps and not pending and not shot and done is None:
+            elif not steps and not pending and not shot and not waiting and done is None:
                 done = now
             if done is not None and now - done > LINGER:
                 os.kill(pid, signal.SIGHUP)
@@ -123,6 +201,7 @@ def main():
                     data = b''
                 if data:
                     os.write(term, data)
+                    screen.feed(data)
                 elif status is not None:
                     break
             if term in readable:
@@ -137,7 +216,8 @@ def main():
                         break
     finally:
         termios.tcsetattr(term, termios.TCSADRAIN, saved)
-    return status or 0
+        screen.close()
+    return 1 if failed else status or 0
 
 
 sys.exit(main())

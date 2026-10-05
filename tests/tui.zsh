@@ -150,10 +150,33 @@ scenario_fields() {
   return 1
 }
 
+chosen() {
+  local line pat
+  reply=()
+  for line in $SCENARIOS; do
+    local -a parts=(${=line})
+    if (( $# == 0 )); then
+      reply+=($line)
+      continue
+    fi
+    for pat in $@; do
+      [[ $parts[1] == ${~pat} ]] && { reply+=($line); break }
+    done
+  done
+  (( ${#reply} )) && return 0
+  print -u2 "no scenario matches ${(j: :)@} — try one of:"
+  for line in $SCENARIOS; do print -u2 "  ${${=line}[1]}"; done
+  return 1
+}
+
 run() {
   local mode=$1 line name state target failed=0 golden actual
+  local -a reply
+  shift
+  chosen $@
+  local -a picked=($reply)
   mkdir -p $SCREENS
-  for line in $SCENARIOS; do
+  for line in $picked; do
     local -a parts=(${=line})
     name=$parts[1] state=$parts[2] target=$parts[3]
     local -a keys=(${parts[4,-1]})
@@ -173,8 +196,8 @@ run() {
       failed=1
     fi
   done
-  (( failed )) && { print -u2 "\ntui: screens changed — look at the diff, then \`mise run tui:update\` if it is right"; return 1 }
-  print "\ntui ok — ${#SCENARIOS} screens"
+  (( failed )) && { print -u2 "\ntui: screens changed — look at the diff, then \`mise run tui:update${*:+ ${(j: :)${(q)@}}}\` if it is right"; return 1 }
+  print "\ntui ok — ${#picked} screens"
 }
 
 demo() {
@@ -195,7 +218,8 @@ demo() {
 }
 
 case ${1:-check} in
-  --update|update) run update ;;
+  --update|update) shift; run update $@ ;;
   demo) shift; demo $1 ;;
-  *) run check ;;
+  check) run check ${@[2,-1]} ;;
+  *) run check $@ ;;
 esac

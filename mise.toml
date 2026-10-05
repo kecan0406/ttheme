@@ -151,12 +151,12 @@ echo "bin:check ok"
 '''
 
 [tasks.tui]
-description = "compare every TUI screen against tests/screens/"
+description = "compare every TUI screen against tests/screens/, or only the scenarios named — `mise run tui theme-edit 'browse-*'`"
 depends = ["build", "bin:build"]
 run = "zsh tests/tui.zsh"
 
 [tasks."tui:update"]
-description = "rewrite tests/screens/ from what the TUIs draw now"
+description = "rewrite tests/screens/ from what the TUIs draw now, every screen or only the scenarios named"
 depends = ["build", "bin:build"]
 run = "zsh tests/tui.zsh --update"
 

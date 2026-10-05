@@ -235,7 +235,8 @@ screen.
 
 ```sh
 mise run tui                  # compare (part of `mise run ci`)
-mise run tui:update           # accept what the TUIs draw now
+mise run tui 'theme-*'        # compare only the scenarios named, globs too
+mise run tui:update           # accept what the TUIs draw now (names narrow it too)
 mise run demo preview-open    # open one scenario for real, in its fixture
 ```
 
