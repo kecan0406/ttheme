@@ -255,6 +255,65 @@ model with a key handler and a `view` that returns its rows: open it with
 the modes a screen needs rather than writing them or calling `setRawMode` by
 hand, and never subclass clack's `Prompt`.
 
+### Drawing the screens
+
+A screen draws two kinds of color. Its own — text, key hints, tabs, badges,
+borders, the gate's marks — follows the palette the tab wears, so it never
+names a color: it takes a role from `src/tui/style.ts`. A palette's own colors —
+its swatches, a row lit in its selection and cursor, the scenes, the inside of
+the palette editor's mock terminal, the QR code — are what the screen shows, so
+they go out as hex (`ansiFg`, `ansiBar`, `ansiSquares`, `p.fg`, `p.bg`).
+
+The roles are a closed list in `ROLES`, each the SGR that opens it and the one
+that closes exactly that, so a role inside a painted row never ends the row:
+
+| Role | Draws | SGR |
+|---|---|---|
+| `dim` | counts, key hint labels, notes, a tab that is off, box edges, a gate pass ✓ | `2` … `22` |
+| `bold` | titles, key names, a gate miss ✗ | `1` … `22` |
+| `accent` | the current ◆, an active series, the ▶ and frame of the part in focus | slot 6 |
+| `pill` | a tab or a choice that is on, a mode badge | reverse, bold, slot 6 |
+| `match` | the letters a filter matched | bold, underline, slot 6 |
+| `ok`, `warn`, `error` | a note that something worked, a notice or a changed slot ●, a failure | slots 2, 3, 1 |
+| `under`, `reverse` | the runs a slot draws in a scene, a caret | `4`, `7` |
+
+The accent is the terminal's slot 6 everywhere, never a palette's cursor: it
+follows whatever the tab wears without asking the terminal anything, reads on
+every official background, and stays right in the scrollback after the tab
+changes palette. Preview spells slot 6 out in truecolor only while the terminal
+does not hold the palette it shows yet (iTerm2's hover).
+
+A few surfaces need a fixed distance from the background rather than a slot:
+the palette editor's stage, title bar, active tab and window border, and the
+selection where the terminal leaves OSC 17 unanswered. `SURFACES` holds how far
+each mixes toward the foreground, and `surfaceOf` mixes it from colors the
+screen already knows — the palette it painted on the tab, or the answers to the
+query it made anyway, where the palette editor fills a slot the terminal left
+unanswered from the palette it opened with. Anything left in the scrollback once a screen
+closes — `say` lines, browse's closing report, CLI messages — uses roles and
+slots only, since the tab may change palette after it.
+
+Under `NO_COLOR` or `TERM=dumb` a screen writes no SGR at all and says in text
+what color said: `[Catalog]` for the tab that is on, `[EDIT]` for a badge.
+
+`painter(color)` gives a screen the roles as functions (`p.dim`, `p.pill`, …)
+that hand text back unchanged when color is off, and `src/tui/parts.ts` holds
+the parts several screens draw: `tabOf`, `pillOf`, `hintOf`, `checkOf`,
+`boxEdge` and `boxed`. Glyphs that mean a state are in `MARKS`, one meaning
+each: ▌ the cursor's row, ◆ the palette worn or handled, ✦ a signature slot,
+▸ ▾ a closed and an open series, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more
+rows, ⇡ an update, ↻ auto-update, ★ stars, ⧉ a link, ⌕ search, ⇠ a bright that
+follows its normal, ◐ contrast, ■ a swatch, ▣ pictures.
+
+The shell layer draws with the same roles from `TTHEME_SGR` in
+`shell/ttheme.zsh` (`$TTHEME_SGR[dim]` opens, `$TTHEME_SGR[/dim]` closes).
+`src/tui/style.test.ts` holds that table to `ROLES` and fails on an SGR written
+anywhere else in `src/` or `shell/` (a truecolor `printf` format in the shell
+layer is a palette's color and passes); it also checks that every role closes
+what it opens, that slot 6 and the surfaces hold on every official palette, and
+that no glyph in `MARKS` means two things. The screens in `tests/screens/` run
+under `NO_COLOR`, so look at a change to color in a real terminal too.
+
 ### Keys a screen takes
 
 Preview and browse filter as you type, so a letter or a digit is never a

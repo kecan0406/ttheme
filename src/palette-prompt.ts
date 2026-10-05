@@ -1,11 +1,11 @@
 import type { Readable, Writable } from 'node:stream'
-import { ansiBar, ansiFg, ansiSquares, BOLD, CYAN, DIM, NORMAL, RESET, YELLOW } from './ansi.ts'
 import { type PaletteEntry, swatch } from './manifest.ts'
 import { aliasesFor, containsText } from './names.ts'
 import { marketOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Inbound } from './tui/keys.ts'
 import { Inline } from './tui/screen.ts'
+import { ansiBar, ansiFg, ansiSquares, FG_RESET, INK_RESET, MARKS, type Paint, painter } from './tui/style.ts'
 import { HIDE_CURSOR, PASTES, within } from './tui/terminal.ts'
 import { zone } from './tui/zones.ts'
 
@@ -198,6 +198,7 @@ export class PaletteList {
   named: PaletteEntry[] = []
   series: string[] = []
   private readonly color: boolean
+  private readonly p: Paint
   private readonly onFocus?: (entry: PaletteEntry) => void
   private readonly note?: (entry: PaletteEntry) => string
   private entries: PaletteEntry[] = []
@@ -215,6 +216,7 @@ export class PaletteList {
     this.scope = opts.scope ?? 'palette'
     this.maxItems = opts.maxItems ?? 12
     this.color = opts.color ?? true
+    this.p = painter(this.color)
     this.onFocus = opts.onFocus
     this.note = opts.note
     this.load(opts.entries)
@@ -464,7 +466,7 @@ export class PaletteList {
   private renderRow(row: Row, index: number): string {
     if (row.kind === 'rule') {
       const line = '── Markets ──────────'
-      return `   ${this.color ? `${DIM}${line}${RESET}` : line}`
+      return `   ${this.p.dim(line)}`
     }
     return rowSpot(index, 'row', this.rowText(row, index))
   }
@@ -473,15 +475,14 @@ export class PaletteList {
     const focused = index === this.cursor
     const entry = row.kind === 'palette' ? row.entry : row.kind === 'all' ? undefined : row.lead
     const lit = this.color && focused && entry !== undefined
-    const dim = (s: string) => (this.color ? `${DIM}${s}${NORMAL}` : s)
-    const bold = (s: string) => (this.color ? `${BOLD}${s}${NORMAL}` : s)
+    const { dim, bold } = this.p
     const squares = (e: PaletteEntry) =>
-      this.color ? `  ${ansiSquares(swatch(e), lit ? ansiFg(e.foreground) : '\x1b[39m')}` : ''
-    const gutter = focused ? (lit ? `${ansiFg(entry.cursor)}▌\x1b[39m ` : '▌ ') : '  '
+      this.color ? `  ${ansiSquares(swatch(e), lit ? ansiFg(e.foreground) : FG_RESET)}` : ''
+    const gutter = focused ? (lit ? `${ansiFg(entry.cursor)}${MARKS.gutter}${FG_RESET} ` : `${MARKS.gutter} `) : '  '
     const bar = (text: string) =>
-      lit ? `${gutter}${ansiBar(entry.selection, entry.foreground)} ${text} ${RESET}` : `${gutter} ${text}`
-    const box = (on: boolean) => rowSpot(index, 'box', `${on ? '●' : '○'} `)
-    const arrow = (open: boolean) => rowSpot(index, 'fold', `${open ? '▾' : '▸'} `)
+      lit ? `${gutter}${ansiBar(entry.selection, entry.foreground)} ${text} ${INK_RESET}` : `${gutter} ${text}`
+    const box = (on: boolean) => rowSpot(index, 'box', `${on ? MARKS.on : MARKS.off} `)
+    const arrow = (open: boolean) => rowSpot(index, 'fold', `${open ? MARKS.opened : MARKS.closed} `)
     if (row.kind === 'all') {
       return bar(
         `${box(this.everyone(this.rows).every((e) => this.picked.has(e.name)))}Select all ${dim(`(${row.count})`)}`,
@@ -495,9 +496,7 @@ export class PaletteList {
     }
     const at = this.rows[this.cursor]
     const heldBy = (inside: boolean, label: string) =>
-      this.color && at?.kind === 'palette' && inside
-        ? `${BOLD}${ansiFg(at.entry.cursor)}${label}${NORMAL}\x1b[39m`
-        : bold(label)
+      this.color && at?.kind === 'palette' && inside ? this.p.accent(bold(label)) : bold(label)
     if (row.kind === 'group') {
       const name = heldBy(at?.kind === 'palette' && at.entry.group === row.name, row.name)
       const native = row.native ? ` ${dim(row.native)}` : ''
@@ -705,8 +704,7 @@ export class PalettePrompt {
   }
 
   private draw(): string[] {
-    const dim = (s: string) => (this.color ? `${DIM}${s}${RESET}` : s)
-    const bar = (s: string) => (this.color ? `${CYAN}${s}${RESET}` : s)
+    const { dim, accent: bar, warn } = painter(this.color)
     const title = this.scope === 'series' ? 'Series' : 'Catalog'
     if (this.state === 'submit') {
       return [`${dim('◇')} ${title} ${dim(`· ${this.list.pickedCount()} picked`)}`]
@@ -731,7 +729,7 @@ export class PalettePrompt {
     const go = this.scope === 'series' ? 'continue' : 'install'
     const hint =
       this.state === 'error'
-        ? `${bar('└')} ${this.color ? `${YELLOW}${this.error}${RESET}` : this.error}`
+        ? `${bar('└')} ${warn(this.error)}`
         : `${bar('└')} ${dim(`↑↓ move${fold} · space pick · type to filter · enter ${go} · esc cancel`)}`
     return [head, search, ...body, more, hint]
   }

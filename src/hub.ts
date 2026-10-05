@@ -1,4 +1,5 @@
-import { DIM, RESET } from './ansi.ts'
+import { tabOf } from './tui/parts.ts'
+import { painter } from './tui/style.ts'
 import { zone } from './tui/zones.ts'
 
 export const HUB_TABS = [
@@ -10,8 +11,6 @@ export type HubTab = (typeof HUB_TABS)[number]['name']
 
 export const HUB_CLOSED = 10
 export const HUB_SWITCH = 20
-
-const PILL = '\x1b[7;1m\x1b[36m'
 
 export function hubOf(env: Record<string, string | undefined>): HubTab | undefined {
   return HUB_TABS.find((tab) => tab.name === env.TTHEME_HUB)?.name
@@ -36,13 +35,10 @@ export function hubTarget(code: number): HubTab | undefined {
 }
 
 export function hubBar(active: HubTab, color: boolean): string {
+  const p = painter(color)
   const tabs = HUB_TABS.map(({ name, title }) => {
     const spot: HubSpot = { kind: 'hub', tab: name }
-    if (!color) {
-      return zone(spot, name === active ? `[${title}]` : ` ${title} `)
-    }
-    return name === active ? `${PILL}${zone(spot, ` ${title} `)}${RESET}` : `${DIM}${zone(spot, ` ${title} `)}${RESET}`
+    return tabOf(p, title, name === active, (text) => zone(spot, text))
   })
-  const hint = 'tab next'
-  return ` ${tabs.join(' ')}  ${color ? `${DIM}${hint}${RESET}` : hint}`
+  return ` ${tabs.join(' ')}  ${p.dim('tab next')}`
 }

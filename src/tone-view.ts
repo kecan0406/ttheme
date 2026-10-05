@@ -1,11 +1,13 @@
 import type { Hex } from './color.ts'
 import { oklch } from './color.ts'
 import { check } from './contrast.ts'
-import { boxEdge, boxed, lchTight, painter } from './editor-paint.ts'
+import { lchTight } from './editor-paint.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { BASE, gatedOf, listOf, misses, PAIRS, SLOT_NAMES } from './palette-editor.ts'
 import type { Colors } from './seeds.ts'
 import { slotColors } from './tone.ts'
+import { boxEdge, boxed } from './tui/parts.ts'
+import { FG_RESET, MARKS, painter } from './tui/style.ts'
 
 const WIDTH = 50
 
@@ -42,9 +44,13 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean,
   const tuned = list.filter((_, slot) => off(slot)).length
   const cell = (slot: number) => {
     const hex = list[slot] as Hex
-    const glyph = worn.signatureSlots.includes(SLOT_NAMES[slot] as string) ? '◆' : color ? '■' : ' '
-    const swatch = color ? `${p.fg(hex)}${glyph}\x1b[39m` : glyph
-    const mark = bad.has(slot) ? p.bold('✗') : off(slot) ? (color ? '\x1b[33m●\x1b[39m' : '●') : ' '
+    const glyph = worn.signatureSlots.includes(SLOT_NAMES[slot] as string)
+      ? MARKS.signature
+      : color
+        ? MARKS.swatch
+        : ' '
+    const swatch = color ? `${p.fg(hex)}${glyph}${FG_RESET}` : glyph
+    const mark = bad.has(slot) ? p.bold(MARKS.miss) : off(slot) ? p.warn(MARKS.on) : ' '
     return ` ${swatch} ${lchTight(oklch(hex))}${mark}`
   }
   const gate = failing === 0 ? 'passes the gate' : `${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`

@@ -25,7 +25,7 @@ test('a column move places the zones after it, and a mark cut off by fit closes 
     'ok 3:2+2',
   ])
   const cut = spans(() => fit(`ab ${zone('long', 'cdefgh')}`, 6, false))
-  assert.equal(cut.text, 'ab cd\x1b[0m…')
+  assert.equal(cut.text, 'ab cd…')
   assert.deepEqual(cut.spans, ['long 3:3+3'])
 })
 

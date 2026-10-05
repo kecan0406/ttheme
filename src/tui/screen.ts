@@ -1,6 +1,7 @@
 import { performance } from 'node:perf_hooks'
 import { fit } from '../ansi.ts'
 import type { Mouse } from './keys.ts'
+import { RESET } from './style.ts'
 import { type Hit, lifted, marking, Pointer, type Zone } from './zones.ts'
 
 const FRAME_GAP = 16
@@ -117,7 +118,7 @@ export class Screen {
     for (let row = 0; row < count; row++) {
       const line = lines[row]
       if (line !== this.shown[row]) {
-        out += `\x1b[${row + 1};1H\x1b[0m\x1b[2K${line ?? ''}`
+        out += `\x1b[${row + 1};1H${RESET}\x1b[2K${line ?? ''}`
         rewritten.add(row)
       }
     }
@@ -127,7 +128,7 @@ export class Screen {
     const moved = cursor !== '' && (out !== '' || after !== '' || cursor !== this.cursor)
     this.cursor = cursor
     if (out || after || moved) {
-      this.write(`${BEGIN}${out}${after}\x1b[0m${moved ? cursor : ''}${END}`)
+      this.write(`${BEGIN}${out}${after}${RESET}${moved ? cursor : ''}${END}`)
     }
     this.tick(frame.ticking === true)
   }

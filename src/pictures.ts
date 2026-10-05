@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { LINK, linked } from './ansi.ts'
+import { linked } from './ansi.ts'
 import {
   backdropTone,
   backgroundsDir,
@@ -51,6 +51,7 @@ import { decodeImage, decodePng, type Rgba, transparency } from './png.ts'
 import { linkable } from './terminal.ts'
 import type { Wired } from './terminals/types.ts'
 import type { SharedPicture } from './theme.ts'
+import { FG_RESET, MARKS, slotFg } from './tui/style.ts'
 import { blurOf, coloringFor } from './wiring.ts'
 
 const TIMEOUT = 90_000
@@ -177,7 +178,7 @@ function postRef(shared: SharedPicture, links: boolean): string {
   if (!site || !links) {
     return ref
   }
-  const mark = colorless() ? LINK : `\x1b[${30 + site.ansi}m${LINK}\x1b[39m`
+  const mark = colorless() ? MARKS.link : `${slotFg(site.ansi)}${MARKS.link}${FG_RESET}`
   return `${mark} ${linked(ref, site.pageUrl(shared.id))}`
 }
 

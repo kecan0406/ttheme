@@ -1,20 +1,5 @@
 import type { Readable, Writable } from 'node:stream'
-import {
-  ansiBar,
-  ansiFg,
-  BOLD,
-  CYAN,
-  cells,
-  clip,
-  DIM,
-  fit,
-  NORMAL,
-  RESET,
-  SPINNER,
-  spread,
-  wrapText,
-  YELLOW,
-} from './ansi.ts'
+import { cells, clip, fit, spread, wrapText } from './ansi.ts'
 import { gateFailures } from './catalog.ts'
 import { GATE_RULES } from './contrast.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
@@ -37,7 +22,9 @@ import { isLocal, isRemote, OFFICIAL, parseSource, sameMarket, shownSource, TOPI
 import { marketOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Mouse } from './tui/keys.ts'
+import { hintOf, pillOf, tabOf } from './tui/parts.ts'
 import { Screen } from './tui/screen.ts'
+import { ansiBar, ansiFg, FG_RESET, INK_RESET, MARKS, type Paint, painter, SPINNER } from './tui/style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
 import { type KeySpot, keyZone, zone } from './tui/zones.ts'
 
@@ -159,7 +146,6 @@ const SEARCH_AFTER = 600
 const TYPED_AFTER = 500
 const FOCUS_AFTER = 300
 const NAMES_SHOWN = 12
-const PILL = '\x1b[7;1m'
 const EMPTY: Detail = { title: '', lines: [], brief: '' }
 
 function typedSource(text: string): string | undefined {
@@ -213,6 +199,7 @@ export class BrowsePanel {
   private readonly io: BrowseIo
   private readonly order: (entries: PaletteEntry[]) => PaletteEntry[]
   private readonly color: boolean
+  private readonly p: Paint
   private readonly hub: HubTab | undefined
   private readonly owns: boolean
   private readonly input: Readable | undefined
@@ -240,7 +227,6 @@ export class BrowsePanel {
   private searched: string | undefined
   private asked = 0
   private help = false
-  private worn: PaletteEntry | undefined
   private readonly live: boolean
 
   constructor(opts: BrowseOptions) {
@@ -253,6 +239,7 @@ export class BrowsePanel {
     this.io = opts.io
     this.order = opts.order ?? ((entries) => entries)
     this.color = opts.color ?? true
+    this.p = painter(this.color)
     this.hub = opts.hub
     this.owns = opts.owns ?? false
     this.input = opts.input
@@ -567,7 +554,6 @@ export class BrowsePanel {
 
   private focus(tab: Tab, entry: PaletteEntry): void {
     if (this.tab === tab && this.state !== 'submit' && this.state !== 'cancel') {
-      this.worn = entry
       this.paint?.(entry)
     }
   }
@@ -1004,23 +990,11 @@ export class BrowsePanel {
     }
   }
 
-  private dim(text: string): string {
-    return this.color ? `${DIM}${text}${NORMAL}` : text
-  }
-
-  private bold(text: string): string {
-    return this.color ? `${BOLD}${text}${NORMAL}` : text
-  }
-
-  private warn(text: string): string {
-    return this.color ? `${YELLOW}${text}\x1b[39m` : text
-  }
-
   private lit(lead: PaletteEntry | undefined, focused: boolean, text: string): string {
     if (focused && this.color && lead) {
-      return `${ansiFg(lead.cursor)}▌\x1b[39m ${ansiBar(lead.selection, lead.foreground)} ${text} ${RESET}`
+      return `${ansiFg(lead.cursor)}${MARKS.gutter}${FG_RESET} ${ansiBar(lead.selection, lead.foreground)} ${text} ${INK_RESET}`
     }
-    return `${focused ? '▌ ' : '  '} ${text}`
+    return `${focused ? `${MARKS.gutter} ` : '  '} ${text}`
   }
 
   private status(market: Market): string {
@@ -1033,7 +1007,7 @@ export class BrowsePanel {
   }
 
   private note(text: string): string {
-    return `     ${this.dim(text)}`
+    return `     ${this.p.dim(text)}`
   }
 
   private peeking(source: string): string {
@@ -1044,19 +1018,20 @@ export class BrowsePanel {
   private marketLine(row: MarketRow, focused: boolean, at: number): string[] {
     const box = (mark: string) => rowSpot(at, 'box', `${mark} `)
     if (row.kind === 'rule') {
-      return [`   ${this.dim(`── On GitHub${this.searching ? ' · searching…' : ''} ──────────`)}`]
+      return [`   ${this.p.dim(`── On GitHub${this.searching ? ' · searching…' : ''} ──────────`)}`]
     }
     if (row.kind === 'market') {
       const m = row.market
       const status = this.status(m)
-      const name = focused ? this.bold(m.id) : m.id
+      const name = focused ? this.p.bold(m.id) : m.id
       const listed = m.entries.filter((e) => !e.default)
-      const auto = isRemote(m.source) && (this.want.get(m.source) ?? m.auto) ? `  ${this.dim('↻ auto-update')}` : ''
+      const auto =
+        isRemote(m.source) && (this.want.get(m.source) ?? m.auto) ? `  ${this.p.dim(`${MARKS.auto} auto-update`)}` : ''
       return [
         this.lit(
           m.entries.find((e) => !e.default),
           focused,
-          `${box(this.removes.has(m.source) ? '○' : '●')}${name}${auto}${status ? `  ${this.dim(status)}` : ''}`,
+          `${box(this.removes.has(m.source) ? MARKS.off : MARKS.on)}${name}${auto}${status ? `  ${this.p.dim(status)}` : ''}`,
         ),
         this.note(
           [
@@ -1073,9 +1048,9 @@ export class BrowsePanel {
       const failure = this.failed.get(row.source) ?? this.peekFailed.get(row.source)
       const peeked = this.peeked.get(row.source)
       return [
-        this.lit(undefined, focused, `${box('+')}Add ${shownSource(row.source)}${busy ? `  ${this.dim(busy)}` : ''}`),
+        this.lit(undefined, focused, `${box('+')}Add ${shownSource(row.source)}${busy ? `  ${this.p.dim(busy)}` : ''}`),
         failure
-          ? `     ${this.warn(failure)}`
+          ? `     ${this.p.error(failure)}`
           : this.note(
               peeked
                 ? `${peeked.id} · ${this.peeking(row.source)}`
@@ -1101,7 +1076,7 @@ export class BrowsePanel {
               ? `No market on GitHub matches "${query}"`
               : 'No market on GitHub yet'
       return [
-        this.lit(undefined, focused, `${box('⌕')}${text}`),
+        this.lit(undefined, focused, `${box(MARKS.search)}${text}`),
         this.note(this.searchError ?? (this.searching ? '' : idle ? 'space searches GitHub' : 'space searches again')),
       ]
     }
@@ -1110,14 +1085,14 @@ export class BrowsePanel {
       this.lit(
         undefined,
         focused,
-        `${box(this.known(row.source) ? '●' : '○')}${row.source}  ${this.dim(`★${row.repo.stargazers_count}`)}${busy ? `  ${this.dim(busy)}` : ''}`,
+        `${box(this.known(row.source) ? MARKS.on : MARKS.off)}${row.source}  ${this.p.dim(`${MARKS.star}${row.repo.stargazers_count}`)}${busy ? `  ${this.p.dim(busy)}` : ''}`,
       ),
       this.note([this.peeking(row.source), row.repo.description ?? ''].filter(Boolean).join(' · ')),
     ]
   }
 
   private problemLine(problem: Problem, focused: boolean): string[] {
-    return [this.lit(undefined, focused, `${this.warn('✗')} ${problem.where}`), this.note(problem.message)]
+    return [this.lit(undefined, focused, `${this.p.error(MARKS.miss)} ${problem.where}`), this.note(problem.message)]
   }
 
   private body(): { lines: string[]; above: number; below: number; empty: string } {
@@ -1169,7 +1144,7 @@ export class BrowsePanel {
     if (!this.updates.has(entry.name) || !this.installed.has(entry.name)) {
       return ''
     }
-    return this.renew.has(entry.name) ? `  ${this.bold('↑ update')}` : `  ${this.dim('↑')}`
+    return this.renew.has(entry.name) ? `  ${this.p.bold(`${MARKS.update} update`)}` : `  ${this.p.dim(MARKS.update)}`
   }
 
   private toggleRenew(list: PaletteList): void {
@@ -1278,20 +1253,22 @@ export class BrowsePanel {
     for (const m of this.adds.values()) {
       const auto = m.source !== OFFICIAL && (this.want.get(m.source) ?? m.auto) ? 'updates on its own' : ''
       rows.push(
-        `+ ${m.id}  ${this.dim([m.source === OFFICIAL ? 'The ttheme catalog' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(' · '))}`,
+        `+ ${m.id}  ${this.p.dim([m.source === OFFICIAL ? 'The ttheme catalog' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(' · '))}`,
       )
     }
     for (const source of this.removes) {
       const m = this.markets.find((x) => x.source === source)
       const stay = (m?.entries ?? []).filter((e) => !e.default && this.installed.has(e.name) && this.picked.has(e.name))
       rows.push(
-        `- ${m?.id ?? source}  ${this.dim([m?.shown ?? shownSource(source), stay.length > 0 ? `its ${counted(stay.length)} installed keep working` : ''].filter(Boolean).join(' · '))}`,
+        `- ${m?.id ?? source}  ${this.p.dim([m?.shown ?? shownSource(source), stay.length > 0 ? `its ${counted(stay.length)} installed keep working` : ''].filter(Boolean).join(' · '))}`,
       )
     }
     for (const [source, on] of this.want) {
       const m = this.markets.find((x) => x.source === source)
       if (m && !this.removes.has(source)) {
-        rows.push(`↻ ${m.id}  ${this.dim(on ? 'updates on its own from now' : 'stops updating on its own')}`)
+        rows.push(
+          `${MARKS.auto} ${m.id}  ${this.p.dim(on ? 'updates on its own from now' : 'stops updating on its own')}`,
+        )
       }
     }
     return rows
@@ -1304,7 +1281,7 @@ export class BrowsePanel {
     const renewed = this.entries().filter((e) => renew.has(e.name))
     const width = Math.max(0, ...[...names, ...dropped, ...renewed].map((e) => e.name.length))
     const palette = (sign: string, e: PaletteEntry) =>
-      `   ${sign} ${e.name.padEnd(width)}  ${this.dim(marketOf(e.name) ? (e.catalog ?? '') : e.group)}`
+      `   ${sign} ${e.name.padEnd(width)}  ${this.p.dim(marketOf(e.name) ? (e.catalog ?? '') : e.group)}`
     const counts = [
       names.length > 0 ? `${names.length} to install` : '',
       dropped.length > 0 ? `${dropped.length} to remove` : '',
@@ -1312,14 +1289,14 @@ export class BrowsePanel {
     ].filter(Boolean)
     return [
       ...(markets.length > 0
-        ? [` ${this.bold('Markets')} ${this.dim(`(${markets.length})`)}`, ...markets.map((r) => `   ${r}`), '']
+        ? [` ${this.p.bold('Markets')} ${this.p.dim(`(${markets.length})`)}`, ...markets.map((r) => `   ${r}`), '']
         : []),
       ...(counts.length > 0
         ? [
-            ` ${this.bold('Palettes')} ${this.dim(`(${counts.join(' · ')})`)}`,
+            ` ${this.p.bold('Palettes')} ${this.p.dim(`(${counts.join(' · ')})`)}`,
             ...names.map((e) => palette('+', e)),
             ...dropped.map((e) => palette('-', e)),
-            ...renewed.map((e) => palette('↑', e)),
+            ...renewed.map((e) => palette(MARKS.update, e)),
           ]
         : []),
     ]
@@ -1343,12 +1320,12 @@ export class BrowsePanel {
     const lines = this.log.map((line) => ` ${line}`)
     if (this.phase === 'applying') {
       const frame = SPINNER[this.beat % SPINNER.length]
-      lines.push(` ${this.dim(`${frame} ${this.working || 'Working…'}`)}`)
+      lines.push(` ${this.p.dim(`${frame} ${this.working || 'Working…'}`)}`)
     } else if (this.stopped) {
       lines.push(
         '',
         ...wrapText(this.stopped.message, Math.max(20, this.columns() - 6)).map(
-          (l, i) => ` ${i === 0 ? this.warn('✗') : ' '} ${l}`,
+          (l, i) => ` ${i === 0 ? this.p.error(MARKS.miss) : ' '} ${l}`,
         ),
       )
     }
@@ -1361,12 +1338,12 @@ export class BrowsePanel {
     const lines = review ? this.reviewLines() : this.progressLines()
     const title =
       this.phase === 'review'
-        ? `${this.bold('Review changes')}`
+        ? `${this.p.bold('Review changes')}`
         : this.phase === 'applying'
-          ? this.bold('Applying changes')
+          ? this.p.bold('Applying changes')
           : this.stopped
-            ? `${this.warn('✗')} ${this.bold('Stopped')}`
-            : `${this.bold('✓ Applied')} ${this.dim(this.summary() ? `(${this.summary()})` : '')}`
+            ? `${this.p.error(MARKS.miss)} ${this.p.bold('Stopped')}`
+            : `${this.p.bold(`${MARKS.ok} Applied`)} ${this.p.dim(this.summary() ? `(${this.summary()})` : '')}`
     const room = this.span()
     const most = Math.max(0, lines.length - room)
     const top = this.phase === 'applying' ? most : Math.min(this.offset, most)
@@ -1395,12 +1372,11 @@ export class BrowsePanel {
   }
 
   private keyBar(bar: Bar, width: number): string {
-    const accent = this.color && this.worn ? ansiFg(this.worn.cursor) : ''
-    const badge = this.color ? `\x1b[7;1m${accent} ${bar.badge} ${RESET}  ` : `[${bar.badge}] `
-    const hint = ([key, label]: Hint) => keyZone(key.split(' ')[0] ?? '', `${this.bold(key)} ${this.dim(label)}`)
+    const badge = `${pillOf(this.p, bar.badge)}${this.color ? '  ' : ' '}`
+    const hint = ([key, label]: Hint) => hintOf(this.p, key, label)
     let { note, keys, right } = bar
     for (;;) {
-      const line = `${badge}${[bar.lead ?? '', note ? this.dim(note) : '', ...keys.map(hint)].filter(Boolean).join('   ')}`
+      const line = `${badge}${[bar.lead ?? '', note ? this.p.dim(note) : '', ...keys.map(hint)].filter(Boolean).join('   ')}`
       const tail = right ? hint(right) : ''
       if (cells(line) + (right ? 3 + cells(tail) : 0) <= width) {
         return right ? spread(line, tail, width) : fit(line, width, false)
@@ -1419,7 +1395,7 @@ export class BrowsePanel {
   }
 
   private more(step: number, text: string): string {
-    return this.dim(zone({ kind: 'page', step } satisfies Spot, text))
+    return this.p.dim(zone({ kind: 'page', step } satisfies Spot, text))
   }
 
   private counts(): string {
@@ -1443,10 +1419,10 @@ export class BrowsePanel {
       return `${typed}_`
     }
     if (this.tab === 'markets') {
-      return this.dim('Search… or add one: owner/repo')
+      return this.p.dim('Search… or add one: owner/repo')
     }
     const example = this.tab === 'errors' ? '' : this.hint.text()
-    return this.dim(`Search…${example ? ` e.g. ${example}` : ''}`)
+    return this.p.dim(`Search…${example ? ` e.g. ${example}` : ''}`)
   }
 
   private tabBar(): string {
@@ -1454,24 +1430,21 @@ export class BrowsePanel {
       const count = tab === 'errors' ? this.problemList().length : 0
       const label = count > 0 ? `${title} ${count}` : title
       const spot: Spot = { kind: 'tab', tab }
-      if (!this.color) {
-        return zone(spot, tab === this.tab ? `[${label}]` : ` ${label} `)
-      }
-      return `${tab === this.tab ? PILL : DIM}${zone(spot, ` ${label} `)}${RESET}`
+      return tabOf(this.p, label, tab === this.tab, (text) => zone(spot, text))
     }).join(' ')
   }
 
   private heading(): string {
     const title = TABS.find((t) => t.tab === this.tab)?.heading ?? ''
-    return `${this.bold(title)} ${this.dim(`(${this.counts()})`)}`
+    return `${this.p.bold(title)} ${this.p.dim(`(${this.counts()})`)}`
   }
 
   private searchBox(width: number): string[] {
-    const edge = (left: string, right: string) => this.dim(`${left}${'─'.repeat(width - 2)}${right}`)
-    const side = this.dim('│')
+    const edge = (left: string, right: string) => this.p.dim(`${left}${'─'.repeat(width - 2)}${right}`)
+    const side = this.p.dim('│')
     return [
       edge('╭', '╮'),
-      `${side} ${fit(`${this.dim('⌕')} ${this.searchText()}`, width - 4)} ${side}`,
+      `${side} ${fit(`${this.p.dim(MARKS.search)} ${this.searchText()}`, width - 4)} ${side}`,
       edge('╰', '╯'),
     ]
   }
@@ -1512,14 +1485,14 @@ export class BrowsePanel {
     const parts = shown.map((label, i) => {
       const chip = zone({ kind: 'chip', source: chips[start + i]?.source } satisfies Spot, label)
       if (start + i === sel) {
-        return this.color ? `${BOLD}${CYAN}${chip}${RESET}` : chip
+        return this.p.accent(this.p.bold(chip))
       }
-      return this.dim(chip)
+      return this.p.dim(chip)
     })
-    const text = `${start > 0 ? `${this.dim(keyZone('ctrl+s', '…'))} ` : ''}${parts.join(this.dim(sep))}${left > 0 ? this.dim(`${sep}${keyZone('ctrl+s', `+${left} more`)}`) : ''}`
+    const text = `${start > 0 ? `${this.p.dim(keyZone('ctrl+s', '…'))} ` : ''}${parts.join(this.p.dim(sep))}${left > 0 ? this.p.dim(`${sep}${keyZone('ctrl+s', `+${left} more`)}`) : ''}`
     const plain = (start > 0 ? 2 : 0) + shown.join(sep).length + tail(left)
     const hint = 'ctrl+s market'
-    return plain + 2 + hint.length <= width ? `${text}  ${this.dim(keyZone('ctrl+s', hint))}` : text
+    return plain + 2 + hint.length <= width ? `${text}  ${this.p.dim(keyZone('ctrl+s', hint))}` : text
   }
 
   private sourceOf(entry: PaletteEntry): string {
@@ -1548,16 +1521,16 @@ export class BrowsePanel {
       return EMPTY
     }
     if (row.kind === 'all') {
-      return { title: this.bold('Select all'), lines: ['space picks every palette shown'], brief: '' }
+      return { title: this.p.bold('Select all'), lines: ['space picks every palette shown'], brief: '' }
     }
     if (row.kind === 'group') {
       const members = this.entries().filter((e) => e.group === row.name && !e.default)
       const source = this.sourceOf(row.lead)
       const counts = `${counted(members.length)} · ${members.filter((e) => this.installed.has(e.name)).length} installed`
       return {
-        title: this.bold(row.name),
+        title: this.p.bold(row.name),
         lines: [
-          ...(row.native ? wrapText(row.native, width).map((l) => this.dim(l)) : []),
+          ...(row.native ? wrapText(row.native, width).map((l) => this.p.dim(l)) : []),
           ...wrapText(source, width),
           counts,
         ],
@@ -1569,7 +1542,7 @@ export class BrowsePanel {
       const source = this.sourceOf(row.lead)
       const counts = `${counted(members.length)} · ${members.filter((e) => this.installed.has(e.name)).length} installed`
       return {
-        title: this.bold(row.name),
+        title: this.p.bold(row.name),
         lines: [row.group, ...wrapText(source, width), counts],
         brief: `${row.group} · ${counts}`,
       }
@@ -1587,16 +1560,18 @@ export class BrowsePanel {
       ? e.catalog
         ? [e.catalog]
         : []
-      : [e.group, ...(e.native ? [this.dim(e.native)] : [])]
+      : [e.group, ...(e.native ? [this.p.dim(e.native)] : [])]
     return {
-      title: this.color ? `${BOLD}${ansiFg(e.cursor)}${e.name}${NORMAL}\x1b[39m` : e.name,
+      title: this.color ? this.p.bold(`${ansiFg(e.cursor)}${e.name}${FG_RESET}`) : e.name,
       lines: [
         ...wrapText(source, width),
         ...series,
         this.paletteState(e),
         '',
         fails.length === 0 ? `${gate} · passes` : gate,
-        ...fails.flatMap((f) => wrapText(f, width - 2).map((l, i) => `${i === 0 ? this.warn('✗') : ' '} ${l}`)),
+        ...fails.flatMap((f) =>
+          wrapText(f, width - 2).map((l, i) => `${i === 0 ? this.p.bold(MARKS.miss) : ' '} ${l}`),
+        ),
         ...(extras ? ['', extras] : []),
       ],
       brief: [source, gate, ...(extras ? [extras] : []), this.paletteState(e)].join(' · '),
@@ -1630,15 +1605,15 @@ export class BrowsePanel {
             ? [`Auto-update turns ${this.want.get(m.source) ? 'on' : 'off'}`]
             : []
       return {
-        title: this.bold(m.id),
+        title: this.p.bold(m.id),
         lines: [
           ...wrapText(source, width),
-          ...(m.description ? wrapText(m.description, width).map((l) => this.dim(l)) : []),
+          ...(m.description ? wrapText(m.description, width).map((l) => this.p.dim(l)) : []),
           counts,
           '',
-          isRemote(m.source) ? `${auto}  ${this.dim('←→')}` : auto,
+          isRemote(m.source) ? `${auto}  ${this.p.dim('←→')}` : auto,
           ...(isRemote(m.source) ? [when] : []),
-          ...(failure ? wrapText(failure, width).map((l) => this.warn(l)) : []),
+          ...(failure ? wrapText(failure, width).map((l) => this.p.error(l)) : []),
           ...(staged.length > 0 ? ['', ...staged.flatMap((s) => wrapText(s, width))] : []),
         ],
         brief: [source, auto, ...staged, ...(isRemote(m.source) ? [when] : [])].join(' · '),
@@ -1655,7 +1630,7 @@ export class BrowsePanel {
             ? 'Fetching its palettes…'
             : 'space fetches its palettes')
       return {
-        title: this.bold(shownSource(row.source)),
+        title: this.p.bold(shownSource(row.source)),
         lines: ['Not added', ...this.peekLines(row.source, width), '', ...wrapText(note, width)],
         brief: [this.peeking(row.source), note].filter(Boolean).join(' · '),
       }
@@ -1670,7 +1645,7 @@ export class BrowsePanel {
             ? `${this.repos.length} found · space searches again`
             : 'space searches GitHub')
       return {
-        title: this.bold('GitHub'),
+        title: this.p.bold('GitHub'),
         lines: [
           ...wrapText(`Repositories with the ${TOPIC} topic`, width),
           ...(query && !typedSource(query) ? [`Matching "${query}"`] : []),
@@ -1685,7 +1660,7 @@ export class BrowsePanel {
       ? 'Added'
       : (this.busy.get(row.source) ?? this.failed.get(row.source) ?? this.peekFailed.get(row.source) ?? 'space adds it')
     return {
-      title: this.bold(row.source),
+      title: this.p.bold(row.source),
       lines: [
         `★ ${row.repo.stargazers_count}`,
         ...wrapText(row.repo.description ?? '', width),
@@ -1712,7 +1687,7 @@ export class BrowsePanel {
       peeked.id,
       ...(peeked.description ? wrapText(peeked.description, width) : []),
       counted(listed.length),
-      ...wrapText(names, width).map((l) => this.dim(l)),
+      ...wrapText(names, width).map((l) => this.p.dim(l)),
     ]
   }
 
@@ -1727,7 +1702,7 @@ export class BrowsePanel {
     const rows = this.problemRows()
     const problem = rows[Math.min(this.cursor.errors, rows.length - 1)]
     return problem
-      ? { title: this.bold(problem.where), lines: wrapText(problem.message, width), brief: problem.message }
+      ? { title: this.p.bold(problem.where), lines: wrapText(problem.message, width), brief: problem.message }
       : EMPTY
   }
 
@@ -1829,7 +1804,7 @@ export class BrowsePanel {
   }
 
   private small(cols: number, rows: number, need: number): string {
-    return `Needs ${MIN_COLS}×${need} — now ${cols}×${rows}\n${this.dim('esc cancels')}`
+    return `Needs ${MIN_COLS}×${need} — now ${cols}×${rows}\n${this.p.dim('esc cancels')}`
   }
 
   private draw(): string {
@@ -1849,7 +1824,7 @@ export class BrowsePanel {
       ` ${this.tabBar()}`,
       ...(rows >= ROOMY
         ? [` ${this.heading()}`, ...this.searchBox(cols - 3).map((line) => ` ${line}`)]
-        : [spread(` ${this.dim('⌕')} ${this.searchText()}`, this.dim(this.counts()), width)]),
+        : [spread(` ${this.p.dim(MARKS.search)} ${this.searchText()}`, this.p.dim(this.counts()), width)]),
       ...(strip ? [` ${strip}`] : []),
     ]
     const chrome = head.length + 3 + (wide ? 0 : 1) + (this.hub ? 1 : 0)
@@ -1858,7 +1833,7 @@ export class BrowsePanel {
     }
     this.fitItems(chrome)
     const { lines, above, below, empty } = this.body()
-    const body = lines.length > 0 ? lines.map((line) => ` ${line}`) : [` ${this.dim(empty)}`]
+    const body = lines.length > 0 ? lines.map((line) => ` ${line}`) : [` ${this.p.dim(empty)}`]
     while (body.length < this.maxItems) {
       body.push('')
     }
@@ -1871,9 +1846,9 @@ export class BrowsePanel {
     const main = wide
       ? list.map(
           (row, i) =>
-            `${fit(row, left)} ${this.dim('│')} ${fit(i === 0 ? detail.title : (detail.lines[i - 1] ?? ''), RIGHT, false)}`,
+            `${fit(row, left)} ${this.p.dim('│')} ${fit(i === 0 ? detail.title : (detail.lines[i - 1] ?? ''), RIGHT, false)}`,
         )
-      : [...list.map((row) => fit(row, left, false)), fit(` ${this.dim(detail.brief)}`, left, false)]
+      : [...list.map((row) => fit(row, left, false)), fit(` ${this.p.dim(detail.brief)}`, left, false)]
     const frame = [
       ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
       ...head.map((line) => fit(line, width, false)),
@@ -1909,7 +1884,7 @@ export class BrowsePanel {
     const box = [
       `╭─ Help ${'─'.repeat(w - 9)}╮`,
       blank,
-      ...items.map(([label, text]) => `│${fit(`  ${this.bold(label.padEnd(10))}${text}`, w - 4)}  │`),
+      ...items.map(([label, text]) => `│${fit(`  ${this.p.bold(label.padEnd(10))}${text}`, w - 4)}  │`),
       blank,
       `╰${'─'.repeat(w - 2)}╯`,
     ]

@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs'
 import columns from 'fast-string-width'
-import { BOLD as B, DIM as D, GREEN, LINK, linked, RESET as R, SPINNER, YELLOW } from '../ansi.ts'
+import { linked } from '../ansi.ts'
 import type { Coloring, Framing } from '../backdrop.ts'
 import { BLOCKS, type Block, KEY_SPAN, type Kind, type Narrow, type Rating, SITES } from '../booru.ts'
-import { type Hex, mix, rgb } from '../color.ts'
+import { type Hex, mix } from '../color.ts'
 import { megabytes, progress } from '../pending.ts'
 import { SCENES, sceneAt, sceneParts, WIDE } from '../scenes.ts'
 import { POSITIONS } from '../theme.ts'
+import { ansiBg, ansiFg, MARKS, open, RESET as R, SPINNER, slotBg, slotFg } from '../tui/style.ts'
 import { hintKey, type KeySpot, type Zone } from '../tui/zones.ts'
 
 export type Preset = 'cutouts' | 'all'
@@ -270,13 +271,12 @@ export function release(id: number): string {
   return `\x1b_Ga=d,d=I,i=${id},q=2\x1b\\`
 }
 
-function fg(hex: Hex): string {
-  return `\x1b[38;2;${rgb(hex).join(';')}m`
-}
-
-function bg(hex: Hex): string {
-  return `\x1b[48;2;${rgb(hex).join(';')}m`
-}
+const B = open('bold')
+const D = open('dim')
+const OK = open('ok')
+const WARN = open('warn')
+const fg = ansiFg
+const bg = ansiBg
 
 let beating = false
 
@@ -310,13 +310,17 @@ function clip(text: string, room: number): string {
 type Part = [string, string, string?, FindSpot?]
 
 function siteColor(ansi: number): string {
-  return `\x1b[${30 + ansi}m`
+  return slotFg(ansi)
+}
+
+function lit(ansi: number): string {
+  return `${open('reverse')}${slotFg(ansi)}`
 }
 
 function reference(text: string, sgr: string, url: string | undefined, mark: string): Part[] {
   return url
     ? [
-        [`${LINK} `, mark, undefined, { kind: 'link', url }],
+        [`${MARKS.link} `, mark, undefined, { kind: 'link', url }],
         [text, sgr, url],
       ]
     : [[text, sgr]]
@@ -415,7 +419,7 @@ export function plain(artist: string): string {
 function dims(tile: Tile): Part {
   return [
     `${tile.reduced ? '↓' : ''}${tile.width}×${tile.height}`,
-    Math.max(tile.width, tile.height) < SMALL ? YELLOW : D,
+    Math.max(tile.width, tile.height) < SMALL ? WARN : D,
   ]
 }
 
@@ -426,7 +430,7 @@ interface Foot {
   right?: [string, string]
 }
 
-function foot(line: Line, cols: number, accent: string, spec: Foot): void {
+function foot(line: Line, cols: number, spec: Foot): void {
   const keys = [...(spec.keys ?? [])]
   let lead = spec.lead
   let right = spec.right
@@ -452,7 +456,7 @@ function foot(line: Line, cols: number, accent: string, spec: Foot): void {
   }
   let c = 0
   if (spec.badge) {
-    c = line.put(0, ` ${spec.badge} `, `\x1b[7;1m${accent}`) + 2
+    c = line.put(0, ` ${spec.badge} `, open('pill')) + 2
   }
   const segs: Part[][] = [
     ...(lead ? [lead] : []),
@@ -491,11 +495,10 @@ function roleSgr(role: string, view: FindView): string {
     return ''
   }
   const n = Number(m[2])
-  const code = (base: number): number => (n < 8 ? base + n : base + 52 + n)
   if (m[1] === 'K') {
-    return `\x1b[30;${code(40)}m`
+    return `${slotFg(0)}${slotBg(n)}`
   }
-  return `\x1b[${m[1] === 'B' ? '1;' : ''}${code(30)}m`
+  return `${m[1] === 'B' ? B : ''}${slotFg(n)}`
 }
 
 function sceneTabs(line: Line | undefined, col: number, room: number, view: FindView, accent: string): void {
@@ -722,7 +725,7 @@ function frameBox(lines: (Line | undefined)[], r0: number, c0: number, h: number
 }
 
 function badge(view: FindView, label = view.site, ansi = view.siteAnsi): Part {
-  return [` ${label} `, `\x1b[7;${30 + ansi}m`]
+  return [` ${label} `, lit(ansi)]
 }
 
 function named(key: number): string {
@@ -767,7 +770,7 @@ function tagRow(line: Line, cols: number, view: FindView, accent: string): void 
     if (used + width(text) + 1 > cols - 2) {
       break
     }
-    parts.push([text, chip.on ? `\x1b[7m${accent}` : D, undefined, { kind: 'chip', index: i }], [' ', ''])
+    parts.push([text, chip.on ? `${open('reverse')}${accent}` : D, undefined, { kind: 'chip', index: i }], [' ', ''])
     used += width(text) + 1
     left--
   }
@@ -861,15 +864,15 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
 
 function transparent(shown: Shown): Part[] {
   if (shown.cut === 'on') {
-    return [[`Cut out · ${shown.clear}% transparent`, GREEN]]
+    return [[`Cut out · ${shown.clear}% transparent`, OK]]
   }
   if (shown.cut === 'off') {
-    return [['Opaque · x cuts out', YELLOW]]
+    return [['Opaque · x cuts out', WARN]]
   }
   if (shown.cut === 'failed') {
-    return [['Opaque · no cut-out', YELLOW]]
+    return [['Opaque · no cut-out', WARN]]
   }
-  return [shown.clear > 0 ? [`${shown.clear}% transparent`, GREEN] : ['Opaque', YELLOW]]
+  return [shown.clear > 0 ? [`${shown.clear}% transparent`, OK] : ['Opaque', WARN]]
 }
 
 function where(view: FindView): string {
@@ -878,32 +881,32 @@ function where(view: FindView): string {
 
 function status(view: FindView, loading?: Part): Part[] | undefined {
   if (view.installing !== undefined) {
-    return mention(`${spin(view)} Installing ${view.palette} ← ${named(view.installing)}`, view.installing, YELLOW)
+    return mention(`${spin(view)} Installing ${view.palette} ← ${named(view.installing)}`, view.installing, WARN)
   }
   if (view.hint) {
-    return [[view.hint, GREEN]]
+    return [[view.hint, OK]]
   }
   if (view.error) {
-    return [[view.error, YELLOW]]
+    return [[view.error, WARN]]
   }
   if (view.waiting !== undefined) {
-    return [[`${view.slow ?? view.site} asked to slow down · ${view.waiting}s`, YELLOW]]
+    return [[`${view.slow ?? view.site} asked to slow down · ${view.waiting}s`, WARN]]
   }
   if (view.fetching) {
     const { id, got, size } = view.fetching
-    return mention(`${spin(view)} Fetching ${named(id)} · ${progress(got, size)}`, id, YELLOW)
+    return mention(`${spin(view)} Fetching ${named(id)} · ${progress(got, size)}`, id, WARN)
   }
   if (view.cutting !== undefined) {
-    return mention(`${spin(view)} Cutting out ${named(view.cutting)}`, view.cutting, YELLOW)
+    return mention(`${spin(view)} Cutting out ${named(view.cutting)}`, view.cutting, WARN)
   }
   if (view.preparing !== undefined) {
-    return mention(`${spin(view)} Preparing ${named(view.preparing)}`, view.preparing, YELLOW)
+    return mention(`${spin(view)} Preparing ${named(view.preparing)}`, view.preparing, WARN)
   }
   if (loading) {
     return [loading]
   }
   if (view.saved) {
-    return mention(view.saved.text, view.saved.key, GREEN)
+    return mention(view.saved.text, view.saved.key, OK)
   }
   if (view.note) {
     return [[view.note, D]]
@@ -1049,7 +1052,7 @@ function grid(
         })
       }
       const row: Part[] = [
-        ...(view.installed.includes(tile.key) ? ([['✓ ', GREEN]] as Part[]) : []),
+        ...(view.installed.includes(tile.key) ? ([['✓ ', OK]] as Part[]) : []),
         ...(tile.page || view.site !== 'all'
           ? reference(String(tile.id), on ? B : '', tile.page || undefined, siteColor(tile.siteAnsi))
           : ([
@@ -1114,7 +1117,7 @@ function grid(
   }
   const stage = loading(view, waiting, shown)
   const lead = status(view, stage)
-  foot(lines[rows - 1] as Line, cols, accent, {
+  foot(lines[rows - 1] as Line, cols, {
     badge: 'IMAGE SEARCH',
     lead,
     keys:
@@ -1178,7 +1181,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
     images.push({ id: TRY_ID + view.shown.id, path: view.shown.path, row: 0, col: 0, cols, rows, z: BELOW_BG })
   }
   if (view.tuning) {
-    foot(lines[rows - 1] as Line, cols, accent, {
+    foot(lines[rows - 1] as Line, cols, {
       badge: 'IMAGE EDIT',
       lead: status(view),
       keys: [
@@ -1195,7 +1198,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
     return
   }
   const lead = status(view)
-  foot(lines[rows - 1] as Line, cols, accent, {
+  foot(lines[rows - 1] as Line, cols, {
     badge: 'IMAGE PREVIEW',
     lead,
     keys:
@@ -1316,23 +1319,23 @@ function ordered(row: Row): string[] {
 }
 
 function chips(row: Row, focused: boolean, typing: string | undefined, ansi: number): Chip[] {
-  const lit = `\x1b[7;${30 + ansi}m`
+  const glow = lit(ansi)
   const typed = focused && typing !== undefined
   if (row.entry === 'text') {
     const text = typed ? `${typing}█` : row.value || 'none'
-    return [{ text: ` ${text} `, sgr: typed || (focused && row.value) ? lit : row.value ? '' : D }]
+    return [{ text: ` ${text} `, sgr: typed || (focused && row.value) ? glow : row.value ? '' : D }]
   }
   const on = typed ? [] : row.value.split(' ')
   const out = (typed ? row.choices : ordered(row)).map((choice, k): Chip => {
     const shown = on.includes(choice)
-    const under = row.multi && focused && k === row.cursor ? '4;' : ''
+    const under = row.multi && focused && k === row.cursor ? open('under') : ''
     return {
       text: row.multi ? ` ${shown ? '[x]' : '[ ]'} ${choice} ` : ` ${choice} `,
-      sgr: shown ? (focused ? `\x1b[${under}7;${30 + ansi}m` : '') : under ? `\x1b[4m${D}` : D,
+      sgr: shown ? (focused ? `${under}${glow}` : '') : under ? `${under}${D}` : D,
       choice,
     }
   })
-  return typed ? [...out, { text: ` ${typing}█ `, sgr: lit }] : out
+  return typed ? [...out, { text: ` ${typing}█ `, sgr: glow }] : out
 }
 
 function widest(row: Row): Chip[] {
@@ -1460,7 +1463,7 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
   const h = body + aboutRoom + countRoom + 8
   const x = Math.floor((cols - w) / 2)
   const y = Math.max(1, Math.floor((rows - 1 - h) / 2))
-  const lit = `\x1b[7;${30 + view.siteAnsi}m`
+  const glow = lit(view.siteAnsi)
   lines[y]?.put(x, `╭─ Settings ${'─'.repeat(Math.max(0, w - 13))}╮`)
   for (let r = y + 1; r < y + h - 1; r++) {
     lines[r]?.put(x, `│${' '.repeat(w - 2)}│`)
@@ -1495,7 +1498,7 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
   if (at === link) {
     linkLine.put(x + 2, '▶', accent)
   }
-  const end = linkLine.put(x + 3, view.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? lit : B, undefined, {
+  const end = linkLine.put(x + 3, view.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? glow : B, undefined, {
     kind: 'setting',
     index: link,
   })
@@ -1511,10 +1514,10 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
   })
   lines[y + h - 1]?.put(x, `╰${'─'.repeat(w - 2)}╯`)
   const { keys, right } = panelKeys(view, view.settings[at])
-  foot(lines[rows - 1] as Line, cols, accent, { keys, right })
+  foot(lines[rows - 1] as Line, cols, { keys, right })
 }
 
-function help(lines: Line[], cols: number, rows: number, view: FindView, accent: string): void {
+function help(lines: Line[], cols: number, rows: number, view: FindView): void {
   const keys = view.tuning ? TUNE_KEYS : KEYS[view.mode]
   const w = Math.min(cols - 2, Math.max(50, ...keys.map(([, value]) => width(value) + 16)))
   const laid = keys.map(([label, value]) => ({ label, parts: wrapped(value, w - 16) }))
@@ -1534,7 +1537,7 @@ function help(lines: Line[], cols: number, rows: number, view: FindView, accent:
     }
   }
   lines[y + h - 1]?.put(x, `╰${'─'.repeat(w - 2)}╯`)
-  foot(lines[rows - 1] as Line, cols, accent, { badge: 'HELP', right: ['? esc', 'close'] })
+  foot(lines[rows - 1] as Line, cols, { badge: 'HELP', right: ['? esc', 'close'] })
 }
 
 function suggestions(lines: Line[], view: FindView, accent: string): void {
@@ -1561,7 +1564,7 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
   const lines = Array.from({ length: rows }, () => new Line(cols))
   const images: Placement[] = []
   const tiles: Zone[] = []
-  const accent = fg(view.colors.cursor)
+  const accent = open('accent')
   beating = false
   if (cols < MIN.cols || rows < MIN.rows) {
     lines[0]?.put(0, 'ttheme find', B + accent)
@@ -1588,7 +1591,7 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
       lines[r] = new Line(cols)
     }
     if (view.help) {
-      help(lines, cols, rows, view, accent)
+      help(lines, cols, rows, view)
     } else {
       panel(lines, cols, rows, view, accent)
     }

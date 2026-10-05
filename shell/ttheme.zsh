@@ -2,6 +2,21 @@ typeset -g TTHEME_HOME=${${(%):-%x}:A:h} TTHEME_PALETTES_AT=""
 
 zmodload -F zsh/stat b:zstat 2>/dev/null
 
+typeset -gA TTHEME_SGR=(
+  reset $'\e[0m' /fg $'\e[39m' /bg $'\e[49m' /ink $'\e[39;49m'
+  dim $'\e[2m' /dim $'\e[22m'
+  bold $'\e[1m' /bold $'\e[22m'
+  under $'\e[4m' /under $'\e[24m'
+  reverse $'\e[7m' /reverse $'\e[27m'
+  accent $'\e[36m' /accent $'\e[39m'
+  pill $'\e[7;1;36m' /pill $'\e[22;27;39m'
+  match $'\e[1;4;36m' /match $'\e[22;24;39m'
+  ok $'\e[32m' /ok $'\e[39m'
+  warn $'\e[33m' /warn $'\e[39m'
+  error $'\e[31m' /error $'\e[39m'
+  fg0 $'\e[30m' fg1 $'\e[31m' fg2 $'\e[32m' fg3 $'\e[33m' fg4 $'\e[34m' fg5 $'\e[35m' fg6 $'\e[36m' fg7 $'\e[37m'
+)
+
 __tt_palettes_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at
@@ -296,7 +311,7 @@ __tt_announce() {
     return 0
   fi
   local cur=${p[3]#\#} sel=${p[4]#\#}
-  printf '\033[48;2;%d;%d;%dm %s \033[0m\n\033[7;1;38;2;%d;%d;%dm %s \033[0m \033[2m· ANSI %s\033[0m\n' \
+  printf "\033[48;2;%d;%d;%dm %s ${TTHEME_SGR[reset]}\n${TTHEME_SGR[reverse]}${TTHEME_SGR[bold]}\033[38;2;%d;%d;%dm %s ${TTHEME_SGR[reset]} ${TTHEME_SGR[dim]}· ANSI %s${TTHEME_SGR[reset]}\n" \
     $((16#${sel:0:2})) $((16#${sel:2:2})) $((16#${sel:4:2})) "$grp" \
     $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2})) "$name" "$src"
 }
@@ -626,7 +641,7 @@ __tt_pin_save() {
   k=$REPLY
   __tt_pin_scope "$key"
   if __tt_color; then
-    printf '\033[2mPinned · %s → %s · %s\033[0m\n' "$name" "$k" "$REPLY"
+    printf "${TTHEME_SGR[dim]}Pinned · %s → %s · %s${TTHEME_SGR[reset]}\n" "$name" "$k" "$REPLY"
   else
     print -r -- "Pinned · $name → $k · $REPLY"
   fi
@@ -656,7 +671,7 @@ __tt_unpin_drop() {
   __tt_dir_sync
   for k in $gone; do
     if __tt_color; then
-      print -r -- $'\e[2m'"$k"$'\e[0m'
+      print -r -- $TTHEME_SGR[dim]"$k"$TTHEME_SGR[reset]
     else
       print -r -- "$k"
     fi
@@ -706,13 +721,13 @@ __tt_key() {
 }
 
 __tt_unpin_block() {
-  local b=$'\e[1m' d=$'\e[2m' z=$'\e[0m' on=$'\e[7;1m' bar plain keys top k home=${HOME:a} here=${PWD:a} htip="" REPLY
+  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] on=$TTHEME_SGR[pill] bar plain keys top k home=${HOME:a} here=${PWD:a} htip="" REPLY
   local -A own=() below=() parent=() mark=() tstrip=()
   local -a roots=() lp=() lpw=() ll=() lat=() lpal=() lnote=() lflag=() reply gone=(${(f)drops[$1]})
   local -i i width=$(( (COLUMNS > 0 ? COLUMNS : 80) - 1 )) room=$(( (LINES > 0 ? LINES : 24) - 3 ))
   (( color )) || b= d= z= on=
   if (( color )); then
-    bar=$'\e[7;1m UNPIN \e[0m ' plain="  UNPIN  "
+    bar=$TTHEME_SGR[pill]" UNPIN "$TTHEME_SGR[reset]" " plain="  UNPIN  "
   else
     bar="[UNPIN]" plain=$bar
   fi
@@ -909,7 +924,7 @@ __tt_clip() {
     (( w += cw ))
   done
   REPLY=$out…
-  [[ $1 == *$'\e'* ]] && REPLY+=$'\e[0m'
+  [[ $1 == *$'\e'* ]] && REPLY+=$TTHEME_SGR[reset]
   return 1
 }
 
@@ -927,10 +942,10 @@ __tt_map_chip() {
   if (( ! color )); then
     printf -v REPLY '%-*s' $2 "$1"
   elif (( ${#p} >= 20 )); then
-    printf -v REPLY '\e[48;2;%d;%d;%d;38;2;%d;%d;%dm %-*s \e[0m' $((16#${bg:0:2})) $((16#${bg:2:2})) $((16#${bg:4:2})) \
+    printf -v REPLY "\e[48;2;%d;%d;%d;38;2;%d;%d;%dm %-*s ${TTHEME_SGR[/ink]}" $((16#${bg:0:2})) $((16#${bg:2:2})) $((16#${bg:4:2})) \
       $((16#${fg:0:2})) $((16#${fg:2:2})) $((16#${fg:4:2})) $2 "$1"
   else
-    printf -v REPLY '\e[2m %-*s \e[0m' $2 "$1"
+    printf -v REPLY "${TTHEME_SGR[dim]} %-*s ${TTHEME_SGR[reset]}" $2 "$1"
   fi
 }
 
@@ -1016,14 +1031,14 @@ __tt_map_line() {
 }
 
 __tt_map_walk() {
-  local at=$1 pre=$2 tip z=$'\e[0m' REPLY
+  local at=$1 pre=$2 tip z=$TTHEME_SGR[reset] REPLY
   local -i i
   local -a ks=(${(oi)${(k)parent[(Re)$1]}}) reply
   (( color )) || z=
   __tt_map_under "$at"
   __tt_map_tip "$REPLY"
   tip=$REPLY
-  (( color )) && [[ -z $tip ]] && tip=$'\e[2m'
+  (( color )) && [[ -z $tip ]] && tip=$TTHEME_SGR[dim]
   for (( i = 1; i <= ${#ks}; i++ )); do
     __tt_map_chain "$ks[i]" "${ks[i]:t}"
     if (( i < ${#ks} )); then
@@ -1072,7 +1087,7 @@ __tt_map_build() {
 }
 
 __tt_map_fit() {
-  local b=$'\e[1m' d=$'\e[2m' y=$'\e[33m' r=$'\e[31m' z=$'\e[0m' lab line tag tip note REPLY
+  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] y=$TTHEME_SGR[warn] r=$TTHEME_SGR[error] z=$TTHEME_SGR[reset] lab line tag tip note REPLY
   local -i width=$1 i lvl maxw namew need wr cap
   local -a lw=() rw=() cut=()
   (( color )) || b= d= y= r= z=
@@ -1193,7 +1208,7 @@ __tt_map_tree() {
   print -r -- "$REPLY"
   __tt_tilde "$TTHEME_PINS_FILE"
   if (( color )); then
-    __tt_clip $'\e[2m'"ttheme pin picks one here · ttheme unpin drops one · $REPLY"$'\e[0m' $width
+    __tt_clip $TTHEME_SGR[dim]"ttheme pin picks one here · ttheme unpin drops one · $REPLY"$TTHEME_SGR[reset] $width
   else
     __tt_clip "ttheme pin picks one here · ttheme unpin drops one · $REPLY" $width
   fi
@@ -1228,7 +1243,7 @@ __tt_keep() {
   __tt_worn_shown $2
   __tt_reload
   if __tt_color; then
-    printf '\033[2m%s\033[0m\n' "${(@f)note}"
+    printf "${TTHEME_SGR[dim]}%s${TTHEME_SGR[reset]}\n" "${(@f)note}"
   else
     print -r -- "$note"
   fi

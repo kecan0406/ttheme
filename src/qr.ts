@@ -1,7 +1,7 @@
 import { encode } from 'uqr'
+import { indexed, RESET } from './tui/style.ts'
 
-const INK = '\x1b[38;5;16;48;5;231m'
-const RESET = '\x1b[0m'
+const INK = indexed(16, 231)
 const HALVES = [' ', '▀', '▄', '█']
 
 export function qrLines(text: string): string[] {

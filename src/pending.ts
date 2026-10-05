@@ -1,6 +1,7 @@
-import { DIM, fit, NORMAL, SPINNER } from './ansi.ts'
+import { fit } from './ansi.ts'
 import { colorless } from './osc.ts'
 import { BEAT } from './tui/screen.ts'
+import { close, open, SPINNER } from './tui/style.ts'
 
 const DELAY = 300
 
@@ -57,7 +58,7 @@ export function pending(text = ''): Pending {
   if (!out.isTTY || process.env.TERM === 'dumb') {
     return { set() {}, say: (line) => console.log(line), done() {} }
   }
-  const [dim, undim] = colorless() ? ['', ''] : [DIM, NORMAL]
+  const [dim, undim] = colorless() ? ['', ''] : [open('dim'), close('dim')]
   let beat = 0
   let shown = false
   let ticker: NodeJS.Timeout | undefined

@@ -587,10 +587,10 @@ test('a failed apply says so, keeps what it reported, and still closes on enter'
   assert.match(frames, /✗ cannot write installed\.json/)
 })
 
-test('ctrl+r stages the update of an installed palette marked ↑, and does nothing on one without', async () => {
+test('ctrl+r stages the update of an installed palette marked ⇡, and does nothing on one without', async () => {
   const taken = await drive([TAB, ...'dusk', '\x12', ...APPLY], { updates: ['alice@pastel/dusk'] })
   assert.deepEqual(taken.panel.renew, ['alice@pastel/dusk'])
-  assert.match(taken.frames, /dusk +↑ update/)
+  assert.match(taken.frames, /dusk +⇡ update/)
   assert.match(taken.frames, /Palettes \(1 to update\)/)
   assert.match(taken.frames, /Applied \(1 updated\)/)
   const none = await drive([TAB, ...'miku', '\x12', '\r'], { updates: ['alice@pastel/dusk'] })

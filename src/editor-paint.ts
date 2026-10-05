@@ -1,6 +1,6 @@
-import { ansiFg, BOLD, DIM, fit, NORMAL, spread } from './ansi.ts'
+import { fit, spread } from './ansi.ts'
 import type { Spot } from './builder-layout.ts'
-import { type Hex, luminance, type Oklch, rgb } from './color.ts'
+import { type Hex, luminance, type Oklch } from './color.ts'
 import { inGamut, srgb } from './fix.ts'
 import {
   BASE,
@@ -16,6 +16,8 @@ import {
   slotLabel,
 } from './palette-editor.ts'
 import type { Colors } from './seeds.ts'
+import { boxEdge, boxed, checkOf } from './tui/parts.ts'
+import { FG_RESET, INK_RESET, MARKS, open, type Paint } from './tui/style.ts'
 import { type KeySpot, zone } from './tui/zones.ts'
 
 export const LEFT = 50
@@ -40,24 +42,6 @@ export type EditorSpot =
 
 export function spot(target: EditorSpot, text: string): string {
   return zone(target, text)
-}
-
-export interface Paint {
-  color: boolean
-  dim(s: string): string
-  bold(s: string): string
-  fg(hex: Hex): string
-  bg(hex: Hex): string
-}
-
-export function painter(color: boolean): Paint {
-  return {
-    color,
-    dim: (s) => (color ? `${DIM}${s}${NORMAL}` : s),
-    bold: (s) => (color ? `${BOLD}${s}${NORMAL}` : s),
-    fg: (hex) => (color ? ansiFg(hex) : ''),
-    bg: (hex) => (color ? `\x1b[48;2;${rgb(hex).join(';')}m` : ''),
-  }
 }
 
 export function ink(hex: Hex): Hex {
@@ -107,25 +91,6 @@ export function detailChecks(e: PaletteEditor, slot: number, at: Oklch): Check[]
   return checks
 }
 
-const CORNERS = { top: '╭╮', mid: '├┤', bottom: '╰╯' }
-
-export function boxEdge(width: number, at: keyof typeof CORNERS, labels: [number, string][] = []): string {
-  const [left, right] = [...CORNERS[at]]
-  const line = [...`${left}${'─'.repeat(Math.max(0, width - 2))}${right}`]
-  for (const [col, text] of labels) {
-    ;[...text].forEach((ch, i) => {
-      if (col + i > 0 && col + i < width - 1) {
-        line[col + i] = ch
-      }
-    })
-  }
-  return line.join('')
-}
-
-export function boxed(p: Paint, content: string, width: number): string {
-  return `${p.dim('│')}${fit(content, width - 2)}${p.dim('│')}`
-}
-
 export function lchTight(at: Oklch): string {
   const short = (n: number, digits: number) => n.toFixed(digits).replace(/^0(?=\.)/, '')
   return `${short(at.l, 2)} ${short(at.c, 3)} ${at.h.toFixed(0).padStart(3)}°`
@@ -135,10 +100,6 @@ export function lchShort(at: Oklch): string {
   return `${at.l.toFixed(2)} ${at.c.toFixed(3)} ${at.h.toFixed(0).padStart(3)}°`
 }
 
-export function checkMark(p: Paint, ok: boolean | undefined): string {
-  return ok === undefined ? p.dim('·') : ok ? p.dim('✓') : p.bold('✗')
-}
-
 export function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): string[] {
   const rows = gateRows(e.list, e.signature, e.waive).sort((a, b) => Number(a.ok !== false) - Number(b.ok !== false))
   const failing = rows.filter((r) => r.ok === false).length
@@ -146,7 +107,7 @@ export function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT)
   const width = wide - 4
   const lines = rows.flatMap((r) => {
     const tail = `${r.value} ${r.bound}`
-    const row = `  ${checkMark(p, r.ok)} ${spread(r.ok === false ? r.label : p.dim(r.label), p.dim(tail), width - 2)}`
+    const row = `  ${checkOf(p, r.ok)} ${spread(r.ok === false ? r.label : p.dim(r.label), p.dim(tail), width - 2)}`
     const names = [...new Set(r.slots)].map((slot) => slotLabel(slot).name)
     const first = r.slots[0]
     const to = (line: string) => (first === undefined ? line : spot({ kind: 'slot', slot: first }, line))
@@ -167,12 +128,12 @@ export function used(slot: number, role: string): boolean {
 }
 
 export function roleSgr(p: Paint, c: Colors, role: string, mark: boolean): string {
-  const under = mark ? '\x1b[4m' : ''
+  const under = mark ? open('under') : ''
   if (role === 'd') {
-    return `${p.fg(c.foreground)}\x1b[2m${under}`
+    return `${p.fg(c.foreground)}${open('dim')}${under}`
   }
   if (role === 'b') {
-    return `${p.fg(c.foreground)}\x1b[1m${under}`
+    return `${p.fg(c.foreground)}${open('bold')}${under}`
   }
   if (role === 's') {
     return `${p.bg(c.selection)}${p.fg(c.foreground)}${under}`
@@ -188,7 +149,7 @@ export function roleSgr(p: Paint, c: Colors, role: string, mark: boolean): strin
   if (m[1] === 'K') {
     return `${p.fg(c.ansi[0] as Hex)}${p.bg(color)}${under}`
   }
-  return `${p.fg(color)}${m[1] === 'B' ? '\x1b[1m' : ''}${under}`
+  return `${p.fg(color)}${m[1] === 'B' ? open('bold') : ''}${under}`
 }
 
 export function gradient(p: Paint, samples: (Hex | undefined)[], at: number, lit: boolean, held?: number): string {
@@ -202,15 +163,15 @@ export function gradient(p: Paint, samples: (Hex | undefined)[], at: number, lit
     .map((hex, k) => {
       const shown = hex ?? '#000000'
       if (k === i) {
-        return `${p.bg(shown)}${p.fg(ink(shown))}●\x1b[39;49m`
+        return `${p.bg(shown)}${p.fg(ink(shown))}${MARKS.on}${INK_RESET}`
       }
       if (k === o) {
-        return hex ? `${p.bg(hex)}${p.fg(ink(hex))}○\x1b[39;49m` : `${p.fg('#aaaaaa')}○`
+        return hex ? `${p.bg(hex)}${p.fg(ink(hex))}${MARKS.off}${INK_RESET}` : `${p.fg('#aaaaaa')}${MARKS.off}`
       }
       return hex ? `${p.fg(hex)}█` : `${p.fg(lit ? '#777777' : '#555555')}░`
     })
     .join('')
-    .concat('\x1b[39m')
+    .concat(FG_RESET)
 }
 
 export function channelSamples(want: Oklch, channel: Channel, width: number): (Hex | undefined)[] {

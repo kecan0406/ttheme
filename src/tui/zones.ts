@@ -1,4 +1,5 @@
 import { cells, type Piece, pieces, sequenceAt } from '../ansi.ts'
+import { RESET } from './style.ts'
 
 export interface Zone<T = unknown> {
   row: number
@@ -130,7 +131,7 @@ export function cover(line: string, col: number, over: string): string {
       styles.push(sequence)
     }
   }
-  const reset = line.includes('\x1b') || over.includes('\x1b') ? '\x1b[0m' : ''
+  const reset = line.includes('\x1b') || over.includes('\x1b') ? RESET : ''
   const all = pieces(line)
   let head = ''
   let x = 0

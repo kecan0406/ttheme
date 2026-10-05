@@ -1,34 +1,7 @@
 import cells from 'fast-string-width'
-
-function rgb(hex: string): string {
-  const h = hex.replace('#', '')
-  return [h.slice(0, 2), h.slice(2, 4), h.slice(4, 6)].map((c) => Number.parseInt(c, 16)).join(';')
-}
-
-export function ansiFg(color: string): string {
-  return `\x1b[38;2;${rgb(color)}m`
-}
-
-export function ansiBar(bg: string, fg: string): string {
-  return `\x1b[48;2;${rgb(bg)};38;2;${rgb(fg)}m`
-}
-
-export function ansiSquares(colors: string[], after = '\x1b[39m'): string {
-  return `${colors.map((c) => `${ansiFg(c)}■`).join(' ')}${after}`
-}
+import { closing } from './tui/style.ts'
 
 export { cells }
-
-export const RESET = '\x1b[0m'
-export const BOLD = '\x1b[1m'
-export const DIM = '\x1b[2m'
-export const NORMAL = '\x1b[22m'
-export const GREEN = '\x1b[32m'
-export const YELLOW = '\x1b[33m'
-export const CYAN = '\x1b[36m'
-export const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
-
-export const LINK = '⧉'
 
 export function linked(text: string, url: string | undefined): string {
   return url ? `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\` : text
@@ -114,12 +87,12 @@ export function fit(text: string, width: number, pad = true): string {
     return pad ? text + ' '.repeat(width - full) : text
   }
   const { head, used } = take(text, width - 1)
-  return `${head}${text.includes('\x1b') ? '\x1b[0m' : ''}…${pad ? ' '.repeat(width - 1 - used) : ''}`
+  return `${head}${closing(head)}…${pad ? ' '.repeat(width - 1 - used) : ''}`
 }
 
 export function clip(text: string, width: number): string {
   const { head, used } = take(text, width)
-  return `${head}${text.includes('\x1b') ? RESET : ''}${' '.repeat(width - used)}`
+  return `${head}${closing(head)}${' '.repeat(width - used)}`
 }
 
 export function spread(left: string, right: string, width: number): string {

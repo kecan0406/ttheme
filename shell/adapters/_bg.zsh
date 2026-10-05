@@ -620,7 +620,7 @@ __tt_pv_bg_recolor() {
 }
 
 __tt_pv_bg_panel() {
-  local name=$1 z=$'\e[0m' b=$'\e[1m' d=$'\e[2m' c=$ac val sty mark choice REPLY
+  local name=$1 z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] c=$ac val sty mark choice REPLY
   local -a labs=(Size Position Opacity Colors) at=(1 4 7 0) def=(${=bgdef[$1]})
   local -i r0=$2 col=$3 end=$4 off=${bgoff[$1]} T=$(( $4 - $3 - 21 )) lo=100 hi=100 k i r knob pos=${bgpos[$1]} o tuned
   (( color )) || z= b= d= c=
@@ -650,7 +650,7 @@ __tt_pv_bg_panel() {
         elif [[ $choice != $val ]]; then
           out+=$d" $choice "$z" "
         elif (( tf == k && ! off )); then
-          out+=$'\e[7;1m'$c" $choice "$z" "
+          out+=$pl" $choice "$z" "
         else
           out+=$sty" $choice "$z" "
         fi
@@ -710,7 +710,7 @@ __tt_pv_bg_panel() {
 }
 
 __tt_pv_bg_strip() {
-  local pal=$tune dir=${TTHEME_CONFIG:h}/backgrounds cur fill want sty top side bot cmd buf="" z=$'\e[0m' d=$'\e[2m' REPLY
+  local pal=$tune dir=${TTHEME_CONFIG:h}/backgrounds cur fill want sty top side bot cmd buf="" z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] REPLY
   local -a keys=(${=bgpics[$tune]}) wh pd
   local -i r0=$1 col=$2 end=$3 n=${#keys} at show tc tr=3 i k x r id slot first
   if (( n < 1 )); then
@@ -741,7 +741,7 @@ __tt_pv_bg_strip() {
     x=$(( col + i * (tc + 3) ))
     slot=$(( i + 1 ))
     if (( k == at )); then
-      sty=$'\e[1m'$ac top="┏${(l:tc::━:)}┓" side="┃" bot="┗${(l:tc::━:)}┛"
+      sty=$TTHEME_SGR[bold]$ac top="┏${(l:tc::━:)}┓" side="┃" bot="┗${(l:tc::━:)}┛"
     else
       sty=$d top="╭${(l:tc::─:)}╮" side="│" bot="╰${(l:tc::─:)}╯"
     fi
@@ -816,7 +816,7 @@ __tt_pv_bg_save() {
       note="Background · $name $REPLY"
     fi
     if __tt_color; then
-      printf '\033[2m%s\033[0m\n' "$note"
+      printf "${TTHEME_SGR[dim]}%s${TTHEME_SGR[reset]}\n" "$note"
     else
       print -r -- "$note"
     fi

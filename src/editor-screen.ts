@@ -1,13 +1,10 @@
 import { cells, fit, spread, wrapText } from './ansi.ts'
 import { type Look, pictureArea, planeAt, renderBuilder } from './builder-screen.ts'
-import { type Hex, mix, type Oklch, oklch, rgb } from './color.ts'
+import { type Hex, type Oklch, oklch, rgb } from './color.ts'
 import { brightDrift, hueGap, lookalikes, offRole, ROLE_HUES, roleOf } from './contrast.ts'
 import type { Backdrop } from './editor-backdrop.ts'
 import {
-  boxEdge,
-  boxed,
   channelSamples,
-  checkMark,
   contrastLine,
   detailChecks,
   type EditorSpot,
@@ -17,8 +14,6 @@ import {
   heldOf,
   LEFT,
   lchTight,
-  type Paint,
-  painter,
   position,
   roleSgr,
   spot,
@@ -48,7 +43,9 @@ import type { Colors } from './seeds.ts'
 import { grow, SEED_FIELDS, type Seeds } from './seeds.ts'
 import { CLEAR } from './terminal.ts'
 import { CELL_QUERY, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './tui/keys.ts'
+import { boxEdge, boxed, checkOf, pillOf } from './tui/parts.ts'
 import { Screen } from './tui/screen.ts'
+import { FG_RESET, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './tui/style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
 import { type Hit, keyZone } from './tui/zones.ts'
 
@@ -79,16 +76,8 @@ function scopeLines(p: Paint, e: PaletteEditor): string[] {
   if (e.mode !== 'tune' || e.slot() < BASE.length) {
     return []
   }
-  const c = colorsOf(e.list)
   const items = SCOPES.map((scope) =>
-    spot(
-      { kind: 'scope', scope },
-      scope !== e.scope
-        ? p.dim(scope)
-        : p.color
-          ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${scope} \x1b[39;49m`
-          : `[${scope}]`,
-    ),
+    spot({ kind: 'scope', scope }, scope !== e.scope ? p.dim(scope) : pillOf(p, scope)),
   )
   const n = e.scoped().length
   return [
@@ -124,19 +113,20 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
   const cell = (slot: number) => {
     const hex = e.list[slot] as Hex
     const focused = slot === focus
-    const glyph = e.signature.includes(SLOT_NAMES[slot] as string) ? '◆' : p.color ? '■' : ' '
-    const mark = bad.has(slot) ? '✗' : e.tone && e.changed(slot) ? '●' : ' '
-    const sw = p.color ? `${p.fg(hex)}${glyph}${focused ? p.fg(c.foreground) : '\x1b[39m'} ` : `${glyph} `
+    const glyph = e.signature.includes(SLOT_NAMES[slot] as string) ? MARKS.signature : p.color ? MARKS.swatch : ' '
+    const mark = bad.has(slot) ? MARKS.miss : e.tone && e.changed(slot) ? MARKS.on : ' '
+    const sw = p.color ? `${p.fg(hex)}${glyph}${focused ? p.fg(c.foreground) : FG_RESET} ` : `${glyph} `
     const text = `${sw}${lchTight(e.lch[slot] as Oklch)}${mark}`
     if (!focused) {
       return spot({ kind: 'slot', slot }, ` ${text}`)
     }
     return spot(
       { kind: 'slot', slot },
-      p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${text}\x1b[39;49m` : `›${text}`,
+      p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${text}${INK_RESET}` : `›${text}`,
     )
   }
-  const gutter = (here: boolean) => (here ? (p.color ? `${p.fg(c.cursor)}▌\x1b[39m ` : '▌ ') : '  ')
+  const gutter = (here: boolean) =>
+    here ? (p.color ? `${p.fg(c.cursor)}${MARKS.gutter}${FG_RESET} ` : `${MARKS.gutter} `) : '  '
   const lines = [p.dim(boxEdge(wide, 'top', [[2, ' Base ']]))]
   for (let row = 0; row < BASE.length; row++) {
     const here = row === e.row
@@ -185,11 +175,11 @@ function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
     const bar = gradient(p, samples, position(value, field.min, field.max, SEED_BAR), here)
     const shown = `${value.toFixed(field.digits)}${field.wraps ? '°' : ''}`.padStart(6)
     const hex = SEED_SHOWS[field.key](c)
-    const gutter = here ? (p.color ? `${p.fg(c.cursor)}▌\x1b[39m ` : '▌ ') : '  '
+    const gutter = here ? (p.color ? `${p.fg(c.cursor)}${MARKS.gutter}${FG_RESET} ` : `${MARKS.gutter} `) : '  '
     const label = field.label.padEnd(17)
     const grip: EditorSpot = { kind: 'field', field: i }
     lines.push(
-      `${spot(grip, `${gutter}${here ? p.bold(label) : label}`)}${spot({ kind: 'seed', field: i }, bar)}${spot(grip, ` ${shown}  ${p.color ? `${p.fg(hex)}■\x1b[39m ` : ''}${p.dim(hex)}`)}`,
+      `${spot(grip, `${gutter}${here ? p.bold(label) : label}`)}${spot({ kind: 'seed', field: i }, bar)}${spot(grip, ` ${shown}  ${p.color ? `${p.fg(hex)}${MARKS.swatch}${FG_RESET} ` : ''}${p.dim(hex)}`)}`,
     )
   })
   lines.push('')
@@ -206,14 +196,7 @@ function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
 function sample(p: Paint, c: Colors, width: number, room: number, scene: number, slot: number): string[] {
   const at = SCENES.indexOf(sceneAt(scene))
   const tabs = SCENES.map((one, i) =>
-    spot(
-      { kind: 'scene', scene: i },
-      i !== at
-        ? p.dim(one.name)
-        : p.color
-          ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${one.name} \x1b[39;49m`
-          : `[${one.name}]`,
-    ),
+    spot({ kind: 'scene', scene: i }, i !== at ? p.dim(one.name) : pillOf(p, one.name)),
   ).join('  ')
   const lines = [spread(tabs, p.dim('⇧←→'), width)]
   const base = `${p.bg(c.background)}${p.fg(c.foreground)}`
@@ -226,9 +209,9 @@ function sample(p: Paint, c: Colors, width: number, room: number, scene: number,
       break
     }
     const line = p.color
-      ? parts.map(([t, role]) => `${roleSgr(p, c, role, used(slot, role))}${t}\x1b[0m${base}`).join('')
+      ? parts.map(([t, role]) => `${roleSgr(p, c, role, used(slot, role))}${t}${RESET}${base}`).join('')
       : parts.map(([t]) => t).join('')
-    lines.push(`${base} ${fit(line, width - 2)} ${p.color ? '\x1b[0m' : ''}`)
+    lines.push(`${base} ${fit(line, width - 2)} ${p.color ? RESET : ''}`)
   }
   return lines
 }
@@ -258,16 +241,16 @@ function chart(
       const n = at(normal) === r
       const b = at(bright) === r
       const cellOf = (j: number) => {
-        if (j === 1 && n) return p.color ? `${p.fg(normal)}●` : '●'
-        if (j === 3 && b) return p.color ? `${p.fg(bright)}○` : '○'
+        if (j === 1 && n) return p.color ? `${p.fg(normal)}${MARKS.on}` : MARKS.on
+        if (j === 3 && b) return p.color ? `${p.fg(bright)}${MARKS.off}` : MARKS.off
         return marks[j] as string
       }
       const cells = [0, 1, 2, 3, 4].map(cellOf).join('')
       line += lit.has(k)
         ? p.color
-          ? `${p.bg(c.selection)}${cells}\x1b[39;49m`
+          ? `${p.bg(c.selection)}${cells}${INK_RESET}`
           : cells
-        : `${cells}${p.color ? '\x1b[39m' : ''}`
+        : `${cells}${p.color ? FG_RESET : ''}`
     }
     return line
   })
@@ -303,15 +286,15 @@ function hueLines(p: Paint, shown: Hex[]): string[] {
     for (const role of Object.keys(ROLE_HUES).map(Number)) {
       const hex = c.ansi[role + offset] as Hex
       const at = Math.min(39, Math.round(oklch(hex).h / 9))
-      cells[at] = p.color ? `${p.fg(hex)}${glyph}\x1b[39m` : glyph
+      cells[at] = p.color ? `${p.fg(hex)}${glyph}${FG_RESET}` : glyph
     }
     return `      ${cells.join('')}`
   }
   return [
     `${p.bold('Hue')}   ${p.dim('0°        90°       180°      270°      360°')}`,
-    `${p.dim('bands')} ${band}${p.color ? '\x1b[39m' : ''}`,
-    dots(0, '●'),
-    dots(8, '○'),
+    `${p.dim('bands')} ${band}${p.color ? FG_RESET : ''}`,
+    dots(0, MARKS.on),
+    dots(8, MARKS.off),
   ]
 }
 
@@ -333,8 +316,8 @@ function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
     ...lookalikes(theme).map(([a, b]) => `${name(a)} and ${name(b).toLowerCase()} read as one color`),
   ]
   return notes.length > 0
-    ? notes.map((note) => `${p.bold('✗')} ${note}`)
-    : [p.dim('✓ Every accent keeps its role and its bright')]
+    ? notes.map((note) => `${p.bold(MARKS.miss)} ${note}`)
+    : [p.dim(`${MARKS.ok} Every accent keeps its role and its bright`)]
 }
 
 function relations(p: Paint, e: PaletteEditor, width: number, height: number, full: boolean): string[] {
@@ -353,16 +336,8 @@ function relations(p: Paint, e: PaletteEditor, width: number, height: number, fu
 }
 
 function viewTabs(p: Paint, e: PaletteEditor, width: number): string {
-  const c = colorsOf(e.list)
   const tab = (name: string, view: PaletteEditor['view']) =>
-    spot(
-      { kind: 'view', view },
-      e.view !== view
-        ? p.dim(` ${name} `)
-        : p.color
-          ? `${p.bg(c.selection)}${p.fg(c.foreground)}${p.bold(` ${name} `)}\x1b[39;49m`
-          : `[${name}]`,
-    )
+    spot({ kind: 'view', view }, e.view !== view ? p.dim(` ${name} `) : pillOf(p, name))
   return spread(
     `${tab('Slot', 'slot')}${tab('Relations', 'relations')}`,
     keyZone('g', `${p.bold('g')} ${p.dim('switch')}`),
@@ -383,13 +358,13 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   }
   const right = slot >= BASE.length ? p.dim('Uses underlined below') : sig ? p.dim('◆ signature') : ''
   const lines = [spread(`${p.bold(name)}  ${p.dim(about)}`, e.view === 'relations' ? '' : right, width), '']
-  const block = p.color ? `${p.fg(hex)}${'█'.repeat(8)}\x1b[39m  ` : ''
+  const block = p.color ? `${p.fg(hex)}${'█'.repeat(8)}${FG_RESET}  ` : ''
   const typed = e.typing !== undefined ? `${p.bold(`${e.typing}▏`)}` : undefined
   const [r, g, b] = rgb(hex)
   lines.push(`${block}${typed ?? lchLine(p, at)}`)
   lines.push(`${block}${p.dim(`${hex} · rgb ${r} ${g} ${b}`)}`)
   if (e.view !== 'relations') {
-    const swatch = p.color ? `${p.fg(was)}■\x1b[39m ` : ''
+    const swatch = p.color ? `${p.fg(was)}${MARKS.swatch}${FG_RESET} ` : ''
     lines.push(
       `${block}${was !== hex ? p.dim(`was ${swatch}${oklchText(e.lchOf(was)).slice(6)} · ${was}`) : p.dim('as it opened')}`,
     )
@@ -407,7 +382,7 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   lines.push('')
   for (const check of detailChecks(e, slot, at)) {
     wrapText(check.text, width - 2).forEach((line, i) => {
-      lines.push(`${i === 0 ? checkMark(p, check.ok) : ' '} ${check.ok === false ? line : p.dim(line)}`)
+      lines.push(`${i === 0 ? checkOf(p, check.ok) : ' '} ${check.ok === false ? line : p.dim(line)}`)
     })
   }
   const hint = fixHint(e, slot)
@@ -503,7 +478,7 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
     const here = top + k === e.pick
     const c = choice.colors
     const swatches = p.color
-      ? `${p.bg(c.background)} ${[...c.ansi].map((hex) => `${p.fg(hex)}■`).join('')} ${p.fg(c.foreground)}Aa \x1b[0m`
+      ? `${p.bg(c.background)} ${[...c.ansi].map((hex) => `${p.fg(hex)}${MARKS.swatch}`).join('')} ${p.fg(c.foreground)}Aa ${INK_RESET}`
       : ''
     const gutter = here ? '▌ ' : '  '
     const label = choice.name.padEnd(nameWidth)
@@ -517,8 +492,7 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
 
 const KEEP = new Set(['enter', 's', '?', 'g', 'a', 'i'])
 
-function footer(p: Paint, e: PaletteEditor, width: number, chrome?: readonly Hex[]): string {
-  const accent = p.fg((chrome ?? e.list)[2] as Hex)
+function footer(p: Paint, e: PaletteEditor, width: number): string {
   let badge = 'EDIT'
   let lead = ''
   let keys: [string, string][] = []
@@ -627,10 +601,10 @@ function footer(p: Paint, e: PaletteEditor, width: number, chrome?: readonly Hex
     keys = keys.filter(([key]) => key !== 'i' && key !== 'm')
   }
   if (e.notice) {
-    lead = p.color ? `\x1b[33m${e.notice}\x1b[39m` : e.notice
+    lead = p.warn(e.notice)
     keys = []
   }
-  const tag = p.color ? `\x1b[7;1m${accent} ${badge} \x1b[0m  ` : `[${badge}] `
+  const tag = `${pillOf(p, badge)}${p.color ? '  ' : ' '}`
   const shownRight = right
     ? keyZone(
         right.split(' ')[0] as string,
@@ -677,15 +651,14 @@ export function drawEditor(
   if (!e.overlay && e.mode !== 'seeds') {
     const built = renderBuilder(e, cols, rows, color, look)
     if (built) {
-      return { lines: [...built.lines, footer(p, e, cols, look.chrome)], art: built.art }
+      return { lines: [...built.lines, footer(p, e, cols)], art: built.art }
     }
   }
   const failing = e.failing().length
   const gate = failing === 0 ? '✓ Passes the gate' : `✗ ${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
   const shelf = e.pictures > 0 ? p.dim(`▣ ${e.pictures} ${e.pictures === 1 ? 'picture' : 'pictures'}   `) : ''
-  const state = `${e.dirty() ? `${p.color ? '\x1b[33m●\x1b[39m' : '●'} unsaved   ` : ''}${shelf}${p.dim(gate)}`
-  const accent = p.fg(e.list[2] as Hex)
-  const title = `${accent}◆${p.color ? '\x1b[39m' : ''} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
+  const state = `${e.dirty() ? `${p.warn(MARKS.on)} unsaved   ` : ''}${shelf}${p.dim(gate)}`
+  const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
   const height = rows - 4
   let body: string[]
   if (e.overlay === 'keys') {
@@ -705,7 +678,7 @@ export function drawEditor(
   for (let i = 0; i < height; i++) {
     lines.push(fit(body[i] ?? '', cols))
   }
-  lines.push('', footer(p, e, cols, look.chrome))
+  lines.push('', footer(p, e, cols))
   return { lines, art: undefined }
 }
 
@@ -834,7 +807,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     const chrome = answered.map((hex, slot) => hex ?? (editor.start[slot] as Hex))
     const [ground, ink] = chrome as [Hex, Hex]
     if (!answered[3]) {
-      chrome[3] = mix(ground, ink, 0.2)
+      chrome[3] = surfaceOf(ground, ink, 'selection')
     }
     const screen = new Screen({
       write: (text) => terminal.write(text),
