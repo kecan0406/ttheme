@@ -377,6 +377,6 @@ export function helpText(all: boolean, shell = false): string {
     ...(all ? ['', 'Examples:', ...columns(EXAMPLES, Math.max(...EXAMPLES.map(([left]) => left.length)))] : []),
     '',
     ...(shell ? ['ttheme alone opens preview and browse as tabs — tab and shift+tab move between them'] : []),
-    'https://kecan0406.github.io/ttheme',
+    'https://ttheme.vercel.app',
   ].join('\n')
 }

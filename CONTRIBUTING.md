@@ -53,7 +53,7 @@ once in a market, and `meta.group` is not read. A market palette has no `order`
 and no `role`; `meta.base` names the official palette it varies, which only says
 where its ANSI colors came from. Give the repository the `ttheme-market` topic
 and `ttheme market search` and the
-[market page](https://kecan0406.github.io/ttheme/market) find it.
+[market page](https://ttheme.vercel.app/market) find it.
 
 Open a pull request here when a palette belongs in the official catalog: it
 then has to pass the contrast gate and everything below.
