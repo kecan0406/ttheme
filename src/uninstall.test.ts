@@ -83,6 +83,35 @@ test('uninstall gives every config back as it was and deletes only what ttheme w
   assert.deepEqual(planUninstall(p), { edits: [], removals: [], touches: [] })
 })
 
+test("uninstall also deletes the palette files ttheme 1.0.34 and older wrote without its prefix, and nothing of the user's", () => {
+  const p = paths()
+  const at = (...parts: string[]) => join(p.configHome, ...parts)
+  install(p, { terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'], palettes: ['gojo'], startup: 'gojo' })
+  const old = [
+    [at('ghostty', 'themes', 'geto'), '# geto — Jujutsu Kaisen (呪術廻戦)\n# ANSI: Horizon\nbackground = #11191c\n'],
+    [at('kitty', 'themes', 'geto.conf'), '# geto — Jujutsu Kaisen\n# ANSI: Horizon\nbackground #11191c\n'],
+    [at('alacritty', 'themes', 'geto.toml'), '# geto — Jujutsu Kaisen\n# ANSI: Horizon\n[colors.primary]\n'],
+    [at('wezterm', 'colors', 'geto.toml'), '[metadata]\nname = "geto"\norigin_url = "Horizon"\n\n[colors]\n'],
+  ]
+  const mine = [
+    [at('ghostty', 'themes', 'Dracula'), '# Dracula — a theme\npalette = 0=#000000\n'],
+    [at('wezterm', 'colors', 'night.toml'), '[metadata]\nname = "Night"\norigin_url = "x"\n'],
+    [at('ghostty', 'shaders', 'cursor_tail.glsl'), 'void mainImage() {}\n'],
+  ]
+  for (const [path, text] of [...old, ...mine]) {
+    put(path as string, text as string)
+  }
+
+  applyUninstall(planUninstall(p), p, host)
+
+  for (const [path] of old) {
+    assert.ok(!existsSync(path as string), path)
+  }
+  for (const [path, text] of mine) {
+    assert.equal(readFileSync(path as string, 'utf8'), text)
+  }
+})
+
 test('uninstall keeps the backup when the config changed after ttheme first edited it', () => {
   const p = paths()
   const ghostty = join(p.configHome, 'ghostty', 'config')

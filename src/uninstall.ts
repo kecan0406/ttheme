@@ -1,4 +1,5 @@
-import { existsSync, rmSync, utimesSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import * as p from '@clack/prompts'
@@ -10,6 +11,7 @@ import { localRoot } from './sources.ts'
 import { ownedIn, stripped, systemHost } from './terminals/common.ts'
 import { WIRED, wirings } from './terminals/index.ts'
 import type { Host } from './terminals/types.ts'
+import { owned } from './theme.ts'
 import { removeBlock } from './wiring.ts'
 
 export interface UninstallPaths {
@@ -25,6 +27,46 @@ export interface UninstallPlan {
   removals: string[]
   touches: string[]
   state?: Installed
+}
+
+const SHIPPED_SHADERS = new Set([
+  '814e75361c745b9f1467c82bee90ab3f47daeaa70a528d330a4bc8aec9faeeb9',
+  '668092ea188445700b02d60a102c429e092e46fcd88c33509b9f1fd64d68e6a6',
+  'bf52a8c6d019f59f71723be460d7fe450234d0f03ff0f35e94db2c42455f00ba',
+  '8df4e3246f2cf26deaa0f620f31e94efac21104ec2dbe81fba55ba066141aeb4',
+  '7bdc8051f34b902e970df84df0e4c8d27331b5e04da7f7b498d50b592eaa72f2',
+  'e06b39cd6fa2701bd360b7062d82d4a56766aba97889dfa547d14db5895454f1',
+])
+
+function filesIn(dir: string): string[] {
+  try {
+    return readdirSync(dir)
+      .map((file) => join(dir, file))
+      .filter((path) => statSync(path).isFile())
+  } catch {
+    return []
+  }
+}
+
+function unprefixed(path: string): boolean {
+  const file = path.slice(path.lastIndexOf('/') + 1)
+  if (file.startsWith(owned(''))) {
+    return false
+  }
+  const name = file.replace(/\.(conf|toml)$/, '')
+  const text = readFileSync(path, 'utf8')
+  return (
+    (text.startsWith(`# ${name} — `) && text.split('\n')[1]?.startsWith('# ANSI: ') === true) ||
+    text.startsWith(`[metadata]\nname = "${name}"\norigin_url = "`)
+  )
+}
+
+function oldShaders(dir: string): string[] {
+  const files = filesIn(dir)
+  const shipped = files.filter((path) =>
+    SHIPPED_SHADERS.has(createHash('sha256').update(readFileSync(path)).digest('hex')),
+  )
+  return shipped.length > 0 && shipped.length === readdirSync(dir).length ? [dir] : shipped
 }
 
 function installed(configHome: string): Installed | undefined {
@@ -46,6 +88,8 @@ export function planUninstall(paths: UninstallPaths): UninstallPlan {
     edits: [...stripped(join(paths.zdotdir, '.zshrc'), removeBlock), ...parts.flatMap((part) => part.edits)],
     removals: [
       ...every.flatMap((wiring) => (wiring.shelf ? ownedIn(wiring.shelf.dir(at)) : [])),
+      ...every.flatMap((wiring) => (wiring.shelf ? filesIn(wiring.shelf.dir(at)).filter(unprefixed) : [])),
+      ...oldShaders(join(configHome, 'ghostty', 'shaders')),
       ...parts.flatMap((part) => part.removals),
       ...owns.filter((path) => existsSync(path)),
     ],
