@@ -41,7 +41,8 @@
     "fast-string-width": "^3.0.2",
     "pngjs": "7.0.0",
     "smol-toml": "^1.9.0",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "uqr": "^0.1.3"
   },
   "engines": {
     "bun": ">=1.3",

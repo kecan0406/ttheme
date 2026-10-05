@@ -20,7 +20,8 @@ import {
   textProblem,
 } from './theme.ts'
 
-export const CODE = 'tt2:'
+const CODE = 'tt2:'
+export const SHARE_URL = 'https://ttheme.vercel.app/p/'
 const SUM = 4
 const SLOTS = ['background', 'foreground', 'cursor', 'selection', ...Array.from({ length: 16 }, (_, i) => `ansi${i}`)]
 
@@ -369,8 +370,27 @@ function checksum(bytes: Uint8Array): Buffer {
   return createHash('sha256').update(bytes).digest().subarray(0, SUM)
 }
 
-export function isCode(text: string): boolean {
+function isCode(text: string): boolean {
   return /^tt\d+:/.test(text)
+}
+
+export function shareLink(code: string): string {
+  return `${SHARE_URL}${code}`
+}
+
+export function codeOf(text: string): string | undefined {
+  const given = text.trim()
+  if (!/^https?:\/\//i.test(given)) {
+    return isCode(given) ? given : undefined
+  }
+  const segment = URL.canParse(given) ? /^\/p\/([^/]+)\/?$/.exec(new URL(given).pathname)?.[1] : undefined
+  const code = segment?.replace(/%3a/gi, ':')
+  return code && isCode(code) ? code : undefined
+}
+
+export function readCode(code: string, entries: PaletteEntry[]): PaletteEntry {
+  const draft = fromCode(code)
+  return paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
 }
 
 export function shareCode(d: Draft): string {

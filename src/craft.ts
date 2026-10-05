@@ -13,7 +13,7 @@ import { type Manifest, type PaletteEntry, paletteEntry, toTheme } from './manif
 import { ensureLocal } from './markets.ts'
 import { colorless } from './osc.ts'
 import {
-  CODE,
+  codeOf,
   colorsOfTheme,
   type Draft,
   draftOf,
@@ -23,16 +23,19 @@ import {
   marketFiles,
   ownPath,
   paletteToml,
+  readCode,
   readOwnText,
   recolor,
   resign,
   shareCode,
+  shareLink,
   withPictures,
 } from './own.ts'
 import { type Choice, type Edited, type EditorOptions, listOf } from './palette-editor.ts'
 import { commit, configHome, type Installed, readInstalled, refreshPictures, sync } from './palettes.ts'
 import { PickerLayer } from './picker-art.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
+import { qrLines } from './qr.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
 import { showsPictures } from './terminal.ts'
 import { marketOf, nameProblem, type SharedPicture, type Theme } from './theme.ts'
@@ -69,11 +72,14 @@ function movesText(moves: Move[]): string[] {
   return moves.map((m) => `  ${m.slot.padEnd(pad)}  ${m.from} → ${m.to}  ${m.rule}`)
 }
 
-export function adopt(home: string, code: string, catalog: Manifest): string {
-  const draft = fromCode(code)
-  const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), catalog.palettes, true))
-  const known = available(home, catalog, false).palettes.find((e) => e.name === entry.name)
-  if (known && JSON.stringify(known) !== JSON.stringify(entry)) {
+function wears(p: PaletteEntry): string {
+  return JSON.stringify([p.background, p.foreground, p.cursor, p.selection, p.ansi])
+}
+
+export function adopt(home: string, code: string, catalog: Manifest): PaletteEntry {
+  const entry = readCode(code, catalog.palettes)
+  const known = untuned(home, catalog, false).palettes.find((e) => e.name === entry.name)
+  if (known && wears(known) !== wears(entry)) {
     throw new Error(
       `${entry.name} is already in ${marketOf(entry.name) ?? 'the ttheme catalog'} and differs — \`ttheme add ${entry.name}\` wears that one`,
     )
@@ -81,7 +87,7 @@ export function adopt(home: string, code: string, catalog: Manifest): string {
   if (!known) {
     writeKept(home, [...readKept(home), entry])
   }
-  return entry.name
+  return entry
 }
 
 const SIGNATURE = ['background', 'foreground', 'cursor']
@@ -404,8 +410,8 @@ function mineAt(home: string, name: string): string | undefined {
 }
 
 function decoded(text: string): Colors | undefined {
-  const code = text.trim()
-  if (!code.startsWith(CODE)) {
+  const code = codeOf(text)
+  if (!code) {
     return undefined
   }
   try {
@@ -482,10 +488,12 @@ export async function runShare(name: string, tone?: 'tuned' | 'original'): Promi
     }
     draft.name = tunedName(entry.name)
   }
-  console.log(shareCode(draft))
+  const link = shareLink(shareCode(draft))
+  console.log(link)
   if (process.stdout.isTTY) {
+    console.log(`\n${qrLines(link).join('\n')}`)
     console.error(
-      `\nAnyone with ttheme wears it with: ttheme add ${CODE}…${renamed ? `\nIt carries your tone, named ${draft.name} so it does not clash with ${entry.name}` : ''}`,
+      `\nAnyone can open the link or scan the code to see ${draft.name}, and ttheme add <link> installs it${renamed ? `\nIt carries your tone, named ${draft.name} so it does not clash with ${entry.name}` : ''}`,
     )
   }
 }

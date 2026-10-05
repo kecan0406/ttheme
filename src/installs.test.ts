@@ -8,6 +8,7 @@ import { writeCatalog } from './catalog.ts'
 import { inMarket, runAdd, runDefault } from './installs.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { withMarkets } from './markets.ts'
+import { draftOf, shareCode, shareLink } from './own.ts'
 import { readInstalled, sync, writeInstalled } from './palettes.ts'
 
 function entry(name: string, order: number): PaletteEntry {
@@ -83,6 +84,18 @@ test('default refuses a palette that is not installed', () => {
   const home = installedHome(['gojo'])
   assert.throws(() => inHome(home, () => runDefault('geto')), /geto is not installed/)
   assert.equal(readInstalled(home).startup, undefined)
+})
+
+test('a share link to a palette already in the catalog installs it, and one with other colors is refused', async () => {
+  const home = installedHome(['gojo'])
+  const geto = catalog.palettes[1] as PaletteEntry
+  await inHome(home, () => runAdd([shareLink(shareCode(draftOf(geto)))]))
+  assert.deepEqual(readInstalled(home).palettes, ['gojo', 'geto'])
+  const sukuna = shareLink(shareCode({ ...draftOf(catalog.palettes[2] as PaletteEntry), background: '#000000' }))
+  await assert.rejects(
+    inHome(home, () => runAdd([sukuna])),
+    /sukuna is already in the ttheme catalog and differs/,
+  )
 })
 
 test('--market names bare palettes after the market it added, and refuses one from another market', () => {

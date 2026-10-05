@@ -32,7 +32,7 @@ Your own:
   new <name>                 Make a palette of your own in the palette editor
   edit <palette>             Change one of your palettes in the palette editor
   check <palette>            Measure a palette against the contrast gate
-  share <palette>            Print a share code
+  share <palette>            Print a share link and its QR code
 
 Setup:
   init                       Install the shell layer and wire your terminals
@@ -552,11 +552,20 @@ ttheme new rei                   # kecan0406@dust/rei, from blank in the palette
 ttheme new rei --from rei        # the same, starting from rei's colors and pictures
 ttheme edit rei                  # the same editor; the bare name works for yours
 ttheme check --fix rei           # colors that pass the gate, written in
-ttheme share rei                 # tt2:… — anyone runs ttheme add tt2:…
+ttheme share rei                 # https://ttheme.vercel.app/p/tt2:… and its QR code
 ttheme share rei --tone original # the palette as it was, when you tuned it in palette edit
 ```
 
-`share` prints a palette as you wear it. When you tuned its tone in [palette
+`share` prints a link to a palette as you wear it, and in a terminal its QR code
+under it. The palette lives in the link itself (`tt2:…` after `/p/`), so the page
+needs nothing stored: it shows the palette in a mock terminal, its slots, the
+contrast gate and the posts of its pictures, with the `ttheme add` command to
+copy. `ttheme add <link>` installs it, and so does the bare `tt2:…` code. A link
+to a palette the other side already has — an official one, or one from a market
+they added — installs theirs when the colors match, with the pictures the link
+names, and is refused when they differ.
+
+When you tuned its tone in [palette
 edit](#palette-edit) it asks which to share, your tone or the original;
 `--tone tuned` or `--tone original` answers for it, and without a terminal it
 shares the tuned one. A tuned palette goes out as `<name>-tuned`, since its own
@@ -606,7 +615,7 @@ the same editor on a palette from a market, for its tone; the keys are:
   accents, or all twelve — and each moves by the same step, keeping its own color.
   Chroma stops at the sRGB edge; once you keep, the color is what you see. `#`
   takes `#rrggbb`, `rgb(r g b)` or `oklch(l c h)`, and so does a paste, and a
-  pasted `tt2:` share code takes its colors.
+  pasted share link or `tt2:` code takes its colors.
 - A bright starts linked to its normal when their hues are within 3°: tuning the
   normal moves the bright with it, keeping its own lightness and chroma offset,
   and tuning the bright alone unlinks it (`⇠` in the list). `l` links and unlinks
@@ -623,7 +632,8 @@ the same editor on a palette from a market, for its tone; the keys are:
   between them.
 - `x` copies the share code, the `ttheme add` command with it, or the palette file
   to the clipboard (OSC 52, so the terminal has to allow it; `ttheme share` prints
-  the same code), and `I` takes colors from another palette or a share code.
+  the same code as a link), and `I` takes colors from another palette or a share
+  link.
 - `c` and `v` copy a color between slots, `r` puts a slot back as it opened and
   `R` all of them, `*` marks a signature color (a fourth drops the oldest, and
   says so), `f` moves the colors the gate misses, `o` takes another palette's

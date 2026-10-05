@@ -96,7 +96,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'add',
     args: ['<palette...>'],
-    about: 'Install palettes — from the catalog, or from a share code: ttheme add tt2:…',
+    about: 'Install palettes — from the catalog, or from a share link: ttheme add https://ttheme.vercel.app/p/tt2:…',
     section: 'catalog',
     flags: {
       market: {
@@ -163,7 +163,8 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'share',
     args: ['<palette>'],
-    about: 'Print a share code — ttheme add <code> installs it anywhere, pictures included',
+    about:
+      'Print a share link and its QR code — the page shows the palette, and ttheme add <link> installs it anywhere, pictures included',
     section: 'own',
     flags: {
       tone: {

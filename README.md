@@ -145,10 +145,13 @@ gh repo create <you>/ttheme-<name> --public --source . --push
 gh repo edit <you>/ttheme-<name> --add-topic ttheme-market
 ```
 
-`ttheme share <palette>` prints a code — `tt2:…`, about 200 characters — that
-carries the colors and the numbers of its background posts with their framing.
-`ttheme add tt2:…` installs it anywhere without a market, fetching those posts
-from the booru the way `find` does.
+`ttheme share <palette>` prints a link — `https://ttheme.vercel.app/p/tt2:…` —
+and, in a terminal, its QR code. The link carries the colors and the numbers of
+its background posts with their framing, so nothing is uploaded: the page it
+opens draws the palette in a terminal, lists the posts, and gives the
+`ttheme add` command, and its preview image for chat apps is drawn in the palette's colors.
+`ttheme add <link>` (or the bare `tt2:…` code at its end) installs it anywhere
+without a market, fetching those posts from the booru the way `find` does.
 
 ## Usage
 

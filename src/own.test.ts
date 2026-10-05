@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import {
+  codeOf,
   type Draft,
   fromCode,
   paletteToml,
@@ -14,6 +15,7 @@ import {
   recolor,
   resign,
   shareCode,
+  shareLink,
   warning,
   withPictures,
 } from './own.ts'
@@ -58,6 +60,20 @@ test('a share code carries the whole palette, its waiver and its pictures', () =
   const code = shareCode(draft)
   assert.match(code, /^tt2:[A-Za-z0-9_-]+$/)
   assert.deepEqual(fromCode(code), draft)
+})
+
+test('a share link reads as the code it carries, however it was pasted', () => {
+  const code = shareCode(draft)
+  const link = shareLink(code)
+  assert.equal(link, `https://ttheme.vercel.app/p/${code}`)
+  assert.equal(codeOf(link), code)
+  assert.equal(codeOf(`  ${link}/\n`), code)
+  assert.equal(codeOf(`${link}?utm_source=chat`), code)
+  assert.equal(codeOf(link.replace('tt2:', 'tt2%3A')), code)
+  assert.equal(codeOf(code), code)
+  assert.equal(codeOf('https://ttheme.vercel.app/market'), undefined)
+  assert.equal(codeOf('https://ttheme.vercel.app/p/miku'), undefined)
+  assert.equal(codeOf('kecan0406@dust/rei'), undefined)
 })
 
 const signed = (bytes: Buffer): string =>
