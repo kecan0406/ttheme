@@ -57,15 +57,15 @@ __tt_bg_load kagami
   $bgurl[kagami] == "https://safebooru.org/index.php?page=post&s=view&id=416805" ]] ||
   { print -u2 "__tt_bg_load misread the confs: $bgsrc[kagami] $bgfill[kagami]@$bgfocus[kagami] $bgsize[kagami] $bgpos[kagami] $bgop[kagami] $bgshot[kagami] ($bgdef[kagami]) off=$bgoff[kagami] from=$bgfrom[kagami] by=$bgby[kagami] url=$bgurl[kagami]"; exit 1 }
 tpick=kagami color=0
-TTHEME_ADAPTER=ghostty __tt_pv_bg_title 80
-[[ $REPLY == "Background · akoiro, potate · ⧉ "$'\e]8;;'"$bgurl[kagami]"$'\e\\'"safebooru 416805"$'\e]8;;\e\\' ]] ||
-  { print -u2 "the tuning title did not link its post: ${(q+)REPLY}"; exit 1 }
-TTHEME_ADAPTER=terminal-app __tt_pv_bg_title 80
-[[ $REPLY == "Background · akoiro, potate · safebooru 416805" ]] ||
-  { print -u2 "the tuning title linked its post where the terminal cannot open it: ${(q+)REPLY}"; exit 1 }
-TTHEME_ADAPTER=ghostty __tt_pv_bg_title 30
-[[ $REPLY == "Background · akoiro, potate" ]] ||
-  { print -u2 "a narrow tuning title did not keep the artist over the post: ${(q+)REPLY}"; exit 1 }
+TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 80
+[[ $REPLY == "by akoiro, potate · ⧉ "$'\e]8;;'"$bgurl[kagami]"$'\e\\'"safebooru 416805"$'\e]8;;\e\\' ]] ||
+  { print -u2 "the picture's credit did not link its post: ${(q+)REPLY}"; exit 1 }
+TTHEME_ADAPTER=terminal-app __tt_pv_bg_credit 80
+[[ $REPLY == "by akoiro, potate · safebooru 416805" ]] ||
+  { print -u2 "the picture's credit linked its post where the terminal cannot open it: ${(q+)REPLY}"; exit 1 }
+TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 30
+[[ $REPLY == "by akoiro, potate" ]] ||
+  { print -u2 "a narrow credit did not keep the artist over the post: ${(q+)REPLY}"; exit 1 }
 tpick=""
 bgsize[kagami]=100 bgoff[kagami]=1
 __tt_bg_write kagami || { print -u2 "__tt_bg_write failed"; exit 1 }

@@ -1,4 +1,3 @@
-import { spread } from './ansi.ts'
 import type { Hex } from './color.ts'
 import { oklch } from './color.ts'
 import { check } from './contrast.ts'
@@ -20,7 +19,20 @@ function colorsOfEntry(entry: PaletteEntry): Colors {
   }
 }
 
-export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean): string[] {
+function headOf(width: number, title: string, notes: string[]): [number, string][] {
+  for (const note of notes) {
+    const at = width - 4 - note.length
+    if (at > title.length + 2) {
+      return [
+        [2, title],
+        [at, ` ${note} `],
+      ]
+    }
+  }
+  return [[2, title]]
+}
+
+export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean, width = WIDTH): string[] {
   const p = painter(color)
   const list = listOf(colorsOfEntry(worn))
   const given = slotColors(base).map((hex) => hex.toLowerCase())
@@ -36,16 +48,14 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean)
     return ` ${swatch} ${lchTight(oklch(hex))}${mark}`
   }
   const gate = failing === 0 ? 'passes the gate' : `${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
-  const rows = [
-    `  ${spread(`${p.dim('Palette')}${tuned > 0 ? p.dim(`  ${tuned} tuned`) : ''}`, p.dim(gate), WIDTH - 2)}`,
-  ]
-  rows.push(p.dim(boxEdge(WIDTH, 'top', [[2, ' Base ']])))
+  const notes = tuned > 0 ? [`${tuned} tuned · ${gate}`, gate] : [gate]
+  const rows = [p.dim(boxEdge(width, 'top', headOf(width, ' Palette ', notes)))]
   for (let row = 0; row < BASE.length; row++) {
-    rows.push(boxed(p, ` ${(BASE[row] as string).padEnd(10)}${cell(row)}`, WIDTH))
+    rows.push(boxed(p, ` ${(BASE[row] as string).padEnd(10)}${cell(row)}`, width))
   }
   rows.push(
     p.dim(
-      boxEdge(WIDTH, 'mid', [
+      boxEdge(width, 'mid', [
         [2, ' ANSI '],
         [12, ' Normal 0–7 '],
         [29, ' Bright 8–15 '],
@@ -53,8 +63,8 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean)
     ),
   )
   PAIRS.forEach((name, k) => {
-    rows.push(boxed(p, ` ${name.padEnd(10)}${cell(BASE.length + k)}${cell(BASE.length + 8 + k)}`, WIDTH))
+    rows.push(boxed(p, ` ${name.padEnd(10)}${cell(BASE.length + k)}${cell(BASE.length + 8 + k)}`, width))
   })
-  rows.push(p.dim(boxEdge(WIDTH, 'bottom')))
+  rows.push(p.dim(boxEdge(width, 'bottom')))
   return rows
 }

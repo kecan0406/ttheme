@@ -1,9 +1,9 @@
  ◆ konata · Lucky☆Star
 
-
-            ╭─ Help ───────────────────────────────────────────────────────────────────╮
-   Palette  │                                                                          │
- ╭─ Base ───│  Move      ↑↓ j k  the image, the palette, then Apply  ·  home  end      │
+ ╭─ Image ───────────────────────────────────────────────────────╮
+ │ This term╭─ Help ───────────────────────────────────────────────────────────────────╮
+ ╰──────────│                                                                          │
+ ╭─ Palette │  Move      ↑↓ j k  the image, the palette, then Apply  ·  home  end      │
  │ Backgroun│  Image     Images  ←→  , .  pick one  ·  D removes it  ·  f  finds one   │
  │ Foregroun│            enter on the empty frame  ·  finds the first one              │
  │ Cursor   │            ←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all          │
@@ -16,9 +16,9 @@
  │ Blue     │  Close     ?  esc                                                        │
  │ Magenta  │                                                                          │
  │ Cyan     ╰──────────────────────────────────────────────────────────────────────────╯
- │ White        .83 .012 260°    .95 .020 257°    │
- ╰────────────────────────────────────────────────╯
-
- ▶ [Edit palette]  tunes its colors full screen
-    Apply   saves and wears it in this tab
+ │ White        .83 .012 260°    .95 .020 257°                   │
+ ├───────────────────────────────────────────────────────────────┤
+ │ ▶ [Edit palette]  tunes its colors full screen                │
+ ╰───────────────────────────────────────────────────────────────╯
+      Apply   saves and wears it in this tab
 [HELP]                                                                                   ? esc close

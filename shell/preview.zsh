@@ -203,6 +203,7 @@ __tt_pv_lw() {
     (( l < 30 )) && l=30
   fi
   (( sw > pw - l - 6 )) && sw=$(( pw - l - 6 ))
+  (( te && sw < 50 )) && sw=0
   if (( color && sw >= 32 )); then
     lw=$l
   else
@@ -305,13 +306,13 @@ __tt_pv_row() {
   fi
 }
 
-__tt_pv_bg_title() {
+__tt_pv_bg_credit() {
   local by=${bgby[$tpick]} ref=${bgfrom[$tpick]} url=${bgurl[$tpick]} mark="" sgr=""
   local -i room=$1
   [[ -n $ref && $url == http(s|)://* ]] && __tt_links && mark="⧉ "
-  REPLY=Background${by:+ · $by}${ref:+ · $mark$ref}$2
-  (( ${#REPLY} > room )) && REPLY=Background${by:+ · $by}
-  (( ${#REPLY} > room )) && REPLY=Background
+  REPLY=${by:+by $by}${by:+${ref:+ · }}${ref:+$mark$ref}
+  (( ${#REPLY} > room )) && REPLY=${by:+by $by}
+  (( ${#REPLY} > room )) && REPLY=""
   [[ -n $mark && $REPLY == *"$mark$ref"* ]] || return 0
   (( color )) && [[ -n ${TTHEME_SITE_ANSI[${ref%% *}]} ]] && sgr=$'\e[3'${TTHEME_SITE_ANSI[${ref%% *}]}m
   REPLY=${REPLY/"$mark$ref"/$sgr⧉${sgr:+$'\e[39m'} $'\e]8;;'$url$'\e\\'$ref$'\e]8;;\e\\'}
@@ -1543,20 +1544,26 @@ __tt_te_save_image() {
 
 __tt_te_read() {
   local rows
-  rows=$(__tt_cli tone $tename show 2>/dev/null) || return 1
+  local -i wide=${1:-0}
+  if (( ! wide )); then
+    __tt_pv_lw
+    wide=${reply[2]}
+    (( wide )) || wide=$(( pw - 2 < 66 ? pw - 3 : 65 ))
+  fi
+  tewide=$wide
+  rows=$(__tt_cli tone $tename show $wide 2>/dev/null) || return 1
   teframe=("${(@f)rows}")
   return 0
 }
 
 __tt_te_open() {
   local name=$1
-  tename=$name tfocus=0 teframe=() tetop=0 msgt=0
+  tename=$name tfocus=0 teframe=() tetop=0 msgt=0 te=1
   if ! __tt_te_read; then
     msg="Could not read the colors of $name" msgt=300
-    tename=""
+    tename="" te=0
     return 0
   fi
-  te=1
   (( bgcw )) && __tt_pv_bg_state $name && __tt_pv_tune_open $name
   __tt_te_image && __tt_te_to_image 1
   resized=1
@@ -1811,79 +1818,137 @@ __tt_pv_te_ghost() {
   return 0
 }
 
-__tt_pv_te_panel() {
-  local z=$'\e[0m' d=$'\e[2m' b=$'\e[1m' tt st note REPLY
+__tt_pv_te_edge() {
+  local left=$4 right=$5 sty=$6 hs=$7 head=$8 tail=$9 z=$'\e[0m' line
+  local -i y=$1 col=$2 w=$3 n
+  (( color )) || z=
+  n=$(( w - 3 - (${#head} ? ${#head} + 2 : 0) - (${#tail} ? ${#tail} + 3 : 0) ))
+  (( n < 0 )) && n=0
+  line=$sty$left"─"$z
+  [[ -n $head ]] && line+=$hs" $head "$z
+  line+=$sty${(l:n::─:)}
+  [[ -n $tail ]] && line+=" $tail ─"
+  out+=$'\e['$y';'$col'H'$line$right$z
+}
+
+__tt_pv_te_sides() {
+  local sty=$5 z=$'\e[0m'
+  local -i y r1=$2 col=$3 w=$4
+  (( color )) || z=
+  for (( y = $1; y <= r1; y++ )); do
+    out+=$'\e['$y';'$col'H'$sty"│"$z$'\e['$y';'$(( col + w - 1 ))'H'$sty"│"$z
+  done
+}
+
+__tt_pv_te_images() {
+  local z=$'\e[0m' d=$'\e[2m' b=$'\e[1m' st="  " tt note="0/0"
   local -a held
-  local -i col=$1 end=$2 r0=$3 r1=$4 R W T=${#teframe} I=3 V i n y tfs=$tf
+  local -i y=$1 col=$2 end=$3 n
+  (( color )) || z= d= b=
+  tt=$d
+  if [[ -n $tune ]]; then
+    held=(${=bgpics[$tune]})
+    n=${held[(Ie)${${tpick#$tune}#:}]}
+    (( n )) || n=${held[(Ie)${bgact[$tune]}]}
+    (( n )) || n=1
+    note="$n/$(( ${#held} ? ${#held} : 1 ))"
+  fi
+  (( tfocus == 1 && tf == 5 )) && st=$ac"▶"$z" " tt=$b
+  out+=$'\e['$y';'$col'H'$st$tt"Images"$z$'\e['$y';'$(( end - ${#note} + 1 ))'H'$d$note$z
+  pvz+=("$y $col $end teimg")
+}
+
+__tt_pv_te_editrow() {
+  local z=$'\e[0m' d=$'\e[2m' b=$'\e[1m' note="tunes its colors full screen"
+  local -i y=$1 col=$2 end=$3
+  (( color )) || z= d= b=
+  pvz+=("$y $col $end teedit")
+  out+=$'\e['$y';'$(( col + 2 ))'H'
+  if (( tfocus == 0 )); then
+    (( color )) && out+=$ac"▶"$z" "$'\e[7;1m'$ac" Edit palette "$z || out+="▶ [Edit palette]"
+  else
+    (( color )) && out+="  "$b" Edit palette "$z || out+="   Edit palette "
+  fi
+  (( ${#note} > end - col - 21 )) && note=${note[1,end-col-21]}
+  out+="  "$d$note$z
+}
+
+__tt_pv_te_panel() {
+  local z=$'\e[0m' d=$'\e[2m' b=$'\e[1m' fs hs st note row REPLY
+  local -i col=$1 end=$2 r0=$3 r1=$4 ix=$(( $1 + 2 )) ie=$(( $2 - 2 )) R W T P I=3 V i y pics=0 tfs=$tf
   (( color )) || z= d= b=
   R=$(( r1 - r0 + 1 )) W=$(( end - col + 1 ))
-  [[ -n $tune ]] || __tt_pv_bg_findable $tename && I=17
-  V=$(( I + T + 4 ))
+  (( tewide == W )) || __tt_te_read $W
+  T=${#teframe} P=$(( ${#teframe} + 2 ))
+  __tt_te_image && pics=1
+  (( pics && 18 <= R && (tfocus == 1 || 18 + P + 1 <= R) )) && I=18
+  V=$(( I + P + 1 ))
   if (( V <= R || tfocus == 1 )); then
     tetop=0
   else
     tetop=$(( V - R ))
   fi
+  fs=$d hs=$d
+  (( tfocus == 1 )) && fs=$ac hs=$b$ac
   if (( tetop == 0 && I <= R )); then
     y=$r0
-    tt=$d
-    (( tfocus == 1 )) && tt=$b$ac
-    out+=$'\e['$y';'$(( col + 2 ))'H'$tt"Image"$z
-    pvz+=("$y $col $end teimg")
-    if [[ -n $tune ]]; then
-      (( bgoff[$tpick] )) && st=off || st=on
-      __tt_pv_bg_title $(( W - 12 - ${#st} ))
-      out+="  "$d$REPLY$z$'\e['$y';'$(( end - ${#st} + 1 ))'H'$d$st$z
+    st=""
+    [[ -n $tune ]] && { (( bgoff[$tpick] )) && st=off || st=on }
+    __tt_pv_te_edge $y $col $W ╭ ╮ "$fs" "$hs" Image "$st"
+    __tt_pv_te_sides $(( y + 1 )) $(( y + I - 2 )) $col $W "$fs"
+    __tt_pv_te_edge $(( y + I - 1 )) $col $W ╰ ╯ "$fs"
+    if (( pics )); then
+      for (( i = 0; i < I; i++ )); do
+        pvz+=("$(( y + i )) $col $end teimg")
+      done
     fi
-    if (( I == 17 )); then
-      held=() n=0 note="0/0"
+    if (( I == 18 )); then
       if [[ -n $tune ]]; then
-        held=(${=bgpics[$tune]})
-        n=${held[(Ie)${${tpick#$tune}#:}]}
-        (( n )) || n=${held[(Ie)${bgact[$tune]}]}
-        (( n )) || n=1
-        note="$n/$(( ${#held} ? ${#held} : 1 ))"
+        __tt_pv_bg_credit $(( ie - ix + 1 ))
+        [[ -n $REPLY ]] && out+=$'\e['$(( y + 1 ))';'$ix'H'$d$REPLY$z
       fi
-      st="  " tt=$d
-      (( tfocus == 1 && tf == 5 )) && st=$ac"▶"$z" " tt=$b
-      out+=$'\e['$(( y + 2 ))';'$col'H'$st$tt"Images"$z$'\e['$(( y + 2 ))';'$(( end - ${#note} + 1 ))'H'$d$note$z
-      pvz+=("$(( y + 2 )) $col $end teimg")
+      __tt_pv_te_images $(( y + 2 )) $ix $ie
       if [[ -n $tune ]]; then
-        bgstrip="$(( y + 2 )) $col $end"
+        bgstrip="$(( y + 2 )) $ix $ie"
         (( tfocus == 1 )) || tf=0
-        __tt_pv_bg_panel $tpick $(( y + 9 )) $col $end
+        __tt_pv_bg_panel $tpick $(( y + 9 )) $ix $ie
         tf=$tfs
       else
-        __tt_pv_te_tile $(( y + 3 )) $col
+        __tt_pv_te_tile $(( y + 3 )) $ix
         for (( i = 3; i <= 7; i++ )); do
-          pvz+=("$(( y + i )) $col $(( col + 30 )) tefind")
+          pvz+=("$(( y + i )) $ix $(( ix + 30 )) tefind")
         done
-        __tt_pv_te_ghost $(( y + 9 )) $col $end
+        __tt_pv_te_ghost $(( y + 9 )) $ix $ie
       fi
+    elif (( pics )); then
+      __tt_pv_te_images $(( y + 1 )) $ix $ie
     elif (( bgcw )); then
-      out+=$'\e['$(( y + 2 ))';'$(( col + 2 ))'H'$d"No picture yet"$z
+      out+=$'\e['$(( y + 1 ))';'$ix'H'$d"No picture yet"$z
     else
-      out+=$'\e['$(( y + 2 ))';'$(( col + 2 ))'H'$d"This terminal shows no pictures"$z
+      out+=$'\e['$(( y + 1 ))';'$ix'H'$d"This terminal shows no pictures"$z
     fi
   fi
-  for (( i = 1; i <= T; i++ )); do
-    y=$(( r0 + I + i - tetop ))
+  fs=$d
+  (( tfocus == 0 )) && fs=$ac
+  for (( i = 1; i <= P; i++ )); do
+    y=$(( r0 + I + i - 1 - tetop ))
     (( y >= r0 && y <= r1 )) || continue
-    out+=$'\e['$y';'$col'H'${teframe[i]}$z
-    pvz+=("$y $col $end tepal")
-  done
-  y=$(( r0 + V - 2 - tetop ))
-  if (( y >= r0 && y <= r1 )); then
-    pvz+=("$y $col $end teedit")
-    out+=$'\e['$y';'$col'H'
-    if (( tfocus == 0 )); then
-      (( color )) && out+=$ac"▶"$z" "$'\e[7;1m'$ac" Edit palette "$z || out+="▶ [Edit palette]"
+    if (( i == T )); then
+      __tt_pv_te_edge $y $col $W ├ ┤ "$fs"
+    elif (( i == T + 1 )); then
+      __tt_pv_te_sides $y $y $col $W "$fs"
+      __tt_pv_te_editrow $y $col $end
     else
-      (( color )) && out+="  "$b" Edit palette "$z || out+="   Edit palette "
+      row=${teframe[i == P ? T : i]}
+      if (( tfocus == 0 && color )); then
+        row=${${row//$'\e[2m'/$ac}//$'\e[22m'/$'\e[22;39m'}
+        (( i == 1 )) && row=${row/ Palette /$'\e[1m Palette \e[22m'}
+      fi
+      out+=$'\e['$y';'$col'H'$row$z
+      pvz+=("$y $col $end tepal")
     fi
-    out+="  "$d"tunes its colors full screen"$z
-  fi
-  y=$(( r0 + V - 1 - tetop ))
+  done
+  y=$(( r0 + I + P - tetop ))
   (( y >= r0 && y <= r1 )) || return 0
   pvz+=("$y $col $end teapply")
   if [[ $mode == pin ]]; then
@@ -1893,7 +1958,7 @@ __tt_pv_te_panel() {
   else
     note="saves and wears it in this tab"
   fi
-  out+=$'\e['$y';'$col'H'
+  out+=$'\e['$y';'$ix'H'
   if (( tfocus == 2 )); then
     (( color )) && out+=$ac"▶"$z" "$'\e[7;1m'$ac" Apply "$z || out+="▶ [Apply]"
   else
@@ -2092,7 +2157,7 @@ __tt_preview() {
   local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgprep=() TTHEME_ALIASES=()
   local conf=0 cf=1
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
-  local te=0 tfocus=0 tetop=0 tename=""
+  local te=0 tfocus=0 tetop=0 tewide=0 tename=""
   local -i pvgone=0 bgprepid=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
   local -F mlast=0
   local mact="" mzone="" pvmouse=""

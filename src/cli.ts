@@ -60,7 +60,7 @@ const RUNS: Record<string, Verb['run']> = {
   redraw: () => runRedraw(),
   names: () => updateNames(),
   latest: () => checkLatest(),
-  tone: ([name, action]) => runTone(name as string, action as string),
+  tone: ([name, action, width]) => runTone(name as string, action as string, width),
   flatten: ([source, out, background, opacity, canvas, place, into]) =>
     runFlatten(source as string, out as string, background as string, opacity as string, canvas, place, into),
   bake: ([source, out, canvas, place]) => runBake(source as string, out as string, canvas as string, place as string),

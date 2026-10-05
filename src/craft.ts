@@ -312,12 +312,12 @@ export async function runEdit(name: string): Promise<void> {
 
 const UNCHANGED = 2
 
-export async function runTone(name: string, action: string): Promise<number> {
+export async function runTone(name: string, action: string, width?: string): Promise<number> {
   const home = configHome()
   const base = find(untuned(home, readCatalog(home), false).palettes, name)
   const worn = tonedEntry(base, readTone(home)[name])
   if (action === 'show') {
-    console.log(toneRows(base, worn, !colorless()).join('\n'))
+    console.log(toneRows(base, worn, !colorless(), width === undefined ? undefined : Number(width)).join('\n'))
     return 0
   }
   if (action !== 'edit') {

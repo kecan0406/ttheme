@@ -141,22 +141,26 @@ sample's place while open, once the sample is 48 columns wide.
 ## Palette edit
 
 `tab`, `→` or `ctrl+e` on a palette in `preview` moves into a panel (**EDIT**)
-that takes the sample's place beside the list: the palette's background
-picture on top, its colors under it, an **Edit palette** button and an
-**Apply** button at the bottom. It is one list, starting on the picture: `↓`
+that takes the sample's place beside the list: an **Image** box with the
+palette's background picture on top, a **Palette** box with its colors and the
+**Edit palette** button under it, and an **Apply** button below both. The box
+the cursor is in has its frame in the palette's cursor color. It is one list,
+starting on the picture: `↓`
 past the picture's last field goes on to Edit palette and then to Apply, both
 ends wrap around, and `home`/`end` jump to the top and to Apply; `j`/`k` work
 as `↓`/`↑` throughout. The picture half starts with **Images**, the
 palette's pictures as thumbnails, where `←`/`→` pick one; a palette with none
 shows an empty frame there, and `enter` on it opens
 [find](backgrounds.md#finding-one), with the fields under it dimmed until a
-picture arrives. A window too short for it all scrolls with the cursor, and a
-window too narrow for the sample gives the panel the whole screen.
+picture arrives. In a window too short for it all, the Image box folds to its
+Images line while the cursor is below it and opens again when the cursor comes
+back, and a window with less than 50 columns for the sample gives the panel the
+whole screen.
 
 The palette half only tells. Every slot is listed in OKLCH — lightness,
 chroma, hue — with `◆` on a signature color, `✗` on a slot whose own checks
-miss and a yellow `●` on one that differs from the color its market gives; above
-it stand how many slots you tuned and what the gate says. The picture half is the one
+miss and a yellow `●` on one that differs from the color its market gives; the
+box's top edge says how many slots you tuned and what the gate says. The picture half is the one
 [Tuning](backgrounds.md#tuning) describes — the pictures, then colors, size,
 position and opacity — with `f` to find one, and it is tuned in place.
 
