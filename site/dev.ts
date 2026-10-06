@@ -1,7 +1,7 @@
 import { watch } from 'node:fs'
 import { join, normalize, sep } from 'node:path'
 import { Elysia, NotFound } from 'elysia'
-import { buildAssets, PUBLIC, SITE } from './build'
+import { ASSETS, buildAssets, SITE } from './build'
 
 await buildAssets(false)
 const { site } = await import('./app/site')
@@ -28,10 +28,10 @@ setInterval(() => {
   for (const listener of listeners) listener.enqueue(': ping\n\n')
 }, 5000)
 
-async function shipped(path: string): Promise<Response> {
-  const local = normalize(join(PUBLIC, path))
+async function shipped(name: string): Promise<Response> {
+  const local = normalize(join(ASSETS, name))
   const file = Bun.file(local)
-  if (!local.startsWith(PUBLIC + sep) || !(await file.exists())) throw new NotFound()
+  if (!local.startsWith(ASSETS + sep) || !(await file.exists())) throw new NotFound()
   return new Response(file, { headers: { 'content-type': file.type, 'cache-control': 'no-store' } })
 }
 
@@ -50,7 +50,6 @@ new Elysia()
     })
     return new Response(stream, { headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-store' } })
   })
-  .get('/assets/*', ({ params }) => shipped(join('assets', params['*'])))
-  .get('/fonts/*', ({ params }) => shipped(join('fonts', params['*'])))
+  .get('/assets/*', ({ params }) => shipped(params['*']))
   .use(site)
   .listen(Number(process.env.PORT ?? 3000), ({ url }) => console.log(`site on ${url}`))

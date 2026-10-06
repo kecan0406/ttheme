@@ -43,6 +43,7 @@ function Document({
           <link rel="preload" href={font} as="font" type="font/woff2" crossorigin="" />
         ))}
         <link rel="stylesheet" href={assets.css} />
+        <link rel="stylesheet" href={assets.cjk} media="print" onload="this.media='all'" />
         <script>{THEME_SCRIPT}</script>
         <script type="module" src={assets.js} />
         {assets.reload ? <script type="module">{RELOAD}</script> : null}
