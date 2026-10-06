@@ -18,19 +18,18 @@ const MONO = [
 
 const BLOCKS = [
   [
-    'latin',
-    'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD',
+    'core',
+    'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+2600-27BF,U+FEFF,U+FFFD',
   ],
   ['arrows', 'U+2190-21FF'],
   ['math', 'U+2200-22FF'],
   ['technical', 'U+2300-23FF'],
   ['shapes', 'U+2500-25FF'],
-  ['symbols', 'U+2600-27BF'],
 ] as const
 
 const MONO_SUBSETS = [...BLOCKS, ['rest', outside(BLOCKS.map(([, ranges]) => ranges).join(','))]] as const
 
-const PRELOAD = ['inter-latin-wght-normal', 'nunito-latin-900-normal', 'JetBrainsMono-Regular-latin']
+const PRELOAD = ['inter-latin-wght-normal', 'nunito-latin-900-normal', 'JetBrainsMono-Regular-core']
 
 const subsets = new Map<string, Promise<Uint8Array>>()
 
@@ -121,11 +120,12 @@ function fontsource(shelf: Shelf, specs: string[]): string {
     .join('\n')
 }
 
-async function styles(production: boolean): Promise<string> {
+async function styles(production: boolean, faces: string): Promise<string> {
   const from = join(SITE, 'app', 'globals.css')
-  const result = await postcss([tailwind({ base: SITE, optimize: production })]).process(readFileSync(from, 'utf8'), {
-    from,
-  })
+  const result = await postcss([tailwind({ base: SITE, optimize: production })]).process(
+    `${readFileSync(from, 'utf8')}\n${faces}`,
+    { from },
+  )
   return result.css
 }
 
@@ -147,7 +147,7 @@ export async function buildAssets(production: boolean): Promise<void> {
   rmSync(ASSETS, { recursive: true, force: true })
   mkdirSync(ASSETS, { recursive: true })
   const shelf = new Shelf(production)
-  shelf.put('site.css', `${await mono(shelf)}\n${fontsource(shelf, FACES)}\n${await styles(production)}`)
+  shelf.put('site.css', await styles(production, `${await mono(shelf)}\n${fontsource(shelf, FACES)}`))
   shelf.put('cjk.css', fontsource(shelf, CJK))
   const manifest = {
     css: shelf.url('site'),
