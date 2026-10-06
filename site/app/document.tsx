@@ -55,12 +55,17 @@ function Document({
 }
 
 export function page({ title, description, image, status = 200, cache }: Page, body: JSX.Element): Response {
-  return new Response(
-    `<!doctype html>${html(
-      <Document title={title} description={description} image={image}>
-        {body}
-      </Document>,
-    )}`,
-    { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': cache } },
-  )
+  const text = `<!doctype html>${html(
+    <Document title={title} description={description} image={image}>
+      {body}
+    </Document>,
+  )}`
+  return new Response(text, {
+    status,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': cache,
+      etag: `"${Bun.hash(text).toString(36)}"`,
+    },
+  })
 }
