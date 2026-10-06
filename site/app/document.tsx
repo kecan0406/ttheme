@@ -27,6 +27,7 @@ function Document({
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="data:," />
         <title safe>{title}</title>
         <meta name="description" content={description} />
         <meta property="og:title" content={title} />
