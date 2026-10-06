@@ -34,6 +34,7 @@ import {
   CHANNELS,
   CONTRAST,
   colorsOf,
+  colorText,
   type Format,
   PAIRS,
   type PaletteEditor,
@@ -290,17 +291,6 @@ function planeLines(
   })
 }
 
-function formatText(e: PaletteEditor, hex: Hex, at: { l: number; c: number; h: number }): string {
-  if (e.format === 'rgb') {
-    const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16))
-    return `rgb(${r} ${g} ${b})`
-  }
-  if (e.format === 'oklch') {
-    return `oklch(${at.l.toFixed(3)} ${at.c.toFixed(3)} ${at.h.toFixed(0)})`
-  }
-  return hex
-}
-
 function notes(e: PaletteEditor, p: Paint, width: number): string[] {
   const slot = e.slot()
   const at = e.lch[slot] as { l: number; c: number; h: number }
@@ -338,7 +328,7 @@ function valueLine(e: PaletteEditor, p: Paint, width: number): string {
   const slot = e.slot()
   const hex = e.list[slot] as Hex
   const at = e.lch[slot] as { l: number; c: number; h: number }
-  const typed = e.typing !== undefined ? p.bold(`${e.typing}▏`) : keyZone('#', p.bold(formatText(e, hex, at)))
+  const typed = e.typing !== undefined ? p.bold(`${e.typing}▏`) : keyZone('#', p.bold(colorText(e.format, hex, at)))
   const was = e.start[slot] as Hex
   const swatch = p.color ? `${p.fg(was)}${MARKS.swatch}${FG_RESET} ` : ''
   return spread(typed, was !== hex ? p.dim(`was ${swatch}${was}`) : '', width)

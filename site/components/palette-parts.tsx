@@ -62,9 +62,10 @@ export function PropertyList({ rows }: { rows: [string, string][] }) {
   )
 }
 
-function reading(value: number, unit: string): string {
+export function reading(value: number, unit: string): string {
   if (unit === 'ratio') return `${value.toFixed(2)}:1`
   if (unit === 'luminance') return `L ${value.toFixed(3)}`
+  if (unit === 'pairs') return `${Math.round(value)} ${Math.round(value) === 1 ? 'pair' : 'pairs'}`
   return `${Math.round(value)}°`
 }
 

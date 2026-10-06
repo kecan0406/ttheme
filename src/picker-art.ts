@@ -7,8 +7,8 @@ import { layersUnderCells, showsPictures } from './terminal.ts'
 export const PLANE_TOP = 0.98
 export const PLANE_BOTTOM = 0.12
 const PLANE_CHROMA = 0.37
-const RAINBOW_L = 0.74
-const RAINBOW_C = 0.15
+export const RAINBOW_L = 0.74
+export const RAINBOW_C = 0.15
 
 const PANEL_Z = -1073741828
 const ART_Z = -1073741827

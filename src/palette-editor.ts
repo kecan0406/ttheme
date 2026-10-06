@@ -430,6 +430,26 @@ function grey(hex: Hex): boolean {
   return r === g && g === b
 }
 
+export function lchIn(list: Hex[], hex: Hex): Oklch {
+  const found = oklch(hex)
+  if (!grey(hex)) {
+    return found
+  }
+  const tinted = [0, 1, 3, 2].map((slot) => list[slot] as Hex).find((color) => !grey(color))
+  return { ...found, h: tinted ? oklch(tinted).h : SEEDS.hue }
+}
+
+export function colorText(format: Format, hex: Hex, at: Oklch): string {
+  if (format === 'rgb') {
+    const [r, g, b] = rgb(hex)
+    return `rgb(${r} ${g} ${b})`
+  }
+  if (format === 'oklch') {
+    return `oklch(${at.l.toFixed(3)} ${at.c.toFixed(3)} ${at.h.toFixed(0)})`
+  }
+  return hex
+}
+
 function edge(l: number, h: number): number {
   return Math.floor(edgeChroma(l, h, C_MAX) * 10_000) / 10_000
 }
@@ -801,17 +821,11 @@ export class PaletteEditor {
   }
 
   lchOf(hex: Hex): Oklch {
-    const found = oklch(hex)
-    return grey(hex) ? { ...found, h: this.neutralHue() } : found
+    return lchIn(this.list, hex)
   }
 
   private lchs(): Oklch[] {
     return this.list.map((hex) => this.lchOf(hex))
-  }
-
-  private neutralHue(): number {
-    const tinted = [0, 1, 3, 2].map((slot) => this.list[slot] as Hex).find((hex) => !grey(hex))
-    return tinted ? oklch(tinted).h : SEEDS.hue
   }
 
   private seedKey(key: string): void {

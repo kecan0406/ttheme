@@ -8,7 +8,7 @@ import { Sheets } from '@/components/sheets'
 import { cardPng } from '@/lib/card'
 import { gate, themes } from '@/lib/catalog'
 import { loadMarkets } from '@/lib/markets'
-import { readShared, type Shared } from '@/lib/share'
+import { builderOf, readShared, type Shared } from '@/lib/share'
 import { seriesOf } from '@/lib/sheet'
 import { page } from './document'
 
@@ -91,7 +91,7 @@ export const site = new Elysia({ name: 'site' })
         image: new URL(`${new URL(request.url).pathname}/card.png`, request.url).href,
         cache: CATALOG,
       },
-      <SharePage shared={found} gate={gate} />,
+      <SharePage shared={found} builder={builderOf(found, gate)} />,
     )
   })
   .get('/p/:code/card.png', ({ params }) => {

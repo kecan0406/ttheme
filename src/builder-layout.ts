@@ -344,6 +344,15 @@ export function paneLines(tile: Tile): Part[][] {
   return pane ? fitted(pane, tile.width, tile.rows) : []
 }
 
+export function paneTiles(width: number, rows: number): Tile[] {
+  return PANES.map((pane) => ({ id: pane.id, name: pane.name, col: 0, row: 0, width, rows }))
+}
+
+export function footerRows(tile: Tile): number {
+  const pane = PANES.find((p) => p.id === tile.id)
+  return pane ? footerOf(pane, tile.width).length : 0
+}
+
 export function lights(role: string, slot: number): boolean {
   const { text, ground } = slotsOfRole(role)
   return text === slot || ground === slot
