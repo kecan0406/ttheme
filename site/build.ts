@@ -1,11 +1,15 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, parse } from 'node:path'
 import tailwind from '@tailwindcss/postcss'
 import postcss from 'postcss'
 import subsetFont from 'subset-font'
-import { ASSETS } from './app/shipped'
 
 export const SITE = import.meta.dirname
+export const ASSETS = join(SITE, 'public', 'assets')
+
+const OUTPUT = join(SITE, '.vercel', 'output')
+
+const IMMUTABLE = 'public, max-age=31536000, s-maxage=31536000, immutable'
 
 const FACES = ['@fontsource-variable/inter/index.css', '@fontsource/nunito/800.css', '@fontsource/nunito/900.css']
 
@@ -161,18 +165,38 @@ export async function buildAssets(production: boolean): Promise<void> {
   if (!existsSync(path) || readFileSync(path, 'utf8') !== text) writeFileSync(path, text)
 }
 
-async function server(): Promise<void> {
-  rmSync(join(SITE, 'dist'), { recursive: true, force: true })
-  const result = await Bun.build({
-    entrypoints: [join(SITE, 'server.ts')],
-    outdir: join(SITE, 'dist'),
-    target: 'bun',
-    external: ['elysia'],
-  })
+async function output(): Promise<void> {
+  rmSync(OUTPUT, { recursive: true, force: true })
+  cpSync(ASSETS, join(OUTPUT, 'static', 'assets'), { recursive: true })
+  const lambda = join(OUTPUT, 'functions', 'index.func')
+  const result = await Bun.build({ entrypoints: [join(SITE, 'server.ts')], outdir: lambda, target: 'bun' })
   if (!result.success) throw new AggregateError(result.logs, 'the server bundle did not build')
+  const { version } = JSON.parse(readFileSync(Bun.resolveSync('elysia/package.json', SITE), 'utf8'))
+  writeFileSync(join(lambda, 'package.json'), '{"type":"module"}\n')
+  writeFileSync(
+    join(lambda, '.vc-config.json'),
+    JSON.stringify({
+      runtime: 'bun1.x',
+      handler: 'server.js',
+      launcherType: 'Nodejs',
+      shouldAddHelpers: true,
+      framework: { slug: 'elysia', version },
+    }),
+  )
+  writeFileSync(
+    join(OUTPUT, 'config.json'),
+    JSON.stringify({
+      version: 3,
+      routes: [
+        { src: '/assets/(.*)', headers: { 'cache-control': IMMUTABLE }, continue: true },
+        { handle: 'filesystem' },
+        { src: '/(.*)', dest: '/' },
+      ],
+    }),
+  )
 }
 
 if (import.meta.main) {
   await buildAssets(true)
-  await server()
+  await output()
 }

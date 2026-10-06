@@ -1,9 +1,8 @@
-import { watch } from 'node:fs'
+import { existsSync, watch } from 'node:fs'
 import { join } from 'node:path'
-import { Elysia } from 'elysia'
+import { Elysia, file, NotFound } from 'elysia'
 import { autoHead } from 'elysia/auto-head'
-import { shipped } from './app/shipped'
-import { buildAssets, SITE } from './build'
+import { ASSETS, buildAssets, SITE } from './build'
 
 await buildAssets(false)
 const { site } = await import('./app/site')
@@ -46,6 +45,11 @@ new Elysia()
     })
     return new Response(stream, { headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-store' } })
   })
-  .use(shipped('no-store'))
+  .get('/assets/*', ({ params, set }) => {
+    const name = params['*']
+    if (!/^\w[\w.-]*$/.test(name) || !existsSync(join(ASSETS, name))) throw new NotFound()
+    set.headers['cache-control'] = 'no-store'
+    return file(join(ASSETS, name))
+  })
   .use(site)
   .listen(Number(process.env.PORT ?? 3000), ({ url }) => console.log(`site on ${url}`))
