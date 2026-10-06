@@ -97,7 +97,10 @@ export const site = new Elysia({ name: 'site' })
   .get('/p/:code/card.png', ({ params }) => {
     const found = shared(params.code)
     if (found instanceof Error) return new Response(found.message, { status: 404, headers: { 'cache-control': RETRY } })
-    return new Response(cardPng(found.theme), { headers: { 'content-type': 'image/png', 'cache-control': CATALOG } })
+    const png = cardPng(found.theme)
+    return new Response(png, {
+      headers: { 'content-type': 'image/png', 'content-length': String(png.length), 'cache-control': CATALOG },
+    })
   })
   .error('global', NotFound, () =>
     page(
