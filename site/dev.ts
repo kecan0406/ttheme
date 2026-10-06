@@ -1,8 +1,9 @@
 import { watch } from 'node:fs'
-import { join, normalize, sep } from 'node:path'
-import { Elysia, NotFound } from 'elysia'
+import { join } from 'node:path'
+import { Elysia } from 'elysia'
 import { autoHead } from 'elysia/auto-head'
-import { ASSETS, buildAssets, SITE } from './build'
+import { shipped } from './app/shipped'
+import { buildAssets, SITE } from './build'
 
 await buildAssets(false)
 const { site } = await import('./app/site')
@@ -29,13 +30,6 @@ setInterval(() => {
   for (const listener of listeners) listener.enqueue(': ping\n\n')
 }, 5000)
 
-async function shipped(name: string): Promise<Response> {
-  const local = normalize(join(ASSETS, name))
-  const file = Bun.file(local)
-  if (!local.startsWith(ASSETS + sep) || !(await file.exists())) throw new NotFound()
-  return new Response(file, { headers: { 'content-type': file.type, 'cache-control': 'no-store' } })
-}
-
 new Elysia()
   .use(autoHead())
   .get('/__reload', () => {
@@ -52,6 +46,6 @@ new Elysia()
     })
     return new Response(stream, { headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-store' } })
   })
-  .get('/assets/*', ({ params }) => shipped(params['*']))
+  .use(shipped('no-store'))
   .use(site)
   .listen(Number(process.env.PORT ?? 3000), ({ url }) => console.log(`site on ${url}`))

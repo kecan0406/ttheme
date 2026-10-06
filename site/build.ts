@@ -3,9 +3,9 @@ import { basename, dirname, join, parse } from 'node:path'
 import tailwind from '@tailwindcss/postcss'
 import postcss from 'postcss'
 import subsetFont from 'subset-font'
+import { ASSETS } from './app/shipped'
 
 export const SITE = import.meta.dirname
-export const ASSETS = join(SITE, 'public', 'assets')
 
 const FACES = ['@fontsource-variable/inter/index.css', '@fontsource/nunito/800.css', '@fontsource/nunito/900.css']
 
@@ -162,30 +162,12 @@ export async function buildAssets(production: boolean): Promise<void> {
 }
 
 async function server(): Promise<void> {
-  const files = Object.fromEntries(
-    [...new Bun.Glob('*').scanSync({ cwd: ASSETS })].map((name) => [
-      name,
-      { type: Bun.file(join(ASSETS, name)).type, data: readFileSync(join(ASSETS, name)).toString('base64') },
-    ]),
-  )
   rmSync(join(SITE, 'dist'), { recursive: true, force: true })
   const result = await Bun.build({
     entrypoints: [join(SITE, 'server.ts')],
     outdir: join(SITE, 'dist'),
     target: 'bun',
     external: ['elysia'],
-    plugins: [
-      {
-        name: 'shipped',
-        setup(build) {
-          build.onResolve({ filter: /^virtual:shipped$/ }, () => ({ path: 'shipped', namespace: 'shipped' }))
-          build.onLoad({ filter: /.*/, namespace: 'shipped' }, () => ({
-            contents: `export default ${JSON.stringify(files)}`,
-            loader: 'js',
-          }))
-        },
-      },
-    ],
   })
   if (!result.success) throw new AggregateError(result.logs, 'the server bundle did not build')
 }
