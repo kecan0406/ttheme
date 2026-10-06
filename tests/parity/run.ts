@@ -711,7 +711,7 @@ async function main(): Promise<void> {
       }
       const one = moved.length === 1
       line.say(
-        `walked ${moved.length} ${one ? 'journey' : 'journeys'} again, one at a time, since ${one ? 'its' : 'their'} facts moved or missed the spec${values.verbose ? `: ${moved.map(({ term, journey }) => `${term} ${journey.id}`).join(', ')}` : ` (-v lists ${one ? 'it' : 'them'})`}`,
+        `walked ${moved.length} ${one ? 'journey' : 'journeys'} again, one at a time, since ${one ? 'its' : 'their'} facts moved or missed the spec: ${moved.map(({ term, journey }) => `${term} ${journey.id}`).join(', ')}`,
       )
     }
     line.done()
