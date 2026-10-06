@@ -42,7 +42,7 @@ const { values } = parseArgs({
     keep: { type: 'boolean', default: false },
     verbose: { type: 'boolean', short: 'v', default: false },
     show: { type: 'string', multiple: true },
-    slots: { type: 'string', default: String(availableParallelism() >= 8 ? 3 : 2) },
+    slots: { type: 'string', default: String(availableParallelism() >= 8 ? 3 : 1) },
   },
 })
 

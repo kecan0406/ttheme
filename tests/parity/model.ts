@@ -42,6 +42,7 @@ export const COLS = 100
 export const ROWS = 30
 export const PROMPT = 'pt> '
 const DUMP = '\x1b[5555~'
+const FOLLOW_MS = 5000
 
 export interface Place {
   root: string
@@ -158,6 +159,7 @@ interface Kind {
   changed?(app: App): void
   osc?(app: App, tab: Tab, code: number, data: string): void
   focused?(app: App, tab: Tab): void
+  owes?(app: App): boolean
   picture(app: App, tab: Tab): string
   opacity?(app: App, tab: Tab): string
   background?(app: App, tab: Tab): string | undefined
@@ -437,9 +439,12 @@ const warp = (): Kind => {
   let theme = warpLook('', '')
   let settings = ''
   let db: Database | undefined
+  let owed: { id: string; since: number } | undefined
   const paths = (app: App) => warpPaths(app.place)
+  const active = (app: App) => join(app.place.stateHome, 'ttheme', 'warp', '.active')
   const front = (app: App, tab: Tab) => {
     db?.run('update windows set active_tab_index = ? where id = 1', [app.tabs.indexOf(tab)])
+    owed = existsSync(active(app)) ? { id: tab.session.replaceAll('-', ''), since: performance.now() } : undefined
   }
   return {
     launch(app) {
@@ -476,6 +481,12 @@ const warp = (): Kind => {
       if (app.front === tab) {
         front(app, tab)
       }
+    },
+    owes(app) {
+      if (owed && (read(active(app)).trim() === owed.id || performance.now() - owed.since > FOLLOW_MS)) {
+        owed = undefined
+      }
+      return owed !== undefined
     },
     closed() {
       db?.close()
@@ -1170,6 +1181,9 @@ export class App {
       await Bun.sleep(20)
       this.poll()
       const now = performance.now()
+      if (this.kind.owes?.(this)) {
+        this.activity = now
+      }
       const idle = this.later === 0 && this.tabs.every((tab) => tab.pending === 0)
       if (idle && now - this.activity >= quiet) {
         if (!(await this.busy())) {

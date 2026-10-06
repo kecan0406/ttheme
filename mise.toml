@@ -180,6 +180,7 @@ run = "zsh tests/latency.zsh bench"
 [tasks.parity]
 description = "walk every journey in a model of each terminal, hold every terminal, Ghostty included, to the spec journeys.ts states, and the misses to tests/parity/facts.tsv and gaps.tsv — `mise run parity [--update] [--only <terminal,…>] [--journey <id,…>] [--show <journey.label>] [-v]`"
 depends = ["build", "bin:build"]
+wait_for = ["lint", "check", "test", "shell:check", "ghostty:check", "bin:check", "tui"]
 run = "bun tests/parity/run.ts"
 
 [tasks.compat]
