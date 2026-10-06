@@ -1,6 +1,7 @@
 import { watch } from 'node:fs'
 import { join, normalize, sep } from 'node:path'
 import { Elysia, NotFound } from 'elysia'
+import { autoHead } from 'elysia/auto-head'
 import { ASSETS, buildAssets, SITE } from './build'
 
 await buildAssets(false)
@@ -36,6 +37,7 @@ async function shipped(name: string): Promise<Response> {
 }
 
 new Elysia()
+  .use(autoHead())
   .get('/__reload', () => {
     let held: ReadableStreamDefaultController<string> | undefined
     const stream = new ReadableStream<string>({
