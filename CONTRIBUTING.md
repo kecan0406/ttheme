@@ -11,7 +11,7 @@ lives in a market of your own, and anyone can add it:
 ```sh
 ttheme market init dust           # <you>@dust, in ~/.config/ttheme/market/dust — prints how to publish it
 ttheme new rei                    # <you>@dust/rei, from blank in the palette editor (--from rei starts from rei)
-ttheme edit rei                   # the same editor; the gate's numbers are shown, never enforced
+ttheme edit rei                   # the same editor; the gate's numbers are shown, never enforced — another market's palette is tuned as a tone
 ```
 
 A market is a repository with `palettes/<palette>.toml` and a
@@ -41,8 +41,7 @@ The `"$schema"` lines give an editor completion and checks (Even Better TOML
 reads them, and SchemaStore matches `ttheme-market.toml` by name); ttheme
 ignores them. Run `ttheme market check` in the folder before you push: it reads
 every file as an install would, warns about keys ttheme does not know, follows
-the renames and prints the gate. A palette file ttheme cannot read also shows in
-Browse's Errors tab. Added from GitHub, a market is
+the renames and prints the gate. Added from GitHub, a market is
 `<repository owner>@<name>` and its palettes are `<owner>@<name>/<palette>`;
 the TOML files name them bare (`name = "rei"`). A folder under `palettes/` is a
 catalog — `palettes/neon/arcade.toml` puts arcade in the neon catalog — so every
@@ -329,17 +328,18 @@ panel below, preview's settings, the palette editor and find's grid.
 |---|---|---|
 | any character | filters | filters (each tab keeps its own) |
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
-| `←` `→` | close or open a series; `→` on a palette opens its panel | close or open a series; on a market, auto-update |
-| `enter` | open or close a series; on a palette, apply it, asking where | open or close a series; elsewhere, review every pick and market change, then apply it; close the result |
+| `←` `→` | close or open a series; `→` on a palette opens its panel | close or open a market or a series |
+| `enter` | open or close a series; on a palette, apply it, asking where | open or close a market or a series; elsewhere, review every pick and market change, then apply it; close the result |
 | `esc` | clear the filter, then restore and close | clear the filter, then cancel |
-| `space` | fold or open a series | pick |
+| `space` | fold or open a series | pick; on a GitHub row, add it or search again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
-| `ctrl+r` | — | update the market, or search GitHub again |
-| `ctrl+s` | — | narrow Catalog and Installed to the next market, then back to all |
-| `shift+←` `shift+→` | example scene | previous or next of its four tabs |
+| `ctrl+r` | — | on a market, update it now; on a palette marked `↑` or a series, stage its update; search GitHub again |
+| `ctrl+s` | — | narrow the list to the next market, then back to all |
+| `shift+←` `shift+→` | example scene | on a market, auto-update off and on |
+| `delete` | — | on a market, remove it, or keep it after all |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |
 | `ctrl+c` | quit | cancel |

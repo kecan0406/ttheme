@@ -213,6 +213,7 @@ const WORDS: Record<string, string> = {
   esc: 'esc',
   tab: 'tab',
   bksp: 'backspace',
+  del: 'delete',
   '←': 'left',
   '→': 'right',
 }

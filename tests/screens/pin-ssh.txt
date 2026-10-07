@@ -1,5 +1,7 @@
-   Search… ‹hint›
-
+ Preview (2/2)
+ ╭─────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰─────────────────────────────────────────────╯
 
    ▾ Bocchi the Rock!                         1
 ▌    ■ kita
@@ -13,12 +15,10 @@
 
 
 
-
-
-
 kita  → ssh tusa · while connected
-ssh *.prod  kita  while connected
-ssh tusa    kita  while connected  new
+ssh
+├── *.prod  kita  while connected
+└── tusa    kita  while connected  new
 
 Replaces konata on ssh tusa · while connected
 [PREVIEW (PIN)] kita → [This host]   ssh tusa   enter confirm                               esc back

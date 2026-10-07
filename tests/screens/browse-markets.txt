@@ -1,14 +1,15 @@
-  Catalog   Installed  [Markets]  Errors
- Manage markets (1/1)
+ Browse (7/7 · 2 picked)
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                               │ official
- ▌  ● official                                                 │ The ttheme catalog
-      The ttheme catalog · 6 palettes · 2 installed · comes w… │ 6 palettes · 2 installed
+                                                               │ fix@shop
+    ▸ official (1/6)                                           │ ~/shop
+ ▌  ▸ fix@shop (1/1)  Will remove                              │ 4 palettes · 1 installed
     ── On GitHub ──────────                                    │
-    ⌕ Find markets on GitHub                                   │ Comes with ttheme
-      space searches GitHub                                    │
+    ⌕ Find markets on GitHub  space searches                   │ Read in place
+                                                               │
+                                                               │ Will remove — fix@shop/arcade
+                                                               │ stays installed
                                                                │
                                                                │
                                                                │
@@ -20,5 +21,4 @@
                                                                │
                                                                │
                                                                │
-                                                               │
- [BROWSE] space remove   enter close   ⇧←→ tabs   ? keys                                 esc cancel
+ [BROWSE] → open   space pick   del undo   ? keys                                        esc cancel

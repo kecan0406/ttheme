@@ -1,12 +1,12 @@
- [Catalog]  Installed   Markets   Errors
- Discover palettes (6/6 · 0 picked)
+ Browse (6/6 · 0 picked)
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                               │ Bocchi the Rock!
-    ○ Select all (6)                                           │ ぼっち・ざ・ろっく!
- ▌  ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっく!               │ The ttheme catalog
-    ▸ Lucky☆Star (0/3) らき☆すた                               │ 3 palettes · 0 installed
+                                                               │ official
+ ▌  ▸ official (0/6)                                           │ The ttheme catalog
+    ── On GitHub ──────────                                    │ 6 palettes · 0 installed
+    ⌕ Find markets on GitHub  space searches                   │
+                                                               │ Comes with ttheme
                                                                │
                                                                │
                                                                │
@@ -21,4 +21,4 @@
                                                                │
                                                                │
                                                                │
- [BROWSE] → open   space pick   ⇧←→ tabs   ? keys                                        esc cancel
+ [BROWSE] → open   space pick   del remove   ? keys                                      esc cancel

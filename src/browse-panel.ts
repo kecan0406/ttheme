@@ -7,7 +7,7 @@ import type { PaletteEntry } from './manifest.ts'
 import { type Repository, repositorySource } from './markets.ts'
 import { containsText } from './names.ts'
 import {
-  type ListRow,
+  type Extra,
   PaletteList,
   type PromptFx,
   pageStep,
@@ -15,20 +15,17 @@ import {
   type RowSpot,
   rowSpot,
   SearchHint,
-  stepRow,
 } from './palette-prompt.ts'
 import { counted, type Refreshed } from './refresh.ts'
 import { isLocal, isRemote, OFFICIAL, parseSource, sameMarket, shownSource, TOPIC } from './sources.ts'
 import { marketOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Mouse } from './tui/keys.ts'
-import { hintOf, pillOf, tabOf } from './tui/parts.ts'
+import { hintOf, pillOf } from './tui/parts.ts'
 import { Screen } from './tui/screen.ts'
-import { ansiBar, ansiFg, FG_RESET, INK_RESET, MARKS, type Paint, painter, SPINNER } from './tui/style.ts'
+import { ansiFg, FG_RESET, MARKS, type Paint, painter, SPINNER } from './tui/style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
 import { type KeySpot, keyZone, zone } from './tui/zones.ts'
-
-export type Tab = 'catalog' | 'installed' | 'markets' | 'errors'
 
 export interface Market {
   source: string
@@ -38,13 +35,6 @@ export interface Market {
   entries: PaletteEntry[]
   auto: boolean
   status: string
-}
-
-export interface Problem {
-  where: string
-  message: string
-  source?: string
-  update?: true
 }
 
 export interface Report {
@@ -64,8 +54,8 @@ export interface BrowseOptions {
   kept: PaletteEntry[]
   installed: string[]
   updates?: string[]
+  tuned?: string[]
   startup?: string
-  problems: Problem[]
   due: string[]
   io: BrowseIo
   order?: (entries: PaletteEntry[]) => PaletteEntry[]
@@ -90,12 +80,11 @@ export interface BrowseResult {
 
 type Phase = 'browse' | 'review' | 'applying' | 'done'
 
-type MarketRow =
-  | { kind: 'market'; market: Market }
-  | { kind: 'add'; source: string }
-  | { kind: 'find' }
-  | { kind: 'rule' }
-  | { kind: 'repo'; repo: Repository; source: string }
+type Found = { kind: 'add'; source: string } | { kind: 'find' } | { kind: 'repo'; repo: Repository; source: string }
+
+interface Row extends Extra {
+  found?: Found
+}
 
 interface Detail {
   title: string
@@ -103,15 +92,7 @@ interface Detail {
   brief: string
 }
 
-type Scoped = 'catalog' | 'installed'
-
-type Spot =
-  | RowSpot
-  | KeySpot
-  | HubSpot
-  | { kind: 'tab'; tab: Tab }
-  | { kind: 'chip'; source: string | undefined }
-  | { kind: 'page'; step: number }
+type Spot = RowSpot | KeySpot | HubSpot | { kind: 'chip'; source: string | undefined } | { kind: 'page'; step: number }
 
 interface Chip {
   source: string | undefined
@@ -129,12 +110,6 @@ interface Bar {
   right?: Hint
 }
 
-const TABS: { tab: Tab; title: string; heading: string }[] = [
-  { tab: 'catalog', title: 'Catalog', heading: 'Discover palettes' },
-  { tab: 'installed', title: 'Installed', heading: 'Installed palettes' },
-  { tab: 'markets', title: 'Markets', heading: 'Manage markets' },
-  { tab: 'errors', title: 'Errors', heading: 'Problems' },
-]
 const RIGHT = 34
 const LEFT_MAX = 72
 const WIDE = 94
@@ -168,21 +143,14 @@ type State = 'active' | 'submit' | 'cancel'
 
 export class BrowsePanel {
   readonly picked: Set<string>
-  private tab: Tab = 'catalog'
-  private readonly fields: Record<Tab, Field> = {
-    catalog: new Field(),
-    installed: new Field(),
-    markets: new Field(),
-    errors: new Field(),
-  }
-  private readonly cursor = { markets: 0, errors: 0 }
-  private readonly top = { markets: 0, errors: 0 }
+  private readonly field = new Field()
   private readonly adds = new Map<string, Market>()
   private readonly removes = new Set<string>()
   private readonly want = new Map<string, boolean>()
   private readonly renew = new Set<string>()
   private updates: Set<string>
-  private readonly scope: Record<Scoped, string | undefined> = { catalog: undefined, installed: undefined }
+  private readonly tuned: Set<string>
+  private scope: string | undefined
   private readonly busy = new Map<string, string>()
   private readonly failed = new Map<string, string>()
   private readonly peeked = new Map<string, Market>()
@@ -192,7 +160,6 @@ export class BrowsePanel {
   private readonly refreshed: Refreshed[] = []
   private readonly inflight = new Set<Promise<unknown>>()
   private markets: Market[]
-  private problems: Problem[]
   private readonly kept: PaletteEntry[]
   private readonly installed: ReadonlySet<string>
   private readonly startup: string | undefined
@@ -206,8 +173,7 @@ export class BrowsePanel {
   private readonly output: (Writable & { columns?: number; rows?: number }) | undefined
   private maxItems = 12
   private readonly paint: ((entry: PaletteEntry) => void) | undefined
-  private readonly catalog: PaletteList
-  private readonly mine: PaletteList
+  private readonly catalog: PaletteList<Row>
   private readonly hint: SearchHint
   private screen: Screen | undefined
   private state: State = 'active'
@@ -231,10 +197,10 @@ export class BrowsePanel {
 
   constructor(opts: BrowseOptions) {
     this.markets = opts.markets
-    this.problems = opts.problems
     this.kept = opts.kept
     this.installed = new Set(opts.installed)
     this.updates = new Set(opts.updates ?? [])
+    this.tuned = new Set(opts.tuned ?? [])
     this.startup = opts.startup
     this.io = opts.io
     this.order = opts.order ?? ((entries) => entries)
@@ -247,31 +213,27 @@ export class BrowsePanel {
     this.live = opts.lookups ?? true
     this.paint = opts.onFocus
     this.picked = new Set(opts.installed)
-    const entries = this.entries()
-    this.catalog = new PaletteList({
-      entries,
+    this.catalog = new PaletteList<Row>({
+      entries: this.entries(),
       picked: this.picked,
+      layout: 'markets',
       color: this.color,
       maxItems: this.maxItems,
       note: (entry) => this.mark(entry),
-      onFocus: (entry) => this.focus('catalog', entry),
-    })
-    this.mine = new PaletteList({
-      entries: this.mineOf(entries),
-      picked: this.picked,
-      color: this.color,
-      maxItems: this.maxItems,
-      note: (entry) => this.mark(entry),
-      onFocus: (entry) => this.focus('installed', entry),
+      badge: (id) => this.badge(id),
+      tops: () => this.tops(),
+      extras: () => this.found(),
+      onFocus: (entry) => this.focus(entry),
     })
     this.hint = new SearchHint(
       opts.fx ?? 'typewriter',
-      () => paletteExample(this.tab === 'installed' ? this.mine : this.catalog),
+      () => paletteExample(this.catalog),
       () => this.redraw(),
     )
     for (const source of opts.due) {
       this.update(source)
     }
+    this.lookup()
   }
 
   run(): Promise<'submit' | 'cancel'> {
@@ -387,9 +349,9 @@ export class BrowsePanel {
       return
     }
     const page = pageStep(key, this.maxItems)
-    const list = this.list()
+    const list = this.catalog
     if (key === 'enter') {
-      if (list?.foldable()) {
+      if (list.foldable()) {
         list.flip()
       } else if (this.dirty()) {
         this.phase = 'review'
@@ -397,7 +359,7 @@ export class BrowsePanel {
       } else {
         this.state = 'submit'
       }
-    } else if ((key === 'esc' || key === 'ctrl-u') && this.fields[this.tab].value) {
+    } else if ((key === 'esc' || key === 'ctrl-u') && this.field.value) {
       this.clear()
     } else if (key === 'esc') {
       this.state = 'cancel'
@@ -408,34 +370,48 @@ export class BrowsePanel {
     } else if (key === 'up' || key === 'down') {
       this.move(key === 'up' ? -1 : 1)
     } else if (key === 'left' || key === 'right') {
-      this.side(key === 'right')
+      list.fold(key === 'right')
     } else if (key === 'tab' || key === 'shift-tab') {
       if (this.hub) {
         this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
       }
     } else if (key === 'shift-left' || key === 'shift-right') {
-      this.switchTab(key === 'shift-right' ? 1 : -1)
+      this.autoUpdate(key === 'shift-right')
     } else if (key === ' ') {
       this.activate()
-    } else if (key === 'ctrl-r' && list) {
-      this.toggleRenew(list)
-    } else if (key === 'ctrl-r') {
-      const row = this.tab === 'markets' ? this.marketRow() : undefined
-      if (row?.kind === 'market' && isRemote(row.market.source) && !this.adds.has(row.market.source)) {
-        this.update(row.market.source)
-      } else if (row?.kind === 'find') {
-        this.search()
+    } else if (key === 'delete') {
+      const market = this.focusedMarket()
+      if (market) {
+        this.toggleMarket(market)
       }
+    } else if (key === 'ctrl-r') {
+      this.refresh()
     } else if (key === 'ctrl-s') {
       this.cycle()
-    } else if (this.fields[this.tab].key(key)) {
+    } else if (this.field.key(key)) {
       this.typed()
+    }
+  }
+
+  private refresh(): void {
+    const row = this.catalog.focusedRow()
+    const market = this.focusedMarket()
+    if (market) {
+      if (isRemote(market.source) && !this.adds.has(market.source)) {
+        this.update(market.source)
+      }
+    } else if (row?.kind === 'extra') {
+      if (row.extra.found?.kind === 'find') {
+        this.search()
+      }
+    } else if (row?.kind !== 'group') {
+      this.toggleRenew()
     }
   }
 
   private pasted(text: string): void {
     if (this.phase === 'browse' && !this.help && !this.asking && this.leaving === undefined) {
-      this.fields[this.tab].paste(text)
+      this.field.paste(text)
       this.typed()
     }
   }
@@ -463,12 +439,11 @@ export class BrowsePanel {
       if (!free) {
         return
       }
-      if (spot.kind === 'tab') {
-        this.show(spot.tab)
-      } else if (spot.kind === 'chip') {
+      if (spot.kind === 'chip') {
         this.scopeTo(spot.source)
       } else if (spot.kind === 'row') {
-        this.pointRow(spot.at)
+        this.catalog.point(spot.at)
+        this.watch()
       }
     } else if (event.action === 'release' && hit?.inside) {
       if (spot.kind === 'key') {
@@ -494,56 +469,35 @@ export class BrowsePanel {
       this.scroll(step)
       return
     }
-    const list = this.list()
-    if (list) {
-      list.move(step, false)
-    } else {
-      this.move(step, false)
-    }
-  }
-
-  private pointRow(at: number): void {
-    const list = this.list()
-    if (list) {
-      list.point(at)
-      return
-    }
-    this.cursor[this.tab === 'markets' ? 'markets' : 'errors'] = at
-    this.watch()
+    this.move(step, false)
   }
 
   private openRow(spot: RowSpot, count: number): void {
-    const list = this.list()
-    if (list) {
-      if (spot.part === 'box') {
-        list.pick()
-      } else if (spot.part === 'fold') {
-        list.flip()
-      } else if (count === 2) {
-        list.open()
+    const list = this.catalog
+    if (list.focusedRow()?.kind === 'extra') {
+      if (spot.part === 'box' || count === 2) {
+        this.activate()
       }
-    } else if (spot.part === 'box' || count === 2) {
-      this.activate()
+    } else if (spot.part === 'box') {
+      list.pick()
+    } else if (spot.part === 'fold') {
+      list.flip()
+    } else if (count === 2) {
+      list.open()
     }
   }
 
   private typed(): void {
-    const value = this.fields[this.tab].value
-    this.list()?.setFilter(value)
-    if (this.tab === 'markets') {
-      this.later('search', SEARCH_AFTER, () => this.lookup())
-      this.watch()
-    }
+    this.catalog.setFilter(this.field.value)
+    this.later('search', SEARCH_AFTER, () => this.lookup())
+    this.watch()
   }
 
   private clear(): void {
-    this.fields[this.tab].value = ''
-    const list = this.list()
-    if (list) {
-      list.clear()
-    } else {
-      this.typed()
-    }
+    this.field.value = ''
+    this.catalog.clear()
+    this.later('search', SEARCH_AFTER, () => this.lookup())
+    this.watch()
   }
 
   private redraw(): void {
@@ -552,8 +506,8 @@ export class BrowsePanel {
     }
   }
 
-  private focus(tab: Tab, entry: PaletteEntry): void {
-    if (this.tab === tab && this.state !== 'submit' && this.state !== 'cancel') {
+  private focus(entry: PaletteEntry): void {
+    if (this.state !== 'submit' && this.state !== 'cancel') {
       this.paint?.(entry)
     }
   }
@@ -563,10 +517,6 @@ export class BrowsePanel {
     const done = () => this.inflight.delete(work)
     work.then(done, done)
     return work
-  }
-
-  private list(): PaletteList | undefined {
-    return this.tab === 'catalog' ? this.catalog : this.tab === 'installed' ? this.mine : undefined
   }
 
   private active(): Market[] {
@@ -586,15 +536,11 @@ export class BrowsePanel {
     return this.order([...listed, ...orphans.values()])
   }
 
-  private mineOf(entries: PaletteEntry[]): PaletteEntry[] {
-    return entries.filter((e) => this.installed.has(e.name))
-  }
-
-  private scoped(entries: PaletteEntry[], tab: Scoped): PaletteEntry[] {
-    const source = this.scope[tab]
+  private scoped(entries: PaletteEntry[]): PaletteEntry[] {
+    const source = this.scope
     const market = source === undefined ? undefined : this.active().find((m) => m.source === source)
     if (!market) {
-      this.scope[tab] = undefined
+      this.scope = undefined
       return entries
     }
     const names = new Set(market.entries.map((e) => e.name))
@@ -602,109 +548,84 @@ export class BrowsePanel {
   }
 
   private reload(): void {
-    const entries = this.entries()
-    this.catalog.setEntries(this.scoped(entries, 'catalog'))
-    this.mine.setEntries(this.scoped(this.mineOf(entries), 'installed'))
+    this.catalog.setEntries(this.scoped(this.entries()))
   }
 
-  private chips(tab: Scoped): Chip[] {
-    const entries = tab === 'catalog' ? this.entries() : this.mineOf(this.entries())
-    const markets = this.active()
-      .map((m) => ({
-        source: m.source as string | undefined,
-        label: m.id,
-        count: m.entries.filter((e) => !e.default && (tab === 'catalog' || this.installed.has(e.name))).length,
-      }))
-      .filter((c) => tab === 'catalog' || c.count > 0 || c.source === this.scope[tab])
-    return [{ source: undefined, label: 'All', count: entries.filter((e) => !e.default).length }, ...markets]
+  private chips(): Chip[] {
+    const markets = this.active().map((m) => ({
+      source: m.source as string | undefined,
+      label: m.id,
+      count: m.entries.filter((e) => !e.default).length,
+    }))
+    return [{ source: undefined, label: 'All', count: this.entries().filter((e) => !e.default).length }, ...markets]
+  }
+
+  private tops(): string[] {
+    return [...this.markets, ...this.adds.values()]
+      .filter((m) => this.scope === undefined || m.source === this.scope)
+      .map((m) => m.id)
+  }
+
+  private marketNamed(id: string): Market | undefined {
+    return [...this.markets, ...this.adds.values()].find((m) => m.id === id)
+  }
+
+  private focusedMarket(): Market | undefined {
+    const row = this.catalog.focusedRow()
+    return row?.kind === 'group' ? this.marketNamed(row.name) : undefined
   }
 
   private cycle(): void {
-    const tab = this.tab
-    if ((tab !== 'catalog' && tab !== 'installed') || this.active().length < 2) {
+    if (this.active().length < 2) {
       return
     }
-    const chips = this.chips(tab)
+    const chips = this.chips()
     const at = Math.max(
       0,
-      chips.findIndex((c) => c.source === this.scope[tab]),
+      chips.findIndex((c) => c.source === this.scope),
     )
     this.scopeTo(chips[(at + 1) % chips.length]?.source)
   }
 
   private scopeTo(source: string | undefined): void {
-    const tab = this.tab
-    if (tab !== 'catalog' && tab !== 'installed') {
-      return
-    }
-    this.scope[tab] = source
+    this.scope = source
     this.reload()
-    this.list()?.refocus()
-  }
-
-  private switchTab(step: number): void {
-    const at = TABS.findIndex((t) => t.tab === this.tab)
-    this.show(TABS[(at + step + TABS.length) % TABS.length]?.tab ?? 'catalog')
-  }
-
-  private show(tab: Tab): void {
-    this.tab = tab
-    this.list()?.refocus()
-    if (tab === 'markets') {
-      this.lookup()
-      this.watch()
-    }
+    this.catalog.refocus()
   }
 
   private move(delta: number, wrap = true): void {
-    const list = this.list()
-    if (list) {
-      list.move(delta, wrap)
-      return
-    }
-    const key = this.tab === 'markets' ? 'markets' : 'errors'
-    const rules =
-      key === 'markets' ? this.marketRows().map((r) => r.kind === 'rule') : this.problemRows().map(() => false)
-    this.cursor[key] = stepRow(this.cursor[key], delta, rules.length, (i) => rules[i] === true, wrap)
+    this.catalog.move(delta, wrap)
     this.watch()
   }
 
-  private side(right: boolean): void {
-    const list = this.list()
-    if (list) {
-      list.fold(right)
-      return
-    }
-    const row = this.tab === 'markets' ? this.marketRow() : undefined
-    if (row?.kind === 'market' && isRemote(row.market.source)) {
-      if (right === row.market.auto) {
-        this.want.delete(row.market.source)
+  private autoUpdate(on: boolean): void {
+    const market = this.focusedMarket()
+    if (market && isRemote(market.source)) {
+      if (on === market.auto) {
+        this.want.delete(market.source)
       } else {
-        this.want.set(row.market.source, right)
+        this.want.set(market.source, on)
       }
     }
   }
 
   private activate(): void {
-    const list = this.list()
-    if (list) {
-      list.pick()
+    const row = this.catalog.focusedRow()
+    if (row?.kind !== 'extra') {
+      this.catalog.pick()
       return
     }
-    const row = this.tab === 'markets' ? this.marketRow() : undefined
-    if (row?.kind === 'market') {
-      this.toggleMarket(row.market)
-    } else if (row?.kind === 'add') {
-      this.load(row.source, true)
-    } else if (row?.kind === 'repo') {
-      const known = this.known(row.source)
-      const at = this.marketRows().findIndex((r) => r.kind === 'market' && r.market === known)
-      if (known && at >= 0) {
-        this.cursor.markets = at
-      } else if (!known) {
-        this.load(row.source, true)
+    const found = row.extra.found
+    if (found?.kind === 'add') {
+      this.load(found.source, true)
+    } else if (found?.kind === 'repo') {
+      const known = this.known(found.source)
+      if (known) {
+        this.catalog.select(`group ${known.id}`)
+      } else {
+        this.load(found.source, true)
       }
-    } else if (row?.kind === 'find') {
+    } else if (found?.kind === 'find') {
       this.search()
     }
   }
@@ -797,22 +718,27 @@ export class BrowsePanel {
     return !this.known(source) && !this.peeked.has(source) && !this.busy.has(source) && !this.peekFailed.has(source)
   }
 
+  private focusedFound(): Found | undefined {
+    const row = this.catalog.focusedRow()
+    return row?.kind === 'extra' ? row.extra.found : undefined
+  }
+
   private watch(): void {
-    if (!this.live || this.tab !== 'markets') {
+    if (!this.live) {
       return
     }
-    const typed = typedSource(this.fields.markets.value)
+    const typed = typedSource(this.field.value)
     if (typed && this.wants(typed)) {
       this.later('typed', TYPED_AFTER, () => this.load(typed, false))
     } else {
       this.cancel('typed')
     }
-    const row = this.marketRow()
-    if (row?.kind === 'repo' && this.wants(row.source)) {
-      const source = row.source
+    const found = this.focusedFound()
+    if (found?.kind === 'repo' && this.wants(found.source)) {
+      const source = found.source
       this.later('focus', FOCUS_AFTER, () => {
-        const now = this.marketRow()
-        if (this.tab === 'markets' && now?.kind === 'repo' && now.source === source) {
+        const now = this.focusedFound()
+        if (now?.kind === 'repo' && now.source === source) {
           this.load(source, false)
         }
       })
@@ -836,11 +762,13 @@ export class BrowsePanel {
     } else {
       this.want.set(market.source, auto)
     }
+    const typed = typedSource(this.field.value)
+    if (typed && sameMarket(typed, market.source)) {
+      this.field.value = ''
+      this.catalog.setFilter('')
+    }
     this.reload()
-    this.cursor.markets = Math.max(
-      0,
-      this.marketRows().findIndex((r) => r.kind === 'market' && r.market.source === market.source),
-    )
+    this.catalog.select(`group ${market.id}`)
   }
 
   private update(source: string): void {
@@ -854,7 +782,6 @@ export class BrowsePanel {
         this.busy.delete(source)
         this.updates = new Set(updates)
         this.markets = this.markets.map((m) => (m.source === source ? market : m))
-        this.problems = this.problems.filter((p) => p.source !== source)
         this.refreshed.push(refreshed)
         this.reload()
         this.redraw()
@@ -868,7 +795,7 @@ export class BrowsePanel {
   }
 
   private wanted(): string {
-    const query = this.fields.markets.value.trim()
+    const query = this.field.value.trim()
     return query && !typedSource(query) ? query : ''
   }
 
@@ -889,6 +816,7 @@ export class BrowsePanel {
         if (seq === this.asked) {
           this.searching = false
           this.repos = repos
+          this.catalog.refresh()
           this.watch()
           this.redraw()
         }
@@ -903,97 +831,32 @@ export class BrowsePanel {
     )
   }
 
-  private marketRows(): MarketRow[] {
-    const hit = (...fields: string[]) => containsText(fields, this.fields.markets.value)
-    const known = [...this.markets, ...this.adds.values()]
-    const rows: MarketRow[] = known
-      .filter((m) => hit(m.id, m.shown, m.source))
-      .map((market) => ({ kind: 'market', market }))
-    const typed = typedSource(this.fields.markets.value)
-    if (typed && !known.some((m) => sameMarket(m.source, typed))) {
-      rows.push({ kind: 'add', source: typed })
-    }
-    const found = (this.repos ?? [])
+  private found(): Row[] {
+    const typed = typedSource(this.field.value)
+    const hit = (...fields: string[]) => containsText(fields, this.field.value)
+    const repos = (this.repos ?? [])
       .map((repo) => ({ repo, source: repositorySource(repo) }))
       .filter(({ repo, source }) => hit(source, repo.description ?? ''))
-    rows.push(
-      { kind: 'rule' },
-      ...(found.length > 0
-        ? found.map(({ repo, source }) => ({ kind: 'repo' as const, repo, source }))
-        : [{ kind: 'find' as const }]),
-    )
-    return rows
-  }
-
-  private marketRow(): MarketRow | undefined {
-    const rows = this.marketRows()
-    return rows[this.at(rows, 'markets', (r) => r?.kind === 'rule')]
-  }
-
-  private problemList(): Problem[] {
-    const names = new Map([...this.markets, ...this.adds.values()].map((m) => [m.source, m.id]))
+    const rows: Found[] = [
+      ...(typed && !this.known(typed) ? [{ kind: 'add' as const, source: typed }] : []),
+      ...repos.map(({ repo, source }) => ({ kind: 'repo' as const, repo, source })),
+      ...(repos.length > 0 ? [] : [{ kind: 'find' as const }]),
+    ]
     return [
-      ...this.problems.filter((p) => !(p.update && p.source && this.failed.has(p.source))),
-      ...[...this.failed].map(([source, message]) => ({ where: names.get(source) ?? source, message, source })),
+      {
+        key: 'github',
+        rule: true,
+        text: () => `   ${this.p.dim(`── On GitHub${this.searching ? ' · searching…' : ''} ──────────`)}`,
+      },
+      ...rows.map((found) => ({
+        key: found.kind === 'find' ? 'find' : `${found.kind} ${found.source}`,
+        found,
+        text: (focused: boolean, at: number) => this.foundLine(found, focused, at),
+      })),
     ]
   }
 
-  private problemRows(): Problem[] {
-    return this.problemList().filter((p) => containsText([`${p.where} ${p.message}`], this.fields.errors.value))
-  }
-
-  private at<T>(rows: T[], key: 'markets' | 'errors', rule: (row: T | undefined) => boolean = () => false): number {
-    const cursor = Math.min(this.cursor[key], Math.max(0, rows.length - 1))
-    if (!rule(rows[cursor])) {
-      return cursor
-    }
-    return cursor > 0 ? cursor - 1 : cursor + 1
-  }
-
-  private windowOf<T>(
-    rows: T[],
-    key: 'markets' | 'errors',
-    render: (row: T, focused: boolean, at: number) => string[],
-    rule: (row: T | undefined) => boolean = () => false,
-  ): { lines: string[]; above: number; below: number } {
-    const cursor = this.at(rows, key, rule)
-    this.cursor[key] = cursor
-    const height = (i: number) => (rule(rows[i]) ? 1 : 2)
-    const span = (from: number, to: number) => {
-      let lines = 0
-      for (let i = from; i <= to; i++) {
-        lines += height(i)
-      }
-      return lines
-    }
-    let top = Math.min(this.top[key], cursor)
-    while (top < cursor && span(top, cursor) > this.maxItems) {
-      top += 1
-    }
-    while (top > 0 && span(top - 1, rows.length - 1) <= this.maxItems) {
-      top -= 1
-    }
-    this.top[key] = top
-    const shown: number[] = []
-    let used = 0
-    for (let i = top; i < rows.length && used + height(i) <= this.maxItems; i++) {
-      shown.push(i)
-      used += height(i)
-    }
-    return {
-      lines: shown.flatMap((i) => {
-        const lines = render(rows[i] as T, i === cursor, i)
-        return rule(rows[i]) ? lines : lines.map((line) => rowSpot(i, 'row', line))
-      }),
-      above: top,
-      below: rows.length - top - shown.length,
-    }
-  }
-
-  private lit(lead: PaletteEntry | undefined, focused: boolean, text: string): string {
-    if (focused && this.color && lead) {
-      return `${ansiFg(lead.cursor)}${MARKS.gutter}${FG_RESET} ${ansiBar(lead.selection, lead.foreground)} ${text} ${INK_RESET}`
-    }
+  private lit(focused: boolean, text: string): string {
     return `${focused ? `${MARKS.gutter} ` : '  '} ${text}`
   }
 
@@ -1006,8 +869,16 @@ export class BrowsePanel {
           (this.failed.has(market.source) || market.status.startsWith('update failed') ? 'Update failed' : ''))
   }
 
-  private note(text: string): string {
-    return `     ${this.p.dim(text)}`
+  private badge(id: string): string {
+    const m = this.marketNamed(id)
+    if (!m) {
+      return ''
+    }
+    const auto = isRemote(m.source) && (this.want.get(m.source) ?? m.auto) ? `${MARKS.auto} auto-update` : ''
+    return [auto, this.status(m)]
+      .filter(Boolean)
+      .map((part) => `  ${this.p.dim(part)}`)
+      .join('')
   }
 
   private peeking(source: string): string {
@@ -1015,53 +886,26 @@ export class BrowsePanel {
     return peeked ? counted(peeked.entries.filter((e) => !e.default).length) : ''
   }
 
-  private marketLine(row: MarketRow, focused: boolean, at: number): string[] {
+  private foundLine(found: Found, focused: boolean, at: number): string {
     const box = (mark: string) => rowSpot(at, 'box', `${mark} `)
-    if (row.kind === 'rule') {
-      return [`   ${this.p.dim(`── On GitHub${this.searching ? ' · searching…' : ''} ──────────`)}`]
-    }
-    if (row.kind === 'market') {
-      const m = row.market
-      const status = this.status(m)
-      const name = focused ? this.p.bold(m.id) : m.id
-      const listed = m.entries.filter((e) => !e.default)
-      const auto =
-        isRemote(m.source) && (this.want.get(m.source) ?? m.auto) ? `  ${this.p.dim(`${MARKS.auto} auto-update`)}` : ''
-      return [
-        this.lit(
-          m.entries.find((e) => !e.default),
-          focused,
-          `${box(this.removes.has(m.source) ? MARKS.off : MARKS.on)}${name}${auto}${status ? `  ${this.p.dim(status)}` : ''}`,
-        ),
-        this.note(
-          [
-            m.source === OFFICIAL ? 'The ttheme catalog' : isLocal(m.source) ? m.shown : m.source,
-            counted(listed.length),
-            `${listed.filter((e) => this.installed.has(e.name)).length} installed`,
-            m.status,
-          ].join(' · '),
-        ),
-      ]
-    }
-    if (row.kind === 'add') {
-      const busy = this.busy.get(row.source)
-      const failure = this.failed.get(row.source) ?? this.peekFailed.get(row.source)
-      const peeked = this.peeked.get(row.source)
-      return [
-        this.lit(undefined, focused, `${box('+')}Add ${shownSource(row.source)}${busy ? `  ${this.p.dim(busy)}` : ''}`),
-        failure
-          ? `     ${this.p.error(failure)}`
-          : this.note(
-              peeked
-                ? `${peeked.id} · ${this.peeking(row.source)}`
+    const after = (text: string) => (text ? `  ${this.p.dim(text)}` : '')
+    if (found.kind === 'add') {
+      const failure = this.failed.get(found.source) ?? this.peekFailed.get(found.source)
+      const peeked = this.peeked.get(found.source)
+      const note = failure
+        ? `  ${this.p.error(failure)}`
+        : after(
+            this.busy.get(found.source) ??
+              (peeked
+                ? `${peeked.id} · ${this.peeking(found.source)}`
                 : this.live
                   ? 'Fetching its palettes…'
-                  : 'space fetches its palettes',
-            ),
-      ]
+                  : 'space fetches its palettes'),
+          )
+      return this.lit(focused, `${box('+')}Add ${shownSource(found.source)}${note}`)
     }
-    if (row.kind === 'find') {
-      const query = this.fields.markets.value.trim()
+    if (found.kind === 'find') {
+      const query = this.field.value.trim()
       const named = query && !typedSource(query)
       const idle = !this.searching && !this.searchError && this.repos === undefined
       const text = this.searching
@@ -1075,55 +919,15 @@ export class BrowsePanel {
             : named
               ? `No market on GitHub matches "${query}"`
               : 'No market on GitHub yet'
-      return [
-        this.lit(undefined, focused, `${box(MARKS.search)}${text}`),
-        this.note(this.searchError ?? (this.searching ? '' : idle ? 'space searches GitHub' : 'space searches again')),
-      ]
+      const note = this.searchError ?? (this.searching ? '' : idle ? 'space searches' : 'space searches again')
+      return this.lit(focused, `${box(MARKS.search)}${text}${after(note)}`)
     }
-    const busy = this.busy.get(row.source)
-    return [
-      this.lit(
-        undefined,
-        focused,
-        `${box(this.known(row.source) ? MARKS.on : MARKS.off)}${row.source}  ${this.p.dim(`${MARKS.star}${row.repo.stargazers_count}`)}${busy ? `  ${this.p.dim(busy)}` : ''}`,
-      ),
-      this.note([this.peeking(row.source), row.repo.description ?? ''].filter(Boolean).join(' · ')),
-    ]
-  }
-
-  private problemLine(problem: Problem, focused: boolean): string[] {
-    return [this.lit(undefined, focused, `${this.p.error(MARKS.miss)} ${problem.where}`), this.note(problem.message)]
-  }
-
-  private body(): { lines: string[]; above: number; below: number; empty: string } {
-    const list = this.list()
-    if (list) {
-      const filter = this.fields[this.tab].value
-      return {
-        ...list.window(),
-        empty: filter
-          ? `No palettes match '${filter}'`
-          : this.tab === 'installed'
-            ? 'Nothing installed yet'
-            : 'No palettes',
-      }
-    }
-    if (this.tab === 'markets') {
-      return {
-        ...this.windowOf(
-          this.marketRows(),
-          'markets',
-          (r, f, at) => this.marketLine(r, f, at),
-          (r) => r?.kind === 'rule',
-        ),
-        empty: '',
-      }
-    }
-    const filter = this.fields.errors.value
-    return {
-      ...this.windowOf(this.problemRows(), 'errors', (p, f) => this.problemLine(p, f)),
-      empty: filter ? `No problems match '${filter}'` : 'No problems',
-    }
+    const busy = this.busy.get(found.source)
+    const note = [busy ?? this.peeking(found.source), found.repo.description ?? ''].filter(Boolean).join(' · ')
+    return this.lit(
+      focused,
+      `${box(this.known(found.source) ? MARKS.on : MARKS.off)}${found.source}  ${this.p.dim(`${MARKS.star}${found.repo.stargazers_count}`)}${after(note)}`,
+    )
   }
 
   private changes(): number {
@@ -1141,26 +945,17 @@ export class BrowsePanel {
   }
 
   private mark(entry: PaletteEntry): string {
+    const tuned = this.tuned.has(entry.name) ? `  ${this.p.warn(MARKS.on)}` : ''
     if (!this.updates.has(entry.name) || !this.installed.has(entry.name)) {
-      return ''
+      return tuned
     }
-    return this.renew.has(entry.name) ? `  ${this.p.bold(`${MARKS.update} update`)}` : `  ${this.p.dim(MARKS.update)}`
+    return `${tuned}${this.renew.has(entry.name) ? `  ${this.p.bold(`${MARKS.update} update`)}` : `  ${this.p.dim(MARKS.update)}`}`
   }
 
-  private toggleRenew(list: PaletteList): void {
+  private toggleRenew(): void {
+    const list = this.catalog
     const row = list.focusedRow()
-    const entries = this.entries()
-    const names = (
-      row?.kind === 'palette'
-        ? [row.entry]
-        : row?.kind === 'group'
-          ? entries.filter((e) => e.group === row.name)
-          : row?.kind === 'catalog'
-            ? entries.filter((e) => e.group === row.group && e.catalog === row.name)
-            : row?.kind === 'all'
-              ? entries
-              : []
-    )
+    const names = (row ? list.inside(row) : [])
       .map((e) => e.name)
       .filter((name) => this.updates.has(name) && this.installed.has(name))
     if (names.length === 0) {
@@ -1400,43 +1195,21 @@ export class BrowsePanel {
 
   private counts(): string {
     const updating = [...this.busy.values()].includes('Updating…') ? 'Updating… · ' : ''
-    const list = this.list()
-    if (list) {
-      return `${updating}${list.matched()}/${list.total()} · ${list.pickedCount()} picked`
-    }
-    if (this.tab === 'markets') {
-      const all = this.markets.length + this.adds.size
-      const shown = this.marketRows().filter((r) => r.kind === 'market').length
-      const changes = this.changes()
-      return `${updating}${shown}/${all}${changes > 0 ? ` · ${changes} to apply` : ''}`
-    }
-    return `${this.problemRows().length}/${this.problemList().length}`
+    const list = this.catalog
+    return `${updating}${list.matched()}/${list.total()} · ${list.pickedCount()} picked`
   }
 
   private searchText(): string {
-    const typed = this.fields[this.tab].value
+    const typed = this.field.value
     if (typed) {
       return `${typed}_`
     }
-    if (this.tab === 'markets') {
-      return this.p.dim('Search… or add one: owner/repo')
-    }
-    const example = this.tab === 'errors' ? '' : this.hint.text()
+    const example = this.hint.text()
     return this.p.dim(`Search…${example ? ` e.g. ${example}` : ''}`)
   }
 
-  private tabBar(): string {
-    return TABS.map(({ tab, title }) => {
-      const count = tab === 'errors' ? this.problemList().length : 0
-      const label = count > 0 ? `${title} ${count}` : title
-      const spot: Spot = { kind: 'tab', tab }
-      return tabOf(this.p, label, tab === this.tab, (text) => zone(spot, text))
-    }).join(' ')
-  }
-
   private heading(): string {
-    const title = TABS.find((t) => t.tab === this.tab)?.heading ?? ''
-    return `${this.p.bold(title)} ${this.p.dim(`(${this.counts()})`)}`
+    return `${this.p.bold('Browse')} ${this.p.dim(`(${this.counts()})`)}`
   }
 
   private searchBox(width: number): string[] {
@@ -1450,14 +1223,13 @@ export class BrowsePanel {
   }
 
   private strip(width: number): string | undefined {
-    const tab = this.tab
-    if ((tab !== 'catalog' && tab !== 'installed') || this.active().length < 2) {
+    if (this.active().length < 2) {
       return undefined
     }
-    const chips = this.chips(tab)
+    const chips = this.chips()
     const sel = Math.max(
       0,
-      chips.findIndex((c) => c.source === this.scope[tab]),
+      chips.findIndex((c) => c.source === this.scope),
     )
     const labels = chips.map((c, i) => (i === sel && !this.color ? `[${c.label} ${c.count}]` : `${c.label} ${c.count}`))
     const sep = ' · '
@@ -1495,8 +1267,8 @@ export class BrowsePanel {
     return plain + 2 + hint.length <= width ? `${text}  ${this.p.dim(keyZone('ctrl+s', hint))}` : text
   }
 
-  private sourceOf(entry: PaletteEntry): string {
-    const market = this.active().find((m) => m.entries.some((e) => e.name === entry.name))
+  private sourceOf(entry: PaletteEntry | undefined): string {
+    const market = entry && this.active().find((m) => m.entries.some((e) => e.name === entry.name))
     if (!market) {
       return 'In no market you added'
     }
@@ -1516,35 +1288,32 @@ export class BrowsePanel {
     return `${state}${update}${this.startup === entry.name ? ' · Default' : ''}`
   }
 
-  private paletteDetail(row: ListRow | undefined, width: number): Detail {
-    if (!row || row.kind === 'rule') {
+  private detail(width: number): Detail {
+    const row = this.catalog.focusedRow()
+    if (!row || row.kind === 'rule' || row.kind === 'all') {
       return EMPTY
     }
-    if (row.kind === 'all') {
-      return { title: this.p.bold('Select all'), lines: ['space picks every palette shown'], brief: '' }
+    if (row.kind === 'extra') {
+      return row.extra.found ? this.foundDetail(row.extra.found, width) : EMPTY
     }
-    if (row.kind === 'group') {
-      const members = this.entries().filter((e) => e.group === row.name && !e.default)
+    const market = row.kind === 'group' ? this.marketNamed(row.name) : undefined
+    if (market) {
+      return this.marketDetail(market, width)
+    }
+    if (row.kind === 'group' || row.kind === 'catalog') {
+      const members = this.catalog.inside(row)
       const source = this.sourceOf(row.lead)
       const counts = `${counted(members.length)} · ${members.filter((e) => this.installed.has(e.name)).length} installed`
+      const within = row.kind === 'catalog' ? row.group : undefined
       return {
         title: this.p.bold(row.name),
         lines: [
           ...(row.native ? wrapText(row.native, width).map((l) => this.p.dim(l)) : []),
+          ...(within ? [within] : []),
           ...wrapText(source, width),
           counts,
         ],
-        brief: `${source} · ${counts}`,
-      }
-    }
-    if (row.kind === 'catalog') {
-      const members = this.entries().filter((e) => e.group === row.group && e.catalog === row.name)
-      const source = this.sourceOf(row.lead)
-      const counts = `${counted(members.length)} · ${members.filter((e) => this.installed.has(e.name)).length} installed`
-      return {
-        title: this.p.bold(row.name),
-        lines: [row.group, ...wrapText(source, width), counts],
-        brief: `${row.group} · ${counts}`,
+        brief: `${within ?? source} · ${counts}`,
       }
     }
     const e = row.entry
@@ -1578,47 +1347,44 @@ export class BrowsePanel {
     }
   }
 
-  private marketDetail(row: MarketRow | undefined, width: number): Detail {
-    if (!row || row.kind === 'rule') {
-      return EMPTY
+  private marketDetail(m: Market, width: number): Detail {
+    const source = m.source === OFFICIAL ? 'The ttheme catalog' : m.shown
+    const listed = m.entries.filter((e) => !e.default)
+    const installed = listed.filter((e) => this.installed.has(e.name)).map((e) => e.name)
+    const counts = `${counted(listed.length)} · ${installed.length} installed`
+    const auto = isRemote(m.source)
+      ? `Auto-update ${(this.want.get(m.source) ?? m.auto) ? 'on' : 'off'}`
+      : cap(m.status)
+    const when = this.busy.get(m.source) ?? cap(m.status)
+    const failure = this.failed.get(m.source)
+    const staged = this.adds.has(m.source)
+      ? ['Will add']
+      : this.removes.has(m.source)
+        ? [
+            installed.length > 0
+              ? `Will remove — ${installed.join(', ')} stay${installed.length === 1 ? 's' : ''} installed`
+              : 'Will remove',
+          ]
+        : this.want.has(m.source)
+          ? [`Auto-update turns ${this.want.get(m.source) ? 'on' : 'off'}`]
+          : []
+    return {
+      title: this.p.bold(m.id),
+      lines: [
+        ...wrapText(source, width),
+        ...(m.description ? wrapText(m.description, width).map((l) => this.p.dim(l)) : []),
+        counts,
+        '',
+        isRemote(m.source) ? `${auto}  ${this.p.dim('⇧←→')}` : auto,
+        ...(isRemote(m.source) ? [when] : []),
+        ...(failure ? wrapText(failure, width).map((l) => this.p.error(l)) : []),
+        ...(staged.length > 0 ? ['', ...staged.flatMap((s) => wrapText(s, width))] : []),
+      ],
+      brief: [source, auto, ...staged, ...(isRemote(m.source) ? [when] : [])].join(' · '),
     }
-    if (row.kind === 'market') {
-      const m = row.market
-      const source = m.source === OFFICIAL ? 'The ttheme catalog' : m.shown
-      const listed = m.entries.filter((e) => !e.default)
-      const installed = listed.filter((e) => this.installed.has(e.name)).map((e) => e.name)
-      const counts = `${counted(listed.length)} · ${installed.length} installed`
-      const auto = isRemote(m.source)
-        ? `Auto-update ${(this.want.get(m.source) ?? m.auto) ? 'on' : 'off'}`
-        : cap(m.status)
-      const when = this.busy.get(m.source) ?? cap(m.status)
-      const failure = this.failed.get(m.source)
-      const staged = this.adds.has(m.source)
-        ? ['Will add']
-        : this.removes.has(m.source)
-          ? [
-              installed.length > 0
-                ? `Will remove — ${installed.join(', ')} stay${installed.length === 1 ? 's' : ''} installed`
-                : 'Will remove',
-            ]
-          : this.want.has(m.source)
-            ? [`Auto-update turns ${this.want.get(m.source) ? 'on' : 'off'}`]
-            : []
-      return {
-        title: this.p.bold(m.id),
-        lines: [
-          ...wrapText(source, width),
-          ...(m.description ? wrapText(m.description, width).map((l) => this.p.dim(l)) : []),
-          counts,
-          '',
-          isRemote(m.source) ? `${auto}  ${this.p.dim('←→')}` : auto,
-          ...(isRemote(m.source) ? [when] : []),
-          ...(failure ? wrapText(failure, width).map((l) => this.p.error(l)) : []),
-          ...(staged.length > 0 ? ['', ...staged.flatMap((s) => wrapText(s, width))] : []),
-        ],
-        brief: [source, auto, ...staged, ...(isRemote(m.source) ? [when] : [])].join(' · '),
-      }
-    }
+  }
+
+  private foundDetail(row: Found, width: number): Detail {
     if (row.kind === 'add') {
       const note =
         this.busy.get(row.source) ??
@@ -1636,7 +1402,7 @@ export class BrowsePanel {
       }
     }
     if (row.kind === 'find') {
-      const query = this.fields.markets.value.trim()
+      const query = this.field.value.trim()
       const note =
         this.searchError ??
         (this.searching
@@ -1651,6 +1417,8 @@ export class BrowsePanel {
           ...(query && !typedSource(query) ? [`Matching "${query}"`] : []),
           '',
           ...wrapText(note, width),
+          '',
+          ...wrapText('Type owner/repo or a folder to add one', width),
         ],
         brief: note,
       }
@@ -1691,21 +1459,6 @@ export class BrowsePanel {
     ]
   }
 
-  private detail(width: number): Detail {
-    const list = this.list()
-    if (list) {
-      return this.paletteDetail(list.focusedRow(), width)
-    }
-    if (this.tab === 'markets') {
-      return this.marketDetail(this.marketRow(), width)
-    }
-    const rows = this.problemRows()
-    const problem = rows[Math.min(this.cursor.errors, rows.length - 1)]
-    return problem
-      ? { title: this.p.bold(problem.where), lines: wrapText(problem.message, width), brief: problem.message }
-      : EMPTY
-  }
-
   private footer(): Bar {
     if (this.help) {
       return { badge: 'HELP', keys: [], right: ['? esc', 'close'] }
@@ -1732,9 +1485,9 @@ export class BrowsePanel {
         right: ['esc', 'back'],
       }
     }
-    const filter = this.fields[this.tab].value
+    const filter = this.field.value
     const enter: Hint = ['enter', this.dirty() ? 'apply' : 'close']
-    const tail: Hint[] = [['⇧←→', 'tabs'], ...(filter ? [['bksp', 'edit'] as Hint] : []), ['?', 'keys']]
+    const tail: Hint[] = [...(filter ? [['bksp', 'edit'] as Hint] : []), ['?', 'keys']]
     return {
       badge: filter ? 'BROWSE (FILTER)' : 'BROWSE',
       keys: [...this.rowKeys(enter), ...tail],
@@ -1743,44 +1496,47 @@ export class BrowsePanel {
   }
 
   private rowKeys(enter: Hint): Hint[] {
-    const list = this.list()
-    if (list) {
-      const row = list.focusedRow()
-      if (!row) {
-        return [enter]
-      }
-      if (list.foldable()) {
-        const open = (row.kind === 'group' || row.kind === 'catalog') && row.expanded
-        return [open ? ['←', 'close'] : ['→', 'open'], ['space', 'pick']]
-      }
-      const renewable = row.kind === 'palette' && this.updates.has(row.entry.name) && this.installed.has(row.entry.name)
-      return [
-        ['space', 'pick'],
-        ...(renewable ? [['ctrl+r', this.renew.has(row.entry.name) ? 'keep' : 'update'] as Hint] : []),
-        enter,
-      ]
-    }
-    if (this.tab === 'errors') {
+    const list = this.catalog
+    const row = list.focusedRow()
+    if (!row) {
       return [enter]
     }
-    const row = this.marketRow()
-    if (row?.kind === 'market') {
-      const m = row.market
-      const staged = this.adds.has(m.source) || this.removes.has(m.source)
+    if (row.kind === 'extra') {
+      const found = row.extra.found
+      if (found?.kind === 'find') {
+        return [['space', 'search'], enter]
+      }
+      if (found?.kind === 'add' || (found?.kind === 'repo' && !this.known(found.source))) {
+        return [['space', 'add'], enter]
+      }
+      return [enter]
+    }
+    const fold: Hint[] =
+      list.foldable() && (row.kind === 'group' || row.kind === 'catalog')
+        ? [row.expanded ? ['←', 'close'] : ['→', 'open']]
+        : []
+    const market = this.focusedMarket()
+    if (market) {
+      const remote = isRemote(market.source)
+      const staged = this.adds.has(market.source) || this.removes.has(market.source)
       return [
-        ['space', staged ? 'undo' : 'remove'],
-        ...(isRemote(m.source) ? [['←→', 'auto-update'] as Hint] : []),
-        ...(isRemote(m.source) && !this.adds.has(m.source) ? [['ctrl+r', 'update'] as Hint] : []),
-        enter,
+        ...fold,
+        ['space', 'pick'],
+        ...(remote ? [['⇧←→', 'auto-update'] as Hint] : []),
+        ...(remote && !this.adds.has(market.source) ? [['ctrl+r', 'update'] as Hint] : []),
+        ['del', staged ? 'undo' : 'remove'],
+        ...(fold.length > 0 ? [] : [enter]),
       ]
     }
-    if (row?.kind === 'find') {
-      return [['space', 'search'], enter]
+    if (fold.length > 0) {
+      return [...fold, ['space', 'pick']]
     }
-    if (row?.kind === 'add' || (row?.kind === 'repo' && !this.known(row.source))) {
-      return [['space', 'add'], enter]
-    }
-    return [enter]
+    const renewable = row.kind === 'palette' && this.updates.has(row.entry.name) && this.installed.has(row.entry.name)
+    return [
+      ['space', 'pick'],
+      ...(renewable ? [['ctrl+r', this.renew.has(row.entry.name) ? 'keep' : 'update'] as Hint] : []),
+      enter,
+    ]
   }
 
   private columns(): number {
@@ -1795,7 +1551,6 @@ export class BrowsePanel {
     const items = Math.max(MIN_ITEMS, this.rows() - used)
     this.maxItems = items
     this.catalog.maxItems = items
-    this.mine.maxItems = items
   }
 
   private view(): string[] {
@@ -1821,7 +1576,6 @@ export class BrowsePanel {
     const left = wide ? Math.min(cols - RIGHT - 4, LEFT_MAX) : width
     const strip = this.strip(width - 1)
     const head = [
-      ` ${this.tabBar()}`,
       ...(rows >= ROOMY
         ? [` ${this.heading()}`, ...this.searchBox(cols - 3).map((line) => ` ${line}`)]
         : [spread(` ${this.p.dim(MARKS.search)} ${this.searchText()}`, this.p.dim(this.counts()), width)]),
@@ -1832,8 +1586,8 @@ export class BrowsePanel {
       return this.small(cols, rows, chrome + MIN_ITEMS)
     }
     this.fitItems(chrome)
-    const { lines, above, below, empty } = this.body()
-    const body = lines.length > 0 ? lines.map((line) => ` ${line}`) : [` ${this.p.dim(empty)}`]
+    const { lines, above, below } = this.catalog.window()
+    const body = lines.map((line) => ` ${line}`)
     while (body.length < this.maxItems) {
       body.push('')
     }
@@ -1861,14 +1615,14 @@ export class BrowsePanel {
   private helpRows(): Hint[] {
     return [
       ['Move', '↑↓  home  end  pgup  pgdn'],
-      ['Series', '←→  ·  enter on a series'],
-      ['Pick', 'space  ·  a palette, a series, all'],
+      ['Open', '←→  ·  enter on a market or a series'],
+      ['Pick', 'space  ·  a palette, a series, a market'],
       ['Filter', 'Any text  ·  bksp  ·  ctrl-u clears'],
-      ['', 'Each tab keeps its own'],
-      ['Tabs', '⇧←→  Catalog, Installed, Markets, Errors'],
-      ...(this.active().length >= 2 ? [['Market', 'ctrl+s  ·  one market, then all'] as Hint] : []),
-      ['Markets', 'space  adds or removes  ·  ←→  auto-update'],
-      ['', 'ctrl+r  updates it, or searches again'],
+      ...(this.active().length >= 2 ? [['Scope', 'ctrl+s  ·  one market, then all'] as Hint] : []),
+      ['Market', '⇧←→  auto-update  ·  ctrl+r  updates it'],
+      ['', 'del  removes it  ·  again to undo'],
+      ['Add', 'owner/repo, a folder, or a row on GitHub'],
+      ['', 'space  adds it  ·  ctrl+r  searches again'],
       ['Update', 'ctrl+r  on a palette marked ↑'],
       ['Apply', 'enter  reviews and applies  ·  esc cancels'],
       ...(this.hub ? [['Screens', 'tab  ·  shift+tab'] as Hint] : []),

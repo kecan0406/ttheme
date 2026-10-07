@@ -26,16 +26,38 @@ __tt_palettes_load() {
   TTHEME_PALETTES_AT=$at[1]
 }
 
+__tt_specs_named() {
+  local v REPLY
+  reply=()
+  for v in TTHEME_SPEC TTHEME_PIN_SPEC TTHEME_BASE_SPEC TTHEME_SSH_SPEC TTHEME_SSH_BACK; do
+    [[ -n ${(P)v} ]] || continue
+    __tt_name_of "${(P)v}"
+    [[ -n ${TTHEME_PALETTE[$REPLY]} ]] && reply+=($v $REPLY)
+  done
+}
+
+__tt_respec() {
+  local spec=$TTHEME_SPEC v n worn
+  for v n in "$@"; do
+    [[ -n ${TTHEME_PALETTE[$n]} ]] || continue
+    typeset -g $v=${TTHEME_PALETTE[$n]}
+    [[ $v == TTHEME_SPEC ]] && worn=$n
+  done
+  [[ -n $worn && -n $TTHEME_PAINTED && $TTHEME_SPEC != "$spec" ]] && __tt_wear "$TTHEME_SPEC" $worn
+  return 0
+}
+
 __tt_fresh() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  local -a at
+  local -a at reply
   local was=$TTHEME_STARTUP start="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   if ! zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null; then
     [[ -e $TTHEME_HOME ]] || __tt_gone
     return 0
   fi
   if [[ $at[1] != "$TTHEME_PALETTES_AT" ]]; then
-    __tt_palettes_load && { __tt_follow "$start" && __tt_sync; __tt_reloaded }
+    __tt_specs_named
+    __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && __tt_sync; __tt_reloaded }
     [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
   fi
   at=("")
@@ -753,7 +775,7 @@ __tt_unpin_block() {
   [[ -n $cover ]] && __tt_pin_base "$cover" && top=$REPLY
   __tt_map_build "$top"
   __tt_map_fit $width
-  (( ${#reply} > room )) && reply=("${(@)reply[1,room-1]}" "   …")
+  (( ${#reply} > room )) && reply=("${(@)reply[1,room-1]}" "    …")
   block=("$bar" "${reply[@]}")
   __tt_unpin_then $width $gone
   block+=("${reply[@]}")
@@ -1042,11 +1064,11 @@ __tt_map_walk() {
   for (( i = 1; i <= ${#ks}; i++ )); do
     __tt_map_chain "$ks[i]" "${ks[i]:t}"
     if (( i < ${#ks} )); then
-      __tt_map_line "$reply[1]" "$pre$tip├─ $z" $(( $3 + 3 )) "$reply[2]"
-      __tt_map_walk "$reply[1]" "$pre$tip│  $z" $(( $3 + 3 ))
+      __tt_map_line "$reply[1]" "$pre$tip├── $z" $(( $3 + 4 )) "$reply[2]/"
+      __tt_map_walk "$reply[1]" "$pre$tip│   $z" $(( $3 + 4 ))
     else
-      __tt_map_line "$reply[1]" "$pre$tip└─ $z" $(( $3 + 3 )) "$reply[2]"
-      __tt_map_walk "$reply[1]" "$pre   " $(( $3 + 3 ))
+      __tt_map_line "$reply[1]" "$pre$tip└── $z" $(( $3 + 4 )) "$reply[2]/"
+      __tt_map_walk "$reply[1]" "$pre    " $(( $3 + 4 ))
     fi
   done
 }
@@ -1185,11 +1207,21 @@ __tt_map_fit() {
 }
 
 __tt_map_ssh() {
-  local k name flag
-  for k in ${(oi)${(M)${(k)TTHEME_PINS}:#ssh:*}}; do
-    name=$TTHEME_PINS[$k] flag=""
+  local k name flag tip=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset]
+  local -a ks=(${(oi)${(M)${(k)TTHEME_PINS}:#ssh:*}})
+  local -i i
+  (( ${#ks} )) || return 0
+  (( color )) || tip= z=
+  lp+=("") lpw+=(0) ll+=(ssh) lat+=(ssh:) lpal+=("") lnote+=("") lflag+=("")
+  for (( i = 1; i <= ${#ks}; i++ )); do
+    k=$ks[i] name=$TTHEME_PINS[$ks[i]] flag=""
     [[ -n ${TTHEME_PALETTE[$name]} ]] || flag="not installed"
-    lp+=("") lpw+=(0) ll+=("ssh ${k#ssh:}") lat+=("$k") lpal+=("$name") lnote+=("while connected") lflag+=("$flag")
+    if (( i < ${#ks} )); then
+      lp+=("$tip├── $z")
+    else
+      lp+=("$tip└── $z")
+    fi
+    lpw+=(4) ll+=("${k#ssh:}") lat+=("$k") lpal+=("$name") lnote+=("while connected") lflag+=("$flag")
   done
 }
 
@@ -1326,7 +1358,10 @@ __tt_catalog() {
 __tt_catalog_done() {
   [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
   local was=$TTHEME_PALETTES_AT
+  local -a reply
+  __tt_specs_named
   if __tt_palettes_load && [[ $TTHEME_PALETTES_AT != "$was" ]]; then
+    __tt_respec $reply
     __tt_reloaded
   fi
   [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$1" ]] && return 0
@@ -1503,7 +1538,12 @@ ttheme() {
   fi
 
   case $1 in
-    list|add|remove|update|market|new|edit|check|share) __tt_catalog "$@"; return ;;
+    list|add|remove|update|market|new) __tt_catalog "$@"; return ;;
+    edit|check|share)
+      local REPLY
+      __tt_name_of "$TTHEME_SPEC"
+      TTHEME_WORN=${TTHEME_PALETTE[$REPLY]:+$REPLY} __tt_catalog "$@"
+      return ;;
     on|off) __tt_switch "$@"; return ;;
     info) TTHEME_ZSH=$ZSH_VERSION __tt_cli "$@"; return ;;
   esac

@@ -105,16 +105,16 @@ the folders under its `palettes/` as catalogs:
 ```sh
 ttheme add dusk --market alice/ttheme-pastel  # add alice's market and install from it
 ttheme market add alice/ttheme-pastel#v1      # or add it alone, pinned to a tag
-ttheme                                        # shift+tab to Browse, shift+→ to Markets: add, remove, auto-update
+ttheme                                        # shift+tab to Browse: markets are rows there — add, remove, auto-update
 ```
 
-Browse handles markets the way it handles palettes: its Markets tab
+Browse handles markets the way it handles palettes: in the same list it
 adds one by repository or folder, finds the public ones on GitHub, marks one for
 removal and switches its auto-update, and enter applies all of it with the
 palettes you picked. The official catalog comes with ttheme and updates with it;
 a repository asks when you add it whether its list updates on its own, and a
 palette you installed from it keeps its colors until you take its update —
-`ctrl+r` on a palette marked `↑` in Browse's Installed tab. Nobody reviews a market. Its
+`ctrl+r` on a palette marked `↑` in Browse. Nobody reviews a market. Its
 palettes are colors and post numbers, never code, and the contrast gate's
 numbers are shown for them but never enforced — only the official catalog is
 held to the gate. `ttheme update` updates ttheme and refreshes every market now; `ttheme market
@@ -129,8 +129,12 @@ twenty colors that pass the contrast gate, then each one is tuned in OKLCH while
 the terminal repaints as you go. It makes `<you>@<market>/rei`, named after your
 GitHub handle and a market name the first `new` asks for, in
 `~/.config/ttheme/market/<market>`, and installs it; `--from rei` starts from
-rei's colors instead. `ttheme edit rei` opens the same editor, and `ttheme check
---fix` suggests colors that pass the gate.
+rei's colors instead. `ttheme edit rei` opens the same editor — on any palette,
+the official ones included: one that is not yours keeps your changes as a tone
+over its own colors, and `R` then `s` in the editor puts them back. `ttheme check
+--fix` writes colors that pass the gate (as a tone, for a palette that is not
+yours). Left without a palette, `edit`, `check` and `share` ask to use the one
+the tab wears; `share` into a pipe uses it without asking.
 
 A local market is already a repository layout: `palettes/*.toml` (a folder
 under it, such as `palettes/night/`, is a catalog) and the
@@ -157,11 +161,11 @@ without a market, fetching those posts from the booru the way `find` does.
 
 | Command | |
 |---|---|
-| `ttheme` | Preview and Browse as tabs of one screen — `tab` and `shift+tab` switch. Preview tries palettes live: the tab repaints as the cursor moves, enter applies it to this tab or makes it the default. Browse picks palettes and markets: `shift+←/→` moves between Catalog, Installed, Markets and Errors |
+| `ttheme` | Preview and Browse as tabs of one screen — `tab` and `shift+tab` switch. Preview tries palettes live: the tab repaints as the cursor moves, enter applies it to this tab or makes it the default. Browse picks palettes and markets in one list: a market's row takes `delete`, `shift+←/→` for its auto-update and `ctrl+r` |
 | `ttheme use <palette>` | Paint this tab (a unique prefix works) |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` | A palette for this directory, everything below it, its repository or an ssh host (`ssh:<host>`) — a panel shows what each choice reaches; `cd` or `ssh` in repaints, leaving restores |
-| `ttheme pins` | Map every pinned directory as a tree, in each palette's colors, with where you are marked, and every pinned ssh host |
+| `ttheme pins` | Map every pin as a file tree — the pinned directories in each palette's colors, with where you are marked, and every pinned ssh host |
 | `ttheme market add <owner/repo>` | Add someone's market (`#v1` pins it) — `ttheme market` lists yours; `search`, `remove` too |
 | `ttheme new <name>` | Make a palette of your own in the palette editor (`--from <palette>` starts from its colors); `edit`, `check`, `share` follow |
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |

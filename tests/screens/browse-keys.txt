@@ -1,23 +1,23 @@
- [Catalog]  Installed   Markets   Errors
- Discover palettes (6/6 · 2 picked)
+ Browse (6/6 · 2 picked)
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
                      ╭─ Help ─────────────────────────────────────────────────╮
-    ○ Select all (6) │                                                        │
- ▌  ▸ Bocchi the Rock│  Move      ↑↓  home  end  pgup  pgdn                   │
-    ▸ Lucky☆Star (1/3│  Series    ←→  ·  enter on a series                    │
-                     │  Pick      space  ·  a palette, a series, all          │
+ ▌  ▸ official (2/6) │                                                        │
+    ── On GitHub ────│  Move      ↑↓  home  end  pgup  pgdn                   │
+    ⌕ Find markets on│  Open      ←→  ·  enter on a market or a series        │
+                     │  Pick      space  ·  a palette, a series, a market     │
                      │  Filter    Any text  ·  bksp  ·  ctrl-u clears         │
-                     │            Each tab keeps its own                      │
-                     │  Tabs      ⇧←→  Catalog, Installed, Markets, Errors    │
-                     │  Markets   space  adds or removes  ·  ←→  auto-update  │
-                     │            ctrl+r  updates it, or searches again       │
+                     │  Market    ⇧←→  auto-update  ·  ctrl+r  updates it     │
+                     │            del  removes it  ·  again to undo           │
+                     │  Add       owner/repo, a folder, or a row on GitHub    │
+                     │            space  adds it  ·  ctrl+r  searches again   │
                      │  Update    ctrl+r  on a palette marked ↑               │
                      │  Apply     enter  reviews and applies  ·  esc cancels  │
                      │  Close     ?  esc                                      │
                      │                                                        │
                      ╰────────────────────────────────────────────────────────╯
+                                                               │
                                                                │
                                                                │
                                                                │

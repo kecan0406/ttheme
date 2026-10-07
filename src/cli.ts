@@ -3,7 +3,7 @@ import pkg from '../package.json' with { type: 'json' }
 import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
-import { runCheck, runEdit, runNew, runShare, runTone } from './craft.ts'
+import { runCheck, runEdit, runNew, runShare, runTone, shareThisTab, thisTab } from './craft.ts'
 import { runFind } from './find/find.ts'
 import { runBake, runFlatten, runImage } from './images.ts'
 import { runInfo } from './info.ts'
@@ -47,9 +47,19 @@ const RUNS: Record<string, Verb['run']> = {
   update: (markets) => runUpdate(markets),
   market: ([action, arg]) => runMarket(action, arg),
   new: ([name], { from, in: into }) => runNew(name as string, from, into),
-  edit: ([name]) => runEdit(name as string),
-  check: ([name], { fix }) => runCheck(name as string, fix),
-  share: ([name], { tone }) => runShare(name as string, tone as 'tuned' | 'original' | undefined),
+  edit: async (args) => runEdit(await paletteOf(args, 'edit')),
+  check: async (args, { fix }) => runCheck(await paletteOf(args, 'check'), fix),
+  share: async ([name], { tone }) => {
+    const asked = tone as 'tuned' | 'original' | undefined
+    if (name !== undefined) {
+      return runShare(name, asked)
+    }
+    const here = await shareThisTab(asked)
+    if (!here) {
+      throw new UsageError('name a palette', verbNamed('share'))
+    }
+    return runShare(here.name, here.tone)
+  },
   init: (_, { yes }) => runInit({ yes }),
   uninstall: (_, { yes }) => runUninstall(yes),
   wire: ([name]) => runWire(name as string),
@@ -89,6 +99,15 @@ function verbNamed(name: string): Verb {
     throw new UsageError(name.startsWith('-') ? `unknown option '${name}'` : `unknown command '${name}'`)
   }
   return verb
+}
+
+async function paletteOf([name]: string[], verb: string): Promise<string> {
+  const chosen = name ?? (await thisTab())
+  if (chosen === undefined) {
+    const worn = process.env.TTHEME_WORN
+    throw new UsageError(`name a palette${worn ? ` — this tab wears ${worn}` : ''}`, verbNamed(verb))
+  }
+  return chosen
 }
 
 function parseFlags(verb: Verb, args: string[]) {

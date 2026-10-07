@@ -46,6 +46,47 @@ function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
 }
 
+export async function thisTab(): Promise<string | undefined> {
+  const worn = process.env.TTHEME_WORN
+  if (!worn || !tty()) {
+    return undefined
+  }
+  const yes = await p.confirm({ message: `Use ${worn}, the palette this tab wears?` })
+  if (p.isCancel(yes) || !yes) {
+    throw new Cancelled()
+  }
+  return worn
+}
+
+export async function shareThisTab(
+  tone: 'tuned' | 'original' | undefined,
+): Promise<{ name: string; tone?: 'tuned' | 'original' } | undefined> {
+  const worn = process.env.TTHEME_WORN
+  if (!worn) {
+    return undefined
+  }
+  if (!tty()) {
+    console.error(`Sharing ${worn}, the palette this tab wears`)
+    return { name: worn, ...(tone ? { tone } : {}) }
+  }
+  if (tone !== undefined || readTone(configHome())[worn] === undefined) {
+    await thisTab()
+    return { name: worn, ...(tone ? { tone } : {}) }
+  }
+  const answer = await p.select({
+    message: `Share ${worn}, the palette this tab wears?`,
+    options: [
+      { value: 'tuned', label: 'Your tone', hint: `named ${tunedName(worn)}` },
+      { value: 'original', label: 'The original' },
+      { value: 'no', label: 'No' },
+    ],
+  })
+  if (p.isCancel(answer) || answer === 'no') {
+    throw new Cancelled()
+  }
+  return { name: worn, tone: answer as 'tuned' | 'original' }
+}
+
 function mine(name: string, home: string): string {
   if (name.includes('/')) {
     return name
@@ -253,16 +294,23 @@ export async function runEdit(name: string): Promise<void> {
   const ownFile = mineAt(home, own)
   const full = ownFile && existsSync(ownFile) ? own : view.palettes.some((e) => e.name === name) ? name : own
   const path = mineAt(home, full)
-  if (!path || !existsSync(path)) {
-    const known = view.palettes.some((e) => e.name === full)
-    throw new Error(
-      known
-        ? `${full} is not one of yours — \`ttheme new <name> --from ${full}\` makes your own copy`
-        : `no palette of yours called ${full} — \`ttheme new\` makes one`,
-    )
+  const theirs = !path || !existsSync(path)
+  if (theirs && !view.palettes.some((e) => e.name === full)) {
+    throw new Error(`no palette called ${full} — \`ttheme new\` makes one`)
   }
   if (!tty()) {
     throw new Error('edit opens the palette editor — run it in a terminal')
+  }
+  if (theirs) {
+    const count = await editTone(home, full, false)
+    console.log(
+      count === undefined
+        ? 'Nothing changed'
+        : count === 0
+          ? `${full} is back to its own colors`
+          : `Saved ${full} · ${tunedText(count)} — R then s in \`ttheme edit ${full}\` puts its own colors back`,
+    )
+    return
   }
   const before = readFileSync(path, 'utf8')
   let theme: Theme
@@ -320,18 +368,43 @@ const UNCHANGED = 2
 
 export async function runTone(name: string, action: string, width?: string): Promise<number> {
   const home = configHome()
-  const base = find(untuned(home, readCatalog(home), false).palettes, name)
-  const worn = tonedEntry(base, readTone(home)[name])
   if (action === 'show') {
+    const base = find(untuned(home, readCatalog(home), false).palettes, name)
+    const worn = tonedEntry(base, readTone(home)[name])
     console.log(toneRows(base, worn, !colorless(), width === undefined ? undefined : Number(width)).join('\n'))
     return 0
   }
+  if (action === 'reset') {
+    const tone = readTone(home)
+    if (tone[name] === undefined) {
+      return UNCHANGED
+    }
+    writeTone(home, withTone(tone, name, {}))
+    sync(home, readCatalog(home), readInstalled(home))
+    process.stderr.write('Back to the original colors')
+    return 0
+  }
   if (action !== 'edit') {
-    throw new Error(`tone takes show or edit, not ${action}`)
+    throw new Error(`tone takes show, edit or reset, not ${action}`)
   }
   if (!tty()) {
     throw new Error('needs a terminal')
   }
+  const count = await editTone(home, name, true)
+  if (count === undefined) {
+    return UNCHANGED
+  }
+  process.stderr.write(count === 0 ? 'Back to the original colors' : `Saved · ${tunedText(count)}`)
+  return 0
+}
+
+function tunedText(count: number): string {
+  return `${count} ${count === 1 ? 'color' : 'colors'} tuned`
+}
+
+async function editTone(home: string, name: string, hosted: boolean): Promise<number | undefined> {
+  const base = find(untuned(home, readCatalog(home), false).palettes, name)
+  const worn = tonedEntry(base, readTone(home)[name])
   const edited = await editColors(
     {
       title: 'Edit palette',
@@ -344,23 +417,19 @@ export async function runTone(name: string, action: string, width?: string): Pro
       decode: decoded,
       check: () => undefined,
     },
-    true,
+    hosted,
   )
   if (!edited) {
-    return UNCHANGED
+    return undefined
   }
   const tone = readTone(home)
   const over = overrideOf(base, listOf(edited.colors))
   if (JSON.stringify(over) === JSON.stringify(tone[name] ?? {})) {
-    return UNCHANGED
+    return undefined
   }
   writeTone(home, withTone(tone, name, over))
   sync(home, readCatalog(home), readInstalled(home))
-  const count = Object.keys(over).length
-  process.stderr.write(
-    count === 0 ? 'Back to the original colors' : `Saved · ${count} ${count === 1 ? 'color' : 'colors'} tuned`,
-  )
-  return 0
+  return Object.keys(over).length
 }
 
 function named(view: Manifest, name: string, home: string): PaletteEntry {
@@ -388,13 +457,19 @@ export function runCheck(name: string, fix = false): number {
     `\n${left.length === 0 ? 'These colors pass' : 'These colors come closer'}:\n${movesText(moves).join('\n')}`,
   )
   const path = mineAt(home, entry.name)
-  if (!path || !existsSync(path)) {
-    console.log(`\n\`ttheme new <name> --from ${entry.name}\` makes a copy you can fix`)
+  const theirs = !path || !existsSync(path)
+  if (!fix) {
+    console.log(`\n\`ttheme check --fix ${entry.name}\` writes them${theirs ? ' as your tone of it' : ''}`)
     return 1
   }
-  if (!fix) {
-    console.log(`\n\`ttheme check --fix ${entry.name}\` writes them`)
-    return 1
+  if (theirs) {
+    const base = find(untuned(home, catalog, false).palettes, entry.name)
+    writeTone(home, withTone(readTone(home), entry.name, overrideOf(base, listOf(colorsOfTheme(theme)))))
+    sync(home, catalog, state)
+    console.log(
+      `\nSaved as your tone of ${entry.name} — R then s in \`ttheme edit ${entry.name}\` puts its own colors back`,
+    )
+    return left.length === 0 ? 0 : 1
   }
   writeAtomic(path, recolor(readFileSync(path, 'utf8'), colorsOfTheme(theme)))
   if (state.palettes.includes(entry.name)) {

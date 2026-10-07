@@ -380,7 +380,7 @@ export const JOURNEYS: Journey[] = [
       const a = await p.open()
       await p.launch(a, 'ttheme', 'Browse')
       await p.keys(a, 'shift-tab')
-      await p.expect(a, 'Catalog')
+      await p.expect(a, 'GitHub')
       await p.keys(a, 'k', 'i', 't', 'a')
       await p.look('hover', { want: 'kita', picture: 'konata', text: true, wears: false })
       await p.quit(a)
@@ -395,7 +395,7 @@ export const JOURNEYS: Journey[] = [
       const a = await p.open()
       await p.launch(a, 'ttheme', 'Browse')
       await p.keys(a, 'shift-tab')
-      await p.expect(a, 'Catalog')
+      await p.expect(a, 'GitHub')
       await p.keys(a, 'k', 'i', 't', 'a')
       await p.quit(a)
       await p.type(a, 'ttheme use miku')
@@ -440,6 +440,20 @@ export const JOURNEYS: Journey[] = [
       const g = await ghostty.open()
       await ghostty.type(g, 'ttheme use kita')
       await ghostty.look('ghostty', { want: 'kita', opacity: '0.23' })
+    },
+  },
+  {
+    id: 'tone-reach',
+    about: 'a palette tuned in another tab repaints a tab already wearing it once that tab comes to the front',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use kita')
+      const b = await p.open()
+      await p.launch(b, 'ttheme edit kita', 'Edit palette')
+      await p.keys(b, 'enter', 'up', 'up', 'up', 'enter', 's')
+      await p.back(b)
+      await p.focus(a)
+      await p.look('tuned', { want: 'kita' })
     },
   },
   {

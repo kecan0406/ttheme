@@ -290,6 +290,10 @@ __tt_pv_row() {
   [[ -n ${TTHEME_CATALOG[$t]} && ${TTHEME_GROUP[$t]} == *@* ]] && ind="     "
   __tt_pv_hl "$name" "$base"
   hl=$REPLY
+  if (( ${TTHEME_TUNED[(Ie)$t]} )); then
+    (( color )) && hl+=" "$TTHEME_SGR[warn]"●"$TTHEME_SGR[/warn] || hl+=" ●"
+    w=-2
+  fi
   extra=""
   for part in "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
     __tt_pv_alias "$name" "$part"
@@ -297,7 +301,7 @@ __tt_pv_row() {
   done
   if (( color )); then
     [[ -n ${tstrip[$t]} ]] || __tt_pv_strip $t
-    w=$(( lw - 16 - ${#ind} - ${#name} ))
+    w=$(( w + lw - 16 - ${#ind} - ${#name} ))
     __tt_pv_fit "$extra"
     (( w < 1 )) && w=1
     REPLY=$gut$on"$ind$mark $base$hl$r$REPLY${(l:w:: :)}${tstrip[$t]} "$z
@@ -394,6 +398,8 @@ __tt_pv_foot() {
     right=$b"esc"$z$d" back"$z
   elif (( te && tfocus == 0 )); then
     badge=$tb kk=(enter ↑↓ s ⇧enter) kl=("edit palette" move save apply)
+    (( tbtn )) && kl[1]="reset palette"
+    (( ${TTHEME_TUNED[(Ie)$tename]} )) && kk[2]=↑↓←→
     right=$b"esc"$z$d" cancel"$z
   elif (( te && tfocus == 2 )); then
     badge=$tb kk=(enter ↑↓ s) kl=(apply move save)
@@ -560,7 +566,7 @@ __tt_pv_help() {
     hv+=("?  esc")
   fi
   (( color )) || z= b=
-  local -i i r x y w hh
+  local -i i r x y w hh floor
   if (( split && sw >= 48 )); then
     for (( i = 1; i <= ${#hk}; i++ )); do
       r=$(( i + 3 ))
@@ -572,7 +578,10 @@ __tt_pv_help() {
   w=$(( pw - 2 < 58 ? pw - 2 : 58 )) hh=$(( ${#hk} + 4 ))
   (( te )) && w=$(( pw - 2 < 76 ? pw - 2 : 76 ))
   x=$(( (pw - w) / 2 + 1 )) y=$(( (ph - hh) / 2 ))
-  (( y < 4 )) && y=4
+  floor=$(( te && ! split ? 4 : pvhd + 2 ))
+  (( y < floor )) && y=$floor
+  (( y > ph - hh )) && y=$(( ph - hh ))
+  (( y < 1 )) && y=1
   blank=${(l:w:: :)}
   out+=$'\e['$y';'$x'H'"╭─ Help ${(l:$(( w - 9 ))::─:)}╮"
   for (( r = y + 1; r < y + hh - 1; r++ )); do
@@ -904,7 +913,7 @@ __tt_pv_flush() {
   elif (( ${#bgthumb} )); then
     __tt_pv_bg_strip_off
   fi
-  printf '\e[1;%dH\e[?2026l' $(( 4 + ${(m)#flt} ))
+  printf '\e[%d;%dH\e[?2026l' $pvsr $pvsc
 }
 
 __tt_pv_reach() {
@@ -941,7 +950,7 @@ __tt_pv_reach() {
     __tt_map_build "$top"
   fi
   __tt_map_fit $1
-  (( ${#reply} > room )) && reply=("${(@)reply[1,room-1]}" "   …")
+  (( ${#reply} > room )) && reply=("${(@)reply[1,room-1]}" "    …")
   reach=("${reply[@]}")
   [[ $key == /* || ${#was} -gt 0 ]] && reach+=("")
   __tt_pin_where "$key"
@@ -960,7 +969,7 @@ __tt_pv_reach() {
 
 __tt_pv_draw() {
   local out line cnt ex ag="" acat="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" nflt="" rsub="" REPLY
-  local -i lw sw split sc se=$(( pw - 2 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0
+  local -i lw sw split sc se=$(( pw - 2 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
   local -a held
   bgstrip=""
   if [[ -n $flt ]]; then
@@ -970,15 +979,16 @@ __tt_pv_draw() {
   __tt_pv_lw
   lw=$reply[1] sw=$reply[2]
   split=$(( sw > 0 )) sc=$(( pw - 1 - sw ))
-  h=$(( ph - 5 ))
-  (( conf && ! split )) && h=$(( ph - 6 - ${#cvars} ))
+  hd=$(( tall ? hub + 4 : 2 )) pvhd=$hd
+  h=$(( ph - hd - 3 ))
+  (( conf && ! split )) && h=$(( ph - hd - 4 - ${#cvars} ))
   reach=()
   if [[ -n $pick && $mode == pin ]]; then
     if (( split )); then
       __tt_pv_reach $sw $(( ph - 6 ))
     else
-      __tt_pv_reach $se $(( ph - 13 ))
-      h=$(( ph - 6 - ${#reach} ))
+      __tt_pv_reach $se $(( ph - hd - 11 ))
+      h=$(( ph - hd - 4 - ${#reach} ))
     fi
   fi
   (( h < 1 )) && h=1
@@ -1029,15 +1039,14 @@ __tt_pv_draw() {
     __tt_pv_te_draw
     return 0
   fi
+  local find bd="" edge=${(l:$(( lw - 3 ))::─:)}
+  (( color )) && bd=$TTHEME_SGR[bold]
   if [[ -n $flt ]]; then
-    if (( color )); then
-      line="   "$TTHEME_SGR[bold]$flt$zz$ac$TTHEME_SGR[reverse]" "$TTHEME_SGR[reset]
-    else
-      line="   ${flt}_"
-    fi
+    find=$flt"_"
   else
     ex="$expal | $exgrp"
-    (( ${#ex} > lw - 19 - ${#cnt} )) && ex="${ex[1,lw-20-${#cnt}]}…"
+    local -i room=$(( tall ? lw - 21 : lw - 19 - ${#cnt} ))
+    (( ${#ex} > room )) && ex="${ex[1,room-1]}…"
     if (( gstep > 0 )); then
       local gkeep=$(( ${#ex} * (8 - gstep) / 8 ))
       if [[ $TTHEME_FX == (decode|glitch) ]]; then
@@ -1055,27 +1064,37 @@ __tt_pv_draw() {
         ex="${ex[1,gkeep]}▏"
       fi
     fi
-    line="   "$dd"Search… e.g. $ex"$zz
+    find=$dd"Search… e.g. $ex"$zz
   fi
-  local tail=$'\e['$(( lw - ${#cnt} ))'G'$dd$cnt$zz
-  [[ -n $flt ]] && tail=$'\e['$(( lw - ${#cnt} ))'G'$cnt
+  if (( tall )); then
+    pvsr=$(( hub + 3 )) pvsc=$(( 6 + ${(m)#flt} ))
+    line=$'\e['$lw'X '$dd"│"$zz" "$dd"⌕"$zz" "$find$'\e['$lw'G'$dd"│"$zz
+  else
+    pvsr=$(( hub + 1 )) pvsc=$(( 4 + ${(m)#flt} ))
+    line=$'\e['$lw'X '$dd"⌕"$zz" "$find$'\e['$(( lw - ${#cnt} ))'G'$dd$cnt$zz
+  fi
   if [[ $1 == hint ]] && (( ! wiped )); then
-    print -rn -- $'\e['$(( 1 + hub ))'H'$TTHEME_SGR[reset]$'\e['$lw'X'$line$tail
-    printf '\e[%d;%dH\e[?2026l' $(( 1 + hub )) $(( 4 + ${(m)#flt} ))
+    print -rn -- $'\e['$pvsr'H'$TTHEME_SGR[reset]$line
+    printf '\e[%d;%dH\e[?2026l' $pvsr $pvsc
     return 0
   fi
   if (( hub )); then
     __tt_pv_bar $(( split ? sc - 2 : pw - 1 ))
-    out+=$REPLY$'\e[K\n'$line$'\e[K'$tail$'\n'
+    out+=$REPLY$'\e[K\n'
+  fi
+  if (( tall )); then
+    out+=" "$bd"Preview"$zz" "$dd"($cnt)"$zz$'\e[K\n'
+    out+=" "$dd"╭"$edge"╮"$zz$'\e[K\n'$line$'\e[K\n'" "$dd"╰"$edge"╯"$zz$'\e[K\n'
   else
-    out+=$line$'\e[K'$tail$'\n\e[K\n'
+    out+=$line$'\e[K\n'
+    (( hub )) || out+=$'\e[K\n'
   fi
   if (( N > h && top > 1 )); then
     out+="   "$dd"…"$zz
-    pvz+=("3 1 $lw more -1")
+    pvz+=("$(( hd + 1 )) 1 $lw more -1")
   fi
   out+=$'\e[K\n'
-  for (( k = 0; k < ph - 4; k++ )); do
+  for (( k = 0; k < ph - hd - 2; k++ )); do
     i=$(( top + k ))
     line=""
     if (( k < h )); then
@@ -1084,15 +1103,15 @@ __tt_pv_draw() {
       elif (( i <= N )); then
         __tt_pv_row $i
         line=$REPLY
-        pvz+=("$(( 4 + k )) 1 $lw row $i")
+        pvz+=("$(( hd + 2 + k )) 1 $lw row $i")
         case ${rtype[i]} in
-          hdr) pvz+=("$(( 4 + k )) 3 5 fold $i") ;;
-          cat) pvz+=("$(( 4 + k )) 5 7 fold $i") ;;
+          hdr) pvz+=("$(( hd + 2 + k )) 3 5 fold $i") ;;
+          cat) pvz+=("$(( hd + 2 + k )) 5 7 fold $i") ;;
         esac
       fi
     elif (( k == h && N > h && top + h <= N )); then
       line="   "$dd"…"$zz
-      pvz+=("$(( 4 + k )) 1 $lw more 1")
+      pvz+=("$(( hd + 2 + k )) 1 $lw more 1")
     fi
     out+=$line$'\e[K\n'
   done
@@ -1368,12 +1387,15 @@ __tt_pv_free() {
 }
 
 __tt_pv_press() {
+  [[ $4 == tereset ]] || tearm=0
   case $4 in
     row|fold) __tt_pv_free && [[ ${rtype[$5]} != rule ]] && cur=$5 ;;
     pick) pk=$5 ;;
     conf) cf=$5 ;;
     teimg) (( tfocus == 1 )) || __tt_te_to_image ;;
-    tepal|teedit) tfocus=0 ;;
+    tepal) tfocus=0 ;;
+    teedit) tfocus=0 tbtn=0 ;;
+    tereset) tfocus=0 tbtn=1 ;;
     tefield|track|place|colors)
       (( tfocus == 1 )) || __tt_te_to_image
       case $4 in
@@ -1430,6 +1452,7 @@ __tt_pv_release() {
       ;;
     tefind) __tt_te_find ;;
     teedit) __tt_te_edit ;;
+    tereset) __tt_te_resetting ;;
     teapply) __tt_te_apply || return 1 ;;
     place) __tt_pv_bg_adjust at $5 ;;
     colors)
@@ -1556,7 +1579,7 @@ __tt_te_read() {
 
 __tt_te_open() {
   local name=$1
-  tename=$name tfocus=0 teframe=() tetop=0 msgt=0 te=1
+  tename=$name tfocus=0 teframe=() tetop=0 msgt=0 te=1 tbtn=0 tearm=0
   if ! __tt_te_read; then
     msg="Could not read the colors of $name" msgt=300
     tename="" te=0
@@ -1570,7 +1593,7 @@ __tt_te_open() {
 
 __tt_te_close() {
   [[ -n $tune ]] && __tt_pv_untune
-  te=0 tfocus=0 tename="" teframe=() tetop=0 help=0 pick=""
+  te=0 tfocus=0 tename="" teframe=() tetop=0 tbtn=0 tearm=0 help=0 pick=""
   resized=1 bgname=""
   return 0
 }
@@ -1642,8 +1665,14 @@ __tt_pv_unpaint() {
   fi
 }
 
+__tt_te_follow() {
+  [[ $orig == "$1" && -n ${TTHEME_PALETTE[$tename]} ]] || return 0
+  orig=${TTHEME_PALETTE[$tename]}
+  TTHEME_SPEC=$orig
+}
+
 __tt_te_edit() {
-  local name=$tename err back=$applied
+  local name=$tename err back=$applied was=${TTHEME_PALETTE[$tename]}
   local -i rc
   __tt_te_save_image
   __tt_pv_untune
@@ -1658,6 +1687,7 @@ __tt_te_edit() {
   resized=1 bgname="" bgshown="" bgdim=()
   if (( rc == 0 )); then
     __tt_palettes_load && __tt_reloaded
+    __tt_te_follow "$was"
     __tt_reload
     back=${TTHEME_PALETTE[$name]:-$back}
   fi
@@ -1675,11 +1705,56 @@ __tt_te_edit() {
   return 0
 }
 
+__tt_te_reset() {
+  local name=$tename err was=${TTHEME_PALETTE[$tename]}
+  local -i rc
+  __tt_te_save_image
+  __tt_pv_untune
+  __tt_pv_bg_close
+  err=$(__tt_cli tone $name reset 2>&1 >/dev/null)
+  rc=$?
+  err=${${err//$'\n'/ }## #}
+  tbtn=0 tearm=0 resized=1 bgname="" bgshown="" bgdim=()
+  if (( rc == 0 )); then
+    __tt_palettes_load && __tt_reloaded
+    __tt_te_follow "$was"
+    __tt_reload
+    [[ -n ${TTHEME_PALETTE[$name]} ]] && __tt_pv_paint "${TTHEME_PALETTE[$name]}" && applied=${TTHEME_PALETTE[$name]}
+    __tt_pv_bg_reset $name
+    bgload[$name]=""
+    __tt_te_read
+    msg=${err:-"Back to the original colors"} msgt=200
+  elif (( rc == 1 )); then
+    msg=${err:-"Could not reset the colors of $name"} msgt=300
+  fi
+  __tt_pv_bg_state $name && __tt_pv_tune_open $name
+  return 0
+}
+
+__tt_te_resetting() {
+  if (( tearm )); then
+    __tt_te_reset
+  else
+    tearm=1
+  fi
+}
+
 __tt_te_palette() {
+  local -i armed=$tearm
+  tearm=0
+  (( ${TTHEME_TUNED[(Ie)$tename]} )) || tbtn=0
   case $key in
-    $'\r'|$'\n') __tt_te_edit ;;
+    $'\r'|$'\n')
+      if (( tbtn )); then
+        tearm=$armed
+        __tt_te_resetting
+      else
+        __tt_te_edit
+      fi
+      ;;
+    left|right) (( ${TTHEME_TUNED[(Ie)$tename]} )) && tbtn=$(( ! tbtn )) ;;
     s) __tt_te_save ;;
-    esc) __tt_te_close ;;
+    esc) (( armed )) || __tt_te_close ;;
     up|k)
       if __tt_te_image; then
         __tt_te_to_image last
@@ -1856,19 +1931,33 @@ __tt_pv_te_images() {
   pvz+=("$y $col $end teimg")
 }
 
+__tt_pv_te_button() {
+  if (( tfocus == 0 && tbtn == $1 )); then
+    (( color )) && out+=$ac"▶"$z" "$pl" $2 "$z || out+="▶ [$2]"
+  else
+    (( color )) && out+="  "$b" $2 "$z || out+="   $2 "
+  fi
+}
+
 __tt_pv_te_editrow() {
   local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold] note="tunes its colors full screen"
-  local -i y=$1 col=$2 end=$3
+  local -i y=$1 col=$2 end=$3 x=$(( $2 + 2 ))
+  local reset="Reset palette"
   (( color )) || z= d= b=
-  pvz+=("$y $col $end teedit")
-  out+=$'\e['$y';'$(( col + 2 ))'H'
-  if (( tfocus == 0 )); then
-    (( color )) && out+=$ac"▶"$z" "$pl" Edit palette "$z || out+="▶ [Edit palette]"
-  else
-    (( color )) && out+="  "$b" Edit palette "$z || out+="   Edit palette "
+  out+=$'\e['$y';'$x'H'
+  __tt_pv_te_button 0 "Edit palette"
+  pvz+=("$y $col $(( x + 15 )) teedit")
+  x+=16
+  if (( ${TTHEME_TUNED[(Ie)$tename]} )); then
+    out+="  "
+    (( tearm )) && reset="Reset? enter again"
+    __tt_pv_te_button 1 "$reset"
+    pvz+=("$y $(( x + 2 )) $(( x + ${#reset} + 5 )) tereset")
+    x+=$(( ${#reset} + 6 ))
+    (( tfocus == 0 && tbtn )) && note="back to its own colors"
+    (( tearm )) && note="drops your tone"
   fi
-  (( ${#note} > end - col - 21 )) && note=${note[1,end-col-21]}
-  out+="  "$d$note$z
+  (( ${#note} <= end - x - 3 )) && out+="  "$d$note$z
 }
 
 __tt_pv_te_panel() {
@@ -2082,7 +2171,7 @@ __tt_pv_handle() {
       if (( cur <= 1 )); then
         (( ${#rval} )) && cur=${#rval}
       else
-        cur=$(( cur - ph + 5 ))
+        cur=$(( cur - ph + pvhd + 3 ))
         (( cur < 1 )) && cur=1
         [[ ${rtype[cur]} == rule ]] && cur=$(( cur - 1 ))
       fi
@@ -2091,7 +2180,7 @@ __tt_pv_handle() {
       if (( cur >= ${#rval} )); then
         cur=1
       else
-        cur=$(( cur + ph - 5 ))
+        cur=$(( cur + ph - pvhd - 3 ))
         (( cur > ${#rval} )) && cur=${#rval}
         [[ ${rtype[cur]} == rule ]] && cur=$(( cur + 1 ))
       fi
@@ -2146,7 +2235,7 @@ __tt_preview() {
     print -u2 "ttheme $mode: needs a terminal"
     return 1
   fi
-  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC painted=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0 tick=0
+  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC painted=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0 tick=0 pvhd=2 pvsr=1 pvsc=4
   local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown="" bginc="" osd="" osdt=0
   local tune="" tpick="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bganchor=0 bgcut="" bgnext=0 bgbytes=0 bgstrip="" pvscene="" pvscenes=""
   local -i scene=0
@@ -2155,7 +2244,7 @@ __tt_preview() {
   local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgprep=() TTHEME_ALIASES=()
   local conf=0 cf=1
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
-  local te=0 tfocus=0 tetop=0 tewide=0 tename=""
+  local te=0 tfocus=0 tetop=0 tewide=0 tbtn=0 tearm=0 tename=""
   local -i pvgone=0 bgprepid=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
   local -F mlast=0
   local mact="" mzone="" pvmouse=""

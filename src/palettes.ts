@@ -212,7 +212,13 @@ function aliasesFor(entries: PaletteEntry[], home: string): Record<string, strin
 
 function writeTable(ctx: Ctx, host: Host, repainted: boolean): string {
   const table = join(ctx.configHome, 'ttheme', 'palettes.zsh')
-  const content = palettesZsh(ctx.entries, ctx.startup, ctx.state.terminals, layer(ctx, host))
+  const content = palettesZsh(
+    ctx.entries,
+    ctx.startup,
+    ctx.state.terminals,
+    layer(ctx, host),
+    Object.keys(readTone(ctx.configHome)),
+  )
   if (repainted || readText(table) !== content) {
     writeAtomic(table, content)
     rmSync(`${table}.zwc`, { force: true })

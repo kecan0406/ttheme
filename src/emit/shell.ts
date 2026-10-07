@@ -20,6 +20,7 @@ export function palettesZsh(
   startup?: string,
   terminals: readonly string[] = [],
   layer: Readonly<Record<string, string>> = {},
+  tuned: readonly string[] = [],
 ): string {
   for (const p of palettes) {
     for (const field of [p.name, p.group, p.native ?? '', ...(p.nativeNames ?? []), p.ansiSource]) {
@@ -88,6 +89,12 @@ export function palettesZsh(
     'typeset -gA TTHEME_PALETTE=(',
     ...palettes.map((p) => entry(p, [p.background, p.foreground, p.cursor, p.selection, ...p.ansi].join(' '))),
     ')',
+    '',
+    "# the palettes whose colors your tone moves off their market's (tone.json): lists mark them, and preview's panel offers to reset them",
+    `typeset -ga TTHEME_TUNED=(${palettes
+      .filter((p) => tuned.includes(p.name))
+      .map((p) => p.name)
+      .join(' ')})`,
     '',
     '# series order: new tabs cycle through it and TTHEME_SORT=series lists it — the default role stays applyable but unlisted',
     `typeset -ga TTHEME_ORDER=(${names(rotation)})`,

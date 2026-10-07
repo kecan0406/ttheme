@@ -577,7 +577,9 @@ function topBar(e: PaletteEditor, p: Paint, width: number): string {
   const changes = e.changes()
   const dot = p.warn(MARKS.on)
   const state = dirty ? `${dot} ${p.dim(changes > 0 ? `unsaved · ${changes} changed` : 'unsaved')}` : ''
-  const buttons = dirty ? `${keyZone('R', p.dim('Reset'))}  ${keyZone('s', pillOf(p, 'Save'))}` : ''
+  const buttons = [e.resettable() ? keyZone('R', p.dim('Reset')) : '', dirty ? keyZone('s', pillOf(p, 'Save')) : '']
+    .filter(Boolean)
+    .join('  ')
   const left = [title, state, buttons].filter(Boolean).join('   ')
   const button = (word: string, label: string, on: boolean) => keyZone(word, on ? pillOf(p, label) : p.dim(label))
   const pictures = e.options.find || e.pictures > 0

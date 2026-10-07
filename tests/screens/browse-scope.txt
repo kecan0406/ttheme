@@ -1,15 +1,17 @@
- [Catalog]  Installed   Markets   Errors
- Discover palettes (1/4 · 1 picked)
+ Browse (1/4 · 1 picked)
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ v_                                                                                          │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
  All 10 · official 6 · [fix@shop 4]  ctrl+s market
-                                                               │ fix@shop/volt
-    ○ Select all (1)                                           │ ~/shop
-    ▾ fix@shop (0/1)                                           │ neon
-      ▾ neon (0/1)                                             │ Not installed
- ▌      ○ volt                                                 │
-                                                               │ Gate 9/9 · passes
+                                                               │ GitHub
+    ▾ fix@shop (0/1)                                           │ Repositories with the
+      ▾ neon (0/1)                                             │ ttheme-market topic
+        ○ volt                                                 │ Matching "v"
+    ── On GitHub ──────────                                    │
+ ▌  ⌕ Find "v" on GitHub  space searches                       │ space searches GitHub
+                                                               │
+                                                               │ Type owner/repo or a folder to add
+                                                               │ one
                                                                │
                                                                │
                                                                │
@@ -19,6 +21,4 @@
                                                                │
                                                                │
                                                                │
-                                                               │
-                                                               │
- [BROWSE (FILTER)] space pick   enter close   ⇧←→ tabs   bksp edit   ? keys        esc clear filter
+ [BROWSE (FILTER)] space search   enter close   bksp edit   ? keys                 esc clear filter

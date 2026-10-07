@@ -149,7 +149,7 @@ test('series rows are folded headers matched through any member', () => {
     ['Madoka Magica (2)'],
   )
   assert.deepEqual(
-    seriesRows(entries, '').map((r) => (r.kind === 'group' ? r.lead.name : '')),
+    seriesRows(entries, '').map((r) => (r.kind === 'group' ? r.lead?.name : '')),
     ['miku', 'homura'],
   )
 })

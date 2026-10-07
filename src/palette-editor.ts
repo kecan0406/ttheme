@@ -623,6 +623,10 @@ export class PaletteEditor {
     )
   }
 
+  resettable(): boolean {
+    return this.dirty() || (this.tone && this.list.some((c, i) => c !== this.original[i]))
+  }
+
   misses(): Set<number> {
     return misses(this.list, this.signature, this.waive)
   }

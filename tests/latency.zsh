@@ -219,7 +219,7 @@ typing() {
   upto false 0.3 $name || :
   local -i from=${#BUF}
   upto 'ticks $from && (( REPLY >= 8 || $#reply ))' 6 $name || { fail "$name: preview's search hint never animated while it sat idle"; return 1 }
-  (( ! $#reply )) || { fail "$name: while preview sat idle, its search hint redrew the whole screen (${reply[1]} characters) instead of its first row"; return 1 }
+  (( ! $#reply )) || { fail "$name: while preview sat idle, its search hint redrew the whole screen (${reply[1]} characters) instead of its search row"; return 1 }
   zpty -w -n sh $'\e'
   upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
   stop

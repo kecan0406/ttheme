@@ -1,5 +1,7 @@
-   Search… ‹hint›
-
+ Preview (2/2)
+ ╭─────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰─────────────────────────────────────────────╯
 
    ▾ Bocchi the Rock!                         1
 ▌    ■ kita
@@ -13,11 +15,9 @@
 
 
 
-
-
 kita  → ~/work · this directory
 ~/work ← here  kita  this directory  new
-└─ site        kita  this directory
+└── site/      kita  this directory
 
 Replaces konata on ~/work · and below
 Then here · kita pinned to this directory

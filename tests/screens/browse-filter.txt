@@ -1,14 +1,13 @@
- [Catalog]  Installed   Markets   Errors
- Discover palettes (1/6 · 2 picked)
+ Browse (1/6 · 2 picked)
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ ki_                                                                                         │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
                                                                │ kita
-    ● Select all (1)                                           │ The ttheme catalog
-    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!               │ Bocchi the Rock!
- ▌    ● kita                                                   │ ぼっち・ざ・ろっく!
-                                                               │ Installed
-                                                               │
+    ▾ official (1/1)                                           │ The ttheme catalog
+      ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!             │ Bocchi the Rock!
+ ▌      ● kita                                                 │ ぼっち・ざ・ろっく!
+    ── On GitHub ──────────                                    │ Installed
+    ⌕ Find "ki" on GitHub  space searches                      │
                                                                │ Gate 9/9 · passes
                                                                │
                                                                │
@@ -21,4 +20,5 @@
                                                                │
                                                                │
                                                                │
- [BROWSE (FILTER)] space pick   enter close   ⇧←→ tabs   bksp edit   ? keys        esc clear filter
+                                                               │
+ [BROWSE (FILTER)] space pick   enter close   bksp edit   ? keys                   esc clear filter

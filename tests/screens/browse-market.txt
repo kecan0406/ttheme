@@ -1,24 +1,24 @@
- [Catalog]  Installed   Markets   Errors
- Discover palettes (10/10 · 2 picked)
+ Browse (10/10 · 2 picked)
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
  [All 10] · official 6 · fix@shop 4  ctrl+s market
                                                                │ fix@shop/arcade
-    ○ Select all (10)                                          │ ~/shop
-    ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっく!               │ neon
-    ▸ Lucky☆Star (1/3) らき☆すた                               │ Installed
-    ── Markets ──────────                                      │
-    ▾ fix@shop (1/4)                                           │ Gate 8/9
-      ▾ neon (1/2)                                             │ ✗ accent hue outside its ANSI role
- ▌      ● arcade                                               │   16.644 > 0
-        ○ volt                                                 │
-      ▸ pastel (0/1)                                           │
-      ○ dusk                                                   │
+    ▸ official (1/6)                                           │ ~/shop
+    ▾ fix@shop (1/4)                                           │ neon
+      ▾ neon (1/2)                                             │ Installed
+ ▌      ● arcade                                               │
+        ○ volt                                                 │ Gate 8/9
+      ▸ pastel (0/1)                                           │ ✗ accent hue outside its ANSI role
+      ○ dusk                                                   │   16.644 > 0
+    ── On GitHub ──────────                                    │
+    ⌕ Find markets on GitHub  space searches                   │
                                                                │
                                                                │
                                                                │
                                                                │
                                                                │
                                                                │
- [BROWSE] space pick   enter close   ⇧←→ tabs   ? keys                                   esc cancel
+                                                               │
+                                                               │
+ [BROWSE] space pick   enter close   ? keys                                              esc cancel

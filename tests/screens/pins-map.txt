@@ -1,12 +1,13 @@
 ttheme: unknown palette 'ryo' pinned to ~/notes/**
 ~
-├─ notes                     ryo     and below · not installed
-└─ work                      konata  and below
-   ├─ api/v2 ← here
-   └─ site                   kita    this directory
+├── notes/                   ryo     and below · not installed
+└── work/                    konata  and below
+    ├── api/v2/ ← here
+    └── site/                kita    this directory
 /nonexistent-ttheme/archive  kita    and below · no such directory
-ssh *.prod                   kita    while connected
-ssh tusa                     konata  while connected
+ssh
+├── *.prod                   kita    while connected
+└── tusa                     konata  while connected
 
 Here · konata pinned to ~/work and below
 ttheme pin picks one here · ttheme unpin drops one · ~/ttheme/pins

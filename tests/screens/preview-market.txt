@@ -1,14 +1,14 @@
  [Preview]  Browse   ⇧tab switch
-   Search… ‹hint›
+ Preview (2/2)
+ ╭─────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰─────────────────────────────────────────────╯
 
    ▸ Lucky☆Star                               1
    ── Markets ─────────────────────────────────
    ▾ fix@shop                                 1
      ▾ neon                                   1
 ▌      ■ arcade
-
-
-
 
 
 

@@ -1,15 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs'
-import { type BrowseIo, BrowsePanel, type BrowseResult, type Market, type Problem } from './browse-panel.ts'
-import {
-  available,
-  catalogPath,
-  parseCatalog,
-  readArchive,
-  readCachedArchive,
-  readCatalog,
-  readKept,
-  updatesOf,
-} from './catalog.ts'
+import { type BrowseIo, BrowsePanel, type BrowseResult, type Market } from './browse-panel.ts'
+import { available, readCatalog, readKept, updatesOf } from './catalog.ts'
 import { HUB_CLOSED, hubOf } from './hub.ts'
 import { reload, takeUpdates } from './installs.ts'
 import { liveOf } from './live.ts'
@@ -17,21 +7,19 @@ import { listed, type PaletteEntry } from './manifest.ts'
 import { dropCache, findMarkets, idOf, keptNote, lastUpdate, withMarkets } from './markets.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
-import { type Report, readMarketDir, warning } from './own.ts'
+import { readMarketDir, warning } from './own.ts'
 import { promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, type Installed, readInstalled, worn, writeInstalled } from './palettes.ts'
 import { into, say } from './pending.ts'
 import { bringPictures } from './pictures.ts'
 import {
   AUTO_TIMEOUT,
-  ago,
   applyRefreshed,
   cachedEntries,
   cachedMarket,
   counted,
   dueSources,
   type Fetched,
-  fetchedAt,
   fetchMarket,
   readTries,
   refreshMarket,
@@ -42,7 +30,6 @@ import {
 import { autoWanted } from './release.ts'
 import {
   autoUpdates,
-  cachePath,
   isLocal,
   isRemote,
   localIdentity,
@@ -53,6 +40,7 @@ import {
   shownSource,
 } from './sources.ts'
 import { alphabetical, marketOf } from './theme.ts'
+import { readTone } from './tone.ts'
 
 function marketState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Market {
   const market = source === OFFICIAL ? undefined : cachedMarket(home, source)
@@ -71,50 +59,6 @@ function marketState(home: string, state: Installed, source: string, tries: Reco
     auto: autoUpdates(source, state.updates),
     status: lastUpdate(home, source, tries),
   }
-}
-
-function message(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
-}
-
-function problemsOf(home: string, state: Installed, tries: Record<string, Tried>, markets: Market[]): Problem[] {
-  const names = new Map(markets.map((m) => [m.source, m.id]))
-  const problems: Problem[] = []
-  const filed: Report = (where, text) => problems.push({ where, message: text })
-  for (const source of marketsOf(state.markets)) {
-    const where = names.get(source) ?? shownSource(source)
-    const failed = tries[source]
-    const at = fetchedAt(home, source)
-    if (failed && (at === undefined || failed.at > at)) {
-      problems.push({ where, source, update: true, message: `Update failed ${ago(failed.at)}: ${failed.error}` })
-    }
-    if (source === OFFICIAL) {
-      try {
-        parseCatalog(readFileSync(catalogPath(home), 'utf8'))
-      } catch (error) {
-        problems.push({ where, source, message: `${shownSource(catalogPath(home))}: ${message(error)}` })
-      }
-    } else if (isRemote(source)) {
-      if (!existsSync(cachePath(home, source))) {
-        problems.push({ where, source, message: 'No copy of it yet — `ttheme update` fetches it' })
-      } else {
-        try {
-          readArchive(source, readCachedArchive(home, source), cachedEntries(home, OFFICIAL), filed)
-        } catch (error) {
-          problems.push({ where, source, message: `${shownSource(cachePath(home, source))}: ${message(error)}` })
-        }
-      }
-    } else {
-      try {
-        readMarketDir(source, marketId(localIdentity(source)), cachedEntries(home, OFFICIAL), (path, text) =>
-          filed(shownSource(path), text),
-        )
-      } catch (error) {
-        problems.push({ where, message: message(error) })
-      }
-    }
-  }
-  return problems
 }
 
 function updateNames(home: string): string[] {
@@ -301,9 +245,9 @@ export async function runBrowse(): Promise<number> {
     kept,
     installed: state.palettes,
     updates: updateNames(home),
+    tuned: Object.keys(readTone(home)),
     ...(startup ? { startup } : {}),
     ...(hub ? { hub } : {}),
-    problems: problemsOf(home, state, tries, markets),
     due: auto ? dueSources(home, state) : [],
     io: browseIo(home, state, fetched, lookups.signal, (result, report) =>
       into({ say: report.say, set: report.status }, () => applyBrowse(home, markets, result, fetched)),

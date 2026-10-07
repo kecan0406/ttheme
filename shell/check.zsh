@@ -25,7 +25,7 @@ out=$(ttheme use city 2>&1) && { print -u2 "ttheme use took a bad name"; exit 1 
 [[ $out == *"did you mean"*nightcity* ]] || { print -u2 "did-you-mean broke: $out"; exit 1 }
 ttheme --frobnicate 2>/dev/null && { print -u2 "ttheme took an unknown option"; exit 1 }
 [[ $(ttheme pin --help) == "Usage: ttheme pin"* ]] || { print -u2 "ttheme pin --help did not describe pin"; exit 1 }
-[[ $(ttheme pins --help) == "Usage: ttheme pins"$'\n\n'"Map every pin — the pinned directories"* ]] || { print -u2 "ttheme pins --help did not describe pins"; exit 1 }
+[[ $(ttheme pins --help) == "Usage: ttheme pins"$'\n\n'"Map every pin as a file tree — the pinned directories"* ]] || { print -u2 "ttheme pins --help did not describe pins"; exit 1 }
 ttheme pins extra 2>/dev/null && { print -u2 "ttheme pins took an extra argument"; exit 1 }
 out=$(__tt_preview hub </dev/null 2>&1) && { print -u2 "preview ran without a tty"; exit 1 }
 [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }
@@ -460,13 +460,14 @@ cd $OLDPWD
   out=$(COLUMNS=200 __tt_map_tree)
   want=(
     "~                          mio            this directory"
-    "├─ notes                   nosuchpalette  and below · not installed"
-    "└─ work                    homura         and below"
-    "   ├─ api/v2 ← here"
-    "   └─ site                 kaito          this directory · miku below"
+    "├── notes/                 nosuchpalette  and below · not installed"
+    "└── work/                  homura         and below"
+    "    ├── api/v2/ ← here"
+    "    └── site/              kaito          this directory · miku below"
     "/nonexistent-ttheme/place  rei            and below · no such directory"
-    "ssh *.prod                 nosuchpalette  while connected · not installed"
-    "ssh tusa                   kaito          while connected"
+    "ssh"
+    "├── *.prod                 nosuchpalette  while connected · not installed"
+    "└── tusa                   kaito          while connected"
     ""
     "Here · homura pinned to ~/work and below"
     "ttheme pin picks one here · ttheme unpin drops one · $TTHEME_PINS_FILE"
@@ -475,9 +476,9 @@ cd $OLDPWD
   color=1
   out=$(__tt_map_tree)
   __tt_map_tip homura
-  [[ ${${(f)out}[4]} == "   $REPLY├─ "$'\e[0m\e[2mapi/v2\e[0m '"$REPLY"$'\e[1m← here\e[0m' ]] ||
+  [[ ${${(f)out}[4]} == "    $REPLY├── "$'\e[0m\e[2mapi/v2/\e[0m '"$REPLY"$'\e[1m← here\e[0m' ]] ||
     { print -u2 "the pins map did not draw homura's branches, or the here mark, in homura's color: ${(q+)${(f)out}[4]}"; exit 1 }
-  [[ ${${(f)out}[2]} == $'\e[2m├─ \e[0m\e[1mnotes\e[0m'* ]] || { print -u2 "a branch outside every pin was not dim: ${(q+)${(f)out}[2]}"; exit 1 }
+  [[ ${${(f)out}[2]} == $'\e[2m├── \e[0m\e[1mnotes/\e[0m'* ]] || { print -u2 "a branch outside every pin was not dim: ${(q+)${(f)out}[2]}"; exit 1 }
   cd $HOME/work/site
   [[ ${${(f)"$(color=0 __tt_map_tree)"}[-2]} == "Here · kaito pinned to this directory" ]] ||
     { print -u2 "the pins map named the wrong pin here: ${${(f)"$(color=0 __tt_map_tree)"}[-2]}"; exit 1 }
@@ -518,19 +519,19 @@ cd $OLDPWD
   pick=homura pk=3
   __tt_pv_reach 60 12
   want=(
-    "~/code        konata  and below"
-    "└─ acme       homura  and below  new"
-    "   ├─ docs    rei     and below"
-    "   │  └─ api  miku    this directory"
-    "   ├─ src/deep ← here"
-    "   └─ web     kita    this directory"
+    "~/code            konata  and below"
+    "└── acme/         homura  and below  new"
+    "    ├── docs/     rei     and below"
+    "    │   └── api/  miku    this directory"
+    "    ├── src/deep/ ← here"
+    "    └── web/      kita    this directory"
     ""
     "Then here · homura pinned to ~/code/acme and below"
   )
   [[ ${(F)reach} == ${(F)want} && $rsub == "→ ~/code/acme · and below" ]] ||
     { print -u2 "pinning the repository did not show what it reaches ($rsub):"; print -rlu2 -- $reach; exit 1 }
   __tt_pv_reach 30 12
-  [[ ${reach[2]} == "└─ acme       homura  new" && ${reach[-1]} == "  pinned to ~/code/acme and b…" ]] ||
+  [[ ${reach[2]} == "└── acme/         homura  new" && ${reach[-1]} == "  pinned to ~/code/acme and b…" ]] ||
     { print -u2 "a narrow reach panel did not give up the notes before the tree, or wrap what paints here:"; print -rlu2 -- $reach; exit 1 }
   __tt_clip $'\e[1mabcdef\e[0m' 4 && { print -u2 "a clip that cut said it fit"; exit 1 }
   [[ $REPLY == $'\e[1mabc…\e[0m' ]] || { print -u2 "a clip lost its colors or its width: ${(q+)REPLY}"; exit 1 }
@@ -543,11 +544,11 @@ cd $OLDPWD
   COLUMNS=100 LINES=30 __tt_unpin_block 2
   want=(
     "[UNPIN]  This directory  [And below]  ~/code    ←→ choose · enter unpin · esc keep"
-    "~/code             konata  and below"
-    "└─ acme"
-    "   ├─ docs ← here  rei     and below  ✕ unpin"
-    "   │  └─ api       miku    this directory  ✕ unpin"
-    "   └─ web          kita    this directory"
+    "~/code                konata  and below"
+    "└── acme/"
+    "    ├── docs/ ← here  rei     and below  ✕ unpin"
+    "    │   └── api/      miku    this directory  ✕ unpin"
+    "    └── web/          kita    this directory"
     "Then here · konata pinned to ~/code and below"
   )
   [[ ${(F)block} == ${(F)want} ]] || { print -u2 "unpin's and-below choice did not mark what goes:"; print -rlu2 -- $block; exit 1 }

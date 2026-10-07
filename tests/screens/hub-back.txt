@@ -1,12 +1,12 @@
  [Preview]  Browse   tab next
-   Search… ‹hint›
+ Preview (2/2)
+ ╭─────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰─────────────────────────────────────────────╯
 
    ▸ Bocchi the Rock!                         1
 ▌  ▾ Lucky☆Star                               1
        konata
-
-
-
 
 
 

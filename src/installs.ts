@@ -17,6 +17,7 @@ import { installedPath, isLocal, marketSources, OFFICIAL, shownSource } from './
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
 import { alphabetical, marketOf } from './theme.ts'
+import { readTone } from './tone.ts'
 
 export function reload(count: number): void {
   say(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
@@ -209,9 +210,11 @@ export function runList(query: string | undefined, json = false): void {
   }
   const pad = Math.max(...hits.map((p) => p.name.length), 0)
   const note: Record<Source, string> = { market: '', mine: '  · yours', kept: '  · in no market you added' }
+  const tone = readTone(home)
   for (const p of hits) {
     const group = p.catalog ? `${p.group} / ${p.catalog}` : p.group
-    console.log(`  ${installed.has(p.name) ? '●' : '○'} ${p.name.padEnd(pad)}  ${group}${note[source(p.name)]}`)
+    const tuned = tone[p.name] ? '  · tuned' : ''
+    console.log(`  ${installed.has(p.name) ? '●' : '○'} ${p.name.padEnd(pad)}  ${group}${note[source(p.name)]}${tuned}`)
   }
   if (process.stdout.isTTY) {
     const shown = query ? `${hits.length} of ${all.length}` : `${all.length}`

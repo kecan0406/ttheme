@@ -67,7 +67,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'pins',
     args: [],
     about:
-      "Map every pin — the pinned directories as a tree in their palettes' colors, every ssh host, and the pin that covers this one",
+      "Map every pin as a file tree — the pinned directories in their palettes' colors, every ssh host, and the pin that covers this one",
     section: 'tab',
     shell: true,
   },
@@ -149,22 +149,24 @@ export const VERB_SPECS: VerbSpec[] = [
   },
   {
     name: 'edit',
-    args: ['<palette>'],
-    about: 'Change one of your palettes in the palette editor — the contrast gate advises, never refuses',
+    args: ['[palette]'],
+    about:
+      "Change a palette in the palette editor — your own in its file, any other as your tone over its market's colors, which R and s in the editor put back; with none named, asks to edit the one this tab wears",
     section: 'own',
   },
   {
     name: 'check',
-    args: ['<palette>'],
-    about: 'Measure a palette against the contrast gate — where it misses, suggest colors that pass',
+    args: ['[palette]'],
+    about:
+      'Measure a palette against the contrast gate — where it misses, suggest colors that pass; with none named, asks to check the one this tab wears',
     section: 'own',
     flags: { fix: { type: 'boolean', about: 'Write the suggested colors into your palette' } },
   },
   {
     name: 'share',
-    args: ['<palette>'],
+    args: ['[palette]'],
     about:
-      'Print a share link and its QR code — the page shows the palette, and ttheme add <link> installs it anywhere, pictures included',
+      'Print a share link and its QR code — the page shows the palette, and ttheme add <link> installs it anywhere, pictures included; with none named, asks to share the one this tab wears — or shares it without asking when the link goes to a pipe',
     section: 'own',
     flags: {
       tone: {
@@ -253,7 +255,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'tone',
     args: ['<palette>', '<action>', '[width]'],
     about:
-      "Print a palette's colors for preview's panel at its width, or open them in the palette editor — preview calls this",
+      "Print a palette's colors for preview's panel at its width, open them in the palette editor, or reset them to its market's — preview calls this",
     section: 'setup',
     hidden: true,
   },

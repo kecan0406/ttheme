@@ -62,7 +62,7 @@ Preview keeps its filter, its open series and its cursor while you are in
 browse, and comes back repainted in the colors it was showing. A browse tab
 starts fresh each time: with picks or market changes staged, `tab` asks
 whether to apply them first — `y` applies and closes, `n` discards and moves
-on, `esc` stays. Inside browse, its own four tabs move with `shift+←`/`shift+→`.
+on, `esc` stays.
 
 The two screens share their keys wherever they do the same thing: `←`/`→`
 and `enter` open and close a series, `esc` clears the filter and, once it is
@@ -170,7 +170,9 @@ leave. The editor keeps what it changes itself: `s` there saves, as a tone — a
 override of the palette's own colors (`tone.json`, beside `installed.json`,
 naming just the slots you moved, so the palette itself and `kept.json` stay as
 the market gave them) — and esc leaves, asking first when something changed.
-`R` puts every slot back, and saving that drops the tone. `sync` lays the tone over the
+`R` puts every slot back, and saving that drops the tone; while a tone is
+saved, **Reset palette** sits beside Edit palette (`←→` moves between them); enter
+on it asks `Reset? enter again`, and a second enter drops the tone. `sync` lays the tone over the
 palette before it writes anything, so every terminal's theme file, the zsh table
 and the pictures' tint follow it, and `ttheme update` leaves it be. The editor
 has no seeds, no signature marks, no other palette to take colors from and no
@@ -249,9 +251,9 @@ choice drops and the last line says what this directory will wear afterwards:
 
 ```
 [UNPIN] [This directory]  And below   ~/work    ←→ choose · enter unpin · esc keep
-~/work          konata  and below
-└─ site ← here  kita    this directory  ✕ unpin
-   └─ docs      rei     and below
+~/work            konata  and below
+└── site/ ← here  kita    this directory  ✕ unpin
+    └── docs/     rei     and below
 Then here · konata pinned to ~/work and below
 ```
 
@@ -259,9 +261,10 @@ Then here · konata pinned to ~/work and below
 without a terminal `unpin` drops this directory's own pin or says which command
 drops the one above.
 
-`pins` draws them as a map: every pinned directory in a tree from `~`, and in
-another from `/` for those outside your home, with a run of directories that
-hold no pin folded into one row. Each pin shows its palette's name in that
+`pins` draws them as a file tree: every pinned directory in a tree from `~`, in
+another from `/` for those outside your home, and every pinned ssh host in one
+under `ssh`, with a run of directories that hold no pin folded into one row.
+Each pin shows its palette's name in that
 palette's own background and foreground, then its six colors and how far it
 reaches. The branches below an **and below** pin are drawn in its cursor color,
 so each palette's ground shows at a glance; the directory you are in is marked
@@ -270,11 +273,13 @@ names that pin:
 
 ```
 ~
-├─ notes      ryo     and below · not installed
-└─ work       konata  and below
-   ├─ api/v2 ← here
-   └─ site    kita    this directory
-/srv/archive  kita    and below · no such directory
+├── notes/     ryo     and below · not installed
+└── work/      konata  and below
+    ├── api/v2/ ← here
+    └── site/  kita    this directory
+/srv/archive   kita    and below · no such directory
+ssh
+└── tusa       konata  while connected
 
 Here · konata pinned to ~/work and below
 ttheme pin picks one here · ttheme unpin drops one · ~/.config/ttheme/pins
@@ -296,7 +301,7 @@ between, in which case your pick stays. The host is the name you type after
 shorter one. It opens the same browser as a directory's pin, where enter
 offers **This host** (**Every match** for a pattern) and the panel
 lists the host pins as they will be. The pin lands in the same `pins` file as
-`ssh:<host>  <palette>`; `pins` lists it below the directories, and
+`ssh:<host>  <palette>`; `pins` lists it under `ssh` below the directories, and
 `ttheme unpin ssh:<host>` drops it.
 
 ```
@@ -346,7 +351,7 @@ still wins:
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `tone` | the colors a new background picture is drawn in: `tone` tints it in one color of its palette, `original` keeps its own colors. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `tone` and `original`. Like the blur, it is read from `config.zsh` itself |
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
-| `TTHEME_MARKET_LOOKUP` | `on` | Browse's Markets tab looks GitHub up by itself: the repositories carrying the `ttheme-market` topic when the tab opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
+| `TTHEME_MARKET_LOOKUP` | `on` | Browse looks GitHub up by itself: the repositories carrying the `ttheme-market` topic when it opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
 | `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |
@@ -366,73 +371,69 @@ still wins:
 ## The catalog
 
 The catalog is not installed wholesale: `init` installs the series you pick, and
-`init --yes` none at all. Browse, the second tab of `ttheme`, is the catalog as a
-full-screen live picker in four tabs — `shift+→` moves on, `shift+←` back, and each tab keeps its own filter.
-The rest is preview's: `↑`/`↓`, page up/down and home/end move through a list,
-`←`/`→` and `enter` open and close a series, `esc` clears the filter before it
-leaves, `?` lists the keys, and the last line names the keys of the row you are
-on:
+`init --yes` none at all. Browse, the second tab of `ttheme`, is the catalog and
+its markets as one full-screen live picker. The rest is preview's: `↑`/`↓`,
+page up/down and home/end move through it, `←`/`→` and `enter` open and close
+a market or a series, `esc` clears the filter before it leaves, `?` lists the
+keys, and the last line names the keys of the row you are on.
 
-- **Catalog** is every palette of every market you added. Groups fold and
-  unfold, typing filters (a query has no spaces, `space` is the pick key), the
-  tab repaints as the cursor lands on a palette, and `space` marks one (a series
-  from its header, everything shown from `Select all`). With two markets or more
-  a strip under the search box counts each one (`All 130 · official 108 ·
-  alice@pastel 22`), and `ctrl+s` narrows the list to the next market, then
-  back to all of them.
-- **Installed** is the same list cut down to what you have, so unmarking one
-  there is how you drop it. It has its own strip, with the markets you have a
-  palette from. A palette whose market changed it since you installed it is
-  marked `↑`, and `ctrl+r` stages its update — or every one in a series.
-- **Markets** lists the markets you added over two lines each — where it comes
-  from, how many palettes it holds and how many of them you have, when it was
-  updated. `space` marks one for removal (its installed palettes stay), `←` and
-  `→` turn a repository's auto-update off and on, and `ctrl+r` updates it now;
-  the official catalog comes with ttheme, so it has neither. Under
-  `On GitHub` it lists the repositories with the `ttheme-market` topic by
-  itself as the tab opens, and again a moment after you stop typing, for what
-  you typed; moving onto one fetches its archive, so the detail panel names the
-  palettes it would bring before you add it, and `space` adds it — after asking
-  whether it updates on its own. Type a repository (`alice/ttheme-pastel`,
-  `#v1` pins it) or a folder and an `Add` row appears, looked up the same way.
-  A search GitHub turns away shows as a row that `space` or `ctrl+r` retries;
-  `TTHEME_MARKET_LOOKUP=off` leaves all of this to `space`.
-- **Errors** collects what went wrong: a market that failed to update, a
-  market whose `ttheme-market.toml` cannot be read, a palette file — yours or
-  a market's — that does not parse.
+Every market you added is a row: `official` holds the series that come with
+ttheme, and every other market its catalogs, each opening onto its palettes.
+Typing filters (a query has no spaces, `space` is the pick key), the tab
+repaints as the cursor lands on a palette, and `space` marks one (a series, a
+catalog or a whole market from its header); unmarking one you have is how you
+drop it. A palette whose market changed it since you installed it is marked
+`↑`, and `ctrl+r` stages its update — or every one under a series or catalog.
+With two markets or more a strip under the search box counts each one (`All
+130 · official 108 · alice@pastel 22`), and `ctrl+s` narrows the list to the
+next market, then back to all of them.
 
-Nothing is written until you apply. enter on anything but a series opens a
-review of everything staged across the tabs — the markets added and removed, the
+On a market's row, `delete` marks it for removal (its installed palettes stay,
+and `delete` again keeps it), `shift+←` and `shift+→` turn a repository's
+auto-update off and on, and `ctrl+r` updates it now; the official catalog
+comes with ttheme, so it has neither. The row says when one is staged or its
+update failed, and the detail panel says where it comes from, when it was
+updated and why an update failed. Under the markets, `On GitHub` lists the
+repositories with the `ttheme-market` topic by itself as Browse opens, and
+again a moment after you stop typing, for what you typed; moving onto one
+fetches its archive, so the detail panel names the palettes it would bring
+before you add it, and `space` adds it — after asking whether it updates on its
+own. Type a repository (`alice/ttheme-pastel`, `#v1` pins it) or a folder and
+an `Add` row appears there, looked up the same way. A search GitHub turns away
+shows as a row that `space` or `ctrl+r` retries; `TTHEME_MARKET_LOOKUP=off`
+leaves all of this to `space`.
+
+Nothing is written until you apply. enter on anything but a market or a series
+opens a review of everything staged — the markets added and removed, the
 auto-update switches, and exactly the palettes marked (installing the new ones,
-removing the unmarked, updating the ones staged with `ctrl+r`); enter again applies it, esc goes back to the tabs. The
+removing the unmarked, updating the ones staged with `ctrl+r`); enter again applies it, esc goes back to the list. The
 screen stays while it works: what it has done so far, and one line for the step
 in hand (a picture being fetched,
 `Downloading kita · danbooru 1234 · 3.1/8.4 MB · 1/2`), then what was applied,
 until enter closes it — and the same lines are left in your scrollback. With
-nothing staged enter simply leaves, and esc on the tabs, with the filter clear,
+nothing staged enter simply leaves, and esc on the list, with the filter clear,
 leaves everything as it was. From 94 columns up, the panel on the right
 describes whatever the cursor is on — a palette's market, its gate score and
 failing rules, its pictures, and what enter will do to it; a narrower window
 gets the same as one line under the list:
 
 ```
- [Catalog]  Installed   Markets   Errors
- Discover palettes (1/6 · 2 picked)
+ Browse (1/6 · 2 picked)
  ╭──────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ ki_                                                                                │
  ╰──────────────────────────────────────────────────────────────────────────────────────╯
                                                                │ kita
-    ● Select all (1)                                           │ The ttheme catalog
-    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!               │ Bocchi the Rock!
- ▌    ● kita   ■ ■ ■ ■ ■ ■                                     │ ぼっち・ざ・ろっく!
-                                                               │ Installed
-                                                               │ Gate 9/9 · passes
- [BROWSE (FILTER)] space pick   enter close   ⇧←→ tabs   ? keys          esc clear filter
+    ▾ official (1/1)                                           │ The ttheme catalog
+      ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!             │ Bocchi the Rock!
+ ▌      ● kita   ■ ■ ■ ■ ■ ■                                   │ ぼっち・ざ・ろっく!
+    ── On GitHub ──────────                                    │ Installed
+    ⌕ Find "ki" on GitHub  space searches                      │ Gate 9/9 · passes
+ [BROWSE (FILTER)] space pick   enter close   bksp edit   ? keys       esc clear filter
 ```
 
 The counts stay honest: `1/6` is what the filter matched out of the catalog,
-`2 picked` is the install set, and `(1/1)` on the series header is how many of
-its shown palettes are in it. The six squares are the palette's own colors — its
+`2 picked` is the install set, and `(1/1)` on a header is how many of its
+shown palettes are in it. The six squares are the palette's own colors — its
 foreground, the three that identify the character, then its red and green — and
 the focused row is drawn in the palette's selection color, which `ttheme`,
 `preview` and `browse` all share.
@@ -458,8 +459,8 @@ from there. The official palettes come with ttheme, so this is how they change.
 Then it refetches every other market you added; `ttheme update alice@pastel`
 refetches that one alone. A palette you installed from a market keeps the
 colors it was installed with (`~/.config/ttheme/kept.json`) until you take its
-update: `update` names the ones that have one, Browse marks them `↑` in its
-Installed tab, and `ctrl+r` there stages one — or a whole series — for enter to
+update: `update` names the ones that have one, Browse marks them `↑`, and
+`ctrl+r` there stages one — or everything under a series or catalog — for enter to
 apply, pictures it newly lists included. A palette that leaves its market stays
 installed from that copy; `list` marks it.
 
@@ -471,7 +472,7 @@ list: `add`, `remove`, `market`, `default`, `on` and `off` fetch it
 first, Browse in the background while it is open, the others waiting a few
 seconds at most, and say so on your terminal, never into a pipe
 (`Updated alice@pastel — 12 palettes (3 new)`), when something changed. A failed
-try is kept quiet, shown under Errors, and tried again an hour later.
+try is kept quiet, shown on the market's row in Browse, and tried again an hour later.
 `TTHEME_AUTO_UPDATE=off` in `ttheme config` stops both, and so does a `CI`
 environment; `ttheme update` still works. An update also follows a market's
 renames: a palette you installed under a name its market renamed is installed
@@ -498,7 +499,7 @@ ttheme market check ./my-market   # what an install would read from a folder, be
 
 Adding a repository asks whether it updates on its own (no, without a
 terminal); the official catalog comes with ttheme and updates with it, and a
-folder is read in place, so neither needs one. Browse's Markets tab switches it later.
+folder is read in place, so neither needs one. `shift+←/→` on its row in Browse switches it later.
 Adding a repository you already have with another `#ref` moves it there,
 keeping its auto-update.
 
@@ -520,7 +521,7 @@ alice/ttheme-pastel               ▾ alice@pastel
 
 The catalog is only a shelf, never part of the name — dusk stays
 `alice@pastel/dusk` wherever its file moves — so a palette name is used once in
-a market; a second file with the same name is skipped and shown under Errors. Only the
+a market; a second file with the same name is skipped, and `ttheme market check` names it. Only the
 official catalog is held to the contrast gate — a market palette installs
 whatever its numbers, and `ttheme check` shows them. `ttheme market remove
 official` drops the official catalog too; `ttheme market add official` brings
@@ -551,7 +552,9 @@ know is ignored, so a market written for a newer ttheme still reads;
 ttheme new rei                   # kecan0406@dust/rei, from blank in the palette editor
 ttheme new rei --from rei        # the same, starting from rei's colors and pictures
 ttheme edit rei                  # the same editor; the bare name works for yours
-ttheme check --fix rei           # colors that pass the gate, written in
+ttheme edit miku                 # an official palette: your changes kept as its tone, R then s puts it back
+ttheme edit                      # asks to edit the palette this tab wears (check and share ask the same)
+ttheme check --fix rei           # colors that pass the gate, written in — as a tone, for a palette not yours
 ttheme share rei                 # https://ttheme.vercel.app/p/tt2:… and its QR code
 ttheme share rei --tone original # the palette as it was, when you tuned it in palette edit
 ```
@@ -568,7 +571,10 @@ names, and is refused when they differ.
 When you tuned its tone in [palette
 edit](#palette-edit) it asks which to share, your tone or the original;
 `--tone tuned` or `--tone original` answers for it, and without a terminal it
-shares the tuned one. A tuned palette goes out as `<name>-tuned`, since its own
+shares the tuned one. With no palette named it asks once — the tab's palette,
+as your tone or the original, or not at all — and when the link goes to a
+pipe (`ttheme share | pbcopy`) it shares the tab's palette without asking,
+naming it on stderr. A tuned palette goes out as `<name>-tuned`, since its own
 name belongs to the original wherever that is installed.
 
 `new` opens the palette editor full screen on a blank palette (it needs 80×24; from 96×28 on it takes the builder layout below).
@@ -577,8 +583,11 @@ hue and a tint for the neutrals and the cursor, and one lightness and chroma the
 accents share, each accent on the hue its ANSI role reads as. Every slider is
 drawn in the colors it would give, and whatever the seeds, the twenty colors they
 grow pass the gate. enter moves on to the slots, and the seeds stay behind;
-`edit` and `--from` open on the slots. preview's [panel](#palette-edit) opens
-the same editor on a palette from a market, for its tone; the keys are:
+`edit` and `--from` open on the slots. On a palette that is not yours — an
+official one, or one from another market — `edit` and preview's
+[panel](#palette-edit) open the same editor for its tone, kept as
+[palette edit](#palette-edit) describes: the top bar offers `R` while the tone
+differs from the market's colors, and `s` after it drops the tone. The keys are:
 
 - From 96×28 on, the editor is a builder: the twenty slots on the left — the four
   base colors, then a row for each ANSI color with its normal and bright side by
@@ -667,7 +676,8 @@ carries its name and `<you>`, your GitHub handle — read from `gh` when it is l
 once otherwise, and kept in `installed.json`. A file you break stays out of the
 list (every command says why on stderr) until you fix it; `edit` keeps a palette
 that misses the gate and prints the numbers, and `check --fix` writes colors that
-pass.
+pass — into the file for yours, and as your tone for any other palette. `ttheme
+list`, browse and preview mark a palette with a tone (`· tuned`, a yellow `●`).
 
 The folder is a repository layout already, with nothing to build: ttheme reads
 the files as pushed. `ttheme market init` prints the `git` and `gh` commands

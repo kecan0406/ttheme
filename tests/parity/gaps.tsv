@@ -4,3 +4,4 @@ windows-terminal	@pictures	cannot	Windows Terminal shows a picture only as a pro
 warp	unwired.used.{picture,text}	cannot	Warp paints a tab only through the settings.toml init wires, so ttheme use in a Warp init never wired asks to wire it first, and the wiring puts on the palette’s picture with its colors
 konsole	preview-tune.tune.text	cannot	Konsole opens an OSC 8 link only where the profile allows escaped links, off by default, and ttheme writes colors only, so preview marks the post as a link only where the user’s profile allows them
 terminal-app	preview-tune.tune.text	cannot	Terminal.app opens no OSC 8 link and draws no kitty graphics, so preview marks no post with the ⧉ of a link and offers no find, whose results are pictures
+terminal-app	tone-reach.tuned.picture	cannot	Terminal.app reads a profile once, at launch, so a palette tuned since then is painted over its base profile with OSC colors, which carry no picture, until Terminal.app restarts
