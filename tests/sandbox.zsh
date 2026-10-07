@@ -4,6 +4,7 @@ setopt err_return pipe_fail
 
 typeset -g ROOT=${${(%):-%x}:A:h:h}
 typeset -g REAL_HOME=$HOME
+typeset -g MINE=${XDG_CONFIG_HOME:-$HOME/.config}/ttheme
 typeset -g SANDBOX=${${TMPDIR:-/tmp}%/}/ttheme-sandbox
 typeset -g SUITE=ttheme-sandbox
 typeset -g SUITE_DIR="$HOME/Library/Application Support/$SUITE"
@@ -18,7 +19,7 @@ typeset -g ALACRITTY_GUI="alacritty --config-file $SANDBOX/"
 typeset -g WARP_LAUNCH=$HOME/.warp/launch_configurations/ttheme-sandbox.yaml
 typeset -g KONSOLE_GUI="konsole --separate --workdir $SANDBOX"
 typeset -g KONSOLE_SCREEN=${TTHEME_KONSOLE_SCREEN:-:77}
-typeset -gi PICTURED=0
+typeset -gi PICTURED=0 BRING=0
 typeset -ga FOREIGN=(GHOSTTY_RESOURCES_DIR GHOSTTY_BIN_DIR GHOSTTY_SHELL_FEATURES TERM_PROGRAM TERM_PROGRAM_VERSION
   COLORTERM TERMINFO KITTY_WINDOW_ID ITERM_SESSION_ID ITERM_PROFILE WEZTERM_PANE WEZTERM_EXECUTABLE WEZTERM_UNIX_SOCKET
   WT_SESSION WT_PROFILE_ID ALACRITTY_WINDOW_ID KONSOLE_VERSION KONSOLE_DBUS_SERVICE KONSOLE_DBUS_SESSION KONSOLE_DBUS_WINDOW)
@@ -52,11 +53,59 @@ isolate() {
   export HOME=$SANDBOX TTHEME_ITERM_SUITE=$SUITE DBUS_SESSION_BUS_ADDRESS=disabled:
 }
 
+clone() {
+  cp -cR -- $1 $2 2>/dev/null || { rm -rf -- $2; cp -R -- $1 $2 }
+}
+
+bring() {
+  local to=$SANDBOX/.config/ttheme tilde=${MINE/#$REAL_HOME/\~} item src dest conf text
+  local -a moved=() lines=()
+  for item in config.zsh tone.json pins kept.json markets backgrounds; do
+    [[ -e $MINE/$item ]] || continue
+    rm -rf -- $to/$item
+    clone $MINE/$item $to/$item
+  done
+  for src in ${(f)"$(node -p "(require(process.argv[1]).markets ?? []).filter((s) => s.startsWith('/')).join('\\n')" $MINE/installed.json)"}; do
+    [[ -d $src ]] || continue
+    dest=$to/market/${src:t}
+    while [[ -e $dest ]]; do dest+=-; done
+    mkdir -p ${dest:h}
+    clone $src $dest
+    moved+=($src $dest)
+  done
+  if [[ -f $to/pins ]]; then
+    lines=("${(@f)$(<$to/pins)}")
+    print -rl -- "${(@)lines/#\~/$REAL_HOME}" > $to/pins
+  fi
+  for conf in $to/backgrounds/*.conf(N); do
+    text=$(<$conf)
+    [[ $text == *($MINE|$tilde)/* ]] || continue
+    text=${text//$MINE\//$to/}
+    print -r -- ${text//$tilde\//$to/} > $conf
+  done
+  node -e '
+const fs = require("node:fs")
+const [mine, made, ...pairs] = process.argv.slice(1)
+const own = JSON.parse(fs.readFileSync(mine, "utf8"))
+const fresh = JSON.parse(fs.readFileSync(made, "utf8"))
+const moved = new Map(pairs.flatMap((source, i) => (i % 2 === 0 ? [[source, pairs[i + 1]]] : [])))
+const local = ["terminals", "itermBase", "konsoleBase", "terminalBase", "wtHome"]
+const next = Object.fromEntries(Object.entries(own).filter(([key]) => !local.includes(key)))
+for (const key of local.filter((key) => key in fresh)) next[key] = fresh[key]
+if (next.markets) next.markets = next.markets.map((source) => moved.get(source) ?? source)
+fs.writeFileSync(made, `${JSON.stringify(next, null, 2)}\n`)
+' $MINE/installed.json $to/installed.json $moved
+}
+
 wire() {
   local label=$1
   shift
   node $ROOT/bin/ttheme.js init --yes > /dev/null
   (( $# == 0 )) || node $SANDBOX/.config/ttheme/ttheme.js add $@ > /dev/null
+  if (( BRING )); then
+    bring
+    node $ROOT/bin/ttheme.js init --yes > /dev/null
+  fi
   if (( PICTURED && $# )); then
     bun $ROOT/tests/picture.ts $SANDBOX/.config ${@[-1]}
     node $SANDBOX/.config/ttheme/ttheme.js image ${@[-1]} tuned > /dev/null
@@ -183,18 +232,24 @@ hand_back() {
   osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($front).activateWithOptions(0)" > /dev/null
 }
 
-usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole] [--pictured] [--zshenv FILE] [--empty | palette…]" }
+usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole] [--pictured] [--zshenv FILE] [--empty | --mine | palette…]" }
 
 main() {
-  local -a here behind iterm wezterm kitty alacritty warp tapp konsole legacy trust empty pictured zshenv
+  local -a here behind iterm wezterm kitty alacritty warp tapp konsole legacy trust empty mine pictured zshenv
   zparseopts -D -E -F -- -here=here -behind=behind -iterm=iterm -wezterm=wezterm -kitty=kitty -alacritty=alacritty -warp=warp -terminal-app=tapp \
-    -konsole=konsole -legacy=legacy -trust=trust -empty=empty -pictured=pictured -zshenv:=zshenv || { usage; return 1 }
+    -konsole=konsole -legacy=legacy -trust=trust -empty=empty -mine=mine -pictured=pictured -zshenv:=zshenv || { usage; return 1 }
   local -i other=$(( $#iterm + $#wezterm + $#kitty + $#alacritty + $#warp + $#tapp + $#konsole ))
-  (( other > 1 || $#here && ($#behind || other) || ($#legacy || $#trust) && ! $#iterm || $#empty && $# )) && { usage; return 1 }
+  (( other > 1 || $#here && ($#behind || other) || ($#legacy || $#trust) && ! $#iterm || ($#empty || $#mine) && $# || $#empty && $#mine )) && { usage; return 1 }
+  if (( $#mine )); then
+    (( $#warp || $#tapp )) && { print -u2 -r -- "--mine stays out of --warp and --terminal-app, which wire the user's own app settings"; return 1 }
+    [[ -r $MINE/installed.json ]] || { print -u2 "no ttheme install at ${MINE/#$REAL_HOME/~} to bring in"; return 1 }
+  fi
   local -a palettes=($@)
-  PICTURED=$#pictured
+  PICTURED=$#pictured BRING=$#mine
   local label=${(j: :)palettes}
-  if (( $#empty )); then
+  if (( $#mine )); then
+    label="yours, from ${MINE/#$REAL_HOME/~}"
+  elif (( $#empty )); then
     label="none, \`ttheme\` picks them"
   elif (( ! $#palettes )); then
     palettes=(${(f)"$(node -p "require(process.argv[1]).palettes.map((p) => p.name).join('\\n')" $ROOT/dist/manifest.json)"})

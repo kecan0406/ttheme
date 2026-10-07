@@ -37,7 +37,8 @@ A flow that needs both — "keep from preview, then does only this Ghostty reloa
 ```zsh
 S=.claude/skills/sandbox/scripts/shell.zsh
 zsh $S start gojo konata          # build, wire, install these palettes, print the first screen
-                                  # no palettes installs all of them; --empty none (init's new-user state)
+                                  # no palettes installs all of them; --empty none (init's new-user state);
+                                  # --mine the user's own install, copied (palettes, default, markets, pins, tone, pictures, settings)
 zsh $S send 'ttheme list' Enter   # tmux key names; prints the screen once it settles
 zsh $S send Down Right Enter
 zsh $S show -e                    # current screen with SGR colors — shows which option is highlighted
@@ -55,7 +56,7 @@ G=.claude/skills/sandbox/scripts/ghostty.zsh
 zsh $G --shots <scratchpad>/paint gojo konata -- 'ttheme use gojo' 'sb_report "fg $(sb_color fg) ansi1 $(sb_color 1)"'
 ```
 
-The script starts a fresh sandbox with those palettes (every palette when none are named, none with `--empty`; `--pictured` puts a test picture on the last one named, as a find install would) and opens a second Ghostty instance on it — its own config only, no saved window state — then hands focus back to whatever the user had in front as soon as the window exists. The commands after `--` run once, at the first prompt of that first window. Then it prints the results and closes the instance; `--keep` leaves it open. Anything longer than a line or two goes in a file in the scratchpad, passed as `-- "source <file>"`; the arguments are joined with `; ` and nested quotes get painful fast.
+The script starts a fresh sandbox with those palettes (every palette when none are named, none with `--empty`, the user's own install with `--mine`; `--pictured` puts a test picture on the last one named, as a find install would) and opens a second Ghostty instance on it — its own config only, no saved window state — then hands focus back to whatever the user had in front as soon as the window exists. The commands after `--` run once, at the first prompt of that first window. Then it prints the results and closes the instance; `--keep` leaves it open. Anything longer than a line or two goes in a file in the scratchpad, passed as `-- "source <file>"`; the arguments are joined with `; ` and nested quotes get painful fast.
 
 That first window is what a new tab gets: Ghostty started it through `launch-tab.zsh`, so the tab rotation, the `theme =` line and background confs apply as they would for a new tab.
 

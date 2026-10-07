@@ -4,11 +4,11 @@ setopt err_return pipe_fail
 
 source ${${(%):-%x}:A:h}/lib.zsh
 
-usage() { print -u2 "usage: window.zsh --kitty|--alacritty|--wezterm|--warp|--terminal-app [--shots DIR] [--keep] [--pictured] [--empty | palette…] -- 'zsh commands'" }
+usage() { print -u2 "usage: window.zsh --kitty|--alacritty|--wezterm|--warp|--terminal-app [--shots DIR] [--keep] [--pictured] [--empty | --mine | palette…] -- 'zsh commands'" }
 
 main() {
-  local -a shots keep empty pictured kind
-  zparseopts -D -E -F -- -shots:=shots -keep=keep -empty=empty -pictured=pictured -kitty=kind -alacritty=kind -wezterm=kind -warp=kind -terminal-app=kind ||
+  local -a shots keep empty mine pictured kind
+  zparseopts -D -E -F -- -shots:=shots -keep=keep -empty=empty -mine=mine -pictured=pictured -kitty=kind -alacritty=kind -wezterm=kind -warp=kind -terminal-app=kind ||
     { usage; return 1 }
   (( $#kind == 1 )) || { usage; return 1 }
   local split=${@[(i)--]}
@@ -27,7 +27,7 @@ main() {
   else
     write_hook $hook $HERE/probe.zsh -- ${@[split+1,-1]}
   fi
-  if ! out=$(cd $ROOT && mise run sandbox $kind --behind $pictured --zshenv $hook $empty $palettes 2>&1); then
+  if ! out=$(cd $ROOT && mise run sandbox $kind --behind $pictured --zshenv $hook $empty $mine $palettes 2>&1); then
     rm -f $hook
     print -r -- $out
     return 1
