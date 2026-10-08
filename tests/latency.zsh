@@ -318,7 +318,7 @@ hostile() {
   home $name off
   print -rl -- 'autoload -Uz compinit && compinit -u -d $HOME/.zcompdump' "PROMPT='bench> '" \
     'setopt no_clobber sh_word_split ksh_arrays no_unset warn_create_global glob_subst extended_glob' \
-    'source $XDG_CONFIG_HOME/ttheme/ttheme.zsh' > $WORK/$name/.zshrc
+    'source "$XDG_CONFIG_HOME/ttheme/ttheme.zsh"' > $WORK/$name/.zshrc
   measure $name stderr 0
   start $name
   upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
@@ -421,6 +421,7 @@ check() {
   hovering iterm2
   hovering iterm2-switch
   hostile options
+  hostile 'options with spaces'
   TERMINAL=iterm2
   hostile options-iterm2
   TERMINAL=""

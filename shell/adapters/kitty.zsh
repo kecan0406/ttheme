@@ -1,4 +1,4 @@
-source $TTHEME_HOME/adapters/_bg.zsh
+source "$TTHEME_HOME/adapters/_bg.zsh"
 
 __tt_follows_focus() { return 0 }
 

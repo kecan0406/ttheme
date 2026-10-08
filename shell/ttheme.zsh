@@ -112,7 +112,7 @@ fi
 
 typeset -g TTHEME_CONFIG=${XDG_CONFIG_HOME:-$HOME/.config}/ttheme/config.zsh
 
-[[ -r $TTHEME_CONFIG ]] && source $TTHEME_CONFIG
+[[ -r $TTHEME_CONFIG ]] && source "$TTHEME_CONFIG"
 
 typeset -g TTHEME_PINS_FILE=${TTHEME_CONFIG:h}/pins
 typeset -g TTHEME_PINS_RAW="" TTHEME_PINS_AT=""
@@ -305,10 +305,10 @@ __tt_mend() {
   __tt_apply "$TTHEME_SPEC"
 }
 
-source $TTHEME_HOME/adapters/_osc.zsh
-source $TTHEME_HOME/adapters/_wired.zsh
+source "$TTHEME_HOME/adapters/_osc.zsh"
+source "$TTHEME_HOME/adapters/_wired.zsh"
 [[ -r $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh ]] &&
-  source $TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh
+  source "$TTHEME_HOME/adapters/$TTHEME_ADAPTER.zsh"
 
 __tt_empty() {
   print -u2 'ttheme: no palettes installed yet — run `ttheme` in a terminal to pick some, or `ttheme add <palette>`'
@@ -1499,7 +1499,7 @@ __tt_next() {
   REPLY=${TTHEME_PALETTE[$TTHEME_ORDER[idx]]}
 }
 
-source $TTHEME_HOME/preview.zsh
+source "$TTHEME_HOME/preview.zsh"
 
 __tt_hook() {
   autoload -Uz add-zsh-hook add-zle-hook-widget

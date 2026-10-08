@@ -1,4 +1,4 @@
-source $TTHEME_HOME/adapters/_bg.zsh
+source "$TTHEME_HOME/adapters/_bg.zsh"
 
 zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
 

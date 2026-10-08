@@ -1,4 +1,4 @@
-source $TTHEME_HOME/adapters/_bg.zsh
+source "$TTHEME_HOME/adapters/_bg.zsh"
 
 typeset -g TTHEME_WARP_SETTINGS=$HOME/.warp/settings.toml TTHEME_WARP_THEMES=$HOME/.warp/themes TTHEME_WARP_WORN=""
 typeset -g TTHEME_WARP_TABS=$TTHEME_STATE_DIR/warp TTHEME_WARP_DB="" TTHEME_WARP_ID="" TTHEME_WARP_LAST="" TTHEME_WARP_LOOK="" TTHEME_WARP_SEEN=""

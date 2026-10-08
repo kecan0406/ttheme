@@ -91,7 +91,7 @@ test('the shell adapters open find and repaint in part exactly where TRAITS says
     adapters
       .filter(
         (a) =>
-          code(a).includes('source $TTHEME_HOME/adapters/_bg.zsh') &&
+          code(a).includes('source "$TTHEME_HOME/adapters/_bg.zsh"') &&
           !/^__tt_pv_bg_findable\(\) \{ return 1 \}$/m.test(code(a)),
       )
       .sort(),

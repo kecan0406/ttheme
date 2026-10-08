@@ -1,4 +1,4 @@
-source $TTHEME_HOME/adapters/_bg.zsh
+source "$TTHEME_HOME/adapters/_bg.zsh"
 
 zmodload -F zsh/files b:zf_rm b:zf_mkdir 2>/dev/null
 

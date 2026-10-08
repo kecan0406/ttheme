@@ -1,4 +1,4 @@
-source $TTHEME_HOME/adapters/_bg.zsh
+source "$TTHEME_HOME/adapters/_bg.zsh"
 
 typeset -g TTHEME_WEZTERM_SHOWN="" TTHEME_WEZTERM_VIEW=""
 
