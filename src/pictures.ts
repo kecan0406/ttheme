@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { linked } from './ansi.ts'
+import { fetchProfiles } from './artists.ts'
 import {
   backdropTone,
   backgroundsDir,
@@ -97,16 +98,26 @@ async function install(
       lend([post], await fetchLent([post.md5], signal))
     } catch {}
   }
-  const credited = uncredited(site, post)
-    ? fetchCredits(site, post.id, signal).then(
-        (found) => {
-          if (found) {
-            credit(post, found)
-          }
-        },
-        () => {},
-      )
-    : undefined
+  let profiles: Record<string, string[]> = {}
+  const credited = (
+    uncredited(site, post)
+      ? fetchCredits(site, post.id, signal).then(
+          (found) => {
+            if (found) {
+              credit(post, found)
+            }
+          },
+          () => {},
+        )
+      : Promise.resolve()
+  )
+    .then(() => (post.named.artist.length > 0 ? fetchProfiles(post.named.artist, signal) : new Map()))
+    .then(
+      (found) => {
+        profiles = Object.fromEntries([...found].filter(([, urls]) => urls.length > 0))
+      },
+      () => {},
+    )
   if (
     !rated(site, post, ratingSet(process.env.TTHEME_FIND_RATING)) ||
     exposed(post, blockSet(process.env.TTHEME_FIND_BLOCK)).length > 0
@@ -159,6 +170,7 @@ async function install(
       bytes,
       from: `${site.name} ${shared.id} ${site.pageUrl(shared.id)}`,
       artist: post.named.artist,
+      profiles,
       source: sourcePage(post.source),
       cut,
     },

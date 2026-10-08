@@ -7,6 +7,7 @@ import { SharePage } from '@/components/share-page'
 import { Sheets } from '@/components/sheets'
 import { cardPng } from '@/lib/card'
 import { gate, themes } from '@/lib/catalog'
+import { creditsOf } from '@/lib/credits'
 import { loadMarkets } from '@/lib/markets'
 import { builderOf, readShared, type Shared } from '@/lib/share'
 import { seriesOf } from '@/lib/sheet'
@@ -15,6 +16,7 @@ import { page } from './document'
 const CATALOG = 'public, max-age=0, s-maxage=31536000'
 const MARKETS = 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400'
 const RETRY = 'public, max-age=0, s-maxage=60'
+const CREDITS = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800'
 
 const STORE = 'One ttheme market: its repository, its palettes and how they measure against the contrast gate'
 
@@ -100,6 +102,14 @@ export const site = new Elysia({ name: 'site' })
     const png = cardPng(found.theme)
     return new Response(png, {
       headers: { 'content-type': 'image/png', 'content-length': String(png.length), 'cache-control': CATALOG },
+    })
+  })
+  .get('/p/:code/credits.json', async ({ params }) => {
+    const found = shared(params.code)
+    if (found instanceof Error) return new Response(found.message, { status: 404, headers: { 'cache-control': RETRY } })
+    const { pictures, complete } = await creditsOf(found)
+    return new Response(JSON.stringify(pictures), {
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': complete ? CREDITS : RETRY },
     })
   })
   .error('global', NotFound, () =>

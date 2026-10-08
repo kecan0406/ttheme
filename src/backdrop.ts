@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
+import { artworkOf, creditLine, linksOf } from './artists.ts'
 import { type Hex, luminance, mix, rgb } from './color.ts'
 import { checkReadability } from './contrast.ts'
 import { keyOf, known, recall, remember } from './drawn.ts'
@@ -75,6 +76,7 @@ interface Original {
   bytes: Uint8Array
   from?: string
   artist?: string[]
+  profiles?: Record<string, string[]>
   source?: string
   cut?: boolean
 }
@@ -511,6 +513,7 @@ export interface Picture {
   window?: { width: number; height: number }
   from?: string
   artist?: string[]
+  profiles?: Record<string, string[]>
   source?: string
   original?: string
   cut?: string
@@ -582,8 +585,27 @@ export function undrawn(picture: Picture): boolean {
   return picture.tone === undefined && coloringOf(picture) === 'tone'
 }
 
+function word(name: string): string {
+  return name.replace(/[\s,\p{Cc}]+/gu, '_')
+}
+
 function byline(picture: Picture): string {
-  return (picture.artist ?? []).map((name) => name.replace(/[\s,\p{Cc}]+/gu, '_')).join(',')
+  return (picture.artist ?? []).map(word).join(',')
+}
+
+function creditLines(held: Picture): string[] {
+  const page = artworkOf(held)
+  const line = creditLine(held)?.replace(/\p{Cc}+/gu, '')
+  return [
+    ...(line ? [`# credit ${held.key} ${line}`] : []),
+    ...(page ? [`# source ${held.key} ${page.label} ${page.url}`] : []),
+    ...(held.artist ?? []).flatMap((name) => {
+      const links = linksOf(held.profiles?.[name])
+      return links.length > 0
+        ? [`# profile ${held.key} ${word(name)} ${links.map((link) => `${link.kind} ${link.url}`).join(' ')}`]
+        : []
+    }),
+  ]
 }
 
 function confText(dir: string, rack: Rack): string {
@@ -600,6 +622,7 @@ function confText(dir: string, rack: Rack): string {
       ].join(' '),
     ),
     ...rack.pictures.filter((held) => coloringOf(held) === 'original').map((held) => `# colors ${held.key} original`),
+    ...rack.pictures.flatMap(creditLines),
     `background-image = ${join(dir, picture.fill)}`,
     'background-image-fit = cover',
     'background-image-position = top-right',
@@ -880,6 +903,7 @@ export function installBackdrop(
     window: size,
     ...(source.from ? { from: source.from } : {}),
     ...(source.artist?.length ? { artist: source.artist } : {}),
+    ...(source.profiles && Object.keys(source.profiles).length > 0 ? { profiles: source.profiles } : {}),
     ...(source.source ? { source: source.source } : {}),
     original: `${original}.${source.ext}`,
     ...(source.cut ? { cut: `${original}.cut.png` } : {}),

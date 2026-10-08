@@ -1,5 +1,5 @@
 import { official } from '@/lib/catalog'
-import type { ShareView, SlotView } from '@/lib/share-view'
+import type { Picture, ShareView, SlotView } from '@/lib/share-view'
 import { passes } from '@/lib/sheet'
 import { type GateRule, type Theme, toTheme } from '@/lib/themes'
 import { SITES } from '../../src/booru.ts'
@@ -28,12 +28,6 @@ export const GRID = { cols: 120, rows: 34 }
 const PLANE_ROWS = 40
 const HUE_STOPS = 24
 const FAINT = 0.45
-
-export interface Picture {
-  post: string
-  href: string | null
-  framing: string
-}
 
 export interface Shared {
   code: string
@@ -87,6 +81,7 @@ function picture(shared: SharedPicture): Picture {
     post: `${site?.name ?? shared.site} #${shared.id}`,
     href: site ? site.pageUrl(shared.id) : null,
     framing: framing(shared),
+    credit: null,
   }
 }
 

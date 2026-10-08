@@ -41,13 +41,16 @@ REPLY=; __tt_bg_place 2045 1994 100 40 8 16 60 9 contain
 [[ $REPLY == "52 17 49 24 5 0 2039 1994" ]] || { print -u2 "__tt_bg_place broke on a sized corner: $REPLY"; exit 1 }
 REPLY=; __tt_bg_frame 2056 2560 1600 1000 199 5 contain 62
 [[ $REPLY == "1598 1990 1 -733" ]] || { print -u2 "__tt_bg_frame broke on a zoom around the face: $REPLY"; exit 1 }
-typeset -A bgfrom=() bgurl=() bgby=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgdim=() bgtunef=() bgofff=() bgimages=() bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() bgedit=() bgcolors=() bgprep=()
+typeset -A bgfrom=() bgurl=() bgby=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgdim=() bgtunef=() bgofff=() bgimages=() bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() bgedit=() bgcolors=() bgcred=() bgpage=() bgprof=() bgprep=()
 typeset -i bgprepid=0
 functions[__tt_pv_bg_prepare_run]=$functions[__tt_pv_bg_prepare]
 __tt_pv_bg_prepare() { : }
 bgd=$XDG_CONFIG_HOME/ttheme/backgrounds
 mkdir -p $bgd && : > $bgd/kagami@fill-42.png && : > $bgd/kagami@60-bottom-right.png && : > $bgd/kagami@130-bottom-right-1600x1000.png
-base=("# by akoiro,potate" "# from safebooru 416805 https://safebooru.org/index.php?page=post&s=view&id=416805" "background-image = kagami@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2")
+base=("# by akoiro,potate" "# from safebooru 416805 https://safebooru.org/index.php?page=post&s=view&id=416805" "# image safebooru_416805 1/1" "background-image = kagami@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2"
+  "# credit safebooru_416805 Background art by akoiro (x.com/akoiro), potate · https://www.pixiv.net/artworks/123"
+  "# source safebooru_416805 pixiv 123 https://www.pixiv.net/artworks/123"
+  "# profile safebooru_416805 akoiro x https://x.com/akoiro" "# profile safebooru_416805 potate pixiv https://www.pixiv.net/users/9 x https://x.com/potepalette")
 print -l $base > $bgd/kagami.conf
 print -l "background-image = kagami@130-bottom-right-1600x1000.png" "background-image-fit = cover" "background-image-position = bottom-right" "background-image-opacity = 0.252" > $bgd/kagami.tune.conf
 __tt_bg_load kagami
@@ -56,17 +59,31 @@ __tt_bg_load kagami
   $bgfrom[kagami] == "safebooru 416805" && $bgby[kagami] == "akoiro, potate" &&
   $bgurl[kagami] == "https://safebooru.org/index.php?page=post&s=view&id=416805" ]] ||
   { print -u2 "__tt_bg_load misread the confs: $bgsrc[kagami] $bgfill[kagami]@$bgfocus[kagami] $bgsize[kagami] $bgpos[kagami] $bgop[kagami] $bgshot[kagami] ($bgdef[kagami]) off=$bgoff[kagami] from=$bgfrom[kagami] by=$bgby[kagami] url=$bgurl[kagami]"; exit 1 }
-tpick=kagami color=0
+tune=kagami tpick=kagami color=0
+art=$'\e]8;;https://www.pixiv.net/artworks/123\e\\pixiv 123\e]8;;\e\\'
 TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 80
-[[ $REPLY == "by akoiro, potate · ⧉ "$'\e]8;;'"$bgurl[kagami]"$'\e\\'"safebooru 416805"$'\e]8;;\e\\' ]] ||
-  { print -u2 "the picture's credit did not link its post: ${(q+)REPLY}"; exit 1 }
+[[ $REPLY == "by akoiro, potate · ⧉ $art · ⧉ "$'\e]8;;'"$bgurl[kagami]"$'\e\\'"safebooru 416805"$'\e]8;;\e\\' ]] ||
+  { print -u2 "the picture's credit did not link its artwork and its post: ${(q+)REPLY}"; exit 1 }
+TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 40
+[[ $REPLY == "by akoiro, potate · ⧉ $art" ]] ||
+  { print -u2 "a narrower credit did not drop the post before the artwork: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=terminal-app __tt_pv_bg_credit 80
-[[ $REPLY == "by akoiro, potate · safebooru 416805" ]] ||
-  { print -u2 "the picture's credit linked its post where the terminal cannot open it: ${(q+)REPLY}"; exit 1 }
+[[ $REPLY == "by akoiro, potate · pixiv 123 · safebooru 416805" ]] ||
+  { print -u2 "the picture's credit linked its pages where the terminal cannot open them: ${(q+)REPLY}"; exit 1 }
 TTHEME_ADAPTER=ghostty __tt_pv_bg_credit 30
 [[ $REPLY == "by akoiro, potate" ]] ||
-  { print -u2 "a narrow credit did not keep the artist over the post: ${(q+)REPLY}"; exit 1 }
-tpick=""
+  { print -u2 "a narrow credit did not keep the artist over the pages: ${(q+)REPLY}"; exit 1 }
+TTHEME_ADAPTER=ghostty __tt_pv_bg_profiles 80
+[[ $REPLY == "akoiro ⧉ "$'\e]8;;https://x.com/akoiro\e\\x\e]8;;\e\\'" · potate ⧉ "$'\e]8;;https://www.pixiv.net/users/9\e\\pixiv\e]8;;\e\\'" ⧉ "$'\e]8;;https://x.com/potepalette\e\\x\e]8;;\e\\' ]] ||
+  { print -u2 "the picture's artists did not link their profiles: ${(q+)REPLY}"; exit 1 }
+TTHEME_ADAPTER=ghostty __tt_pv_bg_profiles 12
+[[ $REPLY == "akoiro ⧉ "$'\e]8;;https://x.com/akoiro\e\\x\e]8;;\e\\' ]] ||
+  { print -u2 "a narrow profile line did not stop at the last link that fits: ${(q+)REPLY}"; exit 1 }
+TTHEME_ADAPTER=terminal-app __tt_pv_bg_profiles 80
+[[ -z $REPLY ]] || { print -u2 "the profiles showed where the terminal cannot open them: ${(q+)REPLY}"; exit 1 }
+[[ $bgcred[kagami:safebooru_416805] == "Background art by akoiro (x.com/akoiro), potate · https://www.pixiv.net/artworks/123" ]] ||
+  { print -u2 "__tt_bg_load misread the credit to copy: ${(q+)bgcred[kagami:safebooru_416805]}"; exit 1 }
+tune="" tpick=""
 bgsize[kagami]=100 bgoff[kagami]=1
 __tt_bg_write kagami || { print -u2 "__tt_bg_write failed"; exit 1 }
 [[ "$(<$bgd/kagami.conf)" == "$(print -l $base "config-file = ?kagami.tune.conf" "config-file = ?kagami.off.conf")" ]] ||

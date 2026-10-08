@@ -77,8 +77,8 @@ __tt_bg_load() {
     bgimages[$name]=${bgimages[$pal]:-1}
   elif [[ -r $dir/$file.conf ]]; then
     lines=("${(@f)$(<$dir/$file.conf)}")
-    for line in ${(k)bgcolors[(I)${(b)pal}:*]}; do
-      unset "bgcolors[$line]"
+    for line in ${(k)bgcolors[(I)${(b)pal}:*]} ${(k)bgcred[(I)${(b)pal}:*]} ${(k)bgpage[(I)${(b)pal}:*]} ${(k)bgprof[(I)${(b)pal}:*]}; do
+      unset "bgcolors[$line]" "bgcred[$line]" "bgpage[$line]" "bgprof[$line]"
     done
   fi
   for line in $lines; do
@@ -87,6 +87,9 @@ __tt_bg_load() {
       'config-file = ?'*.off.conf) bgofff[$name]=${line#config-file = \?} ;;
       '# image '*/<->) bgimages[$name]=${line##*/} bgact[$pal]=${${line#\# image }%% *} ;;
       '# colors '*) pd=(${=line#\# colors }); [[ -n $key ]] || bgcolors[$pal:$pd[1]]=$pd[2] ;;
+      '# credit '*) [[ -n $key ]] || { line=${line#\# credit }; bgcred[$pal:${line%% *}]=${line#* } } ;;
+      '# source '*) [[ -n $key ]] || { line=${line#\# source }; bgpage[$pal:${line%% *}]="${line##* } ${${line#* }% *}" } ;;
+      '# profile '*) [[ -n $key ]] || { line=${line#\# profile }; bgprof[$pal:${line%% *}]+=${bgprof[$pal:${line%% *}]:+$'\n'}${line#* } } ;;
       '# picture '*)
         pd=(${=line#\# picture })
         bgpic[$pal:$pd[1]]=${(j: :)pd[2,-1]}
@@ -509,8 +512,8 @@ __tt_pv_bg_reset() {
   for img in ${(k)bgsrc[(I)${(b)1}(|:*)]}; do
     unset "bgsrc[$img]"
   done
-  for img in ${(k)bgcolors[(I)${(b)1}:*]}; do
-    unset "bgcolors[$img]"
+  for img in ${(k)bgcolors[(I)${(b)1}:*]} ${(k)bgcred[(I)${(b)1}:*]} ${(k)bgpage[(I)${(b)1}:*]} ${(k)bgprof[(I)${(b)1}:*]}; do
+    unset "bgcolors[$img]" "bgcred[$img]" "bgpage[$img]" "bgprof[$img]"
   done
   unset "bgview[$1]" "bgswap[$1]"
 }

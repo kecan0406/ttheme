@@ -143,7 +143,9 @@ function install(configHome: string, id: number, artist = id === 1 ? ['akoiro', 
       bytes: new Uint8Array([id]),
       from: `safebooru ${id} https://example.test/${id}`,
       ...(artist ? { artist } : {}),
-      ...(id === 1 ? { source: 'https://www.pixiv.net/artworks/1' } : {}),
+      ...(id === 1
+        ? { source: 'https://www.pixiv.net/artworks/1', profiles: { akoiro: ['https://x.com/akoiro'] } }
+        : {}),
     },
     { width: 40, height: 20 },
     0,
@@ -335,6 +337,17 @@ test('the conf lists every picture preview can switch to with its artist, and on
     ['safebooru_2', '-', 'safebooru 2 https://example.test/2'],
   ])
   assert.doesNotMatch(conf(), /^# by /m)
+  assert.deepEqual(
+    conf()
+      .split('\n')
+      .filter((line) => /^# (?:credit|source|profile) /.test(line)),
+    [
+      '# credit safebooru_1 Background art by akoiro (x.com/akoiro), potate fluffy · https://www.pixiv.net/artworks/1',
+      '# source safebooru_1 pixiv 1 https://www.pixiv.net/artworks/1',
+      '# profile safebooru_1 akoiro x https://x.com/akoiro',
+      '# credit safebooru_2 Background art (artist unknown) · https://example.test/2',
+    ],
+  )
   showImage(configHome, 'kagami', 'safebooru_1')
   assert.match(conf(), /^# by akoiro,potate_fluffy$/m)
   assert.deepEqual(dropImage(configHome, 'kagami', 'safebooru_1'), { key: 'safebooru_1', left: 1 })

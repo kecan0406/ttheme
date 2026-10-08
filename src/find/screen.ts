@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import columns from 'fast-string-width'
 import { linked } from '../ansi.ts'
+import type { Profile } from '../artists.ts'
 import type { Coloring, Framing } from '../backdrop.ts'
 import { BLOCKS, type Block, KEY_SPAN, type Kind, type Narrow, type Rating, SITES } from '../booru.ts'
 import { type Hex, mix } from '../color.ts'
@@ -75,6 +76,7 @@ export interface Info {
   source: string
   link?: string
   artists: string[]
+  profiles: Record<string, Profile[]>
   characters: string[]
   series: string[]
   tags: string[]
@@ -219,7 +221,7 @@ const SWEEP = 20
 const TIP_BEATS = 50
 const TIPS: [string, string][] = [
   ['space', 'unfolds a set of ×N'],
-  ['o', 'opens the post page in a browser'],
+  ['o', 'opens the artwork page in a browser'],
   ['c', 'switches between cutouts and every post'],
   ['a', 'opens the advanced filters'],
   ['1-9', 'turn a tag of the tags row on or off'],
@@ -584,6 +586,14 @@ function bare(url: string): string {
   return url.replace(/^https?:\/\/(?:www\.)?/, '')
 }
 
+function artistParts(artists: readonly string[], profiles: Record<string, Profile[]>, accent: string): Part[] {
+  return artists.flatMap((name, i): Part[] => [
+    ...(i > 0 ? ([['  ', '']] as Part[]) : []),
+    [name, ''],
+    ...(profiles[name] ?? []).flatMap((link): Part[] => [[' ', ''], ...reference(link.kind, '', link.url, accent)]),
+  ])
+}
+
 function credits(lines: Line[], row: number, col: number, view: FindView, accent: string): void {
   const info = view.info
   const artists = info?.artists ?? []
@@ -591,7 +601,7 @@ function credits(lines: Line[], row: number, col: number, view: FindView, accent
   const said: [string, Part[]][] = [
     ['Post', info?.page ? reference(bare(info.page), '', info.page, site) : [['—', D]]],
     ['Source', info?.source ? reference(bare(info.source), '', info.link, accent) : [['—', D]]],
-    ['Artist', [artists.length > 0 ? [artists.join('  '), ''] : ['—', D]]],
+    ['Artist', artists.length > 0 ? artistParts(artists, info?.profiles ?? {}, accent) : [['—', D]]],
   ]
   said.forEach(([label, value], i) => {
     lines[row + i]?.put(col, label, D)
@@ -1240,7 +1250,7 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
     ['Tags', "1-9  turn a tag of the tags row on or off — the palette's own, then danbooru's related characters"],
     ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window or paste its link'],
     ['Unfold', 'space  a set of ×N'],
-    ['Open', 'o  the post page in a browser'],
+    ['Open', 'o  the artwork page in a browser  ·  O  the post page'],
     ['Settings', 's  rating, block, posts, solo, order, sets, remove bg'],
     ['Advanced', 'a or Advanced › in settings  min score, min size, sites, hide, hide tags, PNG only'],
     ['Back', 'esc returns to preview'],
@@ -1254,7 +1264,7 @@ const KEYS: Record<FindView['mode'], [string, string][]> = {
     ['Details', 'i  characters, series, tags, rating and file, under Post, Source and Artist'],
     ['Example', `⇧←→  ${SCENES.map((scene) => scene.name.toLowerCase()).join(', ')}`],
     ['Cut out', 'x  the background off or on, on an opaque picture'],
-    ['Open', 'o  the post page in a browser'],
+    ['Open', 'o  the artwork page in a browser  ·  O  the post page'],
     ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window'],
     ['Grid', 'esc'],
     ['Close', '?  esc'],

@@ -208,8 +208,9 @@ up to eight tags that start like the last word, each with its post count — the
 way to find a costume variant such as `amane_suzuha_(beta)` or a tag you only
 half remember; `↑`/`↓` pick one and enter searches it; a Japanese input
 method composes in the query itself. A palette with no `meta.booru` tag at all opens
-find on that empty query, so it can have a background too. `o` opens the post's
-page in a browser.
+find on that empty query, so it can have a background too. `o` opens the
+artwork's own page in a browser — the post's when the post names none — and `O`
+the post's.
 
 The row under the site tabs lists the tags the search uses and, after them, the
 characters danbooru says share posts with the first one (up to nine in all, so
@@ -283,8 +284,9 @@ konachan, 850 px on danbooru; zerochan names none, so its larger posts are left
 out — and its size carries `↓`; those
 copies are JPEGs, so a cutout tried on that way comes out opaque. `←`/`→` try
 the neighbours, which find fetches ahead of you two at a time, and enter installs
-— keeping the artist and the artwork's page with the picture, which the tuning
-panel's title names (`Background · akoiro · danbooru 12267381`) — and returns
+— keeping the artist, the artwork's page and the artist's own pages with the
+picture, which the tuning panel names over it (`by akoiro · ⧉ pixiv 113837973 ·
+⧉ danbooru 12267381`, the artist's pages on the line under it) — and returns
 to the grid with the tile marked `✓`, the tab, search and scroll as
 you left them; esc then hands the last one installed to the preview, which
 carries on straight into the tuning panel below. In the grid `c` switches
@@ -408,11 +410,19 @@ from any, move along it, the
 strip sliding round when there are more, and the background shows that picture
 with its own tuning at once — nothing is saved until `s`, which makes it the
 palette's picture, and esc goes back to the one the panel opened with. `D`
-removes the picture the strip is on, with its files. `backgrounds/images.json` lists each
+removes the picture the strip is on, with its files. `y` copies a line that
+credits it, to paste beside a screenshot — `Background art by yoshio_296
+(x.com/yoshio_296) · https://www.pixiv.net/artworks/102307058`, following the
+artist on X, else pixiv or Bluesky, wherever the artwork's page is not; the
+booru's post stands in for a picture that names no artwork page. It goes to the
+system's clipboard (`pbcopy`, `wl-copy` or `xclip`), or over SSH, and where none
+of those is there, to the terminal's (OSC 52). `backgrounds/images.json` lists each
 palette's pictures and which one is up; only ttheme writes it, and the pictures'
 files never move — showing another picture only rewrites `<palette>.conf` to
 point at it, and every picture the palette holds is listed in the conf as a
-`# picture` line, which is where the strip reads them. Each picture carries its own settings — size, position, opacity,
+`# picture` line, which is where the strip reads them, with its credit, its
+artwork's page and the artist's pages as `# credit`, `# source` and `# profile`
+lines, which is where the panel reads them. Each picture carries its own settings — size, position, opacity,
 the off switch and the baked crops sit beside it under its own name
 (`kagami.1a2b3c4d.tune.conf`), so moving back to a picture puts it back the way
 you left it.

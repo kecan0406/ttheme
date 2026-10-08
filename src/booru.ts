@@ -999,6 +999,42 @@ export async function fetchLent(md5s: readonly string[], signal: AbortSignal): P
   return lent
 }
 
+export function artistsUrl(names: readonly string[]): string {
+  const params = new URLSearchParams([
+    ...names.map((name): [string, string] => ['search[name_array][]', name]),
+    ['only', 'name,is_deleted,urls'],
+    ['limit', String(names.length)],
+  ])
+  return `${LENDER.origin}/artists.json?${params}`
+}
+
+export function parseArtistUrls(text: string): Map<string, string[]> {
+  return new Map(
+    records(text).flatMap((artist): [string, string[]][] => {
+      const name = String(artist.name ?? '')
+      if (!name || artist.is_deleted === true) {
+        return []
+      }
+      const urls = Array.isArray(artist.urls) ? (artist.urls as Record<string, unknown>[]) : []
+      return [[name, urls.flatMap((url) => (url.is_active === false || !url.url ? [] : [String(url.url)]))]]
+    }),
+  )
+}
+
+export async function fetchArtistUrls(names: readonly string[], signal: AbortSignal): Promise<Map<string, string[]>> {
+  const found = new Map<string, string[]>()
+  if (pausedUntil(LENDER) > Date.now()) {
+    return found
+  }
+  for (let at = 0; at < names.length; at += PAGE) {
+    const text = await (await get(LENDER, artistsUrl(names.slice(at, at + PAGE)), signal, {}, LEND_TIMEOUT)).text()
+    for (const [name, urls] of parseArtistUrls(text)) {
+      found.set(name, urls)
+    }
+  }
+  return found
+}
+
 export async function locate(
   site: Site,
   post: Post,

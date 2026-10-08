@@ -25,6 +25,28 @@ export interface SlotView {
   miss: boolean
 }
 
+export interface PictureLink {
+  label: string
+  url: string
+}
+
+export interface PictureArtist {
+  name: string
+  links: PictureLink[]
+}
+
+export interface PictureCredit {
+  artists: PictureArtist[]
+  page: PictureLink | null
+}
+
+export interface Picture {
+  post: string
+  href: string | null
+  framing: string
+  credit: PictureCredit | null
+}
+
 export interface ShareView {
   panes: string[]
   top: number

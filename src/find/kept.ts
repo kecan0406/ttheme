@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { fetchProfiles } from '../artists.ts'
 import { origins } from '../backdrop.ts'
 import {
   type Credit,
@@ -10,6 +11,7 @@ import {
   fetchPost,
   fileOf,
   headOf,
+  LENDER,
   locate,
   mates,
   type Post,
@@ -34,6 +36,13 @@ function writeCache(site: Site, name: string, data: Record<string, unknown>): vo
   writeAtomic(join(cacheDir(site), name), `${JSON.stringify(data)}\n`)
 }
 
+interface Known {
+  at: number
+  urls: string[]
+}
+
+const FRESH = 7 * 24 * 60 * 60 * 1000
+
 interface Shelf {
   home: string
   catalog: Manifest
@@ -48,6 +57,7 @@ export class Kept {
   private readonly owners = new Map<string, Map<string, string[]>>()
   private readonly crediting = new Map<number, Promise<void>>()
   private readonly inflight = new Map<string, Promise<number>>()
+  private readonly asking = new Map<string, Promise<void>>()
 
   private readonly home: string
   private readonly catalog: Manifest
@@ -113,6 +123,20 @@ export class Kept {
       this.crediting.set(key, job)
     }
     return job
+  }
+
+  links(names: readonly string[]): Record<string, string[]> {
+    const known = this.keep<Known>(LENDER, 'profiles.json')
+    return Object.fromEntries(
+      names.flatMap((name): [string, string[]][] => {
+        const urls = known[name]?.urls ?? []
+        return urls.length > 0 ? [[name, urls]] : []
+      }),
+    )
+  }
+
+  profile(pick: Pick, signal: AbortSignal): Promise<void> {
+    return this.credit(pick, signal).then(() => this.profiles(pick.post.named.artist, signal))
   }
 
   async mateOwners(site: Site): Promise<Map<string, string[]>> {
@@ -183,6 +207,34 @@ export class Kept {
       this.caches.set(at, known)
     }
     return known as Record<string, T>
+  }
+
+  private async profiles(names: readonly string[], signal: AbortSignal): Promise<void> {
+    const known = this.keep<Known>(LENDER, 'profiles.json')
+    const now = Date.now()
+    const due = names.filter((name) => !this.asking.has(name) && now - (known[name]?.at ?? 0) >= FRESH)
+    if (due.length > 0) {
+      const job = fetchProfiles(due, signal)
+        .then(
+          (found) => {
+            for (const name of due) {
+              known[name] = { at: Date.now(), urls: found.get(name) ?? [] }
+            }
+            this.unsaved.add(`${LENDER.key}/profiles.json`)
+            this.credited()
+          },
+          () => {},
+        )
+        .finally(() => {
+          for (const name of due) {
+            this.asking.delete(name)
+          }
+        })
+      for (const name of due) {
+        this.asking.set(name, job)
+      }
+    }
+    await Promise.all(names.flatMap((name) => this.asking.get(name) ?? []))
   }
 
   private async credits({ site, post }: Pick, signal: AbortSignal): Promise<void> {

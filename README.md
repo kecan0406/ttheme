@@ -251,10 +251,13 @@ Danbooru, which state no license; none of it ships on npm.
 Every background picture belongs to the artist who drew it. ttheme never passes
 one on: a palette or a share code names a booru post by its number, and each
 machine fetches it from that booru itself. `find` names who drew each post and
-links the post and the artwork's own page, an installed picture keeps its
-artist and source, and preview's image edit names the artist over the picture. The
-pictures are for your own terminal — when you show one off, credit the artist
-and link the artwork's page, not the booru's copy.
+links the artwork's own page, the post and the artist's own pages — pixiv, X and
+Bluesky, and Fanbox, Skeb, Patreon or Fantia where they take support. An
+installed picture keeps them all, preview's image edit names the artist over the
+picture with the same links, and a share link's page names them too. The
+pictures are for your own terminal — when you show one off, `y` in preview's
+image edit copies a line that credits the artist and links the artwork's page,
+not the booru's copy.
 
 ## License
 

@@ -1,6 +1,7 @@
+import { PictureRows } from '@/components/picture-list'
 import { InspectorPopover, SlotPopover } from '@/components/share-popovers'
 import { html } from '@/lib/render'
-import { FORMATS, type ShareView, type SlotFormat } from '@/lib/share-view'
+import { FORMATS, type Picture, type ShareView, type SlotFormat } from '@/lib/share-view'
 import { contrast } from '@/lib/sheet'
 import { fill, readJson, reducedMotion } from './dom'
 import { tabKey } from './tabs'
@@ -115,6 +116,17 @@ class ShareSheet extends HTMLElement {
       this.#watch.observe(term)
     }
     this.#tail()
+    void this.#credits()
+  }
+
+  async #credits() {
+    const list = this.querySelector('[data-pictures]')
+    if (!list) return
+    try {
+      const response = await fetch(`${location.pathname.replace(/\/$/, '')}/credits.json`)
+      if (!response.ok) return
+      fill(list, html(<PictureRows pictures={(await response.json()) as Picture[]} />))
+    } catch {}
   }
 
   disconnectedCallback() {

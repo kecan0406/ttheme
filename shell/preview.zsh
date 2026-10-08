@@ -313,16 +313,91 @@ __tt_pv_row() {
   fi
 }
 
+__tt_pv_bg_pickkey() {
+  REPLY=${tpick#*:}
+  [[ $tpick == *:* ]] || REPLY=${bgact[$tune]}
+}
+
 __tt_pv_bg_credit() {
-  local by=${bgby[$tpick]} ref=${bgfrom[$tpick]} url=${bgurl[$tpick]} mark="" sgr=""
+  local by=${bgby[$tpick]} ref=${bgfrom[$tpick]} url=${bgurl[$tpick]} page lab pu pmark="" smark="" sgr="" acc=""
   local -i room=$1
-  [[ -n $ref && $url == http(s|)://* ]] && __tt_links && mark="⧉ "
-  REPLY=${by:+by $by}${by:+${ref:+ · }}${ref:+$mark$ref}
-  (( ${#REPLY} > room )) && REPLY=${by:+by $by}
-  (( ${#REPLY} > room )) && REPLY=""
-  [[ -n $mark && $REPLY == *"$mark$ref"* ]] || return 0
+  local -a items
+  __tt_pv_bg_pickkey
+  page=${bgpage[$tune:$REPLY]}
+  pu=${page%% *} lab=${page#* }
+  [[ $url == http(s|)://* ]] || url=""
+  if __tt_links; then
+    [[ -n $url ]] && pmark="⧉ "
+    [[ -n $pu ]] && smark="⧉ "
+  fi
+  items=(${by:+"by $by"} ${lab:+"$smark$lab"} ${ref:+"$pmark$ref"})
+  while (( ${#items} )) && (( ${#${(j: · :)items}} > room )); do
+    items[-1]=()
+  done
+  REPLY=${(j: · :)items}
+  if [[ -n $smark && $REPLY == *"$smark$lab"* ]]; then
+    (( color )) && acc=$ac
+    REPLY=${REPLY/"$smark$lab"/$acc⧉${acc:+$TTHEME_SGR[/accent]} $'\e]8;;'$pu$'\e\\'$lab$'\e]8;;\e\\'}
+  fi
+  [[ -n $pmark && $REPLY == *"$pmark$ref"* ]] || return 0
   (( color )) && [[ -n ${TTHEME_SITE_ANSI[${ref%% *}]} ]] && sgr=$TTHEME_SGR[fg${TTHEME_SITE_ANSI[${ref%% *}]}]
-  REPLY=${REPLY/"$mark$ref"/$sgr⧉${sgr:+$TTHEME_SGR[/fg]} $'\e]8;;'$url$'\e\\'$ref$'\e]8;;\e\\'}
+  REPLY=${REPLY/"$pmark$ref"/$sgr⧉${sgr:+$TTHEME_SGR[/fg]} $'\e]8;;'$url$'\e\\'$ref$'\e]8;;\e\\'}
+  return 0
+}
+
+__tt_pv_copy() {
+  if (( $+commands[pbcopy] )); then
+    print -rn -- $1 | LC_CTYPE=UTF-8 pbcopy
+  elif [[ -n $WAYLAND_DISPLAY ]] && (( $+commands[wl-copy] )); then
+    print -rn -- $1 | wl-copy
+  elif [[ -n $DISPLAY ]] && (( $+commands[xclip] )); then
+    print -rn -- $1 | xclip -selection clipboard
+  else
+    return 1
+  fi
+} >/dev/null 2>&1
+
+__tt_pv_bg_copy() {
+  local text
+  __tt_pv_bg_pickkey
+  text=${bgcred[$tune:$REPLY]}
+  if [[ -z $text ]]; then
+    msg="This picture names no artist and no page" msgt=300
+    return 0
+  fi
+  if [[ -n $SSH_CONNECTION$SSH_TTY ]] || ! __tt_pv_copy $text; then
+    __tt_b64s $text
+    __tt_out $'\e]52;c;'$REPLY$'\a'
+  fi
+  msg="Copied · $text" msgt=200
+}
+
+__tt_pv_bg_profiles() {
+  local k entry plain="" step piece acc="" lead
+  local -a ents e
+  local -i room=$1 i many
+  REPLY=""
+  __tt_links || return 0
+  __tt_pv_bg_pickkey
+  k=$REPLY REPLY=""
+  ents=(${(f)bgprof[$tune:$k]})
+  many=$(( ${#ents} > 1 ))
+  (( color )) && acc=$ac
+  for entry in $ents; do
+    e=(${=entry})
+    lead=""
+    [[ -n $plain ]] && lead=" · "
+    if (( many )); then
+      (( ${#plain} + ${#lead} + ${#e[1]} > room )) && return 0
+      plain+=$lead$e[1] REPLY+=$lead$e[1] lead=" "
+    fi
+    for (( i = 2; i < ${#e}; i += 2 )); do
+      step="⧉ $e[i]"
+      (( ${#plain} + ${#lead} + ${#step} > room )) && return 0
+      piece=$acc⧉${acc:+$TTHEME_SGR[/accent]}" "$'\e]8;;'$e[i+1]$'\e\\'$e[i]$'\e]8;;\e\\'
+      plain+=$lead$step REPLY+=$lead$piece lead=" "
+    done
+  done
   return 0
 }
 
@@ -424,6 +499,8 @@ __tt_pv_foot() {
       kl[2]="image ×$REPLY"
       (( REPLY > 1 )) || { kk[2]=() kl[2]=() }
       __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
+      __tt_pv_bg_pickkey
+      [[ -n ${bgcred[$tune:$REPLY]} ]] && { kk+=(y); kl+=(credit) }
       kk+=(D) kl+=(remove)
     elif [[ -n $tune ]]; then
       __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
@@ -435,6 +512,8 @@ __tt_pv_foot() {
         kk+=('=' + ⇧←→) kl+=(reset "reset all" ×10)
       fi
       (( bgoff[$tpick] )) && { kk+=(space); kl+=(show) } || { kk+=(c space); kl+=(colors hide) }
+      __tt_pv_bg_pickkey
+      [[ -n ${bgcred[$tune:$REPLY]} ]] && { kk+=(y); kl+=(credit) }
       __tt_pv_bg_images $tune
       (( REPLY > 1 )) && { kk+=(', .' D); kl+=("image ×$REPLY" remove) }
     else
@@ -553,7 +632,7 @@ __tt_pv_help() {
       "Images  ←→  , .  pick one  ·  D removes it  ·  f  finds one"
       "enter on the empty frame  ·  finds the first one"
       "←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all"
-      "space  hides  ·  c  colors"
+      "space  hides  ·  c  colors  ·  y  copies who drew it"
       "enter  ·  tunes its colors full screen, keeps its own tone"
       "?  there lists its keys  ·  esc leaves it"
       "enter on Apply, or ⇧enter anywhere  ·  saves, asks where"
@@ -723,6 +802,7 @@ __tt_pv_tune() {
     ',') __tt_pv_bg_pick -1 ;;
     '.') __tt_pv_bg_pick 1 ;;
     D) __tt_pv_bg_drop ;;
+    y) __tt_pv_bg_copy ;;
   esac
   return 0
 }
@@ -2020,7 +2100,7 @@ __tt_pv_te_panel() {
   (( tewide == W )) || __tt_te_read $W
   T=${#teframe} P=$(( ${#teframe} + 2 ))
   __tt_te_image && pics=1
-  (( pics && 18 <= R && (tfocus == 1 || 18 + P + 1 <= R) )) && I=18
+  (( pics && 19 <= R && (tfocus == 1 || 19 + P + 1 <= R) )) && I=19
   V=$(( I + P + 1 ))
   if (( V <= R || tfocus == 1 )); then
     tetop=0
@@ -2041,23 +2121,25 @@ __tt_pv_te_panel() {
         pvz+=("$(( y + i )) $col $end teimg")
       done
     fi
-    if (( I == 18 )); then
+    if (( I == 19 )); then
       if [[ -n $tune ]]; then
         __tt_pv_bg_credit $(( ie - ix + 1 ))
         [[ -n $REPLY ]] && out+=$'\e['$(( y + 1 ))';'$ix'H'$d$REPLY$z
+        __tt_pv_bg_profiles $(( ie - ix + 1 ))
+        [[ -n $REPLY ]] && out+=$'\e['$(( y + 2 ))';'$ix'H'$d$REPLY$z
       fi
-      __tt_pv_te_images $(( y + 2 )) $ix $ie
+      __tt_pv_te_images $(( y + 3 )) $ix $ie
       if [[ -n $tune ]]; then
-        bgstrip="$(( y + 2 )) $ix $ie"
+        bgstrip="$(( y + 3 )) $ix $ie"
         (( tfocus == 1 )) || tf=0
-        __tt_pv_bg_panel $tpick $(( y + 9 )) $ix $ie
+        __tt_pv_bg_panel $tpick $(( y + 10 )) $ix $ie
         tf=$tfs
       else
-        __tt_pv_te_tile $(( y + 3 )) $ix
-        for (( i = 3; i <= 7; i++ )); do
+        __tt_pv_te_tile $(( y + 4 )) $ix
+        for (( i = 4; i <= 8; i++ )); do
           pvz+=("$(( y + i )) $ix $(( ix + 30 )) tefind")
         done
-        __tt_pv_te_ghost $(( y + 9 )) $ix $ie
+        __tt_pv_te_ghost $(( y + 10 )) $ix $ie
       fi
     elif (( pics )); then
       __tt_pv_te_images $(( y + 1 )) $ix $ie
@@ -2302,7 +2384,7 @@ __tt_preview() {
   local -i scene=0
   local -a bgorder=()
   local -A bgfrom=() bgurl=() bgby=() bgsent=() bgcost=() bgdim=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgedit=() bgtunef=() bgofff=() bgimages=()
-  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgprep=() TTHEME_ALIASES=()
+  local -A bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() pvseek=() bgcolors=() bgcred=() bgpage=() bgprof=() bgprep=() TTHEME_ALIASES=()
   local conf=0 cf=1
   local -a plabel=(" Default " " This tab ") pkeys=() reach=() csnap=() teframe=()
   local te=0 tfocus=0 tetop=0 tewide=0 tbtn=0 tearm=0 tename=""

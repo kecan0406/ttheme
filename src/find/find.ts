@@ -3,7 +3,9 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
+import { linksOf } from '../artists.ts'
 import { backdropTone, backgroundsDir, fillSize, rackOf, type Tone, type Tune } from '../backdrop.ts'
 import {
   BLOCKS,
@@ -313,6 +315,7 @@ const SUGGEST_WAIT = 150
 const COUNT_WAIT = 300
 const THUMB = 12
 const PRELOAD = 2
+const PROFILE_WAIT = 5000
 const SETTLE = 150
 const FEATURES = '\x1b[?5522$p\x1b]72;t=q\x1b\\\x1b[c'
 const NOTICE = 4000
@@ -1317,8 +1320,8 @@ class Finder {
       this.unfold()
       return
     }
-    if (key === 'o') {
-      this.openPage()
+    if (key === 'o' || key === 'O') {
+      this.openPage(key === 'O')
       return
     }
     if (key === 's') {
@@ -1734,11 +1737,17 @@ class Finder {
     }
   }
 
-  private openPage(): void {
+  private openPage(post: boolean): void {
     const tile = this.view.tiles[this.view.focus]
     const pick = tile && this.posts.get(tile.key)
-    if (pick) {
-      visit(pick.site.pageUrl(pick.post.id))
+    if (!pick) {
+      return
+    }
+    const source = sourcePage(pick.post.source)
+    const page = pick.site === LOCAL ? '' : pick.site.pageUrl(pick.post.id)
+    const url = !post && /^https?:\/\//i.test(source) ? source : page
+    if (url) {
+      visit(url)
     }
   }
 
@@ -1774,8 +1783,8 @@ class Finder {
       this.recolor()
       return
     }
-    if (key === 'o') {
-      this.openPage()
+    if (key === 'o' || key === 'O') {
+      this.openPage(key === 'O')
       return
     }
     if (key === 'x') {
@@ -1901,6 +1910,9 @@ class Finder {
       source,
       ...(link ? { link } : {}),
       artists: named.artist,
+      profiles: Object.fromEntries(
+        Object.entries(this.kept.links(named.artist)).map(([name, urls]) => [name, linksOf(urls)]),
+      ),
       characters: named.character,
       series: named.copyright,
       tags: post.tags.filter((tag) => !listed.has(tag)),
@@ -2603,7 +2615,7 @@ class Finder {
     }
     const control = new AbortController()
     this.fetch = control
-    void this.kept.credit(pick, control.signal)
+    void this.kept.profile(pick, control.signal)
     if (!rendition(pick.post)) {
       return
     }
@@ -2730,7 +2742,7 @@ class Finder {
       const tile = view.tiles[index]
       const pick = tile && this.posts.get(tile.key)
       if (pick) {
-        void this.kept.credit(pick, this.signal)
+        void this.kept.profile(pick, this.signal)
       }
       if (this.prefetching >= PRELOAD || !pick || !rendition(pick.post)) {
         continue
@@ -2875,7 +2887,11 @@ class Finder {
     view.error = undefined
     this.paint.flush()
     const tune = toTune(view.tune, view.untuned)
-    const post = this.posts.get(current.key)?.post
+    const pick = this.posts.get(current.key)
+    const post = pick?.post
+    if (pick) {
+      await Promise.race([this.kept.profile(pick, this.signal), sleep(PROFILE_WAIT, undefined, { ref: false })])
+    }
     try {
       await this.renders.run({
         job: 'backdrop',
@@ -2890,6 +2906,7 @@ class Finder {
           ext: current.ext,
           from: `${current.site.name} ${current.id} ${current.site.pageUrl(current.id)}`,
           artist: post?.named.artist ?? [],
+          profiles: this.kept.links(post?.named.artist ?? []),
           source: sourcePage(post?.source ?? ''),
         },
         width: this.cols * this.cell.w,

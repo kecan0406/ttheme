@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { type Builder, type GateLine, GRID, type Pane, type Picture, type Run, type Shared } from '@/lib/share'
+import { type Builder, type GateLine, GRID, type Pane, type Run, type Shared } from '@/lib/share'
 import type { ShareView, SlotView } from '@/lib/share-view'
 import { wearStyle } from '@/lib/wear'
 import { CommandRow } from './command-row'
 import { PropertyList, reading, SectionLabel, Signature } from './palette-parts'
+import { PictureList } from './picture-list'
 import { Marks, Verdict } from './share-popovers'
 import { ThemeToggle } from './theme-toggle'
 
@@ -19,31 +20,6 @@ const PAIRS = [0, 1, 2, 3, 4, 5, 6, 7]
 
 function bringing(count: number): string {
   return `It brings ${count === 1 ? 'a picture, downloaded from its post' : `${count} pictures, downloaded from their posts`} as it installs.`
-}
-
-function PictureList({ pictures }: { pictures: Picture[] }) {
-  return (
-    <ul class="grid gap-1.5 text-sm">
-      {pictures.map((picture) => (
-        <li class="flex flex-wrap items-baseline justify-between gap-x-3">
-          {picture.href ? (
-            <a href={picture.href} class="font-mono text-code text-primary underline-offset-4 hover:underline" safe>
-              {picture.post}
-            </a>
-          ) : (
-            <span class="font-mono text-code" safe>
-              {picture.post}
-            </span>
-          )}
-          {picture.framing ? (
-            <span class="text-xs text-muted-foreground" safe>
-              {picture.framing}
-            </span>
-          ) : null}
-        </li>
-      ))}
-    </ul>
-  )
 }
 
 function Line({ runs }: { runs: Run[] }) {
