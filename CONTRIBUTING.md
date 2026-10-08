@@ -129,7 +129,7 @@ One palette per pull request. At most three open at a time.
 - `meta.signature` names three palette slots that must resolve to three
   different colors — they are what the site draws as the palette's identity.
 - `meta.booru` is the character's booru tag (`kaname_madoka`,
-  `lucy_(cyberpunk)`), which `preview` searches on danbooru, konachan,
+  `lucy_(cyberpunk)`), which `find` searches on danbooru, konachan,
   yande.re and zerochan when someone looks for a background. Check it on danbooru first —
   it should be a character tag with posts. Leave it out for
   palettes that are not one character (a place, a concept). It is a search
@@ -208,7 +208,7 @@ waive it by name and say why:
 
 ```toml
 [contrast]
-waive = ["foreground"]     # foreground | accents | ansi0-dark | light-ansi | ansi8-visible
+waive = ["foreground"]     # foreground | accents | ansi0-dark | light-ansi | ansi8-visible | selection | ansi-role | bright-follows | distinct
 reason = "why this palette is the exception"
 ```
 
@@ -228,8 +228,8 @@ for leaving it out. The repository's own agent rules are in `AGENTS.md`.
 ## Working on the TUIs
 
 Every screen `ttheme` draws is captured and compared against `tests/screens/`.
-The scenarios run in tmux at a fixed 100×24 against `tests/fixture.json` — six
-palettes across two series, pinned so that adding a palette never rewrites a
+The scenarios run in tmux at a fixed 100×24 against `tests/fixture.json` — seven
+palettes across three series, pinned so that adding a palette never rewrites a
 screen.
 
 ```sh
@@ -326,7 +326,7 @@ panel below, preview's settings, the palette editor and find's grid.
 
 | Key | Preview | Browse |
 |---|---|---|
-| any character | filters | filters (each tab keeps its own) |
+| any character | filters | filters |
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
 | `←` `→` | close or open a series; `→` on a palette opens its panel | close or open a market or a series |
 | `enter` | open or close a series; on a palette, apply it, asking where | open or close a market or a series; elsewhere, review every pick and market change, then apply it; close the result |
