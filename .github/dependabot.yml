@@ -11,7 +11,7 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: bun
-    directories: ["/", "/site"]
+    directory: /
     schedule:
       interval: weekly
     cooldown:
@@ -19,6 +19,18 @@ updates:
     groups:
       dependencies:
         update-types: ["minor", "patch"]
+
+  - package-ecosystem: bun
+    directory: /site
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      site:
+        update-types: ["minor", "patch"]
     ignore:
       - dependency-name: elysia
         versions: [">=2.0.0-exp.0 <2.0.0"]
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
