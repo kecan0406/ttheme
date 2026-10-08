@@ -68,7 +68,7 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
-      - run: npm stage publish npm/*.tgz
+      - run: npm stage publish ./npm/*.tgz
 
       - name: github release
         env:
