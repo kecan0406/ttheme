@@ -304,6 +304,27 @@ test('sync keeps Warp on the palette of the painted tab that ran the command, un
   }
 })
 
+test('a Warp theme written late lands when nothing came after it, and gives way to a sync that did, such as ttheme off', async () => {
+  const mine = '[appearance.themes]\ntheme = "Dracula"\n'
+  const [kept, undone] = [0, 1].map(() => {
+    const configHome = fixture()
+    const home = fixture()
+    const settings = warpSettings(home, configHome)
+    mkdirSync(join(settings, '..'), { recursive: true })
+    writeFileSync(settings, mine)
+    sync(configHome, catalog, { terminals: ['warp'], palettes: ['gojo'] }, home)
+    return { configHome, home, settings }
+  }) as [{ configHome: string; home: string; settings: string }, { configHome: string; home: string; settings: string }]
+  sync(undone.configHome, catalog, { terminals: ['warp'], palettes: ['gojo'], off: true }, undone.home)
+  const until = Date.now() + 4000
+  while (!/name = "gojo"/.test(readFileSync(kept.settings, 'utf8')) && Date.now() < until) {
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+  await new Promise((resolve) => setTimeout(resolve, 300))
+  assert.match(readFileSync(kept.settings, 'utf8'), /name = "gojo"/)
+  assert.equal(readFileSync(undone.settings, 'utf8'), mine)
+})
+
 test('sync adds the Warp theme table when there is none, gives Warp its default back while off, and leaves Warp alone without a settings file', () => {
   const configHome = fixture()
   const home = fixture()

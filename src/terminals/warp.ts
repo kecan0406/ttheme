@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { backgroundsDir, readBackdrop } from '../backdrop.ts'
@@ -26,6 +27,10 @@ export const WARP_DEFAULT = '"dark"'
 
 export function warpBasePath(configHome: string): string {
   return join(configHome, 'ttheme', 'warp.base')
+}
+
+function warpLaterPath(configHome: string): string {
+  return join(configHome, 'ttheme', 'warp.later')
 }
 
 const WARP_SECTION = '[appearance.themes]'
@@ -77,7 +82,7 @@ function ours(content: string): boolean {
 }
 
 const WARP_LATER =
-  "setTimeout(() => { const fs = require('node:fs'); const [file, next, seen, theme] = process.argv.slice(-4); if (fs.readFileSync(file, 'utf8') !== seen || !fs.existsSync(theme)) return; const tmp = file + '.ttheme-' + process.pid; fs.writeFileSync(tmp, next); fs.chmodSync(tmp, fs.statSync(file).mode & 0o7777); fs.renameSync(tmp, file) }, 500)"
+  "setTimeout(() => { const fs = require('node:fs'); const [file, next, seen, theme, later, token] = process.argv.slice(-6); if (!fs.existsSync(later) || fs.readFileSync(later, 'utf8') !== token || fs.readFileSync(file, 'utf8') !== seen || !fs.existsSync(theme)) return; const tmp = file + '.ttheme-' + process.pid; fs.writeFileSync(tmp, next); fs.chmodSync(tmp, fs.statSync(file).mode & 0o7777); fs.renameSync(tmp, file) }, 500)"
 
 interface Laid {
   files: Map<string, string>
@@ -171,6 +176,8 @@ function wearWarp(at: At, startup: string | undefined, laid: Laid, keep = false)
   if (keep && (wear === undefined || !laid.files.has(wear))) {
     return undefined
   }
+  const later = warpLaterPath(at.configHome)
+  rmSync(later, { force: true })
   let value: string
   if (wear) {
     if (!ours(content) && !existsSync(base)) {
@@ -192,10 +199,14 @@ function wearWarp(at: At, startup: string | undefined, laid: Laid, keep = false)
   const theme = wear === undefined ? undefined : (laid.files.get(wear) ?? `${owned(wear)}.yaml`)
   if (theme !== undefined && laid.fresh.has(theme)) {
     backupOnce(file)
-    spawn(process.execPath, ['-e', WARP_LATER, realpathSync(file), next, content, join(warpThemes(at.home), theme)], {
-      detached: true,
-      stdio: 'ignore',
-    }).unref()
+    const token = randomUUID()
+    mkdirSync(dirname(later), { recursive: true })
+    writeFileSync(later, token)
+    spawn(
+      process.execPath,
+      ['-e', WARP_LATER, realpathSync(file), next, content, join(warpThemes(at.home), theme), later, token],
+      { detached: true, stdio: 'ignore' },
+    ).unref()
   } else {
     editUserFile(file, next)
   }
