@@ -729,6 +729,14 @@ __tt_key() {
           C) REPLY=right ;;
           D) REPLY=left ;;
           Z) REPLY=stab ;;
+          "200~")
+            seq=""
+            while read -sk 1 -t 0.5 c; do
+              seq+=$c
+              [[ $c == '~' && $seq == *$'\e[201~' ]] && break
+            done
+            REPLY=nop
+            ;;
           *) REPLY=nop ;;
         esac
       else
@@ -795,7 +803,7 @@ __tt_unpin_choose() {
   chosen=0
   {
     tty=$(stty -g 2>/dev/null && stty -echo -icanon -ixon min 1 time 0 2>/dev/null)
-    print -rn -- $'\e[?25l'
+    print -rn -- $'\e[?25l\e[?2004h'
     while :; do
       __tt_unpin_block $at
       __tt_unpin_paint $n
@@ -811,7 +819,7 @@ __tt_unpin_choose() {
   } always {
     REPLY=$'\r'
     (( n > 1 )) && REPLY+=$'\e['$(( n - 1 ))'A'
-    print -rn -- "$REPLY"$'\e[J\e[?25h'
+    print -rn -- "$REPLY"$'\e[J\e[?2004l\e[?25h'
     [[ -n $tty ]] && stty "$tty" 2>/dev/null
   }
   (( chosen ))

@@ -246,6 +246,35 @@ flow() {
   stop
 }
 
+pasting() {
+  local name=$1 REPLY
+  start $name
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
+  BUF=""
+  zpty -w -n sh $'ttheme\r'
+  upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
+  [[ ${BUF#*$'\e[?1049h'} == *$'\e[?2004h'* ]] || { fail "$name: preview left bracketed paste off, so a pasted newline pressed enter"; return 1 }
+  zpty -w -n sh $'\e[200~kita\r\rprint -r -- PASTED_$((6*7))\r\e[201~'
+  upto false 0.5 $name || :
+  [[ $BUF != *$'\e[?1049l'* ]] || { fail "$name: a paste closed preview and ran its last line in the shell"; return 1 }
+  zpty -w -n sh $'\e'
+  upto false 0.3 $name || :
+  zpty -w -n sh $'\e'
+  upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
+  BUF=""
+  zpty -w -n sh $'cd ~/a && ttheme unpin\r'
+  upto '[[ $BUF == *UNPIN* ]]' 5 $name || { fail "$name: unpin never offered its choice"; return 1 }
+  [[ ${BUF##*$'\e[?2004l'} == *$'\e[?2004h'* ]] || { fail "$name: unpin's choice left bracketed paste off, so a pasted newline chose"; return 1 }
+  zpty -w -n sh $'\e[200~x\rprint -r -- PASTED_$((6*7))\r\e[201~'
+  upto false 0.5 $name || :
+  [[ $BUF != *Unpinned* ]] || { fail "$name: a paste into unpin's choice unpinned"; return 1 }
+  zpty -w -n sh $'\e'
+  upto '[[ $BUF == *"bench> "* ]]' 5 $name || { fail "$name: unpin's choice never closed"; return 1 }
+  upto false 0.3 $name || :
+  stop
+  [[ $BUF != *PASTED_42* ]] || { fail "$name: a line pasted into preview or unpin's choice ran in the shell"; return 1 }
+}
+
 hovering() {
   local name=$1 REPLY session
   local -i from
@@ -329,11 +358,15 @@ check() {
   done
   typing off
   flow off
+  home paste off
+  mkdir -p $WORK/paste/a/b
+  print -rl -- "$WORK/paste/a kita" "$WORK/paste/a/b rei" > $WORK/paste/.config/ttheme/pins
+  pasting paste
   hovering iterm2
   hovering iterm2-switch
   hostile options
   late late
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
 }
 
 bench() {

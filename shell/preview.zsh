@@ -1286,8 +1286,23 @@ __tt_pv_read() {
     Z) key=stab ;;
     '<'<->';'<->';'<->[Mm]) __tt_pv_sgr $seq ;;
     M) __tt_pv_x10 ;;
+    "200~") __tt_pv_paste ;;
     *) key=nop ;;
   esac
+}
+
+__tt_pv_paste() {
+  setopt localoptions extendedglob
+  local text=""
+  key=nop
+  while __tt_pv_getch 0.5; do
+    text+=$REPLY
+    [[ $REPLY == '~' && $text == *$'\e[201~' ]] && break
+  done
+  text=${${text%$'\e[201~'}//[$'\r\n\t']##/ }
+  pasted=${text//[[:cntrl:]]/}
+  [[ -n $pasted ]] && key=paste
+  return 0
 }
 
 __tt_pv_sgr() {
@@ -1534,7 +1549,7 @@ __tt_pv_screen() {
       to=$at
     fi
   done
-  printf '\e[?2026h\e[?25l%s' "$pvmouse"
+  printf '\e[?2026h\e[?25l\e[?2004h%s' "$pvmouse"
   if [[ -n $applied ]]; then
     __tt_pv_paint "$applied"
   else
@@ -1683,7 +1698,7 @@ __tt_te_edit() {
   __tt_bg_hide $name
   err=$(__tt_cli tone $name edit 2>&1 >/dev/tty)
   rc=$?
-  printf %s "$pvmouse"
+  printf '\e[?2004h%s' "$pvmouse"
   err=${${err//$'\n'/ }## #}
   resized=1 bgname="" bgshown="" bgdim=()
   if (( rc == 0 )); then
@@ -2222,6 +2237,15 @@ __tt_pv_handle() {
       __tt_pv_rows
       __tt_pv_first "$name"
       ;;
+    paste)
+      __tt_pv_lw
+      name=""
+      [[ ${rtype[cur]} == thm ]] && name=${rval[cur]}
+      flt+=${(L)pasted}
+      while [[ -n $flt ]] && (( ${(m)#flt} > reply[1] - 12 )); do flt=${flt[1,-2]}; done
+      __tt_pv_rows
+      __tt_pv_first "$name"
+      ;;
   esac
   return 0
 }
@@ -2248,7 +2272,7 @@ __tt_preview() {
   local te=0 tfocus=0 tetop=0 tewide=0 tbtn=0 tearm=0 tename=""
   local -i pvgone=0 bgprepid=0 mrow=0 mcol=0 mclick=0 mwheel=0 mlwheel=0 mlrow=0 mlcol=0
   local -F mlast=0
-  local mact="" mzone="" pvmouse=""
+  local mact="" mzone="" pvmouse="" pasted=""
   local -a pvz=()
   local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=("New tabs" Announce "Search fx" Sort Mouse Blur Colors)
   local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc series" "on off" "0 1 2 3 4" "tone original") cshow=("off seq" "on off" "typewriter decode glitch" "abc series" "on off" "off 1px 2px 3px 4px" "tone original")
@@ -2283,7 +2307,7 @@ __tt_preview() {
     tty=$(stty -g 2>/dev/null) && stty -echo -icanon -ixon min 1 time 0 2>/dev/null || tty=""
     TTHEME_RAW=$(( ${#tty} > 0 ))
     __tt_pv_bg_open
-    printf '\e[?2026h\e[?1049h\e[?7l\e[?25l'
+    printf '\e[?2026h\e[?1049h\e[?7l\e[?25l\e[?2004h'
     __tt_pv_pointer
     while :; do
       printf '\e[?2026h'
@@ -2316,7 +2340,7 @@ __tt_preview() {
       __tt_pv_unpaint
     fi
     __tt_pv_pointer off
-    printf '\e[?7h'
+    printf '\e[?2004l\e[?7h'
     (( hubleft )) || printf '\e[?1049l'
     printf '\e[?25h\e[?2026l'
     [[ -n $tty ]] && stty "$tty" 2>/dev/null
