@@ -4,7 +4,7 @@ import { closing } from './tui/style.ts'
 export { cells }
 
 export function linked(text: string, url: string | undefined): string {
-  return url ? `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\` : text
+  return url && !/\p{Cc}/u.test(url) ? `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\` : text
 }
 
 export function sequenceAt(text: string, at: number): number {

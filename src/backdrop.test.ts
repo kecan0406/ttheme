@@ -129,7 +129,7 @@ test("the fill is made at the window's shape, no wider than 2560", () => {
   assert.deepEqual(fillSize(1200, 800), { width: 1200, height: 800 })
 })
 
-function install(configHome: string, id: number): void {
+function install(configHome: string, id: number, artist = id === 1 ? ['akoiro', 'potate fluffy'] : undefined): void {
   const image = { width: 4, height: 4, data: new Uint8Array(64).fill(200 + id) }
   installBackdrop(
     configHome,
@@ -142,7 +142,8 @@ function install(configHome: string, id: number): void {
       ext: 'png',
       bytes: new Uint8Array([id]),
       from: `safebooru ${id} https://example.test/${id}`,
-      ...(id === 1 ? { artist: ['akoiro', 'potate fluffy'], source: 'https://www.pixiv.net/artworks/1' } : {}),
+      ...(artist ? { artist } : {}),
+      ...(id === 1 ? { source: 'https://www.pixiv.net/artworks/1' } : {}),
     },
     { width: 40, height: 20 },
     0,
@@ -338,6 +339,14 @@ test('the conf lists every picture preview can switch to with its artist, and on
   assert.match(conf(), /^# by akoiro,potate_fluffy$/m)
   assert.deepEqual(dropImage(configHome, 'kagami', 'safebooru_1'), { key: 'safebooru_1', left: 1 })
   assert.equal(shown(dir), 'safebooru_2')
+})
+
+test('an artist name a site sends with control characters reaches the conf without them', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  install(configHome, 3, ['mallory\x1b]52;c;aGk=\x07', 'bell\x07'])
+  const conf = readFileSync(join(backgroundsDir(configHome), 'kagami.conf'), 'utf8')
+  assert.match(conf, /^# by mallory_\]52;c;aGk=_,bell_$/m)
+  assert.doesNotMatch(conf.replaceAll('\n', ''), /\p{Cc}/u)
 })
 
 test('removing the last picture leaves the palette bare', () => {

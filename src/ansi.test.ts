@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { cells, clip, fit, wrapText } from './ansi.ts'
+import { cells, clip, fit, linked, wrapText } from './ansi.ts'
 
 test('fit closes only what the cut text opened, so a painted row keeps its background', () => {
   assert.equal(fit('\x1b[1mabcdef\x1b[22m', 4), '\x1b[1mabc\x1b[22m…')
@@ -22,4 +22,9 @@ test('fit, clip and wrapText count an emoji sequence as the cells it takes, and 
   assert.deepEqual(wrapText('mikumiku❤️■', 5), ['mikum', 'iku❤️', '■'])
   assert.deepEqual(wrapText('日本', 1), ['日', '本'])
   assert.deepEqual(wrapText('ab', 0), ['a', 'b'])
+})
+
+test('a link whose address holds a control character goes out as its text alone', () => {
+  assert.equal(linked('post', 'https://example.test/1'), '\x1b]8;;https://example.test/1\x1b\\post\x1b]8;;\x1b\\')
+  assert.equal(linked('post', 'https://example.test/\x1b]52;c;aGk=\x07'), 'post')
 })

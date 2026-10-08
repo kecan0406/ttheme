@@ -367,8 +367,9 @@ class Line {
   }
 
   put(col: number, text: string, sgr = '', link?: string, spot?: FindSpot): number {
-    this.parts.push({ col, text, sgr, ...(link ? { link } : {}), ...(spot ? { spot } : {}) })
-    return col + width(text)
+    const shown = text.replace(/\p{Cc}/gu, '')
+    this.parts.push({ col, text: shown, sgr, ...(link ? { link } : {}), ...(spot ? { spot } : {}) })
+    return col + width(shown)
   }
 
   run(col: number, parts: Part[]): number {

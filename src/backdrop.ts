@@ -583,7 +583,7 @@ export function undrawn(picture: Picture): boolean {
 }
 
 function byline(picture: Picture): string {
-  return (picture.artist ?? []).map((name) => name.replace(/[\s,]+/g, '_')).join(',')
+  return (picture.artist ?? []).map((name) => name.replace(/[\s,\p{Cc}]+/gu, '_')).join(',')
 }
 
 function confText(dir: string, rack: Rack): string {

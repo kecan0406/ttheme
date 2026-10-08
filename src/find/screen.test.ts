@@ -30,7 +30,7 @@ test('transmit sends the picture itself, in chunks, to a terminal that reads no 
   assert.equal(transmit({ ...p, path: join(dir, 'gone.png') }, false), undefined)
 })
 
-test('the settings panel in a window too short for it shows what fits instead of failing', () => {
+function viewOf(over: Partial<FindView> = {}): FindView {
   const row = (label: string, choices: string[], extra: Partial<Row> = {}): Row => ({
     label,
     about: 'Posts scored at least this — danbooru, konachan and yande.re; zerochan keeps no score',
@@ -41,7 +41,7 @@ test('the settings panel in a window too short for it shows what fits instead of
     ...extra,
   })
   const tune = { size: 'fill' as const, at: 2, opacity: 0.2 }
-  const view: FindView = {
+  return {
     palette: 'miku',
     tag: 'hatsune_miku',
     site: 'all',
@@ -103,8 +103,19 @@ test('the settings panel in a window too short for it shows what fits instead of
     untuned: tune,
     coloring: 'tone',
     chips: [],
+    ...over,
   }
-  const frame = renderFind(view, 25, 21)
+}
+
+test('the settings panel in a window too short for it shows what fits instead of failing', () => {
+  const frame = renderFind(viewOf(), 25, 21)
   assert.equal(frame.lines.length, 21)
   assert.match(frame.lines[1] ?? '', /Settings/)
+})
+
+test('a tag a site sends with control characters is drawn without them', () => {
+  const frame = renderFind(viewOf({ tag: 'hatsune_miku\x1b]52;c;aGk=\x07', panel: undefined }), 100, 30)
+  const out = frame.lines.join('\n')
+  assert.match(out, /hatsune_miku\]52;c;aGk=/)
+  assert.ok(!out.includes('\x1b]52') && !out.includes('\x07'))
 })
