@@ -363,6 +363,10 @@ export function repositorySource(r: Repository): string {
   return `${r.owner.login.toLowerCase()}/${r.name}`
 }
 
+function inert(text: string): string {
+  return text.replace(/[\p{Cc}\s]+/gu, ' ').trim()
+}
+
 export async function findMarkets(query: string | undefined, signal?: AbortSignal): Promise<Repository[]> {
   const q = encodeURIComponent(`topic:${TOPIC}${query ? ` ${query}` : ''}`)
   try {
@@ -372,7 +376,13 @@ export async function findMarkets(query: string | undefined, signal?: AbortSigna
       undefined,
       signal,
     )
-    return items
+    return items.map((r) => ({
+      ...r,
+      full_name: inert(r.full_name),
+      name: inert(r.name),
+      description: r.description === null ? null : inert(r.description),
+      owner: { ...r.owner, login: inert(r.owner.login) },
+    }))
   } catch (error) {
     if (error instanceof Limited) {
       throw new Error(
