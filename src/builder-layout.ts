@@ -341,7 +341,8 @@ function fitted(pane: Pane, width: number, rows: number): Part[][] {
 
 export function paneLines(tile: Tile): Part[][] {
   const pane = PANES.find((p) => p.id === tile.id)
-  return pane ? fitted(pane, tile.width, tile.rows) : []
+  const room = tile.width - 2
+  return pane ? fitted(pane, tile.width, tile.rows).map((line) => line.filter((part) => part.col < room)) : []
 }
 
 export function paneTiles(width: number, rows: number): Tile[] {

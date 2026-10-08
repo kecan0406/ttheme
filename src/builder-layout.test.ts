@@ -73,3 +73,19 @@ test('every ANSI color, the selection and the cursor show somewhere in the windo
     }
   }
 })
+
+test('a pane hands out only the runs it has room to show, so the inspector never lands on one cut away', () => {
+  for (const [cols, rows, scene] of [
+    [96, 28, 1],
+    [96, 28, 2],
+    [118, 28, 2],
+  ] as const) {
+    const layout = layoutOf(cols, rows, scene)
+    assert.ok(layout)
+    for (const tile of layout.tiles) {
+      for (const part of paneLines(tile).flat()) {
+        assert.ok(part.col < tile.width - 2, `${tile.id} at ${cols}×${rows}: ${part.text} starts at ${part.col}`)
+      }
+    }
+  }
+})
