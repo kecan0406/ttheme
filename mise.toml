@@ -24,6 +24,10 @@ run = "biome check ."
 description = "apply biome fixes"
 run = "biome check --write ."
 
+[tasks.slop]
+description = "oxlint with the vendored anti-slop rules"
+run = "oxlint"
+
 [tasks."shell:check"]
 description = "syntax-check and exercise the zsh layer"
 depends = ["build"]

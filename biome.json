@@ -16,7 +16,7 @@
     }
   },
   "files": {
-    "includes": ["**", "!site/app/globals.css", "!tests/fixture.json", "!tests/screens"]
+    "includes": ["**", "!site/app/globals.css", "!tests/fixture.json", "!tests/screens", "!tools/oxlint/anti-slop"]
   },
   "overrides": [
     {
