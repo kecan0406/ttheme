@@ -599,7 +599,7 @@ __tt_pv_specimen() {
   (( ${#sp} >= 20 )) || return 0
   local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] cell hex fore line text piece role tabs="" built="" key="$applied|$painted|$scene|$sw|$sc|$ph"
   local -A rs=(p "" d $TTHEME_SGR[dim] b $TTHEME_SGR[bold])
-  local -i i r=6 cw=4 k n=${#TTHEME_SCENES} at
+  local -i i r=6 cw=4 k n=${#TTHEME_SCENES} at room
   (( n )) || return 0
   if [[ $key == "$pvscene" ]]; then
     out+=$pvscenes
@@ -660,11 +660,17 @@ __tt_pv_specimen() {
     [[ $line == «n»* ]] && (( sw >= 44 )) && continue
     (( r < ph )) || break
     parts=("${(@s:«:)line}")
-    text=$parts[1]
+    text=$parts[1] room=$sw
+    while (( ${(m)#text} > room )); do text=${text[1,-2]}; done
+    (( room -= ${(m)#text} ))
     for piece in "${(@)parts[2,-1]}"; do
+      (( room > 0 )) || break
       role=${piece%%»*}
       [[ $role == [wn] ]] && role=p
-      text+=$z${rs[${role:-p}]}${piece#*»}
+      piece=${piece#*»}
+      while (( ${(m)#piece} > room )); do piece=${piece[1,-2]}; done
+      text+=$z${rs[${role:-p}]}$piece
+      (( room -= ${(m)#piece} ))
     done
     built+=$'\e['$r';'$sc'H'$text$z
     (( ++r ))

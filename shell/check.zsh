@@ -186,6 +186,23 @@ out=; __tt_pv_foot 200
 msg=${(l:200::x:)} msgt=100 out=; __tt_pv_foot 80
 plain=${out//$'\e[K'/}
 (( ${(m)#plain} <= 80 )) || { print -u2 "a long preview message overran the bar: ${(m)#plain} columns"; exit 1 }
+() {
+  setopt localoptions extendedglob
+  local row text
+  local -i width
+  applied=$TTHEME_PALETTE[kita] painted=$TTHEME_PALETTE[kita] ph=24 ac=
+  for sw sc in 36 43 54 65; do
+    for (( scene = 0; scene < ${#TTHEME_SCENES}; scene++ )); do
+      out= pvscene=
+      __tt_pv_specimen
+      for row in "${(@ps:\e[:)${out//$'\e['[0-9;]#m/}}"; do
+        [[ $row == <->';'<->H* ]] || continue
+        text=${row#*H} width=${(m)#text}
+        (( width <= sw )) || { print -u2 "the sample's ${TTHEME_SCENES[scene + 1]} scene ran $width columns into a panel of $sw: $text"; exit 1 }
+      done
+    done
+  done
+} || exit 1
 print -l "# image safebooru_2 2/3" "# picture safebooru_1 kagami.aaaaaaaa kagami.aaaaaaaa@fill-40.png 0.2 akoiro safebooru 1 x" \
   "# picture safebooru_2 kagami.1a2b3c4d kagami.1a2b3c4d@fill-42.png 0.2 -" "# picture safebooru_3 kagami.cccccccc kagami.cccccccc@fill-40.png 0.3 -" \
   "background-image = kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" \
