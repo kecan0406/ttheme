@@ -968,14 +968,15 @@ __tt_map_tip() {
 
 __tt_map_chip() {
   local -a p=(${=TTHEME_PALETTE[$1]})
-  local bg=${p[1]#\#} fg=${p[2]#\#}
+  local bg=${p[1]#\#} fg=${p[2]#\#} name=$1
+  (( ${#name} > $2 )) && name=${name[1,$2-1]}…
   if (( ! color )); then
-    printf -v REPLY '%-*s' $2 "$1"
+    printf -v REPLY '%-*s' $2 "$name"
   elif (( ${#p} >= 20 )); then
     printf -v REPLY "\e[48;2;%d;%d;%d;38;2;%d;%d;%dm %-*s ${TTHEME_SGR[/ink]}" $((16#${bg:0:2})) $((16#${bg:2:2})) $((16#${bg:4:2})) \
-      $((16#${fg:0:2})) $((16#${fg:2:2})) $((16#${fg:4:2})) $2 "$1"
+      $((16#${fg:0:2})) $((16#${fg:2:2})) $((16#${fg:4:2})) $2 "$name"
   else
-    printf -v REPLY "${TTHEME_SGR[dim]} %-*s ${TTHEME_SGR[reset]}" $2 "$1"
+    printf -v REPLY "${TTHEME_SGR[dim]} %-*s ${TTHEME_SGR[reset]}" $2 "$name"
   fi
 }
 
@@ -1118,7 +1119,7 @@ __tt_map_build() {
 
 __tt_map_fit() {
   local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] y=$TTHEME_SGR[warn] r=$TTHEME_SGR[error] z=$TTHEME_SGR[reset] lab line tag tip note REPLY
-  local -i width=$1 i lvl maxw namew need wr cap
+  local -i width=$1 i lvl maxw namew need wr cap short
   local -a lw=() rw=() cut=()
   (( color )) || b= d= y= r= z=
   reply=()
@@ -1157,11 +1158,16 @@ __tt_map_fit() {
   (( lvl > 3 )) && lvl=3
   cut=()
   if (( need > width )); then
-    cap=0
+    cap=0 short=0
     for (( i = 1; i <= ${#ll}; i++ )); do
       (( rw[i] > cap )) && cap=$rw[i]
+      (( rw[i] && lw[i] - ${(m)#ll[i]} + 1 > short )) && short=$(( lw[i] - ${(m)#ll[i]} + 1 ))
     done
     cap=$(( width - cap ))
+    if (( short > cap )); then
+      short=$(( short - cap > namew - 4 ? namew - 4 : short - cap ))
+      (( short > 0 )) && (( namew -= short, cap += short ))
+    fi
     maxw=0
     for (( i = 1; i <= ${#ll}; i++ )); do
       wr=$(( rw[i] ? cap : width ))
@@ -1210,6 +1216,10 @@ __tt_map_fit() {
       fi
     fi
     while [[ $line == *' ' ]]; do line=${line% }; done
+    if (( need > width )); then
+      __tt_clip "$line" $width
+      line=$REPLY
+    fi
     reply+=("$line")
   done
 }

@@ -610,6 +610,21 @@ cd $OLDPWD
   __tt_pv_reach 30 12
   [[ ${reach[2]} == "└── acme/         homura  new" && ${reach[-1]} == "  pinned to ~/code/acme and b…" ]] ||
     { print -u2 "a narrow reach panel did not give up the notes before the tree, or wrap what paints here:"; print -rlu2 -- $reach; exit 1 }
+  (
+    TTHEME_PALETTE[someone@mine/own-miku]=$TTHEME_PALETTE[miku]
+    print -l "~/code/acme/docs/**  someone@mine/own-miku" "~/code/acme/web  kita" > $TTHEME_PINS_FILE
+    TTHEME_PINS_RAW=; __tt_pins_load
+    cd $HOME
+    __tt_pin_scopes $HOME
+    pick=kaito pk=1
+    for width in 36 30 24; do
+      __tt_pv_reach $width 12
+      for line in $reach; do
+        (( ${(m)#line} <= width )) || { print -u2 "pinning home ran a reach line past a panel $width wide: $line"; exit 1 }
+      done
+    done
+  ) || exit 1
+  fresh
   __tt_clip $'\e[1mabcdef\e[0m' 4 && { print -u2 "a clip that cut said it fit"; exit 1 }
   [[ $REPLY == $'\e[1mabc…\e[0m' ]] || { print -u2 "a clip lost its colors or its width: ${(q+)REPLY}"; exit 1 }
   __tt_clip ab 2 && [[ $REPLY == ab ]] || { print -u2 "a clip cut what fits"; exit 1 }
