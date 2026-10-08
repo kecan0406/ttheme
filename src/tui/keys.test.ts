@@ -152,6 +152,20 @@ test('a mouse report split across reads is held, and a quick second press on the
   keys.stop()
 })
 
+test('a legacy report split inside its opening bytes still reads, and the key after it stays a key', () => {
+  const got: Inbound[] = []
+  const keys = new Keys((events) => got.push(...events))
+  keys.feed(Buffer.from([0x1b]))
+  keys.feed(Buffer.from([0x5b, 0x4d, 0x20, 0xa0, 0x21, 0x61]))
+  keys.feed(Buffer.from([0x1b, 0x5b]))
+  keys.feed(Buffer.from([0x4d, 0x23, 0xc3, 0x22, 0x62]))
+  assert.deepEqual(
+    got.map((event) => (event.kind === 'mouse' ? `${event.action} ${event.row},${event.col}` : `${event.kind}`)),
+    ['press 0,127', 'key', 'release 1,162', 'key'],
+  )
+  keys.stop()
+})
+
 test('a burst of wheel events one notch sends is one step, and legacy bytes past column 95 read, split or not', () => {
   const got: Inbound[] = []
   const keys = new Keys((events) => got.push(...events))

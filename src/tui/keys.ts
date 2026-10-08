@@ -309,13 +309,19 @@ export function keysOf(input: string): string[] {
   return decode(input, true).events.flatMap((event) => (event.kind === 'key' ? [event.key] : []))
 }
 
-function legacy(bytes: Buffer): { bytes: Buffer; carry: Buffer | undefined } {
-  let at = bytes.indexOf(LEGACY)
-  if (at === -1) {
-    return { bytes, carry: undefined }
+function opening(bytes: Buffer, from: number): number {
+  for (let n = Math.min(LEGACY.length - 1, bytes.length - from); n > 0; n--) {
+    if (bytes.subarray(bytes.length - n).equals(LEGACY.subarray(0, n))) {
+      return bytes.length - n
+    }
   }
+  return bytes.length
+}
+
+function legacy(bytes: Buffer): { bytes: Buffer; carry: Buffer | undefined } {
   const parts: Buffer[] = []
   let from = 0
+  let at = bytes.indexOf(LEGACY)
   while (at !== -1 && at + 6 <= bytes.length) {
     parts.push(bytes.subarray(from, at))
     const [code = 0, x = 0, y = 0] = bytes.subarray(at + 3, at + 6)
@@ -325,8 +331,9 @@ function legacy(bytes: Buffer): { bytes: Buffer; carry: Buffer | undefined } {
     from = at + 6
     at = bytes.indexOf(LEGACY, from)
   }
-  parts.push(bytes.subarray(from, at === -1 ? bytes.length : at))
-  return { bytes: Buffer.concat(parts), carry: at === -1 ? undefined : bytes.subarray(at) }
+  const end = at === -1 ? opening(bytes, from) : at
+  parts.push(bytes.subarray(from, end))
+  return { bytes: Buffer.concat(parts), carry: end < bytes.length ? bytes.subarray(end) : undefined }
 }
 
 function long(held: string): boolean {
@@ -402,10 +409,8 @@ export class Keys {
   feed(chunk: Buffer | string): void {
     clearTimeout(this.timer)
     const text = typeof chunk === 'string' ? chunk : this.bytes(chunk)
-    if (this.carry) {
-      this.wait(SEQUENCE_WAIT)
-    }
     if (!this.held && !text.includes('\x1b') && this.burst(text)) {
+      this.settle()
       this.take([{ kind: 'paste', text }])
       return
     }
@@ -415,11 +420,16 @@ export class Keys {
     }
     const { events, rest } = decode(this.held + text, false, this.cell())
     this.held = rest
-    if (rest && !long(rest)) {
-      this.wait(rest.length === 1 ? ESC_WAIT : SEQUENCE_WAIT)
-    }
+    this.settle()
     if (events.length > 0) {
       this.take(events)
+    }
+  }
+
+  private settle(): void {
+    const waiting = this.held.length + (this.carry?.length ?? 0)
+    if (waiting > 0 && !long(this.held)) {
+      this.wait(waiting === 1 ? ESC_WAIT : SEQUENCE_WAIT)
     }
   }
 
@@ -436,8 +446,10 @@ export class Keys {
 
   flush(): void {
     clearTimeout(this.timer)
+    const carry = this.carry
     this.carry = undefined
-    const { events } = decode(this.held, true, this.cell())
+    const opened = carry && !carry.subarray(0, LEGACY.length).equals(LEGACY) ? this.utf8.write(carry) : ''
+    const { events } = decode(this.held + opened, true, this.cell())
     this.held = ''
     if (events.length > 0) {
       this.take(events)
