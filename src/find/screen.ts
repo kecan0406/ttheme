@@ -1483,27 +1483,29 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
     pack(chips(row, focused, view.typing, view.siteAnsi), room).forEach((chipLine, k) => {
       let col = x + lead
       for (const chip of chipLine) {
-        col = (lines[r + k] as Line).put(col, chip.text, chip.sgr, undefined, {
-          kind: 'choice',
-          index: i,
-          choice: chip.choice,
-        })
-        col += 1
+        col =
+          (lines[r + k]?.put(col, chip.text, chip.sgr, undefined, {
+            kind: 'choice',
+            index: i,
+            choice: chip.choice,
+          }) ?? col) + 1
       }
     })
     r += held[i] as number
   }
   const other = pages.find((page) => page.advanced !== view.advanced)?.rows ?? []
-  const linkLine = lines[y + 3 + body] as Line
-  if (at === link) {
-    linkLine.put(x + 2, '▶', accent)
-  }
-  const end = linkLine.put(x + 3, view.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? glow : B, undefined, {
-    kind: 'setting',
-    index: link,
-  })
-  if (other.some((i) => view.settings[i]?.value !== view.settings[i]?.default)) {
-    linkLine.put(end + 1, '•', D)
+  const linkLine = lines[y + 3 + body]
+  if (linkLine) {
+    if (at === link) {
+      linkLine.put(x + 2, '▶', accent)
+    }
+    const end = linkLine.put(x + 3, view.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? glow : B, undefined, {
+      kind: 'setting',
+      index: link,
+    })
+    if (other.some((i) => view.settings[i]?.value !== view.settings[i]?.default)) {
+      linkLine.put(end + 1, '•', D)
+    }
   }
   lines[y + 5 + body]?.put(x + 2, '─'.repeat(w - 4), D)
   wrapped(view.settings[at]?.about ?? pageAbout(view), text).forEach((line, k) => {

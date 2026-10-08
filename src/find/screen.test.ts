@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { stepped, transmit } from './screen.ts'
+import { type FindView, type Row, renderFind, stepped, transmit } from './screen.ts'
 
 test('a step from a typed value goes to the nearest step that way, and steps wrap around', () => {
   const sizes = ['off', '720', '1080', '1440', '1800', '2560']
@@ -28,4 +28,83 @@ test('transmit sends the picture itself, in chunks, to a terminal that reads no 
   const data = chunks.map((chunk) => chunk.slice(chunk.indexOf(';') + 1, -2)).join('')
   assert.deepEqual(Buffer.from(data, 'base64'), bytes)
   assert.equal(transmit({ ...p, path: join(dir, 'gone.png') }, false), undefined)
+})
+
+test('the settings panel in a window too short for it shows what fits instead of failing', () => {
+  const row = (label: string, choices: string[], extra: Partial<Row> = {}): Row => ({
+    label,
+    about: 'Posts scored at least this — danbooru, konachan and yande.re; zerochan keeps no score',
+    choices,
+    value: choices.join(' '),
+    default: choices.join(' '),
+    cursor: 0,
+    ...extra,
+  })
+  const tune = { size: 'fill' as const, at: 2, opacity: 0.2 }
+  const view: FindView = {
+    palette: 'miku',
+    tag: 'hatsune_miku',
+    site: 'all',
+    siteAnsi: 6,
+    nextSite: 'danbooru',
+    preset: 'cutouts',
+    order: 'fit',
+    solo: false,
+    rating: ['safe'],
+    block: ['nudity', 'underwear'],
+    sets: 'fold',
+    narrow: { score: 0, size: 0, png: false },
+    enabled: ['danbooru'],
+    hide: [],
+    hideTags: [],
+    settings: [
+      row('Rating', ['safe', 'questionable', 'explicit'], { multi: {} }),
+      row('Block', ['nudity', 'underwear'], { multi: { none: 'none' } }),
+      row('Posts', ['all', 'cutouts'], { value: 'all', default: 'all' }),
+      row('Solo', ['on', 'off'], { value: 'off', default: 'off' }),
+      row('Order', ['fit', 'newest', 'score'], { value: 'fit', default: 'fit' }),
+      row('Sets', ['fold', 'show'], { value: 'fold', default: 'fold' }),
+      row('Remove bg', ['on', 'off'], { value: 'on', default: 'on' }),
+      row('Min score', ['off', '5', '10', '25', '50', '100'], {
+        value: 'off',
+        default: 'off',
+        entry: 'number',
+        advanced: true,
+      }),
+      row('Min size', ['off', '720', '1080', '1440', '1800', '2560'], {
+        value: 'off',
+        default: 'off',
+        entry: 'number',
+        advanced: true,
+      }),
+      row('Sites', ['danbooru', 'konachan', 'yande.re', 'zerochan'], { multi: {}, advanced: true }),
+      row('Hide', ['comic', 'monochrome', 'sketch', 'chibi'], { multi: { none: 'none' }, advanced: true }),
+    ],
+    panel: 0,
+    advanced: false,
+    colors: { cursor: '#ffffff', selection: '#333333', background: '#000000', foreground: '#eeeeee', ansi: [] },
+    tiles: [],
+    installed: [],
+    held: [],
+    checked: 0,
+    total: 0,
+    searching: false,
+    stage: 'fetch',
+    sites: [],
+    focus: 0,
+    top: 0,
+    scroll: 0,
+    beat: 0,
+    mode: 'grid',
+    help: false,
+    scene: 0,
+    details: false,
+    tune,
+    untuned: tune,
+    coloring: 'tone',
+    chips: [],
+  }
+  const frame = renderFind(view, 25, 21)
+  assert.equal(frame.lines.length, 21)
+  assert.match(frame.lines[1] ?? '', /Settings/)
 })
