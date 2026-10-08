@@ -477,6 +477,7 @@ __tt_pv_bg_find() {
   err=$(__tt_cli find $name 2>&1 >/dev/tty)
   rc=$?
   printf '\e[?2004h%s' "$pvmouse"
+  __tt_pv_size
   for var in ${(k)parameters[(I)TTHEME_FIND_*]}; do
     [[ ${parameters[$var]} == *export* ]] || unset $var
   done

@@ -1587,6 +1587,7 @@ __tt_pv_screen() {
     __tt_osc_reset
     painted=""
   fi
+  __tt_pv_size
   resized=1 bgname="" bgshown="" bgdim=()
   return 0
 }
@@ -1730,6 +1731,7 @@ __tt_te_edit() {
   err=$(__tt_cli tone $name edit 2>&1 >/dev/tty)
   rc=$?
   printf '\e[?2004h%s' "$pvmouse"
+  __tt_pv_size
   err=${${err//$'\n'/ }## #}
   resized=1 bgname="" bgshown="" bgdim=()
   if (( rc == 0 )); then

@@ -330,6 +330,25 @@ hostile() {
     { fail "$name: the layer broke under options a user's .zshrc sets before it"; return 1 }
 }
 
+returning() {
+  local name=$1 REPLY
+  start $name
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
+  BUF=""
+  zpty -w -n sh $'ttheme\r'
+  upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
+  BUF=""
+  zpty -w -n sh $'\e[Z'
+  repeat 25; do
+    upto false 0.015 $name || :
+    zpty -w -n sh $'\e[B'
+  done
+  [[ $BUF == *"now 30×10"* ]] || { fail "$name: preview came back from a screen the window was resized under still drawing for the size it had before"; return 1 }
+  zpty -w -n sh $'\e'
+  upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
+  stop
+}
+
 late() {
   local name=$1
   home $name off
@@ -370,11 +389,14 @@ check() {
   mkdir -p $WORK/paste/a/b
   print -rl -- "$WORK/paste/a kita" "$WORK/paste/a/b rei" > $WORK/paste/.config/ttheme/pins
   pasting paste
+  home back off
+  print -r -- "const { execSync } = require('node:child_process'); if (process.argv[2] === 'browse') { execSync('stty rows 10 cols 30', { stdio: 'inherit' }); process.exit(21) } process.exit(1)" > $WORK/back/.config/ttheme/ttheme.js
+  returning back
   hovering iterm2
   hovering iterm2-switch
   hostile options
   late late
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys and a late answer is never typed into it, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
 }
 
 bench() {
