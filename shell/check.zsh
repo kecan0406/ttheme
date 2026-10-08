@@ -212,6 +212,23 @@ plain=${out//$'\e[K'/}
       (( ${(m)#text} <= pw )) || { print -u2 "preview's too-small notice ran past a window $pw wide: $text"; exit 1 }
     done
   done
+  local long=someone@mine/own-palette-with-a-long-name-up-to-forty
+  pw=40 ph=12
+  drawn=$(rtype=() rval=() flt=${(l:26::z:)} resized=0 bgcw=0 hub=0 conf=0 pick= help=0 te=0 tune= msgt=0 osdt=0 color=1 __tt_pv_draw)
+  for text in "${(@f)${drawn//$'\e['[0-9;?]#[A-Za-z]/}}"; do
+    (( ${(m)#text} <= pw )) || { print -u2 "a filter that matched nothing ran past a window $pw wide: $text"; exit 1 }
+  done
+  out= color=1
+  __tt_pv_head 1 43 78 $long "" "~/market-mine"
+  text=${${out//$'\e['[0-9;?]#[A-Za-z]/}}
+  (( ${(m)#text} <= 36 )) || { print -u2 "a long palette name ran past the panel head: $text"; exit 1 }
+  for pw in 50 80; do
+    out= pick=$long pk=1 mode=hub te=0 help=0 msgt=0 color=1
+    __tt_pv_foot $pw
+    text=${${out//$'\e['[0-9;?]#[A-Za-z]/}}
+    (( ${(m)#text} <= pw )) || { print -u2 "the bar under a pick ran past a window $pw wide: $text"; exit 1 }
+  done
+  pick= pk=1
 } || exit 1
 print -l "# image safebooru_2 2/3" "# picture safebooru_1 kagami.aaaaaaaa kagami.aaaaaaaa@fill-40.png 0.2 akoiro safebooru 1 x" \
   "# picture safebooru_2 kagami.1a2b3c4d kagami.1a2b3c4d@fill-42.png 0.2 -" "# picture safebooru_3 kagami.cccccccc kagami.cccccccc@fill-40.png 0.3 -" \

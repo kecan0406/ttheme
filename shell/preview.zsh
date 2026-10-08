@@ -350,10 +350,19 @@ __tt_pv_bar() {
 }
 
 __tt_pv_head() {
-  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] right=$6
+  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] title=$4 sub=$5 right=$6
+  local -i room=$(( $3 - $2 + 1 )) used
   (( color )) || b= d= z=
-  out+=$'\e['$1';'$2'H'$b$gc$4$z
-  [[ -n $5 ]] && out+="  "$d$5$z
+  if (( ${(m)#title} > room )); then
+    while [[ -n $title ]] && (( ${(m)#title} > room - 1 )); do title=${title[1,-2]}; done
+    title+=…
+  fi
+  used=${(m)#title}
+  (( used + 2 + ${(m)#sub} <= room )) || sub=""
+  [[ -n $sub ]] && (( used += 2 + ${(m)#sub} ))
+  (( used + 2 + ${(m)#right} <= room )) || right=""
+  out+=$'\e['$1';'$2'H'$b$gc$title$z
+  [[ -n $sub ]] && out+="  "$d$sub$z
   [[ -n $right ]] && out+=$'\e['$(( $3 - ${(m)#right} + 1 ))'G'$d$right$z
   return 0
 }
@@ -498,6 +507,10 @@ __tt_pv_foot() {
       break
     fi
   done
+  if (( lwid > end )); then
+    __tt_clip "$line" $end
+    line=$REPLY
+  fi
   out+=$line$'\e[K'
   [[ -n $right ]] && out+=$'\e['$(( end - rwid + 1 ))'G'$right
   local -i zc=1 zw
@@ -1109,7 +1122,7 @@ __tt_pv_draw() {
     line=""
     if (( k < h )); then
       if (( ! N )); then
-        (( k == 0 )) && line="   ${dd}No palettes match '$flt'$zz"
+        (( k == 0 )) && { __tt_clip "   ${dd}No palettes match '$flt'$zz" $lw; line=$REPLY }
       elif (( i <= N )); then
         __tt_pv_row $i
         line=$REPLY
