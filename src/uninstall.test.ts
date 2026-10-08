@@ -125,6 +125,20 @@ test('uninstall keeps the backup when the config changed after ttheme first edit
   assert.equal(readFileSync(backupPath(ghostty), 'utf8'), 'font-size = 13\n')
 })
 
+test('uninstall gives back a config that ended without a newline or with blank lines byte for byte, and drops its backup', () => {
+  for (const mine of ['font-size = 13', 'font-size = 13\n\n\n']) {
+    const p = paths()
+    const ghostty = join(p.configHome, 'ghostty', 'config')
+    put(ghostty, mine)
+    install(p, { terminals: ['ghostty'], palettes: ['gojo'] })
+
+    applyUninstall(planUninstall(p), p, host)
+
+    assert.equal(readFileSync(ghostty, 'utf8'), mine)
+    assert.ok(!existsSync(backupPath(ghostty)))
+  }
+})
+
 test('a config kept as a symlink stays one through install and uninstall', () => {
   const p = paths()
   const real = join(p.home, 'dotfiles', 'ghostty')

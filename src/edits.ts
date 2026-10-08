@@ -53,6 +53,10 @@ export function editUserFile(path: string, content: string): boolean {
   return true
 }
 
+function alike(a: string, b: string): boolean {
+  return a.replace(/\n*$/, '') === b.replace(/\n*$/, '')
+}
+
 export function restoreUserFile(path: string, content: string): 'removed' | 'restored' | 'kept backup' {
   const backup = backupPath(path)
   const saved = existsSync(backup) ? readFileSync(backup, 'utf8') : undefined
@@ -60,8 +64,9 @@ export function restoreUserFile(path: string, content: string): 'removed' | 'res
     rmSync(path, { force: true })
     return 'removed'
   }
-  writeAtomic(path, content)
-  if (saved === undefined || saved === content) {
+  const same = saved !== undefined && alike(saved, content)
+  writeAtomic(path, same ? saved : content)
+  if (saved === undefined || same) {
     rmSync(backup, { force: true })
     return 'restored'
   }
