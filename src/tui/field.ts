@@ -10,7 +10,7 @@ function plain(text: string): string {
 
 export function edit(value: string, key: string, accept: (ch: string) => boolean = () => true): string | undefined {
   if (key === 'backspace') {
-    return [...graphemes.segment(value)]
+    return [...graphemes(value)]
       .slice(0, -1)
       .map((part) => part.segment)
       .join('')

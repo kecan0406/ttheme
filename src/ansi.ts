@@ -27,7 +27,12 @@ export function sequenceAt(text: string, at: number): number {
   return end < text.length ? end - at + 1 : 0
 }
 
-export const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+let segmenter: Intl.Segmenter | undefined
+
+export function graphemes(text: string): Intl.Segments {
+  segmenter ??= new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+  return segmenter.segment(text)
+}
 
 export interface Piece {
   text: string
@@ -49,7 +54,7 @@ export function pieces(text: string): Piece[] {
     }
     const next = text.indexOf('\x1b', i + 1)
     const stop = next === -1 ? text.length : next
-    for (const { segment, index } of graphemes.segment(text.slice(i, stop))) {
+    for (const { segment, index } of graphemes(text.slice(i, stop))) {
       out.push({
         text: segment,
         start: i + index,
