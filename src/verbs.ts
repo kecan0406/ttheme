@@ -82,7 +82,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'browse',
     args: [],
     about:
-      'Pick palettes and markets in a live picker — one list with every market as a row, which ctrl+s narrows to one market at a time',
+      'Pick palettes and marketplaces in a live picker — one list with every marketplace as a row, which ctrl+s narrows to one marketplace at a time',
     section: 'catalog',
     hidden: true,
   },
@@ -99,40 +99,40 @@ export const VERB_SPECS: VerbSpec[] = [
     about: 'Install palettes — from the catalog, or from a share link: ttheme add https://ttheme.vercel.app/p/tt2:…',
     section: 'catalog',
     flags: {
-      market: {
+      marketplace: {
         type: 'string',
         value: '<source>',
-        about: 'Add this market first — a repository, a folder or official — and take bare palette names from it',
+        about: 'Add this marketplace first — a repository, a folder or official — and take bare palette names from it',
       },
     },
   },
   { name: 'remove', args: ['<palette...>'], about: 'Uninstall palettes', section: 'catalog' },
   {
     name: 'update',
-    args: ['[market...]'],
+    args: ['[marketplace...]'],
     about:
-      'Update ttheme and refresh your markets — official palettes come with ttheme; an installed palette from another market keeps its colors until ctrl+r on it in Browse takes its update',
+      'Update ttheme and refresh your marketplaces — official palettes come with ttheme; an installed palette from another marketplace keeps its colors until ctrl+r on it in Browse takes its update',
     section: 'catalog',
   },
   {
-    name: 'market',
+    name: 'marketplace',
     args: ['[action]', '[source]'],
-    about: 'The markets you added — add, remove and search them; init makes one of your own',
+    about: 'The marketplaces you added — add, remove and search them; init makes one of your own',
     actions: [
-      ['(none)', 'List the markets you added — their palettes, auto-update and last update'],
+      ['(none)', 'List the marketplaces you added — their palettes, auto-update and last update'],
       [
         'add <source>',
-        'Add a market — a repository (alice/ttheme-pastel, #v1 pins a tag or branch), a folder, or official; asks whether it updates on its own',
+        'Add a marketplace — a repository (alice/ttheme-pastel, #v1 pins a tag or branch), a folder, or official; asks whether it updates on its own',
       ],
-      ['remove <market>', 'Drop one by its name (alice@pastel) — the palettes you installed from it keep working'],
-      ['search [query]', 'Repositories on GitHub with the ttheme-market topic'],
+      ['remove <marketplace>', 'Drop one by its name (alice@pastel) — the palettes you installed from it keep working'],
+      ['search [query]', 'Repositories on GitHub with the ttheme-marketplace topic'],
       [
         'init [name]',
-        'Make a market of your own — <you>@<name>, in ~/.config/ttheme/market/<name> or a folder you give',
+        'Make a marketplace of your own — <you>@<name>, in ~/.config/ttheme/marketplace/<name> or a folder you give',
       ],
       [
         'check [dir]',
-        "Check a market's folder before you push it — ttheme-market.toml, every palette, the renames and the gate; nothing is written",
+        "Check a marketplace's folder before you push it — ttheme-marketplace.toml, every palette, the renames and the gate; nothing is written",
       ],
     ],
     section: 'catalog',
@@ -140,18 +140,23 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'new',
     args: ['<name>'],
-    about: 'Make a palette of your own in the palette editor — <you>@<market>/<name>, from blank, installed at once',
+    about:
+      'Make a palette of your own in the palette editor — <you>@<marketplace>/<name>, from blank, installed at once',
     section: 'own',
     flags: {
       from: { type: 'string', value: '<palette>', about: "Start from this palette's colors instead of blank" },
-      in: { type: 'string', value: '<market>', about: 'The local market to put it in — when you have more than one' },
+      in: {
+        type: 'string',
+        value: '<marketplace>',
+        about: 'The local marketplace to put it in — when you have more than one',
+      },
     },
   },
   {
     name: 'edit',
     args: ['[palette]'],
     about:
-      "Change a palette in the palette editor — your own in its file, any other as your tone over its market's colors, which R and s in the editor put back; with none named, asks to edit the one this tab wears",
+      "Change a palette in the palette editor — your own in its file, any other as your tone over its marketplace's colors, which R and s in the editor put back; with none named, asks to edit the one this tab wears",
     section: 'own',
   },
   {
@@ -255,7 +260,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'tone',
     args: ['<palette>', '<action>', '[width]'],
     about:
-      "Print a palette's colors for preview's panel at its width, open them in the palette editor, or reset them to its market's — preview calls this",
+      "Print a palette's colors for preview's panel at its width, open them in the palette editor, or reset them to its marketplace's — preview calls this",
     section: 'setup',
     hidden: true,
   },
@@ -343,9 +348,9 @@ const EXAMPLES: [string, string][] = [
   ['ttheme add homura madoka', 'Install two palettes'],
   ['ttheme use homura', 'Paint this tab with one'],
   ['ttheme list --json madoka', 'The madoka series as JSON'],
-  ['ttheme market add alice/ttheme-pastel', "alice's market, alice@pastel — ttheme add alice@pastel/dusk"],
-  ['ttheme add dusk --market alice/ttheme-pastel', 'The same in one step'],
-  ['ttheme new rei --from rei', 'Your own rei, <you>@<market>/rei, to edit and share'],
+  ['ttheme marketplace add alice/ttheme-pastel', "alice's marketplace, alice@pastel — ttheme add alice@pastel/dusk"],
+  ['ttheme add dusk --marketplace alice/ttheme-pastel', 'The same in one step'],
+  ['ttheme new rei --from rei', 'Your own rei, <you>@<marketplace>/rei, to edit and share'],
 ]
 
 export function briefText(): string {

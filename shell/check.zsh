@@ -236,7 +236,7 @@ plain=${out//$'\e[K'/}
     (( ${(m)#text} <= pw )) || { print -u2 "a filter that matched nothing ran past a window $pw wide: $text"; exit 1 }
   done
   out= color=1
-  __tt_pv_head 1 43 78 $long "" "~/market-mine"
+  __tt_pv_head 1 43 78 $long "" "~/marketplace-mine"
   text=${${out//$'\e['[0-9;?]#[A-Za-z]/}}
   (( ${(m)#text} <= 36 )) || { print -u2 "a long palette name ran past the panel head: $text"; exit 1 }
   for pw in 50 80; do
@@ -708,7 +708,7 @@ forks_of() {
   pids=(${(u)${(f)"$(grep -oE '\+[0-9]+> ' $log | tr -dc '0-9\n')"}})
   REPLY=$(( ${#pids} - 1 ))
 }
-for pair in 'gojo Z29qbw==' 'owner@market/slug b3duZXJAbWFya2V0L3NsdWc=' '日本/é 5pel5pysL8Op' 'ab YWI='; do
+for pair in 'gojo Z29qbw==' 'owner@marketplace/slug b3duZXJAbWFya2V0cGxhY2Uvc2x1Zw==' '日本/é 5pel5pysL8Op' 'ab YWI='; do
   REPLY=; __tt_b64s ${pair% *}
   [[ $REPLY == ${pair##* } ]] || { print -u2 "__tt_b64s broke on ${pair% *}: $REPLY"; exit 1 }
 done

@@ -16,4 +16,4 @@ body:
       description: The colors fans know them by. Color values and post numbers only, no images or links to art.
   - type: markdown
     attributes:
-      value: To make the palette yourself, see the palette section of CONTRIBUTING.md, or publish it in your own market.
+      value: To make the palette yourself, see the palette section of CONTRIBUTING.md, or publish it in your own marketplace.

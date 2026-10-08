@@ -108,7 +108,7 @@ profiles, fragment or settings key), says what
 init will change, takes it all out again on uninstall, and — for the terminals
 whose default is a profile, iTerm2, Konsole and Terminal.app — points new tabs at ttheme's
 profile and gives yours back. Every command that changes the state (`init`,
-`add`, `remove`, `default`, `on`, `off`, Browse's apply, a market refresh) writes it
+`add`, `remove`, `default`, `on`, `off`, Browse's apply, a marketplace refresh) writes it
 once and hands it to every wired terminal the same way, whichever terminal you
 ran it in.
 

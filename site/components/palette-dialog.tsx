@@ -4,15 +4,15 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Icon } from '@/lib/icons'
 import { gatePassed, luminance } from '@/lib/sheet'
-import type { GateRule, Market, Theme } from '@/lib/themes'
+import type { GateRule, Marketplace, Theme } from '@/lib/themes'
 import { CommandRow } from './command-row'
 import { PaletteBadges } from './palette-card'
 import { GateList, PropertyList, SectionLabel, Signature, SwatchGrid } from './palette-parts'
 import { SCENES, type Scene, TerminalPreview } from './terminal-preview'
 
-function commands(theme: Theme, market: Market | undefined): string[] {
-  if (!market) return [`ttheme add ${theme.name}`, `ttheme use ${theme.name}`]
-  return [`ttheme add ${theme.name} --market ${market.add}`, `ttheme use ${theme.id}`]
+function commands(theme: Theme, marketplace: Marketplace | undefined): string[] {
+  if (!marketplace) return [`ttheme add ${theme.name}`, `ttheme use ${theme.name}`]
+  return [`ttheme add ${theme.name} --marketplace ${marketplace.add}`, `ttheme use ${theme.id}`]
 }
 
 function lightness(hex: string): string {
@@ -33,12 +33,12 @@ export function PaletteDialog() {
 
 export function PaletteDialogBody({
   theme,
-  market,
+  marketplace,
   gate,
   scene,
 }: {
   theme: Theme
-  market: Market | undefined
+  marketplace: Marketplace | undefined
   gate: GateRule[]
   scene: Scene
 }) {
@@ -48,7 +48,7 @@ export function PaletteDialogBody({
         <DialogTitle id="palette-dialog-title">{escapeHtml(theme.name)}</DialogTitle>
         <DialogDescription id="palette-dialog-description" class="sr-only">
           {escapeHtml(
-            `${theme.market ? theme.id : theme.group} palette, its slots, its contrast readings and how to install it`,
+            `${theme.marketplace ? theme.id : theme.group} palette, its slots, its contrast readings and how to install it`,
           )}
         </DialogDescription>
         <PaletteBadges theme={theme} />
@@ -66,11 +66,11 @@ export function PaletteDialogBody({
           <SectionLabel icon={<Icon node={List} />}>Properties</SectionLabel>
           <PropertyList
             rows={[
-              [theme.market ? 'Market' : 'Series', `${theme.group}${theme.lead ? ' · lead' : ''}`],
+              [theme.marketplace ? 'Marketplace' : 'Series', `${theme.group}${theme.lead ? ' · lead' : ''}`],
               ['ANSI from', theme.ansiSource],
               ['Background L*', lightness(theme.background)],
               ['Foreground L*', lightness(theme.foreground)],
-              ['Gate', `${gatePassed(theme, gate)} / ${gate.length} floors${theme.market ? ' · advisory' : ''}`],
+              ['Gate', `${gatePassed(theme, gate)} / ${gate.length} floors${theme.marketplace ? ' · advisory' : ''}`],
             ]}
           />
         </section>
@@ -88,7 +88,7 @@ export function PaletteDialogBody({
         </section>
       </aside>
       <DialogFooter class="col-start-1 row-start-2 grid gap-2 max-[860px]:row-start-auto">
-        {commands(theme, market).map((command) => (
+        {commands(theme, marketplace).map((command) => (
           <CommandRow command={command} />
         ))}
       </DialogFooter>

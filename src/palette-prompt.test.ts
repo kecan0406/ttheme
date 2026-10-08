@@ -305,7 +305,7 @@ const shop: PaletteEntry[] = [
   entry({ name: 'kec@shop/dusk', group: 'kec@shop' }),
 ]
 
-test('a market lists its catalogs, then the palettes outside every catalog', () => {
+test('a marketplace lists its catalogs, then the palettes outside every catalog', () => {
   const rows = pickerRows(shop, new Set(['kec@shop', 'kec@shop/neon']), '')
   assert.deepEqual(
     rows.map((r) => (r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name} (${r.count})`)),

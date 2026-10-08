@@ -14,7 +14,7 @@ function moved(renames: Record<string, string | false>, installed: string[], for
   return moves
 }
 
-test('an installed palette its market renamed follows the chain to the palette there now, and one mapped to false is removed', () => {
+test('an installed palette its marketplace renamed follows the chain to the palette there now, and one mapped to false is removed', () => {
   const moves = moved({ dawn: 'twilight', twilight: 'dusk', old: false }, [
     `${ID}/dawn`,
     `${ID}/old`,
@@ -25,12 +25,12 @@ test('an installed palette its market renamed follows the chain to the palette t
   assert.deepEqual(moves.removed, [`${ID}/old`])
 })
 
-test('a palette that left its market stays installed unless the market asks for its removal, and a chain that loops goes nowhere', () => {
+test('a palette that left its marketplace stays installed unless the marketplace asks for its removal, and a chain that loops goes nowhere', () => {
   assert.deepEqual(moved({ a: 'b', b: 'a' }, [`${ID}/a`, `${ID}/gone`]), { renamed: new Map(), removed: [] })
   assert.deepEqual(moved({ a: 'b', b: 'a' }, [`${ID}/a`, `${ID}/gone`], true).removed, [`${ID}/a`, `${ID}/gone`])
 })
 
-test('market check names a chain that loops or ends off the market, and a rename of a palette still there', () => {
+test('marketplace check names a chain that loops or ends off the marketplace, and a rename of a palette still there', () => {
   const { errors, warnings } = renameProblems(
     { a: 'b', b: 'a', c: 'missing', noon: 'dusk', fine: 'dusk', gone: false },
     new Set(['dusk', 'noon']),

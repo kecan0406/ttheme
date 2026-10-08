@@ -3,7 +3,7 @@ import { available, readCatalog, readKept, search, updatesOf, writeKept } from '
 import { adopt } from './craft.ts'
 import { liveOf } from './live.ts'
 import { listed, type Manifest, type PaletteEntry } from './manifest.ts'
-import { addSource, idOf, localLine } from './markets.ts'
+import { addSource, idOf, localLine } from './marketplaces.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
 import { codeOf, readLocal, SHARE_URL } from './own.ts'
@@ -13,39 +13,39 @@ import { pending, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
 import { applyRefreshed, attempt, failureLine, type Refreshed, refreshLine, updatesLine } from './refresh.ts'
 import { newerRelease, upgradeTo } from './release.ts'
-import { installedPath, isLocal, marketSources, OFFICIAL, shownSource } from './sources.ts'
+import { installedPath, isLocal, marketplaceSources, OFFICIAL, shownSource } from './sources.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
-import { alphabetical, marketOf } from './theme.ts'
+import { alphabetical, marketplaceOf } from './theme.ts'
 import { readTone } from './tone.ts'
 
 export function reload(count: number): void {
   say(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
 }
 
-export function inMarket(given: string[], id: string): string[] {
+export function inMarketplace(given: string[], id: string): string[] {
   return given.map((name) => {
     if (codeOf(name)) {
       return name
     }
-    const market = marketOf(name)
-    if (market === undefined) {
+    const marketplace = marketplaceOf(name)
+    if (marketplace === undefined) {
       return id === OFFICIAL ? name : `${id}/${name}`
     }
-    if (market !== id) {
-      throw new Error(`${name} is not in ${id} — give its bare name, or leave --market out`)
+    if (marketplace !== id) {
+      throw new Error(`${name} is not in ${id} — give its bare name, or leave --marketplace out`)
     }
     return name
   })
 }
 
-export async function runAdd(asked: string[], market?: string): Promise<void> {
+export async function runAdd(asked: string[], marketplace?: string): Promise<void> {
   const link = asked.find((n) => /^https?:\/\//i.test(n.trim()) && !codeOf(n))
   if (link) {
     throw new Error(`${link} is not a share link — one reads ${SHARE_URL}tt2:…`)
   }
   const home = configHome()
-  const given = market ? inMarket(asked, (await addSource(home, market)).id) : asked
+  const given = marketplace ? inMarketplace(asked, (await addSource(home, marketplace)).id) : asked
   const catalog = readCatalog(home)
   const shared = new Map<string, PaletteEntry>()
   const names = [
@@ -183,10 +183,10 @@ function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wire
     : [`Default ${name} · no terminal is wired to open with it — \`ttheme init\` wires one`]
 }
 
-type Source = 'market' | 'mine' | 'kept'
+type Source = 'marketplace' | 'mine' | 'kept'
 
 function sources(home: string, catalog: Manifest): Map<string, Source> {
-  const out = new Map<string, Source>(catalog.palettes.map((p) => [p.name, 'market']))
+  const out = new Map<string, Source>(catalog.palettes.map((p) => [p.name, 'marketplace']))
   for (const p of readLocal(home, catalog.palettes, false)) {
     out.set(p.name, 'mine')
   }
@@ -214,7 +214,7 @@ export function runList(query: string | undefined, json = false): void {
     return
   }
   const pad = Math.max(...hits.map((p) => p.name.length), 0)
-  const note: Record<Source, string> = { market: '', mine: '  · yours', kept: '  · in no market you added' }
+  const note: Record<Source, string> = { marketplace: '', mine: '  · yours', kept: '  · in no marketplace you added' }
   const tone = readTone(home)
   for (const p of hits) {
     const group = p.catalog ? `${p.group} / ${p.catalog}` : p.group
@@ -227,7 +227,7 @@ export function runList(query: string | undefined, json = false): void {
   }
 }
 
-function marketNamed(home: string, sources: string[], name: string): string {
+function marketplaceNamed(home: string, sources: string[], name: string): string {
   const id = (source: string) => {
     try {
       return idOf(home, source)
@@ -237,15 +237,15 @@ function marketNamed(home: string, sources: string[], name: string): string {
   }
   const hit = sources.find((s) => s === name || shownSource(s) === name || id(s) === name)
   if (!hit) {
-    throw new Error(`no market named ${name} — \`ttheme market\` lists them`)
+    throw new Error(`no marketplace named ${name} — \`ttheme marketplace\` lists them`)
   }
   return hit
 }
 
 export async function runUpdate(asked: string[] = []): Promise<number> {
   const home = configHome()
-  const all = marketSources(home)
-  const named = asked.map((name) => marketNamed(home, all, name))
+  const all = marketplaceSources(home)
+  const named = asked.map((name) => marketplaceNamed(home, all, name))
   const release = await newerRelease()
   let stuck = false
   if (release.latest) {
@@ -258,20 +258,20 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   } else {
     console.log(release.note)
   }
-  const markets = (named.length > 0 ? named : all).filter((source) => source !== OFFICIAL)
-  if (named.length === 0 && markets.length === 0) {
-    console.log('No markets to update — `ttheme market add <owner>/<repo>` adds one')
+  const marketplaces = (named.length > 0 ? named : all).filter((source) => source !== OFFICIAL)
+  if (named.length === 0 && marketplaces.length === 0) {
+    console.log('No marketplaces to update — `ttheme marketplace add <owner>/<repo>` adds one')
   }
   const kept = (source: string, failure: Error): string =>
     `${failureLine(source, failure)} — kept the copy from the last update`
-  for (const source of markets.filter(isLocal)) {
+  for (const source of marketplaces.filter(isLocal)) {
     try {
       console.log(`  ${localLine(home, source)}`)
     } catch (error) {
       console.log(`  ${kept(source, error as Error)}`)
     }
   }
-  const remote = markets.filter((source) => !isLocal(source))
+  const remote = marketplaces.filter((source) => !isLocal(source))
   const waiting = new Set(remote)
   const done: Refreshed[] = []
   const line = pending()

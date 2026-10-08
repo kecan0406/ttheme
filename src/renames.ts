@@ -1,6 +1,6 @@
-import type { MarketInfo } from './sources.ts'
+import type { MarketplaceInfo } from './sources.ts'
 
-type Renames = MarketInfo['renames']
+type Renames = MarketplaceInfo['renames']
 
 export interface Moves {
   renamed: Map<string, string>
@@ -23,7 +23,7 @@ function follow(renames: Renames, slug: string): string | false | undefined {
 
 export function plan(
   id: string,
-  info: Pick<MarketInfo, 'renames' | 'forceRemove'>,
+  info: Pick<MarketplaceInfo, 'renames' | 'forceRemove'>,
   slugs: ReadonlySet<string>,
   installed: readonly string[],
   moves: Moves,

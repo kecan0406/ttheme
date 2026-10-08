@@ -169,7 +169,7 @@ export async function runUninstall(yes = false): Promise<void> {
         ...plan.edits.map((e) => `Take ttheme out of ${e.file}`),
         ...plan.removals.map((r) =>
           r === tthemeDir
-            ? `Delete ${r} — settings, pins, every installed picture${existsSync(localRoot(paths.configHome)) ? `, and your markets under ${localRoot(paths.configHome)} (push them to GitHub first to keep them)` : ''}`
+            ? `Delete ${r} — settings, pins, every installed picture${existsSync(localRoot(paths.configHome)) ? `, and your marketplaces under ${localRoot(paths.configHome)} (push them to GitHub first to keep them)` : ''}`
             : `Delete ${r}`,
         ),
       ].join('\n'),

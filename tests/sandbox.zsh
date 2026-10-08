@@ -60,14 +60,14 @@ clone() {
 bring() {
   local to=$SANDBOX/.config/ttheme tilde=${MINE/#$REAL_HOME/\~} item src dest conf text
   local -a moved=() lines=()
-  for item in config.zsh tone.json pins kept.json markets backgrounds; do
+  for item in config.zsh tone.json pins kept.json marketplaces markets backgrounds; do
     [[ -e $MINE/$item ]] || continue
     rm -rf -- $to/$item
     clone $MINE/$item $to/$item
   done
-  for src in ${(f)"$(node -p "(require(process.argv[1]).markets ?? []).filter((s) => s.startsWith('/')).join('\\n')" $MINE/installed.json)"}; do
+  for src in ${(f)"$(node -p "((m) => m.marketplaces ?? m.markets ?? [])(require(process.argv[1])).filter((s) => s.startsWith('/')).join('\\n')" $MINE/installed.json)"}; do
     [[ -d $src ]] || continue
-    dest=$to/market/${src:t}
+    dest=$to/marketplace/${src:t}
     while [[ -e $dest ]]; do dest+=-; done
     mkdir -p ${dest:h}
     clone $src $dest
@@ -92,7 +92,7 @@ const moved = new Map(pairs.flatMap((source, i) => (i % 2 === 0 ? [[source, pair
 const local = ["terminals", "itermBase", "konsoleBase", "terminalBase", "wtHome"]
 const next = Object.fromEntries(Object.entries(own).filter(([key]) => !local.includes(key)))
 for (const key of local.filter((key) => key in fresh)) next[key] = fresh[key]
-if (next.markets) next.markets = next.markets.map((source) => moved.get(source) ?? source)
+for (const key of ["marketplaces", "markets"]) if (next[key]) next[key] = next[key].map((source) => moved.get(source) ?? source)
 fs.writeFileSync(made, `${JSON.stringify(next, null, 2)}\n`)
 ' $MINE/installed.json $to/installed.json $moved
 }

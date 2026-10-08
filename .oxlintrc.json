@@ -43,7 +43,7 @@
         "src/booru.ts",
         "src/catalog.ts",
         "src/find/kept.ts",
-        "src/markets.ts",
+        "src/marketplaces.ts",
         "src/palettes.ts",
         "src/refresh.ts",
         "src/release.ts",

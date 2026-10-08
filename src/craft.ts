@@ -10,7 +10,7 @@ import { writeAtomic } from './edits.ts'
 import { findFor } from './find/find.ts'
 import { fixGate, type Move } from './fix.ts'
 import { type Manifest, type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
-import { ensureLocal } from './markets.ts'
+import { ensureLocal } from './marketplaces.ts'
 import { colorless } from './osc.ts'
 import {
   codeOf,
@@ -19,8 +19,8 @@ import {
   draftOf,
   fromCode,
   gateLines,
-  localMarkets,
-  marketFiles,
+  localMarketplaces,
+  marketplaceFiles,
   ownPath,
   paletteToml,
   readCode,
@@ -38,7 +38,7 @@ import { bringPictures, heldPictures } from './pictures.ts'
 import { qrLines } from './qr.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
 import { showsPictures } from './terminal.ts'
-import { marketOf, nameProblem, type SharedPicture, type Theme } from './theme.ts'
+import { marketplaceOf, nameProblem, type SharedPicture, type Theme } from './theme.ts'
 import { overrideOf, readTone, tonedEntry, withTone, writeTone } from './tone.ts'
 import { toneRows } from './tone-view.ts'
 
@@ -91,8 +91,8 @@ function mine(name: string, home: string): string {
   if (name.includes('/')) {
     return name
   }
-  const locals = localMarkets(home, false)
-  const holding = locals.filter((m) => marketFiles(m.dir).some((f) => f.slug === name))
+  const locals = localMarketplaces(home, false)
+  const holding = locals.filter((m) => marketplaceFiles(m.dir).some((f) => f.slug === name))
   const [hit] = holding.length === 1 ? holding : locals.length === 1 ? locals : []
   return hit ? `${hit.id}/${name}` : name
 }
@@ -122,7 +122,7 @@ export function adopt(home: string, code: string, catalog: Manifest): PaletteEnt
   const known = untuned(home, catalog, false).palettes.find((e) => e.name === entry.name)
   if (known && wears(known) !== wears(entry)) {
     throw new Error(
-      `${entry.name} is already in ${marketOf(entry.name) ?? 'the ttheme catalog'} and differs — \`ttheme add ${entry.name}\` wears that one`,
+      `${entry.name} is already in ${marketplaceOf(entry.name) ?? 'the ttheme catalog'} and differs — \`ttheme add ${entry.name}\` wears that one`,
     )
   }
   if (!known) {
@@ -224,14 +224,14 @@ async function editColors(options: EditorOptions, hosted = false): Promise<Edite
 export async function runNew(name: string, from: string | undefined, into: string | undefined): Promise<void> {
   const home = configHome()
   const catalog = readCatalog(home)
-  const market = await ensureLocal(home, into)
-  const full = name.includes('/') ? name : `${market.id}/${name}`
+  const marketplace = await ensureLocal(home, into)
+  const full = name.includes('/') ? name : `${marketplace.id}/${name}`
   const problem = nameProblem(full)
   if (problem) {
     throw new Error(`${full} ${problem}`)
   }
-  if (marketOf(full) !== market.id) {
-    throw new Error(`palettes in ${market.dir} are named ${market.id}/<palette> — ${full} belongs elsewhere`)
+  if (marketplaceOf(full) !== marketplace.id) {
+    throw new Error(`palettes in ${marketplace.dir} are named ${marketplace.id}/<palette> — ${full} belongs elsewhere`)
   }
   const path = ownPath(home, full)
   if (existsSync(path)) {
@@ -241,7 +241,7 @@ export async function runNew(name: string, from: string | undefined, into: strin
   if (!tty()) {
     throw new Error('new opens the palette editor — run it in a terminal')
   }
-  const base = source && (marketOf(source.name) ? source.base : source.default ? undefined : source.name)
+  const base = source && (marketplaceOf(source.name) ? source.base : source.default ? undefined : source.name)
   const kept = source ? draftOf(source, full, `kept from ${source.name}`) : undefined
   const held = source ? (heldPictures(home, source.name) ?? source.pictures) : undefined
   const { base: _, ansiSource: __, group: ___, ...rest } = kept ?? { name: full, signature: SIGNATURE, ...grow(SEEDS) }
@@ -480,8 +480,10 @@ export function runCheck(name: string, fix = false): number {
 }
 
 function mineAt(home: string, name: string): string | undefined {
-  const market = marketOf(name)
-  return market && localMarkets(home, false).some((m) => m.id === market) ? ownPath(home, name) : undefined
+  const marketplace = marketplaceOf(name)
+  return marketplace && localMarketplaces(home, false).some((m) => m.id === marketplace)
+    ? ownPath(home, name)
+    : undefined
 }
 
 function decoded(text: string): Colors | undefined {

@@ -2,21 +2,21 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                     ╭─ Help ─────────────────────────────────────────────────╮
- ▌  ▸ official (2/6) │                                                        │
-    ── On GitHub ────│  Move      ↑↓  home  end  pgup  pgdn                   │
-    ⌕ Find markets on│  Open      ←→  ·  enter on a market or a series        │
-                     │  Pick      space  ·  a palette, a series, a market     │
-                     │  Filter    Any text  ·  bksp  ·  ctrl-u clears         │
-                     │  Market    ⇧←→  auto-update  ·  ctrl+r  updates it     │
-                     │            del  removes it  ·  again to undo           │
-                     │  Add       owner/repo, a folder, or a row on GitHub    │
-                     │            space  adds it  ·  ctrl+r  searches again   │
-                     │  Update    ctrl+r  on a palette marked ↑               │
-                     │  Apply     enter  reviews and applies  ·  esc cancels  │
-                     │  Close     ?  esc                                      │
-                     │                                                        │
-                     ╰────────────────────────────────────────────────────────╯
+                  ╭─ Help ───────────────────────────────────────────────────────╮
+ ▌  ▸ official (2/│                                                              │
+    ── On GitHub ─│  Move          ↑↓  home  end  pgup  pgdn                     │
+    ⌕ Find marketp│  Open          ←→  ·  enter on a marketplace or a series     │
+                  │  Pick          space  ·  a palette, a series, a marketplace  │
+                  │  Filter        Any text  ·  bksp  ·  ctrl-u clears           │
+                  │  Marketplace   ⇧←→  auto-update  ·  ctrl+r  updates it       │
+                  │                del  removes it  ·  again to undo             │
+                  │  Add           owner/repo, a folder, or a row on GitHub      │
+                  │                space  adds it  ·  ctrl+r  searches again     │
+                  │  Update        ctrl+r  on a palette marked ↑                 │
+                  │  Apply         enter  reviews and applies  ·  esc cancels    │
+                  │  Close         ?  esc                                        │
+                  │                                                              │
+                  ╰──────────────────────────────────────────────────────────────╯
                                                                │
                                                                │
                                                                │

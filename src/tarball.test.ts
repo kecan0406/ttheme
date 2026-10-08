@@ -6,9 +6,11 @@ import { untar } from './tarball.ts'
 
 test("a repository's archive reads as its files under paths without the top folder, however long or far from ASCII", () => {
   const long = `palettes/팝픈 뮤직/${'a'.repeat(120)}.toml`
-  const files = untar(tarballOf({ 'ttheme-market.toml': 'name = "pastel"\n', [long]: 'x', 'palettes/dusk.toml': '' }))
-  assert.deepEqual([...files.keys()].sort(), ['palettes/dusk.toml', long, 'ttheme-market.toml'].sort())
-  assert.equal(new TextDecoder().decode(files.get('ttheme-market.toml')), 'name = "pastel"\n')
+  const files = untar(
+    tarballOf({ 'ttheme-marketplace.toml': 'name = "pastel"\n', [long]: 'x', 'palettes/dusk.toml': '' }),
+  )
+  assert.deepEqual([...files.keys()].sort(), ['palettes/dusk.toml', long, 'ttheme-marketplace.toml'].sort())
+  assert.equal(new TextDecoder().decode(files.get('ttheme-marketplace.toml')), 'name = "pastel"\n')
   assert.equal(files.get('palettes/dusk.toml')?.length, 0)
 })
 

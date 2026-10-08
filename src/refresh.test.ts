@@ -18,11 +18,11 @@ import {
   refreshLine,
   updateNote,
 } from './refresh.ts'
-import { cachePath, marketsDir } from './sources.ts'
+import { cachePath, marketplacesDir } from './sources.ts'
 
 const now = 1_000_000_000_000
 
-test('a market is due once a day, never while auto-update is off, and an hour after a failed try', () => {
+test('a marketplace is due once a day, never while auto-update is off, and an hour after a failed try', () => {
   assert.equal(isDue(true, undefined, undefined, now), true)
   assert.equal(isDue(true, now - REFRESH_AFTER, undefined, now), true)
   assert.equal(isDue(true, now - REFRESH_AFTER + 1, undefined, now), false)
@@ -53,7 +53,7 @@ test('an update is noted only when something changed', () => {
 
 const SOURCE = 'ann/ttheme-pastel'
 
-const MARKET = { 'ttheme-market.toml': 'name = "pastel"\n\n[owner]\nname = "ann"\n' }
+const MARKETPLACE = { 'ttheme-marketplace.toml': 'name = "pastel"\n\n[owner]\nname = "ann"\n' }
 
 function catalog(schema: number): string {
   return JSON.stringify({ schema, version: '9.0.0', gate: [], palettes: [] })
@@ -61,8 +61,8 @@ function catalog(schema: number): string {
 
 async function withNetwork<T>(respond: () => Promise<Response>, run: (home: string) => Promise<T>): Promise<T> {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-refresh-'))
-  mkdirSync(marketsDir(home), { recursive: true })
-  writeFileSync(cachePath(home, SOURCE), `${JSON.stringify({ files: MARKET })}\n`)
+  mkdirSync(marketplacesDir(home), { recursive: true })
+  writeFileSync(cachePath(home, SOURCE), `${JSON.stringify({ files: MARKETPLACE })}\n`)
   writeCatalog(home, JSON.parse(catalog(SCHEMA)))
   const realFetch = globalThis.fetch
   const realState = process.env.XDG_STATE_HOME
@@ -92,7 +92,7 @@ test('an attempt hands back what happened instead of throwing', async () => {
     },
   )
   await withNetwork(
-    async () => new Response(tarballOf(MARKET)),
+    async () => new Response(tarballOf(MARKETPLACE)),
     async (home) => {
       const fresh = await attempt(home, SOURCE)
       assert.ok('refreshed' in fresh)
@@ -119,7 +119,7 @@ function installed(name: string): PaletteEntry {
   }
 }
 
-test('applying a refresh hands back the palettes that left their market instead of printing them', async () => {
+test('applying a refresh hands back the palettes that left their marketplace instead of printing them', async () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-apply-'))
   const catalog: Manifest = {
     schema: SCHEMA,
@@ -134,7 +134,7 @@ test('applying a refresh hands back the palettes that left their market instead 
   const left = applyRefreshed(home, [
     { source: 'official', id: 'official', count: 1, change: { added: [], changed: [], gone: ['gojo'] } },
   ])
-  assert.deepEqual(left, ['gojo left its market — ttheme keeps the copy you have'])
+  assert.deepEqual(left, ['gojo left its marketplace — ttheme keeps the copy you have'])
   assert.deepEqual(
     applyRefreshed(home, [
       { source: 'official', id: 'official', count: 1, change: { added: ['x'], changed: [], gone: [] } },

@@ -2,7 +2,7 @@ import { ThemeToggle } from './theme-toggle'
 
 const NAV = [
   { href: '/sheets', label: 'sheets' },
-  { href: '/market', label: 'market' },
+  { href: '/marketplace', label: 'marketplace' },
 ] as const
 
 export function SiteHeader({ current, themeToggle = true }: { current: string; themeToggle?: boolean }) {

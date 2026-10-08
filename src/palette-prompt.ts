@@ -2,7 +2,7 @@ import type { Readable, Writable } from 'node:stream'
 import { type PaletteEntry, swatch } from './manifest.ts'
 import { aliasesFor, containsText } from './names.ts'
 import { OFFICIAL } from './sources.ts'
-import { marketOf, slugOf } from './theme.ts'
+import { marketplaceOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Inbound } from './tui/keys.ts'
 import { Inline } from './tui/screen.ts'
@@ -39,7 +39,7 @@ type Row<X extends Extra = Extra> =
 
 export type PickerScope = 'palette' | 'series'
 
-type PickerLayout = 'series' | 'markets'
+type PickerLayout = 'series' | 'marketplaces'
 
 interface Place {
   top(entry: PaletteEntry): string
@@ -49,11 +49,11 @@ interface Place {
 const PLACES: Record<PickerLayout, Place> = {
   series: {
     top: (e) => e.group,
-    shelf: (e) => (isMarket(e.group) ? e.catalog : undefined),
+    shelf: (e) => (isMarketplace(e.group) ? e.catalog : undefined),
   },
-  markets: {
-    top: (e) => (isMarket(e.group) ? e.group : OFFICIAL),
-    shelf: (e) => (isMarket(e.group) ? e.catalog : e.group),
+  marketplaces: {
+    top: (e) => (isMarketplace(e.group) ? e.group : OFFICIAL),
+    shelf: (e) => (isMarketplace(e.group) ? e.catalog : e.group),
   },
 }
 
@@ -62,7 +62,7 @@ function catalogKey(group: string, catalog: string): string {
 }
 
 function shownName(entry: PaletteEntry): string {
-  return marketOf(entry.name) ? slugOf(entry.name) : entry.name
+  return marketplaceOf(entry.name) ? slugOf(entry.name) : entry.name
 }
 
 function shelfKey(entry: PaletteEntry, place: Place): string | undefined {
@@ -148,7 +148,7 @@ export function pickerRows(
         kind: 'catalog',
         group: top,
         name,
-        ...(!isMarket(lead.group) && lead.native ? { native: lead.native } : {}),
+        ...(!isMarketplace(lead.group) && lead.native ? { native: lead.native } : {}),
         lead,
         expanded: unfolded,
         count: inside.length,
@@ -173,7 +173,7 @@ export function seriesRows(entries: PaletteEntry[], filter: string): PickerRow[]
   return pickerRows(entries, new Set(), '').filter((r) => r.kind === 'group' && hit.has(r.name))
 }
 
-function isMarket(group: string): boolean {
+function isMarketplace(group: string): boolean {
   return group.includes('@')
 }
 
@@ -212,7 +212,7 @@ export function pageStep(name: string | undefined, size: number): number | undef
 }
 
 function ruled<X extends Extra>(rows: Row<X>[]): Row<X>[] {
-  const at = rows.findIndex((r) => r.kind === 'group' && isMarket(r.name))
+  const at = rows.findIndex((r) => r.kind === 'group' && isMarketplace(r.name))
   return at > 0 && rows.slice(0, at).some((r) => r.kind === 'group')
     ? [...rows.slice(0, at), { kind: 'rule' }, ...rows.slice(at)]
     : rows
@@ -444,7 +444,7 @@ export class PaletteList<X extends Extra = Extra> {
         ? seriesRows(this.entries, this.filter)
         : pickerRows(this.entries, this.expanded, this.filter, this.layout, this.tops?.() ?? [])
     const tree: Row<X>[] =
-      this.layout === 'markets' || body.length === 0
+      this.layout === 'marketplaces' || body.length === 0
         ? body
         : ruled([{ kind: 'all', count: this.allCount(body) }, ...body])
     this.rows = [...tree, ...(this.extras?.() ?? []).map((extra) => ({ kind: 'extra' as const, extra }))]
@@ -578,7 +578,7 @@ export class PaletteList<X extends Extra = Extra> {
 
   private renderRow(row: Row<X>, index: number): string {
     if (row.kind === 'rule') {
-      const line = '── Markets ──────────'
+      const line = '── Marketplaces ──────────'
       return `   ${this.p.dim(line)}`
     }
     if (row.kind === 'extra') {

@@ -3,26 +3,26 @@
 `themes/*.toml` is the official catalog. A merged palette ships with the next
 release, and `ttheme update` brings it to everyone.
 
-## Your own market first
+## Your own marketplace first
 
 You do not need this repository to share a palette. Every palette you make
-lives in a market of your own, and anyone can add it:
+lives in a marketplace of your own, and anyone can add it:
 
 ```sh
-ttheme market init dust           # <you>@dust, in ~/.config/ttheme/market/dust — prints how to publish it
+ttheme marketplace init dust      # <you>@dust, in ~/.config/ttheme/marketplace/dust — prints how to publish it
 ttheme new rei                    # <you>@dust/rei, from blank in the palette editor (--from rei starts from rei)
-ttheme edit rei                   # the same editor; the gate's numbers are shown, never enforced — another market's palette is tuned as a tone
+ttheme edit rei                   # the same editor; the gate's numbers are shown, never enforced — another marketplace's palette is tuned as a tone
 ```
 
-A market is a repository with `palettes/<palette>.toml` and a
-`ttheme-market.toml` that names it — nothing is built: ttheme fetches the
+A marketplace is a repository with `palettes/<palette>.toml` and a
+`ttheme-marketplace.toml` that names it — nothing is built: ttheme fetches the
 repository's archive and reads the TOML files as they are, so every push is the
-market:
+marketplace:
 
 ```toml
-"$schema" = "https://www.schemastore.org/ttheme-market.json"
+"$schema" = "https://www.schemastore.org/ttheme-marketplace.json"
 name = "dust"                              # <owner>@dust
-description = "Palettes from my favourite shows"   # browse and the market page show it
+description = "Palettes from my favourite shows"   # browse and the marketplace page show it
 
 [owner]
 name = "you"                               # your GitHub handle
@@ -38,21 +38,21 @@ gone = false                               # removed — taken off the machines 
 ```
 
 The `"$schema"` lines give an editor completion and checks (Even Better TOML
-reads them, and SchemaStore matches `ttheme-market.toml` by name); ttheme
-ignores them. Run `ttheme market check` in the folder before you push: it reads
+reads them, and SchemaStore matches `ttheme-marketplace.toml` by name); ttheme
+ignores them. Run `ttheme marketplace check` in the folder before you push: it reads
 every file as an install would, warns about keys ttheme does not know, follows
-the renames and prints the gate. Added from GitHub, a market is
+the renames and prints the gate. Added from GitHub, a marketplace is
 `<repository owner>@<name>` and its palettes are `<owner>@<name>/<palette>`;
 the TOML files name them bare (`name = "rei"`). A folder under `palettes/` is a
 catalog — `palettes/neon/arcade.toml` puts arcade in the neon catalog — so every
-list shows the market, then its catalogs, then their palettes, below the series;
+list shows the marketplace, then its catalogs, then their palettes, below the series;
 a file straight under `palettes/` sits in no catalog, after them. The catalog is
 not part of the name (still `<owner>@<name>/arcade`), so a palette name is used
-once in a market, and `meta.group` is not read. A market palette has no `order`
+once in a marketplace, and `meta.group` is not read. A marketplace palette has no `order`
 and no `role`; `meta.base` names the official palette it varies, which only says
-where its ANSI colors came from. Give the repository the `ttheme-market` topic
-and `ttheme market search` and the
-[market page](https://ttheme.vercel.app/market) find it.
+where its ANSI colors came from. Give the repository the `ttheme-marketplace` topic
+and `ttheme marketplace search` and the
+[marketplace page](https://ttheme.vercel.app/marketplace) find it.
 
 Open a pull request here when a palette belongs in the official catalog: it
 then has to pass the contrast gate and everything below.
@@ -328,18 +328,18 @@ panel below, preview's settings, the palette editor and find's grid.
 |---|---|---|
 | any character | filters | filters |
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
-| `←` `→` | close or open a series; `→` on a palette opens its panel | close or open a market or a series |
-| `enter` | open or close a series; on a palette, apply it, asking where | open or close a market or a series; elsewhere, review every pick and market change, then apply it; close the result |
+| `←` `→` | close or open a series; `→` on a palette opens its panel | close or open a marketplace or a series |
+| `enter` | open or close a series; on a palette, apply it, asking where | open or close a marketplace or a series; elsewhere, review every pick and marketplace change, then apply it; close the result |
 | `esc` | clear the filter, then restore and close | clear the filter, then cancel |
 | `space` | fold or open a series | pick; on a GitHub row, add it or search again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
-| `ctrl+r` | — | on a market, update it now; on a palette marked `↑` or a series, stage its update; search GitHub again |
-| `ctrl+s` | — | narrow the list to the next market, then back to all |
-| `shift+←` `shift+→` | example scene | on a market, auto-update off and on |
-| `delete` | — | on a market, remove it, or keep it after all |
+| `ctrl+r` | — | on a marketplace, update it now; on a palette marked `↑` or a series, stage its update; search GitHub again |
+| `ctrl+s` | — | narrow the list to the next marketplace, then back to all |
+| `shift+←` `shift+→` | example scene | on a marketplace, auto-update off and on |
+| `delete` | — | on a marketplace, remove it, or keep it after all |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |
 | `ctrl+c` | quit | cancel |
@@ -401,7 +401,7 @@ look, and never Title Case.
   notes (`Nothing changed`), the prose half of a two-column list, and every
   `about` line in `src/verbs.ts`.
 - **As spelled where they are typed**: anything the user types or
-  `config.zsh` holds — values (`fit`, `safe`, `off`), palette and market
+  `config.zsh` holds — values (`fit`, `safe`, `off`), palette and marketplace
   names (`kita`, `kec@dust`), site names on find's tabs (`danbooru`), booru
   tags, commands and flags (`ttheme use`, `--yes`) and key names
   (`enter`, `ctrl+v`). A line that starts with one keeps it as spelled.

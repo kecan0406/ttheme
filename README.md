@@ -89,10 +89,10 @@ Browse offers. `init` installs the series you pick; Browse, the second tab of
 with the next release — `ttheme update` brings it, and ttheme says when one is
 out.
 
-### Markets
+### Marketplaces
 
-Anyone can publish palettes from a GitHub repository. A market is named
-`<owner>@<name>` — its repository's owner and the name its `ttheme-market.toml` gives — and
+Anyone can publish palettes from a GitHub repository. A marketplace is named
+`<owner>@<name>` — its repository's owner and the name its `ttheme-marketplace.toml` gives — and
 sits below the series in Preview and Browse, past a line, with
 the folders under its `palettes/` as catalogs:
 
@@ -100,7 +100,7 @@ the folders under its `palettes/` as catalogs:
 ▾ Evangelion
     rei
     asuka
-── Markets ──────────
+── Marketplaces ─────
 ▾ alice@pastel
   ▾ night
       dusk
@@ -109,32 +109,32 @@ the folders under its `palettes/` as catalogs:
 ```
 
 ```sh
-ttheme add dusk --market alice/ttheme-pastel  # add alice's market and install from it
-ttheme market add alice/ttheme-pastel#v1      # or add it alone, pinned to a tag
-ttheme                                        # shift+tab to Browse: markets are rows there — add, remove, auto-update
+ttheme add dusk --marketplace alice/ttheme-pastel  # add alice's marketplace and install from it
+ttheme marketplace add alice/ttheme-pastel#v1      # or add it alone, pinned to a tag
+ttheme                                             # shift+tab to Browse: marketplaces are rows there — add, remove, auto-update
 ```
 
-Browse handles markets the way it handles palettes: in the same list it
+Browse handles marketplaces the way it handles palettes: in the same list it
 adds one by repository or folder, finds the public ones on GitHub, marks one for
 removal and switches its auto-update, and enter applies all of it with the
 palettes you picked. The official catalog comes with ttheme and updates with it;
 a repository asks when you add it whether its list updates on its own, and a
 palette you installed from it keeps its colors until you take its update —
-`ctrl+r` on a palette marked `↑` in Browse. Nobody reviews a market. Its
+`ctrl+r` on a palette marked `↑` in Browse. Nobody reviews a marketplace. Its
 palettes are colors and post numbers, never code, and the contrast gate's
 numbers are shown for them but never enforced — only the official catalog is
-held to the gate. `ttheme update` updates ttheme and refreshes every market now; `ttheme market
+held to the gate. `ttheme update` updates ttheme and refreshes every marketplace now; `ttheme marketplace
 remove alice@pastel` drops one, and the palettes you installed from it keep
-working. The official catalog is a market too (`official`). [The markets
-page](https://ttheme.vercel.app/market) lists the public ones.
+working. The official catalog is a marketplace too (`official`). [The marketplaces
+page](https://ttheme.vercel.app/marketplace) lists the public ones.
 
 ### Your own palettes
 
 `ttheme new rei` opens the palette editor on a blank palette: a few seeds grow
 twenty colors that pass the contrast gate, then each one is tuned in OKLCH while
-a mock terminal beside them shows the result. It makes `<you>@<market>/rei`, named after your
-GitHub handle and a market name the first `new` asks for, in
-`~/.config/ttheme/market/<market>`, and installs it; `--from rei` starts from
+a mock terminal beside them shows the result. It makes `<you>@<marketplace>/rei`, named after your
+GitHub handle and a marketplace name the first `new` asks for, in
+`~/.config/ttheme/marketplace/<marketplace>`, and installs it; `--from rei` starts from
 rei's colors instead. `ttheme edit rei` opens the same editor — on any palette,
 the official ones included: one that is not yours keeps your changes as a tone
 over its own colors, and `R` then `s` in the editor puts them back. `ttheme check
@@ -142,17 +142,17 @@ over its own colors, and `R` then `s` in the editor puts them back. `ttheme chec
 yours). Left without a palette, `edit`, `check` and `share` ask to use the one
 the tab wears; `share` into a pipe uses it without asking.
 
-A local market is already a repository layout: `palettes/*.toml` (a folder
+A local marketplace is already a repository layout: `palettes/*.toml` (a folder
 under it, such as `palettes/night/`, is a catalog) and the
-`ttheme-market.toml` that names it — nothing to build, since ttheme reads the
-files as pushed. `ttheme market init <name>` makes one and prints the commands that
+`ttheme-marketplace.toml` that names it — nothing to build, since ttheme reads the
+files as pushed. `ttheme marketplace init <name>` makes one and prints the commands that
 publish it:
 
 ```sh
-cd ~/.config/ttheme/market/<name>
+cd ~/.config/ttheme/marketplace/<name>
 git init -b main && git add -A && git commit -m "<you>@<name>"
 gh repo create <you>/ttheme-<name> --public --source . --push
-gh repo edit <you>/ttheme-<name> --add-topic ttheme-market
+gh repo edit <you>/ttheme-<name> --add-topic ttheme-marketplace
 ```
 
 `ttheme share <palette>` prints a link — `https://ttheme.vercel.app/p/tt2:…` —
@@ -161,18 +161,18 @@ its background posts with their framing, so nothing is uploaded: the page it
 opens draws the palette in a terminal, lists the posts, and gives the
 `ttheme add` command, and its preview image for chat apps is drawn in the palette's colors.
 `ttheme add <link>` (or the bare `tt2:…` code at its end) installs it anywhere
-without a market, fetching those posts from the booru the way `find` does.
+without a marketplace, fetching those posts from the booru the way `find` does.
 
 ## Usage
 
 | Command | |
 |---|---|
-| `ttheme` | Preview and Browse as tabs of one screen — `tab` and `shift+tab` switch. Preview tries palettes live: the tab repaints as the cursor moves, enter applies it to this tab or makes it the default. Browse picks palettes and markets in one list: a market's row takes `delete`, `shift+←/→` for its auto-update and `ctrl+r` |
+| `ttheme` | Preview and Browse as tabs of one screen — `tab` and `shift+tab` switch. Preview tries palettes live: the tab repaints as the cursor moves, enter applies it to this tab or makes it the default. Browse picks palettes and marketplaces in one list: a marketplace's row takes `delete`, `shift+←/→` for its auto-update and `ctrl+r` |
 | `ttheme use <palette>` | Paint this tab (a unique prefix works) |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` | A palette for this directory, everything below it, its repository or an ssh host (`ssh:<host>`) — a panel shows what each choice reaches; `cd` or `ssh` in repaints, leaving restores |
 | `ttheme pins` | Map every pin as a file tree — the pinned directories in each palette's colors, with where you are marked, and every pinned ssh host |
-| `ttheme market add <owner/repo>` | Add someone's market (`#v1` pins it) — `ttheme market` lists yours; `search`, `remove` too |
+| `ttheme marketplace add <owner/repo>` | Add someone's marketplace (`#v1` pins it) — `ttheme marketplace` lists yours; `search`, `remove` too |
 | `ttheme new <name>` | Make a palette of your own in the palette editor (`--from <palette>` starts from its colors); `edit`, `check`, `share` follow |
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |
 | `ttheme config` | Settings in `$EDITOR` |
@@ -209,7 +209,7 @@ window, WezTerm the active tab's per window, Warp the tab in front's, through it
 ## Contributing
 
 A palette is one TOML file of color values and post numbers — never images.
-Your own go in your own market, with no review; the official catalog takes pull
+Your own go in your own marketplace, with no review; the official catalog takes pull
 requests, and [CONTRIBUTING.md](CONTRIBUTING.md) has its rules, the file format
 and the checks a palette must pass.
 

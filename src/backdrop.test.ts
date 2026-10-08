@@ -437,7 +437,7 @@ test('a shared framing written for a picture reads back the same, and the defaul
   }
 })
 
-test("a market's palette keeps its pictures in files named with -- for the @ and the /", () => {
+test("a marketplace's palette keeps its pictures in files named with -- for the @ and the /", () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-slash-'))
   const image = { width: 4, height: 4, data: new Uint8Array(64).fill(90) }
   const colors = { ...KAGAMI, name: 'kec@dust/rei' }

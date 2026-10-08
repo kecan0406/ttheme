@@ -5,10 +5,10 @@ import { parse } from 'smol-toml'
 import { nameProblem } from './theme.ts'
 
 export const OFFICIAL = 'official'
-export const MARKET_FILE = 'ttheme-market.toml'
-export const MARKET_SCHEMA_URL = 'https://www.schemastore.org/ttheme-market.json'
+export const MARKETPLACE_FILE = 'ttheme-marketplace.toml'
+export const MARKETPLACE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-marketplace.json'
 export const PALETTE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-palette.json'
-export const MARKET_KEYS = [
+export const MARKETPLACE_KEYS = [
   '$schema',
   'name',
   'description',
@@ -18,7 +18,7 @@ export const MARKET_KEYS = [
   'metadata',
 ]
 export const OWNER_KEYS = ['name', 'email', 'url']
-export const TOPIC = 'ttheme-market'
+export const TOPIC = 'ttheme-marketplace'
 
 const OWNER = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i
 const REPO_NAME = /^[\w.-]{1,100}$/
@@ -28,14 +28,16 @@ export function installedPath(configHome: string): string {
   return join(configHome, 'ttheme', 'installed.json')
 }
 
-export function marketsOf(markets: string[] | undefined): string[] {
-  return markets ?? [OFFICIAL]
+export function marketplacesOf(marketplaces: string[] | undefined): string[] {
+  return marketplaces ?? [OFFICIAL]
 }
 
-export function marketSources(configHome: string): string[] {
+export function marketplaceSources(configHome: string): string[] {
   try {
-    const { markets } = JSON.parse(readFileSync(installedPath(configHome), 'utf8')) as { markets?: unknown }
-    return marketsOf(Array.isArray(markets) ? markets.filter((m): m is string => typeof m === 'string') : undefined)
+    const { marketplaces } = JSON.parse(readFileSync(installedPath(configHome), 'utf8')) as { marketplaces?: unknown }
+    return marketplacesOf(
+      Array.isArray(marketplaces) ? marketplaces.filter((m): m is string => typeof m === 'string') : undefined,
+    )
   } catch {
     return [OFFICIAL]
   }
@@ -59,7 +61,7 @@ export function refOf(source: string): string | undefined {
   return isRemote(source) && at >= 0 ? source.slice(at + 1) : undefined
 }
 
-export function sameMarket(a: string, b: string): boolean {
+export function sameMarketplace(a: string, b: string): boolean {
   return repoOf(a) === repoOf(b)
 }
 
@@ -96,7 +98,7 @@ export function parseSource(arg: string, cwd = process.cwd()): string {
     (ref !== undefined && refProblem(ref))
   ) {
     throw new Error(
-      `${arg} is not a market — give a repository (alice/ttheme-dust, #v1 pins a tag or branch) or a path (./my-market)`,
+      `${arg} is not a marketplace — give a repository (alice/ttheme-dust, #v1 pins a tag or branch) or a path (./my-marketplace)`,
     )
   }
   return `${owner.toLowerCase()}/${repo}${ref === undefined ? '' : `#${ref}`}`
@@ -111,23 +113,23 @@ export function remoteOwner(source: string): string {
   return source.slice(0, source.indexOf('/'))
 }
 
-export function marketsDir(configHome: string): string {
-  return join(configHome, 'ttheme', 'markets')
+export function marketplacesDir(configHome: string): string {
+  return join(configHome, 'ttheme', 'marketplaces')
 }
 
 export function cachePath(configHome: string, source: string): string {
-  return join(marketsDir(configHome), `${repoOf(source).replace('/', '--')}.json`)
+  return join(marketplacesDir(configHome), `${repoOf(source).replace('/', '--')}.json`)
 }
 
 export function localRoot(configHome: string): string {
-  return join(configHome, 'ttheme', 'market')
+  return join(configHome, 'ttheme', 'marketplace')
 }
 
 export function defaultLocal(configHome: string, name: string): string {
   return join(localRoot(configHome), name)
 }
 
-function marketProblem(owner: unknown, name: unknown): string | undefined {
+function marketplaceProblem(owner: unknown, name: unknown): string | undefined {
   if (typeof owner !== 'string' || typeof name !== 'string') {
     return 'needs a "name" and an [owner] table whose name is the GitHub handle'
   }
@@ -139,7 +141,7 @@ export interface Identity {
   name: string
 }
 
-export function marketId({ owner, name }: Identity): string {
+export function marketplaceId({ owner, name }: Identity): string {
   return `${owner}@${name}`
 }
 
@@ -149,15 +151,15 @@ export interface Owner {
   url?: string
 }
 
-export interface MarketInfo extends Identity {
+export interface MarketplaceInfo extends Identity {
   about: Owner
   description?: string
   renames: Record<string, string | false>
   forceRemove: boolean
 }
 
-export function marketToml({ owner, name }: Identity): string {
-  return `"$schema" = ${JSON.stringify(MARKET_SCHEMA_URL)}\nname = ${JSON.stringify(name)}\n\n[owner]\nname = ${JSON.stringify(owner)}\n`
+export function marketplaceToml({ owner, name }: Identity): string {
+  return `"$schema" = ${JSON.stringify(MARKETPLACE_SCHEMA_URL)}\nname = ${JSON.stringify(name)}\n\n[owner]\nname = ${JSON.stringify(owner)}\n`
 }
 
 function shown(where: string, key: string, value: unknown, kind: string): string {
@@ -188,14 +190,14 @@ function renamesOf(where: string, raw: unknown): Record<string, string | false> 
   return renames
 }
 
-export function readMarketInfo(text: string, where: string): MarketInfo {
+export function readMarketplaceInfo(text: string, where: string): MarketplaceInfo {
   let doc: Record<string, unknown>
   try {
     doc = parse(text)
   } catch (error) {
     throw new Error(`${where} is not valid TOML — ${(error as Error).message.split('\n')[0]}`)
   }
-  const name = shown(where, 'name', doc.name, 'the market name')
+  const name = shown(where, 'name', doc.name, 'the marketplace name')
   const raw = doc.owner
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new Error(`${where}: owner is a table — [owner] with name = "<GitHub handle>"`)
@@ -209,7 +211,7 @@ export function readMarketInfo(text: string, where: string): MarketInfo {
   if (force !== undefined && typeof force !== 'boolean') {
     throw new Error(`${where}: force_remove_deleted_palettes must be true or false`)
   }
-  const problem = marketProblem(about.name, name)
+  const problem = marketplaceProblem(about.name, name)
   if (problem) {
     throw new Error(`${where} ${problem}`)
   }
@@ -223,12 +225,12 @@ export function readMarketInfo(text: string, where: string): MarketInfo {
   }
 }
 
-export function localIdentity(dir: string): MarketInfo {
-  const path = join(dir, MARKET_FILE)
+export function localIdentity(dir: string): MarketplaceInfo {
+  const path = join(dir, MARKETPLACE_FILE)
   if (!existsSync(path)) {
-    throw new Error(`${dir} has no ${MARKET_FILE} — \`ttheme market init ${dir}\` makes one`)
+    throw new Error(`${dir} has no ${MARKETPLACE_FILE} — \`ttheme marketplace init ${dir}\` makes one`)
   }
-  return readMarketInfo(readFileSync(path, 'utf8'), path)
+  return readMarketplaceInfo(readFileSync(path, 'utf8'), path)
 }
 
 export function shownSource(source: string): string {

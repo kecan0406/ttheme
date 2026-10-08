@@ -1,19 +1,19 @@
 import { escapeHtml } from '@kitajs/html'
 import { arrange, type Section } from '@/lib/gallery'
 import { json } from '@/lib/render'
-import type { GateRule, Market } from '@/lib/themes'
+import type { GateRule, Marketplace } from '@/lib/themes'
 import { FilterBar } from './filter-bar'
 import { PaletteCard } from './palette-card'
 import { PaletteDialog } from './palette-dialog'
 
-export function MarketGallery({
+export function MarketplaceGallery({
   sections,
-  markets,
+  marketplaces,
   gate,
   sources = true,
 }: {
   sections: Section[]
-  markets: Market[]
+  marketplaces: Marketplace[]
   gate: GateRule[]
   sources?: boolean
 }) {
@@ -21,7 +21,7 @@ export function MarketGallery({
   const placed = arrange(
     sections.map((section) => ({
       title: section.title,
-      market: section.themes[0]?.market != null,
+      marketplace: section.themes[0]?.marketplace != null,
       count: section.themes.length,
     })),
     sources,
@@ -36,7 +36,7 @@ export function MarketGallery({
           return (
             <section
               data-shelf={section.title}
-              data-market={section.themes[0]?.market ? '' : undefined}
+              data-marketplace={section.themes[0]?.marketplace ? '' : undefined}
               aria-label={section.subtitle ? `${section.title} ${section.subtitle}` : section.title}
               hidden={!place?.shown}
               class="grid gap-4"
@@ -47,7 +47,7 @@ export function MarketGallery({
                   hidden={!place?.divider}
                   class="flex items-center gap-3 text-sm text-muted-foreground after:h-px after:flex-1 after:bg-border"
                 >
-                  ── Markets
+                  ── Marketplaces
                 </div>
               ) : null}
               <h2 data-heading hidden={!place?.heading} class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -59,7 +59,7 @@ export function MarketGallery({
                 </span>
                 {section.href ? (
                   <a href={section.href} class="text-xs font-medium text-primary underline-offset-4 hover:underline">
-                    market page
+                    marketplace page
                   </a>
                 ) : null}
               </h2>
@@ -88,7 +88,7 @@ export function MarketGallery({
       </div>
       <PaletteDialog />
       <script type="application/json" data-gallery>
-        {json({ themes: all, markets, gate })}
+        {json({ themes: all, marketplaces, gate })}
       </script>
     </palette-gallery>
   )

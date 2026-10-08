@@ -10,7 +10,7 @@ import {
   type Draft,
   fromCode,
   paletteToml,
-  readMarketDir,
+  readMarketplaceDir,
   readOwnText,
   recolor,
   resign,
@@ -77,7 +77,7 @@ test('a share link reads as the code it carries, however it was pasted', () => {
   assert.equal(codeOf(`${link}?utm_source=chat`), code)
   assert.equal(codeOf(link.replace('tt2:', 'tt2%3A')), code)
   assert.equal(codeOf(code), code)
-  assert.equal(codeOf('https://ttheme.vercel.app/market'), undefined)
+  assert.equal(codeOf('https://ttheme.vercel.app/marketplace'), undefined)
   assert.equal(codeOf('https://ttheme.vercel.app/p/miku'), undefined)
   assert.equal(codeOf('kecan0406@dust/rei'), undefined)
 })
@@ -138,7 +138,7 @@ test('recolor rewrites the twenty colors and nothing else', () => {
   assert.deepEqual(pictured.pictures?.at(-1), { site: 'danbooru', id: 42, size: 'fill' })
 })
 
-test('a market takes its catalogs from folders, keeps loose palettes after them, and skips a name used twice', () => {
+test('a marketplace takes its catalogs from folders, keeps loose palettes after them, and skips a name used twice', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
   const { waive: _, reason: __, pictures: ___, base: ____, ...plain } = draft
   const put = (path: string, name: string) => {
@@ -149,7 +149,7 @@ test('a market takes its catalogs from folders, keeps loose palettes after them,
   put('pastel/arcade.toml', 'arcade')
   put('pastel/sakura.toml', 'sakura')
   put('dusk.toml', 'dusk')
-  const entries = readMarketDir(dir, 'kec@shop', [], warning(false))
+  const entries = readMarketplaceDir(dir, 'kec@shop', [], warning(false))
   assert.deepEqual(
     entries.map((e) => [e.name, e.catalog]),
     [

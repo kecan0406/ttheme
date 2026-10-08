@@ -38,7 +38,7 @@ A flow that needs both — "keep from preview, then does only this Ghostty reloa
 S=.claude/skills/sandbox/scripts/shell.zsh
 zsh $S start gojo konata          # build, wire, install these palettes, print the first screen
                                   # no palettes installs all of them; --empty none (init's new-user state);
-                                  # --mine the user's own install, copied (palettes, default, markets, pins, tone, pictures, settings)
+                                  # --mine the user's own install, copied (palettes, default, marketplaces, pins, tone, pictures, settings)
 zsh $S send 'ttheme list' Enter   # tmux key names; prints the screen once it settles
 zsh $S send Down Right Enter
 zsh $S show -e                    # current screen with SGR colors — shows which option is highlighted

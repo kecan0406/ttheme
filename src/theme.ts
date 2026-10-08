@@ -105,7 +105,7 @@ export function owned(name: string): string {
   return `ttheme-${stem(name)}`
 }
 
-export function marketOf(name: string): string | undefined {
+export function marketplaceOf(name: string): string | undefined {
   const at = name.indexOf('/')
   return at < 0 ? undefined : name.slice(0, at)
 }
@@ -117,7 +117,7 @@ export function slugOf(name: string): string {
 export function nameProblem(name: string): string | undefined {
   const m = NAME.exec(name)
   if (!m) {
-    return 'takes lowercase letters, digits and single hyphens, as <palette> or <owner>@<market>/<palette>'
+    return 'takes lowercase letters, digits and single hyphens, as <palette> or <owner>@<marketplace>/<palette>'
   }
   if ((m[1]?.length ?? 0) > 39) {
     return 'has an owner longer than a GitHub handle can be'
@@ -390,7 +390,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   const shared = place.open === true
   for (const key of ['order', 'role']) {
     if (shared && meta[key] !== undefined) {
-      fail(file, `meta.${key} is for the official palettes — a market palette follows its base`)
+      fail(file, `meta.${key} is for the official palettes — a marketplace palette follows its base`)
     }
   }
 
@@ -401,7 +401,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
 
   const base = meta.base === undefined ? undefined : paletteName(file, 'meta.base', meta.base)
   if (base !== undefined && !shared) {
-    fail(file, 'meta.base is for market palettes')
+    fail(file, 'meta.base is for marketplace palettes')
   }
   const from = base === undefined ? undefined : place.bases?.get(base)
 
@@ -504,10 +504,10 @@ export function alphabetical<T extends { group: string; name: string; base?: str
   items: T[],
 ): T[] {
   const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
-  const root = (t: T) => (marketOf(t.name) ? t.name : (t.base ?? t.name))
+  const root = (t: T) => (marketplaceOf(t.name) ? t.name : (t.base ?? t.name))
   return [...items].sort(
     (a, b) =>
-      Number(marketOf(a.name) !== undefined) - Number(marketOf(b.name) !== undefined) ||
+      Number(marketplaceOf(a.name) !== undefined) - Number(marketplaceOf(b.name) !== undefined) ||
       cmp(a.group.toLowerCase(), b.group.toLowerCase()) ||
       Number(a.catalog === undefined) - Number(b.catalog === undefined) ||
       cmp((a.catalog ?? '').toLowerCase(), (b.catalog ?? '').toLowerCase()) ||

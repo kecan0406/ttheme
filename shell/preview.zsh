@@ -241,7 +241,7 @@ __tt_pv_row() {
     (( color )) && on=$sb
   fi
   if [[ ${rtype[$1]} == rule ]]; then
-    name='── Markets '
+    name='── Marketplaces '
     REPLY="   "$d$name${(l:lw - 4 - ${#name}::─:)}$z
     return 0
   fi

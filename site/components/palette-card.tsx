@@ -12,8 +12,8 @@ export function PaletteBadges({ theme }: { theme: Theme }) {
   return (
     <div class="flex gap-1.5" style={wearStyle(theme)}>
       <Badge variant="preview">
-        <Icon node={theme.market ? Store : Layers} />
-        {theme.market ? 'market' : 'official'}
+        <Icon node={theme.marketplace ? Store : Layers} />
+        {theme.marketplace ? 'marketplace' : 'official'}
       </Badge>
       <Badge variant="preview">
         <Icon node={isLight(theme) ? Contrast : Moon} />
@@ -42,7 +42,7 @@ export function PaletteCard({ theme, scene }: { theme: Theme; scene: Scene }) {
             <Signature theme={theme} />
           </CardAction>
           <CardDescription>
-            {escapeHtml(theme.market ? theme.id : `${theme.group}${theme.lead ? ' · lead' : ''}`)}
+            {escapeHtml(theme.marketplace ? theme.id : `${theme.group}${theme.lead ? ' · lead' : ''}`)}
           </CardDescription>
         </CardHeader>
       </button>

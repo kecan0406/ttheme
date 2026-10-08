@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { marketOf, nameProblem, ORIGINAL, readBooruSites, readTheme, slugOf, stem, textProblem } from './theme.ts'
+import { marketplaceOf, nameProblem, ORIGINAL, readBooruSites, readTheme, slugOf, stem, textProblem } from './theme.ts'
 
 test('booru_sites renames the tag per site, as one tag or a list, and an empty list skips the site', () => {
   assert.deepEqual(
@@ -30,7 +30,7 @@ test('booru_sites refuses an unknown site, a tag with a space, a list where the 
   assert.throws(() => readBooruSites('x.toml', { yande: 'y' }, undefined), /needs meta.booru/)
 })
 
-test('a palette name is a slug, or a market and a slug', () => {
+test('a palette name is a slug, or a marketplace and a slug', () => {
   assert.equal(nameProblem('madoka'), undefined)
   assert.equal(nameProblem('kecan0406@dust/rei-2'), undefined)
   for (const bad of [
@@ -48,8 +48,8 @@ test('a palette name is a slug, or a market and a slug', () => {
     assert.notEqual(nameProblem(bad), undefined, bad)
   }
   assert.equal(stem('kecan0406@dust/rei'), 'kecan0406--dust--rei')
-  assert.equal(marketOf('kecan0406@dust/rei'), 'kecan0406@dust')
-  assert.equal(marketOf('madoka'), undefined)
+  assert.equal(marketplaceOf('kecan0406@dust/rei'), 'kecan0406@dust')
+  assert.equal(marketplaceOf('madoka'), undefined)
   assert.equal(slugOf('kecan0406@dust/rei'), 'rei')
   assert.equal(slugOf('madoka'), 'madoka')
 })
@@ -73,7 +73,7 @@ selection_background = "#303060"
 ansi = [${Array.from({ length: 16 }, () => '"#808080"').join(', ')}]
 `
 
-test('a market palette follows its base: group and order come from it, and its own order is refused', () => {
+test('a marketplace palette follows its base: group and order come from it, and its own order is refused', () => {
   const groups = new Map([['Madoka Magica', { name: 'Madoka Magica', lead: 'madoka' }]])
   const bases = new Map([['madoka', { group: 'Madoka Magica', order: 15 }]])
   const place = { name: 'dusk', groups, bases, open: true as const }
@@ -87,7 +87,7 @@ test('a market palette follows its base: group and order come from it, and its o
   assert.equal(readTheme('d.toml', shared('name = "dusk"\nbase = "homura"'), place).base, 'homura')
   assert.throws(
     () => readTheme('d.toml', shared('name = "dusk"\nbase = "madoka"'), { name: 'dusk', groups }),
-    /meta.base is for market palettes/,
+    /meta.base is for marketplace palettes/,
   )
 })
 

@@ -2,18 +2,18 @@ import { PaletteDialogBody } from '@/components/palette-dialog'
 import { type Scene, SceneLines } from '@/components/terminal-preview'
 import { arrange, type Filters, type Ground, matches, type Source, START } from '@/lib/gallery'
 import { html } from '@/lib/render'
-import type { GateRule, Market, Theme } from '@/lib/themes'
+import type { GateRule, Marketplace, Theme } from '@/lib/themes'
 import { fill, readJson, wear } from './dom'
 
 interface Gallery {
   themes: Theme[]
-  markets: Market[]
+  marketplaces: Marketplace[]
   gate: GateRule[]
 }
 
 class PaletteGallery extends HTMLElement {
   #themes = new Map<string, Theme>()
-  #markets: Market[] = []
+  #marketplaces: Marketplace[] = []
   #gate: GateRule[] = []
   #filters: Filters = { ...START }
 
@@ -54,9 +54,9 @@ class PaletteGallery extends HTMLElement {
   }
 
   connectedCallback() {
-    const { themes, markets, gate } = readJson<Gallery>(this, 'script[data-gallery]')
+    const { themes, marketplaces, gate } = readJson<Gallery>(this, 'script[data-gallery]')
     this.#themes = new Map(themes.map((theme) => [theme.id, theme]))
-    this.#markets = markets
+    this.#marketplaces = marketplaces
     this.#gate = gate
     this.addEventListener('input', this.#input)
     this.addEventListener('change', this.#change)
@@ -90,7 +90,7 @@ class PaletteGallery extends HTMLElement {
     const placed = arrange(
       shelves.map((shelf, index) => ({
         title: shelf.dataset.shelf ?? '',
-        market: shelf.dataset.market !== undefined,
+        marketplace: shelf.dataset.marketplace !== undefined,
         count: counts[index] ?? 0,
       })),
       this.dataset.sources === 'all',
@@ -138,10 +138,10 @@ class PaletteGallery extends HTMLElement {
       if (dialog.open) dialog.close()
       return
     }
-    const market = this.#markets.find((entry) => entry.id === theme.market)
+    const marketplace = this.#marketplaces.find((entry) => entry.id === theme.marketplace)
     fill(
       dialog,
-      html(<PaletteDialogBody theme={theme} market={market} gate={this.#gate} scene={this.#filters.scene} />),
+      html(<PaletteDialogBody theme={theme} marketplace={marketplace} gate={this.#gate} scene={this.#filters.scene} />),
     )
     wear(dialog, theme)
     if (!dialog.open) dialog.showModal()

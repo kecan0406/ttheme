@@ -109,7 +109,7 @@ function Git() {
         <C n={6}>)</C> Bump version
       </L>
       <L>
-        <C n={1}>*</C> <C n={3}>cd854dd</C> Name markets owner@name
+        <C n={1}>*</C> <C n={3}>cd854dd</C> Name marketplaces owner@name
       </L>
       <L>
         <C n={1}>*</C> <C n={3}>3e84502</C> Tier the help
@@ -119,7 +119,7 @@ function Git() {
         git diff --stat
       </L>
       <L>
-        {' src/markets.ts | 12 '}
+        {' src/marketplaces.ts | 12 '}
         <C n={2}>++++++++</C>
         <C n={1}>----</C>
       </L>
@@ -203,7 +203,7 @@ export function SceneLines({ theme, scene }: { theme: Theme; scene: Scene }) {
   if (scene === 'git') return <Git />
   if (scene === 'test') return <Test />
   if (scene === 'colors') return <Colors />
-  return <Shell use={theme.market ? theme.id : theme.name} />
+  return <Shell use={theme.marketplace ? theme.id : theme.name} />
 }
 
 export function TerminalPreview({

@@ -5,7 +5,7 @@
                                                                │ official
  ▌  ▸ official (0/6)                                           │ The ttheme catalog
     ── On GitHub ──────────                                    │ 6 palettes · 0 installed
-    ⌕ Find markets on GitHub  space searches                   │
+    ⌕ Find marketplaces on GitHub  space searches              │
                                                                │ Comes with ttheme
                                                                │
                                                                │

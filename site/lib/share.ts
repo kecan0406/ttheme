@@ -21,7 +21,7 @@ import {
   slotUse,
 } from '../../src/palette-editor.ts'
 import { PLANE_BOTTOM, PLANE_TOP, RAINBOW_C, RAINBOW_L, reach, shareOf } from '../../src/picker-art.ts'
-import { marketOf, type SharedPicture, slugOf } from '../../src/theme.ts'
+import { marketplaceOf, type SharedPicture, slugOf } from '../../src/theme.ts'
 
 export const GRID = { cols: 120, rows: 34 }
 
@@ -87,12 +87,12 @@ function picture(shared: SharedPicture): Picture {
 
 export function readShared(code: string): Shared {
   const entry = readCode(code, official)
-  const market = marketOf(entry.name) ?? null
+  const marketplace = marketplaceOf(entry.name) ?? null
   return {
     code,
     link: shareLink(code),
     entry,
-    theme: toTheme({ ...entry, name: market ? slugOf(entry.name) : entry.name }, market),
+    theme: toTheme({ ...entry, name: marketplace ? slugOf(entry.name) : entry.name }, marketplace),
     pictures: (entry.pictures ?? []).map(picture),
   }
 }

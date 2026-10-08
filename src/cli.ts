@@ -9,7 +9,7 @@ import { runBake, runFlatten, runImage } from './images.ts'
 import { runInfo } from './info.ts'
 import { runInit } from './init.ts'
 import { runAdd, runDefault, runList, runOff, runOn, runRemove, runSync, runUpdate } from './installs.ts'
-import { runMarket } from './markets.ts'
+import { runMarketplace } from './marketplaces.ts'
 import { startNamesUpdate, updateNames } from './names-update.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
@@ -26,11 +26,11 @@ interface Flags {
   fix?: boolean
   from?: string
   in?: string
-  market?: string
+  marketplace?: string
   tone?: string
 }
 
-const REFRESHES = new Set(['add', 'remove', 'market', 'default', 'on', 'off'])
+const REFRESHES = new Set(['add', 'remove', 'marketplace', 'default', 'on', 'off'])
 
 interface Verb extends VerbSpec {
   run?(args: string[], flags: Flags): unknown
@@ -42,10 +42,10 @@ const RUNS: Record<string, Verb['run']> = {
   off: () => runOff(),
   browse: () => runBrowse(),
   list: ([query], { json }) => runList(query, json),
-  add: (names, { market }) => runAdd(names, market),
+  add: (names, { marketplace }) => runAdd(names, marketplace),
   remove: (names) => runRemove(names),
-  update: (markets) => runUpdate(markets),
-  market: ([action, arg]) => runMarket(action, arg),
+  update: (marketplaces) => runUpdate(marketplaces),
+  marketplace: ([action, arg]) => runMarketplace(action, arg),
   new: ([name], { from, in: into }) => runNew(name as string, from, into),
   edit: async (args) => runEdit(await paletteOf(args, 'edit')),
   check: async (args, { fix }) => runCheck(await paletteOf(args, 'check'), fix),

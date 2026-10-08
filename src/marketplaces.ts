@@ -15,10 +15,27 @@ import {
 } from './catalog.ts'
 import { writeAtomic } from './edits.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
-import { gateLines, type LocalMarket, localMarkets, marketFiles, palettesDir, readMarketDir, warning } from './own.ts'
+import {
+  gateLines,
+  type LocalMarketplace,
+  localMarketplaces,
+  marketplaceFiles,
+  palettesDir,
+  readMarketplaceDir,
+  warning,
+} from './own.ts'
 import { configHome, type Installed, readInstalled, sync, writeInstalled } from './palettes.ts'
 import { pending } from './pending.ts'
-import { ago, cachedMarket, counted, type Fetched, fetchedAt, fetchMarket, readTries, storeMarket } from './refresh.ts'
+import {
+  ago,
+  cachedMarketplace,
+  counted,
+  type Fetched,
+  fetchedAt,
+  fetchMarketplace,
+  readTries,
+  storeMarketplace,
+} from './refresh.ts'
 import { renameProblems } from './renames.ts'
 import {
   autoUpdates,
@@ -28,21 +45,21 @@ import {
   isLocal,
   isRemote,
   localIdentity,
-  MARKET_FILE,
-  MARKET_KEYS,
-  marketId,
-  marketsOf,
-  marketToml,
+  MARKETPLACE_FILE,
+  MARKETPLACE_KEYS,
+  marketplaceId,
+  marketplacesOf,
+  marketplaceToml,
   OFFICIAL,
   OWNER_KEYS,
   parseSource,
   refOf,
   repoOf,
-  sameMarket,
+  sameMarketplace,
   shownSource,
   TOPIC,
 } from './sources.ts'
-import { marketOf, nameProblem, slugOf, unknownKeys } from './theme.ts'
+import { marketplaceOf, nameProblem, slugOf, unknownKeys } from './theme.ts'
 
 const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const ACTIONS = ['add', 'remove', 'search', 'init', 'check']
@@ -78,7 +95,7 @@ async function handle(home: string, state: Installed): Promise<string> {
       )
     }
     const typed = await p.text({
-      message: 'Your GitHub handle — your palettes are named <handle>@<market>/<palette>',
+      message: 'Your GitHub handle — your palettes are named <handle>@<marketplace>/<palette>',
       validate: (value) =>
         HANDLE.test((value ?? '').toLowerCase()) && (value ?? '').length <= 39
           ? undefined
@@ -90,7 +107,7 @@ async function handle(home: string, state: Installed): Promise<string> {
     author = typed.toLowerCase()
   }
   writeInstalled(home, { ...state, author })
-  console.log(`Your palettes are named ${author}@<market>/<palette>`)
+  console.log(`Your palettes are named ${author}@<marketplace>/<palette>`)
   return author
 }
 
@@ -98,7 +115,7 @@ export function idOf(home: string, source: string): string {
   if (source === OFFICIAL) {
     return OFFICIAL
   }
-  return isLocal(source) ? marketId(localIdentity(source)) : archiveId(source, readCachedArchive(home, source))
+  return isLocal(source) ? marketplaceId(localIdentity(source)) : archiveId(source, readCachedArchive(home, source))
 }
 
 function nameOf(home: string, source: string): string | undefined {
@@ -109,12 +126,12 @@ function nameOf(home: string, source: string): string | undefined {
   }
 }
 
-function marketOfPalette(name: string): string {
-  return marketOf(name) ?? OFFICIAL
+function marketplaceOfPalette(name: string): string {
+  return marketplaceOf(name) ?? OFFICIAL
 }
 
 function official(home: string): PaletteEntry[] {
-  return readCatalog(home).palettes.filter((e) => marketOf(e.name) === undefined)
+  return readCatalog(home).palettes.filter((e) => marketplaceOf(e.name) === undefined)
 }
 
 function officialFor(home: string): PaletteEntry[] {
@@ -122,29 +139,33 @@ function officialFor(home: string): PaletteEntry[] {
   return existsSync(path) ? parseCatalog(readFileSync(path, 'utf8')).palettes : official(home)
 }
 
-export function withMarkets(state: Installed, markets: string[], updates: Record<string, boolean>): Installed {
+export function withMarketplaces(
+  state: Installed,
+  marketplaces: string[],
+  updates: Record<string, boolean>,
+): Installed {
   const { updates: _, ...rest } = state
   const kept = Object.entries(updates).filter(
-    ([source, on]) => isRemote(source) && markets.includes(source) && on !== autoUpdates(source, {}),
+    ([source, on]) => isRemote(source) && marketplaces.includes(source) && on !== autoUpdates(source, {}),
   )
-  return { ...rest, markets, ...(kept.length > 0 ? { updates: Object.fromEntries(kept) } : {}) }
+  return { ...rest, marketplaces, ...(kept.length > 0 ? { updates: Object.fromEntries(kept) } : {}) }
 }
 
 function nameTaken(home: string, sources: string[], source: string, name: string): string | undefined {
-  return sources.find((s) => s !== source && !sameMarket(s, source) && nameOf(home, s) === name)
+  return sources.find((s) => s !== source && !sameMarketplace(s, source) && nameOf(home, s) === name)
 }
 
 function register(home: string, source: string, name: string, auto?: boolean): void {
   const state = readInstalled(home)
-  const sources = marketsOf(state.markets)
+  const sources = marketplacesOf(state.marketplaces)
   const taken = nameTaken(home, sources, source, name)
   if (taken) {
     throw new Error(
-      `${name} already names the market at ${shownSource(taken)} — \`ttheme market remove ${name}\` first`,
+      `${name} already names the marketplace at ${shownSource(taken)} — \`ttheme marketplace remove ${name}\` first`,
     )
   }
   const updates = auto === undefined ? { ...state.updates } : { ...state.updates, [source]: auto }
-  writeInstalled(home, withMarkets(state, sources.includes(source) ? sources : [...sources, source], updates))
+  writeInstalled(home, withMarketplaces(state, sources.includes(source) ? sources : [...sources, source], updates))
 }
 
 async function askAuto(id: string): Promise<boolean> {
@@ -164,7 +185,7 @@ async function askAuto(id: string): Promise<boolean> {
 async function fetching(home: string, source: string): Promise<Fetched> {
   const line = pending(`Fetching ${shownSource(source)}`)
   try {
-    return await fetchMarket(home, source)
+    return await fetchMarketplace(home, source)
   } finally {
     line.done()
   }
@@ -173,35 +194,35 @@ async function fetching(home: string, source: string): Promise<Fetched> {
 async function repin(home: string, was: string, source: string): Promise<Fetched> {
   const fetched = await fetching(home, source)
   const state = readInstalled(home)
-  const sources = marketsOf(state.markets)
+  const sources = marketplacesOf(state.marketplaces)
   const taken = nameTaken(home, sources, source, fetched.id)
   if (taken) {
     throw new Error(
-      `${fetched.id} already names the market at ${shownSource(taken)} — \`ttheme market remove ${fetched.id}\` first`,
+      `${fetched.id} already names the marketplace at ${shownSource(taken)} — \`ttheme marketplace remove ${fetched.id}\` first`,
     )
   }
   const { [was]: auto, ...others } = state.updates ?? {}
   const updates = auto === undefined ? others : { ...others, [source]: auto }
   writeInstalled(
     home,
-    withMarkets(
+    withMarketplaces(
       state,
       sources.map((s) => (s === was ? source : s)),
       updates,
     ),
   )
-  storeMarket(home, fetched)
+  storeMarketplace(home, fetched)
   return fetched
 }
 
 export async function addSource(home: string, arg: string): Promise<{ source: string; id: string; fresh: boolean }> {
   const source = parseSource(arg)
-  const sources = marketsOf(readInstalled(home).markets)
+  const sources = marketplacesOf(readInstalled(home).marketplaces)
   if (sources.includes(source)) {
     console.log(`${shownSource(source)} is already added`)
     return { source, id: idOf(home, source), fresh: false }
   }
-  const was = isRemote(source) ? sources.find((s) => isRemote(s) && sameMarket(s, source)) : undefined
+  const was = isRemote(source) ? sources.find((s) => isRemote(s) && sameMarketplace(s, source)) : undefined
   if (was) {
     const fetched = await repin(home, was, source)
     console.log(
@@ -210,16 +231,16 @@ export async function addSource(home: string, arg: string): Promise<{ source: st
     return { source, id: fetched.id, fresh: false }
   }
   if (isLocal(source)) {
-    const id = marketId(localIdentity(source))
+    const id = marketplaceId(localIdentity(source))
     register(home, source, id)
-    const count = readMarketDir(source, id, official(home)).length
+    const count = readMarketplaceDir(source, id, official(home)).length
     console.log(`Added ${id} · ${shownSource(source)} — ${counted(count)}, read in place`)
     return { source, id, fresh: true }
   }
   const fetched = await fetching(home, source)
   const auto = source === OFFICIAL ? undefined : await askAuto(fetched.id)
   register(home, source, fetched.id, auto)
-  storeMarket(home, fetched)
+  storeMarketplace(home, fetched)
   const count = counted(listed(fetched.entries).length)
   console.log(
     source === OFFICIAL
@@ -229,7 +250,7 @@ export async function addSource(home: string, arg: string): Promise<{ source: st
   return { source, id: fetched.id, fresh: true }
 }
 
-async function addMarket(arg: string): Promise<void> {
+async function addMarketplace(arg: string): Promise<void> {
   const home = configHome()
   const { source, id, fresh } = await addSource(home, arg)
   if (!fresh) {
@@ -237,7 +258,7 @@ async function addMarket(arg: string): Promise<void> {
   }
   if (isLocal(source)) {
     console.log(
-      '\nThe Browse tab of `ttheme` picks them · once the folder is on GitHub, `ttheme market add <owner>/<repo>` adds it anywhere',
+      '\nThe Browse tab of `ttheme` picks them · once the folder is on GitHub, `ttheme marketplace add <owner>/<repo>` adds it anywhere',
     )
   } else if (source === OFFICIAL) {
     console.log('\nThe Browse tab of `ttheme` picks them')
@@ -256,18 +277,18 @@ export function keptNote(kept: string[]): string {
   return `${counted(kept.length)} installed from it keep${kept.length === 1 ? 's' : ''} working: ${kept.join(', ')} — \`ttheme remove\` drops ${kept.length === 1 ? 'it' : 'them'}`
 }
 
-function removeMarket(name: string): void {
+function removeMarketplace(name: string): void {
   const home = configHome()
   const state = readInstalled(home)
-  const sources = marketsOf(state.markets)
+  const sources = marketplacesOf(state.marketplaces)
   const source = sources.find((s) => nameOf(home, s) === name) ?? sources.find((s) => s === parseSourceOrNot(name))
   if (!source) {
-    throw new Error(`no market named ${name} — \`ttheme market\` lists them`)
+    throw new Error(`no marketplace named ${name} — \`ttheme marketplace\` lists them`)
   }
   const id = nameOf(home, source)
-  const kept = state.palettes.filter((n) => marketOfPalette(n) === id)
+  const kept = state.palettes.filter((n) => marketplaceOfPalette(n) === id)
   const remaining = sources.filter((s) => s !== source)
-  const next = withMarkets(state, remaining, state.updates ?? {})
+  const next = withMarketplaces(state, remaining, state.updates ?? {})
   writeInstalled(home, next)
   dropCache(home, source)
   sync(home, readCatalog(home), next)
@@ -291,7 +312,7 @@ function countOf(home: string, source: string): number | undefined {
       return listed(parseCatalog(readFileSync(catalogPath(home), 'utf8')).palettes).length
     }
     if (isLocal(source)) {
-      return readMarketDir(source, idOf(home, source), official(home), warning(false)).length
+      return readMarketplaceDir(source, idOf(home, source), official(home), warning(false)).length
     }
     return readArchive(source, readCachedArchive(home, source), official(home), warning(false)).entries.length
   } catch {
@@ -314,21 +335,21 @@ export function lastUpdate(home: string, source: string, tries = readTries(), no
   return at === undefined ? 'never updated' : `updated ${ago(at, now)}`
 }
 
-function listMarkets(): void {
+function listMarketplaces(): void {
   const home = configHome()
   const state = readInstalled(home)
-  const sources = marketsOf(state.markets)
+  const sources = marketplacesOf(state.marketplaces)
   if (sources.length === 0) {
-    console.log('No markets — `ttheme market add official` brings the ttheme catalog back')
+    console.log('No marketplaces — `ttheme marketplace add official` brings the ttheme catalog back')
     return
   }
   const tries = readTries()
   const rows = sources.map((source) => {
     const name = nameOf(home, source) ?? '?'
     const count = countOf(home, source)
-    const installed = state.palettes.filter((n) => marketOfPalette(n) === name).length
+    const installed = state.palettes.filter((n) => marketplaceOfPalette(n) === name).length
     const auto = isLocal(source) ? [] : [`auto-update ${autoUpdates(source, state.updates) ? 'on' : 'off'}`]
-    const about = source === OFFICIAL ? undefined : cachedMarket(home, source)?.info.description
+    const about = source === OFFICIAL ? undefined : cachedMarketplace(home, source)?.info.description
     return {
       name,
       where: shownSource(source),
@@ -367,7 +388,7 @@ function inert(text: string): string {
   return text.replace(/[\p{Cc}\s]+/gu, ' ').trim()
 }
 
-export async function findMarkets(query: string | undefined, signal?: AbortSignal): Promise<Repository[]> {
+export async function findMarketplaces(query: string | undefined, signal?: AbortSignal): Promise<Repository[]> {
   const q = encodeURIComponent(`topic:${TOPIC}${query ? ` ${query}` : ''}`)
   try {
     const { items } = await fetchParsed(
@@ -393,14 +414,14 @@ export async function findMarkets(query: string | undefined, signal?: AbortSigna
   }
 }
 
-async function searchMarkets(query: string | undefined): Promise<void> {
+async function searchMarketplaces(query: string | undefined): Promise<void> {
   const home = configHome()
-  const items = await findMarkets(query)
+  const items = await findMarketplaces(query)
   if (items.length === 0) {
     console.log(`No repository carries the ${TOPIC} topic${query ? ` and matches ${query}` : ''} yet`)
     return
   }
-  const added = new Set(marketsOf(readInstalled(home).markets).map(repoOf))
+  const added = new Set(marketplacesOf(readInstalled(home).marketplaces).map(repoOf))
   const rows = items.map((r) => {
     const arg = repositorySource(r)
     return {
@@ -414,7 +435,7 @@ async function searchMarkets(query: string | undefined): Promise<void> {
   for (const r of rows) {
     console.log(`  ${r.added ? '●' : '○'} ${r.arg.padEnd(width)}  ${r.stars.padStart(5)}  ${r.about}`)
   }
-  console.log('\n`ttheme market add <name>` adds one')
+  console.log('\n`ttheme marketplace add <name>` adds one')
 }
 
 function repoFor({ name }: Identity): string {
@@ -423,10 +444,10 @@ function repoFor({ name }: Identity): string {
 
 function scaffold(dir: string, identity: Identity): void {
   mkdirSync(palettesDir(dir), { recursive: true })
-  writeAtomic(join(dir, MARKET_FILE), marketToml(identity))
+  writeAtomic(join(dir, MARKETPLACE_FILE), marketplaceToml(identity))
   writeAtomic(
     join(dir, 'README.md'),
-    `# ${marketId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) market:\n\n\`\`\`sh\nttheme market add ${identity.owner}/${repoFor(identity)}\nttheme\n\`\`\`\n`,
+    `# ${marketplaceId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) marketplace:\n\n\`\`\`sh\nttheme marketplace add ${identity.owner}/${repoFor(identity)}\nttheme\n\`\`\`\n`,
   )
 }
 
@@ -436,24 +457,26 @@ function nameProblemOf(name: string): string | undefined {
 
 async function askName(): Promise<string> {
   if (!tty()) {
-    throw new Error('name the market: ttheme market init <name>, or --in <name> on new')
+    throw new Error('name the marketplace: ttheme marketplace init <name>, or --in <name> on new')
   }
   const typed = await p.text({
-    message: "Your market's name — its palettes are <you>@<name>/<palette>",
+    message: "Your marketplace's name — its palettes are <you>@<name>/<palette>",
     validate: (value) => nameProblemOf((value ?? '').toLowerCase()),
   })
   if (p.isCancel(typed)) {
-    throw new Error('no market name given')
+    throw new Error('no marketplace name given')
   }
   return typed.toLowerCase()
 }
 
-export async function ensureLocal(home: string, into?: string): Promise<LocalMarket> {
-  const locals = localMarkets(home)
+export async function ensureLocal(home: string, into?: string): Promise<LocalMarketplace> {
+  const locals = localMarketplaces(home)
   if (into) {
     const hit = locals.find((m) => m.name === into || m.id === into || m.dir === parseSourceOrNot(into))
     if (!hit) {
-      throw new Error(`${into} is not one of your local markets — \`ttheme market init ${into}\` makes it one`)
+      throw new Error(
+        `${into} is not one of your local marketplaces — \`ttheme marketplace init ${into}\` makes it one`,
+      )
     }
     return hit
   }
@@ -462,31 +485,33 @@ export async function ensureLocal(home: string, into?: string): Promise<LocalMar
     return only
   }
   if (only) {
-    throw new Error(`you have ${locals.length} local markets — --in names one: ${locals.map((m) => m.name).join(', ')}`)
+    throw new Error(
+      `you have ${locals.length} local marketplaces — --in names one: ${locals.map((m) => m.name).join(', ')}`,
+    )
   }
   const name = await askName()
   return initLocal(home, defaultLocal(home, name), name)
 }
 
-async function initLocal(home: string, dir: string, name: string): Promise<LocalMarket> {
-  const fresh = !existsSync(join(dir, MARKET_FILE))
+async function initLocal(home: string, dir: string, name: string): Promise<LocalMarketplace> {
+  const fresh = !existsSync(join(dir, MARKETPLACE_FILE))
   let identity: Identity
   if (fresh) {
     const problem = nameProblemOf(name)
     if (problem) {
-      throw new Error(`the market name ${name} ${problem}`)
+      throw new Error(`the marketplace name ${name} ${problem}`)
     }
     if (existsSync(dir) && readdirSync(dir).length > 0) {
-      throw new Error(`${dir} is not empty — pick a new folder for the market`)
+      throw new Error(`${dir} is not empty — pick a new folder for the marketplace`)
     }
     identity = { owner: await handle(home, readInstalled(home)), name }
     scaffold(dir, identity)
   } else {
     identity = localIdentity(dir)
   }
-  const id = marketId(identity)
+  const id = marketplaceId(identity)
   register(home, dir, id)
-  console.log(`${fresh ? 'Made' : 'Added'} your market ${id} · ${shownSource(dir)}`)
+  console.log(`${fresh ? 'Made' : 'Added'} your marketplace ${id} · ${shownSource(dir)}`)
   return { dir, ...identity, id }
 }
 
@@ -494,29 +519,31 @@ function pathLike(arg: string): boolean {
   return arg.startsWith('.') || arg.startsWith('/') || arg.startsWith('~')
 }
 
-async function initMarket(arg: string | undefined): Promise<void> {
+async function initMarketplace(arg: string | undefined): Promise<void> {
   const home = configHome()
   const name =
     arg && !pathLike(arg) ? arg.toLowerCase() : arg ? basename(parseSource(arg)).toLowerCase() : await askName()
   const dir = arg && pathLike(arg) ? parseSource(arg) : defaultLocal(home, name)
-  const market = await initLocal(home, dir, name)
-  const repo = `${market.owner}/${repoFor(market)}`
+  const marketplace = await initLocal(home, dir, name)
+  const repo = `${marketplace.owner}/${repoFor(marketplace)}`
   console.log(`
 \`ttheme new <palette> --from <palette>\` puts palettes in it, and a folder under palettes/ shelves them in a catalog — others see them once it is on GitHub:
 
   cd ${shownSource(dir)}
-  git init -b main && git add -A && git commit -m "${market.id}"
+  git init -b main && git add -A && git commit -m "${marketplace.id}"
   gh repo create ${repo} --public --source . --push
   gh repo edit ${repo} --add-topic ${TOPIC}
 
-Every push is the market: \`ttheme market add ${repo}\` works anywhere`)
+Every push is the marketplace: \`ttheme marketplace add ${repo}\` works anywhere`)
 }
 
-function checkMarket(arg: string | undefined): number {
+function checkMarketplace(arg: string | undefined): number {
   const dir = arg ? parseSource(arg) : process.cwd()
-  const path = join(dir, MARKET_FILE)
+  const path = join(dir, MARKETPLACE_FILE)
   if (!existsSync(path)) {
-    throw new Error(`${shownSource(dir)} has no ${MARKET_FILE} — \`ttheme market init ${shownSource(dir)}\` makes one`)
+    throw new Error(
+      `${shownSource(dir)} has no ${MARKETPLACE_FILE} — \`ttheme marketplace init ${shownSource(dir)}\` makes one`,
+    )
   }
   const errors: string[] = []
   const warnings: string[] = []
@@ -530,20 +557,20 @@ function checkMarket(arg: string | undefined): number {
   }
   const doc = parse(text) as Record<string, unknown>
   const owner = doc.owner as Record<string, unknown>
-  for (const key of Object.keys(doc).filter((k) => !MARKET_KEYS.includes(k))) {
-    warnings.push(`${MARKET_FILE}: unknown key ${key} — ttheme ignores it`)
+  for (const key of Object.keys(doc).filter((k) => !MARKETPLACE_KEYS.includes(k))) {
+    warnings.push(`${MARKETPLACE_FILE}: unknown key ${key} — ttheme ignores it`)
   }
   for (const key of Object.keys(owner).filter((k) => !OWNER_KEYS.includes(k))) {
-    warnings.push(`${MARKET_FILE}: unknown key owner.${key} — ttheme ignores it`)
+    warnings.push(`${MARKETPLACE_FILE}: unknown key owner.${key} — ttheme ignores it`)
   }
   if (!info.description) {
-    warnings.push(`${MARKET_FILE}: no description — Browse and the market page show one`)
+    warnings.push(`${MARKETPLACE_FILE}: no description — Browse and the marketplace page show one`)
   }
-  const id = marketId(info)
-  const entries = readMarketDir(dir, id, officialFor(configHome()), (where, message) =>
+  const id = marketplaceId(info)
+  const entries = readMarketplaceDir(dir, id, officialFor(configHome()), (where, message) =>
     errors.push(`${relative(dir, where)}: ${message.replace(`${basename(where)}: `, '')}`),
   )
-  for (const file of marketFiles(dir)) {
+  for (const file of marketplaceFiles(dir)) {
     let keys: string[]
     try {
       keys = unknownKeys(file.path, readFileSync(file.path, 'utf8'))
@@ -555,8 +582,8 @@ function checkMarket(arg: string | undefined): number {
     }
   }
   const renames = renameProblems(info.renames, new Set(entries.map((e) => slugOf(e.name))))
-  errors.push(...renames.errors.map((e) => `${MARKET_FILE}: ${e}`))
-  warnings.push(...renames.warnings.map((w) => `${MARKET_FILE}: ${w}`))
+  errors.push(...renames.errors.map((e) => `${MARKETPLACE_FILE}: ${e}`))
+  warnings.push(...renames.warnings.map((w) => `${MARKETPLACE_FILE}: ${w}`))
   for (const entry of entries) {
     const failing = gateLines(entry).filter((l) => l.startsWith('  ✗'))
     const shown = entry.catalog ? `${entry.catalog}/${slugOf(entry.name)}` : slugOf(entry.name)
@@ -575,27 +602,27 @@ function checkMarket(arg: string | undefined): number {
   return errors.length > 0 ? 1 : 0
 }
 
-export async function runMarket(action: string | undefined, arg: string | undefined): Promise<number | undefined> {
+export async function runMarketplace(action: string | undefined, arg: string | undefined): Promise<number | undefined> {
   switch (action) {
     case undefined:
-      listMarkets()
+      listMarketplaces()
       return
     case 'add':
-      await addMarket(required(action, arg))
+      await addMarketplace(required(action, arg))
       return
     case 'remove':
-      removeMarket(required(action, arg))
+      removeMarketplace(required(action, arg))
       return
     case 'search':
-      await searchMarkets(arg)
+      await searchMarketplaces(arg)
       return
     case 'init':
-      await initMarket(arg)
+      await initMarketplace(arg)
       return
     case 'check':
-      return checkMarket(arg)
+      return checkMarketplace(arg)
     default:
-      throw new Error(`unknown market action ${action} — ${ACTIONS.join(', ')}, or none to list them`)
+      throw new Error(`unknown marketplace action ${action} — ${ACTIONS.join(', ')}, or none to list them`)
   }
 }
 
@@ -603,8 +630,8 @@ function required(action: string, arg: string | undefined): string {
   if (!arg) {
     throw new Error(
       action === 'add'
-        ? 'market add takes a repository or a folder: ttheme market add alice/ttheme-dust'
-        : 'market remove takes a market name — `ttheme market` lists them',
+        ? 'marketplace add takes a repository or a folder: ttheme marketplace add alice/ttheme-dust'
+        : 'marketplace remove takes a marketplace name — `ttheme marketplace` lists them',
     )
   }
   return arg
@@ -612,5 +639,5 @@ function required(action: string, arg: string | undefined): string {
 
 export function localLine(home: string, source: string): string {
   const id = idOf(home, source)
-  return `${id} — ${counted(readMarketDir(source, id, official(home), warning(false)).length)}, read in place`
+  return `${id} — ${counted(readMarketplaceDir(source, id, official(home), warning(false)).length)}, read in place`
 }

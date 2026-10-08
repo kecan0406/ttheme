@@ -75,7 +75,7 @@ test('readCatalog can take the bundled official catalog, so an upgrade never par
   )
 })
 
-test('an installed palette from a market keeps its colors until its update is taken, while an official one follows the catalog', () => {
+test('an installed palette from a marketplace keeps its colors until its update is taken, while an official one follows the catalog', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-pinned-'))
   mkdirSync(join(home, 'ttheme'), { recursive: true })
   const was = [entry({ name: 'ann@pastel/dusk' }), entry({ name: 'gojo' })]
@@ -177,7 +177,7 @@ test('gateFailures measures an entry that carries no gate', () => {
   assert.match(gateFailures(bare as PaletteEntry)[0] ?? '', /foreground on background/)
 })
 
-test('readCatalog puts each added market after the series under its own name, and available adds local markets and kept ones', () => {
+test('readCatalog puts each added marketplace after the series under its own name, and available adds local marketplaces and kept ones', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-available-'))
   const skeleton = {
     schema: SCHEMA,
@@ -185,18 +185,18 @@ test('readCatalog puts each added market after the series under its own name, an
     gate: [],
   }
   const local = join(home, 'mine')
-  mkdirSync(join(home, 'ttheme', 'markets'), { recursive: true })
+  mkdirSync(join(home, 'ttheme', 'marketplaces'), { recursive: true })
   mkdirSync(join(local, 'palettes'), { recursive: true })
   writeFileSync(
     join(home, 'ttheme', 'installed.json'),
-    JSON.stringify({ terminals: [], palettes: [], markets: ['official', 'ann/ttheme-pastel', local] }),
+    JSON.stringify({ terminals: [], palettes: [], marketplaces: ['official', 'ann/ttheme-pastel', local] }),
   )
   writeCatalog(home, { ...skeleton, palettes: [entry({ name: 'gojo' }), entry({ name: 'geto', order: 2 })] })
   writeFileSync(
-    join(home, 'ttheme', 'markets', 'ann--ttheme-pastel.json'),
+    join(home, 'ttheme', 'marketplaces', 'ann--ttheme-pastel.json'),
     JSON.stringify({
       files: {
-        'ttheme-market.toml': 'name = "pastel"\n\n[owner]\nname = "someone"\n',
+        'ttheme-marketplace.toml': 'name = "pastel"\n\n[owner]\nname = "someone"\n',
         'palettes/old.toml': paletteToml({
           name: 'old',
           base: 'gojo',
@@ -211,7 +211,7 @@ test('readCatalog puts each added market after the series under its own name, an
       },
     }),
   )
-  writeFileSync(join(local, 'ttheme-market.toml'), 'name = "dust"\n\n[owner]\nname = "kec"\n')
+  writeFileSync(join(local, 'ttheme-marketplace.toml'), 'name = "dust"\n\n[owner]\nname = "kec"\n')
   writeFileSync(
     join(local, 'palettes', 'rei.toml'),
     paletteToml({
@@ -244,14 +244,15 @@ test('readCatalog puts each added market after the series under its own name, an
   assert.equal(all.find((p) => p.name === 'kec@dust/rei')?.group, 'kec@dust')
 })
 
-test("a market names itself in ttheme-market.toml — the owner of an added one is its repository's", () => {
-  const archive = (text: string) => ({ files: { 'ttheme-market.toml': text } })
-  const market = (rest: string) => archive(`"$schema" = "https://www.schemastore.org/ttheme-market.json"\n${rest}`)
-  assert.equal(archiveId('ann/ttheme-pastel', market('name = "pastel"\n\n[owner]\nname = "bob"\n')), 'ann@pastel')
+test("a marketplace names itself in ttheme-marketplace.toml — the owner of an added one is its repository's", () => {
+  const archive = (text: string) => ({ files: { 'ttheme-marketplace.toml': text } })
+  const marketplace = (rest: string) =>
+    archive(`"$schema" = "https://www.schemastore.org/ttheme-marketplace.json"\n${rest}`)
+  assert.equal(archiveId('ann/ttheme-pastel', marketplace('name = "pastel"\n\n[owner]\nname = "bob"\n')), 'ann@pastel')
   assert.deepEqual(
     archiveInfo(
       'ann/ttheme-pastel',
-      market(
+      marketplace(
         'name = "pastel"\ndescription = "Soft colors"\nforce_remove_deleted_palettes = true\n\n[owner]\nname = "ann"\nurl = "https://github.com/ann"\n\n[renames]\nold = "new"\ngone = false\n\n[metadata]\nmine = 1\n',
       ),
     ),
@@ -264,11 +265,15 @@ test("a market names itself in ttheme-market.toml — the owner of an added one 
       forceRemove: true,
     },
   )
-  assert.throws(() => archiveId('ann/ttheme-pastel', { files: {} }), /has no ttheme-market\.toml/)
-  assert.throws(() => archiveId('ann/ttheme-pastel', market('name = "pastel"\nowner = "ann"\n')), /owner is a table/)
-  assert.throws(() => archiveId('ann/ttheme-pastel', market('name = "pastel"\n')), /owner is a table/)
+  assert.throws(() => archiveId('ann/ttheme-pastel', { files: {} }), /has no ttheme-marketplace\.toml/)
   assert.throws(
-    () => archiveId('ann/ttheme-pastel', market('name = "pastel"\n\n[owner]\nname = "ann"\n\n[renames]\nold = 3\n')),
+    () => archiveId('ann/ttheme-pastel', marketplace('name = "pastel"\nowner = "ann"\n')),
+    /owner is a table/,
+  )
+  assert.throws(() => archiveId('ann/ttheme-pastel', marketplace('name = "pastel"\n')), /owner is a table/)
+  assert.throws(
+    () =>
+      archiveId('ann/ttheme-pastel', marketplace('name = "pastel"\n\n[owner]\nname = "ann"\n\n[renames]\nold = 3\n')),
     /renames\.old/,
   )
 })

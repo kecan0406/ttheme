@@ -1,6 +1,6 @@
 import { reach } from './catalog.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
-import { type Repository, repositorySource } from './markets.ts'
+import { type Repository, repositorySource } from './marketplaces.ts'
 import { fetchArchive, fromArchive } from './refresh.ts'
 import { TOPIC } from './sources.ts'
 import { slugOf } from './theme.ts'

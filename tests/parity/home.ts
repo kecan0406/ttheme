@@ -131,7 +131,7 @@ export function placeFor(work: string, term: Term, bin: string, slot: string): P
     TTHEME_ITERM_SUITE: ITERM_SUITE,
     TTHEME_NAMES: 'off',
     TTHEME_AUTO_UPDATE: 'off',
-    TTHEME_MARKET_LOOKUP: 'off',
+    TTHEME_MARKETPLACE_LOOKUP: 'off',
   }
   return place
 }

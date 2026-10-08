@@ -90,7 +90,7 @@ export function palettesZsh(
     ...palettes.map((p) => entry(p, [p.background, p.foreground, p.cursor, p.selection, ...p.ansi].join(' '))),
     ')',
     '',
-    "# the palettes whose colors your tone moves off their market's (tone.json): lists mark them, and preview's panel offers to reset them",
+    "# the palettes whose colors your tone moves off their marketplace's (tone.json): lists mark them, and preview's panel offers to reset them",
     `typeset -ga TTHEME_TUNED=(${palettes
       .filter((p) => tuned.includes(p.name))
       .map((p) => p.name)
@@ -106,7 +106,7 @@ export function palettesZsh(
     ...palettes.map((p) => entry(p, p.group)),
     ')',
     '',
-    "# the catalog a market palette sits in — the folder under the market's palettes/, one level below the market in every list",
+    "# the catalog a marketplace palette sits in — the folder under the marketplace's palettes/, one level below the marketplace in every list",
     'typeset -gA TTHEME_CATALOG=(',
     ...palettes.filter((p) => p.catalog).map((p) => entry(p, p.catalog ?? '')),
     ')',

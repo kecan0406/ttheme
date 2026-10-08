@@ -83,18 +83,18 @@
         },
         "base": {
           "$ref": "#/definitions/palette",
-          "description": "In a market, the official palette this one varies, which only says where its ANSI colors came from"
+          "description": "In a marketplace, the official palette this one varies, which only says where its ANSI colors came from"
         },
         "group": {
-          "description": "The series the palette belongs to; in the official catalog it needs a [[group]] in themes/_groups.toml, and a market palette's group is its market",
+          "description": "The series the palette belongs to; in the official catalog it needs a [[group]] in themes/_groups.toml, and a marketplace palette's group is its marketplace",
           "type": "string"
         },
         "order": {
-          "description": "The official palette's place in the new-tab rotation; a market palette has none",
+          "description": "The official palette's place in the new-tab rotation; a marketplace palette has none",
           "type": "integer"
         },
         "role": {
-          "description": "\"default\" marks the official catalog's neutral palette; a market palette has none",
+          "description": "\"default\" marks the official catalog's neutral palette; a marketplace palette has none",
           "type": "string",
           "enum": ["default"]
         },

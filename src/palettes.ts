@@ -11,7 +11,7 @@ import { installedPath } from './sources.ts'
 import { readText, systemHost, themeFiles, tilde } from './terminals/common.ts'
 import { WIRED, type Wired, wirings } from './terminals/index.ts'
 import type { Ctx, Host, Moment, Now, Out, Pointed } from './terminals/types.ts'
-import { marketOf, owned } from './theme.ts'
+import { marketplaceOf, owned } from './theme.ts'
 import { readTone, tuned } from './tone.ts'
 
 export interface Installed {
@@ -24,7 +24,7 @@ export interface Installed {
   terminalBase?: string
   wtHome?: string
   wtProfile?: string
-  markets?: string[]
+  marketplaces?: string[]
   updates?: Record<string, boolean>
   palettes: string[]
 }
@@ -54,7 +54,7 @@ const OPTIONAL: { [K in Optional]-?: (value: unknown) => Installed[K] } = {
   terminalBase: text,
   wtHome: text,
   wtProfile: text,
-  markets: (value) => (Array.isArray(value) ? value.filter((m): m is string => typeof m === 'string') : undefined),
+  marketplaces: (value) => (Array.isArray(value) ? value.filter((m): m is string => typeof m === 'string') : undefined),
   updates: (value) =>
     value && typeof value === 'object'
       ? Object.fromEntries(
@@ -92,14 +92,14 @@ export function resolve(catalog: Manifest, names: string[]): PaletteEntry[] {
   const known = new Map(catalog.palettes.map((p) => [p.name, p]))
   const missing = names.filter((n) => !known.has(n))
   if (missing.length > 0) {
-    const markets = [...new Set(missing.flatMap((n) => marketOf(n) ?? []))].filter(
-      (market) => !catalog.palettes.some((p) => marketOf(p.name) === market),
+    const marketplaces = [...new Set(missing.flatMap((n) => marketplaceOf(n) ?? []))].filter(
+      (marketplace) => !catalog.palettes.some((p) => marketplaceOf(p.name) === marketplace),
     )
     const hint =
-      markets.length > 0
-        ? `add ${markets.join(', ')} first — \`ttheme market search\` finds a market's repository`
+      marketplaces.length > 0
+        ? `add ${marketplaces.join(', ')} first — \`ttheme marketplace search\` finds a marketplace's repository`
         : nearest(listed(catalog.palettes), missing)
-    throw new Error(`not in any market: ${missing.join(', ')} — ${hint}`)
+    throw new Error(`not in any marketplace: ${missing.join(', ')} — ${hint}`)
   }
   return catalog.palettes.filter((p) => names.includes(p.name))
 }

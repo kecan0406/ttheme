@@ -172,7 +172,7 @@ __tt_pins_load
 
 : ${TTHEME_WARP_FAST:=on}
 
-: ${TTHEME_MARKET_LOOKUP:=on}
+: ${TTHEME_MARKETPLACE_LOOKUP:=on}
 
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
@@ -1558,7 +1558,7 @@ ttheme() {
   fi
 
   case $1 in
-    list|add|remove|update|market|new) __tt_catalog "$@"; return ;;
+    list|add|remove|update|marketplace|new) __tt_catalog "$@"; return ;;
     edit|check|share)
       local REPLY
       __tt_name_of "$TTHEME_SPEC"
@@ -1612,9 +1612,9 @@ if (( ${+functions[compdef]} )); then
       _files -/
     elif [[ $words[2] == new ]]; then
       compadd -- --from --in
-    elif [[ $words[2] == market && $CURRENT == 3 ]]; then
+    elif [[ $words[2] == marketplace && $CURRENT == 3 ]]; then
       compadd -- add remove search init
-    elif [[ $words[2] == market && $words[3] == (add|init) && $CURRENT == 4 ]]; then
+    elif [[ $words[2] == marketplace && $words[3] == (add|init) && $CURRENT == 4 ]]; then
       _files -/
     elif [[ $words[2] == (pin|unpin) && $CURRENT == 3 ]]; then
       reply=(${${(M)${(k)TTHEME_PINS}:#ssh:*}#ssh:})
@@ -1628,11 +1628,11 @@ if (( ${+functions[compdef]} )); then
         _files -/
         [[ $words[2] == pin || ${#reply} -gt 0 ]] && compadd -S '' -- ssh:
       fi
-    elif [[ $words[2] == add && $words[CURRENT-1] == --market ]]; then
+    elif [[ $words[2] == add && $words[CURRENT-1] == --marketplace ]]; then
       _files -/
     elif [[ $words[2] == add ]]; then
       reply=(${${${(M)${(f)"$(__tt_cli list --json 2>/dev/null)"}:#*\"name\": *}#*\"name\": \"}%%\"*})
-      compadd -- --market ${reply:|TTHEME_ORDER}
+      compadd -- --marketplace ${reply:|TTHEME_ORDER}
     fi
   }
   compdef __tt_complete ttheme

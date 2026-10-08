@@ -33,8 +33,8 @@ export function FilterBar({ total, sources = true }: { total: number; sources?: 
           <ToggleGroupItem name="source" value="official">
             official
           </ToggleGroupItem>
-          <ToggleGroupItem name="source" value="markets">
-            markets
+          <ToggleGroupItem name="source" value="marketplaces">
+            marketplaces
           </ToggleGroupItem>
         </ToggleGroup>
       ) : null}

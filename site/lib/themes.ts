@@ -8,7 +8,7 @@ export interface GateRule {
 
 export interface Theme {
   id: string
-  market: string | null
+  marketplace: string | null
   name: string
   group: string
   catalog: string | null
@@ -25,7 +25,7 @@ export interface Theme {
   gate: number[]
 }
 
-export interface Market {
+export interface Marketplace {
   id: string
   repo: string
   add: string
@@ -53,15 +53,15 @@ export interface ManifestEntry {
   gate: number[]
 }
 
-export function toTheme(entry: ManifestEntry, market: string | null = null): Theme {
+export function toTheme(entry: ManifestEntry, marketplace: string | null = null): Theme {
   return {
-    id: market ? `${market}/${entry.name}` : entry.name,
-    market,
+    id: marketplace ? `${marketplace}/${entry.name}` : entry.name,
+    marketplace,
     name: entry.name,
-    group: market ?? entry.group,
-    catalog: market ? (entry.catalog ?? null) : null,
-    native: market ? null : (entry.native ?? null),
-    lead: market ? false : (entry.lead ?? false),
+    group: marketplace ?? entry.group,
+    catalog: marketplace ? (entry.catalog ?? null) : null,
+    native: marketplace ? null : (entry.native ?? null),
+    lead: marketplace ? false : (entry.lead ?? false),
     ansiSource: entry.ansiSource,
     background: entry.background,
     foreground: entry.foreground,

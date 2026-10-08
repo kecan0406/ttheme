@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { SITES } from './booru.ts'
 import { RULES } from './contrast.ts'
-import { MARKET_KEYS, MARKET_SCHEMA_URL, OWNER_KEYS, PALETTE_SCHEMA_URL } from './sources.ts'
+import { MARKETPLACE_KEYS, MARKETPLACE_SCHEMA_URL, OWNER_KEYS, PALETTE_SCHEMA_URL } from './sources.ts'
 import { PALETTE_KEYS, POSITIONS } from './theme.ts'
 
 interface Node {
@@ -20,11 +20,11 @@ const read = (name: string): Node =>
   JSON.parse(readFileSync(join(import.meta.dirname, '..', 'schemas', name), 'utf8')) as Node
 const keys = (node: Node | undefined): string[] => Object.keys(node?.properties ?? {}).sort()
 
-test('the market schema SchemaStore serves describes the keys ttheme reads from ttheme-market.toml', () => {
-  const market = read('ttheme-market.json')
-  assert.equal(market.$id, MARKET_SCHEMA_URL)
-  assert.deepEqual(keys(market), [...MARKET_KEYS].sort())
-  assert.deepEqual(keys(market.properties?.owner), [...OWNER_KEYS].sort())
+test('the marketplace schema SchemaStore serves describes the keys ttheme reads from ttheme-marketplace.toml', () => {
+  const marketplace = read('ttheme-marketplace.json')
+  assert.equal(marketplace.$id, MARKETPLACE_SCHEMA_URL)
+  assert.deepEqual(keys(marketplace), [...MARKETPLACE_KEYS].sort())
+  assert.deepEqual(keys(marketplace.properties?.owner), [...OWNER_KEYS].sort())
 })
 
 test('the palette schema describes the keys, sites, positions, slots and gate rules the palette reader knows', () => {

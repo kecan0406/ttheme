@@ -86,7 +86,7 @@ test('a tone file with nonsense in it is read as far as it makes sense', () => {
   assert.deepEqual(readTone(dir), {})
 })
 
-test('available lays the tone over the palettes while the untuned view keeps them as the markets give them', () => {
+test('available lays the tone over the palettes while the untuned view keeps them as the marketplaces give them', () => {
   const dir = home()
   writeTone(dir, { gojo: { cursor: '#ff8800' } })
   assert.equal(available(dir, catalog).palettes.find((p) => p.name === 'gojo')?.cursor, '#ff8800')

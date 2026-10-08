@@ -81,7 +81,7 @@ test('toTheme carries the default role through as a role, not a flag', () => {
 })
 
 test('resolve rejects a name the catalog does not carry', () => {
-  assert.throws(() => resolve(catalog, ['gojo', 'nobody']), /not in any market: nobody/)
+  assert.throws(() => resolve(catalog, ['gojo', 'nobody']), /not in any marketplace: nobody/)
 })
 
 test('resolve returns catalog order, not the order asked for', () => {
@@ -453,8 +453,8 @@ test('the shell names a laid Warp picture as the CLI does, so preview draws stra
   const cases: [string, string, string][] = [
     ['asuka', '/Users/kdh/.config/ttheme/backgrounds/asuka.6fc048f5@115-center-right-2912x2040.png', '#211513'],
     [
-      'kecan@market/miku',
-      '/home/사용자/.config/ttheme/backgrounds/kecan--market--miku.0a1b2c3d@fill-40.png',
+      'kecan@marketplace/miku',
+      '/home/사용자/.config/ttheme/backgrounds/kecan--marketplace--miku.0a1b2c3d@fill-40.png',
       '#2A1B3C',
     ],
   ]
@@ -646,7 +646,7 @@ test('a palette that leaves the catalog keeps working from the copy the last syn
   assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(gojo geto\)/)
 })
 
-test("a market's palette gets theme files and a startup line with -- for the @ and the /", () => {
+test("a marketplace's palette gets theme files and a startup line with -- for the @ and the /", () => {
   const home = fixture()
   const shared: Manifest = { ...catalog, palettes: [...catalog.palettes, entry('kec@dust/rei', 2, { base: 'gojo' })] }
   sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['kec@dust/rei'] })
@@ -668,7 +668,7 @@ test('installed.json keeps every field it holds through a write and a read', () 
     terminalBase: 'Clear Dark',
     wtHome: '/mnt/c/Users/kec/AppData/Local',
     wtProfile: '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}',
-    markets: ['official', 'alice/pastel#v1'],
+    marketplaces: ['official', 'alice/pastel#v1'],
     updates: { 'alice/pastel#v1': true, official: false },
     palettes: ['gojo', 'alice@pastel/dusk'],
   }

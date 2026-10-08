@@ -5,21 +5,21 @@ import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
 import { emptyManifest, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
 import { aliasesFor, containsText } from './names.ts'
-import { marketLayout, type Report, readLocal, readMarketFiles, warning } from './own.ts'
+import { marketplaceLayout, type Report, readLocal, readMarketplaceFiles, warning } from './own.ts'
 import {
   cachePath,
   type Identity,
   isRemote,
-  MARKET_FILE,
-  type MarketInfo,
-  marketId,
-  marketSources,
+  MARKETPLACE_FILE,
+  type MarketplaceInfo,
+  marketplaceId,
+  marketplaceSources,
   OFFICIAL,
-  readMarketInfo,
+  readMarketplaceInfo,
   remoteOwner,
   shownSource,
 } from './sources.ts'
-import { marketOf, nameProblem, textProblem } from './theme.ts'
+import { marketplaceOf, nameProblem, textProblem } from './theme.ts'
 import { readTone, tuned } from './tone.ts'
 
 const TIMEOUT = 20_000
@@ -38,7 +38,7 @@ export interface Archive {
 }
 
 export function readCatalog(configHome: string, warn = true, official?: Manifest): Manifest {
-  const sources = marketSources(configHome)
+  const sources = marketplaceSources(configHome)
   const path = catalogPath(configHome)
   let base = emptyManifest()
   if (sources.includes(OFFICIAL)) {
@@ -64,7 +64,7 @@ function parseArchive(source: string): Archive {
   }
   const files = doc?.files
   if (!files || typeof files !== 'object' || Object.values(files).some((text) => typeof text !== 'string')) {
-    throw new Error('is not a copy of a market this ttheme fetched — `ttheme update` fetches it again')
+    throw new Error('is not a copy of a marketplace this ttheme fetched — `ttheme update` fetches it again')
   }
   return { ...(typeof doc?.etag === 'string' ? { etag: doc.etag } : {}), files: files as Record<string, string> }
 }
@@ -74,34 +74,43 @@ export function readCachedArchive(configHome: string, source: string): Archive {
 }
 
 function remoteId(source: string, identity: Identity): string {
-  return marketId({ owner: remoteOwner(source), name: identity.name })
+  return marketplaceId({ owner: remoteOwner(source), name: identity.name })
 }
 
-export function archiveInfo(source: string, archive: Archive): MarketInfo {
-  const text = archive.files[MARKET_FILE]
+export function archiveInfo(source: string, archive: Archive): MarketplaceInfo {
+  const text = archive.files[MARKETPLACE_FILE]
   if (text === undefined) {
-    throw new Error(`${shownSource(source)} has no ${MARKET_FILE} — \`ttheme market init\` makes one`)
+    throw new Error(`${shownSource(source)} has no ${MARKETPLACE_FILE} — \`ttheme marketplace init\` makes one`)
   }
-  return readMarketInfo(text, MARKET_FILE)
+  return readMarketplaceInfo(text, MARKETPLACE_FILE)
 }
 
 export function archiveId(source: string, archive: Archive): string {
   return remoteId(source, archiveInfo(source, archive))
 }
 
-export interface ReadMarket {
+export interface ReadMarketplace {
   id: string
-  info: MarketInfo
+  info: MarketplaceInfo
   entries: PaletteEntry[]
 }
 
-export function readArchive(source: string, archive: Archive, official: PaletteEntry[], report: Report): ReadMarket {
+export function readArchive(
+  source: string,
+  archive: Archive,
+  official: PaletteEntry[],
+  report: Report,
+): ReadMarketplace {
   const info = archiveInfo(source, archive)
   const id = remoteId(source, info)
   const shown = shownSource(source)
   const texts = new Map(Object.entries(archive.files).map(([path, text]) => [`${shown}/${path}`, text]))
-  const files = marketLayout(Object.keys(archive.files), (path) => `${shown}/${path}`)
-  return { id, info, entries: readMarketFiles(files, (file) => texts.get(file.path) ?? '', id, official, report, true) }
+  const files = marketplaceLayout(Object.keys(archive.files), (path) => `${shown}/${path}`)
+  return {
+    id,
+    info,
+    entries: readMarketplaceFiles(files, (file) => texts.get(file.path) ?? '', id, official, report, true),
+  }
 }
 
 function readCached(configHome: string, source: string, official: PaletteEntry[], warn: boolean): PaletteEntry[] {
@@ -184,13 +193,13 @@ export function updatesOf(configHome: string, catalog: Manifest): PaletteEntry[]
   const kept = new Map(readKept(configHome).map((p) => [p.name, p]))
   return catalog.palettes.filter((p) => {
     const was = kept.get(p.name)
-    return marketOf(p.name) !== undefined && was !== undefined && looks(was) !== looks(p)
+    return marketplaceOf(p.name) !== undefined && was !== undefined && looks(was) !== looks(p)
   })
 }
 
 export function untuned(configHome: string, catalog: Manifest, warn = true): Manifest {
   const kept = readKept(configHome)
-  const pinned = new Map(kept.filter((p) => marketOf(p.name) !== undefined).map((p) => [p.name, p]))
+  const pinned = new Map(kept.filter((p) => marketplaceOf(p.name) !== undefined).map((p) => [p.name, p]))
   const palettes = [
     ...catalog.palettes.map((p) => pinned.get(p.name) ?? p),
     ...readLocal(configHome, catalog.palettes, warn),

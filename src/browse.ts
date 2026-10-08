@@ -1,13 +1,13 @@
-import { type BrowseIo, BrowsePanel, type BrowseResult, type Market } from './browse-panel.ts'
+import { type BrowseIo, BrowsePanel, type BrowseResult, type Marketplace } from './browse-panel.ts'
 import { available, readCatalog, readKept, updatesOf } from './catalog.ts'
 import { HUB_CLOSED, hubOf } from './hub.ts'
 import { reload, takeUpdates } from './installs.ts'
 import { liveOf } from './live.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
-import { dropCache, findMarkets, idOf, keptNote, lastUpdate, withMarkets } from './markets.ts'
+import { dropCache, findMarketplaces, idOf, keptNote, lastUpdate, withMarketplaces } from './marketplaces.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
-import { readMarketDir, warning } from './own.ts'
+import { readMarketplaceDir, warning } from './own.ts'
 import { promptFx } from './palette-prompt.ts'
 import { commit, configHome, forget, type Installed, readInstalled, worn, writeInstalled } from './palettes.ts'
 import { into, say } from './pending.ts'
@@ -16,14 +16,14 @@ import {
   AUTO_TIMEOUT,
   applyRefreshed,
   cachedEntries,
-  cachedMarket,
+  cachedMarketplace,
   counted,
   dueSources,
   type Fetched,
-  fetchMarket,
+  fetchMarketplace,
   readTries,
-  refreshMarket,
-  storeMarket,
+  refreshMarketplace,
+  storeMarketplace,
   type Tried,
   updateNote,
 } from './refresh.ts'
@@ -33,29 +33,29 @@ import {
   isLocal,
   isRemote,
   localIdentity,
-  marketId,
-  marketsOf,
+  marketplaceId,
+  marketplacesOf,
   OFFICIAL,
   repoOf,
   shownSource,
 } from './sources.ts'
-import { alphabetical, marketOf } from './theme.ts'
+import { alphabetical, marketplaceOf } from './theme.ts'
 import { readTone } from './tone.ts'
 
-function marketState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Market {
-  const market = source === OFFICIAL ? undefined : cachedMarket(home, source)
+function marketplaceState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Marketplace {
+  const marketplace = source === OFFICIAL ? undefined : cachedMarketplace(home, source)
   let id: string
   try {
-    id = market?.id ?? idOf(home, source)
+    id = marketplace?.id ?? idOf(home, source)
   } catch {
     id = isRemote(source) ? repoOf(source) : shownSource(source)
   }
   return {
     source,
     id,
-    ...(market?.info.description ? { description: market.info.description } : {}),
+    ...(marketplace?.info.description ? { description: marketplace.info.description } : {}),
     shown: shownSource(source),
-    entries: source === OFFICIAL ? cachedEntries(home, source) : (market?.entries ?? []),
+    entries: source === OFFICIAL ? cachedEntries(home, source) : (marketplace?.entries ?? []),
     auto: autoUpdates(source, state.updates),
     status: lastUpdate(home, source, tries),
   }
@@ -75,36 +75,36 @@ function browseIo(
   return {
     refresh: async (source) => {
       if (isLocal(source)) {
-        const market = marketState(home, state, source, readTries())
+        const marketplace = marketplaceState(home, state, source, readTries())
         return {
-          market,
+          marketplace,
           refreshed: {
             source,
-            id: market.id,
-            count: listed(market.entries).length,
+            id: marketplace.id,
+            count: listed(marketplace.entries).length,
             change: { added: [], changed: [], gone: [] },
           },
           updates: updateNames(home),
         }
       }
-      const refreshed = await refreshMarket(home, source, AUTO_TIMEOUT)
-      return { market: marketState(home, state, source, readTries()), refreshed, updates: updateNames(home) }
+      const refreshed = await refreshMarketplace(home, source, AUTO_TIMEOUT)
+      return { marketplace: marketplaceState(home, state, source, readTries()), refreshed, updates: updateNames(home) }
     },
     fetch: async (source) => {
       if (isLocal(source)) {
         const info = localIdentity(source)
-        const id = marketId(info)
+        const id = marketplaceId(info)
         return {
           source,
           id,
           ...(info.description ? { description: info.description } : {}),
           shown: shownSource(source),
-          entries: readMarketDir(source, id, cachedEntries(home, OFFICIAL), warning(false)),
+          entries: readMarketplaceDir(source, id, cachedEntries(home, OFFICIAL), warning(false)),
           auto: false,
           status: 'read in place',
         }
       }
-      const got = await fetchMarket(home, source, undefined, lookups)
+      const got = await fetchMarketplace(home, source, undefined, lookups)
       fetched.set(source, got)
       return {
         source,
@@ -116,7 +116,7 @@ function browseIo(
         status: 'not added yet',
       }
     },
-    search: (query) => findMarkets(query, lookups),
+    search: (query) => findMarketplaces(query, lookups),
     apply,
   }
 }
@@ -127,7 +127,7 @@ function applyAndSay(...args: Parameters<typeof applyRefreshed>): void {
   }
 }
 
-function marketChanges(result: BrowseResult, markets: Market[], wanted: string[]): string[] {
+function marketplaceChanges(result: BrowseResult, marketplaces: Marketplace[], wanted: string[]): string[] {
   const lines: string[] = []
   for (const m of result.adds) {
     const auto = m.source !== OFFICIAL && (result.auto[m.source] ?? m.auto)
@@ -136,17 +136,17 @@ function marketChanges(result: BrowseResult, markets: Market[], wanted: string[]
     )
   }
   for (const source of result.removes) {
-    const id = markets.find((m) => m.source === source)?.id ?? source
+    const id = marketplaces.find((m) => m.source === source)?.id ?? source
     lines.push(`Removed ${id} · ${shownSource(source)}`)
-    const kept = wanted.filter((name) => (marketOf(name) ?? OFFICIAL) === id)
+    const kept = wanted.filter((name) => (marketplaceOf(name) ?? OFFICIAL) === id)
     if (kept.length > 0) {
       lines.push(keptNote(kept))
     }
   }
   for (const [source, on] of Object.entries(result.auto)) {
-    const market = markets.find((m) => m.source === source)
-    if (market && !result.removes.includes(source)) {
-      lines.push(`${market.id} ${on ? 'updates on its own now' : 'no longer updates on its own'}`)
+    const marketplace = marketplaces.find((m) => m.source === source)
+    if (marketplace && !result.removes.includes(source)) {
+      lines.push(`${marketplace.id} ${on ? 'updates on its own now' : 'no longer updates on its own'}`)
     }
   }
   return lines
@@ -154,7 +154,7 @@ function marketChanges(result: BrowseResult, markets: Market[], wanted: string[]
 
 async function applyBrowse(
   home: string,
-  markets: Market[],
+  marketplaces: Marketplace[],
   result: BrowseResult,
   fetched: Map<string, Fetched>,
 ): Promise<void> {
@@ -163,17 +163,17 @@ async function applyBrowse(
   for (const m of result.adds) {
     const got = fetched.get(m.source)
     if (got) {
-      storeMarket(home, got)
+      storeMarketplace(home, got)
     }
   }
   for (const source of result.removes) {
     dropCache(home, source)
   }
   const sources = [
-    ...marketsOf(current.markets).filter((s) => !result.removes.includes(s)),
+    ...marketplacesOf(current.marketplaces).filter((s) => !result.removes.includes(s)),
     ...result.adds.map((m) => m.source),
   ]
-  const placed = withMarkets(current, sources, { ...current.updates, ...result.auto })
+  const placed = withMarketplaces(current, sources, { ...current.updates, ...result.auto })
   if (moved) {
     writeInstalled(home, placed)
   }
@@ -192,7 +192,7 @@ async function applyBrowse(
   const next = { ...placed, palettes: wanted }
   commit(home, catalog, current, next)
   forget(home, catalog, current.terminals, dropped)
-  for (const line of marketChanges(result, markets, wanted)) {
+  for (const line of marketplaceChanges(result, marketplaces, wanted)) {
     say(line)
   }
   for (const name of added) {
@@ -227,10 +227,10 @@ export async function runBrowse(): Promise<number> {
   const was = readKept(home)
   const tries = readTries()
   const auto = autoWanted()
-  const markets = marketsOf(state.markets).map((source) => marketState(home, state, source, tries))
-  const names = new Set(markets.flatMap((m) => m.entries.map((e) => e.name)))
+  const marketplaces = marketplacesOf(state.marketplaces).map((source) => marketplaceState(home, state, source, tries))
+  const names = new Set(marketplaces.flatMap((m) => m.entries.map((e) => e.name)))
   const kept = was.filter((e) => state.palettes.includes(e.name) && !names.has(e.name))
-  knowAliases([...markets.flatMap((m) => m.entries), ...kept])
+  knowAliases([...marketplaces.flatMap((m) => m.entries), ...kept])
   const fetched = new Map<string, Fetched>()
   const lookups = new AbortController()
   const tty = process.stdout.isTTY === true
@@ -241,7 +241,7 @@ export async function runBrowse(): Promise<number> {
     process.stdout.write('\x1b[?2026h')
   }
   const panel = new BrowsePanel({
-    markets,
+    marketplaces,
     kept,
     installed: state.palettes,
     updates: updateNames(home),
@@ -250,11 +250,11 @@ export async function runBrowse(): Promise<number> {
     ...(hub ? { hub } : {}),
     due: auto ? dueSources(home, state) : [],
     io: browseIo(home, state, fetched, lookups.signal, (result, report) =>
-      into({ say: report.say, set: report.status }, () => applyBrowse(home, markets, result, fetched)),
+      into({ say: report.say, set: report.status }, () => applyBrowse(home, marketplaces, result, fetched)),
     ),
     ...(process.env.TTHEME_SORT === 'series' ? {} : { order: alphabetical }),
     color: !colorless(),
-    lookups: process.env.TTHEME_MARKET_LOOKUP !== 'off',
+    lookups: process.env.TTHEME_MARKETPLACE_LOOKUP !== 'off',
     fx: promptFx(process.env.TTHEME_FX),
     owns: tty && !hub,
     ...(live ? { onFocus: (entry: PaletteEntry) => process.stdout.write(live.paint(entry)) } : {}),

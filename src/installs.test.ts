@@ -5,9 +5,9 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { writeCatalog } from './catalog.ts'
-import { inMarket, runAdd, runDefault } from './installs.ts'
+import { inMarketplace, runAdd, runDefault } from './installs.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
-import { withMarkets } from './markets.ts'
+import { withMarketplaces } from './marketplaces.ts'
 import { draftOf, shareCode, shareLink } from './own.ts'
 import { readInstalled, sync, writeInstalled } from './palettes.ts'
 
@@ -37,7 +37,7 @@ const catalog: Manifest = {
 }
 
 function installedHome(palettes: string[]): string {
-  const home = mkdtempSync(join(tmpdir(), 'ttheme-market-'))
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-marketplace-'))
   const state = { terminals: ['ghostty' as const], palettes }
   writeCatalog(home, catalog)
   writeInstalled(home, state)
@@ -98,25 +98,25 @@ test('a share link to a palette already in the catalog installs it, and one with
   )
 })
 
-test('--market names bare palettes after the market it added, and refuses one from another market', () => {
-  assert.deepEqual(inMarket(['dusk', 'alice@pastel/dawn', 'tt2:abc'], 'alice@pastel'), [
+test('--marketplace names bare palettes after the marketplace it added, and refuses one from another marketplace', () => {
+  assert.deepEqual(inMarketplace(['dusk', 'alice@pastel/dawn', 'tt2:abc'], 'alice@pastel'), [
     'alice@pastel/dusk',
     'alice@pastel/dawn',
     'tt2:abc',
   ])
-  assert.deepEqual(inMarket(['kita'], 'official'), ['kita'])
-  assert.throws(() => inMarket(['bob@neon/glow'], 'alice@pastel'), /bob@neon\/glow is not in alice@pastel/)
+  assert.deepEqual(inMarketplace(['kita'], 'official'), ['kita'])
+  assert.throws(() => inMarketplace(['bob@neon/glow'], 'alice@pastel'), /bob@neon\/glow is not in alice@pastel/)
 })
 
 test('installed.json keeps an auto-update setting only where it differs from the default', () => {
   const state = { terminals: ['ghostty' as const], palettes: [] }
-  const next = withMarkets(state, ['official', 'alice/pastel', 'bob/neon'], {
+  const next = withMarketplaces(state, ['official', 'alice/pastel', 'bob/neon'], {
     official: true,
     'alice/pastel': true,
     'bob/neon': false,
     'carol/gone': true,
   })
-  assert.deepEqual(next.markets, ['official', 'alice/pastel', 'bob/neon'])
+  assert.deepEqual(next.marketplaces, ['official', 'alice/pastel', 'bob/neon'])
   assert.deepEqual(next.updates, { 'alice/pastel': true })
-  assert.equal(withMarkets(state, ['official'], { official: true }).updates, undefined)
+  assert.equal(withMarketplaces(state, ['official'], { official: true }).updates, undefined)
 })

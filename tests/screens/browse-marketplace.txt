@@ -2,7 +2,7 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
- [All 10] · official 6 · fix@shop 4  ctrl+s market
+ [All 10] · official 6 · fix@shop 4  ctrl+s marketplace
                                                                │ fix@shop/arcade
     ▸ official (1/6)                                           │ ~/shop
     ▾ fix@shop (1/4)                                           │ neon
@@ -12,7 +12,7 @@
       ▸ pastel (0/1)                                           │ ✗ accent hue outside its ANSI role
       ○ dusk                                                   │   16.644 > 0
     ── On GitHub ──────────                                    │
-    ⌕ Find markets on GitHub  space searches                   │
+    ⌕ Find marketplaces on GitHub  space searches              │
                                                                │
                                                                │
                                                                │

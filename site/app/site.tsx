@@ -1,24 +1,24 @@
 import { Elysia, NotFound } from 'elysia'
 import { Home } from '@/components/home'
-import { MarketPage } from '@/components/market-page'
-import { MarketStore, NoSuchMarket } from '@/components/market-store'
+import { MarketplacePage } from '@/components/marketplace-page'
+import { MarketplaceStore, NoSuchMarketplace } from '@/components/marketplace-store'
 import { Missing } from '@/components/missing'
 import { SharePage } from '@/components/share-page'
 import { Sheets } from '@/components/sheets'
 import { cardPng } from '@/lib/card'
 import { gate, themes } from '@/lib/catalog'
 import { creditsOf } from '@/lib/credits'
-import { loadMarkets } from '@/lib/markets'
+import { loadMarketplaces } from '@/lib/marketplaces'
 import { builderOf, readShared, type Shared } from '@/lib/share'
 import { seriesOf } from '@/lib/sheet'
 import { page } from './document'
 
 const CATALOG = 'public, max-age=0, s-maxage=31536000'
-const MARKETS = 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400'
+const MARKETPLACES = 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400'
 const RETRY = 'public, max-age=0, s-maxage=60'
 const CREDITS = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800'
 
-const STORE = 'One ttheme market: its repository, its palettes and how they measure against the contrast gate'
+const STORE = 'One ttheme marketplace: its repository, its palettes and how they measure against the contrast gate'
 
 function shared(code: string): Shared | Error {
   try {
@@ -50,28 +50,28 @@ export const site = new Elysia({ name: 'site' })
       <Sheets themes={themes} gate={gate} />,
     ),
   )
-  .get('/market', async () => {
-    const { markets, fresh } = await loadMarkets()
+  .get('/marketplace', async () => {
+    const { marketplaces, fresh } = await loadMarketplaces()
     return page(
       {
-        title: 'ttheme — market',
-        description: 'Every ttheme palette: the official series and the markets anyone publishes from GitHub',
-        cache: fresh ? MARKETS : RETRY,
+        title: 'ttheme — marketplace',
+        description: 'Every ttheme palette: the official series and the marketplaces anyone publishes from GitHub',
+        cache: fresh ? MARKETPLACES : RETRY,
       },
-      <MarketPage themes={themes} markets={markets} gate={gate} />,
+      <MarketplacePage themes={themes} marketplaces={marketplaces} gate={gate} />,
     )
   })
-  .get('/market/:id', async ({ params }) => {
-    const { markets, fresh } = await loadMarkets()
-    const market = markets.find((entry) => entry.id === params.id)
-    if (!market)
+  .get('/marketplace/:id', async ({ params }) => {
+    const { marketplaces, fresh } = await loadMarketplaces()
+    const marketplace = marketplaces.find((entry) => entry.id === params.id)
+    if (!marketplace)
       return page(
-        { title: 'ttheme — no such market', description: STORE, status: 404, cache: RETRY },
-        <NoSuchMarket id={params.id} />,
+        { title: 'ttheme — no such marketplace', description: STORE, status: 404, cache: RETRY },
+        <NoSuchMarketplace id={params.id} />,
       )
     return page(
-      { title: `ttheme — ${market.id}`, description: STORE, cache: fresh ? MARKETS : RETRY },
-      <MarketStore market={market} gate={gate} />,
+      { title: `ttheme — ${marketplace.id}`, description: STORE, cache: fresh ? MARKETPLACES : RETRY },
+      <MarketplaceStore marketplace={marketplace} gate={gate} />,
     )
   })
   .get('/p/:code', ({ params, request }) => {

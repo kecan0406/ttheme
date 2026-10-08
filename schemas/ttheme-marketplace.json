@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://www.schemastore.org/ttheme-market.json",
-  "title": "ttheme market",
-  "description": "The ttheme-market.toml at the root of a ttheme market: a repository or folder whose palettes/*.toml and palettes/<catalog>/*.toml are the market's palettes\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#markets",
+  "$id": "https://www.schemastore.org/ttheme-marketplace.json",
+  "title": "ttheme marketplace",
+  "description": "The ttheme-marketplace.toml at the root of a ttheme marketplace: a repository or folder whose palettes/*.toml and palettes/<catalog>/*.toml are the marketplace's palettes\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#marketplaces",
   "type": "object",
   "definitions": {
     "palette": {
@@ -23,28 +23,28 @@
       "type": "string"
     },
     "name": {
-      "description": "The market's name: its palettes are <owner>@<name>/<palette>, where the owner is the repository's owner on GitHub\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#markets",
+      "description": "The marketplace's name: its palettes are <owner>@<name>/<palette>, where the owner is the repository's owner on GitHub\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#marketplaces",
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
       "maxLength": 40
     },
     "description": {
       "$ref": "#/definitions/text",
-      "description": "What the market holds, shown in ttheme browse, ttheme market and the market page"
+      "description": "What the marketplace holds, shown in ttheme browse, ttheme marketplace and the marketplace page"
     },
     "owner": {
-      "description": "Who keeps the market",
+      "description": "Who keeps the marketplace",
       "type": "object",
       "properties": {
         "name": {
-          "description": "The owner's GitHub handle, which names a market read from a folder; a market added from GitHub takes its repository's owner instead",
+          "description": "The owner's GitHub handle, which names a marketplace read from a folder; a marketplace added from GitHub takes its repository's owner instead",
           "type": "string",
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
           "maxLength": 39
         },
         "email": {
           "$ref": "#/definitions/text",
-          "description": "An address for questions about the market"
+          "description": "An address for questions about the marketplace"
         },
         "url": {
           "$ref": "#/definitions/text",
@@ -54,7 +54,7 @@
       "required": ["name"]
     },
     "renames": {
-      "description": "Palettes that were renamed or removed: an old name maps to its new name, or to false once it is gone. Installs of the old name follow the chain on the next update, so keep the entries after everyone has moved\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#markets",
+      "description": "Palettes that were renamed or removed: an old name maps to its new name, or to false once it is gone. Installs of the old name follow the chain on the next update, so keep the entries after everyone has moved\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#marketplaces",
       "type": "object",
       "propertyNames": {
         "$ref": "#/definitions/palette"
@@ -71,7 +71,7 @@
       }
     },
     "force_remove_deleted_palettes": {
-      "description": "Whether a palette that leaves the market without a rename is removed from the machines that installed it; by default they keep their copy",
+      "description": "Whether a palette that leaves the marketplace without a rename is removed from the machines that installed it; by default they keep their copy",
       "type": "boolean",
       "default": false
     },

@@ -16,7 +16,7 @@ typeset -g COLS=100 ROWS=24
 typeset -gA STATES=(
   empty  ''
   few    'konata kita'
-  market 'konata fix@shop/arcade'
+  marketplace 'konata fix@shop/arcade'
   pinned 'konata kita'
 )
 
@@ -26,8 +26,8 @@ typeset -ga SCENARIOS=(
   'browse-picked   few    browse   Right Down Right Down Space'
   'browse-review   few    browse   Right Down Right Down Space Enter'
   'browse-series   few    browse   Right Down Space'
-  'browse-scope   market browse   v C-s C-s'
-  'browse-markets  market browse   Down DC'
+  'browse-scope   marketplace browse   v C-s C-s'
+  'browse-marketplaces  marketplace browse   Down DC'
   'browse-keys     few    browse   ?@Help'
   'list-few        few    list'
   'hub-few         few    hub'
@@ -42,9 +42,9 @@ typeset -ga SCENARIOS=(
   'theme-edit      few    hub  Down Right Down Tab@Palette'
   'theme-editor    few    hub  Down Right Down Tab@Palette Enter@slot'
   'theme-keys      few    hub  Down Right Down Right@Palette ?@Help'
-  'browse-market   market browse   Down Right Down Right Down'
-  'preview-market  market hub  Down Right Down Right Down'
-  'hub-market      market hub'
+  'browse-marketplace   marketplace browse   Down Right Down Right Down'
+  'preview-marketplace  marketplace hub  Down Right Down Right Down'
+  'hub-marketplace      marketplace hub'
   'pins-map        pinned pins'
   'pin-scope       pinned pin      Right Down Enter@PIN Left'
   'pin-repo        pinned pin-deep Right Down Enter@PIN Right'
@@ -58,10 +58,10 @@ fixture_home() {
   env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off ZDOTDIR=$home GHOSTTY_RESOURCES_DIR=x \
     node $ROOT/bin/ttheme.js init --yes < /dev/null > /dev/null
   cp $FIXTURE $home/ttheme/catalog.json
-  if [[ $state == market ]]; then
-    cp -R $ROOT/tests/market $home/shop
+  if [[ $state == marketplace ]]; then
+    cp -R $ROOT/tests/marketplace $home/shop
     env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off \
-      node $ROOT/bin/ttheme.js market add $home/shop > /dev/null
+      node $ROOT/bin/ttheme.js marketplace add $home/shop > /dev/null
   fi
   local -a palettes=(${=STATES[$state]})
   if (( ${#palettes} )); then
@@ -90,7 +90,7 @@ command_for() {
 }
 
 scenario_env() {
-  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0 TTHEME_MARKET_LOOKUP=off TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off)
+  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0 TTHEME_MARKETPLACE_LOOKUP=off TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off)
 }
 
 settle() {

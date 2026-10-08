@@ -44,7 +44,7 @@ function features(palettes: number, series: number) {
     {
       emoji: '🍀',
       title: 'free and open',
-      text: 'MIT licensed, and anyone can publish a market of their own palettes from a GitHub repository.',
+      text: 'MIT licensed, and anyone can publish a marketplace of their own palettes from a GitHub repository.',
     },
   ]
 }
@@ -125,7 +125,7 @@ export function Home({ themes, series }: { themes: Theme[]; series: number }) {
               Windows Terminal, Warp and Konsole. One command, then every tab can wear its own.
             </p>
             <div class="flex w-full flex-wrap items-center gap-3">
-              <LinkButton variant="pop" size="lg" href="/market">
+              <LinkButton variant="pop" size="lg" href="/marketplace">
                 browse the palettes
                 <Icon node={ArrowRight} />
               </LinkButton>
@@ -244,8 +244,8 @@ export function Home({ themes, series }: { themes: Theme[]; series: number }) {
         <footer class="flex flex-wrap items-center justify-between gap-4 border-t py-8 text-sm text-muted-foreground">
           <span>free and open, MIT</span>
           <nav aria-label="more" class="flex flex-wrap gap-4">
-            <a href="/market" class="hover:text-foreground">
-              market
+            <a href="/marketplace" class="hover:text-foreground">
+              marketplace
             </a>
             <a href="/sheets" class="hover:text-foreground">
               sheets

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { findMarkets } from './markets.ts'
+import { findMarketplaces } from './marketplaces.ts'
 
 test('a repository the GitHub search lists comes back without the control characters its text holds', async () => {
   const realFetch = globalThis.fetch
@@ -13,7 +13,7 @@ test('a repository the GitHub search lists comes back without the control charac
   }
   globalThis.fetch = (async () => new Response(JSON.stringify({ items: [listed] }))) as unknown as typeof fetch
   try {
-    const [repo] = await findMarkets(undefined)
+    const [repo] = await findMarketplaces(undefined)
     assert.equal(repo?.description, 'Pastel ]52;c;ZWNobyBoaQ== palettes [2J next line')
     assert.equal(repo?.owner.login, 'mallory [8m')
     assert.equal(repo?.full_name, 'mallory/ttheme-evil')

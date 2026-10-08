@@ -6,7 +6,7 @@
     ▸ official (1/6)                                           │ ~/shop
  ▌  ▸ fix@shop (1/1)  Will remove                              │ 4 palettes · 1 installed
     ── On GitHub ──────────                                    │
-    ⌕ Find markets on GitHub  space searches                   │ Read in place
+    ⌕ Find marketplaces on GitHub  space searches              │ Read in place
                                                                │
                                                                │ Will remove — fix@shop/arcade
                                                                │ stays installed

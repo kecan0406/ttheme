@@ -4,7 +4,7 @@ import { gateFailures } from './catalog.ts'
 import { GATE_RULES } from './contrast.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
 import type { PaletteEntry } from './manifest.ts'
-import { type Repository, repositorySource } from './markets.ts'
+import { type Repository, repositorySource } from './marketplaces.ts'
 import { containsText } from './names.ts'
 import {
   type Extra,
@@ -17,8 +17,8 @@ import {
   SearchHint,
 } from './palette-prompt.ts'
 import { counted, type Refreshed } from './refresh.ts'
-import { isLocal, isRemote, OFFICIAL, parseSource, sameMarket, shownSource, TOPIC } from './sources.ts'
-import { marketOf, slugOf } from './theme.ts'
+import { isLocal, isRemote, OFFICIAL, parseSource, sameMarketplace, shownSource, TOPIC } from './sources.ts'
+import { marketplaceOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Mouse } from './tui/keys.ts'
 import { hintOf, pillOf } from './tui/parts.ts'
@@ -27,7 +27,7 @@ import { ansiFg, FG_RESET, MARKS, type Paint, painter, SPINNER } from './tui/sty
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
 import { type KeySpot, keyZone, zone } from './tui/zones.ts'
 
-export interface Market {
+export interface Marketplace {
   source: string
   id: string
   description?: string
@@ -43,14 +43,14 @@ export interface Report {
 }
 
 export interface BrowseIo {
-  refresh(source: string): Promise<{ market: Market; refreshed: Refreshed; updates: string[] }>
-  fetch(source: string): Promise<Market>
+  refresh(source: string): Promise<{ marketplace: Marketplace; refreshed: Refreshed; updates: string[] }>
+  fetch(source: string): Promise<Marketplace>
   search(query: string | undefined): Promise<Repository[]>
   apply(result: BrowseResult, report: Report): Promise<void>
 }
 
 interface BrowseOptions {
-  markets: Market[]
+  marketplaces: Marketplace[]
   kept: PaletteEntry[]
   installed: string[]
   updates?: string[]
@@ -71,7 +71,7 @@ interface BrowseOptions {
 
 export interface BrowseResult {
   picked: Set<string>
-  adds: Market[]
+  adds: Marketplace[]
   removes: string[]
   auto: Record<string, boolean>
   renew: string[]
@@ -144,7 +144,7 @@ type State = 'active' | 'submit' | 'cancel'
 export class BrowsePanel {
   readonly picked: Set<string>
   private readonly field = new Field()
-  private readonly adds = new Map<string, Market>()
+  private readonly adds = new Map<string, Marketplace>()
   private readonly removes = new Set<string>()
   private readonly want = new Map<string, boolean>()
   private readonly renew = new Set<string>()
@@ -153,13 +153,13 @@ export class BrowsePanel {
   private scope: string | undefined
   private readonly busy = new Map<string, string>()
   private readonly failed = new Map<string, string>()
-  private readonly peeked = new Map<string, Market>()
+  private readonly peeked = new Map<string, Marketplace>()
   private readonly peekFailed = new Map<string, string>()
   private readonly staging = new Set<string>()
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>()
   private readonly refreshed: Refreshed[] = []
   private readonly inflight = new Set<Promise<unknown>>()
-  private markets: Market[]
+  private marketplaces: Marketplace[]
   private readonly kept: PaletteEntry[]
   private readonly installed: ReadonlySet<string>
   private readonly startup: string | undefined
@@ -184,7 +184,7 @@ export class BrowsePanel {
   private working = ''
   private stopped: Error | undefined
   private beat = 0
-  private asking: Market | undefined
+  private asking: Marketplace | undefined
   private leaving: number | undefined
   private goto: number | undefined
   private repos: Repository[] | undefined
@@ -196,7 +196,7 @@ export class BrowsePanel {
   private readonly live: boolean
 
   constructor(opts: BrowseOptions) {
-    this.markets = opts.markets
+    this.marketplaces = opts.marketplaces
     this.kept = opts.kept
     this.installed = new Set(opts.installed)
     this.updates = new Set(opts.updates ?? [])
@@ -216,7 +216,7 @@ export class BrowsePanel {
     this.catalog = new PaletteList<Row>({
       entries: this.entries(),
       picked: this.picked,
-      layout: 'markets',
+      layout: 'marketplaces',
       color: this.color,
       maxItems: this.maxItems,
       note: (entry) => this.mark(entry),
@@ -380,9 +380,9 @@ export class BrowsePanel {
     } else if (key === ' ') {
       this.activate()
     } else if (key === 'delete') {
-      const market = this.focusedMarket()
-      if (market) {
-        this.toggleMarket(market)
+      const marketplace = this.focusedMarketplace()
+      if (marketplace) {
+        this.toggleMarketplace(marketplace)
       }
     } else if (key === 'ctrl-r') {
       this.refresh()
@@ -395,10 +395,10 @@ export class BrowsePanel {
 
   private refresh(): void {
     const row = this.catalog.focusedRow()
-    const market = this.focusedMarket()
-    if (market) {
-      if (isRemote(market.source) && !this.adds.has(market.source)) {
-        this.update(market.source)
+    const marketplace = this.focusedMarketplace()
+    if (marketplace) {
+      if (isRemote(marketplace.source) && !this.adds.has(marketplace.source)) {
+        this.update(marketplace.source)
       }
     } else if (row?.kind === 'extra') {
       if (row.extra.found?.kind === 'find') {
@@ -519,15 +519,15 @@ export class BrowsePanel {
     return work
   }
 
-  private active(): Market[] {
-    return [...this.markets.filter((m) => !this.removes.has(m.source)), ...this.adds.values()]
+  private active(): Marketplace[] {
+    return [...this.marketplaces.filter((m) => !this.removes.has(m.source)), ...this.adds.values()]
   }
 
   private entries(): PaletteEntry[] {
     const listed = this.active().flatMap((m) => m.entries)
     const names = new Set(listed.map((e) => e.name))
     const orphans = new Map<string, PaletteEntry>()
-    const dropped = this.markets.filter((m) => this.removes.has(m.source)).flatMap((m) => m.entries)
+    const dropped = this.marketplaces.filter((m) => this.removes.has(m.source)).flatMap((m) => m.entries)
     for (const entry of [...this.kept, ...dropped]) {
       if (this.installed.has(entry.name) && !names.has(entry.name)) {
         orphans.set(entry.name, entry)
@@ -538,12 +538,12 @@ export class BrowsePanel {
 
   private scoped(entries: PaletteEntry[]): PaletteEntry[] {
     const source = this.scope
-    const market = source === undefined ? undefined : this.active().find((m) => m.source === source)
-    if (!market) {
+    const marketplace = source === undefined ? undefined : this.active().find((m) => m.source === source)
+    if (!marketplace) {
       this.scope = undefined
       return entries
     }
-    const names = new Set(market.entries.map((e) => e.name))
+    const names = new Set(marketplace.entries.map((e) => e.name))
     return entries.filter((e) => names.has(e.name))
   }
 
@@ -552,27 +552,30 @@ export class BrowsePanel {
   }
 
   private chips(): Chip[] {
-    const markets = this.active().map((m) => ({
+    const marketplaces = this.active().map((m) => ({
       source: m.source as string | undefined,
       label: m.id,
       count: m.entries.filter((e) => !e.default).length,
     }))
-    return [{ source: undefined, label: 'All', count: this.entries().filter((e) => !e.default).length }, ...markets]
+    return [
+      { source: undefined, label: 'All', count: this.entries().filter((e) => !e.default).length },
+      ...marketplaces,
+    ]
   }
 
   private tops(): string[] {
-    return [...this.markets, ...this.adds.values()]
+    return [...this.marketplaces, ...this.adds.values()]
       .filter((m) => this.scope === undefined || m.source === this.scope)
       .map((m) => m.id)
   }
 
-  private marketNamed(id: string): Market | undefined {
-    return [...this.markets, ...this.adds.values()].find((m) => m.id === id)
+  private marketplaceNamed(id: string): Marketplace | undefined {
+    return [...this.marketplaces, ...this.adds.values()].find((m) => m.id === id)
   }
 
-  private focusedMarket(): Market | undefined {
+  private focusedMarketplace(): Marketplace | undefined {
     const row = this.catalog.focusedRow()
-    return row?.kind === 'group' ? this.marketNamed(row.name) : undefined
+    return row?.kind === 'group' ? this.marketplaceNamed(row.name) : undefined
   }
 
   private cycle(): void {
@@ -599,12 +602,12 @@ export class BrowsePanel {
   }
 
   private autoUpdate(on: boolean): void {
-    const market = this.focusedMarket()
-    if (market && isRemote(market.source)) {
-      if (on === market.auto) {
-        this.want.delete(market.source)
+    const marketplace = this.focusedMarketplace()
+    if (marketplace && isRemote(marketplace.source)) {
+      if (on === marketplace.auto) {
+        this.want.delete(marketplace.source)
       } else {
-        this.want.set(market.source, on)
+        this.want.set(marketplace.source, on)
       }
     }
   }
@@ -630,20 +633,20 @@ export class BrowsePanel {
     }
   }
 
-  private toggleMarket(market: Market): void {
-    if (this.adds.has(market.source)) {
-      this.adds.delete(market.source)
-      this.want.delete(market.source)
-    } else if (this.removes.has(market.source)) {
-      this.removes.delete(market.source)
+  private toggleMarketplace(marketplace: Marketplace): void {
+    if (this.adds.has(marketplace.source)) {
+      this.adds.delete(marketplace.source)
+      this.want.delete(marketplace.source)
+    } else if (this.removes.has(marketplace.source)) {
+      this.removes.delete(marketplace.source)
     } else {
-      this.removes.add(market.source)
+      this.removes.add(marketplace.source)
     }
     this.reload()
   }
 
-  private known(source: string): Market | undefined {
-    return [...this.markets, ...this.adds.values()].find((m) => sameMarket(m.source, source))
+  private known(source: string): Marketplace | undefined {
+    return [...this.marketplaces, ...this.adds.values()].find((m) => sameMarketplace(m.source, source))
   }
 
   private load(source: string, stage: boolean): void {
@@ -664,11 +667,11 @@ export class BrowsePanel {
     this.peekFailed.delete(source)
     this.busy.set(source, 'Fetching…')
     this.track(this.io.fetch(source)).then(
-      (market) => {
+      (marketplace) => {
         this.busy.delete(source)
-        this.peeked.set(source, market)
+        this.peeked.set(source, marketplace)
         if (this.staging.delete(source)) {
-          this.arrive(source, market)
+          this.arrive(source, marketplace)
         }
         this.redraw()
       },
@@ -684,14 +687,14 @@ export class BrowsePanel {
     )
   }
 
-  private arrive(source: string, market: Market): void {
-    const clash = this.active().find((m) => m.id === market.id)
+  private arrive(source: string, marketplace: Marketplace): void {
+    const clash = this.active().find((m) => m.id === marketplace.id)
     if (clash) {
-      this.failed.set(source, `${market.id} already names the market at ${clash.shown}`)
+      this.failed.set(source, `${marketplace.id} already names the marketplace at ${clash.shown}`)
     } else if (isLocal(source) || source === OFFICIAL) {
-      this.stage(market, market.auto)
+      this.stage(marketplace, marketplace.auto)
     } else {
-      this.asking = market
+      this.asking = marketplace
     }
     this.redraw()
   }
@@ -748,27 +751,27 @@ export class BrowsePanel {
   }
 
   private answer(yes: boolean): void {
-    const market = this.asking
+    const marketplace = this.asking
     this.asking = undefined
-    if (market) {
-      this.stage(market, yes)
+    if (marketplace) {
+      this.stage(marketplace, yes)
     }
   }
 
-  private stage(market: Market, auto: boolean): void {
-    this.adds.set(market.source, market)
-    if (auto === market.auto) {
-      this.want.delete(market.source)
+  private stage(marketplace: Marketplace, auto: boolean): void {
+    this.adds.set(marketplace.source, marketplace)
+    if (auto === marketplace.auto) {
+      this.want.delete(marketplace.source)
     } else {
-      this.want.set(market.source, auto)
+      this.want.set(marketplace.source, auto)
     }
     const typed = typedSource(this.field.value)
-    if (typed && sameMarket(typed, market.source)) {
+    if (typed && sameMarketplace(typed, marketplace.source)) {
       this.field.value = ''
       this.catalog.setFilter('')
     }
     this.reload()
-    this.catalog.select(`group ${market.id}`)
+    this.catalog.select(`group ${marketplace.id}`)
   }
 
   private update(source: string): void {
@@ -778,10 +781,10 @@ export class BrowsePanel {
     this.failed.delete(source)
     this.busy.set(source, 'Updating…')
     this.track(this.io.refresh(source)).then(
-      ({ market, refreshed, updates }) => {
+      ({ marketplace, refreshed, updates }) => {
         this.busy.delete(source)
         this.updates = new Set(updates)
-        this.markets = this.markets.map((m) => (m.source === source ? market : m))
+        this.marketplaces = this.marketplaces.map((m) => (m.source === source ? marketplace : m))
         this.refreshed.push(refreshed)
         this.reload()
         this.redraw()
@@ -860,17 +863,19 @@ export class BrowsePanel {
     return `${focused ? `${MARKS.gutter} ` : '  '} ${text}`
   }
 
-  private status(market: Market): string {
-    return this.adds.has(market.source)
+  private status(marketplace: Marketplace): string {
+    return this.adds.has(marketplace.source)
       ? 'Will add'
-      : this.removes.has(market.source)
+      : this.removes.has(marketplace.source)
         ? 'Will remove'
-        : (this.busy.get(market.source) ??
-          (this.failed.has(market.source) || market.status.startsWith('update failed') ? 'Update failed' : ''))
+        : (this.busy.get(marketplace.source) ??
+          (this.failed.has(marketplace.source) || marketplace.status.startsWith('update failed')
+            ? 'Update failed'
+            : ''))
   }
 
   private badge(id: string): string {
-    const m = this.marketNamed(id)
+    const m = this.marketplaceNamed(id)
     if (!m) {
       return ''
     }
@@ -915,10 +920,10 @@ export class BrowsePanel {
           : idle
             ? named
               ? `Find "${query}" on GitHub`
-              : 'Find markets on GitHub'
+              : 'Find marketplaces on GitHub'
             : named
-              ? `No market on GitHub matches "${query}"`
-              : 'No market on GitHub yet'
+              ? `No marketplace on GitHub matches "${query}"`
+              : 'No marketplace on GitHub yet'
       const note = this.searchError ?? (this.searching ? '' : idle ? 'space searches' : 'space searches again')
       return this.lit(focused, `${box(MARKS.search)}${text}${after(note)}`)
     }
@@ -1043,7 +1048,7 @@ export class BrowsePanel {
     }
   }
 
-  private marketChanges(): string[] {
+  private marketplaceChanges(): string[] {
     const rows: string[] = []
     for (const m of this.adds.values()) {
       const auto = m.source !== OFFICIAL && (this.want.get(m.source) ?? m.auto) ? 'updates on its own' : ''
@@ -1052,14 +1057,14 @@ export class BrowsePanel {
       )
     }
     for (const source of this.removes) {
-      const m = this.markets.find((x) => x.source === source)
+      const m = this.marketplaces.find((x) => x.source === source)
       const stay = (m?.entries ?? []).filter((e) => !e.default && this.installed.has(e.name) && this.picked.has(e.name))
       rows.push(
         `- ${m?.id ?? source}  ${this.p.dim([m?.shown ?? shownSource(source), stay.length > 0 ? `its ${counted(stay.length)} installed keep working` : ''].filter(Boolean).join(' · '))}`,
       )
     }
     for (const [source, on] of this.want) {
-      const m = this.markets.find((x) => x.source === source)
+      const m = this.marketplaces.find((x) => x.source === source)
       if (m && !this.removes.has(source)) {
         rows.push(
           `${MARKS.auto} ${m.id}  ${this.p.dim(on ? 'updates on its own from now' : 'stops updating on its own')}`,
@@ -1070,21 +1075,25 @@ export class BrowsePanel {
   }
 
   private reviewLines(): string[] {
-    const markets = this.marketChanges()
+    const marketplaces = this.marketplaceChanges()
     const { names, dropped } = this.pending()
     const renew = new Set(this.result().renew)
     const renewed = this.entries().filter((e) => renew.has(e.name))
     const width = Math.max(0, ...[...names, ...dropped, ...renewed].map((e) => e.name.length))
     const palette = (sign: string, e: PaletteEntry) =>
-      `   ${sign} ${e.name.padEnd(width)}  ${this.p.dim(marketOf(e.name) ? (e.catalog ?? '') : e.group)}`
+      `   ${sign} ${e.name.padEnd(width)}  ${this.p.dim(marketplaceOf(e.name) ? (e.catalog ?? '') : e.group)}`
     const counts = [
       names.length > 0 ? `${names.length} to install` : '',
       dropped.length > 0 ? `${dropped.length} to remove` : '',
       renewed.length > 0 ? `${renewed.length} to update` : '',
     ].filter(Boolean)
     return [
-      ...(markets.length > 0
-        ? [` ${this.p.bold('Markets')} ${this.p.dim(`(${markets.length})`)}`, ...markets.map((r) => `   ${r}`), '']
+      ...(marketplaces.length > 0
+        ? [
+            ` ${this.p.bold('Marketplaces')} ${this.p.dim(`(${marketplaces.length})`)}`,
+            ...marketplaces.map((r) => `   ${r}`),
+            '',
+          ]
         : []),
       ...(counts.length > 0
         ? [
@@ -1101,7 +1110,7 @@ export class BrowsePanel {
     const { names, dropped } = this.pending()
     const added = this.adds.size
     return [
-      added > 0 ? `${added} market${added === 1 ? '' : 's'} added` : '',
+      added > 0 ? `${added} marketplace${added === 1 ? '' : 's'} added` : '',
       this.removes.size > 0 ? `${this.removes.size} removed` : '',
       names.length > 0 ? `${names.length} installed` : '',
       dropped.length > 0 ? `${dropped.length} removed` : '',
@@ -1263,16 +1272,16 @@ export class BrowsePanel {
     })
     const text = `${start > 0 ? `${this.p.dim(keyZone('ctrl+s', '…'))} ` : ''}${parts.join(this.p.dim(sep))}${left > 0 ? this.p.dim(`${sep}${keyZone('ctrl+s', `+${left} more`)}`) : ''}`
     const plain = (start > 0 ? 2 : 0) + shown.join(sep).length + tail(left)
-    const hint = 'ctrl+s market'
+    const hint = 'ctrl+s marketplace'
     return plain + 2 + hint.length <= width ? `${text}  ${this.p.dim(keyZone('ctrl+s', hint))}` : text
   }
 
   private sourceOf(entry: PaletteEntry | undefined): string {
-    const market = entry && this.active().find((m) => m.entries.some((e) => e.name === entry.name))
-    if (!market) {
-      return 'In no market you added'
+    const marketplace = entry && this.active().find((m) => m.entries.some((e) => e.name === entry.name))
+    if (!marketplace) {
+      return 'In no marketplace you added'
     }
-    return market.source === OFFICIAL ? 'The ttheme catalog' : market.shown
+    return marketplace.source === OFFICIAL ? 'The ttheme catalog' : marketplace.shown
   }
 
   private paletteState(entry: PaletteEntry): string {
@@ -1296,9 +1305,9 @@ export class BrowsePanel {
     if (row.kind === 'extra') {
       return row.extra.found ? this.foundDetail(row.extra.found, width) : EMPTY
     }
-    const market = row.kind === 'group' ? this.marketNamed(row.name) : undefined
-    if (market) {
-      return this.marketDetail(market, width)
+    const marketplace = row.kind === 'group' ? this.marketplaceNamed(row.name) : undefined
+    if (marketplace) {
+      return this.marketplaceDetail(marketplace, width)
     }
     if (row.kind === 'group' || row.kind === 'catalog') {
       const members = this.catalog.inside(row)
@@ -1325,7 +1334,7 @@ export class BrowsePanel {
       ...(pictures > 0 ? [`${pictures} picture${pictures === 1 ? '' : 's'}`] : []),
       ...(e.base ? [`Base ${e.base}`] : []),
     ].join(' · ')
-    const series = marketOf(e.name)
+    const series = marketplaceOf(e.name)
       ? e.catalog
         ? [e.catalog]
         : []
@@ -1347,7 +1356,7 @@ export class BrowsePanel {
     }
   }
 
-  private marketDetail(m: Market, width: number): Detail {
+  private marketplaceDetail(m: Marketplace, width: number): Detail {
     const source = m.source === OFFICIAL ? 'The ttheme catalog' : m.shown
     const listed = m.entries.filter((e) => !e.default)
     const installed = listed.filter((e) => this.installed.has(e.name)).map((e) => e.name)
@@ -1515,15 +1524,15 @@ export class BrowsePanel {
       list.foldable() && (row.kind === 'group' || row.kind === 'catalog')
         ? [row.expanded ? ['←', 'close'] : ['→', 'open']]
         : []
-    const market = this.focusedMarket()
-    if (market) {
-      const remote = isRemote(market.source)
-      const staged = this.adds.has(market.source) || this.removes.has(market.source)
+    const marketplace = this.focusedMarketplace()
+    if (marketplace) {
+      const remote = isRemote(marketplace.source)
+      const staged = this.adds.has(marketplace.source) || this.removes.has(marketplace.source)
       return [
         ...fold,
         ['space', 'pick'],
         ...(remote ? [['⇧←→', 'auto-update'] as Hint] : []),
-        ...(remote && !this.adds.has(market.source) ? [['ctrl+r', 'update'] as Hint] : []),
+        ...(remote && !this.adds.has(marketplace.source) ? [['ctrl+r', 'update'] as Hint] : []),
         ['del', staged ? 'undo' : 'remove'],
         ...(fold.length > 0 ? [] : [enter]),
       ]
@@ -1615,11 +1624,11 @@ export class BrowsePanel {
   private helpRows(): Hint[] {
     return [
       ['Move', '↑↓  home  end  pgup  pgdn'],
-      ['Open', '←→  ·  enter on a market or a series'],
-      ['Pick', 'space  ·  a palette, a series, a market'],
+      ['Open', '←→  ·  enter on a marketplace or a series'],
+      ['Pick', 'space  ·  a palette, a series, a marketplace'],
       ['Filter', 'Any text  ·  bksp  ·  ctrl-u clears'],
-      ...(this.active().length >= 2 ? [['Scope', 'ctrl+s  ·  one market, then all'] as Hint] : []),
-      ['Market', '⇧←→  auto-update  ·  ctrl+r  updates it'],
+      ...(this.active().length >= 2 ? [['Scope', 'ctrl+s  ·  one marketplace, then all'] as Hint] : []),
+      ['Marketplace', '⇧←→  auto-update  ·  ctrl+r  updates it'],
       ['', 'del  removes it  ·  again to undo'],
       ['Add', 'owner/repo, a folder, or a row on GitHub'],
       ['', 'space  adds it  ·  ctrl+r  searches again'],
@@ -1632,13 +1641,14 @@ export class BrowsePanel {
 
   private helpBox(lines: string[], cols: number, rows: number, top: number): string[] {
     const items = this.helpRows()
-    const w = Math.min(cols - 2, 58)
+    const pad = Math.max(...items.map(([label]) => label.length)) + 3
+    const w = Math.min(cols - 2, 6 + pad + Math.max(...items.map(([, text]) => cells(text))))
     const x = Math.floor((cols - w) / 2)
     const blank = `│${' '.repeat(w - 2)}│`
     const box = [
       `╭─ Help ${'─'.repeat(w - 9)}╮`,
       blank,
-      ...items.map(([label, text]) => `│${fit(`  ${this.p.bold(label.padEnd(10))}${text}`, w - 4)}  │`),
+      ...items.map(([label, text]) => `│${fit(`  ${this.p.bold(label.padEnd(pad))}${text}`, w - 4)}  │`),
       blank,
       `╰${'─'.repeat(w - 2)}╯`,
     ]

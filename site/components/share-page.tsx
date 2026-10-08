@@ -260,7 +260,7 @@ function AboutPanel({ shared }: { shared: Shared }) {
         <SectionLabel icon={<Icon node={List} />}>Palette</SectionLabel>
         <PropertyList
           rows={[
-            [theme.market ? 'Market' : 'Series', theme.market ?? theme.group],
+            [theme.marketplace ? 'Marketplace' : 'Series', theme.marketplace ?? theme.group],
             ['ANSI from', theme.ansiSource],
             ['Signature', theme.signatureSlots.join(' · ')],
           ]}
@@ -321,7 +321,7 @@ function Bar({ shared }: { shared: Shared }) {
           /
         </span>
         <span class="min-w-0 truncate text-sm font-medium text-soft-foreground min-[761px]:max-[1100px]:hidden" safe>
-          {theme.market ?? theme.group}
+          {theme.marketplace ?? theme.group}
         </span>
         <span aria-hidden="true" class="text-base text-faint-foreground min-[761px]:max-[1100px]:hidden">
           /

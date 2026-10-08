@@ -8,7 +8,7 @@ import {
   catalogPath,
   Missing,
   parseCatalog,
-  type ReadMarket,
+  type ReadMarketplace,
   reach,
   readArchive,
   readCachedArchive,
@@ -18,7 +18,7 @@ import {
 import { writeAtomic } from './edits.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
 import { advise } from './notice.ts'
-import { readMarketDir, warning } from './own.ts'
+import { readMarketplaceDir, warning } from './own.ts'
 import { commit, configHome, forget, type Installed, readInstalled } from './palettes.ts'
 import { pending } from './pending.ts'
 import { movePins } from './pins.ts'
@@ -32,11 +32,11 @@ import {
   isLocal,
   isRemote,
   localIdentity,
-  MARKET_FILE,
-  type MarketInfo,
-  marketId,
-  marketsDir,
-  marketsOf,
+  MARKETPLACE_FILE,
+  type MarketplaceInfo,
+  marketplaceId,
+  marketplacesDir,
+  marketplacesOf,
   OFFICIAL,
   refOf,
   shownSource,
@@ -54,15 +54,15 @@ export interface Tried {
   error: string
 }
 
-export interface FetchedMarket {
+export interface FetchedMarketplace {
   source: string
   id: string
   entries: PaletteEntry[]
   archive: Archive
-  info: MarketInfo
+  info: MarketplaceInfo
 }
 
-export type Fetched = FetchedMarket | { source: string; id: string; entries: PaletteEntry[] }
+export type Fetched = FetchedMarketplace | { source: string; id: string; entries: PaletteEntry[] }
 
 export interface Change {
   added: string[]
@@ -78,7 +78,7 @@ export interface Refreshed {
 }
 
 function triesPath(): string {
-  return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'markets.json')
+  return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'marketplaces.json')
 }
 
 export function readTries(): Record<string, Tried> {
@@ -127,7 +127,7 @@ export function isDue(auto: boolean, fetched: number | undefined, failed: number
 
 export function dueSources(home: string, state: Installed, now = Date.now()): string[] {
   const tries = readTries()
-  return marketsOf(state.markets).filter((source) =>
+  return marketplacesOf(state.marketplaces).filter((source) =>
     isDue(autoUpdates(source, state.updates), fetchedAt(home, source), tries[source]?.at, now),
   )
 }
@@ -136,7 +136,7 @@ function archiveOf(tarball: Uint8Array, etag: string | null): Archive {
   const files: Record<string, string> = {}
   const text = new TextDecoder()
   for (const [path, data] of untar(tarball)) {
-    if (path === MARKET_FILE || (path.startsWith('palettes/') && path.endsWith('.toml'))) {
+    if (path === MARKETPLACE_FILE || (path.startsWith('palettes/') && path.endsWith('.toml'))) {
       files[path] = text.decode(data)
     }
   }
@@ -165,7 +165,7 @@ export async function fetchArchive(
   return archiveOf(new Uint8Array(await response.arrayBuffer()), response.headers.get('etag'))
 }
 
-export function fromArchive(source: string, archive: Archive, official: PaletteEntry[]): FetchedMarket {
+export function fromArchive(source: string, archive: Archive, official: PaletteEntry[]): FetchedMarketplace {
   const { id, info, entries } = readArchive(source, archive, official, warning(false))
   return { source, id, entries, archive, info }
 }
@@ -174,7 +174,7 @@ function officialOf(home: string): PaletteEntry[] {
   return cachedEntries(home, OFFICIAL)
 }
 
-export async function fetchMarket(
+export async function fetchMarketplace(
   home: string,
   source: string,
   timeout?: number,
@@ -193,11 +193,11 @@ export async function fetchMarket(
   return fromArchive(source, archive, officialOf(home))
 }
 
-export function storeMarket(home: string, fetched: Fetched): void {
+export function storeMarketplace(home: string, fetched: Fetched): void {
   if (!('archive' in fetched)) {
     return
   }
-  mkdirSync(marketsDir(home), { recursive: true })
+  mkdirSync(marketplacesDir(home), { recursive: true })
   writeAtomic(cachePath(home, fetched.source), `${JSON.stringify(fetched.archive)}\n`)
 }
 
@@ -232,14 +232,14 @@ export function diffEntries(before: PaletteEntry[], after: PaletteEntry[]): Chan
 
 async function fetchNewer(home: string, source: string, timeout?: number): Promise<Fetched | undefined> {
   if (!isRemote(source)) {
-    return fetchMarket(home, source, timeout)
+    return fetchMarketplace(home, source, timeout)
   }
   const cached = cachedArchive(home, source)
   const archive = await fetchArchive(source, timeout, undefined, cached?.etag)
   return archive && fromArchive(source, archive, officialOf(home))
 }
 
-export async function refreshMarket(home: string, source: string, timeout?: number): Promise<Refreshed> {
+export async function refreshMarketplace(home: string, source: string, timeout?: number): Promise<Refreshed> {
   const before = cachedEntries(home, source)
   let fetched: Fetched | undefined
   try {
@@ -249,7 +249,7 @@ export async function refreshMarket(home: string, source: string, timeout?: numb
     throw error
   }
   if (fetched) {
-    storeMarket(home, fetched)
+    storeMarketplace(home, fetched)
   } else {
     const now = new Date()
     utimesSync(cachePath(home, source), now, now)
@@ -268,7 +268,7 @@ type Outcome = { source: string; refreshed: Refreshed } | { source: string; fail
 
 export async function attempt(home: string, source: string, timeout?: number): Promise<Outcome> {
   try {
-    return { source, refreshed: await refreshMarket(home, source, timeout) }
+    return { source, refreshed: await refreshMarketplace(home, source, timeout) }
   } catch (error) {
     return { source, failure: error instanceof Error ? error : new Error(String(error)) }
   }
@@ -313,12 +313,16 @@ export function updateNote(r: Refreshed): string | undefined {
   return changed(r.change) ? `Updated ${refreshLine(r)}` : undefined
 }
 
-export function cachedMarket(home: string, source: string, official = officialOf(home)): ReadMarket | undefined {
+export function cachedMarketplace(
+  home: string,
+  source: string,
+  official = officialOf(home),
+): ReadMarketplace | undefined {
   try {
     if (isLocal(source)) {
       const info = localIdentity(source)
-      const id = marketId(info)
-      return { id, info, entries: readMarketDir(source, id, official, warning(false)) }
+      const id = marketplaceId(info)
+      return { id, info, entries: readMarketplaceDir(source, id, official, warning(false)) }
     }
     return isRemote(source) ? readArchive(source, readCachedArchive(home, source), official, warning(false)) : undefined
   } catch {
@@ -326,17 +330,23 @@ export function cachedMarket(home: string, source: string, official = officialOf
   }
 }
 
-function followMarkets(home: string): string[] {
+function followMarketplaces(home: string): string[] {
   if (!existsSync(installedPath(home))) {
     return []
   }
   const state = readInstalled(home)
   const official = officialOf(home)
   const moves: Moves = { renamed: new Map(), removed: [] }
-  for (const source of marketsOf(state.markets)) {
-    const market = cachedMarket(home, source, official)
-    if (market) {
-      plan(market.id, market.info, new Set(market.entries.map((e) => slugOf(e.name))), state.palettes, moves)
+  for (const source of marketplacesOf(state.marketplaces)) {
+    const marketplace = cachedMarketplace(home, source, official)
+    if (marketplace) {
+      plan(
+        marketplace.id,
+        marketplace.info,
+        new Set(marketplace.entries.map((e) => slugOf(e.name))),
+        state.palettes,
+        moves,
+      )
     }
   }
   if (moves.renamed.size === 0 && moves.removed.length === 0) {
@@ -354,8 +364,8 @@ function followMarkets(home: string): string[] {
   const kept = startup && !moves.removed.includes(startup) ? (moves.renamed.get(startup) ?? startup) : undefined
   commit(home, catalog, state, { ...rest, palettes, ...(kept ? { startup: kept } : {}) })
   return [
-    ...[...moves.renamed].map(([from, to]) => `${from} is ${to} now — its market renamed it`),
-    ...moves.removed.map((name) => `${name} was removed from its market`),
+    ...[...moves.renamed].map(([from, to]) => `${from} is ${to} now — its marketplace renamed it`),
+    ...moves.removed.map((name) => `${name} was removed from its marketplace`),
   ]
 }
 
@@ -364,16 +374,16 @@ export function updatesLine(home: string): string | undefined {
   if (names.length === 0) {
     return undefined
   }
-  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its market' : 'their markets'} — ctrl+r on a palette marked ↑ in Browse (\`ttheme\`) takes it`
+  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its marketplace' : 'their marketplaces'} — ctrl+r on a palette marked ↑ in Browse (\`ttheme\`) takes it`
 }
 
 export function applyRefreshed(home: string, done: Refreshed[]): string[] {
-  const moved = followMarkets(home)
+  const moved = followMarketplaces(home)
   const state = readInstalled(home)
   const gone = new Set(done.flatMap((r) => r.change.gone))
   const left = state.palettes
     .filter((name) => gone.has(name))
-    .map((name) => `${name} left its market — ttheme keeps the copy you have`)
+    .map((name) => `${name} left its marketplace — ttheme keeps the copy you have`)
   return [...moved, ...left]
 }
 
