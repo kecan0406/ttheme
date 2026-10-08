@@ -565,7 +565,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
     badge = 'EDIT (INSPECT)'
     keys = [
       ['←→↑↓', 'spot'],
-      ['tab', 'pane'],
+      ['⇧←→', 'tab'],
       ['enter', 'its slot'],
       ['i', 'leave'],
     ]
