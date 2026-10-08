@@ -206,7 +206,7 @@ depends = ["build"]
 run = "bun install --frozen-lockfile && bun build.ts && ./node_modules/.bin/tsc --noEmit -p . && ./node_modules/.bin/tsc --noEmit -p client && ./node_modules/.bin/xss-scan && ./node_modules/.bin/xss-scan --cwd client -p tsconfig.json"
 
 [tasks.pages]
-description = "gather what GitHub Pages serves into pages/: dist/manifest.json, the catalog every installed CLI fetches, and the README's pictures"
+description = "gather what GitHub Pages serves into pages/: dist/manifest.json, which installs from before the official palettes shipped with ttheme still fetch as their catalog, and the README's pictures"
 depends = ["build"]
 run = "rm -rf pages && mkdir pages && cp dist/manifest.json pages/ && bun site/readme.ts pages"
 

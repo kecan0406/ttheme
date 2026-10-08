@@ -112,7 +112,7 @@ test('configFile seeds the template with every default spelled out on a commente
       '# checks in the background: on refreshes the markets you set to update on their own once a day and says when a newer ttheme is out; off leaves both to ttheme update (default on)',
       '# : ${TTHEME_AUTO_UPDATE:=on}',
       '',
-      '# the Markets tab in browse: on looks GitHub up by itself — the markets carrying the ttheme-market topic when the tab opens or you type, and the palettes of a repository you type or move onto; off waits for space (default on)',
+      '# GitHub lookups in browse: on looks GitHub up by itself — the markets carrying the ttheme-market topic when browse opens or you type, and the palettes of a repository you type or move onto; off waits for space (default on)',
       '# : ${TTHEME_MARKET_LOOKUP:=on}',
       '',
       '# the ratings find lists, any of safe, questionable and explicit, each booru read in its own rating vocabulary (default safe)',

@@ -364,7 +364,7 @@ export function updatesLine(home: string): string | undefined {
   if (names.length === 0) {
     return undefined
   }
-  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its market' : 'their markets'} — ctrl+r in the Installed tab of Browse (\`ttheme\`) takes it`
+  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its market' : 'their markets'} — ctrl+r on a palette marked ↑ in Browse (\`ttheme\`) takes it`
 }
 
 export function applyRefreshed(home: string, done: Refreshed[]): string[] {

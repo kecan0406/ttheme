@@ -155,8 +155,8 @@ mise run ci
 ```
 
 That runs lint, typecheck, tests, the build with its contrast gate, the shell
-check, the node bundle check, the TUI screens and the parity walk — exactly
-what CI runs.
+check, the Ghostty config check, the node bundle check, the TUI screens and the
+parity walk — exactly what CI runs.
 
 CI runs on Ubuntu, so the tools are GNU's; macOS ships BSD's, which forgive
 more. If a shell step passes for you and fails there, look at those first —

@@ -82,7 +82,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'browse',
     args: [],
     about:
-      'Pick palettes and markets in a live picker — shift+←/→ moves between Catalog, Installed, Markets and Errors',
+      'Pick palettes and markets in a live picker — one list with every market as a row, which ctrl+s narrows to one market at a time',
     section: 'catalog',
     hidden: true,
   },
@@ -111,7 +111,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'update',
     args: ['[market...]'],
     about:
-      "Update ttheme and refresh your markets — official palettes come with ttheme; an installed palette from another market keeps its colors until Browse's Installed tab takes its update",
+      'Update ttheme and refresh your markets — official palettes come with ttheme; an installed palette from another market keeps its colors until ctrl+r on it in Browse takes its update',
     section: 'catalog',
   },
   {

@@ -86,7 +86,7 @@ const CONFIG_SETTINGS = {
     default: 'on',
   },
   TTHEME_MARKET_LOOKUP: {
-    doc: '# the Markets tab in browse: on looks GitHub up by itself — the markets carrying the ttheme-market topic when the tab opens or you type, and the palettes of a repository you type or move onto; off waits for space (default on)',
+    doc: '# GitHub lookups in browse: on looks GitHub up by itself — the markets carrying the ttheme-market topic when browse opens or you type, and the palettes of a repository you type or move onto; off waits for space (default on)',
     default: 'on',
   },
   TTHEME_FIND_RATING: {

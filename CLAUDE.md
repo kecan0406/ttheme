@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 All dev commands are mise tasks. package.json deliberately has **no scripts** — do not add any; the toolchain (bun 1.3) and tasks live in mise.toml.
 
-- `mise run ci` — lint + typecheck + tests + build + shell check + node-bundle check + TUI screens + the parity walk (exactly what CI runs)
+- `mise run ci` — lint + typecheck + tests + build + shell check + Ghostty config check + node-bundle check + TUI screens + the parity walk (exactly what CI runs)
 - `mise run build` (or `--only <terminal>`) — regenerate dist/; fails on contrast violations
 - `mise run test` / `mise run check` / `mise run lint` / `mise run format`
 - `mise run shell:check` — zsh syntax + runtime check of shell/ (depends on build): `shell/check.zsh`, `latency.zsh check` and the fork ratchet
