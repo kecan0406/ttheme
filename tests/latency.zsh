@@ -349,6 +349,30 @@ returning() {
   stop
 }
 
+ahead() {
+  local name=$1 REPLY
+  start $name
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
+  step $'ttheme use kita\r' $name
+  step $'print -r -- HIST_$((3*3))\r' $name
+  BUF=""
+  zpty -w -n sh $'sleep 0.3\r'
+  upto false 0.1 $name || :
+  zpty -w -n sh $'\e[A\e[A'
+  upto '[[ $BUF == *$'"'"'\e]11;?'"'"'*"HIST_\$((3*3))"* ]]' 3 $name || { fail "$name: an arrow key typed while the shell asked the terminal never reached the command line"; return 1 }
+  zpty -w -n sh $'\C-u'
+  BUF=""
+  zpty -w -n sh $'sleep 0.3\r'
+  upto false 0.1 $name || :
+  zpty -w -n sh $'\e'
+  upto '[[ $BUF == *$'"'"'\e]11;?'"'"'* ]]' 3 $name || { fail "$name: the shell never asked after a command"; return 1 }
+  upto false 0.6 $name || :
+  zpty -w -n sh $'\C-u'
+  step $'print -r -- AFTER_$((4*4))\r' $name
+  [[ $BUF == *AFTER_16* && $BUF != *(rgb:|command not found)* ]] || { fail "$name: an escape typed while the shell asked the terminal let the answer onto the command line"; return 1 }
+  stop
+}
+
 late() {
   local name=$1
   home $name off
@@ -392,11 +416,13 @@ check() {
   home back off
   print -r -- "const { execSync } = require('node:child_process'); if (process.argv[2] === 'browse') { execSync('stty rows 10 cols 30', { stdio: 'inherit' }); process.exit(21) } process.exit(1)" > $WORK/back/.config/ttheme/ttheme.js
   returning back
+  home ahead off
+  ahead ahead
   hovering iterm2
   hovering iterm2-switch
   hostile options
   late late
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
 }
 
 bench() {

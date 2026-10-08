@@ -165,7 +165,7 @@ __tt_b64s() {
 
 __tt_ask() {
   setopt localoptions extendedglob
-  local fd saved="" buf="" chunk seqs=$'\e[]_P][^\a\e]#(\a|\e\\\\)|\e\\[[0-?]#[ -/]#[@-~]|\e[^][_P]'
+  local fd saved="" buf="" chunk seq
   local -a match mbegin mend
   REPLY=""
   { exec {fd}<>/dev/tty } 2>/dev/null || return 1
@@ -185,10 +185,26 @@ __tt_ask() {
   [[ -n $saved ]] && stty "$saved" <&$fd 2>/dev/null
   exec {fd}>&-
   [[ $buf == *$'\e[0n'* ]] || __tt_owed
-  while [[ $buf == (#b)([^$'\e']#)(${~seqs})(*) ]]; do
-    TTHEME_TYPED+=$match[1] REPLY+=$match[2] buf=$match[-1]
+  while [[ -n $buf ]]; do
+    if [[ $buf == (#b)([^$'\e']##)(*) ]]; then
+      TTHEME_TYPED+=$match[1] buf=$match[2]
+    elif [[ $buf == (#b)($'\e'[]P_^X][^$'\a\e']#($'\a'|$'\e\\'))(*) ]]; then
+      REPLY+=$match[1] buf=$match[-1]
+    elif [[ $buf == (#b)($'\e['[0-?]#[ -/]#[@-~])(*) ]]; then
+      seq=$match[1] buf=$match[-1]
+      if [[ $seq == *[nt] || $seq == $'\e['[?\>]*c || $seq == *'$y' ]]; then
+        REPLY+=$seq
+      else
+        TTHEME_TYPED+=$seq
+      fi
+    elif [[ $buf == (#b)($'\e'(O?|[^][P_^XO$'\e']))(*) ]]; then
+      TTHEME_TYPED+=$match[1] buf=$match[-1]
+    elif [[ $buf == $'\e\e'* ]]; then
+      TTHEME_TYPED+=$'\e' buf=${buf:1}
+    else
+      break
+    fi
   done
-  [[ $buf == $'\e'* ]] || TTHEME_TYPED+=$buf
   REPLY=${REPLY%$'\e[0n'}
 }
 
