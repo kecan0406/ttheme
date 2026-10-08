@@ -262,6 +262,14 @@ pasting() {
   zpty -w -n sh $'\e'
   upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
   BUF=""
+  zpty -w -n sh $'ttheme\r'
+  upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
+  zpty -w -n sh $'\e]11;rgb:1e1e/1e1e/2e2e\e\\\e_Gi=31;OK\e\\'
+  upto false 0.5 $name || :
+  [[ $BUF != *(rgb:1e1e|gi=31)* ]] || { fail "$name: an answer that came after preview stopped waiting was typed into its search"; return 1 }
+  zpty -w -n sh $'\e'
+  upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
+  BUF=""
   zpty -w -n sh $'cd ~/a && ttheme unpin\r'
   upto '[[ $BUF == *UNPIN* ]]' 5 $name || { fail "$name: unpin never offered its choice"; return 1 }
   [[ ${BUF##*$'\e[?2004l'} == *$'\e[?2004h'* ]] || { fail "$name: unpin's choice left bracketed paste off, so a pasted newline chose"; return 1 }
@@ -366,7 +374,7 @@ check() {
   hovering iterm2-switch
   hostile options
   late late
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys and a late answer is never typed into it, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
 }
 
 bench() {

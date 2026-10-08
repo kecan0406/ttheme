@@ -1274,6 +1274,7 @@ __tt_pv_read() {
   if [[ $REPLY != '[' && $REPLY != O ]]; then
     key=nop
     [[ $REPLY == c ]] && key=altc
+    [[ $REPLY == [\]P_^X] ]] && __tt_pv_string
     return 0
   fi
   while __tt_pv_getch 0.05; do
@@ -1298,6 +1299,14 @@ __tt_pv_read() {
     "200~") __tt_pv_paste ;;
     *) key=nop ;;
   esac
+}
+
+__tt_pv_string() {
+  local prev=""
+  while __tt_pv_getch 0.05; do
+    [[ $REPLY == $'\a' || ( $prev == $'\e' && $REPLY == \\ ) ]] && return 0
+    prev=$REPLY
+  done
 }
 
 __tt_pv_paste() {
