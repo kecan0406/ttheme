@@ -309,6 +309,33 @@ test('uninstall gives Konsole its own default back and deletes every scheme and 
   assert.deepEqual(readdirSync(konsoleData(home)), ['Mine.profile'])
 })
 
+test('uninstall drops the konsolerc backup that ttheme off already made true again', () => {
+  const { configHome, home } = fixture()
+  const rc = konsolerc(configHome)
+  const mine = '[Desktop Entry]\nDefaultProfile=Mine.profile\n'
+  put(rc, mine)
+  put(join(konsoleData(home), 'Mine.profile'), '[General]\nName=Mine\n')
+  const off: Installed = { terminals: ['konsole'], palettes: ['gojo'], off: true }
+  writeInstalled(configHome, off)
+  commit(configHome, catalog, off, { terminals: ['konsole'], palettes: ['gojo'] }, false, nobody, home)
+  const on = JSON.parse(readFileSync(join(configHome, 'ttheme', 'installed.json'), 'utf8')) as Installed
+  commit(configHome, catalog, on, { ...on, off: true }, false, nobody, home)
+  assert.equal(readFileSync(rc, 'utf8'), mine)
+  assert.ok(existsSync(backupPath(rc)))
+  const paths = {
+    home,
+    configHome,
+    zdotdir: home,
+    cacheDir: join(home, '.cache', 'ttheme'),
+    stateDir: join(home, '.local', 'state', 'ttheme'),
+  }
+
+  applyUninstall(planUninstall(paths), paths, nobody)
+
+  assert.equal(readFileSync(rc, 'utf8'), mine)
+  assert.ok(!existsSync(backupPath(rc)))
+})
+
 test('init offers Konsole where it runs, preselects it once it has run, and says what it will change', () => {
   const { configHome, home } = fixture()
   assert.equal(konsole.offered({ configHome, home }, { ...nobody, platform: 'linux' }), true)

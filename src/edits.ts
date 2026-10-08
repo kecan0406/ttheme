@@ -72,3 +72,10 @@ export function restoreUserFile(path: string, content: string): 'removed' | 'res
   }
   return 'kept backup'
 }
+
+export function spareBackup(path: string): string[] {
+  const backup = backupPath(path)
+  return existsSync(path) && existsSync(backup) && alike(readFileSync(path, 'utf8'), readFileSync(backup, 'utf8'))
+    ? [backup]
+    : []
+}

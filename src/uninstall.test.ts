@@ -173,3 +173,23 @@ test('uninstall puts back the Warp theme ttheme replaced', () => {
   assert.equal(readFileSync(settings, 'utf8'), before)
   assert.ok(!existsSync(backupPath(settings)))
 })
+
+test('uninstall drops the Warp backup that ttheme off already made true again', () => {
+  const p = paths()
+  const settings =
+    process.platform === 'darwin'
+      ? join(p.home, '.warp', 'settings.toml')
+      : join(p.configHome, 'warp-terminal', 'settings.toml')
+  const before = '[appearance.themes]\ntheme = "Dracula"\n'
+  put(settings, before)
+  install(p, { terminals: ['warp'], palettes: ['gojo'], off: true })
+  install(p, { terminals: ['warp'], palettes: ['gojo'] })
+  install(p, { terminals: ['warp'], palettes: ['gojo'], off: true })
+  assert.equal(readFileSync(settings, 'utf8'), before)
+  assert.ok(existsSync(backupPath(settings)))
+
+  applyUninstall(planUninstall(p), p, host)
+
+  assert.equal(readFileSync(settings, 'utf8'), before)
+  assert.ok(!existsSync(backupPath(settings)))
+})

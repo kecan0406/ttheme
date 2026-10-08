@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import { backgroundsDir, readBackdrop } from '../backdrop.ts'
 import { type Hex, isHex, rgb } from '../color.ts'
-import { editUserFile } from '../edits.ts'
+import { editUserFile, spareBackup } from '../edits.ts'
 import { konsole as emitter } from '../emit/index.ts'
 import { konsoleScheme } from '../emit/konsole.ts'
 import { listed } from '../manifest.ts'
@@ -302,10 +302,10 @@ export const konsole: Wiring = {
   unwire(at, state) {
     const file = konsolerc(at.configHome)
     const content = readText(file)
-    const now = iniValue(content, 'Desktop Entry', 'DefaultProfile')
+    const ours = iniValue(content, 'Desktop Entry', 'DefaultProfile')?.startsWith(owned('')) === true
     return {
-      edits: now?.startsWith(owned('')) ? [{ file, content: withDefaultProfile(content, state?.konsoleBase) }] : [],
-      removals: [],
+      edits: ours ? [{ file, content: withDefaultProfile(content, state?.konsoleBase) }] : [],
+      removals: ours ? [] : spareBackup(file),
       touches: [],
     }
   },

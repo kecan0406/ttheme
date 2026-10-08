@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { backgroundsDir, readBackdrop } from '../backdrop.ts'
-import { backupOnce, editUserFile, writeAtomic } from '../edits.ts'
+import { backupOnce, editUserFile, spareBackup, writeAtomic } from '../edits.ts'
 import { warp as emitter } from '../emit/index.ts'
 import type { ProfileBackground } from '../emit/iterm2.ts'
 import { type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from '../emit/warp.ts'
@@ -241,7 +241,7 @@ export const warp: Wiring = {
       edits: ours(content)
         ? [{ file, content: withWarpTheme(content, readText(warpBasePath(at.configHome)) || WARP_DEFAULT) }]
         : [],
-      removals: [],
+      removals: ours(content) ? [] : spareBackup(file),
       touches: [],
     }
   },
