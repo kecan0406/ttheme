@@ -22,7 +22,7 @@ New tabs:
   config                         Edit settings in $EDITOR
 
 Palettes:
-  list [query]                   Show the catalog, marking what is installed
+  list [query]                   List palettes, marking what is installed
   add <palette...>               Install palettes
   remove <palette...>            Uninstall palettes
   update [marketplace...]        Update ttheme and refresh your marketplaces
@@ -58,20 +58,20 @@ screens filter as you type, so a letter is
 never a command here: what they do besides typing sits on `tab`, the arrows,
 `enter`, `space`, `esc` and `ctrl` or `alt` with a key ([the keys each screen
 takes](../CONTRIBUTING.md#keys-a-screen-takes) are listed for anyone adding one).
-Preview keeps its filter, its open series and its cursor while you are in
+Preview keeps its filter, its open catalogs and its cursor while you are in
 browse, and comes back repainted in the colors it was showing. A browse tab
 starts fresh each time: with picks or marketplace changes staged, `tab` asks
 whether to apply them first — `y` applies and closes, `n` discards and moves
 on, `esc` stays.
 
 The two screens share their keys wherever they do the same thing: `←`/`→`
-and `enter` open and close a series, `esc` clears the filter and, once it is
+and `enter` open and close a catalog, `esc` clears the filter and, once it is
 clear, closes the tabs from either screen, and `?` lists the keys. On a palette
 `enter` does what it does on that screen: preview applies the palette it landed
 on, browse reviews its picks and then applies them. `ttheme pin` is preview alone, with no
 tab row, and `ttheme` opens browse alone while no palette is installed. Piped,
-`ttheme` prints the palettes, one per line, as name, series and
-source separated by tabs.
+`ttheme` prints the palettes, one per line, as name, catalog (after its
+marketplace, for one that is not official) and source separated by tabs.
 
 ## The mouse
 
@@ -81,7 +81,7 @@ in preview the tab repaints, as with the arrows — and a double click does what
 enter does: preview applies the palette, browse picks it, the editor tunes the
 slot, find tries the picture on (in the builder a single click on a slot already opens its picker). The wheel moves the cursor a row (find's grid a
 row of tiles, its try-on to the next picture), and the burst a terminal sends
-for one notch counts once. The tabs, the marketplace chips, a series' ▸, a palette's
+for one notch counts once. The tabs, the marketplace chips, a catalog's ▸, a palette's
 ○ and the keys named on the last line are buttons: they act when you let go
 over them, so moving off first cancels. In the editor, a click on the L, C, H or ◐ bar tunes that channel to the point and a
 drag moves it, past either end of the bar too; in the builder, a click or drag on
@@ -100,15 +100,15 @@ scrolling the terminal.
 
 ## Preview
 
-In `preview`, series and palettes are listed by name (`TTHEME_SORT=series`
-keeps the order they were added), groups start folded with the cursor on the
+In `preview`, catalogs and palettes are listed by name (`TTHEME_SORT=catalog`
+keeps the order they were added), catalogs start folded with the cursor on the
 current palette;
 `↑`/`↓` move (the tab repaints as the focus lands on a palette) and wrap
 around at either end, `←`/`→` fold and unfold (so do enter and space on a
-series), page up/down jump a screen (from the last row to the first, and back)
+catalog), page up/down jump a screen (from the last row to the first, and back)
 and home/end to either end, typing filters and underlines the match (ctrl-u clears it) —
-any text, Japanese included, against the palette, series and catalog names, each
-series' Japanese title and the character's names in Japanese and as its booru tag
+any text, Japanese included, against the palette, marketplace and catalog names, each
+catalog's Japanese title and the character's names in Japanese and as its booru tag
 spells them, ignoring case and punctuation, so `ひとり` or `hitori` finds `bocchi`
 and `らきすた` finds Lucky☆Star; a row that matched on one of those other names
 shows it dimmed beside its own, and a Japanese input method composes in the
@@ -327,7 +327,7 @@ turns tab-separated, and `NO_COLOR` is respected.
 
 ## A new palette on every tab
 
-With `TTHEME_TAB_PALETTE=seq`, new tabs take the next palette in group order, with the counter shared across
+With `TTHEME_TAB_PALETTE=seq`, new tabs take the next palette in the order they were added, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather
 than rolling the same one twice. Turned on through `ttheme config` or alt-c in
 `preview`, it also has Ghostty open new tabs through `launch-tab.zsh`, which
@@ -349,13 +349,13 @@ still wins:
 | `TTHEME_TAB_PALETTE` | `off` | `off` keeps new tabs on the terminal's configured theme (`preview` → default changes it); `seq` gives every new tab the next palette. |
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
-| `TTHEME_SORT` | `abc` | `series` lists series and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |
+| `TTHEME_SORT` | `abc` | `catalog` lists catalogs and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |
 | `TTHEME_MOUSE` | `on` | `off` leaves the mouse to the terminal in every screen, so a drag selects text and a click opens a link without a modifier, and the wheel scrolls the terminal ([the mouse](#the-mouse)). alt-c in `preview` has it as `Mouse`, and turning it off there lets go of the mouse at once |
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `tone` | the colors a new background picture is drawn in: `tone` tints it in one color of its palette, `original` keeps its own colors. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `tone` and `original`. Like the blur, it is read from `config.zsh` itself |
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
 | `TTHEME_NAMES` | `on` | characters' names in every language, which preview, browse, `list` and `find`'s search box match besides the palette names: `on` downloads them from aninames' weekly release into `~/.cache/ttheme/aninames/` (about 7 MB to download, about 65 MB there once the search index is built from them) and checks for a newer one once a day in the background; `off` leaves them as they are |
-| `TTHEME_AUTO_UPDATE` | `on` | the checks ttheme makes by itself once a day: whether npm has a newer ttheme, and the list of every marketplace whose auto-update is on ([The catalog](#the-catalog)); `off` leaves both to `ttheme update`, as a `CI` environment does |
+| `TTHEME_AUTO_UPDATE` | `on` | the checks ttheme makes by itself once a day: whether npm has a newer ttheme, and the list of every marketplace whose auto-update is on ([Installing palettes](#installing-palettes)); `off` leaves both to `ttheme update`, as a `CI` environment does |
 | `TTHEME_MARKETPLACE_LOOKUP` | `on` | Browse looks GitHub up by itself: the repositories carrying the `ttheme-marketplace` topic when it opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
@@ -373,29 +373,29 @@ still wins:
 | `TTHEME_FIND_PNG` | `off` | `on` lists PNG originals only: danbooru is asked for `filetype:png`, the other sites are told by the file's extension, and a zerochan post counts only where danbooru holds the same file, since zerochan's list names no file |
 | `TTHEME_FIND_HOSTS` | — | send a `find` site somewhere else, as `key=https://host` pairs (`danbooru=https://danbooru.donmai.us` asks danbooru at its main name instead of `shima.donmai.us`, the one networks that block the main name by hostname let through). The tab keeps its name and carries `*` |
 
-## The catalog
+## Installing palettes
 
-The catalog is not installed wholesale: `init` installs the series you pick, and
-`init --yes` none at all. Browse, the second tab of `ttheme`, is the catalog and
-its marketplaces as one full-screen live picker. The rest is preview's: `↑`/`↓`,
+No marketplace is installed wholesale: `init` installs the catalogs you pick, and
+`init --yes` none at all. Browse, the second tab of `ttheme`, is every
+marketplace you added as one full-screen live picker. The rest is preview's: `↑`/`↓`,
 page up/down and home/end move through it, `←`/`→` and `enter` open and close
-a marketplace or a series, `esc` clears the filter before it leaves, `?` lists the
+a marketplace or a catalog, `esc` clears the filter before it leaves, `?` lists the
 keys, and the last line names the keys of the row you are on.
 
-Every marketplace you added is a row: `official` holds the series that come with
-ttheme, and every other marketplace its catalogs, each opening onto its palettes.
+Every marketplace you added is a row: `official` holds the catalogs that come with
+ttheme, and every other marketplace its own, each opening onto its palettes.
 Typing filters (a query has no spaces, `space` is the pick key), the tab
-repaints as the cursor lands on a palette, and `space` marks one (a series, a
-catalog or a whole marketplace from its header); unmarking one you have is how you
+repaints as the cursor lands on a palette, and `space` marks one (a catalog or a
+whole marketplace from its header); unmarking one you have is how you
 drop it. A palette whose marketplace changed it since you installed it is marked
-`↑`, and `ctrl+r` stages its update — or every one under a series or catalog.
+`↑`, and `ctrl+r` stages its update — or every one under a catalog.
 With two marketplaces or more a strip under the search box counts each one (`All
 130 · official 108 · alice@pastel 22`), and `ctrl+s` narrows the list to the
 next marketplace, then back to all of them.
 
 On a marketplace's row, `delete` marks it for removal (its installed palettes stay,
 and `delete` again keeps it), `shift+←` and `shift+→` turn a repository's
-auto-update off and on, and `ctrl+r` updates it now; the official catalog
+auto-update off and on, and `ctrl+r` updates it now; the official marketplace
 comes with ttheme, so it has neither. The row says when one is staged or its
 update failed, and the detail panel says where it comes from, when it was
 updated and why an update failed. Under the marketplaces, `On GitHub` lists the
@@ -408,7 +408,7 @@ an `Add` row appears there, looked up the same way. A search GitHub turns away
 shows as a row that `space` or `ctrl+r` retries; `TTHEME_MARKETPLACE_LOOKUP=off`
 leaves all of this to `space`.
 
-Nothing is written until you apply. enter on anything but a marketplace or a series
+Nothing is written until you apply. enter on anything but a marketplace or a catalog
 opens a review of everything staged — the marketplaces added and removed, the
 auto-update switches, and exactly the palettes marked (installing the new ones,
 removing the unmarked, updating the ones staged with `ctrl+r`); enter again applies it, esc goes back to the list. The
@@ -428,7 +428,7 @@ gets the same as one line under the list:
  │ ⌕ ki_                                                                                │
  ╰──────────────────────────────────────────────────────────────────────────────────────╯
                                                                │ kita
-    ▾ official (1/1)                                           │ The ttheme catalog
+    ▾ official (1/1)                                           │ The official marketplace
       ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!             │ Bocchi the Rock!
  ▌      ● kita   ■ ■ ■ ■ ■ ■                                   │ ぼっち・ざ・ろっく!
     ── On GitHub ──────────                                    │ Installed
@@ -436,7 +436,7 @@ gets the same as one line under the list:
  [BROWSE (FILTER)] space pick   enter close   bksp edit   ? keys       esc clear filter
 ```
 
-The counts stay honest: `1/6` is what the filter matched out of the catalog,
+The counts stay honest: `1/6` is what the filter matched out of every palette,
 `2 picked` is the install set, and `(1/1)` on a header is how many of its
 shown palettes are in it. The six squares are the palette's own colors — its
 foreground, the three that identify the character, then its red and green — and
@@ -446,7 +446,7 @@ the focused row is drawn in the palette's selection color, which `ttheme`,
 The same four verbs work without the picker:
 
 ```sh
-ttheme list jujutsu     # what the catalog has, and what you already installed
+ttheme list jujutsu     # what your marketplaces have, and what you already installed
 ttheme add gojo geto    # two more, written into your terminal configs
 ttheme remove kyubey    # and one fewer
 ttheme update           # a newer ttheme with its palettes, and every marketplace's new list
@@ -461,11 +461,16 @@ becomes the one new windows open with.
 `npx @kecan0406/ttheme@<newest> init --yes` — the same update `init` offers,
 keeping your terminals, palettes and settings — and the new ttheme carries on
 from there. The official palettes come with ttheme, so this is how they change.
+An install from before marketplaces had that name moves on this update:
+`~/.config/ttheme/market/` and `markets/` become `marketplace/` and
+`marketplaces/`, and each local marketplace's `ttheme-market.toml` becomes
+`ttheme-marketplace.toml` — commit that rename where the folder is a repository
+you publish.
 Then it refetches every other marketplace you added; `ttheme update alice@pastel`
 refetches that one alone. A palette you installed from a marketplace keeps the
 colors it was installed with (`~/.config/ttheme/kept.json`) until you take its
 update: `update` names the ones that have one, Browse marks them `↑`, and
-`ctrl+r` there stages one — or everything under a series or catalog — for enter to
+`ctrl+r` there stages one — or everything under a catalog — for enter to
 apply, pictures it newly lists included. A palette that leaves its marketplace stays
 installed from that copy; `list` marks it.
 
@@ -487,8 +492,8 @@ marketplace renamed it`). Nothing ever runs from the shell or a new tab.
 
 ## Marketplaces
 
-The catalog is every marketplace you added, laid together. The official one
-(`official`, the palettes in this repository) is there from `init`; any GitHub
+Every list of palettes lays together the marketplaces you added. The official
+one (`official`, the palettes in this repository) is there from `init`; any GitHub
 repository with a `ttheme-marketplace.toml` at its root is another:
 
 ```sh
@@ -503,7 +508,7 @@ ttheme marketplace check ./my-marketplace          # what an install would read 
 ```
 
 Adding a repository asks whether it updates on its own (no, without a
-terminal); the official catalog comes with ttheme and updates with it, and a
+terminal); the official marketplace comes with ttheme and updates with it, and a
 folder is read in place, so neither needs one. `shift+←/→` on its row in Browse switches it later.
 Adding a repository you already have with another `#ref` moves it there,
 keeping its auto-update.
@@ -511,9 +516,11 @@ keeping its auto-update.
 A marketplace is `<owner>@<name>`: the repository's owner and the name its
 `ttheme-marketplace.toml` gives. Its palettes are `<owner>@<name>/<palette>` (`ttheme add
 alice@pastel/dusk`), and `preview` and `browse` — the two tabs of the bare
-`ttheme` — list the marketplace below every series, past a `── Marketplaces` line: the marketplace, then its
+`ttheme` — list the marketplace below the official catalogs, past a `── Marketplaces` line: the marketplace, then its
 catalogs — the folders under its `palettes/` — then their palettes by their
 own names, and a palette filed straight under `palettes/` after the catalogs.
+The catalogs come in name order unless `[[catalog]]` tables in its
+`ttheme-marketplace.toml` give theirs (below).
 
 ```
 alice/ttheme-pastel               ▾ alice@pastel
@@ -527,15 +534,15 @@ alice/ttheme-pastel               ▾ alice@pastel
 The catalog is only a shelf, never part of the name — dusk stays
 `alice@pastel/dusk` wherever its file moves — so a palette name is used once in
 a marketplace; a second file with the same name is skipped, and `ttheme marketplace check` names it. Only the
-official catalog is held to the contrast gate — a marketplace palette installs
+official marketplace is held to the contrast gate — a marketplace palette installs
 whatever its numbers, and `ttheme check` shows them. `ttheme marketplace remove
-official` drops the official catalog too; `ttheme marketplace add official` brings
+official` drops the official marketplace too; `ttheme marketplace add official` brings
 it back.
 
 Installed palettes and the marketplaces you added are listed in
 `~/.config/ttheme/installed.json`, with an auto-update switch under `updates`
-only where it differs from the default; the official catalog `init` installed
-is `~/.config/ttheme/catalog.json` and each other marketplace is cached in
+only where it differs from the default; the official marketplace `init` installed
+is `~/.config/ttheme/official.json` and each other marketplace is cached in
 `~/.config/ttheme/marketplaces/<owner>--<repository>.json` — the repository's
 `ttheme-marketplace.toml` and `palettes/` files as fetched from its archive, read
 like a folder on every command — whose age is how auto-update tells a day has
@@ -545,7 +552,11 @@ without sending anything. Failed tries are kept in
 
 A `ttheme-marketplace.toml` names the marketplace and says who keeps it, and may carry a
 `description` (browse, `ttheme marketplace` and the marketplace page show it), the
-`[renames]` above, `force_remove_deleted_palettes` (a palette that disappears
+`[renames]` above, `[[catalog]]` tables (one per folder under `palettes/`, in
+the order the lists show them: `name` the folder, `native` its title in its
+original language, shown dim beside it, and `lead` the palette whose colors
+stand for it — a folder no table names follows them by name and is led by its
+first palette), `force_remove_deleted_palettes` (a palette that disappears
 without a rename comes off the machines that have it, instead of staying as
 their copy) and a `[metadata]` table ttheme does not read. A key ttheme does not
 know is ignored, so a marketplace written for a newer ttheme still reads;
@@ -677,7 +688,7 @@ behind it. `--from <palette>` skips the seeds.
 Your palettes are files in a local marketplace: the first `new` asks for its name and
 creates `~/.config/ttheme/marketplace/<name>` (`ttheme marketplace init <name>` makes one
 up front, or in a folder you give, and `--in <name>` picks between several). Each is
-`palettes/<name>.toml` (move it into a folder there to shelve it in a catalog), in the same format as `themes/*.toml` (see
+`palettes/<name>.toml` (move it into a folder there to shelve it in a catalog), in the same format as `themes/palettes/<catalog>/*.toml` (see
 CONTRIBUTING.md) with a bare `meta.name`; the marketplace's `ttheme-marketplace.toml`
 carries its name and `<you>`, your GitHub handle — read from `gh` when it is logged in, asked
 once otherwise, and kept in `installed.json`. A file you break stays out of the

@@ -1,5 +1,5 @@
 name: Palette request
-description: Ask for a character palette in the official catalog
+description: Ask for a character palette in the official marketplace
 labels: [palette]
 body:
   - type: input

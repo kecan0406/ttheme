@@ -1,10 +1,13 @@
-import { dirname, join } from 'node:path'
+import { existsSync } from 'node:fs'
+import { basename, dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { argbFromHex, Hct } from '@material/material-color-utilities'
+import { type Catalog, MARKETPLACE_FILE, readCatalogs } from '../../../../src/theme.ts'
 import { deltaE, tripletDelta } from './delta.ts'
 
 export interface ThemeDoc {
-  meta: { name: string; group: string; ansi_source: string; signature: string[] }
+  catalog: string
+  meta: { name: string; ansi_source: string; signature: string[] }
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
 }
 
@@ -17,7 +20,7 @@ export interface AnchorEntry {
   note?: string
 }
 
-const SERIES_MIN = 13
+const CATALOG_MIN = 13
 const CURSOR_MIN = 3
 const DEPARTURE_MAX = 10
 const HUE_MAX = 12
@@ -28,16 +31,35 @@ const WIDE = /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]/
 export const width = (s: string) => [...s].reduce((n, c) => n + (WIDE.test(c) ? 2 : 1), 0)
 export const pad = (s: string, n: number) => s + ' '.repeat(Math.max(0, n - width(s)))
 
-export async function readTheme(file: string): Promise<ThemeDoc> {
-  return Bun.TOML.parse(await Bun.file(file).text()) as unknown as ThemeDoc
+export function catalogOf(file: string): string {
+  return basename(dirname(resolve(file)))
 }
 
-export async function loadCatalog(dir: string): Promise<ThemeDoc[]> {
+export function themesOf(file: string): string {
+  let dir = resolve(dirname(file))
+  while (!existsSync(join(dir, MARKETPLACE_FILE))) {
+    const up = dirname(dir)
+    if (up === dir) return 'themes'
+    dir = up
+  }
+  return dir
+}
+
+export async function readTheme(file: string): Promise<ThemeDoc> {
+  return { ...(Bun.TOML.parse(await Bun.file(file).text()) as Omit<ThemeDoc, 'catalog'>), catalog: catalogOf(file) }
+}
+
+export async function loadPalettes(themes: string): Promise<ThemeDoc[]> {
   const docs: ThemeDoc[] = []
-  for await (const file of new Bun.Glob('*.toml').scan(dir)) {
-    if (!file.startsWith('_')) docs.push(await readTheme(join(dir, file)))
+  for await (const file of new Bun.Glob('palettes/*/*.toml').scan(themes)) {
+    docs.push(await readTheme(join(themes, file)))
   }
   return docs.sort((a, b) => a.meta.name.localeCompare(b.meta.name))
+}
+
+export async function loadCatalogs(themes: string): Promise<Catalog[]> {
+  const path = join(themes, MARKETPLACE_FILE)
+  return readCatalogs(MARKETPLACE_FILE, (Bun.TOML.parse(await Bun.file(path).text()) as { catalog?: unknown }).catalog)
 }
 
 export async function loadAnchors(file: string): Promise<Record<string, AnchorEntry>> {
@@ -104,30 +126,31 @@ function departures(doc: ThemeDoc, entry: AnchorEntry): Departure[] {
   })
 }
 
-function audit(doc: ThemeDoc, catalog: ThemeDoc[], entry: AnchorEntry | undefined, anchored: boolean): string[] {
-  const { name, group, signature } = doc.meta
+function audit(doc: ThemeDoc, palettes: ThemeDoc[], entry: AnchorEntry | undefined, anchored: boolean): string[] {
+  const { meta, catalog } = doc
+  const { name, signature } = meta
   const reasons: string[] = []
-  console.log(`\n── ${name} · ${group} · signature ${signature.join('/')}`)
+  console.log(`\n── ${name} · ${catalog} · signature ${signature.join('/')}`)
 
   const own = signatureColors(doc)
-  const series = catalog
-    .filter((t) => t.meta.group === group && t.meta.name !== name)
+  const siblings = palettes
+    .filter((t) => t.catalog === catalog && t.meta.name !== name)
     .map((t) => ({ name: t.meta.name, d: tripletDelta(own, signatureColors(t)) }))
     .sort((a, b) => a.d - b.d)
-  const crowded = series.filter((s) => s.d < SERIES_MIN)
+  const crowded = siblings.filter((s) => s.d < CATALOG_MIN)
   console.log(
-    `  series     ${series.length === 0 ? 'no other theme' : series.map((s) => `${s.name} ${fixed(s.d)}${s.d < SERIES_MIN ? ' !' : ''}`).join('   ')}`,
+    `  catalog    ${siblings.length === 0 ? 'no other theme' : siblings.map((s) => `${s.name} ${fixed(s.d)}${s.d < CATALOG_MIN ? ' !' : ''}`).join('   ')}`,
   )
-  if (crowded.length > 0) reasons.push(`series collision: ${crowded.map((s) => `${s.name} ${fixed(s.d)}`).join(', ')}`)
+  if (crowded.length > 0) reasons.push(`catalog collision: ${crowded.map((s) => `${s.name} ${fixed(s.d)}`).join(', ')}`)
 
-  const cursors = catalog
-    .filter((t) => t.meta.group !== group)
-    .map((t) => ({ label: `${t.meta.name} (${t.meta.group})`, d: deltaE(doc.colors.cursor, t.colors.cursor) }))
+  const cursors = palettes
+    .filter((t) => t.catalog !== catalog)
+    .map((t) => ({ label: `${t.meta.name} (${t.catalog})`, d: deltaE(doc.colors.cursor, t.colors.cursor) }))
     .sort((a, b) => a.d - b.d)
   const dupes = cursors.filter((c) => c.d < CURSOR_MIN)
   const shown = dupes.length > 0 ? dupes : cursors.slice(0, 1)
   console.log(
-    `  cursor     ${doc.colors.cursor}  ${dupes.length > 0 ? 'duplicates' : 'nearest outside the series:'} ${shown.map((c) => `${c.label} ${fixed(c.d)}${c.d < CURSOR_MIN ? ' !' : ''}`).join('   ')}`,
+    `  cursor     ${doc.colors.cursor}  ${dupes.length > 0 ? 'duplicates' : 'nearest outside the catalog:'} ${shown.map((c) => `${c.label} ${fixed(c.d)}${c.d < CURSOR_MIN ? ' !' : ''}`).join('   ')}`,
   )
   if (dupes.length > 0) reasons.push(`cursor duplicate: ${dupes.map((c) => `${c.label} ${fixed(c.d)}`).join(', ')}`)
 
@@ -169,15 +192,15 @@ if (import.meta.main) {
     allowPositionals: true,
   })
   if (positionals.length === 0) {
-    console.error('usage: bun audit.ts themes/<name>.toml [...] [--anchors <file>]')
+    console.error('usage: bun audit.ts themes/palettes/<catalog>/<name>.toml [...] [--anchors <file>]')
     process.exit(1)
   }
-  const catalog = await loadCatalog(dirname(positionals[0] as string))
+  const palettes = await loadPalettes(themesOf(positionals[0] as string))
   const anchors = values.anchors === undefined ? {} : await loadAnchors(values.anchors)
   const review: [string, string[]][] = []
   for (const file of positionals) {
     const doc = await readTheme(file)
-    const reasons = audit(doc, catalog, anchors[doc.meta.name], values.anchors !== undefined)
+    const reasons = audit(doc, palettes, anchors[doc.meta.name], values.anchors !== undefined)
     if (reasons.length > 0) review.push([doc.meta.name, reasons])
   }
   const nameWidth = Math.max(0, ...review.map(([name]) => name.length))

@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@kecan0406/ttheme"><img src="https://img.shields.io/npm/v/@kecan0406/ttheme?style=flat-square" alt="npm version"></a>
   <a href="https://github.com/kecan0406/ttheme/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/kecan0406/ttheme/ci.yml?branch=main&style=flat-square&label=ci" alt="CI status"></a>
-  <a href="https://ttheme.vercel.app/"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fkecan0406.github.io%2Fttheme%2Fmanifest.json&query=%24.palettes.length&label=palettes&style=flat-square&color=c796c8" alt="palettes in the catalog"></a>
+  <a href="https://ttheme.vercel.app/"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fkecan0406.github.io%2Fttheme%2Fmanifest.json&query=%24.palettes.length&label=palettes&style=flat-square&color=c796c8" alt="official palettes"></a>
   <a href="LICENSE"><img src="https://img.shields.io/npm/l/@kecan0406/ttheme?style=flat-square" alt="MIT license"></a>
 </p>
 
@@ -25,7 +25,7 @@
 
 - **Colors from the character.** Every palette keeps the three colors that
   identify its character and borrows its ANSI ramp from an established scheme,
-  harmonized so the whole catalog reads alike.
+  harmonized so every official palette reads alike.
 - **Every palette passes an accessibility gate.** Body text at 7:1 against the
   background (WCAG AAA), every meaningful ANSI color at 3:1, and each accent stays
   in its role — red reads as an error, green as success. The build fails if a
@@ -42,7 +42,7 @@ npx @kecan0406/ttheme@latest init
 
 It needs Node 22 or newer and zsh, which macOS ships — bash and fish get the
 `ttheme` command too, run through zsh. It asks which terminals to wire and which
-series to install, shows every file it is about to change, and writes nothing
+catalogs to install, shows every file it is about to change, and writes nothing
 until you confirm. Then:
 
 ```sh
@@ -80,11 +80,11 @@ a checkout are in [docs/install.md](docs/install.md).
 <details>
 <summary><b>Every palette</b></summary>
 <br>
-<img src="https://kecan0406.github.io/ttheme/readme/palettes.svg" alt="Every palette in the catalog, grouped by series" width="856">
+<img src="https://kecan0406.github.io/ttheme/readme/palettes.svg" alt="Every official palette, grouped by catalog" width="856">
 </details>
 
-Both images are drawn from the live catalog, so they always match what
-Browse offers. `init` installs the series you pick; Browse, the second tab of
+Both images are drawn from the official marketplace as it ships, so they always
+match what Browse offers. `init` installs the catalogs you pick; Browse, the second tab of
 `ttheme`, adds or drops single palettes any time, and a merged palette reaches everyone
 with the next release — `ttheme update` brings it, and ttheme says when one is
 out.
@@ -93,7 +93,7 @@ out.
 
 Anyone can publish palettes from a GitHub repository. A marketplace is named
 `<owner>@<name>` — its repository's owner and the name its `ttheme-marketplace.toml` gives — and
-sits below the series in Preview and Browse, past a line, with
+sits below the official catalogs in Preview and Browse, past a line, with
 the folders under its `palettes/` as catalogs:
 
 ```
@@ -117,15 +117,15 @@ ttheme                                             # shift+tab to Browse: market
 Browse handles marketplaces the way it handles palettes: in the same list it
 adds one by repository or folder, finds the public ones on GitHub, marks one for
 removal and switches its auto-update, and enter applies all of it with the
-palettes you picked. The official catalog comes with ttheme and updates with it;
+palettes you picked. The official marketplace comes with ttheme and updates with it;
 a repository asks when you add it whether its list updates on its own, and a
 palette you installed from it keeps its colors until you take its update —
 `ctrl+r` on a palette marked `↑` in Browse. Nobody reviews a marketplace. Its
 palettes are colors and post numbers, never code, and the contrast gate's
-numbers are shown for them but never enforced — only the official catalog is
+numbers are shown for them but never enforced — only the official marketplace is
 held to the gate. `ttheme update` updates ttheme and refreshes every marketplace now; `ttheme marketplace
 remove alice@pastel` drops one, and the palettes you installed from it keep
-working. The official catalog is a marketplace too (`official`). [The marketplaces
+working. The official palettes are a marketplace too (`official`). [The marketplaces
 page](https://ttheme.vercel.app/marketplace) lists the public ones.
 
 ### Your own palettes
@@ -143,7 +143,8 @@ yours). Left without a palette, `edit`, `check` and `share` ask to use the one
 the tab wears; `share` into a pipe uses it without asking.
 
 A local marketplace is already a repository layout: `palettes/*.toml` (a folder
-under it, such as `palettes/night/`, is a catalog) and the
+under it, such as `palettes/night/`, is a catalog, which a `[[catalog]]` table in
+`ttheme-marketplace.toml` may give an order, a title and a lead) and the
 `ttheme-marketplace.toml` that names it — nothing to build, since ttheme reads the
 files as pushed. `ttheme marketplace init <name>` makes one and prints the commands that
 publish it:
@@ -209,7 +210,7 @@ window, WezTerm the active tab's per window, Warp the tab in front's, through it
 ## Contributing
 
 A palette is one TOML file of color values and post numbers — never images.
-Your own go in your own marketplace, with no review; the official catalog takes pull
+Your own go in your own marketplace, with no review; the official marketplace takes pull
 requests, and [CONTRIBUTING.md](CONTRIBUTING.md) has its rules, the file format
 and the checks a palette must pass.
 

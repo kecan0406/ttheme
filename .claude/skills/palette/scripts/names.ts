@@ -1,4 +1,4 @@
-import { basename } from 'node:path'
+import { basename, dirname, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { SITES, type Site } from '../../../../src/booru.ts'
 
@@ -19,10 +19,11 @@ const file = args[0]
 const flag = args.indexOf('--site')
 const only = flag === -1 ? undefined : args.slice(flag + 1)
 if (!file?.endsWith('.toml') || only?.length === 0) {
-  console.error('usage: bun names.ts themes/<name>.toml [--site <key> ...]')
+  console.error('usage: bun names.ts themes/palettes/<catalog>/<name>.toml [--site <key> ...]')
   process.exit(1)
 }
-const doc = Bun.TOML.parse(await Bun.file(file).text()) as { meta?: { booru?: string; group?: string } }
+const doc = Bun.TOML.parse(await Bun.file(file).text()) as { meta?: { booru?: string } }
+const catalog = basename(dirname(resolve(file)))
 const booru = doc.meta?.booru
 if (!booru) {
   console.error(`${basename(file, '.toml')}: no meta.booru`)
@@ -203,7 +204,7 @@ function words(text: string): Set<string> {
 async function ofSeries(name: string): Promise<boolean> {
   const got = await zerochanAt(`${spelled(name)}?xml=&l=1`)
   const series = words(/ is a character from (.+?)\.\s/.exec(got.text)?.[1] ?? '')
-  const ours = words(doc.meta?.group ?? '')
+  const ours = words(catalog)
   return [...series].some((word) => ours.has(word))
 }
 

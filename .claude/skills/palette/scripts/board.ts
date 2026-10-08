@@ -1,6 +1,6 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { deltaE } from './delta.ts'
 
@@ -13,7 +13,7 @@ interface Colors {
 }
 
 interface ThemeDoc {
-  meta: { name: string; group: string; ansi_source: string; signature: string[] }
+  meta: { name: string; ansi_source: string; signature: string[] }
   colors: Colors
 }
 
@@ -34,7 +34,7 @@ interface Variant {
 
 interface Theme {
   name: string
-  group: string
+  catalog: string
   source: string
   signature: string[]
   colors: Colors
@@ -42,7 +42,7 @@ interface Theme {
   art: string | undefined
 }
 
-interface Group {
+interface Catalog {
   slug: string
   name: string
   themes: string[]
@@ -58,7 +58,7 @@ interface Choice {
 }
 
 interface ClientData {
-  groups: Group[]
+  catalogs: Catalog[]
   choices: Choice[]
 }
 
@@ -99,7 +99,7 @@ const BAD = 15
 const TEXT = 4.5
 const USAGE =
   'usage: bun board.ts --anchors <anchors.json> --out <board.html> [--variants <variants.json>] ' +
-  '[--art <theme>=<image> ...] [--title "<Series> palettes"] <theme.toml> [...]'
+  '[--art <theme>=<image> ...] [--title "<Catalog> palettes"] <theme.toml> [...]'
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
@@ -111,7 +111,7 @@ const slug = (name: string) =>
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'series'
+    .replace(/^-+|-+$/g, '') || 'catalog'
 
 function color(value: unknown, where: string): string {
   if (typeof value !== 'string' || !HEX.test(value)) throw new Error(`${where}: not a #rrggbb color: ${String(value)}`)
@@ -209,7 +209,7 @@ async function readTheme(file: string, anchors: Record<string, Anchor>): Promise
   if (!meta || typeof meta.name !== 'string' || !NAME.test(meta.name)) throw new Error(`${file}: meta.name missing`)
   return {
     name: meta.name,
-    group: typeof meta.group === 'string' ? meta.group : 'Ungrouped',
+    catalog: basename(dirname(resolve(file))),
     source: typeof meta.ansi_source === 'string' ? meta.ansi_source : '',
     signature: slots(meta.signature, `${file}: meta.signature`),
     colors: colorsOf(doc.colors, `${file}: colors`),
@@ -346,7 +346,7 @@ function themeSection(t: Theme): string {
     ? `<figure class="art"><img id="art-${t.name}" src="${t.art}" alt="${esc(t.name)} 원화"></figure>`
     : ''
   return `<section class="panel theme" id="t-${t.name}">
-<div class="d-head"><span class="d-label">${esc(t.group)}</span><h2>${esc(t.name)}${flag}</h2><p>ANSI ${esc(t.source)}${origin}</p></div>
+<div class="d-head"><span class="d-label">${esc(t.catalog)}</span><h2>${esc(t.name)}${flag}</h2><p>ANSI ${esc(t.source)}${origin}</p></div>
 ${note}
 <div class="t-body${t.art ? '' : ' no-art'}">${art}<div class="block"><h3>실측 앵커</h3>${measured(t)}</div><div class="block preview"><h3>팔레트</h3>${card(t.colors, t.signature, t.name)}${term(t.colors, t.name)}</div></div>
 <div class="block"><h3>실측 → 최종</h3>${departure(t)}</div>
@@ -499,7 +499,7 @@ function client(data: ClientData): void {
 
   const renderSignoff = () => {
     let done = 0
-    for (const g of data.groups) {
+    for (const g of data.catalogs) {
       const doc = state.signoff[g.slug]
       if (doc) done++
       const status = el(`so-state-${g.slug}`)
@@ -510,7 +510,7 @@ function client(data: ClientData): void {
         status.classList.toggle('ok', !!doc)
       }
       if (button) {
-        button.textContent = doc ? '메모와 함께 다시 승인' : '이 시리즈 승인'
+        button.textContent = doc ? '메모와 함께 다시 승인' : '이 카탈로그 승인'
         button.setAttribute('aria-pressed', String(!!doc))
       }
       if (note && doc && !dirty.has(g.slug) && document.activeElement !== note && note.value !== doc.note)
@@ -519,8 +519,8 @@ function client(data: ClientData): void {
     const pill = el('pill-signoff')
     const count = pill?.querySelector('b')
     if (pill && count) {
-      count.textContent = `${done}/${data.groups.length}`
-      pill.classList.toggle('set', done === data.groups.length)
+      count.textContent = `${done}/${data.catalogs.length}`
+      pill.classList.toggle('set', done === data.catalogs.length)
     }
   }
 
@@ -551,21 +551,21 @@ function client(data: ClientData): void {
       return
     }
     const sign = target.closest<HTMLElement>('.sign')
-    const group = sign?.dataset.group
-    if (group) {
-      const note = el(`so-note-${group}`) as HTMLTextAreaElement | null
+    const catalog = sign?.dataset.catalog
+    if (catalog) {
+      const note = el(`so-note-${catalog}`) as HTMLTextAreaElement | null
       const doc: SignoffDoc = { at: Date.now(), note: note?.value ?? '' }
-      state.signoff[group] = doc
-      dirty.delete(group)
+      state.signoff[catalog] = doc
+      dirty.delete(catalog)
       renderSignoff()
-      write(`signoff/${group}`, { ...doc })
+      write(`signoff/${catalog}`, { ...doc })
     }
   })
 
   document.addEventListener('input', (event) => {
     const target = event.target as HTMLElement | null
-    const group = target?.dataset.note
-    if (group) dirty.add(group)
+    const catalog = target?.dataset.note
+    if (catalog) dirty.add(catalog)
   })
 
   renderPick()
@@ -695,8 +695,8 @@ section.panel { margin-top: 24px; background: var(--surface); border: 1px solid 
 .block > h3 { font-size: 15px; font-weight: 600; }
 .block > p { color: var(--muted); font-size: 14px; max-width: 80ch; }
 .scroll { overflow-x: auto; padding-bottom: 4px; }
-.cast-group { display: grid; gap: 8px; }
-.cast-group h3 { font-size: 14px; font-weight: 600; color: var(--muted); }
+.cast-catalog { display: grid; gap: 8px; }
+.cast-catalog h3 { font-size: 14px; font-weight: 600; color: var(--muted); }
 .cast { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 a.cast-card { text-decoration: none; border-radius: 8px; display: block; }
 a.cast-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -804,16 +804,16 @@ table.dep .arrow { color: var(--muted); width: 1%; }
 }
 `
 
-function page(title: string, themes: Theme[], groups: Group[], choices: Choice[]): string {
-  const multi = groups.length > 1
-  const cast = groups
+function page(title: string, themes: Theme[], catalogs: Catalog[], choices: Choice[]): string {
+  const multi = catalogs.length > 1
+  const cast = catalogs
     .map((g) => {
       const cards = g.themes
         .map((name) => themes.find((t) => t.name === name))
         .filter((t): t is Theme => t !== undefined)
         .map((t) => `<a class="cast-card" href="#t-${t.name}">${card(t.colors, t.signature, t.name)}</a>`)
         .join('')
-      return `<div class="cast-group">${multi ? `<h3>${esc(g.name)}</h3>` : ''}<div class="cast">${cards}</div></div>`
+      return `<div class="cast-catalog">${multi ? `<h3>${esc(g.name)}</h3>` : ''}<div class="cast">${cards}</div></div>`
     })
     .join('')
   const pickNo = 3
@@ -827,17 +827,17 @@ function page(title: string, themes: Theme[], groups: Group[], choices: Choice[]
 <div class="tally" id="pick-tally"></div>
 </section>`
     : ''
-  const signoffs = groups
+  const signoffs = catalogs
     .map(
       (g) => `<div class="signoff">
 <div class="signoff-head"><h3>${esc(g.name)}</h3><span class="muted small">${g.themes.map(esc).join(' · ')}</span><span class="so-state" id="so-state-${g.slug}">아직 승인 전</span></div>
 <label class="muted small" for="so-note-${g.slug}">메모 (승인과 함께 저장)</label>
 <textarea id="so-note-${g.slug}" data-note="${g.slug}" placeholder="예: kisara는 D로, 나머지는 그대로"></textarea>
-<button type="button" class="sign" id="so-btn-${g.slug}" data-group="${g.slug}" aria-pressed="false">이 시리즈 승인</button>
+<button type="button" class="sign" id="so-btn-${g.slug}" data-catalog="${g.slug}" aria-pressed="false">이 카탈로그 승인</button>
 </div>`,
     )
     .join('')
-  const data: ClientData = { groups, choices }
+  const data: ClientData = { catalogs, choices }
   const json = JSON.stringify(data).replace(/</g, '\\u003c')
   const pickPill = choices.length
     ? `<a class="pill" id="pill-pick" href="#pick">두 안 비교 <b>0/${choices.length}</b></a>`
@@ -851,26 +851,26 @@ function page(title: string, themes: Theme[], groups: Group[], choices: Choice[]
 <span class="bar-title">${esc(title)}</span>
 <a class="pill" href="#cast">캐스트 <b>${themes.length}</b></a>
 ${pickPill}
-<a class="pill" id="pill-signoff" href="#signoff">승인 <b>0/${groups.length}</b></a>
+<a class="pill" id="pill-signoff" href="#signoff">승인 <b>0/${catalogs.length}</b></a>
 <span class="save-state" id="save-state">저장 연결 중…</span>
 </div></div>
 <div class="wrap">
 <header class="hero">
 <span class="eyebrow">ttheme · palette skill · swatch board</span>
 <h1>${esc(title)}</h1>
-<p>캐스트를 나란히 본 뒤, 캐릭터마다 설정화에서 잰 색이 최종 팔레트에서 얼마나 달라졌는지 확인하세요. 자동 검사는 표시만 합니다. 표시된 캐릭터는 두 안씩 비교해 고르고, 마지막에 시리즈를 승인해 주세요.</p>
+<p>캐스트를 나란히 본 뒤, 캐릭터마다 설정화에서 잰 색이 최종 팔레트에서 얼마나 달라졌는지 확인하세요. 자동 검사는 표시만 합니다. 표시된 캐릭터는 두 안씩 비교해 고르고, 마지막에 카탈로그를 승인해 주세요.</p>
 <div class="scale"><span>색 차이는 <b>ΔE2000</b></span><span><b>≈1</b> 구분 어려움</span><span><b>2–5</b> 가까운 색</span><span><b>10+</b> 확실히 다른 색</span><span><b>30+</b> 다른 계열</span><span><b class="good">≤${GOOD}</b> · <b class="mid">${GOOD}–${BAD}</b> · <b class="bad">${BAD}+</b></span></div>
 <div class="notice" id="offline" hidden>이 보기에서는 저장 기능을 쓸 수 없어 선택과 승인이 기록되지 않습니다. claude.ai에서 열면 저장됩니다.</div>
 </header>
 <section class="panel" id="cast">
-<div class="d-head"><span class="d-label">1 · 캐스트</span><h2>시리즈를 한눈에</h2><p>사이트 카드와 같은 모양입니다. 오른쪽 표시 셋이 대표색이고, selection 대표색은 어두운 배경에서 점으로는 사라져 <b>sel</b> 칩으로 그립니다. 같은 시리즈인데 서로 무관해 보이거나 두 캐릭터가 한 팔레트처럼 겹치면 문제입니다. 카드를 누르면 그 캐릭터로 갑니다.</p></div>
+<div class="d-head"><span class="d-label">1 · 캐스트</span><h2>카탈로그를 한눈에</h2><p>사이트 카드와 같은 모양입니다. 오른쪽 표시 셋이 대표색이고, selection 대표색은 어두운 배경에서 점으로는 사라져 <b>sel</b> 칩으로 그립니다. 같은 카탈로그인데 서로 무관해 보이거나 두 캐릭터가 한 팔레트처럼 겹치면 문제입니다. 카드를 누르면 그 캐릭터로 갑니다.</p></div>
 ${cast}
 </section>
 <div class="part-head"><span class="d-label">2 · 캐릭터별</span><h2>실측 색과 최종 팔레트</h2><p>왼쪽은 설정화에서 잰 색(회색은 쓰지 않은 색), 오른쪽은 최종 팔레트입니다. 아래 표는 대표 슬롯마다 실측 색이 최종 색으로 얼마나 옮겨 갔는지 보여 줍니다.</p></div>
 ${themes.map(themeSection).join('\n')}
 ${pick}
 <section class="panel" id="signoff">
-<div class="d-head"><span class="d-label">${signNo} · 승인</span><h2>시리즈 승인</h2><p>보드 전체를 보고 이 시리즈를 받아들일 때 누르세요. 메모는 승인과 함께 저장됩니다.</p></div>
+<div class="d-head"><span class="d-label">${signNo} · 승인</span><h2>카탈로그 승인</h2><p>보드 전체를 보고 이 카탈로그를 받아들일 때 누르세요. 메모는 승인과 함께 저장됩니다.</p></div>
 <div class="signoffs">${signoffs}</div>
 </section>
 </div>
@@ -909,11 +909,11 @@ if (import.meta.main) {
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
-  const groups: Group[] = []
+  const catalogs: Catalog[] = []
   for (const t of themes) {
-    const g = groups.find((x) => x.name === t.group)
+    const g = catalogs.find((x) => x.name === t.catalog)
     if (g) g.themes.push(t.name)
-    else groups.push({ slug: slug(t.group), name: t.group, themes: [t.name] })
+    else catalogs.push({ slug: slug(t.catalog), name: t.catalog, themes: [t.name] })
   }
   const variants = values.variants ? readVariants(await Bun.file(values.variants).json(), themes) : {}
   const choices: Choice[] = Object.entries(variants).map(([name, set]) => {
@@ -928,13 +928,13 @@ if (import.meta.main) {
       note: anchor?.note ?? '',
     }
   })
-  const title = values.title ?? `${groups.map((g) => g.name).join(' · ')} palettes`
-  const html = page(title, themes, groups, choices)
+  const title = values.title ?? `${catalogs.map((g) => g.name).join(' · ')} palettes`
+  const html = page(title, themes, catalogs, choices)
   await Bun.write(values.out, html)
   const size = Buffer.byteLength(html)
   console.log(
     `wrote ${values.out} (${(size / 1024).toFixed(0)} KB, ${themes.length} themes, ${choices.length} comparisons, ` +
-      `db: picks/<theme>, signoff/${groups.map((g) => g.slug).join('|')})`,
+      `db: picks/<theme>, signoff/${catalogs.map((g) => g.slug).join('|')})`,
   )
   if (size > LIMIT) {
     console.error(`page is ${(size / 1024 / 1024).toFixed(1)} MB, over the 4 MB budget — pass fewer --art images`)

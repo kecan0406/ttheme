@@ -14,7 +14,7 @@ bash or fish — see [Shells](#shells).
 1. **Which terminals to wire** — the one you are in comes preselected. With
    Warp among them, also whether to switch Warp to each tab's palette in about
    0.2 s instead of 0.6 s, for some CPU while it does (`TTHEME_WARP_FAST`).
-2. **Which series to install** — `space` marks one, `Select all` takes the lot,
+2. **Which catalogs to install** — `space` marks one, `Select all` takes the lot,
    enter moves on.
 3. **Whether to wear them** — with one palette picked, `Wear <palette> in every
    tab?`; with several, whether to pick the default in `ttheme` once
@@ -31,7 +31,7 @@ for the `ttheme` command here, a terminal restart for new tabs).
 Running it again updates in place. `--yes` (`-y`) skips every prompt: over an
 install it updates in place and keeps everything, and on a first install it
 wires the terminal you are in and installs no palettes — Browse, the second tab
-of `ttheme`, opens the full catalog any time, to add or drop single palettes.
+of `ttheme`, opens every marketplace any time, to add or drop single palettes.
 init refuses to run without a terminal unless it is given `--yes`.
 
 ## What init changes

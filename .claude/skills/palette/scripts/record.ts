@@ -29,7 +29,7 @@ const { values, positionals } = parseArgs({
   allowPositionals: true,
 })
 if (values.anchors === undefined || positionals.length === 0) {
-  console.error('usage: bun record.ts --anchors <file> themes/<name>.toml [...]')
+  console.error('usage: bun record.ts --anchors <file> themes/palettes/<catalog>/<name>.toml [...]')
   process.exit(1)
 }
 

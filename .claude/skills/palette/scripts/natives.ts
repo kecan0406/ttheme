@@ -4,7 +4,7 @@ import { namesDir, namesOf } from '../../../../src/names.ts'
 
 const arg = process.argv[2]
 if (!arg) {
-  console.error('usage: bun natives.ts themes/<name>.toml | <danbooru tag>')
+  console.error('usage: bun natives.ts themes/palettes/<catalog>/<name>.toml | <danbooru tag>')
   process.exit(1)
 }
 

@@ -4,10 +4,11 @@ import { oklch } from '../../../../src/color.ts'
 import { check } from '../../../../src/contrast.ts'
 import { fixRoles } from '../../../../src/fix.ts'
 import type { Theme } from '../../../../src/theme.ts'
+import { catalogOf } from './audit.ts'
 import { deltaE } from './delta.ts'
 
 interface ThemeDoc {
-  meta: { name: string; group: string; signature: string[] }
+  meta: { name: string; signature: string[] }
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
   contrast?: { waive?: string[] }
 }
@@ -47,7 +48,7 @@ const { values, positionals } = parseArgs({
   allowPositionals: true,
 })
 if (positionals.length === 0) {
-  console.error('usage: bun ansi-roles.ts [--write] [--report <file.json>] themes/<a>.toml [...]')
+  console.error('usage: bun ansi-roles.ts [--write] [--report <file.json>] themes/palettes/<catalog>/<a>.toml [...]')
   process.exit(1)
 }
 
@@ -73,7 +74,7 @@ for (const file of positionals) {
     }
   })
   if (net.length > 0 || left.length > 0) {
-    console.log(`\n── ${doc.meta.name} · ${doc.meta.group}`)
+    console.log(`\n── ${doc.meta.name} · ${catalogOf(file)}`)
     for (const n of net)
       console.log(
         `  ansi${n.slot}  ${n.from} → ${n.to}  ${n.hueFrom}° → ${n.hueTo}°  ΔE ${n.de}  ${n.rules.join(', ')}`,
@@ -82,7 +83,7 @@ for (const file of positionals) {
   }
   report.push({
     name: doc.meta.name,
-    group: doc.meta.group,
+    catalog: catalogOf(file),
     signature: doc.meta.signature,
     background: doc.colors.background,
     foreground: doc.colors.foreground,

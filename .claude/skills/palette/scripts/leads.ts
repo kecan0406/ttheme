@@ -1,15 +1,11 @@
-import { join } from 'node:path'
 import { parseArgs } from 'node:util'
-import { loadCatalog, slotColor, type ThemeDoc } from './audit.ts'
+import { MARKETPLACE_FILE } from '../../../../src/theme.ts'
+import { loadCatalogs, loadPalettes, slotColor, type ThemeDoc } from './audit.ts'
 import { deltaE } from './delta.ts'
-
-interface GroupsDoc {
-  group: { name: string; lead: string }[]
-}
 
 interface Lead {
   name: string
-  group: string
+  catalog: string
   seed: string
 }
 
@@ -22,63 +18,63 @@ const { values } = parseArgs({
   args: Bun.argv.slice(2),
   options: {
     themes: { type: 'string', default: 'themes' },
-    group: { type: 'string', multiple: true, default: [] },
+    catalog: { type: 'string', multiple: true, default: [] },
     top: { type: 'string', default: '10' },
   },
 })
 const dir = values.themes
 const top = Number(values.top)
 if (!Number.isInteger(top) || top < 1) {
-  console.error('usage: bun leads.ts [--top N] [--group "<name>" ...] [--themes <dir>]')
+  console.error('usage: bun leads.ts [--top N] [--catalog "<name>" ...] [--themes <dir>]')
   process.exit(1)
 }
 
-const catalog = await loadCatalog(dir)
-const tables = (Bun.TOML.parse(await Bun.file(join(dir, '_groups.toml')).text()) as unknown as GroupsDoc).group
+const palettes = await loadPalettes(dir)
+const tables = await loadCatalogs(dir)
 const seeded = (doc: ThemeDoc): Lead => ({
   name: doc.meta.name,
-  group: doc.meta.group,
+  catalog: doc.catalog,
   seed: slotColor(doc, doc.meta.signature[0] as string).toLowerCase(),
 })
 
-const present = [...new Set(catalog.map((t) => t.meta.group))]
-const forced = values.group
+const present = [...new Set(palettes.map((t) => t.catalog))]
+const forced = values.catalog
 for (const name of forced) {
   if (!present.includes(name)) {
-    console.error(`no theme in ${dir} has group "${name}"`)
+    console.error(`no theme in ${dir}/palettes/${name}`)
     process.exit(1)
   }
 }
 const fresh =
   forced.length > 0 ? [...new Set(forced)] : present.filter((name) => !tables.some((table) => table.name === name))
 if (fresh.length === 0) {
-  console.log('no new groups')
+  console.log('no new catalogs')
   process.exit(0)
 }
 
 const existing = tables
   .filter((table) => !fresh.includes(table.name))
   .map((table) => {
-    const doc = catalog.find((t) => t.meta.name === table.lead)
-    if (doc === undefined) throw new Error(`_groups.toml: lead ${table.lead} of ${table.name} has no theme`)
+    const doc = palettes.find((t) => t.meta.name === table.lead)
+    if (doc === undefined) throw new Error(`${MARKETPLACE_FILE}: lead ${table.lead} of ${table.name} has no theme`)
     return seeded(doc)
   })
 const current = new Map(tables.map((table) => [table.name, table.lead]))
-const candidates = fresh.map((group) => catalog.filter((t) => t.meta.group === group).map(seeded))
+const candidates = fresh.map((catalog) => palettes.filter((t) => t.catalog === catalog).map(seeded))
 
 const nearestExisting = (lead: Lead): Nearest =>
   existing
     .map((other) => ({ lead: other, d: deltaE(lead.seed, other.seed) }))
     .reduce((best, n) => (n.d < best.d ? n : best), { lead, d: Number.POSITIVE_INFINITY })
 
-const label = (n: Nearest) => (Number.isFinite(n.d) ? `${n.lead.name} (${n.lead.group}) ${n.d.toFixed(1)}` : 'none')
-const mark = (lead: Lead) => (current.get(lead.group) === lead.name ? ' *' : '')
+const label = (n: Nearest) => (Number.isFinite(n.d) ? `${n.lead.name} (${n.lead.catalog}) ${n.d.toFixed(1)}` : 'none')
+const mark = (lead: Lead) => (current.get(lead.catalog) === lead.name ? ' *' : '')
 const nameWidth = Math.max(...candidates.flat().map((c) => c.name.length + mark(c).length))
-const groupWidth = Math.max(...fresh.map((g) => g.length))
+const catalogWidth = Math.max(...fresh.map((g) => g.length))
 
-console.log(`new groups: ${fresh.join(', ')}  (against ${existing.length} existing leads, ΔE00)`)
-fresh.forEach((group, i) => {
-  console.log(`\n${group} — candidates by distance to the nearest existing lead`)
+console.log(`new catalogs: ${fresh.join(', ')}  (against ${existing.length} existing leads, ΔE00)`)
+fresh.forEach((catalog, i) => {
+  console.log(`\n${catalog} — candidates by distance to the nearest existing lead`)
   for (const c of (candidates[i] as Lead[])
     .map((lead) => ({ lead, near: nearestExisting(lead) }))
     .sort((a, b) => b.near.d - a.near.d)) {
@@ -127,8 +123,8 @@ assignments.slice(0, top).forEach((a, rank) => {
   console.log(`\n${String(rank + 1).padStart(3)}  score ${a.score.toFixed(1)}  (${a.bottleneck})`)
   a.picks.forEach((pick) => {
     console.log(
-      `     ${pick.group.padEnd(groupWidth)}  ${(pick.name + mark(pick)).padEnd(nameWidth)}  ${pick.seed}  nearest existing: ${label(floor.get(pick.name) as Nearest)}`,
+      `     ${pick.catalog.padEnd(catalogWidth)}  ${(pick.name + mark(pick)).padEnd(nameWidth)}  ${pick.seed}  nearest existing: ${label(floor.get(pick.name) as Nearest)}`,
     )
   })
 })
-if (forced.some((group) => current.has(group))) console.log('\n* the group’s current lead')
+if (forced.some((catalog) => current.has(catalog))) console.log('\n* the catalog’s current lead')

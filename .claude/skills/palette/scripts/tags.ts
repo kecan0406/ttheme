@@ -24,7 +24,7 @@ const split = args.indexOf('--try')
 const files = split === -1 ? args : args.slice(0, split)
 const tried = split === -1 ? [] : args.slice(split + 1)
 if (files.length + tried.length === 0 || files.some((f) => !f.endsWith('.toml'))) {
-  console.error('usage: bun tags.ts themes/<name>.toml [...] [--try <tag> ...]')
+  console.error('usage: bun tags.ts themes/palettes/<catalog>/<name>.toml [...] [--try <tag> ...]')
   process.exit(1)
 }
 

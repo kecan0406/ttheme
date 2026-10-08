@@ -1,6 +1,6 @@
 import { mkdir, readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { argbFromHex, Hct } from '@material/material-color-utilities'
 import { deltaE } from './delta.ts'
@@ -11,7 +11,7 @@ type Palette = ReturnType<typeof harmonizePalette>
 type Colors = ThemeDoc['colors']
 
 interface Source {
-  meta: ThemeDoc['meta'] & { group?: string; ansi_source?: string }
+  meta: ThemeDoc['meta'] & { ansi_source?: string }
   colors: Colors
 }
 
@@ -47,7 +47,7 @@ const GROUPS = [
 const COLLISION_WEIGHT = 4
 const SLOTS = ['cursor', 'foreground', 'background', 'selection', ...Array.from({ length: 16 }, (_, i) => `ansi${i}`)]
 const USAGE =
-  'usage: bun pick-base.ts themes/<name>.toml [--top N] [--schemes <dir>] [--include <name> ...] [--apply <scheme> [--codename <name>]]'
+  'usage: bun pick-base.ts themes/palettes/<catalog>/<name>.toml [--top N] [--schemes <dir>] [--include <name> ...] [--apply <scheme> [--codename <name>]]'
 
 const hct = (hex: string) => Hct.fromInt(argbFromHex(hex))
 const hueDiff = (a: number, b: number) => {
@@ -149,12 +149,11 @@ async function codename(file: string, theme: Source): Promise<string> {
   const own = theme.meta.ansi_source?.split(' + ')[1]
   if (own) return own
   const dir = dirname(file)
-  if (theme.meta.group)
-    for (const sibling of new Bun.Glob('*.toml').scanSync(dir)) {
-      const other = Bun.TOML.parse(await Bun.file(join(dir, sibling)).text()) as Partial<Source>
-      const code = other.meta?.ansi_source?.split(' + ')[1]
-      if (other.meta?.group === theme.meta.group && code) return code
-    }
+  for (const sibling of new Bun.Glob('*.toml').scanSync(dir)) {
+    const other = Bun.TOML.parse(await Bun.file(join(dir, sibling)).text()) as Partial<Source>
+    const code = other.meta?.ansi_source?.split(' + ')[1]
+    if (code) return code
+  }
   return '<codename>'
 }
 
@@ -224,7 +223,7 @@ const current = theme.meta.ansi_source?.split(' + ')[0]
 
 if (values.apply !== undefined) {
   if (code === '<codename>')
-    fail(`${theme.meta.name}: no sibling names a codename for ${theme.meta.group}; pass --codename`)
+    fail(`${theme.meta.name}: no sibling names a codename for ${basename(dirname(file))}; pass --codename`)
   const path = join(values.schemes, values.apply)
   if (!(await Bun.file(path).exists())) await sync(values.schemes)
   if (!(await Bun.file(path).exists())) fail(`${values.apply}: not in ${values.schemes}`)

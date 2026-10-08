@@ -154,7 +154,7 @@ wherever the order puts its pictures, and folds in the same way a picture
 another site holds too — re-encoded at the same shape, cut from the post its
 source names, or hung under the same parent; space unfolds it and folds it
 again. Pictures by the uploader of the backgrounds
-you already have in the same series come first and carry `≈`, so a series keeps
+you already have in the same catalog come first and carry `≈`, so a catalog keeps
 one hand; anything under 1600 px on its long edge shows its size in yellow.
 
 While a search is on its way and the grid has nothing to show, the middle of it

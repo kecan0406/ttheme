@@ -1,6 +1,7 @@
 # Contributing a palette
 
-`themes/*.toml` is the official catalog. A merged palette ships with the next
+`themes/` is the official marketplace: `themes/ttheme-marketplace.toml` and
+`themes/palettes/<catalog>/<palette>.toml`. A merged palette ships with the next
 release, and `ttheme update` brings it to everyone.
 
 ## Your own marketplace first
@@ -35,32 +36,40 @@ gone = false                               # removed — taken off the machines 
 
 # force_remove_deleted_palettes = true     # also take off a palette that just disappears
 # [metadata]                               # anything of your own; ttheme does not read it
+
+[[catalog]]                                # optional: the folder palettes/night/
+name = "night"
+native = "夜"                              # shown dim beside it
+lead = "dusk"                              # the palette whose colors stand for it
 ```
 
 The `"$schema"` lines give an editor completion and checks (Even Better TOML
 reads them, and SchemaStore matches `ttheme-marketplace.toml` by name); ttheme
 ignores them. Run `ttheme marketplace check` in the folder before you push: it reads
-every file as an install would, warns about keys ttheme does not know, follows
-the renames and prints the gate. Added from GitHub, a marketplace is
+every file as an install would, warns about keys ttheme does not know and about a
+`[[catalog]]` table with no folder or a lead outside it, follows the renames and
+prints the gate. Added from GitHub, a marketplace is
 `<repository owner>@<name>` and its palettes are `<owner>@<name>/<palette>`;
 the TOML files name them bare (`name = "rei"`). A folder under `palettes/` is a
 catalog — `palettes/neon/arcade.toml` puts arcade in the neon catalog — so every
-list shows the marketplace, then its catalogs, then their palettes, below the series;
-a file straight under `palettes/` sits in no catalog, after them. The catalog is
-not part of the name (still `<owner>@<name>/arcade`), so a palette name is used
-once in a marketplace, and `meta.group` is not read. A marketplace palette has no `order`
+list shows the marketplace, then its catalogs, then their palettes, below the
+official catalogs; a file straight under `palettes/` sits in no catalog, after
+them. The `[[catalog]]` tables are optional: their order is the catalogs' order,
+and a folder no table names follows them by name, led by its first palette. The
+catalog is not part of the name (still `<owner>@<name>/arcade`), so a palette
+name is used once in a marketplace. A marketplace palette has no `order`
 and no `role`; `meta.base` names the official palette it varies, which only says
 where its ANSI colors came from. Give the repository the `ttheme-marketplace` topic
 and `ttheme marketplace search` and the
 [marketplace page](https://ttheme.vercel.app/marketplace) find it.
 
-Open a pull request here when a palette belongs in the official catalog: it
+Open a pull request here when a palette belongs in the official marketplace: it
 then has to pass the contrast gate and everything below.
 
 ## What this project accepts
 
 **Color values and post numbers only.** A palette is twenty hex colors, a
-name, the series it belongs to and, optionally, the numbers of booru posts
+name, the catalog it belongs to and, optionally, the numbers of booru posts
 that suit it as a background. That is the whole contribution, released under the
 project's MIT license.
 
@@ -93,7 +102,7 @@ the pictures you have up.
 
 ## The file
 
-One file — copy any of `themes/*.toml`:
+One file — copy any of `themes/palettes/<catalog>/*.toml` into its catalog's folder:
 
 ```toml
 "$schema" = "https://www.schemastore.org/ttheme-palette.json"
@@ -101,7 +110,6 @@ One file — copy any of `themes/*.toml`:
 [meta]
 name = "madoka"                            # must match the filename
 native_names = ["鹿目まどか"]               # the character's names in Japanese, preview searches them
-group = "Madoka Magica"                    # needs a [[group]] in themes/_groups.toml
 order = 15                                 # position in the rotation
 ansi_source = "Elegant + Magica"           # what the harmonizer was fed
 booru = "kaname_madoka"                    # booru character tag find searches
@@ -115,17 +123,21 @@ selection_background = "#553444"
 ansi = [ ... 16 colors ... ]
 ```
 
-The series title and its `native` reading live once in `themes/_groups.toml`,
-never in a theme file.
+The file's folder is its catalog (`themes/palettes/Madoka Magica/madoka.toml`).
+The catalog's `native` title and its lead live once, in its `[[catalog]]` table
+in `themes/ttheme-marketplace.toml`, never in a palette file.
 
 ## Rules
 
 One palette per pull request. At most three open at a time.
 
-- `themes/<name>.toml`, where `<name>` matches `meta.name` and is lowercase.
-- `meta.group` needs a matching `[[group]]` in `themes/_groups.toml`. Adding a
-  new series means adding that table, with its `native` title and the `lead`
-  palette whose signature colors the group. A theme file never repeats them.
+- `themes/palettes/<catalog>/<name>.toml`, where `<name>` matches `meta.name` and
+  is lowercase.
+- The catalog folder needs a matching `[[catalog]]` in
+  `themes/ttheme-marketplace.toml`. Adding a new catalog means adding that
+  table, with its `native` title and the `lead` palette whose signature colors
+  the catalog, where `meta.order` puts its palettes — the tables follow that
+  order. A palette file never repeats them.
 - `meta.signature` names three palette slots that must resolve to three
   different colors — they are what the site draws as the palette's identity.
 - `meta.booru` is the character's booru tag (`kaname_madoka`,
@@ -136,7 +148,7 @@ One palette per pull request. At most three open at a time.
   term; posts go in `[[picture]]`, by number.
 - `meta.native_names` lists the character's names in its original language (or
   the Japanese release's), which `preview` searches alongside the palette and
-  series names: the full name first, then any other it goes by — a code name, an
+  catalog names: the full name first, then any other it goes by — a code name, an
   avatar name, a civilian one (`["雨宮蓮", "来栖暁", "ジョーカー"]`). A place,
   concept or machine takes its own Japanese name. Check them against the tag's
   danbooru wiki, whose other names list them; a name may not contain `|`.
@@ -201,7 +213,7 @@ names, and one that explains nothing fails. A change that moves a fact fails
 until `mise run parity --update` records it; `--only`, `--journey` and `--show
 journey.label` narrow a run and print what a tab shows.
 
-Every palette in the catalog passes the gate unwaived — `kyubey` runs tightest,
+Every official palette passes the gate unwaived — `kyubey` runs tightest,
 since as the one light palette every accent has to darken enough to hold
 against a near-white background. If a palette genuinely has to break a rule,
 waive it by name and say why:
@@ -229,7 +241,7 @@ for leaving it out. The repository's own agent rules are in `AGENTS.md`.
 
 Every screen `ttheme` draws is captured and compared against `tests/screens/`.
 The scenarios run in tmux at a fixed 100×24 against `tests/fixture.json` — seven
-palettes across three series, pinned so that adding a palette never rewrites a
+palettes across three catalogs, pinned so that adding a palette never rewrites a
 screen.
 
 ```sh
@@ -270,7 +282,7 @@ that closes exactly that, so a role inside a painted row never ends the row:
 |---|---|---|
 | `dim` | counts, key hint labels, notes, a tab that is off, box edges, a gate pass ✓ | `2` … `22` |
 | `bold` | titles, key names, a gate miss ✗ | `1` … `22` |
-| `accent` | the current ◆, an active series, the ▶ and frame of the part in focus | slot 6 |
+| `accent` | the current ◆, an active catalog, the ▶ and frame of the part in focus | slot 6 |
 | `pill` | a tab or a choice that is on, a mode badge | reverse, bold, slot 6 |
 | `match` | the letters a filter matched | bold, underline, slot 6 |
 | `ok`, `warn`, `error` | a note that something worked, a notice or a changed slot ●, a failure | slots 2, 3, 1 |
@@ -293,14 +305,14 @@ closes — `say` lines, browse's closing report, CLI messages — uses roles and
 slots only, since the tab may change palette after it.
 
 Under `NO_COLOR` or `TERM=dumb` a screen writes no SGR at all and says in text
-what color said: `[Catalog]` for the tab that is on, `[EDIT]` for a badge.
+what color said: `[Preview]` for the tab that is on, `[EDIT]` for a badge.
 
 `painter(color)` gives a screen the roles as functions (`p.dim`, `p.pill`, …)
 that hand text back unchanged when color is off, and `src/tui/parts.ts` holds
 the parts several screens draw: `tabOf`, `pillOf`, `hintOf`, `checkOf`,
 `boxEdge` and `boxed`. Glyphs that mean a state are in `MARKS`, one meaning
 each: ▌ the cursor's row, ◆ the palette worn or handled, ✦ a signature slot,
-▸ ▾ a closed and an open series, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more
+▸ ▾ a closed and an open catalog, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more
 rows, ⇡ an update, ↻ auto-update, ★ stars, ⧉ a link, ⌕ search, ⇠ a bright that
 follows its normal, ◐ contrast, ■ a swatch, ▣ pictures.
 
@@ -328,15 +340,15 @@ panel below, preview's settings, the palette editor and find's grid.
 |---|---|---|
 | any character | filters | filters |
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
-| `←` `→` | close or open a series; `→` on a palette opens its panel | close or open a marketplace or a series |
-| `enter` | open or close a series; on a palette, apply it, asking where | open or close a marketplace or a series; elsewhere, review every pick and marketplace change, then apply it; close the result |
+| `←` `→` | close or open a catalog; `→` on a palette opens its panel | close or open a marketplace or a catalog |
+| `enter` | open or close a catalog; on a palette, apply it, asking where | open or close a marketplace or a catalog; elsewhere, review every pick and marketplace change, then apply it; close the result |
 | `esc` | clear the filter, then restore and close | clear the filter, then cancel |
-| `space` | fold or open a series | pick; on a GitHub row, add it or search again |
+| `space` | fold or open a catalog | pick; on a GitHub row, add it or search again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
-| `ctrl+r` | — | on a marketplace, update it now; on a palette marked `↑` or a series, stage its update; search GitHub again |
+| `ctrl+r` | — | on a marketplace, update it now; on a palette marked `↑` or a catalog, stage its update; search GitHub again |
 | `ctrl+s` | — | narrow the list to the next marketplace, then back to all |
 | `shift+←` `shift+→` | example scene | on a marketplace, auto-update off and on |
 | `delete` | — | on a marketplace, remove it, or keep it after all |
@@ -414,7 +426,7 @@ look, and never Title Case.
   the screen (`No picture on the clipboard`) is not an error.
 - **Capitals**: only a mode badge (`PREVIEW`, `EDIT`, `IMAGE SEARCH`, `IMAGE PREVIEW`, `HELP`, `CONFIG`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
 
-Counts on screen come from the catalog, never from the rows being drawn. A
-folded series still reports how many of its palettes are picked, and the
+Counts on screen come from the palettes listed, never from the rows being drawn. A
+folded catalog still reports how many of its palettes are picked, and the
 filtered total counts what matches, not what fits on screen. The cursor and the
 scroll window are the only things allowed to read the drawn rows.
