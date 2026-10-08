@@ -279,6 +279,15 @@ test('g shows every ANSI color’s lightness, chroma and hue beside the slots', 
   assert.match(shown, /Yellow 68° → bright 103°/)
 })
 
+test('g shows the relations in a window the builder fills too, and g again brings the builder back', () => {
+  const e = press(editor({ colors: drifted }), 'g')
+  const shown = screen(e, 120, 40)
+  assert.match(shown, /Lightness/)
+  assert.doesNotMatch(shown, /zsh {3}nvim {3}htop/)
+  assert.match(press(e, 'i').notice ?? '', /g goes back to the builder/)
+  assert.match(screen(press(e, 'g'), 120, 40), /zsh {3}nvim {3}htop/)
+})
+
 test('a bright follows its normal until it is tuned on its own, and l links it again', () => {
   const e = press(editor(), ...RED, 'tab', 'up', 'up', 'enter')
   const lift = (e.lch[5]?.l ?? 0) - oklch(start.ansi[1] as string).l

@@ -735,6 +735,8 @@ export class PaletteEditor {
     }
     if (key === 'g' && this.mode !== 'seeds') {
       this.view = this.view === 'slot' ? 'relations' : 'slot'
+      this.inspect = false
+      this.spot = undefined
       return
     }
     const step = key === 'j' ? 'down' : key === 'k' ? 'up' : key
@@ -949,7 +951,7 @@ export class PaletteEditor {
   }
 
   private layout(): Layout | undefined {
-    return this.size ? layoutOf(this.size.cols, this.size.rows, this.scene) : undefined
+    return this.size && this.view === 'slot' ? layoutOf(this.size.cols, this.size.rows, this.scene) : undefined
   }
 
   get roomy(): boolean {
@@ -981,7 +983,8 @@ export class PaletteEditor {
 
   private builderKey(key: string): boolean {
     if (['i', 'm', 'w', 'x', 'I'].includes(key) && !this.roomy) {
-      this.notice = 'The builder needs a window of at least 96×28'
+      this.notice =
+        this.view === 'relations' ? 'g goes back to the builder' : 'The builder needs a window of at least 96×28'
       return true
     }
     if (key === 'i') {

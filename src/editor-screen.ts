@@ -648,7 +648,7 @@ export function drawEditor(
     return { lines: Array.from({ length: rows }, (_, i) => fit(small[i] ?? '', cols)), art: undefined }
   }
   e.viewport(cols, rows)
-  if (!e.overlay && e.mode !== 'seeds') {
+  if (!e.overlay && e.mode !== 'seeds' && e.view === 'slot') {
     const built = renderBuilder(e, cols, rows, color, look)
     if (built) {
       return { lines: [...built.lines, footer(p, e, cols)], art: built.art }
