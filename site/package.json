@@ -6,7 +6,7 @@
     "@kitajs/html": "5.0.0-next.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "elysia": "2.0.0-beta.21",
+    "elysia": "2.0.0-beta.26",
     "lucide": "^1.51.0",
     "tailwind-merge": "^3.6.0"
   },
