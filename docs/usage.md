@@ -644,9 +644,9 @@ differs from the market's colors, and `s` after it drops the tone. The keys are:
   between spots, `⇧←→` to another tab, `enter` goes to the slot, and a click on a
   slot in the popover opens it. `m` shows only the slots that changed (the
   cursor skips the rest), and `g`
-  turns the preview into the palette's relations: the lightness and chroma of every
-  ANSI color, normal and bright, its hue over the role bands, and the misses
-  between them.
+  puts the palette's relations in the builder's place, beside the slots: the
+  lightness and chroma of every ANSI color, normal and bright, its hue over the
+  role bands, and the misses between them; `g` again brings the builder back.
 - `x` copies the share code, the `ttheme add` command with it, or the palette file
   to the clipboard (OSC 52, so the terminal has to allow it; `ttheme share` prints
   the same code as a link), and `I` takes colors from another palette or a share
