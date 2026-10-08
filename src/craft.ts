@@ -566,9 +566,12 @@ export async function runShare(name: string, tone?: 'tuned' | 'original'): Promi
   const link = shareLink(shareCode(draft))
   console.log(link)
   if (process.stdout.isTTY) {
-    console.log(`\n${qrLines(link).join('\n')}`)
+    const qr = qrLines(link)
+    if (qr) {
+      console.log(`\n${qr.join('\n')}`)
+    }
     console.error(
-      `\nAnyone can open the link or scan the code to see ${draft.name}, and ttheme add <link> installs it${renamed ? `\nIt carries your tone, named ${draft.name} so it does not clash with ${entry.name}` : ''}`,
+      `\nAnyone can open the link${qr ? ' or scan the code' : ''} to see ${draft.name}, and ttheme add <link> installs it${renamed ? `\nIt carries your tone, named ${draft.name} so it does not clash with ${entry.name}` : ''}`,
     )
   }
 }

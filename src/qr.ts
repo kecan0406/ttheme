@@ -4,7 +4,12 @@ import { indexed, RESET } from './tui/style.ts'
 const INK = indexed(16, 231)
 const HALVES = [' ', '▀', '▄', '█']
 
-export function qrLines(text: string): string[] {
+const MOST = 2953
+
+export function qrLines(text: string): string[] | undefined {
+  if (Buffer.byteLength(text) > MOST) {
+    return undefined
+  }
   const { data } = encode(text, { border: 2, boostEcc: true })
   const lines: string[] = []
   for (let y = 0; y < data.length; y += 2) {

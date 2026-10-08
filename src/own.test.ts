@@ -62,6 +62,12 @@ test('a share code carries the whole palette, its waiver and its pictures', () =
   assert.deepEqual(fromCode(code), draft)
 })
 
+test('a share code refuses more pictures than its count can carry instead of dropping them all', () => {
+  const pictures = Array.from({ length: 256 }, (_, i) => ({ site: 'danbooru', id: i + 1 }))
+  assert.throws(() => shareCode({ ...draft, pictures }), /at most 255 pictures/)
+  assert.equal(fromCode(shareCode({ ...draft, pictures: pictures.slice(0, 255) })).pictures?.length, 255)
+})
+
 test('a share link reads as the code it carries, however it was pasted', () => {
   const code = shareCode(draft)
   const link = shareLink(code)

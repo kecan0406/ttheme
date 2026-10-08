@@ -409,6 +409,9 @@ export function shareCode(d: Draft): string {
   w.u16((d.waive ?? []).reduce((mask, rule) => mask | (1 << RULES.indexOf(rule)), 0))
   w.str(d.waive && d.waive.length > 0 ? d.reason : '')
   const pictures = d.pictures ?? []
+  if (pictures.length > 255) {
+    throw new Error(`a share code carries at most 255 pictures, and ${d.name} holds ${pictures.length}`)
+  }
   w.u8(pictures.length)
   for (const p of pictures) {
     w.u8(SITES.findIndex((s) => s.key === p.site))
