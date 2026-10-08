@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { backupPath } from '../edits.ts'
 import { alacritty as emitter } from '../emit/index.ts'
 import { owned } from '../theme.ts'
 import { BLOCK, BLOCK_BEGIN, BLOCK_END, fromHome, GENERATED, MANAGED, removeBlock, upsertBlock } from '../wiring.ts'
@@ -54,16 +55,29 @@ function alacrittyCandidates(at: At): string[] {
 interface AlacrittyConfig {
   file: string
   yaml?: string
+  leftover?: string[]
+}
+
+function leftover(file: string): boolean {
+  const content = readText(file)
+  return BLOCK.test(content) && removeBlock(content) === '' && !existsSync(backupPath(file))
 }
 
 export function alacrittyConfig(at: At): AlacrittyConfig {
   const candidates = alacrittyCandidates(at)
-  const found = candidates.find((file) => existsSync(file))
-  if (found) {
-    return { file: found }
+  const left = candidates.filter(leftover)
+  const found = candidates.find((file) => existsSync(file) && !left.includes(file))
+  const yaml = found
+    ? undefined
+    : candidates.map((file) => file.replace(/\.toml$/, '.yml')).find((file) => existsSync(file))
+  if (!found && !yaml) {
+    return { file: left[0] ?? (candidates[0] as string) }
   }
-  const yaml = candidates.map((file) => file.replace(/\.toml$/, '.yml')).find((file) => existsSync(file))
-  return { file: candidates[0] as string, ...(yaml ? { yaml } : {}) }
+  return {
+    file: found ?? (candidates[0] as string),
+    ...(yaml ? { yaml } : {}),
+    ...(left.length > 0 ? { leftover: left } : {}),
+  }
 }
 
 function alacrittyOwn(configHome: string): string {
@@ -98,6 +112,9 @@ export const alacritty: Wiring = {
     out.themes(alacritty)
     out.write(alacrittyOwn(ctx.configHome), alacrittyOwnText(themeOf(ctx)))
     const config = alacrittyConfig(ctx)
+    for (const file of config.leftover ?? []) {
+      out.remove(file)
+    }
     const wired = config.yaml ? undefined : upsertAlacrittyImport(readText(config.file), pointer(ctx))
     if (wired !== undefined) {
       out.wire(config.file, wired)
@@ -114,13 +131,19 @@ export const alacritty: Wiring = {
   },
   notes(now) {
     const config = alacrittyConfig(now)
+    const freed = (config.leftover ?? []).map(
+      (file) =>
+        `${tilde(file, now.home)} held only ttheme's import and hid ${tilde(config.yaml ?? config.file, now.home)} from Alacritty — ttheme removed it`,
+    )
     if (config.yaml) {
       return [
+        ...freed,
         `${tilde(config.yaml, now.home)} is the config Alacritty reads, and ttheme edits TOML only — \`alacritty migrate\` converts it, and ttheme wires the TOML at its next add, remove or default`,
       ]
     }
     const content = readText(config.file)
     return [
+      ...freed,
       ...(existsSync(config.file) && upsertAlacrittyImport(content, pointer(now)) === undefined
         ? [
             `${tilde(config.file, now.home)} already imports files under [general] — ttheme left it alone; add ${pointer(now)} to that import list yourself`,

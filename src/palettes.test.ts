@@ -26,10 +26,12 @@ import {
   resolve,
   startupPalette,
   sync,
+  wiringNotes,
   withBases,
   writeInstalled,
 } from './palettes.ts'
 import { decodePng, encodeRgba } from './png.ts'
+import { upsertAlacrittyImport } from './terminals/alacritty.ts'
 import { itermProfilesPath } from './terminals/iterm2.ts'
 import type { Host } from './terminals/types.ts'
 import { warpSettings, warpThemes, warpThemeValue } from './terminals/warp.ts'
@@ -194,6 +196,35 @@ test('sync wires an existing wezterm.lua before its last return, and leaves one 
   writeFileSync(dotfile, 'return { font_size = 13 }\n')
   sync(configHome, catalog, { terminals: ['wezterm'], palettes: ['gojo'] }, home)
   assert.equal(readFileSync(dotfile, 'utf8'), 'return { font_size = 13 }\n')
+})
+
+test('sync drops an alacritty.toml that held only the ttheme block and hid the config Alacritty would read without it', () => {
+  const home = fixture()
+  const configHome = join(home, '.config')
+  const shadow = join(configHome, 'alacritty', 'alacritty.toml')
+  const only = upsertAlacrittyImport('', '~/.config/ttheme/alacritty.toml') ?? ''
+  mkdirSync(join(configHome, 'alacritty'), { recursive: true })
+  writeFileSync(shadow, only)
+  writeFileSync(join(home, '.alacritty.toml'), '[font]\nsize = 14\n')
+  const state: Installed = { terminals: ['alacritty'], palettes: ['gojo'] }
+  assert.ok(
+    wiringNotes(configHome, state, home).some((note) => note.startsWith('~/.config/alacritty/alacritty.toml held')),
+  )
+  sync(configHome, catalog, state, home)
+  assert.ok(!existsSync(shadow))
+  assert.match(readFileSync(join(home, '.alacritty.toml'), 'utf8'), /^\[font\]\nsize = 14\n\n# ttheme begin\n/)
+
+  const yaml = join(configHome, 'alacritty', 'alacritty.yml')
+  writeFileSync(shadow, only)
+  writeFileSync(yaml, 'font:\n  size: 14\n')
+  sync(configHome, catalog, state, home)
+  assert.ok(!existsSync(shadow))
+  assert.equal(readFileSync(yaml, 'utf8'), 'font:\n  size: 14\n')
+
+  const fresh = fixture()
+  sync(join(fresh, '.config'), catalog, state, fresh)
+  sync(join(fresh, '.config'), catalog, state, fresh)
+  assert.match(readFileSync(join(fresh, '.config', 'alacritty', 'alacritty.toml'), 'utf8'), /^# ttheme begin\n/)
 })
 
 test('sync gives Windows Terminal a fragment that dresses the zsh profile, and nudges it to reload', () => {
