@@ -239,7 +239,7 @@ function ColorsPanel({ gate, view }: { gate: GateLine[]; view: ShareView }) {
         >
           <Verdict ok={passed === gate.length} />
           <span safe>{`${passed} / ${gate.length} floors`}</span>
-          <span class="font-medium text-muted-foreground">
+          <span class="font-medium text-muted-foreground" safe>
             {waived > 0 ? `contrast gate · ${waived} waived` : 'contrast gate'}
           </span>
         </button>
