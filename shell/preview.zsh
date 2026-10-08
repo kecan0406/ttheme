@@ -817,6 +817,7 @@ __tt_pv_conf_save() {
   __tt_tilde "$TTHEME_CONFIG"
   if __tt_config_write "${pairs[@]}"; then
     conf=0 msg="Saved · $REPLY" msgt=200
+    (( ${pairs[(Ie)TTHEME_TAB_PALETTE]} )) && __tt_cli sync > /dev/null 2>&1 && __tt_reload
     (( ${pairs[(Ie)TTHEME_BG_BLUR]} )) && __tt_pv_redraw
   else
     __tt_pv_unconf

@@ -14,7 +14,8 @@ export function tilde(path: string, home: string): string {
 }
 
 export function blockKeys(body: string): string {
-  return [...new Set(body.split('\n').map((line) => line.split(/[ =]/)[0]))].join(', ')
+  const keys = body.split('\n').filter((line) => line !== '' && !line.startsWith('#'))
+  return [...new Set(keys.map((line) => line.split(/[ =]/)[0]))].join(', ')
 }
 
 export function stripped(file: string, remove: (content: string) => string): Unwired['edits'] {

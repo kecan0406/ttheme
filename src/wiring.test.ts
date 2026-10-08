@@ -4,15 +4,17 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { alacrittyColors, upsertAlacrittyImport } from './terminals/alacritty.ts'
-import { ghosttyBlock } from './terminals/ghostty.ts'
-import { kittyBlock } from './terminals/kitty.ts'
-import { removeLuaBlock, upsertLuaBlock } from './terminals/wezterm.ts'
+import { alacrittyColors, alacrittyConfig, upsertAlacrittyImport } from './terminals/alacritty.ts'
+import { ghosttyBlock, ghosttyOwnText } from './terminals/ghostty.ts'
+import { kittyBlock, kittyOwnText } from './terminals/kitty.ts'
+import { removeLuaBlock, upsertLuaBlock, weztermBlock } from './terminals/wezterm.ts'
 import {
   blurOf,
   coloringFor,
   configFile,
   configTemplate,
+  GENERATED,
+  MANAGED,
   removeBlock,
   SETTING_NAMES,
   settingDefault,
@@ -41,22 +43,35 @@ test('upsertBlock is idempotent', () => {
   assert.equal(upsertBlock(once, 'a = 1'), once)
 })
 
-test('ghosttyBlock routes every new tab through the launcher', () => {
+test('the Ghostty block only includes the file ttheme owns, optionally and from the home folder', () => {
   assert.equal(
-    ghosttyBlock('/cfg/ttheme', 'miku'),
-    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = ttheme-miku\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
+    ghosttyBlock('/home/u/.config/ttheme', '/home/u'),
+    `# ${MANAGED}\nconfig-file = ?~/.config/ttheme/ghostty.conf`,
+  )
+  assert.equal(ghosttyBlock('/cfg/ttheme', '/home/u'), `# ${MANAGED}\nconfig-file = ?/cfg/ttheme/ghostty.conf`)
+})
+
+test("ttheme's Ghostty file routes new tabs through the launcher only while they rotate, and always includes the shown background", () => {
+  assert.equal(
+    ghosttyOwnText('/cfg/ttheme', 'miku', true, true),
+    `# ${GENERATED}\ncommand = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = ttheme-miku\nconfig-file = ?backgrounds/shown.conf\n`,
+  )
+  assert.equal(
+    ghosttyOwnText('/cfg/ttheme', undefined, false, true),
+    `# ${GENERATED}\nconfig-file = ?backgrounds/shown.conf\n`,
   )
 })
 
-test('ghosttyBlock includes the shown background even with no startup palette', () => {
-  assert.equal(
-    ghosttyBlock('/cfg/ttheme', undefined),
-    'command = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
-  )
+test('zshrcBlock sources the layer only while it is there, from where the layer itself finds its config', () => {
+  const layer = '"${XDG_CONFIG_HOME:-$HOME/.config}/ttheme/ttheme.zsh"'
+  assert.equal(zshrcBlock(), `# ${MANAGED}\n[[ -r ${layer} ]] && source ${layer}`)
 })
 
-test('zshrcBlock only sources the layer', () => {
-  assert.equal(zshrcBlock('/cfg/ttheme'), 'source /cfg/ttheme/ttheme.zsh')
+test('the WezTerm block runs the module only while it is there', () => {
+  assert.equal(
+    weztermBlock('/home/u/.config/ttheme/wezterm.lua', '/home/u'),
+    `-- ${MANAGED}\ndo local path = require('wezterm').home_dir .. "/.config/ttheme/wezterm.lua" local file = io.open(path) if file then file:close() dofile(path)(config) end end`,
+  )
 })
 
 test('configFile seeds the template with every default spelled out on a commented line', () => {
@@ -165,38 +180,59 @@ test('configFile appends a documented line when a setting is missing', () => {
   assert.match(out, /^# series and palettes .*\n# : \$\{TTHEME_SORT:=abc\}$/m)
 })
 
-test('the kitty block wears the chosen palette and loads the watcher', () => {
+test("the kitty block includes ttheme's file, which wears the chosen palette and loads the watcher", () => {
+  assert.equal(kittyBlock('/home/u/.config/ttheme', '/home/u'), `# ${MANAGED}\ninclude ~/.config/ttheme/kitty.conf`)
   assert.equal(
-    kittyBlock('miku', '/cfg/ttheme/kitty.py'),
-    'include themes/ttheme-miku.conf\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\nwindow_logo_alpha 1',
+    kittyOwnText('/cfg/kitty/themes/ttheme-miku.conf', '/cfg/ttheme/kitty.py'),
+    `# ${GENERATED}\ninclude /cfg/kitty/themes/ttheme-miku.conf\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\nwindow_logo_alpha 1\n`,
   )
-  assert.doesNotMatch(kittyBlock(undefined, '/cfg/ttheme/kitty.py'), /include/)
+  assert.doesNotMatch(kittyOwnText(undefined, '/cfg/ttheme/kitty.py'), /include/)
 })
 
 test('upsertAlacrittyImport appends a [general] block to a config without one', () => {
-  const theme = '/cfg/alacritty/themes/miku.toml'
-  assert.equal(upsertAlacrittyImport('', theme), `# ttheme begin\n[general]\nimport = ["${theme}"]\n# ttheme end\n`)
-  const own = upsertAlacrittyImport('[font]\nsize = 14\n', theme)
-  assert.equal(own, `[font]\nsize = 14\n\n# ttheme begin\n[general]\nimport = ["${theme}"]\n# ttheme end\n`)
-  assert.equal(upsertAlacrittyImport(own ?? '', theme), own)
+  const own = '~/.config/ttheme/alacritty.toml'
+  assert.equal(
+    upsertAlacrittyImport('', own),
+    `# ttheme begin\n# ${MANAGED}\n[general]\nimport = ["${own}"]\n# ttheme end\n`,
+  )
+  const mine = upsertAlacrittyImport('[font]\nsize = 14\n', own)
+  assert.equal(
+    mine,
+    `[font]\nsize = 14\n\n# ttheme begin\n# ${MANAGED}\n[general]\nimport = ["${own}"]\n# ttheme end\n`,
+  )
+  assert.equal(upsertAlacrittyImport(mine ?? '', own), mine)
 })
 
 test('upsertAlacrittyImport joins an existing [general] table and keeps it on rewrite', () => {
-  const theme = '/cfg/alacritty/themes/miku.toml'
-  const wired = upsertAlacrittyImport('[general]\nlive_config_reload = true\n\n[font]\nsize = 14\n', theme)
+  const own = '~/.config/ttheme/alacritty.toml'
+  const wired = upsertAlacrittyImport('[general]\nlive_config_reload = true\n\n[font]\nsize = 14\n', own)
   assert.equal(
     wired,
-    `[general]\n# ttheme begin\nimport = ["${theme}"]\n# ttheme end\nlive_config_reload = true\n\n[font]\nsize = 14\n`,
+    `[general]\n# ttheme begin\n# ${MANAGED}\nimport = ["${own}"]\n# ttheme end\nlive_config_reload = true\n\n[font]\nsize = 14\n`,
   )
-  assert.equal(upsertAlacrittyImport(wired ?? '', theme), wired)
-  assert.equal(
-    upsertAlacrittyImport(wired ?? '', undefined),
-    '[general]\n# ttheme begin\n# ttheme end\nlive_config_reload = true\n\n[font]\nsize = 14\n',
-  )
+  assert.equal(upsertAlacrittyImport(wired ?? '', own), wired)
+})
+
+test('Alacritty is wired through the config it reads, never one that would hide it', () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-alacritty-'))
+  const at = { home, configHome: join(home, '.config') }
+  assert.deepEqual(alacrittyConfig(at), { file: join(home, '.config', 'alacritty', 'alacritty.toml') })
+  writeFileSync(join(home, '.alacritty.toml'), '[font]\nsize = 14\n')
+  assert.deepEqual(alacrittyConfig(at), { file: join(home, '.alacritty.toml') })
+  mkdirSync(join(home, '.config'), { recursive: true })
+  writeFileSync(join(home, '.config', 'alacritty.toml'), '[font]\nsize = 15\n')
+  assert.deepEqual(alacrittyConfig(at), { file: join(home, '.config', 'alacritty.toml') })
+  const yaml = mkdtempSync(join(tmpdir(), 'ttheme-alacritty-'))
+  mkdirSync(join(yaml, '.config', 'alacritty'), { recursive: true })
+  writeFileSync(join(yaml, '.config', 'alacritty', 'alacritty.yml'), 'font:\n  size: 14\n')
+  assert.deepEqual(alacrittyConfig({ home: yaml, configHome: join(yaml, '.config') }), {
+    file: join(yaml, '.config', 'alacritty', 'alacritty.toml'),
+    yaml: join(yaml, '.config', 'alacritty', 'alacritty.yml'),
+  })
 })
 
 test('upsertAlacrittyImport leaves a config alone when it already imports or defines general otherwise', () => {
-  const theme = '/cfg/alacritty/themes/miku.toml'
+  const theme = '~/.config/ttheme/alacritty.toml'
   assert.equal(upsertAlacrittyImport('[general]\nimport = ["mine.toml"]\n', theme), undefined)
   assert.equal(upsertAlacrittyImport('import = ["mine.toml"]\n', theme), undefined)
   assert.equal(upsertAlacrittyImport('general.live_config_reload = true\n', theme), undefined)
@@ -216,22 +252,10 @@ test('withSetting rewrites the line a setting already has, and adds one when it 
   )
 })
 
-test('ghosttyBlock leaves a command and shell-integration the user set to the user', () => {
-  const block = ghosttyBlock('/cfg/ttheme', 'miku', 'font-size = 13\ncommand = /opt/homebrew/bin/fish\n')
-  assert.equal(block, 'theme = ttheme-miku\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf')
+test("ttheme's kitty file leaves the logo settings the user set to the user", () => {
   assert.equal(
-    ghosttyBlock('/cfg/ttheme', undefined, 'shell-integration = none\n'),
-    'command = /cfg/ttheme/launch-tab.zsh\nconfig-file = ?/cfg/ttheme/backgrounds/shown.conf',
-  )
-  const ours = upsertBlock('', ghosttyBlock('/cfg/ttheme', 'miku'))
-  assert.match(ghosttyBlock('/cfg/ttheme', 'miku', ours), /^command = /m)
-  assert.match(ghosttyBlock('/cfg/ttheme', 'miku', '# command = zsh\ncommand-palette-entry = x\n'), /^command = /m)
-})
-
-test('the kitty block leaves the logo settings the user set to the user', () => {
-  assert.equal(
-    kittyBlock(undefined, '/cfg/ttheme/kitty.py', 'window_logo_alpha 0.4\n'),
-    'watcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100',
+    kittyOwnText(undefined, '/cfg/ttheme/kitty.py', 'window_logo_alpha 0.4\n'),
+    `# ${GENERATED}\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\n`,
   )
 })
 
@@ -242,7 +266,6 @@ test('removeBlock gives back the content upsertBlock started from', () => {
   assert.equal(removeBlock('font-size = 14\n'), 'font-size = 14\n')
   const general = '[general]\nlive_config_reload = true\n\n[font]\nsize = 14\n'
   assert.equal(removeBlock(upsertAlacrittyImport(general, '/t.toml') ?? ''), general)
-  assert.equal(removeBlock(upsertAlacrittyImport(general, undefined) ?? ''), general)
 })
 
 test('removeLuaBlock gives back the config upsertLuaBlock wired, and empties the one it created', () => {

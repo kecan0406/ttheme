@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
-import { dirname, isAbsolute, join } from 'node:path'
+import { basename, dirname, isAbsolute, join } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
 import { readBackdrop } from '../../src/backdrop.ts'
 import { SLOT_CODES } from '../../src/osc.ts'
@@ -175,6 +175,26 @@ function ghosttyLines(file: string, depth = 0): [string, string, string][] {
   })
 }
 
+function expandHome(path: string, home: string): string {
+  return path.startsWith('~/') ? join(home, path.slice(2)) : path
+}
+
+function ghosttyTree(main: string, home: string): { lines: [string, string, string][]; files: string[] } {
+  const lines = ghosttyLines(main)
+  const files: string[] = []
+  for (let i = 0; i < lines.length && files.length < 16; i++) {
+    const [key, value, from] = lines[i] as [string, string, string]
+    if (key !== 'config-file') {
+      continue
+    }
+    const path = expandHome(value.replace(/^\?/, ''), home)
+    const file = isAbsolute(path) ? path : join(dirname(from), path)
+    files.push(file)
+    lines.push(...ghosttyLines(file))
+  }
+  return { lines, files }
+}
+
 export interface GhosttyLoad {
   command?: string
   colors: Colors
@@ -183,7 +203,7 @@ export interface GhosttyLoad {
 }
 
 export function ghosttyLoad(configHome: string): GhosttyLoad {
-  const main = ghosttyLines(join(configHome, 'ghostty', 'config'))
+  const { lines: main, files } = ghosttyTree(join(configHome, 'ghostty', 'config'), dirname(configHome))
   const command = main.findLast(([key]) => key === 'command')?.[1]
   const theme = main.findLast(([key]) => key === 'theme')?.[1]
   const colors = new Map<string, string>()
@@ -212,29 +232,38 @@ export function ghosttyLoad(configHome: string): GhosttyLoad {
   apply(main)
   let picture = 'none'
   let opacity = '-'
-  for (const [key, value, from] of main) {
-    if (key !== 'config-file') {
-      continue
-    }
-    const path = value.replace(/^\?/, '')
-    for (const [inner, target, at] of ghosttyLines(isAbsolute(path) ? path : join(dirname(from), path))) {
-      if (inner === 'config-file') {
-        const conf = target.replace(/^\?/, '')
-        const file = isAbsolute(conf) ? conf : join(dirname(at), conf)
-        picture =
-          existsSync(file) && pictured(file)
-            ? stemName(
-                file
-                  .split('/')
-                  .at(-1)
-                  ?.replace(/\.conf$/, '') ?? '',
-              )
-            : 'none'
-        opacity = picture === 'none' ? '-' : strength(file)
-      }
+  const shown = files.find((file) => basename(file) === 'shown.conf')
+  for (const [inner, target, at] of shown ? ghosttyLines(shown) : []) {
+    if (inner === 'config-file') {
+      const conf = target.replace(/^\?/, '')
+      const file = isAbsolute(conf) ? conf : join(dirname(at), conf)
+      picture =
+        existsSync(file) && pictured(file)
+          ? stemName(
+              file
+                .split('/')
+                .at(-1)
+                ?.replace(/\.conf$/, '') ?? '',
+            )
+          : 'none'
+      opacity = picture === 'none' ? '-' : strength(file)
     }
   }
   return { ...(command ? { command } : {}), colors: filled(colors), picture, opacity }
+}
+
+export function kittyFiles(configHome: string): string[] {
+  const dir = join(configHome, 'kitty')
+  const files: string[] = []
+  const walk = (file: string, depth: number) => {
+    files.push(file)
+    for (const [, path = ''] of depth < 8 ? read(file).matchAll(/^\s*include\s+(.+?)\s*$/gm) : []) {
+      const full = expandHome(path, dirname(configHome))
+      walk(isAbsolute(full) ? full : join(dir, full), depth + 1)
+    }
+  }
+  walk(join(dir, 'kitty.conf'), 0)
+  return files
 }
 
 export function kittyColors(configHome: string): Colors {
@@ -252,7 +281,7 @@ export function kittyColors(configHome: string): Colors {
         continue
       }
       if (match[1] === 'include' && depth < 8) {
-        const path = match[2] ?? ''
+        const path = expandHome(match[2] ?? '', dirname(configHome))
         apply(isAbsolute(path) ? path : join(dirname(file), path), depth + 1)
         continue
       }
@@ -328,15 +357,22 @@ function alacrittyPick(doc: Record<string, unknown>): Record<string, unknown> | 
   }
 }
 
-export function alacrittyFiles(configHome: string): string[] {
-  const config = join(configHome, 'alacritty', 'alacritty.toml')
+function alacrittyTree(file: string, home: string, depth: number): string[] {
   let imports: string[] = []
   try {
-    imports = (parseToml(read(config)) as { general?: { import?: string[] } }).general?.import ?? []
+    imports = (parseToml(read(file)) as { general?: { import?: string[] } }).general?.import ?? []
   } catch {
     imports = []
   }
-  return [...imports, config]
+  const nested = depth < 5 ? imports.map((path) => expandHome(path, home)) : []
+  return [
+    ...nested.flatMap((path) => alacrittyTree(isAbsolute(path) ? path : join(dirname(file), path), home, depth + 1)),
+    file,
+  ]
+}
+
+export function alacrittyFiles(configHome: string): string[] {
+  return alacrittyTree(join(configHome, 'alacritty', 'alacritty.toml'), dirname(configHome), 0)
 }
 
 export function alacrittyColors(configHome: string): Colors {

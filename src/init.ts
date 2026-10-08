@@ -26,9 +26,22 @@ import {
   writeInstalled,
 } from './palettes.ts'
 import { redrawPictures } from './redraw.ts'
+import {
+  bashBlock,
+  bashFiles,
+  fishFunction,
+  fishText,
+  hasZsh,
+  invokingShell,
+  ownsFish,
+  type Shell,
+  shellNamed,
+  shellsOf,
+  zdotdirOf,
+} from './shells.ts'
 import { marketsOf, OFFICIAL } from './sources.ts'
 import { detectTerminal, TRAITS } from './terminal.ts'
-import { systemHost } from './terminals/common.ts'
+import { systemHost, tilde } from './terminals/common.ts'
 import { WIRED, WIRINGS, type Wired, wirings } from './terminals/index.ts'
 import type { Host, Pointed, Setup } from './terminals/types.ts'
 import { warpSettings } from './terminals/warp.ts'
@@ -47,12 +60,15 @@ export interface InitPaths extends Setup {
   root: string
   zdotdir: string
   stateDir?: string
+  shells?: Shell[]
+  platform?: NodeJS.Platform
 }
 
 export interface InitPlan {
   home: string
   copies: { from: string; to: string; executable?: boolean }[]
-  edits: { file: string; block: string }[]
+  edits: { file: string; block: string; about: string }[]
+  writes: { file: string; content: string; about: string }[]
   settings: { file: string; content: string }
   forget: string[]
   catalog: Manifest
@@ -81,7 +97,23 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
   ]
   copyDir(copies, join(paths.root, 'shell', 'adapters'), join(home, 'adapters'))
-  const edits: InitPlan['edits'] = [{ file: join(paths.zdotdir, '.zshrc'), block: zshrcBlock(home) }]
+  const shells = paths.shells ?? ['zsh']
+  const edits: InitPlan['edits'] = [
+    { file: join(paths.zdotdir, '.zshrc'), block: zshrcBlock(), about: 'source ttheme.zsh' },
+    ...(shells.includes('bash')
+      ? bashFiles(paths.home, paths.platform ?? process.platform).map((file) => ({
+          file,
+          block: bashBlock(),
+          about: 'the ttheme command, run through zsh',
+        }))
+      : []),
+  ]
+  const fish = fishFunction(paths.configHome)
+  const ours = !existsSync(fish) || ownsFish(readFileSync(fish, 'utf8'))
+  const writes: InitPlan['writes'] =
+    shells.includes('fish') && ours
+      ? [{ file: fish, content: fishText(), about: 'the ttheme command, run through zsh' }]
+      : []
   const configPath = join(home, 'config.zsh')
   const seeded = configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : '')
   const settings = {
@@ -99,9 +131,29 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     ),
     ...(opts.off ? { off: true as const } : {}),
   }
-  const notes = wiringNotes(paths.configHome, installed, paths.home)
+  const notes = [
+    ...wiringNotes(paths.configHome, installed, paths.home),
+    ...(shells.includes('fish') && !ours
+      ? [`${tilde(fish, paths.home)} is a function of your own — ttheme left it, so fish has no ttheme command`]
+      : []),
+    ...(shells.some((shell) => shell !== 'zsh')
+      ? [
+          `${shells.filter((shell) => shell !== 'zsh').join(' and ')} run ttheme through zsh — a pin taking effect on cd, the picture following the tab in front and the repaint after a program resets the colors stay with zsh tabs`,
+        ]
+      : []),
+  ]
   const forget = paths.stateDir ? [join(paths.stateDir, 'ghostty', '.blind')] : []
-  return { home: paths.home, copies, edits, settings, forget, catalog: loadManifest(paths.root), installed, notes }
+  return {
+    home: paths.home,
+    copies,
+    edits,
+    writes,
+    settings,
+    forget,
+    catalog: loadManifest(paths.root),
+    installed,
+    notes,
+  }
 }
 
 export function installedState(configHome: string): Installed | undefined {
@@ -226,6 +278,9 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''
     editUserFile(e.file, upsertBlock(current, e.block))
   }
+  for (const w of plan.writes) {
+    writeAtomic(w.file, w.content)
+  }
   return pointDefaults(configHome, installed, true, host, plan.home)
 }
 
@@ -271,6 +326,7 @@ function verify(plan: InitPlan): void {
     ...plan.copies.filter((c) => !existsSync(c.to)).map((c) => c.to),
     ...(existsSync(plan.settings.file) ? [] : [plan.settings.file]),
     ...plan.edits.filter((e) => !readFileSync(e.file, 'utf8').includes('# ttheme begin')).map((e) => e.file),
+    ...plan.writes.filter((w) => !existsSync(w.file)).map((w) => w.file),
   ]
   if (missing.length > 0) {
     throw new Error(`init left gaps:\n${missing.join('\n')}`)
@@ -312,13 +368,23 @@ function pickDefault(configHome: string): void {
   })
 }
 
-function receipt(plan: InitPlan, opts: InitOptions, painted: boolean, pointed: ReadonlyMap<Wired, Pointed>): void {
+function reopen(shell: Shell): string {
+  return shell === 'bash' ? 'exec bash -l' : `exec ${shell}`
+}
+
+function receipt(
+  plan: InitPlan,
+  opts: InitOptions,
+  painted: boolean,
+  pointed: ReadonlyMap<Wired, Pointed>,
+  here: Shell,
+): void {
   const series = seriesOf(plan.catalog, opts.palettes)
   p.note(
     [`${series.join(', ')} (${opts.palettes.length})`, ...startupLines(plan.installed, painted)].join('\n'),
     `Installed ${opts.palettes.length} palettes`,
   )
-  p.note(['exec zsh          The ttheme command in this tab', ...nextLines(plan, pointed)].join('\n'), 'Next')
+  p.note([`${reopen(here).padEnd(18)}The ttheme command in this tab`, ...nextLines(plan, pointed)].join('\n'), 'Next')
   p.outro('Done')
 }
 
@@ -330,12 +396,21 @@ function say(interactive: boolean): (line: string) => void {
   return interactive ? (line) => p.log.step(line) : (line) => console.log(line)
 }
 
-async function upgrade(state: Installed, paths: InitPaths, host: Host, interactive: boolean): Promise<void> {
+async function upgrade(
+  state: Installed,
+  paths: InitPaths,
+  host: Host,
+  interactive: boolean,
+  here: Shell,
+): Promise<void> {
   const plan = planUpgrade(state, paths)
   const pointed = applyInit(plan, host)
   verify(plan)
   await redrawPictures(paths.configHome, say(interactive), paths.home)
-  const lines = ['exec zsh          Open tabs run the new layer — new tabs already do', ...nextLines(plan, pointed)]
+  const lines = [
+    `${reopen(here).padEnd(18)}Open tabs run the new layer — new tabs already do`,
+    ...nextLines(plan, pointed),
+  ]
   const title = `Updated to ${pkg.version} — kept ${summary(plan.installed)}`
   if (!interactive) {
     console.log([title, ...lines].join('\n'))
@@ -345,13 +420,13 @@ async function upgrade(state: Installed, paths: InitPaths, host: Host, interacti
   p.outro('Done')
 }
 
-function report(plan: InitPlan, pointed: ReadonlyMap<Wired, Pointed>): void {
+function report(plan: InitPlan, pointed: ReadonlyMap<Wired, Pointed>, here: Shell): void {
   const lines = [
     `Placed ${plan.copies.length} files`,
     `Settings in ${plan.settings.file} — edit later with \`ttheme config\``,
-    ...plan.edits.map((e) => `Wired ${e.file}`),
+    ...[...plan.edits, ...plan.writes].map((e) => `Wired ${e.file}`),
     ...nextLines(plan, pointed),
-    'No palettes yet — open a new shell (`exec zsh`), then `ttheme` picks them from the catalog',
+    `No palettes yet — open a new shell (\`${reopen(here)}\`), then \`ttheme\` picks them from the catalog`,
   ]
   console.log(lines.join('\n'))
 }
@@ -371,21 +446,26 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   }
   const home = homedir()
   const configHome = configDir()
-  const zdotdir = process.env.ZDOTDIR ?? home
   const host = systemHost()
+  if (!hasZsh(host)) {
+    throw new Error('ttheme runs its tab layer in zsh, even for bash and fish — install zsh first')
+  }
   const wtHome = windowsAppData(host)
   const wtProfile = process.env.WT_PROFILE_ID
   const paths: InitPaths = {
     root,
     home,
     configHome,
-    zdotdir,
+    zdotdir: zdotdirOf(host, home),
+    shells: shellsOf(host, process.ppid),
+    platform: host.platform,
     stateDir: join(process.env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme'),
     ...(wtHome ? { wtHome } : {}),
     ...(wtProfile ? { wtProfile } : {}),
   }
+  const here = invokingShell(host.run, process.ppid) ?? shellNamed(host.env.SHELL) ?? 'zsh'
   const detected = detectTerminal(process.env)
-  const preselected = offered(paths, host).filter((t) => t === detected || WIRINGS[t].present(paths))
+  const preselected = offered(paths, host).filter((t) => t === detected)
   if (!flags.yes && (process.stdin.isTTY !== true || process.stdout.isTTY !== true)) {
     throw new Error(
       'init asks before it edits your configs — run it in a terminal, or pass --yes to accept the defaults',
@@ -393,7 +473,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   }
   const existing = installedState(configHome)
   if (flags.yes && existing) {
-    await upgrade(existing, paths, host, false)
+    await upgrade(existing, paths, host, false, here)
     return
   }
   if (flags.yes) {
@@ -409,7 +489,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     const plan = planInit(opts, paths)
     const pointed = applyInit(plan, host)
     verify(plan)
-    report(plan, pointed)
+    report(plan, pointed, here)
     return
   }
   p.intro('ttheme init')
@@ -424,7 +504,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       }),
     )
     if (keep) {
-      await upgrade(existing, paths, host, true)
+      await upgrade(existing, paths, host, true, here)
       return
     }
   }
@@ -456,7 +536,8 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       `Install ${palettes.length} palettes — ${seriesOf(catalog, palettes).join(', ')}`,
       `Copy ${plan.copies.length} files under ${configHome}`,
       `Write ${plan.settings.file}`,
-      ...plan.edits.map((e) => `Edit ${e.file} — a ttheme block: source ttheme.zsh`),
+      ...plan.edits.map((e) => `Edit ${e.file} — a ttheme block: ${e.about}`),
+      ...plan.writes.map((w) => `Write ${w.file} — ${w.about}`),
       ...wiringPlan(configHome, plan.installed, home),
       'Each config is backed up once to <file>.ttheme.bak before the first edit — `npx @kecan0406/ttheme uninstall` takes it all out',
       wear
@@ -485,5 +566,5 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     pickDefault(configHome)
   }
   const installed = readInstalled(configHome)
-  receipt({ ...plan, catalog, installed }, opts, paintStartup(catalog, installed, configHome), pointed)
+  receipt({ ...plan, catalog, installed }, opts, paintStartup(catalog, installed, configHome), pointed, here)
 }

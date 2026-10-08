@@ -197,7 +197,7 @@ and without the choice — `TTHEME_TAB_PALETTE=seq`, or a terminal init did not
 wire — enter applies to this tab at once.
 
 The question is asked with `TTHEME_TAB_PALETTE=off` (the default), in a
-terminal init wired — and always in Ghostty and iTerm2. Default rewrites `theme =` in the `# ttheme begin` block of your Ghostty config and sends
+terminal init wired — and always in Ghostty and iTerm2. Default rewrites `theme =` in `~/.config/ttheme/ghostty.conf`, the file the `# ttheme begin` block of your Ghostty config includes, and sends
 `SIGUSR2` to the Ghostty that owns the tab, rewrites iTerm2's `ttheme · default`
 profile, which iTerm2 reloads by itself, makes the palette's
 `ttheme · <palette>` profile Konsole's default, which every running Konsole
@@ -329,7 +329,10 @@ turns tab-separated, and `NO_COLOR` is respected.
 
 With `TTHEME_TAB_PALETTE=seq`, new tabs take the next palette in group order, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather
-than rolling the same one twice.
+than rolling the same one twice. Turned on through `ttheme config` or alt-c in
+`preview`, it also has Ghostty open new tabs through `launch-tab.zsh`, which
+paints the next palette before your shell starts; set any other way, the tab
+takes it once zsh starts.
 
 ## Settings
 

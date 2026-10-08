@@ -8,7 +8,7 @@ import { runFind } from './find/find.ts'
 import { runBake, runFlatten, runImage } from './images.ts'
 import { runInfo } from './info.ts'
 import { runInit } from './init.ts'
-import { runAdd, runDefault, runList, runOff, runOn, runRemove, runUpdate } from './installs.ts'
+import { runAdd, runDefault, runList, runOff, runOn, runRemove, runSync, runUpdate } from './installs.ts'
 import { runMarket } from './markets.ts'
 import { startNamesUpdate, updateNames } from './names-update.ts'
 import { runRedraw } from './redraw.ts'
@@ -67,6 +67,7 @@ const RUNS: Record<string, Verb['run']> = {
   build: (_, { only }) => build({ only }),
   find: ([name]) => runFind(name as string),
   image: ([name, action, key]) => runImage(name as string, action as string, key),
+  sync: () => runSync(),
   redraw: () => runRedraw(),
   names: () => updateNames(),
   latest: () => checkLatest(),

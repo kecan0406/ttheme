@@ -320,7 +320,7 @@ __tt_name_of() { REPLY=${${(k)TTHEME_PALETTE[(re)$1]}:-custom} }
 __tt_color() { [[ -t 1 && -z $NO_COLOR && $TERM != dumb ]] }
 
 __tt_announce() {
-  (( TTHEME_ANNOUNCE )) || return 0
+  (( TTHEME_ANNOUNCE )) && [[ -t 1 ]] || return 0
   local -a p=(${=TTHEME_SPEC})
   (( ${#p} >= 20 )) || return 0
   local REPLY
@@ -1385,14 +1385,16 @@ __tt_switch() {
 }
 
 __tt_config() {
-  local blur
+  local blur tab
   if [[ ! -e $TTHEME_CONFIG ]]; then
     mkdir -p ${TTHEME_CONFIG:h} || return 1
     __tt_put $TTHEME_CONFIG "$TTHEME_CONFIG_TEMPLATE"
   fi
   blur=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*}
+  tab=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_TAB_PALETTE:='*}
   ${=${VISUAL:-${EDITOR:-vi}}} $TTHEME_CONFIG || return
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*} == "$blur" ]] || __tt_redraw
+  [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_TAB_PALETTE:='*} == "$tab" ]] || { __tt_cli sync && __tt_reload }
   print -r -- "Settings apply in new tabs — $TTHEME_CONFIG"
 }
 

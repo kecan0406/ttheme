@@ -33,6 +33,7 @@ import { decodePng, encodeRgba } from './png.ts'
 import { itermProfilesPath } from './terminals/iterm2.ts'
 import type { Host } from './terminals/types.ts'
 import { warpSettings, warpThemes, warpThemeValue } from './terminals/warp.ts'
+import { weztermBlock } from './terminals/wezterm.ts'
 import { wtFragmentPath } from './terminals/windows-terminal.ts'
 
 function entry(name: string, order: number, partial: Partial<PaletteEntry> = {}): PaletteEntry {
@@ -147,22 +148,22 @@ test('sync writes an empty but valid table when nothing is installed', () => {
   sync(home, catalog, { terminals: ['ghostty'], palettes: [] })
   const table = readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8')
   assert.match(table, /TTHEME_ORDER=\(\)/)
-  assert.doesNotMatch(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = /m)
+  assert.doesNotMatch(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = /m)
 })
 
 test('sync points the terminal at the startup palette once one is installed', () => {
   const home = fixture()
   sync(home, catalog, { terminals: ['ghostty'], palettes: ['gojo'] })
-  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-gojo$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-gojo$/m)
 })
 
 test('sync leaves the terminal theme alone while ttheme is off', () => {
   const home = fixture()
   sync(home, catalog, { terminals: ['ghostty', 'kitty'], off: true, palettes: ['gojo'] })
-  const config = readFileSync(join(home, 'ghostty', 'config'), 'utf8')
+  const config = readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8')
   assert.doesNotMatch(config, /^theme = /m)
-  assert.match(config, /^config-file = \?.*\/backgrounds\/shown\.conf$/m)
-  assert.doesNotMatch(readFileSync(join(home, 'kitty', 'kitty.conf'), 'utf8'), /^include /m)
+  assert.match(config, /^config-file = \?backgrounds\/shown\.conf$/m)
+  assert.doesNotMatch(readFileSync(join(home, 'ttheme', 'kitty.conf'), 'utf8'), /^include /m)
   assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo')))
 })
 
@@ -175,10 +176,7 @@ test('sync wires WezTerm through a module its config runs, and creates the confi
   assert.match(readFileSync(module, 'utf8'), /^local STARTUP = "ttheme-gojo"$/m)
   assert.match(readFileSync(module, 'utf8'), /^ {2}\["gojo"\] = "#11191c",$/m)
   const config = readFileSync(join(configHome, 'wezterm', 'wezterm.lua'), 'utf8')
-  assert.match(
-    config,
-    new RegExp(`-- ttheme begin\\ndofile\\("${module}"\\)\\(config\\)\\n-- ttheme end\\n\\nreturn config\\n$`),
-  )
+  assert.ok(config.endsWith(`-- ttheme begin\n${weztermBlock(module, home)}\n-- ttheme end\n\nreturn config\n`))
 })
 
 test('sync wires an existing wezterm.lua before its last return, and leaves one without it alone', () => {
@@ -187,7 +185,10 @@ test('sync wires an existing wezterm.lua before its last return, and leaves one 
   const dotfile = join(home, '.wezterm.lua')
   writeFileSync(dotfile, 'local config = {}\nconfig.font_size = 13\nreturn config\n')
   sync(configHome, catalog, { terminals: ['wezterm'], palettes: ['gojo'] }, home)
-  assert.match(readFileSync(dotfile, 'utf8'), /font_size = 13\n-- ttheme begin\n.*\n-- ttheme end\n\nreturn config\n$/)
+  assert.match(
+    readFileSync(dotfile, 'utf8'),
+    /font_size = 13\n-- ttheme begin\n.*\n.*\n-- ttheme end\n\nreturn config\n$/,
+  )
   assert.ok(!existsSync(join(configHome, 'wezterm', 'wezterm.lua')))
 
   writeFileSync(dotfile, 'return { font_size = 13 }\n')
@@ -599,7 +600,7 @@ test("a market's palette gets theme files and a startup line with -- for the @ a
   sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['kec@dust/rei'] })
   assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-kec--dust--rei')))
   assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-kec--dust--rei.conf')))
-  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-kec--dust--rei$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-kec--dust--rei$/m)
   assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(kec@dust\/rei\)/)
 })
 

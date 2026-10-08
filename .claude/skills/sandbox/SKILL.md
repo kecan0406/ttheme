@@ -58,7 +58,7 @@ zsh $G --shots <scratchpad>/paint gojo konata -- 'ttheme use gojo' 'sb_report "f
 
 The script starts a fresh sandbox with those palettes (every palette when none are named, none with `--empty`, the user's own install with `--mine`; `--pictured` puts a test picture on the last one named, as a find install would) and opens a second Ghostty instance on it — its own config only, no saved window state — then hands focus back to whatever the user had in front as soon as the window exists. The commands after `--` run once, at the first prompt of that first window. Then it prints the results and closes the instance; `--keep` leaves it open. Anything longer than a line or two goes in a file in the scratchpad, passed as `-- "source <file>"`; the arguments are joined with `; ` and nested quotes get painful fast.
 
-That first window is what a new tab gets: Ghostty started it through `launch-tab.zsh`, so the tab rotation, the `theme =` line and background confs apply as they would for a new tab.
+That first window is what a new tab gets: Ghostty started it as it starts any new tab — through `launch-tab.zsh` once `TTHEME_TAB_PALETTE` rotates, since ttheme's `ghostty.conf` sets `command` only then — so the tab rotation, the `theme =` line and background confs apply as they would for a new tab.
 
 Inside the commands (both window modes):
 
@@ -171,4 +171,5 @@ The window scripts are macOS's (`screencapture`, `lsappinfo`). On Linux, `mise r
 - `pgrep ghostty` from Claude's shell misses the user's Ghostty (BSD pgrep skips its own ancestors) — that does not mean it is not running.
 - Ghostty's full log: `/usr/bin/log show --info --last 2m --predicate 'process == "ghostty"'` — `log` alone is a zsh builtin.
 - To test Ghostty and iTerm2 wired together, add `ghostty` to `installed.json`'s terminals inside an iTerm2 run and resync (`ttheme default <name>`), never the reverse: a Ghostty-mode shell has the user's real `HOME`, so syncing with `iterm2` wired there overwrites the user's own `DynamicProfiles/ttheme.json`. Append a logging `__tt_reload_ghostty` to `$ZDOTDIR/.zshrc` first (and define it in the run's shell) — it is the one function that signals Ghostty, behind both `__tt_reload` and `__tt_pictured` — because from iTerm2 a Ghostty reload falls back to `pkill -USR2 -x ghostty` and would reach the user's Ghostty; `sb_drive` children read `.zshrc`, so they log too.
+- A bash or fish started inside the sandbox runs `ttheme` through `zsh -c`, which never reaches the quiet hook's `precmd`, so its Ghostty reload falls back to `pkill -USR2 -x ghostty` and reaches the user's Ghostty: put a logging `pkill` first on `PATH` before any command that reloads, and again inside `bash -l`, whose `/etc/profile` (`path_helper`) moves `/usr/bin` ahead of it.
 - Report what was measured (colors, screens, reload counts, log lines) apart from what was inferred.

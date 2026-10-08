@@ -40,8 +40,10 @@
 npx @kecan0406/ttheme@latest init
 ```
 
-It asks which terminals to wire and which series to install, shows every file it
-is about to change, and writes nothing until you confirm. Then:
+It needs Node 22 or newer and zsh, which macOS ships — bash and fish get the
+`ttheme` command too, run through zsh. It asks which terminals to wire and which
+series to install, shows every file it is about to change, and writes nothing
+until you confirm. Then:
 
 ```sh
 exec zsh               # the ttheme command in this tab
@@ -51,13 +53,17 @@ ttheme                 # preview and browse as tabs — tab switches
 <details>
 <summary><b>What init changes</b></summary>
 
-- Your terminal config and `~/.zshrc` get a block between `# ttheme begin` /
-  `# ttheme end`; everything outside it is left alone, and what goes in is
-  colors only — no font, font size or shader.
+- Your terminal config and `~/.zshrc` get one line between `# ttheme begin` /
+  `# ttheme end` that loads a file ttheme keeps under `~/.config/ttheme`, and
+  only while it is there — so changing the default palette never touches your
+  config again, and a config synced to a machine without ttheme still works.
+  Everything outside the block is left alone, and what ttheme sets is colors —
+  no font, font size or shader — plus, in Ghostty while new tabs rotate
+  palettes, the `command` that opens them on the next one.
 - Each file is backed up once to `<file>.ttheme.bak` before the first edit, and
   written through symlinks, so a dotfiles repo keeps its links.
-- A key you set yourself stays yours, and every file ttheme adds to a terminal's
-  folders is named `ttheme-<palette>`.
+- A `command` or `shell-integration` you set in Ghostty stays yours, and every
+  file ttheme adds to a terminal's folders is named `ttheme-<palette>`.
 - `npx @kecan0406/ttheme@latest uninstall` lists and then reverses all of it.
 
 Per-terminal details, manual install from the release archives and building from

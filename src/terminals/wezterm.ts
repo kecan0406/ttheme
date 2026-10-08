@@ -3,14 +3,18 @@ import { join } from 'node:path'
 import { backgroundsDir } from '../backdrop.ts'
 import { wezterm as emitter } from '../emit/index.ts'
 import { weztermModule } from '../emit/wezterm.ts'
+import { fromHome, MANAGED } from '../wiring.ts'
 import { readText, stripped, tilde } from './common.ts'
 import type { At, Wiring } from './types.ts'
 
 const LUA_BLOCK = /-- ttheme begin\n[\s\S]*?-- ttheme end\n?/
 const LUA_RETURN = /^return config[ \t]*$/gm
 
-export function weztermBlock(module: string): string {
-  return `dofile(${JSON.stringify(module)})(config)`
+export function weztermBlock(module: string, home: string): string {
+  const relative = fromHome(module, home, '')
+  const path =
+    relative === undefined ? JSON.stringify(module) : `require('wezterm').home_dir .. ${JSON.stringify(relative)}`
+  return `-- ${MANAGED}\ndo local path = ${path} local file = io.open(path) if file then file:close() dofile(path)(config) end end`
 }
 
 const WEZTERM_SKELETON = "local wezterm = require 'wezterm'\nlocal config = wezterm.config_builder()\n\n"
@@ -68,7 +72,7 @@ export const wezterm: Wiring = {
       }),
     )
     const config = weztermConfig(ctx.configHome, ctx.home)
-    const wired = upsertLuaBlock(readText(config), weztermBlock(module(ctx)))
+    const wired = upsertLuaBlock(readText(config), weztermBlock(module(ctx), ctx.home))
     if (wired !== undefined) {
       out.wire(config, wired)
     }

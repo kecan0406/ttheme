@@ -260,6 +260,14 @@ export const VERB_SPECS: VerbSpec[] = [
     hidden: true,
   },
   {
+    name: 'sync',
+    args: [],
+    about:
+      "Write every wired terminal's config again from what is installed and config.zsh — ttheme config and preview call this when TTHEME_TAB_PALETTE changed",
+    section: 'setup',
+    hidden: true,
+  },
+  {
     name: 'redraw',
     args: [],
     about: 'Draw the background pictures again after TTHEME_BG_BLUR changed — ttheme config and preview call this',

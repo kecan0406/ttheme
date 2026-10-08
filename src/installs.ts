@@ -122,6 +122,11 @@ export function runDefault(name: string): void {
   console.log(defaultNote(name, state.terminals, pointed).join('\n'))
 }
 
+export function runSync(): void {
+  const home = configHome()
+  sync(home, readCatalog(home), readInstalled(home))
+}
+
 export function runOn(): void {
   const home = configHome()
   const state = readInstalled(home)

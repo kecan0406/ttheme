@@ -102,7 +102,9 @@ Everything ttheme knows lives in a few files with one owner each —
 `installed.json` (what is installed, the default, on or off), the pictures'
 store, `config.zsh` and the pins — and each terminal is wired by one module in
 `src/terminals/` behind the same interface: it writes its theme files, keeps its
-own block in your config (or its profiles, fragment or settings key), says what
+own block in your config — one line that loads a file ttheme keeps beside the
+layer, so a change after init rewrites that file and never yours — (or its
+profiles, fragment or settings key), says what
 init will change, takes it all out again on uninstall, and — for the terminals
 whose default is a profile, iTerm2 and Konsole — points new tabs at ttheme's
 profile and gives yours back. Every command that changes the state (`init`,
@@ -179,7 +181,8 @@ which the shell layer sets whenever the tab's palette changes, and reads the
 picture from `backgrounds/<palette>.conf` itself — so a picture installed or
 tuned from Ghostty or iTerm2 reaches WezTerm within a second.
 
-kitty gets a watcher, `~/.config/ttheme/kitty.py`, which the kitty block loads:
+kitty gets a watcher, `~/.config/ttheme/kitty.py`, which `~/.config/ttheme/kitty.conf`
+loads — the file the kitty block includes:
 the shell layer tells it what a window wears and shows through user vars
 (`ttheme_worn`, `ttheme_shown`, `ttheme_startup`), and it answers with the
 window's logo — kitty's per-window picture, drawn above the default background
@@ -187,7 +190,7 @@ and below any cell with a background of its own, which does not scroll — read
 from `backgrounds/<palette>.conf` itself, so a picture tuned in another terminal
 shows the next time a kitty window takes focus. kitty 0.49 draws every logo at
 the global `window_logo_alpha` and scales every logo by `window_logo_scale`, so
-the block sets those to 1 and 100 and the watcher fades the picture's own alpha
+ttheme's file sets those to 1 and 100 and the watcher fades the picture's own alpha
 to the tuned opacity instead. kitty reloads its config by itself whenever
 `kitty.conf` or a file it includes changes, and a reload resets every color an
 OSC set; the watcher wraps the reload and puts each window's palette back, and

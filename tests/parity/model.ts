@@ -17,6 +17,7 @@ import {
   itermProfiles,
   type KonsoleLook,
   kittyColors,
+  kittyFiles,
   kittyTheme,
   konsoleLook,
   konsoleProfile,
@@ -296,21 +297,17 @@ const kitty = (): Kind => {
   let config = OWN
   let files: string[] = []
   let watching = false
-  const conf = (app: App) => read(join(app.place.configHome, 'kitty', 'kitty.conf'))
-  const include = (app: App) =>
-    [...conf(app).matchAll(/^include (.+)$/gm)].map(([, file]) => join(app.place.configHome, 'kitty', file ?? ''))
+  const load = (app: App) => {
+    config = kittyColors(app.place.configHome)
+    files = kittyFiles(app.place.configHome)
+    watching = files.some((file) => /^watcher /m.test(read(file)))
+  }
   return {
-    launch(app) {
-      config = kittyColors(app.place.configHome)
-      files = include(app)
-      watching = /^watcher /m.test(conf(app))
-    },
+    launch: load,
     opening: (app) => ({ argv: login(app), env: {}, colors: config }),
-    watched: (app) => [join(app.place.configHome, 'kitty', 'kitty.conf'), ...files],
+    watched: () => files,
     changed(app) {
-      config = kittyColors(app.place.configHome)
-      files = include(app)
-      watching = /^watcher /m.test(conf(app))
+      load(app)
       for (const tab of app.tabs) {
         for (const [code, slot] of tab.slots) {
           slot.base = config.get(code) ?? slot.base

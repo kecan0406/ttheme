@@ -69,7 +69,7 @@ test('a kept default survives a later add', () => {
     runAdd(['sukuna'])
   })
   assert.equal(readInstalled(home).startup, 'geto')
-  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-geto$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-geto$/m)
 })
 
 test('default turns ttheme back on', () => {
@@ -77,7 +77,7 @@ test('default turns ttheme back on', () => {
   writeInstalled(home, { terminals: ['ghostty'], off: true, palettes: ['gojo', 'geto'] })
   inHome(home, () => runDefault('geto'))
   assert.equal(readInstalled(home).off, undefined)
-  assert.match(readFileSync(join(home, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-geto$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-geto$/m)
 })
 
 test('default refuses a palette that is not installed', () => {

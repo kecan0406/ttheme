@@ -7,6 +7,7 @@ import { cacheRoot } from './booru.ts'
 import { Cancelled } from './cancelled.ts'
 import { restoreUserFile } from './edits.ts'
 import { configHome as configDir, type Installed, pointDefaults, readInstalled } from './palettes.ts'
+import { bashCandidates, fishFunction, ownsFish, zdotdirOf } from './shells.ts'
 import { localRoot } from './sources.ts'
 import { ownedIn, stripped, systemHost } from './terminals/common.ts'
 import { WIRED, wirings } from './terminals/index.ts'
@@ -84,9 +85,15 @@ export function planUninstall(paths: UninstallPaths): UninstallPlan {
   const every = wirings(WIRED)
   const parts = every.map((wiring) => wiring.unwire(at, state))
   const owns = [join(configHome, 'ttheme'), paths.cacheDir, paths.stateDir]
+  const fish = fishFunction(configHome)
   return {
-    edits: [...stripped(join(paths.zdotdir, '.zshrc'), removeBlock), ...parts.flatMap((part) => part.edits)],
+    edits: [
+      ...stripped(join(paths.zdotdir, '.zshrc'), removeBlock),
+      ...bashCandidates(home).flatMap((file) => stripped(file, removeBlock)),
+      ...parts.flatMap((part) => part.edits),
+    ],
     removals: [
+      ...(existsSync(fish) && ownsFish(readFileSync(fish, 'utf8')) ? [fish] : []),
       ...every.flatMap((wiring) => (wiring.shelf ? ownedIn(wiring.shelf.dir(at)) : [])),
       ...every.flatMap((wiring) => (wiring.shelf ? filesIn(wiring.shelf.dir(at)).filter(unprefixed) : [])),
       ...oldShaders(join(configHome, 'ghostty', 'shaders')),
@@ -136,7 +143,7 @@ function uninstallPaths(): UninstallPaths {
   return {
     home,
     configHome: configDir(),
-    zdotdir: process.env.ZDOTDIR ?? home,
+    zdotdir: zdotdirOf(systemHost(), home),
     cacheDir: cacheRoot(),
     stateDir: join(process.env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme'),
   }

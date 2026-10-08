@@ -4,20 +4,31 @@ import { backgroundsDir } from '../backdrop.ts'
 import { kitty as emitter } from '../emit/index.ts'
 import { kittyWatcher } from '../emit/kitty.ts'
 import { owned } from '../theme.ts'
-import { removeBlock, upsertBlock, userSets } from '../wiring.ts'
+import { fromHome, GENERATED, MANAGED, removeBlock, upsertBlock, userSets } from '../wiring.ts'
 import { blockKeys, readText, stripped, tilde } from './common.ts'
-import type { At, Wiring } from './types.ts'
+import type { At, Now, Wiring } from './types.ts'
 
-export function kittyBlock(palette: string | undefined, watcher: string, user = ''): string {
+export function kittyBlock(tthemeDir: string, home: string): string {
+  const own = join(tthemeDir, 'kitty.conf')
+  return `# ${MANAGED}\ninclude ${fromHome(own, home, '~') ?? own}`
+}
+
+export function kittyOwnText(theme: string | undefined, watcher: string, user = ''): string {
   return [
-    ...(palette ? [`include themes/${owned(palette)}.conf`] : []),
+    `# ${GENERATED}`,
+    ...(theme ? [`include ${theme}`] : []),
     `watcher ${watcher}`,
     ...['window_logo_scale 100', 'window_logo_alpha 1'].filter((line) => !userSets(user, line.split(' ')[0] as string)),
+    '',
   ].join('\n')
 }
 
 export function kittyConfig(configHome: string): string {
   return join(configHome, 'kitty', 'kitty.conf')
+}
+
+export function kittyOwn(configHome: string): string {
+  return join(configHome, 'ttheme', 'kitty.conf')
 }
 
 export function kittyWatcherPath(configHome: string): string {
@@ -26,6 +37,14 @@ export function kittyWatcherPath(configHome: string): string {
 
 function themes(at: At): string {
   return join(at.configHome, 'kitty', 'themes')
+}
+
+function ownText(now: Now): string {
+  return kittyOwnText(
+    now.startup && join(themes(now), `${owned(now.startup)}.conf`),
+    kittyWatcherPath(now.configHome),
+    readText(kittyConfig(now.configHome)),
+  )
 }
 
 export const kitty: Wiring = {
@@ -41,17 +60,18 @@ export const kitty: Wiring = {
       kittyWatcherPath(ctx.configHome),
       kittyWatcher({ themes: themes(ctx), backgrounds: backgroundsDir(ctx.configHome) }),
     )
+    out.write(kittyOwn(ctx.configHome), ownText(ctx))
     const file = kittyConfig(ctx.configHome)
-    const user = readText(file)
-    out.wire(file, upsertBlock(user, kittyBlock(ctx.startup, kittyWatcherPath(ctx.configHome), user)))
+    out.wire(file, upsertBlock(readText(file), kittyBlock(join(ctx.configHome, 'ttheme'), ctx.home)))
   },
-  plan(ctx) {
-    const file = kittyConfig(ctx.configHome)
-    const body = kittyBlock(ctx.startup, kittyWatcherPath(ctx.configHome), readText(file))
-    return [`Edit ${tilde(file, ctx.home)} — a ttheme block: ${blockKeys(body)}`]
+  plan(now) {
+    return [
+      `Edit ${tilde(kittyConfig(now.configHome), now.home)} — a ttheme block: include`,
+      `Write ${tilde(kittyOwn(now.configHome), now.home)} — ${blockKeys(ownText(now))}`,
+    ]
   },
-  notes(ctx) {
-    const user = readText(kittyConfig(ctx.configHome))
+  notes(now) {
+    const user = readText(kittyConfig(now.configHome))
     return userSets(user, 'window_logo_scale') || userSets(user, 'window_logo_alpha')
       ? ['kitty.conf sets its own window_logo_scale or window_logo_alpha — pictures are drawn with them']
       : []

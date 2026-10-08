@@ -16,6 +16,8 @@ import {
 } from './init.ts'
 import { SCHEMA } from './manifest.ts'
 import { type Installed, sync } from './palettes.ts'
+import { applyUninstall, planUninstall } from './uninstall.ts'
+import { MANAGED, withSetting } from './wiring.ts'
 
 function manifestFixture() {
   const palette = (name: string, order: number, role?: 'default') => ({
@@ -157,7 +159,7 @@ test('applyInit creates the layout, marks the launcher executable and wires conf
   assert.ok(statSync(launcher).mode & 0o100, 'launcher is not executable')
   const ghostty = readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8')
   assert.match(ghostty, /# ttheme begin/)
-  assert.match(ghostty, /command = .*launch-tab\.zsh/)
+  assert.match(ghostty, /^config-file = \?~\/\.config\/ttheme\/ghostty\.conf$/m)
   const zshrc = readFileSync(join(paths.home, '.zshrc'), 'utf8')
   assert.match(zshrc, /source .*ttheme\.zsh/)
   assert.ok(!zshrc.includes('export TTHEME_'))
@@ -188,7 +190,7 @@ test('init wears the first palette and leaves the new-tab setting at its default
   const paths = makeFixture()
   const tab = /^(?:# )?: \$\{TTHEME_TAB_PALETTE:=(\w+)\}$/m
   applyInit(planInit(options({ palettes: ['neutral', 'miku'] }), paths))
-  assert.match(readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8'), /^theme = ttheme-neutral$/m)
+  assert.match(readFileSync(join(paths.configHome, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-neutral$/m)
   assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8').match(tab)?.[1], 'off')
 })
 
@@ -205,6 +207,57 @@ test('init writes the Warp tab-switch answer only when it differs from the defau
   assert.equal(fast(), 'off')
   applyInit(planInit(options({ warpFast: true }), paths))
   assert.equal(fast(), '# on')
+})
+
+test('Ghostty opens new tabs through the launcher only while they rotate, and never over a command of the user', () => {
+  const paths = makeFixture()
+  const own = join(paths.configHome, 'ttheme', 'ghostty.conf')
+  const config = join(paths.configHome, 'ttheme', 'config.zsh')
+  applyInit(planInit(options(), paths))
+  assert.doesNotMatch(readFileSync(own, 'utf8'), /^command = /m)
+  writeFileSync(config, withSetting(readFileSync(config, 'utf8'), 'TTHEME_TAB_PALETTE', 'seq'))
+  applyInit(planInit(options(), paths))
+  assert.match(readFileSync(own, 'utf8'), /^command = .*launch-tab\.zsh\nshell-integration = zsh$/m)
+  writeFileSync(join(paths.configHome, 'ghostty', 'config.ghostty'), 'command = /opt/homebrew/bin/fish\n')
+  applyInit(planInit(options(), paths))
+  assert.doesNotMatch(readFileSync(own, 'utf8'), /^command = /m)
+})
+
+test('bash and fish get the ttheme command through zsh, and uninstall takes both out', () => {
+  const paths: InitPaths = { ...makeFixture(), shells: ['zsh', 'bash', 'fish'], platform: 'darwin' }
+  writeFileSync(join(paths.home, '.bashrc'), 'alias ll="ls -l"\n')
+  const plan = planInit(options(), paths)
+  assert.deepEqual(
+    plan.edits.map((e) => e.file),
+    [join(paths.home, '.zshrc'), join(paths.home, '.bashrc'), join(paths.home, '.bash_profile')],
+  )
+  applyInit(plan)
+  const fish = join(paths.configHome, 'fish', 'functions', 'ttheme.fish')
+  assert.match(readFileSync(join(paths.home, '.bashrc'), 'utf8'), /^ttheme\(\) \{ zsh -c /m)
+  assert.ok(readFileSync(fish, 'utf8').startsWith(`# ${MANAGED}\nfunction ttheme`))
+  const uninstall = {
+    home: paths.home,
+    configHome: paths.configHome,
+    zdotdir: paths.zdotdir,
+    cacheDir: join(paths.home, '.cache', 'ttheme'),
+    stateDir: join(paths.home, '.local', 'state', 'ttheme'),
+  }
+  applyUninstall(planUninstall(uninstall), uninstall, { platform: 'darwin', env: {}, run: () => undefined })
+  assert.equal(readFileSync(join(paths.home, '.bashrc'), 'utf8'), 'alias ll="ls -l"\n')
+  assert.ok(!existsSync(join(paths.home, '.bash_profile')))
+  assert.ok(!existsSync(fish))
+})
+
+test("a fish function of the user's own named ttheme is left alone", () => {
+  const paths = makeFixture()
+  const fish = join(paths.configHome, 'fish', 'functions', 'ttheme.fish')
+  mkdirSync(join(fish, '..'), { recursive: true })
+  writeFileSync(fish, 'function ttheme\n  echo mine\nend\n')
+  const plan = planInit(options(), { ...paths, shells: ['zsh', 'fish'] })
+  assert.deepEqual(plan.writes, [])
+  assert.ok(plan.notes.some((note) => note.includes('is a function of your own')))
+  applyInit(plan)
+  assert.equal(readFileSync(fish, 'utf8'), 'function ttheme\n  echo mine\nend\n')
 })
 
 test('applyInit is idempotent', () => {
@@ -330,7 +383,7 @@ test('setting it up again keeps the markets, their auto-update, the handle and w
     palettes,
   })
   assert.match(
-    readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8'),
+    readFileSync(join(paths.configHome, 'ttheme', 'ghostty.conf'), 'utf8'),
     /^theme = ttheme-alice--pastel--dusk$/m,
   )
 })

@@ -3,8 +3,9 @@
 ## Ghostty
 
 A palette can also bring a Ghostty background image. The block `init` writes
-includes `~/.config/ttheme/backgrounds/shown.conf` with an optional
-`config-file = ?…`, and that one line names the palette whose picture is up.
+includes ttheme's `~/.config/ttheme/ghostty.conf`, which includes
+`backgrounds/shown.conf` beside it with an optional `config-file = ?…`, and that
+one line names the palette whose picture is up.
 Putting a palette on — `ttheme use <name>`, enter in `preview`,
 `ttheme default`, cd into a pinned directory — rewrites the line and sends
 `SIGUSR2`, so whatever Ghostty settings you put in `<palette>.conf` arrive with
