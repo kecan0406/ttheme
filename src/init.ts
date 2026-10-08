@@ -284,7 +284,7 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
   return pointDefaults(configHome, installed, true, host, plan.home)
 }
 
-function accepted<T>(value: T | symbol): T {
+function accepted<T>(value: T | typeof p.CANCEL_SYMBOL): T {
   if (p.isCancel(value)) {
     p.cancel('Nothing changed')
     throw new Cancelled()
