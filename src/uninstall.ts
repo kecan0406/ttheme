@@ -88,7 +88,9 @@ export function planUninstall(paths: UninstallPaths): UninstallPlan {
   const fish = fishFunction(configHome)
   return {
     edits: [
-      ...stripped(join(paths.zdotdir, '.zshrc'), removeBlock),
+      ...[...new Set([join(paths.zdotdir, '.zshrc'), join(home, '.zshrc')])].flatMap((file) =>
+        stripped(file, removeBlock),
+      ),
       ...bashCandidates(home).flatMap((file) => stripped(file, removeBlock)),
       ...parts.flatMap((part) => part.edits),
     ],

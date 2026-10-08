@@ -139,6 +139,20 @@ test('uninstall gives back a config that ended without a newline or with blank l
   }
 })
 
+test('uninstall takes the block out of ~/.zshrc too when zsh reads its .zshrc from ZDOTDIR', () => {
+  const base = paths()
+  const zdotdir = join(base.home, '.zsh')
+  const p = { ...base, zdotdir }
+  const mine = 'export FOO=1\n'
+  put(join(zdotdir, '.zshrc'), `${mine}\n# ttheme begin\nsource ~/.config/ttheme/ttheme.zsh\n# ttheme end\n`)
+  put(join(p.home, '.zshrc'), '# ttheme begin\nsource ~/.config/ttheme/ttheme.zsh\n# ttheme end\n')
+
+  applyUninstall(planUninstall(p), p, host)
+
+  assert.equal(readFileSync(join(zdotdir, '.zshrc'), 'utf8'), mine)
+  assert.ok(!existsSync(join(p.home, '.zshrc')))
+})
+
 test('a config kept as a symlink stays one through install and uninstall', () => {
   const p = paths()
   const real = join(p.home, 'dotfiles', 'ghostty')
