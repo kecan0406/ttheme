@@ -1,0 +1,33 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "rokkenjima"
+native_names = ["六軒島"]
+order = 81
+ansi_source = "Sequoia Retro Dark + Truth"
+signature = ["cursor", "ansi3", "ansi4"]
+
+[colors]
+background = "#1d170c"
+foreground = "#f2e0c5"
+cursor = "#e8b246"
+selection_background = "#3f3c4a"
+ansi = [
+  "#292318",
+  "#d98d74",
+  "#a2b270",
+  "#ffa48e",
+  "#75a6c8",
+  "#e888b0",
+  "#78bdb2",
+  "#d1c5b4",
+
+  "#807667",
+  "#ffa98d",
+  "#c3d38e",
+  "#ffd4bb",
+  "#87cadf",
+  "#eab5de",
+  "#99dfd3",
+  "#feebd0",
+]

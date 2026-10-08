@@ -53,6 +53,32 @@
       },
       "required": ["name"]
     },
+    "catalog": {
+      "description": "The catalogs, the folders under palettes/, in the order ttheme lists them, each with an optional title in its original language and a lead palette whose colors stand for it; a folder no table names follows them, in name order\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#marketplaces",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "The catalog's folder under palettes/, spelled as it is there",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "native": {
+            "description": "The catalog's title in its original language, shown dim beside it",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "lead": {
+            "$ref": "#/definitions/palette",
+            "description": "The palette whose colors stand for the catalog in the lists"
+          }
+        },
+        "required": ["name"]
+      }
+    },
     "renames": {
       "description": "Palettes that were renamed or removed: an old name maps to its new name, or to false once it is gone. Installs of the old name follow the chain on the next update, so keep the entries after everyone has moved\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#marketplaces",
       "type": "object",

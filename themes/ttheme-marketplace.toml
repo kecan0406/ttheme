@@ -1,0 +1,151 @@
+"$schema" = "https://www.schemastore.org/ttheme-marketplace.json"
+name = "official"
+description = "The palettes that come with ttheme"
+
+[owner]
+name = "kecan0406"
+url = "https://github.com/kecan0406"
+
+[[catalog]]
+name = "Default"
+lead = "neutral"
+
+[[catalog]]
+name = "Vocaloid"
+native = "ボーカロイド"
+lead = "miku"
+
+[[catalog]]
+name = "Evangelion"
+native = "エヴァンゲリオン"
+lead = "eva01"
+
+[[catalog]]
+name = "Madoka Magica"
+native = "魔法少女まどか☆マギカ"
+lead = "madoka"
+
+[[catalog]]
+name = "Steins;Gate"
+native = "シュタインズ・ゲート"
+lead = "kurisu"
+
+[[catalog]]
+name = "Lucky☆Star"
+native = "らき☆すた"
+lead = "konata"
+
+[[catalog]]
+name = "Bocchi the Rock!"
+native = "ぼっち・ざ・ろっく!"
+lead = "bocchi"
+
+[[catalog]]
+name = "Monogatari"
+native = "〈物語〉シリーズ"
+lead = "hitagi"
+
+[[catalog]]
+name = "Sailor Moon"
+native = "美少女戦士セーラームーン"
+lead = "moon"
+
+[[catalog]]
+name = "Lain"
+native = "serial experiments lain"
+lead = "lain"
+
+[[catalog]]
+name = "VA-11 Hall-A"
+native = "VA-11 Hall-A ヴァルハラ"
+lead = "jill"
+
+[[catalog]]
+name = "Persona 5"
+native = "ペルソナ5"
+lead = "joker"
+
+[[catalog]]
+name = "Undertale"
+native = "アンダーテイル"
+lead = "determination"
+
+[[catalog]]
+name = "Call of the Night"
+native = "よふかしのうた"
+lead = "nazuna"
+
+[[catalog]]
+name = "Higurashi"
+native = "ひぐらしのなく頃に"
+lead = "hinamizawa"
+
+[[catalog]]
+name = "Doki Doki Literature Club"
+native = "ドキドキ文芸部!"
+lead = "monika"
+
+[[catalog]]
+name = "Umineko"
+native = "うみねこのなく頃に"
+lead = "beatrice"
+
+[[catalog]]
+name = "K-On!"
+native = "けいおん!"
+lead = "yui"
+
+[[catalog]]
+name = "Cyberpunk: Edgerunners"
+native = "サイバーパンク エッジランナーズ"
+lead = "lucy"
+
+[[catalog]]
+name = "Touhou Project"
+native = "東方Project"
+lead = "reimu"
+
+[[catalog]]
+name = "Chuunibyou"
+native = "中二病でも恋がしたい!"
+lead = "rikka"
+
+[[catalog]]
+name = "Jujutsu Kaisen"
+native = "呪術廻戦"
+lead = "gojo"
+
+[[catalog]]
+name = "Oregairu"
+native = "やはり俺の青春ラブコメはまちがっている。"
+lead = "iroha"
+
+[[catalog]]
+name = "Code Geass"
+native = "コードギアス 反逆のルルーシュ"
+lead = "lelouch"
+
+[[catalog]]
+name = "Black Bullet"
+native = "ブラック・ブレット"
+lead = "enju"
+
+[[catalog]]
+name = "Sword Art Online"
+native = "ソードアート・オンライン"
+lead = "sinon"
+
+[[catalog]]
+name = "The Devil Is a Part-Timer!"
+native = "はたらく魔王さま!"
+lead = "urushihara"
+
+[[catalog]]
+name = "No Game No Life"
+native = "ノーゲーム・ノーライフ"
+lead = "jibril"
+
+[[catalog]]
+name = "Nichijou"
+native = "日常"
+lead = "sakamoto"

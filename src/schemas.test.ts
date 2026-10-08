@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { SITES } from './booru.ts'
 import { RULES } from './contrast.ts'
-import { MARKETPLACE_KEYS, MARKETPLACE_SCHEMA_URL, OWNER_KEYS, PALETTE_SCHEMA_URL } from './sources.ts'
+import { CATALOG_KEYS, MARKETPLACE_KEYS, MARKETPLACE_SCHEMA_URL, OWNER_KEYS, PALETTE_SCHEMA_URL } from './sources.ts'
 import { PALETTE_KEYS, POSITIONS } from './theme.ts'
 
 interface Node {
@@ -25,6 +25,7 @@ test('the marketplace schema SchemaStore serves describes the keys ttheme reads 
   assert.equal(marketplace.$id, MARKETPLACE_SCHEMA_URL)
   assert.deepEqual(keys(marketplace), [...MARKETPLACE_KEYS].sort())
   assert.deepEqual(keys(marketplace.properties?.owner), [...OWNER_KEYS].sort())
+  assert.deepEqual(keys(marketplace.properties?.catalog?.items), [...CATALOG_KEYS].sort())
 })
 
 test('the palette schema describes the keys, sites, positions, slots and gate rules the palette reader knows', () => {

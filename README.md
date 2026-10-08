@@ -74,7 +74,7 @@ a checkout are in [docs/install.md](docs/install.md).
 ## Palettes
 
 <p align="center">
-  <a href="https://ttheme.vercel.app/"><img src="https://kecan0406.github.io/ttheme/readme/series.svg" alt="One card per series, drawn in its lead palette" width="856"></a>
+  <a href="https://ttheme.vercel.app/"><img src="https://kecan0406.github.io/ttheme/readme/catalogs.svg" alt="One card per catalog, drawn in its lead palette" width="856"></a>
 </p>
 
 <details>

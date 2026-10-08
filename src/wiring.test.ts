@@ -91,7 +91,7 @@ test('configFile seeds the template with every default spelled out on a commente
       '# search hint animation: typewriter, decode or glitch (default typewriter)',
       '# : ${TTHEME_FX:=typewriter}',
       '',
-      '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
+      '# catalogs and palettes in ttheme and preview: abc sorts them by name, catalog keeps the order they were added (default abc)',
       '# : ${TTHEME_SORT:=abc}',
       '',
       '# clicks, the wheel and drags in preview, browse, the palette editor and find: on, or off to leave the mouse to the terminal, so a drag selects text again without a modifier (default on)',
@@ -177,7 +177,7 @@ test('configFile appends a documented line when a setting is missing', () => {
   assert.match(out, /^# new tabs: .*\n# : \$\{TTHEME_TAB_PALETTE:=off\}$/m)
   assert.match(out, /^# the palette notice .*\n# : \$\{TTHEME_ANNOUNCE:=1\}$/m)
   assert.match(out, /^# search hint animation: .*\n# : \$\{TTHEME_FX:=typewriter\}$/m)
-  assert.match(out, /^# series and palettes .*\n# : \$\{TTHEME_SORT:=abc\}$/m)
+  assert.match(out, /^# catalogs and palettes .*\n# : \$\{TTHEME_SORT:=abc\}$/m)
 })
 
 test("the kitty block includes ttheme's file, which wears the chosen palette and loads the watcher", () => {

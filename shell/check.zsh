@@ -1164,8 +1164,8 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   print -r -- "$TTHEME_CONFIG_TEMPLATE" >| $XDG_CONFIG_HOME/dotfiles/config.zsh
   ln -s $XDG_CONFIG_HOME/dotfiles/config.zsh $XDG_CONFIG_HOME/linked/config.zsh
   TTHEME_CONFIG=$XDG_CONFIG_HOME/linked/config.zsh
-  __tt_config_write TTHEME_SORT series || { print -u2 "saving a setting failed under noclobber"; exit 1 }
-  [[ -L $TTHEME_CONFIG && "$(<$XDG_CONFIG_HOME/dotfiles/config.zsh)" == *': ${TTHEME_SORT:=series}'* ]] ||
+  __tt_config_write TTHEME_SORT catalog || { print -u2 "saving a setting failed under noclobber"; exit 1 }
+  [[ -L $TTHEME_CONFIG && "$(<$XDG_CONFIG_HOME/dotfiles/config.zsh)" == *': ${TTHEME_SORT:=catalog}'* ]] ||
     { print -u2 "saving a setting replaced a linked config.zsh, or never reached it"; exit 1 }
 ) || exit 1
 (

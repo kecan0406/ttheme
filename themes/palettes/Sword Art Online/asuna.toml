@@ -1,0 +1,39 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "asuna"
+native_names = ["アスナ", "結城明日奈"]
+order = 128
+ansi_source = "Melange Dark + Aincrad"
+booru = "asuna_(sao)"
+signature = ["cursor", "ansi1", "foreground"]
+
+[meta.booru_sites]
+konachan = "yuuki_asuna"
+yande = "asuna_(sword_art_online)"
+zerochan = "yuuki_asuna"
+
+[colors]
+background = "#1f160d"
+foreground = "#e3e2e7"
+cursor = "#e9ac73"
+selection_background = "#433d36"
+ansi = [
+  "#2c2219",
+  "#ff7767",
+  "#aab06a",
+  "#f6ac6a",
+  "#af97cd",
+  "#df909e",
+  "#94bb87",
+  "#d5c3b6",
+
+  "#837469",
+  "#ffae8a",
+  "#c6d38c",
+  "#ffd6a1",
+  "#d1b7f2",
+  "#fdb2c3",
+  "#b0ddaa",
+  "#ffeadb",
+]

@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "jill"
+native_names = ["ジル・スティングレイ"]
+order = 43
+ansi_source = "TokyoNight"
+booru = "jill_stingray"
+signature = ["cursor", "ansi1", "ansi5"]
+
+[meta.booru_sites]
+zerochan = "julianne_stingray"
+
+[colors]
+background = "#15181e"
+foreground = "#dee2f2"
+cursor = "#7aa2f7"
+selection_background = "#333d5b"
+ansi = [
+  "#21242b",
+  "#f9778f",
+  "#4cbf8e",
+  "#efb081",
+  "#779ff4",
+  "#b695f2",
+  "#77b6f1",
+  "#c5c6d0",
+
+  "#757780",
+  "#ffa9d1",
+  "#71e1ae",
+  "#fad7be",
+  "#a6c0ff",
+  "#c4c0ff",
+  "#aed6ff",
+  "#eaedfe",
+]

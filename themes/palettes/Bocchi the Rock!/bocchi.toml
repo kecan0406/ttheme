@@ -1,0 +1,39 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "bocchi"
+native_names = ["後藤ひとり"]
+order = 29
+ansi_source = "Sakura + Kessoku"
+booru = "gotoh_hitori"
+signature = ["cursor", "ansi4", "ansi9"]
+
+[meta.booru_sites]
+konachan = "gotou_hitori"
+yande = "gotou_hitori"
+zerochan = "gotou_hitori"
+
+[colors]
+background = "#201517"
+foreground = "#fadbe1"
+cursor = "#feabc0"
+selection_background = "#51344e"
+ansi = [
+  "#2c2123",
+  "#fd729f",
+  "#c0af11",
+  "#f4ae78",
+  "#86a1d3",
+  "#f979c9",
+  "#8dbe88",
+  "#d6c2c5",
+
+  "#847376",
+  "#ffa7ca",
+  "#e4d020",
+  "#fad8bf",
+  "#bcbeff",
+  "#faafe4",
+  "#ade0a7",
+  "#ffe8ec",
+]

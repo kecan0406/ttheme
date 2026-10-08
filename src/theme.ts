@@ -9,10 +9,10 @@ export interface GhosttyExtras {
   iconScreen: Hex[]
 }
 
-export interface Group {
+export interface Catalog {
   name: string
   native?: string
-  lead: string
+  lead?: string
 }
 
 export const POSITIONS = [
@@ -38,7 +38,7 @@ export interface SharedPicture {
 export interface Theme {
   name: string
   base?: string
-  group: string
+  catalog?: string
   native?: string
   nativeNames?: string[]
   lead: boolean
@@ -62,15 +62,15 @@ export interface Theme {
 
 export interface Place {
   name: string
-  groups: ReadonlyMap<string, Group>
-  bases?: ReadonlyMap<string, { group: string; order: number }>
+  catalog?: string
+  catalogs: ReadonlyMap<string, Catalog>
+  bases?: ReadonlyMap<string, { order: number }>
   open?: true
   foreign?: true
 }
 
-export const ORIGINAL = 'Original'
+export const MARKETPLACE_FILE = 'ttheme-marketplace.toml'
 const SHARED_ORDER = 1_000_000
-const GROUPS_FILE = '_groups.toml'
 const SIGNATURE_SIZE = 3
 const MAX_PICTURES = 8
 const SLUG = '[a-z0-9]+(?:-[a-z0-9]+)*'
@@ -316,20 +316,25 @@ function toml(file: string, source: string): Record<string, unknown> {
   }
 }
 
-function readGroups(dir: string): Group[] {
-  const doc = toml(GROUPS_FILE, readFileSync(join(dir, GROUPS_FILE), 'utf8'))
-  const raw = doc.group
-  if (!Array.isArray(raw) || raw.length === 0) {
-    fail(GROUPS_FILE, 'needs at least one [[group]] table')
+export function readCatalogs(file: string, raw: unknown): Catalog[] {
+  if (raw === undefined) {
+    return []
   }
-  return raw.map((entry) => {
-    const g = table(entry)
+  if (!Array.isArray(raw)) {
+    fail(file, 'catalog must be [[catalog]] tables')
+  }
+  const catalogs = raw.map((entry, i) => {
+    const c = table(entry)
     return {
-      name: text(GROUPS_FILE, 'group.name', g.name),
-      native: g.native === undefined ? undefined : text(GROUPS_FILE, 'group.native', g.native),
-      lead: str(GROUPS_FILE, 'group.lead', g.lead),
+      name: text(file, `catalog[${i}].name`, c.name),
+      ...(c.native === undefined ? {} : { native: text(file, `catalog[${i}].native`, c.native) }),
+      ...(c.lead === undefined ? {} : { lead: paletteName(file, `catalog[${i}].lead`, c.lead) }),
     }
   })
+  if (new Set(catalogs.map((c) => c.name)).size !== catalogs.length) {
+    fail(file, 'catalog.name must be unique')
+  }
+  return catalogs
 }
 
 function readNativeNames(file: string, raw: unknown): string[] {
@@ -347,7 +352,7 @@ function readNativeNames(file: string, raw: unknown): string[] {
 
 export const PALETTE_KEYS: Readonly<Record<string, readonly string[]>> = {
   '': ['$schema', 'meta', 'colors', 'contrast', 'ghostty', 'picture'],
-  meta: ['name', 'base', 'group', 'ansi_source', 'booru', 'booru_sites', 'native_names', 'signature', 'order', 'role'],
+  meta: ['name', 'base', 'ansi_source', 'booru', 'booru_sites', 'native_names', 'signature', 'order', 'role'],
   colors: ['background', 'foreground', 'cursor', 'selection_background', 'ansi'],
   contrast: ['waive', 'reason'],
   ghostty: ['icon_ghost', 'icon_screen'],
@@ -405,11 +410,14 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   }
   const from = base === undefined ? undefined : place.bases?.get(base)
 
-  const groupName =
-    shared && meta.group === undefined ? (from?.group ?? ORIGINAL) : text(file, 'meta.group', meta.group)
-  const group = place.groups.get(groupName)
-  if (!group && !(shared && (groupName === ORIGINAL || place.open))) {
-    fail(file, `meta.group "${groupName}" has no [[group]] table in ${GROUPS_FILE}`)
+  const catalog = place.catalog === undefined ? undefined : place.catalogs.get(place.catalog)
+  if (!shared && !catalog) {
+    fail(
+      file,
+      place.catalog === undefined
+        ? 'an official palette lives in a catalog folder, palettes/<catalog>/<palette>.toml'
+        : `its folder "${place.catalog}" has no [[catalog]] table in ${MARKETPLACE_FILE}`,
+    )
   }
 
   const background = hex(file, 'colors.background', colors.background)
@@ -439,10 +447,10 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   return {
     name,
     ...(base ? { base } : {}),
-    group: groupName,
-    native: group?.native,
+    ...(place.catalog === undefined ? {} : { catalog: place.catalog }),
+    native: catalog?.native,
     ...(nativeNames ? { nativeNames } : {}),
-    lead: !shared && group?.lead === name,
+    lead: catalog?.lead === name,
     order: shared ? (from?.order ?? SHARED_ORDER) : Number(meta.order),
     role,
     ansiSource:
@@ -470,15 +478,35 @@ export function readTheme(file: string, source: string, place: Place): Theme {
 }
 
 export function loadThemes(dir: string): Theme[] {
-  const groups = readGroups(dir)
-  const byName = new Map(groups.map((g) => [g.name, g]))
-  if (byName.size !== groups.length) {
-    fail(GROUPS_FILE, 'group.name must be unique')
+  const catalogs = readCatalogs(
+    MARKETPLACE_FILE,
+    toml(MARKETPLACE_FILE, readFileSync(join(dir, MARKETPLACE_FILE), 'utf8')).catalog,
+  )
+  if (catalogs.length === 0) {
+    fail(MARKETPLACE_FILE, 'needs at least one [[catalog]] table')
   }
+  const byName = new Map(catalogs.map((c) => [c.name, c]))
+  const shelf = join(dir, 'palettes')
 
-  const themes = readdirSync(dir)
-    .filter((f) => f.endsWith('.toml') && !f.startsWith('_'))
-    .map((f) => readTheme(f, readFileSync(join(dir, f), 'utf8'), { name: basename(f, '.toml'), groups: byName }))
+  const themes = readdirSync(shelf, { withFileTypes: true })
+    .filter((item) => !item.name.startsWith('.'))
+    .flatMap((item) => {
+      if (!item.isDirectory()) {
+        fail(
+          `palettes/${item.name}`,
+          'an official palette lives in a catalog folder, palettes/<catalog>/<palette>.toml',
+        )
+      }
+      return readdirSync(join(shelf, item.name))
+        .filter((f) => f.endsWith('.toml'))
+        .map((f) =>
+          readTheme(`palettes/${item.name}/${f}`, readFileSync(join(shelf, item.name, f), 'utf8'), {
+            name: basename(f, '.toml'),
+            catalog: item.name,
+            catalogs: byName,
+          }),
+        )
+    })
     .sort((a, b) => a.order - b.order)
 
   const orders = new Set(themes.map((t) => t.order))
@@ -486,12 +514,16 @@ export function loadThemes(dir: string): Theme[] {
     throw new Error('themes: meta.order must be unique across all themes')
   }
 
-  for (const group of groups) {
-    const members = themes.filter((t) => t.group === group.name)
-    if (members.length === 0) fail(GROUPS_FILE, `group "${group.name}" has no themes`)
-    if (!members.some((t) => t.name === group.lead)) {
-      fail(GROUPS_FILE, `group "${group.name}" lead "${group.lead}" is not one of its themes`)
+  for (const catalog of catalogs) {
+    const members = themes.filter((t) => t.catalog === catalog.name)
+    if (members.length === 0) fail(MARKETPLACE_FILE, `catalog "${catalog.name}" has no palettes`)
+    if (!members.some((t) => t.name === catalog.lead)) {
+      fail(MARKETPLACE_FILE, `catalog "${catalog.name}" needs a lead, one of its palettes`)
     }
+  }
+  const shown = [...new Set(themes.map((t) => t.catalog))]
+  if (shown.join('\n') !== catalogs.map((c) => c.name).join('\n')) {
+    fail(MARKETPLACE_FILE, 'the [[catalog]] tables must follow the order meta.order gives their palettes')
   }
   return themes
 }
@@ -500,15 +532,21 @@ export function rotation(themes: Theme[]): Theme[] {
   return themes.filter((t) => t.role === undefined)
 }
 
-export function alphabetical<T extends { group: string; name: string; base?: string; catalog?: string }>(
-  items: T[],
-): T[] {
+export function shelfOf(item: { name: string; catalog?: string }): string {
+  return [marketplaceOf(item.name), item.catalog].filter((part) => part !== undefined).join(' / ')
+}
+
+export function topOf(item: { name: string; catalog?: string }): string {
+  return marketplaceOf(item.name) ?? item.catalog ?? ''
+}
+
+export function alphabetical<T extends { name: string; base?: string; catalog?: string }>(items: T[]): T[] {
   const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
   const root = (t: T) => (marketplaceOf(t.name) ? t.name : (t.base ?? t.name))
   return [...items].sort(
     (a, b) =>
       Number(marketplaceOf(a.name) !== undefined) - Number(marketplaceOf(b.name) !== undefined) ||
-      cmp(a.group.toLowerCase(), b.group.toLowerCase()) ||
+      cmp(topOf(a).toLowerCase(), topOf(b).toLowerCase()) ||
       Number(a.catalog === undefined) - Number(b.catalog === undefined) ||
       cmp((a.catalog ?? '').toLowerCase(), (b.catalog ?? '').toLowerCase()) ||
       cmp(root(a), root(b)) ||

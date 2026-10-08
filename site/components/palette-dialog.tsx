@@ -4,7 +4,7 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Icon } from '@/lib/icons'
 import { gatePassed, luminance } from '@/lib/sheet'
-import type { GateRule, Marketplace, Theme } from '@/lib/themes'
+import { type GateRule, type Marketplace, shelfOf, type Theme } from '@/lib/themes'
 import { CommandRow } from './command-row'
 import { PaletteBadges } from './palette-card'
 import { GateList, PropertyList, SectionLabel, Signature, SwatchGrid } from './palette-parts'
@@ -48,7 +48,7 @@ export function PaletteDialogBody({
         <DialogTitle id="palette-dialog-title">{escapeHtml(theme.name)}</DialogTitle>
         <DialogDescription id="palette-dialog-description" class="sr-only">
           {escapeHtml(
-            `${theme.marketplace ? theme.id : theme.group} palette, its slots, its contrast readings and how to install it`,
+            `${theme.marketplace ? theme.id : (theme.catalog ?? '')} palette, its slots, its contrast readings and how to install it`,
           )}
         </DialogDescription>
         <PaletteBadges theme={theme} />
@@ -66,7 +66,7 @@ export function PaletteDialogBody({
           <SectionLabel icon={<Icon node={List} />}>Properties</SectionLabel>
           <PropertyList
             rows={[
-              [theme.marketplace ? 'Marketplace' : 'Series', `${theme.group}${theme.lead ? ' · lead' : ''}`],
+              [theme.marketplace ? 'Marketplace' : 'Catalog', `${shelfOf(theme)}${theme.lead ? ' · lead' : ''}`],
               ['ANSI from', theme.ansiSource],
               ['Background L*', lightness(theme.background)],
               ['Foreground L*', lightness(theme.foreground)],

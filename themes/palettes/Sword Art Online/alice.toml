@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "alice"
+native_names = ["アリス・ツーベルク", "アリス・シンセシス・サーティ"]
+order = 131
+ansi_source = "Cobalt Next Dark + Aincrad"
+booru = "alice_zuberg"
+signature = ["cursor", "selection", "ansi5"]
+
+[meta.booru_sites]
+zerochan = "alice_schuberg"
+
+[colors]
+background = "#1b170c"
+foreground = "#ede2c6"
+cursor = "#e8d082"
+selection_background = "#10409c"
+ansi = [
+  "#272318",
+  "#ff7849",
+  "#9ab566",
+  "#e3b53a",
+  "#799dfe",
+  "#a79af4",
+  "#71c189",
+  "#cec6b4",
+
+  "#7d7767",
+  "#ffad92",
+  "#bdd594",
+  "#f9da8b",
+  "#8bc3f7",
+  "#dbbaf6",
+  "#9be1ae",
+  "#f9edd0",
+]

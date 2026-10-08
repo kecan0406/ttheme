@@ -45,25 +45,25 @@ function svg(height: number, body: string[]) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${height}" viewBox="0 0 ${WIDTH} ${height}" font-family="${FONT}">${body.join('')}</svg>`
 }
 
-function series(themes: Theme[]) {
+function catalogs(themes: Theme[]) {
   const leads = themes.filter((theme) => theme.lead)
   return svg(
     rows(leads.length),
     grid(
-      leads.map((theme) => [theme, theme.group, theme.native ?? '']),
+      leads.map((theme) => [theme, theme.catalog ?? '', theme.native ?? '']),
       0,
     ),
   )
 }
 
 function palettes(themes: Theme[]) {
-  const groups = Map.groupBy(themes, (theme) => theme.group)
+  const shelves = Map.groupBy(themes, (theme) => theme.catalog ?? '')
   const body: string[] = []
   let top = 0
-  for (const [group, members] of groups) {
+  for (const [catalog, members] of shelves) {
     const native = members[0]?.native
     body.push(
-      `<text x="0" y="${top + 20}" fill="${MUTED}" font-size="14" font-weight="700">${xml(group)}${native ? ` <tspan font-weight="400">${xml(native)}</tspan>` : ''}</text>`,
+      `<text x="0" y="${top + 20}" fill="${MUTED}" font-size="14" font-weight="700">${xml(catalog)}${native ? ` <tspan font-weight="400">${xml(native)}</tspan>` : ''}</text>`,
     )
     top += HEAD
     body.push(
@@ -79,5 +79,5 @@ function palettes(themes: Theme[]) {
 
 const out = join(process.argv[2] ?? '.', 'readme')
 mkdirSync(out, { recursive: true })
-writeFileSync(join(out, 'series.svg'), series(themes))
+writeFileSync(join(out, 'catalogs.svg'), catalogs(themes))
 writeFileSync(join(out, 'palettes.svg'), palettes(themes))

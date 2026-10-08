@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "maou"
+native_names = ["真奥貞夫"]
+order = 133
+ansi_source = "Electron Highlighter + Ente Isla"
+booru = "maou_sadao"
+signature = ["cursor", "selection", "ansi3"]
+
+[colors]
+background = "#211512"
+foreground = "#fddbd4"
+cursor = "#df7259"
+selection_background = "#842329"
+ansi = [
+  "#2e211e",
+  "#f87a7c",
+  "#aab300",
+  "#e3b463",
+  "#c08be7",
+  "#e28abd",
+  "#5fc574",
+  "#d8c2bd",
+
+  "#85736f",
+  "#ffabab",
+  "#cad52b",
+  "#ffd6a9",
+  "#d5b2ff",
+  "#ffaeda",
+  "#81e792",
+  "#ffe9e4",
+]

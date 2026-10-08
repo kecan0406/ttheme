@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "luka"
+native_names = ["巡音ルカ"]
+order = 6
+ansi_source = "Rose Pine"
+booru = "megurine_luka"
+signature = ["cursor", "ansi3", "ansi2"]
+
+[colors]
+background = "#1f1517"
+foreground = "#f9dbe1"
+cursor = "#ffbacc"
+selection_background = "#4d3747"
+ansi = [
+  "#2c2123",
+  "#f6789d",
+  "#74b3d1",
+  "#e6b26a",
+  "#8ea0d1",
+  "#ca94ca",
+  "#8ab4da",
+  "#d6c2c5",
+
+  "#837376",
+  "#ffa9be",
+  "#8cd7e4",
+  "#fdd5bc",
+  "#aec0f3",
+  "#edb4ec",
+  "#b3d6ed",
+  "#ffe8ec",
+]

@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "anko"
+native_names = ["鶯アンコ"]
+order = 65
+ansi_source = "Arthur"
+booru = "uguisu_anko"
+signature = ["cursor", "ansi4", "ansi2"]
+
+[meta.booru_sites]
+konachan = []
+
+[colors]
+background = "#201511"
+foreground = "#fddcd0"
+cursor = "#ee6d35"
+selection_background = "#473c32"
+ansi = [
+  "#2d211c",
+  "#f67d6a",
+  "#8cb685",
+  "#f6ab68",
+  "#6fa0f9",
+  "#d592ac",
+  "#82b7d7",
+  "#d8c2bb",
+
+  "#85736d",
+  "#ffad93",
+  "#bcdd4c",
+  "#fdd5b9",
+  "#bcbbfb",
+  "#ffb0cf",
+  "#a4d9fa",
+  "#ffe9e2",
+]

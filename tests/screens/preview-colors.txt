@@ -16,7 +16,7 @@ Config
   New tabs   [off]  seq
   Announce    on  [off]
   Search fx  [typewriter]  decode   glitch
-  Sort       [abc]  series
+  Sort       [abc]  catalog
   Mouse      [on]  off
   Blur       [off]  1px   2px   3px   4px
 ▶ Colors      tone  [original]

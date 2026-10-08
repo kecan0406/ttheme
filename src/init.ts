@@ -43,7 +43,6 @@ import {
   installedPath,
   isLocal,
   localRoot,
-  MARKETPLACE_FILE,
   MARKETPLACE_SCHEMA_URL,
   marketplacesDir,
   marketplacesOf,
@@ -56,7 +55,7 @@ import { WIRED, WIRINGS, type Wired, wirings } from './terminals/index.ts'
 import type { Host, Pointed, Setup } from './terminals/types.ts'
 import { warpSettings } from './terminals/warp.ts'
 import { windowsAppData } from './terminals/windows-terminal.ts'
-import { marketplaceOf } from './theme.ts'
+import { MARKETPLACE_FILE, marketplaceOf, shelfOf } from './theme.ts'
 import { configFile, settingValue, upsertBlock, withSetting, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {
@@ -411,8 +410,8 @@ function verify(plan: InitPlan): void {
   }
 }
 
-function seriesOf(catalog: Manifest, names: string[]): string[] {
-  return [...new Set(catalog.palettes.filter((e) => names.includes(e.name)).map((e) => e.group))]
+function catalogsOf(catalog: Manifest, names: string[]): string[] {
+  return [...new Set(catalog.palettes.filter((e) => names.includes(e.name)).map(shelfOf))]
 }
 
 function paintStartup(catalog: Manifest, installed: Installed, configHome: string): boolean {
@@ -457,9 +456,9 @@ function receipt(
   pointed: ReadonlyMap<Wired, Pointed>,
   here: Shell,
 ): void {
-  const series = seriesOf(plan.catalog, opts.palettes)
+  const catalogs = catalogsOf(plan.catalog, opts.palettes)
   p.note(
-    [`${series.join(', ')} (${opts.palettes.length})`, ...startupLines(plan.installed, painted)].join('\n'),
+    [`${catalogs.join(', ')} (${opts.palettes.length})`, ...startupLines(plan.installed, painted)].join('\n'),
     `Installed ${opts.palettes.length} palettes`,
   )
   p.note([`${reopen(here).padEnd(18)}The ttheme command in this tab`, ...nextLines(plan, pointed)].join('\n'), 'Next')
@@ -598,7 +597,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const catalog = existing ? againCatalog(existing, paths) : loadManifest(root)
   const palettes = existing
     ? await pickPalettes(catalog, existing.palettes, 'palette', true)
-    : await pickPalettes(catalog, [], 'series', true)
+    : await pickPalettes(catalog, [], 'catalog', true)
   if (!palettes) {
     p.cancel('Nothing changed')
     throw new Cancelled()
@@ -618,7 +617,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const plan = existing ? planAgain(existing, opts, paths) : planInit(opts, paths)
   p.note(
     [
-      `Install ${palettes.length} palettes — ${seriesOf(catalog, palettes).join(', ')}`,
+      `Install ${palettes.length} palettes — ${catalogsOf(catalog, palettes).join(', ')}`,
       `Copy ${plan.copies.length} files under ${configHome}`,
       `Write ${plan.settings.file}`,
       ...plan.edits.map((e) => `Edit ${e.file} — a ttheme block: ${e.about}`),

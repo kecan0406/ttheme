@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "david"
+native_names = ["デイビッド・マルティネス", "デイヴィッド・マルティネス"]
+order = 87
+ansi_source = "Cobalt2 + Edgerunner"
+booru = "david_martinez"
+signature = ["cursor", "ansi12", "ansi1"]
+
+[colors]
+background = "#1a180d"
+foreground = "#ece2c6"
+cursor = "#f0cc09"
+selection_background = "#264058"
+ansi = [
+  "#272418",
+  "#ff7763",
+  "#95b821",
+  "#d6bb00",
+  "#739ae8",
+  "#ff789f",
+  "#64c386",
+  "#cdc6b4",
+
+  "#7c7767",
+  "#ffae80",
+  "#b5da43",
+  "#ffdb37",
+  "#babbff",
+  "#fcb1c3",
+  "#7de5b8",
+  "#f8edd1",
+]

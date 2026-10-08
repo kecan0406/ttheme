@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Icon } from '@/lib/icons'
 import { slotOf } from '@/lib/sheet'
-import type { Theme } from '@/lib/themes'
+import { shelfOf, type Theme } from '@/lib/themes'
 
 export interface Tab {
   id: number
@@ -39,7 +39,7 @@ export function Session({ theme }: { theme: Theme }) {
         {escapeHtml(`ttheme use ${theme.name}`)}
       </Line>
       <Line>
-        <span class="term-on-se" safe>{` ${theme.group} `}</span>
+        <span class="term-on-se" safe>{` ${shelfOf(theme)} `}</span>
       </Line>
       <Line>
         <span class="term-on-cu" safe>{` ${theme.name} `}</span>

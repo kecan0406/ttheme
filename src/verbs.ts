@@ -347,7 +347,7 @@ const EXAMPLES: [string, string][] = [
   ['npx @kecan0406/ttheme init -y', 'Wire the terminals found here, no prompts'],
   ['ttheme add homura madoka', 'Install two palettes'],
   ['ttheme use homura', 'Paint this tab with one'],
-  ['ttheme list --json madoka', 'The madoka series as JSON'],
+  ['ttheme list --json madoka', 'The Madoka Magica catalog as JSON'],
   ['ttheme marketplace add alice/ttheme-pastel', "alice's marketplace, alice@pastel — ttheme add alice@pastel/dusk"],
   ['ttheme add dusk --marketplace alice/ttheme-pastel', 'The same in one step'],
   ['ttheme new rei --from rei', 'Your own rei, <you>@<marketplace>/rei, to edit and share'],

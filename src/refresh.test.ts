@@ -104,7 +104,7 @@ test('an attempt hands back what happened instead of throwing', async () => {
 function installed(name: string): PaletteEntry {
   return {
     name,
-    group: 'Jujutsu Kaisen',
+    catalog: 'Jujutsu Kaisen',
     order: 1,
     ansiSource: 'Horizon + Jujutsu',
     background: '#11191c',

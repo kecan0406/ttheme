@@ -47,7 +47,7 @@ class LeadShowcase extends HTMLElement {
     const name = this.querySelector('[data-lead-name]')
     if (name) name.textContent = theme.name
     const title = this.querySelector('[data-lead-title]')
-    if (title) title.textContent = `ttheme · ${theme.name} · ${theme.group}`
+    if (title) title.textContent = `ttheme · ${theme.name} · ${theme.catalog ?? ''}`
     const sparkles = this.querySelector('sparkle-burst')
     if (sparkles instanceof SparkleBurst) {
       sparkles.dataset.colors = JSON.stringify(theme.signature)

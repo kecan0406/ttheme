@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "suzuha"
+native_names = ["阿万音鈴羽"]
+order = 24
+ansi_source = "Gruvbox Dark + Lab"
+booru = "amane_suzuha"
+signature = ["cursor", "ansi9", "ansi4"]
+
+[colors]
+background = "#1f160d"
+foreground = "#f8dec7"
+cursor = "#d98e32"
+selection_background = "#423e2b"
+ansi = [
+  "#2b2218",
+  "#fd7b3a",
+  "#beae2a",
+  "#f6ad3c",
+  "#66acaf",
+  "#e989a1",
+  "#6abfb2",
+  "#d5c4b5",
+
+  "#837568",
+  "#ffac9e",
+  "#e2cf2e",
+  "#ffd79d",
+  "#8bcbdf",
+  "#fdb1c3",
+  "#81e3d4",
+  "#ffead9",
+]

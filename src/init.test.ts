@@ -22,7 +22,7 @@ import { MANAGED, withSetting } from './wiring.ts'
 function manifestFixture() {
   const palette = (name: string, order: number, role?: 'default') => ({
     name,
-    group: 'Fixture',
+    catalog: 'Fixture',
     order,
     ansiSource: 'Fixture',
     ...(role ? { default: true } : {}),

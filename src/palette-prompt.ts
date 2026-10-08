@@ -2,7 +2,7 @@ import type { Readable, Writable } from 'node:stream'
 import { type PaletteEntry, swatch } from './manifest.ts'
 import { aliasesFor, containsText } from './names.ts'
 import { OFFICIAL } from './sources.ts'
-import { marketplaceOf, slugOf } from './theme.ts'
+import { marketplaceOf, slugOf, topOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Inbound } from './tui/keys.ts'
 import { Inline } from './tui/screen.ts'
@@ -14,10 +14,10 @@ const MIN_ITEMS = 3
 
 type PickerRow =
   | { kind: 'palette'; entry: PaletteEntry }
-  | { kind: 'group'; name: string; native?: string; lead?: PaletteEntry; expanded: boolean; count: number }
+  | { kind: 'top'; name: string; native?: string; lead?: PaletteEntry; expanded: boolean; count: number }
   | {
       kind: 'catalog'
-      group: string
+      top: string
       name: string
       native?: string
       lead: PaletteEntry
@@ -37,9 +37,9 @@ type Row<X extends Extra = Extra> =
   | { kind: 'rule' }
   | { kind: 'extra'; extra: X }
 
-export type PickerScope = 'palette' | 'series'
+export type PickerScope = 'palette' | 'catalog'
 
-type PickerLayout = 'series' | 'marketplaces'
+type PickerLayout = 'catalogs' | 'marketplaces'
 
 interface Place {
   top(entry: PaletteEntry): string
@@ -47,18 +47,18 @@ interface Place {
 }
 
 const PLACES: Record<PickerLayout, Place> = {
-  series: {
-    top: (e) => e.group,
-    shelf: (e) => (isMarketplace(e.group) ? e.catalog : undefined),
+  catalogs: {
+    top: topOf,
+    shelf: (e) => (marketplaceOf(e.name) ? e.catalog : undefined),
   },
   marketplaces: {
-    top: (e) => (isMarketplace(e.group) ? e.group : OFFICIAL),
-    shelf: (e) => (isMarketplace(e.group) ? e.catalog : e.group),
+    top: (e) => marketplaceOf(e.name) ?? OFFICIAL,
+    shelf: (e) => e.catalog,
   },
 }
 
-function catalogKey(group: string, catalog: string): string {
-  return `${group}/${catalog}`
+function catalogKey(top: string, catalog: string): string {
+  return `${top}/${catalog}`
 }
 
 function shownName(entry: PaletteEntry): string {
@@ -74,11 +74,11 @@ function rowKey(row: Row | undefined): string {
   if (row?.kind === 'palette') {
     return `palette ${row.entry.name}`
   }
-  if (row?.kind === 'group') {
-    return `group ${row.name}`
+  if (row?.kind === 'top') {
+    return `top ${row.name}`
   }
   if (row?.kind === 'catalog') {
-    return `catalog ${catalogKey(row.group, row.name)}`
+    return `catalog ${catalogKey(row.top, row.name)}`
   }
   if (row?.kind === 'extra') {
     return `extra ${row.extra.key}`
@@ -94,7 +94,7 @@ export function matchesPalette(entry: PaletteEntry, search: string): boolean {
   return containsText(
     [
       entry.name,
-      entry.group,
+      marketplaceOf(entry.name) ?? '',
       entry.native ?? '',
       entry.catalog ?? '',
       ...(entry.nativeNames ?? []),
@@ -108,7 +108,7 @@ export function pickerRows(
   entries: PaletteEntry[],
   expanded: ReadonlySet<string>,
   filter: string,
-  layout: PickerLayout = 'series',
+  layout: PickerLayout = 'catalogs',
   tops: readonly string[] = [],
 ): PickerRow[] {
   const place = PLACES[layout]
@@ -129,9 +129,9 @@ export function pickerRows(
     }
     const open = q.length > 0 || expanded.has(top)
     rows.push({
-      kind: 'group',
+      kind: 'top',
       name: top,
-      ...(top === e.group && e.native ? { native: e.native } : {}),
+      ...(!marketplaceOf(e.name) && top === e.catalog && e.native ? { native: e.native } : {}),
       lead: members.find((m) => m.lead) ?? e,
       expanded: open,
       count: matching.length,
@@ -146,9 +146,9 @@ export function pickerRows(
       const unfolded = q.length > 0 || expanded.has(catalogKey(top, name))
       rows.push({
         kind: 'catalog',
-        group: top,
+        top,
         name,
-        ...(!isMarketplace(lead.group) && lead.native ? { native: lead.native } : {}),
+        ...(lead.native ? { native: lead.native } : {}),
         lead,
         expanded: unfolded,
         count: inside.length,
@@ -161,20 +161,20 @@ export function pickerRows(
   }
   for (const top of tops) {
     if (!seen.has(top) && (q === '' || containsText([top], q))) {
-      rows.push({ kind: 'group', name: top, expanded: expanded.has(top), count: 0 })
+      rows.push({ kind: 'top', name: top, expanded: expanded.has(top), count: 0 })
     }
   }
   return rows
 }
 
-export function seriesRows(entries: PaletteEntry[], filter: string): PickerRow[] {
+export function catalogRows(entries: PaletteEntry[], filter: string): PickerRow[] {
   const q = filter.trim()
-  const hit = new Set(entries.filter((e) => !e.default && (q === '' || matchesPalette(e, q))).map((e) => e.group))
-  return pickerRows(entries, new Set(), '').filter((r) => r.kind === 'group' && hit.has(r.name))
+  const hit = new Set(entries.filter((e) => !e.default && (q === '' || matchesPalette(e, q))).map(topOf))
+  return pickerRows(entries, new Set(), '').filter((r) => r.kind === 'top' && hit.has(r.name))
 }
 
-function isMarketplace(group: string): boolean {
-  return group.includes('@')
+function isMarketplace(top: string): boolean {
+  return top.includes('@')
 }
 
 export function stepRow(at: number, delta: number, count: number, rule: (i: number) => boolean, wrap = true): number {
@@ -212,8 +212,8 @@ export function pageStep(name: string | undefined, size: number): number | undef
 }
 
 function ruled<X extends Extra>(rows: Row<X>[]): Row<X>[] {
-  const at = rows.findIndex((r) => r.kind === 'group' && isMarketplace(r.name))
-  return at > 0 && rows.slice(0, at).some((r) => r.kind === 'group')
+  const at = rows.findIndex((r) => r.kind === 'top' && isMarketplace(r.name))
+  return at > 0 && rows.slice(0, at).some((r) => r.kind === 'top')
     ? [...rows.slice(0, at), { kind: 'rule' }, ...rows.slice(at)]
     : rows
 }
@@ -247,7 +247,7 @@ interface PaletteListOptions<X extends Extra = Extra> {
   maxItems?: number
   color?: boolean
   note?: (entry: PaletteEntry) => string
-  badge?: (group: string) => string
+  badge?: (top: string) => string
   tops?: () => readonly string[]
   extras?: () => X[]
   onFocus?: (entry: PaletteEntry) => void
@@ -258,18 +258,18 @@ export class PaletteList<X extends Extra = Extra> {
   readonly scope: PickerScope
   maxItems: number
   named: PaletteEntry[] = []
-  series: string[] = []
+  catalogs: string[] = []
   private readonly layout: PickerLayout
   private readonly place: Place
   private readonly color: boolean
   private readonly p: Paint
   private readonly onFocus?: (entry: PaletteEntry) => void
   private readonly note?: (entry: PaletteEntry) => string
-  private readonly badge?: (group: string) => string
+  private readonly badge?: (top: string) => string
   private readonly tops?: () => readonly string[]
   private readonly extras?: () => X[]
   private entries: PaletteEntry[] = []
-  private seriesPad = 0
+  private catalogPad = 0
   private namePad = 0
   private expanded = new Set<string>()
   private rows: Row<X>[] = []
@@ -281,7 +281,7 @@ export class PaletteList<X extends Extra = Extra> {
   constructor(opts: PaletteListOptions<X>) {
     this.picked = opts.picked
     this.scope = opts.scope ?? 'palette'
-    this.layout = opts.layout ?? 'series'
+    this.layout = opts.layout ?? 'catalogs'
     this.place = PLACES[this.layout]
     this.maxItems = opts.maxItems ?? 12
     this.color = opts.color ?? true
@@ -298,8 +298,8 @@ export class PaletteList<X extends Extra = Extra> {
   private load(entries: PaletteEntry[]): void {
     this.entries = entries
     this.named = entries.filter((e) => !e.default)
-    this.series = [...new Set(this.named.map((e) => e.group))]
-    this.seriesPad = Math.max(0, ...this.series.map((g) => g.length))
+    this.catalogs = [...new Set(this.named.map(topOf))]
+    this.catalogPad = Math.max(0, ...this.catalogs.map((g) => g.length))
     this.namePad = Math.max(0, ...this.named.map((e) => this.indent(e).length + shownName(e).length))
   }
 
@@ -354,29 +354,29 @@ export class PaletteList<X extends Extra = Extra> {
     return true
   }
 
-  private members(group: string, catalog?: string): PaletteEntry[] {
+  private members(top: string, catalog?: string): PaletteEntry[] {
     const filter = this.scope === 'palette' ? this.filter.trim() : ''
-    return this.under(group, catalog).filter((e) => filter === '' || matchesPalette(e, filter))
+    return this.under(top, catalog).filter((e) => filter === '' || matchesPalette(e, filter))
   }
 
-  private under(group: string, catalog?: string): PaletteEntry[] {
+  private under(top: string, catalog?: string): PaletteEntry[] {
     return this.named.filter(
-      (e) => this.place.top(e) === group && (catalog === undefined || this.place.shelf(e) === catalog),
+      (e) => this.place.top(e) === top && (catalog === undefined || this.place.shelf(e) === catalog),
     )
   }
 
   inside(row: Row<X>): PaletteEntry[] {
     return row.kind === 'palette'
       ? [row.entry]
-      : row.kind === 'group'
+      : row.kind === 'top'
         ? this.under(row.name)
         : row.kind === 'catalog'
-          ? this.under(row.group, row.name)
+          ? this.under(row.top, row.name)
           : []
   }
 
   private everyone(rows: Row<X>[]): PaletteEntry[] {
-    return rows.flatMap((r) => (r.kind === 'group' ? this.members(r.name) : []))
+    return rows.flatMap((r) => (r.kind === 'top' ? this.members(r.name) : []))
   }
 
   pick(): void {
@@ -384,10 +384,10 @@ export class PaletteList<X extends Extra = Extra> {
     const names =
       row?.kind === 'palette'
         ? [row.entry.name]
-        : row?.kind === 'group'
+        : row?.kind === 'top'
           ? this.members(row.name).map((e) => e.name)
           : row?.kind === 'catalog'
-            ? this.members(row.group, row.name).map((e) => e.name)
+            ? this.members(row.top, row.name).map((e) => e.name)
             : row?.kind === 'all'
               ? this.everyone(this.rows).map((e) => e.name)
               : []
@@ -404,25 +404,25 @@ export class PaletteList<X extends Extra = Extra> {
     }
   }
 
-  pickedIn(group: string, catalog?: string): number {
-    return this.members(group, catalog).filter((e) => this.picked.has(e.name)).length
+  pickedIn(top: string, catalog?: string): number {
+    return this.members(top, catalog).filter((e) => this.picked.has(e.name)).length
   }
 
   pickedCount(): number {
     if (this.scope === 'palette') {
       return this.named.filter((e) => this.picked.has(e.name)).length
     }
-    return this.series.filter((g) => this.members(g).every((e) => this.picked.has(e.name))).length
+    return this.catalogs.filter((g) => this.members(g).every((e) => this.picked.has(e.name))).length
   }
 
   total(): number {
-    return this.scope === 'series' ? this.series.length : this.named.length
+    return this.scope === 'catalog' ? this.catalogs.length : this.named.length
   }
 
   matched(): number {
     const filter = this.filter.trim()
-    if (this.scope === 'series') {
-      return this.rows.filter((r) => r.kind === 'group').length
+    if (this.scope === 'catalog') {
+      return this.rows.filter((r) => r.kind === 'top').length
     }
     return filter ? this.named.filter((e) => matchesPalette(e, filter)).length : this.named.length
   }
@@ -430,7 +430,7 @@ export class PaletteList<X extends Extra = Extra> {
   private sync(): void {
     const row = this.rows[this.cursor]
     const entry =
-      row?.kind === 'palette' ? row.entry : row?.kind === 'group' && this.scope === 'series' ? row.lead : undefined
+      row?.kind === 'palette' ? row.entry : row?.kind === 'top' && this.scope === 'catalog' ? row.lead : undefined
     if (entry && entry.name !== this.lastFocused) {
       this.lastFocused = entry.name
       this.onFocus?.(entry)
@@ -440,8 +440,8 @@ export class PaletteList<X extends Extra = Extra> {
   private rebuild(snap: 'first' | 'keep' | 'clamp' | 'stay'): void {
     const focused = this.rows[this.cursor]
     const body =
-      this.scope === 'series'
-        ? seriesRows(this.entries, this.filter)
+      this.scope === 'catalog'
+        ? catalogRows(this.entries, this.filter)
         : pickerRows(this.entries, this.expanded, this.filter, this.layout, this.tops?.() ?? [])
     const tree: Row<X>[] =
       this.layout === 'marketplaces' || body.length === 0
@@ -473,7 +473,7 @@ export class PaletteList<X extends Extra = Extra> {
   }
 
   private allCount(body: PickerRow[]): number {
-    return this.scope === 'series' ? body.length : this.everyone(body).length
+    return this.scope === 'catalog' ? body.length : this.everyone(body).length
   }
 
   move(delta: number, wrap = true): void {
@@ -493,14 +493,14 @@ export class PaletteList<X extends Extra = Extra> {
 
   flip(): void {
     const row = this.rows[this.cursor]
-    if (row?.kind === 'group' || row?.kind === 'catalog') {
+    if (row?.kind === 'top' || row?.kind === 'catalog') {
       this.fold(!row.expanded)
     }
   }
 
   foldable(): boolean {
     const row = this.rows[this.cursor]
-    return (row?.kind === 'group' || row?.kind === 'catalog') && this.scope === 'palette' && !this.filter
+    return (row?.kind === 'top' || row?.kind === 'catalog') && this.scope === 'palette' && !this.filter
   }
 
   open(): void {
@@ -535,25 +535,25 @@ export class PaletteList<X extends Extra = Extra> {
   }
 
   fold(open: boolean): void {
-    if (this.filter || this.scope === 'series') {
+    if (this.filter || this.scope === 'catalog') {
       return
     }
     const row = this.rows[this.cursor]
-    if (row?.kind === 'group') {
+    if (row?.kind === 'top') {
       if (open !== row.expanded) {
         this.toggle(row.name)
       }
     } else if (row?.kind === 'catalog') {
       if (open !== row.expanded) {
-        this.toggle(catalogKey(row.group, row.name))
+        this.toggle(catalogKey(row.top, row.name))
       } else if (!open) {
-        this.reach(`group ${row.group}`)
+        this.reach(`top ${row.top}`)
       }
     } else if (row?.kind === 'palette' && !open && !row.entry.default) {
       const parent = shelfKey(row.entry, this.place)
       if (parent === undefined) {
         const top = this.place.top(row.entry)
-        this.climb(top, `group ${top}`)
+        this.climb(top, `top ${top}`)
       } else {
         this.climb(parent, `catalog ${parent}`)
       }
@@ -605,24 +605,24 @@ export class PaletteList<X extends Extra = Extra> {
         `${box(this.everyone(this.rows).every((e) => this.picked.has(e.name)))}Select all ${dim(`(${row.count})`)}`,
       )
     }
-    if (row.kind === 'group' && this.scope === 'series') {
+    if (row.kind === 'top' && this.scope === 'catalog') {
       const tail = `(${row.count})${row.native ? ` ${row.native}` : ''}`
       return bar(
-        `${box(this.pickedIn(row.name) === row.count)}${bold(row.name.padEnd(this.seriesPad))}${row.lead ? squares(row.lead) : ''}${this.color ? '  ' : ' '}${dim(tail)}`,
+        `${box(this.pickedIn(row.name) === row.count)}${bold(row.name.padEnd(this.catalogPad))}${row.lead ? squares(row.lead) : ''}${this.color ? '  ' : ' '}${dim(tail)}`,
       )
     }
     const at = this.rows[this.cursor]
     const heldBy = (inside: boolean, label: string) =>
       this.color && at?.kind === 'palette' && inside ? this.p.accent(bold(label)) : bold(label)
-    if (row.kind === 'group') {
+    if (row.kind === 'top') {
       const name = heldBy(at?.kind === 'palette' && this.place.top(at.entry) === row.name, row.name)
       const native = row.native ? ` ${dim(row.native)}` : ''
       const badge = this.badge?.(row.name) ?? ''
       return bar(`${arrow(row.expanded)}${name} ${dim(`(${this.pickedIn(row.name)}/${row.count})`)}${native}${badge}`)
     }
     if (row.kind === 'catalog') {
-      const inside = at?.kind === 'palette' && shelfKey(at.entry, this.place) === catalogKey(row.group, row.name)
-      const counts = dim(`(${this.pickedIn(row.group, row.name)}/${row.count})`)
+      const inside = at?.kind === 'palette' && shelfKey(at.entry, this.place) === catalogKey(row.top, row.name)
+      const counts = dim(`(${this.pickedIn(row.top, row.name)}/${row.count})`)
       const native = row.native ? ` ${dim(row.native)}` : ''
       return bar(`  ${arrow(row.expanded)}${heldBy(inside, row.name)} ${counts}${native}`)
     }
@@ -637,7 +637,7 @@ export class PaletteList<X extends Extra = Extra> {
 
 export function paletteExample<X extends Extra>(list: PaletteList<X>): string {
   const pal = list.named[Math.floor(Math.random() * list.named.length)]
-  const grp = list.series[Math.floor(Math.random() * list.series.length)]
+  const grp = list.catalogs[Math.floor(Math.random() * list.catalogs.length)]
   return pal && grp ? `${pal.name} | ${grp}` : ''
 }
 
@@ -824,7 +824,7 @@ export class PalettePrompt {
 
   private draw(): string[] {
     const { dim, accent: bar, warn } = painter(this.color)
-    const title = this.scope === 'series' ? 'Series' : 'Catalog'
+    const title = this.scope === 'catalog' ? 'Catalogs' : 'Palettes'
     if (this.state === 'submit') {
       return [`${dim('◇')} ${title} ${dim(`· ${this.list.pickedCount()} picked`)}`]
     }
@@ -839,13 +839,13 @@ export class PalettePrompt {
     const body =
       lines.length > 0
         ? lines.map((line) => `${bar('│')} ${line}`)
-        : [`${bar('│')} ${dim(`No ${this.scope === 'series' ? 'series' : 'palettes'} match '${typed}'`)}`]
+        : [`${bar('│')} ${dim(`No ${this.scope === 'catalog' ? 'catalogs' : 'palettes'} match '${typed}'`)}`]
     while (body.length < this.list.maxItems) {
       body.push(bar('│'))
     }
     const more = below > 0 ? `${bar('│')} ${dim(`↓ ${below} more`)}` : bar('│')
-    const fold = this.scope === 'series' ? '' : ' · ←→ fold'
-    const go = this.scope === 'series' ? 'continue' : 'install'
+    const fold = this.scope === 'catalog' ? '' : ' · ←→ fold'
+    const go = this.scope === 'catalog' ? 'continue' : 'install'
     const hint =
       this.state === 'error'
         ? `${bar('└')} ${warn(this.error)}`

@@ -1,0 +1,33 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "velvet"
+native_names = ["ベルベットルーム"]
+order = 55
+ansi_source = "Tomorrow Night Blue"
+signature = ["cursor", "ansi4", "ansi5"]
+
+[colors]
+background = "#1b170c"
+foreground = "#ece2c6"
+cursor = "#f5cf00"
+selection_background = "#383b5b"
+ansi = [
+  "#272418",
+  "#e58869",
+  "#a7b165",
+  "#cebb6f",
+  "#7fa4cd",
+  "#c395d6",
+  "#77c08e",
+  "#cdc6b4",
+
+  "#7c7767",
+  "#ffac91",
+  "#c8d283",
+  "#f1dc8d",
+  "#8fc8e5",
+  "#f0b4e1",
+  "#97e2ad",
+  "#f8edd1",
+]

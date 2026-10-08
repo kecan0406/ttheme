@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "rebecca"
+native_names = ["レベッカ"]
+order = 89
+ansi_source = "Emerald Synth"
+booru = "rebecca_(cyberpunk)"
+signature = ["ansi1", "ansi2", "cursor"]
+
+[meta.booru_sites]
+zerochan = "rebecca_(cyberpunk:_edgerunners)"
+
+[colors]
+background = "#201516"
+foreground = "#fbdbde"
+cursor = "#99dfd0"
+selection_background = "#17453c"
+ansi = [
+  "#2d2122",
+  "#ff728f",
+  "#2cc36f",
+  "#ffa768",
+  "#b98dea",
+  "#fd79b6",
+  "#76b6fc",
+  "#d6c2c3",
+
+  "#847375",
+  "#ffa9b9",
+  "#9ee06a",
+  "#ffd5b7",
+  "#d4b4fa",
+  "#fcb0d2",
+  "#b2d5fd",
+  "#ffe9ea",
+]

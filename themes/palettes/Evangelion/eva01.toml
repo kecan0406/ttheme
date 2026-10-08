@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "eva01"
+native_names = ["エヴァンゲリオン初号機"]
+order = 13
+ansi_source = "Aura"
+booru = "eva_01"
+signature = ["cursor", "ansi4", "ansi3"]
+
+[meta.booru_sites]
+konachan = "eva-01"
+
+[colors]
+background = "#151910"
+foreground = "#dde6d0"
+cursor = "#8dd355"
+selection_background = "#443858"
+ansi = [
+  "#21251c",
+  "#f57c53",
+  "#45c177",
+  "#e5b370",
+  "#b08cff",
+  "#c684ea",
+  "#7ac15b",
+  "#c4c8ba",
+
+  "#74796d",
+  "#f9ab91",
+  "#91dcb5",
+  "#f1dd8d",
+  "#afbaff",
+  "#c7baff",
+  "#89e689",
+  "#e9f1db",
+]

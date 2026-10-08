@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "nijika"
+native_names = ["伊地知虹夏"]
+order = 30
+ansi_source = "Medallion"
+booru = "ijichi_nijika"
+signature = ["cursor", "ansi12", "ansi1"]
+
+[colors]
+background = "#1d170c"
+foreground = "#f3e0c5"
+cursor = "#ffb400"
+selection_background = "#493c11"
+ansi = [
+  "#2a2318",
+  "#f97e38",
+  "#beac28",
+  "#eab21c",
+  "#ac96e3",
+  "#e48da2",
+  "#70bfb2",
+  "#d2c5b4",
+
+  "#807567",
+  "#ffb065",
+  "#e1ce26",
+  "#ffd880",
+  "#b2bdff",
+  "#fdb1c3",
+  "#8ae2d3",
+  "#ffebd0",
+]

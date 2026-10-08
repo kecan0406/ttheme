@@ -1,0 +1,38 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "fox"
+native_names = ["喜多川祐介", "フォックス"]
+order = 52
+ansi_source = "Nord"
+booru = "kitagawa_yusuke"
+signature = ["cursor", "foreground", "ansi1"]
+
+[meta.booru_sites]
+yande = "kitagawa_yuusuke"
+zerochan = "kitagawa_yuusuke"
+
+[colors]
+background = "#12181d"
+foreground = "#e0e3e8"
+cursor = "#05a9ee"
+selection_background = "#353e4f"
+ansi = [
+  "#1e242a",
+  "#e9838b",
+  "#7db79a",
+  "#b4c184",
+  "#79a5ca",
+  "#ab9ed5",
+  "#7eb9d2",
+  "#c1c7ce",
+
+  "#71787e",
+  "#ffa7c8",
+  "#9dd8ba",
+  "#d5e3a2",
+  "#9ac6ec",
+  "#ccbff7",
+  "#9adceb",
+  "#e3effb",
+]

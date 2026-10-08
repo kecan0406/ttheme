@@ -1,0 +1,39 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "nazuna"
+native_names = ["七草ナズナ"]
+order = 62
+ansi_source = "Purplepeter"
+booru = "nanakusa_nazuna_(yofukashi_no_uta)"
+signature = ["cursor", "ansi1", "ansi13"]
+
+[meta.booru_sites]
+konachan = "nanakusa_nazuna"
+yande = "nanakusa_nazuna"
+zerochan = "nanakusa_nazuna"
+
+[colors]
+background = "#1e151a"
+foreground = "#f4dce9"
+cursor = "#e9acd4"
+selection_background = "#423859"
+ansi = [
+  "#2a2127",
+  "#fd786c",
+  "#b9af61",
+  "#f0ae7c",
+  "#7aa1e9",
+  "#db8bcf",
+  "#00bdfe",
+  "#d2c2ca",
+
+  "#81737a",
+  "#ffa9b7",
+  "#dbd17e",
+  "#ffd4b9",
+  "#a2c1ff",
+  "#e2b6fc",
+  "#a4d9f9",
+  "#ffe8f3",
+]

@@ -14,7 +14,7 @@ const read = (...path: string[]) => readFileSync(join(root, ...path), 'utf8')
 
 const miku: PaletteEntry = {
   name: 'miku',
-  group: 'Vocaloid',
+  catalog: 'Vocaloid',
   ansiSource: 'Test',
   background: '#0e2124',
   foreground: '#e0f4f2',

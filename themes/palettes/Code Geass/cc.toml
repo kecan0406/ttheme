@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "cc"
+native_names = ["シーツー", "C.C."]
+order = 117
+ansi_source = "Nebula Drift + Geass"
+booru = "c.c."
+signature = ["cursor", "ansi3", "ansi12"]
+
+[colors]
+background = "#151910"
+foreground = "#dfe5ce"
+cursor = "#a8d966"
+selection_background = "#41395a"
+ansi = [
+  "#21251b",
+  "#fe774a",
+  "#60bf6f",
+  "#eeb05b",
+  "#00b0cc",
+  "#fc7da1",
+  "#42c5a2",
+  "#c5c8b9",
+
+  "#75796c",
+  "#ffac91",
+  "#81e18d",
+  "#ffd793",
+  "#91c8e6",
+  "#fdb1c3",
+  "#69e7c2",
+  "#eaf1d9",
+]

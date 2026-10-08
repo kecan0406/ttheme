@@ -85,10 +85,6 @@
           "$ref": "#/definitions/palette",
           "description": "In a marketplace, the official palette this one varies, which only says where its ANSI colors came from"
         },
-        "group": {
-          "description": "The series the palette belongs to; in the official catalog it needs a [[group]] in themes/_groups.toml, and a marketplace palette's group is its marketplace",
-          "type": "string"
-        },
         "order": {
           "description": "The official palette's place in the new-tab rotation; a marketplace palette has none",
           "type": "integer"

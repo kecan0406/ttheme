@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "yui"
+native_names = ["平沢唯"]
+order = 82
+ansi_source = "Espresso Libre + HTT"
+booru = "hirasawa_yui"
+signature = ["cursor", "ansi11", "ansi13"]
+
+[colors]
+background = "#211513"
+foreground = "#fddbd5"
+cursor = "#ed6650"
+selection_background = "#4b3a2b"
+ansi = [
+  "#2e211e",
+  "#fd7b4f",
+  "#baaf18",
+  "#e9b600",
+  "#c186ff",
+  "#f18884",
+  "#82c07b",
+  "#d8c2be",
+
+  "#857370",
+  "#fead9a",
+  "#b2df52",
+  "#e6e346",
+  "#ceb4ff",
+  "#ffb3b5",
+  "#94e58b",
+  "#ffe9e5",
+]

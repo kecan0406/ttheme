@@ -7,10 +7,10 @@ import { type BrowseIo, BrowsePanel, type Marketplace } from './browse-panel.ts'
 import type { PaletteEntry } from './manifest.ts'
 import type { Repository } from './marketplaces.ts'
 
-function entry(name: string, group: string): PaletteEntry {
+function entry(name: string, catalog?: string): PaletteEntry {
   return {
     name,
-    group,
+    ...(catalog ? { catalog } : {}),
     order: 1,
     ansiSource: 'Test',
     background: '#000000',
@@ -30,7 +30,7 @@ function marketplace(source: string, id: string, names: string[], auto = false):
     source,
     id,
     shown: source === 'official' ? 'the ttheme catalog' : `github.com/${source}`,
-    entries: names.map((n) => entry(id === 'official' ? n : `${id}/${n}`, id === 'official' ? 'Vocaloid' : id)),
+    entries: names.map((n) => entry(id === 'official' ? n : `${id}/${n}`, id === 'official' ? 'Vocaloid' : undefined)),
     auto,
     status: source === 'official' ? 'comes with ttheme' : 'updated just now',
   }

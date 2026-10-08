@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "asuka"
+native_names = ["惣流・アスカ・ラングレー"]
+order = 9
+ansi_source = "GitLab Dark"
+booru = "souryuu_asuka_langley"
+signature = ["cursor", "ansi11", "ansi4"]
+
+[meta.booru_sites]
+konachan = "soryu_asuka_langley"
+
+[colors]
+background = "#211513"
+foreground = "#fddbd5"
+cursor = "#ed664f"
+selection_background = "#5b322e"
+ansi = [
+  "#2e211e",
+  "#f47e6b",
+  "#b9ae2f",
+  "#ffa765",
+  "#6ea5db",
+  "#f383a1",
+  "#7bc175",
+  "#d8c2be",
+
+  "#857370",
+  "#fdada0",
+  "#d6cf77",
+  "#ffd795",
+  "#adc3ff",
+  "#fdb2c3",
+  "#a6e18e",
+  "#ffe9e5",
+]

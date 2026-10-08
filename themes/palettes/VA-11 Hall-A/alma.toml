@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "alma"
+native_names = ["アルマ・アルマス"]
+order = 45
+ansi_source = "Belafonte Night + Glitch City"
+booru = "alma_armas"
+signature = ["cursor", "ansi12", "ansi9"]
+
+[meta.booru_sites]
+konachan = []
+
+[colors]
+background = "#1e160d"
+foreground = "#f6dfc6"
+cursor = "#eaa549"
+selection_background = "#483a3f"
+ansi = [
+  "#2b2218",
+  "#fc7c34",
+  "#b8ae61",
+  "#f4ae51",
+  "#61abb7",
+  "#ea859f",
+  "#8fbc8a",
+  "#d4c4b5",
+
+  "#827568",
+  "#ffac9c",
+  "#d9cf7f",
+  "#ffd6a0",
+  "#8fc9e4",
+  "#ffafce",
+  "#afdfa9",
+  "#ffebd6",
+]

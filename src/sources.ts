@@ -2,10 +2,9 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
-import { nameProblem } from './theme.ts'
+import { type Catalog, MARKETPLACE_FILE, nameProblem, readCatalogs } from './theme.ts'
 
 export const OFFICIAL = 'official'
-export const MARKETPLACE_FILE = 'ttheme-marketplace.toml'
 export const MARKETPLACE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-marketplace.json'
 export const PALETTE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-palette.json'
 export const MARKETPLACE_KEYS = [
@@ -13,11 +12,13 @@ export const MARKETPLACE_KEYS = [
   'name',
   'description',
   'owner',
+  'catalog',
   'renames',
   'force_remove_deleted_palettes',
   'metadata',
 ]
 export const OWNER_KEYS = ['name', 'email', 'url']
+export const CATALOG_KEYS = ['name', 'native', 'lead']
 export const TOPIC = 'ttheme-marketplace'
 
 const OWNER = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i
@@ -154,6 +155,7 @@ export interface Owner {
 export interface MarketplaceInfo extends Identity {
   about: Owner
   description?: string
+  catalogs: Catalog[]
   renames: Record<string, string | false>
   forceRemove: boolean
 }
@@ -220,6 +222,7 @@ export function readMarketplaceInfo(text: string, where: string): MarketplaceInf
     name,
     about: { ...about, ...(email ? { email } : {}), ...(url ? { url } : {}) },
     ...(description ? { description } : {}),
+    catalogs: readCatalogs(where, doc.catalog),
     renames: renamesOf(where, doc.renames),
     forceRemove: force === true,
   }

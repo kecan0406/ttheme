@@ -4,7 +4,7 @@ __tt_pv_seek() {
   local t part key REPLY
   for t in ${(k)TTHEME_PALETTE}; do
     key=""
-    for part in "$t" "${TTHEME_GROUP[$t]:-Other}" "${TTHEME_NATIVE[$t]}" "${TTHEME_CATALOG[$t]}" "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
+    for part in "$t" "${TTHEME_MARKETPLACE[$t]}" "${TTHEME_NATIVE[$t]}" "${TTHEME_CATALOG[$t]}" "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
       [[ -n $part ]] || continue
       __tt_pv_norm "$part"
       key+="|$REPLY"
@@ -33,9 +33,9 @@ __tt_pv_rows() {
     __tt_pv_norm "$flt"
     nflt=$REPLY
   fi
-  for g in $groups; do
+  for g in $tops; do
     ts=()
-    for t in ${=gthemes[$g]}; do
+    for t in ${=tmembers[$g]}; do
       [[ -z $flt || ${pvseek[$t]} == *$nflt* ]] && ts+=($t)
     done
     [[ -n $flt ]] && (( ! ${#ts} )) && continue
@@ -91,7 +91,7 @@ __tt_pv_first() {
 }
 
 __tt_pv_goto() {
-  local name=$1 i g=${TTHEME_GROUP[$1]:-Other} c=${TTHEME_CATALOG[$1]}
+  local name=$1 i g=${TTHEME_MARKETPLACE[$1]:-${TTHEME_CATALOG[$1]:-Other}} c=${TTHEME_CATALOG[$1]}
   exp[$g]=1
   [[ -n $c && $g == *@* ]] && exp[$g/$c]=1
   __tt_pv_rows
@@ -143,7 +143,7 @@ __tt_pv_left() {
     fi
     return 0
   fi
-  local g=${TTHEME_GROUP[${rval[cur]}]:-Other} c=${TTHEME_CATALOG[${rval[cur]}]}
+  local g=${TTHEME_MARKETPLACE[${rval[cur]}]:-${TTHEME_CATALOG[${rval[cur]}]:-Other}} c=${TTHEME_CATALOG[${rval[cur]}]}
   [[ -n $c && $g == *@* ]] && g=$g/$c
   exp[$g]=""
   __tt_pv_rows
@@ -258,7 +258,7 @@ __tt_pv_row() {
     __tt_pv_hl "$name" "$base"
     hl=$REPLY
     w=$(( lw - 6 - ${(m)#name} - ${#rcnt[$1]} ))
-    __tt_pv_alias "$t" "${TTHEME_NATIVE[${${=gthemes[$t]}[1]}]}"
+    __tt_pv_alias "$t" "${TTHEME_NATIVE[${${=tmembers[$t]}[1]}]}"
     __tt_pv_fit "$REPLY"
     extra=$REPLY
     (( w < 1 )) && w=1
@@ -287,7 +287,7 @@ __tt_pv_row() {
     mark=$ac$cdot$r
   fi
   name=${t##*/}
-  [[ -n ${TTHEME_CATALOG[$t]} && ${TTHEME_GROUP[$t]} == *@* ]] && ind="     "
+  [[ -n ${TTHEME_CATALOG[$t]} && -n ${TTHEME_MARKETPLACE[$t]} ]] && ind="     "
   (( ${TTHEME_TUNED[(Ie)$t]} )) && w=-2
   (( ${(m)#name} > lw - 17 - ${#ind} + w )) && name="${name[1,lw-18-${#ind}+w]}…"
   __tt_pv_hl "$name" "$base"
@@ -640,10 +640,10 @@ __tt_pv_help() {
       "esc  ·  back to the list, dropping picture changes since s"
     )
   else
-    hk=(Move Series Filter "" Example Apply Edit)
+    hk=(Move Catalogs Filter "" Example Apply Edit)
     hv=(
       "↑↓  home  end  pgup  pgdn"
-      "←→  ·  enter or space on a series"
+      "←→  ·  enter or space on a catalog"
       "Any text  ·  bksp  ·  ctrl-u clears"
       "Names and titles, in Japanese too"
       "⇧←→  ${(Lj:, :)TTHEME_SCENES}"
@@ -652,7 +652,7 @@ __tt_pv_help() {
     )
     hk+=(Config "")
     hv+=("alt-c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")
-    (( hub )) && { hk+=(Screens); hv+=("shift+tab  ·  tab on a series") }
+    (( hub )) && { hk+=(Screens); hv+=("shift+tab  ·  tab on a catalog") }
   fi
   hk+=(Close)
   if (( help == 2 )); then
@@ -844,7 +844,7 @@ __tt_pv_untune() {
 
 __tt_pv_regroup() {
   local ty=${rtype[cur]} v=${rval[cur]} i
-  __tt_pv_group
+  __tt_pv_tops
   __tt_pv_rows
   for (( i = 1; i <= ${#rval}; i++ )); do
     [[ ${rtype[i]} == "$ty" && ${rval[i]} == "$v" ]] && { cur=$i; return 0 }
@@ -1112,8 +1112,8 @@ __tt_pv_draw() {
       fi
     fi
     if [[ ${rtype[cur]} == thm ]]; then
-      ag=${TTHEME_GROUP[${rval[cur]}]:-Other}
-      [[ -n ${TTHEME_CATALOG[${rval[cur]}]} ]] && acat=$ag/${TTHEME_CATALOG[${rval[cur]}]}
+      ag=${TTHEME_MARKETPLACE[${rval[cur]}]:-${TTHEME_CATALOG[${rval[cur]}]:-Other}}
+      [[ -n ${TTHEME_MARKETPLACE[${rval[cur]}]} && -n ${TTHEME_CATALOG[${rval[cur]}]} ]] && acat=$ag/${TTHEME_CATALOG[${rval[cur]}]}
     fi
   fi
   if [[ -n $flt ]]; then
@@ -1150,7 +1150,7 @@ __tt_pv_draw() {
   if [[ -n $flt ]]; then
     find=$flt"_"
   else
-    ex="$expal | $exgrp"
+    ex="$expal | $extop"
     local -i room=$(( tall ? lw - 21 : lw - 19 - ${#cnt} ))
     (( ${#ex} > room )) && ex="${ex[1,room-1]}…"
     if (( gstep > 0 )); then
@@ -1263,14 +1263,14 @@ __tt_pv_draw() {
   __tt_pv_flush
 }
 
-__tt_pv_group() {
+__tt_pv_tops() {
   local k g
-  groups=() gthemes=()
+  tops=() tmembers=()
   __tt_order
   for k in $reply; do
-    g=${TTHEME_GROUP[$k]:-Other}
-    [[ -n ${gthemes[$g]} ]] || groups+=($g)
-    gthemes[$g]+=" $k"
+    g=${TTHEME_MARKETPLACE[$k]:-${TTHEME_CATALOG[$k]:-Other}}
+    [[ -n ${tmembers[$g]} ]] || tops+=($g)
+    tmembers[$g]+=" $k"
   done
 }
 
@@ -1300,7 +1300,7 @@ __tt_pv_strip() {
 }
 
 __tt_pv_init() {
-  __tt_pv_group
+  __tt_pv_tops
   [[ -n $orig ]] && __tt_name_of "$orig" && cn=$REPLY
   [[ -n ${TTHEME_PALETTE[$cn]} ]] || return 0
   cdot="◆"
@@ -1308,7 +1308,7 @@ __tt_pv_init() {
 
 __tt_pv_roll() {
   expal=${TTHEME_ORDER[RANDOM % ${#TTHEME_ORDER} + 1]}
-  exgrp=${groups[RANDOM % ${#groups} + 1]}
+  extop=${tops[RANDOM % ${#tops} + 1]}
   gseed=$RANDOM
   exnext=$(( SECONDS + 3 ))
 }
@@ -1979,7 +1979,9 @@ __tt_pv_te_head() {
   (( color )) || z= d= b= y=
   __tt_te_unsaved && (( room -= 11 ))
   line=$b$ac"◆"$z" "$b$tename$z
-  [[ -n ${TTHEME_GROUP[$tename]} ]] && line+=" "$d"· ${TTHEME_GROUP[$tename]}"$z
+  local REPLY
+  __tt_shelf $tename
+  line+=" "$d"· $REPLY"$z
   __tt_clip "$line" $room
   out+=$'\e[1;'$col'H'$REPLY$z
   __tt_te_unsaved && out+=$'\e[1;'$(( end - 8 ))'H'$y"●"$z" "$d"unsaved"$z
@@ -2378,7 +2380,7 @@ __tt_preview() {
     print -u2 "ttheme $mode: needs a terminal"
     return 1
   fi
-  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC painted=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" exgrp="" exnext=0 gstep=0 gseed=0 tick=0 pvhd=2 pvsr=1 pvsc=4
+  local orig=$TTHEME_SPEC applied=$TTHEME_SPEC painted=$TTHEME_SPEC flt="" sel="" cn="" cdot="" key="" REPLY="" cur=1 top=1 color=0 pw=80 ph=24 resized=1 expal="" extop="" exnext=0 gstep=0 gseed=0 tick=0 pvhd=2 pvsr=1 pvsc=4
   local pick="" pk=1 pkdef=1 picked=0 canpick=0 bgcw=0 bgch=0 bgname="" bgshown="" bginc="" osd="" osdt=0
   local tune="" tpick="" tf=1 help=0 msg="" msgt=0 an="" bgrel=0 bgmx=0 bgmy=0 bganchor=0 bgcut="" bgnext=0 bgbytes=0 bgstrip="" pvscene="" pvscenes=""
   local -i scene=0
@@ -2393,12 +2395,12 @@ __tt_preview() {
   local mact="" mzone="" pvmouse="" pasted=""
   local -a pvz=()
   local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=("New tabs" Announce "Search fx" Sort Mouse Blur Colors)
-  local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc series" "on off" "0 1 2 3 4" "tone original") cshow=("off seq" "on off" "typewriter decode glitch" "abc series" "on off" "off 1px 2px 3px 4px" "tone original")
+  local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "tone original") cshow=("off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "tone original")
   local -A cnote=(
     TTHEME_TAB_PALETTE:seq "New tabs rotate through palettes" TTHEME_TAB_PALETTE:off "New tabs keep the terminal theme"
     TTHEME_ANNOUNCE:1 "Shows the palette notice" TTHEME_ANNOUNCE:0 "Silences the palette notice"
     TTHEME_FX:typewriter "The search hint types itself" TTHEME_FX:decode "The search hint decodes" TTHEME_FX:glitch "The search hint glitches in"
-    TTHEME_SORT:abc "Series and palettes by name" TTHEME_SORT:series "Series in the order added"
+    TTHEME_SORT:abc "Catalogs and palettes by name" TTHEME_SORT:catalog "Catalogs in the order added"
     TTHEME_MOUSE:on "Clicks, the wheel and drags work in ttheme's screens" TTHEME_MOUSE:off "The terminal keeps the mouse, so a drag selects text"
     TTHEME_BG_BLUR:0 "Pictures stay sharp" TTHEME_BG_BLUR:1 "Pictures soften a little behind the text"
     TTHEME_BG_BLUR:2 "Pictures soften behind the text" TTHEME_BG_BLUR:3 "Pictures blur behind the text"
@@ -2410,8 +2412,8 @@ __tt_preview() {
   [[ $mode == pin ]] && __tt_pin_scopes "$pdir"
   __tt_pv_canpick
   __tt_pv_size
-  local -a groups=() rtype=() rval=() rcnt=() reply=()
-  local -A gthemes=() exp=() tstrip=()
+  local -a tops=() rtype=() rval=() rcnt=() reply=()
+  local -A tmembers=() exp=() tstrip=()
   __tt_color && color=1
   __tt_pv_init
   __tt_pv_roll

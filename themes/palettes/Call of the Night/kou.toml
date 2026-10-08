@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "kou"
+native_names = ["夜守コウ"]
+order = 63
+ansi_source = "Under The Sea"
+booru = "yamori_kou"
+signature = ["cursor", "ansi5", "ansi9"]
+
+[meta.booru_sites]
+konachan = []
+
+[colors]
+background = "#211513"
+foreground = "#fddbd5"
+cursor = "#e66c59"
+selection_background = "#264242"
+ansi = [
+  "#2e211e",
+  "#ff7668",
+  "#c3ab00",
+  "#e7b171",
+  "#64a9cd",
+  "#5aaaff",
+  "#09c6b3",
+  "#d8c2be",
+
+  "#857370",
+  "#ffaba4",
+  "#e9cb00",
+  "#ffd5a7",
+  "#6dccfb",
+  "#b7c7ff",
+  "#3ee9d4",
+  "#ffe9e5",
+]

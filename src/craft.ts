@@ -38,7 +38,7 @@ import { bringPictures, heldPictures } from './pictures.ts'
 import { qrLines } from './qr.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
 import { showsPictures } from './terminal.ts'
-import { marketplaceOf, nameProblem, type SharedPicture, type Theme } from './theme.ts'
+import { marketplaceOf, nameProblem, type SharedPicture, shelfOf, type Theme } from './theme.ts'
 import { overrideOf, readTone, tonedEntry, withTone, writeTone } from './tone.ts'
 import { toneRows } from './tone-view.ts'
 
@@ -244,7 +244,7 @@ export async function runNew(name: string, from: string | undefined, into: strin
   const base = source && (marketplaceOf(source.name) ? source.base : source.default ? undefined : source.name)
   const kept = source ? draftOf(source, full, `kept from ${source.name}`) : undefined
   const held = source ? (heldPictures(home, source.name) ?? source.pictures) : undefined
-  const { base: _, ansiSource: __, group: ___, ...rest } = kept ?? { name: full, signature: SIGNATURE, ...grow(SEEDS) }
+  const { base: _, ansiSource: __, ...rest } = kept ?? { name: full, signature: SIGNATURE, ...grow(SEEDS) }
   const shelf = shelfFor(home, full)
   const toml = ({ colors, signature }: Edited) => {
     const pictures = merged(held, shelf.fresh())
@@ -441,7 +441,7 @@ export function runCheck(name: string, fix = false): number {
   const catalog = readCatalog(home)
   const state = readInstalled(home)
   const entry = named(available(home, catalog), name, home)
-  console.log(`${entry.name} · ${entry.group}\n`)
+  console.log(`${entry.name} · ${shelfOf(entry)}\n`)
   console.log(gateLines(entry).join('\n'))
   const failures = gateFailures(entry)
   if (failures.length === 0) {

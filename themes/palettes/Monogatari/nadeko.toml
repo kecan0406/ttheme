@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "nadeko"
+native_names = ["千石撫子"]
+order = 36
+ansi_source = "Tinacious Design Dark"
+booru = "sengoku_nadeko"
+signature = ["cursor", "ansi4", "ansi2"]
+
+[colors]
+background = "#1f1518"
+foreground = "#f9dbe3"
+cursor = "#f2a0bd"
+selection_background = "#53334b"
+ansi = [
+  "#2c2124",
+  "#fa72aa",
+  "#3fc267",
+  "#fba969",
+  "#00aedb",
+  "#eb7de3",
+  "#6ab7fd",
+  "#d5c2c6",
+
+  "#837377",
+  "#ffa8c5",
+  "#a7e25f",
+  "#fdd5b9",
+  "#8ec9fb",
+  "#ffaaf4",
+  "#a2dbf5",
+  "#ffe8ee",
+]

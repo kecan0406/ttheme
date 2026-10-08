@@ -1,0 +1,39 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "yuri"
+native_names = ["ユリ"]
+order = 74
+ansi_source = "Purple Portal + DDLC"
+booru = "yuri_(doki_doki_literature_club)"
+signature = ["cursor", "ansi11", "ansi9"]
+
+[meta.booru_sites]
+konachan = "yuri_(ddlc)"
+yande = "yuri_(doki_doki_literature_club!)"
+zerochan = "yuri_(doki_doki_literature_club!)"
+
+[colors]
+background = "#1b161d"
+foreground = "#eddeef"
+cursor = "#c29ed1"
+selection_background = "#4e3551"
+ansi = [
+  "#282229",
+  "#f375b9",
+  "#43c38e",
+  "#ff9eac",
+  "#9097ff",
+  "#ae94f6",
+  "#42bcf5",
+  "#cec3ce",
+
+  "#7d747e",
+  "#ffaab4",
+  "#88dfb5",
+  "#ffd0e4",
+  "#b9bcf8",
+  "#cebbf7",
+  "#a4d8f9",
+  "#f9e9fa",
+]

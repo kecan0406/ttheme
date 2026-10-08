@@ -1,0 +1,38 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "urushihara"
+native_names = ["漆原半蔵"]
+order = 137
+ansi_source = "Abernathy + Ente Isla"
+booru = "urushihara_hanzou"
+signature = ["cursor", "ansi5", "ansi12"]
+
+[meta.booru_sites]
+konachan = ["hanzou_urushihara", "urushihara_hanzo"]
+zerochan = "urushihara_hanzo"
+
+[colors]
+background = "#1a161e"
+foreground = "#e9dff1"
+cursor = "#705c8e"
+selection_background = "#3c3e3d"
+ansi = [
+  "#26222a",
+  "#fc71a5",
+  "#51bf8f",
+  "#ffa76d",
+  "#819bff",
+  "#c992d7",
+  "#4dbafa",
+  "#cbc4cf",
+
+  "#7b757f",
+  "#ffa8c4",
+  "#62e4ab",
+  "#fdd5b9",
+  "#c4baf2",
+  "#f0b0ff",
+  "#a3d8ff",
+  "#f5eafc",
+]

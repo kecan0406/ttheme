@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "flandre"
+native_names = ["フランドール・スカーレット"]
+order = 96
+ansi_source = "Molokai"
+booru = "flandre_scarlet"
+signature = ["cursor", "ansi11", "ansi12"]
+
+[colors]
+background = "#201514"
+foreground = "#fcdbd9"
+cursor = "#ee6466"
+selection_background = "#59323e"
+ansi = [
+  "#2d2120",
+  "#ff7389",
+  "#c0af12",
+  "#e8b543",
+  "#74a3ff",
+  "#ed7de0",
+  "#71baf9",
+  "#d7c1c0",
+
+  "#857372",
+  "#ffa9b8",
+  "#c0dc55",
+  "#ede05d",
+  "#81c8ff",
+  "#ffaaf7",
+  "#a4ddf5",
+  "#ffe9e8",
+]

@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "lain"
+native_names = ["岩倉玲音"]
+order = 42
+ansi_source = "IR Black"
+booru = "iwakura_lain"
+signature = ["cursor", "ansi2", "ansi12"]
+
+[colors]
+background = "#211513"
+foreground = "#fddbd6"
+cursor = "#ee6653"
+selection_background = "#5c322e"
+ansi = [
+  "#2e211f",
+  "#ff7667",
+  "#79bd40",
+  "#e1b46e",
+  "#83a2e2",
+  "#fe78b8",
+  "#83b7d7",
+  "#d8c2be",
+
+  "#857370",
+  "#fdaca4",
+  "#ccd56d",
+  "#ffd799",
+  "#99c6ec",
+  "#ffafd2",
+  "#a0dbf6",
+  "#ffe9e6",
+]

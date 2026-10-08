@@ -32,7 +32,6 @@ import {
   isLocal,
   isRemote,
   localIdentity,
-  MARKETPLACE_FILE,
   type MarketplaceInfo,
   marketplaceId,
   marketplacesDir,
@@ -42,7 +41,7 @@ import {
   shownSource,
 } from './sources.ts'
 import { untar } from './tarball.ts'
-import { slugOf } from './theme.ts'
+import { MARKETPLACE_FILE, slugOf } from './theme.ts'
 import { moveTone } from './tone.ts'
 
 export const REFRESH_AFTER = 24 * 60 * 60 * 1000

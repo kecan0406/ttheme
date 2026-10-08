@@ -12,7 +12,7 @@ import { overrideOf, readTone, slotColors, tonedEntry, tonePath, tuned, withTone
 function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    group: 'Jujutsu Kaisen',
+    catalog: 'Jujutsu Kaisen',
     order: 1,
     ansiSource: 'Horizon + Jujutsu',
     background: '#11191c',

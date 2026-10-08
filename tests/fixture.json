@@ -36,7 +36,7 @@
   "palettes": [
     {
       "name": "neutral",
-      "group": "Default",
+      "catalog": "Default",
       "lead": true,
       "order": 1,
       "ansiSource": "Nvim Dark",
@@ -88,7 +88,7 @@
     },
     {
       "name": "konata",
-      "group": "Lucky☆Star",
+      "catalog": "Lucky☆Star",
       "native": "らき☆すた",
       "lead": true,
       "order": 25,
@@ -140,7 +140,7 @@
     },
     {
       "name": "kagami",
-      "group": "Lucky☆Star",
+      "catalog": "Lucky☆Star",
       "native": "らき☆すた",
       "order": 26,
       "ansiSource": "Nightfox + Ryouou",
@@ -191,7 +191,7 @@
     },
     {
       "name": "tsukasa",
-      "group": "Lucky☆Star",
+      "catalog": "Lucky☆Star",
       "native": "らき☆すた",
       "order": 27,
       "ansiSource": "Sublette + Ryouou",
@@ -242,7 +242,7 @@
     },
     {
       "name": "bocchi",
-      "group": "Bocchi the Rock!",
+      "catalog": "Bocchi the Rock!",
       "native": "ぼっち・ざ・ろっく!",
       "lead": true,
       "order": 29,
@@ -294,7 +294,7 @@
     },
     {
       "name": "kita",
-      "group": "Bocchi the Rock!",
+      "catalog": "Bocchi the Rock!",
       "native": "ぼっち・ざ・ろっく!",
       "order": 32,
       "ansiSource": "Wild Cherry + Kessoku",
@@ -345,7 +345,7 @@
     },
     {
       "name": "ryo",
-      "group": "Bocchi the Rock!",
+      "catalog": "Bocchi the Rock!",
       "native": "ぼっち・ざ・ろっく!",
       "order": 31,
       "ansiSource": "TokyoNight Storm",

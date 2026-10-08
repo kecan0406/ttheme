@@ -6,10 +6,11 @@ import pkg from '../../package.json' with { type: 'json' }
 import { parseCatalog } from '../catalog.ts'
 import { type Manifest, type PaletteEntry, SCHEMA, swatch } from '../manifest.ts'
 import { loadThemes } from '../theme.ts'
-import { manifest } from './manifest.ts'
+import { manifest, type SchemaOneEntry, schemaOne } from './manifest.ts'
 
 const published = manifest(loadThemes(join(import.meta.dirname, '..', '..', 'themes')))
 const { schema, version, gate: rules, palettes: entries } = published
+const pages = schemaOne(published)
 
 test('manifest states which build produced it', () => {
   assert.equal(version, pkg.version)
@@ -35,7 +36,7 @@ const SCHEMA_1_FIELDS = {
   ansi: 1,
   gate: 1,
   backdrop: 1,
-} satisfies Record<RequiredKeys<PaletteEntry>, 1>
+} satisfies Record<RequiredKeys<SchemaOneEntry>, 1>
 
 const SCHEMA_1_DOCUMENT = {
   schema: 1,
@@ -56,17 +57,17 @@ const SCHEMA_1_GATE = [
   'distinct',
 ]
 
-test('every entry keeps the fields a schema 1 reader needs — dropping or renaming one is a new SCHEMA', () => {
-  for (const e of entries) {
+test('every entry Pages serves keeps the fields a schema 1 reader needs — dropping or renaming one is a new SCHEMA', () => {
+  for (const e of pages.palettes) {
     for (const field of Object.keys(SCHEMA_1_FIELDS)) {
       assert.ok(field in e, `${e.name}: ${field} is gone, so older ttheme would misread it — raise SCHEMA`)
     }
   }
 })
 
-test('the manifest keeps the top-level fields a schema 1 reader needs — dropping or renaming one is a new SCHEMA', () => {
+test('the manifest Pages serves keeps the top-level fields a schema 1 reader needs — dropping or renaming one is a new SCHEMA', () => {
   for (const field of Object.keys(SCHEMA_1_DOCUMENT)) {
-    assert.ok(field in published, `${field} is gone, so older ttheme would misread the manifest — raise SCHEMA`)
+    assert.ok(field in pages, `${field} is gone, so older ttheme would misread the manifest — raise SCHEMA`)
   }
 })
 
@@ -85,8 +86,8 @@ test('the manifest the build writes is one every reader accepts', () => {
 
 test('manifest carries every theme in display order', () => {
   assert.ok(entries.length > 0)
-  const groupRuns = entries.filter((e, i) => e.group !== entries[i - 1]?.group).length
-  assert.equal(groupRuns, new Set(entries.map((e) => e.group)).size, 'groups must be contiguous')
+  const runs = entries.filter((e, i) => e.catalog !== entries[i - 1]?.catalog).length
+  assert.equal(runs, new Set(entries.map((e) => e.catalog)).size, 'catalogs must be contiguous')
 })
 
 test('manifest marks exactly one default palette', () => {
@@ -153,16 +154,17 @@ test('manifest publishes the gate every palette was measured against', () => {
   }
 })
 
-test('every group names one lead palette and one native title', () => {
-  const groups = new Map<string, PaletteEntry[]>()
+test('every catalog names one lead palette and one native title', () => {
+  const catalogs = new Map<string | undefined, PaletteEntry[]>()
   for (const e of entries) {
-    const members = groups.get(e.group)
+    const members = catalogs.get(e.catalog)
     if (members) members.push(e)
-    else groups.set(e.group, [e])
+    else catalogs.set(e.catalog, [e])
   }
-  for (const [group, members] of groups) {
-    assert.equal(members.filter((e) => e.lead).length, 1, `${group}: expected exactly one lead palette`)
-    assert.equal(new Set(members.map((e) => e.native)).size, 1, `${group}: native title must match across the group`)
+  assert.ok(!catalogs.has(undefined), 'every official palette sits in a catalog')
+  for (const [catalog, members] of catalogs) {
+    assert.equal(members.filter((e) => e.lead).length, 1, `${catalog}: expected exactly one lead palette`)
+    assert.equal(new Set(members.map((e) => e.native)).size, 1, `${catalog}: native title must match across it`)
   }
 })
 

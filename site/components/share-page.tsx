@@ -7,6 +7,7 @@ import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { type Builder, type GateLine, GRID, type Pane, type Run, type Shared } from '@/lib/share'
 import type { ShareView, SlotView } from '@/lib/share-view'
+import { shelfOf } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
 import { CommandRow } from './command-row'
 import { PropertyList, reading, SectionLabel, Signature } from './palette-parts'
@@ -260,7 +261,7 @@ function AboutPanel({ shared }: { shared: Shared }) {
         <SectionLabel icon={<Icon node={List} />}>Palette</SectionLabel>
         <PropertyList
           rows={[
-            [theme.marketplace ? 'Marketplace' : 'Series', theme.marketplace ?? theme.group],
+            [theme.marketplace ? 'Marketplace' : 'Catalog', shelfOf(theme)],
             ['ANSI from', theme.ansiSource],
             ['Signature', theme.signatureSlots.join(' · ')],
           ]}
@@ -321,7 +322,7 @@ function Bar({ shared }: { shared: Shared }) {
           /
         </span>
         <span class="min-w-0 truncate text-sm font-medium text-soft-foreground min-[761px]:max-[1100px]:hidden" safe>
-          {theme.marketplace ?? theme.group}
+          {shelfOf(theme)}
         </span>
         <span aria-hidden="true" class="text-base text-faint-foreground min-[761px]:max-[1100px]:hidden">
           /

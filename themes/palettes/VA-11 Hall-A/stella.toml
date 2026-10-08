@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "stella"
+native_names = ["ステラ・ホシイ"]
+order = 46
+ansi_source = "Scarlet Protocol + Glitch City"
+booru = "stella_hoshii"
+signature = ["cursor", "ansi2", "ansi13"]
+
+[meta.booru_sites]
+konachan = []
+
+[colors]
+background = "#201515"
+foreground = "#fcdbdb"
+cursor = "#ee636d"
+selection_background = "#573245"
+ansi = [
+  "#2d2121",
+  "#ff747d",
+  "#0fc476",
+  "#ffa768",
+  "#ad91ee",
+  "#f37bd1",
+  "#7ab3ff",
+  "#d7c1c1",
+
+  "#857373",
+  "#ffaba8",
+  "#96e66e",
+  "#ffd5b4",
+  "#d4b5ff",
+  "#efb0ff",
+  "#b1d5fe",
+  "#ffe9e8",
+]

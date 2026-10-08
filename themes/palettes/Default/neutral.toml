@@ -1,0 +1,33 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "neutral"
+order = 1
+role = "default"
+ansi_source = "Nvim Dark"
+signature = ["cursor", "ansi4", "ansi5"]
+
+[colors]
+background = "#17171f"
+foreground = "#e3e0f3"
+cursor = "#cdcdff"
+selection_background = "#3e3c4c"
+ansi = [
+  "#23232b",
+  "#d08ea3",
+  "#73ba98",
+  "#efaf7f",
+  "#72a7c9",
+  "#c796c8",
+  "#5cbedc",
+  "#c7c5d0",
+
+  "#777680",
+  "#f4adc3",
+  "#94dcb8",
+  "#fad7be",
+  "#a1c3f2",
+  "#dabaf5",
+  "#95dbff",
+  "#eeecfe",
+]

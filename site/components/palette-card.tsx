@@ -42,7 +42,7 @@ export function PaletteCard({ theme, scene }: { theme: Theme; scene: Scene }) {
             <Signature theme={theme} />
           </CardAction>
           <CardDescription>
-            {escapeHtml(theme.marketplace ? theme.id : `${theme.group}${theme.lead ? ' · lead' : ''}`)}
+            {escapeHtml(theme.marketplace ? theme.id : `${theme.catalog ?? ''}${theme.lead ? ' · lead' : ''}`)}
           </CardDescription>
         </CardHeader>
       </button>

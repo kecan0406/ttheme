@@ -16,7 +16,7 @@ export function FilterBar({ total, sources = true }: { total: number; sources?: 
         </InputGroupAddon>
         <InputGroupInput
           name="query"
-          placeholder="search palettes, series, owners"
+          placeholder="search palettes, catalogs, owners"
           aria-label="search palettes"
           spellcheck="false"
           autocomplete="off"

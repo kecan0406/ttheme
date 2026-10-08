@@ -1,0 +1,39 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "tet"
+native_names = ["テト"]
+order = 144
+ansi_source = "Peppermint + Blank"
+booru = "teto_(no_game_no_life)"
+signature = ["cursor", "ansi1", "ansi12"]
+
+[meta.booru_sites]
+konachan = "tet_(no_game_no_life)"
+yande = "tet_(no_game_no_life)"
+zerochan = "tet_(no_game_no_life)"
+
+[colors]
+background = "#131913"
+foreground = "#d9e6d5"
+cursor = "#aedeae"
+selection_background = "#3c3e3e"
+ansi = [
+  "#1f251e",
+  "#ff7197",
+  "#72bc75",
+  "#bbc262",
+  "#52a7d9",
+  "#f37dbb",
+  "#79bdae",
+  "#c1c9be",
+
+  "#727970",
+  "#ffaaa1",
+  "#a8d8a8",
+  "#d3e590",
+  "#99c3ff",
+  "#fdb1c1",
+  "#9bdfcb",
+  "#e4f2e0",
+]

@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "rikka"
+native_names = ["小鳥遊六花"]
+order = 97
+ansi_source = "Challenger Deep + Delusion"
+booru = "takanashi_rikka"
+signature = ["cursor", "ansi12", "ansi1"]
+
+[colors]
+background = "#1b170c"
+foreground = "#eee1c5"
+cursor = "#f8cd41"
+selection_background = "#3d3a5b"
+ansi = [
+  "#282318",
+  "#ff7574",
+  "#88b958",
+  "#e0b72a",
+  "#00b0c2",
+  "#d790bc",
+  "#67c383",
+  "#cfc6b4",
+
+  "#7d7667",
+  "#ffad8c",
+  "#b0da5c",
+  "#f6db8c",
+  "#7fcbec",
+  "#f8b1dd",
+  "#a9e0a2",
+  "#faedd0",
+]

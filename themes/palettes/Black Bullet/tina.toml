@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "tina"
+native_names = ["ティナ・スプラウト"]
+order = 124
+ansi_source = "Galizur + Varanium"
+booru = "tina_sprout"
+signature = ["cursor", "ansi6", "selection"]
+
+[colors]
+background = "#1b170c"
+foreground = "#eee2c5"
+cursor = "#ead082"
+selection_background = "#2c4a5e"
+ansi = [
+  "#282318",
+  "#ff7749",
+  "#9ab719",
+  "#dcb831",
+  "#76a6c8",
+  "#f185a0",
+  "#76bcc2",
+  "#cec6b4",
+
+  "#7d7667",
+  "#ffad92",
+  "#b9d93f",
+  "#ffdb42",
+  "#2cd0f9",
+  "#ffb1c3",
+  "#38ead4",
+  "#f9edd0",
+]

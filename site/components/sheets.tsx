@@ -2,9 +2,10 @@ import { escapeHtml } from '@kitajs/html'
 import { ChevronDown, ChevronLeft, ChevronRight, Gauge, List, SwatchBook } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { catalogsOf } from '@/lib/catalogs'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { gatePassed, seriesOf, sheetNumber } from '@/lib/sheet'
+import { gatePassed, sheetNumber } from '@/lib/sheet'
 import type { GateRule, Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
 import { CommandRow } from './command-row'
@@ -23,7 +24,7 @@ export function SheetHeading({ themes, theme, gate }: { themes: Theme[]; theme: 
         {theme.name}
       </h1>
       <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm text-soft-foreground">
-        <span safe>{`${theme.group}${theme.lead ? ' · lead' : ''}`}</span>
+        <span safe>{`${theme.catalog ?? ''}${theme.lead ? ' · lead' : ''}`}</span>
         <Signature theme={theme} />
         <Badge variant={passed === gate.length ? 'success' : 'warning'}>
           {passed} / {gate.length} floors
@@ -41,7 +42,7 @@ export function SheetDetails({ theme, gate }: { theme: Theme; gate: GateRule[] }
           <SectionLabel icon={<Icon node={List} />}>Properties</SectionLabel>
           <PropertyList
             rows={[
-              ['Series', `${theme.group}${theme.lead ? ' · lead' : ''}`],
+              ['Catalog', `${theme.catalog ?? ''}${theme.lead ? ' · lead' : ''}`],
               ['ANSI from', theme.ansiSource],
               ['Signature', theme.signatureSlots.join(' · ')],
             ]}
@@ -125,13 +126,13 @@ export function Sheets({ themes, gate }: { themes: Theme[]; gate: GateRule[] }) 
           <Icon node={ChevronLeft} />
         </Button>
         <div data-strip class="flex min-w-0 flex-1 snap-x gap-2 overflow-x-auto py-1 [scrollbar-width:none]">
-          {seriesOf(themes).map((entry) => (
+          {catalogsOf(themes).map((entry) => (
             <div class="flex flex-none items-stretch gap-2">
               <span
                 class="flex flex-none items-center pr-1 pl-2 text-2xs font-bold tracking-caps whitespace-nowrap text-muted-foreground uppercase"
                 safe
               >
-                {entry.name}
+                {entry.catalog}
               </span>
               {entry.themes.map((sheet) => (
                 <button

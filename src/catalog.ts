@@ -10,7 +10,6 @@ import {
   cachePath,
   type Identity,
   isRemote,
-  MARKETPLACE_FILE,
   type MarketplaceInfo,
   marketplaceId,
   marketplaceSources,
@@ -19,7 +18,7 @@ import {
   remoteOwner,
   shownSource,
 } from './sources.ts'
-import { marketplaceOf, nameProblem, textProblem } from './theme.ts'
+import { MARKETPLACE_FILE, marketplaceOf, nameProblem, shelfOf, textProblem } from './theme.ts'
 import { readTone, tuned } from './tone.ts'
 
 const TIMEOUT = 20_000
@@ -159,7 +158,7 @@ function entryProblem(p: PaletteEntry): string | undefined {
   if (![p.background, p.foreground, p.cursor, p.selection, ...p.ansi].every((c) => typeof c === 'string' && isHex(c))) {
     return 'holds a color that is not "#rrggbb"'
   }
-  for (const field of [p.group, p.native ?? '-', p.catalog ?? '-', p.ansiSource]) {
+  for (const field of [p.native ?? '-', p.catalog ?? '-', p.ansiSource]) {
     const problem = typeof field === 'string' ? textProblem(field) : 'has a field that is not text'
     if (problem) {
       return problem
@@ -286,15 +285,17 @@ export function find(palettes: PaletteEntry[], name: string): PaletteEntry {
 export function nearest(palettes: PaletteEntry[], names: string[]): string {
   const needles = names.map((n) => n.toLowerCase())
   const named = palettes.filter((p) => needles.some((n) => p.name.includes(n)))
-  const grouped = palettes.filter((p) => !named.includes(p) && needles.some((n) => p.group.toLowerCase().includes(n)))
-  const near = [...named, ...grouped].map((p) => p.name).slice(0, 3)
+  const shelved = palettes.filter(
+    (p) => !named.includes(p) && needles.some((n) => shelfOf(p).toLowerCase().includes(n)),
+  )
+  const near = [...named, ...shelved].map((p) => p.name).slice(0, 3)
   return near.length > 0 ? `did you mean: ${near.join(', ')}?` : '`ttheme list` shows what is there'
 }
 
 export function search(palettes: PaletteEntry[], query: string): PaletteEntry[] {
   return palettes.filter((p) =>
     containsText(
-      [p.name, p.group, p.native ?? '', p.ansiSource, ...(p.nativeNames ?? []), ...aliasesFor(p.booru)],
+      [p.name, shelfOf(p), p.native ?? '', p.ansiSource, ...(p.nativeNames ?? []), ...aliasesFor(p.booru)],
       query,
     ),
   )
@@ -302,7 +303,7 @@ export function search(palettes: PaletteEntry[], query: string): PaletteEntry[] 
 
 export function booruTags(palettes: PaletteEntry[], near: PaletteEntry, token: string): PaletteEntry[] {
   const needle = token.toLowerCase()
-  const rank = (p: PaletteEntry) => (p.name === near.name ? 0 : p.group === near.group ? 1 : 2)
+  const rank = (p: PaletteEntry) => (p.name === near.name ? 0 : shelfOf(p) === shelfOf(near) ? 1 : 2)
   return palettes
     .filter((p) => p.booru?.toLowerCase().includes(needle))
     .map((p, at) => ({ p, at }))

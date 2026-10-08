@@ -23,6 +23,7 @@ import {
 import { writeAtomic } from '../edits.ts'
 import type { Pick } from '../fit.ts'
 import type { Manifest, PaletteEntry } from '../manifest.ts'
+import { shelfOf } from '../theme.ts'
 
 function readCache<T>(site: Site, name: string): Record<string, T> {
   try {
@@ -148,7 +149,7 @@ export class Kept {
     const known = this.keep<string>(site, 'owners.json')
     const siblings = this.catalog.palettes.flatMap((sibling) => {
       const origin = found.get(sibling.name)
-      return sibling.group === this.entry.group && sibling.name !== this.entry.name && origin?.site === site.key
+      return shelfOf(sibling) === shelfOf(this.entry) && sibling.name !== this.entry.name && origin?.site === site.key
         ? [{ name: sibling.name, id: origin.id }]
         : []
     })

@@ -83,7 +83,7 @@ export function MarketplaceGallery({
           <strong data-empty-title class="block font-semibold text-foreground">
             no palette matches these filters ( ˘ω˘ )
           </strong>
-          clear a filter, or search for a series instead.
+          clear a filter, or search for a catalog instead.
         </div>
       </div>
       <PaletteDialog />

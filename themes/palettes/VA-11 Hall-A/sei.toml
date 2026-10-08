@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "sei"
+native_names = ["セイ・P・アサギリ"]
+order = 47
+ansi_source = "Blue Matrix"
+booru = "sei_asagiri"
+signature = ["cursor", "ansi12", "ansi9"]
+
+[meta.booru_sites]
+konachan = []
+
+[colors]
+background = "#101916"
+foreground = "#d4e7df"
+cursor = "#7bcdb5"
+selection_background = "#293f59"
+ansi = [
+  "#1c2622",
+  "#f27e49",
+  "#00c38a",
+  "#afc531",
+  "#729de9",
+  "#ac93f7",
+  "#44bfdc",
+  "#bfc9c4",
+
+  "#6f7975",
+  "#ffaba5",
+  "#4de693",
+  "#d0e664",
+  "#b8bcff",
+  "#cdbcf7",
+  "#3fe7ea",
+  "#e0f2ea",
+]

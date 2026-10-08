@@ -7,10 +7,10 @@ import { SharePage } from '@/components/share-page'
 import { Sheets } from '@/components/sheets'
 import { cardPng } from '@/lib/card'
 import { gate, themes } from '@/lib/catalog'
+import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
 import { loadMarketplaces } from '@/lib/marketplaces'
 import { builderOf, readShared, type Shared } from '@/lib/share'
-import { seriesOf } from '@/lib/sheet'
 import { page } from './document'
 
 const CATALOG = 'public, max-age=0, s-maxage=31536000'
@@ -37,7 +37,7 @@ export const site = new Elysia({ name: 'site' })
           'Character color palettes for Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp and Konsole',
         cache: CATALOG,
       },
-      <Home themes={themes} series={seriesOf(themes).length} />,
+      <Home themes={themes} catalogs={catalogsOf(themes).length} />,
     ),
   )
   .get('/sheets', () =>
@@ -55,7 +55,7 @@ export const site = new Elysia({ name: 'site' })
     return page(
       {
         title: 'ttheme — marketplace',
-        description: 'Every ttheme palette: the official series and the marketplaces anyone publishes from GitHub',
+        description: 'Every ttheme palette: the official catalogs and the marketplaces anyone publishes from GitHub',
         cache: fresh ? MARKETPLACES : RETRY,
       },
       <MarketplacePage themes={themes} marketplaces={marketplaces} gate={gate} />,

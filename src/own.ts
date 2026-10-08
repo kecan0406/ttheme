@@ -15,9 +15,8 @@ import {
   PALETTE_SCHEMA_URL,
 } from './sources.ts'
 import {
-  type Group,
+  type Catalog,
   marketplaceOf,
-  ORIGINAL,
   type Place,
   POSITIONS,
   readTheme,
@@ -35,7 +34,7 @@ const SLOTS = ['background', 'foreground', 'cursor', 'selection', ...Array.from(
 export interface Draft {
   name: string
   base?: string
-  group?: string
+  catalog?: string
   ansiSource?: string
   booru?: string
   booruSites?: Record<string, string[]>
@@ -85,7 +84,11 @@ function byName(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0
 }
 
-export function marketplaceLayout(paths: Iterable<string>, at: (path: string) => string): MarketplaceFile[] {
+export function marketplaceLayout(
+  paths: Iterable<string>,
+  at: (path: string) => string,
+  catalogs: readonly Catalog[] = [],
+): MarketplaceFile[] {
   const shelved: { file: MarketplaceFile; name: string }[] = []
   const loose: { file: MarketplaceFile; name: string }[] = []
   for (const path of paths) {
@@ -101,12 +104,29 @@ export function marketplaceLayout(paths: Iterable<string>, at: (path: string) =>
       shelved.push({ file: { path: at(path), slug: basename(second, '.toml'), catalog: first }, name: second })
     }
   }
-  shelved.sort((a, b) => byName(a.file.catalog ?? '', b.file.catalog ?? '') || byName(a.name, b.name))
+  const listed = (catalog = '') => {
+    const at = catalogs.findIndex((c) => c.name === catalog)
+    return at < 0 ? catalogs.length : at
+  }
+  shelved.sort(
+    (a, b) =>
+      listed(a.file.catalog) - listed(b.file.catalog) ||
+      byName(a.file.catalog ?? '', b.file.catalog ?? '') ||
+      byName(a.name, b.name),
+  )
   loose.sort((a, b) => byName(a.name, b.name))
   return [...shelved, ...loose].map(({ file }) => file)
 }
 
-export function marketplaceFiles(dir: string): MarketplaceFile[] {
+export function catalogsIn(dir: string): Catalog[] {
+  try {
+    return localIdentity(dir).catalogs
+  } catch {
+    return []
+  }
+}
+
+export function marketplaceFiles(dir: string, catalogs: readonly Catalog[] = []): MarketplaceFile[] {
   const folder = palettesDir(dir)
   if (!existsSync(folder)) {
     return []
@@ -116,7 +136,7 @@ export function marketplaceFiles(dir: string): MarketplaceFile[] {
       ? readdirSync(join(folder, item.name)).map((file) => `palettes/${item.name}/${file}`)
       : [`palettes/${item.name}`],
   )
-  return marketplaceLayout(paths, (path) => join(dir, path))
+  return marketplaceLayout(paths, (path) => join(dir, path), catalogs)
 }
 
 function marketplaceFileProblem(file: MarketplaceFile, seen: ReadonlyMap<string, MarketplaceFile>): string | undefined {
@@ -143,27 +163,34 @@ export function ownPath(configHome: string, name: string): string {
   return marketplaceFiles(local.dir).find((f) => f.slug === slug)?.path ?? join(palettesDir(local.dir), `${slug}.toml`)
 }
 
-function placeFor(name: string, entries: PaletteEntry[], foreign = false): Place {
-  const groups = new Map<string, Group>()
-  for (const e of entries) {
-    if (e.group !== ORIGINAL && !groups.has(e.group)) {
-      const lead = entries.find((x) => x.group === e.group && x.lead)?.name ?? ''
-      groups.set(e.group, { name: e.group, ...(e.native ? { native: e.native } : {}), lead })
-    }
-  }
-  const bases = new Map(
-    entries
-      .filter((e) => !e.default && !marketplaceOf(e.name))
-      .map((e) => [e.name, { group: e.group, order: e.order }]),
-  )
-  return { name, groups, bases, open: true, ...(foreign ? { foreign: true as const } : {}) }
+export interface Shelf {
+  catalog?: string
+  catalogs?: readonly Catalog[]
 }
 
-export function readOwnText(name: string, source: string, entries: PaletteEntry[], foreign = false): Theme {
+function placeFor(name: string, entries: PaletteEntry[], foreign: boolean, shelf: Shelf): Place {
+  const bases = new Map(
+    entries.filter((e) => !e.default && !marketplaceOf(e.name)).map((e) => [e.name, { order: e.order }]),
+  )
+  return {
+    name,
+    ...(shelf.catalog === undefined ? {} : { catalog: shelf.catalog }),
+    catalogs: new Map((shelf.catalogs ?? []).map((c) => [c.name, c])),
+    bases,
+    open: true,
+    ...(foreign ? { foreign: true as const } : {}),
+  }
+}
+
+export function readOwnText(
+  name: string,
+  source: string,
+  entries: PaletteEntry[],
+  foreign = false,
+  shelf: Shelf = {},
+): Theme {
   const slug = slugOf(name)
-  const { native: _, ...theme } = readTheme(`${slug}.toml`, source, placeFor(slug, entries, foreign))
-  const marketplace = marketplaceOf(name)
-  return { ...theme, name, ...(marketplace ? { group: marketplace, lead: false } : {}) }
+  return { ...readTheme(`${slug}.toml`, source, placeFor(slug, entries, foreign, shelf)), name }
 }
 
 export type Report = (where: string, message: string) => void
@@ -179,6 +206,7 @@ export function readMarketplaceFiles(
   entries: PaletteEntry[],
   report: Report,
   foreign = false,
+  catalogs: readonly Catalog[] = [],
 ): PaletteEntry[] {
   const seen = new Map<string, MarketplaceFile>()
   return files.flatMap((file) => {
@@ -188,8 +216,8 @@ export function readMarketplaceFiles(
         throw new Error(problem)
       }
       seen.set(file.slug, file)
-      const entry = paletteEntry(readOwnText(`${id}/${file.slug}`, read(file), entries, foreign))
-      return [file.catalog ? { ...entry, catalog: file.catalog } : entry]
+      const shelf = { ...(file.catalog === undefined ? {} : { catalog: file.catalog }), catalogs }
+      return [paletteEntry(readOwnText(`${id}/${file.slug}`, read(file), entries, foreign, shelf))]
     } catch (error) {
       report(file.path, (error as Error).message)
       return []
@@ -203,7 +231,16 @@ export function readMarketplaceDir(
   entries: PaletteEntry[],
   report: Report = warning(true),
 ): PaletteEntry[] {
-  return readMarketplaceFiles(marketplaceFiles(dir), (file) => readFileSync(file.path, 'utf8'), id, entries, report)
+  const catalogs = catalogsIn(dir)
+  return readMarketplaceFiles(
+    marketplaceFiles(dir, catalogs),
+    (file) => readFileSync(file.path, 'utf8'),
+    id,
+    entries,
+    report,
+    false,
+    catalogs,
+  )
 }
 
 export function readLocal(configHome: string, entries: PaletteEntry[], warn = true): PaletteEntry[] {
@@ -216,7 +253,7 @@ export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string)
   return {
     name,
     ...(entry.base ? { base: entry.base } : {}),
-    ...(entry.group !== ORIGINAL ? { group: entry.group } : {}),
+    ...(entry.catalog ? { catalog: entry.catalog } : {}),
     ansiSource: entry.ansiSource,
     ...(entry.booru ? { booru: entry.booru } : {}),
     ...(entry.booruSites ? { booruSites: entry.booruSites } : {}),
@@ -259,7 +296,6 @@ export function paletteToml(d: Draft): string {
     '[meta]',
     `name = ${q(slugOf(d.name))}`,
     ...(d.base ? [`base = ${q(d.base)}`] : []),
-    ...(d.group ? [`group = ${q(d.group)}`] : []),
     ...(d.ansiSource ? [`ansi_source = ${q(d.ansiSource)}`] : []),
     ...(d.booru ? [`booru = ${q(d.booru)}`] : []),
     `signature = [${d.signature.map(q).join(', ')}]`,
@@ -403,7 +439,8 @@ export function codeOf(text: string): string | undefined {
 
 export function readCode(code: string, entries: PaletteEntry[]): PaletteEntry {
   const draft = fromCode(code)
-  return paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
+  const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
+  return draft.catalog ? { ...entry, catalog: draft.catalog } : entry
 }
 
 export function shareCode(d: Draft): string {
@@ -416,7 +453,7 @@ export function shareCode(d: Draft): string {
     w.u8(SLOTS.indexOf(slot))
   }
   w.str(d.base)
-  w.str(d.group)
+  w.str(d.catalog)
   w.str(d.ansiSource)
   w.str(d.booru)
   w.u16((d.waive ?? []).reduce((mask, rule) => mask | (1 << RULES.indexOf(rule)), 0))
@@ -467,7 +504,7 @@ export function fromCode(code: string): Draft {
   ]
   const signature = [r.u8(), r.u8(), r.u8()].map((i) => SLOTS[i] ?? `slot${i}`)
   const base = r.str()
-  const group = r.str()
+  const catalog = r.str()
   const ansiSource = r.str()
   const booru = r.str()
   const mask = r.u16()
@@ -494,7 +531,7 @@ export function fromCode(code: string): Draft {
   return {
     name,
     ...(base ? { base } : {}),
-    ...(group ? { group } : {}),
+    ...(catalog ? { catalog } : {}),
     ...(ansiSource ? { ansiSource } : {}),
     ...(booru ? { booru } : {}),
     signature,

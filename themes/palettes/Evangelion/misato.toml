@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "misato"
+native_names = ["葛城ミサト"]
+order = 12
+ansi_source = "Purple Rain"
+booru = "katsuragi_misato"
+signature = ["cursor", "ansi13", "foreground"]
+
+[colors]
+background = "#201514"
+foreground = "#e5e2dd"
+cursor = "#ee645d"
+selection_background = "#453858"
+ansi = [
+  "#2d211f",
+  "#ff7766",
+  "#c0ae13",
+  "#ffa851",
+  "#b38bff",
+  "#d68bdc",
+  "#76b6fc",
+  "#d8c2bf",
+
+  "#857371",
+  "#ffaba7",
+  "#e2d03c",
+  "#ffd5ae",
+  "#c1bbff",
+  "#d8baff",
+  "#90d9ff",
+  "#ffe9e7",
+]

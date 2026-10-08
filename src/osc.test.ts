@@ -6,7 +6,7 @@ import { answered, colorQuery, paletteOsc, parseOscColors, restoreOsc } from './
 
 const miku: PaletteEntry = {
   name: 'miku',
-  group: 'Vocaloid',
+  catalog: 'Vocaloid',
   ansiSource: 'Test',
   background: '#0e2124',
   foreground: '#e0f4f2',

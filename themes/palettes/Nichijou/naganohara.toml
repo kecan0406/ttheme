@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "naganohara"
+native_names = ["長野原みお"]
+order = 146
+ansi_source = "Oceanic Next + Nichijou"
+booru = "naganohara_mio"
+signature = ["cursor", "selection", "ansi3"]
+
+[colors]
+background = "#13181e"
+foreground = "#dae3f1"
+cursor = "#9cc2ec"
+selection_background = "#354660"
+ansi = [
+  "#1f242a",
+  "#ff6ea5",
+  "#7cb79a",
+  "#e9b173",
+  "#72a5d8",
+  "#ac9dd8",
+  "#70bbd1",
+  "#c2c7cf",
+
+  "#73777f",
+  "#ffabc5",
+  "#9dd8ba",
+  "#f8d57d",
+  "#93c5fb",
+  "#cdbefa",
+  "#91ddf3",
+  "#e6effc",
+]

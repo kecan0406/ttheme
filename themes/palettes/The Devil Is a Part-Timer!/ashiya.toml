@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "ashiya"
+native_names = ["芦屋四郎"]
+order = 136
+ansi_source = "Apple System Colors + Ente Isla"
+booru = "ashiya_shirou"
+signature = ["cursor", "foreground", "ansi2"]
+
+[colors]
+background = "#1d170c"
+foreground = "#e9e2cb"
+cursor = "#bd9852"
+selection_background = "#283f59"
+ansi = [
+  "#292318",
+  "#ff7749",
+  "#9eb464",
+  "#e4b61b",
+  "#00b2ba",
+  "#ff7c98",
+  "#66c1a0",
+  "#d1c5b4",
+
+  "#807667",
+  "#ffac91",
+  "#bdd83b",
+  "#ffd972",
+  "#6bd6f7",
+  "#ffb2be",
+  "#7fe5be",
+  "#feebd0",
+]

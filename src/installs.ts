@@ -16,7 +16,7 @@ import { newerRelease, upgradeTo } from './release.ts'
 import { installedPath, isLocal, marketplaceSources, OFFICIAL, shownSource } from './sources.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
-import { alphabetical, marketplaceOf } from './theme.ts'
+import { alphabetical, marketplaceOf, shelfOf } from './theme.ts'
 import { readTone } from './tone.ts'
 
 export function reload(count: number): void {
@@ -205,7 +205,7 @@ export function runList(query: string | undefined, json = false): void {
   if (json) {
     const rows = hits.map((p) => ({
       name: p.name,
-      group: p.group,
+      marketplace: marketplaceOf(p.name) ?? OFFICIAL,
       ...(p.catalog ? { catalog: p.catalog } : {}),
       installed: installed.has(p.name),
       source: source(p.name),
@@ -217,9 +217,10 @@ export function runList(query: string | undefined, json = false): void {
   const note: Record<Source, string> = { marketplace: '', mine: '  · yours', kept: '  · in no marketplace you added' }
   const tone = readTone(home)
   for (const p of hits) {
-    const group = p.catalog ? `${p.group} / ${p.catalog}` : p.group
     const tuned = tone[p.name] ? '  · tuned' : ''
-    console.log(`  ${installed.has(p.name) ? '●' : '○'} ${p.name.padEnd(pad)}  ${group}${note[source(p.name)]}${tuned}`)
+    console.log(
+      `  ${installed.has(p.name) ? '●' : '○'} ${p.name.padEnd(pad)}  ${shelfOf(p)}${note[source(p.name)]}${tuned}`,
+    )
   }
   if (process.stdout.isTTY) {
     const shown = query ? `${hits.length} of ${all.length}` : `${all.length}`
@@ -342,7 +343,7 @@ export async function pickPalettes(
   scope: PickerScope,
   required = false,
 ): Promise<string[] | undefined> {
-  const entries = process.env.TTHEME_SORT === 'series' ? catalog.palettes : alphabetical(catalog.palettes)
+  const entries = process.env.TTHEME_SORT === 'catalog' ? catalog.palettes : alphabetical(catalog.palettes)
   knowAliases(entries)
   const tty = process.stdout.isTTY === true
   const live = liveOf(process.env, tty, configHome())

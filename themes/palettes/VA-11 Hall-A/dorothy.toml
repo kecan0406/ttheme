@@ -1,0 +1,38 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "dorothy"
+native_names = ["ドロシー・ヘイズ"]
+order = 44
+ansi_source = "Cyberpunk + Glitch City"
+booru = "dorothy_haze"
+signature = ["cursor", "ansi4", "ansi5"]
+
+[meta.booru_sites]
+konachan = []
+zerochan = []
+
+[colors]
+background = "#201515"
+foreground = "#fbdbdc"
+cursor = "#ed6376"
+selection_background = "#573243"
+ansi = [
+  "#2d2021",
+  "#ff728e",
+  "#bead00",
+  "#feaa2f",
+  "#00ace6",
+  "#d289f2",
+  "#80b8f6",
+  "#d7c1c2",
+
+  "#857374",
+  "#ffaab6",
+  "#d5d21f",
+  "#ffd6a9",
+  "#95c7ff",
+  "#fface7",
+  "#a9dbfa",
+  "#ffe9e9",
+]

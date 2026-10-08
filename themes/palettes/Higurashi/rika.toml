@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "rika"
+native_names = ["古手梨花"]
+order = 69
+ansi_source = "Nocturnal Winter"
+booru = "furude_rika"
+signature = ["cursor", "ansi13", "foreground"]
+
+[colors]
+background = "#16171f"
+foreground = "#e3e1e9"
+cursor = "#818bd9"
+selection_background = "#3c3b54"
+ansi = [
+  "#23232b",
+  "#fe70a5",
+  "#51bf8f",
+  "#b0c166",
+  "#729eff",
+  "#f879cc",
+  "#00c3d3",
+  "#c7c5d0",
+
+  "#777680",
+  "#ffafaf",
+  "#62e4ab",
+  "#cee46b",
+  "#acbfff",
+  "#ffb1c5",
+  "#00e7fa",
+  "#edecfe",
+]

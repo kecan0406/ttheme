@@ -4,7 +4,7 @@ import { HUB_CLOSED, HUB_SWITCH, HUB_TABS } from '../hub.ts'
 import { listed, type PaletteEntry, paletteEntry, swatch } from '../manifest.ts'
 import { SCENES } from '../scenes.ts'
 import { TRAITS } from '../terminal.ts'
-import { alphabetical } from '../theme.ts'
+import { alphabetical, marketplaceOf } from '../theme.ts'
 import { helpText, VERB_SPECS } from '../verbs.ts'
 import { configTemplate, SETTING_NAMES } from '../wiring.ts'
 import type { Emitter, Output } from './types.ts'
@@ -23,7 +23,7 @@ export function palettesZsh(
   tuned: readonly string[] = [],
 ): string {
   for (const p of palettes) {
-    for (const field of [p.name, p.group, p.native ?? '', ...(p.nativeNames ?? []), p.ansiSource]) {
+    for (const field of [p.name, p.catalog ?? '', p.native ?? '', ...(p.nativeNames ?? []), p.ansiSource]) {
       if (UNQUOTABLE.test(field)) {
         throw new Error(`${p.name}: "${field}" contains a character that breaks zsh quoting`)
       }
@@ -96,22 +96,26 @@ export function palettesZsh(
       .map((p) => p.name)
       .join(' ')})`,
     '',
-    '# series order: new tabs cycle through it and TTHEME_SORT=series lists it — the default role stays applyable but unlisted',
+    '# the order palettes were added: new tabs cycle through it and TTHEME_SORT=catalog lists it — the default role stays applyable but unlisted',
     `typeset -ga TTHEME_ORDER=(${names(rotation)})`,
     '',
-    '# the same palettes by series name, then palette name: TTHEME_SORT=abc lists them this way',
+    '# the same palettes by catalog name, then palette name: TTHEME_SORT=abc lists them this way',
     `typeset -ga TTHEME_ABC=(${names(alphabetical(rotation))})`,
     '',
-    'typeset -gA TTHEME_GROUP=(',
-    ...palettes.map((p) => entry(p, p.group)),
+    '# the marketplace a palette came from, for every one but the official palettes, whose catalogs head the lists',
+    'typeset -gA TTHEME_MARKETPLACE=(',
+    ...palettes.flatMap((p) => {
+      const marketplace = marketplaceOf(p.name)
+      return marketplace ? [entry(p, marketplace)] : []
+    }),
     ')',
     '',
-    "# the catalog a marketplace palette sits in — the folder under the marketplace's palettes/, one level below the marketplace in every list",
+    "# the catalog a palette sits in — the folder under its marketplace's palettes/, one level below a marketplace in every list",
     'typeset -gA TTHEME_CATALOG=(',
     ...palettes.filter((p) => p.catalog).map((p) => entry(p, p.catalog ?? '')),
     ')',
     '',
-    '# original-language title, rendered dim next to the group',
+    "# the catalog's original-language title, rendered dim next to it",
     'typeset -gA TTHEME_NATIVE=(',
     ...palettes.filter((p) => p.native).map((p) => entry(p, p.native ?? '')),
     ')',

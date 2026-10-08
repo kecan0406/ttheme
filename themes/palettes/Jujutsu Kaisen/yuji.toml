@@ -1,0 +1,39 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "yuji"
+native_names = ["虎杖悠仁"]
+order = 103
+ansi_source = "Rose Pine Moon + Jujutsu"
+booru = "itadori_yuji"
+signature = ["cursor", "ansi3", "ansi1"]
+
+[meta.booru_sites]
+konachan = "itadori_yuuji"
+yande = "itadori_yuuji"
+zerochan = "itadori_yuuji"
+
+[colors]
+background = "#211513"
+foreground = "#fddbd6"
+cursor = "#e79a8e"
+selection_background = "#3e3b53"
+ansi = [
+  "#2e211f",
+  "#ff7573",
+  "#6dbb95",
+  "#f1ac7e",
+  "#8ea0d1",
+  "#d292c0",
+  "#81b8d8",
+  "#d8c2be",
+
+  "#857370",
+  "#ffaab1",
+  "#9cd9b9",
+  "#ffd5b8",
+  "#aec0f3",
+  "#f5b2e2",
+  "#b5d6ec",
+  "#ffe9e6",
+]

@@ -7,7 +7,7 @@
 ▌  ▸ Bocchi the Rock!╭─ Help ─────────────────────────────────────────────────╮
    ▸ Lucky☆Star      │                                                        │
                      │  Move      ↑↓  home  end  pgup  pgdn                   │
-                     │  Series    ←→  ·  enter or space on a series           │
+                     │  Catalogs  ←→  ·  enter or space on a catalog          │
                      │  Filter    Any text  ·  bksp  ·  ctrl-u clears         │
                      │            Names and titles, in Japanese too           │
                      │  Example   ⇧←→  shell, code, diff, logs, monitor       │
@@ -15,7 +15,7 @@
                      │  Edit      tab  →  ctrl+e  ·  its colors and picture   │
                      │  Config    alt-c  ·  ↑↓ setting  ←→ value              │
                      │            enter saves  ·  esc undoes                  │
-                     │  Screens   shift+tab  ·  tab on a series               │
+                     │  Screens   shift+tab  ·  tab on a catalog              │
                      │  Close     ?  esc                                      │
                      │                                                        │
                      ╰────────────────────────────────────────────────────────╯

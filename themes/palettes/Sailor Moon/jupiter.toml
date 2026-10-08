@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "jupiter"
+native_names = ["セーラージュピター", "木野まこと"]
+order = 40
+ansi_source = "Everforest Dark Hard + Senshi"
+booru = "sailor_jupiter"
+signature = ["cursor", "ansi1", "ansi11"]
+
+[colors]
+background = "#131913"
+foreground = "#d9e6d5"
+cursor = "#36a455"
+selection_background = "#4d3743"
+ansi = [
+  "#1f251e",
+  "#eb8284",
+  "#92b57d",
+  "#c8bc73",
+  "#61acac",
+  "#dd8da1",
+  "#83be8e",
+  "#c1c9be",
+
+  "#727970",
+  "#ffac8f",
+  "#a3dd5f",
+  "#ffd794",
+  "#59d2db",
+  "#ffb0c2",
+  "#83e5ac",
+  "#e4f2e1",
+]

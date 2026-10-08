@@ -40,7 +40,7 @@ export function matches(theme: Theme, { query, source, ground }: Filters): boole
   if (source === 'marketplaces' && !theme.marketplace) return false
   if (ground !== 'both' && isLight(theme) !== (ground === 'light')) return false
   const q = query.trim().toLowerCase()
-  return !q || `${theme.id} ${theme.group} ${theme.native ?? ''}`.toLowerCase().includes(q)
+  return !q || `${theme.id} ${theme.catalog ?? ''} ${theme.native ?? ''}`.toLowerCase().includes(q)
 }
 
 export function arrange(shelves: Shelf[], sources: boolean): Placed[] {

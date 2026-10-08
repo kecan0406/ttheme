@@ -4,16 +4,16 @@ import { test } from 'node:test'
 
 import type { PaletteEntry } from './manifest.ts'
 import {
+  catalogRows,
   firstPalette,
   matchesPalette,
   PalettePrompt,
   type PickerScope,
   pickerRows,
-  seriesRows,
   stepRow,
 } from './palette-prompt.ts'
 
-function entry(partial: Partial<PaletteEntry> & { name: string; group: string }): PaletteEntry {
+function entry(partial: Partial<PaletteEntry> & { name: string }): PaletteEntry {
   return {
     ansiSource: 'Test',
     background: '#000000',
@@ -31,11 +31,11 @@ function entry(partial: Partial<PaletteEntry> & { name: string; group: string })
 }
 
 const entries: PaletteEntry[] = [
-  entry({ name: 'neutral', group: '—', default: true }),
-  entry({ name: 'miku', group: 'Vocaloid' }),
-  entry({ name: 'rin', group: 'Vocaloid' }),
-  entry({ name: 'madoka', group: 'Madoka Magica', native: '魔法少女まどか☆マギカ' }),
-  entry({ name: 'homura', group: 'Madoka Magica', native: '魔法少女まどか☆マギカ', lead: true }),
+  entry({ name: 'neutral', catalog: '—', default: true }),
+  entry({ name: 'miku', catalog: 'Vocaloid' }),
+  entry({ name: 'rin', catalog: 'Vocaloid' }),
+  entry({ name: 'madoka', catalog: 'Madoka Magica', native: '魔法少女まどか☆マギカ' }),
+  entry({ name: 'homura', catalog: 'Madoka Magica', native: '魔法少女まどか☆マギカ', lead: true }),
 ]
 
 test('stepRow wraps at either end, stops short of it on a page, and steps over a rule', () => {
@@ -72,7 +72,7 @@ test('stepRow never leaves the list over a rule at its top or bottom', () => {
   assert.equal(stepRow(1, 1, 3, bottom, false), 1)
 })
 
-test('matchesPalette filters by name, group and native title', () => {
+test('matchesPalette filters by name, catalog and native title', () => {
   const madoka = entries[3]
   assert.ok(madoka)
   assert.ok(matchesPalette(madoka, 'mado'))
@@ -91,24 +91,24 @@ test('matchesPalette ignores spaces and symbols on both sides, since a typed spa
   assert.ok(!matchesPalette(madoka, 'madokarin'))
 })
 
-test('folded rows show group headers only, without the default palette', () => {
+test('folded rows show catalog headers only, without the default palette', () => {
   const rows = pickerRows(entries, new Set(), '')
   assert.deepEqual(
-    rows.map((r) => (r.kind === 'group' ? `▸${r.name}` : r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name}`)),
+    rows.map((r) => (r.kind === 'top' ? `▸${r.name}` : r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name}`)),
     ['▸Vocaloid', '▸Madoka Magica'],
   )
   assert.deepEqual(
-    rows.map((r) => (r.kind === 'group' ? r.count : 0)),
+    rows.map((r) => (r.kind === 'top' ? r.count : 0)),
     [2, 2],
   )
   assert.equal(firstPalette(rows), 0)
 })
 
-test('expanding a group inserts its palettes under the header', () => {
+test('expanding a catalog inserts its palettes under the header', () => {
   const rows = pickerRows(entries, new Set(['Vocaloid']), '')
   assert.deepEqual(
     rows.map((r) =>
-      r.kind === 'group'
+      r.kind === 'top'
         ? `${r.expanded ? '▾' : '▸'}${r.name}`
         : r.kind === 'palette'
           ? r.entry.name
@@ -118,20 +118,20 @@ test('expanding a group inserts its palettes under the header', () => {
   )
 })
 
-test('a filter overrides folds and hides non-matching groups', () => {
+test('a filter overrides folds and hides non-matching catalogs', () => {
   const rows = pickerRows(entries, new Set(), 'mado')
   assert.deepEqual(
-    rows.map((r) => (r.kind === 'group' ? `▾${r.name}` : r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name}`)),
+    rows.map((r) => (r.kind === 'top' ? `▾${r.name}` : r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name}`)),
     ['▾Madoka Magica', 'madoka', 'homura'],
   )
   assert.equal(firstPalette(rows), 1)
 })
 
-test('a name filter narrows inside the matching group', () => {
+test('a name filter narrows inside the matching catalog', () => {
   const rows = pickerRows(entries, new Set(), 'ho')
   assert.deepEqual(
     rows.map((r) =>
-      r.kind === 'group' ? `${r.name} (${r.count})` : r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name}`,
+      r.kind === 'top' ? `${r.name} (${r.count})` : r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name}`,
     ),
     ['Madoka Magica (1)', 'homura'],
   )
@@ -141,15 +141,15 @@ test('the default palette is never offered, even by filter', () => {
   assert.deepEqual(pickerRows(entries, new Set(), 'neu'), [])
 })
 
-test('series rows are folded headers matched through any member', () => {
+test('catalog rows are folded headers matched through any member', () => {
   assert.deepEqual(
-    seriesRows(entries, 'ho').map((r) =>
-      r.kind === 'group' ? `${r.name} (${r.count})` : r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name}`,
+    catalogRows(entries, 'ho').map((r) =>
+      r.kind === 'top' ? `${r.name} (${r.count})` : r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name}`,
     ),
     ['Madoka Magica (2)'],
   )
   assert.deepEqual(
-    seriesRows(entries, '').map((r) => (r.kind === 'group' ? r.lead?.name : '')),
+    catalogRows(entries, '').map((r) => (r.kind === 'top' ? r.lead?.name : '')),
     ['miku', 'homura'],
   )
 })
@@ -182,18 +182,18 @@ async function drive(
   return { result, frames, focused, picked: [...prompt.picked] }
 }
 
-test('right unfolds a group and space picks the palette under the cursor', async () => {
+test('right unfolds a catalog and space picks the palette under the cursor', async () => {
   const { picked, frames, focused } = await drive(['\x1b[C', '\x1b[B', ' ', '\r'])
   assert.deepEqual(picked, ['miku'])
   assert.deepEqual(focused, ['miku'])
   assert.match(frames, /▌ {2}▾ Vocaloid \(0\/2\)/)
   assert.match(frames, /▸ Madoka Magica \(0\/2\)/)
-  assert.match(frames, /Catalog \(4\/4 · 0 picked\)/)
+  assert.match(frames, /Palettes \(4\/4 · 0 picked\)/)
   assert.match(frames, /│ {4}Search…/)
   assert.match(frames, /space pick · type to filter · enter install/)
 })
 
-test('groups fold back and cursor moves across them', async () => {
+test('catalogs fold back and cursor moves across them', async () => {
   const { picked, focused } = await drive(['\x1b[C', '\x1b[B', '\x1b[D', '\x1b[B', '\x1b[C', '\x1b[B', ' ', '\r'])
   assert.deepEqual(picked, ['madoka'])
   assert.deepEqual(focused, ['miku', 'madoka'])
@@ -203,7 +203,7 @@ test('typing filters and the cursor lands on the first match', async () => {
   const { picked, frames } = await drive(['m', 'a', 'd', 'o', ' ', '\r'])
   assert.deepEqual(picked, ['madoka'])
   assert.match(frames, /│ {4}mado_/)
-  assert.match(frames, /Catalog \(2\/4 · 0 picked\)/)
+  assert.match(frames, /Palettes \(2\/4 · 0 picked\)/)
 })
 
 test('editing the filter keeps the focused palette when it still matches', async () => {
@@ -237,44 +237,44 @@ test('installed palettes start out picked', async () => {
   assert.deepEqual(picked, ['rin'])
 })
 
-test('space on a folded group picks its palettes without expanding it first', async () => {
+test('space on a folded catalog picks its palettes without expanding it first', async () => {
   const { picked, frames } = await drive([' ', '\r'])
   assert.deepEqual(picked.sort(), ['miku', 'rin'])
   assert.match(frames, /▌ {2}▸ Vocaloid \(0\/2\)/)
 })
 
-test('a folded group still reports how many of its palettes are picked', async () => {
+test('a folded catalog still reports how many of its palettes are picked', async () => {
   const { frames } = await drive(['\x1b[B', '\r'], { installed: ['miku'] })
   assert.match(frames, /▸ Vocaloid \(1\/2\)/)
 })
 
 test('the filtered count comes from the catalog, not from the drawn rows', async () => {
   const { frames } = await drive(['m', 'i', '\r'])
-  assert.match(frames, /Catalog \(1\/4 · 0 picked\)/)
+  assert.match(frames, /Palettes \(1\/4 · 0 picked\)/)
 })
 
-test('space on a group row picks every palette under it, and again drops them', async () => {
+test('space on a catalog row picks every palette under it, and again drops them', async () => {
   const all = await drive(['\x1b[C', ' ', '\r'])
   assert.deepEqual(all.picked.sort(), ['miku', 'rin'])
   const none = await drive(['\x1b[C', ' ', ' ', '\r'])
   assert.deepEqual(none.picked, [])
 })
 
-test('series scope lists series only, previews each lead and never unfolds', async () => {
-  const { picked, frames, focused } = await drive(['\x1b[C', '\x1b[B', '\x1b[C', ' ', '\r'], { scope: 'series' })
+test('catalog scope lists catalogs only, previews each lead and never unfolds', async () => {
+  const { picked, frames, focused } = await drive(['\x1b[C', '\x1b[B', '\x1b[C', ' ', '\r'], { scope: 'catalog' })
   assert.deepEqual(picked.sort(), ['homura', 'madoka'])
   assert.deepEqual(focused, ['miku', 'homura'])
-  assert.match(frames, /Series \(2\/2 · 0 picked\)/)
+  assert.match(frames, /Catalogs \(2\/2 · 0 picked\)/)
   assert.match(frames, /▌ {2}○ Vocaloid +\(2\)/)
-  assert.match(frames, /Series \(2\/2 · 1 picked\)/)
+  assert.match(frames, /Catalogs \(2\/2 · 1 picked\)/)
   assert.doesNotMatch(frames, /←→ fold/)
   assert.doesNotMatch(frames, /▾/)
 })
 
-test('series scope picks the whole series even when a member name filtered it', async () => {
-  const { picked, frames } = await drive(['h', 'o', ' ', '\r'], { scope: 'series' })
+test('catalog scope picks the whole catalog even when a member name filtered it', async () => {
+  const { picked, frames } = await drive(['h', 'o', ' ', '\r'], { scope: 'catalog' })
   assert.deepEqual(picked.sort(), ['homura', 'madoka'])
-  assert.match(frames, /Series \(1\/2 · 0 picked\)/)
+  assert.match(frames, /Catalogs \(1\/2 · 0 picked\)/)
   assert.match(frames, /▌ {2}● Madoka Magica \(2\) 魔法少女まどか☆マギカ/)
 })
 
@@ -285,42 +285,35 @@ test('space toggles the row and never lands in the filter', async () => {
   assert.doesNotMatch(frames, /│ {4}mi k/)
 })
 
-test('the select all row picks every shown series, and again drops them', async () => {
-  const all = await drive(['\x1b[A', ' ', '\r'], { scope: 'series' })
+test('the select all row picks every shown catalog, and again drops them', async () => {
+  const all = await drive(['\x1b[A', ' ', '\r'], { scope: 'catalog' })
   assert.deepEqual(all.picked.sort(), ['homura', 'madoka', 'miku', 'rin'])
-  const none = await drive(['\x1b[A', ' ', ' ', '\r'], { scope: 'series' })
+  const none = await drive(['\x1b[A', ' ', ' ', '\r'], { scope: 'catalog' })
   assert.deepEqual(none.picked, [])
 })
 
 test('a required picker refuses to continue with nothing picked', async () => {
-  const { picked, frames } = await drive(['\r', ' ', '\r'], { scope: 'series', required: true })
-  assert.match(frames, /Pick at least one series/)
+  const { picked, frames } = await drive(['\r', ' ', '\r'], { scope: 'catalog', required: true })
+  assert.match(frames, /Pick at least one catalog/)
   assert.deepEqual(picked.sort(), ['miku', 'rin'])
 })
 
 const shop: PaletteEntry[] = [
-  entry({ name: 'kec@shop/arcade', group: 'kec@shop', catalog: 'neon' }),
-  entry({ name: 'kec@shop/volt', group: 'kec@shop', catalog: 'neon' }),
-  entry({ name: 'kec@shop/sakura', group: 'kec@shop', catalog: 'pastel' }),
-  entry({ name: 'kec@shop/dusk', group: 'kec@shop' }),
+  entry({ name: 'kec@shop/arcade', catalog: 'neon' }),
+  entry({ name: 'kec@shop/volt', catalog: 'neon' }),
+  entry({ name: 'kec@shop/sakura', catalog: 'pastel' }),
+  entry({ name: 'kec@shop/dusk' }),
 ]
 
 test('a marketplace lists its catalogs, then the palettes outside every catalog', () => {
   const rows = pickerRows(shop, new Set(['kec@shop', 'kec@shop/neon']), '')
   assert.deepEqual(
     rows.map((r) => (r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name} (${r.count})`)),
-    [
-      'group kec@shop (4)',
-      'catalog neon (2)',
-      'kec@shop/arcade',
-      'kec@shop/volt',
-      'catalog pastel (1)',
-      'kec@shop/dusk',
-    ],
+    ['top kec@shop (4)', 'catalog neon (2)', 'kec@shop/arcade', 'kec@shop/volt', 'catalog pastel (1)', 'kec@shop/dusk'],
   )
   assert.deepEqual(
     pickerRows(shop, new Set(), 'pastel').map((r) => (r.kind === 'palette' ? r.entry.name : `${r.kind} ${r.name}`)),
-    ['group kec@shop', 'catalog pastel', 'kec@shop/sakura'],
+    ['top kec@shop', 'catalog pastel', 'kec@shop/sakura'],
   )
 })
 

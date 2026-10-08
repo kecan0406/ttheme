@@ -17,7 +17,7 @@ const settled = () => new Promise((resolve) => setTimeout(resolve, WARP_SETTLE +
 function palette(name: string, background: string): PaletteEntry {
   return {
     name,
-    group: 'Vocaloid',
+    catalog: 'Vocaloid',
     order: 1,
     ansiSource: 'Test',
     background,

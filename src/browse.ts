@@ -252,7 +252,7 @@ export async function runBrowse(): Promise<number> {
     io: browseIo(home, state, fetched, lookups.signal, (result, report) =>
       into({ say: report.say, set: report.status }, () => applyBrowse(home, marketplaces, result, fetched)),
     ),
-    ...(process.env.TTHEME_SORT === 'series' ? {} : { order: alphabetical }),
+    ...(process.env.TTHEME_SORT === 'catalog' ? {} : { order: alphabetical }),
     color: !colorless(),
     lookups: process.env.TTHEME_MARKETPLACE_LOOKUP !== 'off',
     fx: promptFx(process.env.TTHEME_FX),

@@ -10,7 +10,6 @@ export interface Theme {
   id: string
   marketplace: string | null
   name: string
-  group: string
   catalog: string | null
   native: string | null
   lead: boolean
@@ -38,7 +37,6 @@ export interface Marketplace {
 
 export interface ManifestEntry {
   name: string
-  group: string
   catalog?: string
   native?: string
   lead?: boolean
@@ -53,15 +51,18 @@ export interface ManifestEntry {
   gate: number[]
 }
 
+export function shelfOf(theme: Pick<Theme, 'marketplace' | 'catalog'>): string {
+  return [theme.marketplace, theme.catalog].filter((part) => part !== null).join(' / ')
+}
+
 export function toTheme(entry: ManifestEntry, marketplace: string | null = null): Theme {
   return {
     id: marketplace ? `${marketplace}/${entry.name}` : entry.name,
     marketplace,
     name: entry.name,
-    group: marketplace ?? entry.group,
-    catalog: marketplace ? (entry.catalog ?? null) : null,
-    native: marketplace ? null : (entry.native ?? null),
-    lead: marketplace ? false : (entry.lead ?? false),
+    catalog: entry.catalog ?? null,
+    native: entry.native ?? null,
+    lead: entry.lead ?? false,
     ansiSource: entry.ansiSource,
     background: entry.background,
     foreground: entry.foreground,

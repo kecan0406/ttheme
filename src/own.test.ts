@@ -19,11 +19,11 @@ import {
   warning,
   withPictures,
 } from './own.ts'
+import { marketplaceOf } from './theme.ts'
 
 const draft: Draft = {
   name: 'kecan0406@dust/rei',
   base: 'alice',
-  group: 'Sword Art Online',
   booru: 'alice_zuberg',
   signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
@@ -158,5 +158,5 @@ test('a marketplace takes its catalogs from folders, keeps loose palettes after 
       ['kec@shop/dusk', undefined],
     ],
   )
-  assert.ok(entries.every((e) => e.group === 'kec@shop'))
+  assert.ok(entries.every((e) => marketplaceOf(e.name) === 'kec@shop'))
 })

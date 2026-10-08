@@ -39,13 +39,13 @@ import {
 import { renameProblems } from './renames.ts'
 import {
   autoUpdates,
+  CATALOG_KEYS,
   cachePath,
   defaultLocal,
   type Identity,
   isLocal,
   isRemote,
   localIdentity,
-  MARKETPLACE_FILE,
   MARKETPLACE_KEYS,
   marketplaceId,
   marketplacesOf,
@@ -59,7 +59,7 @@ import {
   shownSource,
   TOPIC,
 } from './sources.ts'
-import { marketplaceOf, nameProblem, slugOf, unknownKeys } from './theme.ts'
+import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf, unknownKeys } from './theme.ts'
 
 const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const ACTIONS = ['add', 'remove', 'search', 'init', 'check']
@@ -563,6 +563,11 @@ function checkMarketplace(arg: string | undefined): number {
   for (const key of Object.keys(owner).filter((k) => !OWNER_KEYS.includes(k))) {
     warnings.push(`${MARKETPLACE_FILE}: unknown key owner.${key} — ttheme ignores it`)
   }
+  for (const [i, table] of (Array.isArray(doc.catalog) ? (doc.catalog as Record<string, unknown>[]) : []).entries()) {
+    for (const key of Object.keys(table).filter((k) => !CATALOG_KEYS.includes(k))) {
+      warnings.push(`${MARKETPLACE_FILE}: unknown key catalog[${i}].${key} — ttheme ignores it`)
+    }
+  }
   if (!info.description) {
     warnings.push(`${MARKETPLACE_FILE}: no description — Browse and the marketplace page show one`)
   }
@@ -579,6 +584,16 @@ function checkMarketplace(arg: string | undefined): number {
     }
     for (const key of keys) {
       warnings.push(`${relative(dir, file.path)}: unknown key ${key} — ttheme ignores it`)
+    }
+  }
+  for (const catalog of info.catalogs) {
+    const inside = entries.filter((e) => e.catalog === catalog.name)
+    if (inside.length === 0) {
+      warnings.push(`${MARKETPLACE_FILE}: catalog ${catalog.name} has no folder under palettes/ — ttheme ignores it`)
+    } else if (catalog.lead && !inside.some((e) => slugOf(e.name) === catalog.lead)) {
+      warnings.push(
+        `${MARKETPLACE_FILE}: catalog ${catalog.name} leads with ${catalog.lead}, which is not in it — its first palette leads instead`,
+      )
     }
   }
   const renames = renameProblems(info.renames, new Set(entries.map((e) => slugOf(e.name))))

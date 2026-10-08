@@ -21,11 +21,12 @@ import {
 } from './catalog.ts'
 import { type PaletteEntry, SCHEMA } from './manifest.ts'
 import { paletteToml } from './own.ts'
+import { shelfOf } from './theme.ts'
 
 function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name: 'gojo',
-    group: 'Jujutsu Kaisen',
+    catalog: 'Jujutsu Kaisen',
     order: 1,
     ansiSource: 'Horizon + Jujutsu',
     background: '#11191c',
@@ -120,7 +121,7 @@ test('gateFailures honours a waiver by rule name', () => {
 })
 
 test('search matches the palette, the series and the ANSI source', () => {
-  const palettes = [entry(), entry({ name: 'miku', group: 'Vocaloid', ansiSource: 'vauxe Miku' })]
+  const palettes = [entry(), entry({ name: 'miku', catalog: 'Vocaloid', ansiSource: 'vauxe Miku' })]
   assert.deepEqual(
     search(palettes, 'jujutsu').map((p) => p.name),
     ['gojo'],
@@ -140,10 +141,10 @@ test('search matches the palette, the series and the ANSI source', () => {
 })
 
 test('booruTags finds the booru tags that hold what was typed, this palette and its series first', () => {
-  const suzuha = entry({ name: 'suzuha', group: 'Steins;Gate', booru: 'amane_suzuha' })
-  const ruka = entry({ name: 'ruka', group: 'Steins;Gate', booru: 'urushibara_ruka' })
-  const lulu = entry({ name: 'lulu', group: 'Hololive', booru: 'suzuhara_lulu' })
-  const none = entry({ name: 'none', group: 'Steins;Gate' })
+  const suzuha = entry({ name: 'suzuha', catalog: 'Steins;Gate', booru: 'amane_suzuha' })
+  const ruka = entry({ name: 'ruka', catalog: 'Steins;Gate', booru: 'urushibara_ruka' })
+  const lulu = entry({ name: 'lulu', catalog: 'Hololive', booru: 'suzuhara_lulu' })
+  const none = entry({ name: 'none', catalog: 'Steins;Gate' })
   assert.deepEqual(
     booruTags([lulu, ruka, none, suzuha], suzuha, 'SUZU').map((p) => p.name),
     ['suzuha', 'lulu'],
@@ -217,7 +218,6 @@ test('readCatalog puts each added marketplace after the series under its own nam
     paletteToml({
       name: 'kec@dust/rei',
       base: 'gojo',
-      group: 'Jujutsu Kaisen',
       signature: ['cursor', 'foreground', 'background'],
       background: '#101010',
       foreground: '#f0f0f0',
@@ -226,10 +226,10 @@ test('readCatalog puts each added marketplace after the series under its own nam
       ansi: Array.from({ length: 16 }, () => '#808080'),
     }),
   )
-  writeKept(home, [entry({ name: 'bob@x/gone', group: 'bob@x' })])
+  writeKept(home, [entry({ name: 'bob@x/gone' })])
   const catalog = readCatalog(home)
   assert.deepEqual(
-    catalog.palettes.map((p) => [p.name, p.group]),
+    catalog.palettes.map((p) => [p.name, shelfOf(p)]),
     [
       ['gojo', 'Jujutsu Kaisen'],
       ['geto', 'Jujutsu Kaisen'],
@@ -241,7 +241,7 @@ test('readCatalog puts each added marketplace after the series under its own nam
     all.map((p) => p.name),
     ['gojo', 'geto', 'ann@pastel/old', 'kec@dust/rei', 'bob@x/gone'],
   )
-  assert.equal(all.find((p) => p.name === 'kec@dust/rei')?.group, 'kec@dust')
+  assert.equal(shelfOf(all.find((p) => p.name === 'kec@dust/rei') ?? { name: '' }), 'kec@dust')
 })
 
 test("a marketplace names itself in ttheme-marketplace.toml — the owner of an added one is its repository's", () => {
@@ -253,7 +253,7 @@ test("a marketplace names itself in ttheme-marketplace.toml — the owner of an 
     archiveInfo(
       'ann/ttheme-pastel',
       marketplace(
-        'name = "pastel"\ndescription = "Soft colors"\nforce_remove_deleted_palettes = true\n\n[owner]\nname = "ann"\nurl = "https://github.com/ann"\n\n[renames]\nold = "new"\ngone = false\n\n[metadata]\nmine = 1\n',
+        'name = "pastel"\ndescription = "Soft colors"\nforce_remove_deleted_palettes = true\n\n[owner]\nname = "ann"\nurl = "https://github.com/ann"\n\n[[catalog]]\nname = "night"\nnative = "夜"\nlead = "dusk"\n\n[renames]\nold = "new"\ngone = false\n\n[metadata]\nmine = 1\n',
       ),
     ),
     {
@@ -261,6 +261,7 @@ test("a marketplace names itself in ttheme-marketplace.toml — the owner of an 
       name: 'pastel',
       about: { name: 'ann', url: 'https://github.com/ann' },
       description: 'Soft colors',
+      catalogs: [{ name: 'night', native: '夜', lead: 'dusk' }],
       renames: { old: 'new', gone: false },
       forceRemove: true,
     },

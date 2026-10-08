@@ -404,7 +404,7 @@ export class BrowsePanel {
       if (row.extra.found?.kind === 'find') {
         this.search()
       }
-    } else if (row?.kind !== 'group') {
+    } else if (row?.kind !== 'top') {
       this.toggleRenew()
     }
   }
@@ -575,7 +575,7 @@ export class BrowsePanel {
 
   private focusedMarketplace(): Marketplace | undefined {
     const row = this.catalog.focusedRow()
-    return row?.kind === 'group' ? this.marketplaceNamed(row.name) : undefined
+    return row?.kind === 'top' ? this.marketplaceNamed(row.name) : undefined
   }
 
   private cycle(): void {
@@ -624,7 +624,7 @@ export class BrowsePanel {
     } else if (found?.kind === 'repo') {
       const known = this.known(found.source)
       if (known) {
-        this.catalog.select(`group ${known.id}`)
+        this.catalog.select(`top ${known.id}`)
       } else {
         this.load(found.source, true)
       }
@@ -771,7 +771,7 @@ export class BrowsePanel {
       this.catalog.setFilter('')
     }
     this.reload()
-    this.catalog.select(`group ${marketplace.id}`)
+    this.catalog.select(`top ${marketplace.id}`)
   }
 
   private update(source: string): void {
@@ -1081,7 +1081,7 @@ export class BrowsePanel {
     const renewed = this.entries().filter((e) => renew.has(e.name))
     const width = Math.max(0, ...[...names, ...dropped, ...renewed].map((e) => e.name.length))
     const palette = (sign: string, e: PaletteEntry) =>
-      `   ${sign} ${e.name.padEnd(width)}  ${this.p.dim(marketplaceOf(e.name) ? (e.catalog ?? '') : e.group)}`
+      `   ${sign} ${e.name.padEnd(width)}  ${this.p.dim(e.catalog ?? '')}`
     const counts = [
       names.length > 0 ? `${names.length} to install` : '',
       dropped.length > 0 ? `${dropped.length} to remove` : '',
@@ -1305,15 +1305,15 @@ export class BrowsePanel {
     if (row.kind === 'extra') {
       return row.extra.found ? this.foundDetail(row.extra.found, width) : EMPTY
     }
-    const marketplace = row.kind === 'group' ? this.marketplaceNamed(row.name) : undefined
+    const marketplace = row.kind === 'top' ? this.marketplaceNamed(row.name) : undefined
     if (marketplace) {
       return this.marketplaceDetail(marketplace, width)
     }
-    if (row.kind === 'group' || row.kind === 'catalog') {
+    if (row.kind === 'top' || row.kind === 'catalog') {
       const members = this.catalog.inside(row)
       const source = this.sourceOf(row.lead)
       const counts = `${counted(members.length)} · ${members.filter((e) => this.installed.has(e.name)).length} installed`
-      const within = row.kind === 'catalog' ? row.group : undefined
+      const within = row.kind === 'catalog' ? row.top : undefined
       return {
         title: this.p.bold(row.name),
         lines: [
@@ -1334,16 +1334,12 @@ export class BrowsePanel {
       ...(pictures > 0 ? [`${pictures} picture${pictures === 1 ? '' : 's'}`] : []),
       ...(e.base ? [`Base ${e.base}`] : []),
     ].join(' · ')
-    const series = marketplaceOf(e.name)
-      ? e.catalog
-        ? [e.catalog]
-        : []
-      : [e.group, ...(e.native ? [this.p.dim(e.native)] : [])]
+    const shelf = e.catalog ? [e.catalog, ...(e.native ? [this.p.dim(e.native)] : [])] : []
     return {
       title: this.color ? this.p.bold(`${ansiFg(e.cursor)}${e.name}${FG_RESET}`) : e.name,
       lines: [
         ...wrapText(source, width),
-        ...series,
+        ...shelf,
         this.paletteState(e),
         '',
         fails.length === 0 ? `${gate} · passes` : gate,
@@ -1521,7 +1517,7 @@ export class BrowsePanel {
       return [enter]
     }
     const fold: Hint[] =
-      list.foldable() && (row.kind === 'group' || row.kind === 'catalog')
+      list.foldable() && (row.kind === 'top' || row.kind === 'catalog')
         ? [row.expanded ? ['←', 'close'] : ['→', 'open']]
         : []
     const marketplace = this.focusedMarketplace()
@@ -1624,8 +1620,8 @@ export class BrowsePanel {
   private helpRows(): Hint[] {
     return [
       ['Move', '↑↓  home  end  pgup  pgdn'],
-      ['Open', '←→  ·  enter on a marketplace or a series'],
-      ['Pick', 'space  ·  a palette, a series, a marketplace'],
+      ['Open', '←→  ·  enter on a marketplace or a catalog'],
+      ['Pick', 'space  ·  a palette, a catalog, a marketplace'],
       ['Filter', 'Any text  ·  bksp  ·  ctrl-u clears'],
       ...(this.active().length >= 2 ? [['Scope', 'ctrl+s  ·  one marketplace, then all'] as Hint] : []),
       ['Marketplace', '⇧←→  auto-update  ·  ctrl+r  updates it'],

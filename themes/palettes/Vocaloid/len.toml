@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "len"
+native_names = ["鏡音レン"]
+order = 5
+ansi_source = "Srcery"
+booru = "kagamine_len"
+signature = ["cursor", "ansi6", "ansi9"]
+
+[colors]
+background = "#19180d"
+foreground = "#e9e3c7"
+cursor = "#e4d517"
+selection_background = "#483d18"
+ansi = [
+  "#262418",
+  "#f87e2f",
+  "#8fb84e",
+  "#e3b61d",
+  "#19aeca",
+  "#ff789f",
+  "#38c2c7",
+  "#cbc7b5",
+
+  "#7a7768",
+  "#ffac9f",
+  "#c5d642",
+  "#fbda75",
+  "#5ad2d2",
+  "#ffafc2",
+  "#2febcd",
+  "#f4eed2",
+]

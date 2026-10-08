@@ -20,7 +20,7 @@ typeset -gA TTHEME_SGR=(
 __tt_palettes_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at
-  unset TTHEME_PALETTE TTHEME_GROUP TTHEME_CATALOG TTHEME_NATIVE TTHEME_SRC
+  unset TTHEME_PALETTE TTHEME_MARKETPLACE TTHEME_CATALOG TTHEME_NATIVE TTHEME_SRC
   source $TTHEME_HOME/palettes.zsh || return 1
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null
   TTHEME_PALETTES_AT=$at[1]
@@ -327,7 +327,8 @@ __tt_announce() {
   __tt_name_of "$TTHEME_SPEC"
   [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || return 0
   local name=$REPLY
-  local grp=${TTHEME_GROUP[$name]:-Other} src=${TTHEME_SRC[$name]:-unknown}
+  __tt_shelf $name
+  local grp=$REPLY src=${TTHEME_SRC[$name]:-unknown}
   if ! __tt_color; then
     print -r -- "$name · $grp · ANSI $src"
     return 0
@@ -1300,19 +1301,26 @@ __tt_keep() {
 }
 
 __tt_order() {
-  if [[ $TTHEME_SORT == series ]]; then
+  if [[ $TTHEME_SORT == catalog ]]; then
     reply=($TTHEME_ORDER)
   else
     reply=($TTHEME_ABC)
   fi
 }
 
+__tt_shelf() {
+  local m=${TTHEME_MARKETPLACE[$1]} c=${TTHEME_CATALOG[$1]}
+  REPLY=${m:+$m${c:+ / }}$c
+  REPLY=${REPLY:-Other}
+}
+
 __tt_menu() {
-  local k
+  local k REPLY
   local -a reply
   __tt_order
   for k in $reply; do
-    printf '%s\t%s\t%s\n' "$k" "${TTHEME_GROUP[$k]:-Other}" "${TTHEME_SRC[$k]:-unknown}"
+    __tt_shelf $k
+    printf '%s\t%s\t%s\n' "$k" "$REPLY" "${TTHEME_SRC[$k]:-unknown}"
   done
 }
 

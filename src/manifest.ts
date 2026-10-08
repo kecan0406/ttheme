@@ -6,7 +6,6 @@ import type { SharedPicture, Theme } from './theme.ts'
 export interface PaletteEntry {
   name: string
   base?: string
-  group: string
   catalog?: string
   native?: string
   nativeNames?: string[]
@@ -54,7 +53,7 @@ export function paletteEntry(t: Theme): PaletteEntry {
   return {
     name: t.name,
     ...(t.base ? { base: t.base } : {}),
-    group: t.group,
+    ...(t.catalog ? { catalog: t.catalog } : {}),
     ...(t.native ? { native: t.native } : {}),
     ...(t.nativeNames ? { nativeNames: t.nativeNames } : {}),
     ...(t.lead ? { lead: true } : {}),
@@ -81,7 +80,7 @@ export function toTheme(entry: PaletteEntry): Theme {
   return {
     name: entry.name,
     ...(entry.base ? { base: entry.base } : {}),
-    group: entry.group,
+    ...(entry.catalog ? { catalog: entry.catalog } : {}),
     ...(entry.native ? { native: entry.native } : {}),
     ...(entry.nativeNames ? { nativeNames: entry.nativeNames } : {}),
     lead: entry.lead === true,

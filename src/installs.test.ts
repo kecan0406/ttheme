@@ -14,7 +14,7 @@ import { readInstalled, sync, writeInstalled } from './palettes.ts'
 function entry(name: string, order: number): PaletteEntry {
   return {
     name,
-    group: 'Jujutsu Kaisen',
+    catalog: 'Jujutsu Kaisen',
     order,
     ansiSource: 'Horizon + Jujutsu',
     background: '#11191c',

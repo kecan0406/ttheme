@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "dekomori"
+native_names = ["凸守早苗"]
+order = 100
+ansi_source = "Cobalt2 + Delusion"
+booru = "dekomori_sanae"
+signature = ["cursor", "ansi12", "ansi5"]
+
+[colors]
+background = "#1a180d"
+foreground = "#ece2c6"
+cursor = "#f0cc09"
+selection_background = "#264058"
+ansi = [
+  "#272418",
+  "#fe7749",
+  "#95b821",
+  "#d6bb00",
+  "#779be6",
+  "#ff7d91",
+  "#64c386",
+  "#cdc6b4",
+
+  "#7c7767",
+  "#fead8f",
+  "#b5da43",
+  "#ffdb37",
+  "#bbbbff",
+  "#ffb3ad",
+  "#7de5b8",
+  "#f8edd1",
+]

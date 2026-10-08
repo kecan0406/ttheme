@@ -1,0 +1,38 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "kaito"
+native_names = ["カイト", "KAITO"]
+order = 7
+ansi_source = "Aardvark Blue + Crypton"
+booru = "kaito_(vocaloid)"
+signature = ["cursor", "ansi4", "ansi3"]
+
+[meta.booru_sites]
+konachan = "kaito"
+yande = "kaito"
+
+[colors]
+background = "#15171e"
+foreground = "#dfe2f2"
+cursor = "#5e8df6"
+selection_background = "#2f3e5a"
+ansi = [
+  "#21232b",
+  "#fe6fa5",
+  "#4dbf8e",
+  "#daba00",
+  "#62a1ff",
+  "#c18eff",
+  "#6bb8ef",
+  "#c5c6d0",
+
+  "#757780",
+  "#ffaac5",
+  "#5de3a9",
+  "#d2e37a",
+  "#a2c2f7",
+  "#d8b9ff",
+  "#9fd9ff",
+  "#eaedfe",
+]

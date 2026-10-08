@@ -41,7 +41,7 @@ import { wtFragmentPath } from './terminals/windows-terminal.ts'
 function entry(name: string, order: number, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    group: 'Jujutsu Kaisen',
+    catalog: 'Jujutsu Kaisen',
     order,
     ansiSource: 'Horizon + Jujutsu',
     background: '#11191c',

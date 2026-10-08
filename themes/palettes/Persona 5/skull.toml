@@ -1,0 +1,39 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "skull"
+native_names = ["坂本竜司", "スカル"]
+order = 50
+ansi_source = "Desert"
+booru = "sakamoto_ryuji"
+signature = ["cursor", "ansi1", "foreground"]
+
+[meta.booru_sites]
+konachan = "sakamoto_ryuuji"
+yande = "sakamoto_ryuuji"
+zerochan = "sakamoto_ryuuji"
+
+[colors]
+background = "#1b170c"
+foreground = "#eee2c2"
+cursor = "#f5cf00"
+selection_background = "#4c3b15"
+ansi = [
+  "#272418",
+  "#ff766a",
+  "#91b83a",
+  "#cbbd66",
+  "#969be4",
+  "#d693ad",
+  "#62c0b2",
+  "#cdc6b4",
+
+  "#7c7767",
+  "#ffae86",
+  "#b2da46",
+  "#f0e02f",
+  "#98befd",
+  "#fcb1c3",
+  "#00ebd5",
+  "#f8edd1",
+]

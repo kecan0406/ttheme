@@ -1,0 +1,38 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "seri"
+native_names = ["桔梗セリ"]
+order = 64
+ansi_source = "Birds Of Paradise"
+booru = "kikyou_seri"
+signature = ["cursor", "ansi12", "ansi9"]
+
+[meta.booru_sites]
+konachan = []
+zerochan = "kikiyou_seri"
+
+[colors]
+background = "#1e160d"
+foreground = "#f6dfc6"
+cursor = "#e99d2a"
+selection_background = "#523823"
+ansi = [
+  "#2b2218",
+  "#fc7c35",
+  "#9bb477",
+  "#faab38",
+  "#67a8c1",
+  "#da92a3",
+  "#8abc92",
+  "#d4c4b4",
+
+  "#827568",
+  "#ffac9b",
+  "#bbd592",
+  "#feda51",
+  "#9ac6ec",
+  "#fdb2c3",
+  "#abdeb1",
+  "#ffebd6",
+]

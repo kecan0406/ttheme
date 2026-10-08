@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+
+[meta]
+name = "izuna"
+native_names = ["初瀬いづな"]
+order = 143
+ansi_source = "Kanagawa Wave + Blank"
+booru = "hatsuse_izuna"
+signature = ["cursor", "ansi1", "ansi3"]
+
+[colors]
+background = "#19161e"
+foreground = "#e7dff2"
+cursor = "#9a81ea"
+selection_background = "#413e29"
+ansi = [
+  "#25222b",
+  "#ff7766",
+  "#80b79c",
+  "#f2b000",
+  "#919dde",
+  "#b09cd8",
+  "#7eb9d2",
+  "#cac4cf",
+
+  "#79757f",
+  "#ffabb8",
+  "#8cddb5",
+  "#f8d8be",
+  "#a1c4f0",
+  "#cdbef7",
+  "#a1daf6",
+  "#f2ebfd",
+]

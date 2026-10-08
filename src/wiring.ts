@@ -58,7 +58,7 @@ const CONFIG_SETTINGS = {
     default: 'typewriter',
   },
   TTHEME_SORT: {
-    doc: '# series and palettes in ttheme and preview: abc sorts them by name, series keeps the order they were added (default abc)',
+    doc: '# catalogs and palettes in ttheme and preview: abc sorts them by name, catalog keeps the order they were added (default abc)',
     default: 'abc',
   },
   TTHEME_MOUSE: {

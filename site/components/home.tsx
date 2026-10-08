@@ -14,12 +14,12 @@ import { TerminalPreview } from './terminal-preview'
 const INIT = 'npx @kecan0406/ttheme init'
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
-function features(palettes: number, series: number) {
+function features(palettes: number, catalogs: number) {
   return [
     {
       emoji: '🎨',
       title: 'a palette per character',
-      text: `${palettes} palettes across ${series} series, each measured from the character's official art, with three signature colors you will recognise.`,
+      text: `${palettes} palettes across ${catalogs} catalogs, each measured from the character's official art, with three signature colors you will recognise.`,
     },
     {
       emoji: '🖥️',
@@ -57,7 +57,7 @@ const STEPS = [
   },
   {
     title: 'browse',
-    text: 'Pick more from the catalog in Browse, the second tab of ttheme, series by series.',
+    text: 'Pick more in Browse, the second tab of ttheme, catalog by catalog.',
     command: 'ttheme',
   },
 ]
@@ -93,7 +93,7 @@ export function LeadUse({ theme }: { theme: Theme }) {
   return <CommandRow command={`ttheme use ${theme.name}`} class="bg-card" />
 }
 
-export function Home({ themes, series }: { themes: Theme[]; series: number }) {
+export function Home({ themes, catalogs }: { themes: Theme[]; catalogs: number }) {
   const leads = themes.filter((theme) => theme.lead)
   const theme = leads[0] as Theme
 
@@ -108,7 +108,7 @@ export function Home({ themes, series }: { themes: Theme[]; series: number }) {
         >
           <div class="grid justify-items-start gap-6">
             <Badge variant="sticker">
-              {themes.length} palettes · {series} series ✦
+              {themes.length} palettes · {catalogs} catalogs ✦
             </Badge>
             <h1 class="font-display text-display-xl font-black">
               wear{' '}
@@ -146,7 +146,7 @@ export function Home({ themes, series }: { themes: Theme[]; series: number }) {
                   class="min-w-0 flex-1 truncate text-center font-mono text-xs text-muted-foreground"
                   safe
                 >
-                  {`ttheme · ${theme.name} · ${theme.group}`}
+                  {`ttheme · ${theme.name} · ${theme.catalog ?? ''}`}
                 </span>
                 <Button variant="ghost" size="icon-sm" aria-label="previous palette" data-pick="-1">
                   <Icon node={ChevronLeft} />
@@ -173,7 +173,7 @@ export function Home({ themes, series }: { themes: Theme[]; series: number }) {
             everything a tab needs
           </h2>
           <div class="grid grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
-            {features(themes.length, series).map((feature) => (
+            {features(themes.length, catalogs).map((feature) => (
               <article class="grid content-start gap-2 rounded-3xl border bg-muted p-6">
                 <span class="text-3xl" role="img" aria-hidden="true" safe>
                   {feature.emoji}
@@ -214,7 +214,7 @@ export function Home({ themes, series }: { themes: Theme[]; series: number }) {
                 </span>
                 <span class="flex items-center justify-between gap-2">
                   <span class="min-w-0 truncate text-xs opacity-70" safe>
-                    {lead.group}
+                    {lead.catalog}
                   </span>
                   <Signature theme={lead} />
                 </span>

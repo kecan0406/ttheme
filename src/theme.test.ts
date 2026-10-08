@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { marketplaceOf, nameProblem, ORIGINAL, readBooruSites, readTheme, slugOf, stem, textProblem } from './theme.ts'
+import { marketplaceOf, nameProblem, readBooruSites, readTheme, slugOf, stem, textProblem } from './theme.ts'
 
 test('booru_sites renames the tag per site, as one tag or a list, and an empty list skips the site', () => {
   assert.deepEqual(
@@ -73,26 +73,28 @@ selection_background = "#303060"
 ansi = [${Array.from({ length: 16 }, () => '"#808080"').join(', ')}]
 `
 
-test('a marketplace palette follows its base: group and order come from it, and its own order is refused', () => {
-  const groups = new Map([['Madoka Magica', { name: 'Madoka Magica', lead: 'madoka' }]])
-  const bases = new Map([['madoka', { group: 'Madoka Magica', order: 15 }]])
-  const place = { name: 'dusk', groups, bases, open: true as const }
-  const theme = readTheme('dusk.toml', shared('name = "dusk"\nbase = "madoka"'), place)
-  assert.equal(theme.group, 'Madoka Magica')
+test('a marketplace palette takes its order from its base and its catalog from its folder, and its own order is refused', () => {
+  const catalogs = new Map([['neon', { name: 'neon', native: 'ネオン', lead: 'dusk' }]])
+  const bases = new Map([['madoka', { order: 15 }]])
+  const place = { name: 'dusk', catalogs, bases, open: true as const }
+  const theme = readTheme('dusk.toml', shared('name = "dusk"\nbase = "madoka"'), { ...place, catalog: 'neon' })
+  assert.equal(theme.catalog, 'neon')
+  assert.equal(theme.native, 'ネオン')
+  assert.equal(theme.lead, true)
   assert.equal(theme.order, 15)
   assert.equal(theme.ansiSource, 'madoka')
-  assert.equal(readTheme('d.toml', shared('name = "dusk"'), place).group, ORIGINAL)
+  assert.equal(readTheme('d.toml', shared('name = "dusk"'), place).catalog, undefined)
   assert.throws(() => readTheme('d.toml', shared('name = "dusk"\norder = 3'), place), /meta.order is for the official/)
   assert.throws(() => readTheme('d.toml', shared('name = "other"'), place), /does not match its file/)
   assert.equal(readTheme('d.toml', shared('name = "dusk"\nbase = "homura"'), place).base, 'homura')
   assert.throws(
-    () => readTheme('d.toml', shared('name = "dusk"\nbase = "madoka"'), { name: 'dusk', groups }),
+    () => readTheme('d.toml', shared('name = "dusk"\nbase = "madoka"'), { name: 'dusk', catalogs }),
     /meta.base is for marketplace palettes/,
   )
 })
 
 test('[[picture]] takes a known site, a post number and an optional framing', () => {
-  const place = { name: 'dusk', groups: new Map(), open: true as const }
+  const place = { name: 'dusk', catalogs: new Map(), open: true as const }
   const withPicture = (table: string) => `${shared('name = "dusk"')}\n[[picture]]\n${table}\n`
   assert.deepEqual(readTheme('d.toml', withPicture('site = "danbooru"\nid = 12\nsize = 130'), place).pictures, [
     { site: 'danbooru', id: 12, size: 130 },
@@ -108,7 +110,7 @@ test('[[picture]] takes a known site, a post number and an optional framing', ()
 
 test('a palette another ttheme wrote drops the find sites and framings this one does not know instead of refusing the palette', () => {
   assert.deepEqual(readBooruSites('x.toml', { gelbooru: 'x', yande: 'y' }, 'x', true), { yande: ['y'] })
-  const place = { name: 'dusk', groups: new Map(), open: true as const, foreign: true as const }
+  const place = { name: 'dusk', catalogs: new Map(), open: true as const, foreign: true as const }
   const pictures = `${shared('name = "dusk"')}
 [[picture]]
 site = "pixiv"
