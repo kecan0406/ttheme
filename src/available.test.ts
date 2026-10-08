@@ -10,15 +10,15 @@ import {
   available,
   booruTags,
   gateFailures,
-  parseCatalog,
-  readCatalog,
+  parseManifest,
+  readMarketplaces,
   search,
   siteTags,
   untuned,
   updatesOf,
-  writeCatalog,
   writeKept,
-} from './catalog.ts'
+  writeOfficial,
+} from './available.ts'
 import { type PaletteEntry, SCHEMA } from './manifest.ts'
 import { paletteToml } from './own.ts'
 import { shelfOf } from './theme.ts'
@@ -42,47 +42,47 @@ function entry(partial: Partial<PaletteEntry> = {}): PaletteEntry {
   }
 }
 
-function catalogJson(palettes: PaletteEntry[]): string {
+function manifestJson(palettes: PaletteEntry[]): string {
   return JSON.stringify({ schema: SCHEMA, version: '0.1.0', gate: [], palettes })
 }
 
-test('parseCatalog rejects a document without palettes', () => {
-  assert.throws(() => parseCatalog('{"schema":1,"version":"0.1.0"}'), /no version or palettes/)
+test('parseManifest rejects a document without palettes', () => {
+  assert.throws(() => parseManifest('{"schema":1,"version":"0.1.0"}'), /no version or palettes/)
 })
 
-test('parseCatalog rejects text that is not JSON', () => {
-  assert.throws(() => parseCatalog('<html>'), /not valid JSON/)
+test('parseManifest rejects text that is not JSON', () => {
+  assert.throws(() => parseManifest('<html>'), /not valid JSON/)
 })
 
-test('parseCatalog rejects an entry missing its 16 ANSI colors', () => {
+test('parseManifest rejects an entry missing its 16 ANSI colors', () => {
   const short = entry({ ansi: ['#808080'] })
-  assert.throws(() => parseCatalog(catalogJson([short])), /16 ANSI colors/)
+  assert.throws(() => parseManifest(manifestJson([short])), /16 ANSI colors/)
 })
 
-test('parseCatalog accepts a well formed catalog', () => {
-  assert.equal(parseCatalog(catalogJson([entry()])).palettes[0]?.name, 'gojo')
+test('parseManifest accepts a well formed manifest', () => {
+  assert.equal(parseManifest(manifestJson([entry()])).palettes[0]?.name, 'gojo')
 })
 
-test('readCatalog can take the bundled official catalog, so an upgrade never parses the cache it is about to replace', () => {
+test('readMarketplaces can take the bundled official manifest, so an upgrade never parses the cache it is about to replace', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-bundled-'))
   mkdirSync(join(home, 'ttheme'), { recursive: true })
   writeFileSync(join(home, 'ttheme', 'installed.json'), JSON.stringify({ terminals: [], palettes: [] }))
-  writeFileSync(join(home, 'ttheme', 'catalog.json'), JSON.stringify({ schema: 1, palettes: 'another shape' }))
-  assert.throws(() => readCatalog(home, false), /no version or palettes/)
-  const bundled = parseCatalog(catalogJson([entry({ name: 'gojo' })]))
+  writeFileSync(join(home, 'ttheme', 'official.json'), JSON.stringify({ schema: 1, palettes: 'another shape' }))
+  assert.throws(() => readMarketplaces(home, false), /no version or palettes/)
+  const bundled = parseManifest(manifestJson([entry({ name: 'gojo' })]))
   assert.deepEqual(
-    readCatalog(home, false, bundled).palettes.map((p) => p.name),
+    readMarketplaces(home, false, bundled).palettes.map((p) => p.name),
     ['gojo'],
   )
 })
 
-test('an installed palette from a marketplace keeps its colors until its update is taken, while an official one follows the catalog', () => {
+test('an installed palette from a marketplace keeps its colors until its update is taken, while an official one follows the official marketplace', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-pinned-'))
   mkdirSync(join(home, 'ttheme'), { recursive: true })
   const was = [entry({ name: 'ann@pastel/dusk' }), entry({ name: 'gojo' })]
   writeKept(home, was)
   const moved = { background: '#000000' }
-  const catalog = {
+  const manifest = {
     schema: SCHEMA,
     version: '0.1.0',
     gate: [],
@@ -92,16 +92,16 @@ test('an installed palette from a marketplace keeps its colors until its update 
       entry({ name: 'ann@pastel/dawn', ...moved }),
     ],
   }
-  const view = new Map(untuned(home, catalog, false).palettes.map((e) => [e.name, e.background]))
+  const view = new Map(untuned(home, manifest, false).palettes.map((e) => [e.name, e.background]))
   assert.equal(view.get('ann@pastel/dusk'), '#11191c')
   assert.equal(view.get('gojo'), '#000000')
   assert.equal(view.get('ann@pastel/dawn'), '#000000')
   assert.deepEqual(
-    updatesOf(home, catalog).map((e) => e.name),
+    updatesOf(home, manifest).map((e) => e.name),
     ['ann@pastel/dusk'],
   )
-  writeKept(home, [catalog.palettes[0] as PaletteEntry, was[1] as PaletteEntry])
-  assert.deepEqual(updatesOf(home, catalog), [])
+  writeKept(home, [manifest.palettes[0] as PaletteEntry, was[1] as PaletteEntry])
+  assert.deepEqual(updatesOf(home, manifest), [])
 })
 
 test('gateFailures is empty when every rule is met', () => {
@@ -163,12 +163,12 @@ test('siteTags reads the names a site goes by, else the one booru tag, else none
   assert.deepEqual(siteTags(entry(), 'danbooru'), [])
 })
 
-test('parseCatalog refuses an entry whose name or text would reach a path or a config line', () => {
-  assert.throws(() => parseCatalog(catalogJson([entry({ name: '../../x' })])), /lowercase letters/)
-  assert.throws(() => parseCatalog(catalogJson([entry({ ansiSource: 'x\ncommand = rm' })])), /control character/)
-  assert.throws(() => parseCatalog(catalogJson([entry({ background: 'red' })])), /#rrggbb/)
+test('parseManifest refuses an entry whose name or text would reach a path or a config line', () => {
+  assert.throws(() => parseManifest(manifestJson([entry({ name: '../../x' })])), /lowercase letters/)
+  assert.throws(() => parseManifest(manifestJson([entry({ ansiSource: 'x\ncommand = rm' })])), /control character/)
+  assert.throws(() => parseManifest(manifestJson([entry({ background: 'red' })])), /#rrggbb/)
   assert.equal(
-    parseCatalog(catalogJson([entry({ name: 'kec@dust/rei', base: 'gojo' })])).palettes[0]?.name,
+    parseManifest(manifestJson([entry({ name: 'kec@dust/rei', base: 'gojo' })])).palettes[0]?.name,
     'kec@dust/rei',
   )
 })
@@ -178,7 +178,7 @@ test('gateFailures measures an entry that carries no gate', () => {
   assert.match(gateFailures(bare as PaletteEntry)[0] ?? '', /foreground on background/)
 })
 
-test('readCatalog puts each added marketplace after the series under its own name, and available adds local marketplaces and kept ones', () => {
+test('readMarketplaces puts each added marketplace after the official one under its own name, and available adds local marketplaces and kept ones', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-available-'))
   const skeleton = {
     schema: SCHEMA,
@@ -192,7 +192,7 @@ test('readCatalog puts each added marketplace after the series under its own nam
     join(home, 'ttheme', 'installed.json'),
     JSON.stringify({ terminals: [], palettes: [], marketplaces: ['official', 'ann/ttheme-pastel', local] }),
   )
-  writeCatalog(home, { ...skeleton, palettes: [entry({ name: 'gojo' }), entry({ name: 'geto', order: 2 })] })
+  writeOfficial(home, { ...skeleton, palettes: [entry({ name: 'gojo' }), entry({ name: 'geto', order: 2 })] })
   writeFileSync(
     join(home, 'ttheme', 'marketplaces', 'ann--ttheme-pastel.json'),
     JSON.stringify({
@@ -227,16 +227,16 @@ test('readCatalog puts each added marketplace after the series under its own nam
     }),
   )
   writeKept(home, [entry({ name: 'bob@x/gone' })])
-  const catalog = readCatalog(home)
+  const manifest = readMarketplaces(home)
   assert.deepEqual(
-    catalog.palettes.map((p) => [p.name, shelfOf(p)]),
+    manifest.palettes.map((p) => [p.name, shelfOf(p)]),
     [
       ['gojo', 'Jujutsu Kaisen'],
       ['geto', 'Jujutsu Kaisen'],
       ['ann@pastel/old', 'ann@pastel'],
     ],
   )
-  const all = available(home, catalog).palettes
+  const all = available(home, manifest).palettes
   assert.deepEqual(
     all.map((p) => p.name),
     ['gojo', 'geto', 'ann@pastel/old', 'kec@dust/rei', 'bob@x/gone'],

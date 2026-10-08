@@ -1374,14 +1374,14 @@ __tt_cli() {
   env $pass node $TTHEME_HOME/ttheme.js "$@"
 }
 
-__tt_catalog() {
+__tt_installs() {
   local was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   __tt_cli "$@" || return
   [[ $1 == (list|share) ]] && return 0
-  __tt_catalog_done "$was"
+  __tt_installs_done "$was"
 }
 
-__tt_catalog_done() {
+__tt_installs_done() {
   [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
   local was=$TTHEME_PALETTES_AT
   local -a reply
@@ -1556,7 +1556,7 @@ ttheme() {
       if (( ${#TTHEME_PALETTE} )); then
         __tt_preview hub
       else
-        __tt_catalog browse
+        __tt_installs browse
       fi
     else
       (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
@@ -1566,11 +1566,11 @@ ttheme() {
   fi
 
   case $1 in
-    list|add|remove|update|marketplace|new) __tt_catalog "$@"; return ;;
+    list|add|remove|update|marketplace|new) __tt_installs "$@"; return ;;
     edit|check|share)
       local REPLY
       __tt_name_of "$TTHEME_SPEC"
-      TTHEME_WORN=${TTHEME_PALETTE[$REPLY]:+$REPLY} __tt_catalog "$@"
+      TTHEME_WORN=${TTHEME_PALETTE[$REPLY]:+$REPLY} __tt_installs "$@"
       return ;;
     on|off) __tt_switch "$@"; return ;;
     info) TTHEME_ZSH=$ZSH_VERSION __tt_cli "$@"; return ;;

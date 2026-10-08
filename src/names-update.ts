@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, statSync, utimesSync, writeFileSyn
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { gunzipSync } from 'node:zlib'
-import { catalogPath, readAvailable } from './catalog.ts'
+import { officialPath, readAvailable } from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { knowAliases, namesDir, primeNames } from './names.ts'
 import { configHome, refreshAliases } from './palettes.ts'
@@ -84,7 +84,7 @@ export async function updateNames(home = homedir()): Promise<number> {
   }
   primeNames(home)
   const config = configHome()
-  if (existsSync(catalogPath(config))) {
+  if (existsSync(officialPath(config))) {
     knowAliases(readAvailable(config).palettes, home)
     refreshAliases(config, home)
   }

@@ -3,9 +3,9 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSy
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import { test } from 'node:test'
-import { readCatalog } from './catalog.ts'
+import { readMarketplaces } from './available.ts'
 import {
-  againCatalog,
+  againManifest,
   applyInit,
   type InitOptions,
   type InitPaths,
@@ -336,7 +336,7 @@ test('an upgrade lets the new layer ask again whether Ghostty names the terminal
   assert.equal(existsSync(join(stateDir, 'ghostty', 'ttys001')), true)
 })
 
-test('an upgrade drops palettes the catalog no longer has, and a default among them', () => {
+test('an upgrade drops palettes no marketplace has any more, and a default among them', () => {
   const paths = makeFixture()
   const plan = planUpgrade({ terminals: ['ghostty'], startup: 'gone', palettes: ['miku', 'gone'] }, paths)
   assert.deepEqual(plan.installed, { terminals: ['ghostty'], palettes: ['miku'] })
@@ -368,7 +368,7 @@ test('setting it up again keeps the marketplaces, their auto-update, the handle 
   const state = installedState(paths.configHome)
   assert.ok(state)
   assert.deepEqual(
-    againCatalog(state, paths)
+    againManifest(state, paths)
       .palettes.filter((e) => !e.default)
       .map((e) => e.name),
     palettes,
@@ -396,26 +396,26 @@ test('an upgrade keeps what came from marketplaces when the caches it finds are 
   const palettes = ['miku', 'alice@pastel/dusk', 'kec@moss/fern']
   const state = { terminals: ['ghostty' as const], marketplaces: ['official', 'alice/pastel', dust], palettes }
   writeFileSync(join(home, 'installed.json'), JSON.stringify(state))
-  sync(paths.configHome, readCatalog(paths.configHome), state)
-  writeFileSync(join(home, 'catalog.json'), JSON.stringify({ schema: 1, palettes: 'another shape' }))
+  sync(paths.configHome, readMarketplaces(paths.configHome), state)
+  writeFileSync(join(home, 'official.json'), JSON.stringify({ schema: 1, palettes: 'another shape' }))
   writeFileSync(
     join(home, 'marketplaces', 'alice--pastel.json'),
     JSON.stringify({ ...manifestFixture(), owner: 'alice', name: 'pastel' }),
   )
-  assert.throws(() => readCatalog(paths.configHome, false), /no version or palettes/)
+  assert.throws(() => readMarketplaces(paths.configHome, false), /no version or palettes/)
   const current = installedState(paths.configHome)
   assert.ok(current)
   assert.deepEqual(planUpgrade(current, paths).installed.palettes, palettes)
 })
 
-test('setting it up again offers no official palette once the official catalog was removed', () => {
+test('setting it up again offers no official palette once the official marketplace was removed', () => {
   const paths = makeFixture()
   withMarketplaces(paths)
   const state = { terminals: ['ghostty' as const], marketplaces: ['alice/pastel'], palettes: [] }
   writeFileSync(join(paths.configHome, 'ttheme', 'installed.json'), JSON.stringify(state))
-  const catalog = againCatalog(state, paths)
+  const manifest = againManifest(state, paths)
   assert.deepEqual(
-    catalog.palettes.map((e) => e.name),
+    manifest.palettes.map((e) => e.name),
     ['alice@pastel/dusk'],
   )
 })

@@ -238,7 +238,7 @@ export function localIdentity(dir: string): MarketplaceInfo {
 
 export function shownSource(source: string): string {
   if (source === OFFICIAL) {
-    return 'the ttheme catalog'
+    return 'the official marketplace'
   }
   if (!isLocal(source)) {
     return `github.com/${source}`

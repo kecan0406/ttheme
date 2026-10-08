@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { available, nearest, readAvailable, untuned, writeKept } from './available.ts'
 import { backgroundsDir, freshenConfs, paintFor, readStore, retint } from './backdrop.ts'
-import { available, nearest, readAvailable, untuned, writeKept } from './catalog.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { aliasesZsh, palettesZsh } from './emit/shell.ts'
 import { listed, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
@@ -88,20 +88,20 @@ export function writeInstalled(configHome: string, state: Installed): void {
   writeAtomic(installedPath(configHome), `${JSON.stringify(state, null, 2)}\n`)
 }
 
-export function resolve(catalog: Manifest, names: string[]): PaletteEntry[] {
-  const known = new Map(catalog.palettes.map((p) => [p.name, p]))
+export function resolve(manifest: Manifest, names: string[]): PaletteEntry[] {
+  const known = new Map(manifest.palettes.map((p) => [p.name, p]))
   const missing = names.filter((n) => !known.has(n))
   if (missing.length > 0) {
     const marketplaces = [...new Set(missing.flatMap((n) => marketplaceOf(n) ?? []))].filter(
-      (marketplace) => !catalog.palettes.some((p) => marketplaceOf(p.name) === marketplace),
+      (marketplace) => !manifest.palettes.some((p) => marketplaceOf(p.name) === marketplace),
     )
     const hint =
       marketplaces.length > 0
         ? `add ${marketplaces.join(', ')} first — \`ttheme marketplace search\` finds a marketplace's repository`
-        : nearest(listed(catalog.palettes), missing)
+        : nearest(listed(manifest.palettes), missing)
     throw new Error(`not in any marketplace: ${missing.join(', ')} — ${hint}`)
   }
-  return catalog.palettes.filter((p) => names.includes(p.name))
+  return manifest.palettes.filter((p) => names.includes(p.name))
 }
 
 function now(configHome: string, state: Installed, home: string): Now {
@@ -159,13 +159,13 @@ function layer(at: Now, host: Host): Record<string, string> {
 
 export function sync(
   configHome: string,
-  catalog: Manifest,
+  manifest: Manifest,
   state: Installed,
   home = homedir(),
   host: Host = systemHost(),
 ): string[] {
   readStore(backgroundsDir(configHome))
-  const kept = resolve(untuned(configHome, catalog), state.palettes)
+  const kept = resolve(untuned(configHome, manifest), state.palettes)
   const entries = tuned(kept, readTone(configHome))
   retint(configHome, new Map(entries.map((entry) => [entry.name, paintFor(entry)])))
   freshenConfs(configHome)
@@ -269,13 +269,13 @@ export function wiringNext(
 
 export function forget(
   configHome: string,
-  catalog: Manifest,
+  manifest: Manifest,
   terminals: Wired[],
   names: string[],
   home = homedir(),
 ): string[] {
   const removed: string[] = []
-  const known = available(configHome, catalog, false).palettes
+  const known = available(configHome, manifest, false).palettes
   for (const wiring of wirings(terminals)) {
     const dir = wiring.shelf?.dir({ configHome, home })
     for (const entry of dir ? known.filter((p) => names.includes(p.name)) : []) {
@@ -321,7 +321,7 @@ export function pointDefaults(
 
 export function commit(
   configHome: string,
-  catalog: Manifest,
+  manifest: Manifest,
   before: Installed,
   after: Installed,
   take = false,
@@ -330,7 +330,7 @@ export function commit(
 ): Map<Wired, Pointed> {
   const taking = take || (!worn(before) && worn(after) !== undefined)
   const next = taking ? withBases(configHome, after, host, home) : after
-  sync(configHome, catalog, next, home, host)
+  sync(configHome, manifest, next, home, host)
   writeInstalled(configHome, next)
   return taking || worn(before) !== worn(after) ? pointDefaults(configHome, next, taking, host, home) : new Map()
 }

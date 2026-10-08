@@ -23,12 +23,12 @@ import { readTone, tuned } from './tone.ts'
 
 const TIMEOUT = 20_000
 
-export function catalogPath(configHome: string): string {
-  return join(configHome, 'ttheme', 'catalog.json')
+export function officialPath(configHome: string): string {
+  return join(configHome, 'ttheme', 'official.json')
 }
 
-export function writeCatalog(configHome: string, catalog: Manifest): void {
-  writeAtomic(catalogPath(configHome), `${JSON.stringify(catalog, null, 2)}\n`)
+export function writeOfficial(configHome: string, manifest: Manifest): void {
+  writeAtomic(officialPath(configHome), `${JSON.stringify(manifest, null, 2)}\n`)
 }
 
 export interface Archive {
@@ -36,18 +36,18 @@ export interface Archive {
   files: Record<string, string>
 }
 
-export function readCatalog(configHome: string, warn = true, official?: Manifest): Manifest {
+export function readMarketplaces(configHome: string, warn = true, official?: Manifest): Manifest {
   const sources = marketplaceSources(configHome)
-  const path = catalogPath(configHome)
+  const path = officialPath(configHome)
   let base = emptyManifest()
   if (sources.includes(OFFICIAL)) {
     if (official) {
       base = official
     } else {
       if (!existsSync(path)) {
-        throw new Error(`no catalog at ${path} — run \`ttheme init\` first`)
+        throw new Error(`no official marketplace at ${path} — run \`ttheme init\` first`)
       }
-      base = parseCatalog(readFileSync(path, 'utf8'))
+      base = parseManifest(readFileSync(path, 'utf8'))
     }
   }
   const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source, base.palettes, warn))
@@ -127,24 +127,24 @@ function readCached(configHome: string, source: string, official: PaletteEntry[]
   }
 }
 
-export function parseCatalog(source: string): Manifest {
+export function parseManifest(source: string): Manifest {
   let doc: unknown
   try {
     doc = JSON.parse(source)
   } catch {
-    throw new Error('catalog is not valid JSON')
+    throw new Error('the manifest is not valid JSON')
   }
-  const catalog = doc as Manifest
-  if (typeof catalog?.version !== 'string' || !Array.isArray(catalog.palettes)) {
-    throw new Error('catalog has no version or palettes')
+  const manifest = doc as Manifest
+  if (typeof manifest?.version !== 'string' || !Array.isArray(manifest.palettes)) {
+    throw new Error('the manifest has no version or palettes')
   }
-  for (const p of catalog.palettes) {
+  for (const p of manifest.palettes) {
     const problem = entryProblem(p)
     if (problem) {
-      throw new Error(`catalog entry ${JSON.stringify(p?.name)} ${problem}`)
+      throw new Error(`manifest entry ${JSON.stringify(p?.name)} ${problem}`)
     }
   }
-  return catalog
+  return manifest
 }
 
 function entryProblem(p: PaletteEntry): string | undefined {
@@ -188,32 +188,32 @@ function looks(p: PaletteEntry): string {
   return JSON.stringify([p.background, p.foreground, p.cursor, p.selection, p.ansi, p.pictures ?? []])
 }
 
-export function updatesOf(configHome: string, catalog: Manifest): PaletteEntry[] {
+export function updatesOf(configHome: string, manifest: Manifest): PaletteEntry[] {
   const kept = new Map(readKept(configHome).map((p) => [p.name, p]))
-  return catalog.palettes.filter((p) => {
+  return manifest.palettes.filter((p) => {
     const was = kept.get(p.name)
     return marketplaceOf(p.name) !== undefined && was !== undefined && looks(was) !== looks(p)
   })
 }
 
-export function untuned(configHome: string, catalog: Manifest, warn = true): Manifest {
+export function untuned(configHome: string, manifest: Manifest, warn = true): Manifest {
   const kept = readKept(configHome)
   const pinned = new Map(kept.filter((p) => marketplaceOf(p.name) !== undefined).map((p) => [p.name, p]))
   const palettes = [
-    ...catalog.palettes.map((p) => pinned.get(p.name) ?? p),
-    ...readLocal(configHome, catalog.palettes, warn),
+    ...manifest.palettes.map((p) => pinned.get(p.name) ?? p),
+    ...readLocal(configHome, manifest.palettes, warn),
   ]
   const known = new Set(palettes.map((p) => p.name))
-  return { ...catalog, palettes: [...palettes, ...kept.filter((p) => !known.has(p.name))] }
+  return { ...manifest, palettes: [...palettes, ...kept.filter((p) => !known.has(p.name))] }
 }
 
-export function available(configHome: string, catalog: Manifest, warn = true): Manifest {
-  const view = untuned(configHome, catalog, warn)
+export function available(configHome: string, manifest: Manifest, warn = true): Manifest {
+  const view = untuned(configHome, manifest, warn)
   return { ...view, palettes: tuned(view.palettes, readTone(configHome)) }
 }
 
 export function readAvailable(configHome: string): Manifest {
-  return available(configHome, readCatalog(configHome))
+  return available(configHome, readMarketplaces(configHome))
 }
 
 export class Missing extends Error {}
@@ -277,7 +277,7 @@ export function gateFailures(palette: PaletteEntry): string[] {
 export function find(palettes: PaletteEntry[], name: string): PaletteEntry {
   const hit = palettes.find((p) => p.name === name)
   if (!hit) {
-    throw new Error(`no palette named ${name} in the catalog — ${nearest(palettes, [name])}`)
+    throw new Error(`no palette named ${name} in your marketplaces — ${nearest(palettes, [name])}`)
   }
   return hit
 }

@@ -46,7 +46,7 @@ const FRESH = 7 * 24 * 60 * 60 * 1000
 
 interface Shelf {
   home: string
-  catalog: Manifest
+  manifest: Manifest
   entry: PaletteEntry
   signal: AbortSignal
   credited: () => void
@@ -61,14 +61,14 @@ export class Kept {
   private readonly asking = new Map<string, Promise<void>>()
 
   private readonly home: string
-  private readonly catalog: Manifest
+  private readonly manifest: Manifest
   private readonly entry: PaletteEntry
   private readonly signal: AbortSignal
   private readonly credited: () => void
 
   constructor(shelf: Shelf) {
     this.home = shelf.home
-    this.catalog = shelf.catalog
+    this.manifest = shelf.manifest
     this.entry = shelf.entry
     this.signal = shelf.signal
     this.credited = shelf.credited
@@ -147,7 +147,7 @@ export class Kept {
     }
     const found = origins(this.home)
     const known = this.keep<string>(site, 'owners.json')
-    const siblings = this.catalog.palettes.flatMap((sibling) => {
+    const siblings = this.manifest.palettes.flatMap((sibling) => {
       const origin = found.get(sibling.name)
       return shelfOf(sibling) === shelfOf(this.entry) && sibling.name !== this.entry.name && origin?.site === site.key
         ? [{ name: sibling.name, id: origin.id }]

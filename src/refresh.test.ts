@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { tarballOf } from '../tests/tarball.ts'
-import { writeCatalog } from './catalog.ts'
+import { writeOfficial } from './available.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { sync, writeInstalled } from './palettes.ts'
 import {
@@ -55,7 +55,7 @@ const SOURCE = 'ann/ttheme-pastel'
 
 const MARKETPLACE = { 'ttheme-marketplace.toml': 'name = "pastel"\n\n[owner]\nname = "ann"\n' }
 
-function catalog(schema: number): string {
+function manifest(schema: number): string {
   return JSON.stringify({ schema, version: '9.0.0', gate: [], palettes: [] })
 }
 
@@ -63,7 +63,7 @@ async function withNetwork<T>(respond: () => Promise<Response>, run: (home: stri
   const home = mkdtempSync(join(tmpdir(), 'ttheme-refresh-'))
   mkdirSync(marketplacesDir(home), { recursive: true })
   writeFileSync(cachePath(home, SOURCE), `${JSON.stringify({ files: MARKETPLACE })}\n`)
-  writeCatalog(home, JSON.parse(catalog(SCHEMA)))
+  writeOfficial(home, JSON.parse(manifest(SCHEMA)))
   const realFetch = globalThis.fetch
   const realState = process.env.XDG_STATE_HOME
   globalThis.fetch = (async () => respond()) as unknown as typeof fetch
@@ -121,16 +121,16 @@ function installed(name: string): PaletteEntry {
 
 test('applying a refresh hands back the palettes that left their marketplace instead of printing them', async () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-apply-'))
-  const catalog: Manifest = {
+  const manifest: Manifest = {
     schema: SCHEMA,
     version: '0.1.0',
     gate: [],
     palettes: [installed('gojo'), installed('geto')],
   }
   const state = { terminals: ['ghostty' as const], palettes: ['gojo', 'geto'] }
-  writeCatalog(home, catalog)
+  writeOfficial(home, manifest)
   writeInstalled(home, state)
-  sync(home, catalog, state)
+  sync(home, manifest, state)
   const left = applyRefreshed(home, [
     { source: 'official', id: 'official', count: 1, change: { added: [], changed: [], gone: ['gojo'] } },
   ])

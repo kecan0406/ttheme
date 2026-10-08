@@ -1,5 +1,5 @@
+import { available, readKept, readMarketplaces, updatesOf } from './available.ts'
 import { type BrowseIo, BrowsePanel, type BrowseResult, type Marketplace } from './browse-panel.ts'
-import { available, readCatalog, readKept, updatesOf } from './catalog.ts'
 import { HUB_CLOSED, hubOf } from './hub.ts'
 import { reload, takeUpdates } from './installs.ts'
 import { liveOf } from './live.ts'
@@ -62,7 +62,7 @@ function marketplaceState(home: string, state: Installed, source: string, tries:
 }
 
 function updateNames(home: string): string[] {
-  return updatesOf(home, readCatalog(home, false)).map((e) => e.name)
+  return updatesOf(home, readMarketplaces(home, false)).map((e) => e.name)
 }
 
 function browseIo(
@@ -177,8 +177,8 @@ async function applyBrowse(
   if (moved) {
     writeInstalled(home, placed)
   }
-  const catalog = readCatalog(home, false)
-  const wanted = available(home, catalog, false)
+  const manifest = readMarketplaces(home, false)
+  const wanted = available(home, manifest, false)
     .palettes.filter((e) => result.picked.has(e.name))
     .map((e) => e.name)
   const dropped = current.palettes.filter((n) => !wanted.includes(n))
@@ -190,8 +190,8 @@ async function applyBrowse(
     return
   }
   const next = { ...placed, palettes: wanted }
-  commit(home, catalog, current, next)
-  forget(home, catalog, current.terminals, dropped)
+  commit(home, manifest, current, next)
+  forget(home, manifest, current.terminals, dropped)
   for (const line of marketplaceChanges(result, marketplaces, wanted)) {
     say(line)
   }
@@ -206,7 +206,7 @@ async function applyBrowse(
   }
   await bringPictures(
     home,
-    available(home, catalog, false).palettes.filter((e) => added.includes(e.name)),
+    available(home, manifest, false).palettes.filter((e) => added.includes(e.name)),
     next.terminals,
   )
   if (renew.length > 0) {

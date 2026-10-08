@@ -31,7 +31,7 @@ function entry(name: string, order: number, partial: Partial<PaletteEntry> = {})
   }
 }
 
-const catalog: Manifest = {
+const manifest: Manifest = {
   schema: SCHEMA,
   version: '0.1.0',
   gate: [],
@@ -129,7 +129,7 @@ test('sync gives every listed palette and the default a profile on top of the us
     palettes: ['neutral', 'gojo', 'geto', 'kec@dust/fern'],
     konsoleBase: 'Mine.profile',
   }
-  sync(configHome, catalog, state, home)
+  sync(configHome, manifest, state, home)
   const dir = konsoleData(home)
   const versioned = (file: string) => /\.[0-9a-f]{8}\.colorscheme$/.test(file)
   assert.deepEqual(
@@ -160,13 +160,13 @@ test('sync gives every listed palette and the default a profile on top of the us
     )
   }
   const gojo = readFileSync(join(dir, 'ttheme-gojo.profile'), 'utf8')
-  assert.equal(gojo, konsoleProfile(toTheme(catalog.palettes[1] as PaletteEntry), 'Mine.profile'))
+  assert.equal(gojo, konsoleProfile(toTheme(manifest.palettes[1] as PaletteEntry), 'Mine.profile'))
   assert.equal(iniValue(gojo, 'Appearance', 'ColorScheme'), 'ttheme-gojo')
   assert.equal(iniValue(gojo, 'Cursor Options', 'CustomCursorColor'), '255,0,0')
   assert.equal(iniValue(gojo, 'General', 'Name'), 'ttheme · gojo')
   assert.equal(iniValue(gojo, 'General', 'Parent'), 'Mine.profile')
 
-  sync(configHome, catalog, { ...state, palettes: ['gojo'], konsoleBase: undefined }, home)
+  sync(configHome, manifest, { ...state, palettes: ['gojo'], konsoleBase: undefined }, home)
   assert.ok(!existsSync(join(dir, 'ttheme-geto.profile')))
   assert.ok(!existsSync(join(dir, 'ttheme-neutral.profile')))
   assert.deepEqual(
@@ -192,7 +192,7 @@ test('Konsole opens new tabs on the default palette’s profile, follows ttheme 
   writeInstalled(configHome, before)
   const on = commit(
     configHome,
-    catalog,
+    manifest,
     before,
     { terminals: ['konsole'], palettes: ['gojo', 'geto'] },
     false,
@@ -204,15 +204,15 @@ test('Konsole opens new tabs on the default palette’s profile, follows ttheme 
   const state: Installed = { terminals: ['konsole'], palettes: ['gojo', 'geto'], konsoleBase: 'Mine.profile' }
   assert.equal(readFileSync(backupPath(rc), 'utf8'), mine)
 
-  commit(configHome, catalog, state, { ...state, startup: 'geto' }, true, nobody, home)
+  commit(configHome, manifest, state, { ...state, startup: 'geto' }, true, nobody, home)
   assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-geto.profile')
 
-  commit(configHome, catalog, { ...state, startup: 'geto' }, { ...state, palettes: ['gojo'] }, false, nobody, home)
+  commit(configHome, manifest, { ...state, startup: 'geto' }, { ...state, palettes: ['gojo'] }, false, nobody, home)
   assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-gojo.profile')
 
   commit(
     configHome,
-    catalog,
+    manifest,
     { ...state, palettes: ['gojo'] },
     { ...state, palettes: ['gojo'], off: true },
     false,
@@ -227,9 +227,9 @@ test('a default the user picks in Konsole stays through an add or remove, and tt
   const rc = konsolerc(configHome)
   put(rc, '[Desktop Entry]\nDefaultProfile=Picked.profile\n')
   const state: Installed = { terminals: ['konsole'], palettes: ['gojo', 'geto'], konsoleBase: 'Mine.profile' }
-  commit(configHome, catalog, state, { ...state, palettes: ['geto'] }, false, nobody, home)
+  commit(configHome, manifest, state, { ...state, palettes: ['geto'] }, false, nobody, home)
   assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'Picked.profile')
-  const pointed = commit(configHome, catalog, state, { ...state, startup: 'geto' }, true, nobody, home)
+  const pointed = commit(configHome, manifest, state, { ...state, startup: 'geto' }, true, nobody, home)
   assert.ok(pointed.has('konsole'))
   assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-geto.profile')
 })
@@ -241,13 +241,13 @@ test('every running Konsole takes the new default over D-Bus, and one that canno
     { service: 'org.kde.konsole-8187', loaded: ['ttheme · gojo', 'ttheme · geto'] },
     { service: 'org.kde.konsole', loaded: ['ttheme · gojo', 'ttheme · geto'] },
   ])
-  const took = commit(configHome, catalog, state, { ...state, startup: 'geto' }, true, live.host, home)
+  const took = commit(configHome, manifest, state, { ...state, startup: 'geto' }, true, live.host, home)
   assert.deepEqual([...took], [['konsole', { restart: false }]])
   assert.deepEqual([...live.defaults.values()], ['ttheme · geto', 'ttheme · geto'])
 
   const stale = bus([{ service: 'org.kde.konsole-9', loaded: ['ttheme · gojo'] }])
   assert.deepEqual(
-    [...commit(configHome, catalog, state, { ...state, startup: 'geto' }, true, stale.host, home)],
+    [...commit(configHome, manifest, state, { ...state, startup: 'geto' }, true, stale.host, home)],
     [['konsole', { restart: true }]],
   )
 })
@@ -295,7 +295,7 @@ test('uninstall gives Konsole its own default back and deletes every scheme and 
   put(join(konsoleData(home), 'Mine.profile'), '[General]\nName=Mine\n')
   const off: Installed = { terminals: ['konsole'], palettes: ['gojo'], off: true }
   writeInstalled(configHome, off)
-  commit(configHome, catalog, off, { terminals: ['konsole'], palettes: ['gojo'] }, false, nobody, home)
+  commit(configHome, manifest, off, { terminals: ['konsole'], palettes: ['gojo'] }, false, nobody, home)
   const paths = {
     home,
     configHome,
@@ -317,9 +317,9 @@ test('uninstall drops the konsolerc backup that ttheme off already made true aga
   put(join(konsoleData(home), 'Mine.profile'), '[General]\nName=Mine\n')
   const off: Installed = { terminals: ['konsole'], palettes: ['gojo'], off: true }
   writeInstalled(configHome, off)
-  commit(configHome, catalog, off, { terminals: ['konsole'], palettes: ['gojo'] }, false, nobody, home)
+  commit(configHome, manifest, off, { terminals: ['konsole'], palettes: ['gojo'] }, false, nobody, home)
   const on = JSON.parse(readFileSync(join(configHome, 'ttheme', 'installed.json'), 'utf8')) as Installed
-  commit(configHome, catalog, on, { ...on, off: true }, false, nobody, home)
+  commit(configHome, manifest, on, { ...on, off: true }, false, nobody, home)
   assert.equal(readFileSync(rc, 'utf8'), mine)
   assert.ok(existsSync(backupPath(rc)))
   const paths = {

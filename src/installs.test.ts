@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { writeCatalog } from './catalog.ts'
+import { writeOfficial } from './available.ts'
 import { inMarketplace, runAdd, runDefault } from './installs.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { withMarketplaces } from './marketplaces.ts'
@@ -29,7 +29,7 @@ function entry(name: string, order: number): PaletteEntry {
   }
 }
 
-const catalog: Manifest = {
+const manifest: Manifest = {
   schema: SCHEMA,
   version: '0.1.0',
   gate: [],
@@ -39,9 +39,9 @@ const catalog: Manifest = {
 function installedHome(palettes: string[]): string {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-marketplace-'))
   const state = { terminals: ['ghostty' as const], palettes }
-  writeCatalog(home, catalog)
+  writeOfficial(home, manifest)
   writeInstalled(home, state)
-  sync(home, catalog, state)
+  sync(home, manifest, state)
   return home
 }
 
@@ -86,15 +86,15 @@ test('default refuses a palette that is not installed', () => {
   assert.equal(readInstalled(home).startup, undefined)
 })
 
-test('a share link to a palette already in the catalog installs it, and one with other colors is refused', async () => {
+test('a share link to a palette already in a marketplace installs it, and one with other colors is refused', async () => {
   const home = installedHome(['gojo'])
-  const geto = catalog.palettes[1] as PaletteEntry
+  const geto = manifest.palettes[1] as PaletteEntry
   await inHome(home, () => runAdd([shareLink(shareCode(draftOf(geto)))]))
   assert.deepEqual(readInstalled(home).palettes, ['gojo', 'geto'])
-  const sukuna = shareLink(shareCode({ ...draftOf(catalog.palettes[2] as PaletteEntry), background: '#000000' }))
+  const sukuna = shareLink(shareCode({ ...draftOf(manifest.palettes[2] as PaletteEntry), background: '#000000' }))
   await assert.rejects(
     inHome(home, () => runAdd([sukuna])),
-    /sukuna is already in the ttheme catalog and differs/,
+    /sukuna is already in the official marketplace and differs/,
   )
 })
 

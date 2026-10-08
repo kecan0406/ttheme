@@ -90,7 +90,7 @@
           "type": "integer"
         },
         "role": {
-          "description": "\"default\" marks the official catalog's neutral palette; a marketplace palette has none",
+          "description": "\"default\" marks the official marketplace's neutral palette; any other marketplace's palette has none",
           "type": "string",
           "enum": ["default"]
         },

@@ -1,20 +1,20 @@
 import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { moveRacks } from './backdrop.ts'
 import {
   type Archive,
   archiveId,
-  catalogPath,
   Missing,
-  parseCatalog,
+  officialPath,
+  parseManifest,
   type ReadMarketplace,
   reach,
   readArchive,
   readCachedArchive,
-  readCatalog,
+  readMarketplaces,
   updatesOf,
-} from './catalog.ts'
+} from './available.ts'
+import { moveRacks } from './backdrop.ts'
 import { writeAtomic } from './edits.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
 import { advise } from './notice.ts'
@@ -180,8 +180,8 @@ export async function fetchMarketplace(
   signal?: AbortSignal,
 ): Promise<Fetched> {
   if (source === OFFICIAL) {
-    if (!existsSync(catalogPath(home))) {
-      throw new Error(`the ttheme catalog is not on this machine — \`${UPDATE_COMMAND}\` puts it back`)
+    if (!existsSync(officialPath(home))) {
+      throw new Error(`the official marketplace is not on this machine — \`${UPDATE_COMMAND}\` puts it back`)
     }
     return { source, id: OFFICIAL, entries: cachedEntries(home, OFFICIAL) }
   }
@@ -211,7 +211,7 @@ function cachedArchive(home: string, source: string): Archive | undefined {
 export function cachedEntries(home: string, source: string): PaletteEntry[] {
   try {
     if (source === OFFICIAL) {
-      return parseCatalog(readFileSync(catalogPath(home), 'utf8')).palettes
+      return parseManifest(readFileSync(officialPath(home), 'utf8')).palettes
     }
     return readArchive(source, readCachedArchive(home, source), officialOf(home), warning(false)).entries
   } catch {
@@ -351,8 +351,8 @@ function followMarketplaces(home: string): string[] {
   if (moves.renamed.size === 0 && moves.removed.length === 0) {
     return []
   }
-  const catalog = readCatalog(home, false)
-  forget(home, catalog, state.terminals, [...moves.renamed.keys(), ...moves.removed])
+  const manifest = readMarketplaces(home, false)
+  forget(home, manifest, state.terminals, [...moves.renamed.keys(), ...moves.removed])
   moveTone(home, moves.renamed, moves.removed)
   moveRacks(home, moves.renamed)
   movePins(home, moves.renamed, moves.removed)
@@ -361,7 +361,7 @@ function followMarketplaces(home: string): string[] {
   ]
   const { startup, ...rest } = state
   const kept = startup && !moves.removed.includes(startup) ? (moves.renamed.get(startup) ?? startup) : undefined
-  commit(home, catalog, state, { ...rest, palettes, ...(kept ? { startup: kept } : {}) })
+  commit(home, manifest, state, { ...rest, palettes, ...(kept ? { startup: kept } : {}) })
   return [
     ...[...moves.renamed].map(([from, to]) => `${from} is ${to} now — its marketplace renamed it`),
     ...moves.removed.map((name) => `${name} was removed from its marketplace`),
@@ -369,7 +369,7 @@ function followMarketplaces(home: string): string[] {
 }
 
 export function updatesLine(home: string): string | undefined {
-  const names = updatesOf(home, readCatalog(home, false)).map((e) => e.name)
+  const names = updatesOf(home, readMarketplaces(home, false)).map((e) => e.name)
   if (names.length === 0) {
     return undefined
   }

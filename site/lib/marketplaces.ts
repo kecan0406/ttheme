@@ -1,4 +1,4 @@
-import { official } from '@/lib/catalog'
+import { official } from '@/lib/official'
 import { type Marketplace, toTheme } from '@/lib/themes'
 import { showcase } from '../../src/showcase.ts'
 

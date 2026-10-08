@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import pkg from '../../package.json' with { type: 'json' }
-import { parseCatalog } from '../catalog.ts'
+import { parseManifest } from '../available.ts'
 import { type Manifest, type PaletteEntry, SCHEMA, swatch } from '../manifest.ts'
 import { loadThemes } from '../theme.ts'
 import { manifest, type SchemaOneEntry, schemaOne } from './manifest.ts'
@@ -79,7 +79,7 @@ test('gate measurements keep the order schema 1 readers index them by — a new 
 })
 
 test('the manifest the build writes is one every reader accepts', () => {
-  const read = parseCatalog(JSON.stringify(published))
+  const read = parseManifest(JSON.stringify(published))
   assert.equal(read.schema, SCHEMA)
   assert.equal(read.palettes.length, entries.length)
 })

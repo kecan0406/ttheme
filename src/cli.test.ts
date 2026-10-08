@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { Missing } from './available.ts'
 import { EMITTED } from './build.ts'
-import { Missing } from './catalog.ts'
 import { isCrash, parse, UsageError, VERBS } from './cli.ts'
 import { WIRED } from './terminals/types.ts'
 

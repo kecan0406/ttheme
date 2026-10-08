@@ -44,7 +44,7 @@ test('a repository takes a tag, branch or commit after #, which the fetch follow
   assert.ok(!sameMarketplace('alice/anime', 'alice/other'))
 })
 
-test('only a repository updates on its own, once turned on — the official catalog comes with ttheme', () => {
+test('only a repository updates on its own, once turned on — the official marketplace comes with ttheme', () => {
   assert.equal(autoUpdates(OFFICIAL, undefined), false)
   assert.equal(autoUpdates(OFFICIAL, { official: true }), false)
   assert.equal(autoUpdates('alice/anime', undefined), false)

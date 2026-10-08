@@ -6,6 +6,7 @@ import { basename, dirname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { linksOf } from '../artists.ts'
+import { booruTags, find, readAvailable, siteTags } from '../available.ts'
 import { backdropTone, backgroundsDir, fillSize, rackOf, type Tone, type Tune } from '../backdrop.ts'
 import {
   BLOCKS,
@@ -51,7 +52,6 @@ import {
   tagList,
   tagsOf,
 } from '../booru.ts'
-import { booruTags, find, readAvailable, siteTags } from '../catalog.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../cutout.ts'
 import { writeAtomic } from '../edits.ts'
 import { type Frame, fitOrder, interleave, type Pick } from '../fit.ts'
@@ -495,7 +495,7 @@ class Finder {
   private readonly scratch = mkdtempSync(join(tmpdir(), 'ttheme-find-'))
 
   private readonly home: string
-  private readonly catalog: Manifest
+  private readonly manifest: Manifest
   private readonly entry: PaletteEntry
   private readonly tagged: ReadonlySet<string>
   private readonly blurring: number
@@ -503,12 +503,12 @@ class Finder {
   private readonly paint: Paint
   private readonly kept: Kept
 
-  constructor(home: string, catalog: Manifest, entry: PaletteEntry, tag: string, start?: Start) {
+  constructor(home: string, manifest: Manifest, entry: PaletteEntry, tag: string, start?: Start) {
     this.start = start
     this.home = home
-    this.catalog = catalog
+    this.manifest = manifest
     this.entry = entry
-    this.tagged = new Set(catalog.palettes.flatMap((p) => (p.booru ? [p.booru] : [])))
+    this.tagged = new Set(manifest.palettes.flatMap((p) => (p.booru ? [p.booru] : [])))
     this.tone = backdropTone(entry, entry.signatureSlots)
     this.blurring = blurOf(home)
     const untuned: Tuning = { size: 'fill', at: TOP_RIGHT, opacity: this.tone.opacity }
@@ -583,7 +583,7 @@ class Finder {
     })
     this.kept = new Kept({
       home,
-      catalog,
+      manifest,
       entry,
       signal: this.signal,
       credited: () => {
@@ -1612,7 +1612,7 @@ class Finder {
       return
     }
     const ours = typed
-      ? booruTags(this.catalog.palettes, this.entry, token).map((p) => ({
+      ? booruTags(this.manifest.palettes, this.entry, token).map((p) => ({
           value: p.booru as string,
           count: 0,
           palette: p.name,
@@ -1967,7 +1967,7 @@ class Finder {
   }
 
   private namesOf(tag: string, site: string): string[] {
-    const owner = tag === this.entry.booru ? this.entry : this.catalog.palettes.find((p) => p.booru === tag)
+    const owner = tag === this.entry.booru ? this.entry : this.manifest.palettes.find((p) => p.booru === tag)
     return owner ? siteTags(owner, site) : [tag]
   }
 
@@ -2957,12 +2957,12 @@ export async function findFor(
 
 export async function runFind(name: string): Promise<number> {
   const home = configHome()
-  const catalog = readAvailable(home)
-  const entry = find(catalog.palettes, name)
+  const manifest = readAvailable(home)
+  const entry = find(manifest.palettes, name)
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error('needs a terminal')
   }
-  const finder = new Finder(home, catalog, entry, entry.booru ?? '')
+  const finder = new Finder(home, manifest, entry, entry.booru ?? '')
   const code = await finder.run()
   if (finder.saved && code !== 0) {
     process.stderr.write(`${finder.saved}\n`)

@@ -1,6 +1,6 @@
 import type { Readable, Writable } from 'node:stream'
 import { cells, clip, fit, spread, wrapText } from './ansi.ts'
-import { gateFailures } from './catalog.ts'
+import { gateFailures } from './available.ts'
 import { GATE_RULES } from './contrast.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
 import type { PaletteEntry } from './manifest.ts'
@@ -18,7 +18,7 @@ import {
 } from './palette-prompt.ts'
 import { counted, type Refreshed } from './refresh.ts'
 import { isLocal, isRemote, OFFICIAL, parseSource, sameMarketplace, shownSource, TOPIC } from './sources.ts'
-import { marketplaceOf, slugOf } from './theme.ts'
+import { slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Mouse } from './tui/keys.ts'
 import { hintOf, pillOf } from './tui/parts.ts'
@@ -173,7 +173,7 @@ export class BrowsePanel {
   private readonly output: (Writable & { columns?: number; rows?: number }) | undefined
   private maxItems = 12
   private readonly paint: ((entry: PaletteEntry) => void) | undefined
-  private readonly catalog: PaletteList<Row>
+  private readonly list: PaletteList<Row>
   private readonly hint: SearchHint
   private screen: Screen | undefined
   private state: State = 'active'
@@ -213,7 +213,7 @@ export class BrowsePanel {
     this.live = opts.lookups ?? true
     this.paint = opts.onFocus
     this.picked = new Set(opts.installed)
-    this.catalog = new PaletteList<Row>({
+    this.list = new PaletteList<Row>({
       entries: this.entries(),
       picked: this.picked,
       layout: 'marketplaces',
@@ -227,7 +227,7 @@ export class BrowsePanel {
     })
     this.hint = new SearchHint(
       opts.fx ?? 'typewriter',
-      () => paletteExample(this.catalog),
+      () => paletteExample(this.list),
       () => this.redraw(),
     )
     for (const source of opts.due) {
@@ -349,7 +349,7 @@ export class BrowsePanel {
       return
     }
     const page = pageStep(key, this.maxItems)
-    const list = this.catalog
+    const list = this.list
     if (key === 'enter') {
       if (list.foldable()) {
         list.flip()
@@ -394,7 +394,7 @@ export class BrowsePanel {
   }
 
   private refresh(): void {
-    const row = this.catalog.focusedRow()
+    const row = this.list.focusedRow()
     const marketplace = this.focusedMarketplace()
     if (marketplace) {
       if (isRemote(marketplace.source) && !this.adds.has(marketplace.source)) {
@@ -442,7 +442,7 @@ export class BrowsePanel {
       if (spot.kind === 'chip') {
         this.scopeTo(spot.source)
       } else if (spot.kind === 'row') {
-        this.catalog.point(spot.at)
+        this.list.point(spot.at)
         this.watch()
       }
     } else if (event.action === 'release' && hit?.inside) {
@@ -473,7 +473,7 @@ export class BrowsePanel {
   }
 
   private openRow(spot: RowSpot, count: number): void {
-    const list = this.catalog
+    const list = this.list
     if (list.focusedRow()?.kind === 'extra') {
       if (spot.part === 'box' || count === 2) {
         this.activate()
@@ -488,14 +488,14 @@ export class BrowsePanel {
   }
 
   private typed(): void {
-    this.catalog.setFilter(this.field.value)
+    this.list.setFilter(this.field.value)
     this.later('search', SEARCH_AFTER, () => this.lookup())
     this.watch()
   }
 
   private clear(): void {
     this.field.value = ''
-    this.catalog.clear()
+    this.list.clear()
     this.later('search', SEARCH_AFTER, () => this.lookup())
     this.watch()
   }
@@ -548,7 +548,7 @@ export class BrowsePanel {
   }
 
   private reload(): void {
-    this.catalog.setEntries(this.scoped(this.entries()))
+    this.list.setEntries(this.scoped(this.entries()))
   }
 
   private chips(): Chip[] {
@@ -574,7 +574,7 @@ export class BrowsePanel {
   }
 
   private focusedMarketplace(): Marketplace | undefined {
-    const row = this.catalog.focusedRow()
+    const row = this.list.focusedRow()
     return row?.kind === 'top' ? this.marketplaceNamed(row.name) : undefined
   }
 
@@ -593,11 +593,11 @@ export class BrowsePanel {
   private scopeTo(source: string | undefined): void {
     this.scope = source
     this.reload()
-    this.catalog.refocus()
+    this.list.refocus()
   }
 
   private move(delta: number, wrap = true): void {
-    this.catalog.move(delta, wrap)
+    this.list.move(delta, wrap)
     this.watch()
   }
 
@@ -613,9 +613,9 @@ export class BrowsePanel {
   }
 
   private activate(): void {
-    const row = this.catalog.focusedRow()
+    const row = this.list.focusedRow()
     if (row?.kind !== 'extra') {
-      this.catalog.pick()
+      this.list.pick()
       return
     }
     const found = row.extra.found
@@ -624,7 +624,7 @@ export class BrowsePanel {
     } else if (found?.kind === 'repo') {
       const known = this.known(found.source)
       if (known) {
-        this.catalog.select(`top ${known.id}`)
+        this.list.select(`top ${known.id}`)
       } else {
         this.load(found.source, true)
       }
@@ -722,7 +722,7 @@ export class BrowsePanel {
   }
 
   private focusedFound(): Found | undefined {
-    const row = this.catalog.focusedRow()
+    const row = this.list.focusedRow()
     return row?.kind === 'extra' ? row.extra.found : undefined
   }
 
@@ -768,10 +768,10 @@ export class BrowsePanel {
     const typed = typedSource(this.field.value)
     if (typed && sameMarketplace(typed, marketplace.source)) {
       this.field.value = ''
-      this.catalog.setFilter('')
+      this.list.setFilter('')
     }
     this.reload()
-    this.catalog.select(`top ${marketplace.id}`)
+    this.list.select(`top ${marketplace.id}`)
   }
 
   private update(source: string): void {
@@ -819,7 +819,7 @@ export class BrowsePanel {
         if (seq === this.asked) {
           this.searching = false
           this.repos = repos
-          this.catalog.refresh()
+          this.list.refresh()
           this.watch()
           this.redraw()
         }
@@ -958,7 +958,7 @@ export class BrowsePanel {
   }
 
   private toggleRenew(): void {
-    const list = this.catalog
+    const list = this.list
     const row = list.focusedRow()
     const names = (row ? list.inside(row) : [])
       .map((e) => e.name)
@@ -1053,7 +1053,7 @@ export class BrowsePanel {
     for (const m of this.adds.values()) {
       const auto = m.source !== OFFICIAL && (this.want.get(m.source) ?? m.auto) ? 'updates on its own' : ''
       rows.push(
-        `+ ${m.id}  ${this.p.dim([m.source === OFFICIAL ? 'The ttheme catalog' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(' · '))}`,
+        `+ ${m.id}  ${this.p.dim([m.source === OFFICIAL ? 'The official marketplace' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(' · '))}`,
       )
     }
     for (const source of this.removes) {
@@ -1204,7 +1204,7 @@ export class BrowsePanel {
 
   private counts(): string {
     const updating = [...this.busy.values()].includes('Updating…') ? 'Updating… · ' : ''
-    const list = this.catalog
+    const list = this.list
     return `${updating}${list.matched()}/${list.total()} · ${list.pickedCount()} picked`
   }
 
@@ -1281,7 +1281,7 @@ export class BrowsePanel {
     if (!marketplace) {
       return 'In no marketplace you added'
     }
-    return marketplace.source === OFFICIAL ? 'The ttheme catalog' : marketplace.shown
+    return marketplace.source === OFFICIAL ? 'The official marketplace' : marketplace.shown
   }
 
   private paletteState(entry: PaletteEntry): string {
@@ -1298,7 +1298,7 @@ export class BrowsePanel {
   }
 
   private detail(width: number): Detail {
-    const row = this.catalog.focusedRow()
+    const row = this.list.focusedRow()
     if (!row || row.kind === 'rule' || row.kind === 'all') {
       return EMPTY
     }
@@ -1310,7 +1310,7 @@ export class BrowsePanel {
       return this.marketplaceDetail(marketplace, width)
     }
     if (row.kind === 'top' || row.kind === 'catalog') {
-      const members = this.catalog.inside(row)
+      const members = this.list.inside(row)
       const source = this.sourceOf(row.lead)
       const counts = `${counted(members.length)} · ${members.filter((e) => this.installed.has(e.name)).length} installed`
       const within = row.kind === 'catalog' ? row.top : undefined
@@ -1353,7 +1353,7 @@ export class BrowsePanel {
   }
 
   private marketplaceDetail(m: Marketplace, width: number): Detail {
-    const source = m.source === OFFICIAL ? 'The ttheme catalog' : m.shown
+    const source = m.source === OFFICIAL ? 'The official marketplace' : m.shown
     const listed = m.entries.filter((e) => !e.default)
     const installed = listed.filter((e) => this.installed.has(e.name)).map((e) => e.name)
     const counts = `${counted(listed.length)} · ${installed.length} installed`
@@ -1501,7 +1501,7 @@ export class BrowsePanel {
   }
 
   private rowKeys(enter: Hint): Hint[] {
-    const list = this.catalog
+    const list = this.list
     const row = list.focusedRow()
     if (!row) {
       return [enter]
@@ -1555,7 +1555,7 @@ export class BrowsePanel {
   private fitItems(used: number): void {
     const items = Math.max(MIN_ITEMS, this.rows() - used)
     this.maxItems = items
-    this.catalog.maxItems = items
+    this.list.maxItems = items
   }
 
   private view(): string[] {
@@ -1591,7 +1591,7 @@ export class BrowsePanel {
       return this.small(cols, rows, chrome + MIN_ITEMS)
     }
     this.fitItems(chrome)
-    const { lines, above, below } = this.catalog.window()
+    const { lines, above, below } = this.list.window()
     const body = lines.map((line) => ` ${line}`)
     while (body.length < this.maxItems) {
       body.push('')

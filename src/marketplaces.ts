@@ -5,14 +5,14 @@ import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
 import {
   archiveId,
-  catalogPath,
   fetchParsed,
   Limited,
-  parseCatalog,
+  officialPath,
+  parseManifest,
   readArchive,
   readCachedArchive,
-  readCatalog,
-} from './catalog.ts'
+  readMarketplaces,
+} from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
 import {
@@ -131,12 +131,12 @@ function marketplaceOfPalette(name: string): string {
 }
 
 function official(home: string): PaletteEntry[] {
-  return readCatalog(home).palettes.filter((e) => marketplaceOf(e.name) === undefined)
+  return readMarketplaces(home).palettes.filter((e) => marketplaceOf(e.name) === undefined)
 }
 
 function officialFor(home: string): PaletteEntry[] {
   const path = join(import.meta.dirname, '..', 'dist', 'manifest.json')
-  return existsSync(path) ? parseCatalog(readFileSync(path, 'utf8')).palettes : official(home)
+  return existsSync(path) ? parseManifest(readFileSync(path, 'utf8')).palettes : official(home)
 }
 
 export function withMarketplaces(
@@ -244,7 +244,7 @@ export async function addSource(home: string, arg: string): Promise<{ source: st
   const count = counted(listed(fetched.entries).length)
   console.log(
     source === OFFICIAL
-      ? `Added the ttheme catalog — ${count}`
+      ? `Added the official marketplace — ${count}`
       : `Added ${fetched.id} · ${shownSource(source)} — ${count}${auto ? ', updating on its own' : ''}`,
   )
   return { source, id: fetched.id, fresh: true }
@@ -291,7 +291,7 @@ function removeMarketplace(name: string): void {
   const next = withMarketplaces(state, remaining, state.updates ?? {})
   writeInstalled(home, next)
   dropCache(home, source)
-  sync(home, readCatalog(home), next)
+  sync(home, readMarketplaces(home), next)
   console.log(`Removed ${id ?? name} · ${shownSource(source)}`)
   if (kept.length > 0) {
     console.log(keptNote(kept))
@@ -309,7 +309,7 @@ function parseSourceOrNot(arg: string): string | undefined {
 function countOf(home: string, source: string): number | undefined {
   try {
     if (source === OFFICIAL) {
-      return listed(parseCatalog(readFileSync(catalogPath(home), 'utf8')).palettes).length
+      return listed(parseManifest(readFileSync(officialPath(home), 'utf8')).palettes).length
     }
     if (isLocal(source)) {
       return readMarketplaceDir(source, idOf(home, source), official(home), warning(false)).length
@@ -340,7 +340,7 @@ function listMarketplaces(): void {
   const state = readInstalled(home)
   const sources = marketplacesOf(state.marketplaces)
   if (sources.length === 0) {
-    console.log('No marketplaces — `ttheme marketplace add official` brings the ttheme catalog back')
+    console.log('No marketplaces — `ttheme marketplace add official` brings the official one back')
     return
   }
   const tries = readTries()

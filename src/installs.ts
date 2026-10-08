@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { available, readCatalog, readKept, search, updatesOf, writeKept } from './catalog.ts'
+import { available, readKept, readMarketplaces, search, updatesOf, writeKept } from './available.ts'
 import { adopt } from './craft.ts'
 import { liveOf } from './live.ts'
 import { listed, type Manifest, type PaletteEntry } from './manifest.ts'
@@ -46,7 +46,7 @@ export async function runAdd(asked: string[], marketplace?: string): Promise<voi
   }
   const home = configHome()
   const given = marketplace ? inMarketplace(asked, (await addSource(home, marketplace)).id) : asked
-  const catalog = readCatalog(home)
+  const manifest = readMarketplaces(home)
   const shared = new Map<string, PaletteEntry>()
   const names = [
     ...new Set(
@@ -55,7 +55,7 @@ export async function runAdd(asked: string[], marketplace?: string): Promise<voi
         if (!code) {
           return n
         }
-        const entry = adopt(home, code, catalog)
+        const entry = adopt(home, code, manifest)
         shared.set(entry.name, entry)
         return entry.name
       }),
@@ -65,18 +65,18 @@ export async function runAdd(asked: string[], marketplace?: string): Promise<voi
   const already = names.filter((n) => state.palettes.includes(n))
   const fresh = names.filter((n) => !state.palettes.includes(n))
   if (fresh.length === 0) {
-    sync(home, catalog, state)
+    sync(home, manifest, state)
     console.log(`Already installed: ${already.join(', ')}`)
     return
   }
   const next = { ...state, palettes: [...state.palettes, ...fresh] }
-  commit(home, catalog, state, next)
+  commit(home, manifest, state, next)
   for (const name of fresh) {
     console.log(`  + ${name}`)
   }
   await bringPictures(
     home,
-    available(home, catalog, false)
+    available(home, manifest, false)
       .palettes.filter((e) => fresh.includes(e.name))
       .map((e) => {
         const code = shared.get(e.name)
@@ -89,7 +89,7 @@ export async function runAdd(asked: string[], marketplace?: string): Promise<voi
 
 export function runRemove(names: string[]): number {
   const home = configHome()
-  const catalog = readCatalog(home)
+  const manifest = readMarketplaces(home)
   const state = readInstalled(home)
   const gone = names.filter((n) => state.palettes.includes(n))
   const absent = names.filter((n) => !state.palettes.includes(n))
@@ -97,8 +97,8 @@ export function runRemove(names: string[]): number {
     throw new Error(`not installed: ${absent.join(', ')} — \`ttheme list\` marks what is`)
   }
   const next = { ...state, palettes: state.palettes.filter((n) => !gone.includes(n)) }
-  commit(home, catalog, state, next)
-  forget(home, catalog, state.terminals, gone)
+  commit(home, manifest, state, next)
+  forget(home, manifest, state.terminals, gone)
   for (const name of gone) {
     console.log(`  - ${name}`)
   }
@@ -112,19 +112,19 @@ export function runRemove(names: string[]): number {
 
 export function runDefault(name: string): void {
   const home = configHome()
-  const catalog = readCatalog(home)
+  const manifest = readMarketplaces(home)
   const state = readInstalled(home)
   if (!state.palettes.includes(name)) {
     throw new Error(`${name} is not installed — \`ttheme add ${name}\` first`)
   }
   const { off: _, ...rest } = state
-  const pointed = commit(home, catalog, state, { ...rest, startup: name }, true)
+  const pointed = commit(home, manifest, state, { ...rest, startup: name }, true)
   console.log(defaultNote(name, state.terminals, pointed).join('\n'))
 }
 
 export function runSync(): void {
   const home = configHome()
-  sync(home, readCatalog(home), readInstalled(home))
+  sync(home, readMarketplaces(home), readInstalled(home))
 }
 
 export function runOn(): void {
@@ -139,7 +139,7 @@ export function runOn(): void {
     return
   }
   const { off: _, ...next } = state
-  const pointed = commit(home, readCatalog(home), state, next)
+  const pointed = commit(home, readMarketplaces(home), state, next)
   console.log(defaultNote(name, next.terminals, pointed).join('\n'))
 }
 
@@ -150,7 +150,7 @@ export function runOff(): void {
     console.log('Already off')
     return
   }
-  const pointed = commit(home, readCatalog(home), state, { ...state, off: true })
+  const pointed = commit(home, readMarketplaces(home), state, { ...state, off: true })
   const name = startupPalette(state)
   console.log(`Off · new tabs open in the terminal's own colors${name ? ` — \`ttheme on\` wears ${name} again` : ''}`)
   for (const wiring of wirings(state.terminals)) {
@@ -185,9 +185,9 @@ function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wire
 
 type Source = 'marketplace' | 'mine' | 'kept'
 
-function sources(home: string, catalog: Manifest): Map<string, Source> {
-  const out = new Map<string, Source>(catalog.palettes.map((p) => [p.name, 'marketplace']))
-  for (const p of readLocal(home, catalog.palettes, false)) {
+function sources(home: string, manifest: Manifest): Map<string, Source> {
+  const out = new Map<string, Source>(manifest.palettes.map((p) => [p.name, 'marketplace']))
+  for (const p of readLocal(home, manifest.palettes, false)) {
     out.set(p.name, 'mine')
   }
   return out
@@ -195,10 +195,10 @@ function sources(home: string, catalog: Manifest): Map<string, Source> {
 
 export function runList(query: string | undefined, json = false): void {
   const home = configHome()
-  const catalog = readCatalog(home)
+  const manifest = readMarketplaces(home)
   const installed = new Set(readInstalled(home).palettes)
-  const from = sources(home, catalog)
-  const all = listed(available(home, catalog).palettes)
+  const from = sources(home, manifest)
+  const all = listed(available(home, manifest).palettes)
   if (query) knowAliases(all)
   const hits = alphabetical(query ? search(all, query) : all)
   const source = (name: string): Source => from.get(name) ?? 'kept'
@@ -311,9 +311,9 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
 }
 
 export async function takeUpdates(home: string, names: string[]): Promise<void> {
-  const catalog = readCatalog(home, false)
+  const manifest = readMarketplaces(home, false)
   const fresh = new Map(
-    updatesOf(home, catalog)
+    updatesOf(home, manifest)
       .filter((e) => names.includes(e.name))
       .map((e) => [e.name, e]),
   )
@@ -326,11 +326,11 @@ export async function takeUpdates(home: string, names: string[]): Promise<void> 
     was.map((e) => fresh.get(e.name) ?? e),
   )
   const state = readInstalled(home)
-  sync(home, catalog, state)
+  sync(home, manifest, state)
   const pictures = new Map(was.map((e) => [e.name, e.pictures]))
   await bringPictures(
     home,
-    available(home, catalog, false)
+    available(home, manifest, false)
       .palettes.filter((e) => fresh.has(e.name))
       .map((e) => since(e, pictures.get(e.name))),
     state.terminals,
@@ -338,12 +338,12 @@ export async function takeUpdates(home: string, names: string[]): Promise<void> 
 }
 
 export async function pickPalettes(
-  catalog: Manifest,
+  manifest: Manifest,
   installed: string[],
   scope: PickerScope,
   required = false,
 ): Promise<string[] | undefined> {
-  const entries = process.env.TTHEME_SORT === 'catalog' ? catalog.palettes : alphabetical(catalog.palettes)
+  const entries = process.env.TTHEME_SORT === 'catalog' ? manifest.palettes : alphabetical(manifest.palettes)
   knowAliases(entries)
   const tty = process.stdout.isTTY === true
   const live = liveOf(process.env, tty, configHome())
@@ -364,5 +364,5 @@ export async function pickPalettes(
   if (done === 'cancel') {
     return undefined
   }
-  return catalog.palettes.filter((e) => prompt.picked.has(e.name)).map((e) => e.name)
+  return manifest.palettes.filter((e) => prompt.picked.has(e.name)).map((e) => e.name)
 }

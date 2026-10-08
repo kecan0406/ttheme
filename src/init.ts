@@ -4,9 +4,9 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
+import { available, officialPath, parseManifest, readMarketplaces, writeOfficial } from './available.ts'
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
-import { available, parseCatalog, readCatalog, writeCatalog } from './catalog.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { pickPalettes } from './installs.ts'
 import { liveOf } from './live.ts'
@@ -80,7 +80,7 @@ interface InitPlan {
   writes: { file: string; content: string; about: string }[]
   settings: { file: string; content: string }
   forget: string[]
-  catalog: Manifest
+  manifest: Manifest
   installed: Installed
   notes: string[]
 }
@@ -92,7 +92,7 @@ function copyDir(copies: InitPlan['copies'], from: string, to: string): void {
 }
 
 function loadManifest(root: string): Manifest {
-  return parseCatalog(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
+  return parseManifest(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
 }
 
 export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
@@ -159,7 +159,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     writes,
     settings,
     forget,
-    catalog: loadManifest(paths.root),
+    manifest: loadManifest(paths.root),
     installed,
     notes,
   }
@@ -176,12 +176,13 @@ export function installedState(configHome: string): Installed | undefined {
 const OLD_FILE = 'ttheme-market.toml'
 const OLD_SCHEMA_URL = 'https://www.schemastore.org/ttheme-market.json'
 
-function moveMarkets(configHome: string, stateDir: string): string[] {
+function moveRenamed(configHome: string, stateDir: string): string[] {
   const root = join(configHome, 'ttheme')
   const old = join(root, 'market')
   for (const [from, to] of [
     [old, localRoot(configHome)],
     [join(root, 'markets'), marketplacesDir(configHome)],
+    [join(root, 'catalog.json'), officialPath(configHome)],
   ] as const) {
     if (existsSync(from) && !existsSync(to)) {
       renameSync(from, to)
@@ -243,13 +244,13 @@ function moveMarkets(configHome: string, stateDir: string): string[] {
 
 function currentPalettes(configHome: string, official: Manifest): PaletteEntry[] {
   try {
-    return available(configHome, readCatalog(configHome, false, official), false).palettes
+    return available(configHome, readMarketplaces(configHome, false, official), false).palettes
   } catch {
     return []
   }
 }
 
-export function againCatalog(state: Installed, paths: InitPaths): Manifest {
+export function againManifest(state: Installed, paths: InitPaths): Manifest {
   const bundled = loadManifest(paths.root)
   const official = marketplacesOf(state.marketplaces).includes(OFFICIAL) ? bundled.palettes : []
   const names = new Set(official.map((e) => e.name))
@@ -284,7 +285,7 @@ export function planAgain(state: Installed, opts: InitOptions, paths: InitPaths)
 export function planUpgrade(state: Installed, paths: InitPaths): InitPlan {
   const plan = planInit({ terminals: state.terminals, palettes: state.palettes, off: state.off }, paths)
   const known = new Set(
-    [...plan.catalog.palettes, ...currentPalettes(paths.configHome, plan.catalog)].map((e) => e.name),
+    [...plan.manifest.palettes, ...currentPalettes(paths.configHome, plan.manifest)].map((e) => e.name),
   )
   const palettes = state.palettes.filter((n) => known.has(n))
   const gone = state.palettes.filter((n) => !known.has(n))
@@ -294,7 +295,8 @@ export function planUpgrade(state: Installed, paths: InitPaths): InitPlan {
     palettes,
     ...(startup && palettes.includes(startup) ? { startup } : {}),
   }
-  const notes = gone.length > 0 ? [`Dropped ${gone.join(', ')} — no longer in the catalog`, ...plan.notes] : plan.notes
+  const notes =
+    gone.length > 0 ? [`Dropped ${gone.join(', ')} — no longer in any marketplace`, ...plan.notes] : plan.notes
   return { ...plan, installed, notes }
 }
 
@@ -346,10 +348,10 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
   )
   const installed = withBases(configHome, { ...plan.installed, ...carried }, host, plan.home)
   if (marketplacesOf(installed.marketplaces).includes(OFFICIAL)) {
-    writeCatalog(configHome, plan.catalog)
+    writeOfficial(configHome, plan.manifest)
   }
   writeInstalled(configHome, installed)
-  sync(configHome, readCatalog(configHome), installed, plan.home, host)
+  sync(configHome, readMarketplaces(configHome), installed, plan.home, host)
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''
@@ -410,12 +412,12 @@ function verify(plan: InitPlan): void {
   }
 }
 
-function catalogsOf(catalog: Manifest, names: string[]): string[] {
-  return [...new Set(catalog.palettes.filter((e) => names.includes(e.name)).map(shelfOf))]
+function catalogsOf(manifest: Manifest, names: string[]): string[] {
+  return [...new Set(manifest.palettes.filter((e) => names.includes(e.name)).map(shelfOf))]
 }
 
-function paintStartup(catalog: Manifest, installed: Installed, configHome: string): boolean {
-  const startup = catalog.palettes.find((e) => e.name === worn(installed))
+function paintStartup(manifest: Manifest, installed: Installed, configHome: string): boolean {
+  const startup = manifest.palettes.find((e) => e.name === worn(installed))
   const tty = process.stdout.isTTY === true
   const wear = startup && liveOf(process.env, tty, configHome)?.wear(startup, installed.terminals)
   if (wear === undefined) {
@@ -456,7 +458,7 @@ function receipt(
   pointed: ReadonlyMap<Wired, Pointed>,
   here: Shell,
 ): void {
-  const catalogs = catalogsOf(plan.catalog, opts.palettes)
+  const catalogs = catalogsOf(plan.manifest, opts.palettes)
   p.note(
     [`${catalogs.join(', ')} (${opts.palettes.length})`, ...startupLines(plan.installed, painted)].join('\n'),
     `Installed ${opts.palettes.length} palettes`,
@@ -505,7 +507,7 @@ function report(plan: InitPlan, pointed: ReadonlyMap<Wired, Pointed>, here: Shel
     `Settings in ${plan.settings.file} — edit later with \`ttheme config\``,
     ...[...plan.edits, ...plan.writes].map((e) => `Wired ${e.file}`),
     ...nextLines(plan, pointed),
-    `No palettes yet — open a new shell (\`${reopen(here)}\`), then \`ttheme\` picks them from the catalog`,
+    `No palettes yet — open a new shell (\`${reopen(here)}\`), then \`ttheme\` picks them from your marketplaces`,
   ]
   console.log(lines.join('\n'))
 }
@@ -551,7 +553,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       'init asks before it edits your configs — run it in a terminal, or pass --yes to accept the defaults',
     )
   }
-  const moved = moveMarkets(configHome, stateDir)
+  const moved = moveRenamed(configHome, stateDir)
   const existing = installedState(configHome)
   if (flags.yes && existing) {
     await upgrade(existing, paths, host, false, here, moved)
@@ -594,10 +596,10 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   }
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
   const warpFast = terminals.includes('warp') ? await askWarpFast(configHome) : undefined
-  const catalog = existing ? againCatalog(existing, paths) : loadManifest(root)
+  const manifest = existing ? againManifest(existing, paths) : loadManifest(root)
   const palettes = existing
-    ? await pickPalettes(catalog, existing.palettes, 'palette', true)
-    : await pickPalettes(catalog, [], 'catalog', true)
+    ? await pickPalettes(manifest, existing.palettes, 'palette', true)
+    : await pickPalettes(manifest, [], 'catalog', true)
   if (!palettes) {
     p.cancel('Nothing changed')
     throw new Cancelled()
@@ -617,7 +619,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const plan = existing ? planAgain(existing, opts, paths) : planInit(opts, paths)
   p.note(
     [
-      `Install ${palettes.length} palettes — ${catalogsOf(catalog, palettes).join(', ')}`,
+      `Install ${palettes.length} palettes — ${catalogsOf(manifest, palettes).join(', ')}`,
       `Copy ${plan.copies.length} files under ${configHome}`,
       `Write ${plan.settings.file}`,
       ...plan.edits.map((e) => `Edit ${e.file} — a ttheme block: ${e.about}`),
@@ -650,5 +652,5 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     pickDefault(configHome)
   }
   const installed = readInstalled(configHome)
-  receipt({ ...plan, catalog, installed }, opts, paintStartup(catalog, installed, configHome), pointed, here)
+  receipt({ ...plan, manifest, installed }, opts, paintStartup(manifest, installed, configHome), pointed, here)
 }

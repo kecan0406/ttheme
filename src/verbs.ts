@@ -10,12 +10,12 @@ export interface Flag {
   about: string
 }
 
-export type Section = 'tab' | 'startup' | 'catalog' | 'own' | 'setup' | 'support'
+export type Section = 'tab' | 'startup' | 'palettes' | 'own' | 'setup' | 'support'
 
 const SECTIONS: { section: Section; title: string }[] = [
   { section: 'tab', title: 'This tab' },
   { section: 'startup', title: 'New tabs' },
-  { section: 'catalog', title: 'Palettes' },
+  { section: 'palettes', title: 'Palettes' },
   { section: 'own', title: 'Your own' },
   { section: 'setup', title: 'Setup' },
   { section: 'support', title: 'Support' },
@@ -83,21 +83,22 @@ export const VERB_SPECS: VerbSpec[] = [
     args: [],
     about:
       'Pick palettes and marketplaces in a live picker — one list with every marketplace as a row, which ctrl+s narrows to one marketplace at a time',
-    section: 'catalog',
+    section: 'palettes',
     hidden: true,
   },
   {
     name: 'list',
     args: ['[query]'],
-    about: 'Show the catalog, marking what is installed',
-    section: 'catalog',
+    about: 'List palettes, marking what is installed',
+    section: 'palettes',
     flags: { json: { type: 'boolean', about: 'Print the matches as JSON — name, group, catalog, installed' } },
   },
   {
     name: 'add',
     args: ['<palette...>'],
-    about: 'Install palettes — from the catalog, or from a share link: ttheme add https://ttheme.vercel.app/p/tt2:…',
-    section: 'catalog',
+    about:
+      'Install palettes — from your marketplaces, or from a share link: ttheme add https://ttheme.vercel.app/p/tt2:…',
+    section: 'palettes',
     flags: {
       marketplace: {
         type: 'string',
@@ -106,13 +107,13 @@ export const VERB_SPECS: VerbSpec[] = [
       },
     },
   },
-  { name: 'remove', args: ['<palette...>'], about: 'Uninstall palettes', section: 'catalog' },
+  { name: 'remove', args: ['<palette...>'], about: 'Uninstall palettes', section: 'palettes' },
   {
     name: 'update',
     args: ['[marketplace...]'],
     about:
       'Update ttheme and refresh your marketplaces — official palettes come with ttheme; an installed palette from another marketplace keeps its colors until ctrl+r on it in Browse takes its update',
-    section: 'catalog',
+    section: 'palettes',
   },
   {
     name: 'marketplace',
@@ -135,7 +136,7 @@ export const VERB_SPECS: VerbSpec[] = [
         "Check a marketplace's folder before you push it — ttheme-marketplace.toml, every palette, the renames and the gate; nothing is written",
       ],
     ],
-    section: 'catalog',
+    section: 'palettes',
   },
   {
     name: 'new',

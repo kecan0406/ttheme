@@ -29,7 +29,7 @@ function marketplace(source: string, id: string, names: string[], auto = false):
   return {
     source,
     id,
-    shown: source === 'official' ? 'the ttheme catalog' : `github.com/${source}`,
+    shown: source === 'official' ? 'the official marketplace' : `github.com/${source}`,
     entries: names.map((n) => entry(id === 'official' ? n : `${id}/${n}`, id === 'official' ? 'Vocaloid' : undefined)),
     auto,
     status: source === 'official' ? 'comes with ttheme' : 'updated just now',
@@ -215,13 +215,13 @@ test('the right panel sits beside the list from 94 columns, and folds into one l
   const wide = await drive([...MIKU, '\r'])
   assert.match(wide.last, /^ +│ miku$/m)
   assert.match(wide.last, /^ ▌ {6}● miku +│/m)
-  assert.match(wide.last, / │ The ttheme catalog$/m)
+  assert.match(wide.last, / │ The official marketplace$/m)
   assert.match(wide.last, / │ Installed$/m)
   const narrow = await drive([...MIKU, '\r'], { columns: 80 })
-  assert.doesNotMatch(narrow.last, / │ The ttheme catalog/)
+  assert.doesNotMatch(narrow.last, / │ The official marketplace/)
   assert.match(
     narrow.last,
-    /^ The ttheme catalog · Gate \d+\/\d+.* · Installed\n \[BROWSE\] space pick {3}enter close/m,
+    /^ The official marketplace · Gate \d+\/\d+.* · Installed\n \[BROWSE\] space pick {3}enter close/m,
   )
 })
 

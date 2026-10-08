@@ -28,7 +28,7 @@ function entry(name: string, order: number): PaletteEntry {
   }
 }
 
-const catalog: Manifest = {
+const manifest: Manifest = {
   schema: SCHEMA,
   version: '0.1.0',
   gate: [],
@@ -55,7 +55,7 @@ function put(path: string, content: string): void {
 
 function install(p: UninstallPaths, state: Installed): void {
   writeInstalled(p.configHome, state)
-  sync(p.configHome, catalog, state, p.home)
+  sync(p.configHome, manifest, state, p.home)
 }
 
 test('uninstall gives every config back as it was and deletes only what ttheme wrote', () => {

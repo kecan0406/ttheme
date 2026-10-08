@@ -1,4 +1,4 @@
-import { official } from '@/lib/catalog'
+import { official } from '@/lib/official'
 import type { Picture, ShareView, SlotView } from '@/lib/share-view'
 import { passes } from '@/lib/sheet'
 import { type GateRule, type Theme, toTheme } from '@/lib/themes'

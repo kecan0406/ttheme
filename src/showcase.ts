@@ -1,4 +1,4 @@
-import { reach } from './catalog.ts'
+import { reach } from './available.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
 import { type Repository, repositorySource } from './marketplaces.ts'
 import { fetchArchive, fromArchive } from './refresh.ts'

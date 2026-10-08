@@ -40,8 +40,8 @@
   "overrides": [
     {
       "files": [
+        "src/available.ts",
         "src/booru.ts",
-        "src/catalog.ts",
         "src/find/kept.ts",
         "src/marketplaces.ts",
         "src/palettes.ts",

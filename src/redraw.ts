@@ -1,4 +1,5 @@
 import { availableParallelism, homedir } from 'node:os'
+import { readAvailable } from './available.ts'
 import {
   applyRedraw,
   backgroundsDir,
@@ -9,7 +10,6 @@ import {
   readStore,
   undrawn,
 } from './backdrop.ts'
-import { readAvailable } from './catalog.ts'
 import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from './palettes.ts'
 import { prepareOne, redrawOne } from './pictures.ts'
 import { Pool } from './render.ts'

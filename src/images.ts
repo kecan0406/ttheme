@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
+import { find, readAvailable } from './available.ts'
 import { dropImage, showImage } from './backdrop.ts'
-import { find, readAvailable } from './catalog.ts'
 import { isHex } from './color.ts'
 import { rewrite, writeAtomic } from './edits.ts'
 import { configHome, refreshPictures } from './palettes.ts'

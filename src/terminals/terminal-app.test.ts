@@ -29,7 +29,7 @@ function entry(name: string, order: number, partial: Partial<PaletteEntry> = {})
   }
 }
 
-const catalog: Manifest = {
+const manifest: Manifest = {
   schema: SCHEMA,
   version: '0.1.0',
   gate: [],
@@ -77,7 +77,7 @@ test('sync writes a profile per listed palette over the user’s own, and the sc
   const { host, scripts } = terminal('Clear Dark')
   const state = withBases(configHome, { terminals: ['terminal-app'], palettes: ['gojo', 'geto'] }, host)
   assert.equal(state.terminalBase, 'Clear Dark')
-  sync(configHome, catalog, state, configHome, host)
+  sync(configHome, manifest, state, configHome, host)
   assert.equal(readFileSync(terminalScript(configHome), 'utf8'), TERMINAL_JS)
   const [verb, base, ...rest] = scripts[0] ?? []
   assert.deepEqual([verb, base], ['write', 'Clear Dark'])

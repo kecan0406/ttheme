@@ -248,7 +248,7 @@ test('a folded catalog still reports how many of its palettes are picked', async
   assert.match(frames, /▸ Vocaloid \(1\/2\)/)
 })
 
-test('the filtered count comes from the catalog, not from the drawn rows', async () => {
+test('the filtered count comes from the palettes, not from the drawn rows', async () => {
   const { frames } = await drive(['m', 'i', '\r'])
   assert.match(frames, /Palettes \(1\/4 · 0 picked\)/)
 })

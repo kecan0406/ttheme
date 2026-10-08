@@ -1,7 +1,7 @@
 import { homedir } from 'node:os'
 import * as p from '@clack/prompts'
+import { readMarketplaces } from './available.ts'
 import { Cancelled } from './cancelled.ts'
-import { readCatalog } from './catalog.ts'
 import {
   configHome,
   pointDefaults,
@@ -54,7 +54,7 @@ export async function runWire(name: string): Promise<number> {
   const based = withBases(config, alone, host, home)
   const installed = { ...based, terminals: [...state.terminals, id] }
   writeInstalled(config, installed)
-  sync(config, readCatalog(config), installed, home, host)
+  sync(config, readMarketplaces(config), installed, home, host)
   const pointed = pointDefaults(config, based, true, host, home)
   const next = wiringNext(config, based, pointed, home)
   if (next.length > 0) {

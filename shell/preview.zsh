@@ -2484,7 +2484,7 @@ __tt_preview() {
     else
       (( ${#bgedit} + ${#bgswap} )) && [[ -n ${TTHEME_PALETTE[$cn]} ]] && { __tt_shown "$cn" && __tt_reload }
     fi
-    (( hubleft )) && __tt_catalog_done "$hubwas"
+    (( hubleft )) && __tt_installs_done "$hubwas"
   }
   return 0
 }

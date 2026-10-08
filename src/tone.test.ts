@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { available, readKept, untuned } from './catalog.ts'
+import { available, readKept, untuned } from './available.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { sync } from './palettes.ts'
 import { overrideOf, readTone, slotColors, tonedEntry, tonePath, tuned, withTone, writeTone } from './tone.ts'
@@ -28,7 +28,7 @@ function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry 
   }
 }
 
-const catalog: Manifest = {
+const manifest: Manifest = {
   schema: SCHEMA,
   version: '0.1.0',
   gate: [],
@@ -89,19 +89,19 @@ test('a tone file with nonsense in it is read as far as it makes sense', () => {
 test('available lays the tone over the palettes while the untuned view keeps them as the marketplaces give them', () => {
   const dir = home()
   writeTone(dir, { gojo: { cursor: '#ff8800' } })
-  assert.equal(available(dir, catalog).palettes.find((p) => p.name === 'gojo')?.cursor, '#ff8800')
-  assert.equal(available(dir, catalog).palettes.find((p) => p.name === 'geto')?.cursor, '#7cc1d6')
-  assert.equal(untuned(dir, catalog).palettes.find((p) => p.name === 'gojo')?.cursor, '#7cc1d6')
+  assert.equal(available(dir, manifest).palettes.find((p) => p.name === 'gojo')?.cursor, '#ff8800')
+  assert.equal(available(dir, manifest).palettes.find((p) => p.name === 'geto')?.cursor, '#7cc1d6')
+  assert.equal(untuned(dir, manifest).palettes.find((p) => p.name === 'gojo')?.cursor, '#7cc1d6')
 })
 
 test('sync writes the tone into every theme file and the zsh table, and kept.json keeps the palette as it was', () => {
   const dir = home()
   writeTone(dir, { gojo: { cursor: '#ff8800' } })
-  sync(dir, catalog, { terminals: ['ghostty'], palettes: ['gojo'] })
+  sync(dir, manifest, { terminals: ['ghostty'], palettes: ['gojo'] })
   assert.match(readFileSync(join(dir, 'ghostty', 'themes', 'ttheme-gojo'), 'utf8'), /#ff8800/)
   assert.match(readFileSync(join(dir, 'ttheme', 'palettes.zsh'), 'utf8'), /#ff8800/)
   assert.equal(readKept(dir).find((p) => p.name === 'gojo')?.cursor, '#7cc1d6')
   writeTone(dir, {})
-  sync(dir, catalog, { terminals: ['ghostty'], palettes: ['gojo'] })
+  sync(dir, manifest, { terminals: ['ghostty'], palettes: ['gojo'] })
   assert.doesNotMatch(readFileSync(join(dir, 'ghostty', 'themes', 'ttheme-gojo'), 'utf8'), /#ff8800/)
 })

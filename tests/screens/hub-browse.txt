@@ -4,7 +4,7 @@
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
                                                                │ official
- ▌  ▸ official (2/6)                                           │ The ttheme catalog
+ ▌  ▸ official (2/6)                                           │ The official marketplace
     ── On GitHub ──────────                                    │ 6 palettes · 2 installed
     ⌕ Find marketplaces on GitHub  space searches              │
                                                                │ Comes with ttheme

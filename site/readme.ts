@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { themes } from '@/lib/catalog'
+import { themes } from '@/lib/official'
 import type { Theme } from '@/lib/themes'
 
 const COLS = 3
