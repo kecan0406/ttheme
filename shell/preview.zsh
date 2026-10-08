@@ -288,15 +288,16 @@ __tt_pv_row() {
   fi
   name=${t##*/}
   [[ -n ${TTHEME_CATALOG[$t]} && ${TTHEME_GROUP[$t]} == *@* ]] && ind="     "
+  (( ${TTHEME_TUNED[(Ie)$t]} )) && w=-2
+  (( ${(m)#name} > lw - 17 - ${#ind} + w )) && name="${name[1,lw-18-${#ind}+w]}…"
   __tt_pv_hl "$name" "$base"
   hl=$REPLY
-  if (( ${TTHEME_TUNED[(Ie)$t]} )); then
+  if (( w )); then
     (( color )) && hl+=" "$TTHEME_SGR[warn]"●"$TTHEME_SGR[/warn] || hl+=" ●"
-    w=-2
   fi
   extra=""
   for part in "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
-    __tt_pv_alias "$name" "$part"
+    __tt_pv_alias "${t##*/}" "$part"
     [[ -n $REPLY ]] && { extra=$REPLY; break }
   done
   if (( color )); then
@@ -306,7 +307,9 @@ __tt_pv_row() {
     (( w < 1 )) && w=1
     REPLY=$gut$on"$ind$mark $base$hl$r$REPLY${(l:w:: :)}${tstrip[$t]} "$z
   else
-    REPLY="$gut$ind$mark $hl${extra:+  $extra}"
+    w=$(( w + lw - 4 - ${#ind} - ${#name} ))
+    __tt_pv_fit "$extra"
+    REPLY="$gut$ind$mark $hl$REPLY"
   fi
 }
 
@@ -2100,7 +2103,7 @@ __tt_pv_te_panel() {
   else
     (( color )) && out+="  "$b" Apply "$z || out+="   Apply "
   fi
-  out+="  "$d$note$z
+  (( ${#note} <= end - ix - 10 )) && out+="  "$d$note$z
   return 0
 }
 

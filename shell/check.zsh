@@ -229,6 +229,39 @@ plain=${out//$'\e[K'/}
     (( ${(m)#text} <= pw )) || { print -u2 "the bar under a pick ran past a window $pw wide: $text"; exit 1 }
   done
   pick= pk=1
+  (
+    typeset -A tstrip=()
+    TTHEME_PALETTE[$long]=$TTHEME_PALETTE[kita] TTHEME_SWATCH[$long]=$TTHEME_SWATCH[kita]
+    rval=($long kita) rtype=(thm thm) cur=1 color=1 cdot= lw=40 flt=
+    for i in 1 2; do
+      __tt_pv_row $i
+      text=${REPLY//$'\e['[0-9;?]#[A-Za-z]/}
+      (( ${(m)#text} <= lw )) || { print -u2 "a palette row ran past a list $lw wide: $text"; exit 1 }
+    done
+    [[ $text == *kita* ]] || { print -u2 "a palette row that fits lost its name: $text"; exit 1 }
+  ) || exit 1
+  (
+    local seq p s
+    local -i col far
+    out= tename=kita tewide=38 teframe=(x x x) tfocus=2 tune= tbtn=0 tearm=0 mode=hub canpick=0 bgcw=0 color=1 tetop=0
+    __tt_pv_te_panel 2 39 3 11
+    s=$out col=1 far=0
+    while [[ -n $s ]]; do
+      seq=${(M)s##$'\e['[0-9;?]#[A-Za-z]}
+      if [[ -n $seq ]]; then
+        s=${s#$seq} p=${${seq#$'\e['}%?}
+        case $seq in
+          *H) [[ $p == *\;* ]] && col=${p#*;} || col=1 ;;
+          *G) col=${p:-1} ;;
+        esac
+        continue
+      fi
+      (( col += ${(m)#s[1]} ))
+      (( col - 1 > far )) && far=$(( col - 1 ))
+      s=${s:1}
+    done
+    (( far <= 39 )) || { print -u2 "the edit panel drew to column $far past its edge at 39"; exit 1 }
+  ) || exit 1
 } || exit 1
 print -l "# image safebooru_2 2/3" "# picture safebooru_1 kagami.aaaaaaaa kagami.aaaaaaaa@fill-40.png 0.2 akoiro safebooru 1 x" \
   "# picture safebooru_2 kagami.1a2b3c4d kagami.1a2b3c4d@fill-42.png 0.2 -" "# picture safebooru_3 kagami.cccccccc kagami.cccccccc@fill-40.png 0.3 -" \
