@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { fit } from '../ansi.ts'
+import { clip, fit } from '../ansi.ts'
 import { cover, lift, marking, zone, zoneAt } from './zones.ts'
 
 function spans(line: () => string): { text: string; spans: string[] } {
@@ -19,7 +19,7 @@ test('a frame lifts its marks out and keeps the columns they wrapped, past wide 
   assert.deepEqual(got.spans, ['a 3:1+4', 'c 3:10+1', 'b 3:8+3'])
 })
 
-test('a column move places the zones after it, and a mark cut off by fit closes where the line ends', () => {
+test('a column move places the zones after it, and a mark cut off by fit or clip closes where the cut text ends', () => {
   assert.deepEqual(spans(() => `\x1b[12G${zone('id', '1234')}\x1b[3G${zone('ok', 'ok')}`).spans, [
     'id 3:11+4',
     'ok 3:2+2',
@@ -27,6 +27,9 @@ test('a column move places the zones after it, and a mark cut off by fit closes 
   const cut = spans(() => fit(`ab ${zone('long', 'cdefgh')}`, 6, false))
   assert.equal(cut.text, 'ab cd…')
   assert.deepEqual(cut.spans, ['long 3:3+3'])
+  const beside = spans(() => `${fit(zone('row', 'abcdefgh'), 4)} │ ${clip(zone('cell', 'xyz'), 2)} tail`)
+  assert.equal(beside.text, 'abc… │ xy tail')
+  assert.deepEqual(beside.spans, ['row 3:0+4', 'cell 3:7+2'])
 })
 
 test('the smallest zone under the pointer wins, and the later of two the same size', () => {

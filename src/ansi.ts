@@ -68,19 +68,30 @@ export function pieces(text: string): Piece[] {
   return out
 }
 
-function take(text: string, room: number): { head: string; used: number } {
+function markOf(sequence: string): string | undefined {
+  const digits = sequence.slice(3, -1)
+  return sequence.startsWith('\x1b[?') && sequence.endsWith('y') && /^\d{1,4}$/.test(digits) ? digits : undefined
+}
+
+function take(text: string, room: number): { head: string; used: number; ends: string } {
   let head = ''
   let used = 0
+  let open = 0
   for (const piece of pieces(text)) {
     if (!piece.sequence) {
       if (used + piece.width > room) {
         break
       }
       used += piece.width
+    } else {
+      const mark = markOf(piece.text)
+      if (mark !== undefined) {
+        open = mark === '0' ? Math.max(0, open - 1) : open + 1
+      }
     }
     head += piece.text
   }
-  return { head, used }
+  return { head, used, ends: '\x1b[?0y'.repeat(open) }
 }
 
 export function fit(text: string, width: number, pad = true): string {
@@ -91,13 +102,13 @@ export function fit(text: string, width: number, pad = true): string {
   if (full <= width) {
     return pad ? text + ' '.repeat(width - full) : text
   }
-  const { head, used } = take(text, width - 1)
-  return `${head}${closing(head)}…${pad ? ' '.repeat(width - 1 - used) : ''}`
+  const { head, used, ends } = take(text, width - 1)
+  return `${head}${closing(head)}…${ends}${pad ? ' '.repeat(width - 1 - used) : ''}`
 }
 
 export function clip(text: string, width: number): string {
-  const { head, used } = take(text, width)
-  return `${head}${closing(head)}${' '.repeat(width - used)}`
+  const { head, used, ends } = take(text, width)
+  return `${head}${closing(head)}${ends}${' '.repeat(width - used)}`
 }
 
 export function spread(left: string, right: string, width: number): string {
