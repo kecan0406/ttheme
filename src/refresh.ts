@@ -77,7 +77,7 @@ export interface Refreshed {
   change: Change
 }
 
-export function triesPath(): string {
+function triesPath(): string {
   return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'markets.json')
 }
 
@@ -264,7 +264,7 @@ export async function refreshMarket(home: string, source: string, timeout?: numb
   }
 }
 
-export type Outcome = { source: string; refreshed: Refreshed } | { source: string; failure: Error }
+type Outcome = { source: string; refreshed: Refreshed } | { source: string; failure: Error }
 
 export async function attempt(home: string, source: string, timeout?: number): Promise<Outcome> {
   try {
@@ -326,7 +326,7 @@ export function cachedMarket(home: string, source: string, official = officialOf
   }
 }
 
-export function followMarkets(home: string): string[] {
+function followMarkets(home: string): string[] {
   if (!existsSync(installedPath(home))) {
     return []
   }

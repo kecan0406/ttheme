@@ -1,10 +1,10 @@
 import { cells } from './ansi.ts'
 import { SCENES, sceneParts } from './scenes.ts'
 
-export const FULL_COLS = 130
-export const FULL_ROWS = 38
-export const TABS_COLS = 96
-export const TABS_ROWS = 28
+const FULL_COLS = 130
+const FULL_ROWS = 38
+const TABS_COLS = 96
+const TABS_ROWS = 28
 
 interface Pane {
   id: string
@@ -77,7 +77,7 @@ export interface Spot {
   run: number
 }
 
-export interface Slots {
+interface Slots {
   text: number
   ground: number
 }

@@ -20,7 +20,7 @@ export interface Seeds {
   brights: number
 }
 
-export interface SeedField {
+interface SeedField {
   key: keyof Seeds
   label: string
   min: number

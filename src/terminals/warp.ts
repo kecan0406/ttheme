@@ -53,7 +53,7 @@ export function warpThemeValue(palette: string, file = `${owned(palette)}.yaml`)
   return `{ custom = { name = "${palette}", path = "${file}" } }`
 }
 
-export function warpWorn(value: string | undefined): string | undefined {
+function warpWorn(value: string | undefined): string | undefined {
   return value?.includes(`path = "${owned('')}`) === true ? /name = "([^"]+)"/.exec(value)?.[1] : undefined
 }
 

@@ -20,11 +20,11 @@ export function konsolerc(configHome: string): string {
   return join(configHome, 'konsolerc')
 }
 
-export function profileFile(palette: string): string {
+function profileFile(palette: string): string {
   return `${owned(palette)}.profile`
 }
 
-export function profileName(palette: string): string {
+function profileName(palette: string): string {
   return `ttheme · ${palette}`
 }
 
@@ -145,7 +145,7 @@ export function konsoleProfile(theme: Theme, parent: string): string {
 
 const VERSIONED = /^ttheme-(.+)\.([0-9a-f]{8})\.colorscheme$/
 
-export function versionOf(text: string): string {
+function versionOf(text: string): string {
   return createHash('sha1').update(text).digest('hex').slice(0, 8)
 }
 
@@ -167,7 +167,7 @@ function schemes(ctx: Ctx, out: Out): void {
   }
 }
 
-export function schemeVersions(dir: string): string {
+function schemeVersions(dir: string): string {
   return ownedIn(dir)
     .flatMap((file) => {
       const [, stem, version] = VERSIONED.exec(basename(file)) ?? []

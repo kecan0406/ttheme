@@ -17,7 +17,7 @@ interface Card {
   posts?: number
 }
 
-export interface Known {
+interface Known {
   tag: string
   tags: string[]
   names: string[]
@@ -53,7 +53,7 @@ const KATAKANA = /[ァ-ヶ]/g
 
 const SPACE = /[\s\p{P}\p{S}]+/gu
 
-export function searchKey(text: string): string {
+function searchKey(text: string): string {
   return text
     .normalize('NFKC')
     .toLowerCase()
@@ -431,7 +431,7 @@ export function knowAliases(entries: readonly { booru?: string }[], home = homed
   )
 }
 
-export interface NameHit {
+interface NameHit {
   tag: string
   name: string
 }

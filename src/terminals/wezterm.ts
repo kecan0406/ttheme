@@ -39,7 +39,7 @@ export function upsertLuaBlock(content: string, body: string): string | undefine
   return `${content.slice(0, last.index)}${block}\n${content.slice(last.index)}`
 }
 
-export function weztermConfig(configHome: string, home: string): string {
+function weztermConfig(configHome: string, home: string): string {
   const dotfile = join(home, '.wezterm.lua')
   return existsSync(dotfile) ? dotfile : join(configHome, 'wezterm', 'wezterm.lua')
 }

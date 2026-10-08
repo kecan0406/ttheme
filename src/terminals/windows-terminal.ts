@@ -8,7 +8,7 @@ export function wtFragmentPath(wtHome: string): string {
   return join(wtHome, 'Microsoft', 'Windows Terminal', 'Fragments', 'ttheme', 'ttheme.json')
 }
 
-export function wtSettings(wtHome: string): string[] {
+function wtSettings(wtHome: string): string[] {
   return [
     join(wtHome, 'Packages', 'Microsoft.WindowsTerminal_8wekyb3d8bbwe', 'LocalState', 'settings.json'),
     join(wtHome, 'Packages', 'Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe', 'LocalState', 'settings.json'),

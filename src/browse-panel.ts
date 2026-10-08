@@ -49,7 +49,7 @@ export interface BrowseIo {
   apply(result: BrowseResult, report: Report): Promise<void>
 }
 
-export interface BrowseOptions {
+interface BrowseOptions {
   markets: Market[]
   kept: PaletteEntry[]
   installed: string[]

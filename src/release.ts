@@ -62,7 +62,7 @@ function writeSeen(seen: Seen): void {
   writeAtomic(seenPath(), `${JSON.stringify(seen)}\n`)
 }
 
-export function fetchLatest(timeout = TIMEOUT): Promise<string> {
+function fetchLatest(timeout = TIMEOUT): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       'npm',

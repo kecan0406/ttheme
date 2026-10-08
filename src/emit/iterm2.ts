@@ -3,7 +3,7 @@ import type { Theme } from '../theme.ts'
 import { owned } from '../theme.ts'
 import type { Emitter, Output } from './types.ts'
 
-export interface ItermColor {
+interface ItermColor {
   'Alpha Component': number
   'Blue Component': number
   'Color Space': 'P3'
@@ -22,7 +22,7 @@ function color(hex: Hex): ItermColor {
   }
 }
 
-export function itermColors(theme: Theme): Record<string, ItermColor> {
+function itermColors(theme: Theme): Record<string, ItermColor> {
   return {
     ...Object.fromEntries(theme.ansi.map((c, i) => [`Ansi ${i} Color`, color(c)])),
     'Background Color': color(theme.background),

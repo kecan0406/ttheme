@@ -34,7 +34,7 @@ function writeCache(site: Site, name: string, data: Record<string, unknown>): vo
   writeAtomic(join(cacheDir(site), name), `${JSON.stringify(data)}\n`)
 }
 
-export interface Shelf {
+interface Shelf {
   home: string
   catalog: Manifest
   entry: PaletteEntry

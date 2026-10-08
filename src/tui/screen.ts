@@ -18,7 +18,7 @@ export interface Frame {
   zones?: Zone[]
 }
 
-export interface ScreenOptions {
+interface ScreenOptions {
   write: (text: string) => void
   view: () => Frame | undefined
   beat?: () => void

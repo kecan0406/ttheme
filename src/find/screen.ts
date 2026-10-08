@@ -197,7 +197,7 @@ export type FindSpot =
   | { kind: 'place'; at: number }
   | { kind: 'scene'; scene: number }
 
-export interface Frame {
+interface Frame {
   lines: string[]
   images: Placement[]
   zones: Zone[]
@@ -208,8 +208,8 @@ export interface Frame {
 export const TILE = { pitch: 25, cols: 22, rows: 9, height: 13 }
 export const MIN = { cols: 25, rows: 21 }
 export const HELD = { cols: 10, rows: 3, pitch: 12, top: 4 }
-export const GRID_TOP = HELD.top + HELD.rows + 1
-export const HELD_ID = 2 ** 30
+const GRID_TOP = HELD.top + HELD.rows + 1
+const HELD_ID = 2 ** 30
 export const TRY_ID = 2 ** 31
 const BELOW_BG = -1073741826
 const SMALL = 1600
@@ -412,7 +412,7 @@ class Line {
   }
 }
 
-export function plain(artist: string): string {
+function plain(artist: string): string {
   return artist.replace(/_\([^)]*\)?$/, '')
 }
 
@@ -1290,7 +1290,7 @@ export function stepped(choices: readonly string[], value: string, step: 1 | -1)
   return next ?? (choices[step > 0 ? 0 : choices.length - 1] as string)
 }
 
-export function wrapped(text: string, room: number): string[] {
+function wrapped(text: string, room: number): string[] {
   const out: string[] = []
   let line = ''
   for (const word of text.split(' ')) {

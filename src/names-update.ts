@@ -9,7 +9,7 @@ import { writeAtomic } from './edits.ts'
 import { knowAliases, namesDir, primeNames } from './names.ts'
 import { configHome, refreshAliases } from './palettes.ts'
 
-export const NAMES_RELEASE = 'https://github.com/kecan0406/aninames/releases/latest/download'
+const NAMES_RELEASE = 'https://github.com/kecan0406/aninames/releases/latest/download'
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -25,7 +25,7 @@ function checked(home: string): string {
   return join(namesDir(home), '.checked')
 }
 
-export function namesWanted(env: NodeJS.ProcessEnv = process.env): boolean {
+function namesWanted(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.TTHEME_NAMES !== 'off'
 }
 

@@ -64,7 +64,7 @@ export interface InitPaths extends Setup {
   platform?: NodeJS.Platform
 }
 
-export interface InitPlan {
+interface InitPlan {
   home: string
   copies: { from: string; to: string; executable?: boolean }[]
   edits: { file: string; block: string; about: string }[]
@@ -82,7 +82,7 @@ function copyDir(copies: InitPlan['copies'], from: string, to: string): void {
   }
 }
 
-export function loadManifest(root: string): Manifest {
+function loadManifest(root: string): Manifest {
   return parseCatalog(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
 }
 
@@ -182,7 +182,7 @@ export function againCatalog(state: Installed, paths: InitPaths): Manifest {
   return { ...bundled, palettes: [...official, ...others] }
 }
 
-export function keptStartup(state: Installed, palettes: string[]): string | undefined {
+function keptStartup(state: Installed, palettes: string[]): string | undefined {
   const was = startupPalette(state)
   return was && palettes.includes(was) ? was : undefined
 }

@@ -174,7 +174,7 @@ function ensureSetting(content: string, name: keyof typeof CONFIG_SETTINGS): str
 
 export const SETTING_NAMES = Object.keys(CONFIG_SETTINGS)
 
-export const BLUR_MOST = 8
+const BLUR_MOST = 8
 
 export function settingValue(configHome: string, name: keyof typeof CONFIG_SETTINGS): string {
   let text = ''

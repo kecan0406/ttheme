@@ -24,7 +24,6 @@ import { edgeChroma, fixGate, inGamut } from './fix.ts'
 import { type Colors, grow, nudge, SEED_FIELDS, SEEDS, type Seeds } from './seeds.ts'
 import { edit } from './tui/field.ts'
 
-export const SLOT_COUNT = 20
 export const SLOT_NAMES = [
   'background',
   'foreground',
@@ -67,7 +66,7 @@ export const CHANNELS: Channel[] = [
   { key: 'h', label: 'Hue', min: 0, max: 360, step: 1, digits: 0, wraps: true },
 ]
 
-export const FAST = 5
+const FAST = 5
 const HUE_STEP = 5
 export const CONTRAST = CHANNELS.length
 export const SCOPES = ['this', 'pair', 'normals', 'brights', 'accents'] as const
@@ -77,7 +76,7 @@ const ACCENTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
 const NORMALS = ACCENTS.filter((i) => i < 8).map((i) => BASE.length + i)
 const BRIGHTS = ACCENTS.filter((i) => i > 8).map((i) => BASE.length + i)
 
-export function scopeSlots(scope: Scope, slot: number): number[] {
+function scopeSlots(scope: Scope, slot: number): number[] {
   const ansi = slot - BASE.length
   if (ansi < 0 || scope === 'this') {
     return [slot]
@@ -89,7 +88,7 @@ export function scopeSlots(scope: Scope, slot: number): number[] {
   return set.includes(slot) ? set : [slot]
 }
 
-export function gridOrder(): number[] {
+function gridOrder(): number[] {
   return Array.from({ length: ROWS }, (_, row) => (row < BASE.length ? [row] : [row, row + 8])).flat()
 }
 
@@ -115,7 +114,7 @@ export interface Exports {
 }
 
 export type Format = 'hex' | 'rgb' | 'oklch'
-export type Menu = 'export' | 'import'
+type Menu = 'export' | 'import'
 
 export interface EditorOptions {
   title: string
@@ -133,12 +132,12 @@ export interface EditorOptions {
   check: (edited: Edited) => string | undefined
 }
 
-export function isPicture(text: string): boolean {
+function isPicture(text: string): boolean {
   const trimmed = text.trim()
   return /^https?:\/\/\S+$/i.test(trimmed) || pastedRefs(trimmed).length > 0
 }
 
-export type Mode = 'seeds' | 'list' | 'tune'
+type Mode = 'seeds' | 'list' | 'tune'
 
 interface Snapshot {
   list: Hex[]
@@ -229,12 +228,12 @@ export function gatedOf(list: Hex[], signature: string[], waive: string[]): Gate
   }
 }
 
-export interface Partner {
+interface Partner {
   against: number
   floor: number | undefined
 }
 
-export function partnerOf(slot: number, waive: string[]): Partner {
+function partnerOf(slot: number, waive: string[]): Partner {
   const ansi = slot - BASE.length
   const rule =
     slot <= 1
@@ -388,7 +387,7 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
   return checks
 }
 
-export interface GateRow {
+interface GateRow {
   ok: boolean | undefined
   label: string
   value: string
@@ -1047,14 +1046,6 @@ export class PaletteEditor {
     }
   }
 
-  openMenu(menu: Menu): void {
-    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
-      return
-    }
-    this.menu = this.menu === menu ? undefined : menu
-    this.entry = 0
-  }
-
   private startInspect(): void {
     const layout = this.layout()
     if (!layout) {
@@ -1063,18 +1054,6 @@ export class PaletteEditor {
     }
     this.inspect = true
     this.spot = firstSpot(layout, this.slot())
-  }
-
-  toggleInspect(): void {
-    if (this.mode === 'seeds' || this.typing !== undefined || this.overlay || this.quitting) {
-      return
-    }
-    if (this.inspect) {
-      this.inspect = false
-      this.spot = undefined
-    } else {
-      this.startInspect()
-    }
   }
 
   private inspectKey(key: string): boolean {

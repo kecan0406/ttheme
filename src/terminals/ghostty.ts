@@ -16,15 +16,15 @@ const COLOR_KEYS = [
   'selection-foreground',
 ]
 
-export function ghosttyConfig(configHome: string): string {
+function ghosttyConfig(configHome: string): string {
   return join(configHome, 'ghostty', 'config')
 }
 
-export function ghosttyOwn(configHome: string): string {
+function ghosttyOwn(configHome: string): string {
   return join(configHome, 'ttheme', 'ghostty.conf')
 }
 
-export function ghosttyFiles(at: At, platform: NodeJS.Platform = process.platform): string[] {
+function ghosttyFiles(at: At, platform: NodeJS.Platform = process.platform): string[] {
   const support = join(at.home, 'Library', 'Application Support', 'com.mitchellh.ghostty')
   return [
     ghosttyConfig(at.configHome),

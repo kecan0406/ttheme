@@ -88,7 +88,7 @@ const PASTE_END = '\x1b[201~'
 
 type Step = { events: Inbound[]; end: number } | undefined
 
-export function keyOf(ch: string): string | undefined {
+function keyOf(ch: string): string | undefined {
   const named = NAMED[ch]
   if (named) {
     return named

@@ -178,7 +178,7 @@ async function work(task: Task): Promise<number | Look | Picture | Shown | null>
   return 0
 }
 
-export function serveRenders(port: NonNullable<typeof parentPort>): void {
+function serveRenders(port: NonNullable<typeof parentPort>): void {
   port.on('message', async (task: Task & { id: number }) => {
     try {
       port.postMessage({ id: task.id, value: await work(task) })

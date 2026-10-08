@@ -19,7 +19,7 @@ import { runUninstall } from './uninstall.ts'
 import { briefText, commandHelp, helpText, VERB_SPECS, type VerbSpec } from './verbs.ts'
 import { runWire } from './wire.ts'
 
-export interface Flags {
+interface Flags {
   yes?: boolean
   only?: string[]
   json?: boolean
@@ -32,7 +32,7 @@ export interface Flags {
 
 const REFRESHES = new Set(['add', 'remove', 'market', 'default', 'on', 'off'])
 
-export interface Verb extends VerbSpec {
+interface Verb extends VerbSpec {
   run?(args: string[], flags: Flags): unknown
 }
 
@@ -79,7 +79,7 @@ const RUNS: Record<string, Verb['run']> = {
 
 export const VERBS: Verb[] = VERB_SPECS.map((spec) => ({ ...spec, run: RUNS[spec.name] }))
 
-export type Invocation =
+type Invocation =
   | { kind: 'brief' }
   | { kind: 'help'; verb?: Verb; all?: boolean }
   | { kind: 'version' }

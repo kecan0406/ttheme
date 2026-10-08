@@ -8,7 +8,7 @@ import { pngHead } from './png.ts'
 
 export const PAGE = 100
 export const MAX_PIXELS = 25_000_000
-export const CACHE_BYTES = 512 * 1024 * 1024
+const CACHE_BYTES = 512 * 1024 * 1024
 
 export type Rating = 'safe' | 'questionable' | 'explicit'
 export type Block = 'nudity' | 'underwear'
@@ -359,7 +359,7 @@ export function parseZerochanCount(text: string): number {
   return Number(/Zerochan has ([\d,]+) /.exec(text)?.[1]?.replace(/,/g, '') ?? 0)
 }
 
-export interface Suggestion {
+interface Suggestion {
   value: string
   count: number
 }
@@ -693,7 +693,7 @@ export function originHost(source: string): string {
   return host.split('.').slice(-2).join('.')
 }
 
-export interface Copy {
+interface Copy {
   site: Site
   url: string
 }
@@ -922,7 +922,7 @@ export function credit(post: Post, found: Partial<Credit>): void {
   }
 }
 
-export interface Lent {
+interface Lent {
   tags: string[]
   named: Named
   source: string

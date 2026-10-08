@@ -28,7 +28,7 @@ function cutoutTags(site: Site): Set<string> {
   )
 }
 
-export function fitScore(pick: Pick, frame: Frame, best: number, match = 0): number {
+function fitScore(pick: Pick, frame: Frame, best: number, match = 0): number {
   const { site, post } = pick
   const tags = new Set(post.tags)
   const cut = [...cutoutTags(site)].some((tag) => tags.has(tag))

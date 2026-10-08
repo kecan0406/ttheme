@@ -33,7 +33,7 @@ export const wezterm: Emitter = {
   },
 }
 
-export interface WeztermModule {
+interface WeztermModule {
   path: string
   colors: string
   backgrounds: string

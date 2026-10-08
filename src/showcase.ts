@@ -10,7 +10,7 @@ interface Found extends Repository {
   license: { spdx_id: string } | null
 }
 
-export interface Shown {
+interface Shown {
   id: string
   repo: string
   add: string

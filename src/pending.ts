@@ -5,7 +5,7 @@ import { close, open, SPINNER } from './tui/style.ts'
 
 const DELAY = 300
 
-export interface Pending {
+interface Pending {
   set(text: string): void
   say(line: string): void
   done(): void
@@ -24,7 +24,7 @@ export function progress(got: number, size: number): string {
     : `${Math.round(got / 1e3)}/${Math.round(size / 1e3)} KB`
 }
 
-export interface Sink {
+interface Sink {
   say(line: string): void
   set(text: string): void
 }

@@ -28,7 +28,7 @@ export interface Mask {
   data: Uint8Array
 }
 
-export interface Rgb {
+interface Rgb {
   width: number
   height: number
   data: Uint8Array

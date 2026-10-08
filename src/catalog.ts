@@ -55,7 +55,7 @@ export function readCatalog(configHome: string, warn = true, official?: Manifest
   return { ...base, palettes: [...base.palettes, ...remote] }
 }
 
-export function parseArchive(source: string): Archive {
+function parseArchive(source: string): Archive {
   let doc: { etag?: unknown; files?: unknown } | null
   try {
     doc = JSON.parse(source)
@@ -73,7 +73,7 @@ export function readCachedArchive(configHome: string, source: string): Archive {
   return parseArchive(readFileSync(cachePath(configHome, source), 'utf8'))
 }
 
-export function remoteId(source: string, identity: Identity): string {
+function remoteId(source: string, identity: Identity): string {
   return marketId({ owner: remoteOwner(source), name: identity.name })
 }
 
@@ -159,7 +159,7 @@ function entryProblem(p: PaletteEntry): string | undefined {
   return undefined
 }
 
-export function keptPath(configHome: string): string {
+function keptPath(configHome: string): string {
   return join(configHome, 'ttheme', 'kept.json')
 }
 

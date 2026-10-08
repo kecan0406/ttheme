@@ -46,7 +46,7 @@ export function schemeLines(
 
 const ANCHOR: Readonly<Record<string, string>> = { left: '0', top: '0', center: '0.5', right: '1', bottom: '1' }
 
-export function wallpaperLines(picture: ProfileBackground | undefined): string[] {
+function wallpaperLines(picture: ProfileBackground | undefined): string[] {
   if (!picture || picture.opacity <= 0) {
     return ['Wallpaper=']
   }

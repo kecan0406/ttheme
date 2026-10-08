@@ -23,15 +23,15 @@ export function kittyOwnText(theme: string | undefined, watcher: string, user = 
   ].join('\n')
 }
 
-export function kittyConfig(configHome: string): string {
+function kittyConfig(configHome: string): string {
   return join(configHome, 'kitty', 'kitty.conf')
 }
 
-export function kittyOwn(configHome: string): string {
+function kittyOwn(configHome: string): string {
   return join(configHome, 'ttheme', 'kitty.conf')
 }
 
-export function kittyWatcherPath(configHome: string): string {
+function kittyWatcherPath(configHome: string): string {
   return join(configHome, 'ttheme', 'kitty.py')
 }
 

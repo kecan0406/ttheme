@@ -12,7 +12,7 @@ export interface Flag {
 
 export type Section = 'tab' | 'startup' | 'catalog' | 'own' | 'setup' | 'support'
 
-export const SECTIONS: { section: Section; title: string }[] = [
+const SECTIONS: { section: Section; title: string }[] = [
   { section: 'tab', title: 'This tab' },
   { section: 'startup', title: 'New tabs' },
   { section: 'catalog', title: 'Palettes' },
@@ -291,7 +291,7 @@ export const VERB_SPECS: VerbSpec[] = [
   },
 ]
 
-export function usageOf(verb: VerbSpec): string {
+function usageOf(verb: VerbSpec): string {
   const flags = Object.entries(verb.flags ?? {}).map(([name, { value }]) => `[--${name}${value ? ` ${value}` : ''}]`)
   return [verb.name, ...flags, ...verb.args].join(' ')
 }

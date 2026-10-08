@@ -40,7 +40,7 @@ export interface Area {
   rows: number
 }
 
-export interface Rect {
+interface Rect {
   col: number
   row: number
   cols: number
@@ -68,7 +68,7 @@ interface Look {
   rect: Rect
 }
 
-export function cellRect(width: number, height: number, area: Area, cell: Cell, box: Box): Rect | undefined {
+function cellRect(width: number, height: number, area: Area, cell: Cell, box: Box): Rect | undefined {
   const t = Math.trunc
   const left = area.col * cell.w
   const top = area.row * cell.h

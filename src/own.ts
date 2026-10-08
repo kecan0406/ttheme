@@ -68,7 +68,7 @@ export function palettesDir(dir: string): string {
   return join(dir, 'palettes')
 }
 
-export interface MarketFile {
+interface MarketFile {
   path: string
   slug: string
   catalog?: string
@@ -112,7 +112,7 @@ export function marketFiles(dir: string): MarketFile[] {
   return marketLayout(paths, (path) => join(dir, path))
 }
 
-export function marketFileProblem(file: MarketFile, seen: ReadonlyMap<string, MarketFile>): string | undefined {
+function marketFileProblem(file: MarketFile, seen: ReadonlyMap<string, MarketFile>): string | undefined {
   const twin = seen.get(file.slug)
   if (twin) {
     return `${file.slug} is also ${twin.catalog ? `in ${twin.catalog}` : 'outside a catalog'} — a palette name is used once in a market`
@@ -134,7 +134,7 @@ export function ownPath(configHome: string, name: string): string {
   return marketFiles(local.dir).find((f) => f.slug === slug)?.path ?? join(palettesDir(local.dir), `${slug}.toml`)
 }
 
-export function placeFor(name: string, entries: PaletteEntry[], foreign = false): Place {
+function placeFor(name: string, entries: PaletteEntry[], foreign = false): Place {
   const groups = new Map<string, Group>()
   for (const e of entries) {
     if (e.group !== ORIGINAL && !groups.has(e.group)) {

@@ -33,7 +33,7 @@ type Env = Record<string, string | undefined>
 type Name = (typeof NAMES)[number]
 type Color = [number, number, number, number]
 
-export interface Cell {
+interface Cell {
   w: number
   h: number
 }
@@ -231,7 +231,7 @@ function surfaceOf(art: Pick<Art, 'ground' | 'ink'>): { dark: boolean; surface: 
   return { dark, surface: mix(art.ground, art.ink, dark ? 0.07 : 0.04) }
 }
 
-export function panelPixels(art: Art, cell: Cell): Rgba {
+function panelPixels(art: Art, cell: Cell): Rgba {
   const image = canvas((art.panel.cols + 2) * cell.w, (art.panel.rows + 1) * cell.h)
   const masks = panelMasks(art, cell, image.width, image.height)
   const { dark, surface } = surfaceOf(art)
@@ -247,7 +247,7 @@ export function panelPixels(art: Art, cell: Cell): Rgba {
   return image
 }
 
-export function planePixels(box: Box, h: number, cell: Cell): Rgba {
+function planePixels(box: Box, h: number, cell: Cell): Rgba {
   const image = canvas(Math.round(box.cols * cell.w), Math.round(box.rows * cell.h))
   const { width, height, data } = image
   const radius = Math.round(cell.h * 0.3)
@@ -285,7 +285,7 @@ function pill(cell: Cell, cols: number): { top: number; height: number; width: n
   return { top: Math.round((cell.h - height) / 2), height, width: cols * cell.w }
 }
 
-export function huePixels(art: Art['hue'], cell: Cell): Rgba {
+function huePixels(art: Art['hue'], cell: Cell): Rgba {
   const image = canvas(art.cols * cell.w, cell.h)
   const { top, height, width } = pill(cell, art.cols)
   const colors = Array.from({ length: width }, (_, x) => {
@@ -303,7 +303,7 @@ export function huePixels(art: Art['hue'], cell: Cell): Rgba {
   return image
 }
 
-export function contrastPixels(art: Art['contrast'], ink: Hex, cell: Cell): Rgba {
+function contrastPixels(art: Art['contrast'], ink: Hex, cell: Cell): Rgba {
   const image = canvas(art.cols * cell.w, cell.h)
   const { top, height, width } = pill(cell, art.cols)
   const tick = art.floor === undefined ? -1 : Math.round((art.floor * (art.cols - 1) + 0.5) * cell.w)
@@ -327,7 +327,7 @@ export function contrastPixels(art: Art['contrast'], ink: Hex, cell: Cell): Rgba
   return image
 }
 
-export function thumbPixels(
+function thumbPixels(
   cols: number,
   rows: number,
   x: number,
@@ -387,7 +387,7 @@ function panelKey(art: Art): string {
   return `${panel.cols}x${panel.rows} ${art.ground} ${art.ink} ${art.accent} ${at(art.tabs)},${art.tabs.active}/${art.tabs.count} ${at(art.field)} ${divider}`
 }
 
-export function piecesOf(art: Art, cell: Cell): Piece[] {
+function piecesOf(art: Art, cell: Cell): Piece[] {
   const size = `${cell.w}x${cell.h}`
   const radius = Math.max(4, Math.round(cell.h * 0.34))
   const along = (box: Box, at: number) => (box.col + 0.5 + at * (box.cols - 1)) * cell.w

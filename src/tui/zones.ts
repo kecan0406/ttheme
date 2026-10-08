@@ -19,7 +19,7 @@ export interface Hit<T = unknown> {
   inside: boolean
 }
 
-export interface Lifted {
+interface Lifted {
   text: string
   zones: Zone[]
 }
@@ -177,7 +177,7 @@ export function lifted(lines: readonly string[], targets: readonly unknown[]): {
   return { lines: texts, zones }
 }
 
-export function relative<T>(zone: Zone<T>, row: number, col: number, fx = 0.5, fy = 0.5): Hit<T> {
+function relative<T>(zone: Zone<T>, row: number, col: number, fx = 0.5, fy = 0.5): Hit<T> {
   const x = col - zone.col
   const y = row - zone.row
   return {
@@ -231,7 +231,7 @@ export function keyZone(word: string, text: string): string {
   return key ? zone({ kind: 'key', key } satisfies KeySpot, text) : text
 }
 
-export interface Pointed {
+interface Pointed {
   action: 'press' | 'release' | 'drag' | 'move' | 'wheel'
   button: string | undefined
   row: number

@@ -24,7 +24,7 @@ export interface Move {
   to: Hex
 }
 
-export type Fixable = Gated & { selectionBackground: Hex; signatureSlots: string[] }
+type Fixable = Gated & { selectionBackground: Hex; signatureSlots: string[] }
 
 const MARGIN = 5
 const PASSES = 6
@@ -71,7 +71,7 @@ export function inGamut(l: number, c: number, h: number): Hex {
   return `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`
 }
 
-export function rehue(hex: Hex, hue: number): Hex {
+function rehue(hex: Hex, hue: number): Hex {
   const { l, c } = oklch(hex)
   return inGamut(l, c, (hue + 360) % 360)
 }

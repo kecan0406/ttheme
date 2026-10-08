@@ -33,7 +33,7 @@ const FIGURE = 2560
 const FAINT = 0.1
 const WHITE = 0.99
 const LIFT = 2
-export const PLACEMENT = { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 }
+const PLACEMENT = { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 }
 const PEAK = luminance(mix('#19161e', '#9b86c8', 0.2))
 const SHELF = 'shelf'
 const ORIGINALS = 'originals'
@@ -68,7 +68,7 @@ export interface Paint {
   colors: Colors
 }
 
-export interface Original {
+interface Original {
   site: string
   id: number
   ext: string
@@ -79,7 +79,7 @@ export interface Original {
   cut?: boolean
 }
 
-export interface Origin {
+interface Origin {
   site: string
   id: number
 }
@@ -166,7 +166,7 @@ export function fillSize(width: number, height: number): { width: number; height
   return { width: Math.round(width * k), height: Math.round(height * k) }
 }
 
-export interface Frame {
+interface Frame {
   crop: Box
   at: Box
   focus: number
@@ -521,7 +521,7 @@ interface Rack {
   pictures: Picture[]
 }
 
-export interface Store {
+interface Store {
   version: number
   palettes: Record<string, Rack>
 }
@@ -1288,7 +1288,7 @@ function recolor(dir: string, name: string, picture: Picture, hue: Hue): Picture
   }
 }
 
-export function due(picture: Picture, paint: Paint): boolean {
+function due(picture: Picture, paint: Paint): boolean {
   return coloringOf(picture) !== 'original' && picture.tone !== undefined && picture.tone !== paint.hue.color
 }
 

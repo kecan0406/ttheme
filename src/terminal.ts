@@ -63,7 +63,7 @@ export function detectTerminal(env: Env): Terminal {
   return 'unknown'
 }
 
-export interface Traits {
+interface Traits {
   links: boolean
   pictures: boolean
   bands: boolean
@@ -144,7 +144,7 @@ function iniValue(text: string, group: string, key: string): string | undefined 
   return undefined
 }
 
-export function konsoleLinks(env: Env): boolean {
+function konsoleLinks(env: Env): boolean {
   const config = env.XDG_CONFIG_HOME ?? join(homedir(), '.config')
   const rc = join(config, 'konsolerc')
   let file = existsSync(rc) ? iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile') : undefined

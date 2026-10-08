@@ -8,7 +8,7 @@ import type { Installed } from '../palettes.ts'
 import { tilde } from './common.ts'
 import type { Ctx, Defaults, Host, Moment, Wiring } from './types.ts'
 
-export const ITERM_DEFAULT = 'ttheme-default'
+const ITERM_DEFAULT = 'ttheme-default'
 
 export function itermProfilesPath(home: string): string {
   return join(home, 'Library', 'Application Support', 'iTerm2', 'DynamicProfiles', 'ttheme.json')

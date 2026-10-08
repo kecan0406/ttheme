@@ -49,8 +49,8 @@ import { FG_RESET, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } fro
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
 import { type Hit, keyZone } from './tui/zones.ts'
 
-export const MIN_COLS = 80
-export const MIN_ROWS = 24
+const MIN_COLS = 80
+const MIN_ROWS = 24
 const SEED_BAR = 11
 
 function channelLines(p: Paint, e: PaletteEditor, at: Oklch, barWidth: number): string[] {
@@ -693,7 +693,7 @@ function closesPicker(target: EditorSpot | undefined): boolean {
   return target.kind === 'key' ? !PICKER_KEYS.has(target.key) : !PICKER_SPOTS.has(target.kind)
 }
 
-export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void {
+function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void {
   if (event.action === 'wheel') {
     if (!event.sideways) {
       e.scroll(event.wheel)
@@ -768,7 +768,7 @@ export function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse
   }
 }
 
-export interface Surface {
+interface Surface {
   backdrop?: Backdrop
   layer?: PickerLayer
   color: boolean

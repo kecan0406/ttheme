@@ -40,7 +40,7 @@ export function upsertAlacrittyImport(content: string, pointer: string): string 
   return `${outside.slice(0, at)}\n${BLOCK_BEGIN}\n# ${MANAGED}\n${importLine(pointer)}\n${BLOCK_END}${rest}`
 }
 
-export function alacrittyCandidates(at: At): string[] {
+function alacrittyCandidates(at: At): string[] {
   return [
     ...new Set([
       join(at.configHome, 'alacritty', 'alacritty.toml'),
@@ -51,7 +51,7 @@ export function alacrittyCandidates(at: At): string[] {
   ]
 }
 
-export interface AlacrittyConfig {
+interface AlacrittyConfig {
   file: string
   yaml?: string
 }
@@ -66,11 +66,11 @@ export function alacrittyConfig(at: At): AlacrittyConfig {
   return { file: candidates[0] as string, ...(yaml ? { yaml } : {}) }
 }
 
-export function alacrittyOwn(configHome: string): string {
+function alacrittyOwn(configHome: string): string {
   return join(configHome, 'ttheme', 'alacritty.toml')
 }
 
-export function alacrittyOwnText(theme: string | undefined): string {
+function alacrittyOwnText(theme: string | undefined): string {
   return [`# ${GENERATED}`, ...(theme ? ['[general]', importLine(theme)] : []), ''].join('\n')
 }
 

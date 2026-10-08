@@ -127,7 +127,7 @@ export function defaultLocal(configHome: string, name: string): string {
   return join(localRoot(configHome), name)
 }
 
-export function marketProblem(owner: unknown, name: unknown): string | undefined {
+function marketProblem(owner: unknown, name: unknown): string | undefined {
   if (typeof owner !== 'string' || typeof name !== 'string') {
     return 'needs a "name" and an [owner] table whose name is the GitHub handle'
   }

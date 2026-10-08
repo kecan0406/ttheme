@@ -66,7 +66,7 @@ function fromGh(): string | undefined {
   }
 }
 
-export async function handle(home: string, state: Installed): Promise<string> {
+async function handle(home: string, state: Installed): Promise<string> {
   if (state.author) {
     return state.author
   }
@@ -130,7 +130,7 @@ export function withMarkets(state: Installed, markets: string[], updates: Record
   return { ...rest, markets, ...(kept.length > 0 ? { updates: Object.fromEntries(kept) } : {}) }
 }
 
-export function nameTaken(home: string, sources: string[], source: string, name: string): string | undefined {
+function nameTaken(home: string, sources: string[], source: string, name: string): string | undefined {
   return sources.find((s) => s !== source && !sameMarket(s, source) && nameOf(home, s) === name)
 }
 
@@ -285,7 +285,7 @@ function parseSourceOrNot(arg: string): string | undefined {
   }
 }
 
-export function countOf(home: string, source: string): number | undefined {
+function countOf(home: string, source: string): number | undefined {
   try {
     if (source === OFFICIAL) {
       return listed(parseCatalog(readFileSync(catalogPath(home), 'utf8')).palettes).length

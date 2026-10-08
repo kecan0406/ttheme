@@ -1,13 +1,13 @@
 import type { MarketInfo } from './sources.ts'
 
-export type Renames = MarketInfo['renames']
+type Renames = MarketInfo['renames']
 
 export interface Moves {
   renamed: Map<string, string>
   removed: string[]
 }
 
-export function follow(renames: Renames, slug: string): string | false | undefined {
+function follow(renames: Renames, slug: string): string | false | undefined {
   let at = slug
   const seen = new Set<string>()
   while (Object.hasOwn(renames, at) && !seen.has(at)) {

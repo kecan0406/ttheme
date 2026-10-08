@@ -6,7 +6,7 @@ import { measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
 import { type PaletteEntry, toTheme } from './manifest.ts'
 
-export const TONE_SLOTS = [
+const TONE_SLOTS = [
   'background',
   'foreground',
   'cursor',
@@ -14,9 +14,9 @@ export const TONE_SLOTS = [
   ...Array.from({ length: 16 }, (_, i) => `ansi${i}`),
 ] as const
 
-export type ToneSlot = (typeof TONE_SLOTS)[number]
-export type Override = Partial<Record<ToneSlot, string>>
-export type Tone = Record<string, Override>
+type ToneSlot = (typeof TONE_SLOTS)[number]
+type Override = Partial<Record<ToneSlot, string>>
+type Tone = Record<string, Override>
 
 const VERSION = 1
 
@@ -71,7 +71,7 @@ export function writeTone(configHome: string, tone: Tone): void {
   writeAtomic(path, `${JSON.stringify({ version: VERSION, palettes }, null, 2)}\n`)
 }
 
-export function colorOf(
+function colorOf(
   entry: Pick<PaletteEntry, 'background' | 'foreground' | 'cursor' | 'selection' | 'ansi'>,
   slot: string,
 ): string {

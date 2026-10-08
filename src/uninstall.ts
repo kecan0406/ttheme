@@ -23,7 +23,7 @@ export interface UninstallPaths {
   stateDir: string
 }
 
-export interface UninstallPlan {
+interface UninstallPlan {
   edits: { file: string; content: string }[]
   removals: string[]
   touches: string[]

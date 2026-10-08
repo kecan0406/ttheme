@@ -38,7 +38,7 @@ function isFile(path: string): boolean {
   }
 }
 
-export function words(line: string): string[] {
+function words(line: string): string[] {
   const out: string[] = []
   let word = ''
   let quote = ''

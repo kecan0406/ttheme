@@ -8,7 +8,7 @@ import { writeAtomic } from './edits.ts'
 const KEPT = 12
 const NAME = /^[0-9a-f]{40}$/
 
-export interface Held {
+interface Held {
   stem: string
   fill: string
   peak?: Hex

@@ -8,7 +8,7 @@ export function colorless(env: NodeJS.ProcessEnv = process.env): boolean {
   return Boolean(env.NO_COLOR) || env.TERM === 'dumb'
 }
 
-export function slotOsc(slot: number, color: string): string {
+function slotOsc(slot: number, color: string): string {
   return `\x1b]${SLOT_CODES[slot]};${color}\x1b\\`
 }
 

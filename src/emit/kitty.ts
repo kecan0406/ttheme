@@ -23,7 +23,7 @@ export const kitty: Emitter = {
   },
 }
 
-export interface KittyWatcher {
+interface KittyWatcher {
   themes: string
   backgrounds: string
 }

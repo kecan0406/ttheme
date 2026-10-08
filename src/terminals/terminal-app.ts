@@ -28,7 +28,7 @@ export function terminalPictures(configHome: string): string {
   return join(configHome, 'ttheme', 'terminal-app')
 }
 
-export function terminalWindow(env: Host['env'], home: string): string {
+function terminalWindow(env: Host['env'], home: string): string {
   return join(env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme', 'terminal-app.window')
 }
 
@@ -242,7 +242,7 @@ function baseOf(state: Moment['state'], host: Host): string {
   return state.terminalBase ?? (now && !now.startsWith(OURS) ? now : 'Basic')
 }
 
-export interface Shape {
+interface Shape {
   width: number
   height: number
 }
@@ -278,7 +278,7 @@ export function heldIn(dir: string): Map<string, string[]> {
   return held
 }
 
-export function pictureVersions(dir: string): string {
+function pictureVersions(dir: string): string {
   return [...heldIn(dir)]
     .map(([of, files]) => `${of} ${(LAID.exec(files[0] as string) ?? [])[2]}`)
     .sort()

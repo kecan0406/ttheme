@@ -65,7 +65,7 @@ export function heldPictures(configHome: string, name: string): SharedPicture[] 
   return held.length > 0 ? held : undefined
 }
 
-export function missingPictures(configHome: string, entry: PaletteEntry): SharedPicture[] {
+function missingPictures(configHome: string, entry: PaletteEntry): SharedPicture[] {
   const have = new Set(readStore(backgroundsDir(configHome)).palettes[entry.name]?.pictures.map((p) => p.key))
   return (entry.pictures ?? []).filter((p) => !have.has(imageKey(p)))
 }

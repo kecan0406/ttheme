@@ -1,6 +1,6 @@
 export const WIDE = 44
 
-export interface Scene {
+interface Scene {
   name: string
   lines: string[]
 }

@@ -100,7 +100,7 @@ export function lchShort(at: Oklch): string {
   return `${at.l.toFixed(2)} ${at.c.toFixed(3)} ${at.h.toFixed(0).padStart(3)}°`
 }
 
-export function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): string[] {
+function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): string[] {
   const rows = gateRows(e.list, e.signature, e.waive).sort((a, b) => Number(a.ok !== false) - Number(b.ok !== false))
   const failing = rows.filter((r) => r.ok === false).length
   const head = `  ${p.dim('Gate')}  ${failing === 0 ? p.dim('passes') : p.bold(`${failing} ${failing === 1 ? 'miss' : 'misses'}`)}`

@@ -44,13 +44,13 @@ function marginOf(raw: string | undefined): { x: number; y: number } | undefined
 
 const MARGIN = marginOf(process.env.TTHEME_BG_MARGIN)
 
-export interface Grid {
+interface Grid {
   cols: number
   rows: number
   cell: { w: number; h: number }
 }
 
-export interface Canvas {
+interface Canvas {
   view: FindView
   grid: () => Grid
   background: Hex

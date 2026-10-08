@@ -12,7 +12,7 @@ import { zone } from './tui/zones.ts'
 
 const MIN_ITEMS = 3
 
-export type PickerRow =
+type PickerRow =
   | { kind: 'palette'; entry: PaletteEntry }
   | { kind: 'group'; name: string; native?: string; lead?: PaletteEntry; expanded: boolean; count: number }
   | {
@@ -39,7 +39,7 @@ type Row<X extends Extra = Extra> =
 
 export type PickerScope = 'palette' | 'series'
 
-export type PickerLayout = 'series' | 'markets'
+type PickerLayout = 'series' | 'markets'
 
 interface Place {
   top(entry: PaletteEntry): string
@@ -57,11 +57,11 @@ const PLACES: Record<PickerLayout, Place> = {
   },
 }
 
-export function catalogKey(group: string, catalog: string): string {
+function catalogKey(group: string, catalog: string): string {
   return `${group}/${catalog}`
 }
 
-export function shownName(entry: PaletteEntry): string {
+function shownName(entry: PaletteEntry): string {
   return marketOf(entry.name) ? slugOf(entry.name) : entry.name
 }
 
@@ -70,7 +70,7 @@ function shelfKey(entry: PaletteEntry, place: Place): string | undefined {
   return name === undefined ? undefined : catalogKey(place.top(entry), name)
 }
 
-export function rowKey(row: Row | undefined): string {
+function rowKey(row: Row | undefined): string {
   if (row?.kind === 'palette') {
     return `palette ${row.entry.name}`
   }
@@ -173,7 +173,7 @@ export function seriesRows(entries: PaletteEntry[], filter: string): PickerRow[]
   return pickerRows(entries, new Set(), '').filter((r) => r.kind === 'group' && hit.has(r.name))
 }
 
-export function isMarket(group: string): boolean {
+function isMarket(group: string): boolean {
   return group.includes('@')
 }
 
@@ -229,8 +229,6 @@ export function promptFx(value: string | undefined): PromptFx {
   return value === 'decode' || value === 'glitch' ? value : 'typewriter'
 }
 
-export type ListRow<X extends Extra = Extra> = Row<X>
-
 export interface RowSpot {
   kind: 'row'
   at: number
@@ -241,7 +239,7 @@ export function rowSpot(at: number, part: RowSpot['part'], text: string): string
   return zone({ kind: 'row', at, part } satisfies RowSpot, text)
 }
 
-export interface PaletteListOptions<X extends Extra = Extra> {
+interface PaletteListOptions<X extends Extra = Extra> {
   entries: PaletteEntry[]
   picked: Set<string>
   scope?: PickerScope
@@ -703,7 +701,7 @@ export class SearchHint {
   }
 }
 
-export interface PalettePromptOptions {
+interface PalettePromptOptions {
   entries: PaletteEntry[]
   scope?: PickerScope
   installed?: Iterable<string>
