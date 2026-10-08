@@ -315,7 +315,7 @@ test("sync gives a palette's Warp theme its picture under a name of its own, and
   assert.equal(first.length, 1)
   const theme = readFileSync(join(themes, first[0] as string), 'utf8')
   const flat = /^ {2}path: "(.+)"$/m.exec(theme)?.[1] ?? ''
-  assert.match(flat, new RegExp(`^${themes}/ttheme-gojo\\.[0-9a-f]{8}\\.png$`))
+  assert.match(flat, new RegExp(`^${RegExp.escape(themes)}/ttheme-gojo\\.[0-9a-f]{8}\\.png$`))
   assert.match(theme, /^background_image:\n {2}path: ".+"\n {2}opacity: 20$/m)
   assert.deepEqual([...decodePng(readFileSync(flat)).data], [255, 255, 255, 255, 17, 25, 28, 255])
   assert.doesNotMatch(readFileSync(join(themes, 'ttheme-gojo.yaml'), 'utf8'), /background_image/)
@@ -324,18 +324,18 @@ test("sync gives a palette's Warp theme its picture under a name of its own, and
   mkdirSync(join(settings, '..'), { recursive: true })
   writeFileSync(settings, '[appearance.themes]\ntheme = "Dracula"\n')
   sync(configHome, catalog, state, home)
-  assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${first[0]?.replace(/\./g, '\\.')}"`))
+  assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${RegExp.escape(first[0] as string)}"`))
   pictured(configHome, 0.5)
   sync(configHome, catalog, state, home)
-  assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${first[0]?.replace(/\./g, '\\.')}"`))
+  assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${RegExp.escape(first[0] as string)}"`))
   sync(configHome, catalog, state, home)
   sync(configHome, catalog, state, home)
   const now = picturedThemes(home)
   assert.deepEqual(now.length, 1)
   assert.notEqual(now[0], first[0])
-  assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${now[0]?.replace(/\./g, '\\.')}"`))
+  assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${RegExp.escape(now[0] as string)}"`))
   const again = readFileSync(join(themes, now[0] as string), 'utf8')
-  assert.match(again, new RegExp(`^ {2}path: "${flat}"\\n {2}opacity: 50$`, 'm'))
+  assert.match(again, new RegExp(`^ {2}path: "${RegExp.escape(flat)}"\\n {2}opacity: 50$`, 'm'))
   assert.deepEqual(
     readdirSync(themes).filter((file) => file.endsWith('.png')),
     [flat.slice(themes.length + 1)],
@@ -390,7 +390,7 @@ test('a picture changed anywhere moves Warp to the new pictured theme only while
   refreshPictures(configHome, home)
   const now = picturedThemes(home)
   assert.equal(now.length, 1)
-  assert.match(readFileSync(settings, 'utf8'), new RegExp(`name = "gojo", path = "${now[0]?.replace(/\./g, '\\.')}"`))
+  assert.match(readFileSync(settings, 'utf8'), new RegExp(`name = "gojo", path = "${RegExp.escape(now[0] as string)}"`))
   assert.match(readFileSync(join(warpThemes(home), now[0] as string), 'utf8'), /^ {2}opacity: 30$/m)
 })
 

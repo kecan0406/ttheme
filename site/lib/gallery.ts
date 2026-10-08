@@ -59,5 +59,5 @@ export function arrange(shelves: Shelf[], sources: boolean): Placed[] {
 }
 
 export function marketPath(id: string): string {
-  return `/market/${encodeURIComponent(id).replace('%40', '@')}`
+  return `/market/${encodeURIComponent(id).replaceAll('%40', '@')}`
 }
