@@ -2,10 +2,13 @@ source $TTHEME_HOME/adapters/_bg.zsh
 
 zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
 
-if (( ! ${+TTHEME_ITERM_SHOWN} )); then
+() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  (( ${+TTHEME_ITERM_SHOWN} )) && return 0
   typeset -gx TTHEME_ITERM_SHOWN="" TTHEME_ITERM_DYED=0
   [[ $ITERM_PROFILE == 'ttheme · '* ]] && TTHEME_ITERM_SHOWN=${ITERM_PROFILE#ttheme · }
-fi
+  return 0
+}
 
 __tt_keepable() { return 0 }
 

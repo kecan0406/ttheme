@@ -421,6 +421,9 @@ check() {
   hovering iterm2
   hovering iterm2-switch
   hostile options
+  TERMINAL=iterm2
+  hostile options-iterm2
+  TERMINAL=""
   late late
   print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
 }
