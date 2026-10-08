@@ -22,7 +22,7 @@ typeset -gA STATES=(
 
 typeset -ga SCENARIOS=(
   'browse-empty    empty  browse'
-  'browse-filter   few    browse   k i'
+  'browse-filter   few    browse   k i@(1/6'
   'browse-picked   few    browse   Right Down Right Down Space'
   'browse-review   few    browse   Right Down Right Down Space Enter'
   'browse-series   few    browse   Right Down Space'
