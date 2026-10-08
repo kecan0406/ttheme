@@ -211,13 +211,23 @@ depends = ["build"]
 run = "rm -rf pages && mkdir pages && cp dist/manifest.json pages/ && bun site/readme.ts pages"
 
 [tasks.release]
-description = "verify everything, then bump the version, tag it and push — the release workflow publishes to npm and cuts the GitHub release — `mise run release 1.0.0`"
+description = "verify everything, then bump the version, tag it and push — the release workflow stages it on npm and cuts the GitHub release, and it goes live once approved on npmjs.com — `mise run release 1.0.0`"
 depends = ["ci"]
 usage = 'arg "<version>" help="x.y.z, or patch | minor | major"'
 run = '''
 set -e
 npm version "${usage_version}" -m "Bump version to %s"
 git push --atomic --follow-tags origin main
+tag="v$(jq -r .version package.json)"
+run=
+for _ in $(seq 30); do
+  run=$(gh run list --workflow release.yml --branch "$tag" --json databaseId --jq '.[0].databaseId // empty')
+  [ -n "$run" ] && break
+  sleep 2
+done
+[ -n "$run" ] || { echo "release: no workflow run for $tag"; exit 1; }
+gh run watch "$run" --compact --exit-status
+echo "$tag is staged — approve it under Staged Packages on https://www.npmjs.com/package/@kecan0406/ttheme"
 '''
 
 [tasks.ci]

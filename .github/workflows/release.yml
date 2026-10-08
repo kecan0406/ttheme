@@ -5,22 +5,19 @@ on:
     tags: ["v*.*.*"]
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: jdx/mise-action@v2
-      - uses: actions/setup-node@v6
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          node-version: "24"
-          registry-url: https://registry.npmjs.org
-          package-manager-cache: false
+          cache: false
       - run: sudo apt-get update && sudo apt-get install -y zsh tmux sqlite3
       - run: bun install --frozen-lockfile
 
@@ -31,7 +28,8 @@ jobs:
 
       - name: package
         run: |
-          mkdir -p release
+          mkdir -p release npm
+          npm pack --pack-destination npm
           for dir in dist/*/; do
             term=$(basename "$dir")
             [ "$term" = shell ] || tar -czf "release/ttheme-$term.tar.gz" -C dist "$term"
@@ -44,9 +42,35 @@ jobs:
           git log --no-merges --invert-grep --grep='^Bump version to ' --format='- %s' \
             "${prev:+$prev..}$GITHUB_REF_NAME" > notes.md
 
-      - run: npm publish --access public
-
-      - uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          files: release/*
-          body_path: notes.md
+          name: release
+          path: |
+            release/
+            npm/
+            notes.md
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: npm
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - run: npm stage publish npm/*.tgz
+
+      - name: github release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/* --repo "$GITHUB_REPOSITORY" --notes-file notes.md --verify-tag
