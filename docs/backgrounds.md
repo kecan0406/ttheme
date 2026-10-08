@@ -372,14 +372,14 @@ differently; a picture whose original is gone is left as it was, and init says s
 ## Tuning
 
 `preview` shows the background of the palette under the cursor while you
-browse: through the kitty graphics protocol (Ghostty, kitty, and iTerm2 3.7 or newer)
+browse: through the kitty graphics protocol (Ghostty, kitty, iTerm2 3.7 or newer and Konsole)
 it draws that palette's `background-image` where Ghostty would place it, faded by
 `background-image-opacity`, behind the list — or just its plain background when
 it has no file. Only PNG images preview.
 
 On a palette with a background, the panel `tab`, `→` or `ctrl+e` opens in `preview` tunes it
 in place, above the palette's colors — the panel opens on it, and `↓` past its
-last field moves on to the slots. Its first row is **Images**, the palette's
+last field moves on to **Edit palette**. Its first row is **Images**, the palette's
 pictures as thumbnails (see [Several pictures](#several-pictures-per-palette)),
 and under it `↑`/`↓` (or `j`/`k`) pick colors, size, position or opacity, and `←`/`→` change it (with
 shift, ten steps at a time; `c` switches the colors from any field — see
@@ -395,7 +395,7 @@ one in reading order; opacity moves by 0.01. A field that is not at its
 default carries `↺` at the panel's right edge, lit on the field the cursor is on:
 `=` puts that one field back, `+` all three of size, position and opacity (and
 shows the picture again if it was off). Space turns the palette's background off and on, `s` saves
-the change — with the tone, see [Palette edit](usage.md#palette-edit) — and esc goes back to the list,
+the change (see [Palette edit](usage.md#palette-edit)), and esc goes back to the list,
 dropping what you changed since the last save. `f` in the panel opens find to add a picture, keeping what you tuned so far.
 
 ## Several pictures per palette
@@ -423,8 +423,9 @@ picture's `<palette>.<hash>.tune.conf` (the tuning) and
 conf. A `<palette>.conf` you write yourself is left alone; the preview appends
 `<palette>.tune.conf` and `<palette>.off.conf` includes to it instead.
 Saved changes are written at once, by `s`,
-and reach both terminals from whichever one ran the preview: Ghostty reloads
-when it is showing that palette, and iTerm2's profiles are rewritten. Ghostty has no scale setting,
+and reach every terminal you wired from whichever one ran the preview: Ghostty
+reloads when it is showing that palette, and the others take the new picture
+through their profiles, schemes, themes or watchers. Ghostty has no scale setting,
 so every size but 100% and fill is baked into a copy beside the image and the
 tuning points at it: below 100% onto a transparent canvas of the image's own
 size (`kagami.1a2b3c4d@60-bottom-right.png`, fitted with `contain`), above it onto

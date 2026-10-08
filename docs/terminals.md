@@ -66,8 +66,8 @@ get it.
   terminals…) gets repainting and nothing else.
 - **Colors only** — ttheme sets no font, font size or shader anywhere; those
   stay what you configured in your terminal.
-- **Background pictures** — `find`, `ttheme image` and `preview`'s live
-  backdrop. Ghostty shows one picture app-wide, following the focused tab;
+- **Background pictures** — `find`, and the pictures preview shows and tunes
+  beside its list. Ghostty shows one picture app-wide, following the focused tab;
   iTerm2 (3.7 or newer) shows one per tab and kitty one per window (a split
   pane included), both with the same preview, tuning and find. WezTerm shows the
   picture of the active tab per window, and its preview, tuning and find draw
@@ -106,7 +106,7 @@ own block in your config — one line that loads a file ttheme keeps beside the
 layer, so a change after init rewrites that file and never yours — (or its
 profiles, fragment or settings key), says what
 init will change, takes it all out again on uninstall, and — for the terminals
-whose default is a profile, iTerm2 and Konsole — points new tabs at ttheme's
+whose default is a profile, iTerm2, Konsole and Terminal.app — points new tabs at ttheme's
 profile and gives yours back. Every command that changes the state (`init`,
 `add`, `remove`, `default`, `on`, `off`, Browse's apply, a market refresh) writes it
 once and hands it to every wired terminal the same way, whichever terminal you
@@ -115,15 +115,17 @@ ran it in.
 A terminal that watches its files takes the change by itself (kitty, WezTerm,
 Alacritty, iTerm2, Warp); the others are told: Ghostty by a reload the shell
 layer sends to the Ghostty that owns the tab, Windows Terminal by a touch of its
-`settings.json`, Konsole over D-Bus. Open tabs catch up at their next prompt —
+`settings.json`, Konsole over D-Bus, Terminal.app by one of its own tabs at its
+next prompt. Open tabs catch up at their next prompt —
 the shell layer re-reads `palettes.zsh` when it moves — and a tab only ever
 repaints itself, so a palette you painted by hand stays until you change it.
 
-Ghostty is the reference. Every change runs the same journeys — new tabs,
-`use`, `default`, `off` and `on` across tabs, preview, pins, browse, pictures
-tuned elsewhere — against a model of each terminal built from what was measured
-in the real one, and every place a terminal still differs from Ghostty is listed
-with its reason in
+Every terminal is held to one spec, Ghostty included. Every change runs the
+same journeys — new tabs, `use`, `default`, `off` and `on` across tabs,
+preview, pins, browse, pictures tuned elsewhere — against a model of each
+terminal built from what was measured in the real one, each journey says what
+the tab in front should show, and every place a terminal still misses it is
+listed with its reason in
 [`tests/parity/gaps.tsv`](../tests/parity/gaps.tsv): what the terminal cannot
 express, what ttheme could still close, and what was left out on purpose.
 

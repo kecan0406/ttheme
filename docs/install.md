@@ -1,6 +1,6 @@
 # Install
 
-**Ghostty, kitty, Alacritty, WezTerm, iTerm2, Windows Terminal, Warp or Konsole** — one command, no clone:
+**Ghostty, kitty, Alacritty, WezTerm, iTerm2, Windows Terminal, Warp, Konsole or Terminal.app** — one command, no clone:
 
 ```sh
 npx @kecan0406/ttheme@latest init
@@ -11,7 +11,9 @@ bash or fish — see [Shells](#shells).
 
 ## What init asks
 
-1. **Which terminals to wire** — the one you are in comes preselected.
+1. **Which terminals to wire** — the one you are in comes preselected. With
+   Warp among them, also whether to switch Warp to each tab's palette in about
+   0.2 s instead of 0.6 s, for some CPU while it does (`TTHEME_WARP_FAST`).
 2. **Which series to install** — `space` marks one, `Select all` takes the lot,
    enter moves on.
 3. **Whether to wear them** — with one palette picked, `Wear <palette> in every
@@ -19,16 +21,18 @@ bash or fish — see [Shells](#shells).
    everything is installed. No installs ttheme off: your terminal keeps its own
    colors until `ttheme on`.
 
-Then it lists every file it is about to change and the keys its blocks set, and
+Then it lists every file it is about to change and the keys ttheme's own files set, and
 writes nothing until you confirm, so cancelling before that touches nothing. It
 ends with a receipt, paints the default palette onto the tab you ran it in (when
 you chose to wear one) and
 lists what to do next (`exec zsh` — `exec bash -l` or `exec fish` from those —
 for the `ttheme` command here, a terminal restart for new tabs).
 
-Running it again updates in place. `--yes` (`-y`) skips every prompt and installs
-no palettes, and init refuses to run without a terminal unless it is given —
-Browse, the second tab of `ttheme`, opens the full catalog any time, to add or drop single palettes.
+Running it again updates in place. `--yes` (`-y`) skips every prompt: over an
+install it updates in place and keeps everything, and on a first install it
+wires the terminal you are in and installs no palettes — Browse, the second tab
+of `ttheme`, opens the full catalog any time, to add or drop single palettes.
+init refuses to run without a terminal unless it is given `--yes`.
 
 ## What init changes
 
@@ -101,6 +105,12 @@ next one.
   its profiles when it starts, so quit and reopen it once after init; from then
   on `ttheme default` moves every running Konsole to the new default. `ttheme
   off` gives your own profile back.
+- **Terminal.app** (macOS) gets a `ttheme · <palette>` profile per palette in its
+  own settings — a copy of your default profile in the palette's colors, with
+  its picture — and the default palette's profile as the one new windows and
+  tabs open with. Terminal.app reads its settings when it starts, so quit and
+  reopen it once after init; from then on a new default reaches it at the next
+  prompt one of its tabs shows. `ttheme off` gives your own profile back.
 
 ## Shells
 
@@ -128,8 +138,8 @@ and the `ttheme-*` theme files, `~/.config/ttheme` (installed pictures
 included), the cache and the iTerm2 and Windows Terminal files are deleted. A
 config you did not touch since ttheme first edited it comes back byte for byte
 and its backup goes; one you edited since keeps `<file>.ttheme.bak`. Konsole
-gets its own default profile back too, and loses every `ttheme-*` scheme and
-profile. Open shells drop the layer at their next prompt.
+and Terminal.app get their own default profile back too, and lose every ttheme
+scheme and profile. Open shells drop the layer at their next prompt.
 
 ## By hand
 
@@ -138,6 +148,11 @@ One archive per terminal in the
 
 ```sh
 REL=https://github.com/kecan0406/ttheme/releases/latest/download
+
+# ghostty
+curl -L $REL/ttheme-ghostty.tar.gz | tar xz
+cp ghostty/themes/ttheme-miku ~/.config/ghostty/themes/
+#   config:  theme = ttheme-miku
 
 # kitty
 curl -L $REL/ttheme-kitty.tar.gz | tar xz
