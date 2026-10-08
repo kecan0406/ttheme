@@ -132,7 +132,7 @@ page](https://ttheme.vercel.app/market) lists the public ones.
 
 `ttheme new rei` opens the palette editor on a blank palette: a few seeds grow
 twenty colors that pass the contrast gate, then each one is tuned in OKLCH while
-the terminal repaints as you go. It makes `<you>@<market>/rei`, named after your
+a mock terminal beside them shows the result. It makes `<you>@<market>/rei`, named after your
 GitHub handle and a market name the first `new` asks for, in
 `~/.config/ttheme/market/<market>`, and installs it; `--from rei` starts from
 rei's colors instead. `ttheme edit rei` opens the same editor — on any palette,
@@ -199,8 +199,8 @@ two share the screen, and how to let Neovim wear the palette instead:
 
 ## Background pictures
 
-A palette can wear a picture behind the text. ttheme ships none: `ttheme
-preview` → enter, then `f` in the picture panel searches danbooru, konachan, yande.re and zerochan for the character live
+A palette can wear a picture behind the text. ttheme ships none: in `ttheme`,
+`tab` on a palette opens its panel, and `f` there searches danbooru, konachan, yande.re and zerochan for the character live
 (safe-rated by default), or takes a picture you paste or drop, cuts the
 character out on macOS, tints it to the palette — or keeps its own colors — and
 installs it on your machine only. Ghostty shows the focused tab's picture, iTerm2, Konsole and Terminal.app one per tab, kitty one per

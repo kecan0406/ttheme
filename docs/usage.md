@@ -13,7 +13,7 @@ This tab:
   use <palette>              Paint this tab
   pin [dir|ssh:<host>]       Pin a palette to a directory or an ssh host
   unpin [dir|ssh:<host>]     Drop a pin
-  pins                       Map every pin
+  pins                       Map every pin as a file tree
 
 New tabs:
   default <palette>          Make a palette the one new tabs open with
@@ -30,9 +30,9 @@ Palettes:
 
 Your own:
   new <name>                 Make a palette of your own in the palette editor
-  edit <palette>             Change one of your palettes in the palette editor
-  check <palette>            Measure a palette against the contrast gate
-  share <palette>            Print a share link and its QR code
+  edit [palette]             Change a palette in the palette editor
+  check [palette]            Measure a palette against the contrast gate
+  share [palette]            Print a share link and its QR code
 
 Setup:
   init                       Install the shell layer and wire your terminals
@@ -68,7 +68,7 @@ The two screens share their keys wherever they do the same thing: `←`/`→`
 and `enter` open and close a series, `esc` clears the filter and, once it is
 clear, closes the tabs from either screen, and `?` lists the keys. On a palette
 `enter` does what it does on that screen: preview applies the palette it landed
-on, browse applies its picks and closes. `ttheme pin` is preview alone, with no
+on, browse reviews its picks and then applies them. `ttheme pin` is preview alone, with no
 tab row, and `ttheme` opens browse alone while no palette is installed. Piped,
 `ttheme` prints the palettes, one per line, as name, series and
 source separated by tabs.
@@ -119,7 +119,7 @@ panel, then out of the filter, then out of the preview with the original colors
 restored. Each palette row carries its 16 colors, normal over bright. The last
 line lists only the keys that work right there, always names the mode
 (`PREVIEW`, `PREVIEW (FILTER)`, `PREVIEW (APPLY)`,
-`PREVIEW (PIN)`, `EDIT`, `EDIT (APPLY)`, `CONFIG`, `HELP`) and pins where
+`PREVIEW (PIN)`, `EDIT`, `EDIT (APPLY)`, `EDIT (PIN)`, `CONFIG`, `HELP`) and pins where
 esc goes to the right; `?` shows all of them.
 In Warp, which wears one theme for the whole app, the tab in front decides it:
 preview switches that theme as the focus moves — every Warp window at once —
@@ -144,7 +144,7 @@ sample's place while open, once the sample is 48 columns wide.
 that takes the sample's place beside the list: an **Image** box with the
 palette's background picture on top, a **Palette** box with its colors and the
 **Edit palette** button under it, and an **Apply** button below both. The box
-the cursor is in has its frame in the palette's cursor color. It is one list,
+the cursor is in has its frame in the accent color. It is one list,
 starting on the picture: `↓`
 past the picture's last field goes on to Edit palette and then to Apply, both
 ends wrap around, and `home`/`end` jump to the top and to Apply; `j`/`k` work
@@ -188,10 +188,10 @@ drops what you changed in the picture since the last save, without asking.
 the picture's tuning first, as `shift+enter` anywhere in the panel does in a
 terminal that tells it from `enter`, such as Ghostty — applies it as it is on
 screen and asks
-where: **default** or **this tab**. Default records the palette as
+where: **Default** or **This tab**. Default records the palette as
 your default palette (so a later `add` or `remove` keeps it) and hands it to
-every terminal you wired, whichever one you are in, and this tab keeps it for
-the tab alone; `←`/`→` move between them, starting on default. In `ttheme pin`
+every terminal you wired, whichever one you are in, and This tab keeps it for
+the tab alone; `←`/`→` move between them, starting on Default. In `ttheme pin`
 it asks how far the pin reaches instead (see [Directory pins](#directory-pins)),
 and without the choice — `TTHEME_TAB_PALETTE=seq`, or a terminal init did not
 wire — enter applies to this tab at once.
@@ -354,6 +354,8 @@ still wins:
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `tone` | the colors a new background picture is drawn in: `tone` tints it in one color of its palette, `original` keeps its own colors. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `tone` and `original`. Like the blur, it is read from `config.zsh` itself |
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
+| `TTHEME_NAMES` | `on` | characters' names in every language, which preview, browse, `list` and `find`'s search box match besides the palette names: `on` downloads them from aninames' weekly release into `~/.cache/ttheme/aninames/` (about 7 MB to download, about 65 MB there once the search index is built from them) and checks for a newer one once a day in the background; `off` leaves them as they are |
+| `TTHEME_AUTO_UPDATE` | `on` | the checks ttheme makes by itself once a day: whether npm has a newer ttheme, and the list of every market whose auto-update is on ([The catalog](#the-catalog)); `off` leaves both to `ttheme update`, as a `CI` environment does |
 | `TTHEME_MARKET_LOOKUP` | `on` | Browse looks GitHub up by itself: the repositories carrying the `ttheme-market` topic when it opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
@@ -451,7 +453,7 @@ ttheme update           # a newer ttheme with its palettes, and every market's n
 ```
 
 `add`, `remove` and Browse's apply rewrite `palettes.zsh`, each wired terminal's
-`themes/` directory and the `theme =` line in its config, then the shell re-reads
+`themes/` directory and the file its config loads from `~/.config/ttheme`, then the shell re-reads
 them — the change is live in the tab you ran it in. The first palette you install
 becomes the one new windows open with.
 
@@ -597,13 +599,17 @@ differs from the market's colors, and `s` after it drops the tone. The keys are:
   side and `⇠` between them while the bright follows the normal — each slot as its
   OKLCH lightness, chroma and hue (lightness and hue below 140 columns) with
   ✗ where its own checks miss and a yellow ● where it differs from the colors it opened with — for a tone, the ones its market gives;
-  the preview on the right; a bar on top. At 130×38 the preview is all five scenes
-  at once — Shell, Code, Diff, Logs and Monitor — under a strip of the sixteen ANSI
-  colors, the selection and the cursor, so every slot is drawn somewhere; narrower,
-  it shows one scene at a time (`⇧←→`, or a click on its tab). Below 96×28 the editor keeps
+  under them, what the slot under the cursor is for and which tabs of the preview
+  show it how often (`w` dims everything it does not draw), and at the bottom the
+  gate's rules, where `n` and `N` walk the slots that miss; the preview on the
+  right; a bar on top. The preview is a terminal window, its frame and title bar
+  in your terminal's own colors and everything inside it in the colors being
+  edited, with three tabs in its title bar — zsh (a diff, logs, and a shell whose
+  `colortest` shows all sixteen colors before the selection and the cursor), nvim
+  and htop — which `⇧←→`, or a click on a tab, switches. Below 96×28 the editor keeps
   its older layout, the slots beside the slot's details.
 - `↑↓` (or `j`/`k`) picks a row and `←→` its normal or bright, as in the older
-  layout; a search or `m` keeps a row while either of its colors matches; a click
+  layout; `m` keeps only the rows where a color changed; a click
   on a slot opens it, `enter` or `tab` too. The picker floats over the list under
   the slot (above it when there is no room below), and the rows beneath stay where
   they are; a click outside it keeps the color and closes it, a click on another
@@ -635,10 +641,9 @@ differs from the market's colors, and `s` after it drops the tone. The keys are:
   the session; the palette file only holds colors.
 - `i`, or a click on the sample, inspects it: the spot shows reversed and a
   popover names the slots it is drawn with — the text and the ground. `←→↑↓` move
-  between spots, `tab` between panes, `enter` goes to the slot, and a click on a
+  between spots, `⇧←→` to another tab, `enter` goes to the slot, and a click on a
   slot in the popover opens it. `m` shows only the slots that changed (the
-  cursor skips the rest), `ctrl+f` searches the slots by name or hex as you type,
-  `G` swaps the slots for the gate's nine rules, each miss naming its slots, and `g`
+  cursor skips the rest), and `g`
   turns the preview into the palette's relations: the lightness and chroma of every
   ANSI color, normal and bright, its hue over the role bands, and the misses
   between them.
@@ -665,10 +670,9 @@ differs from the market's colors, and `s` after it drops the tone. The keys are:
   palette's `[[picture]]` tables when you save, your own picture stays on your
   machine, and cancelling takes back what was added.
 
-While the editor is open the terminal wears the colors being edited, one changed
-slot at a time — in iTerm2, where each OSC color is a profile change, only the
-background and foreground, with the rest drawn in the editor — and gets its own
-colors back when it closes. `--from <palette>` skips the seeds.
+While the editor is open the terminal keeps its own colors: the colors being
+edited show only inside the editor — its slots, its preview and the picture
+behind it. `--from <palette>` skips the seeds.
 
 Your palettes are files in a local market: the first `new` asks for its name and
 creates `~/.config/ttheme/market/<name>` (`ttheme market init <name>` makes one
