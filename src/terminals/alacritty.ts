@@ -11,7 +11,7 @@ export function alacrittyColors(content: string): boolean {
   return /^[ \t]*\[colors[\].]/m.test(outside) || /^[ \t]*colors[ \t]*[.=]/m.test(outside)
 }
 
-const TOML_GENERAL = /^[ \t]*\[general\][ \t]*(?:#.*)?$/m
+const TOML_GENERAL = /^[ \t]*\[general\][ \t]*(?:#.*)?\r?$/m
 const TOML_TABLE = /^[ \t]*\[/m
 const TOML_IMPORT = /^[ \t]*import[ \t]*=/m
 const TOML_GENERAL_KEY = /^[ \t]*general[ \t]*[.=]/m

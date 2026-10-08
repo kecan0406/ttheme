@@ -268,6 +268,13 @@ test('removeBlock gives back the content upsertBlock started from', () => {
   assert.equal(removeBlock(upsertAlacrittyImport(general, '/t.toml') ?? ''), general)
 })
 
+test('upsertAlacrittyImport keeps the line ending of a CRLF [general] header, so the block comes out as it went in', () => {
+  const crlf = '[general]\r\nlive_config_reload = true\r\n\r\n[font]\r\nsize = 14\r\n'
+  const once = upsertAlacrittyImport(crlf, '/t.toml') ?? ''
+  assert.equal(upsertAlacrittyImport(once, '/t.toml'), once)
+  assert.equal(removeBlock(once), crlf)
+})
+
 test('removeLuaBlock gives back the config upsertLuaBlock wired, and empties the one it created', () => {
   const mine = 'local config = {}\nconfig.font_size = 13\nreturn config\n'
   assert.equal(removeLuaBlock(upsertLuaBlock(mine, 'x') ?? ''), mine)
