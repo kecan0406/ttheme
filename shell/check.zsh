@@ -202,6 +202,16 @@ plain=${out//$'\e[K'/}
       done
     done
   done
+  local drawn
+  local -a rows
+  for pw ph in 20 5 12 2 30 1 39 24; do
+    drawn=$(rtype=() rval=() flt= resized=0 bgcw=0 hub=0 conf=0 pick= help=0 te=0 tune= msgt=0 osdt=0 color=1 __tt_pv_draw)
+    rows=("${(@f)${drawn//$'\e['[0-9;?]#[A-Za-z]/}}")
+    (( ${#rows} <= ph )) || { print -u2 "preview's too-small notice drew ${#rows} rows into a window of $ph and scrolled it"; exit 1 }
+    for text in $rows; do
+      (( ${(m)#text} <= pw )) || { print -u2 "preview's too-small notice ran past a window $pw wide: $text"; exit 1 }
+    done
+  done
 } || exit 1
 print -l "# image safebooru_2 2/3" "# picture safebooru_1 kagami.aaaaaaaa kagami.aaaaaaaa@fill-40.png 0.2 akoiro safebooru 1 x" \
   "# picture safebooru_2 kagami.1a2b3c4d kagami.1a2b3c4d@fill-42.png 0.2 -" "# picture safebooru_3 kagami.cccccccc kagami.cccccccc@fill-40.png 0.3 -" \

@@ -1033,12 +1033,15 @@ __tt_pv_draw() {
   fi
   [[ $1 == hint ]] && (( ! wiped )) || pvz=()
   if (( pw < 40 || ph < 12 )); then
-    line="ttheme"
-    (( color )) && line=$TTHEME_SGR[bold]$ac$line$TTHEME_SGR[reset]
-    out+=$line$'\e[K\n'"Needs 40×12 — now ${pw}×${ph}"$'\e[K\n'
-    line="esc quits"
-    (( color )) && line=$TTHEME_SGR[dim]$line$TTHEME_SGR[reset]
-    out+=$line$'\e[K\e[J'
+    local -a small=(ttheme "Needs 40×12 — now ${pw}×${ph}" "esc quits") paint=("" "" "")
+    (( color )) && paint=($TTHEME_SGR[bold]$ac "" $TTHEME_SGR[dim])
+    for (( k = 1; k <= 3 && k <= ph; k++ )); do
+      line=${small[k]}
+      while (( ${(m)#line} > pw )); do line=${line[1,-2]}; done
+      (( k > 1 )) && out+=$'\n'
+      out+=${paint[k]}$line${paint[k]:+$TTHEME_SGR[reset]}$'\e[K'
+    done
+    out+=$'\e[J'
     __tt_pv_flush
     return 0
   fi
