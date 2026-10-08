@@ -53,6 +53,7 @@ test('cover pads a short line and blanks the half of a wide character it cuts', 
   assert.equal(cover('ab', 4, 'Z'), 'ab  Z')
   assert.equal(cover('カタカ', 1, 'x'), ' xタカ')
   assert.equal(cover('カタカ', 2, 'x'), 'カx カ')
+  assert.equal(cover('abカ', 2, 'x'), 'abx ')
 })
 
 test('cover counts an emoji sequence as one character', () => {

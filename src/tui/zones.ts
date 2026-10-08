@@ -160,11 +160,12 @@ export function cover(line: string, col: number, over: string): string {
     }
     k++
   }
-  if (k >= all.length) {
+  const rest = k < all.length ? line.slice((all[k] as Piece).start) : ''
+  if (rest === '' && x <= end) {
     return `${head}${closing}${over}${reset}`
   }
   const resume = `${styles.join('')}${link}${open.join('')}${' '.repeat(Math.max(0, x - end))}`
-  return `${head}${closing}${over}${reset}${resume}${line.slice((all[k] as Piece).start)}`
+  return `${head}${closing}${over}${reset}${resume}${rest}`
 }
 
 export function lifted(lines: readonly string[], targets: readonly unknown[]): { lines: string[]; zones: Zone[] } {
