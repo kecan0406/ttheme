@@ -3,22 +3,22 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                               │ bocchi
-    ▾ official (3/6)                                           │ The official marketplace
-      ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっく!             │ Bocchi the Rock!
- ▌      ● bocchi                                               │ ぼっち・ざ・ろっく!
-        ● kita                                                 │ Will install
-        ○ ryo                                                  │
-      ▸ Lucky☆Star (1/3) らき☆すた                             │ Gate 9/9 · passes
-    ── On GitHub ──────────                                    │
-    ⌕ Find marketplaces on GitHub  space searches              │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
+                                                     ╭─ official ─────────────────────────────────╮
+    + Add marketplace  type owner/repo or a folder   │ Comes with ttheme                          │
+                                                     │                                            │
+    ● official                                       │    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・…  │
+      Built in                                       │ ▌    ● bocchi                              │
+      6 available · 2 installed · 1 to install       │      ● kita                                │
+                                                     │      ○ ryo                                 │
+    ── On GitHub ──────────                          │    ▸ Lucky☆Star (1/3) らき☆すた            │
+    ⌕ Find marketplaces on GitHub  space searches    │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     ├────────────────────────────────────────────┤
+                                                     │ bocchi  Will install                       │
+                                                     │ Gate 9/9 · passes                          │
+                                                     │                                            │
+                                                     ╰────────────────────────────────────────────╯
  [BROWSE] Apply your changes before you leave?   y apply   n discard                       esc stay

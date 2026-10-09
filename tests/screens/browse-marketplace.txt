@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
- [All 10] · official 6 · fix@shop 4  ctrl+s marketplace
-                                                               │ fix@shop/arcade
-    ▸ official (1/6)                                           │ ~/shop
-    ▾ fix@shop (1/4)                                           │ neon
-      ▾ neon (1/2)                                             │ Installed
- ▌      ● arcade                                               │
-        ○ volt                                                 │ Gate 8/9
-      ▸ pastel (0/1)                                           │ ✗ accent hue outside its ANSI role
-      ○ dusk                                                   │   16.644 > 0
-    ── On GitHub ──────────                                    │
-    ⌕ Find marketplaces on GitHub  space searches              │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
- [BROWSE] space pick   enter close   ? keys                                              esc cancel
+                                                     ╭─ fix@shop ─────────────────────────────────╮
+    + Add marketplace  type owner/repo or a folder   │ Read in place                              │
+                                                     │                                            │
+    ● official                                       │    ▾ neon (1/2)                            │
+      Built in                                       │ ▌    ● arcade                              │
+      6 available · 1 installed                      │      ○ volt                                │
+                                                     │    ▸ pastel (0/1)                          │
+    ● fix@shop                                       │    ○ dusk                                  │
+      ~/shop                                         │                                            │
+      4 available · 1 installed · Read in place      │                                            │
+                                                     │                                            │
+    ── On GitHub ──────────                          │                                            │
+    ⌕ Find marketplaces on GitHub  space searches    │                                            │
+                                                     │                                            │
+                                                     ├────────────────────────────────────────────┤
+                                                     │ fix@shop/arcade  Installed                 │
+                                                     │ Gate 8/9 · ✗ accent hue outside its ANSI … │
+                                                     │                                            │
+                                                     ╰────────────────────────────────────────────╯
+ [BROWSE] space pick   enter close   ? keys                                                esc back

@@ -3,22 +3,22 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                               │ official
- ▌  ▸ official (2/6)                                           │ The official marketplace
-    ── On GitHub ──────────                                    │ 6 palettes · 2 installed
-    ⌕ Find marketplaces on GitHub  space searches              │
-                                                               │ Comes with ttheme
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
+                                                     ╭─ official ─────────────────────────────────╮
+    + Add marketplace  type owner/repo or a folder   │ Comes with ttheme                          │
+                                                     │                                            │
+ ▌  ● official                                       │    ▸ Bocchi the Rock! (1/3) ぼっち・ざ・…  │
+ ▌    Built in                                       │    ▸ Lucky☆Star (1/3) らき☆すた            │
+ ▌    6 available · 2 installed                      │                                            │
+                                                     │                                            │
+    ── On GitHub ──────────                          │                                            │
+    ⌕ Find marketplaces on GitHub  space searches    │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     ╰────────────────────────────────────────────╯
  [BROWSE] → open   space pick   del remove   ? keys                                      esc cancel

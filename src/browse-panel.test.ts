@@ -207,22 +207,20 @@ const DOWN = '\x1b[B'
 const RIGHT = '\x1b[C'
 const END = '\x1b[F'
 const DEL = '\x1b[3~'
-const CTRL_S = '\x13'
 const APPLY = ['\r', '\r', 20, '\r']
-const MIKU = [RIGHT, DOWN, RIGHT, DOWN]
+const MIKU = [RIGHT, RIGHT, DOWN]
 
-test('the right panel sits beside the list from 94 columns, and folds into one line under it', async () => {
+test('a marketplace opens in the panel beside the cards from 94 columns, and over them in a narrower window', async () => {
   const wide = await drive([...MIKU, '\r'])
-  assert.match(wide.last, /^ +│ miku$/m)
-  assert.match(wide.last, /^ ▌ {6}● miku +│/m)
-  assert.match(wide.last, / │ The official marketplace$/m)
-  assert.match(wide.last, / │ Installed$/m)
+  assert.match(wide.last, /╭─ official ─+╮$/m)
+  assert.match(wide.last, /^ {4}● official +│/m)
+  assert.match(wide.last, /│ ▌ {4}● miku +│$/m)
+  assert.match(wide.last, /├─+┤\n.*│ miku {2}Installed +│\n.*│ Gate \d+\/\d+ · passes +│/)
+  assert.match(wide.last, /\[BROWSE\] space pick {3}enter close {3}\? keys +esc back$/m)
   const narrow = await drive([...MIKU, '\r'], { columns: 80 })
-  assert.doesNotMatch(narrow.last, / │ The official marketplace/)
-  assert.match(
-    narrow.last,
-    /^ The official marketplace · Gate \d+\/\d+.* · Installed\n \[BROWSE\] space pick {3}enter close/m,
-  )
+  assert.doesNotMatch(narrow.last, /● official/)
+  assert.match(narrow.last, /^ ╭─ official ─+╮$/m)
+  assert.match(narrow.last, /^ │ ▌ {4}● miku +│$/m)
 })
 
 test('a window too short for the search, the marketplace strip and three rows says how tall it needs to be', async () => {
@@ -234,8 +232,8 @@ test('delete on a marketplace’s row stages its removal and again takes it back
   const { panel, frames } = await drive([DOWN, DEL, END, ...APPLY])
   assert.deepEqual(panel.removes, ['alice/ttheme-pastel'])
   assert.ok(panel.picked.has('alice@pastel/dusk'))
-  assert.match(frames, /▸ alice@pastel \(1\/1\) {2}Will remove/)
-  assert.match(frames, / │ Will remove — alice@pastel\/dusk\n.* │ stays installed/)
+  assert.match(frames, /○ alice@pastel {2}Will remove/)
+  assert.match(frames, /│ Will remove — alice@pastel\/dusk( stays)? +│\n.*│ (stays )?installed +│/)
   const undone = await drive([DOWN, DEL, DEL, '\x1b'])
   assert.deepEqual(undone.panel.removes, [])
 })
@@ -243,7 +241,7 @@ test('delete on a marketplace’s row stages its removal and again takes it back
 test('shift+right and shift+left turn a marketplace’s auto-update on and off, and only a change is kept', async () => {
   const on = await drive([DOWN, AUTO_ON, END, ...APPLY])
   assert.deepEqual(on.panel.auto, { 'alice/ttheme-pastel': true })
-  assert.match(on.frames, /▸ alice@pastel \(1\/2\) {2}↻ auto-update/)
+  assert.match(on.frames, /● alice@pastel {2}↻ auto-update/)
   assert.match(on.frames, /Auto-update turns on/)
   const back = await drive([DOWN, AUTO_ON, AUTO_OFF, '\x1b'])
   assert.deepEqual(back.panel.auto, {})
@@ -263,14 +261,14 @@ test('a repository typed into the search is fetched, asked about, and staged wit
     })
   const yes = await answer('y')
   assert.deepEqual(fetched, ['bob/ttheme-neon'])
-  assert.match(yes.frames, /\+ Add github\.com\/bob\/ttheme-neon/)
+  assert.match(yes.frames, /\+ Add bob\/ttheme-neon/)
   assert.match(yes.frames, /Update bob@neon on its own when its author changes it\? {3}y yes {3}n no +esc back/)
   assert.deepEqual(
     yes.panel.adds.map((m) => m.id),
     ['bob@neon'],
   )
   assert.deepEqual(yes.panel.auto, { 'bob/ttheme-neon': true })
-  assert.match(yes.frames, /▌ {2}▸ bob@neon \(0\/1\) {2}↻ auto-update {2}Will add/)
+  assert.match(yes.frames, /▌ {2}● bob@neon {2}↻ auto-update {2}Will add/)
   const no = await answer('n')
   assert.deepEqual(
     no.panel.adds.map((m) => m.id),
@@ -306,9 +304,9 @@ test('a marketplace due at open refreshes in the background and its new palettes
   assert.match(frames, /5\/5 · 2 picked/)
 })
 
-test('a failed update says so on its marketplace’s row, and the detail panel gives the reason', async () => {
+test('a failed update says so on its marketplace’s card, and the panel gives the reason', async () => {
   const { frames } = await drive([DOWN, '\x1b'], { due: ['alice/ttheme-pastel'] })
-  assert.match(frames, /▸ alice@pastel \(1\/2\) {2}Update failed/)
+  assert.match(frames, /● alice@pastel {2}Update failed/)
   assert.match(frames, / │ Update failed: offline/)
 })
 
@@ -341,27 +339,9 @@ test('tab does nothing in browse on its own', async () => {
   assert.match(plain.last, /^ Browse \(4\/4 · 2 picked\)$/m)
 })
 
-test('the strip counts each marketplace, and ctrl+s walks them, filtering the list and its counts', async () => {
-  const all = await drive(['\x1b'])
-  assert.match(all.last, /^ \[All 4\] · official 2 · alice@pastel 2 +ctrl\+s marketplace$/m)
-  assert.match(all.last, /Browse \(4\/4 · 2 picked\)/)
-  const first = await drive([CTRL_S, '\x1b'])
-  assert.match(first.last, /^ All 4 · \[official 2\] · alice@pastel 2/m)
-  assert.match(first.last, /Browse \(2\/2 · 1 picked\)/)
-  assert.match(first.last, /▸ official \(1\/2\)/)
-  assert.doesNotMatch(first.last, /▸ alice@pastel \(/)
-  const second = await drive([CTRL_S, CTRL_S, '\x1b'])
-  assert.match(second.last, /Browse \(2\/2 · 1 picked\)/)
-  assert.match(second.last, /▸ alice@pastel \(1\/2\)/)
-  assert.doesNotMatch(second.last, /▸ official \(/)
-  const around = await drive([CTRL_S, CTRL_S, CTRL_S, '\x1b'])
-  assert.match(around.last, /\[All 4\]/)
-  assert.deepEqual([...around.panel.picked].sort(), ['alice@pastel/dusk', 'miku'])
-})
-
 test('a window short on rows folds the heading and the search box into one line', async () => {
   const { last } = await drive(['\x1b'], { rows: 14 })
-  assert.doesNotMatch(last, /╭/)
+  assert.doesNotMatch(last, /^ ╭/m)
   assert.match(last, /⌕ Search….* 4\/4 · 2 picked$/m)
 })
 
@@ -372,26 +352,29 @@ test('a long list says how many rows lie above and below the window', async () =
     Array.from({ length: 30 }, (_, i) => `p${String(i).padStart(2, '0')}`),
     true,
   )
-  const top = await drive([RIGHT, DOWN, RIGHT, '\x1b'], { marketplaces: [many], rows: 14, installed: [] })
+  const top = await drive([RIGHT, RIGHT, '\x1b', '\x1b'], { marketplaces: [many], rows: 14, installed: [] })
   assert.doesNotMatch(top.last, /↑ \d+ more/)
-  assert.match(top.last, /^ ↓ \d+ more/m)
-  const deep = await drive([RIGHT, DOWN, RIGHT, ...Array.from({ length: 20 }, () => DOWN), '\r'], {
+  assert.match(top.last, /↓ \d+ more ─╯$/m)
+  const deep = await drive([RIGHT, RIGHT, ...Array.from({ length: 20 }, () => DOWN), '\r'], {
     marketplaces: [many],
     rows: 14,
     installed: [],
   })
-  assert.match(deep.last, /^ ↑ \d+ more/m)
-  assert.match(deep.last, /^ ↓ \d+ more/m)
+  assert.match(deep.last, /│ ↑ \d+ more +│$/m)
+  assert.match(deep.last, /├─+ ↓ \d+ more ─┤$/m)
 })
 
-test('the detail panel of a marketplace’s row says where it comes from, what it holds and when it was updated', async () => {
+test('a marketplace’s card says where it comes from, what it holds and when it was updated, and the panel beside it how it updates and what is in it', async () => {
   const { last } = await drive([DOWN, '\x1b'], { columns: 120 })
-  assert.match(last, /^ +│ alice@pastel$/m)
-  assert.match(last, /^ ▌ {2}▸ alice@pastel \(1\/2\) +│/m)
-  assert.match(last, / │ github\.com\/alice\/ttheme-pastel$/m)
-  assert.match(last, / │ 2 palettes · 1 installed$/m)
-  assert.match(last, / │ Auto-update off {2}⇧←→$/m)
-  assert.match(last, / │ Updated just now$/m)
+  assert.match(last, /^ {4}\+ Add marketplace {2}type owner\/repo or a folder +│/m)
+  assert.match(last, /^ {4}● official +│[^\n]*\n {6}Built in +│[^\n]*\n {6}2 available · 1 installed +│/m)
+  assert.match(last, /^ ▌ {2}● alice@pastel +│/m)
+  assert.match(last, /^ ▌ {4}alice\/ttheme-pastel +│/m)
+  assert.match(last, /^ ▌ {4}2 available · 1 installed · Updated just now +│/m)
+  assert.match(last, /╭─ alice@pastel ─+╮$/m)
+  assert.match(last, /│ Auto-update off {2}⇧←→ +│$/m)
+  assert.match(last, /│ {4}● dusk +│$/m)
+  assert.match(last, /│ {4}○ dawn +│$/m)
 })
 
 test('ctrl+r and ctrl+s never end up in the search text', async () => {
@@ -410,8 +393,8 @@ test('opening browse looks GitHub up on its own and lists what it finds under th
     }),
   })
   assert.deepEqual(asked, [undefined])
-  assert.match(last, /▸ alice@pastel \(1\/2\) +│[^\n]*\n +── On GitHub ─/)
-  assert.match(last, /○ bob\/ttheme-neon {2}★12 {2}Neon palettes/)
+  assert.match(last, /Updated just now +│[^\n]*\n[^\n]*\n +── On GitHub ─/)
+  assert.match(last, /○ bob\/ttheme-neon +│[^\n]*\n {6}Neon palettes +│[^\n]*\n {6}★12 +│/)
 })
 
 test('typing searches GitHub for it once typing stops, and not before', async () => {
@@ -444,7 +427,7 @@ test('a failed GitHub search says so, and space on that row searches again', asy
   assert.match(last, /▌ {2}○ bob\/ttheme-neon/)
 })
 
-test('moving onto a GitHub repository fetches its palettes for the detail panel, once', async () => {
+test('moving onto a GitHub repository fetches its palettes for the panel, once', async () => {
   const neon = marketplace('bob/ttheme-neon', 'bob@neon', ['glow', 'haze'])
   const fetched: string[] = []
   const { frames, panel } = await drive([20, END, 600, '\r'], {
@@ -458,7 +441,7 @@ test('moving onto a GitHub repository fetches its palettes for the detail panel,
   })
   assert.deepEqual(fetched, ['bob/ttheme-neon'])
   assert.match(frames, / │ glow, haze/)
-  assert.match(frames, /★12 {2}2 palettes · Neon palettes/)
+  assert.match(frames, /^ ▌ {4}★12 · 2 available +│/m)
   assert.deepEqual(panel.adds, [])
 })
 
@@ -483,7 +466,7 @@ test('a repository typed into the search is looked up by itself, and space then 
 })
 
 test('enter with something staged opens a review of it, and esc goes back to the list', async () => {
-  const { frames, ran } = await drive([...MIKU, DOWN, ' ', DOWN, DEL, END, '\r', 20, '\x1b', ...APPLY])
+  const { frames, ran } = await drive([...MIKU, DOWN, ' ', '\x1b', DOWN, DEL, END, '\r', 20, '\x1b', ...APPLY])
   assert.match(frames, /Review changes/)
   assert.match(frames, /Marketplaces \(1\)/)
   assert.match(frames, /- alice@pastel +github\.com\/alice\/ttheme-pastel · its 1 palette installed keep working/)
@@ -502,15 +485,16 @@ test('enter with nothing staged leaves at once', async () => {
   assert.equal(result, 'submit')
 })
 
-test('enter opens a marketplace as preview opens a series, and esc clears the filter back to its palette before it cancels', async () => {
-  const opened = await drive(['\r', '\x1b'])
+test('enter takes a marketplace into the panel, typing lands on the first match there, and esc clears the filter, goes back to the cards, then cancels', async () => {
+  const opened = await drive(['\r', '\x1b', '\x1b'])
   assert.equal(opened.result, 'cancel')
-  assert.match(opened.last, /^ ▌ {2}▾ official/m)
-  assert.match(opened.last, /^ {6}▸ Vocaloid/m)
-  const filtered = await drive(['r', 'i', '\x1b', '\x1b'])
+  assert.match(opened.frames, /│ ▌ {2}▸ Vocaloid \(1\/2\) +│$/m)
+  assert.match(opened.last, /^ ▌ {2}● official +│/m)
+  const filtered = await drive(['r', 'i', '\x1b', '\x1b', '\x1b'])
   assert.equal(filtered.result, 'cancel')
-  assert.match(filtered.last, /⌕ Search…/)
-  assert.match(filtered.last, /^ ▌ {6}○ rin/m)
+  assert.match(filtered.frames, /│ ⌕ ri_ +│[\s\S]*│ ▌ {4}○ rin +│$/m)
+  assert.match(filtered.frames, /│ ⌕ Search…[^\n]*\n[\s\S]*│ ▌ {4}○ rin +│$/m)
+  assert.match(filtered.last, /^ ▌ {2}● official +│/m)
 })
 
 test('? shows the keys over the list until ? or esc, and the list takes no key meanwhile', async () => {

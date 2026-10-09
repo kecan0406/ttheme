@@ -1,5 +1,5 @@
 import type { Readable, Writable } from 'node:stream'
-import { cells, clip, fit, spread, wrapText } from './ansi.ts'
+import { cells, clip, fit, pieces, spread, wrapText } from './ansi.ts'
 import { gateFailures } from './available.ts'
 import { GATE_RULES } from './contrast.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
@@ -7,6 +7,7 @@ import type { PaletteEntry } from './manifest.ts'
 import { type Repository, repositorySource } from './marketplaces.ts'
 import { containsText } from './names.ts'
 import {
+  type Card,
   type Extra,
   PaletteList,
   type PromptFx,
@@ -18,14 +19,14 @@ import {
 } from './palette-prompt.ts'
 import { counted, type Refreshed } from './refresh.ts'
 import { isLocal, isRemote, OFFICIAL, parseSource, sameMarketplace, shownSource, TOPIC } from './sources.ts'
-import { slugOf } from './theme.ts'
+import { marketplaceOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Mouse } from './tui/keys.ts'
-import { hintOf, pillOf } from './tui/parts.ts'
+import { boxEdge, hintOf, pillOf } from './tui/parts.ts'
 import { Screen } from './tui/screen.ts'
 import { ansiFg, FG_RESET, MARKS, type Paint, painter, SPINNER } from './tui/style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
-import { type KeySpot, keyZone, zone } from './tui/zones.ts'
+import { type KeySpot, zone } from './tui/zones.ts'
 
 export interface Marketplace {
   source: string
@@ -80,7 +81,11 @@ export interface BrowseResult {
 
 type Phase = 'browse' | 'review' | 'applying' | 'done'
 
-type Found = { kind: 'add'; source: string } | { kind: 'find' } | { kind: 'repo'; repo: Repository; source: string }
+type Found =
+  | { kind: 'new' }
+  | { kind: 'add'; source: string }
+  | { kind: 'find' }
+  | { kind: 'repo'; repo: Repository; source: string }
 
 interface Row extends Extra {
   found?: Found
@@ -92,13 +97,9 @@ interface Detail {
   brief: string
 }
 
-type Spot = RowSpot | KeySpot | HubSpot | { kind: 'chip'; source: string | undefined } | { kind: 'page'; step: number }
+type Side = 'cards' | 'panel'
 
-interface Chip {
-  source: string | undefined
-  label: string
-  count: number
-}
+type Spot = RowSpot | KeySpot | HubSpot | { kind: 'page'; step: number; pane?: string }
 
 type Hint = [string, string]
 
@@ -110,8 +111,9 @@ interface Bar {
   right?: Hint
 }
 
-const RIGHT = 34
-const LEFT_MAX = 72
+const LEFT_MIN = 40
+const LEFT_MAX = 60
+const PANEL_MIN = 42
 const WIDE = 94
 const ROOMY = 22
 const MIN_COLS = 40
@@ -135,6 +137,10 @@ function typedSource(text: string): string | undefined {
   }
 }
 
+function whereOf(source: string): string {
+  return source === OFFICIAL ? 'Built in' : isRemote(source) ? source : shownSource(source)
+}
+
 function cap(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
@@ -150,7 +156,6 @@ export class BrowsePanel {
   private readonly renew = new Set<string>()
   private updates: Set<string>
   private readonly tuned: Set<string>
-  private scope: string | undefined
   private readonly busy = new Map<string, string>()
   private readonly failed = new Map<string, string>()
   private readonly peeked = new Map<string, Marketplace>()
@@ -174,6 +179,10 @@ export class BrowsePanel {
   private maxItems = 12
   private readonly paint: ((entry: PaletteEntry) => void) | undefined
   private readonly list: PaletteList<Row>
+  private readonly inside: PaletteList<Row>
+  private side: Side = 'cards'
+  private open: string | undefined
+  private split = 0
   private readonly hint: SearchHint
   private screen: Screen | undefined
   private state: State = 'active'
@@ -217,14 +226,34 @@ export class BrowsePanel {
       entries: this.entries(),
       picked: this.picked,
       layout: 'marketplaces',
+      mode: 'cards',
       color: this.color,
       maxItems: this.maxItems,
       note: (entry) => this.mark(entry),
       badge: (id) => this.badge(id),
+      about: (top, members, matching) => this.about(top, members, matching),
       tops: () => this.tops(),
+      heads: () => this.heads(),
       extras: () => this.found(),
       onFocus: (entry) => this.focus(entry),
     })
+    this.inside = new PaletteList<Row>({
+      entries: [],
+      picked: this.picked,
+      layout: 'marketplaces',
+      mode: 'inside',
+      pane: 'panel',
+      color: this.color,
+      maxItems: this.maxItems,
+      note: (entry) => this.mark(entry),
+      onFocus: (entry) => {
+        if (this.side === 'panel') {
+          this.focus(entry)
+        }
+      },
+    })
+    this.inside.focus = 'off'
+    this.follow()
     this.hint = new SearchHint(
       opts.fx ?? 'typewriter',
       () => paletteExample(this.list),
@@ -348,64 +377,125 @@ export class BrowsePanel {
       this.steer(key)
       return
     }
-    const page = pageStep(key, this.maxItems)
-    const list = this.list
+    const panel = this.side === 'panel'
+    const page = pageStep(key, (panel ? this.inside : this.list).page())
     if (key === 'enter') {
-      if (list.foldable()) {
-        list.flip()
-      } else if (this.dirty()) {
-        this.phase = 'review'
-        this.offset = 0
+      if (panel && this.inside.foldable()) {
+        this.inside.flip()
+      } else if (!panel && this.list.focusedRow()?.kind === 'top') {
+        this.enter()
       } else {
-        this.state = 'submit'
+        this.finish()
       }
     } else if ((key === 'esc' || key === 'ctrl-u') && this.field.value) {
       this.clear()
     } else if (key === 'esc') {
-      this.state = 'cancel'
+      if (panel) {
+        this.back()
+      } else {
+        this.state = 'cancel'
+      }
     } else if (key === '?') {
       this.help = true
     } else if (page !== undefined) {
       this.move(page)
     } else if (key === 'up' || key === 'down') {
       this.move(key === 'up' ? -1 : 1)
-    } else if (key === 'left' || key === 'right') {
-      list.fold(key === 'right')
+    } else if (key === 'right') {
+      if (panel) {
+        this.inside.fold(true)
+      } else {
+        this.enter()
+      }
+    } else if (key === 'left') {
+      if (panel && this.inside.outer()) {
+        this.back()
+      } else if (panel) {
+        this.inside.fold(false)
+      }
     } else if (key === 'tab' || key === 'shift-tab') {
       if (this.hub) {
         this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
       }
     } else if (key === 'shift-left' || key === 'shift-right') {
-      this.autoUpdate(key === 'shift-right')
+      if (!panel) {
+        this.autoUpdate(key === 'shift-right')
+      }
     } else if (key === ' ') {
-      this.activate()
+      if (panel) {
+        this.inside.pick()
+      } else {
+        this.activate()
+      }
     } else if (key === 'delete') {
       const marketplace = this.focusedMarketplace()
-      if (marketplace) {
+      if (marketplace && !panel) {
         this.toggleMarketplace(marketplace)
       }
     } else if (key === 'ctrl-r') {
       this.refresh()
-    } else if (key === 'ctrl-s') {
-      this.cycle()
     } else if (this.field.key(key)) {
       this.typed()
     }
   }
 
+  private finish(): void {
+    if (this.dirty()) {
+      this.phase = 'review'
+      this.offset = 0
+    } else {
+      this.state = 'submit'
+    }
+  }
+
+  private enter(): boolean {
+    this.follow()
+    if (this.side === 'panel') {
+      return true
+    }
+    if (this.list.focusedRow()?.kind !== 'top' || this.inside.size() === 0) {
+      return false
+    }
+    this.side = 'panel'
+    this.list.focus = 'held'
+    this.inside.focus = 'lit'
+    this.inside.refocus()
+    return true
+  }
+
+  private back(): void {
+    this.side = 'cards'
+    this.list.focus = 'lit'
+    this.inside.focus = 'off'
+  }
+
+  private follow(fresh = false): void {
+    const row = this.list.focusedRow()
+    const top = row?.kind === 'top' ? row.name : undefined
+    if (fresh || top !== this.open) {
+      this.open = top
+      this.inside.setEntries(top === undefined ? [] : this.membersOf(top))
+    }
+    if (this.side === 'panel' && this.inside.size() === 0) {
+      this.back()
+    }
+  }
+
+  private membersOf(top: string): PaletteEntry[] {
+    return this.entries().filter((e) => (marketplaceOf(e.name) ?? OFFICIAL) === top)
+  }
+
   private refresh(): void {
     const row = this.list.focusedRow()
     const marketplace = this.focusedMarketplace()
-    if (marketplace) {
+    if (this.side === 'panel') {
+      this.toggleRenew()
+    } else if (marketplace) {
       if (isRemote(marketplace.source) && !this.adds.has(marketplace.source)) {
         this.update(marketplace.source)
       }
-    } else if (row?.kind === 'extra') {
-      if (row.extra.found?.kind === 'find') {
-        this.search()
-      }
-    } else if (row?.kind !== 'top') {
-      this.toggleRenew()
+    } else if (row?.kind === 'extra' && row.extra.found?.kind === 'find') {
+      this.search()
     }
   }
 
@@ -428,7 +518,7 @@ export class BrowsePanel {
     const free = this.phase === 'browse' && this.leaving === undefined && !this.asking
     if (event.action === 'wheel') {
       if (!event.sideways && (free || this.phase !== 'browse')) {
-        this.wheel(event.wheel)
+        this.wheel(event.wheel, this.split > 0 && event.col >= this.split)
       }
       return
     }
@@ -436,14 +526,8 @@ export class BrowsePanel {
       return
     }
     if (event.action === 'press' && event.button === 'left') {
-      if (!free) {
-        return
-      }
-      if (spot.kind === 'chip') {
-        this.scopeTo(spot.source)
-      } else if (spot.kind === 'row') {
-        this.list.point(spot.at)
-        this.watch()
+      if (free && spot.kind === 'row') {
+        this.point(spot)
       }
     } else if (event.action === 'release' && hit?.inside) {
       if (spot.kind === 'key') {
@@ -451,8 +535,8 @@ export class BrowsePanel {
       } else if (spot.kind === 'page') {
         if (this.phase !== 'browse') {
           this.scroll(spot.step * this.span())
-        } else if (free) {
-          this.move(spot.step * this.maxItems)
+        } else if (free && this.side === (spot.pane ? 'panel' : 'cards')) {
+          this.move(spot.step * (spot.pane ? this.inside : this.list).page())
         }
       } else if (spot.kind === 'hub') {
         if (free && this.hub && spot.tab !== this.hub) {
@@ -464,38 +548,77 @@ export class BrowsePanel {
     }
   }
 
-  private wheel(step: number): void {
+  private point(spot: RowSpot): void {
+    if (spot.pane) {
+      if (this.enter()) {
+        this.inside.point(spot.at)
+      }
+      return
+    }
+    this.back()
+    this.list.point(spot.at)
+    this.watch()
+  }
+
+  private wheel(step: number, panel: boolean): void {
     if (this.phase !== 'browse') {
       this.scroll(step)
       return
+    }
+    if (panel && !this.enter()) {
+      return
+    }
+    if (!panel) {
+      this.back()
     }
     this.move(step, false)
   }
 
   private openRow(spot: RowSpot, count: number): void {
-    const list = this.list
-    if (list.focusedRow()?.kind === 'extra') {
+    if (spot.pane) {
+      if (spot.part === 'box') {
+        this.inside.pick()
+      } else if (spot.part === 'fold') {
+        this.inside.flip()
+      } else if (count === 2) {
+        this.inside.open()
+      }
+    } else if (this.list.focusedRow()?.kind === 'extra') {
       if (spot.part === 'box' || count === 2) {
         this.activate()
       }
-    } else if (spot.part === 'box') {
-      list.pick()
-    } else if (spot.part === 'fold') {
-      list.flip()
-    } else if (count === 2) {
-      list.open()
+    } else if (spot.part === 'fold' || count === 2) {
+      this.enter()
     }
   }
 
   private typed(): void {
-    this.list.setFilter(this.field.value)
+    const query = this.field.value
+    const was = this.list.focusedRow()
+    this.list.setFilter(query)
+    if (was?.kind === 'top') {
+      this.list.select(`top ${was.name}`)
+    }
+    this.inside.setFilter(query)
+    this.follow()
+    if (query.trim() && this.list.focusedRow()?.kind === 'top' && this.inside.matched() > 0) {
+      this.enter()
+    } else if (query.trim()) {
+      this.back()
+    }
     this.later('search', SEARCH_AFTER, () => this.lookup())
     this.watch()
   }
 
   private clear(): void {
     this.field.value = ''
-    this.list.clear()
+    const was = this.list.focusedRow()
+    this.inside.clear()
+    this.list.setFilter('')
+    if (was?.kind === 'top') {
+      this.list.select(`top ${was.name}`)
+    }
+    this.follow()
     this.later('search', SEARCH_AFTER, () => this.lookup())
     this.watch()
   }
@@ -536,37 +659,13 @@ export class BrowsePanel {
     return this.order([...listed, ...orphans.values()])
   }
 
-  private scoped(entries: PaletteEntry[]): PaletteEntry[] {
-    const source = this.scope
-    const marketplace = source === undefined ? undefined : this.active().find((m) => m.source === source)
-    if (!marketplace) {
-      this.scope = undefined
-      return entries
-    }
-    const names = new Set(marketplace.entries.map((e) => e.name))
-    return entries.filter((e) => names.has(e.name))
-  }
-
   private reload(): void {
-    this.list.setEntries(this.scoped(this.entries()))
-  }
-
-  private chips(): Chip[] {
-    const marketplaces = this.active().map((m) => ({
-      source: m.source as string | undefined,
-      label: m.id,
-      count: m.entries.filter((e) => !e.default).length,
-    }))
-    return [
-      { source: undefined, label: 'All', count: this.entries().filter((e) => !e.default).length },
-      ...marketplaces,
-    ]
+    this.list.setEntries(this.entries())
+    this.follow(true)
   }
 
   private tops(): string[] {
-    return [...this.marketplaces, ...this.adds.values()]
-      .filter((m) => this.scope === undefined || m.source === this.scope)
-      .map((m) => m.id)
+    return [...this.marketplaces, ...this.adds.values()].map((m) => m.id)
   }
 
   private marketplaceNamed(id: string): Marketplace | undefined {
@@ -578,26 +677,8 @@ export class BrowsePanel {
     return row?.kind === 'top' ? this.marketplaceNamed(row.name) : undefined
   }
 
-  private cycle(): void {
-    if (this.active().length < 2) {
-      return
-    }
-    const chips = this.chips()
-    const at = Math.max(
-      0,
-      chips.findIndex((c) => c.source === this.scope),
-    )
-    this.scopeTo(chips[(at + 1) % chips.length]?.source)
-  }
-
-  private scopeTo(source: string | undefined): void {
-    this.scope = source
-    this.reload()
-    this.list.refocus()
-  }
-
   private move(delta: number, wrap = true): void {
-    this.list.move(delta, wrap)
+    ;(this.side === 'panel' ? this.inside : this.list).move(delta, wrap)
     this.watch()
   }
 
@@ -834,14 +915,25 @@ export class BrowsePanel {
     )
   }
 
-  private found(): Row[] {
+  private heads(): Row[] {
     const typed = typedSource(this.field.value)
+    const found: Found = typed && !this.known(typed) ? { kind: 'add', source: typed } : { kind: 'new' }
+    return [
+      {
+        key: 'add',
+        idle: found.kind === 'new',
+        found,
+        text: (focused: boolean, at: number) => this.foundLine(found, focused, at),
+      },
+    ]
+  }
+
+  private found(): Row[] {
     const hit = (...fields: string[]) => containsText(fields, this.field.value)
     const repos = (this.repos ?? [])
       .map((repo) => ({ repo, source: repositorySource(repo) }))
       .filter(({ repo, source }) => hit(source, repo.description ?? ''))
     const rows: Found[] = [
-      ...(typed && !this.known(typed) ? [{ kind: 'add' as const, source: typed }] : []),
       ...repos.map(({ repo, source }) => ({ kind: 'repo' as const, repo, source })),
       ...(repos.length > 0 ? [] : [{ kind: 'find' as const }]),
     ]
@@ -849,10 +941,10 @@ export class BrowsePanel {
       {
         key: 'github',
         rule: true,
-        text: () => `   ${this.p.dim(`── On GitHub${this.searching ? ' · searching…' : ''} ──────────`)}`,
+        text: () => `\n   ${this.p.dim(`── On GitHub${this.searching ? ' · searching…' : ''} ──────────`)}`,
       },
       ...rows.map((found) => ({
-        key: found.kind === 'find' ? 'find' : `${found.kind} ${found.source}`,
+        key: found.kind === 'repo' ? `repo ${found.source}` : found.kind,
         found,
         text: (focused: boolean, at: number) => this.foundLine(found, focused, at),
       })),
@@ -868,10 +960,26 @@ export class BrowsePanel {
       ? 'Will add'
       : this.removes.has(marketplace.source)
         ? 'Will remove'
-        : (this.busy.get(marketplace.source) ??
-          (this.failed.has(marketplace.source) || marketplace.status.startsWith('update failed')
-            ? 'Update failed'
-            : ''))
+        : (this.busy.get(marketplace.source) ?? (this.failed.has(marketplace.source) ? 'Update failed' : ''))
+  }
+
+  private about(top: string, members: PaletteEntry[], matching?: number): Card {
+    const m = this.marketplaceNamed(top)
+    const installed = members.filter((e) => this.installed.has(e.name)).length
+    const adding = members.filter((e) => this.picked.has(e.name) && !this.installed.has(e.name)).length
+    const dropping = members.filter((e) => this.installed.has(e.name) && !this.picked.has(e.name)).length
+    const counts = [
+      ...(m && matching !== undefined ? [`${matching} of ${m.entries.filter((e) => !e.default).length} match`] : []),
+      ...(m && matching === undefined ? [`${m.entries.filter((e) => !e.default).length} available`] : []),
+      ...(installed > 0 || !m ? [`${installed} installed`] : []),
+      ...(adding > 0 ? [`${adding} to install`] : []),
+      ...(dropping > 0 ? [`${dropping} to remove`] : []),
+      ...(m && m.source !== OFFICIAL && !(this.adds.has(m.source) && isRemote(m.source)) ? [cap(m.status)] : []),
+    ]
+    return {
+      added: m !== undefined && !this.removes.has(m.source),
+      lines: [this.p.dim(m ? whereOf(m.source) : 'Not added'), this.p.dim(counts.join(' · '))],
+    }
   }
 
   private badge(id: string): string {
@@ -894,6 +1002,12 @@ export class BrowsePanel {
   private foundLine(found: Found, focused: boolean, at: number): string {
     const box = (mark: string) => rowSpot(at, 'box', `${mark} `)
     const after = (text: string) => (text ? `  ${this.p.dim(text)}` : '')
+    if (found.kind === 'new') {
+      const typed = typedSource(this.field.value)
+      const known = typed ? this.known(typed) : undefined
+      const note = known ? `${known.id} is already added` : 'type owner/repo or a folder'
+      return this.lit(focused, `${box('+')}Add marketplace${after(note)}`)
+    }
     if (found.kind === 'add') {
       const failure = this.failed.get(found.source) ?? this.peekFailed.get(found.source)
       const peeked = this.peeked.get(found.source)
@@ -907,7 +1021,7 @@ export class BrowsePanel {
                   ? 'Fetching its palettes…'
                   : 'space fetches its palettes'),
           )
-      return this.lit(focused, `${box('+')}Add ${shownSource(found.source)}${note}`)
+      return this.lit(focused, `${box('+')}Add ${whereOf(found.source)}${note}`)
     }
     if (found.kind === 'find') {
       const query = this.field.value.trim()
@@ -927,12 +1041,20 @@ export class BrowsePanel {
       const note = this.searchError ?? (this.searching ? '' : idle ? 'space searches' : 'space searches again')
       return this.lit(focused, `${box(MARKS.search)}${text}${after(note)}`)
     }
-    const busy = this.busy.get(found.source)
-    const note = [busy ?? this.peeking(found.source), found.repo.description ?? ''].filter(Boolean).join(' · ')
-    return this.lit(
-      focused,
-      `${box(this.known(found.source) ? MARKS.on : MARKS.off)}${found.source}  ${this.p.dim(`${MARKS.star}${found.repo.stargazers_count}`)}${after(note)}`,
-    )
+    const known = this.known(found.source)
+    const failure = this.failed.get(found.source) ?? this.peekFailed.get(found.source)
+    const peeked = this.peeked.get(found.source)
+    const facts = [
+      `${MARKS.star}${found.repo.stargazers_count}`,
+      known ? `Added as ${known.id}` : peeked ? `${peeked.entries.filter((e) => !e.default).length} available` : '',
+      this.busy.get(found.source) ?? '',
+    ].filter(Boolean)
+    return [
+      '',
+      this.lit(focused, `${box(known ? MARKS.on : MARKS.off)}${found.source}`),
+      ...(found.repo.description ? [this.lit(focused, `  ${this.p.dim(found.repo.description)}`)] : []),
+      this.lit(focused, `  ${this.p.dim(facts.join(' · '))}${failure ? `  ${this.p.error(failure)}` : ''}`),
+    ].join('\n')
   }
 
   private changes(): number {
@@ -958,7 +1080,7 @@ export class BrowsePanel {
   }
 
   private toggleRenew(): void {
-    const list = this.list
+    const list = this.inside
     const row = list.focusedRow()
     const names = (row ? list.inside(row) : [])
       .map((e) => e.name)
@@ -1198,8 +1320,8 @@ export class BrowsePanel {
     }
   }
 
-  private more(step: number, text: string): string {
-    return this.p.dim(zone({ kind: 'page', step } satisfies Spot, text))
+  private more(step: number, text: string, pane?: string): string {
+    return this.p.dim(zone({ kind: 'page', step, ...(pane ? { pane } : {}) } satisfies Spot, text))
   }
 
   private counts(): string {
@@ -1231,59 +1353,6 @@ export class BrowsePanel {
     ]
   }
 
-  private strip(width: number): string | undefined {
-    if (this.active().length < 2) {
-      return undefined
-    }
-    const chips = this.chips()
-    const sel = Math.max(
-      0,
-      chips.findIndex((c) => c.source === this.scope),
-    )
-    const labels = chips.map((c, i) => (i === sel && !this.color ? `[${c.label} ${c.count}]` : `${c.label} ${c.count}`))
-    const sep = ' · '
-    const tail = (more: number) => (more > 0 ? `${sep}+${more} more`.length : 0)
-    const shownFrom = (start: number): number => {
-      let used = start > 0 ? 2 : 0
-      let n = 0
-      for (let i = start; i < labels.length; i++) {
-        const grown = used + (n > 0 ? sep.length : 0) + (labels[i] as string).length
-        if (grown + tail(labels.length - i - 1) > width) {
-          break
-        }
-        used = grown
-        n += 1
-      }
-      return n
-    }
-    let start = 0
-    while (start < sel && start + shownFrom(start) <= sel) {
-      start += 1
-    }
-    const count = Math.max(1, shownFrom(start))
-    const shown = labels.slice(start, start + count)
-    const left = labels.length - start - count
-    const parts = shown.map((label, i) => {
-      const chip = zone({ kind: 'chip', source: chips[start + i]?.source } satisfies Spot, label)
-      if (start + i === sel) {
-        return this.p.accent(this.p.bold(chip))
-      }
-      return this.p.dim(chip)
-    })
-    const text = `${start > 0 ? `${this.p.dim(keyZone('ctrl+s', '…'))} ` : ''}${parts.join(this.p.dim(sep))}${left > 0 ? this.p.dim(`${sep}${keyZone('ctrl+s', `+${left} more`)}`) : ''}`
-    const plain = (start > 0 ? 2 : 0) + shown.join(sep).length + tail(left)
-    const hint = 'ctrl+s marketplace'
-    return plain + 2 + hint.length <= width ? `${text}  ${this.p.dim(keyZone('ctrl+s', hint))}` : text
-  }
-
-  private sourceOf(entry: PaletteEntry | undefined): string {
-    const marketplace = entry && this.active().find((m) => m.entries.some((e) => e.name === entry.name))
-    if (!marketplace) {
-      return 'In no marketplace you added'
-    }
-    return marketplace.source === OFFICIAL ? 'The official marketplace' : marketplace.shown
-  }
-
   private paletteState(entry: PaletteEntry): string {
     const now = this.picked.has(entry.name)
     const was = this.installed.has(entry.name)
@@ -1299,34 +1368,35 @@ export class BrowsePanel {
 
   private detail(width: number): Detail {
     const row = this.list.focusedRow()
-    if (!row || row.kind === 'rule' || row.kind === 'all') {
-      return EMPTY
-    }
-    if (row.kind === 'extra') {
+    if (row?.kind === 'extra') {
       return row.extra.found ? this.foundDetail(row.extra.found, width) : EMPTY
     }
-    const marketplace = row.kind === 'top' ? this.marketplaceNamed(row.name) : undefined
+    if (row?.kind !== 'top') {
+      return EMPTY
+    }
+    const marketplace = this.marketplaceNamed(row.name)
     if (marketplace) {
       return this.marketplaceDetail(marketplace, width)
     }
-    if (row.kind === 'top' || row.kind === 'catalog') {
-      const members = this.list.inside(row)
-      const source = this.sourceOf(row.lead)
-      const counts = `${counted(members.length)} · ${members.filter((e) => this.installed.has(e.name)).length} installed`
-      const within = row.kind === 'catalog' ? row.top : undefined
-      return {
-        title: this.p.bold(row.name),
-        lines: [
-          ...(row.native ? wrapText(row.native, width).map((l) => this.p.dim(l)) : []),
-          ...(within ? [within] : []),
-          ...wrapText(source, width),
-          counts,
-        ],
-        brief: `${within ?? source} · ${counts}`,
-      }
+    const note = 'In no marketplace you added — its installed palettes stay'
+    return { title: this.p.bold(row.name), lines: wrapText(note, width), brief: note }
+  }
+
+  private foot(width: number): string[] {
+    const row = this.inside.focusedRow()
+    if (row?.kind === 'catalog') {
+      const members = this.inside.inside(row)
+      const installed = members.filter((e) => this.installed.has(e.name)).length
+      return [
+        `${this.p.bold(row.name)}${row.native ? ` ${this.p.dim(row.native)}` : ''}`,
+        this.p.dim(`${counted(members.length)} · ${installed} installed`),
+        '',
+      ]
+    }
+    if (row?.kind !== 'palette') {
+      return ['', '', '']
     }
     const e = row.entry
-    const source = this.sourceOf(e)
     const fails = gateFailures(e)
     const gate = `Gate ${GATE_RULES.length - fails.length}/${GATE_RULES.length}`
     const pictures = e.pictures?.length ?? 0
@@ -1334,33 +1404,22 @@ export class BrowsePanel {
       ...(pictures > 0 ? [`${pictures} picture${pictures === 1 ? '' : 's'}`] : []),
       ...(e.base ? [`Base ${e.base}`] : []),
     ].join(' · ')
-    const shelf = e.catalog ? [e.catalog, ...(e.native ? [this.p.dim(e.native)] : [])] : []
-    return {
-      title: this.color ? this.p.bold(`${ansiFg(e.cursor)}${e.name}${FG_RESET}`) : e.name,
-      lines: [
-        ...wrapText(source, width),
-        ...shelf,
-        this.paletteState(e),
-        '',
-        fails.length === 0 ? `${gate} · passes` : gate,
-        ...fails.flatMap((f) =>
-          wrapText(f, width - 2).map((l, i) => `${i === 0 ? this.p.bold(MARKS.miss) : ' '} ${l}`),
-        ),
-        ...(extras ? ['', extras] : []),
-      ],
-      brief: [source, gate, ...(extras ? [extras] : []), this.paletteState(e)].join(' · '),
-    }
+    const more = fails.length > 1 ? ` · +${fails.length - 1}` : ''
+    return [
+      `${this.color ? this.p.bold(`${ansiFg(e.cursor)}${e.name}${FG_RESET}`) : e.name}  ${this.p.dim(this.paletteState(e))}`,
+      fails[0] === undefined
+        ? this.p.dim(`${gate} · passes`)
+        : `${gate} · ${this.p.bold(MARKS.miss)} ${fails[0]}${more}`,
+      fit(this.p.dim(extras), width),
+    ]
   }
 
   private marketplaceDetail(m: Marketplace, width: number): Detail {
-    const source = m.source === OFFICIAL ? 'The official marketplace' : m.shown
     const listed = m.entries.filter((e) => !e.default)
     const installed = listed.filter((e) => this.installed.has(e.name)).map((e) => e.name)
-    const counts = `${counted(listed.length)} · ${installed.length} installed`
     const auto = isRemote(m.source)
       ? `Auto-update ${(this.want.get(m.source) ?? m.auto) ? 'on' : 'off'}`
       : cap(m.status)
-    const when = this.busy.get(m.source) ?? cap(m.status)
     const failure = this.failed.get(m.source)
     const staged = this.adds.has(m.source)
       ? ['Will add']
@@ -1376,20 +1435,24 @@ export class BrowsePanel {
     return {
       title: this.p.bold(m.id),
       lines: [
-        ...wrapText(source, width),
-        ...(m.description ? wrapText(m.description, width).map((l) => this.p.dim(l)) : []),
-        counts,
-        '',
+        ...(m.description ? [...wrapText(m.description, width).map((l) => this.p.dim(l)), ''] : []),
         isRemote(m.source) ? `${auto}  ${this.p.dim('⇧←→')}` : auto,
-        ...(isRemote(m.source) ? [when] : []),
         ...(failure ? wrapText(failure, width).map((l) => this.p.error(l)) : []),
         ...(staged.length > 0 ? ['', ...staged.flatMap((s) => wrapText(s, width))] : []),
       ],
-      brief: [source, auto, ...staged, ...(isRemote(m.source) ? [when] : [])].join(' · '),
+      brief: [auto, ...staged].join(' · '),
     }
   }
 
   private foundDetail(row: Found, width: number): Detail {
+    if (row.kind === 'new') {
+      const how = 'Type owner/repo, owner/repo#ref or a folder into the search, and space adds it'
+      return {
+        title: this.p.bold('Add marketplace'),
+        lines: [...wrapText(how, width), '', ...wrapText(`Or pick one on GitHub, below the marketplaces`, width)],
+        brief: how,
+      }
+    }
     if (row.kind === 'add') {
       const note =
         this.busy.get(row.source) ??
@@ -1401,7 +1464,7 @@ export class BrowsePanel {
             ? 'Fetching its palettes…'
             : 'space fetches its palettes')
       return {
-        title: this.p.bold(shownSource(row.source)),
+        title: this.p.bold(whereOf(row.source)),
         lines: ['Not added', ...this.peekLines(row.source, width), '', ...wrapText(note, width)],
         brief: [this.peeking(row.source), note].filter(Boolean).join(' · '),
       }
@@ -1495,18 +1558,28 @@ export class BrowsePanel {
     const tail: Hint[] = [...(filter ? [['bksp', 'edit'] as Hint] : []), ['?', 'keys']]
     return {
       badge: filter ? 'BROWSE (FILTER)' : 'BROWSE',
-      keys: [...this.rowKeys(enter), ...tail],
-      right: filter ? ['esc', 'clear filter'] : ['esc', 'cancel'],
+      keys: [...(this.side === 'panel' ? this.panelKeys(enter) : this.cardKeys(enter)), ...tail],
+      right: filter ? ['esc', 'clear filter'] : this.side === 'panel' ? ['esc', 'back'] : ['esc', 'cancel'],
     }
   }
 
-  private rowKeys(enter: Hint): Hint[] {
-    const list = this.list
+  private panelKeys(enter: Hint): Hint[] {
+    const list = this.inside
     const row = list.focusedRow()
-    if (!row) {
-      return [enter]
+    if (row?.kind === 'catalog' && list.foldable()) {
+      return [row.expanded ? ['←', 'close'] : ['→', 'open'], ['space', 'pick']]
     }
-    if (row.kind === 'extra') {
+    const renewable = row?.kind === 'palette' && this.updates.has(row.entry.name) && this.installed.has(row.entry.name)
+    return [
+      ['space', 'pick'],
+      ...(renewable ? [['ctrl+r', this.renew.has(row.entry.name) ? 'keep' : 'update'] as Hint] : []),
+      enter,
+    ]
+  }
+
+  private cardKeys(enter: Hint): Hint[] {
+    const row = this.list.focusedRow()
+    if (row?.kind === 'extra') {
       const found = row.extra.found
       if (found?.kind === 'find') {
         return [['space', 'search'], enter]
@@ -1516,31 +1589,22 @@ export class BrowsePanel {
       }
       return [enter]
     }
-    const fold: Hint[] =
-      list.foldable() && (row.kind === 'top' || row.kind === 'catalog')
-        ? [row.expanded ? ['←', 'close'] : ['→', 'open']]
-        : []
+    if (row?.kind !== 'top') {
+      return [enter]
+    }
+    const open: Hint[] = this.inside.size() > 0 ? [['→', 'open']] : []
     const marketplace = this.focusedMarketplace()
-    if (marketplace) {
-      const remote = isRemote(marketplace.source)
-      const staged = this.adds.has(marketplace.source) || this.removes.has(marketplace.source)
-      return [
-        ...fold,
-        ['space', 'pick'],
-        ...(remote ? [['⇧←→', 'auto-update'] as Hint] : []),
-        ...(remote && !this.adds.has(marketplace.source) ? [['ctrl+r', 'update'] as Hint] : []),
-        ['del', staged ? 'undo' : 'remove'],
-        ...(fold.length > 0 ? [] : [enter]),
-      ]
+    if (!marketplace) {
+      return [...open, ['space', 'pick']]
     }
-    if (fold.length > 0) {
-      return [...fold, ['space', 'pick']]
-    }
-    const renewable = row.kind === 'palette' && this.updates.has(row.entry.name) && this.installed.has(row.entry.name)
+    const remote = isRemote(marketplace.source)
+    const staged = this.adds.has(marketplace.source) || this.removes.has(marketplace.source)
     return [
+      ...open,
       ['space', 'pick'],
-      ...(renewable ? [['ctrl+r', this.renew.has(row.entry.name) ? 'keep' : 'update'] as Hint] : []),
-      enter,
+      ...(remote ? [['⇧←→', 'auto-update'] as Hint] : []),
+      ...(remote && !this.adds.has(marketplace.source) ? [['ctrl+r', 'update'] as Hint] : []),
+      ['del', staged ? 'undo' : 'remove'],
     ]
   }
 
@@ -1576,38 +1640,31 @@ export class BrowsePanel {
     if (this.phase !== 'browse') {
       return this.frame(cols, rows)
     }
+    this.follow()
     const wide = cols >= WIDE
     const width = cols - 1
-    const left = wide ? Math.min(cols - RIGHT - 4, LEFT_MAX) : width
-    const strip = this.strip(width - 1)
-    const head = [
-      ...(rows >= ROOMY
+    const head =
+      rows >= ROOMY
         ? [` ${this.heading()}`, ...this.searchBox(cols - 3).map((line) => ` ${line}`)]
-        : [spread(` ${this.p.dim(MARKS.search)} ${this.searchText()}`, this.p.dim(this.counts()), width)]),
-      ...(strip ? [` ${strip}`] : []),
-    ]
+        : [spread(` ${this.p.dim(MARKS.search)} ${this.searchText()}`, this.p.dim(this.counts()), width)]
     const chrome = head.length + 3 + (wide ? 0 : 1) + (this.hub ? 1 : 0)
     if (rows < chrome + MIN_ITEMS) {
       return this.small(cols, rows, chrome + MIN_ITEMS)
     }
     this.fitItems(chrome)
-    const { lines, above, below } = this.list.window()
-    const body = lines.map((line) => ` ${line}`)
-    while (body.length < this.maxItems) {
-      body.push('')
-    }
-    const list = [
-      above > 0 ? ` ${this.more(-1, `↑ ${above} more`)}` : '',
-      ...body,
-      below > 0 ? ` ${this.more(1, `↓ ${below} more`)}` : '',
-    ]
-    const detail = this.detail(wide ? RIGHT : left - 2)
-    const main = wide
-      ? list.map(
-          (row, i) =>
-            `${fit(row, left)} ${this.p.dim('│')} ${fit(i === 0 ? detail.title : (detail.lines[i - 1] ?? ''), RIGHT, false)}`,
-        )
-      : [...list.map((row) => fit(row, left, false)), fit(` ${this.p.dim(detail.brief)}`, left, false)]
+    const view = this.list.window()
+    const plain = (line: string) =>
+      pieces(line)
+        .flatMap((piece) => (piece.sequence ? [] : [piece.text]))
+        .join('')
+        .trimEnd()
+    const widest = Math.max(0, ...view.lines.map((line) => cells(plain(line)) + 3))
+    const left = wide ? Math.min(LEFT_MAX, width - PANEL_MIN - 1, Math.max(LEFT_MIN, widest)) : width
+    this.split = wide ? left + 1 : 0
+    const main =
+      !wide && this.side === 'panel'
+        ? this.panel(width - 1, this.maxItems + 3).map((line) => ` ${line}`)
+        : this.cards(view, wide, left, width)
     const frame = [
       ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
       ...head.map((line) => fit(line, width, false)),
@@ -1617,13 +1674,81 @@ export class BrowsePanel {
     return (this.help ? this.helpBox(frame, cols, rows, frame.length - main.length - 1) : frame).join('\n')
   }
 
+  private cards(
+    { lines, above, below }: { lines: string[]; above: number; below: number },
+    wide: boolean,
+    left: number,
+    width: number,
+  ): string[] {
+    const body = lines.map((line) => ` ${line}`)
+    while (body.length < this.maxItems) {
+      body.push('')
+    }
+    const list = [
+      above > 0 ? ` ${this.more(-1, `↑ ${above} more`)}` : '',
+      ...body,
+      below > 0 ? ` ${this.more(1, `↓ ${below} more`)}` : '',
+    ]
+    if (!wide) {
+      return [
+        ...list.map((row) => fit(row, left, false)),
+        fit(` ${this.p.dim(this.detail(left - 2).brief)}`, left, false),
+      ]
+    }
+    const box = this.panel(width - left - 1, list.length)
+    return list.map((row, i) => `${fit(row, left)} ${box[i] ?? ''}`)
+  }
+
+  private panel(width: number, height: number): string[] {
+    const lit = this.side === 'panel'
+    const frame = (text: string) => (lit ? this.p.accent(text) : this.p.dim(text))
+    const inner = width - 4
+    const side = (text: string) => `${frame('│')} ${fit(text, inner)} ${frame('│')}`
+    const detail = this.detail(inner)
+    const title = lit ? this.p.accent(detail.title) : detail.title
+    const body = height - 2
+    if (this.list.focusedRow()?.kind !== 'top') {
+      const lines = detail.lines.slice(0, body)
+      while (lines.length < body) {
+        lines.push('')
+      }
+      return [this.edge(width, 'top', title, '', lit), ...lines.map(side), this.edge(width, 'bottom', '', '', lit)]
+    }
+    const foot = lit ? this.foot(inner) : []
+    const head = detail.lines.slice(0, Math.max(0, body - 2 - (foot.length > 0 ? foot.length + 1 : 0)))
+    this.inside.maxItems = Math.max(1, body - head.length - 1 - (foot.length > 0 ? foot.length + 1 : 0))
+    const { lines, above, below } = this.inside.window()
+    const tree = this.inside.size() > 0 ? lines : [this.p.dim('   No palettes yet')]
+    while (tree.length < this.inside.maxItems) {
+      tree.push('')
+    }
+    const down = below > 0 ? this.more(1, `↓ ${below} more`, 'panel') : ''
+    return [
+      this.edge(width, 'top', title, '', lit),
+      ...head.map(side),
+      side(above > 0 ? this.more(-1, `↑ ${above} more`, 'panel') : ''),
+      ...tree.map(side),
+      ...(foot.length > 0 ? [this.edge(width, 'mid', '', down, lit), ...foot.map(side)] : []),
+      this.edge(width, 'bottom', '', foot.length > 0 ? '' : down, lit),
+    ]
+  }
+
+  private edge(width: number, at: 'top' | 'mid' | 'bottom', head: string, tail: string, lit: boolean): string {
+    const frame = (text: string) => (lit ? this.p.accent(text) : this.p.dim(text))
+    const [left = '', right = ''] = [...boxEdge(2, at)]
+    const title = head ? ` ${fit(head, width - 8, false)} ` : ''
+    const end = tail ? ` ${tail} ` : ''
+    const fill = Math.max(0, width - 3 - cells(title) - cells(end) - (tail ? 1 : 0))
+    return `${frame(`${left}─`)}${title}${frame('─'.repeat(fill))}${end}${frame(`${tail ? '─' : ''}${right}`)}`
+  }
+
   private helpRows(): Hint[] {
     return [
       ['Move', '↑↓  home  end  pgup  pgdn'],
-      ['Open', '←→  ·  enter on a marketplace or a catalog'],
+      ['Open', '→  enter  ·  a marketplace into the panel, a catalog'],
+      ['Back', '←  esc  ·  from the panel to the marketplaces'],
       ['Pick', 'space  ·  a palette, a catalog, a marketplace'],
       ['Filter', 'Any text  ·  bksp  ·  ctrl-u clears'],
-      ...(this.active().length >= 2 ? [['Scope', 'ctrl+s  ·  one marketplace, then all'] as Hint] : []),
       ['Marketplace', '⇧←→  auto-update  ·  ctrl+r  updates it'],
       ['', 'del  removes it  ·  again to undo'],
       ['Add', 'owner/repo, a folder, or a row on GitHub'],

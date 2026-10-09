@@ -356,7 +356,7 @@ still wins:
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
 | `TTHEME_NAMES` | `on` | characters' names in every language, which preview, browse, `list` and `find`'s search box match besides the palette names: `on` downloads them from aninames' weekly release into `~/.cache/ttheme/aninames/` (about 7 MB to download, about 65 MB there once the search index is built from them) and checks for a newer one once a day in the background; `off` leaves them as they are |
 | `TTHEME_AUTO_UPDATE` | `on` | the checks ttheme makes by itself once a day: whether npm has a newer ttheme, and the list of every marketplace whose auto-update is on ([Installing palettes](#installing-palettes)); `off` leaves both to `ttheme update`, as a `CI` environment does |
-| `TTHEME_MARKETPLACE_LOOKUP` | `on` | Browse looks GitHub up by itself: the repositories carrying the `ttheme-marketplace` topic when it opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the detail panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
+| `TTHEME_MARKETPLACE_LOOKUP` | `on` | Browse looks GitHub up by itself: the repositories carrying the `ttheme-marketplace` topic when it opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
 | `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |
@@ -377,39 +377,50 @@ still wins:
 
 No marketplace is installed wholesale: `init` installs the catalogs you pick, and
 `init --yes` none at all. Browse, the second tab of `ttheme`, is every
-marketplace you added as one full-screen live picker. The rest is preview's: `↑`/`↓`,
-page up/down and home/end move through it, `←`/`→` and `enter` open and close
-a marketplace or a catalog, `esc` clears the filter before it leaves, `?` lists the
-keys, and the last line names the keys of the row you are on.
+marketplace you added as one full-screen live picker: the marketplaces on the
+left, and beside them a panel with the one the cursor is on. The rest is
+preview's: `↑`/`↓`, page up/down and home/end move through it, `→` or `enter`
+on a marketplace moves into its panel, where `←`/`→` and `enter` close and open
+a catalog, `←` at the top level or `esc` comes back to the marketplaces, `esc`
+clears the filter before anything else, `?` lists the keys, and the last line
+names the keys of the row you are on.
 
-Every marketplace you added is a row: `official` holds the catalogs that come with
-ttheme, and every other marketplace its own, each opening onto its palettes.
-Typing filters (a query has no spaces, `space` is the pick key), the tab
-repaints as the cursor lands on a palette, and `space` marks one (a catalog or a
-whole marketplace from its header); unmarking one you have is how you
-drop it. A palette whose marketplace changed it since you installed it is marked
-`↑`, and `ctrl+r` stages its update — or every one under a catalog.
-With two marketplaces or more a strip under the search box counts each one (`All
-130 · official 108 · alice@pastel 22`), and `ctrl+s` narrows the list to the
-next marketplace, then back to all of them.
+Every marketplace you added is a card of three lines, as Claude Code draws its
+marketplaces: its name, where it comes from — `Built in` for `official`, which
+holds the catalogs that come with ttheme, `owner/repo` for a repository, the
+folder for one on disk — and what it holds, `66 available · 2 installed · Updated
+2 days ago`. The panel beside the cards shows the marketplace the cursor is on —
+how it updates, then its catalogs and palettes — and once you move into it its
+frame takes the accent, the tab repaints as the cursor lands on a palette, and
+its foot describes the palette or catalog under the cursor: whether it is
+installed, its gate score and first failing rule, its pictures. `space` marks a
+palette (a catalog, or a whole marketplace from its card); unmarking one you have
+is how you drop it. A palette whose marketplace changed it since you installed
+it is marked `↑`, and `ctrl+r` stages its update — or every one under a catalog.
+Typing filters every marketplace at once (a query has no spaces, `space` is the
+pick key): a card with nothing matching hides, the others say how many match
+(`2 of 108 match`), and the cursor lands on the first match inside the panel.
 
-On a marketplace's row, `delete` marks it for removal (its installed palettes stay,
+On a marketplace's card, `delete` marks it for removal (its installed palettes stay,
 and `delete` again keeps it), `shift+←` and `shift+→` turn a repository's
 auto-update off and on, and `ctrl+r` updates it now; the official marketplace
-comes with ttheme, so it has neither. The row says when one is staged or its
-update failed, and the detail panel says where it comes from, when it was
-updated and why an update failed. Under the marketplaces, `On GitHub` lists the
-repositories with the `ttheme-marketplace` topic by itself as Browse opens, and
-again a moment after you stop typing, for what you typed; moving onto one
-fetches its archive, so the detail panel names the palettes it would bring
-before you add it, and `space` adds it — after asking whether it updates on its
-own. Type a repository (`alice/ttheme-pastel`, `#v1` pins it) or a folder and
-an `Add` row appears there, looked up the same way. A search GitHub turns away
+comes with ttheme, so it has neither. The card says when one is staged, updating
+or failed, and what you marked in it (`1 to install`, `1 to remove`); the
+panel says why an update failed and whether it updates on its own. Under the
+marketplaces, `On GitHub` lists the repositories
+with the `ttheme-marketplace` topic by itself as Browse opens, and again a
+moment after you stop typing, for what you typed, each as a card: the
+repository, its description, and its stars; moving onto one fetches its
+archive, so its card counts the palettes it would bring and the panel names
+them before you add it, and `space` adds it — after asking whether it
+updates on its own. `+ Add marketplace` leads the list: type a repository
+(`alice/ttheme-pastel`, `#v1` pins it) or a folder and it becomes an `Add` row
+for it, looked up the same way. A search GitHub turns away
 shows as a row that `space` or `ctrl+r` retries; `TTHEME_MARKETPLACE_LOOKUP=off`
 leaves all of this to `space`.
 
-Nothing is written until you apply. enter on anything but a marketplace or a catalog
-opens a review of everything staged — the marketplaces added and removed, the
+Nothing is written until you apply. enter on a palette, or on a row of the
+marketplaces that is not a marketplace, opens a review of everything staged — the marketplaces added and removed, the
 auto-update switches, and exactly the palettes marked (installing the new ones,
 removing the unmarked, updating the ones staged with `ctrl+r`); enter again applies it, esc goes back to the list. The
 screen stays while it works: what it has done so far, and one line for the step
@@ -417,28 +428,42 @@ in hand (a picture being fetched,
 `Downloading kita · danbooru 1234 · 3.1/8.4 MB · 1/2`), then what was applied,
 until enter closes it — and the same lines are left in your scrollback. With
 nothing staged enter simply leaves, and esc on the list, with the filter clear,
-leaves everything as it was. From 94 columns up, the panel on the right
-describes whatever the cursor is on — a palette's marketplace, its gate score and
-failing rules, its pictures, and what enter will do to it; a narrower window
-gets the same as one line under the list:
+leaves everything as it was. The panel needs 94 columns to sit beside the
+cards; in a narrower window the cards come with one line under them about the
+one the cursor is on, and the panel takes the whole screen while you are in it:
 
 ```
- Browse (1/6 · 2 picked)
- ╭──────────────────────────────────────────────────────────────────────────────────────╮
- │ ⌕ ki_                                                                                │
- ╰──────────────────────────────────────────────────────────────────────────────────────╯
-                                                               │ kita
-    ▾ official (1/1)                                           │ The official marketplace
-      ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!             │ Bocchi the Rock!
- ▌      ● kita   ■ ■ ■ ■ ■ ■                                   │ ぼっち・ざ・ろっく!
-    ── On GitHub ──────────                                    │ Installed
-    ⌕ Find "ki" on GitHub  space searches                      │ Gate 9/9 · passes
- [BROWSE (FILTER)] space pick   enter close   bksp edit   ? keys       esc clear filter
+ Browse (177/177 · 9 picked)
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ Search… e.g. kita | Bocchi the Rock!                                                        │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                       ╭─ official ───────────────────────────────╮
+    + Add marketplace  type owner/repo or a folder     │ Comes with ttheme                        │
+                                                       │                                          │
+    ● official                                         │    ▾ Bocchi the Rock! (2/4) ぼっち・ざ…  │
+      Built in                                         │ ▌    ● bocchi                            │
+      108 available · 6 installed                      │      ● kita                              │
+                                                       │      ○ nijika                            │
+    ● kecan0406@bemani  ↻ auto-update                  │      ○ ryo                               │
+      kecan0406/ttheme-bemani                          │    ▸ Lucky☆Star (1/4) らき☆すた          │
+      66 available · 2 installed · Updated 2 days ago  │    ▸ Frieren (1/3) 葬送のフリーレン      │
+                                                       │    ▸ K-On! (2/97) けいおん!              │
+    ● kec@mine                                         │                                          │
+      ~/.config/ttheme/marketplace/mine                │                                          │
+      3 available · 1 installed · Read in place        │                                          │
+                                                       │                                          │
+    ── On GitHub ──────────                            │                                          │
+                                                       ├──────────────────────────────────────────┤
+    ○ alice/ttheme-pastel                              │ bocchi  Installed                        │
+      Soft pastel palettes                             │ Gate 9/9 · passes                        │
+      ★12                                              │                                          │
+                                                       ╰──────────────────────────────────────────╯
+ [BROWSE] space pick   enter close   ? keys                                                esc back
 ```
 
-The counts stay honest: `1/6` is what the filter matched out of every palette,
-`2 picked` is the install set, and `(1/1)` on a header is how many of its
-shown palettes are in it. The six squares are the palette's own colors — its
+The counts stay honest: `177/177` is what the filter matched out of every
+palette, `9 picked` is the install set, a card counts its whole marketplace,
+and `(2/4)` on a catalog is how many of its shown palettes are in it. The six squares are the palette's own colors — its
 foreground, the three that identify the character, then its red and green — and
 the focused row is drawn in the palette's selection color, which `ttheme`,
 `preview` and `browse` all share.

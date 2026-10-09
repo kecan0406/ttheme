@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                               │ Bocchi the Rock!
-    ▾ official (4/6)                                           │ ぼっち・ざ・ろっく!
- ▌    ▸ Bocchi the Rock! (3/3) ぼっち・ざ・ろっく!             │ official
-      ▸ Lucky☆Star (1/3) らき☆すた                             │ The official marketplace
-    ── On GitHub ──────────                                    │ 3 palettes · 1 installed
-    ⌕ Find marketplaces on GitHub  space searches              │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
- [BROWSE] → open   space pick   ? keys                                                   esc cancel
+                                                     ╭─ official ─────────────────────────────────╮
+    + Add marketplace  type owner/repo or a folder   │ Comes with ttheme                          │
+                                                     │                                            │
+    ● official                                       │ ▌  ▸ Bocchi the Rock! (3/3) ぼっち・ざ・…  │
+      Built in                                       │    ▸ Lucky☆Star (1/3) らき☆すた            │
+      6 available · 2 installed · 2 to install       │                                            │
+                                                     │                                            │
+    ── On GitHub ──────────                          │                                            │
+    ⌕ Find marketplaces on GitHub  space searches    │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     ├────────────────────────────────────────────┤
+                                                     │ Bocchi the Rock! ぼっち・ざ・ろっく!       │
+                                                     │ 3 palettes · 1 installed                   │
+                                                     │                                            │
+                                                     ╰────────────────────────────────────────────╯
+ [BROWSE] → open   space pick   ? keys                                                     esc back

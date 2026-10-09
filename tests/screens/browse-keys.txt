@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                 ╭─ Help ────────────────────────────────────────────────────────╮
- ▌  ▸ official (2│                                                               │
-    ── On GitHub │  Move          ↑↓  home  end  pgup  pgdn                      │
-    ⌕ Find market│  Open          ←→  ·  enter on a marketplace or a catalog     │
-                 │  Pick          space  ·  a palette, a catalog, a marketplace  │
-                 │  Filter        Any text  ·  bksp  ·  ctrl-u clears            │
-                 │  Marketplace   ⇧←→  auto-update  ·  ctrl+r  updates it        │
-                 │                del  removes it  ·  again to undo              │
-                 │  Add           owner/repo, a folder, or a row on GitHub       │
-                 │                space  adds it  ·  ctrl+r  searches again      │
-                 │  Update        ctrl+r  on a palette marked ↑                  │
-                 │  Apply         enter  reviews and applies  ·  esc cancels     │
-                 │  Close         ?  esc                                         │
-                 │                                                               │
-                 ╰───────────────────────────────────────────────────────────────╯
-                                                               │
-                                                               │
-                                                               │
-                                                               │
+              ╭─ Help ───────────────────────────────────────────────────────────────╮
+    + Add mark│                                                                      │
+              │  Move          ↑↓  home  end  pgup  pgdn                             │
+ ▌  ● official│  Open          →  enter  ·  a marketplace into the panel, a catalog  │
+ ▌    Built in│  Back          ←  esc  ·  from the panel to the marketplaces         │
+ ▌    6 availa│  Pick          space  ·  a palette, a catalog, a marketplace         │
+              │  Filter        Any text  ·  bksp  ·  ctrl-u clears                   │
+    ── On GitH│  Marketplace   ⇧←→  auto-update  ·  ctrl+r  updates it               │
+    ⌕ Find mar│                del  removes it  ·  again to undo                     │
+              │  Add           owner/repo, a folder, or a row on GitHub              │
+              │                space  adds it  ·  ctrl+r  searches again             │
+              │  Update        ctrl+r  on a palette marked ↑                         │
+              │  Apply         enter  reviews and applies  ·  esc cancels            │
+              │  Close         ?  esc                                                │
+              │                                                                      │
+              ╰──────────────────────────────────────────────────────────────────────╯
+                                                     │                                            │
+                                                     │                                            │
+                                                     ╰────────────────────────────────────────────╯
  [HELP]                                                                                 ? esc close

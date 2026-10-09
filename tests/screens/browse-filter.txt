@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ ki_                                                                                         │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                               │ kita
-    ▾ official (1/1)                                           │ The official marketplace
-      ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっく!             │ Bocchi the Rock!
- ▌      ● kita                                                 │ ぼっち・ざ・ろっく!
-    ── On GitHub ──────────                                    │ Installed
-    ⌕ Find "ki" on GitHub  space searches                      │
-                                                               │ Gate 9/9 · passes
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
+                                                     ╭─ official ─────────────────────────────────╮
+    + Add marketplace  type owner/repo or a folder   │ Comes with ttheme                          │
+                                                     │                                            │
+    ● official                                       │    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・…  │
+      Built in                                       │ ▌    ● kita                                │
+      1 of 6 match · 2 installed                     │                                            │
+                                                     │                                            │
+    ── On GitHub ──────────                          │                                            │
+    ⌕ Find "ki" on GitHub  space searches            │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     ├────────────────────────────────────────────┤
+                                                     │ kita  Installed                            │
+                                                     │ Gate 9/9 · passes                          │
+                                                     │                                            │
+                                                     ╰────────────────────────────────────────────╯
  [BROWSE (FILTER)] space pick   enter close   bksp edit   ? keys                   esc clear filter

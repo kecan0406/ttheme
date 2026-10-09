@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                               │ fix@shop
-    ▸ official (1/6)                                           │ ~/shop
- ▌  ▸ fix@shop (1/1)  Will remove                              │ 4 palettes · 1 installed
-    ── On GitHub ──────────                                    │
-    ⌕ Find marketplaces on GitHub  space searches              │ Read in place
-                                                               │
-                                                               │ Will remove — fix@shop/arcade
-                                                               │ stays installed
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
-                                                               │
+                                                     ╭─ fix@shop ─────────────────────────────────╮
+    + Add marketplace  type owner/repo or a folder   │ Read in place                              │
+                                                     │                                            │
+    ● official                                       │ Will remove — fix@shop/arcade stays        │
+      Built in                                       │ installed                                  │
+      6 available · 1 installed                      │                                            │
+                                                     │    ▸ neon (1/1)                            │
+ ▌  ○ fix@shop  Will remove                          │                                            │
+ ▌    ~/shop                                         │                                            │
+ ▌    4 available · 1 installed · Read in place      │                                            │
+                                                     │                                            │
+    ── On GitHub ──────────                          │                                            │
+    ⌕ Find marketplaces on GitHub  space searches    │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     │                                            │
+                                                     ╰────────────────────────────────────────────╯
  [BROWSE] → open   space pick   del undo   ? keys                                        esc cancel
