@@ -1,7 +1,7 @@
 import { LeadPreview, LeadUse } from '@/components/home'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
-import { fill, readJson, reducedMotion, settle, swap, wear } from './dom'
+import { fadeThrough, fill, readJson, reducedMotion, settle, swap, wear } from './dom'
 import { SparkleBurst } from './sparkle-burst'
 
 class LeadShowcase extends HTMLElement {
@@ -39,9 +39,14 @@ class LeadShowcase extends HTMLElement {
   #show(index: number) {
     const count = this.#leads.length
     const at = ((index % count) + count) % count
-    const theme = this.#leads[at]
-    if (at === this.#at || !theme) return
+    if (at === this.#at || !this.#leads[at]) return
     this.#at = at
+    fadeThrough(() => this.#draw())
+  }
+
+  #draw() {
+    const at = this.#at
+    const theme = this.#leads[at] as Theme
     settle(this)
     wear(this, theme)
     const name = this.querySelector('[data-lead-name]')

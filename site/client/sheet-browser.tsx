@@ -2,7 +2,7 @@ import { SheetDetails, SheetHeading, SheetUse } from '@/components/sheets'
 import { Session, TerminalTabs } from '@/components/terminal-window'
 import { html } from '@/lib/render'
 import type { GateRule, Theme } from '@/lib/themes'
-import { fill, readJson, reducedMotion, settle, swap, wear } from './dom'
+import { fadeThrough, fill, readJson, reducedMotion, settle, swap, wear } from './dom'
 import { tabKey } from './tabs'
 
 interface OpenTab {
@@ -110,14 +110,23 @@ class SheetBrowser extends HTMLElement {
   }
 
   #render() {
+    const changed = this.#themes[this.#at] !== this.#shown
+    this.#shown = this.#themes[this.#at]
+    if (!changed) {
+      this.#draw()
+      return
+    }
+    fadeThrough(() => {
+      settle(this)
+      this.#draw()
+      this.#center()
+    })
+  }
+
+  #draw() {
     const theme = this.#themes[this.#at] as Theme
     const tabs = this.#tabs.map(({ id, index }) => ({ id, theme: this.#themes[index] as Theme }))
-    const changed = theme !== this.#shown
-    this.#shown = theme
-    if (changed) {
-      settle(this)
-      wear(this, theme)
-    }
+    wear(this, theme)
     this.querySelector('[data-sheet-label]')?.setAttribute('aria-label', theme.name)
     fill(
       this.querySelector('[data-heading]'),
@@ -134,7 +143,6 @@ class SheetBrowser extends HTMLElement {
       if (Number(tile.dataset.sheet) === this.#at) tile.setAttribute('aria-current', 'true')
       else tile.removeAttribute('aria-current')
     }
-    if (changed) this.#center()
   }
 }
 

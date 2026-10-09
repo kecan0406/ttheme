@@ -7,7 +7,10 @@ const NAV = [
 
 export function SiteHeader({ current, themeToggle = true }: { current: string; themeToggle?: boolean }) {
   return (
-    <header class="sticky top-4.5 z-10 flex items-center justify-between gap-6 rounded-xl border bg-glass px-4.5 py-3.5 shadow-sm backdrop-blur-[14px] backdrop-saturate-130 max-[560px]:flex-wrap max-[560px]:gap-3">
+    <header
+      data-sticky
+      class="sticky top-4.5 z-10 flex items-center justify-between gap-6 rounded-xl border bg-glass px-4.5 py-3.5 shadow-sm backdrop-blur-[14px] backdrop-saturate-130 max-[560px]:flex-wrap max-[560px]:gap-3"
+    >
       <div class="flex min-w-0 flex-col gap-0.5">
         <a
           href="/"

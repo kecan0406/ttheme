@@ -107,7 +107,6 @@
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --animate-enter: enter 0.57s var(--ease-spring) both;
 
-  --animate-squish: squish 0.42s var(--ease-spring);
   --animate-dance: dance 10s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
   --animate-sparkle: sparkle 0.75s ease-out forwards;
   --animate-rain: rain 1.6s cubic-bezier(0.3, 0.6, 0.4, 1) forwards;
@@ -116,15 +115,6 @@
     from {
       opacity: 0;
       transform: translateY(10px) scale(0.96);
-    }
-  }
-
-  @keyframes squish {
-    19% {
-      transform: scale(0.96);
-    }
-    48% {
-      transform: scale(1.03);
     }
   }
 
@@ -328,6 +318,99 @@ html {
 .wear[data-settling] *::before,
 .wear[data-settling] *::after {
   transition: none !important;
+}
+
+lead-showcase [data-lead-name] {
+  view-transition-name: lead-name;
+}
+
+lead-showcase [data-lead-title] {
+  view-transition-name: lead-title;
+}
+
+lead-showcase [data-lead-preview] {
+  view-transition-name: lead-preview;
+}
+
+lead-showcase [data-lead-use] code {
+  view-transition-name: lead-use;
+}
+
+sheet-browser [data-heading] {
+  view-transition-name: sheet-heading;
+}
+
+sheet-browser [data-slot='scroll-area']:has([data-session]) {
+  view-transition-name: sheet-session;
+}
+
+sheet-browser [data-use] code {
+  view-transition-name: sheet-use;
+}
+
+sheet-browser #sheet-details > :nth-child(1) {
+  view-transition-name: sheet-details-1;
+}
+
+sheet-browser #sheet-details > :nth-child(2) {
+  view-transition-name: sheet-details-2;
+}
+
+:root {
+  view-transition-name: none;
+}
+
+::view-transition {
+  clip-path: inset(var(--clear-top, 0px) 0 var(--clear-bottom, 0px));
+  pointer-events: none;
+}
+
+::view-transition-old(*),
+::view-transition-new(*) {
+  width: auto;
+  height: auto;
+}
+
+::view-transition-old(*) {
+  animation: fade-out 0.18s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+::view-transition-new(*) {
+  animation: fade-in 0.42s cubic-bezier(0.3, 0.7, 0.2, 1) 0.18s both;
+}
+
+::view-transition-new(lead-preview) {
+  animation:
+    fade-in 0.42s cubic-bezier(0.3, 0.7, 0.2, 1) 0.18s both,
+    squish 0.42s var(--ease-spring) 0.18s;
+}
+
+::view-transition-group(lead-preview),
+::view-transition-group(sheet-session) {
+  overflow: clip;
+  border-end-start-radius: calc(var(--radius-3xl) - 1px);
+  border-end-end-radius: calc(var(--radius-3xl) - 1px);
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes squish {
+  19% {
+    transform: scale(0.96);
+  }
+  48% {
+    transform: scale(1.03);
+  }
 }
 
 .term {

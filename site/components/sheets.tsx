@@ -120,6 +120,7 @@ export function Sheets({ themes, gate }: { themes: Theme[]; gate: GateRule[] }) 
 
       <nav
         aria-label="every sheet"
+        data-sticky
         class="sticky bottom-4 mx-auto mb-4 flex w-[min(1280px,calc(100%-40px))] items-center gap-2 rounded-xl border bg-glass p-2 shadow-md backdrop-blur-[14px]"
       >
         <Button variant="ghost" size="icon-sm" aria-label="scroll back" data-scroll="-1">

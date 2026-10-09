@@ -36,3 +36,21 @@ export function settle(element: HTMLElement) {
     window.setTimeout(() => delete element.dataset.settling, SETTLE_MS),
   )
 }
+
+export function fadeThrough(update: () => void) {
+  if (reducedMotion() || !('startViewTransition' in document)) {
+    update()
+    return
+  }
+  const middle = window.innerHeight / 2
+  let top = 0
+  let bottom = window.innerHeight
+  for (const sticky of document.querySelectorAll('[data-sticky]')) {
+    const box = sticky.getBoundingClientRect()
+    if (box.bottom <= middle) top = Math.max(top, box.bottom)
+    else if (box.top >= middle) bottom = Math.min(bottom, box.top)
+  }
+  document.documentElement.style.setProperty('--clear-top', `${top}px`)
+  document.documentElement.style.setProperty('--clear-bottom', `${window.innerHeight - bottom}px`)
+  document.startViewTransition(update)
+}

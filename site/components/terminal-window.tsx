@@ -116,7 +116,11 @@ export function TerminalTabs({ tabs, active }: { tabs: Tab[]; active: number }) 
           class="-mb-px flex-[0_1_136px] gap-2 py-2 text-xs"
         >
           <i class="size-2 flex-none rounded-full" style={`background:${tab.theme.cursor}`} />
-          <span class="min-w-0 truncate" safe>
+          <span
+            class="min-w-0 truncate"
+            style={tab.id === active ? `view-transition-name:sheet-tab-${tab.id}` : undefined}
+            safe
+          >
             {tab.theme.name}
           </span>
         </TabsTrigger>

@@ -83,7 +83,7 @@ function Step({ number, title, text, children }: PropsWithChildren<{ number: num
 
 export function LeadPreview({ theme }: { theme: Theme }) {
   return (
-    <div data-lead-preview class="motion-safe:animate-squish">
+    <div data-lead-preview>
       <TerminalPreview theme={theme} scene="shell" worn class="min-h-60 px-6 pt-5 pb-6 text-sm" />
     </div>
   )
