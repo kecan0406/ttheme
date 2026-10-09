@@ -15,10 +15,11 @@ description: Drive ttheme for real inside the throwaway sandbox (`mise run sandb
 
 A change to a screen is checked in this order, each step only as wide as the change:
 
-1. Keys and text in shell mode (below): find the key path to the screen and read it there, colors aside.
-2. The golden screens it moves, by name or glob: `mise run tui theme-edit 'browse-*'` (about 3 s for two, against about 28 s for all), then `mise run tui:update <same names>` and `git diff tests/screens`.
-3. The parity journeys whose looks hold its text: `mise run parity --journey preview-tune --show 'preview-tune.*'` prints them, `--update` with the same `--journey` records them (about 6 s for one journey in nine terminals, against about 100 s for all), and `git diff tests/parity/facts.tsv` shows what moved. The whole walk runs once, in `mise run ci`, at the end.
-4. One window run, only for what text cannot show — a picture, colors, the frame a terminal draws. `--pictured` gives the last palette named a test picture first; `wait:TEXT` steps replace guessed pauses, and every `shot:NAME` brings its screen text beside the picture. Judge a thin or dim line on `zoom.zsh`'s crop, never on the 1200 px shot.
+1. What the screen draws, colors included, with no window: `mise run look <scenario or screen> <size> [keys]` (about 1.5 s) writes a PNG and a text grid — see CLAUDE.md.
+2. Keys and text in shell mode (below), for what a capture cannot reach: a flow across commands, a prompt's answer, files a flow writes.
+3. The golden screens it moves, by name or glob: `mise run tui theme-edit 'browse-*'` (about 3 s for two, against about 28 s for all), then `mise run tui:update <same names>` and `git diff tests/screens`.
+4. The parity journeys whose looks hold its text: `mise run parity --journey preview-tune --show 'preview-tune.*'` prints them, `--update` with the same `--journey` records them (about 6 s for one journey in nine terminals, against about 100 s for all), and `git diff tests/parity/facts.tsv` shows what moved. The whole walk runs once, in `mise run ci`, at the end.
+5. One window run, only for what a capture cannot show — a picture, the frame a terminal draws, the colors a real terminal paints. `--pictured` gives the last palette named a test picture first; `wait:TEXT` steps replace guessed pauses, and every `shot:NAME` brings its screen text beside the picture. Judge a thin or dim line on `zoom.zsh`'s crop, never on the 1200 px shot.
 
 ## Pick the mode by what the question needs
 

@@ -164,6 +164,11 @@ description = "rewrite tests/screens/ from what the TUIs draw now, every screen 
 depends = ["build", "bin:build"]
 run = "zsh tests/tui.zsh --update"
 
+[tasks.look]
+description = "draw one TUI screen as the terminal shows it, colors on, into a PNG and a text grid with row and column numbers for Claude to read — a tests/tui.zsh scenario or a screen, a size, then keys: `mise run look preview-open 120x34`, `mise run look edit:kita 130x38 down down enter`, `--emit styles --rows 3-9` for each run's SGR"
+quiet = true
+run = ["mise run -q bin:build > /dev/null", "zsh tests/tui.zsh look"]
+
 [tasks.demo]
 description = "open one TUI scenario for real, in its fixture — `mise run demo browse-filter`"
 depends = ["build", "bin:build"]

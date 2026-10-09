@@ -12,6 +12,7 @@ typeset -g SOCKET=ttheme-tui
 typeset -g SCREENS=$ROOT/tests/screens
 typeset -g FIXTURE=$ROOT/tests/fixture.json
 typeset -g COLS=100 ROWS=24
+typeset -gi PAINTED=0
 
 typeset -gA STATES=(
   empty  ''
@@ -79,6 +80,7 @@ command_for() {
   local target=$1 home=$2
   case $target in
     browse|list|add|remove) print -r -- "node $ROOT/bin/ttheme.js $target" ;;
+    edit:?*) print -r -- "node $ROOT/bin/ttheme.js edit ${target#edit:}" ;;
     hub) print -r -- "source $home/ttheme/ttheme.zsh; ttheme" ;;
     pins) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work/api/v2; ttheme pins" ;;
     pin) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work; ttheme pin" ;;
@@ -121,20 +123,25 @@ normalize() {
 capture() {
   local state=$1 target=$2; shift 2
   local home cmd key
-  local -a reply
+  local -a reply paint=(NO_COLOR=1)
+  (( PAINTED )) && paint=(COLORTERM=truecolor)
   home=$(fixture_home $state)
   cmd=$(command_for $target $home)
   scenario_env $home
   tmux -L $SOCKET kill-server 2>/dev/null || true
   tmux -L $SOCKET new-session -d -x $COLS -y $ROWS \
-    "env -u GHOSTTY_RESOURCES_DIR -u KITTY_WINDOW_ID -u WEZTERM_PANE -u ALACRITTY_WINDOW_ID -u ITERM_SESSION_ID $reply NO_COLOR=1 zsh -f -c '${cmd}; sleep 60'"
+    "env -u GHOSTTY_RESOURCES_DIR -u KITTY_WINDOW_ID -u WEZTERM_PANE -u ALACRITTY_WINDOW_ID -u ITERM_SESSION_ID -u NO_COLOR $reply $paint zsh -f -c '${cmd}; sleep 60'"
   settle
   for key in "$@"; do
     tmux -L $SOCKET send-keys -- "${key%%@*}"
     [[ $key == *@* ]] && await "${key#*@}"
     settle
   done
-  tmux -L $SOCKET capture-pane -p | normalize
+  if (( PAINTED )); then
+    tmux -L $SOCKET capture-pane -e -p -N
+  else
+    tmux -L $SOCKET capture-pane -p | normalize
+  fi
   tmux -L $SOCKET kill-server 2>/dev/null || true
   rm -rf $home
 }
@@ -215,9 +222,59 @@ demo() {
   { env $reply zsh -f -c $cmd } always { rm -rf $home }
 }
 
+look() {
+  local what=$1 size=$2 state=few target line out='' against='' here=$ROOT old l
+  local -a keys flags parts
+  if [[ -z $what || $size != <->x<-> ]]; then
+    print -u2 "usage: mise run look <scenario | browse | list | hub | pins | pin | edit:<palette>> <cols>x<rows> [keys…] [--state ${(kj: | :)STATES}] [--rows a-b] [--cols a-b] [--emit png,txt,styles] [--against <git ref>] [--out <path>]"
+    print -u2 "scenarios, each a state, a screen and keys (keys given here come after its own):"
+    for l in $SCENARIOS; do print -u2 "  ${${=l}[1]}"; done
+    return 1
+  fi
+  shift 2
+  if line=$(scenario_fields $what); then
+    parts=(${=line})
+    state=$parts[2] target=$parts[3] keys=(${parts[4,-1]})
+  else
+    target=$what
+  fi
+  while (( $# )); do
+    case $1 in
+      --state) state=$2; shift 2 ;;
+      --out) out=$2; shift 2 ;;
+      --against) against=$2; shift 2 ;;
+      --rows|--cols|--emit) flags+=($1 $2); shift 2 ;;
+      *) keys+=($1); shift ;;
+    esac
+  done
+  (( ${+STATES[$state]} )) || { print -u2 "no state $state — one of ${(kj:, :)STATES}"; return 1 }
+  command_for $target - > /dev/null
+  out=${out:-${${TMPDIR:-/tmp}%/}/ttheme-look/${what//[^[:alnum:]-]/-}}
+  mkdir -p ${out:h}
+  COLS=${size%x*} ROWS=${size#*x} SOCKET=ttheme-look-$$ PAINTED=1
+  capture $state $target $keys > $out.ansi
+  if [[ -n $against ]]; then
+    old=$(mktemp -d)
+    {
+      git -C $here archive $against | tar -x -C $old
+      ln -s $here/node_modules $old/node_modules
+      ( cd $old && bun src/bin.ts build > /dev/null && bun build src/bin.ts --target=node --sourcemap=linked --outdir=bin --entry-naming=ttheme.js > /dev/null )
+      print '{"type":"module"}' > $old/bin/package.json
+      ROOT=$old
+      capture $state $target $keys > $out.before.ansi
+    } always {
+      ROOT=$here
+      rm -rf $old
+    }
+    flags+=(--against $out.before.ansi)
+  fi
+  bun $ROOT/tests/look.ts $out.ansi $size $out $flags
+}
+
 case ${1:-check} in
   --update|update) shift; run update $@ ;;
   demo) shift; demo $1 ;;
+  look) shift; look $@ ;;
   check) run check ${@[2,-1]} ;;
   *) run check $@ ;;
 esac
