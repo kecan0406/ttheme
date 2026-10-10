@@ -522,10 +522,7 @@ export class PickerLayer {
   }
 
   clear(): string {
-    let out = ''
-    for (const shown of this.shown.values()) {
-      out += release(shown.id)
-    }
+    const out = [...this.shown.values()].map((shown) => release(shown.id)).join('')
     this.shown.clear()
     return out
   }

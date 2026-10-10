@@ -152,6 +152,7 @@ export function backdropTone(colors: Colors, signature: string[]): Tone {
     return cursor
   }
   return signature
+    .values()
     .filter((slot) => slot !== 'cursor' && slot !== 'background')
     .map((slot) => toneFor(colors, slot))
     .reduce((best, tone) => (tone.reach > best.reach ? tone : best), cursor)
@@ -1071,14 +1072,12 @@ export function writeTune(
 }
 
 export function origins(configHome: string): Map<string, Origin> {
-  const found = new Map<string, Origin>()
-  for (const [name, rack] of Object.entries(readStore(backgroundsDir(configHome)).palettes)) {
-    const [, site, id] = /^([a-z.]+)_(\d+)$/.exec(rack.active) ?? []
-    if (site && id) {
-      found.set(name, { site, id: Number(id) })
-    }
-  }
-  return found
+  return new Map(
+    Object.entries(readStore(backgroundsDir(configHome)).palettes).flatMap(([name, rack]): [string, Origin][] => {
+      const [, site, id] = /^([a-z.]+)_(\d+)$/.exec(rack.active) ?? []
+      return site && id ? [[name, { site, id: Number(id) }]] : []
+    }),
+  )
 }
 
 function sizeOf(path: string): { width: number; height: number } | undefined {

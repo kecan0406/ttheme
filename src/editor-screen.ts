@@ -32,7 +32,6 @@ import {
   gatedOf,
   PAIRS,
   PaletteEditor,
-  ROWS,
   SCOPES,
   SLOT_NAMES,
   slotLabel,
@@ -127,19 +126,17 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
   }
   const gutter = (here: boolean) =>
     here ? (p.color ? `${p.fg(c.cursor)}${MARKS.gutter}${FG_RESET} ` : `${MARKS.gutter} `) : '  '
-  const lines = [p.dim(boxEdge(wide, 'top', [[2, ' Base ']]))]
-  for (let row = 0; row < BASE.length; row++) {
-    const here = row === e.row
-    const label = (BASE[row] as string).padEnd(10)
-    lines.push(
-      boxed(
+  const lines = [
+    p.dim(boxEdge(wide, 'top', [[2, ' Base ']])),
+    ...BASE.map((name, row) => {
+      const here = row === e.row
+      const label = name.padEnd(10)
+      return boxed(
         p,
         `${spot({ kind: 'slot', slot: row }, `${gutter(here)}${here ? p.bold(label) : label}`)}${cell(row)}`,
         wide,
-      ),
-    )
-  }
-  lines.push(
+      )
+    }),
     p.dim(
       boxEdge(wide, 'mid', [
         [2, ' ANSI '],
@@ -147,49 +144,48 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
         [29, ' Bright 8–15 '],
       ]),
     ),
-  )
-  for (let row = BASE.length; row < ROWS; row++) {
-    const here = row === e.row
-    const label = (PAIRS[row - BASE.length] as string).padEnd(10)
-    const named = spot(
-      { kind: 'slot', slot: row + (e.col === 1 ? 8 : 0) },
-      `${gutter(here)}${here ? p.bold(label) : label}`,
-    )
-    lines.push(boxed(p, `${named}${cell(row)}${cell(row + 8)}`, wide))
-  }
-  lines.push(p.dim(boxEdge(wide, 'bottom')))
+    ...PAIRS.map((name, k) => {
+      const row = BASE.length + k
+      const here = row === e.row
+      const label = name.padEnd(10)
+      const named = spot(
+        { kind: 'slot', slot: row + (e.col === 1 ? 8 : 0) },
+        `${gutter(here)}${here ? p.bold(label) : label}`,
+      )
+      return boxed(p, `${named}${cell(row)}${cell(row + 8)}`, wide)
+    }),
+    p.dim(boxEdge(wide, 'bottom')),
+  ]
   const gate = gateBox(p, e, height - lines.length, wide)
   return [...lines, ...Array.from({ length: Math.max(0, height - lines.length - gate.length) }, () => ''), ...gate]
 }
 
 function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
   const c = colorsOf(e.list)
-  const lines = [`  ${p.dim('Seeds')}`]
-  SEED_FIELDS.forEach((field, i) => {
-    const here = i === e.field
-    const value = e.seeds[field.key]
-    const samples = Array.from({ length: SEED_BAR }, (_, k) => {
-      const v = field.min + ((field.max - field.min) * k) / (SEED_BAR - 1)
-      return SEED_SHOWS[field.key](grow({ ...e.seeds, [field.key]: v }))
-    })
-    const bar = gradient(p, samples, position(value, field.min, field.max, SEED_BAR), here)
-    const shown = `${value.toFixed(field.digits)}${field.wraps ? '°' : ''}`.padStart(6)
-    const hex = SEED_SHOWS[field.key](c)
-    const gutter = here ? (p.color ? `${p.fg(c.cursor)}${MARKS.gutter}${FG_RESET} ` : `${MARKS.gutter} `) : '  '
-    const label = field.label.padEnd(17)
-    const grip: EditorSpot = { kind: 'field', field: i }
-    lines.push(
-      `${spot(grip, `${gutter}${here ? p.bold(label) : label}`)}${spot({ kind: 'seed', field: i }, bar)}${spot(grip, ` ${shown}  ${p.color ? `${p.fg(hex)}${MARKS.swatch}${FG_RESET} ` : ''}${p.dim(hex)}`)}`,
-    )
-  })
-  lines.push('')
-  for (const line of wrapText(
-    'Seven seeds grow all twenty colors, each accent on the hue its ANSI role reads as — whatever the seeds, they pass the gate. enter moves on to tune each slot, and the seeds stay behind.',
-    LEFT - 4,
-  )) {
-    lines.push(`  ${p.dim(line)}`)
-  }
-  lines.push('')
+  const lines = [
+    `  ${p.dim('Seeds')}`,
+    ...SEED_FIELDS.map((field, i) => {
+      const here = i === e.field
+      const value = e.seeds[field.key]
+      const samples = Array.from({ length: SEED_BAR }, (_, k) => {
+        const v = field.min + ((field.max - field.min) * k) / (SEED_BAR - 1)
+        return SEED_SHOWS[field.key](grow({ ...e.seeds, [field.key]: v }))
+      })
+      const bar = gradient(p, samples, position(value, field.min, field.max, SEED_BAR), here)
+      const shown = `${value.toFixed(field.digits)}${field.wraps ? '°' : ''}`.padStart(6)
+      const hex = SEED_SHOWS[field.key](c)
+      const gutter = here ? (p.color ? `${p.fg(c.cursor)}${MARKS.gutter}${FG_RESET} ` : `${MARKS.gutter} `) : '  '
+      const label = field.label.padEnd(17)
+      const grip: EditorSpot = { kind: 'field', field: i }
+      return `${spot(grip, `${gutter}${here ? p.bold(label) : label}`)}${spot({ kind: 'seed', field: i }, bar)}${spot(grip, ` ${shown}  ${p.color ? `${p.fg(hex)}${MARKS.swatch}${FG_RESET} ` : ''}${p.dim(hex)}`)}`
+    }),
+    '',
+    ...wrapText(
+      'Seven seeds grow all twenty colors, each accent on the hue its ANSI role reads as — whatever the seeds, they pass the gate. enter moves on to tune each slot, and the seeds stay behind.',
+      LEFT - 4,
+    ).map((line) => `  ${p.dim(line)}`),
+    '',
+  ]
   return [...lines, ...gateBox(p, e, height - lines.length, LEFT)]
 }
 
@@ -198,22 +194,21 @@ function sample(p: Paint, c: Colors, width: number, room: number, scene: number,
   const tabs = SCENES.map((one, i) =>
     spot({ kind: 'scene', scene: i }, i !== at ? p.dim(one.name) : pillOf(p, one.name)),
   ).join('  ')
-  const lines = [spread(tabs, p.dim('⇧←→'), width)]
   const base = `${p.bg(c.background)}${p.fg(c.foreground)}`
-  for (const text of sceneAt(scene).lines) {
-    const parts = sceneParts(text, width - 2)
-    if (!parts) {
-      continue
-    }
-    if (lines.length >= room) {
-      break
-    }
-    const line = p.color
-      ? parts.map(([t, role]) => `${roleSgr(p, c, role, used(slot, role))}${t}${RESET}${base}`).join('')
-      : parts.map(([t]) => t).join('')
-    lines.push(`${base} ${fit(line, width - 2)} ${p.color ? RESET : ''}`)
-  }
-  return lines
+  return [
+    spread(tabs, p.dim('⇧←→'), width),
+    ...sceneAt(scene)
+      .lines.values()
+      .map((text) => sceneParts(text, width - 2))
+      .filter((parts) => parts !== undefined)
+      .take(Math.max(0, room - 1))
+      .map((parts) => {
+        const line = p.color
+          ? parts.map(([t, role]) => `${roleSgr(p, c, role, used(slot, role))}${t}${RESET}${base}`).join('')
+          : parts.map(([t]) => t).join('')
+        return `${base} ${fit(line, width - 2)} ${p.color ? RESET : ''}`
+      }),
+  ]
 }
 
 const SHORT = ['Bk', 'Rd', 'Gr', 'Ye', 'Bl', 'Ma', 'Cy', 'Wh']
@@ -233,8 +228,7 @@ function chart(
   const at = (hex: Hex) => Math.min(rows - 1, Math.max(0, Math.round((top - pick(oklch(hex))) / step)))
   return Array.from({ length: rows }, (_, r) => {
     const label = r % 2 === 0 ? (top - step * r).toFixed(top >= 1 ? 1 : 2).replace(/^0(?=\.\d\d)/, '') : ''
-    let line = `${label.padStart(4)} ${p.dim(r % 2 === 0 ? '┤' : '│')}`
-    for (let k = 0; k < 8; k++) {
+    const columns = Array.from({ length: 8 }, (_, k) => {
       const marks = [' ', ' ', ' ', ' ', ' ']
       const normal = c.ansi[k] as Hex
       const bright = c.ansi[k + 8] as Hex
@@ -246,13 +240,13 @@ function chart(
         return marks[j] as string
       }
       const cells = [0, 1, 2, 3, 4].map(cellOf).join('')
-      line += lit.has(k)
+      return lit.has(k)
         ? p.color
           ? `${p.bg(c.selection)}${cells}${INK_RESET}`
           : cells
         : `${cells}${p.color ? FG_RESET : ''}`
-    }
-    return line
+    })
+    return `${label.padStart(4)} ${p.dim(r % 2 === 0 ? '┤' : '│')}${columns.join('')}`
   })
 }
 
@@ -361,30 +355,26 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   const block = p.color ? `${p.fg(hex)}${'█'.repeat(8)}${FG_RESET}  ` : ''
   const typed = e.typing !== undefined ? `${p.bold(`${e.typing}▏`)}` : undefined
   const [r, g, b] = rgb(hex)
-  lines.push(`${block}${typed ?? lchLine(p, at)}`)
-  lines.push(`${block}${p.dim(`${hex} · rgb ${r} ${g} ${b}`)}`)
+  lines.push(`${block}${typed ?? lchLine(p, at)}`, `${block}${p.dim(`${hex} · rgb ${r} ${g} ${b}`)}`)
   if (e.view !== 'relations') {
     const swatch = p.color ? `${p.fg(was)}${MARKS.swatch}${FG_RESET} ` : ''
     lines.push(
       `${block}${was !== hex ? p.dim(`was ${swatch}${oklchText(e.lchOf(was)).slice(6)} · ${was}`) : p.dim('as it opened')}`,
     )
   }
-  lines.push('')
-  lines.push(...channelLines(p, e, at, barWidth), contrastLine(p, e, barWidth))
-  const scope = scopeLines(p, e)
-  if (scope.length > 0) {
-    lines.push(...scope)
-  }
+  lines.push('', ...channelLines(p, e, at, barWidth), contrastLine(p, e, barWidth), ...scopeLines(p, e))
   if (e.view === 'relations') {
     lines.push('', ...relations(p, e, width, height - lines.length - 1, false))
     return lines
   }
-  lines.push('')
-  for (const check of detailChecks(e, slot, at)) {
-    wrapText(check.text, width - 2).forEach((line, i) => {
-      lines.push(`${i === 0 ? checkOf(p, check.ok) : ' '} ${check.ok === false ? line : p.dim(line)}`)
-    })
-  }
+  lines.push(
+    '',
+    ...detailChecks(e, slot, at).flatMap((check) =>
+      wrapText(check.text, width - 2).map(
+        (line, i) => `${i === 0 ? checkOf(p, check.ok) : ' '} ${check.ok === false ? line : p.dim(line)}`,
+      ),
+    ),
+  )
   const hint = fixHint(e, slot)
   if (hint) {
     lines.push(p.dim(`  ${hint}`))
@@ -457,37 +447,37 @@ const KEYS: [string, string][] = [
 ]
 
 function keysPane(p: Paint, e: PaletteEditor, width: number): string[] {
-  const lines = [`  ${p.bold('Help')}`, '']
-  for (const [name, text] of KEYS.filter(([name]) => name !== 'Pictures' || e.options.find)) {
-    wrapText(text, width - 16).forEach((line, i) => {
-      lines.push(`  ${p.bold((i === 0 ? name : '').padEnd(11))}  ${line}`)
-    })
-  }
-  return lines
+  return [
+    `  ${p.bold('Help')}`,
+    '',
+    ...KEYS.filter(([name]) => name !== 'Pictures' || e.options.find).flatMap(([name, text]) =>
+      wrapText(text, width - 16).map((line, i) => `  ${p.bold((i === 0 ? name : '').padEnd(11))}  ${line}`),
+    ),
+  ]
 }
 
 function openPane(p: Paint, e: PaletteEditor, width: number, height: number): string[] {
   const choices = e.choices()
   const all = e.options.palettes?.length ?? 0
   const filter = e.filter ? `${p.bold(e.filter)}▏` : p.dim('type to filter')
-  const lines = [spread(`  ${p.bold('Take colors from')}  ${filter}`, p.dim(`${choices.length}/${all}`), width), '']
   const room = height - 2
   const top = Math.max(0, Math.min(e.pick - Math.floor(room / 2), choices.length - room))
   const nameWidth = Math.min(40, Math.max(12, ...choices.map((c) => cells(c.name))))
-  choices.slice(top, top + room).forEach((choice, k) => {
-    const here = top + k === e.pick
-    const c = choice.colors
-    const swatches = p.color
-      ? `${p.bg(c.background)} ${[...c.ansi].map((hex) => `${p.fg(hex)}${MARKS.swatch}`).join('')} ${p.fg(c.foreground)}Aa ${INK_RESET}`
-      : ''
-    const gutter = here ? '▌ ' : '  '
-    const label = choice.name.padEnd(nameWidth)
-    lines.push(spot({ kind: 'choice', index: top + k }, `${gutter}${here ? p.bold(label) : label}  ${swatches}`))
-  })
-  if (choices.length === 0) {
-    lines.push(`  ${p.dim(`No palettes match '${e.filter}'`)}`)
-  }
-  return lines
+  return [
+    spread(`  ${p.bold('Take colors from')}  ${filter}`, p.dim(`${choices.length}/${all}`), width),
+    '',
+    ...choices.slice(top, top + room).map((choice, k) => {
+      const here = top + k === e.pick
+      const c = choice.colors
+      const swatches = p.color
+        ? `${p.bg(c.background)} ${c.ansi.map((hex) => `${p.fg(hex)}${MARKS.swatch}`).join('')} ${p.fg(c.foreground)}Aa ${INK_RESET}`
+        : ''
+      const gutter = here ? '▌ ' : '  '
+      const label = choice.name.padEnd(nameWidth)
+      return spot({ kind: 'choice', index: top + k }, `${gutter}${here ? p.bold(label) : label}  ${swatches}`)
+    }),
+    ...(choices.length === 0 ? [`  ${p.dim(`No palettes match '${e.filter}'`)}`] : []),
+  ]
 }
 
 const KEEP = new Set(['enter', 's', '?', 'g', 'a', 'i'])
@@ -614,16 +604,11 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   for (;;) {
     const segments = [lead, ...keys.map(([k, label]) => keyZone(k, `${p.bold(k)} ${p.dim(label)}`))].filter(Boolean)
     const line = `${tag}${segments.join('   ')}`
-    let drop = -1
-    keys.forEach(([key], i) => {
-      if (i > 0 && !KEEP.has(key)) {
-        drop = i
-      }
-    })
+    const drop = keys.findLastIndex(([key], i) => i > 0 && !KEEP.has(key))
     if (cells(line) + cells(right) + 3 <= width || drop < 0) {
       return right ? spread(line, shownRight, width) : fit(line, width)
     }
-    keys = keys.filter((_, i) => i !== drop)
+    keys = keys.toSpliced(drop, 1)
   }
 }
 
@@ -675,11 +660,13 @@ export function drawEditor(
       (_, i) => `${fit(left[i] ?? '', LEFT)}${p.dim('│')} ${fit(side[i] ?? '', right)}`,
     )
   }
-  const lines = [spread(title, state, cols), '']
-  for (let i = 0; i < height; i++) {
-    lines.push(fit(body[i] ?? '', cols))
-  }
-  lines.push('', footer(p, e, cols))
+  const lines = [
+    spread(title, state, cols),
+    '',
+    ...Array.from({ length: height }, (_, i) => fit(body[i] ?? '', cols)),
+    '',
+    footer(p, e, cols),
+  ]
   return { lines, art: undefined }
 }
 

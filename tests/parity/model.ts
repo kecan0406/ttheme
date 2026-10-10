@@ -132,10 +132,9 @@ export class Tab {
 
   screen(home: string): string {
     const buffer = this.xterm.buffer.active
-    const lines: string[] = []
-    for (let y = 0; y < ROWS; y++) {
-      lines.push((buffer.getLine(buffer.viewportY + y)?.translateToString(true) ?? '').replaceAll(home, '~'))
-    }
+    const lines = Array.from({ length: ROWS }, (_, y) =>
+      (buffer.getLine(buffer.viewportY + y)?.translateToString(true) ?? '').replaceAll(home, '~'),
+    )
     while (lines.length > 0 && lines.at(-1)?.trim() === '') {
       lines.pop()
     }
@@ -270,7 +269,7 @@ const iterm2 = (): Kind => {
       }
       if (data.startsWith('SetProfile=')) {
         const name = data.slice('SetProfile='.length)
-        const guid = name ? [...profiles.values()].find((p) => p.name === name)?.guid : fallback
+        const guid = name ? profiles.values().find((p) => p.name === name)?.guid : fallback
         if (guid) {
           wear(app, tab, guid)
         }
@@ -762,7 +761,7 @@ export class App {
   }
 
   displayed(tab: Tab): Colors {
-    return new Map([...tab.slots.keys()].map((code) => [code, this.shown(tab, code)]))
+    return new Map(tab.slots.keys().map((code) => [code, this.shown(tab, code)]))
   }
 
   reply(tab: Tab, data: string): void {

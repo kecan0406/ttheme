@@ -143,16 +143,13 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
       out.remove(join(dir, file))
     }
   }
-  const shown = new Set<string>()
-  for (const file of readdirSync(dir)) {
-    const image =
-      file.startsWith(owned('')) && file.endsWith('.yaml')
-        ? /^ {2}path: "(.+)"$/m.exec(readText(join(dir, file)))?.[1]
-        : undefined
-    if (image) {
-      shown.add(image)
-    }
-  }
+  const shown = new Set(
+    readdirSync(dir)
+      .values()
+      .filter((file) => file.startsWith(owned('')) && file.endsWith('.yaml'))
+      .map((file) => /^ {2}path: "(.+)"$/m.exec(readText(join(dir, file)))?.[1])
+      .filter((image) => image !== undefined),
+  )
   for (const file of readdirSync(dir)) {
     if (owns(file, 'png') && !shown.has(join(dir, file))) {
       out.remove(join(dir, file))

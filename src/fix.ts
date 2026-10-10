@@ -209,8 +209,7 @@ class Fixer<T extends Fixable> {
   }
 
   net(): Move[] {
-    return [...new Set(this.moves.map((m) => m.slot))].flatMap((slot) => {
-      const mine = this.moves.filter((m) => m.slot === slot)
+    return [...Map.groupBy(this.moves, (m) => m.slot)].flatMap(([slot, mine]) => {
       const from = (mine[0] as Move).from
       const to = this.get(slot)
       return from === to ? [] : [{ slot, rule: [...new Set(mine.map((m) => m.rule))].join(', '), from, to }]

@@ -15,6 +15,7 @@ import {
   measure,
   offRole,
   ROLE_HUES,
+  ROLES,
   roleOf,
   type Violation,
 } from './contrast.ts'
@@ -73,8 +74,8 @@ export const SCOPES = ['this', 'pair', 'normals', 'brights', 'accents'] as const
 export type Scope = (typeof SCOPES)[number]
 
 const ACCENTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
-const NORMALS = ACCENTS.filter((i) => i < 8).map((i) => BASE.length + i)
-const BRIGHTS = ACCENTS.filter((i) => i > 8).map((i) => BASE.length + i)
+const NORMALS = ROLES.map((role) => BASE.length + role)
+const BRIGHTS = ROLES.map((role) => BASE.length + 8 + role)
 
 function scopeSlots(scope: Scope, slot: number): number[] {
   const ansi = slot - BASE.length
@@ -291,9 +292,7 @@ export function ruleSlots(list: Hex[], signature: string[], waive: string[], rul
 
 export function misses(list: Hex[], signature: string[], waive: string[]): Set<number> {
   return new Set(
-    SLOT_NAMES.flatMap((_, slot) =>
-      slotChecks(list, signature, waive, slot).some((check) => check.ok === false) ? [slot] : [],
-    ),
+    SLOT_NAMES.keys().filter((slot) => slotChecks(list, signature, waive, slot).some((check) => check.ok === false)),
   )
 }
 
@@ -520,8 +519,8 @@ export class PaletteEditor {
     this.mode = this.fresh ? 'seeds' : 'list'
     this.list = listOf(options.colors ?? grow(this.seeds))
     this.lch = this.lchs()
-    this.start = [...this.list]
-    this.original = options.original ? listOf(options.original) : [...this.list]
+    this.start = this.list
+    this.original = options.original ? listOf(options.original) : this.list
     this.signature = [...options.signature]
     this.startSignature = [...options.signature]
     this.pictures = options.pictures ?? 0
@@ -855,8 +854,8 @@ export class PaletteEditor {
   }
 
   private leaveSeeds(): void {
-    this.start = [...this.list]
-    this.original = [...this.list]
+    this.start = this.list
+    this.original = this.list
     this.chain(this.original)
     this.seeded = true
     this.mode = 'list'
@@ -925,7 +924,7 @@ export class PaletteEditor {
       this.set(this.slot(), this.original[this.slot()] as Hex, 'reset')
     } else if (key === 'R') {
       this.remember('reset-all')
-      this.list = [...this.original]
+      this.list = this.original
       this.lch = this.lchs()
     } else if (key === '=') {
       this.follow()
@@ -1200,7 +1199,7 @@ export class PaletteEditor {
 
   private tune(): void {
     this.remember('tune')
-    this.tuneFrom = { list: [...this.list], lch: [...this.lch] }
+    this.tuneFrom = { list: this.list, lch: this.lch }
     this.holds = new Map()
     this.hold()
     this.mode = 'tune'
@@ -1276,8 +1275,8 @@ export class PaletteEditor {
       this.endTune()
     } else if (key === 'esc') {
       if (this.tuneFrom) {
-        this.list = [...this.tuneFrom.list]
-        this.lch = [...this.tuneFrom.lch]
+        this.list = this.tuneFrom.list
+        this.lch = this.tuneFrom.lch
         this.history.pop()
       }
       this.endTune()
@@ -1368,7 +1367,7 @@ export class PaletteEditor {
       l = up ? Math.min(1, l + 0.001) : Math.max(0, l - 0.001)
       this.place(slot, l, keep, at.h)
     }
-    this.lch[slot] = { ...(this.lch[slot] as Oklch), l: Math.round(l * 10_000) / 10_000 }
+    this.lch = this.lch.with(slot, { ...(this.lch[slot] as Oklch), l: Math.round(l * 10_000) / 10_000 })
   }
 
   private step(steps: number): void {
@@ -1445,16 +1444,17 @@ export class PaletteEditor {
 
   private place(slot: number, l: number, c: number, h: number): void {
     const fits = Math.min(c, edge(l, h))
-    this.lch[slot] = { l, c: fits, h }
-    this.list[slot] = inGamut(l, fits, h)
+    this.lch = this.lch.with(slot, { l, c: fits, h })
+    this.list = this.list.with(slot, inGamut(l, fits, h))
   }
 
   private take(color: Hex, edit: string): void {
     if (this.mode === 'tune') {
-      this.list[this.slot()] = color
-      this.lch[this.slot()] = this.lchOf(color)
-      this.holds.set(this.slot(), (this.lch[this.slot()] as Oklch).c)
-      this.trail([this.slot()])
+      const slot = this.slot()
+      this.list = this.list.with(slot, color)
+      this.lch = this.lch.with(slot, this.lchOf(color))
+      this.holds.set(slot, (this.lch[slot] as Oklch).c)
+      this.trail([slot])
     } else {
       this.set(this.slot(), color, edit)
     }
@@ -1514,9 +1514,13 @@ export class PaletteEditor {
     }
   }
 
+  private snapshot(): Snapshot {
+    return { list: this.list, lch: this.lch, signature: this.signature }
+  }
+
   private remember(edit: string): void {
     if (edit !== this.lastEdit || ALWAYS.has(edit)) {
-      this.history.push({ list: [...this.list], lch: [...this.lch], signature: [...this.signature] })
+      this.history.push(this.snapshot())
       this.future = []
     }
     this.lastEdit = edit
@@ -1527,8 +1531,8 @@ export class PaletteEditor {
       return
     }
     this.remember(edit)
-    this.list[slot] = color
-    this.lch[slot] = this.lchOf(color)
+    this.list = this.list.with(slot, color)
+    this.lch = this.lch.with(slot, this.lchOf(color))
     this.trail([slot])
   }
 
@@ -1604,7 +1608,7 @@ export class PaletteEditor {
       this.notice = 'Nothing to undo'
       return
     }
-    this.future.push({ list: [...this.list], lch: [...this.lch], signature: [...this.signature] })
+    this.future.push(this.snapshot())
     this.restore(last)
   }
 
@@ -1614,14 +1618,14 @@ export class PaletteEditor {
       this.notice = 'Nothing to redo'
       return
     }
-    this.history.push({ list: [...this.list], lch: [...this.lch], signature: [...this.signature] })
+    this.history.push(this.snapshot())
     this.restore(next)
   }
 
   private restore(snap: Snapshot): void {
-    this.list = [...snap.list]
-    this.lch = [...snap.lch]
-    this.signature = [...snap.signature]
+    this.list = snap.list
+    this.lch = snap.lch
+    this.signature = snap.signature
     this.lastEdit = undefined
   }
 }

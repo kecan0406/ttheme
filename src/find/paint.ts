@@ -156,7 +156,7 @@ export class Paint {
       if (!p) {
         continue
       }
-      if (this.wipes && [...wiped].some((r) => r >= p.row && r < p.row + p.rows)) {
+      if (this.wipes && wiped.values().some((r) => r >= p.row && r < p.row + p.rows)) {
         this.placed.delete(p.id)
       }
       keep.add(p.id)

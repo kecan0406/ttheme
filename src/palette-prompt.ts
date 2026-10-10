@@ -119,15 +119,13 @@ export function pickerRows(
   const place = PLACES[layout]
   const q = filter.trim()
   const rows: PickerRow[] = []
-  const seen = new Set<string>()
   const palette = (entry: PaletteEntry): PickerRow => ({ kind: 'palette', entry })
-  for (const e of entries) {
-    const top = place.top(e)
-    if (e.default || seen.has(top)) {
-      continue
-    }
-    seen.add(top)
-    const members = entries.filter((m) => !m.default && place.top(m) === top)
+  const groups = Map.groupBy(
+    entries.filter((e) => !e.default),
+    (e) => place.top(e),
+  )
+  for (const [top, members] of groups) {
+    const e = members[0] as PaletteEntry
     const matching = q ? members.filter((m) => matchesPalette(m, q)) : members
     if (q && matching.length === 0) {
       continue
@@ -147,8 +145,7 @@ export function pickerRows(
       continue
     }
     const shelved = matching.filter((m) => place.shelf(m) !== undefined)
-    for (const name of new Set(shelved.map((m) => place.shelf(m) as string))) {
-      const inside = shelved.filter((m) => place.shelf(m) === name)
+    for (const [name, inside] of Map.groupBy(shelved, (m) => place.shelf(m) as string)) {
       const lead = inside.find((m) => m.lead) ?? (inside[0] as PaletteEntry)
       const unfolded = q.length > 0 || expanded.has(catalogKey(top, name))
       rows.push({
@@ -167,7 +164,7 @@ export function pickerRows(
     rows.push(...matching.filter((m) => place.shelf(m) === undefined).map(palette))
   }
   for (const top of tops) {
-    if (!seen.has(top) && (q === '' || containsText([top], q))) {
+    if (!groups.has(top) && (q === '' || containsText([top], q))) {
       rows.push({ kind: 'top', name: top, expanded: expanded.has(top), count: 0 })
     }
   }
@@ -176,7 +173,12 @@ export function pickerRows(
 
 export function catalogRows(entries: PaletteEntry[], filter: string): PickerRow[] {
   const q = filter.trim()
-  const hit = new Set(entries.filter((e) => !e.default && (q === '' || matchesPalette(e, q))).map(topOf))
+  const hit = new Set(
+    entries
+      .values()
+      .filter((e) => !e.default && (q === '' || matchesPalette(e, q)))
+      .map(topOf),
+  )
   return pickerRows(entries, new Set(), '').filter((r) => r.kind === 'top' && hit.has(r.name))
 }
 
@@ -220,9 +222,7 @@ export function pageStep(name: string | undefined, size: number): number | undef
 
 function ruled<X extends Extra>(rows: Row<X>[]): Row<X>[] {
   const at = rows.findIndex((r) => r.kind === 'top' && isMarketplace(r.name))
-  return at > 0 && rows.slice(0, at).some((r) => r.kind === 'top')
-    ? [...rows.slice(0, at), { kind: 'rule' }, ...rows.slice(at)]
-    : rows
+  return at > 0 && rows.slice(0, at).some((r) => r.kind === 'top') ? rows.toSpliced(at, 0, { kind: 'rule' }) : rows
 }
 
 export function firstPalette(rows: PickerRow[]): number {

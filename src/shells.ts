@@ -27,12 +27,7 @@ export function invokingShell(run: Host['run'], pid: number): Shell | undefined 
 }
 
 export function shellsOf(host: Host, pid: number): Shell[] {
-  const found = new Set<Shell>(['zsh'])
-  for (const shell of [shellNamed(host.env.SHELL), invokingShell(host.run, pid)]) {
-    if (shell) {
-      found.add(shell)
-    }
-  }
+  const found = new Set(['zsh', shellNamed(host.env.SHELL), invokingShell(host.run, pid)])
   return SHELLS.filter((shell) => found.has(shell))
 }
 

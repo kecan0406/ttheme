@@ -169,13 +169,8 @@ export function cover(line: string, col: number, over: string): string {
 }
 
 export function lifted(lines: readonly string[], targets: readonly unknown[]): { lines: string[]; zones: Zone[] } {
-  const zones: Zone[] = []
-  const texts = lines.map((line, row) => {
-    const one = lift(line, row, targets)
-    zones.push(...one.zones)
-    return one.text
-  })
-  return { lines: texts, zones }
+  const each = lines.map((line, row) => lift(line, row, targets))
+  return { lines: each.map((one) => one.text), zones: each.flatMap((one) => one.zones) }
 }
 
 function relative<T>(zone: Zone<T>, row: number, col: number, fx = 0.5, fy = 0.5): Hit<T> {

@@ -133,6 +133,7 @@ export function builderOf(shared: Shared, rules: GateRule[]): Builder {
   const missed = misses(list, signature, waive)
   const tiles = paneTiles(GRID.cols, GRID.rows)
   const lines = tiles.map((tile) => paneLines(tile))
+  const parts = lines.map((pane) => pane.flat())
   const panes = tiles.map((tile, i): Pane => {
     const runs = (lines[i] ?? []).map((line) => line.map(runOf))
     const footer = footerRows(tile)
@@ -159,7 +160,7 @@ export function builderOf(shared: Shared, rules: GateRule[]): Builder {
       along: round(at.h / 360, 4),
       checks: slotChecks(list, signature, waive, slot).map((check) => ({ ok: check.ok ?? null, text: check.text })),
       use: slotUse(slot),
-      uses: lines.map((pane) => pane.flat().filter((part) => lights(part.role, slot)).length),
+      uses: parts.map((pane) => pane.filter((part) => lights(part.role, slot)).length),
       signature: signature.includes(key),
       miss: missed.has(slot),
     }

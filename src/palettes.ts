@@ -92,16 +92,16 @@ export function resolve(manifest: Manifest, names: string[]): PaletteEntry[] {
   const known = new Map(manifest.palettes.map((p) => [p.name, p]))
   const missing = names.filter((n) => !known.has(n))
   if (missing.length > 0) {
-    const marketplaces = [...new Set(missing.flatMap((n) => marketplaceOf(n) ?? []))].filter(
-      (marketplace) => !manifest.palettes.some((p) => marketplaceOf(p.name) === marketplace),
-    )
+    const present = new Set(manifest.palettes.flatMap((p) => marketplaceOf(p.name) ?? []))
+    const marketplaces = [...new Set(missing.flatMap((n) => marketplaceOf(n) ?? [])).difference(present)]
     const hint =
       marketplaces.length > 0
         ? `add ${marketplaces.join(', ')} first — \`ttheme marketplace search\` finds a marketplace's repository`
         : nearest(listed(manifest.palettes), missing)
     throw new Error(`not in any marketplace: ${missing.join(', ')} — ${hint}`)
   }
-  return manifest.palettes.filter((p) => names.includes(p.name))
+  const wanted = new Set(names)
+  return manifest.palettes.filter((p) => wanted.has(p.name))
 }
 
 function now(configHome: string, state: Installed, home: string): Now {
@@ -275,12 +275,15 @@ export function forget(
   home = homedir(),
 ): string[] {
   const removed: string[] = []
-  const known = available(configHome, manifest, false).palettes
+  const gone = available(configHome, manifest, false).palettes.filter((p) => names.includes(p.name))
   for (const wiring of wirings(terminals)) {
     const dir = wiring.shelf?.dir({ configHome, home })
-    for (const entry of dir ? known.filter((p) => names.includes(p.name)) : []) {
+    if (!dir) {
+      continue
+    }
+    for (const entry of gone) {
       for (const { file } of themeFiles(wiring, toTheme(entry))) {
-        const path = join(dir as string, file)
+        const path = join(dir, file)
         if (existsSync(path)) {
           rmSync(path, { force: true })
           removed.push(path)

@@ -170,7 +170,10 @@ export interface Shelf {
 
 function placeFor(name: string, entries: PaletteEntry[], foreign: boolean, shelf: Shelf): Place {
   const bases = new Map(
-    entries.filter((e) => !e.default && !marketplaceOf(e.name)).map((e) => [e.name, { order: e.order }]),
+    entries
+      .values()
+      .filter((e) => !e.default && !marketplaceOf(e.name))
+      .map((e) => [e.name, { order: e.order }]),
   )
   return {
     name,
@@ -317,13 +320,11 @@ export function paletteToml(d: Draft): string {
     '',
     ...d.ansi.slice(8).map((c) => `  ${q(c)},`),
     ']',
+    ...(d.waive && d.waive.length > 0
+      ? ['', '[contrast]', `waive = [${d.waive.map(q).join(', ')}]`, `reason = ${q(d.reason ?? '')}`]
+      : []),
+    ...(d.pictures ?? []).flatMap((p) => ['', ...pictureToml(p)]),
   ]
-  if (d.waive && d.waive.length > 0) {
-    lines.push('', '[contrast]', `waive = [${d.waive.map(q).join(', ')}]`, `reason = ${q(d.reason ?? '')}`)
-  }
-  for (const p of d.pictures ?? []) {
-    lines.push('', ...pictureToml(p))
-  }
   return `${lines.join('\n')}\n`
 }
 

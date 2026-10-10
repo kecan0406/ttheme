@@ -85,10 +85,8 @@ interface InitPlan {
   notes: string[]
 }
 
-function copyDir(copies: InitPlan['copies'], from: string, to: string): void {
-  for (const f of readdirSync(from)) {
-    copies.push({ from: join(from, f), to: join(to, f) })
-  }
+function copyDir(from: string, to: string): InitPlan['copies'] {
+  return readdirSync(from).map((f) => ({ from: join(from, f), to: join(to, f) }))
 }
 
 function loadManifest(root: string): Manifest {
@@ -104,8 +102,8 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     { from: join(paths.root, 'shell', 'ttheme.zsh'), to: join(home, 'ttheme.zsh') },
     { from: join(paths.root, 'shell', 'preview.zsh'), to: join(home, 'preview.zsh') },
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
+    ...copyDir(join(paths.root, 'shell', 'adapters'), join(home, 'adapters')),
   ]
-  copyDir(copies, join(paths.root, 'shell', 'adapters'), join(home, 'adapters'))
   const shells = paths.shells ?? ['zsh']
   const edits: InitPlan['edits'] = [
     { file: join(paths.zdotdir, '.zshrc'), block: zshrcBlock(), about: 'source ttheme.zsh' },

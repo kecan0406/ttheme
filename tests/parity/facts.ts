@@ -22,14 +22,9 @@ export const SAME = '='
 const packed = (value: string, spec: string) => (value === spec ? SAME : value)
 
 export function tableOf(results: ReadonlyMap<Term, Facts>, wanted: Facts, known: Table = new Map()): Table {
-  const ids = new Set<string>()
-  for (const facts of results.values()) {
-    for (const id of Object.keys(facts)) {
-      ids.add(id)
-    }
-  }
+  const ids = new Set(results.values().flatMap((facts) => Object.keys(facts)))
   if (TERMS.some((term) => !results.has(term))) {
-    const walked = new Set([...ids].map((id) => id.split('.')[0]))
+    const walked = new Set(ids.values().map((id) => id.split('.')[0]))
     for (const id of known.keys()) {
       if (walked.has(id.split('.')[0])) {
         ids.add(id)
@@ -66,24 +61,24 @@ function byJourney(a: string, b: string): number {
 }
 
 export function readTable(file = FACTS): Table {
-  const table: Table = new Map()
   if (!existsSync(file)) {
-    return table
+    return new Map()
   }
   const [head = '', ...lines] = readFileSync(file, 'utf8').trimEnd().split('\n')
   const columns = head.split('\t').slice(1) as Column[]
-  for (const line of lines) {
-    const [id = '', ...cells] = line.split('\t')
-    table.set(id, new Map(columns.map((column, i) => [column, cells[i] ?? '-'])))
-  }
-  return table
+  return new Map(
+    lines.map((line) => {
+      const [id = '', ...cells] = line.split('\t')
+      return [id, new Map(columns.map((column, i) => [column, cells[i] ?? '-']))]
+    }),
+  )
 }
 
 export function writeTable(table: Table, file = FACTS): void {
-  const lines = [['fact', ...COLUMNS].join('\t')]
-  for (const [id, row] of table) {
-    lines.push([id, ...COLUMNS.map((column) => row.get(column) ?? '-')].join('\t'))
-  }
+  const lines = [
+    ['fact', ...COLUMNS].join('\t'),
+    ...table.entries().map(([id, row]) => [id, ...COLUMNS.map((column) => row.get(column) ?? '-')].join('\t')),
+  ]
   writeFileSync(file, `${lines.join('\n')}\n`)
 }
 
@@ -200,6 +195,8 @@ export function unmeasured(compat: Compat, term: Term): string[] | undefined {
   const decided = (id: string) => ['pass', 'fail'].includes(compat.result(term, id) ?? '?')
   const cases: { id: string; holds: unknown }[] = [...MEASURED, ...BRIDGES]
   return cases
+    .values()
     .filter(({ holds }) => !cases.some((other) => other.holds === holds && decided(other.id)))
     .map(({ id }) => id)
+    .toArray()
 }

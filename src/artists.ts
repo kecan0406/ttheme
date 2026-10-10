@@ -89,10 +89,7 @@ export function profileKind(url: string): ProfileKind | undefined {
 
 export function profilesOf(urls: readonly string[]): string[] {
   return PROFILE_KINDS.flatMap((kind) => {
-    for (const [of, form, canonical] of FORMS) {
-      if (of !== kind) {
-        continue
-      }
+    for (const [, form, canonical] of FORMS.filter(([of]) => of === kind)) {
       for (const url of urls) {
         const id = form.exec(url)?.[1]
         if (id) {
@@ -156,7 +153,8 @@ export function postOf(picture: Credited): Page | undefined {
 export function followOf(urls: readonly string[] | undefined, page: string | undefined): string | undefined {
   const on = page ? PAGE_KINDS.find(([form]) => form.test(page))?.[1] : undefined
   const links = linksOf(urls)
-  return FOLLOWS.flatMap((kind) => (kind === on ? [] : links.filter((link) => link.kind === kind)))[0]?.url
+  const kind = FOLLOWS.find((each) => each !== on && links.some((link) => link.kind === each))
+  return links.find((link) => link.kind === kind)?.url
 }
 
 export function creditLine(picture: Credited): string | undefined {
@@ -215,6 +213,6 @@ export async function postCredit(site: Site, id: number, signal: AbortSignal): P
   return {
     artist: post.named.artist,
     source: sourcePage(post.source),
-    profiles: Object.fromEntries([...profiles].filter(([, urls]) => urls.length > 0)),
+    profiles: Object.fromEntries(profiles.entries().filter(([, urls]) => urls.length > 0)),
   }
 }

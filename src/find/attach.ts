@@ -99,25 +99,22 @@ function local(word: string): string | undefined {
 }
 
 export function pastedRefs(text: string, exists: (path: string) => boolean = isFile): string[] {
-  const refs: string[] = []
-  for (const line of text.replace(/\r\n?/g, '\n').split('\n')) {
-    const whole = local(line.trim())
-    if (whole && exists(whole)) {
-      refs.push(whole)
-      continue
-    }
-    for (const word of words(line)) {
-      if (/^https?:\/\/\S+$/i.test(word)) {
-        refs.push(word)
-        continue
+  return text
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .flatMap((line) => {
+      const whole = local(line.trim())
+      if (whole && exists(whole)) {
+        return [whole]
       }
-      const path = local(word)
-      if (path && exists(path)) {
-        refs.push(path)
-      }
-    }
-  }
-  return refs
+      return words(line).flatMap((word) => {
+        if (/^https?:\/\/\S+$/i.test(word)) {
+          return [word]
+        }
+        const path = local(word)
+        return path && exists(path) ? [path] : []
+      })
+    })
 }
 
 function sniff(bytes: Uint8Array): { ext: 'png' | 'jpg'; width: number; height: number } | undefined {

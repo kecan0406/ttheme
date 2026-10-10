@@ -258,8 +258,11 @@ if (values.against) {
     }
     moved++
     const row = String(y).padStart(2)
-    lines.push(...(a === b ? [`${row}   ${b}`] : [`${row} - ${a}`, `${row} + ${b}`]))
-    lines.push(...gone.map((r) => `     - ${r.at} ${r.style}`), ...came.map((r) => `     + ${r.at} ${r.style}`))
+    lines.push(
+      ...(a === b ? [`${row}   ${b}`] : [`${row} - ${a}`, `${row} + ${b}`]),
+      ...gone.map((r) => `     - ${r.at} ${r.style}`),
+      ...came.map((r) => `     + ${r.at} ${r.style}`),
+    )
   }
   console.log(
     moved

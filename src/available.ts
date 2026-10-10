@@ -158,13 +158,10 @@ function entryProblem(p: PaletteEntry): string | undefined {
   if (![p.background, p.foreground, p.cursor, p.selection, ...p.ansi].every((c) => typeof c === 'string' && isHex(c))) {
     return 'holds a color that is not "#rrggbb"'
   }
-  for (const field of [p.native ?? '-', p.catalog ?? '-', p.ansiSource]) {
-    const problem = typeof field === 'string' ? textProblem(field) : 'has a field that is not text'
-    if (problem) {
-      return problem
-    }
-  }
-  return undefined
+  return [p.native ?? '-', p.catalog ?? '-', p.ansiSource]
+    .values()
+    .map((field) => (typeof field === 'string' ? textProblem(field) : 'has a field that is not text'))
+    .find(Boolean)
 }
 
 function keptPath(configHome: string): string {
@@ -304,11 +301,7 @@ export function search(palettes: PaletteEntry[], query: string): PaletteEntry[] 
 export function booruTags(palettes: PaletteEntry[], near: PaletteEntry, token: string): PaletteEntry[] {
   const needle = token.toLowerCase()
   const rank = (p: PaletteEntry) => (p.name === near.name ? 0 : shelfOf(p) === shelfOf(near) ? 1 : 2)
-  return palettes
-    .filter((p) => p.booru?.toLowerCase().includes(needle))
-    .map((p, at) => ({ p, at }))
-    .sort((a, b) => rank(a.p) - rank(b.p) || a.at - b.at)
-    .map(({ p }) => p)
+  return palettes.filter((p) => p.booru?.toLowerCase().includes(needle)).sort((a, b) => rank(a) - rank(b))
 }
 
 export function siteTags(entry: PaletteEntry, site: string): string[] {

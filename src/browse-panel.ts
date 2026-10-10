@@ -205,7 +205,6 @@ export class BrowsePanel {
   private listing: Listing | undefined
   private loading = false
   private loadError: string | undefined
-  private asked = 0
   private help = false
   private readonly live: boolean
 
@@ -338,13 +337,13 @@ export class BrowsePanel {
   }
 
   async idle(): Promise<void> {
-    await Promise.allSettled([...this.inflight])
+    await Promise.allSettled(this.inflight)
   }
 
   result(): BrowseResult {
     const names = new Set(this.entries().map((e) => e.name))
     return {
-      picked: new Set([...this.picked].filter((name) => names.has(name))),
+      picked: new Set(this.picked.values().filter((name) => names.has(name))),
       adds: [...this.adds.values()],
       removes: [...this.removes],
       auto: Object.fromEntries(this.want),
@@ -1086,10 +1085,7 @@ export class BrowsePanel {
       return ''
     }
     const auto = isRemote(m.source) && (this.want.get(m.source) ?? m.auto) ? `${MARKS.auto} auto-update` : ''
-    return [auto, this.status(m)]
-      .filter(Boolean)
-      .map((part) => `  ${this.p.dim(part)}`)
-      .join('')
+    return [auto, this.status(m)].map((part) => (part ? `  ${this.p.dim(part)}` : '')).join('')
   }
 
   private peeking(source: string): string {
@@ -1172,7 +1168,7 @@ export class BrowsePanel {
       this.changes() > 0 ||
       renew.length > 0 ||
       picked.size !== this.installed.size ||
-      [...picked].some((n) => !this.installed.has(n))
+      !picked.isSubsetOf(this.installed)
     )
   }
 
@@ -1415,8 +1411,7 @@ export class BrowsePanel {
       if (note) {
         note = undefined
       } else if (keys.length > 2 || (!right && keys.length > 1)) {
-        const drop = keys.length - 2
-        keys = keys.filter((_, i) => i !== drop)
+        keys = keys.toSpliced(-2, 1)
       } else if (right) {
         right = undefined
       } else {
@@ -1438,7 +1433,7 @@ export class BrowsePanel {
       ]
       return parts.length > 0 ? parts.join(' · ') : 'on GitHub'
     }
-    const updating = [...this.busy.values()].includes('Updating…') ? 'Updating… · ' : ''
+    const updating = this.busy.values().some((text) => text === 'Updating…') ? 'Updating… · ' : ''
     const list = this.list
     return `${updating}${list.matched()}/${list.total()} · ${list.pickedCount()} picked`
   }

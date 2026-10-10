@@ -227,7 +227,7 @@ function itermProfileOf(env: Env): string | undefined {
 
 function itermLive(env: Env, write: (text: string) => void): Live {
   const slots = TRAITS.iterm2.repaint ?? []
-  const rest = SLOT_CODES.map((_, slot) => slot).filter((slot) => !slots.includes(slot))
+  const rest = [...SLOT_CODES.keys()].filter((slot) => !slots.includes(slot))
   const sent = new Set(slots)
   const profile = itermProfileOf(env)
   let timers: ReturnType<typeof setTimeout>[] = []
@@ -350,7 +350,7 @@ export function livePaint(
   if (terminal === 'konsole' && env.TTHEME_KONSOLE_LOOK) {
     return konsoleLive(env, env.TTHEME_KONSOLE_LOOK)
   }
-  const slots = traits.repaint ?? SLOT_CODES.map((_, slot) => slot)
+  const slots = traits.repaint ?? [...SLOT_CODES.keys()]
   const codes = SLOT_CODES.filter((_, slot) => slots.includes(slot))
   return {
     slots,

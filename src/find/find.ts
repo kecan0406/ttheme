@@ -1722,11 +1722,7 @@ class Finder {
         }
         group.open = !group.open
         this.board.focus = index
-        for (const pick of group.posts) {
-          if (!this.thumbPath.has(postKey(pick.site, pick.post.id))) {
-            this.thumbQueue.push(pick)
-          }
-        }
+        this.thumbQueue.push(...group.posts.filter((pick) => !this.thumbPath.has(postKey(pick.site, pick.post.id))))
         this.thumbs()
         this.show()
         this.scroll()
@@ -2098,9 +2094,7 @@ class Finder {
       board.sources = owned.flatMap(({ plan: { site, tags }, owners }) => {
         const by = tagsOf(tags) + 1 <= site.tagBudget ? site.uploadedBy : undefined
         return [
-          ...(by
-            ? [...owners.keys()].map((owner) => ({ site, tags: `${tags} ${by(owner)}`, page: 0, done: false }))
-            : []),
+          ...(by ? owners.keys().map((owner) => ({ site, tags: `${tags} ${by(owner)}`, page: 0, done: false })) : []),
           { site, tags, page: 0, done: false },
         ]
       })

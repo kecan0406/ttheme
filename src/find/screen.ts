@@ -395,11 +395,11 @@ class Line {
   }
 
   right(end: number, parts: Part[]): void {
-    this.run(end - parts.reduce((n, [text]) => n + width(text), 0), parts)
+    this.run(end - partsWidth(parts), parts)
   }
 
   center(room: number, parts: Part[]): void {
-    this.run(Math.floor((room - parts.reduce((n, [text]) => n + width(text), 0)) / 2), parts)
+    this.run(Math.floor((room - partsWidth(parts)) / 2), parts)
   }
 
   render(): string {
@@ -510,7 +510,7 @@ function sceneTabs(line: Line | undefined, col: number, room: number, view: Find
     ...(i ? ([['  ', '']] as Part[]) : []),
     [scene.name, i === at ? B + accent : D, undefined, { kind: 'scene', scene: i }],
   ])
-  const fits = strip.reduce((n, [text]) => n + width(text), 0) <= room
+  const fits = partsWidth(strip) <= room
   line?.run(
     col,
     fits
@@ -579,7 +579,7 @@ function tagLines(tags: string[], room: number, most: number): string[] {
   if (kept < tags.length) {
     last.push(`+${tags.length - kept}`)
   }
-  return out.filter((line) => line.length > 0).map((line) => line.join('  '))
+  return out.flatMap((line) => (line.length > 0 ? [line.join('  ')] : []))
 }
 
 function bare(url: string): string {
@@ -765,7 +765,7 @@ function tabs(line: Line, cols: number, view: FindView): void {
     const tab: Part = [text, sgr, undefined, { kind: 'site', tab: i }]
     return i ? [[' ', ''], tab] : [tab]
   })
-  const fits = strip.reduce((n, [text]) => n + width(text), 0) <= cols
+  const fits = partsWidth(strip) <= cols
   line.run(0, fits ? strip : [badge(view)])
 }
 
@@ -1296,8 +1296,7 @@ export function stepped(choices: readonly string[], value: string, step: 1 | -1)
     return choices[(at + step + choices.length) % choices.length] as string
   }
   const n = Number(value) || 0
-  const next =
-    step > 0 ? choices.find((c) => (Number(c) || 0) > n) : [...choices].reverse().find((c) => (Number(c) || 0) < n)
+  const next = step > 0 ? choices.find((c) => (Number(c) || 0) > n) : choices.findLast((c) => (Number(c) || 0) < n)
   return next ?? (choices[step > 0 ? 0 : choices.length - 1] as string)
 }
 
@@ -1326,7 +1325,7 @@ function ordered(row: Row): string[] {
     return row.choices
   }
   const at = row.choices.findIndex((choice) => (Number(choice) || 0) > Number(row.value))
-  return at === -1 ? [...row.choices, row.value] : [...row.choices.slice(0, at), row.value, ...row.choices.slice(at)]
+  return at === -1 ? [...row.choices, row.value] : row.choices.toSpliced(at, 0, row.value)
 }
 
 function chips(row: Row, focused: boolean, typing: string | undefined, ansi: number): Chip[] {

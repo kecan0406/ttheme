@@ -132,13 +132,13 @@ export function dueSources(home: string, state: Installed, now = Date.now()): st
 }
 
 function archiveOf(tarball: Uint8Array, etag: string | null): Archive {
-  const files: Record<string, string> = {}
   const text = new TextDecoder()
-  for (const [path, data] of untar(tarball)) {
-    if (path === MARKETPLACE_FILE || (path.startsWith('palettes/') && path.endsWith('.toml'))) {
-      files[path] = text.decode(data)
-    }
-  }
+  const files = Object.fromEntries(
+    untar(tarball)
+      .entries()
+      .filter(([path]) => path === MARKETPLACE_FILE || (path.startsWith('palettes/') && path.endsWith('.toml')))
+      .map(([path, data]) => [path, text.decode(data)]),
+  )
   return { ...(etag ? { etag } : {}), files }
 }
 
@@ -224,7 +224,7 @@ export function diffEntries(before: PaletteEntry[], after: PaletteEntry[]): Chan
   const now = new Map(after.map((e) => [e.name, JSON.stringify(e)]))
   return {
     added: [...now.keys()].filter((name) => !was.has(name)),
-    changed: [...now].filter(([name, json]) => was.has(name) && was.get(name) !== json).map(([name]) => name),
+    changed: [...now.keys()].filter((name) => was.has(name) && was.get(name) !== now.get(name)),
     gone: [...was.keys()].filter((name) => !now.has(name)),
   }
 }

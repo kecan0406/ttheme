@@ -55,11 +55,9 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean,
   }
   const gate = failing === 0 ? 'passes the gate' : `${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
   const notes = tuned > 0 ? [`${tuned} tuned · ${gate}`, gate] : [gate]
-  const rows = [p.dim(boxEdge(width, 'top', headOf(width, ' Palette ', notes)))]
-  for (let row = 0; row < BASE.length; row++) {
-    rows.push(boxed(p, ` ${(BASE[row] as string).padEnd(10)}${cell(row)}`, width))
-  }
-  rows.push(
+  return [
+    p.dim(boxEdge(width, 'top', headOf(width, ' Palette ', notes))),
+    ...BASE.map((name, row) => boxed(p, ` ${name.padEnd(10)}${cell(row)}`, width)),
     p.dim(
       boxEdge(width, 'mid', [
         [2, ' ANSI '],
@@ -67,10 +65,9 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean,
         [29, ' Bright 8–15 '],
       ]),
     ),
-  )
-  PAIRS.forEach((name, k) => {
-    rows.push(boxed(p, ` ${name.padEnd(10)}${cell(BASE.length + k)}${cell(BASE.length + 8 + k)}`, width))
-  })
-  rows.push(p.dim(boxEdge(width, 'bottom')))
-  return rows
+    ...PAIRS.map((name, k) =>
+      boxed(p, ` ${name.padEnd(10)}${cell(BASE.length + k)}${cell(BASE.length + 8 + k)}`, width),
+    ),
+    p.dim(boxEdge(width, 'bottom')),
+  ]
 }

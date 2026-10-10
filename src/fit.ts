@@ -31,13 +31,13 @@ function cutoutTags(site: Site): Set<string> {
 function fitScore(pick: Pick, frame: Frame, best: number, match = 0): number {
   const { site, post } = pick
   const tags = new Set(post.tags)
-  const cut = [...cutoutTags(site)].some((tag) => tags.has(tag))
+  const cut = !cutoutTags(site).isDisjointFrom(tags)
   const short = Math.min(post.width, post.height)
   const aspect = post.width > 0 && post.height > 0 ? post.width / post.height / (frame.w / frame.h) : 1
   return (
     (post.solo ? 2 : 0) +
-    ([...FLAT].some((tag) => tags.has(tag)) ? -3 : 0) +
-    ([...SCENERY].some((tag) => tags.has(tag)) ? -1.5 : 0) +
+    (FLAT.isDisjointFrom(tags) ? 0 : -3) +
+    (SCENERY.isDisjointFrom(tags) ? 0 : -1.5) +
     2 * Math.min(1, short / frame.h) +
     (cut ? 1.5 : -Math.min(1.5, Math.abs(Math.log(aspect)))) +
     (best > 0 ? (1.5 * Math.log1p(Math.max(0, post.score))) / Math.log1p(best) : 0) +
@@ -57,10 +57,7 @@ export function fitOrder(picks: Pick[], frame: Frame, matches: ReadonlyMap<Post,
 }
 
 export function interleave(picks: Pick[]): Pick[] {
-  const lanes = new Map<Site, Pick[]>()
-  for (const pick of picks) {
-    lanes.set(pick.site, [...(lanes.get(pick.site) ?? []), pick])
-  }
+  const lanes = Map.groupBy(picks, (pick) => pick.site)
   const out: Pick[] = []
   for (let i = 0; out.length < picks.length; i++) {
     for (const lane of lanes.values()) {
@@ -91,7 +88,11 @@ function oklab(r: number, g: number, b: number): [number, number, number] {
 }
 
 export function paletteMatch(image: Rgba, colors: Hex[]): number {
-  const targets = colors.map((hex) => oklab(...rgb(hex))).filter(([, a, b]) => Math.hypot(a, b) >= CHROMA)
+  const targets = colors
+    .values()
+    .map((hex) => oklab(...rgb(hex)))
+    .filter(([, a, b]) => Math.hypot(a, b) >= CHROMA)
+    .toArray()
   if (targets.length === 0) {
     return 0
   }

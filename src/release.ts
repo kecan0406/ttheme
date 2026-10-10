@@ -27,13 +27,8 @@ export function isNewer(latest: string, running: string): boolean {
   if (!a || !b) {
     return false
   }
-  for (const part of [1, 2, 3]) {
-    const gap = Number(a[part]) - Number(b[part])
-    if (gap !== 0) {
-      return gap > 0
-    }
-  }
-  return false
+  const gap = [1, 2, 3].map((part) => Number(a[part]) - Number(b[part])).find((step) => step !== 0)
+  return (gap ?? 0) > 0
 }
 
 export function autoWanted(env: NodeJS.ProcessEnv = process.env): boolean {

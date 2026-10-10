@@ -514,15 +514,15 @@ export function loadThemes(dir: string): Theme[] {
     throw new Error('themes: meta.order must be unique across all themes')
   }
 
+  const byCatalog = Map.groupBy(themes, (t) => t.catalog)
   for (const catalog of catalogs) {
-    const members = themes.filter((t) => t.catalog === catalog.name)
-    if (members.length === 0) fail(MARKETPLACE_FILE, `catalog "${catalog.name}" has no palettes`)
+    const members = byCatalog.get(catalog.name)
+    if (!members) fail(MARKETPLACE_FILE, `catalog "${catalog.name}" has no palettes`)
     if (!members.some((t) => t.name === catalog.lead)) {
       fail(MARKETPLACE_FILE, `catalog "${catalog.name}" needs a lead, one of its palettes`)
     }
   }
-  const shown = [...new Set(themes.map((t) => t.catalog))]
-  if (shown.join('\n') !== catalogs.map((c) => c.name).join('\n')) {
+  if ([...byCatalog.keys()].join('\n') !== catalogs.map((c) => c.name).join('\n')) {
     fail(MARKETPLACE_FILE, 'the [[catalog]] tables must follow the order meta.order gives their palettes')
   }
   return themes
@@ -543,7 +543,7 @@ export function topOf(item: { name: string; catalog?: string }): string {
 export function alphabetical<T extends { name: string; base?: string; catalog?: string }>(items: T[]): T[] {
   const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
   const root = (t: T) => (marketplaceOf(t.name) ? t.name : (t.base ?? t.name))
-  return [...items].sort(
+  return items.toSorted(
     (a, b) =>
       Number(marketplaceOf(a.name) !== undefined) - Number(marketplaceOf(b.name) !== undefined) ||
       cmp(topOf(a).toLowerCase(), topOf(b).toLowerCase()) ||

@@ -121,7 +121,7 @@ test('a PNG is read the way its eXIf orientation shows it, as the JPEG decoder t
     const bytes = new Uint8Array(Buffer.concat([plain.subarray(0, 33), chunk, plain.subarray(33)]))
     const image = decodePng(bytes)
     assert.deepEqual(
-      [image.width, image.height, [...image.data].filter((_, at) => at % 4 === 0).map((red) => red / 40)],
+      [image.width, image.height, [...image.data].flatMap((red, at) => (at % 4 === 0 ? [red / 40] : []))],
       [width, height, order],
       `orientation ${turn}`,
     )

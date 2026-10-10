@@ -53,7 +53,7 @@ function topFor(input: Input): Terminal | undefined {
 let lingering: NodeJS.Timeout | undefined
 
 function failAll(error: unknown): void {
-  for (const terminal of [...opened].reverse()) {
+  for (const terminal of opened.toReversed()) {
     terminal.abort(error)
   }
   if (!lingering) {
@@ -69,7 +69,7 @@ const onSignal = Object.fromEntries(
 )
 
 function exiting(): void {
-  for (const terminal of [...opened].reverse()) {
+  for (const terminal of opened.toReversed()) {
     terminal.close()
   }
 }
@@ -266,7 +266,7 @@ export class Terminal {
     this.input.off('data', this.received)
     this.output.off('resize', this.resizing)
     let out = ''
-    for (const mode of [...this.modes].reverse()) {
+    for (const mode of this.modes.toReversed()) {
       const count = (held.get(mode) ?? 1) - 1
       if (count === 0) {
         held.delete(mode)

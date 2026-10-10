@@ -635,7 +635,7 @@ export function postRef(text: string, fallback: Site): { site: Site; id: number 
     return undefined
   }
   const site = siteNamed(url.host)
-  const id = Number(url.searchParams.get('id') ?? url.pathname.split('/').filter(Boolean).at(-1))
+  const id = Number(url.searchParams.get('id') ?? url.pathname.split('/').findLast(Boolean))
   return site && id > 0 ? { site, id } : undefined
 }
 

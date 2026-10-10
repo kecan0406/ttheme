@@ -54,11 +54,10 @@ const journeys = (() => {
   return ids ? JOURNEYS.filter((j) => ids.includes(j.id)) : JOURNEYS
 })()
 
-for (const term of terms) {
-  if (!TERMS.includes(term)) {
-    console.error(`unknown terminal ${term} — one of ${TERMS.join(', ')}`)
-    process.exit(2)
-  }
+const unknown = terms.find((term) => !TERMS.includes(term))
+if (unknown !== undefined) {
+  console.error(`unknown terminal ${unknown} — one of ${TERMS.join(', ')}`)
+  process.exit(2)
 }
 if (journeys.length === 0) {
   console.error(`no journey named ${values.journey} — one of ${JOURNEYS.map((j) => j.id).join(', ')}`)
@@ -717,7 +716,7 @@ async function main(): Promise<void> {
     line.done()
     clearInterval(beat)
     const fresh = tableOf(results, wanted, old)
-    const scoped: Table = new Map([...old].filter(([id]) => journeys.some((j) => id.split('.')[0] === j.id)))
+    const scoped: Table = new Map(old.entries().filter(([id]) => journeys.some((j) => id.split('.')[0] === j.id)))
     if (values.update) {
       writeTable(
         merged(

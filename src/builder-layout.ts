@@ -281,22 +281,19 @@ function sceneLines(name: string, picked: boolean, width: number): string[] {
 }
 
 function parsed(markup: string[], width: number): Part[][] {
-  const lines: Part[][] = []
-  for (const text of markup) {
-    const parts = sceneParts(text, width)
-    if (!parts) {
-      continue
-    }
-    let col = 0
-    lines.push(
-      parts.map(([t, role]) => {
+  return markup
+    .values()
+    .map((text) => sceneParts(text, width))
+    .filter((parts) => parts !== undefined)
+    .map((parts) => {
+      let col = 0
+      return parts.map(([t, role]) => {
         const part = { text: t, role, col }
         col += cells(t)
         return part
-      }),
-    )
-  }
-  return lines
+      })
+    })
+    .toArray()
 }
 
 function statusLine(width: number): string {
@@ -317,7 +314,7 @@ function fitted(pane: Pane, width: number, rows: number): Part[][] {
   const footer = parsed(footerOf(pane, width), width)
   const room = Math.max(0, rows - footer.length)
   let shown: Part[][] = []
-  for (const name of [...pane.scenes].reverse()) {
+  for (const name of pane.scenes.toReversed()) {
     const whole = parsed(sceneLines(name, false, width), width)
     const picked = parsed(sceneLines(name, true, width), width)
     const next = [whole, picked].find((lines) => shown.length + lines.length <= room)
@@ -400,15 +397,16 @@ interface Run {
 }
 
 function runsOf(layout: Layout): Run[] {
-  const out: Run[] = []
-  for (const tile of layout.tiles) {
-    paneLines(tile).forEach((line, l) => {
-      line.forEach((part, r) => {
-        out.push({ spot: { pane: tile.id, line: l, run: r }, col: part.col, text: part.text, role: part.role })
-      })
-    })
-  }
-  return out
+  return layout.tiles.flatMap((tile) =>
+    paneLines(tile).flatMap((line, l) =>
+      line.map((part, r) => ({
+        spot: { pane: tile.id, line: l, run: r },
+        col: part.col,
+        text: part.text,
+        role: part.role,
+      })),
+    ),
+  )
 }
 
 function same(a: Spot, b: Spot): boolean {
@@ -505,14 +503,8 @@ export function joints(rules: readonly Rule[]): Map<number, Map<number, string>>
       }
     }
   }
-  const out = new Map<number, Map<number, string>>()
-  for (const [row, line] of ways) {
-    const drawn = new Map<number, string>()
-    for (const [col, cell] of line) {
-      const key = [...cell].sort().join('')
-      drawn.set(col, JOINTS[key] ?? (cell.has('l') || cell.has('r') ? '─' : '│'))
-    }
-    out.set(row, drawn)
-  }
-  return out
+  const glyph = (cell: Set<string>) => JOINTS[[...cell].sort().join('')] ?? (cell.has('l') || cell.has('r') ? '─' : '│')
+  return new Map(
+    ways.entries().map(([row, line]) => [row, new Map(line.entries().map(([col, cell]) => [col, glyph(cell)]))]),
+  )
 }

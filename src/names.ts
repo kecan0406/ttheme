@@ -76,7 +76,10 @@ function long(key: string): boolean {
 
 function files(home: string): string[] {
   const dir = namesDir(home)
-  return LAYERS.map((layer) => join(dir, `ttheme-${layer}.json`)).filter((path) => existsSync(path))
+  return LAYERS.values()
+    .map((layer) => join(dir, `ttheme-${layer}.json`))
+    .filter((path) => existsSync(path))
+    .toArray()
 }
 
 const FORMAT = 6
@@ -134,21 +137,22 @@ function merged(paths: string[]): Known[] {
       cards.set(id, into)
     }
   }
-  const known: Known[] = []
-  const top = Math.log1p([...cards.values()].reduce((most, card) => Math.max(most, card.posts), 1))
-  for (const card of cards.values()) {
-    if (card.tags.size === 0) continue
-    const tags = [...card.tags]
-    known.push({
-      tag: card.tag && card.tags.has(card.tag) ? card.tag : (tags[0] as string),
-      tags,
-      names: [...new Set(card.names)],
-      japanese: [...new Set(card.japanese)],
-      generated: [...new Set(card.generated)],
-      rank: card.posts > 0 ? Math.log1p(card.posts) / top : card.rank,
+  const top = Math.log1p(cards.values().reduce((most, card) => Math.max(most, card.posts), 1))
+  return cards
+    .values()
+    .filter((card) => card.tags.size > 0)
+    .map((card): Known => {
+      const tags = [...card.tags]
+      return {
+        tag: card.tag && card.tags.has(card.tag) ? card.tag : (tags[0] as string),
+        tags,
+        names: [...new Set(card.names)],
+        japanese: [...new Set(card.japanese)],
+        generated: [...new Set(card.generated)],
+        rank: card.posts > 0 ? Math.log1p(card.posts) / top : card.rank,
+      }
     })
-  }
-  return known
+    .toArray()
 }
 
 function packed<T extends { set(values: ArrayLike<number>): void }>(
@@ -394,9 +398,8 @@ export function paletteAliases(tags: readonly string[], home = homedir()): Map<s
 }
 
 function aliasMap(tags: readonly string[], home: string): Map<string, string[]> {
-  const out = new Map<string, string[]>()
   const paths = files(home)
-  if (paths.length === 0 || tags.length === 0) return out
+  if (paths.length === 0 || tags.length === 0) return new Map()
   const stamp = stampOf(paths)
   const cache = join(namesDir(home), 'aliases.json')
   let kept: { stamp: string; tags: Record<string, string[]> } | undefined
@@ -405,11 +408,10 @@ function aliasMap(tags: readonly string[], home: string): Map<string, string[]> 
   } catch {}
   if (kept?.stamp === stamp && tags.every((tag) => tag in kept.tags)) {
     remembered = kept.tags
-    for (const tag of tags) out.set(tag, kept.tags[tag] ?? [])
-    return out
+    return new Map(tags.map((tag) => [tag, kept.tags[tag] ?? []]))
   }
   const index = load(home)
-  if (!index) return out
+  if (!index) return new Map()
   const all = new Set([...tags, ...(kept?.stamp === stamp ? Object.keys(kept.tags) : [])])
   const fresh: Record<string, string[]> = {}
   for (const tag of all) {
@@ -420,8 +422,7 @@ function aliasMap(tags: readonly string[], home: string): Map<string, string[]> 
     writeAtomic(cache, `${JSON.stringify({ stamp, tags: fresh })}\n`)
   } catch {}
   remembered = fresh
-  for (const tag of tags) out.set(tag, fresh[tag] ?? [])
-  return out
+  return new Map(tags.map((tag) => [tag, fresh[tag] ?? []]))
 }
 
 export function knowAliases(entries: readonly { booru?: string }[], home = homedir()): void {

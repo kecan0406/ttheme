@@ -17,13 +17,10 @@ function wtSettings(wtHome: string): string[] {
 }
 
 function wtDefaultProfile(settings: string[]): string | undefined {
-  for (const file of settings) {
-    const guid = /"defaultProfile"\s*:\s*"(\{[0-9a-fA-F-]+\})"/.exec(readFileSync(file, 'utf8'))?.[1]
-    if (guid) {
-      return guid
-    }
-  }
-  return undefined
+  return settings
+    .values()
+    .map((file) => /"defaultProfile"\s*:\s*"(\{[0-9a-fA-F-]+\})"/.exec(readFileSync(file, 'utf8'))?.[1])
+    .find((guid) => guid !== undefined)
 }
 
 export function windowsAppData(host: Host): string | undefined {

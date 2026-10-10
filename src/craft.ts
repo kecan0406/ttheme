@@ -184,10 +184,7 @@ function shelfFor(home: string, name: string): Shelf {
 }
 
 function merged(...lists: (readonly SharedPicture[] | undefined)[]): SharedPicture[] | undefined {
-  const seen = new Map<string, SharedPicture>()
-  for (const picture of lists.flatMap((list) => list ?? [])) {
-    seen.set(imageKey(picture), picture)
-  }
+  const seen = new Map(lists.flatMap((list) => list ?? []).map((picture) => [imageKey(picture), picture]))
   return seen.size > 0 ? [...seen.values()] : undefined
 }
 

@@ -114,7 +114,7 @@ async function install(
     .then(() => (post.named.artist.length > 0 ? fetchProfiles(post.named.artist, signal) : new Map()))
     .then(
       (found) => {
-        profiles = Object.fromEntries([...found].filter(([, urls]) => urls.length > 0))
+        profiles = Object.fromEntries(found.entries().filter(([, urls]) => urls.length > 0))
       },
       () => {},
     )
@@ -222,9 +222,8 @@ export async function bringPictures(
   }
   line.done()
   for (const entry of got) {
-    const first = (entry.pictures ?? []).find((shared) =>
-      rackOf(configHome, entry.name).some((picture) => picture.key === imageKey(shared)),
-    )
+    const held = new Set(rackOf(configHome, entry.name).map((picture) => picture.key))
+    const first = (entry.pictures ?? []).find((shared) => held.has(imageKey(shared)))
     if (first) {
       showImage(configHome, entry.name, imageKey(first))
     }

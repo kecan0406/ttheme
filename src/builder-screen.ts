@@ -320,7 +320,7 @@ function linkLine(e: PaletteEditor, p: Paint, width: number): string | undefined
     : pair.on
       ? [`Bright follows · L ${lift}`, `Bright follows`]
       : ['Its bright moves on its own', 'Moves on its own']
-  const text = choices.find((choice) => cells(choice) <= room) ?? choices[choices.length - 1] ?? ''
+  const text = choices.find((choice) => cells(choice) <= room) ?? choices.at(-1) ?? ''
   return spread(p.dim(text), keyZone('l', `${p.bold('l')} ${p.dim(pair.on ? 'unlink' : 'link')}`), width)
 }
 
@@ -348,13 +348,14 @@ function pickerLines(e: PaletteEditor, p: Paint, outer: number, room: number): P
   const left = ' L × C '
   const right = ` H ${at.h.toFixed(0)}° `
   const dashes = Math.max(0, outer - 4 - cells(left) - cells(right))
-  const lines = [`${p.dim('╭─')}${p.dim(left)}${p.dim('─'.repeat(dashes))}${p.dim(right)}${p.dim('─╮')}`]
   const origin = e.origin()
-  for (const line of planeLines(p, at, hex, width, rows, origin?.lch)) {
-    lines.push(boxed(line))
-  }
   const hue = CHANNELS[2] as (typeof CHANNELS)[number]
-  lines.push(
+  const tab = (label: string, format: Format) =>
+    spot({ kind: 'format', format }, e.format === format ? pillOf(p, label) : p.dim(` ${label} `))
+  const bottom = fit(` ${HINTS} `, outer - 4, false)
+  const lines = [
+    `${p.dim('╭─')}${p.dim(left)}${p.dim('─'.repeat(dashes))}${p.dim(right)}${p.dim('─╮')}`,
+    ...planeLines(p, at, hex, width, rows, origin?.lch).map((line) => boxed(line)),
     boxed(
       spot(
         { kind: 'bar', channel: 2 },
@@ -367,20 +368,13 @@ function pickerLines(e: PaletteEditor, p: Paint, outer: number, room: number): P
         ),
       ),
     ),
-  )
-  lines.push(boxed(contrastLine(p, e, Math.max(8, width - 11), origin?.ratio)))
-  const tab = (label: string, format: Format) =>
-    spot({ kind: 'format', format }, e.format === format ? pillOf(p, label) : p.dim(` ${label} `))
-  lines.push(boxed(`${tab('Hex', 'hex')} ${tab('RGB', 'rgb')} ${tab('OKLCH', 'oklch')}`))
-  lines.push(boxed(valueLine(e, p, width)))
-  if (link) {
-    lines.push(boxed(link))
-  }
-  for (const line of extra) {
-    lines.push(boxed(line))
-  }
-  const bottom = fit(` ${HINTS} `, outer - 4, false)
-  lines.push(`${p.dim('╰─')}${p.dim(bottom)}${p.dim('─'.repeat(Math.max(0, outer - 4 - cells(bottom))))}${p.dim('─╯')}`)
+    boxed(contrastLine(p, e, Math.max(8, width - 11), origin?.ratio)),
+    boxed(`${tab('Hex', 'hex')} ${tab('RGB', 'rgb')} ${tab('OKLCH', 'oklch')}`),
+    boxed(valueLine(e, p, width)),
+    ...(link ? [boxed(link)] : []),
+    ...extra.map((line) => boxed(line)),
+    `${p.dim('╰─')}${p.dim(bottom)}${p.dim('─'.repeat(Math.max(0, outer - 4 - cells(bottom))))}${p.dim('─╯')}`,
+  ]
   return { lines: lines.map((line) => spot({ kind: 'picker' }, line)) }
 }
 
@@ -398,10 +392,10 @@ function artLines(e: PaletteEditor, p: Paint, outer: number, room: number): Popu
   const extra = notes(e, p, width).slice(0, Math.max(0, room - fixed - PLANE_LEAST))
   const rows = Math.max(PLANE_LEAST, Math.min(ART_MOST, room - fixed - extra.length))
   const padded = (content: string) => ` ${fit(content, width)} `
-  const lines = [padded(spread(p.dim('L × C'), p.dim(`H ${at.h.toFixed(0)}°`), width))]
-  for (let row = 0; row < rows; row++) {
-    lines.push(padded(spot({ kind: 'plane', row, rows }, ' '.repeat(width))))
-  }
+  const lines = [
+    padded(spread(p.dim('L × C'), p.dim(`H ${at.h.toFixed(0)}°`), width)),
+    ...Array.from({ length: rows }, (_, row) => padded(spot({ kind: 'plane', row, rows }, ' '.repeat(width)))),
+  ]
   const hue = lines.length
   lines.push(padded(spot({ kind: 'bar', channel: 2 }, ' '.repeat(width))))
   const contrast = lines.length
@@ -433,10 +427,7 @@ function artLines(e: PaletteEditor, p: Paint, outer: number, room: number): Popu
   if (link) {
     lines.push(padded(link))
   }
-  for (const line of extra) {
-    lines.push(padded(line))
-  }
-  lines.push(padded(p.dim(HINTS)))
+  lines.push(...extra.map((line) => padded(line)), padded(p.dim(HINTS)))
   return {
     lines: lines.map((line) => spot({ kind: 'picker' }, line)),
     parts: {
@@ -538,7 +529,7 @@ function sidebar(
   const width = boxWidth(side)
   const rows: string[] = []
   let anchor: number | undefined
-  const bases = BASE.map((_, slot) => slot).filter((slot) => e.visible(slot))
+  const bases = [...BASE.keys()].filter((slot) => e.visible(slot))
   if (bases.length > 0) {
     rows.push(p.dim(boxEdge(width, 'top', [[2, ' Base ']])))
     for (const slot of bases) {
@@ -548,9 +539,7 @@ function sidebar(
       rows.push(boxed(p, baseRow(e, p, c, slot, width - 2, missed), width))
     }
   }
-  const pairs = PAIRS.map((_, row) => row).filter(
-    (row) => e.visible(BASE.length + row) || e.visible(BASE.length + row + 8),
-  )
+  const pairs = [...PAIRS.keys()].filter((row) => e.visible(BASE.length + row) || e.visible(BASE.length + row + 8))
   if (pairs.length > 0) {
     rows.push(p.dim(boxEdge(width, bases.length > 0 ? 'mid' : 'top', ansiLabels(side))))
     for (const row of pairs) {
@@ -619,19 +608,18 @@ function contentRows(
   const base = groundOf(p, c, behind)
   const slot = e.slot()
   return Array.from({ length: tile.rows }, (_, i) => {
-    const line = lines[i]
-    const row: Cellrow = [{ text: ' ', sgr: base }]
-    if (line) {
-      line.forEach((part, r) => {
+    const row: Cellrow = [
+      { text: ' ', sgr: base },
+      ...(lines[i] ?? []).map((part, r): Piece => {
         const here = pinned && pinned.pane === tile.id && pinned.line === i && pinned.run === r
         const sgr = p.color
           ? here
             ? `${base}${p.bg(c.foreground)}${p.fg(c.background)}`
             : `${base}${roleSgr(p, c, part.role, usesSlot(part.role, slot))}${e.where && !lights(part.role, slot) ? open('dim') : ''}`
           : ''
-        row.push({ text: part.text, sgr, target: { kind: 'run', spot: { pane: tile.id, line: i, run: r } } })
-      })
-    }
+        return { text: part.text, sgr, target: { kind: 'run', spot: { pane: tile.id, line: i, run: r } } }
+      }),
+    ]
     const inner = crop(row, 0, tile.width - 1)
     const pad = tile.width - widthOf(inner)
     return pad > 0 ? [...inner, { text: ' '.repeat(pad), sgr: base, target: GROUND }] : inner
@@ -648,26 +636,28 @@ function popoverRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefin
   const edge = (text: string): Piece => ({ text, sgr: dim })
   const top = '┌ Slots here '
   const foot = '└ enter its slot · esc '
-  const rows: Cellrow[] = [[edge(`${top}${'─'.repeat(POPOVER - cells(top) - 1)}┐`)]]
   const slots: [string, number][] = [['text', here.text]]
   if (here.ground !== here.text) {
     slots.push(['ground', here.ground])
   }
-  for (const [label, slot] of slots) {
-    const target: EditorSpot = { kind: 'open', slot }
-    const hex = e.shown()[slot] as Hex
-    const about = slot < BASE.length ? '' : slotLabel(slot).about
-    rows.push([
-      { text: '│ ', sgr: dim, target },
-      { text: label.padEnd(7), sgr: dim, target },
-      { text: MARKS.swatch, sgr: p.color ? `${base}${p.fg(hex)}` : '', target },
-      { text: ' ', sgr: base, target },
-      { text: slotLabel(slot).name.slice(0, 14).padEnd(14), sgr: base, target },
-      { text: about.padEnd(POPOVER - 27), sgr: dim, target },
-      { text: ' │', sgr: dim, target },
-    ])
-  }
-  rows.push([edge(`${foot}${'─'.repeat(POPOVER - cells(foot) - 1)}┘`)])
+  const rows: Cellrow[] = [
+    [edge(`${top}${'─'.repeat(POPOVER - cells(top) - 1)}┐`)],
+    ...slots.map(([label, slot]): Cellrow => {
+      const target: EditorSpot = { kind: 'open', slot }
+      const hex = e.shown()[slot] as Hex
+      const about = slot < BASE.length ? '' : slotLabel(slot).about
+      return [
+        { text: '│ ', sgr: dim, target },
+        { text: label.padEnd(7), sgr: dim, target },
+        { text: MARKS.swatch, sgr: p.color ? `${base}${p.fg(hex)}` : '', target },
+        { text: ' ', sgr: base, target },
+        { text: slotLabel(slot).name.slice(0, 14).padEnd(14), sgr: base, target },
+        { text: about.padEnd(POPOVER - 27), sgr: dim, target },
+        { text: ' │', sgr: dim, target },
+      ]
+    }),
+    [edge(`${foot}${'─'.repeat(POPOVER - cells(foot) - 1)}┘`)],
+  ]
   return rows.map((row) => crop(row, 0, POPOVER))
 }
 
@@ -681,48 +671,52 @@ function menuRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefined 
   const base = p.color ? `${p.bg(c.background)}${p.fg(c.foreground)}` : ''
   const dim = p.color ? `${base}${open('dim')}` : ''
   const title = e.menu === 'export' ? 'Copy ' : 'Take from '
-  const rows: Cellrow[] = [[{ text: `┌ ${title}${'─'.repeat(Math.max(0, width - 3 - title.length))}┐`, sgr: dim }]]
-  items.forEach((item, index) => {
-    const here = index === e.entry
-    const target: EditorSpot = { kind: 'entry', index }
-    rows.push([
-      { text: '│', sgr: dim },
-      {
-        text: ` ${here ? '▌' : ' '} ${item.padEnd(width - 6)}`,
-        sgr: here && p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)}${open('bold')}` : base,
-        target,
-      },
-      { text: '│', sgr: dim },
-    ])
-  })
-  rows.push([{ text: `└${'─'.repeat(width - 2)}┘`, sgr: dim }])
-  return rows
+  return [
+    [{ text: `┌ ${title}${'─'.repeat(Math.max(0, width - 3 - title.length))}┐`, sgr: dim }],
+    ...items.map((item, index): Cellrow => {
+      const here = index === e.entry
+      const target: EditorSpot = { kind: 'entry', index }
+      return [
+        { text: '│', sgr: dim },
+        {
+          text: ` ${here ? '▌' : ' '} ${item.padEnd(width - 6)}`,
+          sgr: here && p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)}${open('bold')}` : base,
+          target,
+        },
+        { text: '│', sgr: dim },
+      ]
+    }),
+    [{ text: `└${'─'.repeat(width - 2)}┘`, sgr: dim }],
+  ]
 }
 
 const LIGHTS: Hex[] = ['#ff5f57', '#febc2e', '#28c840']
 
 function titleBar(e: PaletteEditor, p: Paint, ui: Colors, width: number): Cellrow {
   const bar = p.color ? `${p.bg(barOf(ui))}${p.fg(ui.foreground)}` : ''
-  const row: Cellrow = [{ text: ' ', sgr: bar }]
-  for (const hex of LIGHTS) {
-    row.push({ text: '●', sgr: p.color ? `${bar}${p.fg(hex)}` : '' }, { text: ' ', sgr: bar })
-  }
-  row.push({ text: '  ', sgr: bar })
   const names = tabNames()
   const at = ((e.scene % names.length) + names.length) % names.length
-  names.forEach((name, i) => {
-    const target: EditorSpot = { kind: 'scene', scene: i }
-    row.push(
-      i === at
-        ? {
-            text: ` ${name} `,
-            sgr: p.color ? `${bar}${p.bg(surfaceOf(ui.background, ui.foreground, 'tab'))}${open('bold')}` : '',
-            target,
-          }
-        : { text: ` ${name} `, sgr: p.color ? `${bar}${open('dim')}` : '', target },
+  const row: Cellrow = [
+    { text: ' ', sgr: bar },
+    ...LIGHTS.flatMap((hex) => [
+      { text: '●', sgr: p.color ? `${bar}${p.fg(hex)}` : '' },
       { text: ' ', sgr: bar },
-    )
-  })
+    ]),
+    { text: '  ', sgr: bar },
+    ...names.flatMap((name, i): Cellrow => {
+      const target: EditorSpot = { kind: 'scene', scene: i }
+      return [
+        i === at
+          ? {
+              text: ` ${name} `,
+              sgr: p.color ? `${bar}${p.bg(surfaceOf(ui.background, ui.foreground, 'tab'))}${open('bold')}` : '',
+              target,
+            }
+          : { text: ` ${name} `, sgr: p.color ? `${bar}${open('dim')}` : '', target },
+        { text: ' ', sgr: bar },
+      ]
+    }),
+  ]
   const hint = '⇧←→ '
   return [
     ...row,
@@ -830,10 +824,9 @@ export function renderBuilder(
   const top = topBar(e, p, layout.width)
   const rule = p.dim('─'.repeat(layout.width))
   const divider = p.dim('│')
-  const lines: string[] = []
-  for (let r = 0; r < rows - 1; r++) {
+  const lines = Array.from({ length: rows - 1 }, (_, r) => {
     const right = r === 0 ? top : r === 1 ? rule : drawn(grid[r - 2] ?? [], color)
-    lines.push(`${fit(side[r] ?? '', layout.side)}${divider}${right}`)
-  }
+    return `${fit(side[r] ?? '', layout.side)}${divider}${right}`
+  })
   return { lines, art: popped.art }
 }

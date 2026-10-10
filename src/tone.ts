@@ -88,14 +88,12 @@ export function slotColors(
 }
 
 export function overrideOf(entry: PaletteEntry, colors: readonly string[]): Override {
-  const over: Override = {}
-  TONE_SLOTS.forEach((slot, i) => {
-    const color = (colors[i] as string).toLowerCase()
-    if (color !== colorOf(entry, slot).toLowerCase()) {
-      over[slot] = color
-    }
-  })
-  return over
+  return Object.fromEntries(
+    TONE_SLOTS.flatMap((slot, i) => {
+      const color = (colors[i] as string).toLowerCase()
+      return color === colorOf(entry, slot).toLowerCase() ? [] : [[slot, color]]
+    }),
+  )
 }
 
 export function tonedEntry(entry: PaletteEntry, over: Override | undefined): PaletteEntry {
