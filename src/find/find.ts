@@ -2741,7 +2741,7 @@ class Finder {
         this.paint.flush()
         const same = this.twins.get(verdict) ?? (await this.renders.run({ job: 'twin', cut: path, whole }))
         this.twins.set(verdict, same)
-        if (same && group && !signal.aborted) {
+        if (same && group?.posts.includes(other) && !signal.aborted) {
           group.posts.splice(group.posts.indexOf(other), 1)
           group.posts.unshift(other)
           return other
