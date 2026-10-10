@@ -11,6 +11,8 @@ const toggleVariants = cva(
           'min-h-8 rounded-full px-3 py-1 text-sm text-soft-foreground hover:bg-muted hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-checked:ring-1 has-checked:ring-border',
         scene:
           'rounded-sm px-2.5 py-0.75 text-xs text-(--fg)/65 hover:bg-(--fg)/12 hover:text-(--fg) has-checked:bg-(--fg)/18 has-checked:text-(--fg) has-checked:inset-ring has-checked:inset-ring-(--fg)/22',
+        underline:
+          'relative py-2.5 text-sm text-muted-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 hover:text-foreground has-checked:text-foreground has-checked:after:opacity-100',
       },
     },
     defaultVariants: {
@@ -24,6 +26,7 @@ type Variant = NonNullable<VariantProps<typeof toggleVariants>['variant']>
 const GROUP: Record<Variant, string> = {
   default: 'rounded-full border border-border bg-muted/65',
   scene: 'rounded-lg border border-(--fg)/16 bg-(--fg)/9',
+  underline: 'gap-5 p-0',
 }
 
 function ToggleGroup({

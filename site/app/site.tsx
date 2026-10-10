@@ -3,14 +3,17 @@ import { Home } from '@/components/home'
 import { MarketplacePage } from '@/components/marketplace-page'
 import { MarketplaceStore, NoSuchMarketplace } from '@/components/marketplace-store'
 import { Missing } from '@/components/missing'
+import { NoSuchPalette, PalettePage } from '@/components/palette-page'
 import { SharePage } from '@/components/share-page'
 import { Sheets } from '@/components/sheets'
 import { cardPng } from '@/lib/card'
 import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
+import { OFFICIAL, OFFICIAL_ABOUT } from '@/lib/gallery'
 import { loadMarketplaces } from '@/lib/marketplaces'
 import { gate, themes } from '@/lib/official'
 import { builderOf, readShared, type Shared } from '@/lib/share'
+import type { Marketplace, Theme } from '@/lib/themes'
 import { page } from './document'
 
 const CATALOG = 'public, max-age=0, s-maxage=31536000'
@@ -19,6 +22,31 @@ const RETRY = 'public, max-age=0, s-maxage=60'
 const CREDITS = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800'
 
 const STORE = 'One ttheme marketplace: its repository, its palettes and how they measure against the contrast gate'
+
+function about(theme: Theme): string {
+  return `${theme.name}${theme.catalog ? ` from ${theme.catalog}` : ''}, a ttheme palette — see it in a terminal, copy its colors and install it with one command`
+}
+
+function palettePage(theme: Theme, marketplace: Marketplace | null, palettes: Theme[], cache: string): Response {
+  return page(
+    { title: `ttheme — ${theme.name}`, description: about(theme), cache },
+    <PalettePage theme={theme} marketplace={marketplace} palettes={palettes} gate={gate} />,
+  )
+}
+
+function noMarketplace(id: string): Response {
+  return page(
+    { title: 'ttheme — no such marketplace', description: STORE, status: 404, cache: RETRY },
+    <NoSuchMarketplace id={id} />,
+  )
+}
+
+function noPalette(id: string, name: string): Response {
+  return page(
+    { title: 'ttheme — no such palette', description: STORE, status: 404, cache: RETRY },
+    <NoSuchPalette id={id} name={name} />,
+  )
+}
 
 function shared(code: string): Shared | Error {
   try {
@@ -34,7 +62,7 @@ export const site = new Elysia({ name: 'site' })
       {
         title: 'ttheme — wear your favorite character',
         description:
-          'Character color palettes for Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp and Konsole',
+          'Character color palettes for Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp, Konsole and Terminal.app',
         cache: CATALOG,
       },
       <Home themes={themes} catalogs={catalogsOf(themes).length} />,
@@ -62,17 +90,31 @@ export const site = new Elysia({ name: 'site' })
     )
   })
   .get('/marketplace/:id', async ({ params }) => {
+    if (params.id === OFFICIAL)
+      return page(
+        { title: 'ttheme — official', description: OFFICIAL_ABOUT, cache: CATALOG },
+        <MarketplaceStore marketplace={null} palettes={themes} gate={gate} />,
+      )
     const { marketplaces, fresh } = await loadMarketplaces()
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
-    if (!marketplace)
-      return page(
-        { title: 'ttheme — no such marketplace', description: STORE, status: 404, cache: RETRY },
-        <NoSuchMarketplace id={params.id} />,
-      )
+    if (!marketplace) return noMarketplace(params.id)
     return page(
       { title: `ttheme — ${marketplace.id}`, description: STORE, cache: fresh ? MARKETPLACES : RETRY },
-      <MarketplaceStore marketplace={marketplace} gate={gate} />,
+      <MarketplaceStore marketplace={marketplace} palettes={marketplace.palettes} gate={gate} />,
     )
+  })
+  .get('/marketplace/:id/:name', async ({ params }) => {
+    if (params.id === OFFICIAL) {
+      const theme = themes.find((entry) => entry.name === params.name)
+      return theme ? palettePage(theme, null, themes, CATALOG) : noPalette(OFFICIAL, params.name)
+    }
+    const { marketplaces, fresh } = await loadMarketplaces()
+    const marketplace = marketplaces.find((entry) => entry.id === params.id)
+    if (!marketplace) return noMarketplace(params.id)
+    const theme = marketplace.palettes.find((entry) => entry.name === params.name)
+    return theme
+      ? palettePage(theme, marketplace, marketplace.palettes, fresh ? MARKETPLACES : RETRY)
+      : noPalette(marketplace.id, params.name)
   })
   .get('/p/:code', ({ params, request }) => {
     const found = shared(params.code)

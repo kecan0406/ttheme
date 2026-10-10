@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button'
 import { Icon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 
+export const INIT = 'npx @kecan0406/ttheme init'
+
 export function CommandRow({ command, class: className }: { command: string; class?: string }) {
   return (
     <div

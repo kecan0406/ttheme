@@ -15,6 +15,17 @@ export function SectionLabel({ icon, children }: PropsWithChildren<{ icon: JSX.E
   )
 }
 
+export function SectionHead({ title, id, children }: PropsWithChildren<{ title: string; id?: string }>) {
+  return (
+    <div class="flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b pb-3">
+      <h2 id={id} class="text-2xs font-bold tracking-caps text-muted-foreground uppercase" safe>
+        {title}
+      </h2>
+      {children}
+    </div>
+  )
+}
+
 export function Signature({ theme, size = 'sm' }: { theme: Theme; size?: 'sm' | 'lg' }) {
   if (size === 'sm')
     return (
@@ -93,9 +104,9 @@ export function GateList({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
   )
 }
 
-const SLOTS = ['bg', 'fg', 'cursor', 'selection']
+export const SLOTS = ['bg', 'fg', 'cursor', 'selection']
 
-function Swatch({ name, color }: { name: string; color: string }) {
+export function Swatch({ name, color }: { name: string; color: string }) {
   return (
     <button
       type="button"

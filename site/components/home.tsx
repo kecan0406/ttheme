@@ -6,12 +6,11 @@ import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
-import { CommandRow } from './command-row'
+import { CommandRow, INIT } from './command-row'
 import { Signature } from './palette-parts'
 import { SiteHeader } from './site-header'
 import { TerminalPreview } from './terminal-preview'
 
-const INIT = 'npx @kecan0406/ttheme init'
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
 function features(palettes: number, catalogs: number) {
@@ -24,7 +23,7 @@ function features(palettes: number, catalogs: number) {
     {
       emoji: '🖥️',
       title: 'every terminal you use',
-      text: 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp and Konsole, all wired by one init.',
+      text: 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp, Konsole and Terminal.app, all wired by one init.',
     },
     {
       emoji: '🗂️',
@@ -122,7 +121,7 @@ export function Home({ themes, catalogs }: { themes: Theme[]; catalogs: number }
             </h1>
             <p class="max-w-[52ch] text-base text-soft-foreground">
               Character color palettes, measured from official art, for Ghostty, iTerm2, WezTerm, kitty, Alacritty,
-              Windows Terminal, Warp and Konsole. One command, then every tab can wear its own.
+              Windows Terminal, Warp, Konsole and Terminal.app. One command, then every tab can wear its own.
             </p>
             <div class="flex w-full flex-wrap items-center gap-3">
               <LinkButton variant="pop" size="lg" href="/marketplace">

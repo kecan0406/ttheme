@@ -12,6 +12,7 @@ const badgeVariants = cva(
           'bg-muted/65 px-2.5 py-1 text-xs font-normal tracking-normal normal-case tabular-nums text-muted-foreground',
         preview:
           'bg-[color-mix(in_oklab,var(--bg)_82%,var(--fg))] text-(--fg) shadow-[0_0_0_1px_color-mix(in_oklab,var(--fg)_12%,transparent),0_0_0_4px_color-mix(in_oklab,var(--bg)_90%,transparent),0_0_10px_4px_color-mix(in_oklab,var(--bg)_60%,transparent)]',
+        tag: 'px-2.5 py-1 text-xs font-medium tracking-normal normal-case text-soft-foreground inset-ring inset-ring-border',
         success: 'text-success inset-ring inset-ring-success/45',
         warning: 'text-warning inset-ring inset-ring-warning/45',
         destructive: 'text-destructive inset-ring inset-ring-destructive/45',

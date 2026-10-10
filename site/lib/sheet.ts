@@ -35,3 +35,8 @@ export function gatePassed(theme: Theme, gate: GateRule[]): number {
 export function sheetNumber(themes: Theme[], theme: Theme): string {
   return String(themes.indexOf(theme) + 1).padStart(3, '0')
 }
+
+export function lightness(hex: string): string {
+  const y = luminance(hex)
+  return (y > 216 / 24389 ? 116 * Math.cbrt(y) - 16 : (24389 / 27) * y).toFixed(1)
+}

@@ -1,63 +1,69 @@
-import type { Scene } from '@/components/terminal-preview'
 import type { Theme } from '@/lib/themes'
-import { isLight } from '@/lib/wear'
 
 export type Source = 'all' | 'official' | 'marketplaces'
-export type Ground = 'both' | 'dark' | 'light'
+
+export const SOURCES: Source[] = ['all', 'official', 'marketplaces']
 
 export interface Filters {
   query: string
   source: Source
-  ground: Ground
-  scene: Scene
 }
 
-export interface Section {
-  key: string
-  title: string
-  subtitle?: string
-  href?: string
-  themes: Theme[]
+export const START: Filters = { query: '', source: 'all' }
+
+export interface Searchable {
+  text: string
+  official: boolean
+}
+
+export function searchable(theme: Theme): Searchable {
+  return {
+    text: `${theme.id} ${theme.catalog ?? ''} ${theme.native ?? ''}`.toLowerCase(),
+    official: theme.marketplace === null,
+  }
+}
+
+export function matches({ text, official }: Searchable, { query, source }: Filters): boolean {
+  if (source === 'official' && !official) return false
+  if (source === 'marketplaces' && official) return false
+  const q = query.trim().toLowerCase()
+  return !q || text.includes(q)
+}
+
+export function shelvesMatching(shelves: Searchable[][], filters: Filters): number {
+  return shelves.filter((members) => members.some((member) => matches(member, filters))).length
 }
 
 export interface Shelf {
-  title: string
-  marketplace: boolean
-  count: number
+  id: string
+  repo: string
+  about: string
+  palettes: Theme[]
 }
 
-export interface Placed {
-  shown: boolean
-  heading: boolean
-  divider: boolean
-  total: number
+export const OFFICIAL = 'official'
+
+export const OFFICIAL_REPO = 'kecan0406/ttheme'
+
+export const OFFICIAL_ABOUT =
+  'The palettes that come with ttheme, each measured from official art and held to the contrast gate before it ships.'
+
+export function marketplacePath(id: string | null): string {
+  return `/marketplace/${id === null ? OFFICIAL : encodeURIComponent(id).replaceAll('%40', '@')}`
 }
 
-export const START: Filters = { query: '', source: 'all', ground: 'both', scene: 'shell' }
-
-export function matches(theme: Theme, { query, source, ground }: Filters): boolean {
-  if (source === 'official' && theme.marketplace) return false
-  if (source === 'marketplaces' && !theme.marketplace) return false
-  if (ground !== 'both' && isLight(theme) !== (ground === 'light')) return false
-  const q = query.trim().toLowerCase()
-  return !q || `${theme.id} ${theme.catalog ?? ''} ${theme.native ?? ''}`.toLowerCase().includes(q)
+export function palettePath(theme: Pick<Theme, 'marketplace' | 'name'>): string {
+  return `${marketplacePath(theme.marketplace)}/${encodeURIComponent(theme.name)}`
 }
 
-export function arrange(shelves: Shelf[], sources: boolean): Placed[] {
-  const totals = new Map<string, number>()
-  for (const shelf of shelves) totals.set(shelf.title, (totals.get(shelf.title) ?? 0) + shelf.count)
-  let previous: Shelf | undefined
-  let marketplacesShown = false
-  return shelves.map((shelf) => {
-    if (shelf.count === 0) return { shown: false, heading: false, divider: false, total: 0 }
-    const divider = sources && shelf.marketplace && !marketplacesShown
-    marketplacesShown ||= shelf.marketplace
-    const heading = previous?.title !== shelf.title
-    previous = shelf
-    return { shown: true, heading, divider, total: totals.get(shelf.title) ?? 0 }
-  })
+export function catalogAnchor(catalog: string | null): string {
+  if (catalog === null) return 'loose'
+  return `catalog-${catalog
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-|-$/g, '')}`
 }
 
-export function marketplacePath(id: string): string {
-  return `/marketplace/${encodeURIComponent(id).replaceAll('%40', '@')}`
+export function catalogPath(theme: Pick<Theme, 'marketplace' | 'catalog'>): string {
+  return `${marketplacePath(theme.marketplace)}#${catalogAnchor(theme.catalog)}`
 }

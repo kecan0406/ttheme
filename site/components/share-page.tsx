@@ -9,13 +9,12 @@ import { type Builder, type GateLine, GRID, type Pane, type Run, type Shared } f
 import type { ShareView, SlotView } from '@/lib/share-view'
 import { shelfOf } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
-import { CommandRow } from './command-row'
+import { CommandRow, INIT } from './command-row'
 import { PropertyList, reading, SectionLabel, Signature } from './palette-parts'
 import { PictureList } from './picture-list'
 import { Marks, Verdict } from './share-popovers'
 import { ThemeToggle } from './theme-toggle'
 
-const INIT = 'npx @kecan0406/ttheme init'
 const LIGHTS = ['#ff5f57', '#febc2e', '#28c840']
 const PAIRS = [0, 1, 2, 3, 4, 5, 6, 7]
 

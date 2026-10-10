@@ -1,72 +1,115 @@
 import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
+import { CalendarDays, FolderTree, GitBranch, Package, Palette, Scale, ShieldCheck } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { catalogsOf } from '@/lib/catalogs'
+import { catalogAnchor, OFFICIAL, OFFICIAL_ABOUT, OFFICIAL_REPO } from '@/lib/gallery'
+import { Icon } from '@/lib/icons'
 import { gatePassed } from '@/lib/sheet'
-import type { GateRule, Marketplace } from '@/lib/themes'
-import { CommandRow } from './command-row'
-import { MarketplaceGallery } from './marketplace-gallery'
-import { MarketplaceFrame } from './marketplace-page'
+import type { GateRule, Marketplace, Theme } from '@/lib/themes'
+import { CommandRow, INIT } from './command-row'
+import { Crumbs, MarketplaceFrame } from './marketplace-frame'
+import { PaletteRow } from './palette-rows'
 
-function Stat({ label, children }: PropsWithChildren<{ label: string }>) {
+function Meta({ icon, children }: PropsWithChildren<{ icon: JSX.Element }>) {
   return (
-    <div class="grid content-start gap-0.5 border-border px-4 py-3 not-first:border-l max-[560px]:not-first:border-t max-[560px]:not-first:border-l-0">
-      <dt class="text-xs text-muted-foreground" safe>
-        {label}
-      </dt>
-      <dd class="text-base font-semibold tabular-nums [overflow-wrap:anywhere]">{children}</dd>
-    </div>
+    <span class="inline-flex items-center gap-1.5 [&_svg]:size-4 [&_svg]:text-muted-foreground">
+      {icon}
+      {children}
+    </span>
   )
 }
 
-export function MarketplaceStore({ marketplace, gate }: { marketplace: Marketplace; gate: GateRule[] }) {
-  const clean = marketplace.palettes.filter((theme) => gatePassed(theme, gate) === gate.length).length
+function plural(count: number, word: string): string {
+  return `${count} ${word}${count === 1 ? '' : 's'}`
+}
+
+export function MarketplaceStore({
+  marketplace,
+  palettes,
+  gate,
+}: {
+  marketplace: Marketplace | null
+  palettes: Theme[]
+  gate: GateRule[]
+}) {
+  const id = marketplace?.id ?? OFFICIAL
+  const shelves = catalogsOf(palettes)
+  const clean = palettes.filter((theme) => gatePassed(theme, gate) === gate.length).length
+  const repo = marketplace?.repo ?? OFFICIAL_REPO
 
   return (
     <MarketplaceFrame>
-      <div class="grid grid-cols-[minmax(0,1fr)] gap-3 pt-5">
-        <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">community marketplace</p>
+      <header class="grid gap-4">
+        <Crumbs trail={[{ label: 'marketplace', href: '/marketplace' }, { label: id }]} />
         <h1 class="font-display text-display-lg font-black [overflow-wrap:anywhere]" safe>
-          {marketplace.id}
+          {id}
         </h1>
-        {marketplace.about ? (
-          <p class="max-w-[68ch] text-soft-foreground" safe>
-            {marketplace.about}
-          </p>
-        ) : null}
-        <CommandRow command={`ttheme marketplace add ${marketplace.add}`} class="max-w-[520px]" />
-      </div>
-      <dl class="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] rounded-xl border bg-card shadow-sm">
-        <Stat label="palettes">{marketplace.palettes.length}</Stat>
-        <Stat label="contrast gate · advisory">
-          {clean} / {marketplace.palettes.length}{' '}
-          <span class="text-xs font-normal text-muted-foreground">clear every floor</span>
-        </Stat>
-        <Stat label="last push">{escapeHtml(marketplace.pushedAt)}</Stat>
-        <Stat label="GitHub stars">{marketplace.stars}</Stat>
-        <Stat label="license">
-          {marketplace.license ? escapeHtml(marketplace.license) : <Badge variant="warning">none stated</Badge>}
-        </Stat>
-        <Stat label="source">
-          <a
-            href={`https://github.com/${marketplace.repo}`}
-            class="text-primary underline-offset-4 hover:underline"
-            safe
-          >
-            {marketplace.repo}
-          </a>
-        </Stat>
-      </dl>
-      <MarketplaceGallery
-        sections={catalogsOf(marketplace.palettes).map(({ catalog, themes }) => ({
-          key: `${marketplace.id}:${catalog ?? ''}`,
-          title: 'palettes',
-          ...(catalog ? { subtitle: catalog } : {}),
-          themes,
-        }))}
-        marketplaces={[marketplace]}
-        gate={gate}
-        sources={false}
-      />
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-soft-foreground">
+          <Meta icon={<Icon node={Palette} />}>{escapeHtml(plural(palettes.length, 'palette'))}</Meta>
+          <Meta icon={<Icon node={FolderTree} />}>
+            {escapeHtml(plural(shelves.filter((shelf) => shelf.catalog !== null).length, 'catalog'))}
+          </Meta>
+          <Meta icon={<Icon node={ShieldCheck} />}>
+            {escapeHtml(
+              marketplace ? `${clean} of ${palettes.length} clear the gate · advisory` : 'every one clears the gate',
+            )}
+          </Meta>
+          {marketplace ? (
+            <>
+              <Meta icon={<Icon node={Scale} />}>
+                {marketplace.license ? (
+                  escapeHtml(marketplace.license)
+                ) : (
+                  <Badge variant="warning">no license stated</Badge>
+                )}
+              </Meta>
+              <Meta icon={<Icon node={CalendarDays} />}>{escapeHtml(`pushed ${marketplace.pushedAt}`)}</Meta>
+            </>
+          ) : (
+            <Meta icon={<Icon node={Package} />}>comes with ttheme</Meta>
+          )}
+          <Meta icon={<Icon node={GitBranch} />}>
+            <a href={`https://github.com/${repo}`} class="transition-colors hover:text-foreground" safe>
+              {repo}
+            </a>
+            {marketplace ? (
+              <span class="text-muted-foreground">{escapeHtml(`· ${plural(marketplace.stars, 'GitHub star')}`)}</span>
+            ) : null}
+          </Meta>
+        </div>
+        <p class="max-w-[68ch] text-soft-foreground" safe>
+          {marketplace ? marketplace.about : OFFICIAL_ABOUT}
+        </p>
+        <CommandRow
+          command={marketplace ? `ttheme marketplace add ${marketplace.add}` : INIT}
+          class="max-w-[760px] bg-card"
+        />
+      </header>
+      {shelves.map(({ catalog, themes }) => (
+        <section
+          id={catalogAnchor(catalog)}
+          aria-labelledby={`${catalogAnchor(catalog)}-title`}
+          class="grid scroll-mt-28 grid-cols-[minmax(0,1fr)] gap-4"
+        >
+          <div class="grid gap-1">
+            <h2
+              id={`${catalogAnchor(catalog)}-title`}
+              class="font-display text-display-sm font-black [overflow-wrap:anywhere]"
+              safe
+            >
+              {catalog ?? 'other palettes'}
+            </h2>
+            <p class="text-sm text-muted-foreground" safe>
+              {[themes[0]?.native, plural(themes.length, 'palette')].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+          <div class="grid grid-cols-[minmax(0,1fr)] border-t">
+            {themes.map((theme) => (
+              <PaletteRow theme={theme} gate={gate} where={marketplace !== null} />
+            ))}
+          </div>
+        </section>
+      ))}
     </MarketplaceFrame>
   )
 }
@@ -74,7 +117,8 @@ export function MarketplaceStore({ marketplace, gate }: { marketplace: Marketpla
 export function NoSuchMarketplace({ id }: { id: string }) {
   return (
     <MarketplaceFrame>
-      <div class="grid justify-items-start gap-3 pt-5">
+      <div class="grid justify-items-start gap-3">
+        <Crumbs trail={[{ label: 'marketplace', href: '/marketplace' }, { label: id }]} />
         <h1 class="font-display text-display-lg font-black">no such marketplace</h1>
         <p class="max-w-[68ch] text-soft-foreground">
           {escapeHtml(`No repository with the ttheme-marketplace topic publishes ${id}.`)} The list is refreshed from
