@@ -10,6 +10,7 @@ import {
   readStore,
   undrawn,
 } from './backdrop.ts'
+import { MATTING } from './cutout.ts'
 import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from './palettes.ts'
 import { prepareOne, redrawOne } from './pictures.ts'
 import { Pool } from './render.ts'
@@ -25,7 +26,12 @@ export async function redrawPictures(home: string, say: (line: string) => void, 
     const paint = paints.get(name)
     return paint
       ? rack.pictures
-          .filter((picture) => undrawn(picture) || (picture.blur ?? 0) !== blurring)
+          .filter(
+            (picture) =>
+              undrawn(picture) ||
+              (picture.blur ?? 0) !== blurring ||
+              (picture.cut !== undefined && picture.matte !== MATTING),
+          )
           .map((picture) => ({ name, key: picture.key, paint }))
       : []
   })

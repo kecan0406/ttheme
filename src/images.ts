@@ -4,7 +4,19 @@ import { dropImage, showImage } from './backdrop.ts'
 import { isHex } from './color.ts'
 import { rewrite, writeAtomic } from './edits.ts'
 import { configHome, refreshPictures } from './palettes.ts'
-import { type Canvas, decodePng, encodeRgb, encodeRgba, flatten, lay, type Rgba } from './png.ts'
+import {
+  alphaOf,
+  type Canvas,
+  decodePng,
+  encodeMask,
+  encodeRgb,
+  encodeRgba,
+  flatten,
+  lay,
+  layMask,
+  type Rgba,
+  toneOf,
+} from './png.ts'
 import { prepareColoring, redrawColoring } from './redraw.ts'
 
 export async function runImage(name: string, action: string, key?: string): Promise<number> {
@@ -69,8 +81,11 @@ export function canvasOf(image: Rgba, canvas: string, place: string): Canvas {
 }
 
 export function runBake(source: string, out: string, canvas: string, place: string): number {
-  const image = decodePng(new Uint8Array(readFileSync(source)))
-  writeAtomic(out, encodeRgba(lay(image, geometry(canvas, place))))
+  const bytes = new Uint8Array(readFileSync(source))
+  const frame = geometry(canvas, place)
+  const image = decodePng(bytes)
+  const tone = toneOf(bytes)
+  writeAtomic(out, tone ? encodeMask(layMask(alphaOf(image), frame), tone) : encodeRgba(lay(image, frame)))
   return 0
 }
 

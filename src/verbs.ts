@@ -256,7 +256,8 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'bake',
     args: ['<source>', '<out>', '<canvas>', '<place>'],
-    about: "Place a picture on a transparent canvas the way sips bakes preview's tuning — preview in Warp calls this",
+    about:
+      "Place a picture on a transparent canvas where preview's tuning puts it — preview calls this for a size the terminal cannot scale and for the bands iTerm2 shows",
     section: 'setup',
     hidden: true,
   },

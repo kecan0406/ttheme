@@ -2793,6 +2793,7 @@ class Finder {
     const made = await this.renders.run({
       job: 'show',
       from: using === 'cut' ? (current.cut as string) : current.path,
+      cut: using === 'cut',
       to: path,
       width,
       height,

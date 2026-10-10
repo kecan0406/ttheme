@@ -162,21 +162,14 @@ __tt_bg_cells() {
 __tt_bg_crop() {
   local img=$1 band
   local -i iw=$2 ih=$3 y=$4 h=$5 d=$(( 2 * $4 + $5 - $3 ))
-  if (( d * d <= 1 || ! $+commands[sips] )); then
+  if (( d * d <= 1 )); then
     __tt_bg_send $img
     REPLY="$REPLY $y"
     return 0
   fi
   [[ -n $bgcut ]] || bgcut=$(mktemp -d) || return 1
   band=$bgcut/${${img:t}%.png}-$y-$h.png
-  if [[ ! -r $band ]]; then
-    if (( y )); then
-      sips -c $h $iw --cropOffset $y 0 $img --out $band >/dev/null 2>&1 || return 1
-    else
-      sips -p $(( ih + 2 )) $(( iw + 2 )) $img --out $bgcut/pad.png >/dev/null 2>&1 &&
-        sips -c $h $iw --cropOffset 1 1 $bgcut/pad.png --out $band >/dev/null 2>&1 || return 1
-    fi
-  fi
+  [[ -r $band ]] || __tt_bg_bake $img $band $iw $h $iw $ih 0 $(( -y )) || return 1
   __tt_bg_send $band
   REPLY="$REPLY 0"
 }

@@ -445,12 +445,6 @@ __tt_bg_shown() { __tt_warp_wearing }
 
 __tt_bg_refresh() { __tt_warp_unview }
 
-__tt_bg_bake() {
-  local place
-  printf -v place '%dx%d%+d%+d' $5 $6 $7 $8
-  __tt_cli bake "$1" "$2" "${3}x$4" "$place" >/dev/null 2>&1
-}
-
 __tt_bg_hide() {
   __tt_warp_set "{ custom = { name = \"$1\", path = \"ttheme-${${1/@/--}/\//--}.yaml\" } }"
   TTHEME_WARP_VIEW=""

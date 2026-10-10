@@ -1,7 +1,7 @@
 import { constants, deflateSync, inflateSync } from 'node:zlib'
 import { PNG } from 'pngjs'
 import { type Hex, rgb } from './color.ts'
-import { decodeJpeg } from './jpeg.ts'
+import { decodeJpeg, exifTurn } from './jpeg.ts'
 
 export interface Rgba {
   width: number
@@ -48,13 +48,15 @@ export function isPng(bytes: Uint8Array): boolean {
   return bytes.length >= SIGNATURE.length && SIGNATURE.every((b, i) => bytes[i] === b)
 }
 
-const CHANNELS: Record<number, number> = { 0: 1, 2: 3, 4: 2, 6: 4 }
+const CHANNELS: Record<number, number> = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }
 
 interface Scan {
   width: number
   height: number
   type: number
   idat: Buffer[]
+  palette: Buffer | undefined
+  opacity: Buffer | undefined
 }
 
 function scanned(bytes: Uint8Array): Scan | undefined {
@@ -69,20 +71,42 @@ function scanned(bytes: Uint8Array): Scan | undefined {
     return undefined
   }
   const idat: Buffer[] = []
+  let palette: Buffer | undefined
+  let opacity: Buffer | undefined
   for (let at = 8; at + 12 <= png.length; ) {
     const size = png.readUInt32BE(at)
     const kind = png.toString('latin1', at + 4, at + 8)
+    const body = png.subarray(at + 8, at + 8 + size)
     if (kind === 'IDAT') {
-      idat.push(png.subarray(at + 8, at + 8 + size))
-    } else if (kind === 'tRNS' || kind === 'IEND') {
-      if (kind === 'tRNS' && type !== 4 && type !== 6) {
+      idat.push(body)
+    } else if (kind === 'PLTE') {
+      palette = body
+    } else if (kind === 'tRNS') {
+      if (type !== INDEXED) {
         return undefined
       }
+      opacity = body
+    } else if (kind === 'IEND') {
       break
     }
     at += 12 + size
   }
-  return idat.length > 0 ? { width, height, type, idat } : undefined
+  if (idat.length === 0 || (type === INDEXED && !palette)) {
+    return undefined
+  }
+  return { width, height, type, idat, palette, opacity }
+}
+
+function lookup(palette: Buffer, opacity: Buffer | undefined): Uint32Array {
+  const table = new Uint32Array(256)
+  const bytes = new Uint8Array(table.buffer)
+  for (let index = 0; index < 256; index++) {
+    bytes[index * 4] = palette[index * 3] ?? 0
+    bytes[index * 4 + 1] = palette[index * 3 + 1] ?? 0
+    bytes[index * 4 + 2] = palette[index * 3 + 2] ?? 0
+    bytes[index * 4 + 3] = opacity?.[index] ?? 255
+  }
+  return table
 }
 
 function unfilter(raw: Uint8Array, stride: number, height: number, bpp: number): void {
@@ -139,10 +163,16 @@ function inflated(scan: Scan): Rgba {
   }
   unfilter(raw, stride, height, bpp)
   const data = new Uint8Array(width * height * 4)
+  const table = type === INDEXED ? lookup(scan.palette as Buffer, scan.opacity) : undefined
+  const pixels = new Uint32Array(data.buffer)
   for (let y = 0; y < height; y++) {
     const from = y * (stride + 1) + 1
     const to = y * width * 4
-    if (type === 6) {
+    if (table) {
+      for (let x = 0, at = y * width; x < width; x++, at++) {
+        pixels[at] = table[raw[from + x] as number] as number
+      }
+    } else if (type === 6) {
       data.set(raw.subarray(from, from + stride), to)
     } else if (type === 2) {
       for (let x = 0, i = from, o = to; x < width; x++, i += 3, o += 4) {
@@ -172,13 +202,49 @@ function inflated(scan: Scan): Rgba {
   return { width, height, data }
 }
 
+function turnOf(bytes: Uint8Array): number {
+  const png = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  for (let at = 8; at + 12 <= png.length; ) {
+    const size = png.readUInt32BE(at)
+    const kind = png.toString('latin1', at + 4, at + 8)
+    if (kind === 'eXIf') {
+      return exifTurn(png.subarray(at + 8, Math.min(png.length, at + 8 + size)))
+    }
+    if (kind === 'IDAT' || kind === 'IEND') {
+      return 1
+    }
+    at += 12 + size
+  }
+  return 1
+}
+
+function turned(image: Rgba, turn: number): Rgba {
+  if (turn <= 1) {
+    return image
+  }
+  const { width: w, height: h } = image
+  const width = turn >= 5 ? h : w
+  const height = turn >= 5 ? w : h
+  const from = new Uint32Array(image.data.buffer, image.data.byteOffset, w * h)
+  const data = new Uint8Array(width * height * 4)
+  const to = new Uint32Array(data.buffer)
+  for (let v = 0; v < height; v++) {
+    for (let u = 0; u < width; u++) {
+      const x = turn <= 3 && turn >= 2 ? w - 1 - u : turn === 5 || turn === 6 ? v : turn >= 7 ? w - 1 - v : u
+      const y = turn === 3 || turn === 4 ? h - 1 - v : turn === 5 || turn === 8 ? u : turn >= 6 ? h - 1 - u : v
+      to[v * width + u] = from[y * w + x] as number
+    }
+  }
+  return { width, height, data }
+}
+
 export function decodePng(bytes: Uint8Array): Rgba {
   const scan = scanned(bytes)
   if (scan) {
-    return inflated(scan)
+    return turned(inflated(scan), turnOf(bytes))
   }
   const png = PNG.sync.read(Buffer.from(bytes))
-  return { width: png.width, height: png.height, data: new Uint8Array(png.data) }
+  return turned({ width: png.width, height: png.height, data: new Uint8Array(png.data) }, turnOf(bytes))
 }
 
 export function decodeImage(bytes: Uint8Array, limit: number): Rgba {
@@ -195,14 +261,18 @@ export function decodeImage(bytes: Uint8Array, limit: number): Rgba {
   throw new Error('not a PNG or JPEG image')
 }
 
-interface Laid {
-  part: Rgba
+interface Laid<T> {
+  part: T
   box: Box
   dx: number
   dy: number
 }
 
-function region(image: Rgba, canvas: Canvas): Laid | undefined {
+function region<T extends Rgba | Mask>(
+  image: T,
+  canvas: Canvas,
+  sample: (image: T, from: Box, width: number, height: number) => T,
+): Laid<T> | undefined {
   const { width, height, at } = canvas
   const x0 = Math.max(0, at.x)
   const y0 = Math.max(0, at.y)
@@ -221,17 +291,30 @@ function region(image: Rgba, canvas: Canvas): Laid | undefined {
     w: (box.w * image.width) / at.w,
     h: (box.h * image.height) / at.h,
   }
-  return { part: resample(image, from, box.w, box.h), box, dx: 0, dy: 0 }
+  return { part: sample(image, from, box.w, box.h), box, dx: 0, dy: 0 }
 }
 
 export function lay(image: Rgba, canvas: Canvas): Rgba {
   const data = new Uint8Array(canvas.width * canvas.height * 4)
-  const laid = region(image, canvas)
+  const laid = region(image, canvas, resample)
   if (laid) {
     const { part, box, dx, dy } = laid
     for (let y = 0; y < box.h; y++) {
       const s = ((y + dy) * part.width + dx) * 4
       data.set(part.data.subarray(s, s + box.w * 4), ((box.y + y) * canvas.width + box.x) * 4)
+    }
+  }
+  return { width: canvas.width, height: canvas.height, data }
+}
+
+export function layMask(mask: Mask, canvas: Canvas): Mask {
+  const data = new Uint8Array(canvas.width * canvas.height)
+  const laid = region(mask, canvas, (from, box, width, height) => quantize(resamplePlane(from, box, width, height)))
+  if (laid) {
+    const { part, box, dx, dy } = laid
+    for (let y = 0; y < box.h; y++) {
+      const s = (y + dy) * part.width + dx
+      data.set(part.data.subarray(s, s + box.w), (box.y + y) * canvas.width + box.x)
     }
   }
   return { width: canvas.width, height: canvas.height, data }
@@ -252,7 +335,7 @@ export function flatten(
   for (let y = 1; y < height; y++) {
     data.copyWithin(y * width * 3, 0, width * 3)
   }
-  const laid = region(image, canvas)
+  const laid = region(image, canvas, resample)
   if (!laid) {
     return { width, height, data }
   }
@@ -288,8 +371,9 @@ export function pngHead(bytes: Uint8Array): { width: number; height: number; alp
     return null
   }
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  const width = view.getUint32(16)
-  const height = view.getUint32(20)
+  const across = turnOf(bytes) >= 5
+  const width = view.getUint32(across ? 20 : 16)
+  const height = view.getUint32(across ? 16 : 20)
   if (bytes[25] === 4 || bytes[25] === 6) {
     return { width, height, alpha: true }
   }
@@ -795,6 +879,19 @@ export function encodeMask(mask: Mask, tone: Hex): Buffer {
 
 export function encodeGray(mask: Mask): Buffer {
   return pngOf(mask, 0, [])
+}
+
+export function toneOf(bytes: Uint8Array): Hex | undefined {
+  const palette = scanned(bytes)?.palette
+  if (!palette || palette.length < 3) {
+    return undefined
+  }
+  for (let at = 3; at + 2 < palette.length; at += 3) {
+    if (palette[at] !== palette[0] || palette[at + 1] !== palette[1] || palette[at + 2] !== palette[2]) {
+      return undefined
+    }
+  }
+  return `#${[...palette.subarray(0, 3)].map((c) => c.toString(16).padStart(2, '0')).join('')}`
 }
 
 export function retone(bytes: Uint8Array, tone: Hex): Buffer | undefined {

@@ -51,6 +51,7 @@ interface Match {
 interface Show {
   job: 'show'
   from: string
+  cut: boolean
   to: string
   width: number
   height: number
@@ -136,7 +137,7 @@ async function work(task: Task): Promise<number | Look | Picture | Shown | null>
   if (task.job === 'show') {
     if (held?.from !== task.from) {
       const image = decodeImage(new Uint8Array(readFileSync(task.from)), MAX_PIXELS)
-      held = { from: task.from, clear: transparency(image), inked: inked(image) }
+      held = { from: task.from, clear: transparency(image), inked: inked(image, task.cut) }
     }
     const { image, fill, opacity } = tryOn(
       held.inked,

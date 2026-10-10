@@ -5,6 +5,7 @@ import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
+import { inflateSync } from 'node:zlib'
 import { AGENT, KEY_SPAN, MAX_PIXELS, type Site } from '../booru.ts'
 import { jpegSize } from '../jpeg.ts'
 import { isPng, pngHead } from '../png.ts'
@@ -13,6 +14,7 @@ import type { Inbound } from '../tui/keys.ts'
 const run = promisify(execFile)
 const LIMIT = 64 * 1024 * 1024
 const SIDE = 4096
+const SRGB = '/System/Library/ColorSync/Profiles/sRGB Profile.icc'
 const IMAGE_MIMES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/tiff', 'image/heic']
 const TEXT_MIMES = ['text/uri-list', 'text/plain;charset=utf-8', 'text/plain']
 const DROP_MIMES = [...IMAGE_MIMES, 'text/uri-list', 'text/plain']
@@ -126,12 +128,67 @@ function sniff(bytes: Uint8Array): { ext: 'png' | 'jpg'; width: number; height: 
   return { ext: isPng(bytes) ? 'png' : 'jpg', width: size.width, height: size.height }
 }
 
+function profileOf(bytes: Uint8Array): Buffer | undefined {
+  const data = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  if (isPng(bytes)) {
+    for (let at = 8; at + 12 <= data.length; ) {
+      const size = data.readUInt32BE(at)
+      const kind = data.toString('latin1', at + 4, at + 8)
+      if (kind === 'iCCP') {
+        const body = data.subarray(at + 8, at + 8 + size)
+        try {
+          return inflateSync(body.subarray(body.indexOf(0) + 2))
+        } catch {
+          return undefined
+        }
+      }
+      if (kind === 'IDAT') {
+        return undefined
+      }
+      at += 12 + size
+    }
+    return undefined
+  }
+  const parts: Buffer[] = []
+  for (let at = 2; at + 4 <= data.length && data[at] === 0xff && data[at + 1] !== 0xda; ) {
+    const length = data.readUInt16BE(at + 2)
+    if (data[at + 1] === 0xe2 && data.toString('latin1', at + 4, at + 16) === 'ICC_PROFILE\0') {
+      parts[data[at + 16] ?? 0] = data.subarray(at + 18, at + 2 + length)
+    }
+    at += 2 + length
+  }
+  return parts.length > 0 ? Buffer.concat(parts.filter(Boolean)) : undefined
+}
+
+function foreignColors(bytes: Uint8Array): boolean {
+  const profile = profileOf(bytes)
+  if (!profile || profile.length < 132 || profile.toString('latin1', 16, 20) === 'GRAY') {
+    return false
+  }
+  for (let entry = 132, n = profile.readUInt32BE(128); n > 0 && entry + 12 <= profile.length; n--, entry += 12) {
+    if (profile.toString('latin1', entry, entry + 4) === 'desc') {
+      const at = profile.readUInt32BE(entry + 4)
+      const named = profile.toString('latin1', at, at + profile.readUInt32BE(entry + 8)).replaceAll('\0', '')
+      return !/sRGB/i.test(named)
+    }
+  }
+  return true
+}
+
+async function measured(path: string): Promise<{ width: number; height: number } | undefined> {
+  const { stdout } = await run('sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', path]).catch(() => ({ stdout: '' }))
+  const width = Number(/pixelWidth: (\d+)/.exec(stdout)?.[1])
+  const height = Number(/pixelHeight: (\d+)/.exec(stdout)?.[1])
+  return width > 0 && height > 0 ? { width, height } : undefined
+}
+
 export async function normalize(bytes: Uint8Array, source: string): Promise<Loaded> {
   const known = sniff(bytes)
-  if (known && known.width * known.height <= MAX_PIXELS) {
+  const darwin = process.platform === 'darwin'
+  if (known && known.width * known.height <= MAX_PIXELS && !(darwin && foreignColors(bytes))) {
     return { bytes, ...known, source }
   }
-  if (process.platform !== 'darwin') {
+  if (!darwin) {
     throw new Error(
       known
         ? `${known.width}×${known.height} is over ${MAX_PIXELS / 1e6} megapixels`
@@ -143,8 +200,9 @@ export async function normalize(bytes: Uint8Array, source: string): Promise<Load
     const from = join(dir, 'in')
     const to = join(dir, 'out.png')
     writeFileSync(from, bytes)
-    const fit = !known || known.width * known.height > MAX_PIXELS ? ['--resampleHeightWidthMax', String(SIDE)] : []
-    await run('sips', ['-s', 'format', 'png', ...fit, from, '--out', to]).catch(() => {
+    const size = known ?? (await measured(from))
+    const fit = size && size.width * size.height > MAX_PIXELS ? ['--resampleHeightWidthMax', String(SIDE)] : []
+    await run('sips', ['-s', 'format', 'png', '--matchTo', SRGB, ...fit, from, '--out', to]).catch(() => {
       throw new Error('that is not a picture macOS can read')
     })
     const png = new Uint8Array(readFileSync(to))

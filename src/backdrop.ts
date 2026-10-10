@@ -4,6 +4,7 @@ import { basename, isAbsolute, join } from 'node:path'
 import { artworkOf, creditLine, linksOf } from './artists.ts'
 import { type Hex, luminance, mix, rgb } from './color.ts'
 import { checkReadability } from './contrast.ts'
+import { MATTING, matte } from './cutout.ts'
 import { keyOf, known, recall, remember } from './drawn.ts'
 import { writeAtomic } from './edits.ts'
 import type { ProfileBackground } from './emit/iterm2.ts'
@@ -29,7 +30,7 @@ import {
 import { stem as fileStem, POSITIONS, type SharedPicture } from './theme.ts'
 
 const FILL = { width: 2560, height: 1550 }
-const DRAWING = 1
+const DRAWING = 2
 const FIGURE = 2560
 const FAINT = 0.1
 const WHITE = 0.99
@@ -372,7 +373,8 @@ export interface Inked {
   peak: Hex
 }
 
-export function inked(image: Rgba): Inked {
+export function inked(source: Rgba, cut = false): Inked {
+  const image = cut ? matte(source) : source
   const box = figureBox(image)
   let ink: Mask | undefined
   let peak: Hex | undefined
@@ -395,9 +397,16 @@ type Drawing =
   | { coloring: 'tone'; figure: Mask; fill: Mask; focus: number }
   | { coloring: 'original'; figure: Rgba; fill: Rgba; focus: number; peak: Hex }
 
-function draw(image: Rgba, width: number, height: number, blurring: number, coloring: Coloring): Drawing {
-  const held = inked(image)
-  const { box, clear, ink } = held
+function draw(
+  source: Rgba,
+  width: number,
+  height: number,
+  blurring: number,
+  coloring: Coloring,
+  cut: boolean,
+): Drawing {
+  const held = inked(source, cut)
+  const { box, clear, ink, image } = held
   const frame = fillFrame(box, width, height, clear)
   const k = Math.min(1, FIGURE / Math.max(box.w, box.h))
   const at = { x: 0, y: 0, w: Math.round(box.w * k), h: Math.round(box.h * k) }
@@ -517,6 +526,7 @@ export interface Picture {
   source?: string
   original?: string
   cut?: string
+  matte?: number
 }
 
 interface Rack {
@@ -891,7 +901,7 @@ export function installBackdrop(
   const store = readStore(dir)
   const rack = store.palettes[name] ?? { active: key, pictures: [] }
   const size = fillSize(window.width, window.height)
-  const drawing = draw(image, size.width, size.height, blurring, coloring)
+  const drawing = draw(image, size.width, size.height, blurring, coloring, source.cut === true)
   const drawn = made(name, key, drawing, tone.color)
   const original = kept(name, key)
   const picture: Picture = {
@@ -906,7 +916,7 @@ export function installBackdrop(
     ...(source.profiles && Object.keys(source.profiles).length > 0 ? { profiles: source.profiles } : {}),
     ...(source.source ? { source: source.source } : {}),
     original: `${original}.${source.ext}`,
-    ...(source.cut ? { cut: `${original}.cut.png` } : {}),
+    ...(source.cut ? { cut: `${original}.cut.png`, matte: MATTING } : {}),
   }
   const old = rack.pictures.find((held) => held.key === key)
   if (old) {
@@ -1172,7 +1182,7 @@ function drawnFor(
   if (!image) {
     return null
   }
-  const drawing = draw(image, size.width, size.height, blurring, coloring)
+  const drawing = draw(image, size.width, size.height, blurring, coloring, cut || picture.cut !== undefined)
   const result = made(name, picture.key, drawing, paint.hue.color)
   const peak = drawing.coloring === 'original' ? drawing.peak : undefined
   if (key) {
@@ -1214,6 +1224,7 @@ export function redrawn(
     blur: blurring,
     window: size,
     ...(cut ? { cut: `${kept(name, picture.key)}.cut.png` } : {}),
+    ...(cut || picture.cut ? { matte: MATTING } : {}),
   }
   if (coloring === 'original') {
     delete next.tone

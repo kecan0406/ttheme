@@ -241,8 +241,10 @@ file over as its path, each quoted its own way, and find reads them all; kitty
 and iTerm2 3.7 also deliver the dropped picture itself through kitty's
 drag-and-drop protocol, so a picture dragged out of a browser works there too,
 and kitty's clipboard protocol makes Cmd+V with a picture on the clipboard work
-directly, over ssh as well. PNG and JPEG work everywhere; macOS converts any
-other picture (HEIC, WebP, GIF, TIFF…) and shrinks one over 25 megapixels. The
+directly, over ssh as well. PNG and JPEG work everywhere, turned the way their
+EXIF orientation says; macOS converts any other picture (HEIC, WebP, GIF, TIFF…),
+shrinks one over 25 megapixels and brings one whose colors are in another space
+than sRGB (a Display P3 screenshot, an iPhone photo) into sRGB. The
 installed picture is named `local` in the conf's `# from` line, with the file or
 link it came from, and keeps its original under `backgrounds/originals/` like a
 booru post. Over ssh `ctrl+v` can only reach the clipboard through kitty's protocol,
@@ -276,8 +278,11 @@ installs, and the opacity goes back to the new coloring's default (esc in the
 panel undoes the tuning, not the colors). On macOS an opaque picture is
 cut out first: ttheme asks the system's own Vision framework (macOS 14 or newer,
 through `osascript` — nothing is installed or uploaded) for the character alone,
-marks the picture `cut out`, and `x` switches between the cut-out and the picture
-as it is. When Vision finds no character, or would leave almost nothing or
+narrows the soft edge Vision gives it (Vision draws its mask at 512×512 whatever
+the picture's size) and colors what stays partly clear along that edge from the
+character's own pixels beside it, so no rim of the old background rings the
+figure, marks the picture `cut out`, and `x` switches between the cut-out and the
+picture as it is. When Vision finds no character, or would leave almost nothing or
 remove almost nothing, the picture stays opaque; elsewhere it always does. A post over 25 megapixels is
 fetched as the site's own smaller copy instead — up to 3500 px on yande.re and
 konachan, 850 px on danbooru; zerochan names none, so its larger posts are left
@@ -442,7 +447,8 @@ size (`kagami.1a2b3c4d@60-bottom-right.png`, fitted with `contain`), above it on
 one of the window's size at the time (`kagami.1a2b3c4d@130-center-2880x1800.png`,
 with `cover`). With iTerm2 wired, a size of 100% or less that is not centered
 goes onto the window-sized canvas too, since iTerm2 cannot place an image.
-Baking runs `sips`, so those sizes are offered on macOS only.
+ttheme bakes these copies itself, with the same resampling it draws every
+picture with, so every size is offered on every system.
 
 The preview and find draw inside the cell grid, and Ghostty's `window-padding` around
 it keeps showing the configured background. While the cursor rests on the

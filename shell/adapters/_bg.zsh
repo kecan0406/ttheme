@@ -184,22 +184,9 @@ __tt_bg_dim() {
 }
 
 __tt_bg_bake() {
-  local src=$1 out=$2 tmp
-  local -i W=$3 H=$4 dw=$5 dh=$6 ox=$7 oy=$8 vx vy vw vh px py rc
-  vx=$(( ox < 0 ? -ox : 0 )) vy=$(( oy < 0 ? -oy : 0 ))
-  vw=$(( (dw < W - ox ? dw : W - ox) - vx )) vh=$(( (dh < H - oy ? dh : H - oy) - vy ))
-  px=$(( ox > 0 ? ox : 0 )) py=$(( oy > 0 ? oy : 0 ))
-  (( vw > 0 && vh > 0 )) || return 1
-  tmp=$(mktemp -d) || return 1
-  sips -z $dh $dw $src --out $tmp/a.png >/dev/null 2>&1 &&
-    sips -p $(( dh + 2 )) $(( dw + 2 )) $tmp/a.png --out $tmp/b.png >/dev/null 2>&1 &&
-    sips -c $vh $vw --cropOffset $(( vy + 1 )) $(( vx + 1 )) $tmp/b.png --out $tmp/c.png >/dev/null 2>&1 &&
-    sips -p $(( 2 * H - vh + 2 )) $(( 2 * W - vw + 2 )) $tmp/c.png --out $tmp/d.png >/dev/null 2>&1 &&
-    sips -c $H $W --cropOffset $(( H - vh + 1 - py )) $(( W - vw + 1 - px )) $tmp/d.png --out $tmp/e.png >/dev/null 2>&1 &&
-    mv -f $tmp/e.png $out
-  rc=$?
-  rm -rf $tmp
-  return $rc
+  local place
+  printf -v place '%dx%d%+d%+d' $5 $6 $7 $8
+  __tt_cli bake "$1" "$2" "${3}x$4" "$place" >/dev/null 2>&1
 }
 
 __tt_bg_include() {
@@ -379,7 +366,7 @@ __tt_pv_bg_adjust() {
   __tt_bg_image $name
   __tt_bg_dim "$REPLY" || return 0
   local size=${bgsize[$name]} op=${bgop[$name]}
-  local -i n=${2:-0} at=${bgpos[$name]} off=${bgoff[$name]} o=$(( ${bgop[$name]} * 100 + 0.5 )) m fs=0 bake=$+commands[sips]
+  local -i n=${2:-0} at=${bgpos[$name]} off=${bgoff[$name]} o=$(( ${bgop[$name]} * 100 + 0.5 )) m fs=0
   local -a def=(${=bgdef[$name]})
   __tt_pv_bg_fs $name && fs=$REPLY
   case $1 in
@@ -399,15 +386,15 @@ __tt_pv_bg_adjust() {
           if (( n < 0 )); then
             if [[ $size == fill ]]; then
               (( fs )) || return 0
-              size=$(( bake && fs > 100 ? fs : 100 ))
+              size=$(( fs > 100 ? fs : 100 ))
               n=$(( n + 1 ))
             fi
-            if (( bake && n )); then
+            if (( n )); then
               size=$(( size + n ))
               (( size < 20 )) && size=20
             fi
           elif [[ $size != fill ]]; then
-            if (( ! bake || size + n > fs )); then
+            if (( size + n > fs )); then
               size=fill
             else
               size=$(( size + n ))
@@ -417,14 +404,12 @@ __tt_pv_bg_adjust() {
         pos) at=$(( ((at - 1 + n) % 9 + 9) % 9 + 1 )) ;;
         at) at=$n ;;
         sizeat)
-          local -i lo=$(( bake ? 20 : 100 )) hi=$(( fs > 100 ? fs : 100 ))
+          local -i lo=20 hi=$(( fs > 100 ? fs : 100 ))
           m=$(( lo + n * (hi - lo + 1) / 1000 ))
           if (( n >= 1000 || (fs && m > fs) )); then
             size=fill
-          elif (( bake )); then
-            size=$m
           else
-            size=100
+            size=$m
           fi
           ;;
         opto)
@@ -626,10 +611,9 @@ __tt_pv_bg_recolor() {
 __tt_pv_bg_panel() {
   local name=$1 z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] c=$ac val sty mark choice REPLY
   local -a labs=(Size Position Opacity Colors) at=(1 4 7 0) def=(${=bgdef[$1]})
-  local -i r0=$2 col=$3 end=$4 off=${bgoff[$1]} T=$(( $4 - $3 - 21 )) lo=100 hi=100 k i r knob pos=${bgpos[$1]} o tuned
+  local -i r0=$2 col=$3 end=$4 off=${bgoff[$1]} T=$(( $4 - $3 - 21 )) lo=20 hi=100 k i r knob pos=${bgpos[$1]} o tuned
   (( color )) || z= b= d= c=
   (( T < 8 )) && T=8
-  (( $+commands[sips] )) && lo=20
   __tt_pv_bg_fs $name && (( REPLY > hi )) && hi=$REPLY
   for k in 1 2 3 4; do
     r=$(( r0 + at[k] ))
