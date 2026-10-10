@@ -267,6 +267,7 @@ interface PaletteListOptions<X extends Extra = Extra> {
   tops?: () => readonly string[]
   heads?: () => X[]
   extras?: () => X[]
+  pinned?: () => X[]
   onFocus?: (entry: PaletteEntry) => void
 }
 
@@ -290,11 +291,13 @@ export class PaletteList<X extends Extra = Extra> {
   private readonly tops?: () => readonly string[]
   private readonly heads?: () => X[]
   private readonly extras?: () => X[]
+  private readonly pinned?: () => X[]
   private entries: PaletteEntry[] = []
   private catalogPad = 0
   private namePad = 0
   private expanded = new Set<string>()
   private rows: Row<X>[] = []
+  private fixed = 0
   private cursor = 0
   private top = 0
   private span = 1
@@ -318,6 +321,7 @@ export class PaletteList<X extends Extra = Extra> {
     this.tops = opts.tops
     this.heads = opts.heads
     this.extras = opts.extras
+    this.pinned = opts.pinned
     this.load(opts.entries)
     this.rebuild('first')
   }
@@ -479,7 +483,9 @@ export class PaletteList<X extends Extra = Extra> {
         ? body
         : ruled([{ kind: 'all', count: this.allCount(body) }, ...body])
     const extra = (rows: X[] | undefined) => (rows ?? []).map((x) => ({ kind: 'extra' as const, extra: x }))
-    this.rows = [...extra(this.heads?.()), ...tree, ...extra(this.extras?.())]
+    const pinned = extra(this.pinned?.())
+    this.fixed = pinned.length
+    this.rows = [...extra(this.heads?.()), ...tree, ...extra(this.extras?.()), ...pinned]
     const start =
       body.length > 0
         ? this.rows.indexOf(body[this.mode === 'inside' && !this.filter.trim() ? 0 : firstPalette(body)] as Row<X>)
@@ -515,7 +521,11 @@ export class PaletteList<X extends Extra = Extra> {
   }
 
   move(delta: number, wrap = true): void {
-    this.cursor = stepRow(this.cursor, delta, this.rows.length, (i) => passed(this.rows[i]), wrap)
+    const scrolling = this.rows.length - this.fixed
+    const jump = this.fixed > 0 && scrolling > 0 && Math.abs(delta) !== 1
+    this.cursor = jump
+      ? stepRow(Math.min(this.cursor, scrolling - 1), delta, scrolling, (i) => passed(this.rows[i]), wrap)
+      : stepRow(this.cursor, delta, this.rows.length, (i) => passed(this.rows[i]), wrap)
     this.sync()
   }
 
@@ -539,6 +549,7 @@ export class PaletteList<X extends Extra = Extra> {
       this.mode === 'inside' &&
       (this.filter.trim() !== '' ||
         row === undefined ||
+        row.kind === 'extra' ||
         (row.kind === 'catalog' && !row.expanded) ||
         (row.kind === 'palette' && shelfKey(row.entry, this.place) === undefined))
     )
@@ -623,16 +634,23 @@ export class PaletteList<X extends Extra = Extra> {
     return this.span
   }
 
+  pins(): string[] {
+    const scrolling = this.rows.length - this.fixed
+    return this.rows.slice(scrolling).flatMap((row, i) => this.renderRow(row, scrolling + i))
+  }
+
   window(): { lines: string[]; above: number; below: number } {
-    const blocks = this.rows.map((row, i) => this.renderRow(row, i))
+    const scrolling = this.rows.length - this.fixed
+    const blocks = this.rows.slice(0, scrolling).map((row, i) => this.renderRow(row, i))
     const height = (i: number) => blocks[i]?.length ?? 0
     const room = Math.max(1, this.maxItems)
-    this.top = Math.min(this.top, this.cursor)
+    const at = Math.max(0, Math.min(this.cursor, scrolling - 1))
+    this.top = Math.min(this.top, at)
     let used = 0
-    for (let i = this.top; i <= this.cursor; i++) {
+    for (let i = this.top; i <= at; i++) {
       used += height(i)
     }
-    while (this.top < this.cursor && used > room) {
+    while (this.top < at && used > room) {
       used -= height(this.top)
       this.top += 1
     }

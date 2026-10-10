@@ -9,6 +9,19 @@ export function tabOf(p: Paint, label: string, on: boolean, mark: (text: string)
   return on ? p.pill(mark(` ${label} `)) : p.dim(mark(` ${label} `))
 }
 
+export function buttonOf(p: Paint, label: string, state: 'idle' | 'focus' | 'off', danger = false): string {
+  if (!p.color) {
+    return state === 'focus' ? `[${label}]` : ` ${label} `
+  }
+  if (state === 'off') {
+    return p.dim(` ${label} `)
+  }
+  if (state === 'focus') {
+    return danger ? p.danger(` ${label} `) : p.pill(` ${label} `)
+  }
+  return p.chip(` ${label} `)
+}
+
 export function pillOf(p: Paint, label: string): string {
   return p.color ? p.pill(` ${label} `) : `[${label}]`
 }

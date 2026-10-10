@@ -88,10 +88,13 @@ test('a role closes exactly what it opens, so it never ends a painted row early'
   }
 })
 
-test('the accent slot reads on every official background, and the surfaces step away from it in order', () => {
+test('the accent slot, the chip’s slot 8 and the danger slot 1 read on every official background, and the surfaces step away from the accent in order', () => {
   const names = Object.keys(SURFACES) as Surface[]
   for (const theme of loadThemes(join(root, 'themes'))) {
     assert.ok(contrast(theme.ansi[6] as string, theme.background) >= 3, theme.name)
+    assert.ok(contrast(theme.ansi[8] as string, theme.background) >= 3, theme.name)
+    assert.ok(contrast(theme.foreground, theme.ansi[8] as string) >= 3, theme.name)
+    assert.ok(contrast(theme.ansi[1] as string, theme.background) >= 3, theme.name)
     const steps = names.map((name) => contrast(surfaceOf(theme.background, theme.foreground, name), theme.background))
     assert.deepEqual(
       steps,

@@ -10,6 +10,8 @@ typeset -gA TTHEME_SGR=(
   reverse $'\e[7m' /reverse $'\e[27m'
   accent $'\e[36m' /accent $'\e[39m'
   pill $'\e[7;1;36m' /pill $'\e[22;27;39m'
+  chip $'\e[100;1m' /chip $'\e[22;49m'
+  danger $'\e[7;1;31m' /danger $'\e[22;27;39m'
   match $'\e[1;4;36m' /match $'\e[22;24;39m'
   ok $'\e[32m' /ok $'\e[39m'
   warn $'\e[33m' /warn $'\e[39m'

@@ -7,6 +7,8 @@ export const ROLES = {
   reverse: ['7', '27'],
   accent: ['36', '39'],
   pill: ['7;1;36', '22;27;39'],
+  chip: ['100;1', '22;49'],
+  danger: ['7;1;31', '22;27;39'],
   match: ['1;4;36', '22;24;39'],
   ok: ['32', '39'],
   warn: ['33', '39'],
@@ -33,6 +35,8 @@ export const MARKS = {
   below: '↓',
   update: '⇡',
   auto: '↻',
+  remove: '×',
+  undo: '↶',
   star: '★',
   link: '⧉',
   search: '⌕',
@@ -152,6 +156,8 @@ export interface Paint {
   bold(text: string): string
   accent(text: string): string
   pill(text: string): string
+  chip(text: string): string
+  danger(text: string): string
   ok(text: string): string
   warn(text: string): string
   error(text: string): string
@@ -167,6 +173,8 @@ export function painter(color: boolean): Paint {
     bold: role('bold'),
     accent: role('accent'),
     pill: role('pill'),
+    chip: role('chip'),
+    danger: role('danger'),
     ok: role('ok'),
     warn: role('warn'),
     error: role('error'),

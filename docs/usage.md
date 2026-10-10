@@ -390,10 +390,11 @@ marketplaces: its name, where it comes from — `Built in` for `official`, which
 holds the catalogs that come with ttheme, `owner/repo` for a repository, the
 folder for one on disk — and what it holds, `66 available · 2 installed · Updated
 2 days ago`. The panel beside the cards shows the marketplace the cursor is on —
-how it updates, then its catalogs and palettes — and once you move into it its
+its catalogs and palettes, with what you can do to the marketplace itself
+under them — and once you move into it its
 frame takes the accent, the tab repaints as the cursor lands on a palette, and
-its foot describes the palette or catalog under the cursor: whether it is
-installed, its gate score and first failing rule, its pictures. `space` marks a
+its foot describes the palette, catalog or action under the cursor: whether a
+palette is installed, its gate score and first failing rule, its pictures. `space` marks a
 palette (a catalog, or a whole marketplace from its card); unmarking one you have
 is how you drop it. A palette whose marketplace changed it since you installed
 it is marked `↑`, and `ctrl+r` stages its update — or every one under a catalog.
@@ -401,12 +402,18 @@ Typing filters every marketplace at once (a query has no spaces, `space` is the
 pick key): a card with nothing matching hides, the others say how many match
 (`2 of 108 match`), and the cursor lands on the first match inside the panel.
 
-On a marketplace's card, `delete` marks it for removal (its installed palettes stay,
-and `delete` again keeps it), `shift+←` and `shift+→` turn a repository's
-auto-update off and on, and `ctrl+r` updates it now; the official marketplace
-comes with ttheme, so it has neither. The card says when one is staged, updating
-or failed, and what you marked in it (`1 to install`, `1 to remove`); the
-panel says why an update failed and whether it updates on its own.
+Under the palettes in the panel sit the marketplace's own actions — `↓` past
+the last palette reaches them, and `↑` from the first wraps onto them. `enter`,
+`space` or a click does one: `Update now` fetches a repository again,
+`Auto-update` switches a repository's updating on its own on or off, and `Remove marketplace`
+asks first (`y` removes it, `n` or `esc` keeps it), then takes it off the list and
+holds the removal until you apply it — the heading counts it (`1 marketplace to
+remove`), and leaving without applying drops it. Its installed palettes stay: while
+any is installed they sit under a card of their own, marked `Not added`. The
+official marketplace comes with ttheme and a folder is read in place, so each has
+`Remove marketplace` alone. The card says when one is staged for adding, updating
+or failed, and what you marked in it (`1 to install`, `1 to remove`); the panel
+says why an update failed.
 `+ Add marketplace` leads the list: type a repository (`alice/ttheme-pastel`,
 `#v1` pins it) or a folder and it becomes an `Add` row for it, whose palettes
 Browse fetches by itself so the panel names them before you add it, and

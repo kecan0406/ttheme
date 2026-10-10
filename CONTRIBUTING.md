@@ -285,6 +285,8 @@ that closes exactly that, so a role inside a painted row never ends the row:
 | `bold` | titles, key names, a gate miss ✗ | `1` … `22` |
 | `accent` | the current ◆, an active catalog, the ▶ and frame of the part in focus | slot 6 |
 | `pill` | a tab or a choice that is on, a mode badge | reverse, bold, slot 6 |
+| `chip` | a button that is not under the cursor | bold on slot 8 |
+| `danger` | the button that removes something, while the cursor is on it | reverse, bold, slot 1 |
 | `match` | the letters a filter matched | bold, underline, slot 6 |
 | `ok`, `warn`, `error` | a note that something worked, a notice or a changed slot ●, a failure | slots 2, 3, 1 |
 | `under`, `reverse` | the runs a slot draws in a scene, a caret | `4`, `7` |
@@ -314,7 +316,7 @@ the parts several screens draw: `tabOf`, `pillOf`, `hintOf`, `checkOf`,
 `boxEdge` and `boxed`. Glyphs that mean a state are in `MARKS`, one meaning
 each: ▌ the cursor's row, ◆ the palette worn or handled, ✦ a signature slot,
 ▸ ▾ a closed and an open catalog, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more
-rows, ⇡ an update, ↻ auto-update, ★ stars, ⧉ a link, ⌕ search, ⇠ a bright that
+rows, ⇡ an update, ↻ auto-update, × a removal, ↶ taking one back, ★ stars, ⧉ a link, ⌕ search, ⇠ a bright that
 follows its normal, ◐ contrast, ■ a swatch, ▣ pictures.
 
 The shell layer draws with the same roles from `TTHEME_SGR` in
@@ -340,18 +342,17 @@ panel below, preview's settings, the palette editor and find's grid.
 | Key | Preview | Browse |
 |---|---|---|
 | any character | filters | filters every marketplace, landing on the first match in the panel; in the search, filters the marketplace list at once |
-| `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
+| `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
 | `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces; `→` on `Search marketplace` opens the search, and `←` there goes back |
-| `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; elsewhere, review every pick and marketplace change, then apply it; close the result |
+| `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; elsewhere, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
 | `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel; in the search, clear it, then go back |
-| `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on an `Add` row, add it; in the search, add a marketplace (again to undo) or load the list again |
+| `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on an `Add` row, add it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
-| `ctrl+r` | — | on a marketplace, update it now; in its panel, on a palette marked `↑` or a catalog, stage its update; in the search, load the marketplace list again |
-| `shift+←` `shift+→` | example scene | on a marketplace, auto-update off and on |
-| `delete` | — | on a marketplace, remove it, or keep it after all |
+| `ctrl+r` | — | in a marketplace's panel, on a palette marked `↑` or a catalog, stage its update; in the search, load the marketplace list again |
+| `shift+←` `shift+→` | example scene | — |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |
 | `ctrl+c` | quit | cancel |
@@ -387,10 +388,17 @@ an Apply button — and the part the cursor is in takes the keys:
 Every screen but init's picker takes the mouse, and every mouse action has a key
 in the tables above. A press selects — it moves the cursor to a row, opens a
 tab, sets a slider to the point — and a release over what was pressed acts: a
-key hint presses its key, a ○ picks, a ▸ folds, a double click does what enter
-does. Acting on the release keeps a screen that closes on a click from leaving
+key hint presses its key, a ○ picks, a ▸ folds, a button row acts, a double click
+does what enter does. Acting on the release keeps a screen that closes on a click from leaving
 the release to the shell, and moving off before letting go cancels. The wheel
 moves the cursor a row and never wraps.
+
+A button row is an icon, its label and the value after them (`↻ Auto-update   on`,
+`+ Add marketplace`) marked as one zone, so a click anywhere on the item acts and
+the blank after it does not. The icon and label sit on a chip — `chip`, slot 8,
+which every official palette keeps 3.6:1 or more away from its background — and
+the chip under the cursor is a `pill`; a button that removes something stays a grey `chip` until the cursor reaches it and then is a red `danger` chip, not a `pill` (red text on the grey chip reads at 1.4–1.7:1, so red is only ever a fill, slot 1 under the background's own color); one with nothing to do is dim, with no chip. A status that is not a
+control, like a card's `↻ auto-update` badge, gets no zone of its own.
 
 A Node screen marks what can be clicked while it draws: `zone(target, text)`
 around the text (`keyZone` for a key hint), or a rectangle in `Frame.zones`;

@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                  ╭─ Marketplaces ────────────────────────────────╮
-     ← Back                                       │ Repositories with the ttheme-marketplace      │
-                                                  │ topic, read every half hour into one list     │
- ▌  ⌕ Load the marketplace list  space loads it   │                                               │
-                                                  │ Load the marketplace list · space loads it    │
-                                                  │                                               │
-                                                  │ Type owner/repo or a folder to add one        │
-                                                  │                                               │
-                                                  │                                               │
-                                                  │                                               │
-                                                  │                                               │
-                                                  │                                               │
-                                                  │                                               │
-                                                  │                                               │
-                                                  │                                               │
-                                                  │                                               │
-                                                  │                                               │
-                                                  │                                               │
-                                                  ╰───────────────────────────────────────────────╯
+                                                   ╭─ Marketplaces ───────────────────────────────╮
+     ← Back                                        │ Repositories with the ttheme-marketplace     │
+                                                   │ topic, read every half hour into one list    │
+ ▌ [⌕ Load the marketplace list]  space loads it   │                                              │
+                                                   │ Load the marketplace list · space loads it   │
+                                                   │                                              │
+                                                   │ Type owner/repo or a folder to add one       │
+                                                   │                                              │
+                                                   │                                              │
+                                                   │                                              │
+                                                   │                                              │
+                                                   │                                              │
+                                                   │                                              │
+                                                   │                                              │
+                                                   │                                              │
+                                                   │                                              │
+                                                   │                                              │
+                                                   │                                              │
+                                                   ╰──────────────────────────────────────────────╯
  [SEARCH] space load   ? keys                                                              esc back

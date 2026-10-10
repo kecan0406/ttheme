@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                     ╭─ fix@shop ─────────────────────────────────╮
-    + Add marketplace  type owner/repo or a folder   │ Read in place                              │
-    ⌕ Search marketplace  find one on GitHub         │                                            │
-                                                     │    ▾ neon (1/2)                            │
-    ● official                                       │ ▌    ● arcade                              │
-      Built in                                       │      ○ volt                                │
-      6 available · 1 installed                      │    ▸ pastel (0/1)                          │
-                                                     │    ○ dusk                                  │
-    ● fix@shop                                       │                                            │
-      ~/shop                                         │                                            │
-      4 available · 1 installed · Read in place      │                                            │
-                                                     │                                            │
-                                                     │                                            │
-                                                     │                                            │
-                                                     ├────────────────────────────────────────────┤
-                                                     │ fix@shop/arcade  Installed                 │
-                                                     │ Gate 8/9 · ✗ accent hue outside its ANSI … │
-                                                     │                                            │
-                                                     ╰────────────────────────────────────────────╯
- [BROWSE] space pick   enter close   ? keys                                                esc back
+                                                      ╭─ fix@shop ────────────────────────────────╮
+    + Add marketplace   type owner/repo or a folder   │ Read in place                             │
+    ⌕ Search marketplace   find one on GitHub         │                                           │
+                                                      │    ▾ neon (1/2)                           │
+    ● official                                        │ ▌    ● arcade                             │
+      Built in                                        │      ○ volt                               │
+      6 available · 1 installed                       │    ▸ pastel (0/1)                         │
+                                                      │    ○ dusk                                 │
+    ● fix@shop                                        │                                           │
+      ~/shop                                          │                                           │
+      4 available · 1 installed · Read in place       │                                           │
+                                                      │                                           │
+                                                      ├───────────────────────────────────────────┤
+                                                      │ fix@shop/arcade  Installed                │
+                                                      │ Gate 8/9 · ✗ accent hue outside its ANSI… │
+                                                      │                                           │
+                                                      ├───────────────────────────────────────────┤
+                                                      │    × Remove marketplace                   │
+                                                      ╰───────────────────────────────────────────╯
+ [BROWSE] space pick   ? keys                                                              esc back
