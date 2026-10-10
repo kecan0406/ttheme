@@ -282,7 +282,9 @@ narrows the soft edge Vision gives it (Vision draws its mask at 512×512 whateve
 the picture's size) and colors what stays partly clear along that edge from the
 character's own pixels beside it, so no rim of the old background rings the
 figure, marks the picture `cut out`, and `x` switches between the cut-out and the
-picture as it is. When Vision finds no character, or would leave almost nothing or
+picture as it is. Before that, when the tile's folded posts include a transparent
+PNG of the same picture (cropped or scaled, with the same pixels where it is
+solid), find tries that post instead and says so, since a person cut its edges. When Vision finds no character, or would leave almost nothing or
 remove almost nothing, the picture stays opaque; elsewhere it always does. A post over 25 megapixels is
 fetched as the site's own smaller copy instead — up to 3500 px on yande.re and
 konachan, 850 px on danbooru; zerochan names none, so its larger posts are left

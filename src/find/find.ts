@@ -490,6 +490,7 @@ class Finder {
   private noticeTimer?: NodeJS.Timeout
   private peekTimer?: NodeJS.Timeout
   private peeked?: string
+  private readonly twins = new Map<string, boolean>()
   private attaching?: AbortController
   private done?: (code: number) => void
   private readonly scratch = mkdtempSync(join(tmpdir(), 'ttheme-find-'))
@@ -2621,6 +2622,7 @@ class Finder {
     }
     const { site } = pick
     const board = this.board
+    let instead: Pick | undefined
     try {
       await locate(site, pick.post, control.signal)
       const version = rendition(pick.post) as Rendition
@@ -2657,6 +2659,10 @@ class Finder {
       this.paint.flush()
       const plain = await this.render(current, 'plain')
       if (control.signal.aborted || board !== this.board) {
+        return
+      }
+      instead = plain.clear === 0 ? await this.twinOf(pick, path, control.signal) : undefined
+      if (instead || control.signal.aborted || board !== this.board) {
         return
       }
       if (plain.clear === 0 && canRemoveBackground() && this.setting('TTHEME_FIND_REMOVE_BG') !== 'off') {
@@ -2707,6 +2713,80 @@ class Finder {
       }
       this.paint.draw()
     }
+    const next = instead && board === this.board ? this.swapIn(instead) : undefined
+    if (next) {
+      await this.load(next)
+    }
+  }
+
+  private async twinOf(pick: Pick, whole: string, signal: AbortSignal): Promise<Pick | undefined> {
+    const view = this.view
+    const group = this.board.groups.find((held) => !held.open && held.posts[0] === pick)
+    for (const other of group?.posts.slice(1) ?? []) {
+      const key = postKey(other.site, other.post.id)
+      const verdict = `${postKey(pick.site, pick.post.id)}>${key}`
+      if (this.twins.get(verdict) === false || !(await this.kept.transparent(other.site, other.post))) {
+        continue
+      }
+      const version = rendition(other.post)
+      if (signal.aborted || version?.ext !== 'png') {
+        continue
+      }
+      try {
+        const path = this.origPath(other.site, other.post.id, version.ext)
+        const from = fileOf(other.site, other.post, version)
+        view.fetching = { id: key, got: 0, size: 0 }
+        await this.kept.cached(from.site, path, from.url, (got, total) => {
+          if (view.fetching?.id === key) {
+            view.fetching = { id: key, got, size: total }
+            this.paint.draw()
+          }
+        })
+        view.fetching = undefined
+        view.preparing = key
+        this.paint.flush()
+        const same = this.twins.get(verdict) ?? (await this.renders.run({ job: 'twin', cut: path, whole }))
+        this.twins.set(verdict, same)
+        if (same && group && !signal.aborted) {
+          group.posts.splice(group.posts.indexOf(other), 1)
+          group.posts.unshift(other)
+          return other
+        }
+      } catch {
+        this.twins.set(verdict, false)
+      } finally {
+        if (view.fetching?.id === key) {
+          view.fetching = undefined
+        }
+        if (view.preparing === key) {
+          view.preparing = undefined
+        }
+      }
+    }
+    return undefined
+  }
+
+  private swapIn(twin: Pick): Tile | undefined {
+    const view = this.view
+    const key = postKey(twin.site, twin.post.id)
+    if (!this.thumbPath.has(key)) {
+      this.thumbQueue.push(twin)
+      this.thumbs()
+    }
+    this.show()
+    this.inform()
+    const tile = view.tiles[view.focus]
+    if (tile?.key !== key) {
+      return undefined
+    }
+    view.hint = `Trying ${twin.site.name} ${twin.post.id}, the same picture with a transparent background`
+    clearTimeout(this.peekTimer)
+    this.peekTimer = setTimeout(() => {
+      view.hint = undefined
+      this.paint.draw()
+    }, NOTICE)
+    this.paint.draw()
+    return tile
   }
 
   private async cutOut(site: Site, id: number, path: string, signal: AbortSignal): Promise<string | undefined> {

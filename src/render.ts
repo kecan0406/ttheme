@@ -24,7 +24,7 @@ import { writeAtomic } from './edits.ts'
 import { paletteMatch } from './fit.ts'
 import { redrawOne } from './pictures.ts'
 import { contain, decodeImage, encodeRgba, transparency } from './png.ts'
-import { shape } from './works.ts'
+import { sameArtwork, shape } from './works.ts'
 
 interface Thumb {
   job: 'thumb'
@@ -46,6 +46,12 @@ interface Match {
   job: 'match'
   from: string
   colors: Hex[]
+}
+
+interface Twin {
+  job: 'twin'
+  cut: string
+  whole: string
 }
 
 interface Show {
@@ -109,20 +115,23 @@ export interface Look {
   hash: string
 }
 
-type Task = Thumb | Band | Match | Show | Backdrop | Redraw
+type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw
 type Lane = 'tile' | 'band' | 'view'
 type Result<T extends Task> = T extends Match
   ? Look
-  : T extends Redraw
-    ? Picture | null
-    : T extends Show
-      ? Shown
-      : number
+  : T extends Twin
+    ? boolean
+    : T extends Redraw
+      ? Picture | null
+      : T extends Show
+        ? Shown
+        : number
 
 const LANES: Record<Task['job'], Lane> = {
   thumb: 'tile',
   band: 'band',
   match: 'tile',
+  twin: 'view',
   show: 'view',
   backdrop: 'view',
   redraw: 'view',
@@ -130,7 +139,12 @@ const LANES: Record<Task['job'], Lane> = {
 
 let held: { from: string; clear: number; inked: Inked } | undefined
 
-async function work(task: Task): Promise<number | Look | Picture | Shown | null> {
+async function work(task: Task): Promise<number | boolean | Look | Picture | Shown | null> {
+  if (task.job === 'twin') {
+    const whole =
+      held?.from === task.whole ? held.inked.image : decodeImage(new Uint8Array(readFileSync(task.whole)), MAX_PIXELS)
+    return sameArtwork(decodeImage(new Uint8Array(readFileSync(task.cut)), MAX_PIXELS), whole)
+  }
   if (task.job === 'redraw') {
     return redrawOne(task.home, task.name, task.key, task.paint, task.blur, task.aligns, task.user)
   }
