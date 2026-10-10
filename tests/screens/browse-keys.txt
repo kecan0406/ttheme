@@ -4,15 +4,15 @@
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
               ╭─ Help ───────────────────────────────────────────────────────────────╮
     + Add mark│                                                                      │
-              │  Move          ↑↓  home  end  pgup  pgdn                             │
- ▌  ● official│  Open          →  enter  ·  a marketplace into the panel, a catalog  │
- ▌    Built in│  Back          ←  esc  ·  from the panel to the marketplaces         │
- ▌    6 availa│  Pick          space  ·  a palette, a catalog, a marketplace         │
-              │  Filter        Any text  ·  bksp  ·  ctrl-u clears                   │
-    ── On GitH│  Marketplace   ⇧←→  auto-update  ·  ctrl+r  updates it               │
-    ⌕ Find mar│                del  removes it  ·  again to undo                     │
-              │  Add           owner/repo, a folder, or a row on GitHub              │
-              │                space  adds it  ·  ctrl+r  searches again             │
+    ⌕ Search m│  Move          ↑↓  home  end  pgup  pgdn                             │
+              │  Open          →  enter  ·  a marketplace into the panel, a catalog  │
+ ▌  ● official│  Back          ←  esc  ·  from the panel to the marketplaces         │
+ ▌    Built in│  Pick          space  ·  a palette, a catalog, a marketplace         │
+ ▌    6 availa│  Filter        Any text  ·  bksp  ·  ctrl-u clears                   │
+              │  Marketplace   ⇧←→  auto-update  ·  ctrl+r  updates it               │
+              │                del  removes it  ·  again to undo                     │
+              │  Add           owner/repo or a folder typed in  ·  space  adds it    │
+              │  Search        enter  on Search marketplace  ·  finds one on GitHub  │
               │  Update        ctrl+r  on a palette marked ↑                         │
               │  Apply         enter  reviews and applies  ·  esc cancels            │
               │  Close         ?  esc                                                │

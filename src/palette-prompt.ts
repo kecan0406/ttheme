@@ -27,7 +27,6 @@ type PickerRow =
 
 export interface Extra {
   key: string
-  rule?: boolean
   idle?: boolean
   text(focused: boolean, at: number): string
 }
@@ -92,7 +91,7 @@ function rowKey(row: Row | undefined): string {
 }
 
 function passed(row: Row | undefined): boolean {
-  return row?.kind === 'rule' || (row?.kind === 'extra' && row.extra.rule === true)
+  return row?.kind === 'rule'
 }
 
 export function matchesPalette(entry: PaletteEntry, search: string): boolean {
@@ -665,10 +664,7 @@ export class PaletteList<X extends Extra = Extra> {
       row.kind === 'extra'
         ? row.extra.text(index === this.cursor && this.focus === 'lit', index)
         : this.rowText(row, index)
-    const lines = text.split('\n')
-    return row.kind === 'extra' && row.extra.rule
-      ? lines
-      : lines.map((l) => (l ? rowSpot(index, 'row', l, this.pane) : l))
+    return text.split('\n').map((l) => (l ? rowSpot(index, 'row', l, this.pane) : l))
   }
 
   private rowText(row: PickerRow | { kind: 'all'; count: number }, index: number): string {

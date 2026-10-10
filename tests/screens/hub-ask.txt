@@ -5,13 +5,13 @@
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
                                                      ╭─ official ─────────────────────────────────╮
     + Add marketplace  type owner/repo or a folder   │ Comes with ttheme                          │
+    ⌕ Search marketplace  find one on GitHub         │                                            │
+                                                     │    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・…  │
+    ● official                                       │ ▌    ● bocchi                              │
+      Built in                                       │      ● kita                                │
+      6 available · 2 installed · 1 to install       │      ○ ryo                                 │
+                                                     │    ▸ Lucky☆Star (1/3) らき☆すた            │
                                                      │                                            │
-    ● official                                       │    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・…  │
-      Built in                                       │ ▌    ● bocchi                              │
-      6 available · 2 installed · 1 to install       │      ● kita                                │
-                                                     │      ○ ryo                                 │
-    ── On GitHub ──────────                          │    ▸ Lucky☆Star (1/3) らき☆すた            │
-    ⌕ Find marketplaces on GitHub  space searches    │                                            │
                                                      │                                            │
                                                      │                                            │
                                                      │                                            │

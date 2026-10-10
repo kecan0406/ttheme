@@ -1,16 +1,20 @@
 import { reach } from './available.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
-import { type Repository, repositorySource } from './marketplaces.ts'
 import { fetchArchive, fromArchive } from './refresh.ts'
 import { TOPIC } from './sources.ts'
 import { slugOf } from './theme.ts'
 
-interface Found extends Repository {
+interface Found {
+  full_name: string
+  name: string
+  description: string | null
+  stargazers_count: number
+  owner: { login: string }
   pushed_at: string
   license: { spdx_id: string } | null
 }
 
-interface Shown {
+export interface Shown {
   id: string
   repo: string
   add: string
@@ -28,7 +32,7 @@ async function found(token: string | undefined): Promise<Found[]> {
 }
 
 async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {
-  const source = repositorySource(r)
+  const source = `${r.owner.login.toLowerCase()}/${r.name}`
   try {
     const archive = await fetchArchive(source)
     if (!archive) {

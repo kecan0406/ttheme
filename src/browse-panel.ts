@@ -3,9 +3,9 @@ import { cells, clip, fit, pieces, spread, wrapText } from './ansi.ts'
 import { gateFailures } from './available.ts'
 import { GATE_RULES } from './contrast.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
-import type { PaletteEntry } from './manifest.ts'
-import { type Repository, repositorySource } from './marketplaces.ts'
-import { containsText } from './names.ts'
+import { type PaletteEntry, swatch } from './manifest.ts'
+import type { Listed, Listing } from './marketplace-index.ts'
+import { listedMatches } from './marketplaces.ts'
 import {
   type Card,
   type Extra,
@@ -17,14 +17,14 @@ import {
   rowSpot,
   SearchHint,
 } from './palette-prompt.ts'
-import { counted, type Refreshed } from './refresh.ts'
+import { ago, counted, type Refreshed } from './refresh.ts'
 import { isLocal, isRemote, OFFICIAL, parseSource, sameMarketplace, shownSource, TOPIC } from './sources.ts'
 import { marketplaceOf, slugOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Mouse } from './tui/keys.ts'
-import { boxEdge, hintOf, pillOf } from './tui/parts.ts'
+import { boxEdge, hintOf, pillOf, tabOf } from './tui/parts.ts'
 import { Screen } from './tui/screen.ts'
-import { ansiFg, FG_RESET, MARKS, type Paint, painter, SPINNER } from './tui/style.ts'
+import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter, SPINNER } from './tui/style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
 import { type KeySpot, zone } from './tui/zones.ts'
 
@@ -46,7 +46,7 @@ export interface Report {
 export interface BrowseIo {
   refresh(source: string): Promise<{ marketplace: Marketplace; refreshed: Refreshed; updates: string[] }>
   fetch(source: string): Promise<Marketplace>
-  search(query: string | undefined): Promise<Repository[]>
+  index(): Promise<Listing>
   apply(result: BrowseResult, report: Report): Promise<void>
 }
 
@@ -84,8 +84,10 @@ type Phase = 'browse' | 'review' | 'applying' | 'done'
 type Found =
   | { kind: 'new' }
   | { kind: 'add'; source: string }
-  | { kind: 'find' }
-  | { kind: 'repo'; repo: Repository; source: string }
+  | { kind: 'search' }
+  | { kind: 'back' }
+  | { kind: 'state' }
+  | { kind: 'listed'; listed: Listed }
 
 interface Row extends Extra {
   found?: Found
@@ -98,6 +100,8 @@ interface Detail {
 }
 
 type Side = 'cards' | 'panel'
+
+type View = 'browse' | 'search'
 
 type Spot = RowSpot | KeySpot | HubSpot | { kind: 'page'; step: number; pane?: string }
 
@@ -119,9 +123,7 @@ const ROOMY = 22
 const MIN_COLS = 40
 const MIN_ROWS = 10
 const MIN_ITEMS = 3
-const SEARCH_AFTER = 600
 const TYPED_AFTER = 500
-const FOCUS_AFTER = 300
 const NAMES_SHOWN = 12
 const EMPTY: Detail = { title: '', lines: [], brief: '' }
 
@@ -150,6 +152,7 @@ type State = 'active' | 'submit' | 'cancel'
 export class BrowsePanel {
   readonly picked: Set<string>
   private readonly field = new Field()
+  private readonly query = new Field()
   private readonly adds = new Map<string, Marketplace>()
   private readonly removes = new Set<string>()
   private readonly want = new Map<string, boolean>()
@@ -180,7 +183,10 @@ export class BrowsePanel {
   private readonly paint: ((entry: PaletteEntry) => void) | undefined
   private readonly list: PaletteList<Row>
   private readonly inside: PaletteList<Row>
+  private readonly results: PaletteList<Row>
   private side: Side = 'cards'
+  private showing: View = 'browse'
+  private landing: string | undefined
   private open: string | undefined
   private split = 0
   private readonly hint: SearchHint
@@ -196,10 +202,9 @@ export class BrowsePanel {
   private asking: Marketplace | undefined
   private leaving: number | undefined
   private goto: number | undefined
-  private repos: Repository[] | undefined
-  private searching = false
-  private searchError: string | undefined
-  private searched: string | undefined
+  private listing: Listing | undefined
+  private loading = false
+  private loadError: string | undefined
   private asked = 0
   private help = false
   private readonly live: boolean
@@ -234,7 +239,6 @@ export class BrowsePanel {
       about: (top, members, matching) => this.about(top, members, matching),
       tops: () => this.tops(),
       heads: () => this.heads(),
-      extras: () => this.found(),
       onFocus: (entry) => this.focus(entry),
     })
     this.inside = new PaletteList<Row>({
@@ -253,6 +257,16 @@ export class BrowsePanel {
       },
     })
     this.inside.focus = 'off'
+    this.results = new PaletteList<Row>({
+      entries: [],
+      picked: new Set(),
+      layout: 'marketplaces',
+      mode: 'cards',
+      color: this.color,
+      maxItems: this.maxItems,
+      heads: () => this.searchHeads(),
+      extras: () => this.found(),
+    })
     this.follow()
     this.hint = new SearchHint(
       opts.fx ?? 'typewriter',
@@ -262,7 +276,6 @@ export class BrowsePanel {
     for (const source of opts.due) {
       this.update(source)
     }
-    this.lookup()
   }
 
   run(): Promise<'submit' | 'cancel'> {
@@ -368,6 +381,7 @@ export class BrowsePanel {
     if (this.asking) {
       if (key === 'esc') {
         this.asking = undefined
+        this.landing = undefined
       } else if (/^[yn]$/i.test(key)) {
         this.answer(key.toLowerCase() === 'y')
       }
@@ -377,6 +391,10 @@ export class BrowsePanel {
       this.steer(key)
       return
     }
+    if (this.showing === 'search') {
+      this.searchKey(key)
+      return
+    }
     const panel = this.side === 'panel'
     const page = pageStep(key, (panel ? this.inside : this.list).page())
     if (key === 'enter') {
@@ -384,6 +402,8 @@ export class BrowsePanel {
         this.inside.flip()
       } else if (!panel && this.list.focusedRow()?.kind === 'top') {
         this.enter()
+      } else if (!panel && this.focusedFound()?.kind === 'search') {
+        this.openSearch()
       } else {
         this.finish()
       }
@@ -404,6 +424,8 @@ export class BrowsePanel {
     } else if (key === 'right') {
       if (panel) {
         this.inside.fold(true)
+      } else if (this.focusedFound()?.kind === 'search') {
+        this.openSearch()
       } else {
         this.enter()
       }
@@ -437,6 +459,109 @@ export class BrowsePanel {
     } else if (this.field.key(key)) {
       this.typed()
     }
+  }
+
+  private searchKey(key: string): void {
+    const page = pageStep(key, this.results.page())
+    if (key === 'enter' || key === ' ') {
+      this.take(key === 'enter')
+    } else if ((key === 'esc' || key === 'ctrl-u') && this.query.value) {
+      this.query.value = ''
+      this.searchTyped()
+    } else if (key === 'esc' || key === 'left') {
+      this.closeSearch()
+    } else if (key === '?') {
+      this.help = true
+    } else if (page !== undefined) {
+      this.move(page)
+    } else if (key === 'up' || key === 'down') {
+      this.move(key === 'up' ? -1 : 1)
+    } else if (key === 'tab' || key === 'shift-tab') {
+      if (this.hub) {
+        this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
+      }
+    } else if (key === 'ctrl-r') {
+      this.loadIndex()
+    } else if (this.query.key(key)) {
+      this.searchTyped()
+    }
+  }
+
+  private take(back: boolean): void {
+    const found = this.focusedFound()
+    if (found?.kind === 'back') {
+      this.closeSearch()
+      return
+    }
+    if (found?.kind === 'state') {
+      this.loadIndex()
+      return
+    }
+    const source = found?.kind === 'add' ? found.source : found?.kind === 'listed' ? found.listed.source : undefined
+    if (source === undefined) {
+      return
+    }
+    const known = this.known(source)
+    if (!known) {
+      this.landing = back ? source : undefined
+      this.load(source, true)
+    } else if (back) {
+      this.closeSearch()
+      this.list.select(`top ${known.id}`)
+    } else if (this.adds.has(known.source)) {
+      this.adds.delete(known.source)
+      this.want.delete(known.source)
+      this.reload()
+    }
+  }
+
+  private openSearch(): void {
+    const typed = this.field.value.trim()
+    if (typed && !typedSource(typed)) {
+      this.query.value = typed
+    }
+    this.showing = 'search'
+    this.results.setFilter(this.query.value)
+    this.results.refresh()
+    if (this.live && !this.listing) {
+      this.loadIndex()
+    }
+    this.watch()
+  }
+
+  private closeSearch(): void {
+    this.showing = 'browse'
+    this.landing = undefined
+    this.follow()
+    this.watch()
+  }
+
+  private searchTyped(): void {
+    this.results.setFilter(this.query.value)
+    this.watch()
+  }
+
+  private loadIndex(): void {
+    if (this.loading) {
+      return
+    }
+    this.loading = true
+    this.loadError = undefined
+    this.redraw()
+    this.track(this.io.index()).then(
+      (listing) => {
+        this.loading = false
+        this.listing = listing
+        this.results.refresh()
+        this.redraw()
+      },
+      (error: Error) => {
+        this.loading = false
+        this.loadError = error.message
+        this.results.refresh()
+        this.redraw()
+      },
+    )
   }
 
   private finish(): void {
@@ -486,21 +611,22 @@ export class BrowsePanel {
   }
 
   private refresh(): void {
-    const row = this.list.focusedRow()
     const marketplace = this.focusedMarketplace()
     if (this.side === 'panel') {
       this.toggleRenew()
-    } else if (marketplace) {
-      if (isRemote(marketplace.source) && !this.adds.has(marketplace.source)) {
-        this.update(marketplace.source)
-      }
-    } else if (row?.kind === 'extra' && row.extra.found?.kind === 'find') {
-      this.search()
+    } else if (marketplace && isRemote(marketplace.source) && !this.adds.has(marketplace.source)) {
+      this.update(marketplace.source)
     }
   }
 
   private pasted(text: string): void {
-    if (this.phase === 'browse' && !this.help && !this.asking && this.leaving === undefined) {
+    if (this.phase !== 'browse' || this.help || this.asking || this.leaving !== undefined) {
+      return
+    }
+    if (this.showing === 'search') {
+      this.query.paste(text)
+      this.searchTyped()
+    } else {
       this.field.paste(text)
       this.typed()
     }
@@ -536,7 +662,7 @@ export class BrowsePanel {
         if (this.phase !== 'browse') {
           this.scroll(spot.step * this.span())
         } else if (free && this.side === (spot.pane ? 'panel' : 'cards')) {
-          this.move(spot.step * (spot.pane ? this.inside : this.list).page())
+          this.move(spot.step * (spot.pane ? this.inside : this.current()).page())
         }
       } else if (spot.kind === 'hub') {
         if (free && this.hub && spot.tab !== this.hub) {
@@ -549,6 +675,11 @@ export class BrowsePanel {
   }
 
   private point(spot: RowSpot): void {
+    if (this.showing === 'search') {
+      this.results.point(spot.at)
+      this.watch()
+      return
+    }
     if (spot.pane) {
       if (this.enter()) {
         this.inside.point(spot.at)
@@ -565,6 +696,10 @@ export class BrowsePanel {
       this.scroll(step)
       return
     }
+    if (this.showing === 'search') {
+      this.move(step, false)
+      return
+    }
     if (panel && !this.enter()) {
       return
     }
@@ -575,7 +710,11 @@ export class BrowsePanel {
   }
 
   private openRow(spot: RowSpot, count: number): void {
-    if (spot.pane) {
+    if (this.showing === 'search') {
+      if (spot.part === 'box' || count === 2) {
+        this.take(count === 2)
+      }
+    } else if (spot.pane) {
       if (spot.part === 'box') {
         this.inside.pick()
       } else if (spot.part === 'fold') {
@@ -606,7 +745,6 @@ export class BrowsePanel {
     } else if (query.trim()) {
       this.back()
     }
-    this.later('search', SEARCH_AFTER, () => this.lookup())
     this.watch()
   }
 
@@ -619,7 +757,6 @@ export class BrowsePanel {
       this.list.select(`top ${was.name}`)
     }
     this.follow()
-    this.later('search', SEARCH_AFTER, () => this.lookup())
     this.watch()
   }
 
@@ -677,8 +814,12 @@ export class BrowsePanel {
     return row?.kind === 'top' ? this.marketplaceNamed(row.name) : undefined
   }
 
+  private current(): PaletteList<Row> {
+    return this.showing === 'search' ? this.results : this.list
+  }
+
   private move(delta: number, wrap = true): void {
-    ;(this.side === 'panel' ? this.inside : this.list).move(delta, wrap)
+    ;(this.side === 'panel' ? this.inside : this.current()).move(delta, wrap)
     this.watch()
   }
 
@@ -702,15 +843,8 @@ export class BrowsePanel {
     const found = row.extra.found
     if (found?.kind === 'add') {
       this.load(found.source, true)
-    } else if (found?.kind === 'repo') {
-      const known = this.known(found.source)
-      if (known) {
-        this.list.select(`top ${known.id}`)
-      } else {
-        this.load(found.source, true)
-      }
-    } else if (found?.kind === 'find') {
-      this.search()
+    } else if (found?.kind === 'search') {
+      this.openSearch()
     }
   }
 
@@ -760,6 +894,7 @@ export class BrowsePanel {
         this.busy.delete(source)
         if (this.staging.delete(source)) {
           this.failed.set(source, error.message)
+          this.landing = undefined
         } else {
           this.peekFailed.set(source, error.message)
         }
@@ -772,6 +907,7 @@ export class BrowsePanel {
     const clash = this.active().find((m) => m.id === marketplace.id)
     if (clash) {
       this.failed.set(source, `${marketplace.id} already names the marketplace at ${clash.shown}`)
+      this.landing = undefined
     } else if (isLocal(source) || source === OFFICIAL) {
       this.stage(marketplace, marketplace.auto)
     } else {
@@ -803,7 +939,7 @@ export class BrowsePanel {
   }
 
   private focusedFound(): Found | undefined {
-    const row = this.list.focusedRow()
+    const row = this.current().focusedRow()
     return row?.kind === 'extra' ? row.extra.found : undefined
   }
 
@@ -811,23 +947,11 @@ export class BrowsePanel {
     if (!this.live) {
       return
     }
-    const typed = typedSource(this.field.value)
+    const typed = typedSource((this.showing === 'search' ? this.query : this.field).value)
     if (typed && this.wants(typed)) {
       this.later('typed', TYPED_AFTER, () => this.load(typed, false))
     } else {
       this.cancel('typed')
-    }
-    const found = this.focusedFound()
-    if (found?.kind === 'repo' && this.wants(found.source)) {
-      const source = found.source
-      this.later('focus', FOCUS_AFTER, () => {
-        const now = this.focusedFound()
-        if (now?.kind === 'repo' && now.source === source) {
-          this.load(source, false)
-        }
-      })
-    } else {
-      this.cancel('focus')
     }
   }
 
@@ -851,8 +975,18 @@ export class BrowsePanel {
       this.field.value = ''
       this.list.setFilter('')
     }
+    const asked = typedSource(this.query.value)
+    if (asked && sameMarketplace(asked, marketplace.source)) {
+      this.query.value = ''
+      this.results.setFilter('')
+    }
     this.reload()
     this.list.select(`top ${marketplace.id}`)
+    if (this.landing !== undefined && sameMarketplace(this.landing, marketplace.source)) {
+      this.closeSearch()
+    } else {
+      this.results.refresh()
+    }
   }
 
   private update(source: string): void {
@@ -878,77 +1012,41 @@ export class BrowsePanel {
     )
   }
 
-  private wanted(): string {
-    const query = this.field.value.trim()
-    return query && !typedSource(query) ? query : ''
-  }
-
-  private lookup(): void {
-    if (this.live && this.searched !== this.wanted()) {
-      this.search()
+  private row(found: Found, idle = false): Row {
+    return {
+      key: found.kind === 'listed' ? `listed ${found.listed.source}` : found.kind,
+      ...(idle ? { idle } : {}),
+      found,
+      text: (focused: boolean, at: number) => this.foundLine(found, focused, at),
     }
-  }
-
-  private search(): void {
-    const query = this.wanted()
-    const seq = ++this.asked
-    this.searched = query
-    this.searching = true
-    this.searchError = undefined
-    this.track(this.io.search(query || undefined)).then(
-      (repos) => {
-        if (seq === this.asked) {
-          this.searching = false
-          this.repos = repos
-          this.list.refresh()
-          this.watch()
-          this.redraw()
-        }
-      },
-      (error: Error) => {
-        if (seq === this.asked) {
-          this.searching = false
-          this.searchError = error.message
-          this.redraw()
-        }
-      },
-    )
   }
 
   private heads(): Row[] {
     const typed = typedSource(this.field.value)
     const found: Found = typed && !this.known(typed) ? { kind: 'add', source: typed } : { kind: 'new' }
+    return [this.row(found, found.kind === 'new'), this.row({ kind: 'search' })]
+  }
+
+  private searchHeads(): Row[] {
+    const typed = typedSource(this.query.value)
+    const listed = typed && this.listing?.marketplaces.some((m) => sameMarketplace(m.source, typed))
     return [
-      {
-        key: 'add',
-        idle: found.kind === 'new',
-        found,
-        text: (focused: boolean, at: number) => this.foundLine(found, focused, at),
-      },
+      this.row({ kind: 'back' }, true),
+      ...(typed && !listed && !this.known(typed) ? [this.row({ kind: 'add', source: typed })] : []),
     ]
   }
 
+  private matches(): Listed[] {
+    const query = this.query.value.trim()
+    return (this.listing?.marketplaces ?? []).filter((m) => !query || listedMatches(m, query))
+  }
+
   private found(): Row[] {
-    const hit = (...fields: string[]) => containsText(fields, this.field.value)
-    const repos = (this.repos ?? [])
-      .map((repo) => ({ repo, source: repositorySource(repo) }))
-      .filter(({ repo, source }) => hit(source, repo.description ?? ''))
-    const rows: Found[] = [
-      ...repos.map(({ repo, source }) => ({ kind: 'repo' as const, repo, source })),
-      ...(repos.length > 0 ? [] : [{ kind: 'find' as const }]),
-    ]
-    return [
-      {
-        key: 'github',
-        rule: true,
-        text: () => `\n   ${this.p.dim(`── On GitHub${this.searching ? ' · searching…' : ''} ──────────`)}`,
-      },
-      ...rows.map((found) => ({
-        key: found.kind === 'repo' ? `repo ${found.source}` : found.kind,
-        found,
-        text: (focused: boolean, at: number) => this.foundLine(found, focused, at),
-      })),
-    ]
+    const listed = this.matches()
+    if (listed.length > 0) {
+      return listed.map((m) => this.row({ kind: 'listed', listed: m }))
+    }
+    return typedSource(this.query.value) && !this.loading ? [] : [this.row({ kind: 'state' })]
   }
 
   private lit(focused: boolean, text: string): string {
@@ -1023,38 +1121,45 @@ export class BrowsePanel {
           )
       return this.lit(focused, `${box('+')}Add ${whereOf(found.source)}${note}`)
     }
-    if (found.kind === 'find') {
-      const query = this.field.value.trim()
-      const named = query && !typedSource(query)
-      const idle = !this.searching && !this.searchError && this.repos === undefined
-      const text = this.searching
-        ? 'Searching GitHub…'
-        : this.searchError
-          ? 'GitHub search failed'
-          : idle
-            ? named
-              ? `Find "${query}" on GitHub`
-              : 'Find marketplaces on GitHub'
-            : named
-              ? `No marketplace on GitHub matches "${query}"`
-              : 'No marketplace on GitHub yet'
-      const note = this.searchError ?? (this.searching ? '' : idle ? 'space searches' : 'space searches again')
+    if (found.kind === 'search') {
+      return this.lit(focused, `${box(MARKS.search)}Search marketplace${after('find one on GitHub')}`)
+    }
+    if (found.kind === 'back') {
+      return `   ${rowSpot(at, 'box', tabOf(this.p, '← Back', focused))}\n`
+    }
+    if (found.kind === 'state') {
+      const [text, note] = this.stateOf()
       return this.lit(focused, `${box(MARKS.search)}${text}${after(note)}`)
     }
-    const known = this.known(found.source)
-    const failure = this.failed.get(found.source) ?? this.peekFailed.get(found.source)
-    const peeked = this.peeked.get(found.source)
+    const m = found.listed
+    const known = this.known(m.source)
+    const failure = this.failed.get(m.source)
     const facts = [
-      `${MARKS.star}${found.repo.stargazers_count}`,
-      known ? `Added as ${known.id}` : peeked ? `${peeked.entries.filter((e) => !e.default).length} available` : '',
-      this.busy.get(found.source) ?? '',
+      `${MARKS.star}${m.stars}`,
+      known ? this.addedNote(known) : counted(m.palettes.length),
+      this.busy.get(m.source) ?? '',
     ].filter(Boolean)
-    return [
-      '',
-      this.lit(focused, `${box(known ? MARKS.on : MARKS.off)}${found.source}`),
-      ...(found.repo.description ? [this.lit(focused, `  ${this.p.dim(found.repo.description)}`)] : []),
-      this.lit(focused, `  ${this.p.dim(facts.join(' · '))}${failure ? `  ${this.p.error(failure)}` : ''}`),
-    ].join('\n')
+    return this.lit(
+      focused,
+      `${box(known ? MARKS.on : MARKS.off)}${m.id}${after(facts.join(' · '))}${failure ? `  ${this.p.error(failure)}` : ''}`,
+    )
+  }
+
+  private stateOf(): [string, string] {
+    const query = this.query.value.trim()
+    return this.loading
+      ? ['Loading the marketplace list…', '']
+      : this.loadError
+        ? ['The marketplace list did not load', 'space retries']
+        : !this.listing
+          ? ['Load the marketplace list', 'space loads it']
+          : query
+            ? [`No marketplace matches "${query}"`, '']
+            : ['No marketplace yet', '']
+  }
+
+  private addedNote(known: Marketplace): string {
+    return this.adds.has(known.source) ? 'Will add' : 'Added'
   }
 
   private changes(): number {
@@ -1325,22 +1430,34 @@ export class BrowsePanel {
   }
 
   private counts(): string {
+    if (this.showing === 'search') {
+      const parts = [
+        ...(this.loading ? ['Loading…'] : []),
+        ...(this.listing ? [`${this.matches().length} found`] : []),
+        ...(this.listing?.offline ? [`offline, from ${ago(this.listing.at)}`] : []),
+      ]
+      return parts.length > 0 ? parts.join(' · ') : 'on GitHub'
+    }
     const updating = [...this.busy.values()].includes('Updating…') ? 'Updating… · ' : ''
     const list = this.list
     return `${updating}${list.matched()}/${list.total()} · ${list.pickedCount()} picked`
   }
 
   private searchText(): string {
-    const typed = this.field.value
+    const typed = (this.showing === 'search' ? this.query : this.field).value
     if (typed) {
       return `${typed}_`
+    }
+    if (this.showing === 'search') {
+      return this.p.dim('Search… a marketplace, a palette, or type owner/repo or a folder')
     }
     const example = this.hint.text()
     return this.p.dim(`Search…${example ? ` e.g. ${example}` : ''}`)
   }
 
   private heading(): string {
-    return `${this.p.bold('Browse')} ${this.p.dim(`(${this.counts()})`)}`
+    const title = this.showing === 'search' ? 'Search marketplace' : 'Browse'
+    return `${this.p.bold(title)} ${this.p.dim(`(${this.counts()})`)}`
   }
 
   private searchBox(width: number): string[] {
@@ -1367,7 +1484,7 @@ export class BrowsePanel {
   }
 
   private detail(width: number): Detail {
-    const row = this.list.focusedRow()
+    const row = this.current().focusedRow()
     if (row?.kind === 'extra') {
       return row.extra.found ? this.foundDetail(row.extra.found, width) : EMPTY
     }
@@ -1449,9 +1566,20 @@ export class BrowsePanel {
       const how = 'Type owner/repo, owner/repo#ref or a folder into the search, and space adds it'
       return {
         title: this.p.bold('Add marketplace'),
-        lines: [...wrapText(how, width), '', ...wrapText(`Or pick one on GitHub, below the marketplaces`, width)],
+        lines: [...wrapText(how, width), '', ...wrapText('Or find one on GitHub with Search marketplace', width)],
         brief: how,
       }
+    }
+    if (row.kind === 'search') {
+      const what = `The marketplaces anyone publishes on GitHub with the ${TOPIC} topic, listed every half hour`
+      return {
+        title: this.p.bold('Search marketplace'),
+        lines: [...wrapText(what, width), '', ...wrapText('enter opens the search', width)],
+        brief: 'enter searches the marketplaces on GitHub',
+      }
+    }
+    if (row.kind === 'back') {
+      return { title: this.p.bold('Back'), lines: ['Back to your marketplaces'], brief: 'enter goes back' }
     }
     if (row.kind === 'add') {
       const note =
@@ -1469,43 +1597,51 @@ export class BrowsePanel {
         brief: [this.peeking(row.source), note].filter(Boolean).join(' · '),
       }
     }
-    if (row.kind === 'find') {
-      const query = this.field.value.trim()
-      const note =
-        this.searchError ??
-        (this.searching
-          ? 'Searching…'
-          : this.repos
-            ? `${this.repos.length} found · space searches again`
-            : 'space searches GitHub')
+    if (row.kind === 'state') {
+      const [text, note] = this.stateOf()
+      const what = `Repositories with the ${TOPIC} topic, read every half hour into one list`
       return {
-        title: this.p.bold('GitHub'),
+        title: this.p.bold('Marketplaces'),
         lines: [
-          ...wrapText(`Repositories with the ${TOPIC} topic`, width),
-          ...(query && !typedSource(query) ? [`Matching "${query}"`] : []),
+          ...wrapText(what, width),
           '',
-          ...wrapText(note, width),
+          ...wrapText([text, note].filter(Boolean).join(' · '), width),
+          ...(this.loadError ? wrapText(this.loadError, width).map((l) => this.p.error(l)) : []),
           '',
           ...wrapText('Type owner/repo or a folder to add one', width),
         ],
-        brief: note,
+        brief: [text, note].filter(Boolean).join(' · '),
       }
     }
-    const known = this.known(row.source)
+    const m = row.listed
+    const known = this.known(m.source)
     const note = known
-      ? 'Added'
-      : (this.busy.get(row.source) ?? this.failed.get(row.source) ?? this.peekFailed.get(row.source) ?? 'space adds it')
+      ? this.addedNote(known)
+      : (this.busy.get(m.source) ?? this.failed.get(m.source) ?? 'space adds it, enter adds it and goes back')
     return {
-      title: this.p.bold(row.source),
+      title: this.p.bold(m.id),
       lines: [
-        `★ ${row.repo.stargazers_count}`,
-        ...wrapText(row.repo.description ?? '', width),
-        ...this.peekLines(row.source, width),
+        this.p.dim(m.source),
+        ...wrapText(m.about, width).map((l) => this.p.dim(l)),
+        this.p.dim([`★ ${m.stars}`, ...(m.updated ? [`updated ${m.updated}`] : [])].join(' · ')),
         '',
         ...wrapText(note, width),
+        '',
+        ...this.paletteLines(m, width),
       ],
-      brief: [this.peeking(row.source), note].filter(Boolean).join(' · '),
+      brief: [counted(m.palettes.length), note].join(' · '),
     }
+  }
+
+  private paletteLines(m: Listed, width: number): string[] {
+    const pad = Math.min(Math.max(...m.palettes.map((e) => cells(e.name))), Math.max(8, width - 16))
+    let shelf: string | undefined
+    return m.palettes.flatMap((e) => {
+      const head = e.catalog !== shelf && e.catalog ? [this.p.dim(e.catalog)] : []
+      shelf = e.catalog
+      const squares = this.color ? `  ${ansiSquares(swatch(e))}` : ''
+      return [...head, `  ${fit(e.name, pad)}${squares}`]
+    })
   }
 
   private peekLines(source: string, width: number): string[] {
@@ -1553,6 +1689,13 @@ export class BrowsePanel {
         right: ['esc', 'back'],
       }
     }
+    if (this.showing === 'search') {
+      return {
+        badge: 'SEARCH',
+        keys: [...this.searchKeys(), ...(this.query.value ? [['bksp', 'edit'] as Hint] : []), ['?', 'keys']],
+        right: this.query.value ? ['esc', 'clear search'] : ['esc', 'back'],
+      }
+    }
     const filter = this.field.value
     const enter: Hint = ['enter', this.dirty() ? 'apply' : 'close']
     const tail: Hint[] = [...(filter ? [['bksp', 'edit'] as Hint] : []), ['?', 'keys']]
@@ -1577,17 +1720,36 @@ export class BrowsePanel {
     ]
   }
 
+  private searchKeys(): Hint[] {
+    const found = this.focusedFound()
+    if (found?.kind === 'back') {
+      return [['enter', 'back']]
+    }
+    if (found?.kind === 'state') {
+      return this.loading ? [] : [['space', 'load']]
+    }
+    const source = found?.kind === 'add' ? found.source : found?.kind === 'listed' ? found.listed.source : undefined
+    if (source === undefined) {
+      return []
+    }
+    const known = this.known(source)
+    if (!known) {
+      return [
+        ['space', 'add'],
+        ['enter', 'add and go back'],
+      ]
+    }
+    return [...(this.adds.has(known.source) ? [['space', 'undo'] as Hint] : []), ['enter', 'go to it']]
+  }
+
   private cardKeys(enter: Hint): Hint[] {
     const row = this.list.focusedRow()
     if (row?.kind === 'extra') {
       const found = row.extra.found
-      if (found?.kind === 'find') {
-        return [['space', 'search'], enter]
+      if (found?.kind === 'search') {
+        return [['enter', 'open']]
       }
-      if (found?.kind === 'add' || (found?.kind === 'repo' && !this.known(found.source))) {
-        return [['space', 'add'], enter]
-      }
-      return [enter]
+      return found?.kind === 'add' ? [['space', 'add'], enter] : [enter]
     }
     if (row?.kind !== 'top') {
       return [enter]
@@ -1620,6 +1782,7 @@ export class BrowsePanel {
     const items = Math.max(MIN_ITEMS, this.rows() - used)
     this.maxItems = items
     this.list.maxItems = items
+    this.results.maxItems = items
   }
 
   private view(): string[] {
@@ -1652,7 +1815,7 @@ export class BrowsePanel {
       return this.small(cols, rows, chrome + MIN_ITEMS)
     }
     this.fitItems(chrome)
-    const view = this.list.window()
+    const view = this.current().window()
     const plain = (line: string) =>
       pieces(line)
         .flatMap((piece) => (piece.sequence ? [] : [piece.text]))
@@ -1707,8 +1870,9 @@ export class BrowsePanel {
     const detail = this.detail(inner)
     const title = lit ? this.p.accent(detail.title) : detail.title
     const body = height - 2
-    if (this.list.focusedRow()?.kind !== 'top') {
-      const lines = detail.lines.slice(0, body)
+    if (this.current().focusedRow()?.kind !== 'top') {
+      const lines =
+        detail.lines.length > body ? [...detail.lines.slice(0, body - 1), this.p.dim('…')] : detail.lines.slice(0)
       while (lines.length < body) {
         lines.push('')
       }
@@ -1743,6 +1907,18 @@ export class BrowsePanel {
   }
 
   private helpRows(): Hint[] {
+    if (this.showing === 'search') {
+      return [
+        ['Move', '↑↓  home  end  pgup  pgdn'],
+        ['Filter', 'Any text  ·  bksp  ·  ctrl-u clears'],
+        ['Add', 'space  adds it  ·  again to undo'],
+        ['', 'enter  adds it and goes back to its card'],
+        ['Reload', 'ctrl+r  the list, which GitHub fills every half hour'],
+        ['Back', '←  esc  ·  ← Back'],
+        ...(this.hub ? [['Screens', 'tab  ·  shift+tab'] as Hint] : []),
+        ['Close', '?  esc'],
+      ]
+    }
     return [
       ['Move', '↑↓  home  end  pgup  pgdn'],
       ['Open', '→  enter  ·  a marketplace into the panel, a catalog'],
@@ -1751,8 +1927,8 @@ export class BrowsePanel {
       ['Filter', 'Any text  ·  bksp  ·  ctrl-u clears'],
       ['Marketplace', '⇧←→  auto-update  ·  ctrl+r  updates it'],
       ['', 'del  removes it  ·  again to undo'],
-      ['Add', 'owner/repo, a folder, or a row on GitHub'],
-      ['', 'space  adds it  ·  ctrl+r  searches again'],
+      ['Add', 'owner/repo or a folder typed in  ·  space  adds it'],
+      ['Search', 'enter  on Search marketplace  ·  finds one on GitHub'],
       ['Update', 'ctrl+r  on a palette marked ↑'],
       ['Apply', 'enter  reviews and applies  ·  esc cancels'],
       ...(this.hub ? [['Screens', 'tab  ·  shift+tab'] as Hint] : []),

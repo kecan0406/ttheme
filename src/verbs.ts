@@ -126,7 +126,10 @@ export const VERB_SPECS: VerbSpec[] = [
         'Add a marketplace — a repository (alice/ttheme-pastel, #v1 pins a tag or branch), a folder, or official; asks whether it updates on its own',
       ],
       ['remove <marketplace>', 'Drop one by its name (alice@pastel) — the palettes you installed from it keep working'],
-      ['search [query]', 'Repositories on GitHub with the ttheme-marketplace topic'],
+      [
+        'search [query]',
+        'The marketplaces on GitHub with the ttheme-marketplace topic, listed every half hour — a query matches names, palettes and descriptions',
+      ],
       [
         'init [name]',
         'Make a marketplace of your own — <you>@<name>, in ~/.config/ttheme/marketplace/<name> or a folder you give',

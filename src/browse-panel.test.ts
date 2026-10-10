@@ -5,7 +5,7 @@ import cells from 'fast-string-width'
 
 import { type BrowseIo, BrowsePanel, type Marketplace } from './browse-panel.ts'
 import type { PaletteEntry } from './manifest.ts'
-import type { Repository } from './marketplaces.ts'
+import type { Listed, Listing } from './marketplace-index.ts'
 
 function entry(name: string, catalog?: string): PaletteEntry {
   return {
@@ -36,8 +36,16 @@ function marketplace(source: string, id: string, names: string[], auto = false):
   }
 }
 
-function repo(owner: string, name: string, stars: number, description: string | null = null): Repository {
-  return { full_name: `${owner}/${name}`, name, description, stargazers_count: stars, owner: { login: owner } }
+function listedOf(source: string, id: string, stars: number, about: string, names: string[]): Listed {
+  const palettes = names.map((name) => {
+    const { background, foreground, cursor, selection, ansi, signatureSlots } = entry(name)
+    return { name, background, foreground, cursor, selection, ansi, signatureSlots }
+  })
+  return { id, source, about, stars, updated: '2026-10-09', palettes }
+}
+
+function listing(...marketplaces: Listed[]): Listing {
+  return { marketplaces, at: Date.now() }
 }
 
 const official = marketplace('official', 'official', ['miku', 'rin'])
@@ -138,7 +146,7 @@ function io(overrides: Partial<BrowseIo> = {}): BrowseIo {
   return {
     refresh: () => Promise.reject(new Error('offline')),
     fetch: () => Promise.reject(new Error('offline')),
-    search: () => Promise.resolve([]),
+    index: () => Promise.resolve(listing()),
     apply: () => Promise.resolve(),
     ...overrides,
   }
@@ -203,12 +211,14 @@ const AUTO_ON = '\x1b[1;2C'
 const AUTO_OFF = '\x1b[1;2D'
 const PLAIN_TAB = '\t'
 const SHIFT_TAB = '\x1b[Z'
+const UP = '\x1b[A'
 const DOWN = '\x1b[B'
 const RIGHT = '\x1b[C'
-const END = '\x1b[F'
+const HOME = '\x1b[H'
 const DEL = '\x1b[3~'
 const APPLY = ['\r', '\r', 20, '\r']
 const MIKU = [RIGHT, RIGHT, DOWN]
+const SEARCH = [UP, '\r']
 
 test('a marketplace opens in the panel beside the cards from 94 columns, and over them in a narrower window', async () => {
   const wide = await drive([...MIKU, '\r'])
@@ -229,7 +239,7 @@ test('a window too short for the search, the marketplace strip and three rows sa
 })
 
 test('delete on a marketplace’s row stages its removal and again takes it back, and its installed palettes stay picked', async () => {
-  const { panel, frames } = await drive([DOWN, DEL, END, ...APPLY])
+  const { panel, frames } = await drive([DOWN, DEL, HOME, ...APPLY])
   assert.deepEqual(panel.removes, ['alice/ttheme-pastel'])
   assert.ok(panel.picked.has('alice@pastel/dusk'))
   assert.match(frames, /○ alice@pastel {2}Will remove/)
@@ -239,7 +249,7 @@ test('delete on a marketplace’s row stages its removal and again takes it back
 })
 
 test('shift+right and shift+left turn a marketplace’s auto-update on and off, and only a change is kept', async () => {
-  const on = await drive([DOWN, AUTO_ON, END, ...APPLY])
+  const on = await drive([DOWN, AUTO_ON, HOME, ...APPLY])
   assert.deepEqual(on.panel.auto, { 'alice/ttheme-pastel': true })
   assert.match(on.frames, /● alice@pastel {2}↻ auto-update/)
   assert.match(on.frames, /Auto-update turns on/)
@@ -251,7 +261,7 @@ test('a repository typed into the search is fetched, asked about, and staged wit
   const neon = marketplace('bob/ttheme-neon', 'bob@neon', ['glow'])
   const fetched: string[] = []
   const answer = (key: string) =>
-    drive([...'bob/ttheme-neon', ' ', key, END, ...APPLY], {
+    drive([...'bob/ttheme-neon', ' ', key, HOME, ...APPLY], {
       io: io({
         fetch: (source) => {
           fetched.push(source)
@@ -378,61 +388,74 @@ test('a marketplace’s card says where it comes from, what it holds and when it
 })
 
 test('ctrl+r and ctrl+s never end up in the search text', async () => {
-  const { last } = await drive(['k', '\x12', '\x13', 'i', '\r'])
-  assert.match(last, /│ ⌕ ki_ +│/)
+  const { frames } = await drive(['k', '\x12', '\x13', 'i', '\x1b', '\x1b'])
+  assert.match(frames, /│ ⌕ ki_ +│/)
 })
 
-test('opening browse looks GitHub up on its own and lists what it finds under the palettes', async () => {
-  const asked: (string | undefined)[] = []
-  const { last } = await drive([20, '\x1b'], {
-    io: io({
-      search: (query) => {
-        asked.push(query)
-        return Promise.resolve([repo('bob', 'ttheme-neon', 12, 'Neon palettes')])
-      },
-    }),
-  })
-  assert.deepEqual(asked, [undefined])
-  assert.match(last, /Updated just now +│[^\n]*\n[^\n]*\n +── On GitHub ─/)
-  assert.match(last, /○ bob\/ttheme-neon +│[^\n]*\n {6}Neon palettes +│[^\n]*\n {6}★12 +│/)
-})
-
-test('typing searches GitHub for it once typing stops, and not before', async () => {
-  const asked: (string | undefined)[] = []
-  const search = (query: string | undefined) => {
-    asked.push(query)
-    return Promise.resolve([])
+test('Search marketplace opens a screen of its own that loads the marketplace list as it opens, which Browse alone never does', async () => {
+  let asked = 0
+  const index = () => {
+    asked += 1
+    return Promise.resolve(listing(listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow', 'haze'])))
   }
-  await drive([...'neon', '\r'], { io: io({ search }) })
-  assert.deepEqual(asked, [undefined])
-  asked.length = 0
-  await drive([...'neon', 750, '\r'], { io: io({ search }) })
-  assert.deepEqual(asked, [undefined, 'neon'])
+  await drive([20, '\x1b'], { io: io({ index }) })
+  assert.equal(asked, 0)
+  const { frames } = await drive([UP, 20, '\r', 20, '\x1b', '\x1b'], { io: io({ index }) })
+  assert.equal(asked, 1)
+  assert.match(
+    frames,
+    /^ {4}\+ Add marketplace {2}type owner\/repo or a folder +│[^\n]*\n ▌ {2}⌕ Search marketplace {2}find one on GitHub +│/m,
+  )
+  assert.match(frames, / Search marketplace \(1 found\)$/m)
+  assert.match(frames, /^ +← Back +│ bob\/ttheme-neon +│$/m)
+  assert.match(frames, /^ ▌ {2}○ bob@neon {2}★12 · 2 palettes +│ ★ 12 · updated 2026-10-09 +│$/m)
+  assert.match(frames, /│ Neon palettes +│/)
+  assert.match(frames, /│ {3}glow +│\n.*│ {3}haze +│/)
+  assert.match(frames, /\[SEARCH\] space add {3}enter add and go back {3}\? keys +esc back$/m)
 })
 
-test('a failed GitHub search says so, and space on that row searches again', async () => {
+test('typing in the search filters the list at once, palette names included, and what Browse filtered opens it', async () => {
+  const index = () =>
+    Promise.resolve(
+      listing(
+        listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow']),
+        listedOf('alice/ttheme-pastel', 'alice@pastel', 3, 'Soft palettes', ['dusk']),
+      ),
+    )
+  const typed = await drive([...SEARCH, 20, ...'glow', '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
+  assert.match(typed.frames, / Search marketplace \(2 found\)$/m)
+  assert.match(typed.frames, / Search marketplace \(1 found\)\n.*\n │ ⌕ glow_/)
+  const seeded = await drive([...'zzz', '\r', 20, '\x1b', '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
+  assert.match(seeded.frames, /│ ⌕ zzz_ +│/)
+  assert.match(seeded.frames, /⌕ No marketplace matches "zzz"/)
+})
+
+test('a list that did not load says so and space loads it again, and a copy from before shows while offline', async () => {
   let calls = 0
-  const { frames, last } = await drive([20, END, ' ', 20, '\r'], {
-    io: io({
-      search: () => {
-        calls += 1
-        return calls === 1
-          ? Promise.reject(new Error('rate limited'))
-          : Promise.resolve([repo('bob', 'ttheme-neon', 12)])
-      },
-    }),
-  })
+  const neon = listing(listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow']))
+  const index = () => {
+    calls += 1
+    return calls === 1 ? Promise.reject(new Error('cannot reach the list')) : Promise.resolve(neon)
+  }
+  const { frames } = await drive([...SEARCH, 20, ' ', 20, '\x1b', '\x1b'], { io: io({ index }) })
   assert.equal(calls, 2)
-  assert.match(frames, /⌕ GitHub search failed {2}rate limited/)
-  assert.match(last, /▌ {2}○ bob\/ttheme-neon/)
+  assert.match(frames, /⌕ The marketplace list did not load {2}space retries/)
+  assert.match(frames, /│ cannot reach the list +│/)
+  assert.match(frames, /▌ {2}○ bob@neon/)
+  const offline = await drive([...SEARCH, 20, '\x1b', '\x1b'], {
+    io: io({ index: () => Promise.resolve({ ...neon, at: Date.now() - 3 * 3_600_000, offline: 'cannot reach' }) }),
+  })
+  assert.match(offline.frames, / Search marketplace \(1 found · offline, from 3h ago\)$/m)
 })
 
-test('moving onto a GitHub repository fetches its palettes for the panel, once', async () => {
+test('enter on a listed marketplace adds it and goes back to its card, and ← Back goes back with nothing added', async () => {
   const neon = marketplace('bob/ttheme-neon', 'bob@neon', ['glow', 'haze'])
+  const index = () =>
+    Promise.resolve(listing(listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow', 'haze'])))
   const fetched: string[] = []
-  const { frames, panel } = await drive([20, END, 600, '\r'], {
+  const { frames, panel } = await drive([...SEARCH, 20, '\r', 'y', 20, HOME, ...APPLY], {
     io: io({
-      search: () => Promise.resolve([repo('bob', 'ttheme-neon', 12, 'Neon palettes')]),
+      index,
       fetch: (source) => {
         fetched.push(source)
         return Promise.resolve(neon)
@@ -440,15 +463,22 @@ test('moving onto a GitHub repository fetches its palettes for the panel, once',
     }),
   })
   assert.deepEqual(fetched, ['bob/ttheme-neon'])
-  assert.match(frames, / │ glow, haze/)
-  assert.match(frames, /^ ▌ {4}★12 · 2 available +│/m)
-  assert.deepEqual(panel.adds, [])
+  assert.match(frames, /^ ▌ {2}● bob@neon {2}↻ auto-update {2}Will add +│/m)
+  assert.deepEqual(
+    panel.adds.map((m) => m.id),
+    ['bob@neon'],
+  )
+  const back = await drive([...SEARCH, 20, UP, '\r', 20, '\x1b'], { io: io({ index }) })
+  assert.match(back.frames, /^ +\[← Back\] +│ Back to your marketplaces +│$/m)
+  assert.match(back.frames, /\[SEARCH\] enter back {3}\? keys +esc back$/m)
+  assert.match(back.last, /^ Browse \(4\/4 · 2 picked\)$/m)
+  assert.deepEqual(back.panel.adds, [])
 })
 
 test('a repository typed into the search is looked up by itself, and space then asks without fetching again', async () => {
   const neon = marketplace('bob/ttheme-neon', 'bob@neon', ['glow', 'haze'])
   const fetched: string[] = []
-  const { frames, panel } = await drive([...'bob/ttheme-neon', 750, ' ', 'y', END, ...APPLY], {
+  const { frames, panel } = await drive([...'bob/ttheme-neon', 750, ' ', 'y', HOME, ...APPLY], {
     io: io({
       fetch: (source) => {
         fetched.push(source)
@@ -466,7 +496,7 @@ test('a repository typed into the search is looked up by itself, and space then 
 })
 
 test('enter with something staged opens a review of it, and esc goes back to the list', async () => {
-  const { frames, ran } = await drive([...MIKU, DOWN, ' ', '\x1b', DOWN, DEL, END, '\r', 20, '\x1b', ...APPLY])
+  const { frames, ran } = await drive([...MIKU, DOWN, ' ', '\x1b', DOWN, DEL, HOME, '\r', 20, '\x1b', ...APPLY])
   assert.match(frames, /Review changes/)
   assert.match(frames, /Marketplaces \(1\)/)
   assert.match(frames, /- alice@pastel +github\.com\/alice\/ttheme-pastel · its 1 palette installed keep working/)
@@ -508,7 +538,7 @@ test('? shows the keys over the list until ? or esc, and the list takes no key m
 
 test('applying shows what the work reports and waits for it, and done stays until enter', async () => {
   let calls = 0
-  const { frames, ran, log, failed, panel } = await drive([DOWN, DEL, END, '\r', '\r', 30, '\x1b', '\r', 350, '\r'], {
+  const { frames, ran, log, failed, panel } = await drive([DOWN, DEL, HOME, '\r', '\r', 30, '\x1b', '\r', 350, '\r'], {
     io: io({
       apply: async (_, report) => {
         calls += 1
@@ -538,7 +568,7 @@ test('applying shows what the work reports and waits for it, and done stays unti
 })
 
 test('a failed apply says so, keeps what it reported, and still closes on enter', async () => {
-  const { frames, failed, log } = await drive([DOWN, DEL, END, ...APPLY], {
+  const { frames, failed, log } = await drive([DOWN, DEL, HOME, ...APPLY], {
     io: io({
       apply: (_, report) => {
         report.say('Removed alice@pastel')

@@ -4,7 +4,8 @@ import { HUB_CLOSED, hubOf } from './hub.ts'
 import { reload, takeUpdates } from './installs.ts'
 import { liveOf } from './live.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
-import { dropCache, findMarketplaces, idOf, keptNote, lastUpdate, withMarketplaces } from './marketplaces.ts'
+import { readIndex } from './marketplace-index.ts'
+import { dropCache, idOf, keptNote, lastUpdate, withMarketplaces } from './marketplaces.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
 import { readMarketplaceDir, warning } from './own.ts'
@@ -116,7 +117,7 @@ function browseIo(
         status: 'not added yet',
       }
     },
-    search: (query) => findMarketplaces(query, lookups),
+    index: () => readIndex(lookups),
     apply,
   }
 }

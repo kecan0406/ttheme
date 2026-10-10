@@ -4,17 +4,17 @@
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
                                                      ╭─ fix@shop ─────────────────────────────────╮
     + Add marketplace  type owner/repo or a folder   │ Read in place                              │
-                                                     │                                            │
-    ● official                                       │    ▾ neon (1/2)                            │
-      Built in                                       │ ▌    ● arcade                              │
-      6 available · 1 installed                      │      ○ volt                                │
-                                                     │    ▸ pastel (0/1)                          │
-    ● fix@shop                                       │    ○ dusk                                  │
+    ⌕ Search marketplace  find one on GitHub         │                                            │
+                                                     │    ▾ neon (1/2)                            │
+    ● official                                       │ ▌    ● arcade                              │
+      Built in                                       │      ○ volt                                │
+      6 available · 1 installed                      │    ▸ pastel (0/1)                          │
+                                                     │    ○ dusk                                  │
+    ● fix@shop                                       │                                            │
       ~/shop                                         │                                            │
       4 available · 1 installed · Read in place      │                                            │
                                                      │                                            │
-    ── On GitHub ──────────                          │                                            │
-    ⌕ Find marketplaces on GitHub  space searches    │                                            │
+                                                     │                                            │
                                                      │                                            │
                                                      ├────────────────────────────────────────────┤
                                                      │ fix@shop/arcade  Installed                 │

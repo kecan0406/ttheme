@@ -30,6 +30,7 @@ typeset -ga SCENARIOS=(
   'browse-panel   marketplace browse   Down Right'
   'browse-marketplaces  marketplace browse   Down DC'
   'browse-keys     few    browse   ?@Help'
+  'browse-search   few    browse   Up Enter@SEARCH'
   'list-few        few    list'
   'hub-few         few    hub'
   'hub-empty       empty  hub'

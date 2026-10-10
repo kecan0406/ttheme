@@ -339,17 +339,17 @@ panel below, preview's settings, the palette editor and find's grid.
 
 | Key | Preview | Browse |
 |---|---|---|
-| any character | filters | filters every marketplace, landing on the first match in the panel |
+| any character | filters | filters every marketplace, landing on the first match in the panel; in the search, filters the marketplace list at once |
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping |
-| `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces |
-| `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog; elsewhere, review every pick and marketplace change, then apply it; close the result |
-| `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel |
-| `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on a GitHub row, add it or search again |
+| `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces; `→` on `Search marketplace` opens the search, and `←` there goes back |
+| `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; elsewhere, review every pick and marketplace change, then apply it; close the result |
+| `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel; in the search, clear it, then go back |
+| `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on an `Add` row, add it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
-| `ctrl+r` | — | on a marketplace, update it now; in its panel, on a palette marked `↑` or a catalog, stage its update; search GitHub again |
+| `ctrl+r` | — | on a marketplace, update it now; in its panel, on a palette marked `↑` or a catalog, stage its update; in the search, load the marketplace list again |
 | `shift+←` `shift+→` | example scene | on a marketplace, auto-update off and on |
 | `delete` | — | on a marketplace, remove it, or keep it after all |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |

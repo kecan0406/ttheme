@@ -5,8 +5,6 @@ import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
 import {
   archiveId,
-  fetchParsed,
-  Limited,
   officialPath,
   parseManifest,
   readArchive,
@@ -15,6 +13,8 @@ import {
 } from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
+import { type Listed, readIndex } from './marketplace-index.ts'
+import { containsText } from './names.ts'
 import {
   gateLines,
   type LocalMarketplace,
@@ -372,70 +372,31 @@ function listMarketplaces(): void {
   }
 }
 
-export interface Repository {
-  full_name: string
-  name: string
-  description: string | null
-  stargazers_count: number
-  owner: { login: string }
-}
-
-export function repositorySource(r: Repository): string {
-  return `${r.owner.login.toLowerCase()}/${r.name}`
-}
-
-function inert(text: string): string {
-  return text.replace(/[\p{Cc}\s]+/gu, ' ').trim()
-}
-
-export async function findMarketplaces(query: string | undefined, signal?: AbortSignal): Promise<Repository[]> {
-  const q = encodeURIComponent(`topic:${TOPIC}${query ? ` ${query}` : ''}`)
-  try {
-    const { items } = await fetchParsed(
-      `https://api.github.com/search/repositories?q=${q}&sort=stars&per_page=50`,
-      (text) => JSON.parse(text) as { items: Repository[] },
-      undefined,
-      signal,
-    )
-    return items.map((r) => ({
-      ...r,
-      full_name: inert(r.full_name),
-      name: inert(r.name),
-      description: r.description === null ? null : inert(r.description),
-      owner: { ...r.owner, login: inert(r.owner.login) },
-    }))
-  } catch (error) {
-    if (error instanceof Limited) {
-      throw new Error(
-        'GitHub lets a search through about ten times a minute without signing in — try again in a minute',
-      )
-    }
-    throw error
-  }
+export function listedMatches(m: Listed, query: string): boolean {
+  return containsText([m.id, m.source, m.about, ...m.palettes.flatMap((e) => [e.name, e.catalog ?? ''])], query)
 }
 
 async function searchMarketplaces(query: string | undefined): Promise<void> {
   const home = configHome()
-  const items = await findMarketplaces(query)
-  if (items.length === 0) {
-    console.log(`No repository carries the ${TOPIC} topic${query ? ` and matches ${query}` : ''} yet`)
+  const { marketplaces, at, offline } = await readIndex()
+  if (offline) {
+    console.log(`Offline — the list from ${ago(at)} (${offline})\n`)
+  }
+  const found = marketplaces.filter((m) => !query || listedMatches(m, query))
+  if (found.length === 0) {
+    console.log(`No marketplace carries the ${TOPIC} topic${query ? ` and matches ${query}` : ''} yet`)
     return
   }
   const added = new Set(marketplacesOf(readInstalled(home).marketplaces).map(repoOf))
-  const rows = items.map((r) => {
-    const arg = repositorySource(r)
-    return {
-      arg,
-      added: added.has(arg),
-      stars: `★${r.stargazers_count}`,
-      about: r.description ?? '',
-    }
-  })
-  const width = Math.max(...rows.map((r) => r.arg.length))
-  for (const r of rows) {
-    console.log(`  ${r.added ? '●' : '○'} ${r.arg.padEnd(width)}  ${r.stars.padStart(5)}  ${r.about}`)
+  const idWidth = Math.max(...found.map((m) => m.id.length))
+  const sourceWidth = Math.max(...found.map((m) => m.source.length))
+  for (const m of found) {
+    const stars = `★${m.stars}`.padStart(5)
+    console.log(
+      `  ${added.has(m.source) ? '●' : '○'} ${m.id.padEnd(idWidth)}  ${m.source.padEnd(sourceWidth)}  ${stars}  ${counted(m.palettes.length)}  ${m.about}`,
+    )
   }
-  console.log('\n`ttheme marketplace add <name>` adds one')
+  console.log('\n`ttheme marketplace add <owner/repo>` adds one')
 }
 
 function repoFor({ name }: Identity): string {

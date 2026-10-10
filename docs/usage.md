@@ -406,21 +406,28 @@ and `delete` again keeps it), `shift+←` and `shift+→` turn a repository's
 auto-update off and on, and `ctrl+r` updates it now; the official marketplace
 comes with ttheme, so it has neither. The card says when one is staged, updating
 or failed, and what you marked in it (`1 to install`, `1 to remove`); the
-panel says why an update failed and whether it updates on its own. Under the
-marketplaces, `On GitHub` lists the repositories
-with the `ttheme-marketplace` topic by itself as Browse opens, and again a
-moment after you stop typing, for what you typed, each as a card: the
-repository, its description, and its stars; moving onto one fetches its
-archive, so its card counts the palettes it would bring and the panel names
-them before you add it, and `space` adds it — after asking whether it
-updates on its own. `+ Add marketplace` leads the list: type a repository
-(`alice/ttheme-pastel`, `#v1` pins it) or a folder and it becomes an `Add` row
-for it, looked up the same way. A search GitHub turns away
-shows as a row that `space` or `ctrl+r` retries; `TTHEME_MARKETPLACE_LOOKUP=off`
-leaves all of this to `space`.
+panel says why an update failed and whether it updates on its own.
+`+ Add marketplace` leads the list: type a repository (`alice/ttheme-pastel`,
+`#v1` pins it) or a folder and it becomes an `Add` row for it, whose palettes
+Browse fetches by itself so the panel names them before you add it, and
+`space` adds it — after asking whether it updates on its own.
+`⌕ Search marketplace` under it opens a screen of its own, laid out like
+Browse: a heading, its own search box, `← Back` and the marketplaces on the
+left, one to a line by name (`kecan0406@bemani`), and the one under the cursor
+in the panel — where it comes from, its description and stars, and every
+palette it holds with its colors. The list is every repository on GitHub with
+the `ttheme-marketplace` topic, read every half hour into one file that the
+search downloads when it opens (and only when it changed), so typing filters
+it at once, by name, description or palette; a new marketplace shows up within
+the hour, and typing its `owner/repo` adds it right away. Without a network the
+search shows the list it last downloaded, saying how old it is. `space` adds a
+marketplace (again to undo), and enter adds it and goes back to its card — or
+to the card of one you already have. A list that did not load shows as a row
+that `space` or `ctrl+r` loads again, and esc clears the search, then goes back.
+`TTHEME_MARKETPLACE_LOOKUP=off` leaves all of this to `space`.
 
-Nothing is written until you apply. enter on a palette, or on a row of the
-marketplaces that is not a marketplace, opens a review of everything staged — the marketplaces added and removed, the
+Nothing is written until you apply. enter on a palette, or on
+`+ Add marketplace`, opens a review of everything staged — the marketplaces added and removed, the
 auto-update switches, and exactly the palettes marked (installing the new ones,
 removing the unmarked, updating the ones staged with `ctrl+r`); enter again applies it, esc goes back to the list. The
 screen stays while it works: what it has done so far, and one line for the step
@@ -439,24 +446,24 @@ one the cursor is on, and the panel takes the whole screen while you are in it:
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
                                                        ╭─ official ───────────────────────────────╮
     + Add marketplace  type owner/repo or a folder     │ Comes with ttheme                        │
+    ⌕ Search marketplace  find one on GitHub           │                                          │
+                                                       │    ▾ Bocchi the Rock! (2/4) ぼっち・ざ…  │
+    ● official                                         │ ▌    ● bocchi                            │
+      Built in                                         │      ● kita                              │
+      108 available · 6 installed                      │      ○ nijika                            │
+                                                       │      ○ ryo                               │
+    ● kecan0406@bemani  ↻ auto-update                  │    ▸ Lucky☆Star (1/4) らき☆すた          │
+      kecan0406/ttheme-bemani                          │    ▸ Frieren (1/3) 葬送のフリーレン      │
+      66 available · 2 installed · Updated 2 days ago  │    ▸ K-On! (2/97) けいおん!              │
                                                        │                                          │
-    ● official                                         │    ▾ Bocchi the Rock! (2/4) ぼっち・ざ…  │
-      Built in                                         │ ▌    ● bocchi                            │
-      108 available · 6 installed                      │      ● kita                              │
-                                                       │      ○ nijika                            │
-    ● kecan0406@bemani  ↻ auto-update                  │      ○ ryo                               │
-      kecan0406/ttheme-bemani                          │    ▸ Lucky☆Star (1/4) らき☆すた          │
-      66 available · 2 installed · Updated 2 days ago  │    ▸ Frieren (1/3) 葬送のフリーレン      │
-                                                       │    ▸ K-On! (2/97) けいおん!              │
     ● kec@mine                                         │                                          │
       ~/.config/ttheme/marketplace/mine                │                                          │
       3 available · 1 installed · Read in place        │                                          │
                                                        │                                          │
-    ── On GitHub ──────────                            │                                          │
                                                        ├──────────────────────────────────────────┤
-    ○ alice/ttheme-pastel                              │ bocchi  Installed                        │
-      Soft pastel palettes                             │ Gate 9/9 · passes                        │
-      ★12                                              │                                          │
+                                                       │ bocchi  Installed                        │
+                                                       │ Gate 9/9 · passes                        │
+                                                       │                                          │
                                                        ╰──────────────────────────────────────────╯
  [BROWSE] space pick   enter close   ? keys                                                esc back
 ```
@@ -522,7 +529,7 @@ one (`official`, the palettes in this repository) is there from `init`; any GitH
 repository with a `ttheme-marketplace.toml` at its root is another:
 
 ```sh
-ttheme marketplace search                          # repositories with the ttheme-marketplace topic
+ttheme marketplace search                          # the marketplaces on GitHub, listed every half hour
 ttheme marketplace add alice/ttheme-pastel         # a repository — its ttheme-marketplace.toml names it: alice@pastel
 ttheme marketplace add alice/ttheme-pastel#v1      # the same, pinned to a tag, branch or commit
 ttheme marketplace add ./my-marketplace            # a folder, read in place on every command
