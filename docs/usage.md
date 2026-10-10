@@ -356,7 +356,7 @@ still wins:
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
 | `TTHEME_NAMES` | `on` | characters' names in every language, which preview, browse, `list` and `find`'s search box match besides the palette names: `on` downloads them from aninames' weekly release into `~/.cache/ttheme/aninames/` (about 7 MB to download, about 65 MB there once the search index is built from them) and checks for a newer one once a day in the background; `off` leaves them as they are |
 | `TTHEME_AUTO_UPDATE` | `on` | the checks ttheme makes by itself once a day: whether npm has a newer ttheme, and the list of every marketplace whose auto-update is on ([Installing palettes](#installing-palettes)); `off` leaves both to `ttheme update`, as a `CI` environment does |
-| `TTHEME_MARKETPLACE_LOOKUP` | `on` | Browse looks GitHub up by itself: the repositories carrying the `ttheme-marketplace` topic when it opens and again, a moment after you stop typing, for what you typed, and the palettes of the repository you type (`owner/repo`) or move onto, so its palettes show in the panel before you add it. GitHub lets a search through about ten times a minute without signing in, so a busy minute shows a failed search that `space` retries. `off` waits for `space` on each |
+| `TTHEME_MARKETPLACE_LOOKUP` | `on` | Browse downloads the list of marketplaces on GitHub — every repository carrying the `ttheme-marketplace` topic, read every half hour — by itself when Search marketplace opens. `off` waits for `space` or `ctrl+r` there |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
 | `TTHEME_FIND_BLOCK` | `nudity underwear` | the posts `find` drops by tag: `nudity` (`nude`, `naked`, `topless`…), `underwear` (`panties`, `bra`, `lingerie`… — each with the site's own spelling), both, or `none` to keep every post. What is let through shows next to the query as `allows …` |
 | `TTHEME_FIND_POSTS` | `all` | what `find` opens on — every post of the character, or only the transparent cutouts (`cutouts`) |
@@ -414,10 +414,16 @@ official marketplace comes with ttheme and a folder is read in place, so each ha
 `Remove marketplace` alone. The card says when one is staged for adding, updating
 or failed, and what you marked in it (`1 to install`, `1 to remove`); the panel
 says why an update failed.
-`+ Add marketplace` leads the list: type a repository (`alice/ttheme-pastel`,
-`#v1` pins it) or a folder and it becomes an `Add` row for it, whose palettes
-Browse fetches by itself so the panel names them before you add it, and
-`space` adds it — after asking whether it updates on its own.
+`+ Add marketplace` leads the list, and the panel beside it is where you add
+one, as in Claude Code: `enter`, `→` or a click moves into it, you type a
+repository (`alice/ttheme-pastel`, `#v1` pins a tag or branch) or a folder
+(`~/my-marketplace`) — what you had typed into the search already, if it reads
+as one — and `enter` fetches it there and lands in the panel of the new
+marketplace, staged to be added, its palettes ready to pick. A source that does
+not read as one, or that cannot be fetched, says why under the field; one you
+already have is gone to instead; `esc` goes back to the list, dropping a fetch
+still running. Auto-update starts off for a repository, and its `Auto-update`
+row turns it on.
 `⌕ Search marketplace` under it opens a screen of its own, laid out like
 Browse: a heading, its own search box, `← Back` and the marketplaces on the
 left, one to a line by name (`kecan0406@bemani`), and the one under the cursor
@@ -426,15 +432,14 @@ palette it holds with its colors. The list is every repository on GitHub with
 the `ttheme-marketplace` topic, read every half hour into one file that the
 search downloads when it opens (and only when it changed), so typing filters
 it at once, by name, description or palette; a new marketplace shows up within
-the hour, and typing its `owner/repo` adds it right away. Without a network the
+the hour, and `+ Add marketplace` adds one by its `owner/repo` right away. Without a network the
 search shows the list it last downloaded, saying how old it is. `space` adds a
 marketplace (again to undo), and enter adds it and goes back to its card — or
 to the card of one you already have. A list that did not load shows as a row
 that `space` or `ctrl+r` loads again, and esc clears the search, then goes back.
-`TTHEME_MARKETPLACE_LOOKUP=off` leaves all of this to `space`.
+`TTHEME_MARKETPLACE_LOOKUP=off` leaves loading the list to `space`.
 
-Nothing is written until you apply. enter on a palette, or on
-`+ Add marketplace`, opens a review of everything staged — the marketplaces added and removed, the
+Nothing is written until you apply. enter on a palette opens a review of everything staged — the marketplaces added and removed, the
 auto-update switches, and exactly the palettes marked (installing the new ones,
 removing the unmarked, updating the ones staged with `ctrl+r`); enter again applies it, esc goes back to the list. The
 screen stays while it works: what it has done so far, and one line for the step
@@ -452,7 +457,7 @@ one the cursor is on, and the panel takes the whole screen while you are in it:
  │ ⌕ Search… e.g. kita | Bocchi the Rock!                                                        │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
                                                        ╭─ official ───────────────────────────────╮
-    + Add marketplace  type owner/repo or a folder     │ Comes with ttheme                        │
+    + Add marketplace  owner/repo or a folder          │ Comes with ttheme                        │
     ⌕ Search marketplace  find one on GitHub           │                                          │
                                                        │    ▾ Bocchi the Rock! (2/4) ぼっち・ざ…  │
     ● official                                         │ ▌    ● bocchi                            │
@@ -546,9 +551,9 @@ ttheme marketplace remove alice@pastel             # installed palettes from it 
 ttheme marketplace check ./my-marketplace          # what an install would read from a folder, before you push it
 ```
 
-Adding a repository asks whether it updates on its own (no, without a
-terminal); the official marketplace comes with ttheme and updates with it, and a
-folder is read in place, so neither needs one. `shift+←/→` on its row in Browse switches it later.
+`ttheme marketplace add` asks whether a repository updates on its own (no,
+without a terminal, and in Browse's `+ Add marketplace`); the official marketplace comes with ttheme and updates with it, and a
+folder is read in place, so neither needs one. The `Auto-update` row of its panel in Browse switches it later.
 Adding a repository you already have with another `#ref` moves it there,
 keeping its auto-update.
 

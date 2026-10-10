@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                      ╭─ official ────────────────────────────────╮
-    + Add marketplace   type owner/repo or a folder   │ Comes with ttheme                         │
-    ⌕ Search marketplace   find one on GitHub         │                                           │
-                                                      │    ▸ Bocchi the Rock! (0/3) ぼっち・ざ・… │
- ▌  ● official                                        │    ▸ Lucky☆Star (0/3) らき☆すた           │
- ▌    Built in                                        │                                           │
- ▌    6 available                                     │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      ├───────────────────────────────────────────┤
-                                                      │    × Remove marketplace                   │
-                                                      ╰───────────────────────────────────────────╯
+                                                 ╭─ official ─────────────────────────────────────╮
+    + Add marketplace   owner/repo or a folder   │ Comes with ttheme                              │
+    ⌕ Search marketplace   find one on GitHub    │                                                │
+                                                 │    ▸ Bocchi the Rock! (0/3) ぼっち・ざ・ろっ…  │
+ ▌  ● official                                   │    ▸ Lucky☆Star (0/3) らき☆すた                │
+ ▌    Built in                                   │                                                │
+ ▌    6 available                                │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 ├────────────────────────────────────────────────┤
+                                                 │    × Remove marketplace                        │
+                                                 ╰────────────────────────────────────────────────╯
  [BROWSE] → open   space pick   ? keys                                                   esc cancel

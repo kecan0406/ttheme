@@ -1,0 +1,24 @@
+ Browse (6/6 · 2 picked)
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ Search… ‹hint› │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                 ╭─ Add marketplace ──────────────────────────────╮
+    + Add marketplace   owner/repo or a folder   │ Enter marketplace source:                      │
+    ⌕ Search marketplace   find one on GitHub    │ Examples:                                      │
+                                                 │  · owner/repo (GitHub)                         │
+    ● official                                   │  · owner/repo#v1 (a tag or branch)             │
+      Built in                                   │  · ~/path/to/marketplace (a folder)            │
+      6 available · 2 installed                  │                                                │
+                                                 │ ╭────────────────────────────────────────────╮ │
+                                                 │ │ bob_                                       │ │
+                                                 │ ╰────────────────────────────────────────────╯ │
+                                                 │                                                │
+                                                 │ bob is not a marketplace — give a repository   │
+                                                 │ (alice/ttheme-dust, #v1 pins a tag or branch)  │
+                                                 │ or a path (./my-marketplace)                   │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 ╰────────────────────────────────────────────────╯
+ [BROWSE (ADD)] enter add   bksp edit   ? keys                                           esc cancel

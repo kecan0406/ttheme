@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ ki_                                                                                         │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                      ╭─ official ────────────────────────────────╮
-    + Add marketplace   type owner/repo or a folder   │ Comes with ttheme                         │
-    ⌕ Search marketplace   find one on GitHub         │                                           │
-                                                      │    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・… │
-    ● official                                        │ ▌    ● kita                               │
-      Built in                                        │                                           │
-      1 of 6 match · 2 installed                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      ├───────────────────────────────────────────┤
-                                                      │ kita  Installed                           │
-                                                      │ Gate 9/9 · passes                         │
-                                                      │                                           │
-                                                      ├───────────────────────────────────────────┤
-                                                      │    × Remove marketplace                   │
-                                                      ╰───────────────────────────────────────────╯
+                                                 ╭─ official ─────────────────────────────────────╮
+    + Add marketplace   owner/repo or a folder   │ Comes with ttheme                              │
+    ⌕ Search marketplace   find one on GitHub    │                                                │
+                                                 │    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっ…  │
+    ● official                                   │ ▌    ● kita                                    │
+      Built in                                   │                                                │
+      1 of 6 match · 2 installed                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 ├────────────────────────────────────────────────┤
+                                                 │ kita  Installed                                │
+                                                 │ Gate 9/9 · passes                              │
+                                                 │                                                │
+                                                 ├────────────────────────────────────────────────┤
+                                                 │    × Remove marketplace                        │
+                                                 ╰────────────────────────────────────────────────╯
  [BROWSE (FILTER)] space pick   bksp edit   ? keys                                 esc clear filter

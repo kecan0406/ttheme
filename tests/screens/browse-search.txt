@@ -8,8 +8,8 @@
  ▌ [⌕ Load the marketplace list]  space loads it   │                                              │
                                                    │ Load the marketplace list · space loads it   │
                                                    │                                              │
-                                                   │ Type owner/repo or a folder to add one       │
-                                                   │                                              │
+                                                   │ Not listed yet? + Add marketplace adds one   │
+                                                   │ by its owner/repo                            │
                                                    │                                              │
                                                    │                                              │
                                                    │                                              │

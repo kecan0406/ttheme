@@ -2,23 +2,23 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                      ╭─ fix@shop ────────────────────────────────╮
-    + Add marketplace   type owner/repo or a folder   │ Read in place                             │
-    ⌕ Search marketplace   find one on GitHub         │                                           │
-                                                      │    ▸ neon (1/2)                           │
-    ● official                                        │    ▸ pastel (0/1)                         │
-      Built in                                        │    ○ dusk                                 │
-      6 available · 1 installed                       │                                           │
-                                                      │                                           │
- ▌  ● fix@shop                                        │                                           │
- ▌    ~/shop                                          │                                           │
- ▌    4 available · 1 installed · Read in place       │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      ├───────────────────────────────────────────┤
-                                                      │    × Remove marketplace                   │
-                                                      ╰───────────────────────────────────────────╯
+                                                  ╭─ fix@shop ────────────────────────────────────╮
+    + Add marketplace   owner/repo or a folder    │ Read in place                                 │
+    ⌕ Search marketplace   find one on GitHub     │                                               │
+                                                  │    ▸ neon (1/2)                               │
+    ● official                                    │    ▸ pastel (0/1)                             │
+      Built in                                    │    ○ dusk                                     │
+      6 available · 1 installed                   │                                               │
+                                                  │                                               │
+ ▌  ● fix@shop                                    │                                               │
+ ▌    ~/shop                                      │                                               │
+ ▌    4 available · 1 installed · Read in place   │                                               │
+                                                  │                                               │
+                                                  │                                               │
+                                                  │                                               │
+                                                  │                                               │
+                                                  │                                               │
+                                                  ├───────────────────────────────────────────────┤
+                                                  │    × Remove marketplace                       │
+                                                  ╰───────────────────────────────────────────────╯
  [BROWSE] → open   space pick   ? keys                                                   esc cancel

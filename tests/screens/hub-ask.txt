@@ -3,22 +3,22 @@
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                      ╭─ official ────────────────────────────────╮
-    + Add marketplace   type owner/repo or a folder   │ Comes with ttheme                         │
-    ⌕ Search marketplace   find one on GitHub         │                                           │
-                                                      │    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・… │
-    ● official                                        │ ▌    ● bocchi                             │
-      Built in                                        │      ● kita                               │
-      6 available · 2 installed · 1 to install        │      ○ ryo                                │
-                                                      │    ▸ Lucky☆Star (1/3) らき☆すた           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      │                                           │
-                                                      ├───────────────────────────────────────────┤
-                                                      │ bocchi  Will install                      │
-                                                      │ Gate 9/9 · passes                         │
-                                                      │                                           │
-                                                      ├───────────────────────────────────────────┤
-                                                      │    × Remove marketplace                   │
-                                                      ╰───────────────────────────────────────────╯
+                                                 ╭─ official ─────────────────────────────────────╮
+    + Add marketplace   owner/repo or a folder   │ Comes with ttheme                              │
+    ⌕ Search marketplace   find one on GitHub    │                                                │
+                                                 │    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっ…  │
+    ● official                                   │ ▌    ● bocchi                                  │
+      Built in                                   │      ● kita                                    │
+      6 available · 2 installed · 1 to install   │      ○ ryo                                     │
+                                                 │    ▸ Lucky☆Star (1/3) らき☆すた                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 │                                                │
+                                                 ├────────────────────────────────────────────────┤
+                                                 │ bocchi  Will install                           │
+                                                 │ Gate 9/9 · passes                              │
+                                                 │                                                │
+                                                 ├────────────────────────────────────────────────┤
+                                                 │    × Remove marketplace                        │
+                                                 ╰────────────────────────────────────────────────╯
  [BROWSE] Apply your changes before you leave?   y apply   n discard                       esc stay

@@ -341,13 +341,13 @@ panel below, preview's settings, the palette editor and find's grid.
 
 | Key | Preview | Browse |
 |---|---|---|
-| any character | filters | filters every marketplace, landing on the first match in the panel; in the search, filters the marketplace list at once |
+| any character | filters | filters every marketplace, landing on the first match in the panel; in the search, filters the marketplace list at once; in the `+ Add marketplace` form, types the source |
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
-| `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces; `→` on `Search marketplace` opens the search, and `←` there goes back |
-| `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; elsewhere, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
-| `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel; in the search, clear it, then go back |
-| `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on an `Add` row, add it; in the search, add a marketplace (again to undo) or load the list again |
-| `bksp` `ctrl+u` | edit the filter, clear it | edit the filter, clear it |
+| `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces; `→` on `+ Add marketplace` moves into its form in the panel and on `Search marketplace` opens the search, and `←` in either goes back |
+| `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `+ Add marketplace`, move into its form in the panel, and there fetch the source typed and land in the panel of the marketplace it stages; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; on a palette, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
+| `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
+| `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
+| `bksp` `ctrl+u` | edit the filter, clear it | edit the filter or the `+ Add marketplace` form's source, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
