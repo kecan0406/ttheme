@@ -3,13 +3,14 @@ import { ChevronDown, ChevronLeft, ChevronRight, Gauge, List, SwatchBook } from 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { catalogsOf } from '@/lib/catalogs'
+import type { Facts } from '@/lib/facts'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { gatePassed, sheetNumber } from '@/lib/sheet'
 import type { GateRule, Theme } from '@/lib/themes'
-import { wearStyle } from '@/lib/wear'
 import { CommandRow } from './command-row'
 import { GateList, PropertyList, SectionLabel, Signature, SwatchGrid } from './palette-parts'
+import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { TerminalWindow } from './terminal-window'
 
@@ -65,14 +66,14 @@ export function SheetUse({ theme }: { theme: Theme }) {
   return <CommandRow command={`ttheme use ${theme.name}`} class="min-w-70 flex-1 bg-card" />
 }
 
-export function Sheets({ themes, gate }: { themes: Theme[]; gate: GateRule[] }) {
+export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRule[]; facts: Facts }) {
   const theme = themes[0] as Theme
   const tabs = themes.slice(0, 3).map((sheet, id) => ({ id, theme: sheet }))
 
   return (
-    <sheet-browser class="wear ground flex min-h-dvh flex-col" style={wearStyle(theme)}>
+    <sheet-browser class="ground flex min-h-dvh flex-col">
       <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] flex-1 grid-cols-[minmax(0,1fr)] content-start gap-5 pt-4.5">
-        <SiteHeader current="/sheets" themeToggle={false} />
+        <SiteHeader current="/sheets" />
 
         <section data-sheet-label aria-label={theme.name} class="grid justify-items-center gap-6 pt-8 pb-10">
           <div class="grid w-full max-w-[880px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4">
@@ -156,6 +157,9 @@ export function Sheets({ themes, gate }: { themes: Theme[]; gate: GateRule[] }) 
           <Icon node={ChevronRight} />
         </Button>
       </nav>
+      <div class="mx-auto w-[min(1280px,calc(100%-40px))]">
+        <SiteFooter facts={facts} ribbon="worn" />
+      </div>
       <script type="application/json" data-sheets>
         {json({ themes, gate })}
       </script>

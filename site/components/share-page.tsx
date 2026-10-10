@@ -13,7 +13,6 @@ import { CommandRow, INIT } from './command-row'
 import { PropertyList, reading, SectionLabel, Signature } from './palette-parts'
 import { PictureList } from './picture-list'
 import { Marks, Verdict } from './share-popovers'
-import { ThemeToggle } from './theme-toggle'
 
 const LIGHTS = ['#ff5f57', '#febc2e', '#28c840']
 const PAIRS = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -337,7 +336,6 @@ function Bar({ shared }: { shared: Shared }) {
           <span class="max-[1100px]:sr-only">inspect</span>
         </Button>
         <span aria-hidden="true" class="mx-1 h-5 w-px bg-border" />
-        <ThemeToggle />
         <Button
           variant="ghost"
           size="icon-sm"

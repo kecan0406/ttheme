@@ -1,6 +1,6 @@
 import './copy'
 import './fields'
-import './theme-toggle'
+import './palette-picker'
 import './sparkle-burst'
 import './kaomoji-rain'
 import './lead-showcase'

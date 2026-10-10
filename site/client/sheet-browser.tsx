@@ -2,8 +2,9 @@ import { SheetDetails, SheetHeading, SheetUse } from '@/components/sheets'
 import { Session, TerminalTabs } from '@/components/terminal-window'
 import { html } from '@/lib/render'
 import type { GateRule, Theme } from '@/lib/themes'
-import { fadeThrough, fill, readJson, reducedMotion, settle, swap, wear } from './dom'
+import { fadeThrough, fill, readJson, reducedMotion, swap } from './dom'
 import { tabKey } from './tabs'
+import { onWear, recall, remember, show } from './wear'
 
 interface OpenTab {
   id: number
@@ -21,6 +22,7 @@ class SheetBrowser extends HTMLElement {
   #active = 0
   #next = 0
   #shown: Theme | undefined
+  #off = () => {}
 
   #click = (event: MouseEvent) => {
     const target = event.target as Element
@@ -58,6 +60,8 @@ class SheetBrowser extends HTMLElement {
     this.addEventListener('click', this.#click)
     this.addEventListener('keydown', this.#keydown)
     window.addEventListener('keydown', this.#arrows)
+    this.#off = onWear((theme) => this.#adopt(theme))
+    this.#restore()
     this.#center()
   }
 
@@ -65,10 +69,26 @@ class SheetBrowser extends HTMLElement {
     this.removeEventListener('click', this.#click)
     this.removeEventListener('keydown', this.#keydown)
     window.removeEventListener('keydown', this.#arrows)
+    this.#off()
   }
 
   get #at(): number {
     return (this.#tabs.find((tab) => tab.id === this.#active) ?? (this.#tabs[0] as OpenTab)).index
+  }
+
+  #restore() {
+    const stored = recall()
+    const index = stored ? this.#themes.findIndex((theme) => theme.name === stored.name) : -1
+    if (index < 1) return
+    this.#tabs = this.#tabs.map((tab) => (tab.id === this.#active ? { ...tab, index } : tab))
+    this.#shown = this.#themes[index]
+    this.#draw()
+  }
+
+  #adopt(theme: Theme) {
+    const index = this.#themes.findIndex((entry) => entry.name === theme.name)
+    if (index === -1) show(theme)
+    else this.#paint(index)
   }
 
   #paint(index: number) {
@@ -112,12 +132,12 @@ class SheetBrowser extends HTMLElement {
   #render() {
     const changed = this.#themes[this.#at] !== this.#shown
     this.#shown = this.#themes[this.#at]
+    remember(this.#shown as Theme)
     if (!changed) {
       this.#draw()
       return
     }
     fadeThrough(() => {
-      settle(this)
       this.#draw()
       this.#center()
     })
@@ -126,7 +146,7 @@ class SheetBrowser extends HTMLElement {
   #draw() {
     const theme = this.#themes[this.#at] as Theme
     const tabs = this.#tabs.map(({ id, index }) => ({ id, theme: this.#themes[index] as Theme }))
-    wear(this, theme)
+    show(theme)
     this.querySelector('[data-sheet-label]')?.setAttribute('aria-label', theme.name)
     fill(
       this.querySelector('[data-heading]'),

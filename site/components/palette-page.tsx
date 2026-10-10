@@ -2,6 +2,7 @@ import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
 import { Layers, Store } from 'lucide'
 import { Badge, badgeVariants } from '@/components/ui/badge'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import type { Facts } from '@/lib/facts'
 import { catalogPath, marketplacePath, OFFICIAL } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { gatePassed, lightness } from '@/lib/sheet'
@@ -219,11 +220,13 @@ export function PalettePage({
   marketplace,
   palettes,
   gate,
+  facts,
 }: {
   theme: Theme
   marketplace: Marketplace | null
   palettes: Theme[]
   gate: GateRule[]
+  facts: Facts
 }) {
   const id = marketplace?.id ?? OFFICIAL
   const siblings = palettes.filter((other) => other.catalog === theme.catalog && other !== theme)
@@ -234,7 +237,7 @@ export function PalettePage({
   ]
 
   return (
-    <MarketplaceFrame>
+    <MarketplaceFrame facts={facts} ribbon={theme}>
       <header class="grid gap-4">
         <Crumbs trail={trail} />
         <h1 class="font-display text-display-lg font-black [overflow-wrap:anywhere]" safe>
@@ -281,9 +284,9 @@ export function PalettePage({
   )
 }
 
-export function NoSuchPalette({ id, name }: { id: string; name: string }) {
+export function NoSuchPalette({ id, name, facts }: { id: string; name: string; facts: Facts }) {
   return (
-    <MarketplaceFrame>
+    <MarketplaceFrame facts={facts}>
       <div class="grid justify-items-start gap-3">
         <Crumbs
           trail={[

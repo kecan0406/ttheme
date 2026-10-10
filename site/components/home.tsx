@@ -2,12 +2,13 @@ import type { PropsWithChildren } from '@kitajs/html'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { Button, LinkButton } from '@/components/ui/button'
+import type { Facts } from '@/lib/facts'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
-import { wearStyle } from '@/lib/wear'
 import { CommandRow, INIT } from './command-row'
 import { Signature } from './palette-parts'
+import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { TerminalPreview } from './terminal-preview'
 
@@ -92,14 +93,14 @@ export function LeadUse({ theme }: { theme: Theme }) {
   return <CommandRow command={`ttheme use ${theme.name}`} class="bg-card" />
 }
 
-export function Home({ themes, catalogs }: { themes: Theme[]; catalogs: number }) {
+export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
   const leads = themes.filter((theme) => theme.lead)
   const theme = leads[0] as Theme
 
   return (
-    <lead-showcase class="wear ground block min-h-dvh" style={wearStyle(theme)}>
+    <lead-showcase class="ground block min-h-dvh">
       <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-4.5">
-        <SiteHeader current="/" themeToggle={false} />
+        <SiteHeader current="/" />
 
         <section
           aria-label="ttheme"
@@ -107,7 +108,7 @@ export function Home({ themes, catalogs }: { themes: Theme[]; catalogs: number }
         >
           <div class="grid justify-items-start gap-6">
             <Badge variant="sticker">
-              {themes.length} palettes · {catalogs} catalogs ✦
+              {facts.palettes} palettes · {facts.catalogs} catalogs ✦
             </Badge>
             <h1 class="font-display text-display-xl font-black">
               wear{' '}
@@ -172,7 +173,7 @@ export function Home({ themes, catalogs }: { themes: Theme[]; catalogs: number }
             everything a tab needs
           </h2>
           <div class="grid grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
-            {features(themes.length, catalogs).map((feature) => (
+            {features(facts.palettes, facts.catalogs).map((feature) => (
               <article class="grid content-start gap-2 rounded-3xl border bg-muted p-6">
                 <span class="text-3xl" role="img" aria-hidden="true" safe>
                   {feature.emoji}
@@ -240,23 +241,7 @@ export function Home({ themes, catalogs }: { themes: Theme[]; catalogs: number }
           </ol>
         </section>
 
-        <footer class="flex flex-wrap items-center justify-between gap-4 border-t py-8 text-sm text-muted-foreground">
-          <span>free and open, MIT</span>
-          <nav aria-label="more" class="flex flex-wrap gap-4">
-            <a href="/marketplace" class="hover:text-foreground">
-              marketplace
-            </a>
-            <a href="/sheets" class="hover:text-foreground">
-              sheets
-            </a>
-            <a href="https://github.com/kecan0406/ttheme" class="hover:text-foreground">
-              github
-            </a>
-            <a href="https://www.npmjs.com/package/@kecan0406/ttheme" class="hover:text-foreground">
-              npm
-            </a>
-          </nav>
-        </footer>
+        <SiteFooter facts={facts} landing />
       </div>
       <kaomoji-rain>
         <div aria-hidden="true" class="pointer-events-none fixed inset-0 z-50 overflow-hidden" />

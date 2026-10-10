@@ -2,6 +2,7 @@ import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
 import { CalendarDays, FolderTree, GitBranch, Package, Palette, Scale, ShieldCheck } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { catalogsOf } from '@/lib/catalogs'
+import type { Facts } from '@/lib/facts'
 import { catalogAnchor, OFFICIAL, OFFICIAL_ABOUT, OFFICIAL_REPO } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { gatePassed } from '@/lib/sheet'
@@ -27,10 +28,12 @@ export function MarketplaceStore({
   marketplace,
   palettes,
   gate,
+  facts,
 }: {
   marketplace: Marketplace | null
   palettes: Theme[]
   gate: GateRule[]
+  facts: Facts
 }) {
   const id = marketplace?.id ?? OFFICIAL
   const shelves = catalogsOf(palettes)
@@ -38,7 +41,7 @@ export function MarketplaceStore({
   const repo = marketplace?.repo ?? OFFICIAL_REPO
 
   return (
-    <MarketplaceFrame>
+    <MarketplaceFrame facts={facts}>
       <header class="grid gap-4">
         <Crumbs trail={[{ label: 'marketplace', href: '/marketplace' }, { label: id }]} />
         <h1 class="font-display text-display-lg font-black [overflow-wrap:anywhere]" safe>
@@ -114,9 +117,9 @@ export function MarketplaceStore({
   )
 }
 
-export function NoSuchMarketplace({ id }: { id: string }) {
+export function NoSuchMarketplace({ id, facts }: { id: string; facts: Facts }) {
   return (
-    <MarketplaceFrame>
+    <MarketplaceFrame facts={facts}>
       <div class="grid justify-items-start gap-3">
         <Crumbs trail={[{ label: 'marketplace', href: '/marketplace' }, { label: id }]} />
         <h1 class="font-display text-display-lg font-black">no such marketplace</h1>

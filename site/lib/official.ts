@@ -8,3 +8,5 @@ const manifest = parseManifest(JSON.stringify(published))
 export const official = manifest.palettes
 export const gate = manifest.gate
 export const themes: Theme[] = listed(manifest.palettes).map((entry) => toTheme(entry))
+
+export const fallback: Theme = themes.find((theme) => theme.lead) ?? (themes[0] as Theme)

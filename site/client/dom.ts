@@ -1,5 +1,4 @@
-import type { Theme } from '@/lib/themes'
-import { SETTLE_MS, wearSlots } from '@/lib/wear'
+import { SETTLE_MS } from '@/lib/wear'
 
 const settling = new WeakMap<HTMLElement, number>()
 
@@ -22,10 +21,6 @@ export function swap(target: Element | null, markup: string) {
 
 export function reducedMotion(): boolean {
   return matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
-export function wear(element: HTMLElement, theme: Theme) {
-  for (const [slot, color] of wearSlots(theme)) element.style.setProperty(slot, color)
 }
 
 export function settle(element: HTMLElement) {

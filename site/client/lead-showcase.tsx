@@ -1,54 +1,69 @@
 import { LeadPreview, LeadUse } from '@/components/home'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
-import { fadeThrough, fill, readJson, reducedMotion, settle, swap, wear } from './dom'
+import { fadeThrough, fill, readJson, reducedMotion, swap } from './dom'
 import { SparkleBurst } from './sparkle-burst'
+import { choose, onWear, recall, show } from './wear'
 
 class LeadShowcase extends HTMLElement {
   #leads: Theme[] = []
-  #at = 0
+  #shown = ''
   #timer = 0
+  #off = () => {}
 
   #click = (event: MouseEvent) => {
     const target = event.target as Element
     const step = target.closest<HTMLElement>('[data-pick]')
     const lead = target.closest<HTMLElement>('[data-lead]')
-    if (step) this.#pick(this.#at + Number(step.dataset.pick))
-    else if (lead) this.#pick(Number(lead.dataset.lead))
+    if (step) this.#step(Number(step.dataset.pick))
+    else if (lead) choose(this.#leads[Number(lead.dataset.lead)] as Theme)
   }
 
   connectedCallback() {
     this.#leads = readJson<Theme[]>(this, 'script[data-leads]')
+    this.#shown = (this.#leads[0] as Theme).name
     this.addEventListener('click', this.#click)
+    this.#off = onWear((theme) => this.#pick(theme))
+    const stored = recall()
+    if (stored) {
+      if (stored.name !== this.#shown) this.#draw(stored)
+      return
+    }
     if (reducedMotion()) return
     this.#timer = window.setInterval(() => {
-      if (!document.hidden) this.#show(this.#at + 1)
+      if (!document.hidden) this.#cycle()
     }, 4000)
   }
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
+    this.#off()
     window.clearInterval(this.#timer)
   }
 
-  #pick(index: number) {
-    window.clearInterval(this.#timer)
-    this.#show(index)
+  get #at(): number {
+    return this.#leads.findIndex((lead) => lead.name === this.#shown)
   }
 
-  #show(index: number) {
+  #step(delta: number) {
     const count = this.#leads.length
-    const at = ((index % count) + count) % count
-    if (at === this.#at || !this.#leads[at]) return
-    this.#at = at
-    fadeThrough(() => this.#draw())
+    const from = this.#at === -1 && delta < 0 ? 0 : this.#at
+    choose(this.#leads[(((from + delta) % count) + count) % count] as Theme)
   }
 
-  #draw() {
-    const at = this.#at
-    const theme = this.#leads[at] as Theme
-    settle(this)
-    wear(this, theme)
+  #cycle() {
+    const next = this.#leads[(this.#at + 1) % this.#leads.length] as Theme
+    fadeThrough(() => this.#draw(next))
+  }
+
+  #pick(theme: Theme) {
+    window.clearInterval(this.#timer)
+    if (theme.name !== this.#shown) fadeThrough(() => this.#draw(theme))
+  }
+
+  #draw(theme: Theme) {
+    this.#shown = theme.name
+    show(theme)
     const name = this.querySelector('[data-lead-name]')
     if (name) name.textContent = theme.name
     const title = this.querySelector('[data-lead-title]')
@@ -61,7 +76,7 @@ class LeadShowcase extends HTMLElement {
     swap(this.querySelector('[data-lead-preview]'), html(<LeadPreview theme={theme} />))
     fill(this.querySelector('[data-lead-use]'), html(<LeadUse theme={theme} />))
     for (const button of this.querySelectorAll<HTMLElement>('[data-lead]'))
-      button.setAttribute('aria-pressed', String(Number(button.dataset.lead) === at))
+      button.setAttribute('aria-pressed', String(this.#leads[Number(button.dataset.lead)]?.name === theme.name))
   }
 }
 

@@ -9,12 +9,16 @@ import { Sheets } from '@/components/sheets'
 import { cardPng } from '@/lib/card'
 import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
+import type { Facts } from '@/lib/facts'
 import { OFFICIAL, OFFICIAL_ABOUT } from '@/lib/gallery'
 import { loadMarketplaces } from '@/lib/marketplaces'
 import { gate, themes } from '@/lib/official'
 import { builderOf, readShared, type Shared } from '@/lib/share'
 import type { Marketplace, Theme } from '@/lib/themes'
+import pkg from '../../package.json' with { type: 'json' }
 import { page } from './document'
+
+const facts: Facts = { palettes: themes.length, catalogs: catalogsOf(themes).length, version: pkg.version }
 
 const CATALOG = 'public, max-age=0, s-maxage=31536000'
 const MARKETPLACES = 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400'
@@ -30,21 +34,21 @@ function about(theme: Theme): string {
 function palettePage(theme: Theme, marketplace: Marketplace | null, palettes: Theme[], cache: string): Response {
   return page(
     { title: `ttheme — ${theme.name}`, description: about(theme), cache },
-    <PalettePage theme={theme} marketplace={marketplace} palettes={palettes} gate={gate} />,
+    <PalettePage theme={theme} marketplace={marketplace} palettes={palettes} gate={gate} facts={facts} />,
   )
 }
 
 function noMarketplace(id: string): Response {
   return page(
     { title: 'ttheme — no such marketplace', description: STORE, status: 404, cache: RETRY },
-    <NoSuchMarketplace id={id} />,
+    <NoSuchMarketplace id={id} facts={facts} />,
   )
 }
 
 function noPalette(id: string, name: string): Response {
   return page(
     { title: 'ttheme — no such palette', description: STORE, status: 404, cache: RETRY },
-    <NoSuchPalette id={id} name={name} />,
+    <NoSuchPalette id={id} name={name} facts={facts} />,
   )
 }
 
@@ -65,7 +69,7 @@ export const site = new Elysia({ name: 'site' })
           'Character color palettes for Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp, Konsole and Terminal.app',
         cache: CATALOG,
       },
-      <Home themes={themes} catalogs={catalogsOf(themes).length} />,
+      <Home themes={themes} facts={facts} />,
     ),
   )
   .get('/sheets', () =>
@@ -75,7 +79,7 @@ export const site = new Elysia({ name: 'site' })
         description: 'Browse every ttheme palette in a terminal, with its slots and contrast readings',
         cache: CATALOG,
       },
-      <Sheets themes={themes} gate={gate} />,
+      <Sheets themes={themes} gate={gate} facts={facts} />,
     ),
   )
   .get('/marketplace', async () => {
@@ -86,21 +90,21 @@ export const site = new Elysia({ name: 'site' })
         description: 'Every ttheme palette: the official catalogs and the marketplaces anyone publishes from GitHub',
         cache: fresh ? MARKETPLACES : RETRY,
       },
-      <MarketplacePage themes={themes} marketplaces={marketplaces} gate={gate} />,
+      <MarketplacePage themes={themes} marketplaces={marketplaces} gate={gate} facts={facts} />,
     )
   })
   .get('/marketplace/:id', async ({ params }) => {
     if (params.id === OFFICIAL)
       return page(
         { title: 'ttheme — official', description: OFFICIAL_ABOUT, cache: CATALOG },
-        <MarketplaceStore marketplace={null} palettes={themes} gate={gate} />,
+        <MarketplaceStore marketplace={null} palettes={themes} gate={gate} facts={facts} />,
       )
     const { marketplaces, fresh } = await loadMarketplaces()
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
     if (!marketplace) return noMarketplace(params.id)
     return page(
       { title: `ttheme — ${marketplace.id}`, description: STORE, cache: fresh ? MARKETPLACES : RETRY },
-      <MarketplaceStore marketplace={marketplace} palettes={marketplace.palettes} gate={gate} />,
+      <MarketplaceStore marketplace={marketplace} palettes={marketplace.palettes} gate={gate} facts={facts} />,
     )
   })
   .get('/marketplace/:id/:name', async ({ params }) => {
@@ -116,6 +120,13 @@ export const site = new Elysia({ name: 'site' })
       ? palettePage(theme, marketplace, marketplace.palettes, fresh ? MARKETPLACES : RETRY)
       : noPalette(marketplace.id, params.name)
   })
+  .get(
+    '/palettes.json',
+    () =>
+      new Response(JSON.stringify(themes), {
+        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': CATALOG },
+      }),
+  )
   .get('/p/:code', ({ params, request }) => {
     const found = shared(params.code)
     if (found instanceof Error)
@@ -126,7 +137,11 @@ export const site = new Elysia({ name: 'site' })
           status: 404,
           cache: RETRY,
         },
-        <Missing title="broken share link" text={`This link does not open a palette — ${found.message}`} />,
+        <Missing
+          title="broken share link"
+          text={`This link does not open a palette — ${found.message}`}
+          facts={facts}
+        />,
       )
     return page(
       {
@@ -157,13 +172,13 @@ export const site = new Elysia({ name: 'site' })
   .error('global', NotFound, () =>
     page(
       { title: 'ttheme — no such page', description: 'Nothing lives at this address.', status: 404, cache: RETRY },
-      <Missing title="no such page" text="Nothing lives at this address." />,
+      <Missing title="no such page" text="Nothing lives at this address." facts={facts} />,
     ),
   )
   .error('global', ({ error }) => {
     process.stderr.write(`site: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`)
     return page(
       { title: 'ttheme — something went wrong', description: 'Try again in a moment.', status: 500, cache: 'no-store' },
-      <Missing title="something went wrong" text="Try again in a moment." />,
+      <Missing title="something went wrong" text="Try again in a moment." facts={facts} />,
     )
   })

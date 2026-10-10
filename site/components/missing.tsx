@@ -1,11 +1,13 @@
+import type { Facts } from '@/lib/facts'
+import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 
-export function Missing({ title, text }: { title: string; text: string }) {
+export function Missing({ title, text, facts }: { title: string; text: string; facts: Facts }) {
   return (
     <div class="ground min-h-dvh">
       <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-4.5">
         <SiteHeader current="" />
-        <div class="grid justify-items-start gap-3 pt-5">
+        <div class="grid justify-items-start gap-3 pt-5 pb-16">
           <h1 class="font-display text-display-lg font-black" safe>
             {title}
           </h1>
@@ -16,6 +18,7 @@ export function Missing({ title, text }: { title: string; text: string }) {
             back home
           </a>
         </div>
+        <SiteFooter facts={facts} />
       </div>
     </div>
   )

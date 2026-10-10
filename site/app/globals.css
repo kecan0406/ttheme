@@ -1,7 +1,5 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:is(.dark *));
-
 @font-face {
   font-family: 'Inter Fallback';
   src: local('Arial');
@@ -97,6 +95,9 @@
   --text-display-xl: clamp(40px, 6vw, 72px);
   --text-display-xl--line-height: 1.02;
   --text-display-xl--letter-spacing: -0.02em;
+  --text-mega: clamp(88px, 25vw, 300px);
+  --text-mega--line-height: 0.85;
+  --text-mega--letter-spacing: -0.04em;
   --tracking-caps: 0.08em;
   --shadow-sm: var(--elevation-sm);
   --shadow-md: var(--elevation-md);
@@ -180,64 +181,11 @@
 @property --a15 { syntax: '<color>'; inherits: true; initial-value: #000000; }
 
 :root {
-  --background: #f3f4f4;
-  --foreground: #0f1115;
-  --card: #ffffff;
-  --card-foreground: var(--foreground);
-  --popover: #ffffff;
-  --popover-foreground: var(--foreground);
-  --primary: #2f6db0;
-  --primary-foreground: #ffffff;
-  --secondary: #f6f7f7;
-  --secondary-foreground: var(--foreground);
-  --muted: rgb(15 17 21 / 6%);
-  --muted-foreground: #646b79;
-  --soft-foreground: #2a2f38;
-  --faint-foreground: #9aa2ad;
-  --accent: rgb(47 109 176 / 12%);
-  --accent-foreground: var(--foreground);
-  --destructive: #b04a3f;
-  --success: #2f7d53;
-  --warning: #8a5d00;
-  --border: #e2e3df;
-  --input: #d3d2cd;
-  --ring: var(--primary);
   --overlay: rgb(0 0 0 / 32%);
-  --glass: rgb(255 255 255 / 72%);
-  --glass-panel: rgb(255 255 255 / 66%);
-  --sidebar: #f9f9f9;
-  --elevation-sm: 0 1px 2px rgb(18 20 27 / 5%);
-  --elevation-md: 0 6px 18px -8px rgb(18 20 27 / 12%), 0 2px 6px -2px rgb(18 20 27 / 6%);
-  --elevation-lg: 0 24px 60px -20px rgb(18 20 27 / 25%), 0 10px 24px -12px rgb(18 20 27 / 12%);
-  --radius: 10px;
-  color-scheme: light;
-}
-
-.dark {
-  --background: #11151c;
-  --foreground: #f1f2f4;
-  --card: #191e26;
-  --popover: #191e26;
-  --primary: #8cb8e8;
-  --primary-foreground: #0b0d12;
-  --secondary: #1f252f;
-  --muted: rgb(241 242 244 / 6%);
-  --muted-foreground: #8a93a1;
-  --soft-foreground: #c6cbd4;
-  --faint-foreground: #5c6473;
-  --accent: rgb(140 184 232 / 18%);
-  --destructive: #ef8a8a;
-  --success: #7fcf9f;
-  --warning: #e8c46a;
-  --border: #2a303e;
-  --input: #343c4d;
-  --glass: rgb(25 30 38 / 72%);
-  --glass-panel: rgb(25 30 38 / 66%);
-  --sidebar: #141921;
   --elevation-sm: 0 1px 2px rgb(0 0 0 / 30%);
   --elevation-md: 0 10px 30px -10px rgb(0 0 0 / 50%), 0 4px 10px -4px rgb(0 0 0 / 30%);
   --elevation-lg: 0 30px 70px -20px rgb(0 0 0 / 70%), 0 14px 30px -12px rgb(0 0 0 / 40%);
-  color-scheme: dark;
+  --radius: 10px;
 }
 
 html {
@@ -280,6 +228,7 @@ html {
   background-attachment: fixed;
 }
 
+:root,
 .wear {
   --background: var(--bg);
   --foreground: var(--fg);
@@ -306,14 +255,20 @@ html {
   --glass: color-mix(in oklab, var(--bg) 72%, transparent);
   --glass-panel: color-mix(in oklab, color-mix(in oklab, var(--fg) 5%, var(--bg)) 70%, transparent);
   --sidebar: color-mix(in oklab, var(--fg) 3%, var(--bg));
-  background: var(--bg);
-  color: var(--fg);
   transition-property: --bg, --fg, --cu, --se, --a0, --a1, --a2, --a3, --a4, --a5, --a6, --a7, --a8, --a9, --a10, --a11,
     --a12, --a13, --a14, --a15;
   transition-duration: 0.6s;
   transition-timing-function: cubic-bezier(0.3, 0.7, 0.2, 1);
 }
 
+.wear {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+:root[data-settling] *,
+:root[data-settling] *::before,
+:root[data-settling] *::after,
 .wear[data-settling] *,
 .wear[data-settling] *::before,
 .wear[data-settling] *::after {
@@ -656,6 +611,7 @@ sheet-browser #sheet-details > :nth-child(2) {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :root,
   .wear {
     transition: none;
   }

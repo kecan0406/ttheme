@@ -1,4 +1,5 @@
 import { catalogsOf } from '@/lib/catalogs'
+import type { Facts } from '@/lib/facts'
 import { OFFICIAL, OFFICIAL_ABOUT, OFFICIAL_REPO, type Shelf } from '@/lib/gallery'
 import type { GateRule, Marketplace, Theme } from '@/lib/themes'
 import { CommandRow, INIT } from './command-row'
@@ -38,16 +39,18 @@ export function MarketplacePage({
   themes,
   marketplaces,
   gate,
+  facts,
 }: {
   themes: Theme[]
   marketplaces: Marketplace[]
   gate: GateRule[]
+  facts: Facts
 }) {
   const shelves = shelvesOf(themes, marketplaces)
   const palettes = shelves.reduce((sum, shelf) => sum + shelf.palettes.length, 0)
 
   return (
-    <MarketplaceFrame>
+    <MarketplaceFrame facts={facts}>
       <section
         aria-labelledby="marketplace-title"
         class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] items-start gap-x-16 gap-y-5 max-[960px]:grid-cols-[minmax(0,1fr)]"
