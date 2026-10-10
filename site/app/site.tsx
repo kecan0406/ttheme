@@ -33,7 +33,7 @@ function about(theme: Theme): string {
 
 function palettePage(theme: Theme, marketplace: Marketplace | null, palettes: Theme[], cache: string): Response {
   return page(
-    { title: `ttheme — ${theme.name}`, description: about(theme), cache },
+    { title: `ttheme — ${theme.name}`, description: about(theme), cache, wear: theme },
     <PalettePage theme={theme} marketplace={marketplace} palettes={palettes} gate={gate} facts={facts} />,
   )
 }

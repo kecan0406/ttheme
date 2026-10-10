@@ -1,11 +1,13 @@
 import { luminance } from '@/lib/sheet'
 import type { Theme } from '@/lib/themes'
 
-export const SETTLE_MS = 650
+export const SETTLE_MS = 450
 
 export const WEAR_KEY = 'ttheme-site-wear'
 
 export const WEAR_EVENT = 'ttheme:wear'
+
+export const SHOW_EVENT = 'ttheme:show'
 
 export const WEAR_SCRIPT = `try{var w=JSON.parse(localStorage.getItem('${WEAR_KEY}'));if(w&&w.v){var s=document.documentElement.style;for(var i=0;i<w.v.length;i++)if(w.v[i][0].indexOf('--')===0)s.setProperty(w.v[i][0],w.v[i][1]);s.colorScheme=w.l?'light':'dark'}}catch(e){}`
 

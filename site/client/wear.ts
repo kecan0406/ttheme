@@ -1,5 +1,5 @@
 import type { Theme } from '@/lib/themes'
-import { isLight, WEAR_EVENT, WEAR_KEY, wearVars } from '@/lib/wear'
+import { isLight, SHOW_EVENT, WEAR_EVENT, WEAR_KEY, wearVars } from '@/lib/wear'
 import { settle } from './dom'
 
 const COLOR = /^#[0-9a-f]{6}$/i
@@ -40,6 +40,7 @@ export function remember(theme: Theme) {
 }
 
 export function show(theme: Theme) {
+  document.dispatchEvent(new CustomEvent<Theme>(SHOW_EVENT, { detail: theme }))
   const root = document.documentElement
   settle(root)
   for (const [slot, value] of wearVars(theme)) root.style.setProperty(slot, value)

@@ -1,8 +1,10 @@
 import type { PropsWithChildren } from '@kitajs/html'
 import assets from '@/assets.json' with { type: 'json' }
+import { FacetGround } from '@/components/facet-ground'
 import { CARD_HEIGHT, CARD_WIDTH } from '@/lib/card'
 import { fallback } from '@/lib/official'
 import { html } from '@/lib/render'
+import type { Theme } from '@/lib/themes'
 import { rootStyle, WEAR_SCRIPT } from '@/lib/wear'
 
 const RELOAD = `const s=new EventSource('${assets.reload}');let lost=false;s.onmessage=()=>location.reload();s.onerror=()=>{lost=true};s.onopen=()=>{if(lost)location.reload()}`
@@ -15,16 +17,18 @@ interface Page {
   image?: string
   status?: number
   cache: string
+  wear?: Theme
 }
 
 function Document({
   title,
   description,
   image,
+  wear,
   children,
-}: PropsWithChildren<{ title: string; description: string; image?: string }>) {
+}: PropsWithChildren<{ title: string; description: string; image?: string; wear?: Theme }>) {
   return (
-    <html lang="en" style={rootStyle(fallback)}>
+    <html lang="en" style={rootStyle(wear ?? fallback)}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -46,18 +50,21 @@ function Document({
         ))}
         <link rel="stylesheet" href={assets.css} />
         <link rel="stylesheet" href={assets.cjk} media="print" onload="this.media='all'" />
-        <script>{WEAR_SCRIPT}</script>
+        {wear ? null : <script>{WEAR_SCRIPT}</script>}
         <script type="module" src={assets.js} />
         {assets.reload ? <script type="module">{RELOAD}</script> : null}
       </head>
-      <body>{children}</body>
+      <body>
+        <FacetGround />
+        {children}
+      </body>
     </html>
   )
 }
 
-export function page({ title, description, image, status = 200, cache }: Page, body: JSX.Element): Response {
+export function page({ title, description, image, status = 200, cache, wear }: Page, body: JSX.Element): Response {
   const text = `<!doctype html>${html(
-    <Document title={title} description={description} image={image}>
+    <Document title={title} description={description} image={image} wear={wear}>
       {body}
     </Document>,
   )}`
