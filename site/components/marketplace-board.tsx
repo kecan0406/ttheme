@@ -238,8 +238,12 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
             name="query"
             placeholder="search marketplaces, catalogs, palettes"
             aria-label="search marketplaces"
+            aria-keyshortcuts="/"
             spellcheck="false"
             autocomplete="off"
+            autocapitalize="none"
+            autocorrect="off"
+            enterkeyhint="search"
           />
           <InputGroupAddon align="inline-end">
             <Kbd>/</Kbd>

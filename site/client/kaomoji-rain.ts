@@ -1,4 +1,5 @@
 import { reducedMotion } from './dom'
+import { printable, typing } from './keys'
 
 const FACES = ['(・ω・)', '(＾▽＾)', '( ˘ω˘ )', '(>ω<)', 'uwu', 'owo', '(｡•ᴗ•｡)']
 const SLOTS = [1, 3, 5, 9, 12, 13, 14]
@@ -8,7 +9,7 @@ class KaomojiRain extends HTMLElement {
   #typed = ''
 
   #key = (event: KeyboardEvent) => {
-    if (event.target instanceof HTMLInputElement || event.metaKey || event.ctrlKey) return
+    if (typing(event.target) || !printable(event)) return
     this.#typed = (this.#typed + event.key).slice(-WORD.length)
     if (this.#typed !== WORD || reducedMotion()) return
     this.#typed = ''

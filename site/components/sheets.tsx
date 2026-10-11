@@ -97,13 +97,19 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
           class="grid grid-cols-[minmax(0,1fr)] justify-items-center gap-6 pt-8 pb-10"
         >
           <div class="grid w-full max-w-[880px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4">
-            <Button variant="outline" size="icon" aria-label="previous sheet" data-step="-1">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="previous sheet"
+              aria-keyshortcuts="ArrowLeft"
+              data-step="-1"
+            >
               <Icon node={ChevronLeft} />
             </Button>
             <div data-heading class="grid justify-items-center gap-2 text-center">
               <SheetHeading theme={theme} count={themes.length} />
             </div>
-            <Button variant="outline" size="icon" aria-label="next sheet" data-step="1">
+            <Button variant="outline" size="icon" aria-label="next sheet" aria-keyshortcuts="ArrowRight" data-step="1">
               <Icon node={ChevronRight} />
             </Button>
           </div>

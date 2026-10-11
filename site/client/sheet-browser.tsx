@@ -5,6 +5,7 @@ import { sheetNumber, sheetVars } from '@/lib/sheet'
 import { SHEET_AT } from '@/lib/sheet-script'
 import type { GateRule, Theme } from '@/lib/themes'
 import { fadeThrough, fill, readJson, reducedMotion, swap } from './dom'
+import { bare, typing } from './keys'
 import { tabKey } from './tabs'
 import { onWear, recall, remember, show } from './wear'
 
@@ -13,8 +14,8 @@ interface OpenTab {
   index: number
 }
 
-function typing(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest('input, textarea, [role="tablist"]') !== null
+function owned(target: EventTarget | null): boolean {
+  return typing(target) || (target instanceof Element && target.closest('[role="tablist"], [popover]') !== null)
 }
 
 class SheetBrowser extends HTMLElement {
@@ -47,7 +48,7 @@ class SheetBrowser extends HTMLElement {
   }
 
   #arrows = (event: KeyboardEvent) => {
-    if (event.metaKey || event.ctrlKey || event.altKey || typing(event.target)) return
+    if (!bare(event) || event.shiftKey || event.repeat || owned(event.target)) return
     if (event.key === 'ArrowRight') this.#step(1)
     if (event.key === 'ArrowLeft') this.#step(-1)
   }

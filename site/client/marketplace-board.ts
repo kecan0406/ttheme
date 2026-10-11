@@ -9,6 +9,7 @@ import {
   shelvesMatching,
 } from '@/lib/gallery'
 import { readJson, reducedMotion } from './dom'
+import { bare, typing } from './keys'
 
 const TURN_MS = 2000
 
@@ -63,7 +64,7 @@ class MarketplaceBoard extends HTMLElement {
   }
 
   #slash = (event: KeyboardEvent) => {
-    if (event.key !== '/' || event.target instanceof HTMLInputElement) return
+    if (event.key !== '/' || !bare(event) || typing(event.target)) return
     event.preventDefault()
     this.querySelector<HTMLInputElement>('input[name="query"]')?.focus()
   }
