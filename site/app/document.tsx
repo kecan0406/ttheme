@@ -4,20 +4,25 @@ import { FacetGround } from '@/components/facet-ground'
 import { CARD_HEIGHT, CARD_WIDTH } from '@/lib/card'
 import { HANDOFF_SCRIPT } from '@/lib/handoff'
 import { fallback } from '@/lib/official'
-import { html } from '@/lib/render'
+import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import { SPECULATION_RULES } from '@/lib/speculation'
 import type { Theme } from '@/lib/themes'
 import { rootStyle, type Vars, WEAR_SCRIPT, wearIcon } from '@/lib/wear'
+import { SHARE_URL } from '../../src/own.ts'
 
 const RELOAD = `let s=null,b=null;const c=()=>{s?.close();s=null},f=()=>{if(document.visibilityState==='hidden'&&!document.prerendering)c();else if(!s){s=new EventSource('${assets.reload}');s.onmessage=(e)=>{b??=e.data;if(e.data!==b)location.reload()}}};document.addEventListener('visibilitychange',f);addEventListener('pageshow',f);addEventListener('pagehide',c);f()`
 
 const FONTS: string[] = assets.fonts
 
+const ORIGIN = new URL(SHARE_URL).origin
+
 interface Page {
   title: string
   description: string
+  path?: string
   image?: string
+  imageAlt?: string
   status?: number
   cache: string
   wear?: Theme
@@ -28,7 +33,9 @@ interface Page {
 function Document({
   title,
   description,
+  path,
   image,
+  imageAlt,
   wear,
   root = [],
   head,
@@ -36,7 +43,9 @@ function Document({
 }: PropsWithChildren<{
   title: string
   description: string
+  path?: string
   image?: string
+  imageAlt?: string
   wear?: Theme
   root?: Vars
   head?: string
@@ -50,6 +59,15 @@ function Document({
         <link rel="icon" type="image/svg+xml" href={wearIcon(wear ?? fallback)} />
         <title safe>{title}</title>
         <meta name="description" content={description} />
+        {path === undefined ? null : (
+          <>
+            <link rel="canonical" href={`${ORIGIN}${path}`} />
+            <meta property="og:url" content={`${ORIGIN}${path}`} />
+          </>
+        )}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="ttheme" />
+        <meta property="og:locale" content="en_US" />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         {image ? (
@@ -57,9 +75,12 @@ function Document({
             <meta property="og:image" content={image} />
             <meta property="og:image:width" content={String(CARD_WIDTH)} />
             <meta property="og:image:height" content={String(CARD_HEIGHT)} />
+            {imageAlt ? <meta property="og:image:alt" content={imageAlt} /> : null}
             <meta name="twitter:card" content="summary_large_image" />
           </>
-        ) : null}
+        ) : (
+          <meta name="twitter:card" content="summary" />
+        )}
         {FONTS.map((font) => (
           <link rel="preload" href={font} as="font" type="font/woff2" crossorigin="" />
         ))}
@@ -70,6 +91,11 @@ function Document({
         <script>{HANDOFF_SCRIPT}</script>
         <script>{ROUTE_SCRIPT}</script>
         <script type="speculationrules">{SPECULATION_RULES}</script>
+        {path === '/' ? (
+          <script type="application/ld+json">
+            {json({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'ttheme', url: `${ORIGIN}/` })}
+          </script>
+        ) : null}
         <script type="module" src={assets.js} />
         {assets.reload ? <script type="module">{RELOAD}</script> : null}
       </head>
@@ -90,11 +116,20 @@ function Document({
 }
 
 export function page(
-  { title, description, image, status = 200, cache, wear, root, head }: Page,
+  { title, description, path, image, imageAlt, status = 200, cache, wear, root, head }: Page,
   body: JSX.Element,
 ): Response {
   const text = `<!doctype html>${html(
-    <Document title={title} description={description} image={image} wear={wear} root={root} head={head}>
+    <Document
+      title={title}
+      description={description}
+      path={path}
+      image={image}
+      imageAlt={imageAlt}
+      wear={wear}
+      root={root}
+      head={head}
+    >
       {body}
     </Document>,
   )}`

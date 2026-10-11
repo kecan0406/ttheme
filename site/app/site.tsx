@@ -43,7 +43,13 @@ export const PRERENDERED: string[] = [
 
 function palettePage(theme: Theme, marketplace: Marketplace | null, palettes: Theme[]): Response {
   return page(
-    { title: `ttheme — ${theme.name}`, description: about(theme), cache: CATALOG, wear: theme },
+    {
+      title: `ttheme — ${theme.name}`,
+      description: about(theme),
+      path: palettePath(theme),
+      cache: CATALOG,
+      wear: theme,
+    },
     <PalettePage theme={theme} marketplace={marketplace} palettes={palettes} gate={gate} facts={facts} />,
   )
 }
@@ -77,6 +83,7 @@ export const site = new Elysia({ name: 'site' })
         title: 'ttheme — wear your favorite character',
         description:
           'Character color palettes for Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp, Konsole and Terminal.app',
+        path: '/',
         cache: CATALOG,
       },
       <Home themes={themes} facts={facts} />,
@@ -87,6 +94,7 @@ export const site = new Elysia({ name: 'site' })
       {
         title: 'ttheme — sheets',
         description: 'Browse every ttheme palette in a terminal, with its slots and contrast readings',
+        path: '/sheets',
         cache: CATALOG,
         root: sheetVars(themes[0] as Theme, sheetNumber(themes, themes[0] as Theme), gate),
         head: sheetScript(themes, gate),
@@ -99,6 +107,7 @@ export const site = new Elysia({ name: 'site' })
       {
         title: 'ttheme — marketplace',
         description: 'Every ttheme palette: the official catalogs and the marketplaces anyone publishes from GitHub',
+        path: '/marketplace',
         cache: CATALOG,
       },
       <MarketplacePage themes={themes} marketplaces={marketplaces} facts={facts} />,
@@ -107,13 +116,18 @@ export const site = new Elysia({ name: 'site' })
   .get('/marketplace/:id', ({ params }) => {
     if (params.id === OFFICIAL)
       return page(
-        { title: 'ttheme — official', description: OFFICIAL_ABOUT, cache: CATALOG },
+        { title: 'ttheme — official', description: OFFICIAL_ABOUT, path: marketplacePath(null), cache: CATALOG },
         <MarketplaceStore marketplace={null} palettes={themes} gate={gate} facts={facts} />,
       )
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
     if (!marketplace) return noMarketplace(params.id)
     return page(
-      { title: `ttheme — ${marketplace.id}`, description: STORE, cache: CATALOG },
+      {
+        title: `ttheme — ${marketplace.id}`,
+        description: STORE,
+        path: marketplacePath(marketplace.id),
+        cache: CATALOG,
+      },
       <MarketplaceStore marketplace={marketplace} palettes={marketplace.palettes} gate={gate} facts={facts} />,
     )
   })
@@ -154,7 +168,9 @@ export const site = new Elysia({ name: 'site' })
       {
         title: `ttheme — ${found.theme.name}`,
         description: `${found.theme.name}, a ttheme palette someone shared — see it in a terminal and install it with one command`,
+        path: new URL(request.url).pathname,
         image: new URL(`${new URL(request.url).pathname}/card.png`, request.url).href,
+        imageAlt: `${found.theme.name}'s signature and sixteen ANSI colors`,
         cache: CATALOG,
       },
       <SharePage shared={found} builder={builderOf(found, gate)} />,
