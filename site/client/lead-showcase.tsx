@@ -1,7 +1,7 @@
 import { LeadUse } from '@/components/home'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
-import { fadeThrough, fill, readJson, reducedMotion } from './dom'
+import { announce, fadeThrough, fill, readJson, reducedMotion } from './dom'
 import { SparkleBurst } from './sparkle-burst'
 import { choose, onWear, recall, show } from './wear'
 
@@ -19,11 +19,15 @@ class LeadShowcase extends HTMLElement {
   #off = () => {}
 
   #click = (event: MouseEvent) => {
-    const target = event.target as Element
-    const step = target.closest<HTMLElement>('[data-pick]')
-    const lead = target.closest<HTMLElement>('[data-lead]')
+    const step = (event.target as Element).closest<HTMLElement>('[data-pick]')
     if (step) this.#step(Number(step.dataset.pick))
-    else if (lead) choose(this.#leads[Number(lead.dataset.lead)] as Theme)
+  }
+
+  #change = (event: Event) => {
+    const input = event.target
+    if (!(input instanceof HTMLInputElement) || input.name !== 'lead') return
+    const lead = this.#leads.find((theme) => theme.name === input.value)
+    if (lead) choose(lead)
   }
 
   #hidden = () => this.#hold('hidden', document.hidden)
@@ -52,13 +56,12 @@ class LeadShowcase extends HTMLElement {
     this.#leads = readJson<Theme[]>(this, 'script[data-leads]')
     this.#shown = (this.#leads[0] as Theme).name
     this.addEventListener('click', this.#click)
+    this.addEventListener('change', this.#change)
     this.#off = onWear((theme) => this.#pick(theme))
     const stored = recall()
-    if (stored) {
-      if (stored.name !== this.#shown) this.#draw(stored)
-      return
-    }
-    if (reducedMotion()) return
+    if (stored && stored.name !== this.#shown) this.#draw(stored)
+    else this.#check(this.#shown)
+    if (stored || reducedMotion()) return
     this.#cycling = true
     document.addEventListener('visibilitychange', this.#hidden)
     this.#window?.addEventListener('pointerenter', this.#enter)
@@ -79,6 +82,7 @@ class LeadShowcase extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
+    this.removeEventListener('change', this.#change)
     this.#off()
     this.#stop()
   }
@@ -131,7 +135,9 @@ class LeadShowcase extends HTMLElement {
   #step(delta: number) {
     const count = this.#leads.length
     const from = this.#at === -1 && delta < 0 ? 0 : this.#at
-    choose(this.#leads[(((from + delta) % count) + count) % count] as Theme)
+    const theme = this.#leads[(((from + delta) % count) + count) % count] as Theme
+    choose(theme)
+    announce(`wearing ${theme.name}`)
   }
 
   #cycle() {
@@ -152,8 +158,12 @@ class LeadShowcase extends HTMLElement {
     const sparkles = this.querySelector('sparkle-burst')
     if (sparkles instanceof SparkleBurst) sparkles.burst()
     fill(this.querySelector('[data-lead-use]'), html(<LeadUse theme={theme} />))
-    for (const button of this.querySelectorAll<HTMLElement>('[data-lead]'))
-      button.setAttribute('aria-pressed', String(this.#leads[Number(button.dataset.lead)]?.name === theme.name))
+    this.#check(theme.name)
+  }
+
+  #check(name: string) {
+    for (const input of this.querySelectorAll<HTMLInputElement>('input[name="lead"]'))
+      input.checked = input.value === name
   }
 }
 

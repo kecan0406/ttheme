@@ -212,15 +212,25 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             </h2>
             <p class="text-soft-foreground">The page wears whichever you pick, the way your terminal would.</p>
           </div>
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
+          <div
+            role="radiogroup"
+            aria-labelledby="characters"
+            class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"
+          >
             {leads.map((lead, index) => (
-              <button
-                type="button"
+              <label
                 data-lead={String(index)}
-                aria-pressed={String(index === 0)}
                 style={`background:${lead.background};color:${lead.foreground}`}
-                class="grid grid-cols-[minmax(0,1fr)] gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-4 pt-3.5 pb-4 text-left shadow-sm transition-[translate,scale,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-offset-4 active:scale-98 active:duration-500 active:ease-spring aria-pressed:ring-2 aria-pressed:ring-ring aria-pressed:ring-offset-2 aria-pressed:ring-offset-background motion-reduce:hover:translate-y-0"
+                class="grid cursor-pointer grid-cols-[minmax(0,1fr)] gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-4 pt-3.5 pb-4 shadow-sm transition-[translate,scale,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-98 active:duration-500 active:ease-spring has-checked:ring-2 has-checked:ring-ring has-checked:ring-offset-2 has-checked:ring-offset-background has-focus-visible:outline-2 has-focus-visible:outline-offset-4 has-focus-visible:outline-ring motion-reduce:hover:translate-y-0"
               >
+                <input
+                  type="radio"
+                  name="lead"
+                  value={lead.name}
+                  checked={index === 0}
+                  autocomplete="off"
+                  class="sr-only"
+                />
                 <span
                   class="font-display text-display-sm font-black [overflow-wrap:anywhere]"
                   style={`color:${lead.cursor}`}
@@ -236,7 +246,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                     <Signature theme={lead} />
                   </span>
                 </span>
-              </button>
+              </label>
             ))}
           </div>
         </section>
