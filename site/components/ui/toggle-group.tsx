@@ -9,8 +9,7 @@ const toggleVariants = cva(
       variant: {
         default:
           'min-h-8 rounded-full px-3 py-1 text-sm text-soft-foreground hover:bg-muted hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-checked:ring-1 has-checked:ring-border',
-        scene:
-          'rounded-sm px-2.5 py-0.75 text-xs text-(--fg)/65 hover:bg-(--fg)/12 hover:text-(--fg) has-checked:bg-(--fg)/18 has-checked:text-(--fg) has-checked:inset-ring has-checked:inset-ring-(--fg)/22',
+        tab: 'relative min-w-0 flex-1 rounded-md px-3 text-xs text-(--fg)/62 before:absolute before:top-1/2 before:left-0 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-(--fg)/16 first:before:hidden hover:text-(--fg) has-checked:bg-(--fg)/16 has-checked:text-(--fg) has-checked:shadow-sm has-checked:before:hidden has-focus-visible:ring-0 has-focus-visible:ring-offset-0 has-focus-visible:inset-ring-2 has-focus-visible:inset-ring-ring [:has(:checked)+&]:before:hidden [&>[data-mark]]:text-(--fg)/30 has-checked:[&>[data-mark]]:text-(--a5)',
         underline:
           'relative -mb-px px-0.5 pb-3 text-sm text-soft-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 hover:text-foreground has-checked:text-foreground has-checked:after:opacity-100',
       },
@@ -25,7 +24,7 @@ type Variant = NonNullable<VariantProps<typeof toggleVariants>['variant']>
 
 const GROUP: Record<Variant, string> = {
   default: 'rounded-full border border-border bg-muted/65',
-  scene: 'rounded-lg border border-(--fg)/16 bg-(--fg)/9',
+  tab: 'h-7.5 w-auto min-w-0 flex-1 flex-nowrap items-stretch gap-0 rounded-lg bg-(--fg)/6 p-0.5',
   underline: 'w-full gap-6 border-b border-border p-0',
 }
 

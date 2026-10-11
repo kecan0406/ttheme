@@ -8,7 +8,6 @@ import { fallback } from '@/lib/official'
 import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import { SPECULATION_RULES } from '@/lib/speculation'
-import type { Theme } from '@/lib/themes'
 import { rootStyle, type Vars, WEAR_SCRIPT, wearIcon } from '@/lib/wear'
 import { SHARE_URL } from '../../src/own.ts'
 
@@ -26,7 +25,6 @@ interface Page {
   imageAlt?: string
   status?: number
   cache: string
-  wear?: Theme
   root?: Vars
   head?: string
 }
@@ -37,7 +35,6 @@ function Document({
   path,
   image,
   imageAlt,
-  wear,
   root = [],
   head,
   children,
@@ -47,17 +44,16 @@ function Document({
   path?: string
   image?: string
   imageAlt?: string
-  wear?: Theme
   root?: Vars
   head?: string
 }>) {
   return (
-    <html lang="en" style={[rootStyle(wear ?? fallback), ...root.map(([name, value]) => `${name}:${value}`)].join(';')}>
+    <html lang="en" style={[rootStyle(fallback), ...root.map(([name, value]) => `${name}:${value}`)].join(';')}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content={(wear ?? fallback).background} />
-        <link rel="icon" type="image/svg+xml" href={wearIcon(wear ?? fallback)} />
+        <meta name="theme-color" content={fallback.background} />
+        <link rel="icon" type="image/svg+xml" href={wearIcon(fallback)} />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <title safe>{title}</title>
         <meta name="description" content={description} />
@@ -89,7 +85,7 @@ function Document({
         <link rel="stylesheet" href={assets.css} />
         <link rel="stylesheet" href={assets.cjk} media="print" onload="this.media='all'" />
         <script>{KEYS_SCRIPT}</script>
-        {wear ? null : <script>{WEAR_SCRIPT}</script>}
+        <script>{WEAR_SCRIPT}</script>
         {head ? <script>{head}</script> : null}
         <script>{HANDOFF_SCRIPT}</script>
         <script>{ROUTE_SCRIPT}</script>
@@ -119,7 +115,7 @@ function Document({
 }
 
 export function page(
-  { title, description, path, image, imageAlt, status = 200, cache, wear, root, head }: Page,
+  { title, description, path, image, imageAlt, status = 200, cache, root, head }: Page,
   body: JSX.Element,
 ): Response {
   const text = `<!doctype html>${html(
@@ -129,7 +125,6 @@ export function page(
       path={path}
       image={image}
       imageAlt={imageAlt}
-      wear={wear}
       root={root}
       head={head}
     >

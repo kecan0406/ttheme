@@ -380,16 +380,16 @@ function Stage({ shared, builder }: { shared: Shared; builder: Builder }) {
         class="mock"
         style={`${wearStyle(shared.theme)};--faint:${view.faint};--cols:${GRID.cols};--rows:${GRID.rows}`}
       >
-        <div class="flex h-10 flex-none items-center gap-4 border-b border-border bg-card pr-3 pl-4">
+        <div class="flex h-10 flex-none items-center gap-3 bg-card pr-1.5 pl-3.5">
           <span aria-hidden="true" class="flex gap-2">
             {LIGHTS.map((color) => (
               <i class="size-3 rounded-full inset-ring inset-ring-black/18" style={`background:${color}`} />
             ))}
           </span>
-          <TabsList label="terminal tabs" class="gap-1">
+          <TabsList label="terminal tabs" variant="track" class="flex-1">
             {panes.map((pane, i) => (
               <TabsTrigger
-                variant="pill"
+                variant="track"
                 selected={i === 0}
                 id={`share-tab-${pane.name}`}
                 aria-controls={`share-pane-${pane.name}`}

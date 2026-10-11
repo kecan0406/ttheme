@@ -8,6 +8,7 @@ declare namespace JSX {
     'kaomoji-rain': HtmlTag
     'lead-showcase': HtmlTag
     'marketplace-board': HtmlTag
+    'marketplace-workspace': HtmlTag
     'palette-picker': HtmlTag
     'route-progress': HtmlTag
     'share-sheet': HtmlTag

@@ -7,14 +7,14 @@ const tabVariants = cva(
   {
     variants: {
       variant: {
-        boxed: 'border-r border-border px-3 py-2 aria-selected:bg-background',
         underline:
           'relative flex-1 justify-center px-4 font-medium after:absolute after:inset-x-6 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 aria-selected:after:opacity-100',
-        pill: 'h-7 rounded-md px-3.5 font-mono text-xs hover:bg-muted aria-selected:bg-muted aria-selected:inset-ring aria-selected:inset-ring-border',
+        track:
+          'relative flex-1 justify-center rounded-md px-3 text-xs before:absolute before:top-1/2 before:left-0 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-foreground/16 first:before:hidden aria-selected:bg-foreground/14 aria-selected:shadow-sm aria-selected:before:hidden [[aria-selected=true]+&]:before:hidden',
       },
     },
     defaultVariants: {
-      variant: 'boxed',
+      variant: 'underline',
     },
   },
 )
@@ -23,15 +23,31 @@ type TabProps = PropsWithChildren<
   VariantProps<typeof tabVariants> & Omit<JSX.HtmlButtonTag, 'class'> & { class?: string; selected: boolean }
 >
 
-function TabsList({ class: className, label, children }: PropsWithChildren<{ class?: string; label: string }>) {
+const LISTS = {
+  plain: '',
+  track: 'h-7.5 rounded-lg bg-foreground/6 p-0.5',
+}
+
+function TabsList({
+  class: className,
+  variant = 'plain',
+  label,
+  children,
+}: PropsWithChildren<{ class?: string; variant?: keyof typeof LISTS; label: string }>) {
   return (
-    <div role="tablist" aria-label={label} data-slot="tabs-list" class={cn('flex min-w-0 items-stretch', className)}>
+    <div
+      role="tablist"
+      aria-label={label}
+      data-slot="tabs-list"
+      data-variant={variant}
+      class={cn('flex min-w-0 items-stretch', LISTS[variant], className)}
+    >
       {children}
     </div>
   )
 }
 
-function TabsTrigger({ class: className, variant = 'boxed', selected, ...props }: TabProps) {
+function TabsTrigger({ class: className, variant = 'underline', selected, ...props }: TabProps) {
   return (
     <button
       type="button"

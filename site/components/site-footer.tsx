@@ -3,7 +3,6 @@ import { Badge } from '@/components/ui/badge'
 import type { Facts } from '@/lib/facts'
 import { OFFICIAL_REPO } from '@/lib/gallery'
 import { BrandIcon } from '@/lib/icons'
-import type { Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 
 const REPO = `https://github.com/${OFFICIAL_REPO}`
@@ -39,20 +38,12 @@ const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
 const SIGNS = [0, 1, 2]
 
-function Ribbon({ theme }: { theme: Theme | 'worn' }) {
-  const colors = theme === 'worn' ? SLOTS.map((slot) => `var(--a${slot})`) : theme.ansi
+function Ribbon() {
   return (
-    <div data-slot="ribbon" class="grid gap-2">
-      <div aria-hidden="true" class="grid h-1.5 grid-cols-16 gap-0.75">
-        {colors.map((color) => (
-          <i class="rounded-full forced-color-adjust-none" style={`background:${color}`} />
-        ))}
-      </div>
-      {theme === 'worn' ? null : (
-        <p class="text-right font-mono text-2xs text-muted-foreground" safe>
-          {`ansi 0–15 · ${theme.name}`}
-        </p>
-      )}
+    <div data-slot="ribbon" aria-hidden="true" class="grid h-1.5 grid-cols-16 gap-0.75">
+      {SLOTS.map((slot) => (
+        <i class="rounded-full forced-color-adjust-none" style={`background:var(--a${slot})`} />
+      ))}
     </div>
   )
 }
@@ -166,12 +157,12 @@ function Mega() {
 export function SiteFooter({
   facts,
   current = '',
-  ribbon,
+  ribbon = false,
   landing = false,
 }: {
   facts: Facts
   current?: string
-  ribbon?: Theme | 'worn'
+  ribbon?: boolean
   landing?: boolean
 }) {
   return (
@@ -180,7 +171,7 @@ export function SiteFooter({
       class="relative isolate mt-auto before:absolute before:inset-0 before:-z-1 before:border-t before:border-border before:bg-glass before:backdrop-blur-[14px] before:backdrop-saturate-130"
     >
       <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-6">
-        {ribbon ? <Ribbon theme={ribbon} /> : null}
+        {ribbon ? <Ribbon /> : null}
         <div class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 max-[640px]:grid-cols-2 max-[640px]:gap-6">
           {landing ? <Tagline facts={facts} /> : <Brand facts={facts} />}
           <Columns current={current} />

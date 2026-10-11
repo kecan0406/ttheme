@@ -3,6 +3,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { Button, LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
+import { marketplacePath } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
@@ -11,6 +12,7 @@ import { CommandRow, INIT } from './command-row'
 import { Signature } from './palette-parts'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
+import { TerminalFrame, WINDOW_TITLE } from './terminal-frame'
 import { TerminalPreview } from './terminal-preview'
 
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
@@ -136,7 +138,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
               Windows Terminal, Warp, Konsole and Terminal.app. One command, then every tab can wear its own.
             </p>
             <div class="flex w-full flex-wrap items-center gap-3">
-              <LinkButton variant="pop" size="lg" href="/marketplace">
+              <LinkButton variant="pop" size="lg" href={marketplacePath(null)}>
                 browse the palettes
                 <Icon node={ArrowRight} />
               </LinkButton>
@@ -145,45 +147,42 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
           </div>
 
           <div class="grid grid-cols-[minmax(0,1fr)] gap-4">
-            <div data-lead-window class="overflow-hidden rounded-3xl border border-input bg-card shadow-lg">
-              <div class="relative flex items-center gap-2 border-b px-4 py-2.5">
-                <span aria-hidden="true" class="flex gap-1.5">
-                  <i class="size-2.5 rounded-full bg-(--a1)" />
-                  <i class="size-2.5 rounded-full bg-(--a3)" />
-                  <i class="size-2.5 rounded-full bg-(--a2)" />
-                </span>
-                <span
-                  data-lead-title
-                  aria-hidden="true"
-                  translate="no"
-                  class="min-w-0 flex-1 truncate text-center font-mono text-xs text-muted-foreground"
-                >
+            <TerminalFrame
+              data-lead-window
+              raised
+              heading={
+                <span data-lead-title aria-hidden="true" translate="no" class={WINDOW_TITLE}>
                   ttheme · <span data-text="name" /> · <span data-text="catalog" />
                 </span>
-                <Button variant="ghost" size="icon-sm" data-lead-rotate data-cycle="on" class="motion-reduce:hidden">
-                  <span data-when="on" class="contents">
-                    <Icon node={Pause} />
-                    <span class="sr-only">stop the palette cycle</span>
-                  </span>
-                  <span data-when="off" class="contents">
-                    <Icon node={Play} />
-                    <span class="sr-only">start the palette cycle</span>
-                  </span>
-                </Button>
-                <Button variant="ghost" size="icon-sm" aria-label="previous palette" data-pick="-1">
-                  <Icon node={ChevronLeft} />
-                </Button>
-                <Button variant="ghost" size="icon-sm" aria-label="next palette" data-pick="1">
-                  <Icon node={ChevronRight} />
-                </Button>
-                <i
-                  data-lead-progress
-                  aria-hidden="true"
-                  class="pointer-events-none absolute inset-x-0 -bottom-px h-0.5 origin-left scale-x-0 bg-primary opacity-0 transition-opacity duration-150 ease-[ease]"
-                />
-              </div>
+              }
+              controls={
+                <>
+                  <Button variant="ghost" size="icon-sm" data-lead-rotate data-cycle="on" class="motion-reduce:hidden">
+                    <span data-when="on" class="contents">
+                      <Icon node={Pause} />
+                      <span class="sr-only">stop the palette cycle</span>
+                    </span>
+                    <span data-when="off" class="contents">
+                      <Icon node={Play} />
+                      <span class="sr-only">start the palette cycle</span>
+                    </span>
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" aria-label="previous palette" data-pick="-1">
+                    <Icon node={ChevronLeft} />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" aria-label="next palette" data-pick="1">
+                    <Icon node={ChevronRight} />
+                  </Button>
+                  <i
+                    data-lead-progress
+                    aria-hidden="true"
+                    class="pointer-events-none absolute inset-x-0 -bottom-px h-0.5 origin-left scale-x-0 bg-primary opacity-0 transition-opacity duration-150 ease-[ease]"
+                  />
+                </>
+              }
+            >
               <LeadPreview theme={theme} />
-            </div>
+            </TerminalFrame>
             <div aria-hidden="true" class="flex items-center justify-center gap-1.5 px-1">
               {SLOTS.map((slot) => (
                 <i

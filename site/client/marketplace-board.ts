@@ -129,7 +129,7 @@ class MarketplaceBoard extends HTMLElement {
     if (!next) return
     this.#at.set(key, at)
     peek.setAttribute('style', next.style)
-    const title = peek.querySelector('[data-peek-title]')
+    const title = peek.querySelector('[data-window-title]')
     if (title) title.textContent = next.title
     const use = peek.querySelector('[data-use]')
     if (use) use.textContent = next.use

@@ -2,6 +2,7 @@ import { Menu } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import { BrandIcon, Icon } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import { PalettePicker } from './palette-picker'
 
 const NAV = [
@@ -9,20 +10,29 @@ const NAV = [
   { href: '/marketplace', label: 'marketplace' },
 ] as const
 
-export function SiteHeader({ current }: { current: string }) {
+export function SiteHeader({ current, fixed = false }: { current: string; fixed?: boolean }) {
   return (
     <header
       data-sticky
       data-site-header
+      data-fixed={fixed}
       class="sticky z-10 before:absolute before:inset-0 before:-z-1 before:border-b before:border-border before:bg-glass before:backdrop-blur-[14px] before:backdrop-saturate-130"
     >
-      <div class="mx-auto flex h-full w-[min(1280px,calc(100%-40px))] items-stretch justify-between gap-4">
+      <div
+        class={cn(
+          'mx-auto flex h-full items-stretch justify-between gap-4',
+          fixed ? 'w-full px-5' : 'w-[min(1280px,calc(100%-40px))]',
+        )}
+      >
         <div class="flex min-w-0 items-stretch gap-3 max-[720px]:gap-1.5">
           <a
             href="/"
             data-wordmark
             translate="no"
-            class="self-center rounded-sm font-display text-display-md font-black outline-none focus-visible:ring-2 focus-visible:ring-ring max-[720px]:text-display-sm"
+            class={cn(
+              'self-center rounded-sm font-display font-black outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              fixed ? 'text-display-sm' : 'text-display-md max-[720px]:text-display-sm',
+            )}
           >
             ttheme
           </a>

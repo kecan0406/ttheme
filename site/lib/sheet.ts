@@ -58,8 +58,3 @@ export function sheetVars(theme: Theme, number: string, gate: GateRule[]): Vars 
     ...marks,
   ]
 }
-
-export function lightness(hex: string): string {
-  const y = luminance(hex)
-  return (y > 216 / 24389 ? 116 * Math.cbrt(y) - 16 : (24389 / 27) * y).toFixed(1)
-}

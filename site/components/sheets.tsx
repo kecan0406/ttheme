@@ -187,7 +187,7 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
           <Icon node={ChevronRight} />
         </Button>
       </nav>
-      <SiteFooter facts={facts} current="/sheets" ribbon="worn" />
+      <SiteFooter facts={facts} current="/sheets" ribbon />
       <script type="application/json" data-sheets>
         {json({ themes, gate })}
       </script>

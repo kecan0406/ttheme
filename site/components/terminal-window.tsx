@@ -1,11 +1,11 @@
 import type { PropsWithChildren } from '@kitajs/html'
 import { Plus } from 'lucide'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Icon } from '@/lib/icons'
 import type { Theme } from '@/lib/themes'
+import { TerminalFrame } from './terminal-frame'
 
 export interface Tab {
   id: number
@@ -116,13 +116,9 @@ export function Session() {
 
 export function TerminalTabs({ tabs, active }: { tabs: Tab[]; active: number }) {
   return (
-    <TabsList label="terminal tabs" class="flex-1">
+    <TabsList label="terminal tabs" variant="track" class="flex-1">
       {tabs.map((tab) => (
-        <TabsTrigger
-          selected={tab.id === active}
-          data-tab={String(tab.id)}
-          class="-mb-px flex-[0_1_136px] gap-2 py-2 text-xs"
-        >
+        <TabsTrigger variant="track" selected={tab.id === active} data-tab={String(tab.id)}>
           {tab.id === active ? (
             <>
               <i class="size-2 flex-none rounded-full bg-(--cu)" />
@@ -144,21 +140,24 @@ export function TerminalTabs({ tabs, active }: { tabs: Tab[]; active: number }) 
 
 export function TerminalWindow({ tabs, active }: { tabs: Tab[]; active: number }) {
   return (
-    <Card class="w-full border-input shadow-lg">
-      <div data-slot="tabs" class="flex flex-col">
-        <div data-tabs class="flex min-w-0 border-b bg-muted text-xs">
+    <TerminalFrame
+      raised
+      class="w-full"
+      tabs={
+        <div data-tabs class="flex min-w-0 flex-1 items-center gap-2">
           <TerminalTabs tabs={tabs} active={active} />
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon-sm"
             aria-label="new tab on the next sheet"
             data-new-tab
-            class="h-auto w-9.5 flex-none rounded-none text-muted-foreground hover:text-primary"
+            class="flex-none text-muted-foreground hover:text-primary"
           >
             <Icon node={Plus} />
           </Button>
         </div>
-      </div>
+      }
+    >
       <div class="relative">
         <ScrollArea contentClass="term w-max min-w-full px-4.5 pt-3.5 pb-4">
           <div data-session>
@@ -166,6 +165,6 @@ export function TerminalWindow({ tabs, active }: { tabs: Tab[]; active: number }
           </div>
         </ScrollArea>
       </div>
-    </Card>
+    </TerminalFrame>
   )
 }

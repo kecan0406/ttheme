@@ -1,11 +1,11 @@
 import { Elysia, NotFound } from 'elysia'
 import { Home } from '@/components/home'
+import { NoSuchMarketplace, NoSuchPalette } from '@/components/marketplace-frame'
 import { MarketplacePage } from '@/components/marketplace-page'
-import { MarketplaceStore, NoSuchMarketplace } from '@/components/marketplace-store'
 import { Missing } from '@/components/missing'
-import { NoSuchPalette, PalettePage } from '@/components/palette-page'
 import { SharePage } from '@/components/share-page'
 import { Sheets } from '@/components/sheets'
+import { MarketplaceWorkspace } from '@/components/workspace'
 import { cardPng, touchIconPng } from '@/lib/card'
 import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
@@ -17,6 +17,7 @@ import { builderOf, readShared, type Shared } from '@/lib/share'
 import { sheetNumber, sheetVars } from '@/lib/sheet'
 import { sheetScript } from '@/lib/sheet-script'
 import type { Marketplace, Theme } from '@/lib/themes'
+import { leadOf } from '@/lib/workspace'
 import pkg from '../../package.json' with { type: 'json' }
 import { page } from './document'
 
@@ -53,17 +54,19 @@ export const PRERENDERED: string[] = [
   ...marketplaces.flatMap((marketplace) => [marketplacePath(marketplace.id), ...marketplace.palettes.map(palettePath)]),
 ]
 
-function palettePage(theme: Theme, marketplace: Marketplace | null, palettes: Theme[]): Response {
+function workspace(marketplace: Marketplace | null, palettes: Theme[], theme: Theme | null): Response {
+  const shown = theme ?? leadOf(catalogsOf(palettes)[0]?.themes ?? palettes)
+  const head = theme
+    ? { title: `ttheme — ${theme.name}`, description: about(theme), path: palettePath(theme), ...cardOf(theme) }
+    : {
+        title: `ttheme — ${marketplace?.id ?? OFFICIAL}`,
+        description: marketplace ? STORE : OFFICIAL_ABOUT,
+        path: marketplacePath(marketplace?.id ?? null),
+        ...CARD,
+      }
   return page(
-    {
-      title: `ttheme — ${theme.name}`,
-      description: about(theme),
-      path: palettePath(theme),
-      ...cardOf(theme),
-      cache: CATALOG,
-      wear: theme,
-    },
-    <PalettePage theme={theme} marketplace={marketplace} palettes={palettes} gate={gate} facts={facts} />,
+    { ...head, cache: CATALOG },
+    <MarketplaceWorkspace marketplace={marketplace} palettes={palettes} theme={shown} gate={gate} facts={facts} />,
   )
 }
 
@@ -130,39 +133,20 @@ export const site = new Elysia({ name: 'site' })
     ),
   )
   .get('/marketplace/:id', ({ params }) => {
-    if (params.id === OFFICIAL)
-      return page(
-        {
-          title: 'ttheme — official',
-          description: OFFICIAL_ABOUT,
-          path: marketplacePath(null),
-          ...CARD,
-          cache: CATALOG,
-        },
-        <MarketplaceStore marketplace={null} palettes={themes} gate={gate} facts={facts} />,
-      )
+    if (params.id === OFFICIAL) return workspace(null, themes, null)
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
     if (!marketplace) return noMarketplace(params.id)
-    return page(
-      {
-        title: `ttheme — ${marketplace.id}`,
-        description: STORE,
-        path: marketplacePath(marketplace.id),
-        ...CARD,
-        cache: CATALOG,
-      },
-      <MarketplaceStore marketplace={marketplace} palettes={marketplace.palettes} gate={gate} facts={facts} />,
-    )
+    return workspace(marketplace, marketplace.palettes, null)
   })
   .get('/marketplace/:id/:name', ({ params }) => {
     if (params.id === OFFICIAL) {
       const theme = themes.find((entry) => entry.name === params.name)
-      return theme ? palettePage(theme, null, themes) : noPalette(OFFICIAL, params.name)
+      return theme ? workspace(null, themes, theme) : noPalette(OFFICIAL, params.name)
     }
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
     if (!marketplace) return noMarketplace(params.id)
     const theme = marketplace.palettes.find((entry) => entry.name === params.name)
-    return theme ? palettePage(theme, marketplace, marketplace.palettes) : noPalette(marketplace.id, params.name)
+    return theme ? workspace(marketplace, marketplace.palettes, theme) : noPalette(marketplace.id, params.name)
   })
   .get('/marketplace/:id/:name/card.png', ({ params }) => {
     const palettes = params.id === OFFICIAL ? themes : marketplaces.find((entry) => entry.id === params.id)?.palettes

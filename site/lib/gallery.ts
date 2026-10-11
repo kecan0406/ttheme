@@ -57,27 +57,19 @@ export function palettePath(theme: Pick<Theme, 'marketplace' | 'name'>): string 
   return `${marketplacePath(theme.marketplace)}/${encodeURIComponent(theme.name)}`
 }
 
-export function catalogAnchor(catalog: string | null): string {
-  if (catalog === null) return 'loose'
-  return `catalog-${catalog
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
-    .replace(/^-|-$/g, '')}`
-}
-
-export function catalogPath(theme: Pick<Theme, 'marketplace' | 'catalog'>): string {
-  return `${marketplacePath(theme.marketplace)}#${catalogAnchor(theme.catalog)}`
-}
-
 export interface Peek {
   title: string
   use: string
   style: string
 }
 
+export function windowTitle(theme: Pick<Theme, 'name'>, catalog: string | null): string {
+  return [catalog, theme.name].filter(Boolean).join(' · ')
+}
+
 export function peekOf(lead: Theme, catalog: string | null): Peek {
   return {
-    title: [catalog, lead.name].filter(Boolean).join(' · '),
+    title: windowTitle(lead, catalog),
     use: lead.marketplace ? lead.id : lead.name,
     style: wearStyle(lead),
   }

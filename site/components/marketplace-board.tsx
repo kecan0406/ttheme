@@ -8,10 +8,10 @@ import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupCount, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { catalogsOf, nativeLang } from '@/lib/catalogs'
 import {
-  catalogPath,
   marketplacePath,
   OFFICIAL,
   type Peek,
+  palettePath,
   peekOf,
   type Shelf,
   SOURCES,
@@ -24,6 +24,7 @@ import { BrandIcon, Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
+import { TerminalFrame } from './terminal-frame'
 import { TerminalPreview } from './terminal-preview'
 
 const DOTS = 9
@@ -67,7 +68,7 @@ function PaletteDots({ themes }: { themes: Theme[] }) {
 function CatalogCard({ catalog, official }: { catalog: Catalog; official: boolean }) {
   return (
     <a
-      href={catalogPath(catalog.lead)}
+      href={palettePath(catalog.lead)}
       data-catalog
       data-search={catalog.themes.map((theme) => searchable(theme).text).join('\n')}
       data-official={official}
@@ -101,22 +102,14 @@ function PeekWindow({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[] }) 
   if (!first) return null
   const peek = peekOf(first.lead, first.catalog)
   return (
-    <div
+    <TerminalFrame
       data-peek={shelf.id}
       data-slot="peek-window"
       style={peek.style}
-      class="min-w-0 flex-[0_1_440px] overflow-hidden rounded-2xl bg-(--bg) text-(--fg) ring-1 ring-border"
-    >
-      <div class="flex items-center gap-2 border-b border-(--fg)/12 py-1 pr-1 pl-3.5">
-        <span aria-hidden="true" class="flex gap-1.5">
-          <i class="size-2.5 rounded-full bg-(--a1)" />
-          <i class="size-2.5 rounded-full bg-(--a3)" />
-          <i class="size-2.5 rounded-full bg-(--a2)" />
-        </span>
-        <span data-peek-title class="min-w-0 flex-1 truncate text-center font-mono text-xs text-(--fg)/62" safe>
-          {peek.title}
-        </span>
-        {catalogs.length > 1 ? (
+      title={peek.title}
+      class="min-w-0 flex-[0_1_440px]"
+      controls={
+        catalogs.length > 1 ? (
           <>
             <Button variant="scene" size="icon-sm" aria-label="previous palette" data-peek-step="-1">
               <Icon node={ChevronLeft} />
@@ -125,10 +118,11 @@ function PeekWindow({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[] }) 
               <Icon node={ChevronRight} />
             </Button>
           </>
-        ) : null}
-      </div>
+        ) : undefined
+      }
+    >
       <TerminalPreview theme={first.lead} scene="shell" worn class="min-h-0 px-4 pt-3 pb-3.5" />
-    </div>
+    </TerminalFrame>
   )
 }
 
