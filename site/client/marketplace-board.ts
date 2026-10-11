@@ -8,7 +8,7 @@ import {
   START,
   shelvesMatching,
 } from '@/lib/gallery'
-import { readJson, reducedMotion } from './dom'
+import { readJson, reducedMotion, tally } from './dom'
 import { composing, letter, typing } from './keys'
 
 const TURN_MS = 2000
@@ -37,14 +37,14 @@ class MarketplaceBoard extends HTMLElement {
     const target = event.target as HTMLInputElement
     if (target.name !== 'query') return
     this.#filters = { ...this.#filters, query: target.value }
-    this.#render()
+    tally(this.#render())
   }
 
   #change = (event: Event) => {
     const { name, value } = event.target as HTMLInputElement
     if (name !== 'source') return
     this.#filters = { ...this.#filters, source: value as Source }
-    this.#render()
+    tally(this.#render())
   }
 
   #toggle = (event: Event) => {
@@ -135,7 +135,7 @@ class MarketplaceBoard extends HTMLElement {
     if (use) use.textContent = next.use
   }
 
-  #render() {
+  #render(): number {
     const shelves = [...this.querySelectorAll<HTMLElement>('[data-shelf]')]
     const cards = shelves.map((shelf) => [...shelf.querySelectorAll<HTMLElement>('[data-catalog]')])
     const members = cards.map((group) => group.map(palettesOf))
@@ -164,6 +164,7 @@ class MarketplaceBoard extends HTMLElement {
     const title = this.querySelector('[data-empty-title]')
     const query = this.#filters.query.trim()
     if (title) title.textContent = `no palette matches${query ? ` “${query}”` : ' these filters'}`
+    return shown
   }
 }
 

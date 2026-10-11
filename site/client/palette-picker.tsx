@@ -1,7 +1,7 @@
 import { PaletteOptions } from '@/components/palette-picker'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
-import { announce, fill } from './dom'
+import { fill, tally } from './dom'
 import { composing } from './keys'
 import { choose, current } from './wear'
 
@@ -11,7 +11,6 @@ class PalettePicker extends HTMLElement {
   #themes: Theme[] | undefined
   #loading: Promise<void> | undefined
   #touch = false
-  #counting = 0
   #active: HTMLElement | undefined
 
   get #panel(): HTMLElement {
@@ -138,11 +137,7 @@ class PalettePicker extends HTMLElement {
     const field = event.target
     if (!(field instanceof HTMLInputElement) || !field.matches('[data-search]')) return
     this.#narrow(field.value.trim().toLowerCase())
-    window.clearTimeout(this.#counting)
-    this.#counting = window.setTimeout(() => {
-      const count = this.#options.length
-      announce(count === 0 ? 'no palette matches' : `${count} ${count === 1 ? 'palette' : 'palettes'}`)
-    }, 500)
+    tally(this.#options.length)
   }
 
   #pick(option: HTMLElement | undefined) {

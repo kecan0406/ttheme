@@ -13,6 +13,11 @@ import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { TerminalWindow } from './terminal-window'
 
+export function stepLabel(themes: Theme[], at: number, delta: number): string {
+  const theme = themes[(at + delta + themes.length) % themes.length] as Theme
+  return `${delta < 0 ? 'previous' : 'next'} sheet, ${theme.name}`
+}
+
 export function SheetHeading({ theme, count }: { theme: Theme; count: number }) {
   return (
     <>
@@ -100,7 +105,7 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
             <Button
               variant="outline"
               size="icon"
-              aria-label="previous sheet"
+              aria-label={stepLabel(themes, 0, -1)}
               aria-keyshortcuts="ArrowLeft"
               data-step="-1"
             >
@@ -109,7 +114,13 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
             <div data-heading class="grid justify-items-center gap-2 text-center">
               <SheetHeading theme={theme} count={themes.length} />
             </div>
-            <Button variant="outline" size="icon" aria-label="next sheet" aria-keyshortcuts="ArrowRight" data-step="1">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label={stepLabel(themes, 0, 1)}
+              aria-keyshortcuts="ArrowRight"
+              data-step="1"
+            >
               <Icon node={ChevronRight} />
             </Button>
           </div>

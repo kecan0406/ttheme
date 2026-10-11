@@ -57,7 +57,7 @@ function features(palettes: number, catalogs: number) {
 const STEPS = [
   {
     title: 'install',
-    text: "Sets up the shell layer and your terminal's config, then asks which palettes to bring.",
+    text: 'Needs Node 22+ and zsh. Asks which terminals and palettes to bring, shows every file it will change, and writes nothing until you confirm.',
     command: INIT,
   },
   {
@@ -137,12 +137,18 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
               Character color palettes, measured from official art, for Ghostty, iTerm2, WezTerm, kitty, Alacritty,
               Windows Terminal, Warp, Konsole and Terminal.app. One command, then every tab can wear its own.
             </p>
-            <div class="flex w-full flex-wrap items-center gap-3">
-              <LinkButton variant="pop" size="lg" href={marketplacePath(null)}>
-                browse the palettes
-                <Icon node={ArrowRight} />
-              </LinkButton>
-              <CommandRow command={INIT} class="min-w-70 flex-1 bg-card" />
+            <div class="grid w-full gap-2.5">
+              <div class="flex w-full flex-wrap items-center gap-3">
+                <LinkButton variant="pop" size="lg" href={marketplacePath(null)}>
+                  browse the palettes
+                  <Icon node={ArrowRight} />
+                </LinkButton>
+                <CommandRow command={INIT} class="min-w-70 flex-1 bg-card" />
+              </div>
+              <p class="text-xs text-muted-foreground">
+                Needs Node 22+ and zsh · shows every file it changes before writing ·{' '}
+                <code class="font-mono">uninstall</code> in place of <code class="font-mono">init</code> undoes it
+              </p>
             </div>
           </div>
 

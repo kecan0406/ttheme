@@ -1,4 +1,4 @@
-import { SheetDetails, SheetUse } from '@/components/sheets'
+import { SheetDetails, SheetUse, stepLabel } from '@/components/sheets'
 import { TerminalTabs } from '@/components/terminal-window'
 import { html } from '@/lib/render'
 import { sheetNumber, sheetVars } from '@/lib/sheet'
@@ -165,6 +165,8 @@ class SheetBrowser extends HTMLElement {
     for (const [name, value] of sheetVars(theme, sheetNumber(this.#themes, theme), this.#gate))
       root.style.setProperty(name, value)
     this.querySelector('[data-sheet-label]')?.setAttribute('aria-label', theme.name)
+    for (const button of this.querySelectorAll<HTMLElement>('[data-sheet-label] [data-step]'))
+      button.setAttribute('aria-label', stepLabel(this.#themes, this.#at, Number(button.dataset.step)))
     const name = this.querySelector('[data-heading] h1 > .sr-only')
     if (name) name.textContent = theme.name
     const list = this.querySelector('[data-tabs] [role="tablist"]')

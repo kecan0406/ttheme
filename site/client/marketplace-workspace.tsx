@@ -4,7 +4,7 @@ import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
 import { nameAt, neighbors, type WorkspaceData } from '@/lib/workspace'
-import { announce, fill, readJson } from './dom'
+import { announce, fill, readJson, tally } from './dom'
 import { bare, composing, letter, typing } from './keys'
 
 const STEPS: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 }
@@ -46,7 +46,7 @@ class MarketplaceWorkspace extends HTMLElement {
     const field = event.target as HTMLInputElement
     if (field.name !== 'query') return
     this.#query = field.value
-    this.#filter()
+    tally(this.#filter())
   }
 
   #keydown = (event: KeyboardEvent) => {
@@ -135,7 +135,7 @@ class MarketplaceWorkspace extends HTMLElement {
     group.querySelector('ul')?.toggleAttribute('hidden', !open)
   }
 
-  #filter() {
+  #filter(): number {
     const query = this.#query.trim().toLowerCase()
     let shown = 0
     for (const group of this.querySelectorAll<HTMLElement>('[data-group]')) {
@@ -154,6 +154,7 @@ class MarketplaceWorkspace extends HTMLElement {
       shown += matched
     }
     this.querySelector('[data-empty]')?.toggleAttribute('hidden', shown > 0)
+    return shown
   }
 
   #reveal() {

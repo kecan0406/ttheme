@@ -1,3 +1,7 @@
+import { plural } from '@/lib/utils'
+
+let tallying = 0
+
 export function readJson<T>(host: Element, selector: string): T {
   const script = host.querySelector<HTMLScriptElement>(selector)
   if (!script?.textContent) throw new Error(`${selector} is missing`)
@@ -22,6 +26,11 @@ export function announce(text: string) {
   window.setTimeout(() => {
     region.textContent = text
   }, 50)
+}
+
+export function tally(count: number) {
+  window.clearTimeout(tallying)
+  tallying = window.setTimeout(() => announce(count === 0 ? 'no palette matches' : plural(count, 'palette')), 500)
 }
 
 export function reducedMotion(): boolean {
