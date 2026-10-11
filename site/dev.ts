@@ -2,7 +2,7 @@ import { existsSync, watch } from 'node:fs'
 import { join } from 'node:path'
 import { Elysia, file, NotFound } from 'elysia'
 import { autoHead } from 'elysia/auto-head'
-import { ASSETS, buildAssets, SITE, snapshot } from './build'
+import { ASSETS, buildAssets, IMMUTABLE, SITE, snapshot } from './build'
 
 await buildAssets(false)
 await snapshot(false)
@@ -49,7 +49,7 @@ new Elysia()
   .get('/assets/*', ({ params, set }) => {
     const name = params['*']
     if (!/^\w[\w.-]*$/.test(name) || !existsSync(join(ASSETS, name))) throw new NotFound()
-    set.headers['cache-control'] = 'no-store'
+    set.headers['cache-control'] = name.endsWith('.woff2') ? IMMUTABLE : 'no-store'
     return file(join(ASSETS, name))
   })
   .use(site)

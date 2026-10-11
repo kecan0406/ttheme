@@ -14,6 +14,26 @@ function drop(at: number) {
   } catch {}
 }
 
+function folded(): number {
+  const header = document.querySelector('[data-site-header]')
+  if (!header) return 0
+  const fold = Number.parseFloat(getComputedStyle(header).paddingTop)
+  if (!(fold > 0)) return 0
+  return Math.round(Math.min(1, Math.max(0, -header.getBoundingClientRect().top / fold)) * 1000) / 1000
+}
+
+function underlined(): string | null {
+  const nav = document.querySelector('[data-site-header] [data-glide]')
+  if (!nav || !CSS.supports('anchor-name', '--glide')) return null
+  if (Number(getComputedStyle(nav, '::before').opacity) < 0.5) return ''
+  for (const link of nav.querySelectorAll('a')) {
+    const label = link.firstElementChild
+    if (label && getComputedStyle(label).getPropertyValue('anchor-name') === '--glide')
+      return link.getAttribute('href') ?? ''
+  }
+  return ''
+}
+
 function leave(event: NavigateEvent) {
   const { destination } = event
   if (destination.sameDocument || event.downloadRequest !== null) return
@@ -32,7 +52,16 @@ function leave(event: NavigateEvent) {
     const light = document.documentElement.style.colorScheme === 'light'
     sessionStorage.setItem(
       HANDOFF_KEY,
-      JSON.stringify({ to: destination.url, at, t: event.navigationType, v: vars, l: light, p: point }),
+      JSON.stringify({
+        to: destination.url,
+        at,
+        t: event.navigationType,
+        v: vars,
+        l: light,
+        p: point,
+        f: folded(),
+        g: underlined(),
+      }),
     )
     event.signal.addEventListener('abort', () => drop(at), { once: true })
   } catch {}

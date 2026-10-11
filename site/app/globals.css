@@ -335,6 +335,36 @@ facet-ground .t2 {
   [data-site-header] [data-wordmark] {
     animation-name: header-wordmark;
   }
+
+  :root[data-unfold] [data-site-header] {
+    animation: header-unfold 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.06s backwards;
+  }
+
+  :root[data-unfold] [data-site-header]::before {
+    animation:
+      glass-in linear both,
+      glass-unfold 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.06s backwards;
+    animation-timeline: scroll(root), auto;
+    animation-range: 0px var(--fold), normal;
+  }
+
+  :root[data-unfold] [data-site-header] > div {
+    animation:
+      header-row linear both,
+      row-unfold 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.06s backwards;
+    animation-timeline: scroll(root), auto;
+    animation-range: 0px var(--fold), normal;
+  }
+
+  @media (width >= 720px) {
+    :root[data-unfold] [data-site-header] [data-wordmark] {
+      animation:
+        header-wordmark linear both,
+        wordmark-unfold 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.06s backwards;
+      animation-timeline: scroll(root), auto;
+      animation-range: 0px var(--fold), normal;
+    }
+  }
 }
 
 @supports (animation-timeline: view()) {
@@ -364,6 +394,32 @@ facet-ground .t2 {
 @keyframes header-wordmark {
   to {
     font-size: --theme(--text-display-sm inline);
+  }
+}
+
+@keyframes header-unfold {
+  from {
+    translate: 0 calc(var(--fold) * var(--unfold) * -1);
+  }
+}
+
+@keyframes glass-unfold {
+  from {
+    opacity: var(--unfold);
+  }
+}
+
+@keyframes row-unfold {
+  from {
+    translate: 0 calc(var(--fold) / -2 * (1 - var(--unfold)));
+  }
+}
+
+@keyframes wordmark-unfold {
+  from {
+    font-size: calc(
+      --theme(--text-display-md inline) * (1 - var(--unfold)) + --theme(--text-display-sm inline) * var(--unfold)
+    );
   }
 }
 
@@ -475,6 +531,23 @@ facet-ground .t2 {
     background: var(--key);
   }
 
+  [data-glide] a[data-glide-from] > span {
+    anchor-name: --glide-from;
+    transition: none;
+  }
+
+  [data-glide]:not(:has(a[aria-current='page'])) a[data-glide-from] > span {
+    anchor-name: --glide, --glide-from;
+  }
+
+  [data-glide]:has(a[data-glide-from])::before {
+    animation: glide-from var(--glide-fade) ease var(--glide-linger) backwards;
+  }
+
+  [data-glide][data-glide-from]::before {
+    animation: glide-in var(--glide-fade) ease var(--glide-linger) backwards;
+  }
+
   @media (hover: hover) {
     [data-glide]:not(:has(a:focus-visible)) a:hover > span {
       anchor-name: --glide;
@@ -504,6 +577,23 @@ facet-ground .t2 {
       scale: none;
       transition-property: opacity, background-color;
     }
+  }
+}
+
+@keyframes glide-from {
+  from {
+    top: calc(anchor(--glide-from bottom) + 1px);
+    right: anchor(--glide-from right);
+    left: anchor(--glide-from left);
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes glide-in {
+  from {
+    opacity: 0;
+    scale: 0 1;
   }
 }
 

@@ -11,7 +11,7 @@ export const ASSETS = join(SITE, 'public', 'assets')
 
 const OUTPUT = join(SITE, '.vercel', 'output')
 
-const IMMUTABLE = 'public, max-age=31536000, s-maxage=31536000, immutable'
+export const IMMUTABLE = 'public, max-age=31536000, s-maxage=31536000, immutable'
 
 const HTML = 'text/html; charset=utf-8'
 
@@ -53,7 +53,7 @@ class Shelf {
 
   put(file: string, data: Uint8Array | string): string {
     const { name, ext } = parse(file)
-    const shipped = this.#production ? `${name}-${Bun.hash(data).toString(36)}${ext}` : file
+    const shipped = this.#production || ext === '.woff2' ? `${name}-${Bun.hash(data).toString(36)}${ext}` : file
     writeFileSync(join(ASSETS, shipped), data)
     this.#names.set(name, shipped)
     return shipped
