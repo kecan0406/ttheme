@@ -1,5 +1,6 @@
+import type { Point } from '@/lib/facets'
 import type { Theme } from '@/lib/themes'
-import { isLight, SHOW_EVENT, WEAR_EVENT, WEAR_KEY, wearSigns, wearSlots, wearVars } from '@/lib/wear'
+import { isLight, SHOW_EVENT, type Shown, SIGNS, SLOTS, type Vars, WEAR_EVENT, WEAR_KEY, wearVars } from '@/lib/wear'
 import { reducedMotion } from './dom'
 import { respeculate } from './speculation'
 
@@ -12,6 +13,8 @@ const FADE: KeyframeEffectOptions = { duration: 400, easing: 'cubic-bezier(0.3, 
 const painted = new Map<string, Rgb>()
 
 let fading: Animation | null = null
+
+let goal: Vars = []
 
 function isTheme(value: unknown): value is Theme {
   if (typeof value !== 'object' || value === null) return false
@@ -70,8 +73,22 @@ function mix(from: Rgb, to: Rgb, progress: number): Rgb {
   ]
 }
 
-function fade(root: HTMLElement, slots: [string, string][]) {
-  if (!fading && slots.every(([slot, color]) => root.style.getPropertyValue(slot) === color)) return
+function same(slots: Vars, other: Vars): boolean {
+  return (
+    slots.length === other.length &&
+    slots.every(([slot, color], index) => other[index]?.[0] === slot && other[index]?.[1] === color)
+  )
+}
+
+function settle(root: HTMLElement) {
+  fading?.cancel()
+  fading = null
+  painted.clear()
+  delete root.dataset.settling
+}
+
+function fade(root: HTMLElement, slots: Vars) {
+  if (fading ? same(slots, goal) : slots.every(([slot, color]) => root.style.getPropertyValue(slot) === color)) return
   const fades = slots.map(([slot, color]) => {
     const worn = root.style.getPropertyValue(slot)
     return { slot, from: painted.get(slot) ?? rgb(COLOR.test(worn) ? worn : color), to: rgb(color) }
@@ -89,25 +106,65 @@ function fade(root: HTMLElement, slots: [string, string][]) {
     requestAnimationFrame(progress < 1 ? step : settled)
   }
   const settled = () => {
-    if (fading !== clock) return
-    fading = null
-    painted.clear()
-    delete root.dataset.settling
+    if (fading === clock) settle(root)
   }
   fading?.cancel()
   fading = clock
+  goal = slots
   root.dataset.settling = ''
   clock.play()
   requestAnimationFrame(step)
 }
 
-export function show(theme: Theme) {
-  document.dispatchEvent(new CustomEvent<Theme>(SHOW_EVENT, { detail: theme }))
+function wear(vars: Vars, light: boolean, origin: Point | null) {
+  document.dispatchEvent(new CustomEvent<Shown>(SHOW_EVENT, { detail: { vars, origin, instant: false } }))
   const root = document.documentElement
-  for (const [name, value] of wearSigns(theme)) root.style.setProperty(name, value)
-  root.style.colorScheme = isLight(theme) ? 'light' : 'dark'
-  fade(root, wearSlots(theme))
+  for (const [name, value] of vars) if (SIGNS.includes(name)) root.style.setProperty(name, value)
+  root.style.colorScheme = light ? 'light' : 'dark'
+  fade(
+    root,
+    vars.filter(([name]) => SLOTS.includes(name)),
+  )
 }
+
+export function show(theme: Theme) {
+  wear(wearVars(theme), isLight(theme), null)
+}
+
+export function worn(): Vars {
+  const { style } = document.documentElement
+  return [...SLOTS, ...SIGNS].map((name): [string, string] => [name, style.getPropertyValue(name)])
+}
+
+function handed(text: string): { vars: Vars; light: boolean; origin: Point | null } | null {
+  try {
+    const { v, l, p } = JSON.parse(text) as { v: Vars; l: boolean; p: unknown }
+    const origin =
+      Array.isArray(p) && typeof p[0] === 'number' && typeof p[1] === 'number' ? { x: p[0], y: p[1] } : null
+    return { vars: v, light: l, origin }
+  } catch {
+    return null
+  }
+}
+
+export function arrive() {
+  const root = document.documentElement
+  const text = root.dataset.handoff
+  if (text === undefined) return
+  delete root.dataset.handoff
+  const own = handed(text)
+  if (!own) return
+  settle(root)
+  document.dispatchEvent(new CustomEvent<Shown>(SHOW_EVENT, { detail: { vars: worn(), origin: null, instant: true } }))
+  wear(own.vars, own.light, own.origin)
+}
+
+window.addEventListener('pageshow', (event) => {
+  if (!event.persisted || !fading) return
+  const root = document.documentElement
+  for (const [slot, color] of goal) root.style.setProperty(slot, color)
+  settle(root)
+})
 
 export function current(): string {
   try {

@@ -486,40 +486,48 @@ route-progress[data-state='done'],
   transition: none !important;
 }
 
-lead-showcase [data-lead-name] {
+:root[data-fading] lead-showcase [data-lead-name] {
   view-transition-name: lead-name;
 }
 
-lead-showcase [data-lead-title] {
+:root[data-fading] lead-showcase [data-lead-title] {
   view-transition-name: lead-title;
 }
 
-lead-showcase [data-lead-use] code {
+:root[data-fading] lead-showcase [data-lead-use] code {
   view-transition-name: lead-use;
 }
 
-sheet-browser [data-heading] {
+:root[data-fading] sheet-browser [data-heading] {
   view-transition-name: sheet-heading;
 }
 
-sheet-browser [data-slot='scroll-area']:has([data-session]) {
+:root[data-fading] sheet-browser [data-slot='scroll-area']:has([data-session]) {
   view-transition-name: sheet-session;
 }
 
-sheet-browser [data-use] code {
+:root[data-fading] sheet-browser [data-use] code {
   view-transition-name: sheet-use;
 }
 
-sheet-browser #sheet-details > :nth-child(1) {
+:root[data-fading] sheet-browser #sheet-details > :nth-child(1) {
   view-transition-name: sheet-details-1;
 }
 
-sheet-browser #sheet-details > :nth-child(2) {
+:root[data-fading] sheet-browser #sheet-details > :nth-child(2) {
   view-transition-name: sheet-details-2;
+}
+
+:root[data-fading] sheet-browser [role='tab'] > span {
+  view-transition-name: var(--tab-name, none);
 }
 
 :root {
   view-transition-name: none;
+}
+
+@view-transition {
+  navigation: auto;
 }
 
 ::view-transition {

@@ -108,7 +108,11 @@ function Preview({ theme }: { theme: Theme }) {
           ))}
         </ToggleGroup>
       </SectionHead>
-      <div class="overflow-hidden rounded-3xl border border-input bg-card shadow-lg" style={wearStyle(theme)}>
+      <div
+        data-palette-preview
+        class="overflow-hidden rounded-3xl border border-input bg-card shadow-lg"
+        style={wearStyle(theme)}
+      >
         <div class="flex items-center gap-2 border-b px-4 py-2.5">
           <span aria-hidden="true" class="flex gap-1.5">
             {LIGHTS.map((slot) => (

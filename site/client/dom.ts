@@ -19,6 +19,8 @@ export function reducedMotion(): boolean {
   return matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
+let fades = 0
+
 export function fadeThrough(update: () => void) {
   if (reducedMotion() || !('startViewTransition' in document)) {
     update()
@@ -32,7 +34,13 @@ export function fadeThrough(update: () => void) {
     if (box.bottom <= middle) top = Math.max(top, box.bottom)
     else if (box.top >= middle) bottom = Math.min(bottom, box.top)
   }
-  document.documentElement.style.setProperty('--clear-top', `${top}px`)
-  document.documentElement.style.setProperty('--clear-bottom', `${window.innerHeight - bottom}px`)
-  document.startViewTransition(update)
+  const root = document.documentElement
+  root.style.setProperty('--clear-top', `${top}px`)
+  root.style.setProperty('--clear-bottom', `${window.innerHeight - bottom}px`)
+  const turn = ++fades
+  const done = () => {
+    if (turn === fades) delete root.dataset.fading
+  }
+  root.dataset.fading = ''
+  document.startViewTransition(update).finished.then(done, done)
 }

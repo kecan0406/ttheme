@@ -2,6 +2,7 @@ import type { PropsWithChildren } from '@kitajs/html'
 import assets from '@/assets.json' with { type: 'json' }
 import { FacetGround } from '@/components/facet-ground'
 import { CARD_HEIGHT, CARD_WIDTH } from '@/lib/card'
+import { HANDOFF_SCRIPT } from '@/lib/handoff'
 import { fallback } from '@/lib/official'
 import { html } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
@@ -53,6 +54,7 @@ function Document({
         <link rel="stylesheet" href={assets.css} />
         <link rel="stylesheet" href={assets.cjk} media="print" onload="this.media='all'" />
         {wear ? null : <script>{WEAR_SCRIPT}</script>}
+        <script>{HANDOFF_SCRIPT}</script>
         <script>{ROUTE_SCRIPT}</script>
         <script type="speculationrules">{SPECULATION_RULES}</script>
         <script type="module" src={assets.js} />

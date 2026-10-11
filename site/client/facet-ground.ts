@@ -13,14 +13,12 @@ import {
   type Shade,
   shade,
 } from '@/lib/facets'
-import type { Theme } from '@/lib/themes'
-import { SHOW_EVENT } from '@/lib/wear'
+import { SHOW_EVENT, type Shown } from '@/lib/wear'
 import { reducedMotion } from './dom'
-import { current } from './wear'
 
 type Lab = [number, number, number]
 
-type Paint = { bg: Lab; tones: Lab[] }
+type Paint = { bg: Lab; tones: Lab[]; key: string }
 
 type Turn = { from: Paint; to: Paint; start: number; lean: Point }
 
@@ -36,7 +34,7 @@ const FOLLOW_MS = 120
 const RISE_MS = 200
 const PRESS_MS = 1000
 const BUDGET = 8_000_000
-const STAGE = '[data-lead-preview], sheet-browser [data-session]'
+const STAGE = '[data-lead-preview], sheet-browser [data-session], [data-palette-preview]'
 
 function linear(value: number): number {
   return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
@@ -100,6 +98,7 @@ class FacetGround extends HTMLElement {
   #context: CanvasRenderingContext2D | null = null
   #resize: ResizeObserver | null = null
   #shown: Paint[] = []
+  #worn = ''
   #turns: Turn[][] = []
   #client: Point | null = null
   #lamp: Point = { ...FACET_LAMP }
@@ -124,6 +123,7 @@ class FacetGround extends HTMLElement {
     )
     this.#shown = MESH.facets.map(() => paint)
     this.#turns = MESH.facets.map(() => [])
+    this.#worn = paint.key
     this.#fit()
     this.#draw(performance.now(), null)
     this.querySelector('svg')?.remove()
@@ -156,9 +156,10 @@ class FacetGround extends HTMLElement {
     const hex = (color: string) => {
       context.fillStyle = '#000000'
       context.fillStyle = color
-      return toLab(String(context.fillStyle))
+      return String(context.fillStyle)
     }
-    return { bg: hex(bg), tones: tones.map(hex) }
+    const colors = [bg, ...tones].map(hex)
+    return { bg: toLab(colors[0] as string), tones: colors.slice(1).map(toLab), key: colors.join() }
   }
 
   #fit(): boolean {
@@ -286,25 +287,28 @@ class FacetGround extends HTMLElement {
   }
 
   #show = (event: Event) => {
-    const theme = (event as CustomEvent<Theme>).detail
-    if (!this.#canvas || theme.name === current()) return
+    const { vars, origin, instant } = (event as CustomEvent<Shown>).detail
+    if (!this.#canvas) return
+    const slot = new Map(vars)
     const to = this.#paint(
-      theme.background,
-      [0, 1, 2].map((index) => theme.signature[index] ?? theme.cursor),
+      slot.get('--bg') ?? '',
+      [0, 1, 2].map((index) => slot.get(`--sg${index}`) || (slot.get('--cu') ?? '')),
     )
+    if (to.key === this.#worn) return
+    this.#worn = to.key
     const now = performance.now()
-    if (reducedMotion()) {
+    if (instant || reducedMotion()) {
       this.#shown = MESH.facets.map(() => to)
       this.#turns = MESH.facets.map(() => [])
-      this.#draw(now, null)
+      this.#draw(now, this.#pointer())
       return
     }
-    const origin = this.#local(this.#origin())
+    const start = this.#local(origin ?? this.#origin())
     for (const [index, center] of CENTERS.entries()) {
       const turns = this.#turns[index] as Turn[]
-      const distance = Math.hypot(center.x - origin.x, center.y - origin.y)
+      const distance = Math.hypot(center.x - start.x, center.y - start.y)
       const lean =
-        distance > 1 ? { x: (center.x - origin.x) / distance, y: (center.y - origin.y) / distance } : { x: 0, y: -1 }
+        distance > 1 ? { x: (center.x - start.x) / distance, y: (center.y - start.y) / distance } : { x: 0, y: -1 }
       const arrive = now + distance / SPEED
       const active = turns[0] && turns[0].start <= now ? turns[0] : null
       this.#turns[index] = active
