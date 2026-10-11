@@ -228,6 +228,7 @@ export function TerminalPreview({
   return (
     <pre
       data-slot="terminal-preview"
+      translate="no"
       style={worn ? undefined : wearStyle(theme)}
       class={cn(
         'min-h-45 overflow-hidden font-mono text-code whitespace-pre text-(--fg)',

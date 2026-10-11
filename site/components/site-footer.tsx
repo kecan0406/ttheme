@@ -73,6 +73,7 @@ function Brand({ facts }: { facts: Facts }) {
       <span class="flex items-center gap-2.5">
         <a
           href="/"
+          translate="no"
           class="rounded-sm font-display text-display-sm font-black outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           ttheme
@@ -143,7 +144,7 @@ function Columns({ current }: { current: string }) {
 
 function Mega() {
   return (
-    <div aria-hidden="true" class="relative h-[0.63em] overflow-hidden text-mega select-none">
+    <div aria-hidden="true" translate="no" class="relative h-[0.63em] overflow-hidden text-mega select-none">
       <span class="absolute top-0 left-1/2 -translate-x-1/2 font-display font-black whitespace-nowrap text-primary opacity-16">
         ttheme
       </span>

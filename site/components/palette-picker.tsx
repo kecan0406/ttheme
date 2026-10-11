@@ -11,6 +11,7 @@ export function PaletteOptions({ themes, current }: { themes: Theme[]; current: 
         <fieldset aria-label={shelf.catalog ?? 'other'} data-shelf class="m-0 grid min-w-0 gap-0.5 border-0 p-0">
           <p
             aria-hidden="true"
+            translate="no"
             class="sticky top-0 z-1 truncate bg-popover px-2.5 py-1.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase"
             safe
           >
@@ -27,7 +28,7 @@ export function PaletteOptions({ themes, current }: { themes: Theme[]; current: 
               class="group/option flex scroll-mt-8 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring aria-selected:bg-accent"
             >
               <Signature theme={theme} />
-              <span class="min-w-0 flex-1 truncate font-display font-extrabold" safe>
+              <span class="min-w-0 flex-1 truncate font-display font-extrabold" translate="no" safe>
                 {theme.name}
               </span>
               <Icon node={Check} class="hidden size-3.5 text-primary group-aria-selected/option:block" />
@@ -55,6 +56,7 @@ export function PalettePicker() {
         <span class="sr-only">palette</span>
         <span
           data-wear-label
+          translate="no"
           class="relative min-w-0 flex-1 truncate text-left font-display text-sm font-extrabold after:content-(--wear-name)"
         />
         <span aria-hidden="true" class="flex flex-none gap-1">

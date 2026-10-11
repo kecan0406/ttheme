@@ -122,7 +122,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             <h1 class="font-display text-display-xl font-black" style={`--lead-prefix:${headlineEm(`${LEAD} `)}`}>
               {LEAD}{' '}
               <sparkle-burst class="relative inline-block">
-                <span data-lead-name class="text-primary">
+                <span data-lead-name translate="no" class="text-primary">
                   <span class="sr-only" safe>
                     {theme.name}
                   </span>
@@ -155,6 +155,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                 <span
                   data-lead-title
                   aria-hidden="true"
+                  translate="no"
                   class="min-w-0 flex-1 truncate text-center font-mono text-xs text-muted-foreground"
                 >
                   ttheme · <span data-text="name" /> · <span data-text="catalog" />
@@ -220,6 +221,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             {leads.map((lead, index) => (
               <label
                 data-lead={String(index)}
+                translate="no"
                 style={`background:${lead.background};color:${lead.foreground}`}
                 class="grid cursor-pointer grid-cols-[minmax(0,1fr)] gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-4 pt-3.5 pb-4 shadow-sm transition-[translate,scale,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-98 active:duration-500 active:ease-spring has-checked:ring-2 has-checked:ring-ring has-checked:ring-offset-2 has-checked:ring-offset-background has-focus-visible:outline-2 has-focus-visible:outline-offset-4 has-focus-visible:outline-ring motion-reduce:hover:translate-y-0"
               >

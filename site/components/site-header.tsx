@@ -21,6 +21,7 @@ export function SiteHeader({ current }: { current: string }) {
           <a
             href="/"
             data-wordmark
+            translate="no"
             class="self-center rounded-sm font-display text-display-md font-black outline-none focus-visible:ring-2 focus-visible:ring-ring max-[720px]:text-display-sm"
           >
             ttheme
