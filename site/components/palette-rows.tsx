@@ -3,25 +3,16 @@ import { gatePassed } from '@/lib/sheet'
 import type { GateRule, Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 
+function chipStyle(theme: Theme): string {
+  return [
+    `--bg:${theme.background}`,
+    ...theme.signature.map((color, index) => `--sg${index}:${color}`),
+    ...theme.ansi.map((color, index) => `--a${index}:${color}`),
+  ].join(';')
+}
+
 export function PaletteChip({ theme }: { theme: Theme }) {
-  return (
-    <span
-      aria-hidden="true"
-      class="grid w-36 gap-1 rounded-md p-1.25 ring-1 ring-border max-[560px]:w-24"
-      style={`background:${theme.background}`}
-    >
-      <span class="flex gap-1">
-        {theme.signature.map((color) => (
-          <i class="h-2 flex-1 rounded-full" style={`background:${color}`} />
-        ))}
-      </span>
-      <span class="flex gap-0.5">
-        {theme.ansi.map((color) => (
-          <i class="h-1.5 flex-1 rounded-full" style={`background:${color}`} />
-        ))}
-      </span>
-    </span>
-  )
+  return <span aria-hidden="true" data-slot="palette-chip" style={chipStyle(theme)} />
 }
 
 export function PaletteRow({ theme, gate, where = true }: { theme: Theme; gate: GateRule[]; where?: boolean }) {

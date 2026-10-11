@@ -558,6 +558,62 @@ sheet-browser #sheet-details > :nth-child(2) {
   }
 }
 
+[data-slot='palette-chip'] {
+  --chip-width: calc(var(--spacing) * 36);
+  --chip-sign: calc((var(--chip-width) - var(--spacing) * 1.5) / 3);
+  --chip-ansi: calc((var(--chip-width) - var(--spacing) * 2) / 16);
+  display: grid;
+  gap: var(--spacing);
+  width: var(--chip-width);
+  padding: calc(var(--spacing) * 1.25);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+[data-slot='palette-chip']::before,
+[data-slot='palette-chip']::after {
+  content: '';
+  border-radius: calc(infinity * 1px);
+}
+
+[data-slot='palette-chip']::before {
+  width: calc(var(--chip-sign) - var(--spacing));
+  height: calc(var(--spacing) * 2);
+  background: var(--sg0);
+  box-shadow:
+    var(--chip-sign) 0 var(--sg1),
+    calc(var(--chip-sign) * 2) 0 var(--sg2);
+}
+
+[data-slot='palette-chip']::after {
+  width: calc(var(--chip-ansi) - var(--spacing) * 0.5);
+  height: calc(var(--spacing) * 1.5);
+  background: var(--a0);
+  box-shadow:
+    var(--chip-ansi) 0 var(--a1),
+    calc(var(--chip-ansi) * 2) 0 var(--a2),
+    calc(var(--chip-ansi) * 3) 0 var(--a3),
+    calc(var(--chip-ansi) * 4) 0 var(--a4),
+    calc(var(--chip-ansi) * 5) 0 var(--a5),
+    calc(var(--chip-ansi) * 6) 0 var(--a6),
+    calc(var(--chip-ansi) * 7) 0 var(--a7),
+    calc(var(--chip-ansi) * 8) 0 var(--a8),
+    calc(var(--chip-ansi) * 9) 0 var(--a9),
+    calc(var(--chip-ansi) * 10) 0 var(--a10),
+    calc(var(--chip-ansi) * 11) 0 var(--a11),
+    calc(var(--chip-ansi) * 12) 0 var(--a12),
+    calc(var(--chip-ansi) * 13) 0 var(--a13),
+    calc(var(--chip-ansi) * 14) 0 var(--a14),
+    calc(var(--chip-ansi) * 15) 0 var(--a15);
+}
+
+@media (width < 560px) {
+  [data-slot='palette-chip'] {
+    --chip-width: calc(var(--spacing) * 24);
+  }
+}
+
 .builder {
   display: grid;
   grid-template-columns: 344px minmax(0, 1fr);
