@@ -146,7 +146,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
 
           <div class="grid grid-cols-[minmax(0,1fr)] gap-4">
             <div data-lead-window class="overflow-hidden rounded-3xl border border-input bg-card shadow-lg">
-              <div class="flex items-center gap-2 border-b px-4 py-2.5">
+              <div class="relative flex items-center gap-2 border-b px-4 py-2.5">
                 <span aria-hidden="true" class="flex gap-1.5">
                   <i class="size-2.5 rounded-full bg-(--a1)" />
                   <i class="size-2.5 rounded-full bg-(--a3)" />
@@ -165,6 +165,11 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                 <Button variant="ghost" size="icon-sm" aria-label="next palette" data-pick="1">
                   <Icon node={ChevronRight} />
                 </Button>
+                <i
+                  data-lead-progress
+                  aria-hidden="true"
+                  class="pointer-events-none absolute inset-x-0 -bottom-px h-0.5 origin-left scale-x-0 bg-primary opacity-0 transition-opacity duration-150 ease-[ease]"
+                />
               </div>
               <LeadPreview theme={theme} />
             </div>

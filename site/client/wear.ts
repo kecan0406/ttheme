@@ -11,6 +11,7 @@ import {
   type Vars,
   WEAR_EVENT,
   WEAR_KEY,
+  wearIcon,
   wearOwn,
   wearVars,
 } from '@/lib/wear'
@@ -26,6 +27,8 @@ const FADE: KeyframeEffectOptions = { duration: 400, easing: 'cubic-bezier(0.3, 
 const painted = new Map<string, Rgb>()
 
 const chrome = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+
+const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
 
 let fading: Animation | null = null
 
@@ -102,6 +105,13 @@ function settle(root: HTMLElement) {
   delete root.dataset.settling
 }
 
+function badge(root: HTMLElement) {
+  if (!icon) return
+  const value = (name: string) => root.style.getPropertyValue(name)
+  const href = wearIcon({ background: value('--bg'), foreground: value('--fg'), signature: TONES.map(value) })
+  if (icon.getAttribute('href') !== href) icon.href = href
+}
+
 function fade(root: HTMLElement, slots: Vars) {
   if (fading ? same(slots, goal) : slots.every(([slot, color]) => root.style.getPropertyValue(slot) === color)) return
   const fades = slots.map(([slot, color]) => {
@@ -122,7 +132,9 @@ function fade(root: HTMLElement, slots: Vars) {
     requestAnimationFrame(progress < 1 ? step : settled)
   }
   const settled = () => {
-    if (fading === clock) settle(root)
+    if (fading !== clock) return
+    settle(root)
+    badge(root)
   }
   fading?.cancel()
   fading = clock
@@ -198,6 +210,7 @@ window.addEventListener('pageshow', (event) => {
   for (const [slot, color] of goal) root.style.setProperty(slot, color)
   chrome?.setAttribute('content', root.style.getPropertyValue('--bg'))
   settle(root)
+  badge(root)
 })
 
 export function current(): string {

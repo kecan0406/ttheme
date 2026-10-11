@@ -8,7 +8,7 @@ import { html } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import { SPECULATION_RULES } from '@/lib/speculation'
 import type { Theme } from '@/lib/themes'
-import { rootStyle, type Vars, WEAR_SCRIPT } from '@/lib/wear'
+import { rootStyle, type Vars, WEAR_SCRIPT, wearIcon } from '@/lib/wear'
 
 const RELOAD = `const s=new EventSource('${assets.reload}');let lost=false;s.onmessage=()=>location.reload();s.onerror=()=>{lost=true};s.onopen=()=>{if(lost)location.reload()}`
 
@@ -47,7 +47,7 @@ function Document({
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content={(wear ?? fallback).background} />
-        <link rel="icon" href="data:," />
+        <link rel="icon" type="image/svg+xml" href={wearIcon(wear ?? fallback)} />
         <title safe>{title}</title>
         <meta name="description" content={description} />
         <meta property="og:title" content={title} />

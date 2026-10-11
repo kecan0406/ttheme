@@ -12,7 +12,7 @@ const IN_VIEW = 0.25
 class LeadShowcase extends HTMLElement {
   #leads: Theme[] = []
   #shown = ''
-  #timer = 0
+  #run: Animation | null = null
   #cycling = false
   #holds = new Set<string>()
   #view: IntersectionObserver | null = null
@@ -42,6 +42,10 @@ class LeadShowcase extends HTMLElement {
 
   get #window(): HTMLElement | null {
     return this.querySelector('[data-lead-window]')
+  }
+
+  get #line(): HTMLElement | null {
+    return this.querySelector('[data-lead-progress]')
   }
 
   connectedCallback() {
@@ -91,17 +95,30 @@ class LeadShowcase extends HTMLElement {
   }
 
   #schedule() {
-    window.clearTimeout(this.#timer)
-    if (!this.#cycling || this.#holds.size > 0) return
-    this.#timer = window.setTimeout(() => {
-      this.#cycle()
-      this.#schedule()
-    }, CYCLE_MS)
+    const line = this.#line
+    if (!this.#cycling || this.#holds.size > 0 || !line) {
+      this.#run?.pause()
+      line?.style.removeProperty('opacity')
+      return
+    }
+    this.#run?.cancel()
+    line.style.opacity = '1'
+    const run = line.animate({ scale: ['0 1', '1 1'] }, { duration: CYCLE_MS, easing: 'linear', fill: 'forwards' })
+    this.#run = run
+    run.finished.then(
+      () => {
+        if (this.#run !== run) return
+        this.#cycle()
+        this.#schedule()
+      },
+      () => {},
+    )
   }
 
   #stop() {
     this.#cycling = false
-    window.clearTimeout(this.#timer)
+    this.#run?.pause()
+    this.#line?.style.removeProperty('opacity')
     this.#view?.disconnect()
     this.#view = null
     document.removeEventListener('visibilitychange', this.#hidden)
