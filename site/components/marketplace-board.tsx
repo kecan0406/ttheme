@@ -6,7 +6,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupCount, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { catalogsOf } from '@/lib/catalogs'
+import { catalogsOf, nativeLang } from '@/lib/catalogs'
 import {
   catalogPath,
   marketplacePath,
@@ -34,6 +34,7 @@ interface Catalog {
   catalog: string | null
   name: string
   note: string | null
+  lang: string | undefined
   themes: Theme[]
   lead: Theme
 }
@@ -43,7 +44,8 @@ function catalogsIn(shelf: Shelf): Catalog[] {
     const lead = themes.find((theme) => theme.lead) ?? themes[0]
     if (!lead) return []
     const note = catalog === null ? null : (lead.native ?? `led by ${lead.name}`)
-    return [{ catalog, name: catalog ?? 'other palettes', note, themes, lead }]
+    const lang = catalog === null ? undefined : nativeLang(lead)
+    return [{ catalog, name: catalog ?? 'other palettes', note, lang, themes, lead }]
   })
 }
 
@@ -78,7 +80,7 @@ function CatalogCard({ catalog, official }: { catalog: Catalog; official: boolea
             {catalog.name}
           </span>
           {catalog.note === null ? null : (
-            <span class="truncate font-display text-xs font-extrabold text-muted-foreground" safe>
+            <span lang={catalog.lang} class="truncate font-display text-xs font-extrabold text-muted-foreground" safe>
               {catalog.note}
             </span>
           )}

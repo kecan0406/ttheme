@@ -3,6 +3,7 @@ import { Layers, Store } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Badge, badgeVariants } from '@/components/ui/badge'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { nativeLang } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
 import { catalogPath, marketplacePath, OFFICIAL } from '@/lib/gallery'
 import { BrandIcon, Icon } from '@/lib/icons'
@@ -190,7 +191,7 @@ function About({ theme, marketplace, gate }: { theme: Theme; marketplace: Market
               {theme.catalog}
             </a>
             {theme.native ? (
-              <span class="text-sm font-normal text-muted-foreground" safe>
+              <span lang={nativeLang(theme)} class="text-sm font-normal text-muted-foreground" safe>
                 {theme.native}
               </span>
             ) : null}

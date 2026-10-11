@@ -2,7 +2,7 @@ import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
 import { CalendarDays, FolderTree, Package, Palette, Scale, ShieldCheck } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
-import { catalogsOf } from '@/lib/catalogs'
+import { catalogsOf, nativeLang } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
 import { catalogAnchor, marketplacePath, OFFICIAL, OFFICIAL_ABOUT, OFFICIAL_REPO } from '@/lib/gallery'
 import { BrandIcon, Icon } from '@/lib/icons'
@@ -19,6 +19,18 @@ function Meta({ icon, children }: PropsWithChildren<{ icon: JSX.Element }>) {
       {icon}
       {children}
     </span>
+  )
+}
+
+function NativeNote({ theme }: { theme: Theme | undefined }) {
+  if (!theme?.native) return null
+  return (
+    <>
+      <span lang={nativeLang(theme)} safe>
+        {theme.native}
+      </span>
+      {' · '}
+    </>
   )
 }
 
@@ -100,8 +112,9 @@ export function MarketplaceStore({
             >
               {catalog ?? 'other palettes'}
             </h2>
-            <p class="text-sm text-muted-foreground" safe>
-              {[themes[0]?.native, plural(themes.length, 'palette')].filter(Boolean).join(' · ')}
+            <p class="text-sm text-muted-foreground">
+              <NativeNote theme={themes[0]} />
+              {escapeHtml(plural(themes.length, 'palette'))}
             </p>
           </div>
           <div class="grid grid-cols-[minmax(0,1fr)] border-t">
