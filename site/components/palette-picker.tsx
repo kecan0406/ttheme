@@ -21,11 +21,12 @@ export function PaletteOptions({ themes, current }: { themes: Theme[]; current: 
             <button
               type="button"
               role="option"
-              tabindex={theme.name === current ? '0' : '-1'}
+              tabindex="-1"
+              id={`wear-option-${theme.name}`}
               data-name={theme.name}
               data-text={`${theme.name} ${theme.catalog ?? ''} ${theme.native ?? ''}`.toLowerCase()}
               aria-selected={String(theme.name === current)}
-              class="group/option flex scroll-mt-8 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring aria-selected:bg-accent"
+              class="group/option flex scroll-mt-8 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-[background-color] hover:bg-muted aria-selected:bg-accent"
             >
               <span aria-hidden="true">
                 <Signature theme={theme} />
@@ -82,6 +83,10 @@ export function PalettePicker() {
           />
           <input
             type="search"
+            role="combobox"
+            aria-controls="wear-options"
+            aria-expanded="true"
+            aria-autocomplete="list"
             data-search
             autocomplete="off"
             autocapitalize="none"
@@ -94,8 +99,10 @@ export function PalettePicker() {
           />
         </label>
         <div
+          id="wear-options"
           role="listbox"
           aria-label="palettes"
+          tabindex="-1"
           data-options
           class="grid max-h-[60dvh] min-h-0 gap-1 overflow-y-auto overscroll-contain"
         >

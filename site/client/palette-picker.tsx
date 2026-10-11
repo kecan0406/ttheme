@@ -2,7 +2,7 @@ import { PaletteOptions } from '@/components/palette-picker'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { announce, fill } from './dom'
-import { bare, composing, printable } from './keys'
+import { composing } from './keys'
 import { choose, current } from './wear'
 
 const PAGE = 8
@@ -12,6 +12,7 @@ class PalettePicker extends HTMLElement {
   #loading: Promise<void> | undefined
   #touch = false
   #counting = 0
+  #active: HTMLElement | undefined
 
   get #panel(): HTMLElement {
     return this.querySelector('[popover]') as HTMLElement
@@ -37,17 +38,19 @@ class PalettePicker extends HTMLElement {
     trigger?.addEventListener('keydown', this.#press)
     this.#panel.addEventListener('beforetoggle', this.#place)
     this.#panel.addEventListener('toggle', this.#toggled)
+    this.addEventListener('mousedown', this.#keep)
     this.addEventListener('click', this.#click)
     this.addEventListener('input', this.#filter)
     this.addEventListener('compositionend', this.#filter)
-    this.addEventListener('keydown', this.#keys)
+    this.#search.addEventListener('keydown', this.#keys)
   }
 
   disconnectedCallback() {
+    this.removeEventListener('mousedown', this.#keep)
     this.removeEventListener('click', this.#click)
     this.removeEventListener('input', this.#filter)
     this.removeEventListener('compositionend', this.#filter)
-    this.removeEventListener('keydown', this.#keys)
+    this.#search.removeEventListener('keydown', this.#keys)
   }
 
   #load = (): Promise<void> => {
@@ -92,18 +95,27 @@ class PalettePicker extends HTMLElement {
     this.#narrow('')
   }
 
+  #worn(): HTMLElement | undefined {
+    return this.#options.find((option) => option.getAttribute('aria-selected') === 'true')
+  }
+
   #mark() {
     const name = current()
     for (const option of this.querySelectorAll<HTMLElement>('[role="option"]'))
       option.setAttribute('aria-selected', String(option.dataset.name === name))
-    const selected = this.querySelector<HTMLElement>('[role="option"][aria-selected="true"]')
-    this.#rove(selected ?? this.#options[0])
-    selected?.scrollIntoView({ block: 'center' })
+    this.#activate(this.#worn() ?? this.#options[0], 'center')
   }
 
-  #rove(target: HTMLElement | undefined) {
-    for (const option of this.querySelectorAll<HTMLElement>('[role="option"]'))
-      option.tabIndex = option === target ? 0 : -1
+  #activate(option: HTMLElement | undefined, block?: ScrollLogicalPosition) {
+    if (this.#active !== option) delete this.#active?.dataset.active
+    this.#active = option
+    if (!option) {
+      this.#search.removeAttribute('aria-activedescendant')
+      return
+    }
+    option.dataset.active = ''
+    this.#search.setAttribute('aria-activedescendant', option.id)
+    if (block) option.scrollIntoView({ block })
   }
 
   #narrow(query: string) {
@@ -117,8 +129,7 @@ class PalettePicker extends HTMLElement {
       shelf.hidden = shown === 0
     }
     const options = this.#options
-    if (!options.some((option) => option.tabIndex === 0))
-      this.#rove(options.find((option) => option.getAttribute('aria-selected') === 'true') ?? options[0])
+    this.#activate(query === '' ? (this.#worn() ?? options[0]) : options[0], 'nearest')
     const empty = this.querySelector<HTMLElement>('[data-empty]')
     if (empty) empty.hidden = options.length > 0
   }
@@ -134,42 +145,40 @@ class PalettePicker extends HTMLElement {
     }, 500)
   }
 
-  #click = (event: MouseEvent) => {
-    const option = (event.target as Element).closest<HTMLElement>('[role="option"]')
+  #pick(option: HTMLElement | undefined) {
     const theme = this.#themes?.find((entry) => entry.name === option?.dataset.name)
     if (!theme) return
     this.#panel.hidePopover()
     choose(theme)
   }
 
-  #retype() {
-    const search = this.#search
-    search.focus()
-    search.setSelectionRange(search.value.length, search.value.length)
+  #keep = (event: MouseEvent) => {
+    if ((event.target as Element).closest('[role="option"]')) event.preventDefault()
+  }
+
+  #click = (event: MouseEvent) => {
+    this.#pick((event.target as Element).closest<HTMLElement>('[role="option"]') ?? undefined)
   }
 
   #keys = (event: KeyboardEvent) => {
-    if (!this.#panel.matches(':popover-open') || composing(event)) return
+    if (composing(event) || event.altKey || event.metaKey || event.ctrlKey) return
     const options = this.#options
-    const at = options.indexOf(document.activeElement as HTMLElement)
-    const go = (target: HTMLElement | undefined) => {
-      if (!target) return
+    const at = this.#active ? options.indexOf(this.#active) : -1
+    const last = options.length - 1
+    const go = (index: number) => {
       event.preventDefault()
-      if (target !== this.#search) this.#rove(target)
-      target.focus()
+      this.#activate(options[index], 'nearest')
     }
-    if (event.key === 'ArrowDown') go(at === -1 ? options[0] : options[at + 1])
-    else if (event.key === 'ArrowUp' && at === 0) go(this.#search)
-    else if (event.key === 'ArrowUp' && at > 0) go(options[at - 1])
-    else if (event.key === 'Home' && at !== -1) go(options[0])
-    else if (event.key === 'End' && at !== -1) go(options.at(-1))
-    else if (event.key === 'PageDown' && at !== -1) go(options[Math.min(at + PAGE, options.length - 1)])
-    else if (event.key === 'PageUp' && at !== -1) go(options[Math.max(at - PAGE, 0)])
-    else if (event.key === 'Enter' && event.target === this.#search) {
+    if (event.key === 'Enter') {
       event.preventDefault()
-      options[0]?.click()
-    } else if (at !== -1 && ((printable(event) && event.key !== ' ') || (event.key === 'Backspace' && bare(event))))
-      this.#retype()
+      this.#pick(this.#active ?? options[0])
+      return
+    }
+    if (options.length === 0) return
+    if (event.key === 'ArrowDown') go(at === last ? 0 : at + 1)
+    else if (event.key === 'ArrowUp') go(at <= 0 ? last : at - 1)
+    else if (event.key === 'PageDown') go(Math.min(at + PAGE, last))
+    else if (event.key === 'PageUp') go(Math.max(at - PAGE, 0))
   }
 }
 

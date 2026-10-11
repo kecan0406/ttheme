@@ -748,6 +748,10 @@ route-progress[data-state='done'],
     outline-offset: 2px;
   }
 
+  :root palette-picker:has([data-search]:focus) [role='option'][data-active] {
+    outline-color: Highlight;
+  }
+
   :has(> .sr-only:checked) {
     text-decoration: underline 2px Highlight;
     text-underline-offset: 4px;
@@ -879,12 +883,23 @@ route-progress[data-state='done'],
   }
 }
 
+palette-picker:has([data-search]:focus) [role='option'][data-active] {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
 [data-wear-label]::before {
   content: var(--wear-was, none);
   position: absolute;
   inset: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@supports (content: 'a' / '') {
+  [data-wear-label]::before {
+    content: var(--wear-was, none) / '';
+  }
 }
 
 [data-wear-label][data-renaming]::before {
