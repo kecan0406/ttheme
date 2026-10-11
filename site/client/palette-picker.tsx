@@ -165,8 +165,10 @@ class PalettePicker extends HTMLElement {
     else if (event.key === 'End' && at !== -1) go(options.at(-1))
     else if (event.key === 'PageDown' && at !== -1) go(options[Math.min(at + PAGE, options.length - 1)])
     else if (event.key === 'PageUp' && at !== -1) go(options[Math.max(at - PAGE, 0)])
-    else if (event.key === 'Enter' && event.target === this.#search) options[0]?.click()
-    else if (at !== -1 && ((printable(event) && event.key !== ' ') || (event.key === 'Backspace' && bare(event))))
+    else if (event.key === 'Enter' && event.target === this.#search) {
+      event.preventDefault()
+      options[0]?.click()
+    } else if (at !== -1 && ((printable(event) && event.key !== ' ') || (event.key === 'Backspace' && bare(event))))
       this.#retype()
   }
 }
