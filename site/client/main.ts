@@ -1,5 +1,6 @@
 import './copy'
 import './fields'
+import './popovers'
 import './route-progress'
 import './speculation'
 import './palette-picker'

@@ -20,6 +20,7 @@ export function PaletteOptions({ themes, current }: { themes: Theme[]; current: 
             <button
               type="button"
               role="option"
+              tabindex={theme.name === current ? '0' : '-1'}
               data-name={theme.name}
               data-text={`${theme.name} ${theme.catalog ?? ''} ${theme.native ?? ''}`.toLowerCase()}
               aria-selected={String(theme.name === current)}
@@ -47,7 +48,7 @@ export function PalettePicker() {
       <button
         type="button"
         popovertarget="wear-picker"
-        aria-haspopup="listbox"
+        aria-haspopup="dialog"
         data-wear-trigger
         class="inline-flex h-7.5 w-50 cursor-pointer items-center gap-2 rounded-full border bg-card pr-2.5 pl-3.5 shadow-sm transition-colors outline-none hover:border-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
@@ -66,6 +67,8 @@ export function PalettePicker() {
       <div
         id="wear-picker"
         popover="auto"
+        role="dialog"
+        aria-label="pick a palette"
         class="m-0 w-64 max-w-[calc(100vw-2rem)] flex-col gap-2 overflow-hidden rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:flex"
       >
         <label class="relative block">
@@ -77,7 +80,10 @@ export function PalettePicker() {
             type="search"
             data-search
             autocomplete="off"
+            autocapitalize="none"
+            autocorrect="off"
             spellcheck="false"
+            enterkeyhint="go"
             aria-label="search palettes"
             placeholder="search palettes"
             class="h-9 w-full min-w-0 rounded-lg border border-border bg-card pr-3 pl-9 text-sm transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-faint-foreground hover:border-input focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/35"
