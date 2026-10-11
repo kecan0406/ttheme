@@ -144,7 +144,7 @@ function Columns({ current }: { current: string }) {
 function Mega() {
   return (
     <div aria-hidden="true" class="relative h-[0.63em] overflow-hidden text-mega select-none">
-      <span class="absolute top-0 left-1/2 -translate-x-1/2 font-display font-black whitespace-nowrap text-primary/16">
+      <span class="absolute top-0 left-1/2 -translate-x-1/2 font-display font-black whitespace-nowrap text-primary opacity-16">
         ttheme
       </span>
       <div class="absolute inset-x-0 bottom-6 flex justify-center gap-2 max-[640px]:bottom-3.5 max-[640px]:gap-1">

@@ -26,6 +26,18 @@ export function SectionHead({ title, id, children }: PropsWithChildren<{ title: 
   )
 }
 
+const WORN = ['bg-(--sg0)', 'bg-(--sg1)', 'bg-(--sg2)']
+
+export function WornSignature() {
+  return (
+    <span aria-hidden="true" class="flex flex-none gap-1">
+      {WORN.map((tone) => (
+        <i class={cn('size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14', tone)} />
+      ))}
+    </span>
+  )
+}
+
 export function Signature({ theme, size = 'sm' }: { theme: Theme; size?: 'sm' | 'lg' }) {
   if (size === 'sm')
     return (

@@ -5,16 +5,28 @@ import { cn } from '@/lib/utils'
 
 export const INIT = 'npx @kecan0406/ttheme init'
 
-export function CommandRow({ command, class: className }: { command: string; class?: string }) {
+export function CommandRow({
+  command,
+  text,
+  class: className,
+}: {
+  command: string
+  text?: JSX.Element
+  class?: string
+}) {
   return (
     <div
       data-slot="command-row"
       class={cn('flex min-w-0 items-center gap-2.5 rounded-lg border bg-muted/65 py-1.5 pr-1.5 pl-3', className)}
     >
       <Icon node={Terminal} class="size-4 flex-none text-muted-foreground" />
-      <code class="min-w-0 flex-1 overflow-x-auto font-mono text-code leading-snug whitespace-nowrap" safe>
-        {command}
-      </code>
+      {text ? (
+        <code class="min-w-0 flex-1 overflow-x-auto font-mono text-code leading-snug whitespace-nowrap">{text}</code>
+      ) : (
+        <code class="min-w-0 flex-1 overflow-x-auto font-mono text-code leading-snug whitespace-nowrap" safe>
+          {command}
+        </code>
+      )}
       <Button
         variant="outline"
         size="icon-sm"

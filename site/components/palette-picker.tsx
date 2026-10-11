@@ -52,7 +52,10 @@ export function PalettePicker() {
         class="inline-flex h-7.5 w-50 cursor-pointer items-center gap-2 rounded-full border bg-card pr-2.5 pl-3.5 shadow-sm transition-colors outline-none hover:border-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <span class="sr-only">palette</span>
-        <span class="min-w-0 flex-1 truncate text-left font-display text-sm font-extrabold after:content-(--wear-name)" />
+        <span
+          data-wear-label
+          class="relative min-w-0 flex-1 truncate text-left font-display text-sm font-extrabold after:content-(--wear-name)"
+        />
         <span aria-hidden="true" class="flex flex-none gap-1">
           <i class="size-3 rounded-full bg-(--sg0) ring-1 ring-border inset-ring inset-ring-black/14" />
           <i class="size-3 rounded-full bg-(--sg1) ring-1 ring-border inset-ring inset-ring-black/14" />

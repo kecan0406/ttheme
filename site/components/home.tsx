@@ -6,6 +6,7 @@ import type { Facts } from '@/lib/facts'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
+import { headlineEm } from '@/lib/wear'
 import { CommandRow, INIT } from './command-row'
 import { Signature } from './palette-parts'
 import { SiteFooter } from './site-footer'
@@ -13,6 +14,8 @@ import { SiteHeader } from './site-header'
 import { TerminalPreview } from './terminal-preview'
 
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
+
+const LEAD = 'wear'
 
 function features(palettes: number, catalogs: number) {
   return [
@@ -64,7 +67,7 @@ const STEPS = [
 
 function Step({ number, title, text, children }: PropsWithChildren<{ number: number; title: string; text: string }>) {
   return (
-    <li class="grid content-start gap-3 rounded-3xl border bg-muted p-6">
+    <li class="row-span-3 grid grid-rows-subgrid gap-3 rounded-3xl border bg-muted p-6">
       <span class="flex items-center gap-3">
         <span class="grid size-8 place-items-center rounded-full bg-primary font-display text-sm font-black text-primary-foreground">
           {number}
@@ -81,10 +84,16 @@ function Step({ number, title, text, children }: PropsWithChildren<{ number: num
   )
 }
 
-export function LeadPreview({ theme }: { theme: Theme }) {
+function LeadPreview({ theme }: { theme: Theme }) {
   return (
     <div data-lead-preview>
-      <TerminalPreview theme={theme} scene="shell" worn class="min-h-60 px-6 pt-5 pb-6 text-sm" />
+      <TerminalPreview
+        theme={theme}
+        scene="shell"
+        worn
+        own
+        class="min-h-60 px-6 pt-5 pb-6 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap max-[640px]:px-4.5 max-[400px]:min-h-62"
+      />
     </div>
   )
 }
@@ -103,17 +112,20 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
       <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-5">
         <section
           aria-label="ttheme"
+          data-lead-hero
           class="grid grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] items-center gap-12 pt-14 pb-10 max-[960px]:grid-cols-[minmax(0,1fr)] max-[960px]:pt-8"
         >
-          <div class="grid justify-items-start gap-6">
+          <div class="@container grid justify-items-start gap-6">
             <Badge variant="sticker">
-              {facts.palettes} palettes · {facts.catalogs} catalogs ✦
+              {facts.palettes} palettes · {facts.catalogs} catalogs <span aria-hidden="true">✦</span>
             </Badge>
-            <h1 class="font-display text-display-xl font-black">
-              wear{' '}
-              <sparkle-burst class="relative inline-block" data-colors={JSON.stringify(theme.signature)}>
-                <span data-lead-name class="text-primary" safe>
-                  {theme.name}
+            <h1 class="font-display text-display-xl font-black" style={`--lead-prefix:${headlineEm(`${LEAD} `)}`}>
+              {LEAD}{' '}
+              <sparkle-burst class="relative inline-block">
+                <span data-lead-name class="text-primary">
+                  <span class="sr-only" safe>
+                    {theme.name}
+                  </span>
                 </span>
               </sparkle-burst>
               <br />
@@ -132,8 +144,8 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             </div>
           </div>
 
-          <div class="grid gap-4">
-            <div class="overflow-hidden rounded-3xl border border-input bg-card shadow-lg">
+          <div class="grid grid-cols-[minmax(0,1fr)] gap-4">
+            <div data-lead-window class="overflow-hidden rounded-3xl border border-input bg-card shadow-lg">
               <div class="flex items-center gap-2 border-b px-4 py-2.5">
                 <span aria-hidden="true" class="flex gap-1.5">
                   <i class="size-2.5 rounded-full bg-(--a1)" />
@@ -142,10 +154,10 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                 </span>
                 <span
                   data-lead-title
+                  aria-hidden="true"
                   class="min-w-0 flex-1 truncate text-center font-mono text-xs text-muted-foreground"
-                  safe
                 >
-                  {`ttheme · ${theme.name} · ${theme.catalog ?? ''}`}
+                  ttheme · <span data-text="name" /> · <span data-text="catalog" />
                 </span>
                 <Button variant="ghost" size="icon-sm" aria-label="previous palette" data-pick="-1">
                   <Icon node={ChevronLeft} />
@@ -156,10 +168,10 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
               </div>
               <LeadPreview theme={theme} />
             </div>
-            <div aria-hidden="true" class="flex flex-wrap items-center gap-1.5 px-1">
+            <div aria-hidden="true" class="flex items-center justify-center gap-1.5 px-1">
               {SLOTS.map((slot) => (
                 <i
-                  class="block h-2.5 rounded-full motion-safe:animate-dance"
+                  class="block h-2.5 min-w-1.5 rounded-full inset-ring inset-ring-foreground/16 motion-safe:animate-dance"
                   style={`background:var(--a${slot});width:${slot % 3 === 0 ? 28 : 12}px;animation-delay:${slot * -0.6}s`}
                 />
               ))}
@@ -173,7 +185,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
           </h2>
           <div class="grid grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
             {features(facts.palettes, facts.catalogs).map((feature) => (
-              <article class="grid content-start gap-2 rounded-3xl border bg-muted p-6">
+              <article class="row-span-3 grid grid-rows-subgrid gap-2 rounded-3xl border bg-muted p-6">
                 <span class="text-3xl" role="img" aria-hidden="true" safe>
                   {feature.emoji}
                 </span>
@@ -202,7 +214,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                 data-lead={String(index)}
                 aria-pressed={String(index === 0)}
                 style={`background:${lead.background};color:${lead.foreground}`}
-                class="grid grid-cols-[minmax(0,1fr)] gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-4 pt-3.5 pb-4 text-left transition-transform duration-200 outline-none hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-98 active:duration-500 active:ease-spring aria-pressed:ring-2 aria-pressed:ring-ring aria-pressed:ring-offset-2 aria-pressed:ring-offset-background motion-reduce:hover:translate-y-0"
+                class="grid grid-cols-[minmax(0,1fr)] gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-4 pt-3.5 pb-4 text-left shadow-sm transition-[translate,scale,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-offset-4 active:scale-98 active:duration-500 active:ease-spring aria-pressed:ring-2 aria-pressed:ring-ring aria-pressed:ring-offset-2 aria-pressed:ring-offset-background motion-reduce:hover:translate-y-0"
               >
                 <span
                   class="font-display text-display-sm font-black [overflow-wrap:anywhere]"
@@ -215,7 +227,9 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                   <span class="min-w-0 truncate text-xs opacity-70" safe>
                     {lead.catalog}
                   </span>
-                  <Signature theme={lead} />
+                  <span aria-hidden="true">
+                    <Signature theme={lead} />
+                  </span>
                 </span>
               </button>
             ))}
@@ -226,7 +240,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
           <h2 id="install" class="font-display text-display-lg font-black">
             three commands
           </h2>
-          <ol class="grid grid-cols-3 gap-4 max-[960px]:grid-cols-1">
+          <ol class="grid grid-cols-3 gap-4 max-[1080px]:grid-cols-1">
             {STEPS.map((step, index) => (
               <Step number={index + 1} title={step.title} text={step.text}>
                 <CommandRow command={step.command} class="bg-card" />

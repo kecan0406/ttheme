@@ -8,7 +8,7 @@ import { html } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import { SPECULATION_RULES } from '@/lib/speculation'
 import type { Theme } from '@/lib/themes'
-import { rootStyle, WEAR_SCRIPT } from '@/lib/wear'
+import { rootStyle, type Vars, WEAR_SCRIPT } from '@/lib/wear'
 
 const RELOAD = `const s=new EventSource('${assets.reload}');let lost=false;s.onmessage=()=>location.reload();s.onerror=()=>{lost=true};s.onopen=()=>{if(lost)location.reload()}`
 
@@ -21,6 +21,8 @@ interface Page {
   status?: number
   cache: string
   wear?: Theme
+  root?: Vars
+  head?: string
 }
 
 function Document({
@@ -28,13 +30,23 @@ function Document({
   description,
   image,
   wear,
+  root = [],
+  head,
   children,
-}: PropsWithChildren<{ title: string; description: string; image?: string; wear?: Theme }>) {
+}: PropsWithChildren<{
+  title: string
+  description: string
+  image?: string
+  wear?: Theme
+  root?: Vars
+  head?: string
+}>) {
   return (
-    <html lang="en" style={rootStyle(wear ?? fallback)}>
+    <html lang="en" style={[rootStyle(wear ?? fallback), ...root.map(([name, value]) => `${name}:${value}`)].join(';')}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content={(wear ?? fallback).background} />
         <link rel="icon" href="data:," />
         <title safe>{title}</title>
         <meta name="description" content={description} />
@@ -54,6 +66,7 @@ function Document({
         <link rel="stylesheet" href={assets.css} />
         <link rel="stylesheet" href={assets.cjk} media="print" onload="this.media='all'" />
         {wear ? null : <script>{WEAR_SCRIPT}</script>}
+        {head ? <script>{head}</script> : null}
         <script>{HANDOFF_SCRIPT}</script>
         <script>{ROUTE_SCRIPT}</script>
         <script type="speculationrules">{SPECULATION_RULES}</script>
@@ -69,9 +82,12 @@ function Document({
   )
 }
 
-export function page({ title, description, image, status = 200, cache, wear }: Page, body: JSX.Element): Response {
+export function page(
+  { title, description, image, status = 200, cache, wear, root, head }: Page,
+  body: JSX.Element,
+): Response {
   const text = `<!doctype html>${html(
-    <Document title={title} description={description} image={image} wear={wear}>
+    <Document title={title} description={description} image={image} wear={wear} root={root} head={head}>
       {body}
     </Document>,
   )}`

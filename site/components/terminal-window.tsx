@@ -1,12 +1,11 @@
-import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
+import type { PropsWithChildren } from '@kitajs/html'
 import { Plus } from 'lucide'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Icon } from '@/lib/icons'
-import { slotOf } from '@/lib/sheet'
-import { shelfOf, type Theme } from '@/lib/themes'
+import type { Theme } from '@/lib/themes'
 
 export interface Tab {
   id: number
@@ -29,36 +28,46 @@ function Prompt() {
   )
 }
 
-export function Session({ theme }: { theme: Theme }) {
-  const file = `themes/${theme.name}.toml`
+function File() {
+  return (
+    <>
+      themes/
+      <span data-text="name" />
+      .toml
+    </>
+  )
+}
 
+export function Session() {
   return (
     <>
       <Line>
         <Prompt />
-        {escapeHtml(`ttheme use ${theme.name}`)}
+        ttheme use <span data-text="name" />
       </Line>
       <Line>
-        <span class="term-on-se" safe>{` ${shelfOf(theme)} `}</span>
+        <span class="term-on-se">
+          {' '}
+          <span data-text="catalog" />{' '}
+        </span>
       </Line>
       <Line>
-        <span class="term-on-cu" safe>{` ${theme.name} `}</span>
+        <span class="term-on-cu">
+          {' '}
+          <span data-text="name" />{' '}
+        </span>
         {'  '}
-        <span class="term-c8" safe>{`ANSI ${theme.ansiSource}`}</span>
+        <span class="term-c8">
+          ANSI <span data-text="ansi" />
+        </span>
       </Line>
       <Line>
         {' '}
-        {theme.signatureSlots.map((slot) =>
-          slot === 'selection' ? (
-            <span class="term-on-se">{' sel '}</span>
-          ) : (
-            <span style={`color:var(--${slotOf(slot)})`}>●</span>
-          ),
-        )}
+        <span data-mark="0" />
+        <span data-mark="1" />
+        <span data-mark="2" />
         {'  '}
-        <span class="term-c7" safe>
-          {theme.signatureSlots.join(' ')}
-        </span>
+        <span class="term-c7" data-text="slots" />
       </Line>
       <Line>
         <Prompt />
@@ -88,15 +97,14 @@ export function Session({ theme }: { theme: Theme }) {
       </Line>
       <Line>
         <Prompt />
-        {escapeHtml(`grep -H '^cursor' ${file}`)}
+        grep -H '^cursor' <File />
       </Line>
       <Line>
-        <span class="term-c5" safe>
-          {file}
+        <span class="term-c5">
+          <File />
         </span>
         <span class="term-c6">:</span>
-        <span class="term-c1 font-bold">cursor</span>
-        {escapeHtml(` = "${theme.cursor}"`)}
+        <span class="term-c1 font-bold">cursor</span> = "<span data-text="cursor" />"
       </Line>
       <Line>
         <Prompt />
@@ -115,17 +123,26 @@ export function TerminalTabs({ tabs, active }: { tabs: Tab[]; active: number }) 
           data-tab={String(tab.id)}
           class="-mb-px flex-[0_1_136px] gap-2 py-2 text-xs"
         >
-          <i class="size-2 flex-none rounded-full" style={`background:${tab.theme.cursor}`} />
-          <span class="min-w-0 truncate" style={tab.id === active ? `--tab-name:sheet-tab-${tab.id}` : undefined} safe>
-            {tab.theme.name}
-          </span>
+          {tab.id === active ? (
+            <>
+              <i class="size-2 flex-none rounded-full bg-(--cu)" />
+              <span class="min-w-0 truncate" style={`--tab-name:sheet-tab-${tab.id}`} data-text="name" />
+            </>
+          ) : (
+            <>
+              <i class="size-2 flex-none rounded-full" style={`background:${tab.theme.cursor}`} />
+              <span class="min-w-0 truncate" safe>
+                {tab.theme.name}
+              </span>
+            </>
+          )}
         </TabsTrigger>
       ))}
     </TabsList>
   )
 }
 
-export function TerminalWindow({ theme, tabs, active }: { theme: Theme; tabs: Tab[]; active: number }) {
+export function TerminalWindow({ tabs, active }: { tabs: Tab[]; active: number }) {
   return (
     <Card class="w-full border-input shadow-lg">
       <div data-slot="tabs" class="flex flex-col">
@@ -145,7 +162,7 @@ export function TerminalWindow({ theme, tabs, active }: { theme: Theme; tabs: Ta
       <div class="relative">
         <ScrollArea contentClass="term w-max min-w-full px-4.5 pt-3.5 pb-4">
           <div data-session>
-            <Session theme={theme} />
+            <Session />
           </div>
         </ScrollArea>
       </div>

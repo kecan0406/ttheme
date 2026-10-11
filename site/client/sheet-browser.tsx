@@ -1,6 +1,8 @@
-import { SheetDetails, SheetHeading, SheetUse } from '@/components/sheets'
-import { Session, TerminalTabs } from '@/components/terminal-window'
+import { SheetDetails, SheetUse } from '@/components/sheets'
+import { TerminalTabs } from '@/components/terminal-window'
 import { html } from '@/lib/render'
+import { sheetNumber, sheetVars } from '@/lib/sheet'
+import { SHEET_AT } from '@/lib/sheet-script'
 import type { GateRule, Theme } from '@/lib/themes'
 import { fadeThrough, fill, readJson, reducedMotion, swap } from './dom'
 import { tabKey } from './tabs'
@@ -62,7 +64,7 @@ class SheetBrowser extends HTMLElement {
     window.addEventListener('keydown', this.#arrows)
     this.#off = onWear((theme) => this.#adopt(theme))
     this.#restore()
-    this.#center()
+    this.#center('auto')
   }
 
   disconnectedCallback() {
@@ -124,9 +126,13 @@ class SheetBrowser extends HTMLElement {
     this.querySelector<HTMLElement>('#sheet-details')?.toggleAttribute('hidden', !open)
   }
 
-  #center() {
+  #center(behavior: ScrollBehavior) {
+    const strip = this.querySelector('[data-strip]')
     const tile = this.querySelector(`[data-sheet="${this.#at}"]`)
-    tile?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' })
+    if (!strip || !tile) return
+    const from = strip.getBoundingClientRect()
+    const to = tile.getBoundingClientRect()
+    strip.scrollBy({ left: to.left + to.width / 2 - (from.left + from.width / 2), behavior })
   }
 
   #render() {
@@ -139,7 +145,7 @@ class SheetBrowser extends HTMLElement {
     }
     fadeThrough(() => {
       this.#draw()
-      this.#center()
+      this.#center(reducedMotion() ? 'auto' : 'smooth')
     })
   }
 
@@ -147,22 +153,23 @@ class SheetBrowser extends HTMLElement {
     const theme = this.#themes[this.#at] as Theme
     const tabs = this.#tabs.map(({ id, index }) => ({ id, theme: this.#themes[index] as Theme }))
     show(theme)
+    const root = document.documentElement
+    for (const [name, value] of sheetVars(theme, sheetNumber(this.#themes, theme), this.#gate))
+      root.style.setProperty(name, value)
     this.querySelector('[data-sheet-label]')?.setAttribute('aria-label', theme.name)
-    fill(
-      this.querySelector('[data-heading]'),
-      html(<SheetHeading themes={this.#themes} theme={theme} gate={this.#gate} />),
-    )
+    const name = this.querySelector('[data-heading] h1 > .sr-only')
+    if (name) name.textContent = theme.name
     const list = this.querySelector('[data-tabs] [role="tablist"]')
     const focused = list?.contains(document.activeElement) ?? false
     swap(list, html(<TerminalTabs tabs={tabs} active={this.#active} />))
     if (focused) this.querySelector<HTMLElement>('[data-tabs] [aria-selected="true"]')?.focus()
-    fill(this.querySelector('[data-session]'), html(<Session theme={theme} />))
     fill(this.querySelector('[data-use]'), html(<SheetUse theme={theme} />))
     fill(this.querySelector('#sheet-details'), html(<SheetDetails theme={theme} gate={this.#gate} />))
     for (const tile of this.querySelectorAll<HTMLElement>('[data-sheet]')) {
       if (Number(tile.dataset.sheet) === this.#at) tile.setAttribute('aria-current', 'true')
       else tile.removeAttribute('aria-current')
     }
+    document.getElementById(SHEET_AT)?.remove()
   }
 }
 

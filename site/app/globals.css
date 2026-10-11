@@ -212,9 +212,18 @@ html {
     text-wrap: balance;
   }
 
+  p {
+    text-wrap: pretty;
+  }
+
   ::selection {
-    background: var(--accent);
-    color: var(--foreground);
+    background: var(--se);
+    color: var(--fg);
+  }
+
+  input,
+  textarea {
+    caret-color: var(--cu);
   }
 
   :focus-visible {
@@ -714,6 +723,97 @@ route-progress[data-state='done'],
 :root[data-settling] *::before,
 :root[data-settling] *::after {
   transition: none !important;
+}
+
+[data-lead-name] {
+  font-size: min(1em, calc((100cqi - var(--lead-prefix) * 1em) / var(--palette-em) * 0.97));
+}
+
+[data-lead-name]::after,
+[data-text='name']::after {
+  content: var(--palette-name);
+}
+
+[data-text='catalog']::after {
+  content: var(--palette-catalog);
+}
+
+[data-text='number']::after {
+  content: var(--sheet-number);
+}
+
+[data-text='lead']::after {
+  content: var(--sheet-lead);
+}
+
+[data-text='ansi']::after {
+  content: var(--sheet-ansi);
+}
+
+[data-text='slots']::after {
+  content: var(--sheet-slots);
+}
+
+[data-text='cursor']::after {
+  content: var(--sheet-cursor);
+}
+
+[data-text='floors']::after {
+  content: var(--sheet-floors);
+}
+
+[data-mark='0'] {
+  background: var(--sheet-ground0);
+  color: var(--sheet-ink0);
+}
+
+[data-mark='0']::after {
+  content: var(--sheet-mark0);
+}
+
+[data-mark='1'] {
+  background: var(--sheet-ground1);
+  color: var(--sheet-ink1);
+}
+
+[data-mark='1']::after {
+  content: var(--sheet-mark1);
+}
+
+[data-mark='2'] {
+  background: var(--sheet-ground2);
+  color: var(--sheet-ink2);
+}
+
+[data-mark='2']::after {
+  content: var(--sheet-mark2);
+}
+
+[data-sheet][aria-current='true'] {
+  outline: 2px solid var(--ring);
+  scroll-initial-target: nearest;
+}
+
+@supports (content: 'a' / '') {
+  [data-lead-name]::after {
+    content: var(--palette-name) / '';
+  }
+}
+
+[data-wear-label]::before {
+  content: var(--wear-was, none);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-wear-label][data-renaming]::before {
+  animation: fade-out 0.12s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+[data-wear-label][data-renaming]::after {
+  animation: fade-in 0.28s cubic-bezier(0.3, 0.7, 0.2, 1) 0.12s both;
 }
 
 :root[data-fading] lead-showcase [data-lead-name] {

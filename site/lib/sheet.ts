@@ -1,4 +1,5 @@
 import type { GateRule, Theme } from '@/lib/themes'
+import type { Vars } from '@/lib/wear'
 
 export type Slot = 'bg' | 'fg' | 'cu' | 'se' | `a${number}`
 
@@ -34,6 +35,28 @@ export function gatePassed(theme: Theme, gate: GateRule[]): number {
 
 export function sheetNumber(themes: Theme[], theme: Theme): string {
   return String(themes.indexOf(theme) + 1).padStart(3, '0')
+}
+
+export function sheetVars(theme: Theme, number: string, gate: GateRule[]): Vars {
+  const passed = gatePassed(theme, gate)
+  const marks = theme.signatureSlots.slice(0, 3).flatMap((slot, index): Vars => {
+    const selection = slot === 'selection'
+    return [
+      [`--sheet-mark${index}`, JSON.stringify(selection ? ' sel ' : '●')],
+      [`--sheet-ground${index}`, selection ? 'var(--se)' : 'transparent'],
+      [`--sheet-ink${index}`, selection ? 'var(--fg)' : `var(--${slotOf(slot)})`],
+    ]
+  })
+  return [
+    ['--sheet-number', JSON.stringify(number)],
+    ['--sheet-lead', JSON.stringify(theme.lead ? ' · lead' : '')],
+    ['--sheet-ansi', JSON.stringify(theme.ansiSource)],
+    ['--sheet-slots', JSON.stringify(theme.signatureSlots.join(' '))],
+    ['--sheet-cursor', JSON.stringify(theme.cursor)],
+    ['--sheet-floors', JSON.stringify(`${passed} / ${gate.length} floors`)],
+    ['--sheet-tone', passed === gate.length ? 'var(--success)' : 'var(--warning)'],
+    ...marks,
+  ]
 }
 
 export function lightness(hex: string): string {

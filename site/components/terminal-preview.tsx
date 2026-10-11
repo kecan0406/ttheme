@@ -43,7 +43,7 @@ function Caret() {
   return <span class="inline-block w-[1ch] bg-(--cu)">&nbsp;</span>
 }
 
-function Shell({ use }: { use: string }) {
+function Shell({ use }: { use: string | null }) {
   return (
     <>
       <L>
@@ -69,9 +69,13 @@ function Shell({ use }: { use: string }) {
       <L>
         <Prompt />
         ttheme use{' '}
-        <span class="term-c3" data-use safe>
-          {use}
-        </span>
+        {use === null ? (
+          <span class="term-c3" data-use data-text="name" />
+        ) : (
+          <span class="term-c3" data-use safe>
+            {use}
+          </span>
+        )}
       </L>
       <L>
         <C n={8}>painted this tab</C>
@@ -199,11 +203,11 @@ function Colors() {
   )
 }
 
-export function SceneLines({ theme, scene }: { theme: Theme; scene: Scene }) {
+export function SceneLines({ theme, scene, own = false }: { theme: Theme; scene: Scene; own?: boolean }) {
   if (scene === 'git') return <Git />
   if (scene === 'test') return <Test />
   if (scene === 'colors') return <Colors />
-  return <Shell use={theme.marketplace ? theme.id : theme.name} />
+  return <Shell use={own ? null : theme.marketplace ? theme.id : theme.name} />
 }
 
 export function TerminalPreview({
@@ -211,12 +215,14 @@ export function TerminalPreview({
   scene,
   bare = false,
   worn = false,
+  own = false,
   class: className,
 }: {
   theme: Theme
   scene: Scene
   bare?: boolean
   worn?: boolean
+  own?: boolean
   class?: string
 }) {
   return (
@@ -229,7 +235,7 @@ export function TerminalPreview({
         className,
       )}
     >
-      <SceneLines theme={theme} scene={scene} />
+      <SceneLines theme={theme} scene={scene} own={own} />
     </pre>
   )
 }

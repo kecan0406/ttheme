@@ -1,14 +1,21 @@
-import { LeadPreview, LeadUse } from '@/components/home'
+import { LeadUse } from '@/components/home'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
-import { fadeThrough, fill, readJson, reducedMotion, swap } from './dom'
+import { fadeThrough, fill, readJson, reducedMotion } from './dom'
 import { SparkleBurst } from './sparkle-burst'
 import { choose, onWear, recall, show } from './wear'
+
+const CYCLE_MS = 4000
+
+const IN_VIEW = 0.25
 
 class LeadShowcase extends HTMLElement {
   #leads: Theme[] = []
   #shown = ''
   #timer = 0
+  #cycling = false
+  #holds = new Set<string>()
+  #view: IntersectionObserver | null = null
   #off = () => {}
 
   #click = (event: MouseEvent) => {
@@ -17,6 +24,24 @@ class LeadShowcase extends HTMLElement {
     const lead = target.closest<HTMLElement>('[data-lead]')
     if (step) this.#step(Number(step.dataset.pick))
     else if (lead) choose(this.#leads[Number(lead.dataset.lead)] as Theme)
+  }
+
+  #hidden = () => this.#hold('hidden', document.hidden)
+
+  #enter = () => this.#hold('pointer', true)
+
+  #leave = () => this.#hold('pointer', false)
+
+  #focus = () => this.#hold('focus', true)
+
+  #blur = (event: FocusEvent) => this.#hold('focus', this.#hero?.contains(event.relatedTarget as Node | null) ?? false)
+
+  get #hero(): HTMLElement | null {
+    return this.querySelector('[data-lead-hero]')
+  }
+
+  get #window(): HTMLElement | null {
+    return this.querySelector('[data-lead-window]')
   }
 
   connectedCallback() {
@@ -30,19 +55,60 @@ class LeadShowcase extends HTMLElement {
       return
     }
     if (reducedMotion()) return
-    this.#timer = window.setInterval(() => {
-      if (!document.hidden) this.#cycle()
-    }, 4000)
+    this.#cycling = true
+    document.addEventListener('visibilitychange', this.#hidden)
+    this.#window?.addEventListener('pointerenter', this.#enter)
+    this.#window?.addEventListener('pointerleave', this.#leave)
+    this.#hero?.addEventListener('focusin', this.#focus)
+    this.#hero?.addEventListener('focusout', this.#blur)
+    const hero = this.#hero
+    if (hero) {
+      this.#view = new IntersectionObserver(
+        ([entry]) => this.#hold('away', (entry?.intersectionRatio ?? 0) < IN_VIEW),
+        { threshold: IN_VIEW },
+      )
+      this.#view.observe(hero)
+    }
+    this.#hidden()
+    this.#schedule()
   }
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
     this.#off()
-    window.clearInterval(this.#timer)
+    this.#stop()
   }
 
   get #at(): number {
     return this.#leads.findIndex((lead) => lead.name === this.#shown)
+  }
+
+  #hold(reason: string, on: boolean) {
+    if (on === this.#holds.has(reason)) return
+    if (on) this.#holds.add(reason)
+    else this.#holds.delete(reason)
+    this.#schedule()
+  }
+
+  #schedule() {
+    window.clearTimeout(this.#timer)
+    if (!this.#cycling || this.#holds.size > 0) return
+    this.#timer = window.setTimeout(() => {
+      this.#cycle()
+      this.#schedule()
+    }, CYCLE_MS)
+  }
+
+  #stop() {
+    this.#cycling = false
+    window.clearTimeout(this.#timer)
+    this.#view?.disconnect()
+    this.#view = null
+    document.removeEventListener('visibilitychange', this.#hidden)
+    this.#window?.removeEventListener('pointerenter', this.#enter)
+    this.#window?.removeEventListener('pointerleave', this.#leave)
+    this.#hero?.removeEventListener('focusin', this.#focus)
+    this.#hero?.removeEventListener('focusout', this.#blur)
   }
 
   #step(delta: number) {
@@ -57,23 +123,17 @@ class LeadShowcase extends HTMLElement {
   }
 
   #pick(theme: Theme) {
-    window.clearInterval(this.#timer)
+    this.#stop()
     if (theme.name !== this.#shown) fadeThrough(() => this.#draw(theme))
   }
 
   #draw(theme: Theme) {
     this.#shown = theme.name
     show(theme)
-    const name = this.querySelector('[data-lead-name]')
+    const name = this.querySelector('[data-lead-name] > span')
     if (name) name.textContent = theme.name
-    const title = this.querySelector('[data-lead-title]')
-    if (title) title.textContent = `ttheme · ${theme.name} · ${theme.catalog ?? ''}`
     const sparkles = this.querySelector('sparkle-burst')
-    if (sparkles instanceof SparkleBurst) {
-      sparkles.dataset.colors = JSON.stringify(theme.signature)
-      sparkles.burst()
-    }
-    swap(this.querySelector('[data-lead-preview]'), html(<LeadPreview theme={theme} />))
+    if (sparkles instanceof SparkleBurst) sparkles.burst()
     fill(this.querySelector('[data-lead-use]'), html(<LeadUse theme={theme} />))
     for (const button of this.querySelectorAll<HTMLElement>('[data-lead]'))
       button.setAttribute('aria-pressed', String(this.#leads[Number(button.dataset.lead)]?.name === theme.name))

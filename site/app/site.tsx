@@ -14,6 +14,8 @@ import { marketplacePath, OFFICIAL, OFFICIAL_ABOUT, palettePath } from '@/lib/ga
 import { marketplaces } from '@/lib/marketplaces'
 import { gate, themes } from '@/lib/official'
 import { builderOf, readShared, type Shared } from '@/lib/share'
+import { sheetNumber, sheetVars } from '@/lib/sheet'
+import { sheetScript } from '@/lib/sheet-script'
 import type { Marketplace, Theme } from '@/lib/themes'
 import pkg from '../../package.json' with { type: 'json' }
 import { page } from './document'
@@ -86,6 +88,8 @@ export const site = new Elysia({ name: 'site' })
         title: 'ttheme — sheets',
         description: 'Browse every ttheme palette in a terminal, with its slots and contrast readings',
         cache: CATALOG,
+        root: sheetVars(themes[0] as Theme, sheetNumber(themes, themes[0] as Theme), gate),
+        head: sheetScript(themes, gate),
       },
       <Sheets themes={themes} gate={gate} facts={facts} />,
     ),

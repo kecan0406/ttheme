@@ -1,6 +1,19 @@
 import type { Point } from '@/lib/facets'
 import type { Theme } from '@/lib/themes'
-import { isLight, SHOW_EVENT, type Shown, SIGNS, SLOTS, type Vars, WEAR_EVENT, WEAR_KEY, wearVars } from '@/lib/wear'
+import {
+  isLight,
+  LABEL,
+  SHOW_EVENT,
+  type Shown,
+  SIGNS,
+  SLOTS,
+  TONES,
+  type Vars,
+  WEAR_EVENT,
+  WEAR_KEY,
+  wearOwn,
+  wearVars,
+} from '@/lib/wear'
 import { reducedMotion } from './dom'
 import { respeculate } from './speculation'
 
@@ -11,6 +24,8 @@ const COLOR = /^#[0-9a-f]{6}$/i
 const FADE: KeyframeEffectOptions = { duration: 400, easing: 'cubic-bezier(0.3, 0.7, 0.2, 1)' }
 
 const painted = new Map<string, Rgb>()
+
+const chrome = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
 
 let fading: Animation | null = null
 
@@ -103,6 +118,7 @@ function fade(root: HTMLElement, slots: Vars) {
       painted.set(slot, color)
       root.style.setProperty(slot, hex(color))
     }
+    chrome?.setAttribute('content', root.style.getPropertyValue('--bg'))
     requestAnimationFrame(progress < 1 ? step : settled)
   }
   const settled = () => {
@@ -116,18 +132,35 @@ function fade(root: HTMLElement, slots: Vars) {
   requestAnimationFrame(step)
 }
 
+function relabel(root: HTMLElement, name: string) {
+  const was = root.style.getPropertyValue(LABEL)
+  root.style.setProperty(LABEL, name)
+  if (!was || was === name || reducedMotion()) return
+  for (const label of document.querySelectorAll<HTMLElement>('[data-wear-label]')) {
+    label.style.setProperty('--wear-was', was)
+    if (label.dataset.renaming === undefined) label.dataset.renaming = ''
+    else
+      for (const animation of label.getAnimations({ subtree: true })) {
+        animation.cancel()
+        animation.play()
+      }
+  }
+}
+
 function wear(vars: Vars, light: boolean, origin: Point | null) {
   document.dispatchEvent(new CustomEvent<Shown>(SHOW_EVENT, { detail: { vars, origin, instant: false } }))
   const root = document.documentElement
-  for (const [name, value] of vars) if (SIGNS.includes(name)) root.style.setProperty(name, value)
+  for (const [name, value] of vars) if (name === LABEL) relabel(root, value)
   root.style.colorScheme = light ? 'light' : 'dark'
   fade(
     root,
-    vars.filter(([name]) => SLOTS.includes(name)),
+    vars.filter(([name]) => SLOTS.includes(name) || TONES.includes(name)),
   )
 }
 
 export function show(theme: Theme) {
+  const root = document.documentElement
+  for (const [name, value] of wearOwn(theme)) root.style.setProperty(name, value)
   wear(wearVars(theme), isLight(theme), null)
 }
 
@@ -163,12 +196,13 @@ window.addEventListener('pageshow', (event) => {
   if (!event.persisted || !fading) return
   const root = document.documentElement
   for (const [slot, color] of goal) root.style.setProperty(slot, color)
+  chrome?.setAttribute('content', root.style.getPropertyValue('--bg'))
   settle(root)
 })
 
 export function current(): string {
   try {
-    const name: unknown = JSON.parse(getComputedStyle(document.documentElement).getPropertyValue('--wear-name'))
+    const name: unknown = JSON.parse(getComputedStyle(document.documentElement).getPropertyValue(LABEL))
     return typeof name === 'string' ? name : ''
   } catch {
     return ''

@@ -6,29 +6,33 @@ import { catalogsOf } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { gatePassed, sheetNumber } from '@/lib/sheet'
 import type { GateRule, Theme } from '@/lib/themes'
 import { CommandRow } from './command-row'
-import { GateList, PropertyList, SectionLabel, Signature, SwatchGrid } from './palette-parts'
+import { GateList, PropertyList, SectionLabel, Signature, SwatchGrid, WornSignature } from './palette-parts'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { TerminalWindow } from './terminal-window'
 
-export function SheetHeading({ themes, theme, gate }: { themes: Theme[]; theme: Theme; gate: GateRule[] }) {
-  const passed = gatePassed(theme, gate)
+export function SheetHeading({ theme, count }: { theme: Theme; count: number }) {
   return (
     <>
-      <span class="font-mono text-xs text-muted-foreground tabular-nums" safe>
-        {`${sheetNumber(themes, theme)} / ${themes.length}`}
+      <span class="font-mono text-xs text-muted-foreground tabular-nums">
+        <span data-text="number" /> / {count}
       </span>
-      <h1 class="font-display text-display-lg font-black text-primary [overflow-wrap:anywhere]" safe>
-        {theme.name}
+      <h1 class="font-display text-display-lg font-black text-primary [overflow-wrap:anywhere]">
+        <span class="sr-only" safe>
+          {theme.name}
+        </span>
+        <span aria-hidden="true" data-text="name" />
       </h1>
       <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm text-soft-foreground">
-        <span safe>{`${theme.catalog ?? ''}${theme.lead ? ' · lead' : ''}`}</span>
-        <Signature theme={theme} />
-        <Badge variant={passed === gate.length ? 'success' : 'warning'}>
-          {passed} / {gate.length} floors
+        <span>
+          <span data-text="catalog" />
+          <span data-text="lead" />
+        </span>
+        <WornSignature />
+        <Badge variant="tone" style="--tone:var(--sheet-tone)">
+          <span data-text="floors" />
         </Badge>
       </div>
     </>
@@ -63,7 +67,17 @@ export function SheetDetails({ theme, gate }: { theme: Theme; gate: GateRule[] }
 }
 
 export function SheetUse({ theme }: { theme: Theme }) {
-  return <CommandRow command={`ttheme use ${theme.name}`} class="min-w-70 flex-1 bg-card" />
+  return (
+    <CommandRow
+      command={`ttheme use ${theme.name}`}
+      text={
+        <>
+          ttheme use <span data-text="name" />
+        </>
+      }
+      class="min-w-70 flex-1 bg-card"
+    />
+  )
 }
 
 export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRule[]; facts: Facts }) {
@@ -74,13 +88,17 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
     <sheet-browser class="ground flex min-h-dvh flex-col">
       <SiteHeader current="/sheets" />
       <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] flex-1 grid-cols-[minmax(0,1fr)] content-start gap-5 pt-5">
-        <section data-sheet-label aria-label={theme.name} class="grid justify-items-center gap-6 pt-8 pb-10">
+        <section
+          data-sheet-label
+          aria-label={theme.name}
+          class="grid grid-cols-[minmax(0,1fr)] justify-items-center gap-6 pt-8 pb-10"
+        >
           <div class="grid w-full max-w-[880px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4">
             <Button variant="outline" size="icon" aria-label="previous sheet" data-step="-1">
               <Icon node={ChevronLeft} />
             </Button>
             <div data-heading class="grid justify-items-center gap-2 text-center">
-              <SheetHeading themes={themes} theme={theme} gate={gate} />
+              <SheetHeading theme={theme} count={themes.length} />
             </div>
             <Button variant="outline" size="icon" aria-label="next sheet" data-step="1">
               <Icon node={ChevronRight} />
@@ -88,7 +106,7 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
           </div>
 
           <div class="w-full max-w-[880px]">
-            <TerminalWindow theme={theme} tabs={tabs} active={0} />
+            <TerminalWindow tabs={tabs} active={0} />
           </div>
 
           <div class="grid w-full max-w-[880px] gap-4">
@@ -141,7 +159,7 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
                   data-sheet={String(themes.indexOf(sheet))}
                   aria-current={sheet === theme ? 'true' : undefined}
                   style={`background:${sheet.background};color:${sheet.foreground}`}
-                  class="grid w-32 flex-none snap-center gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-3 py-2 text-left transition-transform duration-200 outline-none hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring active:scale-98 active:duration-500 active:ease-spring aria-[current=true]:ring-2 aria-[current=true]:ring-ring motion-reduce:hover:translate-y-0"
+                  class="grid w-32 flex-none snap-center gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-3 py-2 text-left transition-transform duration-200 outline-none hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-98 active:duration-500 active:ease-spring motion-reduce:hover:translate-y-0"
                 >
                   <span class="truncate font-display text-sm font-extrabold" style={`color:${sheet.cursor}`}>
                     {escapeHtml(sheet.name)}
