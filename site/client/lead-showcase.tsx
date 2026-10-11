@@ -36,7 +36,14 @@ class LeadShowcase extends HTMLElement {
 
   #leave = () => this.#hold('pointer', false)
 
-  #focus = () => this.#hold('focus', true)
+  #focus = (event: FocusEvent) => {
+    if ((event.target as Element).matches(':focus-visible')) this.#stop()
+    else this.#hold('focus', true)
+  }
+
+  #keydown = (event: KeyboardEvent) => {
+    if (event.repeat && (event.target as Element).matches('input[name="lead"], [data-pick]')) event.preventDefault()
+  }
 
   #blur = (event: FocusEvent) => this.#hold('focus', this.#hero?.contains(event.relatedTarget as Node | null) ?? false)
 
@@ -57,6 +64,7 @@ class LeadShowcase extends HTMLElement {
     this.#shown = (this.#leads[0] as Theme).name
     this.addEventListener('click', this.#click)
     this.addEventListener('change', this.#change)
+    this.addEventListener('keydown', this.#keydown)
     this.#off = onWear((theme) => this.#pick(theme))
     const stored = recall()
     if (stored && stored.name !== this.#shown) this.#draw(stored)
@@ -83,6 +91,7 @@ class LeadShowcase extends HTMLElement {
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
     this.removeEventListener('change', this.#change)
+    this.removeEventListener('keydown', this.#keydown)
     this.#off()
     this.#stop()
   }
