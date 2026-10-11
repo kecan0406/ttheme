@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from '@kitajs/html'
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide'
+import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { Button, LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
@@ -160,6 +160,16 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                 >
                   ttheme · <span data-text="name" /> · <span data-text="catalog" />
                 </span>
+                <Button variant="ghost" size="icon-sm" data-lead-rotate data-cycle="on" class="motion-reduce:hidden">
+                  <span data-when="on" class="contents">
+                    <Icon node={Pause} />
+                    <span class="sr-only">stop the palette cycle</span>
+                  </span>
+                  <span data-when="off" class="contents">
+                    <Icon node={Play} />
+                    <span class="sr-only">start the palette cycle</span>
+                  </span>
+                </Button>
                 <Button variant="ghost" size="icon-sm" aria-label="previous palette" data-pick="-1">
                   <Icon node={ChevronLeft} />
                 </Button>

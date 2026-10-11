@@ -14,12 +14,19 @@ class LeadShowcase extends HTMLElement {
   #shown = ''
   #run: Animation | null = null
   #cycling = false
+  #chosen = false
   #holds = new Set<string>()
   #view: IntersectionObserver | null = null
   #off = () => {}
 
   #click = (event: MouseEvent) => {
-    const step = (event.target as Element).closest<HTMLElement>('[data-pick]')
+    const target = event.target as Element
+    if (target.closest('[data-lead-rotate]')) {
+      this.#chosen = true
+      this.#turn(!this.#cycling)
+      return
+    }
+    const step = target.closest<HTMLElement>('[data-pick]')
     if (step) this.#step(Number(step.dataset.pick))
   }
 
@@ -37,15 +44,12 @@ class LeadShowcase extends HTMLElement {
   #leave = () => this.#hold('pointer', false)
 
   #focus = (event: FocusEvent) => {
-    if ((event.target as Element).matches(':focus-visible')) this.#stop()
-    else this.#hold('focus', true)
+    if (!this.#chosen && (event.target as Element).matches(':focus-visible')) this.#turn(false)
   }
 
   #keydown = (event: KeyboardEvent) => {
     if (event.repeat && (event.target as Element).matches('input[name="lead"], [data-pick]')) event.preventDefault()
   }
-
-  #blur = (event: FocusEvent) => this.#hold('focus', this.#hero?.contains(event.relatedTarget as Node | null) ?? false)
 
   get #hero(): HTMLElement | null {
     return this.querySelector('[data-lead-hero]')
@@ -59,6 +63,10 @@ class LeadShowcase extends HTMLElement {
     return this.querySelector('[data-lead-progress]')
   }
 
+  get #control(): HTMLElement | null {
+    return this.querySelector('[data-lead-rotate]')
+  }
+
   connectedCallback() {
     this.#leads = readJson<Theme[]>(this, 'script[data-leads]')
     this.#shown = (this.#leads[0] as Theme).name
@@ -69,13 +77,13 @@ class LeadShowcase extends HTMLElement {
     const stored = recall()
     if (stored && stored.name !== this.#shown) this.#draw(stored)
     else this.#check(this.#shown)
-    if (stored || reducedMotion()) return
-    this.#cycling = true
+    this.#mark(stored === null)
+    delete document.documentElement.dataset.picked
+    if (reducedMotion()) return
     document.addEventListener('visibilitychange', this.#hidden)
     this.#window?.addEventListener('pointerenter', this.#enter)
     this.#window?.addEventListener('pointerleave', this.#leave)
     this.#hero?.addEventListener('focusin', this.#focus)
-    this.#hero?.addEventListener('focusout', this.#blur)
     const hero = this.#hero
     if (hero) {
       this.#view = new IntersectionObserver(
@@ -85,7 +93,7 @@ class LeadShowcase extends HTMLElement {
       this.#view.observe(hero)
     }
     this.#hidden()
-    this.#schedule()
+    this.#turn(stored === null)
   }
 
   disconnectedCallback() {
@@ -93,11 +101,29 @@ class LeadShowcase extends HTMLElement {
     this.removeEventListener('change', this.#change)
     this.removeEventListener('keydown', this.#keydown)
     this.#off()
-    this.#stop()
+    this.#cycling = false
+    this.#run?.cancel()
+    this.#view?.disconnect()
+    this.#view = null
+    document.removeEventListener('visibilitychange', this.#hidden)
+    this.#window?.removeEventListener('pointerenter', this.#enter)
+    this.#window?.removeEventListener('pointerleave', this.#leave)
+    this.#hero?.removeEventListener('focusin', this.#focus)
   }
 
   get #at(): number {
     return this.#leads.findIndex((lead) => lead.name === this.#shown)
+  }
+
+  #mark(on: boolean) {
+    const control = this.#control
+    if (control) control.dataset.cycle = on ? 'on' : 'off'
+  }
+
+  #turn(on: boolean) {
+    this.#cycling = on
+    this.#mark(on)
+    this.#schedule()
   }
 
   #hold(reason: string, on: boolean) {
@@ -128,19 +154,6 @@ class LeadShowcase extends HTMLElement {
     )
   }
 
-  #stop() {
-    this.#cycling = false
-    this.#run?.pause()
-    this.#line?.style.removeProperty('opacity')
-    this.#view?.disconnect()
-    this.#view = null
-    document.removeEventListener('visibilitychange', this.#hidden)
-    this.#window?.removeEventListener('pointerenter', this.#enter)
-    this.#window?.removeEventListener('pointerleave', this.#leave)
-    this.#hero?.removeEventListener('focusin', this.#focus)
-    this.#hero?.removeEventListener('focusout', this.#blur)
-  }
-
   #step(delta: number) {
     const count = this.#leads.length
     const from = this.#at === -1 && delta < 0 ? 0 : this.#at
@@ -155,7 +168,7 @@ class LeadShowcase extends HTMLElement {
   }
 
   #pick(theme: Theme) {
-    this.#stop()
+    if (this.#cycling) this.#turn(false)
     if (theme.name !== this.#shown) fadeThrough(() => this.#draw(theme))
   }
 

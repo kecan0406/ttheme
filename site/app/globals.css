@@ -792,6 +792,16 @@ route-progress[data-state='done'],
   font-size: min(1em, calc((100cqi - var(--lead-prefix) * 1em) / var(--palette-em) * 0.97));
 }
 
+[data-lead-rotate][data-cycle='on'] > [data-when='off'],
+[data-lead-rotate][data-cycle='off'] > [data-when='on'],
+:root[data-picked] [data-lead-rotate] > [data-when='on'] {
+  display: none;
+}
+
+:root[data-picked] [data-lead-rotate] > [data-when='off'] {
+  display: contents;
+}
+
 [data-lead-name]::after,
 [data-text='name']::after {
   content: var(--palette-name);
