@@ -58,6 +58,7 @@ function Document({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content={(wear ?? fallback).background} />
         <link rel="icon" type="image/svg+xml" href={wearIcon(wear ?? fallback)} />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <title safe>{title}</title>
         <meta name="description" content={description} />
         {path === undefined ? null : (
@@ -73,7 +74,7 @@ function Document({
         <meta property="og:description" content={description} />
         {image ? (
           <>
-            <meta property="og:image" content={image} />
+            <meta property="og:image" content={`${ORIGIN}${image}`} />
             <meta property="og:image:width" content={String(CARD_WIDTH)} />
             <meta property="og:image:height" content={String(CARD_HEIGHT)} />
             {imageAlt ? <meta property="og:image:alt" content={imageAlt} /> : null}
