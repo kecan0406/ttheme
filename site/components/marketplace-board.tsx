@@ -230,25 +230,31 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
     <marketplace-board class="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-5">
         {children}
-        <InputGroup class="h-11 max-w-[540px] flex-[1_1_22rem]">
-          <InputGroupAddon>
-            <Icon node={Search} />
-          </InputGroupAddon>
-          <InputGroupInput
-            name="query"
-            placeholder="search marketplaces, catalogs, palettes"
-            aria-label="search marketplaces"
-            aria-keyshortcuts="/"
-            spellcheck="false"
-            autocomplete="off"
-            autocapitalize="none"
-            autocorrect="off"
-            enterkeyhint="search"
-          />
-          <InputGroupAddon align="inline-end">
-            <Kbd>/</Kbd>
-          </InputGroupAddon>
-        </InputGroup>
+        <search class="max-w-[540px] flex-[1_1_22rem]">
+          <InputGroup class="h-11">
+            <InputGroupAddon>
+              <Icon node={Search} />
+            </InputGroupAddon>
+            <InputGroupInput
+              type="search"
+              name="query"
+              placeholder="search marketplaces, catalogs, palettes"
+              aria-label="search marketplaces"
+              aria-keyshortcuts="Meta+K Control+K"
+              spellcheck="false"
+              autocomplete="off"
+              autocapitalize="none"
+              autocorrect="off"
+              enterkeyhint="search"
+            />
+            <InputGroupAddon align="inline-end">
+              <Kbd>
+                <span data-key="apple">⌘</span>
+                <span data-key="other">ctrl</span>k
+              </Kbd>
+            </InputGroupAddon>
+          </InputGroup>
+        </search>
       </div>
       <ToggleGroup variant="underline" label="source">
         {SOURCES.map((source) => {

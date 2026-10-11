@@ -13,3 +13,7 @@ export function bare(event: KeyboardEvent): boolean {
 export function printable(event: KeyboardEvent): boolean {
   return bare(event) && [...event.key].length === 1
 }
+
+export function letter(event: KeyboardEvent, char: string): boolean {
+  return event.key.toLowerCase() === char || (event.code === `Key${char.toUpperCase()}` && !/^[a-z]$/i.test(event.key))
+}

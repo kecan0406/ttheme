@@ -792,6 +792,11 @@ route-progress[data-state='done'],
   font-size: min(1em, calc((100cqi - var(--lead-prefix) * 1em) / var(--palette-em) * 0.97));
 }
 
+:root[data-apple] [data-key='other'],
+:root:not([data-apple]) [data-key='apple'] {
+  display: none;
+}
+
 [data-lead-rotate][data-cycle='on'] > [data-when='off'],
 [data-lead-rotate][data-cycle='off'] > [data-when='on'],
 :root[data-picked] [data-lead-rotate] > [data-when='on'] {

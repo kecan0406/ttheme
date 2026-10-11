@@ -3,6 +3,7 @@ import assets from '@/assets.json' with { type: 'json' }
 import { FacetGround } from '@/components/facet-ground'
 import { CARD_HEIGHT, CARD_WIDTH } from '@/lib/card'
 import { HANDOFF_SCRIPT } from '@/lib/handoff'
+import { KEYS_SCRIPT } from '@/lib/keys'
 import { fallback } from '@/lib/official'
 import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
@@ -86,6 +87,7 @@ function Document({
         ))}
         <link rel="stylesheet" href={assets.css} />
         <link rel="stylesheet" href={assets.cjk} media="print" onload="this.media='all'" />
+        <script>{KEYS_SCRIPT}</script>
         {wear ? null : <script>{WEAR_SCRIPT}</script>}
         {head ? <script>{head}</script> : null}
         <script>{HANDOFF_SCRIPT}</script>

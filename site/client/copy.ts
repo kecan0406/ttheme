@@ -1,8 +1,9 @@
+import { APPLE } from '@/lib/keys'
 import { announce } from './dom'
 
 const restoring = new WeakMap<HTMLElement, number>()
 
-const KEYS = /Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘c' : 'ctrl+c'
+const KEYS = document.documentElement.hasAttribute(APPLE) ? '⌘c' : 'ctrl+c'
 
 async function write(text: string): Promise<boolean> {
   try {

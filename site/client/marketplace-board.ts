@@ -9,7 +9,7 @@ import {
   shelvesMatching,
 } from '@/lib/gallery'
 import { readJson, reducedMotion } from './dom'
-import { bare, typing } from './keys'
+import { composing, letter, typing } from './keys'
 
 const TURN_MS = 2000
 
@@ -63,10 +63,14 @@ class MarketplaceBoard extends HTMLElement {
     this.#move(peek, Number(step.dataset.peekStep))
   }
 
-  #slash = (event: KeyboardEvent) => {
-    if (event.key !== '/' || !bare(event) || typing(event.target)) return
+  #find = (event: KeyboardEvent) => {
+    if (!letter(event, 'k') || event.metaKey === event.ctrlKey || event.altKey || event.shiftKey) return
+    if (event.defaultPrevented || composing(event) || typing(event.target)) return
+    const field = this.querySelector<HTMLInputElement>('input[name="query"]')
+    if (!field) return
     event.preventDefault()
-    this.querySelector<HTMLInputElement>('input[name="query"]')?.focus()
+    field.focus()
+    field.select()
   }
 
   #tick = () => {
@@ -84,7 +88,7 @@ class MarketplaceBoard extends HTMLElement {
     this.addEventListener('change', this.#change)
     this.addEventListener('toggle', this.#toggle, true)
     this.addEventListener('click', this.#click)
-    window.addEventListener('keydown', this.#slash)
+    window.addEventListener('keydown', this.#find)
     for (const details of this.querySelectorAll<HTMLDetailsElement>('[data-shelf] details[open]'))
       this.#open.add(shelfOf(details))
     const query = this.querySelector<HTMLInputElement>('input[name="query"]')?.value ?? ''
@@ -107,7 +111,7 @@ class MarketplaceBoard extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
-    window.removeEventListener('keydown', this.#slash)
+    window.removeEventListener('keydown', this.#find)
     window.clearInterval(this.#timer)
     this.#observer?.disconnect()
   }
