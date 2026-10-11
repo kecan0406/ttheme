@@ -2,9 +2,10 @@ import { existsSync, watch } from 'node:fs'
 import { join } from 'node:path'
 import { Elysia, file, NotFound } from 'elysia'
 import { autoHead } from 'elysia/auto-head'
-import { ASSETS, buildAssets, SITE } from './build'
+import { ASSETS, buildAssets, SITE, snapshot } from './build'
 
 await buildAssets(false)
+await snapshot(false)
 const { site } = await import('./app/site')
 
 const listeners = new Set<ReadableStreamDefaultController<string>>()

@@ -10,8 +10,8 @@ import { cardPng } from '@/lib/card'
 import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
 import type { Facts } from '@/lib/facts'
-import { OFFICIAL, OFFICIAL_ABOUT } from '@/lib/gallery'
-import { loadMarketplaces } from '@/lib/marketplaces'
+import { marketplacePath, OFFICIAL, OFFICIAL_ABOUT, palettePath } from '@/lib/gallery'
+import { marketplaces } from '@/lib/marketplaces'
 import { gate, themes } from '@/lib/official'
 import { builderOf, readShared, type Shared } from '@/lib/share'
 import type { Marketplace, Theme } from '@/lib/themes'
@@ -21,7 +21,6 @@ import { page } from './document'
 const facts: Facts = { palettes: themes.length, catalogs: catalogsOf(themes).length, version: pkg.version }
 
 const CATALOG = 'public, max-age=0, s-maxage=31536000'
-const MARKETPLACES = 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400'
 const RETRY = 'public, max-age=0, s-maxage=60'
 const CREDITS = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800'
 
@@ -31,9 +30,18 @@ function about(theme: Theme): string {
   return `${theme.name}${theme.catalog ? ` from ${theme.catalog}` : ''}, a ttheme palette — see it in a terminal, copy its colors and install it with one command`
 }
 
-function palettePage(theme: Theme, marketplace: Marketplace | null, palettes: Theme[], cache: string): Response {
+export const PRERENDERED: string[] = [
+  '/',
+  '/sheets',
+  '/marketplace',
+  marketplacePath(null),
+  ...themes.map(palettePath),
+  ...marketplaces.flatMap((marketplace) => [marketplacePath(marketplace.id), ...marketplace.palettes.map(palettePath)]),
+]
+
+function palettePage(theme: Theme, marketplace: Marketplace | null, palettes: Theme[]): Response {
   return page(
-    { title: `ttheme — ${theme.name}`, description: about(theme), cache, wear: theme },
+    { title: `ttheme — ${theme.name}`, description: about(theme), cache: CATALOG, wear: theme },
     <PalettePage theme={theme} marketplace={marketplace} palettes={palettes} gate={gate} facts={facts} />,
   )
 }
@@ -82,43 +90,38 @@ export const site = new Elysia({ name: 'site' })
       <Sheets themes={themes} gate={gate} facts={facts} />,
     ),
   )
-  .get('/marketplace', async () => {
-    const { marketplaces, fresh } = await loadMarketplaces()
-    return page(
+  .get('/marketplace', () =>
+    page(
       {
         title: 'ttheme — marketplace',
         description: 'Every ttheme palette: the official catalogs and the marketplaces anyone publishes from GitHub',
-        cache: fresh ? MARKETPLACES : RETRY,
+        cache: CATALOG,
       },
       <MarketplacePage themes={themes} marketplaces={marketplaces} facts={facts} />,
-    )
-  })
-  .get('/marketplace/:id', async ({ params }) => {
+    ),
+  )
+  .get('/marketplace/:id', ({ params }) => {
     if (params.id === OFFICIAL)
       return page(
         { title: 'ttheme — official', description: OFFICIAL_ABOUT, cache: CATALOG },
         <MarketplaceStore marketplace={null} palettes={themes} gate={gate} facts={facts} />,
       )
-    const { marketplaces, fresh } = await loadMarketplaces()
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
     if (!marketplace) return noMarketplace(params.id)
     return page(
-      { title: `ttheme — ${marketplace.id}`, description: STORE, cache: fresh ? MARKETPLACES : RETRY },
+      { title: `ttheme — ${marketplace.id}`, description: STORE, cache: CATALOG },
       <MarketplaceStore marketplace={marketplace} palettes={marketplace.palettes} gate={gate} facts={facts} />,
     )
   })
-  .get('/marketplace/:id/:name', async ({ params }) => {
+  .get('/marketplace/:id/:name', ({ params }) => {
     if (params.id === OFFICIAL) {
       const theme = themes.find((entry) => entry.name === params.name)
-      return theme ? palettePage(theme, null, themes, CATALOG) : noPalette(OFFICIAL, params.name)
+      return theme ? palettePage(theme, null, themes) : noPalette(OFFICIAL, params.name)
     }
-    const { marketplaces, fresh } = await loadMarketplaces()
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
     if (!marketplace) return noMarketplace(params.id)
     const theme = marketplace.palettes.find((entry) => entry.name === params.name)
-    return theme
-      ? palettePage(theme, marketplace, marketplace.palettes, fresh ? MARKETPLACES : RETRY)
-      : noPalette(marketplace.id, params.name)
+    return theme ? palettePage(theme, marketplace, marketplace.palettes) : noPalette(marketplace.id, params.name)
   })
   .get(
     '/palettes.json',

@@ -3,6 +3,8 @@ import { basename, dirname, join, parse } from 'node:path'
 import tailwind from '@tailwindcss/postcss'
 import postcss from 'postcss'
 import subsetFont from 'subset-font'
+import { showcase } from '../src/showcase.ts'
+import { official } from './lib/official'
 
 export const SITE = import.meta.dirname
 export const ASSETS = join(SITE, 'public', 'assets')
@@ -10,6 +12,10 @@ export const ASSETS = join(SITE, 'public', 'assets')
 const OUTPUT = join(SITE, '.vercel', 'output')
 
 const IMMUTABLE = 'public, max-age=31536000, s-maxage=31536000, immutable'
+
+const HTML = 'text/html; charset=utf-8'
+
+const SNAPSHOT = join(SITE, 'marketplaces.json')
 
 const FACES = ['@fontsource-variable/inter/index.css', '@fontsource/nunito/800.css', '@fontsource/nunito/900.css']
 
@@ -165,10 +171,37 @@ export async function buildAssets(production: boolean): Promise<void> {
   if (!existsSync(path) || readFileSync(path, 'utf8') !== text) writeFileSync(path, text)
 }
 
+export async function snapshot(fresh: boolean): Promise<void> {
+  if (!fresh && existsSync(SNAPSHOT)) return
+  try {
+    writeFileSync(SNAPSHOT, `${JSON.stringify(await showcase(official, process.env.GITHUB_TOKEN))}\n`)
+  } catch (error) {
+    if (fresh) throw new Error(`the marketplaces did not load — ${(error as Error).message}`)
+    process.stderr.write(`site: no marketplaces — ${(error as Error).message}\n`)
+    writeFileSync(SNAPSHOT, '[]\n')
+  }
+}
+
+async function prerender(): Promise<Record<string, { path: string; contentType: string }>> {
+  const { default: server } = await import('./server')
+  const { PRERENDERED } = await import('./app/site')
+  const overrides: Record<string, { path: string; contentType: string }> = {}
+  for (const path of PRERENDERED) {
+    const response = await server.handle(new Request(`http://site${path}`))
+    if (response.status !== 200) throw new Error(`${path} answered ${response.status}`)
+    const name = path === '/' ? 'index' : decodeURIComponent(path.slice(1))
+    const file = join(OUTPUT, 'static', `${name}.html`)
+    mkdirSync(dirname(file), { recursive: true })
+    writeFileSync(file, await response.text())
+    if (path !== '/') overrides[`${name}.html`] = { path: name, contentType: HTML }
+  }
+  return overrides
+}
+
 async function output(): Promise<void> {
   rmSync(OUTPUT, { recursive: true, force: true })
   cpSync(ASSETS, join(OUTPUT, 'static', 'assets'), { recursive: true })
-  const lambda = join(OUTPUT, 'functions', 'index.func')
+  const lambda = join(OUTPUT, 'functions', 'render.func')
   const result = await Bun.build({ entrypoints: [join(SITE, 'server.ts')], outdir: lambda, target: 'bun' })
   if (!result.success) throw new AggregateError(result.logs, 'the server bundle did not build')
   const { version } = JSON.parse(readFileSync(Bun.resolveSync('elysia/package.json', SITE), 'utf8'))
@@ -183,6 +216,7 @@ async function output(): Promise<void> {
       framework: { slug: 'elysia', version },
     }),
   )
+  const overrides = await prerender()
   writeFileSync(
     join(OUTPUT, 'config.json'),
     JSON.stringify({
@@ -190,13 +224,15 @@ async function output(): Promise<void> {
       routes: [
         { src: '/assets/(.*)', headers: { 'cache-control': IMMUTABLE }, continue: true },
         { handle: 'filesystem' },
-        { src: '/(.*)', dest: '/' },
+        { src: '/(.*)', dest: '/render' },
       ],
+      overrides,
     }),
   )
 }
 
 if (import.meta.main) {
   await buildAssets(true)
+  await snapshot(true)
   await output()
 }

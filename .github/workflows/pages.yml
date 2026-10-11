@@ -22,6 +22,7 @@ jobs:
       deployments: read
     outputs:
       changed: ${{ steps.compare.outputs.changed }}
+      index: ${{ steps.compare.outputs.index }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -37,11 +38,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           deployed=$(gh api "repos/$GITHUB_REPOSITORY/deployments?environment=github-pages&per_page=1" --jq '.[0].sha')
-          if [ "$deployed" = "$GITHUB_SHA" ] && curl -fsS https://kecan0406.github.io/ttheme/marketplaces.json | cmp -s - pages/marketplaces.json; then
-            echo changed=false >> "$GITHUB_OUTPUT"
-          else
-            echo changed=true >> "$GITHUB_OUTPUT"
+          index=changed
+          if curl -fsS https://kecan0406.github.io/ttheme/marketplaces.json | cmp -s - pages/marketplaces.json; then
+            index=same
           fi
+          changed=true
+          if [ "$deployed" = "$GITHUB_SHA" ] && [ "$index" = same ]; then
+            changed=false
+          fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "index=$index" >> "$GITHUB_OUTPUT"
 
       - if: steps.compare.outputs.changed != 'false'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
@@ -63,3 +69,13 @@ jobs:
     steps:
       - id: deploy
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  site:
+    needs: build
+    if: needs.build.outputs.index == 'changed'
+    runs-on: ubuntu-26.04
+    permissions: {}
+    steps:
+      - env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: curl -fsS -X POST "${VERCEL_DEPLOY_HOOK:?VERCEL_DEPLOY_HOOK is not set}" > /dev/null

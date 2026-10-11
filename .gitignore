@@ -5,6 +5,7 @@ bin/
 mise.local.toml
 site/public/
 site/assets.json
+site/marketplaces.json
 pages/
 .vercel/
 *.png
