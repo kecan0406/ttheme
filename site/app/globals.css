@@ -191,6 +191,7 @@
 html {
   overflow-anchor: none;
   scroll-padding-top: calc(var(--spacing) * 16);
+  scrollbar-color: var(--faint-foreground) transparent;
 }
 
 @layer base {
