@@ -268,8 +268,8 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
         ))}
       </div>
       <div data-empty hidden class="py-15 text-center text-muted-foreground">
-        <strong data-empty-title class="block font-semibold text-foreground">
-          no palette matches these filters ( ˘ω˘ )
+        <strong class="block font-semibold text-foreground">
+          <span data-empty-title>no palette matches these filters</span> <span aria-hidden="true">( ˘ω˘ )</span>
         </strong>
         clear a filter, or search for a catalog instead.
       </div>

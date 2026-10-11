@@ -123,7 +123,7 @@ export function NoSuchMarketplace({ id, facts }: { id: string; facts: Facts }) {
         <h1 class="font-display text-display-lg font-black">no such marketplace</h1>
         <p class="max-w-[68ch] text-soft-foreground">
           {escapeHtml(`No repository with the ttheme-marketplace topic publishes ${id}.`)} The list is refreshed from
-          GitHub every hour. ( ˘ω˘ )
+          GitHub every hour. <span aria-hidden="true">( ˘ω˘ )</span>
         </p>
         <a href="/marketplace" class="text-sm font-medium text-primary underline-offset-4 hover:underline">
           back to every palette

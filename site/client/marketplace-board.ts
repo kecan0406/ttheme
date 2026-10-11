@@ -159,7 +159,7 @@ class MarketplaceBoard extends HTMLElement {
     this.querySelector('[data-empty]')?.toggleAttribute('hidden', shown > 0)
     const title = this.querySelector('[data-empty-title]')
     const query = this.#filters.query.trim()
-    if (title) title.textContent = `no palette matches${query ? ` “${query}”` : ' these filters'} ( ˘ω˘ )`
+    if (title) title.textContent = `no palette matches${query ? ` “${query}”` : ' these filters'}`
   }
 }
 

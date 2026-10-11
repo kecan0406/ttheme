@@ -1,7 +1,7 @@
 import { PaletteOptions } from '@/components/palette-picker'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
-import { fill } from './dom'
+import { announce, fill } from './dom'
 import { bare, composing, printable } from './keys'
 import { choose, current } from './wear'
 
@@ -11,6 +11,7 @@ class PalettePicker extends HTMLElement {
   #themes: Theme[] | undefined
   #loading: Promise<void> | undefined
   #touch = false
+  #counting = 0
 
   get #panel(): HTMLElement {
     return this.querySelector('[popover]') as HTMLElement
@@ -38,12 +39,14 @@ class PalettePicker extends HTMLElement {
     this.#panel.addEventListener('toggle', this.#toggled)
     this.addEventListener('click', this.#click)
     this.addEventListener('input', this.#filter)
+    this.addEventListener('compositionend', this.#filter)
     this.addEventListener('keydown', this.#keys)
   }
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
     this.removeEventListener('input', this.#filter)
+    this.removeEventListener('compositionend', this.#filter)
     this.removeEventListener('keydown', this.#keys)
   }
 
@@ -122,8 +125,13 @@ class PalettePicker extends HTMLElement {
 
   #filter = (event: Event) => {
     const field = event.target
-    if (field instanceof HTMLInputElement && field.matches('[data-search]'))
-      this.#narrow(field.value.trim().toLowerCase())
+    if (!(field instanceof HTMLInputElement) || !field.matches('[data-search]')) return
+    this.#narrow(field.value.trim().toLowerCase())
+    window.clearTimeout(this.#counting)
+    this.#counting = window.setTimeout(() => {
+      const count = this.#options.length
+      announce(count === 0 ? 'no palette matches' : `${count} ${count === 1 ? 'palette' : 'palettes'}`)
+    }, 500)
   }
 
   #click = (event: MouseEvent) => {

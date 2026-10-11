@@ -86,7 +86,7 @@ function Step({ number, title, text, children }: PropsWithChildren<{ number: num
 
 function LeadPreview({ theme }: { theme: Theme }) {
   return (
-    <div data-lead-preview>
+    <div data-lead-preview aria-hidden="true">
       <TerminalPreview
         theme={theme}
         scene="shell"

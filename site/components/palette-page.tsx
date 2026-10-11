@@ -302,7 +302,8 @@ export function NoSuchPalette({ id, name, facts }: { id: string; name: string; f
         />
         <h1 class="font-display text-display-lg font-black">no such palette</h1>
         <p class="max-w-[68ch] text-soft-foreground">
-          {escapeHtml(`${id} has no palette named ${name}.`)} It may have been renamed or removed. ( ˘ω˘ )
+          {escapeHtml(`${id} has no palette named ${name}.`)} It may have been renamed or removed.{' '}
+          <span aria-hidden="true">( ˘ω˘ )</span>
         </p>
         <a
           href={marketplacePath(id === OFFICIAL ? null : id)}

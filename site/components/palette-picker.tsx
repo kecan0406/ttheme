@@ -27,7 +27,9 @@ export function PaletteOptions({ themes, current }: { themes: Theme[]; current: 
               aria-selected={String(theme.name === current)}
               class="group/option flex scroll-mt-8 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring aria-selected:bg-accent"
             >
-              <Signature theme={theme} />
+              <span aria-hidden="true">
+                <Signature theme={theme} />
+              </span>
               <span class="min-w-0 flex-1 truncate font-display font-extrabold" translate="no" safe>
                 {theme.name}
               </span>
@@ -37,7 +39,7 @@ export function PaletteOptions({ themes, current }: { themes: Theme[]; current: 
         </fieldset>
       ))}
       <p data-empty hidden class="px-2.5 py-2 text-xs text-muted-foreground">
-        no palette matches ( ˘ω˘ )
+        no palette matches <span aria-hidden="true">( ˘ω˘ )</span>
       </p>
     </>
   )
