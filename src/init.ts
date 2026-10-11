@@ -1,10 +1,10 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from 'node:fs'
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
-import { available, officialPath, parseManifest, readMarketplaces, writeOfficial } from './available.ts'
+import { available, parseManifest, readMarketplaces, writeOfficial } from './available.ts'
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
@@ -39,23 +39,14 @@ import {
   shellsOf,
   zdotdirOf,
 } from './shells.ts'
-import {
-  installedPath,
-  isLocal,
-  localRoot,
-  MARKETPLACE_SCHEMA_URL,
-  marketplacesDir,
-  marketplacesOf,
-  OFFICIAL,
-  shownSource,
-} from './sources.ts'
+import { marketplacesOf, OFFICIAL } from './sources.ts'
 import { detectTerminal, TRAITS } from './terminal.ts'
 import { systemHost, tilde } from './terminals/common.ts'
 import { WIRED, WIRINGS, type Wired, wirings } from './terminals/index.ts'
 import type { Host, Pointed, Setup } from './terminals/types.ts'
 import { warpSettings } from './terminals/warp.ts'
 import { windowsAppData } from './terminals/windows-terminal.ts'
-import { MARKETPLACE_FILE, marketplaceOf, shelfOf } from './theme.ts'
+import { marketplaceOf, shelfOf } from './theme.ts'
 import { configFile, settingValue, upsertBlock, withSetting, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {
@@ -169,75 +160,6 @@ export function installedState(configHome: string): Installed | undefined {
   } catch {
     return undefined
   }
-}
-
-const OLD_FILE = 'ttheme-market.toml'
-const OLD_SCHEMA_URL = 'https://www.schemastore.org/ttheme-market.json'
-
-function moveRenamed(configHome: string, stateDir: string): string[] {
-  const root = join(configHome, 'ttheme')
-  const old = join(root, 'market')
-  for (const [from, to] of [
-    [old, localRoot(configHome)],
-    [join(root, 'markets'), marketplacesDir(configHome)],
-    [join(root, 'catalog.json'), officialPath(configHome)],
-  ] as const) {
-    if (existsSync(from) && !existsSync(to)) {
-      renameSync(from, to)
-    }
-  }
-  rmSync(join(stateDir, 'markets.json'), { force: true })
-  const cache = marketplacesDir(configHome)
-  for (const file of existsSync(cache) ? readdirSync(cache).filter((f) => f.endsWith('.json')) : []) {
-    try {
-      const archive: unknown = JSON.parse(readFileSync(join(cache, file), 'utf8'))
-      if (!archive || typeof archive !== 'object' || !('files' in archive)) {
-        continue
-      }
-      const files = archive.files
-      if (files && typeof files === 'object' && OLD_FILE in files && !(MARKETPLACE_FILE in files)) {
-        const { [OLD_FILE]: text, ...rest } = files as Record<string, string>
-        writeAtomic(
-          join(cache, file),
-          `${JSON.stringify({ ...archive, files: { ...rest, [MARKETPLACE_FILE]: text } })}\n`,
-        )
-      }
-    } catch {}
-  }
-  const path = installedPath(configHome)
-  let doc: unknown
-  try {
-    doc = JSON.parse(readFileSync(path, 'utf8'))
-  } catch {
-    return []
-  }
-  if (!doc || typeof doc !== 'object') {
-    return []
-  }
-  if ('markets' in doc && !('marketplaces' in doc)) {
-    const { markets, ...rest } = doc
-    const moved = (Array.isArray(markets) ? markets : []).map((source: unknown) =>
-      typeof source === 'string' && source.startsWith(`${old}/`)
-        ? join(localRoot(configHome), source.slice(old.length + 1))
-        : source,
-    )
-    doc = { ...rest, marketplaces: moved }
-    writeAtomic(path, `${JSON.stringify(doc, null, 2)}\n`)
-  }
-  const sources = doc && typeof doc === 'object' && 'marketplaces' in doc ? doc.marketplaces : undefined
-  return (Array.isArray(sources) ? sources : []).flatMap((source: unknown) => {
-    if (typeof source !== 'string' || !isLocal(source)) {
-      return []
-    }
-    const from = join(source, OLD_FILE)
-    const to = join(source, MARKETPLACE_FILE)
-    if (!existsSync(from) || existsSync(to)) {
-      return []
-    }
-    writeAtomic(to, readFileSync(from, 'utf8').replace(OLD_SCHEMA_URL, MARKETPLACE_SCHEMA_URL))
-    rmSync(from)
-    return [`Renamed ${OLD_FILE} to ${MARKETPLACE_FILE} in ${shownSource(source)}`]
-  })
 }
 
 function currentPalettes(configHome: string, official: Manifest): PaletteEntry[] {
@@ -479,7 +401,6 @@ async function upgrade(
   host: Host,
   interactive: boolean,
   here: Shell,
-  moved: string[],
 ): Promise<void> {
   const plan = planUpgrade(state, paths)
   const pointed = applyInit(plan, host)
@@ -488,7 +409,6 @@ async function upgrade(
   const lines = [
     `${reopen(here).padEnd(18)}Open tabs run the new layer — new tabs already do`,
     ...nextLines(plan, pointed),
-    ...moved,
   ]
   const title = `Updated to ${pkg.version} — kept ${summary(plan.installed)}`
   if (!interactive) {
@@ -551,10 +471,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       'init asks before it edits your configs — run it in a terminal, or pass --yes to accept the defaults',
     )
   }
-  const moved = moveRenamed(configHome, stateDir)
   const existing = installedState(configHome)
   if (flags.yes && existing) {
-    await upgrade(existing, paths, host, false, here, moved)
+    await upgrade(existing, paths, host, false, here)
     return
   }
   if (flags.yes) {
@@ -585,11 +504,8 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       }),
     )
     if (keep) {
-      await upgrade(existing, paths, host, true, here, moved)
+      await upgrade(existing, paths, host, true, here)
       return
-    }
-    for (const line of moved) {
-      p.log.step(line)
     }
   }
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)

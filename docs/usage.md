@@ -505,11 +505,6 @@ becomes the one new windows open with.
 `npx @kecan0406/ttheme@<newest> init --yes` — the same update `init` offers,
 keeping your terminals, palettes and settings — and the new ttheme carries on
 from there. The official palettes come with ttheme, so this is how they change.
-An install from before marketplaces had that name moves on this update:
-`~/.config/ttheme/market/` and `markets/` become `marketplace/` and
-`marketplaces/`, and each local marketplace's `ttheme-market.toml` becomes
-`ttheme-marketplace.toml` — commit that rename where the folder is a repository
-you publish.
 Then it refetches every other marketplace you added; `ttheme update alice@pastel`
 refetches that one alone. A palette you installed from a marketplace keeps the
 colors it was installed with (`~/.config/ttheme/kept.json`) until you take its
