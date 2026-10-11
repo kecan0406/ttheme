@@ -177,7 +177,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             <div aria-hidden="true" class="flex items-center justify-center gap-1.5 px-1">
               {SLOTS.map((slot) => (
                 <i
-                  class="block h-2.5 min-w-1.5 rounded-full inset-ring inset-ring-foreground/16 motion-safe:animate-dance"
+                  class="block h-2.5 min-w-1.5 rounded-full inset-ring inset-ring-foreground/16 forced-color-adjust-none motion-safe:animate-dance"
                   style={`background:var(--a${slot});width:${slot % 3 === 0 ? 28 : 12}px;animation-delay:${slot * -0.6}s`}
                 />
               ))}

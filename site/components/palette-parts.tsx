@@ -32,7 +32,12 @@ export function WornSignature() {
   return (
     <span aria-hidden="true" class="flex flex-none gap-1">
       {WORN.map((tone) => (
-        <i class={cn('size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14', tone)} />
+        <i
+          class={cn(
+            'size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none',
+            tone,
+          )}
+        />
       ))}
     </span>
   )
@@ -44,7 +49,7 @@ export function Signature({ theme, size = 'sm' }: { theme: Theme; size?: 'sm' | 
       <span class="flex flex-none gap-1" role="img" aria-label={`signature ${theme.signature.join(' ')}`}>
         {theme.signature.map((color) => (
           <i
-            class="size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14"
+            class="size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none"
             style={`background:${color}`}
           />
         ))}
@@ -55,7 +60,7 @@ export function Signature({ theme, size = 'sm' }: { theme: Theme; size?: 'sm' | 
       {theme.signature.map((color, index) => (
         <span class="inline-flex items-center gap-2 font-mono text-xs">
           <i
-            class="size-5 rounded-full ring-1 ring-border inset-ring inset-ring-black/14"
+            class="size-5 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none"
             style={`background:${color}`}
           />
           <span safe>{color}</span>
@@ -129,7 +134,7 @@ export function Swatch({ name, color }: { name: string; color: string }) {
     >
       <span
         class={cn(
-          'flex h-11 items-center justify-center font-mono text-2xs tracking-wide inset-ring inset-ring-black/8',
+          'flex h-11 items-center justify-center font-mono text-2xs tracking-wide inset-ring inset-ring-black/8 forced-color-adjust-none',
           luminance(color) > 0.3 ? 'text-[#0b0d12]' : 'text-[#f1f2f4]',
         )}
         style={`background:${color}`}

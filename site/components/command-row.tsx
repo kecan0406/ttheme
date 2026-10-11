@@ -21,13 +21,16 @@ export function CommandRow({
     >
       <Icon node={Terminal} class="size-4 flex-none text-muted-foreground" />
       {text ? (
-        <code translate="no" class="min-w-0 flex-1 overflow-x-auto font-mono text-code leading-snug whitespace-nowrap">
+        <code
+          translate="no"
+          class="min-w-0 flex-1 overflow-x-auto font-mono text-code leading-snug whitespace-nowrap select-all"
+        >
           {text}
         </code>
       ) : (
         <code
           translate="no"
-          class="min-w-0 flex-1 overflow-x-auto font-mono text-code leading-snug whitespace-nowrap"
+          class="min-w-0 flex-1 overflow-x-auto font-mono text-code leading-snug whitespace-nowrap select-all"
           safe
         >
           {command}

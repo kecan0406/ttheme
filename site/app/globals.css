@@ -217,7 +217,8 @@ html {
     text-wrap: pretty;
   }
 
-  ::selection {
+  ::selection,
+  ::target-text {
     background: var(--se);
     color: var(--fg);
   }
@@ -754,6 +755,30 @@ route-progress[data-state='done'],
   [data-glide]::before,
   [data-lead-progress] {
     background: Highlight !important;
+  }
+
+  [data-slot='palette-chip'],
+  [data-slot='catalog-swatch'],
+  [data-slot='palette-dots'] {
+    forced-color-adjust: none;
+  }
+}
+
+@media print {
+  :root {
+    color-scheme: light !important;
+    --bg: #ffffff !important;
+    --fg: #16161a !important;
+    --cu: #16161a !important;
+    --se: #dcdce2 !important;
+    print-color-adjust: exact;
+  }
+
+  facet-ground,
+  route-progress,
+  kaomoji-rain,
+  [data-lead-progress] {
+    display: none !important;
   }
 }
 

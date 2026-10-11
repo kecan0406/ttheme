@@ -45,7 +45,7 @@ function Ribbon({ theme }: { theme: Theme | 'worn' }) {
     <div data-slot="ribbon" class="grid gap-2">
       <div aria-hidden="true" class="grid h-1.5 grid-cols-16 gap-0.75">
         {colors.map((color) => (
-          <i class="rounded-full" style={`background:${color}`} />
+          <i class="rounded-full forced-color-adjust-none" style={`background:${color}`} />
         ))}
       </div>
       {theme === 'worn' ? null : (
@@ -61,7 +61,10 @@ function Signs() {
   return (
     <span aria-hidden="true" class="flex gap-0.75">
       {SIGNS.map((sign) => (
-        <i class="size-2 rounded-full ring-1 ring-border" style={`background:var(--sg${sign})`} />
+        <i
+          class="size-2 rounded-full ring-1 ring-border forced-color-adjust-none"
+          style={`background:var(--sg${sign})`}
+        />
       ))}
     </span>
   )
@@ -151,7 +154,7 @@ function Mega() {
       <div class="absolute inset-x-0 bottom-6 flex justify-center gap-2 max-[640px]:bottom-3.5 max-[640px]:gap-1">
         {SLOTS.map((slot) => (
           <i
-            class="block h-5 w-11 rounded-full inset-ring inset-ring-foreground/16 motion-safe:animate-dance max-[640px]:h-3 max-[640px]:w-4"
+            class="block h-5 w-11 rounded-full inset-ring inset-ring-foreground/16 forced-color-adjust-none motion-safe:animate-dance max-[640px]:h-3 max-[640px]:w-4"
             style={`background:var(--a${slot});animation-delay:${slot * -0.6}s`}
           />
         ))}
