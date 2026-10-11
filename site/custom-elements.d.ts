@@ -9,6 +9,7 @@ declare namespace JSX {
     'lead-showcase': HtmlTag
     'marketplace-board': HtmlTag
     'palette-picker': HtmlTag
+    'route-progress': HtmlTag
     'share-sheet': HtmlTag
     'sheet-browser': HtmlTag
     'sparkle-burst': HtmlTag

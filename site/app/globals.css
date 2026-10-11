@@ -298,6 +298,91 @@ facet-ground .t2 {
   }
 }
 
+route-progress {
+  --route-delay: 0.2s;
+  --route-speed: 0.2s;
+  --route-wait: var(--route-delay);
+  --route-drift: linear(0, 0.25 5%, 0.4 10%, 0.55 18%, 0.7 30%, 0.8 45%, 0.88 60%, 0.94 75%, 0.98 90%, 1);
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  height: 3px;
+  border-radius: 0 9999px 9999px 0;
+  background: var(--primary);
+  opacity: 0;
+  translate: -100%;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+:root[data-arriving] route-progress {
+  --route-wait: calc(var(--route-delay) - var(--route-from) * 1ms);
+}
+
+route-progress[data-state],
+:root[data-arriving] route-progress {
+  visibility: visible;
+}
+
+route-progress[data-state='going'] {
+  animation:
+    route-in var(--route-speed) ease var(--route-wait) both,
+    route-drift 10s var(--route-drift) var(--route-wait) both;
+}
+
+route-progress[data-state='stopped'] {
+  animation:
+    route-in var(--route-speed) ease var(--route-wait) both paused,
+    route-drift 10s var(--route-drift) var(--route-wait) both paused,
+    route-out var(--route-speed) ease forwards;
+}
+
+route-progress[data-state='done'],
+:root[data-arriving] route-progress:not([data-state]) {
+  animation:
+    route-in var(--route-speed) ease var(--route-wait) both paused,
+    route-drift 10s var(--route-drift) var(--route-wait) both paused,
+    route-done var(--route-speed) ease forwards,
+    route-out var(--route-speed) ease var(--route-speed) forwards;
+}
+
+@keyframes route-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes route-drift {
+  from {
+    translate: -92%;
+  }
+  to {
+    translate: -5%;
+  }
+}
+
+@keyframes route-done {
+  to {
+    translate: 0;
+  }
+}
+
+@keyframes route-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  route-progress {
+    forced-color-adjust: none;
+    background: Highlight;
+  }
+}
+
 :root,
 .wear {
   --background: var(--bg);

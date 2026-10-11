@@ -4,6 +4,7 @@ import { FacetGround } from '@/components/facet-ground'
 import { CARD_HEIGHT, CARD_WIDTH } from '@/lib/card'
 import { fallback } from '@/lib/official'
 import { html } from '@/lib/render'
+import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import type { Theme } from '@/lib/themes'
 import { rootStyle, WEAR_SCRIPT } from '@/lib/wear'
 
@@ -51,10 +52,12 @@ function Document({
         <link rel="stylesheet" href={assets.css} />
         <link rel="stylesheet" href={assets.cjk} media="print" onload="this.media='all'" />
         {wear ? null : <script>{WEAR_SCRIPT}</script>}
+        <script>{ROUTE_SCRIPT}</script>
         <script type="module" src={assets.js} />
         {assets.reload ? <script type="module">{RELOAD}</script> : null}
       </head>
       <body>
+        <route-progress role="progressbar" aria-label="loading" />
         <FacetGround />
         {children}
       </body>

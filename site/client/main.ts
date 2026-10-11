@@ -1,5 +1,6 @@
 import './copy'
 import './fields'
+import './route-progress'
 import './palette-picker'
 import './sparkle-burst'
 import './kaomoji-rain'
