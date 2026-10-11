@@ -374,7 +374,7 @@ function Bar({ shared }: { shared: Shared }) {
 function Stage({ shared, builder }: { shared: Shared; builder: Builder }) {
   const { panes, view } = builder
   return (
-    <main aria-label="preview" class="mock-stage [grid-area:stage]">
+    <main id="content" aria-label="preview" class="mock-stage [grid-area:stage]">
       <div
         data-mock
         class="mock"

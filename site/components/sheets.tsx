@@ -87,7 +87,10 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
   return (
     <sheet-browser class="ground flex min-h-dvh flex-col">
       <SiteHeader current="/sheets" />
-      <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] flex-1 grid-cols-[minmax(0,1fr)] content-start gap-5 pt-5">
+      <main
+        id="content"
+        class="mx-auto grid w-[min(1280px,calc(100%-40px))] flex-1 grid-cols-[minmax(0,1fr)] content-start gap-5 pt-5"
+      >
         <section
           data-sheet-label
           aria-label={theme.name}
@@ -134,7 +137,7 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
             </div>
           </div>
         </section>
-      </div>
+      </main>
 
       <nav
         aria-label="every sheet"

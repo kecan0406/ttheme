@@ -74,6 +74,12 @@ function Document({
         {assets.reload ? <script type="module">{RELOAD}</script> : null}
       </head>
       <body>
+        <a
+          href="#content"
+          class="fixed top-3 left-3 z-60 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg not-focus:sr-only"
+        >
+          skip to content
+        </a>
         <route-progress role="progressbar" aria-label="loading" />
         <FacetGround />
         {children}
