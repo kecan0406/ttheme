@@ -720,6 +720,43 @@ route-progress[data-state='done'],
   --sidebar: color-mix(in oklab, var(--fg) 3%, var(--bg));
 }
 
+@media (prefers-contrast: more) {
+  :root {
+    --muted-foreground: color-mix(in oklab, var(--fg) 80%, var(--bg));
+    --soft-foreground: color-mix(in oklab, var(--fg) 92%, var(--bg));
+    --faint-foreground: color-mix(in oklab, var(--fg) 66%, var(--bg));
+    --border: color-mix(in oklab, var(--fg) 36%, var(--bg));
+    --input: color-mix(in oklab, var(--fg) 50%, var(--bg));
+    --glass: color-mix(in oklab, var(--bg) 94%, transparent);
+    --glass-panel: color-mix(in oklab, color-mix(in oklab, var(--fg) 5%, var(--bg)) 94%, transparent);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: var(--bg);
+    --glass-panel: color-mix(in oklab, var(--fg) 5%, var(--bg));
+  }
+}
+
+@media (forced-colors: active) {
+  :focus-visible,
+  :has(> .sr-only:focus-visible) {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  :has(> .sr-only:checked) {
+    text-decoration: underline 2px Highlight;
+    text-underline-offset: 4px;
+  }
+
+  [data-glide]::before,
+  [data-lead-progress] {
+    background: Highlight !important;
+  }
+}
+
 :root[data-settling] *,
 :root[data-settling] *::before,
 :root[data-settling] *::after {
