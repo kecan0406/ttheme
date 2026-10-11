@@ -1,7 +1,7 @@
 import { Menu } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
-import { BrandIcon, Icon } from '@/lib/icons'
+import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { PalettePicker } from './palette-picker'
 
@@ -62,9 +62,17 @@ export function SiteHeader({ current, fixed = false }: { current: string; fixed?
           popover="auto"
           class="top-15 right-5 m-0 w-56 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid min-[720px]:static min-[720px]:flex min-[720px]:w-auto min-[720px]:items-center min-[720px]:self-center min-[720px]:gap-2.5 min-[720px]:overflow-visible min-[720px]:border-0 min-[720px]:bg-transparent min-[720px]:p-0 min-[720px]:text-inherit min-[720px]:shadow-none"
         >
-          <LinkButton variant="ghost" size="sm" href="https://github.com/kecan0406/ttheme" class="justify-start">
+          <LinkButton
+            variant="ghost"
+            size="sm"
+            href="https://github.com/kecan0406/ttheme"
+            target="_blank"
+            rel="noopener"
+            class="justify-start"
+          >
             <BrandIcon icon={siGithub} />
             github
+            <NewTab />
           </LinkButton>
           <PalettePicker />
         </div>

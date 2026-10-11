@@ -1,8 +1,10 @@
 import { type SimpleIcon, siBluesky, siPatreon, siPixiv, siX } from 'simple-icons'
-import { BrandIcon } from '@/lib/icons'
+import { BrandIcon, NewTab } from '@/lib/icons'
 import type { Picture, PictureLink } from '@/lib/share-view'
 
 const LINK = 'font-mono text-code text-primary underline-offset-4 hover:underline'
+
+const MARK = 'inline-block size-3 align-middle'
 
 const BRANDS: Partial<Record<string, SimpleIcon>> = { pixiv: siPixiv, x: siX, bsky: siBluesky, patreon: siPatreon }
 
@@ -13,9 +15,10 @@ function Dot() {
 function Out({ link }: { link: PictureLink }) {
   const brand = link.kind ? BRANDS[link.kind] : undefined
   return (
-    <a href={link.url} class={LINK}>
+    <a href={link.url} target="_blank" rel="noopener" class={LINK}>
       {brand ? <BrandIcon icon={brand} class="mr-1 inline-block size-3 align-middle" /> : null}
       <span safe>{link.label}</span>
+      <NewTab class={MARK} />
     </a>
   )
 }
@@ -40,8 +43,9 @@ function Credit({ picture }: { picture: Picture }) {
         </>
       ) : null}
       {picture.href ? (
-        <a href={picture.href} class={LINK} safe>
-          {picture.post}
+        <a href={picture.href} target="_blank" rel="noopener" class={LINK}>
+          <span safe>{picture.post}</span>
+          <NewTab class={MARK} />
         </a>
       ) : (
         <span class="font-mono text-code" safe>

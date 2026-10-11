@@ -9,7 +9,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { catalogsOf, nativeLang } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
 import { OFFICIAL, OFFICIAL_REPO, palettePath, searchable } from '@/lib/gallery'
-import { BrandIcon, Icon } from '@/lib/icons'
+import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { gatePassed } from '@/lib/sheet'
 import type { GateRule, Marketplace, Theme } from '@/lib/themes'
@@ -289,12 +289,15 @@ function MarketplaceFacts({ marketplace, count }: { marketplace: Marketplace | n
     <span class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
       <a
         href={`https://github.com/${marketplace.repo}`}
+        target="_blank"
+        rel="noopener"
         class="inline-flex min-w-0 items-center gap-1.5 transition-colors hover:text-foreground"
       >
         <BrandIcon icon={siGithub} class="size-3 flex-none" />
         <span class="truncate" safe>
           {marketplace.repo}
         </span>
+        <NewTab class="size-3 flex-none" />
       </a>
       <span safe>{`· ${plural(count, 'palette')} · ${plural(marketplace.stars, 'GitHub star')}`}</span>
       {marketplace.license ? (
@@ -316,9 +319,15 @@ function AppBar({ facts, marketplace, count }: { facts: Facts; marketplace: Mark
           {`v${facts.version}`}
         </span>
         {LINKS.map((link) => (
-          <a href={link.href} class="inline-flex items-center gap-1.5 transition-colors hover:text-foreground">
+          <a
+            href={link.href}
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+          >
             {link.brand ? <BrandIcon icon={link.brand} class="size-3 flex-none" /> : null}
             <span safe>{link.label}</span>
+            <NewTab class="size-3 flex-none" />
           </a>
         ))}
       </nav>

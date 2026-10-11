@@ -2,7 +2,7 @@ import { type SimpleIcon, siGithub, siNpm } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
 import type { Facts } from '@/lib/facts'
 import { OFFICIAL_REPO } from '@/lib/gallery'
-import { BrandIcon } from '@/lib/icons'
+import { BrandIcon, NewTab } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 
 const REPO = `https://github.com/${OFFICIAL_REPO}`
@@ -33,6 +33,23 @@ const COLUMNS: { title: string; links: { label: string; href: string; brand?: Si
     ],
   },
 ]
+
+function outside(href: string): boolean {
+  return href.startsWith('https://')
+}
+
+function OutLabel({ label }: { label: string }) {
+  const at = label.lastIndexOf(' ') + 1
+  return (
+    <>
+      <span safe>{label.slice(0, at)}</span>
+      <span class="whitespace-nowrap">
+        <span safe>{label.slice(at)}</span>
+        <NewTab class="inline-block size-3.5 align-middle" />
+      </span>
+    </>
+  )
+}
 
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
@@ -119,13 +136,15 @@ function Columns({ current }: { current: string }) {
               <li>
                 <a
                   href={link.href}
+                  target={outside(link.href) ? '_blank' : undefined}
+                  rel={outside(link.href) ? 'noopener' : undefined}
                   aria-current={link.href === current ? 'page' : undefined}
                   class="rounded-sm text-sm text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary"
                 >
                   {link.brand ? (
                     <BrandIcon icon={link.brand} class="mr-1.5 inline-block size-3.5 align-middle" />
                   ) : null}
-                  <span safe>{link.label}</span>
+                  <span>{outside(link.href) ? <OutLabel label={link.label} /> : <span safe>{link.label}</span>}</span>
                 </a>
               </li>
             ))}

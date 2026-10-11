@@ -1,5 +1,5 @@
 import { createElement } from '@kitajs/html'
-import type { IconNode } from 'lucide'
+import { ArrowUpRight, type IconNode } from 'lucide'
 import type { SimpleIcon } from 'simple-icons'
 
 export function Icon({ node, class: className }: { node: IconNode; class?: string }) {
@@ -35,5 +35,14 @@ export function BrandIcon({ icon, class: className }: { icon: SimpleIcon; class?
     >
       <path d={icon.path} />
     </svg>
+  )
+}
+
+export function NewTab({ class: className }: { class?: string }) {
+  return (
+    <>
+      <Icon node={ArrowUpRight} class={className} />
+      <span class="sr-only">, opens in a new tab</span>
+    </>
   )
 }
