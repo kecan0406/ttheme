@@ -438,10 +438,6 @@ lead-showcase [data-lead-title] {
   view-transition-name: lead-title;
 }
 
-lead-showcase [data-lead-preview] {
-  view-transition-name: lead-preview;
-}
-
 lead-showcase [data-lead-use] code {
   view-transition-name: lead-use;
 }
@@ -489,13 +485,6 @@ sheet-browser #sheet-details > :nth-child(2) {
   animation: fade-in 0.28s cubic-bezier(0.3, 0.7, 0.2, 1) 0.12s both;
 }
 
-::view-transition-new(lead-preview) {
-  animation:
-    fade-in 0.28s cubic-bezier(0.3, 0.7, 0.2, 1) 0.12s both,
-    squish 0.28s var(--ease-spring) 0.12s;
-}
-
-::view-transition-group(lead-preview),
 ::view-transition-group(sheet-session) {
   overflow: clip;
   border-end-start-radius: calc(var(--radius-3xl) - 1px);
@@ -511,15 +500,6 @@ sheet-browser #sheet-details > :nth-child(2) {
 @keyframes fade-in {
   from {
     opacity: 0;
-  }
-}
-
-@keyframes squish {
-  19% {
-    transform: scale(0.96);
-  }
-  48% {
-    transform: scale(1.03);
   }
 }
 
