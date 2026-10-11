@@ -1,10 +1,11 @@
 import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
-import { CalendarDays, FolderTree, GitBranch, Package, Palette, Scale, ShieldCheck } from 'lucide'
+import { CalendarDays, FolderTree, Package, Palette, Scale, ShieldCheck } from 'lucide'
+import { siGithub } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
 import { catalogsOf } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
 import { catalogAnchor, marketplacePath, OFFICIAL, OFFICIAL_ABOUT, OFFICIAL_REPO } from '@/lib/gallery'
-import { Icon } from '@/lib/icons'
+import { BrandIcon, Icon } from '@/lib/icons'
 import { gatePassed } from '@/lib/sheet'
 import type { GateRule, Marketplace, Theme } from '@/lib/themes'
 import { plural } from '@/lib/utils'
@@ -68,7 +69,7 @@ export function MarketplaceStore({
           ) : (
             <Meta icon={<Icon node={Package} />}>comes with ttheme</Meta>
           )}
-          <Meta icon={<Icon node={GitBranch} />}>
+          <Meta icon={<BrandIcon icon={siGithub} />}>
             <a href={`https://github.com/${repo}`} class="transition-colors hover:text-foreground" safe>
               {repo}
             </a>

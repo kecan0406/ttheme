@@ -1,6 +1,7 @@
-import { ArrowUpRight, Menu } from 'lucide'
+import { Menu } from 'lucide'
+import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
-import { Icon } from '@/lib/icons'
+import { BrandIcon, Icon } from '@/lib/icons'
 import { PalettePicker } from './palette-picker'
 
 const NAV = [
@@ -24,14 +25,14 @@ export function SiteHeader({ current }: { current: string }) {
           >
             ttheme
           </a>
-          <nav aria-label="site" class="flex items-stretch">
+          <nav aria-label="site" data-glide class="flex items-stretch">
             {NAV.map((item) => (
               <a
                 href={item.href}
                 aria-current={item.href === current ? 'page' : undefined}
-                class="relative flex items-center rounded-sm px-3 text-sm font-medium text-soft-foreground transition-colors outline-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset aria-[current=page]:text-foreground aria-[current=page]:after:bg-primary max-[720px]:px-2.5"
+                class="rounded-sm px-3 text-sm leading-13 font-medium text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary max-[720px]:px-2.5"
               >
-                {item.label}
+                <span>{item.label}</span>
               </a>
             ))}
           </nav>
@@ -51,8 +52,8 @@ export function SiteHeader({ current }: { current: string }) {
           class="top-15 right-5 m-0 w-56 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid min-[720px]:static min-[720px]:flex min-[720px]:w-auto min-[720px]:items-center min-[720px]:self-center min-[720px]:gap-2.5 min-[720px]:overflow-visible min-[720px]:border-0 min-[720px]:bg-transparent min-[720px]:p-0 min-[720px]:text-inherit min-[720px]:shadow-none"
         >
           <LinkButton variant="ghost" size="sm" href="https://github.com/kecan0406/ttheme" class="justify-start">
+            <BrandIcon icon={siGithub} />
             github
-            <Icon node={ArrowUpRight} class="size-3" />
           </LinkButton>
           <PalettePicker />
         </div>

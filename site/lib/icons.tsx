@@ -1,5 +1,6 @@
 import { createElement } from '@kitajs/html'
 import type { IconNode } from 'lucide'
+import type { SimpleIcon } from 'simple-icons'
 
 export function Icon({ node, class: className }: { node: IconNode; class?: string }) {
   return (
@@ -17,6 +18,22 @@ export function Icon({ node, class: className }: { node: IconNode; class?: strin
       class={className}
     >
       {node.map(([tag, attributes]) => createElement(tag, attributes))}
+    </svg>
+  )
+}
+
+export function BrandIcon({ icon, class: className }: { icon: SimpleIcon; class?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      class={className}
+    >
+      <path d={icon.path} />
     </svg>
   )
 }

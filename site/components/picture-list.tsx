@@ -1,15 +1,21 @@
+import { type SimpleIcon, siBluesky, siPatreon, siPixiv, siX } from 'simple-icons'
+import { BrandIcon } from '@/lib/icons'
 import type { Picture, PictureLink } from '@/lib/share-view'
 
 const LINK = 'font-mono text-code text-primary underline-offset-4 hover:underline'
+
+const BRANDS: Partial<Record<string, SimpleIcon>> = { pixiv: siPixiv, x: siX, bsky: siBluesky, patreon: siPatreon }
 
 function Dot() {
   return <span class="text-muted-foreground">·</span>
 }
 
 function Out({ link }: { link: PictureLink }) {
+  const brand = link.kind ? BRANDS[link.kind] : undefined
   return (
-    <a href={link.url} class={LINK} safe>
-      {link.label}
+    <a href={link.url} class={LINK}>
+      {brand ? <BrandIcon icon={brand} class="mr-1 inline-block size-3 align-middle" /> : null}
+      <span safe>{link.label}</span>
     </a>
   )
 }

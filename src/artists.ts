@@ -150,8 +150,12 @@ export function postOf(picture: Credited): Page | undefined {
   return safeUrl(url) ? { label: words.slice(0, 2).join(' '), url } : undefined
 }
 
+export function pageKind(url: string): ProfileKind | undefined {
+  return PAGE_KINDS.find(([form]) => form.test(url))?.[1]
+}
+
 export function followOf(urls: readonly string[] | undefined, page: string | undefined): string | undefined {
-  const on = page ? PAGE_KINDS.find(([form]) => form.test(page))?.[1] : undefined
+  const on = page ? pageKind(page) : undefined
   const links = linksOf(urls)
   const kind = FOLLOWS.find((each) => each !== on && links.some((link) => link.kind === each))
   return links.find((link) => link.kind === kind)?.url

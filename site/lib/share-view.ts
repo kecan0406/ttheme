@@ -28,6 +28,7 @@ export interface SlotView {
 export interface PictureLink {
   label: string
   url: string
+  kind?: string
 }
 
 export interface PictureArtist {

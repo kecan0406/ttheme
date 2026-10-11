@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from '@kitajs/html'
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, type IconNode, Layers, Search, Store } from 'lucide'
+import { siGithub } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -19,7 +20,7 @@ import {
   searchable,
   shelvesMatching,
 } from '@/lib/gallery'
-import { Icon } from '@/lib/icons'
+import { BrandIcon, Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
@@ -156,8 +157,11 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
                 {official ? 'official' : 'community'}
               </Badge>
             </span>
-            <span class="truncate font-mono text-xs text-muted-foreground" safe>
-              {shelf.repo}
+            <span class="flex min-w-0 items-center gap-1.5 font-mono text-xs text-muted-foreground">
+              <BrandIcon icon={siGithub} class="size-3 flex-none" />
+              <span class="truncate" safe>
+                {shelf.repo}
+              </span>
             </span>
             <p class="text-sm text-soft-foreground" safe>
               {shelf.about}

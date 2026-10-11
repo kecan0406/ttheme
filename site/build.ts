@@ -146,7 +146,7 @@ async function client(production: boolean): Promise<string> {
     naming: production ? '[name]-[hash].[ext]' : '[name].[ext]',
     target: 'browser',
     minify: production,
-    sourcemap: production ? 'none' : 'inline',
+    sourcemap: production ? 'none' : 'linked',
   })
   const entry = result.outputs.find((output) => output.kind === 'entry-point')
   if (!result.success || !entry) throw new AggregateError(result.logs, 'the client bundle did not build')

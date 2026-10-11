@@ -1,12 +1,14 @@
+import { type SimpleIcon, siGithub, siNpm } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
 import type { Facts } from '@/lib/facts'
 import { OFFICIAL_REPO } from '@/lib/gallery'
+import { BrandIcon } from '@/lib/icons'
 import type { Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 
 const REPO = `https://github.com/${OFFICIAL_REPO}`
 
-const COLUMNS = [
+const COLUMNS: { title: string; links: { label: string; href: string; brand?: SimpleIcon }[] }[] = [
   {
     title: 'browse',
     links: [
@@ -20,14 +22,14 @@ const COLUMNS = [
     links: [
       { label: 'make a palette', href: `${REPO}#your-own-palettes` },
       { label: 'publish a marketplace', href: `${REPO}#marketplaces` },
-      { label: 'marketplaces on GitHub', href: 'https://github.com/topics/ttheme-marketplace' },
+      { label: 'marketplaces on GitHub', href: 'https://github.com/topics/ttheme-marketplace', brand: siGithub },
     ],
   },
   {
     title: 'project',
     links: [
-      { label: 'github', href: REPO },
-      { label: 'npm', href: 'https://www.npmjs.com/package/@kecan0406/ttheme' },
+      { label: 'github', href: REPO, brand: siGithub },
+      { label: 'npm', href: 'https://www.npmjs.com/package/@kecan0406/ttheme', brand: siNpm },
       { label: 'report a bug', href: `${REPO}/issues/new/choose` },
     ],
   },
@@ -117,16 +119,18 @@ function Columns({ current }: { current: string }) {
             <i aria-hidden="true" class="h-1 w-3 rounded-full bg-(--key)" />
             <span safe>{column.title}</span>
           </h2>
-          <ul class="grid gap-2">
+          <ul data-glide class="grid gap-2">
             {column.links.map((link) => (
               <li>
                 <a
                   href={link.href}
                   aria-current={link.href === current ? 'page' : undefined}
-                  class="rounded-sm text-sm text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 transition-colors outline-none hover:text-foreground hover:decoration-(--key) focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:text-foreground aria-[current=page]:decoration-primary"
-                  safe
+                  class="rounded-sm text-sm text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary"
                 >
-                  {link.label}
+                  {link.brand ? (
+                    <BrandIcon icon={link.brand} class="mr-1.5 inline-block size-3.5 align-middle" />
+                  ) : null}
+                  <span safe>{link.label}</span>
                 </a>
               </li>
             ))}

@@ -367,6 +367,146 @@ facet-ground .t2 {
   }
 }
 
+[data-glide] {
+  --glide-linger: 0.06s;
+  --glide-fade: 0.2s;
+  position: relative;
+  isolation: isolate;
+}
+
+[data-glide] a {
+  transition:
+    color 0.18s ease,
+    text-decoration-color 0.18s ease;
+}
+
+[data-glide] a:focus-visible {
+  color: var(--foreground);
+}
+
+[data-glide]:has(a:focus-visible) a:not(:focus-visible) {
+  color: var(--muted-foreground);
+}
+
+[data-site-header] [data-glide] a:focus-visible {
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  [data-glide]:not(:has(a:focus-visible)) a:hover {
+    color: var(--foreground);
+  }
+
+  [data-glide]:not(:has(a:focus-visible)):has(a:hover) a:not(:hover) {
+    color: var(--muted-foreground);
+  }
+}
+
+@supports not (anchor-name: --glide) {
+  @media (hover: hover) {
+    [data-site-footer] [data-glide] a:not([aria-current='page']):hover {
+      text-decoration-color: var(--key);
+    }
+  }
+}
+
+@supports (anchor-name: --glide) {
+  [data-glide]::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    position-anchor: --glide;
+    top: calc(anchor(bottom) + 1px);
+    right: anchor(right);
+    left: anchor(left);
+    height: calc(var(--spacing) * 0.5);
+    border-radius: calc(infinity * 1px);
+    background: var(--primary);
+    opacity: 0;
+    scale: 0 1;
+    pointer-events: none;
+    transition-property: opacity, scale, background-color, top, right, left;
+    transition-duration: var(--glide-fade);
+    transition-timing-function: ease;
+    transition-delay: var(--glide-linger);
+  }
+
+  [data-site-footer] [data-glide]::before {
+    background: var(--key);
+  }
+
+  [data-glide] a {
+    text-decoration-line: none;
+  }
+
+  [data-glide] a > span {
+    transition: anchor-name 0s calc(var(--glide-linger) + var(--glide-fade)) allow-discrete;
+  }
+
+  [data-glide] a[aria-current='page'] > span,
+  [data-glide] a:focus-visible > span {
+    anchor-name: --glide;
+  }
+
+  [data-glide]:has(a:focus-visible) a[aria-current='page']:not(:focus-visible) > span {
+    anchor-name: none;
+  }
+
+  [data-glide]:has(a[aria-current='page']) a > span,
+  [data-glide]:has(a:focus-visible) a > span {
+    transition: none;
+  }
+
+  [data-glide]:has(a[aria-current='page'])::before,
+  [data-glide]:has(a:focus-visible)::before {
+    opacity: 1;
+    scale: 1;
+  }
+
+  [data-glide]:has(a:focus-visible)::before {
+    transition-delay: 0s;
+  }
+
+  [data-site-footer] [data-glide]:has(a[aria-current='page'])::before {
+    background: var(--primary);
+  }
+
+  [data-site-footer] [data-glide]:has(a:not([aria-current='page']):focus-visible)::before {
+    background: var(--key);
+  }
+
+  @media (hover: hover) {
+    [data-glide]:not(:has(a:focus-visible)) a:hover > span {
+      anchor-name: --glide;
+    }
+
+    [data-glide]:not(:has(a:focus-visible)):has(a:hover) a[aria-current='page']:not(:hover) > span {
+      anchor-name: none;
+    }
+
+    [data-glide]:has(a:hover) a > span {
+      transition: none;
+    }
+
+    [data-glide]:has(a:hover)::before {
+      opacity: 1;
+      scale: 1;
+      transition-delay: 0s;
+    }
+
+    [data-site-footer] [data-glide]:not(:has(a:focus-visible)):has(a:not([aria-current='page']):hover)::before {
+      background: var(--key);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-glide]::before {
+      scale: none;
+      transition-property: opacity, background-color;
+    }
+  }
+}
+
 route-progress {
   --route-delay: 0.2s;
   --route-speed: 0.2s;

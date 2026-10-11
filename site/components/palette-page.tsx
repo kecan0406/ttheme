@@ -1,10 +1,11 @@
 import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
 import { Layers, Store } from 'lucide'
+import { siGithub } from 'simple-icons'
 import { Badge, badgeVariants } from '@/components/ui/badge'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { Facts } from '@/lib/facts'
 import { catalogPath, marketplacePath, OFFICIAL } from '@/lib/gallery'
-import { Icon } from '@/lib/icons'
+import { BrandIcon, Icon } from '@/lib/icons'
 import { gatePassed, lightness } from '@/lib/sheet'
 import type { GateRule, Marketplace, Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
@@ -176,10 +177,10 @@ function About({ theme, marketplace, gate }: { theme: Theme; marketplace: Market
           {marketplace ? (
             <a
               href={`https://github.com/${marketplace.repo}`}
-              class="font-mono text-xs font-normal text-muted-foreground transition-colors hover:text-foreground"
-              safe
+              class="inline-flex items-center gap-1.5 font-mono text-xs font-normal text-muted-foreground transition-colors hover:text-foreground"
             >
-              {marketplace.repo}
+              <BrandIcon icon={siGithub} class="size-3 flex-none" />
+              <span safe>{marketplace.repo}</span>
             </a>
           ) : null}
         </Fact>
