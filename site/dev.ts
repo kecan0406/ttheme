@@ -10,13 +10,15 @@ const { site } = await import('./app/site')
 
 const listeners = new Set<ReadableStreamDefaultController<string>>()
 let pending: ReturnType<typeof setTimeout> | undefined
+let stamp = Date.now().toString(36)
 
 function rebuild() {
   clearTimeout(pending)
   pending = setTimeout(async () => {
     try {
       await buildAssets(false)
-      for (const listener of listeners) listener.enqueue('data: reload\n\n')
+      stamp = Date.now().toString(36)
+      for (const listener of listeners) listener.enqueue(`data: ${stamp}\n\n`)
     } catch (error) {
       process.stderr.write(`site: ${(error as Error).message}\n`)
     }
@@ -38,7 +40,7 @@ new Elysia()
       start(controller) {
         held = controller
         listeners.add(controller)
-        controller.enqueue('retry: 300\n\n')
+        controller.enqueue(`retry: 300\n\ndata: ${stamp}\n\n`)
       },
       cancel() {
         if (held) listeners.delete(held)

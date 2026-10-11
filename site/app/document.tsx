@@ -10,7 +10,7 @@ import { SPECULATION_RULES } from '@/lib/speculation'
 import type { Theme } from '@/lib/themes'
 import { rootStyle, type Vars, WEAR_SCRIPT, wearIcon } from '@/lib/wear'
 
-const RELOAD = `const s=new EventSource('${assets.reload}');let lost=false;s.onmessage=()=>location.reload();s.onerror=()=>{lost=true};s.onopen=()=>{if(lost)location.reload()}`
+const RELOAD = `let s=null,b=null;const c=()=>{s?.close();s=null},f=()=>{if(document.visibilityState==='hidden'&&!document.prerendering)c();else if(!s){s=new EventSource('${assets.reload}');s.onmessage=(e)=>{b??=e.data;if(e.data!==b)location.reload()}}};document.addEventListener('visibilitychange',f);addEventListener('pageshow',f);addEventListener('pagehide',c);f()`
 
 const FONTS: string[] = assets.fonts
 
