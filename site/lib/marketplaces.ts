@@ -3,8 +3,11 @@ import { type Marketplace, toTheme } from '@/lib/themes'
 import { showcase } from '../../src/showcase.ts'
 
 const FRESH_MS = 10 * 60 * 1000
+const RETRY_MS = 60 * 1000
 
-let held: { at: number; marketplaces: Marketplace[] } | undefined
+let held: Marketplace[] | undefined
+let due = 0
+let failed = false
 let pending: Promise<Marketplace[]> | undefined
 
 async function fetchMarketplaces(): Promise<Marketplace[]> {
@@ -15,17 +18,36 @@ async function fetchMarketplaces(): Promise<Marketplace[]> {
   }))
 }
 
+function refresh(): Promise<Marketplace[]> {
+  due = Date.now() + RETRY_MS
+  pending ??= fetchMarketplaces()
+    .then(
+      (marketplaces) => {
+        held = marketplaces
+        due = Date.now() + FRESH_MS
+        failed = false
+        return marketplaces
+      },
+      (error: Error) => {
+        failed = true
+        process.stderr.write(`site: no marketplaces — ${error.message}\n`)
+        throw error
+      },
+    )
+    .finally(() => {
+      pending = undefined
+    })
+  return pending
+}
+
 export async function loadMarketplaces(): Promise<{ marketplaces: Marketplace[]; fresh: boolean }> {
-  if (held && Date.now() - held.at < FRESH_MS) return { marketplaces: held.marketplaces, fresh: true }
-  pending ??= fetchMarketplaces().finally(() => {
-    pending = undefined
-  })
+  if (held) {
+    if (Date.now() >= due) refresh().catch(() => {})
+    return { marketplaces: held, fresh: !failed }
+  }
   try {
-    const marketplaces = await pending
-    held = { at: Date.now(), marketplaces }
-    return { marketplaces, fresh: true }
-  } catch (error) {
-    process.stderr.write(`site: no marketplaces — ${(error as Error).message}\n`)
-    return { marketplaces: held?.marketplaces ?? [], fresh: false }
+    return { marketplaces: await refresh(), fresh: true }
+  } catch {
+    return { marketplaces: [], fresh: false }
   }
 }

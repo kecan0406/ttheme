@@ -1,6 +1,7 @@
 import type { Theme } from '@/lib/themes'
 import { isLight, SHOW_EVENT, WEAR_EVENT, WEAR_KEY, wearVars } from '@/lib/wear'
 import { settle } from './dom'
+import { respeculate } from './speculation'
 
 const COLOR = /^#[0-9a-f]{6}$/i
 
@@ -34,9 +35,14 @@ export function recall(): Theme | null {
 }
 
 export function remember(theme: Theme) {
+  const value = JSON.stringify({ v: wearVars(theme), l: isLight(theme), t: theme })
   try {
-    localStorage.setItem(WEAR_KEY, JSON.stringify({ v: wearVars(theme), l: isLight(theme), t: theme }))
-  } catch {}
+    if (localStorage.getItem(WEAR_KEY) === value) return
+    localStorage.setItem(WEAR_KEY, value)
+  } catch {
+    return
+  }
+  respeculate()
 }
 
 export function show(theme: Theme) {
