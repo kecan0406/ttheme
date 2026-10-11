@@ -167,13 +167,17 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
                   type="button"
                   data-sheet={String(themes.indexOf(sheet))}
                   aria-current={sheet === theme ? 'true' : undefined}
+                  tabindex={sheet === theme ? '0' : '-1'}
+                  translate="no"
                   style={`background:${sheet.background};color:${sheet.foreground}`}
                   class="grid w-32 flex-none snap-center gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-3 py-2 text-left transition-transform duration-200 outline-none hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-98 active:duration-500 active:ease-spring motion-reduce:hover:translate-y-0"
                 >
                   <span class="truncate font-display text-sm font-extrabold" style={`color:${sheet.cursor}`}>
                     {escapeHtml(sheet.name)}
                   </span>
-                  <Signature theme={sheet} />
+                  <span aria-hidden="true">
+                    <Signature theme={sheet} />
+                  </span>
                 </button>
               ))}
             </div>

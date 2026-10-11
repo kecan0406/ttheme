@@ -14,8 +14,14 @@ interface OpenTab {
   index: number
 }
 
+const STEPS: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 }
+
 function owned(target: EventTarget | null): boolean {
-  return typing(target) || (target instanceof Element && target.closest('[role="tablist"], [popover]') !== null)
+  return (
+    typing(target) ||
+    (target instanceof Element &&
+      target.closest('[role="tablist"], [popover], [data-slot="scroll-area-viewport"]') !== null)
+  )
 }
 
 class SheetBrowser extends HTMLElement {
@@ -48,9 +54,10 @@ class SheetBrowser extends HTMLElement {
   }
 
   #arrows = (event: KeyboardEvent) => {
-    if (!bare(event) || event.shiftKey || event.repeat || owned(event.target)) return
-    if (event.key === 'ArrowRight') this.#step(1)
-    if (event.key === 'ArrowLeft') this.#step(-1)
+    const delta = STEPS[event.key]
+    if (!delta || !bare(event) || event.shiftKey || event.repeat || owned(event.target)) return
+    event.preventDefault()
+    this.#step(delta)
   }
 
   connectedCallback() {
@@ -166,9 +173,13 @@ class SheetBrowser extends HTMLElement {
     if (focused) this.querySelector<HTMLElement>('[data-tabs] [aria-selected="true"]')?.focus()
     fill(this.querySelector('[data-use]'), html(<SheetUse theme={theme} />))
     fill(this.querySelector('#sheet-details'), html(<SheetDetails theme={theme} gate={this.#gate} />))
+    const roving = this.querySelector('[data-strip]')?.contains(document.activeElement) ?? false
     for (const tile of this.querySelectorAll<HTMLElement>('[data-sheet]')) {
-      if (Number(tile.dataset.sheet) === this.#at) tile.setAttribute('aria-current', 'true')
+      const current = Number(tile.dataset.sheet) === this.#at
+      tile.tabIndex = current ? 0 : -1
+      if (current) tile.setAttribute('aria-current', 'true')
       else tile.removeAttribute('aria-current')
+      if (current && roving) tile.focus({ preventScroll: true })
     }
     document.getElementById(SHEET_AT)?.remove()
   }
