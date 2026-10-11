@@ -83,6 +83,7 @@ function Document({
         <route-progress role="progressbar" aria-label="loading" />
         <FacetGround />
         {children}
+        <p data-announce role="status" class="sr-only" />
       </body>
     </html>
   )

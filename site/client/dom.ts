@@ -15,6 +15,15 @@ export function swap(target: Element | null, markup: string) {
   target.replaceWith(template.content)
 }
 
+export function announce(text: string) {
+  const region = document.querySelector('[data-announce]')
+  if (!region) return
+  region.textContent = ''
+  window.setTimeout(() => {
+    region.textContent = text
+  }, 50)
+}
+
 export function reducedMotion(): boolean {
   return matchMedia('(prefers-reduced-motion: reduce)').matches
 }
