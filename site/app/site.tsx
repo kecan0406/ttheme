@@ -90,7 +90,7 @@ export const site = new Elysia({ name: 'site' })
         description: 'Every ttheme palette: the official catalogs and the marketplaces anyone publishes from GitHub',
         cache: fresh ? MARKETPLACES : RETRY,
       },
-      <MarketplacePage themes={themes} marketplaces={marketplaces} gate={gate} facts={facts} />,
+      <MarketplacePage themes={themes} marketplaces={marketplaces} facts={facts} />,
     )
   })
   .get('/marketplace/:id', async ({ params }) => {

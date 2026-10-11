@@ -12,46 +12,50 @@ export function SiteHeader({ current }: { current: string }) {
   return (
     <header
       data-sticky
-      class="sticky top-4.5 z-10 flex items-center justify-between gap-4 rounded-xl border bg-glass px-4.5 py-3.5 shadow-sm backdrop-blur-[14px] backdrop-saturate-130 max-[720px]:px-3 max-[720px]:py-2.5"
+      data-site-header
+      class="sticky z-10 before:absolute before:inset-0 before:-z-1 before:border-b before:border-border before:bg-glass before:backdrop-blur-[14px] before:backdrop-saturate-130"
     >
-      <div class="flex min-w-0 items-center gap-5 max-[720px]:gap-2.5">
-        <a
-          href="/"
-          class="rounded-sm font-display text-display-md font-black outline-none focus-visible:ring-2 focus-visible:ring-ring max-[720px]:text-display-sm"
+      <div class="mx-auto flex h-full w-[min(1280px,calc(100%-40px))] items-stretch justify-between gap-4">
+        <div class="flex min-w-0 items-stretch gap-3 max-[720px]:gap-1.5">
+          <a
+            href="/"
+            data-wordmark
+            class="self-center rounded-sm font-display text-display-md font-black outline-none focus-visible:ring-2 focus-visible:ring-ring max-[720px]:text-display-sm"
+          >
+            ttheme
+          </a>
+          <nav aria-label="site" class="flex items-stretch">
+            {NAV.map((item) => (
+              <a
+                href={item.href}
+                aria-current={item.href === current ? 'page' : undefined}
+                class="relative flex items-center rounded-sm px-3 text-sm font-medium text-soft-foreground transition-colors outline-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset aria-[current=page]:text-foreground aria-[current=page]:after:bg-primary max-[720px]:px-2.5"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        </div>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          aria-label="menu"
+          popovertarget="site-menu"
+          class="hidden self-center max-[720px]:inline-flex"
         >
-          ttheme
-        </a>
-        <nav aria-label="site" class="flex gap-0.5 rounded-full border bg-muted/65 p-0.75">
-          {NAV.map((item) => (
-            <a
-              href={item.href}
-              aria-current={item.href === current ? 'page' : undefined}
-              class="rounded-full px-3.5 py-0.75 text-sm font-medium text-soft-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-card aria-[current=page]:text-foreground aria-[current=page]:shadow-sm aria-[current=page]:ring-1 aria-[current=page]:ring-border max-[720px]:px-2.5"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </div>
-      <Button
-        variant="outline"
-        size="icon-sm"
-        aria-label="menu"
-        popovertarget="site-menu"
-        class="hidden max-[720px]:inline-flex"
-      >
-        <Icon node={Menu} />
-      </Button>
-      <div
-        id="site-menu"
-        popover="auto"
-        class="top-22 right-5 m-0 w-56 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid min-[720px]:static min-[720px]:flex min-[720px]:w-auto min-[720px]:items-center min-[720px]:gap-2.5 min-[720px]:overflow-visible min-[720px]:border-0 min-[720px]:bg-transparent min-[720px]:p-0 min-[720px]:text-inherit min-[720px]:shadow-none"
-      >
-        <LinkButton variant="ghost" size="sm" href="https://github.com/kecan0406/ttheme" class="justify-start">
-          github
-          <Icon node={ArrowUpRight} class="size-3" />
-        </LinkButton>
-        <PalettePicker />
+          <Icon node={Menu} />
+        </Button>
+        <div
+          id="site-menu"
+          popover="auto"
+          class="top-15 right-5 m-0 w-56 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid min-[720px]:static min-[720px]:flex min-[720px]:w-auto min-[720px]:items-center min-[720px]:self-center min-[720px]:gap-2.5 min-[720px]:overflow-visible min-[720px]:border-0 min-[720px]:bg-transparent min-[720px]:p-0 min-[720px]:text-inherit min-[720px]:shadow-none"
+        >
+          <LinkButton variant="ghost" size="sm" href="https://github.com/kecan0406/ttheme" class="justify-start">
+            github
+            <Icon node={ArrowUpRight} class="size-3" />
+          </LinkButton>
+          <PalettePicker />
+        </div>
       </div>
     </header>
   )

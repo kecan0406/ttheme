@@ -3,10 +3,11 @@ import { CalendarDays, FolderTree, GitBranch, Package, Palette, Scale, ShieldChe
 import { Badge } from '@/components/ui/badge'
 import { catalogsOf } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
-import { catalogAnchor, OFFICIAL, OFFICIAL_ABOUT, OFFICIAL_REPO } from '@/lib/gallery'
+import { catalogAnchor, marketplacePath, OFFICIAL, OFFICIAL_ABOUT, OFFICIAL_REPO } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { gatePassed } from '@/lib/sheet'
 import type { GateRule, Marketplace, Theme } from '@/lib/themes'
+import { plural } from '@/lib/utils'
 import { CommandRow, INIT } from './command-row'
 import { Crumbs, MarketplaceFrame } from './marketplace-frame'
 import { PaletteRow } from './palette-rows'
@@ -18,10 +19,6 @@ function Meta({ icon, children }: PropsWithChildren<{ icon: JSX.Element }>) {
       {children}
     </span>
   )
-}
-
-function plural(count: number, word: string): string {
-  return `${count} ${word}${count === 1 ? '' : 's'}`
 }
 
 export function MarketplaceStore({
@@ -41,7 +38,7 @@ export function MarketplaceStore({
   const repo = marketplace?.repo ?? OFFICIAL_REPO
 
   return (
-    <MarketplaceFrame facts={facts}>
+    <MarketplaceFrame facts={facts} current={marketplacePath(marketplace?.id ?? null)}>
       <header class="grid gap-4">
         <Crumbs trail={[{ label: 'marketplace', href: '/marketplace' }, { label: id }]} />
         <h1 class="font-display text-display-lg font-black [overflow-wrap:anywhere]" safe>

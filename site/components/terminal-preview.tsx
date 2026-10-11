@@ -69,7 +69,7 @@ function Shell({ use }: { use: string }) {
       <L>
         <Prompt />
         ttheme use{' '}
-        <span class="term-c3" safe>
+        <span class="term-c3" data-use safe>
           {use}
         </span>
       </L>

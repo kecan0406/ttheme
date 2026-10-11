@@ -1,8 +1,6 @@
 import { luminance } from '@/lib/sheet'
 import type { Theme } from '@/lib/themes'
 
-export const SETTLE_MS = 450
-
 export const WEAR_KEY = 'ttheme-site-wear'
 
 export const WEAR_EVENT = 'ttheme:wear'
@@ -21,12 +19,15 @@ export function wearSlots(theme: Theme): [string, string][] {
   ]
 }
 
-export function wearVars(theme: Theme): [string, string][] {
+export function wearSigns(theme: Theme): [string, string][] {
   return [
-    ...wearSlots(theme),
     ['--wear-name', JSON.stringify(theme.name)],
     ...theme.signature.slice(0, 3).map((color, index): [string, string] => [`--sg${index}`, color]),
   ]
+}
+
+export function wearVars(theme: Theme): [string, string][] {
+  return [...wearSlots(theme), ...wearSigns(theme)]
 }
 
 export function wearStyle(theme: Theme): string {

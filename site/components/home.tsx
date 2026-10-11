@@ -34,12 +34,12 @@ function features(palettes: number, catalogs: number) {
     {
       emoji: '🖼️',
       title: 'a picture behind the text',
-      text: "Tint a picture into the palette's background, as faint as its contrast floors allow.",
+      text: "Tint a picture into the palette's background and set how strongly it shows behind the text.",
     },
     {
-      emoji: '✅',
-      title: 'readable by design',
-      text: 'Every official palette clears the contrast gate: nine floors, measured on every build.',
+      emoji: '🛠️',
+      title: 'make your own',
+      text: 'ttheme new opens a palette editor in your terminal, and ttheme share turns the result into a link anyone can open.',
     },
     {
       emoji: '🍀',
@@ -98,10 +98,9 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
   const theme = leads[0] as Theme
 
   return (
-    <lead-showcase class="ground block min-h-dvh">
-      <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-4.5">
-        <SiteHeader current="/" />
-
+    <lead-showcase class="ground flex min-h-dvh flex-col">
+      <SiteHeader current="/" />
+      <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-5">
         <section
           aria-label="ttheme"
           class="grid grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] items-center gap-12 pt-14 pb-10 max-[960px]:grid-cols-[minmax(0,1fr)] max-[960px]:pt-8"
@@ -240,9 +239,8 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             </Step>
           </ol>
         </section>
-
-        <SiteFooter facts={facts} landing />
       </div>
+      <SiteFooter facts={facts} current="/" landing />
       <kaomoji-rain>
         <div aria-hidden="true" class="pointer-events-none fixed inset-0 z-50 overflow-hidden" />
       </kaomoji-rain>

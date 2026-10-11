@@ -13,6 +13,7 @@ const buttonVariants = cva(
         secondary: 'bg-secondary text-secondary-foreground hover:bg-muted',
         ghost:
           'text-soft-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-pressed:bg-accent aria-pressed:text-primary aria-pressed:inset-ring aria-pressed:inset-ring-primary/45',
+        scene: 'text-(--fg)/65 hover:bg-(--fg)/12 hover:text-(--fg)',
         destructive: 'bg-destructive/16 text-destructive hover:bg-destructive/24',
         link: 'font-medium text-primary underline-offset-4 hover:underline',
         pop: 'bg-primary text-primary-foreground shadow-[0_4px_0_color-mix(in_oklab,var(--primary)_62%,black)] transition-[transform,box-shadow] duration-75 hover:brightness-105 active:translate-y-1 active:scale-100 active:shadow-none',

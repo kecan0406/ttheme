@@ -1,7 +1,3 @@
-import { SETTLE_MS } from '@/lib/wear'
-
-const settling = new WeakMap<HTMLElement, number>()
-
 export function readJson<T>(host: Element, selector: string): T {
   const script = host.querySelector<HTMLScriptElement>(selector)
   if (!script?.textContent) throw new Error(`${selector} is missing`)
@@ -21,15 +17,6 @@ export function swap(target: Element | null, markup: string) {
 
 export function reducedMotion(): boolean {
   return matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
-export function settle(element: HTMLElement) {
-  element.dataset.settling = ''
-  window.clearTimeout(settling.get(element))
-  settling.set(
-    element,
-    window.setTimeout(() => delete element.dataset.settling, SETTLE_MS),
-  )
 }
 
 export function fadeThrough(update: () => void) {

@@ -37,14 +37,19 @@ export function Crumbs({ trail }: { trail: Crumb[] }) {
   )
 }
 
-export function MarketplaceFrame({ facts, ribbon, children }: PropsWithChildren<{ facts: Facts; ribbon?: Theme }>) {
+export function MarketplaceFrame({
+  facts,
+  current,
+  ribbon,
+  children,
+}: PropsWithChildren<{ facts: Facts; current?: string; ribbon?: Theme }>) {
   return (
-    <div class="ground min-h-dvh">
-      <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-4.5">
-        <SiteHeader current="/marketplace" />
+    <div class="ground flex min-h-dvh flex-col">
+      <SiteHeader current="/marketplace" />
+      <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-5">
         <main class="grid grid-cols-[minmax(0,1fr)] gap-14 pt-8 pb-24">{children}</main>
-        <SiteFooter facts={facts} ribbon={ribbon} />
       </div>
+      <SiteFooter facts={facts} current={current} ribbon={ribbon} />
     </div>
   )
 }

@@ -12,7 +12,7 @@ const toggleVariants = cva(
         scene:
           'rounded-sm px-2.5 py-0.75 text-xs text-(--fg)/65 hover:bg-(--fg)/12 hover:text-(--fg) has-checked:bg-(--fg)/18 has-checked:text-(--fg) has-checked:inset-ring has-checked:inset-ring-(--fg)/22',
         underline:
-          'relative py-2.5 text-sm text-muted-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 hover:text-foreground has-checked:text-foreground has-checked:after:opacity-100',
+          'relative -mb-px px-0.5 pb-3 text-sm text-soft-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 hover:text-foreground has-checked:text-foreground has-checked:after:opacity-100',
       },
     },
     defaultVariants: {
@@ -26,7 +26,7 @@ type Variant = NonNullable<VariantProps<typeof toggleVariants>['variant']>
 const GROUP: Record<Variant, string> = {
   default: 'rounded-full border border-border bg-muted/65',
   scene: 'rounded-lg border border-(--fg)/16 bg-(--fg)/9',
-  underline: 'gap-5 p-0',
+  underline: 'w-full gap-6 border-b border-border p-0',
 }
 
 function ToggleGroup({
@@ -76,4 +76,20 @@ function ToggleGroupItem({
   )
 }
 
-export { ToggleGroup, ToggleGroupItem }
+function ToggleGroupCount({
+  class: className,
+  ...props
+}: PropsWithChildren<Omit<JSX.HtmlTag, 'class'> & { class?: string }>) {
+  return (
+    <span
+      data-slot="toggle-group-count"
+      class={cn(
+        'min-w-5 rounded-full bg-muted px-1.5 text-center font-mono text-xs leading-4.5 text-muted-foreground tabular-nums',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+export { ToggleGroup, ToggleGroupCount, ToggleGroupItem }

@@ -1,8 +1,9 @@
 import type { Theme } from '@/lib/themes'
+import { wearStyle } from '@/lib/wear'
 
-export type Source = 'all' | 'official' | 'marketplaces'
+export type Source = 'all' | 'official' | 'community'
 
-export const SOURCES: Source[] = ['all', 'official', 'marketplaces']
+export const SOURCES: Source[] = ['all', 'official', 'community']
 
 export interface Filters {
   query: string
@@ -25,7 +26,7 @@ export function searchable(theme: Theme): Searchable {
 
 export function matches({ text, official }: Searchable, { query, source }: Filters): boolean {
   if (source === 'official' && !official) return false
-  if (source === 'marketplaces' && official) return false
+  if (source === 'community' && official) return false
   const q = query.trim().toLowerCase()
   return !q || text.includes(q)
 }
@@ -38,6 +39,7 @@ export interface Shelf {
   id: string
   repo: string
   about: string
+  updated: string
   palettes: Theme[]
 }
 
@@ -45,8 +47,7 @@ export const OFFICIAL = 'official'
 
 export const OFFICIAL_REPO = 'kecan0406/ttheme'
 
-export const OFFICIAL_ABOUT =
-  'The palettes that come with ttheme, each measured from official art and held to the contrast gate before it ships.'
+export const OFFICIAL_ABOUT = "The palettes that come with ttheme, each measured from the character's official art."
 
 export function marketplacePath(id: string | null): string {
   return `/marketplace/${id === null ? OFFICIAL : encodeURIComponent(id).replaceAll('%40', '@')}`
@@ -66,4 +67,18 @@ export function catalogAnchor(catalog: string | null): string {
 
 export function catalogPath(theme: Pick<Theme, 'marketplace' | 'catalog'>): string {
   return `${marketplacePath(theme.marketplace)}#${catalogAnchor(theme.catalog)}`
+}
+
+export interface Peek {
+  title: string
+  use: string
+  style: string
+}
+
+export function peekOf(lead: Theme, catalog: string | null): Peek {
+  return {
+    title: [catalog, lead.name].filter(Boolean).join(' · '),
+    use: lead.marketplace ? lead.id : lead.name,
+    style: wearStyle(lead),
+  }
 }

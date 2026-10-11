@@ -35,6 +35,8 @@ const COLUMNS = [
 
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
+const SIGNS = [0, 1, 2]
+
 function Ribbon({ theme }: { theme: Theme | 'worn' }) {
   const colors = theme === 'worn' ? SLOTS.map((slot) => `var(--a${slot})`) : theme.ansi
   return (
@@ -53,15 +55,28 @@ function Ribbon({ theme }: { theme: Theme | 'worn' }) {
   )
 }
 
+function Signs() {
+  return (
+    <span aria-hidden="true" class="flex gap-0.75">
+      {SIGNS.map((sign) => (
+        <i class="size-2 rounded-full ring-1 ring-border" style={`background:var(--sg${sign})`} />
+      ))}
+    </span>
+  )
+}
+
 function Brand({ facts }: { facts: Facts }) {
   return (
     <div class="grid content-start justify-items-start gap-2.5 max-[640px]:col-span-2">
-      <a
-        href="/"
-        class="rounded-sm font-display text-display-sm font-black outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        ttheme
-      </a>
+      <span class="flex items-center gap-2.5">
+        <a
+          href="/"
+          class="rounded-sm font-display text-display-sm font-black outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          ttheme
+        </a>
+        <Signs />
+      </span>
       <p class="text-xs font-medium tracking-wide text-muted-foreground">wear your favorite character</p>
       <Badge variant="count">
         {facts.palettes} palettes · {facts.catalogs} catalogs
@@ -74,33 +89,43 @@ function Tagline({ facts }: { facts: Facts }) {
   return (
     <div class="grid content-start justify-items-start gap-2.5 max-[640px]:col-span-2">
       <p class="max-w-[18ch] font-display text-display-sm font-extrabold">wear your favorite character</p>
-      <Badge variant="count">
-        {facts.palettes} palettes · {facts.catalogs} catalogs
-      </Badge>
+      <span class="flex items-center gap-2.5">
+        <Badge variant="count">
+          {facts.palettes} palettes · {facts.catalogs} catalogs
+        </Badge>
+        <Signs />
+      </span>
     </div>
   )
 }
 
-function Columns() {
+function Columns({ current }: { current: string }) {
   return (
     <nav
       aria-label="more"
       class="col-span-3 grid grid-cols-3 gap-8 max-[640px]:col-span-2 max-[640px]:grid-cols-2 max-[640px]:gap-6"
     >
-      {COLUMNS.map((column) => (
+      {COLUMNS.map((column, index) => (
         <div
           class={cn(
             'grid content-start gap-3',
             column.title === 'your own' && 'max-[640px]:order-3 max-[640px]:col-span-2',
           )}
+          style={`--key:var(--sg${index})`}
         >
-          <h2 class="text-2xs font-bold tracking-caps text-muted-foreground uppercase" safe>
-            {column.title}
+          <h2 class="flex items-center gap-2 text-2xs font-bold tracking-caps text-muted-foreground uppercase">
+            <i aria-hidden="true" class="h-1 w-3 rounded-full bg-(--key)" />
+            <span safe>{column.title}</span>
           </h2>
           <ul class="grid gap-2">
             {column.links.map((link) => (
               <li>
-                <a href={link.href} class="text-sm text-soft-foreground transition-colors hover:text-foreground" safe>
+                <a
+                  href={link.href}
+                  aria-current={link.href === current ? 'page' : undefined}
+                  class="rounded-sm text-sm text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 transition-colors outline-none hover:text-foreground hover:decoration-(--key) focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:text-foreground aria-[current=page]:decoration-primary"
+                  safe
+                >
                   {link.label}
                 </a>
               </li>
@@ -132,24 +157,31 @@ function Mega() {
 
 export function SiteFooter({
   facts,
+  current = '',
   ribbon,
   landing = false,
 }: {
   facts: Facts
+  current?: string
   ribbon?: Theme | 'worn'
   landing?: boolean
 }) {
   return (
-    <footer class={cn('grid gap-8 pt-9 pb-6', !ribbon && !landing && 'border-t')}>
-      {ribbon ? <Ribbon theme={ribbon} /> : null}
-      <div class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 max-[640px]:grid-cols-2 max-[640px]:gap-6">
-        {landing ? <Tagline facts={facts} /> : <Brand facts={facts} />}
-        <Columns />
-      </div>
-      {landing ? <Mega /> : null}
-      <div class="flex flex-wrap justify-between gap-x-4 gap-y-1.5 border-t pt-5 text-xs text-muted-foreground">
-        <span safe>{`free and open, MIT · v${facts.version}`}</span>
-        <span>a palette is colors and post numbers, never code</span>
+    <footer
+      data-site-footer
+      class="relative isolate mt-auto before:absolute before:inset-0 before:-z-1 before:border-t before:border-border before:bg-glass before:backdrop-blur-[14px] before:backdrop-saturate-130"
+    >
+      <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-6">
+        {ribbon ? <Ribbon theme={ribbon} /> : null}
+        <div class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 max-[640px]:grid-cols-2 max-[640px]:gap-6">
+          {landing ? <Tagline facts={facts} /> : <Brand facts={facts} />}
+          <Columns current={current} />
+        </div>
+        {landing ? <Mega /> : null}
+        <div class="flex flex-wrap justify-between gap-x-4 gap-y-1.5 border-t pt-5 text-xs text-muted-foreground">
+          <span safe>{`free and open, MIT · v${facts.version}`}</span>
+          <span>a palette is colors and post numbers, never code</span>
+        </div>
       </div>
     </footer>
   )

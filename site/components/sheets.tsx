@@ -72,9 +72,8 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
 
   return (
     <sheet-browser class="ground flex min-h-dvh flex-col">
-      <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] flex-1 grid-cols-[minmax(0,1fr)] content-start gap-5 pt-4.5">
-        <SiteHeader current="/sheets" />
-
+      <SiteHeader current="/sheets" />
+      <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] flex-1 grid-cols-[minmax(0,1fr)] content-start gap-5 pt-5">
         <section data-sheet-label aria-label={theme.name} class="grid justify-items-center gap-6 pt-8 pb-10">
           <div class="grid w-full max-w-[880px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4">
             <Button variant="outline" size="icon" aria-label="previous sheet" data-step="-1">
@@ -157,9 +156,7 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
           <Icon node={ChevronRight} />
         </Button>
       </nav>
-      <div class="mx-auto w-[min(1280px,calc(100%-40px))]">
-        <SiteFooter facts={facts} ribbon="worn" />
-      </div>
+      <SiteFooter facts={facts} current="/sheets" ribbon="worn" />
       <script type="application/json" data-sheets>
         {json({ themes, gate })}
       </script>
