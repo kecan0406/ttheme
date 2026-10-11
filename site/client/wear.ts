@@ -163,7 +163,7 @@ function wear(vars: Vars, light: boolean, origin: Point | null) {
   document.dispatchEvent(new CustomEvent<Shown>(SHOW_EVENT, { detail: { vars, origin, instant: false } }))
   const root = document.documentElement
   for (const [name, value] of vars) if (name === LABEL) relabel(root, value)
-  root.style.colorScheme = light ? 'light' : 'dark'
+  root.style.colorScheme = light ? 'light only' : 'dark only'
   fade(
     root,
     vars.filter(([name]) => SLOTS.includes(name) || TONES.includes(name)),

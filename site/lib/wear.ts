@@ -50,7 +50,7 @@ export function headlineEm(text: string): number {
   return em / 1000
 }
 
-export const WEAR_SCRIPT = `(function(){try{var w=JSON.parse(localStorage.getItem('${WEAR_KEY}')),s=document.documentElement.style,m=document.querySelector('meta[name=theme-color]'),c=document.querySelector('link[rel=icon]'),a=[${ADVANCES.join(',')}],g='${GLYPHS}',i,e=0,k,n;if(!w||!w.v)return;for(i=0;i<w.v.length;i++)if(w.v[i][0].indexOf('--')===0){s.setProperty(w.v[i][0],w.v[i][1]);if(m&&w.v[i][0]==='--bg')m.content=w.v[i][1]}s.colorScheme=w.l?'light':'dark';n=w.t&&w.t.name;if(typeof n!=='string')return;document.documentElement.setAttribute('data-picked','');for(i=0;i<n.length;i++){k=g.indexOf(n[i]);e+=(k<0?${WIDEST}:a[k])+(${TRACKING})}s.setProperty('--palette-name',JSON.stringify(n));s.setProperty('--palette-catalog',JSON.stringify(w.t.catalog||''));s.setProperty('--palette-em',String(e/1000));if(c&&w.t.signature)c.href=(${ICON})(w.t.background,w.t.foreground,w.t.signature)}catch(x){}})()`
+export const WEAR_SCRIPT = `(function(){try{var w=JSON.parse(localStorage.getItem('${WEAR_KEY}')),s=document.documentElement.style,m=document.querySelector('meta[name=theme-color]'),c=document.querySelector('link[rel=icon]'),a=[${ADVANCES.join(',')}],g='${GLYPHS}',i,e=0,k,n;if(!w||!w.v)return;for(i=0;i<w.v.length;i++)if(w.v[i][0].indexOf('--')===0){s.setProperty(w.v[i][0],w.v[i][1]);if(m&&w.v[i][0]==='--bg')m.content=w.v[i][1]}s.colorScheme=w.l?'light only':'dark only';n=w.t&&w.t.name;if(typeof n!=='string')return;document.documentElement.setAttribute('data-picked','');for(i=0;i<n.length;i++){k=g.indexOf(n[i]);e+=(k<0?${WIDEST}:a[k])+(${TRACKING})}s.setProperty('--palette-name',JSON.stringify(n));s.setProperty('--palette-catalog',JSON.stringify(w.t.catalog||''));s.setProperty('--palette-em',String(e/1000));if(c&&w.t.signature)c.href=(${ICON})(w.t.background,w.t.foreground,w.t.signature)}catch(x){}})()`
 
 export const SLOTS = ['--bg', '--fg', '--cu', '--se', ...Array.from({ length: 16 }, (_, index) => `--a${index}`)]
 
@@ -94,7 +94,7 @@ export function wearStyle(theme: Theme): string {
 
 export function rootStyle(theme: Theme): string {
   const vars = [...wearVars(theme), ...wearOwn(theme)].map(([slot, value]) => `${slot}:${value}`).join(';')
-  return `${vars};color-scheme:${isLight(theme) ? 'light' : 'dark'}`
+  return `${vars};color-scheme:${isLight(theme) ? 'light' : 'dark'} only`
 }
 
 export function isLight(theme: Theme): boolean {

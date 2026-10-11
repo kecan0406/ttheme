@@ -49,7 +49,7 @@ function leave(event: NavigateEvent) {
     }
     const at = Date.now()
     const point = press && performance.now() - press.at < PRESS_MS ? [press.x, press.y] : null
-    const light = document.documentElement.style.colorScheme === 'light'
+    const light = document.documentElement.style.colorScheme.includes('light')
     sessionStorage.setItem(
       HANDOFF_KEY,
       JSON.stringify({
