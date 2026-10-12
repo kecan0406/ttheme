@@ -8,12 +8,12 @@ import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { headlineEm } from '@/lib/wear'
+import { HeroScenes } from './cli-scenes'
 import { CommandRow } from './command-row'
 import { Signature } from './palette-parts'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { TerminalFrame, WINDOW_TITLE } from './terminal-frame'
-import { TerminalPreview } from './terminal-preview'
 
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
@@ -83,20 +83,6 @@ function Step({ number, title, text, children }: PropsWithChildren<{ number: num
       </p>
       {children}
     </li>
-  )
-}
-
-function LeadPreview({ theme }: { theme: Theme }) {
-  return (
-    <div data-lead-preview aria-hidden="true">
-      <TerminalPreview
-        theme={theme}
-        scene="shell"
-        worn
-        own
-        class="min-h-60 px-6 pt-5 pb-6 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap max-[640px]:px-4.5 max-[400px]:min-h-62"
-      />
-    </div>
   )
 }
 
@@ -187,7 +173,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                 </>
               }
             >
-              <LeadPreview theme={theme} />
+              <HeroScenes theme={theme} />
             </TerminalFrame>
             <div aria-hidden="true" class="flex items-center justify-center gap-1.5 px-1">
               {SLOTS.map((slot) => (
