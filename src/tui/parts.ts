@@ -49,6 +49,17 @@ export function boxEdge(width: number, at: keyof typeof CORNERS, labels: [number
   return line.join('')
 }
 
+export function boxTitle(
+  width: number,
+  title: string,
+  edge: (text: string) => string,
+  paint: (text: string) => string,
+): string {
+  const line = [...boxEdge(width, 'top', [[2, title]])]
+  const end = 2 + [...title].length
+  return `${edge(line.slice(0, 2).join(''))}${paint(title)}${edge(line.slice(end).join(''))}`
+}
+
 export function boxed(p: Paint, content: string, width: number): string {
   return `${p.dim('│')}${fit(content, width - 2)}${p.dim('│')}`
 }

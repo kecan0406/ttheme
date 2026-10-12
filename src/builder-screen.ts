@@ -518,7 +518,7 @@ function sidebar(
   const side = layout.side
   const failing = gateMisses(e)
   const dot = e.changedOnly ? p.warn(MARKS.on) : ' '
-  const gate = failing === 0 ? p.dim('Gate ✓') : p.bold(`Gate ✗ ${failing}`)
+  const gate = failing === 0 ? p.ok('Gate ✓') : p.bold(`Gate ✗ ${failing}`)
   const tabs = spread(
     ` ${p.bold('Colors')}  ${gate}`,
     keyZone('m', `${e.changedOnly ? p.bold('⧩ changed') : p.dim('⧩ changed')}${dot} `),
@@ -582,9 +582,6 @@ function topBar(e: PaletteEditor, p: Paint, width: number): string {
           ),
         ]
       : []),
-    button('i', '⌖ Inspect', e.inspect),
-    `${button('u', '↶', false)} ${button('ctrl+r', '↷', false)}`,
-    button('I', 'Import ▾', e.menu === 'import'),
     ...(e.options.exports ? [button('x', 'Export ▾', e.menu === 'export')] : []),
   ].join('  ')
   return spread(left, `${right} `, width)

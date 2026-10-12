@@ -122,17 +122,39 @@ test('f moves the colors the gate misses', () => {
   assert.match(e.notice ?? '', /Moved \d+ colors? — passes the gate/)
 })
 
-test('esc asks before throwing changes away, and a palette that cannot be read is not saved', () => {
+test('esc asks to save changes: y saves, n leaves without saving, esc and other keys keep editing', () => {
   const e = press(editor({ check: () => 'meta.signature slots must resolve to three different colors' }), 'tab', '9')
   press(e, 'enter', 's')
   assert.equal(e.result, undefined)
   assert.match(e.notice ?? '', /signature/)
   press(e, 'esc')
-  assert.match(screen(e), /\[EDIT \(QUIT\)\] Discard changes\?/)
-  press(e, 'n')
+  assert.match(screen(e), /\[EDIT \(QUIT\)\] Save changes\?/)
+  assert.match(renderEditor(e, 80, 24, false).join('\n'), /1 color changed/)
+  press(e, 'x', 'q', 'ctrl-c')
+  assert.equal(e.quitting, true)
+  assert.equal(e.result, undefined)
+  press(e, 'esc')
+  assert.equal(e.quitting, false)
   assert.equal(e.result, undefined)
   press(e, 'esc', 'y')
+  assert.equal(e.result, undefined)
+  assert.match(e.notice ?? '', /signature/)
+  press(e, 'esc', 'n')
   assert.equal(e.result, 'cancelled')
+})
+
+test('the dialog’s enter takes the focused choice, and arrows move the focus', () => {
+  const yes = press(editor(), 'tab', '9', 'enter', 'esc', 'enter')
+  assert.equal(yes.result, 'saved')
+  const no = press(editor(), 'tab', '9', 'enter', 'esc', 'right', 'enter')
+  assert.equal(no.result, 'cancelled')
+  const back = press(editor(), 'tab', '9', 'enter', 'esc', 'right', 'left', 'enter')
+  assert.equal(back.result, 'saved')
+})
+
+test('ctrl-c does not leave the editor', () => {
+  assert.equal(press(editor(), 'ctrl-c').result, undefined)
+  assert.equal(press(editor(), 'tab', '9', 'enter', 'ctrl-c').result, undefined)
 })
 
 test('the screen fits 80×24 and says what it needs below that', () => {
@@ -161,13 +183,13 @@ test('p, ctrl+v, an empty paste and a pasted path or link each ask find for a pi
   assert.match(press(editor(), 'p').notice ?? '', /Pictures need/)
 })
 
-test('a picture find added counts as a change, and esc says it goes too', () => {
+test('a picture find added counts as a change, and the dialog says it goes too', () => {
   const e = editor({ find: async () => ({ count: 1 }), pictures: 0 })
   e.found({ count: 1, note: 'Background · kec@dust/dusk ← danbooru 1' })
   assert.equal(e.added, 1)
   assert.match(screen(e), /▣ 1 picture/)
   press(e, 'esc')
-  assert.match(screen(e), /Discard changes and 1 picture\?/)
+  assert.match(renderEditor(e, 80, 24, false).join('\n'), /1 picture added/)
 })
 
 test('the footer keeps enter and s at 80 columns, and names the tune', () => {

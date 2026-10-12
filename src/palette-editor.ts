@@ -479,6 +479,7 @@ export class PaletteEditor {
   typing: string | undefined
   overlay: 'keys' | 'open' | undefined
   quitting = false
+  quitFocus: 'yes' | 'no' = 'yes'
   compare = false
   notice: string | undefined
   filter = ''
@@ -573,6 +574,10 @@ export class PaletteEditor {
 
   changes(): number {
     return this.list.filter((_, slot) => this.changed(slot)).length
+  }
+
+  unsaved(): number {
+    return this.list.filter((hex, slot) => hex !== this.start[slot]).length
   }
 
   private slotAt(row: number, col: number): number {
@@ -679,15 +684,8 @@ export class PaletteEditor {
 
   press(key: string): void {
     this.notice = undefined
-    if (key === 'ctrl-c') {
-      this.result = 'cancelled'
-      return
-    }
     if (this.quitting) {
-      this.quitting = false
-      if (key === 'y' || key === 'Y') {
-        this.result = 'cancelled'
-      }
+      this.quitKey(key)
       return
     }
     if (this.typing !== undefined) {
@@ -864,8 +862,25 @@ export class PaletteEditor {
   private leave(): void {
     if (this.dirty()) {
       this.quitting = true
+      this.quitFocus = 'yes'
     } else {
       this.result = 'cancelled'
+    }
+  }
+
+  private quitKey(key: string): void {
+    if (key === 'esc') {
+      this.quitting = false
+    } else if (['left', 'right', 'h', 'l', 'tab', 'shift-tab'].includes(key)) {
+      this.quitFocus = this.quitFocus === 'yes' ? 'no' : 'yes'
+    } else if (key === 'y' || key === 'Y' || key === 'n' || key === 'N' || key === 'enter') {
+      const yes = key === 'enter' ? this.quitFocus === 'yes' : key === 'y' || key === 'Y'
+      this.quitting = false
+      if (yes) {
+        this.save()
+      } else {
+        this.result = 'cancelled'
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-import { fit, spread } from './ansi.ts'
+import { cells, fit, spread } from './ansi.ts'
 import type { Spot } from './builder-layout.ts'
 import { type Hex, luminance, type Oklch } from './color.ts'
 import { inGamut, srgb } from './fix.ts'
@@ -16,9 +16,9 @@ import {
   slotLabel,
 } from './palette-editor.ts'
 import type { Colors } from './seeds.ts'
-import { boxEdge, boxed, checkOf } from './tui/parts.ts'
+import { boxEdge, boxed, boxTitle, buttonOf, checkOf, hintOf } from './tui/parts.ts'
 import { FG_RESET, INK_RESET, MARKS, open, type Paint } from './tui/style.ts'
-import { type KeySpot, zone } from './tui/zones.ts'
+import { type KeySpot, keyZone, zone } from './tui/zones.ts'
 
 export const LEFT = 50
 
@@ -103,11 +103,12 @@ export function lchShort(at: Oklch): string {
 function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): string[] {
   const rows = gateRows(e.list, e.signature, e.waive).sort((a, b) => Number(a.ok !== false) - Number(b.ok !== false))
   const failing = rows.filter((r) => r.ok === false).length
+  const checked = (ok: boolean | undefined) => (failing === 0 && ok ? p.ok(MARKS.ok) : checkOf(p, ok))
   const head = `  ${p.dim('Gate')}  ${failing === 0 ? p.dim('passes') : p.bold(`${failing} ${failing === 1 ? 'miss' : 'misses'}`)}`
   const width = wide - 4
   const lines = rows.flatMap((r) => {
     const tail = `${r.value} ${r.bound}`
-    const row = `  ${checkOf(p, r.ok)} ${spread(r.ok === false ? r.label : p.dim(r.label), p.dim(tail), width - 2)}`
+    const row = `  ${checked(r.ok)} ${spread(r.ok === false ? r.label : p.dim(r.label), p.dim(tail), width - 2)}`
     const names = [...new Set(r.slots)].map((slot) => slotLabel(slot).name)
     const first = r.slots[0]
     const to = (line: string) => (first === undefined ? line : spot({ kind: 'slot', slot: first }, line))
@@ -197,10 +198,34 @@ export function gateBox(p: Paint, e: PaletteEditor, room: number, width: number)
   const failing = gateMisses(e)
   const title = failing === 0 ? ' Gate ✓ passes ' : ` Gate ✗ ${failing} · n next `
   return [
-    p.dim(boxEdge(width, 'top', [[2, title]])),
+    boxTitle(width, title, p.dim, failing === 0 ? p.ok : p.dim),
     ...gateLines(p, e, room - 1, width - 1)
       .slice(1)
       .map((line) => boxed(p, line, width)),
+    p.dim(boxEdge(width, 'bottom')),
+  ]
+}
+
+export function quitDialog(p: Paint, e: PaletteEditor, cols: number): string[] {
+  const width = Math.min(46, cols - 4)
+  const edits = e.unsaved()
+  const parts = [
+    ...(edits > 0 ? [`${edits} ${edits === 1 ? 'color' : 'colors'} changed`] : []),
+    ...(e.added > 0 ? [`${e.added} ${e.added === 1 ? 'picture' : 'pictures'} added`] : []),
+  ]
+  const yes = keyZone('y', buttonOf(p, 'Yes', e.quitFocus === 'yes' ? 'focus' : 'idle'))
+  const no = keyZone('n', buttonOf(p, 'No', e.quitFocus === 'no' ? 'focus' : 'idle', true))
+  const buttons = `${yes}  ${no}`
+  const hints = [hintOf(p, 'y', 'save'), hintOf(p, 'n', 'discard'), hintOf(p, 'esc', 'keep editing')].join('   ')
+  const row = (content: string) => boxed(p, content, width)
+  return [
+    boxTitle(width, ' Save changes? ', p.dim, p.bold),
+    row(''),
+    row(`  ${parts.length > 0 ? parts.join(' · ') : 'Unsaved changes'}`),
+    row(''),
+    row(`${' '.repeat(Math.max(0, Math.floor((width - 2 - cells(buttons)) / 2)))}${buttons}`),
+    row(''),
+    row(`  ${hints}`),
     p.dim(boxEdge(width, 'bottom')),
   ]
 }

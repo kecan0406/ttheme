@@ -15,6 +15,7 @@ import {
   LEFT,
   lchTight,
   position,
+  quitDialog,
   roleSgr,
   spot,
   used,
@@ -46,7 +47,7 @@ import { boxEdge, boxed, checkOf, pillOf } from './tui/parts.ts'
 import { Screen } from './tui/screen.ts'
 import { FG_RESET, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './tui/style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
-import { type Hit, keyZone } from './tui/zones.ts'
+import { cover, type Hit, keyZone } from './tui/zones.ts'
 
 const MIN_COLS = 80
 const MIN_ROWS = 24
@@ -443,7 +444,10 @@ const KEYS: [string, string][] = [
     'p finds one on the boorus, tried on in these colors · b shows or hides it behind the editor · drop a picture on the window, or paste one, its path or its link · ctrl+v takes the clipboard’s',
   ],
   ['Compare', 'space shows the colors you started from, on the terminal too'],
-  ['Save', 's saves · esc cancels, asking first when something changed'],
+  [
+    'Save',
+    's saves · esc asks first when something changed: y saves and leaves, n leaves without saving, esc keeps editing',
+  ],
 ]
 
 function keysPane(p: Paint, e: PaletteEditor, width: number): string[] {
@@ -489,12 +493,14 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   let right = ''
   if (e.quitting) {
     badge = 'EDIT (QUIT)'
-    lead =
-      e.added > 0 ? `Discard changes and ${e.added} ${e.added === 1 ? 'picture' : 'pictures'}?` : 'Discard changes?'
+    lead = 'Save changes?'
     keys = [
-      ['y', 'discard'],
-      ['n', 'keep editing'],
+      ['←→', 'choose'],
+      ['enter', 'confirm'],
+      ['y', 'save'],
+      ['n', 'discard'],
     ]
+    right = 'esc keep editing'
   } else if (e.typing !== undefined) {
     badge = 'EDIT (TYPE)'
     lead = p.dim('#rrggbb, rgb(r g b) or oklch(l c h)')
@@ -565,7 +571,6 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['↑↓', 'slot'],
       ['←→', 'normal or bright'],
       ['enter', 'tune'],
-      ['i', 'inspect'],
       ['l', 'link'],
       ['m', 'changed'],
       ['g', e.view === 'slot' ? 'relations' : 'slot'],
@@ -575,7 +580,6 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['p', 'picture'],
       ['b', 'picture layer'],
       ['x', 'export'],
-      ['u', 'undo'],
       ['s', 'save'],
       ['?', 'keys'],
     ]
@@ -623,6 +627,27 @@ export function drawEditor(
   color: boolean,
   look: Look = {},
 ): { lines: string[]; art: Art | undefined } {
+  const drawn = drawFrame(e, cols, rows, color, look)
+  if (!e.quitting || cols < MIN_COLS || rows < MIN_ROWS) {
+    return drawn
+  }
+  const dialog = quitDialog(painter(color), e, cols)
+  const col = Math.floor((cols - cells(dialog[0] as string)) / 2)
+  const top = Math.max(0, Math.floor((drawn.lines.length - dialog.length) / 2))
+  const lines = drawn.lines.map((line, i) => {
+    const part = dialog[i - top]
+    return part === undefined ? line : cover(line, col, part)
+  })
+  return { ...drawn, lines }
+}
+
+function drawFrame(
+  e: PaletteEditor,
+  cols: number,
+  rows: number,
+  color: boolean,
+  look: Look,
+): { lines: string[]; art: Art | undefined } {
   const p = painter(color)
   if (cols < MIN_COLS || rows < MIN_ROWS) {
     const small = [
@@ -643,7 +668,7 @@ export function drawEditor(
   const gate = failing === 0 ? '✓ Passes the gate' : `✗ ${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
   const shelf = e.pictures > 0 ? p.dim(`▣ ${e.pictures} ${e.pictures === 1 ? 'picture' : 'pictures'}   `) : ''
   const reset = e.resettable() ? `${keyZone('R', p.dim('Reset'))}   ` : ''
-  const state = `${e.dirty() ? `${p.warn(MARKS.on)} unsaved   ` : ''}${reset}${shelf}${p.dim(gate)}`
+  const state = `${e.dirty() ? `${p.warn(MARKS.on)} unsaved   ` : ''}${reset}${shelf}${failing === 0 ? p.ok(gate) : p.dim(gate)}`
   const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
   const height = rows - 4
   let body: string[]

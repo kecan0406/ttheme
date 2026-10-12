@@ -361,8 +361,9 @@ The settings panel preview opens over its list and the questions browse asks
 take the keys they list on their own last line while they are open. `find`
 is a screen of its own and keeps its own keys, and so does the palette editor
 (`new`, `edit`, and the Edit palette button of preview's panel), whose keys
-`?` lists and docs/usage.md describes; its esc asks before it throws changes
-away.
+`?` lists and docs/usage.md describes; its esc, once something changed, opens a
+Save changes? dialog (`y` saves and leaves, `n` leaves without saving, esc keeps
+editing, and ctrl+c does nothing there).
 
 Preview's panel (`tab`, `→` or `ctrl+e` on a palette) has no filter, so it uses
 letters too. It is one list — the picture's fields, an Edit palette button, then
