@@ -22,6 +22,7 @@ import { isRemote, OFFICIAL, parseSource, sameMarketplace, shownSource, TOPIC } 
 import { marketplaceOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Mouse } from './tui/keys.ts'
+import { Glide } from './tui/motion.ts'
 import { boxEdge, buttonOf, hintOf, pillOf, tabOf } from './tui/parts.ts'
 import { Screen } from './tui/screen.ts'
 import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter, SPINNER } from './tui/style.ts'
@@ -284,12 +285,26 @@ export class BrowsePanel {
     const modes = [...(this.owns ? [ALT_SCREEN, HIDE_CURSOR, NO_WRAP] : []), PASTES, ...pointing()]
     const assume = this.owns ? [] : [HIDE_CURSOR, NO_WRAP]
     return within({ input: this.input, output: this.output, modes, assume }, async (terminal) => {
+      const lists = [this.list, this.inside, this.results]
+      for (const list of lists) {
+        list.glide = true
+      }
+      const glide = new Glide(
+        () => lists.map((list) => list.step()).includes(true),
+        () => this.screen?.request(),
+      )
       const screen = new Screen({
         write: (text) => terminal.write(text),
-        view: () =>
-          this.state === 'active'
-            ? { lines: this.view(), ticking: this.phase === 'applying' || this.fetching() }
-            : undefined,
+        view: () => {
+          if (this.state !== 'active') {
+            return undefined
+          }
+          const lines = this.view()
+          if (lists.some((list) => list.moving())) {
+            glide.start()
+          }
+          return { lines, ticking: this.phase === 'applying' || this.fetching() }
+        },
         beat: () => {
           this.beat += 1
         },
@@ -315,6 +330,7 @@ export class BrowsePanel {
           () => screen.soon(),
         )
       } finally {
+        glide.stop()
         screen.stop()
         this.screen = undefined
         this.hint.stop()

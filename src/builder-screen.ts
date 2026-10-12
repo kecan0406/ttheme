@@ -111,7 +111,23 @@ function crop(row: Cellrow, from: number, to: number): Cellrow {
 }
 
 function overlay(row: Cellrow, col: number, over: Cellrow): Cellrow {
-  return [...crop(row, 0, col), ...over, ...crop(row, col + widthOf(over), widthOf(row))]
+  const end = col + widthOf(over)
+  const left: Cellrow = []
+  const right: Cellrow = []
+  let at = 0
+  for (const piece of row) {
+    const from = at
+    at += cells(piece.text)
+    const stop = Math.min(col, at)
+    if (stop > from) {
+      left.push({ ...piece, text: sliceText(piece.text, 0, stop - from) })
+    }
+    const start = Math.max(end, from)
+    if (at > start) {
+      right.push({ ...piece, text: sliceText(piece.text, start - from, at - from) })
+    }
+  }
+  return [...left, ...over, ...right]
 }
 
 function drawn(row: Cellrow, color: boolean): string {

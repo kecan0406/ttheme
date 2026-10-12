@@ -44,6 +44,8 @@ picture-renamed	fail	fail	fail	fail	fail	fail	pass	fail
 picture-gone	fail	fail	fail	fail	fail	fail	pass	fail
 sync-output	pass	pass	pass	pass	pass	pass	skip	skip
 sync-query	pass	pass	fail	pass	pass	pass	pass	pass
+keyboard-query	pass	pass	?	pass	?	?	?	?
+keyboard-stack	pass	pass	?	pass	?	?	?	?
 focus-report	pass	pass	pass	pass	pass	fail	skip	skip
 focus-event	skip	skip	skip	skip	skip	skip	pass	pass
 front-tty	pass	fail	fail	fail	fail	fail	fail	fail

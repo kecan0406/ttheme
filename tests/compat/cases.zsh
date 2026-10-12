@@ -74,6 +74,24 @@ __cc_decrqm() {
   esac
 }
 
+__cc_keyboard() {
+  if ! __cc_ask $'\e[?u' || [[ $REPLY != *$'\e[?'<->'u'* ]]; then
+    __cc_report keyboard-query fail "no CSI ? u answer"
+    __cc_report keyboard-stack skip "no kitty keyboard protocol to push onto"
+    return
+  fi
+  __cc_report keyboard-query pass "CSI ? u = ${${REPLY##*\[\?}%%u*}"
+  local pushed="" popped=""
+  __cc_ask $'\e[>5u\e[?u' && pushed=$REPLY
+  __cc_ask $'\e[<u\e[?u' && popped=$REPLY
+  printf '\e[<u'
+  if [[ $pushed == *$'\e[?5u'* && $popped == *$'\e[?0u'* ]]; then
+    __cc_report keyboard-stack pass "push 5 read back 5, pop read back 0"
+  else
+    __cc_report keyboard-stack fail "push read ${(V)pushed:-nothing}, pop read ${(V)popped:-nothing}"
+  fi
+}
+
 __cc_focus() {
   local c fd saved buf="" moved=""
   local -i i
@@ -616,6 +634,8 @@ __cc_cases() {
     __cc_drain
     __cc_report sync-query fail "a DSR went unanswered until the synchronized update ended"
   fi
+
+  __cc_keyboard
 
   __cc_decrqm focus-report 1004
   __cc_focus

@@ -181,3 +181,46 @@ test('a burst of wheel events one notch sends is one step, and legacy bytes past
   )
   keys.stop()
 })
+
+test('a kitty keyboard reply and its CSI u keys read as the names the legacy bytes gave, and the rest is left out', () => {
+  assert.deepEqual(decode('\x1b[?0u\x1b[?5u').events, [
+    { kind: 'keyboard', flags: 0 },
+    { kind: 'keyboard', flags: 5 },
+  ])
+  assert.deepEqual(keysOf('\x1b[27u\x1b[99;5u\x1b[118;3u\x1b[127;3u\x1b[9;2u\x1b[32;5u\x1b[13;2u\x1b[97;2u'), [
+    'esc',
+    'ctrl-c',
+    'alt-v',
+    'alt-backspace',
+    'shift-tab',
+    'ctrl-space',
+    'shift-enter',
+    'A',
+  ])
+  assert.deepEqual(keysOf('\x1b[12593::114;5u\x1b[114;69u\x1b[97;6u\x1b[92;5u'), [
+    'ctrl-r',
+    'ctrl-r',
+    'ctrl-shift-a',
+    'ctrl-\\',
+  ])
+  assert.deepEqual(keysOf('\x1b[114;9u\x1b[57399u\x1b[>5u'), [])
+  assert.deepEqual(decode('\x1b[27'), { events: [], rest: '\x1b[27' })
+})
+
+test('every key a CSI u report names reads as the legacy bytes of the same key did', () => {
+  for (let code = 1; code < 27; code++) {
+    const letter = code + 96
+    assert.deepEqual(
+      keysOf(`\x1b[${letter};5u`),
+      keysOf(String.fromCharCode(code)),
+      `ctrl+${String.fromCharCode(letter)}`,
+    )
+  }
+  assert.deepEqual(keysOf('\x1b[91;5u'), keysOf('\x1b'))
+  assert.deepEqual(keysOf('\x1b[32;5u'), keysOf('\x00'))
+  for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
+    assert.deepEqual(keysOf(`\x1b[${letter.charCodeAt(0)};3u`), keysOf(`\x1b${letter}`), `alt+${letter}`)
+  }
+  assert.deepEqual(keysOf('\x1b[127;3u'), keysOf('\x1b\x7f'))
+  assert.deepEqual(keysOf('\x1b[9;2u'), keysOf('\x1b[Z'))
+})

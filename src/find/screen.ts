@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs'
-import columns from 'fast-string-width'
-import { linked } from '../ansi.ts'
+import { cells as columns, linked } from '../ansi.ts'
 import type { Profile } from '../artists.ts'
 import type { Coloring, Framing } from '../backdrop.ts'
 import { BLOCKS, type Block, KEY_SPAN, type Kind, type Narrow, type Rating, SITES } from '../booru.ts'

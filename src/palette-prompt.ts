@@ -5,6 +5,7 @@ import { OFFICIAL } from './sources.ts'
 import { marketplaceOf, slugOf, topOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Inbound } from './tui/keys.ts'
+import { chase } from './tui/motion.ts'
 import { Inline } from './tui/screen.ts'
 import { ansiBar, ansiFg, ansiSquares, FG_RESET, INK_RESET, MARKS, type Paint, painter } from './tui/style.ts'
 import { HIDE_CURSOR, PASTES, within } from './tui/terminal.ts'
@@ -276,6 +277,7 @@ export class PaletteList<X extends Extra = Extra> {
   readonly scope: PickerScope
   maxItems: number
   focus: PickerFocus = 'lit'
+  glide = false
   named: PaletteEntry[] = []
   catalogs: string[] = []
   private readonly layout: PickerLayout
@@ -300,6 +302,8 @@ export class PaletteList<X extends Extra = Extra> {
   private fixed = 0
   private cursor = 0
   private top = 0
+  private shown = 0
+  private placed = false
   private span = 1
   private filter = ''
   private lastFocused = ''
@@ -350,6 +354,7 @@ export class PaletteList<X extends Extra = Extra> {
   setFilter(filter: string): void {
     if (filter !== this.filter) {
       this.filter = filter
+      this.placed = false
       this.rebuild('keep')
     }
   }
@@ -662,15 +667,32 @@ export class PaletteList<X extends Extra = Extra> {
       this.top -= 1
       tail += height(this.top)
     }
+    if (!this.placed) {
+      this.shown = this.top
+      this.placed = true
+    }
+    const from = this.glide ? Math.max(0, Math.min(this.shown, blocks.length - 1)) : this.top
     const lines: string[] = []
-    let end = this.top
-    while (end < blocks.length && (end === this.top || lines.length + height(end) <= room)) {
+    let end = from
+    while (end < blocks.length && (end === from || lines.length + height(end) <= room)) {
       lines.push(...(blocks[end] ?? []))
       end += 1
     }
-    this.span = Math.max(1, end - this.top)
+    this.span = Math.max(1, end - from)
     lines.push(...(blocks[end] ?? []))
-    return { lines: lines.slice(0, room), above: this.top, below: blocks.length - end }
+    return { lines: lines.slice(0, room), above: from, below: blocks.length - end }
+  }
+
+  moving(): boolean {
+    return this.glide && this.placed && this.shown !== this.top
+  }
+
+  step(): boolean {
+    if (!this.moving()) {
+      return false
+    }
+    this.shown = chase(this.shown, this.top, { span: this.span })
+    return this.shown !== this.top
   }
 
   private renderRow(row: Row<X>, index: number): string[] {

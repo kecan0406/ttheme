@@ -170,12 +170,19 @@ export function brightDrift(theme: Gated): { normal: number; gap: number }[] {
 
 export function lookalikes(theme: Gated): [number, number][] {
   const exempt = exemptSlots(theme)
+  const tones = new Map<number, Oklch | undefined>()
+  const tone = (slot: number) => {
+    if (!tones.has(slot)) {
+      tones.set(slot, chromatic(theme, slot))
+    }
+    return tones.get(slot)
+  }
   return [0, 8].flatMap((base) =>
     ROLES.flatMap((i) =>
       ROLES.filter((j) => j > i).flatMap((j): [number, number][] => {
         const [a, b] = [base + i, base + j]
-        const x = chromatic(theme, a)
-        const y = chromatic(theme, b)
+        const x = tone(a)
+        const y = tone(b)
         if (x === undefined || y === undefined || (exempt.has(a) && exempt.has(b))) return []
         return hueGap(x.h, y.h) < DISTINCT_HUE && Math.abs(x.l - y.l) < DISTINCT_LIGHTNESS ? [[a, b]] : []
       }),

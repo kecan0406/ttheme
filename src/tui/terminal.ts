@@ -1,9 +1,10 @@
 import type { Readable, Writable } from 'node:stream'
-import { type Cell, type Inbound, Keys } from './keys.ts'
+import { type Cell, type Inbound, KEYBOARD_QUERY, Keys } from './keys.ts'
 
 interface Mode {
   on: string
   off: string
+  stacked?: boolean
 }
 
 export const ALT_SCREEN: Mode = { on: '\x1b[?1049h', off: '\x1b[?1049l' }
@@ -13,6 +14,7 @@ export const PASTES: Mode = { on: '\x1b[?2004h', off: '\x1b[?2004l' }
 export const FOCUS: Mode = { on: '\x1b[?1004h', off: '\x1b[?1004l' }
 const MOUSE: Mode = { on: '\x1b[?1000h\x1b[?1002h\x1b[?1006h', off: '\x1b[?1006l\x1b[?1002l\x1b[?1000l' }
 const PIXELS: Mode = { on: '\x1b[?1016h', off: '\x1b[?1016l\x1b[?1006h' }
+const KEYBOARD: Mode = { on: '\x1b[>5u', off: '\x1b[<u', stacked: true }
 
 export function pointing(env: Record<string, string | undefined> = process.env): Mode[] {
   return env.TTHEME_MOUSE === 'off' ? [] : [MOUSE]
@@ -111,6 +113,7 @@ export class Terminal {
   private reject: (error: unknown) => void = ignore
   private open = true
   private aborted = false
+  private enhanced = false
 
   constructor(options: TerminalOptions = {}) {
     this.input = options.input ?? process.stdin
@@ -149,6 +152,9 @@ export class Terminal {
     this.input.resume()
     this.output.on('resize', this.resizing)
     this.output.on('error', ignore)
+    if (this.tty) {
+      this.write(KEYBOARD_QUERY)
+    }
   }
 
   hold(mode: Mode): void {
@@ -254,7 +260,12 @@ export class Terminal {
   reassert(): void {
     if (this.open) {
       this.input.setRawMode?.(true)
-      this.write([...this.assumed, ...this.owned].map((mode) => mode.on).join(''))
+      this.write(
+        [...this.assumed, ...this.owned]
+          .filter((mode) => !mode.stacked)
+          .map((mode) => mode.on)
+          .join(''),
+      )
     }
   }
 
@@ -315,7 +326,12 @@ export class Terminal {
     return mode.on
   }
 
-  private deliver(events: Inbound[]): void {
+  private deliver(heard: Inbound[]): void {
+    const events = heard.filter((event) => event.kind !== 'keyboard')
+    if (events.length < heard.length && this.open && !this.enhanced) {
+      this.enhanced = true
+      this.hold(KEYBOARD)
+    }
     const asking = this.asking
     const passed = asking ? events.filter((event) => !asking.pick(event)) : events
     if (passed.length === 0) {

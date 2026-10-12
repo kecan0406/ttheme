@@ -37,11 +37,13 @@ export type Inbound =
   | { kind: 'color'; code: string; value: string }
   | { kind: 'mode'; mode: number; value: number }
   | { kind: 'attributes' }
+  | { kind: 'keyboard'; flags: number }
   | { kind: 'size'; of: 'cell' | 'window' | 'grid'; h: number; w: number }
   | Mouse
 
 export const CELL_QUERY = '\x1b]1337;ReportCellSize\x07\x1b[16t\x1b[14t\x1b[18t'
 export const PIXEL_QUERY = '\x1b[?1016$p\x1b[16t'
+export const KEYBOARD_QUERY = '\x1b[?u'
 
 const CSI_KEYS: Record<string, string> = {
   A: 'up',
@@ -73,6 +75,11 @@ const NAMED: Record<string, string> = {
   '\x1b': 'esc',
   '\x00': 'ctrl-space',
 }
+
+const CODED: Record<number, string> = { 27: 'esc', 13: 'enter', 9: 'tab', 127: 'backspace', 32: 'space' }
+const CTRL_ALIASES: Record<string, string> = { '[': 'esc', h: 'backspace', i: 'tab', j: 'enter', m: 'enter' }
+const NOT_TEXT = 8 | 16 | 32
+const FUNCTIONAL = 57344
 
 const CSI = /\[([0-?]*)([ -/]*)([@-~])/y
 const CSI_OPEN = /^\[[0-?]*[ -/]*$/
@@ -167,6 +174,45 @@ function pixelled(code: number, x: number, y: number, released: boolean, cell: C
   return mouse && { ...mouse, fx: across - col, fy: down - row }
 }
 
+function glyph(code: number, shifted: number, base: number, shift: boolean, chord: boolean): string | undefined {
+  if (code < 32 || (code >= 127 && code < 160) || code >= FUNCTIONAL) {
+    return undefined
+  }
+  if (chord) {
+    return code > 127 && base >= 33 && base < 127 ? String.fromCharCode(base) : String.fromCodePoint(code)
+  }
+  const plain = String.fromCodePoint(code)
+  return shift ? (Number.isInteger(shifted) ? String.fromCodePoint(shifted) : plain.toUpperCase()) : plain
+}
+
+function coded(params: string): Inbound[] {
+  const [keys = '', mods = ''] = params.split(';')
+  const [code = Number.NaN, shifted = Number.NaN, base = Number.NaN] = keys
+    .split(':')
+    .map((part) => (part === '' ? Number.NaN : Number(part)))
+  const bits = (mods === '' ? 1 : Number(mods.split(':')[0])) - 1
+  if (!Number.isInteger(code) || !Number.isInteger(bits) || bits < 0 || bits & NOT_TEXT) {
+    return []
+  }
+  const shift = (bits & 1) !== 0
+  const alt = (bits & 2) !== 0
+  const ctrl = (bits & 4) !== 0
+  const chord = ctrl || alt
+  const named = CODED[code]
+  const label = named ?? glyph(code, shifted, base, shift, chord)
+  if (label === undefined) {
+    return []
+  }
+  const alias = ctrl && !alt && !shift ? CTRL_ALIASES[label] : undefined
+  if (alias !== undefined) {
+    return [key(alias)]
+  }
+  if (!chord && !(shift && named !== undefined)) {
+    return [key(named === 'space' ? ' ' : label)]
+  }
+  return [key([ctrl && 'ctrl', alt && 'alt', shift && 'shift', label].filter(Boolean).join('-'))]
+}
+
 function report(params: string, between: string, final: string, cell: Cell | undefined): Inbound[] {
   if ((final === 'M' || final === 'm') && between === '' && params.startsWith('<')) {
     const [code = -1, x = 0, y = 0] = params.slice(1).split(';').map(Number)
@@ -184,6 +230,14 @@ function report(params: string, between: string, final: string, cell: Cell | und
   }
   if (final === 'c' && params.startsWith('?')) {
     return [{ kind: 'attributes' }]
+  }
+  if (final === 'u' && between === '') {
+    if (params.startsWith('?')) {
+      return [{ kind: 'keyboard', flags: Number(params.slice(1)) || 0 }]
+    }
+    if (/^[\d:;]*$/.test(params)) {
+      return coded(params)
+    }
   }
   const name = between === '' ? CSI_KEYS[`${params}${final}`] : undefined
   return name ? [key(name)] : []

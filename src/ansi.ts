@@ -1,7 +1,28 @@
-import cells from 'fast-string-width'
+import measure from 'fast-string-width'
 import { closing } from './tui/style.ts'
 
-export { cells }
+const PRINTABLE = /^[\x20-\x7e]*$/
+const WIDTHS = new Map<string, number>()
+const WIDTHS_MOST = 8192
+const WIDTH_LONGEST = 512
+
+export function cells(text: string): number {
+  if (PRINTABLE.test(text)) {
+    return text.length
+  }
+  if (text.length > WIDTH_LONGEST) {
+    return measure(text)
+  }
+  let width = WIDTHS.get(text)
+  if (width === undefined) {
+    if (WIDTHS.size >= WIDTHS_MOST) {
+      WIDTHS.clear()
+    }
+    width = measure(text)
+    WIDTHS.set(text, width)
+  }
+  return width
+}
 
 export function linked(text: string, url: string | undefined): string {
   return url && !/\p{Cc}/u.test(url) ? `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\` : text

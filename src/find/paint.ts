@@ -1,6 +1,6 @@
 import { rmSync } from 'node:fs'
 import { join } from 'node:path'
-import cells from 'fast-string-width'
+import { cells } from '../ansi.ts'
 import { type Hex, rgb } from '../color.ts'
 import type { Renderer } from '../render.ts'
 import {
@@ -13,6 +13,7 @@ import {
   wipesPlacements,
 } from '../terminal.ts'
 import type { Mouse } from '../tui/keys.ts'
+import { chase, GLIDE } from '../tui/motion.ts'
 import { type Frame, Screen } from '../tui/screen.ts'
 import type { Hit } from '../tui/zones.ts'
 import {
@@ -32,8 +33,6 @@ const COVER_ID = 2 ** 31 - 3
 const ANCHOR_ID = 2 ** 31 - 2
 const COVER_Z = -1073741827
 const ANCHOR_Z = -1073741828
-const GLIDE = 16
-const GLIDE_SHARE = 0.4
 const BAND_ID = 3 * 2 ** 30
 const BANDS_HELD = 256
 
@@ -200,7 +199,7 @@ export class Paint {
     const step = (): void => {
       const view = this.view
       const target = view.top * TILE.height
-      let d = target - view.scroll
+      const d = target - view.scroll
       if (d === 0 || view.mode !== 'grid') {
         view.scroll = target
         const settled = this.gliding !== undefined
@@ -210,11 +209,7 @@ export class Paint {
         }
         return
       }
-      if (Math.abs(d) > 2 * span) {
-        view.scroll = target - Math.sign(d) * span
-        d = target - view.scroll
-      }
-      view.scroll += Math.sign(d) * Math.max(1, Math.round(Math.abs(d) * GLIDE_SHARE))
+      view.scroll = chase(view.scroll, target, { span })
       this.draw()
       this.gliding = setTimeout(step, GLIDE)
     }
