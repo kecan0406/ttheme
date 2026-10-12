@@ -2,6 +2,7 @@ import { GatePanel, InstallPanes, PaletteFacts, ScenePanes, SlotsPanel, Workspac
 import { palettePath } from '@/lib/gallery'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
+import { paletteMeta } from '@/lib/titles'
 import { wearStyle } from '@/lib/wear'
 import { nameAt, neighbors, type WorkspaceData } from '@/lib/workspace'
 import { announce, fill, readJson, tally } from './dom'
@@ -191,7 +192,7 @@ class MarketplaceWorkspace extends HTMLElement {
       this.#show(group, true)
     }
     this.#reveal()
-    document.title = `ttheme — ${theme.name}`
+    document.title = paletteMeta(theme).title
     if (push) history.pushState(null, '', palettePath(theme))
     announce(theme.name)
   }

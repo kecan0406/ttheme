@@ -1,6 +1,7 @@
 import { Menu } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
+import { OFFICIAL_URL } from '@/lib/gallery'
 import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { PalettePicker } from './palette-picker'
@@ -65,7 +66,7 @@ export function SiteHeader({ current, fixed = false }: { current: string; fixed?
           <LinkButton
             variant="ghost"
             size="sm"
-            href="https://github.com/kecan0406/ttheme"
+            href={OFFICIAL_URL}
             target="_blank"
             rel="noopener"
             class="justify-start"

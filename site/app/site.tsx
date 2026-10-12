@@ -6,17 +6,20 @@ import { Missing } from '@/components/missing'
 import { SharePage } from '@/components/share-page'
 import { Sheets } from '@/components/sheets'
 import { MarketplaceWorkspace } from '@/components/workspace'
-import { cardPng, touchIconPng } from '@/lib/card'
+import { type Card, cardAlt, cardPng } from '@/lib/card'
 import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
 import type { Facts } from '@/lib/facts'
-import { marketplacePath, OFFICIAL, OFFICIAL_ABOUT, palettePath } from '@/lib/gallery'
+import { marketplacePath, OFFICIAL, palettePath } from '@/lib/gallery'
 import { marketplaces } from '@/lib/marketplaces'
 import { fallback, gate, themes } from '@/lib/official'
+import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
 import { builderOf, readShared, type Shared } from '@/lib/share'
 import { sheetNumber, sheetVars } from '@/lib/sheet'
 import { sheetScript } from '@/lib/sheet-script'
+import { faviconIco, touchIconPng } from '@/lib/tab-icon'
 import type { Marketplace, Theme } from '@/lib/themes'
+import { marketplaceMeta, marketplacesMeta, paletteMeta, sharedMeta, sheetsMeta, siteMeta } from '@/lib/titles'
 import { leadOf } from '@/lib/workspace'
 import pkg from '../../package.json' with { type: 'json' }
 import { page } from './document'
@@ -29,20 +32,30 @@ const CREDITS = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60480
 
 const STORE = 'One ttheme marketplace: its repository, its palettes and how they measure against the contrast gate'
 
+const SITE_CARD: Card = { kind: 'site', theme: fallback, palettes: facts.palettes, catalogs: facts.catalogs }
+
+const CARD = { image: '/card.png', imageAlt: cardAlt(SITE_CARD) }
+
 function cardOf(theme: Theme): { image: string; imageAlt: string } {
-  return { image: `${palettePath(theme)}/card.png`, imageAlt: `${theme.name}'s signature and sixteen ANSI colors` }
+  return { image: `${palettePath(theme)}/card.png`, imageAlt: cardAlt({ kind: 'palette', theme }) }
 }
 
-const CARD = { image: '/card.png', imageAlt: `${fallback.name}'s signature and sixteen ANSI colors` }
+function marketplaceCard(marketplace: Marketplace | null, palettes: Theme[]): Card {
+  return { kind: 'marketplace', marketplace, palettes }
+}
 
-function png(bytes: Buffer): Response {
+function image(bytes: Buffer, type: string): Response {
   return new Response(bytes, {
-    headers: { 'content-type': 'image/png', 'content-length': String(bytes.length), 'cache-control': CATALOG },
+    headers: { 'content-type': type, 'content-length': String(bytes.length), 'cache-control': CATALOG },
   })
 }
 
-function about(theme: Theme): string {
-  return `${theme.name}${theme.catalog ? ` from ${theme.catalog}` : ''}, a ttheme palette — see it in a terminal, copy its colors and install it with one command`
+function png(bytes: Buffer): Response {
+  return image(bytes, 'image/png')
+}
+
+function text(body: string, type: string): Response {
+  return new Response(body, { headers: { 'content-type': `${type}; charset=utf-8`, 'cache-control': CATALOG } })
 }
 
 export const PRERENDERED: string[] = [
@@ -56,17 +69,36 @@ export const PRERENDERED: string[] = [
 
 function workspace(marketplace: Marketplace | null, palettes: Theme[], theme: Theme | null): Response {
   const shown = theme ?? leadOf(catalogsOf(palettes)[0]?.themes ?? palettes)
+  const id = marketplace?.id ?? OFFICIAL
+  const trail = [
+    { name: 'ttheme', path: '/' },
+    { name: 'marketplace', path: '/marketplace' },
+    { name: id, path: marketplacePath(marketplace?.id ?? null) },
+  ]
   const head = theme
-    ? { title: `ttheme — ${theme.name}`, description: about(theme), path: palettePath(theme), ...cardOf(theme) }
+    ? {
+        ...paletteMeta(theme),
+        path: palettePath(theme),
+        ...cardOf(theme),
+        ld: [crumbs([...trail, { name: theme.name, path: palettePath(theme) }])],
+      }
     : {
-        title: `ttheme — ${marketplace?.id ?? OFFICIAL}`,
-        description: marketplace ? STORE : OFFICIAL_ABOUT,
+        ...marketplaceMeta(marketplace, palettes.length, catalogsOf(palettes).length),
         path: marketplacePath(marketplace?.id ?? null),
-        ...CARD,
+        image: `${marketplacePath(marketplace?.id ?? null)}/card.png`,
+        imageAlt: cardAlt(marketplaceCard(marketplace, palettes)),
+        ld: [crumbs(trail)],
       }
   return page(
     { ...head, cache: CATALOG },
-    <MarketplaceWorkspace marketplace={marketplace} palettes={palettes} theme={shown} gate={gate} facts={facts} />,
+    <MarketplaceWorkspace
+      marketplace={marketplace}
+      palettes={palettes}
+      theme={shown}
+      gate={gate}
+      facts={facts}
+      heading={theme ? undefined : `${id} marketplace`}
+    />,
   )
 }
 
@@ -96,11 +128,10 @@ export const site = new Elysia({ name: 'site' })
   .get('/', () =>
     page(
       {
-        title: 'ttheme — wear your favorite character',
-        description:
-          'Character color palettes for Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp, Konsole and Terminal.app',
+        ...siteMeta(facts.palettes),
         path: '/',
         ...CARD,
+        ld: [siteGraph(facts)],
         cache: CATALOG,
       },
       <Home themes={themes} facts={facts} />,
@@ -109,8 +140,7 @@ export const site = new Elysia({ name: 'site' })
   .get('/sheets', () =>
     page(
       {
-        title: 'ttheme — sheets',
-        description: 'Browse every ttheme palette in a terminal, with its slots and contrast readings',
+        ...sheetsMeta(facts.palettes),
         path: '/sheets',
         ...CARD,
         cache: CATALOG,
@@ -123,10 +153,15 @@ export const site = new Elysia({ name: 'site' })
   .get('/marketplace', () =>
     page(
       {
-        title: 'ttheme — marketplace',
-        description: 'Every ttheme palette: the official catalogs and the marketplaces anyone publishes from GitHub',
+        ...marketplacesMeta(facts.palettes),
         path: '/marketplace',
         ...CARD,
+        ld: [
+          crumbs([
+            { name: 'ttheme', path: '/' },
+            { name: 'marketplace', path: '/marketplace' },
+          ]),
+        ],
         cache: CATALOG,
       },
       <MarketplacePage themes={themes} marketplaces={marketplaces} facts={facts} />,
@@ -148,14 +183,23 @@ export const site = new Elysia({ name: 'site' })
     const theme = marketplace.palettes.find((entry) => entry.name === params.name)
     return theme ? workspace(marketplace, marketplace.palettes, theme) : noPalette(marketplace.id, params.name)
   })
-  .get('/marketplace/:id/:name/card.png', ({ params }) => {
+  .get('/marketplace/:id/card.png', async ({ params }) => {
+    const marketplace = marketplaces.find((entry) => entry.id === params.id)
+    if (params.id !== OFFICIAL && !marketplace)
+      return new Response('no such marketplace', { status: 404, headers: { 'cache-control': RETRY } })
+    return png(await cardPng(marketplaceCard(marketplace ?? null, marketplace?.palettes ?? themes)))
+  })
+  .get('/marketplace/:id/:name/card.png', async ({ params }) => {
     const palettes = params.id === OFFICIAL ? themes : marketplaces.find((entry) => entry.id === params.id)?.palettes
     const theme = palettes?.find((entry) => entry.name === params.name)
     if (!theme) return new Response('no such palette', { status: 404, headers: { 'cache-control': RETRY } })
-    return png(cardPng(theme))
+    return png(await cardPng({ kind: 'palette', theme }))
   })
-  .get('/card.png', () => png(cardPng(fallback)))
+  .get('/card.png', async () => png(await cardPng(SITE_CARD)))
   .get('/apple-touch-icon.png', () => png(touchIconPng(fallback)))
+  .get('/favicon.ico', () => image(faviconIco(fallback), 'image/x-icon'))
+  .get('/robots.txt', () => text(ROBOTS, 'text/plain'))
+  .get('/sitemap.xml', () => text(sitemapXml(PRERENDERED), 'application/xml'))
   .get(
     '/palettes.json',
     () =>
@@ -181,20 +225,20 @@ export const site = new Elysia({ name: 'site' })
       )
     return page(
       {
-        title: `ttheme — ${found.theme.name}`,
-        description: `${found.theme.name}, a ttheme palette someone shared — see it in a terminal and install it with one command`,
+        ...sharedMeta(found.theme),
         path: new URL(request.url).pathname,
         image: `${new URL(request.url).pathname}/card.png`,
-        imageAlt: `${found.theme.name}'s signature and sixteen ANSI colors`,
+        imageAlt: cardAlt({ kind: 'share', theme: found.theme }),
+        robots: 'noindex',
         cache: CATALOG,
       },
       <SharePage shared={found} builder={builderOf(found, gate)} />,
     )
   })
-  .get('/p/:code/card.png', ({ params }) => {
+  .get('/p/:code/card.png', async ({ params }) => {
     const found = shared(params.code)
     if (found instanceof Error) return new Response(found.message, { status: 404, headers: { 'cache-control': RETRY } })
-    return png(cardPng(found.theme))
+    return png(await cardPng({ kind: 'share', theme: found.theme }))
   })
   .get('/p/:code/credits.json', async ({ params }) => {
     const found = shared(params.code)

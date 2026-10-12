@@ -1,11 +1,9 @@
 import { type SimpleIcon, siGithub, siNpm } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
 import type { Facts } from '@/lib/facts'
-import { OFFICIAL_REPO } from '@/lib/gallery'
+import { NPM_URL, OFFICIAL_URL } from '@/lib/gallery'
 import { BrandIcon, NewTab } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-
-const REPO = `https://github.com/${OFFICIAL_REPO}`
 
 const COLUMNS: { title: string; links: { label: string; href: string; brand?: SimpleIcon }[] }[] = [
   {
@@ -19,17 +17,17 @@ const COLUMNS: { title: string; links: { label: string; href: string; brand?: Si
   {
     title: 'your own',
     links: [
-      { label: 'make a palette', href: `${REPO}#your-own-palettes` },
-      { label: 'publish a marketplace', href: `${REPO}#marketplaces` },
+      { label: 'make a palette', href: `${OFFICIAL_URL}#your-own-palettes` },
+      { label: 'publish a marketplace', href: `${OFFICIAL_URL}#marketplaces` },
       { label: 'marketplaces on GitHub', href: 'https://github.com/topics/ttheme-marketplace', brand: siGithub },
     ],
   },
   {
     title: 'project',
     links: [
-      { label: 'github', href: REPO, brand: siGithub },
-      { label: 'npm', href: 'https://www.npmjs.com/package/@kecan0406/ttheme', brand: siNpm },
-      { label: 'report a bug', href: `${REPO}/issues/new/choose` },
+      { label: 'github', href: OFFICIAL_URL, brand: siGithub },
+      { label: 'npm', href: NPM_URL, brand: siNpm },
+      { label: 'report a bug', href: `${OFFICIAL_URL}/issues/new/choose` },
     ],
   },
 ]

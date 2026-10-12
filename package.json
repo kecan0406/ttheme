@@ -30,7 +30,12 @@
     "iterm2",
     "konsole",
     "warp",
-    "windows-terminal"
+    "windows-terminal",
+    "color-scheme",
+    "terminal-theme",
+    "palette",
+    "anime",
+    "zsh"
   ],
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

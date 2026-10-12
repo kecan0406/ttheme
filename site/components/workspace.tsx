@@ -8,7 +8,7 @@ import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { catalogsOf, nativeLang } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
-import { OFFICIAL, OFFICIAL_REPO, palettePath, searchable } from '@/lib/gallery'
+import { INIT, NPM_URL, OFFICIAL, OFFICIAL_URL, palettePath, searchable } from '@/lib/gallery'
 import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { gatePassed } from '@/lib/sheet'
@@ -16,7 +16,7 @@ import type { GateRule, Marketplace, Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { leadOf, neighbors, type Where, type WorkspaceData } from '@/lib/workspace'
-import { CommandRow, INIT } from './command-row'
+import { CommandRow } from './command-row'
 import { GateList, SwatchGrid } from './palette-parts'
 import { SiteHeader } from './site-header'
 import { TerminalFrame } from './terminal-frame'
@@ -48,12 +48,10 @@ const VIEW_SHOWN: Record<View, string> = {
   colors: 'group-has-[input[value=colors]:checked]/preview:block',
 }
 
-const REPO = `https://github.com/${OFFICIAL_REPO}`
-
 const LINKS: { label: string; href: string; brand?: SimpleIcon }[] = [
-  { label: 'github', href: REPO, brand: siGithub },
-  { label: 'npm', href: 'https://www.npmjs.com/package/@kecan0406/ttheme', brand: siNpm },
-  { label: 'report a bug', href: `${REPO}/issues/new/choose` },
+  { label: 'github', href: OFFICIAL_URL, brand: siGithub },
+  { label: 'npm', href: NPM_URL, brand: siNpm },
+  { label: 'report a bug', href: `${OFFICIAL_URL}/issues/new/choose` },
 ]
 
 const POPOVER =
@@ -85,12 +83,24 @@ function CatalogTile({ theme }: { theme: Theme }) {
   )
 }
 
-export function WorkspaceHead({ theme }: { theme: Theme }) {
+export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: string }) {
+  const name = 'truncate font-display text-display-sm font-black'
   return (
     <>
-      <h1 class="truncate font-display text-display-sm font-black" translate="no" safe>
-        {theme.name}
-      </h1>
+      {heading ? (
+        <>
+          <h1 class="sr-only" safe>
+            {heading}
+          </h1>
+          <h2 class={name} translate="no" safe>
+            {theme.name}
+          </h2>
+        </>
+      ) : (
+        <h1 class={name} translate="no" safe>
+          {theme.name}
+        </h1>
+      )}
       <p class="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted-foreground">
         {theme.catalog ? (
           <span class="text-soft-foreground" safe>
@@ -341,12 +351,14 @@ export function MarketplaceWorkspace({
   theme,
   gate,
   facts,
+  heading,
 }: {
   marketplace: Marketplace | null
   palettes: Theme[]
   theme: Theme
   gate: GateRule[]
   facts: Facts
+  heading?: string
 }) {
   const where: Where = marketplace ? { id: marketplace.id, repo: marketplace.repo, add: marketplace.add } : null
   const first = catalogsOf(palettes)[0]?.themes ?? palettes
@@ -390,7 +402,7 @@ export function MarketplaceWorkspace({
         <main id="content" class="flex min-w-0 flex-1 flex-col app:min-h-0">
           <div class="group/install flex flex-wrap items-center gap-x-5 gap-y-3 border-b px-5 py-3">
             <div data-head class="grid min-w-0 flex-[1_1_14rem] gap-0.5">
-              <WorkspaceHead theme={theme} />
+              <WorkspaceHead theme={theme} heading={heading} />
             </div>
             <div class="flex min-w-0 flex-[1_1_30rem] items-center gap-2.5">
               <ToggleGroup label="install step" class="flex-none">

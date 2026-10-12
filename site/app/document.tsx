@@ -7,15 +7,15 @@ import { KEYS_SCRIPT } from '@/lib/keys'
 import { fallback } from '@/lib/official'
 import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
+import { ORIGIN } from '@/lib/seo'
 import { SPECULATION_RULES } from '@/lib/speculation'
 import { rootStyle, type Vars, WEAR_SCRIPT, wearIcon } from '@/lib/wear'
-import { SHARE_URL } from '../../src/own.ts'
 
 const RELOAD = `let s=null,b=null;const c=()=>{s?.close();s=null},f=()=>{if(document.visibilityState==='hidden'&&!document.prerendering)c();else if(!s){s=new EventSource('${assets.reload}');s.onmessage=(e)=>{b??=e.data;if(e.data!==b)location.reload()}}};document.addEventListener('visibilitychange',f);addEventListener('pageshow',f);addEventListener('pagehide',c);f()`
 
 const FONTS: string[] = assets.fonts
 
-const ORIGIN = new URL(SHARE_URL).origin
+const INDEXABLE = 'max-image-preview:large'
 
 interface Page {
   title: string
@@ -23,6 +23,8 @@ interface Page {
   path?: string
   image?: string
   imageAlt?: string
+  robots?: string
+  ld?: object[]
   status?: number
   cache: string
   root?: Vars
@@ -35,6 +37,8 @@ function Document({
   path,
   image,
   imageAlt,
+  robots = INDEXABLE,
+  ld = [],
   root = [],
   head,
   children,
@@ -44,6 +48,8 @@ function Document({
   path?: string
   image?: string
   imageAlt?: string
+  robots?: string
+  ld?: object[]
   root?: Vars
   head?: string
 }>) {
@@ -57,6 +63,7 @@ function Document({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <title safe>{title}</title>
         <meta name="description" content={description} />
+        <meta name="robots" content={robots} />
         {path === undefined ? null : (
           <>
             <link rel="canonical" href={`${ORIGIN}${path}`} />
@@ -71,9 +78,15 @@ function Document({
         {image ? (
           <>
             <meta property="og:image" content={`${ORIGIN}${image}`} />
+            <meta property="og:image:type" content="image/png" />
             <meta property="og:image:width" content={String(CARD_WIDTH)} />
             <meta property="og:image:height" content={String(CARD_HEIGHT)} />
-            {imageAlt ? <meta property="og:image:alt" content={imageAlt} /> : null}
+            {imageAlt ? (
+              <>
+                <meta property="og:image:alt" content={imageAlt} />
+                <meta name="twitter:image:alt" content={imageAlt} />
+              </>
+            ) : null}
             <meta name="twitter:card" content="summary_large_image" />
           </>
         ) : (
@@ -90,11 +103,9 @@ function Document({
         <script>{HANDOFF_SCRIPT}</script>
         <script>{ROUTE_SCRIPT}</script>
         <script type="speculationrules">{SPECULATION_RULES}</script>
-        {path === '/' ? (
-          <script type="application/ld+json">
-            {json({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'ttheme', url: `${ORIGIN}/` })}
-          </script>
-        ) : null}
+        {ld.map((graph) => (
+          <script type="application/ld+json">{json(graph)}</script>
+        ))}
         <script type="module" src={assets.js} />
         {assets.reload ? <script type="module">{RELOAD}</script> : null}
       </head>
@@ -115,7 +126,7 @@ function Document({
 }
 
 export function page(
-  { title, description, path, image, imageAlt, status = 200, cache, root, head }: Page,
+  { title, description, path, image, imageAlt, robots, ld, status = 200, cache, root, head }: Page,
   body: JSX.Element,
 ): Response {
   const text = `<!doctype html>${html(
@@ -125,6 +136,8 @@ export function page(
       path={path}
       image={image}
       imageAlt={imageAlt}
+      robots={robots}
+      ld={ld}
       root={root}
       head={head}
     >

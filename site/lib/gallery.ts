@@ -47,6 +47,12 @@ export const OFFICIAL = 'official'
 
 export const OFFICIAL_REPO = 'kecan0406/ttheme'
 
+export const OFFICIAL_URL = `https://github.com/${OFFICIAL_REPO}`
+
+export const NPM_URL = 'https://www.npmjs.com/package/@kecan0406/ttheme'
+
+export const INIT = 'npx @kecan0406/ttheme init'
+
 export const OFFICIAL_ABOUT = "The palettes that come with ttheme, each measured from the character's official art."
 
 export function marketplacePath(id: string | null): string {
