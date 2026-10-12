@@ -3,17 +3,10 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:f
 import { basename, join, relative } from 'node:path'
 import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
-import {
-  archiveId,
-  officialPath,
-  parseManifest,
-  readArchive,
-  readCachedArchive,
-  readMarketplaces,
-} from './available.ts'
+import { archiveId, parseManifest, readCachedArchive, readMarketplaces } from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
-import { type Listed, readIndex } from './marketplace-index.ts'
+import type { Listed } from './marketplace-index.ts'
 import { containsText } from './names.ts'
 import {
   gateLines,
@@ -26,16 +19,7 @@ import {
 } from './own.ts'
 import { configHome, type Installed, readInstalled, sync, writeInstalled } from './palettes.ts'
 import { pending } from './pending.ts'
-import {
-  ago,
-  cachedMarketplace,
-  counted,
-  type Fetched,
-  fetchedAt,
-  fetchMarketplace,
-  readTries,
-  storeMarketplace,
-} from './refresh.ts'
+import { ago, counted, type Fetched, fetchedAt, fetchMarketplace, readTries, storeMarketplace } from './refresh.ts'
 import { renameProblems } from './renames.ts'
 import {
   autoUpdates,
@@ -54,7 +38,6 @@ import {
   OWNER_KEYS,
   parseSource,
   refOf,
-  repoOf,
   sameMarketplace,
   shownSource,
   TOPIC,
@@ -62,7 +45,7 @@ import {
 import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf, unknownKeys } from './theme.ts'
 
 const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-const ACTIONS = ['add', 'remove', 'search', 'init', 'check']
+const ACTIONS = ['add', 'remove', 'init', 'check']
 
 function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
@@ -274,7 +257,7 @@ export function dropCache(home: string, source: string): void {
 }
 
 export function keptNote(kept: string[]): string {
-  return `${counted(kept.length)} installed from it keep${kept.length === 1 ? 's' : ''} working: ${kept.join(', ')} — \`ttheme remove\` drops ${kept.length === 1 ? 'it' : 'them'}`
+  return `${counted(kept.length)} installed from it keep${kept.length === 1 ? 's' : ''} working: ${kept.join(', ')} — the Browse tab of \`ttheme\` drops ${kept.length === 1 ? 'it' : 'them'}`
 }
 
 function removeMarketplace(name: string): void {
@@ -283,7 +266,7 @@ function removeMarketplace(name: string): void {
   const sources = marketplacesOf(state.marketplaces)
   const source = sources.find((s) => nameOf(home, s) === name) ?? sources.find((s) => s === parseSourceOrNot(name))
   if (!source) {
-    throw new Error(`no marketplace named ${name} — \`ttheme marketplace\` lists them`)
+    throw new Error(`no marketplace named ${name} — the Browse tab of \`ttheme\` lists them`)
   }
   const id = nameOf(home, source)
   const kept = state.palettes.filter((n) => marketplaceOfPalette(n) === id)
@@ -306,20 +289,6 @@ function parseSourceOrNot(arg: string): string | undefined {
   }
 }
 
-function countOf(home: string, source: string): number | undefined {
-  try {
-    if (source === OFFICIAL) {
-      return listed(parseManifest(readFileSync(officialPath(home), 'utf8')).palettes).length
-    }
-    if (isLocal(source)) {
-      return readMarketplaceDir(source, idOf(home, source), official(home), warning(false)).length
-    }
-    return readArchive(source, readCachedArchive(home, source), official(home), warning(false)).entries.length
-  } catch {
-    return undefined
-  }
-}
-
 export function lastUpdate(home: string, source: string, tries = readTries(), now = Date.now()): string {
   if (isLocal(source)) {
     return 'read in place'
@@ -335,68 +304,8 @@ export function lastUpdate(home: string, source: string, tries = readTries(), no
   return at === undefined ? 'never updated' : `updated ${ago(at, now)}`
 }
 
-function listMarketplaces(): void {
-  const home = configHome()
-  const state = readInstalled(home)
-  const sources = marketplacesOf(state.marketplaces)
-  if (sources.length === 0) {
-    console.log('No marketplaces — `ttheme marketplace add official` brings the official one back')
-    return
-  }
-  const tries = readTries()
-  const rows = sources.map((source) => {
-    const name = nameOf(home, source) ?? '?'
-    const count = countOf(home, source)
-    const installed = state.palettes.filter((n) => marketplaceOfPalette(n) === name).length
-    const auto = isLocal(source) ? [] : [`auto-update ${autoUpdates(source, state.updates) ? 'on' : 'off'}`]
-    const about = source === OFFICIAL ? undefined : cachedMarketplace(home, source)?.info.description
-    return {
-      name,
-      where: shownSource(source),
-      about,
-      note: [
-        count === undefined ? 'Unreadable' : counted(count),
-        ...(installed > 0 ? [`${installed} installed`] : []),
-        ...auto,
-        lastUpdate(home, source, tries),
-      ].join(' · '),
-    }
-  })
-  const nameWidth = Math.max(...rows.map((r) => r.name.length))
-  const whereWidth = Math.max(...rows.map((r) => r.where.length))
-  for (const r of rows) {
-    console.log(`  ${r.name.padEnd(nameWidth)}  ${r.where.padEnd(whereWidth)}  ${r.note}`)
-    if (r.about) {
-      console.log(`  ${' '.repeat(nameWidth)}  ${r.about}`)
-    }
-  }
-}
-
 export function listedMatches(m: Listed, query: string): boolean {
   return containsText([m.id, m.source, m.about, ...m.palettes.flatMap((e) => [e.name, e.catalog ?? ''])], query)
-}
-
-async function searchMarketplaces(query: string | undefined): Promise<void> {
-  const home = configHome()
-  const { marketplaces, at, offline } = await readIndex()
-  if (offline) {
-    console.log(`Offline — the list from ${ago(at)} (${offline})\n`)
-  }
-  const found = marketplaces.filter((m) => !query || listedMatches(m, query))
-  if (found.length === 0) {
-    console.log(`No marketplace carries the ${TOPIC} topic${query ? ` and matches ${query}` : ''} yet`)
-    return
-  }
-  const added = new Set(marketplacesOf(readInstalled(home).marketplaces).map(repoOf))
-  const idWidth = Math.max(...found.map((m) => m.id.length))
-  const sourceWidth = Math.max(...found.map((m) => m.source.length))
-  for (const m of found) {
-    const stars = `★${m.stars}`.padStart(5)
-    console.log(
-      `  ${added.has(m.source) ? '●' : '○'} ${m.id.padEnd(idWidth)}  ${m.source.padEnd(sourceWidth)}  ${stars}  ${counted(m.palettes.length)}  ${m.about}`,
-    )
-  }
-  console.log('\n`ttheme marketplace add <owner/repo>` adds one')
 }
 
 function repoFor({ name }: Identity): string {
@@ -578,19 +487,13 @@ function checkMarketplace(arg: string | undefined): number {
   return errors.length > 0 ? 1 : 0
 }
 
-export async function runMarketplace(action: string | undefined, arg: string | undefined): Promise<number | undefined> {
+export async function runMarketplace(action: string, arg: string | undefined): Promise<number | undefined> {
   switch (action) {
-    case undefined:
-      listMarketplaces()
-      return
     case 'add':
       await addMarketplace(required(action, arg))
       return
     case 'remove':
       removeMarketplace(required(action, arg))
-      return
-    case 'search':
-      await searchMarketplaces(arg)
       return
     case 'init':
       await initMarketplace(arg)
@@ -598,7 +501,7 @@ export async function runMarketplace(action: string | undefined, arg: string | u
     case 'check':
       return checkMarketplace(arg)
     default:
-      throw new Error(`unknown marketplace action ${action} — ${ACTIONS.join(', ')}, or none to list them`)
+      throw new Error(`unknown marketplace action ${action} — ${ACTIONS.join(', ')}`)
   }
 }
 
@@ -607,7 +510,7 @@ function required(action: string, arg: string | undefined): string {
     throw new Error(
       action === 'add'
         ? 'marketplace add takes a repository or a folder: ttheme marketplace add alice/ttheme-dust'
-        : 'marketplace remove takes a marketplace name — `ttheme marketplace` lists them',
+        : 'marketplace remove takes a marketplace name: ttheme marketplace remove alice@pastel',
     )
   }
   return arg

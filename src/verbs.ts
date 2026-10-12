@@ -29,6 +29,7 @@ export interface VerbSpec {
   actions?: [string, string][]
   shell?: true
   hidden?: true
+  more?: true
   flags?: Record<string, Flag>
 }
 
@@ -87,27 +88,12 @@ export const VERB_SPECS: VerbSpec[] = [
     hidden: true,
   },
   {
-    name: 'list',
-    args: ['[query]'],
-    about: 'List palettes, marking what is installed',
-    section: 'palettes',
-    flags: { json: { type: 'boolean', about: 'Print the matches as JSON — name, group, catalog, installed' } },
-  },
-  {
     name: 'add',
     args: ['<palette...>'],
     about:
       'Install palettes — from your marketplaces, or from a share link: ttheme add https://ttheme.vercel.app/p/tt2:…',
     section: 'palettes',
-    flags: {
-      marketplace: {
-        type: 'string',
-        value: '<source>',
-        about: 'Add this marketplace first — a repository, a folder or official — and take bare palette names from it',
-      },
-    },
   },
-  { name: 'remove', args: ['<palette...>'], about: 'Uninstall palettes', section: 'palettes' },
   {
     name: 'update',
     args: ['[marketplace...]'],
@@ -117,19 +103,15 @@ export const VERB_SPECS: VerbSpec[] = [
   },
   {
     name: 'marketplace',
-    args: ['[action]', '[source]'],
-    about: 'The marketplaces you added — add, remove and search them; init makes one of your own',
+    args: ['<action>', '[source]'],
+    about:
+      'Add or drop a marketplace — Browse also finds them on GitHub and switches their auto-update; init makes one of your own',
     actions: [
-      ['(none)', 'List the marketplaces you added — their palettes, auto-update and last update'],
       [
         'add <source>',
         'Add a marketplace — a repository (alice/ttheme-pastel, #v1 pins a tag or branch), a folder, or official; asks whether it updates on its own',
       ],
       ['remove <marketplace>', 'Drop one by its name (alice@pastel) — the palettes you installed from it keep working'],
-      [
-        'search [query]',
-        'The marketplaces on GitHub with the ttheme-marketplace topic, listed every half hour — a query matches names, palettes and descriptions',
-      ],
       [
         'init [name]',
         'Make a marketplace of your own — <you>@<name>, in ~/.config/ttheme/marketplace/<name> or a folder you give',
@@ -169,6 +151,7 @@ export const VERB_SPECS: VerbSpec[] = [
     about:
       'Measure a palette against the contrast gate — where it misses, suggest colors that pass; with none named, asks to check the one this tab wears',
     section: 'own',
+    more: true,
     flags: { fix: { type: 'boolean', about: 'Write the suggested colors into your palette' } },
   },
   {
@@ -213,6 +196,7 @@ export const VERB_SPECS: VerbSpec[] = [
     args: [],
     about: 'Print what a bug report needs — version, OS, shell, terminal and the settings you changed',
     section: 'support',
+    more: true,
   },
   {
     name: 'build',
@@ -332,7 +316,7 @@ function listed(verb: VerbSpec, all: boolean): [string, string][] {
 const BANNER = [`ttheme ${pkg.version}`, pkg.description, 'Usage: ttheme <command> [options] [args]']
 
 const GETTING_HELP: [string, string][] = [
-  ['ttheme help', 'Every command'],
+  ['ttheme help', 'The everyday commands'],
   ['ttheme help all', 'Every command with its options, and examples'],
   ['ttheme help <command>', 'One command in full'],
 ]
@@ -352,9 +336,7 @@ const EXAMPLES: [string, string][] = [
   ['npx @kecan0406/ttheme init -y', 'Wire the terminals found here, no prompts'],
   ['ttheme add homura madoka', 'Install two palettes'],
   ['ttheme use homura', 'Paint this tab with one'],
-  ['ttheme list --json madoka', 'The Madoka Magica catalog as JSON'],
   ['ttheme marketplace add alice/ttheme-pastel', "alice's marketplace, alice@pastel — ttheme add alice@pastel/dusk"],
-  ['ttheme add dusk --marketplace alice/ttheme-pastel', 'The same in one step'],
   ['ttheme new rei --from rei', 'Your own rei, <you>@<marketplace>/rei, to edit and share'],
 ]
 
@@ -374,11 +356,11 @@ export function commandHelp(verb: VerbSpec): string {
 }
 
 export function helpText(all: boolean, shell = false): string {
-  const shown = VERB_SPECS.filter((v) => !v.hidden && !(shell && v.section === 'setup'))
+  const shown = VERB_SPECS.filter((v) => !v.hidden && (all || !v.more) && !(shell && v.section === 'setup'))
   const sections = SECTIONS.filter(({ section }) => shown.some((v) => v.section === section))
   return [
     ...BANNER,
-    'ttheme alone opens Preview and Browse as tabs — tab and shift+tab move between them',
+    'ttheme alone opens Preview and Browse as tabs — Browse installs and removes palettes; tab and shift+tab move between them',
     '',
     'Getting help:',
     ...columns(GETTING_HELP),

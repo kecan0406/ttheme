@@ -109,8 +109,8 @@ the folders under its `palettes/` as catalogs:
 ```
 
 ```sh
-ttheme add dusk --marketplace alice/ttheme-pastel  # add alice's marketplace and install from it
-ttheme marketplace add alice/ttheme-pastel#v1      # or add it alone, pinned to a tag
+ttheme marketplace add alice/ttheme-pastel#v1      # add alice's marketplace, pinned to a tag
+ttheme add alice@pastel/dusk                       # and install one of its palettes
 ttheme                                             # shift+tab to Browse: marketplaces are rows there — add, remove, auto-update
 ```
 
@@ -173,13 +173,13 @@ without a marketplace, fetching those posts from the booru the way `find` does.
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` | A palette for this directory, everything below it, its repository or an ssh host (`ssh:<host>`) — a panel shows what each choice reaches; `cd` or `ssh` in repaints, leaving restores |
 | `ttheme pins` | Map every pin as a file tree — the pinned directories in each palette's colors, with where you are marked, and every pinned ssh host |
-| `ttheme marketplace add <owner/repo>` | Add someone's marketplace (`#v1` pins it) — `ttheme marketplace` lists yours; `search`, `remove` too |
+| `ttheme marketplace add <owner/repo>` | Add someone's marketplace (`#v1` pins it); `remove` drops one — Browse lists yours, finds the public ones and switches their auto-update |
 | `ttheme new <name>` | Make a palette of your own in the palette editor (`--from <palette>` starts from its colors); `edit`, `check`, `share` follow |
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |
 | `ttheme config` | Settings in `$EDITOR` |
 
-`ttheme help` lists every command by task; `ttheme help all` adds their
-options and examples. Preview's keys and the mouse, directory pins,
+`ttheme help` lists the everyday commands by task; `ttheme help all` adds the
+rest with their options, and examples. Preview's keys and the mouse, directory pins,
 rotating new tabs and every setting are in [docs/usage.md](docs/usage.md).
 
 ## Terminal support
@@ -240,7 +240,7 @@ Terminal background images are downloaded from the booru you pick only when you
 ask `find` for one, built on your own machine and written to
 `~/.config/ttheme/backgrounds/`; none ship in this repository or on npm.
 
-Characters' names in every language — what preview, browse, `list` and
+Characters' names in every language — what preview, browse and
 `find`'s search box match besides the palette names — come from the weekly
 release of [aninames](https://github.com/kecan0406/aninames), which your machine
 downloads into `~/.cache/ttheme/aninames/` (about 7 MB, checked once a day in

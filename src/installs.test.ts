@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { writeOfficial } from './available.ts'
-import { inMarketplace, runAdd, runDefault } from './installs.ts'
+import { runAdd, runDefault } from './installs.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { withMarketplaces } from './marketplaces.ts'
 import { draftOf, shareCode, shareLink } from './own.ts'
@@ -96,16 +96,6 @@ test('a share link to a palette already in a marketplace installs it, and one wi
     inHome(home, () => runAdd([sukuna])),
     /sukuna is already in the official marketplace and differs/,
   )
-})
-
-test('--marketplace names bare palettes after the marketplace it added, and refuses one from another marketplace', () => {
-  assert.deepEqual(inMarketplace(['dusk', 'alice@pastel/dawn', 'tt2:abc'], 'alice@pastel'), [
-    'alice@pastel/dusk',
-    'alice@pastel/dawn',
-    'tt2:abc',
-  ])
-  assert.deepEqual(inMarketplace(['kita'], 'official'), ['kita'])
-  assert.throws(() => inMarketplace(['bob@neon/glow'], 'alice@pastel'), /bob@neon\/glow is not in alice@pastel/)
 })
 
 test('installed.json keeps an auto-update setting only where it differs from the default', () => {

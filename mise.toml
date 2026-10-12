@@ -30,7 +30,7 @@ description = "oxlint with the vendored anti-slop rules"
 run = "oxlint"
 
 [tasks."shell:check"]
-description = "syntax-check and exercise the zsh layer"
+description = "syntax-check and exercise the zsh layer, and validate the emitted Ghostty files when ghostty is installed"
 depends = ["build"]
 run = '''
 set -e
@@ -40,28 +40,20 @@ done
 zsh shell/check.zsh
 zsh tests/latency.zsh check
 zsh tests/latency.zsh forks
+if command -v ghostty >/dev/null 2>&1; then
+  for f in dist/ghostty/themes/*; do
+    ghostty +validate-config --config-file="$PWD/$f" ||
+      { echo "shell:check failed: $f"; exit 1; }
+  done
+else
+  echo "shell:check skipped the Ghostty files — no ghostty binary on this machine"
+fi
 '''
 
 [tasks.forks]
 description = "the fork ratchet: processes a shell with ttheme starts beyond a bare zsh, per journey and terminal, against tests/forks.tsv — `mise run forks [--update]`"
 depends = ["build"]
 run = "zsh tests/latency.zsh forks"
-
-[tasks."ghostty:check"]
-description = "validate emitted ghostty files with ghostty +validate-config"
-depends = ["build"]
-run = '''
-set -e
-if ! command -v ghostty >/dev/null 2>&1; then
-  echo "ghostty:check skipped — no ghostty binary on this machine"
-  exit 0
-fi
-for f in dist/ghostty/themes/*; do
-  ghostty +validate-config --config-file="$PWD/$f" ||
-    { echo "ghostty:check failed: $f"; exit 1; }
-done
-echo "ghostty:check ok"
-'''
 
 [tasks."bin:build"]
 description = "bundle the node cli into bin/ttheme.js"
@@ -137,9 +129,6 @@ layer '(( ${#TTHEME_PALETTE} == 3 ))' ||
   { echo "bin:check failed: init --yes over an install dropped its palettes"; exit 1; }
 grep -q '^theme = ttheme-geto$' "$tmp/.config/ttheme/ghostty.conf" ||
   { echo "bin:check failed: init --yes over an install lost its default"; exit 1; }
-cli remove gojo geto sukuna
-layer '(( ${#TTHEME_PALETTE} == 0 ))' ||
-  { echo "bin:check failed: remove did not reach the installed layer"; exit 1; }
 run_init
 for f in "$tmp/.config/ghostty/config" "$tmp/.zshrc"; do
   [ "$(grep -c '# ttheme begin' "$f")" = 1 ] ||
@@ -156,25 +145,14 @@ echo "bin:check ok"
 '''
 
 [tasks.tui]
-description = "compare every TUI screen against tests/screens/, or only the scenarios named — `mise run tui theme-edit 'browse-*'`"
+description = "compare every TUI screen against tests/screens/, or only the scenarios named; --update rewrites them from what the TUIs draw now — `mise run tui [--update] theme-edit 'browse-*'`"
 depends = ["build", "bin:build"]
 run = "zsh tests/tui.zsh"
-
-[tasks."tui:update"]
-description = "rewrite tests/screens/ from what the TUIs draw now, every screen or only the scenarios named"
-depends = ["build", "bin:build"]
-run = "zsh tests/tui.zsh --update"
 
 [tasks.look]
 description = "draw one TUI screen as the terminal shows it, colors on, into a PNG and a text grid with row and column numbers for Claude to read — a tests/tui.zsh scenario or a screen, a size, then keys: `mise run look preview-open 120x34`, `mise run look edit:kita 130x38 down down enter`, `--emit styles --rows 3-9` for each run's SGR"
 quiet = true
 run = ["mise run -q bin:build > /dev/null", "zsh tests/tui.zsh look"]
-
-[tasks.demo]
-description = "open one TUI scenario for real, in its fixture — `mise run demo browse-filter`"
-depends = ["build", "bin:build"]
-interactive = true
-run = "zsh tests/tui.zsh demo"
 
 [tasks.sandbox]
 description = "a throwaway home wired with this checkout and every palette, in its own Ghostty or another terminal — `mise run sandbox [--here | --iterm | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole] [--empty | --mine | palette…]`"
@@ -190,18 +168,13 @@ run = "zsh tests/latency.zsh bench"
 [tasks.parity]
 description = "walk every journey in a model of each terminal, hold every terminal, Ghostty included, to the spec journeys.ts states, and the misses to tests/parity/facts.tsv and gaps.tsv — `mise run parity [--update] [--only <terminal,…>] [--journey <id,…>] [--show <journey.label>] [-v]`"
 depends = ["build", "bin:build"]
-wait_for = ["lint", "check", "test", "shell:check", "ghostty:check", "bin:check", "tui"]
+wait_for = ["lint", "check", "test", "shell:check", "bin:check", "tui"]
 run = "bun tests/parity/run.ts"
 
 [tasks.compat]
-description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv — `mise run compat [--update] [ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole…]`"
+description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv; konsole named on a machine without it runs in a container (Ubuntu 24.04, Konsole 23.08 on Xvfb) — `mise run compat [--update] [ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole…]`"
 depends = ["build", "bin:build"]
 run = "zsh tests/compat.zsh"
-
-[tasks."compat:konsole"]
-description = "run the compat cases in Konsole from a container (Ubuntu 24.04, Konsole 23.08 on Xvfb) — `mise run compat:konsole [--update]`"
-depends = ["build", "bin:build"]
-run = "docker build -q -t ttheme-konsole -f tests/compat/konsole.Dockerfile tests/compat > /dev/null && docker run --rm -v \"$PWD\":/work ttheme-konsole zsh tests/compat.zsh"
 
 [tasks."site:dev"]
 description = "the showcase site on http://localhost:3000 (PORT moves it), rebuilt and reloaded on every change"
@@ -242,4 +215,4 @@ echo "$tag is on npm — https://www.npmjs.com/package/@kecan0406/ttheme"
 
 [tasks.ci]
 description = "everything the ci workflow runs"
-depends = ["lint", "check", "test", "shell:check", "ghostty:check", "bin:check", "tui", "parity"]
+depends = ["lint", "check", "test", "shell:check", "bin:check", "tui", "parity"]

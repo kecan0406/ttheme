@@ -32,7 +32,6 @@ typeset -ga SCENARIOS=(
   'browse-keys     few    browse   ?@Help'
   'browse-search   few    browse   Up Enter@SEARCH'
   'browse-add      few    browse   Up Up Enter@ADD b o b Enter@give'
-  'list-few        few    list'
   'hub-few         few    hub'
   'hub-empty       empty  hub'
   'hub-browse      few    hub      Tab@GitHub'
@@ -81,7 +80,7 @@ fixture_home() {
 command_for() {
   local target=$1 home=$2
   case $target in
-    browse|list|add|remove) print -r -- "node $ROOT/bin/ttheme.js $target" ;;
+    browse) print -r -- "node $ROOT/bin/ttheme.js $target" ;;
     edit:?*) print -r -- "node $ROOT/bin/ttheme.js edit ${target#edit:}" ;;
     hub) print -r -- "source $home/ttheme/ttheme.zsh; ttheme" ;;
     pins) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work/api/v2; ttheme pins" ;;
@@ -193,7 +192,7 @@ run() {
       print -r -- $actual > $golden
       print "  updated $name"
     elif [[ ! -f $golden ]]; then
-      print -u2 "  ✗ $name — no golden screen, run \`mise run tui:update\`"
+      print -u2 "  ✗ $name — no golden screen, run \`mise run tui --update\`"
       failed=1
     elif [[ $actual == "$(<$golden)" ]]; then
       print "  ✓ $name"
@@ -203,32 +202,15 @@ run() {
       failed=1
     fi
   done
-  (( failed )) && { print -u2 "\ntui: screens changed — look at the diff, then \`mise run tui:update${*:+ ${(j: :)${(q)@}}}\` if it is right"; return 1 }
+  (( failed )) && { print -u2 "\ntui: screens changed — look at the diff, then \`mise run tui --update${*:+ ${(j: :)${(q)@}}}\` if it is right"; return 1 }
   print "\ntui ok — ${#picked} screens"
-}
-
-demo() {
-  local line
-  if ! line=$(scenario_fields $1); then
-    print -u2 "no scenario named ${1:-<none>} — try one of:"
-    local l
-    for l in $SCENARIOS; do print -u2 "  ${${=l}[1]}"; done
-    return 1
-  fi
-  local -a parts=(${=line}) reply
-  local home cmd
-  home=$(fixture_home $parts[2])
-  cmd=$(command_for $parts[3] $home)
-  scenario_env $home
-  print "$parts[1] — state '$parts[2]' in $home"
-  { env $reply zsh -f -c $cmd } always { rm -rf $home }
 }
 
 look() {
   local what=$1 size=$2 state=few target line out='' against='' here=$ROOT old l
   local -a keys flags parts
   if [[ -z $what || $size != <->x<-> ]]; then
-    print -u2 "usage: mise run look <scenario | browse | list | hub | pins | pin | edit:<palette>> <cols>x<rows> [keys…] [--state ${(kj: | :)STATES}] [--rows a-b] [--cols a-b] [--emit png,txt,styles] [--against <git ref>] [--out <path>]"
+    print -u2 "usage: mise run look <scenario | browse | hub | pins | pin | edit:<palette>> <cols>x<rows> [keys…] [--state ${(kj: | :)STATES}] [--rows a-b] [--cols a-b] [--emit png,txt,styles] [--against <git ref>] [--out <path>]"
     print -u2 "scenarios, each a state, a screen and keys (keys given here come after its own):"
     for l in $SCENARIOS; do print -u2 "  ${${=l}[1]}"; done
     return 1
@@ -275,7 +257,6 @@ look() {
 
 case ${1:-check} in
   --update|update) shift; run update $@ ;;
-  demo) shift; demo $1 ;;
   look) shift; look $@ ;;
   check) run check ${@[2,-1]} ;;
   *) run check $@ ;;

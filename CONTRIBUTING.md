@@ -60,7 +60,7 @@ catalog is not part of the name (still `<owner>@<name>/arcade`), so a palette
 name is used once in a marketplace. A marketplace palette has no `order`
 and no `role`; `meta.base` names the official palette it varies, which only says
 where its ANSI colors came from. Give the repository the `ttheme-marketplace` topic
-and `ttheme marketplace search` and the
+and Browse's search and the
 [marketplace page](https://ttheme.vercel.app/marketplace) find it.
 
 Open a pull request here when a palette belongs in the official marketplace: it
@@ -180,7 +180,7 @@ work on both should not lean on either's output format.
 mise run build                # regenerates dist/ for every terminal — fails on bad contrast
 mise run build --only kitty   # just one terminal's subtree
 mise run compat               # the terminal compatibility cases, in each installed terminal
-mise run compat:konsole       # the same cases in Konsole, from a Linux container (needs Docker)
+mise run compat konsole       # the same cases in Konsole, from a Linux container (needs Docker)
 mise run parity               # every journey in a model of every terminal, held to one spec
 ```
 
@@ -193,9 +193,9 @@ its prompt runs a signal's trap at once, and whether a tab that never painted
 follows a new default and a tab that went off takes it back —
 and compares them with `tests/compat/expect.tsv`: a case that used to pass and
 fails is a regression and fails the run, and `--update` records what was
-measured. Konsole runs on Linux alone, so `mise run compat:konsole` runs its
-cases on a private display in a container, where moving focus takes nothing
-from you.
+measured. Konsole runs on Linux alone, so `mise run compat konsole` on a machine
+without it runs its cases on a private display in a container, where moving
+focus takes nothing from you.
 
 Every terminal is held to one spec, Ghostty included. Each journey in
 `tests/parity/journeys.ts` says what the tab in front shows at every look —
@@ -247,13 +247,9 @@ screen.
 ```sh
 mise run tui                  # compare (part of `mise run ci`)
 mise run tui 'theme-*'        # compare only the scenarios named, globs too
-mise run tui:update           # accept what the TUIs draw now (names narrow it too)
-mise run demo preview-open    # open one scenario for real, in its fixture
+mise run tui --update         # accept what the TUIs draw now (names narrow it too)
 mise run look preview-open 120x34   # draw one scenario, colors on, to a PNG and a text grid
 ```
-
-`mise run demo` is also the fastest way to reproduce a bug: it builds the
-fixture state, hands you the real TUI, and throws the directory away after.
 
 ### Under the Node screens
 

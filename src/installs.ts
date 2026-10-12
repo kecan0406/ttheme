@@ -1,14 +1,14 @@
 import { existsSync } from 'node:fs'
-import { available, readKept, readMarketplaces, search, updatesOf, writeKept } from './available.ts'
+import { available, readKept, readMarketplaces, updatesOf, writeKept } from './available.ts'
 import { adopt } from './craft.ts'
 import { liveOf } from './live.ts'
-import { listed, type Manifest, type PaletteEntry } from './manifest.ts'
-import { addSource, idOf, localLine } from './marketplaces.ts'
+import type { Manifest, PaletteEntry } from './manifest.ts'
+import { idOf, localLine } from './marketplaces.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
-import { codeOf, readLocal, SHARE_URL } from './own.ts'
+import { codeOf, SHARE_URL } from './own.ts'
 import { PalettePrompt, type PickerScope, promptFx } from './palette-prompt.ts'
-import { commit, configHome, forget, readInstalled, startupPalette, sync } from './palettes.ts'
+import { commit, configHome, readInstalled, startupPalette, sync } from './palettes.ts'
 import { pending, say } from './pending.ts'
 import { bringPictures, since } from './pictures.ts'
 import { applyRefreshed, attempt, failureLine, type Refreshed, refreshLine, updatesLine } from './refresh.ts'
@@ -16,41 +16,23 @@ import { newerRelease, upgradeTo } from './release.ts'
 import { installedPath, isLocal, marketplaceSources, OFFICIAL, shownSource } from './sources.ts'
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
-import { alphabetical, marketplaceOf, shelfOf } from './theme.ts'
-import { readTone } from './tone.ts'
+import { alphabetical } from './theme.ts'
 
 export function reload(count: number): void {
   say(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
 }
 
-export function inMarketplace(given: string[], id: string): string[] {
-  return given.map((name) => {
-    if (codeOf(name)) {
-      return name
-    }
-    const marketplace = marketplaceOf(name)
-    if (marketplace === undefined) {
-      return id === OFFICIAL ? name : `${id}/${name}`
-    }
-    if (marketplace !== id) {
-      throw new Error(`${name} is not in ${id} — give its bare name, or leave --marketplace out`)
-    }
-    return name
-  })
-}
-
-export async function runAdd(asked: string[], marketplace?: string): Promise<void> {
+export async function runAdd(asked: string[]): Promise<void> {
   const link = asked.find((n) => /^https?:\/\//i.test(n.trim()) && !codeOf(n))
   if (link) {
     throw new Error(`${link} is not a share link — one reads ${SHARE_URL}tt2:…`)
   }
   const home = configHome()
-  const given = marketplace ? inMarketplace(asked, (await addSource(home, marketplace)).id) : asked
   const manifest = readMarketplaces(home)
   const shared = new Map<string, PaletteEntry>()
   const names = [
     ...new Set(
-      given.map((n) => {
+      asked.map((n) => {
         const code = codeOf(n)
         if (!code) {
           return n
@@ -85,29 +67,6 @@ export async function runAdd(asked: string[], marketplace?: string): Promise<voi
     next.terminals,
   )
   reload(next.palettes.length)
-}
-
-export function runRemove(names: string[]): number {
-  const home = configHome()
-  const manifest = readMarketplaces(home)
-  const state = readInstalled(home)
-  const gone = names.filter((n) => state.palettes.includes(n))
-  const absent = names.filter((n) => !state.palettes.includes(n))
-  if (gone.length === 0) {
-    throw new Error(`not installed: ${absent.join(', ')} — \`ttheme list\` marks what is`)
-  }
-  const next = { ...state, palettes: state.palettes.filter((n) => !gone.includes(n)) }
-  commit(home, manifest, state, next)
-  forget(home, manifest, state.terminals, gone)
-  for (const name of gone) {
-    console.log(`  - ${name}`)
-  }
-  reload(next.palettes.length)
-  if (absent.length > 0) {
-    console.error(`ttheme remove: not installed: ${absent.join(', ')}`)
-    return 1
-  }
-  return 0
 }
 
 export function runDefault(name: string): void {
@@ -183,51 +142,6 @@ function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wire
     : [`Default ${name} · no terminal is wired to open with it — \`ttheme init\` wires one`]
 }
 
-type Source = 'marketplace' | 'mine' | 'kept'
-
-function sources(home: string, manifest: Manifest): Map<string, Source> {
-  const out = new Map<string, Source>(manifest.palettes.map((p) => [p.name, 'marketplace']))
-  for (const p of readLocal(home, manifest.palettes, false)) {
-    out.set(p.name, 'mine')
-  }
-  return out
-}
-
-export function runList(query: string | undefined, json = false): void {
-  const home = configHome()
-  const manifest = readMarketplaces(home)
-  const installed = new Set(readInstalled(home).palettes)
-  const from = sources(home, manifest)
-  const all = listed(available(home, manifest).palettes)
-  if (query) knowAliases(all)
-  const hits = alphabetical(query ? search(all, query) : all)
-  const source = (name: string): Source => from.get(name) ?? 'kept'
-  if (json) {
-    const rows = hits.map((p) => ({
-      name: p.name,
-      marketplace: marketplaceOf(p.name) ?? OFFICIAL,
-      ...(p.catalog ? { catalog: p.catalog } : {}),
-      installed: installed.has(p.name),
-      source: source(p.name),
-    }))
-    console.log(JSON.stringify(rows, null, 2))
-    return
-  }
-  const pad = Math.max(...hits.map((p) => p.name.length), 0)
-  const note: Record<Source, string> = { marketplace: '', mine: '  · yours', kept: '  · in no marketplace you added' }
-  const tone = readTone(home)
-  for (const p of hits) {
-    const tuned = tone[p.name] ? '  · tuned' : ''
-    console.log(
-      `  ${installed.has(p.name) ? '●' : '○'} ${p.name.padEnd(pad)}  ${shelfOf(p)}${note[source(p.name)]}${tuned}`,
-    )
-  }
-  if (process.stdout.isTTY) {
-    const shown = query ? `${hits.length} of ${all.length}` : `${all.length}`
-    console.log(`\n${shown} palettes — ${hits.filter((p) => installed.has(p.name)).length} installed`)
-  }
-}
-
 function marketplaceNamed(home: string, sources: string[], name: string): string {
   const id = (source: string) => {
     try {
@@ -238,7 +152,7 @@ function marketplaceNamed(home: string, sources: string[], name: string): string
   }
   const hit = sources.find((s) => s === name || shownSource(s) === name || id(s) === name)
   if (!hit) {
-    throw new Error(`no marketplace named ${name} — \`ttheme marketplace\` lists them`)
+    throw new Error(`no marketplace named ${name} — the Browse tab of \`ttheme\` lists them`)
   }
   return hit
 }

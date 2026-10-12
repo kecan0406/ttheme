@@ -237,14 +237,24 @@ report() {
   (( ! broken ))
 }
 
+konsole_in_container() {
+  docker build -q -t ttheme-konsole -f "$ROOT/tests/compat/konsole.Dockerfile" "$ROOT/tests/compat" > /dev/null || return
+  docker run --rm -v "$ROOT":/work ttheme-konsole zsh tests/compat.zsh $@
+}
+
 main() {
   local -a upd
   zparseopts -D -E -F -- -update=upd || { print -u2 "usage: compat [--update] [${(j:|:)TERMINALS}…]"; return 1 }
   local -a terms=(${@:-$TERMINALS}) ran=()
-  local term
+  local term contained=0
   for term in $terms; do
     (( ${TERMINALS[(Ie)$term]} )) || { print -u2 "unknown terminal $term — one of $TERMINALS"; return 1 }
   done
+  if (( $# && ${terms[(Ie)konsole]} )) && ! installed konsole && (( $+commands[docker] )); then
+    terms=(${terms:#konsole})
+    konsole_in_container $upd konsole || contained=1
+    (( ${#terms} )) || return $contained
+  fi
   rm -rf -- $OUT
   mkdir -p $OUT
   for term in $terms; do
@@ -259,7 +269,7 @@ main() {
   if (( $#upd )); then
     for term in $ran; do update $term; done
   fi
-  report $ran
+  report $ran && (( ! contained ))
 }
 
 main $@

@@ -286,7 +286,7 @@ export function nearest(palettes: PaletteEntry[], names: string[]): string {
     (p) => !named.includes(p) && needles.some((n) => shelfOf(p).toLowerCase().includes(n)),
   )
   const near = [...named, ...shelved].map((p) => p.name).slice(0, 3)
-  return near.length > 0 ? `did you mean: ${near.join(', ')}?` : '`ttheme list` shows what is there'
+  return near.length > 0 ? `did you mean: ${near.join(', ')}?` : 'the Browse tab of `ttheme` shows what is there'
 }
 
 export function search(palettes: PaletteEntry[], query: string): PaletteEntry[] {

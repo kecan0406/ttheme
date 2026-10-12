@@ -1379,7 +1379,7 @@ __tt_cli() {
 __tt_installs() {
   local was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   __tt_cli "$@" || return
-  [[ $1 == (list|share) ]] && return 0
+  [[ $1 == share ]] && return 0
   __tt_installs_done "$was"
 }
 
@@ -1568,7 +1568,7 @@ ttheme() {
   fi
 
   case $1 in
-    list|add|remove|update|marketplace|new) __tt_installs "$@"; return ;;
+    add|update|marketplace|new) __tt_installs "$@"; return ;;
     edit|check|share)
       local REPLY
       __tt_name_of "$TTHEME_SPEC"
@@ -1614,7 +1614,7 @@ if (( ${+functions[compdef]} )); then
     local -a reply
     if (( CURRENT == 2 )); then
       compadd -- $TTHEME_VERBS help
-    elif [[ $words[2] == remove || ( $words[2] == (use|default|edit|check|share) && $CURRENT == 3 ) ]]; then
+    elif [[ $words[2] == (use|default|edit|check|share) && $CURRENT == 3 ]]; then
       compadd -- $TTHEME_ORDER
     elif [[ $words[2] == new && $words[CURRENT-1] == --from ]]; then
       compadd -- $TTHEME_ORDER
@@ -1623,7 +1623,7 @@ if (( ${+functions[compdef]} )); then
     elif [[ $words[2] == new ]]; then
       compadd -- --from --in
     elif [[ $words[2] == marketplace && $CURRENT == 3 ]]; then
-      compadd -- add remove search init
+      compadd -- add remove init
     elif [[ $words[2] == marketplace && $words[3] == (add|init) && $CURRENT == 4 ]]; then
       _files -/
     elif [[ $words[2] == (pin|unpin) && $CURRENT == 3 ]]; then
@@ -1638,11 +1638,6 @@ if (( ${+functions[compdef]} )); then
         _files -/
         [[ $words[2] == pin || ${#reply} -gt 0 ]] && compadd -S '' -- ssh:
       fi
-    elif [[ $words[2] == add && $words[CURRENT-1] == --marketplace ]]; then
-      _files -/
-    elif [[ $words[2] == add ]]; then
-      reply=(${${${(M)${(f)"$(__tt_cli list --json 2>/dev/null)"}:#*\"name\": *}#*\"name\": \"}%%\"*})
-      compadd -- --marketplace ${reply:|TTHEME_ORDER}
     fi
   }
   compdef __tt_complete ttheme

@@ -96,7 +96,7 @@ export function resolve(manifest: Manifest, names: string[]): PaletteEntry[] {
     const marketplaces = [...new Set(missing.flatMap((n) => marketplaceOf(n) ?? [])).difference(present)]
     const hint =
       marketplaces.length > 0
-        ? `add ${marketplaces.join(', ')} first — \`ttheme marketplace search\` finds a marketplace's repository`
+        ? `add ${marketplaces.join(', ')} first — the Browse tab of \`ttheme\` finds a marketplace's repository`
         : nearest(listed(manifest.palettes), missing)
     throw new Error(`not in any marketplace: ${missing.join(', ')} — ${hint}`)
   }

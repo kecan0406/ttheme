@@ -5,8 +5,9 @@
 Two cover most days: `ttheme` alone opens Preview and Browse as tabs of one
 screen — Preview tries every palette live and keeps the one you land on, Browse
 installs or drops palettes — and `ttheme use <palette>` paints this tab.
-`ttheme help` lists every command by task with what it does, and `ttheme help
-all` adds each one's options and actions, and examples:
+`ttheme help` lists the everyday commands by task with what each does, and
+`ttheme help all` adds the rest (`check` and `info`), each one's options and
+actions, and examples:
 
 ```
 This tab:
@@ -22,24 +23,18 @@ New tabs:
   config                         Edit settings in $EDITOR
 
 Palettes:
-  list [query]                   List palettes, marking what is installed
   add <palette...>               Install palettes
-  remove <palette...>            Uninstall palettes
   update [marketplace...]        Update ttheme and refresh your marketplaces
-  marketplace [action] [source]  The marketplaces you added
+  marketplace <action> [source]  Add or drop a marketplace
 
 Your own:
   new <name>                     Make a palette of your own in the palette editor
   edit [palette]                 Change a palette in the palette editor
-  check [palette]                Measure a palette against the contrast gate
   share [palette]                Print a share link and its QR code
 
 Setup:
   init                           Install the shell layer and wire your terminals
   uninstall                      Remove ttheme
-
-Support:
-  info                           Print what a bug report needs
 ```
 
 `ttheme <command> --help` (or `ttheme help <command>`) describes one command
@@ -189,7 +184,7 @@ the picture's tuning first, as `shift+enter` anywhere in the panel does in a
 terminal that tells it from `enter`, such as Ghostty — applies it as it is on
 screen and asks
 where: **Default** or **This tab**. Default records the palette as
-your default palette (so a later `add` or `remove` keeps it) and hands it to
+your default palette (so a later `add` or Browse's apply keeps it) and hands it to
 every terminal you wired, whichever one you are in, and This tab keeps it for
 the tab alone; `←`/`→` move between them, starting on Default. In `ttheme pin`
 it asks how far the pin reaches instead (see [Directory pins](#directory-pins)),
@@ -354,7 +349,7 @@ still wins:
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `tone` | the colors a new background picture is drawn in: `tone` tints it in one color of its palette, `original` keeps its own colors. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `tone` and `original`. Like the blur, it is read from `config.zsh` itself |
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
-| `TTHEME_NAMES` | `on` | characters' names in every language, which preview, browse, `list` and `find`'s search box match besides the palette names: `on` downloads them from aninames' weekly release into `~/.cache/ttheme/aninames/` (about 7 MB to download, about 65 MB there once the search index is built from them) and checks for a newer one once a day in the background; `off` leaves them as they are |
+| `TTHEME_NAMES` | `on` | characters' names in every language, which preview, browse and `find`'s search box match besides the palette names: `on` downloads them from aninames' weekly release into `~/.cache/ttheme/aninames/` (about 7 MB to download, about 65 MB there once the search index is built from them) and checks for a newer one once a day in the background; `off` leaves them as they are |
 | `TTHEME_AUTO_UPDATE` | `on` | the checks ttheme makes by itself once a day: whether npm has a newer ttheme, and the list of every marketplace whose auto-update is on ([Installing palettes](#installing-palettes)); `off` leaves both to `ttheme update`, as a `CI` environment does |
 | `TTHEME_MARKETPLACE_LOOKUP` | `on` | Browse downloads the list of marketplaces on GitHub — every repository carrying the `ttheme-marketplace` topic, read every half hour — by itself when Search marketplace opens. `off` waits for `space` or `ctrl+r` there |
 | `TTHEME_FIND_RATING` | `safe` | the ratings `find` lists, any of `safe`, `questionable` and `explicit` separated by spaces (`"safe explicit"`). Each site is read in its own vocabulary, so danbooru's `s` (sensitive) is not mistaken for yande.re's `s` (safe); zerochan keeps no rating, so its posts count as safe unless they carry a nudity tag, which makes them questionable. The set shows next to the query whenever it is not just `safe` |
@@ -487,16 +482,14 @@ foreground, the three that identify the character, then its red and green — an
 the focused row is drawn in the palette's selection color, which `ttheme`,
 `preview` and `browse` all share.
 
-The same four verbs work without the picker:
+Two verbs work without the picker:
 
 ```sh
-ttheme list jujutsu     # what your marketplaces have, and what you already installed
 ttheme add gojo geto    # two more, written into your terminal configs
-ttheme remove kyubey    # and one fewer
 ttheme update           # a newer ttheme with its palettes, and every marketplace's new list
 ```
 
-`add`, `remove` and Browse's apply rewrite `palettes.zsh`, each wired terminal's
+Dropping a palette is unmarking it in Browse. `add` and Browse's apply rewrite `palettes.zsh`, each wired terminal's
 `themes/` directory and the file its config loads from `~/.config/ttheme`, then the shell re-reads
 them — the change is live in the tab you ran it in. The first palette you install
 becomes the one new windows open with.
@@ -511,13 +504,13 @@ colors it was installed with (`~/.config/ttheme/kept.json`) until you take its
 update: `update` names the ones that have one, Browse marks them `↑`, and
 `ctrl+r` there stages one — or everything under a catalog — for enter to
 apply, pictures it newly lists included. A palette that leaves its marketplace stays
-installed from that copy; `list` marks it.
+installed from that copy; Browse marks it.
 
 Once a day ttheme also checks by itself, in the background of any command:
 whether npm has a newer ttheme, which it says once on your terminal
 (`ttheme 1.2.15 is out, you have 1.2.14 — ttheme update updates it`), and —
 for a marketplace with auto-update on, when its copy is a day old — the marketplace's
-list: `add`, `remove`, `marketplace`, `default`, `on` and `off` fetch it
+list: `add`, `marketplace`, `default`, `on` and `off` fetch it
 first, Browse in the background while it is open, the others waiting a few
 seconds at most, and say so on your terminal, never into a pipe
 (`Updated alice@pastel — 12 palettes (3 new)`), when something changed. A failed
@@ -536,12 +529,10 @@ one (`official`, the palettes in this repository) is there from `init`; any GitH
 repository with a `ttheme-marketplace.toml` at its root is another:
 
 ```sh
-ttheme marketplace search                          # the marketplaces on GitHub, listed every half hour
 ttheme marketplace add alice/ttheme-pastel         # a repository — its ttheme-marketplace.toml names it: alice@pastel
 ttheme marketplace add alice/ttheme-pastel#v1      # the same, pinned to a tag, branch or commit
 ttheme marketplace add ./my-marketplace            # a folder, read in place on every command
-ttheme add dusk --marketplace alice/ttheme-pastel  # add the marketplace and install from it in one step
-ttheme marketplace                                 # what you added: counts, auto-update, the last update
+ttheme add alice@pastel/dusk                       # then install one of its palettes
 ttheme marketplace remove alice@pastel             # installed palettes from it keep working
 ttheme marketplace check ./my-marketplace          # what an install would read from a folder, before you push it
 ```
@@ -590,7 +581,7 @@ without sending anything. Failed tries are kept in
 `~/.local/state/ttheme/marketplaces.json`.
 
 A `ttheme-marketplace.toml` names the marketplace and says who keeps it, and may carry a
-`description` (browse, `ttheme marketplace` and the marketplace page show it), the
+`description` (browse and the marketplace page show it), the
 `[renames]` above, `[[catalog]]` tables (one per folder under `palettes/`, in
 the order the lists show them: `name` the folder, `native` its title in its
 original language, shown dim beside it, and `lead` the palette whose colors

@@ -17,7 +17,7 @@ A change to a screen is checked in this order, each step only as wide as the cha
 
 1. What the screen draws, colors included, with no window: `mise run look <scenario or screen> <size> [keys]` (about 1.5 s) writes a PNG and a text grid — see CLAUDE.md.
 2. Keys and text in shell mode (below), for what a capture cannot reach: a flow across commands, a prompt's answer, files a flow writes.
-3. The golden screens it moves, by name or glob: `mise run tui theme-edit 'browse-*'` (about 3 s for two, against about 28 s for all), then `mise run tui:update <same names>` and `git diff tests/screens`.
+3. The golden screens it moves, by name or glob: `mise run tui theme-edit 'browse-*'` (about 3 s for two, against about 28 s for all), then `mise run tui --update <same names>` and `git diff tests/screens`.
 4. The parity journeys whose looks hold its text: `mise run parity --journey preview-tune --show 'preview-tune.*'` prints them, `--update` with the same `--journey` records them (about 6 s for one journey in nine terminals, against about 100 s for all), and `git diff tests/parity/facts.tsv` shows what moved. The whole walk runs once, in `mise run ci`, at the end.
 5. One window run, only for what a capture cannot show — a picture, the frame a terminal draws, the colors a real terminal paints. `--pictured` gives the last palette named a test picture first; `wait:TEXT` steps replace guessed pauses, and every `shot:NAME` brings its screen text beside the picture. Judge a thin or dim line on `zoom.zsh`'s crop, never on the 1200 px shot.
 
@@ -40,7 +40,7 @@ S=.claude/skills/sandbox/scripts/shell.zsh
 zsh $S start gojo konata          # build, wire, install these palettes, print the first screen
                                   # no palettes installs all of them; --empty none (init's new-user state);
                                   # --mine the user's own install, copied (palettes, default, marketplaces, pins, tone, pictures, settings)
-zsh $S send 'ttheme list' Enter   # tmux key names; prints the screen once it settles
+zsh $S send 'ttheme pins' Enter   # tmux key names; prints the screen once it settles
 zsh $S send Down Right Enter
 zsh $S show -e                    # current screen with SGR colors — shows which option is highlighted
 zsh $S stop
