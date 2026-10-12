@@ -60,7 +60,7 @@ const POPOVER =
 function commandOf(step: Step, theme: Theme, where: Where): string {
   if (step === 'init') return INIT
   if (step === 'use') return `ttheme use ${theme.id}`
-  return where ? `ttheme add ${theme.name} --marketplace ${where.add}` : `ttheme add ${theme.name}`
+  return where ? `ttheme marketplace add ${where.add} && ttheme add ${theme.id}` : `ttheme add ${theme.name}`
 }
 
 function signs(theme: Theme): string[] {
