@@ -401,23 +401,29 @@ typeset -g TTHEME_RELEASE_AT=-
 typeset -gi TTHEME_RELEASE_NEXT=0
 
 __tt_release_seen() {
-  local raw c l t
-  reply=(0 "" 0)
+  local raw c l t y f
+  reply=(0 "" 0 0 0)
   [[ -r $1 ]] || return 1
   raw=$(<$1) 2>/dev/null
   [[ $raw == *'"checked":'* ]] && c=${${raw#*'"checked":'}%%[^0-9]*}
   [[ $raw == *'"latest":"'* ]] && l=${${raw#*'"latest":"'}%%\"*}
   [[ $raw == *'"told":'* ]] && t=${${raw#*'"told":'}%%[^0-9]*}
+  [[ $raw == *'"trying":'* ]] && y=${${raw#*'"trying":'}%%[^0-9]*}
+  [[ $raw == *'"failed":'* ]] && f=${${raw#*'"failed":'}%%[^0-9]*}
   [[ $c == <-> ]] || c=0
   [[ $t == <-> ]] || t=0
+  [[ $y == <-> ]] || y=0
+  [[ $f == <-> ]] || f=0
   [[ $l == <->.<->.<-> ]] || l=""
-  reply=($c "$l" $t)
+  reply=($c "$l" $t $y $f)
 }
 
 __tt_release_put() {
   local json="{\"checked\":$1"
   [[ -n $2 ]] && json+=",\"latest\":\"$2\""
   (( $3 )) && json+=",\"told\":$3"
+  (( $4 )) && json+=",\"trying\":$4"
+  (( $5 )) && json+=",\"failed\":$5"
   json+="}"
   __tt_put $TTHEME_STATE_DIR/release.json "$json"
 }
@@ -439,15 +445,16 @@ __tt_release() {
   __tt_release_tty && __tt_active || return 0
   (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
   local -a at=("") reply
-  local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0
-  integer checked told now=$(( EPOCHSECONDS * 1000 ))
+  local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0 hub=$1
+  integer checked told trying failed period=86400 now=$(( EPOCHSECONDS * 1000 ))
+  [[ $hub == hub ]] && period=3600
   zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
-  [[ $at[1] == "$TTHEME_RELEASE_AT" ]] && (( EPOCHSECONDS < TTHEME_RELEASE_NEXT )) && return 0
+  [[ -z $hub && $at[1] == "$TTHEME_RELEASE_AT" ]] && (( EPOCHSECONDS < TTHEME_RELEASE_NEXT )) && return 0
   __tt_release_seen $f
-  checked=$reply[1] latest=$reply[2] told=$reply[3]
+  checked=$reply[1] latest=$reply[2] told=$reply[3] trying=$reply[4] failed=$reply[5]
   TTHEME_RELEASE_AT=$at[1] TTHEME_RELEASE_NEXT=$(( checked / 1000 + 86400 ))
-  (( EPOCHSECONDS >= TTHEME_RELEASE_NEXT )) && spawn=1
-  [[ -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1
+  (( EPOCHSECONDS >= checked / 1000 + period && EPOCHSECONDS >= failed / 1000 + 3600 )) && spawn=1
+  [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1
   (( spawn || tell )) || return 0
   zmodload -F zsh/system b:zsystem 2>/dev/null
   zmodload -F zsh/files b:zf_mkdir 2>/dev/null
@@ -456,11 +463,11 @@ __tt_release() {
   zsystem flock -t 0 -f fd $TTHEME_STATE_DIR/release.lock 2>/dev/null || return 0
   spawn=0 tell=0
   __tt_release_seen $f
-  checked=$reply[1] latest=$reply[2] told=$reply[3]
+  checked=$reply[1] latest=$reply[2] told=$reply[3] trying=$reply[4] failed=$reply[5]
   TTHEME_RELEASE_NEXT=$(( checked / 1000 + 86400 ))
-  (( EPOCHSECONDS >= TTHEME_RELEASE_NEXT )) && spawn=1 checked=$now TTHEME_RELEASE_NEXT=$(( EPOCHSECONDS + 86400 ))
-  [[ -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1 told=$now
-  (( spawn || tell )) && __tt_release_put $checked "$latest" $told
+  (( EPOCHSECONDS >= checked / 1000 + period && EPOCHSECONDS >= failed / 1000 + 3600 )) && spawn=1 checked=$now trying=$now TTHEME_RELEASE_NEXT=$(( EPOCHSECONDS + 86400 ))
+  [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1 told=$now
+  (( spawn || tell )) && __tt_release_put $checked "$latest" $told $trying $failed
   zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
   TTHEME_RELEASE_AT=$at[1]
   zsystem flock -u $fd

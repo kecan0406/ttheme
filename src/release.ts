@@ -4,7 +4,7 @@ import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import pkg from '../package.json' with { type: 'json' }
 import { writeAtomic } from './edits.ts'
-import { advise, outdated, UPDATE_HERE } from './notice.ts'
+import { advise, outdated, type ReleaseLine, type Standing, standingLine, UPDATE_HERE } from './notice.ts'
 import { configHome } from './palettes.ts'
 
 export const UPDATE_COMMAND = `npx ${pkg.name}@latest init`
@@ -12,11 +12,14 @@ export const UPDATE_COMMAND = `npx ${pkg.name}@latest init`
 const DAY = 24 * 60 * 60 * 1000
 const RETRY = 60 * 60 * 1000
 const TIMEOUT = 10_000
+const BUSY = 30_000
 
-interface Seen {
+export interface Seen {
   checked: number
   latest?: string
   told?: number
+  trying?: number
+  failed?: number
 }
 
 const RELEASE = /^(\d+)\.(\d+)\.(\d+)$/
@@ -46,6 +49,8 @@ function readSeen(): Seen {
       checked: typeof doc.checked === 'number' ? doc.checked : 0,
       ...(typeof doc.latest === 'string' ? { latest: doc.latest } : {}),
       ...(typeof doc.told === 'number' ? { told: doc.told } : {}),
+      ...(typeof doc.trying === 'number' ? { trying: doc.trying } : {}),
+      ...(typeof doc.failed === 'number' ? { failed: doc.failed } : {}),
     }
   } catch {
     return { checked: 0 }
@@ -98,7 +103,7 @@ export function startReleaseCheck(now = Date.now()): void {
     return
   }
   try {
-    writeSeen({ ...seen, checked: now })
+    writeSeen({ ...seen, checked: now, trying: now })
     spawn(process.execPath, [process.argv[1] as string, 'latest'], {
       detached: true,
       stdio: 'ignore',
@@ -107,15 +112,43 @@ export function startReleaseCheck(now = Date.now()): void {
   } catch {}
 }
 
+function settled(seen: Seen): Seen {
+  return {
+    checked: seen.checked,
+    ...(seen.latest !== undefined ? { latest: seen.latest } : {}),
+    ...(seen.told !== undefined ? { told: seen.told } : {}),
+  }
+}
+
 export async function checkLatest(): Promise<number> {
-  const seen = readSeen()
+  const seen = settled(readSeen())
   try {
     writeSeen({ ...seen, checked: Date.now(), latest: await fetchLatest() })
     return 0
   } catch {
-    writeSeen({ ...seen, checked: Date.now() - DAY + RETRY })
+    const now = Date.now()
+    writeSeen({ ...seen, checked: now - DAY + RETRY, failed: now })
     return 1
   }
+}
+
+export function standingOf(seen: Seen, now: number, running: string = pkg.version): Standing {
+  if (seen.trying !== undefined && now - seen.trying < BUSY) {
+    return 'checking'
+  }
+  if (seen.failed !== undefined) {
+    return 'failed'
+  }
+  if (seen.latest === undefined) {
+    return 'unknown'
+  }
+  return isNewer(seen.latest, running) ? 'newer' : 'current'
+}
+
+export function releaseLine(now = Date.now(), env: NodeJS.ProcessEnv = process.env): ReleaseLine {
+  const seen = readSeen()
+  const standing = autoWanted(env) ? standingOf(seen, now) : 'unknown'
+  return { standing, line: standingLine(standing, pkg.version, seen.latest) }
 }
 
 function installedCli(home = configHome()): string {

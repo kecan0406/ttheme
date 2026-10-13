@@ -6,6 +6,7 @@ import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
 import { type PaletteEntry, swatch } from './manifest.ts'
 import type { Listed, Listing } from './marketplace-index.ts'
 import { listedMatches } from './marketplaces.ts'
+import type { ReleaseLine } from './notice.ts'
 import {
   type Card,
   type Extra,
@@ -62,6 +63,7 @@ interface BrowseOptions {
   io: BrowseIo
   order?: (entries: PaletteEntry[]) => PaletteEntry[]
   hub?: HubTab
+  release?: () => ReleaseLine
   lookups?: boolean
   color?: boolean
   fx?: PromptFx
@@ -116,6 +118,7 @@ interface Bar {
   note?: string
   keys: Hint[]
   right?: Hint
+  standing?: ReleaseLine
 }
 
 const LEFT_MIN = 40
@@ -177,6 +180,8 @@ export class BrowsePanel {
   private readonly color: boolean
   private readonly p: Paint
   private readonly hub: HubTab | undefined
+  private readonly release: (() => ReleaseLine) | undefined
+  private standing: ReleaseLine | undefined
   private readonly owns: boolean
   private readonly input: Readable | undefined
   private readonly output: (Writable & { columns?: number; rows?: number }) | undefined
@@ -223,6 +228,8 @@ export class BrowsePanel {
     this.color = opts.color ?? true
     this.p = painter(this.color)
     this.hub = opts.hub
+    this.release = opts.release
+    this.standing = opts.release?.()
     this.owns = opts.owns ?? false
     this.input = opts.input
     this.output = opts.output
@@ -303,10 +310,16 @@ export class BrowsePanel {
           if (lists.some((list) => list.moving())) {
             glide.start()
           }
-          return { lines, ticking: this.phase === 'applying' || this.fetching() }
+          return {
+            lines,
+            ticking: this.phase === 'applying' || this.fetching() || this.standing?.standing === 'checking',
+          }
         },
         beat: () => {
           this.beat += 1
+          if (this.standing?.standing === 'checking') {
+            this.standing = this.release?.()
+          }
         },
       })
       this.screen = screen
@@ -1508,14 +1521,19 @@ export class BrowsePanel {
   private keyBar(bar: Bar, width: number): string {
     const badge = `${pillOf(this.p, bar.badge)}${this.color ? '  ' : ' '}`
     const hint = ([key, label]: Hint) => hintOf(this.p, key, label)
-    let { note, keys, right } = bar
+    let { note, keys, right, standing } = bar
     for (;;) {
       const line = `${badge}${[bar.lead ?? '', note ? this.p.dim(note) : '', ...keys.map(hint)].filter(Boolean).join('   ')}`
-      const tail = right ? hint(right) : ''
-      if (cells(line) + (right ? 3 + cells(tail) : 0) <= width) {
-        return right ? spread(line, tail, width) : fit(line, width, false)
+      const mark = standing
+        ? (standing.standing === 'newer' || standing.standing === 'failed' ? this.p.warn : this.p.dim)(standing.line)
+        : ''
+      const tail = [right ? hint(right) : '', mark].filter(Boolean).join('   ')
+      if (cells(line) + (tail ? 3 + cells(tail) : 0) <= width) {
+        return tail ? spread(line, tail, width) : fit(line, width, false)
       }
-      if (note) {
+      if (standing) {
+        standing = undefined
+      } else if (note) {
         note = undefined
       } else if (keys.length > 2 || (!right && keys.length > 1)) {
         keys = keys.toSpliced(-2, 1)
@@ -1796,6 +1814,7 @@ export class BrowsePanel {
       badge: filter ? 'BROWSE (FILTER)' : 'BROWSE',
       keys: [...(this.side === 'panel' ? this.panelKeys(apply) : this.cardKeys(apply)), ...tail],
       right: filter ? ['esc', 'clear filter'] : this.side === 'panel' ? ['esc', 'back'] : ['esc', 'cancel'],
+      ...(this.standing ? { standing: this.standing } : {}),
     }
   }
 

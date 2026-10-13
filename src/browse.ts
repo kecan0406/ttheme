@@ -28,7 +28,7 @@ import {
   type Tried,
   updateNote,
 } from './refresh.ts'
-import { autoWanted } from './release.ts'
+import { autoWanted, releaseLine } from './release.ts'
 import {
   autoUpdates,
   isLocal,
@@ -248,7 +248,7 @@ export async function runBrowse(): Promise<number> {
     updates: updateNames(home),
     tuned: Object.keys(readTone(home)),
     ...(startup ? { startup } : {}),
-    ...(hub ? { hub } : {}),
+    ...(hub ? { hub, release: () => releaseLine() } : {}),
     due: auto ? dueSources(home, state) : [],
     io: browseIo(home, state, fetched, lookups.signal, (result, report) =>
       into({ say: report.say, set: report.status }, () => applyBrowse(home, marketplaces, result, fetched)),

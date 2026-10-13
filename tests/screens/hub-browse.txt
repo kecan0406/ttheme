@@ -21,4 +21,4 @@
                                                  ├────────────────────────────────────────────────┤
                                                  │    × Remove marketplace                        │
                                                  ╰────────────────────────────────────────────────╯
- [BROWSE] → open   space pick   ? keys                                                   esc cancel
+ [BROWSE] → open   space pick   ? keys                                   esc cancel   ttheme ‹version›

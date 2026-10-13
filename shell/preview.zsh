@@ -445,11 +445,38 @@ __tt_pv_head() {
   return 0
 }
 
+__tt_pv_standing() {
+  local -a reply
+  local standing=unknown latest="" was=$vline
+  integer now
+  vchk=0 vwarn=0
+  if [[ $TTHEME_AUTO_UPDATE != off && ${CI:-false} == false ]]; then
+    (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
+    now=$(( EPOCHSECONDS * 1000 ))
+    __tt_release_seen $TTHEME_STATE_DIR/release.json
+    latest=$reply[2]
+    if (( reply[4] && now - reply[4] < 30000 )); then
+      standing=checking vchk=1
+    elif (( reply[5] )); then
+      standing=failed vwarn=1
+    elif [[ -n $latest ]]; then
+      standing=current
+      __tt_newer $latest $TTHEME_VERSION && standing=newer vwarn=1
+    fi
+  fi
+  if [[ $standing == newer ]]; then
+    printf -v vline $TTHEME_STANDING[$standing] $TTHEME_VERSION $latest
+  else
+    printf -v vline $TTHEME_STANDING[$standing] $TTHEME_VERSION
+  fi
+  [[ $vline != "$was" ]]
+}
+
 __tt_pv_foot() {
   setopt localoptions extendedglob
-  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] on=$pl badge="" lead="" note="" right="" text line plain hex tb=EDIT
+  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] on=$pl badge="" lead="" note="" right="" ver="" vst text line plain hex tb=EDIT
   local -a kk=() kl=() seg=()
-  local -i end=$1 i lwid rwid room
+  local -i end=$1 i lwid rwid vwid rend room
   (( color )) || b= d= z= y= on=
   if (( color )) && [[ -n $applied && $applied != "$painted" ]]; then
     hex=${${=applied}[8]#\#}
@@ -547,6 +574,8 @@ __tt_pv_foot() {
       right=$b"esc"$z$d" restore"$z
       [[ -n $cdot ]] && right+=" $ac$cdot$z $cn"
     fi
+    (( hub )) && ver=$vline vst=$d
+    (( vwarn )) && vst=$y
   fi
   if (( msgt > 0 )) && [[ -z $pick ]]; then
     text=$msg
@@ -555,7 +584,7 @@ __tt_pv_foot() {
       while [[ -n $text ]] && (( ${(m)#text} > room - 1 )); do text=${text[1,-2]}; done
       text+=…
     fi
-    lead=$y$text$z note="" kk=() kl=()
+    lead=$y$text$z note="" kk=() kl=() ver=""
   fi
   while :; do
     seg=()
@@ -576,8 +605,11 @@ __tt_pv_foot() {
     lwid=${(m)#plain}
     plain=${right//$'\e'\[[0-9;]##m/}
     rwid=${(m)#plain}
-    (( lwid <= end && (! rwid || lwid + 3 + rwid <= end) )) && break
-    if [[ -n $note ]]; then
+    vwid=${(m)#ver}
+    (( lwid <= end && lwid + (rwid ? 3 + rwid : 0) + (vwid ? 3 + vwid : 0) <= end )) && break
+    if [[ -n $ver ]]; then
+      ver=""
+    elif [[ -n $note ]]; then
       note=""
     elif (( ${#kk} > 2 )); then
       kk[-2]=() kl[-2]=()
@@ -594,7 +626,12 @@ __tt_pv_foot() {
     line=$REPLY
   fi
   out+=$line$'\e[K'
-  [[ -n $right ]] && out+=$'\e['$(( end - rwid + 1 ))'G'$right
+  rend=$end
+  if [[ -n $ver ]]; then
+    out+=$'\e['$(( end - vwid + 1 ))'G'$vst$ver$z
+    rend=$(( end - vwid - 3 ))
+  fi
+  [[ -n $right ]] && out+=$'\e['$(( rend - rwid + 1 ))'G'$right
   local -i zc=1 zw
   [[ -n $badge ]] && (( zc += ${(m)#badge} + (color ? 4 : 3) ))
   if [[ -n $lead ]]; then
@@ -616,7 +653,7 @@ __tt_pv_foot() {
   done
   if [[ -n $right ]]; then
     plain=${right//$'\e'\[[0-9;]##m/}
-    pvz+=("$ph $(( end - rwid + 1 )) $end key ${plain%% *}")
+    pvz+=("$ph $(( rend - rwid + 1 )) $rend key ${plain%% *}")
   fi
   return 0
 }
@@ -1347,6 +1384,7 @@ __tt_pv_getch() {
       (( msgt -= gstep ? 6 : 20 ))
       (( msgt > 0 )) || return 1
     fi
+    (( vchk )) && __tt_pv_standing && return 1
     (( gstep )) && { gstep=$(( gstep - 1 )); tick=1; return 1 }
     (( ! te && SECONDS >= exnext )) && { __tt_pv_roll; gstep=8; tick=1; return 1 }
   done
@@ -2374,7 +2412,8 @@ __tt_preview() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
   local mode=$1 pdir=${2:-$PWD} hubwas=""
-  local -i hub=0 hubleft=0
+  local -i hub=0 hubleft=0 vchk=0 vwarn=0
+  local vline=""
   [[ $mode == hub ]] && hub=1
   if [[ ! -t 0 || ! -t 1 ]]; then
     print -u2 "ttheme $mode: needs a terminal"
@@ -2421,6 +2460,10 @@ __tt_preview() {
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && __tt_pv_goto "$cn"
   __tt_pv_lw
   (( reply[2] >= 48 )) && help=2
+  if (( hub )); then
+    __tt_release hub
+    __tt_pv_standing
+  fi
   local tty=""
   local -i TTHEME_RAW=0
   {

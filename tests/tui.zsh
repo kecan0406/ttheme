@@ -117,6 +117,7 @@ await() {
 normalize() {
   expand -t 8 |
     sed -E -e 's/Search….*│$/Search… ‹hint› │/' -e t -e 's/Search….*/Search… ‹hint›/' |
+    sed -E -e 's/ttheme [0-9]+\.[0-9]+\.[0-9]+/ttheme ‹version›/' |
     sed -e 's/[[:space:]]*$//' |
     awk 'BEGIN{n=0} {lines[n++]=$0} END{while(n>0 && lines[n-1]=="") n--; for(i=0;i<n;i++) print lines[i]}'
 }

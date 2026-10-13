@@ -21,4 +21,4 @@
 
 
 
-[PREVIEW] → open   ? keys                                                                esc restore
+[PREVIEW] → open   ? keys                                                esc restore   ttheme ‹version›

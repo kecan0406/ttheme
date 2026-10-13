@@ -127,7 +127,10 @@ function normalized(text: string): string {
       continue
     }
     lines.push(
-      line.replace(/Search….*?\s{2,}(?=\d+\/\d+)/, 'Search… ‹hint›  ').replace(/Search… e\.g\..*$/, 'Search… ‹hint›'),
+      line
+        .replace(/Search….*?\s{2,}(?=\d+\/\d+)/, 'Search… ‹hint›  ')
+        .replace(/Search… e\.g\..*$/, 'Search… ‹hint›')
+        .replace(/ttheme \d+\.\d+\.\d+/, 'ttheme ‹version›'),
     )
   }
   return lines.join('\n')

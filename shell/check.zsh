@@ -563,7 +563,7 @@ TTHEME_STARTUP=
   rm -rf $TTHEME_STATE_DIR
   tab
   (( spawned == 1 )) || { print -u2 "a first tab with no stamp did not start the check: spawned=$spawned"; exit 1 }
-  [[ $(<$stamp) == '{"checked":'<13->'}' && ! -s $err ]] || { print -u2 "the claim wrote the wrong stamp, or a first check told: $(<$stamp) $(<$err)"; exit 1 }
+  [[ $(<$stamp) == '{"checked":'<13->',"trying":'<13->'}' && ! -s $err ]] || { print -u2 "the claim wrote the wrong stamp, or a first check told: $(<$stamp) $(<$err)"; exit 1 }
   __tt_release 2>> $err
   tab
   (( spawned == 1 )) || { print -u2 "a second tab started the check again within a day: spawned=$spawned"; exit 1 }
@@ -604,6 +604,52 @@ TTHEME_STARTUP=
   wait
   tab
   (( spawned == 4 )) || { print -u2 "a tab did not start the check once the lock was free: spawned=$spawned"; exit 1 }
+  hub() { TTHEME_RELEASE_AT=- TTHEME_RELEASE_NEXT=0; : >| $err; __tt_release hub 2>> $err }
+  put "{\"checked\":$(( now - 3600000 - 5000 ))}"
+  tab
+  (( spawned == 4 )) || { print -u2 "a prompt checked an hour after the last check: spawned=$spawned"; exit 1 }
+  put "{\"checked\":$(( now - 3600000 - 5000 )),\"latest\":\"1.2.30\"}"
+  hub
+  (( spawned == 5 )) || { print -u2 "the hub did not check an hour after the last check: spawned=$spawned"; exit 1 }
+  [[ $(<$stamp) == '{"checked":'<13->',"latest":"1.2.30","trying":'<13->'}' && ! -s $err ]] || { print -u2 "the hub's claim wrote the wrong stamp, or told: $(<$stamp) $(<$err)"; exit 1 }
+  put "{\"checked\":$(( now - 3600000 + 60000 )),\"latest\":\"1.2.30\"}"
+  hub
+  (( spawned == 5 )) && [[ ! -s $err ]] || { print -u2 "the hub checked within the hour or told a release: spawned=$spawned $(<$err)"; exit 1 }
+  put "{\"checked\":$(( now - 82800000 )),\"failed\":$(( now - 600000 ))}"
+  hub
+  (( spawned == 5 )) || { print -u2 "the hub retried within an hour of a failure: spawned=$spawned"; exit 1 }
+  put "{\"checked\":$(( now - 82800000 )),\"failed\":$(( now - 3700000 ))}"
+  hub
+  (( spawned == 6 )) && [[ $(<$stamp) == '{"checked":'<13->',"trying":'<13->',"failed":'<13->'}' ]] || { print -u2 "the hub did not retry an hour after a failure, or lost the failure: spawned=$spawned $(<$stamp)"; exit 1 }
+  TTHEME_AUTO_UPDATE=off hub
+  CI=true hub
+  (( spawned == 6 )) || { print -u2 "the hub checked with updates off or on CI: spawned=$spawned"; exit 1 }
+) || exit 1
+(
+  zmodload -F zsh/datetime p:EPOCHSECONDS
+  TTHEME_STATE_DIR=$XDG_CONFIG_HOME/standing TTHEME_VERSION=1.2.29 TTHEME_AUTO_UPDATE=on
+  typeset -gA TTHEME_STANDING=(unknown 'ttheme %s' checking 'ttheme %s  checking…' current 'ttheme %s  ✓ up to date' newer 'ttheme %s  ⇡ %s available' failed 'ttheme %s  ✗ check failed')
+  now=$(( EPOCHSECONDS * 1000 ))
+  stand() {
+    local vline="" in=$1
+    local -i vchk=0 vwarn=0
+    mkdir -p $TTHEME_STATE_DIR
+    [[ -n $in ]] && print -r -- "$in" >| $TTHEME_STATE_DIR/release.json || rm -f $TTHEME_STATE_DIR/release.json
+    __tt_pv_standing
+    REPLY="$vline|$vchk|$vwarn"
+  }
+  stand ''
+  [[ $REPLY == 'ttheme 1.2.29|0|0' ]] || { print -u2 "no stamp did not read as the version alone: $REPLY"; exit 1 }
+  stand "{\"checked\":$now,\"trying\":$now}"
+  [[ $REPLY == 'ttheme 1.2.29  checking…|1|0' ]] || { print -u2 "a check under way did not read as checking: $REPLY"; exit 1 }
+  stand "{\"checked\":$now,\"latest\":\"1.2.29\",\"trying\":$(( now - 40000 ))}"
+  [[ $REPLY == 'ttheme 1.2.29  ✓ up to date|0|0' ]] || { print -u2 "a claim older than 30 s still read as checking: $REPLY"; exit 1 }
+  stand "{\"checked\":$now,\"latest\":\"1.2.30\"}"
+  [[ $REPLY == 'ttheme 1.2.29  ⇡ 1.2.30 available|0|1' ]] || { print -u2 "a newer release did not read as available: $REPLY"; exit 1 }
+  stand "{\"checked\":$(( now - 82800000 )),\"latest\":\"1.2.30\",\"failed\":$now}"
+  [[ $REPLY == 'ttheme 1.2.29  ✗ check failed|0|1' ]] || { print -u2 "a failed check did not read as failed: $REPLY"; exit 1 }
+  TTHEME_AUTO_UPDATE=off stand "{\"checked\":$now,\"latest\":\"1.2.30\"}"
+  [[ $REPLY == 'ttheme 1.2.29|0|0' ]] || { print -u2 "updates off still read a release: $REPLY"; exit 1 }
 ) || exit 1
 (
   __tt_cli() { print -r -- "$*" >| $XDG_CONFIG_HOME/relcli }
