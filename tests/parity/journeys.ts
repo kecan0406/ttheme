@@ -165,6 +165,19 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'off-busy',
+    about: 'ttheme off typed in another tab takes the colors off a tab running a program once it comes to the front',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use kita')
+      await p.launch(a, BUSY, 'busy>')
+      const b = await p.open()
+      await p.type(b, 'ttheme off')
+      await p.focus(a)
+      await p.look('busy', { want: 'own', busy: true })
+    },
+  },
+  {
     id: 'off-pin',
     about: 'while ttheme is off, a pinned directory and a pinned host leave the tab in the terminal’s own colors',
     async run(p) {

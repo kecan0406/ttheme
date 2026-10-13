@@ -145,10 +145,19 @@ __tt_ghostty_take() {
   rec=(${=${"$(<$TTHEME_GHOSTTY_TABS/$key)"}})
   [[ $rec[1] == "$ans[3]" ]] || TTHEME_GHOSTTY_IDLE=0
   pal=${rec[3]#-}
-  [[ $rec[2] != - && -z $TTHEME_STARTUP ]] && pal=""
+  if [[ $rec[2] != - && -z $TTHEME_STARTUP ]]; then
+    pal=""
+    (( TTHEME_GHOSTTY_IDLE )) || __tt_ghostty_unpaint $key $rec[1] $rec[4]
+  fi
   [[ -n $pal && -n ${TTHEME_PALETTE[$pal]} ]] || return 0
   __tt_shown "$pal" force && __tt_reload_ghostty
   return 0
+}
+
+__tt_ghostty_unpaint() {
+  [[ $3 == /dev/* && -w $3 ]] || return 0
+  { print -rn -- $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\' >| $3 } 2>/dev/null || return 0
+  __tt_put $TTHEME_GHOSTTY_TABS/$1 "$2 - - $3" 2>/dev/null
 }
 
 __tt_ghostty_tick() {

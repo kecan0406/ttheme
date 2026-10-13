@@ -71,6 +71,9 @@ off-behind.back.colors	own	=	=	=	=	=	=	=	=	=
 off-behind.back.picture	none	=	=	=	=	=	=	=	=	=
 off-behind.back.wears	none	=	=	=	=	=	=	=	=	=
 off-behind.back.issue	-	=	=	=	=	=	=	=	=	=
+off-busy.busy.colors	own	=	kita	kita	kita	kita	=	=	kita	kita
+off-busy.busy.picture	none	=	kita	kita	=	kita	=	=	kita	kita
+off-busy.busy.issue	-	=	=	=	=	=	=	=	=	=
 off-pin.dir.colors	own	=	=	=	=	=	=	=	=	=
 off-pin.dir.picture	none	=	=	=	=	=	=	=	=	=
 off-pin.dir.wears	none	=	=	=	=	=	=	=	=	=
