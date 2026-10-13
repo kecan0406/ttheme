@@ -397,6 +397,7 @@ tune= tpick= bgcw=0 out=
   [[ $out == *"c  colors"* ]] ||
     { print -u2 "the help did not name the colors key: $out"; exit 1 }
 ) || exit 1
+TTHEME_STARTUP=miku
 proj=$XDG_CONFIG_HOME/proj
 mkdir -p $proj/sub/deep $proj-sibling
 ln -s $proj/sub $XDG_CONFIG_HOME/link
@@ -467,6 +468,7 @@ cd $OLDPWD
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && -z $TTHEME_PIN ]] ||
     { print -u2 "a pin dropped in another tab did not give a tab under it its palette back: pin=$TTHEME_PIN"; exit 1 }
 ) || exit 1
+TTHEME_STARTUP=
 (
   __tt_apply() { : }
   __tt_fresh() { : }
@@ -512,7 +514,7 @@ cd $OLDPWD
     __tt_ssh_rule $host || REPLY=-
     [[ $REPLY == "$want" ]] || { print -u2 "ssh to $host took the pin ${(q+)REPLY}, not $want"; exit 1 }
   done
-  TTHEME_SPEC=$TTHEME_PALETTE[miku]
+  TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku]
   __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa'
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[homura]" ]] || { print -u2 "ssh to a pinned host did not paint its palette"; exit 1 }
   __tt_prompt
@@ -523,7 +525,10 @@ cd $OLDPWD
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[rei]" ]] || { print -u2 "the prompt after ssh overrode a palette painted by hand"; exit 1 }
   __tt_ran 'ssh tusa uptime' 'ssh tusa uptime' 'ssh tusa uptime'
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[rei]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "a remote command painted the tab"; exit 1 }
-  TTHEME_SPEC= resets=0
+  TTHEME_STARTUP=
+  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa'
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[rei]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "ssh to a pinned host painted the tab while ttheme is off"; exit 1 }
+  TTHEME_STARTUP=miku TTHEME_SPEC= resets=0
   __tt_osc_reset() { (( ++resets )) }
   __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa'
   __tt_prompt

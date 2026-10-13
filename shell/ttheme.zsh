@@ -360,6 +360,7 @@ __tt_dir_rule() {
 
 __tt_dir_sync() {
   local REPLY="" spec=""
+  [[ -n $TTHEME_STARTUP ]] || return 0
   __tt_dir_rule "$PWD" || REPLY=""
   if [[ -n $REPLY ]]; then
     spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
@@ -493,6 +494,7 @@ __tt_ran() {
   local REPLY name
   TTHEME_RAN=1
   [[ ${${(z)3}[1]:t} == tmux ]] && TTHEME_MUXED=1
+  [[ -n $TTHEME_STARTUP ]] || return 0
   [[ $3 == *ssh* ]] && __tt_ssh_host "$3" && __tt_ssh_rule "$REPLY" || return 0
   name=$TTHEME_PINS[$REPLY]
   TTHEME_SSH_BACK=$TTHEME_SPEC TTHEME_SSH_SPEC=$TTHEME_PALETTE[$name]

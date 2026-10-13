@@ -71,6 +71,17 @@ off-behind.back.colors	own	=	=	=	=	=	=	=	=	=
 off-behind.back.picture	none	=	=	=	=	=	=	=	=	=
 off-behind.back.wears	none	=	=	=	=	=	=	=	=	=
 off-behind.back.issue	-	=	=	=	=	=	=	=	=	=
+off-pin.dir.colors	own	=	=	=	=	=	=	=	=	=
+off-pin.dir.picture	none	=	=	=	=	=	=	=	=	=
+off-pin.dir.wears	none	=	=	=	=	=	=	=	=	=
+off-pin.dir.issue	-	=	=	=	=	=	=	=	=	=
+off-pin.host.colors	own	=	=	=	=	=	=	=	=	=
+off-pin.host.picture	none	=	=	=	=	=	=	=	=	=
+off-pin.host.issue	-	=	=	=	=	=	=	=	=	=
+off-pin.back.colors	own	=	=	=	=	=	=	=	=	=
+off-pin.back.picture	none	=	=	=	=	=	=	=	=	=
+off-pin.back.wears	none	=	=	=	=	=	=	=	=	=
+off-pin.back.issue	-	=	=	=	=	=	=	=	=	=
 on.here.colors	konata	=	=	=	=	=	=	=	=	=
 on.here.picture	konata	=	=	=	none	=	none	=	=	=
 on.here.wears	konata	=	=	=	=	=	=	=	=	=
