@@ -211,6 +211,39 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'on-pin',
+    about: 'ttheme on in a pinned directory wears the pin and not the default, and leaving the pin wears the default',
+    async run(p) {
+      p.pin('work', 'kita')
+      const a = await p.open()
+      await p.type(a, 'cd ~/work')
+      await p.type(a, 'ttheme off')
+      await p.type(a, 'ttheme on')
+      await p.look('in', { want: 'kita' })
+      await p.type(a, 'cd ~')
+      await p.look('out', { want: 'konata' })
+    },
+  },
+  {
+    id: 'on-pin-other',
+    about:
+      'a tab in a pinned directory that went off with ttheme off wears the pin again, not the default, once ttheme on reaches it',
+    async run(p) {
+      p.pin('work', 'kita')
+      const a = await p.open()
+      const b = await p.open()
+      await p.type(b, 'cd ~/work')
+      await p.focus(a)
+      await p.type(a, 'ttheme off')
+      await p.focus(b)
+      await p.look('off', { want: 'own' })
+      await p.focus(a)
+      await p.type(a, 'ttheme on')
+      await p.focus(b)
+      await p.look('on', { want: 'kita' })
+    },
+  },
+  {
     id: 'focus',
     about: 'the picture follows the tab in front',
     async run(p) {

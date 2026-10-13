@@ -80,6 +80,10 @@ __tt_follow() {
   [[ -n $TTHEME_STARTUP && "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" != "$1" && -z $TTHEME_PAINTED ]] || return 1
   __tt_active && __tt_takes_default || return 1
   TTHEME_SPEC=${TTHEME_PALETTE[$TTHEME_STARTUP]}
+  TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  __tt_pins_load
+  __tt_dir_sync
+  return 0
 }
 
 __tt_gone() {
@@ -377,6 +381,17 @@ __tt_dir_sync() {
   [[ -n $spec && $spec != "$TTHEME_SPEC" ]] || return 0
   __tt_wear "$spec"
   return 0
+}
+
+__tt_resume() {
+  local REPLY="" name=$TTHEME_STARTUP
+  TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  __tt_pins_load
+  if __tt_dir_rule "$PWD" && [[ -n ${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]} ]]; then
+    name=$TTHEME_PINS[$REPLY]
+    TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=${TTHEME_PALETTE[$name]} TTHEME_BASE_SPEC=${TTHEME_PALETTE[$TTHEME_STARTUP]}
+  fi
+  __tt_wear "${TTHEME_PALETTE[$name]}" "$name" force || { __tt_reload; __tt_reloaded }
 }
 
 __tt_chpwd() {
@@ -1410,7 +1425,7 @@ __tt_switch() {
   if [[ $1 == off ]]; then
     __tt_off_here force
   elif [[ -n $TTHEME_STARTUP ]]; then
-    __tt_wear "${TTHEME_PALETTE[$TTHEME_STARTUP]}" "$TTHEME_STARTUP" force || __tt_reload
+    __tt_resume
   fi
 }
 
