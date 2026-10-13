@@ -98,7 +98,7 @@ __tt_gone() {
 __tt_off_here() {
   local bg=${TTHEME_SPEC%% *}
   TTHEME_SPEC=
-  if __tt_shown "" || [[ $1 == reload ]]; then
+  if __tt_shown "" $1 || [[ $1 == force ]]; then
     __tt_reload
   fi
   __tt_unshown force
@@ -1406,7 +1406,7 @@ __tt_switch() {
     return 0
   fi
   if [[ $1 == off ]]; then
-    __tt_off_here reload
+    __tt_off_here force
   elif [[ -n $TTHEME_STARTUP ]]; then
     __tt_wear "${TTHEME_PALETTE[$TTHEME_STARTUP]}" "$TTHEME_STARTUP" force || __tt_reload
   fi

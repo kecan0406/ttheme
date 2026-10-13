@@ -152,6 +152,19 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'off-behind',
+    about: 'ttheme off typed in a tab that is not in front takes its picture off too',
+    async run(p) {
+      const a = await p.open()
+      const b = await p.open()
+      await p.type(b, 'ttheme use kita')
+      await p.focus(a)
+      await p.type(b, 'ttheme off')
+      await p.focus(b)
+      await p.look('back', { want: 'own' })
+    },
+  },
+  {
     id: 'on',
     about: 'ttheme on wears the default in this tab and new tabs, and a tab that went off takes it back at its focus',
     async run(p) {

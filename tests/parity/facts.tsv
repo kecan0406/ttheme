@@ -67,6 +67,10 @@ off.new.colors	own	=	=	=	=	=	=	=	=	=
 off.new.picture	none	=	=	=	=	=	=	=	=	=
 off.new.wears	none	=	=	=	=	=	=	=	=	=
 off.new.issue	-	=	=	=	=	=	=	=	=	=
+off-behind.back.colors	own	=	=	=	=	=	=	=	=	=
+off-behind.back.picture	none	=	=	=	=	=	=	=	=	=
+off-behind.back.wears	none	=	=	=	=	=	=	=	=	=
+off-behind.back.issue	-	=	=	=	=	=	=	=	=	=
 on.here.colors	konata	=	=	=	=	=	=	=	=	=
 on.here.picture	konata	=	=	=	none	=	none	=	=	=
 on.here.wears	konata	=	=	=	=	=	=	=	=	=
