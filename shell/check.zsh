@@ -549,6 +549,7 @@ TTHEME_STARTUP=
   rm -f $TTHEME_PINS_FILE
 ) || exit 1
 (
+  unset CI
   __tt_active() { return 0 }
   __tt_release_tty() { return 0 }
   zmodload -F zsh/datetime p:EPOCHSECONDS
@@ -626,6 +627,7 @@ TTHEME_STARTUP=
   (( spawned == 6 )) || { print -u2 "the hub checked with updates off or on CI: spawned=$spawned"; exit 1 }
 ) || exit 1
 (
+  unset CI
   zmodload -F zsh/datetime p:EPOCHSECONDS
   TTHEME_STATE_DIR=$XDG_CONFIG_HOME/standing TTHEME_VERSION=1.2.29 TTHEME_AUTO_UPDATE=on
   typeset -gA TTHEME_STANDING=(unknown 'ttheme %s' checking 'ttheme %s  checking…' current 'ttheme %s  ✓ up to date' newer 'ttheme %s  ⇡ %s available' failed 'ttheme %s  ✗ check failed')
