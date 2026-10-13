@@ -158,14 +158,14 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'share',
     args: ['[palette]'],
     about:
-      'Print a share link and its QR code — the page shows the palette, and ttheme add <link> installs it anywhere, pictures included; with none named, asks to share the one this tab wears — or shares it without asking when the link goes to a pipe',
+      "Share palettes as a link or a GitHub marketplace — asks which and which palettes, then prints the link and its QR code; ttheme add <link> installs a link's palettes, pictures included, and ttheme marketplace add <owner>/<repo> adds the marketplace, which gh creates and sharing it again updates; a palette named, or a link into a pipe, shares that palette, or the one this tab wears, as a link without asking",
     section: 'own',
     flags: {
       tone: {
         type: 'string',
         value: '<tuned|original>',
         choices: ['tuned', 'original'],
-        about: 'Share it as you tuned it, or as it was — asked when you tuned it and omit this',
+        about: 'Share the palettes you tuned as you tuned them, or as they were — asked when you omit this',
       },
     },
   },

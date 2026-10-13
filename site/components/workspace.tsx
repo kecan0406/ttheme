@@ -186,6 +186,11 @@ export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes
         <Icon node={clear ? Check : TriangleAlert} class={clear ? 'text-success' : 'text-warning'} />
         {escapeHtml(`gate ${passed}/${gate.length}`)}
       </Button>
+      {theme.from ? (
+        <span class="text-xs text-muted-foreground" safe>
+          {`from ${theme.from}`}
+        </span>
+      ) : null}
       <span class="text-xs text-muted-foreground" safe>
         {`ansi from ${theme.ansiSource}`}
       </span>

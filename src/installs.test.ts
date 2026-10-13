@@ -8,7 +8,7 @@ import { writeOfficial } from './available.ts'
 import { runAdd, runDefault } from './installs.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { withMarketplaces } from './marketplaces.ts'
-import { draftOf, shareCode, shareLink } from './own.ts'
+import { bundleCode, draftOf, shareCode, shareLink } from './own.ts'
 import { readInstalled, sync, writeInstalled } from './palettes.ts'
 
 function entry(name: string, order: number): PaletteEntry {
@@ -96,6 +96,14 @@ test('a share link to a palette already in a marketplace installs it, and one wi
     inHome(home, () => runAdd([sukuna])),
     /sukuna is already in the official marketplace and differs/,
   )
+})
+
+test('a share link with several palettes installs each one it can and skips one whose colors differ', async () => {
+  const home = installedHome(['gojo'])
+  const geto = draftOf(manifest.palettes[1] as PaletteEntry)
+  const sukuna = { ...draftOf(manifest.palettes[2] as PaletteEntry), background: '#000000' }
+  await inHome(home, () => runAdd([shareLink(bundleCode([geto, sukuna]))]))
+  assert.deepEqual(readInstalled(home).palettes, ['gojo', 'geto'])
 })
 
 test('installed.json keeps an auto-update setting only where it differs from the default', () => {

@@ -10,6 +10,7 @@ const theme: Theme = {
   catalog: 'Madoka Magica',
   native: null,
   lead: false,
+  from: null,
   ansiSource: 'test',
   background: '#fff8f7',
   foreground: '#1f1c39',

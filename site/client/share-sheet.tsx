@@ -123,7 +123,7 @@ class ShareSheet extends HTMLElement {
     const list = this.querySelector('[data-pictures]')
     if (!list) return
     try {
-      const response = await fetch(`${location.pathname.replace(/\/$/, '')}/credits.json`)
+      const response = await fetch(`${location.pathname.replace(/\/$/, '')}/credits.json${location.search}`)
       if (!response.ok) return
       fill(list, html(<PictureRows pictures={(await response.json()) as Picture[]} />))
     } catch {}

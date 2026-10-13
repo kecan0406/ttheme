@@ -38,6 +38,7 @@ export interface SharedPicture {
 export interface Theme {
   name: string
   base?: string
+  from?: string
   catalog?: string
   native?: string
   nativeNames?: string[]
@@ -352,7 +353,7 @@ function readNativeNames(file: string, raw: unknown): string[] {
 
 export const PALETTE_KEYS: Readonly<Record<string, readonly string[]>> = {
   '': ['$schema', 'meta', 'colors', 'contrast', 'ghostty', 'picture'],
-  meta: ['name', 'base', 'ansi_source', 'booru', 'booru_sites', 'native_names', 'signature', 'order', 'role'],
+  meta: ['name', 'base', 'from', 'ansi_source', 'booru', 'booru_sites', 'native_names', 'signature', 'order', 'role'],
   colors: ['background', 'foreground', 'cursor', 'selection_background', 'ansi'],
   contrast: ['waive', 'reason'],
   ghostty: ['icon_ghost', 'icon_screen'],
@@ -408,7 +409,11 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   if (base !== undefined && !shared) {
     fail(file, 'meta.base is for marketplace palettes')
   }
-  const from = base === undefined ? undefined : place.bases?.get(base)
+  const based = base === undefined ? undefined : place.bases?.get(base)
+  const origin = meta.from === undefined ? undefined : paletteName(file, 'meta.from', meta.from)
+  if (origin !== undefined && !shared) {
+    fail(file, 'meta.from is for marketplace palettes')
+  }
 
   const catalog = place.catalog === undefined ? undefined : place.catalogs.get(place.catalog)
   if (!shared && !catalog) {
@@ -447,11 +452,12 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   return {
     name,
     ...(base ? { base } : {}),
+    ...(origin ? { from: origin } : {}),
     ...(place.catalog === undefined ? {} : { catalog: place.catalog }),
     native: catalog?.native,
     ...(nativeNames ? { nativeNames } : {}),
     lead: catalog?.lead === name,
-    order: shared ? (from?.order ?? SHARED_ORDER) : Number(meta.order),
+    order: shared ? (based?.order ?? SHARED_ORDER) : Number(meta.order),
     role,
     ansiSource:
       shared && meta.ansi_source === undefined

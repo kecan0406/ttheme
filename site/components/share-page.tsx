@@ -1,7 +1,7 @@
 import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
 import { Check, ChevronDown, Code, Copy, Image, Link, List, Plus, SquareDashedMousePointer, Terminal } from 'lucide'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, LinkButton } from '@/components/ui/button'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { INIT } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
@@ -254,6 +254,7 @@ function ColorsPanel({ gate, view }: { gate: GateLine[]; view: ShareView }) {
 
 function AboutPanel({ shared }: { shared: Shared }) {
   const { theme, code, link, pictures } = shared
+  const copied: [string, string][] = theme.from ? [['Copied from', theme.from]] : []
   return (
     <section id="share-about" role="tabpanel" aria-labelledby="share-tab-about" data-panel-body="about" hidden>
       <div class="border-b border-border p-4">
@@ -261,6 +262,7 @@ function AboutPanel({ shared }: { shared: Shared }) {
         <PropertyList
           rows={[
             [theme.marketplace ? 'Marketplace' : 'Catalog', shelfOf(theme)],
+            ...copied,
             ['ANSI from', theme.ansiSource],
             ['Signature', theme.signatureSlots.join(' · ')],
           ]}
@@ -303,6 +305,26 @@ function AboutPanel({ shared }: { shared: Shared }) {
         <CommandRow command={INIT} class="bg-card" />
       </div>
     </section>
+  )
+}
+
+function Strip({ shared }: { shared: Shared }) {
+  return (
+    <nav
+      data-strip
+      aria-label="palettes in this link"
+      class="flex min-w-0 items-center gap-1.5 overflow-x-auto border-b border-border bg-background px-4 [grid-area:strip] [scrollbar-width:none] max-[760px]:py-2"
+    >
+      <span class="mr-2 flex-none text-xs font-medium text-muted-foreground" safe>
+        {`${shared.palettes.length} palettes`}
+      </span>
+      {shared.palettes.map((theme, at) => (
+        <LinkButton variant="ghost" size="sm" href={`?i=${at}`} aria-current={at === shared.index ? 'page' : undefined}>
+          <Signature theme={theme} />
+          <span safe>{theme.name}</span>
+        </LinkButton>
+      ))}
+    </nav>
   )
 }
 
@@ -360,6 +382,11 @@ function Bar({ shared }: { shared: Shared }) {
         class="m-0 hidden w-[min(440px,calc(100vw-32px))] gap-2.5 rounded-3xl border border-border bg-popover p-4 text-popover-foreground shadow-lg inset-auto open:grid"
       >
         <CommandRow command={`ttheme add ${code}`} class="bg-card" />
+        {shared.palettes.length > 1 ? (
+          <p class="text-xs text-muted-foreground" safe>
+            {`It installs all ${shared.palettes.length} palettes in this link.`}
+          </p>
+        ) : null}
         {pictures.length > 0 ? (
           <p class="text-xs text-muted-foreground" safe>
             {bringing(pictures.length)}
@@ -422,6 +449,7 @@ function Stage({ shared, builder }: { shared: Shared; builder: Builder }) {
 export function SharePage({ shared, builder }: { shared: Shared; builder: Builder }) {
   return (
     <share-sheet class="builder">
+      {shared.palettes.length > 1 ? <Strip shared={shared} /> : null}
       <div class="border-r border-b border-border bg-sidebar [grid-area:tabs] max-[760px]:border-t max-[760px]:border-r-0">
         <TabsList label="sidebar" class="h-full">
           <TabsTrigger

@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { available, readKept, readMarketplaces, updatesOf, writeKept } from './available.ts'
-import { adopt } from './craft.ts'
+import { adopt, type Refused } from './craft.ts'
 import { liveOf } from './live.ts'
 import type { Manifest, PaletteEntry } from './manifest.ts'
 import { idOf, localLine } from './marketplaces.ts'
@@ -30,19 +30,29 @@ export async function runAdd(asked: string[]): Promise<void> {
   const home = configHome()
   const manifest = readMarketplaces(home)
   const shared = new Map<string, PaletteEntry>()
+  const refused: Refused[] = []
   const names = [
     ...new Set(
-      asked.map((n) => {
+      asked.flatMap((n) => {
         const code = codeOf(n)
         if (!code) {
-          return n
+          return [n]
         }
-        const entry = adopt(home, code, manifest)
-        shared.set(entry.name, entry)
-        return entry.name
+        const adopted = adopt(home, code, manifest)
+        refused.push(...adopted.refused)
+        for (const entry of adopted.entries) {
+          shared.set(entry.name, entry)
+        }
+        return adopted.entries.map((e) => e.name)
       }),
     ),
   ]
+  if (names.length === 0 && refused.length > 0) {
+    throw new Error(refused.map((r) => `${r.name} ${r.why}`).join('\n'))
+  }
+  for (const r of refused) {
+    console.error(`ttheme: left ${r.name} out, since it ${r.why}`)
+  }
   const state = readInstalled(home)
   const already = names.filter((n) => state.palettes.includes(n))
   const fresh = names.filter((n) => !state.palettes.includes(n))
@@ -256,6 +266,7 @@ export async function pickPalettes(
   installed: string[],
   scope: PickerScope,
   required = false,
+  go?: string,
 ): Promise<string[] | undefined> {
   const entries = process.env.TTHEME_SORT === 'catalog' ? manifest.palettes : alphabetical(manifest.palettes)
   knowAliases(entries)
@@ -267,6 +278,7 @@ export async function pickPalettes(
     scope,
     installed,
     required,
+    ...(go ? { go } : {}),
     color: !colorless(),
     fx: promptFx(process.env.TTHEME_FX),
     onFocus: live ? (entry) => process.stdout.write(live.paint(entry)) : undefined,

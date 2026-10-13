@@ -4,11 +4,14 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { deflateRawSync } from 'node:zlib'
 
 import {
+  bundleCode,
   codeOf,
   type Draft,
   fromCode,
+  fromCodes,
   paletteToml,
   readMarketplaceDir,
   readOwnText,
@@ -90,7 +93,7 @@ test('a share code that was cut, padded or retyped is refused', () => {
   assert.throws(() => fromCode(code.slice(0, -6)), /does not add up/)
   assert.throws(() => fromCode(`${code}AAAA`), /does not add up/)
   assert.throws(() => fromCode('tt2:AAA'), /cut short/)
-  assert.throws(() => fromCode(code.replace('tt2:', 'tt1:')), /reads tt2: share codes, not tt1:/)
+  assert.throws(() => fromCode(code.replace('tt2:', 'tt1:')), /reads tt2: and tt3: share codes, not tt1:/)
   assert.throws(() => fromCode(code.replace('tt2:', 'xx:')), /starts with tt2:/)
   assert.throws(() => fromCode(`${code}!`), /characters it never uses/)
   const payload = Buffer.from(code.slice(4), 'base64url').subarray(0, -4)
@@ -99,6 +102,32 @@ test('a share code that was cut, padded or retyped is refused', () => {
   const bad = Buffer.from(payload)
   bad[1] = 0xff
   assert.throws(() => fromCode(signed(bad)), { name: 'Error', message: /text it cannot read/ })
+})
+
+const asuna: Draft = { ...draft, name: 'kecan0406@dust/asuna', from: 'kecan0406@sao/asuna', pictures: [] }
+
+test('a share link carries several palettes and where each one came from, and one palette stays tt2', () => {
+  const { pictures: _, ...bare } = asuna
+  const code = bundleCode([draft, bare])
+  assert.match(code, /^tt3:[A-Za-z0-9_-]+$/)
+  assert.deepEqual(fromCodes(code), [draft, bare])
+  assert.equal(codeOf(shareLink(code)), code)
+  assert.equal(bundleCode([draft]), shareCode(draft))
+  assert.deepEqual(fromCodes(bundleCode([{ ...draft, from: 'rei' }])), [{ ...draft, from: 'rei' }])
+  assert.throws(() => bundleCode([]), /1 to 255 palettes/)
+})
+
+const bundled = (bytes: Buffer): string =>
+  `tt3:${Buffer.concat([bytes, createHash('sha256').update(bytes).digest().subarray(0, 4)]).toString('base64url')}`
+
+test('a bundle that was cut, packs too much or names a palette twice is refused', () => {
+  const code = bundleCode([draft, asuna])
+  assert.throws(() => fromCodes(code.slice(0, -6)), /does not add up/)
+  assert.throws(() => fromCodes(code.replace('tt3:', 'tt9:')), /reads tt2: and tt3: share codes, not tt9:/)
+  assert.throws(() => fromCodes(bundled(Buffer.from([7, 1, 2]))), /packed in a way/)
+  const flood = Buffer.concat([Buffer.from([1]), deflateRawSync(Buffer.alloc(200_000, 1))])
+  assert.throws(() => fromCodes(bundled(flood)), { name: 'Error', message: /does not unpack/ })
+  assert.throws(() => fromCodes(bundleCode([draft, draft])), /holds kecan0406@dust\/rei twice/)
 })
 
 test('a share code with any one character changed is refused', () => {
@@ -114,6 +143,7 @@ test('the TOML a draft writes reads back as the same palette', () => {
   const theme = readOwnText(draft.name, paletteToml(draft), [])
   assert.equal(theme.name, 'kecan0406@dust/rei')
   assert.equal(theme.base, 'alice')
+  assert.equal(readOwnText(asuna.name, paletteToml(asuna), []).from, 'kecan0406@sao/asuna')
   assert.equal(theme.waiveReason, 'the red is the character')
   assert.deepEqual(theme.pictures, draft.pictures)
   assert.deepEqual(theme.ansi, draft.ansi)

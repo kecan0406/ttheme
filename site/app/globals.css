@@ -1210,6 +1210,11 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   overflow: hidden;
 }
 
+.builder:has(> [data-strip]) {
+  grid-template-rows: 48px 56px minmax(0, 1fr);
+  grid-template-areas: 'strip strip' 'tabs bar' 'side stage';
+}
+
 .mock-stage {
   container-type: size;
   position: relative;
@@ -1363,6 +1368,11 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     height: auto;
     min-height: 100dvh;
     overflow: visible;
+  }
+
+  .builder:has(> [data-strip]) {
+    grid-template-rows: auto auto auto 48px auto;
+    grid-template-areas: 'strip' 'bar' 'stage' 'tabs' 'side';
   }
 
   .mock-stage {

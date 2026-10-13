@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
+import { brotliCompressSync, brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
 import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure, RULES } from './contrast.ts'
@@ -27,13 +28,26 @@ import {
 } from './theme.ts'
 
 const CODE = 'tt2:'
+const BUNDLE = 'tt3:'
 export const SHARE_URL = 'https://ttheme.vercel.app/p/'
 const SUM = 4
+const UNPACKED = 64 * 1024
+const PACKS: ((bytes: Buffer) => Buffer)[] = [
+  (bytes) => bytes,
+  (bytes) => deflateRawSync(bytes, { level: 9 }),
+  (bytes) => brotliCompressSync(bytes),
+]
+const UNPACKS: ((bytes: Buffer) => Buffer)[] = [
+  (bytes) => bytes,
+  (bytes) => inflateRawSync(bytes, { maxOutputLength: UNPACKED }),
+  (bytes) => brotliDecompressSync(bytes, { maxOutputLength: UNPACKED }),
+]
 const SLOTS = ['background', 'foreground', 'cursor', 'selection', ...Array.from({ length: 16 }, (_, i) => `ansi${i}`)]
 
 export interface Draft {
   name: string
   base?: string
+  from?: string
   catalog?: string
   ansiSource?: string
   booru?: string
@@ -256,6 +270,7 @@ export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string)
   return {
     name,
     ...(entry.base ? { base: entry.base } : {}),
+    ...(entry.from ? { from: entry.from } : {}),
     ...(entry.catalog ? { catalog: entry.catalog } : {}),
     ansiSource: entry.ansiSource,
     ...(entry.booru ? { booru: entry.booru } : {}),
@@ -299,6 +314,7 @@ export function paletteToml(d: Draft): string {
     '[meta]',
     `name = ${q(slugOf(d.name))}`,
     ...(d.base ? [`base = ${q(d.base)}`] : []),
+    ...(d.from ? [`from = ${q(d.from)}`] : []),
     ...(d.ansiSource ? [`ansi_source = ${q(d.ansiSource)}`] : []),
     ...(d.booru ? [`booru = ${q(d.booru)}`] : []),
     `signature = [${d.signature.map(q).join(', ')}]`,
@@ -361,9 +377,12 @@ class Writer {
     this.u8(n)
   }
 
+  body(): Buffer {
+    return Buffer.from(this.bytes)
+  }
+
   done(): string {
-    const body = Buffer.from(this.bytes)
-    return Buffer.concat([body, checksum(body)]).toString('base64url')
+    return signed(this.body())
   }
 }
 
@@ -420,6 +439,26 @@ function checksum(bytes: Uint8Array): Buffer {
   return createHash('sha256').update(bytes).digest().subarray(0, SUM)
 }
 
+function signed(body: Buffer): string {
+  return Buffer.concat([body, checksum(body)]).toString('base64url')
+}
+
+function payloadOf(code: string, prefix: string): Buffer {
+  const body = code.slice(prefix.length)
+  if (!/^[A-Za-z0-9_-]+$/.test(body)) {
+    throw new Error('the share code holds characters it never uses — was it copied whole?')
+  }
+  const bytes = Buffer.from(body, 'base64url')
+  if (bytes.length <= SUM) {
+    throw new Error('the share code is cut short')
+  }
+  const payload = bytes.subarray(0, -SUM)
+  if (!checksum(payload).equals(bytes.subarray(-SUM))) {
+    throw new Error('the share code does not add up — was it copied whole?')
+  }
+  return payload
+}
+
 function isCode(text: string): boolean {
   return /^tt\d+:/.test(text)
 }
@@ -438,14 +477,41 @@ export function codeOf(text: string): string | undefined {
   return code && isCode(code) ? code : undefined
 }
 
-export function readCode(code: string, entries: PaletteEntry[]): PaletteEntry {
-  const draft = fromCode(code)
-  const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
-  return draft.catalog ? { ...entry, catalog: draft.catalog } : entry
+export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[] {
+  return fromCodes(code).map((draft) => {
+    const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
+    return draft.catalog ? { ...entry, catalog: draft.catalog } : entry
+  })
 }
 
 export function shareCode(d: Draft): string {
   const w = new Writer()
+  writeDraft(w, d)
+  return `${CODE}${w.done()}`
+}
+
+export function bundleCode(drafts: readonly Draft[]): string {
+  const [only] = drafts
+  if (only && drafts.length === 1 && !only.from) {
+    return shareCode(only)
+  }
+  if (drafts.length === 0 || drafts.length > 255) {
+    throw new Error(`a share link carries 1 to 255 palettes, not ${drafts.length}`)
+  }
+  const w = new Writer()
+  w.u8(drafts.length)
+  for (const d of drafts) {
+    writeDraft(w, d)
+    w.str(d.from)
+  }
+  const body = w.body()
+  const [packed] = PACKS.map((pack, method) => Buffer.concat([Buffer.from([method]), pack(body)])).sort(
+    (a, b) => a.length - b.length,
+  )
+  return `${BUNDLE}${signed(packed as Buffer)}`
+}
+
+function writeDraft(w: Writer, d: Draft): void {
   w.str(d.name)
   for (const c of [d.background, d.foreground, d.cursor, d.selection, ...d.ansi]) {
     w.color(c)
@@ -471,30 +537,62 @@ export function shareCode(d: Draft): string {
     w.u8(p.position === undefined ? 0 : (POSITIONS as readonly string[]).indexOf(p.position) + 1)
     w.u16(p.opacity === undefined ? 0 : Math.round(p.opacity * 1000) + 1)
   }
-  return `${CODE}${w.done()}`
+}
+
+function versionProblem(code: string): Error {
+  return new Error(
+    isCode(code)
+      ? `this ttheme reads ${CODE} and ${BUNDLE} share codes, not ${code.slice(0, code.indexOf(':') + 1)}`
+      : `a share code starts with ${CODE} or ${BUNDLE}`,
+  )
 }
 
 export function fromCode(code: string): Draft {
   if (!code.startsWith(CODE)) {
-    throw new Error(
-      isCode(code)
-        ? `this ttheme reads ${CODE} share codes, not ${code.slice(0, code.indexOf(':') + 1)}`
-        : `a share code starts with ${CODE}`,
-    )
+    throw versionProblem(code)
   }
-  const body = code.slice(CODE.length)
-  if (!/^[A-Za-z0-9_-]+$/.test(body)) {
-    throw new Error('the share code holds characters it never uses — was it copied whole?')
+  const r = new Reader(new Uint8Array(payloadOf(code, CODE)))
+  const draft = readDraft(r)
+  r.end()
+  return draft
+}
+
+export function fromCodes(code: string): Draft[] {
+  if (code.startsWith(CODE)) {
+    return [fromCode(code)]
   }
-  const bytes = Buffer.from(body, 'base64url')
-  if (bytes.length <= SUM) {
-    throw new Error('the share code is cut short')
+  if (!code.startsWith(BUNDLE)) {
+    throw versionProblem(code)
   }
-  const payload = bytes.subarray(0, -SUM)
-  if (!checksum(payload).equals(bytes.subarray(-SUM))) {
-    throw new Error('the share code does not add up — was it copied whole?')
+  const payload = payloadOf(code, BUNDLE)
+  const unpack = UNPACKS[payload[0] as number]
+  if (!unpack) {
+    throw new Error('the share code is packed in a way this ttheme does not read')
   }
-  const r = new Reader(new Uint8Array(payload))
+  let body: Buffer
+  try {
+    body = unpack(payload.subarray(1))
+  } catch {
+    throw new Error('the share code does not unpack — was it copied whole?')
+  }
+  const r = new Reader(new Uint8Array(body))
+  const drafts = Array.from({ length: r.u8() }, () => {
+    const draft = readDraft(r)
+    const from = r.str()
+    return from ? { ...draft, from } : draft
+  })
+  r.end()
+  if (drafts.length === 0) {
+    throw new Error('the share code holds no palette')
+  }
+  const twice = drafts.find((d, i) => drafts.findIndex((e) => e.name === d.name) !== i)
+  if (twice) {
+    throw new Error(`the share code holds ${twice.name} twice`)
+  }
+  return drafts
+}
+
+function readDraft(r: Reader): Draft {
   const name = r.str()
   const [background, foreground, cursor, selection, ...ansi] = Array.from({ length: 20 }, () => r.color()) as [
     string,
@@ -525,7 +623,6 @@ export function fromCode(code: string): Draft {
       ...(opacity > 0 ? { opacity: (opacity - 1) / 1000 } : {}),
     }
   })
-  r.end()
   if (![background, foreground, cursor, selection, ...ansi].every(isHex)) {
     throw new Error('the share code holds a color that is not one')
   }

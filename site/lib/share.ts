@@ -8,7 +8,7 @@ import { mix } from '../../src/color.ts'
 import { lchTight } from '../../src/editor-paint.ts'
 import { inGamut } from '../../src/fix.ts'
 import type { PaletteEntry } from '../../src/manifest.ts'
-import { readCode, shareLink } from '../../src/own.ts'
+import { readCodes, shareLink } from '../../src/own.ts'
 import {
   colorText,
   lchIn,
@@ -35,6 +35,8 @@ export interface Shared {
   entry: PaletteEntry
   theme: Theme
   pictures: Picture[]
+  index: number
+  palettes: Theme[]
 }
 
 export interface Run {
@@ -85,15 +87,24 @@ function picture(shared: SharedPicture): Picture {
   }
 }
 
-export function readShared(code: string): Shared {
-  const entry = readCode(code, official)
+function themeOf(entry: PaletteEntry): Theme {
   const marketplace = marketplaceOf(entry.name) ?? null
+  return toTheme({ ...entry, name: marketplace ? slugOf(entry.name) : entry.name }, marketplace)
+}
+
+export function readShared(code: string, index = 0): Shared {
+  const entries = readCodes(code, official)
+  const at = Number.isInteger(index) && index >= 0 && index < entries.length ? index : 0
+  const entry = entries[at] as PaletteEntry
+  const palettes = entries.map(themeOf)
   return {
     code,
     link: shareLink(code),
     entry,
-    theme: toTheme({ ...entry, name: marketplace ? slugOf(entry.name) : entry.name }, marketplace),
+    theme: palettes[at] as Theme,
     pictures: (entry.pictures ?? []).map(picture),
+    index: at,
+    palettes,
   }
 }
 

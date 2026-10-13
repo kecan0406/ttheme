@@ -116,12 +116,18 @@ function noPalette(id: string, name: string): Response {
   )
 }
 
-function shared(code: string): Shared | Error {
+function shared(code: string, at?: string): Shared | Error {
   try {
-    return readShared(code.replace(/%3a/gi, ':'))
+    return readShared(code.replace(/%3a/gi, ':'), Number(at ?? 0))
   } catch (error) {
     return error as Error
   }
+}
+
+function sharedCard(found: Shared): Card {
+  return found.palettes.length > 1
+    ? { kind: 'bundle', palettes: found.palettes }
+    : { kind: 'share', theme: found.theme }
 }
 
 export const site = new Elysia({ name: 'site' })
@@ -207,8 +213,8 @@ export const site = new Elysia({ name: 'site' })
         headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': CATALOG },
       }),
   )
-  .get('/p/:code', ({ params, request }) => {
-    const found = shared(params.code)
+  .get('/p/:code', ({ params, query, request }) => {
+    const found = shared(params.code, query.i)
     if (found instanceof Error)
       return page(
         {
@@ -225,10 +231,10 @@ export const site = new Elysia({ name: 'site' })
       )
     return page(
       {
-        ...sharedMeta(found.theme),
+        ...sharedMeta(found.palettes),
         path: new URL(request.url).pathname,
         image: `${new URL(request.url).pathname}/card.png`,
-        imageAlt: cardAlt({ kind: 'share', theme: found.theme }),
+        imageAlt: cardAlt(sharedCard(found)),
         robots: 'noindex',
         cache: CATALOG,
       },
@@ -238,10 +244,10 @@ export const site = new Elysia({ name: 'site' })
   .get('/p/:code/card.png', async ({ params }) => {
     const found = shared(params.code)
     if (found instanceof Error) return new Response(found.message, { status: 404, headers: { 'cache-control': RETRY } })
-    return png(await cardPng({ kind: 'share', theme: found.theme }))
+    return png(await cardPng(sharedCard(found)))
   })
-  .get('/p/:code/credits.json', async ({ params }) => {
-    const found = shared(params.code)
+  .get('/p/:code/credits.json', async ({ params, query }) => {
+    const found = shared(params.code, query.i)
     if (found instanceof Error) return new Response(found.message, { status: 404, headers: { 'cache-control': RETRY } })
     const { pictures, complete } = await creditsOf(found)
     return new Response(JSON.stringify(pictures), {

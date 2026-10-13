@@ -139,30 +139,37 @@ rei's colors instead. `ttheme edit rei` opens the same editor — on any palette
 the official ones included: one that is not yours keeps your changes as a tone
 over its own colors, and `R` then `s` in the editor puts them back. `ttheme check
 --fix` writes colors that pass the gate (as a tone, for a palette that is not
-yours). Left without a palette, `edit`, `check` and `share` ask to use the one
-the tab wears; `share` into a pipe uses it without asking.
+yours). Left without a palette, `edit` and `check` ask to use the one the tab
+wears.
 
 A local marketplace is already a repository layout: `palettes/*.toml` (a folder
 under it, such as `palettes/night/`, is a catalog, which a `[[catalog]]` table in
 `ttheme-marketplace.toml` may give an order, a title and a lead) and the
 `ttheme-marketplace.toml` that names it — nothing to build, since ttheme reads the
-files as pushed. `ttheme marketplace init <name>` makes one and prints the commands that
-publish it:
+files as pushed. `ttheme marketplace init <name>` makes one.
 
-```sh
-cd ~/.config/ttheme/marketplace/<name>
-git init -b main && git add -A && git commit -m "<you>@<name>"
-gh repo create <you>/ttheme-<name> --public --source . --push
-gh repo edit <you>/ttheme-<name> --add-topic ttheme-marketplace
-```
+`ttheme share` asks how to share, then which palettes, and prints a link and,
+when it fits the window, its QR code:
 
-`ttheme share <palette>` prints a link — `https://ttheme.vercel.app/p/tt2:…` —
-and, in a terminal, its QR code. The link carries the colors and the numbers of
-its background posts with their framing, so nothing is uploaded: the page it
-opens draws the palette in a terminal, lists the posts, and gives the
-`ttheme add` command, and its preview image for chat apps is drawn in the palette's colors.
-`ttheme add <link>` (or the bare `tt2:…` code at its end) installs it anywhere
-without a marketplace, fetching those posts from the booru the way `find` does.
+- **A link** (the palette the tab wears is picked to start with) —
+  `https://ttheme.vercel.app/p/tt3:…`, or `tt2:…` for a single palette — carries the colors and the numbers of their background posts with
+  their framing, so nothing is uploaded: the page it opens draws each palette in
+  a terminal, lists the posts, and gives the `ttheme add` command, and its preview
+  image for chat apps is drawn in the palettes' colors. `ttheme add <link>` (or
+  the bare code at its end) installs them anywhere without a marketplace,
+  fetching those posts from the booru the way `find` does. A link of a few
+  palettes stays a small QR code; past that, share a marketplace.
+- **A marketplace on GitHub** — one of your local marketplaces, or a new one,
+  holding exactly the palettes you pick: a palette from elsewhere is copied in
+  with `meta.from` naming where it came from, and one you unpick is deleted from
+  the folder. The first time it asks the repository's name and who can see it,
+  every time a description, then shows what it will push, commits, and creates
+  the repository with `gh` (with the `ttheme-marketplace` topic when it is
+  public) or pushes to it. Its link is the repository, which
+  `ttheme marketplace add <owner>/<repo>` adds anywhere.
+
+`ttheme share <palette>`, or `ttheme share` into a pipe, shares that palette, or
+the one the tab wears, as a link without asking.
 
 ## Usage
 

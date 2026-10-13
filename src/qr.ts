@@ -6,7 +6,13 @@ const HALVES = [' ', '▀', '▄', '█']
 
 const MOST = 2953
 
-export function qrLines(text: string): string[] | undefined {
+export interface Qr {
+  lines: string[]
+  cols: number
+  rows: number
+}
+
+export function qrCode(text: string): Qr | undefined {
   if (Buffer.byteLength(text) > MOST) {
     return undefined
   }
@@ -17,5 +23,5 @@ export function qrLines(text: string): string[] | undefined {
     const bottom = data[y + 1] ?? []
     lines.push(`${INK}${top.map((dark, x) => HALVES[(dark ? 1 : 0) + (bottom[x] ? 2 : 0)]).join('')}${RESET}`)
   }
-  return lines
+  return { lines, cols: data.length, rows: lines.length }
 }

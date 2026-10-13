@@ -841,6 +841,7 @@ interface PalettePromptOptions {
   scope?: PickerScope
   installed?: Iterable<string>
   required?: boolean
+  go?: string
   maxItems?: number
   color?: boolean
   fx?: PromptFx
@@ -859,6 +860,7 @@ export class PalettePrompt {
   private readonly scope: PickerScope
   private readonly color: boolean
   private readonly required: boolean
+  private readonly go: string | undefined
   private readonly most: number
   private readonly hint: SearchHint
   private readonly field = new Field()
@@ -873,6 +875,7 @@ export class PalettePrompt {
     this.picked = new Set(opts.installed ?? [])
     this.color = opts.color ?? true
     this.required = opts.required ?? false
+    this.go = opts.go
     this.most = opts.maxItems ?? 12
     this.input = opts.input
     this.output = opts.output
@@ -980,7 +983,7 @@ export class PalettePrompt {
     }
     const more = below > 0 ? `${bar('│')} ${dim(`↓ ${below} more`)}` : bar('│')
     const fold = this.scope === 'catalog' ? '' : ' · ←→ fold'
-    const go = this.scope === 'catalog' ? 'continue' : 'install'
+    const go = this.go ?? (this.scope === 'catalog' ? 'continue' : 'install')
     const hint =
       this.state === 'error'
         ? `${bar('└')} ${warn(this.error)}`

@@ -10,9 +10,10 @@ You do not need this repository to share a palette. Every palette you make
 lives in a marketplace of your own, and anyone can add it:
 
 ```sh
-ttheme marketplace init dust      # <you>@dust, in ~/.config/ttheme/marketplace/dust — prints how to publish it
+ttheme marketplace init dust      # <you>@dust, in ~/.config/ttheme/marketplace/dust
 ttheme new rei                    # <you>@dust/rei, from blank in the palette editor (--from rei starts from rei)
 ttheme edit rei                   # the same editor; the gate's numbers are shown, never enforced — another marketplace's palette is tuned as a tone
+ttheme share                      # A marketplace on GitHub: creates the repository with gh and pushes, and again whenever it changes
 ```
 
 A marketplace is a repository with `palettes/<palette>.toml` and a
@@ -59,7 +60,10 @@ and a folder no table names follows them by name, led by its first palette. The
 catalog is not part of the name (still `<owner>@<name>/arcade`), so a palette
 name is used once in a marketplace. A marketplace palette has no `order`
 and no `role`; `meta.base` names the official palette it varies, which only says
-where its ANSI colors came from. Give the repository the `ttheme-marketplace` topic
+where its ANSI colors came from, and `meta.from` the palette it was copied from
+(`<owner>@<marketplace>/<palette>`, or an official palette's name), which
+`ttheme share` writes when it copies one in and Browse and the site show. Give the
+repository the `ttheme-marketplace` topic — `ttheme share` does for a public one —
 and Browse's search and the
 [marketplace page](https://ttheme.vercel.app/marketplace) find it.
 

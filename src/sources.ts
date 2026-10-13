@@ -22,7 +22,7 @@ export const CATALOG_KEYS = ['name', 'native', 'lead']
 export const TOPIC = 'ttheme-marketplace'
 
 const OWNER = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i
-const REPO_NAME = /^[\w.-]{1,100}$/
+export const REPO_NAME = /^[\w.-]{1,100}$/
 const REF = /^\w[\w.+/-]{0,199}$/
 
 export function installedPath(configHome: string): string {

@@ -47,9 +47,24 @@ export function paletteMeta({ id, name, catalog, background, foreground }: Theme
   }
 }
 
-export function sharedMeta({ name, background, foreground }: Theme): Meta {
+function some(names: readonly string[], most: number): string {
+  return names.length <= most
+    ? names.join(', ')
+    : `${names.slice(0, most - 1).join(', ')} and ${names.length - most + 1} more`
+}
+
+export function sharedMeta(palettes: readonly Theme[]): Meta {
+  const [first] = palettes
+  if (first && palettes.length === 1) {
+    const { name, background, foreground } = first
+    return {
+      title: `${name} — shared terminal theme · ttheme`,
+      description: `${name} — a color scheme someone shared: ${background} background, ${foreground} text, 16 ANSI colors. Add it with ttheme add and this link.`,
+    }
+  }
+  const names = palettes.map((theme) => theme.name)
   return {
-    title: `${name} — shared terminal theme · ttheme`,
-    description: `${name} — a color scheme someone shared: ${background} background, ${foreground} text, 16 ANSI colors. Add it with ttheme add and this link.`,
+    title: `${some(names, 3)} — ${names.length} shared terminal themes · ttheme`,
+    description: `${names.length} color schemes someone shared: ${some(names, 8)}. Add them all with ttheme add and this link.`,
   }
 }

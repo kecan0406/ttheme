@@ -13,6 +13,7 @@ export interface Theme {
   catalog: string | null
   native: string | null
   lead: boolean
+  from: string | null
   ansiSource: string
   background: string
   foreground: string
@@ -40,6 +41,7 @@ export interface ManifestEntry {
   catalog?: string
   native?: string
   lead?: boolean
+  from?: string
   ansiSource: string
   background: string
   foreground: string
@@ -63,6 +65,7 @@ export function toTheme(entry: ManifestEntry, marketplace: string | null = null)
     catalog: entry.catalog ?? null,
     native: entry.native ?? null,
     lead: entry.lead ?? false,
+    from: entry.from ?? null,
     ansiSource: entry.ansiSource,
     background: entry.background,
     foreground: entry.foreground,

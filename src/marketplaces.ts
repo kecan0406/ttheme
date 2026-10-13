@@ -40,7 +40,6 @@ import {
   refOf,
   sameMarketplace,
   shownSource,
-  TOPIC,
 } from './sources.ts'
 import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf, unknownKeys } from './theme.ts'
 
@@ -241,7 +240,7 @@ async function addMarketplace(arg: string): Promise<void> {
   }
   if (isLocal(source)) {
     console.log(
-      '\nThe Browse tab of `ttheme` picks them · once the folder is on GitHub, `ttheme marketplace add <owner>/<repo>` adds it anywhere',
+      '\nThe Browse tab of `ttheme` picks them · `ttheme share` puts the folder on GitHub, where `ttheme marketplace add <owner>/<repo>` adds it anywhere',
     )
   } else if (source === OFFICIAL) {
     console.log('\nThe Browse tab of `ttheme` picks them')
@@ -308,17 +307,18 @@ export function listedMatches(m: Listed, query: string): boolean {
   return containsText([m.id, m.source, m.about, ...m.palettes.flatMap((e) => [e.name, e.catalog ?? ''])], query)
 }
 
-function repoFor({ name }: Identity): string {
+export function repoFor({ name }: Identity): string {
   return `ttheme-${name}`
+}
+
+export function readmeOf(identity: Identity, repo = repoFor(identity)): string {
+  return `# ${marketplaceId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) marketplace:\n\n\`\`\`sh\nttheme marketplace add ${identity.owner}/${repo}\nttheme\n\`\`\`\n`
 }
 
 function scaffold(dir: string, identity: Identity): void {
   mkdirSync(palettesDir(dir), { recursive: true })
   writeAtomic(join(dir, MARKETPLACE_FILE), marketplaceToml(identity))
-  writeAtomic(
-    join(dir, 'README.md'),
-    `# ${marketplaceId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) marketplace:\n\n\`\`\`sh\nttheme marketplace add ${identity.owner}/${repoFor(identity)}\nttheme\n\`\`\`\n`,
-  )
+  writeAtomic(join(dir, 'README.md'), readmeOf(identity))
 }
 
 function nameProblemOf(name: string): string | undefined {
@@ -359,6 +359,10 @@ export async function ensureLocal(home: string, into?: string): Promise<LocalMar
       `you have ${locals.length} local marketplaces — --in names one: ${locals.map((m) => m.name).join(', ')}`,
     )
   }
+  return newLocal(home)
+}
+
+export async function newLocal(home: string): Promise<LocalMarketplace> {
   const name = await askName()
   return initLocal(home, defaultLocal(home, name), name)
 }
@@ -394,17 +398,10 @@ async function initMarketplace(arg: string | undefined): Promise<void> {
   const name =
     arg && !pathLike(arg) ? arg.toLowerCase() : arg ? basename(parseSource(arg)).toLowerCase() : await askName()
   const dir = arg && pathLike(arg) ? parseSource(arg) : defaultLocal(home, name)
-  const marketplace = await initLocal(home, dir, name)
-  const repo = `${marketplace.owner}/${repoFor(marketplace)}`
-  console.log(`
-\`ttheme new <palette> --from <palette>\` puts palettes in it, and a folder under palettes/ shelves them in a catalog — others see them once it is on GitHub:
-
-  cd ${shownSource(dir)}
-  git init -b main && git add -A && git commit -m "${marketplace.id}"
-  gh repo create ${repo} --public --source . --push
-  gh repo edit ${repo} --add-topic ${TOPIC}
-
-Every push is the marketplace: \`ttheme marketplace add ${repo}\` works anywhere`)
+  await initLocal(home, dir, name)
+  console.log(
+    '\n`ttheme new <palette> --from <palette>` puts palettes in it, and a folder under palettes/ shelves them in a catalog — `ttheme share` puts it on GitHub, where others add it',
+  )
 }
 
 function checkMarketplace(arg: string | undefined): number {

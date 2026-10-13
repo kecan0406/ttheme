@@ -28,6 +28,7 @@ export interface Frame {
 export type Card =
   | { kind: 'palette' | 'share'; theme: Theme }
   | { kind: 'marketplace'; marketplace: Marketplace | null; palettes: Theme[] }
+  | { kind: 'bundle'; palettes: Theme[] }
   | { kind: 'site'; theme: Theme; palettes: number; catalogs: number }
 
 type Part = [text: string, fill: string, options?: { bold?: boolean; background?: string }]
@@ -388,6 +389,35 @@ function marketplace(kit: Raster, card: Extract<Card, { kind: 'marketplace' }>, 
   return sheet(frame, theme, k, window.shadow, out.join(''))
 }
 
+function bundle(kit: Raster, card: Extract<Card, { kind: 'bundle' }>, frame: Frame): string {
+  const { palettes } = card
+  const theme = palettes[0] as Theme
+  const k = tones(theme)
+  const window = windowOf(kit, theme, k, 'ttheme add', frame)
+  const title = `${palettes.length} shared palettes`
+  const { size, rows } = rowsOf(kit, title, window.left, 164, 60)
+  const out = [
+    wordmark(kit, k),
+    ...rows.map((row, at) => display(kit, row, MARGIN, 300 + at * size * 0.92, size, k.accent)),
+  ]
+  const below = 300 + (rows.length - 1) * size * 0.92
+  const ui = kit.family.ui
+  const names = palettes.map((p) => p.name)
+  const label = names.length <= 3 ? names.join(', ') : `${names.slice(0, 2).join(', ')} and ${names.length - 2} more`
+  out.push(
+    text(label, {
+      x: MARGIN,
+      y: below + 62,
+      size: fitted(kit, label, ui, 500, window.left, 34),
+      fill: k.soft,
+      family: ui,
+    }),
+  )
+  out.push(window.drawn)
+  out.push(listing(kit, 'ttheme add <link>', palettes.slice(0, 7), k, theme.ansi[3] as string, window.body))
+  return sheet(frame, theme, k, window.shadow, out.join(''))
+}
+
 function site(kit: Raster, card: Extract<Card, { kind: 'site' }>, frame: Frame): string {
   const { theme } = card
   const k = tones(theme)
@@ -414,6 +444,7 @@ function site(kit: Raster, card: Extract<Card, { kind: 'site' }>, frame: Frame):
 export async function cardPng(card: Card, frame: Frame = { width: CARD_WIDTH, height: CARD_HEIGHT }): Promise<Buffer> {
   const kit = await raster()
   if (card.kind === 'marketplace') return kit.png(marketplace(kit, card, frame))
+  if (card.kind === 'bundle') return kit.png(bundle(kit, card, frame))
   if (card.kind === 'site') return kit.png(site(kit, card, frame))
   return kit.png(palette(kit, card, frame))
 }
@@ -423,6 +454,8 @@ export function cardAlt(card: Card): string {
     return `ttheme: wear your favorite anime character in your terminal, beside a terminal window wearing ${card.theme.name}`
   if (card.kind === 'marketplace')
     return `${card.marketplace?.id ?? 'official'} marketplace: its name and description beside a terminal window listing its palettes`
+  if (card.kind === 'bundle')
+    return `${card.palettes.length} shared palettes: their count beside a terminal window listing them with their signature colors`
   const { name, catalog } = card.theme
   const whose = card.kind === 'share' ? `${name}, a shared palette` : `${name}${catalog ? `, ${catalog}` : ''}`
   return `${whose}: its name and three signature colors beside a terminal window wearing the palette`

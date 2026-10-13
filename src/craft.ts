@@ -17,25 +17,23 @@ import {
   colorsOfTheme,
   type Draft,
   draftOf,
-  fromCode,
+  fromCodes,
   gateLines,
   localMarketplaces,
   marketplaceFiles,
   ownPath,
   paletteToml,
-  readCode,
+  readCodes,
   readOwnText,
   recolor,
   resign,
   shareCode,
-  shareLink,
   withPictures,
 } from './own.ts'
 import { type Choice, type Edited, type EditorOptions, listOf } from './palette-editor.ts'
 import { commit, configHome, type Installed, readInstalled, refreshPictures, sync } from './palettes.ts'
 import { PickerLayer } from './picker-art.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
-import { qrLines } from './qr.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
 import { showsPictures } from './terminal.ts'
 import { marketplaceOf, nameProblem, type SharedPicture, shelfOf, type Theme } from './theme.ts'
@@ -56,35 +54,6 @@ export async function thisTab(): Promise<string | undefined> {
     throw new Cancelled()
   }
   return worn
-}
-
-export async function shareThisTab(
-  tone: 'tuned' | 'original' | undefined,
-): Promise<{ name: string; tone?: 'tuned' | 'original' } | undefined> {
-  const worn = process.env.TTHEME_WORN
-  if (!worn) {
-    return undefined
-  }
-  if (!tty()) {
-    console.error(`Sharing ${worn}, the palette this tab wears`)
-    return { name: worn, ...(tone ? { tone } : {}) }
-  }
-  if (tone !== undefined || readTone(configHome())[worn] === undefined) {
-    await thisTab()
-    return { name: worn, ...(tone ? { tone } : {}) }
-  }
-  const answer = await p.select({
-    message: `Share ${worn}, the palette this tab wears?`,
-    options: [
-      { value: 'tuned', label: 'Your tone', hint: `named ${tunedName(worn)}` },
-      { value: 'original', label: 'The original' },
-      { value: 'no', label: 'No' },
-    ],
-  })
-  if (p.isCancel(answer) || answer === 'no') {
-    throw new Cancelled()
-  }
-  return { name: worn, tone: answer as 'tuned' | 'original' }
 }
 
 function mine(name: string, home: string): string {
@@ -117,18 +86,36 @@ function wears(p: PaletteEntry): string {
   return JSON.stringify([p.background, p.foreground, p.cursor, p.selection, p.ansi])
 }
 
-export function adopt(home: string, code: string, manifest: Manifest): PaletteEntry {
-  const entry = readCode(code, manifest.palettes)
-  const known = untuned(home, manifest, false).palettes.find((e) => e.name === entry.name)
-  if (known && wears(known) !== wears(entry)) {
-    throw new Error(
-      `${entry.name} is already in ${marketplaceOf(entry.name) ?? 'the official marketplace'} and differs — \`ttheme add ${entry.name}\` wears that one`,
-    )
+export interface Refused {
+  name: string
+  why: string
+}
+
+export interface Adopted {
+  entries: PaletteEntry[]
+  refused: Refused[]
+}
+
+export function adopt(home: string, code: string, manifest: Manifest): Adopted {
+  const known = new Map(untuned(home, manifest, false).palettes.map((e) => [e.name, e]))
+  const entries: PaletteEntry[] = []
+  const refused: Refused[] = []
+  for (const entry of readCodes(code, manifest.palettes)) {
+    const twin = known.get(entry.name)
+    if (twin && wears(twin) !== wears(entry)) {
+      refused.push({
+        name: entry.name,
+        why: `is already in ${marketplaceOf(entry.name) ?? 'the official marketplace'} and differs — \`ttheme add ${entry.name}\` wears that one`,
+      })
+    } else {
+      entries.push(entry)
+    }
   }
-  if (!known) {
-    writeKept(home, [...readKept(home), entry])
+  const fresh = entries.filter((e) => !known.has(e.name))
+  if (fresh.length > 0) {
+    writeKept(home, [...readKept(home), ...fresh])
   }
-  return entry
+  return { entries, refused }
 }
 
 const SIGNATURE = ['background', 'foreground', 'cursor']
@@ -429,7 +416,7 @@ async function editTone(home: string, name: string, hosted: boolean): Promise<nu
   return Object.keys(over).length
 }
 
-function named(view: Manifest, name: string, home: string): PaletteEntry {
+export function named(view: Manifest, name: string, home: string): PaletteEntry {
   return find(view.palettes, view.palettes.some((e) => e.name === name) ? name : mine(name, home))
 }
 
@@ -489,8 +476,16 @@ function decoded(text: string): Colors | undefined {
     return undefined
   }
   try {
-    const { background, foreground, cursor, selection, ansi } = fromCode(code)
-    return { background, foreground, cursor, selection, ansi }
+    const [first] = fromCodes(code)
+    return (
+      first && {
+        background: first.background,
+        foreground: first.foreground,
+        cursor: first.cursor,
+        selection: first.selection,
+        ansi: first.ansi,
+      }
+    )
   } catch {
     return undefined
   }
@@ -509,68 +504,11 @@ function exportsFor(
   }
 }
 
-function draftFor(home: string, entry: PaletteEntry): Draft {
+export function draftFor(home: string, entry: PaletteEntry): Draft {
   const path = mineAt(home, entry.name)
   const reason =
     path && existsSync(path) ? readOwnText(entry.name, readFileSync(path, 'utf8'), [entry]).waiveReason : undefined
   const held = heldPictures(home, entry.name) ?? entry.pictures
   const { pictures: _, ...draft } = draftOf(entry, entry.name, reason)
   return { ...draft, ...(held ? { pictures: held } : {}) }
-}
-
-async function sharing(tuned: PaletteEntry, original: PaletteEntry, asked: 'tuned' | 'original' | undefined) {
-  if (tuned === original) {
-    return original
-  }
-  let which = asked
-  if (which === undefined) {
-    if (!tty()) {
-      which = 'tuned'
-    } else {
-      const answer = await p.select({
-        message: `Share ${original.name} as…`,
-        options: [
-          { value: 'tuned', label: 'Your tone', hint: `named ${tunedName(original.name)}` },
-          { value: 'original', label: 'The original' },
-        ],
-      })
-      if (p.isCancel(answer)) {
-        throw new Cancelled()
-      }
-      which = answer as 'tuned' | 'original'
-    }
-  }
-  return which === 'original' ? original : tuned
-}
-
-function tunedName(name: string): string {
-  return `${name}-tuned`
-}
-
-export async function runShare(name: string, tone?: 'tuned' | 'original'): Promise<void> {
-  const home = configHome()
-  const manifest = readMarketplaces(home)
-  const original = named(untuned(home, manifest), name, home)
-  const tuned = tonedEntry(original, readTone(home)[original.name])
-  const entry = await sharing(tuned, original, tone)
-  const draft = draftFor(home, entry)
-  const renamed = entry === tuned && tuned !== original
-  if (renamed) {
-    const problem = nameProblem(tunedName(entry.name))
-    if (problem) {
-      throw new Error(`${tunedName(entry.name)} ${problem} — share the original, or tune a palette with a shorter name`)
-    }
-    draft.name = tunedName(entry.name)
-  }
-  const link = shareLink(shareCode(draft))
-  console.log(link)
-  if (process.stdout.isTTY) {
-    const qr = qrLines(link)
-    if (qr) {
-      console.log(`\n${qr.join('\n')}`)
-    }
-    console.error(
-      `\nAnyone can open the link${qr ? ' or scan the code' : ''} to see ${draft.name}, and ttheme add <link> installs it${renamed ? `\nIt carries your tone, named ${draft.name} so it does not clash with ${entry.name}` : ''}`,
-    )
-  }
 }

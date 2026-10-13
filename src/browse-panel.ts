@@ -1645,6 +1645,7 @@ export class BrowsePanel {
     const pictures = e.pictures?.length ?? 0
     const extras = [
       ...(pictures > 0 ? [`${pictures} picture${pictures === 1 ? '' : 's'}`] : []),
+      ...(e.from ? [`From ${e.from}`] : []),
       ...(e.base ? [`Base ${e.base}`] : []),
     ].join(' · ')
     const more = fails.length > 1 ? ` · +${fails.length - 1}` : ''

@@ -3,7 +3,7 @@ import pkg from '../package.json' with { type: 'json' }
 import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
-import { runCheck, runEdit, runNew, runShare, runTone, shareThisTab, thisTab } from './craft.ts'
+import { runCheck, runEdit, runNew, runTone, thisTab } from './craft.ts'
 import { runFind } from './find/find.ts'
 import { runBake, runFlatten, runImage } from './images.ts'
 import { runInfo } from './info.ts'
@@ -14,6 +14,7 @@ import { startNamesUpdate, updateNames } from './names-update.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
 import { checkLatest, startReleaseCheck, tellRelease } from './release.ts'
+import { runShare, runShareAsked, type Tone } from './share.ts'
 import { Signalled } from './tui/terminal.ts'
 import { runUninstall } from './uninstall.ts'
 import { briefText, commandHelp, helpText, VERB_SPECS, type VerbSpec } from './verbs.ts'
@@ -46,15 +47,19 @@ const RUNS: Record<string, Verb['run']> = {
   edit: async (args) => runEdit(await paletteOf(args, 'edit')),
   check: async (args, { fix }) => runCheck(await paletteOf(args, 'check'), fix),
   share: async ([name], { tone }) => {
-    const asked = tone as 'tuned' | 'original' | undefined
+    const asked = tone as Tone | undefined
     if (name !== undefined) {
-      return runShare(name, asked)
+      return runShare([name], asked)
     }
-    const here = await shareThisTab(asked)
-    if (!here) {
+    if (process.stdin.isTTY && process.stdout.isTTY) {
+      return runShareAsked(asked)
+    }
+    const worn = process.env.TTHEME_WORN
+    if (!worn) {
       throw new UsageError('name a palette', verbNamed('share'))
     }
-    return runShare(here.name, here.tone)
+    console.error(`Sharing ${worn}, the palette this tab wears`)
+    return runShare([worn], asked)
   },
   init: (_, { yes }) => runInit({ yes }),
   uninstall: (_, { yes }) => runUninstall(yes),

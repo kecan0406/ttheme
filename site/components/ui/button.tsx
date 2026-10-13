@@ -12,7 +12,7 @@ const buttonVariants = cva(
           'border-border bg-card text-soft-foreground hover:border-input hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary aria-pressed:border-primary aria-pressed:text-foreground',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-muted',
         ghost:
-          'text-soft-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-pressed:bg-accent aria-pressed:text-primary aria-pressed:inset-ring aria-pressed:inset-ring-primary/45',
+          'text-soft-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-pressed:bg-accent aria-pressed:text-primary aria-pressed:inset-ring aria-pressed:inset-ring-primary/45 aria-[current=page]:bg-accent aria-[current=page]:text-primary aria-[current=page]:inset-ring aria-[current=page]:inset-ring-primary/45',
         scene: 'text-(--fg)/65 hover:bg-(--fg)/12 hover:text-(--fg)',
         destructive: 'bg-destructive/16 text-destructive hover:bg-destructive/24',
         link: 'font-medium text-primary underline-offset-4 hover:underline',

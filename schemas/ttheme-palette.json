@@ -85,6 +85,12 @@
           "$ref": "#/definitions/palette",
           "description": "In a marketplace, the official palette this one varies, which only says where its ANSI colors came from"
         },
+        "from": {
+          "description": "In a marketplace, the palette this one was copied from, as <owner>@<marketplace>/<palette> or an official palette's name, so a copy keeps saying whose it is",
+          "type": "string",
+          "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*@[a-z0-9]+(?:-[a-z0-9]+)*/)?[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "maxLength": 121
+        },
         "order": {
           "description": "The official palette's place in the new-tab rotation; a marketplace palette has none",
           "type": "integer"

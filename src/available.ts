@@ -151,7 +151,10 @@ function entryProblem(p: PaletteEntry): string | undefined {
   if (typeof p?.name !== 'string' || !Array.isArray(p.ansi) || p.ansi.length !== 16) {
     return 'is missing name or its 16 ANSI colors'
   }
-  const named = nameProblem(p.name) ?? (p.base === undefined ? undefined : nameProblem(p.base))
+  const named = [p.name, p.base, p.from]
+    .values()
+    .map((name) => (name === undefined ? undefined : nameProblem(name)))
+    .find(Boolean)
   if (named) {
     return named
   }
