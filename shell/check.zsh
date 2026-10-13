@@ -164,6 +164,7 @@ TTHEME_SPEC=$TTHEME_PALETTE[kagami]; __tt_sync
   { print -u2 "a tab that lost focus still took the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
 __tt_focus
 TTHEME_SPEC=$TTHEME_PALETTE[rei]
+TTHEME_RAN=1
 __tt_prompt
 __tt_precmd
 [[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" && $reloads == 6 && $TTHEME_FRONT == 0 ]] ||
@@ -171,7 +172,11 @@ __tt_precmd
 __tt_focus
 [[ "$(<$bgd/shown.conf)" == "config-file = ?rei.conf" && $reloads == 7 && $TTHEME_FRONT == 1 ]] ||
   { print -u2 "the focus answer at a prompt did not take the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
-[[ -z "$(__tt_precmd)" && "$(__tt_focus_on)" == $'\e[?1004h' && "$(__tt_preexec)" == $'\e[?1004l' ]] ||
+TTHEME_RAN=0
+__tt_prompt
+(( TTHEME_FRONT == 1 )) ||
+  { print -u2 "a precmd no command ended in forgot where focus is, as zsh-defer's calls after the first prompt do — the first command would run with its tab unsure of being in front"; exit 1 }
+[[ -z "$(__tt_precmd)"&& "$(__tt_focus_on)" == $'\e[?1004h' && "$(__tt_preexec)" == $'\e[?1004l' ]] ||
   { print -u2 "the prompt did not turn focus reporting on and off"; exit 1 }
 __tt_bg_saved kagami
 (( reloads == 7 )) || { print -u2 "saving a picture Ghostty does not show reloaded it: reloads=$reloads"; exit 1 }

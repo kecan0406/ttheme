@@ -71,7 +71,7 @@ __tt_fresh() {
 
 __tt_prompt() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  (( TTHEME_FRONT < 0 )) || TTHEME_FRONT=0
+  (( TTHEME_FRONT < 0 || ! TTHEME_RAN )) || TTHEME_FRONT=0
   [[ -n $TTHEME_SSH_SPEC ]] && __tt_ssh_back
   __tt_fresh
 }
