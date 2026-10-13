@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
@@ -14,6 +15,12 @@ const CHARACTERS = `${LATIN}${LATIN_ONE}–—•…→❯✓✗`
 
 function pack(bytes: Uint8Array): string {
   return deflateRawSync(bytes, { level: 9 }).toString('base64')
+}
+
+export function revision(...files: string[]): string {
+  const hash = createHash('sha1')
+  for (const file of files) hash.update(readFileSync(new URL(file, import.meta.url)))
+  return hash.digest('hex').slice(0, 8)
 }
 
 export function wasm(specifier: string): string {

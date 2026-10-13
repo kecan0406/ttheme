@@ -7,7 +7,7 @@ import { KEYS_SCRIPT } from '@/lib/keys'
 import { fallback } from '@/lib/official'
 import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
-import { ORIGIN } from '@/lib/seo'
+import { CARD_REV, ORIGIN } from '@/lib/seo'
 import { SPECULATION_RULES } from '@/lib/speculation'
 import { rootStyle, type Vars, WEAR_SCRIPT, wearIcon } from '@/lib/wear'
 
@@ -77,7 +77,7 @@ function Document({
         <meta property="og:description" content={description} />
         {image ? (
           <>
-            <meta property="og:image" content={`${ORIGIN}${image}`} />
+            <meta property="og:image" content={`${ORIGIN}${image}?v=${CARD_REV}`} />
             <meta property="og:image:type" content="image/png" />
             <meta property="og:image:width" content={String(CARD_WIDTH)} />
             <meta property="og:image:height" content={String(CARD_HEIGHT)} />
