@@ -4,18 +4,55 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
-  ci:
+  checks:
+    if: github.ref != 'refs/heads/main' || !startsWith(github.event.head_commit.message, 'Bump version to ')
     runs-on: ubuntu-26.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
-      - run: sudo apt-get update && sudo apt-get install -y zsh tmux sqlite3
+      - run: sudo apt-get install -y zsh tmux sqlite3 || { sudo apt-get update && sudo apt-get install -y zsh tmux sqlite3; }
       - run: bun install --frozen-lockfile
-      - run: mise run ci
+      - run: mise run ci:checks
+
+  parity:
+    if: github.ref != 'refs/heads/main' || !startsWith(github.event.head_commit.message, 'Bump version to ')
+    name: parity (${{ matrix.terminals }})
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - terminals: warp
+            slots: 6
+          - terminals: windows-terminal,ghostty,iterm2
+            slots: 4
+          - terminals: kitty,alacritty,wezterm
+            slots: 4
+          - terminals: konsole,terminal-app
+            slots: 4
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+      - run: sudo apt-get install -y zsh tmux sqlite3 || { sudo apt-get update && sudo apt-get install -y zsh tmux sqlite3; }
+      - run: bun install --frozen-lockfile
+      - run: mise run parity --only ${{ matrix.terminals }} --slots ${{ matrix.slots }}
+
+  ci:
+    if: always() && github.ref_type != 'tag' && (github.ref != 'refs/heads/main' || !startsWith(github.event.head_commit.message, 'Bump version to '))
+    needs: [checks, parity]
+    runs-on: ubuntu-26.04
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

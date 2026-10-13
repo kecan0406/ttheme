@@ -3,13 +3,18 @@ name: release
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  pack:
     runs-on: ubuntu-26.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -18,13 +23,14 @@ jobs:
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
           cache: false
-      - run: sudo apt-get update && sudo apt-get install -y zsh tmux sqlite3
+      - run: sudo apt-get install -y zsh || { sudo apt-get update && sudo apt-get install -y zsh; }
       - run: bun install --frozen-lockfile
 
       - name: the tag names the package version
+        if: github.ref_type == 'tag'
         run: test "v$(jq -r .version package.json)" = "$GITHUB_REF_NAME"
 
-      - run: mise run ci
+      - run: mise run bin:check
 
       - name: package
         run: |
@@ -52,7 +58,8 @@ jobs:
           if-no-files-found: error
 
   publish:
-    needs: build
+    needs: [ci, pack]
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-26.04
     environment: npm
     permissions:

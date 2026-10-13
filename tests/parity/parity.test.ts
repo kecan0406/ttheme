@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { TRAITS } from '../../src/terminal.ts'
@@ -29,6 +30,12 @@ test('every terminal ttheme knows runs the journeys, the reference first', () =>
     assert.ok(term in TRAITS, `${term} has no TRAITS row`)
     assert.ok(WIRING[term] === undefined || WIRED.includes(WIRING[term]), term)
   }
+})
+
+test("the ci workflow's parity jobs walk every terminal, each once", () => {
+  const workflow = readFileSync(join(import.meta.dirname, '..', '..', '.github', 'workflows', 'ci.yml'), 'utf8')
+  const walked = [...workflow.matchAll(/^\s+- terminals: (.+)$/gm)].flatMap(([, list = '']) => list.split(','))
+  assert.deepEqual(walked.toSorted(), [...TERMS].toSorted())
 })
 
 test("the model's terminals behave the way mise run compat measured them", () => {
