@@ -2,6 +2,7 @@ import pkg from '../../package.json' with { type: 'json' }
 import { SITES } from '../booru.ts'
 import { HUB_CLOSED, HUB_SWITCH, HUB_TABS } from '../hub.ts'
 import { listed, type PaletteEntry, paletteEntry, swatch } from '../manifest.ts'
+import { outdated, UPDATE_HERE } from '../notice.ts'
 import { SCENES } from '../scenes.ts'
 import { TRAITS } from '../terminal.ts'
 import { alphabetical, marketplaceOf } from '../theme.ts'
@@ -42,6 +43,7 @@ export function palettesZsh(
     '# Source of truth: themes/palettes/<catalog>/*.toml in the ttheme repo.',
     '',
     `typeset -g TTHEME_VERSION=${pkg.version}`,
+    `typeset -g TTHEME_OUTDATED=${quote(outdated('%s', '%s', UPDATE_HERE))}`,
     '',
     '# the palette new tabs open with, which the iTerm2 "ttheme · default" profile wears',
     `typeset -g TTHEME_STARTUP=${startup ?? ''}`,

@@ -549,6 +549,69 @@ TTHEME_STARTUP=
   rm -f $TTHEME_PINS_FILE
 ) || exit 1
 (
+  __tt_active() { return 0 }
+  __tt_release_tty() { return 0 }
+  zmodload -F zsh/datetime p:EPOCHSECONDS
+  spawned=0
+  __tt_release_spawn() { (( ++spawned )) }
+  TTHEME_STATE_DIR=$XDG_CONFIG_HOME/relstate TTHEME_VERSION=1.2.29 TTHEME_AUTO_UPDATE=on
+  TTHEME_OUTDATED='ttheme %s is out, you have %s'
+  err=$XDG_CONFIG_HOME/relerr stamp=$TTHEME_STATE_DIR/release.json
+  now=$(( EPOCHSECONDS * 1000 ))
+  tab() { TTHEME_RELEASE_AT=- TTHEME_RELEASE_NEXT=0; : >| $err; __tt_release 2>> $err }
+  put() { mkdir -p $TTHEME_STATE_DIR; print -r -- "$1" >| $stamp }
+  rm -rf $TTHEME_STATE_DIR
+  tab
+  (( spawned == 1 )) || { print -u2 "a first tab with no stamp did not start the check: spawned=$spawned"; exit 1 }
+  [[ $(<$stamp) == '{"checked":'<13->'}' && ! -s $err ]] || { print -u2 "the claim wrote the wrong stamp, or a first check told: $(<$stamp) $(<$err)"; exit 1 }
+  __tt_release 2>> $err
+  tab
+  (( spawned == 1 )) || { print -u2 "a second tab started the check again within a day: spawned=$spawned"; exit 1 }
+  put "{\"checked\":$(( now - 86400000 + 3600000 ))}"
+  tab
+  (( spawned == 1 )) || { print -u2 "a check retried an hour after a failure started a second one early: spawned=$spawned"; exit 1 }
+  put "{\"checked\":$(( now - 86400000 - 5000 ))}"
+  tab
+  (( spawned == 2 )) || { print -u2 "a check a day old was not started: spawned=$spawned"; exit 1 }
+  put "{\"checked\":$now,\"latest\":\"1.2.30\"}"
+  tab
+  [[ $(<$err) == "ttheme 1.2.30 is out, you have 1.2.29" ]] || { print -u2 "a newer release was not told: [$(<$err)]"; exit 1 }
+  [[ $(<$stamp) == "{\"checked\":$now,\"latest\":\"1.2.30\",\"told\":"<13->"}" ]] || { print -u2 "telling did not record when: $(<$stamp)"; exit 1 }
+  (( spawned == 2 )) || { print -u2 "telling started a check: spawned=$spawned"; exit 1 }
+  tab
+  [[ ! -s $err ]] || { print -u2 "a release was told twice in a day: $(<$err)"; exit 1 }
+  put "{\"checked\":$now,\"latest\":\"1.2.30\",\"told\":$(( now - 90000000 ))}"
+  tab
+  [[ -s $err ]] || { print -u2 "a release was not told again a day later"; exit 1 }
+  put "{\"checked\":$now,\"latest\":\"1.2.29\"}"
+  tab
+  [[ ! -s $err ]] || { print -u2 "the release already installed was told: $(<$err)"; exit 1 }
+  put "{\"checked\":$now,\"latest\":\"1.2.9\"}"
+  tab
+  [[ ! -s $err ]] || { print -u2 "an older release was told: $(<$err)"; exit 1 }
+  put "{\"checked\":0,\"latest\":\"1.2.30\"}"
+  TTHEME_AUTO_UPDATE=off tab
+  (( spawned == 2 )) && [[ ! -s $err ]] || { print -u2 "TTHEME_AUTO_UPDATE=off still checked or told: spawned=$spawned $(<$err)"; exit 1 }
+  CI=true tab
+  (( spawned == 2 )) && [[ ! -s $err ]] || { print -u2 "CI still checked or told: spawned=$spawned $(<$err)"; exit 1 }
+  CI=false tab
+  (( spawned == 3 )) || { print -u2 "CI=false stopped the check: spawned=$spawned"; exit 1 }
+  put "{\"checked\":0}"
+  ( zmodload zsh/system; zsystem flock -t 0 -f held $TTHEME_STATE_DIR/release.lock; sleep 1.5 ) &
+  sleep 0.4
+  tab
+  (( spawned == 3 )) || { print -u2 "a tab started the check while another held the lock: spawned=$spawned"; exit 1 }
+  wait
+  tab
+  (( spawned == 4 )) || { print -u2 "a tab did not start the check once the lock was free: spawned=$spawned"; exit 1 }
+) || exit 1
+(
+  __tt_cli() { print -r -- "$*" >| $XDG_CONFIG_HOME/relcli }
+  __tt_release_spawn
+  sleep 0.3
+  [[ $(<$XDG_CONFIG_HOME/relcli) == latest ]] || { print -u2 "the check did not run the latest verb: $(<$XDG_CONFIG_HOME/relcli)"; exit 1 }
+) || exit 1
+(
   HOME=$XDG_CONFIG_HOME/home
   mkdir -p $HOME/work/api/v2 $HOME/work/site/x $HOME/notes
   print -r -- "//**  rei" > $TTHEME_PINS_FILE

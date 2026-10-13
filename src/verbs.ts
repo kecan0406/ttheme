@@ -271,7 +271,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'latest',
     args: [],
-    about: 'Ask npm for the newest ttheme — any command starts this in the background once a day',
+    about: 'Ask npm for the newest ttheme — a command or a shell prompt starts this in the background once a day',
     section: 'setup',
     hidden: true,
   },

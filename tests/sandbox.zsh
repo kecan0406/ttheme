@@ -125,7 +125,7 @@ open_ghostty() {
 iterm_suite() {
   local legacy=$1 trust=$2
   local dp="$SANDBOX/Library/Application Support/iTerm2/DynamicProfiles"
-  local shell="/usr/bin/env HOME=$SANDBOX TTHEME_ITERM_SUITE=$SUITE ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache /bin/zsh -il"
+  local shell="/usr/bin/env HOME=$SANDBOX TTHEME_ITERM_SUITE=$SUITE ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache TTHEME_AUTO_UPDATE=${TTHEME_AUTO_UPDATE:-off} /bin/zsh -il"
   mkdir -p $dp
   jq -n --arg cmd $shell --arg dir $SANDBOX '{Profiles: [{
       Name: "ttheme sandbox", Guid: "sandbox",
@@ -167,7 +167,7 @@ open_iterm() {
 
 sandbox_shell() {
   print -rl -- '#!/bin/zsh -f' 'unset ${(M)${(k)parameters}:#TTHEME_*} XDG_DATA_HOME' \
-    "exec /usr/bin/env HOME=$SANDBOX ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache /bin/zsh -il" > $SANDBOX/sandbox.command
+    "exec /usr/bin/env HOME=$SANDBOX ZDOTDIR=$SANDBOX XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache TTHEME_AUTO_UPDATE=${TTHEME_AUTO_UPDATE:-off} /bin/zsh -il" > $SANDBOX/sandbox.command
   chmod +x $SANDBOX/sandbox.command
 }
 
@@ -266,7 +266,7 @@ main() {
     cd $HOME
     exec zsh -il
   fi
-  export XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache ZDOTDIR=$SANDBOX
+  export XDG_CONFIG_HOME=$SANDBOX/.config XDG_STATE_HOME=$SANDBOX/.local/state XDG_CACHE_HOME=$SANDBOX/.cache ZDOTDIR=$SANDBOX TTHEME_AUTO_UPDATE=${TTHEME_AUTO_UPDATE:-off}
   local front=""
   (( $+commands[lsappinfo] )) && [[ $(lsappinfo info -only pid "$(lsappinfo front)") =~ 'pid"?[[:space:]]*=[[:space:]]*([0-9]+)' ]] && front=$match[1]
   if (( $#iterm )); then

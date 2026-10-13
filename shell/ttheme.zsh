@@ -74,6 +74,7 @@ __tt_prompt() {
   (( TTHEME_FRONT < 0 || ! TTHEME_RAN )) || TTHEME_FRONT=0
   [[ -n $TTHEME_SSH_SPEC ]] && __tt_ssh_back
   __tt_fresh
+  __tt_release
 }
 
 __tt_follow() {
@@ -179,6 +180,8 @@ __tt_pins_load
 : ${TTHEME_WARP_FAST:=on}
 
 : ${TTHEME_MARKETPLACE_LOOKUP:=on}
+
+: ${TTHEME_AUTO_UPDATE:=on}
 
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
@@ -392,6 +395,78 @@ __tt_resume() {
     TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=${TTHEME_PALETTE[$name]} TTHEME_BASE_SPEC=${TTHEME_PALETTE[$TTHEME_STARTUP]}
   fi
   __tt_wear "${TTHEME_PALETTE[$name]}" "$name" force || { __tt_reload; __tt_reloaded }
+}
+
+typeset -g TTHEME_RELEASE_AT=-
+typeset -gi TTHEME_RELEASE_NEXT=0
+
+__tt_release_seen() {
+  local raw c l t
+  reply=(0 "" 0)
+  [[ -r $1 ]] || return 1
+  raw=$(<$1) 2>/dev/null
+  [[ $raw == *'"checked":'* ]] && c=${${raw#*'"checked":'}%%[^0-9]*}
+  [[ $raw == *'"latest":"'* ]] && l=${${raw#*'"latest":"'}%%\"*}
+  [[ $raw == *'"told":'* ]] && t=${${raw#*'"told":'}%%[^0-9]*}
+  [[ $c == <-> ]] || c=0
+  [[ $t == <-> ]] || t=0
+  [[ $l == <->.<->.<-> ]] || l=""
+  reply=($c "$l" $t)
+}
+
+__tt_release_put() {
+  local json="{\"checked\":$1"
+  [[ -n $2 ]] && json+=",\"latest\":\"$2\""
+  (( $3 )) && json+=",\"told\":$3"
+  json+="}"
+  __tt_put $TTHEME_STATE_DIR/release.json "$json"
+}
+
+__tt_newer() {
+  local -a a=(${(s:.:)1}) b=(${(s:.:)2})
+  (( a[1] > b[1] || ( a[1] == b[1] && ( a[2] > b[2] || ( a[2] == b[2] && a[3] > b[3] ) ) ) ))
+}
+
+__tt_release_tty() { [[ -t 2 ]] }
+
+__tt_release_spawn() {
+  __tt_cli latest </dev/null >/dev/null 2>&1 &!
+}
+
+__tt_release() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  [[ $TTHEME_AUTO_UPDATE == off || ${CI:-false} != false ]] && return 0
+  __tt_release_tty && __tt_active || return 0
+  (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
+  local -a at=("") reply
+  local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0
+  integer checked told now=$(( EPOCHSECONDS * 1000 ))
+  zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
+  [[ $at[1] == "$TTHEME_RELEASE_AT" ]] && (( EPOCHSECONDS < TTHEME_RELEASE_NEXT )) && return 0
+  __tt_release_seen $f
+  checked=$reply[1] latest=$reply[2] told=$reply[3]
+  TTHEME_RELEASE_AT=$at[1] TTHEME_RELEASE_NEXT=$(( checked / 1000 + 86400 ))
+  (( EPOCHSECONDS >= TTHEME_RELEASE_NEXT )) && spawn=1
+  [[ -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1
+  (( spawn || tell )) || return 0
+  zmodload -F zsh/system b:zsystem 2>/dev/null
+  zmodload -F zsh/files b:zf_mkdir 2>/dev/null
+  zf_mkdir -p $TTHEME_STATE_DIR 2>/dev/null
+  [[ -e $TTHEME_STATE_DIR/release.lock ]] || { : >>| $TTHEME_STATE_DIR/release.lock } 2>/dev/null
+  zsystem flock -t 0 -f fd $TTHEME_STATE_DIR/release.lock 2>/dev/null || return 0
+  spawn=0 tell=0
+  __tt_release_seen $f
+  checked=$reply[1] latest=$reply[2] told=$reply[3]
+  TTHEME_RELEASE_NEXT=$(( checked / 1000 + 86400 ))
+  (( EPOCHSECONDS >= TTHEME_RELEASE_NEXT )) && spawn=1 checked=$now TTHEME_RELEASE_NEXT=$(( EPOCHSECONDS + 86400 ))
+  [[ -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1 told=$now
+  (( spawn || tell )) && __tt_release_put $checked "$latest" $told
+  zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
+  TTHEME_RELEASE_AT=$at[1]
+  zsystem flock -u $fd
+  (( spawn )) && __tt_release_spawn
+  (( tell )) && [[ -n $TTHEME_OUTDATED ]] && printf "$TTHEME_OUTDATED\n" $latest $TTHEME_VERSION >&2
+  return 0
 }
 
 __tt_chpwd() {

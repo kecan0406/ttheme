@@ -101,7 +101,7 @@ prompts() { REPLY=$(( ${#${(@s:bench> :)BUF}} - 1 )) }
 
 start() {
   local name=$1 h=$WORK/$1 term=$TERMINAL
-  local -a env=(PATH=$PATH HOME=$h ZDOTDIR=$h XDG_CONFIG_HOME=$h/.config XDG_STATE_HOME=$h/.state XDG_CACHE_HOME=$h/.cache TERM=xterm-256color $EXTRA)
+  local -a env=(PATH=$PATH HOME=$h ZDOTDIR=$h XDG_CONFIG_HOME=$h/.config XDG_STATE_HOME=$h/.state XDG_CACHE_HOME=$h/.cache TERM=xterm-256color TTHEME_AUTO_UPDATE=off $EXTRA)
   [[ -n $term ]] || { [[ $name == (ref-|)terminal-app ]] && term=terminal-app || term=ghostty }
   env+=(${=IDENTITY[$term]})
   stop
@@ -387,6 +387,28 @@ late() {
   stop
 }
 
+releasing() {
+  local term=$1 name=release-$1 h=$WORK/release-$1 log
+  local -a runs
+  log=$h/node.log
+  home $name off
+  mkdir -p $h/bin $h/.state/ttheme
+  print -rl -- '#!/bin/sh' "echo \"\$@\" >> $log" > $h/bin/node
+  chmod +x $h/bin/node
+  print -r -- "{\"checked\":$(( EPOCHSECONDS * 1000 - 172800000 )),\"latest\":\"99.0.0\"}" > $h/.state/ttheme/release.json
+  TERMINAL=$term EXTRA=(TTHEME_AUTO_UPDATE=on PATH=$h/bin:$PATH)
+  start $name || return 1
+  upto '[[ $BUF == *"bench> "* ]]' 5 $name || { fail "$term: no prompt within 5s"; return 1 }
+  upto '[[ -r $log ]]' 3 $name || { fail "$term: a first tab two days after the last check did not start the update check"; return 1 }
+  upto '[[ $BUF == *"is out, you have"* ]]' 3 $name || { fail "$term: a newer release known from the stamp was not told at the first prompt"; return 1 }
+  step $'print -r -- NEXT_$((6*7))\r' $name
+  (( ${#${(@s:is out, you have:)BUF}} == 2 )) || { fail "$term: a newer release was told more than once in a day"; return 1 }
+  runs=(${(f)"$(<$log)"})
+  (( ${#runs} == 1 )) && [[ $runs[1] == *"ttheme.js latest" ]] || { fail "$term: the update check was not one run of the latest verb: $(<$log)"; return 1 }
+  stop
+  TERMINAL="" EXTRA=()
+}
+
 check() {
   local name
   home base
@@ -426,7 +448,10 @@ check() {
   hostile options-iterm2
   TERMINAL=""
   late late
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, and an answer that comes after the layer stopped waiting never reaches the command line"
+  for name in ${(k)IDENTITY}; do
+    releasing $name || return 1
+  done
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, an answer that comes after the layer stopped waiting never reaches the command line, and in every terminal a first tab starts the daily update check once and a newer release is told once at a prompt"
 }
 
 bench() {

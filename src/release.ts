@@ -4,7 +4,7 @@ import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import pkg from '../package.json' with { type: 'json' }
 import { writeAtomic } from './edits.ts'
-import { advise } from './notice.ts'
+import { advise, outdated, UPDATE_HERE } from './notice.ts'
 import { configHome } from './palettes.ts'
 
 export const UPDATE_COMMAND = `npx ${pkg.name}@latest init`
@@ -131,11 +131,11 @@ function runsInstalled(): boolean {
 }
 
 function howToUpdate(): string {
-  return runsInstalled() ? '`ttheme update` updates it' : `\`${UPDATE_COMMAND}\` updates it`
+  return runsInstalled() ? UPDATE_HERE : `\`${UPDATE_COMMAND}\` updates it`
 }
 
 function outdatedLine(latest: string, running: string = pkg.version): string {
-  return `ttheme ${latest} is out, you have ${running} — ${howToUpdate()}`
+  return outdated(latest, running, howToUpdate())
 }
 
 export function tellRelease(now = Date.now()): void {
