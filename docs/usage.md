@@ -622,8 +622,9 @@ edit](#palette-edit) it asks which to share, your tone or the original;
 `--tone tuned` or `--tone original` answers for it, and without a terminal it
 shares the tuned one. With no palette named it asks first how to share — a
 link, or a marketplace on GitHub ([Your own
-palettes](../README.md#your-own-palettes)) — then which palettes, the tab's
-picked to start with; when the link goes to a
+palettes](../README.md#your-own-palettes)) — then which palettes, starting from
+the tab's for a link and from the ones the marketplace holds for a marketplace;
+when the link goes to a
 pipe (`ttheme share | pbcopy`) it shares the tab's palette without asking,
 naming it on stderr. A tuned palette goes out as `<name>-tuned`, since its own
 name belongs to the original wherever that is installed.

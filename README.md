@@ -244,7 +244,8 @@ Palettes are inspired by characters from the listed works; this project is
 unaffiliated with and unendorsed by their rights holders. No character art,
 audio or trademarked asset is redistributed here — only color values.
 Terminal background images are downloaded from a booru only when you ask `find`
-for one or install a palette that names its post, built on your own machine and written to
+for one, install a palette that names its post, or take an update that adds a
+post to a palette's list, built on your own machine and written to
 `~/.config/ttheme/backgrounds/`; none ship in this repository or on npm.
 
 Characters' names in every language — what preview, browse and
