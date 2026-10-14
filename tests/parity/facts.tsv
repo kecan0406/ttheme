@@ -67,6 +67,10 @@ off.new.colors	own	=	=	=	=	=	=	=	=	=
 off.new.picture	none	=	=	=	=	=	=	=	=	=
 off.new.wears	none	=	=	=	=	=	=	=	=	=
 off.new.issue	-	=	=	=	=	=	=	=	=	=
+off-seq.new.colors	own	=	=	=	=	=	=	=	=	=
+off-seq.new.picture	none	=	=	=	=	=	=	=	=	=
+off-seq.new.wears	none	=	=	=	=	=	=	=	=	=
+off-seq.new.issue	-	=	=	=	=	=	=	=	=	=
 off-behind.back.colors	own	=	=	=	=	=	=	=	=	=
 off-behind.back.picture	none	=	=	=	=	=	=	=	=	=
 off-behind.back.wears	none	=	=	=	=	=	=	=	=	=

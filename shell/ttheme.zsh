@@ -1764,7 +1764,7 @@ fi
     local REPLY
     if [[ -n $TTHEME_SPEC ]]; then
       :
-    elif [[ $TTHEME_TAB_PALETTE == off ]]; then
+    elif [[ $TTHEME_TAB_PALETTE == off || -z $TTHEME_STARTUP ]]; then
       [[ -n $TTHEME_HEARD ]] || __tt_listen
       __tt_start_bg && __tt_wearing $REPLY && TTHEME_SPEC=$REPLY
     else

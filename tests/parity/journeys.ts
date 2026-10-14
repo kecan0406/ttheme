@@ -152,6 +152,17 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'off-seq',
+    about: 'with new tabs rotating, a new tab opened after ttheme off opens in the terminal’s own colors too',
+    async run(p) {
+      p.config(': ${TTHEME_TAB_PALETTE:=seq}')
+      const a = await p.open()
+      await p.type(a, 'ttheme off')
+      await p.open()
+      await p.look('new', { want: 'own' })
+    },
+  },
+  {
     id: 'off-behind',
     about: 'ttheme off typed in a tab that is not in front takes its picture off too',
     async run(p) {

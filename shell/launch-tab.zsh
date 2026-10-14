@@ -5,9 +5,11 @@ config=${XDG_CONFIG_HOME:-$HOME/.config}/ttheme/config.zsh
 
 if [[ ${TTHEME_TAB_PALETTE:-off} != off ]]; then
   source ${0:A:h}/ttheme.zsh
-  __tt_next
-  __tt_apply "$REPLY"
-  export TTHEME_SPEC=$REPLY
+  if [[ -n $TTHEME_STARTUP ]]; then
+    __tt_next
+    __tt_apply "$REPLY"
+    export TTHEME_SPEC=$REPLY
+  fi
 fi
 
 exec ${SHELL:-/bin/zsh} -l
