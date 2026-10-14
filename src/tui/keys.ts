@@ -84,6 +84,20 @@ const LOCKS = 64 | 128
 
 const FUNCTIONAL = 57344
 
+const KEYPAD_ENTER = 57414
+
+const KEYPAD_MOVES = new Map([
+  [57417, 'D'],
+  [57418, 'C'],
+  [57419, 'A'],
+  [57420, 'B'],
+  [57421, '5~'],
+  [57422, '6~'],
+  [57423, 'H'],
+  [57424, 'F'],
+  [57426, '3~'],
+])
+
 const CSI = /\[([0-?]*)([ -/]*)([@-~])/y
 const CSI_OPEN = /^\[[0-?]*[ -/]*$/
 const SGR_MOUSE = /\[(<-?\d+;-?\d+;-?\d+)([Mm])/y
@@ -211,15 +225,23 @@ function glyph(code: number, shifted: number, base: number, shift: boolean, chor
 function coded(params: string): Inbound[] {
   const [keys = '', mods = ''] = params.split(';')
 
-  const [code = Number.NaN, shifted = Number.NaN, base = Number.NaN] = keys
+  const [pressed = Number.NaN, shifted = Number.NaN, base = Number.NaN] = keys
     .split(':')
     .map((part) => (part === '' ? Number.NaN : Number(part)))
 
   const bits = (mods === '' ? 1 : Number(mods.split(':')[0])) - 1
 
-  if (!Number.isInteger(code) || !Number.isInteger(bits) || bits < 0 || bits & NOT_TEXT) {
+  if (!Number.isInteger(pressed) || !Number.isInteger(bits) || bits < 0 || bits & NOT_TEXT) {
     return []
   }
+
+  const move = KEYPAD_MOVES.get(pressed)
+
+  if (move !== undefined) {
+    return keyed(mods === '' ? move.slice(0, -1) : `${move.slice(0, -1) || '1'};${mods}`, move.slice(-1))
+  }
+
+  const code = pressed === KEYPAD_ENTER ? 13 : pressed
 
   const shift = (bits & 1) !== 0
   const alt = (bits & 2) !== 0
@@ -262,6 +284,12 @@ function unlocked(params: string, final: string): string {
   return number === '1' && final !== '~' ? '' : number
 }
 
+function keyed(params: string, final: string): Inbound[] {
+  const name = CSI_KEYS[`${unlocked(params, final)}${final}`]
+
+  return name ? [key(name)] : []
+}
+
 function report(params: string, between: string, final: string, cell: Cell | undefined): Inbound[] {
   if ((final === 'M' || final === 'm') && between === '' && params.startsWith('<')) {
     const [code = -1, x = 0, y = 0] = params.slice(1).split(';').map(Number)
@@ -297,9 +325,7 @@ function report(params: string, between: string, final: string, cell: Cell | und
     }
   }
 
-  const name = between === '' ? CSI_KEYS[`${unlocked(params, final)}${final}`] : undefined
-
-  return name ? [key(name)] : []
+  return between === '' ? keyed(params, final) : []
 }
 
 function csi(input: string, at: number, final: boolean, cell: Cell | undefined): Step {

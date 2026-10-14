@@ -247,3 +247,21 @@ test('a key the keyboard protocol reports with caps lock or num lock on reads as
 
   assert.deepEqual(keysOf('\x1b[1;65A\x1b[1;69A\x1b[1;73A'), ['up'])
 })
+
+test('a keypad key the keyboard protocol reports by its own number reads as the key it stands for', () => {
+  for (const [keypad, plain] of [
+    ['\x1b[57414u', '\r'],
+    ['\x1b[57414;2u', '\x1b[13;2u'],
+    ['\x1b[57419u', '\x1b[A'],
+    ['\x1b[57420;129u', '\x1b[B'],
+    ['\x1b[57417u', '\x1b[D'],
+    ['\x1b[57418;2u', '\x1b[1;2C'],
+    ['\x1b[57421u', '\x1b[5~'],
+    ['\x1b[57422;65u', '\x1b[6~'],
+    ['\x1b[57423u', '\x1b[H'],
+    ['\x1b[57424u', '\x1b[F'],
+    ['\x1b[57426u', '\x1b[3~'],
+  ] as const) {
+    assert.deepEqual(keysOf(keypad), keysOf(plain), JSON.stringify(keypad))
+  }
+})
