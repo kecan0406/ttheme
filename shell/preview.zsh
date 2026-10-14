@@ -2499,7 +2499,7 @@ __tt_preview() {
     printf '\e[?2026h'
     __tt_pv_bg_close
     if [[ -n $spec ]]; then
-      [[ $spec == "$painted" ]] || __tt_apply "$spec"
+      [[ $spec == "$painted" ]] && { [[ -n $TTHEME_PAINTED || $mode == pin ]] || (( picked == 1 )) } || __tt_apply "$spec"
     else
       __tt_pv_unpaint
     fi

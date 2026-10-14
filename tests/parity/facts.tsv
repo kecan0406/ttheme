@@ -169,6 +169,10 @@ preview-tab.kept.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tab.kept.picture	kita	=	=	=	none	=	none	=	=	=
 preview-tab.kept.wears	kita	=	=	=	=	=	=	=	=	=
 preview-tab.kept.issue	-	=	=	=	=	=	=	=	=	=
+preview-tab-same.kept.colors	konata	=	=	=	=	=	=	=	=	=
+preview-tab-same.kept.picture	konata	=	=	=	none	=	none	=	=	=
+preview-tab-same.kept.wears	konata	=	=	=	=	=	=	=	=	=
+preview-tab-same.kept.issue	-	=	=	=	=	=	=	=	=	=
 preview-default.here.colors	miku	=	=	=	=	=	=	=	=	=
 preview-default.here.picture	none	=	=	=	=	=	=	=	=	=
 preview-default.here.wears	miku	=	=	=	=	=	=	=	=	=

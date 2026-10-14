@@ -371,6 +371,20 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'preview-tab-same',
+    about:
+      'This tab keeps for this tab the palette a tab that never painted already shows, so a new default leaves it, as ttheme use would',
+    async run(p) {
+      const a = await p.open()
+      await p.launch(a, 'ttheme')
+      await p.keys(a, 'k', 'o', 'n', 'a', 't', 'a', 'enter')
+      await p.keys(a, 'right', 'enter')
+      await p.back(a)
+      await p.type(a, 'ttheme default miku')
+      await p.look('kept', { want: 'konata' })
+    },
+  },
+  {
     id: 'preview-default',
     about: 'preview’s Default makes the palette the one new tabs open with',
     async run(p) {
