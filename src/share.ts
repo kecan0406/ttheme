@@ -33,6 +33,7 @@ import {
   repoText,
   repoUrl,
   toolsProblem,
+  uncommitted,
   withCatalogs,
   withDescription,
   withoutCatalogs,
@@ -498,7 +499,7 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
 
   const files = new Map(marketplaceFiles(marketplace.dir).map((f) => [f.slug, f.path]))
   const drops = dropped.flatMap((e) => files.get(slugOf(e.name)) ?? [])
-  const tracked = existsSync(join(marketplace.dir, '.git'))
+  const tracked = (await uncommitted(marketplace.dir, drops)).length === 0
 
   const named = (kind: Copy['kind']) =>
     copies

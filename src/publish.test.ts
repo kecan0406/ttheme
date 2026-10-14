@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { test } from 'node:test'
-import { withCatalogs, withDescription, withoutCatalogs } from './publish.ts'
+import { uncommitted, withCatalogs, withDescription, withoutCatalogs } from './publish.ts'
 import { readMarketplaceInfo } from './sources.ts'
 
 const toml = `"$schema" = "https://www.schemastore.org/ttheme-marketplace.json"
@@ -49,4 +53,32 @@ test('catalog tables are added at the end and only the ones named come out', () 
     ],
   )
   assert.equal(withoutCatalogs(toml, new Set()), toml)
+})
+
+test('a palette file git never committed is one share must warn it deletes for good, a committed one is not', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-publish-'))
+
+  const git = (...args: string[]) =>
+    execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...args], {
+      cwd: dir,
+      stdio: 'ignore',
+    })
+
+  try {
+    const shared = join(dir, 'palettes', 'kita.toml')
+    const fresh = join(dir, 'palettes', 'miku.toml')
+    mkdirSync(join(dir, 'palettes'))
+    writeFileSync(shared, 'a')
+    assert.deepEqual(await uncommitted(dir, [shared]), [shared])
+    git('init', '-q', '-b', 'main')
+    assert.deepEqual(await uncommitted(dir, [shared]), [shared])
+    git('add', '-A')
+    git('commit', '-q', '--no-verify', '-m', 'share')
+    writeFileSync(shared, 'tuned since')
+    writeFileSync(fresh, 'b')
+    assert.deepEqual(await uncommitted(dir, [shared, fresh]), [fresh])
+    assert.deepEqual(await uncommitted(dir, []), [])
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 })

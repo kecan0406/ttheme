@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, relative } from 'node:path'
 import { promisify } from 'node:util'
 import { TOPIC } from './sources.ts'
 
@@ -91,6 +91,28 @@ export async function isPublic(repo: Repo): Promise<boolean> {
     )
   } catch {
     return false
+  }
+}
+
+export async function uncommitted(dir: string, paths: readonly string[]): Promise<string[]> {
+  if (paths.length === 0 || !existsSync(join(dir, '.git'))) {
+    return [...paths]
+  }
+
+  try {
+    const named = paths.map((path) => relative(dir, path))
+
+    const { stdout } = await exec(
+      'git',
+      ['ls-tree', '-r', '-z', '--name-only', '--full-name', 'HEAD', '--', ...named],
+      { cwd: dir, encoding: 'utf8' },
+    )
+
+    const known = new Set(stdout.split('\0'))
+
+    return paths.filter((_, i) => !known.has(named[i] ?? ''))
+  } catch {
+    return [...paths]
   }
 }
 
