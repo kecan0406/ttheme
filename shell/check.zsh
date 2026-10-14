@@ -846,6 +846,15 @@ __tt_fresh
   (( asks == 1 && naps == 0 )) && [[ $shown == ${TTHEME_PALETTE[miku]%% *} ]] ||
     { print -u2 "a Windows Terminal tab wearing the old default asked its background $asks times and waited $naps times at the prompt after the default moved, or lost its palette: $shown"; exit 1 }
 ) || exit 1
+(
+  integer paints=0
+  __tt_osc_apply() { (( ++paints )) }
+  __tt_dir_sync() { : }
+  export TTHEME_PAINTED=1
+  TTHEME_TMUX=1 TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_PALETTES_AT=
+  __tt_fresh > /dev/null
+  (( paints == 0 )) || { print -u2 "a tmux pane wearing the old default repainted the whole terminal tab at its prompt after the default moved"; exit 1 }
+) || exit 1
 adapter=$TTHEME_ADAPTER
 TTHEME_ITERM_SHOWN=default TTHEME_STARTUP=miku
 source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
