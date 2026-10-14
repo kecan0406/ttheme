@@ -285,12 +285,7 @@ export class Terminal {
   reassert(): void {
     if (this.open) {
       this.input.setRawMode?.(true)
-      this.write(
-        [...this.assumed, ...this.owned]
-          .filter((mode) => !mode.stacked)
-          .map((mode) => mode.on)
-          .join(''),
-      )
+      this.write([...this.assumed, ...this.owned].flatMap((mode) => (mode.stacked ? [] : [mode.on])).join(''))
     }
   }
 

@@ -105,7 +105,7 @@ async function toned(
     return { original, tuned: tonedEntry(original, tones[original.name]) }
   })
 
-  const tunable = pairs.filter((pair) => pair.tuned !== pair.original).map((pair) => pair.original.name)
+  const tunable = pairs.flatMap((pair) => (pair.tuned === pair.original ? [] : [pair.original.name]))
   const which = tunable.length === 0 ? 'original' : (tone ?? (tty() ? await askTone(tunable, renamed) : 'tuned'))
 
   return pairs.map(({ original, tuned }) =>
