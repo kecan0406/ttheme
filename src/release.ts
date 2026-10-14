@@ -133,15 +133,14 @@ function settled(seen: Seen): Seen {
 }
 
 export async function checkLatest(): Promise<number> {
-  const seen = settled(readSeen())
-
   try {
-    writeSeen({ ...seen, checked: Date.now(), latest: await fetchLatest() })
+    const latest = await fetchLatest()
+    writeSeen({ ...settled(readSeen()), checked: Date.now(), latest })
 
     return 0
   } catch {
     const now = Date.now()
-    writeSeen({ ...seen, checked: now - DAY + RETRY, failed: now })
+    writeSeen({ ...settled(readSeen()), checked: now - DAY + RETRY, failed: now })
 
     return 1
   }

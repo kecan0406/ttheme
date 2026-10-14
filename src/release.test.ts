@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import pkg from '../package.json' with { type: 'json' }
 import { standingLine } from './notice.ts'
-import { autoWanted, isNewer, newerRelease, releaseLine, standingOf } from './release.ts'
+import { autoWanted, checkLatest, isNewer, newerRelease, releaseLine, standingOf } from './release.ts'
 
 test('isNewer compares releases part by part and stays quiet about a version that is not a plain release', () => {
   assert.equal(isNewer('1.0.51', '1.0.50'), true)
@@ -68,6 +68,42 @@ test('ttheme update finding the latest release clears a background check that fa
     assert.equal((await newerRelease()).note, `  ttheme ${pkg.version} — up to date`)
     assert.equal(JSON.parse(readFileSync(stamp, 'utf8')).failed, undefined)
     assert.equal(releaseLine(Date.now(), {}).standing, 'current')
+  } finally {
+    for (const [key, value] of Object.entries(was)) {
+      if (value === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = value
+      }
+    }
+
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a release told while the background check asked npm stays told', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-release-'))
+  const was = { PATH: process.env.PATH, XDG_STATE_HOME: process.env.XDG_STATE_HOME }
+
+  try {
+    mkdirSync(join(dir, 'bin'))
+    mkdirSync(join(dir, 'state', 'ttheme'), { recursive: true })
+    const stamp = join(dir, 'state', 'ttheme', 'release.json')
+    const told = Date.now() - 1000
+    const latest = `${pkg.version.replace(/\d+$/, (patch) => String(Number(patch) + 1))}`
+    writeFileSync(stamp, `${JSON.stringify({ checked: Date.now(), latest, trying: Date.now() })}\n`)
+    writeFileSync(
+      join(dir, 'bin', 'npm'),
+      `#!/bin/sh\nprintf '%s\\n' '${JSON.stringify({ checked: Date.now(), latest, told, trying: Date.now() })}' > "$XDG_STATE_HOME/ttheme/release.json"\necho ${latest}\n`,
+    )
+    chmodSync(join(dir, 'bin', 'npm'), 0o755)
+    process.env.PATH = `${join(dir, 'bin')}:${process.env.PATH}`
+    process.env.XDG_STATE_HOME = join(dir, 'state')
+    assert.equal(await checkLatest(), 0)
+    const seen = JSON.parse(readFileSync(stamp, 'utf8'))
+    assert.equal(seen.told, told)
+    assert.equal(seen.latest, latest)
+    assert.equal(seen.trying, undefined)
   } finally {
     for (const [key, value] of Object.entries(was)) {
       if (value === undefined) {
