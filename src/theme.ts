@@ -140,6 +140,10 @@ export function textProblem(value: string): string | undefined {
   return value.length > 80 ? 'is longer than 80 characters' : undefined
 }
 
+export function catalogProblem(catalog: string): string | undefined {
+  return catalog.includes('/') || catalog.startsWith('.') ? 'holds a / or starts with a dot' : textProblem(catalog)
+}
+
 function text(file: string, field: string, value: unknown): string {
   const s = str(file, field, value)
   const problem = textProblem(s)

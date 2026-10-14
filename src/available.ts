@@ -18,7 +18,7 @@ import {
   remoteOwner,
   shownSource,
 } from './sources.ts'
-import { MARKETPLACE_FILE, marketplaceOf, nameProblem, shelfOf, textProblem } from './theme.ts'
+import { catalogProblem, MARKETPLACE_FILE, marketplaceOf, nameProblem, shelfOf, textProblem } from './theme.ts'
 import { readTone, tuned } from './tone.ts'
 
 const TIMEOUT = 20_000
@@ -183,6 +183,12 @@ function entryProblem(p: PaletteEntry): string | undefined {
 
   if (![p.background, p.foreground, p.cursor, p.selection, ...p.ansi].every((c) => typeof c === 'string' && isHex(c))) {
     return 'holds a color that is not "#rrggbb"'
+  }
+
+  const shelved = typeof p.catalog === 'string' ? catalogProblem(p.catalog) : undefined
+
+  if (shelved) {
+    return shelved
   }
 
   return [p.native ?? '-', p.catalog ?? '-', p.ansiSource]

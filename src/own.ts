@@ -17,6 +17,7 @@ import {
 } from './sources.ts'
 import {
   type Catalog,
+  catalogProblem,
   marketplaceOf,
   type Place,
   POSITIONS,
@@ -523,10 +524,6 @@ export function codeOf(text: string): string | undefined {
   const code = segment?.replace(/%3a/gi, ':')
 
   return code && isCode(code) ? code : undefined
-}
-
-function catalogProblem(catalog: string): string | undefined {
-  return catalog.includes('/') || catalog.startsWith('.') ? 'holds a / or starts with a dot' : textProblem(catalog)
 }
 
 export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[] {

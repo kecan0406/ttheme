@@ -11,6 +11,7 @@ import {
   booruTags,
   gateFailures,
   parseManifest,
+  readKept,
   readMarketplaces,
   search,
   siteTags,
@@ -282,5 +283,15 @@ test("a marketplace names itself in ttheme-marketplace.toml — the owner of an 
     () =>
       archiveId('ann/ttheme-pastel', marketplace('name = "pastel"\n\n[owner]\nname = "ann"\n\n[renames]\nold = 3\n')),
     /renames\.old/,
+  )
+})
+
+test('a kept palette whose catalog could not be a catalog folder is left out, so share never copies it outside its marketplace', () => {
+  const home = mkdtempSync(join(tmpdir(), 'ttheme-kept-'))
+  mkdirSync(join(home, 'ttheme'))
+  writeKept(home, [entry({ name: 'bob@x/alacritty', catalog: '../../../../alacritty' }), entry({ name: 'bob@x/kept' })])
+  assert.deepEqual(
+    readKept(home).map((p) => p.name),
+    ['bob@x/kept'],
   )
 })
