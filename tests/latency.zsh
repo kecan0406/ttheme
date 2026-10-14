@@ -414,17 +414,19 @@ check() {
   home base
   home off off
   home seq seq
+  home seq-off seq
+  print -r -- 'typeset -g TTHEME_STARTUP=' >> $WORK/seq-off/.config/ttheme/palettes.zsh
   home terminal-app off
   home iterm2 off
   home iterm2-switch off
   print -rl -- 'typeset -g TTHEME_ITERM_SWITCH=1' "typeset -g TTHEME_ITERM_PROFILES=$WORK/iterm2-switch/profiles.json" >> $WORK/iterm2-switch/.config/ttheme/palettes.zsh
   print -r -- '{}' > $WORK/iterm2-switch/profiles.json
   touch -t 202001010000 $WORK/iterm2-switch/profiles.json
-  for name in base off seq terminal-app; do
+  for name in base off seq seq-off terminal-app; do
     measure $name stderr 0
     [[ $name == (base|seq) ]] || (( ASKED[$name] )) || { fail "$name: the layer asked the terminal nothing, so nothing was tested"; return 1 }
   done
-  for name in off terminal-app; do
+  for name in off seq-off terminal-app; do
     measure $name stderr 0
     (( ASKED[$name] )) || { fail "$name: a second tab never checked the colors it remembered"; return 1 }
     [[ ${BUF%%$'\e]11;?'*} == *"bench> "* ]] || { fail "$name: a second tab asked the terminal before its first prompt"; return 1 }
@@ -451,7 +453,7 @@ check() {
   for name in ${(k)IDENTITY}; do
     releasing $name || return 1
   done
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, an answer that comes after the layer stopped waiting never reaches the command line, and in every terminal a first tab starts the daily update check once and a newer release is told once at a prompt"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, seq while ttheme is off, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, an answer that comes after the layer stopped waiting never reaches the command line, and in every terminal a first tab starts the daily update check once and a newer release is told once at a prompt"
 }
 
 bench() {

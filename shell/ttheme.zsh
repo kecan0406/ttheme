@@ -250,7 +250,7 @@ __tt_put() {
 __tt_recall() {
   local f=$TTHEME_STATE_DIR/colors.$TTHEME_ADAPTER line
   REPLY=""
-  [[ -o zle && -r $f && -z $TTHEME_PAINTED && $TTHEME_TAB_PALETTE == off ]] && (( ! TTHEME_TMUX )) && __tt_active || return 1
+  [[ -o zle && -r $f && -z $TTHEME_PAINTED && ( $TTHEME_TAB_PALETTE == off || -z $TTHEME_STARTUP ) ]] && (( ! TTHEME_TMUX )) && __tt_active || return 1
   line=$(<$f)
   [[ $line == "${TTHEME_STARTUP:--} "?* ]] || return 1
   REPLY=${line#* }
@@ -295,7 +295,7 @@ __tt_recheck() {
   __tt_remember "$now"
   TTHEME_HEARD=$now
   __tt_heard "$now"
-  [[ $TTHEME_TAB_PALETTE == off ]] || return 0
+  [[ $TTHEME_TAB_PALETTE == off || -z $TTHEME_STARTUP ]] || return 0
   __tt_wearing "${heard%% *}" && was=$REPLY
   REPLY=""
   __tt_wearing "${now%% *}"
