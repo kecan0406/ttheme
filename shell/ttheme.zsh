@@ -435,6 +435,12 @@ __tt_newer() {
 
 __tt_release_tty() { [[ -t 2 ]] }
 
+__tt_release_next() {
+  TTHEME_RELEASE_NEXT=$(( $1 / 1000 + 86400 ))
+  [[ -n $2 ]] && __tt_newer $2 $TTHEME_VERSION && (( $3 / 1000 + 86400 < TTHEME_RELEASE_NEXT )) && TTHEME_RELEASE_NEXT=$(( $3 / 1000 + 86400 ))
+  return 0
+}
+
 __tt_release_spawn() {
   __tt_cli latest </dev/null >/dev/null 2>&1 &!
 }
@@ -452,7 +458,8 @@ __tt_release() {
   [[ -z $hub && $at[1] == "$TTHEME_RELEASE_AT" ]] && (( EPOCHSECONDS < TTHEME_RELEASE_NEXT )) && return 0
   __tt_release_seen $f
   checked=$reply[1] latest=$reply[2] told=$reply[3] trying=$reply[4] failed=$reply[5]
-  TTHEME_RELEASE_AT=$at[1] TTHEME_RELEASE_NEXT=$(( checked / 1000 + 86400 ))
+  TTHEME_RELEASE_AT=$at[1]
+  __tt_release_next $checked "$latest" $told
   (( EPOCHSECONDS >= checked / 1000 + period && EPOCHSECONDS >= failed / 1000 + 3600 )) && spawn=1
   [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1
   (( spawn || tell )) || return 0
@@ -464,9 +471,9 @@ __tt_release() {
   spawn=0 tell=0
   __tt_release_seen $f
   checked=$reply[1] latest=$reply[2] told=$reply[3] trying=$reply[4] failed=$reply[5]
-  TTHEME_RELEASE_NEXT=$(( checked / 1000 + 86400 ))
-  (( EPOCHSECONDS >= checked / 1000 + period && EPOCHSECONDS >= failed / 1000 + 3600 )) && spawn=1 checked=$now trying=$now TTHEME_RELEASE_NEXT=$(( EPOCHSECONDS + 86400 ))
+  (( EPOCHSECONDS >= checked / 1000 + period && EPOCHSECONDS >= failed / 1000 + 3600 )) && spawn=1 checked=$now trying=$now
   [[ -z $hub && -n $latest ]] && __tt_newer $latest $TTHEME_VERSION && (( now - told >= 86400000 )) && tell=1 told=$now
+  __tt_release_next $checked "$latest" $told
   (( spawn || tell )) && __tt_release_put $checked "$latest" $told $trying $failed
   zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
   TTHEME_RELEASE_AT=$at[1]

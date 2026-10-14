@@ -584,6 +584,16 @@ TTHEME_STARTUP=
   put "{\"checked\":$now,\"latest\":\"1.2.30\",\"told\":$(( now - 90000000 ))}"
   tab
   [[ -s $err ]] || { print -u2 "a release was not told again a day later"; exit 1 }
+  sec=$EPOCHSECONDS
+  while (( EPOCHSECONDS == sec )); do sleep 0.02; done
+  due=$(( EPOCHSECONDS + 2 ))
+  put "{\"checked\":$(( EPOCHSECONDS * 1000 )),\"latest\":\"1.2.30\",\"told\":$(( due * 1000 - 86400000 ))}"
+  tab
+  [[ ! -s $err ]] || { print -u2 "a release was told again within a day: $(<$err)"; exit 1 }
+  while (( EPOCHSECONDS < due )); do sleep 0.05; done
+  : >| $err
+  __tt_release 2>> $err
+  [[ -s $err ]] || { print -u2 "a tab that read the stamp before its release fell due to be told again kept quiet until the next day's check"; exit 1 }
   put "{\"checked\":$now,\"latest\":\"1.2.29\"}"
   tab
   [[ ! -s $err ]] || { print -u2 "the release already installed was told: $(<$err)"; exit 1 }
