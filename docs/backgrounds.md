@@ -260,7 +260,7 @@ share of transparent pixels next to its size (`opaque` when there are none).
 Under that line the post's page, the source the artwork came from and its artist
 always show, a `—` where the post names none; a source that is a pixiv image
 file (which pixiv refuses to open from a link) is named by its artwork page; the page, the source and the post
-id are links, opened with a click (cmd+click in Ghostty and iTerm2). `i` puts
+id are links, which find opens on a click (not over SSH). `i` puts
 the rest of the post's details where the scene was — characters, series, the
 other tags, rating, score, the day it was posted, file type and size, uploader,
 each row kept with a `—` where the post names none — and `i` again brings the
