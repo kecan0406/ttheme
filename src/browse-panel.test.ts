@@ -95,10 +95,11 @@ class Glass {
     const wide = cells(ch)
     const line = this.cells[this.row]
 
-    if (!line || wide === 0 || this.col + wide > this.width) {
+    if (!line || wide === 0 || wide > this.width) {
       return
     }
 
+    this.col = Math.min(this.col, this.width - wide)
     line[this.col] = ch
 
     if (wide === 2) {
@@ -253,6 +254,11 @@ test('a marketplace opens in the panel beside the cards from 94 columns, and ove
   assert.doesNotMatch(narrow.last, /● official/)
   assert.match(narrow.last, /^ ╭─ official ─+╮$/m)
   assert.match(narrow.last, /^ │ ▌ {4}● miku +│$/m)
+})
+
+test('a window too narrow for the size it needs still fits that message to its width', async () => {
+  const { last } = await drive([PLAIN_TAB], { hub: 'browse', columns: 20, rows: 6 })
+  assert.match(last, /^Needs 40×10 — now 20$/m)
 })
 
 test('a window too short for the search, the marketplace strip and three rows says how tall it needs to be', async () => {

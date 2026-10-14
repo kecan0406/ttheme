@@ -2137,7 +2137,9 @@ export class BrowsePanel {
   }
 
   private small(cols: number, rows: number, need: number): string {
-    return `Needs ${MIN_COLS}×${need} — now ${cols}×${rows}\n${this.p.dim('esc cancels')}`
+    return [`Needs ${MIN_COLS}×${need} — now ${cols}×${rows}`, this.p.dim('esc cancels')]
+      .map((line) => clip(line, cols))
+      .join('\n')
   }
 
   private draw(): string {
