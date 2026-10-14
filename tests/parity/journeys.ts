@@ -310,6 +310,20 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'default-after-reset',
+    about:
+      'a tab painted with the default palette keeps all of it when another tab changes the default, after a program reset colors the tab could not tell from the default’s',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use konata')
+      await p.type(a, "print -n '\\e]112\\e\\\\\\e]111\\e\\\\'")
+      const b = await p.open()
+      await p.type(b, 'ttheme default rei')
+      await p.focus(a)
+      await p.look('kept', { want: 'konata' })
+    },
+  },
+  {
     id: 'editor-terminal',
     about:
       'a shell in an editor’s terminal leaves the tab and its picture alone, and says why ttheme use does nothing there',

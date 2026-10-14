@@ -140,6 +140,10 @@ program-reset.after.colors	miku	=	=	=	=	=	=	=	=	=
 program-reset.after.picture	none	=	=	=	=	=	=	=	=	=
 program-reset.after.wears	miku	=	=	=	=	=	=	=	=	=
 program-reset.after.issue	-	=	=	=	=	=	=	=	=	=
+default-after-reset.kept.colors	konata	=	=	=	=	=	=	=	=	=
+default-after-reset.kept.picture	konata	=	=	=	none	=	none	=	=	=
+default-after-reset.kept.wears	konata	=	=	=	=	=	=	=	=	=
+default-after-reset.kept.issue	-	=	=	=	=	=	=	=	=	=
 editor-terminal.after.colors	kita	=	=	=	=	=	=	=	=	=
 editor-terminal.after.picture	kita	=	=	=	none	=	none	=	=	=
 editor-terminal.after.wears	kita	=	=	=	=	=	=	=	=	=

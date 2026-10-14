@@ -59,7 +59,7 @@ __tt_fresh() {
   fi
   if [[ $at[1] != "$TTHEME_PALETTES_AT" ]]; then
     __tt_specs_named
-    __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && __tt_sync; __tt_reloaded }
+    __tt_palettes_load && { __tt_respec $reply; __tt_hold "$start"; __tt_follow "$start" && __tt_sync; __tt_reloaded }
     [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
   fi
   at=("")
@@ -85,6 +85,11 @@ __tt_follow() {
   __tt_pins_load
   __tt_dir_sync
   return 0
+}
+
+__tt_hold() {
+  [[ -n $TTHEME_STARTUP && -n $TTHEME_PAINTED && $TTHEME_SPEC == "${1#* }" && "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" != "$1" ]] && __tt_reverts || return 0
+  __tt_apply "$TTHEME_SPEC"
 }
 
 __tt_gone() {
@@ -1398,6 +1403,7 @@ __tt_keep() {
   local note was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
   note=$(__tt_cli default "$1") || return 1
   [[ -r $TTHEME_HOME/palettes.zsh ]] && __tt_palettes_load && __tt_reloaded
+  __tt_hold "$was"
   __tt_follow "$was"
   __tt_worn_shown $2
   __tt_reload
@@ -1499,6 +1505,7 @@ __tt_installs_done() {
     __tt_reloaded
   fi
   [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$1" ]] && return 0
+  __tt_hold "$1"
   __tt_follow "$1"
   __tt_worn_shown
   __tt_reload
