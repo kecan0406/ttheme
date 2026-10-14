@@ -121,8 +121,8 @@ stop() {
     kill -HUP $MAIN 2>/dev/null || :
     upto '! zpty -t sh' 2 stop || :
   fi
-  zpty -d sh 2>/dev/null || :
-  BUF=$keep MAIN=""
+  [[ -z $FD ]] || zpty -d sh || :
+  BUF=$keep MAIN="" FD=""
 }
 
 step() {
