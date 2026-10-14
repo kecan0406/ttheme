@@ -265,3 +265,7 @@ test('a keypad key the keyboard protocol reports by its own number reads as the 
     assert.deepEqual(keysOf(keypad), keysOf(plain), JSON.stringify(keypad))
   }
 })
+
+test('a CSI u report whose shifted key lies past the last code point reads as the key shifted', () => {
+  assert.deepEqual(keysOf('\x1b[97:1114112;2u\x1b[97:65;2u'), ['A', 'A'])
+})

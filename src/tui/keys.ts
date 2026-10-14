@@ -219,7 +219,11 @@ function glyph(code: number, shifted: number, base: number, shift: boolean, chor
 
   const plain = String.fromCodePoint(code)
 
-  return shift ? (Number.isInteger(shifted) ? String.fromCodePoint(shifted) : plain.toUpperCase()) : plain
+  return shift
+    ? Number.isInteger(shifted) && shifted <= 0x10ffff
+      ? String.fromCodePoint(shifted)
+      : plain.toUpperCase()
+    : plain
 }
 
 function coded(params: string): Inbound[] {
