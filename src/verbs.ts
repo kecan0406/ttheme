@@ -83,7 +83,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'browse',
     args: [],
     about:
-      'Pick palettes and marketplaces in a live picker — one list with every marketplace as a row, which ctrl+s narrows to one marketplace at a time',
+      'Pick palettes and marketplaces in a live picker — one list with every marketplace as a card, its palettes and actions in a panel beside it',
     section: 'palettes',
     hidden: true,
   },
@@ -217,7 +217,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'find',
     args: ['<palette>'],
-    about: 'Pick a booru background for a palette — preview opens this on tab',
+    about: "Pick a booru background for a palette — preview's panel opens this on f",
     section: 'setup',
     hidden: true,
   },
