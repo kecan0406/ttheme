@@ -1102,7 +1102,7 @@ export async function fetchLent(md5s: readonly string[], signal: AbortSignal): P
   return lent
 }
 
-export function artistsUrl(names: readonly string[]): string {
+function artistsUrl(names: readonly string[]): string {
   const params = new URLSearchParams([
     ...names.map((name): [string, string] => ['search[name_array][]', name]),
     ['only', 'name,is_deleted,urls'],

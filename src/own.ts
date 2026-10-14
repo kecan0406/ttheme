@@ -144,7 +144,7 @@ export function marketplaceLayout(
   return [...shelved, ...loose].map(({ file }) => file)
 }
 
-export function catalogsIn(dir: string): Catalog[] {
+function catalogsIn(dir: string): Catalog[] {
   try {
     return localIdentity(dir).catalogs
   } catch {
@@ -200,7 +200,7 @@ export function ownPath(configHome: string, name: string): string {
   return marketplaceFiles(local.dir).find((f) => f.slug === slug)?.path ?? join(palettesDir(local.dir), `${slug}.toml`)
 }
 
-export interface Shelf {
+interface Shelf {
   catalog?: string
   catalogs?: readonly Catalog[]
 }

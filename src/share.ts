@@ -432,7 +432,7 @@ function emptied(dir: string, paths: readonly string[]): Set<string> {
   return shelves
 }
 
-export async function shareMarketplace(tone?: Tone): Promise<void> {
+async function shareMarketplace(tone?: Tone): Promise<void> {
   const problem = await toolsProblem()
 
   if (problem) {

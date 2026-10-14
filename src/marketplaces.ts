@@ -218,7 +218,7 @@ async function repin(home: string, was: string, source: string): Promise<Fetched
   return fetched
 }
 
-export async function addSource(home: string, arg: string): Promise<{ source: string; id: string; fresh: boolean }> {
+async function addSource(home: string, arg: string): Promise<{ source: string; id: string; fresh: boolean }> {
   const source = parseSource(arg)
   const sources = marketplacesOf(readInstalled(home).marketplaces)
 

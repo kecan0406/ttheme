@@ -6,7 +6,7 @@ const HALVES = [' ', '▀', '▄', '█']
 
 const MOST = 2953
 
-export interface Qr {
+interface Qr {
   lines: string[]
   cols: number
   rows: number

@@ -46,7 +46,7 @@ interface Cached {
   text: string
 }
 
-export function inert(text: string): string {
+function inert(text: string): string {
   return text.replace(/[\p{Cc}\s]+/gu, ' ').trim()
 }
 

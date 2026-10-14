@@ -249,7 +249,7 @@ export function readAvailable(configHome: string): Manifest {
 
 export class Missing extends Error {}
 
-export class Limited extends Error {}
+class Limited extends Error {}
 
 export async function reach(
   url: string,
@@ -281,15 +281,6 @@ export async function reach(
   }
 
   return response
-}
-
-export async function fetchParsed<T>(
-  url: string,
-  parse: (source: string) => T,
-  timeout = TIMEOUT,
-  signal?: AbortSignal,
-): Promise<T> {
-  return parse(await (await reach(url, timeout, signal)).text())
 }
 
 export function gateFailures(palette: PaletteEntry): string[] {

@@ -14,7 +14,7 @@ const RETRY = 60 * 60 * 1000
 const TIMEOUT = 10_000
 const BUSY = 30_000
 
-export interface Seen {
+interface Seen {
   checked: number
   latest?: string
   told?: number

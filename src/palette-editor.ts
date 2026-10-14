@@ -52,7 +52,7 @@ const USES = [
   'Comments, muted text, suggestions',
 ]
 
-export const ROWS = BASE.length + PAIRS.length
+const ROWS = BASE.length + PAIRS.length
 
 export interface Channel {
   key: keyof Oklch

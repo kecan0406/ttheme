@@ -100,7 +100,7 @@ export interface Refused {
   why: string
 }
 
-export interface Adopted {
+interface Adopted {
   entries: PaletteEntry[]
   refused: Refused[]
 }

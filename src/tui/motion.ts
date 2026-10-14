@@ -1,5 +1,6 @@
 export const GLIDE = 16
-export const GLIDE_SHARE = 0.4
+
+const GLIDE_SHARE = 0.4
 
 interface Chase {
   share?: number
