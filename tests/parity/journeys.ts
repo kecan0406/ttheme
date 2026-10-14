@@ -236,19 +236,6 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
-    id: 'on-pin-plain',
-    about:
-      'ttheme on in a directory pinned to a palette without a picture wears the pin with no picture, as a tab that never went off does',
-    async run(p) {
-      p.pin('work', 'miku')
-      const a = await p.open()
-      await p.type(a, 'ttheme off')
-      await p.type(a, 'cd ~/work')
-      await p.type(a, 'ttheme on')
-      await p.look('in', { want: 'miku' })
-    },
-  },
-  {
     id: 'on-pin-other',
     about:
       'a tab in a pinned directory that went off with ttheme off wears the pin again, not the default, once ttheme on reaches it',

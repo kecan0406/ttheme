@@ -51,7 +51,7 @@ __tt_profile() {
     (( TTHEME_RAW )) || out=$'\e[?2026h'$out$'\e[?2026l'
   fi
   __tt_out "$out"
-  TTHEME_ITERM_SHOWN=${1:-default} TTHEME_ITERM_DYED=0
+  TTHEME_ITERM_SHOWN=${1:-${TTHEME_STARTUP:+default}} TTHEME_ITERM_DYED=0
   (( TTHEME_TMUX )) && tmux set -q @ttheme_shown "$TTHEME_ITERM_SHOWN" 2>/dev/null
   return 0
 }
@@ -75,7 +75,7 @@ __tt_osc_apply() {
 __tt_osc_reset() {
   if [[ $TTHEME_ITERM_SWITCH != 1 ]]; then
     __tt_out $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'
-  elif (( TTHEME_TMUX || TTHEME_ITERM_DYED )) || [[ $TTHEME_ITERM_SHOWN != default && -n $TTHEME_STARTUP$TTHEME_ITERM_SHOWN ]]; then
+  elif (( TTHEME_TMUX || TTHEME_ITERM_DYED )) || [[ $TTHEME_ITERM_SHOWN != "${TTHEME_STARTUP:+default}" ]]; then
     __tt_profile ""
   fi
   unset TTHEME_PAINTED
@@ -142,9 +142,9 @@ __tt_shown() {
 }
 
 __tt_unshown() {
-  local was=$TTHEME_ITERM_SHOWN
+  local want=${TTHEME_STARTUP:+default} was=$TTHEME_ITERM_SHOWN
   (( TTHEME_TMUX )) && was=$(tmux show -qv @ttheme_shown 2>/dev/null)
-  [[ $1 != force ]] && [[ $was == default || -z $TTHEME_STARTUP$was ]] && return 0
+  [[ $1 != force && $was == "$want" ]] && return 0
   __tt_profile ""
 }
 
