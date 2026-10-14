@@ -23,19 +23,19 @@ __tt_osc_apply() {
   (( ${#p} >= 20 )) || return 1
   local REPLY
 
+  __tt_worn "$1"
   __tt_osc_colors "$1"
   __tt_out "$REPLY"
   export TTHEME_PAINTED=1
   (( TTHEME_TMUX )) && tmux set -q @ttheme_bg "$p[1]" 2>/dev/null
-  __tt_worn "$1"
   return 0
 }
 
 __tt_osc_reset() {
+  __tt_worn ""
   __tt_out $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'
   unset TTHEME_PAINTED
   (( TTHEME_TMUX )) && tmux set -qu @ttheme_bg 2>/dev/null
-  __tt_worn ""
   return 0
 }
 
