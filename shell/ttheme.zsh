@@ -52,14 +52,14 @@ __tt_respec() {
 __tt_fresh() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at reply
-  local was=$TTHEME_STARTUP start="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
+  local was=$TTHEME_STARTUP start="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" held=$TTHEME_PAINTED
   if ! zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null; then
     [[ -e $TTHEME_HOME ]] || __tt_gone
     return 0
   fi
   if [[ $at[1] != "$TTHEME_PALETTES_AT" ]]; then
     __tt_specs_named
-    __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && __tt_sync; __tt_reloaded; __tt_hold "$start" }
+    __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && __tt_sync; __tt_reloaded; [[ -z $held ]] || __tt_hold "$start" }
     [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
   fi
   at=("")
