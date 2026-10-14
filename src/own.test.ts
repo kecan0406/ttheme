@@ -13,6 +13,7 @@ import {
   fromCode,
   fromCodes,
   paletteToml,
+  readCodes,
   readMarketplaceDir,
   readOwnText,
   recolor,
@@ -138,6 +139,14 @@ test('a share code with any one character changed is refused', () => {
     const other = alphabet[(alphabet.indexOf(code[at] as string) + 17) % 64]
     assert.throws(() => fromCode(`${code.slice(0, at)}${other}${code.slice(at + 1)}`), /does not add up/)
   }
+})
+
+test('a share code whose catalog could not be a catalog folder is refused, so no copy of it lands outside one', () => {
+  for (const catalog of ['../../../../alacritty', 'vocaloid/miku', '.hidden', 'a"b']) {
+    assert.throws(() => readCodes(shareCode({ ...draft, catalog }), []), /the share code's catalog/, catalog)
+  }
+
+  assert.equal(readCodes(shareCode({ ...draft, catalog: 'Vocaloid' }), [])[0]?.catalog, 'Vocaloid')
 })
 
 test('the TOML a draft writes reads back as the same palette', () => {

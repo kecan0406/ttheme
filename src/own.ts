@@ -525,11 +525,25 @@ export function codeOf(text: string): string | undefined {
   return code && isCode(code) ? code : undefined
 }
 
+function catalogProblem(catalog: string): string | undefined {
+  return catalog.includes('/') || catalog.startsWith('.') ? 'holds a / or starts with a dot' : textProblem(catalog)
+}
+
 export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[] {
   return fromCodes(code).map((draft) => {
     const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
 
-    return draft.catalog ? { ...entry, catalog: draft.catalog } : entry
+    if (!draft.catalog) {
+      return entry
+    }
+
+    const problem = catalogProblem(draft.catalog)
+
+    if (problem) {
+      throw new Error(`the share code's catalog ${JSON.stringify(draft.catalog)} ${problem}`)
+    }
+
+    return { ...entry, catalog: draft.catalog }
   })
 }
 
