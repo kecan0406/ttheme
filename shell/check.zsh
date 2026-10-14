@@ -240,6 +240,13 @@ plain=${out//$'\e[K'/}
   for text in "${(@f)${drawn//$'\e['[0-9;?]#[A-Za-z]/}}"; do
     (( ${(m)#text} <= pw )) || { print -u2 "a filter that matched nothing ran past a window $pw wide: $text"; exit 1 }
   done
+  for flt in ${(l:60::z:)} ${(l:30::み:)}; do
+    drawn=$(rtype=() rval=() resized=0 bgcw=0 hub=0 conf=0 pick= help=0 te=0 tune= msgt=0 osdt=0 color=1 __tt_pv_draw)
+    for text in "${(@f)${drawn//$'\e['[0-9;?]#[A-Za-z]/}}"; do
+      (( ${(m)#text} <= pw )) || { print -u2 "a filter typed before the window narrowed ran past a window $pw wide: $text"; exit 1 }
+    done
+  done
+  flt=
   out= color=1
   __tt_pv_head 1 43 78 $long "" "~/marketplace-mine"
   text=${${out//$'\e['[0-9;?]#[A-Za-z]/}}

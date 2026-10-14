@@ -1182,10 +1182,11 @@ __tt_pv_draw() {
     __tt_pv_te_draw
     return 0
   fi
-  local find bd="" edge=${(l:$(( lw - 3 ))::─:)}
+  local find typed=$flt bd="" edge=${(l:$(( lw - 3 ))::─:)}
   (( color )) && bd=$TTHEME_SGR[bold]
+  while [[ -n $typed ]] && (( ${(m)#typed} > lw - 12 )); do typed=${typed[1,-2]}; done
   if [[ -n $flt ]]; then
-    find=$flt"_"
+    find=$typed"_"
   else
     ex="$expal | $extop"
     local -i room=$(( tall ? lw - 21 : lw - 19 - ${#cnt} ))
@@ -1210,10 +1211,10 @@ __tt_pv_draw() {
     find=$dd"Search… e.g. $ex"$zz
   fi
   if (( tall )); then
-    pvsr=$(( hub + 3 )) pvsc=$(( 6 + ${(m)#flt} ))
+    pvsr=$(( hub + 3 )) pvsc=$(( 6 + ${(m)#typed} ))
     line=$'\e['$lw'X '$dd"│"$zz" "$dd"⌕"$zz" "$find$'\e['$lw'G'$dd"│"$zz
   else
-    pvsr=$(( hub + 1 )) pvsc=$(( 4 + ${(m)#flt} ))
+    pvsr=$(( hub + 1 )) pvsc=$(( 4 + ${(m)#typed} ))
     line=$'\e['$lw'X '$dd"⌕"$zz" "$find$'\e['$(( lw - ${#cnt} ))'G'$dd$cnt$zz
   fi
   if [[ $1 == hint ]] && (( ! wiped )); then
