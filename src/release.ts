@@ -254,7 +254,7 @@ export async function newerRelease(): Promise<{ latest?: string; note: string }>
     return { note: `  ttheme ${pkg.version} — could not check for a newer one: ${(error as Error).message}` }
   }
 
-  writeSeen({ ...readSeen(), checked: Date.now(), latest })
+  writeSeen({ ...settled(readSeen()), checked: Date.now(), latest })
 
   if (!isNewer(latest, pkg.version)) {
     return { note: `  ttheme ${pkg.version} — up to date` }
