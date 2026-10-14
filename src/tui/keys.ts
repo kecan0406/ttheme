@@ -79,6 +79,9 @@ const NAMED: Record<string, string> = {
 const CODED: Record<number, string> = { 27: 'esc', 13: 'enter', 9: 'tab', 127: 'backspace', 32: 'space' }
 const CTRL_ALIASES: Record<string, string> = { '[': 'esc', h: 'backspace', i: 'tab', j: 'enter', m: 'enter' }
 const NOT_TEXT = 8 | 16 | 32
+
+const LOCKS = 64 | 128
+
 const FUNCTIONAL = 57344
 
 const CSI = /\[([0-?]*)([ -/]*)([@-~])/y
@@ -242,6 +245,23 @@ function coded(params: string): Inbound[] {
   return [key([ctrl && 'ctrl', alt && 'alt', shift && 'shift', label].filter(Boolean).join('-'))]
 }
 
+function unlocked(params: string, final: string): string {
+  const [number = '', mods, ...more] = params.split(';')
+  const value = Number(mods?.split(':')[0])
+
+  if (mods === undefined || more.length > 0 || !Number.isInteger(value) || value < 1) {
+    return params
+  }
+
+  const bits = (value - 1) & ~LOCKS
+
+  if (bits !== 0) {
+    return `${number};${bits + 1}`
+  }
+
+  return number === '1' && final !== '~' ? '' : number
+}
+
 function report(params: string, between: string, final: string, cell: Cell | undefined): Inbound[] {
   if ((final === 'M' || final === 'm') && between === '' && params.startsWith('<')) {
     const [code = -1, x = 0, y = 0] = params.slice(1).split(';').map(Number)
@@ -277,7 +297,7 @@ function report(params: string, between: string, final: string, cell: Cell | und
     }
   }
 
-  const name = between === '' ? CSI_KEYS[`${params}${final}`] : undefined
+  const name = between === '' ? CSI_KEYS[`${unlocked(params, final)}${final}`] : undefined
 
   return name ? [key(name)] : []
 }

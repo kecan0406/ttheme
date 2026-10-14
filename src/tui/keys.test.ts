@@ -230,3 +230,20 @@ test('every key a CSI u report names reads as the legacy bytes of the same key d
   assert.deepEqual(keysOf('\x1b[127;3u'), keysOf('\x1b\x7f'))
   assert.deepEqual(keysOf('\x1b[9;2u'), keysOf('\x1b[Z'))
 })
+
+test('a key the keyboard protocol reports with caps lock or num lock on reads as the same key with them off', () => {
+  for (const [locked, plain] of [
+    ['\x1b[1;65A', '\x1b[A'],
+    ['\x1b[1;129B', '\x1b[B'],
+    ['\x1b[1;193H', '\x1b[H'],
+    ['\x1b[1;65F', '\x1b[F'],
+    ['\x1b[5;65~', '\x1b[5~'],
+    ['\x1b[3;129~', '\x1b[3~'],
+    ['\x1b[1;66C', '\x1b[1;2C'],
+    ['\x1b[1;130D', '\x1b[1;2D'],
+  ] as const) {
+    assert.deepEqual(keysOf(locked), keysOf(plain), JSON.stringify(locked))
+  }
+
+  assert.deepEqual(keysOf('\x1b[1;65A\x1b[1;69A\x1b[1;73A'), ['up'])
+})
