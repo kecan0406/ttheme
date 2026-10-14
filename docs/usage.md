@@ -30,7 +30,7 @@ Palettes:
 Your own:
   new <name>                     Make a palette of your own in the palette editor
   edit [palette]                 Change a palette in the palette editor
-  share [palette]                Print a share link and its QR code
+  share [palette]                Share palettes as a link or a GitHub marketplace
 
 Setup:
   init                           Install the shell layer and wire your terminals
@@ -76,7 +76,7 @@ in preview the tab repaints, as with the arrows — and a double click does what
 enter does: preview applies the palette, browse picks it, the editor tunes the
 slot, find tries the picture on (in the builder a single click on a slot already opens its picker). The wheel moves the cursor a row (find's grid a
 row of tiles, its try-on to the next picture), and the burst a terminal sends
-for one notch counts once. The tabs, the marketplace chips, a catalog's ▸, a palette's
+for one notch counts once. The tabs, Browse's actions (`+ Add marketplace`, `Update now`, …), a catalog's ▸, a palette's
 ○ and the keys named on the last line are buttons: they act when you let go
 over them, so moving off first cancels. In the editor, a click on the L, C, H or ◐ bar tunes that channel to the point and a
 drag moves it, past either end of the bar too; in the builder, a click or drag on
@@ -520,7 +520,10 @@ environment; `ttheme update` still works. An update also follows a marketplace's
 renames: a palette you installed under a name its marketplace renamed is installed
 under the new name — with its tuning, pictures, pins and startup role — and one
 the marketplace removed comes off (`alice@pastel/dawn is alice@pastel/dusk now — its
-marketplace renamed it`). Nothing ever runs from the shell or a new tab.
+marketplace renamed it`). From the shell only the check for a newer ttheme
+runs: a prompt starts it once a day, and the bare `ttheme` once an hour as it
+opens, its key bars ending in what it found (`⇡ 1.2.31 available`); no
+marketplace is fetched from the shell or a new tab.
 
 ## Marketplaces
 
@@ -617,8 +620,10 @@ names, and is refused when they differ.
 When you tuned its tone in [palette
 edit](#palette-edit) it asks which to share, your tone or the original;
 `--tone tuned` or `--tone original` answers for it, and without a terminal it
-shares the tuned one. With no palette named it asks once — the tab's palette,
-as your tone or the original, or not at all — and when the link goes to a
+shares the tuned one. With no palette named it asks first how to share — a
+link, or a marketplace on GitHub ([Your own
+palettes](../README.md#your-own-palettes)) — then which palettes, the tab's
+picked to start with; when the link goes to a
 pipe (`ttheme share | pbcopy`) it shares the tab's palette without asking,
 naming it on stderr. A tuned palette goes out as `<name>-tuned`, since its own
 name belongs to the original wherever that is installed.
@@ -726,12 +731,13 @@ carries its name and `<you>`, your GitHub handle — read from `gh` when it is l
 once otherwise, and kept in `installed.json`. A file you break stays out of the
 list (every command says why on stderr) until you fix it; `edit` keeps a palette
 that misses the gate and prints the numbers, and `check --fix` writes colors that
-pass — into the file for yours, and as your tone for any other palette. `ttheme
-list`, browse and preview mark a palette with a tone (`· tuned`, a yellow `●`).
+pass — into the file for yours, and as your tone for any other palette. Browse
+and preview mark a palette with a tone with a yellow `●`.
 
 The folder is a repository layout already, with nothing to build: ttheme reads
-the files as pushed. `ttheme marketplace init` prints the `git` and `gh` commands
-that publish it as `<you>/ttheme-<name>` with the `ttheme-marketplace` topic; after
+the files as pushed. `ttheme share`, asked for a marketplace on GitHub, creates
+the repository with `gh` (`<you>/ttheme-<name>` unless you name it otherwise,
+with the `ttheme-marketplace` topic when it is public) and pushes it; after
 that, anyone runs `ttheme marketplace add <you>/ttheme-<name>`.
 
 A palette can list background posts by number with their framing, in

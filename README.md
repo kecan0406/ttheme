@@ -175,7 +175,7 @@ the one the tab wears, as a link without asking.
 
 | Command | |
 |---|---|
-| `ttheme` | Preview and Browse as tabs of one screen — `tab` and `shift+tab` switch. Preview tries palettes live: the tab repaints as the cursor moves, enter applies it to this tab or makes it the default. Browse picks palettes and marketplaces in one list: a marketplace's row takes `delete`, `shift+←/→` for its auto-update and `ctrl+r` |
+| `ttheme` | Preview and Browse as tabs of one screen — `tab` and `shift+tab` switch. Preview tries palettes live: the tab repaints as the cursor moves, enter applies it to this tab or makes it the default. Browse picks palettes and marketplaces in one list: a marketplace's panel holds its palettes and its own `Update now`, `Auto-update` and `Remove marketplace` |
 | `ttheme use <palette>` | Paint this tab (a unique prefix works) |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` | A palette for this directory, everything below it, its repository or an ssh host (`ssh:<host>`) — a panel shows what each choice reaches; `cd` or `ssh` in repaints, leaving restores |
