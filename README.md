@@ -111,14 +111,14 @@ the folders under its `palettes/` as catalogs:
 ```sh
 ttheme marketplace add alice/ttheme-pastel#v1      # add alice's marketplace, pinned to a tag
 ttheme add alice@pastel/dusk                       # and install one of its palettes
-ttheme                                             # shift+tab to Browse: marketplaces are rows there — add, remove, auto-update
+ttheme                                             # shift+tab to Browse: marketplaces are cards there — add, remove, auto-update
 ```
 
 Browse handles marketplaces the way it handles palettes: in the same list it
 adds one by repository or folder, finds the public ones on GitHub, marks one for
 removal and switches its auto-update, and enter applies all of it with the
 palettes you picked. The official marketplace comes with ttheme and updates with it;
-a repository asks when you add it whether its list updates on its own, and a
+a repository added with `ttheme marketplace add` asks whether its list updates on its own, and a
 palette you installed from it keeps its colors until you take its update —
 `ctrl+r` on a palette marked `↑` in Browse. Nobody reviews a marketplace. Its
 palettes are colors and post numbers, never code, and the contrast gate's
@@ -243,8 +243,8 @@ the work of the Independent JPEG Group.
 Palettes are inspired by characters from the listed works; this project is
 unaffiliated with and unendorsed by their rights holders. No character art,
 audio or trademarked asset is redistributed here — only color values.
-Terminal background images are downloaded from the booru you pick only when you
-ask `find` for one, built on your own machine and written to
+Terminal background images are downloaded from a booru only when you ask `find`
+for one or install a palette that names its post, built on your own machine and written to
 `~/.config/ttheme/backgrounds/`; none ship in this repository or on npm.
 
 Characters' names in every language — what preview, browse and
