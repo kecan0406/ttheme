@@ -59,7 +59,7 @@ __tt_fresh() {
   fi
   if [[ $at[1] != "$TTHEME_PALETTES_AT" ]]; then
     __tt_specs_named
-    __tt_palettes_load && { __tt_respec $reply; __tt_hold "$start"; __tt_follow "$start" && __tt_sync; __tt_reloaded }
+    __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && __tt_sync; __tt_reloaded; __tt_hold "$start" }
     [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
   fi
   at=("")

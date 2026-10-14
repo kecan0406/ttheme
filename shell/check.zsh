@@ -833,6 +833,19 @@ print -r -- 'typeset -g TTHEME_STARTUP=rei' >> $TTHEME_HOME/palettes.zsh
 touch -t 203001010000 $TTHEME_HOME/palettes.zsh
 __tt_fresh
 [[ $TTHEME_STARTUP == rei && -n ${TTHEME_PALETTE[miku]} ]] || { print -u2 "a rewritten palettes.zsh did not reload: startup=$TTHEME_STARTUP"; exit 1 }
+(
+  source $XDG_CONFIG_HOME/ttheme/adapters/windows-terminal.zsh
+  integer asks=0 naps=0
+  __tt_osc_apply() { shown=${1%% *}; export TTHEME_PAINTED=1 }
+  __tt_query_bg() { (( ++asks )); REPLY=$shown }
+  __tt_dir_sync() { : }
+  sleep() { (( ++naps )) }
+  export TTHEME_PAINTED=1
+  TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_PALETTES_AT= shown=${TTHEME_PALETTE[rei]%% *}
+  __tt_fresh > /dev/null
+  (( asks == 1 && naps == 0 )) && [[ $shown == ${TTHEME_PALETTE[miku]%% *} ]] ||
+    { print -u2 "a Windows Terminal tab wearing the old default asked its background $asks times and waited $naps times at the prompt after the default moved, or lost its palette: $shown"; exit 1 }
+) || exit 1
 adapter=$TTHEME_ADAPTER
 TTHEME_ITERM_SHOWN=default TTHEME_STARTUP=miku
 source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh
