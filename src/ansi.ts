@@ -6,13 +6,21 @@ const WIDTHS = new Map<string, number>()
 const WIDTHS_MOST = 8192
 const WIDTH_LONGEST = 512
 
+export function printable(text: string): boolean {
+  return PRINTABLE.test(text)
+}
+
 export function cells(text: string): number {
-  if (PRINTABLE.test(text)) {
-    return text.length
+  if (text.length === 1) {
+    const code = text.charCodeAt(0)
+
+    if (code >= 0x20 && code <= 0x7e) {
+      return 1
+    }
   }
 
   if (text.length > WIDTH_LONGEST) {
-    return measure(text)
+    return PRINTABLE.test(text) ? text.length : measure(text)
   }
 
   let width = WIDTHS.get(text)
@@ -22,7 +30,7 @@ export function cells(text: string): number {
       WIDTHS.clear()
     }
 
-    width = measure(text)
+    width = PRINTABLE.test(text) ? text.length : measure(text)
     WIDTHS.set(text, width)
   }
 

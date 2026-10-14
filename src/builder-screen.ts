@@ -1,4 +1,4 @@
-import { cells, fit, spread, wrapText } from './ansi.ts'
+import { cells, fit, printable, spread, wrapText } from './ansi.ts'
 import {
   joints,
   type Layout,
@@ -76,6 +76,10 @@ interface Piece {
 type Cellrow = Piece[]
 
 function sliceText(text: string, from: number, to: number): string {
+  if (printable(text)) {
+    return text.slice(from, to)
+  }
+
   let out = ''
   let at = 0
 
