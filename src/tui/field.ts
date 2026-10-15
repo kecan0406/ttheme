@@ -1,7 +1,9 @@
 import { graphemes } from '../ansi.ts'
 
+const CONTROL = /[\p{Cc}\p{Bidi_Control}]/u
+
 function printable(key: string): boolean {
-  return [...key].length === 1 && key >= ' ' && !(key >= '\x7f' && key <= '\x9f')
+  return [...key].length === 1 && !CONTROL.test(key)
 }
 
 function plain(text: string): string {

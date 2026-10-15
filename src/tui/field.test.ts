@@ -10,3 +10,11 @@ test('a C1 control is no character a field takes, typed or pasted', () => {
   field.paste('b\x9bc\x80d')
   assert.equal(field.value, 'abcd')
 })
+
+test('a bidi control is no character a field takes, typed or pasted', () => {
+  assert.equal(edit('ab', '\u202e'), undefined)
+  assert.equal(edit('ab', '\u200e'), undefined)
+  const field = new Field('a')
+  field.paste('b\u2067c\u200fd')
+  assert.equal(field.value, 'abcd')
+})
