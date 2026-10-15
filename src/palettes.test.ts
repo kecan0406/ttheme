@@ -499,7 +499,9 @@ test('sync writes an iTerm2 profile per listed palette, in P3 with one color set
   )
   const written = read()
   const gojo = written[1]
-  assert.ok(written.every((p: Record<string, unknown>) => p['Dynamic Profile Parent GUID'] === 'BASE'))
+  assert.ok(
+    written.every((p: { 'Dynamic Profile Parent GUID'?: string }) => p['Dynamic Profile Parent GUID'] === 'BASE'),
+  )
   assert.deepEqual(
     written.map((p: { Name: string; Guid: string }) => [p.Name, p.Guid]),
     [
@@ -580,12 +582,15 @@ test("sync gives a palette's iTerm2 profile its picture, tuning and off switch",
   writeFileSync(join(dir, 'geto.off.conf'), 'background-image =\n')
   sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['gojo', 'geto'] }, home)
 
-  const pick = ({ Name, ...p }: Record<string, unknown>) => [
+  const pick = ({
     Name,
-    p['Background Image Location'],
-    p['Background Image Mode'],
-    p.Blend,
-  ]
+    ...p
+  }: {
+    Name: string
+    'Background Image Location'?: string
+    'Background Image Mode'?: number
+    Blend?: number
+  }) => [Name, p['Background Image Location'], p['Background Image Mode'], p.Blend]
 
   assert.deepEqual(JSON.parse(readFileSync(itermProfilesPath(home), 'utf8')).Profiles.map(pick), [
     ['ttheme · default', join(home, 'gojo@60-center.png'), 3, 0.2],

@@ -1,3 +1,4 @@
+import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -19,6 +20,8 @@ import {
   updateNote,
 } from './refresh.ts'
 import { cachePath, marketplacesDir } from './sources.ts'
+
+const { preconnect } = fetch
 
 const now = 1_000_000_000_000
 
@@ -64,15 +67,14 @@ async function withNetwork<T>(respond: () => Promise<Response>, run: (home: stri
   mkdirSync(marketplacesDir(home), { recursive: true })
   writeFileSync(cachePath(home, SOURCE), `${JSON.stringify({ files: MARKETPLACE })}\n`)
   writeOfficial(home, JSON.parse(manifest(SCHEMA)))
-  const realFetch = globalThis.fetch
   const realState = process.env.XDG_STATE_HOME
-  globalThis.fetch = (async () => respond()) as unknown as typeof fetch
+  const fetched = spyOn(globalThis, 'fetch').mockImplementation(Object.assign(async () => respond(), { preconnect }))
   process.env.XDG_STATE_HOME = join(home, 'state')
 
   try {
     return await run(home)
   } finally {
-    globalThis.fetch = realFetch
+    fetched.mockRestore()
 
     if (realState === undefined) {
       delete process.env.XDG_STATE_HOME

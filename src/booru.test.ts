@@ -1,3 +1,4 @@
+import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
 import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -43,6 +44,8 @@ import {
   tagList,
   tagsOf,
 } from './booru.ts'
+
+const { preconnect } = fetch
 
 const site = (key: string) => SITES.find((s) => s.key === key) as Site
 const [dan, kona, yande, zero] = [site('danbooru'), site('konachan'), site('yande'), site('zerochan')]
@@ -464,7 +467,7 @@ test('parseSuggestions keeps each completed tag with its post count', () => {
   assert.deepEqual(parseSuggestions(''), [])
 })
 
-const listed = (fields: Record<string, unknown>) => ({
+const listed = (fields: Record<string, string | number | boolean | null>) => ({
   id: 7,
   width: 1600,
   height: 1000,
@@ -706,34 +709,42 @@ test("a redirect keeps the query the target left off, and keeps the target's own
 })
 
 test('a tag zerochan does not know lists nothing instead of failing the search', async () => {
-  const real = globalThis.fetch
-  globalThis.fetch = (async () => new Response('{ }', { status: 404 })) as unknown as typeof fetch
+  const fetched = spyOn(globalThis, 'fetch').mockImplementation(
+    Object.assign(async () => new Response('{ }', { status: 404 }), { preconnect }),
+  )
 
   try {
     assert.deepEqual(await fetchPosts(zero, 'nobody_here', 0, new AbortController().signal), [])
     await assert.rejects(fetchPosts(yande, 'x', 0, new AbortController().signal), /yande\.re answered 404/)
   } finally {
-    globalThis.fetch = real
+    fetched.mockRestore()
   }
 })
 
 test('a request cut off by a connection reset is tried again', async () => {
-  const real = globalThis.fetch
   let calls = 0
-  globalThis.fetch = (async () => {
-    calls++
 
-    if (calls === 1) {
-      throw new TypeError('fetch failed', { cause: Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' }) })
-    }
+  const fetched = spyOn(globalThis, 'fetch').mockImplementation(
+    Object.assign(
+      async () => {
+        calls++
 
-    return new Response('[]')
-  }) as unknown as typeof fetch
+        if (calls === 1) {
+          throw new TypeError('fetch failed', {
+            cause: Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' }),
+          })
+        }
+
+        return new Response('[]')
+      },
+      { preconnect },
+    ),
+  )
 
   try {
     assert.deepEqual(await fetchPosts(yande, 'x', 0, new AbortController().signal), [])
     assert.equal(calls, 2)
   } finally {
-    globalThis.fetch = real
+    fetched.mockRestore()
   }
 })

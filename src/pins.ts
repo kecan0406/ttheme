@@ -22,7 +22,7 @@ export function movePins(configHome: string, renamed: ReadonlyMap<string, string
       return [line]
     }
 
-    const [, key, name, end] = pin as unknown as [string, string, string, string]
+    const [, key = '', name = '', end = ''] = pin
 
     if (removed.includes(name)) {
       return []
