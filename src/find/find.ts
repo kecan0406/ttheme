@@ -62,7 +62,7 @@ import { type Look, Renderer, type Shown } from '../render.ts'
 import { SCENES } from '../scenes.ts'
 import { CLEAR, viewsInWindow, viewVar } from '../terminal.ts'
 import { POSITIONS } from '../theme.ts'
-import { edit } from '../tui/field.ts'
+import { edit, plain } from '../tui/field.ts'
 import { CELL_QUERY, CellProbe, type Inbound, type Mouse } from '../tui/keys.ts'
 import { FOCUS, HIDE_CURSOR, NO_WRAP, PASTES, pointing, type Terminal, within } from '../tui/terminal.ts'
 import type { Hit } from '../tui/zones.ts'
@@ -857,7 +857,7 @@ class Finder {
     const view = this.view
 
     if (view.editing !== undefined && text.trim() !== '' && !this.picture(text)) {
-      view.editing += text.replace(/[\r\n]+/g, ' ')
+      view.editing += plain(text)
       this.suggest()
       this.paint.draw()
 

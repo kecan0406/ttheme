@@ -6,7 +6,7 @@ function printable(key: string): boolean {
   return [...key].length === 1 && !CONTROL.test(key)
 }
 
-function plain(text: string): string {
+export function plain(text: string): string {
   return [...text.replace(/[\r\n\t]+/g, ' ')].filter(printable).join('')
 }
 
