@@ -128,25 +128,28 @@ capture() {
   local -a reply paint=(NO_COLOR=1)
   (( PAINTED )) && paint=(COLORTERM=truecolor)
   home=$(fixture_home $state)
-  cmd=$(command_for $target $home)
-  scenario_env $home
-  tmux -L $SOCKET kill-server 2>/dev/null || true
-  tmux -L $SOCKET new-session -d -x $COLS -y $ROWS \
-    "env -u GHOSTTY_RESOURCES_DIR -u KITTY_WINDOW_ID -u WEZTERM_PANE -u ALACRITTY_WINDOW_ID -u ITERM_SESSION_ID -u NO_COLOR $reply $paint zsh -f -c '${cmd}; sleep 60'"
-  settle
-  for key in "$@"; do
-    tmux -L $SOCKET send-keys -- "${key%%@*}"
-    [[ $key == *@* ]] && await "${key#*@}"
+  {
+    cmd=$(command_for $target $home)
+    scenario_env $home
+    tmux -L $SOCKET kill-server 2>/dev/null || true
+    tmux -L $SOCKET new-session -d -x $COLS -y $ROWS \
+      "env -u GHOSTTY_RESOURCES_DIR -u KITTY_WINDOW_ID -u WEZTERM_PANE -u ALACRITTY_WINDOW_ID -u ITERM_SESSION_ID -u NO_COLOR $reply $paint zsh -f -c '${cmd}; sleep 60'"
     settle
-  done
-  if (( PAINTED )); then
-    tmux -L $SOCKET capture-pane -e -p -N
-  else
-    tmux -L $SOCKET capture-pane -p | normalize
-  fi
-  tmux -L $SOCKET kill-server 2>/dev/null || true
-  rm -f ${TMUX_TMPDIR:-/tmp}/tmux-$UID/$SOCKET
-  rm -rf $home
+    for key in "$@"; do
+      tmux -L $SOCKET send-keys -- "${key%%@*}"
+      [[ $key == *@* ]] && await "${key#*@}"
+      settle
+    done
+    if (( PAINTED )); then
+      tmux -L $SOCKET capture-pane -e -p -N
+    else
+      tmux -L $SOCKET capture-pane -p | normalize
+    fi
+  } always {
+    tmux -L $SOCKET kill-server 2>/dev/null || true
+    rm -f ${TMUX_TMPDIR:-/tmp}/tmux-$UID/$SOCKET
+    rm -rf $home
+  }
 }
 
 scenario_fields() {
