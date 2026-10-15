@@ -1,6 +1,7 @@
 __tt_out() {
   if (( TTHEME_TMUX )); then
-    printf '\ePtmux;%s\e\\' "${1//$'\e'/$'\e\e'}"
+    local e=$'\e'
+    printf '\ePtmux;%s\e\\' "${1//$e/$e$e}"
   else
     printf '%s' "$1"
   fi

@@ -870,6 +870,12 @@ __tt_fresh
   (( paints == 0 )) || { print -u2 "a tmux pane wearing the old default repainted the whole terminal tab at its prompt after the default moved"; exit 1 }
 ) || exit 1
 (
+  TTHEME_TMUX=1
+  out=$(__tt_out $'\e]11;#123456\e\\')
+  [[ $out == $'\ePtmux;\e\e]11;#123456\e\e\\\e\\' ]] ||
+    { print -u2 "a color sent from inside tmux did not reach the terminal as a passthrough with its escapes doubled: ${(V)out}"; exit 1 }
+) || exit 1
+(
   integer paints=0
   __tt_osc_apply() { (( ++paints )); export TTHEME_PAINTED=1 }
   __tt_active() { return 0 }
