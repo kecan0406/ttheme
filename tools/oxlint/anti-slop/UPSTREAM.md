@@ -39,6 +39,10 @@ skill installs:
 - `require-safety-comment-for-type-assertion` is off, because first-party code
   carries no comments (`AGENTS.md`). `no-chained-type-assertions` and
   `no-widen-then-assert` stay on.
+- `no-conditional-empty-object-spread` is off: `...(x ? { k: x } : {})` is
+  how ttheme builds an object with optional keys throughout (164 places when
+  the rule came in), and with `exactOptionalPropertyTypes` off the statement
+  form it asks for would only trade expressions for mutation.
 - `no-runtime-typeof`, `no-unknown-parameters`, `no-unknown-returns` and
   `no-unsafe-dictionary-type` are off in the files `.oxlintrc.json`'s
   `overrides` lists: the modules that decode a file or a response into
