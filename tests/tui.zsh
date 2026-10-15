@@ -145,6 +145,7 @@ capture() {
     tmux -L $SOCKET capture-pane -p | normalize
   fi
   tmux -L $SOCKET kill-server 2>/dev/null || true
+  rm -f ${TMUX_TMPDIR:-/tmp}/tmux-$UID/$SOCKET
   rm -rf $home
 }
 
