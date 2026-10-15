@@ -608,6 +608,7 @@ export class BrowsePanel {
 
     if (known) {
       this.address.value = ''
+      this.unremove(known)
       this.reveal(known.id)
 
       return
@@ -659,8 +660,11 @@ export class BrowsePanel {
       this.landing = back ? source : undefined
       this.load(source)
     } else if (back) {
+      this.unremove(known)
       this.closeSearch()
       this.list.select(`top ${known.id}`)
+    } else if (this.removes.has(known.source)) {
+      this.unremove(known)
     } else if (this.adds.has(known.source)) {
       this.adds.delete(known.source)
       this.want.delete(known.source)
@@ -1073,6 +1077,12 @@ export class BrowsePanel {
 
     if (next !== undefined) {
       this.list.select(`top ${next}`)
+    }
+  }
+
+  private unremove(known: Marketplace): void {
+    if (this.removes.delete(known.source)) {
+      this.reload()
     }
   }
 

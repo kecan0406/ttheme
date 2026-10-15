@@ -281,6 +281,13 @@ test('the Remove marketplace row asks first, and on yes takes the marketplace of
   assert.match(kept.last, /^ ▌ {2}● alice@pastel +│/m)
 })
 
+test('adding a marketplace staged for removal takes the removal back and lands in its panel', async () => {
+  const { panel, frames, last } = await drive([...REMOVE, ...ADD, ...'alice/ttheme-pastel', '\r', '\x1b', '\x1b'])
+  assert.deepEqual(panel.removes, [])
+  assert.match(frames.slice(frames.lastIndexOf('Enter marketplace source')), /╭─ alice@pastel ─+╮$/m)
+  assert.match(last, /^ ▌ {2}● alice@pastel +│/m)
+})
+
 test('the Auto-update row turns a marketplace’s auto-update on and off, and only a change is kept', async () => {
   const on = await drive([...AUTO, '\x1b', ...'miku', ...APPLY])
   assert.deepEqual(on.panel.auto, { 'alice/ttheme-pastel': true })
