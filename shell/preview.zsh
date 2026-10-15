@@ -2414,6 +2414,7 @@ __tt_pv_handle() {
 __tt_preview() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
+  [[ $functions[TRAPURG] == *__tt_poked* ]] && trap '' URG
   local mode=$1 pdir=${2:-$PWD} hubwas=""
   local -i hub=0 hubleft=0 vchk=0 vwarn=0
   local vline=""

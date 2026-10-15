@@ -406,6 +406,25 @@ noted() {
   stop
 }
 
+urged() {
+  local name=$1 REPLY
+  home $name off
+  start $name
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name: no prompt within 5s"; return 1 }
+  BUF=""
+  zpty -w -n sh $'ttheme\r'
+  upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
+  repeat 30; do
+    kill -URG $MAIN
+    upto false 0.01 $name || :
+  done
+  upto false 0.3 $name || :
+  [[ $BUF != *$'\e[?1049l'* ]] || { fail "$name: preview closed under a run of wakes from other tabs, taking their interrupted reads for a hung-up terminal"; return 1 }
+  zpty -w -n sh $'\e'
+  upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
+  stop
+}
+
 releasing() {
   local term=$1 name=release-$1 h=$WORK/release-$1 log
   local -a runs
@@ -470,10 +489,11 @@ check() {
   TERMINAL=""
   late late
   noted noted
+  urged urged
   for name in ${(k)IDENTITY}; do
     releasing $name || return 1
   done
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, seq while ttheme is off, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, an answer that comes after the layer stopped waiting never reaches the command line, what a shell woken at its prompt has to say lands on a line of its own, and in every terminal a first tab starts the daily update check once and a newer release is told once at a prompt"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, seq while ttheme is off, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, an answer that comes after the layer stopped waiting never reaches the command line, what a shell woken at its prompt has to say lands on a line of its own, a run of wakes leaves preview open, and in every terminal a first tab starts the daily update check once and a newer release is told once at a prompt"
 }
 
 bench() {
