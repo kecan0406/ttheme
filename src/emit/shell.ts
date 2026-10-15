@@ -11,6 +11,7 @@ import { configTemplate, SETTING_NAMES } from '../wiring.ts'
 import type { Emitter, Output } from './types.ts'
 
 const UNQUOTABLE = /["$`\\]/
+const CONTROL = /[\p{Cc}\p{Bidi_Control}]/u
 
 function spoken(tag: string): string {
   return tag.replace(/_\([^)]*\)$/, '').replaceAll('_', ' ')
@@ -162,7 +163,7 @@ export function palettesZsh(
 
 export function aliasesZsh(aliases: Readonly<Record<string, readonly string[]>>): string {
   const rows = Object.entries(aliases).flatMap(([name, all]) => {
-    const names = all.filter((each) => !UNQUOTABLE.test(each) && !each.includes('|'))
+    const names = all.filter((each) => !UNQUOTABLE.test(each) && !CONTROL.test(each) && !each.includes('|'))
 
     return names.length > 0 && !UNQUOTABLE.test(name) ? [[name, names.join('|')] as const] : []
   })
