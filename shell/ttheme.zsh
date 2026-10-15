@@ -1763,8 +1763,8 @@ if (( ${+functions[compdef]} )); then
     elif [[ $words[2] == new ]]; then
       compadd -- --from --in
     elif [[ $words[2] == marketplace && $CURRENT == 3 ]]; then
-      compadd -- add remove init
-    elif [[ $words[2] == marketplace && $words[3] == (add|init) && $CURRENT == 4 ]]; then
+      compadd -- add remove init check
+    elif [[ $words[2] == marketplace && $words[3] == (add|init|check) && $CURRENT == 4 ]]; then
       _files -/
     elif [[ $words[2] == (pin|unpin) && $CURRENT == 3 ]]; then
       reply=(${${(M)${(k)TTHEME_PINS}:#ssh:*}#ssh:})
