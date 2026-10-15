@@ -433,7 +433,7 @@ look, and never Title Case.
   and error messages, which read the same after the `ttheme:` prefix
   (`ttheme: not installed: kita`) and in a status line. A notice written for
   the screen (`No picture on the clipboard`) is not an error.
-- **Capitals**: only a mode badge (`PREVIEW`, `EDIT`, `IMAGE SEARCH`, `IMAGE PREVIEW`, `HELP`, `CONFIG`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
+- **Capitals**: only a mode badge (`PREVIEW`, `BROWSE`, `SEARCH`, `EDIT`, `IMAGE SEARCH`, `IMAGE PREVIEW`, `IMAGE EDIT`, `HELP`, `CONFIG`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
 
 Counts on screen come from the palettes listed, never from the rows being drawn. A
 folded catalog still reports how many of its palettes are picked, and the

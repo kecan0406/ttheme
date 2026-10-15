@@ -13,7 +13,7 @@ body:
     id: info
     attributes:
       label: Output of ttheme info
-      description: Run `ttheme info` in the terminal where it happened and paste what it prints. If ttheme is not set up or init failed, run `npx @kecan0406/ttheme@latest info` instead.
+      description: Run `ttheme info` in the terminal where it happened and paste what it prints — the ttheme version, the OS, the shell, the terminal, the terminals ttheme wired and the settings you changed. If ttheme is not set up or init failed, run `npx @kecan0406/ttheme@latest info` instead.
       render: shell
     validations:
       required: true

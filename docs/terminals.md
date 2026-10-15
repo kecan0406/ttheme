@@ -108,7 +108,8 @@ profiles, fragment or settings key), says what
 init will change, takes it all out again on uninstall, and — for the terminals
 whose default is a profile, iTerm2, Konsole and Terminal.app — points new tabs at ttheme's
 profile and gives yours back. Every command that changes the state (`init`,
-`add`, `default`, `on`, `off`, Browse's apply, a marketplace refresh) writes it
+`add`, `default`, `on`, `off`, `marketplace remove`, a save in the palette
+editor, `check --fix`, Browse's apply, a marketplace refresh) writes it
 once and hands it to every wired terminal the same way, whichever terminal you
 ran it in.
 
@@ -239,7 +240,7 @@ so a palette's twenty colors kept it busy for about 0.2 s, where one switch to
 the palette's profile carries all of them and the picture in about 40 ms
 (measured on 3.7.3 at 80×25). So once iTerm2 lets a control sequence switch
 the profile — Always Allow on the bar it shows the first time, which ttheme
-reads at its next `add`, `default`, `on` or `off`, or Browse's apply — every palette
+reads the next time it writes the state — `add`, `default`, `on`, `off`, `marketplace remove`, a save in the palette editor or Browse's apply — every palette
 goes on that way: `ttheme use`, a pin, preview as the cursor moves, and
 the tab's way back to its default, which is iTerm2's own default profile. A tab
 that sits on its palette's profile follows a tuned picture or tone at once and
