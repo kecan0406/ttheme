@@ -43,17 +43,9 @@ __tt_prompted() {
   __tt_warp_follows || __tt_sync
 }
 
-if (( ! $+functions[TRAPURG] )); then
-  TRAPURG() {
-    emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-    (( ${#zsh_eval_context} == 1 )) && __tt_warp_poked
-    return 0
-  }
-fi
-
-__tt_warp_poked() {
+__tt_poked() {
   local -i TTHEME_WARP_HOLD=1
-  __tt_fresh
+  __tt_fresh woke
   __tt_warp_publish
 }
 

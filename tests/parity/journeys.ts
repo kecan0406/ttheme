@@ -5,6 +5,7 @@ export interface Want {
   want: string
   picture?: string
   opacity?: string
+  at?: Tab
 }
 
 export interface LookOptions extends Want {
@@ -18,7 +19,10 @@ export interface LookOptions extends Want {
 export interface Elsewhere {
   open(): Promise<Tab>
   type(tab: Tab, line: string): Promise<void>
-  look(label: string, want: Want): Promise<void>
+  launch(tab: Tab, line: string, marker: string): Promise<void>
+  focus(tab: Tab): Promise<void>
+  leave(): void
+  look(label: string, want: Want & { busy?: boolean }): Promise<void>
 }
 
 export interface Probe {
@@ -138,7 +142,8 @@ export const JOURNEYS: Journey[] = [
   },
   {
     id: 'off',
-    about: 'ttheme off gives this tab the terminal’s own colors, then every other tab at its next focus, and new tabs',
+    about:
+      'ttheme off gives this tab the terminal’s own colors, then every other tab — at once where it sits idle at its prompt, else at its next prompt or focus — and new tabs',
     async run(p) {
       const a = await p.open()
       const b = await p.open()
@@ -173,6 +178,18 @@ export const JOURNEYS: Journey[] = [
       await p.type(b, 'ttheme off')
       await p.focus(b)
       await p.look('back', { want: 'own' })
+    },
+  },
+  {
+    id: 'off-idle',
+    about:
+      'ttheme off reaches a tab idle at its prompt behind the one that ran it at once, before it comes to the front',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use kita')
+      const b = await p.open()
+      await p.type(b, 'ttheme off')
+      await p.look('behind', { want: 'own', at: a })
     },
   },
   {
@@ -644,6 +661,52 @@ export const JOURNEYS: Journey[] = [
       const g = await ghostty.open()
       await ghostty.type(g, 'ttheme use kita')
       await ghostty.look('ghostty', { want: 'kita', opacity: '0.23' })
+    },
+  },
+  {
+    id: 'off-beside',
+    about:
+      'ttheme off in this terminal takes the colors and the picture off a Ghostty tab idle at its prompt in a window beside it at once, before it comes to the front',
+    async run(p) {
+      const ghostty = await p.wire('ghostty')
+      const g = await ghostty.open()
+      ghostty.leave()
+      const a = await p.open()
+      await p.type(a, 'ttheme off')
+      await ghostty.look('ghostty', { want: 'own', at: g })
+    },
+  },
+  {
+    id: 'default-beside',
+    about:
+      'ttheme default in this terminal reaches a Ghostty tab that never painted, in a window beside it, colors and picture, before it comes to the front',
+    async run(p) {
+      const ghostty = await p.wire('ghostty')
+      const g = await ghostty.open()
+      ghostty.leave()
+      const a = await p.open()
+      await p.type(a, 'ttheme default kita')
+      await Bun.sleep(1000)
+      await ghostty.look('ghostty', { want: 'kita', at: g })
+    },
+  },
+  {
+    id: 'off-reach-busy',
+    about:
+      'ttheme off in this terminal takes the colors and the picture off a Ghostty tab running a program once it comes to the front',
+    async run(p) {
+      const ghostty = await p.wire('ghostty')
+      const g = await ghostty.open()
+      await ghostty.launch(g, BUSY, 'busy>')
+      const h = await ghostty.open()
+      await ghostty.type(h, 'exit')
+      await ghostty.focus(g)
+      ghostty.leave()
+      const a = await p.open()
+      await p.type(a, 'ttheme off')
+      await ghostty.focus(g)
+      await Bun.sleep(1000)
+      await ghostty.look('ghostty', { want: 'own', busy: true })
     },
   },
   {

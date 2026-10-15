@@ -44,7 +44,7 @@ __tt_ghostty_follows() {
 __tt_ghostty_publish() {
   local f line REPLY
   __tt_ghostty_follows || return 0
-  line="$$ ${TTHEME_STARTUP:--} ${1:--} $TTY"
+  line="$$ ${TTHEME_STARTUP:--} ${1:--} $TTY${TTHEME_PAINTED:+ painted}"
   __tt_ghostty_key $TTY
   f=$TTHEME_GHOSTTY_TABS/$REPLY
   [[ -r $f && "$(<$f)" == "$line" ]] && return 0
@@ -146,9 +146,11 @@ __tt_ghostty_take() {
   [[ $rec[1] == "$ans[3]" ]] || TTHEME_GHOSTTY_IDLE=0
   pal=${rec[3]#-}
   if [[ $rec[2] != - && -z $TTHEME_STARTUP ]]; then
-    pal=""
     (( TTHEME_GHOSTTY_IDLE )) || __tt_ghostty_unpaint $key $rec[1] $rec[4]
+    __tt_shown "" force && __tt_reload_ghostty
+    return 0
   fi
+  [[ -n $TTHEME_STARTUP && $rec[2] != "$TTHEME_STARTUP" && $rec[5] != painted ]] && pal=$TTHEME_STARTUP
   [[ -n $pal && -n ${TTHEME_PALETTE[$pal]} ]] || return 0
   __tt_shown "$pal" force && __tt_reload_ghostty
   return 0
@@ -166,7 +168,10 @@ __tt_ghostty_tick() {
   local -F now=$EPOCHREALTIME
   integer seen
   [[ -n $TTHEME_GHOSTTY_CODE ]] && zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/adapters/ghostty.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_GHOSTTY_CODE" ]] && return 1
-  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null && [[ $at[1] != "$TTHEME_PALETTES_AT" ]] && __tt_palettes_load && TTHEME_GHOSTTY_WANT=$now
+  at=("")
+  zstat -F %s.%N -A at +mtime -- $TTHEME_PINS_FILE 2>/dev/null
+  [[ $at[1] != "$TTHEME_PINS_AT" ]] && TTHEME_PINS_AT=$at[1] TTHEME_GHOSTTY_WANT=$now
   if zstat -F %s.%N -A at +mtime -- $TTHEME_GHOSTTY_TABS/.blur 2>/dev/null && [[ $at[1] != "$TTHEME_GHOSTTY_BLUR" ]]; then
     [[ -n $TTHEME_GHOSTTY_BLUR ]] && (( now - TTHEME_GHOSTTY_TOLD >= 1 )) && TTHEME_GHOSTTY_WANT=$now
     TTHEME_GHOSTTY_BLUR=$at[1]

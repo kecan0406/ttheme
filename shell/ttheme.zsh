@@ -59,7 +59,7 @@ __tt_fresh() {
   fi
   if [[ $at[1] != "$TTHEME_PALETTES_AT" ]]; then
     __tt_specs_named
-    __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && __tt_sync; __tt_reloaded behind; [[ -z $held ]] || __tt_hold "$start" }
+    __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && __tt_sync; __tt_reloaded ${${1:-behind}:#woke}; [[ -z $held ]] || __tt_hold "$start" }
     [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
   fi
   at=("")
@@ -102,6 +102,7 @@ __tt_gone() {
     add-zsh-hook -d ${hook%%:*} ${hook#*:}
   done
   (( $+functions[add-zle-hook-widget] )) && add-zle-hook-widget -d line-init __tt_line_init
+  __tt_bye
   unfunction ttheme
 }
 
@@ -1542,6 +1543,7 @@ __tt_installs_done() {
 
 __tt_switch() {
   __tt_cli "$@" || return
+  [[ $1 == off ]] && __tt_unpictured
   [[ -r $TTHEME_HOME/palettes.zsh ]] && __tt_palettes_load && __tt_reloaded
   if ! __tt_active; then
     __tt_reload
@@ -1653,8 +1655,49 @@ __tt_next() {
 
 source "$TTHEME_HOME/preview.zsh"
 
+__tt_enlist() {
+  local dir=$TTHEME_STATE_DIR/shells
+  zmodload -F zsh/files b:zf_mkdir b:zf_rm 2>/dev/null
+  [[ -d $dir ]] || zf_mkdir -p $dir 2>/dev/null || return 0
+  : >| $dir/$$ 2>/dev/null
+  add-zsh-hook zshexit __tt_bye
+}
+
+if (( ! ${+functions[TRAPURG]} )); then
+  TRAPURG() {
+    emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+    (( ${#zsh_eval_context} == 1 )) || return 0
+    __tt_poked
+    return 0
+  }
+fi
+
+__tt_bye() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  zf_rm -f -- $TTHEME_STATE_DIR/shells/$$ 2>/dev/null
+  return 0
+}
+
+__tt_stamp() {
+  local -a at=("") pins=("")
+  zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null
+  zstat -F %s.%N -A pins +mtime -- $TTHEME_PINS_FILE 2>/dev/null
+  REPLY="$at[1] $pins[1]"
+}
+
+__tt_wake() {
+  local f
+  zmodload -F zsh/files b:zf_rm 2>/dev/null
+  for f in $TTHEME_STATE_DIR/shells/<->(N); do
+    (( ${f:t} == $$ )) && continue
+    kill -URG ${f:t} 2>/dev/null || zf_rm -f -- $f 2>/dev/null
+  done
+  return 0
+}
+
 __tt_hook() {
   autoload -Uz add-zsh-hook add-zle-hook-widget
+  __tt_enlist
   zle -N __tt_line_init
   add-zle-hook-widget line-init __tt_line_init
   add-zsh-hook chpwd __tt_chpwd
@@ -1675,6 +1718,19 @@ __tt_hook() {
 }
 
 ttheme() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  local REPLY was
+  integer ret
+  __tt_stamp
+  was=$REPLY
+  __tt_verb "$@"
+  ret=$?
+  __tt_stamp
+  [[ $REPLY == "$was" ]] || __tt_wake
+  return $ret
+}
+
+__tt_verb() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   if (( $# > 1 && ${${argv[2,-1]}[(I)(-h|--help)]} )); then
     __tt_verb_help $1

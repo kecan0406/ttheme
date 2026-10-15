@@ -74,6 +74,8 @@ __tt_unshown() { : }
 
 __tt_reloaded() { : }
 
+__tt_poked() { __tt_fresh woke }
+
 __tt_worn() { : }
 
 __tt_blurred() { : }

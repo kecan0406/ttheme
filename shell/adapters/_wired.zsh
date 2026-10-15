@@ -17,6 +17,20 @@ __tt_pictured() {
   return 0
 }
 
+__tt_unpictured() {
+  local wired
+  for wired in $TTHEME_TERMINALS; do
+    (( $+functions[__tt_unpictured_$wired] )) && __tt_unpictured_$wired
+  done
+  return 0
+}
+
+__tt_unpictured_ghostty() {
+  local REPLY dir=${TTHEME_CONFIG:h}/backgrounds
+  __tt_ghostty_shown && [[ -n $REPLY ]] || return 0
+  __tt_put $dir/shown.conf "config-file = ?.conf"
+}
+
 __tt_ghostty_owner() {
   local pid=$1 ppid comm
   REPLY=0

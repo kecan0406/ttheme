@@ -190,21 +190,23 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
     }
   }
 
+  const launch = async (on: App, tab: Tab, line: string, marker?: string) => {
+    marks.set(tab, tab.prompts())
+    tab.write(`${line}\r`)
+    await on.until(
+      () =>
+        tab.pending === 0 &&
+        (marker ? tab.screen(fixture.place.home).includes(marker) : tab.xterm.buffer.active.type === 'alternate'),
+      15000,
+      `${line} never took the screen`,
+    )
+    await on.settle()
+  }
+
   return {
     open: () => app.open(),
     type: (tab, line) => app.type(tab, line),
-    async launch(tab, line, marker) {
-      marks.set(tab, tab.prompts())
-      tab.write(`${line}\r`)
-      await app.until(
-        () =>
-          tab.pending === 0 &&
-          (marker ? tab.screen(fixture.place.home).includes(marker) : tab.xterm.buffer.active.type === 'alternate'),
-        15000,
-        `${line} never took the screen`,
-      )
-      await app.settle()
-    },
+    launch: (tab, line, marker) => launch(app, tab, line, marker),
     keys: (tab, ...keys) => app.keys(tab, keys),
     async answer(tab, line, question, keys) {
       const before = tab.prompts()
@@ -249,7 +251,7 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
     },
     focus: (tab) => app.focus(tab),
     async look(label, options) {
-      const tab = app.front
+      const tab = options.at ?? app.front
 
       if (!tab) {
         throw new Error(`look ${label}: no tab`)
@@ -313,8 +315,11 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       return {
         open: () => other.open(),
         type: (tab, line) => other.type(tab, line),
+        launch: (tab, line, marker) => launch(other, tab, line, marker),
+        focus: (tab) => other.focus(tab),
+        leave: () => other.leave(),
         async look(label, options) {
-          const tab = other.front
+          const tab = options.at ?? other.front
 
           if (!tab) {
             throw new Error(`look ${label}: no ${terminal} tab`)
@@ -324,7 +329,10 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
           const want = expected(options)
           put(label, 'colors', seen.colors, want.colors)
           put(label, 'picture', seen.picture, want.picture)
-          put(label, 'wears', await other.wears(tab), want.wears)
+
+          if (!options.busy) {
+            put(label, 'wears', await other.wears(tab), want.wears)
+          }
 
           if (want.opacity !== undefined) {
             put(label, 'opacity', seen.opacity, want.opacity, ['pictures'])

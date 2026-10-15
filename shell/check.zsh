@@ -1497,6 +1497,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   TTHEME_GHOSTTY_SEEN=() TTHEME_GHOSTTY_RUN=() TTHEME_GHOSTTY_BLUR="" TTHEME_GHOSTTY_ASKED=0 TTHEME_GHOSTTY_WANT=0 TTHEME_GHOSTTY_HUSH=0 TTHEME_GHOSTTY_NONE=0
   TTHEME_GHOSTTY_FRONT=$keyb TTHEME_GHOSTTY_IDLE=1
   print -r -- "config-file = ?rei.conf" >| $bgd/shown.conf
+  __tt_pins_load
   : > $asks
   __tt_ghostty_tick
   [[ ! -s $asks ]] || { print -u2 "the follower asked Ghostty before any tab took input"; exit 1 }

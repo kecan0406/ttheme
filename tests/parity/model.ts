@@ -157,7 +157,6 @@ interface Opening {
 
 interface Kind {
   delay?: number
-  eager?: true
   launch(app: App): void
   opening(app: App): Opening
   watched?(app: App): string[]
@@ -681,7 +680,6 @@ const terminalApp = (): Kind => {
   }
 
   return {
-    eager: true,
     launch(app) {
       for (const [name, profile] of Object.entries(prefsOf(app.place.home))) {
         const image =
@@ -782,6 +780,7 @@ export class App {
   readonly journal: string[] = []
   front: Tab | undefined
   activity = performance.now()
+  private away = false
   private later = 0
   private stamps = new Map<string, string>()
   readonly term: Term
@@ -1205,10 +1204,7 @@ export class App {
   }
 
   private feed(tab: Tab, chunk: string): void {
-    if (this.kind.eager) {
-      this.poll()
-    }
-
+    this.poll()
     this.scan(tab, chunk)
     tab.pending++
     tab.xterm.write(chunk, () => {
@@ -1261,6 +1257,10 @@ export class App {
   }
 
   private aim(tab: Tab): void {
+    if (this.term !== 'ghostty') {
+      return
+    }
+
     writeFileSync(join(this.place.home, '.parity', 'front'), `${tab.tty}\n`)
   }
 
@@ -1270,15 +1270,24 @@ export class App {
     }
   }
 
+  leave(): void {
+    if (this.front && !this.away) {
+      this.blur(this.front)
+    }
+
+    this.away = true
+  }
+
   async focus(tab: Tab): Promise<void> {
     this.poll()
 
-    if (this.front === tab) {
+    if (this.front === tab && !this.away) {
       return
     }
 
-    const was = this.front
+    const was = this.away ? undefined : this.front
     this.front = tab
+    this.away = false
     this.aim(tab)
 
     if (was) {

@@ -75,6 +75,10 @@ off-behind.back.colors	own	=	=	=	=	=	=	=	=	=
 off-behind.back.picture	none	=	=	=	=	=	=	=	=	=
 off-behind.back.wears	none	=	=	=	=	=	=	=	=	=
 off-behind.back.issue	-	=	=	=	=	=	=	=	=	=
+off-idle.behind.colors	own	=	=	=	=	=	=	=	=	=
+off-idle.behind.picture	none	=	=	=	=	=	=	=	=	=
+off-idle.behind.wears	none	=	=	=	=	=	=	=	=	=
+off-idle.behind.issue	-	=	=	=	=	=	=	=	=	=
 off-busy.busy.colors	own	=	kita	kita	kita	kita	=	=	kita	kita
 off-busy.busy.picture	none	=	kita	kita	=	kita	=	=	kita	kita
 off-busy.busy.issue	-	=	=	=	=	=	=	=	=	=
@@ -288,6 +292,14 @@ reach-picture.ghostty.colors	kita	=	=	=	=	=	=	=	=	=
 reach-picture.ghostty.picture	kita	=	=	=	=	=	=	=	=	=
 reach-picture.ghostty.opacity	0.23	=	=	=	0.2	=	0.2	=	=	=
 reach-picture.ghostty.wears	kita	=	=	=	=	=	=	=	=	=
+off-beside.ghostty.colors	own	=	=	=	=	=	=	=	=	=
+off-beside.ghostty.picture	none	=	=	=	=	=	=	=	=	=
+off-beside.ghostty.wears	none	=	=	=	=	=	=	=	=	=
+default-beside.ghostty.colors	kita	=	=	=	=	=	=	=	=	=
+default-beside.ghostty.picture	kita	=	=	=	=	=	=	=	=	=
+default-beside.ghostty.wears	kita	=	=	=	=	=	=	=	=	=
+off-reach-busy.ghostty.colors	own	=	=	=	=	=	=	=	=	=
+off-reach-busy.ghostty.picture	none	=	=	=	=	=	=	=	=	=
 tone-reach.tuned.colors	kita	=	=	=	=	=	=	=	=	=
 tone-reach.tuned.picture	kita	=	=	=	none	=	none	=	=	none
 tone-reach.tuned.wears	kita	=	=	=	=	=	=	=	=	=
