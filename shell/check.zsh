@@ -871,6 +871,16 @@ __tt_fresh
   (( paints == 1 )) && [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" ]] ||
     { print -u2 "a tab under a pin to the old default painted $paints times at the prompt after the default moved, or left the pin: ${TTHEME_SPEC%% *}"; exit 1 }
 ) || exit 1
+(
+  integer paints=0
+  source $XDG_CONFIG_HOME/ttheme/adapters/editor.zsh
+  __tt_osc_apply() { (( ++paints )) }
+  __tt_dir_sync() { : }
+  export TTHEME_PAINTED=1
+  TTHEME_ADAPTER=editor TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_PALETTES_AT=
+  __tt_fresh > /dev/null
+  (( paints == 0 )) || { print -u2 "an editor's built-in terminal that inherited a painted tab's palette painted it into the editor at its next ttheme command after the default moved"; exit 1 }
+) || exit 1
 adapter=$TTHEME_ADAPTER
 TTHEME_ITERM_SHOWN=default TTHEME_STARTUP=miku
 source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh

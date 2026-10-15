@@ -45,7 +45,7 @@ __tt_respec() {
     typeset -g $v=${TTHEME_PALETTE[$n]}
     [[ $v == TTHEME_SPEC ]] && worn=$n
   done
-  [[ -n $worn && -n $TTHEME_PAINTED && $TTHEME_SPEC != "$spec" ]] && __tt_wear "$TTHEME_SPEC" $worn
+  [[ -n $worn && -n $TTHEME_PAINTED && $TTHEME_SPEC != "$spec" ]] && __tt_active && __tt_wear "$TTHEME_SPEC" $worn
   return 0
 }
 
@@ -88,7 +88,7 @@ __tt_follow() {
 }
 
 __tt_hold() {
-  [[ -n $TTHEME_STARTUP && -n $TTHEME_PAINTED && $TTHEME_SPEC == "${1#* }" && "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" != "$1" ]] && (( ! TTHEME_TMUX )) && __tt_reverts || return 0
+  [[ -n $TTHEME_STARTUP && -n $TTHEME_PAINTED && $TTHEME_SPEC == "${1#* }" && "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" != "$1" ]] && (( ! TTHEME_TMUX )) && __tt_active && __tt_reverts || return 0
   __tt_apply "$TTHEME_SPEC"
 }
 
