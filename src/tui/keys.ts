@@ -138,6 +138,19 @@ function lone(at: number): { events: Inbound[]; end: number } {
   return { events: [key('esc')], end: at + 1 }
 }
 
+function alted(input: string, at: number): Step {
+  const ch = String.fromCodePoint(input.codePointAt(at + 1) as number)
+  const code = ch.codePointAt(0) ?? 0
+
+  if (code < 32 || (code >= 127 && code < 160)) {
+    return lone(at)
+  }
+
+  const label = ch === ' ' ? 'space' : /^[A-Z]$/.test(ch) ? `shift-${ch.toLowerCase()}` : ch
+
+  return { events: [key(`alt-${label}`)], end: at + 1 + ch.length }
+}
+
 function metadata(text: string): Record<string, string> {
   const out: Record<string, string> = {}
 
@@ -352,7 +365,11 @@ function csi(input: string, at: number, final: boolean, cell: Cell | undefined):
   if (!m) {
     const rest = input.slice(at + 1)
 
-    return !final && (CSI_OPEN.test(rest) || SGR_OPEN.test(rest)) ? undefined : lone(at)
+    if (!final && (CSI_OPEN.test(rest) || SGR_OPEN.test(rest))) {
+      return undefined
+    }
+
+    return rest === '[' ? alted(input, at) : lone(at)
   }
 
   const [whole, params = '', between = '', last = ''] = m
@@ -403,7 +420,11 @@ function osc(input: string, at: number, final: boolean): Step {
   const after = code ? input[at + 1 + code[0].length] : undefined
 
   if (after !== ';' && after !== '\x07' && after !== '\x1b') {
-    return !final && OSC_OPEN.test(input.slice(at + 1)) ? undefined : lone(at)
+    if (!final && OSC_OPEN.test(input.slice(at + 1))) {
+      return undefined
+    }
+
+    return input.length === at + 2 ? alted(input, at) : lone(at)
   }
 
   const ends = [input.indexOf('\x07', at), input.indexOf('\x1b\\', at + 2)].filter((end) => end !== -1)
@@ -421,7 +442,7 @@ function ss3(input: string, at: number, final: boolean): Step {
   const last = input[at + 2]
 
   if (last === undefined) {
-    return final ? lone(at) : undefined
+    return final ? alted(input, at) : undefined
   }
 
   if (!/^[A-Za-z]$/.test(last)) {
@@ -456,11 +477,7 @@ function sequence(input: string, at: number, final: boolean, cell: Cell | undefi
     return { events: [key('alt-backspace')], end: at + 2 }
   }
 
-  if (/^[a-z]$/.test(next)) {
-    return { events: [key(`alt-${next}`)], end: at + 2 }
-  }
-
-  return lone(at)
+  return alted(input, at)
 }
 
 export function decode(input: string, final = false, cell?: Cell): { events: Inbound[]; rest: string } {

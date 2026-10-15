@@ -70,6 +70,12 @@ test('pastes and protocol replies come apart from keys, in order, and unfinished
   ])
 })
 
+test('with no keyboard protocol, esc and a key other than a lowercase letter read as that key with alt', () => {
+  assert.deepEqual(keysOf('\x1b1\x1bA\x1b/\x1b \x1b\x1b'), ['alt-1', 'alt-shift-a', 'alt-/', 'alt-space', 'esc', 'esc'])
+  assert.deepEqual(keysOf('\x1b['), ['alt-['])
+  assert.deepEqual(keysOf('\x1bO'), ['alt-shift-o'])
+})
+
 test('an escape sequence split across two reads is one key, and a lone esc is read once the wait passes', async () => {
   const got: Inbound[] = []
   const keys = new Keys((events) => got.push(...events))
