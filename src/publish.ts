@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { promisify } from 'node:util'
+import { parse } from 'smol-toml'
 import { TOPIC } from './sources.ts'
 
 const exec = promisify(execFile)
@@ -178,8 +179,19 @@ export async function describeRepo(repo: Repo, description: string | undefined, 
   ])
 }
 
+function readable(text: string): boolean {
+  try {
+    parse(text)
+
+    return true
+  } catch {
+    return false
+  }
+}
+
 function head(text: string): { top: string; rest: string } {
-  const at = text.search(/^\s*\[/m)
+  const starts = [...text.matchAll(/^[ \t]*\[/gm)].map((match) => match.index)
+  const at = starts.find((start) => readable(text.slice(0, start))) ?? starts[0] ?? -1
 
   return at < 0 ? { top: text, rest: '' } : { top: text.slice(0, at), rest: text.slice(at) }
 }

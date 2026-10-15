@@ -50,6 +50,21 @@ test('a hand-written description over several lines is replaced whole, and a cat
   )
 })
 
+test('a description written on the line after its quotes, starting with a bracket, is replaced whole, with LF or CRLF line ends', () => {
+  const written = toml.replace('name = "pastel"\n', 'name = "pastel"\ndescription = """\n[WIP] Soft colors"""\n')
+
+  for (const text of [written, written.replaceAll('\n', '\r\n')]) {
+    assert.equal(readMarketplaceInfo(text, 'x').description, '[WIP] Soft colors')
+    const info = readMarketplaceInfo(withDescription(text, 'Softer'), 'x')
+    assert.equal(info.description, 'Softer')
+    assert.deepEqual(
+      info.catalogs.map((c) => c.name),
+      ['K-On!', 'Vocaloid'],
+    )
+    assert.equal(readMarketplaceInfo(withDescription(text, undefined), 'x').description, undefined)
+  }
+})
+
 test('catalog tables are added at the end and only the ones named come out', () => {
   const without = withoutCatalogs(toml, new Set(['K-On!']))
   const info = readMarketplaceInfo(without, 'x')
