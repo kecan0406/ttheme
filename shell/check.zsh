@@ -843,16 +843,22 @@ __tt_fresh
 [[ $TTHEME_STARTUP == rei && -n ${TTHEME_PALETTE[miku]} ]] || { print -u2 "a rewritten palettes.zsh did not reload: startup=$TTHEME_STARTUP"; exit 1 }
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/windows-terminal.zsh
-  integer asks=0 naps=0
-  __tt_osc_apply() { shown=${1%% *}; export TTHEME_PAINTED=1 }
+  integer asks=0 naps=0 paints=0
+  __tt_active() { return 0 }
+  __tt_osc_apply() { (( ++paints )); shown=${1%% *}; export TTHEME_PAINTED=1 }
   __tt_query_bg() { (( ++asks )); REPLY=$shown }
   __tt_dir_sync() { : }
   sleep() { (( ++naps )) }
   export TTHEME_PAINTED=1
   TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_PALETTES_AT= shown=${TTHEME_PALETTE[rei]%% *}
   __tt_fresh > /dev/null
-  (( asks == 1 && naps == 0 )) && [[ $shown == ${TTHEME_PALETTE[miku]%% *} ]] ||
-    { print -u2 "a Windows Terminal tab wearing the old default asked its background $asks times and waited $naps times at the prompt after the default moved, or lost its palette: $shown"; exit 1 }
+  (( asks == 0 && naps == 0 && paints == 1 )) && [[ $shown == ${TTHEME_PALETTE[miku]%% *} ]] ||
+    { print -u2 "a Windows Terminal tab wearing the old default asked its background $asks times, waited $naps times and painted $paints times at its prompt after the default moved in another tab, or lost its palette: $shown"; exit 1 }
+  asks=0 naps=0 shown=${TTHEME_PALETTE[miku]%% *}
+  sleep() { (( ++naps )); (( naps < 3 )) || shown=${TTHEME_PALETTE[rei]%% *} }
+  __tt_reloaded
+  (( naps == 3 )) && [[ $shown == ${TTHEME_PALETTE[miku]%% *} ]] ||
+    { print -u2 "a Windows Terminal tab that ran the command did not wait for the settings reload's reset before it painted again: $naps waits, $shown"; exit 1 }
 ) || exit 1
 (
   integer paints=0

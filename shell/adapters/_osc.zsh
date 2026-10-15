@@ -86,6 +86,8 @@ __tt_unpainted() { : }
 
 __tt_reverts() { return 0 }
 
+__tt_holds() { return 0 }
+
 __tt_follows_focus() { return 1 }
 
 __tt_takes_default() { return 0 }

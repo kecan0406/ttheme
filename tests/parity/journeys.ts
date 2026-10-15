@@ -483,6 +483,18 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'pin-default',
+    about:
+      'ttheme default typed in a directory pinned to the old default keeps the pin on the tab, and the tab knows it',
+    async run(p) {
+      p.pin('work', 'konata')
+      const a = await p.open()
+      await p.type(a, 'cd ~/work')
+      await p.type(a, 'ttheme default rei')
+      await p.look('kept', { want: 'konata' })
+    },
+  },
+  {
     id: 'pin-reach',
     about: 'a pin set or moved in another tab reaches a tab already in its directory once it comes to the front',
     async run(p) {

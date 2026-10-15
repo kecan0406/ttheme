@@ -222,6 +222,10 @@ pin.out.colors	konata	=	=	=	=	=	=	=	=	=
 pin.out.picture	konata	=	=	=	none	=	none	=	=	=
 pin.out.wears	konata	=	=	=	=	=	=	=	=	=
 pin.out.issue	-	=	=	=	=	=	=	=	=	=
+pin-default.kept.colors	konata	=	=	=	=	=	=	=	=	=
+pin-default.kept.picture	konata	=	=	=	none	=	none	=	=	=
+pin-default.kept.wears	konata	=	=	=	=	=	=	=	=	=
+pin-default.kept.issue	-	=	=	=	=	=	=	=	=	=
 pin-reach.pinned.colors	kita	=	=	=	=	=	=	=	=	=
 pin-reach.pinned.picture	kita	=	=	=	none	=	none	=	=	=
 pin-reach.pinned.wears	kita	=	=	=	=	=	=	=	=	=
