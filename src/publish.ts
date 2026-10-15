@@ -94,25 +94,31 @@ export async function isPublic(repo: Repo): Promise<boolean> {
   }
 }
 
-export async function uncommitted(dir: string, paths: readonly string[]): Promise<string[]> {
+export interface Unsaved {
+  fresh: string[]
+  changed: string[]
+}
+
+export async function unsaved(dir: string, paths: readonly string[]): Promise<Unsaved> {
   if (paths.length === 0 || !existsSync(join(dir, '.git'))) {
-    return [...paths]
+    return { fresh: [...paths], changed: [] }
   }
 
   try {
     const named = paths.map((path) => relative(dir, path))
 
-    const { stdout } = await exec(
-      'git',
-      ['ls-tree', '-r', '-z', '--name-only', '--full-name', 'HEAD', '--', ...named],
-      { cwd: dir, encoding: 'utf8' },
-    )
+    const listed = async (args: string[]) =>
+      new Set((await exec('git', [...args, '--', ...named], { cwd: dir, encoding: 'utf8' })).stdout.split('\0'))
 
-    const known = new Set(stdout.split('\0'))
+    const known = await listed(['ls-tree', '-r', '-z', '--name-only', '--full-name', 'HEAD'])
+    const moved = await listed(['diff', '--name-only', '-z', 'HEAD'])
 
-    return paths.filter((_, i) => !known.has(named[i] ?? ''))
+    return {
+      fresh: paths.filter((_, i) => !known.has(named[i] ?? '')),
+      changed: paths.filter((_, i) => known.has(named[i] ?? '') && moved.has(named[i] ?? '')),
+    }
   } catch {
-    return [...paths]
+    return { fresh: [...paths], changed: [] }
   }
 }
 

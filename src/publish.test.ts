@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { uncommitted, withCatalogs, withDescription, withoutCatalogs } from './publish.ts'
+import { unsaved, withCatalogs, withDescription, withoutCatalogs } from './publish.ts'
 import { readMarketplaceInfo } from './sources.ts'
 
 const toml = `"$schema" = "https://www.schemastore.org/ttheme-marketplace.json"
@@ -55,7 +55,7 @@ test('catalog tables are added at the end and only the ones named come out', () 
   assert.equal(withoutCatalogs(toml, new Set()), toml)
 })
 
-test('a palette file git never committed is one share must warn it deletes for good, a committed one is not', async () => {
+test('a palette file git never committed, or changed since it was, is one share must warn it deletes, a committed one is not', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-publish-'))
 
   const git = (...args: string[]) =>
@@ -66,18 +66,20 @@ test('a palette file git never committed is one share must warn it deletes for g
 
   try {
     const shared = join(dir, 'palettes', 'kita.toml')
+    const tuned = join(dir, 'palettes', 'rei.toml')
     const fresh = join(dir, 'palettes', 'miku.toml')
     mkdirSync(join(dir, 'palettes'))
     writeFileSync(shared, 'a')
-    assert.deepEqual(await uncommitted(dir, [shared]), [shared])
+    writeFileSync(tuned, 'c')
+    assert.deepEqual(await unsaved(dir, [shared]), { fresh: [shared], changed: [] })
     git('init', '-q', '-b', 'main')
-    assert.deepEqual(await uncommitted(dir, [shared]), [shared])
+    assert.deepEqual(await unsaved(dir, [shared]), { fresh: [shared], changed: [] })
     git('add', '-A')
     git('commit', '-q', '--no-verify', '-m', 'share')
-    writeFileSync(shared, 'tuned since')
+    writeFileSync(tuned, 'tuned since')
     writeFileSync(fresh, 'b')
-    assert.deepEqual(await uncommitted(dir, [shared, fresh]), [fresh])
-    assert.deepEqual(await uncommitted(dir, []), [])
+    assert.deepEqual(await unsaved(dir, [shared, tuned, fresh]), { fresh: [fresh], changed: [tuned] })
+    assert.deepEqual(await unsaved(dir, []), { fresh: [], changed: [] })
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

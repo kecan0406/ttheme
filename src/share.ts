@@ -33,7 +33,7 @@ import {
   repoText,
   repoUrl,
   toolsProblem,
-  uncommitted,
+  unsaved,
   withCatalogs,
   withDescription,
   withoutCatalogs,
@@ -499,7 +499,16 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
 
   const files = new Map(marketplaceFiles(marketplace.dir).map((f) => [f.slug, f.path]))
   const drops = dropped.flatMap((e) => files.get(slugOf(e.name)) ?? [])
-  const tracked = (await uncommitted(marketplace.dir, drops)).length === 0
+  const slugAt = new Map([...files].map(([slug, path]) => [path, slug]))
+  const risk = await unsaved(marketplace.dir, drops)
+  const slugs = (paths: string[]) => paths.map((path) => slugAt.get(path) ?? path).join(', ')
+
+  const lost = [
+    ...(risk.fresh.length > 0 ? [`git has no copy of ${slugs(risk.fresh)}`] : []),
+    ...(risk.changed.length > 0
+      ? [`${slugs(risk.changed)} changed since ${risk.changed.length === 1 ? 'it was' : 'they were'} last committed`]
+      : []),
+  ]
 
   const named = (kind: Copy['kind']) =>
     copies
@@ -520,7 +529,7 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
     ...(replaced.length > 0 ? [`Replace      ${replaced.join(', ')}`] : []),
     ...(removed.length > 0
       ? [
-          `Remove       ${removed.join(', ')} — deleted from ${shownSource(marketplace.dir)}${tracked ? '' : ', and git has no copy of it yet'}`,
+          `Remove       ${removed.join(', ')} — deleted from ${shownSource(marketplace.dir)}${lost.map((l) => `, and ${l}`).join('')}`,
         ]
       : []),
   ]
