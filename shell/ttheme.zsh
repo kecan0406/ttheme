@@ -1821,8 +1821,21 @@ if (( ${+functions[compdef]} )); then
     local -a reply
     if (( CURRENT == 2 )); then
       compadd -- $TTHEME_VERBS help
-    elif [[ $words[2] == (use|default|edit|check|share) && $CURRENT == 3 ]]; then
+    elif [[ $words[2] == (use|default|edit) && $CURRENT == 3 ]]; then
       compadd -- $TTHEME_ORDER
+    elif [[ $words[2] == share && $words[CURRENT-1] == --tone ]]; then
+      compadd -- tuned original
+    elif [[ $words[2] == (check|share) ]]; then
+      local flag=--fix word prev=
+      local -i named=0 flagged=0
+      [[ $words[2] == share ]] && flag=--tone
+      for word in $words[3,CURRENT-1]; do
+        [[ $word == $flag(|=*) ]] && flagged=1
+        [[ $word != -* && $prev != --tone ]] && named=1
+        prev=$word
+      done
+      (( named )) || compadd -- $TTHEME_ORDER
+      (( flagged )) || compadd -- $flag
     elif [[ $words[2] == new && $words[CURRENT-1] == --from ]]; then
       compadd -- $TTHEME_ORDER
     elif [[ $words[2] == new && $words[CURRENT-1] == --in ]]; then
