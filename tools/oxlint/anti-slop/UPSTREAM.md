@@ -47,8 +47,9 @@ skill installs:
   `no-unsafe-dictionary-type` are off in the files `.oxlintrc.json`'s
   `overrides` lists: the modules that decode a file or a response into
   ttheme's types by hand.
-- oxlint's default `correctness` category is off. Biome is ttheme's linter
-  (`mise run lint`); oxlint runs these rules and nothing else.
+- oxlint's default `correctness` category is off. Biome is ttheme's general
+  linter; `mise run lint` runs it and then oxlint, which runs these rules and
+  nothing else (`mise run format` applies oxlint's fixes before Biome's).
 - Biome skips this folder (`biome.json`), so it keeps upstream's formatting.
 
 ## Dependencies
