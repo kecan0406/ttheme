@@ -1,7 +1,7 @@
 import { graphemes } from '../ansi.ts'
 
 function printable(key: string): boolean {
-  return [...key].length === 1 && key >= ' ' && key !== '\x7f'
+  return [...key].length === 1 && key >= ' ' && !(key >= '\x7f' && key <= '\x9f')
 }
 
 function plain(text: string): string {
