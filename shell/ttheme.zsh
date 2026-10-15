@@ -295,7 +295,7 @@ __tt_recheck() {
   __tt_remember "$now"
   TTHEME_HEARD=$now
   __tt_heard "$now"
-  [[ $TTHEME_TAB_PALETTE == off || -z $TTHEME_STARTUP ]] || return 0
+  [[ $TTHEME_TAB_PALETTE == off && -n $TTHEME_STARTUP ]] || return 0
   __tt_wearing "${heard%% *}" && was=$REPLY
   REPLY=""
   __tt_wearing "${now%% *}"
@@ -1790,7 +1790,7 @@ fi
       :
     elif [[ $TTHEME_TAB_PALETTE == off || -z $TTHEME_STARTUP ]]; then
       [[ -n $TTHEME_HEARD ]] || __tt_listen
-      __tt_start_bg && __tt_wearing $REPLY && TTHEME_SPEC=$REPLY
+      [[ -n $TTHEME_STARTUP ]] && __tt_start_bg && __tt_wearing $REPLY && TTHEME_SPEC=$REPLY
     else
       __tt_next
       TTHEME_SPEC=$REPLY

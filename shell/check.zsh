@@ -1375,6 +1375,11 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   export TTHEME_PAINTED=1
   __tt_recheck
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && $TTHEME_HEARD == $stale ]] || { print -u2 "a recheck trusted a painted tab's colors"; exit 1 }
+  unset TTHEME_PAINTED
+  TTHEME_STARTUP= TTHEME_HEARD='#123456' TTHEME_PIN= TTHEME_SPEC= synced=0
+  __tt_recheck
+  [[ -z $TTHEME_SPEC && $TTHEME_HEARD == $fresh && $synced == 0 ]] ||
+    { print -u2 "a recheck while ttheme is off named a palette for the tab's own colors: spec=${TTHEME_SPEC%% *}"; exit 1 }
 ) || exit 1
 (
   setopt noclobber
