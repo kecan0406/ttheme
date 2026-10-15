@@ -11,7 +11,7 @@ export const PALETTES = ['konata', 'kita', 'miku', 'rei']
 export const PICTURED = ['konata', 'kita']
 export const STARTUP = 'konata'
 
-const SHIMS: Record<string, string> = {
+const SHIMS = {
   ps: 'exit 0',
   ssh: [
     's=$(stty -g)',
@@ -70,7 +70,7 @@ const SHIMS: Record<string, string> = {
     '  *".defaultProfile "*) printf \'   string "%s"\\n\' "$(cat "$HOME/.parity/konsole.default" 2>/dev/null)" ;;',
     'esac',
   ].join('\n'),
-}
+} satisfies Record<string, string>
 
 export function shims(work: string): string {
   const bin = join(work, 'bin')

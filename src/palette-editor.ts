@@ -171,7 +171,7 @@ export function colorsOf(list: Hex[]): Colors {
   return { background, foreground, cursor, selection, ansi }
 }
 
-export function slotLabel(slot: number): { name: string; about: string } {
+export function slotLabel(slot: number) {
   if (slot < BASE.length) {
     return { name: BASE[slot] as string, about: SLOT_NAMES[slot] as string }
   }
@@ -402,7 +402,7 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
   const checks = [ratioCheck(color, c.background, 'accents', 'On background', waive)]
   const here = oklch(color)
   const role = roleOf(ansi)
-  const band = ROLE_HUES[role] as { name: string; center: number; width: number }
+  const band = ROLE_HUES.get(role) as { name: string; center: number; width: number }
   const range = `${band.name} ${band.center}±${band.width}°`
 
   if (here.c < ACHROMATIC) {
@@ -1232,18 +1232,18 @@ export class PaletteEditor {
       return false
     }
 
-    const ways: Record<string, 'left' | 'right' | 'up' | 'down' | 'next' | 'previous'> = {
-      left: 'left',
-      right: 'right',
-      up: 'up',
-      k: 'up',
-      down: 'down',
-      j: 'down',
-      tab: 'next',
-      'shift-tab': 'previous',
-    }
+    const ways = new Map<string, 'left' | 'right' | 'up' | 'down' | 'next' | 'previous'>([
+      ['left', 'left'],
+      ['right', 'right'],
+      ['up', 'up'],
+      ['k', 'up'],
+      ['down', 'down'],
+      ['j', 'down'],
+      ['tab', 'next'],
+      ['shift-tab', 'previous'],
+    ])
 
-    const way = ways[key]
+    const way = ways.get(key)
 
     if (key === 'i' || key === 'esc') {
       this.inspect = false

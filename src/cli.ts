@@ -35,56 +35,65 @@ interface Verb extends VerbSpec {
   run?(args: string[], flags: Flags): unknown
 }
 
-const RUNS: Record<string, Verb['run']> = {
-  default: ([name]) => runDefault(name as string),
-  on: () => runOn(),
-  off: () => runOff(),
-  browse: () => runBrowse(),
-  add: (names) => runAdd(names),
-  update: (marketplaces) => runUpdate(marketplaces),
-  marketplace: ([action, arg]) => runMarketplace(action as string, arg),
-  new: ([name], { from, in: into }) => runNew(name as string, from, into),
-  edit: async (args) => runEdit(await paletteOf(args, 'edit')),
-  check: async (args, { fix }) => runCheck(await paletteOf(args, 'check'), fix),
-  share: async ([name], { tone }) => {
-    const asked = tone as Tone | undefined
+const RUNS = new Map<string, Verb['run']>([
+  ['default', ([name]) => runDefault(name as string)],
+  ['on', () => runOn()],
+  ['off', () => runOff()],
+  ['browse', () => runBrowse()],
+  ['add', (names) => runAdd(names)],
+  ['update', (marketplaces) => runUpdate(marketplaces)],
+  ['marketplace', ([action, arg]) => runMarketplace(action as string, arg)],
+  ['new', ([name], { from, in: into }) => runNew(name as string, from, into)],
+  ['edit', async (args) => runEdit(await paletteOf(args, 'edit'))],
+  ['check', async (args, { fix }) => runCheck(await paletteOf(args, 'check'), fix)],
+  [
+    'share',
+    async ([name], { tone }) => {
+      const asked = tone as Tone | undefined
 
-    if (name !== undefined) {
-      return runShare([name], asked)
-    }
+      if (name !== undefined) {
+        return runShare([name], asked)
+      }
 
-    if (process.stdin.isTTY && process.stdout.isTTY) {
-      return runShareAsked(asked)
-    }
+      if (process.stdin.isTTY && process.stdout.isTTY) {
+        return runShareAsked(asked)
+      }
 
-    const worn = process.env.TTHEME_WORN
+      const worn = process.env.TTHEME_WORN
 
-    if (!worn) {
-      throw new UsageError('name a palette', verbNamed('share'))
-    }
+      if (!worn) {
+        throw new UsageError('name a palette', verbNamed('share'))
+      }
 
-    console.error(`Sharing ${worn}, the palette this tab wears`)
+      console.error(`Sharing ${worn}, the palette this tab wears`)
 
-    return runShare([worn], asked)
-  },
-  init: (_, { yes }) => runInit({ yes }),
-  uninstall: (_, { yes }) => runUninstall(yes),
-  wire: ([name]) => runWire(name as string),
-  info: () => runInfo(),
-  build: (_, { only }) => build({ only }),
-  find: ([name]) => runFind(name as string),
-  image: ([name, action, key]) => runImage(name as string, action as string, key),
-  sync: () => runSync(),
-  redraw: () => runRedraw(),
-  names: () => updateNames(),
-  latest: () => checkLatest(),
-  tone: ([name, action, width]) => runTone(name as string, action as string, width),
-  flatten: ([source, out, background, opacity, canvas, place, into]) =>
-    runFlatten(source as string, out as string, background as string, opacity as string, canvas, place, into),
-  bake: ([source, out, canvas, place]) => runBake(source as string, out as string, canvas as string, place as string),
-}
+      return runShare([worn], asked)
+    },
+  ],
+  ['init', (_, { yes }) => runInit({ yes })],
+  ['uninstall', (_, { yes }) => runUninstall(yes)],
+  ['wire', ([name]) => runWire(name as string)],
+  ['info', () => runInfo()],
+  ['build', (_, { only }) => build({ only })],
+  ['find', ([name]) => runFind(name as string)],
+  ['image', ([name, action, key]) => runImage(name as string, action as string, key)],
+  ['sync', () => runSync()],
+  ['redraw', () => runRedraw()],
+  ['names', () => updateNames()],
+  ['latest', () => checkLatest()],
+  ['tone', ([name, action, width]) => runTone(name as string, action as string, width)],
+  [
+    'flatten',
+    ([source, out, background, opacity, canvas, place, into]) =>
+      runFlatten(source as string, out as string, background as string, opacity as string, canvas, place, into),
+  ],
+  [
+    'bake',
+    ([source, out, canvas, place]) => runBake(source as string, out as string, canvas as string, place as string),
+  ],
+])
 
-export const VERBS: Verb[] = VERB_SPECS.map((spec) => ({ ...spec, run: RUNS[spec.name] }))
+export const VERBS: Verb[] = VERB_SPECS.map((spec) => ({ ...spec, run: RUNS.get(spec.name) }))
 
 type Invocation =
   | { kind: 'brief' }

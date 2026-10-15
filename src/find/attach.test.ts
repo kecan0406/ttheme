@@ -27,7 +27,7 @@ test('jpegSize reads the frame header', () => {
   assert.equal(jpegSize(new Uint8Array([0x89, 0x50])), null)
 })
 
-function grabber(): { sent: string[]; got: Got[]; grab: Grabber } {
+function grabber() {
   const sent: string[] = []
   const got: Got[] = []
 

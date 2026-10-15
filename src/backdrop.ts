@@ -127,7 +127,7 @@ function highest(ok: (o: number) => boolean): number {
   return lo
 }
 
-function fade(colors: Colors, color: Hex): { cap: number; matched: number; opacity: number } {
+function fade(colors: Colors, color: Hex) {
   const misses = (o: number) =>
     checkReadability({
       name: colors.name,
@@ -175,7 +175,7 @@ function figureBox(image: Rgba): Box {
   return alphaBox(image) ?? { x: 0, y: 0, w: image.width, h: image.height }
 }
 
-export function fillSize(width: number, height: number): { width: number; height: number } {
+export function fillSize(width: number, height: number) {
   if (width <= 0 || height <= 0) {
     return FILL
   }
@@ -547,7 +547,7 @@ export function tryOn(
   blurring: number,
   framing?: Partial<Framing>,
   coloring: Coloring = 'tone',
-): { image: Rgba; fill: number; opacity: number } {
+) {
   const { box, clear, ink } = held
   const frame = fillFrame(box, width, height, clear)
   const fill = Math.round((100 * frame.at.w) / frame.crop.w / Math.min(width / box.w, height / box.h))
@@ -940,7 +940,7 @@ export function imageKey(origin: Origin): string {
   return `${origin.site}_${origin.id}`
 }
 
-export function dropImage(configHome: string, name: string, key?: string): { key: string; left: number } {
+export function dropImage(configHome: string, name: string, key?: string) {
   const dir = backgroundsDir(configHome)
   const store = readStore(dir)
   const rack = store.palettes[name]
@@ -1073,7 +1073,7 @@ export function installBackdrop(
   return [...written, join(dir, `${fileStem(name)}.conf`)]
 }
 
-export function showImage(configHome: string, name: string, key: string): { at: number; of: number } {
+export function showImage(configHome: string, name: string, key: string) {
   const dir = backgroundsDir(configHome)
   const store = readStore(dir)
   const rack = store.palettes[name]

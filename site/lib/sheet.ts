@@ -3,10 +3,15 @@ import type { Vars } from '@/lib/wear'
 
 export type Slot = 'bg' | 'fg' | 'cu' | 'se' | `a${number}`
 
-const NAMED: Record<string, Slot> = { background: 'bg', foreground: 'fg', cursor: 'cu', selection: 'se' }
+const NAMED = new Map<string, Slot>([
+  ['background', 'bg'],
+  ['foreground', 'fg'],
+  ['cursor', 'cu'],
+  ['selection', 'se'],
+])
 
 export function slotOf(name: string): Slot {
-  return NAMED[name] ?? (`a${name.slice(4)}` as Slot)
+  return NAMED.get(name) ?? (`a${name.slice(4)}` as Slot)
 }
 
 function channel(hex: string, shift: number): number {

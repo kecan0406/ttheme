@@ -32,13 +32,13 @@ test('the marketplace schema SchemaStore serves describes the keys ttheme reads 
 test('the palette schema describes the keys, sites, positions, slots and gate rules the palette reader knows', () => {
   const palette = read('ttheme-palette.json')
   assert.equal(palette.$id, PALETTE_SCHEMA_URL)
-  assert.deepEqual(keys(palette), [...(PALETTE_KEYS[''] ?? [])].sort())
+  assert.deepEqual(keys(palette), [...(PALETTE_KEYS.get('') ?? [])].sort())
 
   for (const table of ['meta', 'colors', 'contrast', 'ghostty']) {
-    assert.deepEqual(keys(palette.properties?.[table]), [...(PALETTE_KEYS[table] ?? [])].sort(), table)
+    assert.deepEqual(keys(palette.properties?.[table]), [...(PALETTE_KEYS.get(table) ?? [])].sort(), table)
   }
 
-  assert.deepEqual(keys(palette.properties?.picture?.items), [...(PALETTE_KEYS.picture ?? [])].sort())
+  assert.deepEqual(keys(palette.properties?.picture?.items), [...(PALETTE_KEYS.get('picture') ?? [])].sort())
   const defs = palette.definitions ?? {}
   assert.deepEqual(
     defs.site?.anyOf?.[0]?.enum,

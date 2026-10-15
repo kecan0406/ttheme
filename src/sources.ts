@@ -189,7 +189,7 @@ function optional(where: string, key: string, value: unknown): string | undefine
   return value === undefined ? undefined : shown(where, key, value, 'one line of text, 200 characters at most')
 }
 
-function renamesOf(where: string, raw: unknown): Record<string, string | false> {
+function renamesOf(where: string, raw: unknown) {
   if (raw === undefined) {
     return {}
   }

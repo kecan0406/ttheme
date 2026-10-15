@@ -178,7 +178,7 @@ function packed<T extends { set(values: ArrayLike<number>): void }>(
   return out
 }
 
-function joined(texts: Buffer[]): { bytes: Buffer; at: Uint32Array } {
+function joined(texts: Buffer[]) {
   const at: number[] = [0]
 
   for (const text of texts) at.push((at.at(-1) as number) + text.length)

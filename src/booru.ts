@@ -343,13 +343,13 @@ export function parseZerochan(text: string): Post[] {
   })
 }
 
-const ZEROCHAN_ROLES: Record<string, keyof Named> = {
-  mangaka: 'artist',
-  studio: 'artist',
-  character: 'character',
-  series: 'copyright',
-  game: 'copyright',
-}
+const ZEROCHAN_ROLES = new Map<string, keyof Named>([
+  ['mangaka', 'artist'],
+  ['studio', 'artist'],
+  ['character', 'character'],
+  ['series', 'copyright'],
+  ['game', 'copyright'],
+])
 
 function unescaped(text: string): string {
   return text.replace(/&(?:#(\d+)|amp|quot|apos|lt|gt);/g, (entity, code: string | undefined) =>
@@ -363,7 +363,7 @@ export function parseZerochanPage(html: string): Credit {
   const named: Named = { artist: [], character: [], copyright: [] }
 
   for (const [, kind, tag] of html.matchAll(/<li class="([a-z]+)[^"]*"[^>]*\bdata-tag="([^"]*)"/g)) {
-    const role = ZEROCHAN_ROLES[kind as string]
+    const role = ZEROCHAN_ROLES.get(kind as string)
     const name = zerochanTag(unescaped(tag as string))
 
     if (role && !named[role].includes(name)) {
@@ -615,7 +615,7 @@ function zerochanPath(tags: string): string {
     .join(',')
 }
 
-function zerochanParams(tags: string): Record<string, string> {
+function zerochanParams(tags: string) {
   const words = tags.split(/\s+/)
   const dimension = words.find((tag) => tag.startsWith('dimension:'))?.slice('dimension:'.length)
 

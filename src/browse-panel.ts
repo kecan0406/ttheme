@@ -1552,7 +1552,7 @@ export class BrowsePanel {
     this.redraw()
   }
 
-  private pending(): { names: PaletteEntry[]; dropped: PaletteEntry[] } {
+  private pending() {
     const entries = this.entries().filter((e) => !e.default)
 
     return {

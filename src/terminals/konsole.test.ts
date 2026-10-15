@@ -43,7 +43,7 @@ const manifest: Manifest = {
   ],
 }
 
-function fixture(): { configHome: string; home: string } {
+function fixture() {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-konsole-'))
 
   return { configHome: join(home, '.config'), home }
@@ -56,7 +56,7 @@ function put(path: string, content: string): void {
 
 const nobody: Host = { platform: 'linux', env: {}, run: () => undefined }
 
-function bus(konsoles: { service: string; loaded: string[] }[]): { host: Host; defaults: Map<string, string> } {
+function bus(konsoles: { service: string; loaded: string[] }[]) {
   const defaults = new Map<string, string>()
 
   const host: Host = {

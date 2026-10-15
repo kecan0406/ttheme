@@ -10,14 +10,14 @@ const ACCENT_SLOTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
 const LIGHT_SLOTS = [7, 15]
 export const ROLES = [1, 2, 3, 4, 5, 6]
 
-export const ROLE_HUES: Record<number, { name: string; center: number; width: number }> = {
-  1: { name: 'red', center: 19, width: 25 },
-  2: { name: 'green', center: 132, width: 35 },
-  3: { name: 'yellow', center: 88, width: 35 },
-  4: { name: 'blue', center: 250, width: 60 },
-  5: { name: 'magenta', center: 329, width: 40 },
-  6: { name: 'cyan', center: 197, width: 60 },
-}
+export const ROLE_HUES = new Map([
+  [1, { name: 'red', center: 19, width: 25 }],
+  [2, { name: 'green', center: 132, width: 35 }],
+  [3, { name: 'yellow', center: 88, width: 35 }],
+  [4, { name: 'blue', center: 250, width: 60 }],
+  [5, { name: 'magenta', center: 329, width: 40 }],
+  [6, { name: 'cyan', center: 197, width: 60 }],
+])
 
 export const ACHROMATIC = 0.03
 export const BRIGHT_GAP = 25
@@ -161,7 +161,7 @@ export function offRole(theme: Gated): { slot: number; hue: number; over: number
 
   return ACCENT_SLOTS.flatMap((slot) => {
     const color = chromatic(theme, slot)
-    const band = ROLE_HUES[roleOf(slot)]
+    const band = ROLE_HUES.get(roleOf(slot))
 
     if (color === undefined || band === undefined || exempt.has(slot)) return []
     const over = hueGap(color.h, band.center) - band.width
@@ -219,7 +219,7 @@ const ROLE_CHECKS: Check<Gated>[] = [
     measure: (theme) => Math.max(0, ...offRole(theme).map((o) => o.over)),
     check: (theme) =>
       offRole(theme).map(({ slot, hue, over }) => {
-        const band = ROLE_HUES[roleOf(slot)] as { name: string; center: number; width: number }
+        const band = ROLE_HUES.get(roleOf(slot)) as { name: string; center: number; width: number }
 
         return `ANSI ${slot} ${at(theme, slot)} has hue ${hue.toFixed(0)}°, ${over.toFixed(0)}° outside ${band.name} (${band.center}±${band.width}°)`
       }),

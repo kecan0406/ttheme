@@ -407,14 +407,17 @@ function readNativeNames(file: string, raw: unknown): string[] {
   })
 }
 
-export const PALETTE_KEYS: Readonly<Record<string, readonly string[]>> = {
-  '': ['$schema', 'meta', 'colors', 'contrast', 'ghostty', 'picture'],
-  meta: ['name', 'base', 'from', 'ansi_source', 'booru', 'booru_sites', 'native_names', 'signature', 'order', 'role'],
-  colors: ['background', 'foreground', 'cursor', 'selection_background', 'ansi'],
-  contrast: ['waive', 'reason'],
-  ghostty: ['icon_ghost', 'icon_screen'],
-  picture: ['site', 'id', 'size', 'position', 'opacity'],
-}
+export const PALETTE_KEYS = new Map([
+  ['', ['$schema', 'meta', 'colors', 'contrast', 'ghostty', 'picture']],
+  [
+    'meta',
+    ['name', 'base', 'from', 'ansi_source', 'booru', 'booru_sites', 'native_names', 'signature', 'order', 'role'],
+  ],
+  ['colors', ['background', 'foreground', 'cursor', 'selection_background', 'ansi']],
+  ['contrast', ['waive', 'reason']],
+  ['ghostty', ['icon_ghost', 'icon_screen']],
+  ['picture', ['site', 'id', 'size', 'position', 'opacity']],
+])
 
 export function unknownKeys(file: string, source: string): string[] {
   const doc = toml(file, source)
@@ -427,9 +430,11 @@ export function unknownKeys(file: string, source: string): string[] {
       : []
 
   return [
-    ...odd('', doc, PALETTE_KEYS['']),
-    ...['meta', 'colors', 'contrast', 'ghostty'].flatMap((table) => odd(table, doc[table], PALETTE_KEYS[table])),
-    ...(Array.isArray(doc.picture) ? doc.picture : []).flatMap((p, i) => odd(`picture[${i}]`, p, PALETTE_KEYS.picture)),
+    ...odd('', doc, PALETTE_KEYS.get('')),
+    ...['meta', 'colors', 'contrast', 'ghostty'].flatMap((table) => odd(table, doc[table], PALETTE_KEYS.get(table))),
+    ...(Array.isArray(doc.picture) ? doc.picture : []).flatMap((p, i) =>
+      odd(`picture[${i}]`, p, PALETTE_KEYS.get('picture')),
+    ),
   ]
 }
 

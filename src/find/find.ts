@@ -243,7 +243,12 @@ function orderOf(value: string): Order {
   return ORDERS.find((order) => order === value) ?? 'fit'
 }
 
-const STEPS: Record<string, number> = { left: -1, right: 1, 'shift-left': -10, 'shift-right': 10 }
+const STEPS = new Map([
+  ['left', -1],
+  ['right', 1],
+  ['shift-left', -10],
+  ['shift-right', 10],
+])
 
 function visit(url: string): void {
   if (process.env.SSH_CONNECTION || !/^(?:https?|file):/i.test(url)) {
@@ -1404,20 +1409,20 @@ class Finder {
     const view = this.view
     const { perRow, rowsVis } = gridShape(this.cols, this.rows)
 
-    const moves: Record<string, number> = {
-      left: -1,
-      right: 1,
-      up: -perRow,
-      down: perRow,
-      k: -perRow,
-      j: perRow,
-      pgup: -perRow * rowsVis,
-      pgdn: perRow * rowsVis,
-      home: -view.focus,
-      end: view.tiles.length,
-    }
+    const moves = new Map([
+      ['left', -1],
+      ['right', 1],
+      ['up', -perRow],
+      ['down', perRow],
+      ['k', -perRow],
+      ['j', perRow],
+      ['pgup', -perRow * rowsVis],
+      ['pgdn', perRow * rowsVis],
+      ['home', -view.focus],
+      ['end', view.tiles.length],
+    ])
 
-    const move = moves[key]
+    const move = moves.get(key)
 
     if (move !== undefined) {
       this.focus(view.focus + move)
@@ -2087,7 +2092,7 @@ class Finder {
       return
     }
 
-    const step = STEPS[key]
+    const step = STEPS.get(key)
 
     if (step !== undefined) {
       if (panel.field === 0) {

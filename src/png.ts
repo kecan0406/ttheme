@@ -48,7 +48,13 @@ export function isPng(bytes: Uint8Array): boolean {
   return bytes.length >= SIGNATURE.length && SIGNATURE.every((b, i) => bytes[i] === b)
 }
 
-const CHANNELS: Record<number, number> = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }
+const CHANNELS = new Map([
+  [0, 1],
+  [2, 3],
+  [3, 1],
+  [4, 2],
+  [6, 4],
+])
 
 interface Scan {
   width: number
@@ -69,7 +75,7 @@ function scanned(bytes: Uint8Array): Scan | undefined {
   const height = png.readUInt32BE(20)
   const type = png[25] as number
 
-  if (png[24] !== 8 || png[28] !== 0 || CHANNELS[type] === undefined) {
+  if (png[24] !== 8 || png[28] !== 0 || !CHANNELS.has(type)) {
     return undefined
   }
 
@@ -168,7 +174,7 @@ function unfilter(raw: Uint8Array, stride: number, height: number, bpp: number):
 
 function inflated(scan: Scan): Rgba {
   const { width, height, type } = scan
-  const bpp = CHANNELS[type] as number
+  const bpp = CHANNELS.get(type) as number
   const stride = width * bpp
 
   const raw = inflateSync(Buffer.concat(scan.idat), {

@@ -4,7 +4,7 @@ import type { Emitter, Output } from './types.ts'
 
 const NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white']
 
-function wtScheme(theme: Theme): Record<string, string> {
+function wtScheme(theme: Theme) {
   return {
     name: owned(theme.name),
     background: theme.background,

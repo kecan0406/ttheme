@@ -6,14 +6,19 @@ const LINK = 'font-mono text-code text-primary underline-offset-4 hover:underlin
 
 const MARK = 'inline-block size-3 align-middle'
 
-const BRANDS: Partial<Record<string, SimpleIcon>> = { pixiv: siPixiv, x: siX, bsky: siBluesky, patreon: siPatreon }
+const BRANDS = new Map<string, SimpleIcon>([
+  ['pixiv', siPixiv],
+  ['x', siX],
+  ['bsky', siBluesky],
+  ['patreon', siPatreon],
+])
 
 function Dot() {
   return <span class="text-muted-foreground">·</span>
 }
 
 function Out({ link }: { link: PictureLink }) {
-  const brand = link.kind ? BRANDS[link.kind] : undefined
+  const brand = link.kind ? BRANDS.get(link.kind) : undefined
 
   return (
     <a href={link.url} target="_blank" rel="noopener" class={LINK}>

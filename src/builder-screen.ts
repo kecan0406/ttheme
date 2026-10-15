@@ -42,7 +42,7 @@ import {
   slotLabel,
   slotUse,
 } from './palette-editor.ts'
-import { type Art, PLANE_BOTTOM, PLANE_TOP, reach, shareOf } from './picker-art.ts'
+import { type Art, type Drawn, PLANE_BOTTOM, PLANE_TOP, reach, shareOf } from './picker-art.ts'
 import type { Colors } from './seeds.ts'
 import { boxEdge, boxed, pillOf } from './tui/parts.ts'
 import { BG_RESET, FG_RESET, INK_RESET, MARKS, open, type Paint, painter, RESET, surfaceOf } from './tui/style.ts'
@@ -283,13 +283,7 @@ function lightnessAt(sample: number, rows: number): number {
   return PLANE_TOP - (sample * (PLANE_TOP - PLANE_BOTTOM)) / (rows * 2 - 1)
 }
 
-export function planeAt(
-  y: number,
-  rows: number,
-  x: number,
-  width: number,
-  hue: number,
-): { lightness: number; chroma: number } {
+export function planeAt(y: number, rows: number, x: number, width: number, hue: number) {
   const lightness = lightnessAt(Math.max(0, Math.min(rows * 2 - 1, y * 2 - 0.5)), rows)
   const share = Math.max(0, Math.min(1, (x - 0.5) / Math.max(1, width - 1)))
 
@@ -563,7 +557,7 @@ function picker(
   anchor: number | undefined,
   height: number,
   drawn: boolean,
-): { lines: string[]; art: Art | undefined } {
+): Drawn {
   const top = 2
   const at = anchor ?? top - 1
   const below = height - 1 - at
@@ -587,13 +581,7 @@ function picker(
   return { lines: out, art: pop.parts && artOf(e, c, pop.parts, first, PICKER_COL, pop.lines.length) }
 }
 
-function sidebar(
-  e: PaletteEditor,
-  p: Paint,
-  c: Colors,
-  layout: Layout,
-  height: number,
-): { lines: string[]; anchor: number | undefined } {
+function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: number) {
   const side = layout.side
   const failing = gateMisses(e)
   const dot = e.changedOnly ? p.warn(MARKS.on) : ' '
@@ -881,7 +869,7 @@ export function renderBuilder(
   rows: number,
   color: boolean,
   look: Look = {},
-): { lines: string[]; art: Art | undefined } | undefined {
+): Drawn | undefined {
   const layout = layoutOf(cols, rows, e.scene)
 
   if (!layout) {

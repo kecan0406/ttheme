@@ -45,7 +45,13 @@ export function schemeLines(
   ]
 }
 
-const ANCHOR: Readonly<Record<string, string>> = { left: '0', top: '0', center: '0.5', right: '1', bottom: '1' }
+const ANCHOR = new Map([
+  ['left', '0'],
+  ['top', '0'],
+  ['center', '0.5'],
+  ['right', '1'],
+  ['bottom', '1'],
+])
 
 function wallpaperLines(picture: ProfileBackground | undefined): string[] {
   if (!picture || picture.opacity <= 0) {
@@ -57,7 +63,7 @@ function wallpaperLines(picture: ProfileBackground | undefined): string[] {
   return [
     `Wallpaper=${picture.image}`,
     `FillStyle=${picture.cover ? 'Crop' : 'Adapt'}`,
-    `Anchor=${ANCHOR[x] ?? '0.5'},${ANCHOR[y] ?? '0.5'}`,
+    `Anchor=${ANCHOR.get(x) ?? '0.5'},${ANCHOR.get(y) ?? '0.5'}`,
     `WallpaperOpacity=${picture.opacity}`,
   ]
 }

@@ -67,7 +67,7 @@ function selection(own: string, light: boolean): string {
 function accent(own: string, index: number, seedHue: number, light: boolean, rotate = true): string {
   const o = hct(own)
   const base = index % 8
-  const hue = o.chroma < GREY_CHROMA ? (ROLE_HUES[base]?.center as number) : o.hue
+  const hue = o.chroma < GREY_CHROMA ? (ROLE_HUES.get(base)?.center as number) : o.hue
   const chroma = Math.max(CHROMA_MIN, Math.min(CHROMA_MAX, o.chroma))
   const tone = light
     ? (LIGHT_TONE[base] as number) - (index > 8 ? BRIGHT_LIFT / 2 : 0)

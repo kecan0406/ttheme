@@ -209,7 +209,7 @@ function expandHome(path: string, home: string): string {
   return path.startsWith('~/') ? join(home, path.slice(2)) : path
 }
 
-function ghosttyTree(main: string, home: string): { lines: [string, string, string][]; files: string[] } {
+function ghosttyTree(main: string, home: string) {
   const lines = ghosttyLines(main)
   const files: string[] = []
 
@@ -242,16 +242,16 @@ export function ghosttyLoad(configHome: string): GhosttyLoad {
   const theme = main.findLast(([key]) => key === 'theme')?.[1]
   const colors = new Map<string, string>()
 
-  const slot: Record<string, string> = {
-    background: '11',
-    foreground: '10',
-    'cursor-color': '12',
-    'selection-background': '17',
-  }
+  const slot = new Map([
+    ['background', '11'],
+    ['foreground', '10'],
+    ['cursor-color', '12'],
+    ['selection-background', '17'],
+  ])
 
   const apply = (lines: [string, string, string][]) => {
     for (const [key, value] of lines) {
-      const code = slot[key]
+      const code = slot.get(key)
       const color = code ? hex(value) : undefined
 
       if (code && color) {
@@ -313,15 +313,15 @@ export function kittyFiles(configHome: string): string[] {
   return files
 }
 
+const KITTY_SLOTS = new Map([
+  ['background', '11'],
+  ['foreground', '10'],
+  ['cursor', '12'],
+  ['selection_background', '17'],
+])
+
 export function kittyColors(configHome: string): Colors {
   const colors = new Map<string, string>()
-
-  const slot: Record<string, string> = {
-    background: '11',
-    foreground: '10',
-    cursor: '12',
-    selection_background: '17',
-  }
 
   const apply = (file: string, depth: number) => {
     for (const line of read(file).split('\n')) {
@@ -338,7 +338,7 @@ export function kittyColors(configHome: string): Colors {
       }
 
       const color = hex(match[2])
-      const code = slot[match[1]] ?? (/^color(\d+)$/.exec(match[1]) ? `4;${match[1].slice(5)}` : undefined)
+      const code = KITTY_SLOTS.get(match[1]) ?? (/^color(\d+)$/.exec(match[1]) ? `4;${match[1].slice(5)}` : undefined)
 
       if (code && color) {
         colors.set(code, color)
@@ -364,9 +364,7 @@ export function kittyTheme(configHome: string, palette: string): Colors | undefi
     const match = /^\s*(\S+)\s+(#[0-9a-fA-F]{6})\s*$/.exec(line)
 
     const code = match?.[1]
-      ? (({ background: '11', foreground: '10', cursor: '12', selection_background: '17' } as Record<string, string>)[
-          match[1]
-        ] ?? (/^color(\d+)$/.exec(match[1]) ? `4;${match[1].slice(5)}` : undefined))
+      ? (KITTY_SLOTS.get(match[1]) ?? (/^color(\d+)$/.exec(match[1]) ? `4;${match[1].slice(5)}` : undefined))
       : undefined
 
     if (code && match?.[2]) {
@@ -511,13 +509,13 @@ export function itermProfiles(home: string): Map<string, ItermProfile> {
     list = []
   }
 
-  const keys: Record<string, string> = {
+  const keys = {
     'Background Color': '11',
     'Foreground Color': '10',
     'Cursor Color': '12',
     'Selection Color': '17',
     ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => [`Ansi ${i} Color`, `4;${i}`])),
-  }
+  } satisfies Record<string, string>
 
   for (const profile of list) {
     const colors = new Map<string, string>()
@@ -552,9 +550,14 @@ export function itermProfiles(home: string): Map<string, ItermProfile> {
   return profiles
 }
 
+interface WtFragment {
+  profiles?: Record<string, string>[]
+  schemes?: Record<string, string>[]
+}
+
 export function wtColors(wtHome: string, profile: string): Colors {
   const file = join(wtHome, 'Microsoft', 'Windows Terminal', 'Fragments', 'ttheme', 'ttheme.json')
-  let fragment: { profiles?: Record<string, string>[]; schemes?: Record<string, string>[] } = {}
+  let fragment: WtFragment = {}
 
   try {
     fragment = JSON.parse(read(file) || '{}')

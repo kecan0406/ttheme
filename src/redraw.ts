@@ -119,7 +119,7 @@ export async function redrawColoring(
   return { key: picture.key, changed: true }
 }
 
-export function prepareColoring(home: string, name: string, key?: string): { key: string; coloring: Coloring } {
+export function prepareColoring(home: string, name: string, key?: string) {
   const rack = readStore(backgroundsDir(home)).palettes[name]
   const picture = rack?.pictures.find((held) => held.key === (key ?? rack.active))
 

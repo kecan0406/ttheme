@@ -14,7 +14,6 @@ import {
   ROLE_HUES,
   ROLES,
   roleOf,
-  type Violation,
 } from './contrast.ts'
 
 export interface Move {
@@ -125,7 +124,7 @@ function darken(hex: Hex, max: number): Hex {
 }
 
 function place(ansi: Hex[], role: number, exempt: Set<number>): [number, number] | undefined {
-  const band = ROLE_HUES[role] as { center: number; width: number }
+  const band = ROLE_HUES.get(role) as { center: number; width: number }
   const [n, b] = [oklch(ansi[role] as Hex), oklch(ansi[role + 8] as Hex)]
 
   const span = (slot: number, now: number) =>
@@ -198,7 +197,7 @@ class Fixer<T extends Fixable> {
     const own = new Set(this.theme.signatureSlots)
 
     for (const { slot, hue } of offRole(this.theme)) {
-      const band = ROLE_HUES[roleOf(slot)] as { center: number; width: number }
+      const band = ROLE_HUES.get(roleOf(slot)) as { center: number; width: number }
       this.rehue(slot, 'ansi-role', band.center + toward(band.center, hue) * (band.width - MARGIN))
     }
 
@@ -260,7 +259,7 @@ class Fixer<T extends Fixable> {
   }
 }
 
-export function fixRoles<T extends Fixable>(theme: T): { theme: T; moves: Move[] } {
+export function fixRoles<T extends Fixable>(theme: T) {
   const fixer = new Fixer(theme)
 
   for (let pass = 0; pass < PASSES; pass++) {
@@ -272,7 +271,7 @@ export function fixRoles<T extends Fixable>(theme: T): { theme: T; moves: Move[]
   return { theme: fixer.theme, moves: fixer.net() }
 }
 
-export function fixGate<T extends Fixable>(theme: T): { theme: T; moves: Move[]; left: Violation[] } {
+export function fixGate<T extends Fixable>(theme: T) {
   const fixer = new Fixer(theme)
 
   for (let pass = 0; pass < PASSES; pass++) {

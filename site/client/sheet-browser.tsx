@@ -14,7 +14,10 @@ interface OpenTab {
   index: number
 }
 
-const STEPS: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 }
+const STEPS = new Map([
+  ['ArrowRight', 1],
+  ['ArrowLeft', -1],
+])
 
 function owned(target: EventTarget | null): boolean {
   return (
@@ -55,7 +58,7 @@ class SheetBrowser extends HTMLElement {
   }
 
   #arrows = (event: KeyboardEvent) => {
-    const delta = STEPS[event.key]
+    const delta = STEPS.get(event.key)
 
     if (!delta || !bare(event) || event.shiftKey || event.repeat || owned(event.target)) return
     event.preventDefault()

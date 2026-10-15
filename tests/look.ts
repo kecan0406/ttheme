@@ -20,13 +20,13 @@ interface Shown {
   ansi: string[]
 }
 
-const BLOCKS: Record<string, [number, number, number, number]> = {
-  '▀': [0, 0, 1, 0.5],
-  '▄': [0, 0.5, 1, 0.5],
-  '█': [0, 0, 1, 1],
-  '▌': [0, 0, 0.5, 1],
-  '▐': [0.5, 0, 0.5, 1],
-}
+const BLOCKS = new Map<string, [number, number, number, number]>([
+  ['▀', [0, 0, 1, 0.5]],
+  ['▄', [0, 0.5, 1, 0.5]],
+  ['█', [0, 0, 1, 1]],
+  ['▌', [0, 0, 0.5, 1]],
+  ['▐', [0.5, 0, 0.5, 1]],
+])
 
 const CUBE = [0, 95, 135, 175, 215, 255]
 
@@ -244,7 +244,7 @@ if (emit.has('png')) {
         svg.push(`<rect x="${px}" y="${py}" width="${w}" height="${ch}" fill="${c.bg}"/>`)
       }
 
-      const block = BLOCKS[c.char]
+      const block = BLOCKS.get(c.char)
 
       if (block) {
         const [bx, by, bw, bh] = block

@@ -85,7 +85,7 @@ function makeFixture(): InitPaths {
   const base = mkdtempSync(join(tmpdir(), 'ttheme-init-'))
   const root = join(base, 'repo')
 
-  const files: Record<string, string> = {
+  const files = {
     'bin/ttheme.js': 'cli',
     'bin/ttheme.js.map': 'map',
     'bin/package.json': '{"type":"module"}',
@@ -101,7 +101,7 @@ function makeFixture(): InitPaths {
     'dist/alacritty/themes/neutral.toml': 'neutral alacritty',
     'dist/alacritty/themes/miku.toml': 'miku alacritty',
     'dist/manifest.json': JSON.stringify(manifestFixture()),
-  }
+  } satisfies Record<string, string>
 
   for (const [path, content] of Object.entries(files)) {
     mkdirSync(join(root, path, '..'), { recursive: true })

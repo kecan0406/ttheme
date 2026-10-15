@@ -189,7 +189,7 @@ class FacetGround extends HTMLElement {
     return true
   }
 
-  #view(): { scale: number; left: number; width: number } {
+  #view() {
     const canvas = this.#canvas as HTMLCanvasElement
     const scale = canvas.height / SPAN
     const width = canvas.width / scale

@@ -14,7 +14,7 @@ const NAME = 'kec@dust/rei'
 const SIGNATURE = ['background', 'foreground', 'cursor']
 const colors = grow(SEEDS)
 
-function home(): { home: string; image: string } {
+function home() {
   const at = mkdtempSync(join(tmpdir(), 'ttheme-backdrop-'))
   const dir = backgroundsDir(at)
   mkdirSync(dir, { recursive: true })

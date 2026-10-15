@@ -53,7 +53,7 @@ export function plan(
   }
 }
 
-export function renameProblems(renames: Renames, slugs: ReadonlySet<string>): { errors: string[]; warnings: string[] } {
+export function renameProblems(renames: Renames, slugs: ReadonlySet<string>) {
   const errors: string[] = []
   const warnings: string[] = []
 

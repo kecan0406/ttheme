@@ -19,11 +19,11 @@ const PANES: Pane[] = [
   { id: 'monitor', scenes: ['Top'], name: 'htop', tail: false },
 ]
 
-const PICKS: Record<string, number[]> = {
-  Shell: [0, 1, 2, 3, 4, 6, 7, 9, 10, 12, 14],
-  Diff: [0, 1, 3, 4, 6, 7, 8, 9, 10, 15],
-  Logs: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-}
+const PICKS = new Map([
+  ['Shell', [0, 1, 2, 3, 4, 6, 7, 9, 10, 12, 14]],
+  ['Diff', [0, 1, 3, 4, 6, 7, 8, 9, 10, 15]],
+  ['Logs', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]],
+])
 
 const SWATCHES = (from: number) => Array.from({ length: 8 }, (_, i) => `«K${from + i}»   «»`).join(' ')
 
@@ -291,7 +291,7 @@ function sceneLines(name: string, picked: boolean, width: number): string[] {
   }
 
   const lines = SCENES.find((s) => s.name === name)?.lines ?? []
-  const pick = picked ? PICKS[name] : undefined
+  const pick = picked ? PICKS.get(name) : undefined
   const chosen = pick ? pick.map((i) => lines[i] ?? '') : lines
 
   return name === 'Shell' ? [...chosen.slice(0, -1), ...COLORTEST, ...chosen.slice(-1)] : chosen
@@ -521,19 +521,19 @@ export function slotsAt(layout: Layout, spot: Spot): Slots | undefined {
   return run ? slotsOfRole(run.role) : undefined
 }
 
-const JOINTS: Record<string, string> = {
-  lr: '─',
-  du: '│',
-  dr: '╭',
-  dl: '╮',
-  ru: '╰',
-  lu: '╯',
-  dlr: '┬',
-  lru: '┴',
-  dru: '├',
-  dlu: '┤',
-  dlru: '┼',
-}
+const JOINTS = new Map([
+  ['lr', '─'],
+  ['du', '│'],
+  ['dr', '╭'],
+  ['dl', '╮'],
+  ['ru', '╰'],
+  ['lu', '╯'],
+  ['dlr', '┬'],
+  ['lru', '┴'],
+  ['dru', '├'],
+  ['dlu', '┤'],
+  ['dlru', '┼'],
+])
 
 export function joints(rules: readonly Rule[]): Map<number, Map<number, string>> {
   const ways = new Map<number, Map<number, Set<string>>>()
@@ -561,7 +561,8 @@ export function joints(rules: readonly Rule[]): Map<number, Map<number, string>>
     }
   }
 
-  const glyph = (cell: Set<string>) => JOINTS[[...cell].sort().join('')] ?? (cell.has('l') || cell.has('r') ? '─' : '│')
+  const glyph = (cell: Set<string>) =>
+    JOINTS.get([...cell].sort().join('')) ?? (cell.has('l') || cell.has('r') ? '─' : '│')
 
   return new Map(
     ways.entries().map(([row, line]) => [row, new Map(line.entries().map(([col, cell]) => [col, glyph(cell)]))]),

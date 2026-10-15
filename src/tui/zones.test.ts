@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { clip, fit } from '../ansi.ts'
 import { cover, lift, marking, zone, zoneAt } from './zones.ts'
 
-function spans(line: () => string): { text: string; spans: string[] } {
+function spans(line: () => string) {
   const { drawn, targets } = marking(line)
   const { text, zones } = lift(drawn, 3, targets)
 

@@ -18,7 +18,9 @@ type ToneSlot = (typeof TONE_SLOTS)[number]
 
 type Override = Partial<Record<ToneSlot, string>>
 
-type Tone = Record<string, Override>
+interface Tone {
+  [palette: string]: Override
+}
 
 const VERSION = 1
 

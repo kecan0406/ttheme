@@ -85,7 +85,7 @@ test('a PNG is read the way its eXIf orientation shows it, as the JPEG decoder t
 
   const plain = new Uint8Array(PNG.sync.write(png))
 
-  const shown: Record<number, [number, number, number[]]> = {
+  const shown = {
     1: [3, 2, [0, 1, 2, 3, 4, 5]],
     2: [3, 2, [2, 1, 0, 5, 4, 3]],
     3: [3, 2, [5, 4, 3, 2, 1, 0]],
@@ -94,7 +94,7 @@ test('a PNG is read the way its eXIf orientation shows it, as the JPEG decoder t
     6: [2, 3, [3, 0, 4, 1, 5, 2]],
     7: [2, 3, [5, 2, 4, 1, 3, 0]],
     8: [2, 3, [2, 5, 1, 4, 0, 3]],
-  }
+  } satisfies Record<number, [number, number, number[]]>
 
   for (const [turn, [width, height, order]] of Object.entries(shown)) {
     const exif = Buffer.from([

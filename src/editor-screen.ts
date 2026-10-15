@@ -37,7 +37,7 @@ import {
   SLOT_NAMES,
   slotLabel,
 } from './palette-editor.ts'
-import type { Art, PickerLayer } from './picker-art.ts'
+import type { Drawn, PickerLayer } from './picker-art.ts'
 import { SCENES, sceneAt, sceneParts } from './scenes.ts'
 import type { Colors } from './seeds.ts'
 import { grow, SEED_FIELDS, type Seeds } from './seeds.ts'
@@ -306,12 +306,12 @@ function hueLines(p: Paint, shown: Hex[]): string[] {
     let best = -1
     let gap = 999
 
-    for (const [role, hue] of Object.entries(ROLE_HUES)) {
+    for (const [role, hue] of ROLE_HUES) {
       const d = hueGap(angle, hue.center)
 
       if (d <= hue.width && d < gap) {
         gap = d
-        best = Number(role)
+        best = role
       }
     }
 
@@ -321,7 +321,7 @@ function hueLines(p: Paint, shown: Hex[]): string[] {
   const dots = (offset: number, glyph: string) => {
     const cells = Array.from({ length: 40 }, () => ' ')
 
-    for (const role of Object.keys(ROLE_HUES).map(Number)) {
+    for (const role of ROLE_HUES.keys()) {
       const hex = c.ansi[role + offset] as Hex
       const at = Math.min(39, Math.round(oklch(hex).h / 9))
       cells[at] = p.color ? `${p.fg(hex)}${glyph}${FG_RESET}` : glyph
@@ -351,7 +351,7 @@ function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
           `${name(normal)} ${hue(normal)}° → bright ${hue(normal + 8)}° · ${gap.toFixed(0)}° apart · ≤ 25°`,
       ),
     ...offRole(theme).map(({ slot, over }) => {
-      const band = ROLE_HUES[roleOf(slot)] as { name: string; center: number; width: number }
+      const band = ROLE_HUES.get(roleOf(slot)) as { name: string; center: number; width: number }
 
       return `${name(slot)} ${hue(slot)}° · ${over.toFixed(0)}° outside ${band.name} ${band.center}±${band.width}°`
     }),
@@ -697,13 +697,7 @@ export function renderEditor(e: PaletteEditor, cols: number, rows: number, color
   return drawEditor(e, cols, rows, color, look).lines
 }
 
-export function drawEditor(
-  e: PaletteEditor,
-  cols: number,
-  rows: number,
-  color: boolean,
-  look: Look = {},
-): { lines: string[]; art: Art | undefined } {
+export function drawEditor(e: PaletteEditor, cols: number, rows: number, color: boolean, look: Look = {}): Drawn {
   const drawn = drawFrame(e, cols, rows, color, look)
 
   if (!e.quitting || cols < MIN_COLS || rows < MIN_ROWS) {
@@ -723,13 +717,7 @@ export function drawEditor(
   return { ...drawn, lines }
 }
 
-function drawFrame(
-  e: PaletteEditor,
-  cols: number,
-  rows: number,
-  color: boolean,
-  look: Look,
-): { lines: string[]; art: Art | undefined } {
+function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean, look: Look): Drawn {
   const p = painter(color)
 
   if (cols < MIN_COLS || rows < MIN_ROWS) {

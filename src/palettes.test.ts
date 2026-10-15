@@ -609,31 +609,30 @@ test('forget removes only the named palettes', () => {
   assert.ok(!existsSync(join(home, 'ghostty', 'themes', 'ttheme-geto')))
 })
 
-function defaultsAt(initial: string | undefined): { host: Host; writes: string[] } {
+function defaultsAt(initial: string | undefined) {
   let value = initial
   const writes: string[] = []
 
-  return {
-    host: {
-      platform: 'darwin',
-      env: {},
-      run: (command, args) => {
-        if (command === 'defaults' && args[0] === 'read') {
-          return value
-        }
+  const host: Host = {
+    platform: 'darwin',
+    env: {},
+    run: (command, args) => {
+      if (command === 'defaults' && args[0] === 'read') {
+        return value
+      }
 
-        if (command === 'defaults' && args[0] === 'write') {
-          value = args[4]
-          writes.push(args[4] ?? '')
+      if (command === 'defaults' && args[0] === 'write') {
+        value = args[4]
+        writes.push(args[4] ?? '')
 
-          return ''
-        }
+        return ''
+      }
 
-        return undefined
-      },
+      return undefined
     },
-    writes,
   }
+
+  return { host, writes }
 }
 
 test('iTerm2 takes ttheme · default as its default profile, keeps it while off and gives the one it replaced back once nothing is installed', () => {

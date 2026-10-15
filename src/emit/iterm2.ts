@@ -23,7 +23,7 @@ function color(hex: Hex): ItermColor {
   }
 }
 
-function itermColors(theme: Theme): Record<string, ItermColor> {
+function itermColors(theme: Theme) {
   return {
     ...Object.fromEntries(theme.ansi.map((c, i) => [`Ansi ${i} Color`, color(c)])),
     'Background Color': color(theme.background),

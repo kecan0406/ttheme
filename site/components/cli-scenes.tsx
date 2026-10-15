@@ -58,15 +58,15 @@ function Part({ text, role }: { text: string; role: string }) {
     )
   }
 
-  const named: Record<string, string> = {
-    d: 'text-(--fg)/60',
-    b: 'font-bold',
-    s: 'bg-(--se)',
-    c: 'bg-(--cu) text-(--bg)',
-  }
+  const named = new Map([
+    ['d', 'text-(--fg)/60'],
+    ['b', 'font-bold'],
+    ['s', 'bg-(--se)'],
+    ['c', 'bg-(--cu) text-(--bg)'],
+  ])
 
   return (
-    <span class={named[role]} safe>
+    <span class={named.get(role)} safe>
       {text}
     </span>
   )

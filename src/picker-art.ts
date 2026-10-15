@@ -49,6 +49,11 @@ export interface Box {
   rows: number
 }
 
+export interface Drawn {
+  lines: string[]
+  art: Art | undefined
+}
+
 export interface Art {
   panel: Box
   ground: Hex
@@ -278,7 +283,7 @@ function panelMasks(art: Art, cell: Cell, width: number, height: number): PanelM
   return masks
 }
 
-function surfaceOf(art: Pick<Art, 'ground' | 'ink'>): { dark: boolean; surface: Hex } {
+function surfaceOf(art: Pick<Art, 'ground' | 'ink'>) {
   const dark = luminance(art.ground) < 0.18
 
   return { dark, surface: mix(art.ground, art.ink, dark ? 0.07 : 0.04) }
@@ -342,7 +347,7 @@ function planePixels(box: Box, h: number, cell: Cell): Rgba {
   return image
 }
 
-function pill(cell: Cell, cols: number): { top: number; height: number; width: number } {
+function pill(cell: Cell, cols: number) {
   const height = Math.max(4, Math.round(cell.h * 0.42))
 
   return { top: Math.round((cell.h - height) / 2), height, width: cols * cell.w }

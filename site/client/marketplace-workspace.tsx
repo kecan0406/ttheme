@@ -8,7 +8,10 @@ import { nameAt, neighbors, type WorkspaceData } from '@/lib/workspace'
 import { announce, fill, readJson, tally } from './dom'
 import { bare, composing, letter, typing } from './keys'
 
-const STEPS: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 }
+const STEPS = new Map([
+  ['ArrowRight', 1],
+  ['ArrowLeft', -1],
+])
 
 const GAP = 6
 
@@ -71,7 +74,7 @@ class MarketplaceWorkspace extends HTMLElement {
       return
     }
 
-    const delta = STEPS[event.key]
+    const delta = STEPS.get(event.key)
 
     if (!delta || !bare(event) || event.shiftKey || event.repeat || owned(event.target)) return
     event.preventDefault()

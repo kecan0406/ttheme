@@ -75,7 +75,7 @@ const PAGE_KINDS: [RegExp, ProfileKind][] = [
 
 const FOLLOWS: ProfileKind[] = ['x', 'pixiv', 'bsky']
 
-const CANONICAL: Record<string, string> = { 'shima.donmai.us': 'danbooru.donmai.us' }
+const CANONICAL = new Map([['shima.donmai.us', 'danbooru.donmai.us']])
 
 const SAFE_URL = /^https?:\/\/[^\s\p{Cc}]+$/u
 
@@ -130,7 +130,7 @@ export function pageLabel(url: string): string {
 export function publicUrl(url: string): string {
   try {
     const at = new URL(url)
-    const host = CANONICAL[at.hostname]
+    const host = CANONICAL.get(at.hostname)
 
     if (host) {
       at.hostname = host

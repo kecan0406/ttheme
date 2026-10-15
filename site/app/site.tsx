@@ -36,7 +36,7 @@ const SITE_CARD: Card = { kind: 'site', theme: fallback, palettes: facts.palette
 
 const CARD = { image: '/card.png', imageAlt: cardAlt(SITE_CARD) }
 
-function cardOf(theme: Theme): { image: string; imageAlt: string } {
+function cardOf(theme: Theme) {
   return { image: `${palettePath(theme)}/card.png`, imageAlt: cardAlt({ kind: 'palette', theme }) }
 }
 

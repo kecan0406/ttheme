@@ -238,14 +238,14 @@ export function stepRow(at: number, delta: number, count: number, rule: (i: numb
 }
 
 export function pageStep(name: string | undefined, size: number): number | undefined {
-  const steps: Record<string, number> = {
-    home: Number.NEGATIVE_INFINITY,
-    end: Number.POSITIVE_INFINITY,
-    pgup: -size,
-    pgdn: size,
-  }
+  const steps = new Map([
+    ['home', Number.NEGATIVE_INFINITY],
+    ['end', Number.POSITIVE_INFINITY],
+    ['pgup', -size],
+    ['pgdn', size],
+  ])
 
-  return name === undefined ? undefined : steps[name]
+  return name === undefined ? undefined : steps.get(name)
 }
 
 function ruled<X extends Extra>(rows: Row<X>[]): Row<X>[] {
@@ -707,7 +707,7 @@ export class PaletteList<X extends Extra = Extra> {
     return this.rows.slice(scrolling).flatMap((row, i) => this.renderRow(row, scrolling + i))
   }
 
-  window(): { lines: string[]; above: number; below: number } {
+  window() {
     const scrolling = this.rows.length - this.fixed
     const blocks = this.rows.slice(0, scrolling).map((row, i) => this.renderRow(row, i))
     const height = (i: number) => blocks[i]?.length ?? 0

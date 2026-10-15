@@ -45,39 +45,53 @@ export const CELL_QUERY = '\x1b]1337;ReportCellSize\x07\x1b[16t\x1b[14t\x1b[18t'
 export const PIXEL_QUERY = '\x1b[?1016$p\x1b[16t'
 export const KEYBOARD_QUERY = '\x1b[?u'
 
-const CSI_KEYS: Record<string, string> = {
-  A: 'up',
-  B: 'down',
-  C: 'right',
-  D: 'left',
-  H: 'home',
-  F: 'end',
-  '1~': 'home',
-  '7~': 'home',
-  '3~': 'delete',
-  '4~': 'end',
-  '8~': 'end',
-  '5~': 'pgup',
-  '6~': 'pgdn',
-  I: 'focus-in',
-  O: 'focus-out',
-  Z: 'shift-tab',
-  '1;2C': 'shift-right',
-  '1;2D': 'shift-left',
-}
+const CSI_KEYS = new Map([
+  ['A', 'up'],
+  ['B', 'down'],
+  ['C', 'right'],
+  ['D', 'left'],
+  ['H', 'home'],
+  ['F', 'end'],
+  ['1~', 'home'],
+  ['7~', 'home'],
+  ['3~', 'delete'],
+  ['4~', 'end'],
+  ['8~', 'end'],
+  ['5~', 'pgup'],
+  ['6~', 'pgdn'],
+  ['I', 'focus-in'],
+  ['O', 'focus-out'],
+  ['Z', 'shift-tab'],
+  ['1;2C', 'shift-right'],
+  ['1;2D', 'shift-left'],
+])
 
-const NAMED: Record<string, string> = {
-  '\r': 'enter',
-  '\n': 'enter',
-  '\t': 'tab',
-  '\b': 'backspace',
-  '\x7f': 'backspace',
-  '\x1b': 'esc',
-  '\x00': 'ctrl-space',
-}
+const NAMED = new Map([
+  ['\r', 'enter'],
+  ['\n', 'enter'],
+  ['\t', 'tab'],
+  ['\b', 'backspace'],
+  ['\x7f', 'backspace'],
+  ['\x1b', 'esc'],
+  ['\x00', 'ctrl-space'],
+])
 
-const CODED: Record<number, string> = { 27: 'esc', 13: 'enter', 9: 'tab', 127: 'backspace', 32: 'space' }
-const CTRL_ALIASES: Record<string, string> = { '[': 'esc', h: 'backspace', i: 'tab', j: 'enter', m: 'enter' }
+const CODED = new Map([
+  [27, 'esc'],
+  [13, 'enter'],
+  [9, 'tab'],
+  [127, 'backspace'],
+  [32, 'space'],
+])
+
+const CTRL_ALIASES = new Map([
+  ['[', 'esc'],
+  ['h', 'backspace'],
+  ['i', 'tab'],
+  ['j', 'enter'],
+  ['m', 'enter'],
+])
+
 const NOT_TEXT = 8 | 16 | 32
 
 const LOCKS = 64 | 128
@@ -113,10 +127,12 @@ const COLOR = /^(1[0-2]|17|4;\d{1,3});(rgba?:[0-9a-fA-F/]+)$/
 const PASTE_START = '\x1b[200~'
 const PASTE_END = '\x1b[201~'
 
-type Step = { events: Inbound[]; end: number } | undefined
+type Parsed = { events: Inbound[]; end: number }
+
+type Step = Parsed | undefined
 
 function keyOf(ch: string): string | undefined {
-  const named = NAMED[ch]
+  const named = NAMED.get(ch)
 
   if (named) {
     return named
@@ -135,7 +151,7 @@ function key(name: string): Inbound {
   return { kind: 'key', key: name }
 }
 
-function lone(at: number): { events: Inbound[]; end: number } {
+function lone(at: number): Parsed {
   return { events: [key('esc')], end: at + 1 }
 }
 
@@ -168,7 +184,7 @@ function string(input: string, at: number, final: boolean, bell: boolean): Step 
   return { events: [], end: end + (input[end] === '\x07' ? 1 : 2) }
 }
 
-function metadata(text: string): Record<string, string> {
+function metadata(text: string) {
   const out: Record<string, string> = {}
 
   for (const pair of text.split(':')) {
@@ -287,14 +303,14 @@ function coded(params: string): Inbound[] {
   const alt = (bits & 2) !== 0
   const ctrl = (bits & 4) !== 0
   const chord = ctrl || alt
-  const named = CODED[code]
+  const named = CODED.get(code)
   const label = named ?? glyph(code, shifted, base, shift, chord)
 
   if (label === undefined) {
     return []
   }
 
-  const alias = ctrl && !alt && !shift ? CTRL_ALIASES[label] : undefined
+  const alias = ctrl && !alt && !shift ? CTRL_ALIASES.get(label) : undefined
 
   if (alias !== undefined) {
     return [key(alias)]
@@ -325,7 +341,7 @@ function unlocked(params: string, final: string): string {
 }
 
 function keyed(params: string, final: string): Inbound[] {
-  const name = CSI_KEYS[`${unlocked(params, final)}${final}`]
+  const name = CSI_KEYS.get(`${unlocked(params, final)}${final}`)
 
   return name ? [key(name)] : []
 }
@@ -468,7 +484,7 @@ function ss3(input: string, at: number, final: boolean): Step {
     return lone(at)
   }
 
-  const name = CSI_KEYS[last]
+  const name = CSI_KEYS.get(last)
 
   return { events: name ? [key(name)] : [], end: at + 3 }
 }
@@ -507,7 +523,7 @@ function sequence(input: string, at: number, final: boolean, cell: Cell | undefi
   return alted(input, at)
 }
 
-export function decode(input: string, final = false, cell?: Cell): { events: Inbound[]; rest: string } {
+export function decode(input: string, final = false, cell?: Cell) {
   const events: Inbound[] = []
   let at = 0
 
@@ -551,7 +567,7 @@ function opening(bytes: Buffer, from: number): number {
   return bytes.length
 }
 
-function legacy(bytes: Buffer): { bytes: Buffer; carry: Buffer | undefined } {
+function legacy(bytes: Buffer) {
   const parts: Buffer[] = []
   let from = 0
   let at = bytes.indexOf(LEGACY)
@@ -660,7 +676,7 @@ export class Keys {
 
   feed(chunk: Buffer | string): void {
     clearTimeout(this.timer)
-    const text = typeof chunk === 'string' ? chunk : this.bytes(chunk)
+    const text = Buffer.isBuffer(chunk) ? this.bytes(chunk) : chunk
 
     if (!this.held && !text.includes('\x1b') && this.burst(text)) {
       this.settle()

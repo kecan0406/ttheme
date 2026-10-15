@@ -45,7 +45,7 @@ type Optional = Exclude<keyof Installed, 'terminals' | 'palettes'>
 
 const text = (value: unknown) => (typeof value === 'string' && value !== '' ? value : undefined)
 
-const OPTIONAL: { [K in Optional]-?: (value: unknown) => Installed[K] } = {
+const OPTIONAL = {
   author: text,
   startup: text,
   off: (value) => (value ? true : undefined),
@@ -61,7 +61,7 @@ const OPTIONAL: { [K in Optional]-?: (value: unknown) => Installed[K] } = {
           Object.entries(value).filter((pair): pair is [string, boolean] => typeof pair[1] === 'boolean'),
         )
       : undefined,
-}
+} satisfies { [K in Optional]-?: (value: unknown) => Installed[K] }
 
 export function readInstalled(configHome: string): Installed {
   const path = installedPath(configHome)
@@ -219,7 +219,7 @@ function writeAliases(configHome: string, entries: PaletteEntry[], home: string)
   }
 }
 
-function aliasesFor(entries: PaletteEntry[], home: string): Record<string, string[]> {
+function aliasesFor(entries: PaletteEntry[], home: string) {
   const tags = entries.flatMap((entry) => (entry.booru ? [entry.booru] : []))
   const known = paletteAliases(tags, home)
   const out: Record<string, string[]> = {}

@@ -361,7 +361,7 @@ export class Backdrop {
     return release(id)
   }
 
-  private band(from: string, y: number, height: number): { path: string; ready: boolean } {
+  private band(from: string, y: number, height: number) {
     const key = `${from}|${y}|${height}`
     const held = this.bands.get(key)
 

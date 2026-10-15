@@ -1307,7 +1307,7 @@ export class App {
         continue
       }
 
-      tab.write(KEYS[key] ?? key)
+      tab.write(KEYS.get(key) ?? key)
       await Bun.sleep(key === 'esc' ? 160 : gap)
     }
 
@@ -1413,22 +1413,22 @@ export class App {
   }
 }
 
-const KEYS: Record<string, string> = {
-  up: '\x1b[A',
-  down: '\x1b[B',
-  right: '\x1b[C',
-  left: '\x1b[D',
-  home: '\x1b[H',
-  end: '\x1b[F',
-  enter: '\r',
-  esc: '\x1b',
-  tab: '\t',
-  space: ' ',
-  bs: '\x7f',
-  'ctrl-c': '\x03',
-  'ctrl-u': '\x15',
-  'shift-tab': '\x1b[Z',
-  'shift-left': '\x1b[1;2D',
-  'shift-right': '\x1b[1;2C',
-  'alt-c': '\x1bc',
-}
+const KEYS = new Map([
+  ['up', '\x1b[A'],
+  ['down', '\x1b[B'],
+  ['right', '\x1b[C'],
+  ['left', '\x1b[D'],
+  ['home', '\x1b[H'],
+  ['end', '\x1b[F'],
+  ['enter', '\r'],
+  ['esc', '\x1b'],
+  ['tab', '\t'],
+  ['space', ' '],
+  ['bs', '\x7f'],
+  ['ctrl-c', '\x03'],
+  ['ctrl-u', '\x15'],
+  ['shift-tab', '\x1b[Z'],
+  ['shift-left', '\x1b[1;2D'],
+  ['shift-right', '\x1b[1;2C'],
+  ['alt-c', '\x1bc'],
+])

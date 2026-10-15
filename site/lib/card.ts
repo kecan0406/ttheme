@@ -124,13 +124,7 @@ function wordmark(kit: Raster, k: Tones, caption?: string): string {
   return `${mark}${text(caption, { x: MARGIN + width + 26, y: 112, size: 30, fill: k.muted, family: kit.family.ui })}`
 }
 
-function rowsOf(
-  kit: Raster,
-  content: string,
-  width: number,
-  max: number,
-  min: number,
-): { size: number; rows: string[] } {
+function rowsOf(kit: Raster, content: string, width: number, max: number, min: number) {
   const family = kit.family.display
   const whole = kit.fit(content, family, 900, width, max, -0.02)
 

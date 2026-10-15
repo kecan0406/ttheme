@@ -251,7 +251,7 @@ export const CAPABILITIES = {
 
 export type Capability = keyof typeof CAPABILITIES
 
-export function identity(term: Term, n: number, session: string): Record<string, string> {
+export function identity(term: Term, n: number, session: string) {
   switch (term) {
     case 'ghostty':
       return { GHOSTTY_RESOURCES_DIR: '/nonexistent/ghostty', TERM_PROGRAM: 'ghostty' }

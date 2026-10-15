@@ -68,7 +68,7 @@ export function grow(s: Seeds): Colors {
   ansi[15] = at(s.foreground + 0.06, s.tint / 2, s.hue)
 
   for (const role of ROLES) {
-    const hue = (ROLE_HUES[role] as { center: number }).center
+    const hue = (ROLE_HUES.get(role) as { center: number }).center
     ansi[role] = at(s.lightness, s.chroma, hue)
     ansi[role + 8] = at(s.lightness + s.brights, s.chroma, hue)
   }

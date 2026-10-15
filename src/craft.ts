@@ -31,7 +31,7 @@ import {
   withPictures,
 } from './own.ts'
 import { type Choice, type Edited, type EditorOptions, listOf } from './palette-editor.ts'
-import { commit, configHome, type Installed, readInstalled, refreshPictures, sync } from './palettes.ts'
+import { commit, configHome, readInstalled, refreshPictures, sync } from './palettes.ts'
 import { PickerLayer } from './picker-art.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
@@ -72,7 +72,7 @@ function mine(name: string, home: string): string {
   return hit ? `${hit.id}/${name}` : name
 }
 
-function install(home: string, manifest: Manifest, names: string[]): { state: Installed; fresh: string[] } {
+function install(home: string, manifest: Manifest, names: string[]) {
   const state = readInstalled(home)
   const fresh = names.filter((n) => !state.palettes.includes(n))
 

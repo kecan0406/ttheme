@@ -1,13 +1,13 @@
-const MOVES: Record<string, (index: number, count: number) => number> = {
-  ArrowRight: (index) => index + 1,
-  ArrowLeft: (index) => index - 1,
-  Home: () => 0,
-  End: (_, count) => count - 1,
-}
+const MOVES = new Map<string, (index: number, count: number) => number>([
+  ['ArrowRight', (index) => index + 1],
+  ['ArrowLeft', (index) => index - 1],
+  ['Home', () => 0],
+  ['End', (_, count) => count - 1],
+])
 
 export function tabKey(event: KeyboardEvent, select: (tab: HTMLElement) => void) {
   const tab = (event.target as Element | null)?.closest<HTMLElement>('[role="tab"]')
-  const move = MOVES[event.key]
+  const move = MOVES.get(event.key)
   const list = tab?.closest('[role="tablist"]')
 
   if (!tab || !move || !list) return

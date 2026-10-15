@@ -20,7 +20,7 @@ export function sitemapXml(paths: string[]): string {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`
 }
 
-export function siteGraph({ palettes, version }: Facts): object {
+export function siteGraph({ palettes, version }: Facts) {
   return {
     '@context': 'https://schema.org',
     '@graph': [
@@ -43,7 +43,7 @@ export function siteGraph({ palettes, version }: Facts): object {
   }
 }
 
-export function crumbs(trail: { name: string; path: string }[]): object {
+export function crumbs(trail: { name: string; path: string }[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

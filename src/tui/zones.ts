@@ -36,7 +36,7 @@ export function zone(target: unknown, text: string): string {
   return `\x1b[?${marks.push(target)}y${text}\x1b[?0y`
 }
 
-export function marking<T>(draw: () => T): { drawn: T; targets: unknown[] } {
+export function marking<T>(draw: () => T) {
   const outer = marks
   const targets: unknown[] = []
   marks = targets
@@ -200,7 +200,7 @@ export function cover(line: string, col: number, over: string): string {
   return `${head}${closing}${over}${reset}${resume}${rest}`
 }
 
-export function lifted(lines: readonly string[], targets: readonly unknown[]): { lines: string[]; zones: Zone[] } {
+export function lifted(lines: readonly string[], targets: readonly unknown[]) {
   const each = lines.map((line, row) => lift(line, row, targets))
 
   return { lines: each.map((one) => one.text), zones: each.flatMap((one) => one.zones) }
@@ -240,16 +240,16 @@ export interface KeySpot {
   key: string
 }
 
-const WORDS: Record<string, string> = {
-  space: ' ',
-  enter: 'enter',
-  esc: 'esc',
-  tab: 'tab',
-  bksp: 'backspace',
-  del: 'delete',
-  '←': 'left',
-  '→': 'right',
-}
+const WORDS = new Map([
+  ['space', ' '],
+  ['enter', 'enter'],
+  ['esc', 'esc'],
+  ['tab', 'tab'],
+  ['bksp', 'backspace'],
+  ['del', 'delete'],
+  ['←', 'left'],
+  ['→', 'right'],
+])
 
 export function hintKey(word: string): string | undefined {
   const modified = /^(ctrl|alt)\+([a-z])$/.exec(word)
@@ -258,7 +258,7 @@ export function hintKey(word: string): string | undefined {
     return `${modified[1]}-${modified[2]}`
   }
 
-  return WORDS[word] ?? ([...word].length === 1 && word !== ' ' ? word : undefined)
+  return WORDS.get(word) ?? ([...word].length === 1 && word !== ' ' ? word : undefined)
 }
 
 export function keyZone(word: string, text: string): string {

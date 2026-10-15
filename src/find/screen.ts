@@ -234,7 +234,7 @@ export function heldFit(cols: number): number {
   return Math.max(0, Math.floor((cols - 1) / HELD.pitch))
 }
 
-export function gridShape(cols: number, rows: number): { perRow: number; rowsVis: number; height: number } {
+export function gridShape(cols: number, rows: number) {
   const height = rows - GRID_TOP - 2
 
   return {
@@ -1603,7 +1603,7 @@ function tally(view: FindView): string {
   return `${view.tag}: ${each.join(' · ')}`
 }
 
-function panelKeys(view: FindView, row: Row | undefined): { keys: [string, string][]; right: [string, string] } {
+function panelKeys(view: FindView, row: Row | undefined): Foot {
   const page = view.advanced ? 'basic' : 'advanced'
 
   if (!row) {

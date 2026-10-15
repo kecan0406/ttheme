@@ -121,7 +121,7 @@ function markOf(sequence: string): string | undefined {
   return sequence.startsWith('\x1b[?') && sequence.endsWith('y') && /^\d{1,4}$/.test(digits) ? digits : undefined
 }
 
-function take(text: string, room: number): { head: string; used: number; ends: string } {
+function take(text: string, room: number) {
   let head = ''
   let used = 0
   let open = 0
