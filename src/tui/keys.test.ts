@@ -269,3 +269,7 @@ test('a keypad key the keyboard protocol reports by its own number reads as the 
 test('a CSI u report whose shifted key lies past the last code point reads as the key shifted', () => {
   assert.deepEqual(keysOf('\x1b[97:1114112;2u\x1b[97:65;2u'), ['A', 'A'])
 })
+
+test('a CSI u report naming a surrogate as its key or its shifted key never reads as half a character', () => {
+  assert.deepEqual(keysOf('\x1b[55296u\x1b[57343;2u\x1b[97:55296;2u'), ['A'])
+})

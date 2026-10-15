@@ -84,6 +84,8 @@ const LOCKS = 64 | 128
 
 const FUNCTIONAL = 57344
 
+const SURROGATES = [0xd800, 0xdfff] as const
+
 const KEYPAD_ENTER = 57414
 
 const KEYPAD_MOVES = new Map([
@@ -208,8 +210,12 @@ function pixelled(code: number, x: number, y: number, released: boolean, cell: C
   return mouse && { ...mouse, fx: across - col, fy: down - row }
 }
 
+function surrogate(code: number): boolean {
+  return code >= SURROGATES[0] && code <= SURROGATES[1]
+}
+
 function glyph(code: number, shifted: number, base: number, shift: boolean, chord: boolean): string | undefined {
-  if (code < 32 || (code >= 127 && code < 160) || code >= FUNCTIONAL) {
+  if (code < 32 || (code >= 127 && code < 160) || surrogate(code) || code >= FUNCTIONAL) {
     return undefined
   }
 
@@ -220,7 +226,7 @@ function glyph(code: number, shifted: number, base: number, shift: boolean, chor
   const plain = String.fromCodePoint(code)
 
   return shift
-    ? Number.isInteger(shifted) && shifted <= 0x10ffff
+    ? Number.isInteger(shifted) && shifted <= 0x10ffff && !surrogate(shifted)
       ? String.fromCodePoint(shifted)
       : plain.toUpperCase()
     : plain
