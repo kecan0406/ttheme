@@ -8,7 +8,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "elysia": "2.0.0-beta.26",
-    "lucide": "^1.51.0",
+    "lucide": "^1.52.0",
     "simple-icons": "^16.34.0",
     "tailwind-merge": "^3.6.0"
   },
@@ -20,7 +20,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@types/bun": "1.4.2",
     "@types/subset-font": "^2.3.0",
-    "postcss": "^8.5.28",
+    "postcss": "^8.5.29",
     "subset-font": "^2.9.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.2"
