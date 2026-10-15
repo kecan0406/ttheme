@@ -28,16 +28,18 @@ get it.
   when their config reloads, so a changed default would undo the palettes open
   tabs wear: kitty's watcher puts each window's palette back as the reload ends,
   and a Windows Terminal tab repaints itself once the reset reaches it — the
-  tab that changed the default at once, every other one at its next prompt or
-  focus.
+  tab that changed the default at once, and so does every other one idle at its
+  prompt, which the shell that ran the command signals; any other repaints at
+  its next prompt or focus.
   Terminal.app takes every OSC color but no OSC reset, so ttheme reads its
   colors when the shell starts and puts them back itself. Once init wired it, a
   tab wears an installed palette by switching to that palette's profile — its
   colors and its picture in one step — through Terminal's own scripting, about
   0.17 s for `ttheme use` and 16–33 ms a hover in preview; `ttheme off` moves a tab
   onto your own profile, which drops every color an OSC set, and a `ttheme
-  default` run in any terminal reaches a running Terminal.app at the next prompt
-  one of its tabs shows. A palette added while Terminal.app runs gets its
+  default` run in any terminal reaches a running Terminal.app at once through
+  any of its tabs idle at a prompt, else at the next prompt one of its tabs
+  shows. A palette added while Terminal.app runs gets its
   profile at Terminal.app's next start and is painted with OSC colors until
   then. Warp answers OSC
   color queries but paints one theme app-wide and never the background an OSC
@@ -83,7 +85,8 @@ get it.
   palette's picture laid on the palette's background, framed for the shape of
   your Terminal.app windows (it stretches a picture over the whole window), and
   a picture's profile is opaque even where your own is translucent. A picture
-  tuned, replaced or removed while it runs reaches every tab at its next prompt
+  tuned, replaced or removed while it runs reaches every tab idle at its prompt
+  as soon as the command that changed it ends, and any other at its next prompt
   or focus, and preview's tuning shows each step in the tab once the picture
   is laid again; find is not offered there, since its results are pictures,
   and a palette's first picture shows from Terminal.app's next start. Alacritty
@@ -117,9 +120,11 @@ A terminal that watches its files takes the change by itself (kitty, WezTerm,
 Alacritty, iTerm2, Warp); the others are told: Ghostty by a reload the shell
 layer sends to the Ghostty that owns the tab, Windows Terminal by a touch of its
 `settings.json`, Konsole over D-Bus, Terminal.app by one of its own tabs at its
-next prompt. Open tabs catch up at their next prompt —
-the shell layer re-reads `palettes.zsh` when it moves — and a tab only ever
-repaints itself, so a palette you painted by hand stays until you change it.
+next prompt. Open tabs catch up at once where they sit idle at their prompt —
+the shell that ran the command signals every other one — and otherwise at their
+next prompt, since the shell layer re-reads `palettes.zsh` when it moves; a tab
+only ever repaints itself, so a palette you painted by hand stays until you
+change it.
 
 Every terminal is held to one spec, Ghostty included. Every change runs the
 same journeys — new tabs, `use`, `default`, `off` and `on` across tabs,
@@ -214,8 +219,8 @@ palettes the process rewrites the file's first byte with itself every 0.25 s
 be reloaded, and the palette of a tab you switch to rides on it — about 0.2 s
 instead of 0.6 s, for about 8% CPU while it lasts. Nothing in the file changes.
 A tab that never took a palette follows the default, and after `ttheme off` a
-tab painted before shows your own theme again, as Ghostty's tabs turn off at
-their next focus. Warp tells a shell waiting at its prompt nothing when its tab
+tab painted before shows your own theme again, as Ghostty's tabs turn off — at
+once where they sit idle at their prompt, else at their next focus. Warp tells a shell waiting at its prompt nothing when its tab
 comes to the front, so the same process does: when the tab in front last read
 older palettes or pins than there are now, it sends that tab's shell a signal
 (SIGURG, which every program ignores unless it asks for it), and a pin set in

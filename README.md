@@ -162,8 +162,10 @@ when it fits the window, its QR code:
 - **A marketplace on GitHub** — one of your local marketplaces, or a new one,
   holding exactly the palettes you pick: a palette from elsewhere is copied in
   with `meta.from` naming where it came from, and one you unpick is deleted from
-  the folder. The first time it asks the repository's name and who can see it,
-  every time a description, then shows what it will push, commits, and creates
+  the folder — the review warns when git has no copy of it, or it changed since
+  it was last committed. The first time it asks the repository's name and
+  who can see it, every time a description, then shows what it will push and
+  asks (no by default when it deletes anything), commits, and creates
   the repository with `gh` (with the `ttheme-marketplace` topic when it is
   public) or pushes to it. Its link is the repository, which
   `ttheme marketplace add <owner>/<repo>` adds anywhere.

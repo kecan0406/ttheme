@@ -196,8 +196,9 @@ terminal init wired — and always in Ghostty and iTerm2. Default rewrites `them
 `SIGUSR2` to the Ghostty that owns the tab, rewrites iTerm2's `ttheme · default`
 profile, which iTerm2 reloads by itself, makes the palette's
 `ttheme · <palette>` profile Konsole's default, which every running Konsole
-takes over D-Bus, and Terminal.app's, which a running Terminal.app takes at the
-next prompt one of its tabs shows — so new tabs, and open tabs you have not
+takes over D-Bus, and Terminal.app's, which a running Terminal.app takes at once
+through a tab of its idle at a prompt, else at the next prompt one of its tabs
+shows — so new tabs, and open tabs you have not
 painted by hand, take the palette without a restart. Painting is per surface otherwise: a new tab
 starts from the configured theme, not from what the last tab was painted.
 
@@ -227,10 +228,12 @@ resolve to the pinned directory — and `cd`ing out restores what the tab had
 before, unless you painted it by hand in between, in which case your pick stays.
 The nearest pinned ancestor wins, so a project can pin one palette and a
 subfolder another, and where a directory has both a pin of its own and one for
-everything below, its own one wins there. Open tabs pick up a changed pins file
-at their next prompt, and in a terminal that reports focus as soon as they come
-to the front: a tab already in a directory you pin elsewhere repaints then, and
-one under a pin you drop goes back to what it had before.
+everything below, its own one wins there. Open tabs idle at their prompt pick up
+a pin or unpin made in another tab at once, and any change to the pins file —
+your own edits too — at their next prompt, and in a terminal that reports focus
+as soon as they come to the front: a tab already in a directory you pin
+elsewhere repaints then, and one under a pin you drop goes back to what it had
+before.
 
 `unpin` works from wherever you are and offers what can go:
 
@@ -416,9 +419,9 @@ repository (`alice/ttheme-pastel`, `#v1` pins a tag or branch) or a folder
 as one — and `enter` fetches it there and lands in the panel of the new
 marketplace, staged to be added, its palettes ready to pick. A source that does
 not read as one, or that cannot be fetched, says why under the field; one you
-already have is gone to instead; `esc` goes back to the list, dropping a fetch
-still running. Auto-update starts off for a repository, and its `Auto-update`
-row turns it on.
+already have is gone to instead, taking back its removal if you staged one;
+`esc` goes back to the list, dropping a fetch still running. Auto-update starts
+off for a repository, and its `Auto-update` row turns it on.
 `⌕ Search marketplace` under it opens a screen of its own, laid out like
 Browse: a heading, its own search box, `← Back` and the marketplaces on the
 left, one to a line by name (`kecan0406@bemani`), and the one under the cursor
@@ -430,7 +433,8 @@ it at once, by name, description or palette; a new marketplace shows up within
 the hour, and `+ Add marketplace` adds one by its `owner/repo` right away. Without a network the
 search shows the list it last downloaded, saying how old it is. `space` adds a
 marketplace (again to undo), and enter adds it and goes back to its card — or
-to the card of one you already have. A list that did not load shows as a row
+to the card of one you already have; either takes back a removal you staged
+for it. A list that did not load shows as a row
 that `space` or `ctrl+r` loads again, and esc clears the search, then goes back.
 `TTHEME_MARKETPLACE_LOOKUP=off` leaves loading the list to `space`.
 

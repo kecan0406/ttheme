@@ -98,7 +98,8 @@ Terminal.app reads a profile once a session, and a picture file once per name,
 but finds the file again by its identity each time a tab takes the profile. So a
 picture tuned, replaced or removed while Terminal.app runs is written into the
 file the profile already points at, under a new name, and every tab wearing
-that palette takes its profile again at its next prompt or focus; only a
+that palette takes its profile again — at once where it sits idle at its
+prompt, else at its next prompt or focus; only a
 palette's first picture, whose profile Terminal.app read without one, waits for
 its next start. Preview's image edit shows each tuning step the same way, in
 the tab you tune in, and puts the saved picture back when you leave without
