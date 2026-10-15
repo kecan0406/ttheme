@@ -208,7 +208,7 @@ __tt_reloaded() {
 
 __tt_pv_leave() {
   [[ $painted != "$orig" ]] || return 0
-  if [[ -n $orig ]]; then
+  if [[ -n $orig ]] && (( ! pvbare )); then
     __tt_apply "$orig"
   else
     __tt_osc_reset

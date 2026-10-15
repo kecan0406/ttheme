@@ -165,6 +165,10 @@ preview-esc.followed.colors	rei	=	=	=	=	=	=	=	=	=
 preview-esc.followed.picture	none	=	=	=	=	=	=	=	=	=
 preview-esc.followed.wears	rei	=	=	=	=	=	=	=	=	=
 preview-esc.followed.issue	-	=	=	=	=	=	=	=	=	=
+preview-default-same.followed.colors	rei	=	=	=	=	=	=	=	=	=
+preview-default-same.followed.picture	none	=	=	=	=	=	=	=	=	=
+preview-default-same.followed.wears	rei	=	=	=	=	=	=	=	=	=
+preview-default-same.followed.issue	-	=	=	=	=	=	=	=	=	=
 preview-tab.pick.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tab.pick.picture	kita	=	=	=	none	=	none	=	=	=
 preview-tab.pick.text	txt:c80b87bf60	=	=	=	=	=	=	=	=	=
@@ -226,6 +230,14 @@ pin-default.kept.colors	konata	=	=	=	=	=	=	=	=	=
 pin-default.kept.picture	konata	=	=	=	none	=	none	=	=	=
 pin-default.kept.wears	konata	=	=	=	=	=	=	=	=	=
 pin-default.kept.issue	-	=	=	=	=	=	=	=	=	=
+pin-preview.pinned.colors	kita	=	=	=	=	=	=	=	=	=
+pin-preview.pinned.picture	kita	=	=	=	none	=	none	=	=	=
+pin-preview.pinned.wears	kita	=	=	=	=	=	=	=	=	=
+pin-preview.pinned.issue	-	=	=	=	=	=	=	=	=	=
+pin-preview.followed.colors	rei	=	=	=	=	=	=	=	=	=
+pin-preview.followed.picture	none	=	=	=	=	=	=	=	=	=
+pin-preview.followed.wears	rei	=	=	=	=	=	=	=	=	=
+pin-preview.followed.issue	-	=	=	=	=	=	=	=	=	=
 pin-reach.pinned.colors	kita	=	=	=	=	=	=	=	=	=
 pin-reach.pinned.picture	kita	=	=	=	none	=	none	=	=	=
 pin-reach.pinned.wears	kita	=	=	=	=	=	=	=	=	=
@@ -252,6 +264,10 @@ browse.back.colors	konata	=	=	=	=	=	=	=	=	=
 browse.back.picture	konata	=	=	=	none	=	none	=	=	=
 browse.back.wears	konata	=	=	=	=	=	=	=	=	=
 browse.back.issue	-	=	=	=	=	=	=	=	=	=
+browse-follow.followed.colors	rei	=	=	=	=	=	=	=	=	=
+browse-follow.followed.picture	none	=	=	=	=	=	=	=	=	=
+browse-follow.followed.wears	rei	=	=	=	=	=	=	=	=	=
+browse-follow.followed.issue	-	=	=	=	=	=	=	=	=	=
 browse-reset.after.colors	miku	=	=	=	=	=	=	=	=	=
 browse-reset.after.picture	none	=	=	=	=	=	=	=	=	=
 browse-reset.after.wears	miku	=	=	=	=	=	=	=	=	=

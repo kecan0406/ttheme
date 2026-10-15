@@ -764,7 +764,7 @@ __tt_pin_scopes() {
 }
 
 __tt_pin_save() {
-  local name=$1 key=$2 k base spec=$3 REPLY
+  local name=$1 key=$2 k base spec=$3 REPLY bare=${4-$(( ! ${#TTHEME_PAINTED} ))}
   if [[ $key == /* ]]; then
     __tt_pin_base "$key"
     base=$REPLY
@@ -782,7 +782,7 @@ __tt_pin_save() {
   if [[ $key == /* ]]; then
     if [[ -z $TTHEME_PIN ]]; then
       TTHEME_BASE_SPEC=$3 TTHEME_BASE_BARE=""
-      [[ -z $TTHEME_PAINTED && -n $3 && $3 == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]] && TTHEME_BASE_BARE=1
+      (( bare )) && [[ -n $3 && $3 == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]] && TTHEME_BASE_BARE=1
     fi
     if __tt_dir_rule "$PWD"; then
       spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
@@ -793,7 +793,9 @@ __tt_pin_save() {
     fi
   fi
   if [[ $spec != "$TTHEME_SPEC" ]]; then
-    if [[ -n $spec ]]; then
+    if (( bare )) && [[ -z $TTHEME_PIN && -n $spec && $spec == "$3" && $spec == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]]; then
+      __tt_unwear "$spec"
+    elif [[ -n $spec ]]; then
       __tt_wear "$spec"
     else
       __tt_osc_reset

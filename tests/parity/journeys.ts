@@ -372,6 +372,21 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'preview-default-same',
+    about:
+      'a tab that never painted still follows the default after preview’s Default picks the palette it already shows, hovers or not',
+    async run(p) {
+      const a = await p.open()
+      await p.launch(a, 'ttheme')
+      await p.keys(a, 'k', 'i', 't', 'a', 'ctrl-u', 'k', 'o', 'n', 'a', 't', 'a', 'enter', 'enter')
+      await p.back(a)
+      const b = await p.open()
+      await p.type(b, 'ttheme default rei')
+      await p.focus(a)
+      await p.look('followed', { want: 'rei', unpainted: true })
+    },
+  },
+  {
     id: 'preview-tab',
     about: 'enter in preview asks where to keep the palette, and This tab keeps it for this tab',
     async run(p) {
@@ -495,6 +510,24 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'pin-preview',
+    about:
+      'a tab that never painted, pinning its directory from preview and then leaving it, follows the default again',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'mkdir -p ~/work && cd ~/work')
+      await p.launch(a, 'ttheme pin')
+      await p.keys(a, 'k', 'i', 't', 'a', 'enter', 'enter')
+      await p.back(a)
+      await p.look('pinned', { want: 'kita' })
+      await p.type(a, 'cd ~')
+      const b = await p.open()
+      await p.type(b, 'ttheme default rei')
+      await p.focus(a)
+      await p.look('followed', { want: 'rei', unpainted: true })
+    },
+  },
+  {
     id: 'pin-reach',
     about: 'a pin set or moved in another tab reaches a tab already in its directory once it comes to the front',
     async run(p) {
@@ -540,6 +573,22 @@ export const JOURNEYS: Journey[] = [
       await p.look('hover', { want: 'kita', picture: 'konata', text: true, wears: false })
       await p.quit(a)
       await p.look('back', { want: 'konata', unpainted: true })
+    },
+  },
+  {
+    id: 'browse-follow',
+    about: 'a tab that never painted still follows the default after the bare ttheme closed from its Browse tab',
+    async run(p) {
+      const a = await p.open()
+      await p.launch(a, 'ttheme', 'Browse')
+      await p.keys(a, 'k', 'i', 't', 'a', 'shift-tab')
+      await p.expect(a, 'GitHub')
+      await p.keys(a, 'm', 'i', 'k', 'u')
+      await p.quit(a)
+      const b = await p.open()
+      await p.type(b, 'ttheme default rei')
+      await p.focus(a)
+      await p.look('followed', { want: 'rei', unpainted: true })
     },
   },
   {

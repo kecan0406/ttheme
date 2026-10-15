@@ -97,7 +97,7 @@ __tt_osc_reset() {
 __tt_pv_leave() {
   [[ $TTHEME_ITERM_SWITCH == 1 && $painted != "$orig" ]] || return 0
   printf '\e[?2026h'
-  if [[ -n $orig ]]; then
+  if [[ -n $orig ]] && (( ! pvbare )); then
     __tt_apply "$orig"
   else
     __tt_osc_reset

@@ -2501,7 +2501,11 @@ __tt_preview() {
     printf '\e[?2026h'
     __tt_pv_bg_close
     if [[ -n $spec ]]; then
-      [[ $spec == "$painted" ]] && { [[ -n $TTHEME_PAINTED || $mode == pin ]] || (( picked == 1 )) } || __tt_apply "$spec"
+      if (( pvbare && picked == 1 )) && [[ $mode != pin && $spec == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]]; then
+        [[ $painted == "$spec" && $applied == "$spec" && -z $TTHEME_PAINTED ]] || __tt_osc_reset
+      else
+        [[ $spec == "$painted" ]] && { [[ -n $TTHEME_PAINTED || $mode == pin ]] || (( picked == 1 )) } || __tt_apply "$spec"
+      fi
     else
       __tt_pv_unpaint
     fi
@@ -2517,7 +2521,7 @@ __tt_preview() {
     if [[ -n $spec ]]; then
       TTHEME_SPEC=$spec
       if [[ $mode == pin ]]; then
-        __tt_pin_save "$sel" "${pkeys[picked]}" "$orig"
+        __tt_pin_save "$sel" "${pkeys[picked]}" "$orig" $pvbare
         [[ $TTHEME_SPEC == "$orig" ]] || __tt_announce
         __tt_sync
       elif (( picked == 1 )); then
