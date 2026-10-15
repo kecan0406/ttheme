@@ -270,6 +270,18 @@ pasting() {
   zpty -w -n sh $'\e'
   upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed"; return 1 }
   BUF=""
+  zpty -w -n sh $'ttheme\r'
+  upto '[[ $BUF == *$'"'"'\e[?1049h'"'"'*$'"'"'\e[?2026l'"'"'* ]]' 5 $name || { fail "$name: preview never drew"; return 1 }
+  zpty -w -n sh $'\ec'
+  upto false 0.3 $name || :
+  zpty -w -n sh $'\e[B\e[B\e[B\e[B'
+  upto false 0.3 $name || :
+  zpty -w -n sh $'\e[C'
+  upto false 0.3 $name || :
+  zpty -w -n sh $'\x03'
+  upto '[[ $BUF == *$'"'"'\e[?1049l'"'"'*"bench> "* ]]' 5 $name || { fail "$name: preview never closed on ctrl+c"; return 1 }
+  [[ ${BUF##*$'\e[?1049l'} != *$'\e[?1000h'* ]] || { fail "$name: leaving preview with Mouse changed in its settings turned mouse reporting on at the prompt"; return 1 }
+  BUF=""
   zpty -w -n sh $'cd ~/a && ttheme unpin\r'
   upto '[[ $BUF == *UNPIN* ]]' 5 $name || { fail "$name: unpin never offered its choice"; return 1 }
   [[ ${BUF##*$'\e[?2004l'} == *$'\e[?2004h'* ]] || { fail "$name: unpin's choice left bracketed paste off, so a pasted newline chose"; return 1 }

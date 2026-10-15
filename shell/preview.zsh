@@ -2517,6 +2517,7 @@ __tt_preview() {
     else
       __tt_pv_unpaint
     fi
+    (( conf )) && __tt_pv_unconf
     __tt_pv_pointer off
     printf '\e[?2004l\e[?7h'
     (( hubleft )) || printf '\e[?1049l'
@@ -2524,7 +2525,6 @@ __tt_preview() {
     [[ -n $tty ]] && stty "$tty" 2>/dev/null
     TTHEME_RAW=0
     [[ -n $tune ]] && __tt_pv_untune
-    (( conf )) && __tt_pv_unconf
     __tt_pv_bg_save
     if [[ -n $spec ]]; then
       TTHEME_SPEC=$spec
