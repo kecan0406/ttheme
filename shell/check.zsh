@@ -291,6 +291,21 @@ plain=${out//$'\e[K'/}
     done
     (( far <= 39 )) || { print -u2 "the edit panel drew to column $far past its edge at 39"; exit 1 }
   ) || exit 1
+  (
+    local -a feed=(${(s::)${:-$'k\u202ei\u2066t\u200ea\u061c\u0085\e[201~'}})
+    __tt_pv_getch() { (( ${#feed} )) || return 1; REPLY=$feed[1]; shift feed }
+    __tt_pv_rows() { : }
+    __tt_pv_first() { : }
+    __tt_pv_lw() { reply=(80) }
+    local key pasted
+    __tt_pv_paste
+    [[ $key == paste && $pasted == kita ]] || { print -u2 "a paste into preview's filter kept a bidi or C1 control: ${(q+)pasted}"; exit 1 }
+    flt=ki rtype=() rval=() cur=1 help=0 pick= te=0 tune= conf=0
+    for key in $'\u2066' $'\u202e' $'\u061c' t; do
+      __tt_pv_handle
+    done
+    [[ $flt == kit ]] || { print -u2 "a key typed into preview's filter let a bidi control in: ${(q+)flt}"; exit 1 }
+  ) || exit 1
 } || exit 1
 print -l "# image safebooru_2 2/3" "# picture safebooru_1 kagami.aaaaaaaa kagami.aaaaaaaa@fill-40.png 0.2 akoiro safebooru 1 x" \
   "# picture safebooru_2 kagami.1a2b3c4d kagami.1a2b3c4d@fill-42.png 0.2 -" "# picture safebooru_3 kagami.cccccccc kagami.cccccccc@fill-40.png 0.3 -" \

@@ -1453,9 +1453,14 @@ __tt_pv_paste() {
     [[ $REPLY == '~' && $text == *$'\e[201~' ]] && break
   done
   text=${${text%$'\e[201~'}//[$'\r\n\t']##/ }
-  pasted=${text//[[:cntrl:]]/}
+  __tt_pv_plain "$text"
+  pasted=$REPLY
   [[ -n $pasted ]] && key=paste
   return 0
+}
+
+__tt_pv_plain() {
+  REPLY=${${1//[[:cntrl:]]/}//($'\u061c'|$'\u200e'|$'\u200f'|$'\u202a'|$'\u202b'|$'\u202c'|$'\u202d'|$'\u202e'|$'\u2066'|$'\u2067'|$'\u2068'|$'\u2069')/}
 }
 
 __tt_pv_sgr() {
@@ -2390,6 +2395,8 @@ __tt_pv_handle() {
       fi
       ;;
     [[:print:]])
+      __tt_pv_plain "$key"
+      [[ -n $REPLY ]] || return 0
       __tt_pv_lw
       (( ${(m)#flt} + ${(m)#key} > reply[1] - 12 )) && return 0
       name=""
