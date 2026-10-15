@@ -481,6 +481,8 @@ export function gateRows(list: Hex[], signature: string[], waive: string[]): Gat
 
 const ALWAYS = new Set(['reset', 'reset-all', 'hex', 'paste', 'fix', 'open', 'tune', 'sig', 'follow'])
 
+const NAME_CHAR = /^[a-z0-9@/-]$/
+
 const C_MAX = (CHANNELS[1] as Channel).max
 
 function grey(hex: Hex): boolean {
@@ -721,7 +723,7 @@ export class PaletteEditor {
     this.notice = undefined
 
     if (this.overlay === 'open') {
-      this.filter += text.replace(/\s+/g, '').toLowerCase()
+      this.filter += [...text.toLowerCase()].filter((ch) => NAME_CHAR.test(ch)).join('')
       this.pick = 0
 
       return
@@ -1744,7 +1746,7 @@ export class PaletteEditor {
         this.leaveSeeds()
       }
     } else {
-      const next = edit(this.filter, lowered(key), (ch) => /^[a-z0-9@/-]$/.test(ch))
+      const next = edit(this.filter, lowered(key), (ch) => NAME_CHAR.test(ch))
 
       if (next !== undefined) {
         this.filter = next

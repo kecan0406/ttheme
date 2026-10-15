@@ -388,6 +388,24 @@ test('a spot on the sample finds its slots, and enter goes to the slot', () => {
   assert.match(e.notice ?? '', /96×28/)
 })
 
+test('a paste into the palette picker keeps only what a typed key could add, so no escape reaches the frame', () => {
+  const e = editor()
+  e.viewport(140, 40)
+  press(e, 'I', 'enter')
+  assert.equal(e.overlay, 'open')
+  e.paste('\x1b]\x07Dawn\u202e\x85')
+  assert.equal(e.filter, 'dawn')
+  assert.deepEqual(
+    e.choices().map((choice) => choice.name),
+    ['kec@dust/dawn'],
+  )
+  const frame = renderEditor(e, 140, 40, true).join('\n')
+  assert.deepEqual(
+    ['\x07', '\u202e', '\x85'].filter((ch) => frame.includes(ch)),
+    [],
+  )
+})
+
 test('a share code pasted into the editor takes its colors, and a plain paste is still a color', () => {
   const e = editor({ decode: (text) => (text === 'tt2:dawn' ? other : undefined) })
   e.paste('tt2:dawn')
