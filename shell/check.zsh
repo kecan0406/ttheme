@@ -919,6 +919,18 @@ __tt_fresh
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && -n $TTHEME_PAINTED && $resets == 1 ]] || { print -u2 "a tab painted by hand came back from a pin unpainted"; exit 1 }
   rm -rf $TTHEME_PINS_FILE $XDG_CONFIG_HOME/barepin
 ) || exit 1
+(
+  integer ons=0
+  __tt_focus_on() { (( ++ons )) }
+  __tt_typed() { TTHEME_TYPED= }
+  TTHEME_FOCUS=1 TTHEME_RECHECK=0 TTHEME_RAN=0 TTHEME_TYPED=$'\r' PENDING=0
+  __tt_line_init
+  TTHEME_TYPED= PENDING=1
+  __tt_line_init
+  PENDING=0
+  __tt_line_init
+  (( ons == 1 )) || { print -u2 "a line with keys typed ahead turned focus reporting on, whose answer can land after the line runs and be echoed: $ons"; exit 1 }
+) || exit 1
 adapter=$TTHEME_ADAPTER
 TTHEME_ITERM_SHOWN=default TTHEME_STARTUP=miku
 source $XDG_CONFIG_HOME/ttheme/adapters/iterm2.zsh

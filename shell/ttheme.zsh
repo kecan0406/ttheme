@@ -647,10 +647,13 @@ __tt_blur() {
 
 __tt_line_init() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  local ahead
   (( TTHEME_RECHECK )) && __tt_recheck
   (( TTHEME_RAN )) && __tt_mend
+  ahead=$TTHEME_TYPED
   __tt_typed
-  (( TTHEME_FOCUS )) && __tt_focus_on
+  (( TTHEME_FOCUS && ! PENDING )) && [[ -z $ahead ]] && __tt_focus_on
+  return 0
 }
 
 __tt_bind_focus() {
