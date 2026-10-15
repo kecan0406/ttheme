@@ -5,6 +5,7 @@ import { promisify } from 'node:util'
 import { TOPIC } from './sources.ts'
 
 const exec = promisify(execFile)
+const DESCRIPTION = /^description\s*=\s*(?:"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\\n]|\\.)*"|'[^'\n]*'|)[^\n]*\n?/m
 
 export interface Repo {
   owner: string
@@ -187,8 +188,8 @@ export function withDescription(text: string, description: string | undefined): 
   const { top, rest } = head(text)
   const line = description ? `description = ${JSON.stringify(description)}\n` : ''
 
-  if (/^description\s*=.*$/m.test(top)) {
-    return top.replace(/^description\s*=.*\n?/m, line) + rest
+  if (DESCRIPTION.test(top)) {
+    return top.replace(DESCRIPTION, line) + rest
   }
 
   if (!line) {
@@ -234,8 +235,10 @@ export function withoutCatalogs(text: string, names: ReadonlySet<string>): strin
       if (/^\s*\[\[\s*catalog\s*\]\]/.test(line)) {
         const end = lines.findIndex((next, j) => j > i && /^\s*\[/.test(next))
         const block = lines.slice(i + 1, end < 0 ? undefined : end).join('\n')
-        const name = /^\s*name\s*=\s*"((?:[^"\\]|\\.)*)"/m.exec(block)?.[1]
-        dropping = name !== undefined && names.has(JSON.parse(`"${name}"`) as string)
+        const name = /^\s*name\s*=\s*(?:"((?:[^"\\]|\\.)*)"|'([^'\n]*)')/m.exec(block)
+        const quoted = name?.[1]
+        const literal = quoted === undefined ? (name?.[2] ?? '') : (JSON.parse(`"${quoted}"`) as string)
+        dropping = name !== null && names.has(literal)
 
         if (dropping) {
           while (kept.length > 0 && kept.at(-1)?.trim() === '') {

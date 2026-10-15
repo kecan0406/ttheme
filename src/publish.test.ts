@@ -35,6 +35,21 @@ test('a description goes in after the name, is replaced in place, and comes out 
   assert.equal(withDescription(toml, undefined), toml)
 })
 
+test('a hand-written description over several lines is replaced whole, and a catalog named in single quotes comes out', () => {
+  const written = toml
+    .replace('name = "pastel"\n', 'name = "pastel"\ndescription = """\nSoft colors"""\n')
+    .replace('name = "K-On!"', "name = 'K-On!'")
+
+  assert.equal(readMarketplaceInfo(written, 'x').description, 'Soft colors')
+  const replaced = withDescription(written, 'Softer')
+  assert.equal(readMarketplaceInfo(replaced, 'x').description, 'Softer')
+  assert.equal(withDescription(written, undefined), toml.replace('name = "K-On!"', "name = 'K-On!'"))
+  assert.deepEqual(
+    readMarketplaceInfo(withoutCatalogs(written, new Set(['K-On!'])), 'x').catalogs.map((c) => c.name),
+    ['Vocaloid'],
+  )
+})
+
 test('catalog tables are added at the end and only the ones named come out', () => {
   const without = withoutCatalogs(toml, new Set(['K-On!']))
   const info = readMarketplaceInfo(without, 'x')
