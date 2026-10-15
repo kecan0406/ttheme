@@ -82,6 +82,15 @@ test('a DCS, APC, PM or SOS string, or an OSC with no number, is read as nothing
   assert.deepEqual(keysOf(`${split.rest}390)\x1b\\e`), ['e'])
 })
 
+test('a string that no terminator ends is typed keys, not a reply: alt and its first key, then the rest', () => {
+  assert.deepEqual(keysOf('\x1bPas\r'), ['alt-shift-p', 'a', 's', 'enter'])
+  assert.deepEqual(keysOf('\x1b]Lx\x1b[B'), ['alt-]', 'L', 'x', 'down'])
+  assert.deepEqual(
+    decode('\x1bXa\x1b[A').events.map((event) => (event.kind === 'key' ? event.key : event.kind)),
+    ['alt-shift-x', 'a', 'up'],
+  )
+})
+
 test('with no keyboard protocol, esc and a key other than a lowercase letter read as that key with alt', () => {
   assert.deepEqual(keysOf('\x1b1\x1bA\x1b/\x1b \x1b\x1b'), ['alt-1', 'alt-shift-a', 'alt-/', 'alt-space', 'esc', 'esc'])
   assert.deepEqual(keysOf('\x1b['), ['alt-['])

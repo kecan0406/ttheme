@@ -173,15 +173,18 @@ function string(input: string, at: number, final: boolean, bell: boolean): Step 
     return final ? alted(input, at) : undefined
   }
 
-  const ends = [input.indexOf('\x1b\\', at + 2), bell ? input.indexOf('\x07', at + 2) : -1].filter((end) => end !== -1)
+  const next = input.indexOf('\x1b', at + 2)
+  const rung = bell ? input.indexOf('\x07', at + 2) : -1
 
-  if (ends.length === 0) {
-    return final ? { events: [], end: input.length } : undefined
+  if (rung !== -1 && (next === -1 || rung < next)) {
+    return { events: [], end: rung + 1 }
   }
 
-  const end = Math.min(...ends)
+  if (next === -1 || next === input.length - 1) {
+    return final ? alted(input, at) : undefined
+  }
 
-  return { events: [], end: end + (input[end] === '\x07' ? 1 : 2) }
+  return input[next + 1] === '\\' ? { events: [], end: next + 2 } : alted(input, at)
 }
 
 function metadata(text: string) {
