@@ -135,6 +135,11 @@ typeset -g TTHEME_SSH_SPEC="" TTHEME_SSH_BACK="" TTHEME_SSH_BARE=""
 
 __tt_tilde() { REPLY=${1/#$HOME\//\~/} }
 
+__tt_note() {
+  (( ${+TTHEME_NOTES} )) || { print -u2 -r -- "$1"; return 0 }
+  TTHEME_NOTES+=("$1")
+}
+
 __tt_ssh_ok() {
   setopt localoptions extendedglob
   [[ $1 == ssh:[[:alnum:]._*?:-]## ]]
@@ -163,7 +168,7 @@ __tt_pins_load() {
       [[ $key == \~ ]] && key=$HOME
       TTHEME_PINS[${key/#\~\//$HOME/}]=$name
     fi
-    [[ -n ${TTHEME_PALETTE[$name]} ]] || print -u2 "ttheme: unknown palette '$name' pinned to $key"
+    [[ -n ${TTHEME_PALETTE[$name]} ]] || __tt_note "ttheme: unknown palette '$name' pinned to $key"
   done
 }
 
@@ -1667,7 +1672,11 @@ if (( ! ${+functions[TRAPURG]} )); then
   TRAPURG() {
     emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
     (( ${#zsh_eval_context} == 1 )) || return 0
+    local -a TTHEME_NOTES=()
     __tt_poked
+    (( ${#TTHEME_NOTES} )) || return 0
+    zle && zle -I
+    print -u2 -rl -- $TTHEME_NOTES
     return 0
   }
 fi
