@@ -1,17 +1,22 @@
 # Vendored anti-slop
 
 Source: [dmmulroy/anti-slop](https://github.com/dmmulroy/anti-slop) at commit
-`c44ef22ca116d0ba62a3ff663a0bd13a3f3fa40b` (2026-09-10), MIT. Copied on
-2026-10-08 from the `install-anti-slop` skill's `assets/anti-slop/`. The skill
-folder (tree `89044d21c75a367eac1ddbaf208e650b1a7d5820`, the hash
-`~/.agents/.skill-lock.json` records) is byte-identical to
-`skills/install-anti-slop` at that commit, and has not changed since
-`e6676e8d0bf17c678cb45b9dacb2bd6ca8dea53a`.
+`13909c9e07590f5a85d93c62712259fe14a883f7` (2026-10-13), MIT. Copied on
+2026-10-15 from a clone of that commit's `skills/install-anti-slop/assets/anti-slop`
+(tree `54b50f11bed7f52ca1948f8802f4df591644762f`; the skill folder is tree
+`97962dc9fad565ca7695bf57805d9d0138ce1def`).
 
-The pristine base for the next update is upstream's
-`skills/install-anti-slop/assets/anti-slop` at that commit, tree
-`a7831feb0c097943ac813ddcb1367e26eef52da5`. Every file here matches it except
-`LICENSE` and this one.
+The pristine base for the next update is that folder at that commit. Every file
+here matches it except `LICENSE` and this one.
+
+The update from `c44ef22ca116d0ba62a3ff663a0bd13a3f3fa40b` (tree
+`a7831feb0c097943ac813ddcb1367e26eef52da5`, the base of the 2026-10-08 copy, which
+matched it byte for byte) brought one upstream change, `d2a9aea`:
+`require-readable-spacing` keeps consecutive single-line bindings grouped at any
+scope, module scope included, unless a binding has its own leading comment
+(`rules/require-readable-spacing.ts`, and `createPaddingLineRule` taking
+caller-defined statement types in `vendor/eslint-stylistic/`). Nothing local
+needed merging.
 
 ## Files
 
@@ -48,15 +53,11 @@ skill installs:
 Upstream develops against `1.78.0`. JS plugins are alpha and not bound by
 semver, so move both packages together and run `mise run slop` afterwards.
 
-## Verification (2026-10-09)
+## Verification (2026-10-15)
 
-- The copy typechecks against `@oxlint/plugins` 1.87.0 with upstream's compiler
-  options. ttheme's own `noUncheckedIndexedAccess` fails
-  `shared/dictionary-types.ts:201` (`unsafeMembers[0]`). The root `tsc` covers
-  only `src/` and `tests/`, so it never sees this folder.
+- `mise run slop` over main (`93ed484`) found 6,652 problems: 6,271 of them
+  `require-readable-spacing`, where the 2026-10-08 copy found 6,605 on the same
+  tree, and the other rules' 381 unchanged. The copy still runs on
+  `@oxlint/plugins` 1.87.0.
 - The skill bundle ships no tests. Upstream keeps them beside each rule, in
-  `src/rules/*.test.ts`.
-- `mise run slop` over ttheme found 6,141 problems in 230 files. 5,793 of them
-  are `require-readable-spacing`, which `oxlint --fix` clears by adding one
-  blank line each and touching no other line; Biome changes nothing after that
-  fix, and a second run of both changes nothing.
+  `src/rules/*.test.ts`, which `d2a9aea` extended for the grouping.
