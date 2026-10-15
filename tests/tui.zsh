@@ -8,7 +8,7 @@ if ! command -v tmux > /dev/null 2>&1; then
 fi
 
 typeset -g ROOT=${${(%):-%x}:A:h:h}
-typeset -g SOCKET=ttheme-tui
+typeset -g SOCKET=ttheme-tui-$$
 typeset -g SCREENS=$ROOT/tests/screens
 typeset -g FIXTURE=$ROOT/tests/fixture.json
 typeset -g COLS=100 ROWS=24
