@@ -358,6 +358,20 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'preview-esc',
+    about: 'a tab that never painted still follows the default after preview opened in it and esc closed it',
+    async run(p) {
+      const a = await p.open()
+      await p.launch(a, 'ttheme')
+      await p.keys(a, 'k', 'i', 't', 'a')
+      await p.quit(a)
+      const b = await p.open()
+      await p.type(b, 'ttheme default rei')
+      await p.focus(a)
+      await p.look('followed', { want: 'rei', unpainted: true })
+    },
+  },
+  {
     id: 'preview-tab',
     about: 'enter in preview asks where to keep the palette, and This tab keeps it for this tab',
     async run(p) {

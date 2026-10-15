@@ -161,6 +161,10 @@ preview-hover.back.colors	konata	=	=	=	=	=	=	=	=	=
 preview-hover.back.picture	konata	=	=	=	none	=	none	=	=	=
 preview-hover.back.wears	konata	=	=	=	=	=	=	=	=	=
 preview-hover.back.issue	-	=	=	=	=	=	=	=	=	=
+preview-esc.followed.colors	rei	=	=	=	=	=	=	=	=	=
+preview-esc.followed.picture	none	=	=	=	=	=	=	=	=	=
+preview-esc.followed.wears	rei	=	=	=	=	=	=	=	=	=
+preview-esc.followed.issue	-	=	=	=	=	=	=	=	=	=
 preview-tab.pick.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tab.pick.picture	kita	=	=	=	none	=	none	=	=	=
 preview-tab.pick.text	txt:c80b87bf60	=	=	=	=	=	=	=	=	=
