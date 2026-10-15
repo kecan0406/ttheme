@@ -522,10 +522,18 @@ TTHEME_STARTUP=
     [[ $REPLY == "$want" ]] || { print -u2 "ssh to $host took the pin ${(q+)REPLY}, not $want"; exit 1 }
   done
   TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku]
-  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa'
+  __tt_apply() { export TTHEME_PAINTED=1 }
+  unset TTHEME_PAINTED
+  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa' > /dev/null
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[homura]" ]] || { print -u2 "ssh to a pinned host did not paint its palette"; exit 1 }
-  __tt_prompt
+  __tt_prompt > /dev/null
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && -z $TTHEME_SSH_SPEC ]] || { print -u2 "the prompt after ssh did not put the palette back"; exit 1 }
+  [[ -z ${TTHEME_PAINTED+x} ]] || { print -u2 "a tab that never painted came back from ssh painted, so it no longer follows the default"; exit 1 }
+  export TTHEME_PAINTED=1
+  __tt_ran 'ssh tusa' 'ssh tusa' 'ssh tusa' > /dev/null
+  __tt_prompt > /dev/null
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && -n $TTHEME_PAINTED ]] || { print -u2 "a tab painted by hand came back from ssh unpainted"; exit 1 }
+  __tt_apply() { : }
   __tt_ran 'ssh web.prod' 'ssh web.prod' 'ssh web.prod'
   TTHEME_SPEC=$TTHEME_PALETTE[rei]
   __tt_prompt
@@ -880,6 +888,30 @@ __tt_fresh
   TTHEME_ADAPTER=editor TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_PALETTES_AT=
   __tt_fresh > /dev/null
   (( paints == 0 )) || { print -u2 "an editor's built-in terminal that inherited a painted tab's palette painted it into the editor at its next ttheme command after the default moved"; exit 1 }
+) || exit 1
+(
+  integer resets=0
+  __tt_osc_reset() { (( ++resets )); unset TTHEME_PAINTED }
+  __tt_osc_apply() { export TTHEME_PAINTED=1 }
+  mkdir -p $XDG_CONFIG_HOME/barepin
+  print -r -- "$XDG_CONFIG_HOME/barepin  kaito" > $TTHEME_PINS_FILE
+  TTHEME_PINS_RAW=; __tt_pins_load
+  unset TTHEME_PAINTED
+  TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  cd $XDG_CONFIG_HOME/barepin
+  __tt_dir_sync
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[kaito]" && -n $TTHEME_PAINTED ]] || { print -u2 "a pinned directory did not paint its palette"; exit 1 }
+  cd $XDG_CONFIG_HOME
+  __tt_dir_sync
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && -z ${TTHEME_PAINTED+x} && $resets == 1 ]] ||
+    { print -u2 "a tab that never painted came back from a pin painted, so it no longer follows the default: spec=${TTHEME_SPEC%% *} resets=$resets"; exit 1 }
+  export TTHEME_PAINTED=1
+  cd $XDG_CONFIG_HOME/barepin
+  __tt_dir_sync
+  cd $XDG_CONFIG_HOME
+  __tt_dir_sync
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[miku]" && -n $TTHEME_PAINTED && $resets == 1 ]] || { print -u2 "a tab painted by hand came back from a pin unpainted"; exit 1 }
+  rm -rf $TTHEME_PINS_FILE $XDG_CONFIG_HOME/barepin
 ) || exit 1
 adapter=$TTHEME_ADAPTER
 TTHEME_ITERM_SHOWN=default TTHEME_STARTUP=miku

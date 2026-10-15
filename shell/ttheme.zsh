@@ -129,8 +129,8 @@ typeset -g TTHEME_CONFIG=${XDG_CONFIG_HOME:-$HOME/.config}/ttheme/config.zsh
 typeset -g TTHEME_PINS_FILE=${TTHEME_CONFIG:h}/pins
 typeset -g TTHEME_PINS_RAW="" TTHEME_PINS_AT=""
 typeset -gA TTHEME_PINS=()
-typeset -g TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_SPEC=""
-typeset -g TTHEME_SSH_SPEC="" TTHEME_SSH_BACK=""
+typeset -g TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_SPEC="" TTHEME_BASE_BARE=""
+typeset -g TTHEME_SSH_SPEC="" TTHEME_SSH_BACK="" TTHEME_SSH_BARE=""
 
 __tt_tilde() { REPLY=${1/#$HOME\//\~/} }
 
@@ -377,10 +377,18 @@ __tt_dir_sync() {
   if [[ -n $REPLY ]]; then
     spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
     [[ $REPLY == "$TTHEME_PIN" && $spec == "$TTHEME_PIN_SPEC" ]] && return 0
-    [[ -n $TTHEME_PIN ]] || TTHEME_BASE_SPEC=$TTHEME_SPEC
+    if [[ -z $TTHEME_PIN ]]; then
+      TTHEME_BASE_SPEC=$TTHEME_SPEC TTHEME_BASE_BARE=""
+      __tt_bare && TTHEME_BASE_BARE=1
+    fi
   else
     [[ -n $TTHEME_PIN ]] || return 0
     if [[ $TTHEME_SPEC == "$TTHEME_PIN_SPEC" ]]; then
+      if [[ -n $TTHEME_BASE_BARE ]]; then
+        TTHEME_PIN="" TTHEME_PIN_SPEC="" TTHEME_BASE_BARE=""
+        __tt_unwear "$TTHEME_BASE_SPEC"
+        return 0
+      fi
       spec=$TTHEME_BASE_SPEC
       [[ -n $spec ]] || { __tt_osc_reset; TTHEME_SPEC= }
     fi
@@ -391,9 +399,19 @@ __tt_dir_sync() {
   return 0
 }
 
+__tt_bare() { [[ -z $TTHEME_PAINTED && -n $TTHEME_SPEC && $TTHEME_SPEC == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]] }
+
+__tt_unwear() {
+  __tt_osc_reset
+  TTHEME_SPEC=$1
+  [[ $1 == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]] || ! __tt_takes_default || TTHEME_SPEC=${TTHEME_PALETTE[$TTHEME_STARTUP]}
+  __tt_sync
+  return 0
+}
+
 __tt_resume() {
   local REPLY="" name=$TTHEME_STARTUP
-  TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC=
+  TTHEME_PIN= TTHEME_PIN_SPEC= TTHEME_BASE_SPEC= TTHEME_BASE_BARE=
   __tt_pins_load
   if __tt_dir_rule "$PWD" && [[ -n ${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]} ]]; then
     name=$TTHEME_PINS[$REPLY]
@@ -587,10 +605,12 @@ __tt_ssh_rule() {
 }
 
 __tt_ssh_back() {
-  local back=$TTHEME_SSH_BACK worn=$TTHEME_SSH_SPEC
-  TTHEME_SSH_BACK="" TTHEME_SSH_SPEC=""
+  local back=$TTHEME_SSH_BACK worn=$TTHEME_SSH_SPEC bare=$TTHEME_SSH_BARE
+  TTHEME_SSH_BACK="" TTHEME_SSH_SPEC="" TTHEME_SSH_BARE=""
   [[ $TTHEME_SPEC == "$worn" && $back != "$worn" ]] || return 0
-  if [[ -n $back ]]; then
+  if [[ -n $bare ]]; then
+    __tt_unwear "$back"
+  elif [[ -n $back ]]; then
     __tt_wear "$back"
   else
     __tt_osc_reset
@@ -606,7 +626,8 @@ __tt_ran() {
   [[ -n $TTHEME_STARTUP ]] || return 0
   [[ $3 == *ssh* ]] && __tt_ssh_host "$3" && __tt_ssh_rule "$REPLY" || return 0
   name=$TTHEME_PINS[$REPLY]
-  TTHEME_SSH_BACK=$TTHEME_SPEC TTHEME_SSH_SPEC=$TTHEME_PALETTE[$name]
+  TTHEME_SSH_BACK=$TTHEME_SPEC TTHEME_SSH_SPEC=$TTHEME_PALETTE[$name] TTHEME_SSH_BARE=""
+  __tt_bare && TTHEME_SSH_BARE=1
   [[ $TTHEME_SSH_SPEC == "$TTHEME_SPEC" ]] || __tt_wear "$TTHEME_SSH_SPEC" "$name"
   return 0
 }
@@ -756,7 +777,10 @@ __tt_pin_save() {
     return 1
   fi
   if [[ $key == /* ]]; then
-    [[ -n $TTHEME_PIN ]] || TTHEME_BASE_SPEC=$3
+    if [[ -z $TTHEME_PIN ]]; then
+      TTHEME_BASE_SPEC=$3 TTHEME_BASE_BARE=""
+      [[ -z $TTHEME_PAINTED && -n $3 && $3 == "${TTHEME_PALETTE[$TTHEME_STARTUP]}" ]] && TTHEME_BASE_BARE=1
+    fi
     if __tt_dir_rule "$PWD"; then
       spec=${TTHEME_PALETTE[$TTHEME_PINS[$REPLY]]}
       TTHEME_PIN=$REPLY TTHEME_PIN_SPEC=$spec
