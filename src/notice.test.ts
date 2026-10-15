@@ -9,19 +9,23 @@ function heard(isTTY: boolean | undefined, lines: string[]): string[] {
   const tty = Object.getOwnPropertyDescriptor(process.stderr, 'isTTY')
   process.stderr.write = ((chunk: string) => {
     written.push(chunk)
+
     return true
   }) as typeof process.stderr.write
   Object.defineProperty(process.stderr, 'isTTY', { value: isTTY, configurable: true })
+
   try {
     advise(lines)
   } finally {
     process.stderr.write = write
+
     if (tty) {
       Object.defineProperty(process.stderr, 'isTTY', tty)
     } else {
       delete (process.stderr as { isTTY?: boolean }).isTTY
     }
   }
+
   return written
 }
 

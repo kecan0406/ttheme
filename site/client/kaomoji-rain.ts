@@ -11,8 +11,10 @@ class KaomojiRain extends HTMLElement {
   #key = (event: KeyboardEvent) => {
     if (typing(event.target) || !printable(event)) return
     this.#typed = (this.#typed + event.key).slice(-WORD.length)
+
     if (this.#typed !== WORD || reducedMotion()) return
     this.#typed = ''
+
     const drops = Array.from({ length: 24 }, (_, index) => {
       const drop = document.createElement('span')
       drop.className = 'absolute -top-8 animate-rain font-display text-base font-extrabold'
@@ -20,8 +22,10 @@ class KaomojiRain extends HTMLElement {
       drop.style.left = `${Math.random() * 96}%`
       drop.style.color = `var(--a${SLOTS[index % SLOTS.length]})`
       drop.style.animationDelay = `${index * 45}ms`
+
       return drop
     })
+
     this.firstElementChild?.append(...drops)
     window.setTimeout(() => {
       for (const drop of drops) drop.remove()

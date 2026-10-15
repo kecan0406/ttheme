@@ -29,6 +29,7 @@ test('paletteOsc emits the same sequences as the zsh osc adapter', () => {
 test('parseOscColors reads terminal replies with ST and BEL terminators', () => {
   const replies =
     '\x1b]11;rgb:1e1e/2222/2828\x1b\\\x1b]4;0;rgb:0000/0000/0000\x07noise\x1b]12;rgba:ffff/0000/0000/aaaa\x1b\\'
+
   const colors = parseOscColors(replies)
   assert.equal(colors.get('11'), 'rgb:1e1e/2222/2828')
   assert.equal(colors.get('4;0'), 'rgb:0000/0000/0000')
@@ -40,6 +41,7 @@ test('restoreOsc replays captured colors as set sequences', () => {
     ['11', 'rgb:1e1e/2222/2828'],
     ['4;3', 'rgb:aaaa/bbbb/cccc'],
   ])
+
   assert.equal(restoreOsc(saved), '\x1b]11;rgb:1e1e/2222/2828\x1b\\\x1b]4;3;rgb:aaaa/bbbb/cccc\x1b\\')
 })
 
@@ -48,10 +50,12 @@ test('the color query ends at a DSR, so a terminal that leaves OSC 17 unanswered
   assert.ok(query.endsWith('\x1b[5n'))
   const codes = query.split('\x1b').flatMap((part) => part.match(/^\](\d+(?:;\d+)?);\?/)?.[1] ?? [])
   assert.equal(codes.length, 20)
+
   const ghostty = codes
     .filter((code) => code !== '17')
     .map((code) => `\x1b]${code};rgb:1717/1717/1f1f\x1b\\`)
     .join('')
+
   assert.equal(answered(ghostty), false)
   assert.equal(answered(`${ghostty}\x1b[0n`), true)
   assert.equal(parseOscColors(`${ghostty}\x1b[0n`).size, 19)

@@ -32,16 +32,19 @@ const BUNDLE = 'tt3:'
 export const SHARE_URL = 'https://ttheme.vercel.app/p/'
 const SUM = 4
 const UNPACKED = 64 * 1024
+
 const PACKS: ((bytes: Buffer) => Buffer)[] = [
   (bytes) => bytes,
   (bytes) => deflateRawSync(bytes, { level: 9 }),
   (bytes) => brotliCompressSync(bytes),
 ]
+
 const UNPACKS: ((bytes: Buffer) => Buffer)[] = [
   (bytes) => bytes,
   (bytes) => inflateRawSync(bytes, { maxOutputLength: UNPACKED }),
   (bytes) => brotliDecompressSync(bytes, { maxOutputLength: UNPACKED }),
 ]
+
 const SLOTS = ['background', 'foreground', 'cursor', 'selection', ...Array.from({ length: 16 }, (_, i) => `ansi${i}`)]
 
 export interface Draft {
@@ -74,11 +77,13 @@ export function localMarketplaces(configHome: string, warn = true): LocalMarketp
     .flatMap((dir) => {
       try {
         const identity = localIdentity(dir)
+
         return [{ dir, ...identity, id: marketplaceId(identity) }]
       } catch (error) {
         if (warn) {
           process.stderr.write(`ttheme: skipping the marketplace at ${dir} — ${(error as Error).message}\n`)
         }
+
         return []
       }
     })
@@ -105,11 +110,14 @@ export function marketplaceLayout(
 ): MarketplaceFile[] {
   const shelved: { file: MarketplaceFile; name: string }[] = []
   const loose: { file: MarketplaceFile; name: string }[] = []
+
   for (const path of paths) {
     const [top, first, second, ...deeper] = path.split('/')
+
     if (top !== 'palettes' || !first || first.startsWith('.') || deeper.length > 0) {
       continue
     }
+
     if (second === undefined) {
       if (first.endsWith('.toml')) {
         loose.push({ file: { path: at(path), slug: basename(first, '.toml') }, name: first })
@@ -118,10 +126,13 @@ export function marketplaceLayout(
       shelved.push({ file: { path: at(path), slug: basename(second, '.toml'), catalog: first }, name: second })
     }
   }
+
   const listed = (catalog = '') => {
     const at = catalogs.findIndex((c) => c.name === catalog)
+
     return at < 0 ? catalogs.length : at
   }
+
   shelved.sort(
     (a, b) =>
       listed(a.file.catalog) - listed(b.file.catalog) ||
@@ -129,6 +140,7 @@ export function marketplaceLayout(
       byName(a.name, b.name),
   )
   loose.sort((a, b) => byName(a.name, b.name))
+
   return [...shelved, ...loose].map(({ file }) => file)
 }
 
@@ -142,38 +154,49 @@ export function catalogsIn(dir: string): Catalog[] {
 
 export function marketplaceFiles(dir: string, catalogs: readonly Catalog[] = []): MarketplaceFile[] {
   const folder = palettesDir(dir)
+
   if (!existsSync(folder)) {
     return []
   }
+
   const paths = readdirSync(folder, { withFileTypes: true }).flatMap((item) =>
     item.isDirectory()
       ? readdirSync(join(folder, item.name)).map((file) => `palettes/${item.name}/${file}`)
       : [`palettes/${item.name}`],
   )
+
   return marketplaceLayout(paths, (path) => join(dir, path), catalogs)
 }
 
 function marketplaceFileProblem(file: MarketplaceFile, seen: ReadonlyMap<string, MarketplaceFile>): string | undefined {
   const twin = seen.get(file.slug)
+
   if (twin) {
     return `${file.slug} is also ${twin.catalog ? `in ${twin.catalog}` : 'outside a catalog'} — a palette name is used once in a marketplace`
   }
+
   const problem = file.catalog === undefined ? undefined : textProblem(file.catalog)
+
   return problem ? `the catalog folder ${JSON.stringify(file.catalog)} ${problem}` : undefined
 }
 
 export function ownPath(configHome: string, name: string): string {
   const marketplace = marketplaceOf(name)
+
   if (!marketplace) {
     throw new Error(`${name} is an official palette — yours are named <you>@<marketplace>/<palette>`)
   }
+
   const local = localMarketplaces(configHome, false).find((m) => m.id === marketplace)
+
   if (!local) {
     throw new Error(
       `${marketplace} is not a local marketplace — \`ttheme marketplace add <dir>\` adds the folder that holds it`,
     )
   }
+
   const slug = slugOf(name)
+
   return marketplaceFiles(local.dir).find((f) => f.slug === slug)?.path ?? join(palettesDir(local.dir), `${slug}.toml`)
 }
 
@@ -189,6 +212,7 @@ function placeFor(name: string, entries: PaletteEntry[], foreign: boolean, shelf
       .filter((e) => !e.default && !marketplaceOf(e.name))
       .map((e) => [e.name, { order: e.order }]),
   )
+
   return {
     name,
     ...(shelf.catalog === undefined ? {} : { catalog: shelf.catalog }),
@@ -207,6 +231,7 @@ export function readOwnText(
   shelf: Shelf = {},
 ): Theme {
   const slug = slugOf(name)
+
   return { ...readTheme(`${slug}.toml`, source, placeFor(slug, entries, foreign, shelf)), name }
 }
 
@@ -226,17 +251,22 @@ export function readMarketplaceFiles(
   catalogs: readonly Catalog[] = [],
 ): PaletteEntry[] {
   const seen = new Map<string, MarketplaceFile>()
+
   return files.flatMap((file) => {
     try {
       const problem = marketplaceFileProblem(file, seen)
+
       if (problem) {
         throw new Error(problem)
       }
+
       seen.set(file.slug, file)
       const shelf = { ...(file.catalog === undefined ? {} : { catalog: file.catalog }), catalogs }
+
       return [paletteEntry(readOwnText(`${id}/${file.slug}`, read(file), entries, foreign, shelf))]
     } catch (error) {
       report(file.path, (error as Error).message)
+
       return []
     }
   })
@@ -249,6 +279,7 @@ export function readMarketplaceDir(
   report: Report = warning(true),
 ): PaletteEntry[] {
   const catalogs = catalogsIn(dir)
+
   return readMarketplaceFiles(
     marketplaceFiles(dir, catalogs),
     (file) => readFileSync(file.path, 'utf8'),
@@ -341,6 +372,7 @@ export function paletteToml(d: Draft): string {
       : []),
     ...(d.pictures ?? []).flatMap((p) => ['', ...pictureToml(p)]),
   ]
+
   return `${lines.join('\n')}\n`
 }
 
@@ -363,9 +395,11 @@ class Writer {
 
   str(s = ''): void {
     const utf8 = new TextEncoder().encode(s)
+
     if (utf8.length > 255) {
       throw new Error(`"${s}" is too long to share`)
     }
+
     this.u8(utf8.length)
     this.bytes.push(...utf8)
   }
@@ -396,9 +430,11 @@ class Reader {
 
   u8(): number {
     const n = this.bytes[this.at++]
+
     if (n === undefined) {
       throw new Error('the share code is cut short')
     }
+
     return n
   }
 
@@ -413,10 +449,13 @@ class Reader {
   str(): string {
     const n = this.u8()
     const slice = this.bytes.subarray(this.at, this.at + n)
+
     if (slice.length !== n) {
       throw new Error('the share code is cut short')
     }
+
     this.at += n
+
     try {
       return new TextDecoder('utf-8', { fatal: true }).decode(slice)
     } catch {
@@ -445,17 +484,23 @@ function signed(body: Buffer): string {
 
 function payloadOf(code: string, prefix: string): Buffer {
   const body = code.slice(prefix.length)
+
   if (!/^[A-Za-z0-9_-]+$/.test(body)) {
     throw new Error('the share code holds characters it never uses — was it copied whole?')
   }
+
   const bytes = Buffer.from(body, 'base64url')
+
   if (bytes.length <= SUM) {
     throw new Error('the share code is cut short')
   }
+
   const payload = bytes.subarray(0, -SUM)
+
   if (!checksum(payload).equals(bytes.subarray(-SUM))) {
     throw new Error('the share code does not add up — was it copied whole?')
   }
+
   return payload
 }
 
@@ -469,17 +514,21 @@ export function shareLink(code: string): string {
 
 export function codeOf(text: string): string | undefined {
   const given = text.trim()
+
   if (!/^https?:\/\//i.test(given)) {
     return isCode(given) ? given : undefined
   }
+
   const segment = URL.canParse(given) ? /^\/p\/([^/]+)\/?$/.exec(new URL(given).pathname)?.[1] : undefined
   const code = segment?.replace(/%3a/gi, ':')
+
   return code && isCode(code) ? code : undefined
 }
 
 export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[] {
   return fromCodes(code).map((draft) => {
     const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
+
     return draft.catalog ? { ...entry, catalog: draft.catalog } : entry
   })
 }
@@ -487,38 +536,49 @@ export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[]
 export function shareCode(d: Draft): string {
   const w = new Writer()
   writeDraft(w, d)
+
   return `${CODE}${w.done()}`
 }
 
 export function bundleCode(drafts: readonly Draft[]): string {
   const [only] = drafts
+
   if (only && drafts.length === 1 && !only.from) {
     return shareCode(only)
   }
+
   if (drafts.length === 0 || drafts.length > 255) {
     throw new Error(`a share link carries 1 to 255 palettes, not ${drafts.length}`)
   }
+
   const w = new Writer()
   w.u8(drafts.length)
+
   for (const d of drafts) {
     writeDraft(w, d)
     w.str(d.from)
   }
+
   const body = w.body()
+
   const [packed] = PACKS.map((pack, method) => Buffer.concat([Buffer.from([method]), pack(body)])).sort(
     (a, b) => a.length - b.length,
   )
+
   return `${BUNDLE}${signed(packed as Buffer)}`
 }
 
 function writeDraft(w: Writer, d: Draft): void {
   w.str(d.name)
+
   for (const c of [d.background, d.foreground, d.cursor, d.selection, ...d.ansi]) {
     w.color(c)
   }
+
   for (const slot of d.signature) {
     w.u8(SLOTS.indexOf(slot))
   }
+
   w.str(d.base)
   w.str(d.catalog)
   w.str(d.ansiSource)
@@ -526,10 +586,13 @@ function writeDraft(w: Writer, d: Draft): void {
   w.u16((d.waive ?? []).reduce((mask, rule) => mask | (1 << RULES.indexOf(rule)), 0))
   w.str(d.waive && d.waive.length > 0 ? d.reason : '')
   const pictures = d.pictures ?? []
+
   if (pictures.length > 255) {
     throw new Error(`a share code carries at most 255 pictures, and ${d.name} holds ${pictures.length}`)
   }
+
   w.u8(pictures.length)
+
   for (const p of pictures) {
     w.u8(SITES.findIndex((s) => s.key === p.site))
     w.u32(p.id)
@@ -551,9 +614,11 @@ export function fromCode(code: string): Draft {
   if (!code.startsWith(CODE)) {
     throw versionProblem(code)
   }
+
   const r = new Reader(new Uint8Array(payloadOf(code, CODE)))
   const draft = readDraft(r)
   r.end()
+
   return draft
 }
 
@@ -561,39 +626,53 @@ export function fromCodes(code: string): Draft[] {
   if (code.startsWith(CODE)) {
     return [fromCode(code)]
   }
+
   if (!code.startsWith(BUNDLE)) {
     throw versionProblem(code)
   }
+
   const payload = payloadOf(code, BUNDLE)
   const unpack = UNPACKS[payload[0] as number]
+
   if (!unpack) {
     throw new Error('the share code is packed in a way this ttheme does not read')
   }
+
   let body: Buffer
+
   try {
     body = unpack(payload.subarray(1))
   } catch {
     throw new Error('the share code does not unpack — was it copied whole?')
   }
+
   const r = new Reader(new Uint8Array(body))
+
   const drafts = Array.from({ length: r.u8() }, () => {
     const draft = readDraft(r)
     const from = r.str()
+
     return from ? { ...draft, from } : draft
   })
+
   r.end()
+
   if (drafts.length === 0) {
     throw new Error('the share code holds no palette')
   }
+
   const twice = drafts.find((d, i) => drafts.findIndex((e) => e.name === d.name) !== i)
+
   if (twice) {
     throw new Error(`the share code holds ${twice.name} twice`)
   }
+
   return drafts
 }
 
 function readDraft(r: Reader): Draft {
   const name = r.str()
+
   const [background, foreground, cursor, selection, ...ansi] = Array.from({ length: 20 }, () => r.color()) as [
     string,
     string,
@@ -601,6 +680,7 @@ function readDraft(r: Reader): Draft {
     string,
     ...string[],
   ]
+
   const signature = [r.u8(), r.u8(), r.u8()].map((i) => SLOTS[i] ?? `slot${i}`)
   const base = r.str()
   const catalog = r.str()
@@ -609,12 +689,14 @@ function readDraft(r: Reader): Draft {
   const mask = r.u16()
   const reason = r.str()
   const waive = RULES.filter((_, i) => mask & (1 << i))
+
   const pictures = Array.from({ length: r.u8() }, (): SharedPicture => {
     const site = SITES[r.u8()]?.key ?? 'unknown'
     const id = r.u32()
     const size = r.u16()
     const position = r.u8()
     const opacity = r.u16()
+
     return {
       site,
       id,
@@ -623,9 +705,11 @@ function readDraft(r: Reader): Draft {
       ...(opacity > 0 ? { opacity: (opacity - 1) / 1000 } : {}),
     }
   })
+
   if (![background, foreground, cursor, selection, ...ansi].every(isHex)) {
     throw new Error('the share code holds a color that is not one')
   }
+
   return {
     name,
     ...(base ? { base } : {}),
@@ -658,17 +742,21 @@ export function colorsOfTheme(
 export function recolor(text: string, colors: Colors): string {
   const start = text.indexOf('ansi = [')
   const end = text.indexOf(']', start)
+
   if (start < 0 || end < 0) {
     throw new Error('no ansi = [...] list to rewrite')
   }
+
   let index = 0
   const block = text.slice(start, end).replace(/"#[0-9a-fA-F]{6}"/g, () => q(colors.ansi[index++] as string))
+
   const keys: [string, string][] = [
     ['background', colors.background],
     ['foreground', colors.foreground],
     ['cursor', colors.cursor],
     ['selection_background', colors.selection],
   ]
+
   return keys.reduce(
     (out, [key, color]) =>
       out.replace(new RegExp(`^(${key}\\s*=\\s*)"#[0-9a-fA-F]{6}"`, 'm'), (_, head) => `${head}${q(color)}`),
@@ -684,14 +772,18 @@ export function gateLines(entry: PaletteEntry): string[] {
   const values = measure(toTheme(entry))
   const waived = new Set(entry.waived ?? [])
   const pad = Math.max(...GATE_RULES.map((r) => r.label.length))
+
   return GATE_RULES.map((rule, i) => {
     const value = values[i] as number
+
     const ok =
       waived.has(rule.rule) ||
       Number.isNaN(value) ||
       ((rule.min === undefined || value >= rule.min) && (rule.max === undefined || value <= rule.max))
+
     const bound = rule.min !== undefined ? `≥ ${rule.min}` : rule.max !== undefined ? `≤ ${rule.max}` : ''
     const shown = Number.isNaN(value) ? '—' : Number.isInteger(value) ? String(value) : value.toFixed(2)
+
     return `  ${ok ? '✓' : '✗'} ${rule.label.padEnd(pad)}  ${shown.padStart(6)} ${bound}${waived.has(rule.rule) ? '  waived' : ''}`
   })
 }

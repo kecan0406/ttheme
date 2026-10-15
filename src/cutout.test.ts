@@ -19,6 +19,7 @@ test("a cut-out's soft edge narrows, and what stays partly clear takes the color
     height: 1,
     data: Uint8Array.from(alphas.flatMap((a, i) => [colors[i] ?? 0, 0, 0, a])),
   })
+
   const edge = matte(row([255, 230, 153, 100, 20], [10, 90, 160, 220, 250]))
   assert.deepEqual(
     [...edge.data].filter((_, at) => at % 4 === 3),

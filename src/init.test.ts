@@ -36,6 +36,7 @@ function manifestFixture() {
     ansi: Array.from({ length: 16 }, (_, i) => `#${i.toString(16).repeat(6)}`),
     gate: [21, 21, 0, 21, 21],
   })
+
   return {
     schema: SCHEMA,
     version: '0.0.0',
@@ -76,12 +77,14 @@ function withMarketplaces(paths: InitPaths): string {
       },
     }),
   )
+
   return dust
 }
 
 function makeFixture(): InitPaths {
   const base = mkdtempSync(join(tmpdir(), 'ttheme-init-'))
   const root = join(base, 'repo')
+
   const files: Record<string, string> = {
     'bin/ttheme.js': 'cli',
     'bin/ttheme.js.map': 'map',
@@ -99,12 +102,15 @@ function makeFixture(): InitPaths {
     'dist/alacritty/themes/miku.toml': 'miku alacritty',
     'dist/manifest.json': JSON.stringify(manifestFixture()),
   }
+
   for (const [path, content] of Object.entries(files)) {
     mkdirSync(join(root, path, '..'), { recursive: true })
     writeFileSync(join(root, path), content)
   }
+
   const home = join(base, 'home')
   mkdirSync(home, { recursive: true })
+
   return { root, home, configHome: join(home, '.config'), zdotdir: home }
 }
 
@@ -117,6 +123,7 @@ test('planInit places the runtime layer and touches only .zshrc', () => {
   const plan = planInit(options({ terminals: ['ghostty', 'kitty'] }), paths)
   const tthemeDir = join(paths.configHome, 'ttheme')
   const targets = plan.copies.map((c) => c.to)
+
   for (const expected of [
     join(tthemeDir, 'ttheme.js'),
     join(tthemeDir, 'package.json'),
@@ -127,6 +134,7 @@ test('planInit places the runtime layer and touches only .zshrc', () => {
   ]) {
     assert.ok(targets.includes(expected), `missing copy target ${expected}`)
   }
+
   assert.deepEqual(
     plan.edits.map((e) => e.file),
     [join(paths.home, '.zshrc')],
@@ -196,11 +204,13 @@ test('init wears the first palette and leaves the new-tab setting at its default
 
 test('init writes the Warp tab-switch answer only when it differs from the default, and an upgrade keeps it', () => {
   const paths = makeFixture()
+
   const fast = () =>
     readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8')
       .match(/^(# )?: \$\{TTHEME_WARP_FAST:=(\w+)\}$/m)
       ?.slice(1)
       .join('')
+
   applyInit(planInit(options({ warpFast: false }), paths))
   assert.equal(fast(), 'off')
   applyInit(planUpgrade(installedState(paths.configHome) as Installed, paths))
@@ -235,6 +245,7 @@ test('bash and fish get the ttheme command through zsh, and uninstall takes both
   const fish = join(paths.configHome, 'fish', 'functions', 'ttheme.fish')
   assert.match(readFileSync(join(paths.home, '.bashrc'), 'utf8'), /^ttheme\(\) \{ zsh -c /m)
   assert.ok(readFileSync(fish, 'utf8').startsWith(`# ${MANAGED}\nfunction ttheme`))
+
   const uninstall = {
     home: paths.home,
     configHome: paths.configHome,
@@ -242,6 +253,7 @@ test('bash and fish get the ttheme command through zsh, and uninstall takes both
     cacheDir: join(paths.home, '.cache', 'ttheme'),
     stateDir: join(paths.home, '.local', 'state', 'ttheme'),
   }
+
   applyUninstall(planUninstall(uninstall), uninstall, { platform: 'darwin', env: {}, run: () => undefined })
   assert.equal(readFileSync(join(paths.home, '.bashrc'), 'utf8'), 'alias ll="ls -l"\n')
   assert.ok(!existsSync(join(paths.home, '.bash_profile')))
@@ -266,6 +278,7 @@ test('applyInit is idempotent', () => {
   applyInit(plan)
   const before = plan.edits.map((e) => readFileSync(e.file, 'utf8'))
   applyInit(planInit(options(), paths))
+
   for (const [i, e] of plan.edits.entries()) {
     const after = readFileSync(e.file, 'utf8')
     assert.equal(after, before[i])
@@ -422,6 +435,7 @@ test('setting it up again offers no official palette once the official marketpla
 
 test('setting it up again carries every setting it does not ask about again', () => {
   const paths = makeFixture()
+
   const state: Required<Installed> = {
     terminals: ['ghostty', 'windows-terminal'],
     author: 'kec',
@@ -436,13 +450,16 @@ test('setting it up again carries every setting it does not ask about again', ()
     updates: { 'alice/pastel#v1': true },
     palettes: ['miku'],
   }
+
   const { installed } = planAgain(state, options({ terminals: ['kitty'], palettes: ['neutral'] }), paths)
   const asked: (keyof Installed)[] = ['terminals', 'palettes', 'off', 'startup', 'wtHome', 'wtProfile']
+
   for (const key of Object.keys(state) as (keyof Installed)[]) {
     if (!asked.includes(key)) {
       assert.deepEqual(installed[key], state[key], key)
     }
   }
+
   assert.deepEqual(installed.terminals, ['kitty'])
   assert.equal(installed.startup, undefined)
   assert.equal(installed.wtHome, undefined)

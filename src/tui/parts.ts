@@ -6,6 +6,7 @@ export function tabOf(p: Paint, label: string, on: boolean, mark: (text: string)
   if (!p.color) {
     return mark(on ? `[${label}]` : ` ${label} `)
   }
+
   return on ? p.pill(mark(` ${label} `)) : p.dim(mark(` ${label} `))
 }
 
@@ -13,12 +14,15 @@ export function buttonOf(p: Paint, label: string, state: 'idle' | 'focus' | 'off
   if (!p.color) {
     return state === 'focus' ? `[${label}]` : ` ${label} `
   }
+
   if (state === 'off') {
     return p.dim(` ${label} `)
   }
+
   if (state === 'focus') {
     return danger ? p.danger(` ${label} `) : p.pill(` ${label} `)
   }
+
   return p.chip(` ${label} `)
 }
 
@@ -39,6 +43,7 @@ const CORNERS = { top: '╭╮', mid: '├┤', bottom: '╰╯' }
 export function boxEdge(width: number, at: keyof typeof CORNERS, labels: [number, string][] = []): string {
   const [left, right] = [...CORNERS[at]]
   const line = [...`${left}${'─'.repeat(Math.max(0, width - 2))}${right}`]
+
   for (const [col, text] of labels) {
     ;[...text].forEach((ch, i) => {
       if (col + i > 0 && col + i < width - 1) {
@@ -46,6 +51,7 @@ export function boxEdge(width: number, at: keyof typeof CORNERS, labels: [number
       }
     })
   }
+
   return line.join('')
 }
 
@@ -57,6 +63,7 @@ export function boxTitle(
 ): string {
   const line = [...boxEdge(width, 'top', [[2, title]])]
   const end = 2 + [...title].length
+
   return `${edge(line.slice(0, 2).join(''))}${paint(title)}${edge(line.slice(end).join(''))}`
 }
 

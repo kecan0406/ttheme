@@ -84,6 +84,7 @@ interface Slots {
 
 function paneAt(index: number): Pane {
   const n = PANES.length
+
   return PANES[((index % n) + n) % n] as Pane
 }
 
@@ -94,9 +95,11 @@ export function tabNames(): string[] {
 export function layoutOf(cols: number, rows: number, scene: number): Layout | undefined {
   const tier =
     cols >= FULL_COLS && rows >= FULL_ROWS ? 'full' : cols >= TABS_COLS && rows >= TABS_ROWS ? 'tabs' : undefined
+
   if (!tier) {
     return undefined
   }
+
   const side = tier === 'full' ? (cols >= 140 ? 47 : 38) : 37
   const width = cols - side - 1
   const left = side + 1 + MARGIN
@@ -105,6 +108,7 @@ export function layoutOf(cols: number, rows: number, scene: number): Layout | un
   const bottom = rows - 3
   const frame = { col: left, row: top, cols: right - left + 1, rows: bottom - top + 1 }
   const inner = { col: left + 1, row: top + 3, cols: frame.cols - 2, rows: bottom - top - 3 }
+
   const rules: Rule[] = [
     { row: top, col: left, length: frame.cols, down: false },
     { row: top + 2, col: left, length: frame.cols, down: false },
@@ -112,7 +116,9 @@ export function layoutOf(cols: number, rows: number, scene: number): Layout | un
     { row: top, col: left, length: bottom - top + 1, down: true },
     { row: top, col: right, length: bottom - top + 1, down: true },
   ]
+
   const pane = paneAt(scene)
+
   return {
     tier,
     side,
@@ -165,6 +171,7 @@ function editorLines(): string[] {
     '«K4» theme.ts «s» scenes.ts «s» contrast.ts ',
     ...SOURCE.map(([sign, code], i) => {
       const n = String(i + 1).padStart(3)
+
       return `${i + 1 === CURSOR_LINE ? `«b»${n}` : `«d»${n}`} ${sign || '«»  '}«»${code}`
     }),
   ]
@@ -174,11 +181,13 @@ function meter(label: string, parts: [string, number][], text: string, width: nu
   const room = Math.max(1, width - label.length - 2 - text.length)
   let used = 0
   let out = `«6»${label}«b»[`
+
   for (const [role, share] of parts) {
     const n = Math.min(room - used, Math.round(share * room))
     out += `«${role}»${'|'.repeat(n)}`
     used += n
   }
+
   return `${out}«»${' '.repeat(room - used)}${text}«b»]`
 }
 
@@ -216,9 +225,11 @@ function filled(role: string, text: string, width: number): string {
 function topLines(width: number): string[] {
   const text = width - 2
   const half = Math.floor((text - 2) / 2)
+
   const cpu = (i: number) => {
     const [user, system, nice] = CPUS[i] as [number, number, number]
     const total = `${((user + system + nice) * 100).toFixed(1)}%`
+
     return meter(
       String(i).padStart(3),
       [
@@ -230,6 +241,7 @@ function topLines(width: number): string[] {
       half,
     )
   }
+
   return [
     ...[0, 1, 2, 3].map((i) => `${cpu(i)}  ${cpu(i + 4)}`),
     `${meter(
@@ -259,11 +271,13 @@ function keyBar(width: number): string {
   KEYS.forEach((label, i) => {
     const key = `F${i + 1}`
     const piece = label.padEnd(6)
+
     if (used + key.length + piece.length <= text) {
       out += `«»${key}«K6»${piece}`
       used += key.length + piece.length
     }
   })
+
   return `${out}«K6»${' '.repeat(Math.max(0, text - used))}`
 }
 
@@ -271,12 +285,15 @@ function sceneLines(name: string, picked: boolean, width: number): string[] {
   if (name === 'Editor') {
     return editorLines()
   }
+
   if (name === 'Top') {
     return topLines(width)
   }
+
   const lines = SCENES.find((s) => s.name === name)?.lines ?? []
   const pick = picked ? PICKS[name] : undefined
   const chosen = pick ? pick.map((i) => lines[i] ?? '') : lines
+
   return name === 'Shell' ? [...chosen.slice(0, -1), ...COLORTEST, ...chosen.slice(-1)] : chosen
 }
 
@@ -287,9 +304,11 @@ function parsed(markup: string[], width: number): Part[][] {
     .filter((parts) => parts !== undefined)
     .map((parts) => {
       let col = 0
+
       return parts.map(([t, role]) => {
         const part = { text: t, role, col }
         col += cells(t)
+
         return part
       })
     })
@@ -300,6 +319,7 @@ function statusLine(width: number): string {
   const left = '«K4» NORMAL «s» main  src/theme.ts [+] '
   const right = '«K1» 1 «K3» 1 «s» utf-8  typescript  21:28 «K4» 80% '
   const room = width - 2 - cells(left.replace(/«[^»]*»/g, '')) - cells(right.replace(/«[^»]*»/g, ''))
+
   return `${left}${' '.repeat(Math.max(0, room))}${right}`
 }
 
@@ -307,6 +327,7 @@ function footerOf(pane: Pane, width: number): string[] {
   if (pane.id === 'code') {
     return [statusLine(width), '«d»"src/theme.ts" 26L, 912B written']
   }
+
   return pane.id === 'monitor' ? [keyBar(width)] : []
 }
 
@@ -314,31 +335,39 @@ function fitted(pane: Pane, width: number, rows: number): Part[][] {
   const footer = parsed(footerOf(pane, width), width)
   const room = Math.max(0, rows - footer.length)
   let shown: Part[][] = []
+
   for (const name of pane.scenes.toReversed()) {
     const whole = parsed(sceneLines(name, false, width), width)
     const picked = parsed(sceneLines(name, true, width), width)
     const next = [whole, picked].find((lines) => shown.length + lines.length <= room)
+
     if (!next) {
       if (shown.length === 0) {
         shown = pane.tail ? picked.slice(picked.length - room) : picked.slice(0, room)
       }
+
       break
     }
+
     shown = [...next, ...shown]
   }
+
   if (footer.length === 0) {
     return shown
   }
+
   const filler = parsed(
     Array.from({ length: room - shown.length }, () => (pane.id === 'code' ? '«4»~' : '')),
     width,
   )
+
   return [...shown, ...filler, ...footer]
 }
 
 export function paneLines(tile: Tile): Part[][] {
   const pane = PANES.find((p) => p.id === tile.id)
   const room = tile.width - 2
+
   return pane ? fitted(pane, tile.width, tile.rows).map((line) => line.filter((part) => part.col < room)) : []
 }
 
@@ -348,16 +377,19 @@ export function paneTiles(width: number, rows: number): Tile[] {
 
 export function footerRows(tile: Tile): number {
   const pane = PANES.find((p) => p.id === tile.id)
+
   return pane ? footerOf(pane, tile.width).length : 0
 }
 
 export function lights(role: string, slot: number): boolean {
   const { text, ground } = slotsOfRole(role)
+
   return text === slot || ground === slot
 }
 
 export function usesOf(layout: Layout, slot: number): { name: string; count: number }[] {
   const box = layout.inner
+
   return PANES.map((pane) => ({
     name: pane.name,
     count: paneLines({ id: pane.id, name: pane.name, col: box.col, row: box.row, width: box.cols, rows: box.rows })
@@ -370,22 +402,29 @@ export function slotsOfRole(role: string): Slots {
   if (role === 's') {
     return { text: 1, ground: 3 }
   }
+
   if (role === 'c') {
     return { text: 1, ground: 2 }
   }
+
   const m = /^([BK]?)(\d+)$/.exec(role)
+
   if (!m) {
     return { text: 1, ground: 0 }
   }
+
   const slot = 4 + Number(m[2])
+
   return m[1] === 'K' ? { text: 4, ground: slot } : { text: slot, ground: 0 }
 }
 
 export function usesSlot(role: string, slot: number): boolean {
   if (slot >= 4) {
     const m = /^([BK]?)(\d+)$/.exec(role)
+
     return m !== null && Number(m[2]) === slot - 4
   }
+
   return (slot === 3 && role === 's') || (slot === 2 && role === 'c')
 }
 
@@ -415,6 +454,7 @@ function same(a: Spot, b: Spot): boolean {
 
 export function firstSpot(layout: Layout, slot: number): Spot | undefined {
   const runs = runsOf(layout)
+
   return (runs.find((r) => usesSlot(r.role, slot)) ?? runs[0])?.spot
 }
 
@@ -428,27 +468,36 @@ export function moveSpot(
   way: 'left' | 'right' | 'up' | 'down' | 'next' | 'previous',
 ): Spot | undefined {
   const runs = runsOf(layout)
+
   if (runs.length === 0) {
     return undefined
   }
+
   const at = spot ? runs.findIndex((r) => same(r.spot, spot)) : -1
+
   if (at < 0) {
     return runs[0]?.spot
   }
+
   const here = runs[at] as Run
+
   if (way === 'left' || way === 'right') {
     return runs[(at + (way === 'left' ? runs.length - 1 : 1)) % runs.length]?.spot
   }
+
   if (way === 'next' || way === 'previous') {
     const panes = layout.tiles.map((t) => t.id)
     const k = panes.indexOf(here.spot.pane)
     const target = panes[(k + (way === 'next' ? 1 : panes.length - 1)) % panes.length]
+
     return runs.find((r) => r.spot.pane === target)?.spot
   }
+
   const step = way === 'up' ? -1 : 1
   const inPane = runs.filter((r) => r.spot.pane === here.spot.pane)
   const lines = [...new Set(inPane.map((r) => r.spot.line))]
   const line = lines[lines.indexOf(here.spot.line) + step]
+
   if (line === undefined) {
     const order = layout.tiles.map((t) => t.id)
     const k = order.indexOf(here.spot.pane) + step
@@ -456,15 +505,19 @@ export function moveSpot(
     const there = runs.filter((r) => r.spot.pane === target)
     const edge = step < 0 ? (there.at(-1)?.spot.line ?? 0) : (there[0]?.spot.line ?? 0)
     const row = there.filter((r) => r.spot.line === edge)
+
     return (row.find((r) => r.col >= here.col) ?? row.at(-1))?.spot
   }
+
   const row = inPane.filter((r) => r.spot.line === line)
   const exact = row.find((r) => r.col <= here.col && r.col + cells(r.text) > here.col)
+
   return (exact ?? row.find((r) => r.col >= here.col) ?? row.at(-1))?.spot
 }
 
 export function slotsAt(layout: Layout, spot: Spot): Slots | undefined {
   const run = runsOf(layout).find((r) => same(r.spot, spot))
+
   return run ? slotsOfRole(run.role) : undefined
 }
 
@@ -484,6 +537,7 @@ const JOINTS: Record<string, string> = {
 
 export function joints(rules: readonly Rule[]): Map<number, Map<number, string>> {
   const ways = new Map<number, Map<number, Set<string>>>()
+
   const mark = (row: number, col: number, way: string) => {
     const line = ways.get(row) ?? new Map<number, Set<string>>()
     ways.set(row, line)
@@ -491,19 +545,24 @@ export function joints(rules: readonly Rule[]): Map<number, Map<number, string>>
     line.set(col, cell)
     cell.add(way)
   }
+
   for (const rule of rules) {
     for (let i = 0; i < rule.length; i++) {
       const row = rule.down ? rule.row + i : rule.row
       const col = rule.down ? rule.col : rule.col + i
+
       if (i > 0) {
         mark(row, col, rule.down ? 'u' : 'l')
       }
+
       if (i < rule.length - 1) {
         mark(row, col, rule.down ? 'd' : 'r')
       }
     }
   }
+
   const glyph = (cell: Set<string>) => JOINTS[[...cell].sort().join('')] ?? (cell.has('l') || cell.has('r') ? '─' : '│')
+
   return new Map(
     ways.entries().map(([row, line]) => [row, new Map(line.entries().map(([col, cell]) => [col, glyph(cell)]))]),
   )

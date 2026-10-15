@@ -18,6 +18,7 @@ interface Node {
 
 const read = (name: string): Node =>
   JSON.parse(readFileSync(join(import.meta.dirname, '..', 'schemas', name), 'utf8')) as Node
+
 const keys = (node: Node | undefined): string[] => Object.keys(node?.properties ?? {}).sort()
 
 test('the marketplace schema SchemaStore serves describes the keys ttheme reads from ttheme-marketplace.toml', () => {
@@ -32,9 +33,11 @@ test('the palette schema describes the keys, sites, positions, slots and gate ru
   const palette = read('ttheme-palette.json')
   assert.equal(palette.$id, PALETTE_SCHEMA_URL)
   assert.deepEqual(keys(palette), [...(PALETTE_KEYS[''] ?? [])].sort())
+
   for (const table of ['meta', 'colors', 'contrast', 'ghostty']) {
     assert.deepEqual(keys(palette.properties?.[table]), [...(PALETTE_KEYS[table] ?? [])].sort(), table)
   }
+
   assert.deepEqual(keys(palette.properties?.picture?.items), [...(PALETTE_KEYS.picture ?? [])].sort())
   const defs = palette.definitions ?? {}
   assert.deepEqual(

@@ -165,7 +165,9 @@ function GateRows({ lines, view }: { lines: GateLine[]; view: ShareView }) {
               : ok
                 ? `≤ ${rule.max}`
                 : `over ${rule.max}`
+
         const names = [...new Set(slots)].map((slot) => view.slots[slot]?.name ?? '').join(' · ')
+
         return (
           <li class="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 py-2 pr-3 pl-4">
             <Verdict ok={ok} />
@@ -199,6 +201,7 @@ function ColorsPanel({ gate, view }: { gate: GateLine[]; view: ShareView }) {
   const passed = gate.filter((line) => line.ok !== false).length
   const waived = gate.filter((line) => line.ok === null).length
   const slot = (index: number) => view.slots[index] as SlotView
+
   return (
     <section
       id="share-colors"
@@ -255,6 +258,7 @@ function ColorsPanel({ gate, view }: { gate: GateLine[]; view: ShareView }) {
 function AboutPanel({ shared }: { shared: Shared }) {
   const { theme, code, link, pictures } = shared
   const copied: [string, string][] = theme.from ? [['Copied from', theme.from]] : []
+
   return (
     <section id="share-about" role="tabpanel" aria-labelledby="share-tab-about" data-panel-body="about" hidden>
       <div class="border-b border-border p-4">
@@ -330,6 +334,7 @@ function Strip({ shared }: { shared: Shared }) {
 
 function Bar({ shared }: { shared: Shared }) {
   const { theme, code, link, pictures } = shared
+
   return (
     <header class="relative z-10 flex min-w-0 items-center justify-between gap-4 border-b border-border bg-background pr-4 pl-5 [grid-area:bar] max-[760px]:flex-wrap max-[760px]:gap-3 max-[760px]:px-4 max-[760px]:py-3.5">
       <nav aria-label="palette" class="flex min-w-0 items-center gap-2.5 max-[760px]:flex-wrap max-[760px]:gap-y-1">
@@ -401,6 +406,7 @@ function Bar({ shared }: { shared: Shared }) {
 
 function Stage({ shared, builder }: { shared: Shared; builder: Builder }) {
   const { panes, view } = builder
+
   return (
     <main id="content" aria-label="preview" class="mock-stage [grid-area:stage]">
       <div

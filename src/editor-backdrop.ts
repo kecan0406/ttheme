@@ -76,9 +76,11 @@ function cellRect(width: number, height: number, area: Area, cell: Cell, box: Bo
   const c1 = t(Math.min(box.x + box.w, left + area.cols * cell.w) / cell.w)
   const r0 = t((Math.max(box.y, top) + cell.h - 1) / cell.h)
   const r1 = t(Math.min(box.y + box.h, top + area.rows * cell.h) / cell.h)
+
   if (c1 <= c0 || r1 <= r0) {
     return undefined
   }
+
   return {
     col: c0,
     row: r0,
@@ -97,6 +99,7 @@ function sizeOf(path: string): { width: number; height: number } | undefined {
     const head = Buffer.alloc(24)
     readSync(fd, head, 0, 24, 0)
     closeSync(fd)
+
     return head.readUInt32BE(0) === 0x89504e47
       ? { width: head.readUInt32BE(16), height: head.readUInt32BE(20) }
       : undefined
@@ -128,6 +131,7 @@ export class Backdrop {
     if (colorless(env) || !showsPictures(env, terminals) || !(layersUnderCells(env) || viewsInWindow(env))) {
       return undefined
     }
+
     return new Backdrop(env, home, name)
   }
 
@@ -153,9 +157,11 @@ export class Backdrop {
     const dir = backgroundsDir(this.home)
     const shown = readBackdrop(dir, this.name, homedir())
     let pictures: Picture[] = []
+
     try {
       pictures = readStore(dir).palettes[this.name]?.pictures ?? []
     } catch {}
+
     const picture = shown ? pictureOf(pictures, shown.image) : undefined
     this.held =
       shown && picture
@@ -180,21 +186,29 @@ export class Backdrop {
     if (this.cell.w === 0) {
       return ''
     }
+
     const background = list[0] as Hex
     const look = this.look(list, signature, waive, area, !this.views || (area.cols === cols && area.rows === rows))
+
     if (this.views) {
       const W = cols * this.cell.w
       const H = rows * this.cell.h
+
       const view = look
         ? `${background}|${look.image}|${look.opacity}|${W}|${H}|${look.box.w}|${look.box.h}|${look.box.x}|${look.box.y}|${this.held?.at ?? 5}`
         : `${background}||1|${W}|${H}|0|0|0|0|5`
+
       if (view === this.viewed) {
         return ''
       }
+
       this.viewed = view
+
       return viewVar(view)
     }
+
     let out = this.layer(COVER_ID, COVER_Z, 'f=24', Buffer.from(rgb(background)), area)
+
     if (look) {
       const alpha = Math.max(0, Math.min(255, Math.round((1 - look.opacity) * 255)))
       out += this.picture(look)
@@ -202,6 +216,7 @@ export class Backdrop {
     } else {
       out += this.drop(PICTURE_ID) + this.drop(VEIL_ID)
     }
+
     return out
   }
 
@@ -213,10 +228,13 @@ export class Backdrop {
 
   clear(): string {
     let out = this.views && this.viewed ? viewVar('') : ''
+
     for (const id of this.sent.keys()) {
       out += release(id)
     }
+
     this.resized()
+
     return out
   }
 
@@ -224,9 +242,11 @@ export class Backdrop {
     const out = this.clear()
     this.tints.clear()
     this.renders?.close()
+
     if (this.scratch) {
       rmSync(this.scratch, { recursive: true, force: true })
     }
+
     return out
   }
 
@@ -238,15 +258,19 @@ export class Backdrop {
     spills: boolean,
   ): Look | undefined {
     const held = this.held
+
     if (!held) {
       return undefined
     }
+
     const colors = { name: this.name, ...colorsOf([...list]), waived: [...waive] }
     const image = drafted(held.picture, held.image, colors, signature, this.tints)
     const size = sizeOf(image)
+
     if (!size) {
       return undefined
     }
+
     const framed = frameAt(
       size.width,
       size.height,
@@ -256,11 +280,14 @@ export class Backdrop {
       held.at,
       held.cover && spills,
     )
+
     const box = { ...framed, x: framed.x + area.col * this.cell.w, y: framed.y + area.row * this.cell.h }
     const rect = cellRect(size.width, size.height, area, this.cell, box)
+
     if (!rect) {
       return undefined
     }
+
     return {
       image,
       opacity: held.opacity,
@@ -273,40 +300,53 @@ export class Backdrop {
   private layer(id: number, z: number, format: string, pixel: Buffer, plate: Area): string {
     const data = pixel.toString('base64')
     const key = `${data}|${plate.col}|${plate.row}|${plate.cols}|${plate.rows}`
+
     if (this.placed.get(id) === key) {
       return ''
     }
+
     this.sent.set(id, key)
     this.placed.set(id, key)
+
     return `\x1b_Ga=t,${format},s=1,v=1,i=${id},q=2;${data}\x1b\\\x1b[${plate.row + 1};${plate.col + 1}H\x1b_Ga=p,i=${id},p=${id},c=${plate.cols},r=${plate.rows},C=1,z=${z},q=2\x1b\\`
   }
 
   private picture(look: Look): string {
     let path = look.image
     let rect = look.rect
+
     if (this.banded && (2 * rect.y + rect.h - look.height) ** 2 > 1) {
       const band = this.band(look.image, rect.y, rect.h)
+
       if (!band.ready) {
         return ''
       }
+
       path = band.path
       rect = { ...rect, y: 0 }
     }
+
     let out = ''
+
     if (this.sent.get(PICTURE_ID) !== path) {
       const data = transmit({ id: PICTURE_ID, path, row: 0, col: 0, cols: 0, rows: 0, z: PICTURE_Z }, this.files)
+
       if (data === undefined) {
         return ''
       }
+
       out += data
       this.sent.set(PICTURE_ID, path)
       this.placed.delete(PICTURE_ID)
     }
+
     const at = `${rect.col};${rect.row};${rect.cols};${rect.rows};${rect.x};${rect.y};${rect.w};${rect.h}`
+
     if (this.placed.get(PICTURE_ID) !== at) {
       out += `\x1b[${rect.row + 1};${rect.col + 1}H\x1b_Ga=p,i=${PICTURE_ID},p=${PICTURE_ID},x=${rect.x},y=${rect.y},w=${rect.w},h=${rect.h},c=${rect.cols},r=${rect.rows},C=1,z=${PICTURE_Z},q=2\x1b\\`
       this.placed.set(PICTURE_ID, at)
     }
+
     return out
   }
 
@@ -314,17 +354,21 @@ export class Backdrop {
     if (!this.sent.has(id)) {
       return ''
     }
+
     this.sent.delete(id)
     this.placed.delete(id)
+
     return release(id)
   }
 
   private band(from: string, y: number, height: number): { path: string; ready: boolean } {
     const key = `${from}|${y}|${height}`
     const held = this.bands.get(key)
+
     if (held) {
       return held
     }
+
     this.scratch ??= mkdtempSync(join(tmpdir(), 'ttheme-edit-'))
     this.renders ??= new Renderer()
     const band = { path: join(this.scratch, `band-${++this.made}.png`), ready: false }
@@ -336,15 +380,18 @@ export class Backdrop {
         this.ready()
       })
       .catch(() => {})
+
     for (const [old, made] of this.bands) {
       if (this.bands.size <= BANDS_HELD) {
         break
       }
+
       if (made.ready && made.path !== this.sent.get(PICTURE_ID)) {
         this.bands.delete(old)
         rmSync(made.path, { force: true })
       }
     }
+
     return band
   }
 }

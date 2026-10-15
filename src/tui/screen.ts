@@ -48,7 +48,9 @@ export class Screen {
     if (this.stopped || this.immediate || this.delayed) {
       return
     }
+
     const wait = this.last + FRAME_GAP - performance.now()
+
     if (wait > 0) {
       this.delayed = setTimeout(this.paint, wait)
     } else {
@@ -60,6 +62,7 @@ export class Screen {
     if (this.stopped || this.immediate) {
       return
     }
+
     clearTimeout(this.delayed)
     this.delayed = undefined
     this.immediate = setImmediate(this.paint)
@@ -101,13 +104,17 @@ export class Screen {
   private readonly paint = (): void => {
     this.immediate = undefined
     this.delayed = undefined
+
     if (this.stopped) {
       return
     }
+
     const { drawn: frame, targets } = marking(() => this.view())
+
     if (!frame) {
       return
     }
+
     this.last = performance.now()
     const { lines, zones } = lifted(frame.lines, targets)
     this.pointer.zones = [...(frame.zones ?? []), ...zones]
@@ -115,21 +122,26 @@ export class Screen {
     this.wipe = ''
     const rewritten = new Set<number>()
     const count = Math.max(lines.length, this.shown.length)
+
     for (let row = 0; row < count; row++) {
       const line = lines[row]
+
       if (line !== this.shown[row]) {
         out += `\x1b[${row + 1};1H${RESET}\x1b[2K${line ?? ''}`
         rewritten.add(row)
       }
     }
+
     this.shown = lines
     const after = frame.after?.(rewritten) ?? ''
     const cursor = frame.cursor ?? ''
     const moved = cursor !== '' && (out !== '' || after !== '' || cursor !== this.cursor)
     this.cursor = cursor
+
     if (out || after || moved) {
       this.write(`${BEGIN}${out}${after}${RESET}${moved ? cursor : ''}${END}`)
     }
+
     this.tick(frame.ticking === true)
   }
 
@@ -175,16 +187,21 @@ export class Inline {
   private put(frame: string[], back: string): void {
     const lines = frame.map((line) => fit(line, this.cols() - 1, false))
     let first = 0
+
     while (first < lines.length && first < this.shown.length && lines[first] === this.shown[first]) {
       first++
     }
+
     if (first === lines.length && lines.length === this.shown.length) {
       return
     }
+
     if (first === lines.length) {
       first = Math.max(0, lines.length - 1)
     }
+
     let out = ''
+
     if (this.shown.length === 0) {
       out = lines.join('\n')
     } else if (first >= this.shown.length) {
@@ -193,6 +210,7 @@ export class Inline {
       const up = this.shown.length - 1 - first
       out = `${up > 0 ? `\x1b[${up}A` : ''}\r\x1b[J${lines.slice(first).join('\n')}`
     }
+
     this.shown = lines
     this.write(`${BEGIN}${back}${out}${END}`)
   }

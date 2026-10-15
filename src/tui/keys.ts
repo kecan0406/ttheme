@@ -97,13 +97,17 @@ type Step = { events: Inbound[]; end: number } | undefined
 
 function keyOf(ch: string): string | undefined {
   const named = NAMED[ch]
+
   if (named) {
     return named
   }
+
   const code = ch.codePointAt(0) ?? 0
+
   if (code < 27) {
     return `ctrl-${String.fromCharCode(code + 96)}`
   }
+
   return code < 32 ? undefined : ch
 }
 
@@ -117,12 +121,15 @@ function lone(at: number): { events: Inbound[]; end: number } {
 
 function metadata(text: string): Record<string, string> {
   const out: Record<string, string> = {}
+
   for (const pair of text.split(':')) {
     const at = pair.indexOf('=')
+
     if (at > 0) {
       out[pair.slice(0, at)] = pair.slice(at + 1)
     }
   }
+
   return out
 }
 
@@ -132,7 +139,9 @@ function pointer(code: number, col: number, row: number, released: boolean): Mou
   if (!Number.isInteger(code) || code < 0 || code >= 128 || !(col >= 0) || !(row >= 0)) {
     return undefined
   }
+
   const low = code & 3
+
   const at = {
     kind: 'mouse' as const,
     row,
@@ -141,27 +150,34 @@ function pointer(code: number, col: number, row: number, released: boolean): Mou
     alt: (code & 8) !== 0,
     ctrl: (code & 16) !== 0,
   }
+
   if (code & 64) {
     return { ...at, action: 'wheel', button: undefined, wheel: low % 2 === 0 ? -1 : 1, sideways: low >= 2, count: 0 }
   }
+
   const button = BUTTONS[low]
   const action = code & 32 ? (button ? 'drag' : 'move') : released || !button ? 'release' : 'press'
+
   return { ...at, action, button, wheel: 0, sideways: false, count: action === 'press' ? 1 : 0 }
 }
 
 function x10(input: string, stop: number, final: boolean): Step {
   const codes: number[] = []
   let end = stop
+
   while (codes.length < 3 && end < input.length) {
     const code = input.codePointAt(end) as number
     codes.push(code)
     end += code > 0xffff ? 2 : 1
   }
+
   if (codes.length < 3) {
     return final ? { events: [], end: input.length } : undefined
   }
+
   const [code = 0, x = 0, y = 0] = codes
   const mouse = Math.max(code, x, y) < 0x80 ? pointer(code - 32, x - 33, y - 33, false) : undefined
+
   return { events: mouse ? [mouse] : [], end }
 }
 
@@ -171,6 +187,7 @@ function pixelled(code: number, x: number, y: number, released: boolean, cell: C
   const col = Math.floor(across)
   const row = Math.floor(down)
   const mouse = pointer(code, col, row, released)
+
   return mouse && { ...mouse, fx: across - col, fy: down - row }
 }
 
@@ -178,38 +195,50 @@ function glyph(code: number, shifted: number, base: number, shift: boolean, chor
   if (code < 32 || (code >= 127 && code < 160) || code >= FUNCTIONAL) {
     return undefined
   }
+
   if (chord) {
     return code > 127 && base >= 33 && base < 127 ? String.fromCharCode(base) : String.fromCodePoint(code)
   }
+
   const plain = String.fromCodePoint(code)
+
   return shift ? (Number.isInteger(shifted) ? String.fromCodePoint(shifted) : plain.toUpperCase()) : plain
 }
 
 function coded(params: string): Inbound[] {
   const [keys = '', mods = ''] = params.split(';')
+
   const [code = Number.NaN, shifted = Number.NaN, base = Number.NaN] = keys
     .split(':')
     .map((part) => (part === '' ? Number.NaN : Number(part)))
+
   const bits = (mods === '' ? 1 : Number(mods.split(':')[0])) - 1
+
   if (!Number.isInteger(code) || !Number.isInteger(bits) || bits < 0 || bits & NOT_TEXT) {
     return []
   }
+
   const shift = (bits & 1) !== 0
   const alt = (bits & 2) !== 0
   const ctrl = (bits & 4) !== 0
   const chord = ctrl || alt
   const named = CODED[code]
   const label = named ?? glyph(code, shifted, base, shift, chord)
+
   if (label === undefined) {
     return []
   }
+
   const alias = ctrl && !alt && !shift ? CTRL_ALIASES[label] : undefined
+
   if (alias !== undefined) {
     return [key(alias)]
   }
+
   if (!chord && !(shift && named !== undefined)) {
     return [key(named === 'space' ? ' ' : label)]
   }
+
   return [key([ctrl && 'ctrl', alt && 'alt', shift && 'shift', label].filter(Boolean).join('-'))]
 }
 
@@ -217,72 +246,98 @@ function report(params: string, between: string, final: string, cell: Cell | und
   if ((final === 'M' || final === 'm') && between === '' && params.startsWith('<')) {
     const [code = -1, x = 0, y = 0] = params.slice(1).split(';').map(Number)
     const mouse = cell ? pixelled(code, x, y, final === 'm', cell) : pointer(code, x - 1, y - 1, final === 'm')
+
     return mouse ? [mouse] : []
   }
+
   if (final === 't' && between === '') {
     const [code, a = 0, b = 0] = params.split(';').map(Number)
     const of = code === 6 ? 'cell' : code === 4 ? 'window' : code === 8 ? 'grid' : undefined
+
     return of ? [{ kind: 'size', of, h: a, w: b }] : []
   }
+
   if (final === 'y' && between === '$' && params.startsWith('?')) {
     const [mode = 0, value = 0] = params.slice(1).split(';').map(Number)
+
     return [{ kind: 'mode', mode, value }]
   }
+
   if (final === 'c' && params.startsWith('?')) {
     return [{ kind: 'attributes' }]
   }
+
   if (final === 'u' && between === '') {
     if (params.startsWith('?')) {
       return [{ kind: 'keyboard', flags: Number(params.slice(1)) || 0 }]
     }
+
     if (/^[\d:;]*$/.test(params)) {
       return coded(params)
     }
   }
+
   const name = between === '' ? CSI_KEYS[`${params}${final}`] : undefined
+
   return name ? [key(name)] : []
 }
 
 function csi(input: string, at: number, final: boolean, cell: Cell | undefined): Step {
   SGR_MOUSE.lastIndex = at + 1
   const mouse = SGR_MOUSE.exec(input)
+
   if (mouse) {
     return { events: report(mouse[1] as string, '', mouse[2] as string, cell), end: at + 1 + mouse[0].length }
   }
+
   CSI.lastIndex = at + 1
   const m = CSI.exec(input)
+
   if (!m) {
     const rest = input.slice(at + 1)
+
     return !final && (CSI_OPEN.test(rest) || SGR_OPEN.test(rest)) ? undefined : lone(at)
   }
+
   const [whole, params = '', between = '', last = ''] = m
   const stop = at + 1 + whole.length
+
   if (params === '' && between === '' && last === 'M') {
     return x10(input, stop, final)
   }
+
   if (params === '200' && last === '~') {
     const close = input.indexOf(PASTE_END, stop)
+
     if (close === -1) {
       return final ? { events: [{ kind: 'paste', text: input.slice(stop) }], end: input.length } : undefined
     }
+
     return { events: [{ kind: 'paste', text: input.slice(stop, close) }], end: close + PASTE_END.length }
   }
+
   return { events: report(params, between, last, cell), end: stop }
 }
 
 function oscEvents(body: string): Inbound[] {
   const cell = CELL_SIZE.exec(body)
+
   if (cell) {
     const scale = Number(cell[3] ?? 1)
+
     return [
       { kind: 'size', of: 'cell', h: Math.round(Number(cell[1]) * scale), w: Math.round(Number(cell[2]) * scale) },
     ]
   }
+
   const color = COLOR.exec(body)
+
   if (color) {
     return [{ kind: 'color', code: color[1] as string, value: color[2] as string }]
   }
+
   const [code = '', meta = '', ...rest] = body.split(';')
+
   return [{ kind: 'osc', code, meta: metadata(meta), payload: rest.join(';') }]
 }
 
@@ -290,72 +345,95 @@ function osc(input: string, at: number, final: boolean): Step {
   OSC_CODE.lastIndex = at + 1
   const code = OSC_CODE.exec(input)
   const after = code ? input[at + 1 + code[0].length] : undefined
+
   if (after !== ';' && after !== '\x07' && after !== '\x1b') {
     return !final && OSC_OPEN.test(input.slice(at + 1)) ? undefined : lone(at)
   }
+
   const ends = [input.indexOf('\x07', at), input.indexOf('\x1b\\', at + 2)].filter((end) => end !== -1)
+
   if (ends.length === 0) {
     return final ? { events: [], end: input.length } : undefined
   }
+
   const end = Math.min(...ends)
+
   return { events: oscEvents(input.slice(at + 2, end)), end: end + (input[end] === '\x07' ? 1 : 2) }
 }
 
 function ss3(input: string, at: number, final: boolean): Step {
   const last = input[at + 2]
+
   if (last === undefined) {
     return final ? lone(at) : undefined
   }
+
   if (!/^[A-Za-z]$/.test(last)) {
     return lone(at)
   }
+
   const name = CSI_KEYS[last]
+
   return { events: name ? [key(name)] : [], end: at + 3 }
 }
 
 function sequence(input: string, at: number, final: boolean, cell: Cell | undefined): Step {
   const next = input[at + 1]
+
   if (next === undefined) {
     return final ? lone(at) : undefined
   }
+
   if (next === '[') {
     return csi(input, at, final, cell)
   }
+
   if (next === ']') {
     return osc(input, at, final)
   }
+
   if (next === 'O') {
     return ss3(input, at, final)
   }
+
   if (next === '\x7f') {
     return { events: [key('alt-backspace')], end: at + 2 }
   }
+
   if (/^[a-z]$/.test(next)) {
     return { events: [key(`alt-${next}`)], end: at + 2 }
   }
+
   return lone(at)
 }
 
 export function decode(input: string, final = false, cell?: Cell): { events: Inbound[]; rest: string } {
   const events: Inbound[] = []
   let at = 0
+
   while (at < input.length) {
     if (input[at] === '\x1b') {
       const step = sequence(input, at, final, cell)
+
       if (!step) {
         return { events, rest: input.slice(at) }
       }
+
       events.push(...step.events)
       at = step.end
       continue
     }
+
     const ch = String.fromCodePoint(input.codePointAt(at) as number)
     const name = keyOf(ch)
+
     if (name) {
       events.push(key(name))
     }
+
     at += ch.length
   }
+
   return { events, rest: '' }
 }
 
@@ -369,6 +447,7 @@ function opening(bytes: Buffer, from: number): number {
       return bytes.length - n
     }
   }
+
   return bytes.length
 }
 
@@ -376,27 +455,34 @@ function legacy(bytes: Buffer): { bytes: Buffer; carry: Buffer | undefined } {
   const parts: Buffer[] = []
   let from = 0
   let at = bytes.indexOf(LEGACY)
+
   while (at !== -1 && at + 6 <= bytes.length) {
     parts.push(bytes.subarray(from, at))
     const [code = 0, x = 0, y = 0] = bytes.subarray(at + 3, at + 6)
+
     if (x > 32 && y > 32) {
       parts.push(Buffer.from(`\x1b[<${code - 32};${x - 32};${y - 32}M`))
     }
+
     from = at + 6
     at = bytes.indexOf(LEGACY, from)
   }
+
   const end = at === -1 ? opening(bytes, from) : at
   parts.push(bytes.subarray(from, end))
+
   return { bytes: Buffer.concat(parts), carry: end < bytes.length ? bytes.subarray(end) : undefined }
 }
 
 function long(held: string): boolean {
   OSC_OPENED.lastIndex = 1
+
   return held.startsWith(PASTE_START) || (held.startsWith('\x1b]') && OSC_OPENED.test(held))
 }
 
 function ended(held: string, text: string): boolean {
   const seam = held.slice(-PASTE_END.length) + text
+
   return held.startsWith(PASTE_START) ? seam.includes(PASTE_END) : seam.includes('\x07') || seam.includes('\x1b\\')
 }
 
@@ -420,6 +506,7 @@ export class Keys {
     this.cell = cell
     this.take = (events) => {
       const kept = this.counted(events)
+
       if (kept.length > 0) {
         take(kept)
       }
@@ -428,34 +515,45 @@ export class Keys {
 
   private counted(events: Inbound[]): Inbound[] {
     const now = performance.now()
+
     return events.filter((event) => {
       if (event.kind !== 'mouse') {
         return true
       }
+
       if (event.action === 'wheel') {
         const way = event.wheel * (event.sideways ? 2 : 1)
         const last = this.wheeled
+
         if (last !== undefined && last.way === way && now - last.at < WHEEL_GAP) {
           return false
         }
+
         this.wheeled = { at: now, way }
+
         return true
       }
+
       if (event.action === 'release') {
         event.count = this.pressed?.count ?? 0
       }
+
       if (event.action !== 'press' || !event.button) {
         return true
       }
+
       const last = this.pressed
+
       const again =
         last !== undefined &&
         last.button === event.button &&
         last.row === event.row &&
         Math.abs(last.col - event.col) <= 1 &&
         now - last.at <= CLICK_GAP
+
       event.count = again ? last.count + 1 : 1
       this.pressed = { at: now, button: event.button, row: event.row, col: event.col, count: event.count }
+
       return true
     })
   }
@@ -463,18 +561,24 @@ export class Keys {
   feed(chunk: Buffer | string): void {
     clearTimeout(this.timer)
     const text = typeof chunk === 'string' ? chunk : this.bytes(chunk)
+
     if (!this.held && !text.includes('\x1b') && this.burst(text)) {
       this.settle()
       this.take([{ kind: 'paste', text }])
+
       return
     }
+
     if (long(this.held) && !ended(this.held, text)) {
       this.held += text
+
       return
     }
+
     const { events, rest } = decode(this.held + text, false, this.cell())
     this.held = rest
     this.settle()
+
     if (events.length > 0) {
       this.take(events)
     }
@@ -482,6 +586,7 @@ export class Keys {
 
   private settle(): void {
     const waiting = this.held.length + (this.carry?.length ?? 0)
+
     if (waiting > 0 && !long(this.held)) {
       this.wait(waiting === 1 ? ESC_WAIT : SEQUENCE_WAIT)
     }
@@ -490,6 +595,7 @@ export class Keys {
   private bytes(chunk: Buffer): string {
     const { bytes, carry } = legacy(this.carry ? Buffer.concat([this.carry, chunk]) : chunk)
     this.carry = carry
+
     return this.utf8.write(bytes)
   }
 
@@ -505,6 +611,7 @@ export class Keys {
     const opened = carry && !carry.subarray(0, LEGACY.length).equals(LEGACY) ? this.utf8.write(carry) : ''
     const { events } = decode(this.held + opened, true, this.cell())
     this.held = ''
+
     if (events.length > 0) {
       this.take(events)
     }
@@ -525,16 +632,20 @@ export class CellProbe {
     if (event.kind !== 'size') {
       return undefined
     }
+
     if (event.of === 'cell') {
       return { w: event.w, h: event.h }
     }
+
     if (event.of === 'window') {
       this.window = event
     } else {
       this.grid = event
     }
+
     const shown = this.window
     const grid = this.grid
+
     return shown && grid && grid.h > 0 && grid.w > 0
       ? { h: Math.floor(shown.h / grid.h), w: Math.floor(shown.w / grid.w) }
       : undefined
@@ -553,6 +664,7 @@ export class PixelProbe {
     } else if (event.kind === 'attributes') {
       return { cell: this.known ? this.cell : undefined }
     }
+
     return undefined
   }
 }

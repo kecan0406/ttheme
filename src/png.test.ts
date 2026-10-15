@@ -7,6 +7,7 @@ import { decodeImage, decodePng, encodeMask, pngHead, toneOf } from './png.ts'
 function sample(width: number, height: number, alpha: boolean, smooth: boolean): PNG {
   const png = new PNG({ width, height })
   let seed = width * 31 + height
+
   for (let i = 0; i < width * height; i++) {
     const x = i % width
     const y = Math.floor(i / width)
@@ -17,6 +18,7 @@ function sample(width: number, height: number, alpha: boolean, smooth: boolean):
     png.data[i * 4 + 2] = smooth ? (x * y) & 255 : (noise >> 5) & 255
     png.data[i * 4 + 3] = alpha ? (smooth ? 200 : (noise >> 7) & 255) : 255
   }
+
   return png
 }
 
@@ -34,6 +36,7 @@ test('the native decode reads every filter and color layout the way pngjs does, 
             inputColorType: 6,
             filterType,
           })
+
           const ours = decodePng(new Uint8Array(bytes))
           const theirs = PNG.sync.read(bytes)
           assert.deepEqual(
@@ -45,8 +48,10 @@ test('the native decode reads every filter and color layout the way pngjs does, 
       }
     }
   }
+
   const deep = PNG.sync.write(sample(4, 4, true, true), { bitDepth: 16, colorType: 6, inputColorType: 6 })
   assert.deepEqual([...decodePng(new Uint8Array(deep)).data], [...PNG.sync.read(deep).data])
+
   for (const [width, height] of [
     [1, 1],
     [7, 5],
@@ -56,6 +61,7 @@ test('the native decode reads every filter and color layout the way pngjs does, 
       { width, height, data: Uint8Array.from({ length: width * height }, (_, i) => (i * 37 + width) & 255) },
       '#a1b2c3',
     )
+
     for (const bytes of [ramp, without(ramp, 'tRNS')]) {
       assert.deepEqual(
         [...decodePng(bytes).data],
@@ -63,17 +69,22 @@ test('the native decode reads every filter and color layout the way pngjs does, 
         `${width}×${height} indexed`,
       )
     }
+
     assert.equal(toneOf(ramp), '#a1b2c3')
   }
+
   assert.equal(toneOf(new Uint8Array(deep)), undefined)
 })
 
 test('a PNG is read the way its eXIf orientation shows it, as the JPEG decoder turns a JPEG', () => {
   const png = new PNG({ width: 3, height: 2 })
+
   for (let i = 0; i < 6; i++) {
     png.data.set([i * 40, 0, 0, 255], i * 4)
   }
+
   const plain = new Uint8Array(PNG.sync.write(png))
+
   const shown: Record<number, [number, number, number[]]> = {
     1: [3, 2, [0, 1, 2, 3, 4, 5]],
     2: [3, 2, [2, 1, 0, 5, 4, 3]],
@@ -84,6 +95,7 @@ test('a PNG is read the way its eXIf orientation shows it, as the JPEG decoder t
     7: [2, 3, [5, 2, 4, 1, 3, 0]],
     8: [2, 3, [2, 5, 1, 4, 0, 3]],
   }
+
   for (const [turn, [width, height, order]] of Object.entries(shown)) {
     const exif = Buffer.from([
       0x4d,
@@ -113,6 +125,7 @@ test('a PNG is read the way its eXIf orientation shows it, as the JPEG decoder t
       0,
       0,
     ])
+
     const body = Buffer.concat([Buffer.from('eXIf', 'latin1'), exif])
     const chunk = Buffer.alloc(12 + exif.length)
     chunk.writeUInt32BE(exif.length, 0)
@@ -132,13 +145,17 @@ test('a PNG is read the way its eXIf orientation shows it, as the JPEG decoder t
 function without(png: Uint8Array, kind: string): Uint8Array {
   const bytes = Buffer.from(png)
   const kept: Buffer[] = [bytes.subarray(0, 8)]
+
   for (let at = 8; at + 12 <= bytes.length; ) {
     const end = at + 12 + bytes.readUInt32BE(at)
+
     if (bytes.toString('latin1', at + 4, at + 8) !== kind) {
       kept.push(bytes.subarray(at, end))
     }
+
     at = end
   }
+
   return new Uint8Array(Buffer.concat(kept))
 }
 

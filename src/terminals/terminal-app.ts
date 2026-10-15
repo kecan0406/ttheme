@@ -234,11 +234,13 @@ function slots(theme: Theme): string[] {
 
 function profiled(ctx: Ctx): Theme[] {
   const shown = new Set(listed(ctx.entries).map((entry) => entry.name))
+
   return ctx.themes.filter((theme) => shown.has(theme.name) || theme.name === ctx.startup)
 }
 
 function baseOf(state: Moment['state'], host: Host): string {
   const now = current(host)
+
   return state.terminalBase ?? (now && !now.startsWith(OURS) ? now : 'Basic')
 }
 
@@ -249,6 +251,7 @@ interface Shape {
 
 export function shapeOf(env: Host['env'], home: string): Shape | undefined {
   const size = /^(\d+)x(\d+)$/.exec(readText(terminalWindow(env, home)).trim())
+
   return size ? { width: Number(size[1]) * 2, height: Number(size[2]) * 2 } : undefined
 }
 
@@ -258,6 +261,7 @@ export function canvasFor(width: number, height: number, picture: ProfileBackgro
   const at = (POSITIONS as readonly string[]).indexOf(picture.position) + 1 || 5
   const box = frameAt(width, height, W, H, 100, at, picture.cover)
   const k = Math.min(1, width / Math.max(1, box.w))
+
   return {
     width: Math.max(1, Math.round(W * k)),
     height: Math.max(1, Math.round(H * k)),
@@ -269,12 +273,15 @@ const LAID = /^ttheme-(.+)\.([0-9a-z-]+)\.png$/
 
 export function heldIn(dir: string): Map<string, string[]> {
   const held = new Map<string, string[]>()
+
   for (const file of existsSync(dir) ? readdirSync(dir) : []) {
     const [, of] = LAID.exec(file) ?? []
+
     if (of) {
       held.set(of, [...(held.get(of) ?? []), file])
     }
   }
+
   return held
 }
 
@@ -290,52 +297,66 @@ function lay(ctx: Ctx): Map<string, string> {
   const held = heldIn(dir)
   const shape = shapeOf(ctx.host.env, ctx.home)
   const laid = new Map<string, string>()
+
   const drop = (files: readonly string[]) => {
     for (const file of files) {
       rmSync(join(dir, file), { force: true })
     }
   }
+
   for (const theme of profiled(ctx)) {
     const files = held.get(stem(theme.name)) ?? []
     held.delete(stem(theme.name))
     const picture = readBackdrop(backgroundsDir(ctx.configHome), theme.name, ctx.home)
     const bytes = picture && existsSync(picture.image) ? new Uint8Array(readFileSync(picture.image)) : undefined
     const head = bytes && pngHead(bytes)
+
     if (!picture || !bytes || !head || picture.opacity <= 0) {
       drop(files)
       continue
     }
+
     const canvas = canvasFor(head.width, head.height, picture, shape)
+
     const version = createHash('sha1')
       .update(bytes)
       .update(JSON.stringify([theme.background.toLowerCase(), picture.opacity, canvas]))
       .digest('hex')
       .slice(0, 8)
+
     const file = `${owned(theme.name)}.${version}.png`
     const path = join(dir, file)
+
     if (!files.includes(file)) {
       let content: Buffer
+
       try {
         content = encodeRgb(flatten(decodePng(bytes), theme.background, picture.opacity, canvas))
       } catch {
         drop(files)
         continue
       }
+
       const [keep, ...rest] = files
+
       if (keep) {
         rewrite(join(dir, keep), path, content)
       } else {
         writeAtomic(path, content)
       }
+
       drop(rest)
     } else {
       drop(files.filter((other) => other !== file))
     }
+
     laid.set(theme.name, path)
   }
+
   for (const files of held.values()) {
     drop(files)
   }
+
   return laid
 }
 
@@ -352,14 +373,17 @@ const defaults: Defaults = {
   profile: terminalProfile,
   base(moment: Moment) {
     const now = current(moment.host)
+
     return now && !now.startsWith(OURS) ? { ...moment.state, terminalBase: now } : moment.state
   },
   point(moment: Moment, take: boolean) {
     const now = current(moment.host)
     const ours = now?.startsWith(OURS) === true
+
     if (moment.state.palettes.length === 0) {
       script(moment.host, moment.configHome, ['drop'])
     }
+
     const want = moment.startup
       ? take || ours
         ? terminalProfile(moment.startup)
@@ -367,13 +391,17 @@ const defaults: Defaults = {
       : ours
         ? baseOf(moment.state, moment.host)
         : undefined
+
     if (want === undefined || (want === now && !take)) {
       return undefined
     }
+
     for (const key of ['Default Window Settings', 'Startup Window Settings']) {
       moment.host.run('defaults', ['write', TERMINAL_DOMAIN, key, '-string', want])
     }
+
     const running = Boolean(moment.host.run('pgrep', ['-x', 'Terminal']))
+
     return { restart: running && script(moment.host, moment.configHome, ['loaded', want]) !== '1' }
   },
 }
@@ -404,6 +432,7 @@ export const terminalApp: Wiring = {
   notes: () => [],
   next(ctx, pointed) {
     const lines = [`Terminal.app      A "${terminalProfile('<palette>')}" profile per palette in Settings › Profiles`]
+
     if (ctx.startup) {
       lines.push(
         pointed?.restart
@@ -411,6 +440,7 @@ export const terminalApp: Wiring = {
           : `Terminal default  "${terminalProfile(ctx.startup)}", which follows \`ttheme default\``,
       )
     }
+
     return lines
   },
   unwire: () => ({ edits: [], removals: [], touches: [] }),

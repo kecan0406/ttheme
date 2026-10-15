@@ -93,10 +93,12 @@ test("resolve returns the marketplaces' order, not the order asked for", () => {
 
 test('sync writes a theme file per terminal and the zsh table', () => {
   const home = fixture()
+
   const written = sync(home, manifest, {
     terminals: ['ghostty', 'kitty'],
     palettes: ['neutral', 'gojo'],
   })
+
   assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo')))
   assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-gojo.conf')))
   assert.ok(existsSync(join(home, 'ttheme', 'palettes.zsh')))
@@ -130,12 +132,14 @@ test('sync moves palettes.zsh whenever it touches Windows Terminal settings, so 
   const settings = join(wtHome, 'Microsoft', 'Windows Terminal', 'settings.json')
   mkdirSync(join(settings, '..'), { recursive: true })
   writeFileSync(settings, '{}\n')
+
   const state: Installed = {
     terminals: ['windows-terminal'],
     palettes: ['gojo'],
     wtHome,
     wtProfile: '{00000000-0000-0000-0000-000000000001}',
   }
+
   sync(configHome, manifest, state)
   const table = join(configHome, 'ttheme', 'palettes.zsh')
   utimesSync(table, new Date(0), new Date(0))
@@ -291,6 +295,7 @@ test('sync keeps Warp on the palette of the painted tab that ran the command, un
   mkdirSync(join(settings, '..'), { recursive: true })
   writeFileSync(settings, `[appearance.themes]\ntheme = ${warpThemeValue('geto')}\n`)
   process.env.TTHEME_WARP_WEARS = 'geto'
+
   try {
     sync(configHome, manifest, state, home)
     assert.match(readFileSync(settings, 'utf8'), /name = "geto"/)
@@ -306,6 +311,7 @@ test('sync keeps Warp on the palette of the painted tab that ran the command, un
 
 test('a Warp theme written late lands when nothing came after it, and gives way to a sync that did, such as ttheme off', async () => {
   const mine = '[appearance.themes]\ntheme = "Dracula"\n'
+
   const [kept, undone] = [0, 1].map(() => {
     const configHome = fixture()
     const home = fixture()
@@ -313,13 +319,17 @@ test('a Warp theme written late lands when nothing came after it, and gives way 
     mkdirSync(join(settings, '..'), { recursive: true })
     writeFileSync(settings, mine)
     sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo'] }, home)
+
     return { configHome, home, settings }
   }) as [{ configHome: string; home: string; settings: string }, { configHome: string; home: string; settings: string }]
+
   sync(undone.configHome, manifest, { terminals: ['warp'], palettes: ['gojo'], off: true }, undone.home)
   const until = Date.now() + 4000
+
   while (!/name = "gojo"/.test(readFileSync(kept.settings, 'utf8')) && Date.now() < until) {
     await new Promise((resolve) => setTimeout(resolve, 50))
   }
+
   await new Promise((resolve) => setTimeout(resolve, 300))
   assert.match(readFileSync(kept.settings, 'utf8'), /name = "gojo"/)
   assert.equal(readFileSync(undone.settings, 'utf8'), mine)
@@ -450,6 +460,7 @@ test('the shell names a laid Warp picture as the CLI does, so preview draws stra
   const layer = readFileSync(join(import.meta.dirname, '..', 'shell', 'adapters', 'warp.zsh'), 'utf8')
   const from = layer.indexOf('__tt_warp_laid() {')
   const laid = layer.slice(from, layer.indexOf('\n}\n', from) + 2)
+
   const cases: [string, string, string][] = [
     ['asuka', '/Users/kdh/.config/ttheme/backgrounds/asuka.6fc048f5@115-center-right-2912x2040.png', '#211513'],
     [
@@ -458,6 +469,7 @@ test('the shell names a laid Warp picture as the CLI does, so preview draws stra
       '#2A1B3C',
     ],
   ]
+
   const shell = spawnSync(
     'zsh',
     [
@@ -467,6 +479,7 @@ test('the shell names a laid Warp picture as the CLI does, so preview draws stra
     ],
     { input: `${cases.map(([pal, image, bg]) => `${pal} ${bg} ${image}`).join('\n')}\n`, encoding: 'utf8' },
   )
+
   assert.deepEqual(
     shell.stdout.trimEnd().split('\n'),
     cases.map(([pal, image, bg]) => `/t/${warpPictureFile(pal, image, bg)}`),
@@ -530,6 +543,7 @@ test('palettes.zsh tells the iTerm2 adapter whether iTerm2 lets a control sequen
   const configHome = fixture()
   const home = fixture()
   const table = () => readFileSync(join(configHome, 'ttheme', 'palettes.zsh'), 'utf8')
+
   const prefs = (value: string | undefined): Host => ({
     platform: 'darwin',
     env: { TTHEME_ITERM_SUITE: 'suite' },
@@ -538,9 +552,11 @@ test('palettes.zsh tells the iTerm2 adapter whether iTerm2 lets a control sequen
         ? value
         : undefined,
   })
+
   sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['gojo'] }, home, prefs('0'))
   assert.match(table(), /^typeset -g TTHEME_ITERM_SWITCH='1'$/m)
   assert.ok(table().includes(`\ntypeset -g TTHEME_ITERM_PROFILES='${itermProfilesPath(home)}'\n`))
+
   for (const value of ['1', undefined]) {
     sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['gojo'] }, home, prefs(value))
     assert.match(table(), /^typeset -g TTHEME_ITERM_SWITCH=''$/m)
@@ -563,12 +579,14 @@ test("sync gives a palette's iTerm2 profile its picture, tuning and off switch",
   writeFileSync(join(dir, 'geto.conf'), `background-image = ${join(dir, 'geto.png')}\nconfig-file = ?geto.off.conf\n`)
   writeFileSync(join(dir, 'geto.off.conf'), 'background-image =\n')
   sync(configHome, manifest, { terminals: ['iterm2'], palettes: ['gojo', 'geto'] }, home)
+
   const pick = ({ Name, ...p }: Record<string, unknown>) => [
     Name,
     p['Background Image Location'],
     p['Background Image Mode'],
     p.Blend,
   ]
+
   assert.deepEqual(JSON.parse(readFileSync(itermProfilesPath(home), 'utf8')).Profiles.map(pick), [
     ['ttheme · default', join(home, 'gojo@60-center.png'), 3, 0.2],
     ['ttheme · gojo', join(home, 'gojo@60-center.png'), 3, 0.2],
@@ -594,6 +612,7 @@ test('forget removes only the named palettes', () => {
 function defaultsAt(initial: string | undefined): { host: Host; writes: string[] } {
   let value = initial
   const writes: string[] = []
+
   return {
     host: {
       platform: 'darwin',
@@ -602,11 +621,14 @@ function defaultsAt(initial: string | undefined): { host: Host; writes: string[]
         if (command === 'defaults' && args[0] === 'read') {
           return value
         }
+
         if (command === 'defaults' && args[0] === 'write') {
           value = args[4]
           writes.push(args[4] ?? '')
+
           return ''
         }
+
         return undefined
       },
     },
@@ -658,6 +680,7 @@ test("a marketplace's palette gets theme files and a startup line with -- for th
 
 test('installed.json keeps every field it holds through a write and a read', () => {
   const home = fixture()
+
   const state: Required<Installed> = {
     terminals: ['ghostty', 'iterm2', 'windows-terminal'],
     author: 'kec',
@@ -672,6 +695,7 @@ test('installed.json keeps every field it holds through a write and a read', () 
     updates: { 'alice/pastel#v1': true, official: false },
     palettes: ['gojo', 'alice@pastel/dusk'],
   }
+
   writeInstalled(home, state)
   assert.deepEqual(readInstalled(home), state)
 })

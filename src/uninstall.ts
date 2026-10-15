@@ -51,11 +51,14 @@ function filesIn(dir: string): string[] {
 
 function unprefixed(path: string): boolean {
   const file = path.slice(path.lastIndexOf('/') + 1)
+
   if (file.startsWith(owned(''))) {
     return false
   }
+
   const name = file.replace(/\.(conf|toml)$/, '')
   const text = readFileSync(path, 'utf8')
+
   return (
     (text.startsWith(`# ${name} — `) && text.split('\n')[1]?.startsWith('# ANSI: ') === true) ||
     text.startsWith(`[metadata]\nname = "${name}"\norigin_url = "`)
@@ -64,9 +67,11 @@ function unprefixed(path: string): boolean {
 
 function oldShaders(dir: string): string[] {
   const files = filesIn(dir)
+
   const shipped = files.filter((path) =>
     SHIPPED_SHADERS.has(createHash('sha256').update(readFileSync(path)).digest('hex')),
   )
+
   return shipped.length > 0 && shipped.length === readdirSync(dir).length ? [dir] : shipped
 }
 
@@ -86,6 +91,7 @@ export function planUninstall(paths: UninstallPaths): UninstallPlan {
   const parts = every.map((wiring) => wiring.unwire(at, state))
   const owns = [join(configHome, 'ttheme'), paths.cacheDir, paths.stateDir]
   const fish = fishFunction(configHome)
+
   return {
     edits: [
       ...[...new Set([join(paths.zdotdir, '.zshrc'), join(home, '.zshrc')])].flatMap((file) =>
@@ -109,6 +115,7 @@ export function planUninstall(paths: UninstallPaths): UninstallPlan {
 
 export function applyUninstall(plan: UninstallPlan, paths: UninstallPaths, host: Host = systemHost()): string[] {
   const done: string[] = []
+
   for (const { file, content } of plan.edits) {
     const result = restoreUserFile(file, content)
     done.push(
@@ -119,29 +126,37 @@ export function applyUninstall(plan: UninstallPlan, paths: UninstallPaths, host:
           : `Took ttheme out of ${file} — kept ${file}.ttheme.bak, since the file changed after ttheme's first edit`,
     )
   }
+
   if (plan.state) {
     const pointed = pointDefaults(paths.configHome, { ...plan.state, off: true, palettes: [] }, false, host, paths.home)
+
     for (const wiring of wirings(plan.state.terminals)) {
       if (pointed.has(wiring.id)) {
         done.push(`Gave ${wiring.name} its own default profile back — it takes it at its next start`)
       }
     }
   }
+
   for (const path of plan.removals) {
     rmSync(path, { recursive: true, force: true })
   }
+
   if (plan.removals.length > 0) {
     done.push(`Deleted ${plan.removals.length} files and folders ttheme wrote`)
   }
+
   const now = new Date()
+
   for (const file of plan.touches) {
     utimesSync(file, now, now)
   }
+
   return done
 }
 
 function uninstallPaths(): UninstallPaths {
   const home = homedir()
+
   return {
     home,
     configHome: configDir(),
@@ -154,14 +169,18 @@ function uninstallPaths(): UninstallPaths {
 export async function runUninstall(yes = false): Promise<void> {
   const paths = uninstallPaths()
   const plan = planUninstall(paths)
+
   if (plan.edits.length === 0 && plan.removals.length === 0) {
     console.log('Nothing of ttheme is installed')
+
     return
   }
+
   if (!yes) {
     if (process.stdin.isTTY !== true || process.stdout.isTTY !== true) {
       throw new Error('uninstall asks before it deletes anything — run it in a terminal, or pass --yes')
     }
+
     const tthemeDir = join(paths.configHome, 'ttheme')
     p.intro('ttheme uninstall')
     p.note(
@@ -176,13 +195,16 @@ export async function runUninstall(yes = false): Promise<void> {
       'Uninstall',
     )
     const ok = await p.confirm({ message: 'Remove ttheme?' })
+
     if (p.isCancel(ok) || !ok) {
       p.cancel('Nothing changed')
       throw new Cancelled()
     }
   }
+
   for (const line of applyUninstall(plan, paths)) {
     console.log(line)
   }
+
   console.log('Open tabs keep their colors until they close — restart your terminal to drop ttheme everywhere')
 }

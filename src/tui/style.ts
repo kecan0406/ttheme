@@ -81,6 +81,7 @@ export function indexed(fg: number, bg: number): string {
 
 function channels(hex: string): string {
   const h = hex.replace('#', '')
+
   return [h.slice(0, 2), h.slice(2, 4), h.slice(4, 6)].map((c) => Number.parseInt(c, 16)).join(';')
 }
 
@@ -111,14 +112,19 @@ export function closing(text: string): string {
   let reverse = false
   let fg = false
   let bg = false
+
   for (const chunk of text.split('\x1b[').slice(1)) {
     const params = /^([0-9;]*)m/.exec(chunk)?.[1]
+
     if (params === undefined) {
       continue
     }
+
     const codes = (params || '0').split(';').map(Number)
+
     for (let i = 0; i < codes.length; i++) {
       const code = codes[i] as number
+
       if (code === 0) {
         weight = italic = under = reverse = fg = bg = false
       } else if (code === 1 || code === 2) {
@@ -146,7 +152,9 @@ export function closing(text: string): string {
       }
     }
   }
+
   const off = [weight && '22', italic && '23', under && '24', reverse && '27', fg && '39', bg && '49'].filter(Boolean)
+
   return off.length > 0 ? csi(off.join(';')) : ''
 }
 
@@ -167,6 +175,7 @@ export interface Paint {
 
 export function painter(color: boolean): Paint {
   const role = (name: Role) => (text: string) => (color ? `${open(name)}${text}${close(name)}` : text)
+
   return {
     color,
     dim: role('dim'),

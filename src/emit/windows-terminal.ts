@@ -23,6 +23,7 @@ export function wtFragment(themes: Theme[], profile?: string, startup?: string):
     ...(profile && startup ? { profiles: [{ updates: profile, colorScheme: owned(startup) }] } : {}),
     schemes: themes.map(wtScheme),
   }
+
   return `${JSON.stringify(doc, null, 2)}\n`
 }
 

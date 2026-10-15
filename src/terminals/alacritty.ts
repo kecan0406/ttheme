@@ -9,6 +9,7 @@ import type { At, Now, Wiring } from './types.ts'
 
 export function alacrittyColors(content: string): boolean {
   const outside = content.replace(BLOCK, '')
+
   return /^[ \t]*\[colors[\].]/m.test(outside) || /^[ \t]*colors[ \t]*[.=]/m.test(outside)
 }
 
@@ -24,20 +25,26 @@ function importLine(pointer: string): string {
 export function upsertAlacrittyImport(content: string, pointer: string): string | undefined {
   const outside = content.replace(BLOCK, '')
   const general = TOML_GENERAL.exec(outside)
+
   if (!general) {
     const first = outside.search(TOML_TABLE)
     const root = first < 0 ? outside : outside.slice(0, first)
+
     if (TOML_GENERAL_KEY.test(outside) || TOML_IMPORT.test(root)) {
       return undefined
     }
+
     return upsertBlock(content, `# ${MANAGED}\n[general]\n${importLine(pointer)}`)
   }
+
   const at = general.index + general[0].length
   const rest = outside.slice(at)
   const next = rest.search(TOML_TABLE)
+
   if (TOML_IMPORT.test(next < 0 ? rest : rest.slice(0, next))) {
     return undefined
   }
+
   return `${outside.slice(0, at)}\n${BLOCK_BEGIN}\n# ${MANAGED}\n${importLine(pointer)}\n${BLOCK_END}${rest}`
 }
 
@@ -60,6 +67,7 @@ interface AlacrittyConfig {
 
 function leftover(file: string): boolean {
   const content = readText(file)
+
   return BLOCK.test(content) && removeBlock(content) === '' && !existsSync(backupPath(file))
 }
 
@@ -67,12 +75,15 @@ export function alacrittyConfig(at: At): AlacrittyConfig {
   const candidates = alacrittyCandidates(at)
   const left = candidates.filter(leftover)
   const found = candidates.find((file) => existsSync(file) && !left.includes(file))
+
   const yaml = found
     ? undefined
     : candidates.map((file) => file.replace(/\.toml$/, '.yml')).find((file) => existsSync(file))
+
   if (!found && !yaml) {
     return { file: left[0] ?? (candidates[0] as string) }
   }
+
   return {
     file: found ?? (candidates[0] as string),
     ...(yaml ? { yaml } : {}),
@@ -90,6 +101,7 @@ function alacrittyOwnText(theme: string | undefined): string {
 
 function pointer(at: At): string {
   const own = alacrittyOwn(at.configHome)
+
   return fromHome(own, at.home, '~') ?? own
 }
 
@@ -112,16 +124,20 @@ export const alacritty: Wiring = {
     out.themes(alacritty)
     out.write(alacrittyOwn(ctx.configHome), alacrittyOwnText(themeOf(ctx)))
     const config = alacrittyConfig(ctx)
+
     for (const file of config.leftover ?? []) {
       out.remove(file)
     }
+
     const wired = config.yaml ? undefined : upsertAlacrittyImport(readText(config.file), pointer(ctx))
+
     if (wired !== undefined) {
       out.wire(config.file, wired)
     }
   },
   plan(now) {
     const config = alacrittyConfig(now)
+
     return !config.yaml && upsertAlacrittyImport(readText(config.file), pointer(now)) !== undefined
       ? [
           `Edit ${tilde(config.file, now.home)} — a ttheme block: general.import`,
@@ -131,17 +147,21 @@ export const alacritty: Wiring = {
   },
   notes(now) {
     const config = alacrittyConfig(now)
+
     const freed = (config.leftover ?? []).map(
       (file) =>
         `${tilde(file, now.home)} held only ttheme's import and hid ${tilde(config.yaml ?? config.file, now.home)} from Alacritty — ttheme removed it`,
     )
+
     if (config.yaml) {
       return [
         ...freed,
         `${tilde(config.yaml, now.home)} is the config Alacritty reads, and ttheme edits TOML only — \`alacritty migrate\` converts it, and ttheme wires the TOML at its next add, remove or default`,
       ]
     }
+
     const content = readText(config.file)
+
     return [
       ...freed,
       ...(existsSync(config.file) && upsertAlacrittyImport(content, pointer(now)) === undefined

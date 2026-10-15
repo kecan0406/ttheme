@@ -23,11 +23,13 @@ test('the pane stays inside the window, which ends above the footer', () => {
     const layout = layoutOf(cols, rows, 0)
     assert.ok(layout)
     const inner = layout.inner
+
     for (const tile of layout.tiles) {
       assert.ok(tile.col >= inner.col && tile.col + tile.width <= inner.col + inner.cols)
       assert.ok(tile.row + tile.rows <= inner.row + inner.rows)
       assert.ok(paneLines(tile).length <= tile.rows)
     }
+
     assert.ok(inner.row + inner.rows < rows - 1)
   }
 })
@@ -62,6 +64,7 @@ test('every ANSI color, the selection and the cursor show somewhere in the windo
   ] as const) {
     const layout = layoutOf(cols, rows, 0)
     assert.ok(layout)
+
     for (let slot = 2; slot < 20; slot++) {
       const spot = firstSpot(layout, slot)
       assert.ok(spot && slotsAt(layout, spot) !== undefined)
@@ -82,6 +85,7 @@ test('a pane hands out only the runs it has room to show, so the inspector never
   ] as const) {
     const layout = layoutOf(cols, rows, scene)
     assert.ok(layout)
+
     for (const tile of layout.tiles) {
       for (const part of paneLines(tile).flat()) {
         assert.ok(part.col < tile.width - 2, `${tile.id} at ${cols}×${rows}: ${part.text} starts at ${part.col}`)

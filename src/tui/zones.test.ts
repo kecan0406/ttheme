@@ -6,6 +6,7 @@ import { cover, lift, marking, zone, zoneAt } from './zones.ts'
 function spans(line: () => string): { text: string; spans: string[] } {
   const { drawn, targets } = marking(line)
   const { text, zones } = lift(drawn, 3, targets)
+
   return { text, spans: zones.map((z) => `${z.target} ${z.row}:${z.col}+${z.width}`) }
 }
 
@@ -38,6 +39,7 @@ test('the smallest zone under the pointer wins, and the later of two the same si
     { row: 2, col: 1, width: 4, height: 1, target: 'link' },
     { row: 2, col: 1, width: 4, height: 1, target: 'later' },
   ]
+
   assert.equal(zoneAt(zones, 2, 3)?.target, 'later')
   assert.equal(zoneAt(zones, 4, 9)?.target, 'tile')
   assert.equal(zoneAt(zones, 5, 0), undefined)

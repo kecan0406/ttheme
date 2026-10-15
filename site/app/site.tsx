@@ -70,11 +70,13 @@ export const PRERENDERED: string[] = [
 function workspace(marketplace: Marketplace | null, palettes: Theme[], theme: Theme | null): Response {
   const shown = theme ?? leadOf(catalogsOf(palettes)[0]?.themes ?? palettes)
   const id = marketplace?.id ?? OFFICIAL
+
   const trail = [
     { name: 'ttheme', path: '/' },
     { name: 'marketplace', path: '/marketplace' },
     { name: id, path: marketplacePath(marketplace?.id ?? null) },
   ]
+
   const head = theme
     ? {
         ...paletteMeta(theme),
@@ -89,6 +91,7 @@ function workspace(marketplace: Marketplace | null, palettes: Theme[], theme: Th
         imageAlt: cardAlt(marketplaceCard(marketplace, palettes)),
         ld: [crumbs(trail)],
       }
+
   return page(
     { ...head, cache: CATALOG },
     <MarketplaceWorkspace
@@ -176,29 +179,39 @@ export const site = new Elysia({ name: 'site' })
   .get('/marketplace/:id', ({ params }) => {
     if (params.id === OFFICIAL) return workspace(null, themes, null)
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
+
     if (!marketplace) return noMarketplace(params.id)
+
     return workspace(marketplace, marketplace.palettes, null)
   })
   .get('/marketplace/:id/:name', ({ params }) => {
     if (params.id === OFFICIAL) {
       const theme = themes.find((entry) => entry.name === params.name)
+
       return theme ? workspace(null, themes, theme) : noPalette(OFFICIAL, params.name)
     }
+
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
+
     if (!marketplace) return noMarketplace(params.id)
     const theme = marketplace.palettes.find((entry) => entry.name === params.name)
+
     return theme ? workspace(marketplace, marketplace.palettes, theme) : noPalette(marketplace.id, params.name)
   })
   .get('/marketplace/:id/card.png', async ({ params }) => {
     const marketplace = marketplaces.find((entry) => entry.id === params.id)
+
     if (params.id !== OFFICIAL && !marketplace)
       return new Response('no such marketplace', { status: 404, headers: { 'cache-control': RETRY } })
+
     return png(await cardPng(marketplaceCard(marketplace ?? null, marketplace?.palettes ?? themes)))
   })
   .get('/marketplace/:id/:name/card.png', async ({ params }) => {
     const palettes = params.id === OFFICIAL ? themes : marketplaces.find((entry) => entry.id === params.id)?.palettes
     const theme = palettes?.find((entry) => entry.name === params.name)
+
     if (!theme) return new Response('no such palette', { status: 404, headers: { 'cache-control': RETRY } })
+
     return png(await cardPng({ kind: 'palette', theme }))
   })
   .get('/card.png', async () => png(await cardPng(SITE_CARD)))
@@ -215,6 +228,7 @@ export const site = new Elysia({ name: 'site' })
   )
   .get('/p/:code', ({ params, query, request }) => {
     const found = shared(params.code, query.i)
+
     if (found instanceof Error)
       return page(
         {
@@ -229,6 +243,7 @@ export const site = new Elysia({ name: 'site' })
           facts={facts}
         />,
       )
+
     return page(
       {
         ...sharedMeta(found.palettes),
@@ -243,13 +258,17 @@ export const site = new Elysia({ name: 'site' })
   })
   .get('/p/:code/card.png', async ({ params }) => {
     const found = shared(params.code)
+
     if (found instanceof Error) return new Response(found.message, { status: 404, headers: { 'cache-control': RETRY } })
+
     return png(await cardPng(sharedCard(found)))
   })
   .get('/p/:code/credits.json', async ({ params, query }) => {
     const found = shared(params.code, query.i)
+
     if (found instanceof Error) return new Response(found.message, { status: 404, headers: { 'cache-control': RETRY } })
     const { pictures, complete } = await creditsOf(found)
+
     return new Response(JSON.stringify(pictures), {
       headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': complete ? CREDITS : RETRY },
     })
@@ -262,6 +281,7 @@ export const site = new Elysia({ name: 'site' })
   )
   .error('global', ({ error }) => {
     process.stderr.write(`site: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`)
+
     return page(
       { title: 'ttheme — something went wrong', description: 'Try again in a moment.', status: 500, cache: 'no-store' },
       <Missing title="something went wrong" text="Try again in a moment." facts={facts} />,

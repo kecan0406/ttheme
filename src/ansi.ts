@@ -10,17 +10,22 @@ export function cells(text: string): number {
   if (PRINTABLE.test(text)) {
     return text.length
   }
+
   if (text.length > WIDTH_LONGEST) {
     return measure(text)
   }
+
   let width = WIDTHS.get(text)
+
   if (width === undefined) {
     if (WIDTHS.size >= WIDTHS_MOST) {
       WIDTHS.clear()
     }
+
     width = measure(text)
     WIDTHS.set(text, width)
   }
+
   return width
 }
 
@@ -32,19 +37,25 @@ export function sequenceAt(text: string, at: number): number {
   if (text[at] !== '\x1b') {
     return 0
   }
+
   if (text[at + 1] === ']') {
     const bell = text.indexOf('\x07', at + 2)
     const st = text.indexOf('\x1b\\', at + 2)
     const end = bell !== -1 && (st === -1 || bell < st) ? bell + 1 : st !== -1 ? st + 2 : 0
+
     return end ? end - at : 0
   }
+
   if (text[at + 1] !== '[') {
     return 0
   }
+
   let end = at + 2
+
   while (end < text.length && !/[@-~]/.test(text[end] as string)) {
     end++
   }
+
   return end < text.length ? end - at + 1 : 0
 }
 
@@ -52,6 +63,7 @@ let segmenter: Intl.Segmenter | undefined
 
 export function graphemes(text: string): Intl.Segments {
   segmenter ??= new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+
   return segmenter.segment(text)
 }
 
@@ -66,15 +78,19 @@ export interface Piece {
 export function pieces(text: string): Piece[] {
   const out: Piece[] = []
   let i = 0
+
   while (i < text.length) {
     const sequence = sequenceAt(text, i)
+
     if (sequence > 0) {
       out.push({ text: text.slice(i, i + sequence), start: i, end: i + sequence, width: 0, sequence: true })
       i += sequence
       continue
     }
+
     const next = text.indexOf('\x1b', i + 1)
     const stop = next === -1 ? text.length : next
+
     for (const { segment, index } of graphemes(text.slice(i, stop))) {
       out.push({
         text: segment,
@@ -84,13 +100,16 @@ export function pieces(text: string): Piece[] {
         sequence: false,
       })
     }
+
     i = stop
   }
+
   return out
 }
 
 function markOf(sequence: string): string | undefined {
   const digits = sequence.slice(3, -1)
+
   return sequence.startsWith('\x1b[?') && sequence.endsWith('y') && /^\d{1,4}$/.test(digits) ? digits : undefined
 }
 
@@ -98,20 +117,25 @@ function take(text: string, room: number): { head: string; used: number; ends: s
   let head = ''
   let used = 0
   let open = 0
+
   for (const piece of pieces(text)) {
     if (!piece.sequence) {
       if (used + piece.width > room) {
         break
       }
+
       used += piece.width
     } else {
       const mark = markOf(piece.text)
+
       if (mark !== undefined) {
         open = mark === '0' ? Math.max(0, open - 1) : open + 1
       }
     }
+
     head += piece.text
   }
+
   return { head, used, ends: '\x1b[?0y'.repeat(open) }
 }
 
@@ -119,36 +143,46 @@ export function fit(text: string, width: number, pad = true): string {
   if (width <= 0) {
     return ''
   }
+
   const full = cells(text)
+
   if (full <= width) {
     return pad ? text + ' '.repeat(width - full) : text
   }
+
   const { head, used, ends } = take(text, width - 1)
+
   return `${head}${closing(head)}…${ends}${pad ? ' '.repeat(width - 1 - used) : ''}`
 }
 
 export function clip(text: string, width: number): string {
   const { head, used, ends } = take(text, width)
+
   return `${head}${closing(head)}${ends}${' '.repeat(width - used)}`
 }
 
 export function spread(left: string, right: string, width: number): string {
   const room = width - cells(right) - 1
+
   return room <= 0 ? fit(left, width) : `${fit(left, room)} ${right}`
 }
 
 export function wrapText(text: string, width: number): string[] {
   const lines: string[] = []
   let line = ''
+
   for (let word of text.split(/\s+/).filter(Boolean)) {
     const joined = line ? `${line} ${word}` : word
+
     if (cells(joined) <= width) {
       line = joined
       continue
     }
+
     if (line) {
       lines.push(line)
     }
+
     while (cells(word) > width) {
       const { head } = take(word, width)
       const cut = Math.max(head.lastIndexOf('/') + 1, head.lastIndexOf('#'))
@@ -156,10 +190,13 @@ export function wrapText(text: string, width: number): string[] {
       lines.push(word.slice(0, at))
       word = word.slice(at)
     }
+
     line = word
   }
+
   if (line) {
     lines.push(line)
   }
+
   return lines
 }

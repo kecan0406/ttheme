@@ -19,6 +19,7 @@ export function FacetGround() {
         {MESH.facets.map((facet) => {
           const corners = facetCorners(MESH.points, facet)
           const { tint, lift } = shade(facet.tint, corners, FACET_LAMP)
+
           return (
             <polygon
               class={`t${facet.tone}`}

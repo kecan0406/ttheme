@@ -14,6 +14,7 @@ export const WIRED = [
   'konsole',
   'terminal-app',
 ] as const
+
 export type Wired = (typeof WIRED)[number]
 
 export interface At {

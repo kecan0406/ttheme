@@ -59,6 +59,7 @@ function fromGh(): string | undefined {
     })
       .trim()
       .toLowerCase()
+
     return HANDLE.test(login) ? login : undefined
   } catch {
     return undefined
@@ -69,13 +70,16 @@ async function handle(home: string, state: Installed): Promise<string> {
   if (state.author) {
     return state.author
   }
+
   let author = fromGh()
+
   if (!author) {
     if (!tty()) {
       throw new Error(
         'your palettes are named after your GitHub handle — log in with `gh auth login`, or run this in a terminal',
       )
     }
+
     const typed = await p.text({
       message: 'Your GitHub handle — your palettes are named <handle>@<marketplace>/<palette>',
       validate: (value) =>
@@ -83,13 +87,17 @@ async function handle(home: string, state: Installed): Promise<string> {
           ? undefined
           : 'that is not a GitHub handle',
     })
+
     if (p.isCancel(typed)) {
       throw new Error('no handle given')
     }
+
     author = typed.toLowerCase()
   }
+
   writeInstalled(home, { ...state, author })
   console.log(`Your palettes are named ${author}@<marketplace>/<palette>`)
+
   return author
 }
 
@@ -97,6 +105,7 @@ export function idOf(home: string, source: string): string {
   if (source === OFFICIAL) {
     return OFFICIAL
   }
+
   return isLocal(source) ? marketplaceId(localIdentity(source)) : archiveId(source, readCachedArchive(home, source))
 }
 
@@ -118,6 +127,7 @@ function official(home: string): PaletteEntry[] {
 
 function officialFor(home: string): PaletteEntry[] {
   const path = join(import.meta.dirname, '..', 'dist', 'manifest.json')
+
   return existsSync(path) ? parseManifest(readFileSync(path, 'utf8')).palettes : official(home)
 }
 
@@ -127,9 +137,11 @@ export function withMarketplaces(
   updates: Record<string, boolean>,
 ): Installed {
   const { updates: _, ...rest } = state
+
   const kept = Object.entries(updates).filter(
     ([source, on]) => isRemote(source) && marketplaces.includes(source) && on !== autoUpdates(source, {}),
   )
+
   return { ...rest, marketplaces, ...(kept.length > 0 ? { updates: Object.fromEntries(kept) } : {}) }
 }
 
@@ -141,11 +153,13 @@ function register(home: string, source: string, name: string, auto?: boolean): v
   const state = readInstalled(home)
   const sources = marketplacesOf(state.marketplaces)
   const taken = nameTaken(home, sources, source, name)
+
   if (taken) {
     throw new Error(
       `${name} already names the marketplace at ${shownSource(taken)} — \`ttheme marketplace remove ${name}\` first`,
     )
   }
+
   const updates = auto === undefined ? { ...state.updates } : { ...state.updates, [source]: auto }
   writeInstalled(home, withMarketplaces(state, sources.includes(source) ? sources : [...sources, source], updates))
 }
@@ -154,18 +168,22 @@ async function askAuto(id: string): Promise<boolean> {
   if (!tty()) {
     return false
   }
+
   const yes = await p.confirm({
     message: `Update ${id} on its own when its author changes it? ttheme checks once a day, when you run it`,
     initialValue: false,
   })
+
   if (p.isCancel(yes)) {
     throw new Error('no answer given — nothing was added')
   }
+
   return yes
 }
 
 async function fetching(home: string, source: string): Promise<Fetched> {
   const line = pending(`Fetching ${shownSource(source)}`)
+
   try {
     return await fetchMarketplace(home, source)
   } finally {
@@ -178,11 +196,13 @@ async function repin(home: string, was: string, source: string): Promise<Fetched
   const state = readInstalled(home)
   const sources = marketplacesOf(state.marketplaces)
   const taken = nameTaken(home, sources, source, fetched.id)
+
   if (taken) {
     throw new Error(
       `${fetched.id} already names the marketplace at ${shownSource(taken)} — \`ttheme marketplace remove ${fetched.id}\` first`,
     )
   }
+
   const { [was]: auto, ...others } = state.updates ?? {}
   const updates = auto === undefined ? others : { ...others, [source]: auto }
   writeInstalled(
@@ -194,31 +214,40 @@ async function repin(home: string, was: string, source: string): Promise<Fetched
     ),
   )
   storeMarketplace(home, fetched)
+
   return fetched
 }
 
 export async function addSource(home: string, arg: string): Promise<{ source: string; id: string; fresh: boolean }> {
   const source = parseSource(arg)
   const sources = marketplacesOf(readInstalled(home).marketplaces)
+
   if (sources.includes(source)) {
     console.log(`${shownSource(source)} is already added`)
+
     return { source, id: idOf(home, source), fresh: false }
   }
+
   const was = isRemote(source) ? sources.find((s) => isRemote(s) && sameMarketplace(s, source)) : undefined
+
   if (was) {
     const fetched = await repin(home, was, source)
     console.log(
       `Moved ${fetched.id} to ${refOf(source) ?? 'its default branch'} · ${shownSource(source)} — ${counted(listed(fetched.entries).length)}`,
     )
+
     return { source, id: fetched.id, fresh: false }
   }
+
   if (isLocal(source)) {
     const id = marketplaceId(localIdentity(source))
     register(home, source, id)
     const count = readMarketplaceDir(source, id, official(home)).length
     console.log(`Added ${id} · ${shownSource(source)} — ${counted(count)}, read in place`)
+
     return { source, id, fresh: true }
   }
+
   const fetched = await fetching(home, source)
   const auto = source === OFFICIAL ? undefined : await askAuto(fetched.id)
   register(home, source, fetched.id, auto)
@@ -229,15 +258,18 @@ export async function addSource(home: string, arg: string): Promise<{ source: st
       ? `Added the official marketplace — ${count}`
       : `Added ${fetched.id} · ${shownSource(source)} — ${count}${auto ? ', updating on its own' : ''}`,
   )
+
   return { source, id: fetched.id, fresh: true }
 }
 
 async function addMarketplace(arg: string): Promise<void> {
   const home = configHome()
   const { source, id, fresh } = await addSource(home, arg)
+
   if (!fresh) {
     return
   }
+
   if (isLocal(source)) {
     console.log(
       '\nThe Browse tab of `ttheme` picks them · `ttheme share` puts the folder on GitHub, where `ttheme marketplace add <owner>/<repo>` adds it anywhere',
@@ -264,9 +296,11 @@ function removeMarketplace(name: string): void {
   const state = readInstalled(home)
   const sources = marketplacesOf(state.marketplaces)
   const source = sources.find((s) => nameOf(home, s) === name) ?? sources.find((s) => s === parseSourceOrNot(name))
+
   if (!source) {
     throw new Error(`no marketplace named ${name} — the Browse tab of \`ttheme\` lists them`)
   }
+
   const id = nameOf(home, source)
   const kept = state.palettes.filter((n) => marketplaceOfPalette(n) === id)
   const remaining = sources.filter((s) => s !== source)
@@ -275,6 +309,7 @@ function removeMarketplace(name: string): void {
   dropCache(home, source)
   sync(home, readMarketplaces(home), next)
   console.log(`Removed ${id ?? name} · ${shownSource(source)}`)
+
   if (kept.length > 0) {
     console.log(keptNote(kept))
   }
@@ -292,14 +327,18 @@ export function lastUpdate(home: string, source: string, tries = readTries(), no
   if (isLocal(source)) {
     return 'read in place'
   }
+
   if (source === OFFICIAL) {
     return 'comes with ttheme'
   }
+
   const failed = tries[source]
   const at = fetchedAt(home, source)
+
   if (failed && (at === undefined || failed.at > at)) {
     return `update failed ${ago(failed.at, now)}`
   }
+
   return at === undefined ? 'never updated' : `updated ${ago(at, now)}`
 }
 
@@ -329,63 +368,80 @@ async function askName(): Promise<string> {
   if (!tty()) {
     throw new Error('name the marketplace: ttheme marketplace init <name>, or --in <name> on new')
   }
+
   const typed = await p.text({
     message: "Your marketplace's name — its palettes are <you>@<name>/<palette>",
     validate: (value) => nameProblemOf((value ?? '').toLowerCase()),
   })
+
   if (p.isCancel(typed)) {
     throw new Error('no marketplace name given')
   }
+
   return typed.toLowerCase()
 }
 
 export async function ensureLocal(home: string, into?: string): Promise<LocalMarketplace> {
   const locals = localMarketplaces(home)
+
   if (into) {
     const hit = locals.find((m) => m.name === into || m.id === into || m.dir === parseSourceOrNot(into))
+
     if (!hit) {
       throw new Error(
         `${into} is not one of your local marketplaces — \`ttheme marketplace init ${into}\` makes it one`,
       )
     }
+
     return hit
   }
+
   const [only, ...more] = locals
+
   if (only && more.length === 0) {
     return only
   }
+
   if (only) {
     throw new Error(
       `you have ${locals.length} local marketplaces — --in names one: ${locals.map((m) => m.name).join(', ')}`,
     )
   }
+
   return newLocal(home)
 }
 
 export async function newLocal(home: string): Promise<LocalMarketplace> {
   const name = await askName()
+
   return initLocal(home, defaultLocal(home, name), name)
 }
 
 async function initLocal(home: string, dir: string, name: string): Promise<LocalMarketplace> {
   const fresh = !existsSync(join(dir, MARKETPLACE_FILE))
   let identity: Identity
+
   if (fresh) {
     const problem = nameProblemOf(name)
+
     if (problem) {
       throw new Error(`the marketplace name ${name} ${problem}`)
     }
+
     if (existsSync(dir) && readdirSync(dir).length > 0) {
       throw new Error(`${dir} is not empty — pick a new folder for the marketplace`)
     }
+
     identity = { owner: await handle(home, readInstalled(home)), name }
     scaffold(dir, identity)
   } else {
     identity = localIdentity(dir)
   }
+
   const id = marketplaceId(identity)
   register(home, dir, id)
   console.log(`${fresh ? 'Made' : 'Added'} your marketplace ${id} · ${shownSource(dir)}`)
+
   return { dir, ...identity, id }
 }
 
@@ -395,8 +451,10 @@ function pathLike(arg: string): boolean {
 
 async function initMarketplace(arg: string | undefined): Promise<void> {
   const home = configHome()
+
   const name =
     arg && !pathLike(arg) ? arg.toLowerCase() : arg ? basename(parseSource(arg)).toLowerCase() : await askName()
+
   const dir = arg && pathLike(arg) ? parseSource(arg) : defaultLocal(home, name)
   await initLocal(home, dir, name)
   console.log(
@@ -407,54 +465,70 @@ async function initMarketplace(arg: string | undefined): Promise<void> {
 function checkMarketplace(arg: string | undefined): number {
   const dir = arg ? parseSource(arg) : process.cwd()
   const path = join(dir, MARKETPLACE_FILE)
+
   if (!existsSync(path)) {
     throw new Error(
       `${shownSource(dir)} has no ${MARKETPLACE_FILE} — \`ttheme marketplace init ${shownSource(dir)}\` makes one`,
     )
   }
+
   const errors: string[] = []
   const warnings: string[] = []
   const text = readFileSync(path, 'utf8')
   let info: ReturnType<typeof localIdentity>
+
   try {
     info = localIdentity(dir)
   } catch (error) {
     console.error(`  ✗ ${(error as Error).message}`)
+
     return 1
   }
+
   const doc = parse(text) as Record<string, unknown>
   const owner = doc.owner as Record<string, unknown>
+
   for (const key of Object.keys(doc).filter((k) => !MARKETPLACE_KEYS.includes(k))) {
     warnings.push(`${MARKETPLACE_FILE}: unknown key ${key} — ttheme ignores it`)
   }
+
   for (const key of Object.keys(owner).filter((k) => !OWNER_KEYS.includes(k))) {
     warnings.push(`${MARKETPLACE_FILE}: unknown key owner.${key} — ttheme ignores it`)
   }
+
   for (const [i, table] of (Array.isArray(doc.catalog) ? (doc.catalog as Record<string, unknown>[]) : []).entries()) {
     for (const key of Object.keys(table).filter((k) => !CATALOG_KEYS.includes(k))) {
       warnings.push(`${MARKETPLACE_FILE}: unknown key catalog[${i}].${key} — ttheme ignores it`)
     }
   }
+
   if (!info.description) {
     warnings.push(`${MARKETPLACE_FILE}: no description — Browse and the marketplace page show one`)
   }
+
   const id = marketplaceId(info)
+
   const entries = readMarketplaceDir(dir, id, officialFor(configHome()), (where, message) =>
     errors.push(`${relative(dir, where)}: ${message.replace(`${basename(where)}: `, '')}`),
   )
+
   for (const file of marketplaceFiles(dir)) {
     let keys: string[]
+
     try {
       keys = unknownKeys(file.path, readFileSync(file.path, 'utf8'))
     } catch {
       keys = []
     }
+
     for (const key of keys) {
       warnings.push(`${relative(dir, file.path)}: unknown key ${key} — ttheme ignores it`)
     }
   }
+
   for (const catalog of info.catalogs) {
     const inside = entries.filter((e) => e.catalog === catalog.name)
+
     if (inside.length === 0) {
       warnings.push(`${MARKETPLACE_FILE}: catalog ${catalog.name} has no folder under palettes/ — ttheme ignores it`)
     } else if (catalog.lead && !inside.some((e) => slugOf(e.name) === catalog.lead)) {
@@ -463,24 +537,30 @@ function checkMarketplace(arg: string | undefined): number {
       )
     }
   }
+
   const renames = renameProblems(info.renames, new Set(entries.map((e) => slugOf(e.name))))
   errors.push(...renames.errors.map((e) => `${MARKETPLACE_FILE}: ${e}`))
   warnings.push(...renames.warnings.map((w) => `${MARKETPLACE_FILE}: ${w}`))
+
   for (const entry of entries) {
     const failing = gateLines(entry).filter((l) => l.startsWith('  ✗'))
     const shown = entry.catalog ? `${entry.catalog}/${slugOf(entry.name)}` : slugOf(entry.name)
     console.log(`  ${shown}${failing.length > 0 ? `\n${failing.join('\n')}` : '  passes the gate'}`)
   }
+
   for (const line of errors) {
     console.error(`  ✗ ${line}`)
   }
+
   for (const line of warnings) {
     console.log(`  ! ${line}`)
   }
+
   const tally = (n: number, what: string) => `${n} ${what}${n === 1 ? '' : 's'}`
   console.log(
     `\n${id} · ${counted(entries.length)} · ${tally(errors.length, 'error')} · ${tally(warnings.length, 'warning')}`,
   )
+
   return errors.length > 0 ? 1 : 0
 }
 
@@ -488,12 +568,15 @@ export async function runMarketplace(action: string, arg: string | undefined): P
   switch (action) {
     case 'add':
       await addMarketplace(required(action, arg))
+
       return
     case 'remove':
       removeMarketplace(required(action, arg))
+
       return
     case 'init':
       await initMarketplace(arg)
+
       return
     case 'check':
       return checkMarketplace(arg)
@@ -510,10 +593,12 @@ function required(action: string, arg: string | undefined): string {
         : 'marketplace remove takes a marketplace name: ttheme marketplace remove alice@pastel',
     )
   }
+
   return arg
 }
 
 export function localLine(home: string, source: string): string {
   const id = idOf(home, source)
+
   return `${id} — ${counted(readMarketplaceDir(source, id, official(home), warning(false)).length)}, read in place`
 }

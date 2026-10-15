@@ -21,19 +21,25 @@ class LeadShowcase extends HTMLElement {
 
   #click = (event: MouseEvent) => {
     const target = event.target as Element
+
     if (target.closest('[data-lead-rotate]')) {
       this.#chosen = true
       this.#turn(!this.#cycling)
+
       return
     }
+
     const step = target.closest<HTMLElement>('[data-pick]')
+
     if (step) this.#step(Number(step.dataset.pick))
   }
 
   #change = (event: Event) => {
     const input = event.target
+
     if (!(input instanceof HTMLInputElement) || input.name !== 'lead') return
     const lead = this.#leads.find((theme) => theme.name === input.value)
+
     if (lead) choose(lead)
   }
 
@@ -75,16 +81,19 @@ class LeadShowcase extends HTMLElement {
     this.addEventListener('keydown', this.#keydown)
     this.#off = onWear((theme) => this.#pick(theme))
     const stored = recall()
+
     if (stored && stored.name !== this.#shown) this.#draw(stored)
     else this.#check(this.#shown)
     this.#mark(stored === null)
     delete document.documentElement.dataset.picked
+
     if (reducedMotion()) return
     document.addEventListener('visibilitychange', this.#hidden)
     this.#window?.addEventListener('pointerenter', this.#enter)
     this.#window?.addEventListener('pointerleave', this.#leave)
     this.#hero?.addEventListener('focusin', this.#focus)
     const hero = this.#hero
+
     if (hero) {
       this.#view = new IntersectionObserver(
         ([entry]) => this.#hold('away', (entry?.intersectionRatio ?? 0) < IN_VIEW),
@@ -92,6 +101,7 @@ class LeadShowcase extends HTMLElement {
       )
       this.#view.observe(hero)
     }
+
     this.#hidden()
     this.#turn(stored === null)
   }
@@ -117,6 +127,7 @@ class LeadShowcase extends HTMLElement {
 
   #mark(on: boolean) {
     const control = this.#control
+
     if (control) control.dataset.cycle = on ? 'on' : 'off'
   }
 
@@ -128,6 +139,7 @@ class LeadShowcase extends HTMLElement {
 
   #hold(reason: string, on: boolean) {
     if (on === this.#holds.has(reason)) return
+
     if (on) this.#holds.add(reason)
     else this.#holds.delete(reason)
     this.#schedule()
@@ -135,11 +147,14 @@ class LeadShowcase extends HTMLElement {
 
   #schedule() {
     const line = this.#line
+
     if (!this.#cycling || this.#holds.size > 0 || !line) {
       this.#run?.pause()
       line?.style.removeProperty('opacity')
+
       return
     }
+
     this.#run?.cancel()
     line.style.opacity = '1'
     const run = line.animate({ scale: ['0 1', '1 1'] }, { duration: CYCLE_MS, easing: 'linear', fill: 'forwards' })
@@ -169,6 +184,7 @@ class LeadShowcase extends HTMLElement {
 
   #pick(theme: Theme) {
     if (this.#cycling) this.#turn(false)
+
     if (theme.name !== this.#shown) fadeThrough(() => this.#draw(theme))
   }
 
@@ -176,8 +192,10 @@ class LeadShowcase extends HTMLElement {
     this.#shown = theme.name
     show(theme)
     const name = this.querySelector('[data-lead-name] > span')
+
     if (name) name.textContent = theme.name
     const sparkles = this.querySelector('sparkle-burst')
+
     if (sparkles instanceof SparkleBurst) sparkles.burst()
     fill(this.querySelector('[data-lead-use]'), html(<LeadUse theme={theme} />))
     this.#check(theme.name)

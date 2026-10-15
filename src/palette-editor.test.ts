@@ -24,6 +24,7 @@ function press(e: PaletteEditor, ...keys: string[]): PaletteEditor {
   for (const key of keys) {
     e.press(key)
   }
+
   return e
 }
 
@@ -225,18 +226,22 @@ test('chroma stops at the sRGB edge, and what lightness took comes back only whi
   const kept = e.lch[5]?.c ?? 0
   assert.equal(e.held, undefined)
   press(e, 'tab')
+
   for (let i = 0; i < 10; i++) {
     press(e, 'shift-right')
   }
+
   assert.ok((e.lch[5]?.c ?? 0) <= kept)
 })
 
 test('a grey slot takes its hue from the background, so chroma grows toward the palette', () => {
   const grey = { ...start, foreground: '#d0d0d0' }
   const e = press(editor({ colors: grey }), 'down', 'tab')
+
   for (let i = 0; i < 10; i++) {
     press(e, 'right')
   }
+
   const hue = oklch(start.background).h
   assert.ok(Math.abs((oklch(e.colors().foreground).h ?? 0) - hue) < 5)
   const flat = press(editor({ colors: grey }), 'down', 'tab', 'shift-right')

@@ -37,13 +37,16 @@ function wired(configHome: string): boolean {
 
 export function warpInstalled(dir: string, name: string): string | undefined {
   const stem = owned(name)
+
   if (!existsSync(dir)) {
     return undefined
   }
+
   const hashed = readdirSync(dir)
     .filter((file) => file.startsWith(`${stem}.`) && /^[0-9a-f]{8}\.yaml$/.test(file.slice(stem.length + 1)))
     .map((file) => ({ file, at: statSync(join(dir, file)).mtimeMs }))
     .sort((a, b) => b.at - a.at)
+
   return hashed[0]?.file ?? (existsSync(join(dir, `${stem}.yaml`)) ? `${stem}.yaml` : undefined)
 }
 
@@ -51,13 +54,17 @@ function pictureOf(dir: string, file: string | undefined): WarpPicture | undefin
   if (!file) {
     return undefined
   }
+
   let yaml: string
+
   try {
     yaml = readFileSync(join(dir, file), 'utf8')
   } catch {
     return undefined
   }
+
   const m = /^background_image:\n\s+path:\s*"([^"]*)"\n\s+opacity:\s*(\d+)/m.exec(yaml)
+
   return m?.[1] ? { image: m[1], opacity: Number(m[2]) / 100 } : undefined
 }
 
@@ -65,10 +72,13 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
   if (!tty || colorless(env) || env.TMUX || detectTerminal(env) !== 'warp') {
     return undefined
   }
+
   const settings = warpSettings(home, configHome)
+
   if (!existsSync(settings) || !wired(configHome)) {
     return undefined
   }
+
   const dir = warpThemes(home)
   const base = warpBasePath(configHome)
   const views: string[] = []
@@ -76,20 +86,26 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
   const picture = pictureOf(dir, own && warpInstalled(dir, own))
   let settle: NodeJS.Timeout | undefined
   let known: NodeJS.Timeout | undefined
+
   const wear = (value: string) => {
     const content = readFileSync(settings, 'utf8')
     const was = warpThemeOf(content)
+
     if (was === value) {
       return
     }
+
     if (ours(value) && !ours(was) && !existsSync(base)) {
       writeAtomic(base, was ?? '')
     }
+
     editUserFile(settings, withWarpTheme(content, value))
+
     if (!ours(value)) {
       rmSync(base, { force: true })
     }
   }
+
   const sweep = (keep?: string) => {
     for (const view of views.splice(0)) {
       if (view === keep) {
@@ -99,19 +115,23 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
       }
     }
   }
+
   const stop = () => {
     clearTimeout(settle)
     clearTimeout(known)
   }
+
   const show = (look: WarpLook, file?: string, laid?: WarpPicture) => {
     stop()
     settle = setTimeout(() => {
       let theme = file
+
       if (!theme) {
         theme = `${owned(look.name)}.view-${process.pid}-${views.length + 1}.yaml`
         writeAtomic(join(dir, theme), warpTheme(look, laid))
         views.push(theme)
       }
+
       const shown = theme
       const age = Date.now() - statSync(join(dir, shown)).mtimeMs
       known = setTimeout(
@@ -123,6 +143,7 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
       )
     }, WARP_SETTLE)
   }
+
   return {
     slots: [],
     paint: (entry) => {
@@ -133,6 +154,7 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
       } else {
         show(entry, existsSync(join(dir, `${owned(entry.name)}.yaml`)) ? `${owned(entry.name)}.yaml` : undefined)
       }
+
       return ''
     },
     wear: (_, terminals) => (terminals.includes('warp') ? '' : undefined),
@@ -140,12 +162,15 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
     restore: (saved) => {
       stop()
       const value = saved.get('theme')
+
       if (value) {
         wear(value)
       } else if (ours(warpThemeOf(readFileSync(settings, 'utf8')))) {
         wear(WARP_DEFAULT)
       }
+
       sweep()
+
       return ''
     },
   }

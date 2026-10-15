@@ -86,6 +86,7 @@ function loadManifest(root: string): Manifest {
 
 export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const home = join(paths.configHome, 'ttheme')
+
   const copies: InitPlan['copies'] = [
     { from: join(paths.root, 'bin', 'ttheme.js'), to: join(home, 'ttheme.js') },
     { from: join(paths.root, 'bin', 'ttheme.js.map'), to: join(home, 'ttheme.js.map') },
@@ -95,7 +96,9 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     { from: join(paths.root, 'shell', 'launch-tab.zsh'), to: join(home, 'launch-tab.zsh'), executable: true },
     ...copyDir(join(paths.root, 'shell', 'adapters'), join(home, 'adapters')),
   ]
+
   const shells = paths.shells ?? ['zsh']
+
   const edits: InitPlan['edits'] = [
     { file: join(paths.zdotdir, '.zshrc'), block: zshrcBlock(), about: 'source ttheme.zsh' },
     ...(shells.includes('bash')
@@ -106,19 +109,24 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
         }))
       : []),
   ]
+
   const fish = fishFunction(paths.configHome)
   const ours = !existsSync(fish) || ownsFish(readFileSync(fish, 'utf8'))
+
   const writes: InitPlan['writes'] =
     shells.includes('fish') && ours
       ? [{ file: fish, content: fishText(), about: 'the ttheme command, run through zsh' }]
       : []
+
   const configPath = join(home, 'config.zsh')
   const seeded = configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : '')
+
   const settings = {
     file: configPath,
     content:
       opts.warpFast === undefined ? seeded : withSetting(seeded, 'TTHEME_WARP_FAST', opts.warpFast ? 'on' : 'off'),
   }
+
   const installed: Installed = {
     terminals: opts.terminals,
     palettes: opts.palettes,
@@ -129,6 +137,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     ),
     ...(opts.off ? { off: true as const } : {}),
   }
+
   const notes = [
     ...wiringNotes(paths.configHome, installed, paths.home),
     ...(shells.includes('fish') && !ours
@@ -140,7 +149,9 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
         ]
       : []),
   ]
+
   const forget = paths.stateDir ? [join(paths.stateDir, 'ghostty', '.blind')] : []
+
   return {
     home: paths.home,
     copies,
@@ -174,20 +185,24 @@ export function againManifest(state: Installed, paths: InitPaths): Manifest {
   const bundled = loadManifest(paths.root)
   const official = marketplacesOf(state.marketplaces).includes(OFFICIAL) ? bundled.palettes : []
   const names = new Set(official.map((e) => e.name))
+
   const others = currentPalettes(paths.configHome, bundled).filter(
     (e) => !names.has(e.name) && (marketplaceOf(e.name) !== undefined || state.palettes.includes(e.name)),
   )
+
   return { ...bundled, palettes: [...official, ...others] }
 }
 
 function keptStartup(state: Installed, palettes: string[]): string | undefined {
   const was = startupPalette(state)
+
   return was && palettes.includes(was) ? was : undefined
 }
 
 export function planAgain(state: Installed, opts: InitOptions, paths: InitPaths): InitPlan {
   const plan = planInit(opts, paths)
   const startup = keptStartup(state, opts.palettes)
+
   const asked = new Set<string>([
     'terminals',
     'palettes',
@@ -195,7 +210,9 @@ export function planAgain(state: Installed, opts: InitOptions, paths: InitPaths)
     'startup',
     ...WIRED.flatMap((id) => Object.keys(WIRINGS[id].installs?.(paths) ?? {})),
   ])
+
   const kept = Object.fromEntries(Object.entries(state).filter(([key]) => !asked.has(key)))
+
   return {
     ...plan,
     installed: { ...kept, ...plan.installed, ...(startup ? { startup } : {}) } as Installed,
@@ -204,19 +221,24 @@ export function planAgain(state: Installed, opts: InitOptions, paths: InitPaths)
 
 export function planUpgrade(state: Installed, paths: InitPaths): InitPlan {
   const plan = planInit({ terminals: state.terminals, palettes: state.palettes, off: state.off }, paths)
+
   const known = new Set(
     [...plan.manifest.palettes, ...currentPalettes(paths.configHome, plan.manifest)].map((e) => e.name),
   )
+
   const palettes = state.palettes.filter((n) => known.has(n))
   const gone = state.palettes.filter((n) => !known.has(n))
   const { startup, ...rest } = state
+
   const installed: Installed = {
     ...rest,
     palettes,
     ...(startup && palettes.includes(startup) ? { startup } : {}),
   }
+
   const notes =
     gone.length > 0 ? [`Dropped ${gone.join(', ')} — no longer in any marketplace`, ...plan.notes] : plan.notes
+
   return { ...plan, installed, notes }
 }
 
@@ -226,6 +248,7 @@ function installedVersion(configHome: string): string | undefined {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     })
+
     return out.trim() || undefined
   } catch {
     return undefined
@@ -234,6 +257,7 @@ function installedVersion(configHome: string): string | undefined {
 
 function summary(state: Installed): string {
   const startup = worn(state)
+
   return [
     wirings(state.terminals)
       .map((wiring) => wiring.name)
@@ -249,37 +273,49 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     rmSync(c.to, { force: true })
     rmSync(`${c.to}.zwc`, { force: true })
     copyFileSync(c.from, c.to)
+
     if (c.executable) {
       chmodSync(c.to, 0o755)
     }
   }
+
   writeAtomic(plan.settings.file, plan.settings.content)
+
   for (const f of plan.forget) {
     rmSync(f, { force: true })
   }
+
   const configHome = dirname(dirname(plan.settings.file))
   const kept = installedState(configHome)
+
   const carried = Object.fromEntries(
     wirings(plan.installed.terminals).flatMap((wiring) => {
       const key = wiring.defaults?.key
       const base = key ? kept?.[key] : undefined
+
       return key && base ? [[key, base]] : []
     }),
   )
+
   const installed = withBases(configHome, { ...plan.installed, ...carried }, host, plan.home)
+
   if (marketplacesOf(installed.marketplaces).includes(OFFICIAL)) {
     writeOfficial(configHome, plan.manifest)
   }
+
   writeInstalled(configHome, installed)
   sync(configHome, readMarketplaces(configHome), installed, plan.home, host)
+
   for (const e of plan.edits) {
     mkdirSync(dirname(e.file), { recursive: true })
     const current = existsSync(e.file) ? readFileSync(e.file, 'utf8') : ''
     editUserFile(e.file, upsertBlock(current, e.block))
   }
+
   for (const w of plan.writes) {
     writeAtomic(w.file, w.content)
   }
+
   return pointDefaults(configHome, installed, true, host, plan.home)
 }
 
@@ -288,6 +324,7 @@ function accepted<T>(value: T | typeof p.CANCEL_SYMBOL): T {
     p.cancel('Nothing changed')
     throw new Cancelled()
   }
+
   return value as T
 }
 
@@ -327,6 +364,7 @@ function verify(plan: InitPlan): void {
     ...plan.edits.filter((e) => !readFileSync(e.file, 'utf8').includes('# ttheme begin')).map((e) => e.file),
     ...plan.writes.filter((w) => !existsSync(w.file)).map((w) => w.file),
   ]
+
   if (missing.length > 0) {
     throw new Error(`init left gaps:\n${missing.join('\n')}`)
   }
@@ -340,21 +378,26 @@ function paintStartup(manifest: Manifest, installed: Installed, configHome: stri
   const startup = manifest.palettes.find((e) => e.name === worn(installed))
   const tty = process.stdout.isTTY === true
   const wear = startup && liveOf(process.env, tty, configHome)?.wear(startup, installed.terminals)
+
   if (wear === undefined) {
     return false
   }
+
   process.stdout.write(wear)
+
   return true
 }
 
 function startupLines(installed: Installed, painted: boolean): string[] {
   const startup = worn(installed)
+
   if (!startup) {
     return [
       'Default    none — new tabs keep the terminal colors',
       `Turn on    \`ttheme on\` wears ${startupPalette(installed)}`,
     ]
   }
+
   return [
     `Default    ${startup}${painted ? ' — this tab wears it already' : ''}`,
     'Change it  `ttheme`, enter on a palette, then default',
@@ -406,15 +449,20 @@ async function upgrade(
   const pointed = applyInit(plan, host)
   verify(plan)
   await redrawPictures(paths.configHome, say(interactive), paths.home)
+
   const lines = [
     `${reopen(here).padEnd(18)}Open tabs run the new layer — new tabs already do`,
     ...nextLines(plan, pointed),
   ]
+
   const title = `Updated to ${pkg.version} — kept ${summary(plan.installed)}`
+
   if (!interactive) {
     console.log([title, ...lines].join('\n'))
+
     return
   }
+
   p.note(lines.join('\n'), title)
   p.outro('Done')
 }
@@ -427,31 +475,39 @@ function report(plan: InitPlan, pointed: ReadonlyMap<Wired, Pointed>, here: Shel
     ...nextLines(plan, pointed),
     `No palettes yet — open a new shell (\`${reopen(here)}\`), then \`ttheme\` picks them from your marketplaces`,
   ]
+
   console.log(lines.join('\n'))
 }
 
 export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const root = join(import.meta.dirname, '..')
+
   for (const file of ['ttheme.js', 'package.json']) {
     if (!existsSync(join(root, 'bin', file))) {
       throw new Error(`bin/${file} is missing — run \`mise run bin:build\` first`)
     }
   }
+
   if (!existsSync(join(root, 'dist'))) {
     if (typeof Bun === 'undefined') {
       throw new Error('this package is missing dist/ — reinstall @kecan0406/ttheme')
     }
+
     await build()
   }
+
   const home = homedir()
   const configHome = configDir()
   const host = systemHost()
+
   if (!hasZsh(host)) {
     throw new Error('ttheme runs its tab layer in zsh, even for bash and fish — install zsh first')
   }
+
   const wtHome = windowsAppData(host)
   const wtProfile = process.env.WT_PROFILE_ID
   const stateDir = join(process.env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme')
+
   const paths: InitPaths = {
     root,
     home,
@@ -463,19 +519,25 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     ...(wtHome ? { wtHome } : {}),
     ...(wtProfile ? { wtProfile } : {}),
   }
+
   const here = invokingShell(host.run, process.ppid) ?? shellNamed(host.env.SHELL) ?? 'zsh'
   const detected = detectTerminal(process.env)
   const preselected = offered(paths, host).filter((t) => t === detected)
+
   if (!flags.yes && (process.stdin.isTTY !== true || process.stdout.isTTY !== true)) {
     throw new Error(
       'init asks before it edits your configs — run it in a terminal, or pass --yes to accept the defaults',
     )
   }
+
   const existing = installedState(configHome)
+
   if (flags.yes && existing) {
     await upgrade(existing, paths, host, false, here)
+
     return
   }
+
   if (flags.yes) {
     if (preselected.length === 0) {
       throw new Error(
@@ -485,16 +547,21 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
           .replace(/, ([^,]*)$/, ' or $1')}`,
       )
     }
+
     const opts: InitOptions = { terminals: preselected, palettes: [] }
     const plan = planInit(opts, paths)
     const pointed = applyInit(plan, host)
     verify(plan)
     report(plan, pointed, here)
+
     return
   }
+
   p.intro('ttheme init')
+
   if (existing) {
     const from = installedVersion(configHome)
+
     const keep = accepted(
       await p.confirm({
         message: `ttheme${from ? ` ${from}` : ''} is installed — ${summary(existing)}\n${from === pkg.version ? 'Reinstall' : 'Update to'} ${pkg.version} and keep all of it?`,
@@ -503,32 +570,41 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
         initialValue: true,
       }),
     )
+
     if (keep) {
       await upgrade(existing, paths, host, true, here)
+
       return
     }
   }
+
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
   const warpFast = terminals.includes('warp') ? await askWarpFast(configHome) : undefined
   const manifest = existing ? againManifest(existing, paths) : loadManifest(root)
+
   const palettes = existing
     ? await pickPalettes(manifest, existing.palettes, 'palette', true)
     : await pickPalettes(manifest, [], 'catalog', true)
+
   if (!palettes) {
     p.cancel('Nothing changed')
     throw new Cancelled()
   }
+
   const first = (existing && keptStartup(existing, palettes)) ?? palettes[0]
+
   const choose =
     palettes.length > 1 &&
     (TRAITS[detected].paints ||
       (detected === 'warp' && terminals.includes('warp') && existsSync(warpSettings(home, configHome))))
+
   const wear = accepted(
     await p.confirm({
       message: choose ? 'Pick a default palette in ttheme once installed?' : `Wear ${first} in every tab?`,
       initialValue: existing ? !existing.off : true,
     }),
   )
+
   const opts: InitOptions = { terminals, palettes, off: !wear, warpFast }
   const plan = existing ? planAgain(existing, opts, paths) : planInit(opts, paths)
   p.note(
@@ -555,16 +631,20 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       .map((wiring) => wiring.name)
       .join(', ')}`,
   )
+
   if (!accepted(await p.confirm({ message: 'Apply these changes?' }))) {
     p.cancel('Nothing changed')
     throw new Cancelled()
   }
+
   const pointed = applyInit(plan, host)
   verify(plan)
   await redrawPictures(configHome, say(true), home)
+
   if (wear && choose) {
     pickDefault(configHome)
   }
+
   const installed = readInstalled(configHome)
   receipt({ ...plan, manifest, installed }, opts, paintStartup(manifest, installed, configHome), pointed, here)
 }

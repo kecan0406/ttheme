@@ -82,6 +82,7 @@ test('an installed palette from a marketplace keeps its colors until its update 
   const was = [entry({ name: 'ann@pastel/dusk' }), entry({ name: 'gojo' })]
   writeKept(home, was)
   const moved = { background: '#000000' }
+
   const manifest = {
     schema: SCHEMA,
     version: '0.1.0',
@@ -92,6 +93,7 @@ test('an installed palette from a marketplace keeps its colors until its update 
       entry({ name: 'ann@pastel/dawn', ...moved }),
     ],
   }
+
   const view = new Map(untuned(home, manifest, false).palettes.map((e) => [e.name, e.background]))
   assert.equal(view.get('ann@pastel/dusk'), '#11191c')
   assert.equal(view.get('gojo'), '#000000')
@@ -180,11 +182,13 @@ test('gateFailures measures an entry that carries no gate', () => {
 
 test('readMarketplaces puts each added marketplace after the official one under its own name, and available adds local marketplaces and kept ones', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-available-'))
+
   const skeleton = {
     schema: SCHEMA,
     version: '0.1.0',
     gate: [],
   }
+
   const local = join(home, 'mine')
   mkdirSync(join(home, 'ttheme', 'marketplaces'), { recursive: true })
   mkdirSync(join(local, 'palettes'), { recursive: true })
@@ -246,8 +250,10 @@ test('readMarketplaces puts each added marketplace after the official one under 
 
 test("a marketplace names itself in ttheme-marketplace.toml — the owner of an added one is its repository's", () => {
   const archive = (text: string) => ({ files: { 'ttheme-marketplace.toml': text } })
+
   const marketplace = (rest: string) =>
     archive(`"$schema" = "https://www.schemastore.org/ttheme-marketplace.json"\n${rest}`)
+
   assert.equal(archiveId('ann/ttheme-pastel', marketplace('name = "pastel"\n\n[owner]\nname = "bob"\n')), 'ann@pastel')
   assert.deepEqual(
     archiveInfo(

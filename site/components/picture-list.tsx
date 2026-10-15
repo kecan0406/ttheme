@@ -14,6 +14,7 @@ function Dot() {
 
 function Out({ link }: { link: PictureLink }) {
   const brand = link.kind ? BRANDS[link.kind] : undefined
+
   return (
     <a href={link.url} target="_blank" rel="noopener" class={LINK}>
       {brand ? <BrandIcon icon={brand} class="mr-1 inline-block size-3 align-middle" /> : null}
@@ -26,6 +27,7 @@ function Out({ link }: { link: PictureLink }) {
 function Credit({ picture }: { picture: Picture }) {
   const credit = picture.credit
   const names = credit?.artists.map((artist) => artist.name).join(', ') ?? ''
+
   return (
     <span class="flex flex-wrap items-baseline gap-x-1.5">
       {names ? (
@@ -58,9 +60,11 @@ function Credit({ picture }: { picture: Picture }) {
 
 function Profiles({ picture }: { picture: Picture }) {
   const artists = (picture.credit?.artists ?? []).filter((artist) => artist.links.length > 0)
+
   if (artists.length === 0) {
     return null
   }
+
   return (
     <span class="flex flex-wrap items-baseline gap-x-1.5 text-xs">
       {artists.map((artist, at) => (

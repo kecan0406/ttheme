@@ -29,22 +29,30 @@ class MarketplaceWorkspace extends HTMLElement {
   #click = (event: MouseEvent) => {
     const target = event.target as Element
     const pick = target.closest<HTMLAnchorElement>('a[data-pick]')
+
     if (pick && plain(event)) {
       event.preventDefault()
       this.#select(this.#named(pick.dataset.pick ?? ''), true)
+
       return
     }
+
     const step = target.closest<HTMLElement>('[data-step]')
+
     if (step) {
       this.#step(Number(step.dataset.step))
+
       return
     }
+
     const toggle = target.closest<HTMLElement>('[data-toggle]')
+
     if (toggle) this.#flip(toggle)
   }
 
   #input = (event: Event) => {
     const field = event.target as HTMLInputElement
+
     if (field.name !== 'query') return
     this.#query = field.value
     tally(this.#filter())
@@ -54,13 +62,17 @@ class MarketplaceWorkspace extends HTMLElement {
     if (letter(event, 'k') && event.metaKey !== event.ctrlKey && !event.altKey && !event.shiftKey) {
       if (event.defaultPrevented || composing(event) || typing(event.target)) return
       const field = this.querySelector<HTMLInputElement>('input[name="query"]')
+
       if (!field) return
       event.preventDefault()
       field.focus()
       field.select()
+
       return
     }
+
     const delta = STEPS[event.key]
+
     if (!delta || !bare(event) || event.shiftKey || event.repeat || owned(event.target)) return
     event.preventDefault()
     this.#step(delta)
@@ -74,6 +86,7 @@ class MarketplaceWorkspace extends HTMLElement {
     if ((event as ToggleEvent).newState !== 'open') return
     const panel = event.target as HTMLElement
     const trigger = this.querySelector<HTMLElement>(`[popovertarget="${panel.id}"]`)
+
     if (!trigger) return
     const box = trigger.getBoundingClientRect()
     panel.style.bottom = `${window.innerHeight - box.top + GAP}px`
@@ -83,24 +96,29 @@ class MarketplaceWorkspace extends HTMLElement {
   connectedCallback() {
     this.#data = readJson<WorkspaceData>(this, 'script[data-workspace]')
     this.#theme = this.#named(this.#data.current)
+
     for (const group of this.querySelectorAll('[data-group]'))
       if (group.querySelector('[data-toggle]')?.getAttribute('aria-expanded') === 'true') this.#open.add(group)
     this.addEventListener('click', this.#click)
     this.addEventListener('input', this.#input)
+
     for (const panel of this.querySelectorAll('[popover]')) panel.addEventListener('beforetoggle', this.#place)
     window.addEventListener('keydown', this.#keydown)
     window.addEventListener('popstate', this.#popstate)
     const query = this.querySelector<HTMLInputElement>('input[name="query"]')?.value ?? ''
+
     if (query) {
       this.#query = query
       this.#filter()
     }
+
     this.#reveal()
   }
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
     this.removeEventListener('input', this.#input)
+
     for (const panel of this.querySelectorAll('[popover]')) panel.removeEventListener('beforetoggle', this.#place)
     window.removeEventListener('keydown', this.#keydown)
     window.removeEventListener('popstate', this.#popstate)
@@ -108,6 +126,7 @@ class MarketplaceWorkspace extends HTMLElement {
 
   #named(name: string): Theme {
     const { palettes, start } = this.#data
+
     return (
       palettes.find((theme) => theme.name === name) ??
       palettes.find((theme) => theme.name === start) ??
@@ -123,10 +142,13 @@ class MarketplaceWorkspace extends HTMLElement {
 
   #flip(toggle: HTMLElement) {
     const group = toggle.closest('[data-group]')
+
     if (!group) return
     const open = toggle.getAttribute('aria-expanded') !== 'true'
     this.#show(group, open)
+
     if (this.#query.trim()) return
+
     if (open) this.#open.add(group)
     else this.#open.delete(group)
   }
@@ -139,31 +161,40 @@ class MarketplaceWorkspace extends HTMLElement {
   #filter(): number {
     const query = this.#query.trim().toLowerCase()
     let shown = 0
+
     for (const group of this.querySelectorAll<HTMLElement>('[data-group]')) {
       const whole = query !== '' && (group.dataset.name ?? '').includes(query)
       const items = [...group.querySelectorAll<HTMLElement>('li[data-search]')]
       let matched = 0
+
       for (const item of items) {
         const hit = !query || whole || (item.dataset.search ?? '').includes(query)
         item.hidden = !hit
+
         if (hit) matched += 1
       }
+
       group.hidden = matched === 0
       const count = group.querySelector('[data-count]')
+
       if (count) count.textContent = query && !whole ? `${matched}/${items.length}` : String(items.length)
       this.#show(group, query ? matched > 0 : this.#open.has(group))
       shown += matched
     }
+
     this.querySelector('[data-empty]')?.toggleAttribute('hidden', shown > 0)
+
     return shown
   }
 
   #reveal() {
     const tree = this.querySelector<HTMLElement>('[data-tree]')
     const link = this.querySelector<HTMLElement>('a[data-pick][aria-current="page"]')
+
     if (!tree || !link || link.closest('[hidden]')) return
     const from = tree.getBoundingClientRect()
     const to = link.getBoundingClientRect()
+
     if (to.top >= from.top && to.bottom <= from.bottom) return
     tree.scrollTop += to.top - from.top - from.height / 3
   }
@@ -182,17 +213,22 @@ class MarketplaceWorkspace extends HTMLElement {
     const { prev, next } = neighbors(theme, palettes)
     this.querySelector('[data-step="-1"]')?.setAttribute('aria-label', `previous palette, ${prev.name}`)
     this.querySelector('[data-step="1"]')?.setAttribute('aria-label', `next palette, ${next.name}`)
+
     for (const link of this.querySelectorAll('a[data-pick]')) {
       if (link.getAttribute('data-pick') === theme.name) link.setAttribute('aria-current', 'page')
       else link.removeAttribute('aria-current')
     }
+
     const group = this.querySelector(`a[data-pick][aria-current="page"]`)?.closest('[data-group]')
+
     if (group && !this.#query.trim()) {
       this.#open.add(group)
       this.#show(group, true)
     }
+
     this.#reveal()
     document.title = paletteMeta(theme).title
+
     if (push) history.pushState(null, '', palettePath(theme))
     announce(theme.name)
   }

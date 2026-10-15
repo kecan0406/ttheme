@@ -33,6 +33,7 @@ test('booru_sites refuses an unknown site, a tag with a space, a list where the 
 test('a palette name is a slug, or a marketplace and a slug', () => {
   assert.equal(nameProblem('madoka'), undefined)
   assert.equal(nameProblem('kecan0406@dust/rei-2'), undefined)
+
   for (const bad of [
     'Madoka',
     '-madoka',
@@ -47,6 +48,7 @@ test('a palette name is a slug, or a marketplace and a slug', () => {
   ]) {
     assert.notEqual(nameProblem(bad), undefined, bad)
   }
+
   assert.equal(stem('kecan0406@dust/rei'), 'kecan0406--dust--rei')
   assert.equal(marketplaceOf('kecan0406@dust/rei'), 'kecan0406@dust')
   assert.equal(marketplaceOf('madoka'), undefined)
@@ -56,6 +58,7 @@ test('a palette name is a slug, or a marketplace and a slug', () => {
 
 test('free text that would break a config line or zsh quoting is refused', () => {
   assert.equal(textProblem('Sword Art Online'), undefined)
+
   for (const bad of ['a\nb', 'a"b', 'a$b', 'a`b', 'a\\b', 'x'.repeat(81)]) {
     assert.notEqual(textProblem(bad), undefined, JSON.stringify(bad))
   }
@@ -111,6 +114,7 @@ test('[[picture]] takes a known site, a post number and an optional framing', ()
 test('a palette another ttheme wrote drops the find sites and framings this one does not know instead of refusing the palette', () => {
   assert.deepEqual(readBooruSites('x.toml', { gelbooru: 'x', yande: 'y' }, 'x', true), { yande: ['y'] })
   const place = { name: 'dusk', catalogs: new Map(), open: true as const, foreign: true as const }
+
   const pictures = `${shared('name = "dusk"')}
 [[picture]]
 site = "pixiv"
@@ -121,6 +125,7 @@ site = "danbooru"
 id = 12
 position = "left"
 `
+
   assert.deepEqual(readTheme('d.toml', pictures, place).pictures, [{ site: 'danbooru', id: 12 }])
   assert.equal(
     readTheme('d.toml', `${shared('name = "dusk"')}\n[[picture]]\nsite = "pixiv"\nid = 3\n`, place).pictures,

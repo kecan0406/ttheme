@@ -102,24 +102,29 @@ export const SCENES: Scene[] = [
 
 export function sceneAt(index: number): Scene {
   const n = SCENES.length
+
   return SCENES[((index % n) + n) % n] as Scene
 }
 
 export function sceneParts(line: string, width: number): [string, string][] | undefined {
   const pieces = line.split('«')
   const out: [string, string][] = pieces[0] ? [[pieces[0], '']] : []
+
   for (const piece of pieces.slice(1)) {
     const end = piece.indexOf('»')
     const role = piece.slice(0, end)
     const text = piece.slice(end + 1)
+
     if (role === 'w' || role === 'n') {
       if ((role === 'w') !== width >= WIDE) {
         return undefined
       }
     }
+
     if (text) {
       out.push([text, role === 'w' || role === 'n' ? '' : role])
     }
   }
+
   return out
 }

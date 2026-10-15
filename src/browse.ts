@@ -46,11 +46,13 @@ import { readTone } from './tone.ts'
 function marketplaceState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Marketplace {
   const marketplace = source === OFFICIAL ? undefined : cachedMarketplace(home, source)
   let id: string
+
   try {
     id = marketplace?.id ?? idOf(home, source)
   } catch {
     id = isRemote(source) ? repoOf(source) : shownSource(source)
   }
+
   return {
     source,
     id,
@@ -77,6 +79,7 @@ function browseIo(
     refresh: async (source) => {
       if (isLocal(source)) {
         const marketplace = marketplaceState(home, state, source, readTries())
+
         return {
           marketplace,
           refreshed: {
@@ -88,13 +91,16 @@ function browseIo(
           updates: updateNames(home),
         }
       }
+
       const refreshed = await refreshMarketplace(home, source, AUTO_TIMEOUT)
+
       return { marketplace: marketplaceState(home, state, source, readTries()), refreshed, updates: updateNames(home) }
     },
     fetch: async (source) => {
       if (isLocal(source)) {
         const info = localIdentity(source)
         const id = marketplaceId(info)
+
         return {
           source,
           id,
@@ -105,8 +111,10 @@ function browseIo(
           status: 'read in place',
         }
       }
+
       const got = await fetchMarketplace(home, source, undefined, lookups)
       fetched.set(source, got)
+
       return {
         source,
         id: got.id,
@@ -130,26 +138,32 @@ function applyAndSay(...args: Parameters<typeof applyRefreshed>): void {
 
 function marketplaceChanges(result: BrowseResult, marketplaces: Marketplace[], wanted: string[]): string[] {
   const lines: string[] = []
+
   for (const m of result.adds) {
     const auto = m.source !== OFFICIAL && (result.auto[m.source] ?? m.auto)
     lines.push(
       `Added ${m.id} · ${m.shown} — ${counted(listed(m.entries).length)}${auto ? ', updating on its own' : ''}`,
     )
   }
+
   for (const source of result.removes) {
     const id = marketplaces.find((m) => m.source === source)?.id ?? source
     lines.push(`Removed ${id} · ${shownSource(source)}`)
     const kept = wanted.filter((name) => (marketplaceOf(name) ?? OFFICIAL) === id)
+
     if (kept.length > 0) {
       lines.push(keptNote(kept))
     }
   }
+
   for (const [source, on] of Object.entries(result.auto)) {
     const marketplace = marketplaces.find((m) => m.source === source)
+
     if (marketplace && !result.removes.includes(source)) {
       lines.push(`${marketplace.id} ${on ? 'updates on its own now' : 'no longer updates on its own'}`)
     }
   }
+
   return lines
 }
 
@@ -161,61 +175,81 @@ async function applyBrowse(
 ): Promise<void> {
   const current = readInstalled(home)
   const moved = result.adds.length + result.removes.length + Object.keys(result.auto).length > 0
+
   for (const m of result.adds) {
     const got = fetched.get(m.source)
+
     if (got) {
       storeMarketplace(home, got)
     }
   }
+
   for (const source of result.removes) {
     dropCache(home, source)
   }
+
   const sources = [
     ...marketplacesOf(current.marketplaces).filter((s) => !result.removes.includes(s)),
     ...result.adds.map((m) => m.source),
   ]
+
   const placed = withMarketplaces(current, sources, { ...current.updates, ...result.auto })
+
   if (moved) {
     writeInstalled(home, placed)
   }
+
   const manifest = readMarketplaces(home, false)
+
   const wanted = available(home, manifest, false)
     .palettes.filter((e) => result.picked.has(e.name))
     .map((e) => e.name)
+
   const dropped = current.palettes.filter((n) => !wanted.includes(n))
   const added = wanted.filter((n) => !current.palettes.includes(n))
   const renew = result.renew.filter((n) => wanted.includes(n))
+
   if (!moved && added.length === 0 && dropped.length === 0 && renew.length === 0) {
     applyAndSay(home, result.refreshed)
     say('Nothing changed')
+
     return
   }
+
   const next = { ...placed, palettes: wanted }
   commit(home, manifest, current, next)
   forget(home, manifest, current.terminals, dropped)
+
   for (const line of marketplaceChanges(result, marketplaces, wanted)) {
     say(line)
   }
+
   for (const name of added) {
     say(`  + ${name}`)
   }
+
   for (const name of dropped) {
     say(`  - ${name}`)
   }
+
   for (const line of applyRefreshed(home, result.refreshed)) {
     say(line)
   }
+
   await bringPictures(
     home,
     available(home, manifest, false).palettes.filter((e) => added.includes(e.name)),
     next.terminals,
   )
+
   if (renew.length > 0) {
     await takeUpdates(home, renew)
+
     for (const name of renew) {
       say(`  ↑ ${name}`)
     }
   }
+
   if (added.length > 0 || dropped.length > 0) {
     reload(next.palettes.length)
   }
@@ -238,9 +272,11 @@ export async function runBrowse(): Promise<number> {
   const live = liveOf(process.env, tty, home)
   const saved = live && !hub ? await live.saved() : new Map<string, string>()
   const startup = worn(state)
+
   if (hub) {
     process.stdout.write('\x1b[?2026h')
   }
+
   const panel = new BrowsePanel({
     marketplaces,
     kept,
@@ -260,36 +296,48 @@ export async function runBrowse(): Promise<number> {
     owns: tty && !hub,
     ...(live ? { onFocus: (entry: PaletteEntry) => process.stdout.write(live.paint(entry)) } : {}),
   })
+
   try {
     await panel.run()
   } finally {
     live?.stop?.()
+
     if (live && (!hub || panel.next() === undefined)) {
       process.stdout.write(live.restore(saved))
     }
+
     lookups.abort()
   }
+
   await panel.idle()
   const result = panel.result()
   const go = panel.next()
+
   if (hub && go !== undefined) {
     applyAndSay(home, result.refreshed)
+
     return go
   }
+
   if (tty && hub) {
     process.stdout.write('\x1b[?1049l\x1b[?25h')
   }
+
   for (const refreshed of result.refreshed) {
     const note = updateNote(refreshed)
+
     if (note) {
       console.log(note)
     }
   }
+
   if (panel.applied()) {
     for (const line of panel.lines()) {
       console.log(line)
     }
+
     const failure = panel.failure()
+
     if (failure) {
       throw failure
     }
@@ -297,7 +345,9 @@ export async function runBrowse(): Promise<number> {
     for (const line of applyRefreshed(home, result.refreshed)) {
       console.log(line)
     }
+
     console.log('Nothing changed')
   }
+
   return hub ? HUB_CLOSED : 0
 }

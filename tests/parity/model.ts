@@ -109,6 +109,7 @@ export class Tab {
   constructor(n: number, session: string, colors: Colors) {
     this.n = n
     this.session = session
+
     for (const [code, color] of colors) {
       this.slots.set(code, { base: color })
     }
@@ -122,7 +123,9 @@ export class Tab {
     if (this.exited) {
       return
     }
+
     this.proc?.terminal?.write(data)
+
     if (this.tty && process.platform !== 'darwin') {
       try {
         utimesSync(this.tty, new Date(), statSync(this.tty).mtime)
@@ -132,12 +135,15 @@ export class Tab {
 
   screen(home: string): string {
     const buffer = this.xterm.buffer.active
+
     const lines = Array.from({ length: ROWS }, (_, y) =>
       (buffer.getLine(buffer.viewportY + y)?.translateToString(true) ?? '').replaceAll(home, '~'),
     )
+
     while (lines.length > 0 && lines.at(-1)?.trim() === '') {
       lines.pop()
     }
+
     return lines.join('\n')
   }
 }
@@ -173,10 +179,13 @@ function login(app: App): string[] {
 
 function vars(app: App, tab: Tab, data: string): void {
   const set = /^SetUserVar=([^=]+)=(.*)$/.exec(data)
+
   if (!set?.[1]) {
     return
   }
+
   tab.vars.set(set[1], Buffer.from(set[2] ?? '', 'base64').toString('utf8'))
+
   if (set[1] === 'ttheme_shown') {
     app.kind.focused?.(app, tab)
   }
@@ -186,6 +195,7 @@ const ghostty = (): Kind => {
   let loaded: GhosttyLoad = { colors: OWN, picture: 'none', opacity: '-' }
   let seen = 0
   const reloads = (app: App) => join(app.place.home, '.parity', 'reloads')
+
   return {
     launch(app) {
       loaded = ghosttyLoad(app.place.configHome)
@@ -197,14 +207,18 @@ const ghostty = (): Kind => {
     watched: (app) => [reloads(app)],
     changed(app) {
       const count = read(reloads(app)).split('\n').filter(Boolean).length
+
       if (count === seen) {
         return
       }
+
       seen = count
       loaded = ghosttyLoad(app.place.configHome)
+
       for (const tab of app.tabs) {
         app.rebase(tab, loaded.colors)
       }
+
       app.log('reload')
     },
     picture: () => loaded.picture,
@@ -216,20 +230,25 @@ const iterm2 = (): Kind => {
   let profiles = new Map<string, ItermProfile>()
   let fallback = 'own'
   const cards = new WeakMap<Tab, ItermProfile>()
+
   const wear = (app: App, tab: Tab, guid: string) => {
     const card = profiles.get(guid)
     tab.profile = guid
+
     if (card) {
       cards.set(tab, card)
     } else {
       cards.delete(tab)
     }
+
     for (const [code, slot] of tab.slots) {
       slot.base = (card?.colors ?? OWN).get(code) ?? slot.base
       delete slot.over
     }
+
     app.log(`profile ${card?.name ?? 'own'}`)
   }
+
   return {
     launch(app) {
       profiles = itermProfiles(app.place.home)
@@ -237,6 +256,7 @@ const iterm2 = (): Kind => {
     },
     opening(app) {
       const card = profiles.get(fallback)
+
       return {
         argv: login(app),
         env: { ITERM_PROFILE: card?.name ?? 'Default' },
@@ -246,6 +266,7 @@ const iterm2 = (): Kind => {
     },
     opened(_, tab) {
       const card = profiles.get(tab.profile)
+
       if (card) {
         cards.set(tab, card)
       }
@@ -255,8 +276,10 @@ const iterm2 = (): Kind => {
     ],
     changed(app) {
       profiles = itermProfiles(app.place.home)
+
       for (const tab of app.tabs) {
         const card = profiles.get(tab.profile)
+
         if (card) {
           cards.set(tab, card)
           app.rebase(tab, card.colors)
@@ -267,9 +290,11 @@ const iterm2 = (): Kind => {
       if (code !== 1337) {
         return
       }
+
       if (data.startsWith('SetProfile=')) {
         const name = data.slice('SetProfile='.length)
         const guid = name ? profiles.values().find((p) => p.name === name)?.guid : fallback
+
         if (guid) {
           wear(app, tab, guid)
         }
@@ -283,10 +308,12 @@ const iterm2 = (): Kind => {
     },
     picture(_, tab) {
       const card = cards.get(tab)
+
       return card && card.image !== '' && card.blend > 0 ? imageName(card.image) : 'none'
     },
     opacity(_, tab) {
       const card = cards.get(tab)
+
       return card && card.image !== '' && card.blend > 0 ? String(card.blend) : '-'
     },
   }
@@ -296,29 +323,35 @@ const kitty = (): Kind => {
   let config = OWN
   let files: string[] = []
   let watching = false
+
   const load = (app: App) => {
     config = kittyColors(app.place.configHome)
     files = kittyFiles(app.place.configHome)
     watching = files.some((file) => /^watcher /m.test(read(file)))
   }
+
   return {
     launch: load,
     opening: (app) => ({ argv: login(app), env: {}, colors: config }),
     watched: () => files,
     changed(app) {
       load(app)
+
       for (const tab of app.tabs) {
         for (const [code, slot] of tab.slots) {
           slot.base = config.get(code) ?? slot.base
           delete slot.over
         }
+
         const worn = watching ? kittyTheme(app.place.configHome, tab.vars.get('ttheme_worn') ?? '') : undefined
+
         if (worn) {
           for (const [code, slot] of tab.slots) {
             slot.over = worn.get(code)
           }
         }
       }
+
       app.log('reload')
     },
     osc(app, tab, code, data) {
@@ -339,6 +372,7 @@ const kitty = (): Kind => {
 
 const alacritty = (): Kind => {
   let config = OWN
+
   return {
     launch(app) {
       config = alacrittyColors(app.place.configHome)
@@ -347,6 +381,7 @@ const alacritty = (): Kind => {
     watched: (app) => alacrittyFiles(app.place.configHome),
     changed(app) {
       config = alacrittyColors(app.place.configHome)
+
       for (const tab of app.tabs) {
         app.rebase(tab, config)
       }
@@ -358,9 +393,11 @@ const alacritty = (): Kind => {
 const wezterm = (): Kind => {
   let config = OWN
   let wired = false
+
   const module = (app: App) =>
     read(join(app.place.configHome, 'wezterm', 'wezterm.lua')).includes('dofile(') ||
     read(join(app.place.home, '.wezterm.lua')).includes('dofile(')
+
   return {
     launch(app) {
       config = weztermColors(app.place.configHome)
@@ -374,6 +411,7 @@ const wezterm = (): Kind => {
     changed(app) {
       config = weztermColors(app.place.configHome)
       wired = module(app)
+
       for (const tab of app.tabs) {
         app.rebase(tab, config)
       }
@@ -387,22 +425,30 @@ const wezterm = (): Kind => {
       if (!wired) {
         return 'none'
       }
+
       const view = tab.vars.get('ttheme_view')
+
       if (view) {
         const image = view.split('|')[1] ?? ''
+
         return image ? imageName(image) : 'none'
       }
+
       return pictureOf(backgrounds(app.place), tab.vars.get('ttheme_shown'))
     },
     opacity(app, tab) {
       if (!wired) {
         return '-'
       }
+
       const view = tab.vars.get('ttheme_view')
+
       if (view) {
         const [, image = '', opacity = '1'] = view.split('|')
+
         return image ? String(Number(opacity)) : '-'
       }
+
       return strengthOf(backgrounds(app.place), tab.vars.get('ttheme_shown'))
     },
   }
@@ -410,6 +456,7 @@ const wezterm = (): Kind => {
 
 const windowsTerminal = (): Kind => {
   let config = OWN
+
   return {
     delay: 250,
     launch(app) {
@@ -419,12 +466,14 @@ const windowsTerminal = (): Kind => {
     watched: (app) => [join(app.place.wtHome, 'Microsoft', 'Windows Terminal', 'settings.json')],
     changed(app) {
       config = wtColors(app.place.wtHome, WT_PROFILE)
+
       for (const tab of app.tabs) {
         for (const [code, slot] of tab.slots) {
           slot.base = config.get(code) ?? slot.base
           delete slot.over
         }
       }
+
       app.log('reload')
     },
     picture: () => 'none',
@@ -438,10 +487,12 @@ const warp = (): Kind => {
   let owed: { id: string; since: number } | undefined
   const paths = (app: App) => warpPaths(app.place)
   const active = (app: App) => join(app.place.stateHome, 'ttheme', 'warp', '.active')
+
   const front = (app: App, tab: Tab) => {
     db?.run('update windows set active_tab_index = ? where id = 1', [app.tabs.indexOf(tab)])
     owed = existsSync(active(app)) ? { id: tab.session.replaceAll('-', ''), since: performance.now() } : undefined
   }
+
   return {
     launch(app) {
       settings = read(paths(app).settings)
@@ -468,9 +519,11 @@ const warp = (): Kind => {
     changed(app) {
       settings = read(paths(app).settings)
       theme = warpLook(paths(app).settings, paths(app).themes)
+
       for (const tab of app.tabs) {
         app.rebase(tab, theme.colors)
       }
+
       app.log(`theme ${named(theme.colors, palettesOf(app.place.home))}`)
     },
     focused(app, tab) {
@@ -482,6 +535,7 @@ const warp = (): Kind => {
       if (owed && (read(active(app)).trim() === owed.id || performance.now() - owed.since > FOLLOW_MS)) {
         owed = undefined
       }
+
       return owed !== undefined
     },
     closed() {
@@ -498,14 +552,17 @@ const konsole = (): Kind => {
   const held = new Map<Tab, { name: string; look: KonsoleLook }>()
   const builtin: KonsoleLook = { colors: OWN, picture: 'none', opacity: '-' }
   const wanted = (app: App) => join(app.place.home, '.parity', 'konsole.default')
+
   const lookup = (app: App, name: string): KonsoleLook => {
     for (const [tab, worn] of held) {
       if (app.behavior.cache === 'weak' && !tab.exited && worn.name === name) {
         return worn.look
       }
     }
+
     return konsoleLook(app.place.dataHome, name) ?? builtin
   }
+
   return {
     launch(app) {
       const rc = read(join(app.place.configHome, 'konsolerc'))
@@ -519,9 +576,11 @@ const konsole = (): Kind => {
       const look = lookup(app, name)
       opening = { name, look }
       const colors = new Map(look.colors)
+
       if (found?.cursor) {
         colors.set('12', found.cursor)
       }
+
       return { argv: login(app), env: {}, colors, profile }
     },
     opened(_, tab) {
@@ -533,12 +592,15 @@ const konsole = (): Kind => {
     watched: (app) => [wanted(app)],
     changed(app) {
       const name = read(wanted(app)).trim()
+
       if (!name) {
         return
       }
+
       const file = name.startsWith('ttheme · ')
         ? `ttheme-${fileStem(name.slice('ttheme · '.length))}.profile`
         : 'Own.profile'
+
       profile = file
       app.log(`default profile ${file}`)
     },
@@ -546,25 +608,33 @@ const konsole = (): Kind => {
       if (code !== 50) {
         return
       }
+
       const fields = new Map(
         data.split(';').flatMap((part): [string, string][] => {
           const at = part.indexOf('=')
+
           return at > 0 ? [[part.slice(0, at), part.slice(at + 1)]] : []
         }),
       )
+
       const name = fields.get('ColorScheme')
+
       if (!name) {
         return
       }
+
       const look = lookup(app, name)
       held.set(tab, { name, look })
       const cursor = fields.get('UseCustomCursorColor') === 'true' ? hex(fields.get('customCursorColor')) : undefined
+
       for (const [code, slot] of tab.slots) {
         slot.base = code === '12' && cursor ? cursor : (look.colors.get(code) ?? slot.base)
+
         if (!code.startsWith('4;')) {
           delete slot.over
         }
       }
+
       app.log(`scheme ${name}`)
     },
     picture: (_, tab) => held.get(tab)?.look.picture ?? 'none',
@@ -580,27 +650,36 @@ const terminalApp = (): Kind => {
   let switched = 0
   const dir = (app: App) => join(app.place.home, '.parity', 'terminal')
   const file = (name: string) => name.replaceAll('/', '--')
+
   const prefs = (app: App, key: string) =>
     read(join(app.place.home, '.parity', 'defaults', TERMINAL_DOMAIN, key)).trim() || 'Own'
+
   const resolve = (app: App, image: Bookmark | undefined): string | undefined => {
     if (!image) {
       return undefined
     }
+
     const laid = terminalPictures(app.place.configHome)
+
     const moved = existsSync(laid)
       ? readdirSync(laid)
           .map((name) => join(laid, name))
           .find((path) => statSync(path).ino === image.ino)
       : undefined
+
     return moved ?? (existsSync(image.path) ? image.path : undefined)
   }
+
   const shown = (app: App, tab: Tab) => {
     const path = resolve(app, loaded.get(tab.profile)?.image)
+
     if (path && !cache.has(path)) {
       cache.set(path, terminalPicture(path, backgrounds(app.place), app.place.home))
     }
+
     shows.set(tab, path ? cache.get(path) : undefined)
   }
+
   return {
     eager: true,
     launch(app) {
@@ -609,16 +688,20 @@ const terminalApp = (): Kind => {
           profile.image && existsSync(profile.image.path)
             ? { path: profile.image.path, ino: statSync(profile.image.path).ino }
             : profile.image
+
         loaded.set(name, {
           colors: new Map(SEEN_ORDER.map((code, i): [string, string] => [code, profile.colors[i] ?? ''])),
           ...(image ? { image } : {}),
         })
       }
+
       fallback = loaded.has(prefs(app, 'Default Window Settings')) ? prefs(app, 'Default Window Settings') : 'Own'
       mkdirSync(join(dir(app), 'loaded'), { recursive: true })
+
       for (const name of loaded.keys()) {
         writeFileSync(join(dir(app), 'loaded', file(name)), '')
       }
+
       writeFileSync(join(dir(app), 'started'), `${Date.now()}\n`)
       writeFileSync(join(app.place.home, '.parity', 'terminal.running'), '')
       rmSync(join(dir(app), 'default'), { force: true })
@@ -637,28 +720,35 @@ const terminalApp = (): Kind => {
     watched: (app) => [join(dir(app), 'default'), join(dir(app), 'switch')],
     changed(app) {
       const want = read(join(dir(app), 'default')).trim()
+
       if (want && loaded.has(want) && want !== fallback) {
         fallback = want
         app.log(`default profile ${want}`)
       }
+
       const lines = read(join(dir(app), 'switch'))
         .split('\n')
         .filter(Boolean)
+
       for (const line of lines.slice(switched)) {
         const [tty = '', name = '', n = ''] = line.split('\t')
         const tab = app.tabs.find((t) => t.tty === tty) ?? (n === '' ? undefined : app.tabs[Number(n)])
         const profile = loaded.get(name)
+
         if (tab && profile) {
           tab.profile = name
+
           for (const [code, slot] of tab.slots) {
             slot.base = profile.colors.get(code) ?? slot.base
             delete slot.over
             delete slot.kept
           }
+
           shown(app, tab)
           app.log(`tab profile ${name}`)
         }
       }
+
       switched = lines.length
     },
     picture: (_, tab) => shows.get(tab)?.palette ?? 'none',
@@ -719,19 +809,26 @@ export class App {
 
   poll(): void {
     const files = this.kind.watched?.(this) ?? []
+
     if (!files.some((file) => stamp(file) !== (this.stamps.get(file) ?? '-'))) {
       return
     }
+
     this.restamp()
+
     if (this.kind.unchanged?.(this)) {
       return
     }
+
     this.activity = performance.now()
     const delay = this.kind.delay ?? 0
+
     if (delay === 0) {
       this.kind.changed?.(this)
+
       return
     }
+
     this.later++
     setTimeout(() => {
       this.kind.changed?.(this)
@@ -748,15 +845,19 @@ export class App {
 
   shown(tab: Tab, code: string): string {
     const covered = code === '11' ? this.kind.background?.(this, tab) : undefined
+
     if (covered) {
       return covered
     }
+
     const slot = tab.slots.get(code) as Slot
+
     return this.behavior.draws.includes(code) ? (slot.over ?? slot.base) : slot.base
   }
 
   private told(tab: Tab, code: string): string {
     const slot = tab.slots.get(code) as Slot
+
     return slot.over ?? slot.base
   }
 
@@ -767,29 +868,38 @@ export class App {
   reply(tab: Tab, data: string): void {
     if (!this.behavior.syncQuery && tab.sync) {
       tab.held += data
+
       return
     }
+
     tab.write(data)
   }
 
   private color(tab: Tab, code: string, value: string): void {
     const slot = tab.slots.get(code)
+
     if (!slot) {
       return
     }
+
     if (value === '?') {
       if (this.behavior.answers.includes(code)) {
         this.reply(tab, `\x1b]${code};${rgbSpec(this.told(tab, code))}\x1b\\`)
       }
+
       return
     }
+
     const color = hex(value)
+
     if (!color) {
       return
     }
+
     if (slot.kept === undefined) {
       slot.kept = slot.over ?? slot.base
     }
+
     slot.over = color
     this.painted(tab)
   }
@@ -798,11 +908,14 @@ export class App {
     if (!this.behavior.resets) {
       return
     }
+
     for (const code of codes) {
       const slot = tab.slots.get(code)
+
       if (!slot) {
         continue
       }
+
       if (this.behavior.baseline && slot.kept !== undefined) {
         slot.over = slot.kept
         delete slot.kept
@@ -810,11 +923,13 @@ export class App {
         delete slot.over
       }
     }
+
     this.painted(tab)
   }
 
   private painted(tab: Tab): void {
     const bg = this.shown(tab, '11')
+
     if (tab.bgs.at(-1) !== bg) {
       tab.bgs.push(bg)
     }
@@ -824,23 +939,30 @@ export class App {
     if (!this.behavior.graphics) {
       return
     }
+
     const at = data.indexOf(';')
+
     const keys = new Map(
       (at < 0 ? data : data.slice(0, at)).split(',').map((pair): [string, string] => {
         const [k = '', v = ''] = pair.split('=')
+
         return [k, v]
       }),
     )
+
     const payload = at < 0 ? '' : data.slice(at + 1)
     const quiet = Number(keys.get('q') ?? '0')
     const id = keys.get('i') ?? '0'
     const action = keys.get('a') ?? 't'
+
     if (action === 'q') {
       if (quiet < 1) {
         this.reply(tab, `\x1b_Gi=${id};OK\x1b\\`)
       }
+
       return
     }
+
     if (action === 't' || action === 'T') {
       if (keys.get('t') === 'f') {
         tab.images.set(id, Buffer.from(payload, 'base64').toString('utf8'))
@@ -848,6 +970,7 @@ export class App {
         tab.images.set(id, tab.images.get(id) ?? '')
       }
     }
+
     if (action === 'p' || action === 'T') {
       if (keys.has('P')) {
         if (quiet < 2) {
@@ -858,26 +981,33 @@ export class App {
               : `\x1b_Gi=${id},p=${keys.get('p') ?? '0'};EINVAL:relative placements\x1b\\`,
           )
         }
+
         if (!this.behavior.relative || !tab.images.has(keys.get('P') ?? '')) {
           return
         }
       }
+
       tab.placements.set(`${id}:${keys.get('p') ?? '0'}`, {
         image: id,
         z: Number(keys.get('z') ?? '0'),
         rows: Number(keys.get('r') ?? ROWS),
       })
     }
+
     if (action === 'd') {
       const what = keys.get('d') ?? 'a'
+
       for (const [key, placed] of tab.placements) {
         const all = what === 'a' || what === 'A'
+
         const mine =
           (what === 'i' || what === 'I') && placed.image === id && (!keys.has('p') || key === `${id}:${keys.get('p')}`)
+
         if (all || mine) {
           tab.placements.delete(key)
         }
       }
+
       if (what === 'A') {
         tab.images.clear()
       } else if (what === 'I') {
@@ -888,29 +1018,38 @@ export class App {
 
   layered(tab: Tab): string | undefined {
     const layers = [...tab.placements.values()].filter((placed) => placed.rows * 2 >= ROWS)
+
     if (layers.length === 0) {
       return undefined
     }
+
     const pictures = layers.filter((placed) => (tab.images.get(placed.image) ?? '') !== '').sort((a, b) => b.z - a.z)
     const top = pictures[0]
+
     return top ? imageName(tab.images.get(top.image) ?? '') : 'none'
   }
 
   private csi(tab: Tab, body: string): void {
     const match = /^([?>=]?)([\d;:]*)([ -/]*)([@-~])$/.exec(body)
+
     if (!match) {
       return
     }
+
     const [, prefix = '', raw = '', middle = '', final = ''] = match
     const params = raw === '' ? [] : raw.split(';').map((p) => Number(p.split(':')[0] || 0))
+
     if (prefix === '' && final === 'n') {
       if (params[0] === 5) {
         this.reply(tab, '\x1b[0n')
       }
+
       return
     }
+
     if (prefix === '' && final === 't') {
       const cells = this.behavior.cells
+
       if (params[0] === 16 && cells.includes('pixels')) {
         this.reply(tab, '\x1b[6;17;8t')
       } else if (params[0] === 14 && cells.includes('points')) {
@@ -918,26 +1057,36 @@ export class App {
       } else if (params[0] === 18 && cells.includes('points')) {
         this.reply(tab, `\x1b[8;${ROWS};${COLS}t`)
       }
+
       return
     }
+
     if (prefix === '?' && middle === '$' && final === 'p') {
       const mode = params[0] ?? 0
       const on = (flag: boolean) => (flag ? 1 : 2)
+
       const state =
         mode === 2026 ? on(tab.sync) : mode === 1004 && this.behavior.focus !== 'none' ? on(tab.focusing) : 0
+
       this.reply(tab, `\x1b[?${mode};${state}$y`)
+
       return
     }
+
     if (prefix === '?' && (final === 'h' || final === 'l')) {
       const set = final === 'h'
+
       if (params.includes(1004)) {
         tab.focusing = set
+
         if (set && this.behavior.focus === 'answer') {
           this.reply(tab, this.front === tab ? '\x1b[I' : '\x1b[O')
         }
       }
+
       if (params.includes(2026)) {
         tab.sync = set
+
         if (!set && tab.held) {
           const held = tab.held
           tab.held = ''
@@ -951,10 +1100,12 @@ export class App {
     const at = body.indexOf(';')
     const code = Number(at < 0 ? body : body.slice(0, at))
     const data = at < 0 ? '' : body.slice(at + 1)
+
     if (code === 10 || code === 11 || code === 12 || code === 17) {
       this.color(tab, String(code), data)
     } else if (code === 4) {
       const parts = data.split(';')
+
       for (let i = 0; i + 1 < parts.length; i += 2) {
         this.color(tab, `4;${parts[i]}`, parts[i + 1] as string)
       }
@@ -970,12 +1121,14 @@ export class App {
   private scan(tab: Tab, chunk: string): void {
     let state = tab.state
     let buf = tab.buf
+
     for (const ch of chunk) {
       switch (state) {
         case 'text':
           if (ch === '\x1b') {
             state = 'esc'
           }
+
           break
         case 'esc':
           buf = ''
@@ -987,16 +1140,20 @@ export class App {
                 : ch === '_' || ch === 'P' || ch === 'X' || ch === '^'
                   ? 'str'
                   : 'text'
+
           if (state === 'str') {
             buf = ch
           }
+
           break
         case 'csi':
           buf += ch
+
           if (ch >= '@' && ch <= '~') {
             this.csi(tab, buf)
             state = 'text'
           }
+
           break
         case 'osc':
           if (ch === '\x07') {
@@ -1007,14 +1164,17 @@ export class App {
           } else {
             buf += ch
           }
+
           break
         case 'osc-esc':
           this.osc(tab, buf)
           state = ch === '\\' ? 'text' : 'esc'
+
           if (state === 'esc') {
             state = ch === '[' ? 'csi' : ch === ']' ? 'osc' : 'text'
             buf = ''
           }
+
           break
         case 'str':
           if (ch === '\x1b') {
@@ -1022,20 +1182,24 @@ export class App {
           } else {
             buf += ch
           }
+
           break
         case 'str-esc':
           if (ch === '\\') {
             if (buf.startsWith('_G')) {
               this.graphics(tab, buf.slice(2))
             }
+
             state = 'text'
           } else {
             buf += `\x1b${ch}`
             state = 'str'
           }
+
           break
       }
     }
+
     tab.state = state
     tab.buf = buf
   }
@@ -1044,6 +1208,7 @@ export class App {
     if (this.kind.eager) {
       this.poll()
     }
+
     this.scan(tab, chunk)
     tab.pending++
     tab.xterm.write(chunk, () => {
@@ -1082,13 +1247,16 @@ export class App {
         this.activity = performance.now()
       },
     })
+
     if (was) {
       this.blur(was)
     }
+
     await this.until(() => tab.prompts() >= 1, 20000, `the ${this.term} tab never drew its first prompt`)
     tab.tty = read(join(this.place.home, '.parity', `tty.${n}`)).trim()
     this.aim(tab)
     await this.settle()
+
     return tab
   }
 
@@ -1104,18 +1272,23 @@ export class App {
 
   async focus(tab: Tab): Promise<void> {
     this.poll()
+
     if (this.front === tab) {
       return
     }
+
     const was = this.front
     this.front = tab
     this.aim(tab)
+
     if (was) {
       this.blur(was)
     }
+
     if (this.behavior.focus !== 'none' && tab.focusing) {
       tab.write('\x1b[I')
     }
+
     this.kind.focused?.(this, tab)
     await this.settle()
   }
@@ -1133,9 +1306,11 @@ export class App {
         await Bun.sleep(Number(key.slice(0, -1)) * 1000)
         continue
       }
+
       tab.write(KEYS[key] ?? key)
       await Bun.sleep(key === 'esc' ? 160 : gap)
     }
+
     await this.settle()
   }
 
@@ -1146,15 +1321,19 @@ export class App {
     await this.until(() => existsSync(file), 5000, `the ${this.term} tab never answered what it wears`)
     await Bun.sleep(20)
     const [spec = ''] = readFileSync(file, 'utf8').trim().split('|')
+
     return specName(spec, palettesOf(this.place.home))
   }
 
   look(tab = this.front): Look {
     this.poll()
+
     if (!tab) {
       return { colors: 'none', picture: 'none', opacity: '-' }
     }
+
     const layered = this.layered(tab)
+
     return {
       colors: named(this.displayed(tab), palettesOf(this.place.home)),
       picture: layered ?? this.kind.picture(this, tab),
@@ -1165,6 +1344,7 @@ export class App {
   private async busy(): Promise<boolean> {
     const proc = Bun.spawn(['ps', '-A', '-ww', '-o', 'args='], { stdout: 'pipe', stderr: 'ignore' })
     const out = await new Response(proc.stdout).text()
+
     return out
       .split('\n')
       .some((line) => line.includes(this.place.home) && / -e /.test(line) && !line.startsWith('ps '))
@@ -1173,20 +1353,26 @@ export class App {
   async settle(quiet = this.term === 'warp' ? 450 : 250): Promise<void> {
     const end = performance.now() + 20000
     this.activity = performance.now()
+
     for (;;) {
       await Bun.sleep(20)
       this.poll()
       const now = performance.now()
+
       if (this.kind.owes?.(this)) {
         this.activity = now
       }
+
       const idle = this.later === 0 && this.tabs.every((tab) => tab.pending === 0)
+
       if (idle && now - this.activity >= quiet) {
         if (!(await this.busy())) {
           return
         }
+
         this.activity = now
       }
+
       if (now > end) {
         throw new Error(`the ${this.term} tabs never settled`)
       }
@@ -1195,11 +1381,13 @@ export class App {
 
   async until(ready: () => boolean, ms: number, what: string): Promise<void> {
     const end = performance.now() + ms
+
     while (!ready()) {
       if (performance.now() > end) {
         const tail = this.tabs.map((tab) => JSON.stringify(tab.raw.slice(-600))).join('\n')
         throw new Error(`${what}\n${tail}`)
       }
+
       await Bun.sleep(15)
       this.poll()
     }
@@ -1207,14 +1395,18 @@ export class App {
 
   async close(): Promise<void> {
     this.kind.closed?.()
+
     for (const tab of this.tabs) {
       tab.proc?.kill('SIGHUP')
     }
+
     await Bun.sleep(60)
+
     for (const tab of this.tabs) {
       if (!tab.exited) {
         tab.proc?.kill('SIGKILL')
       }
+
       tab.proc?.terminal?.close()
       tab.xterm.dispose()
     }

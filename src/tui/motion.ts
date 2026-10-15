@@ -9,13 +9,16 @@ interface Chase {
 export function chase(shown: number, target: number, { share = GLIDE_SHARE, span }: Chase = {}): number {
   let from = shown
   let gap = target - from
+
   if (gap === 0) {
     return target
   }
+
   if (span !== undefined && Math.abs(gap) > 2 * span) {
     from = target - Math.sign(gap) * span
     gap = target - from
   }
+
   return from + Math.sign(gap) * Math.max(1, Math.round(Math.abs(gap) * share))
 }
 
@@ -33,11 +36,13 @@ export class Glide {
     if (this.timer) {
       return
     }
+
     const tick = (): void => {
       const more = this.step()
       this.paint()
       this.timer = more ? setTimeout(tick, GLIDE) : undefined
     }
+
     this.timer = setTimeout(tick, GLIDE)
   }
 

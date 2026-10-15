@@ -71,6 +71,7 @@ export function NoSuchMarketplace({ id, facts }: { id: string; facts: Facts }) {
 
 export function NoSuchPalette({ id, name, facts }: { id: string; name: string; facts: Facts }) {
   const home = marketplacePath(id === OFFICIAL ? null : id)
+
   return (
     <MarketplaceFrame facts={facts}>
       <div class="grid justify-items-start gap-3">

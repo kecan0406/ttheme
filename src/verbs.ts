@@ -287,6 +287,7 @@ export const VERB_SPECS: VerbSpec[] = [
 
 function usageOf(verb: VerbSpec): string {
   const flags = Object.entries(verb.flags ?? {}).map(([name, { value }]) => `[--${name}${value ? ` ${value}` : ''}]`)
+
   return [verb.name, ...flags, ...verb.args].join(' ')
 }
 
@@ -307,6 +308,7 @@ function flagRows(verb: VerbSpec): [string, string][] {
 
 function listed(verb: VerbSpec, all: boolean): [string, string][] {
   const under = all ? [...(verb.actions ?? []), ...flagRows(verb)] : []
+
   return [
     [[verb.name, ...verb.args].join(' '), headOf(verb.about)],
     ...under.map(([left, right]): [string, string] => [`  ${left}`, headOf(right)]),
@@ -346,6 +348,7 @@ export function briefText(): string {
 
 export function commandHelp(verb: VerbSpec): string {
   const flags = flagRows(verb)
+
   return [
     `Usage: ttheme ${usageOf(verb)}`,
     '',
@@ -358,6 +361,7 @@ export function commandHelp(verb: VerbSpec): string {
 export function helpText(all: boolean, shell = false): string {
   const shown = VERB_SPECS.filter((v) => !v.hidden && (all || !v.more) && !(shell && v.section === 'setup'))
   const sections = SECTIONS.filter(({ section }) => shown.some((v) => v.section === section))
+
   return [
     ...BANNER,
     'ttheme alone opens Preview and Browse as tabs — Browse installs and removes palettes; tab and shift+tab move between them',

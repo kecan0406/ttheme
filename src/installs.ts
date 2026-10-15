@@ -24,54 +24,70 @@ export function reload(count: number): void {
 
 export async function runAdd(asked: string[]): Promise<void> {
   const link = asked.find((n) => /^https?:\/\//i.test(n.trim()) && !codeOf(n))
+
   if (link) {
     throw new Error(`${link} is not a share link — one reads ${SHARE_URL}tt2:…`)
   }
+
   const home = configHome()
   const manifest = readMarketplaces(home)
   const shared = new Map<string, PaletteEntry>()
   const refused: Refused[] = []
+
   const names = [
     ...new Set(
       asked.flatMap((n) => {
         const code = codeOf(n)
+
         if (!code) {
           return [n]
         }
+
         const adopted = adopt(home, code, manifest)
         refused.push(...adopted.refused)
+
         for (const entry of adopted.entries) {
           shared.set(entry.name, entry)
         }
+
         return adopted.entries.map((e) => e.name)
       }),
     ),
   ]
+
   if (names.length === 0 && refused.length > 0) {
     throw new Error(refused.map((r) => `${r.name} ${r.why}`).join('\n'))
   }
+
   for (const r of refused) {
     console.error(`ttheme: left ${r.name} out, since it ${r.why}`)
   }
+
   const state = readInstalled(home)
   const already = names.filter((n) => state.palettes.includes(n))
   const fresh = names.filter((n) => !state.palettes.includes(n))
+
   if (fresh.length === 0) {
     sync(home, manifest, state)
     console.log(`Already installed: ${already.join(', ')}`)
+
     return
   }
+
   const next = { ...state, palettes: [...state.palettes, ...fresh] }
   commit(home, manifest, state, next)
+
   for (const name of fresh) {
     console.log(`  + ${name}`)
   }
+
   await bringPictures(
     home,
     available(home, manifest, false)
       .palettes.filter((e) => fresh.includes(e.name))
       .map((e) => {
         const code = shared.get(e.name)
+
         return code ? { ...e, pictures: code.pictures } : e
       }),
     next.terminals,
@@ -83,9 +99,11 @@ export function runDefault(name: string): void {
   const home = configHome()
   const manifest = readMarketplaces(home)
   const state = readInstalled(home)
+
   if (!state.palettes.includes(name)) {
     throw new Error(`${name} is not installed — \`ttheme add ${name}\` first`)
   }
+
   const { off: _, ...rest } = state
   const pointed = commit(home, manifest, state, { ...rest, startup: name }, true)
   console.log(defaultNote(name, state.terminals, pointed).join('\n'))
@@ -100,13 +118,17 @@ export function runOn(): void {
   const home = configHome()
   const state = readInstalled(home)
   const name = startupPalette(state)
+
   if (!name) {
     throw new Error('no palettes installed — `ttheme` picks some')
   }
+
   if (!state.off) {
     console.log(`Already on · ${name}`)
+
     return
   }
+
   const { off: _, ...next } = state
   const pointed = commit(home, readMarketplaces(home), state, next)
   console.log(defaultNote(name, next.terminals, pointed).join('\n'))
@@ -115,13 +137,17 @@ export function runOn(): void {
 export function runOff(): void {
   const home = configHome()
   const state = readInstalled(home)
+
   if (state.off) {
     console.log('Already off')
+
     return
   }
+
   const pointed = commit(home, readMarketplaces(home), state, { ...state, off: true })
   const name = startupPalette(state)
   console.log(`Off · new tabs open in the terminal's own colors${name ? ` — \`ttheme on\` wears ${name} again` : ''}`)
+
   for (const wiring of wirings(state.terminals)) {
     if (pointed.get(wiring.id)?.restart) {
       console.log(`${wiring.name} new tabs open on your own profile once ${wiring.name} restarts`)
@@ -131,14 +157,17 @@ export function runOff(): void {
 
 function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wired, Pointed>): string[] {
   const wearing = wirings(terminals).filter((wiring) => !wiring.defaults)
+
   const lines =
     wearing.length > 0
       ? [
           `Default ${name} · ${wearing.map((wiring) => wiring.name).join(', ')} open new tabs with it once their config reloads`,
         ]
       : []
+
   for (const wiring of wirings(terminals)) {
     const profile = wiring.defaults?.profile(name)
+
     if (profile) {
       lines.push(
         pointed.get(wiring.id)?.restart
@@ -147,6 +176,7 @@ function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wire
       )
     }
   }
+
   return lines.length > 0
     ? lines
     : [`Default ${name} · no terminal is wired to open with it — \`ttheme init\` wires one`]
@@ -160,10 +190,13 @@ function marketplaceNamed(home: string, sources: string[], name: string): string
       return undefined
     }
   }
+
   const hit = sources.find((s) => s === name || shownSource(s) === name || id(s) === name)
+
   if (!hit) {
     throw new Error(`no marketplace named ${name} — the Browse tab of \`ttheme\` lists them`)
   }
+
   return hit
 }
 
@@ -173,6 +206,7 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   const named = asked.map((name) => marketplaceNamed(home, all, name))
   const release = await newerRelease()
   let stuck = false
+
   if (release.latest) {
     try {
       return upgradeTo(release.latest, asked)
@@ -183,12 +217,16 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
   } else {
     console.log(release.note)
   }
+
   const marketplaces = (named.length > 0 ? named : all).filter((source) => source !== OFFICIAL)
+
   if (named.length === 0 && marketplaces.length === 0) {
     console.log('No marketplaces to update — `ttheme marketplace add <owner>/<repo>` adds one')
   }
+
   const kept = (source: string, failure: Error): string =>
     `${failureLine(source, failure)} — kept the copy from the last update`
+
   for (const source of marketplaces.filter(isLocal)) {
     try {
       console.log(`  ${localLine(home, source)}`)
@@ -196,54 +234,69 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
       console.log(`  ${kept(source, error as Error)}`)
     }
   }
+
   const remote = marketplaces.filter((source) => !isLocal(source))
   const waiting = new Set(remote)
   const done: Refreshed[] = []
   const line = pending()
+
   const show = (): void =>
     line.set(
       `Updating ${[...waiting].map(shownSource).join(', ')}${remote.length > 1 ? ` · ${remote.length - waiting.size}/${remote.length}` : ''}`,
     )
+
   show()
   await Promise.all(
     remote.map(async (source) => {
       const outcome = await attempt(home, source)
+
       if ('refreshed' in outcome) {
         done.push(outcome.refreshed)
       }
+
       waiting.delete(source)
+
       if (waiting.size > 0) {
         show()
       } else {
         line.done()
       }
+
       line.say(`  ${'refreshed' in outcome ? refreshLine(outcome.refreshed) : kept(source, outcome.failure)}`)
     }),
   )
   line.done()
+
   if (!existsSync(installedPath(home))) {
     return stuck ? 1 : 0
   }
+
   for (const moved of applyRefreshed(home, done)) {
     console.log(`  ${moved}`)
   }
+
   const updates = updatesLine(home)
+
   if (updates) {
     console.log(updates)
   }
+
   return stuck ? 1 : 0
 }
 
 export async function takeUpdates(home: string, names: string[]): Promise<void> {
   const manifest = readMarketplaces(home, false)
+
   const fresh = new Map(
     updatesOf(home, manifest)
       .filter((e) => names.includes(e.name))
       .map((e) => [e.name, e]),
   )
+
   if (fresh.size === 0) {
     return
   }
+
   const was = readKept(home)
   writeKept(
     home,
@@ -273,6 +326,7 @@ export async function pickPalettes(
   const tty = process.stdout.isTTY === true
   const live = liveOf(process.env, tty, configHome())
   const saved = live ? await live.saved() : new Map<string, string>()
+
   const prompt = new PalettePrompt({
     entries,
     scope,
@@ -283,12 +337,16 @@ export async function pickPalettes(
     fx: promptFx(process.env.TTHEME_FX),
     onFocus: live ? (entry) => process.stdout.write(live.paint(entry)) : undefined,
   })
+
   const done = await prompt.prompt()
+
   if (live) {
     process.stdout.write(live.restore(saved))
   }
+
   if (done === 'cancel') {
     return undefined
   }
+
   return manifest.palettes.filter((e) => prompt.picked.has(e.name)).map((e) => e.name)
 }

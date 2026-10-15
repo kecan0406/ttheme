@@ -15,7 +15,9 @@ const TONE_SLOTS = [
 ] as const
 
 type ToneSlot = (typeof TONE_SLOTS)[number]
+
 type Override = Partial<Record<ToneSlot, string>>
+
 type Tone = Record<string, Override>
 
 const VERSION = 1
@@ -30,44 +32,58 @@ function isSlot(slot: string): slot is ToneSlot {
 
 export function readTone(configHome: string): Tone {
   const path = tonePath(configHome)
+
   if (!existsSync(path)) {
     return {}
   }
+
   let parsed: unknown
+
   try {
     parsed = JSON.parse(readFileSync(path, 'utf8'))
   } catch {
     return {}
   }
+
   const palettes = (parsed as { palettes?: unknown } | null)?.palettes
+
   if (typeof palettes !== 'object' || palettes === null) {
     return {}
   }
+
   const tone: Tone = {}
+
   for (const [name, slots] of Object.entries(palettes)) {
     if (typeof slots !== 'object' || slots === null) {
       continue
     }
+
     const kept: Override = {}
+
     for (const [slot, color] of Object.entries(slots)) {
       if (isSlot(slot) && typeof color === 'string' && isHex(color.toLowerCase())) {
         kept[slot] = color.toLowerCase()
       }
     }
+
     if (Object.keys(kept).length > 0) {
       tone[name] = kept
     }
   }
+
   return tone
 }
 
 export function writeTone(configHome: string, tone: Tone): void {
   const path = tonePath(configHome)
   const palettes = Object.fromEntries(Object.entries(tone).filter(([, slots]) => Object.keys(slots).length > 0))
+
   if (Object.keys(palettes).length === 0) {
     rmSync(path, { force: true })
+
     return
   }
+
   writeAtomic(path, `${JSON.stringify({ version: VERSION, palettes }, null, 2)}\n`)
 }
 
@@ -78,6 +94,7 @@ function colorOf(
   if (slot === 'background' || slot === 'foreground' || slot === 'cursor' || slot === 'selection') {
     return entry[slot]
   }
+
   return entry.ansi[Number(slot.slice(4))] as string
 }
 
@@ -91,6 +108,7 @@ export function overrideOf(entry: PaletteEntry, colors: readonly string[]): Over
   return Object.fromEntries(
     TONE_SLOTS.flatMap((slot, i) => {
       const color = (colors[i] as string).toLowerCase()
+
       return color === colorOf(entry, slot).toLowerCase() ? [] : [[slot, color]]
     }),
   )
@@ -100,11 +118,15 @@ export function tonedEntry(entry: PaletteEntry, over: Override | undefined): Pal
   if (!over) {
     return entry
   }
+
   const same = (slot: ToneSlot) => over[slot] === undefined || over[slot] === colorOf(entry, slot).toLowerCase()
+
   if (TONE_SLOTS.every(same)) {
     return entry
   }
+
   const pick = (slot: ToneSlot) => over[slot] ?? colorOf(entry, slot)
+
   const colors = {
     background: pick('background'),
     foreground: pick('foreground'),
@@ -112,9 +134,11 @@ export function tonedEntry(entry: PaletteEntry, over: Override | undefined): Pal
     selection: pick('selection'),
     ansi: TONE_SLOTS.slice(4).map(pick),
   }
+
   const signature = entry.signatureSlots.map((slot) => (isSlot(slot) ? pick(slot) : colorOf(colors, slot)))
   const patched = { ...entry, ...colors, signature }
   const theme = toTheme(patched)
+
   const backdrop = backdropTone(
     {
       name: patched.name,
@@ -127,6 +151,7 @@ export function tonedEntry(entry: PaletteEntry, over: Override | undefined): Pal
     },
     patched.signatureSlots,
   )
+
   return { ...patched, gate: measure(theme), backdrop }
 }
 
@@ -136,20 +161,24 @@ export function tuned(entries: PaletteEntry[], tone: Tone): PaletteEntry[] {
 
 export function withTone(tone: Tone, name: string, over: Override): Tone {
   const next = { ...tone }
+
   if (Object.keys(over).length === 0) {
     delete next[name]
   } else {
     next[name] = over
   }
+
   return next
 }
 
 export function moveTone(configHome: string, renamed: ReadonlyMap<string, string>, removed: readonly string[]): void {
   const tone = readTone(configHome)
   const names = Object.keys(tone)
+
   if (!names.some((name) => renamed.has(name) || removed.includes(name))) {
     return
   }
+
   writeTone(
     configHome,
     Object.fromEntries(

@@ -19,15 +19,18 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
   if (typeof Bun === 'undefined') {
     throw new Error('needs bun — run it from a checkout: bun src/bin.ts build')
   }
+
   const terminals = only && only.length > 0 ? TERMINAL_EMITTERS.filter((e) => only.includes(e.id)) : TERMINAL_EMITTERS
 
   const themes = loadThemes(THEMES)
 
   const violations = checkAll(themes)
+
   if (violations.length > 0) {
     for (const v of violations) {
       console.error(`  ✗ ${v.theme} [${v.rule}] ${v.detail}`)
     }
+
     throw new Error(
       `${violations.length} contrast violation(s). Fix the palette, or waive the rule in its [contrast] section with a reason.`,
     )
@@ -42,19 +45,23 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
   }
 
   let count = 0
+
   for (const emitter of [...terminals, ...SHARED_EMITTERS]) {
     const perTheme = themes.flatMap((t) => emitter.emit?.(t) ?? [])
     const sharedOutputs = emitter.emitShared?.(themes) ?? []
+
     for (const out of [...perTheme, ...sharedOutputs]) {
       await Bun.write(join(DIST, out.path), out.content)
       count++
     }
+
     const label =
       perTheme.length > 0
         ? `${themes.length} themes${emitter.limits ? `  (${emitter.limits})` : ''}`
         : sharedOutputs.length > 0
           ? sharedOutputs.map((out) => basename(out.path)).join(' ')
           : `no files  (${emitter.limits ?? 'nothing to write'})`
+
     console.log(`  ${emitter.id.padEnd(16)} ${label}`)
   }
 

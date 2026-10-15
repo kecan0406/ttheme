@@ -40,6 +40,7 @@ test('the index the CI writes reads back as it was, most starred first', () => {
     shown('alice@pastel', 'alice/ttheme-pastel', 3, 'Soft'),
     shown('bob@neon', 'bob/ttheme-neon', 12, 'Neon'),
   ])
+
   const read = parseIndex(text)
   assert.deepEqual(
     read.map((m) => [m.id, m.source, m.stars, m.updated, m.palettes.map((e) => e.name)]),
@@ -62,6 +63,7 @@ test('the index the CI writes reads back as it was, most starred first', () => {
 
 test('a listed marketplace comes back without the control characters its text holds, and one that does not read is dropped', () => {
   const [good] = JSON.parse(indexText([shown('bob@neon', 'bob/ttheme-neon', 1, 'x')])).marketplaces
+
   const text = JSON.stringify({
     marketplaces: [
       { ...good, about: 'Pastel\x1b]52;c;ZWNobyBoaQ==\x07 palettes\x1b[2J\nnext\tline' },
@@ -70,6 +72,7 @@ test('a listed marketplace comes back without the control characters its text ho
       { ...good, id: 'eve@empty', palettes: [{ ...good.palettes[0], ansi: ['#zzzzzz'] }] },
     ],
   })
+
   const read = parseIndex(text)
   assert.deepEqual(
     read.map((m) => m.id),

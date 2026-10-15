@@ -22,6 +22,7 @@ export function repoUrl(repo: Repo): string {
 async function works(command: string, args: string[], cwd?: string): Promise<boolean> {
   try {
     await exec(command, args, { cwd, timeout: 30_000 })
+
     return true
   } catch {
     return false
@@ -31,13 +32,16 @@ async function works(command: string, args: string[], cwd?: string): Promise<boo
 async function run(command: string, args: string[], cwd?: string): Promise<string> {
   try {
     const { stdout } = await exec(command, args, { cwd, encoding: 'utf8', timeout: 120_000, maxBuffer: 1 << 22 })
+
     return stdout.trim()
   } catch (error) {
     const { stderr, message } = error as { stderr?: string; message: string }
+
     const said = (stderr ?? '')
       .split('\n')
       .map((line) => line.trim())
       .find(Boolean)
+
     throw new Error(`${command} ${args[0]} failed — ${said ?? message.split('\n')[0]}`)
   }
 }
@@ -46,12 +50,15 @@ export async function toolsProblem(): Promise<string | undefined> {
   if (!(await works('git', ['--version']))) {
     return 'sharing a marketplace needs git'
   }
+
   if (!(await works('gh', ['--version']))) {
     return 'sharing a marketplace needs the GitHub CLI — install gh, then run `gh auth login`'
   }
+
   if (!(await works('gh', ['auth', 'status']))) {
     return 'gh is not logged in to GitHub — run `gh auth login` first'
   }
+
   return undefined
 }
 
@@ -59,13 +66,17 @@ export async function remoteOf(dir: string): Promise<Repo | 'elsewhere' | undefi
   if (!existsSync(join(dir, '.git'))) {
     return undefined
   }
+
   let url: string
+
   try {
     url = (await exec('git', ['config', '--get', 'remote.origin.url'], { cwd: dir, encoding: 'utf8' })).stdout.trim()
   } catch {
     return undefined
   }
+
   const [, owner, name] = /github\.com[:/]([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/i.exec(url) ?? []
+
   return owner && name ? { owner: owner.toLowerCase(), name } : 'elsewhere'
 }
 
@@ -87,11 +98,15 @@ export async function commitAll(dir: string, message: string): Promise<boolean> 
   if (!existsSync(join(dir, '.git'))) {
     await run('git', ['init', '-b', 'main'], dir)
   }
+
   await run('git', ['add', '-A'], dir)
+
   if (!(await run('git', ['status', '--porcelain'], dir))) {
     return false
   }
+
   await run('git', ['commit', '-m', message], dir)
+
   return true
 }
 
@@ -136,23 +151,30 @@ export async function describeRepo(repo: Repo, description: string | undefined, 
 
 function head(text: string): { top: string; rest: string } {
   const at = text.search(/^\s*\[/m)
+
   return at < 0 ? { top: text, rest: '' } : { top: text.slice(0, at), rest: text.slice(at) }
 }
 
 export function withDescription(text: string, description: string | undefined): string {
   const { top, rest } = head(text)
   const line = description ? `description = ${JSON.stringify(description)}\n` : ''
+
   if (/^description\s*=.*$/m.test(top)) {
     return top.replace(/^description\s*=.*\n?/m, line) + rest
   }
+
   if (!line) {
     return text
   }
+
   const name = /^name\s*=.*\n?/m.exec(top)
+
   if (!name) {
     return `${top.replace(/\n*$/, '\n')}${line}${rest ? `\n${rest}` : ''}`
   }
+
   const at = name.index + name[0].length
+
   return `${top.slice(0, at)}${name[0].endsWith('\n') ? '' : '\n'}${line}${top.slice(at)}${rest}`
 }
 
@@ -168,20 +190,25 @@ export function withoutCatalogs(text: string, names: ReadonlySet<string>): strin
   if (names.size === 0) {
     return text
   }
+
   const lines = text.split('\n')
   const kept: string[] = []
   let dropping = false
+
   for (const [i, line] of lines.entries()) {
     if (/^\s*\[/.test(line)) {
       if (dropping && kept.length > 0 && kept.at(-1)?.trim() !== '') {
         kept.push('')
       }
+
       dropping = false
+
       if (/^\s*\[\[\s*catalog\s*\]\]/.test(line)) {
         const end = lines.findIndex((next, j) => j > i && /^\s*\[/.test(next))
         const block = lines.slice(i + 1, end < 0 ? undefined : end).join('\n')
         const name = /^\s*name\s*=\s*"((?:[^"\\]|\\.)*)"/m.exec(block)?.[1]
         dropping = name !== undefined && names.has(JSON.parse(`"${name}"`) as string)
+
         if (dropping) {
           while (kept.length > 0 && kept.at(-1)?.trim() === '') {
             kept.pop()
@@ -189,9 +216,11 @@ export function withoutCatalogs(text: string, names: ReadonlySet<string>): strin
         }
       }
     }
+
     if (!dropping) {
       kept.push(line)
     }
   }
+
   return `${kept.join('\n').replace(/\n*$/, '')}\n`
 }

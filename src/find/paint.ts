@@ -38,6 +38,7 @@ const BANDS_HELD = 256
 
 function marginOf(raw: string | undefined): { x: number; y: number } | undefined {
   const m = /^(\d+) (\d+)$/.exec(raw ?? '')
+
   return m && (Number(m[1]) > 0 || Number(m[2]) > 0) ? { x: Number(m[1]), y: Number(m[2]) } : undefined
 }
 
@@ -130,9 +131,11 @@ export class Paint {
     if (this.signal.aborted) {
       return undefined
     }
+
     const { cols, rows, cell } = this.grid()
     const frame = renderFind(this.view, cols, rows)
     this.view.loaderFrom = frame.loader ? (this.view.loaderFrom ?? this.view.beat) : undefined
+
     return {
       lines: frame.lines,
       zones: frame.zones,
@@ -146,37 +149,49 @@ export class Paint {
     let out = ''
     const keep = new Set<number>()
     let tried: Placement | undefined
+
     for (const wanted of images) {
       if (this.views && wanted.id >= TRY_ID) {
         tried = wanted
         continue
       }
+
       const p = this.bands ? this.banded(wanted) : wanted
+
       if (!p) {
         continue
       }
+
       if (this.wipes && wiped.values().some((r) => r >= p.row && r < p.row + p.rows)) {
         this.placed.delete(p.id)
       }
+
       keep.add(p.id)
+
       if (this.sent.get(p.id) !== p.path) {
         const data = transmit(p, this.files)
+
         if (data === undefined) {
           continue
         }
+
         out += data
         this.sent.set(p.id, p.path)
         this.placed.delete(p.id)
       }
+
       const at = `${p.row};${p.col};${p.cols};${p.rows};${p.crop};${p.z}`
+
       if (this.placed.get(p.id) !== at) {
         if (!this.moves && this.placed.has(p.id)) {
           out += unplace(p.id)
         }
+
         out += place(p, cell)
         this.placed.set(p.id, at)
       }
     }
+
     for (const id of this.sent.keys()) {
       if (!keep.has(id)) {
         out += release(id)
@@ -184,6 +199,7 @@ export class Paint {
         this.placed.delete(id)
       }
     }
+
     return out + (this.views ? this.backdrop(tried) : this.cover())
   }
 
@@ -191,28 +207,36 @@ export class Paint {
     if (this.bands) {
       this.prebake()
     }
+
     if (this.gliding) {
       return
     }
+
     const { cols, rows } = this.grid()
     const span = gridShape(cols, rows).height
+
     const step = (): void => {
       const view = this.view
       const target = view.top * TILE.height
       const d = target - view.scroll
+
       if (d === 0 || view.mode !== 'grid') {
         view.scroll = target
         const settled = this.gliding !== undefined
         this.gliding = undefined
+
         if (settled) {
           this.draw()
         }
+
         return
       }
+
       view.scroll = chase(view.scroll, target, { span })
       this.draw()
       this.gliding = setTimeout(step, GLIDE)
     }
+
     step()
   }
 
@@ -234,6 +258,7 @@ export class Paint {
   private prebake(): void {
     const view = this.view
     const { cols, rows } = this.grid()
+
     for (const p of renderFind({ ...view, scroll: view.top * TILE.height }, cols, rows).images) {
       if (p.crop !== undefined) {
         this.band(p.path, p.crop, p.rows)
@@ -244,24 +269,32 @@ export class Paint {
   private cover(): string {
     const { cols, rows } = this.grid()
     const at = `${cols};${rows}`
+
     if (!this.layers || this.covered === at) {
       return ''
     }
+
     let out = ''
+
     if (!this.covered) {
       const pixel = Buffer.from(rgb(this.background)).toString('base64')
       out += `\x1b_Ga=t,f=24,s=1,v=1,i=${COVER_ID},q=2;${pixel}\x1b\\`
+
       if (MARGIN) {
         out += `\x1b_Ga=t,f=32,s=1,v=1,i=${ANCHOR_ID},q=2;AAAAAA==\x1b\\\x1b[H\x1b_Ga=p,i=${ANCHOR_ID},p=${ANCHOR_ID},c=1,r=1,C=1,z=${ANCHOR_Z},q=2\x1b\\`
       }
     } else if (!this.moves) {
       out += unplace(COVER_ID)
     }
+
     this.covered = at
+
     if (MARGIN) {
       const { x, y } = MARGIN
+
       return `${out}\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},P=${ANCHOR_ID},Q=${ANCHOR_ID},H=${-x},V=${-y},c=${cols + 2 * x},r=${rows + 2 * y},C=1,z=${COVER_Z},q=2\x1b\\`
     }
+
     return `${out}\x1b[H\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},c=${cols},r=${rows},C=1,z=${COVER_Z},q=2\x1b\\`
   }
 
@@ -269,13 +302,17 @@ export class Paint {
     const { cols, rows, cell } = this.grid()
     const W = cols * cell.w
     const H = rows * cell.h
+
     const view = tried
       ? `${this.background}|${tried.path}|1|${W}|${H}|${W}|${H}|0|0|1`
       : `${this.background}||1|${W}|${H}|0|0|0|0|5`
+
     if (view === this.viewed) {
       return ''
     }
+
     this.viewed = view
+
     return viewVar(view)
   }
 
@@ -287,7 +324,9 @@ export class Paint {
     if (p.crop === undefined) {
       return p
     }
+
     const band = this.band(p.path, p.crop, p.rows, !this.gliding)
+
     return band?.ready ? { ...p, id: band.id, path: band.path, crop: undefined } : undefined
   }
 
@@ -299,9 +338,11 @@ export class Paint {
   ): { id: number; path: string; ready: boolean } | undefined {
     const key = `${from}|${crop}|${rows}`
     const held = this.bandFiles.get(key)
+
     if (held || !make) {
       return held
     }
+
     const { cell } = this.grid()
     const id = this.nextBand++
     const made = { id, path: join(this.scratch, `band-${id}.png`), ready: false }
@@ -314,6 +355,7 @@ export class Paint {
       })
       .catch(() => {})
     this.trimBands()
+
     return made
   }
 
@@ -322,6 +364,7 @@ export class Paint {
       if (this.bandFiles.size <= BANDS_HELD) {
         return
       }
+
       if (band.ready && !this.sent.has(band.id)) {
         this.bandFiles.delete(key)
         rmSync(band.path, { force: true })

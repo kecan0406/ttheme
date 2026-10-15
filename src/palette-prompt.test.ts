@@ -165,6 +165,7 @@ async function drive(
     frames += chunk.toString()
   })
   const focused: string[] = []
+
   const prompt = new PalettePrompt({
     entries,
     color: false,
@@ -173,12 +174,16 @@ async function drive(
     onFocus: (e) => focused.push(e.name),
     ...opts,
   })
+
   const pending = prompt.prompt()
+
   for (const key of keys) {
     await new Promise((resolve) => setTimeout(resolve, 5))
     input.write(key)
   }
+
   const result = await pending
+
   return { result, frames, focused, picked: [...prompt.picked] }
 }
 
@@ -326,10 +331,12 @@ test('space on a catalog picks its palettes, left folds a palette back into its 
   })
   const prompt = new PalettePrompt({ entries: [...entries, ...shop], color: false, input, output })
   const pending = prompt.prompt()
+
   for (const key of ['\x1b[B', '\x1b[B', '\x1b[C', '\x1b[B', ' ', '\x1b[C', '\x1b[B', '\x1b[D', '\r']) {
     await new Promise((resolve) => setTimeout(resolve, 5))
     input.write(key)
   }
+
   await pending
   assert.deepEqual([...prompt.picked].sort(), ['kec@shop/arcade', 'kec@shop/volt'])
   assert.match(frames, /▾ kec@shop \(2\/4\)/)

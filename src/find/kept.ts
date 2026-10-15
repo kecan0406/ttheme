@@ -81,15 +81,18 @@ export class Kept {
   async transparent(site: Site, post: Post): Promise<boolean> {
     const known = this.keep<boolean>(site, 'probes.json')
     const cached = known[post.id]
+
     if (cached !== undefined) {
       return cached
     }
+
     try {
       const found = await locate(site, post, this.signal)
       const from = fileOf(site, post)
       const alpha = (found === undefined ? await headOf(from.site, from.url, this.signal) : found)?.alpha === true
       known[post.id] = alpha
       this.unsaved.add(`${site.key}/probes.json`)
+
       return alpha
     } catch {
       return false
@@ -100,10 +103,12 @@ export class Kept {
     for (const at of this.unsaved) {
       const [key, name] = at.split('/') as [string, string]
       const site = SITES.find((s) => s.key === key)
+
       if (site) {
         writeCache(site, name, this.keep(site, name))
       }
     }
+
     this.unsaved.clear()
   }
 
@@ -114,23 +119,29 @@ export class Kept {
 
   credit(pick: Pick, signal: AbortSignal): Promise<void> {
     const { site, post } = pick
+
     if (!uncredited(site, post)) {
       return Promise.resolve()
     }
+
     const key = postKey(site, post.id)
     let job = this.crediting.get(key)
+
     if (!job) {
       job = this.credits(pick, signal).finally(() => this.crediting.delete(key))
       this.crediting.set(key, job)
     }
+
     return job
   }
 
   links(names: readonly string[]): Record<string, string[]> {
     const known = this.keep<Known>(LENDER, 'profiles.json')
+
     return Object.fromEntries(
       names.flatMap((name): [string, string[]][] => {
         const urls = known[name]?.urls ?? []
+
         return urls.length > 0 ? [[name, urls]] : []
       }),
     )
@@ -142,23 +153,30 @@ export class Kept {
 
   async mateOwners(site: Site): Promise<Map<string, string[]>> {
     const cached = this.owners.get(site.key)
+
     if (cached) {
       return cached
     }
+
     const found = origins(this.home)
     const known = this.keep<string>(site, 'owners.json')
+
     const siblings = this.manifest.palettes.flatMap((sibling) => {
       const origin = found.get(sibling.name)
+
       return shelfOf(sibling) === shelfOf(this.entry) && sibling.name !== this.entry.name && origin?.site === site.key
         ? [{ name: sibling.name, id: origin.id }]
         : []
     })
+
     const asked = await Promise.all(
       siblings.map(async (sibling) => {
         const owner = known[sibling.id]
+
         if (owner !== undefined) {
           return { ...sibling, owner }
         }
+
         try {
           return { ...sibling, owner: (await fetchPost(site, sibling.id, this.signal))?.owner ?? '' }
         } catch {
@@ -166,16 +184,20 @@ export class Kept {
         }
       }),
     )
+
     const byPalette = new Map<string, string>()
+
     for (const sibling of asked) {
       if (sibling) {
         known[sibling.id] = sibling.owner
         byPalette.set(sibling.name, sibling.owner)
       }
     }
+
     this.unsaved.add(`${site.key}/owners.json`)
     const owners = mates(byPalette)
     this.owners.set(site.key, owners)
+
     return owners
   }
 
@@ -183,16 +205,22 @@ export class Kept {
     if (existsSync(path)) {
       return statSync(path).size
     }
+
     const running = this.inflight.get(path)
+
     if (running) {
       return running
     }
+
     const job = (async () => {
       const bytes = await fetchBytes(site, url, this.signal, progress)
       writeAtomic(path, bytes)
+
       return bytes.length
     })()
+
     this.inflight.set(path, job)
+
     try {
       return await job
     } finally {
@@ -203,10 +231,12 @@ export class Kept {
   private keep<T>(site: Site, name: string): Record<string, T> {
     const at = `${site.key}/${name}`
     let known = this.caches.get(at)
+
     if (!known) {
       known = readCache<T>(site, name)
       this.caches.set(at, known)
     }
+
     return known as Record<string, T>
   }
 
@@ -214,6 +244,7 @@ export class Kept {
     const known = this.keep<Known>(LENDER, 'profiles.json')
     const now = Date.now()
     const due = names.filter((name) => !this.asking.has(name) && now - (known[name]?.at ?? 0) >= FRESH)
+
     if (due.length > 0) {
       const job = fetchProfiles(due, signal)
         .then(
@@ -221,6 +252,7 @@ export class Kept {
             for (const name of due) {
               known[name] = { at: Date.now(), urls: found.get(name) ?? [] }
             }
+
             this.unsaved.add(`${LENDER.key}/profiles.json`)
             this.credited()
           },
@@ -231,28 +263,34 @@ export class Kept {
             this.asking.delete(name)
           }
         })
+
       for (const name of due) {
         this.asking.set(name, job)
       }
     }
+
     await Promise.all(names.flatMap((name) => this.asking.get(name) ?? []))
   }
 
   private async credits({ site, post }: Pick, signal: AbortSignal): Promise<void> {
     const known = this.keep<Credit>(site, 'credits.json')
     let found = known[post.id]
+
     if (!found) {
       try {
         found = await fetchCredits(site, post.id, signal)
       } catch {
         return
       }
+
       if (!found?.owner) {
         return
       }
+
       known[post.id] = found
       this.unsaved.add(`${site.key}/credits.json`)
     }
+
     credit(post, found)
     this.credited()
   }

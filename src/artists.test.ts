@@ -42,6 +42,7 @@ test('danbooru artists that are deleted, and urls it marks inactive, give no pro
       { name: 'gone', is_deleted: true, urls: [{ url: 'https://x.com/gone', is_active: true }] },
     ]),
   )
+
   assert.deepEqual([...found], [['potate', ['https://x.com/potepalette']]])
 })
 

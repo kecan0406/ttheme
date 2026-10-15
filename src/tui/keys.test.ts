@@ -4,12 +4,15 @@ import { CellProbe, CLICK_GAP, decode, ESC_WAIT, type Inbound, Keys, keysOf } fr
 
 function cellOf(input: string): { h: number; w: number } | undefined {
   const probe = new CellProbe()
+
   for (const event of decode(input).events) {
     const cell = probe.see(event)
+
     if (cell) {
       return cell
     }
   }
+
   return undefined
 }
 
@@ -216,11 +219,14 @@ test('every key a CSI u report names reads as the legacy bytes of the same key d
       `ctrl+${String.fromCharCode(letter)}`,
     )
   }
+
   assert.deepEqual(keysOf('\x1b[91;5u'), keysOf('\x1b'))
   assert.deepEqual(keysOf('\x1b[32;5u'), keysOf('\x00'))
+
   for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
     assert.deepEqual(keysOf(`\x1b[${letter.charCodeAt(0)};3u`), keysOf(`\x1b${letter}`), `alt+${letter}`)
   }
+
   assert.deepEqual(keysOf('\x1b[127;3u'), keysOf('\x1b\x7f'))
   assert.deepEqual(keysOf('\x1b[9;2u'), keysOf('\x1b[Z'))
 })

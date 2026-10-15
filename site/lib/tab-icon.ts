@@ -15,8 +15,10 @@ function rect({ data, width }: Canvas, x: number, y: number, w: number, h: numbe
       const dx = Math.max(x + r - (px + 0.5), px + 0.5 - (x + w - r), 0)
       const dy = Math.max(y + r - (py + 0.5), py + 0.5 - (y + h - r), 0)
       const cover = r === 0 ? 1 : Math.min(1, Math.max(0, r + 0.5 - Math.hypot(dx, dy)))
+
       if (cover === 0) continue
       const at = (py * width + px) * 3
+
       for (let c = 0; c < 3; c++) {
         const was = data[at + c] as number
         data[at + c] = Math.round(was + ((ink[c] as number) - was) * cover)
@@ -34,6 +36,7 @@ function iconPng(theme: Theme, size: number): Buffer {
   theme.signature.forEach((color, i) => {
     rect(icon, (DOTS[i] as number) * scale - dot, size / 2 - dot, dot * 2, dot * 2, dot, rgb(color))
   })
+
   return encodeRgb({ width: size, height: size, data })
 }
 
@@ -52,5 +55,6 @@ export function faviconIco(theme: Theme): Buffer {
   head.writeUInt16LE(32, 12)
   head.writeUInt32LE(image.length, 14)
   head.writeUInt32LE(head.length, 18)
+
   return Buffer.concat([head, image])
 }

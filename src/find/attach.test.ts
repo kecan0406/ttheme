@@ -22,6 +22,7 @@ test('jpegSize reads the frame header', () => {
   const bytes = new Uint8Array([
     0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x02, 0x58, 0x03, 0x20, 0x03,
   ])
+
   assert.deepEqual(jpegSize(bytes), { width: 800, height: 600 })
   assert.equal(jpegSize(new Uint8Array([0x89, 0x50])), null)
 })
@@ -29,6 +30,7 @@ test('jpegSize reads the frame header', () => {
 function grabber(): { sent: string[]; got: Got[]; grab: Grabber } {
   const sent: string[] = []
   const got: Got[] = []
+
   return {
     sent,
     got,
@@ -42,6 +44,7 @@ function grabber(): { sent: string[]; got: Got[]; grab: Grabber } {
 function osc(text: string) {
   const event = decode(text).events[0]
   assert.equal(event?.kind, 'osc')
+
   return event as Parameters<Grabber['take']>[0]
 }
 

@@ -23,6 +23,7 @@ export interface HubSpot {
 
 export function hubGoto(active: HubTab, step: number): number {
   const at = HUB_TABS.findIndex((tab) => tab.name === active)
+
   return HUB_SWITCH + ((at + step + HUB_TABS.length) % HUB_TABS.length) + 1
 }
 
@@ -36,9 +37,12 @@ export function hubTarget(code: number): HubTab | undefined {
 
 export function hubBar(active: HubTab, color: boolean): string {
   const p = painter(color)
+
   const tabs = HUB_TABS.map(({ name, title }) => {
     const spot: HubSpot = { kind: 'hub', tab: name }
+
     return tabOf(p, title, name === active, (text) => zone(spot, text))
   })
+
   return ` ${tabs.join(' ')}  ${p.dim('tab next')}`
 }

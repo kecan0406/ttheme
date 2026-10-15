@@ -45,6 +45,7 @@ interface Terminal {
 function terminal(own: string, running = false, loaded = '1'): Terminal {
   const defaults = new Map([['Default Window Settings', own]])
   const scripts: string[][] = []
+
   return {
     host: {
       platform: 'darwin',
@@ -53,17 +54,23 @@ function terminal(own: string, running = false, loaded = '1'): Terminal {
         if (command === 'defaults' && args[0] === 'read') {
           return defaults.get(args[2] ?? '')
         }
+
         if (command === 'defaults' && args[0] === 'write') {
           defaults.set(args[2] ?? '', args[4] ?? '')
+
           return ''
         }
+
         if (command === 'pgrep') {
           return running ? '4242' : undefined
         }
+
         if (command === 'osascript') {
           scripts.push(args.slice(3))
+
           return args[3] === 'loaded' ? loaded : 'wrote'
         }
+
         return undefined
       },
     },

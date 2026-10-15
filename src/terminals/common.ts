@@ -15,12 +15,14 @@ export function tilde(path: string, home: string): string {
 
 export function blockKeys(body: string): string {
   const keys = body.split('\n').filter((line) => line !== '' && !line.startsWith('#'))
+
   return [...new Set(keys.map((line) => line.split(/[ =]/)[0]))].join(', ')
 }
 
 export function stripped(file: string, remove: (content: string) => string): Unwired['edits'] {
   const content = readText(file)
   const next = remove(content)
+
   return next === content ? [] : [{ file, content: next }]
 }
 
@@ -38,9 +40,12 @@ export function themeFiles(wiring: Wiring, theme: Theme): { file: string; conten
   if (!wiring.shelf) {
     return []
   }
+
   const prefix = `${[wiring.id, wiring.shelf.from].filter(Boolean).join('/')}/`
+
   return (wiring.emitter.emit?.(theme) ?? []).flatMap((out) => {
     const file = out.path.startsWith(prefix) ? out.path.slice(prefix.length) : ''
+
     return file !== '' && !file.includes('/') ? [{ file, content: out.content }] : []
   })
 }

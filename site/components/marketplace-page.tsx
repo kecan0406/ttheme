@@ -45,6 +45,7 @@ export function MarketplacePage({
 }) {
   const shelves = shelvesOf(themes, marketplaces, facts)
   const palettes = shelves.reduce((sum, shelf) => sum + shelf.palettes.length, 0)
+
   const catalogs = shelves.reduce(
     (sum, shelf) => sum + catalogsOf(shelf.palettes).filter((entry) => entry.catalog !== null).length,
     0,

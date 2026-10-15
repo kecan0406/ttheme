@@ -56,6 +56,7 @@ class PalettePicker extends HTMLElement {
     this.#loading ??= fetch('/palettes.json')
       .then((response) => {
         if (!response.ok) throw new Error(String(response.status))
+
         return response.json() as Promise<Theme[]>
       })
       .then((themes) => {
@@ -66,6 +67,7 @@ class PalettePicker extends HTMLElement {
         this.#loading = undefined
         fill(this.#list, html(<p class="px-2.5 py-2 text-xs text-muted-foreground">couldn't load the palettes</p>))
       })
+
     return this.#loading
   }
 
@@ -88,8 +90,10 @@ class PalettePicker extends HTMLElement {
     if ((event as ToggleEvent).newState === 'open') {
       if (!this.#touch) this.#search.focus()
       void this.#load().then(() => this.#mark())
+
       return
     }
+
     this.#search.value = ''
     this.#narrow('')
   }
@@ -100,6 +104,7 @@ class PalettePicker extends HTMLElement {
 
   #mark() {
     const name = current()
+
     for (const option of this.querySelectorAll<HTMLElement>('[role="option"]'))
       option.setAttribute('aria-selected', String(option.dataset.name === name))
     this.#activate(this.#worn() ?? this.#options[0], 'center')
@@ -108,33 +113,43 @@ class PalettePicker extends HTMLElement {
   #activate(option: HTMLElement | undefined, block?: ScrollLogicalPosition) {
     if (this.#active !== option) delete this.#active?.dataset.active
     this.#active = option
+
     if (!option) {
       this.#search.removeAttribute('aria-activedescendant')
+
       return
     }
+
     option.dataset.active = ''
     this.#search.setAttribute('aria-activedescendant', option.id)
+
     if (block) option.scrollIntoView({ block })
   }
 
   #narrow(query: string) {
     for (const shelf of this.querySelectorAll<HTMLElement>('[data-shelf]')) {
       let shown = 0
+
       for (const option of shelf.querySelectorAll<HTMLElement>('[role="option"]')) {
         const match = query === '' || (option.dataset.text ?? '').includes(query)
         option.hidden = !match
+
         if (match) shown++
       }
+
       shelf.hidden = shown === 0
     }
+
     const options = this.#options
     this.#activate(query === '' ? (this.#worn() ?? options[0]) : options[0], 'nearest')
     const empty = this.querySelector<HTMLElement>('[data-empty]')
+
     if (empty) empty.hidden = options.length > 0
   }
 
   #filter = (event: Event) => {
     const field = event.target
+
     if (!(field instanceof HTMLInputElement) || !field.matches('[data-search]')) return
     this.#narrow(field.value.trim().toLowerCase())
     tally(this.#options.length)
@@ -142,6 +157,7 @@ class PalettePicker extends HTMLElement {
 
   #pick(option: HTMLElement | undefined) {
     const theme = this.#themes?.find((entry) => entry.name === option?.dataset.name)
+
     if (!theme) return
     this.#panel.hidePopover()
     choose(theme)
@@ -160,16 +176,21 @@ class PalettePicker extends HTMLElement {
     const options = this.#options
     const at = this.#active ? options.indexOf(this.#active) : -1
     const last = options.length - 1
+
     const go = (index: number) => {
       event.preventDefault()
       this.#activate(options[index], 'nearest')
     }
+
     if (event.key === 'Enter') {
       event.preventDefault()
       this.#pick(this.#active ?? options[0])
+
       return
     }
+
     if (options.length === 0) return
+
     if (event.key === 'ArrowDown') go(at === last ? 0 : at + 1)
     else if (event.key === 'ArrowUp') go(at <= 0 ? last : at - 1)
     else if (event.key === 'PageDown') go(Math.min(at + PAGE, last))

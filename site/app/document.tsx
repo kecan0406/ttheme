@@ -144,6 +144,7 @@ export function page(
       {body}
     </Document>,
   )}`
+
   return new Response(text, {
     status,
     headers: {

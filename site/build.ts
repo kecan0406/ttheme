@@ -56,12 +56,15 @@ class Shelf {
     const shipped = this.#production || ext === '.woff2' ? `${name}-${Bun.hash(data).toString(36)}${ext}` : file
     writeFileSync(join(ASSETS, shipped), data)
     this.#names.set(name, shipped)
+
     return shipped
   }
 
   url(name: string): string {
     const shipped = this.#names.get(name)
+
     if (!shipped) throw new Error(`${name} was never shipped`)
+
     return `/assets/${shipped}`
   }
 }
@@ -69,6 +72,7 @@ class Shelf {
 function spans(ranges: string): [from: number, to: number][] {
   return ranges.split(',').map((range) => {
     const [from = '', to = from] = range.slice(2).split('-')
+
     return [Number.parseInt(from, 16), Number.parseInt(to, 16)]
   })
 }
@@ -78,34 +82,43 @@ function outside(ranges: string): string {
   const span = (from: number, to: number) => (from === to ? `U+${hex(from)}` : `U+${hex(from)}-${hex(to)}`)
   const gaps: string[] = []
   let next = 0
+
   for (const [from, to] of spans(ranges).sort(([a], [b]) => a - b)) {
     if (from > next) gaps.push(span(next, from - 1))
     next = Math.max(next, to + 1)
   }
+
   if (next <= 0x10ffff) gaps.push(span(next, 0x10ffff))
+
   return gaps.join(',')
 }
 
 function characters(ranges: string): string {
   let text = ''
+
   for (const [from, to] of spans(ranges))
     for (let point = from; point <= to; point++) text += String.fromCodePoint(point)
+
   return text
 }
 
 function subset(file: string, font: Uint8Array, ranges: string): Promise<Uint8Array> {
   const key = `${file} ${ranges}`
   const held = subsets.get(key)
+
   if (held) return held
   const part: Promise<Uint8Array> = subsetFont(Buffer.from(font), characters(ranges), { targetFormat: 'woff2' })
   subsets.set(key, part)
+
   return part
 }
 
 async function mono(shelf: Shelf): Promise<string> {
   const faces: string[] = []
+
   for (const [file, weight] of MONO) {
     const font = readFileSync(join(SITE, 'app', 'fonts', `${file}.woff2`))
+
     for (const [name, ranges] of MONO_SUBSETS) {
       const src = shelf.put(`${file}-${name}.woff2`, await subset(file, font, ranges))
       faces.push(
@@ -113,6 +126,7 @@ async function mono(shelf: Shelf): Promise<string> {
       )
     }
   }
+
   return faces.join('\n')
 }
 
@@ -120,6 +134,7 @@ function fontsource(shelf: Shelf, specs: string[]): string {
   return specs
     .map((spec) => {
       const css = Bun.resolveSync(spec, SITE)
+
       return readFileSync(css, 'utf8')
         .replace(/,\s*url\(\.\/files\/[^)]+\.woff\) format\('woff'\)/g, '')
         .replace(
@@ -132,10 +147,12 @@ function fontsource(shelf: Shelf, specs: string[]): string {
 
 async function styles(production: boolean, faces: string): Promise<string> {
   const from = join(SITE, 'app', 'globals.css')
+
   const result = await postcss([tailwind({ base: SITE, optimize: production })]).process(
     `${readFileSync(from, 'utf8')}\n${faces}`,
     { from },
   )
+
   return result.css
 }
 
@@ -148,8 +165,11 @@ async function client(production: boolean): Promise<string> {
     minify: production,
     sourcemap: production ? 'none' : 'linked',
   })
+
   const entry = result.outputs.find((output) => output.kind === 'entry-point')
+
   if (!result.success || !entry) throw new AggregateError(result.logs, 'the client bundle did not build')
+
   return `/assets/${basename(entry.path)}`
 }
 
@@ -159,6 +179,7 @@ export async function buildAssets(production: boolean): Promise<void> {
   const shelf = new Shelf(production)
   shelf.put('site.css', await styles(production, `${await mono(shelf)}\n${fontsource(shelf, FACES)}`))
   shelf.put('cjk.css', fontsource(shelf, CJK))
+
   const manifest = {
     css: shelf.url('site'),
     cjk: shelf.url('cjk'),
@@ -166,13 +187,16 @@ export async function buildAssets(production: boolean): Promise<void> {
     fonts: PRELOAD.map((name) => shelf.url(name)),
     reload: production ? '' : '/__reload',
   }
+
   const path = join(SITE, 'assets.json')
   const text = `${JSON.stringify(manifest, null, 2)}\n`
+
   if (!existsSync(path) || readFileSync(path, 'utf8') !== text) writeFileSync(path, text)
 }
 
 export async function snapshot(fresh: boolean): Promise<void> {
   if (!fresh && existsSync(SNAPSHOT)) return
+
   try {
     writeFileSync(SNAPSHOT, `${JSON.stringify(await showcase(official, process.env.GITHUB_TOKEN))}\n`)
   } catch (error) {
@@ -186,15 +210,19 @@ async function prerender(): Promise<Record<string, { path: string; contentType: 
   const { default: server } = await import('./server')
   const { PRERENDERED } = await import('./app/site')
   const overrides: Record<string, { path: string; contentType: string }> = {}
+
   for (const path of PRERENDERED) {
     const response = await server.handle(new Request(`http://site${path}`))
+
     if (response.status !== 200) throw new Error(`${path} answered ${response.status}`)
     const name = path === '/' ? 'index' : decodeURIComponent(path.slice(1))
     const file = join(OUTPUT, 'static', `${name}.html`)
     mkdirSync(dirname(file), { recursive: true })
     writeFileSync(file, await response.text())
+
     if (path !== '/') overrides[`${name}.html`] = { path: name, contentType: HTML }
   }
+
   return overrides
 }
 
@@ -203,6 +231,7 @@ async function output(): Promise<void> {
   cpSync(ASSETS, join(OUTPUT, 'static', 'assets'), { recursive: true })
   const lambda = join(OUTPUT, 'functions', 'render.func')
   const result = await Bun.build({ entrypoints: [join(SITE, 'server.ts')], outdir: lambda, target: 'bun' })
+
   if (!result.success) throw new AggregateError(result.logs, 'the server bundle did not build')
   const { version } = JSON.parse(readFileSync(Bun.resolveSync('elysia/package.json', SITE), 'utf8'))
   writeFileSync(join(lambda, 'package.json'), '{"type":"module"}\n')

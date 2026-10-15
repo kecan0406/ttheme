@@ -62,13 +62,16 @@ test('detectTerminal answers what the shell layer detects, for every terminal an
   const indent = layer.slice(layer.lastIndexOf('\n', from) + 1, from)
   const block = layer.slice(from, layer.indexOf(`\n${indent}fi\n`, from) + indent.length + 3)
   assert.ok(from >= 0 && block.endsWith(`\n${indent}fi`), 'the adapter detection block moved')
+
   for (const env of ENVS) {
     const shell = spawnSync('zsh', ['-f', '-c', `${block}\nprint -rn -- $TTHEME_ADAPTER`], {
       env: { PATH: process.env.PATH, ...env },
       encoding: 'utf8',
     })
+
     assert.equal(shell.stdout, detectTerminal(env), JSON.stringify(env))
   }
+
   assert.equal(detectTerminal({ TERM_PROGRAM: 'WarpTerminal', GHOSTTY_RESOURCES_DIR: '/x' }), 'warp')
   assert.equal(detectTerminal({ WT_SESSION: 'a-b', TERM_PROGRAM: 'Hyper' }), 'unknown')
   assert.equal(
@@ -81,12 +84,16 @@ test('the shell adapters open find and repaint in part exactly where TRAITS says
   const adapters = readdirSync(join(root, 'shell', 'adapters'))
     .filter((file) => !file.startsWith('_'))
     .map((file) => file.replace(/\.zsh$/, ''))
+
   for (const adapter of adapters) {
     assert.ok(adapter in TRAITS, `shell/adapters/${adapter}.zsh has no TRAITS entry`)
   }
+
   const code = (adapter: string) => read('shell', 'adapters', `${adapter}.zsh`)
+
   const having = (trait: (terminal: Terminal) => boolean) =>
     (Object.keys(TRAITS) as Terminal[]).filter((terminal) => adapters.includes(terminal) && trait(terminal)).sort()
+
   assert.deepEqual(
     adapters
       .filter(
@@ -114,9 +121,11 @@ test('the shared layer names a terminal only to detect it, and an adapter names 
   const from = layer.indexOf('if [[ -n $NVIM ')
   const to = layer.indexOf('typeset -g TTHEME_ADAPTER=unknown')
   assert.deepEqual(named(layer.slice(0, from) + layer.slice(to) + read('shell', 'preview.zsh')), [])
+
   for (const shared of ['_osc.zsh', '_bg.zsh']) {
     assert.deepEqual(named(read('shell', 'adapters', shared)), [], shared)
   }
+
   for (const file of readdirSync(join(root, 'shell', 'adapters')).filter((f) => !f.startsWith('_'))) {
     const self = file.replace(/\.zsh$/, '')
     assert.deepEqual(
@@ -172,10 +181,12 @@ test('iTerm2 is repainted in its background and foreground at once and in the re
     [4, 4, 4, 4, 2],
   )
   assert.equal(written.join(''), paletteOsc(miku).replace('\x1b]11;#0e2124\x1b\\\x1b]10;#e0f4f2\x1b\\', ''))
+
   const saved = new Map([
     ['11', 'rgb:1111/1111/1111'],
     ['10', 'rgb:eeee/eeee/eeee'],
   ])
+
   assert.ok(
     live.restore(saved).startsWith('\x1b]11;rgb:1111/1111/1111\x1b\\\x1b]10;rgb:eeee/eeee/eeee\x1b\\\x1b]112\x1b\\'),
   )
@@ -203,6 +214,7 @@ test('iTerm2 is put back on the profile the tab wore when the shell switches pro
     livePaint({ ...tab, TTHEME_ITERM_SHOWN: 'default' }, true)?.restore(new Map()),
     `\x1b[?2026h${reset}\x1b]1337;SetProfile=ttheme · default\x07\x1b[?2026l`,
   )
+
   for (const env of [
     { ...tab, TTHEME_ITERM_SHOWN: '' },
     { ...tab, TTHEME_ITERM_SHOWN: 'kita', TTHEME_ITERM_DYED: '1' },
@@ -223,6 +235,7 @@ test('a restore puts back every color a repaint sent, resetting the ones the ter
 
 test('every screen clear goes through CLEAR, which iTerm2 does not push into its scrollback', () => {
   assert.ok(!CLEAR.includes('\x1b[2J') && !CLEAR.includes('\x1b[H\x1b[J'))
+
   const sources = [
     ...readdirSync(join(root, 'src'), { recursive: true, encoding: 'utf8' })
       .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
@@ -230,6 +243,7 @@ test('every screen clear goes through CLEAR, which iTerm2 does not push into its
     ...['ttheme.zsh', 'preview.zsh', 'launch-tab.zsh'].map((file) => join('shell', file)),
     ...readdirSync(join(root, 'shell', 'adapters')).map((file) => join('shell', 'adapters', file)),
   ]
+
   const clears = /(?:\\x1b|\\e|\\033)\[2J|(?:\\x1b|\\e|\\033)\[H(?:\\x1b|\\e|\\033)\[J/
   assert.deepEqual(
     sources.filter((file) => clears.test(read(file))),
@@ -243,6 +257,7 @@ test('every function the shell calls on its own runs under zsh defaults, whateve
     read('shell', 'preview.zsh'),
     ...readdirSync(join(root, 'shell', 'adapters')).map((file) => read('shell', 'adapters', file)),
   ].join('\n')
+
   const called = [
     'ttheme',
     ...[...layer.matchAll(/(?:add-zsh-hook [a-z]+|zle -N|add-zle-hook-widget [a-z-]+|compdef) (__tt_\w+)/g)].map(
@@ -250,7 +265,9 @@ test('every function the shell calls on its own runs under zsh defaults, whateve
     ),
     ...[...layer.matchAll(/^\s*(TRAP[A-Z]+)\(\) \{/gm)].map(([, name]) => name ?? ''),
   ]
+
   assert.ok(called.length > 8)
+
   for (const name of new Set(called)) {
     const first = new RegExp(`^\\s*${name}\\(\\) \\{\\n\\s*(.*)$`, 'm').exec(layer)?.[1]
     assert.equal(first, 'emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}', name)
@@ -262,26 +279,34 @@ test('a terminal shows pictures only where mise run compat never saw kitty graph
     .trim()
     .split('\n')
     .map((line) => line.split('\t'))
+
   const measured = (terminal: Terminal, id: string) => rows.find((row) => row[0] === id)?.[head.indexOf(terminal)]
+
   for (const terminal of Object.keys(TRAITS) as Terminal[]) {
     const { pictures, bands, layers, wipes } = TRAITS[terminal]
     const el = measured(terminal, 'kitty-el')
+
     if (el === 'pass' || el === 'fail') {
       assert.equal(wipes === true, el === 'fail', `${terminal}: compat measured kitty-el ${el}`)
     }
+
     if (!pictures) {
       continue
     }
+
     assert.notEqual(
       measured(terminal, 'kitty-graphics'),
       'fail',
       `${terminal} shows pictures, but compat measured kitty-graphics failing there`,
     )
     const under = measured(terminal, 'kitty-under-bg')
+
     if (under === 'pass' || under === 'fail') {
       assert.equal(layers, under === 'pass', `${terminal}: compat measured kitty-under-bg ${under}`)
     }
+
     const crop = measured(terminal, 'kitty-crop')
+
     if (crop === 'pass' || crop === 'fail') {
       assert.equal(bands, crop === 'fail', `${terminal}: compat measured kitty-crop ${crop}`)
     }
@@ -291,12 +316,14 @@ test('a terminal shows pictures only where mise run compat never saw kitty graph
 test('Konsole opens links only where the default profile, or a profile it inherits, allows escaped links', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-konsole-links-'))
   const data = join(home, 'share')
+
   const env = {
     KONSOLE_VERSION: '230805',
     XDG_CONFIG_HOME: home,
     XDG_DATA_HOME: data,
     XDG_DATA_DIRS: join(home, 'none'),
   }
+
   mkdirSync(join(data, 'konsole'), { recursive: true })
   writeFileSync(join(home, 'konsolerc'), '[Desktop Entry]\nDefaultProfile=ttheme-miku.profile\n')
   writeFileSync(

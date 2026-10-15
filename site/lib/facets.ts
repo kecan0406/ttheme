@@ -32,26 +32,32 @@ const UPRIGHT: Lean = { x: 0, y: -1, angle: 0 }
 
 function hash(seed: number): number {
   const wave = Math.sin(seed * 12.9898) * 43758.5453
+
   return wave - Math.floor(wave)
 }
 
 export function facetMesh(): FacetMesh {
   const columns = Math.ceil(FACET_WIDTH / SIZE) + 3
   const rows = Math.ceil((FACET_HEIGHT + FACET_DRIFT) / SIZE) + 3
+
   const points = Array.from({ length: rows * columns }, (_, index) => {
     const i = index % columns
     const j = Math.floor(index / columns)
+
     return {
       x: Math.round((i - 1) * SIZE + (hash(i * 31 + j * 17 + 1) - 0.5) * JITTER * SIZE),
       y: Math.round((j - 1) * SIZE + (hash(i * 13 + j * 29 + 7) - 0.5) * JITTER * SIZE),
       z: hash(i * 7 + j * 11 + 3) * RELIEF,
     }
   })
+
   const facets: Facet[] = []
+
   for (let j = 0; j < rows - 1; j++) {
     for (let i = 0; i < columns - 1; i++) {
       const a = j * columns + i
       const c = a + columns
+
       const halves: [number, number, number][] =
         hash(i * 5 + j * 3 + 9) > 0.5
           ? [
@@ -62,6 +68,7 @@ export function facetMesh(): FacetMesh {
               [a, a + 1, c],
               [a + 1, c + 1, c],
             ]
+
       for (const [half, triangle] of halves.entries()) {
         const seed = hash(i * 41 + j * 23 + half * 7 + 5)
         facets.push({
@@ -72,6 +79,7 @@ export function facetMesh(): FacetMesh {
       }
     }
   }
+
   return { points, facets }
 }
 
@@ -89,6 +97,7 @@ export function facetPoints(corners: Corners): string {
 
 export function raise(point: Vertex, pointer: Point, amount: number): Vertex {
   const distance = (point.x - pointer.x) ** 2 + (point.y - pointer.y) ** 2
+
   return { ...point, z: point.z + amount * BUMP * Math.exp(-distance / (2 * REACH * REACH)) }
 }
 
@@ -118,5 +127,6 @@ export function shade(tint: number, [a, b, c]: Corners, lamp: Point, lean: Lean 
   const glint = Math.max(0, (rx * lx + ry * ly + rz * (lz + reach)) / half) ** SHINE
   const near = Math.exp(-(lx * lx + ly * ly) / (2 * GLOW * GLOW))
   const lift = (diffuse - 0.75) * (0.05 + near * 0.05) + near * 0.03 + glint * GLINT
+
   return { tint: Math.min(0.5, tint + near * 0.12), lift }
 }

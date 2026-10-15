@@ -24,6 +24,7 @@ export function leadOf(themes: Theme[]): Theme {
 export function neighbors(theme: Theme, palettes: Theme[]): Neighbors {
   const shelf = palettes.filter((other) => other.catalog === theme.catalog)
   const at = shelf.indexOf(theme)
+
   return {
     at: at + 1,
     count: shelf.length,
@@ -34,7 +35,9 @@ export function neighbors(theme: Theme, palettes: Theme[]): Neighbors {
 
 export function nameAt(path: string): string | null {
   const parts = path.split('/').filter(Boolean)
+
   if (parts[0] !== 'marketplace' || parts.length !== 3) return null
+
   try {
     return decodeURIComponent(parts[2] as string)
   } catch {

@@ -59,7 +59,9 @@ const POPOVER =
 
 function commandOf(step: Step, theme: Theme, where: Where): string {
   if (step === 'init') return INIT
+
   if (step === 'use') return `ttheme use ${theme.id}`
+
   return where ? `ttheme marketplace add ${where.add} && ttheme add ${theme.id}` : `ttheme add ${theme.name}`
 }
 
@@ -74,6 +76,7 @@ function Dots({ theme }: { theme: Theme }) {
 function ribbon(theme: Theme): string {
   const step = 100 / theme.ansi.length
   const stops = theme.ansi.map((color, index) => `${color} ${index * step}% ${(index + 1) * step}%`)
+
   return `linear-gradient(90deg,${stops.join(',')})`
 }
 
@@ -85,6 +88,7 @@ function CatalogTile({ theme }: { theme: Theme }) {
 
 export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: string }) {
   const name = 'truncate font-display text-display-sm font-black'
+
   return (
     <>
       {heading ? (
@@ -167,6 +171,7 @@ export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes
   const { at, count } = neighbors(theme, palettes)
   const passed = gatePassed(theme, gate)
   const clear = passed === gate.length
+
   return (
     <>
       <Button variant="outline" size="sm" popovertarget="workspace-slots" aria-label="slots, copy a color">
@@ -203,6 +208,7 @@ export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes
 
 export function GatePanel({ theme, gate, where }: { theme: Theme; gate: GateRule[]; where: Where }) {
   const passed = gatePassed(theme, gate)
+
   return (
     <>
       <div class="grid gap-0.5">
@@ -239,6 +245,7 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
         const lead = leadOf(themes)
         const open = themes.includes(current)
         const list = `workspace-catalog-${index}`
+
         return (
           <div data-group data-name={`${catalog ?? 'other palettes'} ${lead.native ?? ''}`.toLowerCase()} class="grid">
             <button
@@ -300,6 +307,7 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
 
 function MarketplaceFacts({ marketplace, count }: { marketplace: Marketplace | null; count: number }) {
   if (!marketplace) return <span safe>{`${OFFICIAL} · ${plural(count, 'palette')} · comes with ttheme`}</span>
+
   return (
     <span class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
       <a
@@ -369,6 +377,7 @@ export function MarketplaceWorkspace({
   const first = catalogsOf(palettes)[0]?.themes ?? palettes
   const data: WorkspaceData = { where, palettes, gate, start: leadOf(first).name, current: theme.name }
   const { prev, next } = neighbors(theme, palettes)
+
   return (
     <div class="ground flex min-h-dvh flex-col app:h-dvh app:overflow-hidden">
       <SiteHeader current="/marketplace" fixed />

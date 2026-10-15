@@ -24,6 +24,7 @@ function colorsOfEntry(entry: PaletteEntry): Colors {
 function headOf(width: number, title: string, notes: string[]): [number, string][] {
   for (const note of notes) {
     const at = width - 4 - note.length
+
     if (at > title.length + 2) {
       return [
         [2, title],
@@ -31,6 +32,7 @@ function headOf(width: number, title: string, notes: string[]): [number, string]
       ]
     }
   }
+
   return [[2, title]]
 }
 
@@ -42,19 +44,25 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean,
   const failing = check(gatedOf(list, worn.signatureSlots, worn.waived ?? [])).length
   const off = (slot: number) => list[slot]?.toLowerCase() !== given[slot]
   const tuned = list.filter((_, slot) => off(slot)).length
+
   const cell = (slot: number) => {
     const hex = list[slot] as Hex
+
     const glyph = worn.signatureSlots.includes(SLOT_NAMES[slot] as string)
       ? MARKS.signature
       : color
         ? MARKS.swatch
         : ' '
+
     const swatch = color ? `${p.fg(hex)}${glyph}${FG_RESET}` : glyph
     const mark = bad.has(slot) ? p.bold(MARKS.miss) : off(slot) ? p.warn(MARKS.on) : ' '
+
     return ` ${swatch} ${lchTight(oklch(hex))}${mark}`
   }
+
   const gate = failing === 0 ? 'passes the gate' : `${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
   const notes = tuned > 0 ? [`${tuned} tuned · ${gate}`, gate] : [gate]
+
   return [
     p.dim(boxEdge(width, 'top', headOf(width, ' Palette ', notes))),
     ...BASE.map((name, row) => boxed(p, ` ${name.padEnd(10)}${cell(row)}`, width)),

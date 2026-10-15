@@ -40,7 +40,9 @@ function viewOf(over: Partial<FindView> = {}): FindView {
     cursor: 0,
     ...extra,
   })
+
   const tune = { size: 'fill' as const, at: 2, opacity: 0.2 }
+
   return {
     palette: 'miku',
     tag: 'hatsune_miku',

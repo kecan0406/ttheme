@@ -24,10 +24,13 @@ class RouteProgress extends HTMLElement {
     window.navigation.addEventListener('navigate', this.#navigate)
     window.addEventListener('pageshow', this.#restored)
     this.addEventListener('animationend', this.#ended)
+
     if (!('arriving' in document.documentElement.dataset)) return
+
     const out = this.getAnimations().find(
       (animation) => animation instanceof CSSAnimation && animation.animationName === 'route-out',
     )
+
     if (out?.playState !== 'running') this.#idle()
   }
 
@@ -41,10 +44,13 @@ class RouteProgress extends HTMLElement {
 
   #navigate = (event: NavigateEvent) => {
     const { destination } = event
+
     if (destination.sameDocument || event.downloadRequest !== null) return
+
     if (new URL(destination.url).origin !== location.origin) return
     const turn = ++this.#turn
     const now = Date.now()
+
     if (!this.dataset.state) this.#origin = now
     delete document.documentElement.dataset.arriving
     this.dataset.state = 'going'

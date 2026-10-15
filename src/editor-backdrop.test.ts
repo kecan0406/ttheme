@@ -30,6 +30,7 @@ function home(): { home: string; image: string } {
     join(dir, 'kec--dust--rei.conf'),
     `background-image = ${image}\nbackground-image-fit = cover\nbackground-image-position = top-right\nbackground-image-opacity = 0.3\n`,
   )
+
   return { home: at, image }
 }
 

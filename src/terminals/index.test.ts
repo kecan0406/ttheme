@@ -33,6 +33,7 @@ test('every wired terminal has its column in the support tables', () => {
     const head = read(...file)
       .split('\n')
       .find((line) => line.startsWith('|') && line.includes('Ghostty'))
+
     for (const id of WIRED) {
       assert.ok(head?.includes(` ${WIRINGS[id].name} `), `${file.join('/')} has no ${WIRINGS[id].name} column`)
     }

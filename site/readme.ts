@@ -19,11 +19,14 @@ function card(theme: Theme, x: number, y: number, title: string, subtitle: strin
   const swatches = theme.ansi.map((color, i) => {
     const sx = x + 12 + (i % 8) * 32
     const sy = y + CARD_H - 30 + Math.floor(i / 8) * 10
+
     return `<rect x="${sx}" y="${sy}" width="32" height="10" fill="${color}"/>`
   })
+
   const dots = theme.signature.map(
     (color, i) => `<circle cx="${x + CARD_W - 16 - i * 14}" cy="${y + 18}" r="5" fill="${color}"/>`,
   )
+
   return [
     `<rect x="${x}" y="${y}" width="${CARD_W}" height="${CARD_H}" rx="8" fill="${theme.background}" stroke="${theme.selectionBackground}"/>`,
     `<text x="${x + 12}" y="${y + 23}" fill="${theme.foreground}" font-size="13" font-weight="700">${xml(title)}</text>`,
@@ -47,6 +50,7 @@ function svg(height: number, body: string[]) {
 
 function catalogs(themes: Theme[]) {
   const leads = themes.filter((theme) => theme.lead)
+
   return svg(
     rows(leads.length),
     grid(
@@ -60,6 +64,7 @@ function palettes(themes: Theme[]) {
   const shelves = Map.groupBy(themes, (theme) => theme.catalog ?? '')
   const body: string[] = []
   let top = 0
+
   for (const [catalog, members] of shelves) {
     const native = members[0]?.native
     body.push(
@@ -74,10 +79,14 @@ function palettes(themes: Theme[]) {
     )
     top += rows(members.length) + 20
   }
+
   return svg(top - 20, body)
 }
 
 const out = join(process.argv[2] ?? '.', 'readme')
+
 mkdirSync(out, { recursive: true })
+
 writeFileSync(join(out, 'catalogs.svg'), catalogs(themes))
+
 writeFileSync(join(out, 'palettes.svg'), palettes(themes))

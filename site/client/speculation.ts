@@ -2,6 +2,7 @@ import { WEAR_KEY } from '@/lib/wear'
 
 export function respeculate() {
   const rules = document.querySelector('script[type="speculationrules"]')
+
   if (!rules) return
   const fresh = document.createElement('script')
   fresh.type = 'speculationrules'

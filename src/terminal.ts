@@ -17,12 +17,15 @@ export function editorOf(env: Env): string | undefined {
   if (env.NVIM) {
     return 'nvim'
   }
+
   if (env.VIM_TERMINAL) {
     return 'vim'
   }
+
   if (env.INSIDE_EMACS) {
     return 'emacs'
   }
+
   return env.TERM_PROGRAM === 'vscode' ? 'vscode' : undefined
 }
 
@@ -30,36 +33,47 @@ export function detectTerminal(env: Env): Terminal {
   if (editorOf(env)) {
     return 'editor'
   }
+
   if (env.TERM_PROGRAM === 'WarpTerminal') {
     return 'warp'
   }
+
   if (env.GHOSTTY_RESOURCES_DIR || env.TERM_PROGRAM === 'ghostty') {
     return 'ghostty'
   }
+
   if (env.KITTY_WINDOW_ID) {
     return 'kitty'
   }
+
   if (env.WEZTERM_PANE) {
     return 'wezterm'
   }
+
   if (env.ALACRITTY_WINDOW_ID) {
     return 'alacritty'
   }
+
   if (env.KONSOLE_VERSION) {
     return 'konsole'
   }
+
   if (env.ITERM_SESSION_ID || env.TERM_PROGRAM === 'iTerm.app') {
     return 'iterm2'
   }
+
   if (env.TERM_PROGRAM === 'Apple_Terminal') {
     return 'terminal-app'
   }
+
   if (env.WT_SESSION && !env.TERM_PROGRAM) {
     return 'windows-terminal'
   }
+
   if (env.TERM?.startsWith('foot')) {
     return 'foot'
   }
+
   return 'unknown'
 }
 
@@ -133,14 +147,17 @@ export const TRAITS: Record<Terminal, Traits> = {
 
 function iniValue(text: string, group: string, key: string): string | undefined {
   let at = ''
+
   for (const line of text.split('\n')) {
     const trimmed = line.trim()
+
     if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
       at = trimmed.slice(1, -1)
     } else if (at === group && trimmed.startsWith(`${key}=`)) {
       return trimmed.slice(key.length + 1)
     }
   }
+
   return undefined
 }
 
@@ -148,32 +165,41 @@ function konsoleLinks(env: Env): boolean {
   const config = env.XDG_CONFIG_HOME ?? join(homedir(), '.config')
   const rc = join(config, 'konsolerc')
   let file = existsSync(rc) ? iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile') : undefined
+
   for (let depth = 0; depth < 8 && file && file !== 'FALLBACK/'; depth++) {
     const name = file.endsWith('.profile') ? file : `${file}.profile`
+
     const path = konsoleDirs(env)
       .map((dir) => join(dir, name))
       .find((candidate) => existsSync(candidate))
+
     if (!path) {
       return false
     }
+
     const text = readFileSync(path, 'utf8')
     const allow = iniValue(text, 'Interaction Options', 'AllowEscapedLinks')
+
     if (allow !== undefined) {
       return allow === 'true'
     }
+
     file = iniValue(text, 'General', 'Parent')
   }
+
   return false
 }
 
 export function linkable(env: Env): boolean {
   const terminal = detectTerminal(env)
+
   return terminal === 'konsole' ? konsoleLinks(env) : TRAITS[terminal].links
 }
 
 export function showsPictures(env: Env, wired: readonly string[]): boolean {
   const terminal = detectTerminal(env)
   const traits = TRAITS[terminal]
+
   return traits.pictures && !env.TMUX && (!traits.views || wired.includes(terminal))
 }
 
@@ -222,6 +248,7 @@ const PACE_MS = 40
 
 function itermProfileOf(env: Env): string | undefined {
   const shown = env.TTHEME_ITERM_SHOWN
+
   return env.TTHEME_ITERM_SWITCH === '1' && env.TTHEME_ITERM_DYED === '0' && shown ? `ttheme · ${shown}` : undefined
 }
 
@@ -231,30 +258,38 @@ function itermLive(env: Env, write: (text: string) => void): Live {
   const sent = new Set(slots)
   const profile = itermProfileOf(env)
   let timers: ReturnType<typeof setTimeout>[] = []
+
   const stop = () => {
     for (const timer of timers) {
       clearTimeout(timer)
     }
+
     timers = []
   }
+
   return {
     slots,
     paint(entry) {
       stop()
+
       for (let at = 0; at < rest.length; at += SLICE) {
         const part = rest.slice(at, at + SLICE)
+
         const timer = setTimeout(
           () => {
             for (const slot of part) {
               sent.add(slot)
             }
+
             write(paletteOsc(entry, part))
           },
           SETTLE_MS + (at / SLICE) * PACE_MS,
         )
+
         timer.unref?.()
         timers.push(timer)
       }
+
       return paletteOsc(entry, slots)
     },
     wear: (entry) => paletteOsc(entry),
@@ -262,6 +297,7 @@ function itermLive(env: Env, write: (text: string) => void): Live {
     restore(saved) {
       stop()
       const codes = SLOT_CODES.filter((_, slot) => sent.has(slot))
+
       return profile
         ? `\x1b[?2026h${restoreOsc(new Map(), codes)}\x1b]1337;SetProfile=${profile}\x07\x1b[?2026l`
         : restoreOsc(saved, codes)
@@ -284,13 +320,16 @@ function konsoleDirs(env: Env): string[] {
 function wallpaperOf(dirs: readonly string[], look: string): string[] {
   const scheme = /(?:^|;)ColorScheme=([^;]+)/.exec(look)?.[1]
   const file = scheme && dirs.map((dir) => join(dir, `${scheme}.colorscheme`)).find((path) => existsSync(path))
+
   if (!file) {
     return ['Wallpaper=']
   }
+
   const lines = readFileSync(file, 'utf8').split('\n')
   const at = lines.findIndex((line) => line.trim() === '[General]')
   const end = lines.findIndex((line, i) => i > at && line.trimStart().startsWith('['))
   const general = at < 0 ? [] : lines.slice(at + 1, end < 0 ? undefined : end).filter((line) => WALLPAPER.test(line))
+
   return general.length > 0 ? general : ['Wallpaper=']
 }
 
@@ -299,26 +338,33 @@ function konsoleLive(env: Env, look: string): Live {
   const dir = dirs[0] as string
   const general = wallpaperOf(dirs, look)
   const views: string[] = []
+
   const show = (name: string, colors: SchemeColors, cursor: string) => {
     const text = schemeLines(colors, `ttheme · ${name}`, general).join('\n')
     const scheme = `${owned('view')}.${createHash('sha1').update(text).digest('hex').slice(0, 10)}`
     const file = join(dir, `${scheme}.colorscheme`)
+
     if (!existsSync(file)) {
       writeAtomic(file, text)
     }
+
     if (!views.includes(file)) {
       views.push(file)
     }
+
     for (const old of views.splice(0, Math.max(0, views.length - KONSOLE_VIEWS))) {
       rmSync(old, { force: true })
     }
+
     return schemeOsc(scheme, cursor)
   }
+
   const sweep = () => {
     for (const file of views.splice(0)) {
       rmSync(file, { force: true })
     }
   }
+
   return {
     slots: [],
     paint: (entry) => show(entry.name, entry, entry.cursor),
@@ -326,6 +372,7 @@ function konsoleLive(env: Env, look: string): Live {
     saved: async () => new Map(),
     restore: () => {
       sweep()
+
       return `\x1b]50;${look}\x07`
     },
     stop: sweep,
@@ -341,17 +388,22 @@ export function livePaint(
 ): Live | undefined {
   const terminal = detectTerminal(env)
   const traits = TRAITS[terminal]
+
   if (!tty || colorless(env) || env.TMUX || !traits.paints) {
     return undefined
   }
+
   if (terminal === 'iterm2') {
     return itermLive(env, write)
   }
+
   if (terminal === 'konsole' && env.TTHEME_KONSOLE_LOOK) {
     return konsoleLive(env, env.TTHEME_KONSOLE_LOOK)
   }
+
   const slots = traits.repaint ?? [...SLOT_CODES.keys()]
   const codes = SLOT_CODES.filter((_, slot) => slots.includes(slot))
+
   return {
     slots,
     paint: (entry) => paletteOsc(entry, slots),

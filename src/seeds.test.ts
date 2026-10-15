@@ -17,6 +17,7 @@ function failing(c: Colors): string[] {
 
 test('the seeds grow twenty colors that pass the gate, whatever the hue, tint and accent chroma', () => {
   assert.deepEqual(failing(grow(SEEDS)), [])
+
   for (const hue of [0, 90, 180, 265]) {
     for (const tint of [0, 0.05]) {
       for (const chroma of [0.05, 0.2]) {

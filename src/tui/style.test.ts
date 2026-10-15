@@ -45,6 +45,7 @@ test('ansiSquares spaces one square per color and hands the foreground back', ()
 
 test('every screen takes its SGR from style.ts, and the shell layer from TTHEME_SGR', () => {
   const sgr = /\\(?:x1b|u001b|033|e)\[(?:[0-9;]|\$\{[^}]*\})*m/
+
   const sources = [
     ...readdirSync(join(root, 'src'), { recursive: true, encoding: 'utf8' })
       .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts') && file !== join('tui', 'style.ts'))
@@ -52,20 +53,24 @@ test('every screen takes its SGR from style.ts, and the shell layer from TTHEME_
     ...['ttheme.zsh', 'preview.zsh', 'launch-tab.zsh'].map((file) => join('shell', file)),
     ...readdirSync(join(root, 'shell', 'adapters')).map((file) => join('shell', 'adapters', file)),
   ]
+
   const raw = sources.flatMap((file) =>
     read(file)
       .replace(TABLE, '')
       .split('\n')
       .flatMap((line, i) => (sgr.test(line) ? [`${file}:${i + 1} ${line.trim()}`] : [])),
   )
+
   assert.deepEqual(raw, [])
 })
 
 test('the shell layer gives each role the SGR style.ts gives it', () => {
   const block = read('shell', 'ttheme.zsh').match(TABLE)?.[0] ?? ''
+
   const table = Object.fromEntries(
     [...block.matchAll(/(\S+) \$'\\e\[([0-9;]*)m'/g)].map(([, key, params]) => [key, `\x1b[${params}m`]),
   )
+
   const roles = Object.keys(ROLES) as Role[]
   assert.deepEqual(table, {
     reset: RESET,
@@ -90,6 +95,7 @@ test('a role closes exactly what it opens, so it never ends a painted row early'
 
 test('the accent slot, the chip’s slot 8 and the danger slot 1 read on every official background, and the surfaces step away from the accent in order', () => {
   const names = Object.keys(SURFACES) as Surface[]
+
   for (const theme of loadThemes(join(root, 'themes'))) {
     assert.ok(contrast(theme.ansi[6] as string, theme.background) >= 3, theme.name)
     assert.ok(contrast(theme.ansi[8] as string, theme.background) >= 3, theme.name)

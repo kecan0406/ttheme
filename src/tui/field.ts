@@ -15,12 +15,15 @@ export function edit(value: string, key: string, accept: (ch: string) => boolean
       .map((part) => part.segment)
       .join('')
   }
+
   if (key === 'ctrl-u') {
     return ''
   }
+
   if (key === 'ctrl-w' || key === 'alt-backspace') {
     return value.replace(/\S*\s*$/, '')
   }
+
   return printable(key) && accept(key) ? value + key : undefined
 }
 
@@ -33,10 +36,13 @@ export class Field {
 
   key(key: string): boolean {
     const next = edit(this.value, key)
+
     if (next === undefined) {
       return false
     }
+
     this.value = next
+
     return true
   }
 

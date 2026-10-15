@@ -14,25 +14,31 @@ export function fromHome(path: string, home: string, prefix: string): string | u
 
 export function upsertBlock(content: string, body: string): string {
   const block = `${BLOCK_BEGIN}\n${body}\n${BLOCK_END}\n`
+
   if (BLOCK.test(content)) {
     return content.replace(BLOCK, block)
   }
+
   if (content === '') {
     return block
   }
+
   return `${content.replace(/\n*$/, '\n')}\n${block}`
 }
 
 export function removeBlock(content: string): string {
   const out = content.replace(/\n?# ttheme begin\n[\s\S]*?# ttheme end(?=\n|$)/, '')
+
   if (out === content) {
     return content
   }
+
   return out.trim() === '' ? '' : out.replace(/\n*$/, '\n')
 }
 
 export function userSets(content: string, key: string): boolean {
   const outside = content.replace(BLOCK, '')
+
   return new RegExp(String.raw`^[ \t]*${key}(?:[ \t]*=|[ \t]+\S)`, 'm').test(outside)
 }
 
@@ -157,6 +163,7 @@ export function settingDefault(name: string): string | undefined {
 
 function settingLine(name: string, value: string): string {
   const line = `: \${${name}:=${value}}`
+
   return settingDefault(name) === value ? `# ${line}` : line
 }
 
@@ -168,7 +175,9 @@ function ensureSetting(content: string, name: keyof typeof CONFIG_SETTINGS): str
   if (settingPattern(name).test(content)) {
     return content
   }
+
   const setting = CONFIG_SETTINGS[name]
+
   return `${content.replace(/\n*$/, '\n')}\n${setting.doc}\n${settingLine(name, setting.default)}\n`
 }
 
@@ -178,15 +187,19 @@ const BLUR_MOST = 8
 
 export function settingValue(configHome: string, name: keyof typeof CONFIG_SETTINGS): string {
   let text = ''
+
   try {
     text = readFileSync(join(configHome, 'ttheme', 'config.zsh'), 'utf8')
   } catch {}
+
   const raw = new RegExp(String.raw`^: \$\{${name}:=([^}\n]*)\}`, 'm').exec(text)?.[1] ?? CONFIG_SETTINGS[name].default
+
   return raw.replace(/^(["'])(.*)\1$/, '$2')
 }
 
 export function blurOf(configHome: string): number {
   const value = Number(settingValue(configHome, 'TTHEME_BG_BLUR'))
+
   return Number.isFinite(value) ? Math.min(BLUR_MOST, Math.max(0, value)) : 0
 }
 
@@ -196,15 +209,18 @@ export function coloringFor(configHome: string): Coloring {
 
 export function configTemplate(): string {
   const sections = Object.entries(CONFIG_SETTINGS).map(([name, s]) => `${s.doc}\n${settingLine(name, s.default)}`)
+
   return `${[CONFIG_HEADER, ...sections].join('\n\n')}\n`
 }
 
 export function withSetting(content: string, name: string, value: string): string {
   const line = settingLine(name, value)
   const pattern = settingPattern(name)
+
   if (pattern.test(content)) {
     return content.replace(pattern, line)
   }
+
   return `${content.replace(/\n*$/, '\n')}\n${line}\n`
 }
 
@@ -212,5 +228,6 @@ export function configFile(content: string): string {
   if (content === '') {
     return configTemplate()
   }
+
   return (Object.keys(CONFIG_SETTINGS) as (keyof typeof CONFIG_SETTINGS)[]).reduce(ensureSetting, content)
 }

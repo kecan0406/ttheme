@@ -24,13 +24,16 @@ function resetOsc(code: string): string {
 
 export function parseOscColors(text: string): Map<string, string> {
   const colors = new Map<string, string>()
+
   for (const part of text.split('\x1b')) {
     const match = part.match(/^\](\d+(?:;\d+)?);(rgba?:[0-9a-fA-F/]+)/)
     const [, code, value] = match ?? []
+
     if (code && value) {
       colors.set(code, value)
     }
   }
+
   return colors
 }
 
@@ -39,12 +42,14 @@ function hexOf(value: string): string {
     .slice(value.indexOf(':') + 1)
     .split('/')
     .slice(0, 3)
+
   return `#${parts.map((part) => part.slice(0, 2).padStart(2, '0')).join('')}`
 }
 
 export function slotColors(saved: ReadonlyMap<string, string>): (string | undefined)[] {
   return SLOT_CODES.map((code) => {
     const value = saved.get(code)
+
     return value ? hexOf(value) : undefined
   })
 }
@@ -57,6 +62,7 @@ export function restoreOsc(
   return codes
     .map((code) => {
       const value = saved.get(code)
+
       return value ? `\x1b]${code};${hex ? hexOf(value) : value}\x1b\\` : resetOsc(code)
     })
     .join('')
@@ -77,6 +83,7 @@ export function answered(replies: string): boolean {
 export async function queryTerminalColors(codes: readonly string[] = SLOT_CODES): Promise<Map<string, string>> {
   let fd: number
   let stream: ReadStream
+
   try {
     fd = openSync('/dev/tty', 'r+')
     stream = new ReadStream(fd)
@@ -84,6 +91,7 @@ export async function queryTerminalColors(codes: readonly string[] = SLOT_CODES)
   } catch {
     return new Map()
   }
+
   try {
     writeSync(fd, colorQuery(codes))
     let buffer = ''
@@ -91,12 +99,14 @@ export async function queryTerminalColors(codes: readonly string[] = SLOT_CODES)
       const deadline = setTimeout(resolve, 120)
       stream.on('data', (chunk: Buffer) => {
         buffer += chunk.toString()
+
         if (answered(buffer)) {
           clearTimeout(deadline)
           resolve()
         }
       })
     })
+
     return parseOscColors(buffer)
   } finally {
     stream.setRawMode(false)

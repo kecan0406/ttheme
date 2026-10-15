@@ -19,6 +19,7 @@ export function progress(got: number, size: number): string {
   if (!size) {
     return megabytes(got)
   }
+
   return size >= 1e6
     ? `${(got / 1e6).toFixed(1)}/${(size / 1e6).toFixed(1)} MB`
     : `${Math.round(got / 1e3)}/${Math.round(size / 1e3)} KB`
@@ -33,6 +34,7 @@ let sink: Sink | undefined
 
 export async function into<T>(to: Sink, work: () => Promise<T>): Promise<T> {
   sink = to
+
   try {
     return await work()
   } finally {
@@ -52,21 +54,27 @@ export function pending(text = ''): Pending {
   if (sink) {
     const to = sink
     to.set(text)
+
     return { set: (next) => to.set(next), say: (line) => to.say(line), done: () => to.set('') }
   }
+
   const out = process.stdout
+
   if (!out.isTTY || process.env.TERM === 'dumb') {
     return { set() {}, say: (line) => console.log(line), done() {} }
   }
+
   const [dim, undim] = colorless() ? ['', ''] : [open('dim'), close('dim')]
   let beat = 0
   let shown = false
   let ticker: NodeJS.Timeout | undefined
+
   const draw = (): void => {
     out.write(
       `\r\x1b[2K${dim}${fit(`${SPINNER[beat % SPINNER.length]} ${text}`, (out.columns || 80) - 1, false)}${undim}`,
     )
   }
+
   const start = setTimeout(() => {
     shown = true
     draw()
@@ -76,10 +84,13 @@ export function pending(text = ''): Pending {
     }, BEAT)
     ticker.unref()
   }, DELAY)
+
   start.unref()
+
   return {
     set(next) {
       text = next
+
       if (shown) {
         draw()
       }
@@ -88,7 +99,9 @@ export function pending(text = ''): Pending {
       if (shown) {
         out.write('\r\x1b[2K')
       }
+
       console.log(line)
+
       if (shown) {
         draw()
       }
@@ -96,6 +109,7 @@ export function pending(text = ''): Pending {
     done() {
       clearTimeout(start)
       clearInterval(ticker)
+
       if (shown) {
         out.write('\r\x1b[2K')
         shown = false

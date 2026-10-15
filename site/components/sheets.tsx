@@ -15,6 +15,7 @@ import { TerminalWindow } from './terminal-window'
 
 export function stepLabel(themes: Theme[], at: number, delta: number): string {
   const theme = themes[(at + delta + themes.length) % themes.length] as Theme
+
   return `${delta < 0 ? 'previous' : 'next'} sheet, ${theme.name}`
 }
 

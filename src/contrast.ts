@@ -18,6 +18,7 @@ export const ROLE_HUES: Record<number, { name: string; center: number; width: nu
   5: { name: 'magenta', center: 329, width: 40 },
   6: { name: 'cyan', center: 197, width: 60 },
 }
+
 export const ACHROMATIC = 0.03
 export const BRIGHT_GAP = 25
 export const DISTINCT_HUE = 15
@@ -49,14 +50,18 @@ interface Check<T extends Readable = Readable> extends GateRule {
 
 function at(theme: Readable, index: number): Hex {
   const color = theme.ansi[index]
+
   if (color === undefined) throw new Error(`${theme.name}: missing ANSI ${index}`)
+
   return color
 }
 
 function belowMin(theme: Readable, indices: number[], min: number): string[] {
   const bg = theme.background
+
   return indices.flatMap((i) => {
     const color = at(theme, i)
+
     return contrast(color, bg) < min ? [`ANSI ${i} ${color} on ${bg} is ${ratio(color, bg)}:1, needs ${min}:1`] : []
   })
 }
@@ -93,6 +98,7 @@ const READABILITY: Check[] = [
     measure: (theme) => luminance(at(theme, 0)),
     check: (theme) => {
       const ansi0 = at(theme, 0)
+
       return luminance(ansi0) > ANSI0_MAX_LUMINANCE
         ? [`ANSI 0 ${ansi0} has luminance ${luminance(ansi0).toFixed(3)}, needs <= ${ANSI0_MAX_LUMINANCE}`]
         : []
@@ -132,6 +138,7 @@ const READABILITY: Check[] = [
 
 export function hueGap(a: number, b: number): number {
   const d = Math.abs(a - b) % 360
+
   return Math.min(d, 360 - d)
 }
 
@@ -139,31 +146,39 @@ export const roleOf = (slot: number) => (slot > 8 ? slot - 8 : slot)
 
 export function exemptSlots(theme: Pick<Theme, 'signatureSlots'>): Set<number> {
   const own = theme.signatureSlots.filter((s) => s.startsWith('ansi')).map((s) => Number(s.slice(4)))
+
   return new Set(own.flatMap((s) => (ROLES.includes(roleOf(s)) ? [s, s > 8 ? s - 8 : s + 8] : [s])))
 }
 
 function chromatic(theme: Readable, slot: number): Oklch | undefined {
   const color = oklch(at(theme, slot))
+
   return color.c < ACHROMATIC ? undefined : color
 }
 
 export function offRole(theme: Gated): { slot: number; hue: number; over: number }[] {
   const exempt = exemptSlots(theme)
+
   return ACCENT_SLOTS.flatMap((slot) => {
     const color = chromatic(theme, slot)
     const band = ROLE_HUES[roleOf(slot)]
+
     if (color === undefined || band === undefined || exempt.has(slot)) return []
     const over = hueGap(color.h, band.center) - band.width
+
     return over > 0 ? [{ slot, hue: color.h, over }] : []
   })
 }
 
 export function brightDrift(theme: Gated): { normal: number; gap: number }[] {
   const own = new Set(theme.signatureSlots)
+
   return ROLES.flatMap((normal) => {
     const n = chromatic(theme, normal)
     const b = chromatic(theme, normal + 8)
+
     if (n === undefined || b === undefined || (own.has(`ansi${normal}`) && own.has(`ansi${normal + 8}`))) return []
+
     return [{ normal, gap: hueGap(n.h, b.h) }]
   })
 }
@@ -171,19 +186,24 @@ export function brightDrift(theme: Gated): { normal: number; gap: number }[] {
 export function lookalikes(theme: Gated): [number, number][] {
   const exempt = exemptSlots(theme)
   const tones = new Map<number, Oklch | undefined>()
+
   const tone = (slot: number) => {
     if (!tones.has(slot)) {
       tones.set(slot, chromatic(theme, slot))
     }
+
     return tones.get(slot)
   }
+
   return [0, 8].flatMap((base) =>
     ROLES.flatMap((i) =>
       ROLES.filter((j) => j > i).flatMap((j): [number, number][] => {
         const [a, b] = [base + i, base + j]
         const x = tone(a)
         const y = tone(b)
+
         if (x === undefined || y === undefined || (exempt.has(a) && exempt.has(b))) return []
+
         return hueGap(x.h, y.h) < DISTINCT_HUE && Math.abs(x.l - y.l) < DISTINCT_LIGHTNESS ? [[a, b]] : []
       }),
     ),
@@ -200,6 +220,7 @@ const ROLE_CHECKS: Check<Gated>[] = [
     check: (theme) =>
       offRole(theme).map(({ slot, hue, over }) => {
         const band = ROLE_HUES[roleOf(slot)] as { name: string; center: number; width: number }
+
         return `ANSI ${slot} ${at(theme, slot)} has hue ${hue.toFixed(0)}°, ${over.toFixed(0)}° outside ${band.name} (${band.center}±${band.width}°)`
       }),
   },

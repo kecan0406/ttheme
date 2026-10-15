@@ -39,8 +39,10 @@ function marketplace(source: string, id: string, names: string[], auto = false):
 function listedOf(source: string, id: string, stars: number, about: string, names: string[]): Listed {
   const palettes = names.map((name) => {
     const { background, foreground, cursor, selection, ansi, signatureSlots } = entry(name)
+
     return { name, background, foreground, cursor, selection, ansi, signatureSlots }
   })
+
   return { id, source, about, stars, updated: '2026-10-09', palettes }
 }
 
@@ -68,13 +70,16 @@ class Glass {
 
   feed(text: string): void {
     let at = 0
+
     while (at < text.length) {
       if (text[at] === '\x1b') {
         at = this.sequence(text, at)
         continue
       }
+
       const ch = String.fromCodePoint(text.codePointAt(at) as number)
       at += ch.length
+
       if (ch === '\n') {
         this.row += 1
         this.col = 0
@@ -89,30 +94,40 @@ class Glass {
   private put(ch: string): void {
     const wide = cells(ch)
     const line = this.cells[this.row]
+
     if (!line || wide === 0 || this.col + wide > this.width) {
       return
     }
+
     line[this.col] = ch
+
     if (wide === 2) {
       line[this.col + 1] = ''
     }
+
     this.col += wide
   }
 
   private sequence(text: string, at: number): number {
     const next = text[at + 1]
+
     if (next === ']' || next === '_') {
       const ends = [text.indexOf('\x07', at), text.indexOf('\x1b\\', at + 2)].filter((end) => end !== -1)
       const end = Math.min(...ends)
+
       return text[end] === '\x07' ? end + 1 : end + 2
     }
+
     CSI.lastIndex = at + 1
     const m = CSI.exec(text)
+
     if (next !== '[' || !m) {
       return at + 2
     }
+
     const [whole, params = '', final] = m
     const [a = 0, b = 0] = params.split(';').map(Number)
+
     if (final === 'H') {
       this.row = Math.max(1, a) - 1
       this.col = Math.max(1, b) - 1
@@ -125,6 +140,7 @@ class Glass {
       for (let row = this.row + 1; row < this.cells.length; row++) {
         this.cells[row] = []
       }
+
       const line = this.cells[this.row] ?? []
       line.length = Math.min(line.length, this.col)
     } else if (final === 'l' && params === '?2026') {
@@ -138,6 +154,7 @@ class Glass {
           .join('\n'),
       )
     }
+
     return at + 1 + whole.length
   }
 }
@@ -171,6 +188,7 @@ async function drive(
   output.rows = opts.rows ?? 24
   const glass = new Glass(output.columns, output.rows)
   output.on('data', (chunk: Buffer) => glass.feed(chunk.toString()))
+
   const panel = new BrowsePanel({
     marketplaces: opts.marketplaces ?? [official, pastel],
     kept: [],
@@ -183,18 +201,23 @@ async function drive(
     input,
     output,
   })
+
   const pending = panel.run()
   let previous = ''
+
   for (const key of keys) {
     if (typeof key === 'number') {
       await new Promise((resolve) => setTimeout(resolve, key))
       continue
     }
+
     await new Promise((resolve) => setTimeout(resolve, previous === '\x1b' ? 80 : 5))
     input.write(key)
     previous = key
   }
+
   const result = await pending
+
   return {
     result,
     frames: glass.frames.map((frame) => `\n${FRAME}${frame}`).join(''),
@@ -265,14 +288,17 @@ test('the Auto-update row turns a marketplace’s auto-update on and off, and on
 test('+ Add marketplace takes a source in the panel, fetches it there, and lands in the panel of the marketplace it staged', async () => {
   const neon = marketplace('bob/ttheme-neon', 'bob@neon', ['glow'])
   const fetched: string[] = []
+
   const { frames, panel, ran } = await drive([...ADD, ...'bob/ttheme-neon', '\r', 20, ...APPLY], {
     io: io({
       fetch: (source) => {
         fetched.push(source)
+
         return Promise.resolve(neon)
       },
     }),
   })
+
   assert.deepEqual(fetched, ['bob/ttheme-neon'])
   assert.match(frames, /╭─ Add marketplace ─+╮$/m)
   assert.match(frames, /│ Enter marketplace source: +│$/m)
@@ -292,12 +318,15 @@ test('+ Add marketplace takes a source in the panel, fetches it there, and lands
 test('esc in the form goes back to the marketplaces keeping what was typed, and a fetch it leaves stages nothing until enter asks again', async () => {
   const neon = marketplace('bob/ttheme-neon', 'bob@neon', ['glow'])
   let fetches = 0
+
   const slow = io({
     fetch: () => {
       fetches += 1
+
       return new Promise((resolve) => setTimeout(() => resolve(neon), 60))
     },
   })
+
   const left = await drive([...ADD, ...'bob/ttheme-neon', '\r', '\x1b', 120, '\x03'], { io: slow })
   assert.match(left.frames, /│ [⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏] Fetching bob\/ttheme-neon… +│$/m)
   assert.match(left.last, /│ │ bob\/ttheme-neon +│ │$/m)
@@ -313,6 +342,7 @@ test('esc in the form goes back to the marketplaces keeping what was typed, and 
 
 test('a marketplace due at open refreshes in the background and its new palettes appear', async () => {
   const fresh = marketplace('official', 'official', ['miku', 'rin', 'luka'], true)
+
   const { panel, frames } = await drive([20, '\x1b'], {
     due: ['official'],
     io: io({
@@ -324,6 +354,7 @@ test('a marketplace due at open refreshes in the background and its new palettes
         }),
     }),
   })
+
   assert.equal(panel.refreshed.length, 1)
   assert.match(frames, /Updating… · /)
   assert.match(frames, /5\/5 · 2 picked/)
@@ -377,14 +408,17 @@ test('a long list says how many rows lie above and below the window', async () =
     Array.from({ length: 30 }, (_, i) => `p${String(i).padStart(2, '0')}`),
     true,
   )
+
   const top = await drive([RIGHT, RIGHT, '\x1b', '\x1b'], { marketplaces: [many], rows: 14, installed: [] })
   assert.doesNotMatch(top.last, /↑ \d+ more/)
   assert.match(top.last, /├─+ ↓ \d+ more ─┤$/m)
+
   const deep = await drive([RIGHT, RIGHT, ...Array.from({ length: 20 }, () => DOWN), '\x03'], {
     marketplaces: [many],
     rows: 14,
     installed: [],
   })
+
   assert.match(deep.last, /│ ↑ \d+ more +│$/m)
   assert.match(deep.last, /├─+ ↓ \d+ more ─┤$/m)
 })
@@ -411,10 +445,13 @@ test('ctrl+r and ctrl+s never end up in the search text', async () => {
 
 test('Search marketplace opens a screen of its own that loads the marketplace list as it opens, which Browse alone never does', async () => {
   let asked = 0
+
   const index = () => {
     asked += 1
+
     return Promise.resolve(listing(listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow', 'haze'])))
   }
+
   await drive([20, '\x1b'], { io: io({ index }) })
   assert.equal(asked, 0)
   const { frames } = await drive([UP, 20, '\r', 20, '\x1b', '\x1b'], { io: io({ index }) })
@@ -439,6 +476,7 @@ test('typing in the search filters the list at once, palette names included, and
         listedOf('alice/ttheme-pastel', 'alice@pastel', 3, 'Soft palettes', ['dusk']),
       ),
     )
+
   const typed = await drive([...SEARCH, 20, ...'glow', '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
   assert.match(typed.frames, / Search marketplace \(2 found\)$/m)
   assert.match(typed.frames, / Search marketplace \(1 found\)\n.*\n │ ⌕ glow_/)
@@ -450,35 +488,45 @@ test('typing in the search filters the list at once, palette names included, and
 test('a list that did not load says so and space loads it again, and a copy from before shows while offline', async () => {
   let calls = 0
   const neon = listing(listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow']))
+
   const index = () => {
     calls += 1
+
     return calls === 1 ? Promise.reject(new Error('cannot reach the list')) : Promise.resolve(neon)
   }
+
   const { frames } = await drive([...SEARCH, 20, ' ', 20, '\x1b', '\x1b'], { io: io({ index }) })
   assert.equal(calls, 2)
   assert.match(frames, /\[⌕ The marketplace list did not load\] {2}space retries/)
   assert.match(frames, /│ cannot reach the list +│/)
   assert.match(frames, /▌ {2}○ bob@neon/)
+
   const offline = await drive([...SEARCH, 20, '\x1b', '\x1b'], {
     io: io({ index: () => Promise.resolve({ ...neon, at: Date.now() - 3 * 3_600_000, offline: 'cannot reach' }) }),
   })
+
   assert.match(offline.frames, / Search marketplace \(1 found · offline, from 3h ago\)$/m)
 })
 
 test('enter on a listed marketplace adds it and goes back to its card, and ← Back goes back with nothing added', async () => {
   const neon = marketplace('bob/ttheme-neon', 'bob@neon', ['glow', 'haze'])
+
   const index = () =>
     Promise.resolve(listing(listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow', 'haze'])))
+
   const fetched: string[] = []
+
   const { frames, panel } = await drive([...SEARCH, 20, '\r', 20, ...'glow', ...APPLY], {
     io: io({
       index,
       fetch: (source) => {
         fetched.push(source)
+
         return Promise.resolve(neon)
       },
     }),
   })
+
   assert.deepEqual(fetched, ['bob/ttheme-neon'])
   assert.match(frames, /^ ▌ {2}● bob@neon {2}Will add +│/m)
   assert.deepEqual(
@@ -507,6 +555,7 @@ test('a source the form cannot read or fetch says why under the field, and one a
     '\r',
     '\x03',
   ])
+
   assert.match(frames, /│ type a repository or a folder +│$/m)
   assert.match(frames, /│ bob is not a marketplace — give a +│$/m)
   assert.match(frames, /│ offline +│$/m)
@@ -560,6 +609,7 @@ test('? shows the keys over the list until ? or esc, and the list takes no key m
 
 test('applying shows what the work reports and waits for it, and done stays until enter', async () => {
   let calls = 0
+
   const { frames, ran, log, failed, panel } = await drive(
     [...REMOVE, ...'miku', '\r', '\r', 30, '\x1b', '\r', 350, '\r'],
     {
@@ -575,6 +625,7 @@ test('applying shows what the work reports and waits for it, and done stays unti
       }),
     },
   )
+
   assert.equal(calls, 1)
   assert.ok(ran)
   assert.equal(failed, undefined)
@@ -597,10 +648,12 @@ test('a failed apply says so, keeps what it reported, and still closes on enter'
     io: io({
       apply: (_, report) => {
         report.say('Removed alice@pastel')
+
         return Promise.reject(new Error('cannot write installed.json'))
       },
     }),
   })
+
   assert.equal(failed?.message, 'cannot write installed.json')
   assert.deepEqual(log, ['Removed alice@pastel'])
   assert.match(frames, /✗ Stopped/)

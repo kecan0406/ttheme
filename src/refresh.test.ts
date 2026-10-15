@@ -68,10 +68,12 @@ async function withNetwork<T>(respond: () => Promise<Response>, run: (home: stri
   const realState = process.env.XDG_STATE_HOME
   globalThis.fetch = (async () => respond()) as unknown as typeof fetch
   process.env.XDG_STATE_HOME = join(home, 'state')
+
   try {
     return await run(home)
   } finally {
     globalThis.fetch = realFetch
+
     if (realState === undefined) {
       delete process.env.XDG_STATE_HOME
     } else {
@@ -121,19 +123,23 @@ function installed(name: string): PaletteEntry {
 
 test('applying a refresh hands back the palettes that left their marketplace instead of printing them', async () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-apply-'))
+
   const manifest: Manifest = {
     schema: SCHEMA,
     version: '0.1.0',
     gate: [],
     palettes: [installed('gojo'), installed('geto')],
   }
+
   const state = { terminals: ['ghostty' as const], palettes: ['gojo', 'geto'] }
   writeOfficial(home, manifest)
   writeInstalled(home, state)
   sync(home, manifest, state)
+
   const left = applyRefreshed(home, [
     { source: 'official', id: 'official', count: 1, change: { added: [], changed: [], gone: ['gojo'] } },
   ])
+
   assert.deepEqual(left, ['gojo left its marketplace — ttheme keeps the copy you have'])
   assert.deepEqual(
     applyRefreshed(home, [

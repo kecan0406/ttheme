@@ -26,6 +26,7 @@ function ghosttyOwn(configHome: string): string {
 
 function ghosttyFiles(at: At, platform: NodeJS.Platform = process.platform): string[] {
   const support = join(at.home, 'Library', 'Application Support', 'com.mitchellh.ghostty')
+
   return [
     ghosttyConfig(at.configHome),
     join(at.configHome, 'ghostty', 'config.ghostty'),
@@ -39,6 +40,7 @@ function setBy(at: At, key: string): string | undefined {
 
 export function ghosttyBlock(tthemeDir: string, home: string): string {
   const own = join(tthemeDir, 'ghostty.conf')
+
   return `# ${MANAGED}\nconfig-file = ?${fromHome(own, home, '~') ?? own}`
 }
 
@@ -92,6 +94,7 @@ export const ghostty: Wiring = {
   notes(now) {
     const command = setBy(now, 'command')
     const colors = now.startup ? COLOR_KEYS.map((key) => setBy(now, key)).find(Boolean) : undefined
+
     return [
       ...(command && rotates(now)
         ? [

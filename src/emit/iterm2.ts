@@ -13,6 +13,7 @@ interface ItermColor {
 
 function color(hex: Hex): ItermColor {
   const [r, g, b] = rgb(hex)
+
   return {
     'Alpha Component': 1,
     'Blue Component': b / 255,
@@ -67,16 +68,19 @@ export function itermProfiles(
     ...background(pictures.get(theme.name)),
     ...itermColors(theme),
   })
+
   const bare = {
     Name: 'ttheme · default',
     Guid: owned('default'),
     'Dynamic Profile Parent GUID': parent,
     ...background(undefined),
   }
+
   const profiles = [
     ...(startup ? [profile(startup, 'default')] : plain && parent ? [bare] : []),
     ...themes.map((theme) => profile(theme, theme.name)),
   ]
+
   return `${JSON.stringify({ Profiles: profiles }, null, 2)}\n`
 }
 

@@ -205,8 +205,11 @@ function Colors() {
 
 export function SceneLines({ theme, scene, own = false }: { theme: Theme; scene: Scene; own?: boolean }) {
   if (scene === 'git') return <Git />
+
   if (scene === 'test') return <Test />
+
   if (scene === 'colors') return <Colors />
+
   return <Shell use={own ? null : theme.marketplace ? theme.id : theme.name} />
 }
 

@@ -55,6 +55,7 @@ export function Signature({ theme, size = 'sm' }: { theme: Theme; size?: 'sm' | 
         ))}
       </span>
     )
+
   return (
     <div class="flex flex-wrap gap-x-4 gap-y-2.5">
       {theme.signature.map((color, index) => (
@@ -92,8 +93,11 @@ export function PropertyList({ rows }: { rows: [string, string][] }) {
 
 export function reading(value: number, unit: string): string {
   if (unit === 'ratio') return `${value.toFixed(2)}:1`
+
   if (unit === 'luminance') return `L ${value.toFixed(3)}`
+
   if (unit === 'pairs') return `${Math.round(value)} ${Math.round(value) === 1 ? 'pair' : 'pairs'}`
+
   return `${Math.round(value)}°`
 }
 
@@ -105,6 +109,7 @@ export function GateList({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
         const ok = passes({ value, min: rule.min, max: rule.max })
         const floor = rule.min !== undefined ? `≥ ${rule.min}` : `≤ ${rule.max}`
         const miss = rule.min !== undefined ? `under ${rule.min}` : `over ${rule.max}`
+
         return (
           <div class="grid grid-cols-[1fr_auto_auto] items-center gap-2.5 border-b border-border/60 py-1.5 text-sm last:border-b-0">
             <span class="text-soft-foreground" safe>
@@ -153,6 +158,7 @@ export function Swatch({ name, color }: { name: string; color: string }) {
 
 export function SwatchGrid({ theme }: { theme: Theme }) {
   const colors = [theme.background, theme.foreground, theme.cursor, theme.selectionBackground, ...theme.ansi]
+
   return (
     <div class="grid grid-cols-4 gap-2">
       {colors.map((color, index) => (

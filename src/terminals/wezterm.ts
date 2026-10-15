@@ -12,8 +12,10 @@ const LUA_RETURN = /^return config[ \t]*$/gm
 
 export function weztermBlock(module: string, home: string): string {
   const relative = fromHome(module, home, '')
+
   const path =
     relative === undefined ? JSON.stringify(module) : `require('wezterm').home_dir .. ${JSON.stringify(relative)}`
+
   return `-- ${MANAGED}\ndo local path = ${path} local file = io.open(path) if file then file:close() dofile(path)(config) end end`
 }
 
@@ -21,26 +23,33 @@ const WEZTERM_SKELETON = "local wezterm = require 'wezterm'\nlocal config = wezt
 
 export function removeLuaBlock(content: string): string {
   const out = content.replace(/-- ttheme begin\n[\s\S]*?-- ttheme end\n\n?/, '')
+
   return out === `${WEZTERM_SKELETON}return config\n` ? '' : out
 }
 
 export function upsertLuaBlock(content: string, body: string): string | undefined {
   const block = `-- ttheme begin\n${body}\n-- ttheme end\n`
+
   if (LUA_BLOCK.test(content)) {
     return content.replace(LUA_BLOCK, block)
   }
+
   if (content === '') {
     return `${WEZTERM_SKELETON}${block}\nreturn config\n`
   }
+
   const last = [...content.matchAll(LUA_RETURN)].at(-1)
+
   if (last?.index === undefined) {
     return undefined
   }
+
   return `${content.slice(0, last.index)}${block}\n${content.slice(last.index)}`
 }
 
 function weztermConfig(configHome: string, home: string): string {
   const dotfile = join(home, '.wezterm.lua')
+
   return existsSync(dotfile) ? dotfile : join(configHome, 'wezterm', 'wezterm.lua')
 }
 
@@ -73,12 +82,14 @@ export const wezterm: Wiring = {
     )
     const config = weztermConfig(ctx.configHome, ctx.home)
     const wired = upsertLuaBlock(readText(config), weztermBlock(module(ctx), ctx.home))
+
     if (wired !== undefined) {
       out.wire(config, wired)
     }
   },
   plan(ctx) {
     const config = weztermConfig(ctx.configHome, ctx.home)
+
     return upsertLuaBlock(readText(config), '') !== undefined
       ? [
           `Edit ${tilde(config, ctx.home)} — a ttheme block before \`return config\`: color_scheme_dirs, color_scheme, pictures`,
@@ -87,6 +98,7 @@ export const wezterm: Wiring = {
   },
   notes(ctx) {
     const config = weztermConfig(ctx.configHome, ctx.home)
+
     return existsSync(config) && upsertLuaBlock(readText(config), '') === undefined
       ? [
           `${config} has no \`return config\` line — ttheme left it alone; call \`dofile("${module(ctx)}")(config)\` from it yourself`,

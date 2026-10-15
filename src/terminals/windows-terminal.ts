@@ -27,10 +27,13 @@ export function windowsAppData(host: Host): string | undefined {
   if (host.platform === 'win32') {
     return host.env.LOCALAPPDATA
   }
+
   if (!host.env.WSL_DISTRO_NAME) {
     return undefined
   }
+
   const local = host.run('cmd.exe', ['/d', '/c', 'echo %LOCALAPPDATA%'])
+
   return (local && host.run('wslpath', ['-u', local])) || undefined
 }
 
@@ -43,17 +46,22 @@ export const windowsTerminal: Wiring = {
   installs: (setup) => ({ wtHome: setup.wtHome, wtProfile: setup.wtProfile }),
   sync(ctx, out) {
     const { wtHome, wtProfile } = ctx.state
+
     if (!wtHome) {
       return
     }
+
     const settings = wtSettings(wtHome)
+
     if (
       out.write(wtFragmentPath(wtHome), wtFragment(ctx.themes, wtProfile ?? wtDefaultProfile(settings), ctx.startup))
     ) {
       const now = new Date()
+
       for (const file of settings) {
         utimesSync(file, now, now)
       }
+
       if (settings.length > 0) {
         out.repaint()
       }
@@ -73,6 +81,7 @@ export const windowsTerminal: Wiring = {
   unwire(_, state) {
     const wtHome = state?.wtHome
     const dir = wtHome ? dirname(wtFragmentPath(wtHome)) : undefined
+
     return {
       edits: [],
       removals: dir && existsSync(dir) ? [dir] : [],

@@ -46,23 +46,29 @@ export function keepable(clear: number): boolean {
 export function matte(image: Rgba): Rgba {
   const { width, height } = image
   const data = image.data.slice()
+
   for (let at = 3; at < data.length; at += 4) {
     data[at] = CURVE[data[at] as number] as number
   }
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const at = (y * width + x) * 4
       const a = data[at + 3] as number
+
       if (a === 0 || a === 255) {
         continue
       }
+
       let r = 0
       let g = 0
       let b = 0
       let n = 0
+
       for (let near = Math.max(0, y - REACH); near <= Math.min(height - 1, y + REACH); near++) {
         for (let across = Math.max(0, x - REACH); across <= Math.min(width - 1, x + REACH); across++) {
           const o = (near * width + across) * 4
+
           if (data[o + 3] === 255) {
             r += data[o] as number
             g += data[o + 1] as number
@@ -71,6 +77,7 @@ export function matte(image: Rgba): Rgba {
           }
         }
       }
+
       if (n > 0) {
         data[at] = Math.round(r / n)
         data[at + 1] = Math.round(g / n)
@@ -78,6 +85,7 @@ export function matte(image: Rgba): Rgba {
       }
     }
   }
+
   return { width, height, data }
 }
 
@@ -87,6 +95,7 @@ export function removeBackground(input: string, output: string, signal: AbortSig
       stdio: ['ignore', 'ignore', 'pipe'],
       signal: AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT)]),
     })
+
     let failure = ''
     child.stderr.on('data', (chunk: Buffer) => {
       failure += chunk
@@ -95,8 +104,10 @@ export function removeBackground(input: string, output: string, signal: AbortSig
     child.on('close', (code) => {
       if (code === 0) {
         resolve()
+
         return
       }
+
       reject(new Error(failure.trim().split('\n').at(-1) || `osascript exited ${code}`))
     })
   })

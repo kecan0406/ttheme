@@ -26,6 +26,7 @@ export function Marks({ signature, miss }: { signature: boolean; miss: boolean }
 export function Verdict({ ok }: { ok: boolean | null }) {
   const tone =
     ok === null ? 'bg-muted text-muted-foreground' : ok ? 'bg-success/16 text-success' : 'bg-warning/18 text-warning'
+
   return (
     <span class={`inline-flex size-5 flex-none items-center justify-center rounded-full ${tone}`}>
       <Icon node={ok === null ? Minus : ok ? Check : X} class="size-3" />
@@ -55,6 +56,7 @@ export function SlotPopover({
 }) {
   const s = view.slots[slot] as SlotView
   const value = s.formats[format]
+
   return (
     <div
       role="dialog"

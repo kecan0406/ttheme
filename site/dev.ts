@@ -5,7 +5,9 @@ import { autoHead } from 'elysia/auto-head'
 import { ASSETS, buildAssets, IMMUTABLE, SITE, snapshot } from './build'
 
 await buildAssets(false)
+
 await snapshot(false)
+
 const { site } = await import('./app/site')
 
 const listeners = new Set<ReadableStreamDefaultController<string>>()
@@ -18,6 +20,7 @@ function rebuild() {
     try {
       await buildAssets(false)
       stamp = Date.now().toString(36)
+
       for (const listener of listeners) listener.enqueue(`data: ${stamp}\n\n`)
     } catch (error) {
       process.stderr.write(`site: ${(error as Error).message}\n`)
@@ -26,6 +29,7 @@ function rebuild() {
 }
 
 watch(join(SITE, 'client'), { recursive: true }, rebuild)
+
 watch(join(SITE, 'app', 'globals.css'), rebuild)
 
 setInterval(() => {
@@ -36,6 +40,7 @@ new Elysia()
   .use(autoHead())
   .get('/__reload', () => {
     let held: ReadableStreamDefaultController<string> | undefined
+
     const stream = new ReadableStream<string>({
       start(controller) {
         held = controller
@@ -46,12 +51,15 @@ new Elysia()
         if (held) listeners.delete(held)
       },
     })
+
     return new Response(stream, { headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-store' } })
   })
   .get('/assets/*', ({ params, set }) => {
     const name = params['*']
+
     if (!/^\w[\w.-]*$/.test(name) || !existsSync(join(ASSETS, name))) throw new NotFound()
     set.headers['cache-control'] = name.endsWith('.woff2') ? IMMUTABLE : 'no-store'
+
     return file(join(ASSETS, name))
   })
   .use(site)

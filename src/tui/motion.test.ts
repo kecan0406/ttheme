@@ -33,6 +33,7 @@ test('a chase covers 40% of what is left, always at least one step, and starts c
 
 test('a list that glides shows the window it left until stepped, and one that does not shows the cursor at once', () => {
   const names = Array.from({ length: 40 }, (_, i) => `palette${String(i).padStart(2, '0')}`)
+
   const make = () =>
     new PaletteList({
       entries: names.map(entry),
@@ -42,6 +43,7 @@ test('a list that glides shows the window it left until stepped, and one that do
       maxItems: 4,
       color: false,
     })
+
   const plain = make()
   plain.window()
   plain.move(-1)
@@ -55,9 +57,11 @@ test('a list that glides shows the window it left until stepped, and one that do
   assert.equal(gliding.window().above, 0)
   assert.equal(gliding.moving(), true)
   const seen = [0]
+
   while (gliding.step()) {
     seen.push(gliding.window().above)
   }
+
   seen.push(gliding.window().above)
   assert.equal(seen.at(-1), 36)
   assert.ok(seen.length > 3 && seen.length < 12, `${seen}`)

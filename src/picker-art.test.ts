@@ -17,6 +17,7 @@ test('the picker layer sends a picture only when it changes, under a spare id, a
     signature: ['background', 'foreground', 'cursor'],
     check: () => undefined,
   })
+
   e.viewport(140, 40)
   const layer = PickerLayer.of({ TERM_PROGRAM: 'ghostty' }, ['ghostty'])
   assert.ok(layer)
@@ -24,9 +25,11 @@ test('the picker layer sends a picture only when it changes, under a spare id, a
   assert.equal(art(), undefined)
   assert.equal(layer.draw(undefined), '')
   layer.measured({ w: 8, h: 16 })
+
   for (const key of ['down', 'down', 'down', 'down', 'down', 'enter', 'up']) {
     e.press(key)
   }
+
   const first = layer.draw(art())
   assert.equal(sent(first).length, 10)
   assert.deepEqual(placed(first), sent(first))

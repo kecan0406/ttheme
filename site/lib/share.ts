@@ -79,6 +79,7 @@ function framing({ size, position, opacity }: SharedPicture): string {
 
 function picture(shared: SharedPicture): Picture {
   const site = SITES.find((s) => s.key === shared.site)
+
   return {
     post: `${site?.name ?? shared.site} #${shared.id}`,
     href: site ? site.pageUrl(shared.id) : null,
@@ -89,6 +90,7 @@ function picture(shared: SharedPicture): Picture {
 
 function themeOf(entry: PaletteEntry): Theme {
   const marketplace = marketplaceOf(entry.name) ?? null
+
   return toTheme({ ...entry, name: marketplace ? slugOf(entry.name) : entry.name }, marketplace)
 }
 
@@ -97,6 +99,7 @@ export function readShared(code: string, index = 0): Shared {
   const at = Number.isInteger(index) && index >= 0 && index < entries.length ? index : 0
   const entry = entries[at] as PaletteEntry
   const palettes = entries.map(themeOf)
+
   return {
     code,
     link: shareLink(code),
@@ -112,6 +115,7 @@ const round = (value: number, digits: number) => Number(value.toFixed(digits))
 
 function runOf(part: Part): Run {
   const { text, ground } = slotsOfRole(part.role)
+
   return {
     text: part.text,
     t: text,
@@ -125,13 +129,16 @@ function runOf(part: Part): Run {
 function hueTrack(): string {
   const stops = Array.from({ length: HUE_STOPS + 1 }, (_, i) => {
     const along = i / HUE_STOPS
+
     return `${inGamut(RAINBOW_L, RAINBOW_C, along * 360)} ${round(along * 100, 2)}%`
   })
+
   return `linear-gradient(90deg, ${stops.join(', ')})`
 }
 
 export function builderOf(shared: Shared, rules: GateRule[]): Builder {
   const { entry } = shared
+
   const list = listOf({
     background: entry.background,
     foreground: entry.foreground,
@@ -139,25 +146,31 @@ export function builderOf(shared: Shared, rules: GateRule[]): Builder {
     selection: entry.selection,
     ansi: entry.ansi,
   })
+
   const signature = entry.signatureSlots
   const waive = entry.waived ?? []
   const missed = misses(list, signature, waive)
   const tiles = paneTiles(GRID.cols, GRID.rows)
   const lines = tiles.map((tile) => paneLines(tile))
   const parts = lines.map((pane) => pane.flat())
+
   const panes = tiles.map((tile, i): Pane => {
     const runs = (lines[i] ?? []).map((line) => line.map(runOf))
     const footer = footerRows(tile)
+
     return { name: tile.name, body: runs.slice(0, runs.length - footer), footer: runs.slice(runs.length - footer) }
   })
+
   const levels = Array.from(
     { length: PLANE_ROWS },
     (_, row) => PLANE_TOP - (row / (PLANE_ROWS - 1)) * (PLANE_TOP - PLANE_BOTTOM),
   )
+
   const slots = list.map((hex, slot): SlotView => {
     const at = lchIn(list, hex)
     const key = SLOT_NAMES[slot] as string
     const [l = '', c = '', h = ''] = lchTight(at).trim().split(/\s+/)
+
     return {
       key,
       name: slotLabel(slot).name,
@@ -176,11 +189,14 @@ export function builderOf(shared: Shared, rules: GateRule[]): Builder {
       miss: missed.has(slot),
     }
   })
+
   const gate = rules.map((rule, i): GateLine => {
     const value = entry.gate[i] ?? Number.NaN
     const ok = waive.includes(rule.rule) ? null : passes({ value, min: rule.min, max: rule.max })
+
     return { rule, value, ok, slots: ok === false ? ruleSlots(list, signature, waive, rule.rule) : [] }
   })
+
   return {
     panes,
     gate,

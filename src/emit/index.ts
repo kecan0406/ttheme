@@ -1,11 +1,21 @@
 export { alacritty } from './alacritty.ts'
+
 export { ghostty } from './ghostty.ts'
+
 export { iterm2 } from './iterm2.ts'
+
 export { kitty } from './kitty.ts'
+
 export { konsole } from './konsole.ts'
+
 export { meta } from './manifest.ts'
+
 export { shell } from './shell.ts'
+
 export { terminalApp } from './terminal-app.ts'
+
 export { warp } from './warp.ts'
+
 export { wezterm } from './wezterm.ts'
+
 export { windowsTerminal } from './windows-terminal.ts'

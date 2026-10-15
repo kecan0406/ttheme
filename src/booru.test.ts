@@ -211,6 +211,7 @@ test('a post over the pixel cap is fetched as the largest smaller copy the site 
       },
     ]),
   )
+
   assert.deepEqual(big && rendition(big), {
     file: 'https://files.yande.re/jpeg/a/1243551.jpg',
     width: 3500,
@@ -218,6 +219,7 @@ test('a post over the pixel cap is fetched as the largest smaller copy the site 
     ext: 'jpg',
   })
   assert.equal(small && rendition(small), small)
+
   const [unsampled] = parseMoebooru(
     JSON.stringify([
       {
@@ -230,6 +232,7 @@ test('a post over the pixel cap is fetched as the largest smaller copy the site 
       },
     ]),
   )
+
   assert.equal(unsampled && rendition(unsampled), undefined)
 })
 
@@ -252,6 +255,7 @@ test('mates groups palettes by uploader and skips posts with none', () => {
     ['miyuki', 'moeimouto'],
     ['reimu', ''],
   ])
+
   assert.deepEqual([...mates(owners)], [['moeimouto', ['miyuki', 'tsukasa']]])
 })
 
@@ -271,6 +275,7 @@ test('parseMoebooru takes the extension from file_ext and the uploader from auth
       },
     ]),
   )
+
   assert.deepEqual(
     [found?.id, found?.ext, found?.owner, found && rated(yande, found)],
     [214705, 'png', 'gnarf1975', true],
@@ -315,6 +320,7 @@ test('related tags are the characters danbooru names, and a challenge page names
       { tag: {} },
     ],
   })
+
   assert.deepEqual(parseRelated(body), [
     { value: 'rche_(beatmania)', count: 90 },
     { value: 'cuvelia', count: 34 },
@@ -361,6 +367,7 @@ test('parseMoebooru reads the artist out of the tag types the same answer carrie
       tags: { hiiragi_kagami: 'character', lucky_star: 'copyright', kantoku: 'artist' },
     }),
   )
+
   assert.deepEqual(found?.named.artist, ['kantoku'])
   assert.equal(found?.score, 42)
 })
@@ -389,6 +396,7 @@ test('parseDanbooru takes the artist, the score, the 360 px preview and only the
       },
     ]),
   )
+
   assert.deepEqual(found?.named.artist, ['hinohari'])
   assert.equal(found?.score, 7)
   assert.deepEqual(
@@ -484,6 +492,7 @@ test('a moebooru post borrows the tags danbooru holds for the same file, headcou
   const posts = parseMoebooru(
     JSON.stringify([listed({ id: 1, md5: 'aa', tags: 'x' }), listed({ id: 2, md5: 'bb', tags: 'x' })]),
   )
+
   lend(posts, parseLent(JSON.stringify([{ md5: 'aa', tag_string: 'x solo comic' }])))
   assert.deepEqual(
     posts.map((p) => [p.tags, p.solo]),
@@ -501,6 +510,7 @@ test('a post takes from danbooru only the credits it lacks, one role at a time',
       tags: { reimu: 'character' },
     }),
   )
+
   const [zc] = parseZerochan(JSON.stringify({ items: [{ id: 5, width: 800, height: 1200, md5: 'bb', tags: [] }] }))
   lend(
     [...posts, ...(zc ? [zc] : [])],
@@ -536,6 +546,7 @@ test('a pixiv file or old illust link is credited as the artwork page it came fr
   ]) {
     assert.equal(sourcePage(file), 'https://www.pixiv.net/artworks/113837973', file)
   }
+
   for (const kept of [
     'https://www.pixiv.net/en/artworks/149948109',
     'https://x.com/oda_koden/status/2103440708585783307',
@@ -562,6 +573,7 @@ test('a zerochan post page names its artist, cast and series by tag type, with i
       name: 'Roy4127',
       status: 2,
     }</script>`
+
   assert.deepEqual(parseZerochanPage(page), {
     named: { artist: ['akoiro'], character: ['hakurei_reimu'], copyright: ['steins;gate', 'touhou_&_friends'] },
     source: '',
@@ -578,12 +590,14 @@ test('a zerochan post page names its artist, cast and series by tag type, with i
 test('a file danbooru also holds is fetched from its cdn, and a list that named no file takes that one', () => {
   const [moe] = parseMoebooru(JSON.stringify([listed({ id: 1, md5: 'aa', tags: 'x' })]))
   const [zc] = parseZerochan(JSON.stringify({ items: [{ id: 5, width: 800, height: 1200, md5: 'bb', tags: [] }] }))
+
   const lent = parseLent(
     JSON.stringify([
       { md5: 'aa', tag_string: 'x', file_url: 'https://cdn.donmai.us/original/aa/00/aa.png' },
       { md5: 'bb', tag_string: 'y', file_url: 'https://cdn.donmai.us/original/bb/00/bb.jpg' },
     ]),
   )
+
   lend(
     [moe, zc].filter((p) => p !== undefined),
     lent,
@@ -627,10 +641,12 @@ test('zerochan names its tags in words, so they are read as tags, and nudity mak
       ],
     }),
   )
+
   assert.deepEqual(plain?.tags, ['hatsune_miku', 'solo', 'transparent_background'])
   assert.deepEqual([plain?.solo, plain?.file, plain?.ext], [true, '', ''], 'a list names no file')
   assert.equal(plain?.preview, 'https://s1.zerochan.net/Hatsune.Miku.600.3248583.jpg')
   assert.deepEqual([plain && rated(zero, plain), nude && rated(zero, nude)], [true, false])
+
   const [detail] = parseZerochan(
     JSON.stringify({
       id: 3248583,
@@ -642,6 +658,7 @@ test('zerochan names its tags in words, so they are read as tags, and nudity mak
       tags: ['Solo'],
     }),
   )
+
   assert.deepEqual(
     [detail?.file, detail?.ext, detail?.md5],
     ['https://static.zerochan.net/Hatsune.Miku.full.3248583.png', 'png', 'cd77'],
@@ -672,6 +689,7 @@ test('a zerochan file is looked for as jpg first, or png first when the post is 
       ],
     }),
   )
+
   assert.deepEqual(photo && zero.guesses?.(photo), [
     'https://static.zerochan.net/Amane.Suzuha.full.7.jpg',
     'https://static.zerochan.net/Amane.Suzuha.full.7.png',
@@ -690,6 +708,7 @@ test("a redirect keeps the query the target left off, and keeps the target's own
 test('a tag zerochan does not know lists nothing instead of failing the search', async () => {
   const real = globalThis.fetch
   globalThis.fetch = (async () => new Response('{ }', { status: 404 })) as unknown as typeof fetch
+
   try {
     assert.deepEqual(await fetchPosts(zero, 'nobody_here', 0, new AbortController().signal), [])
     await assert.rejects(fetchPosts(yande, 'x', 0, new AbortController().signal), /yande\.re answered 404/)
@@ -703,11 +722,14 @@ test('a request cut off by a connection reset is tried again', async () => {
   let calls = 0
   globalThis.fetch = (async () => {
     calls++
+
     if (calls === 1) {
       throw new TypeError('fetch failed', { cause: Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' }) })
     }
+
     return new Response('[]')
   }) as unknown as typeof fetch
+
   try {
     assert.deepEqual(await fetchPosts(yande, 'x', 0, new AbortController().signal), [])
     assert.equal(calls, 2)

@@ -11,6 +11,7 @@ export function installTestPicture(
 ): void {
   const size = 32
   const data = new Uint8Array(size * size * 4)
+
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const at = (y * size + x) * 4
@@ -18,6 +19,7 @@ export function installTestPicture(
       data.set([220, 220, 220, inside ? 255 : 0], at)
     }
   }
+
   const colors = colorsOf(entry)
   installBackdrop(
     configHome,
@@ -38,12 +40,16 @@ export function installTestPicture(
 
 if (import.meta.main) {
   const [configHome = '', name = ''] = process.argv.slice(2)
+
   const manifest = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'dist', 'manifest.json'), 'utf8')) as {
     palettes: PaletteEntry[]
   }
+
   const entry = manifest.palettes.find((p) => p.name === name)
+
   if (!entry) {
     throw new Error(`no ${name} in the catalog`)
   }
+
   installTestPicture(configHome, entry, 1000, { width: 1160, height: 706 })
 }

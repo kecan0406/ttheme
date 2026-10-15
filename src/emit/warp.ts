@@ -17,17 +17,21 @@ function block(header: string, colors: readonly string[]): string[] {
 
 function hashed(name: string, parts: string[], extension: string): string {
   const hash = createHash('sha1')
+
   for (const part of parts) {
     hash.update(part)
   }
+
   return `${owned(name)}.${hash.digest('hex').slice(0, 8)}.${extension}`
 }
 
 export function warpPictureFile(name: string, image: string, background: string): string {
   let hash = 0x811c9dc5
+
   for (const byte of Buffer.from(`${image}\n${background.toLowerCase()}`, 'utf8')) {
     hash = Math.imul(hash ^ byte, 0x01000193) >>> 0
   }
+
   return `${owned(name)}.${hash.toString(16).padStart(8, '0')}.png`
 }
 

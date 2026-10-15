@@ -59,11 +59,14 @@ export interface ShareView {
 
 export function planeRows(view: ShareView, slot: SlotView): string[] {
   const last = Math.max(1, slot.edges.length - 1)
+
   return slot.edges.map((edge, row) => {
     const l = view.top - (row / last) * (view.top - view.bottom)
+
     const stops = [0, 0.25, 0.5, 0.75, 1].map(
       (t) => `oklch(${l.toFixed(3)} ${(edge * t).toFixed(4)} ${slot.hue}) ${t * 100}%`,
     )
+
     return `linear-gradient(90deg, ${stops.join(', ')})`
   })
 }

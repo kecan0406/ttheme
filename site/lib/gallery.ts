@@ -26,8 +26,10 @@ export function searchable(theme: Theme): Searchable {
 
 export function matches({ text, official }: Searchable, { query, source }: Filters): boolean {
   if (source === 'official' && !official) return false
+
   if (source === 'community' && official) return false
   const q = query.trim().toLowerCase()
+
   return !q || text.includes(q)
 }
 

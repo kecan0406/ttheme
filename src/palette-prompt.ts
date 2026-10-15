@@ -72,6 +72,7 @@ function shownName(entry: PaletteEntry): string {
 
 function shelfKey(entry: PaletteEntry, place: Place): string | undefined {
   const name = place.shelf(entry)
+
   return name === undefined ? undefined : catalogKey(place.top(entry), name)
 }
 
@@ -79,15 +80,19 @@ function rowKey(row: Row | undefined): string {
   if (row?.kind === 'palette') {
     return `palette ${row.entry.name}`
   }
+
   if (row?.kind === 'top') {
     return `top ${row.name}`
   }
+
   if (row?.kind === 'catalog') {
     return `catalog ${catalogKey(row.top, row.name)}`
   }
+
   if (row?.kind === 'extra') {
     return `extra ${row.extra.key}`
   }
+
   return row?.kind ?? ''
 }
 
@@ -121,17 +126,22 @@ export function pickerRows(
   const q = filter.trim()
   const rows: PickerRow[] = []
   const palette = (entry: PaletteEntry): PickerRow => ({ kind: 'palette', entry })
+
   const groups = Map.groupBy(
     entries.filter((e) => !e.default),
     (e) => place.top(e),
   )
+
   for (const [top, members] of groups) {
     const e = members[0] as PaletteEntry
     const matching = q ? members.filter((m) => matchesPalette(m, q)) : members
+
     if (q && matching.length === 0) {
       continue
     }
+
     const open = mode === 'inside' || (mode === 'tree' && (q.length > 0 || expanded.has(top)))
+
     if (mode !== 'inside') {
       rows.push({
         kind: 'top',
@@ -142,10 +152,13 @@ export function pickerRows(
         count: matching.length,
       })
     }
+
     if (!open) {
       continue
     }
+
     const shelved = matching.filter((m) => place.shelf(m) !== undefined)
+
     for (const [name, inside] of Map.groupBy(shelved, (m) => place.shelf(m) as string)) {
       const lead = inside.find((m) => m.lead) ?? (inside[0] as PaletteEntry)
       const unfolded = q.length > 0 || expanded.has(catalogKey(top, name))
@@ -158,28 +171,34 @@ export function pickerRows(
         expanded: unfolded,
         count: inside.length,
       })
+
       if (unfolded) {
         rows.push(...inside.map(palette))
       }
     }
+
     rows.push(...matching.filter((m) => place.shelf(m) === undefined).map(palette))
   }
+
   for (const top of tops) {
     if (!groups.has(top) && (q === '' || containsText([top], q))) {
       rows.push({ kind: 'top', name: top, expanded: expanded.has(top), count: 0 })
     }
   }
+
   return rows
 }
 
 export function catalogRows(entries: PaletteEntry[], filter: string): PickerRow[] {
   const q = filter.trim()
+
   const hit = new Set(
     entries
       .values()
       .filter((e) => !e.default && (q === '' || matchesPalette(e, q)))
       .map(topOf),
   )
+
   return pickerRows(entries, new Set(), '').filter((r) => r.kind === 'top' && hit.has(r.name))
 }
 
@@ -189,10 +208,13 @@ function isMarketplace(top: string): boolean {
 
 export function stepRow(at: number, delta: number, count: number, rule: (i: number) => boolean, wrap = true): number {
   const last = count - 1
+
   if (last < 0) {
     return at
   }
+
   let next: number
+
   if (!Number.isFinite(delta)) {
     next = delta > 0 ? last : 0
   } else if (delta > 0) {
@@ -200,14 +222,18 @@ export function stepRow(at: number, delta: number, count: number, rule: (i: numb
   } else {
     next = at <= 0 ? (wrap ? last : 0) : Math.max(0, at + delta)
   }
+
   if (!rule(next)) {
     return next
   }
+
   const step = Math.sign(delta)
   const over = next + step
+
   if (over >= 0 && over <= last) {
     return over
   }
+
   return wrap && Math.abs(delta) === 1 ? (over < 0 ? last : 0) : next - step
 }
 
@@ -218,16 +244,19 @@ export function pageStep(name: string | undefined, size: number): number | undef
     pgup: -size,
     pgdn: size,
   }
+
   return name === undefined ? undefined : steps[name]
 }
 
 function ruled<X extends Extra>(rows: Row<X>[]): Row<X>[] {
   const at = rows.findIndex((r) => r.kind === 'top' && isMarketplace(r.name))
+
   return at > 0 && rows.slice(0, at).some((r) => r.kind === 'top') ? rows.toSpliced(at, 0, { kind: 'rule' }) : rows
 }
 
 export function firstPalette(rows: PickerRow[]): number {
   const index = rows.findIndex((r) => r.kind === 'palette')
+
   return index === -1 ? 0 : index
 }
 
@@ -361,13 +390,16 @@ export class PaletteList<X extends Extra = Extra> {
 
   clear(): void {
     const row = this.rows[this.cursor]
+
     if (row?.kind === 'palette' && !row.entry.default) {
       this.expanded.add(this.place.top(row.entry))
       const parent = shelfKey(row.entry, this.place)
+
       if (parent !== undefined) {
         this.expanded.add(parent)
       }
     }
+
     this.setFilter('')
   }
 
@@ -386,16 +418,20 @@ export class PaletteList<X extends Extra = Extra> {
 
   select(key: string): boolean {
     const at = this.rows.findIndex((r) => rowKey(r) === key)
+
     if (at === -1) {
       return false
     }
+
     this.cursor = at
     this.sync()
+
     return true
   }
 
   private members(top: string, catalog?: string): PaletteEntry[] {
     const filter = this.scope === 'palette' ? this.filter.trim() : ''
+
     return this.under(top, catalog).filter((e) => filter === '' || matchesPalette(e, filter))
   }
 
@@ -421,6 +457,7 @@ export class PaletteList<X extends Extra = Extra> {
 
   pick(): void {
     const row = this.rows[this.cursor]
+
     const names =
       row?.kind === 'palette'
         ? [row.entry.name]
@@ -431,10 +468,13 @@ export class PaletteList<X extends Extra = Extra> {
             : row?.kind === 'all'
               ? this.everyone(this.rows).map((e) => e.name)
               : []
+
     if (names.length === 0) {
       return
     }
+
     const add = names.some((n) => !this.picked.has(n))
+
     for (const n of names) {
       if (add) {
         this.picked.add(n)
@@ -452,6 +492,7 @@ export class PaletteList<X extends Extra = Extra> {
     if (this.scope === 'palette') {
       return this.named.filter((e) => this.picked.has(e.name)).length
     }
+
     return this.catalogs.filter((g) => this.members(g).every((e) => this.picked.has(e.name))).length
   }
 
@@ -461,16 +502,20 @@ export class PaletteList<X extends Extra = Extra> {
 
   matched(): number {
     const filter = this.filter.trim()
+
     if (this.scope === 'catalog') {
       return this.rows.filter((r) => r.kind === 'top').length
     }
+
     return filter ? this.named.filter((e) => matchesPalette(e, filter)).length : this.named.length
   }
 
   private sync(): void {
     const row = this.rows[this.cursor]
+
     const entry =
       row?.kind === 'palette' ? row.entry : row?.kind === 'top' && this.scope === 'catalog' ? row.lead : undefined
+
     if (entry && entry.name !== this.lastFocused) {
       this.lastFocused = entry.name
       this.onFocus?.(entry)
@@ -479,18 +524,22 @@ export class PaletteList<X extends Extra = Extra> {
 
   private rebuild(snap: 'first' | 'keep' | 'clamp' | 'stay'): void {
     const focused = this.rows[this.cursor]
+
     const body =
       this.scope === 'catalog'
         ? catalogRows(this.entries, this.filter)
         : pickerRows(this.entries, this.expanded, this.filter, this.layout, this.tops?.() ?? [], this.mode)
+
     const tree: Row<X>[] =
       this.layout === 'marketplaces' || body.length === 0
         ? body
         : ruled([{ kind: 'all', count: this.allCount(body) }, ...body])
+
     const extra = (rows: X[] | undefined) => (rows ?? []).map((x) => ({ kind: 'extra' as const, extra: x }))
     const pinned = extra(this.pinned?.())
     this.fixed = pinned.length
     this.rows = [...extra(this.heads?.()), ...tree, ...extra(this.extras?.()), ...pinned]
+
     const start =
       body.length > 0
         ? this.rows.indexOf(body[this.mode === 'inside' && !this.filter.trim() ? 0 : firstPalette(body)] as Row<X>)
@@ -498,6 +547,7 @@ export class PaletteList<X extends Extra = Extra> {
             0,
             this.rows.findIndex((r) => !passed(r) && !(r.kind === 'extra' && r.extra.idle)),
           )
+
     if (snap === 'first') {
       this.cursor = start
     } else if (snap === 'keep' || snap === 'stay') {
@@ -508,6 +558,7 @@ export class PaletteList<X extends Extra = Extra> {
     } else if (this.cursor >= this.rows.length) {
       this.cursor = Math.max(0, this.rows.length - 1)
     }
+
     this.settle()
     this.sync()
   }
@@ -516,6 +567,7 @@ export class PaletteList<X extends Extra = Extra> {
     if (!passed(this.rows[this.cursor])) {
       return
     }
+
     const after = this.rows.findIndex((r, i) => i > this.cursor && !passed(r))
     const before = this.rows.findLastIndex((r, i) => i < this.cursor && !passed(r))
     this.cursor = after !== -1 ? after : before !== -1 ? before : this.cursor
@@ -536,11 +588,14 @@ export class PaletteList<X extends Extra = Extra> {
 
   point(at: number): boolean {
     const row = this.rows[at]
+
     if (!row || passed(row)) {
       return false
     }
+
     this.cursor = at
     this.sync()
+
     return true
   }
 
@@ -550,6 +605,7 @@ export class PaletteList<X extends Extra = Extra> {
 
   outer(): boolean {
     const row = this.rows[this.cursor]
+
     return (
       this.mode === 'inside' &&
       (this.filter.trim() !== '' ||
@@ -562,6 +618,7 @@ export class PaletteList<X extends Extra = Extra> {
 
   flip(): void {
     const row = this.rows[this.cursor]
+
     if (row?.kind === 'top' || row?.kind === 'catalog') {
       this.fold(!row.expanded)
     }
@@ -569,6 +626,7 @@ export class PaletteList<X extends Extra = Extra> {
 
   foldable(): boolean {
     const row = this.rows[this.cursor]
+
     return (
       (row?.kind === 'catalog' || (row?.kind === 'top' && this.mode === 'tree')) &&
       this.scope === 'palette' &&
@@ -590,6 +648,7 @@ export class PaletteList<X extends Extra = Extra> {
     } else {
       this.expanded.add(key)
     }
+
     this.rebuild('clamp')
   }
 
@@ -611,7 +670,9 @@ export class PaletteList<X extends Extra = Extra> {
     if (this.filter || this.scope === 'catalog') {
       return
     }
+
     const row = this.rows[this.cursor]
+
     if (row?.kind === 'top') {
       if (open !== row.expanded) {
         this.toggle(row.name)
@@ -624,6 +685,7 @@ export class PaletteList<X extends Extra = Extra> {
       }
     } else if (row?.kind === 'palette' && !open && !row.entry.default) {
       const parent = shelfKey(row.entry, this.place)
+
       if (parent === undefined) {
         if (this.mode === 'tree') {
           const top = this.place.top(row.entry)
@@ -641,6 +703,7 @@ export class PaletteList<X extends Extra = Extra> {
 
   pins(): string[] {
     const scrolling = this.rows.length - this.fixed
+
     return this.rows.slice(scrolling).flatMap((row, i) => this.renderRow(row, scrolling + i))
   }
 
@@ -652,34 +715,44 @@ export class PaletteList<X extends Extra = Extra> {
     const at = Math.max(0, Math.min(this.cursor, scrolling - 1))
     this.top = Math.min(this.top, at)
     let used = 0
+
     for (let i = this.top; i <= at; i++) {
       used += height(i)
     }
+
     while (this.top < at && used > room) {
       used -= height(this.top)
       this.top += 1
     }
+
     let tail = 0
+
     for (let i = this.top; i < blocks.length; i++) {
       tail += height(i)
     }
+
     while (this.top > 0 && tail + height(this.top - 1) <= room) {
       this.top -= 1
       tail += height(this.top)
     }
+
     if (!this.placed) {
       this.shown = this.top
       this.placed = true
     }
+
     const from = this.glide ? Math.max(0, Math.min(this.shown, blocks.length - 1)) : this.top
     const lines: string[] = []
     let end = from
+
     while (end < blocks.length && (end === from || lines.length + height(end) <= room)) {
       lines.push(...(blocks[end] ?? []))
       end += 1
     }
+
     this.span = Math.max(1, end - from)
     lines.push(...(blocks[end] ?? []))
+
     return { lines: lines.slice(0, room), above: from, below: blocks.length - end }
   }
 
@@ -691,19 +764,24 @@ export class PaletteList<X extends Extra = Extra> {
     if (!this.moving()) {
       return false
     }
+
     this.shown = chase(this.shown, this.top, { span: this.span })
+
     return this.shown !== this.top
   }
 
   private renderRow(row: Row<X>, index: number): string[] {
     if (row.kind === 'rule') {
       const line = '── Marketplaces ──────────'
+
       return [`   ${this.p.dim(line)}`]
     }
+
     const text =
       row.kind === 'extra'
         ? row.extra.text(index === this.cursor && this.focus === 'lit', index)
         : this.rowText(row, index)
+
     return text.split('\n').map((l) => (l ? rowSpot(index, 'row', l, this.pane) : l))
   }
 
@@ -712,8 +790,10 @@ export class PaletteList<X extends Extra = Extra> {
     const entry = row.kind === 'palette' ? row.entry : row.kind === 'all' ? undefined : row.lead
     const lit = this.color && focused && this.focus === 'lit' && entry !== undefined
     const { dim, bold } = this.p
+
     const squares = (e: PaletteEntry) =>
       this.color ? `  ${ansiSquares(swatch(e), lit ? ansiFg(e.foreground) : FG_RESET)}` : ''
+
     const gutter = !focused
       ? '  '
       : lit
@@ -723,49 +803,64 @@ export class PaletteList<X extends Extra = Extra> {
             ? `${this.p.dim(MARKS.gutter)} `
             : '  '
           : `${MARKS.gutter} `
+
     const bar = (text: string) =>
       lit ? `${gutter}${ansiBar(entry.selection, entry.foreground)} ${text} ${INK_RESET}` : `${gutter} ${text}`
+
     const box = (on: boolean) => rowSpot(index, 'box', `${on ? MARKS.on : MARKS.off} `, this.pane)
     const arrow = (open: boolean) => rowSpot(index, 'fold', `${open ? MARKS.opened : MARKS.closed} `, this.pane)
+
     if (row.kind === 'all') {
       return bar(
         `${box(this.everyone(this.rows).every((e) => this.picked.has(e.name)))}Select all ${dim(`(${row.count})`)}`,
       )
     }
+
     if (row.kind === 'top' && this.scope === 'catalog') {
       const tail = `(${row.count})${row.native ? ` ${row.native}` : ''}`
+
       return bar(
         `${box(this.pickedIn(row.name) === row.count)}${bold(row.name.padEnd(this.catalogPad))}${row.lead ? squares(row.lead) : ''}${this.color ? '  ' : ' '}${dim(tail)}`,
       )
     }
+
     const at = this.rows[this.cursor]
+
     const heldBy = (inside: boolean, label: string) =>
       this.color && at?.kind === 'palette' && inside ? this.p.accent(bold(label)) : bold(label)
+
     if (row.kind === 'top') {
       const name = heldBy(at?.kind === 'palette' && this.place.top(at.entry) === row.name, row.name)
       const native = row.native ? ` ${dim(row.native)}` : ''
       const badge = this.badge?.(row.name) ?? ''
+
       if (this.about) {
         const card = this.about(row.name, this.under(row.name), this.filter.trim() ? row.count : undefined)
+
         return [
           ...(index > 0 ? [''] : []),
           bar(`${rowSpot(index, 'fold', `${card.added ? MARKS.on : MARKS.off} `, this.pane)}${name}${native}${badge}`),
           ...card.lines.map((line) => bar(`  ${line}`)),
         ].join('\n')
       }
+
       return bar(`${arrow(row.expanded)}${name} ${dim(`(${this.pickedIn(row.name)}/${row.count})`)}${native}${badge}`)
     }
+
     if (row.kind === 'catalog') {
       const inside = at?.kind === 'palette' && shelfKey(at.entry, this.place) === catalogKey(row.top, row.name)
       const counts = dim(`(${this.pickedIn(row.top, row.name)}/${row.count})`)
       const native = row.native ? ` ${dim(row.native)}` : ''
+
       return bar(`${this.lead()}${arrow(row.expanded)}${heldBy(inside, row.name)} ${counts}${native}`)
     }
+
     const e = row.entry
     const indent = this.indent(e)
     const label = shownName(e)
     const padded = this.color ? label.padEnd(this.namePad - indent.length) : label
     const name = focused ? bold(padded) : padded
+
     return bar(`${indent}${box(this.picked.has(e.name))}${name}${squares(e)}${this.note?.(e) ?? ''}`)
   }
 }
@@ -773,6 +868,7 @@ export class PaletteList<X extends Extra = Extra> {
 export function paletteExample<X extends Extra>(list: PaletteList<X>): string {
   const pal = list.named[Math.floor(Math.random() * list.named.length)]
   const grp = list.catalogs[Math.floor(Math.random() * list.catalogs.length)]
+
   return pal && grp ? `${pal.name} | ${grp}` : ''
 }
 
@@ -814,6 +910,7 @@ export class SearchHint {
     if (this.step === 0) {
       return this.example
     }
+
     if (!this.timer) {
       this.timer = setTimeout(() => {
         this.timer = undefined
@@ -822,12 +919,16 @@ export class SearchHint {
       }, 60)
       this.timer.unref?.()
     }
+
     const keep = Math.floor((this.example.length * (8 - this.step)) / 8)
+
     if (this.fx === 'typewriter') {
       return `${this.example.slice(0, keep)}▏`
     }
+
     const pool = this.fx === 'decode' ? 'abcdefghijklmnopqrstuvwxyz' : '▓▒░#*+=<>?/-_'
     const still = this.fx === 'decode' ? (ch: string) => !/[a-z0-9]/i.test(ch) : (ch: string) => ch === ' '
+
     return [...this.example]
       .map((ch, i) =>
         i + ((i * 7 + this.seed) % 3) < keep || still(ch) ? ch : (pool[Math.floor(Math.random() * pool.length)] ?? ch),
@@ -900,23 +1001,31 @@ export class PalettePrompt {
         (text) => terminal.write(text),
         () => terminal.cols,
       )
+
       const view = () => {
         this.list.maxItems = Math.max(MIN_ITEMS, Math.min(this.most, terminal.rows - FRAME_ROWS))
+
         return this.draw()
       }
+
       this.redraw = () => inline.draw(view())
       terminal.onResize(() => inline.redraw(view()))
       this.redraw()
+
       try {
         const state = await terminal.loop(
           (event) => {
             this.take(event)
+
             return this.state === 'submit' || this.state === 'cancel' ? this.state : undefined
           },
           () => this.redraw(),
         )
+
         this.redraw = () => {}
+
         inline.end(this.draw())
+
         return state
       } finally {
         this.hint.stop()
@@ -928,16 +1037,22 @@ export class PalettePrompt {
     if (event.kind === 'paste') {
       this.field.paste(event.text)
       this.list.setFilter(this.field.value)
+
       return
     }
+
     if (event.kind !== 'key') {
       return
     }
+
     const key = event.key
+
     if (this.state === 'error') {
       this.state = 'active'
     }
+
     const page = pageStep(key, this.list.maxItems)
+
     if (key === 'esc' || key === 'ctrl-c') {
       this.state = 'cancel'
     } else if (key === 'enter') {
@@ -963,31 +1078,39 @@ export class PalettePrompt {
   private draw(): string[] {
     const { dim, accent: bar, warn } = painter(this.color)
     const title = this.scope === 'catalog' ? 'Catalogs' : 'Palettes'
+
     if (this.state === 'submit') {
       return [`${dim('◇')} ${title} ${dim(`· ${this.list.pickedCount()} picked`)}`]
     }
+
     if (this.state === 'cancel') {
       return [`${dim(`◇ ${title} · cancelled`)}`]
     }
+
     const typed = this.field.value
     const head = `${bar('◆')} ${title} ${dim(`(${this.list.matched()}/${this.list.total()} · ${this.list.pickedCount()} picked)`)}`
     const example = this.hint.text()
     const search = `${bar('│')}    ${typed ? `${typed}_` : dim(`Search…${example ? ` e.g. ${example}` : ''}`)}`
     const { lines, below } = this.list.window()
+
     const body =
       lines.length > 0
         ? lines.map((line) => `${bar('│')} ${line}`)
         : [`${bar('│')} ${dim(`No ${this.scope === 'catalog' ? 'catalogs' : 'palettes'} match '${typed}'`)}`]
+
     while (body.length < this.list.maxItems) {
       body.push(bar('│'))
     }
+
     const more = below > 0 ? `${bar('│')} ${dim(`↓ ${below} more`)}` : bar('│')
     const fold = this.scope === 'catalog' ? '' : ' · ←→ fold'
     const go = this.go ?? (this.scope === 'catalog' ? 'continue' : 'install')
+
     const hint =
       this.state === 'error'
         ? `${bar('└')} ${warn(this.error)}`
         : `${bar('└')} ${dim(`↑↓ move${fold} · space pick · type to filter · enter ${go} · esc cancel`)}`
+
     return [head, search, ...body, more, hint]
   }
 }

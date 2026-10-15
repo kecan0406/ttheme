@@ -108,6 +108,7 @@ export function palettesZsh(
     'typeset -gA TTHEME_MARKETPLACE=(',
     ...palettes.flatMap((p) => {
       const marketplace = marketplaceOf(p.name)
+
       return marketplace ? [entry(p, marketplace)] : []
     }),
     ')',
@@ -162,9 +163,12 @@ export function palettesZsh(
 export function aliasesZsh(aliases: Readonly<Record<string, readonly string[]>>): string {
   const rows = Object.entries(aliases).flatMap(([name, all]) => {
     const names = all.filter((each) => !UNQUOTABLE.test(each) && !each.includes('|'))
+
     return names.length > 0 && !UNQUOTABLE.test(name) ? [[name, names.join('|')] as const] : []
   })
+
   const pad = Math.max(0, ...rows.map(([name]) => name.length))
+
   return [
     "# the character's other names in every language, |-separated, from the aninames index in the cache: preview reads this when it opens and searches them too",
     'typeset -gA TTHEME_ALIASES=(',

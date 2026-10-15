@@ -4,9 +4,11 @@ import type { Emitter, Output } from './types.ts'
 
 export function manifest(themes: Theme[]): Manifest {
   const [first] = themes
+
   if (!first) {
     throw new Error('manifest needs at least one theme')
   }
+
   return { ...emptyManifest(), palettes: themes.map(paletteEntry) }
 }
 

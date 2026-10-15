@@ -34,6 +34,7 @@ export function marketplaceMeta(marketplace: Marketplace | null, palettes: numbe
       title: `official marketplace — ${palettes} character terminal themes · ttheme`,
       description: `${palettes} terminal color schemes that come with ttheme: one per character in ${catalogs} series, each measured from the character's official art.`,
     }
+
   return {
     title: `${marketplace.id} — ${palettes} terminal themes · ttheme`,
     description: `${marketplace.about} — ${palettes} color schemes in ${catalogs} catalogs. Add it with ttheme marketplace add ${marketplace.add}.`,
@@ -55,14 +56,18 @@ function some(names: readonly string[], most: number): string {
 
 export function sharedMeta(palettes: readonly Theme[]): Meta {
   const [first] = palettes
+
   if (first && palettes.length === 1) {
     const { name, background, foreground } = first
+
     return {
       title: `${name} — shared terminal theme · ttheme`,
       description: `${name} — a color scheme someone shared: ${background} background, ${foreground} text, 16 ANSI colors. Add it with ttheme add and this link.`,
     }
   }
+
   const names = palettes.map((theme) => theme.name)
+
   return {
     title: `${some(names, 3)} — ${names.length} shared terminal themes · ttheme`,
     description: `${names.length} color schemes someone shared: ${some(names, 8)}. Add them all with ttheme add and this link.`,

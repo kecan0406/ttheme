@@ -10,6 +10,7 @@ import type { At, Now, Wiring } from './types.ts'
 
 export function kittyBlock(tthemeDir: string, home: string): string {
   const own = join(tthemeDir, 'kitty.conf')
+
   return `# ${MANAGED}\ninclude ${fromHome(own, home, '~') ?? own}`
 }
 
@@ -72,6 +73,7 @@ export const kitty: Wiring = {
   },
   notes(now) {
     const user = readText(kittyConfig(now.configHome))
+
     return userSets(user, 'window_logo_scale') || userSets(user, 'window_logo_alpha')
       ? ['kitty.conf sets its own window_logo_scale or window_logo_alpha — pictures are drawn with them']
       : []

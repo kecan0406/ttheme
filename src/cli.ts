@@ -48,17 +48,23 @@ const RUNS: Record<string, Verb['run']> = {
   check: async (args, { fix }) => runCheck(await paletteOf(args, 'check'), fix),
   share: async ([name], { tone }) => {
     const asked = tone as Tone | undefined
+
     if (name !== undefined) {
       return runShare([name], asked)
     }
+
     if (process.stdin.isTTY && process.stdout.isTTY) {
       return runShareAsked(asked)
     }
+
     const worn = process.env.TTHEME_WORN
+
     if (!worn) {
       throw new UsageError('name a palette', verbNamed('share'))
     }
+
     console.error(`Sharing ${worn}, the palette this tab wears`)
+
     return runShare([worn], asked)
   },
   init: (_, { yes }) => runInit({ yes }),
@@ -97,26 +103,32 @@ export class UsageError extends Error {
 
 function verbNamed(name: string): Verb {
   const verb = VERBS.find((v) => v.name === name)
+
   if (!verb) {
     throw new UsageError(name.startsWith('-') ? `unknown option '${name}'` : `unknown command '${name}'`)
   }
+
   return verb
 }
 
 async function paletteOf([name]: string[], verb: string): Promise<string> {
   const chosen = name ?? (await thisTab())
+
   if (chosen === undefined) {
     const worn = process.env.TTHEME_WORN
     throw new UsageError(`name a palette${worn ? ` — this tab wears ${worn}` : ''}`, verbNamed(verb))
   }
+
   return chosen
 }
 
 function parseFlags(verb: Verb, args: string[]) {
   const options: ParseArgsOptionsConfig = { help: { type: 'boolean', short: 'h' } }
+
   for (const [name, { type, short, multiple }] of Object.entries(verb.flags ?? {})) {
     options[name] = { type, multiple: multiple === true, ...(short ? { short } : {}) }
   }
+
   try {
     return parseArgs({ args, options, allowPositionals: true })
   } catch (error) {
@@ -127,26 +139,34 @@ function parseFlags(verb: Verb, args: string[]) {
 
 export function parse(argv: readonly string[]): Invocation {
   const [first, ...rest] = argv
+
   if (first === undefined) {
     return { kind: 'brief' }
   }
+
   if (first === '-h' || first === '--help') {
     return { kind: 'help' }
   }
+
   if (first === '-v' || first === '--version') {
     return { kind: 'version' }
   }
+
   if (first === 'help') {
     if (rest[0] === undefined || rest[0] === 'all') {
       return { kind: 'help', all: rest[0] === 'all' }
     }
+
     return { kind: 'help', verb: verbNamed(rest[0]) }
   }
+
   const verb = verbNamed(first)
   const parsed = parseFlags(verb, rest)
+
   if (parsed.values.help) {
     return { kind: 'help', verb }
   }
+
   for (const [name, { choices }] of Object.entries(verb.flags ?? {})) {
     for (const value of [parsed.values[name] ?? []].flat()) {
       if (choices && !choices.includes(String(value))) {
@@ -154,16 +174,21 @@ export function parse(argv: readonly string[]): Invocation {
       }
     }
   }
+
   const args = parsed.positionals
   const least = verb.args.filter((a) => a.startsWith('<')).length
   const most = verb.args.some((a) => a.includes('...')) ? Number.POSITIVE_INFINITY : verb.args.length
+
   if (args.length < least) {
     throw new UsageError(`missing ${verb.args[args.length]}`, verb)
   }
+
   if (args.length > most) {
     throw new UsageError(`too many arguments: ${args.slice(most).join(' ')}`, verb)
   }
+
   const { help: _, ...given } = parsed.values
+
   return { kind: 'run', verb, args, flags: given as Flags }
 }
 
@@ -175,35 +200,49 @@ export function isCrash(error: unknown): boolean {
 
 export async function runCli(argv: readonly string[]): Promise<number> {
   let running: Verb | undefined
+
   try {
     const call = parse(argv)
+
     if (call.kind === 'version') {
       console.log(pkg.version)
+
       return 0
     }
+
     if (call.kind === 'brief') {
       console.error(briefText())
+
       return 1
     }
+
     if (call.kind === 'help') {
       console.log(call.verb ? commandHelp(call.verb) : helpText(call.all === true))
+
       return 0
     }
+
     running = call.verb
+
     if (!call.verb.run) {
       throw new Error('runs in the shell layer — open a new tab once `ttheme init` has wired it')
     }
+
     if (REFRESHES.has(call.verb.name)) {
       await autoRefresh()
     }
+
     const code = await call.verb.run(call.args, call.flags)
+
     if (!call.verb.hidden && call.verb.name !== 'uninstall') {
       startNamesUpdate()
+
       if (call.verb.name !== 'update' && call.verb.name !== 'init') {
         startReleaseCheck()
         tellRelease()
       }
     }
+
     return typeof code === 'number' ? code : 0
   } catch (error) {
     if (error instanceof UsageError) {
@@ -212,18 +251,23 @@ export async function runCli(argv: readonly string[]): Promise<number> {
           ? `ttheme ${error.verb.name}: ${error.message}\n\n${commandHelp(error.verb)}`
           : `ttheme: ${error.message} — see \`ttheme help\``,
       )
+
       return 1
     }
+
     if (error instanceof Cancelled) {
       return 1
     }
+
     if (error instanceof Signalled) {
       return error.exit
     }
+
     const detail = process.env.TTHEME_DEBUG && error instanceof Error ? error.stack : undefined
     console.error(
       `\nttheme${running ? ` ${running.name}` : ''}: ${detail ?? (error instanceof Error ? error.message : String(error))}${isCrash(error) ? '\nReport a bug with the output of `ttheme info`' : ''}`,
     )
+
     return 1
   }
 }

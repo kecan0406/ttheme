@@ -51,6 +51,7 @@ export function paletteEntry(t: Theme): PaletteEntry {
     },
     t.signatureSlots,
   )
+
   return {
     name: t.name,
     ...(t.base ? { base: t.base } : {}),
@@ -124,17 +125,22 @@ export function swatch(entry: Swatched): string[] {
           : slot === 'selection'
             ? entry.selection
             : undefined
+
   const role = (slot: string) => (slot.startsWith('ansi') ? `ansi${Number(slot.slice(4)) % 8}` : slot)
   const roles = new Set<string>()
   const colors: string[] = []
+
   for (const slot of ['foreground', ...entry.signatureSlots, ...SWATCH_FILL]) {
     const hex = color(slot)
+
     if (colors.length === SWATCH_SIZE || !hex || roles.has(role(slot)) || colors.includes(hex)) {
       continue
     }
+
     roles.add(role(slot))
     colors.push(hex)
   }
+
   return colors
 }
 

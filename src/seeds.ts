@@ -55,6 +55,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 export function nudge(seeds: Seeds, field: SeedField, steps: number): Seeds {
   const raw = seeds[field.key] + field.step * steps
   const value = field.wraps ? ((raw % field.max) + field.max) % field.max : clamp(raw, field.min, field.max)
+
   return { ...seeds, [field.key]: Math.round(value * 10_000) / 10_000 }
 }
 
@@ -65,11 +66,13 @@ export function grow(s: Seeds): Colors {
   ansi[8] = at(s.background + 0.25, s.tint, s.hue)
   ansi[7] = at(s.foreground - 0.06, s.tint / 2, s.hue)
   ansi[15] = at(s.foreground + 0.06, s.tint / 2, s.hue)
+
   for (const role of ROLES) {
     const hue = (ROLE_HUES[role] as { center: number }).center
     ansi[role] = at(s.lightness, s.chroma, hue)
     ansi[role + 8] = at(s.lightness + s.brights, s.chroma, hue)
   }
+
   return {
     background: at(s.background, s.tint, s.hue),
     foreground: at(s.foreground, s.tint / 2, s.hue),

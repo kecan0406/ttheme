@@ -38,6 +38,7 @@ function outside(href: string): boolean {
 
 function OutLabel({ label }: { label: string }) {
   const at = label.lastIndexOf(' ') + 1
+
   return (
     <>
       <span safe>{label.slice(0, at)}</span>

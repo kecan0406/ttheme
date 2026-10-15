@@ -28,17 +28,20 @@ const SHOWN: Record<View, string> = {
 
 function sceneRuns(name: string): Run[][] {
   const scene = SCENES.find((candidate) => candidate.name === name)
+
   return (scene?.lines ?? []).map((line) => sceneParts(line, COLS)).filter((parts) => parts !== undefined)
 }
 
 function paneRuns(id: string): Run[][] {
   const tile = paneTiles(COLS, ROWS).find((candidate) => candidate.id === id)
+
   return tile ? paneLines(tile).map((line) => line.map((part): Run => [part.text, part.role])) : []
 }
 
 function Part({ text, role }: { text: string; role: string }) {
   const color = /^(B?)(\d+)$/.exec(role)
   const ground = /^K(\d+)$/.exec(role)
+
   if (color) {
     return (
       <span class={color[1] ? 'font-bold' : undefined} style={`color:var(--a${color[2]})`} safe>
@@ -46,6 +49,7 @@ function Part({ text, role }: { text: string; role: string }) {
       </span>
     )
   }
+
   if (ground) {
     return (
       <span style={`background:var(--a${ground[1]});color:var(--a0)`} safe>
@@ -53,12 +57,14 @@ function Part({ text, role }: { text: string; role: string }) {
       </span>
     )
   }
+
   const named: Record<string, string> = {
     d: 'text-(--fg)/60',
     b: 'font-bold',
     s: 'bg-(--se)',
     c: 'bg-(--cu) text-(--bg)',
   }
+
   return (
     <span class={named[role]} safe>
       {text}

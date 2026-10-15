@@ -31,12 +31,14 @@ function post(fields: Partial<Post>): Post {
 
 function image(width: number, height: number, paint: (x: number, y: number) => number) {
   const data = new Uint8Array(width * height * 4)
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const v = paint(x, y)
       data.set([v, v, v, 255], (y * width + x) * 4)
     }
   }
+
   return { width, height, data }
 }
 
@@ -82,15 +84,20 @@ test('a transparent post stands for an opaque one only where its solid pixels ar
     Math.round(128 + 100 * Math.cos(y / 11)),
     Math.round(128 + 100 * Math.sin((x + y) / 17)),
   ]
+
   const whole = (draw: (x: number, y: number) => number[]) => {
     const data = new Uint8Array(160 * 200 * 4)
+
     for (let i = 0; i < 160 * 200; i++) {
       data.set([...draw(i % 160, Math.floor(i / 160)), 255], i * 4)
     }
+
     return { width: 160, height: 200, data }
   }
+
   const figure = (redrawn: boolean, solid = false) => {
     const data = new Uint8Array(80 * 120 * 4)
+
     for (let i = 0; i < 80 * 120; i++) {
       const x = i % 80
       const y = Math.floor(i / 80)
@@ -98,8 +105,10 @@ test('a transparent post stands for an opaque one only where its solid pixels ar
       const inside = solid || ((x - 40) / 36) ** 2 + ((y - 60) / 56) ** 2 <= 1
       data.set([redrawn && y > 20 && y < 50 && x > 20 && x < 60 ? 255 - r : r, g, b, inside ? 255 : 0], i * 4)
     }
+
     return { width: 80, height: 120, data }
   }
+
   const picture = whole(paint)
   assert.equal(sameArtwork(figure(false), picture), true, 'cut out at the same scale')
   assert.equal(

@@ -32,14 +32,17 @@ export function terminalLive(
   if (!tty || colorless(env) || env.TMUX || detectTerminal(env) !== 'terminal-app') {
     return undefined
   }
+
   const [name = '', version = '-'] = (env.TTHEME_TERMINAL_SHOWN ?? '').split(' ')
   const at = env.TTHEME_TTY
   const picture = name ? readBackdrop(backgroundsDir(configHome), name, home) : undefined
   const files = heldIn(terminalPictures(configHome)).get(stem(name)) ?? []
   const file = files.find((one) => one === `${owned(name)}.${version}.png`) ?? files[0]
+
   if (!at || !picture || version === '-' || !file || !existsSync(picture.image)) {
     return undefined
   }
+
   const own = join(terminalPictures(configHome), file)
   const args = ['-l', 'JavaScript', terminalScript(configHome), 'tab', at, terminalProfile(name)]
   const base = readInstalled(configHome).terminalBase ?? 'Basic'
@@ -52,19 +55,23 @@ export function terminalLive(
   let busy = false
   let over = false
   let next: (() => void) | undefined
+
   const tell = (osc: string) => {
     busy = true
     spawn('osascript', [...args, base], { stdio: 'ignore' }).on('close', () => {
       busy = false
+
       if (over) {
         return
       }
+
       write(osc)
       const run = next
       next = undefined
       run?.()
     })
   }
+
   const show = (background: string, osc: string) => {
     source ??= decodePng(new Uint8Array(readFileSync(picture.image)))
     const out = join(terminalPictures(configHome), `${owned(name)}.h${process.pid}-${++made}.png`)
@@ -76,12 +83,14 @@ export function terminalLive(
     held = out
     tell(osc)
   }
+
   const back = () => {
     if (held !== own) {
       rewrite(held, own, kept)
       held = own
     }
   }
+
   const queue = (run: () => void) => {
     clearTimeout(settle)
     settle = setTimeout(() => {
@@ -92,10 +101,12 @@ export function terminalLive(
       }
     }, SETTLE_MS)
   }
+
   const stop = () => {
     clearTimeout(settle)
     next = undefined
   }
+
   return {
     slots: [],
     paint(entry) {
@@ -107,12 +118,14 @@ export function terminalLive(
             }
           : () => show(entry.background, paletteOsc(entry)),
       )
+
       return ''
     },
     wear(entry) {
       const told = spawnSync('osascript', [...args.slice(0, -1), terminalProfile(entry.name), base], {
         encoding: 'utf8',
       })
+
       return told.stdout?.trim() === 'worn' ? '' : paletteOsc(entry)
     },
     saved: async () => new Map(),
@@ -121,6 +134,7 @@ export function terminalLive(
       over = true
       back()
       spawnSync('osascript', [...args, base], { stdio: 'ignore' })
+
       return ''
     },
     stop,

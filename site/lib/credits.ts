@@ -7,13 +7,17 @@ const TIMEOUT = 8000
 
 async function creditOf(site: string, id: number): Promise<PictureCredit | null> {
   const found = SITES.find((s) => s.key === site)
+
   if (!found) {
     return { artists: [], page: null }
   }
+
   const credit = await postCredit(found, id, AbortSignal.timeout(TIMEOUT))
+
   if (!credit) {
     return { artists: [], page: null }
   }
+
   return {
     artists: credit.artist.map((name) => ({
       name,
@@ -29,6 +33,7 @@ export async function creditsOf(shared: Shared): Promise<{ pictures: Picture[]; 
   const credits = await Promise.all(
     (shared.entry.pictures ?? []).map((picture) => creditOf(picture.site, picture.id).catch(() => null)),
   )
+
   return {
     pictures: shared.pictures.map((picture, at) => ({ ...picture, credit: credits[at] ?? null })),
     complete: credits.every((credit) => credit !== null),

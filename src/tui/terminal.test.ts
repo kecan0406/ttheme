@@ -5,23 +5,28 @@ import { Terminal } from './terminal.ts'
 
 function streams() {
   const order: string[] = []
+
   const input = Object.assign(new PassThrough(), {
     isTTY: true,
     setRawMode: (on: boolean) => {
       order.push(`raw ${on}`)
+
       return input
     },
   })
+
   const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80, rows: 24 })
   let written = ''
   output.on('data', (chunk) => {
     written += String(chunk)
+
     if (String(chunk).includes('\x1b[?u')) {
       order.push('query')
     }
   })
   const count = (text: string) => written.split(text).length - 1
   const settle = () => new Promise((resolve) => setImmediate(resolve))
+
   return { input, output, count, settle, order }
 }
 

@@ -22,6 +22,7 @@ test('a marketplace is added by its repository, a path or official', () => {
   assert.equal(parseSource('/srv/marketplace'), '/srv/marketplace')
   assert.equal(parseSource('~/marketplace'), join(homedir(), 'marketplace'))
   assert.equal(parseSource('official'), OFFICIAL)
+
   for (const bad of ['alice', 'a/b/c', '-alice/x', 'al ice/x', 'alice/../x']) {
     assert.throws(() => parseSource(bad), /is not a marketplace/, bad)
   }
@@ -30,9 +31,11 @@ test('a marketplace is added by its repository, a path or official', () => {
 test('a repository takes a tag, branch or commit after #, which the fetch follows and the cache ignores', () => {
   assert.equal(parseSource('Alice/anime#v1.2'), 'alice/anime#v1.2')
   assert.equal(parseSource('https://github.com/alice/anime.git#release/2'), 'alice/anime#release/2')
+
   for (const bad of ['alice/anime#', 'alice/anime#a..b', 'alice/anime#-x', 'alice/anime#x/', 'alice/anime#a#b']) {
     assert.throws(() => parseSource(bad), /is not a marketplace/, bad)
   }
+
   assert.equal(repoOf('alice/anime#v1'), 'alice/anime')
   assert.equal(refOf('alice/anime#v1'), 'v1')
   assert.equal(refOf('alice/anime'), undefined)

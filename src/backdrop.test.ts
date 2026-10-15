@@ -376,8 +376,10 @@ test('removing the last picture leaves the palette bare', () => {
 test('frameAt places a picture exactly as the shell layer does', () => {
   const box = (a: [number, number, number, number, number, number, boolean, number?]) => {
     const { w, h, x, y } = frameAt(...a)
+
     return `${w} ${h} ${x} ${y}`
   }
+
   assert.equal(box([1000, 1500, 1000, 1500, 60, 3, false]), '600 900 400 0')
   assert.equal(box([1000, 1500, 2560, 1550, 130, 3, false, 42]), '1343 2015 1217 -71')
   assert.equal(box([1600, 900, 2560, 1550, 150, 9, false, 30]), '3840 2160 -640 0')
@@ -386,6 +388,7 @@ test('frameAt places a picture exactly as the shell layer does', () => {
   const from = layer.indexOf('__tt_bg_frame() {')
   const frame = layer.slice(from, layer.indexOf('\n}\n', from) + 2)
   const cases: [number, number, number, number, number, number, boolean, number][] = []
+
   for (const [iw, ih] of [
     [1000, 1500],
     [1600, 900],
@@ -407,6 +410,7 @@ test('frameAt places a picture exactly as the shell layer does', () => {
       }
     }
   }
+
   const shell = spawnSync(
     'zsh',
     ['-f', '-c', `${frame}\nwhile read -r a; do __tt_bg_frame \${=a}; print -r -- $REPLY; done`],
@@ -415,6 +419,7 @@ test('frameAt places a picture exactly as the shell layer does', () => {
       encoding: 'utf8',
     },
   )
+
   assert.deepEqual(shell.stdout.trimEnd().split('\n'), cases.map(box))
 })
 
@@ -426,6 +431,7 @@ test('a shared framing written for a picture reads back the same, and the defaul
   assert.ok(picture)
   assert.equal(writeTune(dir, picture, {}, true, configHome), undefined)
   assert.deepEqual(tuneOf(dir, picture), {})
+
   for (const tune of [
     { size: 60, position: 'center' },
     { size: 130 },
@@ -458,11 +464,13 @@ test("a marketplace's palette keeps its pictures in files named with -- for the 
 
 function figure(): Rgba {
   const data = new Uint8Array(16 * 16 * 4)
+
   for (let y = 2; y < 14; y++) {
     for (let x = 4; x < 12; x++) {
       data.set([40 + y * 12, 40 + y * 12, 40 + y * 12, 255], (y * 16 + x) * 4)
     }
   }
+
   return { width: 16, height: 16, data }
 }
 
@@ -477,6 +485,7 @@ function installFigure(configHome: string, id: number): Picture {
     { width: 40, height: 20 },
     0,
   )
+
   return rackOf(configHome, 'kagami')[0] as Picture
 }
 
@@ -502,6 +511,7 @@ test('Warp gets a picture laid on the background where preview frames it, at its
     height: 2,
     data: Uint8Array.from([255, 0, 0, 255, 255, 0, 0, 0, 255, 0, 0, 255, 255, 0, 0, 255]),
   }
+
   const laid = flatten(image, '#000000', 0.5, { width: 3, height: 2, at: { x: 2, y: -1, w: 2, h: 2 } })
   assert.deepEqual([...laid.data], [0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
   assert.deepEqual(canvasOf(image, '2912x2040', '4x4+10-20'), {
@@ -522,6 +532,7 @@ test('a dim picture is lifted until its brightest part reaches the tone, at most
     height: 10,
     data: new Uint8Array(400).map((_, i) => (i % 4 === 3 ? 255 : level)),
   })
+
   const box = { x: 0, y: 0, w: 10, h: 10 }
   assert.equal(liftOf(flat(60), box), 2)
   assert.equal(liftOf(flat(170), box), 1.5)
@@ -540,12 +551,14 @@ test('a palette that changes its tone paints its pictures again, under new names
   const after = rackOf(configHome, 'kagami')[0] as Picture
   assert.notEqual(after.stem, before.stem)
   assert.deepEqual([after.tone, after.opacity], ['#5fa8d3', before.opacity])
+
   for (const file of [`${after.stem}.png`, after.fill, `${after.stem}@60-center.png`]) {
     assert.deepEqual(
       [...decodePng(new Uint8Array(readFileSync(join(dir, file)))).data.subarray(0, 3)],
       [0x5f, 0xa8, 0xd3],
     )
   }
+
   assert.deepEqual(
     readdirSync(dir).filter((file) => file.startsWith(before.stem)),
     [],
@@ -585,11 +598,13 @@ test('a picture drawn before its tone was kept is drawn again from its original,
 
 function colorful(): Rgba {
   const data = new Uint8Array(16 * 16 * 4)
+
   for (let y = 2; y < 14; y++) {
     for (let x = 4; x < 12; x++) {
       data.set(y === 2 ? [255, 255, 255, 255] : [200, 60, 40, 255], (y * 16 + x) * 4)
     }
   }
+
   return { width: 16, height: 16, data }
 }
 
@@ -605,6 +620,7 @@ function installColorful(configHome: string, id: number): Picture {
     0,
     'original',
   )
+
   return rackOf(configHome, 'kagami')[0] as Picture
 }
 
@@ -615,9 +631,11 @@ test('the peak of a picture is the color of its brightest 1% of visible pixels, 
   const dark = { ...image, data: image.data.map((v, i) => (i % 4 === 3 ? v : Math.min(v, 90))) }
   assert.equal(peakOf(dark, box), '#5a5a5a')
   const clear = { ...image, data: image.data.slice() }
+
   for (let x = 4; x < 12; x++) {
     clear.data[(2 * 16 + x) * 4 + 3] = 0
   }
+
   assert.equal(peakOf(clear, { x: 0, y: 0, w: 16, h: 16 }), '#c83c28')
 })
 
@@ -626,6 +644,7 @@ test('original colors are as faint as their brightest pixel needs, and the text 
   const dark = originalOpacity(KAGAMI, '#5a5a5a')
   assert.ok(white < toneFor(KAGAMI, 'cursor').opacity, 'white is the worst pixel a picture can hold')
   assert.ok(dark > white, 'a dark picture may be drawn stronger')
+
   for (const [peak, opacity] of [
     ['#ffffff', white],
     ['#5a5a5a', dark],
@@ -665,11 +684,13 @@ test('a tone picture has no colors line, and a tuned size of an original-color p
   const own = installColorful(configHome, 22)
   writeTune(dir, own, { size: 60, position: 'center' }, true, configHome)
   const tuned = decodePng(new Uint8Array(readFileSync(join(dir, `${own.stem}@60-center.png`))))
+
   const pixels = [
     ...new Set(
       Array.from({ length: tuned.width * tuned.height }, (_, i) => tuned.data.subarray(i * 4, i * 4 + 4).join(',')),
     ),
   ]
+
   assert.ok(pixels.includes('200,60,40,255'), 'the placed picture keeps its red')
   assert.ok(pixels.includes('0,0,0,0'), 'the rest of the canvas is clear')
 })
@@ -716,6 +737,7 @@ test('a coloring drawn once is kept, so the other one can be got ready and going
   const original = join(dir, before.original as string)
   assert.equal(prepareOne(configHome, 'kagami', before.key, PAINT, 0, 'original'), true)
   chmodSync(original, 0o000)
+
   try {
     const own = await redrawOne(configHome, 'kagami', before.key, PAINT, 0, true, configHome, 'original')
     assert.ok(own)
@@ -730,6 +752,7 @@ test('a coloring drawn once is kept, so the other one can be got ready and going
   } finally {
     chmodSync(original, 0o644)
   }
+
   const own = await redrawOne(configHome, 'kagami', before.key, PAINT, 0, true, configHome, 'original')
   assert.ok(own)
   applyRedraw(configHome, [{ name: 'kagami', picture: own }])
@@ -749,11 +772,13 @@ test('trying a picture on in its own colors lays it over the background at the d
   const stronger = tryOn(held, KAGAMI, PAINT.hue, 40, 20, 0, { opacity: 0.5 }, 'original')
   assert.equal(stronger.opacity, own.opacity, 'the default stays the default while a framing overrides it')
   const [r, g, b] = [0x19, 0x16, 0x1e]
+
   const wanted = [
     Math.round((r as number) + (200 - (r as number)) * 0.5),
     Math.round((g as number) + (60 - (g as number)) * 0.5),
     Math.round((b as number) + (40 - (b as number)) * 0.5),
   ]
+
   const pixels = Array.from({ length: 40 * 20 }, (_, i) => stronger.image.data.subarray(i * 4, i * 4 + 3).join())
   assert.ok(pixels.includes(wanted.join()), `some pixel is red at half strength, ${wanted}`)
 })
@@ -774,9 +799,11 @@ test('blurring a picture in its own colors softens its edge without dimming the 
   )
   const picture = rackOf(configHome, 'kagami')[0] as Picture
   const fill = decodePng(new Uint8Array(readFileSync(join(dir, picture.fill))))
+
   const soft = Array.from({ length: fill.width * fill.height }, (_, i) => fill.data.subarray(i * 4, i * 4 + 4)).filter(
     (px) => (px[3] as number) > 0 && (px[3] as number) < 255,
   )
+
   assert.ok(soft.length > 0, 'the edge has partial alpha')
   assert.ok(
     soft.every((px) => (px[0] as number) >= 195),

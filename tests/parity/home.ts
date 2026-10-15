@@ -75,19 +75,23 @@ const SHIMS: Record<string, string> = {
 export function shims(work: string): string {
   const bin = join(work, 'bin')
   mkdirSync(bin, { recursive: true })
+
   for (const [name, body] of Object.entries(SHIMS)) {
     const file = join(bin, name)
     writeFileSync(file, `#!/bin/sh\n${body}\n`)
     chmodSync(file, 0o755)
   }
+
   return bin
 }
 
 function need(command: string): string {
   const found = Bun.which(command)
+
   if (!found) {
     throw new Error(`parity needs ${command} on PATH`)
   }
+
   return found
 }
 
@@ -95,6 +99,7 @@ function nodeDir(): string {
   const real = Bun.spawnSync([need('node'), '-p', 'process.execPath'])
     .stdout.toString()
     .trim()
+
   return dirname(real || need('node'))
 }
 
@@ -102,6 +107,7 @@ export function placeFor(work: string, term: Term, bin: string, slot: string): P
   const root = join(work, `${term}-${slot}`)
   const home = join(root, 'home')
   const configHome = join(home, '.config')
+
   const place: Place = {
     root,
     home,
@@ -112,6 +118,7 @@ export function placeFor(work: string, term: Term, bin: string, slot: string): P
     wtHome: join(home, 'wt'),
     env: {},
   }
+
   const zsh = need('zsh')
   place.env = {
     PATH: [bin, nodeDir(), dirname(zsh), dirname(need('sqlite3')), '/usr/bin', '/bin', '/usr/sbin', '/sbin'].join(':'),
@@ -133,6 +140,7 @@ export function placeFor(work: string, term: Term, bin: string, slot: string): P
     TTHEME_AUTO_UPDATE: 'off',
     TTHEME_MARKETPLACE_LOOKUP: 'off',
   }
+
   return place
 }
 
@@ -149,14 +157,17 @@ async function run(place: Place, argv: string[], extra: Record<string, string> =
     stdout: 'pipe',
     stderr: 'pipe',
   })
+
   const [out, err, code] = await Promise.all([
     new Response(proc.stdout).text(),
     new Response(proc.stderr).text(),
     proc.exited,
   ])
+
   if (code !== 0) {
     throw new Error(`${argv.join(' ')} failed: ${err}${out}`)
   }
+
   return out
 }
 
@@ -173,6 +184,7 @@ const OWN_SCHEME = [
   .map(([group, code]) => {
     const color = OWN.get(code as string) as string
     const rgb = [1, 3, 5].map((i) => Number.parseInt(color.slice(i, i + 2), 16)).join(',')
+
     return `[${group}]\nColor=${rgb}\n`
   })
   .join('\n')
@@ -183,16 +195,19 @@ function prepare(place: Place, term: Term): void {
   mkdirSync(join(place.root, 'tmp'), { recursive: true })
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'Default Bookmark Guid'), 'own\n')
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'PreventEscapeSequenceFromChangingProfile'), '0\n')
+
   if (term === 'terminal-app') {
     write(join(place.home, '.parity', 'defaults', TERMINAL_DOMAIN, 'Default Window Settings'), 'Own\n')
     write(join(place.home, '.parity', 'defaults', TERMINAL_DOMAIN, 'Startup Window Settings'), 'Own\n')
     write(join(place.stateHome, 'ttheme', 'terminal-app.window'), `${(COLS * 8) / 2}x${(ROWS * 17) / 2}\n`)
   }
+
   if (term === 'konsole') {
     write(join(place.dataHome, 'konsole', 'Own.colorscheme'), OWN_SCHEME)
     write(join(place.dataHome, 'konsole', 'Own.profile'), '[Appearance]\nColorScheme=Own\n\n[General]\nName=Own\n')
     write(join(place.configHome, 'konsolerc'), '[Desktop Entry]\nDefaultProfile=Own.profile\n')
   }
+
   if (term === 'warp') {
     const warp = warpPaths(place)
     write(warp.settings, '[appearance.themes]\ntheme = "dark"\n')
@@ -210,6 +225,7 @@ function prepare(place: Place, term: Term): void {
     db.run('insert into windows (id, active_tab_index) values (1, 0)')
     db.close()
   }
+
   if (term === 'windows-terminal') {
     write(
       join(place.wtHome, 'Microsoft', 'Windows Terminal', 'settings.json'),
@@ -253,21 +269,27 @@ export async function build(
   const installed = JSON.parse(readFileSync(installedPath, 'utf8'))
   const wired = wiring ? WIRING[term] : undefined
   installed.terminals = wired ? [wired] : []
+
   if (wired === 'windows-terminal') {
     installed.wtHome = place.wtHome
     installed.wtProfile = WT_PROFILE
   }
+
   writeFileSync(installedPath, `${JSON.stringify(installed, null, 2)}\n`)
+
   if (wired !== 'ghostty') {
     rmSync(join(place.configHome, 'ghostty'), { recursive: true, force: true })
   }
+
   await cli(place, 'add', ...PALETTES)
   const manifest = JSON.parse(readFileSync(join(repo, 'dist', 'manifest.json'), 'utf8')) as { palettes: PaletteEntry[] }
   PICTURED.forEach((name, i) => {
     const entry = manifest.palettes.find((p) => p.name === name)
+
     if (!entry) {
       throw new Error(`no ${name} in the catalog`)
     }
+
     installTestPicture(place.configHome, entry, 1000 + i, { width: 800, height: 510 })
   })
   await cli(place, 'default', STARTUP)
@@ -278,16 +300,20 @@ export async function build(
   await run(place, ['zsh', '-i', '-c', 'exit'], { GHOSTTY_RESOURCES_DIR: '' })
   const snapshot = join(place.root, 'snapshot')
   await run(place, ['cp', '-a', place.home, snapshot])
+
   return { term, place, snapshot }
 }
 
 export async function reap(place: Place): Promise<void> {
   const proc = Bun.spawn(['ps', '-A', '-ww', '-o', 'pid=,args='], { stdout: 'pipe', stderr: 'ignore' })
   const out = await new Response(proc.stdout).text()
+
   const pids = out.split('\n').flatMap((line) => {
     const match = /^\s*(\d+)\s+(.*)$/.exec(line)
+
     return match?.[2]?.includes(place.home) && !match[2].startsWith('ps ') ? [Number(match[1])] : []
   })
+
   for (const pid of pids) {
     try {
       process.kill(pid, 'SIGKILL')
@@ -306,5 +332,6 @@ export function workDir(): string {
   const dir = join(base, `ttheme-parity-${process.pid}`)
   rmSync(dir, { recursive: true, force: true })
   mkdirSync(dir, { recursive: true })
+
   return dir
 }

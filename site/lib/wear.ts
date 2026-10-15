@@ -24,11 +24,13 @@ const ICON = `function(b,f,s){var x=parseInt(f.slice(1),16),y=parseInt(b.slice(1
 function hairOf(foreground: string, background: string): string {
   const ink = Number.parseInt(foreground.slice(1), 16)
   const ground = Number.parseInt(background.slice(1), 16)
+
   const channels = [16, 8, 0].map((shift) =>
     Math.round(((ink >> shift) & 255) * 0.22 + ((ground >> shift) & 255) * 0.78)
       .toString(16)
       .padStart(2, '0'),
   )
+
   return `#${channels.join('')}`
 }
 
@@ -40,13 +42,17 @@ export function wearIcon({
   const dots = [4.4, 8, 11.6]
     .map((x, index) => `<circle cx='${x}' cy='8' r='1.9' fill='${signature[index]}'/>`)
     .join('')
+
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='.5' y='.5' width='15' height='15' rx='4' fill='${background}' stroke='${hairOf(foreground, background)}'/>${dots}</svg>`
+
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }
 
 export function headlineEm(text: string): number {
   let em = 0
+
   for (const char of text) em += (ADVANCES[GLYPHS.indexOf(char)] ?? WIDEST) + TRACKING
+
   return em / 1000
 }
 
@@ -94,6 +100,7 @@ export function wearStyle(theme: Theme): string {
 
 export function rootStyle(theme: Theme): string {
   const vars = [...wearVars(theme), ...wearOwn(theme)].map(([slot, value]) => `${slot}:${value}`).join(';')
+
   return `${vars};color-scheme:${isLight(theme) ? 'light' : 'dark'} only`
 }
 

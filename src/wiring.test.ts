@@ -263,6 +263,7 @@ test('removeBlock gives back the content upsertBlock started from', () => {
   for (const mine of ['', 'font-size = 14\n', 'font-size = 14\n\n\n']) {
     assert.equal(removeBlock(upsertBlock(mine, 'a = 1')), mine.replace(/\n+$/, '\n'))
   }
+
   assert.equal(removeBlock('font-size = 14\n'), 'font-size = 14\n')
   const general = '[general]\nlive_config_reload = true\n\n[font]\nsize = 14\n'
   assert.equal(removeBlock(upsertAlacrittyImport(general, '/t.toml') ?? ''), general)
@@ -289,11 +290,14 @@ test('alacrittyColors spots colors the user set outside the ttheme block', () =>
 
 test('the blur comes from config.zsh itself, commented out meaning the default and out of range held to it', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-blur-'))
+
   const at = (text: string) => {
     mkdirSync(join(home, 'ttheme'), { recursive: true })
     writeFileSync(join(home, 'ttheme', 'config.zsh'), text)
+
     return blurOf(home)
   }
+
   assert.equal(blurOf(join(home, 'nowhere')), 0)
   assert.equal(at(configFile('')), 0)
   assert.equal(at(withSetting(configFile(''), 'TTHEME_BG_BLUR', '2.5')), 2.5)
@@ -304,11 +308,14 @@ test('the blur comes from config.zsh itself, commented out meaning the default a
 
 test('new pictures are drawn in the colors config.zsh names, tone unless it says original', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-colors-'))
+
   const at = (text: string) => {
     mkdirSync(join(home, 'ttheme'), { recursive: true })
     writeFileSync(join(home, 'ttheme', 'config.zsh'), text)
+
     return coloringFor(home)
   }
+
   assert.equal(coloringFor(join(home, 'nowhere')), 'tone')
   assert.equal(at(configFile('')), 'tone')
   assert.equal(at(withSetting(configFile(''), 'TTHEME_BG_COLORS', 'original')), 'original')
@@ -320,8 +327,10 @@ test('the shell layer falls back to the same default config.zsh documents for ev
   const layer = ['ttheme.zsh', 'preview.zsh']
     .map((file) => readFileSync(join(import.meta.dirname, '..', 'shell', file), 'utf8'))
     .join('\n')
+
   const defaults = [...layer.matchAll(/^: \$\{(TTHEME_\w+):=(.*)\}$/gm)]
   assert.ok(defaults.length > 0)
+
   for (const [, name = '', value] of defaults) {
     assert.ok(SETTING_NAMES.includes(name), `${name} is not a config.zsh setting`)
     assert.equal(value, settingDefault(name), name)

@@ -24,6 +24,7 @@ const SIGNALS = { SIGHUP: 1, SIGINT: 2, SIGQUIT: 3, SIGTERM: 15 } as const
 const LINGER = 3000
 
 type Input = Readable & { isTTY?: boolean; setRawMode?: (on: boolean) => unknown }
+
 type Output = Writable & { isTTY?: boolean; columns?: number; rows?: number }
 
 interface TerminalOptions {
@@ -58,6 +59,7 @@ function failAll(error: unknown): void {
   for (const terminal of opened.toReversed()) {
     terminal.abort(error)
   }
+
   if (!lingering) {
     lingering = setTimeout(() => {
       exiting()
@@ -80,16 +82,20 @@ function continued(): void {
   for (const terminal of opened) {
     terminal.reassert()
   }
+
   opened.at(-1)?.redraw()
 }
 
 function guard(on: boolean): void {
   const method = on ? 'on' : 'off'
+
   for (const [name, handler] of Object.entries(onSignal)) {
     process[method](name, handler)
   }
+
   process[method]('uncaughtException', failAll)
   process[method]('exit', exiting)
+
   if (process.platform !== 'win32') {
     process[method]('SIGCONT', continued)
   }
@@ -129,29 +135,37 @@ export class Terminal {
       this.reject = reject
     })
     this.failed.catch(ignore)
+
     if (this.tty && !opened.some((terminal) => terminal.tty)) {
       guard(true)
     }
+
     opened.push(this)
     let out = ''
+
     for (const mode of this.assumed) {
       if (!held.has(mode)) {
         out += mode.on
       }
     }
+
     for (const mode of options.modes ?? []) {
       out += this.claim(mode)
     }
+
     this.write(out)
     const rawCount = raw.get(this.input) ?? 0
+
     if (rawCount === 0) {
       this.input.setRawMode?.(true)
     }
+
     raw.set(this.input, rawCount + 1)
     this.input.on('data', this.received)
     this.input.resume()
     this.output.on('resize', this.resizing)
     this.output.on('error', ignore)
+
     if (this.tty) {
       this.write(KEYBOARD_QUERY)
     }
@@ -184,6 +198,7 @@ export class Terminal {
     this.take = take
     const queued = this.queued
     this.queued = []
+
     if (queued.length > 0) {
       take(queued)
     }
@@ -204,11 +219,13 @@ export class Terminal {
         this.listen((events) => {
           for (const event of events) {
             const done = over ? undefined : take(event)
+
             if (done !== undefined) {
               over = true
               resolve(done)
             }
           }
+
           if (!over) {
             after()
           }
@@ -223,21 +240,28 @@ export class Terminal {
         hold,
         pick: (event: Inbound) => {
           const value = pick(event)
+
           if (value === undefined) {
             return false
           }
+
           done(value)
+
           return true
         },
       }
+
       const done = (value: T | undefined) => {
         clearTimeout(timer)
+
         if (this.asking === asking) {
           this.asking = undefined
         }
+
         resolve(value)
         this.release()
       }
+
       const timer = setTimeout(() => done(undefined), wait)
       this.asking = asking
       this.write(query)
@@ -248,6 +272,7 @@ export class Terminal {
     if (this.aborted) {
       return
     }
+
     this.aborted = true
     this.keys.stop()
     this.reject(error)
@@ -273,12 +298,15 @@ export class Terminal {
     if (!this.open) {
       return
     }
+
     this.keys.stop()
     this.input.off('data', this.received)
     this.output.off('resize', this.resizing)
     let out = ''
+
     for (const mode of this.modes.toReversed()) {
       const count = (held.get(mode) ?? 1) - 1
+
       if (count === 0) {
         held.delete(mode)
         out += mode.off
@@ -286,9 +314,11 @@ export class Terminal {
         held.set(mode, count)
       }
     }
+
     this.write(out)
     this.open = false
     const rawCount = (raw.get(this.input) ?? 1) - 1
+
     if (rawCount === 0) {
       raw.delete(this.input)
       this.input.setRawMode?.(false)
@@ -296,8 +326,10 @@ export class Terminal {
     } else {
       raw.set(this.input, rawCount)
     }
+
     this.output.off('error', ignore)
     opened.splice(opened.indexOf(this), 1)
+
     if (this.tty && !opened.some((terminal) => terminal.tty)) {
       guard(false)
     }
@@ -319,28 +351,37 @@ export class Terminal {
     this.modes.push(mode)
     const count = held.get(mode) ?? 0
     held.set(mode, count + 1)
+
     if (count > 0) {
       return ''
     }
+
     this.owned.push(mode)
+
     return mode.on
   }
 
   private deliver(heard: Inbound[]): void {
     const events = heard.filter((event) => event.kind !== 'keyboard')
+
     if (events.length < heard.length && this.open && !this.enhanced) {
       this.enhanced = true
       this.hold(KEYBOARD)
     }
+
     const asking = this.asking
     const passed = asking ? events.filter((event) => !asking.pick(event)) : events
+
     if (passed.length === 0) {
       return
     }
+
     if (!this.take || this.asking?.hold) {
       this.queued.push(...passed)
+
       return
     }
+
     this.take(passed)
   }
 
@@ -355,6 +396,7 @@ export class Terminal {
 
 export async function within<T>(options: TerminalOptions, body: (terminal: Terminal) => Promise<T>): Promise<T> {
   const terminal = new Terminal(options)
+
   try {
     return await body(terminal)
   } finally {

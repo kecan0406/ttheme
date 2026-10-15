@@ -43,9 +43,11 @@ interface Catalog {
 function catalogsIn(shelf: Shelf): Catalog[] {
   return catalogsOf(shelf.palettes).flatMap(({ catalog, themes }) => {
     const lead = themes.find((theme) => theme.lead) ?? themes[0]
+
     if (!lead) return []
     const note = catalog === null ? null : (lead.native ?? `led by ${lead.name}`)
     const lang = catalog === null ? undefined : nativeLang(lead)
+
     return [{ catalog, name: catalog ?? 'other palettes', note, lang, themes, lead }]
   })
 }
@@ -54,6 +56,7 @@ function CatalogSwatch({ theme }: { theme: Theme }) {
   const style = [`--bg:${theme.background}`, ...theme.signature.map((color, index) => `--sg${index}:${color}`)].join(
     ';',
   )
+
   return <span aria-hidden="true" data-slot="catalog-swatch" style={style} />
 }
 
@@ -62,6 +65,7 @@ function PaletteDots({ themes }: { themes: Theme[] }) {
     .slice(0, DOTS)
     .map((theme, index) => `--dot${index}:${theme.signature[0]}`)
     .join(';')
+
   return <span aria-hidden="true" data-slot="palette-dots" style={style} />
 }
 
@@ -99,8 +103,10 @@ function CatalogCard({ catalog, official }: { catalog: Catalog; official: boolea
 
 function PeekWindow({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[] }) {
   const first = catalogs[0]
+
   if (!first) return null
   const peek = peekOf(first.lead, first.catalog)
+
   return (
     <TerminalFrame
       data-peek={shelf.id}
@@ -129,6 +135,7 @@ function PeekWindow({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[] }) 
 function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[] }) {
   const official = shelf.id === OFFICIAL
   const named = catalogs.filter((catalog) => catalog.catalog !== null).length
+
   return (
     <article
       data-shelf={shelf.id}
@@ -214,12 +221,14 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
 export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shelves: Shelf[] }>) {
   const found = shelves.map((shelf) => shelf.palettes.map(searchable))
   const catalogs = shelves.map(catalogsIn)
+
   const peeks: Record<string, Peek[]> = Object.fromEntries(
     shelves.map((shelf, index) => [
       shelf.id,
       (catalogs[index] ?? []).map((catalog) => peekOf(catalog.lead, catalog.catalog)),
     ]),
   )
+
   const count = (source: (typeof SOURCES)[number]) => shelvesMatching(found, { ...START, source })
 
   return (
@@ -255,6 +264,7 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
       <ToggleGroup variant="underline" label="source">
         {SOURCES.map((source) => {
           const icon = SOURCE_ICONS[source]
+
           return (
             <ToggleGroupItem variant="underline" name="source" value={source} checked={source === START.source}>
               {icon ? <Icon node={icon} /> : null}

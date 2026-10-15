@@ -47,6 +47,7 @@ function warp(terminals: Wired[] = ['warp']) {
   utimesSync(join(themes, 'ttheme-miku.0123abcd.yaml'), 1_600_000_100, 1_600_000_100)
   const worn = () => warpThemeOf(readFileSync(settings, 'utf8'))
   const views = () => readdirSync(themes).filter((file) => file.includes('.view-'))
+
   return { home, configHome, settings, themes, worn, views }
 }
 

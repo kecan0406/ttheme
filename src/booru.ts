@@ -11,7 +11,9 @@ export const MAX_PIXELS = 25_000_000
 const CACHE_BYTES = 512 * 1024 * 1024
 
 export type Rating = 'safe' | 'questionable' | 'explicit'
+
 export type Block = 'nudity' | 'underwear'
+
 export type Kind = 'comic' | 'monochrome' | 'sketch' | 'chibi'
 
 export const RATINGS: Rating[] = ['safe', 'questionable', 'explicit']
@@ -24,12 +26,14 @@ const EXPOSED: Record<Block, Set<string>> = {
   nudity: new Set(['nude', 'naked', 'topless', 'bottomless', 'nipples', 'naked_towel', 'undressing']),
   underwear: new Set(['underwear', 'panties', 'pantsu', 'bra', 'lingerie', 'pantyshot']),
 }
+
 const KIND_TAGS: Record<Kind, Set<string>> = {
   comic: new Set(['comic', '4koma']),
   monochrome: new Set(['monochrome', 'greyscale']),
   sketch: new Set(['sketch', 'lineart', 'line_art']),
   chibi: new Set(['chibi']),
 }
+
 const FREE = /^(?:rating|score|width|height|filetype|dimension):/
 const MOEBOORU: Record<Rating, string> = { safe: 's', questionable: 'q', explicit: 'e' }
 const HEAD = 8191
@@ -146,14 +150,19 @@ export function extension(url: string): string {
 
 function records(text: string): Record<string, unknown>[] {
   const body = text.trim()
+
   if (!body) {
     return []
   }
+
   const raw: unknown = JSON.parse(body)
+
   if (Array.isArray(raw)) {
     return raw as Record<string, unknown>[]
   }
+
   const posts = (raw as { posts?: unknown }).posts
+
   return Array.isArray(posts) ? (posts as Record<string, unknown>[]) : []
 }
 
@@ -161,11 +170,13 @@ function tagTypes(text: string): Map<string, string> {
   const body = text.trim()
   const raw: unknown = body ? JSON.parse(body) : {}
   const tags = (raw as { tags?: Record<string, unknown> }).tags ?? {}
+
   return new Map(Object.entries(tags).map(([name, type]) => [name, String(type)]))
 }
 
 function version(url: unknown, width: unknown, height: unknown): Rendition {
   const file = absolute(String(url ?? ''))
+
   return { file, width: Number(width) || 0, height: Number(height) || 0, ext: extension(file) }
 }
 
@@ -177,6 +188,7 @@ function words(text: unknown): string[] {
 
 function day(at: unknown): string | undefined {
   const when = typeof at === 'number' ? new Date(at * 1000) : typeof at === 'string' ? new Date(at) : undefined
+
   return when && !Number.isNaN(when.getTime()) ? when.toISOString().slice(0, 10) : undefined
 }
 
@@ -194,11 +206,14 @@ interface Raw {
 
 function post(p: Record<string, unknown>, raw: Raw): Post[] {
   const preview = absolute(String(raw.preview ?? ''))
+
   if (!raw.file || !preview || !Number(p.id)) {
     return []
   }
+
   const width = Number(p.width ?? p.image_width) || 0
   const height = Number(p.height ?? p.image_height) || 0
+
   return [
     {
       id: Number(p.id),
@@ -224,10 +239,12 @@ function post(p: Record<string, unknown>, raw: Raw): Post[] {
 
 export function parseMoebooru(text: string): Post[] {
   const types = tagTypes(text)
+
   return records(text).flatMap((p) => {
     const file = absolute(String(p.file_url ?? ''))
     const tags = String(p.tags ?? '')
     const typed = (type: string) => words(tags).filter((tag) => types.get(tag) === type)
+
     return post(p, {
       preview: p.preview_url,
       file,
@@ -250,6 +267,7 @@ export function parseDanbooru(text: string): Post[] {
     const file = absolute(String(p.file_url ?? ''))
     const tags = String(p.tag_string ?? '')
     const asset = (p.media_asset ?? {}) as { variants?: { type: string; width: number; height: number; url: string }[] }
+
     return post(p, {
       preview: asset.variants?.find((v) => v.type === '360x360')?.url ?? p.preview_file_url,
       file,
@@ -291,13 +309,17 @@ export function parseZerochan(text: string): Post[] {
   const body = text.trim()
   const raw = (body ? JSON.parse(body) : {}) as Record<string, unknown>
   const items = Array.isArray(raw.items) ? (raw.items as Record<string, unknown>[]) : raw.id ? [raw] : []
+
   return items.flatMap((item): Post[] => {
     const id = Number(item.id)
+
     if (!id) {
       return []
     }
+
     const tags = zerochanTags(item.tags)
     const file = absolute(String(item.full ?? ''))
+
     return [
       {
         id,
@@ -339,14 +361,18 @@ function unescaped(text: string): string {
 
 export function parseZerochanPage(html: string): Credit {
   const named: Named = { artist: [], character: [], copyright: [] }
+
   for (const [, kind, tag] of html.matchAll(/<li class="([a-z]+)[^"]*"[^>]*\bdata-tag="([^"]*)"/g)) {
     const role = ZEROCHAN_ROLES[kind as string]
     const name = zerochanTag(unescaped(tag as string))
+
     if (role && !named[role].includes(name)) {
       named[role].push(name)
     }
   }
+
   const posted = day(/"datePublished":\s*"([^"]+)"/.exec(html)?.[1])
+
   return {
     named,
     source: '',
@@ -367,6 +393,7 @@ interface Suggestion {
 export function parseSuggestions(text: string): Suggestion[] {
   return records(text).flatMap((item) => {
     const value = String(item.value ?? '')
+
     return value ? [{ value, count: Number(item.post_count) || 0 }] : []
   })
 }
@@ -374,6 +401,7 @@ export function parseSuggestions(text: string): Suggestion[] {
 export function parseTagList(text: string): Suggestion[] {
   return records(text).flatMap((item) => {
     const value = String(item.name ?? '')
+
     return value ? [{ value, count: Number(item.count) || 0 }] : []
   })
 }
@@ -385,6 +413,7 @@ export function parseCount(xml: string): number {
 export function parseCounts(text: string): number {
   const raw: unknown = text.trim() ? JSON.parse(text) : {}
   const posts = (raw as { counts?: { posts?: unknown } }).counts?.posts
+
   return posts === null ? Number.NaN : Number(posts) || 0
 }
 
@@ -399,8 +428,10 @@ interface Spec {
 
 export function cutoutMap(spec: string | undefined): Map<string, string[]> {
   const cutouts = new Map<string, string[]>()
+
   for (const entry of (spec ?? '').split(/\s+/).filter(Boolean)) {
     const at = entry.indexOf('=')
+
     if (at > 0) {
       cutouts.set(
         entry.slice(0, at),
@@ -411,21 +442,26 @@ export function cutoutMap(spec: string | undefined): Map<string, string[]> {
       )
     }
   }
+
   return cutouts
 }
 
 export function hostMap(spec: string | undefined): Map<string, string> {
   const hosts = new Map<string, string>()
+
   for (const entry of (spec ?? '').split(/[\s,]+/).filter(Boolean)) {
     const at = entry.indexOf('=')
     const key = entry.slice(0, at)
+
     try {
       const url = new URL(entry.slice(at + 1))
+
       if (key && url.protocol === 'https:') {
         hosts.set(key, url.origin)
       }
     } catch {}
   }
+
   return hosts
 }
 
@@ -436,10 +472,13 @@ function chosen<T extends string>(
   none?: string,
 ): T[] {
   const words = (value ?? '').split(/\s+/)
+
   if (none !== undefined && words.includes(none)) {
     return []
   }
+
   const picked = all.filter((item) => words.includes(item))
+
   return picked.length > 0 ? picked : [...fallback]
 }
 
@@ -457,6 +496,7 @@ export function kindSet(value: string | undefined): Kind[] {
 
 export function siteSet(value: string | undefined): string[] {
   const names = SITES.map((site) => site.name)
+
   return chosen(value, names, names)
 }
 
@@ -483,6 +523,7 @@ function tiers(safe: string[], questionable: string[], explicit: string[]): Reco
 function based(spec: Spec): Spec & { moved: boolean } {
   const origin = HOSTS.get(spec.key)
   const cutouts = CUTOUTS.get(spec.key)
+
   return {
     ...spec,
     origin: origin ?? spec.origin,
@@ -503,6 +544,7 @@ function sized(size: number): string[] {
 function moebooru(raw: Spec): Site {
   const spec = based(raw)
   const params = (rest: Record<string, string>) => new URLSearchParams({ api_version: '2', include_tags: '1', ...rest })
+
   return {
     ...spec,
     scored: true,
@@ -511,11 +553,14 @@ function moebooru(raw: Spec): Site {
     ratings: tiers([MOEBOORU.safe], [MOEBOORU.questionable], [MOEBOORU.explicit]),
     rate: (levels) => {
       const [only] = levels
+
       if (levels.length === 1 && only) {
         return `rating:${MOEBOORU[only]}`
       }
+
       const missing = RATINGS.filter((level) => !levels.includes(level))
       const [left] = missing
+
       return missing.length === 1 && left ? `-rating:${MOEBOORU[left]}` : ''
     },
     best: 'order:score',
@@ -535,6 +580,7 @@ function moebooru(raw: Spec): Site {
 function danbooru(raw: Spec): Site {
   const spec = based(raw)
   const ratings = tiers(['g'], ['s', 'q'], ['e'])
+
   return {
     ...spec,
     scored: true,
@@ -572,11 +618,13 @@ function zerochanPath(tags: string): string {
 function zerochanParams(tags: string): Record<string, string> {
   const words = tags.split(/\s+/)
   const dimension = words.find((tag) => tag.startsWith('dimension:'))?.slice('dimension:'.length)
+
   return { s: words.includes('order:fav') ? 'fav' : 'id', ...(dimension ? { d: dimension } : {}) }
 }
 
 function zerochan(raw: Spec): Site {
   const spec = based(raw)
+
   return {
     ...spec,
     scored: false,
@@ -611,6 +659,7 @@ function zerochan(raw: Spec): Site {
 
 function siteNamed(host: string): Site | undefined {
   const domain = originHost(`https://${host}`)
+
   return SITES.find((site) => originHost(site.origin) === domain)
 }
 
@@ -620,22 +669,30 @@ export function tagsOf(query: string): number {
 
 export function postRef(text: string, fallback: Site): { site: Site; id: number } | undefined {
   const query = text.trim()
+
   if (/^\d+$/.test(query)) {
     return { site: fallback, id: Number(query) }
   }
+
   const named = /^([\w.]+):(\d+)$/.exec(query)
+
   if (named) {
     const site = SITES.find((s) => s.key === named[1] || s.name === named[1])
+
     return site && { site, id: Number(named[2]) }
   }
+
   let url: URL
+
   try {
     url = new URL(query)
   } catch {
     return undefined
   }
+
   const site = siteNamed(url.host)
   const id = Number(url.searchParams.get('id') ?? url.pathname.split('/').findLast(Boolean))
+
   return site && id > 0 ? { site, id } : undefined
 }
 
@@ -680,16 +737,19 @@ export const KEY_SPAN = 2 ** 27
 
 export function postKey(site: Site, id: number): number {
   const at = SITES.indexOf(site)
+
   return (at === -1 ? SITES.length : at) * KEY_SPAN + id
 }
 
 export function originHost(source: string): string {
   let host: string
+
   try {
     host = new URL(source).hostname
   } catch {
     return ''
   }
+
   return host.split('.').slice(-2).join('.')
 }
 
@@ -728,12 +788,15 @@ export function rendition(post: Post): Rendition | undefined {
 
 export function mates(owners: ReadonlyMap<string, string>): Map<string, string[]> {
   const byOwner = new Map<string, string[]>()
+
   for (const [palette, owner] of [...owners].sort(([a], [b]) => (a < b ? -1 : 1))) {
     if (owner === '') {
       continue
     }
+
     byOwner.set(owner, [...(byOwner.get(owner) ?? []), palette])
   }
+
   return byOwner
 }
 
@@ -748,11 +811,14 @@ export function cacheDir(site: Site): string {
 export function sweepCache(limit = CACHE_BYTES, root = cacheRoot()): void {
   const files: { path: string; size: number; at: number }[] = []
   let total = 0
+
   for (const site of listing(root)) {
     for (const kind of HELD) {
       const dir = join(root, site, kind)
+
       for (const name of listing(dir)) {
         const path = join(dir, name)
+
         try {
           const { size, mtimeMs } = statSync(path)
           files.push({ path, size, at: mtimeMs })
@@ -761,11 +827,14 @@ export function sweepCache(limit = CACHE_BYTES, root = cacheRoot()): void {
       }
     }
   }
+
   files.sort((a, b) => a.at - b.at)
+
   for (const file of files) {
     if (total <= limit) {
       return
     }
+
     try {
       rmSync(file.path, { force: true })
       total -= file.size
@@ -777,7 +846,9 @@ export function retryAfter(value: string | null, now: number): number {
   if (value !== null && /^\s*\d+\s*$/.test(value)) {
     return Number(value) * 1000
   }
+
   const at = value === null ? Number.NaN : Date.parse(value)
+
   return Number.isNaN(at) ? MAX_WAIT : Math.max(0, at - now)
 }
 
@@ -791,6 +862,7 @@ function reset(error: unknown): boolean {
       return true
     }
   }
+
   return false
 }
 
@@ -803,9 +875,11 @@ function challenged(response: Response): boolean {
 
 export function redirected(from: string, to: string): string {
   const next = new URL(to, from)
+
   if (!next.search) {
     next.search = new URL(from).search
   }
+
   return next.href
 }
 
@@ -817,12 +891,16 @@ async function get(
   timeout = TIMEOUT,
 ) {
   let at = url
+
   for (let tries = 1, hops = 0; ; tries++) {
     const wait = pausedUntil(site) - Date.now()
+
     if (wait > 0) {
       await sleep(wait, undefined, { signal })
     }
+
     let response: Response
+
     try {
       response = await fetch(at, {
         headers: { 'User-Agent': AGENT, Referer: `${site.origin}/`, ...headers },
@@ -833,9 +911,12 @@ async function get(
       if (tries < TRIES && !signal.aborted && reset(error)) {
         continue
       }
+
       throw error
     }
+
     const to = response.headers.get('location')
+
     if (to && response.status >= 300 && response.status < 400 && hops < HOPS) {
       await response.body?.cancel()
       at = redirected(at, to)
@@ -843,15 +924,19 @@ async function get(
       tries--
       continue
     }
+
     if (response.status === 429 && tries < TRIES) {
       await response.body?.cancel()
       const delay = retryAfter(response.headers.get('retry-after'), Date.now())
+
       if (delay > MAX_WAIT) {
         throw new Error(`${site.name} asks to wait ${Math.ceil(delay / 1000)}s`)
       }
+
       paused.set(site.key, Math.max(pausedUntil(site), Date.now() + delay))
       continue
     }
+
     if (!response.ok) {
       await response.body?.cancel()
       throw Object.assign(
@@ -863,6 +948,7 @@ async function get(
         { status: response.status },
       )
     }
+
     return response
   }
 }
@@ -874,6 +960,7 @@ async function listed(site: Site, url: string, signal: AbortSignal): Promise<str
     if (site.missing !== undefined && (error as { status?: number }).status === site.missing) {
       return ''
     }
+
     throw error
   }
 }
@@ -888,6 +975,7 @@ export async function fetchCount(site: Site, tags: string, signal: AbortSignal):
 
 export async function fetchPost(site: Site, id: number, signal: AbortSignal): Promise<Post | undefined> {
   const [found] = site.parse(await listed(site, site.postUrl(id), signal))
+
   return found
 }
 
@@ -897,10 +985,12 @@ export async function fetchCredits(site: Site, id: number, signal: AbortSignal):
 
 const PIXIV_FILE =
   /^https?:\/\/(?:i\.pximg\.net|i\d*\.pixiv\.net|img\d*\.pixiv\.net)\/\S*\/(\d+)(?:_p\d+)?(?:_\w+)?\.\w+(?:[?#]\S*)?$/i
+
 const PIXIV_ILLUST = /^https?:\/\/(?:www\.)?pixiv\.net\/member_illust\.php\?\S*\billust_id=(\d+)/i
 
 export function sourcePage(source: string): string {
   const id = PIXIV_FILE.exec(source)?.[1] ?? PIXIV_ILLUST.exec(source)?.[1]
+
   return id ? `https://www.pixiv.net/artworks/${id}` : source
 }
 
@@ -911,12 +1001,15 @@ export function uncredited(site: Site, post: Post): boolean {
 export function credit(post: Post, found: Partial<Credit>): void {
   for (const role of ROLES) {
     const named = found.named?.[role] ?? []
+
     if (post.named[role].length === 0 && named.length > 0) {
       post.named[role] = named
     }
   }
+
   post.source ||= found.source ?? ''
   post.owner ||= found.owner ?? ''
+
   if (!post.posted && found.posted) {
     post.posted = found.posted
   }
@@ -935,6 +1028,7 @@ export function lentUrl(md5s: readonly string[]): string {
     only: 'md5,tag_string,tag_string_artist,tag_string_character,tag_string_copyright,source,file_url',
     tags: `md5:${md5s.join(',')}`,
   })
+
   return `${LENDER.origin}/posts.json?${params}`
 }
 
@@ -942,6 +1036,7 @@ export function parseLent(text: string): Map<string, Lent> {
   return new Map(
     records(text).flatMap((p): [string, Lent][] => {
       const md5 = String(p.md5 ?? '')
+
       return md5
         ? [
             [
@@ -966,17 +1061,21 @@ export function parseLent(text: string): Map<string, Lent> {
 export function lend(posts: readonly Post[], lent: ReadonlyMap<string, Lent>): void {
   for (const post of posts) {
     const found = lent.get(post.md5)
+
     if (!found) {
       continue
     }
+
     post.tags = [...new Set([...post.tags, ...found.tags])]
     credit(post, found)
     post.solo = found.tags.includes('solo')
+
     if (found.file.includes('/original/')) {
       post.mirror = {
         file: found.file,
         preview: found.file.replace('/original/', '/360x360/').replace(/\.[a-z0-9]+$/i, '.jpg'),
       }
+
       if (!post.file) {
         post.file = found.file
         post.ext = extension(found.file)
@@ -987,15 +1086,19 @@ export function lend(posts: readonly Post[], lent: ReadonlyMap<string, Lent>): v
 
 export async function fetchLent(md5s: readonly string[], signal: AbortSignal): Promise<Map<string, Lent>> {
   const lent = new Map<string, Lent>()
+
   if (pausedUntil(LENDER) > Date.now()) {
     return lent
   }
+
   for (let at = 0; at < md5s.length; at += PAGE) {
     const text = await (await get(LENDER, lentUrl(md5s.slice(at, at + PAGE)), signal, {}, LEND_TIMEOUT)).text()
+
     for (const [md5, found] of parseLent(text)) {
       lent.set(md5, found)
     }
   }
+
   return lent
 }
 
@@ -1005,6 +1108,7 @@ export function artistsUrl(names: readonly string[]): string {
     ['only', 'name,is_deleted,urls'],
     ['limit', String(names.length)],
   ])
+
   return `${LENDER.origin}/artists.json?${params}`
 }
 
@@ -1012,10 +1116,13 @@ export function parseArtistUrls(text: string): Map<string, string[]> {
   return new Map(
     records(text).flatMap((artist): [string, string[]][] => {
       const name = String(artist.name ?? '')
+
       if (!name || artist.is_deleted === true) {
         return []
       }
+
       const urls = Array.isArray(artist.urls) ? (artist.urls as Record<string, unknown>[]) : []
+
       return [[name, urls.flatMap((url) => (url.is_active === false || !url.url ? [] : [String(url.url)]))]]
     }),
   )
@@ -1023,15 +1130,19 @@ export function parseArtistUrls(text: string): Map<string, string[]> {
 
 export async function fetchArtistUrls(names: readonly string[], signal: AbortSignal): Promise<Map<string, string[]>> {
   const found = new Map<string, string[]>()
+
   if (pausedUntil(LENDER) > Date.now()) {
     return found
   }
+
   for (let at = 0; at < names.length; at += PAGE) {
     const text = await (await get(LENDER, artistsUrl(names.slice(at, at + PAGE)), signal, {}, LEND_TIMEOUT)).text()
+
     for (const [name, urls] of parseArtistUrls(text)) {
       found.set(name, urls)
     }
   }
+
   return found
 }
 
@@ -1043,12 +1154,14 @@ export async function locate(
   if (post.file || !site.guesses) {
     return undefined
   }
+
   for (const url of site.guesses(post)) {
     try {
       const response = await get(site, url, signal, { Range: `bytes=0-${HEAD}` })
       const head = pngHead(new Uint8Array(await response.arrayBuffer()))
       post.file = url
       post.ext = extension(url)
+
       return head
     } catch (error) {
       if (signal.aborted || (error as { status?: number }).status !== 404) {
@@ -1056,6 +1169,7 @@ export async function locate(
       }
     }
   }
+
   throw new Error(`${site.name} keeps no png or jpg of ${post.id}`)
 }
 
@@ -1067,7 +1181,9 @@ export async function fetchSuggestions(prefix: string, signal: AbortSignal): Pro
         'search[type]': 'tag_query',
         limit: String(SUGGESTED),
       })
+
       const url = `${LENDER.origin}/autocomplete.json?${params}`
+
       return parseSuggestions(await (await get(LENDER, url, signal, {}, SUGGEST_TIMEOUT)).text())
     } catch (error) {
       if (signal.aborted) {
@@ -1075,8 +1191,10 @@ export async function fetchSuggestions(prefix: string, signal: AbortSignal): Pro
       }
     }
   }
+
   const yande = SITES.find((s) => s.key === 'yande') as Site
   const params = new URLSearchParams({ name: prefix, order: 'count', limit: String(SUGGESTED) })
+
   return parseTagList(
     await (await get(yande, `${yande.origin}/tag.json?${params}`, signal, {}, SUGGEST_TIMEOUT)).text(),
   )
@@ -1085,6 +1203,7 @@ export async function fetchSuggestions(prefix: string, signal: AbortSignal): Pro
 export function parseRelated(text: string): Suggestion[] {
   try {
     const body = JSON.parse(text) as { related_tags?: { tag?: { name?: string; post_count?: number } }[] }
+
     return (body.related_tags ?? []).flatMap(({ tag }) =>
       tag?.name ? [{ value: tag.name, count: Number(tag.post_count) || 0 }] : [],
     )
@@ -1097,11 +1216,13 @@ export async function fetchRelated(tag: string, signal: AbortSignal): Promise<Su
   if (pausedUntil(LENDER) > Date.now()) {
     return []
   }
+
   const params = new URLSearchParams({
     'search[query]': tag,
     'search[category]': 'character',
     limit: String(RELATED),
   })
+
   return parseRelated(
     await (await get(LENDER, `${LENDER.origin}/related_tag.json?${params}`, signal, {}, RELATED_TIMEOUT)).text(),
   )
@@ -1113,6 +1234,7 @@ export function pickedNames(site: Pick<Site, 'ors' | 'tagBudget'>, chosen: reado
 
 export async function headOf(site: Site, url: string, signal: AbortSignal): Promise<ReturnType<typeof pngHead>> {
   const response = await get(site, url, signal, { Range: `bytes=0-${HEAD}` })
+
   return pngHead(new Uint8Array(await response.arrayBuffer()))
 }
 
@@ -1125,25 +1247,33 @@ export async function fetchBytes(
   const response = await get(site, url, signal, {}, 0)
   const size = Number(response.headers.get('content-length')) || 0
   const reader = response.body?.getReader()
+
   if (!reader) {
     return new Uint8Array(await response.arrayBuffer())
   }
+
   const chunks: Uint8Array[] = []
   let got = 0
+
   for (;;) {
     const { done, value } = await reader.read()
+
     if (done) {
       break
     }
+
     chunks.push(value)
     got += value.length
     progress?.(got, size)
   }
+
   const bytes = new Uint8Array(got)
   let at = 0
+
   for (const chunk of chunks) {
     bytes.set(chunk, at)
     at += chunk.length
   }
+
   return bytes
 }

@@ -27,10 +27,13 @@ const RELEASE = /^(\d+)\.(\d+)\.(\d+)$/
 export function isNewer(latest: string, running: string): boolean {
   const a = RELEASE.exec(latest)
   const b = RELEASE.exec(running)
+
   if (!a || !b) {
     return false
   }
+
   const gap = [1, 2, 3].map((part) => Number(a[part]) - Number(b[part])).find((step) => step !== 0)
+
   return (gap ?? 0) > 0
 }
 
@@ -45,6 +48,7 @@ function seenPath(): string {
 function readSeen(): Seen {
   try {
     const doc = JSON.parse(readFileSync(seenPath(), 'utf8')) as Partial<Seen>
+
     return {
       checked: typeof doc.checked === 'number' ? doc.checked : 0,
       ...(typeof doc.latest === 'string' ? { latest: doc.latest } : {}),
@@ -74,6 +78,7 @@ function fetchLatest(timeout = TIMEOUT): Promise<string> {
             .split('\n')
             .find((line) => /\S/.test(line))
             ?.replace(/^npm (error|ERR!) /, '')
+
           const { code, killed } = error as NodeJS.ErrnoException & { killed?: boolean }
           reject(
             new Error(
@@ -84,13 +89,18 @@ function fetchLatest(timeout = TIMEOUT): Promise<string> {
                   : `npm could not ask its registry — ${said ?? 'it gave no reason'}`,
             ),
           )
+
           return
         }
+
         const version = stdout.trim()
+
         if (!RELEASE.test(version)) {
           reject(new Error('the npm registry named no version'))
+
           return
         }
+
         resolve(version)
       },
     )
@@ -99,9 +109,11 @@ function fetchLatest(timeout = TIMEOUT): Promise<string> {
 
 export function startReleaseCheck(now = Date.now()): void {
   const seen = readSeen()
+
   if (!autoWanted() || now - seen.checked < DAY) {
     return
   }
+
   try {
     writeSeen({ ...seen, checked: now, trying: now })
     spawn(process.execPath, [process.argv[1] as string, 'latest'], {
@@ -122,12 +134,15 @@ function settled(seen: Seen): Seen {
 
 export async function checkLatest(): Promise<number> {
   const seen = settled(readSeen())
+
   try {
     writeSeen({ ...seen, checked: Date.now(), latest: await fetchLatest() })
+
     return 0
   } catch {
     const now = Date.now()
     writeSeen({ ...seen, checked: now - DAY + RETRY, failed: now })
+
     return 1
   }
 }
@@ -136,18 +151,22 @@ export function standingOf(seen: Seen, now: number, running: string = pkg.versio
   if (seen.trying !== undefined && now - seen.trying < BUSY) {
     return 'checking'
   }
+
   if (seen.failed !== undefined) {
     return 'failed'
   }
+
   if (seen.latest === undefined) {
     return 'unknown'
   }
+
   return isNewer(seen.latest, running) ? 'newer' : 'current'
 }
 
 export function releaseLine(now = Date.now(), env: NodeJS.ProcessEnv = process.env): ReleaseLine {
   const seen = readSeen()
   const standing = autoWanted(env) ? standingOf(seen, now) : 'unknown'
+
   return { standing, line: standingLine(standing, pkg.version, seen.latest) }
 }
 
@@ -173,41 +192,52 @@ function outdatedLine(latest: string, running: string = pkg.version): string {
 
 export function tellRelease(now = Date.now()): void {
   const seen = readSeen()
+
   if (!autoWanted() || !seen.latest || !isNewer(seen.latest, pkg.version) || now - (seen.told ?? 0) < DAY) {
     return
   }
+
   if (process.stderr.isTTY) {
     writeSeen({ ...seen, told: now })
   }
+
   advise([outdatedLine(seen.latest)])
 }
 
 export function upgradeTo(latest: string, args: readonly string[]): number {
   console.log(`Updating ttheme ${pkg.version} → ${latest}`)
+
   const npx = spawnSync('npx', ['--yes', `${pkg.name}@${latest}`, 'init', '--yes'], {
     cwd: tmpdir(),
     stdio: 'inherit',
     env: { ...process.env, npm_config_prefer_online: 'true' },
   })
+
   if (npx.error) {
     throw new Error(`cannot run npx — ${npx.error.message}; \`${UPDATE_COMMAND}\` updates ttheme once npm is there`)
   }
+
   if (npx.status !== 0) {
     throw new Error(`npx stopped with status ${npx.status} — ttheme ${pkg.version} is still installed`)
   }
+
   const cli = installedCli()
   const now = spawnSync(process.execPath, [cli, '--version'], { encoding: 'utf8' }).stdout?.trim()
+
   if (now !== latest) {
     throw new Error(
       `${cli} is ${now || 'unreadable'} after the update, not ${latest} — \`${UPDATE_COMMAND}\` tries again`,
     )
   }
+
   const seen = readSeen()
   writeSeen({ ...seen, latest })
+
   const next = spawnSync(process.execPath, [cli, 'update', ...args], {
     stdio: 'inherit',
     env: { ...process.env, TTHEME_UPDATED: latest },
   })
+
   return next.status ?? 1
 }
 
@@ -215,15 +245,20 @@ export async function newerRelease(): Promise<{ latest?: string; note: string }>
   if (process.env.TTHEME_UPDATED) {
     return { note: `  ttheme ${pkg.version} — updated` }
   }
+
   let latest: string
+
   try {
     latest = await fetchLatest()
   } catch (error) {
     return { note: `  ttheme ${pkg.version} — could not check for a newer one: ${(error as Error).message}` }
   }
+
   writeSeen({ ...readSeen(), checked: Date.now(), latest })
+
   if (!isNewer(latest, pkg.version)) {
     return { note: `  ttheme ${pkg.version} — up to date` }
   }
+
   return runsInstalled() ? { latest, note: '' } : { note: `  ${outdatedLine(latest)}` }
 }

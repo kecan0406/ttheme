@@ -26,6 +26,7 @@ function pick(key: string, id: number, width: number, height: number, tags: stri
     source: '',
     smaller: [],
   }
+
   return { site: site(key), post }
 }
 
@@ -40,6 +41,7 @@ test('fit puts the character alone above a crowd, and a comic below both', () =>
     ],
     frame,
   )
+
   assert.deepEqual(ids(order), [3, 2, 1])
 })
 
@@ -56,6 +58,7 @@ test('a cutout is not held against its aspect, an opaque picture far from the wi
     ],
     frame,
   )
+
   assert.deepEqual(ids(order), [2, 3, 1])
 })
 
@@ -85,6 +88,7 @@ test('scores are weighed within each site, so a site that scores high does not c
     ],
     frame,
   )
+
   assert.deepEqual(ids(order), [1, 3, 2, 4])
 })
 
@@ -100,14 +104,17 @@ test('interleave takes one from each site in turn and keeps each site in its ord
     pick('danbooru', 3, 1, 1, []),
     pick('yande', 4, 1, 1, []),
   ])
+
   assert.deepEqual(ids(order), [1, 4, 2, 3])
 })
 
 function flat(width: number, height: number, [r, g, b]: number[], alpha = 255) {
   const data = new Uint8Array(width * height * 4)
+
   for (let i = 0; i < data.length; i += 4) {
     data.set([r as number, g as number, b as number, alpha], i)
   }
+
   return { width, height, data }
 }
 

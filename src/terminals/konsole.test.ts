@@ -45,6 +45,7 @@ const manifest: Manifest = {
 
 function fixture(): { configHome: string; home: string } {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-konsole-'))
+
   return { configHome: join(home, '.config'), home }
 }
 
@@ -57,6 +58,7 @@ const nobody: Host = { platform: 'linux', env: {}, run: () => undefined }
 
 function bus(konsoles: { service: string; loaded: string[] }[]): { host: Host; defaults: Map<string, string> } {
   const defaults = new Map<string, string>()
+
   const host: Host = {
     platform: 'linux',
     env: {},
@@ -64,8 +66,10 @@ function bus(konsoles: { service: string; loaded: string[] }[]): { host: Host; d
       if (command !== 'dbus-send') {
         return undefined
       }
+
       const dest = args.find((arg) => arg.startsWith('--dest='))?.slice('--dest='.length)
       const [method = '', value] = args.slice(args.indexOf(`--dest=${dest}`) + 2)
+
       if (dest === 'org.freedesktop.DBus') {
         return [
           'method return time=1 sender=org.freedesktop.DBus -> destination=:1.20 serial=3 reply_serial=2',
@@ -75,26 +79,35 @@ function bus(konsoles: { service: string; loaded: string[] }[]): { host: Host; d
           '   ]',
         ].join('\n')
       }
+
       const konsole = konsoles.find((k) => k.service === dest)
+
       if (!konsole) {
         return undefined
       }
+
       if (method.endsWith('Introspect')) {
         return 'method return time=1\n   string "<!DOCTYPE node>\n<node>\n  <interface name="x"/>\n  <node name="3"/>\n</node>\n"'
       }
+
       if (method.endsWith('setDefaultProfile')) {
         const name = value?.slice('string:'.length) ?? ''
+
         if (konsole.loaded.includes(name)) {
           defaults.set(konsole.service, name)
         }
+
         return 'method return time=1'
       }
+
       if (method.endsWith('defaultProfile')) {
         return `method return time=1\n   string "${defaults.get(konsole.service) ?? 'Built-in'}"`
       }
+
       return undefined
     },
   }
+
   return { host, defaults }
 }
 
@@ -124,11 +137,13 @@ test('a color scheme carries all thirty of Konsole entries: normal, intense from
 
 test('sync gives every listed palette and the default a profile on top of the user’s own, and drops the rest', () => {
   const { configHome, home } = fixture()
+
   const state: Installed = {
     terminals: ['konsole'],
     palettes: ['neutral', 'gojo', 'geto', 'kec@dust/fern'],
     konsoleBase: 'Mine.profile',
   }
+
   sync(configHome, manifest, state, home)
   const dir = konsoleData(home)
   const versioned = (file: string) => /\.[0-9a-f]{8}\.colorscheme$/.test(file)
@@ -147,6 +162,7 @@ test('sync gives every listed palette and the default a profile on top of the us
       'ttheme-neutral.profile',
     ],
   )
+
   for (const stem of ['geto', 'gojo', 'kec--dust--fern', 'neutral']) {
     const [file, ...more] = readdirSync(dir).filter((f) => versioned(f) && f.startsWith(`ttheme-${stem}.`))
     assert.ok(file && more.length === 0, stem)
@@ -159,6 +175,7 @@ test('sync gives every listed palette and the default a profile on top of the us
       ),
     )
   }
+
   const gojo = readFileSync(join(dir, 'ttheme-gojo.profile'), 'utf8')
   assert.equal(gojo, konsoleProfile(toTheme(manifest.palettes[1] as PaletteEntry), 'Mine.profile'))
   assert.equal(iniValue(gojo, 'Appearance', 'ColorScheme'), 'ttheme-gojo')
@@ -190,6 +207,7 @@ test('Konsole opens new tabs on the default palette’s profile, follows ttheme 
   put(join(konsoleData(home), 'Mine.profile'), '[General]\nName=Mine\nParent=FALLBACK/\n')
   const before: Installed = { terminals: ['konsole'], palettes: ['gojo', 'geto'], off: true }
   writeInstalled(configHome, before)
+
   const on = commit(
     configHome,
     manifest,
@@ -199,6 +217,7 @@ test('Konsole opens new tabs on the default palette’s profile, follows ttheme 
     nobody,
     home,
   )
+
   assert.deepEqual([...on], [['konsole', { restart: false }]])
   assert.equal(iniValue(readFileSync(rc, 'utf8'), 'Desktop Entry', 'DefaultProfile'), 'ttheme-gojo.profile')
   const state: Installed = { terminals: ['konsole'], palettes: ['gojo', 'geto'], konsoleBase: 'Mine.profile' }
@@ -237,10 +256,12 @@ test('a default the user picks in Konsole stays through an add or remove, and tt
 test('every running Konsole takes the new default over D-Bus, and one that cannot yet asks for a restart', () => {
   const { configHome, home } = fixture()
   const state: Installed = { terminals: ['konsole'], palettes: ['gojo', 'geto'], konsoleBase: 'Mine.profile' }
+
   const live = bus([
     { service: 'org.kde.konsole-8187', loaded: ['ttheme · gojo', 'ttheme · geto'] },
     { service: 'org.kde.konsole', loaded: ['ttheme · gojo', 'ttheme · geto'] },
   ])
+
   const took = commit(configHome, manifest, state, { ...state, startup: 'geto' }, true, live.host, home)
   assert.deepEqual([...took], [['konsole', { restart: false }]])
   assert.deepEqual([...live.defaults.values()], ['ttheme · geto', 'ttheme · geto'])
@@ -296,6 +317,7 @@ test('uninstall gives Konsole its own default back and deletes every scheme and 
   const off: Installed = { terminals: ['konsole'], palettes: ['gojo'], off: true }
   writeInstalled(configHome, off)
   commit(configHome, manifest, off, { terminals: ['konsole'], palettes: ['gojo'] }, false, nobody, home)
+
   const paths = {
     home,
     configHome,
@@ -303,6 +325,7 @@ test('uninstall gives Konsole its own default back and deletes every scheme and 
     cacheDir: join(home, '.cache', 'ttheme'),
     stateDir: join(home, '.local', 'state', 'ttheme'),
   }
+
   applyUninstall(planUninstall(paths), paths, nobody)
   assert.equal(readFileSync(rc, 'utf8'), mine)
   assert.ok(!existsSync(backupPath(rc)))
@@ -322,6 +345,7 @@ test('uninstall drops the konsolerc backup that ttheme off already made true aga
   commit(configHome, manifest, on, { ...on, off: true }, false, nobody, home)
   assert.equal(readFileSync(rc, 'utf8'), mine)
   assert.ok(existsSync(backupPath(rc)))
+
   const paths = {
     home,
     configHome,

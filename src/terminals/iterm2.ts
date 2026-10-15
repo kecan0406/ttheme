@@ -21,13 +21,17 @@ function keeps(state: Installed): boolean {
 function profiles(ctx: Ctx): string {
   const dir = backgroundsDir(ctx.configHome)
   const pictures = new Map<string, ProfileBackground>()
+
   for (const theme of ctx.themes) {
     const picture = readBackdrop(dir, theme.name, ctx.home)
+
     if (picture) {
       pictures.set(theme.name, picture)
     }
   }
+
   const shown = new Set(listed(ctx.entries).map((entry) => entry.name))
+
   return itermProfiles(
     ctx.themes.filter((theme) => shown.has(theme.name)),
     pictures,
@@ -54,10 +58,12 @@ const defaults: Defaults = {
   profile: () => 'ttheme · default',
   base(moment: Moment) {
     const guid = current(moment.host)
+
     return guid && !guid.startsWith('ttheme-') ? { ...moment.state, itermBase: guid } : moment.state
   },
   point(moment: Moment, take: boolean) {
     const now = current(moment.host)
+
     const want = moment.startup
       ? take || now === ITERM_DEFAULT
         ? ITERM_DEFAULT
@@ -65,10 +71,13 @@ const defaults: Defaults = {
       : now === ITERM_DEFAULT && !keeps(moment.state)
         ? moment.state.itermBase
         : undefined
+
     if (!want || want === now) {
       return undefined
     }
+
     moment.host.run('defaults', ['write', suite(moment.host), 'Default Bookmark Guid', '-string', want])
+
     return { restart: Boolean(moment.host.run('pgrep', ['-x', 'iTerm2'])) }
   },
 }
@@ -94,6 +103,7 @@ export const iterm2: Wiring = {
   notes: () => [],
   next(ctx, pointed) {
     const lines = ['iTerm2 profiles   A "ttheme · <palette>" per palette in Settings › Profiles']
+
     if (ctx.startup) {
       lines.push(
         pointed?.restart
@@ -101,6 +111,7 @@ export const iterm2: Wiring = {
           : `iTerm2 default    "ttheme · default" wears ${ctx.startup} and follows \`ttheme default\``,
       )
     }
+
     return lines
   },
   unwire: (at) => ({

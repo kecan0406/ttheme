@@ -133,6 +133,7 @@ test('a bundle that was cut, packs too much or names a palette twice is refused'
 test('a share code with any one character changed is refused', () => {
   const code = shareCode(draft)
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+
   for (let at = 4; at < code.length - 1; at++) {
     const other = alphabet[(alphabet.indexOf(code[at] as string) + 17) % 64]
     assert.throws(() => fromCode(`${code.slice(0, at)}${other}${code.slice(at + 1)}`), /does not add up/)
@@ -171,10 +172,12 @@ test('recolor rewrites the twenty colors and nothing else', () => {
 test('a marketplace takes its catalogs from folders, keeps loose palettes after them, and skips a name used twice', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
   const { waive: _, reason: __, pictures: ___, base: ____, ...plain } = draft
+
   const put = (path: string, name: string) => {
     mkdirSync(join(dir, 'palettes', path, '..'), { recursive: true })
     writeFileSync(join(dir, 'palettes', path), paletteToml({ ...plain, name }))
   }
+
   put('neon/arcade.toml', 'arcade')
   put('pastel/arcade.toml', 'arcade')
   put('pastel/sakura.toml', 'sakura')

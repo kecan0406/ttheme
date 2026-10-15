@@ -4,10 +4,12 @@ import type { Host } from './terminals/types.ts'
 import { LAYER, MANAGED } from './wiring.ts'
 
 export const SHELLS = ['zsh', 'bash', 'fish'] as const
+
 export type Shell = (typeof SHELLS)[number]
 
 export function shellNamed(path: string | undefined): Shell | undefined {
   const name = basename(path ?? '').replace(/^-/, '')
+
   return (SHELLS as readonly string[]).includes(name) ? (name as Shell) : undefined
 }
 
@@ -17,17 +19,22 @@ export function invokingShell(run: Host['run'], pid: number): Shell | undefined 
       run('ps', ['-o', 'ppid=,comm=', '-p', String(at)])
         ?.trim()
         .split(/\s+/) ?? []
+
     const shell = shellNamed(name.join(' '))
+
     if (shell) {
       return shell
     }
+
     at = Number(parent)
   }
+
   return undefined
 }
 
 export function shellsOf(host: Host, pid: number): Shell[] {
   const found = new Set(['zsh', shellNamed(host.env.SHELL), invokingShell(host.run, pid)])
+
   return SHELLS.filter((shell) => found.has(shell))
 }
 
@@ -37,8 +44,10 @@ export function zdotdirOf(host: Host, home: string): string {
   if (host.env.ZDOTDIR) {
     return host.env.ZDOTDIR
   }
+
   const asked = host.run('zsh', ['-c', `print -rn -- "${ZDOTDIR_MARK}\${ZDOTDIR:-$HOME}"`]) ?? ''
   const at = asked.lastIndexOf(ZDOTDIR_MARK)
+
   return (at >= 0 && asked.slice(at + ZDOTDIR_MARK.length)) || home
 }
 
@@ -52,9 +61,11 @@ export function bashFiles(home: string, platform: NodeJS.Platform): string[] {
   const rc = join(home, '.bashrc')
   const login = BASH_LOGIN.map((file) => join(home, file)).find((file) => existsSync(file))
   const files = [...(existsSync(rc) ? [rc] : []), ...(login ? [login] : [])]
+
   if (platform === 'darwin' && !login) {
     files.push(join(home, '.bash_profile'))
   }
+
   return files.length > 0 ? files : [rc]
 }
 

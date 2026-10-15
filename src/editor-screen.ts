@@ -55,10 +55,12 @@ const SEED_BAR = 11
 
 function channelLines(p: Paint, e: PaletteEditor, at: Oklch, barWidth: number): string[] {
   const held = heldOf(e, at)
+
   return CHANNELS.map((channel, i) => {
     const here = e.mode === 'tune' && i === e.channel
     const value = at[channel.key]
     const shown = `${value.toFixed(channel.digits)}${channel.wraps ? '°' : ''}`.padStart(6)
+
     const bar = gradient(
       p,
       channelSamples(at, channel, barWidth),
@@ -66,8 +68,10 @@ function channelLines(p: Paint, e: PaletteEditor, at: Oklch, barWidth: number): 
       here,
       channel.key === 'c' && held !== undefined ? position(held, channel.min, channel.max, barWidth) : undefined,
     )
+
     const label = channel.key.toUpperCase()
     const grip: EditorSpot = { kind: 'channel', channel: i }
+
     return `${spot(grip, here ? p.bold(`▸${label}`) : p.dim(` ${label}`))} ${spot({ kind: 'bar', channel: i }, bar)} ${spot(grip, here ? p.bold(shown) : p.dim(shown))}`
   })
 }
@@ -76,10 +80,13 @@ function scopeLines(p: Paint, e: PaletteEditor): string[] {
   if (e.mode !== 'tune' || e.slot() < BASE.length) {
     return []
   }
+
   const items = SCOPES.map((scope) =>
     spot({ kind: 'scope', scope }, scope !== e.scope ? p.dim(scope) : pillOf(p, scope)),
   )
+
   const n = e.scoped().length
+
   return [
     `${p.dim('Scope')}  ${items.join('  ')}`,
     p.dim(
@@ -110,6 +117,7 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
   const bad = e.misses()
   const c = colorsOf(e.list)
   const focus = e.slot()
+
   const cell = (slot: number) => {
     const hex = e.list[slot] as Hex
     const focused = slot === focus
@@ -117,21 +125,26 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
     const mark = bad.has(slot) ? MARKS.miss : e.tone && e.changed(slot) ? MARKS.on : ' '
     const sw = p.color ? `${p.fg(hex)}${glyph}${focused ? p.fg(c.foreground) : FG_RESET} ` : `${glyph} `
     const text = `${sw}${lchTight(e.lch[slot] as Oklch)}${mark}`
+
     if (!focused) {
       return spot({ kind: 'slot', slot }, ` ${text}`)
     }
+
     return spot(
       { kind: 'slot', slot },
       p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)} ${text}${INK_RESET}` : `›${text}`,
     )
   }
+
   const gutter = (here: boolean) =>
     here ? (p.color ? `${p.fg(c.cursor)}${MARKS.gutter}${FG_RESET} ` : `${MARKS.gutter} `) : '  '
+
   const lines = [
     p.dim(boxEdge(wide, 'top', [[2, ' Base ']])),
     ...BASE.map((name, row) => {
       const here = row === e.row
       const label = name.padEnd(10)
+
       return boxed(
         p,
         `${spot({ kind: 'slot', slot: row }, `${gutter(here)}${here ? p.bold(label) : label}`)}${cell(row)}`,
@@ -149,35 +162,44 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
       const row = BASE.length + k
       const here = row === e.row
       const label = name.padEnd(10)
+
       const named = spot(
         { kind: 'slot', slot: row + (e.col === 1 ? 8 : 0) },
         `${gutter(here)}${here ? p.bold(label) : label}`,
       )
+
       return boxed(p, `${named}${cell(row)}${cell(row + 8)}`, wide)
     }),
     p.dim(boxEdge(wide, 'bottom')),
   ]
+
   const gate = gateBox(p, e, height - lines.length, wide)
+
   return [...lines, ...Array.from({ length: Math.max(0, height - lines.length - gate.length) }, () => ''), ...gate]
 }
 
 function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
   const c = colorsOf(e.list)
+
   const lines = [
     `  ${p.dim('Seeds')}`,
     ...SEED_FIELDS.map((field, i) => {
       const here = i === e.field
       const value = e.seeds[field.key]
+
       const samples = Array.from({ length: SEED_BAR }, (_, k) => {
         const v = field.min + ((field.max - field.min) * k) / (SEED_BAR - 1)
+
         return SEED_SHOWS[field.key](grow({ ...e.seeds, [field.key]: v }))
       })
+
       const bar = gradient(p, samples, position(value, field.min, field.max, SEED_BAR), here)
       const shown = `${value.toFixed(field.digits)}${field.wraps ? '°' : ''}`.padStart(6)
       const hex = SEED_SHOWS[field.key](c)
       const gutter = here ? (p.color ? `${p.fg(c.cursor)}${MARKS.gutter}${FG_RESET} ` : `${MARKS.gutter} `) : '  '
       const label = field.label.padEnd(17)
       const grip: EditorSpot = { kind: 'field', field: i }
+
       return `${spot(grip, `${gutter}${here ? p.bold(label) : label}`)}${spot({ kind: 'seed', field: i }, bar)}${spot(grip, ` ${shown}  ${p.color ? `${p.fg(hex)}${MARKS.swatch}${FG_RESET} ` : ''}${p.dim(hex)}`)}`
     }),
     '',
@@ -187,15 +209,19 @@ function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
     ).map((line) => `  ${p.dim(line)}`),
     '',
   ]
+
   return [...lines, ...gateBox(p, e, height - lines.length, LEFT)]
 }
 
 function sample(p: Paint, c: Colors, width: number, room: number, scene: number, slot: number): string[] {
   const at = SCENES.indexOf(sceneAt(scene))
+
   const tabs = SCENES.map((one, i) =>
     spot({ kind: 'scene', scene: i }, i !== at ? p.dim(one.name) : pillOf(p, one.name)),
   ).join('  ')
+
   const base = `${p.bg(c.background)}${p.fg(c.foreground)}`
+
   return [
     spread(tabs, p.dim('⇧←→'), width),
     ...sceneAt(scene)
@@ -207,6 +233,7 @@ function sample(p: Paint, c: Colors, width: number, room: number, scene: number,
         const line = p.color
           ? parts.map(([t, role]) => `${roleSgr(p, c, role, used(slot, role))}${t}${RESET}${base}`).join('')
           : parts.map(([t]) => t).join('')
+
         return `${base} ${fit(line, width - 2)} ${p.color ? RESET : ''}`
       }),
   ]
@@ -227,64 +254,82 @@ function chart(
   const lit = litColumns(e)
   const c = colorsOf(shown)
   const at = (hex: Hex) => Math.min(rows - 1, Math.max(0, Math.round((top - pick(oklch(hex))) / step)))
+
   return Array.from({ length: rows }, (_, r) => {
     const label = r % 2 === 0 ? (top - step * r).toFixed(top >= 1 ? 1 : 2).replace(/^0(?=\.\d\d)/, '') : ''
+
     const columns = Array.from({ length: 8 }, (_, k) => {
       const marks = [' ', ' ', ' ', ' ', ' ']
       const normal = c.ansi[k] as Hex
       const bright = c.ansi[k + 8] as Hex
       const n = at(normal) === r
       const b = at(bright) === r
+
       const cellOf = (j: number) => {
         if (j === 1 && n) return p.color ? `${p.fg(normal)}${MARKS.on}` : MARKS.on
+
         if (j === 3 && b) return p.color ? `${p.fg(bright)}${MARKS.off}` : MARKS.off
+
         return marks[j] as string
       }
+
       const cells = [0, 1, 2, 3, 4].map(cellOf).join('')
+
       return lit.has(k)
         ? p.color
           ? `${p.bg(c.selection)}${cells}${INK_RESET}`
           : cells
         : `${cells}${p.color ? FG_RESET : ''}`
     })
+
     return `${label.padStart(4)} ${p.dim(r % 2 === 0 ? '┤' : '│')}${columns.join('')}`
   })
 }
 
 function litColumns(e: PaletteEditor): Set<number> {
   const slots = e.mode === 'tune' ? e.scoped() : [e.slot()]
+
   return new Set(slots.filter((slot) => slot >= BASE.length).map((slot) => (slot - BASE.length) % 8))
 }
 
 function axisLabels(p: Paint, e: PaletteEditor): string {
   const lit = litColumns(e)
+
   return `      ${SHORT.map((name, k) => (lit.has(k) ? p.bold(` ${name}  `) : p.dim(` ${name}  `))).join('')}`
 }
 
 function hueLines(p: Paint, shown: Hex[]): string[] {
   const c = colorsOf(shown)
+
   const band = Array.from({ length: 40 }, (_, cell) => {
     const angle = cell * 9 + 4.5
     let best = -1
     let gap = 999
+
     for (const [role, hue] of Object.entries(ROLE_HUES)) {
       const d = hueGap(angle, hue.center)
+
       if (d <= hue.width && d < gap) {
         gap = d
         best = Number(role)
       }
     }
+
     return best < 0 ? ' ' : p.color ? `${p.fg(c.ansi[best] as Hex)}─` : '─'
   }).join('')
+
   const dots = (offset: number, glyph: string) => {
     const cells = Array.from({ length: 40 }, () => ' ')
+
     for (const role of Object.keys(ROLE_HUES).map(Number)) {
       const hex = c.ansi[role + offset] as Hex
       const at = Math.min(39, Math.round(oklch(hex).h / 9))
       cells[at] = p.color ? `${p.fg(hex)}${glyph}${FG_RESET}` : glyph
     }
+
     return `      ${cells.join('')}`
   }
+
   return [
     `${p.bold('Hue')}   ${p.dim('0°        90°       180°      270°      360°')}`,
     `${p.dim('bands')} ${band}${p.color ? FG_RESET : ''}`,
@@ -297,6 +342,7 @@ function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
   const theme = gatedOf(shown, e.signature, e.waive)
   const name = (ansi: number) => slotLabel(BASE.length + ansi).name
   const hue = (ansi: number) => oklch(shown[BASE.length + ansi] as Hex).h.toFixed(0)
+
   const notes = [
     ...brightDrift(theme)
       .filter(({ gap }) => gap > 25)
@@ -306,10 +352,12 @@ function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
       ),
     ...offRole(theme).map(({ slot, over }) => {
       const band = ROLE_HUES[roleOf(slot)] as { name: string; center: number; width: number }
+
       return `${name(slot)} ${hue(slot)}° · ${over.toFixed(0)}° outside ${band.name} ${band.center}±${band.width}°`
     }),
     ...lookalikes(theme).map(([a, b]) => `${name(a)} and ${name(b).toLowerCase()} read as one color`),
   ]
+
   return notes.length > 0
     ? notes.map((note) => `${p.bold(MARKS.miss)} ${note}`)
     : [p.dim(`${MARKS.ok} Every accent keeps its role and its bright`)]
@@ -319,20 +367,24 @@ function relations(p: Paint, e: PaletteEditor, width: number, height: number, fu
   const shown = e.shown()
   const maxC = Math.max(...shown.slice(BASE.length).map((hex) => oklch(hex).c))
   const topC = Math.max(0.2, Math.ceil(maxC / 0.05) * 0.05)
+
   const lines = [
     spread(p.bold('Lightness'), p.dim('● normal  ○ bright'), width),
     ...chart(p, e, shown, (o) => o.l, 1, 0.3, 8),
     axisLabels(p, e),
   ]
+
   if (full) {
     lines.push('', p.bold('Chroma'), ...chart(p, e, shown, (o) => o.c, topC, 0, 5), '', ...hueLines(p, shown))
   }
+
   return [...lines, ...relationNotes(p, e, shown)].slice(0, height)
 }
 
 function viewTabs(p: Paint, e: PaletteEditor, width: number): string {
   const tab = (name: string, view: PaletteEditor['view']) =>
     spot({ kind: 'view', view }, e.view !== view ? p.dim(` ${name} `) : pillOf(p, name))
+
   return spread(
     `${tab('Slot', 'slot')}${tab('Relations', 'relations')}`,
     keyZone('g', `${p.bold('g')} ${p.dim('switch')}`),
@@ -348,26 +400,33 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   const { name, about } = slotLabel(slot)
   const sig = e.signature.includes(SLOT_NAMES[slot] as string)
   const barWidth = Math.max(8, Math.min(64, width - 12))
+
   if (e.view === 'relations' && e.mode !== 'tune') {
     return [viewTabs(p, e, width), '', ...relations(p, e, width, height - 2, true)]
   }
+
   const right = slot >= BASE.length ? p.dim('Uses underlined below') : sig ? p.dim('◆ signature') : ''
   const lines = [spread(`${p.bold(name)}  ${p.dim(about)}`, e.view === 'relations' ? '' : right, width), '']
   const block = p.color ? `${p.fg(hex)}${'█'.repeat(8)}${FG_RESET}  ` : ''
   const typed = e.typing !== undefined ? `${p.bold(`${e.typing}▏`)}` : undefined
   const [r, g, b] = rgb(hex)
   lines.push(`${block}${typed ?? lchLine(p, at)}`, `${block}${p.dim(`${hex} · rgb ${r} ${g} ${b}`)}`)
+
   if (e.view !== 'relations') {
     const swatch = p.color ? `${p.fg(was)}${MARKS.swatch}${FG_RESET} ` : ''
     lines.push(
       `${block}${was !== hex ? p.dim(`was ${swatch}${oklchText(e.lchOf(was)).slice(6)} · ${was}`) : p.dim('as it opened')}`,
     )
   }
+
   lines.push('', ...channelLines(p, e, at, barWidth), contrastLine(p, e, barWidth), ...scopeLines(p, e))
+
   if (e.view === 'relations') {
     lines.push('', ...relations(p, e, width, height - lines.length - 1, false))
+
     return lines
   }
+
   lines.push(
     '',
     ...detailChecks(e, slot, at).flatMap((check) =>
@@ -377,13 +436,17 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
     ),
   )
   const hint = fixHint(e, slot)
+
   if (hint) {
     lines.push(p.dim(`  ${hint}`))
   }
+
   const room = height - lines.length - 1
+
   if (room >= 3) {
     lines.push('', ...sample(p, colorsOf(e.shown()), width, room, e.scene, slot))
   }
+
   return lines
 }
 
@@ -467,17 +530,21 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
   const room = height - 2
   const top = Math.max(0, Math.min(e.pick - Math.floor(room / 2), choices.length - room))
   const nameWidth = Math.min(40, Math.max(12, ...choices.map((c) => cells(c.name))))
+
   return [
     spread(`  ${p.bold('Take colors from')}  ${filter}`, p.dim(`${choices.length}/${all}`), width),
     '',
     ...choices.slice(top, top + room).map((choice, k) => {
       const here = top + k === e.pick
       const c = choice.colors
+
       const swatches = p.color
         ? `${p.bg(c.background)} ${c.ansi.map((hex) => `${p.fg(hex)}${MARKS.swatch}`).join('')} ${p.fg(c.foreground)}Aa ${INK_RESET}`
         : ''
+
       const gutter = here ? '▌ ' : '  '
       const label = choice.name.padEnd(nameWidth)
+
       return spot({ kind: 'choice', index: top + k }, `${gutter}${here ? p.bold(label) : label}  ${swatches}`)
     }),
     ...(choices.length === 0 ? [`  ${p.dim(`No palettes match '${e.filter}'`)}`] : []),
@@ -491,6 +558,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   let lead = ''
   let keys: [string, string][] = []
   let right = ''
+
   if (e.quitting) {
     badge = 'EDIT (QUIT)'
     lead = 'Save changes?'
@@ -585,33 +653,42 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
     ]
     right = 'esc cancel'
   }
+
   if (!e.options.find) {
     keys = keys.filter(([key]) => key !== 'p' && key !== 'b')
   }
+
   if (!e.options.exports || !e.roomy) {
     keys = keys.filter(([key]) => key !== 'x')
   }
+
   if (!e.roomy) {
     keys = keys.filter(([key]) => key !== 'i' && key !== 'm')
   }
+
   if (e.notice) {
     lead = p.warn(e.notice)
     keys = []
   }
+
   const tag = `${pillOf(p, badge)}${p.color ? '  ' : ' '}`
+
   const shownRight = right
     ? keyZone(
         right.split(' ')[0] as string,
         `${p.bold(right.split(' ')[0] as string)} ${p.dim(right.split(' ').slice(1).join(' '))}`,
       )
     : ''
+
   for (;;) {
     const segments = [lead, ...keys.map(([k, label]) => keyZone(k, `${p.bold(k)} ${p.dim(label)}`))].filter(Boolean)
     const line = `${tag}${segments.join('   ')}`
     const drop = keys.findLastIndex(([key], i) => i > 0 && !KEEP.has(key))
+
     if (cells(line) + cells(right) + 3 <= width || drop < 0) {
       return right ? spread(line, shownRight, width) : fit(line, width)
     }
+
     keys = keys.toSpliced(drop, 1)
   }
 }
@@ -628,16 +705,21 @@ export function drawEditor(
   look: Look = {},
 ): { lines: string[]; art: Art | undefined } {
   const drawn = drawFrame(e, cols, rows, color, look)
+
   if (!e.quitting || cols < MIN_COLS || rows < MIN_ROWS) {
     return drawn
   }
+
   const dialog = quitDialog(painter(color), e, cols)
   const col = Math.floor((cols - cells(dialog[0] as string)) / 2)
   const top = Math.max(0, Math.floor((drawn.lines.length - dialog.length) / 2))
+
   const lines = drawn.lines.map((line, i) => {
     const part = dialog[i - top]
+
     return part === undefined ? line : cover(line, col, part)
   })
+
   return { ...drawn, lines }
 }
 
@@ -649,21 +731,27 @@ function drawFrame(
   look: Look,
 ): { lines: string[]; art: Art | undefined } {
   const p = painter(color)
+
   if (cols < MIN_COLS || rows < MIN_ROWS) {
     const small = [
       p.bold('ttheme palette editor'),
       `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${rows}`,
       p.dim('esc cancels'),
     ]
+
     return { lines: Array.from({ length: rows }, (_, i) => fit(small[i] ?? '', cols)), art: undefined }
   }
+
   e.viewport(cols, rows)
+
   if (!e.overlay && e.mode !== 'seeds' && e.view === 'slot') {
     const built = renderBuilder(e, cols, rows, color, look)
+
     if (built) {
       return { lines: [...built.lines, footer(p, e, cols)], art: built.art }
     }
   }
+
   const failing = e.failing().length
   const gate = failing === 0 ? '✓ Passes the gate' : `✗ ${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
   const shelf = e.pictures > 0 ? p.dim(`▣ ${e.pictures} ${e.pictures === 1 ? 'picture' : 'pictures'}   `) : ''
@@ -672,6 +760,7 @@ function drawFrame(
   const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
   const height = rows - 4
   let body: string[]
+
   if (e.overlay === 'keys') {
     body = keysPane(p, e, cols)
   } else if (e.overlay === 'open') {
@@ -685,6 +774,7 @@ function drawFrame(
       (_, i) => `${fit(left[i] ?? '', LEFT)}${p.dim('│')} ${fit(side[i] ?? '', right)}`,
     )
   }
+
   const lines = [
     spread(title, state, cols),
     '',
@@ -692,6 +782,7 @@ function drawFrame(
     '',
     footer(p, e, cols),
   ]
+
   return { lines, art: undefined }
 }
 
@@ -702,6 +793,7 @@ function closesPicker(target: EditorSpot | undefined): boolean {
   if (!target) {
     return true
   }
+
   return target.kind === 'key' ? !PICKER_KEYS.has(target.key) : !PICKER_SPOTS.has(target.kind)
 }
 
@@ -710,27 +802,37 @@ function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void
     if (!event.sideways) {
       e.scroll(event.wheel)
     }
+
     return
   }
+
   if ((event.action === 'press' || event.action === 'drag') && event.button !== 'left') {
     return
   }
+
   if (event.action === 'press' && e.overlay === 'keys') {
     e.press('esc')
+
     return
   }
+
   const target = hit?.target as EditorSpot | undefined
+
   if (event.action === 'press' && e.mode === 'tune' && e.roomy && !e.overlay && closesPicker(target)) {
     e.dismiss()
   }
+
   if (!hit || !target) {
     return
   }
+
   const along = hit.width > 1 ? (hit.exact.x - 0.5) / (hit.width - 1) : 0
+
   if (event.action === 'release') {
     if (!hit.inside) {
       return
     }
+
     if (target.kind === 'key') {
       e.press(target.key)
     } else if (target.kind === 'entry') {
@@ -740,8 +842,10 @@ function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void
     } else if (event.count === 2 && target.kind === 'choice' && e.overlay === 'open') {
       e.press('enter')
     }
+
     return
   }
+
   if (target.kind === 'plane') {
     const at = planeAt(target.row + hit.exact.y, target.rows, hit.exact.x, hit.width, (e.lch[e.slot()] as Oklch).h)
     e.plane(at.lightness, at.chroma)
@@ -794,45 +898,56 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
   const backdrop = surface.backdrop
   const layer = surface.layer
   const burst = (typed: string) => editor.typing === undefined && typedDrop(typed)
+
   const terminalOptions = surface.hosted
     ? { modes: [PASTES, ...pointing()], assume: [HIDE_CURSOR, NO_WRAP], burst }
     : { modes: [...MODES, ...pointing()], burst }
+
   return within(terminalOptions, async (terminal) => {
     let away = false
     let over = false
     const own = new Map<string, string>()
     const pixels = new PixelProbe()
+
     const seen = await terminal.ask(
       `${colorQuery(SLOT_CODES, '')}${pointing().length > 0 ? PIXEL_QUERY : ''}\x1b[c`,
       (event) => {
         if (event.kind === 'color') {
           own.set(event.code, event.value)
+
           return undefined
         }
+
         return pixels.see(event)
       },
       1000,
     )
+
     if (seen?.cell) {
       terminal.pixels(seen.cell)
     }
+
     const answered = slotColors(own) as (Hex | undefined)[]
     const chrome = answered.map((hex, slot) => hex ?? (editor.start[slot] as Hex))
     const [ground, ink] = chrome as [Hex, Hex]
+
     if (!answered[3]) {
       chrome[3] = surfaceOf(ground, ink, 'selection')
     }
+
     const screen = new Screen({
       write: (text) => terminal.write(text),
       view: () => {
         if (away) {
           return undefined
         }
+
         const { lines, art } = drawEditor(editor, terminal.cols, terminal.rows, surface.color, {
           behind: editor.pic && backdrop?.laid === true,
           art: layer?.ready === true,
           chrome,
         })
+
         return {
           lines,
           after: () =>
@@ -851,6 +966,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
         }
       },
     })
+
     const changed = (keyed = false) => {
       if (keyed) {
         screen.soon()
@@ -858,26 +974,33 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
         screen.request()
       }
     }
+
     const visit = async (start: Start | undefined) => {
       const find = options.find
+
       if (!find) {
         return
       }
+
       away = true
       terminal.write(`${backdrop?.clear() ?? ''}${layer?.clear() ?? ''}`)
+
       try {
         editor.found(await find(editor.edited(), start))
       } catch (error) {
         editor.notice = error instanceof Error ? error.message : String(error)
       }
+
       if (over) {
         return
       }
+
       away = false
       backdrop?.load()
       screen.reset(CLEAR)
       changed()
     }
+
     terminal.write(CLEAR)
     terminal.onResize(() => {
       backdrop?.resized()
@@ -885,10 +1008,12 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
       screen.reset(CLEAR)
       screen.request()
     })
+
     if (backdrop) {
       backdrop.load()
       backdrop.ready = () => screen.request()
     }
+
     if (backdrop || layer) {
       const probe = new CellProbe()
       void terminal
@@ -898,16 +1023,20 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
             backdrop?.measured(cell)
             layer?.measured(cell)
           }
+
           screen.request()
         })
     }
+
     changed()
+
     try {
       const { edited } = await terminal.loop(
         (event): { edited: Edited | undefined } | undefined => {
           if (away) {
             return undefined
           }
+
           if (event.kind === 'paste') {
             editor.paste(event.text)
           } else if (event.kind === 'key') {
@@ -915,18 +1044,23 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
           } else if (event.kind === 'mouse') {
             pointEditor(editor, screen.point(event), event)
           }
+
           if (editor.copied !== undefined) {
             terminal.write(`\x1b]52;c;${Buffer.from(editor.copied).toString('base64')}\x07`)
             editor.copied = undefined
           }
+
           if (editor.result) {
             return { edited: editor.result === 'saved' ? editor.edited() : undefined }
           }
+
           const wants = editor.wants
+
           if (wants) {
             editor.wants = undefined
             void visit(wants.start)
           }
+
           return undefined
         },
         () => {
@@ -935,6 +1069,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
           }
         },
       )
+
       return edited
     } finally {
       over = true

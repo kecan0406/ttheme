@@ -40,12 +40,14 @@ function namesDue(home: string): boolean {
 function stamp(home: string, at: number): void {
   const file = checked(home)
   mkdirSync(namesDir(home), { recursive: true })
+
   if (!existsSync(file)) writeFileSync(file, '')
   utimesSync(file, at / 1000, at / 1000)
 }
 
 export function startNamesUpdate(home = homedir()): void {
   if (!namesWanted() || !namesDue(home)) return
+
   try {
     stamp(home, Date.now())
     spawn(process.execPath, [process.argv[1] as string, 'names'], {
@@ -62,31 +64,42 @@ function sha256(data: Uint8Array): string {
 
 async function download(url: string): Promise<Uint8Array> {
   const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT) })
+
   if (!response.ok) throw new Error(`${url} answered ${response.status}`)
+
   return new Uint8Array(await response.arrayBuffer())
 }
 
 export async function updateNames(home = homedir()): Promise<number> {
   const dir = namesDir(home)
+
   try {
     const release = JSON.parse(new TextDecoder().decode(await download(`${NAMES_RELEASE}/ttheme.json`))) as Release
+
     for (const [layer, { file, sha256: want }] of Object.entries(release.layers)) {
       const target = join(dir, `ttheme-${layer}.json`)
+
       if (existsSync(target) && sha256(readFileSync(target)) === want) continue
       const data = gunzipSync(await download(`${NAMES_RELEASE}/${file}`))
+
       if (sha256(data) !== want) throw new Error(`${file} does not match its hash`)
       writeAtomic(target, data)
     }
+
     stamp(home, Date.now())
   } catch {
     stamp(home, Date.now() - DAY + RETRY)
+
     return 1
   }
+
   primeNames(home)
   const config = configHome()
+
   if (existsSync(officialPath(config))) {
     knowAliases(readAvailable(config).palettes, home)
     refreshAliases(config, home)
   }
+
   return 0
 }

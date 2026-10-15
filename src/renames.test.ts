@@ -11,6 +11,7 @@ const ID = 'ann@pastel'
 function moved(renames: Record<string, string | false>, installed: string[], forceRemove = false): Moves {
   const moves: Moves = { renamed: new Map(), removed: [] }
   plan(ID, { renames, forceRemove }, new Set(['dusk', 'noon']), installed, moves)
+
   return moves
 }
 
@@ -21,6 +22,7 @@ test('an installed palette its marketplace renamed follows the chain to the pale
     `${ID}/noon`,
     'bob@x/dawn',
   ])
+
   assert.deepEqual([...moves.renamed], [[`${ID}/dawn`, `${ID}/dusk`]])
   assert.deepEqual(moves.removed, [`${ID}/old`])
 })
@@ -35,6 +37,7 @@ test('marketplace check names a chain that loops or ends off the marketplace, an
     { a: 'b', b: 'a', c: 'missing', noon: 'dusk', fine: 'dusk', gone: false },
     new Set(['dusk', 'noon']),
   )
+
   assert.equal(errors.length, 3)
   assert.match(errors.join('\n'), /renames\.c: the chain ends at missing/)
   assert.deepEqual(warnings, ['renames.noon: noon is still a palette here, so the rename never applies'])

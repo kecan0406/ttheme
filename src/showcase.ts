@@ -28,18 +28,23 @@ export interface Shown {
 async function found(token: string | undefined): Promise<Found[]> {
   const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(`topic:${TOPIC}`)}&sort=stars&per_page=100`
   const response = await reach(url, undefined, undefined, token ? { authorization: `Bearer ${token}` } : {})
+
   return ((await response.json()) as { items: Found[] }).items
 }
 
 async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {
   const source = `${r.owner.login.toLowerCase()}/${r.name}`
+
   try {
     const archive = await fetchArchive(source)
+
     if (!archive) {
       return []
     }
+
     const { id, entries, info } = fromArchive(source, archive, official)
     const palettes = listed(entries).map((e) => ({ ...e, name: slugOf(e.name) }))
+
     return palettes.length === 0
       ? []
       : [
@@ -56,6 +61,7 @@ async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {
         ]
   } catch (error) {
     process.stderr.write(`showcase: skipping ${source} — ${(error as Error).message}\n`)
+
     return []
   }
 }

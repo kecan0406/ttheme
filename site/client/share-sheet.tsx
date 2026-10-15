@@ -18,19 +18,29 @@ class ShareSheet extends HTMLElement {
 
   #click = (event: MouseEvent) => {
     const target = event.target as Element | null
+
     if (!target) return
     const panel = target.closest<HTMLElement>('[data-panel]')?.dataset.panel
+
     if (panel) return this.#showPanel(panel)
     const pane = target.closest<HTMLElement>('[data-pane]')?.dataset.pane
+
     if (pane) return this.#showPane(pane)
+
     if (target.closest('[data-inspect]')) return this.#inspect(!this.#inspecting)
+
     if (target.closest('[data-slot-close]')) return this.#close(true)
+
     if (target.closest('[data-where]')) return this.#setWhere(!this.#where)
+
     if (target.closest('[data-gate-jump]')) return this.#toGate()
     const opener = target.closest<HTMLElement>('[data-slot-open]')
+
     if (opener) return this.#choose(Number(opener.dataset.slotOpen), opener)
     const run = target.closest<HTMLElement>('[data-mock] .r')
+
     if (run && this.#inspecting) return this.#pin(run)
+
     if (this.#open !== null && !target.closest('[data-slot-popover]')) this.#close(false)
   }
 
@@ -38,13 +48,17 @@ class ShareSheet extends HTMLElement {
     if (event.key === 'Escape' && this.#open !== null) {
       event.preventDefault()
       this.#close(true)
+
       return
     }
+
     if (event.key === 'Escape' && this.#pinned) {
       event.preventDefault()
       this.#release()
+
       return
     }
+
     tabKey(event, (tab) => {
       tab.focus()
       tab.click()
@@ -54,19 +68,24 @@ class ShareSheet extends HTMLElement {
   #change = (event: Event) => {
     const input = event.target as HTMLInputElement
     const format = FORMATS.find((name) => name === input.value)
+
     if (input.name !== 'slot-format' || !format || this.#open === null) return
     this.#format = format
     const value = this.#view?.slots[this.#open]?.formats[format] ?? ''
     const code = this.querySelector('[data-slot-popover] [data-value]')
     const copy = this.querySelector<HTMLElement>('[data-slot-popover] [data-copy]')
+
     if (code) code.textContent = value
+
     if (copy) copy.dataset.copy = value
   }
 
   #toggle = (event: Event) => {
     const group = event.target
+
     if (!(group instanceof HTMLDetailsElement) || this.#open === null) return
     const row = this.querySelector(`[data-row="${this.#open}"]`)
+
     if (!group.open && row && group.contains(row)) this.#close(false)
     else this.#place()
   }
@@ -74,6 +93,7 @@ class ShareSheet extends HTMLElement {
   #placeAdd = (event: Event) => {
     const pop = event.target as HTMLElement
     const button = this.querySelector('[data-add]')
+
     if ((event as ToggleEvent).newState !== 'open' || !button) return
     const spot = button.getBoundingClientRect()
     pop.style.top = `${spot.bottom + 8}px`
@@ -83,10 +103,13 @@ class ShareSheet extends HTMLElement {
   #over = (event: PointerEvent) => {
     if (!this.#inspecting || event.pointerType === 'touch') return
     const run = (event.target as Element | null)?.closest<HTMLElement>('.r')
+
     if (!run || run === this.#hovered) return
     this.#hovered?.removeAttribute('data-hover')
     this.#hovered = run
+
     if (run !== this.#pinned) run.setAttribute('data-hover', '')
+
     if (!this.#pinned) this.#show(run)
     this.#hint()
   }
@@ -94,6 +117,7 @@ class ShareSheet extends HTMLElement {
   #leave = () => {
     this.#hovered?.removeAttribute('data-hover')
     this.#hovered = null
+
     if (!this.#pinned) this.#hide()
     this.#hint()
   }
@@ -106,24 +130,30 @@ class ShareSheet extends HTMLElement {
     this.addEventListener('toggle', this.#toggle, true)
     this.querySelector('#share-add')?.addEventListener('beforetoggle', this.#placeAdd)
     const term = this.querySelector<HTMLElement>('[data-term]')
+
     if (term) {
       term.addEventListener('pointerover', this.#over)
       term.addEventListener('pointerleave', this.#leave)
       this.#watch = new ResizeObserver(() => {
         this.#tail()
+
         if (this.#pinned) this.#show(this.#pinned)
       })
       this.#watch.observe(term)
     }
+
     this.#tail()
     void this.#credits()
   }
 
   async #credits() {
     const list = this.querySelector('[data-pictures]')
+
     if (!list) return
+
     try {
       const response = await fetch(`${location.pathname.replace(/\/$/, '')}/credits.json${location.search}`)
+
       if (!response.ok) return
       fill(list, html(<PictureRows pictures={(await response.json()) as Picture[]} />))
     } catch {}
@@ -143,9 +173,11 @@ class ShareSheet extends HTMLElement {
       tab.setAttribute('aria-selected', String(on))
       tab.tabIndex = on ? 0 : -1
     }
+
     for (const body of this.querySelectorAll<HTMLElement>('[data-panel-body]')) {
       body.hidden = body.dataset.panelBody !== name
     }
+
     if (name !== 'colors') this.#close(false)
   }
 
@@ -155,9 +187,11 @@ class ShareSheet extends HTMLElement {
       tab.setAttribute('aria-selected', String(on))
       tab.tabIndex = on ? 0 : -1
     }
+
     for (const panel of this.querySelectorAll<HTMLElement>('[data-pane-panel]')) {
       panel.hidden = panel.dataset.panePanel !== name
     }
+
     this.#release()
     this.#tail()
   }
@@ -175,10 +209,13 @@ class ShareSheet extends HTMLElement {
     const view = this.#view
     const row = this.querySelector<HTMLElement>(`[data-row="${slot}"]`)
     const box = this.querySelector<HTMLElement>('[data-slot-popover]')
+
     if (!view || !row || !box) return
     this.#showPanel('colors')
     const group = row.closest('details')
+
     if (group && !group.open) group.open = true
+
     for (const lit of this.querySelectorAll<HTMLElement>('[data-row][data-open]')) delete lit.dataset.open
     row.dataset.open = ''
     this.#open = slot
@@ -192,6 +229,7 @@ class ShareSheet extends HTMLElement {
   #place() {
     const box = this.querySelector<HTMLElement>('[data-slot-popover]')
     const row = this.#open === null ? null : this.querySelector<HTMLElement>(`[data-row="${this.#open}"]`)
+
     if (!box || !row) return
     const anchor = row.closest<HTMLElement>('[data-pair]') ?? row
     box.style.top = `${anchor.offsetTop + anchor.offsetHeight + 4}px`
@@ -199,15 +237,19 @@ class ShareSheet extends HTMLElement {
 
   #close(refocus: boolean) {
     const slot = this.#open
+
     if (slot === null) return
     this.#open = null
     const box = this.querySelector<HTMLElement>('[data-slot-popover]')
+
     if (box) {
       box.hidden = true
       box.replaceChildren()
     }
+
     for (const lit of this.querySelectorAll<HTMLElement>('[data-row][data-open]')) delete lit.dataset.open
     this.#light()
+
     if (refocus) this.querySelector<HTMLElement>(`[data-slot-open="${slot}"]`)?.focus()
   }
 
@@ -219,17 +261,21 @@ class ShareSheet extends HTMLElement {
 
   #light() {
     const mock = this.querySelector<HTMLElement>('[data-mock]')
+
     if (!mock) return
     const slot = this.#where && this.#open !== null ? String(this.#open) : null
+
     for (const run of mock.querySelectorAll<HTMLElement>('.r')) {
       run.toggleAttribute('data-lit', slot !== null && (run.dataset.t === slot || run.dataset.g === slot))
     }
+
     mock.toggleAttribute('data-where', slot !== null)
   }
 
   #toGate() {
     this.#showPanel('colors')
     const gate = this.querySelector<HTMLDetailsElement>('#share-gate')
+
     if (!gate) return
     gate.open = true
     gate.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' })
@@ -239,6 +285,7 @@ class ShareSheet extends HTMLElement {
     this.#inspecting = on
     this.querySelector('[data-inspect]')?.setAttribute('aria-pressed', String(on))
     this.querySelector('[data-mock]')?.toggleAttribute('data-inspecting', on)
+
     if (!on) this.#release()
     this.#hint()
   }
@@ -247,6 +294,7 @@ class ShareSheet extends HTMLElement {
     const was = this.#pinned
     was?.removeAttribute('data-pinned')
     this.#pinned = was === run ? null : run
+
     if (this.#pinned) {
       run.removeAttribute('data-hover')
       run.setAttribute('data-pinned', '')
@@ -257,6 +305,7 @@ class ShareSheet extends HTMLElement {
     } else {
       this.#hide()
     }
+
     this.#hint()
   }
 
@@ -273,12 +322,14 @@ class ShareSheet extends HTMLElement {
     const view = this.#view
     const term = this.querySelector<HTMLElement>('[data-term]')
     const box = this.querySelector<HTMLElement>('[data-inspector]')
+
     if (!view || !term || !box) return
     const text = Number(run.dataset.t)
     const ground = Number(run.dataset.g)
     const faint = run.hasAttribute('data-f')
     const ink = faint ? view.faint : view.slots[text]?.hex
     const under = view.slots[ground]?.hex
+
     if (!ink || !under) return
     fill(
       box,
@@ -296,6 +347,7 @@ class ShareSheet extends HTMLElement {
     const appearing = box.hidden
     box.hidden = false
     const card = box.firstElementChild as HTMLElement | null
+
     if (!card) return
     const area = term.getBoundingClientRect()
     const spot = run.getBoundingClientRect()
@@ -305,6 +357,7 @@ class ShareSheet extends HTMLElement {
     const fits = spot.bottom + 6 + card.offsetHeight <= area.bottom
     box.style.left = `${Math.max(8 + term.scrollLeft, left)}px`
     box.style.top = `${fits || above < term.scrollTop ? below : above}px`
+
     if (appearing && !reducedMotion()) {
       box.animate(
         [
@@ -321,6 +374,7 @@ class ShareSheet extends HTMLElement {
 
   #hide() {
     const box = this.querySelector<HTMLElement>('[data-inspector]')
+
     if (!box) return
     box.hidden = true
     box.replaceChildren()
@@ -328,6 +382,7 @@ class ShareSheet extends HTMLElement {
 
   #hint() {
     const hint = this.querySelector<HTMLElement>('[data-hint]')
+
     if (hint) hint.hidden = !this.#inspecting || this.#pinned !== null || this.#hovered !== null
   }
 }

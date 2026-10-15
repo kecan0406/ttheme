@@ -92,11 +92,13 @@ export function profilesOf(urls: readonly string[]): string[] {
     for (const [, form, canonical] of FORMS.filter(([of]) => of === kind)) {
       for (const url of urls) {
         const id = form.exec(url)?.[1]
+
         if (id) {
           return [canonical(id)]
         }
       }
     }
+
     return []
   })
 }
@@ -104,6 +106,7 @@ export function profilesOf(urls: readonly string[]): string[] {
 export function linksOf(urls: readonly string[] | undefined): Profile[] {
   return (urls ?? []).flatMap((url) => {
     const kind = profileKind(url)
+
     return kind ? [{ kind, url }] : []
   })
 }
@@ -111,10 +114,12 @@ export function linksOf(urls: readonly string[] | undefined): Profile[] {
 export function pageLabel(url: string): string {
   for (const [form, label] of PAGES) {
     const match = form.exec(url)
+
     if (match) {
       return label(match)
     }
   }
+
   try {
     return new URL(url).hostname.replace(/^www\./, '')
   } catch {
@@ -126,9 +131,11 @@ export function publicUrl(url: string): string {
   try {
     const at = new URL(url)
     const host = CANONICAL[at.hostname]
+
     if (host) {
       at.hostname = host
     }
+
     return at.href
   } catch {
     return url
@@ -141,12 +148,14 @@ function bare(url: string): string {
 
 export function artworkOf(picture: Credited): Page | undefined {
   const source = picture.source ?? ''
+
   return safeUrl(source) ? { label: pageLabel(source), url: source } : undefined
 }
 
 export function postOf(picture: Credited): Page | undefined {
   const words = (picture.from ?? '').split(' ')
   const url = words[2] ?? ''
+
   return safeUrl(url) ? { label: words.slice(0, 2).join(' '), url } : undefined
 }
 
@@ -158,29 +167,35 @@ export function followOf(urls: readonly string[] | undefined, page: string | und
   const on = page ? pageKind(page) : undefined
   const links = linksOf(urls)
   const kind = FOLLOWS.find((each) => each !== on && links.some((link) => link.kind === each))
+
   return links.find((link) => link.kind === kind)?.url
 }
 
 export function creditLine(picture: Credited): string | undefined {
   const page = artworkOf(picture)?.url ?? postOf(picture)?.url
   const artists = picture.artist ?? []
+
   if (!page && artists.length === 0) {
     return undefined
   }
+
   const by =
     artists.length > 0
       ? `Background art by ${artists
           .map((name) => {
             const follow = followOf(picture.profiles?.[name], page)
+
             return follow ? `${name} (${bare(follow)})` : name
           })
           .join(', ')}`
       : 'Background art (artist unknown)'
+
   return page ? `${by} · ${publicUrl(page)}` : by
 }
 
 export async function fetchProfiles(names: readonly string[], signal: AbortSignal): Promise<Map<string, string[]>> {
   const found = await fetchArtistUrls(names, signal)
+
   return new Map(names.map((name) => [name, profilesOf(found.get(name) ?? [])]))
 }
 
@@ -192,28 +207,35 @@ export interface PostCredit {
 
 export async function postCredit(site: Site, id: number, signal: AbortSignal): Promise<PostCredit | undefined> {
   const post = await fetchPost(site, id, signal)
+
   if (!post) {
     return undefined
   }
+
   if (site !== LENDER && post.md5) {
     try {
       lend([post], await fetchLent([post.md5], signal))
     } catch {}
   }
+
   if (uncredited(site, post)) {
     try {
       const found = await fetchCredits(site, post.id, signal)
+
       if (found) {
         credit(post, found)
       }
     } catch {}
   }
+
   let profiles = new Map<string, string[]>()
+
   if (post.named.artist.length > 0) {
     try {
       profiles = await fetchProfiles(post.named.artist, signal)
     } catch {}
   }
+
   return {
     artist: post.named.artist,
     source: sourcePage(post.source),

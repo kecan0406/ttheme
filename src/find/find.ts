@@ -215,12 +215,15 @@ function initial(setting: Setting, raw: string | undefined): string {
   if (setting.multi) {
     return setting.multi.read(raw).join(' ') || (setting.multi.none as string)
   }
+
   if (setting.entry === 'number') {
     return /^\d+$/.test(raw ?? '') && Number(raw) > 0 ? String(Number(raw)) : 'off'
   }
+
   if (setting.entry === 'text') {
     return tagList(raw).join(' ')
   }
+
   return setting.choices.find((choice) => choice === raw) ?? (setting.choices[0] as string)
 }
 
@@ -246,11 +249,13 @@ function visit(url: string): void {
   if (process.env.SSH_CONNECTION || !/^(?:https?|file):/i.test(url)) {
     return
   }
+
   try {
     const opener = spawn(process.platform === 'darwin' ? 'open' : 'xdg-open', [url], {
       stdio: 'ignore',
       detached: true,
     })
+
     opener.on('error', () => {})
     opener.unref()
   } catch {}
@@ -261,11 +266,14 @@ function resized(size: Tuning['size'], step: number, fill: number): Tuning['size
     if (size !== 'fill') {
       return Math.max(SMALLEST, size + step)
     }
+
     if (!fill) {
       return size
     }
+
     return Math.max(SMALLEST, Math.max(100, fill) + step + 1)
   }
+
   return size === 'fill' || size + step > fill ? 'fill' : size + step
 }
 
@@ -277,6 +285,7 @@ function toTune(tune: Tuning, untuned: Tuning): Tune | undefined {
   if (sameTuning(tune, untuned)) {
     return undefined
   }
+
   return {
     ...(tune.size !== 'fill' ? { size: tune.size } : {}),
     ...(tune.at !== untuned.at ? { position: POSITIONS[tune.at - 1] } : {}),
@@ -286,12 +295,15 @@ function toTune(tune: Tuning, untuned: Tuning): Tune | undefined {
 
 function heldOf(home: string, name: string): Held[] {
   const dir = backgroundsDir(home)
+
   return rackOf(home, name).flatMap((picture, i): Held[] => {
     const [, key, id] = /^([a-z.]+)_(\d+)$/.exec(picture.key) ?? []
     const site = [...SITES, LOCAL].find((s) => s.key === key)
+
     if (!site || !id) {
       return []
     }
+
     return [
       {
         key: picture.key,
@@ -411,17 +423,23 @@ function describe(error: unknown): string {
   if (!(error instanceof Error)) {
     return String(error)
   }
+
   if (error instanceof AggregateError && error.errors[0]) {
     return describe(error.errors[0])
   }
+
   if (error.cause) {
     return describe(error.cause)
   }
+
   const code: unknown = (error as NodeJS.ErrnoException).code
+
   if (typeof code === 'string') {
     return code
   }
+
   const first = (error.message || error.name).split('.')[0] ?? ''
+
   return first.length > 56 ? `${first.slice(0, 55)}…` : first
 }
 
@@ -621,6 +639,7 @@ class Finder {
 
   private get nextTabName(): string {
     const next = (this.tab + 1) % (SITES.length + 1)
+
     return next === 0 ? 'all' : (SITES[next - 1] as Site).name
   }
 
@@ -650,6 +669,7 @@ class Finder {
 
   private previewPath(pick: Pick): string {
     const { url } = previewOf(pick.site, pick.post)
+
     return join(cacheDir(pick.site), 'thumb', `${previewStem(pick.post.id, url)}.${extension(url)}`)
   }
 
@@ -657,6 +677,7 @@ class Finder {
     const { site, post } = pick
     const key = postKey(site, post.id)
     const version = rendition(post) ?? post
+
     return {
       id: post.id,
       key,
@@ -690,6 +711,7 @@ class Finder {
     view.note = board.note
     view.focus = Math.max(0, Math.min(board.focus, view.tiles.length - 1))
     view.top = board.top
+
     if (this.showing !== board) {
       this.showing = board
       this.paint.snap()
@@ -712,6 +734,7 @@ class Finder {
 
   run(): Promise<number> {
     const burst = (typed: string) => this.view.editing === undefined && typedDrop(typed)
+
     return within({ modes: [PASTES, ...pointing()], assume: [HIDE_CURSOR, NO_WRAP], burst }, async (terminal) => {
       this.terminal = terminal
       terminal.onResize(this.onResize)
@@ -719,20 +742,26 @@ class Finder {
         for (const event of events) {
           this.inbound(event)
         }
+
         this.paint.soon()
       })
       terminal.write(CLEAR)
+
       const exit = new Promise<number>((resolve) => {
         this.done = resolve
       })
+
       const clock = setInterval(this.onClock, 250)
       setTimeout(primeNames, 0)
+
       try {
         const probe = new CellProbe()
         const cell = await terminal.ask(CELL_QUERY, (event) => probe.see(event), 1000)
+
         if (cell) {
           this.cell = cell
           this.holdThumbs()
+
           if (this.view.tag) {
             void this.search()
             void this.relate(this.view.tag)
@@ -741,11 +770,14 @@ class Finder {
           this.view.searching = false
           this.view.error = 'This terminal does not report its cell size — find needs kitty graphics'
         }
+
         if (!process.env.TMUX) {
           await terminal.ask(FEATURES, (event) => (event.kind === 'attributes' ? true : undefined), 500, false)
         }
+
         this.grabber.start()
         terminal.hold(FOCUS)
+
         if (this.start && 'paste' in this.start) {
           this.pasted(this.start.paste)
         } else if (this.start) {
@@ -753,7 +785,9 @@ class Finder {
         } else {
           void this.peek()
         }
+
         this.paint.draw()
+
         return await terminal.until(exit)
       } finally {
         this.session.abort()
@@ -814,43 +848,57 @@ class Finder {
 
   private pasted(text: string): void {
     const view = this.view
+
     if (view.editing !== undefined && text.trim() !== '' && !this.picture(text)) {
       view.editing += text.replace(/[\r\n]+/g, ' ')
       this.suggest()
       this.paint.draw()
+
       return
     }
+
     if (view.installing !== undefined || view.panel !== undefined || view.help) {
       return
     }
+
     if (text.trim() === '') {
       void this.fromClipboard()
+
       return
     }
+
     void this.attach(text)
   }
 
   private picture(text: string): boolean {
     const trimmed = text.trim()
+
     if (/^https?:\/\/\S+$/i.test(trimmed)) {
       return !postRef(trimmed, this.site ?? (SITES[0] as Site))
     }
+
     return pastedRefs(trimmed).length > 0
   }
 
   private async got(got: Got): Promise<void> {
     if (got.kind === 'error') {
       this.notice(got.message)
+
       return
     }
+
     if (got.kind === 'text') {
       if (got.text.trim() === '') {
         this.notice(`No picture on the clipboard — ${SCREENSHOT}`)
+
         return
       }
+
       this.pasted(got.text)
+
       return
     }
+
     await this.bring(() => normalize(got.bytes, got.source))
   }
 
@@ -870,18 +918,23 @@ class Finder {
   private async peek(): Promise<void> {
     const view = this.view
     let seen: Awaited<ReturnType<typeof peekClipboard>>
+
     try {
       seen = await peekClipboard()
     } catch {
       return
     }
+
     if (!seen || seen.stamp === this.peeked) {
       return
     }
+
     this.peeked = seen.stamp
+
     if (!seen.picture || view.installing !== undefined) {
       return
     }
+
     view.hint = `Picture on the clipboard · ${PASTE_KEY} uses it`
     clearTimeout(this.peekTimer)
     this.peekTimer = setTimeout(() => {
@@ -893,56 +946,80 @@ class Finder {
 
   private async fromClipboard(): Promise<void> {
     const view = this.view
+
     if (remote()) {
       if (this.grabber.clipboard) {
         this.grabber.ask()
+
         return
       }
+
       this.notice('Over SSH the clipboard is not here — drop the file')
+
       return
     }
+
     let clip: Clip
+
     try {
       clip = await readClipboard(join(this.scratch, `clipboard-${Date.now()}.png`))
     } catch (error) {
       this.notice(`Could not read the clipboard: ${describe(error)}`)
+
       return
     }
+
     clearTimeout(this.peekTimer)
     view.hint = undefined
+
     if ('image' in clip) {
       await this.bring(async (signal) => ({ ...(await loadRef(clip.image, signal)), source: 'clipboard' }))
+
       return
     }
+
     const text = clip.text.trim()
+
     if (!text) {
       this.notice(`No picture on the clipboard — ${SCREENSHOT}`)
+
       return
     }
+
     if (this.picture(text)) {
       await this.attach(text)
+
       return
     }
+
     if (view.editing === undefined) {
       view.editing = ''
     }
+
     this.pasted(text)
   }
 
   private async attach(text: string): Promise<void> {
     const trimmed = text.trim()
+
     if (/^https?:\/\//i.test(trimmed)) {
       const ref = postRef(trimmed, this.site ?? (SITES[0] as Site))
+
       if (ref) {
         await this.jump(ref.site, ref.id)
+
         return
       }
     }
+
     const [first, ...more] = pastedRefs(trimmed).sort((a, b) => Number(!PICTURE.test(a)) - Number(!PICTURE.test(b)))
+
     if (!first) {
       this.notice('Nothing to use in that — drop a picture, or paste one or its link')
+
       return
     }
+
     await this.bring((signal) => loadRef(first, signal), more.length)
   }
 
@@ -956,6 +1033,7 @@ class Finder {
     view.note = 'Reading the picture…'
     this.paint.draw()
     let image: Loaded
+
     try {
       image = await load(AbortSignal.any([control.signal, this.signal]))
     } catch (error) {
@@ -963,11 +1041,14 @@ class Finder {
         view.note = undefined
         this.notice(describe(error), 8000)
       }
+
       return
     }
+
     if (control.signal.aborted) {
       return
     }
+
     view.note = skipped > 0 ? `The first picture of ${skipped + 1} — drop one at a time to try the others` : undefined
     this.quietSuggest()
     view.editing = undefined
@@ -978,6 +1059,7 @@ class Finder {
     const orig = this.origPath(LOCAL, id, image.ext)
     writeAtomic(orig, image.bytes)
     const url = pathToFileURL(orig).href
+
     const post: Post = {
       id,
       file: url,
@@ -996,6 +1078,7 @@ class Finder {
       family: 0,
       smaller: [],
     }
+
     const pick = { site: LOCAL, post }
     const preview = this.previewPath(pick)
     writeAtomic(preview, image.bytes)
@@ -1026,6 +1109,7 @@ class Finder {
     const slow = this.sites.reduce((a, b) => (pausedUntil(b) > pausedUntil(a) ? b : a))
     const left = Math.ceil((pausedUntil(slow) - Date.now()) / 1000)
     const waiting = left > 0 ? left : undefined
+
     if (waiting !== this.view.waiting) {
       this.view.waiting = waiting
       this.view.slow = slow.name
@@ -1040,63 +1124,86 @@ class Finder {
     this.holdThumbs()
     this.scroll()
     this.paint.snap()
+
     if (this.view.mode === 'try' && this.current) {
       this.reveal()
     }
+
     void this.pump()
     this.paint.draw()
   }
 
   private key(key: string): void {
     const view = this.view
+
     if (key === 'ctrl-c') {
       this.finish(2)
+
       return
     }
+
     if (view.installing !== undefined) {
       return
     }
+
     if (key === 'focus-in') {
       void this.peek()
+
       return
     }
+
     if (key === 'focus-out') {
       return
     }
+
     if ((key === 'ctrl-v' || key === 'alt-v') && view.panel === undefined) {
       void this.fromClipboard()
+
       return
     }
+
     if (view.editing !== undefined) {
       this.editKey(key)
+
       return
     }
+
     if (view.panel !== undefined) {
       this.panelKey(key)
+
       return
     }
+
     if (view.help) {
       if (key === '?' || key === 'esc') {
         view.help = false
         this.paint.draw()
       }
+
       return
     }
+
     if (this.cols < MIN.cols || this.rows < MIN.rows) {
       if (key === 'esc') {
         this.finish(2)
       }
+
       return
     }
+
     if (key === '?') {
       view.help = true
       this.paint.draw()
+
       return
     }
+
     if (view.mode === 'try') {
       this.tryKey(key)
+
       return
     }
+
     this.gridKey(key)
   }
 
@@ -1104,18 +1211,23 @@ class Finder {
     const view = this.view
     const hit = this.paint.point(event)
     const spot = hit?.target as FindSpot | undefined
+
     if (view.installing !== undefined) {
       return
     }
+
     if (event.action === 'wheel') {
       if (!event.sideways) {
         this.wheel(event.wheel)
       }
+
       return
     }
+
     if ((event.action === 'press' || event.action === 'drag') && event.button !== 'left') {
       return
     }
+
     if (spot?.kind === 'track' && hit && event.action !== 'release') {
       this.slide(spot.field, hit)
     } else if (event.action === 'press') {
@@ -1127,6 +1239,7 @@ class Finder {
 
   private pressed(spot: FindSpot | undefined): void {
     const view = this.view
+
     if (view.help) {
       this.paint.drop()
       this.key('esc')
@@ -1152,6 +1265,7 @@ class Finder {
 
   private released(spot: FindSpot | undefined, event: Mouse): void {
     const view = this.view
+
     if (spot?.kind === 'key') {
       this.key(spot.key)
     } else if (spot?.kind === 'link') {
@@ -1178,9 +1292,11 @@ class Finder {
 
   private wheel(step: number): void {
     const view = this.view
+
     if (view.help) {
       return
     }
+
     if (view.editing !== undefined) {
       if (view.suggest?.length) {
         this.editKey(step < 0 ? 'up' : 'down')
@@ -1200,44 +1316,58 @@ class Finder {
 
   private panelPoint(spot: FindSpot | undefined): void {
     const view = this.view
+
     if (spot?.kind !== 'setting' && spot?.kind !== 'choice') {
       return
     }
+
     const row = view.settings[spot.index]
+
     if (view.typing !== undefined) {
       const typed = view.settings[view.panel ?? 0]
+
       if (typed && (spot.index !== view.panel || spot.kind === 'setting')) {
         this.typeKey(typed, 'enter')
       } else {
         return
       }
     }
+
     if (spot.kind === 'setting' && spot.index === view.settings.length) {
       view.panel = spot.index
       this.panelKey('enter')
+
       return
     }
+
     view.panel = spot.index
+
     if (spot.kind === 'choice' && row) {
       if (row.entry === 'text' || spot.choice === undefined) {
         this.panelKey('enter')
+
         return
       }
+
       if (row.multi) {
         row.cursor = Math.max(0, row.choices.indexOf(spot.choice))
         this.panelKey(' ')
+
         return
       }
+
       if (row.value !== spot.choice) {
         row.value = spot.choice
         this.recount()
       }
     }
+
     this.paint.draw()
   }
 
   private tryPoint(spot: FindSpot): void {
     const view = this.view
+
     if (spot.kind === 'scene') {
       view.scene = spot.scene
       view.details = false
@@ -1251,11 +1381,14 @@ class Finder {
   private slide(field: number, hit: Hit): void {
     const view = this.view
     const panel = view.tuning
+
     if (!panel) {
       return
     }
+
     const along = Math.min(1, Math.max(0, hit.width > 1 ? hit.x / (hit.width - 1) : 0))
     panel.field = field
+
     if (field === 0) {
       const top = Math.max(100, panel.fill)
       const size = SMALLEST + Math.round(along * (top - SMALLEST + 1))
@@ -1263,12 +1396,14 @@ class Finder {
     } else {
       view.tune.opacity = Math.round(along * 100) / 100
     }
+
     this.retune()
   }
 
   private gridKey(key: string): void {
     const view = this.view
     const { perRow, rowsVis } = gridShape(this.cols, this.rows)
+
     const moves: Record<string, number> = {
       left: -1,
       right: 1,
@@ -1281,57 +1416,79 @@ class Finder {
       home: -view.focus,
       end: view.tiles.length,
     }
+
     const move = moves[key]
+
     if (move !== undefined) {
       this.focus(view.focus + move)
+
       return
     }
+
     if (/^[1-9]$/.test(key)) {
       this.toggle(Number(key) - 1)
+
       return
     }
+
     if (key === 'enter' && view.tiles[view.focus]) {
       view.mode = 'try'
       view.error = undefined
       this.select()
+
       return
     }
+
     if (key === 'v') {
       void this.fromClipboard()
+
       return
     }
+
     if (key === 'c') {
       view.preset = view.preset === 'cutouts' ? 'all' : 'cutouts'
       void this.turn()
+
       return
     }
+
     if (key === 'tab' || key === 'shift-tab') {
       const tabs = SITES.length + 1
       this.tab = (this.tab + (key === 'tab' ? 1 : tabs - 1)) % tabs
       this.syncSite()
       void this.turn()
+
       return
     }
+
     if (key === '/') {
       view.editing = ''
       this.paint.draw()
+
       return
     }
+
     if (key === ' ') {
       this.unfold()
+
       return
     }
+
     if (key === 'o' || key === 'O') {
       this.openPage(key === 'O')
+
       return
     }
+
     if (key === 's') {
       view.panel = 0
       view.advanced = false
       this.recount()
       this.paint.draw()
+
       return
     }
+
     if (key === 'esc') {
       this.finish(2)
     }
@@ -1341,50 +1498,67 @@ class Finder {
     const view = this.view
     const at = view.panel ?? 0
     const row = view.settings[at]
+
     if (view.typing !== undefined && row) {
       this.typeKey(row, key)
+
       return
     }
+
     const page = pageOf(view)
+
     if (key === 'up' || key === 'down') {
       const k = page.indexOf(at) + (key === 'up' ? -1 : 1)
       view.panel = page[(k + page.length) % page.length] ?? at
       this.paint.draw()
+
       return
     }
+
     if (key === 'a' || (key === 'enter' && at === view.settings.length)) {
       view.advanced = !view.advanced
       view.panel = pageOf(view)[0] ?? 0
       this.paint.draw()
+
       return
     }
+
     if (row?.entry && (key === 'enter' || (row.entry === 'number' && /^[0-9]$/.test(key)))) {
       view.typing = key === 'enter' ? (row.entry === 'text' ? row.value : '') : key
       this.paint.draw()
+
       return
     }
+
     if ((key === 'left' || key === 'right') && row && row.entry !== 'text') {
       const step = key === 'left' ? -1 : 1
+
       if (row.multi) {
         row.cursor = (row.cursor + step + row.choices.length) % row.choices.length
       } else {
         row.value = stepped(row.choices, row.value, step)
         this.recount()
       }
+
       this.paint.draw()
+
       return
     }
+
     if (key === ' ' && row?.multi) {
       const on = row.value.split(' ')
       const next = row.choices.filter((choice, k) => (k === row.cursor ? !on.includes(choice) : on.includes(choice)))
       const empty = row.multi.none
+
       if (next.length > 0 || empty !== undefined) {
         row.value = next.length > 0 ? next.join(' ') : (empty as string)
         this.recount()
         this.paint.draw()
       }
+
       return
     }
+
     if (key === 'esc') {
       view.settings.forEach((setting, i) => {
         setting.value = this.setting(SETTINGS[i]?.name ?? '')
@@ -1393,8 +1567,10 @@ class Finder {
       view.advanced = false
       this.quietCount()
       this.paint.draw()
+
       return
     }
+
     if (key === 'enter' || key === 's' || key === 'alt-c') {
       view.panel = undefined
       view.advanced = false
@@ -1406,26 +1582,35 @@ class Finder {
   private typeKey(row: Row, key: string): void {
     const view = this.view
     const typed = view.typing ?? ''
+
     if (key === 'esc') {
       view.typing = undefined
       this.paint.draw()
+
       return
     }
+
     if (key === 'enter' || key === 'up' || key === 'down') {
       row.value =
         row.entry === 'number' ? (Number(typed) > 0 ? String(Number(typed)) : 'off') : tagList(typed).join(' ')
       view.typing = undefined
       this.recount()
+
       if (key === 'enter') {
         this.paint.draw()
+
         return
       }
+
       this.panelKey(key)
+
       return
     }
+
     const next = edit(typed, key, (ch) =>
       row.entry === 'number' ? /^[0-9]$/.test(ch) && typed.length < DIGITS : /^[\x20-\x7e]$/.test(ch),
     )
+
     if (next !== undefined) {
       view.typing = next
       this.paint.draw()
@@ -1441,9 +1626,11 @@ class Finder {
   private recount(): void {
     this.quietCount()
     this.view.counts = undefined
+
     if (!this.view.tag) {
       return
     }
+
     const asked = new AbortController()
     this.counting = asked
     this.countTimer = setTimeout(() => void this.countPending(asked), COUNT_WAIT)
@@ -1452,6 +1639,7 @@ class Finder {
   private pending(): Terms {
     const value = (name: string) =>
       this.view.settings[SETTINGS.findIndex((setting) => setting.name === name)]?.value ?? this.setting(name)
+
     return {
       tag: this.view.tag,
       chosen: this.view.chosen,
@@ -1467,23 +1655,29 @@ class Finder {
     const terms = this.pending()
     const sites = this.site ? [this.site] : SITES.filter((site) => terms.enabled.includes(site.name))
     const signal = AbortSignal.any([this.signal, asked.signal])
+
     const counts = await Promise.all(
       sites.map(async (site): Promise<Count> => {
         const plan = this.query(site, terms)
+
         if (!plan) {
           return { site: site.name, count: 0 }
         }
+
         if (site.counts && !site.counts(plan.tags)) {
           return { site: site.name }
         }
+
         try {
           const count = await fetchCount(site, plan.tags, signal)
+
           return { site: site.name, ...(Number.isFinite(count) ? { count } : {}) }
         } catch {
           return { site: site.name }
         }
       }),
     )
+
     if (this.counting === asked && this.view.panel !== undefined) {
       this.view.counts = counts
       this.paint.draw()
@@ -1495,15 +1689,19 @@ class Finder {
     const before = SETTINGS.map((setting) => this.setting(setting.name))
     view.settings.forEach((row, i) => {
       const setting = SETTINGS[i]
+
       if (setting) {
         this.values.set(setting.name, row.value)
       }
     })
     const changed = SETTINGS.filter((setting, i) => this.setting(setting.name) !== before[i])
+
     if (changed.length === 0) {
       this.paint.draw()
+
       return
     }
+
     this.save(changed)
     view.rating = ratingSet(this.setting('TTHEME_FIND_RATING'))
     view.block = blockSet(this.setting('TTHEME_FIND_BLOCK'))
@@ -1528,15 +1726,18 @@ class Finder {
 
   private store(pairs: [string, string][]): boolean {
     const path = join(this.home, 'ttheme', 'config.zsh')
+
     try {
       const before = existsSync(path) ? readFileSync(path, 'utf8') : ''
       writeAtomic(
         path,
         pairs.reduce((text, [name, value]) => withSetting(text, name, value), before),
       )
+
       return true
     } catch (error) {
       this.view.error = error instanceof Error ? error.message : String(error)
+
       return false
     }
   }
@@ -1545,43 +1746,60 @@ class Finder {
     const view = this.view
     const text = view.editing ?? ''
     const shown = view.suggest ?? []
+
     if ((key === 'up' || key === 'down') && shown.length > 0) {
       const at = view.pick ?? shown.length
       const next = (at + (key === 'down' ? 1 : shown.length)) % (shown.length + 1)
       view.pick = next === shown.length ? undefined : next
       this.paint.draw()
+
       return
     }
+
     if (key === 'esc' || key === 'enter') {
       this.quietSuggest()
     }
+
     if (key === 'esc') {
       view.editing = undefined
+
       if (view.tag === '') {
         this.finish(2)
+
         return
       }
+
       this.paint.draw()
+
       return
     }
+
     if (key === 'enter') {
       const picked = view.pick === undefined ? undefined : shown[view.pick]
       const chosen = picked ? (picked.whole ? picked.value : text.replace(/\S*$/, picked.value)) : text
       view.editing = undefined
       view.suggest = undefined
       view.pick = undefined
+
       if (chosen.trim()) {
         void this.commit(chosen.trim())
+
         return
       }
+
       if (view.tag === '') {
         this.finish(2)
+
         return
       }
+
       this.paint.draw()
+
       return
     }
+
     const next = edit(text, key)
+
     if (next !== undefined) {
       view.editing = next
       this.suggest()
@@ -1602,16 +1820,20 @@ class Finder {
     const text = view.editing ?? ''
     const token = /\S*$/.exec(text)?.[0] ?? ''
     const typed = completable(token)
+
     const named = nameHits(text, KNOWN, this.tagged).map((hit) => ({
       value: hit.tag,
       count: 0,
       alias: hit.name,
       whole: true,
     }))
+
     if (!typed && named.length === 0) {
       view.suggest = undefined
+
       return
     }
+
     const ours = typed
       ? booruTags(this.manifest.palettes, this.entry, token).map((p) => ({
           value: p.booru as string,
@@ -1619,19 +1841,24 @@ class Finder {
           palette: p.name,
         }))
       : []
+
     const known = [...new Map([...ours.slice(0, KNOWN), ...named].map((item) => [item.value, item] as const)).values()]
     view.suggest = known.length > 0 ? known : undefined
+
     if (named.length > 0 && SPOKEN.test(text)) {
       view.pick = known.findIndex((item) => 'whole' in item)
     }
+
     if (!typed) {
       return
     }
+
     const asked = new AbortController()
     this.suggesting = asked
     this.suggestTimer = setTimeout(async () => {
       try {
         const found = await fetchSuggestions(token, AbortSignal.any([this.signal, asked.signal]))
+
         if (this.suggesting === asked && view.editing !== undefined) {
           const counts = new Map(found.map((item) => [item.value, item.count]))
           const names = new Set(known.map((item) => item.value))
@@ -1648,14 +1875,19 @@ class Finder {
 
   private async commit(text: string): Promise<void> {
     const ref = postRef(text, this.site ?? (SITES[0] as Site))
+
     if (ref) {
       await this.jump(ref.site, ref.id)
+
       return
     }
+
     if (this.picture(text)) {
       await this.attach(text)
+
       return
     }
+
     this.view.tag = text
     this.view.chosen = undefined
     void this.relate(text)
@@ -1675,19 +1907,24 @@ class Finder {
     this.boards.set(board.key, board)
     this.show()
     this.paint.draw()
+
     try {
       const post = await fetchPost(site, id, this.signal)
+
       if (gen !== this.gen) {
         return
       }
+
       if (!post) {
         board.searching = false
         board.error = `${site.name} has no post ${id}`
         this.view.error = board.error
         this.show()
         this.paint.draw()
+
         return
       }
+
       this.single(board, { site, post })
     } catch (error) {
       this.fail(gen, error, site)
@@ -1699,10 +1936,13 @@ class Finder {
     this.current = undefined
     this.view.shown = undefined
     const known = this.boards.get(this.boardKey)
+
     if (!known) {
       await this.search()
+
       return
     }
+
     this.gen++
     this.board = known
     this.view.error = known.error
@@ -1714,12 +1954,15 @@ class Finder {
   private unfold(): void {
     const view = this.view
     let index = 0
+
     for (const group of this.board.groups) {
       const size = group.open ? group.posts.length : 1
+
       if (view.focus < index + size) {
         if (group.posts.length < 2) {
           return
         }
+
         group.open = !group.open
         this.board.focus = index
         this.thumbQueue.push(...group.posts.filter((pick) => !this.thumbPath.has(postKey(pick.site, pick.post.id))))
@@ -1728,8 +1971,10 @@ class Finder {
         this.scroll()
         this.paint.glide()
         this.paint.draw()
+
         return
       }
+
       index += size
     }
   }
@@ -1737,12 +1982,15 @@ class Finder {
   private openPage(post: boolean): void {
     const tile = this.view.tiles[this.view.focus]
     const pick = tile && this.posts.get(tile.key)
+
     if (!pick) {
       return
     }
+
     const source = sourcePage(pick.post.source)
     const page = pick.site === LOCAL ? '' : pick.site.pageUrl(pick.post.id)
     const url = !post && /^https?:\/\//i.test(source) ? source : page
+
     if (url) {
       visit(url)
     }
@@ -1750,52 +1998,73 @@ class Finder {
 
   private tryKey(key: string): void {
     const view = this.view
+
     if (view.tuning) {
       this.tuneKey(key)
+
       return
     }
+
     if (key === 'left' || key === 'right') {
       this.direction = key === 'left' ? -1 : 1
       this.focus(view.focus + this.direction)
+
       return
     }
+
     if (key === 'shift-left' || key === 'shift-right') {
       view.scene += key === 'shift-left' ? -1 : 1
       view.details = false
       this.paint.draw()
+
       return
     }
+
     if (key === 'i') {
       view.details = !view.details
       this.inform()
       this.paint.draw()
+
       return
     }
+
     if (key === 't') {
       view.tuning = { field: 0, held: { ...view.tune }, fill: this.current?.fill ?? 0, coloring: view.coloring }
       this.paint.draw()
+
       return
     }
+
     if (key === 'c') {
       this.recolor()
+
       return
     }
+
     if (key === 'o' || key === 'O') {
       this.openPage(key === 'O')
+
       return
     }
+
     if (key === 'x') {
       this.swap()
+
       return
     }
+
     if (key === 'v') {
       void this.fromClipboard()
+
       return
     }
+
     if (key === 'enter') {
       void this.install()
+
       return
     }
+
     if (key === 'esc') {
       this.fetch?.abort()
       clearTimeout(this.settle)
@@ -1810,12 +2079,16 @@ class Finder {
     const view = this.view
     const panel = view.tuning as TunePanel
     const tune = view.tune
+
     if (key === 'up' || key === 'down') {
       panel.field = (panel.field + (key === 'up' ? 2 : 1)) % 3
       this.paint.draw()
+
       return
     }
+
     const step = STEPS[key]
+
     if (step !== undefined) {
       if (panel.field === 0) {
         tune.size = resized(tune.size, step, panel.fill)
@@ -1824,17 +2097,23 @@ class Finder {
       } else {
         tune.opacity = Math.max(0, Math.min(100, Math.round(tune.opacity * 100) + step)) / 100
       }
+
       this.retune()
+
       return
     }
+
     if (/^[1-9]$/.test(key)) {
       panel.field = 1
       tune.at = Number(key)
       this.retune()
+
       return
     }
+
     if (key === '=') {
       const base = view.untuned
+
       if (panel.field === 0) {
         tune.size = base.size
       } else if (panel.field === 1) {
@@ -1842,23 +2121,32 @@ class Finder {
       } else {
         tune.opacity = base.opacity
       }
+
       this.retune()
+
       return
     }
+
     if (key === '+') {
       view.tune = { ...view.untuned }
       this.retune()
+
       return
     }
+
     if (key === 'enter') {
       view.tuning = undefined
       this.paint.draw()
+
       return
     }
+
     if (key === 'c') {
       this.recolor()
+
       return
     }
+
     if (key === 'esc') {
       view.tune = { ...panel.held, ...(panel.coloring === view.coloring ? {} : { opacity: view.untuned.opacity }) }
       view.tuning = undefined
@@ -1868,9 +2156,11 @@ class Finder {
 
   private recolor(): void {
     const view = this.view
+
     if (!this.current || view.shown?.id !== this.current.key) {
       return
     }
+
     view.coloring = view.coloring === 'tone' ? 'original' : 'tone'
     view.tune.opacity = view.untuned.opacity
     this.paint.draw()
@@ -1879,6 +2169,7 @@ class Finder {
 
   private retune(): void {
     this.paint.draw()
+
     if (this.current && this.view.shown?.id === this.current.key) {
       this.reveal()
     }
@@ -1897,11 +2188,13 @@ class Finder {
     const rating = ratingOf(site, post)
     const listed = new Set([...named.artist, ...named.character, ...named.copyright])
     const source = sourcePage(post.source)
+
     const link = /^https?:\/\//i.test(source)
       ? source
       : site === LOCAL && source.startsWith('/')
         ? pathToFileURL(source).href
         : undefined
+
     return {
       page: site === LOCAL ? '' : site.pageUrl(post.id),
       source,
@@ -1922,21 +2215,27 @@ class Finder {
 
   private focus(index: number): void {
     const view = this.view
+
     if (view.tiles.length === 0) {
       return
     }
+
     const next = Math.max(0, Math.min(view.tiles.length - 1, index))
+
     if (next === view.focus) {
       return
     }
+
     view.focus = next
     this.board.focus = next
     this.scroll()
     this.paint.glide()
     void this.pump()
+
     if (view.mode === 'try') {
       this.select()
     }
+
     this.paint.draw()
   }
 
@@ -1944,12 +2243,15 @@ class Finder {
     const view = this.view
     const { perRow, rowsVis } = gridShape(this.cols, this.rows)
     const row = Math.floor(view.focus / perRow)
+
     if (row < view.top) {
       view.top = row
     }
+
     if (row > view.top + rowsVis - 1) {
       view.top = row - rowsVis + 1
     }
+
     this.board.top = view.top
   }
 
@@ -1957,14 +2259,17 @@ class Finder {
     if (terms.chosen) {
       return terms.chosen
     }
+
     if (!terms.tag) {
       return []
     }
+
     return this.namesOf(terms.tag, 'danbooru')
   }
 
   private namesOf(tag: string, site: string): string[] {
     const owner = tag === this.entry.booru ? this.entry : this.manifest.palettes.find((p) => p.booru === tag)
+
     return owner ? siteTags(owner, site) : [tag]
   }
 
@@ -1976,14 +2281,18 @@ class Finder {
   private toggle(at: number): void {
     const view = this.view
     const chip = view.chips[at]
+
     if (!chip) {
       return
     }
+
     const on = this.selected(view)
     const chosen = chip.on ? on.filter((name) => name !== chip.name) : [...on, chip.name]
+
     if (chosen.length === 0) {
       return
     }
+
     view.chosen = chosen
     view.tag = chosen.join(' or ')
     this.syncChips()
@@ -1997,23 +2306,30 @@ class Finder {
     this.pool = names
     this.syncChips()
     this.paint.draw()
+
     if (!tag || /\s/.test(tag)) {
       return
     }
+
     let found = this.related.get(tag)
+
     if (!found) {
       const asked = new AbortController()
       this.relating = asked
+
       try {
         found = (await fetchRelated(tag, AbortSignal.any([this.signal, asked.signal]))).map((item) => item.value)
       } catch {
         return
       }
+
       if (this.relating !== asked) {
         return
       }
+
       this.related.set(tag, found)
     }
+
     this.pool = [...new Set([...names, ...found])]
     this.syncChips()
     this.paint.draw()
@@ -2021,13 +2337,16 @@ class Finder {
 
   private query(site: Site, view: Terms = this.view): { tags: string; notes: string[] } | undefined {
     const names = view.chosen ? pickedNames(site, view.chosen) : this.namesOf(view.tag, site.key)
+
     if (names.length === 0) {
       return undefined
     }
+
     const left = view.chosen?.slice(names.length) ?? []
     const either = names.length > 1
     const cutouts = view.preset === 'cutouts' ? site.cutouts : ''
     const clash = either && cutouts.includes('~')
+
     const wanted = [
       either ? names.map((name) => `~${name}`).join(' ') : (names[0] as string),
       site.rate(view.rating),
@@ -2035,8 +2354,10 @@ class Finder {
       clash ? '' : cutouts,
       view.order === 'score' ? site.best : '',
     ].filter(Boolean)
+
     const kept: string[] = []
     const dropped: string[] = []
+
     for (const part of wanted) {
       if (tagsOf([...kept, part].join(' ')) <= site.tagBudget) {
         kept.push(part)
@@ -2044,6 +2365,7 @@ class Finder {
         dropped.push(part)
       }
     }
+
     return {
       tags: kept.join(' '),
       notes: [
@@ -2066,33 +2388,44 @@ class Finder {
     this.board = board
     this.boards.set(board.key, board)
     this.view.error = undefined
+
     const plans = this.sites.flatMap((site) => {
       const query = this.query(site)
+
       return query ? [{ site, ...query }] : []
     })
+
     const missing = this.sites.filter((site) => !plans.some((plan) => plan.site === site))
+
     const notes = [
       ...plans.flatMap(({ notes }) => notes),
       ...(missing.length > 0
         ? [`${this.entry.name} has no tag on ${missing.map((site) => site.name).join(', ')}`]
         : []),
     ]
+
     board.note = notes.length > 0 ? notes.join(' · ') : undefined
+
     if (plans.length === 0) {
       board.searching = false
     }
+
     this.show()
     this.paint.draw()
     void this.tally(gen, board, plans)
+
     try {
       const owned = await Promise.all(
         plans.map(async (plan) => ({ plan, owners: await this.kept.mateOwners(plan.site) })),
       )
+
       if (gen !== this.gen) {
         return
       }
+
       board.sources = owned.flatMap(({ plan: { site, tags }, owners }) => {
         const by = tagsOf(tags) + 1 <= site.tagBudget ? site.uploadedBy : undefined
+
         return [
           ...(by ? owners.keys().map((owner) => ({ site, tags: `${tags} ${by(owner)}`, page: 0, done: false })) : []),
           { site, tags, page: 0, done: false },
@@ -2108,6 +2441,7 @@ class Finder {
 
   private async tally(gen: number, board: Board, plans: { site: Site; tags: string }[]): Promise<void> {
     const counts = await Promise.allSettled(plans.map(({ site, tags }) => fetchCount(site, tags, this.signal)))
+
     if (gen === this.gen) {
       board.total = counts.reduce(
         (sum, count) => sum + (count.status === 'fulfilled' && Number.isFinite(count.value) ? count.value : 0),
@@ -2122,6 +2456,7 @@ class Finder {
     if (gen !== this.gen || this.signal.aborted) {
       return
     }
+
     this.board.error = reason(site?.name ?? this.tabName, error)
     this.board.searching = false
     this.view.error = this.board.error
@@ -2135,16 +2470,19 @@ class Finder {
         source.done = true
       }
     }
+
     board.note = [board.note, reason(site.name, error)].filter(Boolean).join(' · ')
   }
 
   private wants(): boolean {
     const { perRow, rowsVis } = gridShape(this.cols, this.rows)
+
     return this.view.tiles.length < (this.board.top + rowsVis + LOOKAHEAD) * perRow
   }
 
   private need(): number {
     const { perRow, rowsVis } = gridShape(this.cols, this.rows)
+
     return (rowsVis + LOOKAHEAD) * perRow
   }
 
@@ -2155,16 +2493,19 @@ class Finder {
   private page(site: Site, tags: string, page: number): Promise<Post[]> {
     const key = `${site.key}|${tags}|${page}`
     let job = this.pages.get(key)
+
     if (!job) {
       job = fetchPosts(site, tags, page, this.signal).then((posts) => this.borrow(site, posts))
       this.pages.set(key, job)
       job.catch(() => this.pages.delete(key))
     }
+
     return job
   }
 
   private async borrow(site: Site, posts: Post[]): Promise<Post[]> {
     const asking = site === LENDER ? [] : posts.filter((post) => post.md5 !== '')
+
     if (asking.length > 0) {
       try {
         lend(
@@ -2176,6 +2517,7 @@ class Finder {
         )
       } catch {}
     }
+
     return posts
   }
 
@@ -2189,46 +2531,60 @@ class Finder {
   private async round(board: Board): Promise<void> {
     board.stage = 'fetch'
     this.staged(board)
+
     const due = SITES.flatMap((site) => {
       const source = board.sources.find((s) => s.site === site && !s.done)
+
       return source ? [source] : []
     })
+
     const got = await Promise.all(
       due.map(async (source) => {
         try {
           const posts = await this.page(source.site, source.tags, source.page)
           board.arrived.add(source.site.name)
           this.staged(board)
+
           return { source, posts }
         } catch (error) {
           if (board.sources.every((s) => s.site === source.site) || this.signal.aborted) {
             throw error
           }
+
           this.drop(board, source.site, error)
+
           return { source, posts: undefined }
         }
       }),
     )
+
     if (!this.live(board)) {
       return
     }
+
     const picks: Pick[] = []
+
     for (const { source, posts } of got) {
       if (!posts) {
         continue
       }
+
       source.page++
       source.done = posts.length < PAGE
       let last = board.last.get(source)
+
       for (const post of posts) {
         const set = last && sameSet(last.post, post) ? last.set : `set:${source.site.key}:${post.id}`
         last = { post, set }
         const key = postKey(source.site, post.id)
+
         if (board.seen.has(key)) {
           continue
         }
+
         board.seen.add(key)
         const pick = { site: source.site, post }
+
         if (this.eligible(pick)) {
           board.kin.set(pick, [set, ...kinKeys(source.site, post)])
           picks.push(pick)
@@ -2236,13 +2592,16 @@ class Finder {
           board.checked++
         }
       }
+
       if (last) {
         board.last.set(source, last)
       }
     }
+
     const kept = this.dedupe(board, picks)
     const round = ++board.rounds
     let ordered: Pick[]
+
     if (this.view.order !== 'fit') {
       ordered = due.length > 1 ? interleave(kept) : kept
     } else {
@@ -2256,16 +2615,21 @@ class Finder {
         this.staged(board)
       })
       board.ranking = undefined
+
       if (!this.live(board)) {
         return
       }
+
       ordered = [...fitOrder(head, this.frame(), this.matched), ...rough.slice(head.length)]
     }
+
     board.stage = 'check'
     this.staged(board)
+
     for (const pick of ordered) {
       board.roundOf.set(pick, round)
     }
+
     board.queue.push(...ordered)
     this.ahead(board)
   }
@@ -2274,27 +2638,34 @@ class Finder {
     if (this.aheading || this.view.order !== 'fit' || !this.live(board)) {
       return
     }
+
     const next = board.queue.slice(0, this.need()).filter((pick) => !this.looking.has(postKey(pick.site, pick.post.id)))
+
     if (next.length === 0) {
       return
     }
+
     this.aheading = true
     void this.looks(next).then(() => {
       this.aheading = false
+
       for (const round of new Set(next.map((pick) => board.roundOf.get(pick) ?? 0))) {
         this.resort(board, round)
       }
+
       this.ahead(board)
     })
   }
 
   private resort(board: Board, round: number): void {
     const at = board.queue.flatMap((pick, i) => (board.roundOf.get(pick) === round ? [i] : []))
+
     const sorted = fitOrder(
       at.map((i) => board.queue[i] as Pick),
       this.frame(),
       this.matched,
     )
+
     at.forEach((i, k) => {
       board.queue[i] = sorted[k] as Pick
     })
@@ -2302,47 +2673,62 @@ class Finder {
 
   private dedupe(board: Board, picks: Pick[]): Pick[] {
     const out: Pick[] = []
+
     for (const pick of picks) {
       const keys = sameKeys(pick.post)
       const held = keys.map((key) => board.same.get(key)).find(Boolean)
+
       if (!held) {
         for (const key of keys) {
           board.same.set(key, pick)
         }
+
         out.push(pick)
         continue
       }
+
       board.checked++
+
       if (area(pick.post) <= area(held.post)) {
         continue
       }
+
       for (const key of [...keys, ...sameKeys(held.post)]) {
         board.same.set(key, pick)
       }
+
       const within = out.indexOf(held)
+
       if (within >= 0) {
         out[within] = pick
         continue
       }
+
       this.replace(board, held, pick)
     }
+
     return out
   }
 
   private replace(board: Board, held: Pick, pick: Pick): void {
     board.roundOf.set(pick, board.roundOf.get(held) ?? 0)
     const queued = board.queue.indexOf(held)
+
     if (queued >= 0) {
       board.queue[queued] = pick
+
       return
     }
+
     for (const group of board.groups) {
       const at = group.posts.indexOf(held)
+
       if (at >= 0) {
         group.posts[at] = pick
         this.posts.set(postKey(pick.site, pick.post.id), pick)
         this.thumbQueue.push(pick)
         this.thumbs()
+
         return
       }
     }
@@ -2350,18 +2736,21 @@ class Finder {
 
   private async looks(picks: Pick[], each?: () => void): Promise<void> {
     let next = 0
+
     const lane = async () => {
       while (next < picks.length) {
         await this.look(picks[next++] as Pick)
         each?.()
       }
     }
+
     await Promise.all(Array.from({ length: THUMB }, lane))
   }
 
   private look(pick: Pick): Promise<Look | undefined> {
     const key = postKey(pick.site, pick.post.id)
     let job = this.looking.get(key)
+
     if (!job) {
       job = (async () => {
         const path = this.previewPath(pick)
@@ -2370,60 +2759,78 @@ class Finder {
         const look = await this.renders.run({ job: 'match', from: path, colors: this.entry.signature })
         this.looked.set(key, look)
         this.matched.set(pick.post, look.match)
+
         return look
       })().catch(() => undefined)
       this.looking.set(key, job)
     }
+
     return job
   }
 
   private async pump(): Promise<void> {
     const gen = this.gen
     const board = this.board
+
     if (this.pumping === gen || board.sources.length === 0) {
       return
     }
+
     this.pumping = gen
     const flight: { pick: Pick; passed: Promise<boolean> }[] = []
     let page: Promise<void> | undefined
+
     try {
       board.searching = true
+
       while (gen === this.gen) {
         while (flight.length < PROBE && board.queue.length > 0 && this.wants()) {
           const pick = board.queue.shift() as Pick
           flight.push({ pick, passed: this.vet(pick) })
         }
+
         this.ahead(board)
+
         if (!page && board.queue.length < PROBE && board.sources.some((s) => !s.done) && this.wants()) {
           const job = this.round(board).then(() => {
             if (page === job) {
               page = undefined
             }
           })
+
           job.catch(() => {})
           page = job
         }
+
         const head = flight.shift()
+
         if (!head) {
           if (!page) {
             break
           }
+
           await page
           this.show()
           this.paint.draw()
           continue
         }
+
         const passed = await head.passed
+
         if (gen !== this.gen) {
           return
         }
+
         board.checked++
+
         if (passed) {
           this.admit(head.pick)
         }
+
         this.show()
         this.paint.draw()
       }
+
       if (gen === this.gen) {
         board.searching = false
         this.show()
@@ -2433,6 +2840,7 @@ class Finder {
       this.fail(gen, error)
     } finally {
       this.kept.save()
+
       if (this.pumping === gen) {
         this.pumping = 0
       }
@@ -2441,13 +2849,17 @@ class Finder {
 
   private eligible({ site, post }: Pick): boolean {
     const version = rendition(post)
+
     if (!rated(site, post, this.view.rating) || exposed(post, this.view.block).length > 0 || !version) {
       return false
     }
+
     if (this.view.solo && post.solo === false) {
       return false
     }
+
     const { score, size, png } = this.view.narrow
+
     if (
       Math.min(post.width, post.height) < size ||
       (site.scored && post.score < score) ||
@@ -2457,6 +2869,7 @@ class Finder {
     ) {
       return false
     }
+
     return this.view.preset === 'all'
       ? ['png', 'jpg', 'jpeg', ''].includes(version.ext)
       : ['png', ''].includes(post.ext)
@@ -2464,6 +2877,7 @@ class Finder {
 
   private async vet(pick: Pick): Promise<boolean> {
     const [passed] = await Promise.all([this.passes(pick), this.look(pick)])
+
     return passed
   }
 
@@ -2480,15 +2894,19 @@ class Finder {
     const look = this.looked.get(key)
     const shape = look && { hash: look.hash, width: post.width, height: post.height }
     const kindred = this.view.sets === 'fold' ? this.kindred(board, keys, shape) : undefined
+
     if (kindred) {
       kindred.posts.push(pick)
       this.register(board, kindred, keys, shape)
+
       if (kindred.open) {
         this.thumbQueue.push(pick)
         this.thumbs()
       }
+
       return
     }
+
     const group = { posts: [pick], open: false }
     board.groups.push(group)
     this.register(board, group, keys, shape)
@@ -2499,10 +2917,12 @@ class Finder {
   private kindred(board: Board, keys: string[], shape: Shape | undefined): Group | undefined {
     for (const key of keys) {
       const group = board.kindred.get(key)
+
       if (group) {
         return group
       }
     }
+
     return shape && board.shapes.find((held) => near(held.shape, shape))?.group
   }
 
@@ -2512,6 +2932,7 @@ class Finder {
         board.kindred.set(key, group)
       }
     }
+
     if (shape) {
       board.shapes.push({ shape, group })
     }
@@ -2520,6 +2941,7 @@ class Finder {
   private holds(): void {
     this.view.held = heldOf(this.home, this.entry.name).map((held) => {
       const thumb = this.heldFiles.get(held.from)
+
       return thumb ? { ...held, thumb } : held
     })
     this.holdThumbs()
@@ -2528,13 +2950,16 @@ class Finder {
   private holdThumbs(): void {
     const w = HELD.cols * this.cell.w
     const h = HELD.rows * this.cell.h
+
     if (w === 0 || h === 0) {
       return
     }
+
     for (const held of this.view.held.slice(0, heldFit(this.cols))) {
       if (held.thumb || this.heldAsked.has(held.from)) {
         continue
       }
+
       this.heldAsked.add(held.from)
       const to = join(this.scratch, `held-${basename(held.from)}-${w}x${h}.png`)
       this.renders
@@ -2571,14 +2996,18 @@ class Finder {
     const h = TILE.rows * this.cell.h
     const from = previewOf(site, post)
     const path = join(cacheDir(site), 'tile', `${previewStem(post.id, from.url)}-${w}x${h}.png`)
+
     if (!existsSync(path)) {
       const thumb = this.previewPath(pick)
       await this.kept.cached(from.site, thumb, from.url)
+
       if (this.signal.aborted) {
         return
       }
+
       await this.renders.run({ job: 'thumb', from: thumb, to: path, width: w, height: h })
     }
+
     this.thumbPath.set(postKey(site, post.id), path)
     this.show()
     this.paint.draw()
@@ -2591,13 +3020,17 @@ class Finder {
     clearTimeout(this.settle)
     view.fetching = undefined
     this.inform()
+
     if (!tile) {
       return
     }
+
     if (this.current?.key === tile.key) {
       this.reveal()
+
       return
     }
+
     this.settle = setTimeout(() => void this.load(tile), SETTLE)
     this.paint.draw()
   }
@@ -2605,40 +3038,52 @@ class Finder {
   private async load(tile: Tile): Promise<void> {
     const view = this.view
     const pick = this.posts.get(tile.key)
+
     if (!pick) {
       return
     }
+
     const control = new AbortController()
     this.fetch = control
     void this.kept.profile(pick, control.signal)
+
     if (!rendition(pick.post)) {
       return
     }
+
     const { site } = pick
     const board = this.board
     let instead: Pick | undefined
+
     try {
       await locate(site, pick.post, control.signal)
       const version = rendition(pick.post) as Rendition
       const path = this.origPath(site, tile.id, version.ext)
+
       if (!existsSync(path)) {
         view.fetching = { id: tile.key, got: 0, size: 0 }
         this.paint.draw()
       }
+
       const from = fileOf(site, pick.post, version)
+
       const size = await this.kept.cached(from.site, path, from.url, (got, total) => {
         if (view.fetching?.id === tile.key) {
           view.fetching = { id: tile.key, got, size: total }
           this.paint.draw()
         }
       })
+
       if (control.signal.aborted) {
         return
       }
+
       view.fetching = undefined
+
       if (board !== this.board) {
         return
       }
+
       const current: Current = {
         site,
         id: tile.id,
@@ -2649,32 +3094,42 @@ class Finder {
         using: 'plain',
         failed: false,
       }
+
       view.preparing = tile.key
       this.paint.flush()
       const plain = await this.render(current, 'plain')
+
       if (control.signal.aborted || board !== this.board) {
         return
       }
+
       instead = plain.clear === 0 ? await this.twinOf(pick, path, control.signal) : undefined
+
       if (instead || control.signal.aborted || board !== this.board) {
         return
       }
+
       if (plain.clear === 0 && canRemoveBackground() && this.setting('TTHEME_FIND_REMOVE_BG') !== 'off') {
         view.preparing = undefined
         view.cutting = tile.key
         this.paint.flush()
         current.cut = await this.cutOut(site, tile.id, path, control.signal)
+
         if (control.signal.aborted || board !== this.board) {
           return
         }
+
         view.cutting = undefined
+
         if (current.cut) {
           view.preparing = tile.key
           this.paint.flush()
           const made = await this.render(current, 'cut').catch(() => undefined)
+
           if (control.signal.aborted || board !== this.board) {
             return
           }
+
           if (made && keepable(made.clear)) {
             current.using = 'cut'
           } else {
@@ -2686,10 +3141,13 @@ class Finder {
           current.failed = true
         }
       }
+
       this.current = current
+
       if (view.tiles[view.focus]?.key === tile.key) {
         await this.present()
       }
+
       this.preload()
     } catch (error) {
       if (!control.signal.aborted && !this.signal.aborted) {
@@ -2699,15 +3157,20 @@ class Finder {
       if (view.fetching?.id === tile.key) {
         view.fetching = undefined
       }
+
       if (view.preparing === tile.key) {
         view.preparing = undefined
       }
+
       if (view.cutting === tile.key) {
         view.cutting = undefined
       }
+
       this.paint.draw()
     }
+
     const next = instead && board === this.board ? this.swapIn(instead) : undefined
+
     if (next) {
       await this.load(next)
     }
@@ -2716,16 +3179,21 @@ class Finder {
   private async twinOf(pick: Pick, whole: string, signal: AbortSignal): Promise<Pick | undefined> {
     const view = this.view
     const group = this.board.groups.find((held) => !held.open && held.posts[0] === pick)
+
     for (const other of group?.posts.slice(1) ?? []) {
       const key = postKey(other.site, other.post.id)
       const verdict = `${postKey(pick.site, pick.post.id)}>${key}`
+
       if (this.twins.get(verdict) === false || !(await this.kept.transparent(other.site, other.post))) {
         continue
       }
+
       const version = rendition(other.post)
+
       if (signal.aborted || version?.ext !== 'png') {
         continue
       }
+
       try {
         const path = this.origPath(other.site, other.post.id, version.ext)
         const from = fileOf(other.site, other.post, version)
@@ -2741,9 +3209,11 @@ class Finder {
         this.paint.flush()
         const same = this.twins.get(verdict) ?? (await this.renders.run({ job: 'twin', cut: path, whole }))
         this.twins.set(verdict, same)
+
         if (same && group?.posts.includes(other) && !signal.aborted) {
           group.posts.splice(group.posts.indexOf(other), 1)
           group.posts.unshift(other)
+
           return other
         }
       } catch {
@@ -2752,27 +3222,33 @@ class Finder {
         if (view.fetching?.id === key) {
           view.fetching = undefined
         }
+
         if (view.preparing === key) {
           view.preparing = undefined
         }
       }
     }
+
     return undefined
   }
 
   private swapIn(twin: Pick): Tile | undefined {
     const view = this.view
     const key = postKey(twin.site, twin.post.id)
+
     if (!this.thumbPath.has(key)) {
       this.thumbQueue.push(twin)
       this.thumbs()
     }
+
     this.show()
     this.inform()
     const tile = view.tiles[view.focus]
+
     if (tile?.key !== key) {
       return undefined
     }
+
     view.hint = `Trying ${twin.site.name} ${twin.post.id}, the same picture with a transparent background`
     clearTimeout(this.peekTimer)
     this.peekTimer = setTimeout(() => {
@@ -2780,47 +3256,59 @@ class Finder {
       this.paint.draw()
     }, NOTICE)
     this.paint.draw()
+
     return tile
   }
 
   private async cutOut(site: Site, id: number, path: string, signal: AbortSignal): Promise<string | undefined> {
     const out = join(cacheDir(site), 'cut', `${id}.png`)
+
     if (existsSync(out)) {
       return out
     }
+
     try {
       mkdirSync(dirname(out), { recursive: true })
       await removeBackground(path, out, signal)
+
       return out
     } catch {
       rmSync(out, { force: true })
+
       return undefined
     }
   }
 
   private swap(): void {
     const current = this.current
+
     if (!current?.cut || this.view.shown?.id !== current.key) {
       return
     }
+
     current.using = current.using === 'cut' ? 'plain' : 'cut'
     this.reveal()
   }
 
   private preload(): void {
     const view = this.view
+
     if (view.mode !== 'try') {
       return
     }
+
     for (const index of [view.focus + this.direction, view.focus - this.direction]) {
       const tile = view.tiles[index]
       const pick = tile && this.posts.get(tile.key)
+
       if (pick) {
         void this.kept.profile(pick, this.signal)
       }
+
       if (this.prefetching >= PRELOAD || !pick || !rendition(pick.post)) {
         continue
       }
+
       const { site, post } = pick
       this.prefetching++
       void locate(site, post, this.signal)
@@ -2829,6 +3317,7 @@ class Finder {
           const path = this.origPath(site, post.id, version.ext)
           const from = fileOf(site, post, version)
           await this.kept.cached(from.site, path, from.url)
+
           return this.render(
             { site, id: post.id, key: tile.key, path, ext: version.ext, size: 0, using: 'plain', failed: false },
             'plain',
@@ -2854,16 +3343,21 @@ class Finder {
     const tuned = !sameTuning(tune, this.view.untuned)
     const touched = tune.opacity !== this.view.untuned.opacity
     const mark = tuned ? `-${tune.size}-${tune.at}${touched ? `-${Math.round(tune.opacity * 100)}` : ''}` : ''
+
     const path = join(
       this.scratch,
       `${current.site.key}-${current.id}${using === 'cut' ? 'c' : ''}${coloring === 'original' ? 'o' : ''}-${width}x${height}${mark}.png`,
     )
+
     const key = `${current.site.key}:${current.id}:${using}:${coloring}:${width}x${height}`
     const known = this.clarity.get(key)
+
     if (known && existsSync(path)) {
       current.fill = known.fill
+
       return { clear: known.clear, path, opacity: known.opacity, touched }
     }
+
     const made = await this.renders.run({
       job: 'show',
       from: using === 'cut' ? (current.cut as string) : current.path,
@@ -2877,44 +3371,56 @@ class Finder {
       coloring,
       ...(tuned ? { tune: { size: tune.size, at: tune.at, ...(touched ? { opacity: tune.opacity } : {}) } } : {}),
     })
+
     this.clarity.set(key, made)
     current.fill = made.fill
+
     if (tuned) {
       this.keepTuned(path)
     }
+
     return { clear: made.clear, path, opacity: made.opacity, touched }
   }
 
   private keepTuned(path: string): void {
     this.tunedFiles.push(path)
+
     while (this.tunedFiles.length > TUNED_HELD) {
       const at = this.tunedFiles.findIndex((file) => file !== this.view.shown?.path && file !== path)
+
       if (at === -1) {
         return
       }
+
       rmSync(this.tunedFiles.splice(at, 1)[0] as string, { force: true })
     }
   }
 
   private async present(): Promise<void> {
     const current = this.current
+
     if (!current) {
       return
     }
+
     const using = current.using
     const { coloring } = this.view
     const asked = this.view.tune.opacity
     const { clear, path, opacity, touched } = await this.render(current, using)
+
     if (this.current !== current || current.using !== using || this.view.coloring !== coloring) {
       return
     }
+
     if (!touched && this.view.tune.opacity === asked) {
       this.view.untuned.opacity = opacity
       this.view.tune.opacity = opacity
     }
+
     if (this.view.tuning && current.fill) {
       this.view.tuning.fill = current.fill
     }
+
     this.view.shown = {
       id: current.key,
       clear,
@@ -2926,10 +3432,13 @@ class Finder {
 
   private reveal(): void {
     const view = this.view
+
     if (this.presenting) {
       this.again = true
+
       return
     }
+
     this.presenting = true
     view.preparing = this.current?.key
     this.paint.flush()
@@ -2939,14 +3448,18 @@ class Finder {
       })
       .finally(() => {
         this.presenting = false
+
         if (this.again) {
           this.again = false
           this.reveal()
+
           return
         }
+
         if (view.preparing === this.current?.key) {
           view.preparing = undefined
         }
+
         this.paint.draw()
       })
   }
@@ -2955,18 +3468,22 @@ class Finder {
     const view = this.view
     const tile = view.tiles[view.focus]
     const current = this.current
+
     if (!tile || current?.key !== tile.key || view.preparing !== undefined || view.shown?.id !== tile.key) {
       return
     }
+
     view.installing = tile.key
     view.error = undefined
     this.paint.flush()
     const tune = toTune(view.tune, view.untuned)
     const pick = this.posts.get(current.key)
     const post = pick?.post
+
     if (pick) {
       await Promise.race([this.kept.profile(pick, this.signal), sleep(PROFILE_WAIT, undefined, { ref: false })])
     }
+
     try {
       await this.renders.run({
         job: 'backdrop',
@@ -2994,9 +3511,11 @@ class Finder {
       refreshPictures(this.home)
       this.holds()
       const { size, at, opacity } = view.tune
+
       const framing = tune
         ? ` · ${size === 'fill' ? 'fill' : `${size}%`} · ${POSITIONS[at - 1]} · ${opacity.toFixed(2)}`
         : ''
+
       const by = post?.named.artist.length ? `${post.named.artist.join(', ')} · ` : ''
       view.saved = {
         text: `Background · ${this.entry.name} ← ${by}${current.site.name} ${current.id}${framing}`,
@@ -3010,6 +3529,7 @@ class Finder {
     } catch (error) {
       view.error = error instanceof Error ? error.message : String(error)
     }
+
     view.installing = undefined
     this.paint.draw()
   }
@@ -3024,9 +3544,11 @@ export async function findFor(
 ): Promise<{ saved: string | undefined; installs: number }> {
   const finder = new Finder(home, readAvailable(home), entry, entry.booru ?? '', start)
   await finder.run()
+
   if (viewsInWindow(process.env)) {
     process.stdout.write(viewVar(''))
   }
+
   return { saved: finder.saved, installs: finder.installs }
 }
 
@@ -3034,14 +3556,19 @@ export async function runFind(name: string): Promise<number> {
   const home = configHome()
   const manifest = readAvailable(home)
   const entry = find(manifest.palettes, name)
+
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error('needs a terminal')
   }
+
   const finder = new Finder(home, manifest, entry, entry.booru ?? '')
   const code = await finder.run()
+
   if (finder.saved && code !== 0) {
     process.stderr.write(`${finder.saved}\n`)
+
     return 0
   }
+
   return code
 }

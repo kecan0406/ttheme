@@ -100,9 +100,11 @@ test('manifest marks exactly one default palette', () => {
 test('manifest entries carry the full palette the picker renders and paints', () => {
   for (const e of entries) {
     assert.equal(e.ansi.length, 16, `${e.name}: expected 16 ansi colors`)
+
     for (const hex of [e.background, e.foreground, e.cursor, e.selection, ...e.ansi]) {
       assert.match(hex, /^#[0-9a-fA-F]{6}$/, `${e.name}: bad color ${hex}`)
     }
+
     assert.ok(e.ansiSource.length > 0, `${e.name}: missing ansiSource`)
   }
 })
@@ -112,6 +114,7 @@ test('manifest carries a signature drawn from each palette', () => {
     assert.equal(e.signature.length, 3, `${e.name}: expected 3 signature colors`)
     assert.equal(new Set(e.signature).size, 3, `${e.name}: signature colors must differ`)
     const palette = new Set([e.background, e.foreground, e.cursor, e.selection, ...e.ansi])
+
     for (const hex of e.signature) {
       assert.ok(palette.has(hex), `${e.name}: signature color ${hex} is not a slot of its own palette`)
     }
@@ -121,6 +124,7 @@ test('manifest carries a signature drawn from each palette', () => {
 test('manifest carries the signature slots each signature color was drawn from', () => {
   for (const e of entries) {
     assert.equal(e.signatureSlots.length, e.signature.length, `${e.name}: signature slots must match colors`)
+
     const slots = new Map<string, string>([
       ['background', e.background],
       ['foreground', e.foreground],
@@ -128,6 +132,7 @@ test('manifest carries the signature slots each signature color was drawn from',
       ['selection', e.selection],
       ...e.ansi.map((hex, i): [string, string] => [`ansi${i}`, hex]),
     ])
+
     for (const [i, slot] of e.signatureSlots.entries()) {
       assert.equal(slots.get(slot), e.signature[i], `${e.name}: signature slot ${slot} does not hold its color`)
     }
@@ -136,17 +141,22 @@ test('manifest carries the signature slots each signature color was drawn from',
 
 test('manifest publishes the gate every palette was measured against', () => {
   assert.ok(rules.length > 0)
+
   for (const rule of rules) {
     assert.ok(rule.min !== undefined || rule.max !== undefined, `${rule.rule}: needs a threshold`)
   }
+
   for (const e of entries) {
     assert.equal(e.gate.length, rules.length, `${e.name}: expected one measurement per gate rule`)
+
     for (const [i, rule] of rules.entries()) {
       if (e.waived?.includes(rule.rule)) continue
       const value = e.gate[i] as number
+
       if (rule.min !== undefined) {
         assert.ok(value >= rule.min, `${e.name}: ${rule.rule} measured ${value}, needs ${rule.min}`)
       }
+
       if (rule.max !== undefined) {
         assert.ok(value <= rule.max, `${e.name}: ${rule.rule} measured ${value}, needs at most ${rule.max}`)
       }
@@ -156,12 +166,16 @@ test('manifest publishes the gate every palette was measured against', () => {
 
 test('every catalog names one lead palette and one native title', () => {
   const catalogs = new Map<string | undefined, PaletteEntry[]>()
+
   for (const e of entries) {
     const members = catalogs.get(e.catalog)
+
     if (members) members.push(e)
     else catalogs.set(e.catalog, [e])
   }
+
   assert.ok(!catalogs.has(undefined), 'every official palette sits in a catalog')
+
   for (const [catalog, members] of catalogs) {
     assert.equal(members.filter((e) => e.lead).length, 1, `${catalog}: expected exactly one lead palette`)
     assert.equal(new Set(members.map((e) => e.native)).size, 1, `${catalog}: native title must match across it`)
@@ -180,7 +194,9 @@ test('a swatch shows six different colors: the foreground, the signature, then r
     assert.equal(new Set(colors).size, 6, `${e.name}: ${colors.join(' ')}`)
     assert.equal(colors[0], e.foreground)
   }
+
   const ansi = Array.from({ length: 16 }, (_, i) => `#0000${i.toString(16).padStart(2, '0')}`)
+
   const twin = swatch({
     foreground: '#eeeeee',
     cursor: '#ff00ff',
@@ -188,5 +204,6 @@ test('a swatch shows six different colors: the foreground, the signature, then r
     ansi,
     signatureSlots: ['cursor', 'foreground', 'ansi9'],
   })
+
   assert.deepEqual(twin, ['#eeeeee', '#ff00ff', ansi[9], ansi[2], ansi[4], ansi[3]])
 })

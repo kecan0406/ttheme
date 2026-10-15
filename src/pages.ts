@@ -12,12 +12,16 @@ async function index(official: PaletteEntry[]): Promise<string> {
     process.stderr.write(`pages: the marketplace index keeps the published copy — ${(error as Error).message}\n`)
     const text = await (await reach(INDEX_URL)).text()
     parseIndex(text)
+
     return text
   }
 }
 
 const out = process.argv[2] ?? 'pages'
 const published = parseManifest(readFileSync(join(import.meta.dirname, '..', 'dist', 'manifest.json'), 'utf8'))
+
 mkdirSync(out, { recursive: true })
+
 writeFileSync(join(out, 'manifest.json'), `${JSON.stringify(schemaOne(published), null, 2)}\n`)
+
 writeFileSync(join(out, 'marketplaces.json'), await index(published.palettes))

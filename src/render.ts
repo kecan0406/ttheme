@@ -116,7 +116,9 @@ export interface Look {
 }
 
 type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw
+
 type Lane = 'tile' | 'band' | 'view'
+
 type Result<T extends Task> = T extends Match
   ? Look
   : T extends Twin
@@ -143,16 +145,20 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
   if (task.job === 'twin') {
     const whole =
       held?.from === task.whole ? held.inked.image : decodeImage(new Uint8Array(readFileSync(task.whole)), MAX_PIXELS)
+
     return sameArtwork(decodeImage(new Uint8Array(readFileSync(task.cut)), MAX_PIXELS), whole)
   }
+
   if (task.job === 'redraw') {
     return redrawOne(task.home, task.name, task.key, task.paint, task.blur, task.aligns, task.user)
   }
+
   if (task.job === 'show') {
     if (held?.from !== task.from) {
       const image = decodeImage(new Uint8Array(readFileSync(task.from)), MAX_PIXELS)
       held = { from: task.from, clear: transparency(image), inked: inked(image, task.cut) }
     }
+
     const { image, fill, opacity } = tryOn(
       held.inked,
       task.colors,
@@ -163,11 +169,15 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
       task.tune,
       task.coloring,
     )
+
     mkdirSync(dirname(task.to), { recursive: true })
     writeFileSync(task.to, encodeRgba(image))
+
     return { clear: held.clear, fill, opacity }
   }
+
   const image = decodeImage(new Uint8Array(readFileSync(task.from)), MAX_PIXELS)
+
   if (task.job === 'backdrop') {
     installBackdrop(
       task.home,
@@ -184,20 +194,27 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
       task.coloring,
     )
     const picture = task.tune && rackOf(task.home, task.colors.name).find((p) => p.key === imageKey(task.origin))
+
     if (task.tune && picture) {
       writeTune(backgroundsDir(task.home), picture, task.tune, task.aligns ?? true, task.user ?? task.home)
     }
+
     return 0
   }
+
   if (task.job === 'match') {
     return { match: paletteMatch(image, task.colors), hash: shape(image) }
   }
+
   if (task.job === 'thumb') {
     writeAtomic(task.to, encodeRgba(contain(image, task.width, task.height)))
+
     return 0
   }
+
   const data = image.data.subarray(task.y * image.width * 4, (task.y + task.height) * image.width * 4)
   writeFileSync(task.to, encodeRgba({ width: image.width, height: task.height, data }))
+
   return 0
 }
 
@@ -218,6 +235,7 @@ class Line {
 
   send(task: Task): Promise<unknown> {
     const id = this.next++
+
     return new Promise((ok, no) => {
       const worker = this.open()
       this.waiting.set(id, { ok, no })
@@ -236,29 +254,36 @@ class Line {
     if (this.worker) {
       return this.worker
     }
+
     const worker = new Worker(import.meta.filename)
     worker.unref()
     worker.on('message', ({ id, value, error }: { id: number; value?: unknown; error?: string }) => {
       const held = this.waiting.get(id)
       this.waiting.delete(id)
+
       if (this.waiting.size === 0) {
         worker.unref()
       }
+
       if (error !== undefined) {
         held?.no(new Error(error))
       } else {
         held?.ok(value)
       }
     })
+
     const lost = (error: unknown) => {
       if (this.worker === worker) {
         this.worker = undefined
       }
+
       this.drop(error instanceof Error ? error : new Error('renderer stopped'))
     }
+
     worker.on('error', lost)
     worker.on('exit', () => lost(undefined))
     this.worker = worker
+
     return worker
   }
 
@@ -266,6 +291,7 @@ class Line {
     for (const held of this.waiting.values()) {
       held.no(error)
     }
+
     this.waiting.clear()
   }
 }
@@ -276,10 +302,12 @@ export class Renderer {
   run<T extends Task>(task: T): Promise<Result<T>> {
     const lane = LANES[task.job]
     let line = this.lines.get(lane)
+
     if (!line) {
       line = new Line()
       this.lines.set(lane, line)
     }
+
     return line.send(task) as Promise<Result<T>>
   }
 
@@ -287,6 +315,7 @@ export class Renderer {
     for (const line of this.lines.values()) {
       line.close()
     }
+
     this.lines.clear()
   }
 }
@@ -305,6 +334,7 @@ export class Pool {
       this.lines.map(async (line) => {
         while (next < tasks.length) {
           const at = next++
+
           try {
             results[at] = (await line.send(tasks[at] as T)) as Result<T>
           } catch (error) {
@@ -313,6 +343,7 @@ export class Pool {
         }
       }),
     )
+
     return results
   }
 

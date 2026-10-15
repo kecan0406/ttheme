@@ -42,6 +42,7 @@ function installedHome(palettes: string[]): string {
   writeOfficial(home, manifest)
   writeInstalled(home, state)
   sync(home, manifest, state)
+
   return home
 }
 
@@ -50,10 +51,12 @@ function inHome<T>(home: string, run: () => T): T {
   process.env.XDG_CONFIG_HOME = home
   const log = console.log
   console.log = () => {}
+
   try {
     return run()
   } finally {
     console.log = log
+
     if (saved === undefined) {
       delete process.env.XDG_CONFIG_HOME
     } else {
@@ -108,12 +111,14 @@ test('a share link with several palettes installs each one it can and skips one 
 
 test('installed.json keeps an auto-update setting only where it differs from the default', () => {
   const state = { terminals: ['ghostty' as const], palettes: [] }
+
   const next = withMarketplaces(state, ['official', 'alice/pastel', 'bob/neon'], {
     official: true,
     'alice/pastel': true,
     'bob/neon': false,
     'carol/gone': true,
   })
+
   assert.deepEqual(next.marketplaces, ['official', 'alice/pastel', 'bob/neon'])
   assert.deepEqual(next.updates, { 'alice/pastel': true })
   assert.equal(withMarketplaces(state, ['official'], { official: true }).updates, undefined)

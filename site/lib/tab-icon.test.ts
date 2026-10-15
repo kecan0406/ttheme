@@ -24,6 +24,7 @@ const theme: Theme = {
 
 function corner(bytes: Buffer): string {
   const { data } = PNG.sync.read(bytes)
+
   return `#${[0, 1, 2].map((at) => (data[at] as number).toString(16).padStart(2, '0')).join('')}`
 }
 

@@ -42,6 +42,7 @@ function linear(value: number): number {
 
 function encode(value: number): number {
   const clamped = Math.min(1, Math.max(0, value))
+
   return (clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * clamped ** (1 / 2.4) - 0.055) * 255
 }
 
@@ -50,6 +51,7 @@ function toLab(hex: string): Lab {
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
   const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
   const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
+
   return [
     0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
     1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
@@ -64,12 +66,14 @@ function toRgb([lightness, a, b]: Lab): string {
   const red = encode(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s)
   const green = encode(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s)
   const blue = encode(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s)
+
   return `rgb(${red.toFixed(1)} ${green.toFixed(1)} ${blue.toFixed(1)})`
 }
 
 function colorOf(paint: Paint, tone: number, { tint, lift }: Shade): string {
   const [bl, ba, bb] = paint.bg
   const [tl, ta, tb] = paint.tones[tone] as Lab
+
   return toRgb([Math.min(1, Math.max(0, bl + (tl - bl) * tint + lift)), ba + (ta - ba) * tint, bb + (tb - bb) * tint])
 }
 
@@ -84,10 +88,12 @@ function trace(
   context.fillStyle = color
   context.strokeStyle = color
   context.beginPath()
+
   for (const corner of corners) {
     const fold = ((corner.x - center.x) * lean.x + (corner.y - center.y) * lean.y) * (1 - squash)
     context.lineTo(corner.x - fold * lean.x, corner.y - fold * lean.y)
   }
+
   context.closePath()
   context.fill()
   context.stroke()
@@ -110,6 +116,7 @@ class FacetGround extends HTMLElement {
   connectedCallback() {
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')
+
     if (!context) return
     canvas.setAttribute('aria-hidden', 'true')
     this.append(canvas)
@@ -117,10 +124,12 @@ class FacetGround extends HTMLElement {
     this.#context = context
     const root = getComputedStyle(document.documentElement)
     const slot = (name: string) => root.getPropertyValue(name).trim()
+
     const paint = this.#paint(
       slot('--bg'),
       [0, 1, 2].map((index) => slot(`--sg${index}`) || slot('--cu')),
     )
+
     this.#shown = MESH.facets.map(() => paint)
     this.#turns = MESH.facets.map(() => [])
     this.#worn = paint.key
@@ -153,12 +162,16 @@ class FacetGround extends HTMLElement {
 
   #paint(bg: string, tones: string[]): Paint {
     const context = this.#context as CanvasRenderingContext2D
+
     const hex = (color: string) => {
       context.fillStyle = '#000000'
       context.fillStyle = color
+
       return String(context.fillStyle)
     }
+
     const colors = [bg, ...tones].map(hex)
+
     return { bg: toLab(colors[0] as string), tones: colors.slice(1).map(toLab), key: colors.join() }
   }
 
@@ -168,9 +181,11 @@ class FacetGround extends HTMLElement {
     const scale = Math.min(2, window.devicePixelRatio || 1, Math.sqrt(BUDGET / area))
     const width = Math.round(canvas.clientWidth * scale)
     const height = Math.round(canvas.clientHeight * scale)
+
     if (canvas.width === width && canvas.height === height) return false
     canvas.width = width
     canvas.height = height
+
     return true
   }
 
@@ -178,12 +193,14 @@ class FacetGround extends HTMLElement {
     const canvas = this.#canvas as HTMLCanvasElement
     const scale = canvas.height / SPAN
     const width = canvas.width / scale
+
     return { scale, left: (FACET_WIDTH - width) / 2, width }
   }
 
   #local(client: Point): Point {
     const box = (this.#canvas as HTMLCanvasElement).getBoundingClientRect()
     const { left, width } = this.#view()
+
     return { x: left + ((client.x - box.left) / box.width) * width, y: ((client.y - box.top) / box.height) * SPAN }
   }
 
@@ -211,20 +228,25 @@ class FacetGround extends HTMLElement {
     const rise = pointer ? 1 : 0
     this.#rise += (rise - this.#rise) * (1 - Math.exp(-elapsed / RISE_MS))
     const turning = this.#draw(now, pointer)
+
     const resting =
       Math.hypot(goal.x - this.#lamp.x, goal.y - this.#lamp.y) < 0.5 && Math.abs(rise - this.#rise) < 0.003
+
     if (turning || !resting) this.#frame = requestAnimationFrame(this.#step)
   }
 
   #face(index: number, now: number): Face {
     const turns = this.#turns[index] as Turn[]
+
     while (turns[0] && now >= turns[0].start + TURN_MS) this.#shown[index] = (turns.shift() as Turn).to
     const turn = turns[0]
+
     if (!turn || now < turn.start)
       return { paint: this.#shown[index] as Paint, squash: 1, lean: { x: 0, y: -1, angle: 0 }, under: null }
     const progress = (now - turn.start) / TURN_MS
     const angle = Math.PI * progress * progress * (3 - 2 * progress)
     const front = angle < Math.PI / 2
+
     return {
       paint: front ? turn.from : turn.to,
       squash: Math.abs(Math.cos(angle)),
@@ -243,12 +265,15 @@ class FacetGround extends HTMLElement {
     const rise = this.#rise
     const points = pointer && rise > 0.001 ? MESH.points.map((point) => raise(point, pointer, rise)) : MESH.points
     let turning = false
+
     for (const [index, facet] of MESH.facets.entries()) {
       const { paint, squash, lean, under } = this.#face(index, now)
       turning ||= (this.#turns[index] as Turn[]).length > 0
       const corners = facetCorners(points, facet)
+
       if (corners.every((corner) => corner.x < left) || corners.every((corner) => corner.x > left + width)) continue
       const center = CENTERS[index] as Point
+
       if (under) {
         const { tint, lift } = shade(facet.tint, corners, this.#lamp)
         trace(
@@ -260,9 +285,11 @@ class FacetGround extends HTMLElement {
           colorOf(under, facet.tone, { tint, lift: lift - (1 - squash) * SHADOW }),
         )
       }
+
       const color = colorOf(paint, facet.tone, shade(facet.tint, corners, this.#lamp, lean))
       trace(context, corners, center, lean, squash, color)
     }
+
     return turning
   }
 
@@ -288,42 +315,55 @@ class FacetGround extends HTMLElement {
 
   #show = (event: Event) => {
     const { vars, origin, instant } = (event as CustomEvent<Shown>).detail
+
     if (!this.#canvas) return
     const slot = new Map(vars)
+
     const to = this.#paint(
       slot.get('--bg') ?? '',
       [0, 1, 2].map((index) => slot.get(`--sg${index}`) || (slot.get('--cu') ?? '')),
     )
+
     if (to.key === this.#worn) return
     this.#worn = to.key
     const now = performance.now()
+
     if (instant || reducedMotion()) {
       this.#shown = MESH.facets.map(() => to)
       this.#turns = MESH.facets.map(() => [])
       this.#draw(now, this.#pointer())
+
       return
     }
+
     const start = this.#local(origin ?? this.#origin())
+
     for (const [index, center] of CENTERS.entries()) {
       const turns = this.#turns[index] as Turn[]
       const distance = Math.hypot(center.x - start.x, center.y - start.y)
+
       const lean =
         distance > 1 ? { x: (center.x - start.x) / distance, y: (center.y - start.y) / distance } : { x: 0, y: -1 }
+
       const arrive = now + distance / SPEED
       const active = turns[0] && turns[0].start <= now ? turns[0] : null
       this.#turns[index] = active
         ? [active, { from: active.to, to, start: Math.max(arrive, active.start + TURN_MS), lean }]
         : [{ from: this.#shown[index] as Paint, to, start: arrive, lean }]
     }
+
     this.#kick()
   }
 
   #origin(): Point {
     const press = this.#press
+
     if (press && performance.now() - press.at < PRESS_MS) return press
     const stage = document.querySelector(STAGE)?.getBoundingClientRect()
+
     if (stage && stage.bottom > 0 && stage.top < window.innerHeight)
       return { x: stage.left + stage.width / 2, y: stage.top + stage.height / 2 }
+
     return { x: window.innerWidth / 2, y: window.innerHeight / 2 }
   }
 }

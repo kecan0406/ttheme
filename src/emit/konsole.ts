@@ -20,6 +20,7 @@ export function schemeLines(
   general: readonly string[] = ['Wallpaper='],
 ): string[] {
   const faint = (color: string) => mix(color as Hex, colors.background as Hex, 0.5)
+
   return [
     ...entry('Background', colors.background),
     ...entry('BackgroundFaint', colors.background),
@@ -50,7 +51,9 @@ function wallpaperLines(picture: ProfileBackground | undefined): string[] {
   if (!picture || picture.opacity <= 0) {
     return ['Wallpaper=']
   }
+
   const [y = 'center', x = 'center'] = picture.position.split('-')
+
   return [
     `Wallpaper=${picture.image}`,
     `FillStyle=${picture.cover ? 'Crop' : 'Adapt'}`,

@@ -54,6 +54,7 @@ function asked<T>(answer: T | typeof p.CANCEL_SYMBOL): T {
     p.cancel('Nothing changed')
     throw new Cancelled()
   }
+
   return answer as T
 }
 
@@ -72,6 +73,7 @@ function tunedName(name: string): string {
 async function askTone(names: string[], renamed: boolean): Promise<Tone> {
   const [one] = names
   const single = names.length === 1 ? one : undefined
+
   return asked(
     await p.select({
       message: single ? `Share ${single} as…` : `${listed(names)} carry your tone — share them as…`,
@@ -96,12 +98,16 @@ async function toned(
 ): Promise<Toned[]> {
   const view = untuned(home, manifest)
   const tones = readTone(home)
+
   const pairs = names.map((name) => {
     const original = named(view, name, home)
+
     return { original, tuned: tonedEntry(original, tones[original.name]) }
   })
+
   const tunable = pairs.filter((pair) => pair.tuned !== pair.original).map((pair) => pair.original.name)
   const which = tunable.length === 0 ? 'original' : (tone ?? (tty() ? await askTone(tunable, renamed) : 'tuned'))
+
   return pairs.map(({ original, tuned }) =>
     which === 'tuned' && tuned !== original ? { entry: tuned, tuned: true } : { entry: original, tuned: false },
   )
@@ -109,17 +115,22 @@ async function toned(
 
 function showLink(link: string, note: (scanned: boolean) => string, smaller: string): void {
   console.log(link)
+
   if (!process.stdout.isTTY) {
     return
   }
+
   const qr = qrCode(link)
   const cols = process.stdout.columns || 80
   const rows = process.stdout.rows || 24
   const fits = qr !== undefined && qr.cols <= cols && qr.rows + 4 <= rows
+
   if (qr && fits) {
     console.log(`\n${qr.lines.join('\n')}`)
   }
+
   console.error(`\n${note(fits)}`)
+
   if (!qr) {
     console.error(`The link is too long for a QR code${smaller}`)
   } else if (!fits) {
@@ -133,18 +144,24 @@ export async function runShare(names: readonly string[], tone?: Tone): Promise<v
   const home = configHome()
   const manifest = readMarketplaces(home)
   const shared = await toned(home, manifest, names, tone, true)
+
   const drafts: Draft[] = shared.map(({ entry, tuned }) => {
     const draft = draftFor(home, entry)
+
     if (!tuned) {
       return draft
     }
+
     const name = tunedName(entry.name)
     const problem = nameProblem(name)
+
     if (problem) {
       throw new Error(`${name} ${problem} — share the original, or tune a palette with a shorter name`)
     }
+
     return { ...draft, name, from: entry.from ?? entry.name }
   })
+
   const [first] = drafts
   const many = drafts.length > 1
   const tuned = shared.filter((s) => s.tuned)
@@ -181,12 +198,15 @@ export async function runShareAsked(tone?: Tone): Promise<void> {
       ],
     }),
   )
+
   if (how === 'marketplace') {
     return shareMarketplace(tone)
   }
+
   const home = configHome()
   const manifest = readMarketplaces(home)
   const worn = process.env.TTHEME_WORN
+
   const picked = await pickPalettes(
     { ...manifest, palettes: available(home, manifest, false).palettes },
     worn ? [worn] : [],
@@ -194,24 +214,30 @@ export async function runShareAsked(tone?: Tone): Promise<void> {
     true,
     'share',
   )
+
   if (!picked) {
     throw new Cancelled()
   }
+
   return runShare(picked, tone)
 }
 
 async function pickMarketplace(home: string): Promise<LocalMarketplace> {
   const locals = localMarketplaces(home)
+
   if (locals.length === 0) {
     return newLocal(home)
   }
+
   const remotes = await Promise.all(locals.map((m) => remoteOf(m.dir)))
+
   const choice = asked(
     await p.select({
       message: 'Which marketplace?',
       options: [
         ...locals.map((m, i) => {
           const remote = remotes[i]
+
           return {
             value: m.id,
             label: m.id,
@@ -222,6 +248,7 @@ async function pickMarketplace(home: string): Promise<LocalMarketplace> {
       ],
     }),
   )
+
   return locals.find((m) => m.id === choice) ?? newLocal(home)
 }
 
@@ -254,12 +281,15 @@ async function settle(
       ],
     }),
   )
+
   if (answer === 'skip') {
     return undefined
   }
+
   if (answer === 'replace') {
     return 'replace'
   }
+
   return asked(
     await p.text({
       message: `Name the copy of ${slug}`,
@@ -295,6 +325,7 @@ async function copiesFor(
   const copies: Copy[] = []
   const used = new Set<string>()
   const taken = (slug: string) => used.has(slug) || keptBy.has(slug) || (files.has(slug) && !leaving.has(slug))
+
   const shared = await toned(
     home,
     manifest,
@@ -302,20 +333,25 @@ async function copiesFor(
     tone,
     false,
   )
+
   for (const { entry } of shared) {
     let slug: string | undefined = slugOf(entry.name)
     let kind: Copy['kind'] = keptBy.get(slug)?.from === fromOf(entry) && !used.has(slug) ? 'update' : 'add'
+
     if (kind === 'add' && taken(slug)) {
       const answer = await settle(marketplace, slug, !used.has(slug), taken)
+
       if (answer === 'replace') {
         kind = 'replace'
       } else {
         slug = answer
       }
     }
+
     if (slug === undefined) {
       continue
     }
+
     used.add(slug)
     keptBy.delete(slug)
     const full = `${marketplace.id}/${slug}`
@@ -333,6 +369,7 @@ async function copiesFor(
     const replaces = kind === 'add' ? undefined : files.get(slug)
     copies.push({ entry, slug, draft: copy, path, kind, ...(replaces ? { replaces } : {}) })
   }
+
   return copies
 }
 
@@ -348,13 +385,16 @@ async function askRepo(marketplace: LocalMarketplace): Promise<Repo> {
             : 'takes letters, digits, hyphens, dots and underscores, 100 at most',
       }),
     )
+
     const repo = { owner: marketplace.owner, name }
     const looking = pending(`Looking for ${repoText(repo)} on GitHub`)
     const exists = await repoExists(repo)
     looking.done()
+
     if (!exists) {
       return repo
     }
+
     p.log.warn(`${repoUrl(repo)} already exists — pick another name`)
   }
 }
@@ -371,36 +411,46 @@ async function askDescription(current: string | undefined): Promise<string | und
           : undefined,
     }),
   )
+
   const text = (typed ?? '').trim()
+
   return text === '' ? undefined : text
 }
 
 function emptied(dir: string, paths: readonly string[]): Set<string> {
   const shelves = new Set<string>()
+
   for (const path of paths) {
     const folder = dirname(path)
+
     if (folder !== palettesDir(dir) && existsSync(folder) && readdirSync(folder).length === 0) {
       rmdirSync(folder)
       shelves.add(folder.slice(palettesDir(dir).length + 1))
     }
   }
+
   return shelves
 }
 
 export async function shareMarketplace(tone?: Tone): Promise<void> {
   const problem = await toolsProblem()
+
   if (problem) {
     throw new Error(problem)
   }
+
   const home = configHome()
   const marketplace = await pickMarketplace(home)
   const remote = await remoteOf(marketplace.dir)
+
   if (remote === 'elsewhere') {
     throw new Error(`${shownSource(marketplace.dir)} pushes to a remote that is not on GitHub — sharing needs GitHub`)
   }
+
   const manifest = readMarketplaces(home)
   const all = available(home, manifest, false).palettes
   const own = all.filter((e) => marketplaceOf(e.name) === marketplace.id)
+
   const names = await pickPalettes(
     { ...manifest, palettes: all },
     own.map((e) => e.name),
@@ -408,12 +458,15 @@ export async function shareMarketplace(tone?: Tone): Promise<void> {
     true,
     'continue',
   )
+
   if (!names) {
     throw new Cancelled()
   }
+
   const chosen = new Set(names)
   const kept = own.filter((e) => chosen.has(e.name))
   const dropped = own.filter((e) => !chosen.has(e.name))
+
   const copies = await copiesFor(
     home,
     manifest,
@@ -423,7 +476,9 @@ export async function shareMarketplace(tone?: Tone): Promise<void> {
     dropped,
     tone,
   )
+
   const repo = remote ?? (await askRepo(marketplace))
+
   const open = remote
     ? await isPublic(remote)
     : asked(
@@ -435,6 +490,7 @@ export async function shareMarketplace(tone?: Tone): Promise<void> {
           ],
         }),
       )
+
   const tomlPath = join(marketplace.dir, MARKETPLACE_FILE)
   const before = readFileSync(tomlPath, 'utf8')
   const was = readMarketplaceInfo(before, tomlPath).description
@@ -443,14 +499,17 @@ export async function shareMarketplace(tone?: Tone): Promise<void> {
   const files = new Map(marketplaceFiles(marketplace.dir).map((f) => [f.slug, f.path]))
   const drops = dropped.flatMap((e) => files.get(slugOf(e.name)) ?? [])
   const tracked = existsSync(join(marketplace.dir, '.git'))
+
   const named = (kind: Copy['kind']) =>
     copies
       .filter((c) => c.kind === kind)
       .map((c) => (c.draft.from === c.slug || kind === 'update' ? c.slug : `${c.slug} (from ${c.draft.from})`))
+
   const added = named('add')
   const updated = named('update')
   const replaced = named('replace')
   const removed = dropped.map((e) => slugOf(e.name))
+
   const lines = [
     `Repository   ${repoUrl(repo)} · ${open ? 'public' : 'private'}${remote ? '' : ' · new'}`,
     `Description  ${description ?? 'none'}`,
@@ -464,15 +523,19 @@ export async function shareMarketplace(tone?: Tone): Promise<void> {
         ]
       : []),
   ]
+
   const changes = copies.length + drops.length > 0 || description !== was
+
   if (changes || !remote) {
     p.note(lines.join('\n'), `Share ${marketplace.id}`)
+
     const go = asked(
       await p.confirm({
         message: remote ? 'Push to GitHub?' : 'Create it on GitHub?',
         initialValue: drops.length === 0,
       }),
     )
+
     if (!go) {
       p.cancel('Nothing changed')
       throw new Cancelled()
@@ -482,15 +545,19 @@ export async function shareMarketplace(tone?: Tone): Promise<void> {
   for (const path of drops) {
     rmSync(path)
   }
+
   for (const copy of copies) {
     if (copy.replaces && copy.replaces !== copy.path) {
       rmSync(copy.replaces)
     }
+
     mkdirSync(dirname(copy.path), { recursive: true })
     writeAtomic(copy.path, paletteToml(copy.draft))
   }
+
   const gone = emptied(marketplace.dir, [...drops, ...copies.flatMap((c) => c.replaces ?? [])])
   const shelves = new Set(localIdentity(marketplace.dir).catalogs.map((c) => c.name))
+
   const fresh = new Map(
     copies.flatMap((c) =>
       c.entry.catalog && c.entry.native && !shelves.has(c.entry.catalog)
@@ -498,12 +565,16 @@ export async function shareMarketplace(tone?: Tone): Promise<void> {
         : [],
     ),
   )
+
   const after = withCatalogs(withoutCatalogs(withDescription(before, description), gone), [...fresh.values()])
   readMarketplaceInfo(after, tomlPath)
+
   if (after !== before) {
     writeAtomic(tomlPath, after)
   }
+
   const readme = join(marketplace.dir, 'README.md')
+
   if (!remote && repo.name !== repoFor(marketplace) && existsSync(readme)) {
     if (readFileSync(readme, 'utf8') === readmeOf(marketplace)) {
       writeAtomic(readme, readmeOf(marketplace, repo.name))
@@ -512,8 +583,10 @@ export async function shareMarketplace(tone?: Tone): Promise<void> {
 
   if (changes || !remote) {
     const step = pending(`Pushing ${repoText(repo)}`)
+
     try {
       const slugs = (kind: Copy['kind']) => copies.filter((c) => c.kind === kind).map((c) => c.slug)
+
       const message = [
         slugs('add').length > 0 ? `Add ${listed(slugs('add'))}` : '',
         [...slugs('update'), ...slugs('replace')].length > 0
@@ -523,18 +596,23 @@ export async function shareMarketplace(tone?: Tone): Promise<void> {
       ]
         .filter(Boolean)
         .join('; ')
+
       await commitAll(marketplace.dir, message || `Share ${marketplace.id}`)
+
       if (remote) {
         await pushRepo(marketplace.dir)
       } else {
         await createRepo(marketplace.dir, repo, open, description)
       }
+
       await describeRepo(repo, description, open)
     } finally {
       step.done()
     }
+
     say(`Shared ${marketplace.id} · ${repoUrl(repo)}`)
   }
+
   showLink(
     repoUrl(repo),
     (scanned) =>

@@ -74,6 +74,7 @@ export function indexText(shown: Shown[]): string {
       palettes: m.palettes.map(listedPalette),
     }))
     .sort((a, b) => b.stars - a.stars || a.id.localeCompare(b.id))
+
   return `${JSON.stringify({ marketplaces })}\n`
 }
 
@@ -93,11 +94,13 @@ function readPalette(id: string, value: unknown): ListedPalette | undefined {
   if (typeof value !== 'object' || value === null) {
     return undefined
   }
+
   const v = value as Record<string, unknown>
   const name = word(v.name)
   const [background, foreground, cursor, selection] = [v.background, v.foreground, v.cursor, v.selection].map(color)
   const ansi = Array.isArray(v.ansi) ? v.ansi.map(color) : []
   const slots = Array.isArray(v.signatureSlots) ? v.signatureSlots : []
+
   if (
     !name ||
     nameProblem(`${id}/${name}`) ||
@@ -112,7 +115,9 @@ function readPalette(id: string, value: unknown): ListedPalette | undefined {
   ) {
     return undefined
   }
+
   const catalog = word(v.catalog)
+
   return {
     name,
     ...(catalog ? { catalog } : {}),
@@ -129,43 +134,58 @@ function readListed(value: unknown): Listed | undefined {
   if (typeof value !== 'object' || value === null) {
     return undefined
   }
+
   const v = value as Record<string, unknown>
   const id = word(v.id)
   const typed = word(v.source)
+
   if (!id || !typed || nameProblem(`${id}/x`)) {
     return undefined
   }
+
   let source: string
+
   try {
     source = parseSource(typed)
   } catch {
     return undefined
   }
+
   if (!isRemote(source)) {
     return undefined
   }
+
   const palettes = (Array.isArray(v.palettes) ? v.palettes : []).flatMap((p) => readPalette(id, p) ?? [])
+
   if (palettes.length === 0) {
     return undefined
   }
+
   const stars = typeof v.stars === 'number' && Number.isFinite(v.stars) && v.stars >= 0 ? Math.floor(v.stars) : 0
   const updated = word(v.updated) ?? ''
+
   return { id, source, about: word(v.about) ?? '', stars, updated: DAY.test(updated) ? updated : '', palettes }
 }
 
 export function parseIndex(text: string): Listed[] {
   const doc: unknown = JSON.parse(text)
   const listed = typeof doc === 'object' && doc !== null ? (doc as Record<string, unknown>).marketplaces : undefined
+
   if (!Array.isArray(listed)) {
     throw new Error('the marketplace index lists no marketplaces')
   }
+
   const seen = new Set<string>()
+
   return listed.flatMap((value) => {
     const m = readListed(value)
+
     if (!m || seen.has(m.id)) {
       return []
     }
+
     seen.add(m.id)
+
     return [m]
   })
 }
@@ -178,6 +198,7 @@ function readCached(path: string): Cached | undefined {
   try {
     const doc: unknown = JSON.parse(readFileSync(path, 'utf8'))
     const v = typeof doc === 'object' && doc !== null ? (doc as Record<string, unknown>) : {}
+
     return typeof v.etag === 'string' && typeof v.at === 'number' && typeof v.text === 'string'
       ? { etag: v.etag, at: v.at, text: v.text }
       : undefined
@@ -189,26 +210,33 @@ function readCached(path: string): Cached | undefined {
 export async function readIndex(signal?: AbortSignal, path = indexCache(), url = INDEX_URL): Promise<Listing> {
   const cached = readCached(path)
   let marketplaces: Listed[] | undefined
+
   try {
     marketplaces = cached ? parseIndex(cached.text) : undefined
   } catch {
     marketplaces = undefined
   }
+
   try {
     const response = await reach(url, undefined, signal, cached && marketplaces ? { 'if-none-match': cached.etag } : {})
     const at = Date.now()
+
     if (response.status === 304 && cached && marketplaces) {
       writeAtomic(path, JSON.stringify({ ...cached, at }))
+
       return { marketplaces, at }
     }
+
     const text = await response.text()
     const fresh = parseIndex(text)
     writeAtomic(path, JSON.stringify({ etag: response.headers.get('etag') ?? '', at, text }))
+
     return { marketplaces: fresh, at }
   } catch (error) {
     if (!cached || !marketplaces) {
       throw error
     }
+
     return { marketplaces, at: cached.at, offline: error instanceof Error ? error.message : String(error) }
   }
 }
