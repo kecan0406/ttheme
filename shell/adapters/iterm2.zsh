@@ -40,8 +40,16 @@ __tt_profiled() {
   __tt_switchable $REPLY
 }
 
+__tt_iterm_home() {
+  if [[ -n $ITERM_PROFILE ]]; then
+    REPLY=${${(M)ITERM_PROFILE:#ttheme · default}:+default}
+  else
+    REPLY=${TTHEME_STARTUP:+default}
+  fi
+}
+
 __tt_profile() {
-  local out=$'\e]1337;SetProfile='${1:+ttheme · $1}$'\a'
+  local REPLY out=$'\e]1337;SetProfile='${1:+ttheme · $1}$'\a'
   if [[ $TTHEME_ITERM_SWITCH == 1 ]] && (( TTHEME_ITERM_DYED )); then
     if (( TTHEME_ITERM_DYED == 1 )); then
       out=$'\e]104;0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'$out
@@ -51,7 +59,8 @@ __tt_profile() {
     (( TTHEME_RAW )) || out=$'\e[?2026h'$out$'\e[?2026l'
   fi
   __tt_out "$out"
-  TTHEME_ITERM_SHOWN=${1:-${TTHEME_STARTUP:+default}} TTHEME_ITERM_DYED=0
+  __tt_iterm_home
+  TTHEME_ITERM_SHOWN=${1:-$REPLY} TTHEME_ITERM_DYED=0
   (( TTHEME_TMUX )) && tmux set -q @ttheme_shown "$TTHEME_ITERM_SHOWN" 2>/dev/null
   return 0
 }
@@ -73,9 +82,11 @@ __tt_osc_apply() {
 }
 
 __tt_osc_reset() {
+  local REPLY
+  __tt_iterm_home
   if [[ $TTHEME_ITERM_SWITCH != 1 ]]; then
     __tt_out $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'
-  elif (( TTHEME_TMUX || TTHEME_ITERM_DYED )) || [[ $TTHEME_ITERM_SHOWN != "${TTHEME_STARTUP:+default}" ]]; then
+  elif (( TTHEME_TMUX || TTHEME_ITERM_DYED )) || [[ $TTHEME_ITERM_SHOWN != "$REPLY" ]]; then
     __tt_profile ""
   fi
   unset TTHEME_PAINTED

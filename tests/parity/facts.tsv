@@ -110,7 +110,7 @@ on-pin.out.picture	konata	=	=	=	none	=	none	=	=	=
 on-pin.out.wears	konata	=	=	=	=	=	=	=	=	=
 on-pin.out.issue	-	=	=	=	=	=	=	=	=	=
 on-pin-plain.in.colors	miku	=	=	=	=	=	=	=	=	=
-on-pin-plain.in.picture	none	=	konata	=	=	=	=	=	=	=
+on-pin-plain.in.picture	none	=	=	=	=	=	=	=	=	=
 on-pin-plain.in.wears	miku	=	=	=	=	=	=	=	=	=
 on-pin-plain.in.issue	-	=	=	=	=	=	=	=	=	=
 on-pin-other.off.colors	own	=	=	=	=	=	=	=	=	=
