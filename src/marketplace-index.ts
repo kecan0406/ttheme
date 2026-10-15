@@ -47,7 +47,10 @@ interface Cached {
 }
 
 function inert(text: string): string {
-  return text.replace(/[\p{Cc}\s]+/gu, ' ').trim()
+  return text
+    .replace(/\p{Bidi_Control}/gu, '')
+    .replace(/[\p{Cc}\s]+/gu, ' ')
+    .trim()
 }
 
 function listedPalette(entry: PaletteEntry): ListedPalette {

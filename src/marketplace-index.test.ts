@@ -61,12 +61,12 @@ test('the index the CI writes reads back as it was, most starred first', () => {
   })
 })
 
-test('a listed marketplace comes back without the control characters its text holds, and one that does not read is dropped', () => {
+test('a listed marketplace comes back without the control and bidi characters its text holds, and one that does not read is dropped', () => {
   const [good] = JSON.parse(indexText([shown('bob@neon', 'bob/ttheme-neon', 1, 'x')])).marketplaces
 
   const text = JSON.stringify({
     marketplaces: [
-      { ...good, about: 'Pastel\x1b]52;c;ZWNobyBoaQ==\x07 palettes\x1b[2J\nnext\tline' },
+      { ...good, about: 'Pastel\x1b]52;c;ZWNobyBoaQ==\x07 pal\u202eettes\x1b[2J\nnext\tl\u2066ine\u200f' },
       { ...good, id: 'mallory\x1b[8m@evil' },
       { ...good, id: 'eve@neon', source: '/tmp/local' },
       { ...good, id: 'eve@empty', palettes: [{ ...good.palettes[0], ansi: ['#zzzzzz'] }] },
