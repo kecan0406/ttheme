@@ -625,6 +625,22 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'browse-back',
+    about:
+      'a palette hovered in the bare ttheme’s Browse tab leaves the tab once Preview takes the screen back, so a tab that never painted still follows the default after esc',
+    async run(p) {
+      const a = await p.open()
+      await p.launch(a, 'ttheme', 'Browse')
+      await p.keys(a, 'shift-tab')
+      await p.expect(a, 'GitHub')
+      await p.keys(a, 'm', 'i', 'k', 'u')
+      await p.keys(a, 'tab')
+      await p.look('back', { want: 'konata', wears: false })
+      await p.quit(a)
+      await p.look('closed', { want: 'konata', unpainted: true })
+    },
+  },
+  {
     id: 'unwired',
     about:
       'in a terminal init never wired, a tab opens in its own colors and ttheme use still paints it — asking to wire it first where only the wiring can paint — with no picture, which only the wiring shows',

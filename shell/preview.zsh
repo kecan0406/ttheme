@@ -1708,6 +1708,7 @@ __tt_pv_screen() {
     fi
   done
   printf '\e[?2026h\e[?25l\e[?2004h%s' "$pvmouse"
+  __tt_pv_forget
   if [[ -n $applied ]]; then
     __tt_pv_paint "$applied"
   else

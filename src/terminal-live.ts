@@ -105,6 +105,8 @@ export function terminalLive(
   const stop = () => {
     clearTimeout(settle)
     next = undefined
+    over = true
+    back()
   }
 
   return {
@@ -131,8 +133,6 @@ export function terminalLive(
     saved: async () => new Map(),
     restore() {
       stop()
-      over = true
-      back()
       spawnSync('osascript', [...args, base], { stdio: 'ignore' })
 
       return ''

@@ -276,6 +276,13 @@ browse-reset.after.colors	miku	=	=	=	=	=	=	=	=	=
 browse-reset.after.picture	none	=	=	=	=	=	=	=	=	=
 browse-reset.after.wears	miku	=	=	=	=	=	=	=	=	=
 browse-reset.after.issue	-	=	=	=	=	=	=	=	=	=
+browse-back.back.colors	konata	=	=	=	=	=	=	=	=	=
+browse-back.back.picture	konata	=	=	=	none	=	none	=	=	=
+browse-back.back.issue	-	=	=	=	=	=	=	=	=	=
+browse-back.closed.colors	konata	=	=	=	=	=	=	=	=	=
+browse-back.closed.picture	konata	=	=	=	none	=	none	=	=	=
+browse-back.closed.wears	konata	=	=	=	=	=	=	=	=	=
+browse-back.closed.issue	-	=	=	=	=	=	=	=	=	=
 unwired.open.colors	own	=	=	=	=	=	=	=	=	=
 unwired.open.picture	none	=	=	=	=	=	=	=	=	=
 unwired.open.wears	none	=	=	=	=	=	=	=	=	=
