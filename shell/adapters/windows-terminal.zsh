@@ -5,9 +5,10 @@ __tt_reloaded() {
   integer i
   [[ -n $TTHEME_PAINTED ]] || return 0
   if [[ $1 != behind ]]; then
+    zmodload -F zsh/zselect b:zselect 2>/dev/null
     for (( i = 0; i < 20; i++ )); do
       __tt_query_bg && [[ ${(L)REPLY} == ${(L)${TTHEME_SPEC%% *}} ]] || break
-      sleep 0.05
+      zselect -t 5
     done
   fi
   __tt_repaint

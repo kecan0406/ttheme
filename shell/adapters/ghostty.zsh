@@ -274,10 +274,11 @@ __tt_reset_reloaded() {
   integer i
   __tt_osc_reset
   [[ -n $1 ]] && (( ${TTHEME_TERMINALS[(Ie)ghostty]} && ! TTHEME_TMUX )) || return 0
+  zmodload -F zsh/zselect b:zselect 2>/dev/null
   for (( i = 0; i < 20; i++ )); do
     __tt_query_bg || return 0
     [[ ${(L)REPLY} == ${(L)1} ]] || return 0
-    sleep 0.05
+    zselect -t 5
     __tt_osc_reset
   done
 }
