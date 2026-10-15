@@ -876,6 +876,20 @@ __tt_fresh
     { print -u2 "a color sent from inside tmux did not reach the terminal as a passthrough with its escapes doubled: ${(V)out}"; exit 1 }
 ) || exit 1
 (
+  integer pokes=0
+  __tt_poked() { (( ++pokes )) }
+  TTHEME_TMUX=1 TTHEME_FRONT=0
+  __tt_woken
+  TTHEME_FRONT=-1
+  __tt_woken
+  (( pokes == 0 )) || { print -u2 "a tmux pane tmux had not reported in front acted on a wake, repainting the whole terminal tab with its own palette"; exit 1 }
+  TTHEME_FRONT=1
+  __tt_woken
+  TTHEME_TMUX=0 TTHEME_FRONT=0
+  __tt_woken
+  (( pokes == 2 )) || { print -u2 "a wake did not reach the tmux pane in front or a tab behind outside tmux: $pokes"; exit 1 }
+) || exit 1
+(
   integer paints=0
   __tt_osc_apply() { (( ++paints )); export TTHEME_PAINTED=1 }
   __tt_active() { return 0 }

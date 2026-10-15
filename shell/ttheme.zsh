@@ -1671,15 +1671,19 @@ __tt_enlist() {
 if (( ! ${+functions[TRAPURG]} )); then
   TRAPURG() {
     emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-    (( ${#zsh_eval_context} == 1 )) || return 0
-    local -a TTHEME_NOTES=()
-    __tt_poked
-    (( ${#TTHEME_NOTES} )) || return 0
-    zle && zle -I
-    print -u2 -rl -- $TTHEME_NOTES
+    (( ${#zsh_eval_context} == 1 )) && __tt_woken
     return 0
   }
 fi
+
+__tt_woken() {
+  local -a TTHEME_NOTES=()
+  (( TTHEME_TMUX && TTHEME_FRONT != 1 )) && return 0
+  __tt_poked
+  (( ${#TTHEME_NOTES} )) || return 0
+  zle && zle -I
+  print -u2 -rl -- $TTHEME_NOTES
+}
 
 __tt_bye() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
