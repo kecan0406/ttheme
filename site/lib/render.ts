@@ -4,6 +4,6 @@ export function html(element: JSX.Element): string {
   return element
 }
 
-export function json(value: unknown): string {
+export function json<Data>(value: Data): string {
   return JSON.stringify(value).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')
 }

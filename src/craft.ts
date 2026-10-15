@@ -134,7 +134,7 @@ export function adopt(home: string, code: string, manifest: Manifest): Adopted {
 
 const SIGNATURE = ['background', 'foreground', 'cursor']
 
-function problemOf(read: () => unknown): string | undefined {
+function problemOf(read: () => void): string | undefined {
   try {
     read()
 

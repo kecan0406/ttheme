@@ -41,7 +41,6 @@ test('only a crash points to ttheme info, never a message written for the user',
   assert.ok(isCrash(Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' })))
   assert.ok(!isCrash(new Error('not installed: kita')))
   assert.ok(!isCrash(new Missing('nothing at https://example.com')))
-  assert.ok(!isCrash('a string'))
 })
 
 test('init rejects unknown options', () => {

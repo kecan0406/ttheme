@@ -119,6 +119,8 @@ type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw
 
 type Lane = 'tile' | 'band' | 'view'
 
+type Reply = { id: number; value: Result<Task> } | { id: number; error: string }
+
 type Result<T extends Task> = T extends Match
   ? Look
   : T extends Twin
@@ -231,9 +233,9 @@ function serveRenders(port: NonNullable<typeof parentPort>): void {
 class Line {
   private worker?: Worker
   private next = 1
-  private readonly waiting = new Map<number, { ok: (value: unknown) => void; no: (error: Error) => void }>()
+  private readonly waiting = new Map<number, { ok: (value: Result<Task>) => void; no: (error: Error) => void }>()
 
-  send(task: Task): Promise<unknown> {
+  send(task: Task): Promise<Result<Task>> {
     const id = this.next++
 
     return new Promise((ok, no) => {
@@ -257,27 +259,27 @@ class Line {
 
     const worker = new Worker(import.meta.filename)
     worker.unref()
-    worker.on('message', ({ id, value, error }: { id: number; value?: unknown; error?: string }) => {
-      const held = this.waiting.get(id)
-      this.waiting.delete(id)
+    worker.on('message', (reply: Reply) => {
+      const held = this.waiting.get(reply.id)
+      this.waiting.delete(reply.id)
 
       if (this.waiting.size === 0) {
         worker.unref()
       }
 
-      if (error !== undefined) {
-        held?.no(new Error(error))
+      if ('error' in reply) {
+        held?.no(new Error(reply.error))
       } else {
-        held?.ok(value)
+        held?.ok(reply.value)
       }
     })
 
-    const lost = (error: unknown) => {
+    const lost = (error?: Error) => {
       if (this.worker === worker) {
         this.worker = undefined
       }
 
-      this.drop(error instanceof Error ? error : new Error('renderer stopped'))
+      this.drop(error ?? new Error('renderer stopped'))
     }
 
     worker.on('error', lost)

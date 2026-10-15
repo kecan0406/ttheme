@@ -203,8 +203,8 @@ export function parse(argv: readonly string[]): Invocation {
 
 const CRASHES = [TypeError, RangeError, ReferenceError, SyntaxError]
 
-export function isCrash(error: unknown): boolean {
-  return CRASHES.some((kind) => error instanceof kind) || (error instanceof Error && 'code' in error)
+export function isCrash(error: Error): boolean {
+  return CRASHES.some((kind) => error instanceof kind) || 'code' in error
 }
 
 export async function runCli(argv: readonly string[]): Promise<number> {
@@ -274,7 +274,7 @@ export async function runCli(argv: readonly string[]): Promise<number> {
 
     const detail = process.env.TTHEME_DEBUG && error instanceof Error ? error.stack : undefined
     console.error(
-      `\nttheme${running ? ` ${running.name}` : ''}: ${detail ?? (error instanceof Error ? error.message : String(error))}${isCrash(error) ? '\nReport a bug with the output of `ttheme info`' : ''}`,
+      `\nttheme${running ? ` ${running.name}` : ''}: ${detail ?? (error instanceof Error ? error.message : String(error))}${error instanceof Error && isCrash(error) ? '\nReport a bug with the output of `ttheme info`' : ''}`,
     )
 
     return 1

@@ -23,7 +23,7 @@ export function pointing(env: Record<string, string | undefined> = process.env):
 const SIGNALS = { SIGHUP: 1, SIGINT: 2, SIGQUIT: 3, SIGTERM: 15 } as const
 const LINGER = 3000
 
-type Input = Readable & { isTTY?: boolean; setRawMode?: (on: boolean) => unknown }
+type Input = Readable & { isTTY?: boolean; setRawMode?: (on: boolean) => void }
 
 type Output = Writable & { isTTY?: boolean; columns?: number; rows?: number }
 
@@ -55,7 +55,7 @@ function topFor(input: Input): Terminal | undefined {
 
 let lingering: NodeJS.Timeout | undefined
 
-function failAll(error: unknown): void {
+function failAll(error: Error): void {
   for (const terminal of opened.toReversed()) {
     terminal.abort(error)
   }
@@ -116,7 +116,7 @@ export class Terminal {
   private resized: (() => void) | undefined
   private queued: Inbound[] = []
   private asking: { pick: (event: Inbound) => boolean; hold: boolean } | undefined
-  private reject: (error: unknown) => void = ignore
+  private reject: (error: Error) => void = ignore
   private open = true
   private aborted = false
   private enhanced = false
@@ -268,7 +268,7 @@ export class Terminal {
     })
   }
 
-  abort(error: unknown): void {
+  abort(error: Error): void {
     if (this.aborted) {
       return
     }
