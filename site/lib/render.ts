@@ -1,5 +1,5 @@
 export function html(element: JSX.Element): string {
-  if (typeof element !== 'string') throw new Error('an async component cannot render here')
+  if (element instanceof Promise) throw new Error('an async component cannot render here')
 
   return element
 }

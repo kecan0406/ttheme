@@ -85,13 +85,17 @@ export function itermProfiles(
 }
 
 function plistColor(key: string, c: ItermColor): string {
+  const real = (name: string, value: number) => [`\t\t<key>${name}</key>`, `\t\t<real>${value}</real>`]
+
   return [
     `\t<key>${key}</key>`,
     '\t<dict>',
-    ...Object.entries(c).flatMap(([k, v]) => [
-      `\t\t<key>${k}</key>`,
-      typeof v === 'string' ? `\t\t<string>${v}</string>` : `\t\t<real>${v}</real>`,
-    ]),
+    ...real('Alpha Component', c['Alpha Component']),
+    ...real('Blue Component', c['Blue Component']),
+    '\t\t<key>Color Space</key>',
+    `\t\t<string>${c['Color Space']}</string>`,
+    ...real('Green Component', c['Green Component']),
+    ...real('Red Component', c['Red Component']),
     '\t</dict>',
   ].join('\n')
 }

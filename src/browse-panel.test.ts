@@ -170,6 +170,8 @@ function io(overrides: Partial<BrowseIo> = {}): BrowseIo {
   }
 }
 
+const waits = (key: string | number): key is number => Number.isInteger(key)
+
 async function drive(
   keys: (string | number)[],
   opts: {
@@ -207,7 +209,7 @@ async function drive(
   let previous = ''
 
   for (const key of keys) {
-    if (typeof key === 'number') {
+    if (waits(key)) {
       await new Promise((resolve) => setTimeout(resolve, key))
       continue
     }

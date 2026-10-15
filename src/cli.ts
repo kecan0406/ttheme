@@ -32,7 +32,7 @@ interface Flags {
 const REFRESHES = new Set(['add', 'marketplace', 'default', 'on', 'off'])
 
 interface Verb extends VerbSpec {
-  run?(args: string[], flags: Flags): unknown
+  run?(args: string[], flags: Flags): Promise<number> | Promise<void> | number | void
 }
 
 const RUNS = new Map<string, Verb['run']>([
@@ -252,7 +252,7 @@ export async function runCli(argv: readonly string[]): Promise<number> {
       }
     }
 
-    return typeof code === 'number' ? code : 0
+    return code ?? 0
   } catch (error) {
     if (error instanceof UsageError) {
       console.error(

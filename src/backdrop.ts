@@ -1187,12 +1187,12 @@ export function writeTune(
   const figurePath = join(dir, `${picture.stem}.png`)
   let image = join(dir, picture.fill)
   let cover = true
-  const window = typeof size === 'number' && (size > 100 || (!aligns && position !== 'center'))
+  const window = size !== 'fill' && (size > 100 || (!aligns && position !== 'center'))
 
   if (size === 100 && !window) {
     image = figurePath
     cover = false
-  } else if (typeof size === 'number') {
+  } else if (size !== 'fill') {
     if (undrawn(picture)) {
       throw new Error(`${picture.stem} was drawn before pictures kept their tone — init draws it again`)
     }

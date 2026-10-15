@@ -68,9 +68,20 @@ export function jpegSize(bytes: Uint8Array): { width: number; height: number } |
   return null
 }
 
-let decoder: MozJPEGModule | undefined
+interface Boot {
+  noInitialRun: boolean
+  print: () => undefined
+  printErr: () => undefined
+  instantiateWasm: (
+    imports: ConstructorParameters<typeof WebAssembly.Instance>[1],
+    ready: (instance: WebAssembly.Instance) => void,
+  ) => WebAssembly.Instance['exports']
+  decode?: MozJPEGModule['decode']
+}
 
-function opened(): MozJPEGModule {
+let decoder: MozJPEGModule['decode'] | undefined
+
+function opened(): MozJPEGModule['decode'] {
   if (decoder) {
     return decoder
   }
@@ -79,30 +90,28 @@ function opened(): MozJPEGModule {
     inflateRawSync(Buffer.from(embedded('@jsquash/jpeg/codec/dec/mozjpeg_dec.wasm'), 'base64')),
   )
 
-  const loaded = {
+  const loaded: Boot = {
     noInitialRun: true,
     print: () => undefined,
     printErr: () => undefined,
-    instantiateWasm: (
-      imports: ConstructorParameters<typeof WebAssembly.Instance>[1],
-      ready: (instance: WebAssembly.Instance) => void,
-    ) => {
+    instantiateWasm: (imports, ready) => {
       const instance = new WebAssembly.Instance(code, imports)
       ready(instance)
 
       return instance.exports
     },
-  } as unknown as MozJPEGModule
+  }
 
   void mozjpeg(loaded as never)
+  const decode = loaded.decode?.bind(loaded)
 
-  if (typeof loaded.decode !== 'function') {
+  if (!decode) {
     throw new Error('the JPEG decoder did not start')
   }
 
-  decoder = loaded
+  decoder = decode
 
-  return loaded
+  return decode
 }
 
 export function decodeJpeg(bytes: Uint8Array, limit: number): Rgba {
@@ -115,7 +124,7 @@ export function decodeJpeg(bytes: Uint8Array, limit: number): Rgba {
   let image: ReturnType<MozJPEGModule['decode']> = null
 
   try {
-    image = opened().decode(bytes, true)
+    image = opened()(bytes, true)
   } catch {
     image = null
   }

@@ -424,22 +424,20 @@ interface Current {
   fill?: number
 }
 
-function describe(error: unknown): string {
-  if (!(error instanceof Error)) {
-    return String(error)
-  }
+function describe(error: Error): string {
+  const [inner] = error instanceof AggregateError ? error.errors : []
 
-  if (error instanceof AggregateError && error.errors[0]) {
-    return describe(error.errors[0])
+  if (inner) {
+    return describe(inner instanceof Error ? inner : new Error(String(inner)))
   }
 
   if (error.cause) {
-    return describe(error.cause)
+    return describe(error.cause instanceof Error ? error.cause : new Error(String(error.cause)))
   }
 
-  const code: unknown = (error as NodeJS.ErrnoException).code
+  const code = 'code' in error ? error.code : undefined
 
-  if (typeof code === 'string') {
+  if (code === String(code)) {
     return code
   }
 
@@ -448,7 +446,7 @@ function describe(error: unknown): string {
   return first.length > 56 ? `${first.slice(0, 55)}…` : first
 }
 
-function reason(name: string, error: unknown): string {
+function reason(name: string, error: Error): string {
   return `${name}: ${describe(error)}`
 }
 
@@ -969,7 +967,9 @@ class Finder {
     try {
       clip = await readClipboard(join(this.scratch, `clipboard-${Date.now()}.png`))
     } catch (error) {
-      this.notice(`Could not read the clipboard: ${describe(error)}`)
+      this.notice(
+        `Could not read the clipboard: ${describe(error instanceof Error ? error : new Error(String(error)))}`,
+      )
 
       return
     }
@@ -1044,7 +1044,7 @@ class Finder {
     } catch (error) {
       if (!control.signal.aborted) {
         view.note = undefined
-        this.notice(describe(error), 8000)
+        this.notice(describe(error instanceof Error ? error : new Error(String(error))), 8000)
       }
 
       return
@@ -1932,7 +1932,7 @@ class Finder {
 
       this.single(board, { site, post })
     } catch (error) {
-      this.fail(gen, error, site)
+      this.fail(gen, error instanceof Error ? error : new Error(String(error)), site)
     }
   }
 
@@ -2440,7 +2440,7 @@ class Finder {
       this.paint.draw()
       await this.pump()
     } catch (error) {
-      this.fail(gen, error)
+      this.fail(gen, error instanceof Error ? error : new Error(String(error)))
     }
   }
 
@@ -2457,7 +2457,7 @@ class Finder {
     }
   }
 
-  private fail(gen: number, error: unknown, site = this.site): void {
+  private fail(gen: number, error: Error, site = this.site): void {
     if (gen !== this.gen || this.signal.aborted) {
       return
     }
@@ -2469,7 +2469,7 @@ class Finder {
     this.paint.draw()
   }
 
-  private drop(board: Board, site: Site, error: unknown): void {
+  private drop(board: Board, site: Site, error: Error): void {
     for (const source of board.sources) {
       if (source.site === site) {
         source.done = true
@@ -2556,7 +2556,7 @@ class Finder {
             throw error
           }
 
-          this.drop(board, source.site, error)
+          this.drop(board, source.site, error instanceof Error ? error : new Error(String(error)))
 
           return { source, posts: undefined }
         }
@@ -2842,7 +2842,7 @@ class Finder {
         this.paint.draw()
       }
     } catch (error) {
-      this.fail(gen, error)
+      this.fail(gen, error instanceof Error ? error : new Error(String(error)))
     } finally {
       this.kept.save()
 
@@ -3156,7 +3156,7 @@ class Finder {
       this.preload()
     } catch (error) {
       if (!control.signal.aborted && !this.signal.aborted) {
-        view.error = reason(site.name, error)
+        view.error = reason(site.name, error instanceof Error ? error : new Error(String(error)))
       }
     } finally {
       if (view.fetching?.id === tile.key) {
@@ -3447,26 +3447,32 @@ class Finder {
     this.presenting = true
     view.preparing = this.current?.key
     this.paint.flush()
-    void this.present()
-      .catch((error: unknown) => {
-        view.error = error instanceof Error ? error.message : String(error)
-      })
-      .finally(() => {
-        this.presenting = false
+    void this.presented()
+  }
 
-        if (this.again) {
-          this.again = false
-          this.reveal()
+  private async presented(): Promise<void> {
+    const view = this.view
 
-          return
-        }
+    try {
+      await this.present()
+    } catch (error) {
+      view.error = error instanceof Error ? error.message : String(error)
+    }
 
-        if (view.preparing === this.current?.key) {
-          view.preparing = undefined
-        }
+    this.presenting = false
 
-        this.paint.draw()
-      })
+    if (this.again) {
+      this.again = false
+      this.reveal()
+
+      return
+    }
+
+    if (view.preparing === this.current?.key) {
+      view.preparing = undefined
+    }
+
+    this.paint.draw()
   }
 
   private async install(): Promise<void> {
