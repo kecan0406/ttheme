@@ -552,6 +552,7 @@ __tt_rewear() {
 
 __tt_focus() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  local -a TTHEME_NOTES=()
   TTHEME_FRONT=1
   __tt_fresh
   if (( TTHEME_TMUX )); then
@@ -559,6 +560,9 @@ __tt_focus() {
   else
     __tt_sync
   fi
+  (( ${#TTHEME_NOTES} )) || return 0
+  zle && zle -I
+  print -u2 -rl -- $TTHEME_NOTES
 }
 
 __tt_ssh_host() {

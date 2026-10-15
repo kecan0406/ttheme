@@ -388,7 +388,8 @@ late() {
 }
 
 noted() {
-  local name=$1 REPLY
+  local name=$1 by=$2 REPLY what='a shell woken at its prompt'
+  [[ $by == focus ]] && what='a tab brought to the front at its prompt'
   home $name off
   print -r -- '/nowhere/** nosuch' > $WORK/$name/.config/ttheme/pins
   start $name
@@ -397,12 +398,16 @@ noted() {
   zpty -w -n sh 'print -r -- NOTE_'
   upto '[[ $BUF == *NOTE_* ]]' 2 $name || { fail "$name: the line typed never showed"; return 1 }
   print -rl -- '/nowhere/** nosuch' '/elsewhere/** nosuch' > $WORK/$name/.config/ttheme/pins
-  kill -URG $MAIN
-  upto '[[ $BUF == *"pinned to /elsewhere"* ]]' 3 $name || { fail "$name: a shell woken at its prompt never read the pins another tab changed"; return 1 }
-  upto '[[ $BUF == *"pinned to /elsewhere"*"bench> print -r -- NOTE_"* ]]' 3 $name || { fail "$name: a shell woken at its prompt never drew the line being edited again after what it had to say"; return 1 }
+  if [[ $by == focus ]]; then
+    zpty -w -n sh $'\e[I'
+  else
+    kill -URG $MAIN
+  fi
+  upto '[[ $BUF == *"pinned to /elsewhere"* ]]' 3 $name || { fail "$name: $what never read the pins another tab changed"; return 1 }
+  upto '[[ $BUF == *"pinned to /elsewhere"*"bench> print -r -- NOTE_"* ]]' 3 $name || { fail "$name: $what never drew the line being edited again after what it had to say"; return 1 }
   step $'$((6*7))\r' $name
   [[ $BUF == *NOTE_42* && $BUF != *NOTE_ttheme:* ]] ||
-    { fail "$name: what a shell woken at its prompt had to say landed inside the line being edited"; return 1 }
+    { fail "$name: what $what had to say landed inside the line being edited"; return 1 }
   stop
 }
 
@@ -488,12 +493,13 @@ check() {
   hostile options-iterm2
   TERMINAL=""
   late late
-  noted noted
+  noted noted wake
+  noted focused focus
   urged urged
   for name in ${(k)IDENTITY}; do
     releasing $name || return 1
   done
-  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, seq while ttheme is off, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, an answer that comes after the layer stopped waiting never reaches the command line, what a shell woken at its prompt has to say lands on a line of its own, a run of wakes leaves preview open, and in every terminal a first tab starts the daily update check once and a newer release is told once at a prompt"
+  print "latency check ok — typeahead and stderr survive the startup queries (base, off, seq, seq while ttheme is off, terminal-app), a second tab asks only after its prompt, preview never echoes keys, its idle hint redraws one row, its hover in iTerm2 switches profiles where it may and otherwise leaves the ANSI colors alone, ctrl+s never stops its output, a paste never presses its keys, a late answer is never typed into it and it redraws for a window resized under another screen, keys typed while the shell asks the terminal reach the command line whole, a .zshrc's own options break none of it, an answer that comes after the layer stopped waiting never reaches the command line, what a shell woken or brought to the front at its prompt has to say lands on a line of its own, a run of wakes leaves preview open, and in every terminal a first tab starts the daily update check once and a newer release is told once at a prompt"
 }
 
 bench() {
