@@ -2025,7 +2025,6 @@ __tt_pv_te_head() {
   (( color )) || z= d= b= y=
   __tt_te_unsaved && (( room -= 11 ))
   line=$b$ac"◆"$z" "$b$tename$z
-  local REPLY
   __tt_shelf $tename
   line+=" "$d"· $REPLY"$z
   __tt_clip "$line" $room

@@ -290,6 +290,9 @@ plain=${out//$'\e[K'/}
       s=${s:1}
     done
     (( far <= 39 )) || { print -u2 "the edit panel drew to column $far past its edge at 39"; exit 1 }
+    local said
+    said=$(__tt_pv_te_head 2 39)
+    [[ -z $said ]] || { print -u2 "the edit panel's head wrote to the terminal itself: ${(q+)said}"; exit 1 }
   ) || exit 1
   (
     local -a feed=(${(s::)${:-$'k\u202ei\u2066t\u200ea\u061c\u0085\e[201~'}})
