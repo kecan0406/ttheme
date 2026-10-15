@@ -18,12 +18,12 @@ description = "typecheck"
 run = "tsc --noEmit"
 
 [tasks.lint]
-description = "biome lint + format check + import order"
-run = "biome check ."
+description = "biome lint + format check + import order, then oxlint with the vendored anti-slop rules"
+run = "biome check . && oxlint"
 
 [tasks.format]
-description = "apply biome fixes"
-run = "biome check --write ."
+description = "apply oxlint's anti-slop fixes, then biome's"
+run = "oxlint --fix && biome check --write ."
 
 [tasks.slop]
 description = "oxlint with the vendored anti-slop rules"
