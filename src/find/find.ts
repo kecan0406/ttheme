@@ -424,15 +424,19 @@ interface Current {
   fill?: number
 }
 
-function describe(error: Error): string {
+function describe(error: Error | string): string {
+  if (!(error instanceof Error)) {
+    return error
+  }
+
   const [inner] = error instanceof AggregateError ? error.errors : []
 
   if (inner) {
-    return describe(inner instanceof Error ? inner : new Error(String(inner)))
+    return describe(inner instanceof Error ? inner : String(inner))
   }
 
   if (error.cause) {
-    return describe(error.cause instanceof Error ? error.cause : new Error(String(error.cause)))
+    return describe(error.cause instanceof Error ? error.cause : String(error.cause))
   }
 
   const code = 'code' in error ? error.code : undefined
@@ -446,7 +450,7 @@ function describe(error: Error): string {
   return first.length > 56 ? `${first.slice(0, 55)}…` : first
 }
 
-function reason(name: string, error: Error): string {
+function reason(name: string, error: Error | string): string {
   return `${name}: ${describe(error)}`
 }
 
@@ -967,9 +971,7 @@ class Finder {
     try {
       clip = await readClipboard(join(this.scratch, `clipboard-${Date.now()}.png`))
     } catch (error) {
-      this.notice(
-        `Could not read the clipboard: ${describe(error instanceof Error ? error : new Error(String(error)))}`,
-      )
+      this.notice(`Could not read the clipboard: ${describe(error instanceof Error ? error : String(error))}`)
 
       return
     }
@@ -1044,7 +1046,7 @@ class Finder {
     } catch (error) {
       if (!control.signal.aborted) {
         view.note = undefined
-        this.notice(describe(error instanceof Error ? error : new Error(String(error))), 8000)
+        this.notice(describe(error instanceof Error ? error : String(error)), 8000)
       }
 
       return
@@ -1932,7 +1934,7 @@ class Finder {
 
       this.single(board, { site, post })
     } catch (error) {
-      this.fail(gen, error instanceof Error ? error : new Error(String(error)), site)
+      this.fail(gen, error instanceof Error ? error : String(error), site)
     }
   }
 
@@ -2440,7 +2442,7 @@ class Finder {
       this.paint.draw()
       await this.pump()
     } catch (error) {
-      this.fail(gen, error instanceof Error ? error : new Error(String(error)))
+      this.fail(gen, error instanceof Error ? error : String(error))
     }
   }
 
@@ -2457,7 +2459,7 @@ class Finder {
     }
   }
 
-  private fail(gen: number, error: Error, site = this.site): void {
+  private fail(gen: number, error: Error | string, site = this.site): void {
     if (gen !== this.gen || this.signal.aborted) {
       return
     }
@@ -2469,7 +2471,7 @@ class Finder {
     this.paint.draw()
   }
 
-  private drop(board: Board, site: Site, error: Error): void {
+  private drop(board: Board, site: Site, error: Error | string): void {
     for (const source of board.sources) {
       if (source.site === site) {
         source.done = true
@@ -2556,7 +2558,7 @@ class Finder {
             throw error
           }
 
-          this.drop(board, source.site, error instanceof Error ? error : new Error(String(error)))
+          this.drop(board, source.site, error instanceof Error ? error : String(error))
 
           return { source, posts: undefined }
         }
@@ -2842,7 +2844,7 @@ class Finder {
         this.paint.draw()
       }
     } catch (error) {
-      this.fail(gen, error instanceof Error ? error : new Error(String(error)))
+      this.fail(gen, error instanceof Error ? error : String(error))
     } finally {
       this.kept.save()
 
@@ -3156,7 +3158,7 @@ class Finder {
       this.preload()
     } catch (error) {
       if (!control.signal.aborted && !this.signal.aborted) {
-        view.error = reason(site.name, error instanceof Error ? error : new Error(String(error)))
+        view.error = reason(site.name, error instanceof Error ? error : String(error))
       }
     } finally {
       if (view.fetching?.id === tile.key) {
