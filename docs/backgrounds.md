@@ -142,8 +142,8 @@ few of those tags, so `TTHEME_FIND_CUTOUTS` names the ones to look for, site by
 site.
 
 Under each thumbnail is its post id — a link to the post's page, marked `⧉` in
-the site's color the way Claude Code marks a link, and opened with a click
-(cmd+click in Ghostty and iTerm2); the same mark sets off every post number
+the site's color the way Claude Code marks a link, which find opens on a click
+(not over SSH); the same mark sets off every post number
 find, preview's image edit and `ttheme add` show — and size, and under that the artist: named
 by the site's own tag types, by danbooru's tags for the same file, or, on a
 zerochan post danbooru does not hold, by the post's page once you have tried it

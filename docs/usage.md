@@ -520,10 +520,10 @@ environment; `ttheme update` still works. An update also follows a marketplace's
 renames: a palette you installed under a name its marketplace renamed is installed
 under the new name — with its tuning, pictures, pins and startup role — and one
 the marketplace removed comes off (`alice@pastel/dawn is alice@pastel/dusk now — its
-marketplace renamed it`). From the shell only the check for a newer ttheme
-runs: a prompt starts it once a day, and the bare `ttheme` once an hour as it
-opens, its key bars ending in what it found (`⇡ 1.2.31 available`); no
-marketplace is fetched from the shell or a new tab.
+marketplace renamed it`). A prompt runs only the check for a newer ttheme,
+once a day, and the bare `ttheme` runs it once an hour as it opens, its key
+bars ending in what it found (`⇡ 1.2.31 available`); no marketplace is fetched
+at a prompt or by a new tab.
 
 ## Marketplaces
 
