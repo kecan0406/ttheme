@@ -153,6 +153,17 @@ test('the dialog’s enter takes the focused choice, and arrows move the focus',
   assert.equal(back.result, 'saved')
 })
 
+test('a window too small for the editor still asks whether to save when esc leaves with changes', () => {
+  const e = press(editor(), 'tab', '9', 'enter', 'esc')
+  assert.equal(e.quitting, true)
+  const small = renderEditor(e, 120, 20, false).join('\n')
+  assert.match(small, /Needs 80×24 — now 120×20/)
+  assert.match(small, /Save changes\? {3}y save {3}n discard {3}esc keep editing/)
+  assert.doesNotMatch(small, /esc cancels/)
+  press(e, 'n')
+  assert.equal(e.result, 'cancelled')
+})
+
 test('ctrl-c does not leave the editor', () => {
   assert.equal(press(editor(), 'ctrl-c').result, undefined)
   assert.equal(press(editor(), 'tab', '9', 'enter', 'ctrl-c').result, undefined)

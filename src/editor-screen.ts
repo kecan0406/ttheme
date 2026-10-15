@@ -43,7 +43,7 @@ import type { Colors } from './seeds.ts'
 import { grow, SEED_FIELDS, type Seeds } from './seeds.ts'
 import { CLEAR } from './terminal.ts'
 import { CELL_QUERY, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './tui/keys.ts'
-import { boxEdge, boxed, checkOf, pillOf } from './tui/parts.ts'
+import { boxEdge, boxed, checkOf, hintOf, pillOf } from './tui/parts.ts'
 import { Screen } from './tui/screen.ts'
 import { FG_RESET, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './tui/style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './tui/terminal.ts'
@@ -724,7 +724,9 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
     const small = [
       p.bold('ttheme palette editor'),
       `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${rows}`,
-      p.dim('esc cancels'),
+      e.quitting
+        ? `Save changes?   ${[hintOf(p, 'y', 'save'), hintOf(p, 'n', 'discard'), hintOf(p, 'esc', 'keep editing')].join('   ')}`
+        : p.dim('esc cancels'),
     ]
 
     return { lines: Array.from({ length: rows }, (_, i) => fit(small[i] ?? '', cols)), art: undefined }
