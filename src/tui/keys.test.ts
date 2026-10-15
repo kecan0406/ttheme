@@ -70,10 +70,23 @@ test('pastes and protocol replies come apart from keys, in order, and unfinished
   ])
 })
 
+test('a DCS, APC, PM or SOS string, or an OSC with no number, is read as nothing, whole or split across reads', () => {
+  assert.deepEqual(keysOf('a\x1bP1$r0m\x1b\\b\x1b_Gi=1;OK\x1b\\c\x1b^note\x1b\\\x1bXx\x1b\\\x1b]Lterm\x07d'), [
+    'a',
+    'b',
+    'c',
+    'd',
+  ])
+  const split = decode('\x1bP>|XTerm(')
+  assert.deepEqual(split, { events: [], rest: '\x1bP>|XTerm(' })
+  assert.deepEqual(keysOf(`${split.rest}390)\x1b\\e`), ['e'])
+})
+
 test('with no keyboard protocol, esc and a key other than a lowercase letter read as that key with alt', () => {
   assert.deepEqual(keysOf('\x1b1\x1bA\x1b/\x1b \x1b\x1b'), ['alt-1', 'alt-shift-a', 'alt-/', 'alt-space', 'esc', 'esc'])
   assert.deepEqual(keysOf('\x1b['), ['alt-['])
   assert.deepEqual(keysOf('\x1bO'), ['alt-shift-o'])
+  assert.deepEqual(keysOf('\x1bP'), ['alt-shift-p'])
 })
 
 test('an escape sequence split across two reads is one key, and a lone esc is read once the wait passes', async () => {

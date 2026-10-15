@@ -104,6 +104,7 @@ const CSI = /\[([0-?]*)([ -/]*)([@-~])/y
 const CSI_OPEN = /^\[[0-?]*[ -/]*$/
 const SGR_MOUSE = /\[(<-?\d+;-?\d+;-?\d+)([Mm])/y
 const SGR_OPEN = /^\[<[-\d;]*$/
+const STRINGS = new Set(['P', 'X', '^', '_'])
 const OSC_CODE = /\](\d+)/y
 const OSC_OPEN = /^\]\d*$/
 const OSC_OPENED = /\]\d+;/y
@@ -149,6 +150,22 @@ function alted(input: string, at: number): Step {
   const label = ch === ' ' ? 'space' : /^[A-Z]$/.test(ch) ? `shift-${ch.toLowerCase()}` : ch
 
   return { events: [key(`alt-${label}`)], end: at + 1 + ch.length }
+}
+
+function string(input: string, at: number, final: boolean, bell: boolean): Step {
+  if (at + 2 >= input.length) {
+    return final ? alted(input, at) : undefined
+  }
+
+  const ends = [input.indexOf('\x1b\\', at + 2), bell ? input.indexOf('\x07', at + 2) : -1].filter((end) => end !== -1)
+
+  if (ends.length === 0) {
+    return final ? { events: [], end: input.length } : undefined
+  }
+
+  const end = Math.min(...ends)
+
+  return { events: [], end: end + (input[end] === '\x07' ? 1 : 2) }
 }
 
 function metadata(text: string): Record<string, string> {
@@ -415,16 +432,18 @@ function oscEvents(body: string): Inbound[] {
 }
 
 function osc(input: string, at: number, final: boolean): Step {
+  const first = input[at + 2]
+
+  if (first === undefined || !/\d/.test(first)) {
+    return string(input, at, final, true)
+  }
+
   OSC_CODE.lastIndex = at + 1
   const code = OSC_CODE.exec(input)
   const after = code ? input[at + 1 + code[0].length] : undefined
 
   if (after !== ';' && after !== '\x07' && after !== '\x1b') {
-    if (!final && OSC_OPEN.test(input.slice(at + 1))) {
-      return undefined
-    }
-
-    return input.length === at + 2 ? alted(input, at) : lone(at)
+    return !final && OSC_OPEN.test(input.slice(at + 1)) ? undefined : lone(at)
   }
 
   const ends = [input.indexOf('\x07', at), input.indexOf('\x1b\\', at + 2)].filter((end) => end !== -1)
@@ -471,6 +490,14 @@ function sequence(input: string, at: number, final: boolean, cell: Cell | undefi
 
   if (next === 'O') {
     return ss3(input, at, final)
+  }
+
+  if (STRINGS.has(next)) {
+    return string(input, at, final, false)
+  }
+
+  if (next === '\\') {
+    return { events: [], end: at + 2 }
   }
 
   if (next === '\x7f') {
