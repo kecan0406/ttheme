@@ -32,7 +32,7 @@ const REFS: [RegExp, string][] = [
   [/zerochan\.net\/(\d+)(?:[?#\s]|$)/, 'zerochan'],
 ]
 
-export interface Shape {
+export interface Size {
   hash: string
   width: number
   height: number
@@ -71,7 +71,7 @@ export function sameSet(a: Post, b: Post): boolean {
   )
 }
 
-export function shape(image: Rgba): string {
+export function dhash(image: Rgba): string {
   const W = 9
   const H = 8
   const grey: number[] = []
@@ -126,7 +126,7 @@ export function distance(a: string, b: string): number {
   return bits
 }
 
-export function near(a: Shape, b: Shape): boolean {
+export function near(a: Size, b: Size): boolean {
   if (a.width <= 0 || a.height <= 0 || b.width <= 0 || b.height <= 0) {
     return false
   }

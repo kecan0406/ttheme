@@ -329,9 +329,12 @@ function planePixels(box: Box, h: number, cell: Cell): Rgba {
 
     for (let x = 0; x < width; x++) {
       const near = (x < radius || x >= width - radius) && (y < radius || y >= height - radius)
-      const shape = near ? Math.min(1, Math.max(0, 0.5 - roundRect(x + 0.5, y + 0.5, 0, 0, width, height, radius))) : 1
 
-      if (shape <= 0) {
+      const coverage = near
+        ? Math.min(1, Math.max(0, 0.5 - roundRect(x + 0.5, y + 0.5, 0, 0, width, height, radius)))
+        : 1
+
+      if (coverage <= 0) {
         continue
       }
 
@@ -340,7 +343,7 @@ function planePixels(box: Box, h: number, cell: Cell): Rgba {
       data[i] = color[0] as number
       data[i + 1] = color[1] as number
       data[i + 2] = color[2] as number
-      data[i + 3] = Math.round(shape * 255)
+      data[i + 3] = Math.round(coverage * 255)
     }
   }
 
@@ -366,9 +369,9 @@ function huePixels(art: Art['hue'], cell: Cell): Rgba {
 
   for (let y = top; y < top + height; y++) {
     for (let x = 0; x < width; x++) {
-      const shape = Math.min(1, Math.max(0, 0.5 - roundRect(x + 0.5, y + 0.5, 0, top, width, height, height / 2)))
+      const coverage = Math.min(1, Math.max(0, 0.5 - roundRect(x + 0.5, y + 0.5, 0, top, width, height, height / 2)))
       const color = colors[x] as number[]
-      blend(image, x, y, [color[0] as number, color[1] as number, color[2] as number, 1], shape)
+      blend(image, x, y, [color[0] as number, color[1] as number, color[2] as number, 1], coverage)
     }
   }
 
@@ -384,9 +387,9 @@ function contrastPixels(art: Art['contrast'], ink: Hex, cell: Cell): Rgba {
 
   for (let y = thinTop; y < thinTop + thin; y++) {
     for (let x = 0; x < width; x++) {
-      const shape = Math.min(1, Math.max(0, 0.5 - roundRect(x + 0.5, y + 0.5, 0, thinTop, width, thin, thin / 2)))
+      const coverage = Math.min(1, Math.max(0, 0.5 - roundRect(x + 0.5, y + 0.5, 0, thinTop, width, thin, thin / 2)))
       const passes = tick < 0 || x >= tick
-      blend(image, x, y, rgbaOf(ink, passes ? (art.lit ? 0.5 : 0.36) : 0.14), shape)
+      blend(image, x, y, rgbaOf(ink, passes ? (art.lit ? 0.5 : 0.36) : 0.14), coverage)
     }
   }
 

@@ -11,10 +11,10 @@ import { detectTerminal, type Live, SETTLE_MS } from './terminal.ts'
 import {
   canvasFor,
   heldIn,
-  shapeOf,
   terminalPictures,
   terminalProfile,
   terminalScript,
+  windowOf,
 } from './terminals/terminal-app.ts'
 import { owned, stem } from './theme.ts'
 
@@ -46,7 +46,7 @@ export function terminalLive(
   const own = join(terminalPictures(configHome), file)
   const args = ['-l', 'JavaScript', terminalScript(configHome), 'tab', at, terminalProfile(name)]
   const base = readInstalled(configHome).terminalBase ?? 'Basic'
-  const shape = shapeOf(env, home)
+  const window = windowOf(env, home)
   const kept = readFileSync(own)
   let source: Rgba | undefined
   let held = own
@@ -78,7 +78,7 @@ export function terminalLive(
     rewrite(
       held,
       out,
-      encodeRgb(flatten(source, background, picture.opacity, canvasFor(source.width, source.height, picture, shape))),
+      encodeRgb(flatten(source, background, picture.opacity, canvasFor(source.width, source.height, picture, window))),
     )
     held = out
     tell(osc)

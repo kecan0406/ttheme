@@ -18,7 +18,7 @@ import { type Frame, Screen } from '../tui/screen.ts'
 import type { Hit } from '../tui/zones.ts'
 import {
   type FindView,
-  gridShape,
+  gridLayout,
   type Placement,
   place,
   release,
@@ -213,7 +213,7 @@ export class Paint {
     }
 
     const { cols, rows } = this.grid()
-    const span = gridShape(cols, rows).height
+    const span = gridLayout(cols, rows).height
 
     const step = (): void => {
       const view = this.view

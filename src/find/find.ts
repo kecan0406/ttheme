@@ -67,7 +67,7 @@ import { CELL_QUERY, CellProbe, type Inbound, type Mouse } from '../tui/keys.ts'
 import { FOCUS, HIDE_CURSOR, NO_WRAP, PASTES, pointing, type Terminal, within } from '../tui/terminal.ts'
 import type { Hit } from '../tui/zones.ts'
 import { blurOf, coloringFor, settingDefault, withSetting } from '../wiring.ts'
-import { kinKeys, near, type Shape, sameKeys, sameSet } from '../works.ts'
+import { kinKeys, near, type Size, sameKeys, sameSet } from '../works.ts'
 import {
   type Clip,
   type Got,
@@ -92,7 +92,7 @@ import {
   DIGITS,
   type FindSpot,
   type FindView,
-  gridShape,
+  gridLayout,
   HELD,
   type Held,
   heldFit,
@@ -372,7 +372,7 @@ interface Board {
   last: Map<Source, { post: Post; set: string }>
   kin: Map<Pick, string[]>
   kindred: Map<string, Group>
-  shapes: { shape: Shape; group: Group }[]
+  sizes: { size: Size; group: Group }[]
   seen: Set<number>
   same: Map<string, Pick>
   checked: number
@@ -398,7 +398,7 @@ function blank(key: string, searching: boolean): Board {
     last: new Map(),
     kin: new Map(),
     kindred: new Map(),
-    shapes: [],
+    sizes: [],
     seen: new Set(),
     same: new Map(),
     checked: 0,
@@ -1315,7 +1315,7 @@ class Finder {
     } else if (view.mode === 'try') {
       this.tryKey(step < 0 ? 'left' : 'right')
     } else {
-      this.focus(view.focus + step * gridShape(this.cols, this.rows).perRow)
+      this.focus(view.focus + step * gridLayout(this.cols, this.rows).perRow)
     }
   }
 
@@ -1407,7 +1407,7 @@ class Finder {
 
   private gridKey(key: string): void {
     const view = this.view
-    const { perRow, rowsVis } = gridShape(this.cols, this.rows)
+    const { perRow, rowsVis } = gridLayout(this.cols, this.rows)
 
     const moves = new Map([
       ['left', -1],
@@ -2246,7 +2246,7 @@ class Finder {
 
   private scroll(): void {
     const view = this.view
-    const { perRow, rowsVis } = gridShape(this.cols, this.rows)
+    const { perRow, rowsVis } = gridLayout(this.cols, this.rows)
     const row = Math.floor(view.focus / perRow)
 
     if (row < view.top) {
@@ -2480,13 +2480,13 @@ class Finder {
   }
 
   private wants(): boolean {
-    const { perRow, rowsVis } = gridShape(this.cols, this.rows)
+    const { perRow, rowsVis } = gridLayout(this.cols, this.rows)
 
     return this.view.tiles.length < (this.board.top + rowsVis + LOOKAHEAD) * perRow
   }
 
   private need(): number {
-    const { perRow, rowsVis } = gridShape(this.cols, this.rows)
+    const { perRow, rowsVis } = gridLayout(this.cols, this.rows)
 
     return (rowsVis + LOOKAHEAD) * perRow
   }
@@ -2897,12 +2897,12 @@ class Finder {
     this.posts.set(key, pick)
     const keys = board.kin.get(pick) ?? []
     const look = this.looked.get(key)
-    const shape = look && { hash: look.hash, width: post.width, height: post.height }
-    const kindred = this.view.sets === 'fold' ? this.kindred(board, keys, shape) : undefined
+    const size = look && { hash: look.hash, width: post.width, height: post.height }
+    const kindred = this.view.sets === 'fold' ? this.kindred(board, keys, size) : undefined
 
     if (kindred) {
       kindred.posts.push(pick)
-      this.register(board, kindred, keys, shape)
+      this.register(board, kindred, keys, size)
 
       if (kindred.open) {
         this.thumbQueue.push(pick)
@@ -2914,12 +2914,12 @@ class Finder {
 
     const group = { posts: [pick], open: false }
     board.groups.push(group)
-    this.register(board, group, keys, shape)
+    this.register(board, group, keys, size)
     this.thumbQueue.push(pick)
     this.thumbs()
   }
 
-  private kindred(board: Board, keys: string[], shape: Shape | undefined): Group | undefined {
+  private kindred(board: Board, keys: string[], size: Size | undefined): Group | undefined {
     for (const key of keys) {
       const group = board.kindred.get(key)
 
@@ -2928,18 +2928,18 @@ class Finder {
       }
     }
 
-    return shape && board.shapes.find((held) => near(held.shape, shape))?.group
+    return size && board.sizes.find((held) => near(held.size, size))?.group
   }
 
-  private register(board: Board, group: Group, keys: string[], shape: Shape | undefined): void {
+  private register(board: Board, group: Group, keys: string[], size: Size | undefined): void {
     for (const key of keys) {
       if (!board.kindred.has(key)) {
         board.kindred.set(key, group)
       }
     }
 
-    if (shape) {
-      board.shapes.push({ shape, group })
+    if (size) {
+      board.sizes.push({ size, group })
     }
   }
 

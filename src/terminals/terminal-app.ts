@@ -244,20 +244,25 @@ function baseOf(state: Moment['state'], host: Host): string {
   return state.terminalBase ?? (now && !now.startsWith(OURS) ? now : 'Basic')
 }
 
-interface Shape {
+interface Window {
   width: number
   height: number
 }
 
-export function shapeOf(env: Host['env'], home: string): Shape | undefined {
+export function windowOf(env: Host['env'], home: string): Window | undefined {
   const size = /^(\d+)x(\d+)$/.exec(readText(terminalWindow(env, home)).trim())
 
   return size ? { width: Number(size[1]) * 2, height: Number(size[2]) * 2 } : undefined
 }
 
-export function canvasFor(width: number, height: number, picture: ProfileBackground, shape: Shape | undefined): Canvas {
-  const W = shape?.width ?? width
-  const H = shape?.height ?? height
+export function canvasFor(
+  width: number,
+  height: number,
+  picture: ProfileBackground,
+  window: Window | undefined,
+): Canvas {
+  const W = window?.width ?? width
+  const H = window?.height ?? height
   const at = (POSITIONS as readonly string[]).indexOf(picture.position) + 1 || 5
   const box = frameAt(width, height, W, H, 100, at, picture.cover)
   const k = Math.min(1, width / Math.max(1, box.w))
@@ -295,7 +300,7 @@ function pictureVersions(dir: string): string {
 function lay(ctx: Ctx): Map<string, string> {
   const dir = terminalPictures(ctx.configHome)
   const held = heldIn(dir)
-  const shape = shapeOf(ctx.host.env, ctx.home)
+  const window = windowOf(ctx.host.env, ctx.home)
   const laid = new Map<string, string>()
 
   const drop = (files: readonly string[]) => {
@@ -316,7 +321,7 @@ function lay(ctx: Ctx): Map<string, string> {
       continue
     }
 
-    const canvas = canvasFor(head.width, head.height, picture, shape)
+    const canvas = canvasFor(head.width, head.height, picture, window)
 
     const version = createHash('sha1')
       .update(bytes)

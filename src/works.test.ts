@@ -3,7 +3,7 @@ import { test } from 'node:test'
 
 import { type Post, SITES, type Site } from './booru.ts'
 import { resample } from './png.ts'
-import { distance, kinKeys, near, sameArtwork, sameKeys, sameSet, shape } from './works.ts'
+import { dhash, distance, kinKeys, near, sameArtwork, sameKeys, sameSet } from './works.ts'
 
 const site = (key: string) => SITES.find((s) => s.key === key) as Site
 
@@ -130,11 +130,11 @@ test('a transparent post stands for an opaque one only where its solid pixels ar
 
 test('near folds a re-encoded copy of one shape and ratio, not a different picture or a crop', () => {
   const stripes = image(90, 80, (x) => (x % 20 < 10 ? 30 : 220))
-  const hash = shape(stripes)
-  assert.equal(distance(hash, shape(image(90, 80, (x) => (x % 20 < 10 ? 34 : 216)))), 0)
+  const hash = dhash(stripes)
+  assert.equal(distance(hash, dhash(image(90, 80, (x) => (x % 20 < 10 ? 34 : 216)))), 0)
   const same = { hash, width: 1600, height: 1000 }
   assert.equal(near(same, { hash, width: 800, height: 500 }), true)
   assert.equal(near(same, { hash, width: 1600, height: 900 }), false, 'a crop to another ratio')
-  const other = shape(image(90, 80, (_, y) => (y % 20 < 10 ? 30 : 220)))
+  const other = dhash(image(90, 80, (_, y) => (y % 20 < 10 ? 30 : 220)))
   assert.equal(near(same, { hash: other, width: 1600, height: 1000 }), false)
 })

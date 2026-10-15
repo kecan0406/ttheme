@@ -234,7 +234,7 @@ export function heldFit(cols: number): number {
   return Math.max(0, Math.floor((cols - 1) / HELD.pitch))
 }
 
-export function gridShape(cols: number, rows: number) {
+export function gridLayout(cols: number, rows: number) {
   const height = rows - GRID_TOP - 2
 
   return {
@@ -1149,7 +1149,7 @@ function grid(
   view: FindView,
   accent: string,
 ): boolean {
-  const { perRow, rowsVis, height } = gridShape(cols, rows)
+  const { perRow, rowsVis, height } = gridLayout(cols, rows)
   query(lines[0] as Line, cols, view, accent)
   tabs(lines[1] as Line, cols, view)
   tagRow(lines[2] as Line, cols, view, accent)

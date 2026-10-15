@@ -24,7 +24,7 @@ import { writeAtomic } from './edits.ts'
 import { paletteMatch } from './fit.ts'
 import { redrawOne } from './pictures.ts'
 import { contain, decodeImage, encodeRgba, transparency } from './png.ts'
-import { sameArtwork, shape } from './works.ts'
+import { dhash, sameArtwork } from './works.ts'
 
 interface Thumb {
   job: 'thumb'
@@ -203,7 +203,7 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
   }
 
   if (task.job === 'match') {
-    return { match: paletteMatch(image, task.colors), hash: shape(image) }
+    return { match: paletteMatch(image, task.colors), hash: dhash(image) }
   }
 
   if (task.job === 'thumb') {
