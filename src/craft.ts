@@ -9,9 +9,18 @@ import { runEditor } from './editor-screen.ts'
 import { writeAtomic } from './edits.ts'
 import { findFor } from './find/find.ts'
 import { fixGate, type Move } from './fix.ts'
-import { colorsOfTheme, type Manifest, type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
+import {
+  colorsOfTheme,
+  inMode,
+  type Manifest,
+  otherColors,
+  type PaletteEntry,
+  paletteEntry,
+  toTheme,
+} from './manifest.ts'
 import { ensureLocal } from './marketplaces.ts'
-import { modeOf } from './mode.ts'
+import { mirror } from './mirror.ts'
+import { type Mode, modeOf } from './mode.ts'
 import { colorless } from './osc.ts'
 import {
   codeOf,
@@ -40,6 +49,7 @@ import { showsPictures } from './terminal.ts'
 import { marketplaceOf, nameProblem, type SharedPicture, shelfOf, type Theme } from './theme.ts'
 import { overrideOf, readTone, tonedEntry, toneOf, withTone, writeTone } from './tone.ts'
 import { toneRows } from './tone-view.ts'
+import { wearFor } from './wiring.ts'
 
 function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
@@ -93,7 +103,7 @@ function movesText(moves: Move[]): string[] {
 }
 
 function wears(p: PaletteEntry): string {
-  return JSON.stringify([p.background, p.foreground, p.cursor, p.selection, p.ansi])
+  return JSON.stringify([p.background, p.foreground, p.cursor, p.selection, p.ansi, otherColors(p)])
 }
 
 export interface Refused {
@@ -300,8 +310,8 @@ export async function runNew(name: string, from: string | undefined, into: strin
   console.log(`\n\`ttheme use ${full}\` wears it · \`ttheme edit ${full}\` opens it again`)
 }
 
-function failuresOf(name: string, source: string, manifest: Manifest): string[] {
-  const entry = paletteEntry(readOwnText(name, source, manifest.palettes))
+function failuresOf(name: string, source: string, manifest: Manifest, mode: Mode): string[] {
+  const entry = inMode(paletteEntry(readOwnText(name, source, manifest.palettes)), mode)
 
   return gateFailures(entry).length > 0 ? gateLines(entry).filter((l) => l.startsWith('  ✗')) : []
 }
@@ -349,17 +359,21 @@ export async function runEdit(name: string): Promise<void> {
 
   const shelf = shelfFor(home, full)
   const listed = new Set((theme.pictures ?? []).map((picture) => imageKey(picture)))
+  const wear = wearFor(home)
+  const mode = wear === 'own' ? modeOf(theme) : wear
+  const table = mode === modeOf(theme) ? 'colors' : `colors.${mode}`
+  const shade = table === 'colors' ? theme : (theme.other ?? mirror(theme))
 
   const rewrite = ({ colors, signature }: Edited) =>
     withPictures(
-      resign(recolor(before, colors), signature),
+      resign(withShade(before, colors, table), signature),
       shelf.fresh().filter((picture) => !listed.has(imageKey(picture))),
     )
 
   const edited = await editColors({
     title: 'Edit palette',
     name: full,
-    colors: colorsOfTheme(theme),
+    colors: colorsOfTheme(shade),
     signature: theme.signatureSlots,
     waive: theme.waive,
     palettes: choicesOf(home, manifest, full),
@@ -394,7 +408,7 @@ export async function runEdit(name: string): Promise<void> {
   console.log(
     `Saved ${full}${state.palettes.includes(full) ? ' — new tabs and `ttheme use` wear it' : ` — \`ttheme add ${full}\` installs it`}`,
   )
-  const failing = failuresOf(full, after, manifest)
+  const failing = failuresOf(full, after, manifest, mode)
 
   if (failing.length > 0) {
     console.log(

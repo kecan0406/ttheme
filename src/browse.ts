@@ -3,7 +3,7 @@ import { type BrowseIo, BrowsePanel, type BrowseResult, type Marketplace } from 
 import { HUB_CLOSED, hubOf } from './hub.ts'
 import { reload, takeUpdates } from './installs.ts'
 import { liveOf } from './live.ts'
-import { listed, type PaletteEntry } from './manifest.ts'
+import { inMode, listed, type PaletteEntry } from './manifest.ts'
 import { readIndex } from './marketplace-index.ts'
 import { dropCache, keptNote, lastUpdate, withMarketplaces } from './marketplaces.ts'
 import { knowAliases } from './names.ts'
@@ -42,6 +42,13 @@ import {
 } from './sources.ts'
 import { alphabetical, marketplaceOf } from './theme.ts'
 import { readTone, tunedNames } from './tone.ts'
+import { wearFor } from './wiring.ts'
+
+function inWear(home: string, entries: readonly PaletteEntry[]): PaletteEntry[] {
+  const wear = wearFor(home)
+
+  return entries.map((entry) => inMode(entry, wear))
+}
 
 function marketplaceState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Marketplace {
   const marketplace = source === OFFICIAL ? undefined : cachedMarketplace(home, source)
@@ -58,7 +65,7 @@ function marketplaceState(home: string, state: Installed, source: string, tries:
     id,
     ...(marketplace?.info.description ? { description: marketplace.info.description } : {}),
     shown: shownSource(source),
-    entries: source === OFFICIAL ? cachedEntries(home, source) : (marketplace?.entries ?? []),
+    entries: inWear(home, source === OFFICIAL ? cachedEntries(home, source) : (marketplace?.entries ?? [])),
     auto: autoUpdates(source, state.updates),
     status: lastUpdate(home, source, tries),
   }
@@ -106,7 +113,7 @@ function browseIo(
           id,
           ...(info.description ? { description: info.description } : {}),
           shown: shownSource(source),
-          entries: readMarketplaceDir(source, id, cachedEntries(home, OFFICIAL), warning(false)),
+          entries: inWear(home, readMarketplaceDir(source, id, cachedEntries(home, OFFICIAL), warning(false))),
           auto: false,
           status: 'read in place',
         }
@@ -120,7 +127,7 @@ function browseIo(
         id: got.id,
         ...('info' in got && got.info.description ? { description: got.info.description } : {}),
         shown: shownSource(source),
-        entries: got.entries,
+        entries: inWear(home, got.entries),
         auto: autoUpdates(source, {}),
         status: 'not added yet',
       }
@@ -264,7 +271,12 @@ export async function runBrowse(): Promise<number> {
   const auto = autoWanted()
   const marketplaces = marketplacesOf(state.marketplaces).map((source) => marketplaceState(home, state, source, tries))
   const names = new Set(marketplaces.flatMap((m) => m.entries.map((e) => e.name)))
-  const kept = was.filter((e) => state.palettes.includes(e.name) && !names.has(e.name))
+
+  const kept = inWear(
+    home,
+    was.filter((e) => state.palettes.includes(e.name) && !names.has(e.name)),
+  )
+
   knowAliases([...marketplaces.flatMap((m) => m.entries), ...kept])
   const fetched = new Map<string, Fetched>()
   const lookups = new AbortController()
