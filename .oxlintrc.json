@@ -44,6 +44,7 @@
         "site/client/wear.ts",
         "src/available.ts",
         "src/booru.ts",
+        "src/derived.ts",
         "src/find/kept.ts",
         "src/marketplace-index.ts",
         "src/marketplaces.ts",

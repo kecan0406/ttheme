@@ -1,4 +1,5 @@
 import type { Readable, Writable } from 'node:stream'
+import { SIGNALS, Signalled } from '../cancelled.ts'
 import { type Cell, type Inbound, KEYBOARD_QUERY, Keys } from './keys.ts'
 
 interface Mode {
@@ -20,7 +21,6 @@ export function pointing(env: Record<string, string | undefined> = process.env):
   return env.TTHEME_MOUSE === 'off' ? [] : [MOUSE]
 }
 
-const SIGNALS = { SIGHUP: 1, SIGINT: 2, SIGQUIT: 3, SIGTERM: 15 } as const
 const LINGER = 3000
 
 type Input = Readable & { isTTY?: boolean; setRawMode?: (on: boolean) => void }
@@ -33,15 +33,6 @@ interface TerminalOptions {
   modes?: Mode[]
   assume?: Mode[]
   burst?: (typed: string) => boolean
-}
-
-export class Signalled extends Error {
-  readonly exit: number
-
-  constructor(signal: keyof typeof SIGNALS) {
-    super(signal)
-    this.exit = 128 + SIGNALS[signal]
-  }
 }
 
 const opened: Terminal[] = []

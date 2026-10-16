@@ -1,6 +1,7 @@
 import pkg from '../package.json' with { type: 'json' }
 import { backdropTone } from './backdrop.ts'
 import { GATE_RULES, type GateRule, measure } from './contrast.ts'
+import { memo } from './memo.ts'
 import { mirror } from './mirror.ts'
 import { type Mode, modeOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
@@ -85,14 +86,26 @@ export function withColors(entry: PaletteEntry, colors: Colors): PaletteEntry {
 }
 
 export function otherColors(entry: PaletteEntry): Colors {
-  return entry.other ?? colorsOfTheme(mirror(toTheme(entry)))
+  if (entry.other) {
+    return entry.other
+  }
+
+  const theme = toTheme(entry)
+
+  return memo('mirror', JSON.stringify(theme), () => colorsOfTheme(mirror(theme)))
 }
 
 export function inMode(entry: PaletteEntry, mode: Mode): PaletteEntry {
+  const same = modeOf(entry) === mode
+
+  if (same && entry.other) {
+    return entry
+  }
+
   const other = otherColors(entry)
 
-  if (modeOf(entry) === mode) {
-    return entry.other ? entry : { ...entry, other }
+  if (same) {
+    return { ...entry, other }
   }
 
   const own = {
@@ -103,7 +116,7 @@ export function inMode(entry: PaletteEntry, mode: Mode): PaletteEntry {
     ansi: entry.ansi,
   }
 
-  return withColors({ ...entry, other: own }, other)
+  return memo('mode', JSON.stringify([entry, other]), () => withColors({ ...entry, other: own }, other))
 }
 
 export function paletteEntry(t: Theme): PaletteEntry {

@@ -6,6 +6,7 @@ import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure, RULES } from './contrast.ts'
 import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
+import { memo } from './memo.ts'
 import { modeOf, otherOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import {
@@ -207,19 +208,21 @@ interface Shelf {
   catalogs?: readonly Catalog[]
 }
 
-function placeFor(name: string, entries: PaletteEntry[], foreign: boolean, shelf: Shelf): Place {
-  const bases = new Map(
+function basesOf(entries: PaletteEntry[]): Map<string, { order: number }> {
+  return new Map(
     entries
       .values()
       .filter((e) => !e.default && !marketplaceOf(e.name))
       .map((e) => [e.name, { order: e.order }]),
   )
+}
 
+function placeFor(name: string, entries: PaletteEntry[], foreign: boolean, shelf: Shelf): Place {
   return {
     name,
     ...(shelf.catalog === undefined ? {} : { catalog: shelf.catalog }),
     catalogs: new Map((shelf.catalogs ?? []).map((c) => [c.name, c])),
-    bases,
+    bases: basesOf(entries),
     open: true,
     ...(foreign ? { foreign: true as const } : {}),
   }
@@ -253,6 +256,7 @@ export function readMarketplaceFiles(
   catalogs: readonly Catalog[] = [],
 ): PaletteEntry[] {
   const seen = new Map<string, MarketplaceFile>()
+  const place = JSON.stringify([foreign, catalogs, [...basesOf(entries)]])
 
   return files.flatMap((file) => {
     try {
@@ -264,8 +268,14 @@ export function readMarketplaceFiles(
 
       seen.set(file.slug, file)
       const shelf = { ...(file.catalog === undefined ? {} : { catalog: file.catalog }), catalogs }
+      const name = `${id}/${file.slug}`
+      const text = read(file)
 
-      return [paletteEntry(readOwnText(`${id}/${file.slug}`, read(file), entries, foreign, shelf))]
+      return [
+        memo('entry', `${place}${JSON.stringify([name, file.catalog ?? null, text])}`, () =>
+          paletteEntry(readOwnText(name, text, entries, foreign, shelf)),
+        ),
+      ]
     } catch (error) {
       report(file.path, (error as Error).message)
 
