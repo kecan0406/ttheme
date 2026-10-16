@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Terminal } from '@xterm/headless'
-import type { Mode } from '../../src/mode.ts'
+import type { Mode } from '../../src/core/mode.ts'
 import { TERMINAL_DOMAIN, terminalPictures } from '../../src/terminals/terminal-app.ts'
 import { type Bookmark, prefsOf, tabFile } from './apple.ts'
 import {

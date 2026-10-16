@@ -3,7 +3,7 @@ import { basename, dirname, join, parse } from 'node:path'
 import tailwind from '@tailwindcss/postcss'
 import postcss from 'postcss'
 import subsetFont from 'subset-font'
-import { showcase } from '../src/showcase.ts'
+import { showcase } from '../src/cli/showcase.ts'
 import { official } from './lib/official'
 
 export const SITE = import.meta.dirname

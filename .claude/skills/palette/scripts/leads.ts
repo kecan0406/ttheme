@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util'
-import { MARKETPLACE_FILE } from '../../../../src/theme.ts'
+import { MARKETPLACE_FILE } from '../../../../src/core/theme.ts'
 import { loadCatalogs, loadPalettes, slotColor, type ThemeDoc } from './audit.ts'
 import { deltaE } from './delta.ts'
 

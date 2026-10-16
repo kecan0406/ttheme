@@ -11,13 +11,13 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { backgroundsDir, type ProfileBackground, readBackdrop } from '../backdrop.ts'
-import { backupOnce, editUserFile, spareBackup, writeAtomic } from '../edits.ts'
-import { warp as emitter, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from '../emit/warp.ts'
-import { decodePng, encodeRgb, flatten } from '../png.ts'
-import type { Theme } from '../theme.ts'
-import { owned, stem } from '../theme.ts'
+import { decodePng, encodeRgb, flatten } from '../core/png.ts'
+import type { Theme } from '../core/theme.ts'
+import { owned, stem } from '../core/theme.ts'
+import { backgroundsDir, type ProfileBackground, readBackdrop } from '../pictures/backdrop.ts'
+import { backupOnce, editUserFile, spareBackup, writeAtomic } from '../store/edits.ts'
 import { dataHome, readText, tilde } from './common.ts'
+import { warp as emitter, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from './emit/warp.ts'
 import type { At, Ctx, Out, Wiring } from './types.ts'
 
 export function warpThemes(home: string): string {

@@ -1,4 +1,4 @@
-import { graphemes } from '../text.ts'
+import { graphemes } from '../core/text.ts'
 
 const CONTROL = /[\p{Cc}\p{Bidi_Control}]/u
 

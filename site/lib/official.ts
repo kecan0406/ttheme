@@ -1,6 +1,6 @@
 import { type Theme, toTheme } from '@/lib/themes'
 import published from '../../dist/manifest.json' with { type: 'json' }
-import { listed, parseManifest } from '../../src/manifest.ts'
+import { listed, parseManifest } from '../../src/core/manifest.ts'
 
 const manifest = parseManifest(JSON.stringify(published))
 

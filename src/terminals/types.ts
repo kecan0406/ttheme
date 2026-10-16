@@ -1,9 +1,9 @@
-import type { Emitter } from '../emit/types.ts'
-import type { Host } from '../host.ts'
-import type { Installed } from '../installed.ts'
-import type { PaletteEntry } from '../manifest.ts'
-import type { Theme } from '../theme.ts'
-import type { Wired } from '../wired.ts'
+import type { PaletteEntry } from '../core/manifest.ts'
+import type { Theme } from '../core/theme.ts'
+import type { Wired } from '../core/wired.ts'
+import type { Host } from '../store/host.ts'
+import type { Installed } from '../store/installed.ts'
+import type { Emitter } from './emit/types.ts'
 
 export interface At {
   configHome: string

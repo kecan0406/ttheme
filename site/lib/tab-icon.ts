@@ -1,6 +1,6 @@
 import type { Theme } from '@/lib/themes'
-import { rgb } from '../../src/color.ts'
-import { encodeRgb } from '../../src/png.ts'
+import { rgb } from '../../src/core/color.ts'
+import { encodeRgb } from '../../src/core/png.ts'
 
 const ICON = 180
 const DOTS = [49.5, 90, 130.5]

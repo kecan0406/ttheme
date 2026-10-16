@@ -3,8 +3,8 @@ import { appendFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from '
 import { availableParallelism } from 'node:os'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
-import { colorless } from '../../src/osc.ts'
-import { pending } from '../../src/pending.ts'
+import { colorless } from '../../src/terminals/osc.ts'
+import { pending } from '../../src/tui/pending.ts'
 import {
   type Column,
   cellValue,

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { decodePng } from '../../src/png.ts'
+import { decodePng } from '../../src/core/png.ts'
 
 const image = decodePng(readFileSync(process.argv[2] ?? ''))
 const at = (Math.round(image.height * 0.6) * image.width + Math.round(image.width * 0.7)) * 4

@@ -1,4 +1,4 @@
-import { type Hex, mix } from '../color.ts'
+import { type Hex, mix } from '../core/color.ts'
 
 export const ROLES = {
   dim: ['2', '22'],

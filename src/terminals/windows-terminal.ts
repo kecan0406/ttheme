@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, utimesSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { windowsTerminal as emitter, wtFragment } from '../emit/windows-terminal.ts'
-import type { Host } from '../host.ts'
+import type { Host } from '../store/host.ts'
+import { windowsTerminal as emitter, wtFragment } from './emit/windows-terminal.ts'
 import type { Wiring } from './types.ts'
 
 export function wtFragmentPath(wtHome: string): string {

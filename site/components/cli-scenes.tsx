@@ -2,8 +2,8 @@ import type { PropsWithChildren } from '@kitajs/html'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
-import { paneLines, paneTiles } from '../../src/builder-layout.ts'
-import { SCENES, sceneParts } from '../../src/scenes.ts'
+import { paneLines, paneTiles } from '../../src/core/builder-layout.ts'
+import { SCENES, sceneParts } from '../../src/core/scenes.ts'
 import { SceneLines } from './terminal-preview'
 
 const COLS = 83

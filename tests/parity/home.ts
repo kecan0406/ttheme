@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite'
 import { chmodSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { PaletteEntry } from '../../src/manifest.ts'
+import type { PaletteEntry } from '../../src/core/manifest.ts'
 import { TERMINAL_DOMAIN } from '../../src/terminals/terminal-app.ts'
 import { installTestPicture } from '../picture.ts'
 import { COLS, ITERM_SUITE, type Place, ROWS, warpPaths } from './model.ts'

@@ -1,5 +1,5 @@
-import { type Piece, pieces, sequenceAt } from '../ansi.ts'
-import { cells } from '../text.ts'
+import { cells } from '../core/text.ts'
+import { type Piece, pieces, sequenceAt } from './ansi.ts'
 import { RESET } from './style.ts'
 
 export interface Zone<T = unknown> {

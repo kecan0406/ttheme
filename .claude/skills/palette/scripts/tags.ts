@@ -1,7 +1,7 @@
 import { basename } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { SITES, type Site } from '../../../../src/booru.ts'
-import { fetchCount } from '../../../../src/booru-net.ts'
+import { SITES, type Site } from '../../../../src/core/booru.ts'
+import { fetchCount } from '../../../../src/pictures/booru-net.ts'
 
 interface Row {
   from: string

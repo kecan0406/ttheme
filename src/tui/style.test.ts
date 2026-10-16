@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { loadThemes } from '../build.ts'
-import { contrast } from '../color.ts'
+import { loadThemes } from '../cli/build.ts'
+import { contrast } from '../core/color.ts'
+import { ROOT } from '../root.ts'
 import {
   ansiBar,
   ansiFg,
@@ -24,7 +25,7 @@ import {
   surfaceOf,
 } from './style.ts'
 
-const root = join(import.meta.dirname, '..', '..')
+const root = ROOT
 const TABLE = /^typeset -gA TTHEME_SGR=\([\s\S]*?^\)$/m
 
 function read(...parts: string[]): string {

@@ -1,6 +1,6 @@
-import { check } from '../../../../src/contrast.ts'
-import { modeOf, otherOf } from '../../../../src/mode.ts'
-import type { Theme } from '../../../../src/theme.ts'
+import { check } from '../../../../src/core/contrast.ts'
+import { modeOf, otherOf } from '../../../../src/core/mode.ts'
+import type { Theme } from '../../../../src/core/theme.ts'
 
 interface Shade {
   background: string

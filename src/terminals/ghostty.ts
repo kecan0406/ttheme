@@ -1,8 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { ghostty as emitter } from '../emit/ghostty.ts'
-import type { Mode, Setting } from '../mode.ts'
-import { owned } from '../theme.ts'
+import type { Mode, Setting } from '../core/mode.ts'
+import { owned } from '../core/theme.ts'
 import {
   fromHome,
   GENERATED,
@@ -12,8 +11,9 @@ import {
   settingValue,
   upsertBlock,
   userSets,
-} from '../wiring.ts'
+} from '../store/wiring.ts'
 import { blockKeys, readText, stripped, themeFiles, tilde } from './common.ts'
+import { ghostty as emitter } from './emit/ghostty.ts'
 import type { At, Now, Wiring } from './types.ts'
 
 const COLOR_KEYS = [

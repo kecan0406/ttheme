@@ -1,0 +1,115 @@
+import { type Hex, rgb } from '../../core/color.ts'
+import type { Theme } from '../../core/theme.ts'
+import { owned } from '../../core/theme.ts'
+import type { ProfileBackground } from '../../pictures/backdrop.ts'
+import type { Emitter, Output } from './types.ts'
+
+interface ItermColor {
+  'Alpha Component': number
+  'Blue Component': number
+  'Color Space': 'P3'
+  'Green Component': number
+  'Red Component': number
+}
+
+function color(hex: Hex): ItermColor {
+  const [r, g, b] = rgb(hex)
+
+  return {
+    'Alpha Component': 1,
+    'Blue Component': b / 255,
+    'Color Space': 'P3',
+    'Green Component': g / 255,
+    'Red Component': r / 255,
+  }
+}
+
+function itermColors(theme: Theme) {
+  return {
+    ...Object.fromEntries(theme.ansi.map((c, i) => [`Ansi ${i} Color`, color(c)])),
+    'Background Color': color(theme.background),
+    'Bold Color': color(theme.foreground),
+    'Cursor Color': color(theme.cursor),
+    'Cursor Text Color': color(theme.background),
+    'Foreground Color': color(theme.foreground),
+    'Selected Text Color': color(theme.foreground),
+    'Selection Color': color(theme.selectionBackground),
+  }
+}
+
+function background(picture: ProfileBackground | undefined) {
+  return picture
+    ? {
+        'Background Image Location': picture.image,
+        'Background Image Mode': picture.cover ? 2 : 3,
+        Blend: picture.opacity,
+      }
+    : { 'Background Image Location': '' }
+}
+
+export function itermProfiles(
+  themes: Theme[],
+  pictures: ReadonlyMap<string, ProfileBackground>,
+  startup: Theme | undefined,
+  parent?: string,
+  plain = false,
+): string {
+  const profile = (theme: Theme, id: string) => ({
+    Name: `ttheme · ${id}`,
+    Guid: owned(id),
+    ...(parent ? { 'Dynamic Profile Parent GUID': parent } : {}),
+    'Use Separate Colors for Light and Dark Mode': false,
+    ...background(pictures.get(theme.name)),
+    ...itermColors(theme),
+  })
+
+  const bare = {
+    Name: 'ttheme · default',
+    Guid: owned('default'),
+    'Dynamic Profile Parent GUID': parent,
+    ...background(undefined),
+  }
+
+  const profiles = [
+    ...(startup ? [profile(startup, 'default')] : plain && parent ? [bare] : []),
+    ...themes.map((theme) => profile(theme, theme.name)),
+  ]
+
+  return `${JSON.stringify({ Profiles: profiles }, null, 2)}\n`
+}
+
+function plistColor(key: string, c: ItermColor): string {
+  const real = (name: string, value: number) => [`\t\t<key>${name}</key>`, `\t\t<real>${value}</real>`]
+
+  return [
+    `\t<key>${key}</key>`,
+    '\t<dict>',
+    ...real('Alpha Component', c['Alpha Component']),
+    ...real('Blue Component', c['Blue Component']),
+    '\t\t<key>Color Space</key>',
+    `\t\t<string>${c['Color Space']}</string>`,
+    ...real('Green Component', c['Green Component']),
+    ...real('Red Component', c['Red Component']),
+    '\t</dict>',
+  ].join('\n')
+}
+
+export const iterm2: Emitter = {
+  id: 'iterm2',
+  limits: 'colors are Display P3, the space iTerm2 reads OSC colors in',
+
+  emit(theme: Theme): Output[] {
+    const content = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
+      '<plist version="1.0">',
+      '<dict>',
+      ...Object.entries(itermColors(theme)).map(([key, c]) => plistColor(key, c)),
+      '</dict>',
+      '</plist>',
+      '',
+    ].join('\n')
+
+    return [{ path: `iterm2/${owned(theme.name)}.itermcolors`, content }]
+  },
+}

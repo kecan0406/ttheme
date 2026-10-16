@@ -1,10 +1,10 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { backgroundsDir } from '../backdrop.ts'
-import { kitty as emitter, kittyWatcher } from '../emit/kitty.ts'
-import { owned } from '../theme.ts'
-import { fromHome, GENERATED, MANAGED, removeBlock, upsertBlock, userSets } from '../wiring.ts'
+import { owned } from '../core/theme.ts'
+import { backgroundsDir } from '../pictures/backdrop.ts'
+import { fromHome, GENERATED, MANAGED, removeBlock, upsertBlock, userSets } from '../store/wiring.ts'
 import { blockKeys, readText, stripped, tilde } from './common.ts'
+import { kitty as emitter, kittyWatcher } from './emit/kitty.ts'
 import type { At, Now, Wiring } from './types.ts'
 
 export function kittyBlock(tthemeDir: string, home: string): string {

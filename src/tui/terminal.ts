@@ -1,5 +1,5 @@
 import type { Readable, Writable } from 'node:stream'
-import { SIGNALS, Signalled } from '../cancelled.ts'
+import { SIGNALS, Signalled } from '../core/cancelled.ts'
 import { type Cell, type Inbound, KEYBOARD_QUERY, Keys } from './keys.ts'
 
 interface Mode {

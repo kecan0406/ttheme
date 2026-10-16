@@ -1,4 +1,4 @@
-import { type Hex, oklch } from '../../src/color.ts'
+import { type Hex, oklch } from '../../src/core/color.ts'
 
 type Lab = [number, number, number]
 

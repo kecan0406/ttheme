@@ -1,6 +1,6 @@
 import { basename, dirname, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { SITES, type Site } from '../../../../src/booru.ts'
+import { SITES, type Site } from '../../../../src/core/booru.ts'
 
 const GAP = 350
 const ZEROCHAN_GAP = 1100

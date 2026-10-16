@@ -1,0 +1,494 @@
+import assert from 'node:assert/strict'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, sep } from 'node:path'
+import { test } from 'node:test'
+import { SCHEMA } from '../core/manifest.ts'
+import { modeOf } from '../core/mode.ts'
+import { readMarketplaces } from '../store/available.ts'
+import type { Installed } from '../store/installed.ts'
+import { MANAGED, withSetting } from '../store/wiring.ts'
+import {
+  againManifest,
+  applyInit,
+  type InitOptions,
+  type InitPaths,
+  installedState,
+  planAgain,
+  planInit,
+  planUpgrade,
+} from './init.ts'
+import { sync } from './sync.ts'
+import { applyUninstall, planUninstall } from './uninstall.ts'
+
+function manifestFixture() {
+  const palette = (name: string, order: number, role?: 'default') => ({
+    name,
+    catalog: 'Fixture',
+    order,
+    ansiSource: 'Fixture',
+    ...(role ? { default: true } : {}),
+    background: '#101010',
+    foreground: '#f0f0f0',
+    cursor: '#ff8800',
+    selection: '#303030',
+    signature: ['#ff8800', '#f0f0f0', '#101010'],
+    signatureSlots: ['cursor', 'foreground', 'background'],
+    backdrop: { slot: 'cursor', color: '#ff8800', opacity: 0.2 },
+    ansi: Array.from({ length: 16 }, (_, i) => `#${i.toString(16).repeat(6)}`),
+    gate: [21, 21, 0, 21, 21],
+  })
+
+  return {
+    schema: SCHEMA,
+    version: '0.0.0',
+    gate: [],
+    palettes: [palette('neutral', 1, 'default'), palette('miku', 2)],
+  }
+}
+
+function paletteText(name: string): string {
+  return [
+    '[meta]',
+    `name = "${name}"`,
+    'signature = ["cursor", "foreground", "background"]',
+    '',
+    '[colors]',
+    'background = "#101010"',
+    'foreground = "#f0f0f0"',
+    'cursor = "#ff8800"',
+    'selection_background = "#303030"',
+    `ansi = [${Array.from({ length: 16 }, (_, i) => `"#${i.toString(16).repeat(6)}"`).join(', ')}]`,
+    '',
+  ].join('\n')
+}
+
+function withMarketplaces(paths: InitPaths): string {
+  const dust = join(paths.home, 'dust')
+  mkdirSync(join(dust, 'palettes'), { recursive: true })
+  writeFileSync(join(dust, 'ttheme-marketplace.toml'), 'name = "moss"\n\n[owner]\nname = "kec"\n')
+  writeFileSync(join(dust, 'palettes', 'fern.toml'), paletteText('fern'))
+  const cache = join(paths.configHome, 'ttheme', 'marketplaces')
+  mkdirSync(cache, { recursive: true })
+  writeFileSync(
+    join(cache, 'alice--pastel.json'),
+    JSON.stringify({
+      files: {
+        'ttheme-marketplace.toml': 'name = "pastel"\n\n[owner]\nname = "alice"\n',
+        'palettes/dusk.toml': paletteText('dusk'),
+      },
+    }),
+  )
+
+  return dust
+}
+
+function makeFixture(): InitPaths {
+  const base = mkdtempSync(join(tmpdir(), 'ttheme-init-'))
+  const root = join(base, 'repo')
+
+  const files = {
+    'bin/ttheme.js': 'cli',
+    'bin/ttheme.js.map': 'map',
+    'bin/package.json': '{"type":"module"}',
+    'shell/ttheme.zsh': 'ttheme layer',
+    'shell/preview.zsh': 'preview',
+    'shell/launch-tab.zsh': '#!/bin/zsh -f',
+    'shell/adapters/_osc.zsh': 'osc',
+    'shell/adapters/kitty.zsh': 'kitty adapter',
+    'dist/ghostty/themes/neutral': 'neutral theme',
+    'dist/ghostty/themes/miku': 'miku theme',
+    'dist/kitty/themes/neutral.conf': 'neutral kitty',
+    'dist/kitty/themes/miku.conf': 'miku kitty',
+    'dist/alacritty/themes/neutral.toml': 'neutral alacritty',
+    'dist/alacritty/themes/miku.toml': 'miku alacritty',
+    'dist/manifest.json': JSON.stringify(manifestFixture()),
+  } satisfies Record<string, string>
+
+  for (const [path, content] of Object.entries(files)) {
+    mkdirSync(join(root, path, '..'), { recursive: true })
+    writeFileSync(join(root, path), content)
+  }
+
+  const home = join(base, 'home')
+  mkdirSync(home, { recursive: true })
+
+  return { root, home, configHome: join(home, '.config'), zdotdir: home }
+}
+
+function options(partial: Partial<InitOptions> = {}): InitOptions {
+  return { terminals: ['ghostty'], palettes: [], ...partial }
+}
+
+test('planInit places the runtime layer and touches only .zshrc', () => {
+  const paths = makeFixture()
+  const plan = planInit(options({ terminals: ['ghostty', 'kitty'] }), paths)
+  const tthemeDir = join(paths.configHome, 'ttheme')
+  const targets = plan.copies.map((c) => c.to)
+
+  for (const expected of [
+    join(tthemeDir, 'ttheme.js'),
+    join(tthemeDir, 'package.json'),
+    join(tthemeDir, 'ttheme.zsh'),
+    join(tthemeDir, 'preview.zsh'),
+    join(tthemeDir, 'launch-tab.zsh'),
+    join(tthemeDir, 'adapters', '_osc.zsh'),
+  ]) {
+    assert.ok(targets.includes(expected), `missing copy target ${expected}`)
+  }
+
+  assert.deepEqual(
+    plan.edits.map((e) => e.file),
+    [join(paths.home, '.zshrc')],
+  )
+})
+
+test('planInit installs no palettes and copies no theme files', () => {
+  const paths = makeFixture()
+  const plan = planInit(options({ terminals: ['ghostty', 'kitty'] }), paths)
+  assert.deepEqual(plan.installed.palettes, [])
+  assert.ok(!plan.copies.some((c) => c.to.includes(`${sep}themes${sep}`)))
+})
+
+test('applyInit leaves a fresh install with an empty table and no terminal theme', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options({ terminals: ['ghostty'] }), paths))
+  const table = readFileSync(join(paths.configHome, 'ttheme', 'palettes.zsh'), 'utf8')
+  assert.match(table, /TTHEME_ORDER=\(\)/)
+  const ghostty = readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8')
+  assert.match(ghostty, /# ttheme begin/)
+  assert.doesNotMatch(ghostty, /^theme = /m)
+  assert.deepEqual(JSON.parse(readFileSync(join(paths.configHome, 'ttheme', 'installed.json'), 'utf8')).palettes, [])
+})
+
+test('applyInit creates the layout, marks the launcher executable and wires configs', () => {
+  const paths = makeFixture()
+  const plan = planInit(options(), paths)
+  applyInit(plan)
+  const launcher = join(paths.configHome, 'ttheme', 'launch-tab.zsh')
+  assert.ok(statSync(launcher).mode & 0o100, 'launcher is not executable')
+  const ghostty = readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8')
+  assert.match(ghostty, /# ttheme begin/)
+  assert.match(ghostty, /^config-file = \?~\/\.config\/ttheme\/ghostty\.conf$/m)
+  const zshrc = readFileSync(join(paths.home, '.zshrc'), 'utf8')
+  assert.match(zshrc, /source .*ttheme\.zsh/)
+  assert.ok(!zshrc.includes('export TTHEME_'))
+  const config = readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8')
+  assert.match(config, /^# : \$\{TTHEME_TAB_PALETTE:=off\}$/m)
+})
+
+test('applyInit seeds config.zsh once and keeps user edits on rerun', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options(), paths))
+  const configPath = join(paths.configHome, 'ttheme', 'config.zsh')
+  const first = readFileSync(configPath, 'utf8')
+  assert.match(first, /^# : \$\{TTHEME_TAB_PALETTE:=off\}$/m)
+  assert.match(first, /^# : \$\{TTHEME_ANNOUNCE:=1\}$/m)
+  writeFileSync(
+    configPath,
+    first
+      .replace(/^# : \$\{TTHEME_TAB_PALETTE[^\n]*$/m, ': ${TTHEME_TAB_PALETTE:=seq}')
+      .replace(/^# : \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}'),
+  )
+  applyInit(planInit(options(), paths))
+  const second = readFileSync(configPath, 'utf8')
+  assert.match(second, /^: \$\{TTHEME_TAB_PALETTE:=seq\}$/m)
+  assert.match(second, /^: \$\{TTHEME_FX:=glitch\}$/m)
+})
+
+test('init wears the first palette and leaves the new-tab setting at its default', () => {
+  const paths = makeFixture()
+  const tab = /^(?:# )?: \$\{TTHEME_TAB_PALETTE:=(\w+)\}$/m
+  applyInit(planInit(options({ palettes: ['neutral', 'miku'] }), paths))
+  assert.match(
+    readFileSync(join(paths.configHome, 'ttheme', 'ghostty.conf'), 'utf8'),
+    /^theme = ttheme-neutral\.dark$/m,
+  )
+  assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8').match(tab)?.[1], 'off')
+})
+
+test('init writes the Warp tab-switch answer only when it differs from the default, and an upgrade keeps it', () => {
+  const paths = makeFixture()
+
+  const fast = () =>
+    readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8')
+      .match(/^(# )?: \$\{TTHEME_WARP_FAST:=(\w+)\}$/m)
+      ?.slice(1)
+      .join('')
+
+  applyInit(planInit(options({ warpFast: false }), paths))
+  assert.equal(fast(), 'off')
+  applyInit(planUpgrade(installedState(paths.configHome) as Installed, paths))
+  assert.equal(fast(), 'off')
+  applyInit(planInit(options({ warpFast: true }), paths))
+  assert.equal(fast(), '# on')
+})
+
+test('init writes the mode it was given, and every palette is worn in it from the first table', () => {
+  const paths = makeFixture()
+  const config = join(paths.configHome, 'ttheme', 'config.zsh')
+
+  const worn = () => {
+    const [, background, foreground] =
+      /^ {2}neutral +"(#[0-9a-f]{6}) (#[0-9a-f]{6})/m.exec(
+        readFileSync(join(paths.configHome, 'ttheme', 'palettes.zsh'), 'utf8'),
+      ) ?? []
+
+    return modeOf({ background: background as string, foreground: foreground as string })
+  }
+
+  applyInit(planInit(options({ palettes: ['neutral'] }), paths))
+  assert.match(readFileSync(config, 'utf8'), /^# : \$\{TTHEME_MODE:=dark\}$/m)
+  assert.equal(worn(), 'dark')
+  applyInit(planInit(options({ palettes: ['neutral'], mode: 'light' }), paths))
+  assert.match(readFileSync(config, 'utf8'), /^: \$\{TTHEME_MODE:=light\}$/m)
+  assert.equal(worn(), 'light')
+  applyInit(planUpgrade(installedState(paths.configHome) as Installed, paths))
+  assert.equal(worn(), 'light')
+})
+
+test('Ghostty opens new tabs through the launcher only while they rotate, and never over a command of the user', () => {
+  const paths = makeFixture()
+  const own = join(paths.configHome, 'ttheme', 'ghostty.conf')
+  const config = join(paths.configHome, 'ttheme', 'config.zsh')
+  applyInit(planInit(options(), paths))
+  assert.doesNotMatch(readFileSync(own, 'utf8'), /^command = /m)
+  writeFileSync(config, withSetting(readFileSync(config, 'utf8'), 'TTHEME_TAB_PALETTE', 'seq'))
+  applyInit(planInit(options(), paths))
+  assert.match(readFileSync(own, 'utf8'), /^command = .*launch-tab\.zsh\nshell-integration = zsh$/m)
+  writeFileSync(join(paths.configHome, 'ghostty', 'config.ghostty'), 'command = /opt/homebrew/bin/fish\n')
+  applyInit(planInit(options(), paths))
+  assert.doesNotMatch(readFileSync(own, 'utf8'), /^command = /m)
+})
+
+test('bash and fish get the ttheme command through zsh, and uninstall takes both out', () => {
+  const paths: InitPaths = { ...makeFixture(), shells: ['zsh', 'bash', 'fish'], platform: 'darwin' }
+  writeFileSync(join(paths.home, '.bashrc'), 'alias ll="ls -l"\n')
+  const plan = planInit(options(), paths)
+  assert.deepEqual(
+    plan.edits.map((e) => e.file),
+    [join(paths.home, '.zshrc'), join(paths.home, '.bashrc'), join(paths.home, '.bash_profile')],
+  )
+  applyInit(plan)
+  const fish = join(paths.configHome, 'fish', 'functions', 'ttheme.fish')
+  assert.match(readFileSync(join(paths.home, '.bashrc'), 'utf8'), /^ttheme\(\) \{ zsh -c /m)
+  assert.ok(readFileSync(fish, 'utf8').startsWith(`# ${MANAGED}\nfunction ttheme`))
+
+  const uninstall = {
+    home: paths.home,
+    configHome: paths.configHome,
+    zdotdir: paths.zdotdir,
+    cacheDir: join(paths.home, '.cache', 'ttheme'),
+    stateDir: join(paths.home, '.local', 'state', 'ttheme'),
+  }
+
+  applyUninstall(planUninstall(uninstall), uninstall, { platform: 'darwin', env: {}, run: () => undefined })
+  assert.equal(readFileSync(join(paths.home, '.bashrc'), 'utf8'), 'alias ll="ls -l"\n')
+  assert.ok(!existsSync(join(paths.home, '.bash_profile')))
+  assert.ok(!existsSync(fish))
+})
+
+test("a fish function of the user's own named ttheme is left alone", () => {
+  const paths = makeFixture()
+  const fish = join(paths.configHome, 'fish', 'functions', 'ttheme.fish')
+  mkdirSync(join(fish, '..'), { recursive: true })
+  writeFileSync(fish, 'function ttheme\n  echo mine\nend\n')
+  const plan = planInit(options(), { ...paths, shells: ['zsh', 'fish'] })
+  assert.deepEqual(plan.writes, [])
+  assert.ok(plan.notes.some((note) => note.includes('is a function of your own')))
+  applyInit(plan)
+  assert.equal(readFileSync(fish, 'utf8'), 'function ttheme\n  echo mine\nend\n')
+})
+
+test('applyInit is idempotent', () => {
+  const paths = makeFixture()
+  const plan = planInit(options(), paths)
+  applyInit(plan)
+  const before = plan.edits.map((e) => readFileSync(e.file, 'utf8'))
+  applyInit(planInit(options(), paths))
+
+  for (const [i, e] of plan.edits.entries()) {
+    const after = readFileSync(e.file, 'utf8')
+    assert.equal(after, before[i])
+    assert.equal(after.split('# ttheme begin').length, 2, `duplicated block in ${e.file}`)
+  }
+})
+
+test('applyInit preserves existing zshrc content', () => {
+  const paths = makeFixture()
+  writeFileSync(join(paths.home, '.zshrc'), 'alias ll="ls -l"\n')
+  applyInit(planInit(options(), paths))
+  const zshrc = readFileSync(join(paths.home, '.zshrc'), 'utf8')
+  assert.ok(zshrc.startsWith('alias ll="ls -l"\n'))
+  assert.match(zshrc, /# ttheme begin/)
+})
+
+test('init writes its own alacritty block but never edits an alacritty.toml that imports already', () => {
+  const paths = makeFixture()
+  const config = join(paths.configHome, 'alacritty', 'alacritty.toml')
+  applyInit(planInit(options({ terminals: ['alacritty'] }), paths))
+  assert.match(readFileSync(config, 'utf8'), /# ttheme begin/)
+
+  mkdirSync(join(paths.configHome, 'alacritty'), { recursive: true })
+  writeFileSync(config, '[general]\nimport = ["mine.toml"]\n')
+  const foreign = planInit(options({ terminals: ['alacritty'] }), paths)
+  assert.ok(foreign.notes.some((n) => n.includes('already imports files under [general]')))
+  applyInit(foreign)
+  assert.equal(readFileSync(config, 'utf8'), '[general]\nimport = ["mine.toml"]\n')
+})
+
+test('an upgrade keeps what is installed and only replaces the layer', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options({ palettes: ['neutral', 'miku'] }), paths))
+  const installedPath = join(paths.configHome, 'ttheme', 'installed.json')
+  const state = { ...JSON.parse(readFileSync(installedPath, 'utf8')), startup: 'miku', off: true }
+  writeFileSync(installedPath, JSON.stringify(state))
+  const configPath = join(paths.configHome, 'ttheme', 'config.zsh')
+  writeFileSync(
+    configPath,
+    readFileSync(configPath, 'utf8').replace(/^# : \$\{TTHEME_FX[^\n]*$/m, ': ${TTHEME_FX:=glitch}'),
+  )
+  writeFileSync(join(paths.root, 'shell', 'ttheme.zsh'), 'ttheme layer, next version')
+  const current = installedState(paths.configHome)
+  assert.ok(current)
+  applyInit(planUpgrade(current, paths))
+  assert.deepEqual(installedState(paths.configHome), {
+    terminals: ['ghostty'],
+    startup: 'miku',
+    off: true,
+    palettes: ['neutral', 'miku'],
+  })
+  assert.match(readFileSync(configPath, 'utf8'), /^: \$\{TTHEME_FX:=glitch\}$/m)
+  assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'ttheme.zsh'), 'utf8'), 'ttheme layer, next version')
+})
+
+test('an upgrade lets the new layer ask again whether Ghostty names the terminal in front', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options({ palettes: ['miku'] }), paths))
+  const stateDir = join(paths.home, '.local', 'state', 'ttheme')
+  const blind = join(stateDir, 'ghostty', '.blind')
+  mkdirSync(join(stateDir, 'ghostty'), { recursive: true })
+  writeFileSync(blind, '1.3.2\n')
+  writeFileSync(join(stateDir, 'ghostty', 'ttys001'), '1 miku miku /dev/ttys001\n')
+  const current = installedState(paths.configHome)
+  assert.ok(current)
+  applyInit(planUpgrade(current, { ...paths, stateDir }))
+  assert.equal(existsSync(blind), false)
+  assert.equal(existsSync(join(stateDir, 'ghostty', 'ttys001')), true)
+})
+
+test('an upgrade drops palettes no marketplace has any more, and a default among them', () => {
+  const paths = makeFixture()
+  const plan = planUpgrade({ terminals: ['ghostty'], startup: 'gone', palettes: ['miku', 'gone'] }, paths)
+  assert.deepEqual(plan.installed, { terminals: ['ghostty'], palettes: ['miku'] })
+  assert.match(plan.notes[0] ?? '', /^Dropped gone/)
+})
+
+test('there is no install to upgrade before the first init', () => {
+  assert.equal(installedState(makeFixture().configHome), undefined)
+})
+
+test('setting it up again keeps the marketplaces, their auto-update, the handle and what was installed from them', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options({ palettes: ['miku'] }), paths))
+  const dust = withMarketplaces(paths)
+  const installedPath = join(paths.configHome, 'ttheme', 'installed.json')
+  const marketplaces = ['official', 'alice/pastel#v1', dust]
+  const palettes = ['miku', 'alice@pastel/dusk', 'kec@moss/fern']
+  writeFileSync(
+    installedPath,
+    JSON.stringify({
+      terminals: ['ghostty'],
+      author: 'kec',
+      startup: 'alice@pastel/dusk',
+      marketplaces,
+      updates: { 'alice/pastel#v1': true },
+      palettes,
+    }),
+  )
+  const state = installedState(paths.configHome)
+  assert.ok(state)
+  assert.deepEqual(
+    againManifest(state, paths)
+      .palettes.filter((e) => !e.default)
+      .map((e) => e.name),
+    palettes,
+  )
+  applyInit(planAgain(state, options({ terminals: ['ghostty', 'kitty'], palettes }), paths))
+  assert.deepEqual(installedState(paths.configHome), {
+    terminals: ['ghostty', 'kitty'],
+    author: 'kec',
+    startup: 'alice@pastel/dusk',
+    marketplaces,
+    updates: { 'alice/pastel#v1': true },
+    palettes,
+  })
+  assert.match(
+    readFileSync(join(paths.configHome, 'ttheme', 'ghostty.conf'), 'utf8'),
+    /^theme = ttheme-alice--pastel--dusk\.dark$/m,
+  )
+})
+
+test('an upgrade keeps what came from marketplaces when the caches it finds are in a shape this ttheme does not read', () => {
+  const paths = makeFixture()
+  applyInit(planInit(options({ palettes: ['miku'] }), paths))
+  const dust = withMarketplaces(paths)
+  const home = join(paths.configHome, 'ttheme')
+  const palettes = ['miku', 'alice@pastel/dusk', 'kec@moss/fern']
+  const state = { terminals: ['ghostty' as const], marketplaces: ['official', 'alice/pastel', dust], palettes }
+  writeFileSync(join(home, 'installed.json'), JSON.stringify(state))
+  sync(paths.configHome, readMarketplaces(paths.configHome), state)
+  writeFileSync(join(home, 'official.json'), JSON.stringify({ schema: 1, palettes: 'another shape' }))
+  writeFileSync(
+    join(home, 'marketplaces', 'alice--pastel.json'),
+    JSON.stringify({ ...manifestFixture(), owner: 'alice', name: 'pastel' }),
+  )
+  assert.throws(() => readMarketplaces(paths.configHome, false), /no version or palettes/)
+  const current = installedState(paths.configHome)
+  assert.ok(current)
+  assert.deepEqual(planUpgrade(current, paths).installed.palettes, palettes)
+})
+
+test('setting it up again offers no official palette once the official marketplace was removed', () => {
+  const paths = makeFixture()
+  withMarketplaces(paths)
+  const state = { terminals: ['ghostty' as const], marketplaces: ['alice/pastel'], palettes: [] }
+  writeFileSync(join(paths.configHome, 'ttheme', 'installed.json'), JSON.stringify(state))
+  const manifest = againManifest(state, paths)
+  assert.deepEqual(
+    manifest.palettes.map((e) => e.name),
+    ['alice@pastel/dusk'],
+  )
+})
+
+test('setting it up again carries every setting it does not ask about again', () => {
+  const paths = makeFixture()
+
+  const state: Required<Installed> = {
+    terminals: ['ghostty', 'windows-terminal'],
+    author: 'kec',
+    startup: 'miku',
+    off: true,
+    itermBase: 'A1B2C3',
+    konsoleBase: 'Mine.profile',
+    terminalBase: 'Clear Dark',
+    wtHome: '/mnt/c/Users/kec/AppData/Local',
+    wtProfile: '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}',
+    marketplaces: ['official', 'alice/pastel#v1'],
+    updates: { 'alice/pastel#v1': true },
+    palettes: ['miku'],
+  }
+
+  const { installed } = planAgain(state, options({ terminals: ['kitty'], palettes: ['neutral'] }), paths)
+  const asked: (keyof Installed)[] = ['terminals', 'palettes', 'off', 'startup', 'wtHome', 'wtProfile']
+
+  for (const key of Object.keys(state) as (keyof Installed)[]) {
+    if (!asked.includes(key)) {
+      assert.deepEqual(installed[key], state[key], key)
+    }
+  }
+
+  assert.deepEqual(installed.terminals, ['kitty'])
+  assert.equal(installed.startup, undefined)
+  assert.equal(installed.wtHome, undefined)
+})

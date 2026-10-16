@@ -1,4 +1,4 @@
-import { fit } from '../ansi.ts'
+import { fit } from './ansi.ts'
 import { MARKS, type Paint } from './style.ts'
 import { keyZone } from './zones.ts'
 

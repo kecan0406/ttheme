@@ -2,9 +2,9 @@ import { existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { argbFromHex, Hct } from '@material/material-color-utilities'
-import { lab } from '../../../../src/color.ts'
-import { apart } from '../../../../src/contrast.ts'
-import { type Catalog, MARKETPLACE_FILE, readCatalogs } from '../../../../src/theme.ts'
+import { lab } from '../../../../src/core/color.ts'
+import { apart } from '../../../../src/core/contrast.ts'
+import { type Catalog, MARKETPLACE_FILE, readCatalogs } from '../../../../src/core/theme.ts'
 import { deltaE, tripletDelta } from './delta.ts'
 
 interface Colors {

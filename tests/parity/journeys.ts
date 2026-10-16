@@ -1,4 +1,4 @@
-import type { Mode } from '../../src/mode.ts'
+import type { Mode } from '../../src/core/mode.ts'
 import type { Tab } from './model.ts'
 import type { Capability } from './terms.ts'
 

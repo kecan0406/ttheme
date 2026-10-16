@@ -2,13 +2,13 @@ import { official } from '@/lib/official'
 import type { Picture, ShareView, SlotView } from '@/lib/share-view'
 import { passes } from '@/lib/sheet'
 import { type GateRule, type Theme, toTheme } from '@/lib/themes'
-import { SITES } from '../../src/booru.ts'
-import { footerRows, lights, type Part, paneLines, paneTiles, slotsOfRole } from '../../src/builder-layout.ts'
-import { mix } from '../../src/color.ts'
-import { inGamut } from '../../src/fix.ts'
-import type { PaletteEntry } from '../../src/manifest.ts'
-import { readCodes, shareLink } from '../../src/own.ts'
-import { PLANE_BOTTOM, PLANE_TOP, RAINBOW_C, RAINBOW_L, reach, shareOf } from '../../src/plane.ts'
+import { SITES } from '../../src/core/booru.ts'
+import { footerRows, lights, type Part, paneLines, paneTiles, slotsOfRole } from '../../src/core/builder-layout.ts'
+import { mix } from '../../src/core/color.ts'
+import { inGamut } from '../../src/core/fix.ts'
+import type { PaletteEntry } from '../../src/core/manifest.ts'
+import { readCodes, shareLink } from '../../src/core/own.ts'
+import { PLANE_BOTTOM, PLANE_TOP, RAINBOW_C, RAINBOW_L, reach, shareOf } from '../../src/core/plane.ts'
 import {
   colorText,
   lchIn,
@@ -20,8 +20,8 @@ import {
   slotChecks,
   slotLabel,
   slotUse,
-} from '../../src/slots.ts'
-import { marketplaceOf, type SharedPicture, slugOf } from '../../src/theme.ts'
+} from '../../src/core/slots.ts'
+import { marketplaceOf, type SharedPicture, slugOf } from '../../src/core/theme.ts'
 
 export const GRID = { cols: 120, rows: 34 }
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { clip, fit } from '../ansi.ts'
+import { clip, fit } from './ansi.ts'
 import { cover, lift, marking, zone, zoneAt } from './zones.ts'
 
 function spans(line: () => string) {

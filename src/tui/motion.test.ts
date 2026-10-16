@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import type { PaletteEntry } from '../manifest.ts'
-import { PaletteList } from '../palette-prompt.ts'
+import type { PaletteEntry } from '../core/manifest.ts'
 import { chase } from './motion.ts'
+import { PaletteList } from './palette-prompt.ts'
 
 function entry(name: string): PaletteEntry {
   return {

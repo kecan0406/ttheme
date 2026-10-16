@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Theme } from '../theme.ts'
-import { owned } from '../theme.ts'
+import type { Theme } from '../core/theme.ts'
+import { owned } from '../core/theme.ts'
 import type { Unwired, Wiring } from './types.ts'
 
 export function readText(path: string): string {

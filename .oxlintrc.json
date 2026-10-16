@@ -1,6 +1,8 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "categories": { "correctness": "off" },
+  "categories": {
+    "correctness": "off"
+  },
   "ignorePatterns": [
     ".agent/**",
     ".agents/**",
@@ -15,7 +17,12 @@
     ".windsurf/**",
     "tools/oxlint/anti-slop/**"
   ],
-  "jsPlugins": [{ "name": "anti-slop", "specifier": "./tools/oxlint/anti-slop/index.ts" }],
+  "jsPlugins": [
+    {
+      "name": "anti-slop",
+      "specifier": "./tools/oxlint/anti-slop/index.ts"
+    }
+  ],
   "rules": {
     "oxc/no-accumulating-spread": "error",
     "anti-slop/no-array-filter-map": "error",
@@ -42,22 +49,22 @@
       "files": [
         "site/client/handoff.ts",
         "site/client/wear.ts",
-        "src/available.ts",
-        "src/booru.ts",
-        "src/booru-net.ts",
-        "src/derived.ts",
-        "src/find/kept.ts",
-        "src/installed.ts",
-        "src/manifest.ts",
-        "src/marketplace-index.ts",
-        "src/marketplaces.ts",
-        "src/own.ts",
-        "src/palettes.ts",
-        "src/refresh.ts",
-        "src/release.ts",
-        "src/sources.ts",
-        "src/theme.ts",
-        "src/tone.ts",
+        "src/cli/find/kept.ts",
+        "src/cli/marketplaces.ts",
+        "src/cli/refresh.ts",
+        "src/cli/release.ts",
+        "src/cli/sync.ts",
+        "src/core/booru.ts",
+        "src/core/manifest.ts",
+        "src/core/own.ts",
+        "src/core/theme.ts",
+        "src/pictures/booru-net.ts",
+        "src/store/available.ts",
+        "src/store/derived.ts",
+        "src/store/installed.ts",
+        "src/store/marketplace-index.ts",
+        "src/store/sources.ts",
+        "src/store/tone.ts",
         "tests/parity/looks.ts"
       ],
       "rules": {
@@ -65,6 +72,170 @@
         "anti-slop/no-unknown-parameters": "off",
         "anti-slop/no-unknown-returns": "off",
         "anti-slop/no-unsafe-dictionary-type": "off"
+      }
+    },
+    {
+      "files": ["src/core/**"],
+      "excludeFiles": ["src/core/embed.ts", "**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/store/**", "**/pictures/**", "**/terminals/**", "**/tui/**", "**/cli/**"],
+                "message": "core imports nothing above it: core < store < pictures < terminals < tui < cli"
+              }
+            ],
+            "paths": [
+              {
+                "name": "node:fs",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:fs/promises",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:child_process",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:os",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:net",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:worker_threads",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:tty",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:readline",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:http",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:https",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              },
+              {
+                "name": "node:timers/promises",
+                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/core/embed.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/store/**", "**/pictures/**", "**/terminals/**", "**/tui/**", "**/cli/**"],
+                "message": "core imports nothing above it: core < store < pictures < terminals < tui < cli"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/store/**"],
+      "excludeFiles": ["**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/pictures/**", "**/terminals/**", "**/tui/**", "**/cli/**"],
+                "message": "store imports nothing above it: core < store < pictures < terminals < tui < cli"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/pictures/**"],
+      "excludeFiles": ["**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/terminals/**", "**/tui/**", "**/cli/**"],
+                "message": "pictures imports nothing above it: core < store < pictures < terminals < tui < cli"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/terminals/**"],
+      "excludeFiles": ["**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/tui/**", "**/cli/**"],
+                "message": "terminals imports nothing above it: core < store < pictures < terminals < tui < cli"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/tui/**"],
+      "excludeFiles": ["**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/cli/**"],
+                "message": "tui imports nothing above it: core < store < pictures < terminals < tui < cli"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["site/**"],
+      "excludeFiles": ["site/build.ts", "**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/src/terminals/**", "**/src/tui/**", "**/src/cli/**"],
+                "message": "the site renders from src/core, src/store and src/pictures \u2014 never a terminal, a screen or a verb"
+              }
+            ]
+          }
+        ]
       }
     }
   ]

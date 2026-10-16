@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks'
-import { fit } from '../ansi.ts'
+import { fit } from './ansi.ts'
 import type { Mouse } from './keys.ts'
 import { RESET } from './style.ts'
 import { type Hit, lifted, marking, Pointer, type Zone } from './zones.ts'

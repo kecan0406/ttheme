@@ -1,10 +1,10 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { basename, dirname, isAbsolute, join } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
-import { readBackdrop } from '../../src/backdrop.ts'
-import type { Mode } from '../../src/mode.ts'
-import { SLOT_CODES } from '../../src/osc.ts'
-import { decodePng, type Rgba } from '../../src/png.ts'
+import type { Mode } from '../../src/core/mode.ts'
+import { decodePng, type Rgba } from '../../src/core/png.ts'
+import { readBackdrop } from '../../src/pictures/backdrop.ts'
+import { SLOT_CODES } from '../../src/terminals/osc.ts'
 import { type Colors, OWN, SEEN } from './terms.ts'
 
 export function read(path: string): string {

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { parse } from 'smol-toml'
-import { namesDir, namesOf } from '../../../../src/names.ts'
+import { namesDir, namesOf } from '../../../../src/store/names.ts'
 
 const arg = process.argv[2]
 if (!arg) {

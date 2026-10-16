@@ -2,11 +2,12 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { TRAITS } from '../terminal.ts'
-import { WIRED } from '../wired.ts'
+import { WIRED } from '../core/wired.ts'
+import { ROOT } from '../root.ts'
 import { WIRINGS } from './index.ts'
+import { TRAITS } from './terminal.ts'
 
-const root = join(import.meta.dirname, '..', '..')
+const root = ROOT
 const read = (...path: string[]) => readFileSync(join(root, ...path), 'utf8')
 
 test('every wired terminal is one module: its own id, emitter, traits row and shell adapter', () => {

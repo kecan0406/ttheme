@@ -1,9 +1,9 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { backgroundsDir } from '../backdrop.ts'
-import { wezterm as emitter, weztermModule } from '../emit/wezterm.ts'
-import { fromHome, MANAGED } from '../wiring.ts'
+import { backgroundsDir } from '../pictures/backdrop.ts'
+import { fromHome, MANAGED } from '../store/wiring.ts'
 import { readText, stripped, tilde } from './common.ts'
+import { wezterm as emitter, weztermModule } from './emit/wezterm.ts'
 import type { At, Wiring } from './types.ts'
 
 const LUA_BLOCK = /-- ttheme begin\n[\s\S]*?-- ttheme end\n?/

@@ -1,4 +1,4 @@
-import { WIRED, type Wired } from '../wired.ts'
+import { WIRED, type Wired } from '../core/wired.ts'
 import { alacritty } from './alacritty.ts'
 import { ghostty } from './ghostty.ts'
 import { iterm2 } from './iterm2.ts'
