@@ -20,17 +20,17 @@ const HARMONY = 0.4
 const THRESHOLD = 60
 const CHROMA_MIN = 32
 const CHROMA_MAX = 64
-const SURFACE_CHROMA = 8
-const TEXT_CHROMA = 12
+export const SURFACE_CHROMA = 8
+export const TEXT_CHROMA = 12
 const GREY_CHROMA = 10
-const SELECTION_CHROMA = 24
-const SELECTION_TONE = { dark: 26, light: 86 }
+export const SELECTION_CHROMA = 24
+export const SELECTION_TONE = { dark: 26, light: 86 }
 const SIGNATURE_TEXT_CHROMA = 24
-const CURSOR_TONE = { dark: { min: 43, max: 84 }, light: { min: 36, max: 56 } }
-const CONTAINER_TONE = { dark: { min: 16, max: 30 }, light: { min: 70, max: 90 } }
+export const CURSOR_TONE = { dark: { min: 43, max: 84 }, light: { min: 36, max: 56 } }
+export const CONTAINER_TONE = { dark: { min: 16, max: 30 }, light: { min: 70, max: 90 } }
 const OWN_CHROMA = 16
 const DARK_ANCHOR_TONE = 53.5
-const TONES = {
+export const TONES = {
   dark: [14, 62, 78, 76, 62, 72, 70, 85, 50, 74, 88, 88, 70, 84, 80, 94],
   light: [96, 42, 34, 42, 42, 34, 34, 18, 50, 36, 28, 36, 36, 28, 28, 12],
 }
