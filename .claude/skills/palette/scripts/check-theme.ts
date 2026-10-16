@@ -1,9 +1,17 @@
 import { check } from '../../../../src/contrast.ts'
+import { modeOf, otherOf } from '../../../../src/mode.ts'
 import type { Theme } from '../../../../src/theme.ts'
+
+interface Shade {
+  background: string
+  foreground: string
+  selection_background: string
+  ansi: string[]
+}
 
 interface ThemeDoc {
   meta: { name: string; signature: string[] }
-  colors: { background: string; foreground: string; selection_background: string; ansi: string[] }
+  colors: Shade & { light?: Shade; dark?: Shade }
 }
 
 const files = Bun.argv.slice(2)
@@ -12,21 +20,34 @@ if (files.length === 0) {
   process.exit(1)
 }
 
+const gated = (doc: ThemeDoc, shade: Shade) =>
+  ({
+    name: doc.meta.name,
+    background: shade.background,
+    foreground: shade.foreground,
+    selectionBackground: shade.selection_background,
+    ansi: shade.ansi,
+    signatureSlots: doc.meta.signature,
+    waive: [],
+  }) as unknown as Theme
+
 let violations = 0
 for (const file of files) {
   const doc = Bun.TOML.parse(await Bun.file(file).text()) as unknown as ThemeDoc
-  const theme = {
-    name: doc.meta.name,
-    background: doc.colors.background,
-    foreground: doc.colors.foreground,
-    selectionBackground: doc.colors.selection_background,
-    ansi: doc.colors.ansi,
-    signatureSlots: doc.meta.signature,
-    waive: [],
-  } as unknown as Theme
-  for (const v of check(theme)) {
+  const other = otherOf(modeOf(gated(doc, doc.colors)))
+  const theirs = doc.colors[other]
+  for (const v of check(gated(doc, doc.colors))) {
     violations++
     console.log(`${v.theme}: ${v.rule} — ${v.detail}`)
+  }
+  if (theirs === undefined) {
+    violations++
+    console.log(`${doc.meta.name}: no [colors.${other}] — bun light.ts --write writes it`)
+    continue
+  }
+  for (const v of check(gated(doc, theirs))) {
+    violations++
+    console.log(`${v.theme} [colors.${other}]: ${v.rule} — ${v.detail}`)
   }
 }
 

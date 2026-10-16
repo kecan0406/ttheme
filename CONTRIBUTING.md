@@ -125,6 +125,10 @@ foreground = "#fbdbdd"
 cursor = "#ffc1c6"
 selection_background = "#553444"
 ansi = [ ... 16 colors ... ]
+
+[colors.light]                             # the same palette in its other mode
+background = "#fff8f7"
+...
 ```
 
 The file's folder is its catalog (`themes/palettes/Madoka Magica/madoka.toml`).
@@ -160,7 +164,13 @@ One palette per pull request. At most three open at a time.
   must stay accurate. Take base schemes from
   [mbadolato/iTerm2-Color-Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes),
   or from a source whose license permits it — say which in the PR.
-- Every palette passes the contrast gate: body text at 7:1, accents and black on
+- `[colors]` is the palette in the mode it was made in, and `[colors.light]`
+  (`[colors.dark]` for a light palette) the same palette in the other one, which
+  people who set `TTHEME_MODE` see. Write it with
+  `bun .claude/skills/palette/scripts/light.ts --write <file>`, which mirrors
+  `[colors]` into the other mode; `mise run build` refuses an official palette
+  without it.
+- Every palette passes the contrast gate in both modes: body text at 7:1, accents and black on
   the six accents at 4.5:1, ANSI 8 and white on it at 3:1, each accent in its
   role and apart from its neighbors at text size, red and green apart for a
   deuteranope (`src/contrast.ts`; why each threshold: [docs/gate.md](docs/gate.md)).

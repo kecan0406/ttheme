@@ -1,7 +1,8 @@
 import pkg from '../package.json' with { type: 'json' }
 import { backdropTone } from './backdrop.ts'
 import { GATE_RULES, type GateRule, measure } from './contrast.ts'
-import type { SharedPicture, Theme } from './theme.ts'
+import type { Colors } from './seeds.ts'
+import type { Shade, SharedPicture, Theme } from './theme.ts'
 
 export interface PaletteEntry {
   name: string
@@ -23,6 +24,7 @@ export interface PaletteEntry {
   signature: string[]
   signatureSlots: string[]
   ansi: string[]
+  other?: Colors
   gate: number[]
   waived?: string[]
   backdrop: { slot: string; color: string; opacity: number }
@@ -36,6 +38,26 @@ export interface Manifest {
   version: string
   gate: GateRule[]
   palettes: PaletteEntry[]
+}
+
+export function colorsOfTheme(theme: Shade): Colors {
+  return {
+    background: theme.background,
+    foreground: theme.foreground,
+    cursor: theme.cursor,
+    selection: theme.selectionBackground,
+    ansi: theme.ansi,
+  }
+}
+
+export function shadeOf(colors: Colors): Shade {
+  return {
+    background: colors.background,
+    foreground: colors.foreground,
+    cursor: colors.cursor,
+    selectionBackground: colors.selection,
+    ansi: colors.ansi,
+  }
 }
 
 export function paletteEntry(t: Theme): PaletteEntry {
@@ -72,6 +94,7 @@ export function paletteEntry(t: Theme): PaletteEntry {
     signature: t.signature,
     signatureSlots: t.signatureSlots,
     ansi: t.ansi,
+    ...(t.other ? { other: colorsOfTheme(t.other) } : {}),
     gate: measure(t),
     ...(t.waive.length > 0 ? { waived: t.waive } : {}),
     backdrop: { slot, color, opacity },
@@ -98,6 +121,7 @@ export function toTheme(entry: PaletteEntry): Theme {
     cursor: entry.cursor,
     selectionBackground: entry.selection,
     ansi: entry.ansi,
+    ...(entry.other ? { other: shadeOf(entry.other) } : {}),
     signature: entry.signature,
     signatureSlots: entry.signatureSlots,
     ghostty: {

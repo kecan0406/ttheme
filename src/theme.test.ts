@@ -132,3 +132,30 @@ position = "left"
     undefined,
   )
 })
+
+test('a palette carries its other mode in [colors.light] or [colors.dark], whichever its [colors] is not', () => {
+  const place = { name: 'dusk', catalogs: new Map(), open: true as const }
+  const gray = Array.from({ length: 16 }, () => '"#606060"').join(', ')
+
+  const other = (table: string, background: string, foreground: string, cursor = '#a04060') =>
+    `${shared('name = "dusk"')}\n[${table}]\nbackground = "${background}"\nforeground = "${foreground}"\ncursor = "${cursor}"\nselection_background = "#c0c0e0"\nansi = [${gray}]\n`
+
+  assert.equal(readTheme('d.toml', shared('name = "dusk"'), place).other, undefined)
+  assert.equal(readTheme('d.toml', other('colors.light', '#fafafa', '#202020'), place).other?.background, '#fafafa')
+  assert.throws(() => readTheme('d.toml', other('colors.dark', '#050505', '#f0f0f0'), place), /already dark/)
+  assert.throws(() => readTheme('d.toml', other('colors.light', '#202020', '#fafafa'), place), /must be light/)
+  assert.throws(
+    () => readTheme('d.toml', other('colors.light', '#fafafa', '#202020', '#fafafa'), place),
+    /three different colors in \[colors\.light\]/,
+  )
+  const catalogs = new Map([['neon', { name: 'neon' }]])
+  assert.throws(
+    () =>
+      readTheme('d.toml', shared('name = "dusk"\norder = 3\nansi_source = "Neon"'), {
+        name: 'dusk',
+        catalog: 'neon',
+        catalogs,
+      }),
+    /official palette carries its other mode in \[colors\.light\]/,
+  )
+})

@@ -35,3 +35,28 @@ ansi = [
   "#2adcdf",
   "#e0f2ea",
 ]
+
+[colors.light]
+background = "#f2fcf6"
+foreground = "#13231e"
+cursor = "#00604e"
+selection_background = "#c2d9f9"
+ansi = [
+  "#ecf6f0",
+  "#a64514",
+  "#005c3f",
+  "#5c6a00",
+  "#3462ab",
+  "#574099",
+  "#005869",
+  "#252e2b",
+
+  "#6f7975",
+  "#82423f",
+  "#004d2a",
+  "#4e5b00",
+  "#4b4f8b",
+  "#473b68",
+  "#004a4c",
+  "#13231e",
+]

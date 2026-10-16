@@ -4,11 +4,13 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { SITES } from './booru.ts'
 import { RULES } from './contrast.ts'
+import { MODES } from './mode.ts'
 import { CATALOG_KEYS, MARKETPLACE_KEYS, MARKETPLACE_SCHEMA_URL, OWNER_KEYS, PALETTE_SCHEMA_URL } from './sources.ts'
 import { PALETTE_KEYS, POSITIONS } from './theme.ts'
 
 interface Node {
   $id?: string
+  $ref?: string
   properties?: Record<string, Node>
   items?: Node
   enum?: unknown[]
@@ -40,6 +42,12 @@ test('the palette schema describes the keys, sites, positions, slots and gate ru
 
   assert.deepEqual(keys(palette.properties?.picture?.items), [...(PALETTE_KEYS.get('picture') ?? [])].sort())
   const defs = palette.definitions ?? {}
+
+  for (const mode of MODES) {
+    assert.equal(palette.properties?.colors?.properties?.[mode]?.$ref, '#/definitions/shade', mode)
+    assert.deepEqual(keys(defs.shade), [...(PALETTE_KEYS.get(`colors.${mode}`) ?? [])].sort(), mode)
+  }
+
   assert.deepEqual(
     defs.site?.anyOf?.[0]?.enum,
     SITES.map((s) => s.key),

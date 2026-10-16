@@ -12,8 +12,10 @@ import {
   TEXT_TONE,
   TONES,
 } from '../../../../src/mirror.ts'
+import { colorsToml, withTable } from '../../../../src/own.ts'
 import type { Theme } from '../../../../src/theme.ts'
 import { deltaE } from './delta.ts'
+import { mirrorInto } from './light.ts'
 
 interface ThemeDoc {
   meta: { name: string; signature: string[] }
@@ -199,21 +201,8 @@ function departures(doc: ThemeDoc, p: Palette): string[] {
   })
 }
 
-export function colorsBlock(p: Palette, table = 'colors'): string {
-  const quote = (s: string) => `  "${s}",`
-  return [
-    `[${table}]`,
-    `background = "${p.background}"`,
-    `foreground = "${p.foreground}"`,
-    `cursor = "${p.cursor}"`,
-    `selection_background = "${p.selection}"`,
-    'ansi = [',
-    ...p.ansi.slice(0, 8).map(quote),
-    '',
-    ...p.ansi.slice(8).map(quote),
-    ']',
-    '',
-  ].join('\n')
+export function colorsBlock(p: Palette): string {
+  return `${colorsToml(p, 'colors').join('\n')}\n`
 }
 
 if (import.meta.main) {
@@ -236,11 +225,7 @@ if (import.meta.main) {
       failed++
       for (const p of problems) console.log(`${doc.meta.name}: ${p}`)
     }
-    if (write) {
-      const start = source.indexOf('[colors]')
-      if (start === -1) throw new Error(`${file}: no [colors] section`)
-      await Bun.write(file, source.slice(0, start) + colorsBlock(palette))
-    }
+    if (write) await Bun.write(file, mirrorInto(withTable(source, 'colors', colorsBlock(palette), 'colors')).text)
   }
   console.log(
     failed === 0

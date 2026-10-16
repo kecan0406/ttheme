@@ -66,6 +66,28 @@
           }
         }
       ]
+    },
+    "shade": {
+      "description": "The palette's colors in its other mode",
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/properties/colors/properties/background"
+        },
+        "foreground": {
+          "$ref": "#/properties/colors/properties/foreground"
+        },
+        "cursor": {
+          "$ref": "#/properties/colors/properties/cursor"
+        },
+        "selection_background": {
+          "$ref": "#/properties/colors/properties/selection_background"
+        },
+        "ansi": {
+          "$ref": "#/properties/colors/properties/ansi"
+        }
+      },
+      "required": ["background", "foreground", "cursor", "selection_background", "ansi"]
     }
   },
   "properties": {
@@ -141,7 +163,7 @@
       "required": ["name", "signature"]
     },
     "colors": {
-      "description": "The colors the terminal wears",
+      "description": "The colors the terminal wears, in the mode the palette was made in: light when its background is lighter than its foreground",
       "type": "object",
       "properties": {
         "background": {
@@ -168,9 +190,20 @@
           },
           "minItems": 16,
           "maxItems": 16
+        },
+        "light": {
+          "description": "The palette in light mode, for a palette made dark",
+          "$ref": "#/definitions/shade"
+        },
+        "dark": {
+          "description": "The palette in dark mode, for a palette made light",
+          "$ref": "#/definitions/shade"
         }
       },
-      "required": ["background", "foreground", "cursor", "selection_background", "ansi"]
+      "required": ["background", "foreground", "cursor", "selection_background", "ansi"],
+      "not": {
+        "required": ["light", "dark"]
+      }
     },
     "contrast": {
       "description": "Contrast gate rules this palette is let off, with the reason",

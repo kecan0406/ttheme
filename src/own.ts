@@ -6,6 +6,7 @@ import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure, RULES } from './contrast.ts'
 import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
+import { modeOf, otherOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import {
   type Identity,
@@ -62,6 +63,7 @@ export interface Draft {
   cursor: string
   selection: string
   ansi: string[]
+  other?: Colors
   waive?: string[]
   reason?: string
   pictures?: SharedPicture[]
@@ -313,6 +315,7 @@ export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string)
     cursor: entry.cursor,
     selection: entry.selection,
     ansi: entry.ansi,
+    ...(entry.other ? { other: entry.other } : {}),
     ...(entry.waived && entry.waived.length > 0
       ? { waive: entry.waived, reason: reason ?? 'kept from the palette' }
       : {}),
@@ -339,6 +342,21 @@ export function withPictures(text: string, pictures: readonly SharedPicture[]): 
     : `${text.replace(/\n*$/, '\n')}${pictures.map((p) => `\n${pictureToml(p).join('\n')}\n`).join('')}`
 }
 
+export function colorsToml(c: Colors, table: string): string[] {
+  return [
+    `[${table}]`,
+    `background = ${q(c.background)}`,
+    `foreground = ${q(c.foreground)}`,
+    `cursor = ${q(c.cursor)}`,
+    `selection_background = ${q(c.selection)}`,
+    'ansi = [',
+    ...c.ansi.slice(0, 8).map((color) => `  ${q(color)},`),
+    '',
+    ...c.ansi.slice(8).map((color) => `  ${q(color)},`),
+    ']',
+  ]
+}
+
 export function paletteToml(d: Draft): string {
   const lines = [
     `"$schema" = ${q(PALETTE_SCHEMA_URL)}`,
@@ -358,16 +376,8 @@ export function paletteToml(d: Draft): string {
         ]
       : []),
     '',
-    '[colors]',
-    `background = ${q(d.background)}`,
-    `foreground = ${q(d.foreground)}`,
-    `cursor = ${q(d.cursor)}`,
-    `selection_background = ${q(d.selection)}`,
-    'ansi = [',
-    ...d.ansi.slice(0, 8).map((c) => `  ${q(c)},`),
-    '',
-    ...d.ansi.slice(8).map((c) => `  ${q(c)},`),
-    ']',
+    ...colorsToml(d, 'colors'),
+    ...(d.other ? ['', ...colorsToml(d.other, `colors.${otherOf(modeOf(d))}`)] : []),
     ...(d.waive && d.waive.length > 0
       ? ['', '[contrast]', `waive = [${d.waive.map(q).join(', ')}]`, `reason = ${q(d.reason ?? '')}`]
       : []),
@@ -738,28 +748,62 @@ function readDraft(r: Reader): Draft {
   }
 }
 
-export function colorsOfTheme(
-  theme: Pick<Theme, 'background' | 'foreground' | 'cursor' | 'selectionBackground' | 'ansi'>,
-): Colors {
-  return {
-    background: theme.background,
-    foreground: theme.foreground,
-    cursor: theme.cursor,
-    selection: theme.selectionBackground,
-    ansi: theme.ansi,
+function sectionOf(text: string, table: string): [number, number] | undefined {
+  const head = new RegExp(`^\\[${table.replaceAll('.', '\\.')}\\][ \\t]*$`, 'm').exec(text)
+
+  if (!head) {
+    return undefined
   }
+
+  const body = head.index + head[0].length
+  const next = /^\[/m.exec(text.slice(body))
+
+  return [head.index, next ? body + next.index : text.length]
 }
 
-export function recolor(text: string, colors: Colors): string {
-  const start = text.indexOf('ansi = [')
-  const end = text.indexOf(']', start)
+const joined = (...parts: (string | undefined)[]) =>
+  `${parts
+    .map((part) => part?.trimEnd())
+    .filter((part) => part)
+    .join('\n\n')}\n`
+
+export function withTable(text: string, table: string, block: string | undefined, after: string): string {
+  const at = sectionOf(text, table)
+
+  if (at) {
+    return joined(text.slice(0, at[0]), block, text.slice(at[1]))
+  }
+
+  if (block === undefined) {
+    return text
+  }
+
+  const anchor = sectionOf(text, after)
+
+  if (!anchor) {
+    throw new Error(`no [${after}] table to put [${table}] after`)
+  }
+
+  return joined(text.slice(0, anchor[1]), block, text.slice(anchor[1]))
+}
+
+export function recolor(text: string, colors: Colors, table = 'colors'): string {
+  const at = sectionOf(text, table)
+
+  if (!at) {
+    throw new Error(`no [${table}] table to rewrite`)
+  }
+
+  const section = text.slice(at[0], at[1])
+  const start = section.indexOf('ansi = [')
+  const end = section.indexOf(']', start)
 
   if (start < 0 || end < 0) {
-    throw new Error('no ansi = [...] list to rewrite')
+    throw new Error(`no ansi = [...] list in [${table}] to rewrite`)
   }
 
   let index = 0
-  const block = text.slice(start, end).replace(/"#[0-9a-fA-F]{6}"/g, () => q(colors.ansi[index++] as string))
+  const block = section.slice(start, end).replace(/"#[0-9a-fA-F]{6}"/g, () => q(colors.ansi[index++] as string))
 
   const keys: [string, string][] = [
     ['background', colors.background],
@@ -768,11 +812,13 @@ export function recolor(text: string, colors: Colors): string {
     ['selection_background', colors.selection],
   ]
 
-  return keys.reduce(
+  const rewritten = keys.reduce(
     (out, [key, color]) =>
       out.replace(new RegExp(`^(${key}\\s*=\\s*)"#[0-9a-fA-F]{6}"`, 'm'), (_, head) => `${head}${q(color)}`),
-    text.slice(0, start) + block + text.slice(end),
+    section.slice(0, start) + block + section.slice(end),
   )
+
+  return text.slice(0, at[0]) + rewritten + text.slice(at[1])
 }
 
 export function resign(text: string, signature: string[]): string {

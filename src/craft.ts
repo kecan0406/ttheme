@@ -9,12 +9,11 @@ import { runEditor } from './editor-screen.ts'
 import { writeAtomic } from './edits.ts'
 import { findFor } from './find/find.ts'
 import { fixGate, type Move } from './fix.ts'
-import { type Manifest, type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
+import { colorsOfTheme, type Manifest, type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import { ensureLocal } from './marketplaces.ts'
 import { colorless } from './osc.ts'
 import {
   codeOf,
-  colorsOfTheme,
   type Draft,
   draftOf,
   fromCodes,

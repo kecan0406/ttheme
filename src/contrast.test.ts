@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { contrast, luminance } from './color.ts'
 import { check, RULES } from './contrast.ts'
-import { loadThemes, rotation } from './theme.ts'
+import { inOther, loadThemes, rotation } from './theme.ts'
 
 const themes = loadThemes(join(import.meta.dirname, '..', 'themes'))
 
@@ -14,8 +14,8 @@ test('color math matches known WCAG values', () => {
   assert.equal(contrast('#0e2124', '#39c5bb'), contrast('#39c5bb', '#0e2124'))
 })
 
-test('every theme passes the contrast gate', () => {
-  const failures = themes.flatMap(check)
+test('every theme passes the contrast gate in both modes', () => {
+  const failures = [...themes, ...themes.flatMap(inOther)].flatMap(check)
   assert.deepEqual(
     failures.map((v) => `${v.theme} [${v.rule}] ${v.detail}`),
     [],

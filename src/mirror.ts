@@ -1,14 +1,9 @@
 import { argbFromHex, Hct, hexFromArgb } from '@material/material-color-utilities'
 import type { Hex } from './color.ts'
-import { check, isLight } from './contrast.ts'
+import { check } from './contrast.ts'
 import { fixRoles, type Move } from './fix.ts'
-import type { Theme } from './theme.ts'
-
-export type Mode = 'dark' | 'light'
-
-export const MODES: readonly Mode[] = ['dark', 'light']
-
-export type Shade = Pick<Theme, 'background' | 'foreground' | 'cursor' | 'selectionBackground' | 'ansi'>
+import { type Mode, modeOf, otherOf } from './mode.ts'
+import type { Shade, Theme } from './theme.ts'
 
 type Mirrored = Shade & Pick<Theme, 'name' | 'signatureSlots' | 'waive'>
 
@@ -49,10 +44,6 @@ const make = (hue: number, chroma: number, tone: number): Hex =>
   hexFromArgb(Hct.from(hue, chroma, tone).toInt()).toLowerCase()
 
 const clamp = (v: number, band: { min: number; max: number }) => Math.max(band.min, Math.min(band.max, v))
-
-export const modeOf = (shade: Pick<Theme, 'background' | 'foreground'>): Mode => (isLight(shade) ? 'light' : 'dark')
-
-export const otherOf = (mode: Mode): Mode => (mode === 'dark' ? 'light' : 'dark')
 
 const NAMED = new Map<string, Exclude<keyof Shade, 'ansi'>>([
   ['background', 'background'],

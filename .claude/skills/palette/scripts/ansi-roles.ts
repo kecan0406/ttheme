@@ -6,6 +6,7 @@ import { fixRoles } from '../../../../src/fix.ts'
 import type { Theme } from '../../../../src/theme.ts'
 import { catalogOf } from './audit.ts'
 import { deltaE } from './delta.ts'
+import { mirrorInto } from './light.ts'
 
 interface ThemeDoc {
   meta: { name: string; signature: string[] }
@@ -92,7 +93,7 @@ for (const file of positionals) {
     after: ansi,
     changes: net,
   })
-  if (values.write && net.length > 0) writeFileSync(file, rewrite(text, ansi))
+  if (values.write && net.length > 0) writeFileSync(file, mirrorInto(rewrite(text, ansi)).text)
 }
 
 if (values.report) writeFileSync(values.report, JSON.stringify(report))

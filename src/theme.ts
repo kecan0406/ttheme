@@ -3,6 +3,7 @@ import { basename, join } from 'node:path'
 import { parse } from 'smol-toml'
 import { SITES } from './booru.ts'
 import { type Hex, isHex } from './color.ts'
+import { MODES, modeOf, otherOf } from './mode.ts'
 
 export interface GhosttyExtras {
   iconGhost: Hex
@@ -53,6 +54,7 @@ export interface Theme {
   cursor: Hex
   selectionBackground: Hex
   ansi: Hex[]
+  other?: Shade
   signature: Hex[]
   signatureSlots: string[]
   ghostty: GhosttyExtras
@@ -60,6 +62,8 @@ export interface Theme {
   waiveReason?: string
   pictures?: SharedPicture[]
 }
+
+export type Shade = Pick<Theme, 'background' | 'foreground' | 'cursor' | 'selectionBackground' | 'ansi'>
 
 export interface Place {
   name: string
@@ -413,7 +417,11 @@ export const PALETTE_KEYS = new Map([
     'meta',
     ['name', 'base', 'from', 'ansi_source', 'booru', 'booru_sites', 'native_names', 'signature', 'order', 'role'],
   ],
-  ['colors', ['background', 'foreground', 'cursor', 'selection_background', 'ansi']],
+  ['colors', ['background', 'foreground', 'cursor', 'selection_background', 'ansi', ...MODES]],
+  ...MODES.map((mode): [string, string[]] => [
+    `colors.${mode}`,
+    ['background', 'foreground', 'cursor', 'selection_background', 'ansi'],
+  ]),
   ['contrast', ['waive', 'reason']],
   ['ghostty', ['icon_ghost', 'icon_screen']],
   ['picture', ['site', 'id', 'size', 'position', 'opacity']],
@@ -432,10 +440,57 @@ export function unknownKeys(file: string, source: string): string[] {
   return [
     ...odd('', doc, PALETTE_KEYS.get('')),
     ...['meta', 'colors', 'contrast', 'ghostty'].flatMap((table) => odd(table, doc[table], PALETTE_KEYS.get(table))),
+    ...MODES.flatMap((mode) => odd(`colors.${mode}`, table(doc.colors)[mode], PALETTE_KEYS.get(`colors.${mode}`))),
     ...(Array.isArray(doc.picture) ? doc.picture : []).flatMap((p, i) =>
       odd(`picture[${i}]`, p, PALETTE_KEYS.get('picture')),
     ),
   ]
+}
+
+function readShade(file: string, path: string, raw: Record<string, unknown>): Shade {
+  const ansi = raw.ansi
+
+  if (!Array.isArray(ansi) || ansi.length !== 16) {
+    fail(file, `${path}.ansi must hold exactly 16 colors, got ${Array.isArray(ansi) ? ansi.length : typeof ansi}`)
+  }
+
+  return {
+    background: hex(file, `${path}.background`, raw.background),
+    foreground: hex(file, `${path}.foreground`, raw.foreground),
+    cursor: hex(file, `${path}.cursor`, raw.cursor),
+    selectionBackground: hex(file, `${path}.selection_background`, raw.selection_background),
+    ansi: ansi.map((c, i) => hex(file, `${path}.ansi[${i}]`, c)),
+  }
+}
+
+function readOther(file: string, colors: Record<string, unknown>, own: Shade, signature: string[]): Shade | undefined {
+  const mode = modeOf(own)
+  const want = otherOf(mode)
+
+  if (colors[mode] !== undefined) {
+    fail(file, `[colors] is already ${mode} — the palette's other mode goes in [colors.${want}]`)
+  }
+
+  if (colors[want] === undefined) {
+    return undefined
+  }
+
+  const other = readShade(file, `colors.${want}`, table(colors[want]))
+
+  if (modeOf(other) !== want) {
+    fail(
+      file,
+      `[colors.${want}] must be ${want}: its background is ${modeOf(other) === 'light' ? 'lighter' : 'darker'} than its foreground`,
+    )
+  }
+
+  const known = slotColors({ ...other, selection: other.selectionBackground })
+
+  if (new Set(signature.map((slot) => known.get(slot))).size !== signature.length) {
+    fail(file, `meta.signature slots must resolve to three different colors in [colors.${want}] too`)
+  }
+
+  return other
 }
 
 export function readTheme(file: string, source: string, place: Place): Theme {
@@ -443,15 +498,6 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   const meta = table(doc.meta)
   const colors = table(doc.colors)
   const contrastRules = table(doc.contrast)
-
-  const ansiRaw = colors.ansi
-
-  if (!Array.isArray(ansiRaw) || ansiRaw.length !== 16) {
-    fail(
-      file,
-      `colors.ansi must hold exactly 16 colors, got ${Array.isArray(ansiRaw) ? ansiRaw.length : typeof ansiRaw}`,
-    )
-  }
 
   const name = paletteName(file, 'meta.name', meta.name)
 
@@ -497,11 +543,8 @@ export function readTheme(file: string, source: string, place: Place): Theme {
     )
   }
 
-  const background = hex(file, 'colors.background', colors.background)
-  const foreground = hex(file, 'colors.foreground', colors.foreground)
-  const cursor = hex(file, 'colors.cursor', colors.cursor)
-  const selectionBackground = hex(file, 'colors.selection_background', colors.selection_background)
-  const ansi = ansiRaw.map((c, i) => hex(file, `colors.ansi[${i}]`, c))
+  const own = readShade(file, 'colors', colors)
+  const { background, foreground, cursor, selectionBackground, ansi } = own
 
   const signature = readSignature(file, meta.signature, {
     background,
@@ -510,6 +553,15 @@ export function readTheme(file: string, source: string, place: Place): Theme {
     selection: selectionBackground,
     ansi,
   })
+
+  const other = readOther(file, colors, own, signature.names)
+
+  if (!shared && other === undefined) {
+    fail(
+      file,
+      `an official palette carries its other mode in [colors.${otherOf(modeOf(own))}] — bun .claude/skills/palette/scripts/light.ts --write writes it`,
+    )
+  }
 
   const booru = meta.booru === undefined ? undefined : str(file, 'meta.booru', meta.booru)
 
@@ -548,6 +600,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
     cursor,
     selectionBackground,
     ansi,
+    ...(other ? { other } : {}),
     signature: signature.colors,
     signatureSlots: signature.names,
     ghostty: readGhostty(file, doc.ghostty, {
@@ -559,6 +612,18 @@ export function readTheme(file: string, source: string, place: Place): Theme {
     waiveReason: typeof contrastRules.reason === 'string' ? contrastRules.reason : undefined,
     ...(pictures ? { pictures } : {}),
   }
+}
+
+export function inOther(theme: Theme): Theme[] {
+  const { other, ...rest } = theme
+
+  if (other === undefined) {
+    return []
+  }
+
+  const known = slotColors({ ...other, selection: other.selectionBackground })
+
+  return [{ ...rest, ...other, signature: theme.signatureSlots.map((slot) => known.get(slot) as Hex) }]
 }
 
 export function loadThemes(dir: string): Theme[] {

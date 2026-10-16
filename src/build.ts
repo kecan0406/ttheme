@@ -4,7 +4,7 @@ import { checkAll } from './contrast.ts'
 import { meta, shell } from './emit/index.ts'
 import type { Emitter } from './emit/types.ts'
 import { WIRED, WIRINGS } from './terminals/index.ts'
-import { loadThemes, rotation } from './theme.ts'
+import { inOther, loadThemes, rotation } from './theme.ts'
 
 const root = join(import.meta.dirname, '..')
 const THEMES = join(root, 'themes')
@@ -24,7 +24,10 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
 
   const themes = loadThemes(THEMES)
 
-  const violations = checkAll(themes)
+  const violations = [
+    ...checkAll(themes),
+    ...checkAll(themes.flatMap(inOther)).map((v) => ({ ...v, theme: `${v.theme} in its other mode` })),
+  ]
 
   if (violations.length > 0) {
     for (const v of violations) {
