@@ -1,9 +1,19 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { ghostty as emitter } from '../emit/index.ts'
+import type { Mode, Setting } from '../mode.ts'
 import { owned } from '../theme.ts'
-import { fromHome, GENERATED, MANAGED, removeBlock, settingValue, upsertBlock, userSets } from '../wiring.ts'
-import { blockKeys, readText, stripped, tilde } from './common.ts'
+import {
+  fromHome,
+  GENERATED,
+  MANAGED,
+  modeSetting,
+  removeBlock,
+  settingValue,
+  upsertBlock,
+  userSets,
+} from '../wiring.ts'
+import { blockKeys, readText, stripped, themeFiles, tilde } from './common.ts'
 import type { At, Now, Wiring } from './types.ts'
 
 const COLOR_KEYS = [
@@ -44,16 +54,22 @@ export function ghosttyBlock(tthemeDir: string, home: string): string {
   return `# ${MANAGED}\nconfig-file = ?${fromHome(own, home, '~') ?? own}`
 }
 
+export function ghosttyTheme(palette: string, setting: Setting): string {
+  const named = (mode: Mode) => `${owned(palette)}.${mode}`
+
+  return setting === 'auto' ? `light:${named('light')},dark:${named('dark')}` : named(setting)
+}
+
 export function ghosttyOwnText(
   tthemeDir: string,
-  palette: string | undefined,
+  theme: string | undefined,
   launch: boolean,
   integrate: boolean,
 ): string {
   return [
     `# ${GENERATED}`,
     ...(launch ? [`command = ${tthemeDir}/launch-tab.zsh`, ...(integrate ? ['shell-integration = zsh'] : [])] : []),
-    ...(palette ? [`theme = ${owned(palette)}`] : []),
+    ...(theme ? [`theme = ${theme}`] : []),
     'config-file = ?backgrounds/shown.conf',
     '',
   ].join('\n')
@@ -66,7 +82,7 @@ function rotates(now: Now): boolean {
 function ownText(now: Now): string {
   return ghosttyOwnText(
     join(now.configHome, 'ttheme'),
-    now.startup,
+    now.startup && ghosttyTheme(now.startup, modeSetting(now.configHome)),
     rotates(now) && setBy(now, 'command') === undefined,
     setBy(now, 'shell-integration') === undefined,
   )
@@ -81,6 +97,15 @@ export const ghostty: Wiring = {
   present: (setup) => existsSync(join(setup.configHome, 'ghostty')),
   sync(ctx, out) {
     out.themes(ghostty)
+    const dir = join(ctx.configHome, 'ghostty', 'themes')
+    const kept = new Set(ctx.themes.flatMap((theme) => themeFiles(ghostty, theme).map(({ file }) => file)))
+
+    for (const file of existsSync(dir) ? readdirSync(dir) : []) {
+      if (file.startsWith(owned('')) && !kept.has(file)) {
+        out.remove(join(dir, file))
+      }
+    }
+
     out.write(ghosttyOwn(ctx.configHome), ownText(ctx))
     const file = ghosttyConfig(ctx.configHome)
     out.wire(file, upsertBlock(readText(file), ghosttyBlock(join(ctx.configHome, 'ttheme'), ctx.home)))

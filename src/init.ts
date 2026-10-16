@@ -4,6 +4,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
+import { settingsFor, systemAppearance } from './appearance.ts'
 import { available, parseManifest, readMarketplaces, writeOfficial } from './available.ts'
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
@@ -11,7 +12,7 @@ import { editUserFile, writeAtomic } from './edits.ts'
 import { pickPalettes } from './installs.ts'
 import { liveOf } from './live.ts'
 import { inMode, type Manifest, type PaletteEntry } from './manifest.ts'
-import type { Mode } from './mode.ts'
+import type { Mode, Setting } from './mode.ts'
 import {
   configHome as configDir,
   type Installed,
@@ -48,14 +49,14 @@ import type { Host, Pointed, Setup } from './terminals/types.ts'
 import { warpSettings } from './terminals/warp.ts'
 import { windowsAppData } from './terminals/windows-terminal.ts'
 import { marketplaceOf, shelfOf } from './theme.ts'
-import { configFile, modeFor, settingValue, upsertBlock, withSetting, zshrcBlock } from './wiring.ts'
+import { configFile, modeSetting, settingValue, upsertBlock, withSetting, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {
   terminals: Wired[]
   palettes: string[]
   off?: boolean
   warpFast?: boolean
-  mode?: Mode
+  mode?: Setting
 }
 
 export interface InitPaths extends Setup {
@@ -351,16 +352,22 @@ async function askTerminals(detected: string, preselected: Wired[], paths: InitP
   )
 }
 
-async function askMode(configHome: string): Promise<Mode> {
+async function askMode(configHome: string, terminals: readonly Wired[]): Promise<Setting> {
+  const offered = settingsFor(terminals)
+  const was = modeSetting(configHome)
+
+  const hints: Record<Setting, string> = {
+    dark: 'light text on a dark background',
+    light: 'dark text on a light background',
+    auto: "the system's, as Ghostty shows it",
+  }
+
   return accepted(
-    await p.select<Mode>({
+    await p.select<Setting>({
       message:
         'Wear the palettes dark or light?\nEvery palette comes in both — `ttheme config` or alt-c in `ttheme` switches it later',
-      options: [
-        { value: 'dark', label: 'dark', hint: 'light text on a dark background' },
-        { value: 'light', label: 'light', hint: 'dark text on a light background' },
-      ],
-      initialValue: modeFor(configHome),
+      options: offered.map((value) => ({ value, label: value, hint: hints[value] })),
+      initialValue: offered.includes(was) ? was : 'dark',
     }),
   )
 }
@@ -598,9 +605,10 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
 
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
   const warpFast = terminals.includes('warp') ? await askWarpFast(configHome) : undefined
-  const mode = await askMode(configHome)
+  const mode = await askMode(configHome, terminals)
+  const worn: Mode = mode === 'auto' ? (systemAppearance(host) ?? 'dark') : mode
   const made = existing ? againManifest(existing, paths) : loadManifest(root)
-  const manifest = { ...made, palettes: made.palettes.map((entry) => inMode(entry, mode)) }
+  const manifest = { ...made, palettes: made.palettes.map((entry) => inMode(entry, worn)) }
 
   const palettes = existing
     ? await pickPalettes(manifest, existing.palettes, 'palette', true)
@@ -630,7 +638,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   p.note(
     [
       `Install ${palettes.length} palettes — ${catalogsOf(manifest, palettes).join(', ')}`,
-      `Wear every palette in its ${mode} mode`,
+      mode === 'auto'
+        ? 'Wear every palette in the mode Ghostty shows, which follows the system'
+        : `Wear every palette in its ${mode} mode`,
       `Copy ${plan.copies.length} files under ${configHome}`,
       `Write ${plan.settings.file}`,
       ...plan.edits.map((e) => `Edit ${e.file} — a ttheme block: ${e.about}`),

@@ -79,7 +79,7 @@ test('uninstall gives every config back as it was and deletes only what ttheme w
   assert.ok(!existsSync(join(p.configHome, 'alacritty', 'alacritty.toml')))
   assert.ok(!existsSync(join(p.configHome, 'wezterm', 'wezterm.lua')))
   assert.equal(readFileSync(mine, 'utf8'), 'background = #000000\n')
-  assert.ok(!existsSync(join(p.configHome, 'ghostty', 'themes', 'ttheme-gojo')))
+  assert.ok(!existsSync(join(p.configHome, 'ghostty', 'themes', 'ttheme-gojo.dark')))
   assert.ok(!existsSync(join(p.configHome, 'ttheme')))
   assert.deepEqual(planUninstall(p), { edits: [], removals: [], touches: [] })
 })

@@ -2469,9 +2469,10 @@ __tt_preview() {
   local mact="" mzone="" pvmouse="" pasted=""
   local -a pvz=()
   local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=(Mode "New tabs" Announce "Search fx" Sort Mouse Blur Colors)
-  local -a cchoice=("dark light" "off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "tone original") cshow=("dark light" "off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "tone original")
+  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "tone original") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "tone original")
   local -A cnote=(
     TTHEME_MODE:dark "Every palette in its dark mode" TTHEME_MODE:light "Every palette in its light mode"
+    TTHEME_MODE:auto "Every palette in the mode Ghostty shows, which follows the system"
     TTHEME_TAB_PALETTE:seq "New tabs rotate through palettes" TTHEME_TAB_PALETTE:off "New tabs keep the terminal theme"
     TTHEME_ANNOUNCE:1 "Shows the palette notice" TTHEME_ANNOUNCE:0 "Silences the palette notice"
     TTHEME_FX:typewriter "The search hint types itself" TTHEME_FX:decode "The search hint decodes" TTHEME_FX:glitch "The search hint glitches in"

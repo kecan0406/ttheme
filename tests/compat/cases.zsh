@@ -477,6 +477,21 @@ __cc_cases() {
   fi
   printf '\e[?1004l'
 
+  local said="" seen=dark
+  if __cc_ask $'\e[?996n' && [[ $REPLY == *$'\e[?997;'[12]n* ]]; then
+    said=${${REPLY##*\[\?997;}[1]}
+    (( said == 2 )) && seen=light
+    (( said == 1 )) && printf '\e]11;#ffffff\e\\' || printf '\e]11;#000000\e\\'
+    if __cc_ask $'\e[?996n' && [[ $REPLY == *$'\e[?997;'$said'n'* ]]; then
+      __cc_report appearance-report pass "DSR 996 answered $seen whatever the background an OSC set"
+    else
+      __cc_report appearance-report fail "DSR 996 followed the background an OSC set"
+    fi
+    printf '\e]111\e\\'
+  else
+    __cc_report appearance-report fail "DSR 996 answered ${${(V)REPLY}:-nothing}"
+  fi
+
 
   (( $+functions[__tt_name_of] )) && __tt_name_of "$TTHEME_SPEC"
   other=${${TTHEME_ORDER:#$REPLY}[1]}

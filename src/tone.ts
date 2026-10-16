@@ -165,7 +165,7 @@ export function tonedModes(entry: PaletteEntry, tone: Tone): PaletteEntry {
 }
 
 export function tuned(entries: PaletteEntry[], tone: Tone): PaletteEntry[] {
-  return Object.keys(tone).length === 0 ? entries : entries.map((entry) => tonedEntry(entry, toneOf(tone, entry)))
+  return Object.keys(tone).length === 0 ? entries : entries.map((entry) => tonedModes(entry, tone))
 }
 
 export function tunedNames(tone: Tone, entries: readonly PaletteEntry[]): string[] {

@@ -53,8 +53,8 @@ test('the Ghostty block only includes the file ttheme owns, optionally and from 
 
 test("ttheme's Ghostty file routes new tabs through the launcher only while they rotate, and always includes the shown background", () => {
   assert.equal(
-    ghosttyOwnText('/cfg/ttheme', 'miku', true, true),
-    `# ${GENERATED}\ncommand = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = ttheme-miku\nconfig-file = ?backgrounds/shown.conf\n`,
+    ghosttyOwnText('/cfg/ttheme', 'ttheme-miku.dark', true, true),
+    `# ${GENERATED}\ncommand = /cfg/ttheme/launch-tab.zsh\nshell-integration = zsh\ntheme = ttheme-miku.dark\nconfig-file = ?backgrounds/shown.conf\n`,
   )
   assert.equal(
     ghosttyOwnText('/cfg/ttheme', undefined, false, true),
@@ -82,7 +82,7 @@ test('configFile seeds the template with every default spelled out on a commente
     [
       '# ttheme settings — uncomment a line to change it; exported variables win over this file',
       '',
-      '# the mode every palette is worn in: dark or light, which each palette carries both of — changing it repaints every open tab (default dark)',
+      '# the mode every palette is worn in: dark or light, which each palette carries both of, or auto, which follows the appearance Ghostty reports — changing it repaints every open tab (default dark)',
       '# : ${TTHEME_MODE:=dark}',
       '',
       '# new tabs: off keeps the configured terminal theme, seq rotates through the palettes (default off)',

@@ -2,6 +2,7 @@ import pkg from '../../package.json' with { type: 'json' }
 import { SITES } from '../booru.ts'
 import { HUB_CLOSED, HUB_SWITCH, HUB_TABS } from '../hub.ts'
 import { listed, type PaletteEntry, paletteEntry, swatch } from '../manifest.ts'
+import type { Mode, Setting } from '../mode.ts'
 import { outdated, STANDING_LINES, UPDATE_HERE } from '../notice.ts'
 import { SCENES } from '../scenes.ts'
 import { TRAITS } from '../terminal.ts'
@@ -24,6 +25,11 @@ export function palettesZsh(
   layer: Readonly<Record<string, string>> = {},
   tuned: readonly string[] = [],
   marketplaces: readonly string[] = [],
+  mode: { worn: Mode; auto: boolean; settings: readonly Setting[] } = {
+    worn: 'dark',
+    auto: false,
+    settings: ['dark', 'light'],
+  },
 ): string {
   for (const p of palettes) {
     for (const field of [p.name, p.catalog ?? '', p.native ?? '', ...(p.nativeNames ?? []), p.ansiSource]) {
@@ -52,6 +58,10 @@ export function palettesZsh(
     '',
     '# the palette new tabs open with, which the iTerm2 "ttheme · default" profile wears',
     `typeset -g TTHEME_STARTUP=${startup ?? ''}`,
+    '',
+    '# the mode TTHEME_PALETTE holds, whether TTHEME_MODE is auto — a tab whose terminal reports the appearance then follows it at its prompt — and the values TTHEME_MODE takes here',
+    `typeset -g TTHEME_MODE_WORN=${mode.worn} TTHEME_MODE_AUTO=${mode.auto ? 1 : 0}`,
+    `typeset -ga TTHEME_MODE_SETTINGS=(${mode.settings.join(' ')})`,
     '',
     '# the terminals ttheme is wired into: a picture change reaches every one of them, from whichever runs the shell',
     `typeset -ga TTHEME_TERMINALS=(${terminals.join(' ')})`,

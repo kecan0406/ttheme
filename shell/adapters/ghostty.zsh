@@ -9,6 +9,8 @@ typeset -g TTHEME_GHOSTTY_WATCH='ObjC.import("AppKit");ObjC.import("CoreGraphics
 
 __tt_follows_focus() { return 0 }
 
+__tt_reports_appearance() { (( ! TTHEME_TMUX )) }
+
 __tt_follows_prompt() { return 0 }
 
 __tt_keepable() { return 0 }

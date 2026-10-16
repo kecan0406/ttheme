@@ -369,7 +369,7 @@ test('init offers Konsole where it runs, preselects it once it has run, and says
   assert.equal(konsole.present({ configHome, home }), true)
   const state: Installed = { terminals: ['konsole'], palettes: ['gojo'] }
   assert.deepEqual(wiringPlan(configHome, state, home), [
-    `Write ${konsoleData(home).replace(home, '~')}/ttheme-* — a theme file per palette`,
+    `Write ${konsoleData(home).replace(home, '~')}/ttheme-* — the palettes' theme files`,
     `Write ${konsoleData(home).replace(home, '~')}/ttheme-*.profile — a "ttheme · <palette>" profile per palette, on top of your own`,
     'Edit ~/.config/konsolerc — DefaultProfile; `ttheme off` puts yours back',
   ])

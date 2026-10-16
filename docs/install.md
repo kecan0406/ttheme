@@ -15,8 +15,10 @@ bash or fish — see [Shells](#shells).
    Warp among them, also whether to switch Warp to each tab's palette in about
    0.2 s instead of 0.6 s, for some CPU while it does (`TTHEME_WARP_FAST`).
 2. **Dark or light** — the mode every palette is worn in (`TTHEME_MODE`, `dark`
-   preselected). Every palette comes in both, and the catalogs that follow are
-   shown in the one you pick; `ttheme config` or alt-c in `ttheme` switches it later.
+   preselected), or with Ghostty among the terminals `auto`, which follows the
+   system's appearance as Ghostty shows it. Every palette comes in both, and the
+   catalogs that follow are shown in the one you pick; `ttheme config` or alt-c in
+   `ttheme` switches it later.
 3. **Which catalogs to install** — `space` marks one, `Select all` takes the lot,
    enter moves on.
 4. **Whether to wear them** — with one palette picked, `Wear <palette> in every
@@ -154,8 +156,9 @@ REL=https://github.com/kecan0406/ttheme/releases/latest/download
 
 # ghostty
 curl -L $REL/ttheme-ghostty.tar.gz | tar xz
-cp ghostty/themes/ttheme-miku ~/.config/ghostty/themes/
-#   config:  theme = ttheme-miku
+cp ghostty/themes/ttheme-miku.* ~/.config/ghostty/themes/
+#   config:  theme = ttheme-miku.dark
+#        or  theme = light:ttheme-miku.light,dark:ttheme-miku.dark
 
 # kitty
 curl -L $REL/ttheme-kitty.tar.gz | tar xz

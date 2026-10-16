@@ -112,6 +112,10 @@ test('the shell adapters open find and repaint in part exactly where TRAITS says
     adapters.filter((a) => code(a).includes(String.raw`$'\e]50;'$REPLY`)).sort(),
     having((t) => TRAITS[t].schemes === true),
   )
+  assert.deepEqual(
+    adapters.filter((a) => /^__tt_reports_appearance\(\)/m.test(code(a))).sort(),
+    having((t) => TRAITS[t].appears === true),
+  )
 })
 
 test('the shared layer names a terminal only to detect it, and an adapter names only itself', () => {

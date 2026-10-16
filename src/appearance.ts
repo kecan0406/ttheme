@@ -1,0 +1,58 @@
+import { readFileSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import { writeAtomic } from './edits.ts'
+import { MODES, type Mode, SETTINGS, type Setting } from './mode.ts'
+import { TRAITS } from './terminal.ts'
+import type { Host, Wired } from './terminals/types.ts'
+
+export function settingsFor(terminals: readonly Wired[]): readonly Setting[] {
+  return terminals.some((terminal) => TRAITS[terminal].appears) ? SETTINGS : MODES
+}
+
+export function appearancePath(): string {
+  return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'appearance')
+}
+
+export function readAppearance(): Mode | undefined {
+  try {
+    const text = readFileSync(appearancePath(), 'utf8').trim()
+
+    return MODES.find((mode) => mode === text)
+  } catch {
+    return undefined
+  }
+}
+
+export function systemAppearance(host: Host): Mode | undefined {
+  if (host.platform === 'darwin') {
+    return host.run('defaults', ['read', '-g', 'AppleInterfaceStyle']) === 'Dark' ? 'dark' : 'light'
+  }
+
+  const scheme =
+    host.platform === 'linux'
+      ? host.run('gsettings', ['get', 'org.gnome.desktop.interface', 'color-scheme'])
+      : undefined
+
+  if (scheme === undefined) {
+    return undefined
+  }
+
+  return scheme.includes('prefer-dark') ? 'dark' : 'light'
+}
+
+export function knowAppearance(host: Host): Mode | undefined {
+  const known = readAppearance()
+
+  if (known) {
+    return known
+  }
+
+  const seen = systemAppearance(host)
+
+  if (seen) {
+    writeAtomic(appearancePath(), `${seen}\n`)
+  }
+
+  return seen
+}

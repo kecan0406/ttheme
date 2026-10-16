@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { knowAppearance, settingsFor } from './appearance.ts'
 import { available, nameOf, nearest, readAvailable, untuned, writeKept } from './available.ts'
 import { backgroundsDir, freshenConfs, paintFor, readStore, retint } from './backdrop.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
@@ -13,7 +14,7 @@ import { WIRED, type Wired, wirings } from './terminals/index.ts'
 import type { Ctx, Host, Moment, Now, Out, Pointed } from './terminals/types.ts'
 import { marketplaceOf, owned } from './theme.ts'
 import { readTone, tuned, tunedNames } from './tone.ts'
-import { modeFor } from './wiring.ts'
+import { modeFor, modeSetting } from './wiring.ts'
 
 export interface Installed {
   terminals: Wired[]
@@ -184,6 +185,11 @@ export function sync(
 ): string[] {
   readStore(backgroundsDir(configHome))
   const kept = resolve(untuned(configHome, manifest), state.palettes)
+
+  if (modeSetting(configHome) === 'auto') {
+    knowAppearance(host)
+  }
+
   const mode = modeFor(configHome)
 
   const entries = tuned(
@@ -251,6 +257,11 @@ function writeTable(ctx: Ctx, host: Host, repainted: boolean): string {
     layer(ctx, host),
     tunedNames(readTone(ctx.configHome), ctx.entries),
     marketplacesOf(ctx.state.marketplaces).map((source) => nameOf(ctx.configHome, source) ?? source),
+    {
+      worn: modeFor(ctx.configHome),
+      auto: modeSetting(ctx.configHome) === 'auto',
+      settings: settingsFor(ctx.state.terminals),
+    },
   )
 
   if (repainted || readText(table) !== content) {
@@ -287,7 +298,7 @@ export function wiringPlan(configHome: string, state: Installed, home = homedir(
   const at = now(configHome, state, home)
 
   return wirings(state.terminals).flatMap((wiring) => [
-    ...(wiring.shelf ? [`Write ${tilde(wiring.shelf.dir(at), home)}/${owned('*')} — a theme file per palette`] : []),
+    ...(wiring.shelf ? [`Write ${tilde(wiring.shelf.dir(at), home)}/${owned('*')} — the palettes' theme files`] : []),
     ...wiring.plan(at),
   ])
 }

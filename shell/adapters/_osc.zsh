@@ -93,6 +93,8 @@ __tt_holds() { return 0 }
 
 __tt_follows_focus() { return 1 }
 
+__tt_reports_appearance() { return 1 }
+
 __tt_takes_default() { return 0 }
 
 __tt_follows_prompt() { return 1 }

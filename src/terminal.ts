@@ -85,6 +85,7 @@ interface Traits {
   moves: boolean
   layers: boolean
   paints: boolean
+  appears?: true
   repaint?: readonly number[]
   hex?: true
   schemes?: true
@@ -93,7 +94,16 @@ interface Traits {
 }
 
 export const TRAITS: Record<Terminal, Traits> = {
-  ghostty: { links: true, pictures: true, bands: false, files: true, moves: true, layers: true, paints: true },
+  ghostty: {
+    links: true,
+    pictures: true,
+    bands: false,
+    files: true,
+    moves: true,
+    layers: true,
+    paints: true,
+    appears: true,
+  },
   kitty: { links: true, pictures: true, bands: false, files: true, moves: true, layers: true, paints: true },
   iterm2: {
     links: true,

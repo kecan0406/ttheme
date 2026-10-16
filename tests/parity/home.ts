@@ -195,6 +195,7 @@ function prepare(place: Place, term: Term): void {
   mkdirSync(join(place.root, 'tmp'), { recursive: true })
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'Default Bookmark Guid'), 'own\n')
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'PreventEscapeSequenceFromChangingProfile'), '0\n')
+  write(join(place.stateHome, 'ttheme', 'appearance'), 'dark\n')
 
   if (term === 'terminal-app') {
     write(join(place.home, '.parity', 'defaults', TERMINAL_DOMAIN, 'Default Window Settings'), 'Own\n')

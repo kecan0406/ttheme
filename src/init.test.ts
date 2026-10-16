@@ -199,7 +199,10 @@ test('init wears the first palette and leaves the new-tab setting at its default
   const paths = makeFixture()
   const tab = /^(?:# )?: \$\{TTHEME_TAB_PALETTE:=(\w+)\}$/m
   applyInit(planInit(options({ palettes: ['neutral', 'miku'] }), paths))
-  assert.match(readFileSync(join(paths.configHome, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-neutral$/m)
+  assert.match(
+    readFileSync(join(paths.configHome, 'ttheme', 'ghostty.conf'), 'utf8'),
+    /^theme = ttheme-neutral\.dark$/m,
+  )
   assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8').match(tab)?.[1], 'off')
 })
 
@@ -421,7 +424,7 @@ test('setting it up again keeps the marketplaces, their auto-update, the handle 
   })
   assert.match(
     readFileSync(join(paths.configHome, 'ttheme', 'ghostty.conf'), 'utf8'),
-    /^theme = ttheme-alice--pastel--dusk$/m,
+    /^theme = ttheme-alice--pastel--dusk\.dark$/m,
   )
 })
 

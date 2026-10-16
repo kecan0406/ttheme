@@ -2,6 +2,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { basename, dirname, isAbsolute, join } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
 import { readBackdrop } from '../../src/backdrop.ts'
+import type { Mode } from '../../src/mode.ts'
 import { SLOT_CODES } from '../../src/osc.ts'
 import { decodePng, type Rgba } from '../../src/png.ts'
 import { type Colors, OWN, SEEN } from './terms.ts'
@@ -236,10 +237,20 @@ export interface GhosttyLoad {
   opacity: string
 }
 
-export function ghosttyLoad(configHome: string): GhosttyLoad {
+function themeIn(value: string | undefined, appearance: Mode): string | undefined {
+  const pairs = value?.split(',').map((part) => /^(light|dark):(.+)$/.exec(part.trim()))
+
+  if (!pairs?.every(Boolean)) {
+    return value
+  }
+
+  return pairs.find((pair) => pair?.[1] === appearance)?.[2]
+}
+
+export function ghosttyLoad(configHome: string, appearance: Mode): GhosttyLoad {
   const { lines: main, files } = ghosttyTree(join(configHome, 'ghostty', 'config'), dirname(configHome))
   const command = main.findLast(([key]) => key === 'command')?.[1]
-  const theme = main.findLast(([key]) => key === 'theme')?.[1]
+  const theme = themeIn(main.findLast(([key]) => key === 'theme')?.[1], appearance)
   const colors = new Map<string, string>()
 
   const slot = new Map([

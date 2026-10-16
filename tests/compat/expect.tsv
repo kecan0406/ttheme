@@ -13,6 +13,7 @@ painted	pass	pass	pass	pass	pass	fail	pass	pass
 fg-painted	pass	pass	pass	pass	pass	pass	pass	pass
 ansi-painted	pass	pass	pass	pass	pass	pass	pass	fail
 focus-answer	pass	fail	fail	fail	fail	fail	fail	fail
+appearance-report	pass	?	?	?	?	?	?	?
 follow-default	pass	pass	pass	pass	pass	skip	pass	pass
 follow-belief	pass	pass	pass	pass	pass	skip	pass	pass
 keep-painted	pass	pass	pass	pass	pass	skip	pass	pass

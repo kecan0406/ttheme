@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Terminal } from '@xterm/headless'
+import type { Mode } from '../../src/mode.ts'
 import { TERMINAL_DOMAIN, terminalPictures } from '../../src/terminals/terminal-app.ts'
 import { type Bookmark, prefsOf, tabFile } from './apple.ts'
 import {
@@ -91,6 +92,7 @@ export class Tab {
   state: 'text' | 'esc' | 'csi' | 'osc' | 'osc-esc' | 'str' | 'str-esc' = 'text'
   buf = ''
   focusing = false
+  appearing = false
   sync = false
   held = ''
   pending = 0
@@ -164,6 +166,7 @@ interface Kind {
   changed?(app: App): void
   osc?(app: App, tab: Tab, code: number, data: string): void
   focused?(app: App, tab: Tab): void
+  appeared?(app: App): void
   owes?(app: App): boolean
   picture(app: App, tab: Tab): string
   opacity?(app: App, tab: Tab): string
@@ -197,7 +200,7 @@ const ghostty = (): Kind => {
 
   return {
     launch(app) {
-      loaded = ghosttyLoad(app.place.configHome)
+      loaded = ghosttyLoad(app.place.configHome, app.appearance)
       seen = read(reloads(app)).split('\n').filter(Boolean).length
     },
     opening(app) {
@@ -212,13 +215,20 @@ const ghostty = (): Kind => {
       }
 
       seen = count
-      loaded = ghosttyLoad(app.place.configHome)
+      loaded = ghosttyLoad(app.place.configHome, app.appearance)
 
       for (const tab of app.tabs) {
         app.rebase(tab, loaded.colors)
       }
 
       app.log('reload')
+    },
+    appeared(app) {
+      loaded = ghosttyLoad(app.place.configHome, app.appearance)
+
+      for (const tab of app.tabs) {
+        app.rebase(tab, loaded.colors)
+      }
     },
     picture: () => loaded.picture,
     opacity: () => loaded.opacity,
@@ -779,6 +789,7 @@ export class App {
   readonly tabs: Tab[] = []
   readonly journal: string[] = []
   front: Tab | undefined
+  appearance: Mode = 'dark'
   activity = performance.now()
   private away = false
   private later = 0
@@ -862,6 +873,22 @@ export class App {
 
   displayed(tab: Tab): Colors {
     return new Map(tab.slots.keys().map((code) => [code, this.shown(tab, code)]))
+  }
+
+  private appearanceReport(): string {
+    return `\x1b[?997;${this.appearance === 'dark' ? 1 : 2}n`
+  }
+
+  appear(mode: Mode): void {
+    this.appearance = mode
+    this.log(`appear ${mode}`)
+    this.kind.appeared?.(this)
+
+    for (const tab of this.tabs) {
+      if (tab.appearing) {
+        this.reply(tab, this.appearanceReport())
+      }
+    }
   }
 
   reply(tab: Tab, data: string): void {
@@ -1046,6 +1073,14 @@ export class App {
       return
     }
 
+    if (prefix === '?' && final === 'n') {
+      if (params[0] === 996 && this.behavior.appearance) {
+        this.reply(tab, this.appearanceReport())
+      }
+
+      return
+    }
+
     if (prefix === '' && final === 't') {
       const cells = this.behavior.cells
 
@@ -1081,6 +1116,10 @@ export class App {
         if (set && this.behavior.focus === 'answer') {
           this.reply(tab, this.front === tab ? '\x1b[I' : '\x1b[O')
         }
+      }
+
+      if (params.includes(2031) && this.behavior.appearance) {
+        tab.appearing = set
       }
 
       if (params.includes(2026)) {
@@ -1352,6 +1391,10 @@ export class App {
   }
 
   private async busy(): Promise<boolean> {
+    if (existsSync(join(this.place.stateHome, 'ttheme', 'remode'))) {
+      return true
+    }
+
     const proc = Bun.spawn(['ps', '-A', '-ww', '-o', 'args='], { stdout: 'pipe', stderr: 'ignore' })
     const out = await new Response(proc.stdout).text()
 

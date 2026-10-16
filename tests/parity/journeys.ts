@@ -1,3 +1,4 @@
+import type { Mode } from '../../src/mode.ts'
 import type { Tab } from './model.ts'
 import type { Capability } from './terms.ts'
 
@@ -9,6 +10,7 @@ export interface Want {
 }
 
 export interface LookOptions extends Want {
+  mode?: Mode
   unpainted?: true
   repaints?: number
   text?: true | Capability
@@ -22,6 +24,7 @@ export interface Elsewhere {
   launch(tab: Tab, line: string, marker: string): Promise<void>
   focus(tab: Tab): Promise<void>
   leave(): void
+  appear(mode: Mode): Promise<void>
   look(label: string, want: Want & { busy?: boolean }): Promise<void>
 }
 
@@ -758,6 +761,29 @@ export const JOURNEYS: Journey[] = [
       await p.look('unpainted', { want: 'konata', unpainted: true })
       await p.open()
       await p.look('new', { want: 'konata', repaints: 0 })
+    },
+  },
+  {
+    id: 'auto',
+    about:
+      'with the mode on auto, the appearance a Ghostty tab hears at its prompt reaches every tab, painted or not, and new tabs, in every wired terminal',
+    async run(p) {
+      const ghostty = await p.wire('ghostty')
+      const a = await p.open()
+      const b = await p.open()
+      await p.type(b, 'ttheme use kita')
+      await p.launch(b, 'ttheme')
+      await p.keys(b, 'alt-c', 'right', 'right', 'enter', '1s')
+      await p.quit(b)
+      const g = await ghostty.open()
+      await ghostty.appear('light')
+      await p.focus(b)
+      await p.look('painted', { want: 'kita', mode: 'light' })
+      await p.focus(a)
+      await p.look('unpainted', { want: 'konata', unpainted: true })
+      await p.open()
+      await p.look('new', { want: 'konata', repaints: 0 })
+      await ghostty.look('ghostty', { want: 'konata', at: g })
     },
   },
   {

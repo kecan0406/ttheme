@@ -98,6 +98,7 @@ __tt_gone() {
   __tt_reload
   __tt_reset_reloaded $bg
   print -n $'\e[?1004l'
+  (( TTHEME_APPEARANCE_ON )) && print -n $'\e[?2031l'
   for hook in precmd:__tt_prompt precmd:__tt_precmd precmd:__tt_prompted precmd:__tt_unmux preexec:__tt_preexec preexec:__tt_ran chpwd:__tt_chpwd; do
     add-zsh-hook -d ${hook%%:*} ${hook#*:}
   done
@@ -241,7 +242,7 @@ __tt_active() {
 }
 
 typeset -g TTHEME_HEARD=""
-typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0 TTHEME_FRONT=-1 TTHEME_RAN=0
+typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0 TTHEME_FRONT=-1 TTHEME_RAN=0 TTHEME_APPEARANCE=0 TTHEME_APPEARANCE_ON=0
 
 __tt_put() {
   local f=${1:A}
@@ -296,7 +297,7 @@ __tt_wearing() {
   for k in ${(k)TTHEME_PALETTE}; do
     [[ ${TTHEME_PALETTE[$k]%% *} == "$1" ]] && { REPLY=$TTHEME_PALETTE[$k]; return 0 }
   done
-  return 1
+  (( TTHEME_MODE_AUTO )) && __tt_reports_appearance && __tt_stale $1
 }
 
 __tt_stale() {
@@ -554,7 +555,56 @@ __tt_focus_on() { printf '\e[?1004h' }
 
 __tt_preexec() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  printf '\e[?1004l'
+  if (( TTHEME_APPEARANCE_ON )); then
+    TTHEME_APPEARANCE_ON=0
+    printf '\e[?1004l\e[?2031l'
+  else
+    printf '\e[?1004l'
+  fi
+}
+
+__tt_appearance_on() {
+  TTHEME_APPEARANCE_ON=1
+  printf '\e[?2031h\e[?996n'
+}
+
+__tt_appearance_heard() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  if [[ $KEYS == *1n ]]; then
+    __tt_appearance dark
+  else
+    __tt_appearance light
+  fi
+}
+
+__tt_appearance() {
+  local f=$TTHEME_STATE_DIR/appearance fd
+  (( TTHEME_MODE_AUTO )) && __tt_active || return 0
+  zmodload -F zsh/files b:zf_mkdir b:zf_rm 2>/dev/null
+  zmodload -F zsh/system b:zsystem 2>/dev/null
+  zf_mkdir -p $TTHEME_STATE_DIR 2>/dev/null
+  [[ -r $f && "$(<$f)" == $1 ]] || __tt_put $f $1 2>/dev/null
+  [[ $1 == $TTHEME_MODE_WORN ]] && return 0
+  [[ -e $TTHEME_STATE_DIR/mode.lock ]] || { : >>| $TTHEME_STATE_DIR/mode.lock } 2>/dev/null
+  zsystem flock -t 0 -f fd $TTHEME_STATE_DIR/mode.lock 2>/dev/null || return 0
+  __tt_remode </dev/null >/dev/null 2>&1 &!
+  zsystem flock -u $fd
+}
+
+__tt_remode() {
+  local f=$TTHEME_STATE_DIR/appearance mark=$TTHEME_STATE_DIR/remode want
+  integer n
+  __tt_put $mark $sysparams[pid]
+  for (( n = 0; n < 3; n++ )); do
+    want=$(<$f)
+    __tt_cli sync || break
+    __tt_reload
+    __tt_wake
+    kill -URG $$ 2>/dev/null
+    __tt_redraw
+    [[ "$(<$f)" == $want ]] && break
+  done
+  zf_rm -f -- $mark 2>/dev/null
 }
 
 __tt_rewear() {
@@ -680,7 +730,18 @@ __tt_line_init() {
   ahead=$TTHEME_TYPED
   __tt_typed
   (( TTHEME_FOCUS && ! PENDING )) && [[ -z $ahead ]] && __tt_focus_on
+  (( TTHEME_APPEARANCE && TTHEME_MODE_AUTO && ! PENDING )) && [[ -z $ahead ]] && __tt_appearance_on
   return 0
+}
+
+__tt_bind_appearance() {
+  local k
+  zle -N __tt_appearance_heard
+  TTHEME_APPEARANCE=1
+  for k in emacs viins vicmd; do
+    bindkey -M $k '^[[?997;1n' __tt_appearance_heard
+    bindkey -M $k '^[[?997;2n' __tt_appearance_heard
+  done
 }
 
 __tt_bind_focus() {
@@ -1753,6 +1814,7 @@ __tt_hook() {
   else
     __tt_sync
   fi
+  __tt_reports_appearance && __tt_bind_appearance
   __tt_follows_prompt && add-zsh-hook precmd __tt_prompted
   return 0
 }

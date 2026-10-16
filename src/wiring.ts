@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { readAppearance } from './appearance.ts'
 import type { Coloring } from './backdrop.ts'
-import { MODES, type Mode } from './mode.ts'
+import { type Mode, SETTINGS, type Setting } from './mode.ts'
 
 export const BLOCK_BEGIN = '# ttheme begin'
 export const BLOCK_END = '# ttheme end'
@@ -53,7 +54,7 @@ const CONFIG_HEADER = '# ttheme settings — uncomment a line to change it; expo
 
 const CONFIG_SETTINGS = {
   TTHEME_MODE: {
-    doc: '# the mode every palette is worn in: dark or light, which each palette carries both of — changing it repaints every open tab (default dark)',
+    doc: '# the mode every palette is worn in: dark or light, which each palette carries both of, or auto, which follows the appearance Ghostty reports — changing it repaints every open tab (default dark)',
     default: 'dark',
   },
   TTHEME_TAB_PALETTE: {
@@ -208,10 +209,16 @@ export function blurOf(configHome: string): number {
   return Number.isFinite(value) ? Math.min(BLUR_MOST, Math.max(0, value)) : 0
 }
 
-export function modeFor(configHome: string): Mode {
+export function modeSetting(configHome: string): Setting {
   const value = settingValue(configHome, 'TTHEME_MODE')
 
-  return MODES.find((mode) => mode === value) ?? 'dark'
+  return SETTINGS.find((setting) => setting === value) ?? 'dark'
+}
+
+export function modeFor(configHome: string): Mode {
+  const setting = modeSetting(configHome)
+
+  return setting === 'auto' ? (readAppearance() ?? 'dark') : setting
 }
 
 export function coloringFor(configHome: string): Coloring {

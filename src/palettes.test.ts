@@ -99,7 +99,7 @@ test('sync writes a theme file per terminal and the zsh table', () => {
     palettes: ['neutral', 'gojo'],
   })
 
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo')))
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo.dark')))
   assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-gojo.conf')))
   assert.ok(existsSync(join(home, 'ttheme', 'palettes.zsh')))
   assert.ok(written.includes(join(home, 'ghostty', 'config')))
@@ -110,6 +110,16 @@ test('sync writes a theme file per terminal and the zsh table', () => {
   assert.match(table, /^typeset -ga TTHEME_TERMINALS=\(ghostty kitty\)$/m)
   assert.match(table, /^typeset -ga TTHEME_MARKETPLACES=\('official'\)$/m)
   assert.doesNotMatch(table, /geto/)
+})
+
+test("sync keeps Ghostty's themes folder to both modes of the listed palettes, and leaves the user's own themes", () => {
+  const home = fixture()
+  const themes = join(home, 'ghostty', 'themes')
+  mkdirSync(themes, { recursive: true })
+  writeFileSync(join(themes, 'ttheme-gojo'), 'older')
+  writeFileSync(join(themes, 'Dracula'), 'mine')
+  sync(home, manifest, { terminals: ['ghostty'], palettes: ['gojo'] })
+  assert.deepEqual(readdirSync(themes).sort(), ['Dracula', 'ttheme-gojo.dark', 'ttheme-gojo.light'])
 })
 
 test('sync names every marketplace the install holds in the zsh table, by the name remove and update take', () => {
@@ -176,7 +186,7 @@ test('sync writes an empty but valid table when nothing is installed', () => {
 test('sync points the terminal at the startup palette once one is installed', () => {
   const home = fixture()
   sync(home, manifest, { terminals: ['ghostty'], palettes: ['gojo'] })
-  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-gojo$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-gojo\.dark$/m)
 })
 
 test('sync leaves the terminal theme alone while ttheme is off', () => {
@@ -186,7 +196,7 @@ test('sync leaves the terminal theme alone while ttheme is off', () => {
   assert.doesNotMatch(config, /^theme = /m)
   assert.match(config, /^config-file = \?backgrounds\/shown\.conf$/m)
   assert.doesNotMatch(readFileSync(join(home, 'ttheme', 'kitty.conf'), 'utf8'), /^include /m)
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo')))
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo.dark')))
 })
 
 test('sync wires WezTerm through a module its config runs, and creates the config when there is none', () => {
@@ -644,9 +654,12 @@ test('forget removes only the named palettes', () => {
   const home = fixture()
   sync(home, manifest, { terminals: ['ghostty'], palettes: ['neutral', 'gojo', 'geto'] })
   const removed = forget(home, manifest, ['ghostty'], ['geto'])
-  assert.deepEqual(removed, [join(home, 'ghostty', 'themes', 'ttheme-geto')])
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo')))
-  assert.ok(!existsSync(join(home, 'ghostty', 'themes', 'ttheme-geto')))
+  assert.deepEqual(removed, [
+    join(home, 'ghostty', 'themes', 'ttheme-geto.dark'),
+    join(home, 'ghostty', 'themes', 'ttheme-geto.light'),
+  ])
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-gojo.dark')))
+  assert.ok(!existsSync(join(home, 'ghostty', 'themes', 'ttheme-geto.dark')))
 })
 
 function defaultsAt(initial: string | undefined) {
@@ -711,9 +724,9 @@ test("a marketplace's palette gets theme files and a startup line with -- for th
   const home = fixture()
   const shared: Manifest = { ...manifest, palettes: [...manifest.palettes, entry('kec@dust/rei', 2, { base: 'gojo' })] }
   sync(home, shared, { terminals: ['ghostty', 'kitty'], palettes: ['kec@dust/rei'] })
-  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-kec--dust--rei')))
+  assert.ok(existsSync(join(home, 'ghostty', 'themes', 'ttheme-kec--dust--rei.dark')))
   assert.ok(existsSync(join(home, 'kitty', 'themes', 'ttheme-kec--dust--rei.conf')))
-  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-kec--dust--rei$/m)
+  assert.match(readFileSync(join(home, 'ttheme', 'ghostty.conf'), 'utf8'), /^theme = ttheme-kec--dust--rei\.dark$/m)
   assert.match(readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8'), /TTHEME_ORDER=\(kec@dust\/rei\)/)
 })
 

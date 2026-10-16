@@ -165,6 +165,12 @@ function issues(seen: Look, wears: string | undefined, text: string): string {
   return out.length > 0 ? out.join(',') : '-'
 }
 
+function wornMode(home: string): string {
+  const text = readFileSync(join(home, '.config', 'ttheme', 'palettes.zsh'), 'utf8')
+
+  return /^typeset -g TTHEME_MODE_WORN=(\w+)/m.exec(text)?.[1] ?? '-'
+}
+
 function expected({ want, picture, opacity }: Want) {
   return {
     colors: want,
@@ -293,6 +299,10 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
         put(label, 'repaints', String(tab.bgs.length - 1), String(options.repaints))
       }
 
+      if (options.mode !== undefined) {
+        put(label, 'mode', wornMode(fixture.place.home), options.mode)
+      }
+
       if (want.opacity !== undefined) {
         put(label, 'opacity', seen.opacity, want.opacity, ['pictures'])
       }
@@ -338,6 +348,11 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
         launch: (tab, line, marker) => launch(other, tab, line, marker),
         focus: (tab) => other.focus(tab),
         leave: () => other.leave(),
+        async appear(mode) {
+          other.appear(mode)
+          await other.settle()
+          await app.settle()
+        },
         async look(label, options) {
           const tab = options.at ?? other.front
 
