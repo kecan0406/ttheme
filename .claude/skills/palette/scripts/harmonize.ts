@@ -1,5 +1,17 @@
 import { argbFromHex, Hct, hexFromArgb } from '@material/material-color-utilities'
 import { check, ROLE_HUES } from '../../../../src/contrast.ts'
+import {
+  CONTAINER_TONE,
+  CURSOR_TONE,
+  SELECTION_CHROMA,
+  SELECTION_TONE,
+  SIGNATURE_TEXT_CHROMA,
+  SURFACE_CHROMA,
+  SURFACE_TONE,
+  TEXT_CHROMA,
+  TEXT_TONE,
+  TONES,
+} from '../../../../src/mirror.ts'
 import type { Theme } from '../../../../src/theme.ts'
 import { deltaE } from './delta.ts'
 
@@ -20,20 +32,9 @@ const HARMONY = 0.4
 const THRESHOLD = 60
 const CHROMA_MIN = 32
 const CHROMA_MAX = 64
-export const SURFACE_CHROMA = 8
-export const TEXT_CHROMA = 12
 const GREY_CHROMA = 10
-export const SELECTION_CHROMA = 24
-export const SELECTION_TONE = { dark: 26, light: 86 }
-const SIGNATURE_TEXT_CHROMA = 24
-export const CURSOR_TONE = { dark: { min: 43, max: 84 }, light: { min: 36, max: 56 } }
-export const CONTAINER_TONE = { dark: { min: 16, max: 30 }, light: { min: 70, max: 90 } }
 const OWN_CHROMA = 16
 const DARK_ANCHOR_TONE = 53.5
-export const TONES = {
-  dark: [14, 62, 78, 76, 62, 72, 70, 85, 50, 74, 88, 88, 70, 84, 80, 94],
-  light: [96, 42, 34, 42, 42, 34, 34, 18, 50, 36, 28, 36, 36, 28, 28, 12],
-}
 
 const hct = (hex: string) => Hct.fromInt(argbFromHex(hex))
 const hex = (h: Hct) => hexFromArgb(h.toInt()).toLowerCase()
@@ -62,7 +63,7 @@ function slotColor(doc: ThemeDoc, slot: string): string {
 
 function selection(own: string, light: boolean): string {
   const o = hct(own)
-  return make(o.hue, Math.min(o.chroma, SELECTION_CHROMA), light ? SELECTION_TONE.light : SELECTION_TONE.dark)
+  return make(o.hue, Math.min(o.chroma, SELECTION_CHROMA), SELECTION_TONE[light ? 'light' : 'dark'])
 }
 
 function accent(own: string, index: number, seedHue: number, light: boolean, rotate = true): string {
@@ -70,13 +71,13 @@ function accent(own: string, index: number, seedHue: number, light: boolean, rot
   const base = index % 8
   const hue = o.chroma < GREY_CHROMA ? (ROLE_HUES.get(base)?.center as number) : o.hue
   const chroma = Math.max(CHROMA_MIN, Math.min(CHROMA_MAX, o.chroma))
-  const tone = (light ? TONES.light : TONES.dark)[index] as number
+  const tone = TONES[light ? 'light' : 'dark'][index] as number
   return make(rotate ? harmonize(hue, seedHue) : hue, chroma, tone)
 }
 
 function cursor(own: string, light: boolean): string {
   const o = hct(own)
-  const band = light ? CURSOR_TONE.light : CURSOR_TONE.dark
+  const band = CURSOR_TONE[light ? 'light' : 'dark']
   return make(
     o.hue,
     o.chroma < OWN_CHROMA ? o.chroma : Math.max(CHROMA_MIN, Math.min(CHROMA_MAX, o.chroma)),
@@ -86,13 +87,13 @@ function cursor(own: string, light: boolean): string {
 
 function container(own: string, light: boolean): string {
   const o = hct(own)
-  const band = light ? CONTAINER_TONE.light : CONTAINER_TONE.dark
+  const band = CONTAINER_TONE[light ? 'light' : 'dark']
   return make(o.hue, o.chroma, Math.max(band.min, Math.min(band.max, o.tone)))
 }
 
 function signatureText(own: string, light: boolean): string {
   const o = hct(own)
-  return make(o.hue, Math.min(o.chroma, SIGNATURE_TEXT_CHROMA), light ? 12 : 90)
+  return make(o.hue, Math.min(o.chroma, SIGNATURE_TEXT_CHROMA), TEXT_TONE[light ? 'light' : 'dark'])
 }
 
 export function signatureColors(doc: ThemeDoc): Record<string, string> {
@@ -104,7 +105,7 @@ export function signatureColors(doc: ThemeDoc): Record<string, string> {
   const out: Record<string, string> = {}
   for (const slot of doc.meta.signature) {
     const value = slotColor(doc, slot)
-    if (slot === 'background') out[slot] = make(hct(value).hue, surfaceChroma, light ? 98 : 8)
+    if (slot === 'background') out[slot] = make(hct(value).hue, surfaceChroma, SURFACE_TONE[light ? 'light' : 'dark'])
     else if (slot === 'foreground') out[slot] = signatureText(value, light)
     else if (slot === 'cursor') out[slot] = cursor(value, light)
     else if (slot === 'selection') out[slot] = container(value, light)
@@ -138,20 +139,20 @@ export function harmonizePalette(doc: ThemeDoc): Palette {
   const text = (tone: number) => make(seed.hue, textChroma, tone)
   const palette: Palette = light
     ? {
-        background: surface(98),
-        foreground: text(12),
+        background: surface(SURFACE_TONE.light),
+        foreground: text(TEXT_TONE.light),
         cursor: cursor(doc.colors.cursor, true),
         selection: selection(doc.colors.selection_background, true),
         ansi: doc.colors.ansi.map((own, i) => accent(own, i, seed.hue, true, rotate)),
       }
     : {
-        background: surface(8),
-        foreground: text(90),
+        background: surface(SURFACE_TONE.dark),
+        foreground: text(TEXT_TONE.dark),
         cursor: cursor(doc.colors.cursor, false),
         selection: selection(doc.colors.selection_background, false),
         ansi: doc.colors.ansi.map((own, i) => accent(own, i, seed.hue, false, rotate)),
       }
-  const tones = light ? TONES.light : TONES.dark
+  const tones = TONES[light ? 'light' : 'dark']
   palette.ansi[0] = surface(tones[0] as number)
   palette.ansi[7] = surface(tones[7] as number)
   palette.ansi[8] = surface(tones[8] as number)
@@ -198,10 +199,10 @@ function departures(doc: ThemeDoc, p: Palette): string[] {
   })
 }
 
-export function colorsBlock(p: Palette): string {
+export function colorsBlock(p: Palette, table = 'colors'): string {
   const quote = (s: string) => `  "${s}",`
   return [
-    '[colors]',
+    `[${table}]`,
     `background = "${p.background}"`,
     `foreground = "${p.foreground}"`,
     `cursor = "${p.cursor}"`,
