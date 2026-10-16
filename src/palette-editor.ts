@@ -1236,7 +1236,7 @@ export class PaletteEditor {
         this.openPalettes()
       } else {
         this.notice = this.options.decode
-          ? 'Paste a share link or a tt2: code into this window'
+          ? 'Paste a share link or a tt4: code into this window'
           : 'Share codes are not read here'
       }
 

@@ -91,7 +91,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'add',
     args: ['<palette...>'],
     about:
-      'Install palettes — from your marketplaces, or from a share link: ttheme add https://ttheme.vercel.app/p/tt2:…',
+      'Install palettes — from your marketplaces, or from a share link: ttheme add https://ttheme.vercel.app/p/tt4:…',
     section: 'palettes',
   },
   {

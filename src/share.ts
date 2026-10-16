@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
-import { available, readMarketplaces, shown } from './available.ts'
+import { available, readMarketplaces, untuned } from './available.ts'
 import { Cancelled } from './cancelled.ts'
 import { draftFor, named } from './craft.ts'
 import { writeAtomic } from './edits.ts'
@@ -9,7 +9,6 @@ import { pickPalettes } from './installs.ts'
 import type { Manifest, PaletteEntry } from './manifest.ts'
 import { newLocal, readmeOf, repoFor } from './marketplaces.ts'
 import {
-  bundleCode,
   type Draft,
   type LocalMarketplace,
   localMarketplaces,
@@ -17,6 +16,7 @@ import {
   palettesDir,
   paletteToml,
   readOwnText,
+  shareCode,
   shareLink,
 } from './own.ts'
 import { configHome } from './palettes.ts'
@@ -41,7 +41,7 @@ import {
 import { qrCode } from './qr.ts'
 import { localIdentity, REPO_NAME, readMarketplaceInfo, shownSource } from './sources.ts'
 import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf } from './theme.ts'
-import { readTone, tonedEntry, toneOf } from './tone.ts'
+import { readTone, tonedModes } from './tone.ts'
 
 export type Tone = 'tuned' | 'original'
 
@@ -97,13 +97,13 @@ async function toned(
   tone: Tone | undefined,
   renamed: boolean,
 ): Promise<Toned[]> {
-  const view = shown(home, manifest)
+  const view = untuned(home, manifest)
   const tones = readTone(home)
 
   const pairs = names.map((name) => {
     const original = named(view, name, home)
 
-    return { original, tuned: tonedEntry(original, toneOf(tones, original)) }
+    return { original, tuned: tonedModes(original, tones) }
   })
 
   const tunable = pairs.flatMap((pair) => (pair.tuned === pair.original ? [] : [pair.original.name]))
@@ -168,7 +168,7 @@ export async function runShare(names: readonly string[], tone?: Tone): Promise<v
   const tuned = shared.filter((s) => s.tuned)
   const [tunedOne] = tuned
   showLink(
-    shareLink(bundleCode(drafts)),
+    shareLink(shareCode(drafts)),
     (scanned) =>
       `Anyone can open the link${scanned ? ' or scan the code' : ''} to see ${many ? `these ${drafts.length} palettes` : first?.name}, and ttheme add <link> installs ${many ? 'them' : 'it'}${
         tuned.length === 0

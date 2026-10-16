@@ -154,7 +154,7 @@ files as pushed. `ttheme marketplace init <name>` makes one.
 when it fits the window, its QR code:
 
 - **A link** (the palette the tab wears is picked to start with) —
-  `https://ttheme.vercel.app/p/tt3:…`, or `tt2:…` for a single palette — carries the colors and the numbers of their background posts with
+  `https://ttheme.vercel.app/p/tt4:…` — carries the colors, in both modes where a palette keeps both, and the numbers of their background posts with
   their framing, so nothing is uploaded: the page it opens draws each palette in
   a terminal, lists the posts, and gives the `ttheme add` command, and its preview
   image for chat apps is drawn in the palettes' colors. `ttheme add <link>` (or

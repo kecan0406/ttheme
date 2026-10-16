@@ -29,8 +29,7 @@ import {
   textProblem,
 } from './theme.ts'
 
-const CODE = 'tt2:'
-const BUNDLE = 'tt3:'
+const CODE = 'tt4:'
 export const SHARE_URL = 'https://ttheme.vercel.app/p/'
 const SUM = 4
 const UNPACKED = 64 * 1024
@@ -537,7 +536,7 @@ export function codeOf(text: string): string | undefined {
 }
 
 export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[] {
-  return fromCodes(code).map((draft) => {
+  return fromCode(code).map((draft) => {
     const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
 
     if (!draft.catalog) {
@@ -554,20 +553,7 @@ export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[]
   })
 }
 
-export function shareCode(d: Draft): string {
-  const w = new Writer()
-  writeDraft(w, d)
-
-  return `${CODE}${w.done()}`
-}
-
-export function bundleCode(drafts: readonly Draft[]): string {
-  const [only] = drafts
-
-  if (only && drafts.length === 1 && !only.from) {
-    return shareCode(only)
-  }
-
+export function shareCode(drafts: readonly Draft[]): string {
   if (drafts.length === 0 || drafts.length > 255) {
     throw new Error(`a share link carries 1 to 255 palettes, not ${drafts.length}`)
   }
@@ -577,6 +563,12 @@ export function bundleCode(drafts: readonly Draft[]): string {
 
   for (const d of drafts) {
     writeDraft(w, d)
+    w.u8(d.other ? 1 : 0)
+
+    for (const c of d.other ? colorList(d.other) : []) {
+      w.color(c)
+    }
+
     w.str(d.from)
   }
 
@@ -586,13 +578,15 @@ export function bundleCode(drafts: readonly Draft[]): string {
     (a, b) => a.length - b.length,
   )
 
-  return `${BUNDLE}${signed(packed as Buffer)}`
+  return `${CODE}${signed(packed as Buffer)}`
 }
+
+const colorList = (c: Colors) => [c.background, c.foreground, c.cursor, c.selection, ...c.ansi]
 
 function writeDraft(w: Writer, d: Draft): void {
   w.str(d.name)
 
-  for (const c of [d.background, d.foreground, d.cursor, d.selection, ...d.ansi]) {
+  for (const c of colorList(d)) {
     w.color(c)
   }
 
@@ -626,33 +620,33 @@ function writeDraft(w: Writer, d: Draft): void {
 function versionProblem(code: string): Error {
   return new Error(
     isCode(code)
-      ? `this ttheme reads ${CODE} and ${BUNDLE} share codes, not ${code.slice(0, code.indexOf(':') + 1)}`
-      : `a share code starts with ${CODE} or ${BUNDLE}`,
+      ? `this ttheme reads ${CODE} share codes, not ${code.slice(0, code.indexOf(':') + 1)}`
+      : `a share code starts with ${CODE}`,
   )
 }
 
-export function fromCode(code: string): Draft {
+function readColors(r: Reader): Colors {
+  const [background, foreground, cursor, selection, ...ansi] = Array.from({ length: 20 }, () => r.color()) as [
+    string,
+    string,
+    string,
+    string,
+    ...string[],
+  ]
+
+  if (![background, foreground, cursor, selection, ...ansi].every(isHex)) {
+    throw new Error('the share code holds a color that is not one')
+  }
+
+  return { background, foreground, cursor, selection, ansi }
+}
+
+export function fromCode(code: string): Draft[] {
   if (!code.startsWith(CODE)) {
     throw versionProblem(code)
   }
 
-  const r = new Reader(new Uint8Array(payloadOf(code, CODE)))
-  const draft = readDraft(r)
-  r.end()
-
-  return draft
-}
-
-export function fromCodes(code: string): Draft[] {
-  if (code.startsWith(CODE)) {
-    return [fromCode(code)]
-  }
-
-  if (!code.startsWith(BUNDLE)) {
-    throw versionProblem(code)
-  }
-
-  const payload = payloadOf(code, BUNDLE)
+  const payload = payloadOf(code, CODE)
   const unpack = UNPACKS[payload[0] as number]
 
   if (!unpack) {
@@ -669,11 +663,18 @@ export function fromCodes(code: string): Draft[] {
 
   const r = new Reader(new Uint8Array(body))
 
-  const drafts = Array.from({ length: r.u8() }, () => {
+  const drafts = Array.from({ length: r.u8() }, (): Draft => {
     const draft = readDraft(r)
+    const carries = r.u8()
+
+    if (carries > 1) {
+      throw new Error('the share code holds a palette it cannot read — was it copied whole?')
+    }
+
+    const other = carries === 1 ? readColors(r) : undefined
     const from = r.str()
 
-    return from ? { ...draft, from } : draft
+    return { ...draft, ...(other ? { other } : {}), ...(from ? { from } : {}) }
   })
 
   r.end()
@@ -693,14 +694,7 @@ export function fromCodes(code: string): Draft[] {
 
 function readDraft(r: Reader): Draft {
   const name = r.str()
-
-  const [background, foreground, cursor, selection, ...ansi] = Array.from({ length: 20 }, () => r.color()) as [
-    string,
-    string,
-    string,
-    string,
-    ...string[],
-  ]
+  const { background, foreground, cursor, selection, ansi } = readColors(r)
 
   const signature = [r.u8(), r.u8(), r.u8()].map((i) => SLOTS[i] ?? `slot${i}`)
   const base = r.str()
@@ -726,10 +720,6 @@ function readDraft(r: Reader): Draft {
       ...(opacity > 0 ? { opacity: (opacity - 1) / 1000 } : {}),
     }
   })
-
-  if (![background, foreground, cursor, selection, ...ansi].every(isHex)) {
-    throw new Error('the share code holds a color that is not one')
-  }
 
   return {
     name,

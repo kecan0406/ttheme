@@ -27,7 +27,7 @@ export async function runAdd(asked: string[]): Promise<void> {
   const link = asked.find((n) => /^https?:\/\//i.test(n.trim()) && !codeOf(n))
 
   if (link) {
-    throw new Error(`${link} is not a share link — one reads ${SHARE_URL}tt2:…`)
+    throw new Error(`${link} is not a share link — one reads ${SHARE_URL}tt4:…`)
   }
 
   const home = configHome()

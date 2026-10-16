@@ -26,7 +26,7 @@ import {
   codeOf,
   type Draft,
   draftOf,
-  fromCodes,
+  fromCode,
   gateLines,
   localMarketplaces,
   marketplaceFiles,
@@ -583,7 +583,7 @@ function decoded(text: string): Colors | undefined {
   }
 
   try {
-    const [first] = fromCodes(code)
+    const [first] = fromCode(code)
 
     return (
       first && {
@@ -606,7 +606,7 @@ function exportsFor(
   text: (edited: Edited) => string,
 ): EditorOptions['exports'] {
   return {
-    code: (edited) => shareCode(draftFor(home, paletteEntry(readOwnText(full, text(edited), manifest.palettes)))),
+    code: (edited) => shareCode([draftFor(home, paletteEntry(readOwnText(full, text(edited), manifest.palettes)))]),
     toml: text,
     command: 'ttheme add',
   }

@@ -2,8 +2,8 @@ import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { isHex } from './color.ts'
 import { writeAtomic } from './edits.ts'
-import { type PaletteEntry, slotColor, withColors } from './manifest.ts'
-import { MODES, type Mode, modeOf } from './mode.ts'
+import { inMode, type PaletteEntry, slotColor, withColors } from './manifest.ts'
+import { MODES, type Mode, modeOf, otherOf } from './mode.ts'
 
 const TONE_SLOTS = [
   'background',
@@ -148,6 +148,20 @@ export function tonedEntry(entry: PaletteEntry, over: Override | undefined): Pal
     selection: pick('selection'),
     ansi: TONE_SLOTS.slice(4).map(pick),
   })
+}
+
+export function tonedModes(entry: PaletteEntry, tone: Tone): PaletteEntry {
+  const primary = tonedEntry(entry, toneOf(tone, entry))
+  const other = otherOf(modeOf(entry))
+  const over = tone[entry.name]?.[other]
+
+  if (!over) {
+    return primary
+  }
+
+  const { background, foreground, cursor, selection, ansi } = tonedEntry(inMode(entry, other), over)
+
+  return { ...primary, other: { background, foreground, cursor, selection, ansi } }
 }
 
 export function tuned(entries: PaletteEntry[], tone: Tone): PaletteEntry[] {

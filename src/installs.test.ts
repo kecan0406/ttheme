@@ -8,7 +8,7 @@ import { writeOfficial } from './available.ts'
 import { runAdd, runDefault } from './installs.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { withMarketplaces } from './marketplaces.ts'
-import { bundleCode, draftOf, shareCode, shareLink } from './own.ts'
+import { draftOf, shareCode, shareLink } from './own.ts'
 import { readInstalled, sync, writeInstalled } from './palettes.ts'
 
 function entry(name: string, order: number): PaletteEntry {
@@ -92,9 +92,9 @@ test('default refuses a palette that is not installed', () => {
 test('a share link to a palette already in a marketplace installs it, and one with other colors is refused', async () => {
   const home = installedHome(['gojo'])
   const geto = manifest.palettes[1] as PaletteEntry
-  await inHome(home, () => runAdd([shareLink(shareCode(draftOf(geto)))]))
+  await inHome(home, () => runAdd([shareLink(shareCode([draftOf(geto)]))]))
   assert.deepEqual(readInstalled(home).palettes, ['gojo', 'geto'])
-  const sukuna = shareLink(shareCode({ ...draftOf(manifest.palettes[2] as PaletteEntry), background: '#000000' }))
+  const sukuna = shareLink(shareCode([{ ...draftOf(manifest.palettes[2] as PaletteEntry), background: '#000000' }]))
   await assert.rejects(
     inHome(home, () => runAdd([sukuna])),
     /sukuna is already in the official marketplace and differs/,
@@ -105,7 +105,7 @@ test('a share link with several palettes installs each one it can and skips one 
   const home = installedHome(['gojo'])
   const geto = draftOf(manifest.palettes[1] as PaletteEntry)
   const sukuna = { ...draftOf(manifest.palettes[2] as PaletteEntry), background: '#000000' }
-  await inHome(home, () => runAdd([shareLink(bundleCode([geto, sukuna]))]))
+  await inHome(home, () => runAdd([shareLink(shareCode([geto, sukuna]))]))
   assert.deepEqual(readInstalled(home).palettes, ['gojo', 'geto'])
 })
 

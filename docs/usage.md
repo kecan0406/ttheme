@@ -608,15 +608,15 @@ ttheme edit rei                  # the same editor; the bare name works for your
 ttheme edit miku                 # an official palette: your changes kept as its tone, R then s puts it back
 ttheme edit                      # asks to edit the palette this tab wears (check and share ask the same)
 ttheme check --fix rei           # colors that pass the gate, written in — as a tone, for a palette not yours
-ttheme share rei                 # https://ttheme.vercel.app/p/tt2:… and its QR code
+ttheme share rei                 # https://ttheme.vercel.app/p/tt4:… and its QR code
 ttheme share rei --tone original # the palette as it was, when you tuned it in palette edit
 ```
 
 `share` prints a link to a palette as you wear it, and in a terminal its QR code
-under it. The palette lives in the link itself (`tt2:…` after `/p/`), so the page
+under it. The palette lives in the link itself (`tt4:…` after `/p/`), so the page
 needs nothing stored: it shows the palette in a mock terminal, its slots, the
 contrast gate and the posts of its pictures, with the `ttheme add` command to
-copy. `ttheme add <link>` installs it, and so does the bare `tt2:…` code. A link
+copy. `ttheme add <link>` installs it, and so does the bare `tt4:…` code. A link
 to a palette the other side already has — an official one, or one from a marketplace
 they added — installs theirs when the colors match, with the pictures the link
 names, and is refused when they differ.
@@ -684,7 +684,7 @@ differs from the marketplace's colors, and `s` after it drops the tone. The keys
   accents, or all twelve — and each moves by the same step, keeping its own color.
   Chroma stops at the sRGB edge; once you keep, the color is what you see. `#`
   takes `#rrggbb`, `rgb(r g b)` or `oklch(l c h)`, and so does a paste, and a
-  pasted share link or `tt2:` code takes its colors.
+  pasted share link or `tt4:` code takes its colors.
 - A bright starts linked to its normal when their hues are within 3°: tuning the
   normal moves the bright with it, keeping its own lightness and chroma offset,
   and tuning the bright alone unlinks it (`⇠` in the list). `l` links and unlinks
