@@ -9,7 +9,7 @@ import type { ProfileBackground } from '../emit/iterm2.ts'
 import { type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from '../emit/warp.ts'
 import { decodePng, encodeRgb, flatten } from '../png.ts'
 import type { Theme } from '../theme.ts'
-import { owned } from '../theme.ts'
+import { owned, stem } from '../theme.ts'
 import { dataHome, readText, tilde } from './common.ts'
 import type { At, Ctx, Out, Wiring } from './types.ts'
 
@@ -60,7 +60,7 @@ export function warpThemeOf(content: string): string | undefined {
   return line?.replace(/^theme\s*=\s*/, '').trim()
 }
 
-export function warpThemeValue(palette: string, file = `${owned(palette)}.yaml`): string {
+export function warpThemeValue(palette: string, file: string): string {
   return `{ custom = { name = "${palette}", path = "${file}" } }`
 }
 
@@ -111,10 +111,10 @@ function laidFiles(ctx: Ctx): Laid {
 
   for (const theme of ctx.themes) {
     const picture = readBackdrop(pictures, theme.name, ctx.home)
-    const file = warpThemeFile(theme.name, picture && laidOf(dir, theme, picture))
+    const file = warpThemeFile(theme, picture && laidOf(dir, theme, picture))
     files.set(theme.name, file)
 
-    for (const name of new Set([file, warpThemeFile(theme.name)])) {
+    for (const name of new Set([file, warpThemeFile(theme)])) {
       if (!existsSync(join(dir, name))) {
         fresh.add(name)
       }
@@ -127,7 +127,7 @@ function laidFiles(ctx: Ctx): Laid {
 function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
   const dir = warpThemes(ctx.home)
   const pictures = backgroundsDir(ctx.configHome)
-  const kept = new Set(files.values())
+  const kept = new Set([...files.values(), ...ctx.themes.map((theme) => warpThemeFile(theme))])
   const current = warpThemeOf(readText(warpSettings(ctx.home, ctx.configHome))) ?? ''
 
   for (const theme of ctx.themes) {
@@ -142,7 +142,7 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
           const image = decodePng(new Uint8Array(readFileSync(picture.image)))
           writeAtomic(laid.image, encodeRgb(flatten(image, theme.background, 1)))
         } catch {
-          files.set(theme.name, warpThemeFile(theme.name))
+          files.set(theme.name, warpThemeFile(theme))
           continue
         }
       }
@@ -156,7 +156,7 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
   }
 
   const owns = (file: string, extension: string) =>
-    file.startsWith(owned('')) && new RegExp(`\\.[0-9a-f]{8}\\.${extension}$`).test(file)
+    file.startsWith(owned('')) && !file.includes('.view-') && file.endsWith(`.${extension}`)
 
   for (const file of readdirSync(dir)) {
     if (owns(file, 'yaml') && !kept.has(file) && !current.includes(`path = "${file}"`)) {
@@ -210,7 +210,13 @@ function wearWarp(at: At, startup: string | undefined, laid: Laid, keep = false)
       writeFileSync(base, warpThemeOf(content) ?? '')
     }
 
-    value = warpThemeValue(wear, laid.files.get(wear))
+    const file = laid.files.get(wear)
+
+    if (file === undefined) {
+      return undefined
+    }
+
+    value = warpThemeValue(wear, file)
   } else {
     if (!ours(content)) {
       return undefined
@@ -226,7 +232,7 @@ function wearWarp(at: At, startup: string | undefined, laid: Laid, keep = false)
     return undefined
   }
 
-  const theme = wear === undefined ? undefined : (laid.files.get(wear) ?? `${owned(wear)}.yaml`)
+  const theme = wear === undefined ? undefined : laid.files.get(wear)
 
   if (theme !== undefined && laid.fresh.has(theme)) {
     backupOnce(file)
@@ -268,6 +274,9 @@ export const warp: Wiring = {
     writePictures(ctx, out, laid.files)
     wearWarp(ctx, undefined, laid, true)
   },
+  layer: (ctx) => ({
+    TTHEME_WARP_PLAIN: ctx.themes.map((theme) => `${stem(theme.name)} ${warpThemeFile(theme)}`).join(' '),
+  }),
   plan(ctx) {
     const file = warpSettings(ctx.home, ctx.configHome)
 

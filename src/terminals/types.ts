@@ -90,7 +90,7 @@ export interface Wiring {
   installs?(setup: Setup): Partial<Installed>
   sync(ctx: Ctx, out: Out): void
   pictures?(ctx: Ctx, out: Out): void
-  layer?(now: Now, host: Host): Record<string, string>
+  layer?(ctx: Ctx, host: Host): Record<string, string>
   plan(now: Now): string[]
   notes(now: Now): string[]
   next(now: Now, pointed: Pointed | undefined): string[]

@@ -10,9 +10,8 @@
 
 
 
-
-
 Config
+  Mode       [own]  dark   light
   New tabs   [off]  seq
   Announce    on  [off]
   Search fx  [typewriter]  decode   glitch
@@ -21,4 +20,5 @@ Config
   Blur       [off]  1px   2px   3px   4px
 ▶ Colors      tone  [original]
 
-New pictures keep their own colorsnter save                                                 esc undo
+New pictures keep their own colors
+[CONFIG] ↑↓ setting   ←→ value   enter save                                                 esc undo

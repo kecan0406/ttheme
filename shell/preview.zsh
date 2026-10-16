@@ -957,11 +957,35 @@ __tt_pv_conf_save() {
   if __tt_config_write "${pairs[@]}"; then
     conf=0 msg="Saved · $REPLY" msgt=200
     (( ${pairs[(Ie)TTHEME_TAB_PALETTE]} )) && __tt_cli sync > /dev/null 2>&1 && __tt_reload
-    (( ${pairs[(Ie)TTHEME_BG_BLUR]} )) && __tt_pv_redraw
+    (( ${pairs[(Ie)TTHEME_MODE]} )) && __tt_pv_remode
+    (( ${pairs[(Ie)TTHEME_BG_BLUR]} || ${pairs[(Ie)TTHEME_MODE]} )) && __tt_pv_redraw
   else
     __tt_pv_unconf
     msg="Could not write $REPLY" msgt=200
   fi
+}
+
+__tt_pv_remode() {
+  local v n o a p REPLY
+  local -a reply held
+  __tt_specs_named
+  held=($reply)
+  __tt_name_of "$orig"
+  o=$REPLY
+  __tt_name_of "$applied"
+  a=$REPLY
+  __tt_name_of "$painted"
+  p=$REPLY
+  __tt_cli sync > /dev/null 2>&1 || return 0
+  __tt_palettes_load && __tt_reloaded
+  for v n in $held; do
+    [[ -n ${TTHEME_PALETTE[$n]} ]] && typeset -g $v=${TTHEME_PALETTE[$n]}
+  done
+  [[ -n ${TTHEME_PALETTE[$o]} ]] && orig=${TTHEME_PALETTE[$o]}
+  [[ -n ${TTHEME_PALETTE[$a]} ]] && applied=${TTHEME_PALETTE[$a]}
+  __tt_reload
+  [[ -n ${TTHEME_PALETTE[$p]} ]] && __tt_pv_paint "${TTHEME_PALETTE[$p]}"
+  resized=1
 }
 
 __tt_pv_redraw() {
@@ -1121,7 +1145,7 @@ __tt_pv_draw() {
   split=$(( sw > 0 )) sc=$(( pw - 1 - sw ))
   hd=$(( tall ? hub + 4 : 2 )) pvhd=$hd
   h=$(( ph - hd - 3 ))
-  (( conf && ! split )) && h=$(( ph - hd - 4 - ${#cvars} ))
+  (( conf && ! split )) && h=$(( ph - hd - 5 - ${#cvars} ))
   reach=()
   if [[ -n $pick && $mode == pin ]]; then
     if (( split )); then
@@ -1292,8 +1316,8 @@ __tt_pv_draw() {
         out+=$'\e['$(( ph - 1 - ${#reach} + k ))';1H'${reach[k]}
       done
     elif (( conf )); then
-      __tt_pv_head $(( ph - 2 - ${#cvars} )) 1 $lw Config
-      __tt_pv_conf_panel $(( ph - 1 - ${#cvars} )) 1 $lw
+      __tt_pv_head $(( ph - 3 - ${#cvars} )) 1 $lw Config
+      __tt_pv_conf_panel $(( ph - 2 - ${#cvars} )) 1 $lw
     fi
     (( help )) && __tt_pv_help
   fi
@@ -2444,9 +2468,11 @@ __tt_preview() {
   local -F mlast=0
   local mact="" mzone="" pvmouse="" pasted=""
   local -a pvz=()
-  local -a cvars=(TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=("New tabs" Announce "Search fx" Sort Mouse Blur Colors)
-  local -a cchoice=("off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "tone original") cshow=("off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "tone original")
+  local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=(Mode "New tabs" Announce "Search fx" Sort Mouse Blur Colors)
+  local -a cchoice=("own dark light" "off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "tone original") cshow=("own dark light" "off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "tone original")
   local -A cnote=(
+    TTHEME_MODE:own "Each palette as it was made" TTHEME_MODE:dark "Every palette in its dark mode"
+    TTHEME_MODE:light "Every palette in its light mode"
     TTHEME_TAB_PALETTE:seq "New tabs rotate through palettes" TTHEME_TAB_PALETTE:off "New tabs keep the terminal theme"
     TTHEME_ANNOUNCE:1 "Shows the palette notice" TTHEME_ANNOUNCE:0 "Silences the palette notice"
     TTHEME_FX:typewriter "The search hint types itself" TTHEME_FX:decode "The search hint decodes" TTHEME_FX:glitch "The search hint glitches in"

@@ -187,7 +187,7 @@ test('uninstall puts back the Warp theme ttheme replaced', () => {
   put(settings, before)
   install(p, { terminals: ['warp'], palettes: ['gojo'] })
   install(p, { terminals: ['warp'], palettes: ['gojo'] })
-  assert.match(readFileSync(settings, 'utf8'), /ttheme-gojo\.yaml/)
+  assert.match(readFileSync(settings, 'utf8'), /ttheme-gojo\.[0-9a-f]{8}\.yaml/)
 
   applyUninstall(planUninstall(p), p, host)
 

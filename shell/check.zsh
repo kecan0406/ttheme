@@ -1147,8 +1147,9 @@ done
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/warp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/warpthemes TTHEME_TERMINALS=(warp)
   TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_WARP_FOLLOWS=0 WARP_TERMINAL_SESSION_UUID=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   unset TTHEME_PAINTED
-  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.yaml; done
+  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.00000000.yaml; done
   touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
+  TTHEME_WARP_PLAIN="miku ttheme-miku.00000000.yaml kaito ttheme-kaito.00000000.yaml homura ttheme-homura.00000000.yaml"
   tab=$TTHEME_WARP_TABS/$WARP_TERMINAL_SESSION_UUID
   ours() { __tt_warp_value $1; print -r -- "theme = $REPLY" }
   recorded() { print -r -- "$$ $* ${TTHEME_PALETTES_AT:--} ${TTHEME_PINS_AT:--}" }
@@ -1237,8 +1238,9 @@ done
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/fwarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/fwarpthemes TTHEME_TERMINALS=(warp)
   TTHEME_STARTUP=miku TTHEME_WARP_DB=$XDG_CONFIG_HOME/fwarp/warp.sqlite
   print -rl -- '[appearance.themes]' 'theme = "Dracula"' > $TTHEME_WARP_SETTINGS
-  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.yaml; done
+  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.00000000.yaml; done
   touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
+  TTHEME_WARP_PLAIN="miku ttheme-miku.00000000.yaml kaito ttheme-kaito.00000000.yaml homura ttheme-homura.00000000.yaml"
   sqlite3 $TTHEME_WARP_DB "
     create table app (id integer primary key, active_window_id integer references windows(id));
     create table windows (id integer primary key not null, active_tab_index integer not null);
@@ -1335,8 +1337,10 @@ done
   sent=${(j::)${${${(ps:\e_G:)out}#*;}%$'\e\\'}}
   [[ $out == $'\e_Ga=t,f=100,i=7,m=1,q=2;'* && ${#${(M)${(ps:\e_G:)out}:#m=0,*}} == 1 && $sent != *[^A-Za-z0-9+/=]* && "$(print -rn -- $sent | base64 --decode | shasum)" == "$(shasum < $XDG_CONFIG_HOME/big.png)" ]] ||
     { print -u2 "a picture sent to Warp did not arrive whole in its chunks"; exit 1 }
-  print -rl -- 'name: "miku"' 'details: darker' 'terminal_colors:' >| $TTHEME_WARP_THEMES/ttheme-miku.yaml
+  print -rl -- 'name: "miku"' 'details: darker' 'terminal_colors:' >| $TTHEME_WARP_THEMES/ttheme-miku.00000000.yaml
+  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-miku.00000000.yaml
   : >| $TTHEME_WARP_THEMES/ttheme-miku.89abcdef.yaml
+  TTHEME_WARP_PLAIN="miku ttheme-miku.00000000.yaml"
   printf '\x89PNG\r\n\x1a\n\0\0\0\x0dIHDR\0\0\x06\x5a\0\0\x07\x60' >| $bgd/miku.0a1b2c3d.png
   : >| $bgd/miku.0a1b2c3d@fill-40.png
   print -rl -- 'background-image = miku.0a1b2c3d@fill-40.png' 'background-image-fit = cover' 'background-image-opacity = 0.19' >| $bgd/miku.conf
@@ -1399,7 +1403,7 @@ done
   [[ -z $TTHEME_WARP_SHOWING && ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-miku.89abcdef.yaml"'* ]] ||
     { print -u2 "closing preview left up the view of a picture nobody kept"; exit 1 }
   __tt_bg_hide miku
-  [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-miku.yaml"'* ]] || { print -u2 "find opened over Warp's picture, which covers its loading bar"; exit 1 }
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-miku.00000000.yaml"'* ]] || { print -u2 "find opened over Warp's picture, which covers its loading bar"; exit 1 }
   rm -f $bgd/miku.0a1b2c3d.png $bgd/miku.0a1b2c3d@fill-40.png $bgd/miku.conf $XDG_CONFIG_HOME/cli.log
 ) || exit 1
 mkdir -p $XDG_CONFIG_HOME/fakebin
@@ -1421,7 +1425,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   __tt_sync() { synced=1 }
   TTHEME_HEARD=$stale TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_PIN=
   __tt_recheck
-  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[kaito]" && $TTHEME_HEARD == $fresh && $synced == 1 && "$(<$TTHEME_STATE_DIR/colors.ghostty)" == "miku $fresh" ]] ||
+  [[ $TTHEME_SPEC == "$TTHEME_PALETTE[kaito]" && $TTHEME_HEARD == $fresh && $synced == 1 && "$(<$TTHEME_STATE_DIR/colors.ghostty)" == "miku:$stale $fresh" ]] ||
     { print -u2 "a recheck did not move the tab off a stale remembered color: spec=${TTHEME_SPEC%% *} heard=$TTHEME_HEARD synced=$synced"; exit 1 }
   TTHEME_HEARD=$stale TTHEME_PIN=/pinned TTHEME_BASE_SPEC=$TTHEME_PALETTE[miku] TTHEME_SPEC=$TTHEME_PALETTE[homura]
   __tt_recheck

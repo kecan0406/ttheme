@@ -171,8 +171,8 @@ function writer(ctx: Ctx): Out & { written: string[]; repainted: boolean } {
   return out
 }
 
-function layer(at: Now, host: Host): Record<string, string> {
-  return Object.assign({}, ...wirings(at.state.terminals).map((wiring) => wiring.layer?.(at, host) ?? {}))
+function layer(ctx: Ctx, host: Host): Record<string, string> {
+  return Object.assign({}, ...wirings(ctx.state.terminals).map((wiring) => wiring.layer?.(ctx, host) ?? {}))
 }
 
 export function sync(

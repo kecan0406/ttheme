@@ -10,10 +10,9 @@
 
 
 
-
-
 Config
-▶ New tabs   [off]  seq
+▶ Mode       [own]  dark   light
+  New tabs   [off]  seq
   Announce    on  [off]
   Search fx  [typewriter]  decode   glitch
   Sort       [abc]  catalog
@@ -21,4 +20,5 @@ Config
   Blur       [off]  1px   2px   3px   4px
   Colors     [tone]  original
 
-New tabs keep the terminal theme enter save                                                 esc undo
+Each palette as it was made
+[CONFIG] ↑↓ setting   ←→ value   enter save                                                 esc undo

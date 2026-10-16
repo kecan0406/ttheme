@@ -40,7 +40,7 @@ typeset -ga SCENARIOS=(
   'hub-keys        few    hub      ?@Help'
   'preview-open    few    hub  Down Right'
   'preview-config  few    hub  M-c'
-  'preview-colors  few    hub  M-c Down Down Down Down Down Down Right'
+  'preview-colors  few    hub  M-c Down Down Down Down Down Down Down Right'
   'theme-edit      few    hub  Down Right Down Tab@Palette'
   'theme-editor    few    hub  Down Right Down Tab@Palette Enter@slot'
   'theme-keys      few    hub  Down Right Down Right@Palette ?@Help'

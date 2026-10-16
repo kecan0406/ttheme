@@ -174,6 +174,8 @@ __tt_pins_load() {
 
 __tt_pins_load
 
+: ${TTHEME_MODE:=own}
+
 : ${TTHEME_TAB_PALETTE:=off}
 
 : ${TTHEME_ANNOUNCE:=1}
@@ -253,17 +255,22 @@ __tt_put() {
   return 1
 }
 
+__tt_heard_as() { REPLY=${TTHEME_STARTUP:--}${TTHEME_STARTUP:+:${TTHEME_PALETTE[$TTHEME_STARTUP]%% *}} }
+
 __tt_recall() {
   local f=$TTHEME_STATE_DIR/colors.$TTHEME_ADAPTER line
   REPLY=""
   [[ -o zle && -r $f && -z $TTHEME_PAINTED && ( $TTHEME_TAB_PALETTE == off || -z $TTHEME_STARTUP ) ]] && (( ! TTHEME_TMUX )) && __tt_active || return 1
   line=$(<$f)
-  [[ $line == "${TTHEME_STARTUP:--} "?* ]] || return 1
+  __tt_heard_as
+  [[ $line == "$REPLY "?* ]] || { REPLY=""; return 1 }
   REPLY=${line#* }
 }
 
 __tt_remember() {
-  local f=$TTHEME_STATE_DIR/colors.$TTHEME_ADAPTER line="${TTHEME_STARTUP:--} $1"
+  local REPLY
+  __tt_heard_as
+  local f=$TTHEME_STATE_DIR/colors.$TTHEME_ADAPTER line="$REPLY $1"
   [[ -n $1 && -z $TTHEME_PAINTED ]] && (( ! TTHEME_TMUX )) || return 0
   [[ -r $f && "$(<$f)" == "$line" ]] && return 0
   [[ -d $TTHEME_STATE_DIR ]] || mkdir -p $TTHEME_STATE_DIR 2>/dev/null
@@ -288,6 +295,16 @@ __tt_wearing() {
   [[ -n $TTHEME_STARTUP && ${TTHEME_PALETTE[$TTHEME_STARTUP]%% *} == "$1" ]] && { REPLY=$TTHEME_PALETTE[$TTHEME_STARTUP]; return 0 }
   for k in ${(k)TTHEME_PALETTE}; do
     [[ ${TTHEME_PALETTE[$k]%% *} == "$1" ]] && { REPLY=$TTHEME_PALETTE[$k]; return 0 }
+  done
+  return 1
+}
+
+__tt_stale() {
+  local k
+  [[ -n $1 ]] || return 1
+  [[ -n $TTHEME_STARTUP && ${TTHEME_PALETTE_OTHER[$TTHEME_STARTUP]%% *} == "$1" && -n ${TTHEME_PALETTE[$TTHEME_STARTUP]} ]] && { REPLY=$TTHEME_PALETTE[$TTHEME_STARTUP]; return 0 }
+  for k in ${(k)TTHEME_PALETTE_OTHER}; do
+    [[ ${TTHEME_PALETTE_OTHER[$k]%% *} == "$1" && -n ${TTHEME_PALETTE[$k]} ]] && { REPLY=$TTHEME_PALETTE[$k]; return 0 }
   done
   return 1
 }
@@ -1892,7 +1909,14 @@ fi
       :
     elif [[ $TTHEME_TAB_PALETTE == off || -z $TTHEME_STARTUP ]]; then
       [[ -n $TTHEME_HEARD ]] || __tt_listen
-      [[ -n $TTHEME_STARTUP ]] && __tt_start_bg && __tt_wearing $REPLY && TTHEME_SPEC=$REPLY
+      if [[ -n $TTHEME_STARTUP ]] && __tt_start_bg; then
+        if __tt_wearing $REPLY; then
+          TTHEME_SPEC=$REPLY
+        elif __tt_stale $REPLY; then
+          TTHEME_SPEC=$REPLY
+          __tt_apply "$TTHEME_SPEC"
+        fi
+      fi
     else
       __tt_next
       TTHEME_SPEC=$REPLY

@@ -277,10 +277,11 @@ test('sync drops Warp themes into its themes folder and wires nothing else', () 
   const configHome = fixture()
   const home = fixture()
   const written = sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo'] }, home)
-  const theme = readFileSync(join(warpThemes(home), 'ttheme-gojo.yaml'), 'utf8')
+  const plain = plainTheme(home, 'gojo')
+  const theme = readFileSync(join(warpThemes(home), plain), 'utf8')
   assert.match(theme, /^background: "#11191c"$/m)
   assert.match(theme, /^details: darker$/m)
-  assert.deepEqual(written, [join(warpThemes(home), 'ttheme-gojo.yaml'), join(configHome, 'ttheme', 'palettes.zsh')])
+  assert.deepEqual(written, [join(warpThemes(home), plain), join(configHome, 'ttheme', 'palettes.zsh')])
 })
 
 test('sync puts the startup palette on Warp through its settings file, and gives the old theme back while off', () => {
@@ -291,10 +292,13 @@ test('sync puts the startup palette on Warp through its settings file, and gives
   mkdirSync(join(settings, '..'), { recursive: true })
   const mine = '[appearance]\n\n[appearance.themes]\ntheme = "Dracula"\n\n[appearance.vertical_tabs]\nenabled = true\n'
   writeFileSync(settings, mine)
-  sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo'] }, home)
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo', 'geto'] }, home)
   assert.match(
     readFileSync(settings, 'utf8'),
-    /^\[appearance\.themes\]\ntheme = \{ custom = \{ name = "gojo", path = "ttheme-gojo\.yaml" \} \}\n\n\[appearance\.vertical_tabs\]/m,
+    new RegExp(
+      `^\\[appearance\\.themes\\]\\ntheme = \\{ custom = \\{ name = "gojo", path = "${RegExp.escape(plainTheme(home, 'gojo'))}" \\} \\}\\n\\n\\[appearance\\.vertical_tabs\\]`,
+      'm',
+    ),
   )
   sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo', 'geto'], startup: 'geto' }, home)
   assert.match(readFileSync(settings, 'utf8'), /name = "geto"/)
@@ -309,7 +313,8 @@ test('sync keeps Warp on the palette of the painted tab that ran the command, un
   sync(configHome, manifest, state, home)
   const settings = warpSettings(home, configHome)
   mkdirSync(join(settings, '..'), { recursive: true })
-  writeFileSync(settings, `[appearance.themes]\ntheme = ${warpThemeValue('geto')}\n`)
+  const geto = warpThemeValue('geto', plainTheme(home, 'geto'))
+  writeFileSync(settings, `[appearance.themes]\ntheme = ${geto}\n`)
   process.env.TTHEME_WARP_WEARS = 'geto'
 
   try {
@@ -317,7 +322,7 @@ test('sync keeps Warp on the palette of the painted tab that ran the command, un
     assert.match(readFileSync(settings, 'utf8'), /name = "geto"/)
     sync(configHome, manifest, { ...state, palettes: ['gojo'] }, home)
     assert.match(readFileSync(settings, 'utf8'), /name = "gojo"/)
-    writeFileSync(settings, `[appearance.themes]\ntheme = ${warpThemeValue('geto')}\n`)
+    writeFileSync(settings, `[appearance.themes]\ntheme = ${geto}\n`)
     sync(configHome, manifest, { ...state, off: true }, home)
     assert.match(readFileSync(settings, 'utf8'), /^theme = "dark"$/m)
   } finally {
@@ -378,8 +383,22 @@ function pictured(configHome: string, opacity: number): void {
   )
 }
 
+function warpFiles(home: string, name: string): string[] {
+  return readdirSync(warpThemes(home)).filter((file) => new RegExp(`^ttheme-${name}\\.[0-9a-f]{8}\\.yaml$`).test(file))
+}
+
 function picturedThemes(home: string): string[] {
-  return readdirSync(warpThemes(home)).filter((file) => /^ttheme-gojo\.[0-9a-f]{8}\.yaml$/.test(file))
+  return warpFiles(home, 'gojo').filter((file) =>
+    readFileSync(join(warpThemes(home), file), 'utf8').includes('background_image'),
+  )
+}
+
+function plainTheme(home: string, name: string): string {
+  const [plain] = warpFiles(home, name).filter(
+    (file) => !readFileSync(join(warpThemes(home), file), 'utf8').includes('background_image'),
+  )
+
+  return plain ?? `no plain theme for ${name}`
 }
 
 test("sync gives a palette's Warp theme its picture under a name of its own, and Warp wears that one", () => {
@@ -396,8 +415,8 @@ test("sync gives a palette's Warp theme its picture under a name of its own, and
   assert.match(flat, new RegExp(`^${RegExp.escape(themes)}/ttheme-gojo\\.[0-9a-f]{8}\\.png$`))
   assert.match(theme, /^background_image:\n {2}path: ".+"\n {2}opacity: 20$/m)
   assert.deepEqual([...decodePng(readFileSync(flat)).data], [255, 255, 255, 255, 17, 25, 28, 255])
-  assert.doesNotMatch(readFileSync(join(themes, 'ttheme-gojo.yaml'), 'utf8'), /background_image/)
-  assert.ok(!readdirSync(themes).some((file) => file.startsWith('ttheme-geto.') && file !== 'ttheme-geto.yaml'))
+  assert.doesNotMatch(readFileSync(join(themes, plainTheme(home, 'gojo')), 'utf8'), /background_image/)
+  assert.deepEqual(warpFiles(home, 'geto'), [plainTheme(home, 'geto')])
   const settings = warpSettings(home, configHome)
   mkdirSync(join(settings, '..'), { recursive: true })
   writeFileSync(settings, '[appearance.themes]\ntheme = "Dracula"\n')
@@ -432,11 +451,11 @@ test('Warp wears the plain theme of a palette whose picture cannot be read', () 
   const state: Installed = { terminals: ['warp'], palettes: ['gojo', 'geto'], startup: 'geto' }
   sync(configHome, manifest, state, home)
   sync(configHome, manifest, state, home)
-  assert.match(readFileSync(settings, 'utf8'), /name = "geto", path = "ttheme-geto\.yaml"/)
-  assert.deepEqual(
-    readdirSync(warpThemes(home)).filter((file) => file.startsWith('ttheme-geto.')),
-    ['ttheme-geto.yaml'],
+  assert.match(
+    readFileSync(settings, 'utf8'),
+    new RegExp(`name = "geto", path = "${RegExp.escape(plainTheme(home, 'geto'))}"`),
   )
+  assert.deepEqual(warpFiles(home, 'geto'), [plainTheme(home, 'geto')])
 })
 
 test('a picture changed anywhere moves Warp to the new pictured theme only while Warp wears that palette', () => {
@@ -455,16 +474,16 @@ test('a picture changed anywhere moves Warp to the new pictured theme only while
   refreshPictures(configHome, home)
   refreshPictures(configHome, home)
   assert.equal(readFileSync(settings, 'utf8'), mine)
-  writeFileSync(settings, `[appearance.themes]\ntheme = ${warpThemeValue('geto')}\n`)
+  writeFileSync(settings, `[appearance.themes]\ntheme = ${warpThemeValue('geto', plainTheme(home, 'geto'))}\n`)
   pictured(configHome, 0.3)
   refreshPictures(configHome, home)
   refreshPictures(configHome, home)
-  assert.match(readFileSync(settings, 'utf8'), /path = "ttheme-geto\.yaml"/)
+  assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${RegExp.escape(plainTheme(home, 'geto'))}"`))
   const gone = `[appearance.themes]\ntheme = ${warpThemeValue('kaito', 'ttheme-kaito.0123abcd.yaml')}\n`
   writeFileSync(settings, gone)
   refreshPictures(configHome, home)
   assert.equal(readFileSync(settings, 'utf8'), gone)
-  writeFileSync(settings, `[appearance.themes]\ntheme = ${warpThemeValue('gojo')}\n`)
+  writeFileSync(settings, `[appearance.themes]\ntheme = ${warpThemeValue('gojo', plainTheme(home, 'gojo'))}\n`)
   refreshPictures(configHome, home)
   const now = picturedThemes(home)
   assert.equal(now.length, 1)

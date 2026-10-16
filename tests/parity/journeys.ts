@@ -740,6 +740,27 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'mode',
+    about: "light mode set in preview's settings reaches every tab, painted or not, and new tabs",
+    async run(p) {
+      const a = await p.open()
+      const b = await p.open()
+      await p.type(b, 'ttheme use kita')
+      const c = await p.open()
+      await p.type(c, 'ttheme use miku')
+      await p.launch(c, 'ttheme')
+      await p.keys(c, 'alt-c', 'right', 'right', 'enter', '1s')
+      await p.quit(c)
+      await p.look('here', { want: 'miku' })
+      await p.focus(b)
+      await p.look('painted', { want: 'kita' })
+      await p.focus(a)
+      await p.look('unpainted', { want: 'konata', unpainted: true })
+      await p.open()
+      await p.look('new', { want: 'konata', repaints: 0 })
+    },
+  },
+  {
     id: 'palettes',
     about: 'a palette added in one tab can be worn in another',
     async run(p) {

@@ -297,6 +297,27 @@ function pictureVersions(dir: string): string {
     .join(' ')
 }
 
+function versions(ctx: Ctx): string {
+  const pictures = new Map(
+    [...heldIn(terminalPictures(ctx.configHome))].map(([of, files]) => [of, (LAID.exec(files[0] as string) ?? [])[2]]),
+  )
+
+  return ctx.entries
+    .map((entry) => {
+      const of = stem(entry.name)
+
+      const version = createHash('sha1')
+        .update([entry.background, entry.foreground, entry.cursor, entry.selection, ...entry.ansi].join(' '))
+        .update(pictures.get(of) ?? '-')
+        .digest('hex')
+        .slice(0, 8)
+
+      return `${of} ${version}`
+    })
+    .sort()
+    .join(' ')
+}
+
 function lay(ctx: Ctx): Map<string, string> {
   const dir = terminalPictures(ctx.configHome)
   const held = heldIn(dir)
@@ -424,9 +445,10 @@ export const terminalApp: Wiring = {
   pictures(ctx) {
     write(ctx, lay(ctx))
   },
-  layer: (now, host) => ({
-    TTHEME_TERMINAL_APP_BASE: baseOf(now.state, host),
-    TTHEME_TERMINAL_PICTURES: pictureVersions(terminalPictures(now.configHome)),
+  layer: (ctx, host) => ({
+    TTHEME_TERMINAL_APP_BASE: baseOf(ctx.state, host),
+    TTHEME_TERMINAL_PICTURES: pictureVersions(terminalPictures(ctx.configHome)),
+    TTHEME_TERMINAL_VERSIONS: versions(ctx),
   }),
   plan: (ctx) => [
     `Add a "${terminalProfile('<palette>')}" profile per palette to Terminal.app's settings — a copy of your own profile in the palette's colors, with its picture`,

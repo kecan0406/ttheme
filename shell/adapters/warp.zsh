@@ -68,10 +68,9 @@ __tt_hear() {
 
 __tt_warp_value() {
   setopt localoptions extendedglob
-  local file=ttheme-${${1/@/--}/\//--}
-  local -a pics=($TTHEME_WARP_THEMES/$file.[0-9a-f](#c8).yaml(Nom))
-  (( ${#pics} )) && file=${pics[1]:t:r}
-  REPLY="{ custom = { name = \"$1\", path = \"$file.yaml\" } }"
+  local -a files=($TTHEME_WARP_THEMES/ttheme-${${1/@/--}/\//--}.[0-9a-f](#c8).yaml(Nom))
+  (( ${#files} )) || { REPLY=""; return 1 }
+  REPLY="{ custom = { name = \"$1\", path = \"${files[1]:t}\" } }"
 }
 
 __tt_warp_read() {
@@ -438,7 +437,9 @@ __tt_bg_shown() { __tt_warp_wearing }
 __tt_bg_refresh() { __tt_warp_unview }
 
 __tt_bg_hide() {
-  __tt_warp_set "{ custom = { name = \"$1\", path = \"ttheme-${${1/@/--}/\//--}.yaml\" } }"
+  local -A plain=(${=TTHEME_WARP_PLAIN})
+  local file=${plain[${${1/@/--}/\//--}]}
+  [[ -n $file ]] && __tt_warp_set "{ custom = { name = \"$1\", path = \"$file\" } }"
   TTHEME_WARP_VIEW=""
 }
 
@@ -513,8 +514,9 @@ __tt_warp_view() {
   local -i W=$(( pw * bgcw )) H=$(( ph * bgch )) op wait
   __tt_bg_load $name
   op=$(( ${bgop[$name]} * 100 + 0.5 ))
-  base=$TTHEME_WARP_THEMES/ttheme-${${pal/@/--}/\//--}.yaml
-  [[ -r $base ]] || return 1
+  local -A plain=(${=TTHEME_WARP_PLAIN})
+  base=$TTHEME_WARP_THEMES/${plain[${${pal/@/--}/\//--}]}
+  [[ -f $base ]] || return 1
   if (( ! bgoff[$name] )); then
     __tt_warp_saved $name $W $H
     img=$REPLY

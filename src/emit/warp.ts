@@ -35,8 +35,8 @@ export function warpPictureFile(name: string, image: string, background: string)
   return `${owned(name)}.${hash.toString(16).padStart(8, '0')}.png`
 }
 
-export function warpThemeFile(name: string, picture?: WarpPicture): string {
-  return picture ? hashed(name, [picture.image, String(warpOpacity(picture))], 'yaml') : `${owned(name)}.yaml`
+export function warpThemeFile(theme: WarpLook, picture?: WarpPicture): string {
+  return hashed(theme.name, [warpTheme(theme, picture)], 'yaml')
 }
 
 function warpOpacity(picture: WarpPicture): number {
@@ -66,6 +66,6 @@ export const warp: Emitter = {
   limits: 'no selection color, and Warp paints one theme app-wide',
 
   emit(theme: Theme): Output[] {
-    return [{ path: `warp/themes/${warpThemeFile(theme.name)}`, content: warpTheme(theme) }]
+    return [{ path: `warp/themes/${warpThemeFile(theme)}`, content: warpTheme(theme) }]
   },
 }

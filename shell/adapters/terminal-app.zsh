@@ -82,7 +82,7 @@ __tt_terminal_switch() {
 }
 
 __tt_terminal_version() {
-  local -A v=(${=TTHEME_TERMINAL_PICTURES})
+  local -A v=(${=TTHEME_TERMINAL_VERSIONS})
   REPLY="$1 ${v[${${1/@/--}/\//--}]:--}"
 }
 
