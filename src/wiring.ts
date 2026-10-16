@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { readAppearance } from './appearance.ts'
-import type { Coloring } from './backdrop.ts'
+import type { Coloring } from './backdrop-tone.ts'
 import { type Mode, SETTINGS, type Setting } from './mode.ts'
 
 export const BLOCK_BEGIN = '# ttheme begin'

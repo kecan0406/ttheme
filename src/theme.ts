@@ -1,5 +1,3 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { basename, join } from 'node:path'
 import { parse } from 'smol-toml'
 import { SITES } from './booru.ts'
 import { type Hex, isHex } from './color.ts'
@@ -84,7 +82,7 @@ const NAMED_SLOTS = ['background', 'foreground', 'cursor', 'selection'] as const
 
 type NamedSlot = (typeof NAMED_SLOTS)[number]
 
-function fail(file: string, message: string): never {
+export function fail(file: string, message: string): never {
   throw new Error(`${file}: ${message}`)
 }
 
@@ -361,7 +359,7 @@ function readPictures(file: string, raw: unknown, foreign: boolean): SharedPictu
   return pictures.length > 0 ? pictures : undefined
 }
 
-function toml(file: string, source: string): Record<string, unknown> {
+export function toml(file: string, source: string): Record<string, unknown> {
   try {
     return parse(source) as Record<string, unknown>
   } catch (error) {
@@ -626,66 +624,6 @@ export function inOther(theme: Theme): Theme[] {
   return [{ ...rest, ...other, signature: theme.signatureSlots.map((slot) => known.get(slot) as Hex) }]
 }
 
-export function loadThemes(dir: string): Theme[] {
-  const catalogs = readCatalogs(
-    MARKETPLACE_FILE,
-    toml(MARKETPLACE_FILE, readFileSync(join(dir, MARKETPLACE_FILE), 'utf8')).catalog,
-  )
-
-  if (catalogs.length === 0) {
-    fail(MARKETPLACE_FILE, 'needs at least one [[catalog]] table')
-  }
-
-  const byName = new Map(catalogs.map((c) => [c.name, c]))
-  const shelf = join(dir, 'palettes')
-
-  const themes = readdirSync(shelf, { withFileTypes: true })
-    .filter((item) => !item.name.startsWith('.'))
-    .flatMap((item) => {
-      if (!item.isDirectory()) {
-        fail(
-          `palettes/${item.name}`,
-          'an official palette lives in a catalog folder, palettes/<catalog>/<palette>.toml',
-        )
-      }
-
-      return readdirSync(join(shelf, item.name))
-        .filter((f) => f.endsWith('.toml'))
-        .map((f) =>
-          readTheme(`palettes/${item.name}/${f}`, readFileSync(join(shelf, item.name, f), 'utf8'), {
-            name: basename(f, '.toml'),
-            catalog: item.name,
-            catalogs: byName,
-          }),
-        )
-    })
-    .sort((a, b) => a.order - b.order)
-
-  const orders = new Set(themes.map((t) => t.order))
-
-  if (orders.size !== themes.length) {
-    throw new Error('themes: meta.order must be unique across all themes')
-  }
-
-  const byCatalog = Map.groupBy(themes, (t) => t.catalog)
-
-  for (const catalog of catalogs) {
-    const members = byCatalog.get(catalog.name)
-
-    if (!members) fail(MARKETPLACE_FILE, `catalog "${catalog.name}" has no palettes`)
-
-    if (!members.some((t) => t.name === catalog.lead)) {
-      fail(MARKETPLACE_FILE, `catalog "${catalog.name}" needs a lead, one of its palettes`)
-    }
-  }
-
-  if ([...byCatalog.keys()].join('\n') !== catalogs.map((c) => c.name).join('\n')) {
-    fail(MARKETPLACE_FILE, 'the [[catalog]] tables must follow the order meta.order gives their palettes')
-  }
-
-  return themes
-}
-
 export function rotation(themes: Theme[]): Theme[] {
   return themes.filter((t) => t.role === undefined)
 }
@@ -713,3 +651,6 @@ export function alphabetical<T extends { name: string; base?: string; catalog?: 
       cmp(a.name, b.name),
   )
 }
+
+export const MARKETPLACE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-marketplace.json'
+export const PALETTE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-palette.json'

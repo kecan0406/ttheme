@@ -2,9 +2,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
 import { TRAITS } from '../../src/terminal.ts'
-import { WIRED } from '../../src/terminals/types.ts'
+import { WIRED } from '../../src/wired.ts'
 import {
   BRIDGES,
   COLUMNS,

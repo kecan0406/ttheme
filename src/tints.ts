@@ -1,7 +1,8 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
-import { backdropTone, type Colors, coloringOf, type Picture } from './backdrop.ts'
+import { coloringOf, type Picture } from './backdrop.ts'
+import { backdropTone, type Colors } from './backdrop-tone.ts'
 import type { Hex } from './color.ts'
 import { alphaOf, decodePng, encodeMask, retone } from './png.ts'
 

@@ -6,20 +6,11 @@ import { Cancelled } from './cancelled.ts'
 import { draftFor, named } from './craft.ts'
 import { writeAtomic } from './edits.ts'
 import { pickPalettes } from './installs.ts'
+import { type LocalMarketplace, localMarketplaces, marketplaceFiles, palettesDir } from './local.ts'
 import type { Manifest, PaletteEntry } from './manifest.ts'
 import { newLocal, readmeOf, repoFor } from './marketplaces.ts'
-import {
-  type Draft,
-  type LocalMarketplace,
-  localMarketplaces,
-  marketplaceFiles,
-  palettesDir,
-  paletteToml,
-  readOwnText,
-  shareCode,
-  shareLink,
-} from './own.ts'
-import { configHome } from './palettes.ts'
+import { type Draft, paletteToml, readOwnText, shareCode, shareLink } from './own.ts'
+import { configHome } from './paths.ts'
 import { pending, say } from './pending.ts'
 import {
   commitAll,

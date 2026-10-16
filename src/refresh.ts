@@ -6,7 +6,6 @@ import {
   archiveId,
   Missing,
   officialPath,
-  parseManifest,
   type ReadMarketplace,
   reach,
   readArchive,
@@ -16,10 +15,12 @@ import {
 } from './available.ts'
 import { moveRacks } from './backdrop.ts'
 import { writeAtomic } from './edits.ts'
-import { listed, type PaletteEntry } from './manifest.ts'
+import { type Installed, readInstalled } from './installed.ts'
+import { readMarketplaceDir, warning } from './local.ts'
+import { listed, type PaletteEntry, parseManifest } from './manifest.ts'
 import { advise } from './notice.ts'
-import { readMarketplaceDir, warning } from './own.ts'
-import { commit, configHome, forget, type Installed, readInstalled } from './palettes.ts'
+import { commit, forget } from './palettes.ts'
+import { configHome } from './paths.ts'
 import { pending } from './pending.ts'
 import { movePins } from './pins.ts'
 import { autoWanted, UPDATE_COMMAND } from './release.ts'
@@ -27,6 +28,7 @@ import { type Moves, plan } from './renames.ts'
 import {
   archiveUrl,
   autoUpdates,
+  type Change,
   cachePath,
   installedPath,
   isLocal,
@@ -37,10 +39,12 @@ import {
   marketplacesDir,
   marketplacesOf,
   OFFICIAL,
+  type Refreshed,
   refOf,
   shownSource,
 } from './sources.ts'
 import { untar } from './tarball.ts'
+import { counted } from './text.ts'
 import { MARKETPLACE_FILE, slugOf } from './theme.ts'
 import { moveTone } from './tone.ts'
 
@@ -62,19 +66,6 @@ export interface FetchedMarketplace {
 }
 
 export type Fetched = FetchedMarketplace | { source: string; id: string; entries: PaletteEntry[] }
-
-export interface Change {
-  added: string[]
-  changed: string[]
-  gone: string[]
-}
-
-export interface Refreshed {
-  source: string
-  id: string
-  count: number
-  change: Change
-}
 
 function triesPath(): string {
   return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'marketplaces.json')
@@ -301,26 +292,6 @@ export async function attempt(home: string, source: string, timeout?: number): P
 
 export function failureLine(source: string, failure: Error): string {
   return `${shownSource(source)}: ${failure.message}`
-}
-
-export function counted(n: number): string {
-  return `${n} palette${n === 1 ? '' : 's'}`
-}
-
-export function ago(at: number, now = Date.now()): string {
-  const minutes = Math.floor(Math.max(0, now - at) / 60_000)
-
-  if (minutes < 1) {
-    return 'just now'
-  }
-
-  if (minutes < 60) {
-    return `${minutes}m ago`
-  }
-
-  const hours = Math.floor(minutes / 60)
-
-  return hours < 48 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`
 }
 
 function changed({ added, changed, gone }: Change): string {

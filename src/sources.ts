@@ -2,11 +2,9 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
-import { type Catalog, MARKETPLACE_FILE, nameProblem, readCatalogs } from './theme.ts'
+import { type Catalog, MARKETPLACE_FILE, MARKETPLACE_SCHEMA_URL, nameProblem, readCatalogs } from './theme.ts'
 
 export const OFFICIAL = 'official'
-export const MARKETPLACE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-marketplace.json'
-export const PALETTE_SCHEMA_URL = 'https://www.schemastore.org/ttheme-palette.json'
 
 export const MARKETPLACE_KEYS = [
   '$schema',
@@ -277,4 +275,17 @@ export function shownSource(source: string): string {
   const home = homedir()
 
   return source === home || source.startsWith(`${home}/`) ? `~${source.slice(home.length)}` : source
+}
+
+export interface Change {
+  added: string[]
+  changed: string[]
+  gone: string[]
+}
+
+export interface Refreshed {
+  source: string
+  id: string
+  count: number
+  change: Change
 }

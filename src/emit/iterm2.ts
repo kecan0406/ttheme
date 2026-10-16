@@ -1,3 +1,4 @@
+import type { ProfileBackground } from '../backdrop.ts'
 import { type Hex, rgb } from '../color.ts'
 import type { Theme } from '../theme.ts'
 import { owned } from '../theme.ts'
@@ -34,13 +35,6 @@ function itermColors(theme: Theme) {
     'Selected Text Color': color(theme.foreground),
     'Selection Color': color(theme.selectionBackground),
   }
-}
-
-export interface ProfileBackground {
-  image: string
-  opacity: number
-  cover: boolean
-  position: string
 }
 
 function background(picture: ProfileBackground | undefined) {

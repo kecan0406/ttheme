@@ -318,6 +318,7 @@ export function localId(bytes: Uint8Array): number {
 }
 
 const MAC_CLIPBOARD = `ObjC.import('AppKit')
+
 function run(argv) {
   const pb = $.NSPasteboard.generalPasteboard
   const files = pb.readObjectsForClassesOptions($([$.NSURL]), $({ NSPasteboardURLReadingFileURLsOnlyKey: true }))
@@ -345,11 +346,17 @@ function run(argv) {
 }`
 
 const WSL_CLIPBOARD = `Add-Type -AssemblyName System.Windows.Forms,System.Drawing
+
 $c = [Windows.Forms.Clipboard]
+
 $f = $c::GetFileDropList(); if ($f.Count) { $f; exit }
+
 $p = Join-Path $env:TEMP 'ttheme-clipboard.png'
+
 $s = $c::GetData('PNG'); if ($s -is [IO.MemoryStream]) { [IO.File]::WriteAllBytes($p, $s.ToArray()); $p; exit }
+
 $i = $c::GetImage(); if ($i) { $i.Save($p, [Drawing.Imaging.ImageFormat]::Png); $p; exit }
+
 $c::GetText()`
 
 function wsl(): boolean {
@@ -430,6 +437,7 @@ export async function readClipboard(out: string): Promise<Clip> {
 }
 
 const MAC_PEEK = `ObjC.import('AppKit')
+
 function run() {
   const pb = $.NSPasteboard.generalPasteboard
   const files = pb.readObjectsForClassesOptions($([$.NSURL]), $({ NSPasteboardURLReadingFileURLsOnlyKey: true }))
@@ -676,3 +684,5 @@ export class Grabber {
     this.deliver(got)
   }
 }
+
+export type Start = { paste: string } | { clipboard: true }

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process'
 import { isMainThread } from 'node:worker_threads'
-import { cacheRoot } from './booru.ts'
 import { runCli } from './cli.ts'
 import { keepDerived, saveDerived } from './derived.ts'
+import { cacheRoot } from './paths.ts'
 
 if (isMainThread) {
   if (process.env.TTHEME_DEBUG && typeof Bun === 'undefined' && !process.sourceMapsEnabled) {

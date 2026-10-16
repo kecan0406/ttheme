@@ -3,8 +3,8 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { type WarpLook, type WarpPicture, warpTheme } from './emit/warp.ts'
+import { readInstalled, worn } from './installed.ts'
 import { colorless } from './osc.ts'
-import { readInstalled, worn } from './palettes.ts'
 import { detectTerminal, type Live } from './terminal.ts'
 import {
   WARP_DEFAULT,

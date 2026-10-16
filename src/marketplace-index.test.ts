@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { PaletteEntry } from './manifest.ts'
-import { indexText, parseIndex } from './marketplace-index.ts'
-import type { Shown } from './showcase.ts'
+import { parseIndex, type Shown } from './marketplace-index.ts'
+import { indexText } from './showcase.ts'
 
 function palette(name: string): PaletteEntry {
   return {

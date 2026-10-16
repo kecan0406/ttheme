@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { colorsOf, installBackdrop, toneFor } from '../src/backdrop.ts'
+import { colorsOf, installBackdrop } from '../src/backdrop.ts'
+import { toneFor } from '../src/backdrop-tone.ts'
 import type { PaletteEntry } from '../src/manifest.ts'
 
 export function installTestPicture(

@@ -1,18 +1,11 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { fetchProfiles } from '../artists.ts'
 import { origins } from '../backdrop.ts'
 import {
   type Credit,
-  cacheDir,
   credit,
-  fetchBytes,
-  fetchCredits,
-  fetchPost,
   fileOf,
-  headOf,
   LENDER,
-  locate,
   mates,
   type Post,
   postKey,
@@ -20,6 +13,7 @@ import {
   type Site,
   uncredited,
 } from '../booru.ts'
+import { cacheDir, fetchBytes, fetchCredits, fetchPost, fetchProfiles, headOf, locate } from '../booru-net.ts'
 import { writeAtomic } from '../edits.ts'
 import type { Pick } from '../fit.ts'
 import type { Manifest, PaletteEntry } from '../manifest.ts'

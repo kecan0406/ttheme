@@ -7,12 +7,12 @@ import { gunzipSync } from 'node:zlib'
 import { officialPath, readAvailable } from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { knowAliases, namesDir, primeNames } from './names.ts'
-import { configHome, refreshAliases } from './palettes.ts'
+import { refreshAliases } from './palettes.ts'
+import { configHome } from './paths.ts'
 
 const NAMES_RELEASE = 'https://github.com/kecan0406/aninames/releases/latest/download'
 
 const DAY = 24 * 60 * 60 * 1000
-
 const RETRY = 60 * 60 * 1000
 
 const TIMEOUT = 120_000

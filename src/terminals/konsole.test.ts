@@ -3,14 +3,14 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFil
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
 import { backupPath } from '../edits.ts'
 import { konsoleScheme } from '../emit/konsole.ts'
+import type { Host } from '../host.ts'
+import { type Installed, writeInstalled } from '../installed.ts'
 import { type Manifest, type PaletteEntry, SCHEMA, toTheme } from '../manifest.ts'
-import { commit, type Installed, sync, wiringNext, wiringPlan, writeInstalled } from '../palettes.ts'
+import { commit, sync, wiringNext, wiringPlan } from '../palettes.ts'
 import { applyUninstall, planUninstall } from '../uninstall.ts'
 import { baseLook, iniValue, konsole, konsoleData, konsoleProfile, konsolerc, withDefaultProfile } from './konsole.ts'
-import type { Host } from './types.ts'
 
 function entry(name: string, order: number, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {

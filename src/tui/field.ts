@@ -1,4 +1,4 @@
-import { graphemes } from '../ansi.ts'
+import { graphemes } from '../text.ts'
 
 const CONTROL = /[\p{Cc}\p{Bidi_Control}]/u
 

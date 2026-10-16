@@ -11,11 +11,9 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { backgroundsDir, readBackdrop } from '../backdrop.ts'
+import { backgroundsDir, type ProfileBackground, readBackdrop } from '../backdrop.ts'
 import { backupOnce, editUserFile, spareBackup, writeAtomic } from '../edits.ts'
-import { warp as emitter } from '../emit/index.ts'
-import type { ProfileBackground } from '../emit/iterm2.ts'
-import { type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from '../emit/warp.ts'
+import { warp as emitter, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from '../emit/warp.ts'
 import { decodePng, encodeRgb, flatten } from '../png.ts'
 import type { Theme } from '../theme.ts'
 import { owned, stem } from '../theme.ts'

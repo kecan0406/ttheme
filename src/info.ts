@@ -2,7 +2,8 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { arch, platform, release } from 'node:os'
 import pkg from '../package.json' with { type: 'json' }
-import { configHome, readInstalled } from './palettes.ts'
+import { readInstalled } from './installed.ts'
+import { configHome } from './paths.ts'
 import { detectTerminal, editorOf, type Terminal } from './terminal.ts'
 import { SETTING_NAMES, settingDefault } from './wiring.ts'
 

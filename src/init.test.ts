@@ -14,9 +14,10 @@ import {
   planInit,
   planUpgrade,
 } from './init.ts'
+import type { Installed } from './installed.ts'
 import { SCHEMA } from './manifest.ts'
 import { modeOf } from './mode.ts'
-import { type Installed, sync } from './palettes.ts'
+import { sync } from './palettes.ts'
 import { applyUninstall, planUninstall } from './uninstall.ts'
 import { MANAGED, withSetting } from './wiring.ts'
 

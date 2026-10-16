@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs'
 import { join } from 'node:path'
-import { cacheRoot } from './booru.ts'
 import type { Hex } from './color.ts'
 import { writeAtomic } from './edits.ts'
+import { cacheRoot } from './paths.ts'
 
 const KEPT = 12
 const NAME = /^[0-9a-f]{40}$/

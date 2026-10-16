@@ -1,11 +1,10 @@
 import type { Readable, Writable } from 'node:stream'
-import { cells, clip, fit, pieces, spread, wrapText } from './ansi.ts'
+import { clip, fit, pieces, spread, wrapText } from './ansi.ts'
 import { gateFailures } from './available.ts'
 import { GATE_RULES } from './contrast.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
 import { type PaletteEntry, swatch } from './manifest.ts'
-import type { Listed, Listing } from './marketplace-index.ts'
-import { listedMatches } from './marketplaces.ts'
+import { type Listed, type Listing, listedMatches } from './marketplace-index.ts'
 import type { ReleaseLine } from './notice.ts'
 import {
   type Card,
@@ -18,8 +17,8 @@ import {
   rowSpot,
   SearchHint,
 } from './palette-prompt.ts'
-import { ago, counted, type Refreshed } from './refresh.ts'
-import { isRemote, OFFICIAL, parseSource, sameMarketplace, shownSource, TOPIC } from './sources.ts'
+import { isRemote, OFFICIAL, parseSource, type Refreshed, sameMarketplace, shownSource, TOPIC } from './sources.ts'
+import { ago, cells, counted } from './text.ts'
 import { marketplaceOf } from './theme.ts'
 import { Field } from './tui/field.ts'
 import type { Mouse } from './tui/keys.ts'

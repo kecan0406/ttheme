@@ -3,8 +3,6 @@ import { dirname } from 'node:path'
 import { isMainThread, parentPort, Worker } from 'node:worker_threads'
 import {
   backgroundsDir,
-  type Coloring,
-  type Colors,
   type Framing,
   type Inked,
   imageKey,
@@ -13,17 +11,17 @@ import {
   type Paint,
   type Picture,
   rackOf,
-  type Tone,
   type Tune,
   tryOn,
   writeTune,
 } from './backdrop.ts'
+import type { Coloring, Colors, Tone } from './backdrop-tone.ts'
 import { MAX_PIXELS } from './booru.ts'
 import type { Hex } from './color.ts'
 import { writeAtomic } from './edits.ts'
 import { paletteMatch } from './fit.ts'
-import { redrawOne } from './pictures.ts'
 import { contain, decodeImage, encodeRgba, transparency } from './png.ts'
+import { redrawOne } from './redrawing.ts'
 import { dhash, sameArtwork } from './works.ts'
 
 interface Thumb {

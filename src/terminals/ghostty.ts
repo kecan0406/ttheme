@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { ghostty as emitter } from '../emit/index.ts'
+import { ghostty as emitter } from '../emit/ghostty.ts'
 import type { Mode, Setting } from '../mode.ts'
 import { owned } from '../theme.ts'
 import {

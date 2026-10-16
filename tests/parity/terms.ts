@@ -1,5 +1,5 @@
 import { SLOT_CODES } from '../../src/osc.ts'
-import type { Wired } from '../../src/terminals/types.ts'
+import type { Wired } from '../../src/wired.ts'
 
 export const TERMS = [
   'ghostty',

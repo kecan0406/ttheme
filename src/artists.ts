@@ -1,16 +1,3 @@
-import {
-  credit,
-  fetchArtistUrls,
-  fetchCredits,
-  fetchLent,
-  fetchPost,
-  LENDER,
-  lend,
-  type Site,
-  sourcePage,
-  uncredited,
-} from './booru.ts'
-
 export const PROFILE_KINDS = ['pixiv', 'x', 'bsky', 'fanbox', 'skeb', 'patreon', 'fantia'] as const
 
 export type ProfileKind = (typeof PROFILE_KINDS)[number]
@@ -191,54 +178,4 @@ export function creditLine(picture: Credited): string | undefined {
       : 'Background art (artist unknown)'
 
   return page ? `${by} · ${publicUrl(page)}` : by
-}
-
-export async function fetchProfiles(names: readonly string[], signal: AbortSignal): Promise<Map<string, string[]>> {
-  const found = await fetchArtistUrls(names, signal)
-
-  return new Map(names.map((name) => [name, profilesOf(found.get(name) ?? [])]))
-}
-
-export interface PostCredit {
-  artist: string[]
-  source: string
-  profiles: Record<string, string[]>
-}
-
-export async function postCredit(site: Site, id: number, signal: AbortSignal): Promise<PostCredit | undefined> {
-  const post = await fetchPost(site, id, signal)
-
-  if (!post) {
-    return undefined
-  }
-
-  if (site !== LENDER && post.md5) {
-    try {
-      lend([post], await fetchLent([post.md5], signal))
-    } catch {}
-  }
-
-  if (uncredited(site, post)) {
-    try {
-      const found = await fetchCredits(site, post.id, signal)
-
-      if (found) {
-        credit(post, found)
-      }
-    } catch {}
-  }
-
-  let profiles = new Map<string, string[]>()
-
-  if (post.named.artist.length > 0) {
-    try {
-      profiles = await fetchProfiles(post.named.artist, signal)
-    } catch {}
-  }
-
-  return {
-    artist: post.named.artist,
-    source: sourcePage(post.source),
-    profiles: Object.fromEntries(profiles.entries().filter(([, urls]) => urls.length > 0)),
-  }
 }

@@ -3,11 +3,11 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, symlinkSyn
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
 import { backupPath } from './edits.ts'
+import type { Host } from './host.ts'
+import { type Installed, writeInstalled } from './installed.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
-import { type Installed, sync, writeInstalled } from './palettes.ts'
-import type { Host } from './terminals/types.ts'
+import { sync } from './palettes.ts'
 import { applyUninstall, planUninstall, type UninstallPaths } from './uninstall.ts'
 
 function entry(name: string, order: number): PaletteEntry {

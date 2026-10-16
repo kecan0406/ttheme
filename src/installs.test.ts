@@ -3,13 +3,13 @@ import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
 import { writeOfficial } from './available.ts'
+import { readInstalled, writeInstalled } from './installed.ts'
 import { runAdd, runDefault } from './installs.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { withMarketplaces } from './marketplaces.ts'
 import { draftOf, shareCode, shareLink } from './own.ts'
-import { readInstalled, sync, writeInstalled } from './palettes.ts'
+import { sync } from './palettes.ts'
 
 function entry(name: string, order: number): PaletteEntry {
   return {

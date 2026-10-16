@@ -1,21 +1,11 @@
-import { cells, fit, spread } from './ansi.ts'
+import { fit, spread } from './ansi.ts'
 import type { Spot } from './builder-layout.ts'
 import { type Hex, luminance, type Oklch } from './color.ts'
 import { inGamut, srgb } from './fix.ts'
-import {
-  BASE,
-  type Channel,
-  type Check,
-  CONTRAST,
-  type Format,
-  gateRows,
-  type PaletteEditor,
-  ruleSlots,
-  type Scope,
-  slotChecks,
-  slotLabel,
-} from './palette-editor.ts'
+import { type Channel, CONTRAST, gateRows, type PaletteEditor, type Scope } from './palette-editor.ts'
 import type { Colors } from './seeds.ts'
+import { BASE, type Check, type Format, ruleSlots, slotChecks, slotLabel } from './slots.ts'
+import { cells } from './text.ts'
 import { boxEdge, boxed, boxTitle, buttonOf, checkOf, hintOf } from './tui/parts.ts'
 import { FG_RESET, INK_RESET, MARKS, open, type Paint } from './tui/style.ts'
 import { type KeySpot, keyZone, zone } from './tui/zones.ts'
@@ -96,12 +86,6 @@ export function detailChecks(e: PaletteEditor, slot: number, at: Oklch): Check[]
   }
 
   return checks
-}
-
-export function lchTight(at: Oklch): string {
-  const short = (n: number, digits: number) => n.toFixed(digits).replace(/^0(?=\.)/, '')
-
-  return `${short(at.l, 2)} ${short(at.c, 3)} ${at.h.toFixed(0).padStart(3)}°`
 }
 
 export function lchShort(at: Oklch): string {

@@ -1,6 +1,6 @@
 import { type Marketplace, toTheme } from '@/lib/themes'
 import snapshot from '@/marketplaces.json' with { type: 'json' }
-import type { Shown } from '../../src/showcase.ts'
+import type { Shown } from '../../src/marketplace-index.ts'
 
 export const marketplaces: Marketplace[] = (snapshot as Shown[]).map((marketplace) => ({
   ...marketplace,

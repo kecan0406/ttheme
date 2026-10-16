@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
-import type { Host } from './terminals/types.ts'
+import type { Host } from './host.ts'
 import { LAYER, MANAGED } from './wiring.ts'
 
 export const SHELLS = ['zsh', 'bash', 'fish'] as const

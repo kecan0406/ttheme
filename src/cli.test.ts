@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { Missing } from './available.ts'
 import { EMITTED } from './build.ts'
 import { isCrash, parse, UsageError, VERBS } from './cli.ts'
-import { WIRED } from './terminals/types.ts'
+import { WIRED } from './wired.ts'
 
 test('build --only rejects unknown terminals', () => {
   assert.throws(() => parse(['build', '--only', 'vscode']), UsageError)

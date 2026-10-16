@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path'
 import pkg from '../package.json' with { type: 'json' }
 import { writeAtomic } from './edits.ts'
 import { advise, outdated, type ReleaseLine, type Standing, standingLine, UPDATE_HERE } from './notice.ts'
-import { configHome } from './palettes.ts'
+import { configHome } from './paths.ts'
 
 export const UPDATE_COMMAND = `npx ${pkg.name}@latest init`
 

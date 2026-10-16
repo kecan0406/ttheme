@@ -2,8 +2,8 @@ import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { loadThemes } from '../build.ts'
 import { contrast } from '../color.ts'
-import { loadThemes } from '../theme.ts'
 import {
   ansiBar,
   ansiFg,

@@ -1,11 +1,9 @@
 import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
 import pkg from '../../package.json' with { type: 'json' }
-import { parseManifest } from '../available.ts'
-import { type Manifest, type PaletteEntry, SCHEMA, swatch } from '../manifest.ts'
-import { loadThemes } from '../theme.ts'
+import { loadThemes } from '../build.ts'
+import { type Manifest, type PaletteEntry, parseManifest, SCHEMA, swatch } from '../manifest.ts'
 import { manifest, type SchemaOneEntry, schemaOne } from './manifest.ts'
 
 const published = manifest(loadThemes(join(import.meta.dirname, '..', '..', 'themes')))

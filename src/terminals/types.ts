@@ -1,21 +1,9 @@
 import type { Emitter } from '../emit/types.ts'
+import type { Host } from '../host.ts'
+import type { Installed } from '../installed.ts'
 import type { PaletteEntry } from '../manifest.ts'
-import type { Installed } from '../palettes.ts'
 import type { Theme } from '../theme.ts'
-
-export const WIRED = [
-  'ghostty',
-  'kitty',
-  'alacritty',
-  'wezterm',
-  'iterm2',
-  'windows-terminal',
-  'warp',
-  'konsole',
-  'terminal-app',
-] as const
-
-export type Wired = (typeof WIRED)[number]
+import type { Wired } from '../wired.ts'
 
 export interface At {
   configHome: string
@@ -51,12 +39,6 @@ export interface Unwired {
   edits: { file: string; content: string }[]
   removals: string[]
   touches: string[]
-}
-
-export interface Host {
-  platform: NodeJS.Platform
-  env: Record<string, string | undefined>
-  run(command: string, args: readonly string[]): string | undefined
 }
 
 export interface Moment extends Now {

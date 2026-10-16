@@ -4,12 +4,10 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync }
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
-
 import {
   blockSet,
   cutoutMap,
   exposed,
-  fetchPosts,
   hidden,
   hostMap,
   kindSet,
@@ -33,17 +31,15 @@ import {
   postRef,
   rated,
   ratingSet,
-  redirected,
   rendition,
-  retryAfter,
   SITES,
   type Site,
   siteSet,
   sourcePage,
-  sweepCache,
   tagList,
   tagsOf,
 } from './booru.ts'
+import { fetchPosts, redirected, retryAfter, sweepCache } from './booru-net.ts'
 
 const { preconnect } = fetch
 

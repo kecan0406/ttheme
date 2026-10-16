@@ -4,12 +4,9 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSyn
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
 import {
   applyRedraw,
-  backdropTone,
   backgroundsDir,
-  type Colors,
   coloringOf,
   dropImage,
   fillFrame,
@@ -18,7 +15,6 @@ import {
   inked,
   installBackdrop,
   liftOf,
-  originalOpacity,
   type Paint,
   type Picture,
   peakOf,
@@ -27,16 +23,16 @@ import {
   readStore,
   retint,
   showImage,
-  toneFor,
   tryOn,
   tuneOf,
   writeTune,
 } from './backdrop.ts'
+import { backdropTone, type Colors, originalOpacity, toneFor } from './backdrop-tone.ts'
 import { luminance, mix } from './color.ts'
 import { checkReadability } from './contrast.ts'
 import { canvasOf } from './images.ts'
-import { prepareOne, redrawOne } from './pictures.ts'
 import { decodePng, encodeMask, encodeRgb, encodeRgba, flatten, lay, type Rgba, retone } from './png.ts'
+import { prepareOne, redrawOne } from './redrawing.ts'
 
 process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-cache-'))
 

@@ -1,10 +1,12 @@
-import { rmSync } from 'node:fs'
+import { readdirSync, readFileSync, rmSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { checkAll } from './contrast.ts'
-import { meta, shell } from './emit/index.ts'
+import { meta } from './emit/manifest.ts'
+import { shell } from './emit/shell.ts'
 import type { Emitter } from './emit/types.ts'
-import { WIRED, WIRINGS } from './terminals/index.ts'
-import { inOther, loadThemes, rotation } from './theme.ts'
+import { WIRINGS } from './terminals/index.ts'
+import { fail, inOther, MARKETPLACE_FILE, readCatalogs, readTheme, rotation, type Theme, toml } from './theme.ts'
+import { WIRED } from './wired.ts'
 
 const root = join(import.meta.dirname, '..')
 const THEMES = join(root, 'themes')
@@ -71,4 +73,64 @@ export async function build({ only }: { only?: string[] } = {}): Promise<void> {
   console.log(
     `\n${themes.length} themes (${rotation(themes).length} in the new-tab rotation) -> ${count} files in dist/`,
   )
+}
+
+export function loadThemes(dir: string): Theme[] {
+  const catalogs = readCatalogs(
+    MARKETPLACE_FILE,
+    toml(MARKETPLACE_FILE, readFileSync(join(dir, MARKETPLACE_FILE), 'utf8')).catalog,
+  )
+
+  if (catalogs.length === 0) {
+    fail(MARKETPLACE_FILE, 'needs at least one [[catalog]] table')
+  }
+
+  const byName = new Map(catalogs.map((c) => [c.name, c]))
+  const shelf = join(dir, 'palettes')
+
+  const themes = readdirSync(shelf, { withFileTypes: true })
+    .filter((item) => !item.name.startsWith('.'))
+    .flatMap((item) => {
+      if (!item.isDirectory()) {
+        fail(
+          `palettes/${item.name}`,
+          'an official palette lives in a catalog folder, palettes/<catalog>/<palette>.toml',
+        )
+      }
+
+      return readdirSync(join(shelf, item.name))
+        .filter((f) => f.endsWith('.toml'))
+        .map((f) =>
+          readTheme(`palettes/${item.name}/${f}`, readFileSync(join(shelf, item.name, f), 'utf8'), {
+            name: basename(f, '.toml'),
+            catalog: item.name,
+            catalogs: byName,
+          }),
+        )
+    })
+    .sort((a, b) => a.order - b.order)
+
+  const orders = new Set(themes.map((t) => t.order))
+
+  if (orders.size !== themes.length) {
+    throw new Error('themes: meta.order must be unique across all themes')
+  }
+
+  const byCatalog = Map.groupBy(themes, (t) => t.catalog)
+
+  for (const catalog of catalogs) {
+    const members = byCatalog.get(catalog.name)
+
+    if (!members) fail(MARKETPLACE_FILE, `catalog "${catalog.name}" has no palettes`)
+
+    if (!members.some((t) => t.name === catalog.lead)) {
+      fail(MARKETPLACE_FILE, `catalog "${catalog.name}" needs a lead, one of its palettes`)
+    }
+  }
+
+  if ([...byCatalog.keys()].join('\n') !== catalogs.map((c) => c.name).join('\n')) {
+    fail(MARKETPLACE_FILE, 'the [[catalog]] tables must follow the order meta.order gives their palettes')
+  }
+
+  return themes
 }

@@ -3,14 +3,12 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
 import {
   archiveId,
   archiveInfo,
   available,
   booruTags,
   gateFailures,
-  parseManifest,
   readKept,
   readMarketplaces,
   search,
@@ -20,7 +18,7 @@ import {
   writeKept,
   writeOfficial,
 } from './available.ts'
-import { type PaletteEntry, SCHEMA } from './manifest.ts'
+import { type PaletteEntry, parseManifest, SCHEMA } from './manifest.ts'
 import { paletteToml } from './own.ts'
 import { shelfOf } from './theme.ts'
 

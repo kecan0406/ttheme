@@ -5,9 +5,10 @@ import { join } from 'node:path'
 import { writeAtomic } from './edits.ts'
 import { type SchemeColors, schemeLines } from './emit/konsole.ts'
 import type { PaletteEntry } from './manifest.ts'
+import { MODES, SETTINGS, type Setting } from './mode.ts'
 import { colorless, paletteOsc, queryTerminalColors, restoreOsc, SLOT_CODES, schemeOsc } from './osc.ts'
-import type { Wired } from './terminals/types.ts'
 import { owned } from './theme.ts'
+import type { Wired } from './wired.ts'
 
 type Env = Record<string, string | undefined>
 
@@ -426,4 +427,8 @@ export function livePaint(
     saved: () => queryTerminalColors(codes),
     restore: (saved) => restoreOsc(saved, codes, traits.hex === true),
   }
+}
+
+export function settingsFor(terminals: readonly Wired[]): readonly Setting[] {
+  return terminals.some((terminal) => TRAITS[terminal].appears) ? SETTINGS : MODES
 }

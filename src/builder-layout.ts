@@ -1,5 +1,5 @@
-import { cells } from './ansi.ts'
 import { SCENES, sceneParts } from './scenes.ts'
+import { cells } from './text.ts'
 
 const FULL_COLS = 130
 const FULL_ROWS = 38

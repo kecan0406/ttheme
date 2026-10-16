@@ -2,19 +2,12 @@ import { homedir } from 'node:os'
 import * as p from '@clack/prompts'
 import { readMarketplaces } from './available.ts'
 import { Cancelled } from './cancelled.ts'
-import {
-  configHome,
-  pointDefaults,
-  readInstalled,
-  sync,
-  wiringNext,
-  wiringNotes,
-  wiringPlan,
-  withBases,
-  writeInstalled,
-} from './palettes.ts'
-import { systemHost } from './terminals/common.ts'
-import { WIRED, WIRINGS, type Wired } from './terminals/index.ts'
+import { systemHost } from './host.ts'
+import { readInstalled, writeInstalled } from './installed.ts'
+import { pointDefaults, sync, wiringNext, wiringNotes, wiringPlan, withBases } from './palettes.ts'
+import { configHome } from './paths.ts'
+import { WIRINGS } from './terminals/index.ts'
+import { WIRED, type Wired } from './wired.ts'
 
 export async function runWire(name: string): Promise<number> {
   if (!(WIRED as readonly string[]).includes(name)) {

@@ -1,5 +1,5 @@
 import pkg from '../package.json' with { type: 'json' }
-import { WIRED } from './terminals/types.ts'
+import { WIRED } from './wired.ts'
 
 export interface Flag {
   type: 'boolean' | 'string'

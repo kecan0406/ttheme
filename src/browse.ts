@@ -1,16 +1,18 @@
 import { available, idOf, readKept, readMarketplaces, shown, updatesOf } from './available.ts'
 import { type BrowseIo, BrowsePanel, type BrowseResult, type Marketplace } from './browse-panel.ts'
 import { HUB_CLOSED, hubOf } from './hub.ts'
+import { type Installed, readInstalled, worn, writeInstalled } from './installed.ts'
 import { reload, takeUpdates } from './installs.ts'
 import { liveOf } from './live.ts'
+import { readMarketplaceDir, warning } from './local.ts'
 import { inMode, listed, type PaletteEntry } from './manifest.ts'
 import { readIndex } from './marketplace-index.ts'
 import { dropCache, keptNote, lastUpdate, withMarketplaces } from './marketplaces.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
-import { readMarketplaceDir, warning } from './own.ts'
 import { promptFx } from './palette-prompt.ts'
-import { commit, configHome, forget, type Installed, readInstalled, worn, writeInstalled } from './palettes.ts'
+import { commit, forget } from './palettes.ts'
+import { configHome } from './paths.ts'
 import { into, say } from './pending.ts'
 import { bringPictures } from './pictures.ts'
 import {
@@ -18,7 +20,6 @@ import {
   applyRefreshed,
   cachedEntries,
   cachedMarketplace,
-  counted,
   dueSources,
   type Fetched,
   fetchMarketplace,
@@ -40,6 +41,7 @@ import {
   repoOf,
   shownSource,
 } from './sources.ts'
+import { counted } from './text.ts'
 import { alphabetical, marketplaceOf } from './theme.ts'
 import { readTone, tunedNames } from './tone.ts'
 import { modeFor } from './wiring.ts'

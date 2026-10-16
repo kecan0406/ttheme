@@ -1,9 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { parseManifest, reach } from './available.ts'
+import { reach } from './available.ts'
 import { schemaOne } from './emit/manifest.ts'
-import type { PaletteEntry } from './manifest.ts'
-import { buildIndex, INDEX_URL, parseIndex } from './marketplace-index.ts'
+import { type PaletteEntry, parseManifest } from './manifest.ts'
+import { INDEX_URL, parseIndex } from './marketplace-index.ts'
+import { buildIndex } from './showcase.ts'
 
 async function index(official: PaletteEntry[]): Promise<string> {
   try {

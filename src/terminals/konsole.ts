@@ -4,13 +4,13 @@ import { basename, isAbsolute, join } from 'node:path'
 import { backgroundsDir, readBackdrop } from '../backdrop.ts'
 import { type Hex, isHex, rgb } from '../color.ts'
 import { editUserFile, spareBackup } from '../edits.ts'
-import { konsole as emitter } from '../emit/index.ts'
-import { konsoleScheme } from '../emit/konsole.ts'
+import { konsole as emitter, konsoleScheme } from '../emit/konsole.ts'
+import type { Host } from '../host.ts'
 import { listed } from '../manifest.ts'
 import type { Theme } from '../theme.ts'
 import { owned } from '../theme.ts'
 import { dataHome, ownedIn, readText, tilde } from './common.ts'
-import type { At, Ctx, Defaults, Host, Moment, Out, Wiring } from './types.ts'
+import type { At, Ctx, Defaults, Moment, Out, Wiring } from './types.ts'
 
 export function konsoleData(home: string): string {
   return join(dataHome(home), 'konsole')

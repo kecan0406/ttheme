@@ -5,8 +5,8 @@ import { test } from 'node:test'
 import { SITES } from './booru.ts'
 import { RULES } from './contrast.ts'
 import { MODES } from './mode.ts'
-import { CATALOG_KEYS, MARKETPLACE_KEYS, MARKETPLACE_SCHEMA_URL, OWNER_KEYS, PALETTE_SCHEMA_URL } from './sources.ts'
-import { PALETTE_KEYS, POSITIONS } from './theme.ts'
+import { CATALOG_KEYS, MARKETPLACE_KEYS, OWNER_KEYS } from './sources.ts'
+import { MARKETPLACE_SCHEMA_URL, PALETTE_KEYS, PALETTE_SCHEMA_URL, POSITIONS } from './theme.ts'
 
 interface Node {
   $id?: string

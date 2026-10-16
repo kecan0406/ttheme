@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { appearancePath, knowAppearance } from './appearance.ts'
+import type { Host } from './host.ts'
 import { ghosttyTheme } from './terminals/ghostty.ts'
-import type { Host } from './terminals/types.ts'
 import { modeFor } from './wiring.ts'
 
 function inState<T>(run: (configHome: string) => T): T {

@@ -1,4 +1,4 @@
-import { cells, fit, spread, wrapText } from './ansi.ts'
+import { fit, spread, wrapText } from './ansi.ts'
 import { type Look, pictureArea, planeAt, renderBuilder } from './builder-screen.ts'
 import { type Hex, type Oklch, oklch, rgb } from './color.ts'
 import { brightDrift, confusions, hueGap, lookalikes, offRole, ROLE_HUES, roleOf } from './contrast.ts'
@@ -13,35 +13,22 @@ import {
   gradient,
   heldOf,
   LEFT,
-  lchTight,
   position,
   quitDialog,
   roleSgr,
   spot,
   used,
 } from './editor-paint.ts'
-import { typedDrop } from './find/attach.ts'
-import type { Start } from './find/find.ts'
+import { type Start, typedDrop } from './find/attach.ts'
 import { colorQuery, SLOT_CODES, slotColors } from './osc.ts'
-import {
-  BASE,
-  CHANNELS,
-  CONTRAST,
-  colorsOf,
-  type Edited,
-  type EditorOptions,
-  gatedOf,
-  PAIRS,
-  PaletteEditor,
-  SCOPES,
-  SLOT_NAMES,
-  slotLabel,
-} from './palette-editor.ts'
+import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
 import type { Drawn, PickerLayer } from './picker-art.ts'
 import { SCENES, sceneAt, sceneParts } from './scenes.ts'
 import type { Colors } from './seeds.ts'
 import { grow, SEED_FIELDS, type Seeds } from './seeds.ts'
+import { BASE, colorsOf, gatedOf, lchTight, PAIRS, SLOT_NAMES, slotLabel } from './slots.ts'
 import { CLEAR } from './terminal.ts'
+import { cells } from './text.ts'
 import { CELL_QUERY, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './tui/keys.ts'
 import { boxEdge, boxed, checkOf, hintOf, pillOf } from './tui/parts.ts'
 import { Screen } from './tui/screen.ts'

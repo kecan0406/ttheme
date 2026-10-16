@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto'
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import { artworkOf, creditLine, linksOf } from './artists.ts'
-import { type Hex, luminance, mix, rgb } from './color.ts'
-import { checkReadability, isLight } from './contrast.ts'
+import { type Coloring, type Colors, type Hue, originalOpacity } from './backdrop-tone.ts'
+import { type Hex, rgb } from './color.ts'
+import { isLight } from './contrast.ts'
 import { MATTING, matte } from './cutout.ts'
 import { keyOf, known, recall, remember } from './drawn.ts'
 import { writeAtomic } from './edits.ts'
-import type { ProfileBackground } from './emit/iterm2.ts'
 import {
   alphaBox,
   alphaOf,
@@ -32,39 +32,15 @@ import { stem as fileStem, POSITIONS, type SharedPicture } from './theme.ts'
 const FILL = { width: 2560, height: 1550 }
 const DRAWING = 2
 const FIGURE = 2560
-const FAINT = 0.1
+
 const WHITE = 0.99
 const LIFT = 2
 const PLACEMENT = { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 }
-const PEAK = luminance(mix('#19161e', '#9b86c8', 0.2))
-const FLOOR = luminance(mix('#ede6f2', '#675491', 0.2))
+
 const SHELF = 'shelf'
 const ORIGINALS = 'originals'
 const STORE = 'images.json'
 const VERSION = 1
-
-export interface Colors {
-  name: string
-  background: Hex
-  foreground: Hex
-  cursor: Hex
-  selection?: Hex
-  ansi: Hex[]
-  waived?: string[]
-}
-
-export interface Tone {
-  slot: string
-  color: Hex
-  cap: number
-  matched: number
-  opacity: number
-  reach: number
-}
-
-export type Hue = Pick<Tone, 'color' | 'opacity'>
-
-export type Coloring = 'tone' | 'original'
 
 export interface Paint {
   hue: Hue
@@ -86,94 +62,6 @@ interface Original {
 interface Origin {
   site: string
   id: number
-}
-
-function slotColor(colors: Colors, slot: string): Hex {
-  if (slot === 'background' || slot === 'foreground' || slot === 'cursor') {
-    return colors[slot]
-  }
-
-  if (slot === 'selection' && colors.selection) {
-    return colors.selection
-  }
-
-  const match = /^ansi(\d|1[0-5])$/.exec(slot)
-  const color = match ? colors.ansi[Number(match[1])] : undefined
-
-  if (!color) {
-    throw new Error(`${colors.name} has no slot ${slot}`)
-  }
-
-  return color
-}
-
-function highest(ok: (o: number) => boolean): number {
-  if (ok(1)) {
-    return 1
-  }
-
-  let lo = 0
-  let hi = 1
-
-  for (let i = 0; i < 40; i++) {
-    const mid = (lo + hi) / 2
-
-    if (ok(mid)) {
-      lo = mid
-    } else {
-      hi = mid
-    }
-  }
-
-  return lo
-}
-
-function fade(colors: Colors, color: Hex) {
-  const misses = (o: number) =>
-    checkReadability({
-      name: colors.name,
-      background: mix(colors.background, color, o),
-      foreground: colors.foreground,
-      ansi: colors.ansi,
-      waive: colors.waived ?? [],
-    }).map((miss) => miss.rule)
-
-  const already = new Set(misses(0))
-  const cap = highest((o) => misses(o).every((rule) => already.has(rule)))
-  const light = isLight(colors)
-
-  const matched = highest((o) =>
-    light ? luminance(mix(colors.background, color, o)) >= FLOOR : luminance(mix(colors.background, color, o)) <= PEAK,
-  )
-
-  return { cap, matched, opacity: Math.floor(Math.min(cap, matched) * 100) / 100 }
-}
-
-export function toneFor(colors: Colors, slot: string): Tone {
-  const color = slotColor(colors, slot)
-  const { cap, matched, opacity } = fade(colors, color)
-  const bg = rgb(colors.background)
-  const reach = Math.hypot(...rgb(color).map((c, i) => (c - (bg[i] ?? 0)) * opacity))
-
-  return { slot, color, cap, matched, opacity, reach }
-}
-
-export function originalOpacity(colors: Colors, peak: Hex): number {
-  return fade(colors, peak).opacity
-}
-
-export function backdropTone(colors: Colors, signature: string[]): Tone {
-  const cursor = toneFor(colors, 'cursor')
-
-  if (cursor.opacity >= FAINT) {
-    return cursor
-  }
-
-  return signature
-    .values()
-    .filter((slot) => slot !== 'cursor' && slot !== 'background')
-    .map((slot) => toneFor(colors, slot))
-    .reduce((best, tone) => (tone.reach > best.reach ? tone : best), cursor)
 }
 
 function figureBox(image: Rgba): Box {
@@ -1607,4 +1495,11 @@ export function retint(configHome: string, paints: ReadonlyMap<string, Paint>): 
   }
 
   return names
+}
+
+export interface ProfileBackground {
+  image: string
+  opacity: number
+  cover: boolean
+  position: string
 }

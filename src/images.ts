@@ -3,7 +3,8 @@ import { find, readAvailable } from './available.ts'
 import { dropImage, showImage } from './backdrop.ts'
 import { isHex } from './color.ts'
 import { rewrite, writeAtomic } from './edits.ts'
-import { configHome, refreshPictures } from './palettes.ts'
+import { refreshPictures } from './palettes.ts'
+import { configHome } from './paths.ts'
 import {
   alphaOf,
   type Canvas,

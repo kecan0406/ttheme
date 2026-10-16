@@ -6,8 +6,9 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { tarballOf } from '../tests/tarball.ts'
 import { writeOfficial } from './available.ts'
+import { writeInstalled } from './installed.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
-import { sync, writeInstalled } from './palettes.ts'
+import { sync } from './palettes.ts'
 import {
   applyRefreshed,
   attempt,

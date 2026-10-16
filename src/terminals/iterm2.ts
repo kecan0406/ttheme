@@ -1,12 +1,12 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { backgroundsDir, readBackdrop } from '../backdrop.ts'
-import { iterm2 as emitter } from '../emit/index.ts'
-import { itermProfiles, type ProfileBackground } from '../emit/iterm2.ts'
+import { backgroundsDir, type ProfileBackground, readBackdrop } from '../backdrop.ts'
+import { iterm2 as emitter, itermProfiles } from '../emit/iterm2.ts'
+import type { Host } from '../host.ts'
+import type { Installed } from '../installed.ts'
 import { listed } from '../manifest.ts'
-import type { Installed } from '../palettes.ts'
 import { tilde } from './common.ts'
-import type { Ctx, Defaults, Host, Moment, Wiring } from './types.ts'
+import type { Ctx, Defaults, Moment, Wiring } from './types.ts'
 
 const ITERM_DEFAULT = 'ttheme-default'
 

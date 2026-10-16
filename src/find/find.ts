@@ -7,31 +7,23 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { linksOf } from '../artists.ts'
 import { booruTags, find, readAvailable, siteTags } from '../available.ts'
-import { backdropTone, backgroundsDir, fillSize, rackOf, type Tone, type Tune } from '../backdrop.ts'
+import { backgroundsDir, fillSize, rackOf, type Tune } from '../backdrop.ts'
+import { backdropTone, type Tone } from '../backdrop-tone.ts'
 import {
   BLOCKS,
   blockSet,
-  cacheDir,
   exposed,
   extension,
-  fetchCount,
-  fetchLent,
-  fetchPost,
-  fetchPosts,
-  fetchRelated,
-  fetchSuggestions,
   fileOf,
   hidden,
   KINDS,
   kindSet,
   LENDER,
   lend,
-  locate,
   type Narrow,
   narrowOf,
   PAGE,
   type Post,
-  pausedUntil,
   pickedNames,
   postKey,
   postRef,
@@ -48,16 +40,29 @@ import {
   type Site,
   siteSet,
   sourcePage,
-  sweepCache,
   tagList,
   tagsOf,
 } from '../booru.ts'
+import {
+  cacheDir,
+  fetchCount,
+  fetchLent,
+  fetchPost,
+  fetchPosts,
+  fetchRelated,
+  fetchSuggestions,
+  locate,
+  pausedUntil,
+  sweepCache,
+} from '../booru-net.ts'
 import { canRemoveBackground, keepable, removeBackground } from '../cutout.ts'
 import { writeAtomic } from '../edits.ts'
 import { type Frame, fitOrder, interleave, type Pick } from '../fit.ts'
+import { readInstalled } from '../installed.ts'
 import type { Manifest, PaletteEntry } from '../manifest.ts'
 import { nameHits, primeNames } from '../names.ts'
-import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from '../palettes.ts'
+import { aligns as alignsFor, refreshPictures } from '../palettes.ts'
+import { configHome } from '../paths.ts'
 import { type Look, Renderer, type Shown } from '../render.ts'
 import { SCENES } from '../scenes.ts'
 import { CLEAR, viewsInWindow, viewVar } from '../terminal.ts'
@@ -82,6 +87,7 @@ import {
   readClipboard,
   remember,
   remote,
+  type Start,
   sourceLabel,
   typedDrop,
 } from './attach.ts'
@@ -3547,8 +3553,6 @@ class Finder {
     this.paint.draw()
   }
 }
-
-export type Start = { paste: string } | { clipboard: true }
 
 export async function findFor(
   home: string,

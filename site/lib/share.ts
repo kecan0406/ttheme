@@ -5,13 +5,14 @@ import { type GateRule, type Theme, toTheme } from '@/lib/themes'
 import { SITES } from '../../src/booru.ts'
 import { footerRows, lights, type Part, paneLines, paneTiles, slotsOfRole } from '../../src/builder-layout.ts'
 import { mix } from '../../src/color.ts'
-import { lchTight } from '../../src/editor-paint.ts'
 import { inGamut } from '../../src/fix.ts'
 import type { PaletteEntry } from '../../src/manifest.ts'
 import { readCodes, shareLink } from '../../src/own.ts'
+import { PLANE_BOTTOM, PLANE_TOP, RAINBOW_C, RAINBOW_L, reach, shareOf } from '../../src/plane.ts'
 import {
   colorText,
   lchIn,
+  lchTight,
   listOf,
   misses,
   ruleSlots,
@@ -19,8 +20,7 @@ import {
   slotChecks,
   slotLabel,
   slotUse,
-} from '../../src/palette-editor.ts'
-import { PLANE_BOTTOM, PLANE_TOP, RAINBOW_C, RAINBOW_L, reach, shareOf } from '../../src/picker-art.ts'
+} from '../../src/slots.ts'
 import { marketplaceOf, type SharedPicture, slugOf } from '../../src/theme.ts'
 
 export const GRID = { cols: 120, rows: 34 }

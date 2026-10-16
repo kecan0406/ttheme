@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { loadThemes } from './build.ts'
 import { contrast, luminance } from './color.ts'
 import { check, RULES } from './contrast.ts'
-import { inOther, loadThemes, rotation } from './theme.ts'
+import { inOther, rotation } from './theme.ts'
 
 const themes = loadThemes(join(import.meta.dirname, '..', 'themes'))
 

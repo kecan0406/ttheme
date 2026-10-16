@@ -1,11 +1,19 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isHex } from './color.ts'
 import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
-import { emptyManifest, inMode, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
+import { readLocal, warning } from './local.ts'
+import {
+  emptyManifest,
+  entryProblem,
+  inMode,
+  type Manifest,
+  type PaletteEntry,
+  parseManifest,
+  toTheme,
+} from './manifest.ts'
 import { aliasesFor, containsText } from './names.ts'
-import { marketplaceLayout, type Report, readLocal, readMarketplaceFiles, warning } from './own.ts'
+import { marketplaceLayout, type Report, readMarketplaceFiles } from './own.ts'
 import {
   cachePath,
   type Identity,
@@ -20,7 +28,7 @@ import {
   remoteOwner,
   shownSource,
 } from './sources.ts'
-import { catalogProblem, MARKETPLACE_FILE, marketplaceOf, nameProblem, shelfOf, textProblem } from './theme.ts'
+import { MARKETPLACE_FILE, marketplaceOf, shelfOf } from './theme.ts'
 import { readTone, tuned } from './tone.ts'
 import { modeFor } from './wiring.ts'
 
@@ -160,77 +168,6 @@ function readCached(configHome: string, source: string, official: PaletteEntry[]
 
     return []
   }
-}
-
-export function parseManifest(source: string): Manifest {
-  let doc: unknown
-
-  try {
-    doc = JSON.parse(source)
-  } catch {
-    throw new Error('the manifest is not valid JSON')
-  }
-
-  const manifest = doc as Manifest
-
-  if (typeof manifest?.version !== 'string' || !Array.isArray(manifest.palettes)) {
-    throw new Error('the manifest has no version or palettes')
-  }
-
-  for (const p of manifest.palettes) {
-    const problem = entryProblem(p)
-
-    if (problem) {
-      throw new Error(`manifest entry ${JSON.stringify(p?.name)} ${problem}`)
-    }
-  }
-
-  return manifest
-}
-
-function entryProblem(p: PaletteEntry): string | undefined {
-  if (typeof p?.name !== 'string' || !Array.isArray(p.ansi) || p.ansi.length !== 16) {
-    return 'is missing name or its 16 ANSI colors'
-  }
-
-  const named = [p.name, p.base, p.from]
-    .values()
-    .map((name) => (name === undefined ? undefined : nameProblem(name)))
-    .find(Boolean)
-
-  if (named) {
-    return named
-  }
-
-  if (![p.background, p.foreground, p.cursor, p.selection, ...p.ansi].every((c) => typeof c === 'string' && isHex(c))) {
-    return 'holds a color that is not "#rrggbb"'
-  }
-
-  const other = p.other
-
-  if (
-    other !== undefined &&
-    !(
-      Array.isArray(other?.ansi) &&
-      other.ansi.length === 16 &&
-      [other.background, other.foreground, other.cursor, other.selection, ...other.ansi].every(
-        (c) => typeof c === 'string' && isHex(c),
-      )
-    )
-  ) {
-    return 'holds an other mode that is not 20 "#rrggbb" colors'
-  }
-
-  const shelved = typeof p.catalog === 'string' ? catalogProblem(p.catalog) : undefined
-
-  if (shelved) {
-    return shelved
-  }
-
-  return [p.native ?? '-', p.catalog ?? '-', p.ansiSource]
-    .values()
-    .map((field) => (typeof field === 'string' ? textProblem(field) : 'has a field that is not text'))
-    .find(Boolean)
 }
 
 function keptPath(configHome: string): string {

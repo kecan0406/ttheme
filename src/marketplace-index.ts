@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { reach } from './available.ts'
-import { cacheRoot } from './booru.ts'
 import { writeAtomic } from './edits.ts'
 import type { PaletteEntry } from './manifest.ts'
-import { type Shown, showcase } from './showcase.ts'
+import { containsText } from './names.ts'
+import { cacheRoot } from './paths.ts'
 import { isRemote, parseSource } from './sources.ts'
 import { nameProblem } from './theme.ts'
 
@@ -46,43 +46,11 @@ interface Cached {
   text: string
 }
 
-function inert(text: string): string {
+export function inert(text: string): string {
   return text
     .replace(/\p{Bidi_Control}/gu, '')
     .replace(/[\p{Cc}\s]+/gu, ' ')
     .trim()
-}
-
-function listedPalette(entry: PaletteEntry): ListedPalette {
-  return {
-    name: entry.name,
-    ...(entry.catalog ? { catalog: entry.catalog } : {}),
-    background: entry.background,
-    foreground: entry.foreground,
-    cursor: entry.cursor,
-    selection: entry.selection,
-    ansi: entry.ansi,
-    signatureSlots: entry.signatureSlots,
-  }
-}
-
-export function indexText(shown: Shown[]): string {
-  const marketplaces: Listed[] = shown
-    .map((m) => ({
-      id: m.id,
-      source: m.add,
-      about: inert(m.about),
-      stars: m.stars,
-      updated: m.pushedAt,
-      palettes: m.palettes.map(listedPalette),
-    }))
-    .sort((a, b) => b.stars - a.stars || a.id.localeCompare(b.id))
-
-  return `${JSON.stringify({ marketplaces })}\n`
-}
-
-export async function buildIndex(official: PaletteEntry[], token?: string): Promise<string> {
-  return indexText(await showcase(official, token))
 }
 
 function word(value: unknown): string | undefined {
@@ -242,4 +210,19 @@ export async function readIndex(signal?: AbortSignal, path = indexCache(), url =
 
     return { marketplaces, at: cached.at, offline: error instanceof Error ? error.message : String(error) }
   }
+}
+
+export function listedMatches(m: Listed, query: string): boolean {
+  return containsText([m.id, m.source, m.about, ...m.palettes.flatMap((e) => [e.name, e.catalog ?? ''])], query)
+}
+
+export interface Shown {
+  id: string
+  repo: string
+  add: string
+  about: string
+  stars: number
+  pushedAt: string
+  license: string | null
+  palettes: PaletteEntry[]
 }

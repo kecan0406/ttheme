@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { backupPath } from '../edits.ts'
-import { alacritty as emitter } from '../emit/index.ts'
+import { alacritty as emitter } from '../emit/alacritty.ts'
 import { owned } from '../theme.ts'
 import { BLOCK, BLOCK_BEGIN, BLOCK_END, fromHome, GENERATED, MANAGED, removeBlock, upsertBlock } from '../wiring.ts'
 import { readText, stripped, tilde } from './common.ts'

@@ -3,23 +3,23 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:f
 import { basename, join, relative } from 'node:path'
 import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
-import { idOf, nameOf, parseManifest, readMarketplaces } from './available.ts'
+import { idOf, nameOf, readMarketplaces } from './available.ts'
 import { writeAtomic } from './edits.ts'
-import { listed, type PaletteEntry } from './manifest.ts'
-import type { Listed } from './marketplace-index.ts'
-import { containsText } from './names.ts'
+import { type Installed, readInstalled, writeInstalled } from './installed.ts'
 import {
-  gateLines,
   type LocalMarketplace,
   localMarketplaces,
   marketplaceFiles,
   palettesDir,
   readMarketplaceDir,
   warning,
-} from './own.ts'
-import { configHome, type Installed, readInstalled, sync, writeInstalled } from './palettes.ts'
+} from './local.ts'
+import { listed, type PaletteEntry, parseManifest } from './manifest.ts'
+import { gateLines } from './own.ts'
+import { sync } from './palettes.ts'
+import { configHome } from './paths.ts'
 import { pending } from './pending.ts'
-import { ago, counted, type Fetched, fetchedAt, fetchMarketplace, readTries, storeMarketplace } from './refresh.ts'
+import { type Fetched, fetchedAt, fetchMarketplace, readTries, storeMarketplace } from './refresh.ts'
 import { renameProblems } from './renames.ts'
 import {
   autoUpdates,
@@ -41,6 +41,7 @@ import {
   sameMarketplace,
   shownSource,
 } from './sources.ts'
+import { ago, counted } from './text.ts'
 import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf, unknownKeys } from './theme.ts'
 
 const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -324,10 +325,6 @@ export function lastUpdate(home: string, source: string, tries = readTries(), no
   }
 
   return at === undefined ? 'never updated' : `updated ${ago(at, now)}`
-}
-
-export function listedMatches(m: Listed, query: string): boolean {
-  return containsText([m.id, m.source, m.about, ...m.palettes.flatMap((e) => [e.name, e.catalog ?? ''])], query)
 }
 
 export function repoFor({ name }: Identity): string {

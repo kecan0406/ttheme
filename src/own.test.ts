@@ -5,20 +5,18 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
-
+import { readMarketplaceDir, warning } from './local.ts'
 import {
   codeOf,
   type Draft,
   fromCode,
   paletteToml,
   readCodes,
-  readMarketplaceDir,
   readOwnText,
   recolor,
   resign,
   shareCode,
   shareLink,
-  warning,
   withPictures,
 } from './own.ts'
 import { marketplaceOf } from './theme.ts'

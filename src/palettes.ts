@@ -1,99 +1,24 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { forgetAppearance, knowAppearance, settingsFor } from './appearance.ts'
+import { forgetAppearance, knowAppearance } from './appearance.ts'
 import { available, nameOf, nearest, readAvailable, untuned, writeKept } from './available.ts'
 import { backgroundsDir, freshenConfs, paintFor, readStore, retint } from './backdrop.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { aliasesZsh, palettesZsh } from './emit/shell.ts'
+import { type Host, systemHost } from './host.ts'
+import { type Installed, readInstalled, worn, writeInstalled } from './installed.ts'
 import { inMode, listed, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
 import { paletteAliases } from './names.ts'
-import { installedPath, marketplacesOf } from './sources.ts'
-import { readText, systemHost, themeFiles, tilde } from './terminals/common.ts'
-import { WIRED, type Wired, wirings } from './terminals/index.ts'
-import type { Ctx, Host, Moment, Now, Out, Pointed } from './terminals/types.ts'
+import { marketplacesOf } from './sources.ts'
+import { settingsFor } from './terminal.ts'
+import { readText, themeFiles, tilde } from './terminals/common.ts'
+import { wirings } from './terminals/index.ts'
+import type { Ctx, Moment, Now, Out, Pointed } from './terminals/types.ts'
 import { marketplaceOf, owned } from './theme.ts'
 import { readTone, tuned, tunedNames } from './tone.ts'
+import type { Wired } from './wired.ts'
 import { modeFor, modeSetting } from './wiring.ts'
-
-export interface Installed {
-  terminals: Wired[]
-  author?: string
-  startup?: string
-  off?: true
-  itermBase?: string
-  konsoleBase?: string
-  terminalBase?: string
-  wtHome?: string
-  wtProfile?: string
-  marketplaces?: string[]
-  updates?: Record<string, boolean>
-  palettes: string[]
-}
-
-export function startupPalette(state: Installed): string | undefined {
-  return state.startup && state.palettes.includes(state.startup) ? state.startup : state.palettes[0]
-}
-
-export function worn(state: Installed): string | undefined {
-  return state.off ? undefined : startupPalette(state)
-}
-
-export function configHome(): string {
-  return process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config')
-}
-
-type Optional = Exclude<keyof Installed, 'terminals' | 'palettes'>
-
-const text = (value: unknown) => (typeof value === 'string' && value !== '' ? value : undefined)
-
-const OPTIONAL = {
-  author: text,
-  startup: text,
-  off: (value) => (value ? true : undefined),
-  itermBase: text,
-  konsoleBase: text,
-  terminalBase: text,
-  wtHome: text,
-  wtProfile: text,
-  marketplaces: (value) => (Array.isArray(value) ? value.filter((m): m is string => typeof m === 'string') : undefined),
-  updates: (value) =>
-    value && typeof value === 'object'
-      ? Object.fromEntries(
-          Object.entries(value).filter((pair): pair is [string, boolean] => typeof pair[1] === 'boolean'),
-        )
-      : undefined,
-} satisfies { [K in Optional]-?: (value: unknown) => Installed[K] }
-
-export function readInstalled(configHome: string): Installed {
-  const path = installedPath(configHome)
-
-  if (!existsSync(path)) {
-    throw new Error(`nothing installed yet at ${path} — run \`ttheme init\` first`)
-  }
-
-  const doc = JSON.parse(readFileSync(path, 'utf8'))
-
-  if (!Array.isArray(doc?.palettes) || !Array.isArray(doc.terminals)) {
-    throw new Error(`${path} has no palettes or terminals`)
-  }
-
-  return {
-    terminals: doc.terminals.filter((t: Wired) => WIRED.includes(t)),
-    ...Object.fromEntries(
-      Object.entries(OPTIONAL).flatMap(([key, read]) => {
-        const value = read(doc[key])
-
-        return value === undefined ? [] : [[key, value]]
-      }),
-    ),
-    palettes: doc.palettes,
-  }
-}
-
-export function writeInstalled(configHome: string, state: Installed): void {
-  writeAtomic(installedPath(configHome), `${JSON.stringify(state, null, 2)}\n`)
-}
 
 export function resolve(manifest: Manifest, names: string[]): PaletteEntry[] {
   const known = new Map(manifest.palettes.map((p) => [p.name, p]))

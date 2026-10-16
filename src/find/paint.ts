@@ -1,6 +1,5 @@
 import { rmSync } from 'node:fs'
 import { join } from 'node:path'
-import { cells } from '../ansi.ts'
 import { type Hex, rgb } from '../color.ts'
 import type { Renderer } from '../render.ts'
 import {
@@ -12,6 +11,7 @@ import {
   viewVar,
   wipesPlacements,
 } from '../terminal.ts'
+import { cells } from '../text.ts'
 import type { Mouse } from '../tui/keys.ts'
 import { chase, GLIDE } from '../tui/motion.ts'
 import { type Frame, Screen } from '../tui/screen.ts'

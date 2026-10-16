@@ -1,9 +1,8 @@
-import { execFileSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Theme } from '../theme.ts'
 import { owned } from '../theme.ts'
-import type { Host, Unwired, Wiring } from './types.ts'
+import type { Unwired, Wiring } from './types.ts'
 
 export function readText(path: string): string {
   return existsSync(path) ? readFileSync(path, 'utf8') : ''
@@ -48,22 +47,4 @@ export function themeFiles(wiring: Wiring, theme: Theme): { file: string; conten
 
     return file !== '' && !file.includes('/') ? [{ file, content: out.content }] : []
   })
-}
-
-export function systemHost(): Host {
-  return {
-    platform: process.platform,
-    env: process.env,
-    run: (command, args) => {
-      try {
-        return execFileSync(command, [...args], {
-          encoding: 'utf8',
-          stdio: ['ignore', 'pipe', 'ignore'],
-          timeout: 5000,
-        }).trim()
-      } catch {
-        return undefined
-      }
-    },
-  }
 }

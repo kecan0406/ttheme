@@ -4,11 +4,11 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
+import type { Host } from '../host.ts'
+import type { Installed } from '../installed.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from '../manifest.ts'
-import { type Installed, pointDefaults, sync, withBases } from '../palettes.ts'
+import { pointDefaults, sync, withBases } from '../palettes.ts'
 import { TERMINAL_JS, terminalScript } from './terminal-app.ts'
-import type { Host } from './types.ts'
 
 function entry(name: string, order: number, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {

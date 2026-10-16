@@ -4,29 +4,19 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
-import { readAppearance, settingsFor, systemAppearance } from './appearance.ts'
-import { available, parseManifest, readMarketplaces, writeOfficial } from './available.ts'
+import { readAppearance, systemAppearance } from './appearance.ts'
+import { available, readMarketplaces, writeOfficial } from './available.ts'
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
+import { type Host, systemHost } from './host.ts'
+import { type Installed, readInstalled, startupPalette, worn, writeInstalled } from './installed.ts'
 import { pickPalettes } from './installs.ts'
 import { liveOf } from './live.ts'
-import { inMode, type Manifest, type PaletteEntry } from './manifest.ts'
+import { inMode, type Manifest, type PaletteEntry, parseManifest } from './manifest.ts'
 import type { Mode, Setting } from './mode.ts'
-import {
-  configHome as configDir,
-  type Installed,
-  pointDefaults,
-  readInstalled,
-  startupPalette,
-  sync,
-  wiringNext,
-  wiringNotes,
-  wiringPlan,
-  withBases,
-  worn,
-  writeInstalled,
-} from './palettes.ts'
+import { pointDefaults, sync, wiringNext, wiringNotes, wiringPlan, withBases } from './palettes.ts'
+import { configHome as configDir } from './paths.ts'
 import { redrawPictures } from './redraw.ts'
 import {
   bashBlock,
@@ -42,13 +32,14 @@ import {
   zdotdirOf,
 } from './shells.ts'
 import { marketplacesOf, OFFICIAL } from './sources.ts'
-import { detectTerminal, TRAITS } from './terminal.ts'
-import { systemHost, tilde } from './terminals/common.ts'
-import { WIRED, WIRINGS, type Wired, wirings } from './terminals/index.ts'
-import type { Host, Pointed, Setup } from './terminals/types.ts'
+import { detectTerminal, settingsFor, TRAITS } from './terminal.ts'
+import { tilde } from './terminals/common.ts'
+import { WIRINGS, wirings } from './terminals/index.ts'
+import type { Pointed, Setup } from './terminals/types.ts'
 import { warpSettings } from './terminals/warp.ts'
 import { windowsAppData } from './terminals/windows-terminal.ts'
 import { marketplaceOf, shelfOf } from './theme.ts'
+import { WIRED, type Wired } from './wired.ts'
 import { configFile, modeSetting, settingValue, upsertBlock, withSetting, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {

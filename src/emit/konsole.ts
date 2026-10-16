@@ -1,7 +1,7 @@
+import type { ProfileBackground } from '../backdrop.ts'
 import { type Hex, mix, rgb } from '../color.ts'
 import type { Theme } from '../theme.ts'
 import { owned } from '../theme.ts'
-import type { ProfileBackground } from './iterm2.ts'
 import { banner, type Emitter, type Output } from './types.ts'
 
 function entry(group: string, color: string): string[] {

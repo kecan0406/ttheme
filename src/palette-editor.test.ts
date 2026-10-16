@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { oklch, rgb } from './color.ts'
 import { renderEditor } from './editor-screen.ts'
-import { CONTRAST, type EditorOptions, listOf, PaletteEditor, parseColor } from './palette-editor.ts'
+import { CONTRAST, type EditorOptions, PaletteEditor, parseColor } from './palette-editor.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
+import { listOf } from './slots.ts'
 
 const start: Colors = grow(SEEDS)
 const other: Colors = grow({ ...SEEDS, hue: 20, background: 0.15 })

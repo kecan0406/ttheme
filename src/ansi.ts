@@ -1,41 +1,5 @@
-import measure from 'fast-string-width'
+import { cells, graphemes } from './text.ts'
 import { closing } from './tui/style.ts'
-
-const PRINTABLE = /^[\x20-\x7e]*$/
-const WIDTHS = new Map<string, number>()
-const WIDTHS_MOST = 8192
-const WIDTH_LONGEST = 512
-
-export function printable(text: string): boolean {
-  return PRINTABLE.test(text)
-}
-
-export function cells(text: string): number {
-  if (text.length === 1) {
-    const code = text.charCodeAt(0)
-
-    if (code >= 0x20 && code <= 0x7e) {
-      return 1
-    }
-  }
-
-  if (text.length > WIDTH_LONGEST) {
-    return PRINTABLE.test(text) ? text.length : measure(text)
-  }
-
-  let width = WIDTHS.get(text)
-
-  if (width === undefined) {
-    if (WIDTHS.size >= WIDTHS_MOST) {
-      WIDTHS.clear()
-    }
-
-    width = PRINTABLE.test(text) ? text.length : measure(text)
-    WIDTHS.set(text, width)
-  }
-
-  return width
-}
 
 export function linked(text: string, url: string | undefined): string {
   return url && !/\p{Cc}/u.test(url) ? `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\` : text
@@ -65,14 +29,6 @@ export function sequenceAt(text: string, at: number): number {
   }
 
   return end < text.length ? end - at + 1 : 0
-}
-
-let segmenter: Intl.Segmenter | undefined
-
-export function graphemes(text: string): Intl.Segments {
-  segmenter ??= new Intl.Segmenter(undefined, { granularity: 'grapheme' })
-
-  return segmenter.segment(text)
 }
 
 export interface Piece {

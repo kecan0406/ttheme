@@ -1,5 +1,6 @@
 import { reach } from './available.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
+import { inert, type Listed, type ListedPalette, type Shown } from './marketplace-index.ts'
 import { fetchArchive, fromArchive } from './refresh.ts'
 import { TOPIC } from './sources.ts'
 import { slugOf } from './theme.ts'
@@ -12,17 +13,6 @@ interface Found {
   owner: { login: string }
   pushed_at: string
   license: { spdx_id: string } | null
-}
-
-export interface Shown {
-  id: string
-  repo: string
-  add: string
-  about: string
-  stars: number
-  pushedAt: string
-  license: string | null
-  palettes: PaletteEntry[]
 }
 
 async function found(token: string | undefined): Promise<Found[]> {
@@ -68,4 +58,36 @@ async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {
 
 export async function showcase(official: PaletteEntry[], token?: string): Promise<Shown[]> {
   return (await Promise.all((await found(token)).map((r) => shown(r, official)))).flat()
+}
+
+function listedPalette(entry: PaletteEntry): ListedPalette {
+  return {
+    name: entry.name,
+    ...(entry.catalog ? { catalog: entry.catalog } : {}),
+    background: entry.background,
+    foreground: entry.foreground,
+    cursor: entry.cursor,
+    selection: entry.selection,
+    ansi: entry.ansi,
+    signatureSlots: entry.signatureSlots,
+  }
+}
+
+export function indexText(shown: Shown[]): string {
+  const marketplaces: Listed[] = shown
+    .map((m) => ({
+      id: m.id,
+      source: m.add,
+      about: inert(m.about),
+      stars: m.stars,
+      updated: m.pushedAt,
+      palettes: m.palettes.map(listedPalette),
+    }))
+    .sort((a, b) => b.stars - a.stars || a.id.localeCompare(b.id))
+
+  return `${JSON.stringify({ marketplaces })}\n`
+}
+
+export async function buildIndex(official: PaletteEntry[], token?: string): Promise<string> {
+  return indexText(await showcase(official, token))
 }

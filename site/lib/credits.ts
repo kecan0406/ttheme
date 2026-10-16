@@ -1,6 +1,7 @@
 import type { Picture, PictureCredit } from '@/lib/share-view'
-import { linksOf, pageKind, pageLabel, postCredit, safeUrl } from '../../src/artists.ts'
+import { linksOf, pageKind, pageLabel, safeUrl } from '../../src/artists.ts'
 import { SITES } from '../../src/booru.ts'
+import { postCredit } from '../../src/booru-net.ts'
 import type { Shared } from './share'
 
 const TIMEOUT = 8000

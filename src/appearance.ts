@@ -2,13 +2,8 @@ import { readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { writeAtomic } from './edits.ts'
-import { MODES, type Mode, SETTINGS, type Setting } from './mode.ts'
-import { TRAITS } from './terminal.ts'
-import type { Host, Wired } from './terminals/types.ts'
-
-export function settingsFor(terminals: readonly Wired[]): readonly Setting[] {
-  return terminals.some((terminal) => TRAITS[terminal].appears) ? SETTINGS : MODES
-}
+import type { Host } from './host.ts'
+import { MODES, type Mode } from './mode.ts'
 
 export function appearancePath(): string {
   return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'appearance')

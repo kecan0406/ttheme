@@ -13,28 +13,16 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
 import { writeOfficial } from './available.ts'
 import { ghostty } from './emit/ghostty.ts'
 import { warpPictureFile } from './emit/warp.ts'
+import type { Host } from './host.ts'
+import { type Installed, readInstalled, startupPalette, writeInstalled } from './installed.ts'
 import { inMode, type Manifest, type PaletteEntry, SCHEMA, toTheme } from './manifest.ts'
-import {
-  forget,
-  type Installed,
-  pointDefaults,
-  readInstalled,
-  refreshPictures,
-  resolve,
-  startupPalette,
-  sync,
-  wiringNotes,
-  withBases,
-  writeInstalled,
-} from './palettes.ts'
+import { forget, pointDefaults, refreshPictures, resolve, sync, wiringNotes, withBases } from './palettes.ts'
 import { decodePng, encodeRgba } from './png.ts'
 import { upsertAlacrittyImport } from './terminals/alacritty.ts'
 import { itermProfilesPath } from './terminals/iterm2.ts'
-import type { Host } from './terminals/types.ts'
 import { warpSettings, warpThemes, warpThemeValue } from './terminals/warp.ts'
 import { weztermBlock } from './terminals/wezterm.ts'
 import { wtFragmentPath } from './terminals/windows-terminal.ts'

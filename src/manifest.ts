@@ -1,11 +1,13 @@
 import pkg from '../package.json' with { type: 'json' }
-import { backdropTone } from './backdrop.ts'
+import { backdropTone } from './backdrop-tone.ts'
+import { isHex } from './color.ts'
 import { GATE_RULES, type GateRule, measure } from './contrast.ts'
 import { memo } from './memo.ts'
 import { mirror } from './mirror.ts'
 import { type Mode, modeOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import type { Shade, SharedPicture, Theme } from './theme.ts'
+import { catalogProblem, nameProblem, textProblem } from './theme.ts'
 
 export interface PaletteEntry {
   name: string
@@ -233,4 +235,75 @@ export function listed(palettes: PaletteEntry[]): PaletteEntry[] {
 
 export function emptyManifest(): Manifest {
   return { schema: SCHEMA, version: pkg.version, gate: GATE_RULES, palettes: [] }
+}
+
+export function parseManifest(source: string): Manifest {
+  let doc: unknown
+
+  try {
+    doc = JSON.parse(source)
+  } catch {
+    throw new Error('the manifest is not valid JSON')
+  }
+
+  const manifest = doc as Manifest
+
+  if (typeof manifest?.version !== 'string' || !Array.isArray(manifest.palettes)) {
+    throw new Error('the manifest has no version or palettes')
+  }
+
+  for (const p of manifest.palettes) {
+    const problem = entryProblem(p)
+
+    if (problem) {
+      throw new Error(`manifest entry ${JSON.stringify(p?.name)} ${problem}`)
+    }
+  }
+
+  return manifest
+}
+
+export function entryProblem(p: PaletteEntry): string | undefined {
+  if (typeof p?.name !== 'string' || !Array.isArray(p.ansi) || p.ansi.length !== 16) {
+    return 'is missing name or its 16 ANSI colors'
+  }
+
+  const named = [p.name, p.base, p.from]
+    .values()
+    .map((name) => (name === undefined ? undefined : nameProblem(name)))
+    .find(Boolean)
+
+  if (named) {
+    return named
+  }
+
+  if (![p.background, p.foreground, p.cursor, p.selection, ...p.ansi].every((c) => typeof c === 'string' && isHex(c))) {
+    return 'holds a color that is not "#rrggbb"'
+  }
+
+  const other = p.other
+
+  if (
+    other !== undefined &&
+    !(
+      Array.isArray(other?.ansi) &&
+      other.ansi.length === 16 &&
+      [other.background, other.foreground, other.cursor, other.selection, ...other.ansi].every(
+        (c) => typeof c === 'string' && isHex(c),
+      )
+    )
+  ) {
+    return 'holds an other mode that is not 20 "#rrggbb" colors'
+  }
+
+  const shelved = typeof p.catalog === 'string' ? catalogProblem(p.catalog) : undefined
+
+  if (shelved) {
+    return shelved
+  }
+
+  return [p.native ?? '-', p.catalog ?? '-', p.ansiSource]
+    .values()
+    .map((field) => (typeof field === 'string' ? textProblem(field) : 'has a field that is not text'))
+    .find(Boolean)
 }

@@ -1,4 +1,4 @@
-import { cells, fit, printable, spread, wrapText } from './ansi.ts'
+import { fit, spread, wrapText } from './ansi.ts'
 import {
   joints,
   type Layout,
@@ -29,21 +29,12 @@ import {
   spot,
 } from './editor-paint.ts'
 import { srgb } from './fix.ts'
-import {
-  BASE,
-  CHANNELS,
-  CONTRAST,
-  colorsOf,
-  colorText,
-  type Format,
-  PAIRS,
-  type PaletteEditor,
-  SLOT_NAMES,
-  slotLabel,
-  slotUse,
-} from './palette-editor.ts'
-import { type Art, type Drawn, PLANE_BOTTOM, PLANE_TOP, reach, shareOf } from './picker-art.ts'
+import { CHANNELS, CONTRAST, type PaletteEditor } from './palette-editor.ts'
+import type { Art, Drawn } from './picker-art.ts'
+import { PLANE_BOTTOM, PLANE_TOP, reach, shareOf } from './plane.ts'
 import type { Colors } from './seeds.ts'
+import { BASE, colorsOf, colorText, type Format, PAIRS, SLOT_NAMES, slotLabel, slotUse } from './slots.ts'
+import { cells, printable } from './text.ts'
 import { boxEdge, boxed, pillOf } from './tui/parts.ts'
 import { BG_RESET, FG_RESET, INK_RESET, MARKS, open, type Paint, painter, RESET, surfaceOf } from './tui/style.ts'
 import { cover, keyZone, zone } from './tui/zones.ts'

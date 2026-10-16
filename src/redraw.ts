@@ -3,7 +3,6 @@ import { readAvailable } from './available.ts'
 import {
   applyRedraw,
   backgroundsDir,
-  type Coloring,
   coloringOf,
   inkDue,
   type Picture,
@@ -11,9 +10,12 @@ import {
   readStore,
   undrawn,
 } from './backdrop.ts'
+import type { Coloring } from './backdrop-tone.ts'
 import { MATTING } from './cutout.ts'
-import { aligns as alignsFor, configHome, readInstalled, refreshPictures } from './palettes.ts'
-import { prepareOne, redrawOne } from './pictures.ts'
+import { readInstalled } from './installed.ts'
+import { aligns as alignsFor, refreshPictures } from './palettes.ts'
+import { configHome } from './paths.ts'
+import { prepareOne, redrawOne } from './redrawing.ts'
 import { Pool } from './render.ts'
 import { blurOf } from './wiring.ts'
 

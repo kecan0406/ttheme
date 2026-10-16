@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-
-import { cells, clip, fit, linked, wrapText } from './ansi.ts'
+import { clip, fit, linked, wrapText } from './ansi.ts'
+import { cells } from './text.ts'
 
 test('fit closes only what the cut text opened, so a painted row keeps its background', () => {
   assert.equal(fit('\x1b[1mabcdef\x1b[22m', 4), '\x1b[1mabc\x1b[22m…')

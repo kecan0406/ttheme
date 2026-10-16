@@ -9,6 +9,8 @@ import { runEditor } from './editor-screen.ts'
 import { writeAtomic } from './edits.ts'
 import { findFor } from './find/find.ts'
 import { fixGate, type Move } from './fix.ts'
+import { readInstalled } from './installed.ts'
+import { localMarketplaces, marketplaceFiles, ownPath } from './local.ts'
 import {
   colorsOfTheme,
   inMode,
@@ -28,9 +30,6 @@ import {
   draftOf,
   fromCode,
   gateLines,
-  localMarketplaces,
-  marketplaceFiles,
-  ownPath,
   paletteToml,
   readCodes,
   readOwnText,
@@ -39,11 +38,13 @@ import {
   withPictures,
   withShade,
 } from './own.ts'
-import { type Choice, type Edited, type EditorOptions, listOf } from './palette-editor.ts'
-import { commit, configHome, readInstalled, refreshPictures, sync } from './palettes.ts'
+import type { Choice, Edited, EditorOptions } from './palette-editor.ts'
+import { commit, refreshPictures, sync } from './palettes.ts'
+import { configHome } from './paths.ts'
 import { PickerLayer } from './picker-art.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
+import { listOf } from './slots.ts'
 import { showsPictures } from './terminal.ts'
 import { marketplaceOf, nameProblem, type SharedPicture, shelfOf, type Theme } from './theme.ts'
 import { overrideOf, readTone, tonedEntry, toneOf, withTone, writeTone } from './tone.ts'
