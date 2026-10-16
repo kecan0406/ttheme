@@ -1,6 +1,6 @@
 import { argbFromHex, Hct, hexFromArgb } from '@material/material-color-utilities'
 import { type Hex, lab } from './color.ts'
-import { apart, check } from './contrast.ts'
+import { apart, check, exemptSlots, roleOf } from './contrast.ts'
 import { fixRoles, type Move } from './fix.ts'
 import { type Mode, modeOf, otherOf } from './mode.ts'
 import type { Shade, Theme } from './theme.ts'
@@ -18,7 +18,7 @@ export interface Mirroring {
 
 export const TONES: Record<Mode, readonly number[]> = {
   dark: [14, 62, 78, 76, 62, 72, 70, 85, 50, 74, 88, 88, 70, 84, 80, 94],
-  light: [96, 42, 34, 42, 42, 34, 34, 18, 50, 36, 28, 36, 36, 28, 28, 12],
+  light: [96, 42, 34, 42, 42, 42, 34, 18, 50, 36, 28, 36, 36, 36, 28, 12],
 }
 
 export const SURFACE_TONE: Record<Mode, number> = { dark: 8, light: 98 }
@@ -39,6 +39,12 @@ export const SURFACE_CHROMA = 8
 export const TEXT_CHROMA = 12
 export const SELECTION_CHROMA = 24
 export const SIGNATURE_TEXT_CHROMA = 24
+
+export const CHROMA_LIFT = 1.3
+
+export const OLIVE = { hue: { min: 86, max: 133 }, chroma: 16, tone: 65 }
+
+export const OLIVE_EXIT = { yellow: 84, green: 136 }
 
 const NEUTRALS = new Set([0, 7, 8])
 
@@ -62,6 +68,37 @@ const own = (value: Hex, tone: number, chroma = Number.POSITIVE_INFINITY) => {
   return make(o.hue, Math.min(o.chroma, chroma), tone)
 }
 
+const edge = (hue: number, tone: number) => Hct.from(hue, 200, tone).chroma
+
+export function carried(value: Hex, tone: number): Hex {
+  const o = hct(value)
+  const room = edge(o.hue, o.tone)
+  const share = room > 0 ? Math.min(1, o.chroma / room) : 0
+
+  return make(o.hue, Math.min(o.chroma * CHROMA_LIFT, Math.max(o.chroma, share * edge(o.hue, tone))), tone)
+}
+
+export function olive(value: Hex): boolean {
+  const o = hct(value)
+  const hue = Math.round(o.hue)
+
+  return (
+    hue >= OLIVE.hue.min &&
+    hue <= OLIVE.hue.max &&
+    Math.round(o.chroma) > OLIVE.chroma &&
+    Math.round(o.tone) < OLIVE.tone
+  )
+}
+
+function cleared(value: Hex, role: number): Hex {
+  if (!olive(value)) return value
+
+  const o = hct(value)
+  const gold = role === 3 || (role !== 2 && o.hue < (OLIVE.hue.min + OLIVE.hue.max) / 2)
+
+  return make(gold ? OLIVE_EXIT.yellow : OLIVE_EXIT.green, o.chroma, o.tone)
+}
+
 const NAMED = new Map<string, Exclude<keyof Shade, 'ansi'>>([
   ['background', 'background'],
   ['foreground', 'foreground'],
@@ -83,13 +120,14 @@ function flip(theme: Mirrored): Shade {
   const text = (tone: number) => make(seed.hue, Math.min(seed.chroma, TEXT_CHROMA), tone)
 
   const flipped = (value: Hex) => 100 - hct(value).tone
+  const exempt = exemptSlots(theme)
 
   return {
     background: surface(SURFACE_TONE[to]),
     foreground: theme.signatureSlots.includes('foreground')
       ? own(theme.foreground, TEXT_TONE[to], SIGNATURE_TEXT_CHROMA)
       : text(TEXT_TONE[to]),
-    cursor: own(theme.cursor, across(hct(theme.cursor).tone, CURSOR_TONE[from], CURSOR_TONE[to])),
+    cursor: carried(theme.cursor, across(hct(theme.cursor).tone, CURSOR_TONE[from], CURSOR_TONE[to])),
     selectionBackground: theme.signatureSlots.includes('selection')
       ? own(theme.selectionBackground, clamp(flipped(theme.selectionBackground), CONTAINER_TONE[to]))
       : own(theme.selectionBackground, SELECTION_TONE[to], SELECTION_CHROMA),
@@ -100,7 +138,9 @@ function flip(theme: Mirrored): Shade {
 
       if (i === 15) return text(tone)
 
-      return own(value, tone)
+      const shade = carried(value, tone)
+
+      return exempt.has(i) ? shade : cleared(shade, roleOf(i))
     }),
   }
 }
@@ -165,14 +205,12 @@ function away(from: number, past: number, mode: Mode): number[] {
   return out
 }
 
-export function separated(theme: Signed, shade: Shade, cursor = shade.cursor): Shade {
+export function separated(theme: Signed, shade: Shade, cursor = shade.cursor, at = own): Shade {
   const mode = modeOf(shade)
   let next = shade
 
   if (lookalikes(theme, next).some((pair) => pair.includes('cursor')))
-    next = stepped(theme, next, 'cursor', nearest(hct(next.cursor).tone, CURSOR_TONE[mode]), (tone) =>
-      own(cursor, tone),
-    )
+    next = stepped(theme, next, 'cursor', nearest(hct(next.cursor).tone, CURSOR_TONE[mode]), (tone) => at(cursor, tone))
 
   for (const [a, b] of lookalikes(theme, next)) {
     if (!a.startsWith('ansi') || !b.startsWith('ansi') || reads(next, a, b)) continue
@@ -201,7 +239,7 @@ function fixed(theme: Mirrored, shade: Shade): Mirroring {
 export function mirrored(theme: Mirrored): Mirroring {
   const { shade, moves } = fixed(theme, flip(theme))
 
-  return { shade: separated(theme, shade, theme.cursor), moves }
+  return { shade: separated(theme, shade, theme.cursor, carried), moves }
 }
 
 export const mirror = (theme: Mirrored): Shade => mirrored(theme).shade

@@ -5,7 +5,7 @@ import { argbFromHex, Hct, hexFromArgb } from '@material/material-color-utilitie
 import { check } from '../../../../src/contrast.ts'
 import type { Move } from '../../../../src/fix.ts'
 import { colorsOfTheme } from '../../../../src/manifest.ts'
-import { CONTAINER_TONE, CURSOR_TONE, lookalikes, mirrored } from '../../../../src/mirror.ts'
+import { CONTAINER_TONE, CURSOR_TONE, carried, lookalikes, mirrored } from '../../../../src/mirror.ts'
 import { type Mode, modeOf, otherOf } from '../../../../src/mode.ts'
 import { colorsToml, withTable } from '../../../../src/own.ts'
 import type { Shade } from '../../../../src/theme.ts'
@@ -126,7 +126,8 @@ function tune(members: Member[]) {
     for (const m of members) {
       for (const slot of (['cursor', 'selection'] as const).filter((s) => m.signature.includes(s))) {
         const band = BANDS[slot][m.to]
-        const source = hct(slotOf(m.own, slot))
+        const anchor = slotOf(m.own, slot)
+        const source = hct(anchor)
         const alike = lookalikes(signed(m), m.base).length
         const failing = check({ ...signed(m), ...m.base }).length
         let best = score()
@@ -135,7 +136,9 @@ function tune(members: Member[]) {
           const shade = withSlot(
             m.shade,
             slot,
-            hexFromArgb(Hct.from(source.hue, source.chroma, tone).toInt()).toLowerCase(),
+            slot === 'cursor'
+              ? carried(anchor, tone)
+              : hexFromArgb(Hct.from(source.hue, source.chroma, tone).toInt()).toLowerCase(),
           )
           if (lookalikes(signed(m), shade).length > alike) continue
           const held = m.shade

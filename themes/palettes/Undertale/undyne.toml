@@ -29,7 +29,7 @@ ansi = [
   "#857370",
   "#f3a195",
   "#9de9f1",
-  "#ffd4b9",
+  "#ffcfb0",
   "#9da7e8",
   "#d5c9ff",
   "#a8cbf2",
@@ -39,24 +39,24 @@ ansi = [
 [colors.light]
 background = "#fff8f7"
 foreground = "#2d1b18"
-cursor = "#b93e34"
+cursor = "#c52e26"
 selection_background = "#bedaf6"
 ansi = [
   "#fff0ee",
-  "#ae3d22",
+  "#b2391c",
   "#00576e",
   "#905500",
-  "#615ba0",
-  "#5f4187",
+  "#6055b8",
+  "#7d4bb1",
   "#1f5380",
   "#362927",
 
   "#857370",
-  "#82433a",
+  "#8c3c32",
   "#004a4f",
-  "#6d4e3a",
-  "#46518b",
-  "#453c68",
-  "#204565",
+  "#764b2b",
+  "#3e4ea2",
+  "#5e4989",
+  "#1f4566",
   "#2d1b18",
 ]
