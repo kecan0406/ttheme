@@ -344,6 +344,7 @@ still wins:
 
 | Setting | Default | |
 |---|---|---|
+| `TTHEME_MODE` | `own` | the mode every palette is worn in: `own` wears each one the way it was made (almost all dark), `dark` or `light` wears every palette in that mode. Each palette carries both — an official one in its file, any other mirrored from the colors it was made in — and a tone tunes a palette in one mode. Changing it repaints every open tab, painted or not, and draws the pictures again for the mode; set it in `ttheme config`, or in alt-c in `preview`, whose `Mode` row comes first. Terminal.app reads its profiles once, at launch, so until it restarts its tabs take the new mode as colors over your own profile, without the picture |
 | `TTHEME_TAB_PALETTE` | `off` | `off` keeps new tabs on the terminal's configured theme (`preview` → default changes it); `seq` gives every new tab the next palette. |
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |

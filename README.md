@@ -86,7 +86,9 @@ a checkout are in [docs/install.md](docs/install.md).
 </details>
 
 Both images are drawn from the official marketplace as it ships, so they always
-match what Browse offers. `init` installs the catalogs you pick; Browse, the second tab of
+match what Browse offers. Every palette comes in a dark and a light mode:
+`TTHEME_MODE` ([settings](docs/usage.md#settings), or alt-c in `ttheme`) wears
+each one as it was made, or every one dark or light. `init` installs the catalogs you pick; Browse, the second tab of
 `ttheme`, adds or drops single palettes any time, and a merged palette reaches everyone
 with the next release — `ttheme update` brings it, and ttheme says when one is
 out.
