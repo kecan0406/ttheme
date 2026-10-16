@@ -89,6 +89,44 @@ test('a cursor too faint to show moves the tint to the signature slot that shows
   assert.equal(backdropTone(tight, ['cursor', 'ansi0', 'ansi4']).slot, 'ansi4')
 })
 
+const KYUBEY: Colors = {
+  name: 'kyubey',
+  background: '#fff8f7',
+  foreground: '#1f1c39',
+  cursor: '#b83b64',
+  ansi: [
+    '#fff0f2',
+    '#974b61',
+    '#1b5b40',
+    '#8b5800',
+    '#51628f',
+    '#6a4269',
+    '#005676',
+    '#35292b',
+    '#847376',
+    '#863d53',
+    '#034c33',
+    '#8b3f13',
+    '#435381',
+    '#5b345b',
+    '#004763',
+    '#2c1b1f',
+  ],
+}
+
+test('a light palette lets its picture darken the background as far as a dark one lets its picture brighten it, mirrored', () => {
+  const tone = toneFor(KYUBEY, 'cursor')
+  assert.ok(tone.opacity >= 0.1, String(tone.opacity))
+  assert.ok(luminance(mix(KYUBEY.background, KYUBEY.cursor, tone.matched)) >= 0.6)
+  assert.ok(luminance(mix(KYUBEY.background, KYUBEY.cursor, tone.matched + 0.02)) < 0.61)
+})
+
+test('on a light background the ink is how dark the picture is, so it reads the right way round', () => {
+  const image: Rgba = { width: 2, height: 1, data: Uint8Array.from([0, 0, 0, 255, 255, 255, 255, 255]) }
+  assert.deepEqual([...inked(image).ink(false).data], [0, 255])
+  assert.deepEqual([...inked(image).ink(true).data], [255, 0])
+})
+
 test('a cut-out stands whole from its head down, right of centre, a little taller than the window', () => {
   const bust = { x: 49, y: 10, w: 2045, h: 1994 }
   const frame = fillFrame(bust, 1880, 1008, 40)

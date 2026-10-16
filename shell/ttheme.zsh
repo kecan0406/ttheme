@@ -1578,7 +1578,7 @@ __tt_config() {
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*} == "$blur" ]] || __tt_redraw
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_TAB_PALETTE:='*} == "$tab" ]] || { __tt_cli sync && __tt_reload }
   if [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_MODE:='*} != "$mode" ]]; then
-    __tt_cli sync && __tt_reload
+    __tt_cli sync && __tt_reload && __tt_redraw
     print -r -- "Open tabs take the new mode; other settings apply in new tabs — $TTHEME_CONFIG"
     return 0
   fi

@@ -3,7 +3,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameS
 import { basename, isAbsolute, join } from 'node:path'
 import { artworkOf, creditLine, linksOf } from './artists.ts'
 import { type Hex, luminance, mix, rgb } from './color.ts'
-import { checkReadability } from './contrast.ts'
+import { checkReadability, isLight } from './contrast.ts'
 import { MATTING, matte } from './cutout.ts'
 import { keyOf, known, recall, remember } from './drawn.ts'
 import { writeAtomic } from './edits.ts'
@@ -37,6 +37,7 @@ const WHITE = 0.99
 const LIFT = 2
 const PLACEMENT = { tall: 1.15, reach: 0.4, widest: 0.95, headroom: 0.04, margin: 0.03, stands: 12 }
 const PEAK = luminance(mix('#19161e', '#9b86c8', 0.2))
+const FLOOR = luminance(mix('#ede6f2', '#675491', 0.2))
 const SHELF = 'shelf'
 const ORIGINALS = 'originals'
 const STORE = 'images.json'
@@ -139,7 +140,11 @@ function fade(colors: Colors, color: Hex) {
 
   const already = new Set(misses(0))
   const cap = highest((o) => misses(o).every((rule) => already.has(rule)))
-  const matched = highest((o) => luminance(mix(colors.background, color, o)) <= PEAK)
+  const light = isLight(colors)
+
+  const matched = highest((o) =>
+    light ? luminance(mix(colors.background, color, o)) >= FLOOR : luminance(mix(colors.background, color, o)) <= PEAK,
+  )
 
   return { cap, matched, opacity: Math.floor(Math.min(cap, matched) * 100) / 100 }
 }
@@ -223,7 +228,7 @@ function luma(data: Uint8Array, at: number): number {
   return 0.299 * (data[at] ?? 0) + 0.587 * (data[at + 1] ?? 0) + 0.114 * (data[at + 2] ?? 0)
 }
 
-export function liftOf(image: Rgba, box: Box): number {
+export function liftOf(image: Rgba, box: Box, light = false): number {
   const counts = new Uint32Array(256)
   const step = Math.max(1, Math.floor((box.w * box.h) / 400_000))
   let seen = 0
@@ -232,7 +237,7 @@ export function liftOf(image: Rgba, box: Box): number {
     const at = ((box.y + Math.floor(i / box.w)) * image.width + box.x + (i % box.w)) * 4
 
     if ((image.data[at + 3] ?? 0) >= 128) {
-      const level = Math.round(luma(image.data, at))
+      const level = Math.round(light ? 255 - luma(image.data, at) : luma(image.data, at))
       counts[level] = (counts[level] ?? 0) + 1
       seen++
     }
@@ -302,7 +307,7 @@ export function peakOf(image: Rgba, box: Box): Hex {
   return '#ffffff'
 }
 
-function inkOf(image: Rgba, lift: number): Mask {
+function inkOf(image: Rgba, lift: number, light: boolean): Mask {
   const src = image.data
   const data = new Uint8Array(image.width * image.height)
 
@@ -313,8 +318,8 @@ function inkOf(image: Rgba, lift: number): Mask {
       continue
     }
 
-    const level =
-      (0.299 * (src[at] as number) + 0.587 * (src[at + 1] as number) + 0.114 * (src[at + 2] as number)) * lift
+    const luma = 0.299 * (src[at] as number) + 0.587 * (src[at + 1] as number) + 0.114 * (src[at + 2] as number)
+    const level = (light ? 255 - luma : luma) * lift
 
     data[i] = ((level > 255 ? 255 : level) * a) / 255 + 0.5
   }
@@ -429,7 +434,7 @@ function blurColors(image: Rgba, sigma: number): Rgba {
 export interface Inked {
   box: Box
   clear: number
-  ink: Mask
+  ink: (light: boolean) => Mask
   image: Rgba
   peak: Hex
 }
@@ -437,16 +442,17 @@ export interface Inked {
 export function inked(source: Rgba, cut = false): Inked {
   const image = cut ? matte(source) : source
   const box = figureBox(image)
-  let ink: Mask | undefined
+  const inks = new Map<boolean, Mask>()
   let peak: Hex | undefined
 
   return {
     box,
     clear: transparency(image, box),
-    get ink() {
-      ink ??= inkOf(image, liftOf(image, box))
+    ink: (light) => {
+      const held = inks.get(light) ?? inkOf(image, liftOf(image, box, light), light)
+      inks.set(light, held)
 
-      return ink
+      return held
     },
     image,
     get peak() {
@@ -468,9 +474,11 @@ function draw(
   blurring: number,
   coloring: Coloring,
   cut: boolean,
+  light: boolean,
 ): Drawing {
   const held = inked(source, cut)
-  const { box, clear, ink, image } = held
+  const { box, clear, image } = held
+  const ink = held.ink(light)
   const frame = fillFrame(box, width, height, clear)
   const k = Math.min(1, FIGURE / Math.max(box.w, box.h))
   const at = { x: 0, y: 0, w: Math.round(box.w * k), h: Math.round(box.h * k) }
@@ -548,7 +556,8 @@ export function tryOn(
   framing?: Partial<Framing>,
   coloring: Coloring = 'tone',
 ) {
-  const { box, clear, ink } = held
+  const { box, clear } = held
+  const ink = held.ink(isLight(colors))
   const frame = fillFrame(box, width, height, clear)
   const fill = Math.round((100 * frame.at.w) / frame.crop.w / Math.min(width / box.w, height / box.h))
   const size = framing?.size ?? 'fill'
@@ -605,6 +614,7 @@ export interface Picture {
   original?: string
   cut?: string
   matte?: number
+  light?: true
 }
 
 interface Rack {
@@ -997,10 +1007,10 @@ function paintOf(
   hue: Hue,
   coloring: Coloring,
   peak: Hex | undefined,
-): Pick<Picture, 'coloring' | 'opacity' | 'tone' | 'peak'> {
+): Pick<Picture, 'coloring' | 'opacity' | 'tone' | 'peak' | 'light'> {
   return coloring === 'original' && peak
     ? { coloring: 'original', opacity: originalOpacity(colors, peak), peak }
-    : { coloring: 'tone', opacity: hue.opacity, tone: hue.color }
+    : { coloring: 'tone', opacity: hue.opacity, tone: hue.color, ...(isLight(colors) ? { light: true } : {}) }
 }
 
 function kept(name: string, key: string): string {
@@ -1032,7 +1042,7 @@ export function installBackdrop(
   const store = readStore(dir)
   const rack = store.palettes[name] ?? { active: key, pictures: [] }
   const size = fillSize(window.width, window.height)
-  const drawing = draw(image, size.width, size.height, blurring, coloring, source.cut === true)
+  const drawing = draw(image, size.width, size.height, blurring, coloring, source.cut === true, isLight(colors))
   const drawn = made(name, key, drawing, tone.color)
   const original = kept(name, key)
 
@@ -1256,6 +1266,7 @@ function drawnKey(
   blurring: number,
   coloring: Coloring,
   tone: string,
+  light: boolean,
 ): string | undefined {
   const files = [picture.original, picture.cut].map((file) => {
     if (!file) {
@@ -1285,6 +1296,7 @@ function drawnKey(
     blurring,
     coloring,
     coloring === 'tone' ? tone : '',
+    coloring === 'tone' && light ? 'light' : '',
   ])
 }
 
@@ -1293,7 +1305,16 @@ function remembered(dir: string, name: string, picture: Picture): void {
     return
   }
 
-  const key = drawnKey(dir, name, picture, picture.window, picture.blur, coloringOf(picture), picture.tone ?? '')
+  const key = drawnKey(
+    dir,
+    name,
+    picture,
+    picture.window,
+    picture.blur,
+    coloringOf(picture),
+    picture.tone ?? '',
+    picture.light === true,
+  )
 
   if (!key || known(key)) {
     return
@@ -1327,7 +1348,10 @@ function drawnFor(
   coloring: Coloring,
   cut: boolean,
 ): Drawn | null {
-  const key = cut ? undefined : drawnKey(dir, name, picture, size, blurring, coloring, paint.hue.color)
+  const key = cut
+    ? undefined
+    : drawnKey(dir, name, picture, size, blurring, coloring, paint.hue.color, isLight(paint.colors))
+
   const held = key ? recall(key) : undefined
 
   if (held) {
@@ -1351,7 +1375,16 @@ function drawnFor(
     return null
   }
 
-  const drawing = draw(image, size.width, size.height, blurring, coloring, cut || picture.cut !== undefined)
+  const drawing = draw(
+    image,
+    size.width,
+    size.height,
+    blurring,
+    coloring,
+    cut || picture.cut !== undefined,
+    isLight(paint.colors),
+  )
+
   const result = made(name, picture.key, drawing, paint.hue.color)
   const peak = drawing.coloring === 'original' ? drawing.peak : undefined
 
@@ -1403,8 +1436,13 @@ export function redrawn(
 
   if (coloring === 'original') {
     delete next.tone
+    delete next.light
   } else {
     delete next.peak
+  }
+
+  if (!isLight(paint.colors)) {
+    delete next.light
   }
 
   if (cut && image) {
@@ -1415,13 +1453,15 @@ export function redrawn(
     return next
   }
 
-  if (coloringOf(picture) !== coloring) {
+  const same = coloringOf(picture) === coloring && picture.light === next.light
+
+  if (!same) {
     remembered(dir, name, picture)
   }
 
   lay(dir, drawn.files)
   const tune = tuneOf(dir, picture)
-  writeTune(dir, next, coloringOf(picture) === coloring ? tune : { ...tune, opacity: undefined }, aligns, home)
+  writeTune(dir, next, same ? tune : { ...tune, opacity: undefined }, aligns, home)
   const off = join(dir, `${picture.stem}.off.conf`)
 
   if (existsSync(off)) {
@@ -1519,8 +1559,19 @@ function recolor(dir: string, name: string, picture: Picture, hue: Hue): Picture
   }
 }
 
+export function inkDue(picture: Picture, paint: Paint): boolean {
+  return (
+    coloringOf(picture) === 'tone' && picture.tone !== undefined && (picture.light === true) !== isLight(paint.colors)
+  )
+}
+
 function due(picture: Picture, paint: Paint): boolean {
-  return coloringOf(picture) !== 'original' && picture.tone !== undefined && picture.tone !== paint.hue.color
+  return (
+    coloringOf(picture) !== 'original' &&
+    picture.tone !== undefined &&
+    picture.tone !== paint.hue.color &&
+    !inkDue(picture, paint)
+  )
 }
 
 export function retint(configHome: string, paints: ReadonlyMap<string, Paint>): string[] {

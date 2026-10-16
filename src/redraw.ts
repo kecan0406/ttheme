@@ -5,6 +5,7 @@ import {
   backgroundsDir,
   type Coloring,
   coloringOf,
+  inkDue,
   type Picture,
   paintFor,
   readStore,
@@ -31,6 +32,7 @@ export async function redrawPictures(home: string, say: (line: string) => void, 
           .filter(
             (picture) =>
               undrawn(picture) ||
+              inkDue(picture, paint) ||
               (picture.blur ?? 0) !== blurring ||
               (picture.cut !== undefined && picture.matte !== MATTING),
           )
