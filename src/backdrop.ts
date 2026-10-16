@@ -1566,12 +1566,7 @@ export function inkDue(picture: Picture, paint: Paint): boolean {
 }
 
 function due(picture: Picture, paint: Paint): boolean {
-  return (
-    coloringOf(picture) !== 'original' &&
-    picture.tone !== undefined &&
-    picture.tone !== paint.hue.color &&
-    !inkDue(picture, paint)
-  )
+  return coloringOf(picture) !== 'original' && picture.tone !== undefined && picture.tone !== paint.hue.color
 }
 
 export function retint(configHome: string, paints: ReadonlyMap<string, Paint>): string[] {

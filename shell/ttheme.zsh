@@ -370,9 +370,9 @@ __tt_announce() {
     print -r -- "$name · $grp · ANSI $src"
     return 0
   fi
-  local cur=${p[3]#\#} sel=${p[4]#\#}
-  printf "\033[48;2;%d;%d;%dm %s ${TTHEME_SGR[reset]}\n${TTHEME_SGR[reverse]}${TTHEME_SGR[bold]}\033[38;2;%d;%d;%dm %s ${TTHEME_SGR[reset]} ${TTHEME_SGR[dim]}· ANSI %s${TTHEME_SGR[reset]}\n" \
-    $((16#${sel:0:2})) $((16#${sel:2:2})) $((16#${sel:4:2})) "$grp" \
+  local fg=${p[2]#\#} cur=${p[3]#\#} sel=${p[4]#\#}
+  printf "\033[48;2;%d;%d;%d;38;2;%d;%d;%dm %s ${TTHEME_SGR[reset]}\n${TTHEME_SGR[reverse]}${TTHEME_SGR[bold]}\033[38;2;%d;%d;%dm %s ${TTHEME_SGR[reset]} ${TTHEME_SGR[dim]}· ANSI %s${TTHEME_SGR[reset]}\n" \
+    $((16#${sel:0:2})) $((16#${sel:2:2})) $((16#${sel:4:2})) $((16#${fg:0:2})) $((16#${fg:2:2})) $((16#${fg:4:2})) "$grp" \
     $((16#${cur:0:2})) $((16#${cur:2:2})) $((16#${cur:4:2})) "$name" "$src"
 }
 
