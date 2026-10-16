@@ -2,13 +2,23 @@ import { existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { argbFromHex, Hct } from '@material/material-color-utilities'
+import { lab } from '../../../../src/color.ts'
+import { apart } from '../../../../src/contrast.ts'
 import { type Catalog, MARKETPLACE_FILE, readCatalogs } from '../../../../src/theme.ts'
 import { deltaE, tripletDelta } from './delta.ts'
+
+interface Colors {
+  background: string
+  foreground: string
+  cursor: string
+  selection_background: string
+  ansi: string[]
+}
 
 export interface ThemeDoc {
   catalog: string
   meta: { name: string; ansi_source: string; signature: string[] }
-  colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
+  colors: Colors & { light?: Colors; dark?: Colors }
 }
 
 export type Anchor = [string, string]
@@ -65,6 +75,14 @@ export async function loadCatalogs(themes: string): Promise<Catalog[]> {
 export async function loadAnchors(file: string): Promise<Record<string, AnchorEntry>> {
   return (await Bun.file(file).json()) as Record<string, AnchorEntry>
 }
+
+export function otherSide(doc: ThemeDoc): ThemeDoc | undefined {
+  const other = doc.colors.light ?? doc.colors.dark
+
+  return other === undefined ? undefined : { ...doc, colors: other }
+}
+
+const sideOf = (doc: ThemeDoc) => (doc.colors.light === undefined ? 'dark' : 'light')
 
 export function slotColor(doc: ThemeDoc, slot: string): string {
   const c = doc.colors
@@ -126,11 +144,32 @@ function departures(doc: ThemeDoc, entry: AnchorEntry): Departure[] {
   })
 }
 
-function audit(doc: ThemeDoc, palettes: ThemeDoc[], entry: AnchorEntry | undefined, anchored: boolean): string[] {
+function lookalikes(doc: ThemeDoc): string[] {
+  const { signature } = doc.meta
+
+  return signature.flatMap((a, i) =>
+    signature
+      .slice(i + 1)
+      .filter((b) => apart(lab(slotColor(doc, a)), lab(slotColor(doc, b))) < 1)
+      .map((b) => `${a}/${b}`),
+  )
+}
+
+function audit(
+  doc: ThemeDoc,
+  palettes: ThemeDoc[],
+  entry: AnchorEntry | undefined,
+  anchored: boolean,
+  side = '',
+): string[] {
   const { meta, catalog } = doc
   const { name, signature } = meta
   const reasons: string[] = []
-  console.log(`\n── ${name} · ${catalog} · signature ${signature.join('/')}`)
+  console.log(`\n── ${name} · ${catalog} · signature ${signature.join('/')}${side && ` · ${side} mode`}`)
+
+  const alike = lookalikes(doc)
+  console.log(`  signature  ${alike.length === 0 ? 'every slot reads apart' : `reads as one: ${alike.join(', ')} !`}`)
+  if (alike.length > 0) reasons.push(`signature look-alike: ${alike.join(', ')}`)
 
   const own = signatureColors(doc)
   const siblings = palettes
@@ -196,11 +235,15 @@ if (import.meta.main) {
     process.exit(1)
   }
   const palettes = await loadPalettes(themesOf(positionals[0] as string))
+  const others = palettes.flatMap((doc) => otherSide(doc) ?? [])
   const anchors = values.anchors === undefined ? {} : await loadAnchors(values.anchors)
   const review: [string, string[]][] = []
   for (const file of positionals) {
     const doc = await readTheme(file)
     const reasons = audit(doc, palettes, anchors[doc.meta.name], values.anchors !== undefined)
+    const other = otherSide(doc)
+    if (other !== undefined)
+      reasons.push(...audit(other, others, undefined, false, sideOf(doc)).map((r) => `${sideOf(doc)}: ${r}`))
     if (reasons.length > 0) review.push([doc.meta.name, reasons])
   }
   const nameWidth = Math.max(0, ...review.map(([name]) => name.length))
