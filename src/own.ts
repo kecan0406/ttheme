@@ -821,6 +821,12 @@ export function recolor(text: string, colors: Colors, table = 'colors'): string 
   return text.slice(0, at[0]) + rewritten + text.slice(at[1])
 }
 
+export function withShade(text: string, colors: Colors, table: string): string {
+  return sectionOf(text, table)
+    ? recolor(text, colors, table)
+    : withTable(text, table, colorsToml(colors, table).join('\n'), 'colors')
+}
+
 export function resign(text: string, signature: string[]): string {
   return text.replace(/^(signature\s*=\s*)\[[^\]]*\]/m, (_, head) => `${head}[${signature.map(q).join(', ')}]`)
 }

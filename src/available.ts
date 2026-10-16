@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { isHex } from './color.ts'
 import { GATE_RULES, measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
-import { emptyManifest, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
+import { emptyManifest, inMode, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
 import { aliasesFor, containsText } from './names.ts'
 import { marketplaceLayout, type Report, readLocal, readMarketplaceFiles, warning } from './own.ts'
 import {
@@ -22,6 +22,7 @@ import {
 } from './sources.ts'
 import { catalogProblem, MARKETPLACE_FILE, marketplaceOf, nameProblem, shelfOf, textProblem } from './theme.ts'
 import { readTone, tuned } from './tone.ts'
+import { wearFor } from './wiring.ts'
 
 const TIMEOUT = 20_000
 
@@ -205,6 +206,21 @@ function entryProblem(p: PaletteEntry): string | undefined {
     return 'holds a color that is not "#rrggbb"'
   }
 
+  const other = p.other
+
+  if (
+    other !== undefined &&
+    !(
+      Array.isArray(other?.ansi) &&
+      other.ansi.length === 16 &&
+      [other.background, other.foreground, other.cursor, other.selection, ...other.ansi].every(
+        (c) => typeof c === 'string' && isHex(c),
+      )
+    )
+  ) {
+    return 'holds an other mode that is not 20 "#rrggbb" colors'
+  }
+
   const shelved = typeof p.catalog === 'string' ? catalogProblem(p.catalog) : undefined
 
   if (shelved) {
@@ -236,7 +252,7 @@ export function readKept(configHome: string): PaletteEntry[] {
 }
 
 function looks(p: PaletteEntry): string {
-  return JSON.stringify([p.background, p.foreground, p.cursor, p.selection, p.ansi, p.pictures ?? []])
+  return JSON.stringify([p.background, p.foreground, p.cursor, p.selection, p.ansi, p.other ?? null, p.pictures ?? []])
 }
 
 export function updatesOf(configHome: string, manifest: Manifest): PaletteEntry[] {
@@ -263,8 +279,15 @@ export function untuned(configHome: string, manifest: Manifest, warn = true): Ma
   return { ...manifest, palettes: [...palettes, ...kept.filter((p) => !known.has(p.name))] }
 }
 
-export function available(configHome: string, manifest: Manifest, warn = true): Manifest {
+export function shown(configHome: string, manifest: Manifest, warn = true): Manifest {
   const view = untuned(configHome, manifest, warn)
+  const wear = wearFor(configHome)
+
+  return { ...view, palettes: view.palettes.map((entry) => inMode(entry, wear)) }
+}
+
+export function available(configHome: string, manifest: Manifest, warn = true): Manifest {
+  const view = shown(configHome, manifest, warn)
 
   return { ...view, palettes: tuned(view.palettes, readTone(configHome)) }
 }

@@ -75,7 +75,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'config',
     args: [],
-    about: 'Edit settings in $EDITOR — they apply in new tabs',
+    about: 'Edit settings in $EDITOR — a new mode reaches every open tab, the rest apply in new tabs',
     section: 'startup',
     shell: true,
   },
@@ -257,7 +257,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'sync',
     args: [],
     about:
-      "Write every wired terminal's config again from what is installed and config.zsh — ttheme config and preview call this when TTHEME_TAB_PALETTE changed",
+      "Write every wired terminal's config again from what is installed and config.zsh — ttheme config and preview call this when TTHEME_TAB_PALETTE or TTHEME_MODE changed",
     section: 'setup',
     hidden: true,
   },

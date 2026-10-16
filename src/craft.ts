@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import * as p from '@clack/prompts'
-import { available, find, gateFailures, readKept, readMarketplaces, untuned, writeKept } from './available.ts'
+import { available, find, gateFailures, readKept, readMarketplaces, shown, untuned, writeKept } from './available.ts'
 import { dropImage, imageKey, rackOf, showImage } from './backdrop.ts'
 import { Cancelled } from './cancelled.ts'
 import { Backdrop } from './editor-backdrop.ts'
@@ -11,6 +11,7 @@ import { findFor } from './find/find.ts'
 import { fixGate, type Move } from './fix.ts'
 import { colorsOfTheme, type Manifest, type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import { ensureLocal } from './marketplaces.ts'
+import { modeOf } from './mode.ts'
 import { colorless } from './osc.ts'
 import {
   codeOf,
@@ -28,6 +29,7 @@ import {
   resign,
   shareCode,
   withPictures,
+  withShade,
 } from './own.ts'
 import { type Choice, type Edited, type EditorOptions, listOf } from './palette-editor.ts'
 import { commit, configHome, readInstalled, refreshPictures, sync } from './palettes.ts'
@@ -36,7 +38,7 @@ import { bringPictures, heldPictures } from './pictures.ts'
 import { type Colors, grow, SEEDS } from './seeds.ts'
 import { showsPictures } from './terminal.ts'
 import { marketplaceOf, nameProblem, type SharedPicture, shelfOf, type Theme } from './theme.ts'
-import { overrideOf, readTone, tonedEntry, withTone, writeTone } from './tone.ts'
+import { overrideOf, readTone, tonedEntry, toneOf, withTone, writeTone } from './tone.ts'
 import { toneRows } from './tone-view.ts'
 
 function tty(): boolean {
@@ -407,8 +409,8 @@ export async function runTone(name: string, action: string, width?: string): Pro
   const home = configHome()
 
   if (action === 'show') {
-    const base = find(untuned(home, readMarketplaces(home), false).palettes, name)
-    const worn = tonedEntry(base, readTone(home)[name])
+    const base = find(shown(home, readMarketplaces(home), false).palettes, name)
+    const worn = tonedEntry(base, toneOf(readTone(home), base))
     console.log(toneRows(base, worn, !colorless(), width === undefined ? undefined : Number(width)).join('\n'))
 
     return 0
@@ -416,12 +418,13 @@ export async function runTone(name: string, action: string, width?: string): Pro
 
   if (action === 'reset') {
     const tone = readTone(home)
+    const base = find(shown(home, readMarketplaces(home), false).palettes, name)
 
-    if (tone[name] === undefined) {
+    if (toneOf(tone, base) === undefined) {
       return UNCHANGED
     }
 
-    writeTone(home, withTone(tone, name, {}))
+    writeTone(home, withTone(tone, name, modeOf(base), {}))
     sync(home, readMarketplaces(home), readInstalled(home))
     process.stderr.write('Back to the original colors')
 
@@ -452,8 +455,8 @@ function tunedText(count: number): string {
 }
 
 async function editTone(home: string, name: string, hosted: boolean): Promise<number | undefined> {
-  const base = find(untuned(home, readMarketplaces(home), false).palettes, name)
-  const worn = tonedEntry(base, readTone(home)[name])
+  const base = find(shown(home, readMarketplaces(home), false).palettes, name)
+  const worn = tonedEntry(base, toneOf(readTone(home), base))
 
   const edited = await editColors(
     {
@@ -477,11 +480,11 @@ async function editTone(home: string, name: string, hosted: boolean): Promise<nu
   const tone = readTone(home)
   const over = overrideOf(base, listOf(edited.colors))
 
-  if (JSON.stringify(over) === JSON.stringify(tone[name] ?? {})) {
+  if (JSON.stringify(over) === JSON.stringify(toneOf(tone, base) ?? {})) {
     return undefined
   }
 
-  writeTone(home, withTone(tone, name, over))
+  writeTone(home, withTone(tone, name, modeOf(base), over))
   sync(home, readMarketplaces(home), readInstalled(home))
 
   return Object.keys(over).length
@@ -527,8 +530,8 @@ export function runCheck(name: string, fix = false): number {
   }
 
   if (theirs) {
-    const base = find(untuned(home, manifest, false).palettes, entry.name)
-    writeTone(home, withTone(readTone(home), entry.name, overrideOf(base, listOf(colorsOfTheme(theme)))))
+    const base = find(shown(home, manifest, false).palettes, entry.name)
+    writeTone(home, withTone(readTone(home), entry.name, modeOf(base), overrideOf(base, listOf(colorsOfTheme(theme)))))
     sync(home, manifest, state)
     console.log(
       `\nSaved as your tone of ${entry.name} — R then s in \`ttheme edit ${entry.name}\` puts its own colors back`,
@@ -537,7 +540,9 @@ export function runCheck(name: string, fix = false): number {
     return left.length === 0 ? 0 : 1
   }
 
-  writeAtomic(path, recolor(readFileSync(path, 'utf8'), colorsOfTheme(theme)))
+  const made = modeOf(find(untuned(home, manifest, false).palettes, entry.name))
+  const table = modeOf(entry) === made ? 'colors' : `colors.${modeOf(entry)}`
+  writeAtomic(path, withShade(readFileSync(path, 'utf8'), colorsOfTheme(theme), table))
 
   if (state.palettes.includes(entry.name)) {
     sync(home, manifest, state)

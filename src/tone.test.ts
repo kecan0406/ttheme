@@ -68,9 +68,12 @@ test('overrideOf keeps just what differs from the palette, and a tone read back 
   const over = overrideOf(gojo, colors)
   assert.deepEqual(over, { cursor: '#ff8800', ansi6: '#00ff88' })
   const dir = home()
-  writeTone(dir, withTone({}, 'gojo', over))
-  assert.deepEqual(readTone(dir), { gojo: over })
-  writeTone(dir, withTone(readTone(dir), 'gojo', {}))
+  writeTone(dir, withTone({}, 'gojo', 'dark', over))
+  assert.deepEqual(readTone(dir), { gojo: { dark: over } })
+  writeTone(dir, withTone(readTone(dir), 'gojo', 'light', { cursor: '#884400' }))
+  assert.deepEqual(readTone(dir), { gojo: { dark: over, light: { cursor: '#884400' } } })
+  writeTone(dir, withTone(readTone(dir), 'gojo', 'light', {}))
+  writeTone(dir, withTone(readTone(dir), 'gojo', 'dark', {}))
   assert.ok(!existsSync(tonePath(dir)))
   assert.deepEqual(readTone(dir), {})
 })
@@ -80,24 +83,41 @@ test('a tone file with nonsense in it is read as far as it makes sense', () => {
   mkdirSync(join(dir, 'ttheme'), { recursive: true })
   writeFileSync(
     tonePath(dir),
-    JSON.stringify({ palettes: { gojo: { cursor: '#FF8800', ansi99: '#ffffff', background: 'red' }, geto: 5 } }),
+    JSON.stringify({
+      version: 2,
+      palettes: { gojo: { dark: { cursor: '#FF8800', ansi99: '#ffffff', background: 'red' }, sepia: {} }, geto: 5 },
+    }),
   )
-  assert.deepEqual(readTone(dir), { gojo: { cursor: '#ff8800' } })
+  assert.deepEqual(readTone(dir), { gojo: { dark: { cursor: '#ff8800' } } })
+  writeFileSync(tonePath(dir), JSON.stringify({ version: 1, palettes: { gojo: { cursor: '#ff8800' } } }))
+  assert.deepEqual(readTone(dir), {})
   writeFileSync(tonePath(dir), '{ not json')
   assert.deepEqual(readTone(dir), {})
 })
 
 test('available lays the tone over the palettes while the untuned view keeps them as the marketplaces give them', () => {
   const dir = home()
-  writeTone(dir, { gojo: { cursor: '#ff8800' } })
+  writeTone(dir, { gojo: { dark: { cursor: '#ff8800' } } })
   assert.equal(available(dir, manifest).palettes.find((p) => p.name === 'gojo')?.cursor, '#ff8800')
   assert.equal(available(dir, manifest).palettes.find((p) => p.name === 'geto')?.cursor, '#7cc1d6')
   assert.equal(untuned(dir, manifest).palettes.find((p) => p.name === 'gojo')?.cursor, '#7cc1d6')
 })
 
+test("a tone tunes a palette in one mode, and the palette worn in the other mode takes that mode's tone", () => {
+  const dir = home()
+  mkdirSync(join(dir, 'ttheme'), { recursive: true })
+  writeFileSync(join(dir, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=light}\n')
+  writeTone(dir, { gojo: { dark: { cursor: '#ff8800' } } })
+  const light = available(dir, manifest).palettes.find((p) => p.name === 'gojo')
+  assert.notEqual(light?.cursor, '#ff8800')
+  assert.equal(light?.other?.cursor, '#7cc1d6')
+  writeTone(dir, { gojo: { dark: { cursor: '#ff8800' }, light: { cursor: '#884400' } } })
+  assert.equal(available(dir, manifest).palettes.find((p) => p.name === 'gojo')?.cursor, '#884400')
+})
+
 test('sync writes the tone into every theme file and the zsh table, and kept.json keeps the palette as it was', () => {
   const dir = home()
-  writeTone(dir, { gojo: { cursor: '#ff8800' } })
+  writeTone(dir, { gojo: { dark: { cursor: '#ff8800' } } })
   sync(dir, manifest, { terminals: ['ghostty'], palettes: ['gojo'] })
   assert.match(readFileSync(join(dir, 'ghostty', 'themes', 'ttheme-gojo'), 'utf8'), /#ff8800/)
   assert.match(readFileSync(join(dir, 'ttheme', 'palettes.zsh'), 'utf8'), /#ff8800/)

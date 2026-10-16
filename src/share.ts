@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
-import { available, readMarketplaces, untuned } from './available.ts'
+import { available, readMarketplaces, shown } from './available.ts'
 import { Cancelled } from './cancelled.ts'
 import { draftFor, named } from './craft.ts'
 import { writeAtomic } from './edits.ts'
@@ -41,7 +41,7 @@ import {
 import { qrCode } from './qr.ts'
 import { localIdentity, REPO_NAME, readMarketplaceInfo, shownSource } from './sources.ts'
 import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf } from './theme.ts'
-import { readTone, tonedEntry } from './tone.ts'
+import { readTone, tonedEntry, toneOf } from './tone.ts'
 
 export type Tone = 'tuned' | 'original'
 
@@ -97,13 +97,13 @@ async function toned(
   tone: Tone | undefined,
   renamed: boolean,
 ): Promise<Toned[]> {
-  const view = untuned(home, manifest)
+  const view = shown(home, manifest)
   const tones = readTone(home)
 
   const pairs = names.map((name) => {
     const original = named(view, name, home)
 
-    return { original, tuned: tonedEntry(original, tones[original.name]) }
+    return { original, tuned: tonedEntry(original, toneOf(tones, original)) }
   })
 
   const tunable = pairs.flatMap((pair) => (pair.tuned === pair.original ? [] : [pair.original.name]))

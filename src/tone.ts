@@ -1,10 +1,9 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
-import { backdropTone } from './backdrop.ts'
 import { isHex } from './color.ts'
-import { measure } from './contrast.ts'
 import { writeAtomic } from './edits.ts'
-import { type PaletteEntry, toTheme } from './manifest.ts'
+import { type PaletteEntry, slotColor, withColors } from './manifest.ts'
+import { MODES, type Mode, modeOf } from './mode.ts'
 
 const TONE_SLOTS = [
   'background',
@@ -18,11 +17,13 @@ type ToneSlot = (typeof TONE_SLOTS)[number]
 
 type Override = Partial<Record<ToneSlot, string>>
 
+type Moded = Partial<Record<Mode, Override>>
+
 interface Tone {
-  [palette: string]: Override
+  [palette: string]: Moded
 }
 
-const VERSION = 1
+const VERSION = 2
 
 export function tonePath(configHome: string): string {
   return join(configHome, 'ttheme', 'tone.json')
@@ -30,6 +31,22 @@ export function tonePath(configHome: string): string {
 
 function isSlot(slot: string): slot is ToneSlot {
   return (TONE_SLOTS as readonly string[]).includes(slot)
+}
+
+function readOverride(slots: unknown): Override {
+  const kept: Override = {}
+
+  if (typeof slots !== 'object' || slots === null) {
+    return kept
+  }
+
+  for (const [slot, color] of Object.entries(slots)) {
+    if (isSlot(slot) && typeof color === 'string' && isHex(color.toLowerCase())) {
+      kept[slot] = color.toLowerCase()
+    }
+  }
+
+  return kept
 }
 
 export function readTone(configHome: string): Tone {
@@ -47,24 +64,26 @@ export function readTone(configHome: string): Tone {
     return {}
   }
 
-  const palettes = (parsed as { palettes?: unknown } | null)?.palettes
+  const file = parsed as { version?: unknown; palettes?: unknown } | null
 
-  if (typeof palettes !== 'object' || palettes === null) {
+  if (file?.version !== VERSION || typeof file.palettes !== 'object' || file.palettes === null) {
     return {}
   }
 
   const tone: Tone = {}
 
-  for (const [name, slots] of Object.entries(palettes)) {
-    if (typeof slots !== 'object' || slots === null) {
+  for (const [name, modes] of Object.entries(file.palettes)) {
+    if (typeof modes !== 'object' || modes === null) {
       continue
     }
 
-    const kept: Override = {}
+    const kept: Moded = {}
 
-    for (const [slot, color] of Object.entries(slots)) {
-      if (isSlot(slot) && typeof color === 'string' && isHex(color.toLowerCase())) {
-        kept[slot] = color.toLowerCase()
+    for (const mode of MODES) {
+      const over = readOverride((modes as Record<string, unknown>)[mode])
+
+      if (Object.keys(over).length > 0) {
+        kept[mode] = over
       }
     }
 
@@ -78,7 +97,7 @@ export function readTone(configHome: string): Tone {
 
 export function writeTone(configHome: string, tone: Tone): void {
   const path = tonePath(configHome)
-  const palettes = Object.fromEntries(Object.entries(tone).filter(([, slots]) => Object.keys(slots).length > 0))
+  const palettes = Object.fromEntries(Object.entries(tone).filter(([, modes]) => Object.keys(modes).length > 0))
 
   if (Object.keys(palettes).length === 0) {
     rmSync(path, { force: true })
@@ -89,21 +108,10 @@ export function writeTone(configHome: string, tone: Tone): void {
   writeAtomic(path, `${JSON.stringify({ version: VERSION, palettes }, null, 2)}\n`)
 }
 
-function colorOf(
-  entry: Pick<PaletteEntry, 'background' | 'foreground' | 'cursor' | 'selection' | 'ansi'>,
-  slot: string,
-): string {
-  if (slot === 'background' || slot === 'foreground' || slot === 'cursor' || slot === 'selection') {
-    return entry[slot]
-  }
-
-  return entry.ansi[Number(slot.slice(4))] as string
-}
-
 export function slotColors(
   entry: Pick<PaletteEntry, 'background' | 'foreground' | 'cursor' | 'selection' | 'ansi'>,
 ): string[] {
-  return TONE_SLOTS.map((slot) => colorOf(entry, slot))
+  return TONE_SLOTS.map((slot) => slotColor(entry, slot))
 }
 
 export function overrideOf(entry: PaletteEntry, colors: readonly string[]): Override {
@@ -111,9 +119,13 @@ export function overrideOf(entry: PaletteEntry, colors: readonly string[]): Over
     TONE_SLOTS.flatMap((slot, i) => {
       const color = (colors[i] as string).toLowerCase()
 
-      return color === colorOf(entry, slot).toLowerCase() ? [] : [[slot, color]]
+      return color === slotColor(entry, slot).toLowerCase() ? [] : [[slot, color]]
     }),
   )
+}
+
+export function toneOf(tone: Tone, entry: PaletteEntry): Override | undefined {
+  return tone[entry.name]?.[modeOf(entry)]
 }
 
 export function tonedEntry(entry: PaletteEntry, over: Override | undefined): PaletteEntry {
@@ -121,53 +133,46 @@ export function tonedEntry(entry: PaletteEntry, over: Override | undefined): Pal
     return entry
   }
 
-  const same = (slot: ToneSlot) => over[slot] === undefined || over[slot] === colorOf(entry, slot).toLowerCase()
+  const same = (slot: ToneSlot) => over[slot] === undefined || over[slot] === slotColor(entry, slot).toLowerCase()
 
   if (TONE_SLOTS.every(same)) {
     return entry
   }
 
-  const pick = (slot: ToneSlot) => over[slot] ?? colorOf(entry, slot)
+  const pick = (slot: ToneSlot) => over[slot] ?? slotColor(entry, slot)
 
-  const colors = {
+  return withColors(entry, {
     background: pick('background'),
     foreground: pick('foreground'),
     cursor: pick('cursor'),
     selection: pick('selection'),
     ansi: TONE_SLOTS.slice(4).map(pick),
-  }
-
-  const signature = entry.signatureSlots.map((slot) => (isSlot(slot) ? pick(slot) : colorOf(colors, slot)))
-  const patched = { ...entry, ...colors, signature }
-  const theme = toTheme(patched)
-
-  const backdrop = backdropTone(
-    {
-      name: patched.name,
-      background: colors.background,
-      foreground: colors.foreground,
-      cursor: colors.cursor,
-      selection: colors.selection,
-      ansi: colors.ansi,
-      waived: theme.waive,
-    },
-    patched.signatureSlots,
-  )
-
-  return { ...patched, gate: measure(theme), backdrop }
+  })
 }
 
 export function tuned(entries: PaletteEntry[], tone: Tone): PaletteEntry[] {
-  return Object.keys(tone).length === 0 ? entries : entries.map((entry) => tonedEntry(entry, tone[entry.name]))
+  return Object.keys(tone).length === 0 ? entries : entries.map((entry) => tonedEntry(entry, toneOf(tone, entry)))
 }
 
-export function withTone(tone: Tone, name: string, over: Override): Tone {
-  const next = { ...tone }
+export function tunedNames(tone: Tone, entries: readonly PaletteEntry[]): string[] {
+  return entries.flatMap((entry) => (toneOf(tone, entry) === undefined ? [] : [entry.name]))
+}
+
+export function withTone(tone: Tone, name: string, mode: Mode, over: Override): Tone {
+  const modes: Moded = { ...tone[name] }
 
   if (Object.keys(over).length === 0) {
+    delete modes[mode]
+  } else {
+    modes[mode] = over
+  }
+
+  const next = { ...tone }
+
+  if (Object.keys(modes).length === 0) {
     delete next[name]
   } else {
-    next[name] = over
+    next[name] = modes
   }
 
   return next
@@ -186,7 +191,7 @@ export function moveTone(configHome: string, renamed: ReadonlyMap<string, string
     Object.fromEntries(
       Object.entries(tone)
         .filter(([name]) => !removed.includes(name))
-        .map(([name, slots]) => [renamed.get(name) ?? name, slots]),
+        .map(([name, modes]) => [renamed.get(name) ?? name, modes]),
     ),
   )
 }

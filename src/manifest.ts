@@ -1,6 +1,8 @@
 import pkg from '../package.json' with { type: 'json' }
 import { backdropTone } from './backdrop.ts'
 import { GATE_RULES, type GateRule, measure } from './contrast.ts'
+import { mirror } from './mirror.ts'
+import { modeOf, type Wear } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import type { Shade, SharedPicture, Theme } from './theme.ts'
 
@@ -58,6 +60,50 @@ export function shadeOf(colors: Colors): Shade {
     selectionBackground: colors.selection,
     ansi: colors.ansi,
   }
+}
+
+type Painted = Pick<PaletteEntry, 'background' | 'foreground' | 'cursor' | 'selection' | 'ansi'>
+
+export function slotColor(colors: Painted, slot: string): string {
+  if (slot === 'background' || slot === 'foreground' || slot === 'cursor' || slot === 'selection') {
+    return colors[slot]
+  }
+
+  return colors.ansi[Number(slot.slice(4))] as string
+}
+
+export function withColors(entry: PaletteEntry, colors: Colors): PaletteEntry {
+  const patched = { ...entry, ...colors, signature: entry.signatureSlots.map((slot) => slotColor(colors, slot)) }
+  const theme = toTheme(patched)
+
+  const { slot, color, opacity } = backdropTone(
+    { name: patched.name, ...colors, waived: theme.waive },
+    patched.signatureSlots,
+  )
+
+  return { ...patched, gate: measure(theme), backdrop: { slot, color, opacity } }
+}
+
+export function otherColors(entry: PaletteEntry): Colors {
+  return entry.other ?? colorsOfTheme(mirror(toTheme(entry)))
+}
+
+export function inMode(entry: PaletteEntry, wear: Wear): PaletteEntry {
+  const other = otherColors(entry)
+
+  if (wear === 'own' || modeOf(entry) === wear) {
+    return entry.other ? entry : { ...entry, other }
+  }
+
+  const own = {
+    background: entry.background,
+    foreground: entry.foreground,
+    cursor: entry.cursor,
+    selection: entry.selection,
+    ansi: entry.ansi,
+  }
+
+  return withColors({ ...entry, other: own }, other)
 }
 
 export function paletteEntry(t: Theme): PaletteEntry {

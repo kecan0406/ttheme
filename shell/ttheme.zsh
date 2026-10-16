@@ -1566,16 +1566,22 @@ __tt_switch() {
 }
 
 __tt_config() {
-  local blur tab
+  local blur tab mode
   if [[ ! -e $TTHEME_CONFIG ]]; then
     mkdir -p ${TTHEME_CONFIG:h} || return 1
     __tt_put $TTHEME_CONFIG "$TTHEME_CONFIG_TEMPLATE"
   fi
   blur=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*}
   tab=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_TAB_PALETTE:='*}
+  mode=${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_MODE:='*}
   ${=${VISUAL:-${EDITOR:-vi}}} $TTHEME_CONFIG || return
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*} == "$blur" ]] || __tt_redraw
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_TAB_PALETTE:='*} == "$tab" ]] || { __tt_cli sync && __tt_reload }
+  if [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_MODE:='*} != "$mode" ]]; then
+    __tt_cli sync && __tt_reload
+    print -r -- "Open tabs take the new mode; other settings apply in new tabs — $TTHEME_CONFIG"
+    return 0
+  fi
   print -r -- "Settings apply in new tabs — $TTHEME_CONFIG"
 }
 

@@ -5,14 +5,15 @@ import { available, nameOf, nearest, readAvailable, untuned, writeKept } from '.
 import { backgroundsDir, freshenConfs, paintFor, readStore, retint } from './backdrop.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { aliasesZsh, palettesZsh } from './emit/shell.ts'
-import { listed, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
+import { inMode, listed, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
 import { paletteAliases } from './names.ts'
 import { installedPath, marketplacesOf } from './sources.ts'
 import { readText, systemHost, themeFiles, tilde } from './terminals/common.ts'
 import { WIRED, type Wired, wirings } from './terminals/index.ts'
 import type { Ctx, Host, Moment, Now, Out, Pointed } from './terminals/types.ts'
 import { marketplaceOf, owned } from './theme.ts'
-import { readTone, tuned } from './tone.ts'
+import { readTone, tuned, tunedNames } from './tone.ts'
+import { wearFor } from './wiring.ts'
 
 export interface Installed {
   terminals: Wired[]
@@ -183,7 +184,13 @@ export function sync(
 ): string[] {
   readStore(backgroundsDir(configHome))
   const kept = resolve(untuned(configHome, manifest), state.palettes)
-  const entries = tuned(kept, readTone(configHome))
+  const wear = wearFor(configHome)
+
+  const entries = tuned(
+    kept.map((entry) => inMode(entry, wear)),
+    readTone(configHome),
+  )
+
   retint(configHome, new Map(entries.map((entry) => [entry.name, paintFor(entry)])))
   freshenConfs(configHome)
   writeKept(configHome, kept)
@@ -242,7 +249,7 @@ function writeTable(ctx: Ctx, host: Host, repainted: boolean): string {
     ctx.startup,
     ctx.state.terminals,
     layer(ctx, host),
-    Object.keys(readTone(ctx.configHome)),
+    tunedNames(readTone(ctx.configHome), ctx.entries),
     marketplacesOf(ctx.state.marketplaces).map((source) => nameOf(ctx.configHome, source) ?? source),
   )
 

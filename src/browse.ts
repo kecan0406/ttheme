@@ -1,4 +1,4 @@
-import { available, idOf, readKept, readMarketplaces, updatesOf } from './available.ts'
+import { available, idOf, readKept, readMarketplaces, shown, updatesOf } from './available.ts'
 import { type BrowseIo, BrowsePanel, type BrowseResult, type Marketplace } from './browse-panel.ts'
 import { HUB_CLOSED, hubOf } from './hub.ts'
 import { reload, takeUpdates } from './installs.ts'
@@ -41,7 +41,7 @@ import {
   shownSource,
 } from './sources.ts'
 import { alphabetical, marketplaceOf } from './theme.ts'
-import { readTone } from './tone.ts'
+import { readTone, tunedNames } from './tone.ts'
 
 function marketplaceState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Marketplace {
   const marketplace = source === OFFICIAL ? undefined : cachedMarketplace(home, source)
@@ -282,7 +282,7 @@ export async function runBrowse(): Promise<number> {
     kept,
     installed: state.palettes,
     updates: updateNames(home),
-    tuned: Object.keys(readTone(home)),
+    tuned: tunedNames(readTone(home), shown(home, readMarketplaces(home), false).palettes),
     ...(startup ? { startup } : {}),
     ...(hub ? { hub, release: () => releaseLine() } : {}),
     due: auto ? dueSources(home, state) : [],

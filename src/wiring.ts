@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Coloring } from './backdrop.ts'
+import { WEARS, type Wear } from './mode.ts'
 
 export const BLOCK_BEGIN = '# ttheme begin'
 export const BLOCK_END = '# ttheme end'
@@ -51,6 +52,10 @@ export function zshrcBlock(): string {
 const CONFIG_HEADER = '# ttheme settings — uncomment a line to change it; exported variables win over this file'
 
 const CONFIG_SETTINGS = {
+  TTHEME_MODE: {
+    doc: '# the mode palettes are worn in: own wears each one the way it was made, dark or light wears every palette in that mode — changing it repaints every open tab (default own)',
+    default: 'own',
+  },
   TTHEME_TAB_PALETTE: {
     doc: '# new tabs: off keeps the configured terminal theme, seq rotates through the palettes (default off)',
     default: 'off',
@@ -201,6 +206,12 @@ export function blurOf(configHome: string): number {
   const value = Number(settingValue(configHome, 'TTHEME_BG_BLUR'))
 
   return Number.isFinite(value) ? Math.min(BLUR_MOST, Math.max(0, value)) : 0
+}
+
+export function wearFor(configHome: string): Wear {
+  const value = settingValue(configHome, 'TTHEME_MODE')
+
+  return WEARS.find((wear) => wear === value) ?? 'own'
 }
 
 export function coloringFor(configHome: string): Coloring {
