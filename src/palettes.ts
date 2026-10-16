@@ -13,7 +13,7 @@ import { WIRED, type Wired, wirings } from './terminals/index.ts'
 import type { Ctx, Host, Moment, Now, Out, Pointed } from './terminals/types.ts'
 import { marketplaceOf, owned } from './theme.ts'
 import { readTone, tuned, tunedNames } from './tone.ts'
-import { wearFor } from './wiring.ts'
+import { modeFor } from './wiring.ts'
 
 export interface Installed {
   terminals: Wired[]
@@ -184,10 +184,10 @@ export function sync(
 ): string[] {
   readStore(backgroundsDir(configHome))
   const kept = resolve(untuned(configHome, manifest), state.palettes)
-  const wear = wearFor(configHome)
+  const mode = modeFor(configHome)
 
   const entries = tuned(
-    kept.map((entry) => inMode(entry, wear)),
+    kept.map((entry) => inMode(entry, mode)),
     readTone(configHome),
   )
 

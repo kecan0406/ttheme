@@ -174,7 +174,7 @@ __tt_pins_load() {
 
 __tt_pins_load
 
-: ${TTHEME_MODE:=own}
+: ${TTHEME_MODE:=dark}
 
 : ${TTHEME_TAB_PALETTE:=off}
 

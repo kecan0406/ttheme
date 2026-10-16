@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { available, nameOf, readKept, readMarketplaces, updatesOf, writeKept } from './available.ts'
 import { adopt, type Refused } from './craft.ts'
 import { liveOf } from './live.ts'
-import { inMode, type Manifest, type PaletteEntry } from './manifest.ts'
+import type { Manifest, PaletteEntry } from './manifest.ts'
 import { localLine } from './marketplaces.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
@@ -17,7 +17,6 @@ import { installedPath, isLocal, marketplaceSources, OFFICIAL, shownSource } fro
 import { type Wired, wirings } from './terminals/index.ts'
 import type { Pointed } from './terminals/types.ts'
 import { alphabetical } from './theme.ts'
-import { wearFor } from './wiring.ts'
 
 export function reload(count: number): void {
   say(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
@@ -314,9 +313,7 @@ export async function pickPalettes(
   required = false,
   go?: string,
 ): Promise<string[] | undefined> {
-  const wear = wearFor(configHome())
-  const worn = manifest.palettes.map((entry) => inMode(entry, wear))
-  const entries = process.env.TTHEME_SORT === 'catalog' ? worn : alphabetical(worn)
+  const entries = process.env.TTHEME_SORT === 'catalog' ? manifest.palettes : alphabetical(manifest.palettes)
   knowAliases(entries)
   const tty = process.stdout.isTTY === true
   const live = liveOf(process.env, tty, configHome())

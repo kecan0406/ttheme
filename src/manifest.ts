@@ -2,7 +2,7 @@ import pkg from '../package.json' with { type: 'json' }
 import { backdropTone } from './backdrop.ts'
 import { GATE_RULES, type GateRule, measure } from './contrast.ts'
 import { mirror } from './mirror.ts'
-import { modeOf, type Wear } from './mode.ts'
+import { type Mode, modeOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import type { Shade, SharedPicture, Theme } from './theme.ts'
 
@@ -88,10 +88,10 @@ export function otherColors(entry: PaletteEntry): Colors {
   return entry.other ?? colorsOfTheme(mirror(toTheme(entry)))
 }
 
-export function inMode(entry: PaletteEntry, wear: Wear): PaletteEntry {
+export function inMode(entry: PaletteEntry, mode: Mode): PaletteEntry {
   const other = otherColors(entry)
 
-  if (wear === 'own' || modeOf(entry) === wear) {
+  if (modeOf(entry) === mode) {
     return entry.other ? entry : { ...entry, other }
   }
 

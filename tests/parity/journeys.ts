@@ -749,7 +749,7 @@ export const JOURNEYS: Journey[] = [
       const c = await p.open()
       await p.type(c, 'ttheme use miku')
       await p.launch(c, 'ttheme')
-      await p.keys(c, 'alt-c', 'right', 'right', 'enter', '1s')
+      await p.keys(c, 'alt-c', 'right', 'enter', '1s')
       await p.quit(c)
       await p.look('here', { want: 'miku' })
       await p.focus(b)

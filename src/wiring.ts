@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Coloring } from './backdrop.ts'
-import { WEARS, type Wear } from './mode.ts'
+import { MODES, type Mode } from './mode.ts'
 
 export const BLOCK_BEGIN = '# ttheme begin'
 export const BLOCK_END = '# ttheme end'
@@ -53,8 +53,8 @@ const CONFIG_HEADER = '# ttheme settings — uncomment a line to change it; expo
 
 const CONFIG_SETTINGS = {
   TTHEME_MODE: {
-    doc: '# the mode palettes are worn in: own wears each one the way it was made, dark or light wears every palette in that mode — changing it repaints every open tab (default own)',
-    default: 'own',
+    doc: '# the mode every palette is worn in: dark or light, which each palette carries both of — changing it repaints every open tab (default dark)',
+    default: 'dark',
   },
   TTHEME_TAB_PALETTE: {
     doc: '# new tabs: off keeps the configured terminal theme, seq rotates through the palettes (default off)',
@@ -208,10 +208,10 @@ export function blurOf(configHome: string): number {
   return Number.isFinite(value) ? Math.min(BLUR_MOST, Math.max(0, value)) : 0
 }
 
-export function wearFor(configHome: string): Wear {
+export function modeFor(configHome: string): Mode {
   const value = settingValue(configHome, 'TTHEME_MODE')
 
-  return WEARS.find((wear) => wear === value) ?? 'own'
+  return MODES.find((mode) => mode === value) ?? 'dark'
 }
 
 export function coloringFor(configHome: string): Coloring {

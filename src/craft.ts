@@ -34,7 +34,6 @@ import {
   paletteToml,
   readCodes,
   readOwnText,
-  recolor,
   resign,
   shareCode,
   withPictures,
@@ -49,7 +48,7 @@ import { showsPictures } from './terminal.ts'
 import { marketplaceOf, nameProblem, type SharedPicture, shelfOf, type Theme } from './theme.ts'
 import { overrideOf, readTone, tonedEntry, toneOf, withTone, writeTone } from './tone.ts'
 import { toneRows } from './tone-view.ts'
-import { wearFor } from './wiring.ts'
+import { modeFor } from './wiring.ts'
 
 function tty(): boolean {
   return process.stdin.isTTY === true && process.stdout.isTTY === true
@@ -359,8 +358,7 @@ export async function runEdit(name: string): Promise<void> {
 
   const shelf = shelfFor(home, full)
   const listed = new Set((theme.pictures ?? []).map((picture) => imageKey(picture)))
-  const wear = wearFor(home)
-  const mode = wear === 'own' ? modeOf(theme) : wear
+  const mode = modeFor(home)
   const table = mode === modeOf(theme) ? 'colors' : `colors.${mode}`
   const shade = table === 'colors' ? theme : (theme.other ?? mirror(theme))
 

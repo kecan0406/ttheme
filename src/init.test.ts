@@ -15,6 +15,7 @@ import {
   planUpgrade,
 } from './init.ts'
 import { SCHEMA } from './manifest.ts'
+import { modeOf } from './mode.ts'
 import { type Installed, sync } from './palettes.ts'
 import { applyUninstall, planUninstall } from './uninstall.ts'
 import { MANAGED, withSetting } from './wiring.ts'
@@ -217,6 +218,29 @@ test('init writes the Warp tab-switch answer only when it differs from the defau
   assert.equal(fast(), 'off')
   applyInit(planInit(options({ warpFast: true }), paths))
   assert.equal(fast(), '# on')
+})
+
+test('init writes the mode it was given, and every palette is worn in it from the first table', () => {
+  const paths = makeFixture()
+  const config = join(paths.configHome, 'ttheme', 'config.zsh')
+
+  const worn = () => {
+    const [, background, foreground] =
+      /^ {2}neutral +"(#[0-9a-f]{6}) (#[0-9a-f]{6})/m.exec(
+        readFileSync(join(paths.configHome, 'ttheme', 'palettes.zsh'), 'utf8'),
+      ) ?? []
+
+    return modeOf({ background: background as string, foreground: foreground as string })
+  }
+
+  applyInit(planInit(options({ palettes: ['neutral'] }), paths))
+  assert.match(readFileSync(config, 'utf8'), /^# : \$\{TTHEME_MODE:=dark\}$/m)
+  assert.equal(worn(), 'dark')
+  applyInit(planInit(options({ palettes: ['neutral'], mode: 'light' }), paths))
+  assert.match(readFileSync(config, 'utf8'), /^: \$\{TTHEME_MODE:=light\}$/m)
+  assert.equal(worn(), 'light')
+  applyInit(planUpgrade(installedState(paths.configHome) as Installed, paths))
+  assert.equal(worn(), 'light')
 })
 
 test('Ghostty opens new tabs through the launcher only while they rotate, and never over a command of the user', () => {

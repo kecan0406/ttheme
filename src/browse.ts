@@ -42,12 +42,12 @@ import {
 } from './sources.ts'
 import { alphabetical, marketplaceOf } from './theme.ts'
 import { readTone, tunedNames } from './tone.ts'
-import { wearFor } from './wiring.ts'
+import { modeFor } from './wiring.ts'
 
 function inWear(home: string, entries: readonly PaletteEntry[]): PaletteEntry[] {
-  const wear = wearFor(home)
+  const mode = modeFor(home)
 
-  return entries.map((entry) => inMode(entry, wear))
+  return entries.map((entry) => inMode(entry, mode))
 }
 
 function marketplaceState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Marketplace {

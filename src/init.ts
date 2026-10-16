@@ -10,7 +10,8 @@ import { Cancelled } from './cancelled.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { pickPalettes } from './installs.ts'
 import { liveOf } from './live.ts'
-import type { Manifest, PaletteEntry } from './manifest.ts'
+import { inMode, type Manifest, type PaletteEntry } from './manifest.ts'
+import type { Mode } from './mode.ts'
 import {
   configHome as configDir,
   type Installed,
@@ -47,13 +48,14 @@ import type { Host, Pointed, Setup } from './terminals/types.ts'
 import { warpSettings } from './terminals/warp.ts'
 import { windowsAppData } from './terminals/windows-terminal.ts'
 import { marketplaceOf, shelfOf } from './theme.ts'
-import { configFile, settingValue, upsertBlock, withSetting, zshrcBlock } from './wiring.ts'
+import { configFile, modeFor, settingValue, upsertBlock, withSetting, zshrcBlock } from './wiring.ts'
 
 export interface InitOptions {
   terminals: Wired[]
   palettes: string[]
   off?: boolean
   warpFast?: boolean
+  mode?: Mode
 }
 
 export interface InitPaths extends Setup {
@@ -121,10 +123,12 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const configPath = join(home, 'config.zsh')
   const seeded = configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : '')
 
+  const fast =
+    opts.warpFast === undefined ? seeded : withSetting(seeded, 'TTHEME_WARP_FAST', opts.warpFast ? 'on' : 'off')
+
   const settings = {
     file: configPath,
-    content:
-      opts.warpFast === undefined ? seeded : withSetting(seeded, 'TTHEME_WARP_FAST', opts.warpFast ? 'on' : 'off'),
+    content: opts.mode === undefined ? fast : withSetting(fast, 'TTHEME_MODE', opts.mode),
   }
 
   const installed: Installed = {
@@ -343,6 +347,20 @@ async function askTerminals(detected: string, preselected: Wired[], paths: InitP
       })),
       initialValues: preselected,
       required: true,
+    }),
+  )
+}
+
+async function askMode(configHome: string): Promise<Mode> {
+  return accepted(
+    await p.select<Mode>({
+      message:
+        'Wear the palettes dark or light?\nEvery palette comes in both — `ttheme config` or alt-c in `ttheme` switches it later',
+      options: [
+        { value: 'dark', label: 'dark', hint: 'light text on a dark background' },
+        { value: 'light', label: 'light', hint: 'dark text on a light background' },
+      ],
+      initialValue: modeFor(configHome),
     }),
   )
 }
@@ -580,7 +598,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
 
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
   const warpFast = terminals.includes('warp') ? await askWarpFast(configHome) : undefined
-  const manifest = existing ? againManifest(existing, paths) : loadManifest(root)
+  const mode = await askMode(configHome)
+  const made = existing ? againManifest(existing, paths) : loadManifest(root)
+  const manifest = { ...made, palettes: made.palettes.map((entry) => inMode(entry, mode)) }
 
   const palettes = existing
     ? await pickPalettes(manifest, existing.palettes, 'palette', true)
@@ -605,11 +625,12 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     }),
   )
 
-  const opts: InitOptions = { terminals, palettes, off: !wear, warpFast }
+  const opts: InitOptions = { terminals, palettes, off: !wear, warpFast, mode }
   const plan = existing ? planAgain(existing, opts, paths) : planInit(opts, paths)
   p.note(
     [
       `Install ${palettes.length} palettes — ${catalogsOf(manifest, palettes).join(', ')}`,
+      `Wear every palette in its ${mode} mode`,
       `Copy ${plan.copies.length} files under ${configHome}`,
       `Write ${plan.settings.file}`,
       ...plan.edits.map((e) => `Edit ${e.file} — a ttheme block: ${e.about}`),

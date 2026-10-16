@@ -82,8 +82,8 @@ test('configFile seeds the template with every default spelled out on a commente
     [
       '# ttheme settings — uncomment a line to change it; exported variables win over this file',
       '',
-      '# the mode palettes are worn in: own wears each one the way it was made, dark or light wears every palette in that mode — changing it repaints every open tab (default own)',
-      '# : ${TTHEME_MODE:=own}',
+      '# the mode every palette is worn in: dark or light, which each palette carries both of — changing it repaints every open tab (default dark)',
+      '# : ${TTHEME_MODE:=dark}',
       '',
       '# new tabs: off keeps the configured terminal theme, seq rotates through the palettes (default off)',
       '# : ${TTHEME_TAB_PALETTE:=off}',

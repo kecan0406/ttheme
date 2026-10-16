@@ -22,7 +22,7 @@ import {
 } from './sources.ts'
 import { catalogProblem, MARKETPLACE_FILE, marketplaceOf, nameProblem, shelfOf, textProblem } from './theme.ts'
 import { readTone, tuned } from './tone.ts'
-import { wearFor } from './wiring.ts'
+import { modeFor } from './wiring.ts'
 
 const TIMEOUT = 20_000
 
@@ -281,9 +281,9 @@ export function untuned(configHome: string, manifest: Manifest, warn = true): Ma
 
 export function shown(configHome: string, manifest: Manifest, warn = true): Manifest {
   const view = untuned(configHome, manifest, warn)
-  const wear = wearFor(configHome)
+  const mode = modeFor(configHome)
 
-  return { ...view, palettes: view.palettes.map((entry) => inMode(entry, wear)) }
+  return { ...view, palettes: view.palettes.map((entry) => inMode(entry, mode)) }
 }
 
 export function available(configHome: string, manifest: Manifest, warn = true): Manifest {

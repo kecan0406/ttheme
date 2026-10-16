@@ -166,7 +166,7 @@ One palette per pull request. At most three open at a time.
   or from a source whose license permits it — say which in the PR.
 - `[colors]` is the palette in the mode it was made in, and `[colors.light]`
   (`[colors.dark]` for a light palette) the same palette in the other one, which
-  people who set `TTHEME_MODE` see. Write it with
+  people who wear the other mode see. Write it with
   `bun .claude/skills/palette/scripts/light.ts --write <file>`, which mirrors
   `[colors]` into the other mode; `mise run build` refuses an official palette
   without it.
