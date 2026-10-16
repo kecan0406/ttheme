@@ -1,13 +1,13 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { available, nearest, readAvailable, untuned, writeKept } from './available.ts'
+import { available, nameOf, nearest, readAvailable, untuned, writeKept } from './available.ts'
 import { backgroundsDir, freshenConfs, paintFor, readStore, retint } from './backdrop.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
 import { aliasesZsh, palettesZsh } from './emit/shell.ts'
 import { listed, type Manifest, type PaletteEntry, toTheme } from './manifest.ts'
 import { paletteAliases } from './names.ts'
-import { installedPath } from './sources.ts'
+import { installedPath, marketplacesOf } from './sources.ts'
 import { readText, systemHost, themeFiles, tilde } from './terminals/common.ts'
 import { WIRED, type Wired, wirings } from './terminals/index.ts'
 import type { Ctx, Host, Moment, Now, Out, Pointed } from './terminals/types.ts'
@@ -243,6 +243,7 @@ function writeTable(ctx: Ctx, host: Host, repainted: boolean): string {
     ctx.state.terminals,
     layer(ctx, host),
     Object.keys(readTone(ctx.configHome)),
+    marketplacesOf(ctx.state.marketplaces).map((source) => nameOf(ctx.configHome, source) ?? source),
   )
 
   if (repainted || readText(table) !== content) {

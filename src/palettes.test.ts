@@ -108,7 +108,23 @@ test('sync writes a theme file per terminal and the zsh table', () => {
   const table = readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8')
   assert.match(table, /TTHEME_ORDER=\(gojo\)/)
   assert.match(table, /^typeset -ga TTHEME_TERMINALS=\(ghostty kitty\)$/m)
+  assert.match(table, /^typeset -ga TTHEME_MARKETPLACES=\('official'\)$/m)
   assert.doesNotMatch(table, /geto/)
+})
+
+test('sync names every marketplace the install holds in the zsh table, by the name remove and update take', () => {
+  const home = fixture()
+  const local = mkdtempSync(join(tmpdir(), 'ttheme-local-'))
+  writeFileSync(join(local, 'ttheme-marketplace.toml'), 'name = "dust"\n\n[owner]\nname = "kec"\n')
+
+  sync(home, manifest, {
+    terminals: ['ghostty'],
+    palettes: ['gojo'],
+    marketplaces: ['official', local, 'ann/ttheme-pastel'],
+  })
+
+  const table = readFileSync(join(home, 'ttheme', 'palettes.zsh'), 'utf8')
+  assert.match(table, /^typeset -ga TTHEME_MARKETPLACES=\('official' 'kec@dust' 'ann\/ttheme-pastel'\)$/m)
 })
 
 test('sync leaves palettes.zsh and its compiled copy alone when nothing it holds changed', () => {

@@ -1854,6 +1854,11 @@ if (( ${+functions[compdef]} )); then
       compadd -- add remove init check
     elif [[ $words[2] == marketplace && $words[3] == (add|init|check) && $CURRENT == 4 ]]; then
       _files -/
+    elif [[ $words[2] == marketplace && $words[3] == remove && $CURRENT == 4 ]]; then
+      compadd -- $TTHEME_MARKETPLACES
+    elif [[ $words[2] == update ]]; then
+      reply=(${TTHEME_MARKETPLACES:#official})
+      compadd -- ${reply:|words}
     elif [[ $words[2] == (pin|unpin) && $CURRENT == 3 ]]; then
       reply=(${${(M)${(k)TTHEME_PINS}:#ssh:*}#ssh:})
       if compset -P 'ssh:'; then

@@ -9,7 +9,9 @@ import { marketplaceLayout, type Report, readLocal, readMarketplaceFiles, warnin
 import {
   cachePath,
   type Identity,
+  isLocal,
   isRemote,
+  localIdentity,
   type MarketplaceInfo,
   marketplaceId,
   marketplaceSources,
@@ -96,6 +98,24 @@ export function archiveInfo(source: string, archive: Archive): MarketplaceInfo {
 
 export function archiveId(source: string, archive: Archive): string {
   return remoteId(source, archiveInfo(source, archive))
+}
+
+export function idOf(configHome: string, source: string): string {
+  if (source === OFFICIAL) {
+    return OFFICIAL
+  }
+
+  return isLocal(source)
+    ? marketplaceId(localIdentity(source))
+    : archiveId(source, readCachedArchive(configHome, source))
+}
+
+export function nameOf(configHome: string, source: string): string | undefined {
+  try {
+    return idOf(configHome, source)
+  } catch {
+    return undefined
+  }
 }
 
 export interface ReadMarketplace {

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:f
 import { basename, join, relative } from 'node:path'
 import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
-import { archiveId, parseManifest, readCachedArchive, readMarketplaces } from './available.ts'
+import { idOf, nameOf, parseManifest, readMarketplaces } from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { listed, type PaletteEntry } from './manifest.ts'
 import type { Listed } from './marketplace-index.ts'
@@ -99,22 +99,6 @@ async function handle(home: string, state: Installed): Promise<string> {
   console.log(`Your palettes are named ${author}@<marketplace>/<palette>`)
 
   return author
-}
-
-export function idOf(home: string, source: string): string {
-  if (source === OFFICIAL) {
-    return OFFICIAL
-  }
-
-  return isLocal(source) ? marketplaceId(localIdentity(source)) : archiveId(source, readCachedArchive(home, source))
-}
-
-function nameOf(home: string, source: string): string | undefined {
-  try {
-    return idOf(home, source)
-  } catch {
-    return undefined
-  }
 }
 
 function marketplaceOfPalette(name: string): string {

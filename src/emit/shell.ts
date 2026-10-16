@@ -23,6 +23,7 @@ export function palettesZsh(
   terminals: readonly string[] = [],
   layer: Readonly<Record<string, string>> = {},
   tuned: readonly string[] = [],
+  marketplaces: readonly string[] = [],
 ): string {
   for (const p of palettes) {
     for (const field of [p.name, p.catalog ?? '', p.native ?? '', ...(p.nativeNames ?? []), p.ansiSource]) {
@@ -54,6 +55,9 @@ export function palettesZsh(
     '',
     '# the terminals ttheme is wired into: a picture change reaches every one of them, from whichever runs the shell',
     `typeset -ga TTHEME_TERMINALS=(${terminals.join(' ')})`,
+    '',
+    '# the marketplaces this install holds, by the name `ttheme marketplace remove` and `ttheme update` take: the completion offers them',
+    `typeset -ga TTHEME_MARKETPLACES=(${marketplaces.map(quote).join(' ')})`,
     ...(Object.keys(layer).length > 0
       ? [
           '',

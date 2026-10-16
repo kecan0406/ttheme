@@ -1,9 +1,9 @@
 import { existsSync } from 'node:fs'
-import { available, readKept, readMarketplaces, updatesOf, writeKept } from './available.ts'
+import { available, nameOf, readKept, readMarketplaces, updatesOf, writeKept } from './available.ts'
 import { adopt, type Refused } from './craft.ts'
 import { liveOf } from './live.ts'
 import type { Manifest, PaletteEntry } from './manifest.ts'
-import { idOf, localLine } from './marketplaces.ts'
+import { localLine } from './marketplaces.ts'
 import { knowAliases } from './names.ts'
 import { colorless } from './osc.ts'
 import { codeOf, SHARE_URL } from './own.ts'
@@ -183,15 +183,7 @@ function defaultNote(name: string, terminals: Wired[], pointed: ReadonlyMap<Wire
 }
 
 function marketplaceNamed(home: string, sources: string[], name: string): string {
-  const id = (source: string) => {
-    try {
-      return idOf(home, source)
-    } catch {
-      return undefined
-    }
-  }
-
-  const hit = sources.find((s) => s === name || shownSource(s) === name || id(s) === name)
+  const hit = sources.find((s) => s === name || shownSource(s) === name || nameOf(home, s) === name)
 
   if (!hit) {
     throw new Error(`no marketplace named ${name} — the Browse tab of \`ttheme\` lists them`)
