@@ -5,7 +5,9 @@ import { fixRoles, type Move } from './fix.ts'
 import { type Mode, modeOf, otherOf } from './mode.ts'
 import type { Shade, Theme } from './theme.ts'
 
-type Mirrored = Shade & Pick<Theme, 'name' | 'signatureSlots' | 'waive'>
+type Signed = Pick<Theme, 'name' | 'signatureSlots' | 'waive'>
+
+type Mirrored = Shade & Signed
 
 type Band = { min: number; max: number }
 
@@ -42,6 +44,8 @@ const NEUTRALS = new Set([0, 7, 8])
 
 const STEP = 0.5
 
+const REACH = 20
+
 const hct = (hex: Hex) => Hct.fromInt(argbFromHex(hex))
 
 const make = (hue: number, chroma: number, tone: number): Hex =>
@@ -50,7 +54,7 @@ const make = (hue: number, chroma: number, tone: number): Hex =>
 const clamp = (v: number, band: Band) => Math.max(band.min, Math.min(band.max, v))
 
 const across = (tone: number, from: Band, to: Band) =>
-  to.max - ((clamp(tone, from) - from.min) * (to.max - to.min)) / (from.max - from.min)
+  to.min + ((clamp(tone, from) - from.min) * (to.max - to.min)) / (from.max - from.min)
 
 const own = (value: Hex, tone: number, chroma = Number.POSITIVE_INFINITY) => {
   const o = hct(value)
@@ -71,15 +75,9 @@ function slotOf(shade: Shade, slot: string): Hex {
   return named === undefined ? (shade.ansi[Number(slot.slice(4))] as Hex) : shade[named]
 }
 
-function crossed(theme: Mirrored) {
-  const from = modeOf(theme)
-  const band = CURSOR_TONE[otherOf(from)]
-
-  return { band, tone: across(hct(theme.cursor).tone, CURSOR_TONE[from], band) }
-}
-
 function flip(theme: Mirrored): Shade {
-  const to = otherOf(modeOf(theme))
+  const from = modeOf(theme)
+  const to = otherOf(from)
   const seed = hct(slotOf(theme, theme.signatureSlots[0] as string))
   const surface = (tone: number) => make(seed.hue, Math.min(seed.chroma, SURFACE_CHROMA), tone)
   const text = (tone: number) => make(seed.hue, Math.min(seed.chroma, TEXT_CHROMA), tone)
@@ -91,7 +89,7 @@ function flip(theme: Mirrored): Shade {
     foreground: theme.signatureSlots.includes('foreground')
       ? own(theme.foreground, TEXT_TONE[to], SIGNATURE_TEXT_CHROMA)
       : text(TEXT_TONE[to]),
-    cursor: own(theme.cursor, crossed(theme).tone),
+    cursor: own(theme.cursor, across(hct(theme.cursor).tone, CURSOR_TONE[from], CURSOR_TONE[to])),
     selectionBackground: theme.signatureSlots.includes('selection')
       ? own(theme.selectionBackground, clamp(flipped(theme.selectionBackground), CONTAINER_TONE[to]))
       : own(theme.selectionBackground, SELECTION_TONE[to], SELECTION_CHROMA),
@@ -107,23 +105,87 @@ function flip(theme: Mirrored): Shade {
   }
 }
 
-function placed(theme: Mirrored, shade: Shade): Hex {
-  const others = theme.signatureSlots.flatMap((slot) => (slot === 'cursor' ? [] : [lab(slotOf(shade, slot))]))
-  const reads = (color: Hex) => others.every((other) => apart(lab(color), other) >= 1)
+const reads = (shade: Shade, a: string, b: string) => apart(lab(slotOf(shade, a)), lab(slotOf(shade, b))) >= 1
 
-  if (!theme.signatureSlots.includes('cursor') || reads(shade.cursor)) return shade.cursor
+function withSlot(shade: Shade, slot: string, value: Hex): Shade {
+  const named = NAMED.get(slot)
 
-  const { band, tone: start } = crossed(theme)
+  if (named !== undefined) return { ...shade, [named]: value }
 
-  for (let k = 1; k * STEP <= band.max - band.min; k++) {
-    for (const tone of [start - k * STEP, start + k * STEP]) {
-      const color = own(theme.cursor, tone)
+  return { ...shade, ansi: shade.ansi.map((v, i) => (i === Number(slot.slice(4)) ? value : v)) }
+}
 
-      if (tone >= band.min && tone <= band.max && reads(color)) return color
-    }
+export function lookalikes(theme: Signed, shade: Shade): [string, string][] {
+  const slots = theme.signatureSlots
+
+  return slots.flatMap((a, i) =>
+    slots
+      .slice(i + 1)
+      .filter((b) => !reads(shade, a, b))
+      .map((b): [string, string] => [a, b]),
+  )
+}
+
+function stepped(theme: Signed, shade: Shade, slot: string, tones: number[], color: (tone: number) => Hex): Shade {
+  const failing = check({ ...theme, ...shade }).length
+
+  for (const tone of tones) {
+    const next = withSlot(shade, slot, color(tone))
+
+    if (
+      theme.signatureSlots.every((other) => other === slot || reads(next, slot, other)) &&
+      check({ ...theme, ...next }).length <= failing
+    )
+      return next
   }
 
-  return shade.cursor
+  return shade
+}
+
+function nearest(start: number, band: Band): number[] {
+  const out: number[] = []
+
+  for (let k = 1; k * STEP <= band.max - band.min; k++) {
+    for (const tone of [start - k * STEP, start + k * STEP]) if (tone >= band.min && tone <= band.max) out.push(tone)
+  }
+
+  return out
+}
+
+function away(from: number, past: number, mode: Mode): number[] {
+  const sign = from === past ? (mode === 'dark' ? 1 : -1) : Math.sign(from - past)
+  const out: number[] = []
+
+  for (let k = 1; k * STEP <= REACH; k++) {
+    const tone = from + sign * k * STEP
+
+    if (tone > 0 && tone < 100) out.push(tone)
+  }
+
+  return out
+}
+
+export function separated(theme: Signed, shade: Shade, cursor = shade.cursor): Shade {
+  const mode = modeOf(shade)
+  let next = shade
+
+  if (lookalikes(theme, next).some((pair) => pair.includes('cursor')))
+    next = stepped(theme, next, 'cursor', nearest(hct(next.cursor).tone, CURSOR_TONE[mode]), (tone) =>
+      own(cursor, tone),
+    )
+
+  for (const [a, b] of lookalikes(theme, next)) {
+    if (!a.startsWith('ansi') || !b.startsWith('ansi') || reads(next, a, b)) continue
+
+    const [still, mover] = Number(a.slice(4)) >= 8 && Number(b.slice(4)) < 8 ? [b, a] : [a, b]
+    const value = slotOf(next, mover)
+
+    next = stepped(theme, next, mover, away(hct(value).tone, hct(slotOf(next, still)).tone, mode), (tone) =>
+      own(value, tone),
+    )
+  }
+
+  return next
 }
 
 function fixed(theme: Mirrored, shade: Shade): Mirroring {
@@ -139,7 +201,7 @@ function fixed(theme: Mirrored, shade: Shade): Mirroring {
 export function mirrored(theme: Mirrored): Mirroring {
   const { shade, moves } = fixed(theme, flip(theme))
 
-  return { shade: { ...shade, cursor: placed(theme, shade) }, moves }
+  return { shade: separated(theme, shade, theme.cursor), moves }
 }
 
 export const mirror = (theme: Mirrored): Shade => mirrored(theme).shade

@@ -16,7 +16,7 @@ zerochan = "gotou_hitori"
 [colors]
 background = "#201517"
 foreground = "#fadbe1"
-cursor = "#feabc0"
+cursor = "#ffb7c8"
 selection_background = "#51344e"
 ansi = [
   "#2c2123",
@@ -41,7 +41,7 @@ ansi = [
 [colors.light]
 background = "#fff8f8"
 foreground = "#2c1b1f"
-cursor = "#965366"
+cursor = "#b07181"
 selection_background = "#f4cbec"
 ansi = [
   "#fff0f2",
@@ -51,7 +51,7 @@ ansi = [
   "#486492",
   "#8b276b",
   "#2e5a2e",
-  "#35292c",
+  "#35292b",
 
   "#847376",
   "#833e5d",

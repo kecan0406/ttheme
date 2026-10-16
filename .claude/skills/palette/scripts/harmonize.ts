@@ -8,6 +8,7 @@ import {
   SIGNATURE_TEXT_CHROMA,
   SURFACE_CHROMA,
   SURFACE_TONE,
+  separated,
   TEXT_CHROMA,
   TEXT_TONE,
   TONES,
@@ -15,7 +16,7 @@ import {
 import { colorsToml, withTable } from '../../../../src/own.ts'
 import type { Theme } from '../../../../src/theme.ts'
 import { deltaE } from './delta.ts'
-import { mirrorInto } from './light.ts'
+import { writeMirrors } from './light.ts'
 
 interface ThemeDoc {
   meta: { name: string; signature: string[] }
@@ -166,7 +167,11 @@ export function harmonizePalette(doc: ThemeDoc): Palette {
     else if (slot === 'selection') palette.selection = value
     else palette.ansi[Number(slot.slice(4))] = value
   }
-  return palette
+  const apart = separated(
+    { name: doc.meta.name, signatureSlots: doc.meta.signature, waive: [] },
+    { ...palette, selectionBackground: palette.selection },
+  )
+  return { ...palette, cursor: apart.cursor, selection: apart.selectionBackground, ansi: apart.ansi }
 }
 
 export function violations(name: string, signature: string[], p: Palette): string[] {
@@ -214,6 +219,7 @@ if (import.meta.main) {
     process.exit(1)
   }
   let failed = 0
+  const written = new Map<string, string>()
   for (const file of files) {
     const source = await Bun.file(file).text()
     const doc = Bun.TOML.parse(source) as unknown as ThemeDoc
@@ -225,8 +231,9 @@ if (import.meta.main) {
       failed++
       for (const p of problems) console.log(`${doc.meta.name}: ${p}`)
     }
-    if (write) await Bun.write(file, mirrorInto(withTable(source, 'colors', colorsBlock(palette), 'colors')).text)
+    written.set(file, withTable(source, 'colors', colorsBlock(palette), 'colors'))
   }
+  if (write) await writeMirrors(files, written)
   console.log(
     failed === 0
       ? `gate clean (${files.length} themes${write ? ', written' : ''})`

@@ -15,7 +15,7 @@ yande = "kaito"
 [colors]
 background = "#15171e"
 foreground = "#dfe2f2"
-cursor = "#5e8df6"
+cursor = "#4e7ee6"
 selection_background = "#2f3e5a"
 ansi = [
   "#21232b",
@@ -40,7 +40,7 @@ ansi = [
 [colors.light]
 background = "#faf8ff"
 foreground = "#1b1f2b"
-cursor = "#3f71d8"
+cursor = "#1351b8"
 selection_background = "#c8d7fa"
 ansi = [
   "#f2f3fd",

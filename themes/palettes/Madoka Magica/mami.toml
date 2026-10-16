@@ -11,7 +11,7 @@ signature = ["cursor", "foreground", "ansi11"]
 [colors]
 background = "#1b170c"
 foreground = "#e3e2e2"
-cursor = "#efcf65"
+cursor = "#e5c55c"
 selection_background = "#453e1f"
 ansi = [
   "#272318",
@@ -36,7 +36,7 @@ ansi = [
 [colors.light]
 background = "#fff8f0"
 foreground = "#1f2020"
-cursor = "#7c6500"
+cursor = "#9a7f1b"
 selection_background = "#e3d7ad"
 ansi = [
   "#fcf3e0",
@@ -48,7 +48,7 @@ ansi = [
   "#085d26",
   "#302c20",
 
-  "#7d7767",
+  "#7d7667",
   "#81442f",
   "#3e4600",
   "#685200",

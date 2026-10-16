@@ -16,7 +16,7 @@ zerochan = "sayori_(doki_doki_literature_club!)"
 [colors]
 background = "#211512"
 foreground = "#fddbd4"
-cursor = "#f4a594"
+cursor = "#ffbaab"
 selection_background = "#543539"
 ansi = [
   "#2e211e",
@@ -41,7 +41,7 @@ ansi = [
 [colors.light]
 background = "#fff8f6"
 foreground = "#2d1b17"
-cursor = "#975749"
+cursor = "#af7467"
 selection_background = "#faccd0"
 ansi = [
   "#fff0ee",

@@ -16,7 +16,7 @@ zerochan = "nanakusa_nazuna"
 [colors]
 background = "#1e151a"
 foreground = "#f4dce9"
-cursor = "#e9acd4"
+cursor = "#e8abd3"
 selection_background = "#423859"
 ansi = [
   "#2a2127",
@@ -41,7 +41,7 @@ ansi = [
 [colors.light]
 background = "#fff8f9"
 foreground = "#291b24"
-cursor = "#7e4d70"
+cursor = "#a26c91"
 selection_background = "#dfd1fa"
 ansi = [
   "#fff0f6",

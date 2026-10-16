@@ -6,7 +6,7 @@ import { fixRoles } from '../../../../src/fix.ts'
 import type { Theme } from '../../../../src/theme.ts'
 import { catalogOf } from './audit.ts'
 import { deltaE } from './delta.ts'
-import { mirrorInto } from './light.ts'
+import { writeMirrors } from './light.ts'
 
 interface ThemeDoc {
   meta: { name: string; signature: string[] }
@@ -54,6 +54,7 @@ if (positionals.length === 0) {
 }
 
 const report: unknown[] = []
+const written = new Map<string, string>()
 let failed = 0
 for (const file of positionals) {
   const text = await Bun.file(file).text()
@@ -93,8 +94,10 @@ for (const file of positionals) {
     after: ansi,
     changes: net,
   })
-  if (values.write && net.length > 0) writeFileSync(file, mirrorInto(rewrite(text, ansi)).text)
+  if (net.length > 0) written.set(file, rewrite(text, ansi))
 }
+
+if (values.write && written.size > 0) await writeMirrors([...written.keys()], written)
 
 if (values.report) writeFileSync(values.report, JSON.stringify(report))
 console.log(failed === 0 ? '\nrole rules clean' : `\n${failed} violation(s) left`)

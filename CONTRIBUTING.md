@@ -168,8 +168,9 @@ One palette per pull request. At most three open at a time.
   (`[colors.dark]` for a light palette) the same palette in the other one, which
   people who wear the other mode see. Write it with
   `bun .claude/skills/palette/scripts/light.ts --write <file>`, which mirrors
-  `[colors]` into the other mode; `mise run build` refuses an official palette
-  without it.
+  `[colors]` into the other mode and rewrites the other palettes in its catalog
+  folder too, keeping their signatures as far apart as in the mode they were made
+  in; `mise run build` refuses an official palette without it.
 - Every palette passes the contrast gate in both modes: body text at 7:1, accents and black on
   the six accents at 4.5:1, ANSI 8 and white on it at 3:1, each accent in its
   role and apart from its neighbors at text size, red and green apart for a

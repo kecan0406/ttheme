@@ -36,7 +36,7 @@ ansi = [
 [colors.light]
 background = "#fff8f8"
 foreground = "#2b1b22"
-cursor = "#bd4384"
+cursor = "#b23b7c"
 selection_background = "#e0d0f9"
 ansi = [
   "#fff0f4",
