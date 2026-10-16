@@ -1,10 +1,12 @@
-import { contrast, type Hex, luminance, type Oklch, oklch, ratio } from './color.ts'
+import { contrast, deuteranope, type Hex, type Lab, lab, luminance, type Oklch, oklch, ratio } from './color.ts'
 import type { Theme } from './theme.ts'
 
-const BODY_MIN = 7
-const ACCENT_MIN = 3
-const ANSI0_MAX_LUMINANCE = 0.15
-const ANSI8_MIN = 1.6
+export const BODY_MIN = 7
+export const ACCENT_MIN = 4.5
+export const ANSI0_MAX_LUMINANCE = 0.15
+export const ANSI8_MIN = 3
+export const ON_ACCENT_MIN = 4.5
+export const ANSI7_ON_ANSI8_MIN = 3
 
 const ACCENT_SLOTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
 const LIGHT_SLOTS = [7, 15]
@@ -21,8 +23,20 @@ export const ROLE_HUES = new Map([
 
 export const ACHROMATIC = 0.03
 export const BRIGHT_GAP = 25
-export const DISTINCT_HUE = 15
-export const DISTINCT_LIGHTNESS = 0.08
+
+const TEXT_DEGREES = 1 / 3
+const OBSERVERS = 0.5
+
+const NOTICEABLE = {
+  l: OBSERVERS * (10.16 + 1.5 / TEXT_DEGREES),
+  a: OBSERVERS * (10.68 + 3.08 / TEXT_DEGREES),
+  b: OBSERVERS * (10.7 + 5.74 / TEXT_DEGREES),
+}
+
+const RED_GREEN: [number, number][] = [
+  [1, 2],
+  [9, 10],
+]
 
 export interface Violation {
   theme: string
@@ -70,6 +84,10 @@ function weakest(theme: Readable, indices: number[]): number {
   return Math.min(...indices.map((i) => contrast(at(theme, i), theme.background)))
 }
 
+export function isLight(theme: Pick<Readable, 'background' | 'foreground'>): boolean {
+  return luminance(theme.background) > luminance(theme.foreground)
+}
+
 const READABILITY: Check[] = [
   {
     rule: 'foreground',
@@ -95,11 +113,11 @@ const READABILITY: Check[] = [
     label: 'ansi0 luminance',
     unit: 'luminance',
     max: ANSI0_MAX_LUMINANCE,
-    measure: (theme) => luminance(at(theme, 0)),
+    measure: (theme) => (isLight(theme) ? Number.NaN : luminance(at(theme, 0))),
     check: (theme) => {
       const ansi0 = at(theme, 0)
 
-      return luminance(ansi0) > ANSI0_MAX_LUMINANCE
+      return !isLight(theme) && luminance(ansi0) > ANSI0_MAX_LUMINANCE
         ? [`ANSI 0 ${ansi0} has luminance ${luminance(ansi0).toFixed(3)}, needs <= ${ANSI0_MAX_LUMINANCE}`]
         : []
     },
@@ -183,30 +201,36 @@ export function brightDrift(theme: Gated): { normal: number; gap: number }[] {
   })
 }
 
+export function apart(x: Lab, y: Lab): number {
+  return Math.max(
+    Math.abs(x.l - y.l) / NOTICEABLE.l,
+    Math.abs(x.a - y.a) / NOTICEABLE.a,
+    Math.abs(x.b - y.b) / NOTICEABLE.b,
+  )
+}
+
 export function lookalikes(theme: Gated): [number, number][] {
   const exempt = exemptSlots(theme)
-  const tones = new Map<number, Oklch | undefined>()
-
-  const tone = (slot: number) => {
-    if (!tones.has(slot)) {
-      tones.set(slot, chromatic(theme, slot))
-    }
-
-    return tones.get(slot)
-  }
 
   return [0, 8].flatMap((base) =>
     ROLES.flatMap((i) =>
       ROLES.filter((j) => j > i).flatMap((j): [number, number][] => {
         const [a, b] = [base + i, base + j]
-        const x = tone(a)
-        const y = tone(b)
 
-        if (x === undefined || y === undefined || (exempt.has(a) && exempt.has(b))) return []
+        if (exempt.has(a) && exempt.has(b)) return []
 
-        return hueGap(x.h, y.h) < DISTINCT_HUE && Math.abs(x.l - y.l) < DISTINCT_LIGHTNESS ? [[a, b]] : []
+        return apart(lab(at(theme, a)), lab(at(theme, b))) < 1 ? [[a, b]] : []
       }),
     ),
+  )
+}
+
+export function confusions(theme: Gated): [number, number][] {
+  const exempt = exemptSlots(theme)
+
+  return RED_GREEN.filter(
+    ([red, green]) =>
+      !(exempt.has(red) && exempt.has(green)) && apart(deuteranope(at(theme, red)), deuteranope(at(theme, green))) < 1,
   )
 }
 
@@ -245,13 +269,59 @@ const ROLE_CHECKS: Check<Gated>[] = [
     measure: (theme) => lookalikes(theme).length,
     check: (theme) =>
       lookalikes(theme).map(
-        ([a, b]) =>
-          `ANSI ${a} ${at(theme, a)} and ANSI ${b} ${at(theme, b)} are within ${DISTINCT_HUE}° hue and ${DISTINCT_LIGHTNESS} lightness`,
+        ([a, b]) => `ANSI ${a} ${at(theme, a)} and ANSI ${b} ${at(theme, b)} read as one color at text size`,
       ),
   },
 ]
 
-const CHECKS: Check<Gated>[] = [...READABILITY, ...ROLE_CHECKS]
+const PAIR_CHECKS: Check<Gated>[] = [
+  {
+    rule: 'ansi0-on-accents',
+    label: 'ansi0 on the weakest accent',
+    unit: 'ratio',
+    min: ON_ACCENT_MIN,
+    measure: (theme) => Math.min(...ROLES.map((i) => contrast(at(theme, 0), at(theme, i)))),
+    check: (theme) => {
+      const ansi0 = at(theme, 0)
+
+      return ROLES.flatMap((i) => {
+        const color = at(theme, i)
+
+        return contrast(ansi0, color) < ON_ACCENT_MIN
+          ? [`ANSI 0 ${ansi0} on ANSI ${i} ${color} is ${ratio(ansi0, color)}:1, needs ${ON_ACCENT_MIN}:1`]
+          : []
+      })
+    },
+  },
+  {
+    rule: 'ansi7-on-ansi8',
+    label: 'ansi7 on ansi8',
+    unit: 'ratio',
+    min: ANSI7_ON_ANSI8_MIN,
+    measure: (theme) => contrast(at(theme, 7), at(theme, 8)),
+    check: (theme) => {
+      const [white, grey] = [at(theme, 7), at(theme, 8)]
+
+      return contrast(white, grey) < ANSI7_ON_ANSI8_MIN
+        ? [`ANSI 7 ${white} on ANSI 8 ${grey} is ${ratio(white, grey)}:1, needs ${ANSI7_ON_ANSI8_MIN}:1`]
+        : []
+    },
+  },
+  {
+    rule: 'cvd-red-green',
+    label: 'red and green a deuteranope confuses',
+    unit: 'pairs',
+    max: 0,
+    measure: (theme) => confusions(theme).length,
+    check: (theme) =>
+      confusions(theme).map(
+        ([red, green]) =>
+          `ANSI ${red} ${at(theme, red)} and ANSI ${green} ${at(theme, green)} read as one color to a deuteranope at text size`,
+      ),
+  },
+]
+
+const CHECKS: Check<Gated>[] = [...READABILITY, ...ROLE_CHECKS, ...PAIR_CHECKS]
 
 export const RULES = CHECKS.map((c) => c.rule)
 

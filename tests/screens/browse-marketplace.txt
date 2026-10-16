@@ -16,7 +16,7 @@
                                                   │                                               │
                                                   ├───────────────────────────────────────────────┤
                                                   │ fix@shop/arcade  Installed                    │
-                                                  │ Gate 8/9 · ✗ accent hue outside its ANSI rol… │
+                                                  │ Gate 9/12 · ✗ accent hue outside its ANSI ro… │
                                                   │                                               │
                                                   ├───────────────────────────────────────────────┤
                                                   │    × Remove marketplace                       │

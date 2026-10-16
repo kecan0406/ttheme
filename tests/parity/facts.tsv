@@ -25,7 +25,7 @@ hub.preview.text	txt:ecff06d851	=	=	=	=	=	=	=	=	=
 hub.preview.issue	-	=	=	=	=	=	=	=	=	=
 hub.browse.colors	kita	=	=	=	=	=	=	=	=	=
 hub.browse.picture	kita	=	=	=	none	=	none	=	=	=
-hub.browse.text	txt:1567aa5f8d	=	=	=	=	=	=	=	=	=
+hub.browse.text	txt:4a3d9341ce	=	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=	=
 hub.back.colors	konata	=	=	=	=	=	=	=	=	=
 hub.back.picture	konata	=	=	=	none	=	none	=	=	=
@@ -195,7 +195,7 @@ preview-default.new.wears	miku	=	=	=	=	=	=	=	=	=
 preview-default.new.issue	-	=	=	=	=	=	=	=	=	=
 preview-tune.tune.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tune.tune.picture	kita	=	=	=	none	=	none	=	=	=
-preview-tune.tune.text	txt:50ad5217a2	=	=	=	txt:41cc3dd987	=	txt:41cc3dd987	=	txt:ab7472e47b	txt:b7374ad9fe
+preview-tune.tune.text	txt:2cf9790bde	=	=	=	txt:94894a8b3d	=	txt:94894a8b3d	=	txt:209f3d0d83	txt:f05b32d3f8
 preview-tune.tune.issue	-	=	=	=	=	=	=	=	=	=
 preview-tune.back.colors	konata	=	=	=	=	=	=	=	=	=
 preview-tune.back.picture	konata	=	=	=	none	=	none	=	=	=
@@ -220,7 +220,7 @@ picture-drop.other.issue	-	=	=	=	=	=	=	=	=	=
 picture-tune.other.colors	kita	=	=	=	=	=	=	=	=	=
 picture-tune.other.picture	kita	=	=	=	none	=	none	=	=	=
 picture-tune.other.wears	kita	=	=	=	=	=	=	=	=	=
-picture-tune.other.opacity	0.23	=	=	=	-	=	-	=	=	=
+picture-tune.other.opacity	0.22	=	=	=	-	=	-	=	=	=
 picture-tune.other.issue	-	=	=	=	=	=	=	=	=	=
 pin.in.colors	kita	=	=	=	=	=	=	=	=	=
 pin.in.picture	kita	=	=	=	none	=	none	=	=	=
@@ -262,7 +262,7 @@ ssh.out.wears	konata	=	=	=	=	=	=	=	=	=
 ssh.out.issue	-	=	=	=	=	=	=	=	=	=
 browse.hover.colors	kita	=	=	=	=	=	=	=	=	=
 browse.hover.picture	konata	=	=	=	none	=	none	=	=	=
-browse.hover.text	txt:1567aa5f8d	=	=	=	=	=	=	=	=	=
+browse.hover.text	txt:4a3d9341ce	=	=	=	=	=	=	=	=	=
 browse.hover.issue	-	=	=	=	=	=	=	=	=	=
 browse.back.colors	konata	=	=	=	=	=	=	=	=	=
 browse.back.picture	konata	=	=	=	none	=	none	=	=	=
@@ -297,7 +297,7 @@ reach.ghostty.picture	none	=	=	=	=	=	=	=	=	=
 reach.ghostty.wears	miku	=	=	=	=	=	=	=	=	=
 reach-picture.ghostty.colors	kita	=	=	=	=	=	=	=	=	=
 reach-picture.ghostty.picture	kita	=	=	=	=	=	=	=	=	=
-reach-picture.ghostty.opacity	0.23	=	=	=	0.2	=	0.2	=	=	=
+reach-picture.ghostty.opacity	0.22	=	=	=	0.19	=	0.19	=	=	=
 reach-picture.ghostty.wears	kita	=	=	=	=	=	=	=	=	=
 off-beside.ghostty.colors	own	=	=	=	=	=	=	=	=	=
 off-beside.ghostty.picture	none	=	=	=	=	=	=	=	=	=

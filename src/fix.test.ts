@@ -38,7 +38,7 @@ test('fixGate lifts every color that reads too faint until the palette passes', 
   assert.deepEqual(check(theme), [])
   assert.deepEqual(
     moves.map((m) => m.slot).sort(),
-    ['ansi0', 'ansi1', 'ansi7', 'ansi8', 'foreground', 'selection'].sort(),
+    ['ansi0', 'ansi1', 'ansi7', 'ansi8', 'ansi10', 'foreground', 'selection'].sort(),
   )
   assert.equal(theme.ansi[2], failing.ansi[2])
 })

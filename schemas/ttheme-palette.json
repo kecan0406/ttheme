@@ -190,7 +190,10 @@
                   "selection",
                   "ansi-role",
                   "bright-follows",
-                  "distinct"
+                  "distinct",
+                  "ansi0-on-accents",
+                  "ansi7-on-ansi8",
+                  "cvd-red-green"
                 ]
               },
               {

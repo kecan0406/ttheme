@@ -27,9 +27,10 @@
   identify its character and borrows its ANSI ramp from an established scheme,
   harmonized so every official palette reads alike.
 - **Every palette passes an accessibility gate.** Body text at 7:1 against the
-  background (WCAG AAA), every meaningful ANSI color at 3:1, and each accent stays
-  in its role — red reads as an error, green as success. The build fails if a
-  palette regresses.
+  background (WCAG AAA), every meaningful ANSI color at 4.5:1 (WCAG AA), and each
+  accent stays in its role — red reads as an error, green as success — and apart
+  from its neighbors at text size, red and green too for a deuteranope. The build
+  fails if a palette regresses.
 - **Switched live, per tab.** Tabs in one window can wear different palettes,
   any tab can be repainted at any time, a directory can pin its own, and a new
   tab can take the next character.

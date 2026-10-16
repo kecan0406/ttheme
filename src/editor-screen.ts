@@ -1,7 +1,7 @@
 import { cells, fit, spread, wrapText } from './ansi.ts'
 import { type Look, pictureArea, planeAt, renderBuilder } from './builder-screen.ts'
 import { type Hex, type Oklch, oklch, rgb } from './color.ts'
-import { brightDrift, hueGap, lookalikes, offRole, ROLE_HUES, roleOf } from './contrast.ts'
+import { brightDrift, confusions, hueGap, lookalikes, offRole, ROLE_HUES, roleOf } from './contrast.ts'
 import type { Backdrop } from './editor-backdrop.ts'
 import {
   channelSamples,
@@ -356,6 +356,7 @@ function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
       return `${name(slot)} ${hue(slot)}° · ${over.toFixed(0)}° outside ${band.name} ${band.center}±${band.width}°`
     }),
     ...lookalikes(theme).map(([a, b]) => `${name(a)} and ${name(b).toLowerCase()} read as one color`),
+    ...confusions(theme).map(([a, b]) => `${name(a)} and ${name(b).toLowerCase()} read as one to a deuteranope`),
   ]
 
   return notes.length > 0

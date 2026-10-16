@@ -20,7 +20,7 @@ test('the seeds grow twenty colors that pass the gate, whatever the hue, tint an
 
   for (const hue of [0, 90, 180, 265]) {
     for (const tint of [0, 0.05]) {
-      for (const chroma of [0.05, 0.2]) {
+      for (const chroma of [0.04, 0.2]) {
         assert.deepEqual(failing(grow({ ...SEEDS, hue, tint, chroma })), [], `hue ${hue} tint ${tint} chroma ${chroma}`)
       }
     }

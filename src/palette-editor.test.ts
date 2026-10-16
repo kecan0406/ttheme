@@ -274,7 +274,7 @@ test('◐ moves lightness until the ratio changes: home goes to the floor, a dig
   const e = press(editor(), ...RED, 'tab', 'tab')
   assert.equal(e.channel, CONTRAST)
   press(e, 'home')
-  assert.ok(e.ratio() >= 3 && e.ratio() < 3.1)
+  assert.ok(e.ratio() >= 4.5 && e.ratio() < 4.6)
   press(e, '7')
   assert.ok(e.ratio() >= 7 && e.ratio() < 7.1)
   press(e, 'end')

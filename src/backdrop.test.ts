@@ -67,8 +67,10 @@ const KAGAMI: Colors = {
 
 const PAINT: Paint = { hue: { color: '#9b86c8', opacity: 0.2 }, colors: KAGAMI }
 
-test('kagami at 0.2 is the brightness every other palette is matched to', () => {
-  assert.equal(toneFor(KAGAMI, 'cursor').opacity, 0.2)
+test('kagami at 0.2 is the brightness every other palette is matched to, and its accents hold kagami itself just under it', () => {
+  const tone = toneFor(KAGAMI, 'cursor')
+  assert.equal(Math.floor(tone.matched * 100) / 100, 0.2)
+  assert.equal(tone.opacity, 0.19)
 })
 
 test('a palette that already misses the gate without a picture still gets the opacity its picture allows', () => {

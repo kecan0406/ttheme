@@ -5,12 +5,12 @@ import {
   BRIGHT_GAP,
   brightDrift,
   check,
-  DISTINCT_HUE,
-  DISTINCT_LIGHTNESS,
+  confusions,
   exemptSlots,
   GATE_RULES,
   type Gated,
   hueGap,
+  isLight,
   lookalikes,
   measure,
   offRole,
@@ -259,7 +259,15 @@ interface Partner {
   floor: number | undefined
 }
 
-function partnerOf(slot: number, waive: string[]): Partner {
+function weakestUnder(list: Hex[]): number {
+  const ansi = colorsOf(list).ansi
+
+  return ROLES.reduce((a, b) =>
+    contrast(ansi[0] as Hex, ansi[a] as Hex) <= contrast(ansi[0] as Hex, ansi[b] as Hex) ? a : b,
+  )
+}
+
+function partnerOf(list: Hex[], slot: number, waive: string[]): Partner {
   const ansi = slot - BASE.length
 
   const rule =
@@ -267,16 +275,18 @@ function partnerOf(slot: number, waive: string[]): Partner {
       ? 'foreground'
       : slot === 3
         ? 'selection'
-        : ansi === 7 || ansi === 15
-          ? 'light-ansi'
-          : ansi === 8
-            ? 'ansi8-visible'
-            : ACCENTS.includes(ansi)
-              ? 'accents'
-              : undefined
+        : ansi === 0
+          ? 'ansi0-on-accents'
+          : ansi === 7 || ansi === 15
+            ? 'light-ansi'
+            : ansi === 8
+              ? 'ansi8-visible'
+              : ACCENTS.includes(ansi)
+                ? 'accents'
+                : undefined
 
   return {
-    against: slot === 0 || slot === 3 ? 1 : 0,
+    against: ansi === 0 ? BASE.length + weakestUnder(list) : slot === 0 || slot === 3 ? 1 : 0,
     floor: rule === undefined || waive.includes(rule) ? undefined : bound(rule),
   }
 }
@@ -307,7 +317,21 @@ export function ruleSlots(list: Hex[], signature: string[], waive: string[], rul
   }
 
   if (rule === 'ansi0-dark') {
-    return luminance(ansi[0] as Hex) > bound(rule) ? [BASE.length] : []
+    return !isLight(theme) && luminance(ansi[0] as Hex) > bound(rule) ? [BASE.length] : []
+  }
+
+  if (rule === 'ansi0-on-accents') {
+    const low = ROLES.flatMap((i) => under(BASE.length + i, ansi[i] as Hex, ansi[0] as Hex))
+
+    return low.length > 0 ? [BASE.length, ...low] : []
+  }
+
+  if (rule === 'ansi7-on-ansi8') {
+    return contrast(ansi[7] as Hex, ansi[8] as Hex) < bound(rule) ? [BASE.length + 7, BASE.length + 8] : []
+  }
+
+  if (rule === 'cvd-red-green') {
+    return confusions(theme).flatMap(([red, green]) => [BASE.length + red, BASE.length + green])
   }
 
   if (rule === 'ansi-role') {
@@ -383,23 +407,43 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
   if (ansi === 0) {
     const lum = luminance(color)
     const max = bound('ansi0-dark')
+    const weakest = weakestUnder(list)
+    const under = ratioCheck(color, c.ansi[weakest] as Hex, 'ansi0-on-accents', `On ANSI ${weakest}`, waive)
+
+    if (isLight(theme)) return [under]
 
     return [
       waive.includes('ansi0-dark')
         ? { ok: undefined, text: `Luminance ${lum.toFixed(3)} · waived` }
         : { ok: lum <= max, text: `Luminance ${lum.toFixed(3)} · ≤ ${max}` },
+      under,
     ]
   }
 
-  if (ansi === 7 || ansi === 15) {
+  if (ansi === 7) {
+    return [
+      ratioCheck(color, c.background, 'light-ansi', 'On background', waive),
+      ratioCheck(color, c.ansi[8] as Hex, 'ansi7-on-ansi8', 'On ANSI 8', waive),
+    ]
+  }
+
+  if (ansi === 15) {
     return [ratioCheck(color, c.background, 'light-ansi', 'On background', waive)]
   }
 
   if (ansi === 8) {
-    return [ratioCheck(color, c.background, 'ansi8-visible', 'On background', waive)]
+    return [
+      ratioCheck(color, c.background, 'ansi8-visible', 'On background', waive),
+      ratioCheck(c.ansi[7] as Hex, color, 'ansi7-on-ansi8', 'ANSI 7 on it', waive),
+    ]
   }
 
   const checks = [ratioCheck(color, c.background, 'accents', 'On background', waive)]
+
+  if (ROLES.includes(ansi)) {
+    checks.push(ratioCheck(c.ansi[0] as Hex, color, 'ansi0-on-accents', 'ANSI 0 on it', waive))
+  }
+
   const here = oklch(color)
   const role = roleOf(ansi)
   const band = ROLE_HUES.get(role) as { name: string; center: number; width: number }
@@ -434,10 +478,13 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
   const alike = lookalikes(theme).flatMap(([a, b]) => (a === ansi ? [b] : b === ansi ? [a] : []))
 
   if (alike.length > 0 && !waive.includes('distinct')) {
-    checks.push({
-      ok: false,
-      text: `Reads as ANSI ${alike.join(', ')} · within ${DISTINCT_HUE}° and ${DISTINCT_LIGHTNESS} lightness`,
-    })
+    checks.push({ ok: false, text: `Reads as ANSI ${alike.join(', ')} at text size` })
+  }
+
+  const mixed = confusions(theme).flatMap(([red, green]) => (red === ansi ? [green] : green === ansi ? [red] : []))
+
+  if (mixed.length > 0 && !waive.includes('cvd-red-green')) {
+    checks.push({ ok: false, text: `Reads as ANSI ${mixed.join(', ')} to a deuteranope` })
   }
 
   return checks
@@ -1526,7 +1573,7 @@ export class PaletteEditor {
   }
 
   partner(): Partner {
-    return partnerOf(this.slot(), this.waive)
+    return partnerOf(this.list, this.slot(), this.waive)
   }
 
   ratio(): number {

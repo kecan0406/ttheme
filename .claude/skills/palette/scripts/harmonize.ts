@@ -23,16 +23,17 @@ const CHROMA_MAX = 64
 const SURFACE_CHROMA = 8
 const TEXT_CHROMA = 12
 const GREY_CHROMA = 10
-const BRIGHT_LIFT = 12
 const SELECTION_CHROMA = 24
 const SELECTION_TONE = { dark: 26, light: 86 }
 const SIGNATURE_TEXT_CHROMA = 24
 const CURSOR_TONE = { dark: { min: 43, max: 84 }, light: { min: 36, max: 56 } }
 const CONTAINER_TONE = { dark: { min: 16, max: 30 }, light: { min: 70, max: 90 } }
 const OWN_CHROMA = 16
-const DARK_ANCHOR_TONE = 42.6
-const NORMAL_TONE: Record<number, number> = { 1: 66, 2: 70, 3: 76, 4: 66, 5: 68, 6: 72 }
-const LIGHT_TONE: Record<number, number> = { 1: 46, 2: 44, 3: 50, 4: 46, 5: 46, 6: 44 }
+const DARK_ANCHOR_TONE = 53.5
+const TONES = {
+  dark: [14, 62, 78, 76, 62, 72, 70, 85, 50, 74, 88, 88, 70, 84, 80, 94],
+  light: [96, 42, 34, 42, 42, 34, 34, 18, 50, 36, 28, 36, 36, 28, 28, 12],
+}
 
 const hct = (hex: string) => Hct.fromInt(argbFromHex(hex))
 const hex = (h: Hct) => hexFromArgb(h.toInt()).toLowerCase()
@@ -69,9 +70,7 @@ function accent(own: string, index: number, seedHue: number, light: boolean, rot
   const base = index % 8
   const hue = o.chroma < GREY_CHROMA ? (ROLE_HUES.get(base)?.center as number) : o.hue
   const chroma = Math.max(CHROMA_MIN, Math.min(CHROMA_MAX, o.chroma))
-  const tone = light
-    ? (LIGHT_TONE[base] as number) - (index > 8 ? BRIGHT_LIFT / 2 : 0)
-    : (NORMAL_TONE[base] as number) + (index > 8 ? BRIGHT_LIFT : 0)
+  const tone = (light ? TONES.light : TONES.dark)[index] as number
   return make(rotate ? harmonize(hue, seedHue) : hue, chroma, tone)
 }
 
@@ -152,10 +151,11 @@ export function harmonizePalette(doc: ThemeDoc): Palette {
         selection: selection(doc.colors.selection_background, false),
         ansi: doc.colors.ansi.map((own, i) => accent(own, i, seed.hue, false, rotate)),
       }
-  palette.ansi[0] = light ? surface(18) : surface(14)
-  palette.ansi[7] = light ? surface(30) : surface(80)
-  palette.ansi[8] = surface(light ? 55 : 50)
-  palette.ansi[15] = light ? text(12) : text(94)
+  const tones = light ? TONES.light : TONES.dark
+  palette.ansi[0] = surface(tones[0] as number)
+  palette.ansi[7] = surface(tones[7] as number)
+  palette.ansi[8] = surface(tones[8] as number)
+  palette.ansi[15] = text(tones[15] as number)
   for (const [slot, value] of Object.entries(signatureColors(doc))) {
     if (slot === 'background') palette.background = value
     else if (slot === 'foreground') palette.foreground = value

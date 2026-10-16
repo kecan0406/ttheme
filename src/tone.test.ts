@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { available, readKept, untuned } from './available.ts'
+import { GATE_RULES } from './contrast.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from './manifest.ts'
 import { sync } from './palettes.ts'
 import { overrideOf, readTone, slotColors, tonedEntry, tonePath, tuned, withTone, writeTone } from './tone.ts'
@@ -48,7 +49,7 @@ test('a tone overrides only the slots it names, and the signature and the pictur
   assert.equal(toned.ansi[0], gojo.ansi[0])
   assert.deepEqual(toned.signature, ['#ff8800', '#e3e2e7', '#00ff88'])
   assert.equal(toned.backdrop.color, '#ff8800')
-  assert.equal(toned.gate.length, 9)
+  assert.equal(toned.gate.length, GATE_RULES.length)
   assert.equal(toned.name, 'gojo')
 })
 

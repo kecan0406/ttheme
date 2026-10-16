@@ -31,6 +31,8 @@ export function contrast(a: string, b: string): number {
 }
 
 export function passes({ value, min, max }: { value: number; min?: number; max?: number }): boolean {
+  if (!Number.isFinite(value)) return true
+
   if (min !== undefined) return value >= min
 
   return max === undefined || value <= max

@@ -499,7 +499,7 @@ export const JOURNEYS: Journey[] = [
       await p.keys(b, 'down', 'down', 'down', 'down', 'right', 'right', 'right', 's', '1s')
       await p.quit(b)
       await p.focus(a)
-      await p.look('other', { want: 'kita', opacity: '0.23' })
+      await p.look('other', { want: 'kita', opacity: '0.22' })
     },
   },
   {
@@ -676,7 +676,7 @@ export const JOURNEYS: Journey[] = [
       await p.quit(a)
       const g = await ghostty.open()
       await ghostty.type(g, 'ttheme use kita')
-      await ghostty.look('ghostty', { want: 'kita', opacity: '0.23' })
+      await ghostty.look('ghostty', { want: 'kita', opacity: '0.22' })
     },
   },
   {

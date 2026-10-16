@@ -106,6 +106,7 @@ export function GateList({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
     <div class="grid">
       {gate.map((rule, index) => {
         const value = theme.gate[index] as number
+        const applies = Number.isFinite(value)
         const ok = passes({ value, min: rule.min, max: rule.max })
         const floor = rule.min !== undefined ? `≥ ${rule.min}` : `≤ ${rule.max}`
         const miss = rule.min !== undefined ? `under ${rule.min}` : `over ${rule.max}`
@@ -116,9 +117,11 @@ export function GateList({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
               {rule.label}
             </span>
             <code class="font-mono text-xs tabular-nums" safe>
-              {reading(value, rule.unit)}
+              {applies ? reading(value, rule.unit) : '—'}
             </code>
-            <Badge variant={ok ? 'success' : 'warning'}>{escapeHtml(ok ? floor : miss)}</Badge>
+            <Badge variant={applies ? (ok ? 'success' : 'warning') : 'outline'}>
+              {escapeHtml(applies ? (ok ? floor : miss) : 'n/a')}
+            </Badge>
           </div>
         )
       })}

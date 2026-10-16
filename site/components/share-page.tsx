@@ -155,8 +155,9 @@ function GateRows({ lines, view }: { lines: GateLine[]; view: ShareView }) {
   return (
     <ul class="grid pb-2">
       {lines.map(({ rule, value, ok, slots }) => {
-        const floor =
-          ok === null
+        const floor = Number.isNaN(value)
+          ? 'n/a'
+          : ok === null
             ? 'waived'
             : rule.min !== undefined
               ? ok
@@ -178,7 +179,9 @@ function GateRows({ lines, view }: { lines: GateLine[]; view: ShareView }) {
               <code class="font-mono text-xs tabular-nums" safe>
                 {Number.isNaN(value) ? '—' : reading(value, rule.unit)}
               </code>
-              <Badge variant={ok === null ? 'outline' : ok ? 'success' : 'warning'}>{escapeHtml(floor)}</Badge>
+              <Badge variant={ok === null || Number.isNaN(value) ? 'outline' : ok ? 'success' : 'warning'}>
+                {escapeHtml(floor)}
+              </Badge>
             </span>
             {slots.length > 0 ? (
               <button

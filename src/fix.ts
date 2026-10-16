@@ -1,15 +1,21 @@
-import { contrast, type Hex, luminance, oklch } from './color.ts'
+import { contrast, deuteranope, type Hex, lab, luminance, oklch } from './color.ts'
 import {
-  ACHROMATIC,
+  ACCENT_MIN,
+  ANSI0_MAX_LUMINANCE,
+  ANSI7_ON_ANSI8_MIN,
+  ANSI8_MIN,
+  apart,
+  BODY_MIN,
   BRIGHT_GAP,
   brightDrift,
   check,
-  DISTINCT_HUE,
-  DISTINCT_LIGHTNESS,
+  confusions,
   exemptSlots,
   type Gated,
   hueGap,
+  isLight,
   lookalikes,
+  ON_ACCENT_MIN,
   offRole,
   ROLE_HUES,
   ROLES,
@@ -28,6 +34,7 @@ type Fixable = Gated & { selectionBackground: Hex; signatureSlots: string[] }
 const MARGIN = 5
 const PASSES = 6
 const HEADROOM = 0.05
+const CLEAR = 1.05
 const ACCENTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
 
 const toward = (from: number, to: number) => ((to - from + 360) % 360 <= 180 ? 1 : -1)
@@ -86,9 +93,8 @@ function rehue(hex: Hex, hue: number): Hex {
   return inGamut(l, c, (hue + 360) % 360)
 }
 
-function relight(hex: Hex, against: Hex, min: number): Hex {
+function relight(hex: Hex, against: Hex, min: number, up = luminance(against) < 0.18): Hex {
   const { l, c, h } = oklch(hex)
-  const up = luminance(against) < 0.18
   const at = (t: number) => inGamut(up ? l + (1 - l) * t : l * (1 - t), c, h)
 
   if (contrast(at(1), against) < min + HEADROOM) {
@@ -132,24 +138,25 @@ function place(ansi: Hex[], role: number, exempt: Set<number>): [number, number]
       ? [now]
       : Array.from({ length: 2 * band.width + 1 }, (_, i) => (band.center - band.width + i + 360) % 360)
 
-  const clear = (slot: number, hue: number, l: number) =>
-    ROLES.every((j) => {
+  const clear = (slot: number, hue: number) => {
+    if (exempt.has(slot)) return true
+    const mine = lab(rehue(ansi[slot] as Hex, hue))
+
+    return ROLES.every((j) => {
       const other = (slot > 8 ? 8 : 0) + j
 
-      if (other === slot) return true
-      const o = oklch(ansi[other] as Hex)
-
-      return o.c < ACHROMATIC || hueGap(o.h, hue) >= DISTINCT_HUE + 1 || Math.abs(o.l - l) >= DISTINCT_LIGHTNESS
+      return other === slot || apart(mine, lab(ansi[other] as Hex)) >= CLEAR
     })
+  }
 
+  const normals = span(role, n.h).filter((hue) => clear(role, hue))
+  const brights = span(role + 8, b.h).filter((hue) => clear(role + 8, hue))
   let best: [number, number] | undefined
   let cost = Number.POSITIVE_INFINITY
 
-  for (const hn of span(role, n.h)) {
-    if (!exempt.has(role) && !clear(role, hn, n.l)) continue
-
-    for (const hb of span(role + 8, b.h)) {
-      if (hueGap(hn, hb) > BRIGHT_GAP - MARGIN || (!exempt.has(role + 8) && !clear(role + 8, hb, b.l))) continue
+  for (const hn of normals) {
+    for (const hb of brights) {
+      if (hueGap(hn, hb) > BRIGHT_GAP - MARGIN) continue
       const moved = hueGap(hn, n.h) + hueGap(hb, b.h)
 
       if (moved < cost) {
@@ -160,6 +167,12 @@ function place(ansi: Hex[], role: number, exempt: Set<number>): [number, number]
   }
 
   return best
+}
+
+function shade(hex: Hex, t: number, up: boolean): Hex {
+  const { l, c, h } = oklch(hex)
+
+  return inGamut(up ? l + (1 - l) * t : l * (1 - t), c, h)
 }
 
 class Fixer<T extends Fixable> {
@@ -224,6 +237,7 @@ class Fixer<T extends Fixable> {
   readability(): void {
     const waived = new Set(this.theme.waive)
     const { background } = this.theme
+    const light = isLight(this.theme)
 
     const lift = (rule: string, slots: string[], min: number, against = background) => {
       if (waived.has(rule)) return
@@ -233,20 +247,70 @@ class Fixer<T extends Fixable> {
       }
     }
 
-    lift('foreground', ['foreground'], 7)
+    lift('foreground', ['foreground'], BODY_MIN)
     lift(
       'accents',
       ACCENTS.map((i) => `ansi${i}`),
-      3,
+      ACCENT_MIN,
     )
-    lift('light-ansi', ['ansi7', 'ansi15'], 7)
-    lift('ansi8-visible', ['ansi8'], 1.6)
+    lift('light-ansi', ['ansi7', 'ansi15'], BODY_MIN)
+    lift('ansi8-visible', ['ansi8'], ANSI8_MIN)
 
-    if (!waived.has('ansi0-dark') && luminance(this.get('ansi0')) > 0.15) {
-      this.set('ansi0', 'ansi0-dark', darken(this.get('ansi0'), 0.15))
+    if (!light && !waived.has('ansi0-dark') && luminance(this.get('ansi0')) > ANSI0_MAX_LUMINANCE) {
+      this.set('ansi0', 'ansi0-dark', darken(this.get('ansi0'), ANSI0_MAX_LUMINANCE))
     }
 
-    lift('selection', ['selection'], 7, this.theme.foreground)
+    if (!waived.has('ansi0-on-accents')) {
+      const weakest = ROLES.map((i) => this.get(`ansi${i}`)).reduce((a, b) =>
+        contrast(this.get('ansi0'), a) <= contrast(this.get('ansi0'), b) ? a : b,
+      )
+
+      if (contrast(this.get('ansi0'), weakest) < ON_ACCENT_MIN) {
+        this.set('ansi0', 'ansi0-on-accents', relight(this.get('ansi0'), weakest, ON_ACCENT_MIN, light))
+      }
+    }
+
+    if (!waived.has('ansi7-on-ansi8') && contrast(this.get('ansi7'), this.get('ansi8')) < ANSI7_ON_ANSI8_MIN) {
+      this.set('ansi7', 'ansi7-on-ansi8', relight(this.get('ansi7'), this.get('ansi8'), ANSI7_ON_ANSI8_MIN, !light))
+    }
+
+    lift('selection', ['selection'], BODY_MIN, this.theme.foreground)
+  }
+
+  separate(): void {
+    if (this.theme.waive.includes('cvd-red-green')) return
+    const exempt = exemptSlots(this.theme)
+
+    for (const [red, green] of confusions(this.theme)) {
+      for (const mover of exempt.has(green) ? [red, green] : [green, red]) {
+        if (this.pull(mover, mover === red ? green : red)) break
+      }
+    }
+  }
+
+  pull(mover: number, other: number): boolean {
+    const from = this.get(`ansi${mover}`)
+    const against = this.get(`ansi${other}`)
+    const up = oklch(from).l >= oklch(against).l
+
+    for (let step = 1; step <= 40; step++) {
+      const to = shade(from, step / 100, up)
+
+      if (
+        contrast(to, this.theme.background) < ACCENT_MIN ||
+        (mover < 8 && contrast(to, this.get('ansi0')) < ON_ACCENT_MIN)
+      ) {
+        return false
+      }
+
+      if (apart(deuteranope(to), deuteranope(against)) >= CLEAR) {
+        this.set(`ansi${mover}`, 'cvd-red-green', to)
+
+        return true
+      }
+    }
+
+    return false
   }
 
   net(): Move[] {
@@ -276,6 +340,7 @@ export function fixGate<T extends Fixable>(theme: T) {
 
   for (let pass = 0; pass < PASSES; pass++) {
     fixer.readability()
+    fixer.separate()
     fixer.roles()
 
     if (check(fixer.theme).length === 0) break

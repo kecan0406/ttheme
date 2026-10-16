@@ -17,7 +17,7 @@ function palette(name: string): PaletteEntry {
     signature: ['#ffffff', '#eeeeee', '#000000'],
     signatureSlots: ['foreground', 'cursor', 'background'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
-    gate: [16.1, 3.9, 0, 16.1, 3.9, 16.1, 0, 0, 0],
+    gate: [16.1, 4.6, 0, 16.1, 3.9, 16.1, 0, 0, 0, 4.6, 3.2, 0],
     backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
   }
 }
