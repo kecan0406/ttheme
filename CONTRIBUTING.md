@@ -163,7 +163,7 @@ One palette per pull request. At most three open at a time.
 - Every palette passes the contrast gate: body text at 7:1, accents and black on
   the six accents at 4.5:1, ANSI 8 and white on it at 3:1, each accent in its
   role and apart from its neighbors at text size, red and green apart for a
-  deuteranope (`src/contrast.ts`).
+  deuteranope (`src/contrast.ts`; why each threshold: [docs/gate.md](docs/gate.md)).
   `mise run build` fails on a violation. A waiver needs `[contrast] waive = [...]`
   **plus** a `reason`; a waiver without one fails the test suite.
 
