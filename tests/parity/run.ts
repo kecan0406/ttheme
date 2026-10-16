@@ -239,11 +239,31 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
     },
     async quit(tab) {
       const mark = marks.get(tab) ?? 0
+      const start = tab.raw.length
       const home = () => tab.xterm.buffer.active.type === 'normal' && tab.prompts() > mark && tab.pending === 0
+      const left = () => tab.raw.includes('\x1b[?1049l', start)
 
-      for (let i = 0; i < 8 && !home(); i++) {
+      const reacted = async (before: number) => {
+        const end = performance.now() + 2500
+        let size = before
+        let still = performance.now()
+
+        while (!home() && !left() && performance.now() < end) {
+          await Bun.sleep(20)
+
+          if (tab.raw.length !== size) {
+            size = tab.raw.length
+            still = performance.now()
+          } else if (size > before && performance.now() - still >= 300) {
+            return
+          }
+        }
+      }
+
+      for (let i = 0; i < 8 && !home() && !left(); i++) {
+        const before = tab.raw.length
         tab.write('\x1b')
-        await Bun.sleep(300)
+        await reacted(before)
       }
 
       await app.until(home, 10000, 'the TUI never gave the prompt back')

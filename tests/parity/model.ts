@@ -1327,6 +1327,7 @@ export class App {
     const file = join(this.place.home, '.parity', `wears.${tab.n}`)
     rmSync(file, { force: true })
     tab.write(DUMP)
+    await this.until(() => existsSync(file), 1500, 'asked again').catch(() => tab.write(DUMP))
     await this.until(() => existsSync(file), 5000, `the ${this.term} tab never answered what it wears`)
     await Bun.sleep(20)
     const [spec = ''] = readFileSync(file, 'utf8').trim().split('|')
