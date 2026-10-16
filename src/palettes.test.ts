@@ -15,8 +15,9 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { writeOfficial } from './available.ts'
+import { ghostty } from './emit/ghostty.ts'
 import { warpPictureFile } from './emit/warp.ts'
-import { type Manifest, type PaletteEntry, SCHEMA, toTheme } from './manifest.ts'
+import { inMode, type Manifest, type PaletteEntry, SCHEMA, toTheme } from './manifest.ts'
 import {
   forget,
   type Installed,
@@ -75,6 +76,16 @@ test('toTheme derives the ghostty icon colors from the palette', () => {
   assert.equal(theme.selectionBackground, '#383b5b')
 })
 
+test("each of a palette's Ghostty themes carries the dock icon colors of its own mode", () => {
+  const light = inMode(entry('gojo', 2), 'light')
+  const files = ghostty.emit?.(toTheme(inMode(entry('gojo', 2), 'dark')))
+  const content = files?.find((file) => file.path.endsWith('.light'))?.content ?? ''
+  assert.match(
+    content,
+    new RegExp(`^macos-icon-screen-color = ${light.cursor},${light.selection},${light.background}$`, 'm'),
+  )
+})
+
 test('toTheme carries the default role through as a role, not a flag', () => {
   assert.equal(toTheme(entry('neutral', 1, { default: true })).role, 'default')
   assert.equal(toTheme(entry('gojo', 2)).role, undefined)
@@ -120,6 +131,40 @@ test("sync keeps Ghostty's themes folder to both modes of the listed palettes, a
   writeFileSync(join(themes, 'Dracula'), 'mine')
   sync(home, manifest, { terminals: ['ghostty'], palettes: ['gojo'] })
   assert.deepEqual(readdirSync(themes).sort(), ['Dracula', 'ttheme-gojo.dark', 'ttheme-gojo.light'])
+})
+
+test("sync forgets the appearance outside auto, takes the system's again on the way back, and at every sync where no wired terminal reports it", () => {
+  const home = fixture()
+  const was = process.env.XDG_STATE_HOME
+  const file = join(home, 'state', 'ttheme', 'appearance')
+  const answering = (style: string | undefined): Host => ({ platform: 'darwin', env: {}, run: () => style })
+
+  const wear = (mode: string, terminals: Installed['terminals'], style: string | undefined) => {
+    writeFileSync(join(home, 'ttheme', 'config.zsh'), `: \${TTHEME_MODE:=${mode}}\n`)
+    sync(home, manifest, { terminals, palettes: ['gojo'] }, undefined, answering(style))
+  }
+
+  process.env.XDG_STATE_HOME = join(home, 'state')
+  mkdirSync(join(home, 'ttheme'), { recursive: true })
+
+  try {
+    wear('auto', ['ghostty'], 'Dark')
+    assert.equal(readFileSync(file, 'utf8'), 'dark\n')
+    wear('auto', ['ghostty'], undefined)
+    assert.equal(readFileSync(file, 'utf8'), 'dark\n')
+    wear('dark', ['ghostty'], undefined)
+    assert.ok(!existsSync(file))
+    wear('auto', ['ghostty'], undefined)
+    assert.equal(readFileSync(file, 'utf8'), 'light\n')
+    wear('auto', ['kitty'], 'Dark')
+    assert.equal(readFileSync(file, 'utf8'), 'dark\n')
+  } finally {
+    if (was === undefined) {
+      delete process.env.XDG_STATE_HOME
+    } else {
+      process.env.XDG_STATE_HOME = was
+    }
+  }
 })
 
 test('sync names every marketplace the install holds in the zsh table, by the name remove and update take', () => {

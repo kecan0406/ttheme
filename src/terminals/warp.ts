@@ -1,6 +1,15 @@
 import { spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs'
 import { dirname, join } from 'node:path'
 import { backgroundsDir, readBackdrop } from '../backdrop.ts'
 import { backupOnce, editUserFile, spareBackup, writeAtomic } from '../edits.ts'
@@ -147,7 +156,12 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
         }
       }
 
-      out.write(join(dir, file), warpTheme(theme, laid))
+      const path = join(dir, file)
+
+      if (!out.write(path, warpTheme(theme, laid))) {
+        const now = new Date()
+        utimesSync(path, now, now)
+      }
     }
   }
 

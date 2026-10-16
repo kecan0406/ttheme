@@ -784,6 +784,10 @@ export const JOURNEYS: Journey[] = [
       await p.open()
       await p.look('new', { want: 'konata', repaints: 0 })
       await ghostty.look('ghostty', { want: 'konata', at: g })
+      await p.focus(b)
+      await ghostty.appear('dark')
+      await ghostty.appear('light')
+      await p.look('back', { want: 'kita', mode: 'light' })
     },
   },
   {

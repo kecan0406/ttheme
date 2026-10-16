@@ -7,7 +7,12 @@ export const ghostty: Emitter = {
   id: 'ghostty',
 
   emit(theme: Theme): Output[] {
-    return [theme, ...inOther(theme)].map((shade) => ({
+    const others = inOther(theme).map((shade) => ({
+      ...shade,
+      ghostty: { iconGhost: shade.cursor, iconScreen: [shade.cursor, shade.selectionBackground, shade.background] },
+    }))
+
+    return [theme, ...others].map((shade) => ({
       path: `ghostty/themes/${owned(theme.name)}.${modeOf(shade)}`,
       content: colors(shade),
     }))

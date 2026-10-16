@@ -670,6 +670,38 @@ TTHEME_STARTUP=
   (( spawned == 6 )) || { print -u2 "the hub checked with updates off or on CI: spawned=$spawned"; exit 1 }
 ) || exit 1
 (
+  zmodload -F zsh/datetime p:EPOCHSECONDS b:strftime
+  zmodload -F zsh/files b:zf_rm
+  zmodload -F zsh/system b:zsystem p:sysparams
+  TTHEME_STATE_DIR=$XDG_CONFIG_HOME/modestate TTHEME_MODE_AUTO=1 TTHEME_MODE_WORN=dark
+  ran=$XDG_CONFIG_HOME/moderan
+  mkdir -p $TTHEME_STATE_DIR
+  : >| $TTHEME_STATE_DIR/mode.lock
+  print -r -- light >| $TTHEME_STATE_DIR/appearance
+  __tt_active() { return 0 }
+  __tt_cli() { print -r -- "$*" >> $ran; return ${failing:-0} }
+  __tt_reload() { : }
+  __tt_wake() { : }
+  __tt_redraw() { : }
+  ( zsystem flock -t 0 $TTHEME_STATE_DIR/mode.lock; sleep 1.5 ) &
+  sleep 0.4
+  __tt_remode
+  [[ ! -e $ran && ! -e $TTHEME_STATE_DIR/remode ]] || { print -u2 "a remode ran while another held the lock: $(<$ran)"; exit 1 }
+  wait
+  failing=1 __tt_remode
+  [[ $(<$ran) == sync && -e $TTHEME_STATE_DIR/remode.failed && ! -e $TTHEME_STATE_DIR/remode ]] || { print -u2 "a failed remode left no failure behind, or its mark: $(<$ran)"; exit 1 }
+  rm -f $ran
+  __tt_remode() { print -r -- remode >> $ran }
+  __tt_appearance light
+  sleep 0.3
+  [[ ! -e $ran ]] || { print -u2 "a prompt started a remode within an hour of a failed one"; exit 1 }
+  strftime -s ago %Y%m%d%H%M.%S $(( EPOCHSECONDS - 7200 ))
+  touch -t $ago $TTHEME_STATE_DIR/remode.failed
+  __tt_appearance light
+  sleep 0.3
+  [[ $(<$ran) == remode ]] || { print -u2 "a prompt did not start a remode an hour after a failed one"; exit 1 }
+) || exit 1
+(
   unset CI
   zmodload -F zsh/datetime p:EPOCHSECONDS
   TTHEME_STATE_DIR=$XDG_CONFIG_HOME/standing TTHEME_VERSION=1.2.29 TTHEME_AUTO_UPDATE=on

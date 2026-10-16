@@ -578,26 +578,27 @@ __tt_appearance_heard() {
 }
 
 __tt_appearance() {
-  local f=$TTHEME_STATE_DIR/appearance fd
+  local f=$TTHEME_STATE_DIR/appearance
+  local -a at=()
   (( TTHEME_MODE_AUTO )) && __tt_active || return 0
-  zmodload -F zsh/files b:zf_mkdir b:zf_rm 2>/dev/null
-  zmodload -F zsh/system b:zsystem 2>/dev/null
-  zf_mkdir -p $TTHEME_STATE_DIR 2>/dev/null
   [[ -r $f && "$(<$f)" == $1 ]] || __tt_put $f $1 2>/dev/null
   [[ $1 == $TTHEME_MODE_WORN ]] && return 0
-  [[ -e $TTHEME_STATE_DIR/mode.lock ]] || { : >>| $TTHEME_STATE_DIR/mode.lock } 2>/dev/null
-  zsystem flock -t 0 -f fd $TTHEME_STATE_DIR/mode.lock 2>/dev/null || return 0
+  zstat -A at +mtime -- $TTHEME_STATE_DIR/remode.failed 2>/dev/null && (( EPOCHSECONDS - at[1] < 3600 )) && return 0
   __tt_remode </dev/null >/dev/null 2>&1 &!
-  zsystem flock -u $fd
 }
 
 __tt_remode() {
   local f=$TTHEME_STATE_DIR/appearance mark=$TTHEME_STATE_DIR/remode want
   integer n
+  zsystem flock -t 0 $TTHEME_STATE_DIR/mode.lock 2>/dev/null || return 0
   __tt_put $mark $sysparams[pid]
   for (( n = 0; n < 3; n++ )); do
     want=$(<$f)
-    __tt_cli sync || break
+    if ! __tt_cli sync; then
+      : >| $TTHEME_STATE_DIR/remode.failed
+      break
+    fi
+    zf_rm -f -- $TTHEME_STATE_DIR/remode.failed 2>/dev/null
     __tt_reload
     __tt_wake
     kill -URG $$ 2>/dev/null
@@ -736,6 +737,11 @@ __tt_line_init() {
 
 __tt_bind_appearance() {
   local k
+  zmodload -F zsh/files b:zf_mkdir b:zf_rm 2>/dev/null
+  zmodload -F zsh/system b:zsystem p:sysparams 2>/dev/null
+  zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
+  zf_mkdir -p $TTHEME_STATE_DIR 2>/dev/null
+  [[ -e $TTHEME_STATE_DIR/mode.lock ]] || { : >>| $TTHEME_STATE_DIR/mode.lock } 2>/dev/null
   zle -N __tt_appearance_heard
   TTHEME_APPEARANCE=1
   for k in emacs viins vicmd; do
@@ -1814,7 +1820,10 @@ __tt_hook() {
   else
     __tt_sync
   fi
-  __tt_reports_appearance && __tt_bind_appearance
+  if __tt_reports_appearance; then
+    __tt_bind_appearance
+    add-zsh-hook preexec __tt_preexec
+  fi
   __tt_follows_prompt && add-zsh-hook precmd __tt_prompted
   return 0
 }

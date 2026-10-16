@@ -60,6 +60,7 @@ const SHIMS = {
     '  delete) rm -f "$dir/$3" ;;',
     'esac',
   ].join('\n'),
+  gsettings: '[ "$*" = "get org.gnome.desktop.interface color-scheme" ] && cat "$HOME/.parity/color-scheme"',
   'dbus-send': [
     'running="$HOME/.parity/konsole.running"',
     '[ -f "$running" ] || exit 1',
@@ -195,7 +196,8 @@ function prepare(place: Place, term: Term): void {
   mkdirSync(join(place.root, 'tmp'), { recursive: true })
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'Default Bookmark Guid'), 'own\n')
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'PreventEscapeSequenceFromChangingProfile'), '0\n')
-  write(join(place.stateHome, 'ttheme', 'appearance'), 'dark\n')
+  write(join(place.home, '.parity', 'defaults', '-g', 'AppleInterfaceStyle'), 'Dark\n')
+  write(join(place.home, '.parity', 'color-scheme'), "'prefer-dark'\n")
 
   if (term === 'terminal-app') {
     write(join(place.home, '.parity', 'defaults', TERMINAL_DOMAIN, 'Default Window Settings'), 'Own\n')

@@ -345,6 +345,11 @@ auto.new.issue	-	=	=	=	=	=	=	=	=	=
 auto.ghostty.colors	konata	=	=	=	=	=	=	=	=	=
 auto.ghostty.picture	konata	=	=	=	=	=	=	=	=	=
 auto.ghostty.wears	konata	=	=	=	=	=	=	=	=	=
+auto.back.colors	kita	=	=	=	=	=	=	=	=	=
+auto.back.picture	kita	=	=	=	none	=	none	=	=	none
+auto.back.wears	kita	=	=	=	=	=	=	=	=	=
+auto.back.mode	light	=	=	=	=	=	=	=	=	=
+auto.back.issue	-	=	=	=	=	=	=	=	=	=
 palettes.added.colors	asuka	=	=	=	=	=	=	=	=	=
 palettes.added.picture	none	=	=	=	=	=	=	=	=	=
 palettes.added.wears	asuka	=	=	=	=	=	=	=	=	=

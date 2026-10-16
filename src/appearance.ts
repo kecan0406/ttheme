@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { writeAtomic } from './edits.ts'
@@ -41,8 +41,12 @@ export function systemAppearance(host: Host): Mode | undefined {
   return scheme.includes('prefer-dark') ? 'dark' : 'light'
 }
 
-export function knowAppearance(host: Host): Mode | undefined {
-  const known = readAppearance()
+export function forgetAppearance(): void {
+  rmSync(appearancePath(), { force: true })
+}
+
+export function knowAppearance(host: Host, again = false): Mode | undefined {
+  const known = again ? undefined : readAppearance()
 
   if (known) {
     return known

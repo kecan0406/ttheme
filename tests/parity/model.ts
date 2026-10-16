@@ -219,6 +219,7 @@ const ghostty = (): Kind => {
 
       for (const tab of app.tabs) {
         app.rebase(tab, loaded.colors)
+        app.report(tab)
       }
 
       app.log('reload')
@@ -228,6 +229,7 @@ const ghostty = (): Kind => {
 
       for (const tab of app.tabs) {
         app.rebase(tab, loaded.colors)
+        app.report(tab)
       }
     },
     picture: () => loaded.picture,
@@ -879,16 +881,29 @@ export class App {
     return `\x1b[?997;${this.appearance === 'dark' ? 1 : 2}n`
   }
 
+  report(tab: Tab): void {
+    if (tab.appearing) {
+      this.reply(tab, this.appearanceReport())
+    }
+  }
+
   appear(mode: Mode): void {
+    const style = join(this.place.home, '.parity', 'defaults', '-g', 'AppleInterfaceStyle')
     this.appearance = mode
     this.log(`appear ${mode}`)
-    this.kind.appeared?.(this)
+    writeFileSync(join(this.place.home, '.parity', 'color-scheme'), mode === 'dark' ? "'prefer-dark'\n" : "'default'\n")
+
+    if (mode === 'dark') {
+      writeFileSync(style, 'Dark\n')
+    } else {
+      rmSync(style, { force: true })
+    }
 
     for (const tab of this.tabs) {
-      if (tab.appearing) {
-        this.reply(tab, this.appearanceReport())
-      }
+      this.report(tab)
     }
+
+    this.kind.appeared?.(this)
   }
 
   reply(tab: Tab, data: string): void {
@@ -1391,8 +1406,14 @@ export class App {
   }
 
   private async busy(): Promise<boolean> {
-    if (existsSync(join(this.place.stateHome, 'ttheme', 'remode'))) {
-      return true
+    const remode = Number(read(join(this.place.stateHome, 'ttheme', 'remode')).trim())
+
+    if (remode > 0) {
+      try {
+        process.kill(remode, 0)
+
+        return true
+      } catch {}
     }
 
     const proc = Bun.spawn(['ps', '-A', '-ww', '-o', 'args='], { stdout: 'pipe', stderr: 'ignore' })

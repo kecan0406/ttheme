@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { knowAppearance, settingsFor } from './appearance.ts'
+import { forgetAppearance, knowAppearance, settingsFor } from './appearance.ts'
 import { available, nameOf, nearest, readAvailable, untuned, writeKept } from './available.ts'
 import { backgroundsDir, freshenConfs, paintFor, readStore, retint } from './backdrop.ts'
 import { editUserFile, writeAtomic } from './edits.ts'
@@ -187,7 +187,9 @@ export function sync(
   const kept = resolve(untuned(configHome, manifest), state.palettes)
 
   if (modeSetting(configHome) === 'auto') {
-    knowAppearance(host)
+    knowAppearance(host, !settingsFor(state.terminals).includes('auto'))
+  } else {
+    forgetAppearance()
   }
 
   const mode = modeFor(configHome)

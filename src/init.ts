@@ -4,7 +4,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import pkg from '../package.json' with { type: 'json' }
-import { settingsFor, systemAppearance } from './appearance.ts'
+import { readAppearance, settingsFor, systemAppearance } from './appearance.ts'
 import { available, parseManifest, readMarketplaces, writeOfficial } from './available.ts'
 import { build } from './build.ts'
 import { Cancelled } from './cancelled.ts'
@@ -606,7 +606,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
   const warpFast = terminals.includes('warp') ? await askWarpFast(configHome) : undefined
   const mode = await askMode(configHome, terminals)
-  const worn: Mode = mode === 'auto' ? (systemAppearance(host) ?? 'dark') : mode
+  const worn: Mode = mode === 'auto' ? (readAppearance() ?? systemAppearance(host) ?? 'dark') : mode
   const made = existing ? againManifest(existing, paths) : loadManifest(root)
   const manifest = { ...made, palettes: made.palettes.map((entry) => inMode(entry, worn)) }
 
