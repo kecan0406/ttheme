@@ -192,8 +192,8 @@ function nearest(start: number, band: Band): number[] {
   return out
 }
 
-function away(from: number, past: number, mode: Mode, tie: number): number[] {
-  const sign = Math.abs(from - past) <= tie ? (mode === 'dark' ? 1 : -1) : Math.sign(from - past)
+function away(from: number, past: number, mode: Mode): number[] {
+  const sign = Math.abs(from - past) <= STEP ? (mode === 'dark' ? 1 : -1) : Math.sign(from - past)
   const out: number[] = []
 
   for (let k = 1; k * STEP <= REACH; k++) {
@@ -221,9 +221,8 @@ export function separated(theme: Signed, shade: Shade, cursor = shade.cursor, at
         : [a, b]
 
     const value = slotOf(next, mover)
-    const tie = still.startsWith('ansi') ? 0 : STEP
 
-    next = stepped(theme, next, mover, away(hct(value).tone, hct(slotOf(next, still)).tone, mode, tie), (tone) =>
+    next = stepped(theme, next, mover, away(hct(value).tone, hct(slotOf(next, still)).tone, mode), (tone) =>
       own(value, tone),
     )
   }
