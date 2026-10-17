@@ -137,7 +137,7 @@ export function Swatch({ name, color }: { name: string; color: string }) {
       type="button"
       data-copy={color}
       data-copy-hold="1200"
-      aria-label={`copy ${name} ${color}`}
+      aria-label={`copy ${color} ${name}`}
       class="group/copy min-w-0 overflow-hidden rounded-md border bg-card text-left transition-transform duration-150 outline-none hover:-translate-y-px hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:hover:translate-y-0"
     >
       <span
