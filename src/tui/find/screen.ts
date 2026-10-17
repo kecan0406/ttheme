@@ -284,6 +284,14 @@ export function release(id: number): string {
   return `\x1b_Ga=d,d=I,i=${id},q=2\x1b\\`
 }
 
+export const SOLID = 'x=1,y=1,w=1,h=1'
+
+export function solid(id: number, pixel: readonly number[]): string {
+  const data = Buffer.from(Array.from({ length: 9 }, () => pixel).flat()).toString('base64')
+
+  return `\x1b_Ga=t,f=${pixel.length * 8},s=3,v=3,i=${id},q=2;${data}\x1b\\`
+}
+
 const B = open('bold')
 const D = open('dim')
 const OK = open('ok')

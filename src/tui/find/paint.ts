@@ -23,6 +23,8 @@ import {
   place,
   release,
   renderFind,
+  SOLID,
+  solid,
   TILE,
   TRY_ID,
   transmit,
@@ -277,8 +279,7 @@ export class Paint {
     let out = ''
 
     if (!this.covered) {
-      const pixel = Buffer.from(rgb(this.background)).toString('base64')
-      out += `\x1b_Ga=t,f=24,s=1,v=1,i=${COVER_ID},q=2;${pixel}\x1b\\`
+      out += solid(COVER_ID, rgb(this.background))
 
       if (MARGIN) {
         out += `\x1b_Ga=t,f=32,s=1,v=1,i=${ANCHOR_ID},q=2;AAAAAA==\x1b\\\x1b[H\x1b_Ga=p,i=${ANCHOR_ID},p=${ANCHOR_ID},c=1,r=1,C=1,z=${ANCHOR_Z},q=2\x1b\\`
@@ -292,10 +293,10 @@ export class Paint {
     if (MARGIN) {
       const { x, y } = MARGIN
 
-      return `${out}\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},P=${ANCHOR_ID},Q=${ANCHOR_ID},H=${-x},V=${-y},c=${cols + 2 * x},r=${rows + 2 * y},C=1,z=${COVER_Z},q=2\x1b\\`
+      return `${out}\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},P=${ANCHOR_ID},Q=${ANCHOR_ID},H=${-x},V=${-y},c=${cols + 2 * x},r=${rows + 2 * y},${SOLID},C=1,z=${COVER_Z},q=2\x1b\\`
     }
 
-    return `${out}\x1b[H\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},c=${cols},r=${rows},C=1,z=${COVER_Z},q=2\x1b\\`
+    return `${out}\x1b[H\x1b_Ga=p,i=${COVER_ID},p=${COVER_ID},c=${cols},r=${rows},${SOLID},C=1,z=${COVER_Z},q=2\x1b\\`
   }
 
   private backdrop(tried: Placement | undefined): string {

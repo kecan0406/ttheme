@@ -232,6 +232,38 @@ __cc_kitty() {
   printf '\e_Ga=d,d=A,q=2\e\\\e[H\e[2J'
 }
 
+__cc_logo() {
+  local dir=${TTHEME_CONFIG:h}/backgrounds got
+  local -i seen=0
+  if [[ $TTHEME_ADAPTER != kitty ]]; then
+    __cc_report logo-over fail "only kitty shows a tab's picture as a window logo"
+    return
+  fi
+  mkdir -p $dir
+  print -rn -- iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAeElEQVR4nO3PQQkAMAzAwEqr1EmdiD2OQSACLrNnv264oAEtaEALGtCCBrSgAS1oQAsa0IIGtKABLWhACxrQgga0oAEtaEALGtCCBrSgAS1oQAsa0IIGtKABLWhACxrQgga0oAEtaEALGtCCBrSgAS1oQAsa0ILHLqN3AQ8Wt6FTAAAAAElFTkSuQmCC | base64 -d > $dir/ttheme-compat-logo.png
+  print -l "background-image = $dir/ttheme-compat-logo.png" 'background-image-opacity = 1' > $dir/ttheme-compat-logo.conf
+  printf '\e[H\e[2J'
+  __tt_kitty_var ttheme_shown ttheme-compat-logo
+  sleep 0.5
+  if (( ! CC_DRAWN )); then
+    __cc_report logo-over skip "the window does not redraw while it is covered"
+  elif ! __cc_shot logo-alone; then
+    __cc_report logo-over skip "no screenshot"
+  else
+    for got in ${(M)${=REPLY}:#\#*}; do __cc_near '#40a040' $got 64 && seen=1; done
+    if (( seen )); then
+      printf '\e_Ga=t,f=24,s=3,v=3,i=44,q=2;QECgQECgQECgQECgQECgQECgQECgQECgQECg\e\\'
+      printf '\e[H\e_Ga=p,i=44,p=44,c=%d,r=%d,x=1,y=1,w=1,h=1,C=1,z=-1073741826,q=2\e\\' $COLUMNS $LINES
+      __cc_seen logo-over '#40a040' '#4040a0' 64
+    else
+      __cc_report logo-over skip "the logo never showed: the window shows ${REPLY:-nothing}"
+    fi
+  fi
+  printf '\e_Ga=d,d=A,q=2\e\\\e[H\e[2J'
+  __tt_kitty_var ttheme_shown "$TTHEME_KITTY_SHOWN"
+  rm -f -- $dir/ttheme-compat-logo.png $dir/ttheme-compat-logo.conf
+}
+
 __cc_scheme() {
   print -l '[Background]' 'Color=160,64,64' '' '[Foreground]' 'Color=230,230,230' '' '[General]' \
     'Description=ttheme compat' 'Opacity=1' "Wallpaper=$2" 'FillStyle=Stretch' 'WallpaperOpacity=1' > $1
@@ -630,12 +662,14 @@ __cc_cases() {
   if __cc_ask $'\e_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\e\\' && [[ $REPLY == *'_Gi=31;OK'* ]]; then
     __cc_report kitty-graphics pass "a=q answered OK"
     __cc_kitty
+    __cc_logo
   else
     __cc_report kitty-graphics fail "${${(V)REPLY}:-no answer}"
     __cc_report kitty-shown skip "no kitty graphics"
     __cc_report kitty-under-bg skip "no kitty graphics"
     __cc_report kitty-el skip "no kitty graphics"
     __cc_report kitty-crop skip "no kitty graphics"
+    __cc_report logo-over fail "only kitty shows a tab's picture as a window logo"
   fi
 
   __cc_decrqm sync-output 2026

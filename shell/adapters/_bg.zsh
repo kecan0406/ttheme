@@ -264,7 +264,7 @@ __tt_pv_bg_open() {
 __tt_pv_bg_show() {
   (( bgcw )) || return 0
   local name=$1 img="" op size fit=contain focus=-1 REPLY
-  local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh at
+  local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh at px
   local -i cols=$(( pw + 2 * bgmx )) rows=$(( ph + 2 * bgmy ))
   (( ${#p} >= 20 )) || return 0
   bgname=$name
@@ -291,12 +291,14 @@ __tt_pv_bg_show() {
     printf '\e_Ga=t,f=32,s=1,v=1,i=999999,q=2;AAAAAA==\e\\\e[H\e_Ga=p,i=999999,p=999999,c=1,r=1,C=1,z=-1073741828,q=2\e\\'
     bganchor=1
   fi
-  __tt_b64 $r $g $b
-  printf '\e_Ga=t,f=24,s=1,v=1,i=1,q=2;%s\e\\' "$REPLY"
-  __tt_bg_at 1 -1073741827 0 0 $cols $rows
-  __tt_b64 $r $g $b $a
-  printf '\e_Ga=t,f=32,s=1,v=1,i=2,q=2;%s\e\\' "$REPLY"
-  __tt_bg_at 2 -1073741825 0 0 $cols $rows
+  px=($r $g $b)
+  __tt_b64 $px $px $px $px $px $px $px $px $px
+  printf '\e_Ga=t,f=24,s=3,v=3,i=1,q=2;%s\e\\' "$REPLY"
+  __tt_bg_at 1 -1073741827 0 0 $cols $rows 1 1 1 1
+  px+=($a)
+  __tt_b64 $px $px $px $px $px $px $px $px $px
+  printf '\e_Ga=t,f=32,s=3,v=3,i=2,q=2;%s\e\\' "$REPLY"
+  __tt_bg_at 2 -1073741825 0 0 $cols $rows 1 1 1 1
   local id=""
   if __tt_bg_dim "$img"; then
     wh=(${=bgdim[$img]})

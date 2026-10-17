@@ -241,6 +241,7 @@ export const MEASURED: { id: string; holds: (b: Behavior) => boolean }[] = [
   { id: 'picture-renamed', holds: (b) => b.bookmarks },
   { id: 'picture-gone', holds: (b) => b.bookmarks },
   { id: 'appearance-report', holds: (b) => b.appearance },
+  { id: 'logo-over', holds: () => false },
 ]
 
 export const WIRING: Record<Term, Wired | undefined> = {

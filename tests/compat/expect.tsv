@@ -35,6 +35,7 @@ kitty-shown	pass	pass	pass	pass	skip	pass	skip	pass
 kitty-under-bg	pass	pass	fail	pass	skip	fail	skip	pass
 kitty-el	pass	pass	fail	pass	skip	pass	skip	pass
 kitty-crop	pass	fail	pass	pass	skip	fail	skip	pass
+logo-over	fail	fail	fail	fail	fail	fail	fail	fail
 scheme-picture	fail	fail	fail	fail	fail	fail	fail	pass
 scheme-held	fail	fail	fail	fail	fail	fail	fail	pass
 scheme-released	fail	fail	fail	fail	fail	fail	fail	pass
