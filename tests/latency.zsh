@@ -646,6 +646,7 @@ appeared() {
   start $name
   upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name (ghostty, auto): no prompt after the command typed ahead"; return 1 }
   stop
+  rm -f -- $WORK/$name/.state/ttheme/appearance
   EXTRA=(TTHEME_TAB_PALETTE=off TT_TRACE=1)
   : > $WORK/$name/trace
   start $name
@@ -727,7 +728,7 @@ forks() {
     done
     print
   done
-  print -r -- "processes a shell with ttheme starts beyond a bare zsh, counted from its xtrace: a warm new tab (start, start-seq), an empty command, a focus-in, a cd, a command that resets a painted tab's cursor (mend), and in Ghostty a prompt under auto that asks and hears the appearance (auto)"
+  print -r -- "processes a shell with ttheme starts beyond a bare zsh, counted from its xtrace: a warm new tab (start, start-seq), an empty command, a focus-in, a cd, a command that resets a painted tab's cursor (mend), and in Ghostty a prompt under auto (auto) — xtrace is off inside a zle widget, so the ask and the hear are counted by shell/check.zsh, not here"
   (( more )) && print -u2 "✗: a hot path starts a process again that $FORKS says it does not — find the new \$(…) or external command"
   (( less )) && print -u2 "+: fewer processes than $FORKS — lock the win in with \`mise run forks --update\`"
   (( more + less == 0 ))
