@@ -10,6 +10,16 @@ typeset -g KONSOLE_SCREEN=${TTHEME_KONSOLE_SCREEN:-:77}
 typeset -ga TERMINALS=(ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole)
 typeset -gA FLAG=(ghostty '' iterm2 '--iterm --trust' wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app '--terminal-app --pictured' konsole --konsole)
 typeset -gA ADAPTER=(ghostty ghostty iterm2 iterm2 wezterm wezterm kitty kitty alacritty alacritty warp warp terminal-app terminal-app konsole konsole)
+typeset -ga MEASURING=()
+
+abandon() {
+  (( ${#MEASURING} )) && quit $MEASURING
+  exit $1
+}
+
+trap 'abandon 129' HUP
+trap 'abandon 130' INT
+trap 'abandon 143' TERM
 
 installed() {
   case $1 in
@@ -121,9 +131,16 @@ serve() {
 }
 
 quit() {
+  local i
   case $1 in
     terminal-app)
-      (( $2 )) || pkill -x Terminal 2>/dev/null || :
+      if (( ! $2 )); then
+        pkill -x Terminal 2>/dev/null || :
+        for i in {1..50}; do
+          pgrep -x Terminal > /dev/null || break
+          sleep 0.1
+        done
+      fi
       zsh $ROOT/tests/terminal-prefs.zsh restore
       ;;
     ghostty) pkill -f -- "--config-file=$SANDBOX/" 2>/dev/null || : ;;
@@ -146,8 +163,11 @@ measure() {
   [[ $term == terminal-app ]] && pgrep -x Terminal > /dev/null && was=1
   hook=$(mktemp "${TMPDIR:-/tmp}/ttheme-compat.XXXXXX")
   print -rl -- "typeset -g CC_ADAPTER=$ADAPTER[$term] CC_TITLE=$title" "source ${(q)ROOT}/tests/compat/cases.zsh" > $hook
+  MEASURING=($term $was)
   if ! zsh $ROOT/tests/sandbox.zsh --behind ${=FLAG[$term]} --zshenv $hook miku asuka rei > /dev/null; then
     rm -f $hook
+    quit $term $was
+    MEASURING=()
     return 1
   fi
   rm -f $hook
@@ -157,6 +177,7 @@ measure() {
     sleep 0.1
   done
   quit $term $was
+  MEASURING=()
   [[ -e $SANDBOX/compat/done ]] || { print -u2 "$term: the cases never finished"; return 1 }
   cp $SANDBOX/compat/results $OUT/$term.tsv
   [[ -s $SANDBOX/compat/errors ]] && cp $SANDBOX/compat/errors $OUT/$term.err
