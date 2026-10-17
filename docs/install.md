@@ -59,7 +59,9 @@ next one.
 
 - **Backups and symlinks** — before its first edit of a file it keeps a copy
   beside it, `<file>.ttheme.bak`, and it writes through symlinks, so a dotfiles
-  repo keeps its links.
+  repo keeps its links. A linked Warp `settings.toml` also gets an identical
+  link put back in its place, since Warp only notices changes inside its own
+  folder.
 - **Your keys stay yours** — a Ghostty `command` or `shell-integration` in any
   of the files Ghostty reads (`config`, `config.ghostty`, and on macOS the
   Application Support ones), kitty's `window_logo_scale` and

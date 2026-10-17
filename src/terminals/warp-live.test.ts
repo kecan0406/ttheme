@@ -1,7 +1,19 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  renameSync,
+  symlinkSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import { test } from 'node:test'
 import type { PaletteEntry } from '../core/manifest.ts'
 import type { Wired } from '../core/wired.ts'
@@ -77,6 +89,23 @@ test("a hover in Warp puts on an installed palette's newest theme once the keys 
   assert.equal(worn(), warpThemeValue('miku', 'ttheme-miku.0123abcd.yaml'))
   assert.equal(readFileSync(warpBasePath(configHome), 'utf8'), '"Dracula"')
   assert.deepEqual(views(), [])
+})
+
+test('a hover in Warp writes a linked settings file through its link, which an identical link then replaces so Warp hears it', async () => {
+  const { home, configHome, settings, worn } = warp()
+  const real = join(home, 'dotfiles', 'warp.toml')
+  mkdirSync(dirname(real), { recursive: true })
+  renameSync(settings, real)
+  const text = relative(dirname(settings), real)
+  symlinkSync(text, settings)
+  const link = lstatSync(settings).ino
+  const live = warpLive(env, true, configHome, home)
+  assert.ok(live)
+  live.paint(palette('miku', '#0e2124'))
+  await settled()
+  assert.equal(worn(), warpThemeValue('miku', 'ttheme-miku.0123abcd.yaml'))
+  assert.equal(readlinkSync(settings), text)
+  assert.notEqual(lstatSync(settings).ino, link)
 })
 
 test('an uninstalled palette reaches Warp through a short-lived theme', async () => {

@@ -1187,14 +1187,19 @@ done
   recorded() { print -r -- "$$ $* ${TTHEME_PALETTES_AT:--} ${TTHEME_PINS_AT:--}" }
   mine=('[appearance]' 'font = 1' '' '[appearance.themes]' 'system_theme = false' 'theme = "dark_city"' '' '[other]' 'x = 2')
   print -rl -- "${mine[@]}" > $XDG_CONFIG_HOME/dotwarp/settings.toml
-  ln -s $XDG_CONFIG_HOME/dotwarp/settings.toml $TTHEME_WARP_SETTINGS
+  ln -s ../dotwarp/settings.toml $TTHEME_WARP_SETTINGS
   __tt_paints && __tt_keepable || { print -u2 "a wired Warp with a settings.toml refused to paint, or to keep a palette as the default"; exit 1 }
   __tt_prompted
   [[ "$(<$tab)" == "$(recorded miku - -)" && "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours miku)"* ]] ||
     { print -u2 "a Warp tab that took no palette did not follow the default: $(<$tab)"; exit 1 }
+  zstat -L -A linked +inode -- $TTHEME_WARP_SETTINGS
   ttheme use kaito > /dev/null || { print -u2 "ttheme use failed in a wired Warp"; exit 1 }
   [[ -L $TTHEME_WARP_SETTINGS && "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- "${(@)mine[1,5]}" "$(ours kaito)" "${(@)mine[7,-1]}")" ]] ||
     { print -u2 "ttheme use in Warp did not put the palette in settings.toml alone, or replaced the link:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
+  zstat -L -A relinked +inode -- $TTHEME_WARP_SETTINGS
+  zstat -L -A linkto +link -- $TTHEME_WARP_SETTINGS
+  [[ $relinked[1] != "$linked[1]" && $linkto[1] == ../dotwarp/settings.toml ]] ||
+    { print -u2 "ttheme use in Warp wrote through the link without putting an identical link in its place, which Warp's watch on its folder never hears: $linkto"; exit 1 }
   [[ "$(<$TTHEME_HOME/warp.base)" == '"dark_city"' && "$(<$TTHEME_WARP_SETTINGS.ttheme.bak)" == "$(print -rl -- "${mine[@]}")" && ${(t)TTHEME_PAINTED} == *export* ]] ||
     { print -u2 "a Warp paint did not keep the user's theme where ttheme off finds it, or did not mark the tab painted"; exit 1 }
   [[ $TTHEME_SPEC == "$TTHEME_PALETTE[kaito]" && "$(<$tab)" == "$(recorded miku kaito -)" ]] ||
@@ -1323,6 +1328,19 @@ done
   zstat -F %s.%N -A at +mtime -- $TTHEME_WARP_SETTINGS
   [[ "$(shasum < $TTHEME_WARP_SETTINGS)" == "$sum" && $at[1] != "$was[1]" ]] ||
     { print -u2 "warming Warp's settings reload changed the file, or left it untouched"; exit 1 }
+  (
+    zmodload zsh/files
+    zf_mv $TTHEME_WARP_SETTINGS $XDG_CONFIG_HOME/fwarp/real.toml && zf_ln -s real.toml $TTHEME_WARP_SETTINGS
+    zstat -L -A was +inode -- $TTHEME_WARP_SETTINGS
+    zstat -F %s.%N -A at +mtime -- $XDG_CONFIG_HOME/fwarp/real.toml
+    __tt_warp_prime
+    zstat -L -A now +inode -- $TTHEME_WARP_SETTINGS
+    zstat -L -A linkto +link -- $TTHEME_WARP_SETTINGS
+    zstat -F %s.%N -A after +mtime -- $XDG_CONFIG_HOME/fwarp/real.toml
+    [[ $now[1] != "$was[1]" && $linkto[1] == real.toml && $after[1] == "$at[1]" && "$(shasum < $TTHEME_WARP_SETTINGS)" == "$sum" ]] ||
+      { print -u2 "warming a linked settings.toml did not put an identical link in its place, or wrote its target"; exit 1 }
+    zf_rm $TTHEME_WARP_SETTINGS && zf_mv $XDG_CONFIG_HOME/fwarp/real.toml $TTHEME_WARP_SETTINGS
+  ) || exit 1
   (
     TTHEME_WARP_TABS=$XDG_CONFIG_HOME/fwarpsame
     mkdir -p $TTHEME_WARP_TABS

@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { owned } from '../core/theme.ts'
-import { editUserFile, writeAtomic } from '../store/edits.ts'
+import { editUserFile, relink, writeAtomic } from '../store/edits.ts'
 import { readInstalled, worn } from '../store/installed.ts'
 import { type WarpLook, type WarpPicture, warpTheme } from './emit/warp.ts'
 import { colorless } from './osc.ts'
@@ -100,6 +100,7 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
     }
 
     editUserFile(settings, withWarpTheme(content, value))
+    relink(settings)
 
     if (!ours(value)) {
       rmSync(base, { force: true })

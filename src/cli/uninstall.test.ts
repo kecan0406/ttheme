@@ -1,5 +1,14 @@
 import assert from 'node:assert/strict'
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readlinkSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -193,6 +202,31 @@ test('uninstall puts back the Warp theme ttheme replaced', () => {
 
   assert.equal(readFileSync(settings, 'utf8'), before)
   assert.ok(!existsSync(backupPath(settings)))
+})
+
+test('uninstall puts back a linked Warp settings file through its link, which an identical link then replaces so Warp hears it', () => {
+  const p = paths()
+
+  const settings =
+    process.platform === 'darwin'
+      ? join(p.home, '.warp', 'settings.toml')
+      : join(p.configHome, 'warp-terminal', 'settings.toml')
+
+  const real = join(p.home, 'dotfiles', 'warp.toml')
+  const before = '[appearance.themes]\ntheme = "Dracula"\n'
+  put(real, before)
+  mkdirSync(join(settings, '..'), { recursive: true })
+  symlinkSync(real, settings)
+  install(p, { terminals: ['warp'], palettes: ['gojo'] })
+  install(p, { terminals: ['warp'], palettes: ['gojo'] })
+  assert.match(readFileSync(real, 'utf8'), /ttheme-gojo\.[0-9a-f]{8}\.yaml/)
+  const link = lstatSync(settings).ino
+
+  applyUninstall(planUninstall(p), p, host)
+
+  assert.equal(readFileSync(real, 'utf8'), before)
+  assert.equal(readlinkSync(settings), real)
+  assert.notEqual(lstatSync(settings).ino, link)
 })
 
 test('uninstall drops the Warp backup that ttheme off already made true again', () => {

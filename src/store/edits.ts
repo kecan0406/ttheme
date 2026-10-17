@@ -2,13 +2,16 @@ import {
   chmodSync,
   copyFileSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   readdirSync,
   readFileSync,
+  readlinkSync,
   realpathSync,
   renameSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { dirname } from 'node:path'
@@ -54,6 +57,21 @@ export function rewrite(from: string, to: string, content: Uint8Array): void {
   if (from !== to) {
     renameSync(from, to)
   }
+}
+
+export function linked(path: string): boolean {
+  return lstatSync(path, { throwIfNoEntry: false })?.isSymbolicLink() === true
+}
+
+export function relink(path: string): void {
+  if (!linked(path)) {
+    return
+  }
+
+  const tmp = `${path}.ttheme-${process.pid}`
+  rmSync(tmp, { force: true })
+  symlinkSync(readlinkSync(path), tmp)
+  renameSync(tmp, path)
 }
 
 export function editUserFile(path: string, content: string): boolean {

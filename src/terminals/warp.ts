@@ -1,21 +1,12 @@
 import { spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  realpathSync,
-  rmSync,
-  utimesSync,
-  writeFileSync,
-} from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { decodePng, encodeRgb, flatten } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
 import { owned, stem } from '../core/theme.ts'
 import { backgroundsDir, type ProfileBackground, readBackdrop } from '../pictures/backdrop.ts'
-import { backupOnce, editUserFile, spareBackup, writeAtomic } from '../store/edits.ts'
+import { backupOnce, editUserFile, linked, relink, spareBackup, writeAtomic } from '../store/edits.ts'
 import { dataHome, readText, tilde } from './common.ts'
 import { warp as emitter, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from './emit/warp.ts'
 import type { At, Ctx, Out, Wiring } from './types.ts'
@@ -99,7 +90,7 @@ function ours(content: string): boolean {
 }
 
 const WARP_LATER =
-  "setTimeout(() => { const fs = require('node:fs'); const [file, next, seen, theme, later, token] = process.argv.slice(-6); if (!fs.existsSync(later) || fs.readFileSync(later, 'utf8') !== token || fs.readFileSync(file, 'utf8') !== seen || !fs.existsSync(theme)) return; const tmp = file + '.ttheme-' + process.pid; fs.writeFileSync(tmp, next); fs.chmodSync(tmp, fs.statSync(file).mode & 0o7777); fs.renameSync(tmp, file) }, 500)"
+  "setTimeout(() => { const fs = require('node:fs'); const [file, next, seen, theme, later, token] = process.argv.slice(-6); if (!fs.existsSync(later) || fs.readFileSync(later, 'utf8') !== token || fs.readFileSync(file, 'utf8') !== seen || !fs.existsSync(theme)) return; const real = fs.realpathSync(file); const tmp = real + '.ttheme-' + process.pid; fs.writeFileSync(tmp, next); fs.chmodSync(tmp, fs.statSync(real).mode & 0o7777); fs.renameSync(tmp, real); if (!fs.lstatSync(file).isSymbolicLink()) return; const link = file + '.ttheme-' + process.pid; fs.rmSync(link, { force: true }); fs.symlinkSync(fs.readlinkSync(file), link); fs.renameSync(link, file) }, 500)"
 
 interface Laid {
   files: Map<string, string>
@@ -251,13 +242,13 @@ function wearWarp(at: At, startup: string | undefined, laid: Laid, keep = false)
     const token = randomUUID()
     mkdirSync(dirname(later), { recursive: true })
     writeFileSync(later, token)
-    spawn(
-      process.execPath,
-      ['-e', WARP_LATER, realpathSync(file), next, content, join(warpThemes(at.home), theme), later, token],
-      { detached: true, stdio: 'ignore' },
-    ).unref()
+    spawn(process.execPath, ['-e', WARP_LATER, file, next, content, join(warpThemes(at.home), theme), later, token], {
+      detached: true,
+      stdio: 'ignore',
+    }).unref()
   } else {
     editUserFile(file, next)
+    relink(file)
   }
 
   return file
@@ -309,7 +300,7 @@ export const warp: Wiring = {
         ? [{ file, content: withWarpTheme(content, readText(warpBasePath(at.configHome)) || WARP_DEFAULT) }]
         : [],
       removals: ours(content) ? [] : spareBackup(file),
-      touches: [],
+      touches: ours(content) && linked(file) ? [file] : [],
     }
   },
 }

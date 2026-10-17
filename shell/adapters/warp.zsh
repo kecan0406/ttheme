@@ -113,7 +113,18 @@ __tt_warp_set() {
   else
     reply+=("" "[appearance.themes]" "theme = $1")
   fi
-  __tt_put $TTHEME_WARP_SETTINGS "${reply[@]}"
+  __tt_put $TTHEME_WARP_SETTINGS "${reply[@]}" || return 1
+  __tt_warp_relink
+}
+
+__tt_warp_relink() {
+  local -a to
+  [[ -L $TTHEME_WARP_SETTINGS ]] && zmodload -F zsh/files b:zf_ln b:zf_mv b:zf_rm 2>/dev/null &&
+    zstat -L -A to +link -- $TTHEME_WARP_SETTINGS 2>/dev/null || return 0
+  zf_rm -f -- $TTHEME_WARP_SETTINGS.$$ 2>/dev/null
+  zf_ln -s -- $to[1] $TTHEME_WARP_SETTINGS.$$ 2>/dev/null && zf_mv -f -- $TTHEME_WARP_SETTINGS.$$ $TTHEME_WARP_SETTINGS 2>/dev/null ||
+    zf_rm -f -- $TTHEME_WARP_SETTINGS.$$ 2>/dev/null
+  return 0
 }
 
 __tt_warp_wearing() {
@@ -254,6 +265,7 @@ __tt_warp_mixed() {
 
 __tt_warp_prime() {
   local fd byte
+  [[ -L $TTHEME_WARP_SETTINGS ]] && { __tt_warp_relink; return 0 }
   sysopen -rw -u fd $TTHEME_WARP_SETTINGS 2>/dev/null || return 0
   sysread -s 1 -i $fd byte && sysseek -u $fd 0 && syswrite -o $fd -- $byte
   exec {fd}>&-

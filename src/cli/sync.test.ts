@@ -2,16 +2,19 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
+  readlinkSync,
   statSync,
+  symlinkSync,
   utimesSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import { test } from 'node:test'
 import { inMode, type Manifest, type PaletteEntry, SCHEMA, toTheme } from '../core/manifest.ts'
 import { decodePng, encodeRgba } from '../core/png.ts'
@@ -398,6 +401,44 @@ test('a Warp theme written late lands when nothing came after it, and gives way 
   await new Promise((resolve) => setTimeout(resolve, 300))
   assert.match(readFileSync(kept.settings, 'utf8'), /name = "gojo"/)
   assert.equal(readFileSync(undone.settings, 'utf8'), mine)
+})
+
+test('a linked Warp settings file is written through its link, which an identical link then replaces so Warp hears every write', async () => {
+  const configHome = fixture()
+  const home = fixture()
+  const settings = warpSettings(home, configHome)
+  const real = join(home, 'dotfiles', 'warp.toml')
+  const mine = '[appearance.themes]\ntheme = "Dracula"\n'
+  mkdirSync(dirname(real), { recursive: true })
+  mkdirSync(dirname(settings), { recursive: true })
+  writeFileSync(real, mine)
+  const text = relative(dirname(settings), real)
+  symlinkSync(text, settings)
+  let link = lstatSync(settings).ino
+
+  const relinked = () => {
+    const was = link
+    link = lstatSync(settings).ino
+
+    return readlinkSync(settings) === text && link !== was
+  }
+
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo', 'geto'] }, home)
+  const until = Date.now() + 4000
+
+  while (!/name = "gojo"/.test(readFileSync(real, 'utf8')) && Date.now() < until) {
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 100))
+  assert.match(readFileSync(real, 'utf8'), /name = "gojo"/)
+  assert.ok(relinked())
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo', 'geto'], startup: 'geto' }, home)
+  assert.match(readFileSync(real, 'utf8'), /name = "geto"/)
+  assert.ok(relinked())
+  sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo', 'geto'], off: true }, home)
+  assert.equal(readFileSync(real, 'utf8'), mine)
+  assert.ok(relinked())
 })
 
 test('sync adds the Warp theme table when there is none, gives Warp its default back while off, and leaves Warp alone without a settings file', () => {
