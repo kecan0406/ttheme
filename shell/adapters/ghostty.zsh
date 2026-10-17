@@ -333,14 +333,17 @@ __tt_pv_claim() {
 
 __tt_bg_cells() {
   local REPLY resp line v f
-  local -i px=2 py=2 fs=0 sc=2
-  for f in ${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config; do
+  local -i l=2 r=2 t=2 b=2 bal=0 fs=0 sc=2
+  local -a files=(${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config{,.ghostty})
+  [[ $OSTYPE == darwin* ]] && files+=("$HOME/Library/Application Support/com.mitchellh.ghostty/config"{,.ghostty})
+  for f in $files; do
     [[ -r $f ]] || continue
     for line in "${(@f)$(<$f)}"; do
       v=${${line#*=}// /}
       case $line in
-        window-padding-x*=*) [[ $v == <->(|,<->) ]] && px=$(( ${v%%,*} > ${v##*,} ? ${v%%,*} : ${v##*,} )) ;;
-        window-padding-y*=*) [[ $v == <->(|,<->) ]] && py=$(( ${v%%,*} > ${v##*,} ? ${v%%,*} : ${v##*,} )) ;;
+        window-padding-x*=*) [[ $v == <->(|,<->) ]] && l=${v%%,*} r=${v##*,} ;;
+        window-padding-y*=*) [[ $v == <->(|,<->) ]] && t=${v%%,*} b=${v##*,} ;;
+        window-padding-balance*=*) case $v in false) bal=0 ;; true) bal=1 ;; equal) bal=2 ;; esac ;;
         font-size*=*) [[ $v == <->(|.<->) ]] && fs=${v%%.*} ;;
       esac
     done
@@ -353,7 +356,9 @@ __tt_bg_cells() {
   bgch=${resp%;*} bgcw=${resp#*;}
   (( fs && bgch * 10 < fs * 20 )) && sc=1
   (( bgrel )) || return 0
-  bgmx=$(( (px * sc + bgcw - 1) / bgcw + 1 )) bgmy=$(( (py * sc + bgch - 1) / bgch + 1 ))
+  bgpad="$(( l * sc )) $(( r * sc )) $(( t * sc )) $(( b * sc )) $bal"
+  bgmx=$(( ((l > r ? l : r) * sc + bgcw - 1) / bgcw + 1 ))
+  bgmy=$(( ((bal == 1 ? t + b : t > b ? t : b) * sc + bgch - 1) / bgch + 1 ))
 }
 
 __tt_bg_crop() {

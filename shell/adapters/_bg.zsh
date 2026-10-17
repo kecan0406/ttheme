@@ -33,25 +33,51 @@ __tt_bg_frame() {
   REPLY="$dw $dh $ox $oy"
 }
 
+__tt_bg_surface() {
+  local -a pd=(${=bgpad:-0 0 0 0 0})
+  local -i gw=$(( pw * bgcw )) gh=$(( ph * bgch )) w h l t cap
+  if (( ! bgrel )); then
+    REPLY="0 0 $gw $gh"
+    return 0
+  fi
+  w=$(( gw + pd[1] + pd[2] + bgcw / 2 )) h=$(( gh + pd[3] + pd[4] + bgch / 2 )) l=$pd[1] t=$pd[3]
+  if (( pd[5] )); then
+    l=$(( (w - gw) / 2 )) t=$(( (h - gh) / 2 )) cap=$(( (pd[1] + pd[2] + bgcw) / 2 ))
+    (( pd[5] == 1 && t > cap )) && t=$cap
+  fi
+  REPLY="$(( -l )) $(( -t )) $w $h"
+}
+
 __tt_bg_place() {
-  local -i cw=$5 ch=$6 W=$(( $3 * $5 )) H=$(( $4 * $6 )) dw dh sx sy c0 c1 r0 r1
+  local -i iw=$1 ih=$2 ox=$3 oy=$4 W=$5 H=$6 cw=$7 ch=$8 dw dh sx sy x0 x1 y0 y1 c0 c1 r0 r1 rows
   local -a fr
-  __tt_bg_frame $1 $2 $W $H $7 $8 $9 ${10:--1}
+  __tt_bg_frame $iw $ih $W $H $9 ${10} ${11} ${12:--1}
   fr=(${=REPLY})
-  dw=$fr[1] dh=$fr[2] sx=$fr[3] sy=$fr[4]
-  c0=$(( ((sx > 0 ? sx : 0) + cw - 1) / cw )) c1=$(( (sx + dw < W ? sx + dw : W) / cw ))
-  r0=$(( ((sy > 0 ? sy : 0) + ch - 1) / ch )) r1=$(( (sy + dh < H ? sy + dh : H) / ch ))
-  (( c1 > c0 && r1 > r0 )) || return 1
-  REPLY="$(( c0 + 1 )) $(( r0 + 1 )) $(( c1 - c0 )) $(( r1 - r0 )) $(( (c0 * cw - sx) * $1 / dw )) $(( (r0 * ch - sy) * $2 / dh )) $(( (c1 - c0) * cw * $1 / dw )) $(( (r1 - r0) * ch * $2 / dh ))"
+  dw=$fr[1] dh=$fr[2] sx=$(( ox + fr[3] )) sy=$(( oy + fr[4] ))
+  x0=$(( sx > ox ? sx : ox )) y0=$(( sy > oy ? sy : oy ))
+  if (( ${13:-0} )); then
+    x1=$(( sx + dw < ox + W + cw ? sx + dw : ox + W + cw )) y1=$(( sy + dh < oy + H + ch ? sy + dh : oy + H + ch ))
+    c0=$(( x0 >= 0 ? x0 / cw : -((cw - 1 - x0) / cw) )) r0=$(( y0 >= 0 ? y0 / ch : -((ch - 1 - y0) / ch) ))
+    if (( sx + dw >= ox + W )); then
+      c1=$(( x1 >= 0 ? (x1 + cw - 1) / cw : -(-x1 / cw) ))
+    else
+      c1=$(( x1 >= 0 ? x1 / cw : -((cw - 1 - x1) / cw) ))
+    fi
+    x1=$(( c1 * cw < sx + dw ? c1 * cw : sx + dw ))
+  else
+    x1=$(( sx + dw < W ? sx + dw : W )) y1=$(( sy + dh < H ? sy + dh : H ))
+    c0=$(( (x0 + cw - 1) / cw )) c1=$(( x1 / cw )) r0=$(( (y0 + ch - 1) / ch )) r1=$(( y1 / ch ))
+    x0=$(( c0 * cw )) x1=$(( c1 * cw )) y0=$(( r0 * ch )) y1=$(( r1 * ch )) rows=$(( r1 - r0 ))
+  fi
+  (( c1 > c0 && x1 > x0 && y1 > y0 )) || return 1
+  REPLY="$c0 $r0 $(( c1 - c0 )) $rows $(( x0 - c0 * cw )) $(( y0 - r0 * ch )) $(( (x0 - sx) * iw / dw )) $(( (y0 - sy) * ih / dh )) $(( (x1 - x0) * iw / dw )) $(( (y1 - y0) * ih / dh ))"
 }
 
 __tt_bg_at() {
-  local src=""
-  (( $# > 6 )) && src=",x=$7,y=$8,w=$9,h=${10}"
   if (( bgrel )); then
-    printf '\e_Ga=p,i=%d,p=%d,P=999999,Q=999999,H=%d,V=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $1 $1 $(( $3 - bgmx )) $(( $4 - bgmy )) $5 $6 "$src" $2
+    printf '\e_Ga=p,i=%d,p=%d,P=999999,Q=999999,H=%d,V=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $1 $1 $3 $4 $5 $6 "$7" $2
   else
-    printf '\e[%d;%dH\e_Ga=p,i=%d,p=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $(( $4 + 1 )) $(( $3 + 1 )) $1 $1 $5 $6 "$src" $2
+    printf '\e[%d;%dH\e_Ga=p,i=%d,p=%d,c=%d,r=%d%s,C=1,z=%d,q=2\e\\' $(( $4 + 1 )) $(( $3 + 1 )) $1 $1 $5 $6 "$7" $2
   fi
 }
 
@@ -204,8 +230,10 @@ __tt_bg_include() {
 __tt_bg_write() {
   local name=$1 pal=${1%:*} dir=${TTHEME_CONFIG:h}/backgrounds src=${bgsrc[$1]} size=${bgsize[$1]} shape img="" fit=contain f REPLY
   local pos=${TTHEME_BG_POSITIONS[${bgpos[$1]}]}
-  local -i W=$(( (pw + 2 * bgmx) * bgcw )) H=$(( (ph + 2 * bgmy) * bgch ))
-  local -a wh fr
+  local -a wh fr sf
+  __tt_bg_surface
+  sf=(${=REPLY})
+  local -i W=$sf[3] H=$sf[4]
   [[ -r $dir/${${pal/@/--}/\//--}.conf ]] || return 0
   [[ $name == *:* ]] || __tt_bg_include $name || return 1
   if [[ "$size ${bgpos[$1]} ${bgop[$1]}" == "${bgdef[$1]}" ]]; then
@@ -255,7 +283,7 @@ __tt_bg_write() {
 }
 
 __tt_pv_bg_open() {
-  bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bganchor=0
+  bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bgpad="" bganchor=0
   local REPLY
   __tt_bg_shown && bginc=$REPLY
   (( TTHEME_TMUX )) || { __tt_bg_cells; TTHEME_TYPED= }
@@ -264,7 +292,7 @@ __tt_pv_bg_open() {
 __tt_pv_bg_show() {
   (( bgcw )) || return 0
   local name=$1 img="" op size fit=contain focus=-1 REPLY
-  local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh at px
+  local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh at px sf
   local -i cols=$(( pw + 2 * bgmx )) rows=$(( ph + 2 * bgmy ))
   (( ${#p} >= 20 )) || return 0
   bgname=$name
@@ -294,23 +322,27 @@ __tt_pv_bg_show() {
   px=($r $g $b)
   __tt_b64 $px $px $px $px $px $px $px $px $px
   printf '\e_Ga=t,f=24,s=3,v=3,i=1,q=2;%s\e\\' "$REPLY"
-  __tt_bg_at 1 -1073741827 0 0 $cols $rows 1 1 1 1
+  __tt_bg_at 1 -1073741827 $(( -bgmx )) $(( -bgmy )) $cols $rows ,x=1,y=1,w=1,h=1
   px+=($a)
   __tt_b64 $px $px $px $px $px $px $px $px $px
   printf '\e_Ga=t,f=32,s=3,v=3,i=2,q=2;%s\e\\' "$REPLY"
-  __tt_bg_at 2 -1073741825 0 0 $cols $rows 1 1 1 1
+  __tt_bg_at 2 -1073741825 $(( -bgmx )) $(( -bgmy )) $cols $rows ,x=1,y=1,w=1,h=1
   local id=""
   if __tt_bg_dim "$img"; then
     wh=(${=bgdim[$img]})
-    if __tt_bg_place $wh[1] $wh[2] $cols $rows $bgcw $bgch $size ${bgpos[$name]} $fit $focus; then
+    __tt_bg_surface
+    sf=(${=REPLY})
+    if __tt_bg_place $wh[1] $wh[2] $sf $bgcw $bgch $size ${bgpos[$name]} $fit $focus $bgrel; then
       at=(${=REPLY})
-      __tt_bg_crop $img $wh[1] $wh[2] $at[6] $at[8] && id=${REPLY% *} at[6]=${REPLY##* }
+      __tt_bg_crop $img $wh[1] $wh[2] $at[8] $at[10] && id=${REPLY% *} at[8]=${REPLY##* }
     fi
   fi
   [[ -n $bgshown && $bgshown != "$id" ]] && printf '\e_Ga=d,d=i,i=%d,p=%d,q=2\e\\' $bgshown $bgshown
   bgshown=$id
   [[ -n $id ]] || return 0
-  __tt_bg_at $id -1073741826 $(( at[1] - 1 )) $(( at[2] - 1 )) $at[3] $at[4] $at[5] $at[6] $at[7] $at[8]
+  local keys=",x=$at[7],y=$at[8],w=$at[9],h=$at[10]"
+  (( bgrel )) && keys=",X=$at[5],Y=$at[6]$keys"
+  __tt_bg_at $id -1073741826 $at[1] $at[2] $at[3] $at[4] $keys
 }
 
 __tt_bg_transmit() {
@@ -355,7 +387,9 @@ __tt_pv_bg_lost() {
 __tt_pv_bg_fs() {
   local name=$1
   local -a wh fwh
-  local -i W=$(( (pw + 2 * bgmx) * bgcw )) H=$(( (ph + 2 * bgmy) * bgch )) kw kh
+  local -i W H kw kh
+  __tt_bg_surface
+  W=${${=REPLY}[3]} H=${${=REPLY}[4]}
   REPLY=0
   (( W && H )) || return 1
   __tt_bg_dim "${bgsrc[$name]}" && __tt_bg_dim "${bgfill[$name]}" || return 1

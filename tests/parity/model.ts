@@ -1031,7 +1031,7 @@ export class App {
       tab.placements.set(`${id}:${keys.get('p') ?? '0'}`, {
         image: id,
         z: Number(keys.get('z') ?? '0'),
-        rows: Number(keys.get('r') ?? ROWS),
+        rows: Number(keys.get('r') ?? 0) || ROWS,
       })
     }
 

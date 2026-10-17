@@ -35,10 +35,14 @@ REPLY=; __tt_b64 26 22 29
 [[ $REPLY == GhYd ]] || { print -u2 "__tt_b64 broke on 3 bytes: $REPLY"; exit 1 }
 REPLY=; __tt_b64 26 22 29 204
 [[ $REPLY == GhYdzA== ]] || { print -u2 "__tt_b64 broke on 4 bytes: $REPLY"; exit 1 }
-REPLY=; __tt_bg_place 2560 1550 714 518 1 1 100 5 cover
-[[ $REPLY == "1 1 714 518 209 0 2137 1550" ]] || { print -u2 "__tt_bg_place broke on a fill: $REPLY"; exit 1 }
-REPLY=; __tt_bg_place 2045 1994 100 40 8 16 60 9 contain
-[[ $REPLY == "52 17 49 24 5 0 2039 1994" ]] || { print -u2 "__tt_bg_place broke on a sized corner: $REPLY"; exit 1 }
+REPLY=; __tt_bg_place 2560 1550 0 0 714 518 1 1 100 5 cover
+[[ $REPLY == "0 0 714 518 0 0 209 0 2137 1550" ]] || { print -u2 "__tt_bg_place broke on a fill: $REPLY"; exit 1 }
+REPLY=; __tt_bg_place 2045 1994 0 0 800 640 8 16 60 9 contain
+[[ $REPLY == "51 16 49 24 0 0 5 0 2039 1994" ]] || { print -u2 "__tt_bg_place broke on a sized corner: $REPLY"; exit 1 }
+REPLY=; pw=179 ph=50 bgcw=16 bgch=34 bgrel=1 bgpad="36 36 28 28 1" __tt_bg_surface
+[[ $REPLY == "-40 -36 2944 1773" ]] || { print -u2 "__tt_bg_surface missed Ghostty's balanced padding: $REPLY"; exit 1 }
+REPLY=; __tt_bg_place 2560 1550 -40 -36 2944 1773 16 34 100 3 cover -1 1
+[[ $REPLY == "-3 -2 185 0 8 32 0 0 2560 1550" ]] || { print -u2 "__tt_bg_place did not lay a fill on Ghostty's padded window to the pixel: $REPLY"; exit 1 }
 REPLY=; __tt_bg_frame 2056 2560 1600 1000 199 5 contain 62
 [[ $REPLY == "1598 1990 1 -733" ]] || { print -u2 "__tt_bg_frame broke on a zoom around the face: $REPLY"; exit 1 }
 typeset -A bgfrom=() bgurl=() bgby=() bgsrc=() bgfill=() bgfocus=() bgsize=() bgpos=() bgop=() bgdef=() bgoff=() bgbase=() bgload=() bgshot=() bgshotkey=() bgdim=() bgtunef=() bgofff=() bgimages=() bgpic=() bgpics=() bgact=() bgview=() bgswap=() bgthumb=() tsnaps=() bgedit=() bgcolors=() bgcred=() bgpage=() bgprof=() bgprep=()
