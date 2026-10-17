@@ -13,7 +13,8 @@ typeset -gA ADAPTER=(ghostty ghostty iterm2 iterm2 wezterm wezterm kitty kitty a
 typeset -ga MEASURING=()
 
 abandon() {
-  (( ${#MEASURING} )) && quit $MEASURING
+  trap '' HUP INT TERM
+  (( ${#MEASURING} )) && { quit $MEASURING || : }
   exit $1
 }
 
@@ -166,8 +167,7 @@ measure() {
   MEASURING=($term $was)
   if ! zsh $ROOT/tests/sandbox.zsh --behind ${=FLAG[$term]} --zshenv $hook miku asuka rei > /dev/null; then
     rm -f $hook
-    quit $term $was
-    MEASURING=()
+    { quit $term $was } always { MEASURING=() }
     return 1
   fi
   rm -f $hook
@@ -176,8 +176,7 @@ measure() {
     [[ -d $SANDBOX/compat ]] && serve $term $title "$old"
     sleep 0.1
   done
-  quit $term $was
-  MEASURING=()
+  { quit $term $was } always { MEASURING=() }
   [[ -e $SANDBOX/compat/done ]] || { print -u2 "$term: the cases never finished"; return 1 }
   cp $SANDBOX/compat/results $OUT/$term.tsv
   [[ -s $SANDBOX/compat/errors ]] && cp $SANDBOX/compat/errors $OUT/$term.err
