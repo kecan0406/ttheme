@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { argbFromHex, Hct } from '@material/material-color-utilities'
-import { CHROMA_LIFT, mirror, OLIVE_EXIT, olive } from './mirror.ts'
+import { CHROMA_LIFT, lookalikes, mirror, OLIVE_EXIT, olive } from './mirror.ts'
 
 const mami = {
   name: 'mami',
@@ -60,4 +60,11 @@ test('the light mirror turns a green its tones leave olive to green and keeps a 
     assert.equal(olive(light.ansi[i] as string), false, `ansi${i}`)
     assert.ok(Math.abs(hct(light.ansi[i] as string).hue - OLIVE_EXIT.green) < 1, `ansi${i}`)
   }
+})
+
+test('the mirror steps an ANSI signature slot off a named one it lands on, as the light bright white lands on the foreground', () => {
+  const plain = { ...mami, signatureSlots: ['foreground', 'ansi15', 'cursor'] }
+  const shade = mirror(plain)
+  assert.notEqual(shade.ansi[15], shade.foreground)
+  assert.deepEqual(lookalikes(plain, shade), [])
 })

@@ -213,9 +213,13 @@ export function separated(theme: Signed, shade: Shade, cursor = shade.cursor, at
     next = stepped(theme, next, 'cursor', nearest(hct(next.cursor).tone, CURSOR_TONE[mode]), (tone) => at(cursor, tone))
 
   for (const [a, b] of lookalikes(theme, next)) {
-    if (!a.startsWith('ansi') || !b.startsWith('ansi') || reads(next, a, b)) continue
+    if ((!a.startsWith('ansi') && !b.startsWith('ansi')) || reads(next, a, b)) continue
 
-    const [still, mover] = Number(a.slice(4)) >= 8 && Number(b.slice(4)) < 8 ? [b, a] : [a, b]
+    const [still, mover] =
+      !b.startsWith('ansi') || (a.startsWith('ansi') && Number(a.slice(4)) >= 8 && Number(b.slice(4)) < 8)
+        ? [b, a]
+        : [a, b]
+
     const value = slotOf(next, mover)
 
     next = stepped(theme, next, mover, away(hct(value).tone, hct(slotOf(next, still)).tone, mode), (tone) =>
