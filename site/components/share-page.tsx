@@ -103,7 +103,7 @@ function BaseRow({ slot, s }: { slot: number; s: SlotView }) {
       <button
         type="button"
         data-slot-open={String(slot)}
-        aria-label={`${s.name} ${s.hex}`}
+        aria-label={`${s.name} ${s.key} ${s.hex}`}
         class="flex min-w-0 items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Swatch hex={s.hex} size="row" />
@@ -111,7 +111,7 @@ function BaseRow({ slot, s }: { slot: number; s: SlotView }) {
           <span class="flex items-center gap-1.5 text-sm font-medium">
             <span safe>{s.name}</span>
             <Marks signature={s.signature} miss={s.miss} />
-          </span>
+          </span>{' '}
           <span class="font-mono text-xs text-muted-foreground" safe>
             {s.key}
           </span>
