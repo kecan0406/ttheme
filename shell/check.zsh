@@ -1022,6 +1022,19 @@ typeset -A bgsent=()
 forks_of __tt_bg_send $bgd/kagami.png
 (( REPLY == 0 )) || { print -u2 "sending a picture to preview forks again ($REPLY processes)"; exit 1 }
 (
+  zmodload -F zsh/datetime p:EPOCHSECONDS
+  TTHEME_STATE_DIR=$XDG_CONFIG_HOME/appearstate TTHEME_MODE_AUTO=1 TTHEME_MODE_WORN=dark
+  mkdir -p $TTHEME_STATE_DIR
+  __tt_active() { return 0 }
+  forks_of __tt_appearance_on
+  (( REPLY == 0 )) || { print -u2 "a prompt under auto forks to ask the appearance ($REPLY processes)"; exit 1 }
+  forks_of __tt_appearance dark
+  (( REPLY == 0 )) && [[ "$(<$TTHEME_STATE_DIR/appearance)" == dark ]] ||
+    { print -u2 "hearing the appearance forks ($REPLY processes) or did not keep it"; exit 1 }
+  forks_of __tt_appearance dark
+  (( REPLY == 0 )) || { print -u2 "hearing the appearance the tab already wears forks ($REPLY processes)"; exit 1 }
+) || exit 1
+(
   typeset -A bgsent=() bgcost=()
   typeset -a bgorder=()
   integer bgnext=0 bgbytes=0

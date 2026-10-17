@@ -60,6 +60,7 @@ answer() {
       \]1(10|11|12|17)*) unset "SHOWN[${${p#\]1}[1,2]}]" ;;
       \]104*) for k in ${(k)SHOWN[(I)4;*]}; do unset "SHOWN[$k]"; done ;;
       \[5n*) out+=$'\e[0n' ;;
+      \[\?996n*) out+=$'\e[?997;1n' ;;
       \[16t*) out+=$'\e[6;16;8t' ;;
     esac
   done
@@ -634,6 +635,31 @@ traced() {
 
 focused() { grep -qxF '__tt_follows_focus() { return 0 }' $ROOT/shell/adapters/$1.zsh }
 
+heard() {
+  local f=$WORK/$1/.state/ttheme/appearance
+  upto '[[ -r $f && "$(<$f)" == dark ]]' 3 $1 || { fail "$1 (ghostty, auto): the prompt never heard the appearance it asked for"; return 1 }
+}
+
+appeared() {
+  local name=$1
+  TERMINAL=ghostty EXTRA=(TTHEME_TAB_PALETTE=off)
+  start $name
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name (ghostty, auto): no prompt after the command typed ahead"; return 1 }
+  stop
+  EXTRA=(TTHEME_TAB_PALETTE=off TT_TRACE=1)
+  : > $WORK/$name/trace
+  start $name
+  upto '[[ $BUF == *TYPED_42* ]] && prompts && (( REPLY >= 2 ))' 5 $name || { fail "$name (ghostty, auto): no prompt after the command typed ahead"; return 1 }
+  heard $name || return 1
+  rm -f -- $WORK/$name/.state/ttheme/appearance
+  mark $name
+  step $'\r' $name || return 1
+  heard $name || return 1
+  forked $name
+  stop
+  TERMINAL="" EXTRA=()
+}
+
 forks() {
   local -a upd head terms journeys base painted counts row out
   local -A want got
@@ -666,7 +692,12 @@ forks() {
     traced fork $term seq || return 1
     got[start-seq.$term]=$(( reply[1] - base[1] ))
     got[mend.$term]=$(( reply[2] - painted[2] ))
+    got[auto.$term]=-
   done
+  home fork-auto off
+  print -r -- 'typeset -g TTHEME_MODE_AUTO=1' >> $WORK/fork-auto/.config/ttheme/palettes.zsh
+  appeared fork-auto || return 1
+  got[auto.ghostty]=$(( REPLY - base[2] ))
   if (( $#upd )); then
     out=("${(pj:\t:)head}")
     for journey in $journeys; do
@@ -696,7 +727,7 @@ forks() {
     done
     print
   done
-  print -r -- "processes a shell with ttheme starts beyond a bare zsh, counted from its xtrace: a warm new tab (start, start-seq), an empty command, a focus-in, a cd, and a command that resets a painted tab's cursor (mend)"
+  print -r -- "processes a shell with ttheme starts beyond a bare zsh, counted from its xtrace: a warm new tab (start, start-seq), an empty command, a focus-in, a cd, a command that resets a painted tab's cursor (mend), and in Ghostty a prompt under auto that asks and hears the appearance (auto)"
   (( more )) && print -u2 "✗: a hot path starts a process again that $FORKS says it does not — find the new \$(…) or external command"
   (( less )) && print -u2 "+: fewer processes than $FORKS — lock the win in with \`mise run forks --update\`"
   (( more + less == 0 ))
