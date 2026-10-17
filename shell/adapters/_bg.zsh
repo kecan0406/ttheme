@@ -35,17 +35,18 @@ __tt_bg_frame() {
 
 __tt_bg_surface() {
   local -a pd=(${=bgpad:-0 0 0 0 0})
-  local -i gw=$(( pw * bgcw )) gh=$(( ph * bgch )) w h l t cap
+  local -i gw=$(( pw * bgcw )) gh=$(( ph * bgch )) w h l t cap nx ny
   if (( ! bgrel )); then
     REPLY="0 0 $gw $gh"
     return 0
   fi
   w=$(( gw + pd[1] + pd[2] + bgcw / 2 )) h=$(( gh + pd[3] + pd[4] + bgch / 2 )) l=$pd[1] t=$pd[3]
   if (( pd[5] )); then
-    l=$(( (w - gw) / 2 )) t=$(( (h - gh) / 2 )) cap=$(( (pd[1] + pd[2] + bgcw) / 2 ))
-    (( pd[5] == 1 && t > cap )) && t=$cap
+    l=$(( (w - gw) / 2 )) t=$(( (h - gh) / 2 )) cap=$(( (pd[1] + pd[2] + bgcw) / 2 )) nx=$(( bgcw / 4 )) ny=$(( bgch / 4 ))
+    (( pd[5] == 1 && t > cap )) && t=$cap ny=0
   fi
   REPLY="$(( -l )) $(( -t )) $w $h"
+  (( ${1:-0} )) && REPLY="$(( -l - nx )) $(( -t - ny )) $(( w + bgcw / 2 )) $(( h + bgch / 2 ))"
 }
 
 __tt_bg_place() {
@@ -330,7 +331,7 @@ __tt_pv_bg_show() {
   local id=""
   if __tt_bg_dim "$img"; then
     wh=(${=bgdim[$img]})
-    __tt_bg_surface
+    __tt_bg_surface ${${(M)fit:#cover}:+1}
     sf=(${=REPLY})
     if __tt_bg_place $wh[1] $wh[2] $sf $bgcw $bgch $size ${bgpos[$name]} $fit $focus $bgrel; then
       at=(${=REPLY})

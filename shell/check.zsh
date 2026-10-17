@@ -41,6 +41,8 @@ REPLY=; __tt_bg_place 2045 1994 0 0 800 640 8 16 60 9 contain
 [[ $REPLY == "51 16 49 24 0 0 5 0 2039 1994" ]] || { print -u2 "__tt_bg_place broke on a sized corner: $REPLY"; exit 1 }
 REPLY=; pw=179 ph=50 bgcw=16 bgch=34 bgrel=1 bgpad="36 36 28 28 1" __tt_bg_surface
 [[ $REPLY == "-40 -36 2944 1773" ]] || { print -u2 "__tt_bg_surface missed Ghostty's balanced padding: $REPLY"; exit 1 }
+REPLY=; pw=179 ph=50 bgcw=16 bgch=34 bgrel=1 bgpad="36 36 28 28 1" __tt_bg_surface 1
+[[ $REPLY == "-44 -44 2952 1790" ]] || { print -u2 "__tt_bg_surface did not grow a cover's window over what the estimate cannot know: $REPLY"; exit 1 }
 REPLY=; __tt_bg_place 2560 1550 -40 -36 2944 1773 16 34 100 3 cover -1 1
 [[ $REPLY == "-3 -2 185 0 8 32 0 0 2560 1550" ]] || { print -u2 "__tt_bg_place did not lay a fill on Ghostty's padded window to the pixel: $REPLY"; exit 1 }
 REPLY=; __tt_bg_frame 2056 2560 1600 1000 199 5 contain 62

@@ -343,7 +343,7 @@ __tt_bg_cells() {
       case $line in
         window-padding-x*=*) [[ $v == <->(|,<->) ]] && l=${v%%,*} r=${v##*,} ;;
         window-padding-y*=*) [[ $v == <->(|,<->) ]] && t=${v%%,*} b=${v##*,} ;;
-        window-padding-balance*=*) case $v in false) bal=0 ;; true) bal=1 ;; equal) bal=2 ;; esac ;;
+        window-padding-balance*=*) case $v in (0|f|F|false) bal=0 ;; (1|t|T|true) bal=1 ;; (equal) bal=2 ;; esac ;;
         font-size*=*) [[ $v == <->(|.<->) ]] && fs=${v%%.*} ;;
       esac
     done
