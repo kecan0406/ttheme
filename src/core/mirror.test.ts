@@ -68,3 +68,38 @@ test('the mirror steps an ANSI signature slot off a named one it lands on, as th
   assert.notEqual(shade.ansi[15], shade.foreground)
   assert.deepEqual(lookalikes(plain, shade), [])
 })
+
+test('the mirror steps a bright white that lands a hair off the foreground toward the mode’s own end, never past the white', () => {
+  const near = {
+    name: 'near',
+    background: '#1d190b',
+    foreground: '#ddd9d8',
+    cursor: '#bb8e85',
+    selectionBackground: '#433400',
+    ansi: [
+      '#9ad49a',
+      '#c990be',
+      '#b0614c',
+      '#99919d',
+      '#a4b7ff',
+      '#a4bbff',
+      '#393d00',
+      '#005f5d',
+      '#59b69e',
+      '#f7a7dd',
+      '#681d44',
+      '#a78a91',
+      '#00b19e',
+      '#50585e',
+      '#d4b995',
+      '#49234e',
+    ],
+    signatureSlots: ['ansi3', 'foreground', 'ansi15'],
+    waive: [],
+  }
+
+  const shade = mirror(near)
+  assert.ok(hct(shade.ansi[15] as string).tone < hct(shade.foreground).tone)
+  assert.ok(hct(shade.ansi[15] as string).tone < hct(shade.ansi[7] as string).tone)
+  assert.deepEqual(lookalikes(near, shade), [])
+})
