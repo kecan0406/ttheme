@@ -59,19 +59,29 @@ export function rewrite(from: string, to: string, content: Uint8Array): void {
   }
 }
 
-export function linked(path: string): boolean {
+export function symlinked(path: string): boolean {
   return lstatSync(path, { throwIfNoEntry: false })?.isSymbolicLink() === true
 }
 
 export function relink(path: string): void {
-  if (!linked(path)) {
+  if (!symlinked(path)) {
     return
   }
 
   const tmp = `${path}.ttheme-${process.pid}`
-  rmSync(tmp, { force: true })
-  symlinkSync(readlinkSync(path), tmp)
-  renameSync(tmp, path)
+
+  try {
+    rmSync(tmp, { force: true })
+    symlinkSync(readlinkSync(path), tmp)
+  } catch {
+    return
+  }
+
+  try {
+    renameSync(tmp, path)
+  } catch {
+    rmSync(tmp, { force: true })
+  }
 }
 
 export function editUserFile(path: string, content: string): boolean {

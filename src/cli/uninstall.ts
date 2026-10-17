@@ -6,7 +6,7 @@ import * as p from '@clack/prompts'
 import { Cancelled } from '../core/cancelled.ts'
 import { owned } from '../core/theme.ts'
 import { WIRED } from '../core/wired.ts'
-import { linked, relink, restoreUserFile } from '../store/edits.ts'
+import { relink, restoreUserFile, symlinked } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled } from '../store/installed.ts'
 import { cacheRoot, configHome as configDir } from '../store/paths.ts'
@@ -151,7 +151,7 @@ export function applyUninstall(plan: UninstallPlan, paths: UninstallPaths, host:
   const now = new Date()
 
   for (const file of plan.touches) {
-    if (linked(file)) {
+    if (symlinked(file)) {
       relink(file)
     } else {
       utimesSync(file, now, now)

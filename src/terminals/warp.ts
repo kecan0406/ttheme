@@ -6,7 +6,7 @@ import { decodePng, encodeRgb, flatten } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
 import { owned, stem } from '../core/theme.ts'
 import { backgroundsDir, type ProfileBackground, readBackdrop } from '../pictures/backdrop.ts'
-import { backupOnce, editUserFile, linked, relink, spareBackup, writeAtomic } from '../store/edits.ts'
+import { backupOnce, editUserFile, relink, spareBackup, symlinked, writeAtomic } from '../store/edits.ts'
 import { dataHome, readText, tilde } from './common.ts'
 import { warp as emitter, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from './emit/warp.ts'
 import type { At, Ctx, Out, Wiring } from './types.ts'
@@ -300,7 +300,7 @@ export const warp: Wiring = {
         ? [{ file, content: withWarpTheme(content, readText(warpBasePath(at.configHome)) || WARP_DEFAULT) }]
         : [],
       removals: ours(content) ? [] : spareBackup(file),
-      touches: ours(content) && linked(file) ? [file] : [],
+      touches: ours(content) && symlinked(file) ? [file] : [],
     }
   },
 }

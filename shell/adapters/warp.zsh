@@ -119,7 +119,7 @@ __tt_warp_set() {
 
 __tt_warp_relink() {
   local -a to
-  [[ -L $TTHEME_WARP_SETTINGS ]] && zmodload -F zsh/files b:zf_ln b:zf_mv b:zf_rm 2>/dev/null &&
+  [[ -L $TTHEME_WARP_SETTINGS && ! -d $TTHEME_WARP_SETTINGS ]] && zmodload -F zsh/files b:zf_ln b:zf_mv b:zf_rm 2>/dev/null &&
     zstat -L -A to +link -- $TTHEME_WARP_SETTINGS 2>/dev/null || return 0
   zf_rm -f -- $TTHEME_WARP_SETTINGS.$$ 2>/dev/null
   zf_ln -s -- $to[1] $TTHEME_WARP_SETTINGS.$$ 2>/dev/null && zf_mv -f -- $TTHEME_WARP_SETTINGS.$$ $TTHEME_WARP_SETTINGS 2>/dev/null ||

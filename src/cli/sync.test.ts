@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import {
+  chmodSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -439,6 +440,29 @@ test('a linked Warp settings file is written through its link, which an identica
   sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo', 'geto'], off: true }, home)
   assert.equal(readFileSync(real, 'utf8'), mine)
   assert.ok(relinked())
+})
+
+test('a linked Warp settings file in a folder ttheme cannot write still takes the theme, and the sync goes on', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const settings = warpSettings(home, configHome)
+  const real = join(home, 'dotfiles', 'warp.toml')
+  mkdirSync(dirname(real), { recursive: true })
+  mkdirSync(dirname(settings), { recursive: true })
+  writeFileSync(real, '[appearance.themes]\ntheme = "Dracula"\n')
+  symlinkSync(real, settings)
+  const state: Installed = { terminals: ['warp'], palettes: ['gojo', 'geto'], startup: 'gojo' }
+  sync(configHome, manifest, state, home)
+  sync(configHome, manifest, state, home)
+  chmodSync(dirname(settings), 0o555)
+
+  try {
+    const written = sync(configHome, manifest, { ...state, startup: 'geto' }, home)
+    assert.match(readFileSync(real, 'utf8'), /name = "geto"/)
+    assert.ok(written.includes(join(configHome, 'ttheme', 'palettes.zsh')))
+  } finally {
+    chmodSync(dirname(settings), 0o755)
+  }
 })
 
 test('sync adds the Warp theme table when there is none, gives Warp its default back while off, and leaves Warp alone without a settings file', () => {
