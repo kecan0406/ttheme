@@ -291,12 +291,11 @@ __tt_listen() {
 }
 
 __tt_wearing() {
-  local k
+  local spec
   [[ -n $1 ]] || return 1
   [[ -n $TTHEME_STARTUP && ${TTHEME_PALETTE[$TTHEME_STARTUP]%% *} == "$1" ]] && { REPLY=$TTHEME_PALETTE[$TTHEME_STARTUP]; return 0 }
-  for k in ${(k)TTHEME_PALETTE}; do
-    [[ ${TTHEME_PALETTE[$k]%% *} == "$1" ]] && { REPLY=$TTHEME_PALETTE[$k]; return 0 }
-  done
+  spec=${TTHEME_PALETTE[(r)${(b)1} *]}
+  [[ -n $spec ]] && { REPLY=$spec; return 0 }
   (( TTHEME_MODE_AUTO )) && __tt_reports_appearance && __tt_stale $1
 }
 
@@ -304,8 +303,8 @@ __tt_stale() {
   local k
   [[ -n $1 ]] || return 1
   [[ -n $TTHEME_STARTUP && ${TTHEME_PALETTE_OTHER[$TTHEME_STARTUP]%% *} == "$1" && -n ${TTHEME_PALETTE[$TTHEME_STARTUP]} ]] && { REPLY=$TTHEME_PALETTE[$TTHEME_STARTUP]; return 0 }
-  for k in ${(k)TTHEME_PALETTE_OTHER}; do
-    [[ ${TTHEME_PALETTE_OTHER[$k]%% *} == "$1" && -n ${TTHEME_PALETTE[$k]} ]] && { REPLY=$TTHEME_PALETTE[$k]; return 0 }
+  for k in ${(k)TTHEME_PALETTE_OTHER[(R)${(b)1} *]}; do
+    [[ -n ${TTHEME_PALETTE[$k]} ]] && { REPLY=$TTHEME_PALETTE[$k]; return 0 }
   done
   return 1
 }
