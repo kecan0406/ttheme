@@ -151,7 +151,7 @@ export function Swatch({ name, color }: { name: string; color: string }) {
           {color}
         </span>
         <Icon node={Check} class="hidden size-3.5 group-data-copied/copy:block" />
-      </span>
+      </span>{' '}
       <span class="block px-2 py-1.5 font-mono text-xs" safe>
         {name}
       </span>
