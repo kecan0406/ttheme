@@ -1,4 +1,4 @@
-import { readdirSync, rmSync, statSync } from 'node:fs'
+import { rmSync, statSync } from 'node:fs'
 import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net'
 import { join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -26,13 +26,14 @@ import {
   uncredited,
 } from '../core/booru.ts'
 import { pngHead } from '../core/png.ts'
+import { listing } from '../store/edits.ts'
 import { cacheRoot } from '../store/paths.ts'
 
 const CACHE_BYTES = 512 * 1024 * 1024
 
-export const HEAD = 8191
+const HEAD = 8191
 
-export const TIMEOUT = 20_000
+const TIMEOUT = 20_000
 
 const LEND_TIMEOUT = 5_000
 
@@ -52,19 +53,11 @@ const TRIES = 3
 
 const HOPS = 3
 
-export const HELD = ['orig', 'tile', 'thumb', 'cut']
+const HELD = ['orig', 'tile', 'thumb', 'cut']
 
 const paused = new Map<string, number>()
 
 setDefaultAutoSelectFamilyAttemptTimeout(CONNECT)
-
-export function listing(dir: string): string[] {
-  try {
-    return readdirSync(dir)
-  } catch {
-    return []
-  }
-}
 
 export function cacheDir(site: Site): string {
   return join(cacheRoot(), site.key)
@@ -118,7 +111,7 @@ export function pausedUntil(site: Site): number {
   return paused.get(site.key) ?? 0
 }
 
-export function reset(error: unknown): boolean {
+function reset(error: unknown): boolean {
   for (let at: unknown = error; at instanceof Error; at = at.cause) {
     if ((at as NodeJS.ErrnoException).code === 'ECONNRESET') {
       return true
@@ -145,7 +138,7 @@ export function redirected(from: string, to: string): string {
   return next.href
 }
 
-export async function get(
+async function get(
   site: Site,
   url: string,
   signal: AbortSignal,
@@ -215,7 +208,7 @@ export async function get(
   }
 }
 
-export async function listed(site: Site, url: string, signal: AbortSignal): Promise<string> {
+async function listed(site: Site, url: string, signal: AbortSignal): Promise<string> {
   try {
     return await (await get(site, url, signal)).text()
   } catch (error) {
@@ -273,7 +266,7 @@ function artistsUrl(names: readonly string[]): string {
   return `${LENDER.origin}/artists.json?${params}`
 }
 
-export async function fetchArtistUrls(names: readonly string[], signal: AbortSignal): Promise<Map<string, string[]>> {
+async function fetchArtistUrls(names: readonly string[], signal: AbortSignal): Promise<Map<string, string[]>> {
   const found = new Map<string, string[]>()
 
   if (pausedUntil(LENDER) > Date.now()) {

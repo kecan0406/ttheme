@@ -28,7 +28,7 @@ export function worn(state: Installed): string | undefined {
 
 type Optional = Exclude<keyof Installed, 'terminals' | 'palettes'>
 
-export const text = (value: unknown) => (typeof value === 'string' && value !== '' ? value : undefined)
+const text = (value: unknown) => (typeof value === 'string' && value !== '' ? value : undefined)
 
 const OPTIONAL = {
   author: text,

@@ -2,13 +2,8 @@
 paths:
   - "shell/adapters/terminal-app.zsh"
   - "src/terminals/terminal-app*.ts"
-  - "src/terminals/emit/terminal-app.ts"
+  - "src/terminals/emit/terminal-app*.ts"
   - "tests/terminal-prefs.zsh"
-  - "shell/adapters/_wired.zsh"
-  - "src/terminals/terminal.ts"
-  - "tests/parity/**"
-  - "tests/compat/**"
-  - ".claude/skills/sandbox/**"
 ---
 
 # Terminal.app

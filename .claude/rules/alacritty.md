@@ -1,13 +1,8 @@
 ---
 paths:
   - "shell/adapters/alacritty.zsh"
-  - "src/terminals/alacritty.ts"
-  - "src/terminals/emit/alacritty.ts"
-  - "shell/adapters/_wired.zsh"
-  - "src/terminals/terminal.ts"
-  - "tests/parity/**"
-  - "tests/compat/**"
-  - ".claude/skills/sandbox/**"
+  - "src/terminals/alacritty*.ts"
+  - "src/terminals/emit/alacritty*.ts"
 ---
 
 # Alacritty

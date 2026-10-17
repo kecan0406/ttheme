@@ -1,6 +1,6 @@
 import { inflateRawSync } from 'node:zlib'
 import mozjpeg, { type MozJPEGModule } from '@jsquash/jpeg/codec/dec/mozjpeg_dec.js'
-import { embedded } from './embed.ts' with { type: 'macro' }
+import { embedded } from '../embed.ts' with { type: 'macro' }
 import type { Rgba } from './png.ts'
 
 export function exifTurn(tiff: Uint8Array): number {

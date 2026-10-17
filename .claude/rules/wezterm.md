@@ -1,13 +1,8 @@
 ---
 paths:
   - "shell/adapters/wezterm.zsh"
-  - "src/terminals/wezterm.ts"
-  - "src/terminals/emit/wezterm.ts"
-  - "shell/adapters/_wired.zsh"
-  - "src/terminals/terminal.ts"
-  - "tests/parity/**"
-  - "tests/compat/**"
-  - ".claude/skills/sandbox/**"
+  - "src/terminals/wezterm*.ts"
+  - "src/terminals/emit/wezterm*.ts"
 ---
 
 # WezTerm

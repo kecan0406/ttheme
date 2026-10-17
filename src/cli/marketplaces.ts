@@ -41,16 +41,13 @@ import {
   shownSource,
 } from '../store/sources.ts'
 import { pending } from '../tui/pending.ts'
+import { interactive } from '../tui/terminal.ts'
 import { type Fetched, fetchedAt, fetchMarketplace, readTries, storeMarketplace } from './refresh.ts'
 import { renameProblems } from './renames.ts'
 import { sync } from './sync.ts'
 
 const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const ACTIONS = ['add', 'remove', 'init', 'check']
-
-function tty(): boolean {
-  return process.stdin.isTTY === true && process.stdout.isTTY === true
-}
 
 function fromGh(): string | undefined {
   try {
@@ -76,7 +73,7 @@ async function handle(home: string, state: Installed): Promise<string> {
   let author = fromGh()
 
   if (!author) {
-    if (!tty()) {
+    if (!interactive()) {
       throw new Error(
         'your palettes are named after your GitHub handle — log in with `gh auth login`, or run this in a terminal',
       )
@@ -151,7 +148,7 @@ function register(home: string, source: string, name: string, auto?: boolean): v
 }
 
 async function askAuto(id: string): Promise<boolean> {
-  if (!tty()) {
+  if (!interactive()) {
     return false
   }
 
@@ -347,7 +344,7 @@ function nameProblemOf(name: string): string | undefined {
 }
 
 async function askName(): Promise<string> {
-  if (!tty()) {
+  if (!interactive()) {
     throw new Error('name the marketplace: ttheme marketplace init <name>, or --in <name> on new')
   }
 

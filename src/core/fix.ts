@@ -1,6 +1,7 @@
 import { contrast, deuteranope, type Hex, lab, luminance, oklch } from './color.ts'
 import {
   ACCENT_MIN,
+  ACCENT_SLOTS,
   ANSI0_MAX_LUMINANCE,
   ANSI7_ON_ANSI8_MIN,
   ANSI8_MIN,
@@ -35,7 +36,6 @@ const MARGIN = 5
 const PASSES = 6
 const HEADROOM = 0.05
 const CLEAR = 1.05
-const ACCENTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
 
 const toward = (from: number, to: number) => ((to - from + 360) % 360 <= 180 ? 1 : -1)
 
@@ -250,7 +250,7 @@ class Fixer<T extends Fixable> {
     lift('foreground', ['foreground'], BODY_MIN)
     lift(
       'accents',
-      ACCENTS.map((i) => `ansi${i}`),
+      ACCENT_SLOTS.map((i) => `ansi${i}`),
       ACCENT_MIN,
     )
     lift('light-ansi', ['ansi7', 'ansi15'], BODY_MIN)

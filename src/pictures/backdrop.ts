@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import { artworkOf, creditLine, linksOf } from '../core/artists.ts'
 import { type Coloring, type Colors, type Hue, originalOpacity } from '../core/backdrop-tone.ts'
@@ -25,7 +25,7 @@ import {
   transparency,
 } from '../core/png.ts'
 import { stem as fileStem, POSITIONS, type SharedPicture } from '../core/theme.ts'
-import { writeAtomic } from '../store/edits.ts'
+import { listing, writeAtomic } from '../store/edits.ts'
 import { MATTING, matte } from './cutout.ts'
 import { keyOf, known, recall, remember } from './drawn.ts'
 
@@ -524,14 +524,6 @@ function readText(path: string): string | undefined {
     return readFileSync(path, 'utf8')
   } catch {
     return undefined
-  }
-}
-
-function listing(dir: string): string[] {
-  try {
-    return readdirSync(dir)
-  } catch {
-    return []
   }
 }
 

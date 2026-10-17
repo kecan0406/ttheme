@@ -21,6 +21,10 @@ export function pointing(env: Record<string, string | undefined> = process.env):
   return env.TTHEME_MOUSE === 'off' ? [] : [MOUSE]
 }
 
+export function interactive(): boolean {
+  return process.stdin.isTTY === true && process.stdout.isTTY === true
+}
+
 const LINGER = 3000
 
 type Input = Readable & { isTTY?: boolean; setRawMode?: (on: boolean) => void }

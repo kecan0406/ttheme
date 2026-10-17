@@ -15,6 +15,7 @@ import { removeBlock } from '../store/wiring.ts'
 import { ownedIn, stripped } from '../terminals/common.ts'
 import { wirings } from '../terminals/index.ts'
 import { bashCandidates, fishFunction, ownsFish, zdotdirOf } from '../terminals/shells.ts'
+import { interactive } from '../tui/terminal.ts'
 import { pointDefaults } from './sync.ts'
 
 export interface UninstallPaths {
@@ -179,7 +180,7 @@ export async function runUninstall(yes = false): Promise<void> {
   }
 
   if (!yes) {
-    if (process.stdin.isTTY !== true || process.stdout.isTTY !== true) {
+    if (!interactive()) {
       throw new Error('uninstall asks before it deletes anything — run it in a terminal, or pass --yes')
     }
 

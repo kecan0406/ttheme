@@ -3,6 +3,7 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   realpathSync,
   renameSync,
@@ -23,6 +24,14 @@ export function backupOnce(path: string): void {
 
   if (existsSync(path) && !existsSync(backup) && !MARKED.test(readFileSync(path, 'utf8'))) {
     copyFileSync(path, backup)
+  }
+}
+
+export function listing(dir: string): string[] {
+  try {
+    return readdirSync(dir)
+  } catch {
+    return []
   }
 }
 

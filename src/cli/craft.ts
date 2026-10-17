@@ -54,20 +54,17 @@ import { Backdrop } from '../tui/editor-backdrop.ts'
 import { runEditor } from '../tui/editor-screen.ts'
 import type { Choice, Edited, EditorOptions } from '../tui/palette-editor.ts'
 import { PickerLayer } from '../tui/picker-art.ts'
+import { interactive } from '../tui/terminal.ts'
 import { toneRows } from '../tui/tone-view.ts'
 import { findFor } from './find/find.ts'
 import { ensureLocal } from './marketplaces.ts'
 import { bringPictures, heldPictures } from './pictures.ts'
 import { commit, refreshPictures, sync } from './sync.ts'
 
-function tty(): boolean {
-  return process.stdin.isTTY === true && process.stdout.isTTY === true
-}
-
 export async function thisTab(): Promise<string | undefined> {
   const worn = process.env.TTHEME_WORN
 
-  if (!worn || !tty()) {
+  if (!worn || !interactive()) {
     return undefined
   }
 
@@ -270,7 +267,7 @@ export async function runNew(name: string, from: string | undefined, into: strin
 
   const source = from ? find(available(home, manifest).palettes, from) : undefined
 
-  if (!tty()) {
+  if (!interactive()) {
     throw new Error('new opens the palette editor — run it in a terminal')
   }
 
@@ -340,7 +337,7 @@ export async function runEdit(name: string): Promise<void> {
     throw new Error(`no palette called ${full} — \`ttheme new\` makes one`)
   }
 
-  if (!tty()) {
+  if (!interactive()) {
     throw new Error('edit opens the palette editor — run it in a terminal')
   }
 
@@ -457,7 +454,7 @@ export async function runTone(name: string, action: string, width?: string): Pro
     throw new Error(`tone takes show, edit or reset, not ${action}`)
   }
 
-  if (!tty()) {
+  if (!interactive()) {
     throw new Error('needs a terminal')
   }
 

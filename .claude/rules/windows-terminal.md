@@ -1,13 +1,8 @@
 ---
 paths:
   - "shell/adapters/windows-terminal.zsh"
-  - "src/terminals/windows-terminal.ts"
-  - "src/terminals/emit/windows-terminal.ts"
-  - "shell/adapters/_wired.zsh"
-  - "src/terminals/terminal.ts"
-  - "tests/parity/**"
-  - "tests/compat/**"
-  - ".claude/skills/sandbox/**"
+  - "src/terminals/windows-terminal*.ts"
+  - "src/terminals/emit/windows-terminal*.ts"
 ---
 
 # Windows Terminal

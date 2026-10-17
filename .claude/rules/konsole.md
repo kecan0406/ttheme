@@ -1,14 +1,9 @@
 ---
 paths:
   - "shell/adapters/konsole.zsh"
-  - "src/terminals/konsole.ts"
-  - "src/terminals/emit/konsole.ts"
+  - "src/terminals/konsole*.ts"
+  - "src/terminals/emit/konsole*.ts"
   - "tests/compat/konsole.Dockerfile"
-  - "shell/adapters/_wired.zsh"
-  - "src/terminals/terminal.ts"
-  - "tests/parity/**"
-  - "tests/compat/**"
-  - ".claude/skills/sandbox/**"
 ---
 
 # Konsole

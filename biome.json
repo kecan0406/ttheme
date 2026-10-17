@@ -18,6 +18,14 @@
   "files": {
     "includes": ["**", "!site/app/globals.css", "!tests/fixture.json", "!tests/screens", "!tools/oxlint/anti-slop"]
   },
+  "linter": {
+    "rules": {
+      "style": {
+        "noCommonJs": "error",
+        "useNodejsImportProtocol": "error"
+      }
+    }
+  },
   "overrides": [
     {
       "includes": ["tests/compat/sample.js"],

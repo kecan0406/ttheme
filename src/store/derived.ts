@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { memoUsed, recallMemo } from '../core/memo.ts'
 import { writeAtomic } from './edits.ts'
@@ -12,7 +13,7 @@ interface Kept {
 const AGE = 24
 const LIMIT = 2000
 const BUILDS = 3
-const FILE = /^\d+-\d+\.json$/
+const FILE = /^[0-9a-f]{16}\.json$/
 
 let store: string | undefined
 
@@ -48,8 +49,12 @@ export function keepDerived(entry: string, cache: string): void {
   }
 
   try {
-    const self = statSync(fileURLToPath(entry))
-    store = join(cache, 'derived', `${self.size}-${Math.trunc(self.mtimeMs)}.json`)
+    const build = createHash('sha1')
+      .update(readFileSync(fileURLToPath(entry)))
+      .digest('hex')
+      .slice(0, 16)
+
+    store = join(cache, 'derived', `${build}.json`)
     const kept = readKept(store)
 
     if (kept) {
@@ -95,10 +100,10 @@ export function saveDerived(): void {
   const kept = Object.entries(all)
     .filter(([, [at]]) => at > epoch - AGE)
     .sort((a, b) => b[1][0] - a[1][0])
-    .slice(0, LIMIT)
+    .slice(0, Math.max(LIMIT, entries.length))
 
   try {
     writeAtomic(store, JSON.stringify({ epoch, entries: Object.fromEntries(kept) }))
-    prune(join(store, '..'))
+    prune(dirname(store))
   } catch {}
 }

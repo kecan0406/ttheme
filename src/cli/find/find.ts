@@ -111,7 +111,16 @@ import {
   type Tuning,
 } from '../../tui/find/screen.ts'
 import { CELL_QUERY, CellProbe, type Inbound, type Mouse } from '../../tui/keys.ts'
-import { FOCUS, HIDE_CURSOR, NO_WRAP, PASTES, pointing, type Terminal, within } from '../../tui/terminal.ts'
+import {
+  FOCUS,
+  HIDE_CURSOR,
+  interactive,
+  NO_WRAP,
+  PASTES,
+  pointing,
+  type Terminal,
+  within,
+} from '../../tui/terminal.ts'
 import type { Hit } from '../../tui/zones.ts'
 import { aligns as alignsFor, refreshPictures } from '../sync.ts'
 import { Kept } from './kept.ts'
@@ -3574,7 +3583,7 @@ export async function runFind(name: string): Promise<number> {
   const manifest = readAvailable(home)
   const entry = find(manifest.palettes, name)
 
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+  if (!interactive()) {
     throw new Error('needs a terminal')
   }
 

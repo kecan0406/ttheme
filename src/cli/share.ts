@@ -13,6 +13,7 @@ import { localIdentity, REPO_NAME, readMarketplaceInfo, shownSource } from '../s
 import { readTone, tonedModes } from '../store/tone.ts'
 import { pending, say } from '../tui/pending.ts'
 import { qrCode } from '../tui/qr.ts'
+import { interactive } from '../tui/terminal.ts'
 import { draftFor, named } from './craft.ts'
 import { pickPalettes } from './installs.ts'
 import { newLocal, readmeOf, repoFor } from './marketplaces.ts'
@@ -48,10 +49,6 @@ function asked<T>(answer: T | typeof p.CANCEL_SYMBOL): T {
   }
 
   return answer as T
-}
-
-function tty(): boolean {
-  return process.stdin.isTTY === true && process.stdout.isTTY === true
 }
 
 function listed(names: readonly string[]): string {
@@ -98,7 +95,9 @@ async function toned(
   })
 
   const tunable = pairs.flatMap((pair) => (pair.tuned === pair.original ? [] : [pair.original.name]))
-  const which = tunable.length === 0 ? 'original' : (tone ?? (tty() ? await askTone(tunable, renamed) : 'tuned'))
+
+  const which =
+    tunable.length === 0 ? 'original' : (tone ?? (interactive() ? await askTone(tunable, renamed) : 'tuned'))
 
   return pairs.map(({ original, tuned }) =>
     which === 'tuned' && tuned !== original ? { entry: tuned, tuned: true } : { entry: original, tuned: false },

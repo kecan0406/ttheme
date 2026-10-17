@@ -1,5 +1,6 @@
 import { contrast, type Hex, luminance, type Oklch, oklch, rgb } from './color.ts'
 import {
+  ACCENT_SLOTS,
   ACHROMATIC,
   BRIGHT_GAP,
   brightDrift,
@@ -66,7 +67,7 @@ export function ruleSlots(list: Hex[], signature: string[], waive: string[], rul
   }
 
   if (rule === 'accents') {
-    return ACCENTS.flatMap((i) => under(BASE.length + i, ansi[i] as Hex, bg))
+    return ACCENT_SLOTS.flatMap((i) => under(BASE.length + i, ansi[i] as Hex, bg))
   }
 
   if (rule === 'light-ansi') {
@@ -123,9 +124,7 @@ export function slotChecks(list: Hex[], signature: string[], waive: string[], sl
   const theme = gatedOf(list, signature, waive)
 
   if (slot === 0) {
-    const accents = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
-
-    const weakest = accents.reduce((a, b) =>
+    const weakest = ACCENT_SLOTS.reduce((a, b) =>
       contrast(c.ansi[a] as Hex, c.background) <= contrast(c.ansi[b] as Hex, c.background) ? a : b,
     )
 
@@ -271,8 +270,6 @@ export function lchTight(at: Oklch): string {
 
   return `${short(at.l, 2)} ${short(at.c, 3)} ${at.h.toFixed(0).padStart(3)}°`
 }
-
-export const ACCENTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
 
 export function bound(rule: string): number {
   const found = GATE_RULES.find((r) => r.rule === rule)

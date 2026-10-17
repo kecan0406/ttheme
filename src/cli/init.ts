@@ -38,6 +38,7 @@ import { detectTerminal, settingsFor, TRAITS } from '../terminals/terminal.ts'
 import type { Pointed, Setup } from '../terminals/types.ts'
 import { warpSettings } from '../terminals/warp.ts'
 import { windowsAppData } from '../terminals/windows-terminal.ts'
+import { interactive } from '../tui/terminal.ts'
 import { build } from './build.ts'
 import { pickPalettes } from './installs.ts'
 import { redrawPictures } from './redraw.ts'
@@ -539,7 +540,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const detected = detectTerminal(process.env)
   const preselected = offered(paths, host).filter((t) => t === detected)
 
-  if (!flags.yes && (process.stdin.isTTY !== true || process.stdout.isTTY !== true)) {
+  if (!flags.yes && !interactive()) {
     throw new Error(
       'init asks before it edits your configs — run it in a terminal, or pass --yes to accept the defaults',
     )

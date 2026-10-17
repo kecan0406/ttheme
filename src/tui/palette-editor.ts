@@ -1,10 +1,18 @@
 import { firstSpot, type Layout, layoutOf, moveSpot, type Spot, slotsAt, validSpot } from '../core/builder-layout.ts'
 import { contrast, type Hex, isHex, luminance, type Oklch, oklch } from '../core/color.ts'
-import { ACHROMATIC, check, GATE_RULES, hueGap, measure, ROLES, type Violation } from '../core/contrast.ts'
+import {
+  ACCENT_SLOTS,
+  ACHROMATIC,
+  check,
+  GATE_RULES,
+  hueGap,
+  measure,
+  ROLES,
+  type Violation,
+} from '../core/contrast.ts'
 import { edgeChroma, fixGate, inGamut } from '../core/fix.ts'
 import { type Colors, grow, nudge, SEED_FIELDS, SEEDS, type Seeds } from '../core/seeds.ts'
 import {
-  ACCENTS,
   BASE,
   bound,
   colorsOf,
@@ -183,7 +191,7 @@ function partnerOf(list: Hex[], slot: number, waive: string[]): Partner {
             ? 'light-ansi'
             : ansi === 8
               ? 'ansi8-visible'
-              : ACCENTS.includes(ansi)
+              : ACCENT_SLOTS.includes(ansi)
                 ? 'accents'
                 : undefined
 

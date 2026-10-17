@@ -1,13 +1,9 @@
 ---
 paths:
   - "shell/adapters/iterm2.zsh"
-  - "src/terminals/iterm2.ts"
-  - "src/terminals/emit/iterm2.ts"
-  - "shell/adapters/_wired.zsh"
-  - "src/terminals/terminal.ts"
-  - "tests/parity/**"
-  - "tests/compat/**"
-  - ".claude/skills/sandbox/**"
+  - "src/terminals/iterm2*.ts"
+  - "src/terminals/emit/iterm2*.ts"
+  - ".claude/skills/sandbox/scripts/iterm*.zsh"
 ---
 
 # iTerm2

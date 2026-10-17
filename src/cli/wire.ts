@@ -7,6 +7,7 @@ import { systemHost } from '../store/host.ts'
 import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { WIRINGS } from '../terminals/index.ts'
+import { interactive } from '../tui/terminal.ts'
 import { pointDefaults, sync, wiringNext, wiringNotes, wiringPlan, withBases } from './sync.ts'
 
 export async function runWire(name: string): Promise<number> {
@@ -33,7 +34,7 @@ export async function runWire(name: string): Promise<number> {
     throw new Error(`${wiring.name} cannot be wired on this system`)
   }
 
-  if (process.stdin.isTTY !== true || process.stdout.isTTY !== true) {
+  if (!interactive()) {
     throw new Error('wire asks before it edits your configs — run it in a terminal')
   }
 

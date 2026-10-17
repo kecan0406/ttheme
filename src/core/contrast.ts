@@ -8,7 +8,7 @@ export const ANSI8_MIN = 3
 export const ON_ACCENT_MIN = 4.5
 export const ANSI7_ON_ANSI8_MIN = 3
 
-const ACCENT_SLOTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
+export const ACCENT_SLOTS = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]
 const LIGHT_SLOTS = [7, 15]
 export const ROLES = [1, 2, 3, 4, 5, 6]
 

@@ -3,10 +3,9 @@ paths:
   - "src/cli/find/**"
   - "src/tui/find/**"
   - "src/pictures/{booru-net,fit,works,render,cutout,backdrop,redrawing}*.ts"
-  - "src/core/{booru,png,scenes,backdrop-tone}*.ts"
+  - "src/core/{artists,booru,png,scenes,backdrop-tone}*.ts"
   - "src/cli/pictures.ts"
   - "src/bin.ts"
-  - "site/lib/backdrop.ts"
 ---
 
 # find: booru search, own pictures, backdrops

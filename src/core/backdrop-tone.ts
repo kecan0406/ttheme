@@ -1,7 +1,7 @@
 import { type Hex, luminance, mix, rgb } from './color.ts'
 import { checkReadability, isLight } from './contrast.ts'
 
-export const FAINT = 0.1
+const FAINT = 0.1
 
 const PEAK = luminance(mix('#19161e', '#9b86c8', 0.2))
 
@@ -30,7 +30,7 @@ export type Hue = Pick<Tone, 'color' | 'opacity'>
 
 export type Coloring = 'tone' | 'original'
 
-export function slotColor(colors: Colors, slot: string): Hex {
+function slotColor(colors: Colors, slot: string): Hex {
   if (slot === 'background' || slot === 'foreground' || slot === 'cursor') {
     return colors[slot]
   }
@@ -70,7 +70,7 @@ function highest(ok: (o: number) => boolean): number {
   return lo
 }
 
-export function fade(colors: Colors, color: Hex) {
+function fade(colors: Colors, color: Hex) {
   const misses = (o: number) =>
     checkReadability({
       name: colors.name,

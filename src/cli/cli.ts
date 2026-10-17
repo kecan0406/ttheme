@@ -1,6 +1,7 @@
 import { type ParseArgsOptionsConfig, parseArgs } from 'node:util'
 import pkg from '../../package.json' with { type: 'json' }
 import { Cancelled, Signalled } from '../core/cancelled.ts'
+import { interactive } from '../tui/terminal.ts'
 import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
 import { runCheck, runEdit, runNew, runTone, thisTab } from './craft.ts'
@@ -54,7 +55,7 @@ const RUNS = new Map<string, Verb['run']>([
         return runShare([name], asked)
       }
 
-      if (process.stdin.isTTY && process.stdout.isTTY) {
+      if (interactive()) {
         return runShareAsked(asked)
       }
 

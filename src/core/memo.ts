@@ -4,8 +4,8 @@ interface Used {
 }
 
 const held = new Map<string, string>()
-const made = new Set<string>()
 const used = new Set<string>()
+let fresh = false
 
 function hashOf(text: string): string {
   let a = 0xdeadbeef
@@ -23,29 +23,32 @@ function hashOf(text: string): string {
   return `${(b >>> 0).toString(36)}${(a >>> 0).toString(36)}`
 }
 
-export function memo<T>(kind: string, input: string, compute: () => T): T {
-  const key = `${kind}:${input.length}:${hashOf(input)}`
-  used.add(key)
-  let text = held.get(key)
-
+function recalled<T>(text: string | undefined): T | undefined {
   if (text === undefined) {
-    try {
-      text = JSON.stringify({ v: compute() })
-    } catch (error) {
-      text = JSON.stringify({ e: error instanceof Error ? error.message : String(error) })
-    }
+    return undefined
+  }
 
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    return undefined
+  }
+}
+
+export function memo<T extends object>(kind: string, input: string, compute: () => T): T {
+  const key = `${kind}:${input.length}:${hashOf(input)}`
+  let value = recalled<T>(held.get(key))
+
+  if (value === undefined) {
+    const text = JSON.stringify(compute())
     held.set(key, text)
-    made.add(key)
+    fresh = true
+    value = JSON.parse(text) as T
   }
 
-  const value = JSON.parse(text) as { v: T } | { e: string }
+  used.add(key)
 
-  if ('e' in value) {
-    throw new Error(value.e)
-  }
-
-  return value.v
+  return value
 }
 
 export function recallMemo(entries: Iterable<[string, string]>): void {
@@ -56,7 +59,7 @@ export function recallMemo(entries: Iterable<[string, string]>): void {
 
 export function memoUsed(): Used {
   return {
-    fresh: made.size > 0,
+    fresh,
     entries: [...used].flatMap((key) => {
       const text = held.get(key)
 

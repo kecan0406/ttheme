@@ -53,7 +53,6 @@
         "src/cli/marketplaces.ts",
         "src/cli/refresh.ts",
         "src/cli/release.ts",
-        "src/cli/sync.ts",
         "src/core/booru.ts",
         "src/core/manifest.ts",
         "src/core/own.ts",
@@ -76,7 +75,7 @@
     },
     {
       "files": ["src/core/**"],
-      "excludeFiles": ["src/core/embed.ts", "**/*.test.ts"],
+      "excludeFiles": ["**/*.test.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -85,70 +84,43 @@
               {
                 "group": ["**/store/**", "**/pictures/**", "**/terminals/**", "**/tui/**", "**/cli/**"],
                 "message": "core imports nothing above it: core < store < pictures < terminals < tui < cli"
-              }
-            ],
-            "paths": [
-              {
-                "name": "node:fs",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
               },
               {
-                "name": "node:fs/promises",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
-              },
-              {
-                "name": "node:child_process",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
-              },
-              {
-                "name": "node:os",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
-              },
-              {
-                "name": "node:net",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
-              },
-              {
-                "name": "node:worker_threads",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
-              },
-              {
-                "name": "node:tty",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
-              },
-              {
-                "name": "node:readline",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
-              },
-              {
-                "name": "node:http",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
-              },
-              {
-                "name": "node:https",
-                "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
-              },
-              {
-                "name": "node:timers/promises",
+                "group": ["node:*", "node:*/*", "bun", "bun:*", "!node:crypto", "!node:path", "!node:zlib"],
                 "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
               }
             ]
+          }
+        ],
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "process",
+            "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+          },
+          {
+            "name": "fetch",
+            "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+          },
+          {
+            "name": "Bun",
+            "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
           }
         ]
       }
     },
     {
-      "files": ["src/core/embed.ts"],
+      "files": ["src/core/booru.ts"],
       "rules": {
-        "no-restricted-imports": [
+        "no-restricted-globals": [
           "error",
           {
-            "patterns": [
-              {
-                "group": ["**/store/**", "**/pictures/**", "**/terminals/**", "**/tui/**", "**/cli/**"],
-                "message": "core imports nothing above it: core < store < pictures < terminals < tui < cli"
-              }
-            ]
+            "name": "fetch",
+            "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
+          },
+          {
+            "name": "Bun",
+            "message": "core does no I/O \u2014 that is store's, pictures' or a terminal's"
           }
         ]
       }

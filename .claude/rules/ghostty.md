@@ -1,13 +1,10 @@
 ---
 paths:
   - "shell/adapters/ghostty.zsh"
-  - "src/terminals/ghostty.ts"
-  - "src/terminals/emit/ghostty.ts"
+  - "src/terminals/ghostty*.ts"
+  - "src/terminals/emit/ghostty*.ts"
   - "shell/adapters/_wired.zsh"
-  - "src/terminals/terminal.ts"
-  - "tests/parity/**"
-  - "tests/compat/**"
-  - ".claude/skills/sandbox/**"
+  - ".claude/skills/sandbox/scripts/ghostty.zsh"
 ---
 
 # Ghostty
