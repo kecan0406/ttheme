@@ -115,12 +115,14 @@ export function runDefault(name: string): void {
 
 export async function runSync(): Promise<void> {
   const home = configHome()
+  const manifest = readMarketplaces(home)
   const wait = pending('Drawing the background pictures')
   let failed: unknown
 
   try {
     await redrawPictures(home, wait.say, undefined, {
       emit: false,
+      manifest,
       step: (done, of) => wait.set(`Drawing the background pictures · ${done}/${of}`),
     })
   } catch (error) {
@@ -129,7 +131,7 @@ export async function runSync(): Promise<void> {
     wait.done()
   }
 
-  sync(home, readMarketplaces(home), readInstalled(home))
+  sync(home, manifest, readInstalled(home))
 
   if (failed !== undefined) {
     throw failed

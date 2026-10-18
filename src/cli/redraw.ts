@@ -1,6 +1,6 @@
 import { availableParallelism, homedir } from 'node:os'
 import type { Coloring } from '../core/backdrop-tone.ts'
-import { inMode } from '../core/manifest.ts'
+import { inMode, type Manifest } from '../core/manifest.ts'
 import { modeOf, otherOf } from '../core/mode.ts'
 import {
   applyRedraw,
@@ -19,7 +19,7 @@ import { MATTING } from '../pictures/cutout.ts'
 import { prune } from '../pictures/drawn.ts'
 import { prepareOne, redrawOne } from '../pictures/redrawing.ts'
 import { Pool } from '../pictures/render.ts'
-import { readAvailable } from '../store/available.ts'
+import { available, readAvailable } from '../store/available.ts'
 import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { blurOf } from '../store/wiring.ts'
@@ -35,6 +35,7 @@ interface Job {
 
 interface Redrawing {
   emit?: boolean
+  manifest?: Manifest
   step?: (done: number, of: number) => void
 }
 
@@ -46,11 +47,17 @@ export async function redrawPictures(
   home: string,
   say: (line: string) => void,
   user = homedir(),
-  { emit = true, step }: Redrawing = {},
+  { emit = true, manifest, step }: Redrawing = {},
 ): Promise<number> {
   const store = readStore(backgroundsDir(home))
+
+  if (Object.keys(store.palettes).length === 0) {
+    return 0
+  }
+
   const blurring = blurOf(home)
-  const entries = new Map(readAvailable(home).palettes.map((entry) => [entry.name, entry]))
+  const shown = manifest ? available(home, manifest) : readAvailable(home)
+  const entries = new Map(shown.palettes.map((entry) => [entry.name, entry]))
   const hits: Job[] = []
   const misses: Job[] = []
   const primes: Job[] = []
