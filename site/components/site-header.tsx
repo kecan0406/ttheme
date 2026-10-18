@@ -4,7 +4,7 @@ import { Button, LinkButton } from '@/components/ui/button'
 import { OFFICIAL_URL } from '@/lib/gallery'
 import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { PalettePicker } from './palette-picker'
+import { HeaderBar } from './header-bar'
 
 const NAV = [
   { href: '/sheets', label: 'sheets' },
@@ -75,7 +75,7 @@ export function SiteHeader({ current, fixed = false }: { current: string; fixed?
             github
             <NewTab />
           </LinkButton>
-          <PalettePicker />
+          <HeaderBar />
         </div>
       </div>
     </header>

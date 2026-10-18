@@ -22,7 +22,7 @@ import {
 } from '@/lib/gallery'
 import { BrandIcon, Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import type { Theme } from '@/lib/themes'
+import { paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { TerminalFrame } from './terminal-frame'
 import { TerminalPreview } from './terminal-preview'
@@ -53,9 +53,10 @@ function catalogsIn(shelf: Shelf): Catalog[] {
 }
 
 function CatalogSwatch({ theme }: { theme: Theme }) {
-  const style = [`--bg:${theme.background}`, ...theme.signature.map((color, index) => `--sg${index}:${color}`)].join(
-    ';',
-  )
+  const style = [
+    `--bg:${paint(theme, (shade) => shade.background)}`,
+    ...theme.signature.map((_, index) => `--sg${index}:${paint(theme, (shade) => shade.signature[index] as string)}`),
+  ].join(';')
 
   return <span aria-hidden="true" data-slot="catalog-swatch" style={style} />
 }
@@ -63,7 +64,7 @@ function CatalogSwatch({ theme }: { theme: Theme }) {
 function PaletteDots({ themes }: { themes: Theme[] }) {
   const style = themes
     .slice(0, DOTS)
-    .map((theme, index) => `--dot${index}:${theme.signature[0]}`)
+    .map((theme, index) => `--dot${index}:${paint(theme, (shade) => shade.signature[0] as string)}`)
     .join(';')
 
   return <span aria-hidden="true" data-slot="palette-dots" style={style} />

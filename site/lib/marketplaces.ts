@@ -1,4 +1,5 @@
-import { type Marketplace, toTheme } from '@/lib/themes'
+import { toTheme } from '@/lib/theme-entry'
+import type { Marketplace } from '@/lib/themes'
 import snapshot from '@/marketplaces.json' with { type: 'json' }
 import type { Shown } from '../../src/store/marketplace-index.ts'
 

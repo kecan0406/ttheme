@@ -3,7 +3,7 @@ import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { announce, fadeThrough, fill, readJson, reducedMotion } from './dom'
 import { SparkleBurst } from './sparkle-burst'
-import { choose, onWear, recall, show } from './wear'
+import { choose, onMode, onWear, recall, show } from './wear'
 
 const CYCLE_MS = 4000
 
@@ -18,6 +18,7 @@ class LeadShowcase extends HTMLElement {
   #holds = new Set<string>()
   #view: IntersectionObserver | null = null
   #off = () => {}
+  #offMode = () => {}
 
   #click = (event: MouseEvent) => {
     const target = event.target as Element
@@ -80,6 +81,7 @@ class LeadShowcase extends HTMLElement {
     this.addEventListener('change', this.#change)
     this.addEventListener('keydown', this.#keydown)
     this.#off = onWear((theme) => this.#pick(theme))
+    this.#offMode = onMode(() => this.#remode())
     const stored = recall()
 
     if (stored && stored.name !== this.#shown) this.#draw(stored)
@@ -111,6 +113,7 @@ class LeadShowcase extends HTMLElement {
     this.removeEventListener('change', this.#change)
     this.removeEventListener('keydown', this.#keydown)
     this.#off()
+    this.#offMode()
     this.#cycling = false
     this.#run?.cancel()
     this.#view?.disconnect()
@@ -180,6 +183,12 @@ class LeadShowcase extends HTMLElement {
   #cycle() {
     const next = this.#leads[(this.#at + 1) % this.#leads.length] as Theme
     fadeThrough(() => this.#draw(next))
+  }
+
+  #remode() {
+    const theme = this.#leads.find((lead) => lead.name === this.#shown) ?? recall()
+
+    if (theme) show(theme)
   }
 
   #pick(theme: Theme) {

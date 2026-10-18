@@ -18,7 +18,7 @@ import { builderOf, readShared, type Shared } from '@/lib/share'
 import { sheetNumber, sheetVars } from '@/lib/sheet'
 import { sheetScript } from '@/lib/sheet-script'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
-import type { Marketplace, Theme } from '@/lib/themes'
+import { inMode, type Marketplace, type Theme } from '@/lib/themes'
 import { marketplaceMeta, marketplacesMeta, paletteMeta, sharedMeta, sheetsMeta, siteMeta } from '@/lib/titles'
 import { leadOf } from '@/lib/workspace'
 import pkg from '../../package.json' with { type: 'json' }
@@ -153,7 +153,7 @@ export const site = new Elysia({ name: 'site' })
         path: '/sheets',
         ...CARD,
         cache: CATALOG,
-        root: sheetVars(themes[0] as Theme, sheetNumber(themes, themes[0] as Theme), gate),
+        root: sheetVars(inMode(themes[0] as Theme, 'dark'), sheetNumber(themes, themes[0] as Theme), gate),
         head: sheetScript(themes, gate),
       },
       <Sheets themes={themes} gate={gate} facts={facts} />,

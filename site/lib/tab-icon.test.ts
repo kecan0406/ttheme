@@ -20,6 +20,16 @@ const theme: Theme = {
   signatureSlots: ['cursor', 'foreground', 'ansi3'],
   ansi: Array.from({ length: 16 }, () => '#808080'),
   gate: [],
+  mode: 'light',
+  other: {
+    background: '#201517',
+    foreground: '#e4dfff',
+    cursor: '#ec638c',
+    selectionBackground: '#4c383f',
+    signature: ['#ec638c', '#e4dfff', '#fdaa30'],
+    ansi: Array.from({ length: 16 }, () => '#808080'),
+    gate: [],
+  },
 }
 
 function corner(bytes: Buffer): string {

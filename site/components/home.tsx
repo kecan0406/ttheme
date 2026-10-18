@@ -6,7 +6,7 @@ import type { Facts } from '@/lib/facts'
 import { INIT, marketplacePath } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import type { Theme } from '@/lib/themes'
+import { paint, type Theme } from '@/lib/themes'
 import { headlineEm } from '@/lib/wear'
 import { HeroScenes } from './cli-scenes'
 import { CommandRow } from './command-row'
@@ -222,7 +222,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             {leads.map((lead, index) => (
               <label
                 translate="no"
-                style={`background:${lead.background};color:${lead.foreground}`}
+                style={`background:${paint(lead, (shade) => shade.background)};color:${paint(lead, (shade) => shade.foreground)}`}
                 class="grid cursor-pointer grid-cols-[minmax(0,1fr)] gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-4 pt-3.5 pb-4 shadow-sm transition-[translate,scale,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-98 active:duration-500 active:ease-spring has-checked:ring-2 has-checked:ring-ring has-checked:ring-offset-2 has-checked:ring-offset-background has-focus-visible:outline-2 has-focus-visible:outline-offset-4 has-focus-visible:outline-ring motion-reduce:hover:translate-y-0"
               >
                 <input
@@ -235,7 +235,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                 />
                 <span
                   class="font-display text-display-sm font-black [overflow-wrap:anywhere]"
-                  style={`color:${lead.cursor}`}
+                  style={`color:${paint(lead, (shade) => shade.cursor)}`}
                   safe
                 >
                   {lead.name}

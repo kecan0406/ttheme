@@ -1,7 +1,7 @@
 import type { Point } from '@/lib/facets'
-import type { Theme } from '@/lib/themes'
+import { MODE_EVENT, type Mode, type Setting } from '@/lib/mode'
+import { inMode, type Shade, type Theme } from '@/lib/themes'
 import {
-  isLight,
   LABEL,
   SHOW_EVENT,
   type Shown,
@@ -16,6 +16,7 @@ import {
   wearVars,
 } from '@/lib/wear'
 import { reducedMotion } from './dom'
+import { mode, setting, store, watch } from './mode'
 import { respeculate } from './speculation'
 
 type Rgb = [number, number, number]
@@ -34,24 +35,48 @@ let fading: Animation | null = null
 
 let goal: Vars = []
 
+function isShade(value: unknown): value is Shade {
+  if (typeof value !== 'object' || value === null) return false
+  const shade = value as Partial<Shade>
+
+  return (
+    Array.isArray(shade.ansi) &&
+    shade.ansi.length === 16 &&
+    shade.ansi.every((color) => COLOR.test(color)) &&
+    Array.isArray(shade.signature) &&
+    Array.isArray(shade.gate) &&
+    [shade.background, shade.foreground, shade.cursor, shade.selectionBackground].every((color) =>
+      COLOR.test(String(color)),
+    )
+  )
+}
+
 function isTheme(value: unknown): value is Theme {
   if (typeof value !== 'object' || value === null) return false
   const theme = value as Partial<Theme>
 
   return (
     typeof theme.name === 'string' &&
-    typeof theme.background === 'string' &&
-    typeof theme.foreground === 'string' &&
-    typeof theme.cursor === 'string' &&
-    typeof theme.selectionBackground === 'string' &&
-    Array.isArray(theme.ansi) &&
-    theme.ansi.length === 16 &&
-    theme.ansi.every((color) => COLOR.test(color)) &&
-    Array.isArray(theme.signature) &&
-    [theme.background, theme.foreground, theme.cursor, theme.selectionBackground].every((color) =>
-      COLOR.test(String(color)),
-    )
+    (theme.mode === 'dark' || theme.mode === 'light') &&
+    isShade(value) &&
+    isShade(theme.other)
   )
+}
+
+let fallen: Theme | null = null
+
+export function fallback(): Theme | null {
+  if (fallen) return fallen
+
+  try {
+    const text = document.querySelector('script[data-fallback]')?.textContent
+    const theme: unknown = text ? JSON.parse(text) : null
+    fallen = isTheme(theme) ? theme : null
+  } catch {
+    fallen = null
+  }
+
+  return fallen
 }
 
 export function recall(): Theme | null {
@@ -66,7 +91,8 @@ export function recall(): Theme | null {
 }
 
 export function remember(theme: Theme) {
-  const value = JSON.stringify({ v: wearVars(theme), l: isLight(theme), t: theme })
+  const v = { dark: wearVars(inMode(theme, 'dark')), light: wearVars(inMode(theme, 'light')) }
+  const value = JSON.stringify({ v, t: theme })
 
   try {
     if (localStorage.getItem(WEAR_KEY) === value) return
@@ -181,6 +207,7 @@ function wear(vars: Vars, light: boolean, origin: Point | null) {
   const root = document.documentElement
 
   for (const [name, value] of vars) if (name === LABEL) relabel(root, value)
+  root.dataset.mode = light ? 'light' : 'dark'
   root.style.colorScheme = light ? 'light only' : 'dark only'
   fade(
     root,
@@ -190,9 +217,10 @@ function wear(vars: Vars, light: boolean, origin: Point | null) {
 
 export function show(theme: Theme) {
   const root = document.documentElement
+  const worn = inMode(theme, mode())
 
-  for (const [name, value] of wearOwn(theme)) root.style.setProperty(name, value)
-  wear(wearVars(theme), isLight(theme), null)
+  for (const [name, value] of wearOwn(worn)) root.style.setProperty(name, value)
+  wear(wearVars(worn), worn.mode === 'light', null)
 }
 
 export function worn(): Vars {
@@ -265,3 +293,38 @@ export function onWear(listener: (theme: Theme) => void): () => void {
 
   return () => document.removeEventListener(WEAR_EVENT, handle)
 }
+
+export function onMode(listener: (mode: Mode) => void): () => void {
+  const handle = (event: Event) => {
+    event.preventDefault()
+    listener((event as CustomEvent<Mode>).detail)
+  }
+
+  document.addEventListener(MODE_EVENT, handle)
+
+  return () => document.removeEventListener(MODE_EVENT, handle)
+}
+
+function follow() {
+  const root = document.documentElement
+  const next = mode()
+  root.dataset.setting = setting()
+
+  if (root.dataset.mode === next) return
+  const theme = recall() ?? fallback()
+  const event = new CustomEvent<Mode>(MODE_EVENT, { detail: next, cancelable: true })
+
+  if (document.dispatchEvent(event) && theme) show(theme)
+}
+
+export function choosing(next: Setting) {
+  store(next)
+  respeculate()
+  follow()
+}
+
+watch(follow)
+
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) follow()
+})

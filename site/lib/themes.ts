@@ -1,3 +1,5 @@
+import type { Mode } from '@/lib/mode'
+
 export interface GateRule {
   rule: string
   label: string
@@ -6,7 +8,17 @@ export interface GateRule {
   max?: number
 }
 
-export interface Theme {
+export interface Shade {
+  background: string
+  foreground: string
+  cursor: string
+  selectionBackground: string
+  signature: string[]
+  ansi: string[]
+  gate: number[]
+}
+
+export interface Theme extends Shade {
   id: string
   marketplace: string | null
   name: string
@@ -15,14 +27,9 @@ export interface Theme {
   lead: boolean
   from: string | null
   ansiSource: string
-  background: string
-  foreground: string
-  cursor: string
-  selectionBackground: string
-  signature: string[]
   signatureSlots: string[]
-  ansi: string[]
-  gate: number[]
+  mode: Mode
+  other: Shade
 }
 
 export interface Marketplace {
@@ -36,44 +43,44 @@ export interface Marketplace {
   palettes: Theme[]
 }
 
-export interface ManifestEntry {
-  name: string
-  catalog?: string
-  native?: string
-  lead?: boolean
-  from?: string
-  ansiSource: string
-  background: string
-  foreground: string
-  cursor: string
-  selection: string
-  signature: string[]
-  signatureSlots: string[]
-  ansi: string[]
-  gate: number[]
-}
-
 export function shelfOf(theme: Pick<Theme, 'marketplace' | 'catalog'>): string {
   return [theme.marketplace, theme.catalog].filter((part) => part !== null).join(' / ')
 }
 
-export function toTheme(entry: ManifestEntry, marketplace: string | null = null): Theme {
+export function shadeOf(theme: Shade): Shade {
   return {
-    id: marketplace ? `${marketplace}/${entry.name}` : entry.name,
-    marketplace,
-    name: entry.name,
-    catalog: entry.catalog ?? null,
-    native: entry.native ?? null,
-    lead: entry.lead ?? false,
-    from: entry.from ?? null,
-    ansiSource: entry.ansiSource,
-    background: entry.background,
-    foreground: entry.foreground,
-    cursor: entry.cursor,
-    selectionBackground: entry.selection,
-    signature: entry.signature,
-    signatureSlots: entry.signatureSlots,
-    ansi: entry.ansi,
-    gate: entry.gate,
+    background: theme.background,
+    foreground: theme.foreground,
+    cursor: theme.cursor,
+    selectionBackground: theme.selectionBackground,
+    signature: theme.signature,
+    ansi: theme.ansi,
+    gate: theme.gate,
   }
+}
+
+export function shades(theme: Theme): Record<Mode, Shade> {
+  return theme.mode === 'dark'
+    ? { dark: shadeOf(theme), light: theme.other }
+    : { dark: theme.other, light: shadeOf(theme) }
+}
+
+export function pinned(theme: Theme): Theme {
+  return { ...theme, other: shadeOf(theme) }
+}
+
+export function inMode(theme: Theme, mode: Mode): Theme {
+  if (theme.mode === mode) return theme
+
+  return { ...theme, ...theme.other, mode, other: shadeOf(theme) }
+}
+
+export function pair(light: string, dark: string): string {
+  return light === dark ? light : `light-dark(${light},${dark})`
+}
+
+export function paint(theme: Theme, pick: (shade: Shade) => string): string {
+  const { dark, light } = shades(theme)
+
+  return pair(pick(light), pick(dark))
 }

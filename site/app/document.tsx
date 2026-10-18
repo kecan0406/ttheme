@@ -9,11 +9,13 @@ import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import { CARD_REV, ORIGIN } from '@/lib/seo'
 import { SPECULATION_RULES } from '@/lib/speculation'
-import { rootStyle, type Vars, WEAR_SCRIPT, wearIcon } from '@/lib/wear'
+import { rootStyle, type Vars, wearIcon, wearScript } from '@/lib/wear'
 
 const RELOAD = `let s=null,b=null;const c=()=>{s?.close();s=null},f=()=>{if(document.visibilityState==='hidden'&&!document.prerendering)c();else if(!s){s=new EventSource('${assets.reload}');s.onmessage=(e)=>{b??=e.data;if(e.data!==b)location.reload()}}};document.addEventListener('visibilitychange',f);addEventListener('pageshow',f);addEventListener('pagehide',c);f()`
 
 const FONTS: string[] = assets.fonts
+
+const WEAR_SCRIPT = wearScript(fallback)
 
 const INSIGHTS = ['/_vercel/insights/script.js', '/_vercel/speed-insights/script.js']
 
@@ -56,7 +58,12 @@ function Document({
   head?: string
 }>) {
   return (
-    <html lang="en" style={[rootStyle(fallback), ...root.map(([name, value]) => `${name}:${value}`)].join(';')}>
+    <html
+      lang="en"
+      data-mode="dark"
+      data-setting="dark"
+      style={[rootStyle(fallback), ...root.map(([name, value]) => `${name}:${value}`)].join(';')}
+    >
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -101,6 +108,9 @@ function Document({
         <link rel="stylesheet" href={assets.cjk} media="print" onload="this.media='all'" />
         <script>{KEYS_SCRIPT}</script>
         <script>{WEAR_SCRIPT}</script>
+        <script type="application/json" data-fallback>
+          {json(fallback)}
+        </script>
         {head ? <script>{head}</script> : null}
         <script>{HANDOFF_SCRIPT}</script>
         <script>{ROUTE_SCRIPT}</script>

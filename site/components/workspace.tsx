@@ -12,10 +12,11 @@ import { INIT, NPM_URL, OFFICIAL, OFFICIAL_URL, palettePath, searchable } from '
 import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { gatePassed } from '@/lib/sheet'
-import type { GateRule, Marketplace, Theme } from '@/lib/themes'
+import { type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { leadOf, neighbors, type Where, type WorkspaceData } from '@/lib/workspace'
+import { ByMode } from './by-mode'
 import { CommandRow } from './command-row'
 import { GateList, SwatchGrid } from './palette-parts'
 import { SiteHeader } from './site-header'
@@ -66,7 +67,7 @@ function commandOf(step: Step, theme: Theme, where: Where): string {
 }
 
 function signs(theme: Theme): string[] {
-  return theme.signature.map((color, index) => `--sg${index}:${color}`)
+  return [0, 1, 2].map((index) => `--sg${index}:${paint(theme, (shade) => shade.signature[index] as string)}`)
 }
 
 function Dots({ theme }: { theme: Theme }) {
@@ -75,14 +76,23 @@ function Dots({ theme }: { theme: Theme }) {
 
 function ribbon(theme: Theme): string {
   const step = 100 / theme.ansi.length
-  const stops = theme.ansi.map((color, index) => `${color} ${index * step}% ${(index + 1) * step}%`)
+
+  const stops = theme.ansi.map((_, index) => {
+    const color = paint(theme, (shade) => shade.ansi[index] as string)
+
+    return `${color} ${index * step}% ${(index + 1) * step}%`
+  })
 
   return `linear-gradient(90deg,${stops.join(',')})`
 }
 
 function CatalogTile({ theme }: { theme: Theme }) {
   return (
-    <span aria-hidden="true" data-slot="catalog-tile" style={[`--bg:${theme.background}`, ...signs(theme)].join(';')} />
+    <span
+      aria-hidden="true"
+      data-slot="catalog-tile"
+      style={[`--bg:${paint(theme, (shade) => shade.background)}`, ...signs(theme)].join(';')}
+    />
   )
 }
 
@@ -167,10 +177,25 @@ export function ScenePanes({ theme }: { theme: Theme }) {
   )
 }
 
-export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes: Theme[]; gate: GateRule[] }) {
-  const { at, count } = neighbors(theme, palettes)
+function GateButton({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
   const passed = gatePassed(theme, gate)
   const clear = passed === gate.length
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      popovertarget="workspace-gate"
+      aria-label={`contrast gate, ${passed} of ${gate.length} floors`}
+    >
+      <Icon node={clear ? Check : TriangleAlert} class={clear ? 'text-success' : 'text-warning'} />
+      {escapeHtml(`gate ${passed}/${gate.length}`)}
+    </Button>
+  )
+}
+
+export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes: Theme[]; gate: GateRule[] }) {
+  const { at, count } = neighbors(theme, palettes)
 
   return (
     <>
@@ -182,15 +207,7 @@ export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes
         />
         slots
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        popovertarget="workspace-gate"
-        aria-label={`contrast gate, ${passed} of ${gate.length} floors`}
-      >
-        <Icon node={clear ? Check : TriangleAlert} class={clear ? 'text-success' : 'text-warning'} />
-        {escapeHtml(`gate ${passed}/${gate.length}`)}
-      </Button>
+      <ByMode theme={theme} render={(shown) => <GateButton theme={shown} gate={gate} />} />
       {theme.from ? (
         <span class="text-xs text-muted-foreground" safe>
           {`from ${theme.from}`}
@@ -207,18 +224,21 @@ export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes
 }
 
 export function GatePanel({ theme, gate, where }: { theme: Theme; gate: GateRule[]; where: Where }) {
-  const passed = gatePassed(theme, gate)
-
   return (
-    <>
-      <div class="grid gap-0.5">
-        <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">contrast gate</p>
-        <p class="text-sm text-soft-foreground" safe>
-          {`${theme.name} clears ${passed} of ${gate.length} floors${where ? ' · advisory, never enforced' : ''}`}
-        </p>
-      </div>
-      <GateList theme={theme} gate={gate} />
-    </>
+    <ByMode
+      theme={theme}
+      render={(shown) => (
+        <>
+          <div class="grid gap-0.5">
+            <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">contrast gate</p>
+            <p class="text-sm text-soft-foreground" safe>
+              {`${shown.name} clears ${gatePassed(shown, gate)} of ${gate.length} floors${where ? ' · advisory, never enforced' : ''}`}
+            </p>
+          </div>
+          <GateList theme={shown} gate={gate} />
+        </>
+      )}
+    />
   )
 }
 
@@ -229,7 +249,7 @@ export function SlotsPanel({ theme }: { theme: Theme }) {
         <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">slots</p>
         <p class="text-xs text-muted-foreground">click a color to copy it</p>
       </div>
-      <SwatchGrid theme={theme} />
+      <ByMode theme={theme} render={(shown) => <SwatchGrid theme={shown} />} />
     </>
   )
 }

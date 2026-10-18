@@ -190,6 +190,18 @@
   --radius: 10px;
 }
 
+:root[data-mode='light'] {
+  --overlay: rgb(0 0 0 / 24%);
+  --elevation-sm: 0 1px 2px rgb(0 0 0 / 12%);
+  --elevation-md: 0 10px 30px -10px rgb(0 0 0 / 22%), 0 4px 10px -4px rgb(0 0 0 / 12%);
+  --elevation-lg: 0 30px 70px -20px rgb(0 0 0 / 30%), 0 14px 30px -12px rgb(0 0 0 / 16%);
+}
+
+:root:not([data-mode='light']) [data-view='light'],
+:root[data-mode='light'] [data-view='dark'] {
+  display: none;
+}
+
 html {
   overflow-anchor: none;
   scroll-padding-top: calc(var(--spacing) * 16);

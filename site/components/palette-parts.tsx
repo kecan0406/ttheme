@@ -3,7 +3,7 @@ import { Check } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { Icon } from '@/lib/icons'
 import { luminance, passes } from '@/lib/sheet'
-import type { GateRule, Theme } from '@/lib/themes'
+import { type GateRule, paint, type Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 
 export function SectionLabel({ icon, children }: PropsWithChildren<{ icon: JSX.Element }>) {
@@ -43,34 +43,16 @@ export function WornSignature() {
   )
 }
 
-export function Signature({ theme, size = 'sm' }: { theme: Theme; size?: 'sm' | 'lg' }) {
-  if (size === 'sm')
-    return (
-      <span class="flex flex-none gap-1" role="img" aria-label={`signature ${theme.signature.join(' ')}`}>
-        {theme.signature.map((color) => (
-          <i
-            class="size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none"
-            style={`background:${color}`}
-          />
-        ))}
-      </span>
-    )
-
+export function Signature({ theme }: { theme: Theme }) {
   return (
-    <div class="flex flex-wrap gap-x-4 gap-y-2.5">
-      {theme.signature.map((color, index) => (
-        <span class="inline-flex items-center gap-2 font-mono text-xs">
-          <i
-            class="size-5 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none"
-            style={`background:${color}`}
-          />
-          <span safe>{color}</span>
-          <span class="font-sans text-muted-foreground" safe>
-            {theme.signatureSlots[index]}
-          </span>
-        </span>
+    <span class="flex flex-none gap-1" role="img" aria-label={`signature ${theme.signature.join(' ')}`}>
+      {theme.signature.map((_, index) => (
+        <i
+          class="size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none"
+          style={`background:${paint(theme, (shade) => shade.signature[index] as string)}`}
+        />
       ))}
-    </div>
+    </span>
   )
 }
 

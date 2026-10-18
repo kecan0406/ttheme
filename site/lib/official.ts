@@ -1,4 +1,5 @@
-import { type Theme, toTheme } from '@/lib/themes'
+import { toTheme } from '@/lib/theme-entry'
+import type { Theme } from '@/lib/themes'
 import published from '../../dist/manifest.json' with { type: 'json' }
 import { listed, parseManifest } from '../../src/core/manifest.ts'
 

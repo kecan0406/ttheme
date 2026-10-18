@@ -6,7 +6,8 @@ import { catalogsOf } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import type { GateRule, Theme } from '@/lib/themes'
+import { type GateRule, paint, type Theme } from '@/lib/themes'
+import { ByMode } from './by-mode'
 import { CommandRow } from './command-row'
 import { GateList, PropertyList, SectionLabel, Signature, SwatchGrid, WornSignature } from './palette-parts'
 import { SiteFooter } from './site-footer'
@@ -61,12 +62,12 @@ export function SheetDetails({ theme, gate }: { theme: Theme; gate: GateRule[] }
         </section>
         <section>
           <SectionLabel icon={<Icon node={Gauge} />}>Contrast gate</SectionLabel>
-          <GateList theme={theme} gate={gate} />
+          <ByMode theme={theme} render={(shown) => <GateList theme={shown} gate={gate} />} />
         </section>
       </div>
       <section>
         <SectionLabel icon={<Icon node={SwatchBook} />}>Slots</SectionLabel>
-        <SwatchGrid theme={theme} />
+        <ByMode theme={theme} render={(shown) => <SwatchGrid theme={shown} />} />
       </section>
     </>
   )
@@ -181,10 +182,13 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
                   aria-current={sheet === theme ? 'true' : undefined}
                   tabindex={sheet === theme ? '0' : '-1'}
                   translate="no"
-                  style={`background:${sheet.background};color:${sheet.foreground}`}
+                  style={`background:${paint(sheet, (shade) => shade.background)};color:${paint(sheet, (shade) => shade.foreground)}`}
                   class="grid w-32 flex-none snap-center gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-3 py-2 text-left transition-transform duration-200 outline-none hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-98 active:duration-500 active:ease-spring motion-reduce:hover:translate-y-0"
                 >
-                  <span class="truncate font-display text-sm font-extrabold" style={`color:${sheet.cursor}`}>
+                  <span
+                    class="truncate font-display text-sm font-extrabold"
+                    style={`color:${paint(sheet, (shade) => shade.cursor)}`}
+                  >
                     {escapeHtml(sheet.name)}
                   </span>
                   <span aria-hidden="true">

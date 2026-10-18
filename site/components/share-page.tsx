@@ -8,7 +8,7 @@ import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { type Builder, type GateLine, GRID, type Pane, type Run, type Shared } from '@/lib/share'
 import type { ShareView, SlotView } from '@/lib/share-view'
-import { shelfOf } from '@/lib/themes'
+import { pinned, shelfOf } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
 import { CommandRow } from './command-row'
 import { PropertyList, reading, SectionLabel, Signature } from './palette-parts'
@@ -327,7 +327,7 @@ function Strip({ shared }: { shared: Shared }) {
       </span>
       {shared.palettes.map((theme, at) => (
         <LinkButton variant="ghost" size="sm" href={`?i=${at}`} aria-current={at === shared.index ? 'page' : undefined}>
-          <Signature theme={theme} />
+          <Signature theme={pinned(theme)} />
           <span safe>{theme.name}</span>
         </LinkButton>
       ))}
@@ -359,7 +359,7 @@ function Bar({ shared }: { shared: Shared }) {
         <h1 class="font-display text-display-sm font-black whitespace-nowrap" safe>
           {theme.name}
         </h1>
-        <Signature theme={theme} />
+        <Signature theme={pinned(theme)} />
       </nav>
       <div class="flex flex-none items-center gap-1.5 max-[760px]:w-full">
         <Button variant="ghost" size="sm" aria-pressed="false" data-inspect>
@@ -415,7 +415,7 @@ function Stage({ shared, builder }: { shared: Shared; builder: Builder }) {
       <div
         data-mock
         class="mock"
-        style={`${wearStyle(shared.theme)};--faint:${view.faint};--cols:${GRID.cols};--rows:${GRID.rows}`}
+        style={`${wearStyle(pinned(shared.theme))};--faint:${view.faint};--cols:${GRID.cols};--rows:${GRID.rows}`}
       >
         <div class="flex h-10 flex-none items-center gap-3 bg-card pr-1.5 pl-3.5">
           <span aria-hidden="true" class="flex gap-2">

@@ -74,7 +74,7 @@ class PalettePicker extends HTMLElement {
   #place = (event: Event) => {
     if ((event as ToggleEvent).newState !== 'open') return
     const trigger = this.querySelector('[data-wear-trigger]') as HTMLElement
-    const box = trigger.getBoundingClientRect()
+    const box = (this.closest('[data-slot="header-bar"]') ?? trigger).getBoundingClientRect()
     const panel = this.#panel
     panel.style.top = `${box.bottom + 8}px`
     const width = Math.min(256, window.innerWidth - 32)

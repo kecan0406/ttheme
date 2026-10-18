@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Icon } from '@/lib/icons'
-import type { Theme } from '@/lib/themes'
+import { paint, type Theme } from '@/lib/themes'
 import { TerminalFrame } from './terminal-frame'
 
 export interface Tab {
@@ -126,7 +126,10 @@ export function TerminalTabs({ tabs, active }: { tabs: Tab[]; active: number }) 
             </>
           ) : (
             <>
-              <i class="size-2 flex-none rounded-full" style={`background:${tab.theme.cursor}`} />
+              <i
+                class="size-2 flex-none rounded-full"
+                style={`background:${paint(tab.theme, (shade) => shade.cursor)}`}
+              />
               <span class="min-w-0 truncate" safe>
                 {tab.theme.name}
               </span>

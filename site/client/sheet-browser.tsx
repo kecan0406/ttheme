@@ -3,11 +3,12 @@ import { TerminalTabs } from '@/components/terminal-window'
 import { html } from '@/lib/render'
 import { sheetNumber, sheetVars } from '@/lib/sheet'
 import { SHEET_AT } from '@/lib/sheet-script'
-import type { GateRule, Theme } from '@/lib/themes'
+import { type GateRule, inMode, type Theme } from '@/lib/themes'
 import { fadeThrough, fill, readJson, reducedMotion, swap } from './dom'
 import { bare, typing } from './keys'
+import { mode } from './mode'
 import { tabKey } from './tabs'
-import { onWear, recall, remember, show } from './wear'
+import { onMode, onWear, recall, remember, show } from './wear'
 
 interface OpenTab {
   id: number
@@ -35,6 +36,7 @@ class SheetBrowser extends HTMLElement {
   #next = 0
   #shown: Theme | undefined
   #off = () => {}
+  #offMode = () => {}
 
   #click = (event: MouseEvent) => {
     const target = event.target as Element
@@ -76,6 +78,7 @@ class SheetBrowser extends HTMLElement {
     this.addEventListener('keydown', this.#keydown)
     window.addEventListener('keydown', this.#arrows)
     this.#off = onWear((theme) => this.#adopt(theme))
+    this.#offMode = onMode(() => this.#draw())
     this.#restore()
     this.#center('auto')
   }
@@ -85,6 +88,7 @@ class SheetBrowser extends HTMLElement {
     this.removeEventListener('keydown', this.#keydown)
     window.removeEventListener('keydown', this.#arrows)
     this.#off()
+    this.#offMode()
   }
 
   get #at(): number {
@@ -175,7 +179,7 @@ class SheetBrowser extends HTMLElement {
     show(theme)
     const root = document.documentElement
 
-    for (const [name, value] of sheetVars(theme, sheetNumber(this.#themes, theme), this.#gate))
+    for (const [name, value] of sheetVars(inMode(theme, mode()), sheetNumber(this.#themes, theme), this.#gate))
       root.style.setProperty(name, value)
     this.querySelector('[data-sheet-label]')?.setAttribute('aria-label', theme.name)
 

@@ -1,3 +1,4 @@
+import { MODE_KEY } from '@/lib/mode'
 import { WEAR_KEY } from '@/lib/wear'
 
 export function respeculate() {
@@ -12,5 +13,5 @@ export function respeculate() {
 }
 
 window.addEventListener('storage', (event) => {
-  if (event.key === WEAR_KEY) respeculate()
+  if (event.key === WEAR_KEY || event.key === MODE_KEY) respeculate()
 })
