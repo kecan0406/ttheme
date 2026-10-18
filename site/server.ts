@@ -3,3 +3,5 @@ import { autoHead } from 'elysia/auto-head'
 import { site } from './app/site'
 
 export default new Elysia().use(autoHead()).use(site)
+
+export { PRERENDERED } from './app/site'

@@ -3,5 +3,5 @@
   "framework": null,
   "bunVersion": "1.x",
   "installCommand": "bun install --frozen-lockfile",
-  "buildCommand": "cd .. && bun install --frozen-lockfile && bun src/bin.ts build && cd site && bun build.ts"
+  "buildCommand": "cd .. && bun install --frozen-lockfile && bun src/bin.ts build && cd site && (timeout 150 bun build.ts || timeout 150 bun build.ts)"
 }

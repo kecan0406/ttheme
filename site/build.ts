@@ -213,9 +213,8 @@ export async function snapshot(fresh: boolean): Promise<void> {
   }
 }
 
-async function prerender(): Promise<Record<string, { path: string; contentType: string }>> {
-  const { default: server } = await import('./server')
-  const { PRERENDERED } = await import('./app/site')
+async function prerender(bundle: string): Promise<Record<string, { path: string; contentType: string }>> {
+  const { default: server, PRERENDERED } = (await import(bundle)) as typeof import('./server')
   const overrides: Record<string, { path: string; contentType: string }> = {}
 
   for (const path of PRERENDERED) {
@@ -252,7 +251,7 @@ async function output(): Promise<void> {
       framework: { slug: 'elysia', version },
     }),
   )
-  const overrides = await prerender()
+  const overrides = await prerender(join(lambda, 'server.js'))
   writeFileSync(
     join(OUTPUT, 'config.json'),
     JSON.stringify({
@@ -272,4 +271,5 @@ if (import.meta.main) {
   await buildAssets(true)
   await snapshot(true)
   await output()
+  process.exit(0)
 }
