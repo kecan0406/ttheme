@@ -1,5 +1,16 @@
 import { createHash } from 'node:crypto'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync } from 'node:fs'
+import {
+  closeSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  readSync,
+  renameSync,
+  rmSync,
+  statSync,
+} from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import { artworkOf, creditLine, linksOf } from '../core/artists.ts'
 import { type Coloring, type Colors, type Hue, originalOpacity } from '../core/backdrop-tone.ts'
@@ -14,6 +25,7 @@ import {
   encodeGray,
   encodeMask,
   encodeRgba,
+  isPng,
   type Mask,
   type Plane,
   pngHead,
@@ -1228,6 +1240,28 @@ function toned(name: string, key: string, held: Held, tone: Hex | undefined): Ma
   return figure && fill
     ? laid(stemOf(name, key, figure, fill), Number(/@fill-(\d+)\.png$/.exec(held.fill)?.[1] ?? 50), figure, fill)
     : undefined
+}
+
+export function decodable(configHome: string, picture: Picture): boolean {
+  if (!picture.original) {
+    return false
+  }
+
+  const head = new Uint8Array(8)
+  let fd: number | undefined
+
+  try {
+    fd = openSync(join(backgroundsDir(configHome), picture.original), 'r')
+    readSync(fd, head, 0, head.length, 0)
+
+    return isPng(head) || (head[0] === 0xff && head[1] === 0xd8)
+  } catch {
+    return false
+  } finally {
+    if (fd !== undefined) {
+      closeSync(fd)
+    }
+  }
 }
 
 export function cached(

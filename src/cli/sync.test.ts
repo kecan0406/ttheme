@@ -542,10 +542,19 @@ test("sync gives a palette's Warp theme its picture under a name of its own, and
   assert.match(readFileSync(settings, 'utf8'), new RegExp(`path = "${RegExp.escape(now[0] as string)}"`))
   const again = readFileSync(join(themes, now[0] as string), 'utf8')
   assert.match(again, new RegExp(`^ {2}path: "${RegExp.escape(flat)}"\\n {2}opacity: 50$`, 'm'))
+  const light = inMode(entry('gojo', 2), 'light').background
+  const image = join(configHome, 'ttheme', 'backgrounds', 'gojo@fill-40.png')
+  const ahead = warpPictureFile('gojo', image, light)
+
   assert.deepEqual(
-    readdirSync(themes).filter((file) => file.endsWith('.png')),
-    [flat.slice(themes.length + 1)],
+    readdirSync(themes)
+      .filter((file) => file.endsWith('.png'))
+      .sort(),
+    [flat.slice(themes.length + 1), ahead].sort(),
   )
+
+  const [r, g, b] = [1, 3, 5].map((at) => Number.parseInt(light.slice(at, at + 2), 16))
+  assert.deepEqual([...decodePng(readFileSync(join(themes, ahead))).data], [255, 255, 255, 255, r, g, b, 255])
 })
 
 test('Warp wears the plain theme of a palette whose picture cannot be read', () => {

@@ -7,6 +7,7 @@ import {
   backgroundsDir,
   cached,
   coloringOf,
+  decodable,
   inkDue,
   type Paint,
   type Picture,
@@ -78,7 +79,7 @@ export async function redrawPictures(
         into.push({ name, key: picture.key, paint })
       }
 
-      if (!flips && !undrawn(picture) && picture.original && coloringOf(picture) === 'tone') {
+      if (!flips && !undrawn(picture) && coloringOf(picture) === 'tone' && decodable(home, picture)) {
         other ??= paintFor(inMode(entry, otherOf(modeOf(entry))))
 
         if (!cached(home, name, picture, other, blurring, 'tone')) {

@@ -1,7 +1,19 @@
 import { spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
+import {
+  closeSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  readSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs'
 import { dirname, join } from 'node:path'
+import type { Hex } from '../core/color.ts'
 import { decodePng, encodeRgb, flatIndexed, flatten } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
 import { owned, stem } from '../core/theme.ts'
@@ -122,11 +134,35 @@ function laidFiles(ctx: Ctx): Laid {
   return { files, fresh }
 }
 
+function layPicture(from: string, to: string, background: Hex): void {
+  const bytes = new Uint8Array(readFileSync(from))
+  writeAtomic(to, flatIndexed(bytes, background, 1) ?? encodeRgb(flatten(decodePng(bytes), background, 1)))
+}
+
+function indexed(path: string): boolean {
+  const head = new Uint8Array(26)
+  let fd: number | undefined
+
+  try {
+    fd = openSync(path, 'r')
+    readSync(fd, head, 0, head.length, 0)
+
+    return head[25] === 3
+  } catch {
+    return false
+  } finally {
+    if (fd !== undefined) {
+      closeSync(fd)
+    }
+  }
+}
+
 function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
   const dir = warpThemes(ctx.home)
   const pictures = backgroundsDir(ctx.configHome)
   const kept = new Set([...files.values(), ...ctx.themes.map((theme) => warpThemeFile(theme))])
   const current = warpThemeOf(readText(warpSettings(ctx.home, ctx.configHome))) ?? ''
+  const others = new Set<string>()
 
   for (const theme of ctx.themes) {
     const picture = readBackdrop(pictures, theme.name, ctx.home)
@@ -137,11 +173,7 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
 
       if (!existsSync(laid.image)) {
         try {
-          const bytes = new Uint8Array(readFileSync(picture.image))
-          writeAtomic(
-            laid.image,
-            flatIndexed(bytes, theme.background, 1) ?? encodeRgb(flatten(decodePng(bytes), theme.background, 1)),
-          )
+          layPicture(picture.image, laid.image, theme.background)
         } catch {
           files.set(theme.name, warpThemeFile(theme))
           continue
@@ -153,6 +185,17 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
       if (!out.write(path, warpTheme(theme, laid))) {
         const now = new Date()
         utimesSync(path, now, now)
+      }
+
+      if (theme.other) {
+        const other = join(dir, warpPictureFile(theme.name, picture.image, theme.other.background))
+        others.add(other)
+
+        if (!existsSync(other) && !indexed(picture.image)) {
+          try {
+            layPicture(picture.image, other, theme.other.background)
+          } catch {}
+        }
       }
     }
   }
@@ -178,12 +221,8 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
       .filter((image) => image !== undefined),
   )
 
-  for (const theme of ctx.themes) {
-    const picture = theme.other && readBackdrop(pictures, theme.name, ctx.home)
-
-    if (picture && theme.other) {
-      shown.add(join(dir, warpPictureFile(theme.name, picture.image, theme.other.background)))
-    }
+  for (const other of others) {
+    shown.add(other)
   }
 
   for (const file of readdirSync(dir)) {
