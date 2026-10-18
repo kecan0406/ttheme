@@ -206,16 +206,6 @@ __tt_reloaded() {
   return 0
 }
 
-__tt_pv_leave() {
-  [[ $painted != "$orig" ]] || return 0
-  if [[ -n $orig ]] && (( ! pvbare )); then
-    __tt_apply "$orig"
-  else
-    __tt_osc_reset
-  fi
-  painted=$orig
-}
-
 __tt_bg_shown() {
   REPLY=$TTHEME_KONSOLE_NAME
   [[ -n $REPLY ]]

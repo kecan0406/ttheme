@@ -614,8 +614,8 @@ __tt_pv_bg_show() {
 }
 
 __tt_pv_bg_close() {
-  (( bgcw )) && { printf '\e_Ga=d,d=A,q=2\e\\'; __tt_bg_forget }
   (( ${+bgedit[$bgname]} )) || [[ -n $bgname && ${bgview[${bgname%:*}]} == "$bgname" ]] || __tt_warp_unview "$applied"
+  (( bgcw )) && { printf '\e_Ga=d,d=A,q=2\e\\'; __tt_pv_bg_lost }
   [[ -z $bgcut ]] || { ( zselect -t 1000; rm -rf -- $bgcut ) &!; bgcut="" }
   (( ${#TTHEME_WARP_LAID} )) || return 0
   local -a laid=($TTHEME_WARP_LAID)

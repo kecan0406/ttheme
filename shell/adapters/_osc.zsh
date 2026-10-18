@@ -65,8 +65,6 @@ __tt_pv_paint() { __tt_apply "$1" && painted=$1 }
 
 __tt_pv_claim() { : }
 
-__tt_pv_leave() { : }
-
 __tt_pv_forget() { : }
 
 __tt_shown() { return 1 }
@@ -132,6 +130,8 @@ __tt_pv_bg_strip() { : }
 __tt_pv_bg_strip_off() { : }
 
 __tt_pv_bg_close() { : }
+
+__tt_pv_bg_lost() { : }
 
 __tt_pv_bg_reset() { : }
 

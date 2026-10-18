@@ -284,7 +284,8 @@ export async function runBrowse(): Promise<number> {
   const lookups = new AbortController()
   const tty = process.stdout.isTTY === true
   const live = liveOf(process.env, tty, home)
-  const saved = live && !hub ? await live.saved() : new Map<string, string>()
+  const look = hub ? (process.env.TTHEME_HUB_LOOK ?? '') : undefined
+  const saved = live ? await live.saved(look) : new Map<string, string>()
   const startup = worn(state)
 
   if (hub) {

@@ -107,17 +107,26 @@ __tt_pv_shows() {
   return 0
 }
 
-__tt_pv_focus() {
+__tt_pv_want() {
+  REPLY=""
   if (( te )); then
     __tt_pv_shows $tename
-    (( resized )) || [[ $REPLY == "$bgname" ]] || __tt_pv_bg_show "$REPLY"
-    return 0
+  elif [[ -n $an ]]; then
+    __tt_pv_shows $an
   fi
-  [[ ${rtype[cur]} == thm ]] || return 0
-  __tt_pv_shows ${rval[cur]}
-  (( resized )) || [[ $REPLY == "$bgname" ]] || __tt_pv_bg_show "$REPLY"
-  local spec=${TTHEME_PALETTE[${rval[cur]}]}
-  [[ $spec == "$applied" ]] && return 0
+  return 0
+}
+
+__tt_pv_focus() {
+  local spec=""
+  if (( ! te )) && [[ ${rtype[cur]} == thm ]]; then
+    an=${rval[cur]} spec=${TTHEME_PALETTE[${rval[cur]}]}
+  fi
+  if (( ! resized )); then
+    __tt_pv_want
+    [[ -z $REPLY || $REPLY == "$bgname" ]] || __tt_pv_bg_show "$REPLY"
+  fi
+  [[ -n $spec && $spec != "$applied" ]] || return 0
   __tt_pv_paint "$spec"
   applied=$spec
 }
@@ -1000,7 +1009,7 @@ __tt_pv_redraw() {
   printf '\e[?2026h'
   __tt_pv_draw
   out=$(__tt_cli redraw 2>&1)
-  bgsrc=() resized=1 bgname="" bgshown="" bgdim=()
+  bgsrc=() resized=1 bgdim=()
   __tt_reload
   (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER
   msg=${${out//$'\n'/ }:-"Saved · no background pictures to draw"} msgt=300
@@ -1065,12 +1074,8 @@ __tt_pv_flush() {
   local REPLY
   print -rn -- "$out"
   if (( wiped )); then
-    local bn=$bgname
-    if [[ ${rtype[cur]} == thm ]]; then
-      __tt_pv_shows ${rval[cur]}
-      bn=$REPLY
-    fi
-    [[ -n $bn ]] && __tt_pv_bg_show "$bn" 1
+    __tt_pv_want
+    [[ -n $REPLY ]] && __tt_pv_bg_show "$REPLY"
   fi
   if [[ -n $bgstrip ]]; then
     __tt_pv_bg_strip ${=bgstrip}
@@ -1185,7 +1190,7 @@ __tt_pv_draw() {
   out=$'\e[H'
   if (( resized )); then
     out+=$'\e[K\e[2H\e[J\e[H'
-    (( bgcw )) && { __tt_bg_wipe; out+=$REPLY }
+    (( bgcw )) && { __tt_bg_wipe; out+=$REPLY; __tt_pv_bg_lost }
     resized=0 wiped=1
   fi
   [[ $1 == hint ]] && (( ! wiped )) || pvz=()
@@ -1709,19 +1714,42 @@ __tt_pv_pick() {
   return 0
 }
 
+__tt_pv_leave() {
+  printf '\e[?2026h'
+  __tt_pv_bg_close
+  __tt_pv_unpaint
+  printf '\e[?2026l'
+}
+
+__tt_pv_lost() {
+  painted=? resized=1 bgdim=()
+  __tt_pv_forget
+}
+
+__tt_pv_back() {
+  printf '\e[?2026h\e[?25l\e[?2004h%s' "$pvmouse"
+  __tt_pv_lost
+  if [[ -n $applied ]]; then
+    __tt_pv_paint "$applied"
+  else
+    __tt_osc_reset
+    painted=""
+  fi
+  __tt_pv_size
+}
+
 __tt_pv_screen() {
   local err
   local -i at=${TTHEME_HUB_TABS[(Ie)preview]} n=${#TTHEME_HUB_TABS} rc
   local -i to=$(( (at - 1 + $1 + n) % n + 1 ))
-  __tt_pv_bg_close
   __tt_pv_leave
   while (( to != at )); do
     hubwas="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
-    err=$(TTHEME_HUB=${TTHEME_HUB_TABS[to]} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)
+    err=$(TTHEME_HUB=${TTHEME_HUB_TABS[to]} TTHEME_HUB_LOOK=${TTHEME_PAINTED:+$orig} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)
     rc=$?
     if (( rc == TTHEME_HUB_CLOSED )); then
-      hubleft=1 painted=?
-      __tt_pv_forget
+      hubleft=1
+      __tt_pv_lost
       return 1
     elif (( rc > TTHEME_HUB_SWITCH && rc <= TTHEME_HUB_SWITCH + n )); then
       to=$(( rc - TTHEME_HUB_SWITCH ))
@@ -1731,16 +1759,7 @@ __tt_pv_screen() {
       to=$at
     fi
   done
-  printf '\e[?2026h\e[?25l\e[?2004h%s' "$pvmouse"
-  __tt_pv_forget
-  if [[ -n $applied ]]; then
-    __tt_pv_paint "$applied"
-  else
-    __tt_osc_reset
-    painted=""
-  fi
-  __tt_pv_size
-  resized=1 bgname="" bgshown="" bgdim=()
+  __tt_pv_back
   return 0
 }
 
@@ -1793,8 +1812,7 @@ __tt_te_open() {
 
 __tt_te_close() {
   [[ -n $tune ]] && __tt_pv_untune
-  te=0 tfocus=0 tename="" teframe=() tetop=0 tbtn=0 tearm=0 help=0 pick=""
-  resized=1 bgname=""
+  te=0 tfocus=0 tename="" teframe=() tetop=0 tbtn=0 tearm=0 help=0 pick="" resized=1
   return 0
 }
 
@@ -1878,24 +1896,19 @@ __tt_te_edit() {
   local -i rc
   __tt_te_save_image
   __tt_pv_untune
-  __tt_pv_unpaint
-  painted=$orig applied=$orig
-  __tt_pv_bg_close
+  __tt_pv_leave
   __tt_bg_hide $name
   err=$(__tt_cli tone $name edit 2>&1 >/dev/tty)
   rc=$?
-  printf '\e[?2004h%s' "$pvmouse"
-  __tt_pv_size
   err=${${err//$'\n'/ }## #}
-  resized=1 bgname="" bgshown="" bgdim=()
   if (( rc == 0 )); then
     __tt_palettes_load && __tt_reloaded
     __tt_te_follow "$was"
     __tt_reload
     back=${TTHEME_PALETTE[$name]:-$back}
   fi
-  __tt_pv_paint "$back"
   applied=$back
+  __tt_pv_back
   if (( rc == 0 )); then
     __tt_pv_bg_reset $name
     bgload[$name]=""
@@ -1917,7 +1930,7 @@ __tt_te_reset() {
   err=$(__tt_cli tone $name reset 2>&1 >/dev/null)
   rc=$?
   err=${${err//$'\n'/ }## #}
-  tbtn=0 tearm=0 resized=1 bgname="" bgshown="" bgdim=()
+  tbtn=0 tearm=0 resized=1 bgdim=()
   if (( rc == 0 )); then
     __tt_palettes_load && __tt_reloaded
     __tt_te_follow "$was"
@@ -2515,7 +2528,6 @@ __tt_preview() {
         __tt_pv_draw hint
       else
         __tt_pv_focus
-        [[ ${rtype[cur]} == thm ]] && an=${rval[cur]}
         __tt_pv_draw
       fi
       tick=0 mlwheel=0

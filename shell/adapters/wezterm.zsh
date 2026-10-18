@@ -48,7 +48,6 @@ __tt_pv_bg_show() {
   local -i W=$(( pw * bgcw )) H=$(( ph * bgch )) focus=-1
   local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh
   (( ${#p} >= 20 )) || return 0
-  (( $2 )) && TTHEME_WEZTERM_VIEW=-
   bgname=$name
   __tt_bg_load $name
   if [[ $name != "$bginc" || "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" != "${bgload[$name]}" ]]; then
@@ -73,9 +72,14 @@ __tt_pv_bg_show() {
   __tt_wezterm_var ttheme_view "$view"
 }
 
+__tt_pv_bg_lost() {
+  __tt_bg_forget
+  bgname="" bgshown="" bganchor=0 TTHEME_WEZTERM_VIEW=-
+}
+
 __tt_pv_bg_close() {
-  (( bgcw )) && { printf '\e_Ga=d,d=A,q=2\e\\'; __tt_bg_forget }
-  [[ -n $TTHEME_WEZTERM_VIEW ]] || return 0
+  local view=$TTHEME_WEZTERM_VIEW
+  (( bgcw )) && { printf '\e_Ga=d,d=A,q=2\e\\'; __tt_pv_bg_lost }
   TTHEME_WEZTERM_VIEW=""
-  __tt_wezterm_var ttheme_view ""
+  [[ -z $view ]] || __tt_wezterm_var ttheme_view ""
 }

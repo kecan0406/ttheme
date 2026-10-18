@@ -157,16 +157,6 @@ __tt_cli_env() {
   [[ -n $TTHEME_TERMINAL_SHOWN ]] && pass+=(TTHEME_TERMINAL_SHOWN=$TTHEME_TERMINAL_SHOWN TTHEME_TTY=$TTY)
 }
 
-__tt_pv_leave() {
-  [[ $painted != "$orig" ]] || return 0
-  if [[ -n $orig ]] && (( ! pvbare )); then
-    __tt_apply "$orig"
-  else
-    __tt_osc_reset
-  fi
-  painted=$orig
-}
-
 __tt_pv_forget() {
   TTHEME_TERMINAL_SHOWN=""
   __tt_out $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'
@@ -274,7 +264,7 @@ __tt_pv_bg_close() {
   (( TTHEME_TERMINAL_RFD )) && exec {TTHEME_TERMINAL_RFD}<&-
   (( TTHEME_TERMINAL_PID )) && { kill $TTHEME_TERMINAL_PID 2>/dev/null; wait $TTHEME_TERMINAL_PID 2>/dev/null }
   TTHEME_TERMINAL_WFD=0 TTHEME_TERMINAL_RFD=0 TTHEME_TERMINAL_PID=0
-  return 0
+  __tt_pv_bg_lost
 }
 
 () {

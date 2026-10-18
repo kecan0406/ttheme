@@ -267,7 +267,6 @@ __tt_pv_bg_show() {
   local -a p=(${=TTHEME_PALETTE[${name%:*}]}) wh at
   local -i cols=$(( pw + 2 * bgmx )) rows=$(( ph + 2 * bgmy ))
   (( ${#p} >= 20 )) || return 0
-  (( $2 )) && { __tt_bg_forget; bgshown="" bganchor=0 }
   bgname=$name
   __tt_bg_load $name
   if (( ! bgrel )) && [[ $name == "$bginc" && "${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]}" == "${bgload[$name]}" ]]; then
@@ -344,6 +343,11 @@ __tt_bg_forget() {
     printf '\e_Ga=d,d=I,i=%d,q=2\e\\' $id
   done
   bgsent=() bgcost=() bgorder=() bgbytes=0 bgthumb=()
+}
+
+__tt_pv_bg_lost() {
+  __tt_bg_forget
+  bgname="" bgshown="" bganchor=0
 }
 
 __tt_pv_bg_fs() {
@@ -464,14 +468,12 @@ __tt_pv_bg_find() {
   __tt_bg_hide $name
   err=$(__tt_cli find $name 2>&1 >/dev/tty)
   rc=$?
-  printf '\e[?2004h%s' "$pvmouse"
-  __tt_pv_size
+  __tt_pv_back
   for var in ${(k)parameters[(I)TTHEME_FIND_*]}; do
     [[ ${parameters[$var]} == *export* ]] || unset $var
   done
   [[ -r $TTHEME_CONFIG ]] && source $TTHEME_CONFIG
   err=${${err//$'\n'/ }## #}
-  resized=1 bgname="" bgshown="" bgdim=()
   if (( rc == 1 )); then
     msg=${err:-"Find failed for $name"} msgt=300
   fi
@@ -566,7 +568,7 @@ __tt_pv_bg_drop() {
   err=$(__tt_cli image $name drop ${key:+$key} 2>&1)
   rc=$?
   err=${${err//$'\n'/ }## #}
-  resized=1 bgname="" bgshown="" bgdim=()
+  resized=1 bgdim=()
   __tt_pv_bg_reset $name
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
@@ -592,7 +594,7 @@ __tt_pv_bg_recolor() {
   err=$(__tt_cli image $name $want $key 2>&1)
   rc=$?
   err=${${err//$'\n'/ }## #}
-  resized=1 bgname="" bgshown="" bgdim=()
+  resized=1 bgdim=()
   __tt_pv_bg_reset $name
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
@@ -770,7 +772,7 @@ __tt_pv_bg_strip_off() {
 }
 
 __tt_pv_bg_close() {
-  (( bgcw )) && { printf '\e_Ga=d,d=A,q=2\e\\'; __tt_bg_forget }
+  (( bgcw )) && { printf '\e_Ga=d,d=A,q=2\e\\'; __tt_pv_bg_lost }
   [[ -z $bgcut ]] || { rm -rf -- $bgcut; bgcut="" }
 }
 

@@ -8,7 +8,7 @@ import { owned } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { type SchemeColors, schemeLines } from './emit/konsole.ts'
-import { colorless, paletteOsc, queryTerminalColors, restoreOsc, SLOT_CODES, schemeOsc } from './osc.ts'
+import { colorless, paletteOsc, queryTerminalColors, restoreOsc, SLOT_CODES, schemeOsc, specColors } from './osc.ts'
 
 type Env = Record<string, string | undefined>
 
@@ -248,7 +248,7 @@ export interface Live {
   slots: readonly number[]
   paint(entry: PaletteEntry): string
   wear(entry: PaletteEntry, wired: readonly string[]): string | undefined
-  saved(): Promise<Map<string, string>>
+  saved(look?: string): Promise<Map<string, string>>
   restore(saved: ReadonlyMap<string, string>): string
   stop?(): void
 }
@@ -304,7 +304,7 @@ function itermLive(env: Env, write: (text: string) => void): Live {
       return paletteOsc(entry, slots)
     },
     wear: (entry) => paletteOsc(entry),
-    saved: () => queryTerminalColors(),
+    saved: async (look) => (look === undefined ? queryTerminalColors() : specColors(look)),
     restore(saved) {
       stop()
       const codes = SLOT_CODES.filter((_, slot) => sent.has(slot))
@@ -424,7 +424,7 @@ export function livePaint(
         : wired.includes(terminal)
           ? schemeOsc(owned(entry.name), entry.cursor)
           : undefined,
-    saved: () => queryTerminalColors(codes),
+    saved: async (look) => (look === undefined ? queryTerminalColors(codes) : specColors(look)),
     restore: (saved) => restoreOsc(saved, codes, traits.hex === true),
   }
 }

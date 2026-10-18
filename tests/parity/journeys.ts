@@ -628,6 +628,29 @@ export const JOURNEYS: Journey[] = [
     },
   },
   {
+    id: 'hub-back',
+    about:
+      'the bare ttheme hands Browse the tab’s own palette whatever Preview shows, and Preview takes back the palette it showed, its picture with it, even when the switch left from a catalog row',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use kita')
+      await p.launch(a, 'ttheme', 'Browse')
+      await p.keys(a, 'k', 'o', 'n', 'up')
+      await p.look('catalog', { want: 'konata', wears: false })
+      await p.keys(a, 'tab')
+      await p.expect(a, 'GitHub')
+      await p.look('browse', { want: 'kita', wears: false })
+      await p.keys(a, 'tab')
+      await p.look('back', { want: 'konata', wears: false })
+      await p.keys(a, 'down')
+      await p.look('row', { want: 'konata', wears: false })
+      await p.keys(a, 'bs', 'bs', 'bs', 'r', 'e', 'i')
+      await p.look('moved', { want: 'rei', wears: false })
+      await p.quit(a)
+      await p.look('closed', { want: 'kita' })
+    },
+  },
+  {
     id: 'browse-back',
     about:
       'a palette hovered in the bare ttheme’s Browse tab leaves the tab once Preview takes the screen back, so a tab that never painted still follows the default after esc',

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import type { PaletteEntry } from '../core/manifest.ts'
-import { answered, colorQuery, paletteOsc, parseOscColors, restoreOsc } from './osc.ts'
+import { answered, colorQuery, paletteOsc, parseOscColors, restoreOsc, specColors } from './osc.ts'
 
 const miku: PaletteEntry = {
   name: 'miku',
@@ -59,6 +59,17 @@ test('the color query ends at a DSR, so a terminal that leaves OSC 17 unanswered
   assert.equal(answered(ghostty), false)
   assert.equal(answered(`${ghostty}\x1b[0n`), true)
   assert.equal(parseOscColors(`${ghostty}\x1b[0n`).size, 19)
+})
+
+test('the look the hub hands Browse restores as its colors, and an empty one as resets', () => {
+  const spec = ['-', miku.foreground, miku.cursor, miku.selection, ...miku.ansi].join(' ')
+  const codes = ['11', '10', '4;3']
+
+  assert.equal(
+    restoreOsc(specColors(spec), codes),
+    '\x1b]111\x1b\\\x1b]10;rgb:e0/f4/f2\x1b\\\x1b]4;3;rgb:00/00/03\x1b\\',
+  )
+  assert.equal(restoreOsc(specColors(''), codes), '\x1b]111\x1b\\\x1b]110\x1b\\\x1b]104;3\x1b\\')
 })
 
 test('a restore round-trips through the parser', () => {

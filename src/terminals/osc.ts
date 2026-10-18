@@ -37,6 +37,21 @@ export function parseOscColors(text: string): Map<string, string> {
   return colors
 }
 
+export function specColors(spec: string): Map<string, string> {
+  const colors = new Map<string, string>()
+  const hexes = spec.split(' ')
+
+  for (const [slot, code] of SLOT_CODES.entries()) {
+    const hex = hexes[slot] ?? ''
+
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+      colors.set(code, `rgb:${hex.slice(1, 3)}/${hex.slice(3, 5)}/${hex.slice(5, 7)}`)
+    }
+  }
+
+  return colors
+}
+
 function hexOf(value: string): string {
   const parts = value
     .slice(value.indexOf(':') + 1)
