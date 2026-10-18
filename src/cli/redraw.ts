@@ -16,7 +16,7 @@ import {
   undrawn,
 } from '../pictures/backdrop.ts'
 import { MATTING } from '../pictures/cutout.ts'
-import { prune } from '../pictures/drawn.ts'
+import { prune, writable } from '../pictures/drawn.ts'
 import { prepareOne, redrawOne } from '../pictures/redrawing.ts'
 import { Pool } from '../pictures/render.ts'
 import { available, readAvailable } from '../store/available.ts'
@@ -61,6 +61,7 @@ export async function redrawPictures(
   const hits: Job[] = []
   const misses: Job[] = []
   const primes: Job[] = []
+  const keeping = writable()
 
   for (const [name, rack] of Object.entries(store.palettes)) {
     const entry = entries.get(name)
@@ -86,7 +87,7 @@ export async function redrawPictures(
         into.push({ name, key: picture.key, paint })
       }
 
-      if (!flips && !undrawn(picture) && coloringOf(picture) === 'tone' && decodable(home, picture)) {
+      if (keeping && !flips && !undrawn(picture) && coloringOf(picture) === 'tone' && decodable(home, picture)) {
         other ??= paintFor(inMode(entry, otherOf(modeOf(entry))))
 
         if (!cached(home, name, picture, other, blurring, 'tone')) {

@@ -682,7 +682,6 @@ TTHEME_STARTUP=
   __tt_cli() { print -r -- "$*" >> $ran; return ${failing:-0} }
   __tt_reload() { : }
   __tt_wake() { : }
-  __tt_redraw() { : }
   ( zsystem flock -t 0 $TTHEME_STATE_DIR/mode.lock; sleep 1.5 ) &
   sleep 0.4
   __tt_remode
@@ -1520,7 +1519,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   print -r -- "$TTHEME_CONFIG_TEMPLATE" >| $TTHEME_CONFIG
   __tt_cli() { print -r -- "$*" >> $calls }
   __tt_reload() { : }
-  __tt_redraw() { : }
+  __tt_bg_refresh() { print -r -- refresh >> $calls }
   TTHEME_MODE_SETTINGS=(dark light)
   out=$(ttheme dark 2>&1) && [[ $out == *"already worn in its dark mode"* && ! -e $calls ]] ||
     { print -u2 "ttheme dark ran a sync with nothing to change: $out"; exit 1 }
@@ -1542,6 +1541,27 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
     print -u2 "ttheme auto took an argument"
     exit 1
   fi
+) || exit 1
+(
+  mkdir -p $XDG_CONFIG_HOME/resync/backgrounds
+  TTHEME_CONFIG=$XDG_CONFIG_HOME/resync/config.zsh calls=$XDG_CONFIG_HOME/resync/calls
+  store=${TTHEME_CONFIG:h}/backgrounds/images.json
+  TTHEME_ORDER=(miku)
+  __tt_reload() { print -r -- reload >> $calls }
+  __tt_bg_refresh() { print -r -- "refresh $*" >> $calls }
+  __tt_cli() { print -r -- "$*" >> $calls; [[ -z $moves ]] || print -r -- $RANDOM >| $store }
+  __tt_resync || { print -u2 "a sync that moved no picture failed"; exit 1 }
+  [[ "$(<$calls)" == $'sync\nreload' ]] ||
+    { print -u2 "a sync that moved no picture asked the terminal to refresh its pictures: $(<$calls)"; exit 1 }
+  rm -f $calls
+  moves=1
+  __tt_resync || { print -u2 "a sync that moved the pictures failed"; exit 1 }
+  [[ "$(<$calls)" == $'sync\nreload\nrefresh miku' ]] ||
+    { print -u2 "a sync that moved the pictures did not refresh the terminal's pictures once: $(<$calls)"; exit 1 }
+  rm -f $calls
+  __tt_cli() { print -r -- "$*" >> $calls; return 1 }
+  __tt_resync && { print -u2 "a failed sync was taken for a switch"; exit 1 }
+  [[ "$(<$calls)" == sync ]] || { print -u2 "a failed sync still reloaded or refreshed: $(<$calls)"; exit 1 }
 ) || exit 1
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh

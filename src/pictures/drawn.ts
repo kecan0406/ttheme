@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs'
+import { accessSync, constants, existsSync, mkdirSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Hex } from '../core/color.ts'
 import { listing, writeAtomic } from '../store/edits.ts'
@@ -36,6 +36,17 @@ function dir(): string {
 
 export function keyOf(parts: (string | number)[]): string {
   return createHash('sha1').update(JSON.stringify(parts)).digest('hex')
+}
+
+export function writable(): boolean {
+  try {
+    mkdirSync(dir(), { recursive: true })
+    accessSync(dir(), constants.W_OK)
+
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function known(key: string): boolean {
