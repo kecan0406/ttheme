@@ -80,6 +80,27 @@ export const VERB_SPECS: VerbSpec[] = [
     shell: true,
   },
   {
+    name: 'dark',
+    args: [],
+    about: 'Wear every palette in its dark mode — every open tab repaints, and new tabs open in it',
+    section: 'startup',
+    shell: true,
+  },
+  {
+    name: 'light',
+    args: [],
+    about: 'Wear every palette in its light mode — every open tab repaints, and new tabs open in it',
+    section: 'startup',
+    shell: true,
+  },
+  {
+    name: 'auto',
+    args: [],
+    about: "Wear every palette in the mode the system is in — where a wired terminal reports it, which is Ghostty's",
+    section: 'startup',
+    shell: true,
+  },
+  {
     name: 'browse',
     args: [],
     about:
@@ -256,7 +277,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'sync',
     args: [],
     about:
-      "Write every wired terminal's config again from what is installed and config.zsh — ttheme config and preview call this when TTHEME_TAB_PALETTE or TTHEME_MODE changed",
+      "Write every wired terminal's config again from what is installed and config.zsh — ttheme config, ttheme dark, light and auto, and preview call this when TTHEME_TAB_PALETTE or TTHEME_MODE changed",
     section: 'setup',
     hidden: true,
   },

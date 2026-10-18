@@ -1515,6 +1515,35 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
     { print -u2 "saving a setting replaced a linked config.zsh, or never reached it"; exit 1 }
 ) || exit 1
 (
+  mkdir -p $XDG_CONFIG_HOME/moded
+  TTHEME_CONFIG=$XDG_CONFIG_HOME/moded/config.zsh calls=$XDG_CONFIG_HOME/moded/calls
+  print -r -- "$TTHEME_CONFIG_TEMPLATE" >| $TTHEME_CONFIG
+  __tt_cli() { print -r -- "$*" >> $calls }
+  __tt_reload() { : }
+  __tt_redraw() { : }
+  TTHEME_MODE_SETTINGS=(dark light)
+  out=$(ttheme dark 2>&1) && [[ $out == *"already worn in its dark mode"* && ! -e $calls ]] ||
+    { print -u2 "ttheme dark ran a sync with nothing to change: $out"; exit 1 }
+  ttheme light > /dev/null || { print -u2 "ttheme light failed"; exit 1 }
+  [[ "$(<$TTHEME_CONFIG)" == *$'\n'': ${TTHEME_MODE:=light}'* && "$(<$calls)" == sync ]] ||
+    { print -u2 "ttheme light did not write the setting once and sync"; exit 1 }
+  out=$(ttheme light 2>&1) && [[ $out == *"already worn in its light mode"* && "$(<$calls)" == sync ]] ||
+    { print -u2 "ttheme light synced again with nothing to change: $out"; exit 1 }
+  ttheme dark > /dev/null || { print -u2 "ttheme dark failed"; exit 1 }
+  [[ "$(<$TTHEME_CONFIG)" != *$'\n'': ${TTHEME_MODE:=light}'* && "$(<$TTHEME_CONFIG)" == *'# : ${TTHEME_MODE:=dark}'* ]] ||
+    { print -u2 "ttheme dark left the light line in config.zsh"; exit 1 }
+  out=$(ttheme auto 2>&1) && { print -u2 "ttheme auto took where no terminal reports the appearance"; exit 1 }
+  [[ $out == *"auto needs a wired terminal"* && "$(<$TTHEME_CONFIG)" != *$'\n'': ${TTHEME_MODE:=auto}'* ]] ||
+    { print -u2 "ttheme auto's refusal broke: $out"; exit 1 }
+  TTHEME_MODE_SETTINGS=(dark light auto)
+  ttheme auto > /dev/null && [[ "$(<$TTHEME_CONFIG)" == *$'\n'': ${TTHEME_MODE:=auto}'* ]] ||
+    { print -u2 "ttheme auto did not write the setting where a terminal reports the appearance"; exit 1 }
+  if ttheme auto extra 2>/dev/null; then
+    print -u2 "ttheme auto took an argument"
+    exit 1
+  fi
+) || exit 1
+(
   source $XDG_CONFIG_HOME/ttheme/adapters/ghostty.zsh
   TTHEME_TERMINALS=(ghostty) TTHEME_STARTUP=miku TTHEME_TMUX=0 TERM_PROGRAM_VERSION=1.3.2
   reloads=0 asks=$XDG_CONFIG_HOME/asks

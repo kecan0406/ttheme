@@ -358,7 +358,7 @@ async function askMode(configHome: string, terminals: readonly Wired[]): Promise
   return accepted(
     await p.select<Setting>({
       message:
-        'Wear the palettes dark or light?\nEvery palette comes in both — `ttheme config` or alt-c in `ttheme` switches it later',
+        'Wear the palettes dark or light?\nEvery palette comes in both — `ttheme dark`, `ttheme light` or alt-c in `ttheme` switches it later',
       options: offered.map((value) => ({ value, label: value, hint: hints[value] })),
       initialValue: offered.includes(was) ? was : 'dark',
     }),

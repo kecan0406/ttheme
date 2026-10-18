@@ -17,8 +17,8 @@ bash or fish — see [Shells](#shells).
 2. **Dark or light** — the mode every palette is worn in (`TTHEME_MODE`, `dark`
    preselected), or with Ghostty among the terminals `auto`, which follows the
    system's appearance as Ghostty shows it. Every palette comes in both, and the
-   catalogs that follow are shown in the one you pick; `ttheme config` or alt-c in
-   `ttheme` switches it later.
+   catalogs that follow are shown in the one you pick; `ttheme dark`, `ttheme light`,
+   `ttheme auto` or alt-c in `ttheme` switches it later.
 3. **Which catalogs to install** — `space` marks one, `Select all` takes the lot,
    enter moves on.
 4. **Whether to wear them** — with one palette picked, `Wear <palette> in every

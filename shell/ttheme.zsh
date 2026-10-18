@@ -1668,6 +1668,26 @@ __tt_config() {
   print -r -- "Settings apply in new tabs — $TTHEME_CONFIG"
 }
 
+__tt_mode() {
+  local want=$1
+  local -a lines=()
+  if (( ! ${TTHEME_MODE_SETTINGS[(Ie)$want]} )); then
+    print -u2 -r -- "ttheme: $want needs a wired terminal that reports the system's appearance, which only Ghostty does — here: ${(j: · :)TTHEME_MODE_SETTINGS}"
+    return 1
+  fi
+  [[ -r $TTHEME_CONFIG ]] && lines=("${(@f)$(<$TTHEME_CONFIG)}")
+  if [[ -n ${(M)lines:#": \${TTHEME_MODE:=$want}"} ]] || [[ $want == dark && -z ${(M)lines:#': ${TTHEME_MODE:='*} ]]; then
+    print -r -- "Every palette is already worn in its $want mode"
+    return 0
+  fi
+  __tt_config_write TTHEME_MODE $want || { print -u2 -r -- "ttheme: could not write $TTHEME_CONFIG"; return 1 }
+  TTHEME_MODE=$want
+  __tt_cli sync > /dev/null || return 1
+  __tt_reload
+  __tt_redraw
+  print -r -- "Open tabs take the $want mode, and so do new ones — $TTHEME_CONFIG"
+}
+
 __tt_redraw() {
   local out
   out=$(__tt_cli redraw 2>&1) || { [[ -n $out ]] && print -ru2 -- "$out"; return 1 }
@@ -1887,6 +1907,7 @@ __tt_verb() {
   esac
   __tt_arity "$@" || return
   [[ $1 == config ]] && { __tt_config; return }
+  [[ $1 == (dark|light|auto) ]] && { __tt_mode $1; return }
   (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
 
   local REPLY
