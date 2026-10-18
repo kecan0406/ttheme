@@ -144,6 +144,7 @@ export function TerminalTabs({ tabs, active }: { tabs: Tab[]; active: number }) 
 export function TerminalWindow({ tabs, active }: { tabs: Tab[]; active: number }) {
   return (
     <TerminalFrame
+      mode
       raised
       class="w-full"
       tabs={

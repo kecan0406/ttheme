@@ -465,12 +465,23 @@ export function MarketplaceWorkspace({
               aria-label="preview"
               data-palette-preview
               style={wearStyle(theme)}
+              mode
               raised
               class="group/preview flex min-h-96 flex-col app:min-h-0 app:flex-1"
               tabs={
-                <ToggleGroup variant="tab" label="view">
+                <ToggleGroup
+                  variant="tab"
+                  label="view"
+                  class="max-[560px]:overflow-x-auto max-[560px]:[scrollbar-width:none]"
+                >
                   {VIEWS.map((view) => (
-                    <ToggleGroupItem variant="tab" name="scene" value={view} checked={view === 'all'}>
+                    <ToggleGroupItem
+                      variant="tab"
+                      name="scene"
+                      value={view}
+                      checked={view === 'all'}
+                      class="max-[560px]:flex-none"
+                    >
                       <span data-mark aria-hidden="true">
                         ❯
                       </span>

@@ -141,6 +141,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
           <div class="grid grid-cols-[minmax(0,1fr)] gap-4">
             <TerminalFrame
               data-lead-window
+              mode
               raised
               heading={
                 <span data-lead-title aria-hidden="true" translate="no" class={WINDOW_TITLE}>

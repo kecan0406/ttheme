@@ -781,6 +781,11 @@ route-progress[data-state='done'],
     text-underline-offset: 4px;
   }
 
+  [data-slot='window-mode'] [aria-pressed='true'] {
+    background: Highlight;
+    color: HighlightText;
+  }
+
   [data-glide]::before,
   [data-lead-progress] {
     background: Highlight !important;

@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from '@kitajs/html'
 import { cn } from '@/lib/utils'
+import { WindowMode } from './window-mode'
 
 const LIGHTS = ['--a1', '--a3', '--a2']
 
@@ -20,6 +21,7 @@ export function TerminalFrame({
   heading,
   tabs,
   controls,
+  mode = false,
   raised = false,
   class: className,
   children,
@@ -30,6 +32,7 @@ export function TerminalFrame({
     heading?: JSX.Element
     tabs?: JSX.Element
     controls?: JSX.Element
+    mode?: boolean
     raised?: boolean
     class?: string
   }
@@ -48,6 +51,7 @@ export function TerminalFrame({
         <div class="flex h-10 flex-none items-center gap-3 pr-1.5 pl-3.5">
           <Lights class="flex-none" />
           {tabs}
+          {mode ? <WindowMode /> : null}
         </div>
       ) : (
         <div class="relative flex flex-none items-center gap-2 py-1 pr-1 pl-3.5">
@@ -60,6 +64,7 @@ export function TerminalFrame({
             </span>
           )}
           {controls ? controls : null}
+          {mode ? <WindowMode /> : null}
         </div>
       )}
       {children}
