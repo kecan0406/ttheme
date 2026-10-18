@@ -13,6 +13,13 @@ const OUTPUT = join(SITE, '.vercel', 'output')
 
 export const IMMUTABLE = 'public, max-age=31536000, s-maxage=31536000, immutable'
 
+export const SECURITY_HEADERS = {
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+  'x-frame-options': 'DENY',
+}
+
 const HTML = 'text/html; charset=utf-8'
 
 const SNAPSHOT = join(SITE, 'marketplaces.json')
@@ -251,6 +258,7 @@ async function output(): Promise<void> {
     JSON.stringify({
       version: 3,
       routes: [
+        { src: '/(.*)', headers: SECURITY_HEADERS, continue: true },
         { src: '/assets/(.*)', headers: { 'cache-control': IMMUTABLE }, continue: true },
         { handle: 'filesystem' },
         { src: '/(.*)', dest: '/render' },
