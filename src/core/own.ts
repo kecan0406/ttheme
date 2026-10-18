@@ -23,7 +23,7 @@ import {
 } from './theme.ts'
 
 const CODE = 'tt4:'
-export const SHARE_URL = 'https://ttheme.vercel.app/p/'
+export const SHARE_URL = 'https://ttheme.dev/p/'
 const SUM = 4
 const UNPACKED = 64 * 1024
 

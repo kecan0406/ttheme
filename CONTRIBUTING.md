@@ -65,7 +65,7 @@ where its ANSI colors came from, and `meta.from` the palette it was copied from
 `ttheme share` writes when it copies one in and Browse and the site show. Give the
 repository the `ttheme-marketplace` topic — `ttheme share` does for a public one —
 and Browse's search and the
-[marketplace page](https://ttheme.vercel.app/marketplace) find it.
+[marketplace page](https://ttheme.dev/marketplace) find it.
 
 Open a pull request here when a palette belongs in the official marketplace: it
 then has to pass the contrast gate and everything below.

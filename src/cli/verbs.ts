@@ -90,8 +90,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'add',
     args: ['<palette...>'],
-    about:
-      'Install palettes — from your marketplaces, or from a share link: ttheme add https://ttheme.vercel.app/p/tt4:…',
+    about: 'Install palettes — from your marketplaces, or from a share link: ttheme add https://ttheme.dev/p/tt4:…',
     section: 'palettes',
   },
   {
@@ -378,6 +377,6 @@ export function helpText(all: boolean, shell = false): string {
     ]),
     ...(all ? ['', 'Examples:', ...columns(EXAMPLES, Math.max(...EXAMPLES.map(([left]) => left.length)))] : []),
     '',
-    'https://ttheme.vercel.app',
+    'https://ttheme.dev',
   ].join('\n')
 }

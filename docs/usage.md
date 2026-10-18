@@ -609,7 +609,7 @@ ttheme edit rei                  # the same editor; the bare name works for your
 ttheme edit miku                 # an official palette: your changes kept as its tone, R then s puts it back
 ttheme edit                      # asks to edit the palette this tab wears (check and share ask the same)
 ttheme check --fix rei           # colors that pass the gate, written in — as a tone, for a palette not yours
-ttheme share rei                 # https://ttheme.vercel.app/p/tt4:… and its QR code
+ttheme share rei                 # https://ttheme.dev/p/tt4:… and its QR code
 ttheme share rei --tone original # the palette as it was, when you tuned it in palette edit
 ```
 

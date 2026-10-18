@@ -5,12 +5,12 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@kecan0406/ttheme"><img src="https://img.shields.io/npm/v/@kecan0406/ttheme?style=flat-square" alt="npm version"></a>
   <a href="https://github.com/kecan0406/ttheme/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/kecan0406/ttheme/ci.yml?branch=main&style=flat-square&label=ci" alt="CI status"></a>
-  <a href="https://ttheme.vercel.app/"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fkecan0406.github.io%2Fttheme%2Fmanifest.json&query=%24.palettes.length&label=palettes&style=flat-square&color=c796c8" alt="official palettes"></a>
+  <a href="https://ttheme.dev/"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fkecan0406.github.io%2Fttheme%2Fmanifest.json&query=%24.palettes.length&label=palettes&style=flat-square&color=c796c8" alt="official palettes"></a>
   <a href="LICENSE"><img src="https://img.shields.io/npm/l/@kecan0406/ttheme?style=flat-square" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <a href="https://ttheme.vercel.app/">Site</a> ·
+  <a href="https://ttheme.dev/">Site</a> ·
   <a href="#palettes">Palettes</a> ·
   <a href="docs/usage.md">Usage</a> ·
   <a href="docs/terminals.md">Terminals</a> ·
@@ -76,7 +76,7 @@ a checkout are in [docs/install.md](docs/install.md).
 ## Palettes
 
 <p align="center">
-  <a href="https://ttheme.vercel.app/"><img src="https://kecan0406.github.io/ttheme/readme/catalogs.svg" alt="One card per catalog, drawn in its lead palette" width="856"></a>
+  <a href="https://ttheme.dev/"><img src="https://kecan0406.github.io/ttheme/readme/catalogs.svg" alt="One card per catalog, drawn in its lead palette" width="856"></a>
 </p>
 
 <details>
@@ -131,7 +131,7 @@ numbers are shown for them but never enforced — only the official marketplace 
 held to the gate. `ttheme update` updates ttheme and refreshes every marketplace now; `ttheme marketplace
 remove alice@pastel` drops one, and the palettes you installed from it keep
 working. The official palettes are a marketplace too (`official`). [The marketplaces
-page](https://ttheme.vercel.app/marketplace) lists the public ones.
+page](https://ttheme.dev/marketplace) lists the public ones.
 
 ### Your own palettes
 
@@ -157,7 +157,7 @@ files as pushed. `ttheme marketplace init <name>` makes one.
 when it fits the window, its QR code:
 
 - **A link** (the palette the tab wears is picked to start with) —
-  `https://ttheme.vercel.app/p/tt4:…` — carries the colors, in both modes where a palette keeps both, and the numbers of their background posts with
+  `https://ttheme.dev/p/tt4:…` — carries the colors, in both modes where a palette keeps both, and the numbers of their background posts with
   their framing, so nothing is uploaded: the page it opens draws each palette in
   a terminal, lists the posts, and gives the `ttheme add` command, and its preview
   image for chat apps is drawn in the palettes' colors. `ttheme add <link>` (or
