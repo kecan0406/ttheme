@@ -2,22 +2,18 @@ import { settingOf } from '@/lib/mode'
 import { setting } from './mode'
 import { choosing } from './wear'
 
-const root = document.documentElement
-
 class ModeSwitch extends HTMLElement {
   connectedCallback() {
     this.#sync()
     this.addEventListener('change', this.#change)
     window.addEventListener('pageshow', this.#sync)
     window.addEventListener('storage', this.#sync)
-    this.#watch.observe(root, { attributes: true, attributeFilter: ['data-setting'] })
   }
 
   disconnectedCallback() {
     this.removeEventListener('change', this.#change)
     window.removeEventListener('pageshow', this.#sync)
     window.removeEventListener('storage', this.#sync)
-    this.#watch.disconnect()
   }
 
   #sync = () => {
@@ -26,8 +22,6 @@ class ModeSwitch extends HTMLElement {
     for (const radio of this.querySelectorAll<HTMLInputElement>('input[type="radio"]'))
       radio.checked = radio.value === now
   }
-
-  #watch = new MutationObserver(this.#sync)
 
   #change = (event: Event) => {
     const radio = event.target
@@ -39,15 +33,33 @@ class ModeSwitch extends HTMLElement {
 
 customElements.define('mode-switch', ModeSwitch)
 
+const root = document.documentElement
+
+function shown(scope: HTMLElement | null | undefined): string | undefined {
+  return scope?.dataset.windowMode ?? root.dataset.mode
+}
+
 function pressed() {
   for (const cell of document.querySelectorAll<HTMLElement>('[data-mode-to]'))
-    cell.setAttribute('aria-pressed', String(cell.dataset.modeTo === root.dataset.mode))
+    cell.setAttribute(
+      'aria-pressed',
+      String(cell.dataset.modeTo === shown(cell.closest<HTMLElement>('[data-mode-scope]'))),
+    )
 }
 
 document.addEventListener('click', (event) => {
-  const cell = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-mode-to]') : null
+  const button =
+    event.target instanceof Element ? event.target.closest<HTMLElement>('[data-mode-to], [data-mode-reset]') : null
 
-  if (cell) choosing(settingOf(cell.dataset.modeTo ?? null))
+  const scope = button?.closest<HTMLElement>('[data-mode-scope]')
+
+  if (!button || !scope) return
+  const next = button.dataset.modeTo
+
+  if (next === undefined) delete scope.dataset.windowMode
+  else if (next !== shown(scope)) scope.dataset.windowMode = next
+
+  pressed()
 })
 
 new MutationObserver(pressed).observe(root, { attributes: true, attributeFilter: ['data-mode'] })

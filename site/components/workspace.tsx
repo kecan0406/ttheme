@@ -433,7 +433,7 @@ export function MarketplaceWorkspace({
           </search>
           <Tree palettes={palettes} current={theme} />
         </aside>
-        <main id="content" class="flex min-w-0 flex-1 flex-col app:min-h-0">
+        <main id="content" data-mode-scope class="flex min-w-0 flex-1 flex-col app:min-h-0">
           <div class="group/install flex flex-wrap items-center gap-x-5 gap-y-3 border-b px-5 py-3">
             <div data-head class="grid min-w-0 flex-[1_1_14rem] gap-0.5">
               <WorkspaceHead theme={theme} heading={heading} />
