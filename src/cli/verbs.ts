@@ -277,7 +277,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'sync',
     args: [],
     about:
-      "Write every wired terminal's config again from what is installed and config.zsh — ttheme config, ttheme dark, light and auto, and preview call this when TTHEME_TAB_PALETTE or TTHEME_MODE changed",
+      "Write every wired terminal's config again from what is installed and config.zsh, drawing first the background pictures that TTHEME_MODE turned — ttheme config, ttheme dark, light and auto, and preview call this when TTHEME_TAB_PALETTE or TTHEME_MODE changed",
     section: 'setup',
     hidden: true,
   },

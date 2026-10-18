@@ -1,17 +1,20 @@
 import { createHash } from 'node:crypto'
-import { existsSync, readdirSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs'
+import { existsSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Hex } from '../core/color.ts'
-import { writeAtomic } from '../store/edits.ts'
+import { listing, writeAtomic } from '../store/edits.ts'
 import { cacheRoot } from '../store/paths.ts'
 
-const KEPT = 12
+const LIMIT = 512 * 1024 * 1024
+const PRUNED_EVERY = 16
+const UNFINISHED = 60 * 60 * 1000
 const NAME = /^[0-9a-f]{40}$/
 
-interface Held {
+export interface Held {
   stem: string
   fill: string
   peak?: Hex
+  tone?: Hex
   figure: Buffer
   picture: Buffer
 }
@@ -20,9 +23,12 @@ interface Head {
   stem: string
   fill: string
   peak?: Hex
+  tone?: Hex
   figure: number
   picture: number
 }
+
+let written = 0
 
 function dir(): string {
   return join(cacheRoot(), 'drawn')
@@ -53,7 +59,14 @@ export function recall(key: string): Held | undefined {
     const now = new Date()
     utimesSync(path, now, now)
 
-    return { stem: head.stem, fill: head.fill, ...(head.peak ? { peak: head.peak } : {}), figure, picture }
+    return {
+      stem: head.stem,
+      fill: head.fill,
+      ...(head.peak ? { peak: head.peak } : {}),
+      ...(head.tone ? { tone: head.tone } : {}),
+      figure,
+      picture,
+    }
   } catch {
     return undefined
   }
@@ -65,6 +78,7 @@ export function remember(key: string, held: Held): void {
       stem: held.stem,
       fill: held.fill,
       ...(held.peak ? { peak: held.peak } : {}),
+      ...(held.tone ? { tone: held.tone } : {}),
       figure: held.figure.length,
       picture: held.picture.length,
     } satisfies Head),
@@ -73,22 +87,36 @@ export function remember(key: string, held: Held): void {
   const size = Buffer.alloc(4)
   size.writeUInt32BE(head.length)
   writeAtomic(join(dir(), key), Buffer.concat([size, head, held.figure, held.picture]))
-  prune()
+
+  if (++written % PRUNED_EVERY === 0) {
+    prune()
+  }
 }
 
-function prune(): void {
-  const found = readdirSync(dir())
-    .filter((name) => NAME.test(name))
-    .flatMap((name) => {
-      try {
-        return [{ name, at: statSync(join(dir(), name)).mtimeMs }]
-      } catch {
-        return []
-      }
-    })
-    .sort((a, b) => b.at - a.at)
+export function prune(limit = LIMIT): void {
+  const now = Date.now()
 
-  for (const { name } of found.slice(KEPT)) {
-    rmSync(join(dir(), name), { force: true })
+  const found = listing(dir()).flatMap((name) => {
+    try {
+      const { size, mtimeMs } = statSync(join(dir(), name))
+
+      return [{ name, size, at: mtimeMs }]
+    } catch {
+      return []
+    }
+  })
+
+  let total = 0
+
+  for (const { name, size, at } of found.sort((a, b) => b.at - a.at)) {
+    if (NAME.test(name)) {
+      total += size
+
+      if (total > limit) {
+        rmSync(join(dir(), name), { force: true })
+      }
+    } else if (name.includes('.ttheme-') && now - at > UNFINISHED) {
+      rmSync(join(dir(), name), { force: true })
+    }
   }
 }

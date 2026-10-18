@@ -8,7 +8,17 @@ import { canvasOf } from '../cli/images.ts'
 import { backdropTone, type Colors, originalOpacity, toneFor } from '../core/backdrop-tone.ts'
 import { luminance, mix } from '../core/color.ts'
 import { checkReadability } from '../core/contrast.ts'
-import { decodePng, encodeMask, encodeRgb, encodeRgba, flatten, lay, type Rgba, retone } from '../core/png.ts'
+import {
+  decodePng,
+  encodeMask,
+  encodeRgb,
+  encodeRgba,
+  flatIndexed,
+  flatten,
+  lay,
+  type Rgba,
+  retone,
+} from '../core/png.ts'
 import { ROOT } from '../root.ts'
 import {
   applyRedraw,
@@ -542,6 +552,27 @@ test('Warp gets a picture laid whole on the background, so no transparent part l
   assert.deepEqual([...decodePng(encodeRgb(laid)).data], [144, 32, 48, 255, 32, 64, 96, 255])
 })
 
+test('a tone picture is laid on the background by swapping its palette, to the pixels flatten gives, and any other picture is left to flatten', () => {
+  const mask = { width: 4, height: 2, data: Uint8Array.from([0, 1, 127, 128, 200, 254, 255, 77]) }
+  const file = encodeMask(mask, '#9b86c8')
+
+  for (const opacity of [1, 0.5]) {
+    const laid = flatIndexed(file, '#204060', opacity)
+    assert.ok(laid)
+    const got = decodePng(laid)
+    assert.deepEqual(
+      [...got.data].filter((_, i) => i % 4 !== 3),
+      [...flatten(decodePng(file), '#204060', opacity).data],
+    )
+    assert.ok(got.data.every((v, i) => i % 4 !== 3 || v === 255))
+  }
+
+  assert.equal(
+    flatIndexed(encodeRgba({ width: 1, height: 1, data: Uint8Array.from([1, 2, 3, 4]) }), '#204060', 1),
+    undefined,
+  )
+})
+
 test('Warp gets a picture laid on the background where preview frames it, at its own size when Warp would enlarge it', () => {
   const image: Rgba = {
     width: 2,
@@ -797,6 +828,38 @@ test('a coloring drawn once is kept, so the other one can be got ready and going
   const recolored = await redrawOne(configHome, 'kagami', before.key, bluer, 0, true, configHome, 'tone')
   assert.ok(recolored)
   assert.deepEqual([recolored.tone, recolored.stem === before.stem], ['#336699', false])
+})
+
+test('a drawing kept for one tone serves a palette whose tone moved, as the picture a fresh drawing gives', async () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-drawn-tone-'))
+  const dir = backgroundsDir(configHome)
+  const before = installFigure(configHome, 32)
+  const bluer = { ...PAINT, hue: { color: '#336699', opacity: 0.2 } }
+  assert.equal(prepareOne(configHome, 'kagami', before.key, PAINT, 0, 'tone'), true)
+  const original = join(dir, before.original as string)
+  chmodSync(original, 0o000)
+
+  try {
+    const moved = await redrawOne(configHome, 'kagami', before.key, bluer, 0, true, configHome, 'tone')
+    assert.ok(moved)
+    assert.deepEqual([moved.tone, moved.stem === before.stem], ['#336699', false])
+    const fresh = mkdtempSync(join(tmpdir(), 'ttheme-drawn-fresh-'))
+    const image = figure()
+
+    installBackdrop(
+      fresh,
+      KAGAMI,
+      bluer.hue,
+      image,
+      { site: 'safebooru', id: 32, ext: 'png', bytes: encodeRgba(image) },
+      { width: 40, height: 20 },
+      0,
+    )
+
+    assert.equal((rackOf(fresh, 'kagami')[0] as Picture).stem, moved.stem)
+  } finally {
+    chmodSync(original, 0o644)
+  }
 })
 
 test('trying a picture on in its own colors lays it over the background at the default opacity, straight alpha', () => {

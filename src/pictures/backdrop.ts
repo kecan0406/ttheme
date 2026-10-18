@@ -27,10 +27,10 @@ import {
 import { stem as fileStem, POSITIONS, type SharedPicture } from '../core/theme.ts'
 import { listing, writeAtomic } from '../store/edits.ts'
 import { MATTING, matte } from './cutout.ts'
-import { keyOf, known, recall, remember } from './drawn.ts'
+import { type Held, keyOf, known, recall, remember } from './drawn.ts'
 
 const FILL = { width: 2560, height: 1550 }
-const DRAWING = 2
+const DRAWING = 3
 const FIGURE = 2560
 
 const WHITE = 0.99
@@ -866,11 +866,12 @@ interface Made {
   files: [string, Buffer][]
 }
 
-function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
-  const figure = drawing.coloring === 'original' ? encodeRgba(drawing.figure) : encodeMask(drawing.figure, tone)
-  const fill = drawing.coloring === 'original' ? encodeRgba(drawing.fill) : encodeMask(drawing.fill, tone)
-  const stem = `${fileStem(name)}.${createHash('sha1').update(key).update(figure).update(fill).digest('hex').slice(0, 8)}`
-  const named = `${stem}@fill-${Math.round(drawing.focus * 100)}.png`
+function stemOf(name: string, key: string, figure: Uint8Array, fill: Uint8Array): string {
+  return `${fileStem(name)}.${createHash('sha1').update(key).update(figure).update(fill).digest('hex').slice(0, 8)}`
+}
+
+function laid(stem: string, focus: number, figure: Buffer, fill: Buffer): Made {
+  const named = `${stem}@fill-${focus}.png`
 
   return {
     stem,
@@ -880,6 +881,13 @@ function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
       [named, fill],
     ],
   }
+}
+
+function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
+  const figure = drawing.coloring === 'original' ? encodeRgba(drawing.figure) : encodeMask(drawing.figure, tone)
+  const fill = drawing.coloring === 'original' ? encodeRgba(drawing.fill) : encodeMask(drawing.fill, tone)
+
+  return laid(stemOf(name, key, figure, fill), Math.round(drawing.focus * 100), figure, fill)
 }
 
 function paintOf(
@@ -1145,7 +1153,6 @@ function drawnKey(
   size: { width: number; height: number },
   blurring: number,
   coloring: Coloring,
-  tone: string,
   light: boolean,
 ): string | undefined {
   const files = [picture.original, picture.cut].map((file) => {
@@ -1171,30 +1178,21 @@ function drawnKey(
     fileStem(name),
     picture.key,
     ...(files as string[]),
+    picture.cut ? MATTING : '',
     size.width,
     size.height,
     blurring,
     coloring,
-    coloring === 'tone' ? tone : '',
     coloring === 'tone' && light ? 'light' : '',
   ])
 }
 
 function remembered(dir: string, name: string, picture: Picture): void {
-  if (!picture.window || picture.blur === undefined) {
+  if (!picture.window || picture.blur === undefined || undrawn(picture)) {
     return
   }
 
-  const key = drawnKey(
-    dir,
-    name,
-    picture,
-    picture.window,
-    picture.blur,
-    coloringOf(picture),
-    picture.tone ?? '',
-    picture.light === true,
-  )
+  const key = drawnKey(dir, name, picture, picture.window, picture.blur, coloringOf(picture), picture.light === true)
 
   if (!key || known(key)) {
     return
@@ -1205,10 +1203,46 @@ function remembered(dir: string, name: string, picture: Picture): void {
       stem: picture.stem,
       fill: picture.fill,
       ...(picture.peak ? { peak: picture.peak } : {}),
+      ...(picture.tone ? { tone: picture.tone } : {}),
       figure: readFileSync(join(dir, `${picture.stem}.png`)),
       picture: readFileSync(join(dir, picture.fill)),
     })
   } catch {}
+}
+
+function toned(name: string, key: string, held: Held, tone: Hex | undefined): Made | undefined {
+  if (tone === undefined || held.tone === tone) {
+    return {
+      stem: held.stem,
+      fill: held.fill,
+      files: [
+        [`${held.stem}.png`, held.figure],
+        [held.fill, held.picture],
+      ],
+    }
+  }
+
+  const figure = held.tone === undefined ? undefined : retone(held.figure, tone)
+  const fill = held.tone === undefined ? undefined : retone(held.picture, tone)
+
+  return figure && fill
+    ? laid(stemOf(name, key, figure, fill), Number(/@fill-(\d+)\.png$/.exec(held.fill)?.[1] ?? 50), figure, fill)
+    : undefined
+}
+
+export function cached(
+  configHome: string,
+  name: string,
+  picture: Picture,
+  paint: Paint,
+  blurring: number,
+  coloring: Coloring = coloringOf(picture),
+): boolean {
+  const dir = backgroundsDir(configHome)
+  const size = picture.window ?? sizeOf(join(dir, picture.fill)) ?? FILL
+  const key = drawnKey(dir, name, picture, size, blurring, coloring, isLight(paint.colors))
+
+  return key !== undefined && known(key)
 }
 
 interface Drawn {
@@ -1228,25 +1262,12 @@ function drawnFor(
   coloring: Coloring,
   cut: boolean,
 ): Drawn | null {
-  const key = cut
-    ? undefined
-    : drawnKey(dir, name, picture, size, blurring, coloring, paint.hue.color, isLight(paint.colors))
-
+  const key = cut ? undefined : drawnKey(dir, name, picture, size, blurring, coloring, isLight(paint.colors))
   const held = key ? recall(key) : undefined
+  const hit = held && toned(name, picture.key, held, coloring === 'tone' ? paint.hue.color : undefined)
 
-  if (held) {
-    return {
-      made: {
-        stem: held.stem,
-        fill: held.fill,
-        files: [
-          [`${held.stem}.png`, held.figure],
-          [held.fill, held.picture],
-        ],
-      },
-      peak: held.peak,
-      image: undefined,
-    }
+  if (held && hit) {
+    return { made: hit, peak: held.peak, image: undefined }
   }
 
   const image = load()
@@ -1273,6 +1294,7 @@ function drawnFor(
       stem: result.stem,
       fill: result.fill,
       ...(peak ? { peak } : {}),
+      ...(coloring === 'tone' ? { tone: paint.hue.color } : {}),
       figure: result.files[0]?.[1] as Buffer,
       picture: result.files[1]?.[1] as Buffer,
     })
@@ -1362,6 +1384,7 @@ export function prepared(
 ): boolean {
   const dir = backgroundsDir(configHome)
   const size = picture.window ?? sizeOf(join(dir, picture.fill)) ?? FILL
+  remembered(dir, name, picture)
 
   return drawnFor(dir, name, picture, size, load, paint, blurring, coloring, false) !== null
 }

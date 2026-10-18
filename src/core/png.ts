@@ -1075,3 +1075,41 @@ export function retone(bytes: Uint8Array, tone: Hex): Buffer | undefined {
 
   return Buffer.concat(parts)
 }
+
+export function flatIndexed(bytes: Uint8Array, background: Hex, opacity: number): Buffer | undefined {
+  const scan = scanned(bytes)
+
+  if (scan?.type !== INDEXED || !scan.palette) {
+    return undefined
+  }
+
+  const base = rgb(background)
+  const palette = scan.palette
+  const laid = new Uint8Array(palette.length)
+
+  for (let i = 0; i + 2 < palette.length; i += 3) {
+    const a = ((scan.opacity?.[i / 3] ?? 255) / 255) * opacity
+
+    for (let c = 0; c < 3; c++) {
+      laid[i + c] = Math.round((base[c] as number) * (1 - a) + (palette[i + c] as number) * a)
+    }
+  }
+
+  const png = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  const parts: Uint8Array[] = [Buffer.from(SIGNATURE)]
+
+  for (let at = SIGNATURE.length; at + 8 <= png.length; ) {
+    const end = at + 12 + png.readUInt32BE(at)
+    const kind = png.toString('latin1', at + 4, at + 8)
+
+    if (kind === 'PLTE') {
+      parts.push(chunk('PLTE', laid))
+    } else if (kind !== 'tRNS') {
+      parts.push(png.subarray(at, end))
+    }
+
+    at = end
+  }
+
+  return Buffer.concat(parts)
+}

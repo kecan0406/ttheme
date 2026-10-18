@@ -1,16 +1,21 @@
 import { availableParallelism, homedir } from 'node:os'
 import type { Coloring } from '../core/backdrop-tone.ts'
+import { inMode } from '../core/manifest.ts'
+import { modeOf, otherOf } from '../core/mode.ts'
 import {
   applyRedraw,
   backgroundsDir,
+  cached,
   coloringOf,
   inkDue,
+  type Paint,
   type Picture,
   paintFor,
   readStore,
   undrawn,
 } from '../pictures/backdrop.ts'
 import { MATTING } from '../pictures/cutout.ts'
+import { prune } from '../pictures/drawn.ts'
 import { prepareOne, redrawOne } from '../pictures/redrawing.ts'
 import { Pool } from '../pictures/render.ts'
 import { readAvailable } from '../store/available.ts'
@@ -21,67 +26,153 @@ import { aligns as alignsFor, refreshPictures } from './sync.ts'
 
 const WORKERS = 4
 
-export async function redrawPictures(home: string, say: (line: string) => void, user = homedir()): Promise<number> {
+interface Job {
+  name: string
+  key: string
+  paint: Paint
+}
+
+interface Redrawing {
+  emit?: boolean
+  step?: (done: number, of: number) => void
+}
+
+function plural(n: number): string {
+  return `${n} background picture${n === 1 ? '' : 's'}`
+}
+
+export async function redrawPictures(
+  home: string,
+  say: (line: string) => void,
+  user = homedir(),
+  { emit = true, step }: Redrawing = {},
+): Promise<number> {
   const store = readStore(backgroundsDir(home))
   const blurring = blurOf(home)
-  const paints = new Map(readAvailable(home).palettes.map((entry) => [entry.name, paintFor(entry)]))
+  const entries = new Map(readAvailable(home).palettes.map((entry) => [entry.name, entry]))
+  const hits: Job[] = []
+  const misses: Job[] = []
+  const primes: Job[] = []
 
-  const due = Object.entries(store.palettes).flatMap(([name, rack]) => {
-    const paint = paints.get(name)
+  for (const [name, rack] of Object.entries(store.palettes)) {
+    const entry = entries.get(name)
 
-    return paint
-      ? rack.pictures
-          .filter(
-            (picture) =>
-              undrawn(picture) ||
-              inkDue(picture, paint) ||
-              (picture.blur ?? 0) !== blurring ||
-              (picture.cut !== undefined && picture.matte !== MATTING),
-          )
-          .map((picture) => ({ name, key: picture.key, paint }))
-      : []
-  })
+    if (!entry) {
+      continue
+    }
 
-  if (due.length === 0) {
+    const paint = paintFor(entry)
+    let other: Paint | undefined
+
+    for (const picture of rack.pictures) {
+      const flips = inkDue(picture, paint)
+
+      const due =
+        undrawn(picture) ||
+        flips ||
+        (picture.blur ?? 0) !== blurring ||
+        (picture.cut !== undefined && picture.matte !== MATTING)
+
+      if (due) {
+        const into = cached(home, name, picture, paint, blurring) ? hits : misses
+        into.push({ name, key: picture.key, paint })
+      }
+
+      if (!flips && !undrawn(picture) && picture.original && coloringOf(picture) === 'tone') {
+        other ??= paintFor(inMode(entry, otherOf(modeOf(entry))))
+
+        if (!cached(home, name, picture, other, blurring, 'tone')) {
+          primes.push({ name, key: picture.key, paint: other })
+        }
+      }
+    }
+  }
+
+  const total = hits.length + misses.length + primes.length
+
+  if (total === 0) {
     return 0
   }
 
-  say(
-    `Drawing ${due.length} background picture${due.length === 1 ? '' : 's'} again${blurring ? ` · blur ${blurring}px` : ''}`,
-  )
   const aligns = alignsFor(readInstalled(home).terminals)
-  const pool = new Pool(Math.min(WORKERS, availableParallelism() - 1))
-
-  const results = await pool.map(
-    due.map(({ name, key, paint }) => ({
-      job: 'redraw' as const,
-      home,
-      user,
-      name,
-      key,
-      paint,
-      blur: blurring,
-      aligns,
-    })),
-  )
-
-  pool.close()
   const drawn: { name: string; picture: Picture }[] = []
-  results.forEach((result, at) => {
-    const { name, key } = due[at] as (typeof due)[number]
+  let done = 0
 
-    if (result instanceof Error || result === null) {
-      say(
-        `  ▢ ${name} ${key} — ${result instanceof Error ? result.message : 'no original to draw it from'}, left as it was`,
-      )
+  for (const { name, key, paint } of hits) {
+    try {
+      const picture = await redrawOne(home, name, key, paint, blurring, aligns, user)
 
-      return
+      if (picture) {
+        drawn.push({ name, picture })
+      }
+    } catch (error) {
+      say(`  ▢ ${name} ${key} — ${error instanceof Error ? error.message : String(error)}, left as it was`)
     }
 
-    drawn.push({ name, picture: result })
-  })
+    step?.(++done, total)
+  }
+
+  if (misses.length + primes.length > 0) {
+    if (misses.length > 0) {
+      say(`Drawing ${plural(misses.length)} again${blurring ? ` · blur ${blurring}px` : ''}`)
+    } else {
+      say(`Drawing ${plural(primes.length)} for the other mode`)
+    }
+
+    const pool = new Pool(Math.min(WORKERS, availableParallelism() - 1, misses.length + primes.length))
+    const coloring: Coloring = 'tone'
+    const tick = () => step?.(++done, total)
+
+    const results = await pool.map(
+      misses.map(({ name, key, paint }) => ({
+        job: 'redraw' as const,
+        home,
+        user,
+        name,
+        key,
+        paint,
+        blur: blurring,
+        aligns,
+      })),
+      tick,
+    )
+
+    await pool.map(
+      primes.map(({ name, key, paint }) => ({
+        job: 'prepare' as const,
+        home,
+        name,
+        key,
+        paint,
+        blur: blurring,
+        coloring,
+      })),
+      tick,
+    )
+
+    pool.close()
+
+    misses.forEach(({ name, key }, at) => {
+      const result = results[at]
+
+      if (result instanceof Error || !result) {
+        say(
+          `  ▢ ${name} ${key} — ${result instanceof Error ? result.message : 'no original to draw it from'}, left as it was`,
+        )
+
+        return
+      }
+
+      drawn.push({ name, picture: result })
+    })
+  }
+
   applyRedraw(home, drawn)
-  refreshPictures(home, user)
+  prune()
+
+  if (emit && drawn.length > 0) {
+    refreshPictures(home, user)
+  }
 
   return drawn.length
 }

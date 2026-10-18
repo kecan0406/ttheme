@@ -966,8 +966,11 @@ __tt_pv_conf_save() {
   if __tt_config_write "${pairs[@]}"; then
     conf=0 msg="Saved · $REPLY" msgt=200
     (( ${pairs[(Ie)TTHEME_TAB_PALETTE]} )) && __tt_cli sync > /dev/null 2>&1 && __tt_reload
-    (( ${pairs[(Ie)TTHEME_MODE]} )) && __tt_pv_remode
-    (( ${pairs[(Ie)TTHEME_BG_BLUR]} || ${pairs[(Ie)TTHEME_MODE]} )) && __tt_pv_redraw
+    if (( ${pairs[(Ie)TTHEME_MODE]} )); then
+      __tt_pv_redraw remode
+    elif (( ${pairs[(Ie)TTHEME_BG_BLUR]} )); then
+      __tt_pv_redraw
+    fi
   else
     __tt_pv_unconf
     msg="Could not write $REPLY" msgt=200
@@ -998,7 +1001,7 @@ __tt_pv_remode() {
 }
 
 __tt_pv_redraw() {
-  local name out
+  local name out saved=$msg
   if (( $+functions[__tt_bg_write] )); then
     for name in ${(k)bgedit}; do
       __tt_bg_write $name
@@ -1008,7 +1011,14 @@ __tt_pv_redraw() {
   msg="Drawing the background pictures again" msgt=300
   printf '\e[?2026h'
   __tt_pv_draw
-  out=$(__tt_cli redraw 2>&1)
+
+  if [[ $1 == remode ]]; then
+    __tt_pv_remode
+    out=$saved
+  else
+    out=$(__tt_cli redraw 2>&1)
+  fi
+
   bgsrc=() resized=1 bgdim=()
   __tt_reload
   (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER

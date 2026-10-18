@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { decodePng, encodeRgb, flatten } from '../core/png.ts'
+import { decodePng, encodeRgb, flatIndexed, flatten } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
 import { owned, stem } from '../core/theme.ts'
 import { backgroundsDir, type ProfileBackground, readBackdrop } from '../pictures/backdrop.ts'
@@ -137,8 +137,11 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
 
       if (!existsSync(laid.image)) {
         try {
-          const image = decodePng(new Uint8Array(readFileSync(picture.image)))
-          writeAtomic(laid.image, encodeRgb(flatten(image, theme.background, 1)))
+          const bytes = new Uint8Array(readFileSync(picture.image))
+          writeAtomic(
+            laid.image,
+            flatIndexed(bytes, theme.background, 1) ?? encodeRgb(flatten(decodePng(bytes), theme.background, 1)),
+          )
         } catch {
           files.set(theme.name, warpThemeFile(theme))
           continue
@@ -174,6 +177,14 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
       .map((file) => /^ {2}path: "(.+)"$/m.exec(readText(join(dir, file)))?.[1])
       .filter((image) => image !== undefined),
   )
+
+  for (const theme of ctx.themes) {
+    const picture = theme.other && readBackdrop(pictures, theme.name, ctx.home)
+
+    if (picture && theme.other) {
+      shown.add(join(dir, warpPictureFile(theme.name, picture.image, theme.other.background)))
+    }
+  }
 
   for (const file of readdirSync(dir)) {
     if (owns(file, 'png') && !shown.has(join(dir, file))) {

@@ -21,7 +21,7 @@ import {
   writeTune,
 } from './backdrop.ts'
 import { paletteMatch } from './fit.ts'
-import { redrawOne } from './redrawing.ts'
+import { prepareOne, redrawOne } from './redrawing.ts'
 import { dhash, sameArtwork } from './works.ts'
 
 interface Thumb {
@@ -108,12 +108,22 @@ interface Redraw {
   aligns: boolean
 }
 
+interface Prepare {
+  job: 'prepare'
+  home: string
+  name: string
+  key: string
+  paint: Paint
+  blur: number
+  coloring: Coloring
+}
+
 export interface Look {
   match: number
   hash: string
 }
 
-type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw
+type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw | Prepare
 
 type Lane = 'tile' | 'band' | 'view'
 
@@ -125,9 +135,11 @@ type Result<T extends Task> = T extends Match
     ? boolean
     : T extends Redraw
       ? Picture | null
-      : T extends Show
-        ? Shown
-        : number
+      : T extends Prepare
+        ? boolean
+        : T extends Show
+          ? Shown
+          : number
 
 const LANES: Record<Task['job'], Lane> = {
   thumb: 'tile',
@@ -137,6 +149,7 @@ const LANES: Record<Task['job'], Lane> = {
   show: 'view',
   backdrop: 'view',
   redraw: 'view',
+  prepare: 'view',
 }
 
 let held: { from: string; clear: number; inked: Inked } | undefined
@@ -151,6 +164,10 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
 
   if (task.job === 'redraw') {
     return redrawOne(task.home, task.name, task.key, task.paint, task.blur, task.aligns, task.user)
+  }
+
+  if (task.job === 'prepare') {
+    return prepareOne(task.home, task.name, task.key, task.paint, task.blur, task.coloring)
   }
 
   if (task.job === 'show') {
@@ -327,7 +344,7 @@ export class Pool {
     this.lines = Array.from({ length: Math.max(1, size) }, () => new Line())
   }
 
-  async map<T extends Task>(tasks: T[]): Promise<(Result<T> | Error)[]> {
+  async map<T extends Task>(tasks: T[], each?: () => void): Promise<(Result<T> | Error)[]> {
     const results: (Result<T> | Error)[] = []
     let next = 0
     await Promise.all(
@@ -340,6 +357,8 @@ export class Pool {
           } catch (error) {
             results[at] = error instanceof Error ? error : new Error(String(error))
           }
+
+          each?.()
         }
       }),
     )

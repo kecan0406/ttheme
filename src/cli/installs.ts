@@ -17,6 +17,7 @@ import { pending, say } from '../tui/pending.ts'
 import { adopt, type Refused } from './craft.ts'
 import { localLine } from './marketplaces.ts'
 import { bringPictures, since } from './pictures.ts'
+import { redrawPictures } from './redraw.ts'
 import { applyRefreshed, attempt, failureLine, refreshLine, updatesLine } from './refresh.ts'
 import { newerRelease, upgradeTo } from './release.ts'
 import { commit, sync } from './sync.ts'
@@ -112,9 +113,27 @@ export function runDefault(name: string): void {
   console.log(defaultNote(name, state.terminals, pointed).join('\n'))
 }
 
-export function runSync(): void {
+export async function runSync(): Promise<void> {
   const home = configHome()
+  const wait = pending('Drawing the background pictures')
+  let failed: unknown
+
+  try {
+    await redrawPictures(home, wait.say, undefined, {
+      emit: false,
+      step: (done, of) => wait.set(`Drawing the background pictures · ${done}/${of}`),
+    })
+  } catch (error) {
+    failed = error
+  } finally {
+    wait.done()
+  }
+
   sync(home, readMarketplaces(home), readInstalled(home))
+
+  if (failed !== undefined) {
+    throw failed
+  }
 }
 
 export function runOn(): void {

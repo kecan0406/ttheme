@@ -593,15 +593,13 @@ __tt_remode() {
   __tt_put $mark $sysparams[pid]
   for (( n = 0; n < 3; n++ )); do
     want=$(<$f)
-    if ! __tt_cli sync; then
+    if ! __tt_resync; then
       : >| $TTHEME_STATE_DIR/remode.failed
       break
     fi
     zf_rm -f -- $TTHEME_STATE_DIR/remode.failed 2>/dev/null
-    __tt_reload
     __tt_wake
     kill -URG $$ 2>/dev/null
-    __tt_redraw
     [[ "$(<$f)" == $want ]] && break
   done
   zf_rm -f -- $mark 2>/dev/null
@@ -1661,7 +1659,7 @@ __tt_config() {
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*} == "$blur" ]] || __tt_redraw
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_TAB_PALETTE:='*} == "$tab" ]] || { __tt_cli sync && __tt_reload }
   if [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_MODE:='*} != "$mode" ]]; then
-    __tt_cli sync && __tt_reload && __tt_redraw
+    __tt_resync
     print -r -- "Open tabs take the new mode; other settings apply in new tabs — $TTHEME_CONFIG"
     return 0
   fi
@@ -1682,10 +1680,19 @@ __tt_mode() {
   fi
   __tt_config_write TTHEME_MODE $want || { print -u2 -r -- "ttheme: could not write $TTHEME_CONFIG"; return 1 }
   TTHEME_MODE=$want
-  __tt_cli sync > /dev/null || return 1
-  __tt_reload
-  __tt_redraw
+  __tt_resync || return 1
   print -r -- "Open tabs take the $want mode, and so do new ones — $TTHEME_CONFIG"
+}
+
+__tt_resync() {
+  local store=${TTHEME_CONFIG:h}/backgrounds/images.json
+  local -a was=("") now=("")
+  zstat -F %s.%N -A was +mtime -- $store 2>/dev/null
+  __tt_cli sync || return 1
+  __tt_reload
+  zstat -F %s.%N -A now +mtime -- $store 2>/dev/null
+  [[ $now[1] == "$was[1]" ]] || { (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER }
+  return 0
 }
 
 __tt_redraw() {
