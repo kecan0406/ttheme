@@ -192,7 +192,7 @@ the one the tab wears, as a link without asking.
 | `ttheme new <name>` | Make a palette of your own in the palette editor (`--from <palette>` starts from its colors); `edit`, `check`, `share` follow |
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |
 | `ttheme config` | Settings in `$EDITOR` |
-| `ttheme dark` / `light` / `auto` | Wear every palette in its dark or light mode, or in the system's with Ghostty — open tabs repaint |
+| `ttheme dark` / `light` / `auto` | Wear every palette in its dark or light mode, or in the system's where a wired terminal reports it — open tabs repaint |
 
 `ttheme help` lists the everyday commands by task; `ttheme help all` adds the
 rest with their options, and examples. Preview's keys and the mouse, directory pins,
