@@ -15,6 +15,8 @@ const RELOAD = `let s=null,b=null;const c=()=>{s?.close();s=null},f=()=>{if(docu
 
 const FONTS: string[] = assets.fonts
 
+const INSIGHTS = ['/_vercel/insights/script.js', '/_vercel/speed-insights/script.js']
+
 const INDEXABLE = 'max-image-preview:large'
 
 interface Page {
@@ -107,7 +109,7 @@ function Document({
           <script type="application/ld+json">{json(graph)}</script>
         ))}
         <script type="module" src={assets.js} />
-        {assets.reload ? <script type="module">{RELOAD}</script> : null}
+        {assets.reload ? <script type="module">{RELOAD}</script> : INSIGHTS.map((src) => <script defer src={src} />)}
       </head>
       <body>
         <a
