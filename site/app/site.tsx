@@ -134,6 +134,20 @@ function sharedCard(found: Shared): Card {
 }
 
 export const site = new Elysia({ name: 'site' })
+  .onError('global', NotFound, () =>
+    page(
+      { title: 'ttheme — no such page', description: 'Nothing lives at this address.', status: 404, cache: RETRY },
+      <Missing title="no such page" text="Nothing lives at this address." facts={facts} />,
+    ),
+  )
+  .onError('global', ({ error }) => {
+    process.stderr.write(`site: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`)
+
+    return page(
+      { title: 'ttheme — something went wrong', description: 'Try again in a moment.', status: 500, cache: 'no-store' },
+      <Missing title="something went wrong" text="Try again in a moment." facts={facts} />,
+    )
+  })
   .get('/', () =>
     page(
       {
@@ -272,18 +286,4 @@ export const site = new Elysia({ name: 'site' })
     return new Response(JSON.stringify(pictures), {
       headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': complete ? CREDITS : RETRY },
     })
-  })
-  .error('global', NotFound, () =>
-    page(
-      { title: 'ttheme — no such page', description: 'Nothing lives at this address.', status: 404, cache: RETRY },
-      <Missing title="no such page" text="Nothing lives at this address." facts={facts} />,
-    ),
-  )
-  .error('global', ({ error }) => {
-    process.stderr.write(`site: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`)
-
-    return page(
-      { title: 'ttheme — something went wrong', description: 'Try again in a moment.', status: 500, cache: 'no-store' },
-      <Missing title="something went wrong" text="Try again in a moment." facts={facts} />,
-    )
   })
