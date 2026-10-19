@@ -54,7 +54,7 @@ skill installs:
 
 ## Dependencies
 
-`oxlint` and `@oxlint/plugins` are pinned to the same exact version, `1.87.0`.
+`oxlint` and `@oxlint/plugins` are pinned to the same exact version, `1.89.0`.
 Upstream develops against `1.78.0`. JS plugins are alpha and not bound by
 semver, so move both packages together and run `mise run slop` afterwards.
 
