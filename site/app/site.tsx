@@ -45,9 +45,7 @@ function marketplaceCard(marketplace: Marketplace | null, palettes: Theme[]): Ca
 }
 
 function image(bytes: Buffer, type: string): Response {
-  return new Response(bytes, {
-    headers: { 'content-type': type, 'content-length': String(bytes.length), 'cache-control': CATALOG },
-  })
+  return new Response(bytes, { headers: { 'content-type': type, 'content-length': String(bytes.length) } })
 }
 
 function png(bytes: Buffer): Response {
@@ -55,7 +53,23 @@ function png(bytes: Buffer): Response {
 }
 
 function text(body: string, type: string): Response {
-  return new Response(body, { headers: { 'content-type': `${type}; charset=utf-8`, 'cache-control': CATALOG } })
+  return new Response(body, { headers: { 'content-type': `${type}; charset=utf-8` } })
+}
+
+function gone(reason: string): Response {
+  return new Response(reason, { status: 404, headers: { 'cache-control': RETRY } })
+}
+
+type Stock = {
+  marketplace: Marketplace | null
+  palettes: Theme[]
+}
+
+function stockOf(id: string): Stock | undefined {
+  if (id === OFFICIAL) return { marketplace: null, palettes: themes }
+  const marketplace = marketplaces.find((entry) => entry.id === id)
+
+  return marketplace && { marketplace, palettes: marketplace.palettes }
 }
 
 export const PRERENDERED: string[] = [
@@ -148,6 +162,13 @@ export const site = new Elysia({ name: 'site' })
       <Missing title="something went wrong" text="Try again in a moment." facts={facts} />,
     )
   })
+  .macro({
+    catalog: {
+      afterHandle({ set }) {
+        set.headers['cache-control'] = CATALOG
+      },
+    },
+  })
   .get('/', () =>
     page(
       {
@@ -190,55 +211,37 @@ export const site = new Elysia({ name: 'site' })
       <MarketplacePage themes={themes} marketplaces={marketplaces} facts={facts} />,
     ),
   )
-  .get('/marketplace/:id', ({ params }) => {
-    if (params.id === OFFICIAL) return workspace(null, themes, null)
-    const marketplace = marketplaces.find((entry) => entry.id === params.id)
+  .group('/marketplace/:id', (scope) =>
+    scope
+      .derive(({ params, status }) => stockOf(params.id) ?? status(404, noMarketplace(params.id)))
+      .get('', ({ marketplace, palettes }) => workspace(marketplace, palettes, null))
+      .get('/:name', ({ marketplace, palettes, params }) => {
+        const theme = palettes.find((entry) => entry.name === params.name)
 
-    if (!marketplace) return noMarketplace(params.id)
+        return theme ? workspace(marketplace, palettes, theme) : noPalette(params.id, params.name)
+      }),
+  )
+  .group('/marketplace/:id', (scope) =>
+    scope
+      .derive(({ params, status }) => stockOf(params.id) ?? status(404, gone('no such marketplace')))
+      .get('/card.png', { catalog: true }, async ({ marketplace, palettes }) =>
+        png(await cardPng(marketplaceCard(marketplace, palettes))),
+      )
+      .get('/:name/card.png', { catalog: true }, async ({ palettes, params }) => {
+        const theme = palettes.find((entry) => entry.name === params.name)
 
-    return workspace(marketplace, marketplace.palettes, null)
-  })
-  .get('/marketplace/:id/:name', ({ params }) => {
-    if (params.id === OFFICIAL) {
-      const theme = themes.find((entry) => entry.name === params.name)
-
-      return theme ? workspace(null, themes, theme) : noPalette(OFFICIAL, params.name)
-    }
-
-    const marketplace = marketplaces.find((entry) => entry.id === params.id)
-
-    if (!marketplace) return noMarketplace(params.id)
-    const theme = marketplace.palettes.find((entry) => entry.name === params.name)
-
-    return theme ? workspace(marketplace, marketplace.palettes, theme) : noPalette(marketplace.id, params.name)
-  })
-  .get('/marketplace/:id/card.png', async ({ params }) => {
-    const marketplace = marketplaces.find((entry) => entry.id === params.id)
-
-    if (params.id !== OFFICIAL && !marketplace)
-      return new Response('no such marketplace', { status: 404, headers: { 'cache-control': RETRY } })
-
-    return png(await cardPng(marketplaceCard(marketplace ?? null, marketplace?.palettes ?? themes)))
-  })
-  .get('/marketplace/:id/:name/card.png', async ({ params }) => {
-    const palettes = params.id === OFFICIAL ? themes : marketplaces.find((entry) => entry.id === params.id)?.palettes
-    const theme = palettes?.find((entry) => entry.name === params.name)
-
-    if (!theme) return new Response('no such palette', { status: 404, headers: { 'cache-control': RETRY } })
-
-    return png(await cardPng({ kind: 'palette', theme }))
-  })
-  .get('/card.png', async () => png(await cardPng(SITE_CARD)))
-  .get('/apple-touch-icon.png', () => png(touchIconPng(fallback)))
-  .get('/favicon.ico', () => image(faviconIco(fallback), 'image/x-icon'))
-  .get('/robots.txt', () => text(ROBOTS, 'text/plain'))
-  .get('/sitemap.xml', () => text(sitemapXml(PRERENDERED), 'application/xml'))
+        return theme ? png(await cardPng({ kind: 'palette', theme })) : gone('no such palette')
+      }),
+  )
+  .get('/card.png', { catalog: true }, async () => png(await cardPng(SITE_CARD)))
+  .get('/apple-touch-icon.png', { catalog: true }, () => png(touchIconPng(fallback)))
+  .get('/favicon.ico', { catalog: true }, () => image(faviconIco(fallback), 'image/x-icon'))
+  .get('/robots.txt', { catalog: true }, () => text(ROBOTS, 'text/plain'))
+  .get('/sitemap.xml', { catalog: true }, () => text(sitemapXml(PRERENDERED), 'application/xml'))
   .get(
     '/palettes.json',
-    () =>
-      new Response(JSON.stringify(themes), {
-        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': CATALOG },
-      }),
+    { catalog: true },
+    () => new Response(JSON.stringify(themes), { headers: { 'content-type': 'application/json; charset=utf-8' } }),
   )
   .get('/p/:code', ({ params, query, request }) => {
     const found = shared(params.code, query.i)
@@ -270,20 +273,19 @@ export const site = new Elysia({ name: 'site' })
       <SharePage shared={found} builder={builderOf(found, gate)} />,
     )
   })
-  .get('/p/:code/card.png', async ({ params }) => {
-    const found = shared(params.code)
+  .group('/p/:code', (scope) =>
+    scope
+      .derive(({ params, query, status }) => {
+        const found = shared(params.code, query.i)
 
-    if (found instanceof Error) return new Response(found.message, { status: 404, headers: { 'cache-control': RETRY } })
+        return found instanceof Error ? status(404, gone(found.message)) : { found }
+      })
+      .get('/card.png', { catalog: true }, async ({ found }) => png(await cardPng(sharedCard(found))))
+      .get('/credits.json', async ({ found }) => {
+        const { pictures, complete } = await creditsOf(found)
 
-    return png(await cardPng(sharedCard(found)))
-  })
-  .get('/p/:code/credits.json', async ({ params, query }) => {
-    const found = shared(params.code, query.i)
-
-    if (found instanceof Error) return new Response(found.message, { status: 404, headers: { 'cache-control': RETRY } })
-    const { pictures, complete } = await creditsOf(found)
-
-    return new Response(JSON.stringify(pictures), {
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': complete ? CREDITS : RETRY },
-    })
-  })
+        return new Response(JSON.stringify(pictures), {
+          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': complete ? CREDITS : RETRY },
+        })
+      }),
+  )
