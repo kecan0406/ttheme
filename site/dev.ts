@@ -1,6 +1,6 @@
 import { existsSync, watch } from 'node:fs'
 import { join } from 'node:path'
-import { Elysia, file, NotFound } from 'elysia'
+import { Elysia, file, NotFound, sse } from 'elysia'
 import { autoHead } from 'elysia/auto-head'
 import { ASSETS, buildAssets, IMMUTABLE, SITE, snapshot } from './build'
 
@@ -10,9 +10,9 @@ await snapshot(false)
 
 const { site } = await import('./app/site')
 
-const listeners = new Set<ReadableStreamDefaultController<string>>()
 let pending: ReturnType<typeof setTimeout> | undefined
 let stamp = Date.now().toString(36)
+let rebuilt = Promise.withResolvers<void>()
 
 function rebuild() {
   clearTimeout(pending)
@@ -20,8 +20,8 @@ function rebuild() {
     try {
       await buildAssets(false)
       stamp = Date.now().toString(36)
-
-      for (const listener of listeners) listener.enqueue(`data: ${stamp}\n\n`)
+      rebuilt.resolve()
+      rebuilt = Promise.withResolvers<void>()
     } catch (error) {
       process.stderr.write(`site: ${(error as Error).message}\n`)
     }
@@ -32,32 +32,23 @@ watch(join(SITE, 'client'), { recursive: true }, rebuild)
 
 watch(join(SITE, 'app', 'globals.css'), rebuild)
 
-setInterval(() => {
-  for (const listener of listeners) listener.enqueue(': ping\n\n')
-}, 5000)
-
 new Elysia()
   .use(autoHead())
-  .get('/__reload', () => {
-    let held: ReadableStreamDefaultController<string> | undefined
+  .get('/__reload', async function* ({ request, set }) {
+    set.headers['cache-control'] = 'no-store'
+    yield sse({ retry: 300, data: stamp })
 
-    const stream = new ReadableStream<string>({
-      start(controller) {
-        held = controller
-        listeners.add(controller)
-        controller.enqueue(`retry: 300\n\ndata: ${stamp}\n\n`)
-      },
-      cancel() {
-        if (held) listeners.delete(held)
-      },
-    })
+    while (!request.signal.aborted) {
+      const seen = stamp
+      await Promise.race([rebuilt.promise, Bun.sleep(5000)])
 
-    return new Response(stream, { headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-store' } })
+      yield stamp === seen ? sse({ event: 'ping' }) : sse({ data: stamp })
+    }
   })
   .get('/assets/*', ({ params, set }) => {
     const name = params['*']
 
-    if (!/^\w[\w.-]*$/.test(name) || !existsSync(join(ASSETS, name))) throw new NotFound()
+    if (!/^\w[\w.-]*$/.test(name) || !existsSync(join(ASSETS, name))) return new NotFound()
     set.headers['cache-control'] = name.endsWith('.woff2') ? IMMUTABLE : 'no-store'
 
     return file(join(ASSETS, name))
