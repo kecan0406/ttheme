@@ -112,6 +112,13 @@ test('the older screen counts the rules the gate misses, as its Gate box and the
   assert.ok(count < check(gatedOf(e.list, e.signature, e.waive)).length)
 })
 
+test('a ratio just under its floor misses the gate in the count as on the slots, though it reads as the floor', () => {
+  const e = editor({ colors: { ...start, foreground: '#64b198', selection: '#06070a' } })
+  assert.equal(gateMisses(e), 1)
+  assert.match(screen(e), /✗ 1 miss in the gate/)
+  assert.ok(e.misses().has(1))
+})
+
 test('a signature slot is marked ✦ in the list and in its detail alike', () => {
   const lines = screen(editor()).split('\n')
   assert.match(lines.find((line) => line.includes('▌ Background')) ?? '', /Background›✦/)

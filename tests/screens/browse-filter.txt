@@ -16,7 +16,7 @@
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │ kita  Installed                                │
-                                                 │ Gate 12/12 · passes                            │
+                                                 │ Gate 8/12 · ✗ accent hue outside its ANSI rol… │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │    × Remove marketplace                        │

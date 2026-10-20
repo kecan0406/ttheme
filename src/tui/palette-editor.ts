@@ -18,7 +18,7 @@ import {
   GATE_RULES,
   hueGap,
   measure,
-  meets,
+  missedRules,
   ROLES,
   shownOf,
 } from '../core/contrast.ts'
@@ -231,13 +231,15 @@ interface GateRow {
 }
 
 export function gateRows(list: Hex[], signature: string[], waive: string[]): GateRow[] {
-  const values = measure(gatedOf(list, signature, waive))
+  const theme = gatedOf(list, signature, waive)
+  const values = measure(theme)
+  const missed = new Set(missedRules(theme).map((rule) => rule.rule))
 
   return GATE_RULES.map((rule, i) => {
     const value = values[i] as number
     const waived = waive.includes(rule.rule)
 
-    const ok = waived || Number.isNaN(value) ? undefined : meets(rule, value)
+    const ok = waived || Number.isNaN(value) ? undefined : !missed.has(rule.rule)
 
     return {
       ok,

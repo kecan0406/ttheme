@@ -250,7 +250,7 @@ test('a marketplace opens in the panel beside the cards from 94 columns, and ove
   assert.match(wide.last, /╭─ official ─+╮$/m)
   assert.match(wide.last, /^ {4}● official +│/m)
   assert.match(wide.last, /│ ▌ {4}● miku +│$/m)
-  assert.match(wide.last, /├─+┤\n.*│ miku {2}Installed +│\n.*│ Gate \d+\/\d+ · passes +│/)
+  assert.match(wide.last, /├─+┤\n.*│ miku {2}Installed +│\n.*│ Gate \d+\/\d+ · /)
   assert.match(wide.last, /\[BROWSE\] space pick {3}\? keys +esc back$/m)
   const narrow = await drive([...MIKU, '\x03'], { columns: 80 })
   assert.doesNotMatch(narrow.last, /● official/)

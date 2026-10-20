@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { type PaletteEntry, parseManifest, SCHEMA } from '../core/manifest.ts'
 import { paletteToml } from '../core/own.ts'
+import { grow, SEEDS } from '../core/seeds.ts'
 import { shelfOf } from '../core/theme.ts'
 import {
   archiveId,
@@ -105,20 +106,42 @@ test('an installed palette from a marketplace keeps its colors until its update 
   assert.deepEqual(updatesOf(home, manifest), [])
 })
 
+const seeded = grow(SEEDS)
+
+function gated(partial: Partial<PaletteEntry> = {}): PaletteEntry {
+  return entry({
+    background: seeded.background,
+    foreground: seeded.foreground,
+    cursor: seeded.cursor,
+    selection: seeded.selection,
+    ansi: seeded.ansi,
+    signature: [seeded.background, seeded.foreground, seeded.cursor],
+    signatureSlots: ['background', 'foreground', 'cursor'],
+    ...partial,
+  })
+}
+
 test('gateFailures is empty when every rule is met', () => {
-  assert.deepEqual(gateFailures(entry()), [])
+  assert.deepEqual(gateFailures(gated()), [])
 })
 
 test('gateFailures reports a ratio below its minimum', () => {
-  assert.match(gateFailures(entry({ gate: [4, 6.8, 0.02, 10.4, 4.0] }))[0] ?? '', /foreground on background 4 ≥ 7/)
+  assert.match(gateFailures(gated({ foreground: '#3a4150' }))[0] ?? '', /^foreground on background \d+\.\d+ ≥ 7$/)
 })
 
 test('gateFailures reports a value above its maximum', () => {
-  assert.match(gateFailures(entry({ gate: [13.8, 6.8, 0.9, 10.4, 4.0] }))[0] ?? '', /ansi0 luminance 0\.90 ≤ 0\.15/)
+  const ansi = seeded.ansi.map((hex, i) => (i === 0 ? '#9aa0aa' : hex))
+  assert.match(gateFailures(gated({ ansi })).join('\n'), /ansi0 luminance \d+\.\d+ ≤ 0\.15/)
 })
 
 test('gateFailures honours a waiver by rule name', () => {
-  assert.deepEqual(gateFailures(entry({ gate: [4, 6.8, 0.02, 10.4, 4.0], waived: ['foreground'] })), [])
+  const failures = gateFailures(gated({ foreground: '#3a4150', waived: ['foreground'] }))
+  assert.ok(!failures.some((line) => line.startsWith('foreground on background')))
+})
+
+test('gateFailures measures the colors, never a gate stored before the rules it holds now', () => {
+  const stale = gated({ foreground: '#3a4150', gate: [13.8, 6.8, 0.02, 10.4, 4.0] })
+  assert.match(gateFailures(stale)[0] ?? '', /^foreground on background/)
 })
 
 test('search matches the palette, the series and the ANSI source', () => {

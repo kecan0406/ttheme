@@ -337,18 +337,10 @@ export function measure(theme: Gated): number[] {
   return CHECKS.map((c) => Math.round(c.measure(theme) * 1000) / 1000)
 }
 
-export function meets(rule: GateRule, value: number): boolean {
-  return (rule.min === undefined || value >= rule.min) && (rule.max === undefined || value <= rule.max)
-}
-
 export function missedRules(theme: Gated): GateRule[] {
-  const values = measure(theme)
+  const missed = new Set(check(theme).map((violation) => violation.rule))
 
-  return GATE_RULES.filter((rule, i) => {
-    const value = values[i] as number
-
-    return !theme.waive.includes(rule.rule) && !Number.isNaN(value) && !meets(rule, value)
-  })
+  return GATE_RULES.filter((rule) => missed.has(rule.rule))
 }
 
 export function shownOf(value: number): string {
