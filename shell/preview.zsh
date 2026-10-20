@@ -1090,8 +1090,8 @@ __tt_pv_redraw() {
 
 __tt_pv_conf_panel() {
   local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] c=$ac on=$pl var v note
-  local -a ch sh
-  local -i r0=$1 col=$2 end=$3 k i j fit=1
+  local -a ch sh reply
+  local -i r0=$1 col=$2 end=$3 k i j r fit=1
   (( color )) || z= b= d= c= on=
   for (( k = 1; k <= ${#cvars}; k++ )); do
     sh=(${=cshow[k]})
@@ -1139,7 +1139,17 @@ __tt_pv_conf_panel() {
   done
   var=${cvars[cf]}
   note=${cnote[$var:${(P)var}]}
-  [[ -n $note ]] && out+=$'\e['$(( r0 + ${#cvars} + 1 ))';'$col'H'$d${note[1,end-col+1]}$z
+  r=$(( r0 + ${#cvars} + 1 ))
+  [[ -n $note ]] && (( r < ph )) || return 0
+  __tt_pv_wrap "$note" $(( end - col + 1 ))
+  if (( ${#reply} > ph - r )); then
+    v=${(j: :)reply[ph-r,-1]}
+    while (( ${(m)#v} > end - col )); do v=${v[1,-2]}; done
+    reply[ph-r,-1]=("${v% }$TTHEME_MARKS[cut]")
+  fi
+  for v in $reply; do
+    out+=$'\e['$(( r++ ))';'$col'H'$d$v$z
+  done
   return 0
 }
 
