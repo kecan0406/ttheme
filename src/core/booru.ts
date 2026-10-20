@@ -118,6 +118,12 @@ export function extension(url: string): string {
   return (/\.([a-z0-9]+)(?:\?.*)?$/i.exec(url)?.[1] ?? '').toLowerCase()
 }
 
+function extOf(raw: unknown, file: string): string {
+  const said = String(raw ?? '').toLowerCase()
+
+  return /^[a-z0-9]{1,8}$/.test(said) ? said : extension(file)
+}
+
 function records(text: string): Record<string, unknown>[] {
   const body = text.trim()
 
@@ -218,7 +224,7 @@ export function parseMoebooru(text: string): Post[] {
     return post(p, {
       preview: p.preview_url,
       file,
-      ext: String(p.file_ext || extension(file)).toLowerCase(),
+      ext: extOf(p.file_ext, file),
       owner: p.author,
       md5: p.md5,
       tags,
@@ -241,7 +247,7 @@ export function parseDanbooru(text: string): Post[] {
     return post(p, {
       preview: asset.variants?.find((v) => v.type === '360x360')?.url ?? p.preview_file_url,
       file,
-      ext: String(p.file_ext || extension(file)).toLowerCase(),
+      ext: extOf(p.file_ext, file),
       owner: '',
       md5: p.md5,
       tags,

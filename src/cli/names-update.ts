@@ -77,6 +77,7 @@ export async function updateNames(home = homedir()): Promise<number> {
     const release = JSON.parse(new TextDecoder().decode(await download(`${NAMES_RELEASE}/ttheme.json`))) as Release
 
     for (const [layer, { file, sha256: want }] of Object.entries(release.layers)) {
+      if (!/^[a-z][a-z0-9-]{0,31}$/.test(layer)) continue
       const target = join(dir, `ttheme-${layer}.json`)
 
       if (existsSync(target) && sha256(readFileSync(target)) === want) continue
