@@ -3,8 +3,8 @@ import { cells } from './text.ts'
 
 const FULL_COLS = 130
 const FULL_ROWS = 38
-const TABS_COLS = 96
-const TABS_ROWS = 28
+export const TABS_COLS = 96
+export const TABS_ROWS = 28
 
 interface Pane {
   id: string

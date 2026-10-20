@@ -1,4 +1,14 @@
-import { firstSpot, type Layout, layoutOf, moveSpot, type Spot, slotsAt, validSpot } from '../core/builder-layout.ts'
+import {
+  firstSpot,
+  type Layout,
+  layoutOf,
+  moveSpot,
+  type Spot,
+  slotsAt,
+  TABS_COLS,
+  TABS_ROWS,
+  validSpot,
+} from '../core/builder-layout.ts'
 import { contrast, type Hex, isHex, luminance, type Oklch, oklch } from '../core/color.ts'
 import {
   ACCENT_SLOTS,
@@ -39,6 +49,8 @@ const ROWS = BASE.length + PAIRS.length
 
 const LEAVE =
   'esc  ctrl+c  leaves, asking first when something changed: y saves, n discards, esc keeps editing  ·  ctrl+c  again discards'
+
+const UNBUILT = `The builder needs a window of at least ${TABS_COLS}×${TABS_ROWS}`
 
 export interface Channel {
   key: keyof Oklch
@@ -1051,10 +1063,7 @@ export class PaletteEditor {
 
   private builderKey(key: string): boolean {
     if (['i', 'm', 'w', 'x', 'I'].includes(key) && !this.roomy) {
-      this.say(
-        this.view === 'relations' ? 'g goes back to the builder' : 'The builder needs a window of at least 96×28',
-        'warn',
-      )
+      this.say(this.view === 'relations' ? 'g goes back to the builder' : UNBUILT, 'warn')
 
       return true
     }
@@ -1136,7 +1145,7 @@ export class PaletteEditor {
     const layout = this.layout()
 
     if (!layout) {
-      this.say('The builder needs a window of at least 96×28', 'warn')
+      this.say(UNBUILT, 'warn')
 
       return
     }
