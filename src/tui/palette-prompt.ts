@@ -30,7 +30,7 @@ type PickerRow =
 export interface Extra {
   key: string
   idle?: boolean
-  text(focused: boolean, at: number): string
+  text(focused: boolean, at: number, held: boolean): string
 }
 
 type Row<X extends Extra = Extra> =
@@ -780,7 +780,11 @@ export class PaletteList<X extends Extra = Extra> {
 
     const text =
       row.kind === 'extra'
-        ? row.extra.text(index === this.cursor && this.focus === 'lit', index)
+        ? row.extra.text(
+            index === this.cursor && this.focus === 'lit',
+            index,
+            index === this.cursor && this.focus === 'held',
+          )
         : this.rowText(row, index)
 
     return text.split('\n').map((l) => (l ? rowSpot(index, 'row', l, this.pane) : l))

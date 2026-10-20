@@ -44,11 +44,12 @@ export function button(
   mark: string,
   label: string,
   note: string,
-  how: { pane?: string; off?: boolean; danger?: boolean } = {},
+  how: { pane?: string; off?: boolean; danger?: boolean; held?: boolean } = {},
 ): string {
   const chip = buttonOf(p, `${mark} ${label}`, how.off ? 'off' : focused ? 'focus' : 'idle', how.danger)
+  const gutter = focused ? `${MARKS.gutter} ` : how.held && p.color ? `${p.dim(MARKS.gutter)} ` : '  '
 
-  return `${focused ? `${MARKS.gutter} ` : '  '}${rowSpot(at, 'box', `${chip}${note}`, how.pane)}`
+  return `${gutter}${rowSpot(at, 'box', `${chip}${note}`, how.pane)}`
 }
 
 export function lit(focused: boolean, text: string): string {

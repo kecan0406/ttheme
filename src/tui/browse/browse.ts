@@ -913,7 +913,7 @@ export class BrowsePanel {
       key: found.kind === 'listed' ? `listed ${found.listed.source}` : found.kind,
       ...(idle ? { idle } : {}),
       found,
-      text: (focused: boolean, at: number) => this.foundLine(found, focused, at),
+      text: (focused: boolean, at: number, held: boolean) => this.foundLine(found, focused, at, held),
     }
   }
 
@@ -961,12 +961,12 @@ export class BrowsePanel {
     return [auto, this.status(m)].map((part) => (part ? `  ${this.p.dim(part)}` : '')).join('')
   }
 
-  private foundLine(found: Found, focused: boolean, at: number): string {
+  private foundLine(found: Found, focused: boolean, at: number, held: boolean): string {
     const after = (text: string) => `  ${this.p.dim(text)}`
 
     return found.kind === 'new'
-      ? button(this.p, at, focused, '+', 'Add marketplace', after('owner/repo or a folder'))
-      : button(this.p, at, focused, MARKS.search, 'Search marketplace', after('find one on GitHub'))
+      ? button(this.p, at, focused, '+', 'Add marketplace', after('owner/repo or a folder'), { held })
+      : button(this.p, at, focused, MARKS.search, 'Search marketplace', after('find one on GitHub'), { held })
   }
 
   private mark(entry: PaletteEntry): string {
