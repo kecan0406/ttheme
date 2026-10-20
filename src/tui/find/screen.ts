@@ -8,6 +8,7 @@ import { cells as columns } from '../../core/text.ts'
 import { POSITIONS } from '../../core/theme.ts'
 import type { Framing } from '../../pictures/backdrop.ts'
 import { linked } from '../ansi.ts'
+import type { Tone } from '../bar.ts'
 import { type Help, type HelpSpot, type Legend, overlay, type Topic } from '../help.ts'
 import { moreOf } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
@@ -158,7 +159,7 @@ export interface FindView {
   saved?: { text: string; key: number }
   note?: string
   hint?: string
-  error?: string
+  notice?: { text: string; tone: Tone }
   waiting?: number
   slow?: string
 }
@@ -299,6 +300,7 @@ const B = open('bold')
 const D = open('dim')
 const OK = open('ok')
 const WARN = open('warn')
+const TONED: Record<Tone, string> = { info: '', ok: OK, warn: WARN, error: open('error') }
 const fg = ansiFg
 const bg = ansiBg
 
@@ -1025,8 +1027,8 @@ function status(view: FindView, loading?: Part): Part[] | undefined {
     return [[view.hint, OK]]
   }
 
-  if (view.error) {
-    return [[view.error, WARN]]
+  if (view.notice) {
+    return [[view.notice.text, TONED[view.notice.tone]]]
   }
 
   if (view.waiting !== undefined) {
@@ -1272,7 +1274,7 @@ function grid(
 
   const quiet = view.searching && view.tiles.length === 0
 
-  if (quiet && !view.error) {
+  if (quiet && !view.notice) {
     const [key, label] = TIPS[Math.floor(beat(view) / TIP_BEATS) % TIPS.length] as [string, string]
     lines[rows - 2]?.run(0, [
       ['Tip  ', D],
@@ -1289,7 +1291,7 @@ function grid(
     lines[rows - 2]?.put(0, scroll.join('   '), D)
   }
 
-  if (!view.searching && view.tiles.length === 0 && !view.error && view.tag) {
+  if (!view.searching && view.tiles.length === 0 && !view.notice && view.tag) {
     lines[GRID_TOP + 1]?.put(
       0,
       view.preset === 'cutouts'
