@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import { PassThrough } from 'node:stream'
 import { test } from 'node:test'
 import cells from 'fast-string-width'
-import type { PaletteEntry } from '../core/manifest.ts'
-import type { Listed, Listing } from '../store/marketplace-index.ts'
-import { type BrowseIo, BrowsePanel, type Marketplace } from './browse-panel.ts'
+import type { PaletteEntry } from '../../core/manifest.ts'
+import type { Listed, Listing } from '../../store/marketplace-index.ts'
+import { type BrowseIo, BrowsePanel, type Marketplace } from './browse.ts'
 
 function entry(name: string, catalog?: string): PaletteEntry {
   return {

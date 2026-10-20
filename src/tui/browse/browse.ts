@@ -1,10 +1,10 @@
 import type { Readable, Writable } from 'node:stream'
-import { GATE_RULES } from '../core/contrast.ts'
-import { type PaletteEntry, swatch } from '../core/manifest.ts'
-import { ago, cells, counted, inert } from '../core/text.ts'
-import { marketplaceOf } from '../core/theme.ts'
-import { gateFailures } from '../store/available.ts'
-import { type Listed, type Listing, listedMatches } from '../store/marketplace-index.ts'
+import { GATE_RULES } from '../../core/contrast.ts'
+import { type PaletteEntry, swatch } from '../../core/manifest.ts'
+import { ago, cells, counted, inert } from '../../core/text.ts'
+import { marketplaceOf } from '../../core/theme.ts'
+import { gateFailures } from '../../store/available.ts'
+import { type Listed, type Listing, listedMatches } from '../../store/marketplace-index.ts'
 import {
   isRemote,
   OFFICIAL,
@@ -13,15 +13,15 @@ import {
   sameMarketplace,
   shownSource,
   TOPIC,
-} from '../store/sources.ts'
-import { clip, fit, pieces, spread, wrapText } from './ansi.ts'
-import { type Bar, barLine, type Hint, type Tone, toned } from './bar.ts'
-import { Field } from './field.ts'
-import { Help, type Legend, overlay, type Topic, type TopicSpot } from './help.ts'
-import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
-import type { Mouse } from './keys.ts'
-import { Glide } from './motion.ts'
-import type { ReleaseLine } from './notice.ts'
+} from '../../store/sources.ts'
+import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
+import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
+import { Field } from '../field.ts'
+import { Help, type Legend, overlay, type Topic, type TopicSpot } from '../help.ts'
+import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
+import type { Mouse } from '../keys.ts'
+import { Glide } from '../motion.ts'
+import type { ReleaseLine } from '../notice.ts'
 import {
   type Card,
   type Extra,
@@ -32,12 +32,12 @@ import {
   type RowSpot,
   rowSpot,
   SearchHint,
-} from './palette-prompt.ts'
-import { boxEdge, buttonOf, moreOf, tabOf } from './parts.ts'
-import { Screen } from './screen.ts'
-import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter, SPINNER } from './style.ts'
-import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './terminal.ts'
-import { type KeySpot, zone } from './zones.ts'
+} from '../palette-prompt.ts'
+import { boxEdge, buttonOf, moreOf, tabOf } from '../parts.ts'
+import { Screen } from '../screen.ts'
+import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter, SPINNER } from '../style.ts'
+import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from '../terminal.ts'
+import { type KeySpot, zone } from '../zones.ts'
 
 export interface Marketplace {
   source: string
