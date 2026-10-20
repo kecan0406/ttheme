@@ -17,6 +17,7 @@ import {
 import { clip, fit, pieces, spread, wrapText } from './ansi.ts'
 import { type Bar, barLine, type Hint } from './bar.ts'
 import { Field } from './field.ts'
+import { Help, type Legend, overlay, type Topic, type TopicSpot } from './help.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
 import type { Mouse } from './keys.ts'
 import { Glide } from './motion.ts'
@@ -116,7 +117,7 @@ type Side = 'cards' | 'panel' | 'form'
 
 type View = 'browse' | 'search'
 
-type Spot = RowSpot | KeySpot | HubSpot | { kind: 'page'; step: number; pane?: string } | { kind: 'form' }
+type Spot = RowSpot | KeySpot | HubSpot | TopicSpot | { kind: 'page'; step: number; pane?: string } | { kind: 'form' }
 
 const LEFT_MIN = 40
 const LEFT_MAX = 60
@@ -212,7 +213,7 @@ export class BrowsePanel {
   private listing: Listing | undefined
   private loading = false
   private loadError: string | undefined
-  private help = false
+  private help: Help | undefined
   private readonly live: boolean
 
   constructor(opts: BrowseOptions) {
@@ -403,8 +404,12 @@ export class BrowsePanel {
     }
 
     if (this.help) {
-      if (key === '?' || key === 'esc') {
-        this.help = false
+      const answer = this.help.key(key)
+
+      if (answer !== 'stay') {
+        const run = answer === 'run' ? this.help.chosen()?.run : undefined
+        this.help = undefined
+        run?.()
       }
 
       return
@@ -481,7 +486,7 @@ export class BrowsePanel {
         this.state = 'cancel'
       }
     } else if (key === '?') {
-      this.help = true
+      this.help = new Help(this.topics(), this.legend())
     } else if (page !== undefined) {
       this.move(page)
     } else if (key === 'up' || key === 'down') {
@@ -532,7 +537,7 @@ export class BrowsePanel {
     } else if (key === 'esc' || key === 'left') {
       this.closeSearch()
     } else if (key === '?') {
-      this.help = true
+      this.help = new Help(this.topics(), this.legend())
     } else if (page !== undefined) {
       this.move(page)
     } else if (key === 'up' || key === 'down') {
@@ -552,7 +557,7 @@ export class BrowsePanel {
     if (key === 'esc' || key === 'left') {
       this.back()
     } else if (key === '?') {
-      this.help = true
+      this.help = new Help(this.topics(), this.legend())
     } else if (key === 'tab' || key === 'shift-tab') {
       if (this.hub) {
         this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
@@ -774,7 +779,13 @@ export class BrowsePanel {
   }
 
   private pasted(text: string): void {
-    if (this.phase !== 'browse' || this.help || this.removing || this.leaving !== undefined) {
+    if (this.help) {
+      this.help.paste(text)
+
+      return
+    }
+
+    if (this.phase !== 'browse' || this.removing || this.leaving !== undefined) {
       return
     }
 
@@ -793,16 +804,27 @@ export class BrowsePanel {
   }
 
   private mouse(event: Mouse, screen: Screen): void {
+    const hit = screen.point(event)
+    const spot = hit?.target as Spot | undefined
+
     if (this.help) {
-      if (event.action === 'release') {
-        this.help = false
+      if (event.action === 'wheel') {
+        this.help.wheel(event.wheel)
+      } else if (event.action === 'press' && event.button === 'left' && spot?.kind === 'topic') {
+        this.help.point(spot.index)
+      } else if (event.action === 'release' && spot?.kind === 'key' && hit?.inside) {
+        this.key(spot.key)
+      } else if (event.action === 'release' && spot?.kind === 'topic') {
+        if (hit?.inside && event.count >= 2 && this.help.point(spot.index)) {
+          this.key('enter')
+        }
+      } else if (event.action === 'release') {
+        this.help = undefined
       }
 
       return
     }
 
-    const hit = screen.point(event)
-    const spot = hit?.target as Spot | undefined
     const free = this.phase === 'browse' && this.leaving === undefined && !this.removing
 
     if (event.action === 'wheel') {
@@ -1969,7 +1991,7 @@ export class BrowsePanel {
 
   private footer(): Bar {
     if (this.help) {
-      return { badge: 'HELP', keys: [], right: ['? esc', 'close'] }
+      return this.help.bar()
     }
 
     if (this.leaving !== undefined) {
@@ -2171,7 +2193,9 @@ export class BrowsePanel {
       ` ${barLine(this.p, this.footer(), width - 1)}`,
     ]
 
-    return (this.help ? this.helpBox(frame, cols, rows, frame.length - main.length - 1) : frame).join('\n')
+    return (
+      this.help ? overlay(frame, this.help.box(this.p, cols, rows), cols, rows, frame.length - main.length - 1) : frame
+    ).join('\n')
   }
 
   private cards(
@@ -2259,58 +2283,86 @@ export class BrowsePanel {
     return `${frame(`${left}─`)}${title}${frame('─'.repeat(fill))}${end}${frame(`${tail ? '─' : ''}${right}`)}`
   }
 
-  private helpRows(): Hint[] {
+  private topics(): Topic[] {
+    const screens: Topic[] = this.hub
+      ? [{ label: 'Screens', text: 'tab  ·  shift+tab', run: () => this.key('tab') }]
+      : []
+
+    const close: Topic = { label: 'Close', text: '?  esc', run: () => {} }
+
     if (this.showing === 'search') {
       return [
-        ['Move', '↑↓  home  end  pgup  pgdn'],
-        ['Filter', 'Any text  ·  bksp  ·  ctrl-u clears'],
-        ['Add', 'space  adds it  ·  again to undo'],
-        ['', 'enter  adds it and goes back to its card'],
-        ['Reload', 'ctrl+r  the list, which GitHub fills every half hour'],
-        ['Back', '←  esc  ·  ← Back'],
-        ...(this.hub ? [['Screens', 'tab  ·  shift+tab'] as Hint] : []),
-        ['Close', '?  esc'],
+        { label: 'Move', text: '↑↓  home  end  pgup  pgdn' },
+        { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl-u clears' },
+        { label: 'Add', text: 'space  adds it  ·  again to undo', run: () => this.take(false) },
+        { label: '', text: 'enter  adds it and goes back to its card', run: () => this.take(true) },
+        { label: 'Reload', text: 'ctrl+r  the list, which GitHub fills every half hour', run: () => this.loadIndex() },
+        { label: 'Back', text: '←  esc  ·  ← Back', run: () => this.closeSearch() },
+        ...screens,
+        close,
       ]
     }
 
+    const form = this.side === 'form'
+    const panel = this.side === 'panel'
+    const when = (on: boolean, run: () => void) => (on ? { run } : {})
+
     return [
-      ['Move', '↑↓  home  end  pgup  pgdn'],
-      ['Open', '→  enter  ·  a marketplace into the panel, a catalog'],
-      ['Back', '←  esc  ·  from the panel to the marketplaces'],
-      ['Pick', 'space  ·  a palette, a catalog, a marketplace'],
-      ['Filter', 'Any text  ·  bksp  ·  ctrl-u clears'],
-      ['Marketplace', '↓  below its palettes, to its own actions'],
-      ['', 'enter  updates it, turns auto-update on or off, removes it'],
-      ['Add', 'enter  on + Add marketplace  ·  a repository or a folder, in the panel'],
-      ['Search', 'enter  on Search marketplace  ·  finds one on GitHub'],
-      ['Update', `ctrl+r  on a palette marked ${MARKS.update}`],
-      ['Apply', 'enter  reviews and applies  ·  esc cancels'],
-      ...(this.hub ? [['Screens', 'tab  ·  shift+tab'] as Hint] : []),
-      ['Close', '?  esc'],
+      { label: 'Move', text: '↑↓  home  end  pgup  pgdn' },
+      {
+        label: 'Open',
+        text: '→  enter  ·  a marketplace into the panel, a catalog',
+        ...when(!form, () => this.key('right')),
+      },
+      {
+        label: 'Back',
+        text: '←  esc  ·  from the panel to the marketplaces',
+        ...when(panel || form, () => this.back()),
+      },
+      { label: 'Pick', text: 'space  ·  a palette, a catalog, a marketplace', ...when(!form, () => this.key(' ')) },
+      { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl-u clears' },
+      { label: 'Marketplace', text: '↓  below its palettes, to its own actions' },
+      { label: '', text: 'enter  updates it, turns auto-update on or off, removes it' },
+      {
+        label: 'Add',
+        text: 'enter  on + Add marketplace  ·  a repository or a folder, in the panel',
+        ...when(!form, () => {
+          this.back()
+          this.list.select('extra new')
+          this.openForm()
+        }),
+      },
+      {
+        label: 'Search',
+        text: 'enter  on Search marketplace  ·  finds one on GitHub',
+        ...when(!form, () => {
+          this.back()
+          this.list.select('extra search')
+          this.openSearch()
+        }),
+      },
+      {
+        label: 'Update',
+        text: `ctrl+r  on a palette marked ${MARKS.update}`,
+        ...when(panel, () => this.key('ctrl-r')),
+      },
+      {
+        label: 'Apply',
+        text: 'enter  reviews and applies  ·  esc cancels',
+        ...when(this.dirty(), () => this.finish()),
+      },
+      ...screens,
+      close,
     ]
   }
 
-  private helpBox(lines: string[], cols: number, rows: number, top: number): string[] {
-    const items = this.helpRows()
-    const pad = Math.max(...items.map(([label]) => label.length)) + 3
-    const w = Math.min(cols - 2, 6 + pad + Math.max(...items.map(([, text]) => cells(text))))
-    const x = Math.floor((cols - w) / 2)
-    const blank = `│${' '.repeat(w - 2)}│`
-
-    const box = [
-      `╭─ Help ${'─'.repeat(w - 9)}╮`,
-      blank,
-      ...items.map(([label, text]) => `│${fit(`  ${this.p.bold(label.padEnd(pad))}${text}`, w - 4)}  │`),
-      blank,
-      `╰${'─'.repeat(w - 2)}╯`,
+  private legend(): Legend {
+    return [
+      [MARKS.on, 'picked'],
+      [MARKS.off, 'not picked'],
+      [MARKS.update, 'has an update'],
+      [MARKS.auto, 'updates on its own'],
+      [MARKS.star, 'stars on GitHub'],
     ]
-
-    const y = Math.max(0, Math.min(Math.max(top, Math.floor((rows - box.length) / 2)), rows - 1 - box.length))
-
-    return lines.map((line, i) => {
-      const part = box[i - y]
-
-      return part === undefined ? line : `${clip(line, x)}${part}`
-    })
   }
 }

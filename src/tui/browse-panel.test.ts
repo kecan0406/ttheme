@@ -612,13 +612,18 @@ test('enter takes a marketplace into the panel, typing lands on the first match 
   assert.match(filtered.last, /^ ▌ {2}● official +│/m)
 })
 
-test('? shows the keys over the list until ? or esc, and the list takes no key meanwhile', async () => {
+test('? shows the keys and marks over the list until ? or esc, typing filters them, and enter runs the one chosen', async () => {
   const { last, frames, panel } = await drive(['?', ' ', '?', '\x1b'])
   assert.match(frames, /╭─ Help ─+╮/)
   assert.match(frames, /Marketplace {3}↓ {2}below its palettes, to its own actions/)
-  assert.match(frames, /\[HELP\] +\? esc close/)
+  assert.match(frames, /Marks +● picked {3}○ not picked {3}⇡ has an update/)
+  assert.match(frames, /\[HELP\] ↑↓ choose {3}enter run {3}type to filter +\? esc close/)
   assert.doesNotMatch(last, /Help/)
   assert.deepEqual([...panel.picked].sort(), ['alice@pastel/dusk', 'miku'])
+  const ran = await drive(['?', ...'search', '\r', '\x03'])
+  assert.match(ran.frames, /▶ Search +enter {2}on Search marketplace/)
+  assert.doesNotMatch(ran.frames.split('\u0001').at(-2) ?? '', /Pick {3,}space/)
+  assert.match(ran.last, /\[SEARCH\]/)
 })
 
 test('applying shows what the work reports and waits for it, and done stays until enter', async () => {
