@@ -333,19 +333,24 @@ each: ▌ the cursor's row, ◆ the palette worn or handled, ▶ the part in foc
 rows, ⇡ an update, ↻ auto-update, × a removal, ↶ taking one back, ★ stars, ⧉ a link, ⌕ search, ⇠ a bright that
 follows its normal, ◐ contrast, ■ a swatch, ▣ pictures.
 
-Three more parts are shared, so no screen draws its own. The key bar on a
-screen's last line is `barLine` (`src/tui/bar.ts`): a badge, a lead, the keys,
-the key on the right and the release line. The lead is a question or a notice,
-said in its tone through `toned` — `ok` for what worked, `warn` for what could
-not be done, `error` for a failure, plain for information — and the keys stay
-after it: a narrow window drops the release line first, then a note, then keys
-from the end, but never `?`, `enter` or the keys a screen lists in `keep`. `?`
-opens `Help` (`src/tui/help.ts`) over the screen: the topics of the mode it is
-in, each run with enter by the key it names wherever that key does something, a
-filter that typing fills, and a Marks line saying what the screen's glyphs
-mean, wrapped at its `·` parts and scrolled by lines in a short window. And a
-list its window cuts says what is out of sight with `moreOf` (`↑ 3 more`,
-`↓ 12 more`).
+Three more parts are shared. Browse and the palette editor draw their key bar
+with `barLine` (`src/tui/bar.ts`): a badge, a lead, the keys, the key on the
+right and the release line — find keeps its own `foot`, which places its links,
+and init's picker a hint line under its list. The lead is a question or a
+notice, said in its tone through `toned` — `ok` for what worked, `warn` for
+what could not be done, `error` for a failure, plain for information — and the
+keys stay after it: a narrow window drops the release line first, then a note,
+then keys from the end (never the first, `?`, `enter` or the ones a screen
+lists in `keep`), then the key on the right, and cuts what still does not fit.
+In Browse, the palette editor and find `?` opens `Help` (`src/tui/help.ts`): the
+topics of the mode the screen is in, where `↑` `↓` reach every topic and enter
+runs the key a topic names — Browse and the editor offer that only where the key
+does something —, a filter that typing fills, and a Marks line saying what the
+screen's marks mean. A long topic wraps at its `·` parts, the topics scroll in a
+short window, the box takes every click inside it, and the screen under it
+keeps no click zones but on its key bar (find clears its screen first, since
+its pictures would show through). And a list its window cuts says what is out
+of sight with `moreOf` (`↑ 3 more`, `↓ 12 more`).
 
 The shell layer draws with the same roles from `TTHEME_SGR` in
 `shell/ttheme.zsh` (`$TTHEME_SGR[dim]` opens, `$TTHEME_SGR[/dim]` closes).
@@ -376,7 +381,7 @@ panel below, preview's settings, the palette editor and find's grid.
 | `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel, asking first when something is staged; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
 | `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter or the `+ Add marketplace` form's source, clear it |
-| `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and it names the marks the screen draws |
+| `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks line says what browse's marks mean |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
 | `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a catalog, stage its update; in the search, load the marketplace list again |
@@ -389,8 +394,8 @@ The settings panel preview opens over its list and the questions browse asks
 take the keys they list on their own last line while they are open. `find`
 is a screen of its own and keeps its own keys, and so does the palette editor
 (`new`, `edit`, and the Edit palette button of preview's panel); in both, as in
-browse, `?` opens the same help (`src/tui/help.ts`) over the screen with the keys
-of the mode it is in, which docs/usage.md describes. The editor's esc, once something changed, opens a
+browse, `?` opens the same help (`src/tui/help.ts`) with the keys of the mode
+the screen is in, which docs/usage.md describes. The editor's esc, once something changed, opens a
 Save changes? dialog (`y` saves and leaves, `n` leaves without saving, esc keeps
 editing), and ctrl+c leaves from anywhere in it the same way — a tune it
 interrupts is kept, so it counts as a change — while a second ctrl+c in the
@@ -472,15 +477,19 @@ folded catalog still reports how many of its palettes are picked, and the
 filtered total counts what matches, not what fits on screen. The cursor and the
 scroll window are the only things allowed to read the drawn rows.
 
-A question names what it acts on and what stays (`Remove alice@pastel? Its
-installed palettes stay installed`), and a no is answered too: the bar leads
-with what was kept (`alice@pastel kept`) until the next key.
+A question says what it acts on (`Remove alice@pastel? Its installed palettes
+stay installed`, `Apply 3 changes before you leave?`, the editor's Save
+changes? counting the colors and pictures changed), and a no is answered too:
+the bar leads with what was kept (`alice@pastel kept`) until the next key.
 
 Text someone else wrote — a marketplace's files, the marketplace index, a
 booru's answer, the names release, an error message built from any of them —
-goes through `src/core/text.ts` before a screen or a message shows it: `inert`
-for one line, `inertLines` for a message that keeps its line breaks, and
-`quoted` or `escaped` for a value an error echoes, which write each control or
-direction character as `\uXXXX`. None of them lets an escape sequence reach the
-terminal or a direction mark reorder what it touches, and a reader refuses such
-a character where a value has no use for one (`textProblem`).
+has every control and direction character dropped or spelled out before a
+screen or a message shows it, so no escape sequence reaches the terminal and
+no direction mark reorders what it touches: through `src/core/text.ts` in
+Browse, the editor's notices, the readers and the CLI's errors (`inert` for one
+line, `inertLines` for a message that keeps its line breaks, and `quoted` or
+`escaped` for a value an error echoes), through `Line.put` and `linked` in
+find, and through `aliasesZsh` and the picture's conf lines for preview; a
+reader refuses such a character where a value has no use for one
+(`textProblem`).

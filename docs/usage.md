@@ -382,8 +382,8 @@ preview's: `↑`/`↓`, page up/down and home/end move through it, `→` or `ent
 on a marketplace moves into its panel, where `←`/`→` and `enter` close and open
 a catalog, `←` at the top level or `esc` comes back to the marketplaces, `esc`
 clears the filter before anything else, `?` opens the help — type to filter it,
-`↑`/`↓` and enter run what it lists, and it says what each mark means — and the
-last line names the keys of the row you are on.
+`↑`/`↓` and enter run what it lists, and its Marks line says what Browse's marks
+mean — and the last line names the keys of the row you are on.
 
 Every marketplace you added is a card of three lines, as Claude Code draws its
 marketplaces: its name, where it comes from — `Built in` for `official`, which
