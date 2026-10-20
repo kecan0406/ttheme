@@ -15,7 +15,7 @@ import {
   TOPIC,
 } from '../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from './ansi.ts'
-import { type Bar, barLine, type Hint } from './bar.ts'
+import { type Bar, barLine, type Hint, type Tone, toned } from './bar.ts'
 import { Field } from './field.ts'
 import { Help, type Legend, overlay, type Topic, type TopicSpot } from './help.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
@@ -209,6 +209,7 @@ export class BrowsePanel {
   private adding: string | undefined
   private formError: string | undefined
   private leaving: { to: number | undefined } | undefined
+  private notice: { text: string; tone: Tone } | undefined
   private goto: number | undefined
   private listing: Listing | undefined
   private loading = false
@@ -397,6 +398,8 @@ export class BrowsePanel {
   }
 
   private key(key: string): void {
+    this.notice = undefined
+
     if (key === 'ctrl-c') {
       this.interrupt()
 
@@ -433,9 +436,7 @@ export class BrowsePanel {
     }
 
     if (this.removing) {
-      if (key === 'esc') {
-        this.removing = undefined
-      } else if (/^[yn]$/i.test(key)) {
+      if (key === 'esc' || /^[yn]$/i.test(key)) {
         this.answer(key.toLowerCase() === 'y')
       }
 
@@ -807,6 +808,10 @@ export class BrowsePanel {
     const hit = screen.point(event)
     const spot = hit?.target as Spot | undefined
 
+    if (event.action === 'press') {
+      this.notice = undefined
+    }
+
     if (this.help) {
       if (event.action === 'wheel') {
         this.help.wheel(event.wheel)
@@ -1172,6 +1177,8 @@ export class BrowsePanel {
 
     if (marketplace && yes) {
       this.remove(marketplace)
+    } else if (marketplace) {
+      this.notice = { text: `${marketplace.id} kept`, tone: 'ok' }
     }
   }
 
@@ -2055,6 +2062,7 @@ export class BrowsePanel {
 
     return {
       badge: filter ? 'BROWSE (FILTER)' : 'BROWSE',
+      ...(this.notice ? { lead: toned(this.p, this.notice.tone, this.notice.text) } : {}),
       keys: [...(this.side === 'panel' ? this.panelKeys(apply) : this.cardKeys(apply)), ...tail],
       right: filter ? ['esc', 'clear filter'] : this.side === 'panel' ? ['esc', 'back'] : ['esc', 'cancel'],
       ...(this.standing ? { standing: this.standing } : {}),

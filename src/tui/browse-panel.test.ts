@@ -279,6 +279,7 @@ test('the Remove marketplace row asks first, and on yes takes the marketplace of
   assert.match(gone.last, /^ ▌ {2}● official +│/m)
   const kept = await drive([DOWN, RIGHT, UP, '\r', 'n', '\x1b', '\x1b'])
   assert.deepEqual(kept.panel.removes, [])
+  assert.match(kept.frames, /\[BROWSE\] alice@pastel kept {3}enter remove/)
   assert.match(kept.last, /^ ▌ {2}● alice@pastel +│/m)
 })
 
