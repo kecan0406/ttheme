@@ -1,24 +1,24 @@
 ◆ Edit palette · konata                                                       ✗ 5 misses in the gate
     ╭─ Help ───────────────────────────────────────────────────────────────────────────────────╮
-╭─ B│ ⌕ Type to filter                                                                         │
-│▌ B│                                                                                          │
-│  F│                                                                                          │
-│  C│   Move        ↑↓  a slot  ·  ←→  normal or bright  ·  home  end                          │
-│  S│               pgup  the base colors  ·  pgdn  the ANSI ones                              │
-├─ A│ ▶ Misses      n  N  the next and last slot the gate misses                               │
-│  B│   Tune        enter  tab  opens the picker under the slot                                │21
-│  R│               ↑↓  lightness  ·  ←→  chroma  ·  ⇧←→  hue by 5  ·  ,  .  hue by 1          │14
-│  G│               pgup  pgdn  lightness ×5  ·  home  end  the ends  ·  0-9  jump             │3°
-│  Y│               enter  keeps  ·  a click outside the picker keeps                          │0:1
-│  B│               esc  undoes every slot the tune moved                                      │
-│  M│   Contrast    tab  while tuning                                                          │
-│  C│               ◐ moves lightness until the ratio to the color it is read against changes  │
-│  W│               home  the gate’s floor  ·  1-9  that ratio                                 │
-╰───│ ↓ 18 more                                                                                │
-╭─ G│                                                                                          │ ⇧←→
-│  ✗│   Marks       ✗ misses the gate   ● changed   ⇠ follows its normal   ○ where it was      │
+╭─  │ ⌕ Type to filter                                                                         │
+│▌  │                                                                                          │
+│   │                                                                                          │
+│   │   Move        ↑↓  a slot  ·  ←→  normal or bright  ·  home  end                          │
+│   │               pgup  the base colors  ·  pgdn  the ANSI ones                              │
+├─  │ ▶ Misses      n  N  the next and last slot the gate misses                               │
+│   │   Tune        enter  tab  opens the picker under the slot                                │ 1
+│   │               ↑↓  lightness  ·  ←→  chroma  ·  ⇧←→  hue by 5  ·  ,  .  hue by 1          │ 4
+│   │               pgup  pgdn  lightness ×5  ·  home  end  the ends  ·  0-9  jump             │ °
+│   │               enter  keeps  ·  a click outside the picker keeps                          │ :1
+│   │               esc  undoes every slot the tune moved                                      │
+│   │   Contrast    tab  while tuning                                                          │
+│   │               ◐ moves lightness until the ratio to the color it is read against changes  │
+│   │               home  the gate’s floor  ·  1-9  that ratio                                 │
+╰── │ ↓ 18 more                                                                                │
+╭─  │                                                                                          │ ⇧←→
+│   │   Marks       ✗ misses the gate   ● changed   ⇠ follows its normal   ○ where it was      │
 │   │               ◐ contrast                                                                 │
-│  ↓│                                                                                          │
-╰───╰──────────────────────────────────────────────────────────────────────────────────────────╯
+│   │                                                                                          │
+╰── ╰──────────────────────────────────────────────────────────────────────────────────────────╯
 
 [HELP] ↑↓ choose   enter run   type to filter                                            ? esc close

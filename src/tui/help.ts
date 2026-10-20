@@ -276,11 +276,13 @@ export function overlay(lines: string[], box: string[], cols: number, rows: numb
   const w = Math.max(0, ...box.map((line) => cells(line)))
   const x = Math.max(0, Math.floor((cols - w) / 2))
   const y = Math.max(0, Math.min(Math.max(top, Math.floor((rows - box.length) / 2)), rows - 1 - box.length))
+  const left = x > 0 ? ' ' : ''
+  const right = x + w < cols ? ' ' : ''
 
   return lines.map((line, i) => {
     const part = box[i - y]
     const under = i === lines.length - 1 ? line : unzoned(line)
 
-    return part === undefined ? under : cover(under, x, part)
+    return part === undefined ? under : cover(under, x - left.length, `${left}${part}${right}`)
   })
 }

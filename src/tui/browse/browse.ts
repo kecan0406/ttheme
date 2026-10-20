@@ -1205,7 +1205,7 @@ export class BrowsePanel {
 
     const head =
       rows >= ROOMY
-        ? [` ${this.heading()}`, ...this.searchBox(cols - 3).map((line) => ` ${line}`)]
+        ? [` ${this.heading()}`, ...this.searchBox(width - 1).map((line) => ` ${line}`)]
         : [spread(` ${this.p.dim(MARKS.search)} ${this.searchText()}`, this.p.dim(this.counts()), width)]
 
     const chrome = head.length + 3 + (wide ? 0 : 1) + (this.hub ? 1 : 0)
@@ -1290,7 +1290,7 @@ export class BrowsePanel {
     if (this.showing === 'search') {
       return [
         { label: 'Move', text: '↑↓  home  end  pgup  pgdn' },
-        { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl-u clears' },
+        { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl+u clears' },
         { label: 'Add', text: 'space  adds it  ·  again to undo', run: () => this.take(false) },
         { label: '', text: 'enter  adds it and goes back to its card', run: () => this.take(true) },
         {
@@ -1321,7 +1321,7 @@ export class BrowsePanel {
         ...when(panel || form, () => this.back()),
       },
       { label: 'Pick', text: 'space  ·  a palette, a catalog, a marketplace', ...when(!form, () => this.key(' ')) },
-      { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl-u clears' },
+      { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl+u clears' },
       { label: 'Marketplace', text: '↓  below its palettes, to its own actions' },
       { label: '', text: 'enter  updates it, turns auto-update on or off, removes it' },
       {

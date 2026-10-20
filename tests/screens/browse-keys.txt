@@ -1,13 +1,13 @@
  Browse (6/6 · 2 picked)
- ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ⌕╭─ Help ───────────────────────────────────────────────────────────────────────────────────╮ │
- ╰──│ ⌕ Type to filter                                                                         │─╯
-    │                                                                                          │──╮
+ ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │  ╭─ Help ───────────────────────────────────────────────────────────────────────────────────╮  │
+ ╰─ │ ⌕ Type to filter                                                                         │ ─╯
+    │                                                                                          │ ─╮
     │   Move          ↑↓  home  end  pgup  pgdn                                                │  │
     │ ▶ Open          →  enter  ·  a marketplace into the panel, a catalog                     │  │
     │   Back          ←  esc  ·  from the panel to the marketplaces                            │  │
  ▌  │   Pick          space  ·  a palette, a catalog, a marketplace                            │  │
- ▌  │   Filter        Any text  ·  bksp  ·  ctrl-u clears                                      │  │
+ ▌  │   Filter        Any text  ·  bksp  ·  ctrl+u clears                                      │  │
  ▌  │   Marketplace   ↓  below its palettes, to its own actions                                │  │
     │                 enter  updates it, turns auto-update on or off, removes it               │  │
     │   Add           enter  on + Add marketplace  ·  a repository or a folder, in the panel   │  │
@@ -18,7 +18,7 @@
     │                                                                                          │  │
     │   Marks         ● picked   ○ not picked   ▸ ▾ a catalog, closed or open                  │  │
     │                 ⇡ has an update   ↻ updates on its own   ✗ misses the gate               │  │
-    │                 ★ stars on GitHub                                                        │──┤
+    │                 ★ stars on GitHub                                                        │ ─┤
     │                                                                                          │  │
-    ╰──────────────────────────────────────────────────────────────────────────────────────────╯──╯
+    ╰──────────────────────────────────────────────────────────────────────────────────────────╯ ─╯
  [HELP] ↑↓ choose   enter run   type to filter                                          ? esc close
