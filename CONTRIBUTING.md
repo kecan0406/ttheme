@@ -353,12 +353,15 @@ its pictures would show through). And a list its window cuts says what is out
 of sight with `moreOf` (`↑ 3 more`, `↓ 12 more`).
 
 The shell layer draws with the same roles from `TTHEME_SGR` in
-`shell/ttheme.zsh` (`$TTHEME_SGR[dim]` opens, `$TTHEME_SGR[/dim]` closes).
-`src/tui/style.test.ts` holds that table to `ROLES` and fails on an SGR written
-anywhere else in `src/` or `shell/` (a truecolor `printf` format in the shell
-layer is a palette's color and passes); it also checks that every role closes
-what it opens, that slot 6 and the surfaces hold on every official palette, and
-that no glyph in `MARKS` means two things. The screens in `tests/screens/` run
+`shell/ttheme.zsh` (`$TTHEME_SGR[dim]` opens, `$TTHEME_SGR[/dim]` closes) and
+the same marks from `TTHEME_MARKS` beside it (`$TTHEME_MARKS[current]`).
+`src/tui/style.test.ts` holds the first table to `ROLES` and the second to
+`MARKS`, fails on an SGR written anywhere else in `src/` or `shell/` (a
+truecolor `printf` format in the shell layer is a palette's color and passes)
+and on a mark written literally in the shell layer — all but ↑ ↓ × ■ · …, which
+also read as text there; it also checks that every role closes what it opens,
+that slot 6 and the surfaces hold on every official palette, and that no glyph
+in `MARKS` means two things. The screens in `tests/screens/` run
 under `NO_COLOR`, so look at a change to color in a real terminal too.
 
 ### Keys a screen takes

@@ -244,13 +244,13 @@ before.
 
 With only this directory's own pin to drop it drops it at once. Otherwise it
 shows a bar under the prompt — `←`/`→` choose, enter unpins, esc keeps
-everything — above the pins involved as a tree, where `✕ unpin` marks what the
+everything — above the pins involved as a tree, where `× unpin` marks what the
 choice drops and the last line says what this directory will wear afterwards:
 
 ```
 [UNPIN] [This directory]  And below   ~/work    ←→ choose · enter unpin · esc keep
 ~/work            konata  and below
-└── site/ ← here  kita    this directory  ✕ unpin
+└── site/ ← here  kita    this directory  × unpin
     └── docs/     rei     and below
 Then here · konata pinned to ~/work and below
 ```
