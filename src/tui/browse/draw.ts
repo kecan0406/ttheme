@@ -2,11 +2,18 @@ import { cells } from '../../core/text.ts'
 import { isRemote, OFFICIAL, parseSource, shownSource } from '../../store/sources.ts'
 import { fit } from '../ansi.ts'
 import { rowSpot } from '../palette-prompt.ts'
-import { boxEdge, buttonOf } from '../parts.ts'
+import { boxEdge, buttonOf, moreOf } from '../parts.ts'
 import { MARKS, type Paint } from '../style.ts'
-import type { Detail } from './types.ts'
+import { zone } from '../zones.ts'
+import type { Detail, Spot } from './types.ts'
 
 export const EMPTY: Detail = { title: '', lines: [], brief: '' }
+
+export const MIN_ITEMS = 3
+
+export function more(p: Paint, step: number, count: number, pane?: string): string {
+  return p.dim(zone({ kind: 'page', step, ...(pane ? { pane } : {}) } satisfies Spot, moreOf(step, count)))
+}
 
 export function typedSource(text: string): string | undefined {
   const typed = text.trim()
