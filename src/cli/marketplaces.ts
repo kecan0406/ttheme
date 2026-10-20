@@ -5,7 +5,7 @@ import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
 import { listed, type PaletteEntry, parseManifest } from '../core/manifest.ts'
 import { gateLines } from '../core/own.ts'
-import { ago, counted } from '../core/text.ts'
+import { ago, counted, escaped, inertLines } from '../core/text.ts'
 import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf, unknownKeys } from '../core/theme.ts'
 import { ROOT } from '../root.ts'
 import { idOf, nameOf, readMarketplaces } from '../store/available.ts'
@@ -459,7 +459,7 @@ function checkMarketplace(arg: string | undefined): number {
   try {
     info = localIdentity(dir)
   } catch (error) {
-    console.error(`  ✗ ${(error as Error).message}`)
+    console.error(`  ✗ ${inertLines((error as Error).message)}`)
 
     return 1
   }
@@ -468,16 +468,16 @@ function checkMarketplace(arg: string | undefined): number {
   const owner = doc.owner as Record<string, unknown>
 
   for (const key of Object.keys(doc).filter((k) => !MARKETPLACE_KEYS.includes(k))) {
-    warnings.push(`${MARKETPLACE_FILE}: unknown key ${key} — ttheme ignores it`)
+    warnings.push(`${MARKETPLACE_FILE}: unknown key ${escaped(key)} — ttheme ignores it`)
   }
 
   for (const key of Object.keys(owner).filter((k) => !OWNER_KEYS.includes(k))) {
-    warnings.push(`${MARKETPLACE_FILE}: unknown key owner.${key} — ttheme ignores it`)
+    warnings.push(`${MARKETPLACE_FILE}: unknown key owner.${escaped(key)} — ttheme ignores it`)
   }
 
   for (const [i, table] of (Array.isArray(doc.catalog) ? (doc.catalog as Record<string, unknown>[]) : []).entries()) {
     for (const key of Object.keys(table).filter((k) => !CATALOG_KEYS.includes(k))) {
-      warnings.push(`${MARKETPLACE_FILE}: unknown key catalog[${i}].${key} — ttheme ignores it`)
+      warnings.push(`${MARKETPLACE_FILE}: unknown key catalog[${i}].${escaped(key)} — ttheme ignores it`)
     }
   }
 
@@ -488,7 +488,7 @@ function checkMarketplace(arg: string | undefined): number {
   const id = marketplaceId(info)
 
   const entries = readMarketplaceDir(dir, id, officialFor(configHome()), (where, message) =>
-    errors.push(`${relative(dir, where)}: ${message.replace(`${basename(where)}: `, '')}`),
+    errors.push(`${escaped(relative(dir, where))}: ${message.replace(`${escaped(basename(where))}: `, '')}`),
   )
 
   for (const file of marketplaceFiles(dir)) {
@@ -501,7 +501,7 @@ function checkMarketplace(arg: string | undefined): number {
     }
 
     for (const key of keys) {
-      warnings.push(`${relative(dir, file.path)}: unknown key ${key} — ttheme ignores it`)
+      warnings.push(`${escaped(relative(dir, file.path))}: unknown key ${escaped(key)} — ttheme ignores it`)
     }
   }
 
@@ -528,11 +528,11 @@ function checkMarketplace(arg: string | undefined): number {
   }
 
   for (const line of errors) {
-    console.error(`  ✗ ${line}`)
+    console.error(`  ✗ ${inertLines(line)}`)
   }
 
   for (const line of warnings) {
-    console.log(`  ! ${line}`)
+    console.log(`  ! ${inertLines(line)}`)
   }
 
   const tally = (n: number, what: string) => `${n} ${what}${n === 1 ? '' : 's'}`
