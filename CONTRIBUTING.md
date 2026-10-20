@@ -267,6 +267,7 @@ mise run tui                  # compare (part of `mise run ci`)
 mise run tui 'theme-*'        # compare only the scenarios named, globs too
 mise run tui --update         # accept what the TUIs draw now (names narrow it too)
 mise run look preview-open 120x34   # draw one scenario, colors on, to a PNG and a text grid
+mise run look kit:bar 110x30        # draw one shared part in every state (tests/kit.ts)
 ```
 
 ### Under the Node screens
