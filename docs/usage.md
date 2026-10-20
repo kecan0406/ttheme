@@ -396,7 +396,7 @@ its foot describes the palette, catalog or action under the cursor: whether a
 palette is installed, its gate score and first failing rule, its pictures. `space` marks a
 palette (a catalog, or a whole marketplace from its card); unmarking one you have
 is how you drop it. A palette whose marketplace changed it since you installed
-it is marked `↑`, and `ctrl+r` stages its update — or every one under a catalog.
+it is marked `⇡`, and `ctrl+r` stages its update — or every one under a catalog.
 Typing filters every marketplace at once (a query has no spaces, `space` is the
 pick key): a card with nothing matching hides, the others say how many match
 (`2 of 108 match`), and the cursor lands on the first match inside the panel.
@@ -506,7 +506,7 @@ from there. The official palettes come with ttheme, so this is how they change.
 Then it refetches every other marketplace you added; `ttheme update alice@pastel`
 refetches that one alone. A palette you installed from a marketplace keeps the
 colors it was installed with (`~/.config/ttheme/kept.json`) until you take its
-update: `update` names the ones that have one, Browse marks them `↑`, and
+update: `update` names the ones that have one, Browse marks them `⇡`, and
 `ctrl+r` there stages one — or everything under a catalog — for enter to
 apply, pictures it newly lists included. A palette that leaves its marketplace stays
 installed from that copy; Browse marks it.

@@ -8,6 +8,7 @@ import { cells as columns } from '../../core/text.ts'
 import { POSITIONS } from '../../core/theme.ts'
 import type { Framing } from '../../pictures/backdrop.ts'
 import { linked } from '../ansi.ts'
+import { moreOf } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
 import { ansiBg, ansiFg, MARKS, open, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
 import { hintKey, type KeySpot, type Zone } from '../zones.ts'
@@ -775,7 +776,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
     const style = on ? B : D
 
     if (on) {
-      lines[r]?.put(col, '▶', accent, undefined, { kind: 'field', field: k })
+      lines[r]?.put(col, MARKS.focus, accent, undefined, { kind: 'field', field: k })
     }
 
     lines[r]?.put(col + 2, label, style, undefined, { kind: 'field', field: k })
@@ -1280,7 +1281,7 @@ function grid(
 
   const above = view.top * perRow
   const more = view.tiles.length - (view.top + rowsVis) * perRow
-  const scroll = [...(above > 0 ? [`↑ ${above} above`] : []), ...(more > 0 ? [`↓ ${more} more`] : [])]
+  const scroll = [...(above > 0 ? [moreOf(-1, above)] : []), ...(more > 0 ? [moreOf(1, more)] : [])]
 
   if (scroll.length > 0) {
     lines[rows - 2]?.put(0, scroll.join('   '), D)
@@ -1705,7 +1706,7 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
     const focused = i === at
 
     if (focused) {
-      lines[r]?.put(x + 2, '▶', accent)
+      lines[r]?.put(x + 2, MARKS.focus, accent)
     }
 
     lines[r]?.mark(x + 2, lead - 3, { kind: 'setting', index: i })
@@ -1735,7 +1736,7 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
 
   if (linkLine) {
     if (at === link) {
-      linkLine.put(x + 2, '▶', accent)
+      linkLine.put(x + 2, MARKS.focus, accent)
     }
 
     const end = linkLine.put(x + 3, view.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? glow : B, undefined, {

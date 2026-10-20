@@ -13,7 +13,7 @@
      │                enter  updates it, turns auto-update on or off, removes it              │
      │  Add           enter  on + Add marketplace  ·  a repository or a folder, in the panel  │
      │  Search        enter  on Search marketplace  ·  finds one on GitHub                    │
-     │  Update        ctrl+r  on a palette marked ↑                                           │
+     │  Update        ctrl+r  on a palette marked ⇡                                           │
      │  Apply         enter  reviews and applies  ·  esc cancels                              │
      │  Close         ?  esc                                                                  │
      │                                                                                        │

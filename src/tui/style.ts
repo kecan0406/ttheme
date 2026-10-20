@@ -24,6 +24,7 @@ export type Surface = keyof typeof SURFACES
 export const MARKS = {
   gutter: '▌',
   current: '◆',
+  focus: '▶',
   signature: '✦',
   closed: '▸',
   opened: '▾',

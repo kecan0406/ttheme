@@ -126,7 +126,7 @@ removal and switches its auto-update, and enter applies all of it with the
 palettes you picked. The official marketplace comes with ttheme and updates with it;
 a repository added with `ttheme marketplace add` asks whether its list updates on its own, and a
 palette you installed from it keeps its colors until you take its update —
-`ctrl+r` on a palette marked `↑` in Browse. Nobody reviews a marketplace. Its
+`ctrl+r` on a palette marked `⇡` in Browse. Nobody reviews a marketplace. Its
 palettes are colors and post numbers, never code, and the contrast gate's
 numbers are shown for them but never enforced — only the official marketplace is
 held to the gate. `ttheme update` updates ttheme and refreshes every marketplace now; `ttheme marketplace

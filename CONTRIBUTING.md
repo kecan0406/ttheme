@@ -328,7 +328,7 @@ what color said: `[Preview]` for the tab that is on, `[EDIT]` for a badge.
 that hand text back unchanged when color is off, and `src/tui/parts.ts` holds
 the parts several screens draw: `tabOf`, `pillOf`, `hintOf`, `checkOf`,
 `boxEdge` and `boxed`. Glyphs that mean a state are in `MARKS`, one meaning
-each: ▌ the cursor's row, ◆ the palette worn or handled, ✦ a signature slot,
+each: ▌ the cursor's row, ◆ the palette worn or handled, ▶ the part in focus, ✦ a signature slot,
 ▸ ▾ a closed and an open catalog, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more
 rows, ⇡ an update, ↻ auto-update, × a removal, ↶ taking one back, ★ stars, ⧉ a link, ⌕ search, ⇠ a bright that
 follows its normal, ◐ contrast, ■ a swatch, ▣ pictures.
@@ -365,7 +365,7 @@ panel below, preview's settings, the palette editor and find's grid.
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
-| `ctrl+r` | — | in a marketplace's panel, on a palette marked `↑` or a catalog, stage its update; in the search, load the marketplace list again |
+| `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a catalog, stage its update; in the search, load the marketplace list again |
 | `shift+←` `shift+→` | example scene | — |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |

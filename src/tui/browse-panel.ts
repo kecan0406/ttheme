@@ -15,6 +15,7 @@ import {
   TOPIC,
 } from '../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from './ansi.ts'
+import { type Bar, barLine, type Hint } from './bar.ts'
 import { Field } from './field.ts'
 import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from './hub.ts'
 import type { Mouse } from './keys.ts'
@@ -31,7 +32,7 @@ import {
   rowSpot,
   SearchHint,
 } from './palette-prompt.ts'
-import { boxEdge, buttonOf, hintOf, pillOf, tabOf } from './parts.ts'
+import { boxEdge, buttonOf, moreOf, tabOf } from './parts.ts'
 import { Screen } from './screen.ts'
 import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter, SPINNER } from './style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './terminal.ts'
@@ -116,17 +117,6 @@ type Side = 'cards' | 'panel' | 'form'
 type View = 'browse' | 'search'
 
 type Spot = RowSpot | KeySpot | HubSpot | { kind: 'page'; step: number; pane?: string } | { kind: 'form' }
-
-type Hint = [string, string]
-
-interface Bar {
-  badge: string
-  lead?: string
-  note?: string
-  keys: Hint[]
-  right?: Hint
-  standing?: ReleaseLine
-}
 
 const LEFT_MIN = 40
 const LEFT_MAX = 60
@@ -1687,13 +1677,13 @@ export class BrowsePanel {
     this.offset = top
     const shown = lines.slice(top, top + room)
     const below = lines.length - top - shown.length
-    const body = [top > 0 ? ` ${this.more(-1, `↑ ${top} more`)}` : '', ...shown]
+    const body = [top > 0 ? ` ${this.more(-1, top)}` : '', ...shown]
 
     while (body.length < room + 1) {
       body.push('')
     }
 
-    body.push(below > 0 ? ` ${this.more(1, `↓ ${below} more`)}` : '')
+    body.push(below > 0 ? ` ${this.more(1, below)}` : '')
     const scroll: Hint[] = most > 0 ? [['↑↓', 'scroll']] : []
 
     const bar: Bar = review
@@ -1706,46 +1696,14 @@ export class BrowsePanel {
       ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
       fit(` ${title}`, width, false),
       ...body.map((line) => fit(line, width, false)),
-      ` ${this.keyBar(bar, width - 1)}`,
+      ` ${barLine(this.p, bar, width - 1)}`,
     ]
       .slice(0, rows)
       .join('\n')
   }
 
-  private keyBar(bar: Bar, width: number): string {
-    const badge = `${pillOf(this.p, bar.badge)}${this.color ? '  ' : ' '}`
-    const hint = ([key, label]: Hint) => hintOf(this.p, key, label)
-    let { note, keys, right, standing } = bar
-
-    for (;;) {
-      const line = `${badge}${[bar.lead ?? '', note ? this.p.dim(note) : '', ...keys.map(hint)].filter(Boolean).join('   ')}`
-
-      const mark = standing
-        ? (standing.standing === 'newer' || standing.standing === 'failed' ? this.p.warn : this.p.dim)(standing.line)
-        : ''
-
-      const tail = [right ? hint(right) : '', mark].filter(Boolean).join('   ')
-
-      if (cells(line) + (tail ? 3 + cells(tail) : 0) <= width) {
-        return tail ? spread(line, tail, width) : fit(line, width, false)
-      }
-
-      if (standing) {
-        standing = undefined
-      } else if (note) {
-        note = undefined
-      } else if (keys.length > 2 || (!right && keys.length > 1)) {
-        keys = keys.toSpliced(-2, 1)
-      } else if (right) {
-        right = undefined
-      } else {
-        return fit(line, width, false)
-      }
-    }
-  }
-
-  private more(step: number, text: string, pane?: string): string {
-    return this.p.dim(zone({ kind: 'page', step, ...(pane ? { pane } : {}) } satisfies Spot, text))
+  private more(step: number, count: number, pane?: string): string {
+    return this.p.dim(zone({ kind: 'page', step, ...(pane ? { pane } : {}) } satisfies Spot, moreOf(step, count)))
   }
 
   private counts(): string {
@@ -2023,6 +1981,7 @@ export class BrowsePanel {
           ['n', 'discard'],
         ],
         right: ['esc', 'stay'],
+        keep: ['y', 'n'],
       }
     }
 
@@ -2035,6 +1994,7 @@ export class BrowsePanel {
           ['n', 'keep'],
         ],
         right: ['esc', 'back'],
+        keep: ['y', 'n'],
       }
     }
 
@@ -2208,7 +2168,7 @@ export class BrowsePanel {
       ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
       ...head.map((line) => fit(line, width, false)),
       ...main,
-      ` ${this.keyBar(this.footer(), width - 1)}`,
+      ` ${barLine(this.p, this.footer(), width - 1)}`,
     ]
 
     return (this.help ? this.helpBox(frame, cols, rows, frame.length - main.length - 1) : frame).join('\n')
@@ -2226,11 +2186,7 @@ export class BrowsePanel {
       body.push('')
     }
 
-    const list = [
-      above > 0 ? ` ${this.more(-1, `↑ ${above} more`)}` : '',
-      ...body,
-      below > 0 ? ` ${this.more(1, `↓ ${below} more`)}` : '',
-    ]
+    const list = [above > 0 ? ` ${this.more(-1, above)}` : '', ...body, below > 0 ? ` ${this.more(1, below)}` : '']
 
     if (!wide) {
       return [
@@ -2278,12 +2234,12 @@ export class BrowsePanel {
       tree.push('')
     }
 
-    const down = below > 0 ? this.more(1, `↓ ${below} more`, 'panel') : ''
+    const down = below > 0 ? this.more(1, below, 'panel') : ''
 
     return [
       this.edge(width, 'top', title, '', lit),
       ...head.map(side),
-      side(above > 0 ? this.more(-1, `↑ ${above} more`, 'panel') : ''),
+      side(above > 0 ? this.more(-1, above, 'panel') : ''),
       ...tree.map(side),
       ...(reserved > 0 ? [this.edge(width, 'mid', '', down, lit)] : []),
       ...foot.map(side),
@@ -2327,7 +2283,7 @@ export class BrowsePanel {
       ['', 'enter  updates it, turns auto-update on or off, removes it'],
       ['Add', 'enter  on + Add marketplace  ·  a repository or a folder, in the panel'],
       ['Search', 'enter  on Search marketplace  ·  finds one on GitHub'],
-      ['Update', 'ctrl+r  on a palette marked ↑'],
+      ['Update', `ctrl+r  on a palette marked ${MARKS.update}`],
       ['Apply', 'enter  reviews and applies  ·  esc cancels'],
       ...(this.hub ? [['Screens', 'tab  ·  shift+tab'] as Hint] : []),
       ['Close', '?  esc'],

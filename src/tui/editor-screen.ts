@@ -8,6 +8,7 @@ import { cells } from '../core/text.ts'
 import { colorQuery, SLOT_CODES, slotColors } from '../terminals/osc.ts'
 import { CLEAR } from '../terminals/terminal.ts'
 import { fit, spread, wrapText } from './ansi.ts'
+import { barLine, type Hint } from './bar.ts'
 import { type Look, pictureArea, planeAt, renderBuilder } from './builder-screen.ts'
 import type { Backdrop } from './editor-backdrop.ts'
 import {
@@ -539,13 +540,13 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
   ]
 }
 
-const KEEP = new Set(['enter', 's', '?', 'g', 'a', 'i'])
+const KEEP = ['s', 'g', 'a', 'i']
 
 function footer(p: Paint, e: PaletteEditor, width: number): string {
   let badge = 'EDIT'
   let lead = ''
-  let keys: [string, string][] = []
-  let right = ''
+  let keys: Hint[] = []
+  let right: Hint | undefined
 
   if (e.quitting) {
     badge = 'EDIT (QUIT)'
@@ -556,7 +557,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['y', 'save'],
       ['n', 'discard'],
     ]
-    right = 'esc keep editing'
+    right = ['esc', 'keep editing']
   } else if (e.typing !== undefined) {
     badge = 'EDIT (TYPE)'
     lead = p.dim('#rrggbb, rgb(r g b) or oklch(l c h)')
@@ -564,10 +565,10 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['enter', 'set'],
       ['ctrl+u', 'clear'],
     ]
-    right = 'esc back'
+    right = ['esc', 'back']
   } else if (e.overlay === 'keys') {
     badge = 'HELP'
-    right = 'any key closes'
+    right = ['any', 'key closes']
   } else if (e.overlay === 'open') {
     badge = 'EDIT (OPEN)'
     keys = [
@@ -575,19 +576,19 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['a-z', 'filter'],
       ['enter', 'take its colors'],
     ]
-    right = 'esc close'
+    right = ['esc', 'close']
   } else if (e.menu) {
     badge = e.menu === 'export' ? 'EDIT (EXPORT)' : 'EDIT (IMPORT)'
     keys = [
       ['↑↓', 'item'],
       ['enter', 'choose'],
     ]
-    right = 'esc close'
+    right = ['esc', 'close']
   } else if (e.compare) {
     badge = 'EDIT (BEFORE)'
     lead = 'The colors you started from'
     keys = [['space', 'back to yours']]
-    right = 'esc back'
+    right = ['esc', 'back']
   } else if (e.mode === 'seeds') {
     badge = 'EDIT (SEEDS)'
     keys = [
@@ -599,7 +600,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['p', 'picture'],
       ['?', 'keys'],
     ]
-    right = 'esc cancel'
+    right = ['esc', 'cancel']
   } else if (e.mode === 'tune') {
     badge = 'EDIT (TUNE)'
     keys = [
@@ -607,12 +608,12 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['←→', e.channel === CONTRAST ? 'ratio' : 'C'],
       ['⇧←→', 'H'],
       ['tab', '◐'],
-      ...(e.slot() >= BASE.length ? ([['a', 'scope']] as [string, string][]) : []),
+      ...(e.slot() >= BASE.length ? ([['a', 'scope']] as Hint[]) : []),
       [e.channel === CONTRAST ? '1-9' : '0-9', e.channel === CONTRAST ? 'ratio' : 'jump'],
       ['#', 'type'],
       ['enter', 'keep'],
     ]
-    right = 'esc undo'
+    right = ['esc', 'undo']
   } else if (e.inspect) {
     badge = 'EDIT (INSPECT)'
     keys = [
@@ -621,7 +622,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['enter', 'its slot'],
       ['i', 'leave'],
     ]
-    right = 'esc leave'
+    right = ['esc', 'leave']
   } else {
     keys = [
       ['↑↓', 'slot'],
@@ -630,7 +631,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['l', 'link'],
       ['m', 'changed'],
       ['g', e.view === 'slot' ? 'relations' : 'slot'],
-      ...(e.misses().size > 0 ? ([['n', 'next miss']] as [string, string][]) : []),
+      ...(e.misses().size > 0 ? ([['n', 'next miss']] as Hint[]) : []),
       ['#', 'type'],
       ['f', 'fix'],
       ['p', 'picture'],
@@ -639,7 +640,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['s', 'save'],
       ['?', 'keys'],
     ]
-    right = 'esc cancel'
+    right = ['esc', 'cancel']
   }
 
   if (!e.options.find) {
@@ -659,26 +660,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
     keys = []
   }
 
-  const tag = `${pillOf(p, badge)}${p.color ? '  ' : ' '}`
-
-  const shownRight = right
-    ? keyZone(
-        right.split(' ')[0] as string,
-        `${p.bold(right.split(' ')[0] as string)} ${p.dim(right.split(' ').slice(1).join(' '))}`,
-      )
-    : ''
-
-  for (;;) {
-    const segments = [lead, ...keys.map(([k, label]) => keyZone(k, `${p.bold(k)} ${p.dim(label)}`))].filter(Boolean)
-    const line = `${tag}${segments.join('   ')}`
-    const drop = keys.findLastIndex(([key], i) => i > 0 && !KEEP.has(key))
-
-    if (cells(line) + cells(right) + 3 <= width || drop < 0) {
-      return right ? spread(line, shownRight, width) : fit(line, width)
-    }
-
-    keys = keys.toSpliced(drop, 1)
-  }
+  return barLine(p, { badge, lead, keys, ...(right ? { right } : {}), keep: KEEP }, width)
 }
 
 export function renderEditor(e: PaletteEditor, cols: number, rows: number, color: boolean, look: Look = {}): string[] {

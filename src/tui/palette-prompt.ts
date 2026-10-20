@@ -6,6 +6,7 @@ import { OFFICIAL } from '../store/sources.ts'
 import { Field } from './field.ts'
 import type { Inbound } from './keys.ts'
 import { chase } from './motion.ts'
+import { moreOf } from './parts.ts'
 import { Inline } from './screen.ts'
 import { ansiBar, ansiFg, ansiSquares, FG_RESET, INK_RESET, MARKS, type Paint, painter } from './style.ts'
 import { HIDE_CURSOR, PASTES, within } from './terminal.ts'
@@ -1102,7 +1103,7 @@ export class PalettePrompt {
       body.push(bar('│'))
     }
 
-    const more = below > 0 ? `${bar('│')} ${dim(`↓ ${below} more`)}` : bar('│')
+    const more = below > 0 ? `${bar('│')} ${dim(moreOf(1, below))}` : bar('│')
     const fold = this.scope === 'catalog' ? '' : ' · ←→ fold'
     const go = this.go ?? (this.scope === 'catalog' ? 'continue' : 'install')
 
