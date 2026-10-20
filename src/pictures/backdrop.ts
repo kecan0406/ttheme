@@ -742,6 +742,7 @@ function migrate(dir: string): Store {
     .map((file) => file.slice(0, -'.conf'.length))
 
   const shelf = join(dir, SHELF)
+  const moved: string[] = []
 
   for (const name of new Set([...confs, ...listing(shelf)])) {
     const pictures: Picture[] = []
@@ -769,12 +770,8 @@ function migrate(dir: string): Store {
         }
       }
 
-      rmSync(from, { recursive: true })
+      moved.push(from)
       pictures.push(picture)
-    }
-
-    if (listing(join(shelf, name)).length === 0) {
-      rmSync(join(shelf, name), { recursive: true, force: true })
     }
 
     if (pictures.length > 0) {
@@ -783,11 +780,21 @@ function migrate(dir: string): Store {
     }
   }
 
+  save(dir, store, Object.keys(store.palettes))
+
+  for (const from of moved) {
+    rmSync(from, { recursive: true, force: true })
+  }
+
+  for (const name of listing(shelf)) {
+    if (listing(join(shelf, name)).length === 0) {
+      rmSync(join(shelf, name), { recursive: true, force: true })
+    }
+  }
+
   if (listing(shelf).length === 0) {
     rmSync(shelf, { recursive: true, force: true })
   }
-
-  save(dir, store, Object.keys(store.palettes))
 
   return store
 }

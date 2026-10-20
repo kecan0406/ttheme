@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -264,9 +273,8 @@ test('a conf ttheme did not write stays as it is and out of the store', () => {
   assert.equal(readFileSync(join(dir, 'kagami.conf'), 'utf8'), 'background-image = ~/walls/kagami.png\n')
 })
 
-test('the shelf layout moves into the store once, each picture keeping its tuning, bakes and original', () => {
-  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
-  const dir = backgroundsDir(configHome)
+function shelved(): string {
+  const dir = backgroundsDir(mkdtempSync(join(tmpdir(), 'ttheme-images-')))
   const shelf = join(dir, 'shelf', 'kagami', 'safebooru_1')
   mkdirSync(shelf, { recursive: true })
   mkdirSync(join(dir, 'originals'))
@@ -285,6 +293,12 @@ test('the shelf layout moves into the store once, each picture keeping its tunin
   writeFileSync(join(shelf, '.aaaaaaaa@fill-20.png'), 'one')
   writeFileSync(join(shelf, '.aaaaaaaa@60-center.png'), 'baked')
   writeFileSync(join(shelf, '.off.conf'), 'background-image =\n')
+
+  return dir
+}
+
+test('the shelf layout moves into the store once, each picture keeping its tuning, bakes and original', () => {
+  const dir = shelved()
   assert.deepEqual(readStore(dir).palettes.kagami, {
     active: 'safebooru_2',
     pictures: [
@@ -320,6 +334,16 @@ test('the shelf layout moves into the store once, each picture keeping its tunin
     ],
   )
   assert.match(readFileSync(join(dir, 'kagami.conf'), 'utf8'), /^config-file = \?kagami\.bbbbbbbb\.tune\.conf$/m)
+})
+
+test('a shelf move that fails before the store is written is finished by the next read, losing no picture', () => {
+  const dir = shelved()
+  mkdirSync(join(dir, 'images.json'))
+  assert.throws(() => readStore(dir))
+  rmSync(join(dir, 'images.json'), { recursive: true })
+  assert.deepEqual(keys(dir), ['safebooru_1', 'safebooru_2'])
+  assert.ok(existsSync(join(dir, 'kagami.aaaaaaaa@fill-20.png')))
+  assert.ok(!existsSync(join(dir, 'shelf')))
 })
 
 test('showing another saved picture moves no file', () => {

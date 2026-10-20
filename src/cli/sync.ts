@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { inMode, listed, type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
 import { marketplaceOf, owned } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
-import { backgroundsDir, freshenConfs, paintFor, readStore, retint } from '../pictures/backdrop.ts'
+import { freshenConfs, paintFor, retint } from '../pictures/backdrop.ts'
 import { forgetAppearance, knowAppearance } from '../store/appearance.ts'
 import { available, nameOf, nearest, readAvailable, untuned, writeKept } from '../store/available.ts'
 import { editUserFile, writeAtomic } from '../store/edits.ts'
@@ -108,7 +108,6 @@ export function sync(
   home = homedir(),
   host: Host = systemHost(),
 ): string[] {
-  readStore(backgroundsDir(configHome))
   const kept = resolve(untuned(configHome, manifest), state.palettes)
 
   if (modeSetting(configHome) === 'auto') {
