@@ -1,5 +1,5 @@
 import { execFile, spawn, spawnSync } from 'node:child_process'
-import { mkdirSync, readFileSync, realpathSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import pkg from '../../package.json' with { type: 'json' }
@@ -66,13 +66,24 @@ function writeSeen(seen: Seen): void {
   writeAtomic(seenPath(), `${JSON.stringify(seen)}\n`)
 }
 
+function npmDir(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-npm-'))
+  mkdirSync(join(dir, 'node_modules'))
+
+  return dir
+}
+
 function fetchLatest(timeout = TIMEOUT): Promise<string> {
+  const cwd = npmDir()
+
   return new Promise((resolve, reject) => {
     execFile(
       'npm',
       ['view', `${pkg.name}@latest`, 'version', '--prefer-online'],
-      { cwd: tmpdir(), encoding: 'utf8', timeout, env: { ...process.env, npm_config_update_notifier: 'false' } },
+      { cwd, encoding: 'utf8', timeout, env: { ...process.env, npm_config_update_notifier: 'false' } },
       (error, stdout, stderr) => {
+        rmSync(cwd, { recursive: true, force: true })
+
         if (error) {
           const said = stderr
             .split('\n')
@@ -206,11 +217,15 @@ export function tellRelease(now = Date.now()): void {
 export function upgradeTo(latest: string, args: readonly string[]): number {
   console.log(`Updating ttheme ${pkg.version} → ${latest}`)
 
+  const cwd = npmDir()
+
   const npx = spawnSync('npx', ['--yes', `${pkg.name}@${latest}`, 'init', '--yes'], {
-    cwd: tmpdir(),
+    cwd,
     stdio: 'inherit',
     env: { ...process.env, npm_config_prefer_online: 'true' },
   })
+
+  rmSync(cwd, { recursive: true, force: true })
 
   if (npx.error) {
     throw new Error(`cannot run npx — ${npx.error.message}; \`${UPDATE_COMMAND}\` updates ttheme once npm is there`)

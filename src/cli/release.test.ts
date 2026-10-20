@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -104,6 +104,45 @@ test('a release told while the background check asked npm stays told', async () 
     assert.equal(seen.told, told)
     assert.equal(seen.latest, latest)
     assert.equal(seen.trying, undefined)
+  } finally {
+    for (const [key, value] of Object.entries(was)) {
+      if (value === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = value
+      }
+    }
+
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('npm asks its registry from a folder of its own, never from the shared temp folder another user can leave an .npmrc in', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-release-'))
+
+  const was = {
+    PATH: process.env.PATH,
+    XDG_STATE_HOME: process.env.XDG_STATE_HOME,
+    TTHEME_UPDATED: process.env.TTHEME_UPDATED,
+    TMPDIR: process.env.TMPDIR,
+  }
+
+  try {
+    const shared = join(dir, 'tmp')
+    const ran = join(dir, 'ran')
+    mkdirSync(join(shared, 'node_modules'), { recursive: true })
+    writeFileSync(join(shared, '.npmrc'), 'registry=https://registry.example.test/\n')
+    mkdirSync(join(dir, 'bin'))
+    writeFileSync(join(dir, 'bin', 'npm'), `#!/bin/sh\npwd -P > '${ran}'\nls -A >> '${ran}'\necho ${pkg.version}\n`)
+    chmodSync(join(dir, 'bin', 'npm'), 0o755)
+    process.env.PATH = `${join(dir, 'bin')}:${process.env.PATH}`
+    process.env.XDG_STATE_HOME = join(dir, 'state')
+    process.env.TMPDIR = shared
+    delete process.env.TTHEME_UPDATED
+    assert.equal((await newerRelease()).note, `  ttheme ${pkg.version} — up to date`)
+    const [cwd, ...held] = readFileSync(ran, 'utf8').trim().split('\n')
+    assert.deepEqual(held, ['node_modules'])
+    assert.equal(existsSync(cwd as string), false)
   } finally {
     for (const [key, value] of Object.entries(was)) {
       if (value === undefined) {
