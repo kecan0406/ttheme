@@ -485,7 +485,7 @@ __tt_pv_foot() {
   setopt localoptions extendedglob
   local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] on=$pl badge="" pre="" lead="" note="" right="" ver="" vst text line plain hex tb=EDIT
   local -a kk=() kl=() seg=()
-  local -i end=$1 i lwid rwid vwid rend room
+  local -i end=$1 bw=$(( $1 - 1 )) i lwid rwid vwid rend room
   (( color )) || b= d= z= y= on=
   if (( color )) && [[ -n $applied && $applied != "$painted" ]]; then
     hex=${${=applied}[8]#\#}
@@ -589,7 +589,7 @@ __tt_pv_foot() {
   fi
   if (( msgt > 0 )) && [[ -z $pick ]]; then
     text=$msg
-    room=$(( end - (${#badge} ? ${#badge} + 4 : 0) ))
+    room=$(( bw - (${#badge} ? ${#badge} + 4 : 0) ))
     if (( ${(m)#text} > room )); then
       while [[ -n $text ]] && (( ${(m)#text} > room - 1 )); do text=${text[1,-2]}; done
       text+=…
@@ -616,7 +616,7 @@ __tt_pv_foot() {
     plain=${right//$'\e'\[[0-9;]##m/}
     rwid=${(m)#plain}
     vwid=${(m)#ver}
-    (( lwid <= end && lwid + (rwid ? 3 + rwid : 0) + (vwid ? 3 + vwid : 0) <= end )) && break
+    (( lwid <= bw && lwid + (rwid ? 3 + rwid : 0) + (vwid ? 3 + vwid : 0) <= bw )) && break
     if [[ -n $ver ]]; then
       ver=""
     elif [[ -n $note ]]; then
@@ -633,18 +633,18 @@ __tt_pv_foot() {
       break
     fi
   done
-  if (( lwid > end )); then
-    __tt_clip "$line" $end
+  if (( lwid > bw )); then
+    __tt_clip "$line" $bw
     line=$REPLY
   fi
-  out+=$line$'\e[K'
+  out+=" "$line$'\e[K'
   rend=$end
   if [[ -n $ver ]]; then
     out+=$'\e['$(( end - vwid + 1 ))'G'$vst$ver$z
     rend=$(( end - vwid - 3 ))
   fi
   [[ -n $right ]] && out+=$'\e['$(( rend - rwid + 1 ))'G'$right
-  local -i zc=1 zw
+  local -i zc=2 zw
   [[ -n $badge ]] && (( zc += ${(m)#badge} + (color ? 4 : 3) ))
   if [[ -n $lead ]]; then
     if [[ -n $pick ]]; then

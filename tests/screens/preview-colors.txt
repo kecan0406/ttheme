@@ -21,4 +21,4 @@ Config
 ▶ Colors      original  [tone]
 
 New pictures are tinted in the palette's color
-[CONFIG] ↑↓ setting   ←→ value   enter save                                                 esc undo
+ [CONFIG] ↑↓ setting   ←→ value   enter save                                                esc undo
