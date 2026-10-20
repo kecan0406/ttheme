@@ -37,6 +37,7 @@ import {
   fillFrame,
   fillSize,
   frameAt,
+  freshenConfs,
   inked,
   installBackdrop,
   liftOf,
@@ -241,6 +242,28 @@ test('a palette named like a property every object has keeps its pictures as any
   assert.deepEqual(showImage(configHome, 'constructor', 'safebooru_1'), { at: 1, of: 1 })
   dropImage(configHome, 'constructor')
   assert.deepEqual(rackOf(configHome, 'constructor'), [])
+})
+
+test('a picture whose artist is named like a property every object has still gets its conf, so sync keeps working', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const image = { width: 4, height: 4, data: new Uint8Array(64).fill(201) }
+
+  const source = {
+    site: 'safebooru',
+    id: 1,
+    ext: 'png',
+    bytes: new Uint8Array([1]),
+    from: 'safebooru 1 https://example.test/1',
+    artist: ['constructor', 'akoiro'],
+    profiles: { akoiro: ['https://x.com/akoiro'] },
+  }
+
+  installBackdrop(configHome, KAGAMI, toneFor(KAGAMI, 'cursor'), image, source, { width: 40, height: 20 }, 0)
+  assert.match(
+    readFileSync(join(backgroundsDir(configHome), 'kagami.conf'), 'utf8'),
+    /^# credit safebooru_1 .*constructor/m,
+  )
+  freshenConfs(configHome)
 })
 
 test('each picture shows under a path of its own, since terminals reload a background only when its path changes', () => {

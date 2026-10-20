@@ -58,6 +58,17 @@ test('the credit to copy follows each artist on a site the artwork page is not o
   )
 })
 
+test('an artist named like a property every object has is credited as any other is', () => {
+  const profiles = JSON.parse('{"kiyo": ["https://x.com/kiyo"]}')
+
+  for (const name of ['constructor', '__proto__']) {
+    assert.equal(
+      creditLine({ artist: [name, 'kiyo'], profiles, source: 'https://www.pixiv.net/artworks/1' }),
+      `Background art by ${name}, kiyo (x.com/kiyo) · https://www.pixiv.net/artworks/1`,
+    )
+  }
+})
+
 test('the credit to copy names the post where the picture names no artwork page, and nothing when it names neither', () => {
   assert.equal(
     creditLine({ artist: ['a', 'b'], source: 'Original', from: 'danbooru 9 https://shima.donmai.us/posts/9' }),

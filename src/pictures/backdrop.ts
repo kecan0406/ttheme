@@ -12,7 +12,7 @@ import {
   statSync,
 } from 'node:fs'
 import { basename, join } from 'node:path'
-import { artworkOf, creditLine, linksOf } from '../core/artists.ts'
+import { artworkOf, creditLine, linksOf, pagesOf } from '../core/artists.ts'
 import { type Coloring, type Colors, type Hue, originalOpacity } from '../core/backdrop-tone.ts'
 import { type Hex, rgb } from '../core/color.ts'
 import { isLight } from '../core/contrast.ts'
@@ -605,7 +605,7 @@ function creditLines(held: Picture): string[] {
     ...(line ? [`# credit ${held.key} ${line}`] : []),
     ...(page ? [`# source ${held.key} ${page.label} ${page.url}`] : []),
     ...(held.artist ?? []).flatMap((name) => {
-      const links = linksOf(held.profiles?.[name])
+      const links = linksOf(pagesOf(held.profiles, name))
 
       return links.length > 0
         ? [`# profile ${held.key} ${word(name)} ${links.map((link) => `${link.kind} ${link.url}`).join(' ')}`]

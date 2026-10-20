@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import type { Profile } from '../../core/artists.ts'
+import { type Profile, pagesOf } from '../../core/artists.ts'
 import type { Coloring } from '../../core/backdrop-tone.ts'
 import { BLOCKS, type Block, KEY_SPAN, type Kind, type Narrow, type Rating, SITES } from '../../core/booru.ts'
 import { type Hex, mix } from '../../core/color.ts'
@@ -665,7 +665,10 @@ function artistParts(artists: readonly string[], profiles: Record<string, Profil
   return artists.flatMap((name, i): Part[] => [
     ...(i > 0 ? ([['  ', '']] as Part[]) : []),
     [name, ''],
-    ...(profiles[name] ?? []).flatMap((link): Part[] => [[' ', ''], ...reference(link.kind, '', link.url, accent)]),
+    ...(pagesOf(profiles, name) ?? []).flatMap((link): Part[] => [
+      [' ', ''],
+      ...reference(link.kind, '', link.url, accent),
+    ]),
   ])
 }
 

@@ -90,6 +90,10 @@ export function profilesOf(urls: readonly string[]): string[] {
   })
 }
 
+export function pagesOf<T>(profiles: Readonly<Record<string, T>> | undefined, name: string): T | undefined {
+  return profiles !== undefined && Object.hasOwn(profiles, name) ? profiles[name] : undefined
+}
+
 export function linksOf(urls: readonly string[] | undefined): Profile[] {
   return (urls ?? []).flatMap((url) => {
     const kind = profileKind(url)
@@ -170,7 +174,7 @@ export function creditLine(picture: Credited): string | undefined {
     artists.length > 0
       ? `Background art by ${artists
           .map((name) => {
-            const follow = followOf(picture.profiles?.[name], page)
+            const follow = followOf(pagesOf(picture.profiles, name), page)
 
             return follow ? `${name} (${bare(follow)})` : name
           })

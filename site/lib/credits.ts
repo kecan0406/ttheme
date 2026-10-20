@@ -1,5 +1,5 @@
 import type { Picture, PictureCredit } from '@/lib/share-view'
-import { linksOf, pageKind, pageLabel, safeUrl } from '../../src/core/artists.ts'
+import { linksOf, pageKind, pageLabel, pagesOf, safeUrl } from '../../src/core/artists.ts'
 import { SITES } from '../../src/core/booru.ts'
 import { postCredit } from '../../src/pictures/booru-net.ts'
 import type { Shared } from './share'
@@ -22,7 +22,11 @@ async function creditOf(site: string, id: number): Promise<PictureCredit | null>
   return {
     artists: credit.artist.map((name) => ({
       name,
-      links: linksOf(credit.profiles[name]).map((link) => ({ label: link.kind, url: link.url, kind: link.kind })),
+      links: linksOf(pagesOf(credit.profiles, name)).map((link) => ({
+        label: link.kind,
+        url: link.url,
+        kind: link.kind,
+      })),
     })),
     page: safeUrl(credit.source)
       ? { label: pageLabel(credit.source), url: credit.source, kind: pageKind(credit.source) }
