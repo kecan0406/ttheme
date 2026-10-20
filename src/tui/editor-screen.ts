@@ -18,6 +18,7 @@ import {
   type EditorSpot,
   fixHint,
   gateBox,
+  gateMisses,
   gradient,
   heldOf,
   LEFT,
@@ -660,8 +661,9 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
     }
   }
 
-  const failing = e.failing().length
-  const gate = failing === 0 ? '✓ Passes the gate' : `✗ ${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
+  const failing = gateMisses(e)
+  const missed = `${MARKS.miss} ${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
+  const gate = failing === 0 ? `${MARKS.ok} Passes the gate` : missed
   const shown = `${MARKS.pictures} ${e.pictures} ${e.pictures === 1 ? 'picture' : 'pictures'}`
   const shelf = e.pictures > 0 ? p.dim(`${shown}   `) : ''
   const reset = e.resettable() ? `${keyZone('R', p.dim('Reset'))}   ` : ''

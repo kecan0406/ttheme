@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { GATE_RULES, measure } from '../core/contrast.ts'
+import { boundOf, GATE_RULES, measure, meets, shownOf } from '../core/contrast.ts'
 import {
   emptyManifest,
   entryProblem,
@@ -280,15 +280,7 @@ export function gateFailures(palette: PaletteEntry): string[] {
       return []
     }
 
-    if (rule.min !== undefined && value < rule.min) {
-      return [`${rule.label} ${value} < ${rule.min}`]
-    }
-
-    if (rule.max !== undefined && value > rule.max) {
-      return [`${rule.label} ${value} > ${rule.max}`]
-    }
-
-    return []
+    return meets(rule, value) ? [] : [`${rule.label} ${shownOf(value)} ${boundOf(rule)}`]
   })
 }
 

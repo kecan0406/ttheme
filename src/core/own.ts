@@ -3,7 +3,7 @@ import { basename } from 'node:path'
 import { brotliCompressSync, brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
 import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
-import { GATE_RULES, measure, RULES } from './contrast.ts'
+import { boundOf, GATE_RULES, measure, meets, RULES, shownOf } from './contrast.ts'
 import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import { memo } from './memo.ts'
 import { modeOf, otherOf } from './mode.ts'
@@ -743,14 +743,8 @@ export function gateLines(entry: PaletteEntry): string[] {
   return GATE_RULES.map((rule, i) => {
     const value = values[i] as number
 
-    const ok =
-      waived.has(rule.rule) ||
-      Number.isNaN(value) ||
-      ((rule.min === undefined || value >= rule.min) && (rule.max === undefined || value <= rule.max))
+    const ok = waived.has(rule.rule) || Number.isNaN(value) || meets(rule, value)
 
-    const bound = rule.min !== undefined ? `≥ ${rule.min}` : rule.max !== undefined ? `≤ ${rule.max}` : ''
-    const shown = Number.isNaN(value) ? '—' : Number.isInteger(value) ? String(value) : value.toFixed(2)
-
-    return `  ${ok ? '✓' : '✗'} ${rule.label.padEnd(pad)}  ${shown.padStart(6)} ${bound}${waived.has(rule.rule) ? '  waived' : ''}`
+    return `  ${ok ? '✓' : '✗'} ${rule.label.padEnd(pad)}  ${shownOf(value).padStart(6)} ${boundOf(rule)}${waived.has(rule.rule) ? '  waived' : ''}`
   })
 }

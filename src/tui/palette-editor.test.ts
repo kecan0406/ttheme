@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { oklch, rgb } from '../core/color.ts'
+import { check } from '../core/contrast.ts'
 import { type Colors, grow, SEEDS } from '../core/seeds.ts'
-import { listOf } from '../core/slots.ts'
+import { gatedOf, listOf } from '../core/slots.ts'
+import { gateMisses } from './editor-paint.ts'
 import { renderEditor } from './editor-screen.ts'
 import { CONTRAST, type EditorOptions, PaletteEditor, parseColor } from './palette-editor.ts'
 
@@ -100,6 +102,14 @@ test('* marks a signature color, keeping the last three and saying which one wen
   press(e, '*')
   assert.deepEqual(e.signature, ['foreground', 'cursor'])
   assert.match(e.notice ?? '', /needs three/)
+})
+
+test('the older screen counts the rules the gate misses, as its Gate box and the builder do', () => {
+  const dim = { ...start, ansi: start.ansi.map((hex, i) => (i >= 1 && i <= 6 ? start.background : hex)) }
+  const e = editor({ colors: dim })
+  const count = Number(/✗ (\d+) misses in the gate/.exec(screen(e))?.[1])
+  assert.equal(count, gateMisses(e))
+  assert.ok(count < check(gatedOf(e.list, e.signature, e.waive)).length)
 })
 
 test('a signature slot is marked ✦ in the list and in its detail alike', () => {

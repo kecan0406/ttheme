@@ -110,11 +110,11 @@ test('gateFailures is empty when every rule is met', () => {
 })
 
 test('gateFailures reports a ratio below its minimum', () => {
-  assert.match(gateFailures(entry({ gate: [4, 6.8, 0.02, 10.4, 4.0] }))[0] ?? '', /foreground on background 4 < 7/)
+  assert.match(gateFailures(entry({ gate: [4, 6.8, 0.02, 10.4, 4.0] }))[0] ?? '', /foreground on background 4 ≥ 7/)
 })
 
 test('gateFailures reports a value above its maximum', () => {
-  assert.match(gateFailures(entry({ gate: [13.8, 6.8, 0.9, 10.4, 4.0] }))[0] ?? '', /ansi0 luminance 0.9 > 0.15/)
+  assert.match(gateFailures(entry({ gate: [13.8, 6.8, 0.9, 10.4, 4.0] }))[0] ?? '', /ansi0 luminance 0\.90 ≤ 0\.15/)
 })
 
 test('gateFailures honours a waiver by rule name', () => {

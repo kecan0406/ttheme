@@ -1,4 +1,4 @@
-◆ Edit palette · konata                                                      ✗ 10 misses in the gate
+◆ Edit palette · konata                                                       ✗ 5 misses in the gate
     ╭─ Help ───────────────────────────────────────────────────────────────────────────────────╮
 ╭─ B│ ⌕ Type to filter                                                                         │
 │▌ B│                                                                                          │
@@ -18,7 +18,7 @@
 ╭─ G│                                                                                          │ ⇧←→
 │  ✗│   Marks       ✗ misses the gate   ● changed   ⇠ follows its normal   ○ where it was      │
 │   │               ◐ contrast                                                                 │
-│  ✗│                                                                                          │
+│  ↓│                                                                                          │
 ╰───╰──────────────────────────────────────────────────────────────────────────────────────────╯
 
 [HELP] ↑↓ choose   enter run   type to filter                                            ? esc close

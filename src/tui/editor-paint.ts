@@ -6,7 +6,7 @@ import { BASE, type Check, type Format, ruleSlots, slotChecks, slotLabel } from 
 import { cells } from '../core/text.ts'
 import { fit, spread } from './ansi.ts'
 import { type Channel, CONTRAST, gateRows, type PaletteEditor, type Scope } from './palette-editor.ts'
-import { boxEdge, boxed, boxTitle, buttonOf, checkOf, hintOf } from './parts.ts'
+import { boxEdge, boxed, boxTitle, buttonOf, checkOf, hintOf, moreOf } from './parts.ts'
 import { FG_RESET, INK_RESET, MARKS, open, type Paint } from './style.ts'
 import { type KeySpot, keyZone, zone } from './zones.ts'
 
@@ -96,10 +96,9 @@ function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): strin
   const rows = gateRows(e.list, e.signature, e.waive).sort((a, b) => Number(a.ok !== false) - Number(b.ok !== false))
   const failing = rows.filter((r) => r.ok === false).length
   const checked = (ok: boolean | undefined) => (failing === 0 && ok ? p.ok(MARKS.ok) : checkOf(p, ok))
-  const head = `  ${p.dim('Gate')}  ${failing === 0 ? p.dim('passes') : p.bold(`${failing} ${failing === 1 ? 'miss' : 'misses'}`)}`
   const width = wide - 4
 
-  const lines = rows.flatMap((r) => {
+  const rules = rows.map((r) => {
     const tail = `${r.value} ${r.bound}`
     const row = `  ${checked(r.ok)} ${spread(r.ok === false ? r.label : p.dim(r.label), p.dim(tail), width - 2)}`
     const names = [...new Set(r.slots)].map((slot) => slotLabel(slot).name)
@@ -109,10 +108,11 @@ function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): strin
     return names.length > 0 ? [to(row), to(`    ${p.dim(fit(names.join(' · '), width - 2))}`)] : [to(row)]
   })
 
-  return [
-    failing === 0 ? head : spread(head, `${p.bold('n')} ${p.dim('next miss')}`, wide - 2),
-    ...lines.slice(0, Math.max(0, room - 1)),
-  ]
+  const fits = (n: number) => rules.slice(0, n).flat().length + (n < rules.length ? 1 : 0) <= room
+  const shown = Array.from({ length: rules.length + 1 }, (_, i) => rules.length - i).find(fits) ?? 0
+  const lines = rules.slice(0, shown).flat()
+
+  return shown < rules.length && room > 0 ? [...lines, `  ${p.dim(moreOf(1, rules.length - shown))}`] : lines
 }
 
 export function used(slot: number, role: string): boolean {
@@ -213,9 +213,7 @@ export function gateBox(p: Paint, e: PaletteEditor, room: number, width: number)
 
   return [
     boxTitle(width, title, p.dim, failing === 0 ? p.ok : p.dim),
-    ...gateLines(p, e, room - 1, width - 1)
-      .slice(1)
-      .map((line) => boxed(p, line, width)),
+    ...gateLines(p, e, room - 2, width - 1).map((line) => boxed(p, line, width)),
     p.dim(boxEdge(width, 'bottom')),
   ]
 }

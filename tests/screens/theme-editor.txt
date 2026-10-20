@@ -1,4 +1,4 @@
-◆ Edit palette · konata                                                      ✗ 10 misses in the gate
+◆ Edit palette · konata                                                       ✗ 5 misses in the gate
 
 ╭─ Base ─────────────────────────────────────────╮│ Background  background
 │▌ Background›  .21 .014 253°                    ││
@@ -18,7 +18,7 @@
 ╭─ Gate ✗ 5 · n next ────────────────────────────╮│ [Shell]  Code  Diff  Logs  Monitor           ⇧←→
 │  ✗ accent hue outside its ANSI role  41.56 ≤ 0 ││  ~/code/demo on main +2 ~1
 │    Red · Yellow · Bright red · Bright yellow   ││  ❯ git status -sb
-│  ✗ widest normal to bright hue gap  45.67 ≤ 25 ││  ## main...origin/main [ahead 1]
+│  ↓ 11 more                                     ││  ## main...origin/main [ahead 1]
 ╰────────────────────────────────────────────────╯│   M src/main.rs
 
 [EDIT] ↑↓ slot   ←→ normal or bright   enter tune   g relations   s save   ? keys         esc cancel

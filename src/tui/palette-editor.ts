@@ -13,12 +13,14 @@ import { contrast, type Hex, isHex, luminance, type Oklch, oklch } from '../core
 import {
   ACCENT_SLOTS,
   ACHROMATIC,
+  boundOf,
   check,
   GATE_RULES,
   hueGap,
   measure,
+  meets,
   ROLES,
-  type Violation,
+  shownOf,
 } from '../core/contrast.ts'
 import { edgeChroma, fixGate, inGamut } from '../core/fix.ts'
 import { type Colors, grow, nudge, SEED_FIELDS, SEEDS, type Seeds } from '../core/seeds.ts'
@@ -235,22 +237,13 @@ export function gateRows(list: Hex[], signature: string[], waive: string[]): Gat
     const value = values[i] as number
     const waived = waive.includes(rule.rule)
 
-    const ok =
-      waived || Number.isNaN(value)
-        ? undefined
-        : (rule.min === undefined || value >= rule.min) && (rule.max === undefined || value <= rule.max)
+    const ok = waived || Number.isNaN(value) ? undefined : meets(rule, value)
 
     return {
       ok,
       label: rule.label,
-      value: Number.isNaN(value) ? '—' : Number.isInteger(value) ? String(value) : value.toFixed(2),
-      bound: waived
-        ? 'waived'
-        : rule.min !== undefined
-          ? `≥ ${rule.min}`
-          : rule.max !== undefined
-            ? `≤ ${rule.max}`
-            : '',
+      value: shownOf(value),
+      bound: waived ? 'waived' : boundOf(rule),
       slots: ok === false ? ruleSlots(list, signature, waive, rule.rule) : [],
     }
   })
@@ -459,10 +452,6 @@ export class PaletteEditor {
 
   misses(): Set<number> {
     return misses(this.list, this.signature, this.waive)
-  }
-
-  failing(): Violation[] {
-    return check(gatedOf(this.list, this.signature, this.waive))
   }
 
   choices(): Choice[] {

@@ -337,6 +337,28 @@ export function measure(theme: Gated): number[] {
   return CHECKS.map((c) => Math.round(c.measure(theme) * 1000) / 1000)
 }
 
+export function meets(rule: GateRule, value: number): boolean {
+  return (rule.min === undefined || value >= rule.min) && (rule.max === undefined || value <= rule.max)
+}
+
+export function missedRules(theme: Gated): GateRule[] {
+  const values = measure(theme)
+
+  return GATE_RULES.filter((rule, i) => {
+    const value = values[i] as number
+
+    return !theme.waive.includes(rule.rule) && !Number.isNaN(value) && !meets(rule, value)
+  })
+}
+
+export function shownOf(value: number): string {
+  return Number.isNaN(value) ? '—' : Number.isInteger(value) ? String(value) : value.toFixed(2)
+}
+
+export function boundOf(rule: GateRule): string {
+  return rule.min !== undefined ? `≥ ${rule.min}` : rule.max !== undefined ? `≤ ${rule.max}` : ''
+}
+
 function run<T extends Readable>(checks: Check<T>[], theme: T): Violation[] {
   return checks
     .filter((c) => !theme.waive.includes(c.rule))
