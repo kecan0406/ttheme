@@ -667,8 +667,43 @@ __tt_pv_foot() {
   return 0
 }
 
+__tt_pv_wrap() {
+  setopt localoptions extendedglob
+  local sep="  $TTHEME_MARKS[sep]  " mk=$TTHEME_MARKS[sep] line="" part word rest joined REPLY
+  local -a match mbegin mend
+  local -i w=$2 i
+  reply=()
+  for part in "${(@ps:$sep:)1}"; do
+    joined=${line:+$line$sep}$part
+    if (( ${(m)#joined} <= w )); then
+      line=$joined
+    elif [[ -n $line ]] && (( ${(m)#part} <= w )); then
+      reply+=("${${line%%[[:space:]]#}%%[[:space:]]##$mk}")
+      line=$part
+    else
+      [[ -n $line ]] && line+=$sep
+      rest=${part##[[:space:]]#}
+      while [[ $rest == (#b)([^[:space:]]##)([[:space:]]#)(*) ]]; do
+        word=$match[1]$match[2] rest=$match[3] joined=$line$match[1]
+        if [[ -n ${line//[[:space:]]} ]] && (( ${(m)#joined} > w )); then
+          reply+=("${${line%%[[:space:]]#}%%[[:space:]]##$mk}")
+          line=""
+        fi
+        line+=$word
+      done
+      line=${line%%[[:space:]]#}
+    fi
+  done
+  [[ -n $line ]] && reply+=("${${line%%[[:space:]]#}%%[[:space:]]##$mk}")
+  (( ${#reply} )) || reply=("")
+  for (( i = 1; i <= ${#reply}; i++ )); do
+    (( ${(m)#reply[i]} > w )) && { __tt_clip "${reply[i]}" $w; reply[i]=$REPLY }
+  done
+  return 0
+}
+
 __tt_pv_help() {
-  local back="the tab" z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] blank
+  local back="the tab" z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && back=$cn
   local -a hk=() hv=()
   if (( te )); then
@@ -690,7 +725,7 @@ __tt_pv_help() {
     hv=(
       "↑↓  home  end  pgup  pgdn"
       "←→  ·  enter or space on a catalog"
-      "Any text  ·  bksp  ·  ctrl-u clears"
+      "Any text  ·  bksp  ·  ctrl+u clears"
       "Names and titles, in Japanese too"
       "⇧←→  ${(Lj:, :)TTHEME_SCENES}"
       "enter  applies  ·  esc restores $back"
@@ -706,18 +741,41 @@ __tt_pv_help() {
   else
     hv+=("?  esc")
   fi
-  (( color )) || z= b=
-  local -i i r x y w hh floor
+  (( color )) || z= b= d=
+  local -i i j k r x y w hh floor tw rows used n
+  local -a hl=() hn=()
   if (( split && sw >= 48 )); then
-    for (( i = 1; i <= ${#hk}; i++ )); do
-      r=$(( i + 3 ))
-      (( r < ph )) || break
-      out+=$'\e['$r';'$sc'H'$b${hk[i]}$z$'\e['$r';'$(( sc + 10 ))'H'${hv[i][1,se-sc-9]}
+    tw=$(( se - sc - 9 )) rows=$(( ph - 4 ))
+  else
+    w=$(( pw - 2 < 58 ? pw - 2 : 58 ))
+    (( te )) && w=$(( pw - 2 < 76 ? pw - 2 : 76 ))
+    tw=$(( w - 16 )) rows=$(( ph - 5 ))
+  fi
+  for (( i = 1; i <= ${#hk}; i++ )); do
+    __tt_pv_wrap "${hv[i]}" $tw
+    hl+=("${reply[@]}") hn+=(${#reply})
+    (( used += ${#reply} ))
+  done
+  n=${#hk}
+  if (( used > rows )); then
+    used=1
+    for (( n = 0; n < ${#hk} && used + hn[n + 1] <= rows; n++ )); do
+      (( used += hn[n + 1] ))
     done
+  fi
+  if (( split && sw >= 48 )); then
+    r=4
+    for (( i = 1; i <= n; i++ )); do
+      out+=$'\e['$r';'$sc'H'$b${hk[i]}$z
+      for (( j = 1; j <= hn[i]; j++, r++ )); do
+        (( ++k ))
+        out+=$'\e['$r';'$(( sc + 10 ))'H'${hl[k]}
+      done
+    done
+    (( n < ${#hk} )) && out+=$'\e['$r';'$sc'H'$d$TTHEME_MARKS[below]" $(( ${#hk} - n )) more"$z
     return 0
   fi
-  w=$(( pw - 2 < 58 ? pw - 2 : 58 )) hh=$(( ${#hk} + 4 ))
-  (( te )) && w=$(( pw - 2 < 76 ? pw - 2 : 76 ))
+  hh=$(( used + 4 ))
   x=$(( (pw - w) / 2 + 1 )) y=$(( (ph - hh) / 2 ))
   floor=$(( te && ! split ? 4 : pvhd + 2 ))
   (( y < floor )) && y=$floor
@@ -728,10 +786,15 @@ __tt_pv_help() {
   for (( r = y + 1; r < y + hh - 1; r++ )); do
     out+=$'\e['$r';'$x'H'$blank$'\e['$r';'$x'H│'$'\e['$r';'$(( x + w - 1 ))'H│'
   done
-  for (( i = 1; i <= ${#hk}; i++ )); do
-    r=$(( y + 1 + i ))
-    out+=$'\e['$r';'$(( x + 3 ))'H'$b${hk[i]}$z$'\e['$r';'$(( x + 13 ))'H'${hv[i][1,w-16]}
+  r=$(( y + 2 ))
+  for (( i = 1; i <= n; i++ )); do
+    out+=$'\e['$r';'$(( x + 3 ))'H'$b${hk[i]}$z
+    for (( j = 1; j <= hn[i]; j++, r++ )); do
+      (( ++k ))
+      out+=$'\e['$r';'$(( x + 13 ))'H'${hl[k]}
+    done
   done
+  (( n < ${#hk} )) && out+=$'\e['$r';'$(( x + 3 ))'H'$d$TTHEME_MARKS[below]" $(( ${#hk} - n )) more"$z
   out+=$'\e['$(( y + hh - 1 ))';'$x'H'"╰${(l:$(( w - 2 ))::─:)}╯"
 }
 
