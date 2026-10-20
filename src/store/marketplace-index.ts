@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { PaletteEntry } from '../core/manifest.ts'
+import { inert } from '../core/text.ts'
 import { nameProblem } from '../core/theme.ts'
 import { reach } from './available.ts'
 import { writeAtomic } from './edits.ts'
@@ -44,13 +45,6 @@ interface Cached {
   etag: string
   at: number
   text: string
-}
-
-export function inert(text: string): string {
-  return text
-    .replace(/\p{Bidi_Control}/gu, '')
-    .replace(/[\p{Cc}\s]+/gu, ' ')
-    .trim()
 }
 
 function word(value: unknown): string | undefined {

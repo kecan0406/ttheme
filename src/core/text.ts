@@ -12,6 +12,13 @@ export function printable(text: string): boolean {
   return PRINTABLE.test(text)
 }
 
+export function inert(text: string): string {
+  return text
+    .replace(/\p{Bidi_Control}/gu, '')
+    .replace(/[\p{Cc}\s]+/gu, ' ')
+    .trim()
+}
+
 export function cells(text: string): number {
   if (text.length === 1) {
     const code = text.charCodeAt(0)

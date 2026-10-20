@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
+import { inert } from '../core/text.ts'
 import { type Catalog, MARKETPLACE_FILE, MARKETPLACE_SCHEMA_URL, nameProblem, readCatalogs } from '../core/theme.ts'
 
 export const OFFICIAL = 'official'
@@ -184,7 +185,7 @@ function shown(where: string, key: string, value: unknown, kind: string): string
 }
 
 function optional(where: string, key: string, value: unknown): string | undefined {
-  return value === undefined ? undefined : shown(where, key, value, 'one line of text, 200 characters at most')
+  return value === undefined ? undefined : inert(shown(where, key, value, 'one line of text, 200 characters at most'))
 }
 
 function renamesOf(where: string, raw: unknown) {

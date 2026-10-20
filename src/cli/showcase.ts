@@ -1,7 +1,8 @@
 import { listed, type PaletteEntry } from '../core/manifest.ts'
+import { inert } from '../core/text.ts'
 import { slugOf } from '../core/theme.ts'
 import { reach } from '../store/available.ts'
-import { inert, type Listed, type ListedPalette, type Shown } from '../store/marketplace-index.ts'
+import type { Listed, ListedPalette, Shown } from '../store/marketplace-index.ts'
 import { TOPIC } from '../store/sources.ts'
 import { fetchArchive, fromArchive } from './refresh.ts'
 
