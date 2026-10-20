@@ -194,6 +194,93 @@
       }
     },
     {
+      "files": [
+        "src/tui/ansi.ts",
+        "src/tui/field.ts",
+        "src/tui/keys.ts",
+        "src/tui/motion.ts",
+        "src/tui/pending.ts",
+        "src/tui/screen.ts",
+        "src/tui/style.ts",
+        "src/tui/terminal.ts",
+        "src/tui/zones.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/cli/**"],
+                "message": "tui imports nothing above it: core < store < pictures < terminals < tui < cli"
+              },
+              {
+                "group": [
+                  "./*",
+                  "./*/**",
+                  "!./ansi.ts",
+                  "!./field.ts",
+                  "!./keys.ts",
+                  "!./motion.ts",
+                  "!./pending.ts",
+                  "!./screen.ts",
+                  "!./style.ts",
+                  "!./terminal.ts",
+                  "!./zones.ts"
+                ],
+                "message": "the runtime imports no part and no screen: runtime < parts < screens"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/tui/bar.ts",
+        "src/tui/help.ts",
+        "src/tui/hub.ts",
+        "src/tui/notice.ts",
+        "src/tui/parts.ts",
+        "src/tui/qr.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/cli/**"],
+                "message": "tui imports nothing above it: core < store < pictures < terminals < tui < cli"
+              },
+              {
+                "group": [
+                  "./*",
+                  "./*/**",
+                  "!./ansi.ts",
+                  "!./field.ts",
+                  "!./keys.ts",
+                  "!./motion.ts",
+                  "!./pending.ts",
+                  "!./screen.ts",
+                  "!./style.ts",
+                  "!./terminal.ts",
+                  "!./zones.ts",
+                  "!./bar.ts",
+                  "!./help.ts",
+                  "!./hub.ts",
+                  "!./notice.ts",
+                  "!./parts.ts",
+                  "!./qr.ts"
+                ],
+                "message": "a part imports no screen: runtime < parts < screens"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["site/**"],
       "excludeFiles": ["site/build.ts", "**/*.test.ts"],
       "rules": {
