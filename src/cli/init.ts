@@ -9,7 +9,7 @@ import { inMode, type Manifest, type PaletteEntry, parseManifest } from '../core
 import type { Mode, Setting } from '../core/mode.ts'
 import { marketplaceOf, shelfOf } from '../core/theme.ts'
 import { WIRED, type Wired } from '../core/wired.ts'
-import { backgroundsDir, coloringOf, readStore } from '../pictures/backdrop.ts'
+import { backgroundsDir, coloringOf, decodable, readStore } from '../pictures/backdrop.ts'
 import { ROOT } from '../root.ts'
 import { readAppearance, systemAppearance } from '../store/appearance.ts'
 import { available, readMarketplaces, writeOfficial } from '../store/available.ts'
@@ -21,6 +21,7 @@ import { marketplacesOf, OFFICIAL } from '../store/sources.ts'
 import {
   coloringFor,
   configFile,
+  modeFor,
   modeSetting,
   settingValue,
   upsertBlock,
@@ -371,7 +372,7 @@ async function askMode(configHome: string, terminals: readonly Wired[]): Promise
     await p.select<Setting>({
       message: `Wear the palettes in ${modes} mode?\nEvery palette comes in both — ${picks.join(', ')} or alt-c in \`ttheme\` switches it later`,
       options: offered.map((value) => ({ value, label: value, hint: hints[value] })),
-      initialValue: offered.includes('auto') ? 'auto' : offered.includes(was) ? was : offered[0],
+      initialValue: offered.includes('auto') ? 'auto' : offered.includes(was) ? was : modeFor(configHome),
     }),
   )
 }
@@ -476,7 +477,7 @@ export async function moveColors(home: string, say: (line: string) => void, user
     await redrawPictures(home, say, user, { ownColors: true })
 
     const left = Object.values(readStore(backgroundsDir(home)).palettes).some((rack) =>
-      rack.pictures.some((picture) => coloringOf(picture) === 'tone'),
+      rack.pictures.some((picture) => coloringOf(picture) === 'tone' && decodable(home, picture)),
     )
 
     if (left) {

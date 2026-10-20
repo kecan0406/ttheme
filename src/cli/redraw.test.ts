@@ -61,7 +61,7 @@ function home(mode: 'dark' | 'light'): string {
   return configHome
 }
 
-function install(configHome: string): Picture {
+function install(configHome: string, id = 7, original?: Uint8Array): Picture {
   const worn = readAvailable(configHome).palettes.find((entry) => entry.name === 'gojo') as PaletteEntry
   const image = figure()
 
@@ -70,7 +70,7 @@ function install(configHome: string): Picture {
     colorsOf(worn),
     worn.backdrop,
     image,
-    { site: 'safebooru', id: 7, ext: 'png', bytes: encodeRgba(image) },
+    { site: 'safebooru', id, ext: 'png', bytes: original ?? encodeRgba(image) },
     { width: 40, height: 20 },
     0,
   )
@@ -137,4 +137,20 @@ test('an update moves every tone picture to its own colors once, and leaves an i
 
   assert.equal((rackOf(toneHome, 'gojo')[0] as Picture).coloring, 'tone')
   assert.equal(readInstalled(toneHome).colorsMoved, true)
+})
+
+test('a picture whose original cannot be read stays in its tone without keeping the move from being made once', async () => {
+  const configHome = home('dark')
+  install(configHome)
+  install(configHome, 8, new Uint8Array([8]))
+  const coloring = (key: string) => rackOf(configHome, 'gojo').find((picture) => picture.key === key)?.coloring
+
+  await moveColors(configHome, () => {}, configHome)
+  assert.equal(coloring('safebooru_7'), 'original')
+  assert.equal(coloring('safebooru_8'), 'tone')
+  assert.equal(readInstalled(configHome).colorsMoved, true)
+
+  await redrawColoring(configHome, 'gojo', 'tone', 'safebooru_7', configHome)
+  await moveColors(configHome, () => {}, configHome)
+  assert.equal(coloring('safebooru_7'), 'tone')
 })
