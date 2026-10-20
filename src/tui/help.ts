@@ -236,7 +236,7 @@ function lines(items: string[], width: number): string[] {
 const SEP = `  ${MARKS.sep}  `
 const TRAILING_SEP = new RegExp(`\\s+${MARKS.sep}$`)
 
-function wrap(text: string, width: number): string[] {
+export function wrap(text: string, width: number): string[] {
   const out: string[] = []
   const push = (line: string) => out.push(line.trimEnd().replace(TRAILING_SEP, ''))
   let line = ''
