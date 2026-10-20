@@ -98,7 +98,7 @@ function viewOf(over: Partial<FindView> = {}): FindView {
     scroll: 0,
     beat: 0,
     mode: 'grid',
-    help: false,
+    help: undefined,
     scene: 0,
     details: false,
     tune,

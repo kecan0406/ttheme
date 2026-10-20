@@ -8,9 +8,10 @@ import { cells as columns } from '../../core/text.ts'
 import { POSITIONS } from '../../core/theme.ts'
 import type { Framing } from '../../pictures/backdrop.ts'
 import { linked } from '../ansi.ts'
+import { type Help, type Legend, overlay, type Topic, type TopicSpot } from '../help.ts'
 import { moreOf } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
-import { ansiBg, ansiFg, MARKS, open, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
+import { ansiBg, ansiFg, MARKS, open, painter, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
 import { hintKey, type KeySpot, type Zone } from '../zones.ts'
 
 export type Preset = 'cutouts' | 'all'
@@ -136,7 +137,7 @@ export interface FindView {
   beat: number
   loaderFrom?: number
   mode: 'grid' | 'try'
-  help: boolean
+  help: Help | undefined
   scene: number
   details: boolean
   info?: Info
@@ -190,6 +191,7 @@ export interface Placement {
 
 export type FindSpot =
   | KeySpot
+  | TopicSpot
   | { kind: 'link'; url: string }
   | { kind: 'tile'; index: number }
   | { kind: 'query' }
@@ -1416,46 +1418,64 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   })
 }
 
-const TUNE_KEYS: [string, string][] = [
+type Key = [label: string, text: string, press?: string]
+
+const TUNE_KEYS: Key[] = [
   ['Field', '↑↓  size, position, opacity'],
   ['Step', '←→  ·  ⇧←→ ×10'],
   ['Place', '1-9  the nine positions'],
-  ['Reset', '=  this field back to its default  ·  +  every field'],
-  ['Colors', "c  its own colors or the palette's tone, opacity back to its default"],
-  ['Keep', 'enter  back to try, installed with the picture'],
-  ['Undo', 'esc'],
-  ['Close', '?  esc'],
+  ['Reset', '=  this field back to its default  ·  +  every field', '+'],
+  ['Colors', "c  its own colors or the palette's tone, opacity back to its default", 'c'],
+  ['Keep', 'enter  back to try, installed with the picture', 'enter'],
+  ['Undo', 'esc', 'esc'],
 ]
 
-const KEYS: Record<FindView['mode'], [string, string][]> = {
+const KEYS: Record<FindView['mode'], Key[]> = {
   grid: [
     ['Move', '←↑↓→  j k  home  end  pgup  pgdn'],
-    ['Try on', 'enter'],
-    ['Site', `tab  shift+tab  all, ${SITES.map((site) => site.name).join(', ')}`],
-    ['Posts', 'c  cutouts or every post'],
-    ['Search', '/  a tag, a post URL or an id'],
+    ['Try on', 'enter', 'enter'],
+    ['Site', `tab  shift+tab  all, ${SITES.map((site) => site.name).join(', ')}`, 'tab'],
+    ['Posts', 'c  cutouts or every post', 'c'],
+    ['Search', '/  a tag, a post URL or an id', '/'],
     ['Tags', "1-9  turn a tag of the tags row on or off — the palette's own, then danbooru's related characters"],
-    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window or paste its link'],
-    ['Unfold', 'space  a set of ×N'],
-    ['Open', 'o  the artwork page in a browser  ·  O  the post page'],
-    ['Settings', 's  rating, block, posts, solo, order, sets, remove bg'],
-    ['Advanced', 'a or Advanced › in settings  min score, min size, sites, hide, hide tags, PNG only'],
-    ['Back', 'esc returns to preview'],
-    ['Close', '?  esc'],
+    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window or paste its link', 'v'],
+    ['Unfold', 'space  a set of ×N', ' '],
+    ['Open', 'o  the artwork page in a browser  ·  O  the post page', 'o'],
+    ['Settings', 's  rating, block, posts, solo, order, sets, remove bg', 's'],
+    ['Advanced', 'a or Advanced › in settings  min score, min size, sites, hide, hide tags, PNG only', 'a'],
+    ['Back', 'esc returns to preview', 'esc'],
   ],
   try: [
     ['Browse', '←→'],
-    ['Install', 'enter'],
-    ['Tune', 't  size, position and opacity, installed with the picture'],
-    ['Colors', "c  its own colors or the palette's tone, installed with the picture"],
-    ['Details', 'i  characters, series, tags, rating and file, under Post, Source and Artist'],
+    ['Install', 'enter', 'enter'],
+    ['Tune', 't  size, position and opacity, installed with the picture', 't'],
+    ['Colors', "c  its own colors or the palette's tone, installed with the picture", 'c'],
+    ['Details', 'i  characters, series, tags, rating and file, under Post, Source and Artist', 'i'],
     ['Example', `⇧←→  ${SCENES.map((scene) => scene.name.toLowerCase()).join(', ')}`],
-    ['Cut out', 'x  the background off or on, on an opaque picture'],
-    ['Open', 'o  the artwork page in a browser  ·  O  the post page'],
-    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window'],
-    ['Grid', 'esc'],
-    ['Close', '?  esc'],
+    ['Cut out', 'x  the background off or on, on an opaque picture', 'x'],
+    ['Open', 'o  the artwork page in a browser  ·  O  the post page', 'o'],
+    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window', 'v'],
+    ['Grid', 'esc', 'esc'],
   ],
+}
+
+export const FIND_MARKS: Legend = [
+  [MARKS.link, 'opens in a browser'],
+  [MARKS.on, 'a picture of your own'],
+  [MARKS.gutter, 'the picture on show'],
+]
+
+export function findTopics(view: FindView, press: (key: string) => void): Topic[] {
+  const cuts = view.shown?.cut === 'on' || view.shown?.cut === 'off'
+
+  return [
+    ...(view.tuning ? TUNE_KEYS : KEYS[view.mode]).map(([label, text, key]): Topic => {
+      const runs = key !== undefined && (key !== 'x' || cuts)
+
+      return { label, text, ...(runs ? { run: () => press(key) } : {}) }
+    }),
+    { label: 'Close', text: '?  esc', run: () => {} },
+  ]
 }
 
 export const DIGITS = 6
@@ -1761,32 +1781,17 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
   foot(lines[rows - 1] as Line, cols, { keys, right })
 }
 
-function help(lines: Line[], cols: number, rows: number, view: FindView): void {
-  const keys = view.tuning ? TUNE_KEYS : KEYS[view.mode]
-  const w = Math.min(cols - 2, Math.max(50, ...keys.map(([, value]) => width(value) + 16)))
-  const laid = keys.map(([label, value]) => ({ label, parts: wrapped(value, w - 16) }))
-  const h = laid.reduce((n, { parts }) => n + parts.length, 0) + 4
-  const x = Math.floor((cols - w) / 2)
-  const y = Math.max(2, Math.floor((rows - h) / 2))
-  lines[y]?.put(x, `╭─ Help ${'─'.repeat(w - 9)}╮`)
+function helpOver(lines: Line[], cols: number, rows: number, help: Help): string[] {
+  const { badge, keys, right } = help.bar()
+  foot(lines[rows - 1] as Line, cols, { badge, keys, ...(right ? { right } : {}) })
 
-  for (let r = y + 1; r < y + h - 1; r++) {
-    lines[r]?.put(x, `│${' '.repeat(w - 2)}│`)
-  }
-
-  let r = y + 2
-
-  for (const { label, parts } of laid) {
-    lines[r]?.put(x + 3, label, B)
-
-    for (const part of parts) {
-      lines[r]?.put(x + 13, part)
-      r++
-    }
-  }
-
-  lines[y + h - 1]?.put(x, `╰${'─'.repeat(w - 2)}╯`)
-  foot(lines[rows - 1] as Line, cols, { badge: 'HELP', right: ['? esc', 'close'] })
+  return overlay(
+    lines.map((l) => l.render()),
+    help.box(painter(true), cols, rows - 1),
+    cols,
+    rows,
+    1,
+  )
 }
 
 function suggestions(lines: Line[], view: FindView, accent: string): void {
@@ -1850,10 +1855,12 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
     }
 
     if (view.help) {
-      help(lines, cols, rows, view)
-    } else {
-      panel(lines, cols, rows, view, accent)
+      const drawn = helpOver(lines, cols, rows, view.help)
+
+      return { lines: drawn, images: keep, zones: zonesOf(lines), loader: false, tick: false }
     }
+
+    panel(lines, cols, rows, view, accent)
 
     return { lines: lines.map((l) => l.render()), images: keep, zones: zonesOf(lines), loader: false, tick: false }
   }

@@ -91,8 +91,10 @@ import { Paint } from '../../tui/find/paint.ts'
 import {
   type Count,
   DIGITS,
+  FIND_MARKS,
   type FindSpot,
   type FindView,
+  findTopics,
   gridLayout,
   HELD,
   type Held,
@@ -110,6 +112,7 @@ import {
   type TunePanel,
   type Tuning,
 } from '../../tui/find/screen.ts'
+import { Help } from '../../tui/help.ts'
 import { CELL_QUERY, CellProbe, type Inbound, type Mouse } from '../../tui/keys.ts'
 import {
   FOCUS,
@@ -601,7 +604,7 @@ class Finder {
       scroll: 0,
       beat: 0,
       mode: 'grid',
-      help: false,
+      help: undefined,
       scene: Math.max(
         0,
         SCENES.findIndex((scene) => scene.name.toLowerCase() === process.env.TTHEME_SCENE),
@@ -879,7 +882,14 @@ class Finder {
       return
     }
 
-    if (view.installing !== undefined || view.panel !== undefined || view.help) {
+    if (view.help) {
+      view.help.paste(text)
+      this.paint.draw()
+
+      return
+    }
+
+    if (view.installing !== undefined || view.panel !== undefined) {
       return
     }
 
@@ -1197,10 +1207,15 @@ class Finder {
     }
 
     if (view.help) {
-      if (key === '?' || key === 'esc') {
-        view.help = false
-        this.paint.draw()
+      const answer = view.help.key(key)
+
+      if (answer !== 'stay') {
+        const run = answer === 'run' ? view.help.chosen()?.run : undefined
+        view.help = undefined
+        run?.()
       }
+
+      this.paint.draw()
 
       return
     }
@@ -1214,7 +1229,10 @@ class Finder {
     }
 
     if (key === '?') {
-      view.help = true
+      view.help = new Help(
+        findTopics(view, (pressed) => this.key(pressed)),
+        FIND_MARKS,
+      )
       this.paint.draw()
 
       return
@@ -1235,6 +1253,12 @@ class Finder {
     const spot = hit?.target as FindSpot | undefined
 
     if (view.installing !== undefined) {
+      return
+    }
+
+    if (view.help) {
+      this.helpPoint(view.help, spot, hit, event)
+
       return
     }
 
@@ -1259,13 +1283,28 @@ class Finder {
     }
   }
 
+  private helpPoint(help: Help, spot: FindSpot | undefined, hit: Hit | undefined, event: Mouse): void {
+    if (event.action === 'wheel') {
+      help.wheel(event.wheel)
+    } else if (event.action === 'press' && event.button === 'left' && spot?.kind === 'topic') {
+      help.point(spot.index)
+    } else if (event.action === 'release' && spot?.kind === 'key' && hit?.inside) {
+      this.key(spot.key)
+    } else if (event.action === 'release' && spot?.kind === 'topic') {
+      if (hit?.inside && event.count >= 2 && help.point(spot.index)) {
+        this.key('enter')
+      }
+    } else if (event.action === 'release') {
+      this.view.help = undefined
+    }
+
+    this.paint.draw()
+  }
+
   private pressed(spot: FindSpot | undefined): void {
     const view = this.view
 
-    if (view.help) {
-      this.paint.drop()
-      this.key('esc')
-    } else if (view.editing !== undefined || spot === undefined) {
+    if (view.editing !== undefined || spot === undefined) {
       return
     } else if (view.panel !== undefined) {
       if (spot.kind === 'setting' && spot.index < view.settings.length && view.typing === undefined) {
@@ -1314,10 +1353,6 @@ class Finder {
 
   private wheel(step: number): void {
     const view = this.view
-
-    if (view.help) {
-      return
-    }
 
     if (view.editing !== undefined) {
       if (view.suggest?.length) {
