@@ -144,8 +144,8 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
     p.dim(
       boxEdge(wide, 'mid', [
         [2, ' ANSI '],
-        [12, ' Normal 0–7 '],
-        [29, ' Bright 8–15 '],
+        [13, ' Normal 0–7 '],
+        [30, ' Bright 8–15 '],
       ]),
     ),
     ...PAIRS.map((name, k) => {
@@ -200,7 +200,7 @@ function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
     '',
   ]
 
-  return [...lines, ...gateBox(p, e, height - lines.length, LEFT)]
+  return [...lines, ...gateBox(p, e, height - lines.length, LEFT - 1)]
 }
 
 function sample(p: Paint, c: Colors, width: number, room: number, scene: number, slot: number): string[] {
@@ -676,7 +676,7 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
     body = openPane(p, e, cols, height)
   } else {
     const right = cols - LEFT - 2
-    const left = e.mode === 'seeds' ? seedPane(p, e, height) : slotPane(p, e, height)
+    const left = e.mode === 'seeds' ? seedPane(p, e, height) : slotPane(p, e, height, LEFT - 1)
     const side = e.mode === 'seeds' ? seedSide(p, e, right, height) : detailPane(p, e, right, height)
     body = Array.from(
       { length: height },
