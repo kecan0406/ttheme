@@ -115,9 +115,10 @@ test('the settings panel in a window too short for it shows what fits instead of
   assert.match(frame.lines[1] ?? '', /Settings/)
 })
 
-test('a tag a site sends with control characters is drawn without them', () => {
-  const frame = renderFind(viewOf({ tag: 'hatsune_miku\x1b]52;c;aGk=\x07', panel: undefined }), 100, 30)
+test('a tag a site sends with control or direction characters is drawn without them', () => {
+  const rlo = String.fromCodePoint(0x202e)
+  const frame = renderFind(viewOf({ tag: `hatsune_miku\x1b]52;c;aGk=\x07${rlo}`, panel: undefined }), 100, 30)
   const out = frame.lines.join('\n')
   assert.match(out, /hatsune_miku\]52;c;aGk=/)
-  assert.ok(!out.includes('\x1b]52') && !out.includes('\x07'))
+  assert.ok(!out.includes('\x1b]52') && !out.includes('\x07') && !out.includes(rlo))
 })

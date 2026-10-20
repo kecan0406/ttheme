@@ -1,7 +1,20 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { marketplaceOf, nameProblem, readBooruSites, readTheme, slugOf, stem, textProblem } from './theme.ts'
+import { parse } from 'smol-toml'
+import {
+  marketplaceOf,
+  nameProblem,
+  readBooruSites,
+  readCatalogs,
+  readTheme,
+  slugOf,
+  stem,
+  textProblem,
+} from './theme.ts'
+
+const RLO = String.fromCodePoint(0x202e)
+const LRI = String.fromCodePoint(0x2066)
 
 test('booru_sites renames the tag per site, as one tag or a list, and an empty list skips the site', () => {
   assert.deepEqual(
@@ -59,9 +72,19 @@ test('a palette name is a slug, or a marketplace and a slug', () => {
 test('free text that would break a config line or zsh quoting is refused', () => {
   assert.equal(textProblem('Sword Art Online'), undefined)
 
-  for (const bad of ['a\nb', 'a"b', 'a$b', 'a`b', 'a\\b', 'x'.repeat(81)]) {
+  for (const bad of ['a\nb', 'a"b', 'a$b', 'a`b', 'a\\b', 'x'.repeat(81), `ab${RLO}cd`, `ab${LRI}cd`]) {
     assert.notEqual(textProblem(bad), undefined, JSON.stringify(bad))
   }
+})
+
+test('a palette that names a catalog lead or a booru tag with characters that steer a terminal is refused without echoing them', () => {
+  const lead = '[[catalog]]\nname = "neon"\nlead = "x\\u001b]52;c;aGk=\\u0007"\n'
+  assert.throws(
+    () => readCatalogs('shop', parse(lead).catalog),
+    (error: Error) => !error.message.includes('\x1b') && !error.message.includes('\x07'),
+  )
+  assert.throws(() => readBooruSites('x.toml', { danbooru: 'miku\x1b[2J' }, 'miku'), /must be one tag/)
+  assert.throws(() => readBooruSites('x.toml', { danbooru: `mi${RLO}ku` }, 'miku'), /must be one tag/)
 })
 
 const shared = (meta: string) => `[meta]

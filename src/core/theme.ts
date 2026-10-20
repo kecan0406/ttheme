@@ -2,6 +2,7 @@ import { parse } from 'smol-toml'
 import { SITES } from './booru.ts'
 import { type Hex, isHex } from './color.ts'
 import { MODES, modeOf, otherOf } from './mode.ts'
+import { escaped, quoted } from './text.ts'
 
 export interface GhosttyExtras {
   iconGhost: Hex
@@ -86,9 +87,13 @@ export function fail(file: string, message: string): never {
   throw new Error(`${file}: ${message}`)
 }
 
+function echo(value: unknown): string {
+  return escaped(JSON.stringify(value) ?? String(value))
+}
+
 function hex(file: string, field: string, value: unknown): Hex {
   if (typeof value !== 'string' || !isHex(value)) {
-    fail(file, `${field} must be "#rrggbb" (lowercase), got ${JSON.stringify(value)}`)
+    fail(file, `${field} must be "#rrggbb" (lowercase), got ${echo(value)}`)
   }
 
   return value
@@ -140,8 +145,8 @@ export function nameProblem(name: string): string | undefined {
 }
 
 export function textProblem(value: string): string | undefined {
-  if (/[\p{Cc}"$`\\]/u.test(value)) {
-    return 'holds a control character, a quote, $, ` or \\'
+  if (/[\p{Cc}\p{Bidi_Control}"$`\\]/u.test(value)) {
+    return 'holds a control character, a direction mark, a quote, $, ` or \\'
   }
 
   return value.length > 80 ? 'is longer than 80 characters' : undefined
@@ -156,7 +161,7 @@ function text(file: string, field: string, value: unknown): string {
   const problem = textProblem(s)
 
   if (problem) {
-    fail(file, `${field} ${JSON.stringify(s)} ${problem}`)
+    fail(file, `${field} ${quoted(s)} ${problem}`)
   }
 
   return s
@@ -167,7 +172,7 @@ function paletteName(file: string, field: string, value: unknown): string {
   const problem = nameProblem(name)
 
   if (problem) {
-    fail(file, `${field} "${name}" ${problem}`)
+    fail(file, `${field} ${quoted(name)} ${problem}`)
   }
 
   return name
@@ -233,10 +238,7 @@ function readSignature(file: string, value: unknown, slots: Slots): Signature {
     const color = known.get(slot)
 
     if (color === undefined) {
-      fail(
-        file,
-        `${field} ${JSON.stringify(raw)} is not a palette slot — use ${NAMED_SLOTS.join(', ')} or ansi0-ansi15`,
-      )
+      fail(file, `${field} ${quoted(slot)} is not a palette slot — use ${NAMED_SLOTS.join(', ')} or ansi0-ansi15`)
     }
 
     names.push(slot)
@@ -278,13 +280,16 @@ export function readBooruSites(
         continue
       }
 
-      fail(file, `meta.booru_sites.${key} is not a find site — use ${SITES.map((s) => s.key).join(', ')}`)
+      fail(file, `meta.booru_sites.${escaped(key)} is not a find site — use ${SITES.map((s) => s.key).join(', ')}`)
     }
 
     const names = typeof value === 'string' ? [value] : Array.isArray(value) ? value : undefined
 
-    if (!names || names.some((name) => typeof name !== 'string' || name === '' || /\s/.test(name))) {
-      fail(file, `meta.booru_sites.${key} must be one tag or a list of tags, got ${JSON.stringify(value)}`)
+    if (
+      !names ||
+      names.some((name) => typeof name !== 'string' || name === '' || /[\s\p{Cc}\p{Bidi_Control}]/u.test(name))
+    ) {
+      fail(file, `meta.booru_sites.${key} must be one tag or a list of tags, got ${echo(value)}`)
     }
 
     if (names.length > 1 && !site.ors) {
@@ -407,7 +412,7 @@ function readNativeNames(file: string, raw: unknown): string[] {
     const said = text(file, `meta.native_names[${i}]`, name)
 
     if (said.includes('|')) {
-      fail(file, `meta.native_names[${i}] ${JSON.stringify(said)} contains |`)
+      fail(file, `meta.native_names[${i}] ${quoted(said)} contains |`)
     }
 
     return said
@@ -519,7 +524,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   const role = meta.role
 
   if (role !== undefined && role !== 'default') {
-    fail(file, `meta.role must be "default", got ${JSON.stringify(role)}`)
+    fail(file, `meta.role must be "default", got ${echo(role)}`)
   }
 
   const base = meta.base === undefined ? undefined : paletteName(file, 'meta.base', meta.base)
@@ -568,8 +573,8 @@ export function readTheme(file: string, source: string, place: Place): Theme {
 
   const booru = meta.booru === undefined ? undefined : str(file, 'meta.booru', meta.booru)
 
-  if (booru !== undefined && /[\s\p{Cc}]/u.test(booru)) {
-    fail(file, `meta.booru must be a single booru tag, got ${JSON.stringify(booru)}`)
+  if (booru !== undefined && /[\s\p{Cc}\p{Bidi_Control}]/u.test(booru)) {
+    fail(file, `meta.booru must be a single booru tag, got ${quoted(booru)}`)
   }
 
   const booruSites = readBooruSites(file, meta.booru_sites, booru, place.foreign === true)

@@ -12,11 +12,25 @@ export function printable(text: string): boolean {
   return PRINTABLE.test(text)
 }
 
+const STEERING = /[\p{Cc}\p{Bidi_Control}]/gu
+
 export function inert(text: string): string {
   return text
     .replace(/\p{Bidi_Control}/gu, '')
     .replace(/[\p{Cc}\s]+/gu, ' ')
     .trim()
+}
+
+export function inertLines(text: string): string {
+  return text.replace(STEERING, (ch) => (ch === '\n' ? ch : ch === '\t' ? ' ' : ''))
+}
+
+export function escaped(text: string): string {
+  return text.replace(STEERING, (ch) => `\\u${(ch.codePointAt(0) ?? 0).toString(16).padStart(4, '0')}`)
+}
+
+export function quoted(text: string): string {
+  return escaped(JSON.stringify(text))
 }
 
 export function cells(text: string): number {

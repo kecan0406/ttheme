@@ -57,7 +57,8 @@ test('only a repository updates on its own, once turned on — the official mark
 })
 
 test('a marketplace description reads without the bidirectional controls that would reorder it on screen', () => {
-  const toml = 'name = "shop"\ndescription = "warm ‮etsap‬ colors ⁦for⁩ nights"\n\n[owner]\nname = "fix"\n'
+  const [rlo, pdf, lri, pdi] = [0x202e, 0x202c, 0x2066, 0x2069].map((code) => String.fromCodePoint(code))
+  const toml = `name = "shop"\ndescription = "warm ${rlo}etsap${pdf} colors ${lri}for${pdi} nights"\n\n[owner]\nname = "fix"\n`
   assert.equal(readMarketplaceInfo(toml, 'shop').description, 'warm etsap colors for nights')
 })
 

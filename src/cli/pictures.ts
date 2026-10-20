@@ -19,6 +19,7 @@ import {
 } from '../core/booru.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { decodeImage, transparency } from '../core/png.ts'
+import { inert } from '../core/text.ts'
 import type { SharedPicture } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
 import {
@@ -235,7 +236,7 @@ export async function bringPictures(
       line.say(`  ▣ ${label}`)
       got.add(entry)
     } catch (error) {
-      line.say(`  ▢ ${label} — ${error instanceof Error ? error.message : String(error)}`)
+      line.say(`  ▢ ${label} — ${inert(error instanceof Error ? error.message : String(error))}`)
     }
   }
 

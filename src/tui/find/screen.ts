@@ -399,7 +399,7 @@ class Line {
   }
 
   put(col: number, text: string, sgr = '', link?: string, spot?: FindSpot): number {
-    const shown = text.replace(/\p{Cc}/gu, '')
+    const shown = text.replace(/[\p{Cc}\p{Bidi_Control}]/gu, '')
     this.parts.push({ col, text: shown, sgr, ...(link ? { link } : {}), ...(spot ? { spot } : {}) })
 
     return col + width(shown)

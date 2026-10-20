@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
-import { inert } from '../core/text.ts'
+import { escaped, inert } from '../core/text.ts'
 import { type Catalog, MARKETPLACE_FILE, MARKETPLACE_SCHEMA_URL, nameProblem, readCatalogs } from '../core/theme.ts'
 
 export const OFFICIAL = 'official'
@@ -201,7 +201,7 @@ function renamesOf(where: string, raw: unknown) {
 
   for (const [from, to] of Object.entries(raw)) {
     if (nameProblem(from) || (to !== false && (typeof to !== 'string' || nameProblem(to)))) {
-      throw new Error(`${where}: renames.${from} must map a palette name to a palette name, or to false`)
+      throw new Error(`${where}: renames.${escaped(from)} must map a palette name to a palette name, or to false`)
     }
 
     renames[from] = to

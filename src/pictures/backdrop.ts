@@ -581,7 +581,7 @@ export function undrawn(picture: Picture): boolean {
 }
 
 function word(name: string): string {
-  return name.replace(/[\s,\p{Cc}]+/gu, '_')
+  return name.replace(/\p{Bidi_Control}/gu, '').replace(/[\s,\p{Cc}]+/gu, '_')
 }
 
 function byline(picture: Picture): string {
@@ -590,7 +590,7 @@ function byline(picture: Picture): string {
 
 function creditLines(held: Picture): string[] {
   const page = artworkOf(held)
-  const line = creditLine(held)?.replace(/\p{Cc}+/gu, '')
+  const line = creditLine(held)?.replace(/[\p{Cc}\p{Bidi_Control}]+/gu, '')
 
   return [
     ...(line ? [`# credit ${held.key} ${line}`] : []),

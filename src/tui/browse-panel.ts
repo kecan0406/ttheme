@@ -1,7 +1,7 @@
 import type { Readable, Writable } from 'node:stream'
 import { GATE_RULES } from '../core/contrast.ts'
 import { type PaletteEntry, swatch } from '../core/manifest.ts'
-import { ago, cells, counted } from '../core/text.ts'
+import { ago, cells, counted, inert } from '../core/text.ts'
 import { marketplaceOf } from '../core/theme.ts'
 import { gateFailures } from '../store/available.ts'
 import { type Listed, type Listing, listedMatches } from '../store/marketplace-index.ts'
@@ -717,7 +717,7 @@ export class BrowsePanel {
       },
       (error: Error) => {
         this.loading = false
-        this.loadError = error.message
+        this.loadError = inert(error.message)
         this.results.refresh()
         this.redraw()
       },
@@ -1140,7 +1140,7 @@ export class BrowsePanel {
       (error: Error) => {
         this.busy.delete(source)
         this.staging.delete(source)
-        this.failed.set(source, error.message)
+        this.failed.set(source, inert(error.message))
         this.landing = undefined
         this.redraw()
       },
@@ -1214,7 +1214,7 @@ export class BrowsePanel {
       },
       (error: Error) => {
         this.busy.delete(source)
-        this.failed.set(source, `Update failed: ${error.message}`)
+        this.failed.set(source, `Update failed: ${inert(error.message)}`)
         this.redraw()
       },
     )
@@ -1670,7 +1670,7 @@ export class BrowsePanel {
     } else if (this.stopped) {
       lines.push(
         '',
-        ...wrapText(this.stopped.message, Math.max(20, this.columns() - 6)).map(
+        ...wrapText(inert(this.stopped.message), Math.max(20, this.columns() - 6)).map(
           (l, i) => ` ${i === 0 ? this.p.error(MARKS.miss) : ' '} ${l}`,
         ),
       )
