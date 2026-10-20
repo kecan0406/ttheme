@@ -437,6 +437,10 @@ function aliasesOf(known: Known | undefined): string[] {
 
 let remembered: Record<string, string[]> | undefined
 
+function aliasesIn(tags: Record<string, string[]>, tag: string): string[] {
+  return Object.hasOwn(tags, tag) ? (tags[tag] ?? []) : []
+}
+
 export function aliasesFor(tag: string | undefined, home = homedir()): string[] {
   if (!tag) return []
 
@@ -450,7 +454,7 @@ export function aliasesFor(tag: string | undefined, home = homedir()): string[] 
     }
   }
 
-  return remembered[tag] ?? []
+  return aliasesIn(remembered, tag)
 }
 
 export function paletteAliases(tags: readonly string[], home = homedir()): Map<string, string[]> {
@@ -473,22 +477,24 @@ function aliasMap(tags: readonly string[], home: string): Map<string, string[]> 
     kept = JSON.parse(readFileSync(cache, 'utf8'))
   } catch {}
 
-  if (kept?.stamp === stamp && tags.every((tag) => tag in kept.tags)) {
+  if (kept?.stamp === stamp && tags.every((tag) => Object.hasOwn(kept.tags, tag))) {
     remembered = kept.tags
 
-    return new Map(tags.map((tag) => [tag, kept.tags[tag] ?? []]))
+    return new Map(tags.map((tag) => [tag, aliasesIn(kept.tags, tag)]))
   }
 
   const index = load(home)
 
   if (!index) return new Map()
   const all = new Set([...tags, ...(kept?.stamp === stamp ? Object.keys(kept.tags) : [])])
-  const fresh: Record<string, string[]> = {}
 
-  for (const tag of all) {
-    const card = cardFor(index, tag)
-    fresh[tag] = card === undefined ? [] : aliasesOf(cardOf(index, card))
-  }
+  const fresh: Record<string, string[]> = Object.fromEntries(
+    all.values().map((tag) => {
+      const card = cardFor(index, tag)
+
+      return [tag, card === undefined ? [] : aliasesOf(cardOf(index, card))]
+    }),
+  )
 
   try {
     writeAtomic(cache, `${JSON.stringify({ stamp, tags: fresh })}\n`)
@@ -496,7 +502,7 @@ function aliasMap(tags: readonly string[], home: string): Map<string, string[]> 
 
   remembered = fresh
 
-  return new Map(tags.map((tag) => [tag, fresh[tag] ?? []]))
+  return new Map(tags.map((tag) => [tag, aliasesIn(fresh, tag)]))
 }
 
 export function knowAliases(entries: readonly { booru?: string }[], home = homedir()): void {
