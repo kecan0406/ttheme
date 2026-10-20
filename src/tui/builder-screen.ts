@@ -576,7 +576,7 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
   const side = layout.side
   const failing = gateMisses(e)
   const dot = e.changedOnly ? p.warn(MARKS.on) : ' '
-  const gate = failing === 0 ? p.ok('Gate ✓') : p.bold(`Gate ✗ ${failing}`)
+  const gate = failing === 0 ? p.ok(`Gate ${MARKS.ok}`) : p.bold(`Gate ${MARKS.miss} ${failing}`)
 
   const tabs = spread(
     ` ${p.bold('Colors')}  ${gate}`,

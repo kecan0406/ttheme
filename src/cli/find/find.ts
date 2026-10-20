@@ -918,7 +918,7 @@ class Finder {
 
   private async got(got: Got): Promise<void> {
     if (got.kind === 'error') {
-      this.notice(got.message)
+      this.notice(got.message, 'error')
 
       return
     }
@@ -1002,7 +1002,7 @@ class Finder {
     try {
       clip = await readClipboard(join(this.scratch, `clipboard-${Date.now()}.png`))
     } catch (error) {
-      this.notice(`Could not read the clipboard: ${describe(error instanceof Error ? error : String(error))}`)
+      this.notice(`Could not read the clipboard: ${describe(error instanceof Error ? error : String(error))}`, 'error')
 
       return
     }

@@ -493,6 +493,11 @@ test('Search marketplace opens a screen of its own that loads the marketplace li
   assert.match(frames, /\[SEARCH\] space add {3}enter add and go back {3}\? keys +esc back$/m)
 })
 
+test('a filter that matches no palette says so under the head rows', async () => {
+  const { frames } = await drive([...'zzz', 20, '\x1b', '\x1b'])
+  assert.match(frames, /^ {4}No palettes match 'zzz'/m)
+})
+
 test('typing in the search filters the list at once, palette names included, and what Browse filtered opens it', async () => {
   const index = () =>
     Promise.resolve(

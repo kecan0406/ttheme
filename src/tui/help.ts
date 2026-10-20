@@ -167,7 +167,7 @@ export class Help {
       side(filter),
       side(''),
       ...(fits ? [] : [side(this.top > 0 ? p.dim(moreOf(-1, this.top)) : '')]),
-      ...(shown.length > 0 ? body.slice(0, span) : [side(p.dim(`  Nothing matches '${typed}'`))]),
+      ...(shown.length > 0 ? body.slice(0, span) : [side(p.dim(`  No keys match '${typed}'`))]),
       ...(fits ? [] : [side(end < shown.length ? p.dim(moreOf(1, shown.length - end)) : '')]),
       ...(marks.length > 0
         ? [

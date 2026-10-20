@@ -1251,7 +1251,10 @@ export class BrowsePanel {
     left: number,
     width: number,
   ): string[] {
-    const body = lines.map((line) => ` ${line}`)
+    const typed = this.field.value.trim()
+    const none = this.showing !== 'search' && typed !== '' && this.list.matched() === 0
+    const empty = none && lines.length + 2 <= this.maxItems ? ['', this.p.dim(`   No palettes match '${typed}'`)] : []
+    const body = [...lines, ...empty].map((line) => ` ${line}`)
 
     while (body.length < this.maxItems) {
       body.push('')
@@ -1264,9 +1267,11 @@ export class BrowsePanel {
     ]
 
     if (!wide) {
+      const { brief, failed } = this.detail(left - 2)
+
       return [
         ...list.map((row) => fit(row, left, false)),
-        fit(` ${this.p.dim(this.detail(left - 2).brief)}`, left, false),
+        fit(` ${(failed ? this.p.error : this.p.dim)(brief)}`, left, false),
       ]
     }
 

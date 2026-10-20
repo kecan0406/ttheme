@@ -262,6 +262,7 @@ export class Search {
         ...this.paletteLines(m, width),
       ],
       brief: [counted(m.palettes.length), note].join(' · '),
+      ...(failure ? { failed: true } : {}),
     }
   }
 

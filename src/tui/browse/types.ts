@@ -78,6 +78,7 @@ export interface Detail {
   title: string
   lines: string[]
   brief: string
+  failed?: boolean
 }
 
 export type Spot =

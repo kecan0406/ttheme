@@ -209,7 +209,7 @@ export function gateBox(p: Paint, e: PaletteEditor, room: number, width: number)
   }
 
   const failing = gateMisses(e)
-  const title = failing === 0 ? ' Gate ✓ passes ' : ` Gate ✗ ${failing} · n next `
+  const title = failing === 0 ? ` Gate ${MARKS.ok} passes ` : ` Gate ${MARKS.miss} ${failing} · n next `
 
   return [
     boxTitle(width, title, p.dim, failing === 0 ? p.ok : p.dim),
