@@ -27,6 +27,7 @@ import { Screen } from '../screen.ts'
 import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter, SPINNER } from '../style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from '../terminal.ts'
 import { zone } from '../zones.ts'
+import { Network } from './network.ts'
 import { Review } from './review.ts'
 import { Staged } from './staged.ts'
 import type { Action, BrowseIo, BrowseOptions, BrowseResult, Detail, Found, Marketplace, Row, Spot } from './types.ts'
@@ -76,11 +77,7 @@ export class BrowsePanel {
   private readonly query = new Field()
   private readonly address = new Field()
   private readonly tuned: Set<string>
-  private readonly busy = new Map<string, string>()
-  private readonly failed = new Map<string, string>()
-  private readonly fetched = new Map<string, Marketplace>()
-  private readonly staging = new Set<string>()
-  private readonly inflight = new Set<Promise<unknown>>()
+  private readonly network: Network
   private readonly startup: string | undefined
   private readonly io: BrowseIo
   private readonly color: boolean
@@ -123,6 +120,7 @@ export class BrowsePanel {
     this.tuned = new Set(opts.tuned ?? [])
     this.startup = opts.startup
     this.io = opts.io
+    this.network = new Network(opts.io, () => this.redraw())
     this.color = opts.color ?? true
     this.p = painter(this.color)
     this.hub = opts.hub
@@ -143,7 +141,7 @@ export class BrowsePanel {
       beat: () => this.beat,
       more: (step, count) => this.more(step, count),
       redraw: () => this.redraw(),
-      apply: (result, report) => this.track(this.io.apply(result, report)),
+      apply: (result, report) => this.network.track(this.io.apply(result, report)),
     })
     this.list = new PaletteList<Row>({
       entries: this.staged.entries(),
@@ -288,8 +286,8 @@ export class BrowsePanel {
     return this.goto
   }
 
-  async idle(): Promise<void> {
-    await Promise.allSettled(this.inflight)
+  idle(): Promise<void> {
+    return this.network.idle()
   }
 
   result(): BrowseResult {
@@ -523,7 +521,7 @@ export class BrowsePanel {
   }
 
   private fetching(): boolean {
-    return this.adding !== undefined && this.busy.has(this.adding)
+    return this.adding !== undefined && this.network.busy.has(this.adding)
   }
 
   private reveal(id: string): void {
@@ -609,7 +607,7 @@ export class BrowsePanel {
     this.loading = true
     this.loadError = undefined
     this.redraw()
-    this.track(this.io.index()).then(
+    this.network.track(this.io.index()).then(
       (listing) => {
         this.loading = false
         this.listing = listing
@@ -646,7 +644,7 @@ export class BrowsePanel {
 
   private back(): void {
     if (this.side === 'form' && this.adding !== undefined) {
-      this.staging.delete(this.adding)
+      this.network.unstage(this.adding)
     }
 
     this.side = 'cards'
@@ -871,14 +869,6 @@ export class BrowsePanel {
     }
   }
 
-  private track<T>(work: Promise<T>): Promise<T> {
-    this.inflight.add(work)
-    const done = () => this.inflight.delete(work)
-    work.then(done, done)
-
-    return work
-  }
-
   private reload(): void {
     this.list.setEntries(this.staged.entries())
     this.follow(true)
@@ -962,39 +952,11 @@ export class BrowsePanel {
   }
 
   private load(source: string): void {
-    const got = this.fetched.get(source)
-
-    if (got) {
-      this.arrive(source, got)
-
-      return
-    }
-
-    this.staging.add(source)
-
-    if (this.busy.has(source)) {
-      return
-    }
-
-    this.failed.delete(source)
-    this.busy.set(source, 'Fetching…')
-    this.track(this.io.fetch(source)).then(
-      (marketplace) => {
-        this.busy.delete(source)
-        this.fetched.set(source, marketplace)
-
-        if (this.staging.delete(source)) {
-          this.arrive(source, marketplace)
-        }
-
-        this.redraw()
-      },
-      (error: Error) => {
-        this.busy.delete(source)
-        this.staging.delete(source)
-        this.failed.set(source, inert(error.message))
+    this.network.fetch(
+      source,
+      (marketplace) => this.arrive(source, marketplace),
+      () => {
         this.landing = undefined
-        this.redraw()
       },
     )
   }
@@ -1003,7 +965,7 @@ export class BrowsePanel {
     const clash = this.staged.named(marketplace.id)
 
     if (clash) {
-      this.failed.set(source, `${marketplace.id} already names the marketplace at ${clash.shown}`)
+      this.network.failed.set(source, `${marketplace.id} already names the marketplace at ${clash.shown}`)
       this.landing = undefined
     } else {
       this.stage(marketplace)
@@ -1051,25 +1013,10 @@ export class BrowsePanel {
   }
 
   private update(source: string): void {
-    if (this.busy.has(source)) {
-      return
-    }
-
-    this.failed.delete(source)
-    this.busy.set(source, 'Updating…')
-    this.track(this.io.refresh(source)).then(
-      ({ marketplace, refreshed, updates }) => {
-        this.busy.delete(source)
-        this.staged.refresh(source, marketplace, refreshed, updates)
-        this.reload()
-        this.redraw()
-      },
-      (error: Error) => {
-        this.busy.delete(source)
-        this.failed.set(source, `Update failed: ${inert(error.message)}`)
-        this.redraw()
-      },
-    )
+    this.network.refresh(source, ({ marketplace, refreshed, updates }) => {
+      this.staged.refresh(source, marketplace, refreshed, updates)
+      this.reload()
+    })
   }
 
   private row(found: Found, idle = false): Row {
@@ -1115,7 +1062,7 @@ export class BrowsePanel {
       note ? ` ${this.p.dim(note)}` : '',
       {
         pane: 'panel',
-        off: action === 'update' && this.busy.has(source),
+        off: action === 'update' && this.network.busy.has(source),
         danger: action === 'remove' && !this.staged.adds.has(source),
       },
     )
@@ -1150,7 +1097,8 @@ export class BrowsePanel {
     const m = this.staged.known(source)
 
     if (action === 'update') {
-      const note = this.busy.get(source) ?? (this.failed.has(source) ? 'Update failed' : m ? cap(m.status) : '')
+      const note =
+        this.network.busy.get(source) ?? (this.network.failed.has(source) ? 'Update failed' : m ? cap(m.status) : '')
 
       return ['Update now', note]
     }
@@ -1215,7 +1163,8 @@ export class BrowsePanel {
   private status(marketplace: Marketplace): string {
     return this.staged.adds.has(marketplace.source)
       ? 'Will add'
-      : (this.busy.get(marketplace.source) ?? (this.failed.has(marketplace.source) ? 'Update failed' : ''))
+      : (this.network.busy.get(marketplace.source) ??
+          (this.network.failed.has(marketplace.source) ? 'Update failed' : ''))
   }
 
   private about(top: string, members: PaletteEntry[], matching?: number): Card {
@@ -1275,12 +1224,12 @@ export class BrowsePanel {
 
     const m = found.listed
     const known = this.staged.known(m.source)
-    const failure = this.failed.get(m.source)
+    const failure = this.network.failed.get(m.source)
 
     const facts = [
       `${MARKS.star}${m.stars}`,
       known ? this.addedNote(known) : counted(m.palettes.length),
-      this.busy.get(m.source) ?? '',
+      this.network.busy.get(m.source) ?? '',
     ].filter(Boolean)
 
     return this.lit(
@@ -1365,7 +1314,7 @@ export class BrowsePanel {
       return parts.length > 0 ? parts.join(' · ') : 'on GitHub'
     }
 
-    const updating = this.busy.values().some((text) => text === 'Updating…') ? 'Updating… · ' : ''
+    const updating = this.network.updating() ? 'Updating… · ' : ''
     const list = this.list
     const dropped = this.staged.removes.size
     const removing = dropped > 0 ? ` · ${dropped} marketplace${dropped === 1 ? '' : 's'} to remove` : ''
@@ -1492,7 +1441,7 @@ export class BrowsePanel {
   private marketplaceDetail(m: Marketplace, width: number): Detail {
     const auto = isRemote(m.source) ? `Auto-update ${this.staged.auto(m) ? 'on' : 'off'}` : cap(m.status)
 
-    const failure = this.failed.get(m.source)
+    const failure = this.network.failed.get(m.source)
 
     const staged = this.staged.adds.has(m.source)
       ? ['Will add']
@@ -1558,7 +1507,9 @@ export class BrowsePanel {
 
     const note = known
       ? this.addedNote(known)
-      : (this.busy.get(m.source) ?? this.failed.get(m.source) ?? 'space adds it, enter adds it and goes back')
+      : (this.network.busy.get(m.source) ??
+        this.network.failed.get(m.source) ??
+        'space adds it, enter adds it and goes back')
 
     return {
       title: this.p.bold(m.id),
@@ -1592,7 +1543,7 @@ export class BrowsePanel {
     const focused = this.side === 'form'
     const value = this.address.value
     const text = value ? `${value}${focused ? '_' : ''}` : focused ? '_' : this.p.dim('owner/repo or a folder')
-    const problem = this.formError ?? (this.adding === undefined ? undefined : this.failed.get(this.adding))
+    const problem = this.formError ?? (this.adding === undefined ? undefined : this.network.failed.get(this.adding))
 
     const status =
       this.adding !== undefined && this.fetching()
