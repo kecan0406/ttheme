@@ -234,7 +234,7 @@ function ansiLabels(side: number): [number, string][] {
   return [
     [2, ' ANSI '],
     [2 + NAME, roomy ? ' Normal 0–7 ' : ' Normal '],
-    [5 + NAME + cellWidth(side), roomy ? ' Bright 8–15 ' : ' Bright '],
+    [4 + NAME + cellWidth(side), roomy ? ' Bright 8–15 ' : ' Bright '],
   ]
 }
 
@@ -946,7 +946,7 @@ export function renderBuilder(
   const lines = Array.from({ length: rows - 1 }, (_, r) => {
     const right = r === 0 ? top : r === 1 ? rule : drawn(grid[r - 2] ?? [], color)
 
-    return `${fit(side[r] ?? '', layout.side)}${divider}${right}`
+    return `${fit(side[r] ?? '', layout.side)}${r === 1 ? p.dim('├') : divider}${right}`
   })
 
   return { lines, art: popped.art }
