@@ -395,7 +395,7 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
     return [viewTabs(p, e, width), '', ...relations(p, e, width, height - 2, true)]
   }
 
-  const right = slot >= BASE.length ? p.dim('Uses underlined below') : sig ? p.dim('◆ signature') : ''
+  const right = slot >= BASE.length ? p.dim('Uses underlined below') : sig ? p.dim(`${MARKS.signature} signature`) : ''
   const lines = [spread(`${p.bold(name)}  ${p.dim(about)}`, e.view === 'relations' ? '' : right, width), '']
   const block = p.color ? `${p.fg(hex)}${'█'.repeat(8)}${FG_RESET}  ` : ''
   const typed = e.typing !== undefined ? `${p.bold(`${e.typing}▏`)}` : undefined

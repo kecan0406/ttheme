@@ -102,6 +102,12 @@ test('* marks a signature color, keeping the last three and saying which one wen
   assert.match(e.notice ?? '', /needs three/)
 })
 
+test('a signature slot is marked ✦ in the list and in its detail alike', () => {
+  const lines = screen(editor()).split('\n')
+  assert.match(lines.find((line) => line.includes('▌ Background')) ?? '', /Background›✦/)
+  assert.match(lines.find((line) => line.includes('│ Background')) ?? '', /✦ signature/)
+})
+
 test('o takes another palette’s colors, filtered by what is typed', () => {
   const e = press(editor(), 'o', 'd', 'a', 'w')
   assert.match(screen(e), /Take colors from {2}daw▏/)
