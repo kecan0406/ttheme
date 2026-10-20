@@ -350,8 +350,9 @@ topics of the mode the screen is in, where `↑` `↓` reach every topic and ent
 runs the key a topic names — Browse and the editor offer that only where the key
 does something —, a filter that typing fills, and a Marks line saying what the
 screen's marks mean. A long topic wraps at its `·` parts, the topics scroll in a
-short window, the box takes every click inside it, and the screen under it
-keeps no click zones but on its key bar (find clears its screen first, since
+short window, the box takes every click inside it and covers one blank column
+on each side, so its edge never meets an edge beside it, and the screen under
+it keeps no click zones but on its key bar (find clears its screen first, since
 its pictures would show through). And a list its window cuts says what is out
 of sight with `moreOf` (`↑ 3 more`, `↓ 12 more`).
 
@@ -489,7 +490,8 @@ changes? counting the colors and pictures changed), and a no is answered too:
 the bar leads with what was kept (`alice@pastel kept`) until the next key.
 
 A state reads the same on every screen. A list with nothing to show says so
-in a dim line where its rows would be: `No palettes match 'kit'` while a
+in a dim line where its rows would be — save Search's list, whose state is its
+one row, a button `space` loads again —: `No palettes match 'kit'` while a
 filter finds nothing (the things in the plural, what was typed in single
 quotes), `No palettes yet` while there are none, and what to do after a ` — `
 where a key does it (`No posts of kita on danbooru — tab tries yande.re`).
@@ -497,17 +499,19 @@ Work under way is a dim line that names it, led by the spinner where the
 screen turns one; find's work on the post in hand (installing, fetching,
 cutting out) leads its foot in warn. A failure is drawn in the error role
 wherever it is named — Browse's card badge, its panel and the `Update now`
-note, Search's row and detail, the editor's bar, find's foot. A notice a key
+note, a Search result's row and detail (and, below 94 columns, the brief under
+the list), the editor's bar, find's foot. A notice a key
 earns is plain when the key had nothing to act on (`Nothing to undo`), ok when
 it did what was asked (`Already passes the gate`), and warn when the key was
 refused for something the person can change (`The builder needs a window of at
 least 96×28`, `Pick at least one palette`, `No picture on the clipboard`).
 
-Text someone else wrote — a marketplace's files, the marketplace index, a
-booru's answer, the names release, an error message built from any of them —
-has every control and direction character dropped or spelled out before a
-screen or a message shows it, so no escape sequence reaches the terminal and
-no direction mark reorders what it touches: through `src/core/text.ts` in
+Text someone else wrote — a marketplace's files and the names of its files and
+folders, the marketplace index, a booru's answer, the names release, an error
+message built from any of them — has every control and direction character
+dropped or spelled out before a screen or a message shows it, so no escape
+sequence reaches the terminal and no direction mark reorders what it touches:
+through `src/core/text.ts` in
 Browse, the editor's notices, the readers and the CLI's errors (`inert` for one
 line, `inertLines` for a message that keeps its line breaks, and `quoted` or
 `escaped` for a value an error echoes), through `Line.put` and `linked` in

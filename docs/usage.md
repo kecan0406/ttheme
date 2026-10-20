@@ -101,7 +101,7 @@ current palette;
 `↑`/`↓` move (the tab repaints as the focus lands on a palette) and wrap
 around at either end, `←`/`→` fold and unfold (so do enter and space on a
 catalog), page up/down jump a screen (from the last row to the first, and back)
-and home/end to either end, typing filters and underlines the match (ctrl-u clears it) —
+and home/end to either end, typing filters and underlines the match (ctrl+u clears it) —
 any text, Japanese included, against the palette, marketplace and catalog names, each
 catalog's Japanese title and the character's names in Japanese and as its booru tag
 spells them, ignoring case and punctuation, so `ひとり` or `hitori` finds `bocchi`
@@ -115,7 +115,7 @@ restored. Each palette row carries its 16 colors, normal over bright. The last
 line lists only the keys that work right there, always names the mode
 (`PREVIEW`, `PREVIEW (FILTER)`, `PREVIEW (APPLY)`,
 `PREVIEW (PIN)`, `EDIT`, `EDIT (APPLY)`, `EDIT (PIN)`, `CONFIG`, `HELP`) and pins where
-esc goes to the right; `?` shows all of them.
+esc goes to the right; `?` shows all of them — in a window too short for them all, those that fit and `↓ n more`.
 In Warp, which wears one theme for the whole app, the tab in front decides it:
 preview switches that theme as the focus moves — every Warp window at once —
 and so do `ttheme use` and a pin, while switching tabs or windows puts
@@ -153,7 +153,7 @@ back, and a window with less than 50 columns for the sample gives the panel the
 whole screen.
 
 The palette half only tells. Every slot is listed in OKLCH — lightness,
-chroma, hue — with `◆` on a signature color, `✗` on a slot whose own checks
+chroma, hue — with `✦` on a signature color, `✗` on a slot whose own checks
 miss and a yellow `●` on one that differs from the color its marketplace gives; the
 box's top edge says how many slots you tuned and what the gate says. The picture half is the one
 [Tuning](backgrounds.md#tuning) describes — the pictures, then colors, size,
@@ -303,7 +303,7 @@ lists the host pins as they will be. The pin lands in the same `pins` file as
 `ttheme unpin ssh:<host>` drops it.
 
 ```
-[PREVIEW (PIN)] kita → [This host]   ssh tusa   enter confirm             esc back
+ [PREVIEW (PIN)] kita → [This host]   ssh tusa   enter confirm            esc back
 ```
 
 Only a session counts: `ssh tusa`, `ssh -p 2222 bob@tusa`, `ssh tusa -A`, an
@@ -400,7 +400,9 @@ is how you drop it. A palette whose marketplace changed it since you installed
 it is marked `⇡`, and `ctrl+r` stages its update — or every one under a catalog.
 Typing filters every marketplace at once (a query has no spaces, `space` is the
 pick key): a card with nothing matching hides, the others say how many match
-(`2 of 108 match`), and the cursor lands on the first match inside the panel.
+(`2 of 108 match`), and the cursor lands on the first match inside the panel; a
+filter no card matches says `No palettes match 'zzz'` under `+ Add marketplace`
+and `⌕ Search marketplace`.
 
 Under the palettes in the panel sit the marketplace's own actions — `↓` past
 the last palette reaches them, and `↑` from the first wraps onto them. `enter`,
@@ -454,9 +456,9 @@ one the cursor is on, and the panel takes the whole screen while you are in it:
 
 ```
  Browse (177/177 · 9 picked)
- ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ⌕ Search… e.g. kita | Bocchi the Rock!                                                        │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ Search… e.g. kita | Bocchi the Rock!                                                         │
+ ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
                                                        ╭─ official ───────────────────────────────╮
     + Add marketplace  owner/repo or a folder          │ Comes with ttheme                        │
     ⌕ Search marketplace  find one on GitHub           │                                          │
@@ -475,7 +477,7 @@ one the cursor is on, and the panel takes the whole screen while you are in it:
                                                        │                                          │
                                                        ├──────────────────────────────────────────┤
                                                        │ bocchi  Installed                        │
-                                                       │ Gate 9/9 · passes                        │
+                                                       │ Gate 12/12 · passes                      │
                                                        │                                          │
                                                        ╰──────────────────────────────────────────╯
  [BROWSE] space pick   enter close   ? keys                                                esc back
