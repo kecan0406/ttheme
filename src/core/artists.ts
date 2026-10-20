@@ -64,7 +64,7 @@ const FOLLOWS: ProfileKind[] = ['x', 'pixiv', 'bsky']
 
 const CANONICAL = new Map([['shima.donmai.us', 'danbooru.donmai.us']])
 
-const SAFE_URL = /^https?:\/\/[^\s\p{Cc}]+$/u
+const SAFE_URL = /^https?:\/\/[^\s\p{Cc}\p{Bidi_Control}]+$/u
 
 export function safeUrl(url: string): boolean {
   return SAFE_URL.test(url)
