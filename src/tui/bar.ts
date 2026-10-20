@@ -30,8 +30,8 @@ export function barLine(p: Paint, bar: Bar, width: number): string {
   const kept = new Set([...KEPT, ...(bar.keep ?? [])])
   let { note, keys, right, standing } = bar
 
-  for (;;) {
-    const line = `${badge}${[bar.lead ?? '', note ? p.dim(note) : '', ...keys.map(hint)].filter(Boolean).join('   ')}`
+  const drawn = (shown: Hint[]) => {
+    const line = `${badge}${[bar.lead ?? '', note ? p.dim(note) : '', ...shown.map(hint)].filter(Boolean).join('   ')}`
 
     const mark = standing
       ? (standing.standing === 'newer' || standing.standing === 'failed' ? p.warn : p.dim)(standing.line)
@@ -39,8 +39,22 @@ export function barLine(p: Paint, bar: Bar, width: number): string {
 
     const tail = [right ? hint(right) : '', mark].filter(Boolean).join('   ')
 
-    if (cells(line) + (tail ? 3 + cells(tail) : 0) <= width) {
-      return tail ? spread(line, tail, width) : fit(line, width, false)
+    return { line, tail, fits: cells(line) + (tail ? 3 + cells(tail) : 0) <= width }
+  }
+
+  for (;;) {
+    const { line, fits } = drawn(keys)
+
+    if (fits) {
+      const back = bar.keys.reduce((held, key) => {
+        const tried = held.includes(key) ? held : bar.keys.filter((each) => held.includes(each) || each === key)
+
+        return drawn(tried).fits ? tried : held
+      }, keys)
+
+      const best = drawn(back)
+
+      return best.tail ? spread(best.line, best.tail, width) : fit(best.line, width, false)
     }
 
     const drop = keys.findLastIndex(([key], i) => i > 0 && !kept.has(key))

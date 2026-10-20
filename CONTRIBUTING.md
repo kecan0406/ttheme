@@ -341,7 +341,9 @@ notice, said in its tone through `toned` — `ok` for what worked, `warn` for
 what could not be done, `error` for a failure, plain for information — and the
 keys stay after it: a narrow window drops the release line first, then a note,
 then keys from the end (never the first, `?`, `enter` or the ones a screen
-lists in `keep`), then the key on the right, and cuts what still does not fit.
+lists in `keep`), then the key on the right, and cuts what still does not fit;
+once the line fits, each key it dropped comes back in its own place if it fits
+there, so a long key dropped late never leaves room a shorter one could use.
 In Browse, the palette editor and find `?` opens `Help` (`src/tui/help.ts`): the
 topics of the mode the screen is in, where `↑` `↓` reach every topic and enter
 runs the key a topic names — Browse and the editor offer that only where the key

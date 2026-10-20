@@ -429,7 +429,7 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   const hint = fixHint(e, slot)
 
   if (hint) {
-    lines.push(p.dim(`  ${hint}`))
+    lines.push(...wrapText(hint, width - 2).map((line) => p.dim(`  ${line}`)))
   }
 
   const room = height - lines.length - 1
