@@ -948,7 +948,7 @@ export class PaletteEditor {
       this.overlay = 'open'
       this.pick = 0
     } else {
-      this.say('No other palettes to take colors from', 'warn')
+      this.say('No other palettes to take colors from')
     }
   }
 
@@ -985,7 +985,7 @@ export class PaletteEditor {
       if (this.clip) {
         this.set(this.slot(), this.clip, 'paste')
       } else {
-        this.say('Nothing copied yet — c copies a slot', 'warn')
+        this.say('Nothing copied yet — c copies a slot')
       }
     } else if (key === 'r') {
       this.set(this.slot(), this.original[this.slot()] as Hex, 'reset')
@@ -1786,7 +1786,7 @@ export class PaletteEditor {
     const last = this.history.pop()
 
     if (!last) {
-      this.say('Nothing to undo', 'warn')
+      this.say('Nothing to undo')
 
       return
     }
@@ -1799,7 +1799,7 @@ export class PaletteEditor {
     const next = this.future.pop()
 
     if (!next) {
-      this.say('Nothing to redo', 'warn')
+      this.say('Nothing to redo')
 
       return
     }

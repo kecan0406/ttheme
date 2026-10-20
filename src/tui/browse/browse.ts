@@ -14,7 +14,7 @@ import { type Card, PaletteList, pageStep, paletteExample, type RowSpot, SearchH
 import { Screen } from '../screen.ts'
 import { MARKS, type Paint, painter } from '../style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from '../terminal.ts'
-import { button, cap, EMPTY, framed, MIN_ITEMS, more, whereOf } from './draw.ts'
+import { button, cap, EMPTY, FAILED, framed, MIN_ITEMS, more, whereOf } from './draw.ts'
 import { AddForm } from './form.ts'
 import { Network } from './network.ts'
 import { Panel } from './panel.ts'
@@ -924,8 +924,7 @@ export class BrowsePanel {
   private status(marketplace: Marketplace): string {
     return this.staged.adds.has(marketplace.source)
       ? 'Will add'
-      : (this.network.busy.get(marketplace.source) ??
-          (this.network.failed.has(marketplace.source) ? 'Update failed' : ''))
+      : (this.network.busy.get(marketplace.source) ?? (this.network.failed.has(marketplace.source) ? FAILED : ''))
   }
 
   private about(top: string, members: PaletteEntry[], matching?: number): Card {
@@ -957,8 +956,10 @@ export class BrowsePanel {
     }
 
     const auto = isRemote(m.source) && this.staged.auto(m) ? `${MARKS.auto} auto-update` : ''
+    const status = this.status(m)
+    const failed = status === FAILED ? `  ${this.p.error(status)}` : status ? `  ${this.p.dim(status)}` : ''
 
-    return [auto, this.status(m)].map((part) => (part ? `  ${this.p.dim(part)}` : '')).join('')
+    return `${auto ? `  ${this.p.dim(auto)}` : ''}${failed}`
   }
 
   private foundLine(found: Found, focused: boolean, at: number, held: boolean): string {

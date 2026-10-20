@@ -7,7 +7,7 @@ import { fit, wrapText } from '../ansi.ts'
 import type { Hint } from '../bar.ts'
 import { PaletteList } from '../palette-prompt.ts'
 import { ansiFg, FG_RESET, MARKS, type Paint } from '../style.ts'
-import { button, cap, edge, MIN_ITEMS, more, whereOf } from './draw.ts'
+import { button, cap, edge, FAILED, MIN_ITEMS, more, whereOf } from './draw.ts'
 import type { Network } from './network.ts'
 import type { Staged } from './staged.ts'
 import type { Action, Detail, Marketplace, Row } from './types.ts'
@@ -184,7 +184,9 @@ export class Panel {
     const { p, staged } = this.host
     const [label, note] = this.text(action, source)
 
-    return button(p, at, focused, this.mark(action, source), label.padEnd(ACTION_PAD), note ? ` ${p.dim(note)}` : '', {
+    const said = note === FAILED ? p.error(note) : p.dim(note)
+
+    return button(p, at, focused, this.mark(action, source), label.padEnd(ACTION_PAD), note ? ` ${said}` : '', {
       pane: 'panel',
       off: action === 'update' && this.host.network.busy.has(source),
       danger: action === 'remove' && !staged.adds.has(source),
@@ -208,7 +210,7 @@ export class Panel {
     const m = staged.known(source)
 
     if (action === 'update') {
-      const note = network.busy.get(source) ?? (network.failed.has(source) ? 'Update failed' : m ? cap(m.status) : '')
+      const note = network.busy.get(source) ?? (network.failed.has(source) ? FAILED : m ? cap(m.status) : '')
 
       return ['Update now', note]
     }

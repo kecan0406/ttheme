@@ -485,6 +485,21 @@ stay installed`, `Apply 3 changes before you leave?`, the editor's Save
 changes? counting the colors and pictures changed), and a no is answered too:
 the bar leads with what was kept (`alice@pastel kept`) until the next key.
 
+A state reads the same on every screen. A list with nothing to show says so
+in a dim line where its rows would be: `No palettes match 'kit'` while a
+filter finds nothing (the things in the plural, what was typed in single
+quotes), `No palettes yet` while there are none, and what to do after a ` — `
+where a key does it (`No posts of kita on danbooru — tab tries yande.re`).
+Work under way is a dim line that names it, led by the spinner where the
+screen turns one; find's work on the post in hand (installing, fetching,
+cutting out) leads its foot in warn. A failure is drawn in the error role
+wherever it is named — Browse's card badge, its panel and the `Update now`
+note, Search's row and detail, the editor's bar, find's foot. A notice a key
+earns is plain when the key had nothing to act on (`Nothing to undo`), ok when
+it did what was asked (`Already passes the gate`), and warn when the key was
+refused for something the person can change (`The builder needs a window of at
+least 96×28`, `Pick at least one palette`, `No picture on the clipboard`).
+
 Text someone else wrote — a marketplace's files, the marketplace index, a
 booru's answer, the names release, an error message built from any of them —
 has every control and direction character dropped or spelled out before a

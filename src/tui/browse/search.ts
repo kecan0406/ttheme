@@ -244,9 +244,11 @@ export class Search {
     const m = found.listed
     const known = staged.known(m.source)
 
+    const failure = known || network.busy.has(m.source) ? undefined : network.failed.get(m.source)
+
     const note = known
       ? this.addedNote(known)
-      : (network.busy.get(m.source) ?? network.failed.get(m.source) ?? 'space adds it, enter adds it and goes back')
+      : (network.busy.get(m.source) ?? failure ?? 'space adds it, enter adds it and goes back')
 
     return {
       title: p.bold(m.id),
@@ -255,7 +257,7 @@ export class Search {
         ...wrapText(m.about, width).map((l) => p.dim(l)),
         p.dim([`${MARKS.star} ${m.stars}`, ...(m.updated ? [`updated ${m.updated}`] : [])].join(' · ')),
         '',
-        ...wrapText(note, width),
+        ...wrapText(note, width).map((l) => (failure ? p.error(l) : l)),
         '',
         ...this.paletteLines(m, width),
       ],
@@ -273,8 +275,8 @@ export class Search {
         : !this.listing
           ? ['Load the marketplace list', 'space loads it']
           : query
-            ? [`No marketplace matches "${query}"`, '']
-            : ['No marketplace yet', '']
+            ? [`No marketplaces match '${query}'`, '']
+            : ['No marketplaces yet', '']
   }
 
   private addedNote(known: Marketplace): string {

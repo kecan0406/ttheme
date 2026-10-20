@@ -11,6 +11,8 @@ export const EMPTY: Detail = { title: '', lines: [], brief: '' }
 
 export const MIN_ITEMS = 3
 
+export const FAILED = 'Update failed'
+
 export function more(p: Paint, step: number, count: number, pane?: string): string {
   return p.dim(zone({ kind: 'page', step, ...(pane ? { pane } : {}) } satisfies Spot, moreOf(step, count)))
 }

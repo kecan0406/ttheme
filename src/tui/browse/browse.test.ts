@@ -507,7 +507,7 @@ test('typing in the search filters the list at once, palette names included, and
   assert.match(typed.frames, / Search marketplace \(1 found\)\n.*\n │ ⌕ glow_/)
   const seeded = await drive([...'zzz', '\r', 20, '\x1b', '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
   assert.match(seeded.frames, /│ ⌕ zzz_ +│/)
-  assert.match(seeded.frames, /⌕ No marketplace matches "zzz"/)
+  assert.match(seeded.frames, /⌕ No marketplaces match 'zzz'/)
 })
 
 test('a list that did not load says so and space loads it again, and a copy from before shows while offline', async () => {

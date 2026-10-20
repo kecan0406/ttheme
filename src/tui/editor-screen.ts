@@ -452,7 +452,7 @@ function seedSide(p: Paint, e: PaletteEditor, width: number, height: number): st
 function openPane(p: Paint, e: PaletteEditor, width: number, height: number): string[] {
   const choices = e.choices()
   const all = e.options.palettes?.length ?? 0
-  const filter = e.filter ? `${p.bold(e.filter)}▏` : p.dim('type to filter')
+  const filter = e.filter ? `${p.bold(e.filter)}▏` : p.dim('Type to filter')
   const room = height - 2
   const span = choices.length <= room ? room : room - 1
   const top = Math.max(0, Math.min(e.pick - Math.floor(span / 2), choices.length - span))
