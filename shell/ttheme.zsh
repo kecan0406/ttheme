@@ -19,6 +19,15 @@ typeset -gA TTHEME_SGR=(
   fg0 $'\e[30m' fg1 $'\e[31m' fg2 $'\e[32m' fg3 $'\e[33m' fg4 $'\e[34m' fg5 $'\e[35m' fg6 $'\e[36m' fg7 $'\e[37m'
 )
 
+typeset -gA TTHEME_MARKS=(
+  gutter ▌ current ◆ focus ▶ signature ✦
+  closed ▸ opened ▾ on ● off ○
+  ok ✓ miss ✗ above ↑ below ↓
+  update ⇡ auto ↻ remove × undo ↶
+  star ★ link ⧉ search ⌕ linked ⇠
+  contrast ◐ swatch ■ pictures ▣ sep · cut …
+)
+
 __tt_palettes_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at
@@ -1446,7 +1455,7 @@ __tt_map_fit() {
         __tt_map_tip "$lpal[i]"
         line+="  "$b$REPLY"new"$z
       elif [[ $tag == drop ]]; then
-        line+="  "$r"✕ unpin"$z
+        line+="  "$r$TTHEME_MARKS[remove]" unpin"$z
       fi
     fi
     while [[ $line == *' ' ]]; do line=${line% }; done

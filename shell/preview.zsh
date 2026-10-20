@@ -242,11 +242,11 @@ __tt_pv_fit() {
 }
 
 __tt_pv_row() {
-  local t=${rval[$1]} b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] r=$TTHEME_SGR[/match] z=$TTHEME_SGR[reset] on="" gut="  " base="" lead=$TTHEME_SGR[dim] mark=" " name arrow=▸ ind="   " hl extra part
+  local t=${rval[$1]} b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] r=$TTHEME_SGR[/match] z=$TTHEME_SGR[reset] on="" gut="  " base="" lead=$TTHEME_SGR[dim] mark=" " name arrow=$TTHEME_MARKS[closed] ind="   " hl extra part
   local -i w
   (( color )) || b= d= r= z= lead=
   if (( $1 == cur )); then
-    gut=$gc"▌"$r" "
+    gut=$gc$TTHEME_MARKS[gutter]$r" "
     (( color )) && on=$sb
   fi
   if [[ ${rtype[$1]} == rule ]]; then
@@ -255,7 +255,7 @@ __tt_pv_row() {
     return 0
   fi
   if [[ ${rtype[$1]} == hdr ]]; then
-    [[ -n $flt || -n ${exp[$t]} ]] && arrow=▾
+    [[ -n $flt || -n ${exp[$t]} ]] && arrow=$TTHEME_MARKS[opened]
     name=$t
     (( ${(m)#name} > lw - 10 )) && name="${name[1,lw-11]}…"
     base=$b
@@ -275,7 +275,7 @@ __tt_pv_row() {
     return 0
   fi
   if [[ ${rtype[$1]} == cat ]]; then
-    [[ -n $flt || -n ${exp[$t]} ]] && arrow=▾
+    [[ -n $flt || -n ${exp[$t]} ]] && arrow=$TTHEME_MARKS[opened]
     name=${t#*/}
     (( ${(m)#name} > lw - 12 )) && name="${name[1,lw-13]}…"
     base=$b
@@ -302,7 +302,7 @@ __tt_pv_row() {
   __tt_pv_hl "$name" "$base"
   hl=$REPLY
   if (( w )); then
-    (( color )) && hl+=" "$TTHEME_SGR[warn]"●"$TTHEME_SGR[/warn] || hl+=" ●"
+    (( color )) && hl+=" "$TTHEME_SGR[warn]$TTHEME_MARKS[on]$TTHEME_SGR[/warn] || hl+=" "$TTHEME_MARKS[on]
   fi
   extra=""
   for part in "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
@@ -336,8 +336,8 @@ __tt_pv_bg_credit() {
   pu=${page%% *} lab=${page#* }
   [[ $url == http(s|)://* ]] || url=""
   if __tt_links; then
-    [[ -n $url ]] && pmark="⧉ "
-    [[ -n $pu ]] && smark="⧉ "
+    [[ -n $url ]] && pmark="$TTHEME_MARKS[link] "
+    [[ -n $pu ]] && smark="$TTHEME_MARKS[link] "
   fi
   items=(${by:+"by $by"} ${lab:+"$smark$lab"} ${ref:+"$pmark$ref"})
   while (( ${#items} )) && (( ${#${(j: · :)items}} > room )); do
@@ -346,11 +346,11 @@ __tt_pv_bg_credit() {
   REPLY=${(j: · :)items}
   if [[ -n $smark && $REPLY == *"$smark$lab"* ]]; then
     (( color )) && acc=$ac
-    REPLY=${REPLY/"$smark$lab"/$acc⧉${acc:+$TTHEME_SGR[/accent]} $'\e]8;;'$pu$'\e\\'$lab$'\e]8;;\e\\'}
+    REPLY=${REPLY/"$smark$lab"/$acc$TTHEME_MARKS[link]${acc:+$TTHEME_SGR[/accent]} $'\e]8;;'$pu$'\e\\'$lab$'\e]8;;\e\\'}
   fi
   [[ -n $pmark && $REPLY == *"$pmark$ref"* ]] || return 0
   (( color )) && [[ -n ${TTHEME_SITE_ANSI[${ref%% *}]} ]] && sgr=$TTHEME_SGR[fg${TTHEME_SITE_ANSI[${ref%% *}]}]
-  REPLY=${REPLY/"$pmark$ref"/$sgr⧉${sgr:+$TTHEME_SGR[/fg]} $'\e]8;;'$url$'\e\\'$ref$'\e]8;;\e\\'}
+  REPLY=${REPLY/"$pmark$ref"/$sgr$TTHEME_MARKS[link]${sgr:+$TTHEME_SGR[/fg]} $'\e]8;;'$url$'\e\\'$ref$'\e]8;;\e\\'}
   return 0
 }
 
@@ -401,9 +401,9 @@ __tt_pv_bg_profiles() {
       plain+=$lead$e[1] REPLY+=$lead$e[1] lead=" "
     fi
     for (( i = 2; i < ${#e}; i += 2 )); do
-      step="⧉ $e[i]"
+      step="$TTHEME_MARKS[link] $e[i]"
       (( ${#plain} + ${#lead} + ${#step} > room )) && return 0
-      piece=$acc⧉${acc:+$TTHEME_SGR[/accent]}" "$'\e]8;;'$e[i+1]$'\e\\'$e[i]$'\e]8;;\e\\'
+      piece=$acc$TTHEME_MARKS[link]${acc:+$TTHEME_SGR[/accent]}" "$'\e]8;;'$e[i+1]$'\e\\'$e[i]$'\e]8;;\e\\'
       plain+=$lead$step REPLY+=$lead$piece lead=" "
     done
   done
@@ -1040,7 +1040,7 @@ __tt_pv_conf_panel() {
     out+=$'\e['$(( r0 + k - 1 ))';'$col'H'
     pvz+=("$(( r0 + k - 1 )) $col $end conf $k")
     if (( k == cf )); then
-      out+=$c"▶"$z" "$b
+      out+=$c$TTHEME_MARKS[focus]$z" "$b
     else
       out+="  "$d
     fi
@@ -1251,10 +1251,10 @@ __tt_pv_draw() {
   fi
   if (( tall )); then
     pvsr=$(( hub + 3 )) pvsc=$(( 6 + ${(m)#typed} ))
-    line=$'\e['$lw'X '$dd"│"$zz" "$dd"⌕"$zz" "$find$'\e['$lw'G'$dd"│"$zz
+    line=$'\e['$lw'X '$dd"│"$zz" "$dd$TTHEME_MARKS[search]$zz" "$find$'\e['$lw'G'$dd"│"$zz
   else
     pvsr=$(( hub + 1 )) pvsc=$(( 4 + ${(m)#typed} ))
-    line=$'\e['$lw'X '$dd"⌕"$zz" "$find$'\e['$(( lw - ${#cnt} ))'G'$dd$cnt$zz
+    line=$'\e['$lw'X '$dd$TTHEME_MARKS[search]$zz" "$find$'\e['$(( lw - ${#cnt} ))'G'$dd$cnt$zz
   fi
   if [[ $1 == hint ]] && (( ! wiped )); then
     print -rn -- $'\e['$pvsr'H'$TTHEME_SGR[reset]$line
@@ -1380,7 +1380,7 @@ __tt_pv_init() {
   __tt_pv_tops
   [[ -n $orig ]] && __tt_name_of "$orig" && cn=$REPLY
   [[ -n ${TTHEME_PALETTE[$cn]} ]] || return 0
-  cdot="◆"
+  cdot=$TTHEME_MARKS[current]
 }
 
 __tt_pv_roll() {
@@ -2072,12 +2072,12 @@ __tt_pv_te_head() {
   local -i col=$1 end=$2 room=$(( $2 - $1 + 1 ))
   (( color )) || z= d= b= y=
   __tt_te_unsaved && (( room -= 11 ))
-  line=$b$ac"◆"$z" "$b$tename$z
+  line=$b$ac$TTHEME_MARKS[current]$z" "$b$tename$z
   __tt_shelf $tename
   line+=" "$d"· $REPLY"$z
   __tt_clip "$line" $room
   out+=$'\e[1;'$col'H'$REPLY$z
-  __tt_te_unsaved && out+=$'\e[1;'$(( end - 8 ))'H'$y"●"$z" "$d"unsaved"$z
+  __tt_te_unsaved && out+=$'\e[1;'$(( end - 8 ))'H'$y$TTHEME_MARKS[on]$z" "$d"unsaved"$z
   return 0
 }
 
@@ -2153,14 +2153,14 @@ __tt_pv_te_images() {
     (( n )) || n=1
     note="$n/$(( ${#held} ? ${#held} : 1 ))"
   fi
-  (( tfocus == 1 && tf == 5 )) && st=$ac"▶"$z" " tt=$b
+  (( tfocus == 1 && tf == 5 )) && st=$ac$TTHEME_MARKS[focus]$z" " tt=$b
   out+=$'\e['$y';'$col'H'$st$tt"Images"$z$'\e['$y';'$(( end - ${#note} + 1 ))'H'$d$note$z
   pvz+=("$y $col $end teimg")
 }
 
 __tt_pv_te_button() {
   if (( tfocus == 0 && tbtn == $1 )); then
-    (( color )) && out+=$ac"▶"$z" "$pl" $2 "$z || out+="▶ [$2]"
+    (( color )) && out+=$ac$TTHEME_MARKS[focus]$z" "$pl" $2 "$z || out+="$TTHEME_MARKS[focus] [$2]"
   else
     (( color )) && out+="  "$b" $2 "$z || out+="   $2 "
   fi
@@ -2276,7 +2276,7 @@ __tt_pv_te_panel() {
   fi
   out+=$'\e['$y';'$ix'H'
   if (( tfocus == 2 )); then
-    (( color )) && out+=$ac"▶"$z" "$pl" Apply "$z || out+="▶ [Apply]"
+    (( color )) && out+=$ac$TTHEME_MARKS[focus]$z" "$pl" Apply "$z || out+="$TTHEME_MARKS[focus] [Apply]"
   else
     (( color )) && out+="  "$b" Apply "$z || out+="   Apply "
   fi

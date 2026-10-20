@@ -661,7 +661,7 @@ __tt_pv_bg_panel() {
     (( tf == k && ! off )) && sty=$b
     out+=$'\e['$r';'$col'H'
     if (( tf == k && ! off )); then
-      out+=$c"▶"$z" "
+      out+=$c$TTHEME_MARKS[focus]$z" "
     else
       out+="  "
     fi
@@ -722,9 +722,9 @@ __tt_pv_bg_panel() {
       if (( ! color )); then
         out+=${(l:knob::=:)}"O"${(l:$(( T - 1 - knob ))::-:)}
       elif (( off )); then
-        out+=$d${(l:knob::━:)}"●"${(l:$(( T - 1 - knob ))::─:)}$z
+        out+=$d${(l:knob::━:)}$TTHEME_MARKS[on]${(l:$(( T - 1 - knob ))::─:)}$z
       else
-        out+=$c${(l:knob::━:)}$b"●"$z$d${(l:$(( T - 1 - knob ))::─:)}$z
+        out+=$c${(l:knob::━:)}$b$TTHEME_MARKS[on]$z$d${(l:$(( T - 1 - knob ))::─:)}$z
       fi
     fi
     out+=$'\e['$r';'$(( end - ${#val} - 1 ))'H'$sty$val$z

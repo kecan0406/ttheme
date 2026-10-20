@@ -26,10 +26,20 @@ import {
 } from './style.ts'
 
 const root = ROOT
-const TABLE = /^typeset -gA TTHEME_SGR=\([\s\S]*?^\)$/m
+const SGR_TABLE = /^typeset -gA TTHEME_SGR=\([\s\S]*?^\)$/m
+const MARK_TABLE = /^typeset -gA TTHEME_MARKS=\(\n([\s\S]*?)^\)$/m
+
+const SHELL_FILES = [
+  ...['ttheme.zsh', 'preview.zsh', 'launch-tab.zsh'].map((file) => join('shell', file)),
+  ...readdirSync(join(root, 'shell', 'adapters')).map((file) => join('shell', 'adapters', file)),
+]
 
 function read(...parts: string[]): string {
   return readFileSync(join(root, ...parts), 'utf8')
+}
+
+function without(text: string, table: RegExp): string {
+  return text.replace(table, (block) => block.replace(/[^\n]/g, ''))
 }
 
 test('ansiFg opens a truecolor foreground without resetting', () => {
@@ -51,13 +61,11 @@ test('every screen takes its SGR from style.ts, and the shell layer from TTHEME_
     ...readdirSync(join(root, 'src'), { recursive: true, encoding: 'utf8' })
       .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts') && file !== join('tui', 'style.ts'))
       .map((file) => join('src', file)),
-    ...['ttheme.zsh', 'preview.zsh', 'launch-tab.zsh'].map((file) => join('shell', file)),
-    ...readdirSync(join(root, 'shell', 'adapters')).map((file) => join('shell', 'adapters', file)),
+    ...SHELL_FILES,
   ]
 
   const raw = sources.flatMap((file) =>
-    read(file)
-      .replace(TABLE, '')
+    without(read(file), SGR_TABLE)
       .split('\n')
       .flatMap((line, i) => (sgr.test(line) ? [`${file}:${i + 1} ${line.trim()}`] : [])),
   )
@@ -66,7 +74,7 @@ test('every screen takes its SGR from style.ts, and the shell layer from TTHEME_
 })
 
 test('the shell layer gives each role the SGR style.ts gives it', () => {
-  const block = read('shell', 'ttheme.zsh').match(TABLE)?.[0] ?? ''
+  const block = read('shell', 'ttheme.zsh').match(SGR_TABLE)?.[0] ?? ''
 
   const table = Object.fromEntries(
     [...block.matchAll(/(\S+) \$'\\e\[([0-9;]*)m'/g)].map(([, key, params]) => [key, `\x1b[${params}m`]),
@@ -114,4 +122,24 @@ test('the accent slot, the chip’s slot 8 and the danger slot 1 read on every o
 test('a mark means one thing', () => {
   const glyphs = Object.values(MARKS)
   assert.equal(new Set(glyphs).size, glyphs.length)
+})
+
+test('the shell layer gives each mark the glyph style.ts gives it', () => {
+  const block = read('shell', 'ttheme.zsh').match(MARK_TABLE)?.[1] ?? ''
+  const table = Object.fromEntries([...block.matchAll(/(\S+) (\S+)/g)].map(([, key, glyph]) => [key, glyph]))
+
+  assert.deepEqual(table, MARKS)
+})
+
+test('the shell layer takes every mark from TTHEME_MARKS but the ones that also read as text, and draws no ✕ for ×', () => {
+  const alsoText = new Set<string>([MARKS.above, MARKS.below, MARKS.remove, MARKS.swatch, MARKS.sep, MARKS.cut])
+  const glyphs = [...Object.values(MARKS).filter((glyph) => !alsoText.has(glyph)), '✕']
+
+  const raw = SHELL_FILES.flatMap((file) =>
+    without(read(file), MARK_TABLE)
+      .split('\n')
+      .flatMap((line, i) => (glyphs.some((glyph) => line.includes(glyph)) ? [`${file}:${i + 1} ${line.trim()}`] : [])),
+  )
+
+  assert.deepEqual(raw, [])
 })
