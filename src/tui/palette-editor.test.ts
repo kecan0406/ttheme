@@ -173,6 +173,25 @@ test('ctrl-c leaves the editor as esc does, asking first when something changed,
   assert.equal(e.result, undefined)
   press(e, 'ctrl-c')
   assert.equal(e.result, 'cancelled')
+  const picking = press(editor(), 'tab', '9', 'enter', 'o', 'd', 'a', 'ctrl-c', 'esc', 'o')
+  assert.equal(picking.filter, '')
+})
+
+test('while compare is on, the help offers no esc to leave or to undo a tune, since esc only turns compare off', () => {
+  const tuning = press(editor(), 'tab', '9', ' ', '?')
+
+  for (const key of 'undoes every') {
+    tuning.help?.key(key)
+  }
+
+  assert.equal(tuning.help?.chosen(), undefined)
+  const listing = press(editor(), 'tab', '9', 'enter', ' ', '?')
+
+  for (const key of 'asking first') {
+    listing.help?.key(key)
+  }
+
+  assert.equal(listing.help?.chosen(), undefined)
 })
 
 test('the screen fits 80×24 and says what it needs below that', () => {

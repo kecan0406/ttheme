@@ -28,6 +28,7 @@ import {
   slotLabel,
   weakestUnder,
 } from '../core/slots.ts'
+import { inert } from '../core/text.ts'
 import type { Tone } from './bar.ts'
 import { edit } from './field.ts'
 import { pastedRefs, type Start } from './find/attach.ts'
@@ -403,7 +404,7 @@ export class PaletteEditor {
   }
 
   say(text: string | undefined, tone: Tone = 'info'): void {
-    this.notice = text
+    this.notice = text === undefined ? undefined : inert(text)
     this.noticeTone = tone
   }
 
@@ -459,7 +460,8 @@ export class PaletteEditor {
   }
 
   private topics(): Topic[] {
-    const list = this.mode === 'list' && !this.inspect
+    const list = this.mode === 'list'
+    const plain = list && !this.inspect
     const tuning = this.mode === 'tune'
     const ansi = this.slot() >= BASE.length
     const others = (this.options.palettes ?? []).length > 0
@@ -503,13 +505,13 @@ export class PaletteEditor {
         text: 'n  N  the next and last slot the gate misses',
         ...when(list && this.misses().size > 0, 'n'),
       },
-      { label: 'Tune', text: 'enter  tab  opens the picker under the slot', ...when(list, 'enter') },
+      { label: 'Tune', text: 'enter  tab  opens the picker under the slot', ...when(plain, 'enter') },
       {
         label: '',
         text: '↑↓  lightness  ·  ←→  chroma  ·  ⇧←→  hue by 5  ·  ,  .  hue by 1  ·  pgup  pgdn  lightness ×5  ·  home  end  the ends  ·  0-9  jump',
       },
       { label: '', text: 'enter  keeps  ·  a click outside the picker keeps', ...when(tuning, 'enter') },
-      { label: '', text: 'esc  undoes every slot the tune moved', ...when(tuning, 'esc') },
+      { label: '', text: 'esc  undoes every slot the tune moved', ...when(tuning && !this.compare, 'esc') },
       {
         label: 'Contrast',
         text: `tab  while tuning  ·  ${MARKS.contrast} moves lightness until the ratio to the color it is read against changes  ·  home  the gate’s floor  ·  1-9  that ratio`,
@@ -534,7 +536,7 @@ export class PaletteEditor {
       {
         label: 'Inspect',
         text: 'i  or a click on the sample finds the slots a spot uses  ·  ←→↑↓  move  ·  enter  goes to the slot  ·  esc  leaves',
-        ...when(roomy, 'i'),
+        ...when(roomy && !this.inspect, 'i'),
       },
       {
         label: 'Link',
@@ -569,7 +571,7 @@ export class PaletteEditor {
       ...pictures,
       { label: 'Compare', text: 'space  shows the colors you started from, on the terminal too', ...when(true, ' ') },
       { label: 'Save', text: 's  saves', ...when(true, 's') },
-      { label: 'Leave', text: LEAVE, ...when(list, 'esc') },
+      { label: 'Leave', text: LEAVE, ...when(plain && !this.compare, 'esc') },
       close,
     ]
   }
@@ -899,6 +901,7 @@ export class PaletteEditor {
 
     this.help = undefined
     this.overlay = undefined
+    this.filter = ''
     this.menu = undefined
     this.typing = undefined
     this.inspect = false

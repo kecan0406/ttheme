@@ -8,7 +8,7 @@ import { cells as columns } from '../../core/text.ts'
 import { POSITIONS } from '../../core/theme.ts'
 import type { Framing } from '../../pictures/backdrop.ts'
 import { linked } from '../ansi.ts'
-import { type Help, type Legend, overlay, type Topic, type TopicSpot } from '../help.ts'
+import { type Help, type HelpSpot, type Legend, overlay, type Topic } from '../help.ts'
 import { moreOf } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
 import { ansiBg, ansiFg, MARKS, open, painter, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
@@ -191,7 +191,7 @@ export interface Placement {
 
 export type FindSpot =
   | KeySpot
-  | TopicSpot
+  | HelpSpot
   | { kind: 'link'; url: string }
   | { kind: 'tile'; index: number }
   | { kind: 'query' }
@@ -1424,7 +1424,7 @@ const TUNE_KEYS: Key[] = [
   ['Field', '↑↓  size, position, opacity'],
   ['Step', '←→  ·  ⇧←→ ×10'],
   ['Place', '1-9  the nine positions'],
-  ['Reset', '=  this field back to its default  ·  +  every field', '+'],
+  ['Reset', '=  this field back to its default  ·  +  every field', '='],
   ['Colors', "c  its own colors or the palette's tone, opacity back to its default", 'c'],
   ['Keep', 'enter  back to try, installed with the picture', 'enter'],
   ['Undo', 'esc', 'esc'],

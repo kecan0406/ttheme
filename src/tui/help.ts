@@ -4,7 +4,7 @@ import type { Bar, Hint } from './bar.ts'
 import { Field } from './field.ts'
 import { boxEdge, boxed, boxTitle, moreOf } from './parts.ts'
 import { MARKS, type Paint } from './style.ts'
-import { cover, zone } from './zones.ts'
+import { cover, unzoned, zone } from './zones.ts'
 
 export interface Topic {
   label: string
@@ -17,12 +17,15 @@ export interface TopicSpot {
   index: number
 }
 
+export type HelpSpot = TopicSpot | { kind: 'help' }
+
 export type Legend = [mark: string, means: string][]
 
 export type Answer = 'stay' | 'close' | 'run'
 
 const CHROME = 5
 const MEASURE = 72
+const LEAST = 3
 
 export class Help {
   readonly filter = new Field()
@@ -44,7 +47,9 @@ export class Help {
   }
 
   chosen(): Topic | undefined {
-    return this.shown()[this.at]?.run ? this.shown()[this.at] : undefined
+    const topic = this.shown()[this.at]
+
+    return topic?.run ? topic : undefined
   }
 
   key(key: string): Answer {
@@ -86,7 +91,7 @@ export class Help {
   }
 
   point(index: number): boolean {
-    if (!this.shown()[index]?.run) {
+    if (index < 0 || index >= this.shown().length) {
       return false
     }
 
@@ -100,14 +105,10 @@ export class Help {
   }
 
   bar(): Bar {
-    const runs = this.shown().some((t) => t.run)
-
-    const keys: Hint[] = runs
-      ? [
-          ['↑↓', 'choose'],
-          ['enter', 'run'],
-        ]
-      : []
+    const keys: Hint[] = [
+      ...(this.shown().length > 1 ? [['↑↓', 'choose'] as Hint] : []),
+      ...(this.chosen() ? [['enter', 'run'] as Hint] : []),
+    ]
 
     return {
       badge: 'HELP',
@@ -122,11 +123,13 @@ export class Help {
     const widest = Math.min(MEASURE, Math.max(0, ...this.topics.map((t) => cells(t.text))))
     const w = Math.max(24, Math.min(cols - 2, 8 + pad + widest))
     const inner = w - 4
-    const side = (text: string) => boxed(p, ` ${fit(text, inner)} `, w)
+    const side = (text: string) => zone({ kind: 'help' } satisfies HelpSpot, boxed(p, ` ${fit(text, inner)} `, w))
+    const edge = (line: string) => zone({ kind: 'help' } satisfies HelpSpot, line)
     const texts = shown.map((t) => wrap(t.text, Math.max(8, inner - 2 - pad)))
     const tall = (from: number, to: number) => texts.slice(from, to).reduce((sum, lines) => sum + lines.length, 0)
     const legend = this.legend.map(([mark, means]) => `${mark} ${means}`)
-    const marks = lines(legend, inner - 2 - pad)
+    const listed = lines(legend, inner - 2 - pad)
+    const marks = rows - 1 - CHROME - (listed.length + 1) >= LEAST ? listed : []
     const room = Math.max(1, rows - 1 - CHROME - (marks.length > 0 ? marks.length + 1 : 0))
     const fits = tall(0, shown.length) <= room
     const span = fits ? room : Math.max(1, room - 2)
@@ -134,7 +137,7 @@ export class Help {
     if (fits) {
       this.top = 0
     } else {
-      this.place(shown, tall, span)
+      this.place(tall, span, shown.length)
     }
 
     const body: string[] = []
@@ -142,13 +145,15 @@ export class Help {
 
     while (end < shown.length && (end === this.top || body.length + (texts[end] as string[]).length <= span)) {
       const t = shown[end] as Topic
-      const on = end === this.at && t.run !== undefined
-      const label = t.label ? p.bold(on ? p.accent(t.label.padEnd(pad)) : t.label.padEnd(pad)) : ' '.repeat(pad)
+      const on = end === this.at
+      const lead = on ? (t.run ? p.accent(MARKS.focus) : p.dim(MARKS.focus)) : ' '
+      const named = t.label.padEnd(pad)
+      const label = t.label ? p.bold(on && t.run ? p.accent(named) : named) : ' '.repeat(pad)
       const index = end
 
       for (const [k, line] of (texts[end] as string[]).entries()) {
-        const text = k === 0 ? `${on ? p.accent(MARKS.focus) : ' '} ${label}${line}` : `  ${' '.repeat(pad)}${line}`
-        body.push(side(t.run ? zone({ kind: 'topic', index } satisfies TopicSpot, text) : text))
+        const text = k === 0 ? `${lead} ${label}${line}` : `  ${' '.repeat(pad)}${line}`
+        body.push(side(zone({ kind: 'topic', index } satisfies TopicSpot, text)))
       }
 
       end++
@@ -157,8 +162,8 @@ export class Help {
     const typed = this.filter.value
     const filter = `${p.dim(MARKS.search)} ${typed ? typed : p.dim('Type to filter')}`
 
-    return [
-      boxTitle(w, ' Help ', p.dim, p.bold),
+    const out = [
+      edge(boxTitle(w, ' Help ', p.dim, p.bold)),
       side(filter),
       side(''),
       ...(fits ? [] : [side(this.top > 0 ? p.dim(moreOf(-1, this.top)) : '')]),
@@ -171,46 +176,41 @@ export class Help {
           ]
         : []),
       side(''),
-      p.dim(boxEdge(w, 'bottom')),
+      edge(p.dim(boxEdge(w, 'bottom'))),
     ]
+
+    const most = Math.max(2, rows - 1)
+
+    return out.length <= most ? out : [...out.slice(0, most - 1), out.at(-1) as string]
   }
 
-  private place(shown: Topic[], tall: (from: number, to: number) => number, span: number): void {
+  private place(tall: (from: number, to: number) => number, span: number, count: number): void {
     if (this.at < this.top) {
       this.top = this.at
-
-      while (this.top > 0 && !shown[this.top - 1]?.run && tall(this.top - 1, this.at + 1) <= span) {
-        this.top--
-      }
     }
 
     while (this.top < this.at && tall(this.top, this.at + 1) > span) {
       this.top++
     }
 
-    while (this.top > 0 && tall(this.top - 1, shown.length) <= span) {
+    while (this.top > 0 && tall(this.top - 1, count) <= span) {
       this.top--
     }
   }
 
   private step(step: number, wrap = true): void {
-    const runs = this.shown().flatMap((t, i) => (t.run ? [i] : []))
+    const count = this.shown().length
 
-    if (runs.length === 0) {
+    if (count === 0) {
       return
     }
 
-    const at = runs.indexOf(this.at)
-
-    const next =
-      at < 0 ? 0 : wrap ? (at + step + runs.length) % runs.length : Math.max(0, Math.min(runs.length - 1, at + step))
-
-    this.at = runs[next] as number
+    this.at = wrap ? (this.at + step + count) % count : Math.max(0, Math.min(count - 1, this.at + step))
   }
 
   private settle(): void {
-    const runs = this.shown().flatMap((t, i) => (t.run ? [i] : []))
-    this.at = runs[0] ?? 0
+    const first = this.shown().findIndex((t) => t.run)
+    this.at = Math.max(0, first)
     this.top = 0
   }
 }
@@ -279,7 +279,8 @@ export function overlay(lines: string[], box: string[], cols: number, rows: numb
 
   return lines.map((line, i) => {
     const part = box[i - y]
+    const under = i === lines.length - 1 ? line : unzoned(line)
 
-    return part === undefined ? line : cover(line, x, part)
+    return part === undefined ? under : cover(under, x, part)
   })
 }

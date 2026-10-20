@@ -931,6 +931,7 @@ class Finder {
       return
     }
 
+    this.view.help = undefined
     await this.bring(() => normalize(got.bytes, got.source))
   }
 
@@ -1188,6 +1189,20 @@ class Finder {
       return
     }
 
+    if (view.help) {
+      const answer = view.help.key(key)
+
+      if (answer !== 'stay') {
+        const run = answer === 'run' ? view.help.chosen()?.run : undefined
+        view.help = undefined
+        run?.()
+      }
+
+      this.paint.draw()
+
+      return
+    }
+
     if ((key === 'ctrl-v' || key === 'alt-v') && view.panel === undefined) {
       void this.fromClipboard()
 
@@ -1202,20 +1217,6 @@ class Finder {
 
     if (view.panel !== undefined) {
       this.panelKey(key)
-
-      return
-    }
-
-    if (view.help) {
-      const answer = view.help.key(key)
-
-      if (answer !== 'stay') {
-        const run = answer === 'run' ? view.help.chosen()?.run : undefined
-        view.help = undefined
-        run?.()
-      }
-
-      this.paint.draw()
 
       return
     }
@@ -1294,7 +1295,7 @@ class Finder {
       if (hit?.inside && event.count >= 2 && help.point(spot.index)) {
         this.key('enter')
       }
-    } else if (event.action === 'release') {
+    } else if (event.action === 'release' && spot?.kind !== 'help') {
       this.view.help = undefined
     }
 

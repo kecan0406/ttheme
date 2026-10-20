@@ -2,7 +2,7 @@ import type { Readable, Writable } from 'node:stream'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import type { Listed, Listing } from '../../store/marketplace-index.ts'
 import type { Refreshed } from '../../store/sources.ts'
-import type { TopicSpot } from '../help.ts'
+import type { HelpSpot } from '../help.ts'
 import type { HubSpot, HubTab } from '../hub.ts'
 import type { ReleaseLine } from '../notice.ts'
 import type { Extra, PromptFx, RowSpot } from '../palette-prompt.ts'
@@ -84,6 +84,6 @@ export type Spot =
   | RowSpot
   | KeySpot
   | HubSpot
-  | TopicSpot
+  | HelpSpot
   | { kind: 'page'; step: number; pane?: string }
   | { kind: 'form' }

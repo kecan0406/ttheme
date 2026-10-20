@@ -1,6 +1,6 @@
 import type { Readable, Writable } from 'node:stream'
 import type { PaletteEntry } from '../../core/manifest.ts'
-import { cells } from '../../core/text.ts'
+import { cells, inert } from '../../core/text.ts'
 import { isRemote, OFFICIAL, TOPIC } from '../../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
@@ -601,7 +601,7 @@ export class BrowsePanel {
         if (hit?.inside && event.count >= 2 && this.help.point(spot.index)) {
           this.key('enter')
         }
-      } else if (event.action === 'release') {
+      } else if (event.action === 'release' && spot?.kind !== 'help') {
         this.help = undefined
       }
 
@@ -877,7 +877,7 @@ export class BrowsePanel {
     if (marketplace && yes) {
       this.remove(marketplace)
     } else if (marketplace) {
-      this.notice = { text: `${marketplace.id} kept`, tone: 'ok' }
+      this.notice = { text: inert(`${marketplace.id} kept`), tone: 'ok' }
     }
   }
 

@@ -28,7 +28,7 @@ import {
   used,
 } from './editor-paint.ts'
 import { type Start, typedDrop } from './find/attach.ts'
-import { type Help, overlay, type TopicSpot } from './help.ts'
+import { type Help, type HelpSpot, overlay } from './help.ts'
 import { CELL_QUERY, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
 import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
 import { boxEdge, boxed, checkOf, hintOf, moreOf, pillOf } from './parts.ts'
@@ -704,7 +704,7 @@ function closesPicker(target: EditorSpot | undefined): boolean {
 }
 
 function pointHelp(e: PaletteEditor, help: Help, hit: Hit | undefined, event: Mouse): void {
-  const target = hit?.target as EditorSpot | TopicSpot | undefined
+  const target = hit?.target as EditorSpot | HelpSpot | undefined
 
   if (event.action === 'wheel') {
     help.wheel(event.wheel)
@@ -716,7 +716,7 @@ function pointHelp(e: PaletteEditor, help: Help, hit: Hit | undefined, event: Mo
     if (hit?.inside && event.count >= 2 && help.point(target.index)) {
       e.press('enter')
     }
-  } else if (event.action === 'release') {
+  } else if (event.action === 'release' && target?.kind !== 'help') {
     e.help = undefined
   }
 }
