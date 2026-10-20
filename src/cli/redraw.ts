@@ -12,6 +12,7 @@ import {
   type Paint,
   type Picture,
   paintFor,
+  rackIn,
   readStore,
   undrawn,
 } from '../pictures/backdrop.ts'
@@ -203,7 +204,7 @@ export async function redrawColoring(
   key?: string,
   user = homedir(),
 ): Promise<{ key: string; changed: boolean }> {
-  const rack = readStore(backgroundsDir(home)).palettes[name]
+  const rack = rackIn(readStore(backgroundsDir(home)), name)
   const picture = rack?.pictures.find((held) => held.key === (key ?? rack.active))
 
   if (!rack || !picture) {
@@ -234,7 +235,7 @@ export async function redrawColoring(
 }
 
 export function prepareColoring(home: string, name: string, key?: string) {
-  const rack = readStore(backgroundsDir(home)).palettes[name]
+  const rack = rackIn(readStore(backgroundsDir(home)), name)
   const picture = rack?.pictures.find((held) => held.key === (key ?? rack.active))
 
   if (!rack || !picture) {

@@ -27,6 +27,7 @@ import {
   colorsOf,
   imageKey,
   installBackdrop,
+  rackIn,
   rackOf,
   readStore,
   showImage,
@@ -58,7 +59,7 @@ export function heldPictures(configHome: string, name: string): SharedPicture[] 
 }
 
 function missingPictures(configHome: string, entry: PaletteEntry): SharedPicture[] {
-  const have = new Set(readStore(backgroundsDir(configHome)).palettes[entry.name]?.pictures.map((p) => p.key))
+  const have = new Set(rackIn(readStore(backgroundsDir(configHome)), entry.name)?.pictures.map((p) => p.key))
 
   return (entry.pictures ?? []).filter((p) => !have.has(imageKey(p)))
 }

@@ -227,6 +227,22 @@ function tuning(dir: string): string {
   )
 }
 
+test('a palette named like a property every object has keeps its pictures as any other does', () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const named = { ...KAGAMI, name: 'constructor' }
+  const image = { width: 4, height: 4, data: new Uint8Array(64).fill(201) }
+  const source = { site: 'safebooru', id: 1, ext: 'png', bytes: new Uint8Array([1]), from: 'safebooru 1' }
+  assert.deepEqual(rackOf(configHome, 'constructor'), [])
+  installBackdrop(configHome, named, toneFor(named, 'cursor'), image, source, { width: 40, height: 20 }, 0)
+  assert.deepEqual(
+    rackOf(configHome, 'constructor').map((picture) => picture.key),
+    ['safebooru_1'],
+  )
+  assert.deepEqual(showImage(configHome, 'constructor', 'safebooru_1'), { at: 1, of: 1 })
+  dropImage(configHome, 'constructor')
+  assert.deepEqual(rackOf(configHome, 'constructor'), [])
+})
+
 test('each picture shows under a path of its own, since terminals reload a background only when its path changes', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)

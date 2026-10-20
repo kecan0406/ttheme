@@ -557,6 +557,10 @@ export function readStore(dir: string): Store {
   return store
 }
 
+export function rackIn(store: Store, name: string): Rack | undefined {
+  return Object.hasOwn(store.palettes, name) ? store.palettes[name] : undefined
+}
+
 export function coloringOf(picture: Picture): Coloring {
   return picture.coloring ?? 'tone'
 }
@@ -656,7 +660,7 @@ function save(dir: string, store: Store, names: string[]): void {
   writeAtomic(storePath(dir), `${JSON.stringify(store, null, 2)}\n`)
 
   for (const name of names) {
-    const rack = store.palettes[name]
+    const rack = rackIn(store, name)
     const conf = join(dir, `${fileStem(name)}.conf`)
 
     if (rack) {
@@ -673,9 +677,9 @@ export function moveRacks(configHome: string, renamed: ReadonlyMap<string, strin
   const names: string[] = []
 
   for (const [from, to] of renamed) {
-    const rack = store.palettes[from]
+    const rack = rackIn(store, from)
 
-    if (rack && !store.palettes[to]) {
+    if (rack && !rackIn(store, to)) {
       store.palettes[to] = rack
       delete store.palettes[from]
       names.push(from, to)
@@ -814,7 +818,7 @@ export function imageKey(origin: Origin): string {
 export function dropImage(configHome: string, name: string, key?: string) {
   const dir = backgroundsDir(configHome)
   const store = readStore(dir)
-  const rack = store.palettes[name]
+  const rack = rackIn(store, name)
 
   if (!rack) {
     throw new Error(`${name} has no image`)
@@ -909,7 +913,7 @@ export function installBackdrop(
   const name = colors.name
   const key = imageKey(source)
   const store = readStore(dir)
-  const rack = store.palettes[name] ?? { active: key, pictures: [] }
+  const rack = rackIn(store, name) ?? { active: key, pictures: [] }
   const size = fillSize(window.width, window.height)
   const drawing = draw(image, size.width, size.height, blurring, coloring, source.cut === true, isLight(colors))
   const drawn = made(name, key, drawing, tone.color)
@@ -955,7 +959,7 @@ export function installBackdrop(
 export function showImage(configHome: string, name: string, key: string) {
   const dir = backgroundsDir(configHome)
   const store = readStore(dir)
-  const rack = store.palettes[name]
+  const rack = rackIn(store, name)
   const at = rack ? rack.pictures.findIndex((picture) => picture.key === key) : -1
 
   if (!rack || at === -1) {
@@ -971,7 +975,7 @@ export function showImage(configHome: string, name: string, key: string) {
 }
 
 export function rackOf(configHome: string, name: string): Picture[] {
-  const rack = readStore(backgroundsDir(configHome)).palettes[name]
+  const rack = rackIn(readStore(backgroundsDir(configHome)), name)
 
   if (!rack) {
     return []
@@ -1399,7 +1403,7 @@ export function applyRedraw(configHome: string, drawn: { name: string; picture: 
   const stale: string[] = []
 
   for (const { name, picture } of drawn) {
-    const rack = store.palettes[name]
+    const rack = rackIn(store, name)
     const at = rack?.pictures.findIndex((held) => held.key === picture.key) ?? -1
     const old = rack?.pictures[at]
 
