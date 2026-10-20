@@ -1,10 +1,9 @@
 import type { Readable, Writable } from 'node:stream'
 import { GATE_RULES } from '../../core/contrast.ts'
-import { type PaletteEntry, swatch } from '../../core/manifest.ts'
-import { ago, cells, counted, inert } from '../../core/text.ts'
+import type { PaletteEntry } from '../../core/manifest.ts'
+import { cells, counted } from '../../core/text.ts'
 import { gateFailures } from '../../store/available.ts'
-import { type Listed, type Listing, listedMatches } from '../../store/marketplace-index.ts'
-import { isRemote, OFFICIAL, sameMarketplace, TOPIC } from '../../store/sources.ts'
+import { isRemote, OFFICIAL, TOPIC } from '../../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
 import { Field } from '../field.ts'
@@ -13,24 +12,17 @@ import { type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
 import type { Mouse } from '../keys.ts'
 import { Glide } from '../motion.ts'
 import type { ReleaseLine } from '../notice.ts'
-import {
-  type Card,
-  PaletteList,
-  pageStep,
-  paletteExample,
-  type RowSpot,
-  rowSpot,
-  SearchHint,
-} from '../palette-prompt.ts'
-import { moreOf, tabOf } from '../parts.ts'
+import { type Card, PaletteList, pageStep, paletteExample, type RowSpot, SearchHint } from '../palette-prompt.ts'
+import { moreOf } from '../parts.ts'
 import { Screen } from '../screen.ts'
-import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter } from '../style.ts'
+import { ansiFg, FG_RESET, MARKS, type Paint, painter } from '../style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from '../terminal.ts'
 import { zone } from '../zones.ts'
-import { button, cap, EMPTY, edge, framed, lit, whereOf } from './draw.ts'
+import { button, cap, EMPTY, edge, framed, whereOf } from './draw.ts'
 import { AddForm } from './form.ts'
 import { Network } from './network.ts'
 import { Review } from './review.ts'
+import { Search } from './search.ts'
 import { Staged } from './staged.ts'
 import type { Action, BrowseIo, BrowseOptions, BrowseResult, Detail, Found, Marketplace, Row, Spot } from './types.ts'
 
@@ -53,7 +45,6 @@ type State = 'active' | 'submit' | 'cancel'
 export class BrowsePanel {
   private readonly staged: Staged
   private readonly field = new Field()
-  private readonly query = new Field()
   private readonly form: AddForm
   private readonly tuned: Set<string>
   private readonly network: Network
@@ -71,10 +62,9 @@ export class BrowsePanel {
   private readonly paint: ((entry: PaletteEntry) => void) | undefined
   private readonly list: PaletteList<Row>
   private readonly inside: PaletteList<Row>
-  private readonly results: PaletteList<Row>
+  private readonly search: Search
   private side: Side = 'cards'
   private showing: View = 'browse'
-  private landing: string | undefined
   private open: string | undefined
   private split = 0
   private readonly hint: SearchHint
@@ -86,9 +76,6 @@ export class BrowsePanel {
   private leaving: { to: number | undefined } | undefined
   private notice: { text: string; tone: Tone } | undefined
   private goto: number | undefined
-  private listing: Listing | undefined
-  private loading = false
-  private loadError: string | undefined
   private help: Help | undefined
   private readonly live: boolean
 
@@ -152,15 +139,14 @@ export class BrowsePanel {
       },
     })
     this.inside.focus = 'off'
-    this.results = new PaletteList<Row>({
-      entries: [],
-      picked: new Set(),
-      layout: 'marketplaces',
-      mode: 'cards',
+    this.search = new Search({
+      staged: this.staged,
+      network: this.network,
+      p: this.p,
       color: this.color,
       maxItems: this.maxItems,
-      heads: () => [this.row({ kind: 'back' }, true)],
-      extras: () => this.found(),
+      redraw: () => this.redraw(),
+      index: () => this.network.track(this.io.index()),
     })
     this.follow()
     this.hint = new SearchHint(
@@ -179,7 +165,7 @@ export class BrowsePanel {
     const assume = this.owns ? [] : [HIDE_CURSOR, NO_WRAP]
 
     return within({ input: this.input, output: this.output, modes, assume }, async (terminal) => {
-      const lists = [this.list, this.inside, this.results]
+      const lists = [this.list, this.inside, this.search.results]
 
       for (const list of lists) {
         list.glide = true
@@ -405,13 +391,12 @@ export class BrowsePanel {
   }
 
   private searchKey(key: string): void {
-    const page = pageStep(key, this.results.page())
+    const page = pageStep(key, this.search.results.page())
 
     if (key === 'enter' || key === ' ') {
       this.take(key === 'enter')
-    } else if ((key === 'esc' || key === 'ctrl-u') && this.query.value) {
-      this.query.value = ''
-      this.searchTyped()
+    } else if ((key === 'esc' || key === 'ctrl-u') && this.search.query.value) {
+      this.search.clear()
     } else if (key === 'esc' || key === 'left') {
       this.closeSearch()
     } else if (key === '?') {
@@ -425,9 +410,9 @@ export class BrowsePanel {
         this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
       }
     } else if (key === 'ctrl-r') {
-      this.loadIndex()
-    } else if (this.query.key(key)) {
-      this.searchTyped()
+      this.search.load()
+    } else if (this.search.query.key(key)) {
+      this.search.typed()
     }
   }
 
@@ -488,7 +473,7 @@ export class BrowsePanel {
   }
 
   private take(back: boolean): void {
-    const found = this.focusedFound()
+    const found = this.search.focused()
 
     if (found?.kind === 'back') {
       this.closeSearch()
@@ -497,7 +482,7 @@ export class BrowsePanel {
     }
 
     if (found?.kind === 'state') {
-      this.loadIndex()
+      this.search.load()
 
       return
     }
@@ -511,7 +496,7 @@ export class BrowsePanel {
     const known = this.staged.known(source)
 
     if (!known) {
-      this.landing = back ? source : undefined
+      this.search.landing = back ? source : undefined
       this.load(source)
     } else if (back) {
       this.unremove(known)
@@ -526,53 +511,14 @@ export class BrowsePanel {
   }
 
   private openSearch(): void {
-    const typed = this.field.value.trim()
-
-    if (typed) {
-      this.query.value = typed
-    }
-
     this.showing = 'search'
-    this.results.setFilter(this.query.value)
-    this.results.refresh()
-
-    if (this.live && !this.listing) {
-      this.loadIndex()
-    }
+    this.search.open(this.field.value.trim(), this.live)
   }
 
   private closeSearch(): void {
     this.showing = 'browse'
-    this.landing = undefined
+    this.search.landing = undefined
     this.follow()
-  }
-
-  private searchTyped(): void {
-    this.results.setFilter(this.query.value)
-  }
-
-  private loadIndex(): void {
-    if (this.loading) {
-      return
-    }
-
-    this.loading = true
-    this.loadError = undefined
-    this.redraw()
-    this.network.track(this.io.index()).then(
-      (listing) => {
-        this.loading = false
-        this.listing = listing
-        this.results.refresh()
-        this.redraw()
-      },
-      (error: Error) => {
-        this.loading = false
-        this.loadError = inert(error.message)
-        this.results.refresh()
-        this.redraw()
-      },
-    )
   }
 
   private enter(): boolean {
@@ -630,8 +576,7 @@ export class BrowsePanel {
     }
 
     if (this.showing === 'search') {
-      this.query.paste(text)
-      this.searchTyped()
+      this.search.paste(text)
     } else if (this.side === 'form') {
       if (!this.form.fetching()) {
         this.form.address.paste(text)
@@ -710,7 +655,7 @@ export class BrowsePanel {
 
   private point(spot: RowSpot): void {
     if (this.showing === 'search') {
-      this.results.point(spot.at)
+      this.search.results.point(spot.at)
 
       return
     }
@@ -833,7 +778,7 @@ export class BrowsePanel {
   }
 
   private current(): PaletteList<Row> {
-    return this.showing === 'search' ? this.results : this.list
+    return this.showing === 'search' ? this.search.results : this.list
   }
 
   private move(delta: number, wrap = true): void {
@@ -908,7 +853,7 @@ export class BrowsePanel {
       source,
       (marketplace) => this.arrive(source, marketplace),
       () => {
-        this.landing = undefined
+        this.search.landing = undefined
       },
     )
   }
@@ -918,7 +863,7 @@ export class BrowsePanel {
 
     if (clash) {
       this.network.failed.set(source, `${marketplace.id} already names the marketplace at ${clash.shown}`)
-      this.landing = undefined
+      this.search.landing = undefined
     } else {
       this.stage(marketplace)
     }
@@ -927,7 +872,7 @@ export class BrowsePanel {
   }
 
   private focusedFound(): Found | undefined {
-    const row = this.current().focusedRow()
+    const row = this.list.focusedRow()
 
     return row?.kind === 'extra' ? row.extra.found : undefined
   }
@@ -956,10 +901,10 @@ export class BrowsePanel {
 
     this.list.select(`top ${marketplace.id}`)
 
-    if (this.landing !== undefined && sameMarketplace(this.landing, marketplace.source)) {
+    if (this.search.lands(marketplace.source)) {
       this.closeSearch()
     } else {
-      this.results.refresh()
+      this.search.results.refresh()
     }
   }
 
@@ -1081,20 +1026,6 @@ export class BrowsePanel {
     return [this.row({ kind: 'new' }, true), this.row({ kind: 'search' })]
   }
 
-  private matches(): Listed[] {
-    const query = this.query.value.trim()
-
-    return (this.listing?.marketplaces ?? []).filter((m) => !query || listedMatches(m, query))
-  }
-
-  private found(): Row[] {
-    const listed = this.matches()
-
-    return listed.length > 0
-      ? listed.map((m) => this.row({ kind: 'listed', listed: m }))
-      : [this.row({ kind: 'state' })]
-  }
-
   private status(marketplace: Marketplace): string {
     return this.staged.adds.has(marketplace.source)
       ? 'Will add'
@@ -1136,59 +1067,11 @@ export class BrowsePanel {
   }
 
   private foundLine(found: Found, focused: boolean, at: number): string {
-    const box = (mark: string) => rowSpot(at, 'box', `${mark} `)
-    const after = (text: string) => (text ? `  ${this.p.dim(text)}` : '')
+    const after = (text: string) => `  ${this.p.dim(text)}`
 
-    if (found.kind === 'new') {
-      return button(this.p, at, focused, '+', 'Add marketplace', after('owner/repo or a folder'))
-    }
-
-    if (found.kind === 'search') {
-      return button(this.p, at, focused, MARKS.search, 'Search marketplace', after('find one on GitHub'))
-    }
-
-    if (found.kind === 'back') {
-      return `   ${rowSpot(at, 'box', tabOf(this.p, '← Back', focused))}\n`
-    }
-
-    if (found.kind === 'state') {
-      const [text, note] = this.stateOf()
-
-      return button(this.p, at, focused, MARKS.search, text, after(note))
-    }
-
-    const m = found.listed
-    const known = this.staged.known(m.source)
-    const failure = this.network.failed.get(m.source)
-
-    const facts = [
-      `${MARKS.star}${m.stars}`,
-      known ? this.addedNote(known) : counted(m.palettes.length),
-      this.network.busy.get(m.source) ?? '',
-    ].filter(Boolean)
-
-    return lit(
-      focused,
-      `${box(known ? MARKS.on : MARKS.off)}${m.id}${after(facts.join(' · '))}${failure ? `  ${this.p.error(failure)}` : ''}`,
-    )
-  }
-
-  private stateOf(): [string, string] {
-    const query = this.query.value.trim()
-
-    return this.loading
-      ? ['Loading the marketplace list…', '']
-      : this.loadError
-        ? ['The marketplace list did not load', 'space retries']
-        : !this.listing
-          ? ['Load the marketplace list', 'space loads it']
-          : query
-            ? [`No marketplace matches "${query}"`, '']
-            : ['No marketplace yet', '']
-  }
-
-  private addedNote(known: Marketplace): string {
-    return this.staged.adds.has(known.source) ? 'Will add' : 'Added'
+    return found.kind === 'new'
+      ? button(this.p, at, focused, '+', 'Add marketplace', after('owner/repo or a folder'))
+      : button(this.p, at, focused, MARKS.search, 'Search marketplace', after('find one on GitHub'))
   }
 
   private mark(entry: PaletteEntry): string {
@@ -1240,13 +1123,7 @@ export class BrowsePanel {
 
   private counts(): string {
     if (this.showing === 'search') {
-      const parts = [
-        ...(this.loading ? ['Loading…'] : []),
-        ...(this.listing ? [`${this.matches().length} found`] : []),
-        ...(this.listing?.offline ? [`offline, from ${ago(this.listing.at)}`] : []),
-      ]
-
-      return parts.length > 0 ? parts.join(' · ') : 'on GitHub'
+      return this.search.counts()
     }
 
     const updating = this.network.updating() ? 'Updating… · ' : ''
@@ -1258,7 +1135,7 @@ export class BrowsePanel {
   }
 
   private searchText(): string {
-    const typed = (this.showing === 'search' ? this.query : this.field).value
+    const typed = (this.showing === 'search' ? this.search.query : this.field).value
 
     if (typed) {
       return `${typed}_`
@@ -1299,7 +1176,11 @@ export class BrowsePanel {
   }
 
   private detail(width: number): Detail {
-    const row = this.current().focusedRow()
+    if (this.showing === 'search') {
+      return this.search.detail(width)
+    }
+
+    const row = this.list.focusedRow()
 
     if (row?.kind === 'extra') {
       return row.extra.found ? this.foundDetail(row.extra.found, width) : EMPTY
@@ -1398,73 +1279,13 @@ export class BrowsePanel {
       }
     }
 
-    if (row.kind === 'search') {
-      const what = `The marketplaces anyone publishes on GitHub with the ${TOPIC} topic, listed every half hour`
-
-      return {
-        title: this.p.bold('Search marketplace'),
-        lines: [...wrapText(what, width), '', ...wrapText('enter opens the search', width)],
-        brief: 'enter searches the marketplaces on GitHub',
-      }
-    }
-
-    if (row.kind === 'back') {
-      return { title: this.p.bold('Back'), lines: ['Back to your marketplaces'], brief: 'enter goes back' }
-    }
-
-    if (row.kind === 'state') {
-      const [text, note] = this.stateOf()
-      const what = `Repositories with the ${TOPIC} topic, read every half hour into one list`
-
-      return {
-        title: this.p.bold('Marketplaces'),
-        lines: [
-          ...wrapText(what, width),
-          '',
-          ...wrapText([text, note].filter(Boolean).join(' · '), width),
-          ...(this.loadError ? wrapText(this.loadError, width).map((l) => this.p.error(l)) : []),
-          '',
-          ...wrapText('Not listed yet? + Add marketplace adds one by its owner/repo', width),
-        ],
-        brief: [text, note].filter(Boolean).join(' · '),
-      }
-    }
-
-    const m = row.listed
-    const known = this.staged.known(m.source)
-
-    const note = known
-      ? this.addedNote(known)
-      : (this.network.busy.get(m.source) ??
-        this.network.failed.get(m.source) ??
-        'space adds it, enter adds it and goes back')
+    const what = `The marketplaces anyone publishes on GitHub with the ${TOPIC} topic, listed every half hour`
 
     return {
-      title: this.p.bold(m.id),
-      lines: [
-        this.p.dim(m.source),
-        ...wrapText(m.about, width).map((l) => this.p.dim(l)),
-        this.p.dim([`★ ${m.stars}`, ...(m.updated ? [`updated ${m.updated}`] : [])].join(' · ')),
-        '',
-        ...wrapText(note, width),
-        '',
-        ...this.paletteLines(m, width),
-      ],
-      brief: [counted(m.palettes.length), note].join(' · '),
+      title: this.p.bold('Search marketplace'),
+      lines: [...wrapText(what, width), '', ...wrapText('enter opens the search', width)],
+      brief: 'enter searches the marketplaces on GitHub',
     }
-  }
-
-  private paletteLines(m: Listed, width: number): string[] {
-    const pad = Math.min(Math.max(...m.palettes.map((e) => cells(e.name))), Math.max(8, width - 16))
-    let shelf: string | undefined
-
-    return m.palettes.flatMap((e) => {
-      const head = e.catalog !== shelf && e.catalog ? [this.p.dim(e.catalog)] : []
-      shelf = e.catalog
-      const squares = this.color ? `  ${ansiSquares(swatch(e))}` : ''
-
-      return [...head, `  ${fit(e.name, pad)}${squares}`]
-    })
   }
 
   private footer(): Bar {
@@ -1499,11 +1320,7 @@ export class BrowsePanel {
     }
 
     if (this.showing === 'search') {
-      return {
-        badge: 'SEARCH',
-        keys: [...this.searchKeys(), ...(this.query.value ? [['bksp', 'edit'] as Hint] : []), ['?', 'keys']],
-        right: this.query.value ? ['esc', 'clear search'] : ['esc', 'back'],
-      }
+      return this.search.bar()
     }
 
     if (this.side === 'form') {
@@ -1544,35 +1361,6 @@ export class BrowsePanel {
     ]
   }
 
-  private searchKeys(): Hint[] {
-    const found = this.focusedFound()
-
-    if (found?.kind === 'back') {
-      return [['enter', 'back']]
-    }
-
-    if (found?.kind === 'state') {
-      return this.loading ? [] : [['space', 'load']]
-    }
-
-    const source = found?.kind === 'listed' ? found.listed.source : undefined
-
-    if (source === undefined) {
-      return []
-    }
-
-    const known = this.staged.known(source)
-
-    if (!known) {
-      return [
-        ['space', 'add'],
-        ['enter', 'add and go back'],
-      ]
-    }
-
-    return [...(this.staged.adds.has(known.source) ? [['space', 'undo'] as Hint] : []), ['enter', 'go to it']]
-  }
-
   private cardKeys(apply: Hint[]): Hint[] {
     const row = this.list.focusedRow()
 
@@ -1601,7 +1389,7 @@ export class BrowsePanel {
     const items = Math.max(MIN_ITEMS, this.rows() - used)
     this.maxItems = items
     this.list.maxItems = items
-    this.results.maxItems = items
+    this.search.results.maxItems = items
   }
 
   private view(): string[] {
@@ -1765,7 +1553,11 @@ export class BrowsePanel {
         { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl-u clears' },
         { label: 'Add', text: 'space  adds it  ·  again to undo', run: () => this.take(false) },
         { label: '', text: 'enter  adds it and goes back to its card', run: () => this.take(true) },
-        { label: 'Reload', text: 'ctrl+r  the list, which GitHub fills every half hour', run: () => this.loadIndex() },
+        {
+          label: 'Reload',
+          text: 'ctrl+r  the list, which GitHub fills every half hour',
+          run: () => this.search.load(),
+        },
         { label: 'Back', text: '←  esc  ·  ← Back', run: () => this.closeSearch() },
         ...screens,
         close,
