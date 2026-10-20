@@ -8,6 +8,7 @@ import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import { memo } from './memo.ts'
 import { modeOf, otherOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
+import { escaped, quoted } from './text.ts'
 import {
   type Catalog,
   catalogProblem,
@@ -116,12 +117,16 @@ function marketplaceFileProblem(file: MarketplaceFile, seen: ReadonlyMap<string,
   const twin = seen.get(file.slug)
 
   if (twin) {
-    return `${file.slug} is also ${twin.catalog ? `in ${twin.catalog}` : 'outside a catalog'} — a palette name is used once in a marketplace`
+    return `${escaped(file.slug)} is also ${twin.catalog ? `in ${escaped(twin.catalog)}` : 'outside a catalog'} — a palette name is used once in a marketplace`
   }
 
-  const problem = file.catalog === undefined ? undefined : textProblem(file.catalog)
+  if (file.catalog === undefined) {
+    return undefined
+  }
 
-  return problem ? `the catalog folder ${JSON.stringify(file.catalog)} ${problem}` : undefined
+  const problem = textProblem(file.catalog)
+
+  return problem ? `the catalog folder ${quoted(file.catalog)} ${problem}` : undefined
 }
 
 interface Shelf {
@@ -448,7 +453,7 @@ export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[]
     const problem = catalogProblem(draft.catalog)
 
     if (problem) {
-      throw new Error(`the share code's catalog ${JSON.stringify(draft.catalog)} ${problem}`)
+      throw new Error(`the share code's catalog ${quoted(draft.catalog)} ${problem}`)
     }
 
     return { ...entry, catalog: draft.catalog }

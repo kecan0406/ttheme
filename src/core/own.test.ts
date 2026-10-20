@@ -1,3 +1,4 @@
+import { spyOn } from 'bun:test'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
@@ -19,6 +20,7 @@ import {
   shareLink,
   withPictures,
 } from './own.ts'
+import { escaped, quoted } from './text.ts'
 import { marketplaceOf } from './theme.ts'
 
 const draft: Draft = {
@@ -217,4 +219,32 @@ test('a marketplace takes its catalogs from folders, keeps loose palettes after 
     ],
   )
   assert.ok(entries.every((e) => marketplaceOf(e.name) === 'kec@shop'))
+})
+
+test('a marketplace file or folder whose name holds a control character or a direction mark is skipped with it spelled out', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-shop-'))
+  const { waive: _, reason: __, pictures: ___, base: ____, ...plain } = draft
+  const night = `night${String.fromCodePoint(0x202e)}`
+  const odd = 'x\x1b]52;c;aGk=\x07'
+  mkdirSync(join(dir, 'palettes', night), { recursive: true })
+  writeFileSync(join(dir, 'palettes', `${odd}.toml`), paletteToml({ ...plain, name: 'x' }))
+  writeFileSync(join(dir, 'palettes', night, 'dusk.toml'), paletteToml({ ...plain, name: 'dusk' }))
+  const said: string[] = []
+
+  const write = spyOn(process.stderr, 'write').mockImplementation((text) => {
+    said.push(String(text))
+
+    return true
+  })
+
+  try {
+    assert.deepEqual(readMarketplaceDir(dir, 'kec@shop', [], warning(true)), [])
+  } finally {
+    write.mockRestore()
+  }
+
+  assert.equal(said.length, 2)
+  assert.ok(said.every((line) => !/[\p{Cc}\p{Bidi_Control}]/u.test(line.slice(0, -1))))
+  assert.ok(said.some((line) => line.includes(`it lives at ${escaped(odd)}`)))
+  assert.ok(said.some((line) => line.includes(`the catalog folder ${quoted(night)}`)))
 })

@@ -84,7 +84,7 @@ const NAMED_SLOTS = ['background', 'foreground', 'cursor', 'selection'] as const
 type NamedSlot = (typeof NAMED_SLOTS)[number]
 
 export function fail(file: string, message: string): never {
-  throw new Error(`${file}: ${message}`)
+  throw new Error(`${escaped(file)}: ${message}`)
 }
 
 function echo(value: unknown): string {
@@ -510,7 +510,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
   const name = paletteName(file, 'meta.name', meta.name)
 
   if (name !== place.name) {
-    fail(file, `meta.name "${name}" does not match its file — it lives at ${place.name}`)
+    fail(file, `meta.name "${name}" does not match its file — it lives at ${escaped(place.name)}`)
   }
 
   const shared = place.open === true
@@ -547,7 +547,7 @@ export function readTheme(file: string, source: string, place: Place): Theme {
       file,
       place.catalog === undefined
         ? 'an official palette lives in a catalog folder, palettes/<catalog>/<palette>.toml'
-        : `its folder "${place.catalog}" has no [[catalog]] table in ${MARKETPLACE_FILE}`,
+        : `its folder ${quoted(place.catalog)} has no [[catalog]] table in ${MARKETPLACE_FILE}`,
     )
   }
 

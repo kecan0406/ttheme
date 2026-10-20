@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { type MarketplaceFile, marketplaceLayout, type Report, readMarketplaceFiles } from '../core/own.ts'
+import { escaped } from '../core/text.ts'
 import { type Catalog, marketplaceOf, slugOf } from '../core/theme.ts'
 import { type Identity, isLocal, localIdentity, marketplaceId, marketplaceSources } from './sources.ts'
 
@@ -20,7 +21,9 @@ export function localMarketplaces(configHome: string, warn = true): LocalMarketp
         return [{ dir, ...identity, id: marketplaceId(identity) }]
       } catch (error) {
         if (warn) {
-          process.stderr.write(`ttheme: skipping the marketplace at ${dir} — ${(error as Error).message}\n`)
+          process.stderr.write(
+            `ttheme: skipping the marketplace at ${escaped(dir)} — ${escaped((error as Error).message)}\n`,
+          )
         }
 
         return []
@@ -77,7 +80,9 @@ export function ownPath(configHome: string, name: string): string {
 }
 
 export function warning(warn: boolean): Report {
-  return warn ? (where, message) => process.stderr.write(`ttheme: skipping ${where} — ${message}\n`) : () => {}
+  return warn
+    ? (where, message) => process.stderr.write(`ttheme: skipping ${escaped(where)} — ${escaped(message)}\n`)
+    : () => {}
 }
 
 export function readMarketplaceDir(
