@@ -106,6 +106,33 @@ test('an attempt hands back what happened instead of throwing', async () => {
   )
 })
 
+test('an archive larger than any marketplace is refused before it is read whole', async () => {
+  const chunk = new Uint8Array(1024 * 1024)
+  let sent = 0
+
+  await withNetwork(
+    async () =>
+      new Response(
+        new ReadableStream({
+          pull(controller) {
+            sent += chunk.length
+            controller.enqueue(chunk)
+
+            if (sent >= 64 * chunk.length) {
+              controller.close()
+            }
+          },
+        }),
+      ),
+    async (home) => {
+      const outcome = await attempt(home, SOURCE)
+      assert.ok('failure' in outcome)
+      assert.equal(failureLine(SOURCE, outcome.failure), 'github.com/ann/ttheme-pastel: the archive is more than 16 MB')
+      assert.ok(sent <= 18 * chunk.length, `${sent / chunk.length} MB read`)
+    },
+  )
+})
+
 function installed(name: string): PaletteEntry {
   return {
     name,
