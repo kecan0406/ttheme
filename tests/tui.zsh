@@ -44,6 +44,7 @@ typeset -ga SCENARIOS=(
   'theme-edit      few    hub  Down Right Down Tab@Palette'
   'theme-editor    few    hub  Down Right Down Tab@Palette Enter@slot'
   'theme-keys      few    hub  Down Right Down Right@Palette ?@Help'
+  'editor-keys     few    hub  Down Right Down Tab@Palette Enter@slot ?@Help'
   'browse-marketplace   marketplace browse   Down Right Right Down'
   'preview-marketplace  marketplace hub  Down Right Down Right Down'
   'hub-marketplace      marketplace hub'
