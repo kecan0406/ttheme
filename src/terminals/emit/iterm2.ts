@@ -1,7 +1,7 @@
 import { type Hex, rgb } from '../../core/color.ts'
 import type { Theme } from '../../core/theme.ts'
 import { owned } from '../../core/theme.ts'
-import type { ProfileBackground } from '../../pictures/backdrop.ts'
+import type { ProfileBackground } from '../../pictures/conf.ts'
 import type { Emitter, Output } from './types.ts'
 
 interface ItermColor {

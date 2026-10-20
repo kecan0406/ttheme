@@ -102,8 +102,13 @@ function str(file: string, field: string, value: unknown): string {
   return value
 }
 
+export const STEM_RULES = [
+  ['@', '--'],
+  ['/', '--'],
+] as const
+
 export function stem(name: string): string {
-  return name.replace('@', '--').replace('/', '--')
+  return STEM_RULES.reduce((value, [from, to]) => value.replace(from, to), name)
 }
 
 export function owned(name: string): string {

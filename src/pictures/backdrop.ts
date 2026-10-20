@@ -11,7 +11,7 @@ import {
   rmSync,
   statSync,
 } from 'node:fs'
-import { basename, isAbsolute, join } from 'node:path'
+import { basename, join } from 'node:path'
 import { artworkOf, creditLine, linksOf } from '../core/artists.ts'
 import { type Coloring, type Colors, type Hue, originalOpacity } from '../core/backdrop-tone.ts'
 import { type Hex, rgb } from '../core/color.ts'
@@ -38,6 +38,7 @@ import {
 } from '../core/png.ts'
 import { stem as fileStem, POSITIONS, type SharedPicture } from '../core/theme.ts'
 import { listing, writeAtomic } from '../store/edits.ts'
+import { CONF_FIT, CONF_IMAGE, CONF_INCLUDE, CONF_OPACITY, CONF_OPTIONAL, CONF_POSITION } from './conf.ts'
 import { MATTING, matte } from './cutout.ts'
 import { type Held, keyOf, known, recall, remember } from './drawn.ts'
 
@@ -620,12 +621,12 @@ function confText(dir: string, rack: Rack): string {
     ),
     ...rack.pictures.filter((held) => coloringOf(held) === 'original').map((held) => `# colors ${held.key} original`),
     ...rack.pictures.flatMap(creditLines),
-    `background-image = ${join(dir, picture.fill)}`,
-    'background-image-fit = cover',
-    'background-image-position = top-right',
-    `background-image-opacity = ${picture.opacity}`,
-    `config-file = ?${picture.stem}.tune.conf`,
-    `config-file = ?${picture.stem}.off.conf`,
+    `${CONF_IMAGE} = ${join(dir, picture.fill)}`,
+    `${CONF_FIT} = cover`,
+    `${CONF_POSITION} = top-right`,
+    `${CONF_OPACITY} = ${picture.opacity}`,
+    `${CONF_INCLUDE} = ${CONF_OPTIONAL}${picture.stem}.tune.conf`,
+    `${CONF_INCLUDE} = ${CONF_OPTIONAL}${picture.stem}.off.conf`,
     '',
   ].join('\n')
 }
@@ -789,53 +790,6 @@ function migrate(dir: string): Store {
   save(dir, store, Object.keys(store.palettes))
 
   return store
-}
-
-function locate(dir: string, path: string, home: string): string {
-  return path.startsWith('~/') ? join(home, path.slice(2)) : isAbsolute(path) ? path : join(dir, path)
-}
-
-export function readBackdrop(dir: string, name: string, home: string): ProfileBackground | undefined {
-  const set = new Map<string, string>()
-
-  const read = (file: string, depth: number): boolean => {
-    const text = readText(file)
-
-    if (text === undefined) {
-      return false
-    }
-
-    for (const line of text.split('\n')) {
-      const m = /^([a-z-]+)\s*=\s*(.*?)\s*$/.exec(line)
-
-      if (m?.[1] === 'config-file' && depth < 4) {
-        read(locate(dir, (m[2] as string).replace(/^\?/, ''), home), depth + 1)
-      } else if (m && /^background-image(?:-fit|-opacity|-position)?$/.test(m[1] as string)) {
-        set.set(m[1] as string, m[2] as string)
-      }
-    }
-
-    return true
-  }
-
-  if (!read(join(dir, `${fileStem(name)}.conf`), 0)) {
-    return undefined
-  }
-
-  const image = set.get('background-image') ?? ''
-
-  if (image === '') {
-    return undefined
-  }
-
-  const opacity = Number(set.get('background-image-opacity') ?? 1)
-
-  return {
-    image: locate(dir, image, home),
-    opacity: Number.isFinite(opacity) ? opacity : 1,
-    cover: set.get('background-image-fit') === 'cover',
-    position: set.get('background-image-position') ?? 'center',
-  }
 }
 
 export function imageKey(origin: Origin): string {
@@ -1544,11 +1498,4 @@ export function retint(configHome: string, paints: ReadonlyMap<string, Paint>): 
   }
 
   return names
-}
-
-export interface ProfileBackground {
-  image: string
-  opacity: number
-  cover: boolean
-  position: string
 }

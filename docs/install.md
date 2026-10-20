@@ -198,6 +198,15 @@ cp konsole/ttheme-miku.colorscheme ~/.local/share/konsole/
 Each Ghostty theme file also carries the dock-icon colors, derived from the
 palette.
 
+An archive holds the theme files alone. `ttheme init` writes the same files
+under your own paths and adds the terminal's own block, profile or scheme, and
+points the terminal at the palette for you. Three terminals write another form
+of what they ship: iTerm2's archive carries a color scheme plist you import
+yourself, its install a dynamic profile per palette; Windows Terminal's
+archive carries the schemes alone, its install a fragment that also names your
+profile; Konsole's archive carries a scheme with no picture, its install one
+with it.
+
 ## From a checkout
 
 Building from a checkout works too: `mise install && bun install && mise run

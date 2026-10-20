@@ -1,6 +1,8 @@
 import type { Theme } from '../../core/theme.ts'
 import { owned } from '../../core/theme.ts'
+import { confReaderPython } from '../../pictures/conf.ts'
 import { GENERATED } from '../../store/wiring.ts'
+import { stemPython } from './stem.ts'
 import { banner, type Emitter, type Output } from './types.ts'
 
 export const kitty: Emitter = {
@@ -52,27 +54,16 @@ export function kittyWatcher(m: KittyWatcher): string {
     '    return path if os.path.isabs(path) else os.path.join(BACKGROUNDS, path)',
     '',
     '',
-    'def read(path, into):',
-    '    try:',
-    "        with open(path, encoding='utf-8') as f:",
-    '            lines = f.read().splitlines()',
-    '    except OSError:',
-    '        return False',
-    '    for line in lines:',
-    "        key, sep, value = line.partition('=')",
-    '        key, value = key.strip(), value.strip()',
-    "        if not sep or not key or key.startswith('#'):",
-    '            continue',
-    "        if key == 'config-file':",
-    "            read(locate(value.lstrip('?')), into)",
-    '        else:',
-    '            into[key] = value',
-    '    return True',
+    ...confReaderPython(),
+    '',
+    '',
+    'def stem(palette):',
+    `    return ${stemPython('palette')}`,
     '',
     '',
     'def logo(palette):',
     '    c = {}',
-    "    if not palette or not read(os.path.join(BACKGROUNDS, palette.replace('@', '--', 1).replace('/', '--', 1) + '.conf'), c):",
+    "    if not palette or not read(os.path.join(BACKGROUNDS, stem(palette) + '.conf'), c):",
     '        return None',
     "    image = c.get('background-image', '')",
     '    try:',
@@ -116,7 +107,7 @@ export function kittyWatcher(m: KittyWatcher): string {
     '',
     '',
     'def theme(palette):',
-    "    path = os.path.join(THEMES, 'ttheme-' + palette.replace('@', '--', 1).replace('/', '--', 1) + '.conf')",
+    "    path = os.path.join(THEMES, 'ttheme-' + stem(palette) + '.conf')",
     '    if not palette or not os.path.exists(path):',
     '        return None',
     '    from kitty.colors import parse_colors',

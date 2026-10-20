@@ -1,6 +1,8 @@
 import type { Theme } from '../../core/theme.ts'
 import { owned } from '../../core/theme.ts'
+import { confReaderLua } from '../../pictures/conf.ts'
 import { GENERATED } from '../../store/wiring.ts'
+import { stemLua } from './stem.ts'
 import type { Emitter, Output } from './types.ts'
 
 const list = (colors: readonly string[]) => `[${colors.map((c) => `"${c}"`).join(', ')}]`
@@ -69,27 +71,16 @@ export function weztermModule(m: WeztermModule): string {
     "  return BACKGROUNDS .. '/' .. path",
     'end',
     '',
-    'local function read(path, into)',
-    "  local f = io.open(path, 'r')",
-    '  if not f then',
-    '    return false',
-    '  end',
-    '  for line in f:lines() do',
-    "    local key, value = line:match('^%s*([%w%-]+)%s*=%s*(.-)%s*$')",
-    "    if key == 'config-file' then",
-    "      read(locate((value:gsub('^%?', ''))), into)",
-    '    elseif key then',
-    '      into[key] = value',
-    '    end',
-    '  end',
-    '  f:close()',
-    '  return true',
+    ...confReaderLua(),
+    '',
+    'local function stem(palette)',
+    `  return ${stemLua('palette')}`,
     'end',
     '',
     'local function layers(palette)',
     '  local color = PALETTES[palette]',
     '  local c = {}',
-    "  if not color or not read(BACKGROUNDS .. '/' .. ((palette:gsub('@', '--', 1)):gsub('/', '--', 1)) .. '.conf', c) then",
+    "  if not color or not read(BACKGROUNDS .. '/' .. stem(palette) .. '.conf', c, 0) then",
     "    return nil, 'none'",
     '  end',
     "  local image = c['background-image'] or ''",

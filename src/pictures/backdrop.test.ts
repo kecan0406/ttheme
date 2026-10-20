@@ -35,7 +35,6 @@ import {
   type Picture,
   peakOf,
   rackOf,
-  readBackdrop,
   readStore,
   retint,
   showImage,
@@ -43,6 +42,7 @@ import {
   tuneOf,
   writeTune,
 } from './backdrop.ts'
+import { readBackdrop } from './conf.ts'
 import { prepareOne, redrawOne } from './redrawing.ts'
 
 process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-cache-'))

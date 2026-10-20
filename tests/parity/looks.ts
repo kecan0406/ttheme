@@ -3,7 +3,7 @@ import { basename, dirname, isAbsolute, join } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
 import type { Mode } from '../../src/core/mode.ts'
 import { decodePng, type Rgba } from '../../src/core/png.ts'
-import { readBackdrop } from '../../src/pictures/backdrop.ts'
+import { readBackdrop } from '../../src/pictures/conf.ts'
 import { SLOT_CODES } from '../../src/terminals/osc.ts'
 import { type Colors, OWN, SEEN } from './terms.ts'
 

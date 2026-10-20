@@ -1,7 +1,7 @@
 import { type Hex, mix, rgb } from '../../core/color.ts'
 import type { Theme } from '../../core/theme.ts'
 import { owned } from '../../core/theme.ts'
-import type { ProfileBackground } from '../../pictures/backdrop.ts'
+import type { ProfileBackground } from '../../pictures/conf.ts'
 import { banner, type Emitter, type Output } from './types.ts'
 
 function entry(group: string, color: string): string[] {
