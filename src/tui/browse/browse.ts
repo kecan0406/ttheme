@@ -1096,9 +1096,11 @@ export class BrowsePanel {
     }
 
     if (this.leaving !== undefined) {
+      const count = this.staged.count()
+
       return {
         badge: 'BROWSE',
-        lead: 'Apply your changes before you leave?',
+        lead: `Apply ${count} ${count === 1 ? 'change' : 'changes'} before you leave?`,
         keys: [
           ['y', 'apply'],
           ['n', 'discard'],
@@ -1359,8 +1361,10 @@ export class BrowsePanel {
     return [
       [MARKS.on, 'picked'],
       [MARKS.off, 'not picked'],
+      [`${MARKS.closed} ${MARKS.opened}`, 'a catalog, closed or open'],
       [MARKS.update, 'has an update'],
       [MARKS.auto, 'updates on its own'],
+      [MARKS.miss, 'misses the gate'],
       [MARKS.star, 'stars on GitHub'],
     ]
   }

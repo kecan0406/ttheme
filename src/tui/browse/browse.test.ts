@@ -391,7 +391,7 @@ test('inside the tabs, tab asks for the next screen at once, or first asks about
   assert.equal(back.next, 21)
 
   const stay = await drive([...MIKU, ' ', PLAIN_TAB, '\x1b', ...APPLY], { hub: 'browse', installed: [] })
-  assert.match(stay.frames, /Apply your changes before you leave\?/)
+  assert.match(stay.frames, /Apply 1 change before you leave\?/)
   assert.equal(stay.result, 'submit')
   assert.equal(stay.next, undefined)
 
@@ -408,8 +408,8 @@ test('inside the tabs, tab asks for the next screen at once, or first asks about
 
 test('ctrl-c or esc with something staged asks before leaving, esc stays, and a second ctrl-c leaves without it', async () => {
   const { frames, last, result, ran } = await drive([...MIKU, ' ', '\x03', '\x1b', '\x1b', '\x1b', '\x03'])
-  assert.match(frames, /\[BROWSE\] Apply your changes before you leave\? {3}y apply {3}n discard +esc stay/)
-  assert.match(last, /Apply your changes before you leave\?/)
+  assert.match(frames, /\[BROWSE\] Apply 1 change before you leave\? {3}y apply {3}n discard +esc stay/)
+  assert.match(last, /Apply 1 change before you leave\?/)
   assert.equal(result, 'cancel')
   assert.equal(ran, false)
 })
@@ -627,7 +627,8 @@ test('? shows the keys and marks over the list until ? or esc, typing filters th
   const { last, frames, panel } = await drive(['?', ' ', '?', '\x1b'])
   assert.match(frames, /╭─ Help ─+╮/)
   assert.match(frames, /Marketplace {3}↓ {2}below its palettes, to its own actions/)
-  assert.match(frames, /Marks +● picked {3}○ not picked {3}⇡ has an update/)
+  assert.match(frames, /Marks +● picked {3}○ not picked {3}▸ ▾ a catalog, closed or open/)
+  assert.match(frames, /⇡ has an update {3}↻ updates on its own {3}✗ misses the gate/)
   assert.match(frames, /\[HELP\] ↑↓ choose {3}enter run {3}type to filter +\? esc close/)
   assert.doesNotMatch(last, /Help/)
   assert.deepEqual([...panel.picked].sort(), ['alice@pastel/dusk', 'miku'])

@@ -78,6 +78,12 @@ export class Staged {
     return this.adds.size + this.removes.size + this.want.size
   }
 
+  count(): number {
+    const { names, dropped } = this.pending()
+
+    return this.changes() + names.length + dropped.length + this.result().renew.length
+  }
+
   dirty(): boolean {
     const { picked, renew } = this.result()
 
