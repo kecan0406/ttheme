@@ -1418,7 +1418,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   })
 }
 
-type Key = [label: string, text: string, press?: string]
+type Key = [label: string, text: string, press?: string, then?: string]
 
 const TUNE_KEYS: Key[] = [
   ['Field', '↑↓  size, position, opacity'],
@@ -1442,7 +1442,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
     ['Unfold', 'space  a set of ×N', ' '],
     ['Open', 'o  the artwork page in a browser  ·  O  the post page', 'o'],
     ['Settings', 's  rating, block, posts, solo, order, sets, remove bg', 's'],
-    ['Advanced', 'a or Advanced › in settings  min score, min size, sites, hide, hide tags, PNG only', 'a'],
+    ['Advanced', 'a or Advanced › in settings  min score, min size, sites, hide, hide tags, PNG only', 's', 'a'],
     ['Back', 'esc returns to preview', 'esc'],
   ],
   try: [
@@ -1469,10 +1469,20 @@ export function findTopics(view: FindView, press: (key: string) => void): Topic[
   const cuts = view.shown?.cut === 'on' || view.shown?.cut === 'off'
 
   return [
-    ...(view.tuning ? TUNE_KEYS : KEYS[view.mode]).map(([label, text, key]): Topic => {
+    ...(view.tuning ? TUNE_KEYS : KEYS[view.mode]).map(([label, text, key, then]): Topic => {
       const runs = key !== undefined && (key !== 'x' || cuts)
 
-      return { label, text, ...(runs ? { run: () => press(key) } : {}) }
+      const run = () => {
+        if (key !== undefined) {
+          press(key)
+        }
+
+        if (then !== undefined) {
+          press(then)
+        }
+      }
+
+      return { label, text, ...(runs ? { run } : {}) }
     }),
     { label: 'Close', text: '?  esc', run: () => {} },
   ]

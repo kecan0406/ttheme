@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { type FindView, type Row, renderFind, stepped, transmit } from './screen.ts'
+import { type FindView, findTopics, type Row, renderFind, stepped, transmit } from './screen.ts'
 
 test('a step from a typed value goes to the nearest step that way, and steps wrap around', () => {
   const sizes = ['off', '720', '1080', '1440', '1800', '2560']
@@ -121,4 +121,11 @@ test('a tag a site sends with control or direction characters is drawn without t
   const out = frame.lines.join('\n')
   assert.match(out, /hatsune_miku\]52;c;aGk=/)
   assert.ok(!out.includes('\x1b]52') && !out.includes('\x07') && !out.includes(rlo))
+})
+
+test('the Advanced topic of the help opens the settings first, since the grid takes no a of its own', () => {
+  const pressed: string[] = []
+  const topics = findTopics(viewOf({ panel: undefined }), (key) => pressed.push(key))
+  topics.find((t) => t.label === 'Advanced')?.run?.()
+  assert.deepEqual(pressed, ['s', 'a'])
 })
