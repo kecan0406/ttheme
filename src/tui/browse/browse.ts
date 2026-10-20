@@ -4,7 +4,7 @@ import { type PaletteEntry, swatch } from '../../core/manifest.ts'
 import { ago, cells, counted, inert } from '../../core/text.ts'
 import { gateFailures } from '../../store/available.ts'
 import { type Listed, type Listing, listedMatches } from '../../store/marketplace-index.ts'
-import { isRemote, OFFICIAL, parseSource, sameMarketplace, shownSource, TOPIC } from '../../store/sources.ts'
+import { isRemote, OFFICIAL, sameMarketplace, TOPIC } from '../../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
 import { Field } from '../field.ts'
@@ -22,11 +22,13 @@ import {
   rowSpot,
   SearchHint,
 } from '../palette-prompt.ts'
-import { boxEdge, buttonOf, moreOf, tabOf } from '../parts.ts'
+import { moreOf, tabOf } from '../parts.ts'
 import { Screen } from '../screen.ts'
-import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter, SPINNER } from '../style.ts'
+import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter } from '../style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from '../terminal.ts'
 import { zone } from '../zones.ts'
+import { button, cap, EMPTY, edge, framed, lit, whereOf } from './draw.ts'
+import { AddForm } from './form.ts'
 import { Network } from './network.ts'
 import { Review } from './review.ts'
 import { Staged } from './staged.ts'
@@ -45,29 +47,6 @@ const MIN_COLS = 40
 const MIN_ROWS = 10
 const MIN_ITEMS = 3
 const ACTION_PAD = 20
-const EMPTY: Detail = { title: '', lines: [], brief: '' }
-
-function typedSource(text: string): string | undefined {
-  const typed = text.trim()
-
-  if (typed !== OFFICIAL && !typed.includes('/') && !typed.startsWith('~')) {
-    return undefined
-  }
-
-  try {
-    return parseSource(typed)
-  } catch {
-    return undefined
-  }
-}
-
-function whereOf(source: string): string {
-  return source === OFFICIAL ? 'Built in' : isRemote(source) ? source : shownSource(source)
-}
-
-function cap(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1)
-}
 
 type State = 'active' | 'submit' | 'cancel'
 
@@ -75,7 +54,7 @@ export class BrowsePanel {
   private readonly staged: Staged
   private readonly field = new Field()
   private readonly query = new Field()
-  private readonly address = new Field()
+  private readonly form: AddForm
   private readonly tuned: Set<string>
   private readonly network: Network
   private readonly startup: string | undefined
@@ -104,8 +83,6 @@ export class BrowsePanel {
   private readonly review: Review
   private beat = 0
   private removing: Marketplace | undefined
-  private adding: string | undefined
-  private formError: string | undefined
   private leaving: { to: number | undefined } | undefined
   private notice: { text: string; tone: Tone } | undefined
   private goto: number | undefined
@@ -123,6 +100,7 @@ export class BrowsePanel {
     this.network = new Network(opts.io, () => this.redraw())
     this.color = opts.color ?? true
     this.p = painter(this.color)
+    this.form = new AddForm(this.network, this.p)
     this.hub = opts.hub
     this.release = opts.release
     this.standing = opts.release?.()
@@ -227,7 +205,7 @@ export class BrowsePanel {
 
           return {
             lines,
-            ticking: this.review.phase === 'applying' || this.fetching() || this.standing?.standing === 'checking',
+            ticking: this.review.phase === 'applying' || this.form.fetching() || this.standing?.standing === 'checking',
           }
         },
         beat: () => {
@@ -462,66 +440,40 @@ export class BrowsePanel {
       if (this.hub) {
         this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
       }
-    } else if (this.fetching()) {
+    } else if (this.form.fetching()) {
       return
     } else if (key === 'enter') {
       this.submit()
-    } else if (this.address.key(key)) {
-      this.edited()
+    } else if (this.form.address.key(key)) {
+      this.form.edited()
     }
   }
 
   private openForm(): void {
-    const typed = this.field.value.trim()
-
-    if (!this.address.value && typedSource(typed)) {
-      this.address.value = typed
-    }
-
+    this.form.seed(this.field.value.trim())
     this.side = 'form'
     this.list.focus = 'held'
   }
 
-  private edited(): void {
-    this.formError = undefined
-    this.adding = undefined
-  }
-
   private submit(): void {
-    const typed = this.address.value.trim()
+    const source = this.form.parse()
 
-    if (!typed) {
-      this.formError = 'type a repository or a folder'
-
-      return
-    }
-
-    let source: string
-
-    try {
-      source = parseSource(typed)
-    } catch (error) {
-      this.formError = (error as Error).message
-
+    if (source === undefined) {
       return
     }
 
     const known = this.staged.known(source)
 
     if (known) {
-      this.address.value = ''
+      this.form.address.value = ''
       this.unremove(known)
       this.reveal(known.id)
 
       return
     }
 
-    this.adding = source
+    this.form.adding = source
     this.load(source)
-  }
-
-  private fetching(): boolean {
-    return this.adding !== undefined && this.network.busy.has(this.adding)
   }
 
   private reveal(id: string): void {
@@ -643,8 +595,8 @@ export class BrowsePanel {
   }
 
   private back(): void {
-    if (this.side === 'form' && this.adding !== undefined) {
-      this.network.unstage(this.adding)
+    if (this.side === 'form') {
+      this.form.drop()
     }
 
     this.side = 'cards'
@@ -681,9 +633,9 @@ export class BrowsePanel {
       this.query.paste(text)
       this.searchTyped()
     } else if (this.side === 'form') {
-      if (!this.fetching()) {
-        this.address.paste(text)
-        this.edited()
+      if (!this.form.fetching()) {
+        this.form.address.paste(text)
+        this.form.edited()
       }
     } else {
       this.field.paste(text)
@@ -995,9 +947,8 @@ export class BrowsePanel {
     this.staged.add(marketplace)
     this.reload()
 
-    if (this.adding !== undefined && sameMarketplace(this.adding, marketplace.source)) {
-      this.address.value = ''
-      this.adding = undefined
+    if (this.form.lands(marketplace.source)) {
+      this.form.done()
       this.reveal(marketplace.id)
 
       return
@@ -1054,7 +1005,8 @@ export class BrowsePanel {
   private actionLine(action: Action, source: string, focused: boolean, at: number): string {
     const [label, note] = this.actionText(action, source)
 
-    return this.button(
+    return button(
+      this.p,
       at,
       focused,
       this.actionMark(action, source),
@@ -1066,19 +1018,6 @@ export class BrowsePanel {
         danger: action === 'remove' && !this.staged.adds.has(source),
       },
     )
-  }
-
-  private button(
-    at: number,
-    focused: boolean,
-    mark: string,
-    label: string,
-    note: string,
-    how: { pane?: string; off?: boolean; danger?: boolean } = {},
-  ): string {
-    const chip = buttonOf(this.p, `${mark} ${label}`, how.off ? 'off' : focused ? 'focus' : 'idle', how.danger)
-
-    return `${focused ? `${MARKS.gutter} ` : '  '}${rowSpot(at, 'box', `${chip}${note}`, how.pane)}`
   }
 
   private actionMark(action: Action, source: string): string {
@@ -1156,10 +1095,6 @@ export class BrowsePanel {
       : [this.row({ kind: 'state' })]
   }
 
-  private lit(focused: boolean, text: string): string {
-    return `${focused ? `${MARKS.gutter} ` : '  '} ${text}`
-  }
-
   private status(marketplace: Marketplace): string {
     return this.staged.adds.has(marketplace.source)
       ? 'Will add'
@@ -1205,11 +1140,11 @@ export class BrowsePanel {
     const after = (text: string) => (text ? `  ${this.p.dim(text)}` : '')
 
     if (found.kind === 'new') {
-      return this.button(at, focused, '+', 'Add marketplace', after('owner/repo or a folder'))
+      return button(this.p, at, focused, '+', 'Add marketplace', after('owner/repo or a folder'))
     }
 
     if (found.kind === 'search') {
-      return this.button(at, focused, MARKS.search, 'Search marketplace', after('find one on GitHub'))
+      return button(this.p, at, focused, MARKS.search, 'Search marketplace', after('find one on GitHub'))
     }
 
     if (found.kind === 'back') {
@@ -1219,7 +1154,7 @@ export class BrowsePanel {
     if (found.kind === 'state') {
       const [text, note] = this.stateOf()
 
-      return this.button(at, focused, MARKS.search, text, after(note))
+      return button(this.p, at, focused, MARKS.search, text, after(note))
     }
 
     const m = found.listed
@@ -1232,7 +1167,7 @@ export class BrowsePanel {
       this.network.busy.get(m.source) ?? '',
     ].filter(Boolean)
 
-    return this.lit(
+    return lit(
       focused,
       `${box(known ? MARKS.on : MARKS.off)}${m.id}${after(facts.join(' · '))}${failure ? `  ${this.p.error(failure)}` : ''}`,
     )
@@ -1345,14 +1280,7 @@ export class BrowsePanel {
   }
 
   private searchBox(width: number): string[] {
-    return this.framed(width, `${this.p.dim(MARKS.search)} ${this.searchText()}`)
-  }
-
-  private framed(width: number, text: string): string[] {
-    const edge = (left: string, right: string) => this.p.dim(`${left}${'─'.repeat(width - 2)}${right}`)
-    const side = this.p.dim('│')
-
-    return [edge('╭', '╮'), `${side} ${fit(text, width - 4)} ${side}`, edge('╰', '╯')]
+    return framed(this.p, width, `${this.p.dim(MARKS.search)} ${this.searchText()}`)
   }
 
   private paletteState(entry: PaletteEntry): string {
@@ -1465,7 +1393,7 @@ export class BrowsePanel {
     if (row.kind === 'new') {
       return {
         title: this.p.bold('Add marketplace'),
-        lines: this.formLines(width),
+        lines: this.form.lines(width, this.side === 'form', this.beat),
         brief: 'enter adds a repository or a folder',
       }
     }
@@ -1539,31 +1467,6 @@ export class BrowsePanel {
     })
   }
 
-  private formLines(width: number): string[] {
-    const focused = this.side === 'form'
-    const value = this.address.value
-    const text = value ? `${value}${focused ? '_' : ''}` : focused ? '_' : this.p.dim('owner/repo or a folder')
-    const problem = this.formError ?? (this.adding === undefined ? undefined : this.network.failed.get(this.adding))
-
-    const status =
-      this.adding !== undefined && this.fetching()
-        ? [this.p.dim(`${SPINNER[this.beat % SPINNER.length]} Fetching ${whereOf(this.adding)}…`)]
-        : problem
-          ? wrapText(problem, width).map((l) => this.p.error(l))
-          : []
-
-    return [
-      'Enter marketplace source:',
-      this.p.dim('Examples:'),
-      ...['owner/repo (GitHub)', 'owner/repo#v1 (a tag or branch)', '~/path/to/marketplace (a folder)'].map((l) =>
-        this.p.dim(` · ${l}`),
-      ),
-      '',
-      ...this.framed(width, text).map((line) => zone({ kind: 'form' } satisfies Spot, line)),
-      ...(status.length > 0 ? ['', ...status] : []),
-    ]
-  }
-
   private footer(): Bar {
     if (this.help) {
       return this.help.bar()
@@ -1604,11 +1507,7 @@ export class BrowsePanel {
     }
 
     if (this.side === 'form') {
-      const keys: Hint[] = this.fetching()
-        ? []
-        : [['enter', 'add'], ...(this.address.value ? [['bksp', 'edit'] as Hint] : [])]
-
-      return { badge: 'BROWSE (ADD)', keys: [...keys, ['?', 'keys']], right: ['esc', 'cancel'] }
+      return { badge: 'BROWSE (ADD)', keys: [...this.form.keys(), ['?', 'keys']], right: ['esc', 'cancel'] }
     }
 
     const filter = this.field.value
@@ -1817,7 +1716,11 @@ export class BrowsePanel {
         lines.push('')
       }
 
-      return [this.edge(width, 'top', title, '', lit), ...lines.map(side), this.edge(width, 'bottom', '', '', lit)]
+      return [
+        edge(this.p, width, 'top', title, '', lit),
+        ...lines.map(side),
+        edge(this.p, width, 'bottom', '', '', lit),
+      ]
     }
 
     const pins = this.inside.pins()
@@ -1837,26 +1740,16 @@ export class BrowsePanel {
     const down = below > 0 ? this.more(1, below, 'panel') : ''
 
     return [
-      this.edge(width, 'top', title, '', lit),
+      edge(this.p, width, 'top', title, '', lit),
       ...head.map(side),
       side(above > 0 ? this.more(-1, above, 'panel') : ''),
       ...tree.map(side),
-      ...(reserved > 0 ? [this.edge(width, 'mid', '', down, lit)] : []),
+      ...(reserved > 0 ? [edge(this.p, width, 'mid', '', down, lit)] : []),
       ...foot.map(side),
-      ...(foot.length > 0 && bottom > 0 ? [this.edge(width, 'mid', '', '', lit)] : []),
+      ...(foot.length > 0 && bottom > 0 ? [edge(this.p, width, 'mid', '', '', lit)] : []),
       ...pins.map(side),
-      this.edge(width, 'bottom', '', reserved > 0 ? '' : down, lit),
+      edge(this.p, width, 'bottom', '', reserved > 0 ? '' : down, lit),
     ]
-  }
-
-  private edge(width: number, at: 'top' | 'mid' | 'bottom', head: string, tail: string, lit: boolean): string {
-    const frame = (text: string) => (lit ? this.p.accent(text) : this.p.dim(text))
-    const [left = '', right = ''] = [...boxEdge(2, at)]
-    const title = head ? ` ${fit(head, width - 8, false)} ` : ''
-    const end = tail ? ` ${tail} ` : ''
-    const fill = Math.max(0, width - 3 - cells(title) - cells(end) - (tail ? 1 : 0))
-
-    return `${frame(`${left}─`)}${title}${frame('─'.repeat(fill))}${end}${frame(`${tail ? '─' : ''}${right}`)}`
   }
 
   private topics(): Topic[] {
