@@ -227,9 +227,11 @@ test('color rows carry the swatch squares and drop the ANSI source', async () =>
   assert.doesNotMatch(frames, /ANSI/)
 })
 
-test('a small window counts the rows below it', async () => {
+test('a small window counts the rows below it, and the rows above it once scrolled', async () => {
   const { frames } = await drive(['a', '\x03'], { maxItems: 2 })
   assert.match(frames, /↓ 4 more/)
+  const scrolled = await drive(['a', '\x1b[B', '\x1b[B', '\x1b[B', '\x03'], { maxItems: 2 })
+  assert.match(scrolled.frames, /↑ \d+ more {2}↓ \d+ more/)
 })
 
 test('ctrl-c cancels the picker', async () => {

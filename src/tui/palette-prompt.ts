@@ -1092,7 +1092,7 @@ export class PalettePrompt {
     const head = `${bar(MARKS.current)} ${title} ${dim(`(${this.list.matched()}/${this.list.total()} · ${this.list.pickedCount()} picked)`)}`
     const example = this.hint.text()
     const search = `${bar('│')}    ${typed ? `${typed}_` : dim(`Search…${example ? ` e.g. ${example}` : ''}`)}`
-    const { lines, below } = this.list.window()
+    const { lines, above, below } = this.list.window()
 
     const body =
       lines.length > 0
@@ -1103,7 +1103,8 @@ export class PalettePrompt {
       body.push(bar('│'))
     }
 
-    const more = below > 0 ? `${bar('│')} ${dim(moreOf(1, below))}` : bar('│')
+    const out = [above > 0 ? moreOf(-1, above) : '', below > 0 ? moreOf(1, below) : ''].filter(Boolean).join('  ')
+    const more = out ? `${bar('│')} ${dim(out)}` : bar('│')
     const fold = this.scope === 'catalog' ? '' : ' · ←→ fold'
     const go = this.go ?? (this.scope === 'catalog' ? 'continue' : 'install')
 

@@ -31,7 +31,7 @@ import { type Start, typedDrop } from './find/attach.ts'
 import { type Help, overlay, type TopicSpot } from './help.ts'
 import { CELL_QUERY, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
 import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
-import { boxEdge, boxed, checkOf, hintOf, pillOf } from './parts.ts'
+import { boxEdge, boxed, checkOf, hintOf, moreOf, pillOf } from './parts.ts'
 import type { Drawn, PickerLayer } from './picker-art.ts'
 import { Screen } from './screen.ts'
 import { FG_RESET, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './style.ts'
@@ -453,13 +453,15 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
   const all = e.options.palettes?.length ?? 0
   const filter = e.filter ? `${p.bold(e.filter)}▏` : p.dim('type to filter')
   const room = height - 2
-  const top = Math.max(0, Math.min(e.pick - Math.floor(room / 2), choices.length - room))
+  const span = choices.length <= room ? room : room - 1
+  const top = Math.max(0, Math.min(e.pick - Math.floor(span / 2), choices.length - span))
+  const below = Math.max(0, choices.length - top - span)
   const nameWidth = Math.min(40, Math.max(12, ...choices.map((c) => cells(c.name))))
 
   return [
     spread(`  ${p.bold('Take colors from')}  ${filter}`, p.dim(`${choices.length}/${all}`), width),
-    '',
-    ...choices.slice(top, top + room).map((choice, k) => {
+    top > 0 ? `  ${p.dim(moreOf(-1, top))}` : '',
+    ...choices.slice(top, top + span).map((choice, k) => {
       const here = top + k === e.pick
       const c = choice.colors
 
@@ -472,6 +474,7 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
 
       return spot({ kind: 'choice', index: top + k }, `${gutter}${here ? p.bold(label) : label}  ${swatches}`)
     }),
+    ...(below > 0 ? [`  ${p.dim(moreOf(1, below))}`] : []),
     ...(choices.length === 0 ? [`  ${p.dim(`No palettes match '${e.filter}'`)}`] : []),
   ]
 }
