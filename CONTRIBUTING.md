@@ -333,6 +333,20 @@ each: ▌ the cursor's row, ◆ the palette worn or handled, ▶ the part in foc
 rows, ⇡ an update, ↻ auto-update, × a removal, ↶ taking one back, ★ stars, ⧉ a link, ⌕ search, ⇠ a bright that
 follows its normal, ◐ contrast, ■ a swatch, ▣ pictures.
 
+Three more parts are shared, so no screen draws its own. The key bar on a
+screen's last line is `barLine` (`src/tui/bar.ts`): a badge, a lead, the keys,
+the key on the right and the release line. The lead is a question or a notice,
+said in its tone through `toned` — `ok` for what worked, `warn` for what could
+not be done, `error` for a failure, plain for information — and the keys stay
+after it: a narrow window drops the release line first, then a note, then keys
+from the end, but never `?`, `enter` or the keys a screen lists in `keep`. `?`
+opens `Help` (`src/tui/help.ts`) over the screen: the topics of the mode it is
+in, each run with enter by the key it names wherever that key does something, a
+filter that typing fills, and a Marks line saying what the screen's glyphs
+mean, wrapped at its `·` parts and scrolled by lines in a short window. And a
+list its window cuts says what is out of sight with `moreOf` (`↑ 3 more`,
+`↓ 12 more`).
+
 The shell layer draws with the same roles from `TTHEME_SGR` in
 `shell/ttheme.zsh` (`$TTHEME_SGR[dim]` opens, `$TTHEME_SGR[/dim]` closes).
 `src/tui/style.test.ts` holds that table to `ROLES` and fails on an SGR written
@@ -374,9 +388,9 @@ panel below, preview's settings, the palette editor and find's grid.
 The settings panel preview opens over its list and the questions browse asks
 take the keys they list on their own last line while they are open. `find`
 is a screen of its own and keeps its own keys, and so does the palette editor
-(`new`, `edit`, and the Edit palette button of preview's panel), whose `?` opens
-the same help as browse's (`src/tui/help.ts`) over the screen, with the keys of
-the mode it is in, and docs/usage.md describes; its esc, once something changed, opens a
+(`new`, `edit`, and the Edit palette button of preview's panel); in both, as in
+browse, `?` opens the same help (`src/tui/help.ts`) over the screen with the keys
+of the mode it is in, which docs/usage.md describes. The editor's esc, once something changed, opens a
 Save changes? dialog (`y` saves and leaves, `n` leaves without saving, esc keeps
 editing), and ctrl+c leaves from anywhere in it the same way — a tune it
 interrupts is kept, so it counts as a change — while a second ctrl+c in the
@@ -457,3 +471,16 @@ Counts on screen come from the palettes listed, never from the rows being drawn.
 folded catalog still reports how many of its palettes are picked, and the
 filtered total counts what matches, not what fits on screen. The cursor and the
 scroll window are the only things allowed to read the drawn rows.
+
+A question names what it acts on and what stays (`Remove alice@pastel? Its
+installed palettes stay installed`), and a no is answered too: the bar leads
+with what was kept (`alice@pastel kept`) until the next key.
+
+Text someone else wrote — a marketplace's files, the marketplace index, a
+booru's answer, the names release, an error message built from any of them —
+goes through `src/core/text.ts` before a screen or a message shows it: `inert`
+for one line, `inertLines` for a message that keeps its line breaks, and
+`quoted` or `escaped` for a value an error echoes, which write each control or
+direction character as `\uXXXX`. None of them lets an escape sequence reach the
+terminal or a direction mark reorder what it touches, and a reader refuses such
+a character where a value has no use for one (`textProblem`).
