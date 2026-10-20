@@ -117,7 +117,7 @@ export function pastedRefs(text: string, exists: (path: string) => boolean = isF
       }
 
       return words(line).flatMap((word) => {
-        if (/^https?:\/\/\S+$/i.test(word)) {
+        if (/^https?:\/\/[^\s\p{Cc}\p{Bidi_Control}]+$/iu.test(word)) {
           return [word]
         }
 

@@ -433,6 +433,42 @@ test('an artist name a site sends with control characters reaches the conf witho
   assert.doesNotMatch(conf.replaceAll('\n', ''), /\p{Cc}/u)
 })
 
+test('a picture whose file name or artist breaks a line reaches the conf on one line, so no reader takes part of it for a setting', () => {
+  const [line, paragraph, rlo] = [0x2028, 0x2029, 0x202e].map((code) => String.fromCodePoint(code))
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
+  const dir = backgroundsDir(configHome)
+  installBackdrop(
+    configHome,
+    KAGAMI,
+    toneFor(KAGAMI, 'cursor'),
+    { width: 4, height: 4, data: new Uint8Array(64).fill(200) },
+    {
+      site: 'local',
+      id: 7,
+      ext: 'png',
+      bytes: new Uint8Array([7]),
+      from: `local 7 /tmp/a\ncommand = /tmp/run\r${line}background-image = /tmp/x.png${rlo}.png`,
+      artist: [`mallory${paragraph}background-image-opacity = 1`],
+    },
+    { width: 40, height: 20 },
+    0,
+  )
+  const conf = readFileSync(join(dir, 'kagami.conf'), 'utf8')
+  const keys = conf.split('\n').flatMap((each) => /^([a-z-]+) = /.exec(each)?.[1] ?? [])
+  assert.deepEqual(
+    [...new Set(keys)],
+    [
+      'background-image',
+      'background-image-fit',
+      'background-image-position',
+      'background-image-opacity',
+      'config-file',
+    ],
+  )
+  assert.doesNotMatch(conf.replaceAll('\n', ''), /[\p{Cc}\p{Zl}\p{Zp}\p{Bidi_Control}]/u)
+  assert.match(conf, /^# from local 7 \/tmp\/a command = \/tmp\/run background-image = \/tmp\/x\.png\.png$/m)
+})
+
 test('removing the last picture leaves the palette bare', () => {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-images-'))
   const dir = backgroundsDir(configHome)

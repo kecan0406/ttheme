@@ -36,6 +36,7 @@ import {
   retone,
   transparency,
 } from '../core/png.ts'
+import { inert } from '../core/text.ts'
 import { stem as fileStem, POSITIONS, type SharedPicture } from '../core/theme.ts'
 import { listing, writeAtomic } from '../store/edits.ts'
 import { CONF_FIT, CONF_IMAGE, CONF_INCLUDE, CONF_OPACITY, CONF_OPTIONAL, CONF_POSITION } from './conf.ts'
@@ -588,9 +589,13 @@ function byline(picture: Picture): string {
   return (picture.artist ?? []).map(word).join(',')
 }
 
+function fromOf(picture: Picture): string {
+  return inert(picture.from ?? '')
+}
+
 function creditLines(held: Picture): string[] {
   const page = artworkOf(held)
-  const line = creditLine(held)?.replace(/[\p{Cc}\p{Bidi_Control}]+/gu, '')
+  const line = inert(creditLine(held) ?? '')
 
   return [
     ...(line ? [`# credit ${held.key} ${line}`] : []),
@@ -608,16 +613,19 @@ function creditLines(held: Picture): string[] {
 function confText(dir: string, rack: Rack): string {
   const at = rack.pictures.findIndex((picture) => picture.key === rack.active)
   const picture = rack.pictures[at] as Picture
+  const from = fromOf(picture)
 
   return [
     ...(picture.artist?.length ? [`# by ${byline(picture)}`] : []),
-    ...(picture.from ? [`# from ${picture.from}`] : []),
+    ...(from ? [`# from ${from}`] : []),
     `# image ${picture.key} ${at + 1}/${rack.pictures.length}`,
     ...rack.pictures.map((held) =>
       [
         `# picture ${held.key} ${held.stem} ${held.fill} ${held.opacity} ${held.artist?.length ? byline(held) : '-'}`,
-        ...(held.from ? [held.from] : []),
-      ].join(' '),
+        fromOf(held),
+      ]
+        .filter(Boolean)
+        .join(' '),
     ),
     ...rack.pictures.filter((held) => coloringOf(held) === 'original').map((held) => `# colors ${held.key} original`),
     ...rack.pictures.flatMap(creditLines),
