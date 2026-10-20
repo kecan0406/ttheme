@@ -1176,7 +1176,7 @@ __tt_pv_reach() {
   local -A own=() below=() parent=() mark=() tstrip=()
   local -a roots=() lp=() lpw=() ll=() lat=() lpal=() lnote=() lflag=() reply was=()
   local -A TTHEME_PINS=("${(@kv)TTHEME_PINS}")
-  local -i room=$2
+  local -i room=$2 spare
   (( color )) || d= z=
   (( room < 2 )) && room=2
   if [[ $key == ssh:* ]]; then
@@ -1206,12 +1206,18 @@ __tt_pv_reach() {
   fi
   __tt_map_fit $1
   (( ${#reply} > room )) && reply=("${(@)reply[1,room-1]}" "    …")
+  spare=$(( room - ${#reply} ))
   reach=("${reply[@]}")
   [[ $key == /* || ${#was} -gt 0 ]] && reach+=("")
   __tt_pin_where "$key"
   base=$REPLY
   for k in $was; do
-    __tt_clip "${d}Replaces ${k% · *} on $base · ${k##* · }$z" $1
+    if ! __tt_clip "${d}Replaces ${k% · *} on $base · ${k##* · }$z" $1 && (( spare > 0 )); then
+      __tt_clip "${d}Replaces ${k% · *}$z" $1
+      reach+=("$REPLY")
+      __tt_clip "${d}  on $base · ${k##* · }$z" $1
+      (( spare-- ))
+    fi
     reach+=("$REPLY")
   done
   __tt_pin_scope "$key"
