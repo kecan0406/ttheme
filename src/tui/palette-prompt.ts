@@ -1089,7 +1089,7 @@ export class PalettePrompt {
     }
 
     const typed = this.field.value
-    const head = `${bar('◆')} ${title} ${dim(`(${this.list.matched()}/${this.list.total()} · ${this.list.pickedCount()} picked)`)}`
+    const head = `${bar(MARKS.current)} ${title} ${dim(`(${this.list.matched()}/${this.list.total()} · ${this.list.pickedCount()} picked)`)}`
     const example = this.hint.text()
     const search = `${bar('│')}    ${typed ? `${typed}_` : dim(`Search…${example ? ` e.g. ${example}` : ''}`)}`
     const { lines, below } = this.list.window()

@@ -302,7 +302,7 @@ that closes exactly that, so a role inside a painted row never ends the row:
 | `chip` | a button that is not under the cursor | bold on slot 8 |
 | `danger` | the button that removes something, while the cursor is on it | reverse, bold, slot 1 |
 | `match` | the letters a filter matched | bold, underline, slot 6 |
-| `ok`, `warn`, `error` | a note that something worked, a notice or a changed slot ●, a failure | slots 2, 3, 1 |
+| `ok`, `warn`, `error` | a notice that something worked, one that something could not be done or a changed slot ●, a failure | slots 2, 3, 1 |
 | `under`, `reverse` | the runs a slot draws in a scene, a caret | `4`, `7` |
 
 The accent is the terminal's slot 6 everywhere, never a palette's cursor: it
@@ -362,7 +362,7 @@ panel below, preview's settings, the palette editor and find's grid.
 | `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
 | `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter or the `+ Add marketplace` form's source, clear it |
-| `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
+| `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and it names the marks the screen draws |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
 | `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a catalog, stage its update; in the search, load the marketplace list again |
@@ -374,8 +374,9 @@ panel below, preview's settings, the palette editor and find's grid.
 The settings panel preview opens over its list and the questions browse asks
 take the keys they list on their own last line while they are open. `find`
 is a screen of its own and keeps its own keys, and so does the palette editor
-(`new`, `edit`, and the Edit palette button of preview's panel), whose keys
-`?` lists and docs/usage.md describes; its esc, once something changed, opens a
+(`new`, `edit`, and the Edit palette button of preview's panel), whose `?` opens
+the same help as browse's (`src/tui/help.ts`) over the screen, with the keys of
+the mode it is in, and docs/usage.md describes; its esc, once something changed, opens a
 Save changes? dialog (`y` saves and leaves, `n` leaves without saving, esc keeps
 editing, and ctrl+c does nothing there).
 

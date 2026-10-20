@@ -400,6 +400,31 @@ test('a spot on the sample finds its slots, and enter goes to the slot', () => {
   assert.match(e.notice ?? '', /96×28/)
 })
 
+test('? lists what each key does, typing filters the list and enter runs the one chosen', () => {
+  const e = press(editor(), '?')
+  assert.ok(e.help)
+  press(e, ...'relations', 'enter')
+  assert.equal(e.help, undefined)
+  assert.equal(e.view, 'relations')
+  press(e, '?', 'esc')
+  assert.equal(e.help, undefined)
+  assert.equal(e.result, undefined)
+})
+
+test('a paste while the editor asks to save or while a menu is open changes no slot', () => {
+  const e = press(editor(), 'tab', 'up', 'enter', 'esc')
+  assert.equal(e.quitting, true)
+  const before = e.colors()
+  e.paste('#ff0000')
+  assert.deepEqual(e.colors(), before)
+  assert.equal(e.quitting, true)
+  e.viewport(140, 40)
+  press(e, 'esc', 'I')
+  assert.equal(e.menu, 'import')
+  e.paste('#ff0000')
+  assert.deepEqual(e.colors(), before)
+})
+
 test('a paste into the palette picker keeps only what a typed key could add, so no escape reaches the frame', () => {
   const e = editor()
   e.viewport(140, 40)

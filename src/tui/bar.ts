@@ -18,6 +18,12 @@ export interface Bar {
 
 export const KEPT = ['?', 'enter']
 
+export type Tone = 'ok' | 'warn' | 'error' | 'info'
+
+export function toned(p: Paint, tone: Tone, text: string): string {
+  return tone === 'info' ? text : p[tone](text)
+}
+
 export function barLine(p: Paint, bar: Bar, width: number): string {
   const badge = `${pillOf(p, bar.badge)}${p.color ? '  ' : ' '}`
   const hint = ([key, label]: Hint) => hintOf(p, key, label)

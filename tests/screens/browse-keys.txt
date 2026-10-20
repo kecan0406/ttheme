@@ -1,24 +1,24 @@
  Browse (6/6 · 2 picked)
  ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
- ╰──╭─ Help ───────────────────────────────────────────────────────────────────────────────────╮
-    │ ⌕ Type to filter                                                                         │
-    │                                                                                          │
-    │   Move          ↑↓  home  end  pgup  pgdn                                                │
-    │ ▶ Open          →  enter  ·  a marketplace into the panel, a catalog                     │
- ▌  │   Back          ←  esc  ·  from the panel to the marketplaces                            │
- ▌  │   Pick          space  ·  a palette, a catalog, a marketplace                            │
- ▌  │   Filter        Any text  ·  bksp  ·  ctrl-u clears                                      │
-    │   Marketplace   ↓  below its palettes, to its own actions                                │
-    │                 enter  updates it, turns auto-update on or off, removes it               │
-    │   Add           enter  on + Add marketplace  ·  a repository or a folder, in the panel   │
-    │   Search        enter  on Search marketplace  ·  finds one on GitHub                     │
-    │   Update        ctrl+r  on a palette marked ⇡                                            │
-    │   Apply         enter  reviews and applies  ·  esc cancels                               │
-    │   Close         ?  esc                                                                   │
-    │                                                                                          │
-    │   Marks         ● picked   ○ not picked   ⇡ has an update   ↻ updates on its own         │
-    │                 ★ stars on GitHub                                                        │
-    │                                                                                          │
-    ╰──────────────────────────────────────────────────────────────────────────────────────────╯
+ ╰──╭─ Help ───────────────────────────────────────────────────────────────────────────────────╮─╯
+    │ ⌕ Type to filter                                                                         │──╮
+    │                                                                                          │  │
+    │   Move          ↑↓  home  end  pgup  pgdn                                                │  │
+    │ ▶ Open          →  enter  ·  a marketplace into the panel, a catalog                     │  │
+ ▌  │   Back          ←  esc  ·  from the panel to the marketplaces                            │  │
+ ▌  │   Pick          space  ·  a palette, a catalog, a marketplace                            │  │
+ ▌  │   Filter        Any text  ·  bksp  ·  ctrl-u clears                                      │  │
+    │   Marketplace   ↓  below its palettes, to its own actions                                │  │
+    │                 enter  updates it, turns auto-update on or off, removes it               │  │
+    │   Add           enter  on + Add marketplace  ·  a repository or a folder, in the panel   │  │
+    │   Search        enter  on Search marketplace  ·  finds one on GitHub                     │  │
+    │   Update        ctrl+r  on a palette marked ⇡                                            │  │
+    │   Apply         enter  reviews and applies  ·  esc cancels                               │  │
+    │   Close         ?  esc                                                                   │  │
+    │                                                                                          │  │
+    │   Marks         ● picked   ○ not picked   ⇡ has an update   ↻ updates on its own         │  │
+    │                 ★ stars on GitHub                                                        │──┤
+    │                                                                                          │  │
+    ╰──────────────────────────────────────────────────────────────────────────────────────────╯──╯
  [HELP] ↑↓ choose   enter run   type to filter                                          ? esc close

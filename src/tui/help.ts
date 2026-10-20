@@ -1,10 +1,10 @@
 import { cells } from '../core/text.ts'
-import { clip, fit } from './ansi.ts'
+import { fit } from './ansi.ts'
 import type { Bar, Hint } from './bar.ts'
 import { Field } from './field.ts'
-import { moreOf } from './parts.ts'
+import { boxEdge, boxed, boxTitle, moreOf } from './parts.ts'
 import { MARKS, type Paint } from './style.ts'
-import { zone } from './zones.ts'
+import { cover, zone } from './zones.ts'
 
 export interface Topic {
   label: string
@@ -22,6 +22,7 @@ export type Legend = [mark: string, means: string][]
 export type Answer = 'stay' | 'close' | 'run'
 
 const CHROME = 5
+const MEASURE = 72
 
 export class Help {
   readonly filter = new Field()
@@ -118,48 +119,51 @@ export class Help {
   box(p: Paint, cols: number, rows: number): string[] {
     const shown = this.shown()
     const pad = Math.max(8, ...this.topics.map((t) => t.label.length)) + 3
-    const legend = this.legend.map(([mark, means]) => `${mark} ${means}`)
-    const widest = Math.max(0, ...this.topics.map((t) => cells(t.text)))
+    const widest = Math.min(MEASURE, Math.max(0, ...this.topics.map((t) => cells(t.text))))
     const w = Math.max(24, Math.min(cols - 2, 8 + pad + widest))
     const inner = w - 4
-    const side = (text: string) => `│ ${fit(text, inner)} │`
-    const marks = lines(legend, inner - pad)
+    const side = (text: string) => boxed(p, ` ${fit(text, inner)} `, w)
+    const texts = shown.map((t) => wrap(t.text, Math.max(8, inner - 2 - pad)))
+    const tall = (from: number, to: number) => texts.slice(from, to).reduce((sum, lines) => sum + lines.length, 0)
+    const legend = this.legend.map(([mark, means]) => `${mark} ${means}`)
+    const marks = lines(legend, inner - 2 - pad)
     const room = Math.max(1, rows - 1 - CHROME - (marks.length > 0 ? marks.length + 1 : 0))
-    const most = Math.max(0, shown.length - room)
-    const fits = shown.length <= room
-    const span = fits ? shown.length : Math.max(1, room - 2)
+    const fits = tall(0, shown.length) <= room
+    const span = fits ? room : Math.max(1, room - 2)
 
-    if (this.at < this.top) {
-      this.top = this.at
-    } else if (this.at >= this.top + span) {
-      this.top = this.at - span + 1
+    if (fits) {
+      this.top = 0
+    } else {
+      this.place(shown, tall, span)
     }
 
-    this.top = Math.max(0, Math.min(this.top, fits ? 0 : shown.length - span, most))
-    const window = shown.slice(this.top, this.top + span)
-    const above = this.top
-    const below = shown.length - this.top - window.length
+    const body: string[] = []
+    let end = this.top
 
-    const rowOf = (t: Topic, i: number) => {
-      const index = this.top + i
-      const on = index === this.at && t.run !== undefined
-      const lead = on ? p.accent(MARKS.focus) : ' '
+    while (end < shown.length && (end === this.top || body.length + (texts[end] as string[]).length <= span)) {
+      const t = shown[end] as Topic
+      const on = end === this.at && t.run !== undefined
       const label = t.label ? p.bold(on ? p.accent(t.label.padEnd(pad)) : t.label.padEnd(pad)) : ' '.repeat(pad)
-      const text = `${lead} ${label}${t.text}`
+      const index = end
 
-      return side(t.run ? zone({ kind: 'topic', index } satisfies TopicSpot, text) : text)
+      for (const [k, line] of (texts[end] as string[]).entries()) {
+        const text = k === 0 ? `${on ? p.accent(MARKS.focus) : ' '} ${label}${line}` : `  ${' '.repeat(pad)}${line}`
+        body.push(side(t.run ? zone({ kind: 'topic', index } satisfies TopicSpot, text) : text))
+      }
+
+      end++
     }
 
     const typed = this.filter.value
     const filter = `${p.dim(MARKS.search)} ${typed ? typed : p.dim('Type to filter')}`
 
     return [
-      `╭─ Help ${'─'.repeat(Math.max(0, w - 9))}╮`,
+      boxTitle(w, ' Help ', p.dim, p.bold),
       side(filter),
       side(''),
-      ...(fits ? [] : [side(above > 0 ? p.dim(moreOf(-1, above)) : '')]),
-      ...(window.length > 0 ? window.map(rowOf) : [side(p.dim(`  Nothing matches '${typed}'`))]),
-      ...(fits ? [] : [side(below > 0 ? p.dim(moreOf(1, below)) : '')]),
+      ...(fits ? [] : [side(this.top > 0 ? p.dim(moreOf(-1, this.top)) : '')]),
+      ...(shown.length > 0 ? body.slice(0, span) : [side(p.dim(`  Nothing matches '${typed}'`))]),
+      ...(fits ? [] : [side(end < shown.length ? p.dim(moreOf(1, shown.length - end)) : '')]),
       ...(marks.length > 0
         ? [
             side(''),
@@ -167,8 +171,26 @@ export class Help {
           ]
         : []),
       side(''),
-      `╰${'─'.repeat(Math.max(0, w - 2))}╯`,
+      p.dim(boxEdge(w, 'bottom')),
     ]
+  }
+
+  private place(shown: Topic[], tall: (from: number, to: number) => number, span: number): void {
+    if (this.at < this.top) {
+      this.top = this.at
+
+      while (this.top > 0 && !shown[this.top - 1]?.run && tall(this.top - 1, this.at + 1) <= span) {
+        this.top--
+      }
+    }
+
+    while (this.top < this.at && tall(this.top, this.at + 1) > span) {
+      this.top++
+    }
+
+    while (this.top > 0 && tall(this.top - 1, shown.length) <= span) {
+      this.top--
+    }
   }
 
   private step(step: number, wrap = true): void {
@@ -211,6 +233,45 @@ function lines(items: string[], width: number): string[] {
   return line ? [...out, line] : out
 }
 
+const SEP = `  ${MARKS.sep}  `
+const TRAILING_SEP = new RegExp(`\\s+${MARKS.sep}$`)
+
+function wrap(text: string, width: number): string[] {
+  const out: string[] = []
+  const push = (line: string) => out.push(line.trimEnd().replace(TRAILING_SEP, ''))
+  let line = ''
+
+  for (const part of text.split(SEP)) {
+    const joined = line ? `${line}${SEP}${part}` : part
+
+    if (cells(joined) <= width) {
+      line = joined
+    } else if (line && cells(part) <= width) {
+      push(line)
+      line = part
+    } else {
+      line = line ? `${line}${SEP}` : ''
+
+      for (const word of part.match(/\S+\s*/g) ?? []) {
+        if (line.trim() && cells(`${line}${word}`.trimEnd()) > width) {
+          push(line)
+          line = ''
+        }
+
+        line += word
+      }
+
+      line = line.trimEnd()
+    }
+  }
+
+  if (line) {
+    push(line)
+  }
+
+  return out.length > 0 ? out : ['']
+}
+
 export function overlay(lines: string[], box: string[], cols: number, rows: number, top = 0): string[] {
   const w = Math.max(0, ...box.map((line) => cells(line)))
   const x = Math.max(0, Math.floor((cols - w) / 2))
@@ -219,6 +280,6 @@ export function overlay(lines: string[], box: string[], cols: number, rows: numb
   return lines.map((line, i) => {
     const part = box[i - y]
 
-    return part === undefined ? line : `${clip(line, x)}${part}`
+    return part === undefined ? line : cover(line, x, part)
   })
 }

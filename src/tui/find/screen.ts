@@ -807,7 +807,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
       knob = Math.max(0, Math.min(track - 1, knob))
       lines[r]?.run(col + 12, [
         ['━'.repeat(knob), accent],
-        ['●', B],
+        [MARKS.on, B],
         ['─'.repeat(track - 1 - knob), D],
       ])
       lines[r]?.mark(col + 12, track, { kind: 'track', field: k })
@@ -920,7 +920,7 @@ function shelf(lines: Line[], images: Placement[], cols: number, view: FindView,
 
     if (held.up) {
       for (let r = 0; r < HELD.rows; r++) {
-        lines[HELD.top + r]?.put(x, '▌', accent)
+        lines[HELD.top + r]?.put(x, MARKS.gutter, accent)
       }
     }
 

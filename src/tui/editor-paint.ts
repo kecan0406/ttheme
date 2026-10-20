@@ -53,7 +53,7 @@ export function contrastLine(p: Paint, e: PaletteEditor, barWidth: number, origi
   const line = here ? '━' : '─'
 
   const bar = Array.from({ length: barWidth }, (_, k) =>
-    k === pos ? p.bold('●') : k === was ? '○' : k === tick ? '┃' : k < tick ? p.dim(line) : line,
+    k === pos ? p.bold(MARKS.on) : k === was ? MARKS.off : k === tick ? '┃' : k < tick ? p.dim(line) : line,
   ).join('')
 
   const shown = `${ratio.toFixed(2)}:1`.padStart(6)
@@ -165,7 +165,7 @@ export function gradient(p: Paint, samples: (Hex | undefined)[], at: number, lit
   const o = held === undefined ? -1 : Math.max(0, Math.min(last, held))
 
   if (!p.color) {
-    return samples.map((_, k) => (k === i ? '●' : k === o ? '○' : lit ? '━' : '─')).join('')
+    return samples.map((_, k) => (k === i ? MARKS.on : k === o ? MARKS.off : lit ? '━' : '─')).join('')
   }
 
   return samples

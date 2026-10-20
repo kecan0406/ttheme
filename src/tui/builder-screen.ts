@@ -218,7 +218,7 @@ function pairRow(e: PaletteEditor, p: Paint, c: Colors, row: number, side: numbe
   const bright = normal + 8
   const here = e.row === normal
   const name = (PAIRS[row] as string).padEnd(NAME)
-  const link = e.linkOf(bright) !== undefined ? p.dim('⇠') : ' '
+  const link = e.linkOf(bright) !== undefined ? p.dim(MARKS.linked) : ' '
   const first = spot({ kind: 'open', slot: normal }, `${gutterOf(p, c, here)}${here ? p.bold(name) : name}`)
 
   return `${first}${cellText(e, p, c, normal, side, missed)}${link} ${cellText(e, p, c, bright, side, missed)}`
@@ -462,7 +462,7 @@ function artLines(e: PaletteEditor, p: Paint, outer: number, room: number): Popu
   const track = width - 11
   lines.push(
     padded(
-      `${spot(grip, here ? p.bold('◐') : p.dim('◐'))} ${spot({ kind: 'bar', channel: CONTRAST }, ' '.repeat(track))} ${spot(grip, here ? p.bold(ratio) : p.dim(ratio))}`,
+      `${spot(grip, here ? p.bold(MARKS.contrast) : p.dim(MARKS.contrast))} ${spot({ kind: 'bar', channel: CONTRAST }, ' '.repeat(track))} ${spot(grip, here ? p.bold(ratio) : p.dim(ratio))}`,
     ),
   )
   const tabs = lines.length
@@ -766,7 +766,7 @@ function menuRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefined 
       return [
         { text: '│', sgr: dim },
         {
-          text: ` ${here ? '▌' : ' '} ${item.padEnd(width - 6)}`,
+          text: ` ${here ? MARKS.gutter : ' '} ${item.padEnd(width - 6)}`,
           sgr: here && p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)}${open('bold')}` : base,
           target,
         },

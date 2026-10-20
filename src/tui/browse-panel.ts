@@ -2235,7 +2235,7 @@ export class BrowsePanel {
 
     if (this.current().focusedRow()?.kind !== 'top') {
       const lines =
-        detail.lines.length > body ? [...detail.lines.slice(0, body - 1), this.p.dim('…')] : detail.lines.slice(0)
+        detail.lines.length > body ? [...detail.lines.slice(0, body - 1), this.p.dim(MARKS.cut)] : detail.lines.slice(0)
 
       while (lines.length < body) {
         lines.push('')
