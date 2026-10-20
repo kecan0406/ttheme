@@ -71,6 +71,12 @@ test('the screen under the help keeps no click zones but on its last row, the ke
   assert.ok(kinds.some(([row, kind]) => kind === 'key' && row === 6))
 })
 
+test("the help box blanks the column beside it only where another box's edge stands", () => {
+  const under = ['abc│defgh│ijk', 'abc7defgh8ijk', 'abc─defgh─ijk', 'key bar']
+  const laid = overlay(under, ['┌───┐', '│ x │', '└───┘'], 13, 4, 0)
+  assert.deepEqual(laid.slice(0, 3), ['abc ┌───┐ ijk', 'abc7│ x │8ijk', 'abc └───┘ ijk'])
+})
+
 function shellFunction(file: string, name: string): string {
   const text = readFileSync(join(ROOT, 'shell', file), 'utf8')
   const found = new RegExp(`^${name}\\(\\) \\{\\n[\\s\\S]*?\\n\\}$`, 'm').exec(text)

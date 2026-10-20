@@ -350,11 +350,11 @@ topics of the mode the screen is in, where `↑` `↓` reach every topic and ent
 runs the key a topic names — Browse and the editor offer that only where the key
 does something —, a filter that typing fills, and a Marks line saying what the
 screen's marks mean. A long topic wraps at its `·` parts, the topics scroll in a
-short window, the box takes every click inside it and covers one blank column
-on each side, so its edge never meets an edge beside it, and the screen under
-it keeps no click zones but on its key bar (find clears its screen first, since
-its pictures would show through). And a list its window cuts says what is out
-of sight with `moreOf` (`↑ 3 more`, `↓ 12 more`).
+short window, the box takes every click inside it and blanks the column beside
+it where that column holds another box's edge, so two edges never touch, and
+the screen under it keeps no click zones but on its key bar (find clears its
+screen first, since its pictures would show through). And a list its window
+cuts says what is out of sight with `moreOf` (`↑ 3 more`, `↓ 12 more`).
 
 The shell layer draws with the same roles from `TTHEME_SGR` in
 `shell/ttheme.zsh` (`$TTHEME_SGR[dim]` opens, `$TTHEME_SGR[/dim]` closes) and

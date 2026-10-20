@@ -272,6 +272,7 @@ test('the top bar keeps Reset and Save however long the name, giving up the coun
   assert.match(top(200), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● unsaved · 1 changed {3}Reset/)
   assert.match(top(120), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
   assert.match(top(112), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
+  assert.match(top(108), /│◆ kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
   assert.match(top(100), /│◆ kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
   assert.match(top(96), /│◆ kec@dust\/a-rather-long-palette-\S+… {3}● {3}Reset/)
 })

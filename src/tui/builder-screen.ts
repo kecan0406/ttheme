@@ -665,7 +665,8 @@ function topBar(e: PaletteEditor, p: Paint, width: number): string {
   const line = (head: string, state: string) => [head, state, buttons].filter(Boolean).join('   ')
   const last = states.at(-1) ?? ''
   const named = `${mark} ${p.dim(fit(e.options.name, room - cells(line(mark, last)) - 1, false))}`
-  const left = states.map((state) => line(titled, state)).find((bar) => cells(bar) <= room) ?? line(named, last)
+  const fitting = (head: string) => states.map((state) => line(head, state)).find((bar) => cells(bar) <= room)
+  const left = fitting(titled) ?? fitting(`${mark} ${p.dim(e.options.name)}`) ?? line(named, last)
 
   return spread(left, `${right} `, width)
 }

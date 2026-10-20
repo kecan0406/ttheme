@@ -1,5 +1,5 @@
 import { cells } from '../core/text.ts'
-import { fit } from './ansi.ts'
+import { fit, pieces } from './ansi.ts'
 import type { Bar, Hint } from './bar.ts'
 import { Field } from './field.ts'
 import { boxEdge, boxed, boxTitle, moreOf } from './parts.ts'
@@ -272,17 +272,42 @@ export function wrap(text: string, width: number): string[] {
   return out.length > 0 ? out : ['']
 }
 
+const EDGES = /^[─│╭╮╯╰├┤┬┴┼┌┐└┘]$/u
+
+function edgeAt(line: string, col: number): boolean {
+  let at = 0
+
+  for (const ch of pieces(line).flatMap((piece) => (piece.sequence ? [] : [...piece.text]))) {
+    if (at === col) {
+      return EDGES.test(ch)
+    }
+
+    at += cells(ch)
+
+    if (at > col) {
+      return false
+    }
+  }
+
+  return false
+}
+
 export function overlay(lines: string[], box: string[], cols: number, rows: number, top = 0): string[] {
   const w = Math.max(0, ...box.map((line) => cells(line)))
   const x = Math.max(0, Math.floor((cols - w) / 2))
   const y = Math.max(0, Math.min(Math.max(top, Math.floor((rows - box.length) / 2)), rows - 1 - box.length))
-  const left = x > 0 ? ' ' : ''
-  const right = x + w < cols ? ' ' : ''
 
   return lines.map((line, i) => {
     const part = box[i - y]
     const under = i === lines.length - 1 ? line : unzoned(line)
 
-    return part === undefined ? under : cover(under, x - left.length, `${left}${part}${right}`)
+    if (part === undefined) {
+      return under
+    }
+
+    const left = x > 0 && edgeAt(under, x - 1) ? ' ' : ''
+    const right = x + w < cols && edgeAt(under, x + w) ? ' ' : ''
+
+    return cover(under, x - left.length, `${left}${part}${right}`)
   })
 }

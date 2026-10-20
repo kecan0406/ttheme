@@ -1,3 +1,4 @@
+import { fit } from '../src/tui/ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../src/tui/bar.ts'
 import { button } from '../src/tui/browse/draw.ts'
 import { Help, type Legend, type Topic } from '../src/tui/help.ts'
@@ -51,7 +52,7 @@ const TONES: Tone[] = ['info', 'ok', 'warn', 'error']
 const STANDINGS: Standing[] = ['unknown', 'checking', 'current', 'newer', 'failed']
 
 function heading(text: string): string {
-  return p.dim(`── ${text}`)
+  return p.dim(fit(`── ${text}`, width, false))
 }
 
 function bars(): string[] {
