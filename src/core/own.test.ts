@@ -167,6 +167,17 @@ test('a share code whose catalog could not be a catalog folder is refused, so no
   assert.equal(readCodes(shareCode([{ ...draft, catalog: 'Vocaloid' }]), [])[0]?.catalog, 'Vocaloid')
 })
 
+test('a share code whose palette name breaks the name rules before its first / is refused, so it never reaches kept.json', () => {
+  const rlo = String.fromCodePoint(0x202e)
+
+  for (const name of ['kecan0406@dust\ncommand = x/rei', `kecan0406@du${rlo}st/rei`, 'dust/rei', 'a@b@c/rei']) {
+    assert.throws(() => readCodes(shareCode([{ ...draft, name }]), []), /the share code's palette/, name)
+  }
+
+  assert.equal(readCodes(shareCode([draft]), [])[0]?.name, 'kecan0406@dust/rei')
+  assert.equal(readCodes(shareCode([{ ...draft, name: 'rei' }]), [])[0]?.name, 'rei')
+})
+
 test('the TOML a draft writes reads back as the same palette', () => {
   const theme = readOwnText(draft.name, paletteToml(draft), [])
   assert.equal(theme.name, 'kecan0406@dust/rei')

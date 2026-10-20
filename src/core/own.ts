@@ -13,6 +13,7 @@ import {
   type Catalog,
   catalogProblem,
   marketplaceOf,
+  nameProblem,
   PALETTE_SCHEMA_URL,
   type Place,
   POSITIONS,
@@ -444,6 +445,12 @@ export function codeOf(text: string): string | undefined {
 
 export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[] {
   return fromCode(code).map((draft) => {
+    const named = nameProblem(draft.name)
+
+    if (named) {
+      throw new Error(`the share code's palette ${quoted(draft.name)} ${named}`)
+    }
+
     const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
 
     if (!draft.catalog) {
