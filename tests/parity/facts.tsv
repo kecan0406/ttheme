@@ -25,7 +25,7 @@ hub.preview.text	txt:8a17701537	=	=	=	=	=	=	=	=	=
 hub.preview.issue	-	=	=	=	=	=	=	=	=	=
 hub.browse.colors	kita	=	=	=	=	=	=	=	=	=
 hub.browse.picture	kita	=	=	=	none	=	none	=	=	=
-hub.browse.text	txt:4a3d9341ce	=	=	=	=	=	=	=	=	=
+hub.browse.text	txt:56c6c7e9f3	=	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=	=
 hub.back.colors	konata	=	=	=	=	=	=	=	=	=
 hub.back.picture	konata	=	=	=	none	=	none	=	=	=
@@ -262,7 +262,7 @@ ssh.out.wears	konata	=	=	=	=	=	=	=	=	=
 ssh.out.issue	-	=	=	=	=	=	=	=	=	=
 browse.hover.colors	kita	=	=	=	=	=	=	=	=	=
 browse.hover.picture	konata	=	=	=	none	=	none	=	=	=
-browse.hover.text	txt:4a3d9341ce	=	=	=	=	=	=	=	=	=
+browse.hover.text	txt:56c6c7e9f3	=	=	=	=	=	=	=	=	=
 browse.hover.issue	-	=	=	=	=	=	=	=	=	=
 browse.back.colors	konata	=	=	=	=	=	=	=	=	=
 browse.back.picture	konata	=	=	=	none	=	none	=	=	=
