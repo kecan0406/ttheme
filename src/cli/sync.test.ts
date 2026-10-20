@@ -853,6 +853,7 @@ test('installed.json keeps every field it holds through a write and a read', () 
     wtProfile: '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}',
     marketplaces: ['official', 'alice/pastel#v1'],
     updates: { 'alice/pastel#v1': true, official: false },
+    colorsMoved: true,
     palettes: ['gojo', 'alice@pastel/dusk'],
   }
 

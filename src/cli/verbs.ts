@@ -80,9 +80,9 @@ export const VERB_SPECS: VerbSpec[] = [
     shell: true,
   },
   {
-    name: 'dark',
+    name: 'auto',
     args: [],
-    about: 'Wear every palette in its dark mode — every open tab repaints, and new tabs open in it',
+    about: "Wear every palette in the mode the system is in — where a wired terminal reports it, which is Ghostty's",
     section: 'startup',
     shell: true,
   },
@@ -94,9 +94,9 @@ export const VERB_SPECS: VerbSpec[] = [
     shell: true,
   },
   {
-    name: 'auto',
+    name: 'dark',
     args: [],
-    about: "Wear every palette in the mode the system is in — where a wired terminal reports it, which is Ghostty's",
+    about: 'Wear every palette in its dark mode — every open tab repaints, and new tabs open in it',
     section: 'startup',
     shell: true,
   },
@@ -245,7 +245,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'image',
     args: ['<palette>', '<action>', '[picture]'],
     about:
-      "Show one of a palette's saved backgrounds, remove one, draw one in its palette's tone or its own colors (or get the other ready before it is asked for), or pass on tuning — preview calls this",
+      "Show one of a palette's saved backgrounds, remove one, draw one in its own colors or its palette's tone (or get the other ready before it is asked for), or pass on tuning — preview calls this",
     section: 'setup',
     hidden: true,
   },
@@ -277,7 +277,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'sync',
     args: [],
     about:
-      "Write every wired terminal's config again from what is installed and config.zsh, drawing first the background pictures that TTHEME_MODE turned — ttheme config, ttheme dark, light and auto, and preview call this when TTHEME_TAB_PALETTE or TTHEME_MODE changed",
+      "Write every wired terminal's config again from what is installed and config.zsh, drawing first the background pictures that TTHEME_MODE turned — ttheme config, ttheme auto, light and dark, and preview call this when TTHEME_TAB_PALETTE or TTHEME_MODE changed",
     section: 'setup',
     hidden: true,
   },

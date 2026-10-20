@@ -28,7 +28,7 @@ export function palettesZsh(
   mode: { worn: Mode; auto: boolean; settings: readonly Setting[] } = {
     worn: 'dark',
     auto: false,
-    settings: ['dark', 'light'],
+    settings: ['light', 'dark'],
   },
 ): string {
   for (const p of palettes) {

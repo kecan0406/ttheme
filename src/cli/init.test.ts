@@ -476,6 +476,7 @@ test('setting it up again carries every setting it does not ask about again', ()
     wtProfile: '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}',
     marketplaces: ['official', 'alice/pastel#v1'],
     updates: { 'alice/pastel#v1': true },
+    colorsMoved: true,
     palettes: ['miku'],
   }
 

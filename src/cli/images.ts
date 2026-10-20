@@ -66,7 +66,7 @@ export async function runImage(name: string, action: string, key?: string): Prom
     return 0
   }
 
-  throw new Error(`unknown image action ${action} — show, drop, tone, original, prepare or tuned`)
+  throw new Error(`unknown image action ${action} — show, drop, original, tone, prepare or tuned`)
 }
 
 function geometry(canvas: string, place: string): Canvas {

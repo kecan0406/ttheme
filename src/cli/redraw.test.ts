@@ -15,8 +15,9 @@ import {
   rackOf,
 } from '../pictures/backdrop.ts'
 import { readAvailable, writeOfficial } from '../store/available.ts'
-import { writeInstalled } from '../store/installed.ts'
-import { redrawPictures } from './redraw.ts'
+import { readInstalled, writeInstalled } from '../store/installed.ts'
+import { moveColors } from './init.ts'
+import { redrawColoring, redrawPictures } from './redraw.ts'
 
 process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-redraw-cache-'))
 
@@ -108,4 +109,32 @@ test('a mode switch lays the drawing of the other ink that was got ready, with n
 
   assert.equal(await redrawPictures(configHome, (line) => lines.push(line), configHome, { emit: false }), 0)
   assert.equal(lines.length, 0)
+})
+
+test('an update moves every tone picture to its own colors once, and leaves an install that sets tone alone', async () => {
+  const configHome = home('dark')
+  const before = install(configHome)
+  assert.equal(before.coloring, 'tone')
+
+  await moveColors(configHome, () => {}, configHome)
+
+  const moved = rackOf(configHome, 'gojo')[0] as Picture
+  assert.equal(moved.coloring, 'original')
+  assert.notEqual(moved.stem, before.stem)
+  assert.equal(readInstalled(configHome).colorsMoved, true)
+
+  await redrawColoring(configHome, 'gojo', 'tone', moved.key, configHome)
+  assert.equal((rackOf(configHome, 'gojo')[0] as Picture).coloring, 'tone')
+
+  await moveColors(configHome, () => {}, configHome)
+  assert.equal((rackOf(configHome, 'gojo')[0] as Picture).coloring, 'tone')
+
+  const toneHome = home('dark')
+  writeFileSync(join(toneHome, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=dark}\n: ${TTHEME_BG_COLORS:=tone}\n')
+  install(toneHome)
+
+  await moveColors(toneHome, () => {}, toneHome)
+
+  assert.equal((rackOf(toneHome, 'gojo')[0] as Picture).coloring, 'tone')
+  assert.equal(readInstalled(toneHome).colorsMoved, true)
 })

@@ -9,6 +9,7 @@ import { inMode, type Manifest, type PaletteEntry, parseManifest } from '../core
 import type { Mode, Setting } from '../core/mode.ts'
 import { marketplaceOf, shelfOf } from '../core/theme.ts'
 import { WIRED, type Wired } from '../core/wired.ts'
+import { backgroundsDir, coloringOf, readStore } from '../pictures/backdrop.ts'
 import { ROOT } from '../root.ts'
 import { readAppearance, systemAppearance } from '../store/appearance.ts'
 import { available, readMarketplaces, writeOfficial } from '../store/available.ts'
@@ -17,7 +18,15 @@ import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, startupPalette, worn, writeInstalled } from '../store/installed.ts'
 import { configHome as configDir } from '../store/paths.ts'
 import { marketplacesOf, OFFICIAL } from '../store/sources.ts'
-import { configFile, modeSetting, settingValue, upsertBlock, withSetting, zshrcBlock } from '../store/wiring.ts'
+import {
+  coloringFor,
+  configFile,
+  modeSetting,
+  settingValue,
+  upsertBlock,
+  withSetting,
+  zshrcBlock,
+} from '../store/wiring.ts'
 import { tilde } from '../terminals/common.ts'
 import { WIRINGS, wirings } from '../terminals/index.ts'
 import { liveOf } from '../terminals/live.ts'
@@ -350,17 +359,19 @@ async function askMode(configHome: string, terminals: readonly Wired[]): Promise
   const was = modeSetting(configHome)
 
   const hints: Record<Setting, string> = {
-    dark: 'light text on a dark background',
-    light: 'dark text on a light background',
     auto: "the system's, as Ghostty shows it",
+    light: 'dark text on a light background',
+    dark: 'light text on a dark background',
   }
+
+  const modes = offered.includes('auto') ? 'auto, light or dark' : 'light or dark'
+  const picks = offered.map((setting) => `\`ttheme ${setting}\``)
 
   return accepted(
     await p.select<Setting>({
-      message:
-        'Wear the palettes dark or light?\nEvery palette comes in both — `ttheme dark`, `ttheme light` or alt-c in `ttheme` switches it later',
+      message: `Wear the palettes in ${modes} mode?\nEvery palette comes in both — ${picks.join(', ')} or alt-c in \`ttheme\` switches it later`,
       options: offered.map((value) => ({ value, label: value, hint: hints[value] })),
-      initialValue: offered.includes(was) ? was : 'dark',
+      initialValue: offered.includes('auto') ? 'auto' : offered.includes(was) ? was : offered[0],
     }),
   )
 }
@@ -456,6 +467,26 @@ function say(interactive: boolean): (line: string) => void {
   return interactive ? (line) => p.log.step(line) : (line) => console.log(line)
 }
 
+export async function moveColors(home: string, say: (line: string) => void, user = homedir()): Promise<void> {
+  if (readInstalled(home).colorsMoved) {
+    return
+  }
+
+  if (coloringFor(home) !== 'tone') {
+    await redrawPictures(home, say, user, { ownColors: true })
+
+    const left = Object.values(readStore(backgroundsDir(home)).palettes).some((rack) =>
+      rack.pictures.some((picture) => coloringOf(picture) === 'tone'),
+    )
+
+    if (left) {
+      return
+    }
+  }
+
+  writeInstalled(home, { ...readInstalled(home), colorsMoved: true })
+}
+
 async function upgrade(
   state: Installed,
   paths: InitPaths,
@@ -466,6 +497,7 @@ async function upgrade(
   const plan = planUpgrade(state, paths)
   const pointed = applyInit(plan, host)
   verify(plan)
+  await moveColors(paths.configHome, say(interactive), paths.home)
   await redrawPictures(paths.configHome, say(interactive), paths.home)
 
   const lines = [
@@ -568,6 +600,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     const plan = planInit(opts, paths)
     const pointed = applyInit(plan, host)
     verify(plan)
+    await moveColors(configHome, say(false), home)
     report(plan, pointed, here)
 
     return
@@ -661,6 +694,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
 
   const pointed = applyInit(plan, host)
   verify(plan)
+  await moveColors(configHome, say(true), home)
   await redrawPictures(configHome, say(true), home)
 
   if (wear && choose) {

@@ -11,14 +11,14 @@
 
 
 Config
-  Mode       [dark]  light   auto
+  Mode        auto   light  [dark]
   New tabs   [off]  seq
   Announce    on  [off]
   Search fx  [typewriter]  decode   glitch
   Sort       [abc]  catalog
   Mouse      [on]  off
   Blur       [off]  1px   2px   3px   4px
-▶ Colors      tone  [original]
+▶ Colors      original  [tone]
 
-New pictures keep their own colors
+New pictures are tinted in the palette's color
 [CONFIG] ↑↓ setting   ←→ value   enter save                                                 esc undo

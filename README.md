@@ -86,10 +86,10 @@ a checkout are in [docs/install.md](docs/install.md).
 </details>
 
 Both images are drawn from the official marketplace as it ships, so they always
-match what Browse offers. Every palette comes in a dark and a light mode:
-`init` asks which one every palette is worn in — or, with Ghostty wired, `auto`,
-which follows the system's appearance as Ghostty shows it — and `ttheme dark`,
-`ttheme light` or `ttheme auto` (or alt-c in `ttheme`, or `TTHEME_MODE` in the
+match what Browse offers. Every palette comes in a light and a dark mode:
+`init` asks which one every palette is worn in — `auto`, where Ghostty is wired,
+follows the system's appearance as Ghostty shows it — and `ttheme auto`,
+`ttheme light` or `ttheme dark` (or alt-c in `ttheme`, or `TTHEME_MODE` in the
 [settings](docs/usage.md#settings)) switches it later. `init` installs the catalogs you pick; Browse, the second tab of
 `ttheme`, adds or drops single palettes any time, and a merged palette reaches everyone
 with the next release — `ttheme update` brings it, and ttheme says when one is
@@ -192,7 +192,7 @@ the one the tab wears, as a link without asking.
 | `ttheme new <name>` | Make a palette of your own in the palette editor (`--from <palette>` starts from its colors); `edit`, `check`, `share` follow |
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |
 | `ttheme config` | Settings in `$EDITOR` |
-| `ttheme dark` / `light` / `auto` | Wear every palette in its dark or light mode, or in the system's where a wired terminal reports it — open tabs repaint |
+| `ttheme auto` / `light` / `dark` | Wear every palette in the system's mode where a wired terminal reports it, or in its light or dark mode — open tabs repaint |
 
 `ttheme help` lists the everyday commands by task; `ttheme help all` adds the
 rest with their options, and examples. Preview's keys and the mouse, directory pins,

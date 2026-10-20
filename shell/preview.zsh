@@ -2108,7 +2108,7 @@ __tt_pv_te_ghost() {
   local -i r0=$1 col=$2 T=$(( $3 - $2 - 21 )) i
   (( color )) || z= d=
   (( T < 8 )) && T=8
-  out+=$'\e['$r0';'$col'H  '$d"Colors"$'\e['$r0';'$(( col + 12 ))'H'" tone   original "$z
+  out+=$'\e['$r0';'$col'H  '$d"Colors"$'\e['$r0';'$(( col + 12 ))'H'" original  tone "$z
   out+=$'\e['$(( r0 + 1 ))';'$col'H  '$d"Size"$'\e['$(( r0 + 1 ))';'$(( col + 12 ))'H'${(l:T::─:)}$z
   for (( i = 1; i <= 9; i++ )); do
     out+=$'\e['$(( r0 + 3 + (i - 1) / 3 ))';'$(( col + 12 + (i - 1) % 3 * 3 ))'H'$d"·"$z
@@ -2492,10 +2492,10 @@ __tt_preview() {
   local mact="" mzone="" pvmouse="" pasted=""
   local -a pvz=()
   local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=(Mode "New tabs" Announce "Search fx" Sort Mouse Blur Colors)
-  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "tone original") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "tone original")
+  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "original tone") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "original tone")
   local -A cnote=(
-    TTHEME_MODE:dark "Every palette in its dark mode" TTHEME_MODE:light "Every palette in its light mode"
     TTHEME_MODE:auto "Every palette in the mode Ghostty shows, which follows the system"
+    TTHEME_MODE:light "Every palette in its light mode" TTHEME_MODE:dark "Every palette in its dark mode"
     TTHEME_TAB_PALETTE:seq "New tabs rotate through palettes" TTHEME_TAB_PALETTE:off "New tabs keep the terminal theme"
     TTHEME_ANNOUNCE:1 "Shows the palette notice" TTHEME_ANNOUNCE:0 "Silences the palette notice"
     TTHEME_FX:typewriter "The search hint types itself" TTHEME_FX:decode "The search hint decodes" TTHEME_FX:glitch "The search hint glitches in"
@@ -2504,8 +2504,8 @@ __tt_preview() {
     TTHEME_BG_BLUR:0 "Pictures stay sharp" TTHEME_BG_BLUR:1 "Pictures soften a little behind the text"
     TTHEME_BG_BLUR:2 "Pictures soften behind the text" TTHEME_BG_BLUR:3 "Pictures blur behind the text"
     TTHEME_BG_BLUR:4 "Pictures blur well behind the text"
-    TTHEME_BG_COLORS:tone "New pictures are tinted in one color of the palette"
     TTHEME_BG_COLORS:original "New pictures keep their own colors"
+    TTHEME_BG_COLORS:tone "New pictures are tinted in the palette's color"
   )
   [[ -r $TTHEME_HOME/aliases.zsh ]] && source $TTHEME_HOME/aliases.zsh
   [[ $mode == pin ]] && __tt_pin_scopes "$pdir"

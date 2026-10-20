@@ -189,7 +189,7 @@ __tt_pins_load
 
 : ${TTHEME_BG_BLUR:=0}
 
-: ${TTHEME_BG_COLORS:=tone}
+: ${TTHEME_BG_COLORS:=original}
 
 : ${TTHEME_WARP_FAST:=on}
 
@@ -1914,7 +1914,7 @@ __tt_verb() {
   esac
   __tt_arity "$@" || return
   [[ $1 == config ]] && { __tt_config; return }
-  [[ $1 == (dark|light|auto) ]] && { __tt_mode $1; return }
+  [[ $1 == (auto|light|dark) ]] && { __tt_mode $1; return }
   (( ${#TTHEME_PALETTE} )) || { __tt_empty; return }
 
   local REPLY

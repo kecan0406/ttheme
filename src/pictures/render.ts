@@ -106,6 +106,7 @@ interface Redraw {
   paint: Paint
   blur: number
   aligns: boolean
+  coloring?: Coloring
 }
 
 interface Prepare {
@@ -163,7 +164,7 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
   }
 
   if (task.job === 'redraw') {
-    return redrawOne(task.home, task.name, task.key, task.paint, task.blur, task.aligns, task.user)
+    return redrawOne(task.home, task.name, task.key, task.paint, task.blur, task.aligns, task.user, task.coloring)
   }
 
   if (task.job === 'prepare') {

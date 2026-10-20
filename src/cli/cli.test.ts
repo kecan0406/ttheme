@@ -31,7 +31,7 @@ test('--version is its own invocation', () => {
 test('every verb either runs here or belongs to the shell layer', () => {
   assert.deepEqual(
     VERBS.filter((v) => !v.run).map((v) => v.name),
-    ['use', 'pin', 'unpin', 'pins', 'config', 'dark', 'light', 'auto'],
+    ['use', 'pin', 'unpin', 'pins', 'config', 'auto', 'light', 'dark'],
   )
   assert.ok(VERBS.filter((v) => v.shell).every((v) => !v.run))
 })

@@ -1535,7 +1535,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   __tt_cli() { print -r -- "$*" >> $calls }
   __tt_reload() { : }
   __tt_bg_refresh() { print -r -- refresh >> $calls }
-  TTHEME_MODE_SETTINGS=(dark light)
+  TTHEME_MODE_SETTINGS=(light dark)
   out=$(ttheme dark 2>&1) && [[ $out == *"already worn in its dark mode"* && ! -e $calls ]] ||
     { print -u2 "ttheme dark ran a sync with nothing to change: $out"; exit 1 }
   ttheme light > /dev/null || { print -u2 "ttheme light failed"; exit 1 }
@@ -1549,7 +1549,7 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   out=$(ttheme auto 2>&1) && { print -u2 "ttheme auto took where no terminal reports the appearance"; exit 1 }
   [[ $out == *"auto needs a wired terminal"* && "$(<$TTHEME_CONFIG)" != *$'\n'': ${TTHEME_MODE:=auto}'* ]] ||
     { print -u2 "ttheme auto's refusal broke: $out"; exit 1 }
-  TTHEME_MODE_SETTINGS=(dark light auto)
+  TTHEME_MODE_SETTINGS=(auto light dark)
   ttheme auto > /dev/null && [[ "$(<$TTHEME_CONFIG)" == *$'\n'': ${TTHEME_MODE:=auto}'* ]] ||
     { print -u2 "ttheme auto did not write the setting where a terminal reports the appearance"; exit 1 }
   if ttheme auto extra 2>/dev/null; then

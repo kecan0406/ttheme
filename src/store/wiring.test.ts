@@ -82,7 +82,7 @@ test('configFile seeds the template with every default spelled out on a commente
     [
       '# ttheme settings — uncomment a line to change it; exported variables win over this file',
       '',
-      '# the mode every palette is worn in: dark or light, which each palette carries both of, or auto, which follows the appearance Ghostty reports — changing it repaints every open tab (default dark)',
+      '# the mode every palette is worn in: auto, which follows the appearance Ghostty reports, or light or dark, which each palette carries both of — changing it repaints every open tab (default dark)',
       '# : ${TTHEME_MODE:=dark}',
       '',
       '# new tabs: off keeps the configured terminal theme, seq rotates through the palettes (default off)',
@@ -103,8 +103,8 @@ test('configFile seeds the template with every default spelled out on a commente
       '# soften the background pictures behind the text: a blur radius in screen pixels, 0 keeps them sharp — changing it draws every picture again (default 0)',
       '# : ${TTHEME_BG_BLUR:=0}',
       '',
-      '# the colors new background pictures are drawn in: tone tints a picture in one color of its palette, original keeps its own — preview switches each picture later (default tone)',
-      '# : ${TTHEME_BG_COLORS:=tone}',
+      '# the colors new background pictures are drawn in: original keeps its own, tone tints a picture in one color of its palette — preview switches each picture later (default original)',
+      '# : ${TTHEME_BG_COLORS:=original}',
       '',
       '# Warp tab switches: on keeps Warp rereading its settings while it is in front with tabs of different palettes, so the tab you switch to shows its palette in about 0.2 s instead of 0.6 s — about 8% CPU meanwhile; off leaves it to Warp (default on)',
       '# : ${TTHEME_WARP_FAST:=on}',
@@ -309,7 +309,7 @@ test('the blur comes from config.zsh itself, commented out meaning the default a
   assert.equal(at(': ${TTHEME_BG_BLUR:=soft}\n'), 0)
 })
 
-test('new pictures are drawn in the colors config.zsh names, tone unless it says original', () => {
+test('new pictures keep their own colors unless config.zsh names another coloring', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-colors-'))
 
   const at = (text: string) => {
@@ -319,9 +319,9 @@ test('new pictures are drawn in the colors config.zsh names, tone unless it says
     return coloringFor(home)
   }
 
-  assert.equal(coloringFor(join(home, 'nowhere')), 'tone')
-  assert.equal(at(configFile('')), 'tone')
-  assert.equal(at(withSetting(configFile(''), 'TTHEME_BG_COLORS', 'original')), 'original')
+  assert.equal(coloringFor(join(home, 'nowhere')), 'original')
+  assert.equal(at(configFile('')), 'original')
+  assert.equal(at(withSetting(configFile(''), 'TTHEME_BG_COLORS', 'tone')), 'tone')
   assert.equal(at(': ${TTHEME_BG_COLORS:="original"}\n'), 'original')
   assert.equal(at(': ${TTHEME_BG_COLORS:=sepia}\n'), 'tone')
 })

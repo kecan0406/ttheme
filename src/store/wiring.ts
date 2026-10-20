@@ -54,7 +54,7 @@ const CONFIG_HEADER = '# ttheme settings — uncomment a line to change it; expo
 
 const CONFIG_SETTINGS = {
   TTHEME_MODE: {
-    doc: '# the mode every palette is worn in: dark or light, which each palette carries both of, or auto, which follows the appearance Ghostty reports — changing it repaints every open tab (default dark)',
+    doc: '# the mode every palette is worn in: auto, which follows the appearance Ghostty reports, or light or dark, which each palette carries both of — changing it repaints every open tab (default dark)',
     default: 'dark',
   },
   TTHEME_TAB_PALETTE: {
@@ -82,8 +82,8 @@ const CONFIG_SETTINGS = {
     default: '0',
   },
   TTHEME_BG_COLORS: {
-    doc: '# the colors new background pictures are drawn in: tone tints a picture in one color of its palette, original keeps its own — preview switches each picture later (default tone)',
-    default: 'tone',
+    doc: '# the colors new background pictures are drawn in: original keeps its own, tone tints a picture in one color of its palette — preview switches each picture later (default original)',
+    default: 'original',
   },
   TTHEME_WARP_FAST: {
     doc: '# Warp tab switches: on keeps Warp rereading its settings while it is in front with tabs of different palettes, so the tab you switch to shows its palette in about 0.2 s instead of 0.6 s — about 8% CPU meanwhile; off leaves it to Warp (default on)',

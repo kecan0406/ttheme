@@ -15,6 +15,7 @@ export interface Installed {
   wtProfile?: string
   marketplaces?: string[]
   updates?: Record<string, boolean>
+  colorsMoved?: true
   palettes: string[]
 }
 
@@ -46,6 +47,7 @@ const OPTIONAL = {
           Object.entries(value).filter((pair): pair is [string, boolean] => typeof pair[1] === 'boolean'),
         )
       : undefined,
+  colorsMoved: (value) => (value ? true : undefined),
 } satisfies { [K in Optional]-?: (value: unknown) => Installed[K] }
 
 export function readInstalled(configHome: string): Installed {

@@ -31,12 +31,14 @@ interface Job {
   name: string
   key: string
   paint: Paint
+  coloring?: Coloring
 }
 
 interface Redrawing {
   emit?: boolean
   manifest?: Manifest
   step?: (done: number, of: number) => void
+  ownColors?: boolean
 }
 
 function plural(n: number): string {
@@ -47,7 +49,7 @@ export async function redrawPictures(
   home: string,
   say: (line: string) => void,
   user = homedir(),
-  { emit = true, manifest, step }: Redrawing = {},
+  { emit = true, manifest, step, ownColors = false }: Redrawing = {},
 ): Promise<number> {
   const store = readStore(backgroundsDir(home))
 
@@ -74,6 +76,12 @@ export async function redrawPictures(
     let other: Paint | undefined
 
     for (const picture of rack.pictures) {
+      if (ownColors && coloringOf(picture) === 'tone') {
+        const into = cached(home, name, picture, paint, blurring, 'original') ? hits : misses
+        into.push({ name, key: picture.key, paint, coloring: 'original' })
+        continue
+      }
+
       const flips = inkDue(picture, paint)
 
       const due =
@@ -107,9 +115,9 @@ export async function redrawPictures(
   const drawn: { name: string; picture: Picture }[] = []
   let done = 0
 
-  for (const { name, key, paint } of hits) {
+  for (const { name, key, paint, coloring } of hits) {
     try {
-      const picture = await redrawOne(home, name, key, paint, blurring, aligns, user)
+      const picture = await redrawOne(home, name, key, paint, blurring, aligns, user, coloring)
 
       if (picture) {
         drawn.push({ name, picture })
@@ -123,17 +131,18 @@ export async function redrawPictures(
 
   if (misses.length + primes.length > 0) {
     if (misses.length > 0) {
-      say(`Drawing ${plural(misses.length)} again${blurring ? ` · blur ${blurring}px` : ''}`)
+      const how = ownColors ? `in ${misses.length === 1 ? 'its' : 'their'} own colors` : 'again'
+
+      say(`Drawing ${plural(misses.length)} ${how}${blurring ? ` · blur ${blurring}px` : ''}`)
     } else {
       say(`Drawing ${plural(primes.length)} for the other mode`)
     }
 
     const pool = new Pool(Math.min(WORKERS, availableParallelism() - 1, misses.length + primes.length))
-    const coloring: Coloring = 'tone'
     const tick = () => step?.(++done, total)
 
     const results = await pool.map(
-      misses.map(({ name, key, paint }) => ({
+      misses.map(({ name, key, paint, coloring }) => ({
         job: 'redraw' as const,
         home,
         user,
@@ -142,6 +151,7 @@ export async function redrawPictures(
         paint,
         blur: blurring,
         aligns,
+        ...(coloring ? { coloring } : {}),
       })),
       tick,
     )
@@ -154,7 +164,7 @@ export async function redrawPictures(
         key,
         paint,
         blur: blurring,
-        coloring,
+        coloring: 'tone' as const,
       })),
       tick,
     )

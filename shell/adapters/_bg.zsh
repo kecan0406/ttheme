@@ -670,8 +670,8 @@ __tt_pv_bg_panel() {
       __tt_bg_coloring $name
       val=$REPLY
       out+=$'\e['$r';'$(( col + 12 ))'H'
-      pvz+=("$r $(( col + 12 )) $(( col + 17 )) colors tone" "$r $(( col + 19 )) $(( col + 28 )) colors original")
-      for choice in tone original; do
+      pvz+=("$r $(( col + 12 )) $(( col + 21 )) colors original" "$r $(( col + 23 )) $(( col + 28 )) colors tone")
+      for choice in original tone; do
         if (( ! color )); then
           if [[ $choice == $val ]]; then out+="[$choice] "; else out+=" $choice  "; fi
         elif [[ $choice != $val ]]; then

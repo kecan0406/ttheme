@@ -14,11 +14,12 @@ bash or fish — see [Shells](#shells).
 1. **Which terminals to wire** — the one you are in comes preselected. With
    Warp among them, also whether to switch Warp to each tab's palette in about
    0.2 s instead of 0.6 s, for some CPU while it does (`TTHEME_WARP_FAST`).
-2. **Dark or light** — the mode every palette is worn in (`TTHEME_MODE`, `dark`
-   preselected), or with Ghostty among the terminals `auto`, which follows the
-   system's appearance as Ghostty shows it. Every palette comes in both, and the
-   catalogs that follow are shown in the one you pick; `ttheme dark`, `ttheme light`,
-   `ttheme auto` or alt-c in `ttheme` switches it later.
+2. **Auto, light or dark** — the mode every palette is worn in (`TTHEME_MODE`,
+   `auto` preselected where Ghostty is among the terminals, since it follows the
+   system's appearance as Ghostty shows it; otherwise what you wear now, `dark` on
+   a first install). Every palette comes in a light and a dark mode, and the
+   catalogs that follow are shown in the one you pick; `ttheme auto`, `ttheme light`,
+   `ttheme dark` or alt-c in `ttheme` switches it later.
 3. **Which catalogs to install** — `space` marks one, `Select all` takes the lot,
    enter moves on.
 4. **Whether to wear them** — with one palette picked, `Wear <palette> in every

@@ -255,8 +255,8 @@ since the clipboard is on your own machine.
 ## Trying it on
 
 Enter tries the picture on: ttheme downloads the original and paints the whole
-window with it the way the installed background will look — tinted with the
-palette (or in its own colors, with `TTHEME_BG_COLORS=original`, and `c` switches between the two), cropped with
+window with it the way the installed background will look — in its own colors by
+default, or tinted with the palette (`TTHEME_BG_COLORS=tone`), and `c` switches between the two — cropped with
 headroom above the face, at the opacity the contrast gate allows — over one of preview's five sample scenes (⇧←→ switch them), with the
 share of transparent pixels next to its size (`opaque` when there are none).
 Under that line the post's page, the source the artwork came from and its artist
@@ -273,8 +273,7 @@ picture, and ahead of time for the posts on either side — for its artist,
 characters, series, uploader and day. `t` opens the same tuning panel preview's image edit has (see
 [Tuning](#tuning)) over the picture: size, position and opacity change what you
 see in place, stay as you move to the next post, and are installed with the
-picture, so preview opens it the way you left it. `c` draws the picture in the palette's tone or in its own
-colors, from the picture or from the tuning panel: the setting only names where
+picture, so preview opens it the way you left it. `c` draws the picture in its own colors or in the palette's tone, from the picture or from the tuning panel: the setting only names where
 find starts, the choice stays as you move to the next post and is what enter
 installs, and the opacity goes back to the new coloring's default (esc in the
 panel undoes the tuning, not the colors). On macOS an opaque picture is
@@ -339,12 +338,12 @@ neither break up nor alias, and stays smooth when a small picture is enlarged.
 
 ## Original colors
 
-A picture can also keep its own colors. `TTHEME_BG_COLORS=original` (in `ttheme
+A picture keeps its own colors unless `TTHEME_BG_COLORS=tone` (in `ttheme
 config`, or alt-c in `preview`) draws every picture installed from then on that
 way, and the `Colors` row of preview's image edit (or `c` in find's try view, for the
 picture about to be installed) switches one picture at a time,
 whatever the setting is — `←`/`→` on it, or `c` from any field, draw that picture
-again from its original, in the palette's tone or in its own colors, which takes
+again from its original, in its own colors or in the palette's tone, which takes
 a moment and is kept at once: esc undoes the tuning, not the colors, and `c`
 again switches back. While image edit sits on a picture, ttheme draws the other
 coloring in the background (`ttheme image <palette> prepare`), and every drawing
@@ -365,7 +364,7 @@ highest opacity at which the palette's text still passes the gate on it, and
 never brighter than a tone picture may be. A picture with white in it opens at
 about half a tone's opacity, a dark one stronger, and either is faint: raise
 the opacity in the tuning panel as far as the text allows — the panel does not
-stop you at the gate. Switching a picture between tone and original keeps its
+stop you at the gate. Switching a picture between original and tone keeps its
 size and position and puts its opacity back to the new default. When the
 palette's colors change, the opacity stays as it is. The terminals take these files as they take a tone's, since each only lays
 a file over its background at an opacity — Warp and Terminal.app through a copy
@@ -378,7 +377,9 @@ their opacity: a picture keeps the opacity it was installed with, or the one you
 set, however the colors move. Changing
 `TTHEME_BG_BLUR` in `ttheme config` or preview's alt-c panel draws every picture
 again from its original, as does the first `init` of a version that draws them
-differently; a picture whose original is gone is left as it was, and init says so.
+differently — pictures drawn in a palette's tone before `original` became the
+default are drawn again in their own colors at that first `init`, once, unless
+`config.zsh` sets `tone`; a picture whose original is gone is left as it was, and init says so.
 
 ## Tuning
 
