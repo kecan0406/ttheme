@@ -632,17 +632,19 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
 }
 
 function topBar(e: PaletteEditor, p: Paint, width: number): string {
-  const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
+  const mark = p.accent(MARKS.current)
+  const titled = `${mark} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
   const dirty = e.dirty()
   const changes = e.changes()
   const dot = p.warn(MARKS.on)
-  const state = dirty ? `${dot} ${p.dim(changes > 0 ? `unsaved · ${changes} changed` : 'unsaved')}` : ''
+  const unsaved = `${dot} ${p.dim('unsaved')}`
+  const counted = changes > 0 ? `${dot} ${p.dim(`unsaved · ${changes} changed`)}` : unsaved
+  const states = dirty ? [counted, unsaved, dot] : ['']
 
   const buttons = [e.resettable() ? keyZone('R', p.dim('Reset')) : '', dirty ? keyZone('s', pillOf(p, 'Save')) : '']
     .filter(Boolean)
     .join('  ')
 
-  const left = [title, state, buttons].filter(Boolean).join('   ')
   const button = (word: string, label: string, on: boolean) => keyZone(word, on ? pillOf(p, label) : p.dim(label))
   const pictures = e.options.find || e.pictures > 0
 
@@ -651,13 +653,19 @@ function topBar(e: PaletteEditor, p: Paint, width: number): string {
       ? [
           button(
             'b',
-            `▣ ${e.pictures > 0 ? `${e.pictures} ` : ''}Picture`,
+            `${MARKS.pictures} ${e.pictures > 0 ? `${e.pictures} ` : ''}Picture`,
             e.pic && (e.pictures > 0 || !!e.options.find),
           ),
         ]
       : []),
     ...(e.options.exports ? [button('x', 'Export ▾', e.menu === 'export')] : []),
   ].join('  ')
+
+  const room = width - cells(`${right} `) - 1
+  const line = (head: string, state: string) => [head, state, buttons].filter(Boolean).join('   ')
+  const last = states.at(-1) ?? ''
+  const named = `${mark} ${p.dim(fit(e.options.name, room - cells(line(mark, last)) - 1, false))}`
+  const left = states.map((state) => line(titled, state)).find((bar) => cells(bar) <= room) ?? line(named, last)
 
   return spread(left, `${right} `, width)
 }

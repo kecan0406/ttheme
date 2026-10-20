@@ -662,7 +662,8 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
 
   const failing = e.failing().length
   const gate = failing === 0 ? '✓ Passes the gate' : `✗ ${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
-  const shelf = e.pictures > 0 ? p.dim(`▣ ${e.pictures} ${e.pictures === 1 ? 'picture' : 'pictures'}   `) : ''
+  const shown = `${MARKS.pictures} ${e.pictures} ${e.pictures === 1 ? 'picture' : 'pictures'}`
+  const shelf = e.pictures > 0 ? p.dim(`${shown}   `) : ''
   const reset = e.resettable() ? `${keyZone('R', p.dim('Reset'))}   ` : ''
   const state = `${e.dirty() ? `${p.warn(MARKS.on)} unsaved   ` : ''}${reset}${shelf}${failing === 0 ? p.ok(gate) : p.dim(gate)}`
   const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`

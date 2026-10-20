@@ -238,6 +238,21 @@ test('the footer keeps enter and s at 80 columns, and names the tune', () => {
   assert.match(renderEditor(press(e, 'tab'), 80, 24, false).at(-1) ?? '', /^\[EDIT \(TUNE\)\] /)
 })
 
+test('the top bar keeps Reset and Save however long the name, giving up the count, then the word, then the title', () => {
+  const e = press(editor({ name: 'kec@dust/a-rather-long-palette-name' }), 'tab', '9', 'enter')
+  const top = (cols: number) => renderEditor(e, cols, 40, false)[0] ?? ''
+
+  for (const cols of [96, 100, 112, 120, 140, 200]) {
+    assert.match(top(cols), /Reset {2}\S*Save/)
+  }
+
+  assert.match(top(200), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● unsaved · 1 changed {3}Reset/)
+  assert.match(top(120), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
+  assert.match(top(112), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
+  assert.match(top(100), /│◆ kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
+  assert.match(top(96), /│◆ kec@dust\/a-rather-long-palette-\S+… {3}● {3}Reset/)
+})
+
 test('←→ on a base row leaves the column alone, and ↑↓ through the base rows keep it', () => {
   const e = press(editor(), 'right', 'down', 'down', 'down', 'down')
   assert.equal(e.slot(), 4)
