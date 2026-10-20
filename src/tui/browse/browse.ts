@@ -2,31 +2,20 @@ import type { Readable, Writable } from 'node:stream'
 import { GATE_RULES } from '../../core/contrast.ts'
 import { type PaletteEntry, swatch } from '../../core/manifest.ts'
 import { ago, cells, counted, inert } from '../../core/text.ts'
-import { marketplaceOf } from '../../core/theme.ts'
 import { gateFailures } from '../../store/available.ts'
 import { type Listed, type Listing, listedMatches } from '../../store/marketplace-index.ts'
-import {
-  isRemote,
-  OFFICIAL,
-  parseSource,
-  type Refreshed,
-  sameMarketplace,
-  shownSource,
-  TOPIC,
-} from '../../store/sources.ts'
+import { isRemote, OFFICIAL, parseSource, sameMarketplace, shownSource, TOPIC } from '../../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
 import { Field } from '../field.ts'
-import { Help, type Legend, overlay, type Topic, type TopicSpot } from '../help.ts'
-import { type HubSpot, type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
+import { Help, type Legend, overlay, type Topic } from '../help.ts'
+import { type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
 import type { Mouse } from '../keys.ts'
 import { Glide } from '../motion.ts'
 import type { ReleaseLine } from '../notice.ts'
 import {
   type Card,
-  type Extra,
   PaletteList,
-  type PromptFx,
   pageStep,
   paletteExample,
   type RowSpot,
@@ -37,87 +26,26 @@ import { boxEdge, buttonOf, moreOf, tabOf } from '../parts.ts'
 import { Screen } from '../screen.ts'
 import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter, SPINNER } from '../style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from '../terminal.ts'
-import { type KeySpot, zone } from '../zones.ts'
-
-export interface Marketplace {
-  source: string
-  id: string
-  description?: string
-  shown: string
-  entries: PaletteEntry[]
-  auto: boolean
-  status: string
-}
-
-export interface Report {
-  say(line: string): void
-  status(text: string): void
-}
-
-export interface BrowseIo {
-  refresh(source: string): Promise<{ marketplace: Marketplace; refreshed: Refreshed; updates: string[] }>
-  fetch(source: string): Promise<Marketplace>
-  index(): Promise<Listing>
-  apply(result: BrowseResult, report: Report): Promise<void>
-}
-
-interface BrowseOptions {
-  marketplaces: Marketplace[]
-  kept: PaletteEntry[]
-  installed: string[]
-  updates?: string[]
-  tuned?: string[]
-  startup?: string
-  due: string[]
-  io: BrowseIo
-  order?: (entries: PaletteEntry[]) => PaletteEntry[]
-  hub?: HubTab
-  release?: () => ReleaseLine
-  lookups?: boolean
-  color?: boolean
-  fx?: PromptFx
-  owns?: boolean
-  input?: Readable
-  output?: Writable
-  onFocus?: (entry: PaletteEntry) => void
-}
-
-export interface BrowseResult {
-  picked: Set<string>
-  adds: Marketplace[]
-  removes: string[]
-  auto: Record<string, boolean>
-  renew: string[]
-  refreshed: Refreshed[]
-}
+import { zone } from '../zones.ts'
+import { Staged } from './staged.ts'
+import type {
+  Action,
+  BrowseIo,
+  BrowseOptions,
+  BrowseResult,
+  Detail,
+  Found,
+  Marketplace,
+  Report,
+  Row,
+  Spot,
+} from './types.ts'
 
 type Phase = 'browse' | 'review' | 'applying' | 'done'
-
-type Found =
-  | { kind: 'new' }
-  | { kind: 'search' }
-  | { kind: 'back' }
-  | { kind: 'state' }
-  | { kind: 'listed'; listed: Listed }
-
-type Action = 'update' | 'auto' | 'remove'
-
-interface Row extends Extra {
-  found?: Found
-  action?: Action
-}
-
-interface Detail {
-  title: string
-  lines: string[]
-  brief: string
-}
 
 type Side = 'cards' | 'panel' | 'form'
 
 type View = 'browse' | 'search'
-
-type Spot = RowSpot | KeySpot | HubSpot | TopicSpot | { kind: 'page'; step: number; pane?: string } | { kind: 'form' }
 
 const LEFT_MIN = 40
 const LEFT_MAX = 60
@@ -155,28 +83,18 @@ function cap(text: string): string {
 type State = 'active' | 'submit' | 'cancel'
 
 export class BrowsePanel {
-  readonly picked: Set<string>
+  private readonly staged: Staged
   private readonly field = new Field()
   private readonly query = new Field()
   private readonly address = new Field()
-  private readonly adds = new Map<string, Marketplace>()
-  private readonly removes = new Set<string>()
-  private readonly want = new Map<string, boolean>()
-  private readonly renew = new Set<string>()
-  private updates: Set<string>
   private readonly tuned: Set<string>
   private readonly busy = new Map<string, string>()
   private readonly failed = new Map<string, string>()
   private readonly fetched = new Map<string, Marketplace>()
   private readonly staging = new Set<string>()
-  private readonly refreshed: Refreshed[] = []
   private readonly inflight = new Set<Promise<unknown>>()
-  private marketplaces: Marketplace[]
-  private readonly kept: PaletteEntry[]
-  private readonly installed: ReadonlySet<string>
   private readonly startup: string | undefined
   private readonly io: BrowseIo
-  private readonly order: (entries: PaletteEntry[]) => PaletteEntry[]
   private readonly color: boolean
   private readonly p: Paint
   private readonly hub: HubTab | undefined
@@ -218,14 +136,10 @@ export class BrowsePanel {
   private readonly live: boolean
 
   constructor(opts: BrowseOptions) {
-    this.marketplaces = opts.marketplaces
-    this.kept = opts.kept
-    this.installed = new Set(opts.installed)
-    this.updates = new Set(opts.updates ?? [])
+    this.staged = new Staged(opts)
     this.tuned = new Set(opts.tuned ?? [])
     this.startup = opts.startup
     this.io = opts.io
-    this.order = opts.order ?? ((entries) => entries)
     this.color = opts.color ?? true
     this.p = painter(this.color)
     this.hub = opts.hub
@@ -236,10 +150,9 @@ export class BrowsePanel {
     this.output = opts.output
     this.live = opts.lookups ?? true
     this.paint = opts.onFocus
-    this.picked = new Set(opts.installed)
     this.list = new PaletteList<Row>({
-      entries: this.entries(),
-      picked: this.picked,
+      entries: this.staged.entries(),
+      picked: this.staged.picked,
       layout: 'marketplaces',
       mode: 'cards',
       color: this.color,
@@ -247,13 +160,13 @@ export class BrowsePanel {
       note: (entry) => this.mark(entry),
       badge: (id) => this.badge(id),
       about: (top, members, matching) => this.about(top, members, matching),
-      tops: () => this.tops(),
+      tops: () => this.staged.tops(),
       heads: () => this.heads(),
       onFocus: (entry) => this.focus(entry),
     })
     this.inside = new PaletteList<Row>({
       entries: [],
-      picked: this.picked,
+      picked: this.staged.picked,
       layout: 'marketplaces',
       mode: 'inside',
       pane: 'panel',
@@ -385,16 +298,7 @@ export class BrowsePanel {
   }
 
   result(): BrowseResult {
-    const names = new Set(this.entries().map((e) => e.name))
-
-    return {
-      picked: new Set(this.picked.values().filter((name) => names.has(name))),
-      adds: [...this.adds.values()],
-      removes: [...this.removes],
-      auto: Object.fromEntries(this.want),
-      renew: [...this.renew].filter((name) => this.updates.has(name) && this.picked.has(name) && names.has(name)),
-      refreshed: this.refreshed,
-    }
+    return this.staged.result()
   }
 
   private key(key: string): void {
@@ -607,7 +511,7 @@ export class BrowsePanel {
       return
     }
 
-    const known = this.known(source)
+    const known = this.staged.known(source)
 
     if (known) {
       this.address.value = ''
@@ -657,7 +561,7 @@ export class BrowsePanel {
       return
     }
 
-    const known = this.known(source)
+    const known = this.staged.known(source)
 
     if (!known) {
       this.landing = back ? source : undefined
@@ -666,11 +570,10 @@ export class BrowsePanel {
       this.unremove(known)
       this.closeSearch()
       this.list.select(`top ${known.id}`)
-    } else if (this.removes.has(known.source)) {
+    } else if (this.staged.removes.has(known.source)) {
       this.unremove(known)
-    } else if (this.adds.has(known.source)) {
-      this.adds.delete(known.source)
-      this.want.delete(known.source)
+    } else if (this.staged.adds.has(known.source)) {
+      this.staged.drop(known.source)
       this.reload()
     }
   }
@@ -726,7 +629,7 @@ export class BrowsePanel {
   }
 
   private finish(): void {
-    if (this.dirty()) {
+    if (this.staged.dirty()) {
       this.phase = 'review'
       this.offset = 0
     }
@@ -767,16 +670,12 @@ export class BrowsePanel {
 
     if (fresh || top !== this.open) {
       this.open = top
-      this.inside.setEntries(top === undefined ? [] : this.membersOf(top))
+      this.inside.setEntries(top === undefined ? [] : this.staged.membersOf(top))
     }
 
     if (this.side === 'panel' && this.inside.size() === 0) {
       this.back()
     }
-  }
-
-  private membersOf(top: string): PaletteEntry[] {
-    return this.entries().filter((e) => (marketplaceOf(e.name) ?? OFFICIAL) === top)
   }
 
   private pasted(text: string): void {
@@ -990,42 +889,15 @@ export class BrowsePanel {
     return work
   }
 
-  private active(): Marketplace[] {
-    return [...this.marketplaces.filter((m) => !this.removes.has(m.source)), ...this.adds.values()]
-  }
-
-  private entries(): PaletteEntry[] {
-    const listed = this.active().flatMap((m) => m.entries)
-    const names = new Set(listed.map((e) => e.name))
-    const orphans = new Map<string, PaletteEntry>()
-    const dropped = this.marketplaces.filter((m) => this.removes.has(m.source)).flatMap((m) => m.entries)
-
-    for (const entry of [...this.kept, ...dropped]) {
-      if (this.installed.has(entry.name) && !names.has(entry.name)) {
-        orphans.set(entry.name, entry)
-      }
-    }
-
-    return this.order([...listed, ...orphans.values()])
-  }
-
   private reload(): void {
-    this.list.setEntries(this.entries())
+    this.list.setEntries(this.staged.entries())
     this.follow(true)
-  }
-
-  private tops(): string[] {
-    return this.active().map((m) => m.id)
-  }
-
-  private marketplaceNamed(id: string): Marketplace | undefined {
-    return this.active().find((m) => m.id === id)
   }
 
   private focusedMarketplace(): Marketplace | undefined {
     const row = this.list.focusedRow()
 
-    return row?.kind === 'top' ? this.marketplaceNamed(row.name) : undefined
+    return row?.kind === 'top' ? this.staged.named(row.name) : undefined
   }
 
   private current(): PaletteList<Row> {
@@ -1034,16 +906,6 @@ export class BrowsePanel {
 
   private move(delta: number, wrap = true): void {
     ;(this.side === 'panel' ? this.inside : this.current()).move(delta, wrap)
-  }
-
-  private autoUpdate(marketplace: Marketplace): void {
-    const on = !(this.want.get(marketplace.source) ?? marketplace.auto)
-
-    if (on === marketplace.auto) {
-      this.want.delete(marketplace.source)
-    } else {
-      this.want.set(marketplace.source, on)
-    }
   }
 
   private onAction(): boolean {
@@ -1062,10 +924,9 @@ export class BrowsePanel {
     if (action === 'update') {
       this.update(marketplace.source)
     } else if (action === 'auto') {
-      this.autoUpdate(marketplace)
-    } else if (this.adds.has(marketplace.source)) {
-      this.adds.delete(marketplace.source)
-      this.want.delete(marketplace.source)
+      this.staged.toggleAuto(marketplace)
+    } else if (this.staged.adds.has(marketplace.source)) {
+      this.staged.drop(marketplace.source)
       this.back()
       this.reload()
     } else {
@@ -1092,12 +953,12 @@ export class BrowsePanel {
   }
 
   private remove(marketplace: Marketplace): void {
-    const at = this.tops().indexOf(marketplace.id)
-    this.removes.add(marketplace.source)
-    this.want.delete(marketplace.source)
+    const at = this.staged.tops().indexOf(marketplace.id)
+    this.staged.remove(marketplace.source)
     this.back()
     this.reload()
-    const next = this.tops()[Math.min(at, this.tops().length - 1)]
+    const tops = this.staged.tops()
+    const next = tops[Math.min(at, tops.length - 1)]
 
     if (next !== undefined) {
       this.list.select(`top ${next}`)
@@ -1105,13 +966,9 @@ export class BrowsePanel {
   }
 
   private unremove(known: Marketplace): void {
-    if (this.removes.delete(known.source)) {
+    if (this.staged.unremove(known.source)) {
       this.reload()
     }
-  }
-
-  private known(source: string): Marketplace | undefined {
-    return [...this.marketplaces, ...this.adds.values()].find((m) => sameMarketplace(m.source, source))
   }
 
   private load(source: string): void {
@@ -1153,7 +1010,7 @@ export class BrowsePanel {
   }
 
   private arrive(source: string, marketplace: Marketplace): void {
-    const clash = this.active().find((m) => m.id === marketplace.id)
+    const clash = this.staged.named(marketplace.id)
 
     if (clash) {
       this.failed.set(source, `${marketplace.id} already names the marketplace at ${clash.shown}`)
@@ -1183,7 +1040,7 @@ export class BrowsePanel {
   }
 
   private stage(marketplace: Marketplace): void {
-    this.adds.set(marketplace.source, marketplace)
+    this.staged.add(marketplace)
     this.reload()
 
     if (this.adding !== undefined && sameMarketplace(this.adding, marketplace.source)) {
@@ -1213,9 +1070,7 @@ export class BrowsePanel {
     this.track(this.io.refresh(source)).then(
       ({ marketplace, refreshed, updates }) => {
         this.busy.delete(source)
-        this.updates = new Set(updates)
-        this.marketplaces = this.marketplaces.map((m) => (m.source === source ? marketplace : m))
-        this.refreshed.push(refreshed)
+        this.staged.refresh(source, marketplace, refreshed, updates)
         this.reload()
         this.redraw()
       },
@@ -1237,7 +1092,7 @@ export class BrowsePanel {
   }
 
   private actions(): Row[] {
-    const marketplace = this.open === undefined ? undefined : this.marketplaceNamed(this.open)
+    const marketplace = this.open === undefined ? undefined : this.staged.named(this.open)
 
     if (!marketplace) {
       return []
@@ -1253,7 +1108,7 @@ export class BrowsePanel {
     })
 
     return [
-      ...(remote && !this.adds.has(source) ? [row('update')] : []),
+      ...(remote && !this.staged.adds.has(source) ? [row('update')] : []),
       ...(remote ? [row('auto')] : []),
       row('remove'),
     ]
@@ -1271,7 +1126,7 @@ export class BrowsePanel {
       {
         pane: 'panel',
         off: action === 'update' && this.busy.has(source),
-        danger: action === 'remove' && !this.adds.has(source),
+        danger: action === 'remove' && !this.staged.adds.has(source),
       },
     )
   }
@@ -1298,11 +1153,11 @@ export class BrowsePanel {
       return MARKS.auto
     }
 
-    return this.adds.has(source) ? MARKS.undo : MARKS.remove
+    return this.staged.adds.has(source) ? MARKS.undo : MARKS.remove
   }
 
   private actionText(action: Action, source: string): [string, string] {
-    const m = this.known(source)
+    const m = this.staged.known(source)
 
     if (action === 'update') {
       const note = this.busy.get(source) ?? (this.failed.has(source) ? 'Update failed' : m ? cap(m.status) : '')
@@ -1311,10 +1166,10 @@ export class BrowsePanel {
     }
 
     if (action === 'auto') {
-      return ['Auto-update', (this.want.get(source) ?? m?.auto) ? 'on' : 'off']
+      return ['Auto-update', m && this.staged.auto(m) ? 'on' : 'off']
     }
 
-    return [this.adds.has(source) ? 'Undo add' : 'Remove marketplace', '']
+    return [this.staged.adds.has(source) ? 'Undo add' : 'Remove marketplace', '']
   }
 
   private actionAbout(action: Action, source: string): [string, string] {
@@ -1326,7 +1181,7 @@ export class BrowsePanel {
       return ['Auto-update', 'Fetch it on its own once a day and say what changed']
     }
 
-    return this.adds.has(source)
+    return this.staged.adds.has(source)
       ? ['Undo add', 'Drop it before it is added']
       : ['Remove marketplace', 'Take it off your list — its installed palettes stay']
   }
@@ -1337,10 +1192,12 @@ export class BrowsePanel {
     }
 
     if (action === 'auto') {
-      return (this.want.get(source) ?? this.known(source)?.auto) ? 'turn off' : 'turn on'
+      const m = this.staged.known(source)
+
+      return m && this.staged.auto(m) ? 'turn off' : 'turn on'
     }
 
-    return this.adds.has(source) ? 'undo add' : 'remove'
+    return this.staged.adds.has(source) ? 'undo add' : 'remove'
   }
 
   private heads(): Row[] {
@@ -1366,16 +1223,16 @@ export class BrowsePanel {
   }
 
   private status(marketplace: Marketplace): string {
-    return this.adds.has(marketplace.source)
+    return this.staged.adds.has(marketplace.source)
       ? 'Will add'
       : (this.busy.get(marketplace.source) ?? (this.failed.has(marketplace.source) ? 'Update failed' : ''))
   }
 
   private about(top: string, members: PaletteEntry[], matching?: number): Card {
-    const m = this.marketplaceNamed(top)
-    const installed = members.filter((e) => this.installed.has(e.name)).length
-    const adding = members.filter((e) => this.picked.has(e.name) && !this.installed.has(e.name)).length
-    const dropping = members.filter((e) => this.installed.has(e.name) && !this.picked.has(e.name)).length
+    const m = this.staged.named(top)
+    const installed = members.filter((e) => this.staged.installed.has(e.name)).length
+    const adding = members.filter((e) => this.staged.picked.has(e.name) && !this.staged.installed.has(e.name)).length
+    const dropping = members.filter((e) => this.staged.installed.has(e.name) && !this.staged.picked.has(e.name)).length
 
     const counts = [
       ...(m && matching !== undefined ? [`${matching} of ${m.entries.filter((e) => !e.default).length} match`] : []),
@@ -1383,7 +1240,7 @@ export class BrowsePanel {
       ...(installed > 0 || !m ? [`${installed} installed`] : []),
       ...(adding > 0 ? [`${adding} to install`] : []),
       ...(dropping > 0 ? [`${dropping} to remove`] : []),
-      ...(m && m.source !== OFFICIAL && !(this.adds.has(m.source) && isRemote(m.source)) ? [cap(m.status)] : []),
+      ...(m && m.source !== OFFICIAL && !(this.staged.adds.has(m.source) && isRemote(m.source)) ? [cap(m.status)] : []),
     ]
 
     return {
@@ -1393,13 +1250,13 @@ export class BrowsePanel {
   }
 
   private badge(id: string): string {
-    const m = this.marketplaceNamed(id)
+    const m = this.staged.named(id)
 
     if (!m) {
       return ''
     }
 
-    const auto = isRemote(m.source) && (this.want.get(m.source) ?? m.auto) ? `${MARKS.auto} auto-update` : ''
+    const auto = isRemote(m.source) && this.staged.auto(m) ? `${MARKS.auto} auto-update` : ''
 
     return [auto, this.status(m)].map((part) => (part ? `  ${this.p.dim(part)}` : '')).join('')
   }
@@ -1427,7 +1284,7 @@ export class BrowsePanel {
     }
 
     const m = found.listed
-    const known = this.known(m.source)
+    const known = this.staged.known(m.source)
     const failure = this.failed.get(m.source)
 
     const facts = [
@@ -1457,59 +1314,26 @@ export class BrowsePanel {
   }
 
   private addedNote(known: Marketplace): string {
-    return this.adds.has(known.source) ? 'Will add' : 'Added'
-  }
-
-  private changes(): number {
-    return this.adds.size + this.removes.size + this.want.size
-  }
-
-  private dirty(): boolean {
-    const { picked, renew } = this.result()
-
-    return (
-      this.changes() > 0 ||
-      renew.length > 0 ||
-      picked.size !== this.installed.size ||
-      !picked.isSubsetOf(this.installed)
-    )
+    return this.staged.adds.has(known.source) ? 'Will add' : 'Added'
   }
 
   private mark(entry: PaletteEntry): string {
     const tuned = this.tuned.has(entry.name) ? `  ${this.p.warn(MARKS.on)}` : ''
 
-    if (!this.updates.has(entry.name) || !this.installed.has(entry.name)) {
+    if (!this.staged.outdated(entry.name)) {
       return tuned
     }
 
-    return `${tuned}${this.renew.has(entry.name) ? `  ${this.p.bold(`${MARKS.update} update`)}` : `  ${this.p.dim(MARKS.update)}`}`
+    return `${tuned}${this.staged.renew.has(entry.name) ? `  ${this.p.bold(`${MARKS.update} update`)}` : `  ${this.p.dim(MARKS.update)}`}`
   }
 
   private toggleRenew(): void {
-    const list = this.inside
-    const row = list.focusedRow()
-
-    const names = (row ? list.inside(row) : [])
-      .map((e) => e.name)
-      .filter((name) => this.updates.has(name) && this.installed.has(name))
-
-    if (names.length === 0) {
-      return
-    }
-
-    const on = names.some((name) => !this.renew.has(name))
-
-    for (const name of names) {
-      if (on) {
-        this.renew.add(name)
-      } else {
-        this.renew.delete(name)
-      }
-    }
+    const row = this.inside.focusedRow()
+    this.staged.toggleRenew((row ? this.inside.inside(row) : []).map((e) => e.name))
   }
 
   private leave(to: number | undefined): void {
-    if (this.dirty()) {
+    if (this.staged.dirty()) {
       this.leaving = { to }
 
       return
@@ -1523,7 +1347,7 @@ export class BrowsePanel {
     if (this.leaving) {
       this.goto = this.leaving.to
       this.state = 'cancel'
-    } else if ((this.phase === 'browse' || this.phase === 'review') && this.dirty()) {
+    } else if ((this.phase === 'browse' || this.phase === 'review') && this.staged.dirty()) {
       this.help = undefined
       this.removing = undefined
       this.leaving = { to: undefined }
@@ -1591,35 +1415,27 @@ export class BrowsePanel {
     this.redraw()
   }
 
-  private pending() {
-    const entries = this.entries().filter((e) => !e.default)
-
-    return {
-      names: entries.filter((e) => this.picked.has(e.name) && !this.installed.has(e.name)),
-      dropped: entries.filter((e) => this.installed.has(e.name) && !this.picked.has(e.name)),
-    }
-  }
-
   private marketplaceChanges(): string[] {
     const rows: string[] = []
+    const { installed, picked } = this.staged
 
-    for (const m of this.adds.values()) {
-      const auto = m.source !== OFFICIAL && (this.want.get(m.source) ?? m.auto) ? 'updates on its own' : ''
+    for (const m of this.staged.adds.values()) {
+      const auto = m.source !== OFFICIAL && this.staged.auto(m) ? 'updates on its own' : ''
       rows.push(
         `+ ${m.id}  ${this.p.dim([m.source === OFFICIAL ? 'The official marketplace' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(' · '))}`,
       )
     }
 
-    for (const source of this.removes) {
-      const m = this.marketplaces.find((x) => x.source === source)
-      const stay = (m?.entries ?? []).filter((e) => !e.default && this.installed.has(e.name) && this.picked.has(e.name))
+    for (const source of this.staged.removes) {
+      const m = this.staged.marketplaces.find((x) => x.source === source)
+      const stay = (m?.entries ?? []).filter((e) => !e.default && installed.has(e.name) && picked.has(e.name))
       rows.push(
         `- ${m?.id ?? source}  ${this.p.dim([m?.shown ?? shownSource(source), stay.length > 0 ? `its ${counted(stay.length)} installed keep working` : ''].filter(Boolean).join(' · '))}`,
       )
     }
 
-    for (const [source, on] of this.want) {
-      const m = this.marketplaces.find((x) => x.source === source)
+    for (const [source, on] of this.staged.want) {
+      const m = this.staged.marketplaces.find((x) => x.source === source)
 
       if (m) {
         rows.push(
@@ -1633,9 +1449,9 @@ export class BrowsePanel {
 
   private reviewLines(): string[] {
     const marketplaces = this.marketplaceChanges()
-    const { names, dropped } = this.pending()
+    const { names, dropped } = this.staged.pending()
     const renew = new Set(this.result().renew)
-    const renewed = this.entries().filter((e) => renew.has(e.name))
+    const renewed = this.staged.entries().filter((e) => renew.has(e.name))
     const width = Math.max(0, ...[...names, ...dropped, ...renewed].map((e) => e.name.length))
 
     const palette = (sign: string, e: PaletteEntry) =>
@@ -1667,12 +1483,12 @@ export class BrowsePanel {
   }
 
   private summary(): string {
-    const { names, dropped } = this.pending()
-    const added = this.adds.size
+    const { names, dropped } = this.staged.pending()
+    const added = this.staged.adds.size
 
     return [
       added > 0 ? `${added} marketplace${added === 1 ? '' : 's'} added` : '',
-      this.removes.size > 0 ? `${this.removes.size} removed` : '',
+      this.staged.removes.size > 0 ? `${this.staged.removes.size} removed` : '',
       names.length > 0 ? `${names.length} installed` : '',
       dropped.length > 0 ? `${dropped.length} removed` : '',
       this.result().renew.length > 0 ? `${this.result().renew.length} updated` : '',
@@ -1761,7 +1577,7 @@ export class BrowsePanel {
 
     const updating = this.busy.values().some((text) => text === 'Updating…') ? 'Updating… · ' : ''
     const list = this.list
-    const dropped = this.removes.size
+    const dropped = this.staged.removes.size
     const removing = dropped > 0 ? ` · ${dropped} marketplace${dropped === 1 ? '' : 's'} to remove` : ''
 
     return `${updating}${list.matched()}/${list.total()} · ${list.pickedCount()} picked${removing}`
@@ -1801,13 +1617,13 @@ export class BrowsePanel {
   }
 
   private paletteState(entry: PaletteEntry): string {
-    const now = this.picked.has(entry.name)
-    const was = this.installed.has(entry.name)
+    const now = this.staged.picked.has(entry.name)
+    const was = this.staged.installed.has(entry.name)
     const state = now && was ? 'Installed' : now ? 'Will install' : was ? 'Will remove' : 'Not installed'
 
     const update =
-      now && was && this.updates.has(entry.name)
-        ? this.renew.has(entry.name)
+      now && this.staged.outdated(entry.name)
+        ? this.staged.renew.has(entry.name)
           ? ' · Will update'
           : ' · Update ready'
         : ''
@@ -1826,7 +1642,7 @@ export class BrowsePanel {
       return EMPTY
     }
 
-    const marketplace = this.marketplaceNamed(row.name)
+    const marketplace = this.staged.named(row.name)
 
     if (marketplace) {
       return this.marketplaceDetail(marketplace, width)
@@ -1842,7 +1658,7 @@ export class BrowsePanel {
 
     if (row?.kind === 'catalog') {
       const members = this.inside.inside(row)
-      const installed = members.filter((e) => this.installed.has(e.name)).length
+      const installed = members.filter((e) => this.staged.installed.has(e.name)).length
 
       return [
         `${this.p.bold(row.name)}${row.native ? ` ${this.p.dim(row.native)}` : ''}`,
@@ -1884,16 +1700,14 @@ export class BrowsePanel {
   }
 
   private marketplaceDetail(m: Marketplace, width: number): Detail {
-    const auto = isRemote(m.source)
-      ? `Auto-update ${(this.want.get(m.source) ?? m.auto) ? 'on' : 'off'}`
-      : cap(m.status)
+    const auto = isRemote(m.source) ? `Auto-update ${this.staged.auto(m) ? 'on' : 'off'}` : cap(m.status)
 
     const failure = this.failed.get(m.source)
 
-    const staged = this.adds.has(m.source)
+    const staged = this.staged.adds.has(m.source)
       ? ['Will add']
-      : this.want.has(m.source)
-        ? [`Auto-update turns ${this.want.get(m.source) ? 'on' : 'off'}`]
+      : this.staged.want.has(m.source)
+        ? [`Auto-update turns ${this.staged.want.get(m.source) ? 'on' : 'off'}`]
         : []
 
     return {
@@ -1950,7 +1764,7 @@ export class BrowsePanel {
     }
 
     const m = row.listed
-    const known = this.known(m.source)
+    const known = this.staged.known(m.source)
 
     const note = known
       ? this.addedNote(known)
@@ -2057,7 +1871,7 @@ export class BrowsePanel {
     }
 
     const filter = this.field.value
-    const apply: Hint[] = this.dirty() ? [['enter', 'apply']] : []
+    const apply: Hint[] = this.staged.dirty() ? [['enter', 'apply']] : []
     const tail: Hint[] = [...(filter ? [['bksp', 'edit'] as Hint] : []), ['?', 'keys']]
 
     return {
@@ -2081,11 +1895,11 @@ export class BrowsePanel {
       return [row.expanded ? ['←', 'close'] : ['→', 'open'], ['space', 'pick']]
     }
 
-    const renewable = row?.kind === 'palette' && this.updates.has(row.entry.name) && this.installed.has(row.entry.name)
+    const renewable = row?.kind === 'palette' && this.staged.outdated(row.entry.name)
 
     return [
       ['space', 'pick'],
-      ...(renewable ? [['ctrl+r', this.renew.has(row.entry.name) ? 'keep' : 'update'] as Hint] : []),
+      ...(renewable ? [['ctrl+r', this.staged.renew.has(row.entry.name) ? 'keep' : 'update'] as Hint] : []),
       ...apply,
     ]
   }
@@ -2107,7 +1921,7 @@ export class BrowsePanel {
       return []
     }
 
-    const known = this.known(source)
+    const known = this.staged.known(source)
 
     if (!known) {
       return [
@@ -2116,7 +1930,7 @@ export class BrowsePanel {
       ]
     }
 
-    return [...(this.adds.has(known.source) ? [['space', 'undo'] as Hint] : []), ['enter', 'go to it']]
+    return [...(this.staged.adds.has(known.source) ? [['space', 'undo'] as Hint] : []), ['enter', 'go to it']]
   }
 
   private cardKeys(apply: Hint[]): Hint[] {
@@ -2370,7 +2184,7 @@ export class BrowsePanel {
       {
         label: 'Apply',
         text: 'enter  reviews and applies  ·  esc cancels',
-        ...when(this.dirty(), () => this.finish()),
+        ...when(this.staged.dirty(), () => this.finish()),
       },
       ...screens,
       close,

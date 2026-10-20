@@ -4,7 +4,8 @@ import { test } from 'node:test'
 import cells from 'fast-string-width'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import type { Listed, Listing } from '../../store/marketplace-index.ts'
-import { type BrowseIo, BrowsePanel, type Marketplace } from './browse.ts'
+import { BrowsePanel } from './browse.ts'
+import type { BrowseIo, Marketplace } from './types.ts'
 
 function entry(name: string, catalog?: string): PaletteEntry {
   return {
