@@ -483,7 +483,7 @@ __tt_pv_standing() {
 
 __tt_pv_foot() {
   setopt localoptions extendedglob
-  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] on=$pl badge="" lead="" note="" right="" ver="" vst text line plain hex tb=EDIT
+  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] on=$pl badge="" pre="" lead="" note="" right="" ver="" vst text line plain hex tb=EDIT
   local -a kk=() kl=() seg=()
   local -i end=$1 i lwid rwid vwid rend room
   (( color )) || b= d= z= y= on=
@@ -496,15 +496,16 @@ __tt_pv_foot() {
   elif (( help )); then
     badge=HELP right=$b"? esc"$z$d" close"$z
   elif [[ -n $pick ]]; then
-    badge='PREVIEW (APPLY)' lead="$pick →"
+    badge='PREVIEW (APPLY)' pre="$pick → "
     (( te )) && badge="$tb (APPLY)"
     for (( i = 1; i <= ${#plabel}; i++ )); do
+      (( i > 1 )) && lead+=" "
       if (( i != pk )); then
-        lead+=" "$d${plabel[i]}$z
+        lead+=$d${plabel[i]}$z
       elif (( color )); then
-        lead+=" "$on${plabel[i]}$z
+        lead+=$on${plabel[i]}$z
       else
-        lead+=" [${${plabel[i]# }% }]"
+        lead+="[${${plabel[i]# }% }]"
       fi
     done
     if [[ $mode == pin ]]; then
@@ -597,7 +598,7 @@ __tt_pv_foot() {
   fi
   while :; do
     seg=()
-    [[ -n $lead ]] && seg+=("$lead")
+    [[ -n $lead ]] && seg+=("$pre$lead")
     [[ -n $note ]] && seg+=("$d$note$z")
     for (( i = 1; i <= ${#kk}; i++ )); do
       seg+=("$b${kk[i]}$z$d ${kl[i]}$z")
@@ -620,6 +621,8 @@ __tt_pv_foot() {
       ver=""
     elif [[ -n $note ]]; then
       note=""
+    elif [[ -n $pre ]]; then
+      pre=""
     elif (( ${#kk} > 2 )); then
       kk[-2]=() kl[-2]=()
     elif [[ -n $right ]]; then
@@ -645,13 +648,13 @@ __tt_pv_foot() {
   [[ -n $badge ]] && (( zc += ${(m)#badge} + (color ? 4 : 3) ))
   if [[ -n $lead ]]; then
     if [[ -n $pick ]]; then
-      zw=$(( zc + ${(m)#pick} + 2 ))
+      zw=$(( zc + ${(m)#pre} - 1 ))
       for (( i = 1; i <= ${#plabel}; i++ )); do
         pvz+=("$ph $(( zw + 1 )) $(( zw + ${(m)#plabel[i]} )) pick $i")
         (( zw += ${(m)#plabel[i]} + 1 ))
       done
     fi
-    plain=${lead//$'\e'\[[0-9;]##m/}
+    plain=$pre${lead//$'\e'\[[0-9;]##m/}
     (( zc += ${(m)#plain} + 3 ))
   fi
   [[ -n $note ]] && (( zc += ${(m)#note} + 3 ))
