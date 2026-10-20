@@ -36,6 +36,9 @@ import { MARKS } from './style.ts'
 
 const ROWS = BASE.length + PAIRS.length
 
+const LEAVE =
+  'esc  ctrl+c  leaves, asking first when something changed: y saves, n discards, esc keeps editing  ·  ctrl+c  again discards'
+
 export interface Channel {
   key: keyof Oklch
   label: string
@@ -462,7 +465,6 @@ export class PaletteEditor {
     const others = (this.options.palettes ?? []).length > 0
     const roomy = list && this.roomy
     const when = (on: boolean, key: string) => (on ? { run: () => this.press(key) } : {})
-    const leave = 'esc  leaves, asking first when something changed: y saves, n discards, esc keeps editing'
     const close: Topic = { label: 'Close', text: '?  esc', run: () => {} }
 
     const pictures: Topic[] = this.options.find
@@ -486,7 +488,7 @@ export class PaletteEditor {
         { label: 'Slots', text: 'enter  keeps these seeds and tunes the slots one by one', ...when(true, 'enter') },
         { label: 'Open', text: 'o  starts from another palette’s colors', ...when(others, 'o') },
         ...pictures,
-        { label: 'Leave', text: leave, ...when(true, 'esc') },
+        { label: 'Leave', text: LEAVE, ...when(true, 'esc') },
         close,
       ]
     }
@@ -567,7 +569,7 @@ export class PaletteEditor {
       ...pictures,
       { label: 'Compare', text: 'space  shows the colors you started from, on the terminal too', ...when(true, ' ') },
       { label: 'Save', text: 's  saves', ...when(true, 's') },
-      { label: 'Leave', text: leave, ...when(list, 'esc') },
+      { label: 'Leave', text: LEAVE, ...when(list, 'esc') },
       close,
     ]
   }
@@ -649,6 +651,12 @@ export class PaletteEditor {
 
   press(key: string): void {
     this.notice = undefined
+
+    if (key === 'ctrl-c') {
+      this.interrupt()
+
+      return
+    }
 
     if (this.help) {
       const answer = this.help.key(key)
@@ -879,6 +887,29 @@ export class PaletteEditor {
     } else {
       this.result = 'cancelled'
     }
+  }
+
+  private interrupt(): void {
+    if (this.quitting) {
+      this.quitting = false
+      this.result = 'cancelled'
+
+      return
+    }
+
+    this.help = undefined
+    this.overlay = undefined
+    this.menu = undefined
+    this.typing = undefined
+    this.inspect = false
+    this.spot = undefined
+    this.compare = false
+
+    if (this.mode === 'tune') {
+      this.tuneKey('enter')
+    }
+
+    this.leave()
   }
 
   private quitKey(key: string): void {

@@ -273,7 +273,7 @@ test('the Remove marketplace row asks first, and on yes takes the marketplace of
   assert.ok(panel.picked.has('alice@pastel/dusk'))
   assert.match(frames, /Remove alice@pastel\? Its installed palettes stay installed {3}y remove {3}n keep +esc back/)
   assert.match(frames, /\(\d+\/\d+ · 2 picked · 1 marketplace to remove\)/)
-  const gone = await drive([...REMOVE, '\x1b'], { installed: ['miku'] })
+  const gone = await drive([...REMOVE, '\x1b', 'n'], { installed: ['miku'] })
   assert.deepEqual(gone.panel.removes, ['alice/ttheme-pastel'])
   assert.doesNotMatch(gone.last, /^ {4}[●○] alice@pastel/m)
   assert.match(gone.last, /^ ▌ {2}● official +│/m)
@@ -346,7 +346,8 @@ test('esc in the form goes back to the marketplaces keeping what was typed, and 
   assert.match(left.last, /│ │ bob\/ttheme-neon +│ │$/m)
   assert.match(left.last, /\[BROWSE\] enter open/)
   assert.deepEqual(left.panel.adds, [])
-  const again = await drive([...ADD, ...'bob/ttheme-neon', '\r', '\x1b', 120, '\r', '\r', 20, '\x03'], { io: slow })
+  const twice = ['\x03', '\x03']
+  const again = await drive([...ADD, ...'bob/ttheme-neon', '\r', '\x1b', 120, '\r', '\r', 20, ...twice], { io: slow })
   assert.equal(fetches, 2)
   assert.deepEqual(
     again.panel.adds.map((m) => m.id),
@@ -401,6 +402,14 @@ test('inside the tabs, tab asks for the next screen at once, or first asks about
   assert.equal(apply.next, undefined)
   assert.equal(apply.panel.picked.size, 1)
   assert.ok(apply.ran)
+})
+
+test('ctrl-c or esc with something staged asks before leaving, esc stays, and a second ctrl-c leaves without it', async () => {
+  const { frames, last, result, ran } = await drive([...MIKU, ' ', '\x03', '\x1b', '\x1b', '\x1b', '\x03'])
+  assert.match(frames, /\[BROWSE\] Apply your changes before you leave\? {3}y apply {3}n discard +esc stay/)
+  assert.match(last, /Apply your changes before you leave\?/)
+  assert.equal(result, 'cancel')
+  assert.equal(ran, false)
 })
 
 test('tab does nothing in browse on its own', async () => {

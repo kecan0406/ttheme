@@ -208,7 +208,7 @@ export class BrowsePanel {
   private removing: Marketplace | undefined
   private adding: string | undefined
   private formError: string | undefined
-  private leaving: number | undefined
+  private leaving: { to: number | undefined } | undefined
   private goto: number | undefined
   private listing: Listing | undefined
   private loading = false
@@ -398,7 +398,7 @@ export class BrowsePanel {
 
   private key(key: string): void {
     if (key === 'ctrl-c') {
-      this.state = 'cancel'
+      this.interrupt()
 
       return
     }
@@ -422,7 +422,7 @@ export class BrowsePanel {
         if (key.toLowerCase() === 'y') {
           this.begin()
         } else {
-          this.goto = this.leaving
+          this.goto = this.leaving.to
           this.state = 'cancel'
         }
 
@@ -483,7 +483,7 @@ export class BrowsePanel {
       if (panel) {
         this.back()
       } else {
-        this.state = 'cancel'
+        this.leave(undefined)
       }
     } else if (key === '?') {
       this.help = new Help(this.topics(), this.legend())
@@ -1501,15 +1501,28 @@ export class BrowsePanel {
     }
   }
 
-  private leave(code: number): void {
+  private leave(to: number | undefined): void {
     if (this.dirty()) {
-      this.leaving = code
+      this.leaving = { to }
 
       return
     }
 
-    this.goto = code
+    this.goto = to
     this.state = 'cancel'
+  }
+
+  private interrupt(): void {
+    if (this.leaving) {
+      this.goto = this.leaving.to
+      this.state = 'cancel'
+    } else if ((this.phase === 'browse' || this.phase === 'review') && this.dirty()) {
+      this.help = undefined
+      this.removing = undefined
+      this.leaving = { to: undefined }
+    } else {
+      this.state = 'cancel'
+    }
   }
 
   private steer(key: string): void {

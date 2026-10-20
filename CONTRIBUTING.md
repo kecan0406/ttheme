@@ -359,7 +359,7 @@ panel below, preview's settings, the palette editor and find's grid.
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
 | `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces; `→` on `+ Add marketplace` moves into its form in the panel and on `Search marketplace` opens the search, and `←` in either goes back |
 | `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `+ Add marketplace`, move into its form in the panel, and there fetch the source typed and land in the panel of the marketplace it stages; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; on a palette, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
-| `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
+| `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel, asking first when something is staged; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
 | `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter or the `+ Add marketplace` form's source, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and it names the marks the screen draws |
@@ -369,7 +369,7 @@ panel below, preview's settings, the palette editor and find's grid.
 | `shift+←` `shift+→` | example scene | — |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |
-| `ctrl+c` | quit | cancel |
+| `ctrl+c` | quit | cancel, asking first when something is staged (`y` applies, `n` or a second ctrl+c discards, esc stays) |
 
 The settings panel preview opens over its list and the questions browse asks
 take the keys they list on their own last line while they are open. `find`
@@ -378,7 +378,10 @@ is a screen of its own and keeps its own keys, and so does the palette editor
 the same help as browse's (`src/tui/help.ts`) over the screen, with the keys of
 the mode it is in, and docs/usage.md describes; its esc, once something changed, opens a
 Save changes? dialog (`y` saves and leaves, `n` leaves without saving, esc keeps
-editing, and ctrl+c does nothing there).
+editing), and ctrl+c leaves from anywhere in it the same way — a tune it
+interrupts is kept, so it counts as a change — while a second ctrl+c in the
+dialog leaves without saving. Every Node screen leaves on ctrl+c; browse and
+the editor, which hold changes until they are applied or saved, ask first.
 
 Preview's panel (`tab`, `→` or `ctrl+e` on a palette) has no filter, so it uses
 letters too. It is one list — the picture's fields, an Edit palette button, then

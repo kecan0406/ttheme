@@ -132,7 +132,7 @@ test('esc asks to save changes: y saves, n leaves without saving, esc and other 
   press(e, 'esc')
   assert.match(screen(e), /\[EDIT \(QUIT\)\] Save changes\?/)
   assert.match(renderEditor(e, 80, 24, false).join('\n'), /1 color changed/)
-  press(e, 'x', 'q', 'ctrl-c')
+  press(e, 'x', 'q')
   assert.equal(e.quitting, true)
   assert.equal(e.result, undefined)
   press(e, 'esc')
@@ -165,9 +165,14 @@ test('a window too small for the editor still asks whether to save when esc leav
   assert.equal(e.result, 'cancelled')
 })
 
-test('ctrl-c does not leave the editor', () => {
-  assert.equal(press(editor(), 'ctrl-c').result, undefined)
-  assert.equal(press(editor(), 'tab', '9', 'enter', 'ctrl-c').result, undefined)
+test('ctrl-c leaves the editor as esc does, asking first when something changed, and a second ctrl-c discards', () => {
+  assert.equal(press(editor(), 'ctrl-c').result, 'cancelled')
+  const e = press(editor(), 'tab', '9', 'ctrl-c')
+  assert.equal(e.mode, 'list')
+  assert.equal(e.quitting, true)
+  assert.equal(e.result, undefined)
+  press(e, 'ctrl-c')
+  assert.equal(e.result, 'cancelled')
 })
 
 test('the screen fits 80×24 and says what it needs below that', () => {

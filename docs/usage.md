@@ -711,7 +711,8 @@ differs from the marketplace's colors, and `s` after it drops the tone. The keys
   from. `?` opens the help, as in Browse, with the keys of the mode you are in;
   `s` saves, and esc, once something changed, asks
   Save changes? — `y` or enter on Yes saves and leaves, `n` leaves without
-  saving, esc keeps editing; ctrl+c does nothing in the editor.
+  saving, esc keeps editing. ctrl+c leaves from anywhere in the editor and asks
+  the same, and a second ctrl+c leaves without saving.
 - Behind the editor lies the palette's own picture, framed as the terminal
   shows it and tinted with the colors being edited, so a change to the
   background, the cursor or a signature color shows on it at once (Ghostty,
