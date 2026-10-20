@@ -27,21 +27,9 @@ import { Screen } from '../screen.ts'
 import { ansiFg, ansiSquares, FG_RESET, MARKS, type Paint, painter, SPINNER } from '../style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from '../terminal.ts'
 import { zone } from '../zones.ts'
+import { Review } from './review.ts'
 import { Staged } from './staged.ts'
-import type {
-  Action,
-  BrowseIo,
-  BrowseOptions,
-  BrowseResult,
-  Detail,
-  Found,
-  Marketplace,
-  Report,
-  Row,
-  Spot,
-} from './types.ts'
-
-type Phase = 'browse' | 'review' | 'applying' | 'done'
+import type { Action, BrowseIo, BrowseOptions, BrowseResult, Detail, Found, Marketplace, Row, Spot } from './types.ts'
 
 type Side = 'cards' | 'panel' | 'form'
 
@@ -116,12 +104,7 @@ export class BrowsePanel {
   private readonly hint: SearchHint
   private screen: Screen | undefined
   private state: State = 'active'
-  private phase: Phase = 'browse'
-  private offset = 0
-  private started = false
-  private log: string[] = []
-  private working = ''
-  private stopped: Error | undefined
+  private readonly review: Review
   private beat = 0
   private removing: Marketplace | undefined
   private adding: string | undefined
@@ -150,6 +133,18 @@ export class BrowsePanel {
     this.output = opts.output
     this.live = opts.lookups ?? true
     this.paint = opts.onFocus
+    this.review = new Review({
+      staged: this.staged,
+      p: this.p,
+      hub: this.hub,
+      color: this.color,
+      span: () => this.span(),
+      columns: () => this.columns(),
+      beat: () => this.beat,
+      more: (step, count) => this.more(step, count),
+      redraw: () => this.redraw(),
+      apply: (result, report) => this.track(this.io.apply(result, report)),
+    })
     this.list = new PaletteList<Row>({
       entries: this.staged.entries(),
       picked: this.staged.picked,
@@ -234,7 +229,7 @@ export class BrowsePanel {
 
           return {
             lines,
-            ticking: this.phase === 'applying' || this.fetching() || this.standing?.standing === 'checking',
+            ticking: this.review.phase === 'applying' || this.fetching() || this.standing?.standing === 'checking',
           }
         },
         beat: () => {
@@ -278,15 +273,15 @@ export class BrowsePanel {
   }
 
   applied(): boolean {
-    return this.started
+    return this.review.started
   }
 
   lines(): string[] {
-    return this.log
+    return this.review.log
   }
 
   failure(): Error | undefined {
-    return this.stopped
+    return this.review.stopped
   }
 
   next(): number | undefined {
@@ -327,7 +322,7 @@ export class BrowsePanel {
         this.leaving = undefined
       } else if (/^[yn]$/i.test(key)) {
         if (key.toLowerCase() === 'y') {
-          this.begin()
+          this.review.begin()
         } else {
           this.goto = this.leaving.to
           this.state = 'cancel'
@@ -347,8 +342,10 @@ export class BrowsePanel {
       return
     }
 
-    if (this.phase !== 'browse') {
-      this.steer(key)
+    if (this.review.phase !== 'browse') {
+      if (this.review.steer(key)) {
+        this.state = 'submit'
+      }
 
       return
     }
@@ -380,7 +377,7 @@ export class BrowsePanel {
       } else if (opens) {
         this.activate()
       } else {
-        this.finish()
+        this.review.open()
       }
     } else if ((key === 'esc' || key === 'ctrl-u') && this.field.value) {
       this.clear()
@@ -628,13 +625,6 @@ export class BrowsePanel {
     )
   }
 
-  private finish(): void {
-    if (this.staged.dirty()) {
-      this.phase = 'review'
-      this.offset = 0
-    }
-  }
-
   private enter(): boolean {
     this.follow()
 
@@ -685,7 +675,7 @@ export class BrowsePanel {
       return
     }
 
-    if (this.phase !== 'browse' || this.removing || this.leaving !== undefined) {
+    if (this.review.phase !== 'browse' || this.removing || this.leaving !== undefined) {
       return
     }
 
@@ -729,10 +719,10 @@ export class BrowsePanel {
       return
     }
 
-    const free = this.phase === 'browse' && this.leaving === undefined && !this.removing
+    const free = this.review.phase === 'browse' && this.leaving === undefined && !this.removing
 
     if (event.action === 'wheel') {
-      if (!event.sideways && (free || this.phase !== 'browse')) {
+      if (!event.sideways && (free || this.review.phase !== 'browse')) {
         this.wheel(event.wheel, this.split > 0 && event.col >= this.split)
       }
 
@@ -753,8 +743,8 @@ export class BrowsePanel {
       if (spot.kind === 'key') {
         this.key(spot.key)
       } else if (spot.kind === 'page') {
-        if (this.phase !== 'browse') {
-          this.scroll(spot.step * this.span())
+        if (this.review.phase !== 'browse') {
+          this.review.scroll(spot.step * this.span())
         } else if (free && this.side === (spot.pane ? 'panel' : 'cards')) {
           this.move(spot.step * (spot.pane ? this.inside : this.current()).page())
         }
@@ -788,8 +778,8 @@ export class BrowsePanel {
   }
 
   private wheel(step: number, panel: boolean): void {
-    if (this.phase !== 'browse') {
-      this.scroll(step)
+    if (this.review.phase !== 'browse') {
+      this.review.scroll(step)
 
       return
     }
@@ -1347,7 +1337,7 @@ export class BrowsePanel {
     if (this.leaving) {
       this.goto = this.leaving.to
       this.state = 'cancel'
-    } else if ((this.phase === 'browse' || this.phase === 'review') && this.staged.dirty()) {
+    } else if ((this.review.phase === 'browse' || this.review.phase === 'review') && this.staged.dirty()) {
       this.help = undefined
       this.removing = undefined
       this.leaving = { to: undefined }
@@ -1356,208 +1346,8 @@ export class BrowsePanel {
     }
   }
 
-  private steer(key: string): void {
-    if (this.phase === 'review') {
-      if (key === 'enter') {
-        this.begin()
-      } else if (key === 'esc') {
-        this.phase = 'browse'
-      }
-    } else if (this.phase === 'done' && (key === 'enter' || key === 'esc')) {
-      this.state = 'submit'
-    }
-
-    const page = key === 'up' ? -1 : key === 'down' ? 1 : pageStep(key, this.span())
-
-    if (page !== undefined) {
-      this.scroll(page)
-    }
-  }
-
-  private scroll(delta: number): void {
-    this.offset = Number.isFinite(delta) ? Math.max(0, this.offset + delta) : delta > 0 ? Number.MAX_SAFE_INTEGER : 0
-    this.redraw()
-  }
-
   private span(): number {
     return Math.max(MIN_ITEMS, this.rows() - (this.hub ? 1 : 0) - 4)
-  }
-
-  private begin(): void {
-    this.phase = 'applying'
-    this.started = true
-    this.offset = 0
-    this.log = []
-    this.working = ''
-
-    const report: Report = {
-      say: (line) => {
-        this.log.push(...line.split('\n'))
-        this.redraw()
-      },
-      status: (text) => {
-        this.working = text
-        this.redraw()
-      },
-    }
-
-    this.track(this.io.apply(this.result(), report)).then(
-      () => this.ended(),
-      (error: Error) => this.ended(error),
-    )
-  }
-
-  private ended(error?: Error): void {
-    this.working = ''
-    this.stopped = error
-    this.phase = 'done'
-    this.offset = 0
-    this.redraw()
-  }
-
-  private marketplaceChanges(): string[] {
-    const rows: string[] = []
-    const { installed, picked } = this.staged
-
-    for (const m of this.staged.adds.values()) {
-      const auto = m.source !== OFFICIAL && this.staged.auto(m) ? 'updates on its own' : ''
-      rows.push(
-        `+ ${m.id}  ${this.p.dim([m.source === OFFICIAL ? 'The official marketplace' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(' · '))}`,
-      )
-    }
-
-    for (const source of this.staged.removes) {
-      const m = this.staged.marketplaces.find((x) => x.source === source)
-      const stay = (m?.entries ?? []).filter((e) => !e.default && installed.has(e.name) && picked.has(e.name))
-      rows.push(
-        `- ${m?.id ?? source}  ${this.p.dim([m?.shown ?? shownSource(source), stay.length > 0 ? `its ${counted(stay.length)} installed keep working` : ''].filter(Boolean).join(' · '))}`,
-      )
-    }
-
-    for (const [source, on] of this.staged.want) {
-      const m = this.staged.marketplaces.find((x) => x.source === source)
-
-      if (m) {
-        rows.push(
-          `${MARKS.auto} ${m.id}  ${this.p.dim(on ? 'updates on its own from now' : 'stops updating on its own')}`,
-        )
-      }
-    }
-
-    return rows
-  }
-
-  private reviewLines(): string[] {
-    const marketplaces = this.marketplaceChanges()
-    const { names, dropped } = this.staged.pending()
-    const renew = new Set(this.result().renew)
-    const renewed = this.staged.entries().filter((e) => renew.has(e.name))
-    const width = Math.max(0, ...[...names, ...dropped, ...renewed].map((e) => e.name.length))
-
-    const palette = (sign: string, e: PaletteEntry) =>
-      `   ${sign} ${e.name.padEnd(width)}  ${this.p.dim(e.catalog ?? '')}`
-
-    const counts = [
-      names.length > 0 ? `${names.length} to install` : '',
-      dropped.length > 0 ? `${dropped.length} to remove` : '',
-      renewed.length > 0 ? `${renewed.length} to update` : '',
-    ].filter(Boolean)
-
-    return [
-      ...(marketplaces.length > 0
-        ? [
-            ` ${this.p.bold('Marketplaces')} ${this.p.dim(`(${marketplaces.length})`)}`,
-            ...marketplaces.map((r) => `   ${r}`),
-            '',
-          ]
-        : []),
-      ...(counts.length > 0
-        ? [
-            ` ${this.p.bold('Palettes')} ${this.p.dim(`(${counts.join(' · ')})`)}`,
-            ...names.map((e) => palette('+', e)),
-            ...dropped.map((e) => palette('-', e)),
-            ...renewed.map((e) => palette(MARKS.update, e)),
-          ]
-        : []),
-    ]
-  }
-
-  private summary(): string {
-    const { names, dropped } = this.staged.pending()
-    const added = this.staged.adds.size
-
-    return [
-      added > 0 ? `${added} marketplace${added === 1 ? '' : 's'} added` : '',
-      this.staged.removes.size > 0 ? `${this.staged.removes.size} removed` : '',
-      names.length > 0 ? `${names.length} installed` : '',
-      dropped.length > 0 ? `${dropped.length} removed` : '',
-      this.result().renew.length > 0 ? `${this.result().renew.length} updated` : '',
-    ]
-      .filter(Boolean)
-      .join(' · ')
-  }
-
-  private progressLines(): string[] {
-    const lines = this.log.map((line) => ` ${line}`)
-
-    if (this.phase === 'applying') {
-      const frame = SPINNER[this.beat % SPINNER.length]
-      lines.push(` ${this.p.dim(`${frame} ${this.working || 'Working…'}`)}`)
-    } else if (this.stopped) {
-      lines.push(
-        '',
-        ...wrapText(inert(this.stopped.message), Math.max(20, this.columns() - 6)).map(
-          (l, i) => ` ${i === 0 ? this.p.error(MARKS.miss) : ' '} ${l}`,
-        ),
-      )
-    }
-
-    return lines
-  }
-
-  private frame(cols: number, rows: number): string {
-    const width = cols - 1
-    const review = this.phase === 'review'
-    const lines = review ? this.reviewLines() : this.progressLines()
-
-    const title =
-      this.phase === 'review'
-        ? `${this.p.bold('Review changes')}`
-        : this.phase === 'applying'
-          ? this.p.bold('Applying changes')
-          : this.stopped
-            ? `${this.p.error(MARKS.miss)} ${this.p.bold('Stopped')}`
-            : `${this.p.bold(`${MARKS.ok} Applied`)} ${this.p.dim(this.summary() ? `(${this.summary()})` : '')}`
-
-    const room = this.span()
-    const most = Math.max(0, lines.length - room)
-    const top = this.phase === 'applying' ? most : Math.min(this.offset, most)
-    this.offset = top
-    const shown = lines.slice(top, top + room)
-    const below = lines.length - top - shown.length
-    const body = [top > 0 ? ` ${this.more(-1, top)}` : '', ...shown]
-
-    while (body.length < room + 1) {
-      body.push('')
-    }
-
-    body.push(below > 0 ? ` ${this.more(1, below)}` : '')
-    const scroll: Hint[] = most > 0 ? [['↑↓', 'scroll']] : []
-
-    const bar: Bar = review
-      ? { badge: 'BROWSE (APPLY)', keys: [...scroll, ['enter', 'apply']], right: ['esc', 'back'] }
-      : this.phase === 'applying'
-        ? { badge: 'BROWSE (APPLY)', note: 'Keys wait until it ends', keys: [] }
-        : { badge: 'BROWSE (APPLY)', keys: scroll, right: ['enter', 'close'] }
-
-    return [
-      ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
-      fit(` ${title}`, width, false),
-      ...body.map((line) => fit(line, width, false)),
-      ` ${barLine(this.p, bar, width - 1)}`,
-    ]
-      .slice(0, rows)
-      .join('\n')
   }
 
   private more(step: number, count: number, pane?: string): string {
@@ -1984,8 +1774,8 @@ export class BrowsePanel {
       return this.small(cols, rows, MIN_ROWS)
     }
 
-    if (this.phase !== 'browse') {
-      return this.frame(cols, rows)
+    if (this.review.phase !== 'browse') {
+      return this.review.frame(cols, rows)
     }
 
     this.follow()
@@ -2184,7 +1974,7 @@ export class BrowsePanel {
       {
         label: 'Apply',
         text: 'enter  reviews and applies  ·  esc cancels',
-        ...when(this.staged.dirty(), () => this.finish()),
+        ...when(this.staged.dirty(), () => this.review.open()),
       },
       ...screens,
       close,
