@@ -142,7 +142,7 @@ __tt_shown miku && __tt_reload || { print -u2 "__tt_shown kept a picture the pal
 __tt_shown rei && { print -u2 "__tt_shown reloaded between two palettes with no picture"; exit 1 }
 (( reloads == 2 )) || { print -u2 "__tt_shown asked for $reloads reloads"; exit 1 }
 REPLY=; __tt_bg_shown || { print -u2 "__tt_bg_shown did not read shown.conf"; exit 1 }
-[[ $REPLY == miku ]] || { print -u2 "shown.conf did not read back as miku: $REPLY"; exit 1 }
+[[ $REPLY == rei ]] || { print -u2 "shown.conf kept miku after the tab moved to rei, so a picture miku gains later would come up behind rei: $REPLY"; exit 1 }
 TTHEME_SPEC=$TTHEME_PALETTE[kagami]; __tt_sync
 [[ "$(<$bgd/shown.conf)" == "config-file = ?kagami.conf" && $reloads == 3 ]] ||
   { print -u2 "taking the tab did not put its picture up: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
@@ -182,6 +182,15 @@ __tt_bg_saved kagami
 (( reloads == 7 )) || { print -u2 "saving a picture Ghostty does not show reloaded it: reloads=$reloads"; exit 1 }
 __tt_bg_saved kagami rei
 (( reloads == 8 )) || { print -u2 "saving the picture Ghostty shows did not reload it: reloads=$reloads"; exit 1 }
+__tt_shown kagami && __tt_reload
+mv $bgd/kagami.conf $bgd/kagami.gone
+__tt_shown miku && { print -u2 "__tt_shown asked for a reload between a palette whose picture went and one with none"; exit 1 }
+[[ "$(<$bgd/shown.conf)" == "config-file = ?miku.conf" ]] ||
+  { print -u2 "shown.conf kept kagami after its last picture went and the tab moved to miku: $(<$bgd/shown.conf)"; exit 1 }
+mv $bgd/kagami.gone $bgd/kagami.conf
+__tt_bg_saved kagami
+[[ "$(<$bgd/shown.conf)" == "config-file = ?miku.conf" && $reloads == 9 ]] ||
+  { print -u2 "a picture put back on kagami came up behind the tab wearing miku: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
 bgsrc=(); __tt_bg_load homura; bgsize[homura]=60
 __tt_bg_write homura && [[ ! -e $bgd/homura.conf ]] || { print -u2 "tuning a palette with no picture left a conf behind"; ls $bgd; exit 1 }
 print -l "# image safebooru_2 2/3" "background-image = kagami.1a2b3c4d@fill-42.png" "background-image-fit = cover" "background-image-opacity = 0.2" "config-file = ?kagami.1a2b3c4d.tune.conf" "config-file = ?kagami.1a2b3c4d.off.conf" > $bgd/kagami.conf
@@ -1608,7 +1617,8 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   TTHEME_STARTUP=
   answer 1 $ttya 999
   __tt_ghostty_check
-  [[ "$(shown)" == "config-file = ?rei.conf" ]] || { print -u2 "a busy tab painted before ttheme went off put its picture back up: $(shown)"; exit 1 }
+  [[ "$(shown)" == "config-file = ?.conf" && $reloads == 2 ]] ||
+    { print -u2 "a busy tab painted before ttheme went off did not take the picture down, or reloaded with none to take: $(shown) reloads=$reloads"; exit 1 }
   TTHEME_STARTUP=miku
   osascript() {
     print >> $asks

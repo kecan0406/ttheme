@@ -291,10 +291,9 @@ __tt_shown() {
   [[ $2 == force ]] || (( TTHEME_FRONT || TTHEME_TMUX )) || return 1
   __tt_bg_shown
   was=$REPLY
-  [[ $was == $1 ]] && return 1
-  [[ -r $dir/${${1/@/--}/\//--}.conf || ( -n $was && -r $dir/${${was/@/--}/\//--}.conf ) ]] || return 1
-  [[ -d $dir ]] || mkdir -p $dir || return 1
-  __tt_put $dir/shown.conf "config-file = ?${${1/@/--}/\//--}.conf"
+  [[ $was == $1 || ! -d $dir ]] && return 1
+  __tt_put $dir/shown.conf "config-file = ?${${1/@/--}/\//--}.conf" || return 1
+  [[ -r $dir/${${1/@/--}/\//--}.conf || ( -n $was && -r $dir/${${was/@/--}/\//--}.conf ) ]]
 }
 
 __tt_ghostty_took() {
