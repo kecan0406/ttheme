@@ -21,4 +21,4 @@
 
 
 
- [PREVIEW] enter apply   tab edit   ? keys                               esc restore   ttheme ‹version›
+ [PREVIEW] enter apply   tab edit   ? keys                              esc restore   ttheme ‹version›

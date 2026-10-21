@@ -21,4 +21,4 @@ kita  → ~/work · this directory
 
 Replaces konata on ~/work · and below
 Then here · kita pinned to this directory
- [PREVIEW (PIN)] kita → [This directory]  And below    ~/work   enter confirm               esc back
+ [PREVIEW (PIN)] kita → [This directory]  And below    ~/work   enter confirm              esc back

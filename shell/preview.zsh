@@ -202,7 +202,7 @@ __tt_pv_osd() {
 }
 
 __tt_pv_lw() {
-  local -i lw=$(( pw - 2 < 48 ? pw - 2 : 48 )) l=$(( pw * 3 / 10 )) sw=$(( pw * 45 / 100 ))
+  local -i lw=$(( pw - 1 < 48 ? pw - 1 : 48 )) l=$(( pw * 3 / 10 )) sw=$(( pw * 45 / 100 ))
   (( l < 38 )) && l=38
   (( l > 56 )) && l=56
   (( sw > 64 )) && sw=64
@@ -1230,7 +1230,7 @@ __tt_pv_reach() {
 
 __tt_pv_draw() {
   local out line cnt ex ag="" acat="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" nflt="" rsub="" REPLY
-  local -i lw sw split sc se=$(( pw - 2 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
+  local -i lw sw split sc se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
   local -a held
   bgstrip=""
   if [[ -n $flt ]]; then
@@ -1239,7 +1239,7 @@ __tt_pv_draw() {
   fi
   __tt_pv_lw
   lw=$reply[1] sw=$reply[2]
-  split=$(( sw > 0 )) sc=$(( pw - 1 - sw ))
+  split=$(( sw > 0 )) sc=$(( pw - sw ))
   hd=$(( tall ? hub + 4 : 2 )) pvhd=$hd
   h=$(( ph - hd - 3 ))
   (( conf && ! split )) && h=$(( ph - hd - 5 - ${#cvars} ))
@@ -1380,7 +1380,7 @@ __tt_pv_draw() {
     fi
     out+=$line$'\e[K\n'
   done
-  __tt_pv_foot $(( split ? se : pw ))
+  __tt_pv_foot $se
   if (( split )); then
     if (( help && sw >= 48 )); then
       __tt_pv_head 1 $sc $se Help
@@ -1880,7 +1880,7 @@ __tt_te_read() {
   if (( ! wide )); then
     __tt_pv_lw
     wide=${reply[2]}
-    (( wide )) || wide=$(( pw - 2 < 66 ? pw - 3 : 65 ))
+    (( wide )) || wide=$(( pw - 1 < 66 ? pw - 2 : 65 ))
   fi
   tewide=$wide
   rows=$(__tt_cli tone $tename show $wide 2>/dev/null) || return 1
@@ -2367,7 +2367,7 @@ __tt_pv_te_panel() {
 }
 
 __tt_pv_te_draw() {
-  local -i i end=$(( pw - 2 < 66 ? pw - 2 : 66 ))
+  local -i i end=$(( pw - 1 < 66 ? pw - 1 : 66 ))
   for (( i = 1; i < ph; i++ )); do
     out+=$'\e['$i$';1H\e[K'
   done
@@ -2385,7 +2385,7 @@ __tt_pv_te_draw() {
   fi
   (( help )) && __tt_pv_help
   out+=$'\e['$ph';1H'
-  __tt_pv_foot $pw
+  __tt_pv_foot $se
   (( osdt > 0 )) && __tt_pv_osd
   __tt_pv_flush
 }
