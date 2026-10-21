@@ -50,7 +50,9 @@ export async function fetchArt(ref: string): Promise<{ bytes: Uint8Array; path: 
 
   const url = new URL(ref)
 
-  const response = await reach(ref, TIMEOUT, undefined, {
+  if (url.host === WIKIA) url.searchParams.set('format', 'original')
+
+  const response = await reach(url.href, TIMEOUT, undefined, {
     'user-agent': BROWSER,
     accept: 'image/png,image/jpeg,image/*;q=0.8',
     referer: refererOf(url),

@@ -14,6 +14,7 @@ import { type Departure, departures } from '../core/harmonize.ts'
 import { colorsOfTheme } from '../core/manifest.ts'
 import { lookalikes, mirrored, withSlot } from '../core/mirror.ts'
 import { decodeImage, encodeRgba, type Rgba, resample } from '../core/png.ts'
+import type { Colors } from '../core/seeds.ts'
 import {
   type Catalog,
   catalogProblem,
@@ -71,7 +72,11 @@ interface Measured {
 interface Made {
   name: string
   file: string
+  changed: boolean
   written: boolean
+  source?: string
+  nativeNames?: string[]
+  colors: Colors
   base: string
   signature: Departure[]
   turned: { slot: string; rule: string; from: Hex; to: Hex }[]
@@ -569,9 +574,8 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
     const source = target?.official && catalog ? `${ranked.name} + ${codenameIn(shelved, catalog)}` : ranked.name
     const order = target?.official ? next++ : undefined
 
-    const text = paletteToml(
-      draftOf(anchors, ranked, booru, source, { ...(order ? { order } : {}), ...(other ? { other } : {}) }),
-    )
+    const draft = draftOf(anchors, ranked, booru, source, { ...(order ? { order } : {}), ...(other ? { other } : {}) })
+    const text = paletteToml(draft)
 
     const file = target ? join(target.dir, 'palettes', ...(catalog ? [catalog] : []), `${anchors.name}.toml`) : ''
 
@@ -593,7 +597,11 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
     made.push({
       name: target?.id ? `${target.id}/${anchors.name}` : anchors.name,
       file,
-      written: file !== '' && (!existsSync(file) || readFileSync(file, 'utf8') !== text),
+      changed: file === '' || !existsSync(file) || readFileSync(file, 'utf8') !== text,
+      written: false,
+      ...(anchors.source ? { source: anchors.source } : {}),
+      ...(draft.nativeNames ? { nativeNames: draft.nativeNames } : {}),
+      colors: colorsOfTheme(ranked.shade),
       base: ranked.name,
       signature: departures(
         Object.fromEntries(anchors.slots.map(([slot, a]) => [slot, [a.part, a.hex] as const])),
@@ -623,7 +631,10 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
   let installed: string[] = []
 
   if (!dry && target) {
-    for (const m of made.filter((x) => x.written)) writeAtomic(m.file, m.text)
+    for (const m of made.filter((x) => x.changed)) {
+      writeAtomic(m.file, m.text)
+      m.written = true
+    }
 
     if (catalogText !== undefined) writeAtomic(join(target.dir, MARKETPLACE_FILE), catalogText)
 
@@ -637,7 +648,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
     }
   }
 
-  const changed = made.some((m) => m.written) || catalogText !== undefined || installed.length > 0
+  const changed = made.some((m) => m.changed) || catalogText !== undefined || installed.length > 0
   const status = dry || changed ? 'done' : 'unchanged'
 
   if (flags.json) {
@@ -671,7 +682,7 @@ function madeLines(
       ...m.turned.map((t) => `  turned     ${t.slot} ${t.from} → ${t.to}  ${t.rule}`),
       ...m.lookalikes.map((pair) => `  reads as one  ${pair}`),
       ...(m.gate.length > 0 ? m.gate.map((g) => `  gate       ${g}`) : ['  gate       clean']),
-      `  ${dry ? 'would write' : m.written ? 'wrote' : 'unchanged'}  ${m.file || '(no marketplace yet)'}`,
+      `  ${m.changed ? (m.written ? 'wrote' : 'would write') : 'unchanged'}  ${m.file || '(no marketplace yet)'}`,
     ]
   })
 

@@ -39,6 +39,7 @@ const TOP = 12
 const PAIR_HUE = 20
 const PAIR_CHROMA = 12
 const PAIR_TONE = { min: 3, max: 30 }
+const PAIR_SHARE = 0.1
 const EXTREME = { min: 3, max: 97 }
 
 const hex = (r: number, g: number, b: number): Hex =>
@@ -63,7 +64,8 @@ function paired(a: Flat, b: Flat): boolean {
     hueDiff(a.hue, b.hue) <= PAIR_HUE &&
     Math.abs(a.chroma - b.chroma) <= PAIR_CHROMA &&
     tone >= PAIR_TONE.min &&
-    tone <= PAIR_TONE.max
+    tone <= PAIR_TONE.max &&
+    Math.min(a.count, b.count) >= PAIR_SHARE * Math.max(a.count, b.count)
   )
 }
 

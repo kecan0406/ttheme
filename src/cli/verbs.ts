@@ -203,7 +203,7 @@ export const VERB_SPECS: VerbSpec[] = [
     actions: [
       [
         'measure <file|url>',
-        "Count a picture's flat colors, or a box's with --crop — --preview writes a copy at most 800 px wide and reads the box in its pixels",
+        "Count a picture's flat colors, or a box's with --crop — --preview writes a copy at most 800 px on its long side and reads the box in its pixels",
       ],
       [
         'consensus <tag>',
@@ -216,9 +216,16 @@ export const VERB_SPECS: VerbSpec[] = [
     ],
     flags: {
       json: { type: 'boolean', about: 'Print the result as JSON on stdout' },
-      preview: { type: 'boolean', about: 'measure: write a preview at most 800 px wide; --crop is then in its pixels' },
+      preview: {
+        type: 'boolean',
+        about: 'measure: write a preview at most 800 px on its long side; --crop is then in its pixels',
+      },
       crop: { type: 'string', value: 'x,y,w,h', about: 'measure: the box to count' },
-      quant: { type: 'string', value: '<n>', about: "measure: group a JPEG's near-duplicate colors into n levels" },
+      quant: {
+        type: 'string',
+        value: '<n>',
+        about: "measure: group near-duplicate colors — a JPEG's, an antialiased edge's — into n levels a channel",
+      },
       anchors: { type: 'string', value: '<file>', about: 'make: the anchors file' },
       catalog: { type: 'string', value: '<name>', about: 'make: the catalog folder the palettes go in' },
       native: { type: 'string', value: '<title>', about: "make: a new catalog's official title" },

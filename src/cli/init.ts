@@ -403,7 +403,7 @@ async function askSkills(agents: AgentHomes, ours: readonly SkillTarget[]): Prom
 
   return accepted(
     await p.multiselect<SkillTarget>({
-      message: `Add the ${SKILL} skill for your coding agents?\nAsk one to make a palette for a character and it measures the colors on official art — none by default`,
+      message: `Add the ${SKILL} skill for your coding agents?\nAsk one to make a palette for a character and it measures the colors on official art`,
       options: offered.map((target) => ({
         value: target,
         label: SKILL_LABELS[target],
