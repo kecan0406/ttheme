@@ -20,16 +20,16 @@ const TURN = Math.atan2(27.77 - 31.5, 22.82 - 19.49)
 
 export const STROKES: readonly Stroke[] = [
   {
-    start: [13, 19],
-    steps: [{ line: [22.82, 27.77] }, { arc: { center: CORNER, radius: 5, from: TURN, to: 0 } }],
-    width: 8,
-    tone: 1,
-  },
-  {
-    start: [24.49, 31.5],
-    steps: [{ arc: { center: CORNER, radius: 5, from: 0, to: -TURN } }, { line: [13, 44] }],
+    start: [22.82, 27.77],
+    steps: [{ arc: { center: CORNER, radius: 5, from: TURN, to: -TURN } }, { line: [13, 44] }],
     width: 8,
     tone: 2,
+  },
+  {
+    start: [13, 19],
+    steps: [{ line: [22.82, 27.77] }],
+    width: 8,
+    tone: 1,
   },
   {
     start: [34.55, 37.84],
@@ -88,7 +88,7 @@ export const PIXELS: readonly (readonly [number, number, 0 | 1 | 2, number])[] =
   [7, 6, 1, 0.4],
   [5, 7, 1, 0.25],
   [6, 7, 1, 1],
-  [7, 7, 1, 1],
+  [7, 7, 2, 1],
   [5, 8, 2, 0.25],
   [6, 8, 2, 1],
   [7, 8, 2, 1],
