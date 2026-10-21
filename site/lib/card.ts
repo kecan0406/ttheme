@@ -1,11 +1,11 @@
 import { catalogsOf } from '@/lib/catalogs'
 import { FACET_HEIGHT, FACET_LAMP, FACET_WIDTH, facetCorners, facetMesh, facetPoints, shade } from '@/lib/facets'
 import { INIT } from '@/lib/gallery'
-import { GLYPH, glyphSvg, marksOf } from '@/lib/mark'
-import { liftOk, mixOk } from '@/lib/oklab'
 import { type Raster, raster } from '@/lib/raster'
 import type { Marketplace, Theme } from '@/lib/themes'
 import { leadOf } from '@/lib/workspace'
+import { GLYPH, glyphSvg, marksOf } from '../../src/core/mark.ts'
+import { liftOk, mixOk } from '../../src/core/oklab.ts'
 
 export const CARD_WIDTH = 1200
 export const CARD_HEIGHT = 630

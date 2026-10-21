@@ -1,3 +1,4 @@
+import { isHex } from '../core/color.ts'
 import { inMode, listed, type PaletteEntry } from '../core/manifest.ts'
 import { counted } from '../core/text.ts'
 import { alphabetical, marketplaceOf } from '../core/theme.ts'
@@ -286,6 +287,7 @@ export async function runBrowse(): Promise<number> {
   const tty = process.stdout.isTTY === true
   const live = liveOf(process.env, tty, home)
   const look = hub ? (process.env.TTHEME_HUB_LOOK ?? '') : undefined
+  const mark = hub ? (process.env.TTHEME_HUB_MARK ?? '').split(' ').filter(isHex) : []
   const saved = live ? await live.saved(look) : new Map<string, string>()
   const startup = worn(state)
 
@@ -300,7 +302,7 @@ export async function runBrowse(): Promise<number> {
     updates: updateNames(home),
     tuned: tunedNames(readTone(home), shown(home, readMarketplaces(home), false).palettes),
     ...(startup ? { startup } : {}),
-    ...(hub ? { hub, release: () => releaseLine() } : {}),
+    ...(hub ? { hub, release: () => releaseLine(), ...(mark.length === 3 ? { mark } : {}) } : {}),
     due: auto ? dueSources(home, state) : [],
     io: browseIo(home, state, fetched, lookups.signal, (result, report) =>
       into({ say: report.say, set: report.status }, () => applyBrowse(home, marketplaces, result, fetched)),

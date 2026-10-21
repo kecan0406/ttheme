@@ -1,5 +1,7 @@
 import type { Readable, Writable } from 'node:stream'
+import type { Hex } from '../../core/color.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
+import { marksOf } from '../../core/mark.ts'
 import { cells, inert } from '../../core/text.ts'
 import { isRemote, OFFICIAL, TOPIC } from '../../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
@@ -55,6 +57,7 @@ export class BrowsePanel {
   private readonly output: (Writable & { columns?: number; rows?: number }) | undefined
   private maxItems = 12
   private readonly paint: ((entry: PaletteEntry) => void) | undefined
+  private inks: readonly Hex[] | undefined
   private readonly list: PaletteList<Row>
   private readonly panel: Panel
   private readonly search: Search
@@ -84,6 +87,7 @@ export class BrowsePanel {
     this.p = painter(this.color)
     this.form = new AddForm(this.network, this.p)
     this.hub = opts.hub
+    this.inks = opts.mark
     this.release = opts.release
     this.standing = opts.release?.()
     this.owns = opts.owns ?? false
@@ -96,6 +100,7 @@ export class BrowsePanel {
       p: this.p,
       hub: this.hub,
       color: this.color,
+      inks: () => this.inks,
       span: () => this.span(),
       columns: () => this.columns(),
       beat: () => this.beat,
@@ -755,8 +760,9 @@ export class BrowsePanel {
   }
 
   private focus(entry: PaletteEntry): void {
-    if (this.state !== 'submit' && this.state !== 'cancel') {
-      this.paint?.(entry)
+    if (this.paint && this.state !== 'submit' && this.state !== 'cancel') {
+      this.paint(entry)
+      this.inks = marksOf(entry.background, entry.foreground, entry.signature)
     }
   }
 
@@ -1234,7 +1240,7 @@ export class BrowsePanel {
         : this.cards(view, wide, left, width)
 
     const frame = [
-      ...(this.hub ? [fit(hubBar(this.hub, this.color), width, false)] : []),
+      ...(this.hub ? [fit(hubBar(this.hub, this.color, this.inks), width, false)] : []),
       ...head.map((line) => fit(line, width, false)),
       ...main,
       ` ${barLine(this.p, this.footer(), width - 1)}`,

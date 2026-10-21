@@ -1,5 +1,7 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { WIRED } from '../core/wired.ts'
+import { markOf } from '../tui/parts.ts'
+import { type Paint, painter } from '../tui/style.ts'
 
 export interface Flag {
   type: 'boolean' | 'string'
@@ -335,7 +337,15 @@ function listed(verb: VerbSpec, all: boolean): [string, string][] {
   ]
 }
 
-const BANNER = [`ttheme ${pkg.version}`, pkg.description, 'Usage: ttheme <command> [options] [args]']
+export function bannerHead(p: Paint): string {
+  const mark = markOf(p)
+
+  return `${mark ? `${mark} ` : ''}${p.bold('ttheme')} ${pkg.version}`
+}
+
+function bannerOf(color: boolean): string[] {
+  return [bannerHead(painter(color)), pkg.description, 'Usage: ttheme <command> [options] [args]']
+}
 
 const GETTING_HELP: [string, string][] = [
   ['ttheme help', 'The everyday commands'],
@@ -362,8 +372,8 @@ const EXAMPLES: [string, string][] = [
   ['ttheme new rei --from rei', 'Your own rei, <you>@<marketplace>/rei, to edit and share'],
 ]
 
-export function briefText(): string {
-  return [...BANNER, '', 'Use --help to list every command, or init to set ttheme up'].join('\n')
+export function briefText(color = false): string {
+  return [...bannerOf(color), '', 'Use --help to list every command, or init to set ttheme up'].join('\n')
 }
 
 export function commandHelp(verb: VerbSpec): string {
@@ -378,12 +388,12 @@ export function commandHelp(verb: VerbSpec): string {
   ].join('\n')
 }
 
-export function helpText(all: boolean, shell = false): string {
+export function helpText(all: boolean, shell = false, color = false): string {
   const shown = VERB_SPECS.filter((v) => !v.hidden && (all || !v.more) && !(shell && v.section === 'setup'))
   const sections = SECTIONS.filter(({ section }) => shown.some((v) => v.section === section))
 
   return [
-    ...BANNER,
+    ...bannerOf(color),
     'ttheme alone opens Preview and Browse as tabs — Browse installs and removes palettes; tab and shift+tab move between them',
     '',
     'Getting help:',

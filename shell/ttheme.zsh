@@ -506,7 +506,7 @@ __tt_release() {
   __tt_release_tty && __tt_active || return 0
   (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
   local -a at=("") reply
-  local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0 hub=$1
+  local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0 hub=$1 mark=""
   integer checked told trying failed period=86400 now=$(( EPOCHSECONDS * 1000 ))
   [[ $hub == hub ]] && period=3600
   zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
@@ -534,7 +534,8 @@ __tt_release() {
   TTHEME_RELEASE_AT=$at[1]
   zsystem flock -u $fd
   (( spawn )) && __tt_release_spawn
-  (( tell )) && [[ -n $TTHEME_OUTDATED ]] && printf "$TTHEME_OUTDATED\n" $latest $TTHEME_VERSION >&2
+  [[ -t 2 && -z $NO_COLOR && $TERM != dumb && -n $TTHEME_MARK_TEXT ]] && mark="$TTHEME_MARK_TEXT "
+  (( tell )) && [[ -n $TTHEME_OUTDATED ]] && printf "%s$TTHEME_OUTDATED\n" "$mark" $latest $TTHEME_VERSION >&2
   return 0
 }
 
@@ -1568,11 +1569,10 @@ __tt_menu() {
 }
 
 __tt_help() {
-  if [[ $1 == all ]]; then
-    print -r -- $TTHEME_HELP_ALL
-  else
-    print -r -- $TTHEME_HELP
-  fi
+  local text=$TTHEME_HELP
+  [[ $1 == all ]] && text=$TTHEME_HELP_ALL
+  __tt_color && text=$TTHEME_HELP_HEAD$'\n'${text#*$'\n'}
+  print -r -- $text
 }
 
 __tt_usage() {

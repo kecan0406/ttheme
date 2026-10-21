@@ -1,10 +1,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { GLYPH, glyphSvg, marksOf, tileBody } from '@/lib/mark'
 import { fallback, themes } from '@/lib/official'
-import { mixOk } from '@/lib/oklab'
 import { type Raster, raster } from '@/lib/raster'
 import { inMode, type Theme } from '@/lib/themes'
+import { GLYPH, glyphSvg, marksOf, tileBody } from '../src/core/mark.ts'
+import { mixOk } from '../src/core/oklab.ts'
 
 const COLS = 3
 const CARD_W = 280

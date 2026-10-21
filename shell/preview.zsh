@@ -411,7 +411,8 @@ __tt_pv_bg_profiles() {
 }
 
 __tt_pv_bar() {
-  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] on=$pl line=" " title hint="tab next"
+  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] on=$pl line=" " title hint="tab next" mk up mo
+  local -a ink
   local -i i at=${TTHEME_HUB_TABS[(Ie)preview]} len=${#TTHEME_HUB_TITLES}
   (( color )) || z= d= on=
   [[ ${rtype[cur]} == thm ]] && hint="⇧tab switch"
@@ -419,6 +420,18 @@ __tt_pv_bar() {
     (( len += ${#title} + 2 ))
   done
   local -i zc=2
+  if (( color )); then
+    __tt_name_of "$applied"
+    ink=(${=TTHEME_MARK_INKS[$REPLY]})
+    if (( ${#ink} == 3 )); then
+      mo=${ink[1]#\#} up=${ink[2]#\#}
+      printf -v mk '\e[38;2;%d;%d;%dm>\e[38;2;%d;%d;%dmω' $((16#${up:0:2})) $((16#${up:2:2})) $((16#${up:4:2})) $((16#${mo:0:2})) $((16#${mo:2:2})) $((16#${mo:4:2}))
+      mk=$TTHEME_SGR[bold]$mk$TTHEME_SGR[/fg]$TTHEME_SGR[/bold]
+    else
+      mk=$TTHEME_SGR[bold]">"$ac"ω"$TTHEME_SGR[/accent]$TTHEME_SGR[/bold]
+    fi
+    line+=$mk"  " zc+=4 len+=4
+  fi
   for (( i = 1; i <= ${#TTHEME_HUB_TITLES}; i++ )); do
     title=${TTHEME_HUB_TITLES[i]}
     (( i > 1 )) && { line+=" "; (( zc++ )) }
@@ -1831,13 +1844,14 @@ __tt_pv_back() {
 }
 
 __tt_pv_screen() {
-  local err
+  local err REPLY
   local -i at=${TTHEME_HUB_TABS[(Ie)preview]} n=${#TTHEME_HUB_TABS} rc
   local -i to=$(( (at - 1 + $1 + n) % n + 1 ))
   __tt_pv_leave
   while (( to != at )); do
     hubwas="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
-    err=$(TTHEME_HUB=${TTHEME_HUB_TABS[to]} TTHEME_HUB_LOOK=${TTHEME_PAINTED:+$orig} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)
+    __tt_name_of "$orig"
+    err=$(TTHEME_HUB=${TTHEME_HUB_TABS[to]} TTHEME_HUB_LOOK=${TTHEME_PAINTED:+$orig} TTHEME_HUB_MARK=${TTHEME_PAINTED:+$TTHEME_MARK_INKS[$REPLY]} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)
     rc=$?
     if (( rc == TTHEME_HUB_CLOSED )); then
       hubleft=1

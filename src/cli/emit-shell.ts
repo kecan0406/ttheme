@@ -1,6 +1,7 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { SITES } from '../core/booru.ts'
 import { listed, type PaletteEntry, paletteEntry, swatch } from '../core/manifest.ts'
+import { marksOf } from '../core/mark.ts'
 import type { Mode, Setting } from '../core/mode.ts'
 import { SCENES } from '../core/scenes.ts'
 import { alphabetical, marketplaceOf } from '../core/theme.ts'
@@ -9,7 +10,9 @@ import type { Emitter, Output } from '../terminals/emit/types.ts'
 import { TRAITS } from '../terminals/terminal.ts'
 import { HUB_CLOSED, HUB_SWITCH, HUB_TABS } from '../tui/hub.ts'
 import { outdated, STANDING_LINES, UPDATE_HERE } from '../tui/notice.ts'
-import { helpText, VERB_SPECS } from './verbs.ts'
+import { markOf } from '../tui/parts.ts'
+import { painter } from '../tui/style.ts'
+import { bannerHead, helpText, VERB_SPECS } from './verbs.ts'
 
 const UNQUOTABLE = /["$`\\]/
 const CONTROL = /[\p{Cc}\p{Bidi_Control}]/u
@@ -52,6 +55,7 @@ export function palettesZsh(
     '',
     `typeset -g TTHEME_VERSION=${pkg.version}`,
     `typeset -g TTHEME_OUTDATED=${quote(outdated('%s', '%s', UPDATE_HERE))}`,
+    `typeset -g TTHEME_MARK_TEXT=${quote(markOf(painter(true)))}`,
     'typeset -gA TTHEME_STANDING=(',
     ...Object.entries(STANDING_LINES).map(([standing, line]) => `  ${standing} ${quote(line)}`),
     ')',
@@ -94,6 +98,7 @@ export function palettesZsh(
     ')',
     `typeset -g TTHEME_HELP=${quote(helpText(false, true))}`,
     `typeset -g TTHEME_HELP_ALL=${quote(helpText(true, true))}`,
+    `typeset -g TTHEME_HELP_HEAD=${quote(bannerHead(painter(true)))}`,
     '',
     '# the screens the bare ttheme switches between (src/hub.ts): the exit status of a screen run by the CLI says where it went',
     `typeset -ga TTHEME_HUB_TABS=(${HUB_TABS.map((tab) => tab.name).join(' ')})`,
@@ -122,6 +127,11 @@ export function palettesZsh(
           ]
         : [],
     ),
+    ')',
+    '',
+    "# each palette's mark, `>ω` (src/core/mark.ts): its signature colors, each lifted until it reads 3:1 on the palette's background — the hub draws the eye in the second and the mouth in the first",
+    'typeset -gA TTHEME_MARK_INKS=(',
+    ...palettes.map((p) => entry(p, marksOf(p.background, p.foreground, p.signature).join(' '))),
     ')',
     '',
     "# the palettes whose colors your tone moves off their marketplace's (tone.json): lists mark them, and preview's panel offers to reset them",

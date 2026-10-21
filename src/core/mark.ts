@@ -1,5 +1,5 @@
-import { mixOk } from '@/lib/oklab'
-import { contrast, type Hex } from '../../src/core/color.ts'
+import { contrast, type Hex } from './color.ts'
+import { mixOk } from './oklab.ts'
 
 export type Point = readonly [number, number]
 

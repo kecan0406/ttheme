@@ -5,7 +5,10 @@ import { dirname, join } from 'node:path'
 import pkg from '../../package.json' with { type: 'json' }
 import { writeAtomic } from '../store/edits.ts'
 import { configHome } from '../store/paths.ts'
+import { colorless } from '../terminals/osc.ts'
 import { advise, outdated, type ReleaseLine, type Standing, standingLine, UPDATE_HERE } from '../tui/notice.ts'
+import { markOf } from '../tui/parts.ts'
+import { painter } from '../tui/style.ts'
 
 export const UPDATE_COMMAND = `npx ${pkg.name}@latest init`
 
@@ -211,7 +214,9 @@ export function tellRelease(now = Date.now()): void {
     writeSeen({ ...seen, told: now })
   }
 
-  advise([outdatedLine(seen.latest)])
+  const mark = markOf(painter(process.stderr.isTTY === true && !colorless()))
+
+  advise([`${mark ? `${mark} ` : ''}${outdatedLine(seen.latest)}`])
 }
 
 export function upgradeTo(latest: string, args: readonly string[]): number {

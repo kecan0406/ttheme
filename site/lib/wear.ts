@@ -1,7 +1,7 @@
 import type { Point } from '@/lib/facets'
-import { marksOf, tileSvg } from '@/lib/mark'
 import { MODE_KEY, type Mode } from '@/lib/mode'
 import { inMode, pair, type Shade, shades, type Theme } from '@/lib/themes'
+import { marksOf, tileSvg } from '../../src/core/mark.ts'
 
 export const WEAR_KEY = 'ttheme-site-wear'
 

@@ -1,5 +1,6 @@
+import type { Hex } from '../core/color.ts'
 import { fit } from './ansi.ts'
-import { MARKS, type Paint } from './style.ts'
+import { FG_RESET, MARKS, type Paint } from './style.ts'
 import { keyZone } from './zones.ts'
 
 export function tabOf(p: Paint, label: string, on: boolean, mark: (text: string) => string = (text) => text): string {
@@ -8,6 +9,16 @@ export function tabOf(p: Paint, label: string, on: boolean, mark: (text: string)
   }
 
   return on ? p.pill(mark(` ${label} `)) : p.dim(mark(` ${label} `))
+}
+
+export function markOf(p: Paint, inks?: readonly Hex[]): string {
+  const [mouth, upper] = inks ?? []
+
+  if (!p.color) {
+    return ''
+  }
+
+  return mouth && upper ? p.bold(`${p.fg(upper)}>${p.fg(mouth)}ω${FG_RESET}`) : p.bold(`>${p.accent('ω')}`)
 }
 
 export function buttonOf(p: Paint, label: string, state: 'idle' | 'focus' | 'off', danger = false): string {

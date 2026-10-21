@@ -31,6 +31,7 @@ import {
 import { tilde } from '../terminals/common.ts'
 import { WIRINGS, wirings } from '../terminals/index.ts'
 import { liveOf } from '../terminals/live.ts'
+import { colorless } from '../terminals/osc.ts'
 import {
   bashBlock,
   bashFiles,
@@ -48,6 +49,8 @@ import { detectTerminal, settingsFor, TRAITS } from '../terminals/terminal.ts'
 import type { Pointed, Setup } from '../terminals/types.ts'
 import { warpSettings } from '../terminals/warp.ts'
 import { windowsAppData } from '../terminals/windows-terminal.ts'
+import { markOf } from '../tui/parts.ts'
+import { painter } from '../tui/style.ts'
 import { interactive } from '../tui/terminal.ts'
 import { build } from './build.ts'
 import { pickPalettes } from './installs.ts'
@@ -607,7 +610,8 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     return
   }
 
-  p.intro('ttheme init')
+  const mark = markOf(painter(process.stdout.isTTY === true && !colorless()))
+  p.intro(`${mark ? `${mark} ` : ''}ttheme init`)
 
   if (existing) {
     const from = installedVersion(configHome)

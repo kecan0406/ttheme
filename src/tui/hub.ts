@@ -1,4 +1,5 @@
-import { tabOf } from './parts.ts'
+import type { Hex } from '../core/color.ts'
+import { markOf, tabOf } from './parts.ts'
 import { painter } from './style.ts'
 import { zone } from './zones.ts'
 
@@ -35,8 +36,9 @@ export function hubTarget(code: number): HubTab | undefined {
   return HUB_TABS[code - HUB_SWITCH - 1]?.name
 }
 
-export function hubBar(active: HubTab, color: boolean): string {
+export function hubBar(active: HubTab, color: boolean, inks?: readonly Hex[]): string {
   const p = painter(color)
+  const mark = markOf(p, inks)
 
   const tabs = HUB_TABS.map(({ name, title }) => {
     const spot: HubSpot = { kind: 'hub', tab: name }
@@ -44,5 +46,5 @@ export function hubBar(active: HubTab, color: boolean): string {
     return tabOf(p, title, name === active, (text) => zone(spot, text))
   })
 
-  return ` ${tabs.join(' ')}  ${p.dim('tab next')}`
+  return ` ${mark ? `${mark}  ` : ''}${tabs.join(' ')}  ${p.dim('tab next')}`
 }

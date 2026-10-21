@@ -2,6 +2,7 @@ import { type ParseArgsOptionsConfig, parseArgs } from 'node:util'
 import pkg from '../../package.json' with { type: 'json' }
 import { Cancelled, Signalled } from '../core/cancelled.ts'
 import { inertLines } from '../core/text.ts'
+import { colorless } from '../terminals/osc.ts'
 import { interactive } from '../tui/terminal.ts'
 import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
@@ -221,13 +222,17 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     }
 
     if (call.kind === 'brief') {
-      console.error(briefText())
+      console.error(briefText(process.stderr.isTTY === true && !colorless()))
 
       return 1
     }
 
     if (call.kind === 'help') {
-      console.log(call.verb ? commandHelp(call.verb) : helpText(call.all === true))
+      console.log(
+        call.verb
+          ? commandHelp(call.verb)
+          : helpText(call.all === true, false, process.stdout.isTTY === true && !colorless()),
+      )
 
       return 0
     }

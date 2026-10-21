@@ -1,6 +1,6 @@
-import { APP, CENTER, marksOf, PIXELS, type Point, pointsOf, STROKES, TILE } from '@/lib/mark'
 import type { Theme } from '@/lib/themes'
 import { rgb } from '../../src/core/color.ts'
+import { APP, CENTER, marksOf, PIXELS, type Point, pointsOf, STROKES, TILE } from '../../src/core/mark.ts'
 import { encodeRgb } from '../../src/core/png.ts'
 
 const TOUCH = 180

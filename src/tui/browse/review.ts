@@ -1,3 +1,4 @@
+import type { Hex } from '../../core/color.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import { counted, inert } from '../../core/text.ts'
 import { OFFICIAL, shownSource } from '../../store/sources.ts'
@@ -16,6 +17,7 @@ export interface ReviewHost {
   readonly p: Paint
   readonly hub: HubTab | undefined
   readonly color: boolean
+  inks(): readonly Hex[] | undefined
   span(): number
   columns(): number
   beat(): number
@@ -130,7 +132,7 @@ export class Review {
         : { badge: 'BROWSE (APPLY)', keys: scroll, right: ['enter', 'close'] }
 
     return [
-      ...(hub ? [fit(hubBar(hub, this.host.color), width, false)] : []),
+      ...(hub ? [fit(hubBar(hub, this.host.color, this.host.inks()), width, false)] : []),
       fit(` ${title}`, width, false),
       ...body.map((line) => fit(line, width, false)),
       ` ${barLine(p, bar, width - 1)}`,

@@ -1,4 +1,4 @@
-import { GLYPH, pathOf, STROKES } from '@/lib/mark'
+import { GLYPH, pathOf, STROKES } from '../../src/core/mark.ts'
 
 const BOX = `${GLYPH.x} ${GLYPH.y} ${GLYPH.width} ${GLYPH.height}`
 

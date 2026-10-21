@@ -1,4 +1,5 @@
 import type { Readable, Writable } from 'node:stream'
+import type { Hex } from '../../core/color.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import type { Listed, Listing } from '../../store/marketplace-index.ts'
 import type { Refreshed } from '../../store/sources.ts'
@@ -41,6 +42,7 @@ export interface BrowseOptions {
   io: BrowseIo
   order?: (entries: PaletteEntry[]) => PaletteEntry[]
   hub?: HubTab
+  mark?: readonly Hex[]
   release?: () => ReleaseLine
   lookups?: boolean
   color?: boolean

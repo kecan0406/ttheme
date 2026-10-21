@@ -10,8 +10,9 @@ import {
   usesSlot,
   validSpot,
 } from '../core/builder-layout.ts'
-import type { Hex } from '../core/color.ts'
+import { type Hex, mix } from '../core/color.ts'
 import { srgb } from '../core/fix.ts'
+import { marksOf, PIXELS } from '../core/mark.ts'
 import { PLANE_BOTTOM, PLANE_TOP, reach, shareOf } from '../core/plane.ts'
 import type { Colors } from '../core/seeds.ts'
 import { BASE, colorsOf, colorText, type Format, PAIRS, SLOT_NAMES, slotLabel, slotUse } from '../core/slots.ts'
@@ -238,7 +239,61 @@ function ansiLabels(side: number): [number, string][] {
   ]
 }
 
-function aboutBox(e: PaletteEditor, p: Paint, layout: Layout, side: number): string[] {
+const STROKE_NAMES = ['mouth', 'upper arm', 'lower arm']
+
+const FADED = 0.28
+
+function markLines(e: PaletteEditor, p: Paint, c: Colors, slot: number): string[] {
+  const at = e.signature.indexOf(SLOT_NAMES[slot] as string)
+
+  if (!p.color || at < 0 || e.signature.length !== 3) {
+    return []
+  }
+
+  const own = e.signature.map((name) => e.list[SLOT_NAMES.indexOf(name)] as Hex)
+  const inks = marksOf(e.list[0] as Hex, e.list[1] as Hex, own)
+
+  const dots = new Map(
+    PIXELS.map(([x, y, tone, alpha]) => {
+      const ink = inks[tone] as Hex
+
+      return [`${x},${y}`, mix(c.background, tone === at ? ink : mix(c.background, ink, FADED), alpha)]
+    }),
+  )
+
+  const xs = PIXELS.map(([x]) => x)
+  const left = Math.min(...xs)
+  const top = Math.min(...PIXELS.map(([, y]) => y))
+
+  const cell = (x: number, y: number) => {
+    const upper = dots.get(`${x},${y}`)
+    const lower = dots.get(`${x},${y + 1}`)
+
+    if (upper && lower) {
+      return `${p.fg(upper)}${p.bg(lower)}▀${BG_RESET}`
+    }
+
+    return upper ? `${p.fg(upper)}▀` : lower ? `${p.fg(lower)}▄` : ' '
+  }
+
+  const notes = [
+    p.bold(`Signature ${at + 1} of 3`),
+    p.dim(`The mark's ${STROKE_NAMES[at]}`),
+    p.dim('Tab icon, share card'),
+    inks[at] === own[at] ? '' : p.dim('Lifted to 3:1 there'),
+  ]
+
+  return [
+    '',
+    ...notes.map((note, row) => {
+      const cells = Array.from({ length: Math.max(...xs) - left + 1 }, (_, i) => cell(left + i, top + row * 2))
+
+      return ` ${cells.join('')}${FG_RESET}  ${note}`
+    }),
+  ]
+}
+
+function aboutBox(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, side: number): string[] {
   const slot = e.slot()
   const label = slotLabel(slot)
   const width = boxWidth(side)
@@ -262,6 +317,8 @@ function aboutBox(e: PaletteEditor, p: Paint, layout: Layout, side: number): str
     const near = Math.abs(at - ground) <= Math.abs(at - ink) ? 'the background' : 'the text'
     lines.push(` ${p.dim(`L ${at.toFixed(2)} reads near ${near}`)}`)
   }
+
+  lines.push(...markLines(e, p, c, slot))
 
   return [
     p.dim(boxEdge(width, 'top', [[2, title]])),
@@ -622,7 +679,7 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
   }
 
   if (e.visible(e.slot())) {
-    rows.push(...aboutBox(e, p, layout, side))
+    rows.push(...aboutBox(e, p, c, layout, side))
   }
 
   const rules = gateBox(p, e, body - rows.length, width)
