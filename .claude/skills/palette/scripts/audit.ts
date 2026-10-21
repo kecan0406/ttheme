@@ -2,8 +2,8 @@ import { existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { argbFromHex, Hct } from '@material/material-color-utilities'
-import { lab } from '../../../../src/core/color.ts'
-import { apart } from '../../../../src/core/contrast.ts'
+import { type Departure, departures } from '../../../../src/core/harmonize.ts'
+import { lookalikes } from '../../../../src/core/mirror.ts'
 import { type Catalog, MARKETPLACE_FILE, readCatalogs } from '../../../../src/core/theme.ts'
 import { deltaE, tripletDelta } from './delta.ts'
 
@@ -32,10 +32,6 @@ export interface AnchorEntry {
 
 const CATALOG_MIN = 13
 const CURSOR_MIN = 3
-const DEPARTURE_MAX = 10
-const HUE_MAX = 12
-const ACHROMATIC = 5
-const DELTA_SLOTS = ['cursor', 'selection']
 const WIDE = /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]/
 
 export const width = (s: string) => [...s].reduce((n, c) => n + (WIDE.test(c) ? 2 : 1), 0)
@@ -112,48 +108,18 @@ const hctLabel = (hex: string) => {
   return `H${Math.round(h.hue).toString().padStart(3)} C${Math.round(h.chroma).toString().padStart(2)} T${Math.round(h.tone).toString().padStart(3)}`
 }
 
-function hueShift(from: string, to: string): number | undefined {
-  const a = hct(from)
-  const b = hct(to)
-  if (a.chroma < ACHROMATIC && b.chroma < ACHROMATIC) return undefined
-  return ((b.hue - a.hue + 540) % 360) - 180
-}
+const shadeOf = (doc: ThemeDoc) => ({
+  background: doc.colors.background,
+  foreground: doc.colors.foreground,
+  cursor: doc.colors.cursor,
+  selectionBackground: doc.colors.selection_background,
+  ansi: doc.colors.ansi,
+})
 
-interface Departure {
-  slot: string
-  part: string
-  measured: string
-  final: string
-  delta: number
-  shift: number | undefined
-  reasons: string[]
-}
-
-function departures(doc: ThemeDoc, entry: AnchorEntry): Departure[] {
-  return doc.meta.signature.flatMap((slot) => {
-    const anchor = entry.slots[slot]
-    if (anchor === undefined) return []
-    const [part, measured] = anchor
-    const final = slotColor(doc, slot)
-    const delta = deltaE(measured, final)
-    const shift = hueShift(measured, final)
-    const reasons: string[] = []
-    if (DELTA_SLOTS.includes(slot) && delta > DEPARTURE_MAX) reasons.push(`ΔE ${fixed(delta)}`)
-    if (shift !== undefined && Math.abs(shift) > HUE_MAX) reasons.push(`hue ${signed(shift)}`)
-    return [{ slot, part, measured: measured.toLowerCase(), final, delta, shift, reasons }]
-  })
-}
-
-function lookalikes(doc: ThemeDoc): string[] {
-  const { signature } = doc.meta
-
-  return signature.flatMap((a, i) =>
-    signature
-      .slice(i + 1)
-      .filter((b) => apart(lab(slotColor(doc, a)), lab(slotColor(doc, b))) < 1)
-      .map((b) => `${a}/${b}`),
-  )
-}
+const reasonsOf = (d: Departure) => [
+  ...(d.far ? [`ΔE ${fixed(d.delta)}`] : []),
+  ...(d.turned ? [`hue ${signed(d.shift as number)}`] : []),
+]
 
 function audit(
   doc: ThemeDoc,
@@ -167,7 +133,7 @@ function audit(
   const reasons: string[] = []
   console.log(`\n── ${name} · ${catalog} · signature ${signature.join('/')}${side && ` · ${side} mode`}`)
 
-  const alike = lookalikes(doc)
+  const alike = lookalikes({ name, signatureSlots: signature, waive: [] }, shadeOf(doc)).map(([a, b]) => `${a}/${b}`)
   console.log(`  signature  ${alike.length === 0 ? 'every slot reads apart' : `reads as one: ${alike.join(', ')} !`}`)
   if (alike.length > 0) reasons.push(`signature look-alike: ${alike.join(', ')}`)
 
@@ -199,7 +165,7 @@ function audit(
     return reasons
   }
   console.log(`  departure  ${entry.source}`)
-  const measured = departures(doc, entry)
+  const measured = departures(entry.slots, signature, shadeOf(doc))
   const partWidth = Math.max(0, ...Object.values(entry.slots).map(([part]) => width(part)))
   for (const slot of signature) {
     const d = measured.find((m) => m.slot === slot)
@@ -208,15 +174,16 @@ function audit(
       continue
     }
     console.log(
-      `    ${pad(slot, 10)} ${pad(d.part, partWidth)}  ${d.measured} ${hctLabel(d.measured)} → ${d.final} ${hctLabel(d.final)}   ΔE ${fixed(d.delta).padStart(4)}   hue ${(d.shift === undefined ? 'grey' : signed(d.shift)).padStart(7)}${d.reasons.length > 0 ? ' !' : ''}`,
+      `    ${pad(slot, 10)} ${pad(d.part, partWidth)}  ${d.measured} ${hctLabel(d.measured)} → ${d.final} ${hctLabel(d.final)}   ΔE ${fixed(d.delta).padStart(4)}   hue ${(d.shift === undefined ? 'grey' : signed(d.shift)).padStart(7)}${reasonsOf(d).length > 0 ? ' !' : ''}`,
     )
   }
   for (const [slot, [part, hex]] of Object.entries(entry.slots)) {
     if (!signature.includes(slot))
       console.log(`    ${pad(slot, 10)} ${pad(part, partWidth)}  ${hex.toLowerCase()}  not in signature`)
   }
-  const moved = measured.filter((d) => d.reasons.length > 0)
-  if (moved.length > 0) reasons.push(`departure: ${moved.map((d) => `${d.slot} ${d.reasons.join(', ')}`).join('; ')}`)
+  const moved = measured.filter((d) => reasonsOf(d).length > 0)
+  if (moved.length > 0)
+    reasons.push(`departure: ${moved.map((d) => `${d.slot} ${reasonsOf(d).join(', ')}`).join('; ')}`)
   if (entry.note) {
     console.log(`  note       ${entry.note}`)
     reasons.push(`note: ${entry.note}`)

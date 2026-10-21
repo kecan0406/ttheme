@@ -106,7 +106,7 @@ const NAMED = new Map<string, Exclude<keyof Shade, 'ansi'>>([
   ['selection', 'selectionBackground'],
 ])
 
-function slotOf(shade: Shade, slot: string): Hex {
+export function slotOf(shade: Shade, slot: string): Hex {
   const named = NAMED.get(slot)
 
   return named === undefined ? (shade.ansi[Number(slot.slice(4))] as Hex) : shade[named]
@@ -147,7 +147,7 @@ function flip(theme: Mirrored): Shade {
 
 const reads = (shade: Shade, a: string, b: string) => apart(lab(slotOf(shade, a)), lab(slotOf(shade, b))) >= 1
 
-function withSlot(shade: Shade, slot: string, value: Hex): Shade {
+export function withSlot(shade: Shade, slot: string, value: Hex): Shade {
   const named = NAMED.get(slot)
 
   if (named !== undefined) return { ...shade, [named]: value }

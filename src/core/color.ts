@@ -90,6 +90,54 @@ export function lab(hex: Hex): Lab {
   return labOf(rgb(hex).map(linear) as Linear)
 }
 
+const RAD = Math.PI / 180
+
+const angle = (b: number, a: number) => (a === 0 && b === 0 ? 0 : ((Math.atan2(b, a) / RAD) % 360) + 360) % 360
+
+export function deltaE(from: Hex, to: Hex): number {
+  const one = lab(from)
+  const two = lab(to)
+  const mean = (Math.hypot(one.a, one.b) + Math.hypot(two.a, two.b)) / 2
+  const g = 0.5 * (1 - Math.sqrt(mean ** 7 / (mean ** 7 + 25 ** 7)))
+  const a1 = (1 + g) * one.a
+  const a2 = (1 + g) * two.a
+  const c1 = Math.hypot(a1, one.b)
+  const c2 = Math.hypot(a2, two.b)
+  const h1 = angle(one.b, a1)
+  const h2 = angle(two.b, a2)
+  const chromatic = c1 * c2 !== 0
+  const turn = h2 - h1
+  const dh = chromatic ? (turn > 180 ? turn - 360 : turn < -180 ? turn + 360 : turn) : 0
+  const dH = 2 * Math.sqrt(c1 * c2) * Math.sin((dh / 2) * RAD)
+  const l = (one.l + two.l) / 2
+  const c = (c1 + c2) / 2
+
+  const h = chromatic
+    ? Math.abs(h1 - h2) > 180
+      ? (h1 + h2 + (h1 + h2 < 360 ? 360 : -360)) / 2
+      : (h1 + h2) / 2
+    : h1 + h2
+
+  const t =
+    1 -
+    0.17 * Math.cos((h - 30) * RAD) +
+    0.24 * Math.cos(2 * h * RAD) +
+    0.32 * Math.cos((3 * h + 6) * RAD) -
+    0.2 * Math.cos((4 * h - 63) * RAD)
+
+  const theta = 30 * Math.exp(-(((h - 275) / 25) ** 2))
+  const rc = 2 * Math.sqrt(c ** 7 / (c ** 7 + 25 ** 7))
+  const sl = 1 + (0.015 * (l - 50) ** 2) / Math.sqrt(20 + (l - 50) ** 2)
+  const sc = 1 + 0.045 * c
+  const sh = 1 + 0.015 * c * t
+  const rt = -Math.sin(2 * theta * RAD) * rc
+  const dl = (two.l - one.l) / sl
+  const dc = (c2 - c1) / sc
+  const dhh = dH / sh
+
+  return Math.sqrt(dl ** 2 + dc ** 2 + dhh ** 2 + rt * dc * dhh)
+}
+
 export function deuteranope(hex: Hex): Lab {
   const [r, g, b] = rgb(hex).map(linear) as Linear
   const clip = (v: number) => Math.min(1, Math.max(0, v))

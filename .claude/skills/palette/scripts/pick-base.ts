@@ -1,59 +1,26 @@
-import { mkdir, readdir } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { argbFromHex, Hct } from '@material/material-color-utilities'
-import { deltaE } from './delta.ts'
-import { colorsBlock, harmonizePalette, violations } from './harmonize.ts'
+import {
+  COLLISION_WEIGHT,
+  FUNCTION_HUE,
+  parseScheme,
+  type Ranked,
+  rankBases,
+  seeded,
+} from '../../../../src/core/base.ts'
+import { slotOf } from '../../../../src/core/mirror.ts'
+import { readSchemes, schemesDir, syncSchemes } from '../../../../src/store/schemes.ts'
+import { anchoredOf, colorsBlock, type ThemeDoc } from './harmonize.ts'
 
-type ThemeDoc = Parameters<typeof harmonizePalette>[0]
-type Palette = ReturnType<typeof harmonizePalette>
-type Colors = ThemeDoc['colors']
-
-interface Source {
+interface Source extends ThemeDoc {
   meta: ThemeDoc['meta'] & { ansi_source?: string }
-  colors: Colors
 }
 
-interface Scheme {
-  background: string
-  foreground: string
-  cursor: string
-  selection: string
-  ansi: string[]
-}
-
-interface Ranked {
-  name: string
-  score: number
-  worst: number
-  worstSlot: number
-  mean: number
-  collision: number
-  pair: [number, number]
-}
-
-const REPO = 'mbadolato/iTerm2-Color-Schemes'
-const LIST_URL = `https://api.github.com/repos/${REPO}/contents/ghostty`
-const RAW_URL = `https://raw.githubusercontent.com/${REPO}/master/ghostty/`
-const INDEX = '.index'
-const INDEX_TTL = 24 * 60 * 60 * 1000
-const CONCURRENCY = 16
-const FUNCTION_HUE: Record<number, number> = { 1: 22, 2: 143, 3: 90, 4: 253, 5: 332, 6: 200 }
-const GROUPS = [
-  [1, 2, 3, 4, 5, 6],
-  [9, 10, 11, 12, 13, 14],
-]
-const COLLISION_WEIGHT = 4
 const SLOTS = ['cursor', 'foreground', 'background', 'selection', ...Array.from({ length: 16 }, (_, i) => `ansi${i}`)]
 const USAGE =
   'usage: bun pick-base.ts themes/palettes/<catalog>/<name>.toml [--top N] [--schemes <dir>] [--include <name> ...] [--apply <scheme> [--codename <name>]]'
 
-const hct = (hex: string) => Hct.fromInt(argbFromHex(hex))
-const hueDiff = (a: number, b: number) => {
-  const d = Math.abs(a - b) % 360
-  return Math.min(d, 360 - d)
-}
 const fixed = (n: number, digits = 0) => n.toFixed(digits)
 
 function fail(message: string): never {
@@ -61,88 +28,12 @@ function fail(message: string): never {
   process.exit(1)
 }
 
-function read(colors: Colors, slot: string): string {
-  if (slot === 'background') return colors.background
-  if (slot === 'foreground') return colors.foreground
-  if (slot === 'cursor') return colors.cursor
-  if (slot === 'selection') return colors.selection_background
-  return colors.ansi[Number(slot.slice(4))] as string
-}
-
-function assign(colors: Colors, slot: string, value: string) {
-  if (slot === 'background') colors.background = value
-  else if (slot === 'foreground') colors.foreground = value
-  else if (slot === 'cursor') colors.cursor = value
-  else if (slot === 'selection') colors.selection_background = value
-  else colors.ansi[Number(slot.slice(4))] = value
-}
-
-function parseScheme(text: string): Scheme | undefined {
-  const values: Record<string, string> = {}
-  const ansi: string[] = []
-  for (const line of text.split('\n')) {
-    const entry = line.match(/^palette\s*=\s*(\d+)\s*=\s*#?([0-9a-f]{6})\s*$/i)
-    if (entry) ansi[Number(entry[1])] = `#${(entry[2] as string).toLowerCase()}`
-    const pair = line.match(/^([a-z-]+)\s*=\s*#?([0-9a-f]{6})\s*$/i)
-    if (pair) values[pair[1] as string] = `#${(pair[2] as string).toLowerCase()}`
-  }
-  const { background, foreground } = values
-  const ramp = Array.from({ length: 16 }, (_, i) => ansi[i])
-  if (!background || !foreground || ramp.some((c) => c === undefined)) return undefined
-  return {
-    background,
-    foreground,
-    cursor: values['cursor-color'] ?? foreground,
-    selection: values['selection-background'] ?? background,
-    ansi: ramp as string[],
-  }
-}
-
-async function listing(dir: string): Promise<string[]> {
-  const index = Bun.file(join(dir, INDEX))
-  const cached = (await index.exists()) ? (await index.text()).split('\n').filter(Boolean) : []
-  if (cached.length > 0 && Date.now() - index.lastModified < INDEX_TTL) return cached
-  const res = await fetch(LIST_URL, { headers: { accept: 'application/vnd.github+json' } }).catch(() => undefined)
-  if (!res?.ok) {
-    console.error(`scheme listing unavailable (${res?.status ?? 'network error'}), using what ${dir} holds`)
-    return cached
-  }
-  const entries = (await res.json()) as { name: string; type: string }[]
-  const names = entries.filter((e) => e.type === 'file').map((e) => e.name)
-  await Bun.write(index, names.join('\n'))
-  return names
-}
-
-async function download(dir: string, names: string[]): Promise<number> {
-  const queue = [...names]
-  let fetched = 0
-  const worker = async () => {
-    for (let name = queue.shift(); name !== undefined; name = queue.shift()) {
-      const res = await fetch(RAW_URL + encodeURIComponent(name)).catch(() => undefined)
-      if (!res?.ok) {
-        console.error(`skipped ${name}: ${res?.status ?? 'network error'}`)
-        continue
-      }
-      await Bun.write(join(dir, name), await res.text())
-      fetched++
-    }
-  }
-  await Promise.all(Array.from({ length: CONCURRENCY }, worker))
-  return fetched
-}
-
 async function sync(dir: string): Promise<string[]> {
-  await mkdir(dir, { recursive: true })
-  const names = await listing(dir)
-  const present = new Set(await readdir(dir))
-  const missing = names.filter((n) => !present.has(n))
-  if (missing.length > 0) {
-    const fetched = await download(dir, missing)
-    console.error(`fetched ${fetched}/${missing.length} missing schemes into ${dir}`)
-  }
-  const corpus = (await readdir(dir)).filter((n) => !n.startsWith('.')).sort()
-  if (corpus.length === 0) fail(`no schemes in ${dir}`)
-  return corpus
+  const corpus = await syncSchemes(dir)
+  for (const note of corpus.notes) console.error(note)
+  if (corpus.missing > 0) console.error(`fetched ${corpus.fetched}/${corpus.missing} missing schemes into ${dir}`)
+  if (corpus.names.length === 0) fail(`no schemes in ${dir}`)
+  return corpus.names
 }
 
 async function codename(file: string, theme: Source): Promise<string> {
@@ -157,40 +48,6 @@ async function codename(file: string, theme: Source): Promise<string> {
   return '<codename>'
 }
 
-function candidate(theme: Source, scheme: Scheme): ThemeDoc {
-  const colors: Colors = {
-    background: scheme.background,
-    foreground: scheme.foreground,
-    cursor: scheme.cursor,
-    selection_background: scheme.selection,
-    ansi: [...scheme.ansi],
-  }
-  for (const slot of theme.meta.signature) assign(colors, slot, read(theme.colors, slot))
-  return { meta: { name: theme.meta.name, signature: theme.meta.signature }, colors }
-}
-
-function score(name: string, signature: Set<number>, palette: Palette): Ranked {
-  const drifts = GROUPS.flat()
-    .filter((i) => !signature.has(i))
-    .map((i) => ({ slot: i, drift: hueDiff(hct(palette.ansi[i] as string).hue, FUNCTION_HUE[i % 8] as number) }))
-  const worst = drifts.reduce((a, b) => (b.drift > a.drift ? b : a))
-  const mean = drifts.reduce((sum, d) => sum + d.drift, 0) / drifts.length
-  let collision = Number.POSITIVE_INFINITY
-  let pair: [number, number] = [0, 0]
-  for (const group of GROUPS)
-    for (const a of group)
-      for (const b of group) {
-        if (a >= b) continue
-        const delta = deltaE(palette.ansi[a] as string, palette.ansi[b] as string)
-        if (delta < collision) {
-          collision = delta
-          pair = [a, b]
-        }
-      }
-  const total = worst.drift + mean - COLLISION_WEIGHT * collision
-  return { name, score: total, worst: worst.drift, worstSlot: worst.slot, mean, collision, pair }
-}
-
 const { values, positionals } = (() => {
   try {
     return parseArgs({
@@ -198,7 +55,7 @@ const { values, positionals } = (() => {
       allowPositionals: true,
       options: {
         top: { type: 'string', default: '10' },
-        schemes: { type: 'string', default: join(tmpdir(), 'ttheme-schemes') },
+        schemes: { type: 'string', default: schemesDir() },
         include: { type: 'string', multiple: true, default: [] },
         apply: { type: 'string' },
         codename: { type: 'string' },
@@ -212,69 +69,43 @@ const file = positionals[0]
 const top = Number(values.top)
 if (positionals.length !== 1 || file === undefined || !Number.isInteger(top) || top < 1) fail(USAGE)
 
-const theme = Bun.TOML.parse(await Bun.file(file).text()) as unknown as Source
-const signature = theme.meta?.signature ?? []
+const source = Bun.TOML.parse(await Bun.file(file).text()) as unknown as Source
+const signature = source.meta?.signature ?? []
 if (signature.length !== 3 || signature.some((s) => !SLOTS.includes(s)))
   fail(`${file}: meta.signature must name 3 of ${SLOTS.join(', ')}`)
-const seed = hct(read(theme.colors, signature[0] as string))
-const signatureAnsi = new Set(signature.filter((s) => s.startsWith('ansi')).map((s) => Number(s.slice(4))))
-const code = values.codename ?? (await codename(file, theme))
-const current = theme.meta.ansi_source?.split(' + ')[0]
+const theme = anchoredOf(source)
+const seed = Hct.fromInt(argbFromHex(slotOf(theme, signature[0] as string)))
+const code = values.codename ?? (await codename(file, source))
+const current = source.meta.ansi_source?.split(' + ')[0]
 
 if (values.apply !== undefined) {
   if (code === '<codename>')
-    fail(`${theme.meta.name}: no sibling names a codename for ${basename(dirname(file))}; pass --codename`)
+    fail(`${theme.name}: no sibling names a codename for ${basename(dirname(file))}; pass --codename`)
   const path = join(values.schemes, values.apply)
   if (!(await Bun.file(path).exists())) await sync(values.schemes)
   if (!(await Bun.file(path).exists())) fail(`${values.apply}: not in ${values.schemes}`)
   const scheme = parseScheme(await Bun.file(path).text())
   if (!scheme) fail(`${values.apply}: fewer than 16 palette entries`)
-  const draft = candidate(theme, scheme).colors
-  const source = await Bun.file(file).text()
-  const start = source.indexOf('[colors]')
+  const text = await Bun.file(file).text()
+  const start = text.indexOf('[colors]')
   if (start === -1) fail(`${file}: no [colors] section`)
   const line = `ansi_source = "${values.apply} + ${code}"`
-  const head = source.slice(0, start)
+  const head = text.slice(0, start)
   const meta = /^ansi_source = .*$/m.test(head)
     ? head.replace(/^ansi_source = .*$/m, line)
     : head.replace(/^order = .*$/m, (order) => `${order}\n${line}`)
   if (!meta.includes(line)) fail(`${file}: no ansi_source or order line to place ${line}`)
-  await Bun.write(file, meta + colorsBlock({ ...draft, selection: draft.selection_background }))
-  console.log(`${theme.meta.name}: ${line}, signature kept, rest from the scheme; harmonize it next`)
+  await Bun.write(file, meta + colorsBlock(seeded(theme, scheme)))
+  console.log(`${theme.name}: ${line}, signature kept, rest from the scheme; harmonize it next`)
   process.exit(0)
 }
 
 const corpus = await sync(values.schemes)
-const ranked: Ranked[] = []
-const dropped = new Map<string, string>()
-let dark = 0
-for (const name of corpus) {
-  const scheme = parseScheme(await Bun.file(join(values.schemes, name)).text())
-  if (!scheme) {
-    dropped.set(name, 'fewer than 16 palette entries')
-    continue
-  }
-  if (hct(scheme.background).tone >= 50) {
-    dropped.set(name, 'light background')
-    continue
-  }
-  dark++
-  let palette: Palette
-  try {
-    palette = harmonizePalette(candidate(theme, scheme))
-  } catch (e) {
-    dropped.set(name, `harmonizer: ${(e as Error).message}`)
-    continue
-  }
-  const problems = violations(theme.meta.name, theme.meta.signature, palette)
-  if (problems.length > 0) dropped.set(name, `gate: ${problems.join('; ')}`)
-  else ranked.push(score(name, signatureAnsi, palette))
-}
+const { ranked, dropped, dark } = rankBases(theme, await readSchemes(values.schemes, corpus))
 if (ranked.length === 0) {
   const reasons = new Set([...dropped.values()].filter((r) => r.startsWith('harmonizer') || r.startsWith('gate')))
-  fail(`${theme.meta.name}: no dark scheme survives\n${[...reasons].slice(0, 5).join('\n')}`)
+  fail(`${theme.name}: no dark scheme survives\n${[...reasons].slice(0, 5).join('\n')}`)
 }
-ranked.sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
 
 const header = `${'rank'.padStart(4)}  ${'score'.padStart(5)}  worst (slot)  ${'mean'.padStart(4)}  min ΔE (pair)   ansi_source`
 const row = (r: Ranked, rank: string) =>
@@ -286,13 +117,11 @@ const row = (r: Ranked, rank: string) =>
     `${fixed(r.collision, 1).padStart(6)} (${r.pair.join('/')})`.padEnd(14),
     `${r.name} + ${code}`,
   ].join('  ')
-const hues = Object.entries(FUNCTION_HUE)
-  .map(([i, h]) => `${['', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan'][Number(i)]} ${h}`)
+const hues = [...FUNCTION_HUE]
+  .map(([i, h]) => `${['', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan'][i]} ${h}`)
   .join(', ')
 
-console.log(
-  `${theme.meta.name}: signature ${signature.join(', ')} held fixed; seed ${signature[0]} hue ${fixed(seed.hue)}`,
-)
+console.log(`${theme.name}: signature ${signature.join(', ')} held fixed; seed ${signature[0]} hue ${fixed(seed.hue)}`)
 console.log(`${corpus.length} schemes → ${dark} dark with 16 colors → ${ranked.length} gate-clean`)
 console.log(`drift  = HCT hue distance of the harmonized slot from its function hue (${hues})`)
 console.log(`         over the non-signature slots of ANSI 1-6 and 9-14; worst and mean, in degrees`)
