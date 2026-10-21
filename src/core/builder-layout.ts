@@ -298,21 +298,21 @@ function sceneLines(name: string, picked: boolean, width: number): string[] {
 }
 
 function parsed(markup: string[], width: number): Part[][] {
-  return markup
-    .values()
-    .map((text) => sceneParts(text, width))
-    .filter((parts) => parts !== undefined)
-    .map((parts) => {
-      let col = 0
+  return markup.flatMap((text) => {
+    const parts = sceneParts(text, width)
 
-      return parts.map(([t, role]) => {
+    if (parts === undefined) return []
+    let col = 0
+
+    return [
+      parts.map(([t, role]) => {
         const part = { text: t, role, col }
         col += cells(t)
 
         return part
-      })
-    })
-    .toArray()
+      }),
+    ]
+  })
 }
 
 function statusLine(width: number): string {
@@ -567,6 +567,6 @@ export function joints(rules: readonly Rule[]): Map<number, Map<number, string>>
     JOINTS.get([...cell].sort().join('')) ?? (cell.has('l') || cell.has('r') ? '─' : '│')
 
   return new Map(
-    ways.entries().map(([row, line]) => [row, new Map(line.entries().map(([col, cell]) => [col, glyph(cell)]))]),
+    Array.from(ways, ([row, line]) => [row, new Map(Array.from(line, ([col, cell]) => [col, glyph(cell)]))]),
   )
 }

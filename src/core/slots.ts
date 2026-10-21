@@ -115,7 +115,9 @@ export function ruleSlots(list: Hex[], signature: string[], waive: string[], rul
 
 export function misses(list: Hex[], signature: string[], waive: string[]): Set<number> {
   return new Set(
-    SLOT_NAMES.keys().filter((slot) => slotChecks(list, signature, waive, slot).some((check) => check.ok === false)),
+    [...SLOT_NAMES.keys()].filter((slot) =>
+      slotChecks(list, signature, waive, slot).some((check) => check.ok === false),
+    ),
   )
 }
 

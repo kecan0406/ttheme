@@ -1,7 +1,16 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2023",
+      "es2024.collection",
+      "es2024.object",
+      "es2024.promise",
+      "es2024.regexp",
+      "es2024.string"
+    ],
     "types": []
   },
   "include": ["**/*.ts", "**/*.tsx", "../custom-elements.d.ts"],

@@ -150,10 +150,7 @@ export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string)
 
 export function basesOf(entries: PaletteEntry[]): Map<string, { order: number }> {
   return new Map(
-    entries
-      .values()
-      .filter((e) => !e.default && !marketplaceOf(e.name))
-      .map((e) => [e.name, { order: e.order }]),
+    entries.flatMap((e) => (e.default || marketplaceOf(e.name) ? [] : [[e.name, { order: e.order }] as const])),
   )
 }
 

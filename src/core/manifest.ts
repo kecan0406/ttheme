@@ -269,7 +269,6 @@ export function entryProblem(p: PaletteEntry): string | undefined {
   }
 
   const named = [p.name, p.base, p.from]
-    .values()
     .map((name) => (name === undefined ? undefined : nameProblem(name)))
     .find(Boolean)
 
@@ -303,7 +302,6 @@ export function entryProblem(p: PaletteEntry): string | undefined {
   }
 
   return [p.native ?? '-', p.catalog ?? '-', p.ansiSource]
-    .values()
     .map((field) => (typeof field === 'string' ? textProblem(field) : 'has a field that is not text'))
     .find(Boolean)
 }

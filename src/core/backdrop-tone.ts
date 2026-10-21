@@ -112,8 +112,6 @@ export function backdropTone(colors: Colors, signature: string[]): Tone {
   }
 
   return signature
-    .values()
-    .filter((slot) => slot !== 'cursor' && slot !== 'background')
-    .map((slot) => toneFor(colors, slot))
+    .flatMap((slot) => (slot === 'cursor' || slot === 'background' ? [] : [toneFor(colors, slot)]))
     .reduce((best, tone) => (tone.reach > best.reach ? tone : best), cursor)
 }
