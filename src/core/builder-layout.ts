@@ -3,8 +3,8 @@ import { cells } from './text.ts'
 
 const FULL_COLS = 130
 const FULL_ROWS = 38
-const TABS_COLS = 96
-const TABS_ROWS = 28
+export const TABS_COLS = 96
+export const TABS_ROWS = 28
 
 interface Pane {
   id: string
@@ -344,6 +344,8 @@ function fitted(pane: Pane, width: number, rows: number): Part[][] {
     if (!next) {
       if (shown.length === 0) {
         shown = pane.tail ? picked.slice(picked.length - room) : picked.slice(0, room)
+      } else if (pane.tail) {
+        shown = [...whole.slice(whole.length - (room - shown.length)), ...shown]
       }
 
       break

@@ -21,4 +21,4 @@ Config
   Colors     [original]  tone
 
 Every palette in its dark mode
-[CONFIG] ↑↓ setting   ←→ value   enter save                                                 esc undo
+ [CONFIG] ↑↓ setting   ←→ value   enter save                                               esc undo

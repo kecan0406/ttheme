@@ -64,7 +64,7 @@ const FOLLOWS: ProfileKind[] = ['x', 'pixiv', 'bsky']
 
 const CANONICAL = new Map([['shima.donmai.us', 'danbooru.donmai.us']])
 
-const SAFE_URL = /^https?:\/\/[^\s\p{Cc}]+$/u
+const SAFE_URL = /^https?:\/\/[^\s\p{Cc}\p{Bidi_Control}]+$/u
 
 export function safeUrl(url: string): boolean {
   return SAFE_URL.test(url)
@@ -88,6 +88,10 @@ export function profilesOf(urls: readonly string[]): string[] {
 
     return []
   })
+}
+
+export function pagesOf<T>(profiles: Readonly<Record<string, T>> | undefined, name: string): T | undefined {
+  return profiles !== undefined && Object.hasOwn(profiles, name) ? profiles[name] : undefined
 }
 
 export function linksOf(urls: readonly string[] | undefined): Profile[] {
@@ -170,7 +174,7 @@ export function creditLine(picture: Credited): string | undefined {
     artists.length > 0
       ? `Background art by ${artists
           .map((name) => {
-            const follow = followOf(picture.profiles?.[name], page)
+            const follow = followOf(pagesOf(picture.profiles, name), page)
 
             return follow ? `${name} (${bare(follow)})` : name
           })

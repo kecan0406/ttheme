@@ -1,14 +1,26 @@
-import { firstSpot, type Layout, layoutOf, moveSpot, type Spot, slotsAt, validSpot } from '../core/builder-layout.ts'
+import {
+  firstSpot,
+  type Layout,
+  layoutOf,
+  moveSpot,
+  type Spot,
+  slotsAt,
+  TABS_COLS,
+  TABS_ROWS,
+  validSpot,
+} from '../core/builder-layout.ts'
 import { contrast, type Hex, isHex, luminance, type Oklch, oklch } from '../core/color.ts'
 import {
   ACCENT_SLOTS,
   ACHROMATIC,
+  boundOf,
   check,
   GATE_RULES,
   hueGap,
   measure,
+  missedRules,
   ROLES,
-  type Violation,
+  shownOf,
 } from '../core/contrast.ts'
 import { edgeChroma, fixGate, inGamut } from '../core/fix.ts'
 import { type Colors, grow, nudge, SEED_FIELDS, SEEDS, type Seeds } from '../core/seeds.ts'
@@ -28,10 +40,19 @@ import {
   slotLabel,
   weakestUnder,
 } from '../core/slots.ts'
+import { inert } from '../core/text.ts'
+import type { Tone } from './bar.ts'
 import { edit } from './field.ts'
 import { pastedRefs, type Start } from './find/attach.ts'
+import { Help, type Legend, type Topic } from './help.ts'
+import { MARKS } from './style.ts'
 
 const ROWS = BASE.length + PAIRS.length
+
+const LEAVE =
+  'esc  ctrl+c  leaves, asking first when something changed: y saves, n discards, esc keeps editing  ·  ctrl+c  again discards'
+
+const UNBUILT = `The builder needs a window of at least ${TABS_COLS}×${TABS_ROWS}`
 
 export interface Channel {
   key: keyof Oklch
@@ -210,28 +231,21 @@ interface GateRow {
 }
 
 export function gateRows(list: Hex[], signature: string[], waive: string[]): GateRow[] {
-  const values = measure(gatedOf(list, signature, waive))
+  const theme = gatedOf(list, signature, waive)
+  const values = measure(theme)
+  const missed = new Set(missedRules(theme).map((rule) => rule.rule))
 
   return GATE_RULES.map((rule, i) => {
     const value = values[i] as number
     const waived = waive.includes(rule.rule)
 
-    const ok =
-      waived || Number.isNaN(value)
-        ? undefined
-        : (rule.min === undefined || value >= rule.min) && (rule.max === undefined || value <= rule.max)
+    const ok = waived || Number.isNaN(value) ? undefined : !missed.has(rule.rule)
 
     return {
       ok,
       label: rule.label,
-      value: Number.isNaN(value) ? '—' : Number.isInteger(value) ? String(value) : value.toFixed(2),
-      bound: waived
-        ? 'waived'
-        : rule.min !== undefined
-          ? `≥ ${rule.min}`
-          : rule.max !== undefined
-            ? `≤ ${rule.max}`
-            : '',
+      value: shownOf(value),
+      bound: waived ? 'waived' : boundOf(rule),
       slots: ok === false ? ruleSlots(list, signature, waive, rule.rule) : [],
     }
   })
@@ -273,11 +287,13 @@ export class PaletteEditor {
   view: 'slot' | 'relations' = 'slot'
   scene = 0
   typing: string | undefined
-  overlay: 'keys' | 'open' | undefined
+  overlay: 'open' | undefined
+  help: Help | undefined
   quitting = false
   quitFocus: 'yes' | 'no' = 'yes'
   compare = false
   notice: string | undefined
+  noticeTone: Tone = 'info'
   filter = ''
   pick = 0
   result: 'saved' | 'cancelled' | undefined
@@ -391,7 +407,12 @@ export class PaletteEditor {
 
   found(found: Found): void {
     this.pictures = found.count
-    this.notice = found.note
+    this.say(found.note, 'ok')
+  }
+
+  say(text: string | undefined, tone: Tone = 'info'): void {
+    this.notice = text === undefined ? undefined : inert(text)
+    this.noticeTone = tone
   }
 
   get waive(): string[] {
@@ -435,18 +456,152 @@ export class PaletteEditor {
     return misses(this.list, this.signature, this.waive)
   }
 
-  failing(): Violation[] {
-    return check(gatedOf(this.list, this.signature, this.waive))
-  }
-
   choices(): Choice[] {
     const needle = this.filter.toLowerCase()
 
     return (this.options.palettes ?? []).filter((c) => c.name.toLowerCase().includes(needle))
   }
 
+  private topics(): Topic[] {
+    const list = this.mode === 'list'
+    const plain = list && !this.inspect
+    const tuning = this.mode === 'tune'
+    const ansi = this.slot() >= BASE.length
+    const others = (this.options.palettes ?? []).length > 0
+    const roomy = list && this.roomy
+    const when = (on: boolean, key: string) => (on ? { run: () => this.press(key) } : {})
+    const close: Topic = { label: 'Close', text: '?  esc', run: () => {} }
+
+    const pictures: Topic[] = this.options.find
+      ? [
+          {
+            label: 'Pictures',
+            text: 'p  finds one on the boorus, tried on in these colors',
+            ...when(this.mode !== 'tune', 'p'),
+          },
+          { label: '', text: 'b  shows or hides it behind the editor', ...when(list, 'b') },
+          {
+            label: '',
+            text: 'Drop a picture on the window, or paste one, its path or its link  ·  ctrl+v  takes the clipboard’s',
+          },
+        ]
+      : []
+
+    if (this.mode === 'seeds') {
+      return [
+        { label: 'Seeds', text: '↑↓  a seed  ·  ←→  a step  ·  ⇧←→  five steps, ten on the hue  ·  home  end' },
+        { label: 'Slots', text: 'enter  keeps these seeds and tunes the slots one by one', ...when(true, 'enter') },
+        { label: 'Open', text: 'o  starts from another palette’s colors', ...when(others, 'o') },
+        ...pictures,
+        { label: 'Leave', text: LEAVE, ...when(true, 'esc') },
+        close,
+      ]
+    }
+
+    return [
+      {
+        label: 'Move',
+        text: '↑↓  a slot  ·  ←→  normal or bright  ·  home  end  ·  pgup  the base colors  ·  pgdn  the ANSI ones',
+      },
+      {
+        label: 'Misses',
+        text: 'n  N  the next and last slot the gate misses',
+        ...when(list && this.misses().size > 0, 'n'),
+      },
+      { label: 'Tune', text: 'enter  tab  opens the picker under the slot', ...when(plain, 'enter') },
+      {
+        label: '',
+        text: '↑↓  lightness  ·  ←→  chroma  ·  ⇧←→  hue by 5  ·  ,  .  hue by 1  ·  pgup  pgdn  lightness ×5  ·  home  end  the ends  ·  0-9  jump',
+      },
+      { label: '', text: 'enter  keeps  ·  a click outside the picker keeps', ...when(tuning, 'enter') },
+      { label: '', text: 'esc  undoes every slot the tune moved', ...when(tuning && !this.compare, 'esc') },
+      {
+        label: 'Contrast',
+        text: `tab  while tuning  ·  ${MARKS.contrast} moves lightness until the ratio to the color it is read against changes  ·  home  the gate’s floor  ·  1-9  that ratio`,
+        ...when(tuning, 'tab'),
+      },
+      {
+        label: 'Chroma',
+        text: `Stops at the sRGB edge  ·  what lightness or hue takes away comes back while you tune, where it fits again (${MARKS.off})`,
+      },
+      {
+        label: 'Scope',
+        text: 'a  while tuning  ·  this, pair, normals, brights or accents  ·  the slots in it move by the same step, each keeping its own color',
+        ...when(tuning && ansi, 'a'),
+      },
+      {
+        label: 'Relations',
+        text: 'g  the lightness, chroma and hue of every ANSI color at once, and the relations the gate checks',
+        ...when(true, 'g'),
+      },
+      { label: 'Sample', text: '⇧←→  another tab  ·  the slot under the cursor is underlined where it is used' },
+      { label: 'Where', text: 'w  dims every part of the sample that does not use the slot', ...when(roomy, 'w') },
+      {
+        label: 'Inspect',
+        text: 'i  or a click on the sample finds the slots a spot uses  ·  ←→↑↓  move  ·  enter  goes to the slot  ·  esc  leaves',
+        ...when(roomy && !this.inspect, 'i'),
+      },
+      {
+        label: 'Link',
+        text: 'l  makes a bright follow its normal: tuning the normal moves it, tuning the bright alone unlinks it  ·  =  snaps it to its normal',
+        ...when(ansi, 'l'),
+      },
+      { label: 'Changed', text: 'm  shows only the slots that changed', ...when(roomy, 'm') },
+      { label: 'Type', text: '#  then #rrggbb, rgb(r g b) or oklch(l c h)  ·  a paste works too', ...when(true, '#') },
+      {
+        label: 'Slot',
+        text: `c  copies  ·  v  pastes  ·  r  puts it back as it opened, R all of them${this.tone ? '' : '  ·  *  marks it a signature color'}`,
+      },
+      { label: 'Fix', text: 'f  moves the colors the gate misses', ...when(list, 'f') },
+      ...(this.tone
+        ? []
+        : [{ label: 'Open', text: 'o  takes another palette’s colors', ...when(list && others, 'o') }]),
+      ...(this.options.exports
+        ? [
+            {
+              label: 'Export',
+              text: 'x  copies the share code, an add command or the palette file',
+              ...when(roomy, 'x'),
+            },
+          ]
+        : []),
+      ...(this.tone
+        ? []
+        : [{ label: 'Import', text: 'I  takes colors from another palette or a share code', ...when(roomy, 'I') }]),
+      { label: 'Gate', text: `${MARKS.miss}  marks every slot whose own checks miss, and each miss names its slots` },
+      { label: 'History', text: 'u  undo', ...when(list, 'u') },
+      { label: '', text: 'ctrl+r  redo', ...when(list, 'ctrl-r') },
+      ...pictures,
+      { label: 'Compare', text: 'space  shows the colors you started from, on the terminal too', ...when(true, ' ') },
+      { label: 'Save', text: 's  saves', ...when(true, 's') },
+      { label: 'Leave', text: LEAVE, ...when(plain && !this.compare, 'esc') },
+      close,
+    ]
+  }
+
+  private legend(): Legend {
+    if (this.mode === 'seeds') {
+      return []
+    }
+
+    return [
+      ...(this.tone ? [] : ([[MARKS.signature, 'signature color']] as Legend)),
+      [MARKS.miss, 'misses the gate'],
+      [MARKS.on, 'changed'],
+      [MARKS.linked, 'follows its normal'],
+      [MARKS.off, 'where it was'],
+      [MARKS.contrast, 'contrast'],
+    ]
+  }
+
   paste(text: string): void {
     this.notice = undefined
+
+    if (this.help) {
+      this.help.paste(text)
+
+      return
+    }
 
     if (this.overlay === 'open') {
       this.filter += [...text.toLowerCase()].filter((ch) => NAME_CHAR.test(ch)).join('')
@@ -455,7 +610,7 @@ export class PaletteEditor {
       return
     }
 
-    if (this.overlay) {
+    if (this.quitting || this.menu) {
       return
     }
 
@@ -482,7 +637,7 @@ export class PaletteEditor {
       this.list = listOf(drawn)
       this.lch = this.lchs()
       this.chain(this.list)
-      this.notice = 'Took the colors of the share code'
+      this.say('Took the colors of the share code', 'ok')
 
       return
     }
@@ -490,7 +645,7 @@ export class PaletteEditor {
     const color = parseColor(text)
 
     if (!color) {
-      this.notice = 'Not a color — #rrggbb, rgb(r g b) or oklch(l c h)'
+      this.say('Not a color — #rrggbb, rgb(r g b) or oklch(l c h)', 'error')
 
       return
     }
@@ -502,6 +657,24 @@ export class PaletteEditor {
   press(key: string): void {
     this.notice = undefined
 
+    if (key === 'ctrl-c') {
+      this.interrupt()
+
+      return
+    }
+
+    if (this.help) {
+      const answer = this.help.key(key)
+
+      if (answer !== 'stay') {
+        const run = answer === 'run' ? this.help.chosen()?.run : undefined
+        this.help = undefined
+        run?.()
+      }
+
+      return
+    }
+
     if (this.quitting) {
       this.quitKey(key)
 
@@ -510,12 +683,6 @@ export class PaletteEditor {
 
     if (this.typing !== undefined) {
       this.type(key)
-
-      return
-    }
-
-    if (this.overlay === 'keys') {
-      this.overlay = undefined
 
       return
     }
@@ -533,7 +700,7 @@ export class PaletteEditor {
     }
 
     if (key === '?') {
-      this.overlay = 'keys'
+      this.help = new Help(this.topics(), this.legend())
 
       return
     }
@@ -667,7 +834,7 @@ export class PaletteEditor {
 
     if (this.overlay === 'open') {
       this.pick = clamp(this.pick, Math.max(0, this.choices().length - 1))
-    } else if (this.overlay || this.quitting || this.typing !== undefined) {
+    } else if (this.quitting || this.typing !== undefined) {
       return
     } else if (this.mode === 'seeds') {
       this.field = clamp(this.field, SEED_FIELDS.length - 1)
@@ -727,6 +894,30 @@ export class PaletteEditor {
     }
   }
 
+  private interrupt(): void {
+    if (this.quitting) {
+      this.quitting = false
+      this.result = 'cancelled'
+
+      return
+    }
+
+    this.help = undefined
+    this.overlay = undefined
+    this.filter = ''
+    this.menu = undefined
+    this.typing = undefined
+    this.inspect = false
+    this.spot = undefined
+    this.compare = false
+
+    if (this.mode === 'tune') {
+      this.tuneKey('enter')
+    }
+
+    this.leave()
+  }
+
   private quitKey(key: string): void {
     if (key === 'esc') {
       this.quitting = false
@@ -746,7 +937,7 @@ export class PaletteEditor {
 
   private findPictures(start?: Start): void {
     if (!this.options.find) {
-      this.notice = 'Pictures need Ghostty, iTerm2 or kitty, outside tmux'
+      this.say('Pictures need Ghostty, iTerm2 or kitty, outside tmux', 'warn')
 
       return
     }
@@ -759,7 +950,7 @@ export class PaletteEditor {
       this.overlay = 'open'
       this.pick = 0
     } else {
-      this.notice = 'No other palettes to take colors from'
+      this.say('No other palettes to take colors from')
     }
   }
 
@@ -791,12 +982,12 @@ export class PaletteEditor {
       this.typing = ''
     } else if (key === 'c') {
       this.clip = this.list[this.slot()]
-      this.notice = `Copied ${this.clip}`
+      this.say(`Copied ${this.clip}`, 'ok')
     } else if (key === 'v') {
       if (this.clip) {
         this.set(this.slot(), this.clip, 'paste')
       } else {
-        this.notice = 'Nothing copied yet — c copies a slot'
+        this.say('Nothing copied yet — c copies a slot')
       }
     } else if (key === 'r') {
       this.set(this.slot(), this.original[this.slot()] as Hex, 'reset')
@@ -863,8 +1054,7 @@ export class PaletteEditor {
 
   private builderKey(key: string): boolean {
     if (['i', 'm', 'w', 'x', 'I'].includes(key) && !this.roomy) {
-      this.notice =
-        this.view === 'relations' ? 'g goes back to the builder' : 'The builder needs a window of at least 96×28'
+      this.say(this.view === 'relations' ? 'g goes back to the builder' : UNBUILT, 'warn')
 
       return true
     }
@@ -876,7 +1066,7 @@ export class PaletteEditor {
     } else if (key === 'm') {
       this.changedOnly = !this.changedOnly
       this.reseat()
-      this.notice = this.changedOnly ? (this.changes() > 0 ? undefined : 'Nothing changed yet') : undefined
+      this.say(this.changedOnly && this.changes() === 0 ? 'Nothing changed yet' : undefined)
     } else if (key === 'b') {
       this.pic = !this.pic
     } else if (key === 'w') {
@@ -914,9 +1104,10 @@ export class PaletteEditor {
       if (entry === 0) {
         this.openPalettes()
       } else {
-        this.notice = this.options.decode
-          ? 'Paste a share link or a tt4: code into this window'
-          : 'Share codes are not read here'
+        this.say(
+          this.options.decode ? 'Paste a share link or a tt4: code into this window' : 'Share codes are not read here',
+          this.options.decode ? 'info' : 'warn',
+        )
       }
 
       return
@@ -932,9 +1123,12 @@ export class PaletteEditor {
       const edited = this.edited()
       const code = exports.code(edited)
       this.copied = entry === 0 ? code : entry === 1 ? `${exports.command} ${code}` : exports.toml(edited)
-      this.notice = `Copied ${entry === 0 ? 'the share code' : entry === 1 ? 'the add command' : 'the palette file'} — paste it where you need it`
+      this.say(
+        `Copied ${entry === 0 ? 'the share code' : entry === 1 ? 'the add command' : 'the palette file'} — paste it where you need it`,
+        'ok',
+      )
     } catch (error) {
-      this.notice = error instanceof Error ? error.message : String(error)
+      this.say(error instanceof Error ? error.message : String(error), 'error')
     }
   }
 
@@ -942,7 +1136,7 @@ export class PaletteEditor {
     const layout = this.layout()
 
     if (!layout) {
-      this.notice = 'The builder needs a window of at least 96×28'
+      this.say(UNBUILT, 'warn')
 
       return
     }
@@ -1070,7 +1264,7 @@ export class PaletteEditor {
     const slot = this.slot()
 
     if (slot < BASE.length) {
-      this.notice = 'l links a bright to its normal — pick an ANSI row'
+      this.say('l links a bright to its normal — pick an ANSI row', 'warn')
 
       return
     }
@@ -1085,7 +1279,7 @@ export class PaletteEditor {
 
     if (this.linkOf(bright) !== undefined) {
       this.unlinked.add(bright)
-      this.notice = `${names} move apart`
+      this.say(`${names} move apart`)
 
       return
     }
@@ -1093,7 +1287,7 @@ export class PaletteEditor {
     this.links.set(bright, normal)
     this.unlinked.delete(bright)
     this.offsets.set(bright, offsetOf(this.lch[normal] as Oklch, this.lch[bright] as Oklch))
-    this.notice = `${names} move together`
+    this.say(`${names} move together`)
   }
 
   private nextMiss(way: number): void {
@@ -1101,7 +1295,7 @@ export class PaletteEditor {
     const bad = this.misses()
 
     if (bad.size === 0) {
-      this.notice = 'The gate passes'
+      this.say('The gate passes', 'ok')
 
       return
     }
@@ -1212,7 +1406,7 @@ export class PaletteEditor {
 
   private rescope(): void {
     if (this.slot() < BASE.length) {
-      this.notice = 'A base color moves alone'
+      this.say('A base color moves alone', 'warn')
 
       return
     }
@@ -1242,7 +1436,7 @@ export class PaletteEditor {
     this.scope = scope
     this.hold()
     const n = this.scoped().length
-    this.notice = n > 1 ? `${n} slots move together` : 'This slot moves alone'
+    this.say(n > 1 ? `${n} slots move together` : 'This slot moves alone')
   }
 
   private endTune(): void {
@@ -1285,7 +1479,7 @@ export class PaletteEditor {
 
     if (ratioAt(far) < want) {
       l = far
-      this.notice = `The ratio stops at ${ratioAt(far).toFixed(2)}:1 on this side of the color it is read against`
+      this.say(`The ratio stops at ${ratioAt(far).toFixed(2)}:1 on this side of the color it is read against`, 'warn')
     } else {
       let near = pivot
       let away = far
@@ -1336,7 +1530,7 @@ export class PaletteEditor {
       const room = edge(at.l, at.h)
 
       if (rounded > room) {
-        this.notice = `Chroma stops at ${room.toFixed(3)}, the sRGB edge for this lightness and hue`
+        this.say(`Chroma stops at ${room.toFixed(3)}, the sRGB edge for this lightness and hue`, 'warn')
       }
 
       const next = Math.min(rounded, room)
@@ -1365,7 +1559,7 @@ export class PaletteEditor {
     )
 
     if (channel.key === 'h' && grey(this.list[slot] as Hex)) {
-      this.notice = 'A grey shows no hue — raise its chroma first'
+      this.say('A grey shows no hue — raise its chroma first', 'warn')
     }
 
     for (const s of others) {
@@ -1426,7 +1620,7 @@ export class PaletteEditor {
       const color = parseColor(typed)
 
       if (!color) {
-        this.notice = 'Not a color — #rrggbb, rgb(r g b) or oklch(l c h)'
+        this.say('Not a color — #rrggbb, rgb(r g b) or oklch(l c h)', 'error')
 
         return
       }
@@ -1466,7 +1660,7 @@ export class PaletteEditor {
       this.chain(this.list)
       this.overlay = undefined
       this.filter = ''
-      this.notice = `Took the colors of ${choice.name}`
+      this.say(`Took the colors of ${choice.name}`, 'ok')
 
       if (this.mode === 'seeds') {
         this.leaveSeeds()
@@ -1507,7 +1701,7 @@ export class PaletteEditor {
 
   private follow(): void {
     if (this.row < BASE.length) {
-      this.notice = '= works on an ANSI row — the bright takes its normal'
+      this.say('= works on an ANSI row — the bright takes its normal', 'warn')
 
       return
     }
@@ -1521,7 +1715,7 @@ export class PaletteEditor {
     this.unlinked.delete(bright)
     this.offsets.set(bright, offsetOf(from, this.lch[bright] as Oklch))
     this.seat(bright)
-    this.notice = `${slotLabel(bright).name} follows ${slotLabel(normal).name.toLowerCase()}`
+    this.say(`${slotLabel(bright).name} follows ${slotLabel(normal).name.toLowerCase()}`, 'ok')
   }
 
   private mark(): void {
@@ -1530,10 +1724,14 @@ export class PaletteEditor {
     const marked = this.signature.includes(name) ? this.signature.filter((s) => s !== name) : [...this.signature, name]
     const dropped = marked.length > 3 ? marked[0] : undefined
     this.signature = marked.slice(-3)
-    this.notice =
-      this.signature.length === 3
+    const whole = this.signature.length === 3
+
+    this.say(
+      whole
         ? `Signature: ${this.signature.join(', ')}${dropped ? ` — ${dropped} dropped` : ''}`
-        : `The signature needs three slots — ${this.signature.length} marked`
+        : `The signature needs three slots — ${this.signature.length} marked`,
+      whole ? 'ok' : 'warn',
+    )
   }
 
   private fix(): void {
@@ -1550,7 +1748,8 @@ export class PaletteEditor {
     })
 
     if (moves.length === 0) {
-      this.notice = check(theme).length === 0 ? 'Already passes the gate' : 'No color change fixes it'
+      const passes = check(theme).length === 0
+      this.say(passes ? 'Already passes the gate' : 'No color change fixes it', passes ? 'ok' : 'warn')
 
       return
     }
@@ -1567,14 +1766,17 @@ export class PaletteEditor {
     const was = this.list
     this.list = next
     this.lch = next.map((c, i) => (c === was[i] ? (this.lch[i] as Oklch) : this.lchOf(c)))
-    this.notice = `Moved ${moves.length} ${moves.length === 1 ? 'color' : 'colors'}${left.length === 0 ? ' — passes the gate' : ' closer to the gate'}`
+    this.say(
+      `Moved ${moves.length} ${moves.length === 1 ? 'color' : 'colors'}${left.length === 0 ? ' — passes the gate' : ' closer to the gate'}`,
+      left.length === 0 ? 'ok' : 'info',
+    )
   }
 
   private save(): void {
     const problem = this.options.check(this.edited())
 
     if (problem) {
-      this.notice = problem
+      this.say(problem, 'error')
 
       return
     }
@@ -1586,7 +1788,7 @@ export class PaletteEditor {
     const last = this.history.pop()
 
     if (!last) {
-      this.notice = 'Nothing to undo'
+      this.say('Nothing to undo')
 
       return
     }
@@ -1599,7 +1801,7 @@ export class PaletteEditor {
     const next = this.future.pop()
 
     if (!next) {
-      this.notice = 'Nothing to redo'
+      this.say('Nothing to redo')
 
       return
     }

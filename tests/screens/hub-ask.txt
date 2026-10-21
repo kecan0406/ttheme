@@ -1,8 +1,8 @@
   Preview  [Browse]  tab next
  Browse (6/6 · 3 picked)
- ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+ ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
                                                  ╭─ official ─────────────────────────────────────╮
     + Add marketplace   owner/repo or a folder   │ Comes with ttheme                              │
     ⌕ Search marketplace   find one on GitHub    │                                                │
@@ -16,9 +16,9 @@
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │ bocchi  Will install                           │
-                                                 │ Gate 12/12 · passes                            │
+                                                 │ Gate 8/12 · ✗ accent hue outside its ANSI rol… │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │    × Remove marketplace                        │
                                                  ╰────────────────────────────────────────────────╯
- [BROWSE] Apply your changes before you leave?   y apply   n discard                       esc stay
+ [BROWSE] Apply 1 change before you leave?   y apply   n discard                           esc stay

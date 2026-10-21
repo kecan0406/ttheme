@@ -68,6 +68,7 @@ import { nameHits, primeNames } from '../../store/names.ts'
 import { configHome } from '../../store/paths.ts'
 import { blurOf, coloringFor, settingDefault, withSetting } from '../../store/wiring.ts'
 import { CLEAR, viewsInWindow, viewVar } from '../../terminals/terminal.ts'
+import type { Tone as NoticeTone } from '../../tui/bar.ts'
 import { edit, plain } from '../../tui/field.ts'
 import {
   type Clip,
@@ -91,8 +92,10 @@ import { Paint } from '../../tui/find/paint.ts'
 import {
   type Count,
   DIGITS,
+  FIND_MARKS,
   type FindSpot,
   type FindView,
+  findTopics,
   gridLayout,
   HELD,
   type Held,
@@ -110,6 +113,7 @@ import {
   type TunePanel,
   type Tuning,
 } from '../../tui/find/screen.ts'
+import { Help } from '../../tui/help.ts'
 import { CELL_QUERY, CellProbe, type Inbound, type Mouse } from '../../tui/keys.ts'
 import {
   FOCUS,
@@ -601,7 +605,7 @@ class Finder {
       scroll: 0,
       beat: 0,
       mode: 'grid',
-      help: false,
+      help: undefined,
       scene: Math.max(
         0,
         SCENES.findIndex((scene) => scene.name.toLowerCase() === process.env.TTHEME_SCENE),
@@ -790,7 +794,10 @@ class Finder {
           }
         } else {
           this.view.searching = false
-          this.view.error = 'This terminal does not report its cell size — find needs kitty graphics'
+          this.view.notice = {
+            text: 'This terminal does not report its cell size — find needs kitty graphics',
+            tone: 'warn',
+          }
         }
 
         if (!process.env.TMUX) {
@@ -879,7 +886,14 @@ class Finder {
       return
     }
 
-    if (view.installing !== undefined || view.panel !== undefined || view.help) {
+    if (view.help) {
+      view.help.paste(text)
+      this.paint.draw()
+
+      return
+    }
+
+    if (view.installing !== undefined || view.panel !== undefined) {
       return
     }
 
@@ -904,7 +918,7 @@ class Finder {
 
   private async got(got: Got): Promise<void> {
     if (got.kind === 'error') {
-      this.notice(got.message)
+      this.notice(got.message, 'error')
 
       return
     }
@@ -921,16 +935,18 @@ class Finder {
       return
     }
 
+    this.view.help = undefined
     await this.bring(() => normalize(got.bytes, got.source))
   }
 
-  private notice(text: string, ms = NOTICE): void {
+  private notice(text: string, tone: NoticeTone = 'warn', ms = NOTICE): void {
     const view = this.view
-    view.error = text
+    const told = { text, tone }
+    view.notice = told
     clearTimeout(this.noticeTimer)
     this.noticeTimer = setTimeout(() => {
-      if (view.error === text) {
-        view.error = undefined
+      if (view.notice === told) {
+        view.notice = undefined
         this.paint.draw()
       }
     }, ms)
@@ -986,7 +1002,7 @@ class Finder {
     try {
       clip = await readClipboard(join(this.scratch, `clipboard-${Date.now()}.png`))
     } catch (error) {
-      this.notice(`Could not read the clipboard: ${describe(error instanceof Error ? error : String(error))}`)
+      this.notice(`Could not read the clipboard: ${describe(error instanceof Error ? error : String(error))}`, 'error')
 
       return
     }
@@ -1050,7 +1066,7 @@ class Finder {
     this.attaching?.abort()
     const control = new AbortController()
     this.attaching = control
-    view.error = undefined
+    view.notice = undefined
     view.saved = undefined
     view.note = 'Reading the picture…'
     this.paint.draw()
@@ -1061,7 +1077,7 @@ class Finder {
     } catch (error) {
       if (!control.signal.aborted) {
         view.note = undefined
-        this.notice(describe(error instanceof Error ? error : String(error)), 8000)
+        this.notice(describe(error instanceof Error ? error : String(error)), 'error', 8000)
       }
 
       return
@@ -1178,6 +1194,20 @@ class Finder {
       return
     }
 
+    if (view.help) {
+      const answer = view.help.key(key)
+
+      if (answer !== 'stay') {
+        const run = answer === 'run' ? view.help.chosen()?.run : undefined
+        view.help = undefined
+        run?.()
+      }
+
+      this.paint.draw()
+
+      return
+    }
+
     if ((key === 'ctrl-v' || key === 'alt-v') && view.panel === undefined) {
       void this.fromClipboard()
 
@@ -1196,15 +1226,6 @@ class Finder {
       return
     }
 
-    if (view.help) {
-      if (key === '?' || key === 'esc') {
-        view.help = false
-        this.paint.draw()
-      }
-
-      return
-    }
-
     if (this.cols < MIN.cols || this.rows < MIN.rows) {
       if (key === 'esc') {
         this.finish(2)
@@ -1214,7 +1235,10 @@ class Finder {
     }
 
     if (key === '?') {
-      view.help = true
+      view.help = new Help(
+        findTopics(view, (pressed) => this.key(pressed)),
+        FIND_MARKS,
+      )
       this.paint.draw()
 
       return
@@ -1235,6 +1259,12 @@ class Finder {
     const spot = hit?.target as FindSpot | undefined
 
     if (view.installing !== undefined) {
+      return
+    }
+
+    if (view.help) {
+      this.helpPoint(view.help, spot, hit, event)
+
       return
     }
 
@@ -1259,13 +1289,28 @@ class Finder {
     }
   }
 
+  private helpPoint(help: Help, spot: FindSpot | undefined, hit: Hit | undefined, event: Mouse): void {
+    if (event.action === 'wheel') {
+      help.wheel(event.wheel)
+    } else if (event.action === 'press' && event.button === 'left' && spot?.kind === 'topic') {
+      help.point(spot.index)
+    } else if (event.action === 'release' && spot?.kind === 'key' && hit?.inside) {
+      this.key(spot.key)
+    } else if (event.action === 'release' && spot?.kind === 'topic') {
+      if (hit?.inside && event.count >= 2 && help.point(spot.index)) {
+        this.key('enter')
+      }
+    } else if (event.action === 'release' && spot?.kind !== 'help') {
+      this.view.help = undefined
+    }
+
+    this.paint.draw()
+  }
+
   private pressed(spot: FindSpot | undefined): void {
     const view = this.view
 
-    if (view.help) {
-      this.paint.drop()
-      this.key('esc')
-    } else if (view.editing !== undefined || spot === undefined) {
+    if (view.editing !== undefined || spot === undefined) {
       return
     } else if (view.panel !== undefined) {
       if (spot.kind === 'setting' && spot.index < view.settings.length && view.typing === undefined) {
@@ -1314,10 +1359,6 @@ class Finder {
 
   private wheel(step: number): void {
     const view = this.view
-
-    if (view.help) {
-      return
-    }
 
     if (view.editing !== undefined) {
       if (view.suggest?.length) {
@@ -1455,7 +1496,7 @@ class Finder {
 
     if (key === 'enter' && view.tiles[view.focus]) {
       view.mode = 'try'
-      view.error = undefined
+      view.notice = undefined
       this.select()
 
       return
@@ -1758,7 +1799,7 @@ class Finder {
 
       return true
     } catch (error) {
-      this.view.error = error instanceof Error ? error.message : String(error)
+      this.view.notice = { text: error instanceof Error ? error.message : String(error), tone: 'error' }
 
       return false
     }
@@ -1923,7 +1964,7 @@ class Finder {
     this.syncSite()
     this.current = undefined
     this.view.shown = undefined
-    this.view.error = undefined
+    this.view.notice = undefined
     const board = blank(`${site.key}|post:${id}`, true)
     this.board = board
     this.boards.set(board.key, board)
@@ -1940,7 +1981,7 @@ class Finder {
       if (!post) {
         board.searching = false
         board.error = `${site.name} has no post ${id}`
-        this.view.error = board.error
+        this.view.notice = { text: board.error, tone: 'error' }
         this.show()
         this.paint.draw()
 
@@ -1967,7 +2008,7 @@ class Finder {
 
     this.gen++
     this.board = known
-    this.view.error = known.error
+    this.view.notice = known.error ? { text: known.error, tone: 'error' } : undefined
     this.show()
     this.paint.draw()
     await this.pump()
@@ -2092,7 +2133,7 @@ class Finder {
       clearTimeout(this.settle)
       view.fetching = undefined
       view.mode = 'grid'
-      view.error = undefined
+      view.notice = undefined
       this.paint.draw()
     }
   }
@@ -2409,7 +2450,7 @@ class Finder {
     const board = blank(this.boardKey, true)
     this.board = board
     this.boards.set(board.key, board)
-    this.view.error = undefined
+    this.view.notice = undefined
 
     const plans = this.sites.flatMap((site) => {
       const query = this.query(site)
@@ -2481,7 +2522,7 @@ class Finder {
 
     this.board.error = reason(site?.name ?? this.tabName, error)
     this.board.searching = false
-    this.view.error = this.board.error
+    this.view.notice = { text: this.board.error, tone: 'error' }
     this.show()
     this.paint.draw()
   }
@@ -3173,7 +3214,7 @@ class Finder {
       this.preload()
     } catch (error) {
       if (!control.signal.aborted && !this.signal.aborted) {
-        view.error = reason(site.name, error instanceof Error ? error : String(error))
+        view.notice = { text: reason(site.name, error instanceof Error ? error : String(error)), tone: 'error' }
       }
     } finally {
       if (view.fetching?.id === tile.key) {
@@ -3473,7 +3514,7 @@ class Finder {
     try {
       await this.present()
     } catch (error) {
-      view.error = error instanceof Error ? error.message : String(error)
+      view.notice = { text: error instanceof Error ? error.message : String(error), tone: 'error' }
     }
 
     this.presenting = false
@@ -3502,7 +3543,7 @@ class Finder {
     }
 
     view.installing = tile.key
-    view.error = undefined
+    view.notice = undefined
     this.paint.flush()
     const tune = toTune(view.tune, view.untuned)
     const pick = this.posts.get(current.key)
@@ -3555,7 +3596,7 @@ class Finder {
       view.fetching = undefined
       view.mode = 'grid'
     } catch (error) {
-      view.error = error instanceof Error ? error.message : String(error)
+      view.notice = { text: error instanceof Error ? error.message : String(error), tone: 'error' }
     }
 
     view.installing = undefined

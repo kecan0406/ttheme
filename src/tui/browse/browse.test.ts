@@ -2,9 +2,10 @@ import assert from 'node:assert/strict'
 import { PassThrough } from 'node:stream'
 import { test } from 'node:test'
 import cells from 'fast-string-width'
-import type { PaletteEntry } from '../core/manifest.ts'
-import type { Listed, Listing } from '../store/marketplace-index.ts'
-import { type BrowseIo, BrowsePanel, type Marketplace } from './browse-panel.ts'
+import type { PaletteEntry } from '../../core/manifest.ts'
+import type { Listed, Listing } from '../../store/marketplace-index.ts'
+import { BrowsePanel } from './browse.ts'
+import type { BrowseIo, Marketplace } from './types.ts'
 
 function entry(name: string, catalog?: string): PaletteEntry {
   return {
@@ -249,7 +250,7 @@ test('a marketplace opens in the panel beside the cards from 94 columns, and ove
   assert.match(wide.last, /╭─ official ─+╮$/m)
   assert.match(wide.last, /^ {4}● official +│/m)
   assert.match(wide.last, /│ ▌ {4}● miku +│$/m)
-  assert.match(wide.last, /├─+┤\n.*│ miku {2}Installed +│\n.*│ Gate \d+\/\d+ · passes +│/)
+  assert.match(wide.last, /├─+┤\n.*│ miku {2}Installed +│\n.*│ Gate \d+\/\d+ · /)
   assert.match(wide.last, /\[BROWSE\] space pick {3}\? keys +esc back$/m)
   const narrow = await drive([...MIKU, '\x03'], { columns: 80 })
   assert.doesNotMatch(narrow.last, /● official/)
@@ -273,12 +274,13 @@ test('the Remove marketplace row asks first, and on yes takes the marketplace of
   assert.ok(panel.picked.has('alice@pastel/dusk'))
   assert.match(frames, /Remove alice@pastel\? Its installed palettes stay installed {3}y remove {3}n keep +esc back/)
   assert.match(frames, /\(\d+\/\d+ · 2 picked · 1 marketplace to remove\)/)
-  const gone = await drive([...REMOVE, '\x1b'], { installed: ['miku'] })
+  const gone = await drive([...REMOVE, '\x1b', 'n'], { installed: ['miku'] })
   assert.deepEqual(gone.panel.removes, ['alice/ttheme-pastel'])
   assert.doesNotMatch(gone.last, /^ {4}[●○] alice@pastel/m)
   assert.match(gone.last, /^ ▌ {2}● official +│/m)
   const kept = await drive([DOWN, RIGHT, UP, '\r', 'n', '\x1b', '\x1b'])
   assert.deepEqual(kept.panel.removes, [])
+  assert.match(kept.frames, /\[BROWSE\] alice@pastel kept {3}enter remove/)
   assert.match(kept.last, /^ ▌ {2}● alice@pastel +│/m)
 })
 
@@ -346,7 +348,8 @@ test('esc in the form goes back to the marketplaces keeping what was typed, and 
   assert.match(left.last, /│ │ bob\/ttheme-neon +│ │$/m)
   assert.match(left.last, /\[BROWSE\] enter open/)
   assert.deepEqual(left.panel.adds, [])
-  const again = await drive([...ADD, ...'bob/ttheme-neon', '\r', '\x1b', 120, '\r', '\r', 20, '\x03'], { io: slow })
+  const twice = ['\x03', '\x03']
+  const again = await drive([...ADD, ...'bob/ttheme-neon', '\r', '\x1b', 120, '\r', '\r', 20, ...twice], { io: slow })
   assert.equal(fetches, 2)
   assert.deepEqual(
     again.panel.adds.map((m) => m.id),
@@ -388,7 +391,7 @@ test('inside the tabs, tab asks for the next screen at once, or first asks about
   assert.equal(back.next, 21)
 
   const stay = await drive([...MIKU, ' ', PLAIN_TAB, '\x1b', ...APPLY], { hub: 'browse', installed: [] })
-  assert.match(stay.frames, /Apply your changes before you leave\?/)
+  assert.match(stay.frames, /Apply 1 change before you leave\?/)
   assert.equal(stay.result, 'submit')
   assert.equal(stay.next, undefined)
 
@@ -401,6 +404,14 @@ test('inside the tabs, tab asks for the next screen at once, or first asks about
   assert.equal(apply.next, undefined)
   assert.equal(apply.panel.picked.size, 1)
   assert.ok(apply.ran)
+})
+
+test('ctrl-c or esc with something staged asks before leaving, esc stays, and a second ctrl-c leaves without it', async () => {
+  const { frames, last, result, ran } = await drive([...MIKU, ' ', '\x03', '\x1b', '\x1b', '\x1b', '\x03'])
+  assert.match(frames, /\[BROWSE\] Apply 1 change before you leave\? {3}y apply {3}n discard +esc stay/)
+  assert.match(last, /Apply 1 change before you leave\?/)
+  assert.equal(result, 'cancel')
+  assert.equal(ran, false)
 })
 
 test('tab does nothing in browse on its own', async () => {
@@ -482,6 +493,11 @@ test('Search marketplace opens a screen of its own that loads the marketplace li
   assert.match(frames, /\[SEARCH\] space add {3}enter add and go back {3}\? keys +esc back$/m)
 })
 
+test('a filter that matches no palette says so under the head rows', async () => {
+  const { frames } = await drive([...'zzz', 20, '\x1b', '\x1b'])
+  assert.match(frames, /^ {4}No palettes match 'zzz'/m)
+})
+
 test('typing in the search filters the list at once, palette names included, and what Browse filtered opens it', async () => {
   const index = () =>
     Promise.resolve(
@@ -496,7 +512,7 @@ test('typing in the search filters the list at once, palette names included, and
   assert.match(typed.frames, / Search marketplace \(1 found\)\n.*\n │ ⌕ glow_/)
   const seeded = await drive([...'zzz', '\r', 20, '\x1b', '\x1b', '\x1b', '\x1b'], { io: io({ index }) })
   assert.match(seeded.frames, /│ ⌕ zzz_ +│/)
-  assert.match(seeded.frames, /⌕ No marketplace matches "zzz"/)
+  assert.match(seeded.frames, /⌕ No marketplaces match 'zzz'/)
 })
 
 test('a list that did not load says so and space loads it again, and a copy from before shows while offline', async () => {
@@ -612,13 +628,19 @@ test('enter takes a marketplace into the panel, typing lands on the first match 
   assert.match(filtered.last, /^ ▌ {2}● official +│/m)
 })
 
-test('? shows the keys over the list until ? or esc, and the list takes no key meanwhile', async () => {
+test('? shows the keys and marks over the list until ? or esc, typing filters them, and enter runs the one chosen', async () => {
   const { last, frames, panel } = await drive(['?', ' ', '?', '\x1b'])
   assert.match(frames, /╭─ Help ─+╮/)
   assert.match(frames, /Marketplace {3}↓ {2}below its palettes, to its own actions/)
-  assert.match(frames, /\[HELP\] +\? esc close/)
+  assert.match(frames, /Marks +● picked {3}○ not picked {3}▸ ▾ a catalog, closed or open/)
+  assert.match(frames, /⇡ has an update {3}↻ updates on its own {3}✗ misses the gate/)
+  assert.match(frames, /\[HELP\] ↑↓ choose {3}enter run {3}type to filter +\? esc close/)
   assert.doesNotMatch(last, /Help/)
   assert.deepEqual([...panel.picked].sort(), ['alice@pastel/dusk', 'miku'])
+  const ran = await drive(['?', ...'search', '\r', '\x03'])
+  assert.match(ran.frames, /▶ Search +enter {2}on Search marketplace/)
+  assert.doesNotMatch(ran.frames.split('\u0001').at(-2) ?? '', /Pick {3,}space/)
+  assert.match(ran.last, /\[SEARCH\]/)
 })
 
 test('applying shows what the work reports and waits for it, and done stays until enter', async () => {

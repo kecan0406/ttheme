@@ -865,14 +865,14 @@ TTHEME_STARTUP=
     "[UNPIN]  This directory  [And below]  ~/code    ←→ choose · enter unpin · esc keep"
     "~/code                konata  and below"
     "└── acme/"
-    "    ├── docs/ ← here  rei     and below  ✕ unpin"
-    "    │   └── api/      miku    this directory  ✕ unpin"
+    "    ├── docs/ ← here  rei     and below  × unpin"
+    "    │   └── api/      miku    this directory  × unpin"
     "    └── web/          kita    this directory"
     "Then here · konata pinned to ~/code and below"
   )
   [[ ${(F)block} == ${(F)want} ]] || { print -u2 "unpin's and-below choice did not mark what goes:"; print -rlu2 -- $block; exit 1 }
   COLUMNS=100 LINES=30 __tt_unpin_block 3
-  [[ ${block[2]} == *"✕ unpin" && ${block[4]} != *"✕"* && ${block[-1]} == "Then here · rei pinned to this directory and below" ]] ||
+  [[ ${block[2]} == *"× unpin" && ${block[4]} != *"×"* &&${block[-1]} == "Then here · rei pinned to this directory and below" ]] ||
     { print -u2 "unpin's covering choice marked the wrong pin:"; print -rlu2 -- $block; exit 1 }
   out=$(ttheme unpin < /dev/null 2>&1) || { print -u2 "unpin without a terminal did not drop this directory's own pin: $out"; exit 1 }
   TTHEME_PINS_RAW=; __tt_pins_load

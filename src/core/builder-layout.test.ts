@@ -77,6 +77,21 @@ test('every ANSI color, the selection and the cursor show somewhere in the windo
   }
 })
 
+test('a shell pane fills the rows its whole scenes leave with the tail of the scene before', () => {
+  for (const [cols, rows] of [
+    [96, 28],
+    [100, 30],
+    [120, 36],
+    [140, 40],
+  ] as const) {
+    const tile = layoutOf(cols, rows, 0)?.tiles[0]
+    assert.ok(tile)
+    const lines = paneLines(tile).map((line) => line.map((part) => part.text).join(''))
+    assert.equal(lines.length, tile.rows, `${cols}×${rows}`)
+    assert.match(lines.at(-1) ?? '', /echo selected text/)
+  }
+})
+
 test('a pane hands out only the runs it has room to show, so the inspector never lands on one cut away', () => {
   for (const [cols, rows, scene] of [
     [96, 28, 1],

@@ -9,6 +9,7 @@ import {
   cachePath,
   OFFICIAL,
   parseSource,
+  readMarketplaceInfo,
   refOf,
   repoOf,
   sameMarketplace,
@@ -53,6 +54,12 @@ test('only a repository updates on its own, once turned on — the official mark
   assert.equal(autoUpdates('alice/anime', undefined), false)
   assert.equal(autoUpdates('alice/anime', { 'alice/anime': true }), true)
   assert.equal(autoUpdates('/srv/marketplace', { '/srv/marketplace': true }), false)
+})
+
+test('a marketplace description reads without the bidirectional controls that would reorder it on screen', () => {
+  const [rlo, pdf, lri, pdi] = [0x202e, 0x202c, 0x2066, 0x2069].map((code) => String.fromCodePoint(code))
+  const toml = `name = "shop"\ndescription = "warm ${rlo}etsap${pdf} colors ${lri}for${pdi} nights"\n\n[owner]\nname = "fix"\n`
+  assert.equal(readMarketplaceInfo(toml, 'shop').description, 'warm etsap colors for nights')
 })
 
 test('a marketplace shows as its repository, or its folder under ~ when it sits in the home directory', () => {

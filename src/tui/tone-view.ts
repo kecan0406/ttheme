@@ -1,6 +1,6 @@
 import type { Hex } from '../core/color.ts'
 import { oklch } from '../core/color.ts'
-import { check } from '../core/contrast.ts'
+import { missedRules } from '../core/contrast.ts'
 import type { PaletteEntry } from '../core/manifest.ts'
 import type { Colors } from '../core/seeds.ts'
 import { BASE, gatedOf, lchTight, listOf, misses, PAIRS, SLOT_NAMES } from '../core/slots.ts'
@@ -40,7 +40,7 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean,
   const list = listOf(colorsOfEntry(worn))
   const given = slotColors(base).map((hex) => hex.toLowerCase())
   const bad = misses(list, worn.signatureSlots, worn.waived ?? [])
-  const failing = check(gatedOf(list, worn.signatureSlots, worn.waived ?? [])).length
+  const failing = missedRules(gatedOf(list, worn.signatureSlots, worn.waived ?? [])).length
   const off = (slot: number) => list[slot]?.toLowerCase() !== given[slot]
   const tuned = list.filter((_, slot) => off(slot)).length
 

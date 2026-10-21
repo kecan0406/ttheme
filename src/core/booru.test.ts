@@ -281,6 +281,31 @@ test('parseMoebooru takes the extension from file_ext and the uploader from auth
   )
 })
 
+test('a file_ext that is not a plain extension is not taken, so it can never lead a cache path out of its folder', () => {
+  const post = (file_ext: string) => ({
+    id: 7,
+    width: 10,
+    height: 10,
+    file_url: 'https://files.yande.re/image/ab/7.png',
+    file_ext,
+    preview_url: 'https://assets.yande.re/data/preview/ab/7.jpg',
+  })
+
+  const [moe] = parseMoebooru(JSON.stringify([post('png/../../../../.zshrc')]))
+
+  const [dan] = parseDanbooru(
+    JSON.stringify([
+      {
+        ...post('../x'),
+        file_url: 'https://cdn.donmai.us/original/ab/7.jpg',
+        preview_file_url: 'https://cdn.donmai.us/180x180/ab/7.jpg',
+      },
+    ]),
+  )
+
+  assert.deepEqual([moe?.ext, dan?.ext], ['png', 'jpg'])
+})
+
 test('the url builders pass the tags through as given, rating included', () => {
   for (const site of SITES.filter((s) => s.key === 'yande' || s.key === 'konachan')) {
     for (const url of [site.postsUrl('hiiragi_kagami rating:s', 0), site.countUrl('hiiragi_kagami rating:s')]) {

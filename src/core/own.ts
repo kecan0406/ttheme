@@ -3,15 +3,17 @@ import { basename } from 'node:path'
 import { brotliCompressSync, brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
 import { SITES } from './booru.ts'
 import { isHex } from './color.ts'
-import { GATE_RULES, measure, RULES } from './contrast.ts'
+import { boundOf, GATE_RULES, measure, missedRules, RULES, shownOf } from './contrast.ts'
 import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import { memo } from './memo.ts'
 import { modeOf, otherOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
+import { escaped, quoted } from './text.ts'
 import {
   type Catalog,
   catalogProblem,
   marketplaceOf,
+  nameProblem,
   PALETTE_SCHEMA_URL,
   type Place,
   POSITIONS,
@@ -116,12 +118,16 @@ function marketplaceFileProblem(file: MarketplaceFile, seen: ReadonlyMap<string,
   const twin = seen.get(file.slug)
 
   if (twin) {
-    return `${file.slug} is also ${twin.catalog ? `in ${twin.catalog}` : 'outside a catalog'} — a palette name is used once in a marketplace`
+    return `${escaped(file.slug)} is also ${twin.catalog ? `in ${escaped(twin.catalog)}` : 'outside a catalog'} — a palette name is used once in a marketplace`
   }
 
-  const problem = file.catalog === undefined ? undefined : textProblem(file.catalog)
+  if (file.catalog === undefined) {
+    return undefined
+  }
 
-  return problem ? `the catalog folder ${JSON.stringify(file.catalog)} ${problem}` : undefined
+  const problem = textProblem(file.catalog)
+
+  return problem ? `the catalog folder ${quoted(file.catalog)} ${problem}` : undefined
 }
 
 interface Shelf {
@@ -439,6 +445,12 @@ export function codeOf(text: string): string | undefined {
 
 export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[] {
   return fromCode(code).map((draft) => {
+    const named = nameProblem(draft.name)
+
+    if (named) {
+      throw new Error(`the share code's palette ${quoted(draft.name)} ${named}`)
+    }
+
     const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
 
     if (!draft.catalog) {
@@ -448,7 +460,7 @@ export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[]
     const problem = catalogProblem(draft.catalog)
 
     if (problem) {
-      throw new Error(`the share code's catalog ${JSON.stringify(draft.catalog)} ${problem}`)
+      throw new Error(`the share code's catalog ${quoted(draft.catalog)} ${problem}`)
     }
 
     return { ...entry, catalog: draft.catalog }
@@ -724,21 +736,16 @@ export function resign(text: string, signature: string[]): string {
 }
 
 export function gateLines(entry: PaletteEntry): string[] {
-  const values = measure(toTheme(entry))
+  const theme = toTheme(entry)
+  const values = measure(theme)
+  const missed = new Set(missedRules(theme).map((rule) => rule.rule))
   const waived = new Set(entry.waived ?? [])
   const pad = Math.max(...GATE_RULES.map((r) => r.label.length))
 
   return GATE_RULES.map((rule, i) => {
     const value = values[i] as number
+    const ok = waived.has(rule.rule) || Number.isNaN(value) || !missed.has(rule.rule)
 
-    const ok =
-      waived.has(rule.rule) ||
-      Number.isNaN(value) ||
-      ((rule.min === undefined || value >= rule.min) && (rule.max === undefined || value <= rule.max))
-
-    const bound = rule.min !== undefined ? `≥ ${rule.min}` : rule.max !== undefined ? `≤ ${rule.max}` : ''
-    const shown = Number.isNaN(value) ? '—' : Number.isInteger(value) ? String(value) : value.toFixed(2)
-
-    return `  ${ok ? '✓' : '✗'} ${rule.label.padEnd(pad)}  ${shown.padStart(6)} ${bound}${waived.has(rule.rule) ? '  waived' : ''}`
+    return `  ${ok ? '✓' : '✗'} ${rule.label.padEnd(pad)}  ${shownOf(value).padStart(6)} ${boundOf(rule)}${waived.has(rule.rule) ? '  waived' : ''}`
   })
 }

@@ -101,7 +101,7 @@ current palette;
 `↑`/`↓` move (the tab repaints as the focus lands on a palette) and wrap
 around at either end, `←`/`→` fold and unfold (so do enter and space on a
 catalog), page up/down jump a screen (from the last row to the first, and back)
-and home/end to either end, typing filters and underlines the match (ctrl-u clears it) —
+and home/end to either end, typing filters and underlines the match (ctrl+u clears it) —
 any text, Japanese included, against the palette, marketplace and catalog names, each
 catalog's Japanese title and the character's names in Japanese and as its booru tag
 spells them, ignoring case and punctuation, so `ひとり` or `hitori` finds `bocchi`
@@ -115,7 +115,7 @@ restored. Each palette row carries its 16 colors, normal over bright. The last
 line lists only the keys that work right there, always names the mode
 (`PREVIEW`, `PREVIEW (FILTER)`, `PREVIEW (APPLY)`,
 `PREVIEW (PIN)`, `EDIT`, `EDIT (APPLY)`, `EDIT (PIN)`, `CONFIG`, `HELP`) and pins where
-esc goes to the right; `?` shows all of them.
+esc goes to the right; `?` shows all of them — in a window too short for them all, those that fit and `↓ n more`.
 In Warp, which wears one theme for the whole app, the tab in front decides it:
 preview switches that theme as the focus moves — every Warp window at once —
 and so do `ttheme use` and a pin, while switching tabs or windows puts
@@ -153,7 +153,7 @@ back, and a window with less than 50 columns for the sample gives the panel the
 whole screen.
 
 The palette half only tells. Every slot is listed in OKLCH — lightness,
-chroma, hue — with `◆` on a signature color, `✗` on a slot whose own checks
+chroma, hue — with `✦` on a signature color, `✗` on a slot whose own checks
 miss and a yellow `●` on one that differs from the color its marketplace gives; the
 box's top edge says how many slots you tuned and what the gate says. The picture half is the one
 [Tuning](backgrounds.md#tuning) describes — the pictures, then colors, size,
@@ -244,13 +244,13 @@ before.
 
 With only this directory's own pin to drop it drops it at once. Otherwise it
 shows a bar under the prompt — `←`/`→` choose, enter unpins, esc keeps
-everything — above the pins involved as a tree, where `✕ unpin` marks what the
+everything — above the pins involved as a tree, where `× unpin` marks what the
 choice drops and the last line says what this directory will wear afterwards:
 
 ```
 [UNPIN] [This directory]  And below   ~/work    ←→ choose · enter unpin · esc keep
 ~/work            konata  and below
-└── site/ ← here  kita    this directory  ✕ unpin
+└── site/ ← here  kita    this directory  × unpin
     └── docs/     rei     and below
 Then here · konata pinned to ~/work and below
 ```
@@ -303,7 +303,7 @@ lists the host pins as they will be. The pin lands in the same `pins` file as
 `ttheme unpin ssh:<host>` drops it.
 
 ```
-[PREVIEW (PIN)] kita → [This host]   ssh tusa   enter confirm             esc back
+ [PREVIEW (PIN)] kita → [This host]   ssh tusa   enter confirm            esc back
 ```
 
 Only a session counts: `ssh tusa`, `ssh -p 2222 bob@tusa`, `ssh tusa -A`, an
@@ -381,8 +381,9 @@ left, and beside them a panel with the one the cursor is on. The rest is
 preview's: `↑`/`↓`, page up/down and home/end move through it, `→` or `enter`
 on a marketplace moves into its panel, where `←`/`→` and `enter` close and open
 a catalog, `←` at the top level or `esc` comes back to the marketplaces, `esc`
-clears the filter before anything else, `?` lists the keys, and the last line
-names the keys of the row you are on.
+clears the filter before anything else, `?` opens the help — type to filter it,
+`↑`/`↓` and enter run what it lists, and its Marks line says what Browse's marks
+mean — and the last line names the keys of the row you are on.
 
 Every marketplace you added is a card of three lines, as Claude Code draws its
 marketplaces: its name, where it comes from — `Built in` for `official`, which
@@ -396,10 +397,12 @@ its foot describes the palette, catalog or action under the cursor: whether a
 palette is installed, its gate score and first failing rule, its pictures. `space` marks a
 palette (a catalog, or a whole marketplace from its card); unmarking one you have
 is how you drop it. A palette whose marketplace changed it since you installed
-it is marked `↑`, and `ctrl+r` stages its update — or every one under a catalog.
+it is marked `⇡`, and `ctrl+r` stages its update — or every one under a catalog.
 Typing filters every marketplace at once (a query has no spaces, `space` is the
 pick key): a card with nothing matching hides, the others say how many match
-(`2 of 108 match`), and the cursor lands on the first match inside the panel.
+(`2 of 108 match`), and the cursor lands on the first match inside the panel; a
+filter no card matches says `No palettes match 'zzz'` under `+ Add marketplace`
+and `⌕ Search marketplace`.
 
 Under the palettes in the panel sit the marketplace's own actions — `↓` past
 the last palette reaches them, and `↑` from the first wraps onto them. `enter`,
@@ -453,9 +456,9 @@ one the cursor is on, and the panel takes the whole screen while you are in it:
 
 ```
  Browse (177/177 · 9 picked)
- ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ⌕ Search… e.g. kita | Bocchi the Rock!                                                        │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ⌕ Search… e.g. kita | Bocchi the Rock!                                                         │
+ ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
                                                        ╭─ official ───────────────────────────────╮
     + Add marketplace  owner/repo or a folder          │ Comes with ttheme                        │
     ⌕ Search marketplace  find one on GitHub           │                                          │
@@ -474,7 +477,7 @@ one the cursor is on, and the panel takes the whole screen while you are in it:
                                                        │                                          │
                                                        ├──────────────────────────────────────────┤
                                                        │ bocchi  Installed                        │
-                                                       │ Gate 9/9 · passes                        │
+                                                       │ Gate 12/12 · passes                      │
                                                        │                                          │
                                                        ╰──────────────────────────────────────────╯
  [BROWSE] space pick   enter close   ? keys                                                esc back
@@ -506,7 +509,7 @@ from there. The official palettes come with ttheme, so this is how they change.
 Then it refetches every other marketplace you added; `ttheme update alice@pastel`
 refetches that one alone. A palette you installed from a marketplace keeps the
 colors it was installed with (`~/.config/ttheme/kept.json`) until you take its
-update: `update` names the ones that have one, Browse marks them `↑`, and
+update: `update` names the ones that have one, Browse marks them `⇡`, and
 `ctrl+r` there stages one — or everything under a catalog — for enter to
 apply, pictures it newly lists included. A palette that leaves its marketplace stays
 installed from that copy; Browse marks it.
@@ -707,9 +710,11 @@ differs from the marketplace's colors, and `s` after it drops the tone. The keys
   `R` all of them, `*` marks a signature color (a fourth drops the oldest, and
   says so), `f` moves the colors the gate misses, `o` takes another palette's
   colors, `u` and ctrl+r undo and redo, and space shows the colors you started
-  from. `?` lists the keys; `s` saves, and esc, once something changed, asks
+  from. `?` opens the help, as in Browse, with the keys of the mode you are in;
+  `s` saves, and esc, once something changed, asks
   Save changes? — `y` or enter on Yes saves and leaves, `n` leaves without
-  saving, esc keeps editing; ctrl+c does nothing in the editor.
+  saving, esc keeps editing. ctrl+c leaves from anywhere in the editor and asks
+  the same, and a second ctrl+c leaves without saving.
 - Behind the editor lies the palette's own picture, framed as the terminal
   shows it and tinted with the colors being edited, so a change to the
   background, the cursor or a signature color shows on it at once (Ghostty,

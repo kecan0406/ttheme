@@ -8,7 +8,7 @@
    ▸ Lucky☆Star      │                                                        │
                      │  Move      ↑↓  home  end  pgup  pgdn                   │
                      │  Catalogs  ←→  ·  enter or space on a catalog          │
-                     │  Filter    Any text  ·  bksp  ·  ctrl-u clears         │
+                     │  Filter    Any text  ·  bksp  ·  ctrl+u clears         │
                      │            Names and titles, in Japanese too           │
                      │  Example   ⇧←→  shell, code, diff, logs, monitor       │
                      │  Apply     enter  applies  ·  esc restores the tab     │
@@ -21,4 +21,4 @@
                      ╰────────────────────────────────────────────────────────╯
 
 
-[HELP]                                                                                   ? esc close
+ [HELP]                                                                                 ? esc close

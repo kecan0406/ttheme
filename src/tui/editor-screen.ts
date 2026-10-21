@@ -8,6 +8,7 @@ import { cells } from '../core/text.ts'
 import { colorQuery, SLOT_CODES, slotColors } from '../terminals/osc.ts'
 import { CLEAR } from '../terminals/terminal.ts'
 import { fit, spread, wrapText } from './ansi.ts'
+import { barLine, type Hint, toned } from './bar.ts'
 import { type Look, pictureArea, planeAt, renderBuilder } from './builder-screen.ts'
 import type { Backdrop } from './editor-backdrop.ts'
 import {
@@ -17,6 +18,7 @@ import {
   type EditorSpot,
   fixHint,
   gateBox,
+  gateMisses,
   gradient,
   heldOf,
   LEFT,
@@ -27,9 +29,10 @@ import {
   used,
 } from './editor-paint.ts'
 import { type Start, typedDrop } from './find/attach.ts'
+import { type Help, type HelpSpot, overlay } from './help.ts'
 import { CELL_QUERY, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
 import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
-import { boxEdge, boxed, checkOf, hintOf, pillOf } from './parts.ts'
+import { boxEdge, boxed, checkOf, hintOf, moreOf, pillOf } from './parts.ts'
 import type { Drawn, PickerLayer } from './picker-art.ts'
 import { Screen } from './screen.ts'
 import { FG_RESET, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './style.ts'
@@ -141,8 +144,8 @@ function slotPane(p: Paint, e: PaletteEditor, height: number, wide = LEFT): stri
     p.dim(
       boxEdge(wide, 'mid', [
         [2, ' ANSI '],
-        [12, ' Normal 0–7 '],
-        [29, ' Bright 8–15 '],
+        [13, ' Normal 0–7 '],
+        [30, ' Bright 8–15 '],
       ]),
     ),
     ...PAIRS.map((name, k) => {
@@ -197,7 +200,7 @@ function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
     '',
   ]
 
-  return [...lines, ...gateBox(p, e, height - lines.length, LEFT)]
+  return [...lines, ...gateBox(p, e, height - lines.length, LEFT - 1)]
 }
 
 function sample(p: Paint, c: Colors, width: number, room: number, scene: number, slot: number): string[] {
@@ -393,7 +396,7 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
     return [viewTabs(p, e, width), '', ...relations(p, e, width, height - 2, true)]
   }
 
-  const right = slot >= BASE.length ? p.dim('Uses underlined below') : sig ? p.dim('◆ signature') : ''
+  const right = slot >= BASE.length ? p.dim('Uses underlined below') : sig ? p.dim(`${MARKS.signature} signature`) : ''
   const lines = [spread(`${p.bold(name)}  ${p.dim(about)}`, e.view === 'relations' ? '' : right, width), '']
   const block = p.color ? `${p.fg(hex)}${'█'.repeat(8)}${FG_RESET}  ` : ''
   const typed = e.typing !== undefined ? `${p.bold(`${e.typing}▏`)}` : undefined
@@ -426,7 +429,7 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   const hint = fixHint(e, slot)
 
   if (hint) {
-    lines.push(p.dim(`  ${hint}`))
+    lines.push(...wrapText(hint, width - 2).map((line) => p.dim(`  ${line}`)))
   }
 
   const room = height - lines.length - 1
@@ -446,83 +449,20 @@ function seedSide(p: Paint, e: PaletteEditor, width: number, height: number): st
   ]
 }
 
-const KEYS: [string, string][] = [
-  [
-    'Slots',
-    '↑↓ slot · ←→ normal or bright · home end · pgup the base colors · pgdn the ANSI ones · n N the next and last miss',
-  ],
-  [
-    'Tune',
-    'enter or tab opens the picker over the list, under the slot · ↑↓ lightness · ←→ chroma · ⇧←→ hue by 5, , . by 1 · pgup pgdn lightness ×5 · tab ◐ contrast · home end the ends · 0-9 jump · enter keeps · esc undoes · a click outside it keeps',
-  ],
-  [
-    'Contrast',
-    '◐ moves lightness until the ratio to the color it is read against changes · home the gate’s floor · 1-9 that ratio',
-  ],
-  [
-    'Chroma',
-    'stops at the sRGB edge · what lightness or hue takes away comes back while you tune, where it fits again (○)',
-  ],
-  [
-    'Scope',
-    'a while tuning: this, pair, normals, brights or accents — the slots in it move by the same step, each keeping its own color',
-  ],
-  ['Relations', 'g shows the lightness, chroma and hue of every ANSI color at once, and the relations the gate checks'],
-  ['Sample', '⇧←→ another tab · the slot under the cursor is underlined where it is used · w dims the rest'],
-  [
-    'Inspect',
-    'i, or a click on the sample, finds the slots a spot uses · ←→↑↓ move · enter goes to the slot · esc leaves',
-  ],
-  [
-    'Link',
-    'l makes a bright follow its normal — tuning the normal moves it, tuning the bright alone unlinks it · = snaps it to its normal',
-  ],
-  ['Filter', 'm only the slots that changed · n and N walk the gate misses listed under the slots'],
-  [
-    'Export',
-    'x copies the share code, an add command or the palette file · I takes colors from another palette or a share code',
-  ],
-  ['Type', '# then #rrggbb, rgb(r g b) or oklch(l c h) — a paste works too'],
-  [
-    'Slot',
-    'c copies · v pastes · r puts it back as it opened, R all of them · = the bright follows its normal · * marks it a signature color',
-  ],
-  ['Palette', 'f moves the colors the gate misses · o takes another palette’s colors'],
-  ['Gate', '✗ marks every slot whose own checks miss, and each miss names its slots'],
-  ['History', 'u undo · ctrl+r redo'],
-  [
-    'Pictures',
-    'p finds one on the boorus, tried on in these colors · b shows or hides it behind the editor · drop a picture on the window, or paste one, its path or its link · ctrl+v takes the clipboard’s',
-  ],
-  ['Compare', 'space shows the colors you started from, on the terminal too'],
-  [
-    'Save',
-    's saves · esc asks first when something changed: y saves and leaves, n leaves without saving, esc keeps editing',
-  ],
-]
-
-function keysPane(p: Paint, e: PaletteEditor, width: number): string[] {
-  return [
-    `  ${p.bold('Help')}`,
-    '',
-    ...KEYS.filter(([name]) => name !== 'Pictures' || e.options.find).flatMap(([name, text]) =>
-      wrapText(text, width - 16).map((line, i) => `  ${p.bold((i === 0 ? name : '').padEnd(11))}  ${line}`),
-    ),
-  ]
-}
-
 function openPane(p: Paint, e: PaletteEditor, width: number, height: number): string[] {
   const choices = e.choices()
   const all = e.options.palettes?.length ?? 0
-  const filter = e.filter ? `${p.bold(e.filter)}▏` : p.dim('type to filter')
+  const filter = e.filter ? `${p.bold(e.filter)}▏` : p.dim('Type to filter')
   const room = height - 2
-  const top = Math.max(0, Math.min(e.pick - Math.floor(room / 2), choices.length - room))
+  const span = choices.length <= room ? room : room - 1
+  const top = Math.max(0, Math.min(e.pick - Math.floor(span / 2), choices.length - span))
+  const below = Math.max(0, choices.length - top - span)
   const nameWidth = Math.min(40, Math.max(12, ...choices.map((c) => cells(c.name))))
 
   return [
     spread(`  ${p.bold('Take colors from')}  ${filter}`, p.dim(`${choices.length}/${all}`), width),
-    '',
-    ...choices.slice(top, top + room).map((choice, k) => {
+    top > 0 ? `  ${p.dim(moreOf(-1, top))}` : '',
+    ...choices.slice(top, top + span).map((choice, k) => {
       const here = top + k === e.pick
       const c = choice.colors
 
@@ -535,17 +475,23 @@ function openPane(p: Paint, e: PaletteEditor, width: number, height: number): st
 
       return spot({ kind: 'choice', index: top + k }, `${gutter}${here ? p.bold(label) : label}  ${swatches}`)
     }),
+    ...(below > 0 ? [`  ${p.dim(moreOf(1, below))}`] : []),
     ...(choices.length === 0 ? [`  ${p.dim(`No palettes match '${e.filter}'`)}`] : []),
   ]
 }
 
-const KEEP = new Set(['enter', 's', '?', 'g', 'a', 'i'])
+const KEEP = ['s', 'g', 'a', 'i']
+const QUITTING = ['y', 'n']
 
 function footer(p: Paint, e: PaletteEditor, width: number): string {
+  if (e.help) {
+    return barLine(p, e.help.bar(), width)
+  }
+
   let badge = 'EDIT'
   let lead = ''
-  let keys: [string, string][] = []
-  let right = ''
+  let keys: Hint[] = []
+  let right: Hint | undefined
 
   if (e.quitting) {
     badge = 'EDIT (QUIT)'
@@ -556,7 +502,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['y', 'save'],
       ['n', 'discard'],
     ]
-    right = 'esc keep editing'
+    right = ['esc', 'keep editing']
   } else if (e.typing !== undefined) {
     badge = 'EDIT (TYPE)'
     lead = p.dim('#rrggbb, rgb(r g b) or oklch(l c h)')
@@ -564,10 +510,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['enter', 'set'],
       ['ctrl+u', 'clear'],
     ]
-    right = 'esc back'
-  } else if (e.overlay === 'keys') {
-    badge = 'HELP'
-    right = 'any key closes'
+    right = ['esc', 'back']
   } else if (e.overlay === 'open') {
     badge = 'EDIT (OPEN)'
     keys = [
@@ -575,19 +518,19 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['a-z', 'filter'],
       ['enter', 'take its colors'],
     ]
-    right = 'esc close'
+    right = ['esc', 'close']
   } else if (e.menu) {
     badge = e.menu === 'export' ? 'EDIT (EXPORT)' : 'EDIT (IMPORT)'
     keys = [
       ['↑↓', 'item'],
       ['enter', 'choose'],
     ]
-    right = 'esc close'
+    right = ['esc', 'close']
   } else if (e.compare) {
     badge = 'EDIT (BEFORE)'
     lead = 'The colors you started from'
     keys = [['space', 'back to yours']]
-    right = 'esc back'
+    right = ['esc', 'back']
   } else if (e.mode === 'seeds') {
     badge = 'EDIT (SEEDS)'
     keys = [
@@ -599,20 +542,20 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['p', 'picture'],
       ['?', 'keys'],
     ]
-    right = 'esc cancel'
+    right = ['esc', 'cancel']
   } else if (e.mode === 'tune') {
     badge = 'EDIT (TUNE)'
     keys = [
       ['↑↓', 'L'],
       ['←→', e.channel === CONTRAST ? 'ratio' : 'C'],
       ['⇧←→', 'H'],
-      ['tab', '◐'],
-      ...(e.slot() >= BASE.length ? ([['a', 'scope']] as [string, string][]) : []),
+      ['tab', MARKS.contrast],
+      ...(e.slot() >= BASE.length ? ([['a', 'scope']] as Hint[]) : []),
       [e.channel === CONTRAST ? '1-9' : '0-9', e.channel === CONTRAST ? 'ratio' : 'jump'],
       ['#', 'type'],
       ['enter', 'keep'],
     ]
-    right = 'esc undo'
+    right = ['esc', 'undo']
   } else if (e.inspect) {
     badge = 'EDIT (INSPECT)'
     keys = [
@@ -621,7 +564,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['enter', 'its slot'],
       ['i', 'leave'],
     ]
-    right = 'esc leave'
+    right = ['esc', 'leave']
   } else {
     keys = [
       ['↑↓', 'slot'],
@@ -630,7 +573,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['l', 'link'],
       ['m', 'changed'],
       ['g', e.view === 'slot' ? 'relations' : 'slot'],
-      ...(e.misses().size > 0 ? ([['n', 'next miss']] as [string, string][]) : []),
+      ...(e.misses().size > 0 ? ([['n', 'next miss']] as Hint[]) : []),
       ['#', 'type'],
       ['f', 'fix'],
       ['p', 'picture'],
@@ -639,7 +582,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['s', 'save'],
       ['?', 'keys'],
     ]
-    right = 'esc cancel'
+    right = ['esc', 'cancel']
   }
 
   if (!e.options.find) {
@@ -655,30 +598,10 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   }
 
   if (e.notice) {
-    lead = p.warn(e.notice)
-    keys = []
+    lead = toned(p, e.noticeTone, e.notice)
   }
 
-  const tag = `${pillOf(p, badge)}${p.color ? '  ' : ' '}`
-
-  const shownRight = right
-    ? keyZone(
-        right.split(' ')[0] as string,
-        `${p.bold(right.split(' ')[0] as string)} ${p.dim(right.split(' ').slice(1).join(' '))}`,
-      )
-    : ''
-
-  for (;;) {
-    const segments = [lead, ...keys.map(([k, label]) => keyZone(k, `${p.bold(k)} ${p.dim(label)}`))].filter(Boolean)
-    const line = `${tag}${segments.join('   ')}`
-    const drop = keys.findLastIndex(([key], i) => i > 0 && !KEEP.has(key))
-
-    if (cells(line) + cells(right) + 3 <= width || drop < 0) {
-      return right ? spread(line, shownRight, width) : fit(line, width)
-    }
-
-    keys = keys.toSpliced(drop, 1)
-  }
+  return barLine(p, { badge, lead, keys, ...(right ? { right } : {}), keep: e.quitting ? QUITTING : KEEP }, width)
 }
 
 export function renderEditor(e: PaletteEditor, cols: number, rows: number, color: boolean, look: Look = {}): string[] {
@@ -688,7 +611,15 @@ export function renderEditor(e: PaletteEditor, cols: number, rows: number, color
 export function drawEditor(e: PaletteEditor, cols: number, rows: number, color: boolean, look: Look = {}): Drawn {
   const drawn = drawFrame(e, cols, rows, color, look)
 
-  if (!e.quitting || cols < MIN_COLS || rows < MIN_ROWS) {
+  if (cols < MIN_COLS || rows < MIN_ROWS) {
+    return drawn
+  }
+
+  if (e.help) {
+    return { lines: overlay(drawn.lines, e.help.box(painter(color), cols, rows - 1), cols, rows, 1), art: undefined }
+  }
+
+  if (!e.quitting) {
     return drawn
   }
 
@@ -730,22 +661,22 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
     }
   }
 
-  const failing = e.failing().length
-  const gate = failing === 0 ? '✓ Passes the gate' : `✗ ${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
-  const shelf = e.pictures > 0 ? p.dim(`▣ ${e.pictures} ${e.pictures === 1 ? 'picture' : 'pictures'}   `) : ''
+  const failing = gateMisses(e)
+  const missed = `${MARKS.miss} ${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
+  const gate = failing === 0 ? `${MARKS.ok} Passes the gate` : missed
+  const shown = `${MARKS.pictures} ${e.pictures} ${e.pictures === 1 ? 'picture' : 'pictures'}`
+  const shelf = e.pictures > 0 ? p.dim(`${shown}   `) : ''
   const reset = e.resettable() ? `${keyZone('R', p.dim('Reset'))}   ` : ''
   const state = `${e.dirty() ? `${p.warn(MARKS.on)} unsaved   ` : ''}${reset}${shelf}${failing === 0 ? p.ok(gate) : p.dim(gate)}`
   const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
   const height = rows - 4
   let body: string[]
 
-  if (e.overlay === 'keys') {
-    body = keysPane(p, e, cols)
-  } else if (e.overlay === 'open') {
+  if (e.overlay === 'open') {
     body = openPane(p, e, cols, height)
   } else {
     const right = cols - LEFT - 2
-    const left = e.mode === 'seeds' ? seedPane(p, e, height) : slotPane(p, e, height)
+    const left = e.mode === 'seeds' ? seedPane(p, e, height) : slotPane(p, e, height, LEFT - 1)
     const side = e.mode === 'seeds' ? seedSide(p, e, right, height) : detailPane(p, e, right, height)
     body = Array.from(
       { length: height },
@@ -775,7 +706,31 @@ function closesPicker(target: EditorSpot | undefined): boolean {
   return target.kind === 'key' ? !PICKER_KEYS.has(target.key) : !PICKER_SPOTS.has(target.kind)
 }
 
+function pointHelp(e: PaletteEditor, help: Help, hit: Hit | undefined, event: Mouse): void {
+  const target = hit?.target as EditorSpot | HelpSpot | undefined
+
+  if (event.action === 'wheel') {
+    help.wheel(event.wheel)
+  } else if (event.action === 'press' && event.button === 'left' && target?.kind === 'topic') {
+    help.point(target.index)
+  } else if (event.action === 'release' && target?.kind === 'key' && hit?.inside) {
+    e.press(target.key)
+  } else if (event.action === 'release' && target?.kind === 'topic') {
+    if (hit?.inside && event.count >= 2 && help.point(target.index)) {
+      e.press('enter')
+    }
+  } else if (event.action === 'release' && target?.kind !== 'help') {
+    e.help = undefined
+  }
+}
+
 function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void {
+  if (e.help) {
+    pointHelp(e, e.help, hit, event)
+
+    return
+  }
+
   if (event.action === 'wheel') {
     if (!event.sideways) {
       e.scroll(event.wheel)
@@ -785,12 +740,6 @@ function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void
   }
 
   if ((event.action === 'press' || event.action === 'drag') && event.button !== 'left') {
-    return
-  }
-
-  if (event.action === 'press' && e.overlay === 'keys') {
-    e.press('esc')
-
     return
   }
 
@@ -966,7 +915,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
       try {
         editor.found(await find(editor.edited(), start))
       } catch (error) {
-        editor.notice = error instanceof Error ? error.message : String(error)
+        editor.say(error instanceof Error ? error.message : String(error), 'error')
       }
 
       if (over) {

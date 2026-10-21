@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { type Hex, rgb } from '../core/color.ts'
 import { colorsOf } from '../core/slots.ts'
 import { POSITIONS } from '../core/theme.ts'
-import { backgroundsDir, frameAt, type Picture, readStore } from '../pictures/backdrop.ts'
+import { backgroundsDir, frameAt, type Picture, rackIn, readStore } from '../pictures/backdrop.ts'
 import { readBackdrop } from '../pictures/conf.ts'
 import { Renderer } from '../pictures/render.ts'
 import { drafted, pictureOf, Tints } from '../pictures/tints.ts'
@@ -167,7 +167,7 @@ export class Backdrop {
     let pictures: Picture[] = []
 
     try {
-      pictures = readStore(dir).palettes[this.name]?.pictures ?? []
+      pictures = rackIn(readStore(dir), this.name)?.pictures ?? []
     } catch {}
 
     const picture = shown ? pictureOf(pictures, shown.image) : undefined

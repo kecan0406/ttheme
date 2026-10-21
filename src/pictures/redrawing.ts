@@ -4,7 +4,7 @@ import type { Coloring } from '../core/backdrop-tone.ts'
 import { MAX_PIXELS } from '../core/booru.ts'
 import { decodeImage, decodePng, type Rgba, transparency } from '../core/png.ts'
 import { cacheRoot } from '../store/paths.ts'
-import { backgroundsDir, type Paint, type Picture, prepared, readStore, redrawn, undrawn } from './backdrop.ts'
+import { backgroundsDir, type Paint, type Picture, prepared, rackIn, readStore, redrawn, undrawn } from './backdrop.ts'
 import { canRemoveBackground, removeBackground } from './cutout.ts'
 
 export const TIMEOUT = 90_000
@@ -59,7 +59,7 @@ export async function redrawOne(
   coloring?: Coloring,
 ): Promise<Picture | null> {
   const dir = backgroundsDir(configHome)
-  const picture = readStore(dir).palettes[name]?.pictures.find((held) => held.key === key)
+  const picture = rackIn(readStore(dir), name)?.pictures.find((held) => held.key === key)
 
   if (!picture?.original) {
     return null
@@ -97,7 +97,7 @@ export function prepareOne(
   coloring: Coloring,
 ): boolean {
   const dir = backgroundsDir(configHome)
-  const picture = readStore(dir).palettes[name]?.pictures.find((held) => held.key === key)
+  const picture = rackIn(readStore(dir), name)?.pictures.find((held) => held.key === key)
 
   if (!picture?.original || undrawn(picture)) {
     return false

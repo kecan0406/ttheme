@@ -21,15 +21,15 @@ use-plain.used.wears	miku	=	=	=	=	=	=	=	=	=
 use-plain.used.issue	-	=	=	=	=	=	=	=	=	=
 hub.preview.colors	konata	=	=	=	=	=	=	=	=	=
 hub.preview.picture	konata	=	=	=	none	=	none	=	=	=
-hub.preview.text	txt:ecff06d851	=	=	=	=	=	=	=	=	=
+hub.preview.text	txt:65d440d76b	=	=	=	=	=	=	=	=	=
 hub.preview.issue	-	=	=	=	=	=	=	=	=	=
 hub.browse.colors	kita	=	=	=	=	=	=	=	=	=
 hub.browse.picture	kita	=	=	=	none	=	none	=	=	=
-hub.browse.text	txt:4a3d9341ce	=	=	=	=	=	=	=	=	=
+hub.browse.text	txt:56c6c7e9f3	=	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=	=
 hub.back.colors	konata	=	=	=	=	=	=	=	=	=
 hub.back.picture	konata	=	=	=	none	=	none	=	=	=
-hub.back.text	txt:ecff06d851	=	=	=	=	=	=	=	=	=
+hub.back.text	txt:65d440d76b	=	=	=	=	=	=	=	=	=
 hub.back.issue	-	=	=	=	=	=	=	=	=	=
 hub.closed.colors	kita	=	=	=	=	=	=	=	=	=
 hub.closed.picture	kita	=	=	=	none	=	none	=	=	=
@@ -159,7 +159,7 @@ editor-terminal.after.text	txt:1b7974a0e0	=	=	=	=	=	=	=	=	=
 editor-terminal.after.issue	-	=	=	=	=	=	=	=	=	=
 preview-hover.hover.colors	kita	=	=	=	=	=	=	=	=	=
 preview-hover.hover.picture	kita	=	=	=	none	=	none	=	=	=
-preview-hover.hover.text	txt:6247f67c14	=	=	=	=	=	=	=	=	=
+preview-hover.hover.text	txt:158470da1d	=	=	=	=	=	=	=	=	=
 preview-hover.hover.issue	-	=	=	=	=	=	=	=	=	=
 preview-hover.back.colors	konata	=	=	=	=	=	=	=	=	=
 preview-hover.back.picture	konata	=	=	=	none	=	none	=	=	=
@@ -175,7 +175,7 @@ preview-default-same.followed.wears	rei	=	=	=	=	=	=	=	=	=
 preview-default-same.followed.issue	-	=	=	=	=	=	=	=	=	=
 preview-tab.pick.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tab.pick.picture	kita	=	=	=	none	=	none	=	=	=
-preview-tab.pick.text	txt:c80b87bf60	=	=	=	=	=	=	=	=	=
+preview-tab.pick.text	txt:19fc01eb16	=	=	=	=	=	=	=	=	=
 preview-tab.pick.issue	-	=	=	=	=	=	=	=	=	=
 preview-tab.kept.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tab.kept.picture	kita	=	=	=	none	=	none	=	=	=
@@ -195,7 +195,7 @@ preview-default.new.wears	miku	=	=	=	=	=	=	=	=	=
 preview-default.new.issue	-	=	=	=	=	=	=	=	=	=
 preview-tune.tune.colors	kita	=	=	=	=	=	=	=	=	=
 preview-tune.tune.picture	kita	=	=	=	none	=	none	=	=	=
-preview-tune.tune.text	txt:564eca10a7	=	=	=	txt:94894a8b3d	=	txt:94894a8b3d	=	txt:1c38643056	txt:d8790c012f
+preview-tune.tune.text	txt:79da0f4163	=	=	=	txt:dcacaf000b	=	txt:dcacaf000b	=	txt:573938da77	txt:57f8773876
 preview-tune.tune.issue	-	=	=	=	=	=	=	=	=	=
 preview-tune.back.colors	konata	=	=	=	=	=	=	=	=	=
 preview-tune.back.picture	konata	=	=	=	none	=	none	=	=	=
@@ -203,7 +203,7 @@ preview-tune.back.wears	konata	=	=	=	=	=	=	=	=	=
 preview-tune.back.issue	-	=	=	=	=	=	=	=	=	=
 preview-config.panel.colors	konata	=	=	=	=	=	=	=	=	=
 preview-config.panel.picture	konata	=	=	=	none	=	none	=	=	=
-preview-config.panel.text	txt:b40246cf3c	=	=	=	=	=	=	=	=	=
+preview-config.panel.text	txt:e2a381fd69	=	=	=	=	=	=	=	=	=
 preview-config.panel.issue	-	=	=	=	=	=	=	=	=	=
 preview-config.back.colors	konata	=	=	=	=	=	=	=	=	=
 preview-config.back.picture	konata	=	=	=	none	=	none	=	=	=
@@ -262,7 +262,7 @@ ssh.out.wears	konata	=	=	=	=	=	=	=	=	=
 ssh.out.issue	-	=	=	=	=	=	=	=	=	=
 browse.hover.colors	kita	=	=	=	=	=	=	=	=	=
 browse.hover.picture	konata	=	=	=	none	=	none	=	=	=
-browse.hover.text	txt:4a3d9341ce	=	=	=	=	=	=	=	=	=
+browse.hover.text	txt:56c6c7e9f3	=	=	=	=	=	=	=	=	=
 browse.hover.issue	-	=	=	=	=	=	=	=	=	=
 browse.back.colors	konata	=	=	=	=	=	=	=	=	=
 browse.back.picture	konata	=	=	=	none	=	none	=	=	=

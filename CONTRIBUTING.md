@@ -267,6 +267,7 @@ mise run tui                  # compare (part of `mise run ci`)
 mise run tui 'theme-*'        # compare only the scenarios named, globs too
 mise run tui --update         # accept what the TUIs draw now (names narrow it too)
 mise run look preview-open 120x34   # draw one scenario, colors on, to a PNG and a text grid
+mise run look kit:bar 110x30        # draw one shared part in every state (tests/kit.ts)
 ```
 
 ### Under the Node screens
@@ -302,7 +303,7 @@ that closes exactly that, so a role inside a painted row never ends the row:
 | `chip` | a button that is not under the cursor | bold on slot 8 |
 | `danger` | the button that removes something, while the cursor is on it | reverse, bold, slot 1 |
 | `match` | the letters a filter matched | bold, underline, slot 6 |
-| `ok`, `warn`, `error` | a note that something worked, a notice or a changed slot ●, a failure | slots 2, 3, 1 |
+| `ok`, `warn`, `error` | a notice that something worked, one that something could not be done or a changed slot ●, a failure | slots 2, 3, 1 |
 | `under`, `reverse` | the runs a slot draws in a scene, a caret | `4`, `7` |
 
 The accent is the terminal's slot 6 everywhere, never a palette's cursor: it
@@ -328,18 +329,43 @@ what color said: `[Preview]` for the tab that is on, `[EDIT]` for a badge.
 that hand text back unchanged when color is off, and `src/tui/parts.ts` holds
 the parts several screens draw: `tabOf`, `pillOf`, `hintOf`, `checkOf`,
 `boxEdge` and `boxed`. Glyphs that mean a state are in `MARKS`, one meaning
-each: ▌ the cursor's row, ◆ the palette worn or handled, ✦ a signature slot,
+each: ▌ the cursor's row, ◆ the palette worn or handled, ▶ the part in focus, ✦ a signature slot,
 ▸ ▾ a closed and an open catalog, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more
 rows, ⇡ an update, ↻ auto-update, × a removal, ↶ taking one back, ★ stars, ⧉ a link, ⌕ search, ⇠ a bright that
 follows its normal, ◐ contrast, ■ a swatch, ▣ pictures.
 
+Three more parts are shared. Browse and the palette editor draw their key bar
+with `barLine` (`src/tui/bar.ts`): a badge, a lead, the keys, the key on the
+right and the release line — find keeps its own `foot`, which places its links,
+and init's picker a hint line under its list. The lead is a question or a
+notice, said in its tone through `toned` — `ok` for what worked, `warn` for
+what could not be done, `error` for a failure, plain for information — and the
+keys stay after it: a narrow window drops the release line first, then a note,
+then keys from the end (never the first, `?`, `enter` or the ones a screen
+lists in `keep`), then the key on the right, and cuts what still does not fit;
+once the line fits, each key it dropped comes back in its own place if it fits
+there, so a long key dropped late never leaves room a shorter one could use.
+In Browse, the palette editor and find `?` opens `Help` (`src/tui/help.ts`): the
+topics of the mode the screen is in, where `↑` `↓` reach every topic and enter
+runs the key a topic names — Browse and the editor offer that only where the key
+does something —, a filter that typing fills, and a Marks line saying what the
+screen's marks mean. A long topic wraps at its `·` parts, the topics scroll in a
+short window, the box takes every click inside it and blanks the column beside
+it where that column holds another box's edge, so two edges never touch, and
+the screen under it keeps no click zones but on its key bar (find clears its
+screen first, since its pictures would show through). And a list its window
+cuts says what is out of sight with `moreOf` (`↑ 3 more`, `↓ 12 more`).
+
 The shell layer draws with the same roles from `TTHEME_SGR` in
-`shell/ttheme.zsh` (`$TTHEME_SGR[dim]` opens, `$TTHEME_SGR[/dim]` closes).
-`src/tui/style.test.ts` holds that table to `ROLES` and fails on an SGR written
-anywhere else in `src/` or `shell/` (a truecolor `printf` format in the shell
-layer is a palette's color and passes); it also checks that every role closes
-what it opens, that slot 6 and the surfaces hold on every official palette, and
-that no glyph in `MARKS` means two things. The screens in `tests/screens/` run
+`shell/ttheme.zsh` (`$TTHEME_SGR[dim]` opens, `$TTHEME_SGR[/dim]` closes) and
+the same marks from `TTHEME_MARKS` beside it (`$TTHEME_MARKS[current]`).
+`src/tui/style.test.ts` holds the first table to `ROLES` and the second to
+`MARKS`, fails on an SGR written anywhere else in `src/` or `shell/` (a
+truecolor `printf` format in the shell layer is a palette's color and passes)
+and on a mark written literally in the shell layer — all but ↑ ↓ × ■ · …, which
+also read as text there; it also checks that every role closes what it opens,
+that slot 6 and the surfaces hold on every official palette, and that no glyph
+in `MARKS` means two things. The screens in `tests/screens/` run
 under `NO_COLOR`, so look at a change to color in a real terminal too.
 
 ### Keys a screen takes
@@ -359,25 +385,29 @@ panel below, preview's settings, the palette editor and find's grid.
 | `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
 | `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces; `→` on `+ Add marketplace` moves into its form in the panel and on `Search marketplace` opens the search, and `←` in either goes back |
 | `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `+ Add marketplace`, move into its form in the panel, and there fetch the source typed and land in the panel of the marketplace it stages; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; on a palette, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
-| `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
+| `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel, asking first when something is staged; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
 | `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter or the `+ Add marketplace` form's source, clear it |
-| `?` | keys, which preview also shows when it opens beside its list until any key closes them | keys |
+| `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks line says what browse's marks mean |
 | `alt-c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
-| `ctrl+r` | — | in a marketplace's panel, on a palette marked `↑` or a catalog, stage its update; in the search, load the marketplace list again |
+| `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a catalog, stage its update; in the search, load the marketplace list again |
 | `shift+←` `shift+→` | example scene | — |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |
-| `ctrl+c` | quit | cancel |
+| `ctrl+c` | quit | cancel, asking first when something is staged (`y` applies, `n` or a second ctrl+c discards, esc stays) |
 
 The settings panel preview opens over its list and the questions browse asks
 take the keys they list on their own last line while they are open. `find`
 is a screen of its own and keeps its own keys, and so does the palette editor
-(`new`, `edit`, and the Edit palette button of preview's panel), whose keys
-`?` lists and docs/usage.md describes; its esc, once something changed, opens a
+(`new`, `edit`, and the Edit palette button of preview's panel); in both, as in
+browse, `?` opens the same help (`src/tui/help.ts`) with the keys of the mode
+the screen is in, which docs/usage.md describes. The editor's esc, once something changed, opens a
 Save changes? dialog (`y` saves and leaves, `n` leaves without saving, esc keeps
-editing, and ctrl+c does nothing there).
+editing), and ctrl+c leaves from anywhere in it the same way — a tune it
+interrupts is kept, so it counts as a change — while a second ctrl+c in the
+dialog leaves without saving. Every Node screen leaves on ctrl+c; browse and
+the editor, which hold changes until they are applied or saved, ask first.
 
 Preview's panel (`tab`, `→` or `ctrl+e` on a palette) has no filter, so it uses
 letters too. It is one list — the picture's fields, an Edit palette button, then
@@ -453,3 +483,38 @@ Counts on screen come from the palettes listed, never from the rows being drawn.
 folded catalog still reports how many of its palettes are picked, and the
 filtered total counts what matches, not what fits on screen. The cursor and the
 scroll window are the only things allowed to read the drawn rows.
+
+A question says what it acts on (`Remove alice@pastel? Its installed palettes
+stay installed`, `Apply 3 changes before you leave?`, the editor's Save
+changes? counting the colors and pictures changed), and a no is answered too:
+the bar leads with what was kept (`alice@pastel kept`) until the next key.
+
+A state reads the same on every screen. A list with nothing to show says so
+in a dim line where its rows would be — save Search's list, whose state is its
+one row, a button `space` loads again —: `No palettes match 'kit'` while a
+filter finds nothing (the things in the plural, what was typed in single
+quotes), `No palettes yet` while there are none, and what to do after a ` — `
+where a key does it (`No posts of kita on danbooru — tab tries yande.re`).
+Work under way is a dim line that names it, led by the spinner where the
+screen turns one; find's work on the post in hand (installing, fetching,
+cutting out) leads its foot in warn. A failure is drawn in the error role
+wherever it is named — Browse's card badge, its panel and the `Update now`
+note, a Search result's row and detail (and, below 94 columns, the brief under
+the list), the editor's bar, find's foot. A notice a key
+earns is plain when the key had nothing to act on (`Nothing to undo`), ok when
+it did what was asked (`Already passes the gate`), and warn when the key was
+refused for something the person can change (`The builder needs a window of at
+least 96×28`, `Pick at least one palette`, `No picture on the clipboard`).
+
+Text someone else wrote — a marketplace's files and the names of its files and
+folders, the marketplace index, a booru's answer, the names release, an error
+message built from any of them — has every control and direction character
+dropped or spelled out before a screen or a message shows it, so no escape
+sequence reaches the terminal and no direction mark reorders what it touches:
+through `src/core/text.ts` in
+Browse, the editor's notices, the readers and the CLI's errors (`inert` for one
+line, `inertLines` for a message that keeps its line breaks, and `quoted` or
+`escaped` for a value an error echoes), through `Line.put` and `linked` in
+find, and through `aliasesZsh` and the picture's conf lines for preview; a
+reader refuses such a character where a value has no use for one
+(`textProblem`).

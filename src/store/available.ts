@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { GATE_RULES, measure } from '../core/contrast.ts'
+import { boundOf, GATE_RULES, measure, missedRules, shownOf } from '../core/contrast.ts'
 import {
   emptyManifest,
   entryProblem,
@@ -270,26 +270,12 @@ export async function reach(
 }
 
 export function gateFailures(palette: PaletteEntry): string[] {
-  const waived = new Set(palette.waived ?? [])
-  const gate = palette.gate ?? measure(toTheme(palette))
+  const theme = toTheme(palette)
+  const values = measure(theme)
 
-  return GATE_RULES.flatMap((rule, i) => {
-    const value = gate[i]
-
-    if (waived.has(rule.rule) || typeof value !== 'number' || Number.isNaN(value)) {
-      return []
-    }
-
-    if (rule.min !== undefined && value < rule.min) {
-      return [`${rule.label} ${value} < ${rule.min}`]
-    }
-
-    if (rule.max !== undefined && value > rule.max) {
-      return [`${rule.label} ${value} > ${rule.max}`]
-    }
-
-    return []
-  })
+  return missedRules(theme).map(
+    (rule) => `${rule.label} ${shownOf(values[GATE_RULES.indexOf(rule)] as number)} ${boundOf(rule)}`,
+  )
 }
 
 export function find(palettes: PaletteEntry[], name: string): PaletteEntry {

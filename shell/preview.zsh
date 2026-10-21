@@ -202,7 +202,7 @@ __tt_pv_osd() {
 }
 
 __tt_pv_lw() {
-  local -i lw=$(( pw - 2 < 48 ? pw - 2 : 48 )) l=$(( pw * 3 / 10 )) sw=$(( pw * 45 / 100 ))
+  local -i lw=$(( pw - 1 < 48 ? pw - 1 : 48 )) l=$(( pw * 3 / 10 )) sw=$(( pw * 45 / 100 ))
   (( l < 38 )) && l=38
   (( l > 56 )) && l=56
   (( sw > 64 )) && sw=64
@@ -242,11 +242,11 @@ __tt_pv_fit() {
 }
 
 __tt_pv_row() {
-  local t=${rval[$1]} b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] r=$TTHEME_SGR[/match] z=$TTHEME_SGR[reset] on="" gut="  " base="" lead=$TTHEME_SGR[dim] mark=" " name arrow=▸ ind="   " hl extra part
+  local t=${rval[$1]} b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] r=$TTHEME_SGR[/match] z=$TTHEME_SGR[reset] on="" gut="  " base="" lead=$TTHEME_SGR[dim] mark=" " name arrow=$TTHEME_MARKS[closed] ind="   " hl extra part
   local -i w
   (( color )) || b= d= r= z= lead=
   if (( $1 == cur )); then
-    gut=$gc"▌"$r" "
+    gut=$gc$TTHEME_MARKS[gutter]$r" "
     (( color )) && on=$sb
   fi
   if [[ ${rtype[$1]} == rule ]]; then
@@ -255,7 +255,7 @@ __tt_pv_row() {
     return 0
   fi
   if [[ ${rtype[$1]} == hdr ]]; then
-    [[ -n $flt || -n ${exp[$t]} ]] && arrow=▾
+    [[ -n $flt || -n ${exp[$t]} ]] && arrow=$TTHEME_MARKS[opened]
     name=$t
     (( ${(m)#name} > lw - 10 )) && name="${name[1,lw-11]}…"
     base=$b
@@ -275,7 +275,7 @@ __tt_pv_row() {
     return 0
   fi
   if [[ ${rtype[$1]} == cat ]]; then
-    [[ -n $flt || -n ${exp[$t]} ]] && arrow=▾
+    [[ -n $flt || -n ${exp[$t]} ]] && arrow=$TTHEME_MARKS[opened]
     name=${t#*/}
     (( ${(m)#name} > lw - 12 )) && name="${name[1,lw-13]}…"
     base=$b
@@ -302,7 +302,7 @@ __tt_pv_row() {
   __tt_pv_hl "$name" "$base"
   hl=$REPLY
   if (( w )); then
-    (( color )) && hl+=" "$TTHEME_SGR[warn]"●"$TTHEME_SGR[/warn] || hl+=" ●"
+    (( color )) && hl+=" "$TTHEME_SGR[warn]$TTHEME_MARKS[on]$TTHEME_SGR[/warn] || hl+=" "$TTHEME_MARKS[on]
   fi
   extra=""
   for part in "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
@@ -336,8 +336,8 @@ __tt_pv_bg_credit() {
   pu=${page%% *} lab=${page#* }
   [[ $url == http(s|)://* ]] || url=""
   if __tt_links; then
-    [[ -n $url ]] && pmark="⧉ "
-    [[ -n $pu ]] && smark="⧉ "
+    [[ -n $url ]] && pmark="$TTHEME_MARKS[link] "
+    [[ -n $pu ]] && smark="$TTHEME_MARKS[link] "
   fi
   items=(${by:+"by $by"} ${lab:+"$smark$lab"} ${ref:+"$pmark$ref"})
   while (( ${#items} )) && (( ${#${(j: · :)items}} > room )); do
@@ -346,11 +346,11 @@ __tt_pv_bg_credit() {
   REPLY=${(j: · :)items}
   if [[ -n $smark && $REPLY == *"$smark$lab"* ]]; then
     (( color )) && acc=$ac
-    REPLY=${REPLY/"$smark$lab"/$acc⧉${acc:+$TTHEME_SGR[/accent]} $'\e]8;;'$pu$'\e\\'$lab$'\e]8;;\e\\'}
+    REPLY=${REPLY/"$smark$lab"/$acc$TTHEME_MARKS[link]${acc:+$TTHEME_SGR[/accent]} $'\e]8;;'$pu$'\e\\'$lab$'\e]8;;\e\\'}
   fi
   [[ -n $pmark && $REPLY == *"$pmark$ref"* ]] || return 0
   (( color )) && [[ -n ${TTHEME_SITE_ANSI[${ref%% *}]} ]] && sgr=$TTHEME_SGR[fg${TTHEME_SITE_ANSI[${ref%% *}]}]
-  REPLY=${REPLY/"$pmark$ref"/$sgr⧉${sgr:+$TTHEME_SGR[/fg]} $'\e]8;;'$url$'\e\\'$ref$'\e]8;;\e\\'}
+  REPLY=${REPLY/"$pmark$ref"/$sgr$TTHEME_MARKS[link]${sgr:+$TTHEME_SGR[/fg]} $'\e]8;;'$url$'\e\\'$ref$'\e]8;;\e\\'}
   return 0
 }
 
@@ -401,9 +401,9 @@ __tt_pv_bg_profiles() {
       plain+=$lead$e[1] REPLY+=$lead$e[1] lead=" "
     fi
     for (( i = 2; i < ${#e}; i += 2 )); do
-      step="⧉ $e[i]"
+      step="$TTHEME_MARKS[link] $e[i]"
       (( ${#plain} + ${#lead} + ${#step} > room )) && return 0
-      piece=$acc⧉${acc:+$TTHEME_SGR[/accent]}" "$'\e]8;;'$e[i+1]$'\e\\'$e[i]$'\e]8;;\e\\'
+      piece=$acc$TTHEME_MARKS[link]${acc:+$TTHEME_SGR[/accent]}" "$'\e]8;;'$e[i+1]$'\e\\'$e[i]$'\e]8;;\e\\'
       plain+=$lead$step REPLY+=$lead$piece lead=" "
     done
   done
@@ -483,9 +483,9 @@ __tt_pv_standing() {
 
 __tt_pv_foot() {
   setopt localoptions extendedglob
-  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] on=$pl badge="" lead="" note="" right="" ver="" vst text line plain hex tb=EDIT
+  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] on=$pl badge="" pre="" lead="" note="" right="" ver="" vst text line plain hex tb=EDIT
   local -a kk=() kl=() seg=()
-  local -i end=$1 i lwid rwid vwid rend room
+  local -i end=$1 bw=$(( $1 - 1 )) i lwid rwid vwid rend room
   (( color )) || b= d= z= y= on=
   if (( color )) && [[ -n $applied && $applied != "$painted" ]]; then
     hex=${${=applied}[8]#\#}
@@ -496,15 +496,16 @@ __tt_pv_foot() {
   elif (( help )); then
     badge=HELP right=$b"? esc"$z$d" close"$z
   elif [[ -n $pick ]]; then
-    badge='PREVIEW (APPLY)' lead="$pick →"
+    badge='PREVIEW (APPLY)' pre="$pick → "
     (( te )) && badge="$tb (APPLY)"
     for (( i = 1; i <= ${#plabel}; i++ )); do
+      (( i > 1 )) && lead+=" "
       if (( i != pk )); then
-        lead+=" "$d${plabel[i]}$z
+        lead+=$d${plabel[i]}$z
       elif (( color )); then
-        lead+=" "$on${plabel[i]}$z
+        lead+=$on${plabel[i]}$z
       else
-        lead+=" [${${plabel[i]# }% }]"
+        lead+="[${${plabel[i]# }% }]"
       fi
     done
     if [[ $mode == pin ]]; then
@@ -588,7 +589,7 @@ __tt_pv_foot() {
   fi
   if (( msgt > 0 )) && [[ -z $pick ]]; then
     text=$msg
-    room=$(( end - (${#badge} ? ${#badge} + 4 : 0) ))
+    room=$(( bw - (${#badge} ? ${#badge} + 4 : 0) ))
     if (( ${(m)#text} > room )); then
       while [[ -n $text ]] && (( ${(m)#text} > room - 1 )); do text=${text[1,-2]}; done
       text+=…
@@ -597,7 +598,7 @@ __tt_pv_foot() {
   fi
   while :; do
     seg=()
-    [[ -n $lead ]] && seg+=("$lead")
+    [[ -n $lead ]] && seg+=("$pre$lead")
     [[ -n $note ]] && seg+=("$d$note$z")
     for (( i = 1; i <= ${#kk}; i++ )); do
       seg+=("$b${kk[i]}$z$d ${kl[i]}$z")
@@ -615,11 +616,13 @@ __tt_pv_foot() {
     plain=${right//$'\e'\[[0-9;]##m/}
     rwid=${(m)#plain}
     vwid=${(m)#ver}
-    (( lwid <= end && lwid + (rwid ? 3 + rwid : 0) + (vwid ? 3 + vwid : 0) <= end )) && break
+    (( lwid <= bw && lwid + (rwid ? 3 + rwid : 0) + (vwid ? 3 + vwid : 0) <= bw )) && break
     if [[ -n $ver ]]; then
       ver=""
     elif [[ -n $note ]]; then
       note=""
+    elif [[ -n $pre ]]; then
+      pre=""
     elif (( ${#kk} > 2 )); then
       kk[-2]=() kl[-2]=()
     elif [[ -n $right ]]; then
@@ -630,28 +633,28 @@ __tt_pv_foot() {
       break
     fi
   done
-  if (( lwid > end )); then
-    __tt_clip "$line" $end
+  if (( lwid > bw )); then
+    __tt_clip "$line" $bw
     line=$REPLY
   fi
-  out+=$line$'\e[K'
+  out+=" "$line$'\e[K'
   rend=$end
   if [[ -n $ver ]]; then
     out+=$'\e['$(( end - vwid + 1 ))'G'$vst$ver$z
     rend=$(( end - vwid - 3 ))
   fi
   [[ -n $right ]] && out+=$'\e['$(( rend - rwid + 1 ))'G'$right
-  local -i zc=1 zw
+  local -i zc=2 zw
   [[ -n $badge ]] && (( zc += ${(m)#badge} + (color ? 4 : 3) ))
   if [[ -n $lead ]]; then
     if [[ -n $pick ]]; then
-      zw=$(( zc + ${(m)#pick} + 2 ))
+      zw=$(( zc + ${(m)#pre} - 1 ))
       for (( i = 1; i <= ${#plabel}; i++ )); do
         pvz+=("$ph $(( zw + 1 )) $(( zw + ${(m)#plabel[i]} )) pick $i")
         (( zw += ${(m)#plabel[i]} + 1 ))
       done
     fi
-    plain=${lead//$'\e'\[[0-9;]##m/}
+    plain=$pre${lead//$'\e'\[[0-9;]##m/}
     (( zc += ${(m)#plain} + 3 ))
   fi
   [[ -n $note ]] && (( zc += ${(m)#note} + 3 ))
@@ -667,8 +670,43 @@ __tt_pv_foot() {
   return 0
 }
 
+__tt_pv_wrap() {
+  setopt localoptions extendedglob
+  local sep="  $TTHEME_MARKS[sep]  " mk=$TTHEME_MARKS[sep] line="" part word rest joined REPLY
+  local -a match mbegin mend
+  local -i w=$2 i
+  reply=()
+  for part in "${(@ps:$sep:)1}"; do
+    joined=${line:+$line$sep}$part
+    if (( ${(m)#joined} <= w )); then
+      line=$joined
+    elif [[ -n $line ]] && (( ${(m)#part} <= w )); then
+      reply+=("${${line%%[[:space:]]#}%%[[:space:]]##$mk}")
+      line=$part
+    else
+      [[ -n $line ]] && line+=$sep
+      rest=${part##[[:space:]]#}
+      while [[ $rest == (#b)([^[:space:]]##)([[:space:]]#)(*) ]]; do
+        word=$match[1]$match[2] rest=$match[3] joined=$line$match[1]
+        if [[ -n ${line//[[:space:]]} ]] && (( ${(m)#joined} > w )); then
+          reply+=("${${line%%[[:space:]]#}%%[[:space:]]##$mk}")
+          line=""
+        fi
+        line+=$word
+      done
+      line=${line%%[[:space:]]#}
+    fi
+  done
+  [[ -n $line ]] && reply+=("${${line%%[[:space:]]#}%%[[:space:]]##$mk}")
+  (( ${#reply} )) || reply=("")
+  for (( i = 1; i <= ${#reply}; i++ )); do
+    (( ${(m)#reply[i]} > w )) && { __tt_clip "${reply[i]}" $w; reply[i]=$REPLY }
+  done
+  return 0
+}
+
 __tt_pv_help() {
-  local back="the tab" z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] blank
+  local back="the tab" z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank
   [[ -n ${TTHEME_PALETTE[$cn]} ]] && back=$cn
   local -a hk=() hv=()
   if (( te )); then
@@ -690,7 +728,7 @@ __tt_pv_help() {
     hv=(
       "↑↓  home  end  pgup  pgdn"
       "←→  ·  enter or space on a catalog"
-      "Any text  ·  bksp  ·  ctrl-u clears"
+      "Any text  ·  bksp  ·  ctrl+u clears"
       "Names and titles, in Japanese too"
       "⇧←→  ${(Lj:, :)TTHEME_SCENES}"
       "enter  applies  ·  esc restores $back"
@@ -706,18 +744,41 @@ __tt_pv_help() {
   else
     hv+=("?  esc")
   fi
-  (( color )) || z= b=
-  local -i i r x y w hh floor
+  (( color )) || z= b= d=
+  local -i i j k r x y w hh floor tw rows used n
+  local -a hl=() hn=()
   if (( split && sw >= 48 )); then
-    for (( i = 1; i <= ${#hk}; i++ )); do
-      r=$(( i + 3 ))
-      (( r < ph )) || break
-      out+=$'\e['$r';'$sc'H'$b${hk[i]}$z$'\e['$r';'$(( sc + 10 ))'H'${hv[i][1,se-sc-9]}
+    tw=$(( se - sc - 9 )) rows=$(( ph - 4 ))
+  else
+    w=$(( pw - 2 < 58 ? pw - 2 : 58 ))
+    (( te )) && w=$(( pw - 2 < 76 ? pw - 2 : 76 ))
+    tw=$(( w - 16 )) rows=$(( ph - 5 ))
+  fi
+  for (( i = 1; i <= ${#hk}; i++ )); do
+    __tt_pv_wrap "${hv[i]}" $tw
+    hl+=("${reply[@]}") hn+=(${#reply})
+    (( used += ${#reply} ))
+  done
+  n=${#hk}
+  if (( used > rows )); then
+    used=1
+    for (( n = 0; n < ${#hk} && used + hn[n + 1] <= rows; n++ )); do
+      (( used += hn[n + 1] ))
     done
+  fi
+  if (( split && sw >= 48 )); then
+    r=4
+    for (( i = 1; i <= n; i++ )); do
+      out+=$'\e['$r';'$sc'H'$b${hk[i]}$z
+      for (( j = 1; j <= hn[i]; j++, r++ )); do
+        (( ++k ))
+        out+=$'\e['$r';'$(( sc + 10 ))'H'${hl[k]}
+      done
+    done
+    (( n < ${#hk} )) && out+=$'\e['$r';'$sc'H'$d$TTHEME_MARKS[below]" $(( ${#hk} - n )) more"$z
     return 0
   fi
-  w=$(( pw - 2 < 58 ? pw - 2 : 58 )) hh=$(( ${#hk} + 4 ))
-  (( te )) && w=$(( pw - 2 < 76 ? pw - 2 : 76 ))
+  hh=$(( used + 4 ))
   x=$(( (pw - w) / 2 + 1 )) y=$(( (ph - hh) / 2 ))
   floor=$(( te && ! split ? 4 : pvhd + 2 ))
   (( y < floor )) && y=$floor
@@ -728,10 +789,15 @@ __tt_pv_help() {
   for (( r = y + 1; r < y + hh - 1; r++ )); do
     out+=$'\e['$r';'$x'H'$blank$'\e['$r';'$x'H│'$'\e['$r';'$(( x + w - 1 ))'H│'
   done
-  for (( i = 1; i <= ${#hk}; i++ )); do
-    r=$(( y + 1 + i ))
-    out+=$'\e['$r';'$(( x + 3 ))'H'$b${hk[i]}$z$'\e['$r';'$(( x + 13 ))'H'${hv[i][1,w-16]}
+  r=$(( y + 2 ))
+  for (( i = 1; i <= n; i++ )); do
+    out+=$'\e['$r';'$(( x + 3 ))'H'$b${hk[i]}$z
+    for (( j = 1; j <= hn[i]; j++, r++ )); do
+      (( ++k ))
+      out+=$'\e['$r';'$(( x + 13 ))'H'${hl[k]}
+    done
   done
+  (( n < ${#hk} )) && out+=$'\e['$r';'$(( x + 3 ))'H'$d$TTHEME_MARKS[below]" $(( ${#hk} - n )) more"$z
   out+=$'\e['$(( y + hh - 1 ))';'$x'H'"╰${(l:$(( w - 2 ))::─:)}╯"
 }
 
@@ -1027,8 +1093,8 @@ __tt_pv_redraw() {
 
 __tt_pv_conf_panel() {
   local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] c=$ac on=$pl var v note
-  local -a ch sh
-  local -i r0=$1 col=$2 end=$3 k i j fit=1
+  local -a ch sh reply
+  local -i r0=$1 col=$2 end=$3 k i j r fit=1
   (( color )) || z= b= d= c= on=
   for (( k = 1; k <= ${#cvars}; k++ )); do
     sh=(${=cshow[k]})
@@ -1040,7 +1106,7 @@ __tt_pv_conf_panel() {
     out+=$'\e['$(( r0 + k - 1 ))';'$col'H'
     pvz+=("$(( r0 + k - 1 )) $col $end conf $k")
     if (( k == cf )); then
-      out+=$c"▶"$z" "$b
+      out+=$c$TTHEME_MARKS[focus]$z" "$b
     else
       out+="  "$d
     fi
@@ -1076,7 +1142,17 @@ __tt_pv_conf_panel() {
   done
   var=${cvars[cf]}
   note=${cnote[$var:${(P)var}]}
-  [[ -n $note ]] && out+=$'\e['$(( r0 + ${#cvars} + 1 ))';'$col'H'$d${note[1,end-col+1]}$z
+  r=$(( r0 + ${#cvars} + 1 ))
+  [[ -n $note ]] && (( r < ph )) || return 0
+  __tt_pv_wrap "$note" $(( end - col + 1 ))
+  if (( ${#reply} > ph - r )); then
+    v=${(j: :)reply[ph-r,-1]}
+    while (( ${(m)#v} > end - col )); do v=${v[1,-2]}; done
+    reply[ph-r,-1]=("${v% }$TTHEME_MARKS[cut]")
+  fi
+  for v in $reply; do
+    out+=$'\e['$(( r++ ))';'$col'H'$d$v$z
+  done
   return 0
 }
 
@@ -1100,7 +1176,7 @@ __tt_pv_reach() {
   local -A own=() below=() parent=() mark=() tstrip=()
   local -a roots=() lp=() lpw=() ll=() lat=() lpal=() lnote=() lflag=() reply was=()
   local -A TTHEME_PINS=("${(@kv)TTHEME_PINS}")
-  local -i room=$2
+  local -i room=$2 spare
   (( color )) || d= z=
   (( room < 2 )) && room=2
   if [[ $key == ssh:* ]]; then
@@ -1130,12 +1206,18 @@ __tt_pv_reach() {
   fi
   __tt_map_fit $1
   (( ${#reply} > room )) && reply=("${(@)reply[1,room-1]}" "    …")
+  spare=$(( room - ${#reply} ))
   reach=("${reply[@]}")
   [[ $key == /* || ${#was} -gt 0 ]] && reach+=("")
   __tt_pin_where "$key"
   base=$REPLY
   for k in $was; do
-    __tt_clip "${d}Replaces ${k% · *} on $base · ${k##* · }$z" $1
+    if ! __tt_clip "${d}Replaces ${k% · *} on $base · ${k##* · }$z" $1 && (( spare > 0 )); then
+      __tt_clip "${d}Replaces ${k% · *}$z" $1
+      reach+=("$REPLY")
+      __tt_clip "${d}  on $base · ${k##* · }$z" $1
+      (( spare-- ))
+    fi
     reach+=("$REPLY")
   done
   __tt_pin_scope "$key"
@@ -1148,7 +1230,7 @@ __tt_pv_reach() {
 
 __tt_pv_draw() {
   local out line cnt ex ag="" acat="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" nflt="" rsub="" REPLY
-  local -i lw sw split sc se=$(( pw - 2 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
+  local -i lw sw split sc se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
   local -a held
   bgstrip=""
   if [[ -n $flt ]]; then
@@ -1157,7 +1239,7 @@ __tt_pv_draw() {
   fi
   __tt_pv_lw
   lw=$reply[1] sw=$reply[2]
-  split=$(( sw > 0 )) sc=$(( pw - 1 - sw ))
+  split=$(( sw > 0 )) sc=$(( pw - sw ))
   hd=$(( tall ? hub + 4 : 2 )) pvhd=$hd
   h=$(( ph - hd - 3 ))
   (( conf && ! split )) && h=$(( ph - hd - 5 - ${#cvars} ))
@@ -1251,10 +1333,10 @@ __tt_pv_draw() {
   fi
   if (( tall )); then
     pvsr=$(( hub + 3 )) pvsc=$(( 6 + ${(m)#typed} ))
-    line=$'\e['$lw'X '$dd"│"$zz" "$dd"⌕"$zz" "$find$'\e['$lw'G'$dd"│"$zz
+    line=$'\e['$lw'X '$dd"│"$zz" "$dd$TTHEME_MARKS[search]$zz" "$find$'\e['$lw'G'$dd"│"$zz
   else
     pvsr=$(( hub + 1 )) pvsc=$(( 4 + ${(m)#typed} ))
-    line=$'\e['$lw'X '$dd"⌕"$zz" "$find$'\e['$(( lw - ${#cnt} ))'G'$dd$cnt$zz
+    line=$'\e['$lw'X '$dd$TTHEME_MARKS[search]$zz" "$find$'\e['$(( lw - ${#cnt} ))'G'$dd$cnt$zz
   fi
   if [[ $1 == hint ]] && (( ! wiped )); then
     print -rn -- $'\e['$pvsr'H'$TTHEME_SGR[reset]$line
@@ -1298,7 +1380,7 @@ __tt_pv_draw() {
     fi
     out+=$line$'\e[K\n'
   done
-  __tt_pv_foot $(( split ? se : pw ))
+  __tt_pv_foot $se
   if (( split )); then
     if (( help && sw >= 48 )); then
       __tt_pv_head 1 $sc $se Help
@@ -1380,7 +1462,7 @@ __tt_pv_init() {
   __tt_pv_tops
   [[ -n $orig ]] && __tt_name_of "$orig" && cn=$REPLY
   [[ -n ${TTHEME_PALETTE[$cn]} ]] || return 0
-  cdot="◆"
+  cdot=$TTHEME_MARKS[current]
 }
 
 __tt_pv_roll() {
@@ -1798,7 +1880,7 @@ __tt_te_read() {
   if (( ! wide )); then
     __tt_pv_lw
     wide=${reply[2]}
-    (( wide )) || wide=$(( pw - 2 < 66 ? pw - 3 : 65 ))
+    (( wide )) || wide=$(( pw - 1 < 66 ? pw - 2 : 65 ))
   fi
   tewide=$wide
   rows=$(__tt_cli tone $tename show $wide 2>/dev/null) || return 1
@@ -2072,12 +2154,12 @@ __tt_pv_te_head() {
   local -i col=$1 end=$2 room=$(( $2 - $1 + 1 ))
   (( color )) || z= d= b= y=
   __tt_te_unsaved && (( room -= 11 ))
-  line=$b$ac"◆"$z" "$b$tename$z
+  line=$b$ac$TTHEME_MARKS[current]$z" "$b$tename$z
   __tt_shelf $tename
   line+=" "$d"· $REPLY"$z
   __tt_clip "$line" $room
   out+=$'\e[1;'$col'H'$REPLY$z
-  __tt_te_unsaved && out+=$'\e[1;'$(( end - 8 ))'H'$y"●"$z" "$d"unsaved"$z
+  __tt_te_unsaved && out+=$'\e[1;'$(( end - 8 ))'H'$y$TTHEME_MARKS[on]$z" "$d"unsaved"$z
   return 0
 }
 
@@ -2153,14 +2235,14 @@ __tt_pv_te_images() {
     (( n )) || n=1
     note="$n/$(( ${#held} ? ${#held} : 1 ))"
   fi
-  (( tfocus == 1 && tf == 5 )) && st=$ac"▶"$z" " tt=$b
+  (( tfocus == 1 && tf == 5 )) && st=$ac$TTHEME_MARKS[focus]$z" " tt=$b
   out+=$'\e['$y';'$col'H'$st$tt"Images"$z$'\e['$y';'$(( end - ${#note} + 1 ))'H'$d$note$z
   pvz+=("$y $col $end teimg")
 }
 
 __tt_pv_te_button() {
   if (( tfocus == 0 && tbtn == $1 )); then
-    (( color )) && out+=$ac"▶"$z" "$pl" $2 "$z || out+="▶ [$2]"
+    (( color )) && out+=$ac$TTHEME_MARKS[focus]$z" "$pl" $2 "$z || out+="$TTHEME_MARKS[focus] [$2]"
   else
     (( color )) && out+="  "$b" $2 "$z || out+="   $2 "
   fi
@@ -2276,7 +2358,7 @@ __tt_pv_te_panel() {
   fi
   out+=$'\e['$y';'$ix'H'
   if (( tfocus == 2 )); then
-    (( color )) && out+=$ac"▶"$z" "$pl" Apply "$z || out+="▶ [Apply]"
+    (( color )) && out+=$ac$TTHEME_MARKS[focus]$z" "$pl" Apply "$z || out+="$TTHEME_MARKS[focus] [Apply]"
   else
     (( color )) && out+="  "$b" Apply "$z || out+="   Apply "
   fi
@@ -2285,7 +2367,7 @@ __tt_pv_te_panel() {
 }
 
 __tt_pv_te_draw() {
-  local -i i end=$(( pw - 2 < 66 ? pw - 2 : 66 ))
+  local -i i end=$(( pw - 1 < 66 ? pw - 1 : 66 ))
   for (( i = 1; i < ph; i++ )); do
     out+=$'\e['$i$';1H\e[K'
   done
@@ -2303,7 +2385,7 @@ __tt_pv_te_draw() {
   fi
   (( help )) && __tt_pv_help
   out+=$'\e['$ph';1H'
-  __tt_pv_foot $pw
+  __tt_pv_foot $se
   (( osdt > 0 )) && __tt_pv_osd
   __tt_pv_flush
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { creditLine, pageLabel, profilesOf } from './artists.ts'
+import { artworkOf, creditLine, pageLabel, profilesOf, safeUrl } from './artists.ts'
 import { parseArtistUrls } from './booru.ts'
 
 test('an artist keeps one profile per site, follows before support, and none of the duplicates danbooru lists', () => {
@@ -58,6 +58,17 @@ test('the credit to copy follows each artist on a site the artwork page is not o
   )
 })
 
+test('an artist named like a property every object has is credited as any other is', () => {
+  const profiles = JSON.parse('{"kiyo": ["https://x.com/kiyo"]}')
+
+  for (const name of ['constructor', '__proto__']) {
+    assert.equal(
+      creditLine({ artist: [name, 'kiyo'], profiles, source: 'https://www.pixiv.net/artworks/1' }),
+      `Background art by ${name}, kiyo (x.com/kiyo) · https://www.pixiv.net/artworks/1`,
+    )
+  }
+})
+
 test('the credit to copy names the post where the picture names no artwork page, and nothing when it names neither', () => {
   assert.equal(
     creditLine({ artist: ['a', 'b'], source: 'Original', from: 'danbooru 9 https://shima.donmai.us/posts/9' }),
@@ -80,4 +91,12 @@ test('an artwork page is labeled by its site and work, any other page by its hos
     ].map(pageLabel),
     ['pixiv 113837973', 'x yoshio_296', 'fanbox yoshio-296', 'deviantart.com'],
   )
+})
+
+test('an address that holds a direction mark is no page, so it is neither credited nor labeled with itself', () => {
+  const [rlo, lri] = [0x202e, 0x2066].map((code) => String.fromCodePoint(code))
+  assert.equal(safeUrl(`https://example.test/${rlo}gnp.exe`), false)
+  assert.equal(artworkOf({ source: `https://exa${rlo}mple.test/a` }), undefined)
+  assert.equal(creditLine({ source: `https://example.test/${rlo}gnp.exe` }), undefined)
+  assert.equal(creditLine({ from: `danbooru 9 https://shima.donmai.us/posts/9${lri}` }), undefined)
 })

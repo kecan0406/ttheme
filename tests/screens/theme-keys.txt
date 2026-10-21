@@ -21,4 +21,4 @@
  │ ▶ [Edit palette]  tunes its colors full screen                │
  ╰───────────────────────────────────────────────────────────────╯
       Apply   saves and wears it in this tab
-[HELP]                                                                                   ? esc close
+ [HELP]                                                                                 ? esc close

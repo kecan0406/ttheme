@@ -59,6 +59,13 @@ function markOf(sequence: string): number | undefined {
     : undefined
 }
 
+export function unzoned(line: string): string {
+  return pieces(line)
+    .filter((piece) => !piece.sequence || markOf(piece.text) === undefined)
+    .map((piece) => piece.text)
+    .join('')
+}
+
 function columnOf(sequence: string): number | undefined {
   const digits = sequence.slice(2, -1)
 

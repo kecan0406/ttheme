@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import type { Profile } from '../../core/artists.ts'
+import { type Profile, pagesOf } from '../../core/artists.ts'
 import type { Coloring } from '../../core/backdrop-tone.ts'
 import { BLOCKS, type Block, KEY_SPAN, type Kind, type Narrow, type Rating, SITES } from '../../core/booru.ts'
 import { type Hex, mix } from '../../core/color.ts'
@@ -8,8 +8,11 @@ import { cells as columns } from '../../core/text.ts'
 import { POSITIONS } from '../../core/theme.ts'
 import type { Framing } from '../../pictures/backdrop.ts'
 import { linked } from '../ansi.ts'
+import type { Tone } from '../bar.ts'
+import { type Help, type HelpSpot, type Legend, overlay, type Topic } from '../help.ts'
+import { moreOf } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
-import { ansiBg, ansiFg, MARKS, open, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
+import { ansiBg, ansiFg, MARKS, open, painter, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
 import { hintKey, type KeySpot, type Zone } from '../zones.ts'
 
 export type Preset = 'cutouts' | 'all'
@@ -135,7 +138,7 @@ export interface FindView {
   beat: number
   loaderFrom?: number
   mode: 'grid' | 'try'
-  help: boolean
+  help: Help | undefined
   scene: number
   details: boolean
   info?: Info
@@ -156,7 +159,7 @@ export interface FindView {
   saved?: { text: string; key: number }
   note?: string
   hint?: string
-  error?: string
+  notice?: { text: string; tone: Tone }
   waiting?: number
   slow?: string
 }
@@ -189,6 +192,7 @@ export interface Placement {
 
 export type FindSpot =
   | KeySpot
+  | HelpSpot
   | { kind: 'link'; url: string }
   | { kind: 'tile'; index: number }
   | { kind: 'query' }
@@ -296,6 +300,7 @@ const B = open('bold')
 const D = open('dim')
 const OK = open('ok')
 const WARN = open('warn')
+const TONED: Record<Tone, string> = { info: '', ok: OK, warn: WARN, error: open('error') }
 const fg = ansiFg
 const bg = ansiBg
 
@@ -398,7 +403,7 @@ class Line {
   }
 
   put(col: number, text: string, sgr = '', link?: string, spot?: FindSpot): number {
-    const shown = text.replace(/\p{Cc}/gu, '')
+    const shown = text.replace(/[\p{Cc}\p{Bidi_Control}]/gu, '')
     this.parts.push({ col, text: shown, sgr, ...(link ? { link } : {}), ...(spot ? { spot } : {}) })
 
     return col + width(shown)
@@ -660,7 +665,10 @@ function artistParts(artists: readonly string[], profiles: Record<string, Profil
   return artists.flatMap((name, i): Part[] => [
     ...(i > 0 ? ([['  ', '']] as Part[]) : []),
     [name, ''],
-    ...(profiles[name] ?? []).flatMap((link): Part[] => [[' ', ''], ...reference(link.kind, '', link.url, accent)]),
+    ...(pagesOf(profiles, name) ?? []).flatMap((link): Part[] => [
+      [' ', ''],
+      ...reference(link.kind, '', link.url, accent),
+    ]),
   ])
 }
 
@@ -775,7 +783,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
     const style = on ? B : D
 
     if (on) {
-      lines[r]?.put(col, '▶', accent, undefined, { kind: 'field', field: k })
+      lines[r]?.put(col, MARKS.focus, accent, undefined, { kind: 'field', field: k })
     }
 
     lines[r]?.put(col + 2, label, style, undefined, { kind: 'field', field: k })
@@ -806,7 +814,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
       knob = Math.max(0, Math.min(track - 1, knob))
       lines[r]?.run(col + 12, [
         ['━'.repeat(knob), accent],
-        ['●', B],
+        [MARKS.on, B],
         ['─'.repeat(track - 1 - knob), D],
       ])
       lines[r]?.mark(col + 12, track, { kind: 'track', field: k })
@@ -919,7 +927,7 @@ function shelf(lines: Line[], images: Placement[], cols: number, view: FindView,
 
     if (held.up) {
       for (let r = 0; r < HELD.rows; r++) {
-        lines[HELD.top + r]?.put(x, '▌', accent)
+        lines[HELD.top + r]?.put(x, MARKS.gutter, accent)
       }
     }
 
@@ -1022,8 +1030,8 @@ function status(view: FindView, loading?: Part): Part[] | undefined {
     return [[view.hint, OK]]
   }
 
-  if (view.error) {
-    return [[view.error, WARN]]
+  if (view.notice) {
+    return [[view.notice.text, TONED[view.notice.tone]]]
   }
 
   if (view.waiting !== undefined) {
@@ -1269,7 +1277,7 @@ function grid(
 
   const quiet = view.searching && view.tiles.length === 0
 
-  if (quiet && !view.error) {
+  if (quiet && !view.notice) {
     const [key, label] = TIPS[Math.floor(beat(view) / TIP_BEATS) % TIPS.length] as [string, string]
     lines[rows - 2]?.run(0, [
       ['Tip  ', D],
@@ -1280,13 +1288,13 @@ function grid(
 
   const above = view.top * perRow
   const more = view.tiles.length - (view.top + rowsVis) * perRow
-  const scroll = [...(above > 0 ? [`↑ ${above} above`] : []), ...(more > 0 ? [`↓ ${more} more`] : [])]
+  const scroll = [...(above > 0 ? [moreOf(-1, above)] : []), ...(more > 0 ? [moreOf(1, more)] : [])]
 
   if (scroll.length > 0) {
     lines[rows - 2]?.put(0, scroll.join('   '), D)
   }
 
-  if (!view.searching && view.tiles.length === 0 && !view.error && view.tag) {
+  if (!view.searching && view.tiles.length === 0 && !view.notice && view.tag) {
     lines[GRID_TOP + 1]?.put(
       0,
       view.preset === 'cutouts'
@@ -1415,46 +1423,74 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   })
 }
 
-const TUNE_KEYS: [string, string][] = [
+type Key = [label: string, text: string, press?: string, then?: string]
+
+const TUNE_KEYS: Key[] = [
   ['Field', '↑↓  size, position, opacity'],
   ['Step', '←→  ·  ⇧←→ ×10'],
   ['Place', '1-9  the nine positions'],
-  ['Reset', '=  this field back to its default  ·  +  every field'],
-  ['Colors', "c  its own colors or the palette's tone, opacity back to its default"],
-  ['Keep', 'enter  back to try, installed with the picture'],
-  ['Undo', 'esc'],
-  ['Close', '?  esc'],
+  ['Reset', '=  this field back to its default  ·  +  every field', '='],
+  ['Colors', "c  its own colors or the palette's tone, opacity back to its default", 'c'],
+  ['Keep', 'enter  back to try, installed with the picture', 'enter'],
+  ['Undo', 'esc', 'esc'],
 ]
 
-const KEYS: Record<FindView['mode'], [string, string][]> = {
+const KEYS: Record<FindView['mode'], Key[]> = {
   grid: [
     ['Move', '←↑↓→  j k  home  end  pgup  pgdn'],
-    ['Try on', 'enter'],
-    ['Site', `tab  shift+tab  all, ${SITES.map((site) => site.name).join(', ')}`],
-    ['Posts', 'c  cutouts or every post'],
-    ['Search', '/  a tag, a post URL or an id'],
+    ['Try on', 'enter', 'enter'],
+    ['Site', `tab  shift+tab  all, ${SITES.map((site) => site.name).join(', ')}`, 'tab'],
+    ['Posts', 'c  cutouts or every post', 'c'],
+    ['Search', '/  a tag, a post URL or an id', '/'],
     ['Tags', "1-9  turn a tag of the tags row on or off — the palette's own, then danbooru's related characters"],
-    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window or paste its link'],
-    ['Unfold', 'space  a set of ×N'],
-    ['Open', 'o  the artwork page in a browser  ·  O  the post page'],
-    ['Settings', 's  rating, block, posts, solo, order, sets, remove bg'],
-    ['Advanced', 'a or Advanced › in settings  min score, min size, sites, hide, hide tags, PNG only'],
-    ['Back', 'esc returns to preview'],
-    ['Close', '?  esc'],
+    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window or paste its link', 'v'],
+    ['Unfold', 'space  a set of ×N', ' '],
+    ['Open', 'o  the artwork page in a browser  ·  O  the post page', 'o'],
+    ['Settings', 's  rating, block, posts, solo, order, sets, remove bg', 's'],
+    ['Advanced', 'a or Advanced › in settings  min score, min size, sites, hide, hide tags, PNG only', 's', 'a'],
+    ['Back', 'esc returns to preview', 'esc'],
   ],
   try: [
     ['Browse', '←→'],
-    ['Install', 'enter'],
-    ['Tune', 't  size, position and opacity, installed with the picture'],
-    ['Colors', "c  its own colors or the palette's tone, installed with the picture"],
-    ['Details', 'i  characters, series, tags, rating and file, under Post, Source and Artist'],
+    ['Install', 'enter', 'enter'],
+    ['Tune', 't  size, position and opacity, installed with the picture', 't'],
+    ['Colors', "c  its own colors or the palette's tone, installed with the picture", 'c'],
+    ['Details', 'i  characters, series, tags, rating and file, under Post, Source and Artist', 'i'],
     ['Example', `⇧←→  ${SCENES.map((scene) => scene.name.toLowerCase()).join(', ')}`],
-    ['Cut out', 'x  the background off or on, on an opaque picture'],
-    ['Open', 'o  the artwork page in a browser  ·  O  the post page'],
-    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window'],
-    ['Grid', 'esc'],
-    ['Close', '?  esc'],
+    ['Cut out', 'x  the background off or on, on an opaque picture', 'x'],
+    ['Open', 'o  the artwork page in a browser  ·  O  the post page', 'o'],
+    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window', 'v'],
+    ['Grid', 'esc', 'esc'],
   ],
+}
+
+export const FIND_MARKS: Legend = [
+  [MARKS.link, 'opens in a browser'],
+  [MARKS.on, 'a picture of your own'],
+  [MARKS.gutter, 'the picture on show'],
+]
+
+export function findTopics(view: FindView, press: (key: string) => void): Topic[] {
+  const cuts = view.shown?.cut === 'on' || view.shown?.cut === 'off'
+
+  return [
+    ...(view.tuning ? TUNE_KEYS : KEYS[view.mode]).map(([label, text, key, then]): Topic => {
+      const runs = key !== undefined && (key !== 'x' || cuts)
+
+      const run = () => {
+        if (key !== undefined) {
+          press(key)
+        }
+
+        if (then !== undefined) {
+          press(then)
+        }
+      }
+
+      return { label, text, ...(runs ? { run } : {}) }
+    }),
+    { label: 'Close', text: '?  esc', run: () => {} },
+  ]
 }
 
 export const DIGITS = 6
@@ -1705,7 +1741,7 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
     const focused = i === at
 
     if (focused) {
-      lines[r]?.put(x + 2, '▶', accent)
+      lines[r]?.put(x + 2, MARKS.focus, accent)
     }
 
     lines[r]?.mark(x + 2, lead - 3, { kind: 'setting', index: i })
@@ -1735,7 +1771,7 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
 
   if (linkLine) {
     if (at === link) {
-      linkLine.put(x + 2, '▶', accent)
+      linkLine.put(x + 2, MARKS.focus, accent)
     }
 
     const end = linkLine.put(x + 3, view.advanced ? ' ‹ Basic ' : ' Advanced › ', at === link ? glow : B, undefined, {
@@ -1760,32 +1796,17 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
   foot(lines[rows - 1] as Line, cols, { keys, right })
 }
 
-function help(lines: Line[], cols: number, rows: number, view: FindView): void {
-  const keys = view.tuning ? TUNE_KEYS : KEYS[view.mode]
-  const w = Math.min(cols - 2, Math.max(50, ...keys.map(([, value]) => width(value) + 16)))
-  const laid = keys.map(([label, value]) => ({ label, parts: wrapped(value, w - 16) }))
-  const h = laid.reduce((n, { parts }) => n + parts.length, 0) + 4
-  const x = Math.floor((cols - w) / 2)
-  const y = Math.max(2, Math.floor((rows - h) / 2))
-  lines[y]?.put(x, `╭─ Help ${'─'.repeat(w - 9)}╮`)
+function helpOver(lines: Line[], cols: number, rows: number, help: Help): string[] {
+  const { badge, keys, right } = help.bar()
+  foot(lines[rows - 1] as Line, cols, { badge, keys, ...(right ? { right } : {}) })
 
-  for (let r = y + 1; r < y + h - 1; r++) {
-    lines[r]?.put(x, `│${' '.repeat(w - 2)}│`)
-  }
-
-  let r = y + 2
-
-  for (const { label, parts } of laid) {
-    lines[r]?.put(x + 3, label, B)
-
-    for (const part of parts) {
-      lines[r]?.put(x + 13, part)
-      r++
-    }
-  }
-
-  lines[y + h - 1]?.put(x, `╰${'─'.repeat(w - 2)}╯`)
-  foot(lines[rows - 1] as Line, cols, { badge: 'HELP', right: ['? esc', 'close'] })
+  return overlay(
+    lines.map((l) => l.render()),
+    help.box(painter(true), cols, rows - 1),
+    cols,
+    rows,
+    1,
+  )
 }
 
 function suggestions(lines: Line[], view: FindView, accent: string): void {
@@ -1849,10 +1870,12 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
     }
 
     if (view.help) {
-      help(lines, cols, rows, view)
-    } else {
-      panel(lines, cols, rows, view, accent)
+      const drawn = helpOver(lines, cols, rows, view.help)
+
+      return { lines: drawn, images: keep, zones: zonesOf(lines), loader: false, tick: false }
     }
+
+    panel(lines, cols, rows, view, accent)
 
     return { lines: lines.map((l) => l.render()), images: keep, zones: zonesOf(lines), loader: false, tick: false }
   }

@@ -18,6 +18,13 @@ test('pastedRefs reads every way a terminal hands over dropped files', () => {
   assert.deepEqual(pastedRefs('/pics/missing.png hello', exists), [])
 })
 
+test('a pasted link that holds a control character or a direction mark is not taken, so it never becomes a link', () => {
+  const rlo = String.fromCodePoint(0x202e)
+  assert.deepEqual(pastedRefs('https://example.com/x.png\x07\x1b]52;c;aGk=\x07', exists), [])
+  assert.deepEqual(pastedRefs(`https://example.com/${rlo}gnp.png`, exists), [])
+  assert.deepEqual(pastedRefs('https://example.com/\x9b31m.png', exists), [])
+})
+
 test('jpegSize reads the frame header', () => {
   const bytes = new Uint8Array([
     0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x02, 0x58, 0x03, 0x20, 0x03,

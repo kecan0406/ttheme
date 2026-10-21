@@ -44,6 +44,7 @@ typeset -ga SCENARIOS=(
   'theme-edit      few    hub  Down Right Down Tab@Palette'
   'theme-editor    few    hub  Down Right Down Tab@Palette Enter@slot'
   'theme-keys      few    hub  Down Right Down Right@Palette ?@Help'
+  'editor-keys     few    hub  Down Right Down Tab@Palette Enter@slot ?@Help'
   'browse-marketplace   marketplace browse   Down Right Right Down'
   'preview-marketplace  marketplace hub  Down Right Down Right Down'
   'hub-marketplace      marketplace hub'
@@ -82,6 +83,7 @@ command_for() {
   case $target in
     browse) print -r -- "node $ROOT/bin/ttheme.js $target" ;;
     edit:?*) print -r -- "node $ROOT/bin/ttheme.js edit ${target#edit:}" ;;
+    kit:?*) print -r -- "bun $ROOT/tests/kit.ts ${target#kit:}" ;;
     hub) print -r -- "source $home/ttheme/ttheme.zsh; ttheme" ;;
     pins) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work/api/v2; ttheme pins" ;;
     pin) print -r -- "source $home/ttheme/ttheme.zsh; cd ~/work; ttheme pin" ;;
@@ -215,7 +217,7 @@ look() {
   local what=$1 size=$2 state=few target line out='' against='' here=$ROOT old l
   local -a keys flags parts
   if [[ -z $what || $size != <->x<-> ]]; then
-    print -u2 "usage: mise run look <scenario | browse | hub | pins | pin | edit:<palette>> <cols>x<rows> [keys…] [--state ${(kj: | :)STATES}] [--rows a-b] [--cols a-b] [--emit png,txt,styles] [--against <git ref>] [--out <path>]"
+    print -u2 "usage: mise run look <scenario | browse | hub | pins | pin | edit:<palette> | kit:<part>> <cols>x<rows> [keys…] [--state ${(kj: | :)STATES}] [--rows a-b] [--cols a-b] [--emit png,txt,styles] [--against <git ref>] [--out <path>]"
     print -u2 "scenarios, each a state, a screen and keys (keys given here come after its own):"
     for l in $SCENARIOS; do print -u2 "  ${${=l}[1]}"; done
     return 1

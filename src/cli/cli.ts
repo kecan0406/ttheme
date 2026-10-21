@@ -1,6 +1,7 @@
 import { type ParseArgsOptionsConfig, parseArgs } from 'node:util'
 import pkg from '../../package.json' with { type: 'json' }
 import { Cancelled, Signalled } from '../core/cancelled.ts'
+import { inertLines } from '../core/text.ts'
 import { interactive } from '../tui/terminal.ts'
 import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
@@ -257,8 +258,8 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     if (error instanceof UsageError) {
       console.error(
         error.verb
-          ? `ttheme ${error.verb.name}: ${error.message}\n\n${commandHelp(error.verb)}`
-          : `ttheme: ${error.message} — see \`ttheme help\``,
+          ? `ttheme ${error.verb.name}: ${inertLines(error.message)}\n\n${commandHelp(error.verb)}`
+          : `ttheme: ${inertLines(error.message)} — see \`ttheme help\``,
       )
 
       return 1
@@ -274,7 +275,7 @@ export async function runCli(argv: readonly string[]): Promise<number> {
 
     const detail = process.env.TTHEME_DEBUG && error instanceof Error ? error.stack : undefined
     console.error(
-      `\nttheme${running ? ` ${running.name}` : ''}: ${detail ?? (error instanceof Error ? error.message : String(error))}${error instanceof Error && isCrash(error) ? '\nReport a bug with the output of `ttheme info`' : ''}`,
+      `\nttheme${running ? ` ${running.name}` : ''}: ${inertLines(detail ?? (error instanceof Error ? error.message : String(error)))}${error instanceof Error && isCrash(error) ? '\nReport a bug with the output of `ttheme info`' : ''}`,
     )
 
     return 1

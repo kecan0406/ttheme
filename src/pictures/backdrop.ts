@@ -12,7 +12,7 @@ import {
   statSync,
 } from 'node:fs'
 import { basename, join } from 'node:path'
-import { artworkOf, creditLine, linksOf } from '../core/artists.ts'
+import { artworkOf, creditLine, linksOf, pagesOf } from '../core/artists.ts'
 import { type Coloring, type Colors, type Hue, originalOpacity } from '../core/backdrop-tone.ts'
 import { type Hex, rgb } from '../core/color.ts'
 import { isLight } from '../core/contrast.ts'
@@ -36,6 +36,7 @@ import {
   retone,
   transparency,
 } from '../core/png.ts'
+import { inert } from '../core/text.ts'
 import { stem as fileStem, POSITIONS, type SharedPicture } from '../core/theme.ts'
 import { listing, writeAtomic } from '../store/edits.ts'
 import { CONF_FIT, CONF_IMAGE, CONF_INCLUDE, CONF_OPACITY, CONF_OPTIONAL, CONF_POSITION } from './conf.ts'
@@ -556,6 +557,10 @@ export function readStore(dir: string): Store {
   return store
 }
 
+export function rackIn(store: Store, name: string): Rack | undefined {
+  return Object.hasOwn(store.palettes, name) ? store.palettes[name] : undefined
+}
+
 export function coloringOf(picture: Picture): Coloring {
   return picture.coloring ?? 'tone'
 }
@@ -581,22 +586,26 @@ export function undrawn(picture: Picture): boolean {
 }
 
 function word(name: string): string {
-  return name.replace(/[\s,\p{Cc}]+/gu, '_')
+  return name.replace(/\p{Bidi_Control}/gu, '').replace(/[\s,\p{Cc}]+/gu, '_')
 }
 
 function byline(picture: Picture): string {
   return (picture.artist ?? []).map(word).join(',')
 }
 
+function fromOf(picture: Picture): string {
+  return inert(picture.from ?? '')
+}
+
 function creditLines(held: Picture): string[] {
   const page = artworkOf(held)
-  const line = creditLine(held)?.replace(/\p{Cc}+/gu, '')
+  const line = inert(creditLine(held) ?? '')
 
   return [
     ...(line ? [`# credit ${held.key} ${line}`] : []),
     ...(page ? [`# source ${held.key} ${page.label} ${page.url}`] : []),
     ...(held.artist ?? []).flatMap((name) => {
-      const links = linksOf(held.profiles?.[name])
+      const links = linksOf(pagesOf(held.profiles, name))
 
       return links.length > 0
         ? [`# profile ${held.key} ${word(name)} ${links.map((link) => `${link.kind} ${link.url}`).join(' ')}`]
@@ -608,16 +617,19 @@ function creditLines(held: Picture): string[] {
 function confText(dir: string, rack: Rack): string {
   const at = rack.pictures.findIndex((picture) => picture.key === rack.active)
   const picture = rack.pictures[at] as Picture
+  const from = fromOf(picture)
 
   return [
     ...(picture.artist?.length ? [`# by ${byline(picture)}`] : []),
-    ...(picture.from ? [`# from ${picture.from}`] : []),
+    ...(from ? [`# from ${from}`] : []),
     `# image ${picture.key} ${at + 1}/${rack.pictures.length}`,
     ...rack.pictures.map((held) =>
       [
         `# picture ${held.key} ${held.stem} ${held.fill} ${held.opacity} ${held.artist?.length ? byline(held) : '-'}`,
-        ...(held.from ? [held.from] : []),
-      ].join(' '),
+        fromOf(held),
+      ]
+        .filter(Boolean)
+        .join(' '),
     ),
     ...rack.pictures.filter((held) => coloringOf(held) === 'original').map((held) => `# colors ${held.key} original`),
     ...rack.pictures.flatMap(creditLines),
@@ -648,7 +660,7 @@ function save(dir: string, store: Store, names: string[]): void {
   writeAtomic(storePath(dir), `${JSON.stringify(store, null, 2)}\n`)
 
   for (const name of names) {
-    const rack = store.palettes[name]
+    const rack = rackIn(store, name)
     const conf = join(dir, `${fileStem(name)}.conf`)
 
     if (rack) {
@@ -665,9 +677,9 @@ export function moveRacks(configHome: string, renamed: ReadonlyMap<string, strin
   const names: string[] = []
 
   for (const [from, to] of renamed) {
-    const rack = store.palettes[from]
+    const rack = rackIn(store, from)
 
-    if (rack && !store.palettes[to]) {
+    if (rack && !rackIn(store, to)) {
       store.palettes[to] = rack
       delete store.palettes[from]
       names.push(from, to)
@@ -806,7 +818,7 @@ export function imageKey(origin: Origin): string {
 export function dropImage(configHome: string, name: string, key?: string) {
   const dir = backgroundsDir(configHome)
   const store = readStore(dir)
-  const rack = store.palettes[name]
+  const rack = rackIn(store, name)
 
   if (!rack) {
     throw new Error(`${name} has no image`)
@@ -901,7 +913,7 @@ export function installBackdrop(
   const name = colors.name
   const key = imageKey(source)
   const store = readStore(dir)
-  const rack = store.palettes[name] ?? { active: key, pictures: [] }
+  const rack = rackIn(store, name) ?? { active: key, pictures: [] }
   const size = fillSize(window.width, window.height)
   const drawing = draw(image, size.width, size.height, blurring, coloring, source.cut === true, isLight(colors))
   const drawn = made(name, key, drawing, tone.color)
@@ -947,7 +959,7 @@ export function installBackdrop(
 export function showImage(configHome: string, name: string, key: string) {
   const dir = backgroundsDir(configHome)
   const store = readStore(dir)
-  const rack = store.palettes[name]
+  const rack = rackIn(store, name)
   const at = rack ? rack.pictures.findIndex((picture) => picture.key === key) : -1
 
   if (!rack || at === -1) {
@@ -963,7 +975,7 @@ export function showImage(configHome: string, name: string, key: string) {
 }
 
 export function rackOf(configHome: string, name: string): Picture[] {
-  const rack = readStore(backgroundsDir(configHome)).palettes[name]
+  const rack = rackIn(readStore(backgroundsDir(configHome)), name)
 
   if (!rack) {
     return []
@@ -1391,7 +1403,7 @@ export function applyRedraw(configHome: string, drawn: { name: string; picture: 
   const stale: string[] = []
 
   for (const { name, picture } of drawn) {
-    const rack = store.palettes[name]
+    const rack = rackIn(store, name)
     const at = rack?.pictures.findIndex((held) => held.key === picture.key) ?? -1
     const old = rack?.pictures[at]
 

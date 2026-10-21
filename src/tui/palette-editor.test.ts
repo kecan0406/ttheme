@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { oklch, rgb } from '../core/color.ts'
+import { check } from '../core/contrast.ts'
 import { type Colors, grow, SEEDS } from '../core/seeds.ts'
-import { listOf } from '../core/slots.ts'
+import { gatedOf, listOf } from '../core/slots.ts'
+import { gateMisses } from './editor-paint.ts'
 import { renderEditor } from './editor-screen.ts'
 import { CONTRAST, type EditorOptions, PaletteEditor, parseColor } from './palette-editor.ts'
 
@@ -102,6 +104,27 @@ test('* marks a signature color, keeping the last three and saying which one wen
   assert.match(e.notice ?? '', /needs three/)
 })
 
+test('the older screen counts the rules the gate misses, as its Gate box and the builder do', () => {
+  const dim = { ...start, ansi: start.ansi.map((hex, i) => (i >= 1 && i <= 6 ? start.background : hex)) }
+  const e = editor({ colors: dim })
+  const count = Number(/✗ (\d+) misses in the gate/.exec(screen(e))?.[1])
+  assert.equal(count, gateMisses(e))
+  assert.ok(count < check(gatedOf(e.list, e.signature, e.waive)).length)
+})
+
+test('a ratio just under its floor misses the gate in the count as on the slots, though it reads as the floor', () => {
+  const e = editor({ colors: { ...start, foreground: '#64b198', selection: '#06070a' } })
+  assert.equal(gateMisses(e), 1)
+  assert.match(screen(e), /✗ 1 miss in the gate/)
+  assert.ok(e.misses().has(1))
+})
+
+test('a signature slot is marked ✦ in the list and in its detail alike', () => {
+  const lines = screen(editor()).split('\n')
+  assert.match(lines.find((line) => line.includes('▌ Background')) ?? '', /Background›✦/)
+  assert.match(lines.find((line) => line.includes('│ Background')) ?? '', /✦ signature/)
+})
+
 test('o takes another palette’s colors, filtered by what is typed', () => {
   const e = press(editor(), 'o', 'd', 'a', 'w')
   assert.match(screen(e), /Take colors from {2}daw▏/)
@@ -132,7 +155,7 @@ test('esc asks to save changes: y saves, n leaves without saving, esc and other 
   press(e, 'esc')
   assert.match(screen(e), /\[EDIT \(QUIT\)\] Save changes\?/)
   assert.match(renderEditor(e, 80, 24, false).join('\n'), /1 color changed/)
-  press(e, 'x', 'q', 'ctrl-c')
+  press(e, 'x', 'q')
   assert.equal(e.quitting, true)
   assert.equal(e.result, undefined)
   press(e, 'esc')
@@ -165,9 +188,33 @@ test('a window too small for the editor still asks whether to save when esc leav
   assert.equal(e.result, 'cancelled')
 })
 
-test('ctrl-c does not leave the editor', () => {
-  assert.equal(press(editor(), 'ctrl-c').result, undefined)
-  assert.equal(press(editor(), 'tab', '9', 'enter', 'ctrl-c').result, undefined)
+test('ctrl-c leaves the editor as esc does, asking first when something changed, and a second ctrl-c discards', () => {
+  assert.equal(press(editor(), 'ctrl-c').result, 'cancelled')
+  const e = press(editor(), 'tab', '9', 'ctrl-c')
+  assert.equal(e.mode, 'list')
+  assert.equal(e.quitting, true)
+  assert.equal(e.result, undefined)
+  press(e, 'ctrl-c')
+  assert.equal(e.result, 'cancelled')
+  const picking = press(editor(), 'tab', '9', 'enter', 'o', 'd', 'a', 'ctrl-c', 'esc', 'o')
+  assert.equal(picking.filter, '')
+})
+
+test('while compare is on, the help offers no esc to leave or to undo a tune, since esc only turns compare off', () => {
+  const tuning = press(editor(), 'tab', '9', ' ', '?')
+
+  for (const key of 'undoes every') {
+    tuning.help?.key(key)
+  }
+
+  assert.equal(tuning.help?.chosen(), undefined)
+  const listing = press(editor(), 'tab', '9', 'enter', ' ', '?')
+
+  for (const key of 'asking first') {
+    listing.help?.key(key)
+  }
+
+  assert.equal(listing.help?.chosen(), undefined)
 })
 
 test('the screen fits 80×24 and says what it needs below that', () => {
@@ -212,6 +259,22 @@ test('the footer keeps enter and s at 80 columns, and names the tune', () => {
   assert.match(foot, /enter tune/)
   assert.match(foot, /s save/)
   assert.match(renderEditor(press(e, 'tab'), 80, 24, false).at(-1) ?? '', /^\[EDIT \(TUNE\)\] /)
+})
+
+test('the top bar keeps Reset and Save however long the name, giving up the count, then the word, then the title', () => {
+  const e = press(editor({ name: 'kec@dust/a-rather-long-palette-name' }), 'tab', '9', 'enter')
+  const top = (cols: number) => renderEditor(e, cols, 40, false)[0] ?? ''
+
+  for (const cols of [96, 100, 112, 120, 140, 200]) {
+    assert.match(top(cols), /Reset {2}\S*Save/)
+  }
+
+  assert.match(top(200), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● unsaved · 1 changed {3}Reset/)
+  assert.match(top(120), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
+  assert.match(top(112), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
+  assert.match(top(108), /│◆ kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
+  assert.match(top(100), /│◆ kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
+  assert.match(top(96), /│◆ kec@dust\/a-rather-long-palette-\S+… {3}● {3}Reset/)
 })
 
 test('←→ on a base row leaves the column alone, and ↑↓ through the base rows keep it', () => {
@@ -388,7 +451,7 @@ test('editing a tone marks the slots off the original colors, and leaves signatu
 test('a spot on the sample finds its slots, and enter goes to the slot', () => {
   const e = editor()
   e.viewport(140, 40)
-  e.point({ pane: 'shell', line: 14, run: 3 })
+  e.point({ pane: 'shell', line: 16, run: 3 })
   assert.equal(e.inspect, true)
   assert.deepEqual(e.slotsHere(), { text: 5, ground: 0 })
   press(e, 'enter')
@@ -398,6 +461,31 @@ test('a spot on the sample finds its slots, and enter goes to the slot', () => {
   press(e, 'i')
   assert.equal(e.inspect, false)
   assert.match(e.notice ?? '', /96×28/)
+})
+
+test('? lists what each key does, typing filters the list and enter runs the one chosen', () => {
+  const e = press(editor(), '?')
+  assert.ok(e.help)
+  press(e, ...'relations', 'enter')
+  assert.equal(e.help, undefined)
+  assert.equal(e.view, 'relations')
+  press(e, '?', 'esc')
+  assert.equal(e.help, undefined)
+  assert.equal(e.result, undefined)
+})
+
+test('a paste while the editor asks to save or while a menu is open changes no slot', () => {
+  const e = press(editor(), 'tab', 'up', 'enter', 'esc')
+  assert.equal(e.quitting, true)
+  const before = e.colors()
+  e.paste('#ff0000')
+  assert.deepEqual(e.colors(), before)
+  assert.equal(e.quitting, true)
+  e.viewport(140, 40)
+  press(e, 'esc', 'I')
+  assert.equal(e.menu, 'import')
+  e.paste('#ff0000')
+  assert.deepEqual(e.colors(), before)
 })
 
 test('a paste into the palette picker keeps only what a typed key could add, so no escape reaches the frame', () => {

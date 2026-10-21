@@ -44,6 +44,7 @@ import {
 import { moveTone } from '../store/tone.ts'
 import { advise } from '../tui/notice.ts'
 import { pending } from '../tui/pending.ts'
+import { MARKS } from '../tui/style.ts'
 import { autoWanted, UPDATE_COMMAND } from './release.ts'
 import { type Moves, plan } from './renames.ts'
 import { commit, forget } from './sync.ts'
@@ -51,6 +52,7 @@ import { commit, forget } from './sync.ts'
 export const REFRESH_AFTER = 24 * 60 * 60 * 1000
 export const RETRY_AFTER = 60 * 60 * 1000
 export const AUTO_TIMEOUT = 5_000
+const ARCHIVE_MOST = 16 * 1024 * 1024
 
 export interface Tried {
   at: number
@@ -141,6 +143,34 @@ function archiveOf(tarball: Uint8Array, etag: string | null): Archive {
   return { ...(etag ? { etag } : {}), files }
 }
 
+async function archiveBytes(response: Response): Promise<Uint8Array> {
+  const reader = response.body?.getReader()
+
+  if (!reader) {
+    return new Uint8Array(await response.arrayBuffer())
+  }
+
+  const chunks: Uint8Array[] = []
+  let size = 0
+
+  for (;;) {
+    const { done, value } = await reader.read()
+
+    if (done) {
+      return Buffer.concat(chunks)
+    }
+
+    size += value.length
+
+    if (size > ARCHIVE_MOST) {
+      await reader.cancel()
+      throw new Error(`the archive is more than ${ARCHIVE_MOST / 1024 / 1024} MB`)
+    }
+
+    chunks.push(value)
+  }
+}
+
 export async function fetchArchive(
   source: string,
   timeout?: number,
@@ -164,7 +194,7 @@ export async function fetchArchive(
     return undefined
   }
 
-  return archiveOf(new Uint8Array(await response.arrayBuffer()), response.headers.get('etag'))
+  return archiveOf(await archiveBytes(response), response.headers.get('etag'))
 }
 
 export function fromArchive(source: string, archive: Archive, official: PaletteEntry[]): FetchedMarketplace {
@@ -387,7 +417,7 @@ export function updatesLine(home: string): string | undefined {
     return undefined
   }
 
-  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its marketplace' : 'their marketplaces'} — ctrl+r on a palette marked ↑ in Browse (\`ttheme\`) takes it`
+  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its marketplace' : 'their marketplaces'} — ctrl+r on a palette marked ${MARKS.update} in Browse (\`ttheme\`) takes it`
 }
 
 export function applyRefreshed(home: string, done: Refreshed[]): string[] {

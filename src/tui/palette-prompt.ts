@@ -6,6 +6,7 @@ import { OFFICIAL } from '../store/sources.ts'
 import { Field } from './field.ts'
 import type { Inbound } from './keys.ts'
 import { chase } from './motion.ts'
+import { moreOf } from './parts.ts'
 import { Inline } from './screen.ts'
 import { ansiBar, ansiFg, ansiSquares, FG_RESET, INK_RESET, MARKS, type Paint, painter } from './style.ts'
 import { HIDE_CURSOR, PASTES, within } from './terminal.ts'
@@ -29,7 +30,7 @@ type PickerRow =
 export interface Extra {
   key: string
   idle?: boolean
-  text(focused: boolean, at: number): string
+  text(focused: boolean, at: number, held: boolean): string
 }
 
 type Row<X extends Extra = Extra> =
@@ -779,7 +780,11 @@ export class PaletteList<X extends Extra = Extra> {
 
     const text =
       row.kind === 'extra'
-        ? row.extra.text(index === this.cursor && this.focus === 'lit', index)
+        ? row.extra.text(
+            index === this.cursor && this.focus === 'lit',
+            index,
+            index === this.cursor && this.focus === 'held',
+          )
         : this.rowText(row, index)
 
     return text.split('\n').map((l) => (l ? rowSpot(index, 'row', l, this.pane) : l))
@@ -1088,10 +1093,10 @@ export class PalettePrompt {
     }
 
     const typed = this.field.value
-    const head = `${bar('◆')} ${title} ${dim(`(${this.list.matched()}/${this.list.total()} · ${this.list.pickedCount()} picked)`)}`
+    const head = `${bar(MARKS.current)} ${title} ${dim(`(${this.list.matched()}/${this.list.total()} · ${this.list.pickedCount()} picked)`)}`
     const example = this.hint.text()
     const search = `${bar('│')}    ${typed ? `${typed}_` : dim(`Search…${example ? ` e.g. ${example}` : ''}`)}`
-    const { lines, below } = this.list.window()
+    const { lines, above, below } = this.list.window()
 
     const body =
       lines.length > 0
@@ -1102,7 +1107,8 @@ export class PalettePrompt {
       body.push(bar('│'))
     }
 
-    const more = below > 0 ? `${bar('│')} ${dim(`↓ ${below} more`)}` : bar('│')
+    const out = [above > 0 ? moreOf(-1, above) : '', below > 0 ? moreOf(1, below) : ''].filter(Boolean).join('  ')
+    const more = out ? `${bar('│')} ${dim(out)}` : bar('│')
     const fold = this.scope === 'catalog' ? '' : ' · ←→ fold'
     const go = this.go ?? (this.scope === 'catalog' ? 'continue' : 'install')
 

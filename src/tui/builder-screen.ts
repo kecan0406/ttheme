@@ -218,7 +218,7 @@ function pairRow(e: PaletteEditor, p: Paint, c: Colors, row: number, side: numbe
   const bright = normal + 8
   const here = e.row === normal
   const name = (PAIRS[row] as string).padEnd(NAME)
-  const link = e.linkOf(bright) !== undefined ? p.dim('⇠') : ' '
+  const link = e.linkOf(bright) !== undefined ? p.dim(MARKS.linked) : ' '
   const first = spot({ kind: 'open', slot: normal }, `${gutterOf(p, c, here)}${here ? p.bold(name) : name}`)
 
   return `${first}${cellText(e, p, c, normal, side, missed)}${link} ${cellText(e, p, c, bright, side, missed)}`
@@ -234,7 +234,7 @@ function ansiLabels(side: number): [number, string][] {
   return [
     [2, ' ANSI '],
     [2 + NAME, roomy ? ' Normal 0–7 ' : ' Normal '],
-    [5 + NAME + cellWidth(side), roomy ? ' Bright 8–15 ' : ' Bright '],
+    [4 + NAME + cellWidth(side), roomy ? ' Bright 8–15 ' : ' Bright '],
   ]
 }
 
@@ -462,7 +462,7 @@ function artLines(e: PaletteEditor, p: Paint, outer: number, room: number): Popu
   const track = width - 11
   lines.push(
     padded(
-      `${spot(grip, here ? p.bold('◐') : p.dim('◐'))} ${spot({ kind: 'bar', channel: CONTRAST }, ' '.repeat(track))} ${spot(grip, here ? p.bold(ratio) : p.dim(ratio))}`,
+      `${spot(grip, here ? p.bold(MARKS.contrast) : p.dim(MARKS.contrast))} ${spot({ kind: 'bar', channel: CONTRAST }, ' '.repeat(track))} ${spot(grip, here ? p.bold(ratio) : p.dim(ratio))}`,
     ),
   )
   const tabs = lines.length
@@ -576,7 +576,7 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
   const side = layout.side
   const failing = gateMisses(e)
   const dot = e.changedOnly ? p.warn(MARKS.on) : ' '
-  const gate = failing === 0 ? p.ok('Gate ✓') : p.bold(`Gate ✗ ${failing}`)
+  const gate = failing === 0 ? p.ok(`Gate ${MARKS.ok}`) : p.bold(`Gate ${MARKS.miss} ${failing}`)
 
   const tabs = spread(
     ` ${p.bold('Colors')}  ${gate}`,
@@ -632,17 +632,19 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
 }
 
 function topBar(e: PaletteEditor, p: Paint, width: number): string {
-  const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
+  const mark = p.accent(MARKS.current)
+  const titled = `${mark} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
   const dirty = e.dirty()
   const changes = e.changes()
   const dot = p.warn(MARKS.on)
-  const state = dirty ? `${dot} ${p.dim(changes > 0 ? `unsaved · ${changes} changed` : 'unsaved')}` : ''
+  const unsaved = `${dot} ${p.dim('unsaved')}`
+  const counted = changes > 0 ? `${dot} ${p.dim(`unsaved · ${changes} changed`)}` : unsaved
+  const states = dirty ? [counted, unsaved, dot] : ['']
 
   const buttons = [e.resettable() ? keyZone('R', p.dim('Reset')) : '', dirty ? keyZone('s', pillOf(p, 'Save')) : '']
     .filter(Boolean)
     .join('  ')
 
-  const left = [title, state, buttons].filter(Boolean).join('   ')
   const button = (word: string, label: string, on: boolean) => keyZone(word, on ? pillOf(p, label) : p.dim(label))
   const pictures = e.options.find || e.pictures > 0
 
@@ -651,13 +653,20 @@ function topBar(e: PaletteEditor, p: Paint, width: number): string {
       ? [
           button(
             'b',
-            `▣ ${e.pictures > 0 ? `${e.pictures} ` : ''}Picture`,
+            `${MARKS.pictures} ${e.pictures > 0 ? `${e.pictures} ` : ''}Picture`,
             e.pic && (e.pictures > 0 || !!e.options.find),
           ),
         ]
       : []),
     ...(e.options.exports ? [button('x', 'Export ▾', e.menu === 'export')] : []),
   ].join('  ')
+
+  const room = width - cells(`${right} `) - 1
+  const line = (head: string, state: string) => [head, state, buttons].filter(Boolean).join('   ')
+  const last = states.at(-1) ?? ''
+  const named = `${mark} ${p.dim(fit(e.options.name, room - cells(line(mark, last)) - 1, false))}`
+  const fitting = (head: string) => states.map((state) => line(head, state)).find((bar) => cells(bar) <= room)
+  const left = fitting(titled) ?? fitting(`${mark} ${p.dim(e.options.name)}`) ?? line(named, last)
 
   return spread(left, `${right} `, width)
 }
@@ -766,7 +775,7 @@ function menuRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefined 
       return [
         { text: '│', sgr: dim },
         {
-          text: ` ${here ? '▌' : ' '} ${item.padEnd(width - 6)}`,
+          text: ` ${here ? MARKS.gutter : ' '} ${item.padEnd(width - 6)}`,
           sgr: here && p.color ? `${p.bg(c.selection)}${p.fg(c.foreground)}${open('bold')}` : base,
           target,
         },
@@ -938,7 +947,7 @@ export function renderBuilder(
   const lines = Array.from({ length: rows - 1 }, (_, r) => {
     const right = r === 0 ? top : r === 1 ? rule : drawn(grid[r - 2] ?? [], color)
 
-    return `${fit(side[r] ?? '', layout.side)}${divider}${right}`
+    return `${fit(side[r] ?? '', layout.side)}${r === 1 ? p.dim('├') : divider}${right}`
   })
 
   return { lines, art: popped.art }

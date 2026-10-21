@@ -28,10 +28,12 @@ import type { Pick } from '../../pictures/fit.ts'
 import { writeAtomic } from '../../store/edits.ts'
 
 function readCache<T>(site: Site, name: string): Record<string, T> {
+  const known: Record<string, T> = Object.create(null)
+
   try {
-    return JSON.parse(readFileSync(join(cacheDir(site), name), 'utf8')) as Record<string, T>
+    return Object.assign(known, JSON.parse(readFileSync(join(cacheDir(site), name), 'utf8')))
   } catch {
-    return {}
+    return known
   }
 }
 
