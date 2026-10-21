@@ -1,0 +1,19 @@
+{
+  "name": "ttheme",
+  "owner": {
+    "name": "kecan0406",
+    "url": "https://github.com/kecan0406"
+  },
+  "description": "Make ttheme terminal palettes with your coding agent",
+  "plugins": [
+    {
+      "name": "ttheme-palette",
+      "source": ".",
+      "description": "Make a ttheme palette for a character from colors measured on its official art, with the installed ttheme CLI",
+      "homepage": "https://ttheme.dev",
+      "license": "MIT",
+      "strict": false,
+      "skills": ["./skills/ttheme-palette"]
+    }
+  ]
+}

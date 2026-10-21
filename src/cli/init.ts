@@ -11,6 +11,18 @@ import { marketplaceOf, shelfOf } from '../core/theme.ts'
 import { WIRED, type Wired } from '../core/wired.ts'
 import { backgroundsDir, coloringOf, decodable, readStore } from '../pictures/backdrop.ts'
 import { ROOT } from '../root.ts'
+import {
+  type AgentHomes,
+  agentHomes,
+  detectedSkill,
+  heldElsewhere,
+  offeredSkills,
+  placeSkill,
+  SKILL,
+  SKILL_LABELS,
+  type SkillTarget,
+  skillPath,
+} from '../store/agent-skills.ts'
 import { readAppearance, systemAppearance } from '../store/appearance.ts'
 import { available, readMarketplaces, writeOfficial } from '../store/available.ts'
 import { editUserFile, writeAtomic } from '../store/edits.ts'
@@ -63,6 +75,7 @@ export interface InitOptions {
   off?: boolean
   warpFast?: boolean
   mode?: Setting
+  skills?: SkillTarget[]
 }
 
 export interface InitPaths extends Setup {
@@ -71,10 +84,13 @@ export interface InitPaths extends Setup {
   stateDir?: string
   shells?: Shell[]
   platform?: NodeJS.Platform
+  claudeHome?: string
 }
 
 interface InitPlan {
   home: string
+  root: string
+  agents: AgentHomes
   copies: { from: string; to: string; executable?: boolean }[]
   edits: { file: string; block: string; about: string }[]
   writes: { file: string; content: string; about: string }[]
@@ -147,6 +163,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
       ),
     ),
     ...(opts.off ? { off: true as const } : {}),
+    ...(opts.skills && opts.skills.length > 0 ? { skills: opts.skills } : {}),
   }
 
   const notes = [
@@ -165,6 +182,8 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
 
   return {
     home: paths.home,
+    root: paths.root,
+    agents: { home: paths.home, claude: paths.claudeHome ?? join(paths.home, '.claude') },
     copies,
     edits,
     writes,
@@ -219,6 +238,7 @@ export function planAgain(state: Installed, opts: InitOptions, paths: InitPaths)
     'palettes',
     'off',
     'startup',
+    'skills',
     ...WIRED.flatMap((id) => Object.keys(WIRINGS[id].installs?.(paths) ?? {})),
   ])
 
@@ -308,7 +328,22 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     }),
   )
 
-  const installed = withBases(configHome, { ...plan.installed, ...carried }, host, plan.home)
+  const { skills: asked = [], ...wanted } = plan.installed
+  const { placed, failed } = placeSkill(plan.root, asked, plan.agents)
+
+  plan.notes.push(
+    ...failed.map(
+      (where) =>
+        `Could not write the ${SKILL} skill to ${where} — run \`npx @kecan0406/ttheme init\` in your own terminal to add it`,
+    ),
+  )
+
+  const installed = withBases(
+    configHome,
+    { ...wanted, ...carried, ...(placed.length > 0 ? { skills: placed } : {}) },
+    host,
+    plan.home,
+  )
 
   if (marketplacesOf(installed.marketplaces).includes(OFFICIAL)) {
     writeOfficial(configHome, plan.manifest)
@@ -354,6 +389,28 @@ async function askTerminals(detected: string, preselected: Wired[], paths: InitP
       })),
       initialValues: preselected,
       required: true,
+    }),
+  )
+}
+
+async function askSkills(agents: AgentHomes, ours: readonly SkillTarget[]): Promise<SkillTarget[]> {
+  const offered = offeredSkills(agents).filter((target) => !heldElsewhere(target, agents, ours))
+  const detected = detectedSkill(process.env)
+
+  if (offered.length === 0) {
+    return []
+  }
+
+  return accepted(
+    await p.multiselect<SkillTarget>({
+      message: `Add the ${SKILL} skill for your coding agents?\nAsk one to make a palette for a character and it measures the colors on official art — none by default`,
+      options: offered.map((target) => ({
+        value: target,
+        label: SKILL_LABELS[target],
+        hint: tilde(skillPath(target, agents), agents.home),
+      })),
+      initialValues: offered.filter((target) => (ours.length > 0 ? ours.includes(target) : target === detected)),
+      required: false,
     }),
   )
 }
@@ -459,7 +516,16 @@ function receipt(
     [`${catalogs.join(', ')} (${opts.palettes.length})`, ...startupLines(plan.installed, painted)].join('\n'),
     `Installed ${opts.palettes.length} palettes`,
   )
-  p.note([`${reopen(here).padEnd(18)}The ttheme command in this tab`, ...nextLines(plan, pointed)].join('\n'), 'Next')
+  p.note(
+    [
+      `${reopen(here).padEnd(18)}The ttheme command in this tab`,
+      ...(plan.installed.skills
+        ? [`Ask your coding agent to make a ttheme palette for a character — ${SKILL} knows how`]
+        : []),
+      ...nextLines(plan, pointed),
+    ].join('\n'),
+    'Next',
+  )
   p.outro('Done')
 }
 
@@ -568,6 +634,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     shells: shellsOf(host, process.ppid),
     platform: host.platform,
     stateDir,
+    claudeHome: agentHomes(home, process.env).claude,
     ...(wtHome ? { wtHome } : {}),
     ...(wtProfile ? { wtProfile } : {}),
   }
@@ -662,7 +729,8 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     }),
   )
 
-  const opts: InitOptions = { terminals, palettes, off: !wear, warpFast, mode }
+  const skills = await askSkills(agentHomes(home, process.env), existing?.skills ?? [])
+  const opts: InitOptions = { terminals, palettes, off: !wear, warpFast, mode, skills }
   const plan = existing ? planAgain(existing, opts, paths) : planInit(opts, paths)
   p.note(
     [
@@ -675,6 +743,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       ...plan.edits.map((e) => `Edit ${e.file} — a ttheme block: ${e.about}`),
       ...plan.writes.map((w) => `Write ${w.file} — ${w.about}`),
       ...wiringPlan(configHome, plan.installed, home),
+      ...(skills.length > 0
+        ? [`Add the ${SKILL} skill — ${skills.map((target) => tilde(skillPath(target, plan.agents), home)).join(', ')}`]
+        : []),
       'Each config is backed up once to <file>.ttheme.bak before the first edit — `npx @kecan0406/ttheme uninstall` takes it all out',
       wear
         ? choose

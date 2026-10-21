@@ -1,11 +1,10 @@
 import { writeFileSync } from 'node:fs'
+import { basename, dirname, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { oklch } from '../../../../src/core/color.ts'
+import { deltaE, oklch } from '../../../../src/core/color.ts'
 import { check } from '../../../../src/core/contrast.ts'
 import { fixRoles } from '../../../../src/core/fix.ts'
 import type { Theme } from '../../../../src/core/theme.ts'
-import { catalogOf } from './audit.ts'
-import { deltaE } from './delta.ts'
 import { writeMirrors } from './light.ts'
 
 interface ThemeDoc {
@@ -13,6 +12,8 @@ interface ThemeDoc {
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
   contrast?: { waive?: string[] }
 }
+
+const catalogOf = (file: string) => basename(dirname(resolve(file)))
 
 function gated(doc: ThemeDoc, ansi: string[]): Theme {
   return {

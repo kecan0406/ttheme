@@ -6,6 +6,7 @@ import * as p from '@clack/prompts'
 import { Cancelled } from '../core/cancelled.ts'
 import { owned } from '../core/theme.ts'
 import { WIRED } from '../core/wired.ts'
+import { agentHomes, placedSkills } from '../store/agent-skills.ts'
 import { relink, restoreUserFile, symlinked } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled } from '../store/installed.ts'
@@ -24,6 +25,7 @@ export interface UninstallPaths {
   zdotdir: string
   cacheDir: string
   stateDir: string
+  claudeHome?: string
 }
 
 interface UninstallPlan {
@@ -109,6 +111,7 @@ export function planUninstall(paths: UninstallPaths): UninstallPlan {
       ...every.flatMap((wiring) => (wiring.shelf ? filesIn(wiring.shelf.dir(at)).filter(unprefixed) : [])),
       ...oldShaders(join(configHome, 'ghostty', 'shaders')),
       ...parts.flatMap((part) => part.removals),
+      ...placedSkills(state?.skills ?? [], { home, claude: paths.claudeHome ?? join(home, '.claude') }),
       ...owns.filter((path) => existsSync(path)),
     ],
     touches: parts.flatMap((part) => part.touches),
@@ -170,6 +173,7 @@ function uninstallPaths(): UninstallPaths {
     zdotdir: zdotdirOf(systemHost(), home),
     cacheDir: cacheRoot(),
     stateDir: join(process.env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme'),
+    claudeHome: agentHomes(home, process.env).claude,
   }
 }
 

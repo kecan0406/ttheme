@@ -1,6 +1,7 @@
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
+import { deltaE } from '../../../../src/core/color.ts'
 import { check } from '../../../../src/core/contrast.ts'
 import { colorsToml } from '../../../../src/core/draft.ts'
 import type { Move } from '../../../../src/core/fix.ts'
@@ -9,7 +10,6 @@ import { mirrored } from '../../../../src/core/mirror.ts'
 import { type Mode, modeOf, otherOf } from '../../../../src/core/mode.ts'
 import { withTable } from '../../../../src/core/own.ts'
 import type { Shade } from '../../../../src/core/theme.ts'
-import { deltaE } from './delta.ts'
 
 interface ThemeDoc {
   meta: { name: string; signature: string[] }

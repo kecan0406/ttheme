@@ -159,6 +159,15 @@ modes against the gate, and take the palette as a `.toml` file — `ttheme add
 ~/Downloads/rei.toml` puts it in your local marketplace and installs it — as a
 link, or as a marketplace ready to push.
 
+A coding agent can make one for a character too. With the ttheme-palette skill it
+finds the character's official art, asks you which picture to measure, measures the
+hair, eyes and outfit with `ttheme palette`, and writes and installs the palette in
+your local marketplace, then tells you what it chose and why. Add the skill with
+`npx skills add kecan0406/ttheme` (Claude Code, Codex, Cline, Warp, Zed and others),
+`/plugin install ttheme-palette --marketplace kecan0406/ttheme` in Claude Code, or
+let `ttheme init` add it — then ask your agent to make a ttheme palette for a
+character.
+
 A local marketplace is already a repository layout: `palettes/*.toml` (a folder
 under it, such as `palettes/night/`, is a catalog, which a `[[catalog]]` table in
 `ttheme-marketplace.toml` may give an order, a title and a lead) and the
@@ -201,6 +210,7 @@ the one the tab wears, as a link without asking.
 | `ttheme pins` | Map every pin as a file tree — the pinned directories in each palette's colors, with where you are marked, and every pinned ssh host |
 | `ttheme marketplace add <owner/repo>` | Add someone's marketplace (`#v1` pins it); `remove` drops one — Browse lists yours, finds the public ones and switches their auto-update |
 | `ttheme new <name>` | Make a palette of your own in the palette editor (`--from <palette>` starts from its colors); `edit`, `check`, `share` follow |
+| `ttheme palette <action>` | Make a character's palette from colors measured on its official art — what the ttheme-palette agent skill runs |
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |
 | `ttheme config` | Settings in `$EDITOR` |
 | `ttheme auto` / `light` / `dark` | Wear every palette in the system's mode where a wired terminal reports it, or in its light or dark mode — open tabs repaint |

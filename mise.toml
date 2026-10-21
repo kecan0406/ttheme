@@ -102,6 +102,8 @@ layer() {
 }
 tar -xzf "$tmp/$(npm pack --pack-destination "$tmp" --silent)" -C "$tmp"
 printf '{"type":"commonjs"}\n' > "$tmp/package.json"
+[ -e "$tmp/package/skills/ttheme-palette/SKILL.md" ] ||
+  { echo "bin:check failed: the package carries no ttheme-palette skill"; exit 1; }
 run_init() {
   sandboxed GHOSTTY_RESOURCES_DIR=x node "$tmp/package/bin/ttheme.js" init --yes < /dev/null > /dev/null
 }

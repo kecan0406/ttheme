@@ -8,6 +8,7 @@
   "files": [
     "bin",
     "dist/manifest.json",
+    "skills",
     "shell",
     "!shell/check.zsh"
   ],

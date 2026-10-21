@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { WIRED, type Wired } from '../core/wired.ts'
+import { SKILL_TARGETS, type SkillTarget } from './agent-skills.ts'
 import { writeAtomic } from './edits.ts'
 import { installedPath } from './sources.ts'
 
@@ -16,6 +17,7 @@ export interface Installed {
   marketplaces?: string[]
   updates?: Record<string, boolean>
   colorsMoved?: true
+  skills?: SkillTarget[]
   palettes: string[]
 }
 
@@ -48,6 +50,7 @@ const OPTIONAL = {
         )
       : undefined,
   colorsMoved: (value) => (value ? true : undefined),
+  skills: (value) => (Array.isArray(value) ? SKILL_TARGETS.filter((target) => value.includes(target)) : undefined),
 } satisfies { [K in Optional]-?: (value: unknown) => Installed[K] }
 
 export function readInstalled(configHome: string): Installed {

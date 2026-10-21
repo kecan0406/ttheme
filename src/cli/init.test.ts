@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, sep } from 'node:path'
+import { dirname, join, sep } from 'node:path'
 import { test } from 'node:test'
 import { SCHEMA } from '../core/manifest.ts'
 import { modeOf } from '../core/mode.ts'
@@ -103,6 +103,7 @@ function makeFixture(): InitPaths {
     'dist/alacritty/themes/neutral.toml': 'neutral alacritty',
     'dist/alacritty/themes/miku.toml': 'miku alacritty',
     'dist/manifest.json': JSON.stringify(manifestFixture()),
+    'skills/ttheme-palette/SKILL.md': '---\nname: ttheme-palette\n---\n',
   } satisfies Record<string, string>
 
   for (const [path, content] of Object.entries(files)) {
@@ -477,11 +478,12 @@ test('setting it up again carries every setting it does not ask about again', ()
     marketplaces: ['official', 'alice/pastel#v1'],
     updates: { 'alice/pastel#v1': true },
     colorsMoved: true,
+    skills: ['agents', 'claude'],
     palettes: ['miku'],
   }
 
   const { installed } = planAgain(state, options({ terminals: ['kitty'], palettes: ['neutral'] }), paths)
-  const asked: (keyof Installed)[] = ['terminals', 'palettes', 'off', 'startup', 'wtHome', 'wtProfile']
+  const asked: (keyof Installed)[] = ['terminals', 'palettes', 'off', 'startup', 'skills', 'wtHome', 'wtProfile']
 
   for (const key of Object.keys(state) as (keyof Installed)[]) {
     if (!asked.includes(key)) {
@@ -492,4 +494,31 @@ test('setting it up again carries every setting it does not ask about again', ()
   assert.deepEqual(installed.terminals, ['kitty'])
   assert.equal(installed.startup, undefined)
   assert.equal(installed.wtHome, undefined)
+})
+
+test('init places the agent skill it is asked for, records it, writes it again on an update, and uninstall takes it out', () => {
+  const paths = makeFixture()
+  const skill = join(paths.home, '.agents', 'skills', 'ttheme-palette', 'SKILL.md')
+  const linked = join(paths.home, '.claude', 'skills', 'ttheme-palette')
+
+  applyInit(planInit(options({ skills: ['claude', 'agents'] }), paths))
+  assert.deepEqual(installedState(paths.configHome)?.skills, ['agents', 'claude'])
+  assert.ok(existsSync(skill))
+  assert.ok(lstatSync(linked).isSymbolicLink())
+
+  rmSync(skill)
+  applyInit(planUpgrade(installedState(paths.configHome) as Installed, paths))
+  assert.ok(existsSync(skill))
+
+  const uninstall = {
+    home: paths.home,
+    configHome: paths.configHome,
+    zdotdir: paths.zdotdir,
+    cacheDir: join(paths.home, '.cache', 'ttheme'),
+    stateDir: join(paths.home, '.local', 'state', 'ttheme'),
+  }
+
+  applyUninstall(planUninstall(uninstall), uninstall, { platform: 'darwin', env: {}, run: () => undefined })
+  assert.ok(!existsSync(dirname(skill)))
+  assert.throws(() => lstatSync(linked))
 })
