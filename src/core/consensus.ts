@@ -75,3 +75,22 @@ export function hairOf(hair: readonly Tagged[]): (Tagged & { chromatic: boolean 
 
   return top === undefined ? undefined : { ...top, chromatic: chromatic(top) }
 }
+
+export function readRelated(doc: unknown): { posts: number; tags: Tagged[] } | undefined {
+  if (typeof doc !== 'object' || doc === null) return undefined
+
+  const { post_count: posts, related_tags: related } = doc as Record<string, unknown>
+
+  if (typeof posts !== 'number' || !Array.isArray(related)) return undefined
+
+  const tags = (related as unknown[]).flatMap((entry): Tagged[] => {
+    if (typeof entry !== 'object' || entry === null) return []
+
+    const { tag, frequency } = entry as Record<string, unknown>
+    const name = typeof tag === 'object' && tag !== null ? (tag as Record<string, unknown>).name : undefined
+
+    return typeof name === 'string' && typeof frequency === 'number' ? [{ name, frequency }] : []
+  })
+
+  return { posts, tags }
+}

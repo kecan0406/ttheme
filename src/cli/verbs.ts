@@ -2,6 +2,7 @@ import pkg from '../../package.json' with { type: 'json' }
 import { WIRED } from '../core/wired.ts'
 import { markOf } from '../tui/parts.ts'
 import { type Paint, painter } from '../tui/style.ts'
+import { EXIT_CODES } from './answer.ts'
 
 export interface Flag {
   type: 'boolean' | 'string'
@@ -33,6 +34,7 @@ export interface VerbSpec {
   hidden?: true
   more?: true
   flags?: Record<string, Flag>
+  notes?: string[]
 }
 
 export const VERB_SPECS: VerbSpec[] = [
@@ -152,6 +154,13 @@ export const VERB_SPECS: VerbSpec[] = [
       ],
     ],
     section: 'palettes',
+    flags: {
+      owner: {
+        type: 'string',
+        value: '<handle>',
+        about: 'init: your GitHub handle, when gh is not logged in and there is no terminal to ask in',
+      },
+    },
   },
   {
     name: 'new',
@@ -183,6 +192,63 @@ export const VERB_SPECS: VerbSpec[] = [
     section: 'own',
     more: true,
     flags: { fix: { type: 'boolean', about: 'Write the suggested colors into your palette' } },
+  },
+  {
+    name: 'palette',
+    args: ['<action>', '[arg]'],
+    about:
+      "Make a character's palette from colors measured on its official art — the steps the ttheme-palette agent skill takes, each printing JSON with --json",
+    section: 'own',
+    more: true,
+    actions: [
+      [
+        'measure <file|url>',
+        "Count a picture's flat colors, or a box's with --crop — --preview writes a copy at most 800 px wide and reads the box in its pixels",
+      ],
+      [
+        'consensus <tag>',
+        "Read which colors danbooru's posts of a character tag name — the eyes, an item, or none — to pick the parts that carry the identity",
+      ],
+      [
+        'make [palette]',
+        'Turn an anchors file into palettes — ranks base schemes, harmonizes, fixes the ANSI roles and runs the gate, then writes them into your local marketplace and installs them',
+      ],
+    ],
+    flags: {
+      json: { type: 'boolean', about: 'Print the result as JSON on stdout' },
+      preview: { type: 'boolean', about: 'measure: write a preview at most 800 px wide; --crop is then in its pixels' },
+      crop: { type: 'string', value: 'x,y,w,h', about: 'measure: the box to count' },
+      quant: { type: 'string', value: '<n>', about: "measure: group a JPEG's near-duplicate colors into n levels" },
+      anchors: { type: 'string', value: '<file>', about: 'make: the anchors file' },
+      catalog: { type: 'string', value: '<name>', about: 'make: the catalog folder the palettes go in' },
+      native: { type: 'string', value: '<title>', about: "make: a new catalog's official title" },
+      lead: { type: 'string', value: '<palette>', about: 'make: the palette that stands for a new catalog' },
+      in: {
+        type: 'string',
+        value: '<marketplace>',
+        about: 'make: your local marketplace to write into, or its folder',
+      },
+      'dry-run': { type: 'boolean', about: 'make: show the result and write nothing' },
+    },
+    notes: [
+      'Anchors file (--anchors), one entry per palette:',
+      '  {',
+      '    "bocchi": {',
+      '      "slots": { "cursor": ["hair", "#ffb7c8"], "ansi4": ["eyes", "#7b96c8"], "ansi9": ["jacket", "#f39cbf"] },',
+      '      "booru": "gotoh_hitori",',
+      '      "native_names": ["後藤ひとり"],',
+      '      "source": "https://…"',
+      '    }',
+      '  }',
+      '  slots         three slots in the order the character reads, the first the seed — background, foreground,',
+      '                cursor, selection or ansi0–ansi15 — each ["<part>", "#rrggbb"] as measured',
+      '  booru         the danbooru tag ttheme find searches (optional)',
+      "  native_names  the names preview's search matches; left out, ttheme's name data fills them in (optional)",
+      '  source        where the colors were measured (optional)',
+      '',
+      'With --json each action prints one object on stdout, its status done, unchanged or error;',
+      'an error lists each field it refuses in problems, as { path, problem }.',
+    ],
   },
   {
     name: 'share',
@@ -393,6 +459,8 @@ export function commandHelp(verb: VerbSpec): string {
     verb.about,
     ...(verb.actions ? ['', 'Actions:', ...columns(verb.actions)] : []),
     ...(flags.length > 0 ? ['', 'Options:', ...columns(flags)] : []),
+    ...(verb.notes ? ['', ...verb.notes] : []),
+    ...(verb.flags?.json ? ['', 'Exit codes:', ...columns(EXIT_CODES, 1)] : []),
   ].join('\n')
 }
 

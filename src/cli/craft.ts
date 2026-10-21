@@ -78,7 +78,7 @@ function mine(name: string, home: string): string {
   return hit ? `${hit.id}/${name}` : name
 }
 
-function install(home: string, manifest: Manifest, names: string[]) {
+export function install(home: string, manifest: Manifest, names: string[]) {
   const state = readInstalled(home)
   const fresh = names.filter((n) => !state.palettes.includes(n))
 

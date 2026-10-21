@@ -233,7 +233,9 @@ export function readAvailable(configHome: string): Manifest {
 
 export class Missing extends Error {}
 
-class Limited extends Error {}
+export class Unreachable extends Error {}
+
+class Limited extends Unreachable {}
 
 export async function reach(
   url: string,
@@ -247,7 +249,7 @@ export async function reach(
     const limit = AbortSignal.timeout(timeout)
     response = await fetch(url, { headers, signal: signal ? AbortSignal.any([limit, signal]) : limit })
   } catch (error) {
-    throw new Error(`cannot reach ${url} — ${error instanceof Error ? error.message : String(error)}`)
+    throw new Unreachable(`cannot reach ${url} — ${error instanceof Error ? error.message : String(error)}`)
   }
 
   if (response.status === 404) {

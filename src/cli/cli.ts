@@ -4,6 +4,7 @@ import { Cancelled, Signalled } from '../core/cancelled.ts'
 import { inertLines } from '../core/text.ts'
 import { colorless } from '../terminals/osc.ts'
 import { interactive } from '../tui/terminal.ts'
+import { emit, failureOf, InputError } from './answer.ts'
 import { runBrowse } from './browse.ts'
 import { build } from './build.ts'
 import { runCheck, runEdit, runNew, runTone, thisTab } from './craft.ts'
@@ -14,6 +15,7 @@ import { runInit } from './init.ts'
 import { runAdd, runDefault, runOff, runOn, runSync, runUpdate } from './installs.ts'
 import { runMarketplace } from './marketplaces.ts'
 import { startNamesUpdate, updateNames } from './names-update.ts'
+import { type PaletteFlags, runPalette } from './palette.ts'
 import { runRedraw } from './redraw.ts'
 import { autoRefresh } from './refresh.ts'
 import { checkLatest, startReleaseCheck, tellRelease } from './release.ts'
@@ -22,19 +24,19 @@ import { runUninstall } from './uninstall.ts'
 import { briefText, commandHelp, helpText, VERB_SPECS, type VerbSpec } from './verbs.ts'
 import { runWire } from './wire.ts'
 
-interface Flags {
+interface Flags extends PaletteFlags {
+  owner?: string
   yes?: boolean
   only?: string[]
   fix?: boolean
   from?: string
-  in?: string
   tone?: string
 }
 
 const REFRESHES = new Set(['add', 'marketplace', 'default', 'on', 'off'])
 
 interface Verb extends VerbSpec {
-  run?(args: string[], flags: Flags): Promise<number> | Promise<void> | number | void
+  run?(args: string[], flags: Flags): Promise<number | undefined> | Promise<void> | number | void
 }
 
 const RUNS = new Map<string, Verb['run']>([
@@ -44,10 +46,11 @@ const RUNS = new Map<string, Verb['run']>([
   ['browse', () => runBrowse()],
   ['add', (names, { in: into }) => runAdd(names, into)],
   ['update', (marketplaces) => runUpdate(marketplaces)],
-  ['marketplace', ([action, arg]) => runMarketplace(action as string, arg)],
+  ['marketplace', ([action, arg], { owner }) => runMarketplace(action as string, arg, owner)],
   ['new', ([name], { from, in: into }) => runNew(name as string, from, into)],
   ['edit', async (args) => runEdit(await paletteOf(args, 'edit'))],
   ['check', async (args, { fix }) => runCheck(await paletteOf(args, 'check'), fix)],
+  ['palette', ([action, arg], flags) => runPalette(action as string, arg, flags)],
   [
     'share',
     async ([name], { tone }) => {
@@ -260,15 +263,7 @@ export async function runCli(argv: readonly string[]): Promise<number> {
 
     return code ?? 0
   } catch (error) {
-    if (error instanceof UsageError) {
-      console.error(
-        error.verb
-          ? `ttheme ${error.verb.name}: ${inertLines(error.message)}\n\n${commandHelp(error.verb)}`
-          : `ttheme: ${inertLines(error.message)} — see \`ttheme help\``,
-      )
-
-      return 1
-    }
+    const json = argv.includes('--json')
 
     if (error instanceof Cancelled) {
       return 1
@@ -278,11 +273,31 @@ export async function runCli(argv: readonly string[]): Promise<number> {
       return error.exit
     }
 
-    const detail = process.env.TTHEME_DEBUG && error instanceof Error ? error.stack : undefined
+    const thrown = error instanceof Error ? error : new Error(String(error))
+    const message = inertLines(thrown.message)
+    const { code, reason } = failureOf(thrown, thrown instanceof UsageError)
+    const problems = thrown instanceof InputError ? thrown.problems : []
+
+    if (json) {
+      emit({ status: 'error', reason, message, problems })
+    }
+
+    if (thrown instanceof UsageError) {
+      console.error(
+        thrown.verb
+          ? `ttheme ${thrown.verb.name}: ${message}\n\n${commandHelp(thrown.verb)}`
+          : `ttheme: ${message} — see \`ttheme help\``,
+      )
+
+      return code
+    }
+
+    const detail = process.env.TTHEME_DEBUG ? thrown.stack : undefined
+    const listed = problems.map((p) => `  ${p.path ? `${inertLines(p.path)}: ` : ''}${inertLines(p.problem)}`)
     console.error(
-      `\nttheme${running ? ` ${running.name}` : ''}: ${inertLines(detail ?? (error instanceof Error ? error.message : String(error)))}${error instanceof Error && isCrash(error) ? '\nReport a bug with the output of `ttheme info`' : ''}`,
+      `\nttheme${running ? ` ${running.name}` : ''}: ${detail ? inertLines(detail) : message}${listed.length > 0 ? `\n${listed.join('\n')}` : ''}${isCrash(thrown) ? '\nReport a bug with the output of `ttheme info`' : ''}`,
     )
 
-    return 1
+    return code
   }
 }

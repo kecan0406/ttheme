@@ -101,7 +101,10 @@ if (values.apply !== undefined) {
 }
 
 const corpus = await sync(values.schemes)
-const { ranked, dropped, dark } = rankBases(theme, await readSchemes(values.schemes, corpus))
+const { ranked, dropped, dark } = rankBases(
+  theme,
+  (await readSchemes(values.schemes, corpus)).map(([name, text]) => [name, parseScheme(text)] as const),
+)
 if (ranked.length === 0) {
   const reasons = new Set([...dropped.values()].filter((r) => r.startsWith('harmonizer') || r.startsWith('gate')))
   fail(`${theme.name}: no dark scheme survives\n${[...reasons].slice(0, 5).join('\n')}`)

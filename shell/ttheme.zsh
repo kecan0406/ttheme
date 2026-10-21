@@ -1987,6 +1987,16 @@ if (( ${+functions[compdef]} )); then
       compadd -- --from --in
     elif [[ $words[2] == marketplace && $CURRENT == 3 ]]; then
       compadd -- add remove init check
+    elif [[ $words[2] == marketplace && $words[3] == init && $CURRENT -ge 4 ]]; then
+      [[ $words[CURRENT-1] == --owner ]] || compadd -- --owner
+      (( CURRENT == 4 )) && _files -/
+    elif [[ $words[2] == palette && $CURRENT == 3 ]]; then
+      compadd -- measure consensus make
+    elif [[ $words[2] == palette && $words[CURRENT-1] == (--anchors|--in) ]]; then
+      _files
+    elif [[ $words[2] == palette ]]; then
+      [[ $words[3] == measure && $CURRENT == 4 ]] && _files -g '*.(png|jpg|jpeg|webp)'
+      compadd -- --json --preview --crop --quant --anchors --catalog --native --lead --in --dry-run
     elif [[ $words[2] == marketplace && $words[3] == (add|init|check) && $CURRENT == 4 ]]; then
       _files -/
     elif [[ $words[2] == marketplace && $words[3] == remove && $CURRENT == 4 ]]; then

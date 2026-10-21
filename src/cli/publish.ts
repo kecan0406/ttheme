@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { promisify } from 'node:util'
 import { parse } from 'smol-toml'
+import type { Catalog } from '../core/theme.ts'
 import { TOPIC } from '../store/sources.ts'
 
 const exec = promisify(execFile)
@@ -219,10 +220,10 @@ export function withDescription(text: string, description: string | undefined): 
   return `${top.slice(0, at)}${name[0].endsWith('\n') ? '' : '\n'}${line}${top.slice(at)}${rest}`
 }
 
-export function withCatalogs(text: string, catalogs: readonly { name: string; native: string }[]): string {
+export function withCatalogs(text: string, catalogs: readonly Catalog[]): string {
   return catalogs.reduce(
     (out, c) =>
-      `${out.replace(/\n*$/, '\n')}\n[[catalog]]\nname = ${JSON.stringify(c.name)}\nnative = ${JSON.stringify(c.native)}\n`,
+      `${out.replace(/\n*$/, '\n')}\n[[catalog]]\nname = ${JSON.stringify(c.name)}\n${c.native === undefined ? '' : `native = ${JSON.stringify(c.native)}\n`}${c.lead === undefined ? '' : `lead = ${JSON.stringify(c.lead)}\n`}`,
     text,
   )
 }

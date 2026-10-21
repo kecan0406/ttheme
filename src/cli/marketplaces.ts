@@ -63,17 +63,21 @@ function fromGh(): string | undefined {
   }
 }
 
-async function handle(home: string, state: Installed): Promise<string> {
+async function handle(home: string, state: Installed, owner?: string): Promise<string> {
   if (state.author) {
     return state.author
   }
 
-  let author = fromGh()
+  if (owner !== undefined && !(HANDLE.test(owner.toLowerCase()) && owner.length <= 39)) {
+    throw new Error(`--owner ${owner} is not a GitHub handle`)
+  }
+
+  let author = owner?.toLowerCase() ?? fromGh()
 
   if (!author) {
     if (!interactive()) {
       throw new Error(
-        'your palettes are named after your GitHub handle — log in with `gh auth login`, or run this in a terminal',
+        'your palettes are named after your GitHub handle — log in with `gh auth login`, pass --owner <handle>, or run this in a terminal',
       )
     }
 
@@ -382,7 +386,7 @@ export async function newLocal(home: string): Promise<LocalMarketplace> {
   return initLocal(home, defaultLocal(home, name), name)
 }
 
-async function initLocal(home: string, dir: string, name: string): Promise<LocalMarketplace> {
+async function initLocal(home: string, dir: string, name: string, owner?: string): Promise<LocalMarketplace> {
   const fresh = !existsSync(join(dir, MARKETPLACE_FILE))
   let identity: Identity
 
@@ -397,7 +401,7 @@ async function initLocal(home: string, dir: string, name: string): Promise<Local
       throw new Error(`${dir} is not empty — pick a new folder for the marketplace`)
     }
 
-    identity = { owner: await handle(home, readInstalled(home)), name }
+    identity = { owner: await handle(home, readInstalled(home), owner), name }
     scaffold(dir, identity)
   } else {
     identity = localIdentity(dir)
@@ -414,14 +418,14 @@ function pathLike(arg: string): boolean {
   return arg.startsWith('.') || arg.startsWith('/') || arg.startsWith('~')
 }
 
-async function initMarketplace(arg: string | undefined): Promise<void> {
+async function initMarketplace(arg: string | undefined, owner?: string): Promise<void> {
   const home = configHome()
 
   const name =
     arg && !pathLike(arg) ? arg.toLowerCase() : arg ? basename(parseSource(arg)).toLowerCase() : await askName()
 
   const dir = arg && pathLike(arg) ? parseSource(arg) : defaultLocal(home, name)
-  await initLocal(home, dir, name)
+  await initLocal(home, dir, name, owner)
   console.log(
     '\n`ttheme new <palette> --from <palette>` puts palettes in it, and a folder under palettes/ shelves them in a catalog — `ttheme share` puts it on GitHub, where others add it',
   )
@@ -529,7 +533,11 @@ function checkMarketplace(arg: string | undefined): number {
   return errors.length > 0 ? 1 : 0
 }
 
-export async function runMarketplace(action: string, arg: string | undefined): Promise<number | undefined> {
+export async function runMarketplace(
+  action: string,
+  arg: string | undefined,
+  owner?: string,
+): Promise<number | undefined> {
   switch (action) {
     case 'add':
       await addMarketplace(required(action, arg))
@@ -540,7 +548,7 @@ export async function runMarketplace(action: string, arg: string | undefined): P
 
       return
     case 'init':
-      await initMarketplace(arg)
+      await initMarketplace(arg, owner)
 
       return
     case 'check':

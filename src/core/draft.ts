@@ -29,6 +29,8 @@ const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_
 
 export interface Draft {
   name: string
+  nativeNames?: string[]
+  order?: number
   base?: string
   from?: string
   catalog?: string
@@ -97,6 +99,8 @@ export function paletteToml(d: Draft): string {
     '',
     '[meta]',
     `name = ${q(slugOf(d.name))}`,
+    ...(d.nativeNames ? [`native_names = [${d.nativeNames.map(q).join(', ')}]`] : []),
+    ...(d.order === undefined ? [] : [`order = ${d.order}`]),
     ...(d.base ? [`base = ${q(d.base)}`] : []),
     ...(d.from ? [`from = ${q(d.from)}`] : []),
     ...(d.ansiSource ? [`ansi_source = ${q(d.ansiSource)}`] : []),

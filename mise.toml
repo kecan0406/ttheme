@@ -124,6 +124,26 @@ layer '__tt_keep geto > /dev/null' ||
 cli add sukuna
 grep -q '^theme = ttheme-geto\.dark$' "$tmp/.config/ttheme/ghostty.conf" ||
   { echo "bin:check failed: an add undid the default keep saved"; exit 1; }
+printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' | base64 -d > "$tmp/dot.png"
+sandboxed node "$tmp/.config/ttheme/ttheme.js" palette measure "$tmp/dot.png" --preview --json | grep -q '"status": "done"' ||
+  { echo "bin:check failed: palette measure did not read a PNG"; exit 1; }
+mkdir -p "$tmp/.cache/ttheme/schemes"
+printf 'Probe\n' > "$tmp/.cache/ttheme/schemes/.index"
+{
+  printf 'background = #1d1f21\nforeground = #c5c8c6\n'
+  i=0
+  for c in 1d1f21 cc6666 c8c800 f0c674 81a2be b294bb 8abeb7 c5c8c6 666666 d54e53 e0e040 e7c547 7aa6da c397d8 70c0b1 eaeaea; do
+    printf 'palette = %s=#%s\n' "$i" "$c"
+    i=$((i + 1))
+  done
+} > "$tmp/.cache/ttheme/schemes/Probe"
+printf '{ "probe": { "slots": { "cursor": ["hair", "#ffa040"], "ansi5": ["eyes", "#c080ff"], "selection": ["coat", "#402a20"] } } }\n' > "$tmp/anchors.json"
+sandboxed node "$tmp/.config/ttheme/ttheme.js" palette make --anchors "$tmp/anchors.json" --dry-run --json | grep -q '"status": "done"' ||
+  { echo "bin:check failed: palette make could not make a palette from anchors"; exit 1; }
+code=0
+cli palette make --anchors "$tmp/missing.json" --json 2> /dev/null || code=$?
+[ "$code" = 3 ] ||
+  { echo "bin:check failed: palette make answered a missing anchors file with $code, not 3"; exit 1; }
 run_init
 layer '(( ${#TTHEME_PALETTE} == 3 ))' ||
   { echo "bin:check failed: init --yes over an install dropped its palettes"; exit 1; }

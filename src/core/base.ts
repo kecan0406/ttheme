@@ -1,6 +1,7 @@
 import { argbFromHex, Hct } from '@material/material-color-utilities'
 import { deltaE, type Hex } from './color.ts'
-import { check } from './contrast.ts'
+import { check, ROLE_HUES } from './contrast.ts'
+import { fixRoles, inGamut, type Move } from './fix.ts'
 import { type Anchored, harmonized } from './harmonize.ts'
 import { slotOf, withSlot } from './mirror.ts'
 import type { Shade } from './theme.ts'
@@ -14,6 +15,7 @@ export interface Ranked {
   collision: number
   pair: [number, number]
   shade: Shade
+  moves: Move[]
 }
 
 export interface Ranking {
@@ -39,6 +41,11 @@ const GROUPS = [
 ]
 
 const LIGHT = 50
+
+export const ROLE_BASE = 'role centers'
+
+const NEUTRAL = { dark: 0.25, light: 0.85 }
+const ACCENT = { lightness: 0.7, chroma: 0.12 }
 
 const hueDiff = (a: number, b: number) => {
   const d = Math.abs(a - b) % 360
@@ -89,7 +96,7 @@ export function gateOf(theme: Anchored, shade: Shade): string[] {
   )
 }
 
-function scored(name: string, held: ReadonlySet<number>, shade: Shade): Ranked {
+function scored(name: string, held: ReadonlySet<number>, shade: Shade): Omit<Ranked, 'shade' | 'moves'> {
   const drifts = GROUPS.flat()
     .filter((i) => !held.has(i))
     .map((i) => ({ slot: i, drift: hueDiff(hueOf(shade.ansi[i] as Hex), FUNCTION_HUE.get(i % 8) as number) }))
@@ -120,19 +127,41 @@ function scored(name: string, held: ReadonlySet<number>, shade: Shade): Ranked {
     mean,
     collision,
     pair,
-    shade,
   }
 }
 
-export function rankBases(theme: Anchored, schemes: Iterable<readonly [string, string]>): Ranking {
+export function finished(theme: Anchored, shade: Shade) {
+  const { theme: fixed, moves } = fixRoles({
+    ...shade,
+    name: theme.name,
+    signatureSlots: theme.signatureSlots,
+    waive: [],
+  })
+
+  return { shade: { ...shade, ansi: fixed.ansi }, moves }
+}
+
+export function roleBase(): Shade {
+  const accent = (role: number) => inGamut(ACCENT.lightness, ACCENT.chroma, ROLE_HUES.get(role)?.center as number)
+
+  return {
+    background: inGamut(NEUTRAL.dark / 2, 0, 0),
+    foreground: inGamut(NEUTRAL.light, 0, 0),
+    cursor: inGamut(NEUTRAL.light, 0, 0),
+    selectionBackground: inGamut(NEUTRAL.dark, 0, 0),
+    ansi: Array.from({ length: 16 }, (_, i) =>
+      i % 8 === 0 ? inGamut(NEUTRAL.dark, 0, 0) : i % 8 === 7 ? inGamut(NEUTRAL.light, 0, 0) : accent(i % 8),
+    ),
+  }
+}
+
+export function rankBases(theme: Anchored, schemes: Iterable<readonly [string, Shade | undefined]>): Ranking {
   const held = new Set(theme.signatureSlots.filter((s) => s.startsWith('ansi')).map((s) => Number(s.slice(4))))
   const ranked: Ranked[] = []
   const dropped = new Map<string, string>()
   let dark = 0
 
-  for (const [name, text] of schemes) {
-    const scheme = parseScheme(text)
-
+  for (const [name, scheme] of schemes) {
     if (!scheme) {
       dropped.set(name, 'fewer than 16 palette entries')
       continue
@@ -145,19 +174,20 @@ export function rankBases(theme: Anchored, schemes: Iterable<readonly [string, s
 
     dark++
 
-    let shade: Shade
+    let raw: Shade
 
     try {
-      shade = harmonized(seeded(theme, scheme))
+      raw = harmonized(seeded(theme, scheme))
     } catch (error) {
       dropped.set(name, `harmonizer: ${(error as Error).message}`)
       continue
     }
 
+    const { shade, moves } = finished(theme, raw)
     const problems = gateOf(theme, shade)
 
     if (problems.length > 0) dropped.set(name, `gate: ${problems.join('; ')}`)
-    else ranked.push(scored(name, held, shade))
+    else ranked.push({ ...scored(name, held, raw), shade, moves })
   }
 
   ranked.sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
