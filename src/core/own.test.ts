@@ -71,14 +71,15 @@ test('a share code refuses more pictures than its count can carry instead of dro
 test('a share link reads as the code it carries, however it was pasted', () => {
   const code = shareCode([draft])
   const link = shareLink(code)
-  assert.equal(link, `https://ttheme.dev/p/${code}`)
+  assert.equal(link, `https://ttheme.dev/builder/${code}`)
   assert.equal(codeOf(link), code)
   assert.equal(codeOf(`  ${link}/\n`), code)
   assert.equal(codeOf(`${link}?utm_source=chat`), code)
   assert.equal(codeOf(link.replace('tt4:', 'tt4%3A')), code)
   assert.equal(codeOf(code), code)
   assert.equal(codeOf('https://ttheme.dev/marketplace'), undefined)
-  assert.equal(codeOf('https://ttheme.dev/p/miku'), undefined)
+  assert.equal(codeOf('https://ttheme.dev/builder/miku'), undefined)
+  assert.equal(codeOf(`https://ttheme.dev/p/${code}`), undefined)
   assert.equal(codeOf('kecan0406@dust/rei'), undefined)
 })
 

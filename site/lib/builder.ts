@@ -58,6 +58,7 @@ export interface Stored {
 
 export interface BuilderData {
   first: Start
+  link: string | null
   panes: string[]
   uses: number[][]
   official: string[]

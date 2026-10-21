@@ -10,8 +10,8 @@ import {
 } from '@/lib/builder'
 import type { Mode } from '@/lib/mode'
 import { pictureOf } from '@/lib/pictures'
-import type { GateLine, Picture, SlotFormat, SlotView } from '@/lib/share-view'
 import { gateLinesOf, slotViewOf } from '@/lib/slot-view'
+import type { GateLine, Picture, SlotFormat, SlotView } from '@/lib/view-types'
 import { contrast, type Hex, mix } from '../../src/core/color.ts'
 import { paletteToml, readOwnText } from '../../src/core/draft.ts'
 import { marksOf } from '../../src/core/mark.ts'
@@ -395,10 +395,12 @@ export function marketOf(owner: string, name: string): MarketView {
   return { owner, name, repo, zip: `${repo}.zip`, problem }
 }
 
-export function statusOf(edit: Edit, kept: boolean): StatusView {
+export function statusOf(edit: Edit, kept: boolean, saved: boolean): StatusView {
   const named = nameTrouble(edit.name)
 
   if (!kept) return { ok: false, text: 'this browser keeps no drafts — export before you leave' }
+
+  if (!saved) return { ok: true, text: `${edit.name} · a change keeps it in this browser` }
 
   return named
     ? { ok: false, text: `kept in this browser · the name ${named}` }

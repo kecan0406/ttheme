@@ -116,7 +116,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'add',
     args: ['<palette...>'],
     about:
-      'Install palettes — from your marketplaces, from a share link (ttheme add https://ttheme.dev/p/tt4:…), or from a palette file, which joins your local marketplace: ttheme add ~/Downloads/kisara.toml',
+      'Install palettes — from your marketplaces, from a share link (ttheme add https://ttheme.dev/builder/tt4:…), or from a palette file, which joins your local marketplace: ttheme add ~/Downloads/kisara.toml',
     section: 'palettes',
     flags: {
       in: {

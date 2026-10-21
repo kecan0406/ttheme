@@ -1,6 +1,6 @@
-import type { GateLine, ShareView, SlotView } from '@/lib/share-view'
 import type { GateRule } from '@/lib/themes'
-import { type Hex, mix } from '../../src/core/color.ts'
+import type { GateLine, SlotView } from '@/lib/view-types'
+import type { Hex } from '../../src/core/color.ts'
 import { GATE_RULES, measure, missedRules } from '../../src/core/contrast.ts'
 import { inGamut } from '../../src/core/fix.ts'
 import { PLANE_BOTTOM, PLANE_TOP, RAINBOW_C, RAINBOW_L, reach, shareOf } from '../../src/core/plane.ts'
@@ -19,7 +19,6 @@ import {
 export const PLANE_ROWS = 40
 
 const HUE_STOPS = 24
-const FAINT = 0.45
 
 export const RULES: GateRule[] = GATE_RULES
 
@@ -69,17 +68,6 @@ export function slotViewOf(
     uses,
     signature: signature.includes(key),
     miss: missed.has(slot),
-  }
-}
-
-export function viewOf(list: Hex[], panes: string[], slots: SlotView[]): ShareView {
-  return {
-    panes,
-    top: PLANE_TOP,
-    bottom: PLANE_BOTTOM,
-    track: hueTrack(),
-    faint: mix(list[1] as Hex, list[0] as Hex, FAINT),
-    slots,
   }
 }
 

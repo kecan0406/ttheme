@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test'
-import { brotliCompressSync, deflateRawSync } from 'node:zlib'
+import { brotliCompressSync } from 'node:zlib'
 import { codeBody, type Draft, paletteToml, sealed } from '../../src/core/draft.ts'
 import { fromCode } from '../../src/core/own.ts'
-import { textDraft, webCode, webDrafts } from './web-code'
+import { textDraft, webCheck, webCode } from './web-code'
 
 const ansi = [
   '#272318',
@@ -58,11 +58,10 @@ async function packedAs(method: number, bytes: Uint8Array): Promise<string> {
   return sealed(packed, new Uint8Array(await crypto.subtle.digest('SHA-256', packed.slice())))
 }
 
-test('the builder opens a link packed raw or deflated as the CLI packs it, and sends a brotli one to a terminal', async () => {
-  const body = codeBody([draft])
-  expect(await webDrafts(await packedAs(0, body))).toEqual([draft])
-  expect(await webDrafts(await packedAs(1, deflateRawSync(body, { level: 9 })))).toEqual([draft])
-  await expect(webDrafts(await packedAs(2, brotliCompressSync(body)))).rejects.toThrow(/brotli/)
+test('the builder sends a link of any packing to its page, and turns away a code that does not add up', async () => {
+  const code = await packedAs(2, brotliCompressSync(codeBody([draft])))
+  await webCheck(code)
+  await expect(webCheck(`${code.slice(0, 6)}${code[6] === 'A' ? 'B' : 'A'}${code.slice(7)}`)).rejects.toThrow(/add up/)
 })
 
 test('a palette file the builder writes opens back as the same palette', () => {

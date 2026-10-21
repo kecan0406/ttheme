@@ -21,8 +21,10 @@ import {
   SignatureDots,
   StartLabel,
   StatusText,
+  Use,
 } from '@/components/builder-parts'
 import { StartEntries } from '@/components/builder-start'
+import { PaneBody } from '@/components/mock-window'
 import { GateRows } from '@/components/slot-list'
 import {
   type BuilderData,
@@ -70,9 +72,10 @@ import {
 import { nativeLang } from '@/lib/catalogs'
 import type { Mode } from '@/lib/mode'
 import { html } from '@/lib/render'
-import { FORMATS, type SlotFormat } from '@/lib/share-view'
+import { scenePanes } from '@/lib/scene-panes'
 import { hueTrack } from '@/lib/slot-view'
-import { textDraft, webCode, webDrafts } from '@/lib/web-code'
+import { FORMATS, type Picture, type PictureCredit, type SlotFormat } from '@/lib/view-types'
+import { textDraft, webCheck, webCode } from '@/lib/web-code'
 import { type Hex, mix, type Oklch } from '../../src/core/color.ts'
 import { codeOf, type Draft, shareLink } from '../../src/core/draft.ts'
 import { PLANE_BOTTOM, PLANE_TOP, reach } from '../../src/core/plane.ts'
@@ -105,6 +108,8 @@ interface Snapshot {
 const ORDER = [0, 1, 2, 3, ...Array.from({ length: 8 }, (_, k) => [4 + k, 12 + k]).flat()]
 
 const SAVE_MS = 400
+
+const LEAST = { cols: 40, rows: 10 }
 
 const at = (value: number) => `${(value * 100).toFixed(2)}%`
 
@@ -177,8 +182,10 @@ class PaletteBuilder extends HTMLElement {
   #loading: Promise<void> | null = null
   #startFailed = false
   #query = ''
-  #choices: Draft[] = []
   #stored: Stored | null = null
+  #linkId: string | null = null
+  #linkKey = ''
+  #credits = new Map<string, PictureCredit | null>()
   #saving = 0
   #market = { owner: '', name: '', description: '' }
   #link: { key: string; view: LinkView } | null = null
@@ -187,6 +194,9 @@ class PaletteBuilder extends HTMLElement {
   #dragging: 'plane' | null = null
   #frame = 0
   #pending: (() => void) | null = null
+  #grid = ''
+  #sizer: ResizeObserver | undefined
+  #sizing = 0
   #inspector = new Inspector(
     this,
     () => this.#named(),
@@ -200,8 +210,15 @@ class PaletteBuilder extends HTMLElement {
   connectedCallback() {
     this.#data = readJson<BuilderData>(this, 'script[data-builder]')
     this.#stored = readStore()
-    const current = this.#stored?.drafts.find((draft) => draft.id === this.#stored?.current)
-    this.#edit = current ?? editOf(this.#data.first.draft, this.#data.first.name, false, freshId(), Date.now())
+    const link = this.#data.link !== null
+    const current = link ? undefined : this.#stored?.drafts.find((draft) => draft.id === this.#stored?.current)
+    this.#edit = current ?? editOf(this.#data.first.draft, this.#data.first.name, link, freshId(), Date.now())
+
+    if (link) {
+      this.#linkId = this.#edit.id
+      this.#linkKey = JSON.stringify(draftFrom(this.#edit))
+    }
+
     this.#relink()
     this.addEventListener('click', this.#click)
     this.addEventListener('input', this.#input)
@@ -210,13 +227,27 @@ class PaletteBuilder extends HTMLElement {
     this.addEventListener('pointerdown', this.#press)
     this.addEventListener('toggle', this.#toggled, true)
     this.querySelector('#builder-start')?.addEventListener('beforetoggle', this.#placeStart)
+    this.querySelector('#builder-add')?.addEventListener('beforetoggle', this.#placeAdd)
     addEventListener('pagehide', this.#flush)
     const term = this.querySelector<HTMLElement>('[data-term]')
     term?.addEventListener('pointerover', this.#inspector.over)
     term?.addEventListener('pointerleave', this.#inspector.leave)
+
+    if (term) {
+      this.#sizer = new ResizeObserver(() => {
+        cancelAnimationFrame(this.#sizing)
+        this.#sizing = requestAnimationFrame(() => this.#fit())
+      })
+      this.#sizer.observe(term)
+    }
+
+    this.#fit()
     this.#render()
     this.#tail()
+    this.#inspector.hint()
     document.documentElement.removeAttribute('data-restoring')
+
+    if (link) void this.#loadCredits()
   }
 
   disconnectedCallback() {
@@ -227,6 +258,8 @@ class PaletteBuilder extends HTMLElement {
     this.removeEventListener('pointerdown', this.#press)
     this.removeEventListener('toggle', this.#toggled, true)
     removeEventListener('pagehide', this.#flush)
+    this.#sizer?.disconnect()
+    cancelAnimationFrame(this.#sizing)
     this.#flush()
 
     for (const url of this.#urls.values()) URL.revokeObjectURL(url)
@@ -393,8 +426,36 @@ class PaletteBuilder extends HTMLElement {
     this.#renderSeeds()
     this.#renderStatus()
     this.#renderExport()
+    this.#renderShared()
     this.#inspector.redraw()
     this.#light()
+  }
+
+  #renderShared() {
+    const on = this.#state.id === this.#linkId
+    const touched = on && JSON.stringify(draftFrom(this.#state)) !== this.#linkKey
+
+    for (const part of this.querySelectorAll<HTMLElement>('[data-link-only]')) part.hidden = !on
+    const add = this.querySelector<HTMLElement>('[data-add]')
+
+    if (add) add.hidden = !on || touched
+    const exporting = this.querySelector<HTMLElement>('[data-bar] [data-export-open]')
+
+    if (exporting) exporting.hidden = on && !touched
+    const note = this.querySelector<HTMLElement>('[data-touched-note]')
+
+    if (note) note.hidden = !touched
+  }
+
+  async #loadCredits() {
+    try {
+      const response = await fetch(`${location.pathname.replace(/\/$/, '')}/credits.json${location.search}`)
+
+      if (!response.ok) return
+
+      for (const picture of (await response.json()) as Picture[]) this.#credits.set(picture.post, picture.credit)
+      this.#renderAbout()
+    } catch {}
   }
 
   #enable(selector: string, on: boolean) {
@@ -426,13 +487,20 @@ class PaletteBuilder extends HTMLElement {
   }
 
   #renderStatus() {
-    const status = statusOf(this.#state, this.#stored !== null)
+    const saved = this.#stored?.drafts.some((draft) => draft.id === this.#state.id) ?? false
+    const status = statusOf(this.#state, this.#stored !== null, saved)
     this.#fill(document.querySelector('[data-status]'), html(<StatusText status={status} />))
   }
 
   #renderAbout() {
     const edit = this.#state
-    const about = aboutOf(edit, this.#view)
+    const shown = aboutOf(edit, this.#view)
+
+    const about = {
+      ...shown,
+      pictures: shown.pictures.map((picture) => ({ ...picture, credit: this.#credits.get(picture.post) ?? null })),
+    }
+
     const box = this.querySelector<HTMLElement>('[data-panel-body="about"]')
 
     if (!box) return
@@ -572,6 +640,7 @@ class PaletteBuilder extends HTMLElement {
 
     if (copy) copy.dataset.copy = text
     this.#fill(this.querySelector('[data-checks]'), html(<Checks s={s} />))
+    this.#fill(this.querySelector('[data-use]'), html(<Use s={s} panes={this.#data?.panes ?? []} />))
     this.querySelector('[data-picker-card] [data-where]')?.setAttribute('aria-pressed', String(this.#where))
     this.#fill(this.querySelector('[data-picker-actions]'), html(<PickerActions p={p} />))
   }
@@ -660,6 +729,36 @@ class PaletteBuilder extends HTMLElement {
 
   #tail() {
     for (const body of this.querySelectorAll<HTMLElement>('[data-tail]')) body.scrollTop = body.scrollHeight
+  }
+
+  #fit() {
+    const term = this.querySelector<HTMLElement>('[data-term]')
+    const pane = term?.querySelector<HTMLElement>('.mock-pane')
+
+    if (!term || !pane || !this.#data) return
+    const style = getComputedStyle(pane)
+    const across = Number.parseFloat(style.paddingLeft) + Number.parseFloat(style.paddingRight)
+    const down = Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom)
+    const cell = Number.parseFloat(style.fontSize) * 0.6
+    const line = Number.parseFloat(style.lineHeight)
+    const cols = Math.max(LEAST.cols, Math.floor((term.clientWidth - across) / cell))
+    const rows = Math.max(LEAST.rows, Math.floor((term.clientHeight - down) / line))
+    const grid = `${cols}x${rows}`
+
+    if (grid === this.#grid) return
+    this.#grid = grid
+    const { panes, uses } = scenePanes(cols, rows)
+
+    for (const one of panes) fill(this.querySelector(`[data-pane-panel="${one.name}"]`), html(<PaneBody pane={one} />))
+    this.#data.uses = uses
+    this.#inspector.release()
+    const mock = this.querySelector<HTMLElement>('[data-mock]')
+
+    if (mock) delete mock.dataset.lit
+    term.dataset.sized = ''
+    this.#light()
+    this.#tail()
+    this.#renderPicker()
   }
 
   #showPanel(name: string) {
@@ -847,6 +946,16 @@ class PaletteBuilder extends HTMLElement {
     this.querySelector<HTMLElement>('#builder-start')?.hidePopover()
   }
 
+  #placeAdd = (event: Event) => {
+    const pop = event.target as HTMLElement
+    const button = this.querySelector('[data-add]')
+
+    if ((event as ToggleEvent).newState !== 'open' || !button) return
+    const spot = button.getBoundingClientRect()
+    pop.style.top = `${spot.bottom + 8}px`
+    pop.style.right = `${Math.max(16, window.innerWidth - spot.right)}px`
+  }
+
   #placeStart = (event: Event) => {
     const pop = event.target as HTMLElement
     const button = this.querySelector('[data-start]')
@@ -920,17 +1029,8 @@ class PaletteBuilder extends HTMLElement {
       const code = codeOf(text)
 
       if (code) {
-        const drafts = await webDrafts(code)
-
-        if (drafts.length === 1) {
-          const [draft] = drafts as [Draft]
-          this.#startFrom({ name: draft.name, draft }, true)
-
-          return
-        }
-
-        this.#choices = drafts
-        this.#renderChoices()
+        await webCheck(code)
+        location.assign(`/builder/${code}`)
 
         return
       }
@@ -942,27 +1042,13 @@ class PaletteBuilder extends HTMLElement {
     }
   }
 
-  #renderChoices() {
-    const error = this.querySelector<HTMLElement>('[data-open-error]')
-
-    if (!error) return
-    error.hidden = false
-    error.replaceChildren(`the link holds ${this.#choices.length} palettes — open one:`)
-
-    for (const [i, draft] of this.#choices.entries()) {
-      const button = document.createElement('button')
-      button.type = 'button'
-      button.dataset.openChoice = String(i)
-      button.className = 'ml-2 font-semibold text-primary underline-offset-4 hover:underline'
-      button.textContent = draft.name
-      error.append(button)
-    }
-  }
-
   #openExport() {
     const dialog = this.querySelector<HTMLDialogElement>('[data-export]')
 
     if (!dialog) return
+    const add = this.querySelector<HTMLElement>('#builder-add')
+
+    if (add?.matches(':popover-open')) add.hidePopover()
     this.#renderExport(true)
     dialog.showModal()
   }
@@ -1179,6 +1265,7 @@ class PaletteBuilder extends HTMLElement {
     this.#renderAbout()
     this.#renderStatus()
     this.#renderExport()
+    this.#renderShared()
     this.#save()
   }
 
@@ -1195,8 +1282,6 @@ class PaletteBuilder extends HTMLElement {
     const mode = target.closest<HTMLElement>('[data-edit-mode]')?.dataset.editMode
 
     if (mode === 'dark' || mode === 'light') return this.#setView(mode)
-
-    if (target.closest('[data-inspect]')) return this.#inspector.toggle(!this.#inspector.on)
 
     if (target.closest('[data-picker-close]')) return this.#close(true)
 
@@ -1239,7 +1324,9 @@ class PaletteBuilder extends HTMLElement {
 
     const run = target.closest<HTMLElement>('[data-mock] .r')
 
-    if (run && this.#inspector.on) return this.#inspector.pin(run)
+    if (run) return this.#inspector.pin(run)
+
+    if (target.closest('[data-term]') && !target.closest('[data-inspector]')) return this.#inspector.release()
 
     if (target.closest('[data-changed]')) {
       this.#only = !this.#only
@@ -1328,16 +1415,6 @@ class PaletteBuilder extends HTMLElement {
 
       return
     }
-
-    const choice = target.closest<HTMLElement>('[data-open-choice]')?.dataset.openChoice
-    const chosen = choice === undefined ? undefined : this.#choices[Number(choice)]
-
-    if (chosen) {
-      this.#choices = []
-      this.#startFrom({ name: chosen.name, draft: chosen }, true)
-
-      return
-    }
   }
 
   #input = (event: Event) => {
@@ -1362,6 +1439,7 @@ class PaletteBuilder extends HTMLElement {
       const { [meta]: _, ...rest } = this.#state.meta
       this.#edit = { ...this.#state, meta: value ? { ...rest, [meta]: value } : rest, at: Date.now() }
       this.#renderExport()
+      this.#renderShared()
       this.#save()
 
       return

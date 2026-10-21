@@ -3,19 +3,31 @@ import { type BuilderData, editOf, madeMode, nameTrouble } from '@/lib/builder'
 import { aboutOf, dotsOf, fileOf, gateOf, marketOf, modesOf, rowsOf, seedRowsOf, slotVars } from '@/lib/builder-view'
 import type { Facts } from '@/lib/facts'
 import { json } from '@/lib/render'
-import type { Pane } from '@/lib/share-view'
+import type { Shared } from '@/lib/share'
+import type { Pane } from '@/lib/view-types'
 import { grow, SEEDS } from '../../src/core/seeds.ts'
 import { listOf, misses, slotLabel } from '../../src/core/slots.ts'
 import { brightLinks } from '../../src/core/tune.ts'
 import { AppBar } from './app-bar'
 import { ExportDialog } from './builder-export'
+import { AddPopover, LinkSection, LinkStrip } from './builder-link'
 import { AboutPanel, BuilderBar, ColorsPanel, EditMode, SeedsPanel, StatusText } from './builder-parts'
 import { StartPopover } from './builder-start'
 import { MockWindow } from './mock-window'
 import { SiteHeader } from './site-header'
 
-export function BuilderPage({ data, panes, facts }: { data: BuilderData; panes: Pane[]; facts: Facts }) {
-  const edit = editOf(data.first.draft, data.first.name, false, 'first', 0)
+export function BuilderPage({
+  data,
+  panes,
+  facts,
+  shared,
+}: {
+  data: BuilderData
+  panes: Pane[]
+  facts: Facts
+  shared: Shared | null
+}) {
+  const edit = editOf(data.first.draft, data.first.name, shared !== null, 'first', 0)
   const list = edit.made
   const waive = edit.meta.waive ?? []
   const missed = misses(list, edit.signature, waive)
@@ -29,6 +41,7 @@ export function BuilderPage({ data, panes, facts }: { data: BuilderData; panes: 
     <div class="ground flex min-h-dvh flex-col app:h-dvh app:overflow-hidden">
       <SiteHeader current="/builder" fixed />
       <palette-builder class="builder-app">
+        {shared && shared.palettes.length > 1 ? <LinkStrip shared={shared} /> : null}
         <div class="border-b border-border bg-sidebar [grid-area:tabs] app:border-r">
           <TabsList label="sidebar" class="h-full">
             <TabsTrigger
@@ -57,6 +70,7 @@ export function BuilderPage({ data, panes, facts }: { data: BuilderData; panes: 
           source={data.first.name}
           dots={dotsOf(list, edit.signature)}
           changed={0}
+          link={shared?.link ?? null}
         />
         <aside
           aria-label="palette"
@@ -71,7 +85,11 @@ export function BuilderPage({ data, panes, facts }: { data: BuilderData; panes: 
             format="hex"
             names={list.map((_, slot) => slotLabel(slot).name)}
           />
-          <AboutPanel about={aboutOf(edit, 'made')} modes={modesOf(edit)} />
+          <AboutPanel
+            about={aboutOf(edit, 'made')}
+            modes={modesOf(edit)}
+            link={shared ? <LinkSection shared={shared} /> : null}
+          />
         </aside>
         <main id="content" aria-label="preview" data-stage class="mock-stage [grid-area:stage]">
           <MockWindow
@@ -89,6 +107,7 @@ export function BuilderPage({ data, panes, facts }: { data: BuilderData; panes: 
           </p>
         </main>
         <StartPopover />
+        {shared ? <AddPopover shared={shared} /> : null}
         <ExportDialog
           file={fileOf(edit)}
           link={{ name: edit.name, link: null, code: null, failed: null, clash: null }}

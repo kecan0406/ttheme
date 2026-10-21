@@ -21,7 +21,7 @@ const INSIGHTS = ['/_vercel/insights/script.js', '/_vercel/speed-insights/script
 
 const INDEXABLE = 'max-image-preview:large'
 
-interface Page {
+export interface Page {
   title: string
   description: string
   path?: string

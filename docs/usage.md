@@ -612,15 +612,16 @@ ttheme edit rei                  # the same editor; the bare name works for your
 ttheme edit miku                 # an official palette: your changes kept as its tone, R then s puts it back
 ttheme edit                      # asks to edit the palette this tab wears (check and share ask the same)
 ttheme check --fix rei           # colors that pass the gate, written in — as a tone, for a palette not yours
-ttheme share rei                 # https://ttheme.dev/p/tt4:… and its QR code
+ttheme share rei                 # https://ttheme.dev/builder/tt4:… and its QR code
 ttheme share rei --tone original # the palette as it was, when you tuned it in palette edit
 ```
 
 `share` prints a link to a palette as you wear it, and in a terminal its QR code
-under it. The palette lives in the link itself (`tt4:…` after `/p/`), so the page
-needs nothing stored: it shows the palette in a mock terminal, its slots, the
-contrast gate and the posts of its pictures, with the `ttheme add` command to
-copy. `ttheme add <link>` installs it, and so does the bare `tt4:…` code. A link
+under it. The palette lives in the link itself (`tt4:…` after `/builder/`), so the page
+needs nothing stored: it opens the builder on the palette — a mock terminal, its
+slots, the contrast gate and the posts of its pictures with their artists —, with
+the `ttheme add` command to copy, and a change there makes a copy of your own to
+export. `ttheme add <link>` installs it, and so does the bare `tt4:…` code. A link
 to a palette the other side already has — an official one, or one from a marketplace
 they added — installs theirs when the colors match, with the pictures the link
 names, and is refused when they differ.

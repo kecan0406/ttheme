@@ -81,7 +81,7 @@ export function LinkPanel({ view }: { view: LinkView }) {
       <CommandRow command={`ttheme add ${view.link}`} class="bg-card" />
       <figure class="grid gap-2">
         <img
-          src={`/p/${view.code}/card.png`}
+          src={`/builder/${view.code}/card.png`}
           alt={`the card chat apps show for the link to ${view.name}`}
           loading="lazy"
           class="aspect-[40/21] w-full rounded-xl border border-border bg-muted"

@@ -132,7 +132,9 @@ export function StartPopover() {
           <Icon node={FolderOpen} class="mt-0.5 size-4 flex-none text-primary" />
           <span class="grid gap-0.5">
             <b class="font-semibold">open a link, code or file</b>
-            <span class="text-xs text-muted-foreground">a ttheme.dev/p link, a tt4: code or a palette's .toml</span>
+            <span class="text-xs text-muted-foreground">
+              a ttheme.dev/builder link, a tt4: code or a palette's .toml
+            </span>
           </span>
         </button>
         <div id="builder-open-box" data-open-box hidden class="grid gap-2 px-2 pt-1 pb-2">
@@ -143,7 +145,7 @@ export function StartPopover() {
             spellcheck="false"
             autocapitalize="none"
             autocorrect="off"
-            placeholder="https://ttheme.dev/p/tt4:…"
+            placeholder="https://ttheme.dev/builder/tt4:…"
             class="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs outline-none placeholder:text-faint-foreground hover:border-input focus-visible:border-ring"
           />
           <div class="flex flex-wrap items-center gap-2">

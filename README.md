@@ -178,9 +178,10 @@ files as pushed. `ttheme marketplace init <name>` makes one.
 when it fits the window, its QR code:
 
 - **A link** (the palette the tab wears is picked to start with) —
-  `https://ttheme.dev/p/tt4:…` — carries the colors, in both modes where a palette keeps both, and the numbers of their background posts with
-  their framing, so nothing is uploaded: the page it opens draws each palette in
-  a terminal, lists the posts, and gives the `ttheme add` command, and its preview
+  `https://ttheme.dev/builder/tt4:…` — carries the colors, in both modes where a palette keeps both, and the numbers of their background posts with
+  their framing, so nothing is uploaded: the page it opens is the builder on those palettes,
+  which draws each in a terminal, lists the posts and their artists, gives the
+  `ttheme add` command and lets you tune a copy, and its preview
   image for chat apps is drawn in the palettes' colors. `ttheme add <link>` (or
   the bare code at its end) installs them anywhere without a marketplace,
   fetching those posts from the booru the way `find` does. A link of a few

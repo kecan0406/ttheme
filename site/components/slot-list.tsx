@@ -1,10 +1,39 @@
 import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
-import { ChevronDown } from 'lucide'
+import { Check, ChevronDown, Minus, X } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { Icon } from '@/lib/icons'
-import type { GateLine } from '@/lib/share-view'
+import type { GateLine } from '@/lib/view-types'
 import { reading } from './palette-parts'
-import { Verdict } from './share-popovers'
+
+export function Marks({ signature, miss }: { signature: boolean; miss: boolean }) {
+  return (
+    <>
+      {signature ? (
+        <span class="text-xs leading-none text-primary">
+          <span aria-hidden="true">✦</span>
+          <span class="sr-only">signature</span>
+        </span>
+      ) : null}
+      {miss ? (
+        <span class="text-xs leading-none font-bold text-destructive">
+          <span aria-hidden="true">✗</span>
+          <span class="sr-only">misses the gate</span>
+        </span>
+      ) : null}
+    </>
+  )
+}
+
+export function Verdict({ ok }: { ok: boolean | null }) {
+  const tone =
+    ok === null ? 'bg-muted text-muted-foreground' : ok ? 'bg-success/16 text-success' : 'bg-warning/18 text-warning'
+
+  return (
+    <span class={`inline-flex size-5 flex-none items-center justify-center rounded-full ${tone}`}>
+      <Icon node={ok === null ? Minus : ok ? Check : X} class="size-3" />
+    </span>
+  )
+}
 
 export function Group({
   name,

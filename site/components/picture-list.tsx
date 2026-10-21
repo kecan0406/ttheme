@@ -1,6 +1,6 @@
 import { type SimpleIcon, siBluesky, siPatreon, siPixiv, siX } from 'simple-icons'
 import { BrandIcon, NewTab } from '@/lib/icons'
-import type { Picture, PictureLink } from '@/lib/share-view'
+import type { Picture, PictureLink } from '@/lib/view-types'
 
 const LINK = 'font-mono text-code text-primary underline-offset-4 hover:underline'
 

@@ -1259,29 +1259,14 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     calc(var(--dot-step) * 8) 0 var(--dot8, transparent);
 }
 
-.builder {
-  display: grid;
-  grid-template-columns: 344px minmax(0, 1fr);
-  grid-template-rows: 56px minmax(0, 1fr);
-  grid-template-areas: 'tabs bar' 'side stage';
-  height: 100dvh;
-  overflow: hidden;
-}
-
-.builder:has(> [data-strip]) {
-  grid-template-rows: 48px 56px minmax(0, 1fr);
-  grid-template-areas: 'strip strip' 'tabs bar' 'side stage';
-}
-
 .mock-stage {
-  container-type: size;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 0;
   min-height: 0;
-  padding: 32px 40px;
+  padding: 16px;
   overflow: hidden;
   background-color: var(--background);
   background-image: radial-gradient(circle, color-mix(in oklab, var(--foreground) 10%, transparent) 1px, transparent 1.6px);
@@ -1289,12 +1274,12 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 }
 
 .mock {
-  --fs: clamp(11px, min((100cqw - 34px) / (var(--cols) * 0.6), (100cqh - 66px) / (var(--rows) * 1.5385)), 13px);
+  --fs: 13px;
   --lh: calc(var(--fs) * 1.5385);
   display: flex;
   flex-direction: column;
-  width: min(100%, calc(var(--fs) * var(--cols) * 0.6 + 34px));
-  height: min(100%, calc(var(--lh) * var(--rows) + 66px));
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) * 1.4);
@@ -1332,6 +1317,11 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   flex: none;
 }
 
+.mock-term:not([data-sized]) > .mock-pane {
+  visibility: hidden;
+  animation: builder-reveal 0s linear 2.5s forwards;
+}
+
 .mock .ln {
   height: var(--lh);
   white-space: pre;
@@ -1345,7 +1335,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   transition: opacity 0.2s;
 }
 
-.mock[data-inspecting] .r {
+.mock .r:not([data-blank]) {
   cursor: pointer;
 }
 
@@ -1360,6 +1350,19 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 
 .mock .r[data-pinned] {
   outline-style: solid;
+}
+
+[data-inspector] [data-arrow] {
+  top: -5px;
+  border-width: 1px 0 0 1px;
+  background: var(--muted);
+}
+
+[data-inspector][data-side='above'] [data-arrow] {
+  top: auto;
+  bottom: -5px;
+  border-width: 0 1px 1px 0;
+  background: var(--popover);
 }
 
 .mock[data-where] .r:not([data-lit]) {
@@ -1428,51 +1431,17 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   }
 }
 
-@media (max-width: 760px) {
-  .builder {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto 48px auto;
-    grid-template-areas: 'bar' 'stage' 'tabs' 'side';
-    align-content: start;
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-  }
-
-  .builder:has(> [data-strip]) {
-    grid-template-rows: auto auto auto 48px auto;
-    grid-template-areas: 'strip' 'bar' 'stage' 'tabs' 'side';
-  }
-
-  .mock-stage {
-    container-type: normal;
-    padding: 16px;
-    overflow: visible;
-  }
-
-  .mock {
-    --fs: 11px;
-    width: 100%;
-    height: 420px;
-    border-radius: calc(var(--radius) * 1.8);
-  }
-
-  .mock-term {
-    overflow: auto;
-  }
-
-  .mock-pane {
-    width: max-content;
-    min-width: 100%;
-  }
-}
-
 .builder-app {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto 48px auto;
   grid-template-areas: 'bar' 'stage' 'tabs' 'side';
   align-content: start;
+}
+
+.builder-app:has(> [data-strip]) {
+  grid-template-rows: auto auto auto 48px auto;
+  grid-template-areas: 'strip' 'bar' 'stage' 'tabs' 'side';
 }
 
 @media not all and (min-width: 900px) and (min-height: 600px) {
@@ -1522,6 +1491,11 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     grid-template-columns: 344px minmax(0, 1fr);
     grid-template-rows: 56px minmax(0, 1fr);
     grid-template-areas: 'tabs bar' 'side stage';
+  }
+
+  .builder-app:has(> [data-strip]) {
+    grid-template-rows: 48px 56px minmax(0, 1fr);
+    grid-template-areas: 'strip strip' 'tabs bar' 'side stage';
   }
 }
 

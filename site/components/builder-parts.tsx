@@ -7,13 +7,14 @@ import {
   Eye,
   FileCode,
   Image,
+  Link,
   Link2,
   List,
   Moon,
+  Plus,
   Redo2,
   RotateCcw,
   Sparkles,
-  SquareDashedMousePointer,
   Sun,
   Undo2,
   Unlink,
@@ -36,14 +37,13 @@ import type {
 } from '@/lib/builder-view'
 import { Icon } from '@/lib/icons'
 import type { Mode } from '@/lib/mode'
-import { FORMATS, planeRows, type SlotView } from '@/lib/share-view'
 import { cn } from '@/lib/utils'
+import { FORMATS, planeRows, type SlotView } from '@/lib/view-types'
 import { PLANE_BOTTOM, PLANE_TOP } from '../../src/core/plane.ts'
 import { Mark } from './mark'
 import { SectionLabel } from './palette-parts'
 import { PictureList } from './picture-list'
-import { Marks, Verdict } from './share-popovers'
-import { GateRows, Group, Swatch } from './slot-list'
+import { GateRows, Group, Marks, Swatch, Verdict } from './slot-list'
 
 const PLANE_THUMB =
   'pointer-events-none absolute size-3.5 -translate-1/2 rounded-full border-2 border-white shadow-sm ring-1 ring-black/55'
@@ -113,12 +113,14 @@ export function BuilderBar({
   source,
   dots,
   changed,
+  link,
 }: {
   name: string
   problem: string | undefined
   source: string | null
   dots: string[]
   changed: number
+  link: string | null
 }) {
   return (
     <header
@@ -188,11 +190,28 @@ export function BuilderBar({
           <span class="max-[1280px]:sr-only">reset</span>
         </Button>
         <span aria-hidden="true" class="mx-1 h-5 w-px bg-border" />
-        <Button variant="ghost" size="sm" aria-pressed="false" data-inspect>
-          <Icon node={SquareDashedMousePointer} />
-          <span class="max-[1280px]:sr-only">inspect</span>
-        </Button>
-        <Button size="sm" data-export-open aria-haspopup="dialog">
+        {link ? (
+          <>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              class="group/copy"
+              aria-label="copy link"
+              data-link-only
+              data-copy={link}
+              data-copy-hold="1400"
+              data-copy-status="copied (・ω・)"
+            >
+              <Icon node={Link} class="group-data-copied/copy:hidden" />
+              <Icon node={Check} class="hidden group-data-copied/copy:block" />
+            </Button>
+            <Button size="sm" popovertarget="builder-add" data-add>
+              <Icon node={Plus} />
+              add to ttheme
+            </Button>
+          </>
+        ) : null}
+        <Button size="sm" data-export-open aria-haspopup="dialog" hidden={link !== null}>
           <Icon node={Download} />
           export
         </Button>
@@ -897,9 +916,10 @@ export function PicturesBox({ about }: { about: AboutView }) {
   )
 }
 
-export function AboutPanel({ about, modes }: { about: AboutView; modes: ModesView }) {
+export function AboutPanel({ about, modes, link }: { about: AboutView; modes: ModesView; link: JSX.Element | null }) {
   return (
     <section id="builder-about" role="tabpanel" aria-labelledby="builder-tab-about" data-panel-body="about" hidden>
+      {link}
       <div class="grid gap-3 border-b border-border p-4">
         <SectionLabel icon={<Icon node={FileCode} />}>File</SectionLabel>
         <label for="builder-about-name" class="grid gap-1.5 text-sm">

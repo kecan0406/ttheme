@@ -19,7 +19,7 @@ import {
 } from './theme.ts'
 
 export const CODE = 'tt4:'
-export const SHARE_URL = 'https://ttheme.dev/p/'
+export const SHARE_URL = 'https://ttheme.dev/builder/'
 export const SUM = 4
 export const UNPACKED = 64 * 1024
 
@@ -540,7 +540,7 @@ export function codeOf(text: string): string | undefined {
     return isCode(given) ? given : undefined
   }
 
-  const segment = URL.canParse(given) ? /^\/p\/([^/]+)\/?$/.exec(new URL(given).pathname)?.[1] : undefined
+  const segment = URL.canParse(given) ? /^\/builder\/([^/]+)\/?$/.exec(new URL(given).pathname)?.[1] : undefined
   const code = segment?.replace(/%3a/gi, ':')
 
   return code && isCode(code) ? code : undefined

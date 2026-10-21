@@ -1,4 +1,4 @@
-import type { Picture } from '@/lib/share-view'
+import type { Picture } from '@/lib/view-types'
 import { SITES } from '../../src/core/booru.ts'
 import type { SharedPicture } from '../../src/core/theme.ts'
 

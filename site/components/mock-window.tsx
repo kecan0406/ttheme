@@ -1,7 +1,6 @@
 import { escapeHtml } from '@kitajs/html'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
-import type { Pane, Run } from '@/lib/share-view'
-import { GRID } from '@/lib/share-view'
+import type { Pane, Run } from '@/lib/view-types'
 
 const LIGHTS = ['#ff5f57', '#febc2e', '#28c840']
 
@@ -15,12 +14,32 @@ function Line({ runs }: { runs: Run[] }) {
           data-g={String(run.g)}
           data-f={run.faint ? '' : undefined}
           data-c={run.cursor ? '' : undefined}
+          data-blank={run.cursor || run.text.trim() !== '' ? undefined : ''}
           safe
         >
           {run.text}
         </span>
       ))}
     </div>
+  )
+}
+
+export function PaneBody({ pane }: { pane: Pane }) {
+  return (
+    <>
+      <div class="mock-body" data-tail={pane.footer.length === 0 ? '' : undefined}>
+        {pane.body.map((runs) => (
+          <Line runs={runs} />
+        ))}
+      </div>
+      {pane.footer.length > 0 ? (
+        <div class="mock-foot">
+          {pane.footer.map((runs) => (
+            <Line runs={runs} />
+          ))}
+        </div>
+      ) : null}
+    </>
   )
 }
 
@@ -34,18 +53,7 @@ function PaneView({ pane, first, prefix }: { pane: Pane; first: boolean; prefix:
       hidden={!first}
       class="mock-pane"
     >
-      <div class="mock-body" data-tail={pane.footer.length === 0 ? '' : undefined}>
-        {pane.body.map((runs) => (
-          <Line runs={runs} />
-        ))}
-      </div>
-      {pane.footer.length > 0 ? (
-        <div class="mock-foot">
-          {pane.footer.map((runs) => (
-            <Line runs={runs} />
-          ))}
-        </div>
-      ) : null}
+      <PaneBody pane={pane} />
     </div>
   )
 }
@@ -62,7 +70,7 @@ export function MockWindow({
   controls?: JSX.Element
 }) {
   return (
-    <div data-mock class="mock" style={`${style};--cols:${GRID.cols};--rows:${GRID.rows}`}>
+    <div data-mock class="mock" style={style}>
       <div class="flex h-10 flex-none items-center gap-3 bg-card pr-1.5 pl-3.5">
         <span aria-hidden="true" class="flex gap-2">
           {LIGHTS.map((color) => (
@@ -88,7 +96,7 @@ export function MockWindow({
         {panes.map((pane, i) => (
           <PaneView pane={pane} first={i === 0} prefix={prefix} />
         ))}
-        <div data-inspector hidden class="absolute z-20" />
+        <div data-inspector hidden class="pointer-events-none absolute z-20 data-pinned:pointer-events-auto" />
       </div>
     </div>
   )

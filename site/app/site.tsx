@@ -5,7 +5,6 @@ import { Home } from '@/components/home'
 import { NoSuchMarketplace, NoSuchPalette } from '@/components/marketplace-frame'
 import { MarketplacePage } from '@/components/marketplace-page'
 import { Missing } from '@/components/missing'
-import { SharePage } from '@/components/share-page'
 import { Sheets } from '@/components/sheets'
 import { MarketplaceWorkspace } from '@/components/workspace'
 import { RESTORE_SCRIPT } from '@/lib/builder'
@@ -18,7 +17,7 @@ import { marketplacePath, OFFICIAL, palettePath, palettesPath } from '@/lib/gall
 import { marketplaces } from '@/lib/marketplaces'
 import { fallback, gate, themes } from '@/lib/official'
 import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
-import { builderOf, readShared, type Shared } from '@/lib/share'
+import { readShared, type Shared } from '@/lib/share'
 import { sheetNumber, sheetVars } from '@/lib/sheet'
 import { sheetScript } from '@/lib/sheet-script'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
@@ -34,7 +33,7 @@ import {
 } from '@/lib/titles'
 import { leadOf } from '@/lib/workspace'
 import pkg from '../../package.json' with { type: 'json' }
-import { page } from './document'
+import { type Page, page } from './document'
 
 const facts: Facts = { palettes: themes.length, catalogs: catalogsOf(themes).length, version: pkg.version }
 
@@ -166,6 +165,15 @@ function sharedCard(found: Shared): Card {
     : { kind: 'share', theme: found.theme }
 }
 
+function builder(found: Shared | null, head: Page): Response {
+  const { data, panes } = builderData(found)
+
+  return page(
+    { ...head, module: assets.builder },
+    <BuilderPage data={data} panes={panes} facts={facts} shared={found} />,
+  )
+}
+
 export const site = new Elysia({ name: 'site' })
   .onError('global', NotFound, () =>
     page(
@@ -230,31 +238,70 @@ export const site = new Elysia({ name: 'site' })
       <MarketplacePage themes={themes} marketplaces={marketplaces} facts={facts} />,
     ),
   )
-  .get('/builder', () => {
-    const { data, panes } = builderData()
-
-    return page(
-      {
-        ...builderMeta(),
-        path: '/builder',
-        ...CARD,
-        ld: [
-          crumbs([
-            { name: 'ttheme', path: '/' },
-            { name: 'builder', path: '/builder' },
-          ]),
-        ],
-        cache: CATALOG,
-        head: RESTORE_SCRIPT,
-        module: assets.builder,
-      },
-      <BuilderPage data={data} panes={panes} facts={facts} />,
-    )
-  })
+  .get('/builder', () =>
+    builder(null, {
+      ...builderMeta(),
+      path: '/builder',
+      ...CARD,
+      ld: [
+        crumbs([
+          { name: 'ttheme', path: '/' },
+          { name: 'builder', path: '/builder' },
+        ]),
+      ],
+      cache: CATALOG,
+      head: RESTORE_SCRIPT,
+    }),
+  )
   .get(
     '/builder/palettes.json',
     { catalog: true },
     () => new Response(JSON.stringify(starts()), { headers: { 'content-type': 'application/json; charset=utf-8' } }),
+  )
+  .get('/builder/:code', ({ params, query, request }) => {
+    const found = shared(params.code, query.i)
+
+    if (found instanceof Error)
+      return page(
+        {
+          title: 'ttheme — broken share link',
+          description: 'This share link does not open a palette.',
+          status: 404,
+          cache: RETRY,
+        },
+        <Missing
+          title="broken share link"
+          text={`This link does not open a palette — ${found.message}`}
+          facts={facts}
+        />,
+      )
+
+    const path = new URL(request.url).pathname
+
+    return builder(found, {
+      ...sharedMeta(found.palettes),
+      path,
+      image: `${path}/card.png`,
+      imageAlt: cardAlt(sharedCard(found)),
+      robots: 'noindex',
+      cache: CATALOG,
+    })
+  })
+  .group('/builder/:code', (scope) =>
+    scope
+      .derive(({ params, query, status }) => {
+        const found = shared(params.code, query.i)
+
+        return found instanceof Error ? status(404, gone(found.message)) : { found }
+      })
+      .get('/card.png', { catalog: true }, async ({ found }) => png(await cardPng(sharedCard(found))))
+      .get('/credits.json', async ({ found }) => {
+        const { pictures, complete } = await creditsOf(found)
+
+        return new Response(JSON.stringify(pictures), {
+          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': complete ? CREDITS : RETRY },
+        })
+      }),
   )
   .group('/marketplace/:id', (scope) =>
     scope
@@ -288,50 +335,4 @@ export const site = new Elysia({ name: 'site' })
     '/palettes.json',
     { catalog: true },
     () => new Response(JSON.stringify(themes), { headers: { 'content-type': 'application/json; charset=utf-8' } }),
-  )
-  .get('/p/:code', ({ params, query, request }) => {
-    const found = shared(params.code, query.i)
-
-    if (found instanceof Error)
-      return page(
-        {
-          title: 'ttheme — broken share link',
-          description: 'This share link does not open a palette.',
-          status: 404,
-          cache: RETRY,
-        },
-        <Missing
-          title="broken share link"
-          text={`This link does not open a palette — ${found.message}`}
-          facts={facts}
-        />,
-      )
-
-    return page(
-      {
-        ...sharedMeta(found.palettes),
-        path: new URL(request.url).pathname,
-        image: `${new URL(request.url).pathname}/card.png`,
-        imageAlt: cardAlt(sharedCard(found)),
-        robots: 'noindex',
-        cache: CATALOG,
-      },
-      <SharePage shared={found} builder={builderOf(found)} />,
-    )
-  })
-  .group('/p/:code', (scope) =>
-    scope
-      .derive(({ params, query, status }) => {
-        const found = shared(params.code, query.i)
-
-        return found instanceof Error ? status(404, gone(found.message)) : { found }
-      })
-      .get('/card.png', { catalog: true }, async ({ found }) => png(await cardPng(sharedCard(found))))
-      .get('/credits.json', async ({ found }) => {
-        const { pictures, complete } = await creditsOf(found)
-
-        return new Response(JSON.stringify(pictures), {
-          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': complete ? CREDITS : RETRY },
-        })
-      }),
   )

@@ -1,4 +1,4 @@
-import type { Picture, PictureCredit } from '@/lib/share-view'
+import type { Picture, PictureCredit } from '@/lib/view-types'
 import { linksOf, pageKind, pageLabel, pagesOf, safeUrl } from '../../src/core/artists.ts'
 import { SITES } from '../../src/core/booru.ts'
 import { postCredit } from '../../src/pictures/booru-net.ts'
