@@ -34,8 +34,12 @@ const ZEROCHAN_FILES = 'https://static.zerochan.net'
 const ZEROCHAN_SAMPLES = 'https://s1.zerochan.net'
 export const AGENT = `ttheme/${pkg.version} (+${pkg.homepage})`
 
-const HOSTS = hostMap(process.env.TTHEME_FIND_HOSTS)
-const CUTOUTS = cutoutMap(process.env.TTHEME_FIND_CUTOUTS)
+function setting(key: string): string | undefined {
+  return typeof process === 'undefined' ? undefined : process.env[key]
+}
+
+const HOSTS = hostMap(setting('TTHEME_FIND_HOSTS'))
+const CUTOUTS = cutoutMap(setting('TTHEME_FIND_CUTOUTS'))
 
 export interface Rendition {
   file: string

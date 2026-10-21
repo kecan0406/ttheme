@@ -54,6 +54,7 @@
         "src/cli/refresh.ts",
         "src/cli/release.ts",
         "src/core/booru.ts",
+        "src/core/draft.ts",
         "src/core/manifest.ts",
         "src/core/own.ts",
         "src/core/theme.ts",

@@ -7,19 +7,8 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
 import { readMarketplaceDir, warning } from '../store/local.ts'
-import {
-  codeOf,
-  type Draft,
-  fromCode,
-  paletteToml,
-  readCodes,
-  readOwnText,
-  recolor,
-  resign,
-  shareCode,
-  shareLink,
-  withPictures,
-} from './own.ts'
+import { codeOf, type Draft, paletteToml, readOwnText, shareLink, withPictures } from './draft.ts'
+import { fromCode, readCodes, recolor, resign, shareCode } from './own.ts'
 import { escaped, quoted } from './text.ts'
 import { marketplaceOf } from './theme.ts'
 

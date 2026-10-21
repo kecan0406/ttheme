@@ -11,6 +11,7 @@ import { Wordmark } from './wordmark'
 const NAV = [
   { href: '/sheets', label: 'sheets' },
   { href: '/marketplace', label: 'marketplace' },
+  { href: '/builder', label: 'builder' },
 ] as const
 
 export function SiteHeader({ current, fixed = false }: { current: string; fixed?: boolean }) {

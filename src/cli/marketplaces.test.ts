@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { paletteToml } from '../core/own.ts'
+import { paletteToml } from '../core/draft.ts'
 import { escaped } from '../core/text.ts'
 import { runMarketplace } from './marketplaces.ts'
 

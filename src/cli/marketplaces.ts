@@ -5,8 +5,9 @@ import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
 import { listed, type PaletteEntry, parseManifest } from '../core/manifest.ts'
 import { gateLines } from '../core/own.ts'
+import { marketplaceNameProblem, marketplaceToml, readmeOf } from '../core/scaffold.ts'
 import { ago, counted, escaped, inertLines } from '../core/text.ts'
-import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf, unknownKeys } from '../core/theme.ts'
+import { type Identity, MARKETPLACE_FILE, marketplaceId, marketplaceOf, slugOf, unknownKeys } from '../core/theme.ts'
 import { ROOT } from '../root.ts'
 import { idOf, nameOf, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
@@ -25,14 +26,11 @@ import {
   CATALOG_KEYS,
   cachePath,
   defaultLocal,
-  type Identity,
   isLocal,
   isRemote,
   localIdentity,
   MARKETPLACE_KEYS,
-  marketplaceId,
   marketplacesOf,
-  marketplaceToml,
   OFFICIAL,
   OWNER_KEYS,
   parseSource,
@@ -325,32 +323,20 @@ export function lastUpdate(home: string, source: string, tries = readTries(), no
   return at === undefined ? 'never updated' : `updated ${ago(at, now)}`
 }
 
-export function repoFor({ name }: Identity): string {
-  return `ttheme-${name}`
-}
-
-export function readmeOf(identity: Identity, repo = repoFor(identity)): string {
-  return `# ${marketplaceId(identity)}\n\nA [ttheme](https://github.com/kecan0406/ttheme) marketplace:\n\n\`\`\`sh\nttheme marketplace add ${identity.owner}/${repo}\nttheme\n\`\`\`\n`
-}
-
 function scaffold(dir: string, identity: Identity): void {
   mkdirSync(palettesDir(dir), { recursive: true })
   writeAtomic(join(dir, MARKETPLACE_FILE), marketplaceToml(identity))
   writeAtomic(join(dir, 'README.md'), readmeOf(identity))
 }
 
-function nameProblemOf(name: string): string | undefined {
-  return nameProblem(`x@${name}/x`) ? 'takes lowercase letters, digits and single hyphens' : undefined
-}
-
 async function askName(): Promise<string> {
   if (!interactive()) {
-    throw new Error('name the marketplace: ttheme marketplace init <name>, or --in <name> on new')
+    throw new Error('you have no marketplace of your own yet — `ttheme marketplace init <name>` makes one')
   }
 
   const typed = await p.text({
     message: "Your marketplace's name — its palettes are <you>@<name>/<palette>",
-    validate: (value) => nameProblemOf((value ?? '').toLowerCase()),
+    validate: (value) => marketplaceNameProblem((value ?? '').toLowerCase()),
   })
 
   if (p.isCancel(typed)) {
@@ -401,7 +387,7 @@ async function initLocal(home: string, dir: string, name: string): Promise<Local
   let identity: Identity
 
   if (fresh) {
-    const problem = nameProblemOf(name)
+    const problem = marketplaceNameProblem(name)
 
     if (problem) {
       throw new Error(`the marketplace name ${name} ${problem}`)

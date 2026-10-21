@@ -2,7 +2,7 @@ import { Check, Copy, Eye, Minus, X } from 'lucide'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Icon } from '@/lib/icons'
-import { FORMATS, planeRows, type ShareView, type SlotFormat, type SlotView } from '@/lib/share-view'
+import { FORMATS, type Named, planeRows, type ShareView, type SlotFormat, type SlotView } from '@/lib/share-view'
 
 export function Marks({ signature, miss }: { signature: boolean; miss: boolean }) {
   return (
@@ -166,7 +166,7 @@ export function SlotPopover({
   )
 }
 
-function InspectorRow({ kind, slot, s, tag }: { kind: string; slot: number; s: SlotView; tag: string }) {
+function InspectorRow({ kind, slot, s, tag }: { kind: string; slot: number; s: Named; tag: string }) {
   return (
     <button
       type="button"
@@ -195,14 +195,14 @@ function InspectorRow({ kind, slot, s, tag }: { kind: string; slot: number; s: S
 }
 
 export function InspectorPopover({
-  view,
+  slots,
   text,
   ground,
   tag,
   ratio,
   snippet,
 }: {
-  view: ShareView
+  slots: Named[]
   text: number
   ground: number
   tag: string
@@ -217,8 +217,8 @@ export function InspectorPopover({
           {snippet}
         </span>
       </div>
-      <InspectorRow kind="text" slot={text} s={view.slots[text] as SlotView} tag={tag} />
-      <InspectorRow kind="ground" slot={ground} s={view.slots[ground] as SlotView} tag="" />
+      <InspectorRow kind="text" slot={text} s={slots[text] as Named} tag={tag} />
+      <InspectorRow kind="ground" slot={ground} s={slots[ground] as Named} tag="" />
       <div class="flex items-center justify-between border-t border-border px-3 py-2 text-xs text-muted-foreground">
         contrast
         <b class="font-mono font-semibold text-foreground" safe>

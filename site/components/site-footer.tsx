@@ -19,7 +19,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; brand?: Si
   {
     title: 'your own',
     links: [
-      { label: 'make a palette', href: `${OFFICIAL_URL}#your-own-palettes` },
+      { label: 'make a palette', href: '/builder' },
       { label: 'publish a marketplace', href: `${OFFICIAL_URL}#marketplaces` },
       { label: 'marketplaces on GitHub', href: 'https://github.com/topics/ttheme-marketplace', brand: siGithub },
     ],

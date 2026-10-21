@@ -1,7 +1,9 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs'
-import { dirname } from 'node:path'
+import { homedir } from 'node:os'
+import { basename, dirname, join, resolve } from 'node:path'
 import * as p from '@clack/prompts'
 import { Cancelled } from '../core/cancelled.ts'
+import { codeOf, type Draft, draftOf, paletteSlug, paletteToml, readOwnText, withPictures } from '../core/draft.ts'
 import { fixGate, type Move } from '../core/fix.ts'
 import {
   colorsOfTheme,
@@ -14,20 +16,7 @@ import {
 } from '../core/manifest.ts'
 import { mirror } from '../core/mirror.ts'
 import { type Mode, modeOf } from '../core/mode.ts'
-import {
-  codeOf,
-  type Draft,
-  draftOf,
-  fromCode,
-  gateLines,
-  paletteToml,
-  readCodes,
-  readOwnText,
-  resign,
-  shareCode,
-  withPictures,
-  withShade,
-} from '../core/own.ts'
+import { fromCode, gateLines, readCodes, resign, shareCode, withShade } from '../core/own.ts'
 import { type Colors, grow, SEEDS } from '../core/seeds.ts'
 import { listOf } from '../core/slots.ts'
 import { marketplaceOf, nameProblem, type SharedPicture, shelfOf, type Theme } from '../core/theme.ts'
@@ -147,6 +136,64 @@ export function adopt(home: string, code: string, manifest: Manifest): Adopted {
   }
 
   return { entries, refused }
+}
+
+export function isPaletteFile(arg: string): boolean {
+  return /\.toml$/i.test(arg.trim())
+}
+
+export async function takeFile(
+  home: string,
+  file: string,
+  manifest: Manifest,
+  into: string | undefined,
+): Promise<string> {
+  const path = file.startsWith('~/') ? join(homedir(), file.slice(2)) : resolve(file)
+  let text: string
+
+  try {
+    text = readFileSync(path, 'utf8')
+  } catch {
+    throw new Error(`${file} cannot be read`)
+  }
+
+  const slug = paletteSlug(file, text)
+  const marketplace = await ensureLocal(home, into)
+  const full = `${marketplace.id}/${slug}`
+  const problem = nameProblem(full)
+
+  if (problem) {
+    throw new Error(`${full} ${problem}`)
+  }
+
+  try {
+    readOwnText(full, text, manifest.palettes)
+  } catch (error) {
+    throw new Error(`${file} cannot be added — ${(error as Error).message}`)
+  }
+
+  const target = ownPath(home, full)
+
+  if (existsSync(target) && readFileSync(target, 'utf8') !== text) {
+    if (!interactive()) {
+      throw new Error(
+        `${full} already exists — run this in a terminal to replace it, or \`ttheme edit ${full}\` changes it`,
+      )
+    }
+
+    const replace = await p.confirm({
+      message: `${full} already exists — replace it with ${basename(path)}?`,
+      initialValue: false,
+    })
+
+    if (p.isCancel(replace) || !replace) {
+      throw new Cancelled()
+    }
+  }
+
+  writeAtomic(target, text)
+
+  return full
 }
 
 const SIGNATURE = ['background', 'foreground', 'cursor']

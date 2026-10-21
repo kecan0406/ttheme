@@ -2,8 +2,10 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync } f
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import { Cancelled } from '../core/cancelled.ts'
+import { type Draft, paletteToml, readOwnText, shareLink } from '../core/draft.ts'
 import type { Manifest, PaletteEntry } from '../core/manifest.ts'
-import { type Draft, paletteToml, readOwnText, shareCode, shareLink } from '../core/own.ts'
+import { shareCode } from '../core/own.ts'
+import { readmeOf, repoFor } from '../core/scaffold.ts'
 import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf } from '../core/theme.ts'
 import { available, readMarketplaces, untuned } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
@@ -16,7 +18,7 @@ import { qrCode } from '../tui/qr.ts'
 import { interactive } from '../tui/terminal.ts'
 import { draftFor, named } from './craft.ts'
 import { pickPalettes } from './installs.ts'
-import { newLocal, readmeOf, repoFor } from './marketplaces.ts'
+import { newLocal } from './marketplaces.ts'
 import {
   commitAll,
   createRepo,

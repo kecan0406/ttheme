@@ -9,24 +9,13 @@ import {
   TABS_ROWS,
   validSpot,
 } from '../core/builder-layout.ts'
-import { contrast, type Hex, isHex, luminance, type Oklch, oklch } from '../core/color.ts'
-import {
-  ACCENT_SLOTS,
-  ACHROMATIC,
-  boundOf,
-  check,
-  GATE_RULES,
-  hueGap,
-  measure,
-  missedRules,
-  ROLES,
-  shownOf,
-} from '../core/contrast.ts'
-import { edgeChroma, fixGate, inGamut } from '../core/fix.ts'
+import { contrast, type Hex, isHex, type Oklch } from '../core/color.ts'
+import { boundOf, check, GATE_RULES, measure, missedRules, ROLES, shownOf } from '../core/contrast.ts'
+import { fixGate } from '../core/fix.ts'
+import { PLANE_CHROMA } from '../core/plane.ts'
 import { type Colors, grow, nudge, SEED_FIELDS, SEEDS, type Seeds } from '../core/seeds.ts'
 import {
   BASE,
-  bound,
   colorsOf,
   type Format,
   gatedOf,
@@ -38,9 +27,19 @@ import {
   ruleSlots,
   SLOT_NAMES,
   slotLabel,
-  weakestUnder,
 } from '../core/slots.ts'
 import { inert } from '../core/text.ts'
+import {
+  brightLinks,
+  following,
+  offsetOf,
+  type Partner,
+  parseColor,
+  partnerOf,
+  placed,
+  room,
+  solveLightness,
+} from '../core/tune.ts'
 import type { Tone } from './bar.ts'
 import { edit } from './field.ts'
 import { pastedRefs, type Start } from './find/attach.ts'
@@ -66,7 +65,7 @@ export interface Channel {
 
 export const CHANNELS: Channel[] = [
   { key: 'l', label: 'Lightness', min: 0, max: 1, step: 0.01, digits: 2 },
-  { key: 'c', label: 'Chroma', min: 0, max: 0.37, step: 0.005, digits: 3 },
+  { key: 'c', label: 'Chroma', min: 0, max: PLANE_CHROMA, step: 0.005, digits: 3 },
   { key: 'h', label: 'Hue', min: 0, max: 360, step: 1, digits: 0, wraps: true },
 ]
 
@@ -159,69 +158,6 @@ function lowered(key: string): string {
   return key.length === 1 ? key.toLowerCase() : key
 }
 
-function hexOf(n: number): string {
-  return clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0')
-}
-
-export function parseColor(text: string): Hex | undefined {
-  const t = text.trim().toLowerCase()
-  const hex = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/.exec(t)
-
-  if (hex) {
-    const h = hex[1] as string
-
-    return `#${h.length === 3 ? [...h].map((c) => c + c).join('') : h}`
-  }
-
-  const rgb = /^rgb\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)\s*\)$/.exec(t)
-
-  if (rgb) {
-    return `#${rgb
-      .slice(1, 4)
-      .map((n) => hexOf(Number(n)))
-      .join('')}`
-  }
-
-  const lch = /^oklch\(\s*([\d.]+)(%?)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:deg|°)?\s*\)$/.exec(t)
-
-  if (lch) {
-    const l = Number(lch[1]) / (lch[2] ? 100 : 1)
-
-    return inGamut(clamp(l, 0, 1), Number(lch[3]), Number(lch[4]) % 360)
-  }
-
-  return undefined
-}
-
-interface Partner {
-  against: number
-  floor: number | undefined
-}
-
-function partnerOf(list: Hex[], slot: number, waive: string[]): Partner {
-  const ansi = slot - BASE.length
-
-  const rule =
-    slot <= 1
-      ? 'foreground'
-      : slot === 3
-        ? 'selection'
-        : ansi === 0
-          ? 'ansi0-on-accents'
-          : ansi === 7 || ansi === 15
-            ? 'light-ansi'
-            : ansi === 8
-              ? 'ansi8-visible'
-              : ACCENT_SLOTS.includes(ansi)
-                ? 'accents'
-                : undefined
-
-  return {
-    against: ansi === 0 ? BASE.length + weakestUnder(list) : slot === 0 || slot === 3 ? 1 : 0,
-    floor: rule === undefined || waive.includes(rule) ? undefined : bound(rule),
-  }
-}
-
 interface GateRow {
   ok: boolean | undefined
   label: string
@@ -256,14 +192,6 @@ const ALWAYS = new Set(['reset', 'reset-all', 'hex', 'paste', 'fix', 'open', 'tu
 const NAME_CHAR = /^[a-z0-9@/-]$/
 
 const C_MAX = (CHANNELS[1] as Channel).max
-
-function edge(l: number, h: number): number {
-  return Math.floor(edgeChroma(l, h, C_MAX) * 10_000) / 10_000
-}
-
-function offsetOf(from: Oklch, to: Oklch): Oklch {
-  return { l: to.l - from.l, c: to.c - from.c, h: ((((to.h - from.h) % 360) + 540) % 360) - 180 }
-}
 
 function alongside(range: { min: number; max: number; step: number; wraps?: boolean }, at: number): number {
   const top = range.wraps ? range.max - range.step : range.max
@@ -342,21 +270,9 @@ export class PaletteEditor {
   }
 
   private chain(list: Hex[]): void {
-    this.links = new Map()
+    this.offsets = brightLinks(list)
+    this.links = new Map([...this.offsets.keys()].map((bright) => [bright, bright - 8]))
     this.unlinked = new Set()
-    this.offsets = new Map()
-
-    for (let k = 0; k < 8; k++) {
-      const normal = BASE.length + k
-      const bright = normal + 8
-      const a = this.lchOf(list[normal] as Hex)
-      const b = this.lchOf(list[bright] as Hex)
-
-      if (a.c >= ACHROMATIC && b.c >= ACHROMATIC && hueGap(a.h, b.h) <= 3) {
-        this.links.set(bright, normal)
-        this.offsets.set(bright, offsetOf(a, b))
-      }
-    }
   }
 
   pair(slot: number): { normal: number; bright: number; on: boolean; lift: number } | undefined {
@@ -1466,45 +1382,16 @@ export class PaletteEditor {
 
   private reach(target: number): void {
     const slot = this.slot()
-    const against = this.list[this.partner().against] as Hex
     const at = this.lch[slot] as Oklch
-    const keep = this.holds.get(slot) ?? at.c
-    const colorAt = (l: number) => inGamut(l, Math.min(keep, edge(l, at.h)), at.h)
-    const ratioAt = (l: number) => contrast(colorAt(l), against)
-    const up = luminance(this.list[slot] as Hex) >= luminance(against)
-    const pivot = oklch(against).l
-    const want = Math.max(1, Math.round(target * 100) / 100)
-    const far = up ? 1 : 0
-    let l: number
+    const against = this.list[this.partner().against] as Hex
+    const solved = solveLightness(this.list[slot] as Hex, at, this.holds.get(slot) ?? at.c, against, target)
 
-    if (ratioAt(far) < want) {
-      l = far
-      this.say(`The ratio stops at ${ratioAt(far).toFixed(2)}:1 on this side of the color it is read against`, 'warn')
-    } else {
-      let near = pivot
-      let away = far
-
-      for (let i = 0; i < 24; i++) {
-        const mid = (near + away) / 2
-
-        if (ratioAt(mid) >= want) {
-          away = mid
-        } else {
-          near = mid
-        }
-      }
-
-      l = away
+    if (solved.stops !== undefined) {
+      this.say(`The ratio stops at ${solved.stops.toFixed(2)}:1 on this side of the color it is read against`, 'warn')
     }
 
-    this.place(slot, l, keep, at.h)
-
-    for (let i = 0; i < 40 && l !== far && contrast(this.list[slot] as Hex, against) < want; i++) {
-      l = up ? Math.min(1, l + 0.001) : Math.max(0, l - 0.001)
-      this.place(slot, l, keep, at.h)
-    }
-
-    this.lch = this.lch.with(slot, { ...(this.lch[slot] as Oklch), l: Math.round(l * 10_000) / 10_000 })
+    this.lch = this.lch.with(slot, solved.lch)
+    this.list = this.list.with(slot, solved.hex)
   }
 
   private step(steps: number): void {
@@ -1527,13 +1414,13 @@ export class PaletteEditor {
     const round = (n: number) => Math.round(n * 10_000) / 10_000
 
     if (channel.key === 'c') {
-      const room = edge(at.l, at.h)
+      const most = room(at.l, at.h)
 
-      if (rounded > room) {
-        this.say(`Chroma stops at ${room.toFixed(3)}, the sRGB edge for this lightness and hue`, 'warn')
+      if (rounded > most) {
+        this.say(`Chroma stops at ${most.toFixed(3)}, the sRGB edge for this lightness and hue`, 'warn')
       }
 
-      const next = Math.min(rounded, room)
+      const next = Math.min(rounded, most)
       const delta = next - at.c
       this.holds.set(slot, next)
       this.place(slot, at.l, next, at.h)
@@ -1586,17 +1473,17 @@ export class PaletteEditor {
       if (among.has(bright) && !among.has(normal)) {
         this.unlinked.add(bright)
       } else if (among.has(normal) && !among.has(bright)) {
-        const at = this.lch[normal] as Oklch
-        const by = this.offsets.get(bright) as Oklch
-        this.place(bright, clamp(at.l + by.l, 0, 1), Math.max(0, at.c + by.c), (((at.h + by.h) % 360) + 360) % 360)
+        const moved = following(this.lch[normal] as Oklch, this.offsets.get(bright) as Oklch)
+        this.lch = this.lch.with(bright, moved.lch)
+        this.list = this.list.with(bright, moved.hex)
       }
     }
   }
 
   private place(slot: number, l: number, c: number, h: number): void {
-    const fits = Math.min(c, edge(l, h))
-    this.lch = this.lch.with(slot, { l, c: fits, h })
-    this.list = this.list.with(slot, inGamut(l, fits, h))
+    const at = placed(l, c, h)
+    this.lch = this.lch.with(slot, at.lch)
+    this.list = this.list.with(slot, at.hex)
   }
 
   private take(color: Hex, edit: string): void {

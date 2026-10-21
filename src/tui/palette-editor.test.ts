@@ -4,9 +4,10 @@ import { oklch, rgb } from '../core/color.ts'
 import { check } from '../core/contrast.ts'
 import { type Colors, grow, SEEDS } from '../core/seeds.ts'
 import { gatedOf, listOf } from '../core/slots.ts'
+import { parseColor } from '../core/tune.ts'
 import { gateMisses } from './editor-paint.ts'
 import { renderEditor } from './editor-screen.ts'
-import { CONTRAST, type EditorOptions, PaletteEditor, parseColor } from './palette-editor.ts'
+import { CONTRAST, type EditorOptions, PaletteEditor } from './palette-editor.ts'
 
 const start: Colors = grow(SEEDS)
 const other: Colors = grow({ ...SEEDS, hue: 20, background: 0.15 })

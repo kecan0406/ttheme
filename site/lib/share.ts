@@ -1,34 +1,16 @@
 import { official } from '@/lib/official'
-import type { Picture, ShareView, SlotView } from '@/lib/share-view'
-import { passes } from '@/lib/sheet'
+import { pictureOf } from '@/lib/pictures'
+import type { GateLine, Pane, Picture, Run, ShareView } from '@/lib/share-view'
+import { GRID } from '@/lib/share-view'
+import { gateLinesOf, slotViewOf, viewOf } from '@/lib/slot-view'
 import { toTheme } from '@/lib/theme-entry'
-import type { GateRule, Theme } from '@/lib/themes'
-import { SITES } from '../../src/core/booru.ts'
+import type { Theme } from '@/lib/themes'
 import { footerRows, lights, type Part, paneLines, paneTiles, slotsOfRole } from '../../src/core/builder-layout.ts'
-import { mix } from '../../src/core/color.ts'
-import { inGamut } from '../../src/core/fix.ts'
+import { shareLink } from '../../src/core/draft.ts'
 import type { PaletteEntry } from '../../src/core/manifest.ts'
-import { readCodes, shareLink } from '../../src/core/own.ts'
-import { PLANE_BOTTOM, PLANE_TOP, RAINBOW_C, RAINBOW_L, reach, shareOf } from '../../src/core/plane.ts'
-import {
-  colorText,
-  lchIn,
-  lchTight,
-  listOf,
-  misses,
-  ruleSlots,
-  SLOT_NAMES,
-  slotChecks,
-  slotLabel,
-  slotUse,
-} from '../../src/core/slots.ts'
-import { marketplaceOf, type SharedPicture, slugOf } from '../../src/core/theme.ts'
-
-export const GRID = { cols: 120, rows: 34 }
-
-const PLANE_ROWS = 40
-const HUE_STOPS = 24
-const FAINT = 0.45
+import { readCodes } from '../../src/core/own.ts'
+import { listOf, misses } from '../../src/core/slots.ts'
+import { marketplaceOf, slugOf } from '../../src/core/theme.ts'
 
 export interface Shared {
   code: string
@@ -40,53 +22,10 @@ export interface Shared {
   palettes: Theme[]
 }
 
-export interface Run {
-  text: string
-  t: number
-  g: number
-  bold: boolean
-  faint: boolean
-  cursor: boolean
-}
-
-export interface Pane {
-  name: string
-  body: Run[][]
-  footer: Run[][]
-}
-
-export interface GateLine {
-  rule: GateRule
-  value: number
-  ok: boolean | null
-  slots: number[]
-}
-
 export interface Builder {
   panes: Pane[]
   gate: GateLine[]
   view: ShareView
-}
-
-function framing({ size, position, opacity }: SharedPicture): string {
-  return [
-    size === undefined ? null : size === 'fill' ? 'fill' : `${size}%`,
-    position ?? null,
-    opacity === undefined ? null : `${Math.round(opacity * 100)}% opacity`,
-  ]
-    .filter((part) => part !== null)
-    .join(' · ')
-}
-
-function picture(shared: SharedPicture): Picture {
-  const site = SITES.find((s) => s.key === shared.site)
-
-  return {
-    post: `${site?.name ?? shared.site} #${shared.id}`,
-    href: site ? site.pageUrl(shared.id) : null,
-    framing: framing(shared),
-    credit: null,
-  }
 }
 
 function themeOf(entry: PaletteEntry): Theme {
@@ -106,13 +45,11 @@ export function readShared(code: string, index = 0): Shared {
     link: shareLink(code),
     entry,
     theme: palettes[at] as Theme,
-    pictures: (entry.pictures ?? []).map(picture),
+    pictures: (entry.pictures ?? []).map(pictureOf),
     index: at,
     palettes,
   }
 }
-
-const round = (value: number, digits: number) => Number(value.toFixed(digits))
 
 function runOf(part: Part): Run {
   const { text, ground } = slotsOfRole(part.role)
@@ -127,17 +64,31 @@ function runOf(part: Part): Run {
   }
 }
 
-function hueTrack(): string {
-  const stops = Array.from({ length: HUE_STOPS + 1 }, (_, i) => {
-    const along = i / HUE_STOPS
-
-    return `${inGamut(RAINBOW_L, RAINBOW_C, along * 360)} ${round(along * 100, 2)}%`
-  })
-
-  return `linear-gradient(90deg, ${stops.join(', ')})`
+export interface Scenes {
+  panes: Pane[]
+  uses: number[][]
 }
 
-export function builderOf(shared: Shared, rules: GateRule[]): Builder {
+export function scenePanes(): Scenes {
+  const tiles = paneTiles(GRID.cols, GRID.rows)
+  const lines = tiles.map((tile) => paneLines(tile))
+  const parts = lines.map((pane) => pane.flat())
+
+  const panes = tiles.map((tile, i): Pane => {
+    const runs = (lines[i] ?? []).map((line) => line.map(runOf))
+    const footer = footerRows(tile)
+
+    return { name: tile.name, body: runs.slice(0, runs.length - footer), footer: runs.slice(runs.length - footer) }
+  })
+
+  const uses = Array.from({ length: 20 }, (_, slot) =>
+    parts.map((pane) => pane.filter((part) => lights(part.role, slot)).length),
+  )
+
+  return { panes, uses }
+}
+
+export function builderOf(shared: Shared): Builder {
   const { entry } = shared
 
   const list = listOf({
@@ -151,63 +102,16 @@ export function builderOf(shared: Shared, rules: GateRule[]): Builder {
   const signature = entry.signatureSlots
   const waive = entry.waived ?? []
   const missed = misses(list, signature, waive)
-  const tiles = paneTiles(GRID.cols, GRID.rows)
-  const lines = tiles.map((tile) => paneLines(tile))
-  const parts = lines.map((pane) => pane.flat())
-
-  const panes = tiles.map((tile, i): Pane => {
-    const runs = (lines[i] ?? []).map((line) => line.map(runOf))
-    const footer = footerRows(tile)
-
-    return { name: tile.name, body: runs.slice(0, runs.length - footer), footer: runs.slice(runs.length - footer) }
-  })
-
-  const levels = Array.from(
-    { length: PLANE_ROWS },
-    (_, row) => PLANE_TOP - (row / (PLANE_ROWS - 1)) * (PLANE_TOP - PLANE_BOTTOM),
-  )
-
-  const slots = list.map((hex, slot): SlotView => {
-    const at = lchIn(list, hex)
-    const key = SLOT_NAMES[slot] as string
-    const [l = '', c = '', h = ''] = lchTight(at).trim().split(/\s+/)
-
-    return {
-      key,
-      name: slotLabel(slot).name,
-      hex,
-      formats: { hex, rgb: colorText('rgb', hex, at), oklch: colorText('oklch', hex, at) },
-      lch: [l, c, h],
-      hue: round(at.h, 1),
-      edges: levels.map((level) => round(reach(level, at.h), 4)),
-      x: round(shareOf(at.l, at.c, at.h), 4),
-      y: round(Math.min(1, Math.max(0, (PLANE_TOP - at.l) / (PLANE_TOP - PLANE_BOTTOM))), 4),
-      along: round(at.h / 360, 4),
-      checks: slotChecks(list, signature, waive, slot).map((check) => ({ ok: check.ok ?? null, text: check.text })),
-      use: slotUse(slot),
-      uses: parts.map((pane) => pane.filter((part) => lights(part.role, slot)).length),
-      signature: signature.includes(key),
-      miss: missed.has(slot),
-    }
-  })
-
-  const gate = rules.map((rule, i): GateLine => {
-    const value = entry.gate[i] ?? Number.NaN
-    const ok = waive.includes(rule.rule) ? null : passes({ value, min: rule.min, max: rule.max })
-
-    return { rule, value, ok, slots: ok === false ? ruleSlots(list, signature, waive, rule.rule) : [] }
-  })
+  const { panes, uses } = scenePanes()
+  const slots = list.map((_, slot) => slotViewOf(list, signature, waive, missed, slot, uses[slot] ?? []))
 
   return {
     panes,
-    gate,
-    view: {
-      panes: tiles.map((tile) => tile.name),
-      top: PLANE_TOP,
-      bottom: PLANE_BOTTOM,
-      track: hueTrack(),
-      faint: mix(entry.foreground, entry.background, FAINT),
+    gate: gateLinesOf(list, signature, waive),
+    view: viewOf(
+      list,
+      panes.map((pane) => pane.name),
       slots,
-    },
+    ),
   }
 }

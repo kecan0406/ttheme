@@ -1,7 +1,7 @@
 import { isHex } from '../core/color.ts'
 import { inMode, listed, type PaletteEntry } from '../core/manifest.ts'
 import { counted } from '../core/text.ts'
-import { alphabetical, marketplaceOf } from '../core/theme.ts'
+import { alphabetical, marketplaceId, marketplaceOf } from '../core/theme.ts'
 import { available, idOf, readKept, readMarketplaces, shown, updatesOf } from '../store/available.ts'
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
 import { readMarketplaceDir, warning } from '../store/local.ts'
@@ -13,7 +13,6 @@ import {
   isLocal,
   isRemote,
   localIdentity,
-  marketplaceId,
   marketplacesOf,
   OFFICIAL,
   repoOf,

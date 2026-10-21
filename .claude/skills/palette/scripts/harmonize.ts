@@ -1,5 +1,6 @@
 import { argbFromHex, Hct, hexFromArgb } from '@material/material-color-utilities'
 import { check, ROLE_HUES } from '../../../../src/core/contrast.ts'
+import { colorsToml } from '../../../../src/core/draft.ts'
 import {
   CONTAINER_TONE,
   CURSOR_TONE,
@@ -13,7 +14,7 @@ import {
   TEXT_TONE,
   TONES,
 } from '../../../../src/core/mirror.ts'
-import { colorsToml, withTable } from '../../../../src/core/own.ts'
+import { withTable } from '../../../../src/core/own.ts'
 import type { Theme } from '../../../../src/core/theme.ts'
 import { deltaE } from './delta.ts'
 import { writeMirrors } from './light.ts'

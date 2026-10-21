@@ -33,6 +33,7 @@ interface Page {
   cache: string
   root?: Vars
   head?: string
+  module?: string
 }
 
 function Document({
@@ -45,6 +46,7 @@ function Document({
   ld = [],
   root = [],
   head,
+  module,
   children,
 }: PropsWithChildren<{
   title: string
@@ -56,6 +58,7 @@ function Document({
   ld?: object[]
   root?: Vars
   head?: string
+  module?: string
 }>) {
   return (
     <html
@@ -119,6 +122,7 @@ function Document({
           <script type="application/ld+json">{json(graph)}</script>
         ))}
         <script type="module" src={assets.js} />
+        {module ? <script type="module" src={module} /> : null}
         {assets.reload ? <script type="module">{RELOAD}</script> : INSIGHTS.map((src) => <script defer src={src} />)}
       </head>
       <body>
@@ -138,7 +142,7 @@ function Document({
 }
 
 export function page(
-  { title, description, path, image, imageAlt, robots, ld, status = 200, cache, root, head }: Page,
+  { title, description, path, image, imageAlt, robots, ld, status = 200, cache, root, head, module }: Page,
   body: JSX.Element,
 ): Response {
   const text = `<!doctype html>${html(
@@ -152,6 +156,7 @@ export function page(
       ld={ld}
       root={root}
       head={head}
+      module={module}
     >
       {body}
     </Document>,

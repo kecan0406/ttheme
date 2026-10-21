@@ -11,18 +11,16 @@ import {
   toTheme,
 } from '../core/manifest.ts'
 import { marketplaceLayout, type Report, readMarketplaceFiles } from '../core/own.ts'
-import { MARKETPLACE_FILE, marketplaceOf, shelfOf } from '../core/theme.ts'
+import { type Identity, MARKETPLACE_FILE, marketplaceId, marketplaceOf, shelfOf } from '../core/theme.ts'
 import { writeAtomic } from './edits.ts'
 import { readLocal, warning } from './local.ts'
 import { aliasesFor, containsText } from './names.ts'
 import {
   cachePath,
-  type Identity,
   isLocal,
   isRemote,
   localIdentity,
   type MarketplaceInfo,
-  marketplaceId,
   marketplaceSources,
   OFFICIAL,
   readMarketplaceInfo,

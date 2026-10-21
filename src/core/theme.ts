@@ -120,6 +120,15 @@ export function owned(name: string): string {
   return `ttheme-${stem(name)}`
 }
 
+export interface Identity {
+  owner: string
+  name: string
+}
+
+export function marketplaceId({ owner, name }: Identity): string {
+  return `${owner}@${name}`
+}
+
 export function marketplaceOf(name: string): string | undefined {
   const at = name.indexOf('/')
 

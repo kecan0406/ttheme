@@ -1,4 +1,6 @@
 import { Elysia, NotFound } from 'elysia'
+import assets from '@/assets.json' with { type: 'json' }
+import { BuilderPage } from '@/components/builder-page'
 import { Home } from '@/components/home'
 import { NoSuchMarketplace, NoSuchPalette } from '@/components/marketplace-frame'
 import { MarketplacePage } from '@/components/marketplace-page'
@@ -6,6 +8,8 @@ import { Missing } from '@/components/missing'
 import { SharePage } from '@/components/share-page'
 import { Sheets } from '@/components/sheets'
 import { MarketplaceWorkspace } from '@/components/workspace'
+import { RESTORE_SCRIPT } from '@/lib/builder'
+import { builderData, starts } from '@/lib/builder-page'
 import { type Card, cardAlt, cardPng } from '@/lib/card'
 import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
@@ -19,7 +23,15 @@ import { sheetNumber, sheetVars } from '@/lib/sheet'
 import { sheetScript } from '@/lib/sheet-script'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
 import { inMode, type Marketplace, type Theme } from '@/lib/themes'
-import { marketplaceMeta, marketplacesMeta, paletteMeta, sharedMeta, sheetsMeta, siteMeta } from '@/lib/titles'
+import {
+  builderMeta,
+  marketplaceMeta,
+  marketplacesMeta,
+  paletteMeta,
+  sharedMeta,
+  sheetsMeta,
+  siteMeta,
+} from '@/lib/titles'
 import { leadOf } from '@/lib/workspace'
 import pkg from '../../package.json' with { type: 'json' }
 import { page } from './document'
@@ -76,6 +88,7 @@ export const PRERENDERED: string[] = [
   '/',
   '/sheets',
   '/marketplace',
+  '/builder',
   marketplacePath(null),
   ...themes.map(palettePath),
   ...marketplaces.flatMap((marketplace) => [marketplacePath(marketplace.id), ...marketplace.palettes.map(palettePath)]),
@@ -211,6 +224,32 @@ export const site = new Elysia({ name: 'site' })
       <MarketplacePage themes={themes} marketplaces={marketplaces} facts={facts} />,
     ),
   )
+  .get('/builder', () => {
+    const { data, panes } = builderData()
+
+    return page(
+      {
+        ...builderMeta(),
+        path: '/builder',
+        ...CARD,
+        ld: [
+          crumbs([
+            { name: 'ttheme', path: '/' },
+            { name: 'builder', path: '/builder' },
+          ]),
+        ],
+        cache: CATALOG,
+        head: RESTORE_SCRIPT,
+        module: assets.builder,
+      },
+      <BuilderPage data={data} panes={panes} facts={facts} />,
+    )
+  })
+  .get(
+    '/builder/palettes.json',
+    { catalog: true },
+    () => new Response(JSON.stringify(starts()), { headers: { 'content-type': 'application/json; charset=utf-8' } }),
+  )
   .group('/marketplace/:id', (scope) =>
     scope
       .derive(({ params, status }) => stockOf(params.id) ?? status(404, noMarketplace(params.id)))
@@ -270,7 +309,7 @@ export const site = new Elysia({ name: 'site' })
         robots: 'noindex',
         cache: CATALOG,
       },
-      <SharePage shared={found} builder={builderOf(found, gate)} />,
+      <SharePage shared={found} builder={builderOf(found)} />,
     )
   })
   .group('/p/:code', (scope) =>

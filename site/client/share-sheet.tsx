@@ -1,9 +1,9 @@
 import { PictureRows } from '@/components/picture-list'
-import { InspectorPopover, SlotPopover } from '@/components/share-popovers'
+import { SlotPopover } from '@/components/share-popovers'
 import { html } from '@/lib/render'
 import { FORMATS, type Picture, type ShareView, type SlotFormat } from '@/lib/share-view'
-import { contrast } from '@/lib/sheet'
 import { fill, readJson, reducedMotion } from './dom'
+import { Inspector } from './inspector'
 import { tabKey } from './tabs'
 
 class ShareSheet extends HTMLElement {
@@ -11,9 +11,11 @@ class ShareSheet extends HTMLElement {
   #open: number | null = null
   #format: SlotFormat = 'hex'
   #where = true
-  #inspecting = false
-  #hovered: HTMLElement | null = null
-  #pinned: HTMLElement | null = null
+  #inspector = new Inspector(
+    this,
+    () => this.#view?.slots,
+    () => this.#view?.faint,
+  )
   #watch: ResizeObserver | undefined
 
   #click = (event: MouseEvent) => {
@@ -27,7 +29,7 @@ class ShareSheet extends HTMLElement {
 
     if (pane) return this.#showPane(pane)
 
-    if (target.closest('[data-inspect]')) return this.#inspect(!this.#inspecting)
+    if (target.closest('[data-inspect]')) return this.#inspector.toggle(!this.#inspector.on)
 
     if (target.closest('[data-slot-close]')) return this.#close(true)
 
@@ -39,7 +41,7 @@ class ShareSheet extends HTMLElement {
     if (opener) return this.#choose(Number(opener.dataset.slotOpen), opener)
     const run = target.closest<HTMLElement>('[data-mock] .r')
 
-    if (run && this.#inspecting) return this.#pin(run)
+    if (run && this.#inspector.on) return this.#inspector.pin(run)
 
     if (this.#open !== null && !target.closest('[data-slot-popover]')) this.#close(false)
   }
@@ -52,9 +54,9 @@ class ShareSheet extends HTMLElement {
       return
     }
 
-    if (event.key === 'Escape' && this.#pinned) {
+    if (event.key === 'Escape' && this.#inspector.pinned) {
       event.preventDefault()
-      this.#release()
+      this.#inspector.release()
 
       return
     }
@@ -100,28 +102,6 @@ class ShareSheet extends HTMLElement {
     pop.style.right = `${Math.max(16, window.innerWidth - spot.right)}px`
   }
 
-  #over = (event: PointerEvent) => {
-    if (!this.#inspecting || event.pointerType === 'touch') return
-    const run = (event.target as Element | null)?.closest<HTMLElement>('.r')
-
-    if (!run || run === this.#hovered) return
-    this.#hovered?.removeAttribute('data-hover')
-    this.#hovered = run
-
-    if (run !== this.#pinned) run.setAttribute('data-hover', '')
-
-    if (!this.#pinned) this.#show(run)
-    this.#hint()
-  }
-
-  #leave = () => {
-    this.#hovered?.removeAttribute('data-hover')
-    this.#hovered = null
-
-    if (!this.#pinned) this.#hide()
-    this.#hint()
-  }
-
   connectedCallback() {
     this.#view = readJson<ShareView>(this, 'script[data-share]')
     this.addEventListener('click', this.#click)
@@ -132,12 +112,11 @@ class ShareSheet extends HTMLElement {
     const term = this.querySelector<HTMLElement>('[data-term]')
 
     if (term) {
-      term.addEventListener('pointerover', this.#over)
-      term.addEventListener('pointerleave', this.#leave)
+      term.addEventListener('pointerover', this.#inspector.over)
+      term.addEventListener('pointerleave', this.#inspector.leave)
       this.#watch = new ResizeObserver(() => {
         this.#tail()
-
-        if (this.#pinned) this.#show(this.#pinned)
+        this.#inspector.refresh()
       })
       this.#watch.observe(term)
     }
@@ -192,7 +171,7 @@ class ShareSheet extends HTMLElement {
       panel.hidden = panel.dataset.panePanel !== name
     }
 
-    this.#release()
+    this.#inspector.release()
     this.#tail()
   }
 
@@ -279,111 +258,6 @@ class ShareSheet extends HTMLElement {
     if (!gate) return
     gate.open = true
     gate.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' })
-  }
-
-  #inspect(on: boolean) {
-    this.#inspecting = on
-    this.querySelector('[data-inspect]')?.setAttribute('aria-pressed', String(on))
-    this.querySelector('[data-mock]')?.toggleAttribute('data-inspecting', on)
-
-    if (!on) this.#release()
-    this.#hint()
-  }
-
-  #pin(run: HTMLElement) {
-    const was = this.#pinned
-    was?.removeAttribute('data-pinned')
-    this.#pinned = was === run ? null : run
-
-    if (this.#pinned) {
-      run.removeAttribute('data-hover')
-      run.setAttribute('data-pinned', '')
-      this.#show(run)
-    } else if (this.#hovered === run) {
-      run.setAttribute('data-hover', '')
-      this.#show(run)
-    } else {
-      this.#hide()
-    }
-
-    this.#hint()
-  }
-
-  #release() {
-    this.#pinned?.removeAttribute('data-pinned')
-    this.#hovered?.removeAttribute('data-hover')
-    this.#pinned = null
-    this.#hovered = null
-    this.#hide()
-    this.#hint()
-  }
-
-  #show(run: HTMLElement) {
-    const view = this.#view
-    const term = this.querySelector<HTMLElement>('[data-term]')
-    const box = this.querySelector<HTMLElement>('[data-inspector]')
-
-    if (!view || !term || !box) return
-    const text = Number(run.dataset.t)
-    const ground = Number(run.dataset.g)
-    const faint = run.hasAttribute('data-f')
-    const ink = faint ? view.faint : view.slots[text]?.hex
-    const under = view.slots[ground]?.hex
-
-    if (!ink || !under) return
-    fill(
-      box,
-      html(
-        <InspectorPopover
-          view={view}
-          text={text}
-          ground={ground}
-          tag={faint ? 'faint' : run.classList.contains('font-bold') ? 'bold' : ''}
-          ratio={`${contrast(ink, under).toFixed(2)}:1`}
-          snippet={run.textContent?.trim().slice(0, 24) || '·'}
-        />,
-      ),
-    )
-    const appearing = box.hidden
-    box.hidden = false
-    const card = box.firstElementChild as HTMLElement | null
-
-    if (!card) return
-    const area = term.getBoundingClientRect()
-    const spot = run.getBoundingClientRect()
-    const left = Math.min(spot.left - area.left, term.clientWidth - card.offsetWidth - 8) + term.scrollLeft
-    const below = spot.bottom - area.top + term.scrollTop + 6
-    const above = spot.top - area.top + term.scrollTop - card.offsetHeight - 6
-    const fits = spot.bottom + 6 + card.offsetHeight <= area.bottom
-    box.style.left = `${Math.max(8 + term.scrollLeft, left)}px`
-    box.style.top = `${fits || above < term.scrollTop ? below : above}px`
-
-    if (appearing && !reducedMotion()) {
-      box.animate(
-        [
-          { opacity: 0, transform: 'translateY(4px)' },
-          { opacity: 1, transform: 'none' },
-        ],
-        {
-          duration: 180,
-          easing: 'ease-out',
-        },
-      )
-    }
-  }
-
-  #hide() {
-    const box = this.querySelector<HTMLElement>('[data-inspector]')
-
-    if (!box) return
-    box.hidden = true
-    box.replaceChildren()
-  }
-
-  #hint() {
-    const hint = this.querySelector<HTMLElement>('[data-hint]')
-
-    if (hint) hint.hidden = !this.#inspecting || this.#pinned !== null || this.#hovered !== null
   }
 }
 

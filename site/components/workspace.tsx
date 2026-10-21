@@ -1,6 +1,6 @@
 import { escapeHtml } from '@kitajs/html'
 import { ArrowLeft, ArrowRight, Check, ChevronRight, Search, Star, TriangleAlert } from 'lucide'
-import { type SimpleIcon, siGithub, siNpm } from 'simple-icons'
+import { siGithub } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -8,7 +8,7 @@ import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { catalogsOf, nativeLang } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
-import { INIT, NPM_URL, OFFICIAL, OFFICIAL_URL, palettePath, searchable } from '@/lib/gallery'
+import { INIT, OFFICIAL, palettePath, searchable } from '@/lib/gallery'
 import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { gatePassed } from '@/lib/sheet'
@@ -16,6 +16,7 @@ import { type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { leadOf, neighbors, type Where, type WorkspaceData } from '@/lib/workspace'
+import { AppBar } from './app-bar'
 import { ByMode } from './by-mode'
 import { CommandRow } from './command-row'
 import { GateList, SwatchGrid } from './palette-parts'
@@ -48,12 +49,6 @@ const VIEW_SHOWN: Record<View, string> = {
   test: 'group-has-[input[value=test]:checked]/preview:block',
   colors: 'group-has-[input[value=colors]:checked]/preview:block',
 }
-
-const LINKS: { label: string; href: string; brand?: SimpleIcon }[] = [
-  { label: 'github', href: OFFICIAL_URL, brand: siGithub },
-  { label: 'npm', href: NPM_URL, brand: siNpm },
-  { label: 'report a bug', href: `${OFFICIAL_URL}/issues/new/choose` },
-]
 
 const POPOVER =
   'm-0 w-96 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-lg inset-auto open:flex'
@@ -352,32 +347,6 @@ function MarketplaceFacts({ marketplace, count }: { marketplace: Marketplace | n
   )
 }
 
-function AppBar({ facts, marketplace, count }: { facts: Facts; marketplace: Marketplace | null; count: number }) {
-  return (
-    <footer class="flex flex-none flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t bg-sidebar px-5 py-1.5 text-xs text-muted-foreground app:h-7 app:py-0">
-      <MarketplaceFacts marketplace={marketplace} count={count} />
-      <nav aria-label="project" class="flex flex-wrap items-center gap-x-3.5 gap-y-1">
-        <span>MIT</span>
-        <span class="font-mono" safe>
-          {`v${facts.version}`}
-        </span>
-        {LINKS.map((link) => (
-          <a
-            href={link.href}
-            target="_blank"
-            rel="noopener"
-            class="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
-          >
-            {link.brand ? <BrandIcon icon={link.brand} class="size-3 flex-none" /> : null}
-            <span safe>{link.label}</span>
-            <NewTab class="size-3 flex-none" />
-          </a>
-        ))}
-      </nav>
-    </footer>
-  )
-}
-
 export function MarketplaceWorkspace({
   marketplace,
   palettes,
@@ -517,7 +486,9 @@ export function MarketplaceWorkspace({
           {json(data)}
         </script>
       </marketplace-workspace>
-      <AppBar facts={facts} marketplace={marketplace} count={palettes.length} />
+      <AppBar facts={facts}>
+        <MarketplaceFacts marketplace={marketplace} count={palettes.length} />
+      </AppBar>
     </div>
   )
 }

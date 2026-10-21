@@ -153,6 +153,12 @@ over its own colors, and `R` then `s` in the editor puts them back. `ttheme chec
 yours). Left without a palette, `edit` and `check` ask to use the one the tab
 wears.
 
+The same editor runs in a browser at [ttheme.dev/builder](https://ttheme.dev/builder):
+start from any palette, a share link or blank seeds, tune the twenty colors in both
+modes against the gate, and take the palette as a `.toml` file — `ttheme add
+~/Downloads/rei.toml` puts it in your local marketplace and installs it — as a
+link, or as a marketplace ready to push.
+
 A local marketplace is already a repository layout: `palettes/*.toml` (a folder
 under it, such as `palettes/night/`, is a catalog, which a `[[catalog]]` table in
 `ttheme-marketplace.toml` may give an order, a title and a lead) and the

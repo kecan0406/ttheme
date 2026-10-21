@@ -163,9 +163,9 @@ async function styles(production: boolean, faces: string): Promise<string> {
   return result.css
 }
 
-async function client(production: boolean): Promise<string> {
+async function client(production: boolean): Promise<{ js: string; builder: string }> {
   const result = await Bun.build({
-    entrypoints: [join(SITE, 'client', 'main.ts')],
+    entrypoints: [join(SITE, 'client', 'main.ts'), join(SITE, 'client', 'palette-builder.tsx')],
     outdir: ASSETS,
     naming: production ? '[name]-[hash].[ext]' : '[name].[ext]',
     target: 'browser',
@@ -173,11 +173,18 @@ async function client(production: boolean): Promise<string> {
     sourcemap: production ? 'none' : 'linked',
   })
 
-  const entry = result.outputs.find((output) => output.kind === 'entry-point')
+  const entry = (name: string) => {
+    const output = result.outputs.find((one) => one.kind === 'entry-point' && basename(one.path).startsWith(name))
 
-  if (!result.success || !entry) throw new AggregateError(result.logs, 'the client bundle did not build')
+    return output && `/assets/${basename(output.path)}`
+  }
 
-  return `/assets/${basename(entry.path)}`
+  const js = entry('main')
+  const builder = entry('palette-builder')
+
+  if (!result.success || !js || !builder) throw new AggregateError(result.logs, 'the client bundle did not build')
+
+  return { js, builder }
 }
 
 export async function buildAssets(production: boolean): Promise<void> {
@@ -190,7 +197,7 @@ export async function buildAssets(production: boolean): Promise<void> {
   const manifest = {
     css: shelf.url('site'),
     cjk: shelf.url('cjk'),
-    js: await client(production),
+    ...(await client(production)),
     fonts: PRELOAD.map((name) => shelf.url(name)),
     reload: production ? '' : '/__reload',
   }

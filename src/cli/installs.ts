@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
+import { codeOf, SHARE_URL } from '../core/draft.ts'
 import type { Manifest, PaletteEntry } from '../core/manifest.ts'
-import { codeOf, SHARE_URL } from '../core/own.ts'
 import { alphabetical } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
 import { available, nameOf, readKept, readMarketplaces, updatesOf, writeKept } from '../store/available.ts'
@@ -14,7 +14,7 @@ import { colorless } from '../terminals/osc.ts'
 import type { Pointed } from '../terminals/types.ts'
 import { PalettePrompt, type PickerScope, promptFx } from '../tui/palette-prompt.ts'
 import { pending, say } from '../tui/pending.ts'
-import { adopt, type Refused } from './craft.ts'
+import { adopt, isPaletteFile, type Refused, takeFile } from './craft.ts'
 import { localLine } from './marketplaces.ts'
 import { bringPictures, since } from './pictures.ts'
 import { redrawPictures } from './redraw.ts'
@@ -26,7 +26,7 @@ export function reload(count: number): void {
   say(`\n${count} palettes installed — open a new tab, or reload your terminal config`)
 }
 
-export async function runAdd(asked: string[]): Promise<void> {
+export async function runAdd(asked: string[], into?: string): Promise<void> {
   const link = asked.find((n) => /^https?:\/\//i.test(n.trim()) && !codeOf(n))
 
   if (link) {
@@ -34,30 +34,31 @@ export async function runAdd(asked: string[]): Promise<void> {
   }
 
   const home = configHome()
-  const manifest = readMarketplaces(home)
+  let manifest = readMarketplaces(home)
   const shared = new Map<string, PaletteEntry>()
   const refused: Refused[] = []
+  const listed: string[] = []
 
-  const names = [
-    ...new Set(
-      asked.flatMap((n) => {
-        const code = codeOf(n)
+  for (const n of asked) {
+    const code = codeOf(n)
 
-        if (!code) {
-          return [n]
-        }
+    if (isPaletteFile(n)) {
+      listed.push(await takeFile(home, n, manifest, into))
+      manifest = readMarketplaces(home)
+    } else if (code) {
+      const adopted = adopt(home, code, manifest)
+      refused.push(...adopted.refused)
 
-        const adopted = adopt(home, code, manifest)
-        refused.push(...adopted.refused)
+      for (const entry of adopted.entries) {
+        shared.set(entry.name, entry)
+        listed.push(entry.name)
+      }
+    } else {
+      listed.push(n)
+    }
+  }
 
-        for (const entry of adopted.entries) {
-          shared.set(entry.name, entry)
-        }
-
-        return adopted.entries.map((e) => e.name)
-      }),
-    ),
-  ]
+  const names = [...new Set(listed)]
 
   if (names.length === 0 && refused.length > 0) {
     throw new Error(refused.map((r) => `${r.name} ${r.why}`).join('\n'))

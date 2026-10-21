@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { listed, type PaletteEntry, parseManifest } from '../core/manifest.ts'
 import { untar } from '../core/tarball.ts'
 import { counted } from '../core/text.ts'
-import { MARKETPLACE_FILE, slugOf } from '../core/theme.ts'
+import { MARKETPLACE_FILE, marketplaceId, slugOf } from '../core/theme.ts'
 import { moveRacks } from '../pictures/backdrop.ts'
 import {
   type Archive,
@@ -33,7 +33,6 @@ import {
   isRemote,
   localIdentity,
   type MarketplaceInfo,
-  marketplaceId,
   marketplacesDir,
   marketplacesOf,
   OFFICIAL,

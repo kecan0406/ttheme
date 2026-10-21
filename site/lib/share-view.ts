@@ -1,4 +1,8 @@
+import type { GateRule } from '@/lib/themes'
+
 export const FORMATS = ['hex', 'rgb', 'oklch'] as const
+
+export const GRID = { cols: 120, rows: 34 }
 
 export type SlotFormat = (typeof FORMATS)[number]
 
@@ -25,6 +29,8 @@ export interface SlotView {
   miss: boolean
 }
 
+export type Named = Pick<SlotView, 'name' | 'hex' | 'key'>
+
 export interface PictureLink {
   label: string
   url: string
@@ -48,6 +54,28 @@ export interface Picture {
   credit: PictureCredit | null
 }
 
+export interface Run {
+  text: string
+  t: number
+  g: number
+  bold: boolean
+  faint: boolean
+  cursor: boolean
+}
+
+export interface Pane {
+  name: string
+  body: Run[][]
+  footer: Run[][]
+}
+
+export interface GateLine {
+  rule: GateRule
+  value: number
+  ok: boolean | null
+  slots: number[]
+}
+
 export interface ShareView {
   panes: string[]
   top: number
@@ -57,7 +85,7 @@ export interface ShareView {
   slots: SlotView[]
 }
 
-export function planeRows(view: ShareView, slot: SlotView): string[] {
+export function planeRows(view: Pick<ShareView, 'top' | 'bottom'>, slot: Pick<SlotView, 'edges' | 'hue'>): string[] {
   const last = Math.max(1, slot.edges.length - 1)
 
   return slot.edges.map((edge, row) => {

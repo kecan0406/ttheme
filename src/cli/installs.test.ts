@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { draftOf, paletteToml, shareLink } from '../core/draft.ts'
 import { type Manifest, type PaletteEntry, SCHEMA } from '../core/manifest.ts'
-import { draftOf, shareCode, shareLink } from '../core/own.ts'
+import { shareCode } from '../core/own.ts'
 import { writeOfficial } from '../store/available.ts'
 import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { runAdd, runDefault } from './installs.ts'
-import { withMarketplaces } from './marketplaces.ts'
+import { runMarketplace, withMarketplaces } from './marketplaces.ts'
 import { sync } from './sync.ts'
 
 function entry(name: string, order: number): PaletteEntry {
@@ -107,6 +108,26 @@ test('a share link with several palettes installs each one it can and skips one 
   const sukuna = { ...draftOf(manifest.palettes[2] as PaletteEntry), background: '#000000' }
   await inHome(home, () => runAdd([shareLink(shareCode([geto, sukuna]))]))
   assert.deepEqual(readInstalled(home).palettes, ['gojo', 'geto'])
+})
+
+test('a palette file joins your local marketplace under its own name and installs, and a changed copy is not taken over it', async () => {
+  const home = installedHome(['gojo'])
+  writeInstalled(home, { ...readInstalled(home), author: 'kec' })
+  await inHome(home, () => runMarketplace('init', 'mine'))
+  const file = join(mkdtempSync(join(tmpdir(), 'ttheme-file-')), 'kisara (1).toml')
+  const kisara = { ...draftOf(manifest.palettes[1] as PaletteEntry), name: 'kisara', background: '#101010' }
+  writeFileSync(file, paletteToml(kisara))
+  await inHome(home, () => runAdd([file]))
+  assert.deepEqual(readInstalled(home).palettes, ['gojo', 'kec@mine/kisara'])
+  const kept = join(home, 'ttheme', 'marketplace', 'mine', 'palettes', 'kisara.toml')
+  assert.equal(readFileSync(kept, 'utf8'), readFileSync(file, 'utf8'))
+  await inHome(home, () => runAdd([file]))
+  writeFileSync(file, paletteToml({ ...kisara, background: '#202020' }))
+  await assert.rejects(
+    inHome(home, () => runAdd([file])),
+    /kec@mine\/kisara already exists/,
+  )
+  assert.match(readFileSync(kept, 'utf8'), /#101010/)
 })
 
 test('installed.json keeps an auto-update setting only where it differs from the default', () => {

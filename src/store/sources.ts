@@ -3,7 +3,7 @@ import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
 import { escaped, inert } from '../core/text.ts'
-import { type Catalog, MARKETPLACE_FILE, MARKETPLACE_SCHEMA_URL, nameProblem, readCatalogs } from '../core/theme.ts'
+import { type Catalog, type Identity, MARKETPLACE_FILE, nameProblem, readCatalogs } from '../core/theme.ts'
 
 export const OFFICIAL = 'official'
 
@@ -149,15 +149,6 @@ function marketplaceProblem(owner: unknown, name: unknown): string | undefined {
   return nameProblem(`${owner}@${name}/x`)
 }
 
-export interface Identity {
-  owner: string
-  name: string
-}
-
-export function marketplaceId({ owner, name }: Identity): string {
-  return `${owner}@${name}`
-}
-
 export interface Owner {
   name: string
   email?: string
@@ -170,10 +161,6 @@ export interface MarketplaceInfo extends Identity {
   catalogs: Catalog[]
   renames: Record<string, string | false>
   forceRemove: boolean
-}
-
-export function marketplaceToml({ owner, name }: Identity): string {
-  return `"$schema" = ${JSON.stringify(MARKETPLACE_SCHEMA_URL)}\nname = ${JSON.stringify(name)}\n\n[owner]\nname = ${JSON.stringify(owner)}\n`
 }
 
 function shown(where: string, key: string, value: unknown, kind: string): string {

@@ -3,7 +3,7 @@ import type { Facts } from '@/lib/facts'
 import { NPM_URL, OFFICIAL_REPO, OFFICIAL_URL } from '@/lib/gallery'
 import { siteMeta } from '@/lib/titles'
 import pkg from '../../package.json' with { type: 'json' }
-import { SHARE_URL } from '../../src/core/own.ts'
+import { SHARE_URL } from '../../src/core/draft.ts'
 import { revision } from './embed.ts' with { type: 'macro' }
 
 export const ORIGIN = new URL(SHARE_URL).origin

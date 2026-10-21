@@ -1,6 +1,7 @@
 import { constants, deflateSync, inflateSync } from 'node:zlib'
 import { PNG } from 'pngjs'
 import { type Hex, rgb } from './color.ts'
+import { crc32 } from './crc.ts'
 import { decodeJpeg, exifTurn } from './jpeg.ts'
 
 export interface Rgba {
@@ -924,26 +925,6 @@ export function alphaOf(image: Rgba): Mask {
   }
 
   return { width: image.width, height: image.height, data }
-}
-
-const CRC = Array.from({ length: 256 }, (_, n) => {
-  let c = n
-
-  for (let k = 0; k < 8; k++) {
-    c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
-  }
-
-  return c >>> 0
-})
-
-function crc32(bytes: Uint8Array): number {
-  let c = 0xffffffff
-
-  for (const byte of bytes) {
-    c = (CRC[(c ^ byte) & 0xff] ?? 0) ^ (c >>> 8)
-  }
-
-  return (c ^ 0xffffffff) >>> 0
 }
 
 function chunk(type: string, data: Uint8Array): Buffer {

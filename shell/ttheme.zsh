@@ -1975,6 +1975,10 @@ if (( ${+functions[compdef]} )); then
       done
       (( named )) || compadd -- $TTHEME_ORDER
       (( flagged )) || compadd -- $flag
+    elif [[ $words[2] == add && $words[CURRENT-1] == --in ]]; then
+      _files -/
+    elif [[ $words[2] == add ]]; then
+      _files -g '*.toml'
     elif [[ $words[2] == new && $words[CURRENT-1] == --from ]]; then
       compadd -- $TTHEME_ORDER
     elif [[ $words[2] == new && $words[CURRENT-1] == --in ]]; then

@@ -3,8 +3,8 @@ import { join } from 'node:path'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { type MarketplaceFile, marketplaceLayout, type Report, readMarketplaceFiles } from '../core/own.ts'
 import { escaped } from '../core/text.ts'
-import { type Catalog, marketplaceOf, slugOf } from '../core/theme.ts'
-import { type Identity, isLocal, localIdentity, marketplaceId, marketplaceSources } from './sources.ts'
+import { type Catalog, type Identity, marketplaceId, marketplaceOf, slugOf } from '../core/theme.ts'
+import { isLocal, localIdentity, marketplaceSources } from './sources.ts'
 
 export interface LocalMarketplace extends Identity {
   dir: string

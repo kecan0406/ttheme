@@ -1,0 +1,1494 @@
+import { FilePanel, LinkPanel, MarketSteps } from '@/components/builder-export'
+import {
+  BarDots,
+  BaseRows,
+  ChangedLabel,
+  Checks,
+  ContrastHead,
+  FileNote,
+  GateSummary,
+  Lch,
+  MarkTile,
+  ModeNote,
+  Modes,
+  PairRows,
+  Picker,
+  PickerActions,
+  PickerHead,
+  PicturesBox,
+  PlaneRows,
+  SeedStrip,
+  SignatureDots,
+  StartLabel,
+  StatusText,
+} from '@/components/builder-parts'
+import { StartEntries } from '@/components/builder-start'
+import { GateRows } from '@/components/slot-list'
+import {
+  type BuilderData,
+  blankEdit,
+  changedIn,
+  changes,
+  draftFrom,
+  type Edit,
+  editOf,
+  followMirror,
+  kept,
+  listIn,
+  madeMode,
+  modeOfView,
+  nameTrouble,
+  originIn,
+  resetAll,
+  STORE,
+  type Start,
+  type Stored,
+  storedOf,
+  type View,
+  withSlot,
+} from '@/lib/builder'
+import {
+  aboutOf,
+  dotsOf,
+  exportProblem,
+  fileOf,
+  gateOf,
+  type LinkView,
+  marketOf,
+  modesOf,
+  type PickerView,
+  pickerOf,
+  type RowFormat,
+  ratioAt,
+  rowsOf,
+  type StartGroup,
+  type StartList,
+  seedRowsOf,
+  slotVars,
+  statusOf,
+} from '@/lib/builder-view'
+import { nativeLang } from '@/lib/catalogs'
+import type { Mode } from '@/lib/mode'
+import { html } from '@/lib/render'
+import { FORMATS, type SlotFormat } from '@/lib/share-view'
+import { hueTrack } from '@/lib/slot-view'
+import { textDraft, webCode, webDrafts } from '@/lib/web-code'
+import { type Hex, mix, type Oklch } from '../../src/core/color.ts'
+import { codeOf, type Draft, shareLink } from '../../src/core/draft.ts'
+import { PLANE_BOTTOM, PLANE_TOP, reach } from '../../src/core/plane.ts'
+import { marketplaceToml, readmeOf, repoFor } from '../../src/core/scaffold.ts'
+import { grow, SEED_FIELDS, SEEDS, type Seeds } from '../../src/core/seeds.ts'
+import { lchIn, listOf, misses, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
+import { ago } from '../../src/core/text.ts'
+import {
+  brightLinks,
+  following,
+  offsetOf,
+  parseColor,
+  partnerOf,
+  placed,
+  room,
+  solveLightness,
+} from '../../src/core/tune.ts'
+import { zip } from '../../src/core/zip.ts'
+import { announce, fill, readJson, reducedMotion } from './dom'
+import { Inspector } from './inspector'
+import { composing, typing } from './keys'
+import { tabKey } from './tabs'
+
+interface Snapshot {
+  made: Hex[]
+  other: Edit['other']
+  signature: string[]
+}
+
+const ORDER = [0, 1, 2, 3, ...Array.from({ length: 8 }, (_, k) => [4 + k, 12 + k]).flat()]
+
+const SAVE_MS = 400
+
+const at = (value: number) => `${(value * 100).toFixed(2)}%`
+
+const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value))
+
+const freshId = () => crypto.randomUUID()
+
+function snapshotOf(edit: Edit): Snapshot {
+  return {
+    made: [...edit.made],
+    other: { base: edit.other.base ? [...edit.other.base] : null, tuned: { ...edit.other.tuned } },
+    signature: [...edit.signature],
+  }
+}
+
+function readStore(): Stored | null {
+  try {
+    return storedOf(localStorage.getItem(STORE))
+  } catch {
+    return null
+  }
+}
+
+function groupsOf(starts: Start[], query: string): StartGroup[] {
+  const q = query.trim().toLowerCase()
+
+  const hits = starts.filter(
+    (start) =>
+      !q ||
+      start.name.toLowerCase().includes(q) ||
+      start.shelf.toLowerCase().includes(q) ||
+      (start.native ?? '').toLowerCase().includes(q),
+  )
+
+  return [...Map.groupBy(hits, (start) => start.shelf)].map(([shelf, palettes]) => {
+    const native = palettes[0]?.native ?? null
+
+    return {
+      title: shelf,
+      native,
+      lang: nativeLang({ native, marketplace: palettes[0]?.name.includes('@') ? shelf : null }),
+      palettes: palettes.map((start) => ({
+        name: start.name,
+        label: start.name.slice(start.name.indexOf('/') + 1),
+        dots: start.dots,
+        lead: start.lead,
+      })),
+    }
+  })
+}
+
+class PaletteBuilder extends HTMLElement {
+  #data: BuilderData | undefined
+  #edit: Edit | undefined
+  #view: View = 'made'
+  #format: SlotFormat = 'hex'
+  #rows: RowFormat = 'hex'
+  #open: number | null = null
+  #where = true
+  #only = false
+  #history: Snapshot[] = []
+  #future: Snapshot[] = []
+  #last: string | undefined
+  #links = new Map<number, Oklch>()
+  #unlinked = new Set<number>()
+  #keep = 0
+  #seeds: Seeds | null = null
+  #before: Edit | null = null
+  #starts: Start[] | null = null
+  #loading: Promise<void> | null = null
+  #startFailed = false
+  #query = ''
+  #choices: Draft[] = []
+  #stored: Stored | null = null
+  #saving = 0
+  #market = { owner: '', name: '', description: '' }
+  #link: { key: string; view: LinkView } | null = null
+  #urls = new Map<string, string>()
+  #shown = new WeakMap<Element, string>()
+  #dragging: 'plane' | null = null
+  #frame = 0
+  #pending: (() => void) | null = null
+  #inspector = new Inspector(
+    this,
+    () => this.#named(),
+    () => {
+      const list = this.#list()
+
+      return mix(list[1] as Hex, list[0] as Hex, 0.45)
+    },
+  )
+
+  connectedCallback() {
+    this.#data = readJson<BuilderData>(this, 'script[data-builder]')
+    this.#stored = readStore()
+    const current = this.#stored?.drafts.find((draft) => draft.id === this.#stored?.current)
+    this.#edit = current ?? editOf(this.#data.first.draft, this.#data.first.name, false, freshId(), Date.now())
+    this.#relink()
+    this.addEventListener('click', this.#click)
+    this.addEventListener('input', this.#input)
+    this.addEventListener('change', this.#change)
+    this.addEventListener('keydown', this.#key)
+    this.addEventListener('pointerdown', this.#press)
+    this.addEventListener('toggle', this.#toggled, true)
+    this.querySelector('#builder-start')?.addEventListener('beforetoggle', this.#placeStart)
+    addEventListener('pagehide', this.#flush)
+    const term = this.querySelector<HTMLElement>('[data-term]')
+    term?.addEventListener('pointerover', this.#inspector.over)
+    term?.addEventListener('pointerleave', this.#inspector.leave)
+    this.#render()
+    this.#tail()
+    document.documentElement.removeAttribute('data-restoring')
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('click', this.#click)
+    this.removeEventListener('input', this.#input)
+    this.removeEventListener('change', this.#change)
+    this.removeEventListener('keydown', this.#key)
+    this.removeEventListener('pointerdown', this.#press)
+    this.removeEventListener('toggle', this.#toggled, true)
+    removeEventListener('pagehide', this.#flush)
+    this.#flush()
+
+    for (const url of this.#urls.values()) URL.revokeObjectURL(url)
+  }
+
+  get #state(): Edit {
+    return this.#edit as Edit
+  }
+
+  #list(): Hex[] {
+    return listIn(this.#state, this.#view)
+  }
+
+  #named() {
+    const list = this.#list()
+
+    return list.map((hex, slot) => ({ hex, key: SLOT_NAMES[slot] as string, name: slotLabel(slot).name }))
+  }
+
+  #fill(target: Element | null, markup: string) {
+    if (!target || this.#shown.get(target) === markup) return
+    this.#shown.set(target, markup)
+    fill(target, markup)
+  }
+
+  #relink() {
+    this.#links = brightLinks(originIn(this.#state, this.#view))
+    this.#unlinked = new Set()
+  }
+
+  #linked(): Set<number> {
+    return new Set([...this.#links.keys()].filter((bright) => !this.#unlinked.has(bright)))
+  }
+
+  #remember(kind: string) {
+    if (kind === this.#last && !kind.startsWith('!')) return
+    this.#history.push(snapshotOf(this.#state))
+    this.#future = []
+    this.#last = kind
+
+    if (this.#history.length > 200) this.#history.shift()
+  }
+
+  #settle() {
+    this.#last = undefined
+  }
+
+  #commit(next: Edit) {
+    this.#edit = { ...next, at: Date.now() }
+    this.#render()
+    this.#save()
+  }
+
+  #set(slot: number, hex: Hex, kind: string) {
+    const edit = this.#state
+
+    if (listIn(edit, this.#view)[slot] === hex) return
+    this.#remember(kind)
+    let next = withSlot(edit, this.#view, slot, hex)
+    const moved = new Set([slot])
+
+    for (const [bright, by] of this.#links) {
+      if (this.#unlinked.has(bright)) continue
+      const normal = bright - 8
+
+      if (moved.has(bright) && !moved.has(normal)) {
+        this.#unlinked.add(bright)
+      } else if (moved.has(normal) && !moved.has(bright)) {
+        const list = listIn(next, this.#view)
+        next = withSlot(next, this.#view, bright, following(lchIn(list, list[normal] as Hex), by).hex)
+      }
+    }
+
+    this.#commit(next)
+  }
+
+  #save() {
+    window.clearTimeout(this.#saving)
+    this.#saving = window.setTimeout(this.#flush, SAVE_MS)
+  }
+
+  #flush = () => {
+    if (!this.#saving) return
+    window.clearTimeout(this.#saving)
+    this.#saving = 0
+
+    try {
+      const next = kept(this.#stored ?? { current: null, drafts: [] }, this.#state)
+      localStorage.setItem(STORE, JSON.stringify(next))
+      this.#stored = next
+    } catch {
+      this.#stored = null
+    }
+
+    this.#renderStatus()
+  }
+
+  #schedule(work: () => void) {
+    this.#pending = work
+
+    if (this.#frame) return
+    this.#frame = requestAnimationFrame(() => {
+      this.#frame = 0
+      const run = this.#pending
+      this.#pending = null
+      run?.()
+    })
+  }
+
+  #render() {
+    const edit = this.#state
+    const list = this.#list()
+    const waive = edit.meta.waive ?? []
+    const missed = misses(list, edit.signature, waive)
+    const changed = changedIn(edit, this.#view)
+    const gate = gateOf(list, edit.signature, waive)
+    const mock = this.querySelector<HTMLElement>('[data-mock]')
+
+    for (const part of slotVars(list).split(';')) {
+      const [name, value] = part.split(':') as [string, string]
+      mock?.style.setProperty(name, value)
+    }
+
+    this.#fill(this.querySelector('[data-bar-dots]'), html(<BarDots dots={dotsOf(list, edit.signature)} />))
+    this.#fill(this.querySelector('[data-changed-label]'), html(<ChangedLabel count={changes(edit)} />))
+    this.querySelector('[data-changed]')?.setAttribute('aria-pressed', String(this.#only))
+    this.#enable('[data-undo]', this.#history.length > 0)
+    this.#enable('[data-redo]', this.#future.length > 0)
+    this.#enable('[data-reset]', changes(edit) > 0)
+    this.#renderName()
+
+    const rows = rowsOf(list, edit.signature, missed, changed, this.#rows, this.#open, this.#linked(), this.#only)
+    this.#fill(this.querySelector('[data-base-rows]'), html(<BaseRows rows={rows.base} />))
+    this.#fill(this.querySelector('[data-pair-rows]'), html(<PairRows pairs={rows.pairs} />))
+    const empty = this.querySelector<HTMLElement>('[data-rows-empty]')
+
+    if (empty) empty.hidden = !(this.#only && rows.empty)
+    this.#fill(this.querySelector('[data-gate-summary]'), html(<GateSummary gate={gate} misses={missed.size} />))
+    const names = this.#named().map((slot) => slot.name)
+    this.#fill(this.querySelector('[data-gate-rows]'), html(<GateRows lines={gate.lines} names={names} />))
+    const count = this.querySelector('[data-count="gate"]')
+
+    if (count) count.textContent = `${gate.passed}/${gate.lines.length}`
+    const note = this.querySelector<HTMLElement>('[data-mode-note]')
+
+    if (note) {
+      note.hidden = this.#view === 'made'
+
+      if (this.#view === 'other') this.#fill(note, html(<ModeNote modes={modesOf(edit)} />))
+    }
+
+    const made = madeMode(edit)
+    const editing = modeOfView(edit, this.#view)
+
+    for (const button of this.querySelectorAll<HTMLElement>('[data-edit-mode]')) {
+      button.setAttribute('aria-pressed', String(button.dataset.editMode === editing))
+      const dot = button.querySelector<HTMLElement>('[data-made-dot]')
+
+      if (dot) dot.hidden = button.dataset.editMode !== made
+    }
+
+    this.#renderPicker()
+    this.#renderAbout()
+    this.#renderSeeds()
+    this.#renderStatus()
+    this.#renderExport()
+    this.#inspector.redraw()
+    this.#light()
+  }
+
+  #enable(selector: string, on: boolean) {
+    const button = this.querySelector<HTMLButtonElement>(selector)
+
+    if (button) button.disabled = !on
+  }
+
+  #renderName() {
+    const edit = this.#state
+    const problem = nameTrouble(edit.name)
+
+    for (const input of this.querySelectorAll<HTMLInputElement>('[data-name], [data-about-name]')) {
+      if (input.value !== edit.name && document.activeElement !== input) input.value = edit.name
+      input.setAttribute('aria-invalid', String(problem !== undefined))
+    }
+
+    const shown = this.querySelector<HTMLElement>('[data-name-problem]')
+
+    if (shown) {
+      shown.hidden = problem === undefined
+      shown.textContent = problem ? `the name ${problem}` : ''
+    }
+
+    const title = this.querySelector('[data-export-name]')
+
+    if (title) title.textContent = edit.name
+    this.#fill(this.querySelector('[data-start-label]'), html(<StartLabel source={edit.source} />))
+  }
+
+  #renderStatus() {
+    const status = statusOf(this.#state, this.#stored !== null)
+    this.#fill(document.querySelector('[data-status]'), html(<StatusText status={status} />))
+  }
+
+  #renderAbout() {
+    const edit = this.#state
+    const about = aboutOf(edit, this.#view)
+    const box = this.querySelector<HTMLElement>('[data-panel-body="about"]')
+
+    if (!box) return
+    this.#fill(this.querySelector('[data-file-note]'), html(<FileNote about={about} />))
+    this.#fill(this.querySelector('[data-mark-tile]'), html(<MarkTile about={about} />))
+    const dots = this.querySelector('[data-signature-dots]')
+
+    if (dots && !dots.contains(document.activeElement)) this.#fill(dots, html(<SignatureDots about={about} />))
+    const trouble = this.querySelector<HTMLElement>('[data-signature-trouble]')
+
+    if (trouble) trouble.hidden = !about.trouble
+    this.#fill(this.querySelector('[data-modes]'), html(<Modes modes={modesOf(edit)} />))
+    const pictures = this.querySelector('[data-pictures]')
+
+    if (pictures && !pictures.contains(document.activeElement))
+      this.#fill(pictures, html(<PicturesBox about={about} />))
+
+    for (const input of this.querySelectorAll<HTMLInputElement>('[data-meta]')) {
+      const value = input.dataset.meta === 'booru' ? about.booru : about.ansiSource
+
+      if (input.value !== value && document.activeElement !== input) input.value = value
+    }
+  }
+
+  #renderSeeds() {
+    const seeds = this.#seeds
+    const colors = this.querySelector<HTMLElement>('[data-panel-body="colors"]')
+    const body = this.querySelector<HTMLElement>('[data-panel-body="seeds"]')
+    const first = this.querySelector('[data-first-tab]')
+
+    if (first) first.textContent = seeds ? 'seeds' : 'colors'
+
+    if (!seeds) {
+      if (body && !body.hidden) {
+        body.hidden = true
+
+        if (colors && this.#panel() === 'colors') colors.hidden = false
+      }
+
+      return
+    }
+
+    if (body) body.hidden = this.#panel() !== 'colors'
+
+    if (colors) colors.hidden = true
+
+    for (const row of seedRowsOf(seeds)) {
+      const shown = this.querySelector(`[data-seed-value="${row.key}"]`)
+
+      if (shown) shown.textContent = row.shown
+      const input = this.querySelector<HTMLInputElement>(`[data-seed="${row.key}"]`)
+
+      if (input && document.activeElement !== input && Number(input.value) !== row.value)
+        input.value = String(row.value)
+    }
+
+    this.#fill(this.querySelector('[data-seed-strip]'), html(<SeedStrip list={this.#state.made} />))
+    const gate = gateOf(this.#state.made, this.#state.signature, [])
+    const passed = this.querySelector('[data-seed-gate]')
+
+    if (passed) passed.textContent = `${gate.passed} / ${gate.lines.length} floors`
+  }
+
+  #panel(): string {
+    return this.querySelector<HTMLElement>('[data-panel][aria-selected="true"]')?.dataset.panel ?? 'colors'
+  }
+
+  #pickerView(slot: number): PickerView {
+    const edit = this.#state
+    const list = this.#list()
+    const waive = edit.meta.waive ?? []
+    const link = slot >= 4 ? (this.#linked().has(slot >= 12 ? slot : slot + 8) ? 'on' : 'off') : null
+
+    return pickerOf(
+      list,
+      originIn(edit, this.#view),
+      slot,
+      edit.signature,
+      waive,
+      misses(list, edit.signature, waive),
+      this.#data?.uses[slot] ?? [],
+      link,
+      this.#format,
+      this.#where,
+    )
+  }
+
+  #renderPicker() {
+    const box = this.querySelector<HTMLElement>('[data-picker]')
+    const slot = this.#open
+
+    if (!box || slot === null || box.hidden || !box.firstElementChild) return
+    const p = this.#pickerView(slot)
+    const { s } = p
+    this.#fill(this.querySelector('[data-picker-head]'), html(<PickerHead p={p} />))
+    const rows = this.querySelector<HTMLElement>('[data-plane-rows]')
+
+    if (rows?.dataset.hue !== String(s.hue)) {
+      if (rows) rows.dataset.hue = String(s.hue)
+      this.#fill(rows, html(<PlaneRows s={s} />))
+    }
+
+    this.#place('[data-thumb-plane]', s.x, s.y)
+    this.#place('[data-thumb-hue]', s.along, 0.5)
+    this.#place('[data-thumb-contrast]', p.partner.at, 0.5)
+    const origin = p.origin
+
+    for (const [selector, x, y] of [
+      ['[data-origin-plane]', origin?.x, origin?.y],
+      ['[data-origin-hue]', origin?.along, 0.5],
+    ] as const) {
+      const mark = this.querySelector<HTMLElement>(selector)
+
+      if (!mark) continue
+      mark.hidden = !origin
+
+      if (origin && x !== undefined && y !== undefined) this.#place(selector, x, y)
+    }
+
+    this.#fill(this.querySelector('[data-lch]'), html(<Lch s={s} />))
+    this.#fill(this.querySelector('[data-contrast-head]'), html(<ContrastHead p={p} />))
+    this.#value('[data-plane-l]', Math.round(Number(s.lch[0]) * 100))
+    this.#value('[data-plane-c]', Math.round(s.x * 100))
+    this.#value('[data-hue]', Math.round(s.hue) % 360)
+    this.#value('[data-contrast]', Math.round(p.partner.at * 1000))
+    this.querySelector('[data-contrast]')?.setAttribute('aria-valuetext', `${p.partner.ratio.toFixed(2)} to 1`)
+    const value = this.querySelector<HTMLInputElement>('[data-value]')
+    const text = s.formats[p.format]
+
+    if (value && document.activeElement !== value) {
+      value.value = text
+      value.setAttribute('aria-invalid', 'false')
+      this.querySelector<HTMLElement>('[data-bad]')?.toggleAttribute('hidden', true)
+    }
+
+    const copy = this.querySelector<HTMLElement>('[data-picker-card] [data-copy]')
+
+    if (copy) copy.dataset.copy = text
+    this.#fill(this.querySelector('[data-checks]'), html(<Checks s={s} />))
+    this.querySelector('[data-picker-card] [data-where]')?.setAttribute('aria-pressed', String(this.#where))
+    this.#fill(this.querySelector('[data-picker-actions]'), html(<PickerActions p={p} />))
+  }
+
+  #place(selector: string, x: number, y: number) {
+    const mark = this.querySelector<HTMLElement>(selector)
+
+    if (!mark) return
+    mark.style.left = at(x)
+    mark.style.top = at(y)
+  }
+
+  #value(selector: string, value: number) {
+    const input = this.querySelector<HTMLInputElement>(selector)
+
+    if (input && document.activeElement !== input && Number(input.value) !== value) input.value = String(value)
+  }
+
+  #openSlot(slot: number) {
+    const data = this.#data
+    const box = this.querySelector<HTMLElement>('[data-picker]')
+
+    if (!data || !box) return
+    this.#showPanel('colors')
+
+    if (this.#seeds) this.#keepSeeds()
+    const row = this.querySelector<HTMLElement>(`[data-row="${slot}"]`)
+    const group = row?.closest('details')
+
+    if (group && !group.open) group.open = true
+    this.#open = slot
+    this.#keep = lchIn(this.#list(), this.#list()[slot] as Hex).c
+    this.#settle()
+    const p = this.#pickerView(slot)
+    this.#shown.delete(box)
+    fill(box, html(<Picker p={p} track={hueTrack()} panes={data.panes} />))
+    box.hidden = false
+    this.#render()
+    this.#placePicker()
+    box.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' })
+  }
+
+  #placePicker() {
+    const box = this.querySelector<HTMLElement>('[data-picker]')
+    const row = this.#open === null ? null : this.querySelector<HTMLElement>(`[data-row="${this.#open}"]`)
+
+    if (!box || !row) return
+    const anchor = row.closest<HTMLElement>('[data-pair]') ?? row
+    box.style.top = `${anchor.offsetTop + anchor.offsetHeight + 4}px`
+  }
+
+  #close(refocus: boolean) {
+    const slot = this.#open
+    const box = this.querySelector<HTMLElement>('[data-picker]')
+
+    if (slot === null) return
+    this.#open = null
+    this.#settle()
+
+    if (box) {
+      box.hidden = true
+      box.replaceChildren()
+      this.#shown.delete(box)
+    }
+
+    this.#render()
+
+    if (refocus) this.querySelector<HTMLElement>(`[data-slot-open="${slot}"]`)?.focus()
+  }
+
+  #light() {
+    const mock = this.querySelector<HTMLElement>('[data-mock]')
+
+    if (!mock) return
+    const slot = this.#where && this.#open !== null ? String(this.#open) : null
+
+    if (mock.dataset.lit === (slot ?? '')) return
+    mock.dataset.lit = slot ?? ''
+
+    for (const run of mock.querySelectorAll<HTMLElement>('.r')) {
+      run.toggleAttribute('data-lit', slot !== null && (run.dataset.t === slot || run.dataset.g === slot))
+    }
+
+    mock.toggleAttribute('data-where', slot !== null)
+  }
+
+  #tail() {
+    for (const body of this.querySelectorAll<HTMLElement>('[data-tail]')) body.scrollTop = body.scrollHeight
+  }
+
+  #showPanel(name: string) {
+    for (const tab of this.querySelectorAll<HTMLElement>('[data-panel]')) {
+      const on = tab.dataset.panel === name
+      tab.setAttribute('aria-selected', String(on))
+      tab.tabIndex = on ? 0 : -1
+    }
+
+    const colors = this.querySelector<HTMLElement>('[data-panel-body="colors"]')
+    const seeds = this.querySelector<HTMLElement>('[data-panel-body="seeds"]')
+    const about = this.querySelector<HTMLElement>('[data-panel-body="about"]')
+
+    if (about) about.hidden = name !== 'about'
+
+    if (colors) colors.hidden = name !== 'colors' || this.#seeds !== null
+
+    if (seeds) seeds.hidden = name !== 'colors' || this.#seeds === null
+
+    if (name !== 'colors' && this.#open !== null) this.#close(false)
+  }
+
+  #showPane(name: string) {
+    for (const tab of this.querySelectorAll<HTMLElement>('[data-pane]')) {
+      const on = tab.dataset.pane === name
+      tab.setAttribute('aria-selected', String(on))
+      tab.tabIndex = on ? 0 : -1
+    }
+
+    for (const panel of this.querySelectorAll<HTMLElement>('[data-pane-panel]')) {
+      panel.hidden = panel.dataset.panePanel !== name
+    }
+
+    this.#inspector.release()
+    this.#tail()
+  }
+
+  #setView(mode: Mode) {
+    const view: View = mode === madeMode(this.#state) ? 'made' : 'other'
+
+    if (view === this.#view) return
+    this.#view = view
+    this.#settle()
+    this.#relink()
+
+    if (this.#open !== null) {
+      const box = this.querySelector<HTMLElement>('[data-picker]')
+      this.#keep = lchIn(this.#list(), this.#list()[this.#open] as Hex).c
+
+      if (box && this.#data) {
+        this.#shown.delete(box)
+        fill(box, html(<Picker p={this.#pickerView(this.#open)} track={hueTrack()} panes={this.#data.panes} />))
+      }
+    }
+
+    this.#render()
+    announce(`editing the ${mode} colors`)
+  }
+
+  #nextMiss() {
+    const list = this.#list()
+    const missed = misses(list, this.#state.signature, this.#state.meta.waive ?? [])
+
+    if (missed.size === 0) return
+    const from = this.#open === null ? -1 : ORDER.indexOf(this.#open)
+    const next = ORDER.slice(from + 1).find((slot) => missed.has(slot)) ?? ORDER.find((slot) => missed.has(slot))
+
+    if (next === undefined) return
+
+    if (this.#only && !changedIn(this.#state, this.#view).has(next)) this.#only = false
+    this.#openSlot(next)
+    this.querySelector<HTMLElement>(`[data-slot-open="${next}"]`)?.focus()
+  }
+
+  #toGate() {
+    this.#showPanel('colors')
+    const gate = this.querySelector<HTMLDetailsElement>('#builder-gate')
+
+    if (!gate) return
+    gate.open = true
+    gate.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' })
+  }
+
+  #undo(back: boolean) {
+    const from = back ? this.#history : this.#future
+    const to = back ? this.#future : this.#history
+    const snapshot = from.pop()
+
+    if (!snapshot) return
+    to.push(snapshotOf(this.#state))
+    this.#settle()
+    this.#edit = { ...this.#state, ...snapshot, at: Date.now() }
+    this.#render()
+    this.#save()
+    announce(back ? 'undone' : 'redone')
+  }
+
+  #toggleLink(bright: number) {
+    const normal = bright - 8
+    const list = this.#list()
+
+    if (this.#linked().has(bright)) {
+      this.#unlinked.add(bright)
+    } else {
+      this.#links.set(bright, offsetOf(lchIn(list, list[normal] as Hex), lchIn(list, list[bright] as Hex)))
+      this.#unlinked.delete(bright)
+    }
+
+    this.#render()
+  }
+
+  #startFrom(start: { name: string; draft: Draft }, own: boolean) {
+    this.#leaveSeeds(false)
+    this.#edit = editOf(start.draft, start.name, own, freshId(), Date.now())
+    this.#reset()
+
+    if (own) this.#save()
+    this.#closeStart()
+    announce(`started from ${start.name}`)
+  }
+
+  #reset() {
+    this.#view = 'made'
+    this.#history = []
+    this.#future = []
+    this.#only = false
+    this.#settle()
+    this.#relink()
+    this.#close(false)
+    this.#showPanel('colors')
+    this.#render()
+  }
+
+  #startDraft(id: string) {
+    const draft = this.#stored?.drafts.find((stored) => stored.id === id)
+
+    if (!draft) return
+    this.#leaveSeeds(false)
+    this.#edit = { ...draft }
+    this.#reset()
+    this.#save()
+    this.#closeStart()
+  }
+
+  #startBlank() {
+    this.#leaveSeeds(false)
+    this.#before = this.#state
+    this.#seeds = { ...SEEDS }
+    this.#edit = blankEdit(listOf(grow(this.#seeds)), freshId(), Date.now())
+    this.#reset()
+    this.#closeStart()
+    this.querySelector<HTMLElement>('[data-seed]')?.focus()
+  }
+
+  #seed(key: string, value: number) {
+    const seeds = this.#seeds
+    const field = SEED_FIELDS.find((one) => one.key === key)
+
+    if (!seeds || !field || Number.isNaN(value)) return
+    this.#seeds = { ...seeds, [field.key]: clamp(value, field.min, field.max) }
+    const made = listOf(grow(this.#seeds))
+    const edit = this.#state
+    this.#edit = { ...edit, made, origin: { made: [...made], other: edit.origin.other }, at: Date.now() }
+    this.#render()
+  }
+
+  #keepSeeds() {
+    this.#seeds = null
+    this.#before = null
+    this.#relink()
+    this.#showPanel('colors')
+    this.#render()
+    this.#save()
+  }
+
+  #leaveSeeds(back: boolean) {
+    if (!this.#seeds) return
+    this.#seeds = null
+
+    if (back && this.#before) this.#edit = this.#before
+    this.#before = null
+  }
+
+  #closeStart() {
+    this.querySelector<HTMLElement>('#builder-start')?.hidePopover()
+  }
+
+  #placeStart = (event: Event) => {
+    const pop = event.target as HTMLElement
+    const button = this.querySelector('[data-start]')
+
+    if ((event as ToggleEvent).newState !== 'open' || !button) return
+    const spot = button.getBoundingClientRect()
+    pop.style.top = `${spot.bottom + 8}px`
+    pop.style.left = `${Math.max(16, Math.min(spot.left, window.innerWidth - 416))}px`
+    void this.#loadStarts()
+    this.#renderStart()
+  }
+
+  async #loadStarts() {
+    if (this.#starts || this.#loading) return
+    this.#startFailed = false
+
+    this.#loading = (async () => {
+      try {
+        const response = await fetch('/builder/palettes.json')
+
+        if (!response.ok) throw new Error(String(response.status))
+        this.#starts = (await response.json()) as Start[]
+      } catch {
+        this.#startFailed = true
+      } finally {
+        this.#loading = null
+        this.#renderStart()
+      }
+    })()
+  }
+
+  #renderStart() {
+    const target = this.querySelector('[data-start-list]')
+    const stored = this.#stored?.drafts ?? []
+    const now = Date.now()
+
+    const list: StartList = this.#startFailed
+      ? { state: 'failed' }
+      : !this.#starts
+        ? { state: 'loading' }
+        : {
+            state: 'ready',
+            query: this.#query,
+            drafts: stored
+              .filter((draft) => !this.#query || draft.name.includes(this.#query.trim().toLowerCase()))
+              .map((draft) => ({
+                id: draft.id,
+                name: draft.name,
+                when: ago(draft.at, now),
+                dots: dotsOf(draft.made, draft.signature),
+                current: draft.id === this.#state.id,
+              })),
+            groups: groupsOf(this.#starts, this.#query),
+          }
+
+    this.#fill(target, html(<StartEntries list={list} />))
+  }
+
+  async #openText(text: string, file?: string) {
+    const error = this.querySelector<HTMLElement>('[data-open-error]')
+
+    const say = (message: string) => {
+      if (!error) return
+      error.hidden = !message
+      error.textContent = message
+    }
+
+    say('')
+
+    try {
+      const code = codeOf(text)
+
+      if (code) {
+        const drafts = await webDrafts(code)
+
+        if (drafts.length === 1) {
+          const [draft] = drafts as [Draft]
+          this.#startFrom({ name: draft.name, draft }, true)
+
+          return
+        }
+
+        this.#choices = drafts
+        this.#renderChoices()
+
+        return
+      }
+
+      const draft = textDraft(file ?? 'palette.toml', text)
+      this.#startFrom({ name: draft.name, draft }, true)
+    } catch (failure) {
+      say(`${file ?? (codeOf(text) ? 'the link' : 'the text')} does not open — ${(failure as Error).message}`)
+    }
+  }
+
+  #renderChoices() {
+    const error = this.querySelector<HTMLElement>('[data-open-error]')
+
+    if (!error) return
+    error.hidden = false
+    error.replaceChildren(`the link holds ${this.#choices.length} palettes — open one:`)
+
+    for (const [i, draft] of this.#choices.entries()) {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.dataset.openChoice = String(i)
+      button.className = 'ml-2 font-semibold text-primary underline-offset-4 hover:underline'
+      button.textContent = draft.name
+      error.append(button)
+    }
+  }
+
+  #openExport() {
+    const dialog = this.querySelector<HTMLDialogElement>('[data-export]')
+
+    if (!dialog) return
+    this.#renderExport(true)
+    dialog.showModal()
+  }
+
+  #url(key: string, blob: Blob): string {
+    const old = this.#urls.get(key)
+
+    if (old) URL.revokeObjectURL(old)
+    const url = URL.createObjectURL(blob)
+    this.#urls.set(key, url)
+
+    return url
+  }
+
+  #renderExport(force = false) {
+    const dialog = this.querySelector<HTMLDialogElement>('[data-export]')
+
+    if (!dialog || (!dialog.open && !force)) return
+    const edit = this.#state
+    const file = fileOf(edit)
+    this.#fill(this.querySelector('[data-export-panel="toml"]'), html(<FilePanel view={file} />))
+    const download = this.querySelector<HTMLAnchorElement>('[data-download-toml]')
+
+    if (download && file.text) {
+      download.href = this.#url('toml', new Blob([file.text], { type: 'application/toml' }))
+      download.download = file.file
+    }
+
+    void this.#renderLink()
+    this.#renderMarket()
+  }
+
+  async #renderLink() {
+    const edit = this.#state
+    const problem = exportProblem(edit)
+    const draft = problem ? null : draftFrom(edit)
+    const key = JSON.stringify(draft)
+    const panel = this.querySelector('[data-export-panel="link"]')
+
+    const clash = this.#data?.official.includes(edit.name)
+      ? `${edit.name} is an official palette's name — where it is installed, a link under that name is turned away. Rename it in the bar first.`
+      : null
+
+    if (problem) {
+      this.#link = null
+      this.#fill(
+        panel,
+        html(<LinkPanel view={{ name: edit.name, link: null, code: null, failed: problem, clash: null }} />),
+      )
+
+      return
+    }
+
+    if (this.#link?.key === key) {
+      this.#fill(panel, html(<LinkPanel view={{ ...this.#link.view, name: edit.name, clash }} />))
+
+      return
+    }
+
+    this.#fill(panel, html(<LinkPanel view={{ name: edit.name, link: null, code: null, failed: null, clash }} />))
+
+    try {
+      const code = await webCode([draft as Draft])
+
+      if (key !== JSON.stringify(exportProblem(this.#state) ? null : draftFrom(this.#state))) return
+      this.#link = { key, view: { name: edit.name, link: shareLink(code), code, failed: null, clash } }
+    } catch (failure) {
+      this.#link = { key, view: { name: edit.name, link: null, code: null, failed: (failure as Error).message, clash } }
+    }
+
+    this.#fill(this.querySelector('[data-export-panel="link"]'), html(<LinkPanel view={this.#link.view} />))
+  }
+
+  #renderMarket() {
+    const edit = this.#state
+    const { owner, name, description } = this.#market
+    const view = marketOf(owner, name)
+    const file = fileOf(edit)
+    const problem = view.problem ?? file.problem
+    this.#fill(this.querySelector('[data-market-steps]'), html(<MarketSteps view={{ ...view, problem }} />))
+    const download = this.querySelector<HTMLAnchorElement>('[data-download-zip]')
+
+    if (!download || problem) return
+    const identity = { owner, name }
+    const repo = repoFor(identity)
+
+    const bytes = zip(
+      [
+        { path: `${repo}/ttheme-marketplace.toml`, text: marketplaceToml(identity, description.trim() || undefined) },
+        { path: `${repo}/README.md`, text: readmeOf(identity) },
+        { path: `${repo}/palettes/${file.file}`, text: file.text },
+      ],
+      new Date(),
+    )
+
+    download.href = this.#url('zip', new Blob([bytes.slice()], { type: 'application/zip' }))
+    download.download = view.zip
+  }
+
+  #showExportTab(name: string) {
+    for (const tab of this.querySelectorAll<HTMLElement>('[data-export-tab]')) {
+      const on = tab.dataset.exportTab === name
+      tab.setAttribute('aria-selected', String(on))
+      tab.tabIndex = on ? 0 : -1
+    }
+
+    for (const panel of this.querySelectorAll<HTMLElement>('[data-export-panel]')) {
+      panel.hidden = panel.dataset.exportPanel !== name
+    }
+  }
+
+  #planeAt(event: PointerEvent) {
+    const plane = this.querySelector<HTMLElement>('[data-plane]')
+    const slot = this.#open
+
+    if (!plane || slot === null) return
+    const box = plane.getBoundingClientRect()
+    const x = clamp((event.clientX - box.left) / box.width)
+    const y = clamp((event.clientY - box.top) / box.height)
+    const l = PLANE_TOP - y * (PLANE_TOP - PLANE_BOTTOM)
+    const { h } = lchIn(this.#list(), this.#list()[slot] as Hex)
+    const c = x * reach(l, h)
+    this.#keep = c
+    this.#set(slot, placed(l, c, h).hex, `plane:${slot}`)
+  }
+
+  #press = (event: PointerEvent) => {
+    const plane = (event.target as Element | null)?.closest<HTMLElement>('[data-plane]')
+
+    if (!plane || event.button !== 0) return
+    event.preventDefault()
+    plane.setPointerCapture(event.pointerId)
+    this.#dragging = 'plane'
+    this.#settle()
+    this.#planeAt(event)
+
+    const move = (next: PointerEvent) => {
+      if (this.#dragging === 'plane') this.#schedule(() => this.#planeAt(next))
+    }
+
+    const end = () => {
+      this.#dragging = null
+      this.#settle()
+      plane.removeEventListener('pointermove', move)
+      plane.removeEventListener('pointerup', end)
+      plane.removeEventListener('pointercancel', end)
+      this.querySelector<HTMLElement>('[data-plane-l]')?.focus({ preventScroll: true })
+    }
+
+    plane.addEventListener('pointermove', move)
+    plane.addEventListener('pointerup', end)
+    plane.addEventListener('pointercancel', end)
+  }
+
+  #channel(kind: 'l' | 'c' | 'h' | 'contrast', value: number) {
+    const slot = this.#open
+
+    if (slot === null) return
+    const list = this.#list()
+    const now = lchIn(list, list[slot] as Hex)
+
+    if (kind === 'contrast') {
+      const partner = partnerOf(list, slot, this.#state.meta.waive ?? [])
+      const against = list[partner.against] as Hex
+      const solved = solveLightness(list[slot] as Hex, now, this.#keep, against, ratioAt(value / 1000))
+      this.#set(slot, solved.hex, `contrast:${slot}`)
+
+      if (solved.stops !== undefined) announce(`the ratio stops at ${solved.stops.toFixed(2)} to 1 on this side`)
+
+      return
+    }
+
+    if (kind === 'c') {
+      this.#keep = (value / 100) * reach(now.l, now.h)
+      this.#set(slot, placed(now.l, this.#keep, now.h).hex, `c:${slot}`)
+
+      return
+    }
+
+    const l = kind === 'l' ? value / 100 : now.l
+    const h = kind === 'h' ? value : now.h
+    this.#set(slot, placed(l, Math.min(this.#keep, room(l, h)), h).hex, `${kind}:${slot}`)
+  }
+
+  #typed(input: HTMLInputElement) {
+    const slot = this.#open
+    const color = parseColor(input.value)
+    const bad = this.querySelector<HTMLElement>('[data-bad]')
+
+    if (slot === null) return
+
+    if (!color) {
+      input.setAttribute('aria-invalid', 'true')
+
+      if (bad) bad.hidden = false
+
+      return
+    }
+
+    input.setAttribute('aria-invalid', 'false')
+
+    if (bad) bad.hidden = true
+    this.#keep = lchIn(this.#list(), color).c
+    this.#set(slot, color, '!typed')
+    input.value = this.#pickerView(slot).s.formats[this.#format]
+  }
+
+  #rename(value: string) {
+    const name = value.trim()
+
+    if (name === this.#state.name) return
+    this.#edit = { ...this.#state, name, at: Date.now() }
+    this.#renderName()
+    this.#renderAbout()
+    this.#renderStatus()
+    this.#renderExport()
+    this.#save()
+  }
+
+  #click = (event: MouseEvent) => {
+    const target = event.target as Element | null
+
+    if (!target) return
+    const panel = target.closest<HTMLElement>('[data-panel]')?.dataset.panel
+
+    if (panel) return this.#showPanel(panel)
+    const pane = target.closest<HTMLElement>('[data-pane]')?.dataset.pane
+
+    if (pane) return this.#showPane(pane)
+    const mode = target.closest<HTMLElement>('[data-edit-mode]')?.dataset.editMode
+
+    if (mode === 'dark' || mode === 'light') return this.#setView(mode)
+
+    if (target.closest('[data-inspect]')) return this.#inspector.toggle(!this.#inspector.on)
+
+    if (target.closest('[data-picker-close]')) return this.#close(true)
+
+    if (target.closest('[data-where]')) {
+      this.#where = !this.#where
+      this.#render()
+
+      return
+    }
+
+    if (target.closest('[data-gate-jump]')) return this.#toGate()
+
+    if (target.closest('[data-next-miss]')) return this.#nextMiss()
+    const link = target.closest<HTMLElement>('[data-link]')?.dataset.link
+
+    if (link) return this.#toggleLink(Number(link))
+
+    if (target.closest('[data-picker-link]') && this.#open !== null && this.#open >= 4) {
+      return this.#toggleLink(this.#open >= 12 ? this.#open : this.#open + 8)
+    }
+
+    if (target.closest('[data-picker-back]') && this.#open !== null) {
+      const origin = originIn(this.#state, this.#view)
+      const hex = origin[this.#open] as Hex
+      this.#keep = lchIn(origin, hex).c
+      this.#set(this.#open, hex, '!back')
+
+      return
+    }
+
+    const opener = target.closest<HTMLElement>('[data-slot-open]')
+
+    if (opener) {
+      const slot = Number(opener.dataset.slotOpen)
+
+      if (this.#open === slot && !opener.closest('[data-inspector]')) return this.#close(true)
+
+      return this.#openSlot(slot)
+    }
+
+    const run = target.closest<HTMLElement>('[data-mock] .r')
+
+    if (run && this.#inspector.on) return this.#inspector.pin(run)
+
+    if (target.closest('[data-changed]')) {
+      this.#only = !this.#only
+      this.#render()
+
+      return
+    }
+
+    if (target.closest('[data-undo]')) return this.#undo(true)
+
+    if (target.closest('[data-redo]')) return this.#undo(false)
+
+    if (target.closest('[data-reset]')) {
+      this.#remember('!reset')
+      this.#settle()
+      this.#commit(resetAll(this.#state))
+      this.#relink()
+      announce('back to the colors it started from')
+
+      return
+    }
+
+    if (target.closest('[data-follow-mirror]')) {
+      this.#remember('!mirror')
+      this.#settle()
+      this.#commit(followMirror(this.#state))
+      this.#relink()
+
+      return
+    }
+
+    if (target.closest('[data-export-open]')) return this.#openExport()
+    const tab = target.closest<HTMLElement>('[data-export-tab]')?.dataset.exportTab
+
+    if (tab) return this.#showExportTab(tab)
+
+    if (target.closest('[data-seeds-keep]')) return this.#keepSeeds()
+
+    if (target.closest('[data-seeds-cancel]')) {
+      this.#leaveSeeds(true)
+      this.#reset()
+
+      return
+    }
+
+    if (target.closest('[data-start-blank]')) return this.#startBlank()
+    const from = target.closest<HTMLElement>('[data-start-from]')?.dataset.startFrom
+    const start = from ? this.#starts?.find((one) => one.name === from) : undefined
+
+    if (start) return this.#startFrom(start, false)
+    const draft = target.closest<HTMLElement>('[data-start-draft]')?.dataset.startDraft
+
+    if (draft) return this.#startDraft(draft)
+
+    if (target.closest('[data-start-retry]')) {
+      this.#startFailed = false
+      this.#renderStart()
+      void this.#loadStarts()
+
+      return
+    }
+
+    const opening = target.closest<HTMLElement>('[data-start-open]')
+
+    if (opening) {
+      const box = this.querySelector<HTMLElement>('[data-open-box]')
+
+      if (box) {
+        box.hidden = !box.hidden
+        opening.setAttribute('aria-expanded', String(!box.hidden))
+
+        if (!box.hidden) this.querySelector<HTMLElement>('[data-open-text]')?.focus()
+      }
+
+      return
+    }
+
+    if (target.closest('[data-open-go]')) {
+      void this.#openText(this.querySelector<HTMLTextAreaElement>('[data-open-text]')?.value ?? '')
+
+      return
+    }
+
+    if (target.closest('[data-open-file]')) {
+      this.querySelector<HTMLInputElement>('[data-open-input]')?.click()
+
+      return
+    }
+
+    const choice = target.closest<HTMLElement>('[data-open-choice]')?.dataset.openChoice
+    const chosen = choice === undefined ? undefined : this.#choices[Number(choice)]
+
+    if (chosen) {
+      this.#choices = []
+      this.#startFrom({ name: chosen.name, draft: chosen }, true)
+
+      return
+    }
+  }
+
+  #input = (event: Event) => {
+    const input = event.target as HTMLInputElement
+
+    if (input.matches('[data-name], [data-about-name]')) return this.#rename(input.value)
+
+    if (input.matches('[data-plane-l]')) return this.#channel('l', Number(input.value))
+
+    if (input.matches('[data-plane-c]')) return this.#channel('c', Number(input.value))
+
+    if (input.matches('[data-hue]')) return this.#schedule(() => this.#channel('h', Number(input.value)))
+
+    if (input.matches('[data-contrast]')) return this.#schedule(() => this.#channel('contrast', Number(input.value)))
+    const seed = input.dataset.seed
+
+    if (seed) return this.#schedule(() => this.#seed(seed, Number(input.value)))
+    const meta = input.dataset.meta
+
+    if (meta === 'ansiSource' || meta === 'booru') {
+      const value = input.value.trim()
+      const { [meta]: _, ...rest } = this.#state.meta
+      this.#edit = { ...this.#state, meta: value ? { ...rest, [meta]: value } : rest, at: Date.now() }
+      this.#renderExport()
+      this.#save()
+
+      return
+    }
+
+    const market = input.dataset.market
+
+    if (market === 'owner' || market === 'name' || market === 'description') {
+      this.#market = {
+        ...this.#market,
+        [market]: market === 'description' ? input.value : input.value.trim().toLowerCase(),
+      }
+      this.#renderMarket()
+
+      return
+    }
+
+    if (input.matches('[data-start-search]')) {
+      this.#query = input.value
+      this.#renderStart()
+    }
+  }
+
+  #change = (event: Event) => {
+    const input = event.target as HTMLInputElement
+
+    if (input.matches('[data-plane-l], [data-plane-c], [data-hue], [data-contrast]')) return this.#settle()
+
+    if (input.matches('[data-value]')) return this.#typed(input)
+
+    if (input.name === 'slot-format') {
+      const format = FORMATS.find((name) => name === input.value)
+
+      if (format) this.#format = format
+      this.#render()
+
+      return
+    }
+
+    if (input.name === 'row-format') {
+      this.#rows = input.value === 'oklch' ? 'oklch' : 'hex'
+      this.#render()
+
+      return
+    }
+
+    const select = event.target
+
+    if (select instanceof HTMLSelectElement && select.dataset.signature !== undefined) {
+      this.#remember('!signature')
+      this.#settle()
+      const next = this.#state.signature.with(Number(select.dataset.signature), select.value)
+      this.#commit({ ...this.#state, signature: next })
+
+      return
+    }
+
+    if (input.matches('[data-keep-pictures]')) {
+      this.#commit({ ...this.#state, keep: input.checked })
+
+      return
+    }
+
+    if (input.matches('[data-open-input]')) {
+      const file = input.files?.[0]
+
+      if (file) void file.text().then((text) => this.#openText(text, file.name))
+      input.value = ''
+    }
+  }
+
+  #toggled = (event: Event) => {
+    const group = event.target
+
+    if (!(group instanceof HTMLDetailsElement) || this.#open === null) return
+    const row = this.querySelector(`[data-row="${this.#open}"]`)
+
+    if (!group.open && row && group.contains(row)) this.#close(false)
+    else this.#placePicker()
+  }
+
+  #key = (event: KeyboardEvent) => {
+    if (composing(event)) return
+
+    if (
+      event.key === 'Escape' &&
+      this.#open !== null &&
+      !(event.target as Element | null)?.closest('dialog, [popover]')
+    ) {
+      event.preventDefault()
+      this.#close(true)
+
+      return
+    }
+
+    if (event.key === 'Escape' && this.#inspector.pinned) {
+      event.preventDefault()
+      this.#inspector.release()
+
+      return
+    }
+
+    if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'z' && !typing(event.target)) {
+      event.preventDefault()
+      this.#undo(!event.shiftKey)
+
+      return
+    }
+
+    if (event.key === 'Enter' && (event.target as Element | null)?.matches('[data-open-text]') && !event.shiftKey) {
+      event.preventDefault()
+      void this.#openText((event.target as HTMLTextAreaElement).value)
+
+      return
+    }
+
+    if (event.key === 'Enter' && (event.target as Element | null)?.matches('[data-name], [data-about-name]')) {
+      ;(event.target as HTMLInputElement).blur()
+
+      return
+    }
+
+    tabKey(event, (tab) => {
+      tab.focus()
+      tab.click()
+    })
+  }
+}
+
+customElements.define('palette-builder', PaletteBuilder)

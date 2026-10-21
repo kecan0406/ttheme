@@ -6,6 +6,8 @@ export const PLANE_BOTTOM = 0.12
 export const RAINBOW_L = 0.74
 export const RAINBOW_C = 0.15
 
+export const PLANE_CHROMA = 0.37
+
 export function reach(l: number, h: number): number {
   let hue = EDGES.get(h)
 
@@ -43,5 +45,3 @@ const EDGES = new Map<number, Map<number, number>>()
 const EDGES_HUES = 1024
 
 const EDGES_LIGHTNESS = 512
-
-const PLANE_CHROMA = 0.37

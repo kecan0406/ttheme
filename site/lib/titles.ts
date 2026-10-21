@@ -21,6 +21,14 @@ export function sheetsMeta(palettes: number): Meta {
   }
 }
 
+export function builderMeta(): Meta {
+  return {
+    title: 'builder — make a terminal palette of your own · ttheme',
+    description:
+      'Tune twenty terminal colors against the contrast gate, in dark and light, then take the palette as a .toml file, a share link or a marketplace of your own.',
+  }
+}
+
 export function marketplacesMeta(palettes: number): Meta {
   return {
     title: 'marketplace — official and community terminal themes · ttheme',
