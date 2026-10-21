@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { fallback, themes } from '@/lib/official'
 import { type Raster, raster } from '@/lib/raster'
 import { inMode, type Theme } from '@/lib/themes'
+import { INK, wordmarkSvg } from '@/lib/wordmark'
 import { GLYPH, glyphSvg, marksOf, tileBody } from '../src/core/mark.ts'
 import { mixOk } from '../src/core/oklab.ts'
 
@@ -88,18 +89,17 @@ function palettes(themes: Theme[]) {
 
 const TAGLINE = 'Character terminal palettes — readable by rule, switched live, one tab at a time.'
 
-function lockup(kit: Raster, theme: Theme, size: number, middle: number, baseline: number) {
+function lockup(theme: Theme, size: number, middle: number, baseline: number) {
   const height = size * 0.75
   const scale = height / GLYPH.height
   const gap = size * 0.3
-  const spacing = -0.02 * size
-  const { x: bearing, width } = kit.ink('ttheme', kit.family.display, size, 900, spacing)
+  const width = (INK.width * size) / 1000
   const left = middle - (GLYPH.width * scale + gap + width) / 2
   const top = baseline - size * 0.3 - height / 2
   const inks = marksOf(theme.background, theme.foreground, theme.signature)
   const glyph = glyphSvg(inks, `translate(${left} ${top}) scale(${scale}) translate(${-GLYPH.x} ${-GLYPH.y})`)
 
-  return `${glyph}<text x="${left + GLYPH.width * scale + gap - bearing}" y="${baseline}" font-family="${kit.family.display}" font-size="${size}" font-weight="900" letter-spacing="${spacing}" fill="${theme.foreground}">ttheme</text>`
+  return `${glyph}${wordmarkSvg(left + GLYPH.width * scale + gap, baseline, size, theme.foreground)}`
 }
 
 function cells(theme: Theme, width: number, height: number, cell: number, radius: number) {
@@ -110,7 +110,7 @@ function cells(theme: Theme, width: number, height: number, cell: number, radius
 
 function banner(kit: Raster, theme: Theme) {
   return kit.png(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320">${cells(theme, 1280, 320, 26, 22)}${lockup(kit, theme, 104, 640, 160 + 104 * 0.3)}</svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320">${cells(theme, 1280, 320, 26, 22)}${lockup(theme, 104, 640, 160 + 104 * 0.3)}</svg>`,
   )
 }
 
@@ -125,7 +125,7 @@ function social(kit: Raster, theme: Theme, leads: Theme[]) {
   })
 
   return kit.png(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">${cells(theme, 1280, 640, 32, 0)}${lockup(kit, theme, 128, 640, 250 + 128 * 0.3)}<text x="640" y="362" text-anchor="middle" font-family="${kit.family.ui}" font-size="26" font-weight="500" fill="${mixOk(theme.background, theme.foreground, 0.82)}">${xml(TAGLINE)}</text>${tiles.join('')}</svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">${cells(theme, 1280, 640, 32, 0)}${lockup(theme, 128, 640, 250 + 128 * 0.3)}<text x="640" y="362" text-anchor="middle" font-family="${kit.family.ui}" font-size="26" font-weight="500" fill="${mixOk(theme.background, theme.foreground, 0.82)}">${xml(TAGLINE)}</text>${tiles.join('')}</svg>`,
   )
 }
 

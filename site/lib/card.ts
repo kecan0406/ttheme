@@ -3,6 +3,7 @@ import { FACET_HEIGHT, FACET_LAMP, FACET_WIDTH, facetCorners, facetMesh, facetPo
 import { INIT } from '@/lib/gallery'
 import { type Raster, raster } from '@/lib/raster'
 import type { Marketplace, Theme } from '@/lib/themes'
+import { INK, wordmarkSvg } from '@/lib/wordmark'
 import { leadOf } from '@/lib/workspace'
 import { GLYPH, glyphSvg, marksOf } from '../../src/core/mark.ts'
 import { liftOk, mixOk } from '../../src/core/oklab.ts'
@@ -124,12 +125,11 @@ function wordmark(kit: Raster, k: Tones, caption?: string): string {
   const top = 112 - 46 * 0.3 - height / 2
   const glyph = glyphSvg(k.marks, `translate(${MARGIN} ${top}) scale(${scale}) translate(${-GLYPH.x} ${-GLYPH.y})`)
   const start = MARGIN + GLYPH.width * scale + 46 * 0.3
-  const mark = `${glyph}${display(kit, 'ttheme', start, 112, 46, k.foreground)}`
+  const mark = `${glyph}${wordmarkSvg(start, 112, 46, k.foreground)}`
 
   if (!caption) return mark
-  const { width } = kit.ink('ttheme', kit.family.display, 46, 900, -0.92)
 
-  return `${mark}${text(caption, { x: start + width + 26, y: 112, size: 30, fill: k.muted, family: kit.family.ui })}`
+  return `${mark}${text(caption, { x: start + (INK.width * 46) / 1000 + 26, y: 112, size: 30, fill: k.muted, family: kit.family.ui })}`
 }
 
 function rowsOf(kit: Raster, content: string, width: number, max: number, min: number) {

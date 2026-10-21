@@ -6,6 +6,7 @@ import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { HeaderBar } from './header-bar'
 import { Mark } from './mark'
+import { Wordmark } from './wordmark'
 
 const NAV = [
   { href: '/sheets', label: 'sheets' },
@@ -33,12 +34,12 @@ export function SiteHeader({ current, fixed = false }: { current: string; fixed?
             data-slot="lockup"
             translate="no"
             class={cn(
-              'self-center rounded-sm font-display font-black outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'self-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring',
               fixed ? 'text-display-sm' : 'text-display-md max-[720px]:text-display-sm',
             )}
           >
             <Mark />
-            ttheme
+            <Wordmark />
           </a>
           <nav aria-label="site" data-glide class="flex items-stretch">
             {NAV.map((item) => (

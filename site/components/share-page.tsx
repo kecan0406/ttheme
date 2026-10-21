@@ -14,6 +14,7 @@ import { CommandRow } from './command-row'
 import { PropertyList, reading, SectionLabel, Signature } from './palette-parts'
 import { PictureList } from './picture-list'
 import { Marks, Verdict } from './share-popovers'
+import { Wordmark } from './wordmark'
 
 const LIGHTS = ['#ff5f57', '#febc2e', '#28c840']
 const PAIRS = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -341,11 +342,8 @@ function Bar({ shared }: { shared: Shared }) {
   return (
     <header class="relative z-10 flex min-w-0 items-center justify-between gap-4 border-b border-border bg-background pr-4 pl-5 [grid-area:bar] max-[760px]:flex-wrap max-[760px]:gap-3 max-[760px]:px-4 max-[760px]:py-3.5">
       <nav aria-label="palette" class="flex min-w-0 items-center gap-2.5 max-[760px]:flex-wrap max-[760px]:gap-y-1">
-        <a
-          href="/"
-          class="rounded-sm font-display text-display-sm font-black outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          ttheme
+        <a href="/" class="rounded-sm text-display-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Wordmark />
         </a>
         <span aria-hidden="true" class="text-base text-faint-foreground">
           /

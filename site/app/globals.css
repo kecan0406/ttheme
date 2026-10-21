@@ -1107,6 +1107,12 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   translate: 0 0.03em;
 }
 
+[data-slot='wordmark'] {
+  display: block;
+  flex: none;
+  width: auto;
+}
+
 [data-slot='signature-dots'] {
   flex: none;
   width: calc(var(--spacing) * 2);

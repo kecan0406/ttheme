@@ -5,6 +5,7 @@ import { NPM_URL, OFFICIAL_URL } from '@/lib/gallery'
 import { BrandIcon, NewTab } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { Mark } from './mark'
+import { Wordmark } from './wordmark'
 
 const COLUMNS: { title: string; links: { label: string; href: string; brand?: SimpleIcon }[] }[] = [
   {
@@ -85,10 +86,10 @@ function Brand({ facts }: { facts: Facts }) {
         href="/"
         translate="no"
         data-slot="lockup"
-        class="rounded-sm font-display text-display-sm font-black outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="rounded-sm text-display-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Mark />
-        ttheme
+        <Wordmark />
       </a>
       <p class="text-xs font-medium tracking-wide text-muted-foreground">wear your favorite character</p>
       <Badge variant="count">
@@ -157,9 +158,7 @@ function Columns({ current }: { current: string }) {
 function Mega() {
   return (
     <div aria-hidden="true" translate="no" class="relative h-[0.63em] overflow-hidden text-mega select-none">
-      <span class="absolute top-0 left-1/2 -translate-x-1/2 font-display font-black whitespace-nowrap text-primary opacity-16">
-        ttheme
-      </span>
+      <Wordmark leading={0.85} class="absolute top-0 left-1/2 -translate-x-1/2 text-primary opacity-16" />
       <div class="absolute inset-x-0 bottom-6 flex justify-center gap-2 max-[640px]:bottom-3.5 max-[640px]:gap-1">
         {SLOTS.map((slot) => (
           <i
