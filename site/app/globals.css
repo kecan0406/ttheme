@@ -221,8 +221,9 @@
 }
 
 html {
+  --clearance: calc(var(--spacing) * 16);
   overflow-anchor: none;
-  scroll-padding-top: calc(var(--spacing) * 16);
+  scroll-padding-top: var(--clearance);
   scrollbar-color: var(--faint-foreground) transparent;
 }
 
@@ -347,6 +348,10 @@ facet-ground .t2 {
   top: calc(var(--fold) * -1);
   height: calc(var(--fold) + var(--spacing) * 13);
   padding-top: var(--fold);
+}
+
+[data-site-header] :is(a, button, input):not(:popover-open *) {
+  scroll-margin-block: calc(var(--clearance) * -1) var(--clearance);
 }
 
 @supports (animation-timeline: scroll()) {

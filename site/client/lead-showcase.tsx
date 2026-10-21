@@ -5,7 +5,7 @@ import { announce, fadeThrough, fill, readJson, reducedMotion } from './dom'
 import { SparkleBurst } from './sparkle-burst'
 import { choose, onMode, onWear, recall, show } from './wear'
 
-const CYCLE_MS = 4000
+const CYCLE_MS = 7000
 
 const IN_VIEW = 0.25
 
