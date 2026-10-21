@@ -451,7 +451,7 @@ test('editing a tone marks the slots off the original colors, and leaves signatu
 test('a spot on the sample finds its slots, and enter goes to the slot', () => {
   const e = editor()
   e.viewport(140, 40)
-  e.point({ pane: 'shell', line: 14, run: 3 })
+  e.point({ pane: 'shell', line: 16, run: 3 })
   assert.equal(e.inspect, true)
   assert.deepEqual(e.slotsHere(), { text: 5, ground: 0 })
   press(e, 'enter')
