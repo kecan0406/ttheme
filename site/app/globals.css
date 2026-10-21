@@ -1094,6 +1094,19 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   }
 }
 
+[data-slot='lockup'] {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+[data-slot='mark'] {
+  flex: none;
+  width: auto;
+  height: 0.75em;
+  translate: 0 0.03em;
+}
+
 [data-slot='signature-dots'] {
   flex: none;
   width: calc(var(--spacing) * 2);

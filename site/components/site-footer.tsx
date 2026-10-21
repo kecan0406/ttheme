@@ -4,6 +4,7 @@ import type { Facts } from '@/lib/facts'
 import { NPM_URL, OFFICIAL_URL } from '@/lib/gallery'
 import { BrandIcon, NewTab } from '@/lib/icons'
 import { cn } from '@/lib/utils'
+import { Mark } from './mark'
 
 const COLUMNS: { title: string; links: { label: string; href: string; brand?: SimpleIcon }[] }[] = [
   {
@@ -80,16 +81,15 @@ function Signs() {
 function Brand({ facts }: { facts: Facts }) {
   return (
     <div class="grid content-start justify-items-start gap-2.5 max-[640px]:col-span-2">
-      <span class="flex items-center gap-2.5">
-        <a
-          href="/"
-          translate="no"
-          class="rounded-sm font-display text-display-sm font-black outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          ttheme
-        </a>
-        <Signs />
-      </span>
+      <a
+        href="/"
+        translate="no"
+        data-slot="lockup"
+        class="rounded-sm font-display text-display-sm font-black outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <Mark />
+        ttheme
+      </a>
       <p class="text-xs font-medium tracking-wide text-muted-foreground">wear your favorite character</p>
       <Badge variant="count">
         {facts.palettes} palettes · {facts.catalogs} catalogs

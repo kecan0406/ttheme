@@ -1,4 +1,9 @@
-<h1 align="center">ttheme</h1>
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://kecan0406.github.io/ttheme/readme/banner-light.png">
+    <img src="https://kecan0406.github.io/ttheme/readme/banner-dark.png" alt="ttheme" width="640">
+  </picture>
+</h1>
 
 <p align="center"><em>Character terminal palettes — readable by rule, switched live, one tab at a time.</em></p>
 

@@ -40,5 +40,7 @@ function corner(bytes: Buffer): string {
 
 test('the touch icon and the favicon start on the palette background, not on half of it', () => {
   expect(corner(touchIconPng(theme))).toBe(theme.background)
-  expect(corner(faviconIco(theme).subarray(22))).toBe(theme.background)
+  const icon = faviconIco(theme)
+  const at = icon.readUInt32LE(18)
+  expect(corner(icon.subarray(at, at + icon.readUInt32LE(14)))).toBe(theme.background)
 })

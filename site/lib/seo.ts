@@ -8,7 +8,7 @@ import { revision } from './embed.ts' with { type: 'macro' }
 
 export const ORIGIN = new URL(SHARE_URL).origin
 
-export const CARD_REV = `${pkg.version}-${revision('./card.ts', './raster.ts', './oklab.ts', './embed.ts')}`
+export const CARD_REV = `${pkg.version}-${revision('./card.ts', './mark.ts', './raster.ts', './oklab.ts', './embed.ts')}`
 
 const [OWNER] = OFFICIAL_REPO.split('/') as [string]
 

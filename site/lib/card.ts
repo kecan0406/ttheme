@@ -1,6 +1,7 @@
 import { catalogsOf } from '@/lib/catalogs'
 import { FACET_HEIGHT, FACET_LAMP, FACET_WIDTH, facetCorners, facetMesh, facetPoints, shade } from '@/lib/facets'
 import { INIT } from '@/lib/gallery'
+import { GLYPH, glyphSvg, marksOf } from '@/lib/mark'
 import { liftOk, mixOk } from '@/lib/oklab'
 import { type Raster, raster } from '@/lib/raster'
 import type { Marketplace, Theme } from '@/lib/themes'
@@ -41,6 +42,7 @@ interface Tones {
   soft: string
   hair: string
   stage: string
+  marks: string[]
 }
 
 interface TextOptions {
@@ -62,6 +64,7 @@ function tones(theme: Theme): Tones {
     soft: mixOk(theme.background, theme.foreground, 0.82),
     hair: mixOk(theme.background, theme.foreground, 0.22),
     stage: mixOk(theme.background, theme.foreground, 0.08),
+    marks: marksOf(theme.background, theme.foreground, theme.signature),
   }
 }
 
@@ -116,12 +119,17 @@ function display(kit: Raster, content: string, x: number, y: number, size: numbe
 }
 
 function wordmark(kit: Raster, k: Tones, caption?: string): string {
-  const mark = display(kit, 'ttheme', MARGIN, 112, 46, k.foreground)
+  const height = 46 * 0.75
+  const scale = height / GLYPH.height
+  const top = 112 - 46 * 0.3 - height / 2
+  const glyph = glyphSvg(k.marks, `translate(${MARGIN} ${top}) scale(${scale}) translate(${-GLYPH.x} ${-GLYPH.y})`)
+  const start = MARGIN + GLYPH.width * scale + 46 * 0.3
+  const mark = `${glyph}${display(kit, 'ttheme', start, 112, 46, k.foreground)}`
 
   if (!caption) return mark
   const { width } = kit.ink('ttheme', kit.family.display, 46, 900, -0.92)
 
-  return `${mark}${text(caption, { x: MARGIN + width + 26, y: 112, size: 30, fill: k.muted, family: kit.family.ui })}`
+  return `${mark}${text(caption, { x: start + width + 26, y: 112, size: 30, fill: k.muted, family: kit.family.ui })}`
 }
 
 function rowsOf(kit: Raster, content: string, width: number, max: number, min: number) {

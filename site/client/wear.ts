@@ -3,6 +3,7 @@ import { MODE_EVENT, type Mode, type Setting } from '@/lib/mode'
 import { inMode, type Shade, type Theme } from '@/lib/themes'
 import {
   LABEL,
+  MARKS,
   SHOW_EVENT,
   type Shown,
   SIGNS,
@@ -14,6 +15,7 @@ import {
   wearIcon,
   wearOwn,
   wearVars,
+  withMarks,
 } from '@/lib/wear'
 import { reducedMotion } from './dom'
 import { mode, setting, store, watch } from './mode'
@@ -139,7 +141,7 @@ function settle(root: HTMLElement) {
 function badge(root: HTMLElement) {
   if (!icon) return
   const value = (name: string) => root.style.getPropertyValue(name)
-  const href = wearIcon({ background: value('--bg'), foreground: value('--fg'), signature: TONES.map(value) })
+  const href = wearIcon(value('--bg'), value('--fg'), MARKS.map(value))
 
   if (icon.getAttribute('href') !== href) icon.href = href
 }
@@ -211,7 +213,7 @@ function wear(vars: Vars, light: boolean, origin: Point | null) {
   root.style.colorScheme = light ? 'light only' : 'dark only'
   fade(
     root,
-    vars.filter(([name]) => SLOTS.includes(name) || TONES.includes(name)),
+    withMarks(vars).filter(([name]) => SLOTS.includes(name) || TONES.includes(name) || MARKS.includes(name)),
   )
 }
 
@@ -226,7 +228,7 @@ export function show(theme: Theme) {
 export function worn(): Vars {
   const { style } = document.documentElement
 
-  return [...SLOTS, ...SIGNS].map((name): [string, string] => [name, style.getPropertyValue(name)])
+  return [...SLOTS, ...SIGNS, ...MARKS].map((name): [string, string] => [name, style.getPropertyValue(name)])
 }
 
 function handed(text: string): { vars: Vars; light: boolean; origin: Point | null } | null {
