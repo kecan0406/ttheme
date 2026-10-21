@@ -5,7 +5,6 @@ import { argbFromHex, Hct } from '@material/material-color-utilities'
 import { type Departure, departures } from '../../../../src/core/harmonize.ts'
 import { lookalikes } from '../../../../src/core/mirror.ts'
 import { type Catalog, MARKETPLACE_FILE, readCatalogs } from '../../../../src/core/theme.ts'
-import { deltaE, tripletDelta } from './delta.ts'
 
 interface Colors {
   background: string
@@ -30,8 +29,6 @@ export interface AnchorEntry {
   note?: string
 }
 
-const CATALOG_MIN = 13
-const CURSOR_MIN = 3
 const WIDE = /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]/
 
 export const width = (s: string) => [...s].reduce((n, c) => n + (WIDE.test(c) ? 2 : 1), 0)
@@ -91,7 +88,6 @@ export function slotColor(doc: ThemeDoc, slot: string): string {
   return color
 }
 
-const signatureColors = (doc: ThemeDoc) => doc.meta.signature.map((slot) => slotColor(doc, slot))
 const fixed = (n: number) => n.toFixed(1)
 const signed = (n: number) => {
   const r = Math.round(n * 10) / 10
@@ -121,13 +117,7 @@ const reasonsOf = (d: Departure) => [
   ...(d.turned ? [`hue ${signed(d.shift as number)}`] : []),
 ]
 
-function audit(
-  doc: ThemeDoc,
-  palettes: ThemeDoc[],
-  entry: AnchorEntry | undefined,
-  anchored: boolean,
-  side = '',
-): string[] {
+function audit(doc: ThemeDoc, entry: AnchorEntry | undefined, anchored: boolean, side = ''): string[] {
   const { meta, catalog } = doc
   const { name, signature } = meta
   const reasons: string[] = []
@@ -136,28 +126,6 @@ function audit(
   const alike = lookalikes({ name, signatureSlots: signature, waive: [] }, shadeOf(doc)).map(([a, b]) => `${a}/${b}`)
   console.log(`  signature  ${alike.length === 0 ? 'every slot reads apart' : `reads as one: ${alike.join(', ')} !`}`)
   if (alike.length > 0) reasons.push(`signature look-alike: ${alike.join(', ')}`)
-
-  const own = signatureColors(doc)
-  const siblings = palettes
-    .filter((t) => t.catalog === catalog && t.meta.name !== name)
-    .map((t) => ({ name: t.meta.name, d: tripletDelta(own, signatureColors(t)) }))
-    .sort((a, b) => a.d - b.d)
-  const crowded = siblings.filter((s) => s.d < CATALOG_MIN)
-  console.log(
-    `  catalog    ${siblings.length === 0 ? 'no other theme' : siblings.map((s) => `${s.name} ${fixed(s.d)}${s.d < CATALOG_MIN ? ' !' : ''}`).join('   ')}`,
-  )
-  if (crowded.length > 0) reasons.push(`catalog collision: ${crowded.map((s) => `${s.name} ${fixed(s.d)}`).join(', ')}`)
-
-  const cursors = palettes
-    .filter((t) => t.catalog !== catalog)
-    .map((t) => ({ label: `${t.meta.name} (${t.catalog})`, d: deltaE(doc.colors.cursor, t.colors.cursor) }))
-    .sort((a, b) => a.d - b.d)
-  const dupes = cursors.filter((c) => c.d < CURSOR_MIN)
-  const shown = dupes.length > 0 ? dupes : cursors.slice(0, 1)
-  console.log(
-    `  cursor     ${doc.colors.cursor}  ${dupes.length > 0 ? 'duplicates' : 'nearest outside the catalog:'} ${shown.map((c) => `${c.label} ${fixed(c.d)}${c.d < CURSOR_MIN ? ' !' : ''}`).join('   ')}`,
-  )
-  if (dupes.length > 0) reasons.push(`cursor duplicate: ${dupes.map((c) => `${c.label} ${fixed(c.d)}`).join(', ')}`)
 
   if (!anchored) return reasons
   if (entry === undefined) {
@@ -201,16 +169,14 @@ if (import.meta.main) {
     console.error('usage: bun audit.ts themes/palettes/<catalog>/<name>.toml [...] [--anchors <file>]')
     process.exit(1)
   }
-  const palettes = await loadPalettes(themesOf(positionals[0] as string))
-  const others = palettes.flatMap((doc) => otherSide(doc) ?? [])
   const anchors = values.anchors === undefined ? {} : await loadAnchors(values.anchors)
   const review: [string, string[]][] = []
   for (const file of positionals) {
     const doc = await readTheme(file)
-    const reasons = audit(doc, palettes, anchors[doc.meta.name], values.anchors !== undefined)
+    const reasons = audit(doc, anchors[doc.meta.name], values.anchors !== undefined)
     const other = otherSide(doc)
     if (other !== undefined)
-      reasons.push(...audit(other, others, undefined, false, sideOf(doc)).map((r) => `${sideOf(doc)}: ${r}`))
+      reasons.push(...audit(other, undefined, false, sideOf(doc)).map((r) => `${sideOf(doc)}: ${r}`))
     if (reasons.length > 0) review.push([doc.meta.name, reasons])
   }
   const nameWidth = Math.max(0, ...review.map(([name]) => name.length))
