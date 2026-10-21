@@ -1,3 +1,4 @@
+import { escapeHtml } from '@kitajs/html'
 import { FolderOpen, Search, Sprout, Star } from 'lucide'
 import { Button } from '@/components/ui/button'
 import type { StartList } from '@/lib/builder-view'
@@ -93,8 +94,8 @@ export function StartEntries({ list }: { list: StartList }) {
         </section>
       ))}
       {empty ? (
-        <p class="px-2 py-6 text-center text-sm text-muted-foreground" safe>
-          {`no palette matches '${list.query}'`} <span aria-hidden="true">( ˘ω˘ )</span>
+        <p class="px-2 py-6 text-center text-sm text-muted-foreground">
+          {escapeHtml(`no palette matches '${list.query}'`)} <span aria-hidden="true">( ˘ω˘ )</span>
         </p>
       ) : null}
     </>

@@ -82,7 +82,7 @@ export function MockWindow({
             </TabsTrigger>
           ))}
         </TabsList>
-        {controls ?? null}
+        {controls ? controls : null}
       </div>
       <div data-term class="mock-term">
         {panes.map((pane, i) => (
