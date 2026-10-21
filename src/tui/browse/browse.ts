@@ -8,7 +8,7 @@ import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
 import { Field } from '../field.ts'
 import { Help, type Legend, overlay, type Topic } from '../help.ts'
-import { type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
+import { HUB_UPDATE, type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
 import type { Mouse } from '../keys.ts'
 import { Glide } from '../motion.ts'
 import type { ReleaseLine } from '../notice.ts'
@@ -307,6 +307,12 @@ export class BrowsePanel {
       if (this.review.steer(key)) {
         this.state = 'submit'
       }
+
+      return
+    }
+
+    if (key === 'alt-u' && this.hub && this.standing?.standing === 'newer') {
+      this.leave(HUB_UPDATE)
 
       return
     }

@@ -9,6 +9,7 @@ export const ROLES = {
   pill: ['7;1;36', '22;27;39'],
   chip: ['100;1', '22;49'],
   danger: ['7;1;31', '22;27;39'],
+  alert: ['7;1;33', '22;27;39'],
   match: ['1;4;36', '22;24;39'],
   ok: ['32', '39'],
   warn: ['33', '39'],
@@ -167,6 +168,7 @@ export interface Paint {
   pill(text: string): string
   chip(text: string): string
   danger(text: string): string
+  alert(text: string): string
   ok(text: string): string
   warn(text: string): string
   error(text: string): string
@@ -185,6 +187,7 @@ export function painter(color: boolean): Paint {
     pill: role('pill'),
     chip: role('chip'),
     danger: role('danger'),
+    alert: role('alert'),
     ok: role('ok'),
     warn: role('warn'),
     error: role('error'),

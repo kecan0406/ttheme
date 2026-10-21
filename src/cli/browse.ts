@@ -25,7 +25,7 @@ import { liveOf } from '../terminals/live.ts'
 import { colorless } from '../terminals/osc.ts'
 import { BrowsePanel } from '../tui/browse/browse.ts'
 import type { BrowseIo, BrowseResult, Marketplace } from '../tui/browse/types.ts'
-import { HUB_CLOSED, hubOf } from '../tui/hub.ts'
+import { HUB_CLOSED, HUB_UPDATE, hubOf } from '../tui/hub.ts'
 import { promptFx } from '../tui/palette-prompt.ts'
 import { into, say } from '../tui/pending.ts'
 import { reload, takeUpdates } from './installs.ts'
@@ -320,7 +320,7 @@ export async function runBrowse(): Promise<number> {
   } finally {
     live?.stop?.()
 
-    if (live && (!hub || panel.next() === undefined)) {
+    if (live && (!hub || panel.next() === undefined || panel.next() === HUB_UPDATE)) {
       process.stdout.write(live.restore(saved))
     }
 
@@ -331,7 +331,7 @@ export async function runBrowse(): Promise<number> {
   const result = panel.result()
   const go = panel.next()
 
-  if (hub && go !== undefined) {
+  if (hub && go !== undefined && go !== HUB_UPDATE) {
     applyAndSay(home, result.refreshed)
 
     return go
@@ -339,6 +339,12 @@ export async function runBrowse(): Promise<number> {
 
   if (tty && hub) {
     process.stdout.write('\x1b[?1049l\x1b[?25h')
+  }
+
+  if (go === HUB_UPDATE) {
+    applyAndSay(home, result.refreshed)
+
+    return HUB_UPDATE
   }
 
   for (const refreshed of result.refreshed) {

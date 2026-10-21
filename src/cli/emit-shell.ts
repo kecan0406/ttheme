@@ -8,9 +8,8 @@ import { alphabetical, marketplaceOf } from '../core/theme.ts'
 import { configTemplate, SETTING_NAMES } from '../store/wiring.ts'
 import type { Emitter, Output } from '../terminals/emit/types.ts'
 import { TRAITS } from '../terminals/terminal.ts'
-import { HUB_CLOSED, HUB_SWITCH, HUB_TABS } from '../tui/hub.ts'
-import { outdated, STANDING_LINES, UPDATE_HERE } from '../tui/notice.ts'
-import { markOf } from '../tui/parts.ts'
+import { HUB_CLOSED, HUB_SWITCH, HUB_TABS, HUB_UPDATE } from '../tui/hub.ts'
+import { outdatedLines, STANDING_LINES } from '../tui/notice.ts'
 import { painter } from '../tui/style.ts'
 import { bannerHead, helpText, VERB_SPECS } from './verbs.ts'
 
@@ -54,8 +53,8 @@ export function palettesZsh(
     '# Source of truth: themes/palettes/<catalog>/*.toml in the ttheme repo.',
     '',
     `typeset -g TTHEME_VERSION=${pkg.version}`,
-    `typeset -g TTHEME_OUTDATED=${quote(outdated('%s', '%s', UPDATE_HERE))}`,
-    `typeset -g TTHEME_MARK_TEXT=${quote(markOf(painter(true)))}`,
+    `typeset -g TTHEME_OUTDATED=${quote(outdatedLines(painter(false), '%s', '%s', 'ttheme update').join('\n'))}`,
+    `typeset -g TTHEME_OUTDATED_COLOR=${quote(outdatedLines(painter(true), '%s', '%s', 'ttheme update').join('\n'))}`,
     'typeset -gA TTHEME_STANDING=(',
     ...Object.entries(STANDING_LINES).map(([standing, line]) => `  ${standing} ${quote(line)}`),
     ')',
@@ -103,7 +102,7 @@ export function palettesZsh(
     '# the screens the bare ttheme switches between (src/hub.ts): the exit status of a screen run by the CLI says where it went',
     `typeset -ga TTHEME_HUB_TABS=(${HUB_TABS.map((tab) => tab.name).join(' ')})`,
     `typeset -ga TTHEME_HUB_TITLES=(${HUB_TABS.map((tab) => tab.title).join(' ')})`,
-    `typeset -gi TTHEME_HUB_CLOSED=${HUB_CLOSED} TTHEME_HUB_SWITCH=${HUB_SWITCH}`,
+    `typeset -gi TTHEME_HUB_CLOSED=${HUB_CLOSED} TTHEME_HUB_SWITCH=${HUB_SWITCH} TTHEME_HUB_UPDATE=${HUB_UPDATE}`,
     '',
     '# the settings config.zsh holds, handed to the CLI on every call',
     `typeset -ga TTHEME_SETTINGS=(${SETTING_NAMES.join(' ')})`,

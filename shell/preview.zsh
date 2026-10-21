@@ -471,7 +471,7 @@ __tt_pv_standing() {
   local -a reply
   local standing=unknown latest="" was=$vline
   integer now
-  vchk=0 vwarn=0
+  vchk=0 vwarn=0 vnew=0
   if [[ $TTHEME_AUTO_UPDATE != off && ${CI:-false} == false ]]; then
     (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
     now=$(( EPOCHSECONDS * 1000 ))
@@ -483,7 +483,7 @@ __tt_pv_standing() {
       standing=failed vwarn=1
     elif [[ -n $latest ]]; then
       standing=current
-      __tt_newer $latest $TTHEME_VERSION && standing=newer vwarn=1
+      __tt_newer $latest $TTHEME_VERSION && standing=newer vwarn=1 vnew=1
     fi
   fi
   if [[ $standing == newer ]]; then
@@ -496,13 +496,14 @@ __tt_pv_standing() {
 
 __tt_pv_foot() {
   setopt localoptions extendedglob
-  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] on=$pl badge="" pre="" lead="" note="" right="" ver="" vst text line plain hex tb=EDIT
+  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] al=$TTHEME_SGR[alert] on=$pl badge="" pre="" lead="" note="" right="" ver="" text line plain hex tb=EDIT
   local -a kk=() kl=() seg=()
   local -i end=$1 bw=$(( $1 - 1 )) i lwid rwid vwid rend room
-  (( color )) || b= d= z= y= on=
+  (( color )) || b= d= z= y= al= on=
   if (( color )) && [[ -n $applied && $applied != "$painted" ]]; then
     hex=${${=applied}[8]#\#}
     printf -v y '\e[38;2;%d;%d;%dm' $((16#${hex:0:2})) $((16#${hex:2:2})) $((16#${hex:4:2}))
+    al=$TTHEME_SGR[reverse]$TTHEME_SGR[bold]$y
   fi
   if (( help == 2 )); then
     badge=HELP right=$b"any key"$z$d" close"$z
@@ -597,8 +598,17 @@ __tt_pv_foot() {
       right=$b"esc"$z$d" restore"$z
       [[ -n $cdot ]] && right+=" $ac$cdot$z $cn"
     fi
-    (( hub )) && ver=$vline vst=$d
-    (( vwarn )) && vst=$y
+    if (( hub && vnew )); then
+      ver=$b"alt+u"$z$d" update"$z"   "$d${vline%%  *}$z"  "
+      if (( color )); then
+        ver+=$al" ${vline#*  } "$z
+      else
+        ver+=${vline#*  }
+      fi
+    elif (( hub )); then
+      ver=$d$vline$z
+      (( vwarn )) && ver=$y$vline$z
+    fi
   fi
   if (( msgt > 0 )) && [[ -z $pick ]]; then
     text=$msg
@@ -628,9 +638,10 @@ __tt_pv_foot() {
     lwid=${(m)#plain}
     plain=${right//$'\e'\[[0-9;]##m/}
     rwid=${(m)#plain}
-    vwid=${(m)#ver}
+    plain=${ver//$'\e'\[[0-9;]##m/}
+    vwid=${(m)#plain}
     (( lwid <= bw && lwid + (rwid ? 3 + rwid : 0) + (vwid ? 3 + vwid : 0) <= bw )) && break
-    if [[ -n $ver ]]; then
+    if [[ -n $ver ]] && (( ! vnew )); then
       ver=""
     elif [[ -n $note ]]; then
       note=""
@@ -642,6 +653,8 @@ __tt_pv_foot() {
       right=""
     elif (( ${#kk} > 1 )); then
       kk[-2]=() kl[-2]=()
+    elif [[ -n $ver ]]; then
+      ver=""
     else
       break
     fi
@@ -653,7 +666,7 @@ __tt_pv_foot() {
   out+=" "$line$'\e[K'
   rend=$end
   if [[ -n $ver ]]; then
-    out+=$'\e['$(( end - vwid + 1 ))'G'$vst$ver$z
+    out+=$'\e['$(( end - vwid + 1 ))'G'$ver$z
     rend=$(( end - vwid - 3 ))
   fi
   [[ -n $right ]] && out+=$'\e['$(( rend - rwid + 1 ))'G'$right
@@ -680,6 +693,7 @@ __tt_pv_foot() {
     plain=${right//$'\e'\[[0-9;]##m/}
     pvz+=("$ph $(( rend - rwid + 1 )) $rend key ${plain%% *}")
   fi
+  [[ -n $ver ]] && (( vnew )) && pvz+=("$ph $(( end - vwid + 1 )) $end key alt+u")
   return 0
 }
 
@@ -1543,6 +1557,7 @@ __tt_pv_read() {
   if [[ $REPLY != '[' && $REPLY != O ]]; then
     key=nop
     [[ $REPLY == c ]] && key=altc
+    [[ $REPLY == u ]] && key=altu
     [[ $REPLY == [\]P_^X] ]] && __tt_pv_string
     return 0
   fi
@@ -1657,6 +1672,7 @@ __tt_pv_word() {
     bksp) REPLY=$'\x7f' ;;
     space) REPLY=' ' ;;
     ⇧enter) REPLY=senter ;;
+    alt+u) REPLY=altu ;;
     ←) REPLY=left ;;
     →) REPLY=right ;;
     '?'|'#'|[a-zA-Z]|'='|'+') REPLY=$1 ;;
@@ -1853,8 +1869,9 @@ __tt_pv_screen() {
     __tt_name_of "$orig"
     err=$(TTHEME_HUB=${TTHEME_HUB_TABS[to]} TTHEME_HUB_LOOK=${TTHEME_PAINTED:+$orig} TTHEME_HUB_MARK=${TTHEME_PAINTED:+$TTHEME_MARK_INKS[$REPLY]} __tt_cli ${TTHEME_HUB_TABS[to]} 2>&1 >/dev/tty)
     rc=$?
-    if (( rc == TTHEME_HUB_CLOSED )); then
+    if (( rc == TTHEME_HUB_CLOSED || rc == TTHEME_HUB_UPDATE )); then
       hubleft=1
+      (( rc == TTHEME_HUB_UPDATE )) && pvupdate=1
       __tt_pv_lost
       return 1
     elif (( rc > TTHEME_HUB_SWITCH && rc <= TTHEME_HUB_SWITCH + n )); then
@@ -2519,6 +2536,7 @@ __tt_pv_handle() {
       fi
       ;;
     stab) (( hub )) && { __tt_pv_screen -1 || return 1 } ;;
+    altu) [[ -z $pick ]] && (( hub && vnew )) && { pvupdate=1; return 1 } ;;
     altc)
       conf=1 cf=1 csnap=()
       for name in $cvars; do
@@ -2566,7 +2584,7 @@ __tt_preview() {
   zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
   [[ $functions[TRAPURG] == *__tt_woken* ]] && trap '' URG
   local mode=$1 pdir=${2:-$PWD} hubwas=""
-  local -i hub=0 hubleft=0 vchk=0 vwarn=0
+  local -i hub=0 hubleft=0 vchk=0 vwarn=0 vnew=0 pvupdate=0
   local vline=""
   [[ $mode == hub ]] && hub=1
   if [[ ! -t 0 || ! -t 1 ]]; then
@@ -2688,5 +2706,6 @@ __tt_preview() {
     fi
     (( hubleft )) && __tt_installs_done "$hubwas"
   }
+  (( pvupdate )) && { __tt_installs update; return }
   return 0
 }

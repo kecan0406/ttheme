@@ -302,6 +302,7 @@ that closes exactly that, so a role inside a painted row never ends the row:
 | `pill` | a tab or a choice that is on, a mode badge | reverse, bold, slot 6 |
 | `chip` | a button that is not under the cursor | bold on slot 8 |
 | `danger` | the button that removes something, while the cursor is on it | reverse, bold, slot 1 |
+| `alert` | a newer ttheme: the release notice's `UPDATE` badge and the hub's `⇡ x.y.z available` | reverse, bold, slot 3 |
 | `match` | the letters a filter matched | bold, underline, slot 6 |
 | `ok`, `warn`, `error` | a notice that something worked, one that something could not be done or a changed slot ●, a failure | slots 2, 3, 1 |
 | `under`, `reverse` | the runs a slot draws in a scene, a caret | `4`, `7` |

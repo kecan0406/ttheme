@@ -12,6 +12,7 @@ export type HubTab = (typeof HUB_TABS)[number]['name']
 
 export const HUB_CLOSED = 10
 export const HUB_SWITCH = 20
+export const HUB_UPDATE = 30
 
 export function hubOf(env: Record<string, string | undefined>): HubTab | undefined {
   return HUB_TABS.find((tab) => tab.name === env.TTHEME_HUB)?.name

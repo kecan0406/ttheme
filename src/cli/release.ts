@@ -6,8 +6,15 @@ import pkg from '../../package.json' with { type: 'json' }
 import { writeAtomic } from '../store/edits.ts'
 import { configHome } from '../store/paths.ts'
 import { colorless } from '../terminals/osc.ts'
-import { advise, outdated, type ReleaseLine, type Standing, standingLine, UPDATE_HERE } from '../tui/notice.ts'
-import { markOf } from '../tui/parts.ts'
+import {
+  advise,
+  outdated,
+  outdatedLines,
+  type ReleaseLine,
+  type Standing,
+  standingLine,
+  UPDATE_HERE,
+} from '../tui/notice.ts'
 import { painter } from '../tui/style.ts'
 
 export const UPDATE_COMMAND = `npx ${pkg.name}@latest init`
@@ -199,6 +206,10 @@ function howToUpdate(): string {
   return runsInstalled() ? UPDATE_HERE : `\`${UPDATE_COMMAND}\` updates it`
 }
 
+function updateCommand(): string {
+  return runsInstalled() ? 'ttheme update' : UPDATE_COMMAND
+}
+
 function outdatedLine(latest: string, running: string = pkg.version): string {
   return outdated(latest, running, howToUpdate())
 }
@@ -214,9 +225,9 @@ export function tellRelease(now = Date.now()): void {
     writeSeen({ ...seen, told: now })
   }
 
-  const mark = markOf(painter(process.stderr.isTTY === true && !colorless()))
-
-  advise([`${mark ? `${mark} ` : ''}${outdatedLine(seen.latest)}`])
+  advise(
+    outdatedLines(painter(process.stderr.isTTY === true && !colorless()), seen.latest, pkg.version, updateCommand()),
+  )
 }
 
 export function upgradeTo(latest: string, args: readonly string[]): number {

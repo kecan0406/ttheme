@@ -12,6 +12,7 @@ typeset -gA TTHEME_SGR=(
   pill $'\e[7;1;36m' /pill $'\e[22;27;39m'
   chip $'\e[100;1m' /chip $'\e[22;49m'
   danger $'\e[7;1;31m' /danger $'\e[22;27;39m'
+  alert $'\e[7;1;33m' /alert $'\e[22;27;39m'
   match $'\e[1;4;36m' /match $'\e[22;24;39m'
   ok $'\e[32m' /ok $'\e[39m'
   warn $'\e[33m' /warn $'\e[39m'
@@ -506,7 +507,7 @@ __tt_release() {
   __tt_release_tty && __tt_active || return 0
   (( $+EPOCHSECONDS )) || zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
   local -a at=("") reply
-  local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0 hub=$1 mark=""
+  local f=$TTHEME_STATE_DIR/release.json fd latest="" spawn=0 tell=0 hub=$1 fmt=$TTHEME_OUTDATED
   integer checked told trying failed period=86400 now=$(( EPOCHSECONDS * 1000 ))
   [[ $hub == hub ]] && period=3600
   zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
@@ -534,8 +535,8 @@ __tt_release() {
   TTHEME_RELEASE_AT=$at[1]
   zsystem flock -u $fd
   (( spawn )) && __tt_release_spawn
-  [[ -t 2 && -z $NO_COLOR && $TERM != dumb && -n $TTHEME_MARK_TEXT ]] && mark="$TTHEME_MARK_TEXT "
-  (( tell )) && [[ -n $TTHEME_OUTDATED ]] && printf "%s$TTHEME_OUTDATED\n" "$mark" $latest $TTHEME_VERSION >&2
+  [[ -t 2 && -z $NO_COLOR && $TERM != dumb && -n $TTHEME_OUTDATED_COLOR ]] && fmt=$TTHEME_OUTDATED_COLOR
+  (( tell )) && [[ -n $fmt ]] && printf "$fmt\n" $latest $TTHEME_VERSION >&2
   return 0
 }
 
