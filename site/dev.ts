@@ -4,9 +4,9 @@ import { Elysia, file, NotFound, sse } from 'elysia'
 import { autoHead } from 'elysia/auto-head'
 import { ASSETS, buildAssets, IMMUTABLE, SITE, snapshot } from './build'
 
-await buildAssets(false)
-
 await snapshot(false)
+
+await buildAssets(false)
 
 const { site } = await import('./app/site')
 

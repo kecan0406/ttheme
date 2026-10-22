@@ -1,10 +1,10 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, parse } from 'node:path'
 import tailwind from '@tailwindcss/postcss'
 import postcss from 'postcss'
 import subsetFont from 'subset-font'
 import { showcase } from '../src/cli/showcase.ts'
-import { official } from './lib/official'
+import { official, themes } from './lib/official'
 
 export const SITE = import.meta.dirname
 export const ASSETS = join(SITE, 'public', 'assets')
@@ -24,9 +24,24 @@ const HTML = 'text/html; charset=utf-8'
 
 const SNAPSHOT = join(SITE, 'marketplaces.json')
 
-const FACES = ['@fontsource-variable/inter/index.css', '@fontsource/nunito/800.css', '@fontsource/nunito/900.css']
+const SHAPING =
+  'rvrn ccmp liga locl mark mkmk rlig frac numr dnom calt clig curs kern rclt valt vert vkrn vpal vrt2 ltra ltrm rtla rtlm rand jalt chws vchw halt vhal palt Harf HARF Buzz BUZZ init medi fina isol med2 fin2 fin3 cswh mset stch ljmo vjmo tjmo abvs blws abvm blwm nukt akhn rphf rkrf pref blwf half abvf pstf cfar vatu cjct pres psts haln dist'.split(
+    ' ',
+  )
 
-const CJK = ['@fontsource/biz-udgothic/400.css', '@fontsource/biz-udgothic/700.css']
+const FEATURES = [...SHAPING, 'cv02', 'cv03', 'cv04', 'cv11', 'ss01', 'tnum']
+
+const FACES = [
+  { css: '@fontsource-variable/inter/index.css', weights: [400, 700] },
+  { css: '@fontsource/nunito/800.css' },
+  { css: '@fontsource/nunito/900.css' },
+] as const
+
+const CJK = '@fontsource/biz-udgothic/700.css'
+
+const DRAWN = ['app', 'components', 'client', 'lib']
+
+const LATIN_END = 0x24f
 
 const MONO = [
   ['JetBrainsMono-Regular', 400],
@@ -49,6 +64,8 @@ const MONO_SUBSETS = [...BLOCKS, ['rest', outside(BLOCKS.map(([, ranges]) => ran
 const PRELOAD = ['inter-latin-wght-normal', 'nunito-latin-900-normal', 'JetBrainsMono-Regular-core']
 
 const subsets = new Map<string, Promise<Uint8Array>>()
+
+type Range = [from: number, to: number]
 
 class Shelf {
   readonly #production: boolean
@@ -76,28 +93,34 @@ class Shelf {
   }
 }
 
-function spans(ranges: string): [from: number, to: number][] {
+function spans(ranges: string): Range[] {
   return ranges.split(',').map((range) => {
-    const [from = '', to = from] = range.slice(2).split('-')
+    const [from = '', to = from] = range.trim().slice(2).split('-')
 
     return [Number.parseInt(from, 16), Number.parseInt(to, 16)]
   })
 }
 
+function hex(point: number): string {
+  return point.toString(16).toUpperCase().padStart(4, '0')
+}
+
+function span([from, to]: Range): string {
+  return from === to ? `U+${hex(from)}` : `U+${hex(from)}-${hex(to)}`
+}
+
 function outside(ranges: string): string {
-  const hex = (point: number) => point.toString(16).toUpperCase().padStart(4, '0')
-  const span = (from: number, to: number) => (from === to ? `U+${hex(from)}` : `U+${hex(from)}-${hex(to)}`)
-  const gaps: string[] = []
+  const gaps: Range[] = []
   let next = 0
 
   for (const [from, to] of spans(ranges).sort(([a], [b]) => a - b)) {
-    if (from > next) gaps.push(span(next, from - 1))
+    if (from > next) gaps.push([next, from - 1])
     next = Math.max(next, to + 1)
   }
 
-  if (next <= 0x10ffff) gaps.push(span(next, 0x10ffff))
+  if (next <= 0x10ffff) gaps.push([next, 0x10ffff])
 
-  return gaps.join(',')
+  return gaps.map(span).join(',')
 }
 
 function characters(ranges: string): string {
@@ -109,12 +132,31 @@ function characters(ranges: string): string {
   return text
 }
 
-function subset(file: string, font: Uint8Array, ranges: string): Promise<Uint8Array> {
-  const key = `${file} ${ranges}`
+function rangesOf(text: string): string {
+  const runs: Range[] = []
+
+  for (const point of [...new Set(Array.from(text, (char) => char.codePointAt(0) as number))].sort((a, b) => a - b)) {
+    const last = runs.at(-1)
+
+    if (last && last[1] === point - 1) last[1] = point
+    else runs.push([point, point])
+  }
+
+  return runs.map(span).join(',')
+}
+
+function subset(key: string, font: Uint8Array, text: string, weights?: readonly [number, number]): Promise<Uint8Array> {
   const held = subsets.get(key)
 
   if (held) return held
-  const part: Promise<Uint8Array> = subsetFont(Buffer.from(font), characters(ranges), { targetFormat: 'woff2' })
+
+  const options = {
+    targetFormat: 'woff2' as const,
+    keepFeatures: FEATURES,
+    ...(weights ? { variationAxes: { wght: { min: weights[0], max: weights[1] } } } : {}),
+  }
+
+  const part: Promise<Uint8Array> = subsetFont(Buffer.from(font), text, options)
   subsets.set(key, part)
 
   return part
@@ -127,7 +169,7 @@ async function mono(shelf: Shelf): Promise<string> {
     const font = readFileSync(join(SITE, 'app', 'fonts', `${file}.woff2`))
 
     for (const [name, ranges] of MONO_SUBSETS) {
-      const src = shelf.put(`${file}-${name}.woff2`, await subset(file, font, ranges))
+      const src = shelf.put(`${file}-${name}.woff2`, await subset(`${file} ${ranges}`, font, characters(ranges)))
       faces.push(
         `@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:${weight};font-display:swap;src:url(${src}) format('woff2');unicode-range:${ranges}}`,
       )
@@ -137,19 +179,83 @@ async function mono(shelf: Shelf): Promise<string> {
   return faces.join('\n')
 }
 
-function fontsource(shelf: Shelf, specs: string[]): string {
-  return specs
-    .map((spec) => {
-      const css = Bun.resolveSync(spec, SITE)
+function facesIn(css: string): { face: string; file: string; ranges: string }[] {
+  return (readFileSync(css, 'utf8').match(/@font-face\s*\{[^}]*\}/g) ?? []).map((face) => {
+    const file = face.match(/url\(\.\/files\/([^)]+\.woff2)\)/)?.[1]
+    const ranges = face.match(/unicode-range:\s*([^;]+);/)?.[1]
 
-      return readFileSync(css, 'utf8')
-        .replace(/,\s*url\(\.\/files\/[^)]+\.woff\) format\('woff'\)/g, '')
-        .replace(
-          /url\(\.\/files\/([^)]+\.woff2)\)/g,
-          (_, file: string) => `url(${shelf.put(file, readFileSync(join(dirname(css), 'files', file)))})`,
-        )
-    })
-    .join('\n')
+    if (!file || !ranges) throw new Error(`${css} has a face without a woff2 file and a unicode-range`)
+
+    return { face, file, ranges }
+  })
+}
+
+function moved(face: string, src: string, ranges: string): string {
+  return face
+    .replace(/,\s*url\(\.\/files\/[^)]+\.woff\) format\('woff'\)/, '')
+    .replace(/url\(\.\/files\/[^)]+\.woff2\)/, `url(${src})`)
+    .replace(/unicode-range:\s*[^;]+;/, `unicode-range: ${ranges};`)
+}
+
+async function fontsource(shelf: Shelf): Promise<string> {
+  const faces: string[] = []
+
+  for (const spec of FACES) {
+    const css = Bun.resolveSync(spec.css, SITE)
+    const weights = 'weights' in spec ? spec.weights : undefined
+
+    for (const { face, file, ranges } of facesIn(css)) {
+      const font = readFileSync(join(dirname(css), 'files', file))
+      const src = shelf.put(file, await subset(file, font, characters(ranges), weights))
+      const weighed = weights ? face.replace(/font-weight:\s*[^;]+;/, `font-weight: ${weights.join(' ')};`) : face
+      faces.push(moved(weighed, src, ranges))
+    }
+  }
+
+  return faces.join('\n')
+}
+
+async function drawn(): Promise<string> {
+  const { marketplaces } = await import('./lib/marketplaces')
+  const palettes = [...themes, ...marketplaces.flatMap((marketplace) => marketplace.palettes)]
+
+  const sources = DRAWN.flatMap((dir) =>
+    readdirSync(join(SITE, dir), { recursive: true, encoding: 'utf8' }).flatMap((file) =>
+      /\.(tsx?|css)$/.test(file) && !file.endsWith('.test.ts') ? [readFileSync(join(SITE, dir, file), 'utf8')] : [],
+    ),
+  )
+
+  const text = [
+    ...palettes.flatMap((theme) => [theme.name, theme.catalog ?? '', theme.native ?? '', theme.ansiSource]),
+    ...marketplaces.flatMap((marketplace) => [marketplace.id, marketplace.about]),
+    ...sources,
+  ].join('')
+
+  return [...new Set(text)].filter((char) => (char.codePointAt(0) as number) > LATIN_END).join('')
+}
+
+async function cjk(shelf: Shelf, text: string): Promise<string> {
+  const css = Bun.resolveSync(CJK, SITE)
+  const faces: string[] = []
+
+  for (const { face, file, ranges } of facesIn(css)) {
+    const covered = spans(ranges)
+
+    const inside = (char: string) => {
+      const point = char.codePointAt(0) as number
+
+      return covered.some(([from, to]) => point >= from && point <= to)
+    }
+
+    const here = Array.from(text).filter(inside).join('')
+
+    if (!here) continue
+    const font = readFileSync(join(dirname(css), 'files', file))
+    const src = shelf.put(file, await subset(`${file} ${here}`, font, here))
+    faces.push(moved(face, src, rangesOf(here)))
+  }
+
+  return faces.join('\n')
 }
 
 async function styles(production: boolean, faces: string): Promise<string> {
@@ -191,12 +297,11 @@ export async function buildAssets(production: boolean): Promise<void> {
   rmSync(ASSETS, { recursive: true, force: true })
   mkdirSync(ASSETS, { recursive: true })
   const shelf = new Shelf(production)
-  shelf.put('site.css', await styles(production, `${await mono(shelf)}\n${fontsource(shelf, FACES)}`))
-  shelf.put('cjk.css', fontsource(shelf, CJK))
+  const faces = [await mono(shelf), await fontsource(shelf), await cjk(shelf, await drawn())]
+  shelf.put('site.css', await styles(production, faces.join('\n')))
 
   const manifest = {
     css: shelf.url('site'),
-    cjk: shelf.url('cjk'),
     ...(await client(production)),
     fonts: PRELOAD.map((name) => shelf.url(name)),
     reload: production ? '' : '/__reload',
@@ -275,8 +380,8 @@ async function output(): Promise<void> {
 }
 
 if (import.meta.main) {
-  await buildAssets(true)
   await snapshot(true)
+  await buildAssets(true)
   await output()
   process.exit(0)
 }

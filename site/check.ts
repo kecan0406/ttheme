@@ -7,10 +7,7 @@ const stand = mkdtempSync(join(tmpdir(), 'ttheme-site-check-'))
 let failed = 0
 
 try {
-  writeFileSync(
-    join(stand, 'assets.json'),
-    JSON.stringify({ css: '', cjk: '', js: '', builder: '', fonts: [], reload: '' }),
-  )
+  writeFileSync(join(stand, 'assets.json'), JSON.stringify({ css: '', js: '', builder: '', fonts: [], reload: '' }))
   writeFileSync(join(stand, 'marketplaces.json'), '[]')
   writeFileSync(
     join(stand, 'tsconfig.json'),

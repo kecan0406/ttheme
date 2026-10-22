@@ -104,11 +104,10 @@ function Document({
         ) : (
           <meta name="twitter:card" content="summary" />
         )}
+        <link rel="stylesheet" href={assets.css} />
         {FONTS.map((font) => (
           <link rel="preload" href={font} as="font" type="font/woff2" crossorigin="" />
         ))}
-        <link rel="stylesheet" href={assets.css} />
-        <link rel="stylesheet" href={assets.cjk} media="print" onload="this.media='all'" />
         <script>{KEYS_SCRIPT}</script>
         <script>{WEAR_SCRIPT}</script>
         <script type="application/json" data-fallback>
