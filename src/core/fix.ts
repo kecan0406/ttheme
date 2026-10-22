@@ -39,52 +39,64 @@ const CLEAR = 1.05
 
 const toward = (from: number, to: number) => ((to - from + 360) % 360 <= 180 ? 1 : -1)
 
-export function srgb(l: number, c: number, h: number): number[] | undefined {
-  const a = c * Math.cos((h * Math.PI) / 180)
-  const b = c * Math.sin((h * Math.PI) / 180)
+const outside = (v: number) => v < -1e-4 || v > 1 + 1e-4
 
-  const lms = [
-    l + 0.3963377774 * a + 0.2158037573 * b,
-    l - 0.1055613458 * a - 0.0638541728 * b,
-    l - 0.0894841775 * a - 1.291485548 * b,
-  ].map((v) => v ** 3) as [number, number, number]
+const encoded = (v: number) => {
+  const u = Math.min(1, Math.max(0, v))
 
-  const [x, y, z] = lms
+  return Math.round(255 * (u <= 0.0031308 ? 12.92 * u : 1.055 * u ** (1 / 2.4) - 0.055))
+}
 
-  const linear = [
+const byte = (v: number) => v.toString(16).padStart(2, '0')
+
+function linearOf(l: number, a: number, b: number): [number, number, number] {
+  const x = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3
+  const y = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3
+  const z = (l - 0.0894841775 * a - 1.291485548 * b) ** 3
+
+  return [
     4.0767416621 * x - 3.3077115913 * y + 0.2309699292 * z,
     -1.2684380046 * x + 2.6097574011 * y - 0.3413193965 * z,
     -0.0041960863 * x - 0.7034186147 * y + 1.707614701 * z,
   ]
+}
 
-  if (linear.some((v) => v < -1e-4 || v > 1 + 1e-4)) return undefined
+function fits(l: number, a: number, b: number): boolean {
+  const [r, g, bl] = linearOf(l, a, b)
 
-  return linear.map((v) => {
-    const u = Math.min(1, Math.max(0, v))
+  return !(outside(r) || outside(g) || outside(bl))
+}
 
-    return Math.round(255 * (u <= 0.0031308 ? 12.92 * u : 1.055 * u ** (1 / 2.4) - 0.055))
-  })
+export function srgb(l: number, c: number, h: number): number[] | undefined {
+  const [r, g, b] = linearOf(l, c * Math.cos((h * Math.PI) / 180), c * Math.sin((h * Math.PI) / 180))
+
+  if (outside(r) || outside(g) || outside(b)) return undefined
+
+  return [encoded(r), encoded(g), encoded(b)]
 }
 
 export function edgeChroma(l: number, h: number, c: number): number {
-  if (srgb(l, c, h) !== undefined) return c
+  const cos = Math.cos((h * Math.PI) / 180)
+  const sin = Math.sin((h * Math.PI) / 180)
+
+  if (fits(l, c * cos, c * sin)) return c
   let lo = 0
   let hi = c
 
   for (let i = 0; i < 24; i++) {
     const mid = (lo + hi) / 2
 
-    if (srgb(l, mid, h) === undefined) hi = mid
-    else lo = mid
+    if (fits(l, mid * cos, mid * sin)) lo = mid
+    else hi = mid
   }
 
   return lo
 }
 
 export function inGamut(l: number, c: number, h: number): Hex {
-  const rgb = srgb(l, edgeChroma(l, h, c), h) ?? [0, 0, 0]
+  const [r, g, b] = srgb(l, edgeChroma(l, h, c), h) ?? [0, 0, 0]
 
-  return `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`
+  return `#${byte(r as number)}${byte(g as number)}${byte(b as number)}`
 }
 
 function rehue(hex: Hex, hue: number): Hex {

@@ -1,8 +1,8 @@
-import { argbFromHex, Hct } from '@material/material-color-utilities'
 import { deltaE, type Hex } from './color.ts'
 import { check, ROLE_HUES } from './contrast.ts'
 import { fixRoles, inGamut, type Move } from './fix.ts'
 import { type Anchored, harmonized } from './harmonize.ts'
+import { hctOf } from './hct.ts'
 import { slotOf, withSlot } from './mirror.ts'
 import type { Shade } from './theme.ts'
 
@@ -18,10 +18,11 @@ export interface Ranked {
   moves: Move[]
 }
 
-export interface Ranking {
-  ranked: Ranked[]
-  dropped: Map<string, string>
-  dark: number
+export type Choice = { best: Ranked } | { best: undefined; dropped: Map<string, string> }
+
+interface Candidate extends Omit<Ranked, 'shade' | 'moves'> {
+  raw: Shade
+  at: number
 }
 
 export const FUNCTION_HUE = new Map([
@@ -52,8 +53,6 @@ const hueDiff = (a: number, b: number) => {
 
   return Math.min(d, 360 - d)
 }
-
-const hueOf = (hex: Hex) => Hct.fromInt(argbFromHex(hex)).hue
 
 export function parseScheme(text: string): Shade | undefined {
   const values = new Map<string, Hex>()
@@ -99,7 +98,7 @@ export function gateOf(theme: Anchored, shade: Shade): string[] {
 function scored(name: string, held: ReadonlySet<number>, shade: Shade): Omit<Ranked, 'shade' | 'moves'> {
   const drifts = GROUPS.flat()
     .filter((i) => !held.has(i))
-    .map((i) => ({ slot: i, drift: hueDiff(hueOf(shade.ansi[i] as Hex), FUNCTION_HUE.get(i % 8) as number) }))
+    .map((i) => ({ slot: i, drift: hueDiff(hctOf(shade.ansi[i] as Hex).hue, FUNCTION_HUE.get(i % 8) as number) }))
 
   const worst = drifts.reduce((a, b) => (b.drift > a.drift ? b : a))
   const mean = drifts.reduce((sum, d) => sum + d.drift, 0) / drifts.length
@@ -155,42 +154,58 @@ export function roleBase(): Shade {
   }
 }
 
-export function rankBases(theme: Anchored, schemes: Iterable<readonly [string, Shade | undefined]>): Ranking {
+export function bestBase(theme: Anchored, schemes: Iterable<readonly [string, Shade | undefined]>): Choice {
   const held = new Set(theme.signatureSlots.filter((s) => s.startsWith('ansi')).map((s) => Number(s.slice(4))))
-  const ranked: Ranked[] = []
-  const dropped = new Map<string, string>()
-  let dark = 0
+  const candidates: Candidate[] = []
+  const dropped: [number, string, string][] = []
+  let at = 0
 
   for (const [name, scheme] of schemes) {
+    at++
+
     if (!scheme) {
-      dropped.set(name, 'fewer than 16 palette entries')
+      dropped.push([at, name, 'fewer than 16 palette entries'])
       continue
     }
 
-    if (Hct.fromInt(argbFromHex(scheme.background)).tone >= LIGHT) {
-      dropped.set(name, 'light background')
+    if (hctOf(scheme.background).tone >= LIGHT) {
+      dropped.push([at, name, 'light background'])
       continue
     }
-
-    dark++
 
     let raw: Shade
 
     try {
       raw = harmonized(seeded(theme, scheme))
     } catch (error) {
-      dropped.set(name, `harmonizer: ${(error as Error).message}`)
+      dropped.push([at, name, `harmonizer: ${(error as Error).message}`])
       continue
     }
 
-    const { shade, moves } = finished(theme, raw)
-    const problems = gateOf(theme, shade)
-
-    if (problems.length > 0) dropped.set(name, `gate: ${problems.join('; ')}`)
-    else ranked.push({ ...scored(name, held, raw), shade, moves })
+    candidates.push({ ...scored(name, held, raw), raw, at })
   }
 
-  ranked.sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
+  candidates.sort((a, b) => a.score - b.score)
 
-  return { ranked, dropped, dark }
+  for (let start = 0; start < candidates.length; ) {
+    const score = (candidates[start] as Candidate).score
+    let end = start + 1
+
+    while (end < candidates.length && (candidates[end] as Candidate).score === score) end++
+
+    const tied = candidates.slice(start, end).sort((a, b) => a.name.localeCompare(b.name))
+
+    for (const { raw, at: given, ...rank } of tied) {
+      const { shade, moves } = finished(theme, raw)
+      const problems = gateOf(theme, shade)
+
+      if (problems.length === 0) return { best: { ...rank, shade, moves } }
+
+      dropped.push([given, rank.name, `gate: ${problems.join('; ')}`])
+    }
+
+    start = end
+  }
+
+  return { best: undefined, dropped: new Map(dropped.sort((a, b) => a[0] - b[0]).map(([, name, why]) => [name, why])) }
 }

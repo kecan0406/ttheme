@@ -1,9 +1,8 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { argbFromHex, Hct } from '@material/material-color-utilities'
 import { type Anchors, type Problem, readAnchors } from '../core/anchors.ts'
-import { parseScheme, type Ranked, ROLE_BASE, rankBases, roleBase } from '../core/base.ts'
+import { bestBase, parseScheme, type Ranked, ROLE_BASE, roleBase } from '../core/base.ts'
 import { AGENT, MAX_PIXELS } from '../core/booru.ts'
 import type { Hex } from '../core/color.ts'
 import { hairOf, readRelated, type Tagged, type Verdict, verdictOf, worn } from '../core/consensus.ts'
@@ -11,6 +10,7 @@ import { check } from '../core/contrast.ts'
 import { type Draft, paletteToml } from '../core/draft.ts'
 import { type Crop, cropProblem, type Flat, flatsOf } from '../core/flats.ts'
 import { type Departure, departures } from '../core/harmonize.ts'
+import { hctOf } from '../core/hct.ts'
 import { colorsOfTheme } from '../core/manifest.ts'
 import { lookalikes, mirrored, withSlot } from '../core/mirror.ts'
 import { decodeImage, encodeRgba, type Rgba, resample } from '../core/png.ts'
@@ -93,8 +93,6 @@ const RELATED_TIMEOUT = 15_000
 
 const round = (n: number, digits = 0) => Number(n.toFixed(digits))
 
-const hctOf = (hex: Hex) => Hct.fromInt(argbFromHex(hex))
-
 const expand = (path: string) => (path.startsWith('~/') ? join(homedir(), path.slice(2)) : resolve(path))
 
 const isUrl = (ref: string) => /^https?:\/\//i.test(ref)
@@ -150,13 +148,14 @@ async function picture(ref: string): Promise<{ path: string; key: string; image:
     key = artKey(ref)
   } else {
     path = expand(ref)
+    const file = statSync(path, { throwIfNoEntry: false })
 
-    if (!existsSync(path) || !statSync(path).isFile()) {
+    if (!file?.isFile()) {
       throw new InputError(`${ref} cannot be read`, [{ path: 'image', problem: 'a file or an http(s) address' }])
     }
 
     bytes = new Uint8Array(readFileSync(path))
-    key = artKey(`${path}:${statSync(path).size}:${statSync(path).mtimeMs}`)
+    key = artKey(`${path}:${file.size}:${file.mtimeMs}`)
   }
 
   const loaded = await normalize(bytes, ref).catch((error: Error) => {
@@ -426,16 +425,15 @@ function anchoredOf(anchors: Anchors): Shade & { name: string; signatureSlots: s
   }
 }
 
-function bestBase(
+function baseFor(
   anchors: Anchors,
   schemes: readonly (readonly [string, Shade | undefined])[],
 ): { ranked: Ranked; problems: Problem[] } | { ranked: undefined; problems: Problem[] } {
-  const theme = anchoredOf(anchors)
-  const { ranked, dropped } = rankBases(theme, schemes)
-  const [best] = ranked
+  const choice = bestBase(anchoredOf(anchors), schemes)
 
-  if (best) return { ranked: best, problems: [] }
+  if (choice.best !== undefined) return { ranked: choice.best, problems: [] }
 
+  const { dropped } = choice
   const harmonizer = [...dropped.values()].find((reason) => reason.startsWith('harmonizer: '))
 
   if (harmonizer) {
@@ -552,7 +550,7 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
   const failed: Problem[] = []
 
   for (const anchors of chosen) {
-    const { ranked, problems: why } = bestBase(anchors, schemes)
+    const { ranked, problems: why } = baseFor(anchors, schemes)
 
     if (!ranked) {
       failed.push(...why)

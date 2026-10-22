@@ -1,6 +1,6 @@
-import { argbFromHex, Hct, hexFromArgb } from '@material/material-color-utilities'
 import { deltaE, type Hex } from './color.ts'
 import { ROLE_HUES } from './contrast.ts'
+import { type Hued, hctHex, hctOf } from './hct.ts'
 import {
   CONTAINER_TONE,
   CURSOR_TONE,
@@ -43,11 +43,6 @@ const HUE_MAX = 12
 const ACHROMATIC = 5
 const HELD = new Set(['cursor', 'selection'])
 
-const hct = (hex: Hex) => Hct.fromInt(argbFromHex(hex))
-
-const make = (hue: number, chroma: number, tone: number): Hex =>
-  hexFromArgb(Hct.from(hue, chroma, tone).toInt()).toLowerCase()
-
 const clamp = (v: number, band: { min: number; max: number }) => Math.max(band.min, Math.min(band.max, v))
 
 const hueDiff = (a: number, b: number) => {
@@ -64,29 +59,29 @@ function toward(hue: number, seed: number): number {
 }
 
 function accent(value: Hex, index: number, seed: number, mode: Mode, rotate: boolean): Hex {
-  const o = hct(value)
+  const o = hctOf(value)
   const hue = o.chroma < GREY_CHROMA ? (ROLE_HUES.get(index % 8)?.center as number) : o.hue
 
-  return make(rotate ? toward(hue, seed) : hue, clamp(o.chroma, CHROMA), TONES[mode][index] as number)
+  return hctHex(rotate ? toward(hue, seed) : hue, clamp(o.chroma, CHROMA), TONES[mode][index] as number)
 }
 
 function cursor(value: Hex, mode: Mode): Hex {
-  const o = hct(value)
+  const o = hctOf(value)
 
-  return make(o.hue, o.chroma < OWN_CHROMA ? o.chroma : clamp(o.chroma, CHROMA), clamp(o.tone, CURSOR_TONE[mode]))
+  return hctHex(o.hue, o.chroma < OWN_CHROMA ? o.chroma : clamp(o.chroma, CHROMA), clamp(o.tone, CURSOR_TONE[mode]))
 }
 
-function signatureColor(theme: Anchored, slot: string, mode: Mode, seed: Hct): Hex {
+function signatureColor(theme: Anchored, slot: string, mode: Mode, seed: Hued): Hex {
   const value = slotOf(theme, slot)
-  const o = hct(value)
+  const o = hctOf(value)
 
-  if (slot === 'background') return make(o.hue, Math.min(seed.chroma, SURFACE_CHROMA), SURFACE_TONE[mode])
+  if (slot === 'background') return hctHex(o.hue, Math.min(seed.chroma, SURFACE_CHROMA), SURFACE_TONE[mode])
 
-  if (slot === 'foreground') return make(o.hue, Math.min(o.chroma, SIGNATURE_TEXT_CHROMA), TEXT_TONE[mode])
+  if (slot === 'foreground') return hctHex(o.hue, Math.min(o.chroma, SIGNATURE_TEXT_CHROMA), TEXT_TONE[mode])
 
   if (slot === 'cursor') return cursor(value, mode)
 
-  if (slot === 'selection') return make(o.hue, o.chroma, clamp(o.tone, CONTAINER_TONE[mode]))
+  if (slot === 'selection') return hctHex(o.hue, o.chroma, clamp(o.tone, CONTAINER_TONE[mode]))
 
   return accent(value, Number(slot.slice(4)), seed.hue, mode, false)
 }
@@ -96,14 +91,14 @@ export function harmonized(theme: Anchored): Shade {
 
   if (first === undefined) throw new Error(`${theme.name}: signature is empty`)
 
-  const seed = hct(slotOf(theme, first))
-  const mode: Mode = hct(theme.background).tone > 50 ? 'light' : 'dark'
+  const seed = hctOf(slotOf(theme, first))
+  const mode: Mode = hctOf(theme.background).tone > 50 ? 'light' : 'dark'
 
   const dark =
     mode === 'light' || theme.signatureSlots.includes('selection')
       ? []
       : theme.signatureSlots.filter(
-          (slot) => slot.startsWith('ansi') && hct(slotOf(theme, slot)).tone < DARK_ANCHOR_TONE,
+          (slot) => slot.startsWith('ansi') && hctOf(slotOf(theme, slot)).tone < DARK_ANCHOR_TONE,
         )
 
   if (dark.length > 0) {
@@ -113,16 +108,16 @@ export function harmonized(theme: Anchored): Shade {
   }
 
   const rotate = seed.chroma >= GREY_CHROMA
-  const surface = (tone: number) => make(seed.hue, Math.min(seed.chroma, SURFACE_CHROMA), tone)
-  const text = (tone: number) => make(seed.hue, Math.min(seed.chroma, TEXT_CHROMA), tone)
+  const surface = (tone: number) => hctHex(seed.hue, Math.min(seed.chroma, SURFACE_CHROMA), tone)
+  const text = (tone: number) => hctHex(seed.hue, Math.min(seed.chroma, TEXT_CHROMA), tone)
   const tones = TONES[mode]
-  const selection = hct(theme.selectionBackground)
+  const selection = hctOf(theme.selectionBackground)
 
   const base: Shade = {
     background: surface(SURFACE_TONE[mode]),
     foreground: text(TEXT_TONE[mode]),
     cursor: cursor(theme.cursor, mode),
-    selectionBackground: make(selection.hue, Math.min(selection.chroma, SELECTION_CHROMA), SELECTION_TONE[mode]),
+    selectionBackground: hctHex(selection.hue, Math.min(selection.chroma, SELECTION_CHROMA), SELECTION_TONE[mode]),
     ansi: theme.ansi.map((value, i) =>
       i === 0 || i === 7 || i === 8
         ? surface(tones[i] as number)
@@ -141,8 +136,8 @@ export function harmonized(theme: Anchored): Shade {
 }
 
 function hueShift(from: Hex, to: Hex): number | undefined {
-  const a = hct(from)
-  const b = hct(to)
+  const a = hctOf(from)
+  const b = hctOf(to)
 
   if (a.chroma < ACHROMATIC && b.chroma < ACHROMATIC) return undefined
 

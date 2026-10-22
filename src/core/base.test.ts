@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { finished, gateOf, rankBases, seeded } from './base.ts'
+import { bestBase, finished, gateOf, seeded } from './base.ts'
 import { check } from './contrast.ts'
 import { harmonized } from './harmonize.ts'
 import { withSlot } from './mirror.ts'
@@ -44,10 +44,10 @@ const theme = {
   ...anchors.reduce((shade, [slot, hex]) => withSlot(shade, slot, hex), scheme),
 }
 
-test('rankBases keeps a base the role fixer brings through the gate and hands back the fixed colors', () => {
+test('bestBase keeps a base the role fixer brings through the gate and hands back the fixed colors', () => {
   assert.ok(gateOf(theme, harmonized(seeded(theme, scheme))).length > 0)
 
-  const [best] = rankBases(theme, [['probe', scheme]]).ranked
+  const { best } = bestBase(theme, [['probe', scheme]])
 
   assert.ok(best)
   assert.deepEqual(check({ ...best.shade, name: theme.name, signatureSlots: theme.signatureSlots, waive: [] }), [])
@@ -55,16 +55,15 @@ test('rankBases keeps a base the role fixer brings through the gate and hands ba
   assert.deepEqual(best.shade, finished(theme, harmonized(seeded(theme, scheme))).shade)
 })
 
-test('rankBases drops a scheme it cannot read and one with a light background', () => {
-  const { ranked, dropped, dark } = rankBases(theme, [
+test('bestBase drops a scheme it cannot read and one with a light background', () => {
+  const choice = bestBase(theme, [
     ['short', undefined],
     ['light', { ...scheme, background: '#fafafa' }],
   ])
 
-  assert.equal(ranked.length, 0)
-  assert.equal(dark, 0)
+  assert.ok(choice.best === undefined)
   assert.deepEqual(
-    [...dropped],
+    [...choice.dropped],
     [
       ['short', 'fewer than 16 palette entries'],
       ['light', 'light background'],

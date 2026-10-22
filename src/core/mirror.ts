@@ -1,7 +1,7 @@
-import { argbFromHex, Hct, hexFromArgb } from '@material/material-color-utilities'
 import { type Hex, lab } from './color.ts'
 import { apart, check, exemptSlots, roleOf } from './contrast.ts'
 import { fixRoles, type Move } from './fix.ts'
+import { hctHex, hctOf } from './hct.ts'
 import { type Mode, modeOf, otherOf } from './mode.ts'
 import type { Shade, Theme } from './theme.ts'
 
@@ -52,34 +52,29 @@ const STEP = 0.5
 
 const REACH = 20
 
-const hct = (hex: Hex) => Hct.fromInt(argbFromHex(hex))
-
-const make = (hue: number, chroma: number, tone: number): Hex =>
-  hexFromArgb(Hct.from(hue, chroma, tone).toInt()).toLowerCase()
-
 const clamp = (v: number, band: Band) => Math.max(band.min, Math.min(band.max, v))
 
 const across = (tone: number, from: Band, to: Band) =>
   to.min + ((clamp(tone, from) - from.min) * (to.max - to.min)) / (from.max - from.min)
 
 const own = (value: Hex, tone: number, chroma = Number.POSITIVE_INFINITY) => {
-  const o = hct(value)
+  const o = hctOf(value)
 
-  return make(o.hue, Math.min(o.chroma, chroma), tone)
+  return hctHex(o.hue, Math.min(o.chroma, chroma), tone)
 }
 
-const edge = (hue: number, tone: number) => Hct.from(hue, 200, tone).chroma
+const edge = (hue: number, tone: number) => hctOf(hctHex(hue, 200, tone)).chroma
 
 export function carried(value: Hex, tone: number): Hex {
-  const o = hct(value)
+  const o = hctOf(value)
   const room = edge(o.hue, o.tone)
   const share = room > 0 ? Math.min(1, o.chroma / room) : 0
 
-  return make(o.hue, Math.min(o.chroma * CHROMA_LIFT, Math.max(o.chroma, share * edge(o.hue, tone))), tone)
+  return hctHex(o.hue, Math.min(o.chroma * CHROMA_LIFT, Math.max(o.chroma, share * edge(o.hue, tone))), tone)
 }
 
 export function olive(value: Hex): boolean {
-  const o = hct(value)
+  const o = hctOf(value)
   const hue = Math.round(o.hue)
 
   return (
@@ -93,10 +88,10 @@ export function olive(value: Hex): boolean {
 function cleared(value: Hex, role: number): Hex {
   if (!olive(value)) return value
 
-  const o = hct(value)
+  const o = hctOf(value)
   const gold = role === 3 || (role !== 2 && o.hue < (OLIVE.hue.min + OLIVE.hue.max) / 2)
 
-  return make(gold ? OLIVE_EXIT.yellow : OLIVE_EXIT.green, o.chroma, o.tone)
+  return hctHex(gold ? OLIVE_EXIT.yellow : OLIVE_EXIT.green, o.chroma, o.tone)
 }
 
 const NAMED = new Map<string, Exclude<keyof Shade, 'ansi'>>([
@@ -115,11 +110,11 @@ export function slotOf(shade: Shade, slot: string): Hex {
 function flip(theme: Mirrored): Shade {
   const from = modeOf(theme)
   const to = otherOf(from)
-  const seed = hct(slotOf(theme, theme.signatureSlots[0] as string))
-  const surface = (tone: number) => make(seed.hue, Math.min(seed.chroma, SURFACE_CHROMA), tone)
-  const text = (tone: number) => make(seed.hue, Math.min(seed.chroma, TEXT_CHROMA), tone)
+  const seed = hctOf(slotOf(theme, theme.signatureSlots[0] as string))
+  const surface = (tone: number) => hctHex(seed.hue, Math.min(seed.chroma, SURFACE_CHROMA), tone)
+  const text = (tone: number) => hctHex(seed.hue, Math.min(seed.chroma, TEXT_CHROMA), tone)
 
-  const flipped = (value: Hex) => 100 - hct(value).tone
+  const flipped = (value: Hex) => 100 - hctOf(value).tone
   const exempt = exemptSlots(theme)
 
   return {
@@ -127,7 +122,7 @@ function flip(theme: Mirrored): Shade {
     foreground: theme.signatureSlots.includes('foreground')
       ? own(theme.foreground, TEXT_TONE[to], SIGNATURE_TEXT_CHROMA)
       : text(TEXT_TONE[to]),
-    cursor: carried(theme.cursor, across(hct(theme.cursor).tone, CURSOR_TONE[from], CURSOR_TONE[to])),
+    cursor: carried(theme.cursor, across(hctOf(theme.cursor).tone, CURSOR_TONE[from], CURSOR_TONE[to])),
     selectionBackground: theme.signatureSlots.includes('selection')
       ? own(theme.selectionBackground, clamp(flipped(theme.selectionBackground), CONTAINER_TONE[to]))
       : own(theme.selectionBackground, SELECTION_TONE[to], SELECTION_CHROMA),
@@ -210,7 +205,9 @@ export function separated(theme: Signed, shade: Shade, cursor = shade.cursor, at
   let next = shade
 
   if (lookalikes(theme, next).some((pair) => pair.includes('cursor')))
-    next = stepped(theme, next, 'cursor', nearest(hct(next.cursor).tone, CURSOR_TONE[mode]), (tone) => at(cursor, tone))
+    next = stepped(theme, next, 'cursor', nearest(hctOf(next.cursor).tone, CURSOR_TONE[mode]), (tone) =>
+      at(cursor, tone),
+    )
 
   for (const [a, b] of lookalikes(theme, next)) {
     if ((!a.startsWith('ansi') && !b.startsWith('ansi')) || reads(next, a, b)) continue
@@ -222,7 +219,7 @@ export function separated(theme: Signed, shade: Shade, cursor = shade.cursor, at
 
     const value = slotOf(next, mover)
 
-    next = stepped(theme, next, mover, away(hct(value).tone, hct(slotOf(next, still)).tone, mode), (tone) =>
+    next = stepped(theme, next, mover, away(hctOf(value).tone, hctOf(slotOf(next, still)).tone, mode), (tone) =>
       own(value, tone),
     )
   }

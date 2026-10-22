@@ -1,5 +1,5 @@
-import { argbFromHex, Hct } from '@material/material-color-utilities'
 import type { Hex } from './color.ts'
+import { hctOf } from './hct.ts'
 import type { Rgba } from './png.ts'
 
 export interface Crop {
@@ -22,8 +22,6 @@ export interface Flat {
 export interface Counting {
   crop?: Crop
   quant?: number
-  top?: number
-  extremes?: boolean
 }
 
 export interface Flats {
@@ -40,7 +38,8 @@ const PAIR_HUE = 20
 const PAIR_CHROMA = 12
 const PAIR_TONE = { min: 3, max: 30 }
 const PAIR_SHARE = 0.1
-const EXTREME = { min: 3, max: 97 }
+const SLOTS_FIRST = 1 << 12
+const SPREAD = 0x9e3779b1
 
 const hex = (r: number, g: number, b: number): Hex =>
   `#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`
@@ -51,8 +50,96 @@ const hueDiff = (a: number, b: number) => {
   return Math.min(d, 360 - d)
 }
 
+class Tally {
+  slots = new Int32Array(SLOTS_FIRST)
+  keys = new Int32Array(SLOTS_FIRST / 2)
+  counts = new Float64Array(SLOTS_FIRST / 2)
+  sums: Float64Array
+  size = 0
+  shift = 32 - Math.log2(SLOTS_FIRST)
+  readonly summing: boolean
+
+  constructor(summing: boolean) {
+    this.summing = summing
+    this.sums = new Float64Array(summing ? (SLOTS_FIRST / 2) * 3 : 0)
+  }
+
+  idOf(key: number): number {
+    const mask = this.slots.length - 1
+    let at = Math.imul(key, SPREAD) >>> this.shift
+
+    for (let held = this.slots[at] as number; held !== 0; held = this.slots[at] as number) {
+      if (this.keys[held - 1] === key) return held - 1
+
+      at = (at + 1) & mask
+    }
+
+    const id = this.size++
+
+    if (id === this.keys.length) this.widen()
+
+    this.keys[id] = key
+    this.slots[at] = id + 1
+
+    if (this.size * 2 > this.slots.length) this.rehash()
+
+    return id
+  }
+
+  widen(): void {
+    const keys = new Int32Array(this.keys.length * 2)
+    const counts = new Float64Array(this.counts.length * 2)
+    keys.set(this.keys)
+    counts.set(this.counts)
+    this.keys = keys
+    this.counts = counts
+
+    if (this.summing) {
+      const sums = new Float64Array(this.sums.length * 2)
+      sums.set(this.sums)
+      this.sums = sums
+    }
+  }
+
+  rehash(): void {
+    const slots = new Int32Array(this.slots.length * 2)
+    const mask = slots.length - 1
+    this.shift--
+
+    for (let id = 0; id < this.size; id++) {
+      let at = Math.imul(this.keys[id] as number, SPREAD) >>> this.shift
+
+      while (slots[at] !== 0) at = (at + 1) & mask
+
+      slots[at] = id + 1
+    }
+
+    this.slots = slots
+  }
+
+  top(most: number): number[] {
+    const kept: number[] = []
+
+    for (let id = 0; id < this.size; id++) {
+      const count = this.counts[id] as number
+
+      if (kept.length === most && count <= (this.counts[kept[most - 1] as number] as number)) continue
+
+      let at = kept.length
+
+      while (at > 0 && count > (this.counts[kept[at - 1] as number] as number)) at--
+
+      kept.splice(at, 0, id)
+
+      if (kept.length > most) kept.pop()
+    }
+
+    return kept
+  }
+}
+
 function flat(color: Hex, count: number): Flat {
-  const h = Hct.fromInt(argbFromHex(color))
+  const h = hctOf(color)
 
   return { hex: color, count, hue: h.hue, chroma: h.chroma, tone: h.tone, lit: false }
 }
@@ -91,6 +178,92 @@ function median(histogram: Uint32Array, total: number): number {
   return 255
 }
 
+const levelsOf = (quant: number) => {
+  const step = 256 / quant
+
+  return Uint8Array.from({ length: 256 }, (_, v) => Math.floor(v / step))
+}
+
+function spread(tally: Tally, channels: readonly [Uint32Array, Uint32Array, Uint32Array]): void {
+  for (let at = 0; at < tally.size; at++) {
+    const key = tally.keys[at] as number
+    const count = tally.counts[at] as number
+    channels[0][key >> 16] = (channels[0][key >> 16] as number) + count
+    channels[1][(key >> 8) & 255] = (channels[1][(key >> 8) & 255] as number) + count
+    channels[2][key & 255] = (channels[2][key & 255] as number) + count
+  }
+}
+
+function countColors(image: Rgba, crop: Crop, tally: Tally): number {
+  const { data } = image
+  let counts = tally.counts
+  let opaque = 0
+  let last = -1
+  let id = -1
+
+  for (let row = crop.y; row < crop.y + crop.height; row++) {
+    for (let at = (row * image.width + crop.x) * 4, end = at + crop.width * 4; at < end; at += 4) {
+      if ((data[at + 3] as number) < OPAQUE) continue
+
+      const key = ((data[at] as number) << 16) | ((data[at + 1] as number) << 8) | (data[at + 2] as number)
+
+      opaque++
+
+      if (key !== last) {
+        id = tally.idOf(key)
+        last = key
+        counts = tally.counts
+      }
+
+      counts[id] = (counts[id] as number) + 1
+    }
+  }
+
+  return opaque
+}
+
+function countLevels(
+  image: Rgba,
+  crop: Crop,
+  tally: Tally,
+  level: Uint8Array,
+  channels: readonly [Uint32Array, Uint32Array, Uint32Array],
+): number {
+  const { data } = image
+  let opaque = 0
+  let last = -1
+  let id = -1
+
+  for (let row = crop.y; row < crop.y + crop.height; row++) {
+    for (let at = (row * image.width + crop.x) * 4, end = at + crop.width * 4; at < end; at += 4) {
+      if ((data[at + 3] as number) < OPAQUE) continue
+
+      const r = data[at] as number
+      const g = data[at + 1] as number
+      const b = data[at + 2] as number
+
+      opaque++
+      channels[0][r] = (channels[0][r] as number) + 1
+      channels[1][g] = (channels[1][g] as number) + 1
+      channels[2][b] = (channels[2][b] as number) + 1
+
+      const key = ((level[r] as number) << 16) | ((level[g] as number) << 8) | (level[b] as number)
+
+      if (key !== last) {
+        id = tally.idOf(key)
+        last = key
+      }
+
+      tally.counts[id] = (tally.counts[id] as number) + 1
+      tally.sums[id * 3] = (tally.sums[id * 3] as number) + r
+      tally.sums[id * 3 + 1] = (tally.sums[id * 3 + 1] as number) + g
+      tally.sums[id * 3 + 2] = (tally.sums[id * 3 + 2] as number) + b
+    }
+  }
+
+  return opaque
+}
+
 export function cropProblem(image: Pick<Rgba, 'width' | 'height'>, crop: Crop): string | undefined {
   const { x, y, width, height } = crop
 
@@ -110,68 +283,36 @@ export function flatsOf(image: Rgba, counting: Counting = {}): Flats {
   if (problem !== undefined) throw new Error(problem)
 
   const quant = counting.quant ?? 0
-  const step = quant > 0 ? 256 / quant : 1
-  const counts = new Map<number, number>()
-  const sums = new Map<number, [number, number, number]>()
+  const tally = new Tally(quant > 0)
   const channels = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)] as const
-  let opaque = 0
 
-  for (let row = crop.y; row < crop.y + crop.height; row++) {
-    for (let at = (row * image.width + crop.x) * 4, end = at + crop.width * 4; at < end; at += 4) {
-      if ((image.data[at + 3] as number) < OPAQUE) continue
+  const opaque =
+    quant > 0 ? countLevels(image, crop, tally, levelsOf(quant), channels) : countColors(image, crop, tally)
 
-      const r = image.data[at] as number
-      const g = image.data[at + 1] as number
-      const b = image.data[at + 2] as number
+  if (quant === 0) spread(tally, channels)
 
-      opaque++
-      channels[0][r] = (channels[0][r] as number) + 1
-      channels[1][g] = (channels[1][g] as number) + 1
-      channels[2][b] = (channels[2][b] as number) + 1
+  const color = (at: number, count: number) => {
+    const key = tally.keys[at] as number
 
-      const key =
-        quant > 0
-          ? (Math.floor(r / step) << 16) | (Math.floor(g / step) << 8) | Math.floor(b / step)
-          : (r << 16) | (g << 8) | b
-
-      counts.set(key, (counts.get(key) ?? 0) + 1)
-
-      if (quant > 0) {
-        const sum = sums.get(key) ?? [0, 0, 0]
-
-        sum[0] += r
-        sum[1] += g
-        sum[2] += b
-        sums.set(key, sum)
-      }
-    }
-  }
-
-  const color = (key: number, count: number) => {
     if (quant === 0) return hex(key >> 16, (key >> 8) & 255, key & 255)
 
-    const [r, g, b] = sums.get(key) as [number, number, number]
-
-    return hex(r / count, g / count, b / count)
+    return hex(
+      (tally.sums[at * 3] as number) / count,
+      (tally.sums[at * 3 + 1] as number) / count,
+      (tally.sums[at * 3 + 2] as number) / count,
+    )
   }
 
-  const top = counting.top ?? TOP
-  const flats: Flat[] = []
+  const flats = tally.top(TOP).map((at) => {
+    const count = tally.counts[at] as number
 
-  for (const [key, count] of [...counts].sort((a, b) => b[1] - a[1])) {
-    if (flats.length === top) break
-
-    const f = flat(color(key, count), count)
-
-    if (counting.extremes === false && (f.tone > EXTREME.max || f.tone < EXTREME.min)) continue
-
-    flats.push(f)
-  }
+    return flat(color(at, count), count)
+  })
 
   return {
     pixels: crop.width * crop.height,
     opaque,
-    distinct: counts.size,
+    distinct: tally.size,
     flats: labelled(flats),
     median: hex(...(channels.map((c) => median(c, opaque)) as [number, number, number])),
   }
