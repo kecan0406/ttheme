@@ -1,7 +1,7 @@
 import { MODE_KEY } from '@/lib/mode'
 import { WEAR_KEY } from '@/lib/wear'
 
-export function respeculate() {
+function replace() {
   const rules = document.querySelector('script[type="speculationrules"]')
 
   if (!rules) return
@@ -10,6 +10,10 @@ export function respeculate() {
   fresh.textContent = rules.textContent
   rules.remove()
   setTimeout(() => document.head.append(fresh))
+}
+
+export function respeculate() {
+  setTimeout(replace)
 }
 
 window.addEventListener('storage', (event) => {

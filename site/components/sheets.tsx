@@ -49,7 +49,7 @@ export function SheetHeading({ theme, count }: { theme: Theme; count: number }) 
 export function SheetDetails({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
   return (
     <>
-      <div class="grid content-start gap-6">
+      <div data-detail="facts" class="grid content-start gap-6">
         <section>
           <SectionLabel icon={<Icon node={List} />}>Properties</SectionLabel>
           <PropertyList
@@ -65,7 +65,7 @@ export function SheetDetails({ theme, gate }: { theme: Theme; gate: GateRule[] }
           <ByMode theme={theme} render={(shown) => <GateList theme={shown} gate={gate} />} />
         </section>
       </div>
-      <section>
+      <section data-detail="slots">
         <SectionLabel icon={<Icon node={SwatchBook} />}>Slots</SectionLabel>
         <ByMode theme={theme} render={(shown) => <SwatchGrid theme={shown} />} />
       </section>

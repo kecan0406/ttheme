@@ -24,6 +24,8 @@ type Turn = { from: Paint; to: Paint; start: number; lean: Point }
 
 type Face = { paint: Paint; squash: number; lean: Lean; under: Paint | null }
 
+type Wave = { to: Paint; origin: Point | null; at: number }
+
 const MESH = facetMesh()
 const CENTERS = MESH.facets.map((facet) => facetCenter(facetCorners(MESH.points, facet)))
 const SPAN = FACET_HEIGHT + FACET_DRIFT
@@ -110,6 +112,7 @@ class FacetGround extends HTMLElement {
   #lamp: Point = { ...FACET_LAMP }
   #rise = 0
   #press: (Point & { at: number }) | null = null
+  #wave: Wave | null = null
   #frame = 0
   #last = 0
 
@@ -216,6 +219,12 @@ class FacetGround extends HTMLElement {
 
   #step = (now: number) => {
     this.#frame = 0
+
+    if (this.#wave) {
+      this.#turn(this.#wave)
+      this.#wave = null
+    }
+
     const elapsed = Math.min(50, Math.max(0, now - this.#last))
     this.#last = now
     const pointer = this.#pointer()
@@ -329,6 +338,7 @@ class FacetGround extends HTMLElement {
     const now = performance.now()
 
     if (instant || reducedMotion()) {
+      this.#wave = null
       this.#shown = MESH.facets.map(() => to)
       this.#turns = MESH.facets.map(() => [])
       this.#draw(now, this.#pointer())
@@ -336,7 +346,12 @@ class FacetGround extends HTMLElement {
       return
     }
 
-    const start = this.#local(origin ?? this.#origin())
+    this.#wave = { to, origin: origin ?? this.#pressed(), at: now }
+    queueMicrotask(() => this.#kick())
+  }
+
+  #turn({ to, origin, at }: Wave) {
+    const start = this.#local(origin ?? this.#stage())
 
     for (const [index, center] of CENTERS.entries()) {
       const turns = this.#turns[index] as Turn[]
@@ -345,20 +360,21 @@ class FacetGround extends HTMLElement {
       const lean =
         distance > 1 ? { x: (center.x - start.x) / distance, y: (center.y - start.y) / distance } : { x: 0, y: -1 }
 
-      const arrive = now + distance / SPEED
-      const active = turns[0] && turns[0].start <= now ? turns[0] : null
+      const arrive = at + distance / SPEED
+      const active = turns[0] && turns[0].start <= at ? turns[0] : null
       this.#turns[index] = active
         ? [active, { from: active.to, to, start: Math.max(arrive, active.start + TURN_MS), lean }]
         : [{ from: this.#shown[index] as Paint, to, start: arrive, lean }]
     }
-
-    this.#kick()
   }
 
-  #origin(): Point {
+  #pressed(): Point | null {
     const press = this.#press
 
-    if (press && performance.now() - press.at < PRESS_MS) return press
+    return press && performance.now() - press.at < PRESS_MS ? press : null
+  }
+
+  #stage(): Point {
     const stage = document.querySelector(STAGE)?.getBoundingClientRect()
 
     if (stage && stage.bottom > 0 && stage.top < window.innerHeight)

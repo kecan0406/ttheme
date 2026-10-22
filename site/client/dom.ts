@@ -42,6 +42,17 @@ export function reducedMotion(): boolean {
 
 let fades = 0
 
+let band: CSSStyleSheet | null = null
+
+function clip(top: number, bottom: number) {
+  if (!band) {
+    band = new CSSStyleSheet()
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, band]
+  }
+
+  band.replaceSync(`::view-transition{clip-path:inset(${top}px 0 ${bottom}px)}`)
+}
+
 export function fadeThrough(update: () => void) {
   if (reducedMotion() || !('startViewTransition' in document)) {
     update()
@@ -49,20 +60,19 @@ export function fadeThrough(update: () => void) {
     return
   }
 
-  const middle = window.innerHeight / 2
+  const height = window.innerHeight
   let top = 0
-  let bottom = window.innerHeight
+  let bottom = height
 
   for (const sticky of document.querySelectorAll('[data-sticky]')) {
     const box = sticky.getBoundingClientRect()
 
-    if (box.bottom <= middle) top = Math.max(top, box.bottom)
-    else if (box.top >= middle) bottom = Math.min(bottom, box.top)
+    if (box.bottom <= height / 2) top = Math.max(top, box.bottom)
+    else if (box.top >= height / 2) bottom = Math.min(bottom, box.top)
   }
 
+  clip(top, height - bottom)
   const root = document.documentElement
-  root.style.setProperty('--clear-top', `${top}px`)
-  root.style.setProperty('--clear-bottom', `${window.innerHeight - bottom}px`)
   const turn = ++fades
 
   const done = () => {

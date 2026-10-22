@@ -146,14 +146,19 @@ class SheetBrowser extends HTMLElement {
     this.querySelector<HTMLElement>('#sheet-details')?.toggleAttribute('hidden', !open)
   }
 
-  #center(behavior: ScrollBehavior) {
+  #offset(): number {
     const strip = this.querySelector('[data-strip]')
     const tile = this.querySelector(`[data-sheet="${this.#at}"]`)
 
-    if (!strip || !tile) return
+    if (!strip || !tile) return 0
     const from = strip.getBoundingClientRect()
     const to = tile.getBoundingClientRect()
-    strip.scrollBy({ left: to.left + to.width / 2 - (from.left + from.width / 2), behavior })
+
+    return to.left + to.width / 2 - (from.left + from.width / 2)
+  }
+
+  #center(behavior: ScrollBehavior, offset = this.#offset()) {
+    if (offset !== 0) this.querySelector('[data-strip]')?.scrollBy({ left: offset, behavior })
   }
 
   #render() {
@@ -168,8 +173,9 @@ class SheetBrowser extends HTMLElement {
     }
 
     fadeThrough(() => {
+      const offset = this.#offset()
       this.#draw()
-      this.#center(reducedMotion() ? 'auto' : 'smooth')
+      requestAnimationFrame(() => this.#center(reducedMotion() ? 'auto' : 'smooth', offset))
     })
   }
 

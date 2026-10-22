@@ -987,11 +987,11 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   view-transition-name: sheet-use;
 }
 
-:root[data-fading] sheet-browser #sheet-details > :nth-child(1) {
+:root[data-fading] sheet-browser [data-detail='facts'] {
   view-transition-name: sheet-details-1;
 }
 
-:root[data-fading] sheet-browser #sheet-details > :nth-child(2) {
+:root[data-fading] sheet-browser [data-detail='slots'] {
   view-transition-name: sheet-details-2;
 }
 
@@ -1008,7 +1008,6 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 }
 
 ::view-transition {
-  clip-path: inset(var(--clear-top, 0px) 0 var(--clear-bottom, 0px));
   pointer-events: none;
 }
 
