@@ -77,7 +77,11 @@ export function StartLabel({ source }: { source: string | null }) {
       <Icon node={Sparkles} />
       <span>start</span>
       {source ? (
-        <span class="min-w-0 truncate font-display font-extrabold text-foreground" translate="no" safe>
+        <span
+          class="min-w-0 truncate font-display font-extrabold text-foreground bar-squeezed:hidden"
+          translate="no"
+          safe
+        >
           {source}
         </span>
       ) : null}
@@ -105,13 +109,13 @@ export function ChangedLabel({ count }: { count: number }) {
       <span>
         {count === 0 ? (
           <>
-            <span class="max-[560px]:hidden">nothing</span>
-            <span class="hidden max-[560px]:inline">0</span>
+            <span class="max-[560px]:hidden bar-squeezed:hidden">nothing</span>
+            <span class="hidden max-[560px]:inline bar-squeezed:inline">0</span>
           </>
         ) : (
           count
         )}
-        <span class="max-[560px]:sr-only"> changed</span>
+        <span class="max-[560px]:sr-only bar-squeezed:sr-only"> changed</span>
       </span>
     </>
   )
@@ -144,7 +148,7 @@ export function BuilderBar({
           popovertarget="builder-start"
           aria-haspopup="dialog"
           data-start
-          class="max-w-60 flex-none"
+          class="max-w-60 min-w-28 shrink bar-squeezed:min-w-auto"
         >
           <span data-start-label class="flex min-w-0 items-center gap-2">
             <StartLabel source={source} />
@@ -153,7 +157,7 @@ export function BuilderBar({
         <span aria-hidden="true" class="text-base text-faint-foreground">
           /
         </span>
-        <div data-draft class="relative min-w-0">
+        <div data-draft class="relative max-w-85 min-w-14">
           <input
             data-name
             aria-label="palette name"
@@ -166,7 +170,7 @@ export function BuilderBar({
             autocapitalize="none"
             autocorrect="off"
             translate="no"
-            class="h-9.5 max-w-85 min-w-[4ch] [field-sizing:content] rounded-t-sm border-b-[1.5px] border-dashed border-transparent bg-transparent px-1 font-display text-display-sm font-black outline-none hover:border-input focus:border-primary focus:bg-muted aria-invalid:border-destructive"
+            class="h-9.5 max-w-full min-w-full [field-sizing:content] rounded-t-sm border-b-[1.5px] border-dashed border-transparent bg-transparent px-1 font-display text-display-sm font-black text-ellipsis outline-none hover:border-input focus:border-primary focus:bg-muted aria-invalid:border-destructive"
           />
           <p
             id="builder-name-problem"
@@ -218,7 +222,7 @@ export function BuilderBar({
             <Button size="sm" popovertarget="builder-add" data-add>
               <Icon node={Plus} />
               <span>
-                add<span class="max-[560px]:sr-only"> to ttheme</span>
+                add<span class="max-[560px]:sr-only bar-squeezed:sr-only"> to ttheme</span>
               </span>
             </Button>
           </>
@@ -285,10 +289,6 @@ export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: stri
         <span data-seed-gate safe>{`${gate.passed} / ${gate.lines.length} floors`}</span>
         <span class="font-medium text-muted-foreground">at every seed</span>
       </div>
-      <p class="px-4 text-sm text-muted-foreground">
-        Seven seeds grow all twenty slots, and every setting clears the gate. Keep them to tune slot by slot — the seeds
-        do not come back.
-      </p>
       <div data-seed-fields class="grid gap-4 px-4">
         <SeedFields seeds={seeds} />
       </div>
@@ -335,29 +335,6 @@ export function GateSummary({ gate, misses }: { gate: Gate; misses: number }) {
   )
 }
 
-export function ModeNote({ modes }: { modes: ModesView }) {
-  return (
-    <>
-      <span safe>
-        {modes.own
-          ? `Editing the ${modes.other} colors the file keeps in [colors.${modes.other}].`
-          : modes.tuned > 0
-            ? `Editing the ${modes.other} mode: the mirror of your ${modes.made} colors, with ${modes.tuned} slots tuned by hand.`
-            : `Editing the ${modes.other} mode: ttheme mirrors your ${modes.made} colors until you tune one here.`}
-      </span>{' '}
-      {modes.own || modes.tuned > 0 ? (
-        <button
-          type="button"
-          data-follow-mirror
-          class="rounded-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          follow the mirror
-        </button>
-      ) : null}
-    </>
-  )
-}
-
 function Cell({ row }: { row: RowView }) {
   return (
     <button
@@ -390,19 +367,14 @@ export function BaseRows({ rows }: { rows: RowView[] }) {
           <button
             type="button"
             data-slot-open={String(row.slot)}
-            aria-label={`${row.name} ${row.key} ${row.hex}`}
+            aria-label={`${row.name} ${row.hex}`}
             aria-expanded={String(row.open)}
             class="flex min-w-0 items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Swatch hex={row.hex} size="row" />
-            <span class="grid min-w-0 gap-px">
-              <span class="flex items-center gap-1.5 text-sm font-medium">
-                <span safe>{row.name}</span>
-                <RowMarks row={row} />
-              </span>
-              <span class="font-mono text-xs text-muted-foreground" safe>
-                {row.key}
-              </span>
+            <span class="flex min-w-0 items-center gap-1.5 text-sm font-medium">
+              <span safe>{row.name}</span>
+              <RowMarks row={row} />
             </span>
           </button>
           <span class="font-mono text-xs text-soft-foreground tabular-nums" safe>
@@ -478,7 +450,6 @@ export function ColorsPanel({
       >
         <GateSummary gate={gate} misses={misses} />
       </div>
-      <p data-mode-note hidden class="border-b border-border bg-accent/60 px-4 py-2.5 text-xs text-soft-foreground" />
       <div class="flex h-11 items-center justify-between gap-2 border-b border-border pr-3 pl-4">
         <span class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">values</span>
         <ToggleGroup label="values in the list">
@@ -629,9 +600,11 @@ export function PickerHead({ p }: { p: PickerView }) {
           <span safe>{s.name}</span>
           <Marks signature={s.signature} miss={s.miss} />
         </span>
-        <span class="font-mono text-xs text-muted-foreground" safe>
-          {`${s.key} · ${p.about}`}
-        </span>
+        {s.key === s.name.toLowerCase() ? null : (
+          <span class="font-mono text-xs text-muted-foreground" safe>
+            {s.key}
+          </span>
+        )}
       </div>
     </>
   )
@@ -842,7 +815,6 @@ export function FileNote({ about }: { about: AboutView }) {
           <span class="font-medium text-soft-foreground" translate="no" safe>
             {about.base}
           </span>
-          {', kept as meta.base'}
         </>
       ) : null}
       {about.from ? (
@@ -851,7 +823,6 @@ export function FileNote({ about }: { about: AboutView }) {
           <span class="font-medium text-soft-foreground" translate="no" safe>
             {about.from}
           </span>
-          {', kept as meta.from'}
         </>
       ) : null}
     </>
@@ -888,14 +859,14 @@ export function Modes({ modes }: { modes: ModesView }) {
   return (
     <>
       <p class="text-sm text-soft-foreground" safe>
-        {`Made in ${modes.made}: [colors] holds it.`}
+        {`Made in ${modes.made}.`}
       </p>
       <p class="text-xs text-muted-foreground" safe>
         {modes.own
-          ? `[colors.${modes.other}] keeps its own ${modes.other} colors${modes.tuned > 0 ? `, ${modes.tuned} of them tuned here` : ''}.`
+          ? `Its ${modes.other} colors are its own${modes.tuned > 0 ? `, ${modes.tuned} of them tuned here` : ''}.`
           : modes.tuned > 0
-            ? `[colors.${modes.other}] is written: the mirror with ${modes.tuned} slots you tuned.`
-            : `No [colors.${modes.other}] — ttheme mirrors your ${modes.made} colors, as it does for any palette that carries none. Tune a slot in the ${modes.other} window to keep your own.`}
+            ? `Its ${modes.other} colors mirror the ${modes.made} ones, ${modes.tuned} of them tuned.`
+            : `Its ${modes.other} colors mirror the ${modes.made} ones.`}
       </p>
       {modes.own || modes.tuned > 0 ? (
         <Button variant="outline" size="sm" data-follow-mirror class="justify-self-start">
@@ -909,9 +880,7 @@ export function Modes({ modes }: { modes: ModesView }) {
 
 export function PicturesBox({ about }: { about: AboutView }) {
   return about.pictures.length === 0 ? (
-    <p class="text-xs text-muted-foreground">
-      No pictures. Once the palette is added, <code class="font-mono">ttheme find</code> looks them up.
-    </p>
+    <p class="text-xs text-muted-foreground">No pictures.</p>
   ) : (
     <>
       <label class="flex items-center gap-2 text-sm">
@@ -921,9 +890,6 @@ export function PicturesBox({ about }: { about: AboutView }) {
       <div class={about.keep ? '' : 'opacity-50'}>
         <PictureList pictures={about.pictures} />
       </div>
-      <p class="text-xs text-muted-foreground">
-        Kept pictures download as the palette installs; <code class="font-mono">ttheme find</code> adds more.
-      </p>
     </>
   )
 }
@@ -955,14 +921,8 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
       </div>
       <div class="grid gap-3 border-b border-border p-4">
         <SectionLabel icon={<Icon node={Sparkles} />}>Signature</SectionLabel>
-        <div class="flex items-center gap-4">
-          <div data-mark-tile class="contents">
-            <MarkTile about={about} />
-          </div>
-          <p class="text-xs text-muted-foreground">
-            The three colors that stand for the character: the dots on every card, the tab icon and the &gt;ω mark, each
-            lifted until it reads 3:1 on the background.
-          </p>
+        <div data-mark-tile class="contents">
+          <MarkTile about={about} />
         </div>
         <div data-signature-dots class="grid grid-cols-3 gap-2">
           <SignatureDots about={about} />
@@ -1007,10 +967,6 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
             class="h-9 font-mono text-sm"
           />
         </label>
-        <p class="text-xs text-muted-foreground">
-          The tag lets <code class="font-mono">ttheme find</code> look up pictures of the character once the palette is
-          added.
-        </p>
       </div>
       <div class="grid gap-2.5 p-4">
         <SectionLabel icon={<Icon node={Image} />}>Pictures</SectionLabel>

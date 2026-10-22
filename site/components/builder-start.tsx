@@ -113,29 +113,13 @@ export function StartPopover() {
       class="m-0 hidden max-h-[min(640px,calc(100dvh-120px))] w-[min(400px,calc(100vw-32px))] flex-col overflow-hidden rounded-3xl border border-border bg-popover text-popover-foreground shadow-lg inset-auto open:flex"
     >
       <div class="grid gap-0.5 border-b border-border p-2">
-        <button type="button" data-start-blank class={`${ITEM} h-auto items-start py-2`}>
-          <Icon node={Sprout} class="mt-0.5 size-4 flex-none text-primary" />
-          <span class="grid gap-0.5">
-            <b class="font-semibold">blank</b>
-            <span class="text-xs text-muted-foreground">
-              grow one from seven seeds — it clears the gate at every setting
-            </span>
-          </span>
+        <button type="button" data-start-blank class={ITEM}>
+          <Icon node={Sprout} class="size-4 flex-none text-primary" />
+          <b class="font-semibold">blank</b>
         </button>
-        <button
-          type="button"
-          data-start-open
-          aria-expanded="false"
-          aria-controls="builder-open-box"
-          class={`${ITEM} h-auto items-start py-2`}
-        >
-          <Icon node={FolderOpen} class="mt-0.5 size-4 flex-none text-primary" />
-          <span class="grid gap-0.5">
-            <b class="font-semibold">open a link, code or file</b>
-            <span class="text-xs text-muted-foreground">
-              a ttheme.dev/builder link, a tt4: code or a palette's .toml
-            </span>
-          </span>
+        <button type="button" data-start-open aria-expanded="false" aria-controls="builder-open-box" class={ITEM}>
+          <Icon node={FolderOpen} class="size-4 flex-none text-primary" />
+          <b class="font-semibold">open a link, code or file</b>
         </button>
         <div id="builder-open-box" data-open-box hidden class="grid gap-2 px-2 pt-1 pb-2">
           <textarea

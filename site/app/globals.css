@@ -6,6 +6,7 @@
 @custom-variant header-short (@container site-header (720px <= width < 800px));
 @custom-variant header-tight (@container site-header (width < 680px));
 @custom-variant header-icons (@container site-header (width < 380px));
+@custom-variant bar-squeezed (@media (900px <= width < 1104px) and (height >= 600px));
 
 @font-face {
   font-family: 'Inter Fallback';

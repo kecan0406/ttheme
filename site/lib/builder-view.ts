@@ -29,7 +29,6 @@ export type Link = 'on' | 'off'
 
 export interface RowView {
   slot: number
-  key: string
   name: string
   hex: Hex
   value: string
@@ -82,7 +81,6 @@ export interface Origin {
 export interface PickerView {
   slot: number
   s: SlotView
-  about: string
   partner: Partnered
   origin: Origin | null
   link: Link | null
@@ -114,7 +112,6 @@ export function rowOf(
 
   return {
     slot,
-    key,
     name: slotLabel(slot).name,
     hex,
     value: format === 'hex' ? hex : lchTight(lchIn(list, hex)).trim(),
@@ -194,7 +191,6 @@ export function pickerOf(
   return {
     slot,
     s: slotViewOf(list, signature, waive, missed, slot, uses),
-    about: slotLabel(slot).about,
     partner: partnered(list, slot, waive),
     origin: at
       ? {
@@ -254,7 +250,6 @@ export interface FileView {
   file: string
   text: string
   problem: string | undefined
-  other: string
 }
 
 export interface LinkView {
@@ -344,17 +339,6 @@ export function aboutOf(edit: Edit, view: View): AboutView {
   }
 }
 
-function otherLine(edit: Edit): string {
-  const { made, other, own, tuned } = modesOf(edit)
-
-  if (own)
-    return `It keeps [colors.${other}], its own ${other} colors${tuned > 0 ? `, ${tuned} of them tuned here` : ''}.`
-
-  return tuned > 0
-    ? `It writes [colors.${other}]: the mirror of your ${made} colors, with ${tuned} slots you tuned.`
-    : `It holds your ${made} colors alone — ttheme mirrors the ${other} mode as it installs.`
-}
-
 export function exportProblem(edit: Edit): string | undefined {
   const named = nameTrouble(edit.name)
 
@@ -377,7 +361,7 @@ export function fileOf(edit: Edit): FileView {
     }
   }
 
-  return { name: edit.name, file: `${edit.name}.toml`, text: read ? '' : text, problem: read, other: otherLine(edit) }
+  return { name: edit.name, file: `${edit.name}.toml`, text: read ? '' : text, problem: read }
 }
 
 export function marketOf(owner: string, name: string): MarketView {

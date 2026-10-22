@@ -9,7 +9,6 @@ import {
   GateSummary,
   Lch,
   MarkTile,
-  ModeNote,
   Modes,
   PairRows,
   Picker,
@@ -244,7 +243,6 @@ class PaletteBuilder extends HTMLElement {
     this.#fit()
     this.#render()
     this.#tail()
-    this.#inspector.hint()
     document.documentElement.removeAttribute('data-restoring')
 
     if (link) void this.#loadCredits()
@@ -403,14 +401,6 @@ class PaletteBuilder extends HTMLElement {
     const count = this.querySelector('[data-count="gate"]')
 
     if (count) count.textContent = `${gate.passed}/${gate.lines.length}`
-    const note = this.querySelector<HTMLElement>('[data-mode-note]')
-
-    if (note) {
-      note.hidden = this.#view === 'made'
-
-      if (this.#view === 'other') this.#fill(note, html(<ModeNote modes={modesOf(edit)} />))
-    }
-
     const made = madeMode(edit)
     const editing = modeOfView(edit, this.#view)
 

@@ -10,16 +10,6 @@ const WARM = 300
 
 const GAP = 8
 
-const SEEN = 'ttheme-builder-inspected'
-
-function seen(): boolean {
-  try {
-    return localStorage.getItem(SEEN) !== null
-  } catch {
-    return false
-  }
-}
-
 export class Inspector {
   #host: HTMLElement
   #slots: () => Named[] | undefined
@@ -28,7 +18,6 @@ export class Inspector {
   #pinned: HTMLElement | null = null
   #timer = 0
   #warm = 0
-  #seen = seen()
 
   constructor(host: HTMLElement, slots: () => Named[] | undefined, faint: () => string | undefined) {
     this.#host = host
@@ -47,7 +36,6 @@ export class Inspector {
     this.#hovered = run
 
     if (run !== this.#pinned) run.setAttribute('data-hover', '')
-    this.hint()
 
     if (this.#pinned) return
     window.clearTimeout(this.#timer)
@@ -86,8 +74,6 @@ export class Inspector {
     } else {
       this.#hide()
     }
-
-    this.hint()
   }
 
   release() {
@@ -97,7 +83,6 @@ export class Inspector {
     this.#pinned = null
     this.#hovered = null
     this.#hide()
-    this.hint()
   }
 
   redraw() {
@@ -115,8 +100,6 @@ export class Inspector {
       this.#warm = performance.now() + WARM
       this.#hide()
     }
-
-    this.hint()
   }
 
   #box(): HTMLElement | null {
@@ -172,7 +155,6 @@ export class Inspector {
     box.style.left = `${left + term.scrollLeft}px`
     box.style.top = `${(above ? spot.top - area.top - height - GAP : spot.bottom - area.top + GAP) + term.scrollTop}px`
     box.style.setProperty('--arrow-x', `${Math.max(14, Math.min(point, width - 14))}px`)
-    this.#saw()
 
     if (appearing && !reducedMotion()) {
       box.animate(
@@ -195,20 +177,5 @@ export class Inspector {
     box.hidden = true
     box.removeAttribute('data-pinned')
     box.replaceChildren()
-  }
-
-  #saw() {
-    if (this.#seen) return
-    this.#seen = true
-
-    try {
-      localStorage.setItem(SEEN, '1')
-    } catch {}
-  }
-
-  hint() {
-    const hint = this.#host.querySelector<HTMLElement>('[data-hint]')
-
-    if (hint) hint.hidden = this.#seen || this.#pinned !== null || this.#hovered !== null
   }
 }

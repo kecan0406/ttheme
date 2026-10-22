@@ -98,13 +98,6 @@ export function BuilderPage({
             style={slotVars(list)}
             controls={<EditMode made={mode} editing={mode} />}
           />
-          <p
-            data-hint
-            hidden
-            class="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs whitespace-nowrap text-soft-foreground shadow-md max-[760px]:hidden"
-          >
-            hover any text in the window to see its slots · click to pin
-          </p>
         </main>
         <StartPopover />
         {shared ? <AddPopover shared={shared} /> : null}

@@ -1,6 +1,6 @@
 import { Check, Copy, Download, FileCode, Link, Package } from 'lucide'
 import { Button, LinkButton } from '@/components/ui/button'
-import { Dialog, DialogClose, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogClose, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { FileView, LinkView, MarketView } from '@/lib/builder-view'
@@ -27,9 +27,6 @@ export function FilePanel({ view }: { view: FileView }) {
 
   return (
     <>
-      <p class={NOTE} safe>
-        {view.other}
-      </p>
       <pre
         translate="no"
         class="max-h-64 overflow-auto rounded-xl border border-border bg-muted/65 px-3.5 py-3 font-mono text-xs leading-relaxed text-soft-foreground"
@@ -56,10 +53,6 @@ export function FilePanel({ view }: { view: FileView }) {
       </div>
       <p class={STEP}>then, in your terminal</p>
       <CommandRow command={`ttheme add ~/Downloads/${view.file}`} class="bg-card" />
-      <p class={NOTE}>
-        It goes into your own marketplace, named after your GitHub handle, and{' '}
-        <code class="font-mono">ttheme edit</code> changes it from there.
-      </p>
       <p class={NOTE}>New to ttheme? Set it up first:</p>
       <CommandRow command={INIT} class="bg-card" />
     </>
@@ -73,23 +66,14 @@ export function LinkPanel({ view }: { view: LinkView }) {
 
   return (
     <>
-      <p class={NOTE}>
-        A link carries the whole palette — both modes, its signature and its pictures — and anyone with ttheme adds it
-        in one line.
-      </p>
       {view.clash ? <Problem text={view.clash} /> : null}
       <CommandRow command={`ttheme add ${view.link}`} class="bg-card" />
-      <figure class="grid gap-2">
-        <img
-          src={`/builder/${view.code}/card.png`}
-          alt={`the card chat apps show for the link to ${view.name}`}
-          loading="lazy"
-          class="aspect-[40/21] w-full rounded-xl border border-border bg-muted"
-        />
-        <figcaption class="text-xs text-muted-foreground">
-          The card chat apps show for the link: its name in the cursor color, the signature dots and the shell scene.
-        </figcaption>
-      </figure>
+      <img
+        src={`/builder/${view.code}/card.png`}
+        alt={`the card chat apps show for the link to ${view.name}`}
+        loading="lazy"
+        class="aspect-[40/21] w-full rounded-xl border border-border bg-muted"
+      />
       <code
         translate="no"
         class="block rounded-lg border border-border bg-muted/65 px-3 py-2.5 font-mono text-xs leading-relaxed [overflow-wrap:anywhere] text-soft-foreground select-all"
@@ -131,15 +115,11 @@ export function MarketSteps({ view }: { view: MarketView }) {
       />
       <CommandRow command={`gh repo create ${view.owner}/${view.repo} --public --source . --push`} class="bg-card" />
       <p class={NOTE}>
-        Give it the <code class="font-mono">ttheme-marketplace</code> topic: Browse's search and /marketplace list it
-        after the next index run, every 30 minutes.
+        Give it the <code class="font-mono">ttheme-marketplace</code> topic so Browse's search and /marketplace list it:
       </p>
       <CommandRow command={`gh repo edit ${view.owner}/${view.repo} --add-topic ttheme-marketplace`} class="bg-card" />
       <p class={NOTE}>Anyone adds it — you too:</p>
       <CommandRow command={`ttheme marketplace add ${view.owner}/${view.repo}`} class="bg-card" />
-      <p class={NOTE}>
-        Or let the terminal do all of it: <code class="font-mono">ttheme share</code>, then a marketplace on GitHub.
-      </p>
     </>
   )
 }
@@ -147,9 +127,6 @@ export function MarketSteps({ view }: { view: MarketView }) {
 export function MarketPanel({ view, description }: { view: MarketView; description: string }) {
   return (
     <>
-      <p class={NOTE}>
-        A marketplace is a GitHub repository of palettes. This one holds the palette you made, ready to push.
-      </p>
       <div class="grid gap-3 min-[560px]:grid-cols-2">
         <label for="builder-market-owner" class="grid gap-1.5 text-sm">
           <span class="text-muted-foreground">your GitHub handle</span>
@@ -230,9 +207,6 @@ export function ExportDialog({
               {file.name}
             </span>
           </DialogTitle>
-          <DialogDescription>
-            Take it as a file, as a link anyone can open, or as a marketplace of your own.
-          </DialogDescription>
         </DialogHeader>
         <TabsList label="export as" class="border-b border-border">
           <TabsTrigger

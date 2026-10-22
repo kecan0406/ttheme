@@ -3,7 +3,7 @@ import { Button, LinkButton } from '@/components/ui/button'
 import { INIT } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import type { Shared } from '@/lib/share'
-import { pinned, shelfOf } from '@/lib/themes'
+import { pinned } from '@/lib/themes'
 import { CommandRow } from './command-row'
 import { SectionLabel, Signature } from './palette-parts'
 
@@ -81,15 +81,11 @@ export function AddPopover({ shared }: { shared: Shared }) {
 }
 
 export function LinkSection({ shared }: { shared: Shared }) {
-  const { code, link, palettes, theme } = shared
-  const from = shelfOf(theme)
+  const { code, link } = shared
 
   return (
     <div data-link-only class="grid gap-2.5 border-b border-border p-4">
       <SectionLabel icon={<Icon node={Link} />}>Share link</SectionLabel>
-      <p class="text-xs text-muted-foreground" safe>
-        {`${palettes.length > 1 ? `One of the ${palettes.length} palettes in this link` : 'Opened from this link'}${from ? `, from ${from}` : ''}.`}
-      </p>
       <p data-touched-note hidden class="text-xs text-warning">
         Your changes are not in this link — export makes one that carries them.
       </p>
