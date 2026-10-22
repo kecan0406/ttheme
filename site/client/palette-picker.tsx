@@ -1,8 +1,10 @@
 import { PaletteOptions } from '@/components/palette-picker'
+import { palettesPath } from '@/lib/gallery'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { fill, tally } from './dom'
 import { composing } from './keys'
+import { palettes } from './palettes'
 import { choose, current } from './wear'
 
 const PAGE = 8
@@ -53,12 +55,7 @@ class PalettePicker extends HTMLElement {
   }
 
   #load = (): Promise<void> => {
-    this.#loading ??= fetch('/palettes.json')
-      .then((response) => {
-        if (!response.ok) throw new Error(String(response.status))
-
-        return response.json() as Promise<Theme[]>
-      })
+    this.#loading ??= palettes(palettesPath(null))
       .then((themes) => {
         this.#themes = themes
         fill(this.#list, html(<PaletteOptions themes={themes} current={current()} />))

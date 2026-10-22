@@ -326,20 +326,31 @@ export async function snapshot(fresh: boolean): Promise<void> {
 }
 
 async function prerender(bundle: string): Promise<Record<string, { path: string; contentType: string }>> {
-  const { default: server, PRERENDERED } = (await import(bundle)) as typeof import('./server')
+  const { default: server, DATA, PRERENDERED } = (await import(bundle)) as typeof import('./server')
   const overrides: Record<string, { path: string; contentType: string }> = {}
 
-  for (const path of PRERENDERED) {
+  const fetched = async (path: string): Promise<string> => {
     const response = await server.handle(new Request(`http://site${path}`))
 
     if (response.status !== 200) throw new Error(`${path} answered ${response.status}`)
-    const name = path === '/' ? 'index' : decodeURIComponent(path.slice(1))
-    const file = join(OUTPUT, 'static', `${name}.html`)
+
+    return response.text()
+  }
+
+  const write = (name: string, body: string) => {
+    const file = join(OUTPUT, 'static', name)
     mkdirSync(dirname(file), { recursive: true })
-    writeFileSync(file, await response.text())
+    writeFileSync(file, body)
+  }
+
+  for (const path of PRERENDERED) {
+    const name = path === '/' ? 'index' : decodeURIComponent(path.slice(1))
+    write(`${name}.html`, await fetched(path))
 
     if (path !== '/') overrides[`${name}.html`] = { path: name, contentType: HTML }
   }
+
+  for (const path of DATA) write(decodeURIComponent(path.slice(1)), await fetched(path))
 
   return overrides
 }

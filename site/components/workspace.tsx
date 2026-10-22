@@ -364,7 +364,7 @@ export function MarketplaceWorkspace({
 }) {
   const where: Where = marketplace ? { id: marketplace.id, repo: marketplace.repo, add: marketplace.add } : null
   const first = catalogsOf(palettes)[0]?.themes ?? palettes
-  const data: WorkspaceData = { where, palettes, gate, start: leadOf(first).name, current: theme.name }
+  const data: WorkspaceData = { where, gate, start: leadOf(first).name, current: theme.name }
   const { prev, next } = neighbors(theme, palettes)
 
   return (

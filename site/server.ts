@@ -4,4 +4,4 @@ import { site } from './app/site'
 
 export default new Elysia().use(autoHead()).use(site)
 
-export { PRERENDERED } from './app/site'
+export { DATA, PRERENDERED } from './app/site'

@@ -14,7 +14,7 @@ import { type Card, cardAlt, cardPng } from '@/lib/card'
 import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
 import type { Facts } from '@/lib/facts'
-import { marketplacePath, OFFICIAL, palettePath } from '@/lib/gallery'
+import { marketplacePath, OFFICIAL, palettePath, palettesPath } from '@/lib/gallery'
 import { marketplaces } from '@/lib/marketplaces'
 import { fallback, gate, themes } from '@/lib/official'
 import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
@@ -92,6 +92,12 @@ export const PRERENDERED: string[] = [
   marketplacePath(null),
   ...themes.map(palettePath),
   ...marketplaces.flatMap((marketplace) => [marketplacePath(marketplace.id), ...marketplace.palettes.map(palettePath)]),
+]
+
+export const DATA: string[] = [
+  palettesPath(null),
+  '/builder/palettes.json',
+  ...marketplaces.map((marketplace) => palettesPath(marketplace.id)),
 ]
 
 function workspace(marketplace: Marketplace | null, palettes: Theme[], theme: Theme | null): Response {
@@ -266,6 +272,7 @@ export const site = new Elysia({ name: 'site' })
       .get('/card.png', { catalog: true }, async ({ marketplace, palettes }) =>
         png(await cardPng(marketplaceCard(marketplace, palettes))),
       )
+      .get('/palettes.json', { catalog: true }, ({ palettes }) => text(JSON.stringify(palettes), 'application/json'))
       .get('/:name/card.png', { catalog: true }, async ({ palettes, params }) => {
         const theme = palettes.find((entry) => entry.name === params.name)
 

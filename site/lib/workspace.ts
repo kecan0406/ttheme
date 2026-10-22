@@ -4,7 +4,6 @@ export type Where = Pick<Marketplace, 'id' | 'repo' | 'add'> | null
 
 export interface WorkspaceData {
   where: Where
-  palettes: Theme[]
   gate: GateRule[]
   start: string
   current: string

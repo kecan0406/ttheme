@@ -205,7 +205,7 @@ export function Sheets({ themes, gate, facts }: { themes: Theme[]; gate: GateRul
       </nav>
       <SiteFooter facts={facts} current="/sheets" ribbon />
       <script type="application/json" data-sheets>
-        {json({ themes, gate })}
+        {json({ gate })}
       </script>
     </sheet-browser>
   )

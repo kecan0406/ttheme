@@ -1,5 +1,5 @@
 import { GatePanel, InstallPanes, PaletteFacts, ScenePanes, SlotsPanel, WorkspaceHead } from '@/components/workspace'
-import { palettePath } from '@/lib/gallery'
+import { palettePath, palettesPath } from '@/lib/gallery'
 import { html } from '@/lib/render'
 import type { Theme } from '@/lib/themes'
 import { paletteMeta } from '@/lib/titles'
@@ -7,6 +7,7 @@ import { wearStyle } from '@/lib/wear'
 import { nameAt, neighbors, type WorkspaceData } from '@/lib/workspace'
 import { announce, fill, readJson, tally } from './dom'
 import { bare, composing, letter, typing } from './keys'
+import { afterPaint, palettes } from './palettes'
 
 const STEPS = new Map([
   ['ArrowRight', 1],
@@ -24,7 +25,9 @@ function plain(event: MouseEvent): boolean {
 }
 
 class MarketplaceWorkspace extends HTMLElement {
-  #data: WorkspaceData = { where: null, palettes: [], gate: [], start: '', current: '' }
+  #data: WorkspaceData = { where: null, gate: [], start: '', current: '' }
+  #palettes: Theme[] = []
+  #ready: Promise<void> | null = null
   #theme: Theme | undefined
   #query = ''
   #open = new Set<Element>()
@@ -33,7 +36,7 @@ class MarketplaceWorkspace extends HTMLElement {
     const target = event.target as Element
     const pick = target.closest<HTMLAnchorElement>('a[data-pick]')
 
-    if (pick && plain(event)) {
+    if (pick && plain(event) && this.#palettes.length > 0) {
       event.preventDefault()
       this.#select(this.#named(pick.dataset.pick ?? ''), true)
 
@@ -43,7 +46,7 @@ class MarketplaceWorkspace extends HTMLElement {
     const step = target.closest<HTMLElement>('[data-step]')
 
     if (step) {
-      this.#step(Number(step.dataset.step))
+      this.#when(() => this.#step(Number(step.dataset.step)))
 
       return
     }
@@ -78,11 +81,11 @@ class MarketplaceWorkspace extends HTMLElement {
 
     if (!delta || !bare(event) || event.shiftKey || event.repeat || owned(event.target)) return
     event.preventDefault()
-    this.#step(delta)
+    this.#when(() => this.#step(delta))
   }
 
   #popstate = () => {
-    this.#select(this.#named(nameAt(location.pathname) ?? this.#data.start), false)
+    this.#when(() => this.#select(this.#named(nameAt(location.pathname) ?? this.#data.start), false))
   }
 
   #place = (event: Event) => {
@@ -98,7 +101,6 @@ class MarketplaceWorkspace extends HTMLElement {
 
   connectedCallback() {
     this.#data = readJson<WorkspaceData>(this, 'script[data-workspace]')
-    this.#theme = this.#named(this.#data.current)
 
     for (const group of this.querySelectorAll('[data-group]'))
       if (group.querySelector('[data-toggle]')?.getAttribute('aria-expanded') === 'true') this.#open.add(group)
@@ -116,6 +118,7 @@ class MarketplaceWorkspace extends HTMLElement {
     }
 
     this.#reveal()
+    afterPaint(() => void this.#load())
   }
 
   disconnectedCallback() {
@@ -127,19 +130,41 @@ class MarketplaceWorkspace extends HTMLElement {
     window.removeEventListener('popstate', this.#popstate)
   }
 
+  #load(): Promise<void> {
+    this.#ready ??= palettes(palettesPath(this.#data.where?.id ?? null)).then(
+      (list) => {
+        this.#palettes = list
+        this.#theme = this.#named(this.#data.current)
+      },
+      () => {
+        this.#ready = null
+      },
+    )
+
+    return this.#ready
+  }
+
+  #when(act: () => void) {
+    if (this.#palettes.length > 0) act()
+    else
+      void this.#load().then(() => {
+        if (this.#palettes.length > 0) act()
+      })
+  }
+
   #named(name: string): Theme {
-    const { palettes, start } = this.#data
+    const { start } = this.#data
 
     return (
-      palettes.find((theme) => theme.name === name) ??
-      palettes.find((theme) => theme.name === start) ??
-      (palettes[0] as Theme)
+      this.#palettes.find((theme) => theme.name === name) ??
+      this.#palettes.find((theme) => theme.name === start) ??
+      (this.#palettes[0] as Theme)
     )
   }
 
   #step(delta: number) {
     if (!this.#theme) return
-    const { prev, next } = neighbors(this.#theme, this.#data.palettes)
+    const { prev, next } = neighbors(this.#theme, this.#palettes)
     this.#select(delta < 0 ? prev : next, true)
   }
 
@@ -205,7 +230,8 @@ class MarketplaceWorkspace extends HTMLElement {
   #select(theme: Theme, push: boolean) {
     if (theme === this.#theme) return
     this.#theme = theme
-    const { palettes, gate, where } = this.#data
+    const { gate, where } = this.#data
+    const palettes = this.#palettes
     this.querySelector('[data-palette-preview]')?.setAttribute('style', wearStyle(theme))
     fill(this.querySelector('[data-head]'), html(<WorkspaceHead theme={theme} />))
     fill(this.querySelector('[data-install]'), html(<InstallPanes theme={theme} where={where} />))

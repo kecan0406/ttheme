@@ -65,6 +65,10 @@ export function palettePath(theme: Pick<Theme, 'marketplace' | 'name'>): string 
   return `${marketplacePath(theme.marketplace)}/${encodeURIComponent(theme.name)}`
 }
 
+export function palettesPath(id: string | null): string {
+  return id === null ? '/palettes.json' : `${marketplacePath(id)}/palettes.json`
+}
+
 export interface Peek {
   title: string
   use: string

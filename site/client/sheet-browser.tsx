@@ -1,5 +1,6 @@
 import { SheetDetails, SheetUse, stepLabel } from '@/components/sheets'
 import { TerminalTabs } from '@/components/terminal-window'
+import { palettesPath } from '@/lib/gallery'
 import { html } from '@/lib/render'
 import { sheetNumber, sheetVars } from '@/lib/sheet'
 import { SHEET_AT } from '@/lib/sheet-script'
@@ -7,6 +8,7 @@ import { type GateRule, inMode, type Theme } from '@/lib/themes'
 import { fadeThrough, fill, readJson, reducedMotion, swap } from './dom'
 import { bare, typing } from './keys'
 import { mode } from './mode'
+import { afterPaint, palettes } from './palettes'
 import { tabKey } from './tabs'
 import { onMode, onWear, recall, remember, show } from './wear'
 
@@ -31,10 +33,11 @@ function owned(target: EventTarget | null): boolean {
 class SheetBrowser extends HTMLElement {
   #themes: Theme[] = []
   #gate: GateRule[] = []
-  #tabs: OpenTab[] = []
+  #tabs: OpenTab[] = [0, 1, 2].map((index) => ({ id: index, index }))
   #active = 0
-  #next = 0
+  #next = 3
   #shown: Theme | undefined
+  #ready: Promise<void> | null = null
   #off = () => {}
   #offMode = () => {}
 
@@ -47,16 +50,16 @@ class SheetBrowser extends HTMLElement {
     const sheet = hit('[data-sheet]')
     const details = hit('[data-details]')
 
-    if (step) this.#step(Number(step.dataset.step))
-    else if (tab) this.#select(Number(tab.dataset.tab))
-    else if (hit('[data-new-tab]')) this.#open()
+    if (step) this.#when(() => this.#step(Number(step.dataset.step)))
+    else if (tab) this.#when(() => this.#select(Number(tab.dataset.tab)))
+    else if (hit('[data-new-tab]')) this.#when(() => this.#open())
     else if (scroll) this.#scroll(Number(scroll.dataset.scroll))
-    else if (sheet) this.#paint(Number(sheet.dataset.sheet))
+    else if (sheet) this.#when(() => this.#paint(Number(sheet.dataset.sheet)))
     else if (details) this.#details(details)
   }
 
   #keydown = (event: KeyboardEvent) => {
-    tabKey(event, (tab) => this.#select(Number(tab.dataset.tab)))
+    tabKey(event, (tab) => this.#when(() => this.#select(Number(tab.dataset.tab))))
   }
 
   #arrows = (event: KeyboardEvent) => {
@@ -64,23 +67,19 @@ class SheetBrowser extends HTMLElement {
 
     if (!delta || !bare(event) || event.shiftKey || event.repeat || owned(event.target)) return
     event.preventDefault()
-    this.#step(delta)
+    this.#when(() => this.#step(delta))
   }
 
   connectedCallback() {
-    const { themes, gate } = readJson<{ themes: Theme[]; gate: GateRule[] }>(this, 'script[data-sheets]')
-    this.#themes = themes
-    this.#gate = gate
-    this.#tabs = themes.slice(0, 3).map((_, id) => ({ id, index: id }))
-    this.#next = this.#tabs.length
-    this.#shown = themes[0]
+    this.#gate = readJson<{ gate: GateRule[] }>(this, 'script[data-sheets]').gate
     this.addEventListener('click', this.#click)
     this.addEventListener('keydown', this.#keydown)
     window.addEventListener('keydown', this.#arrows)
-    this.#off = onWear((theme) => this.#adopt(theme))
-    this.#offMode = onMode(() => this.#draw())
+    this.#off = onWear((theme) => this.#when(() => this.#adopt(theme)))
+    this.#offMode = onMode(() => this.#when(() => this.#draw()))
     this.#restore()
     this.#center('auto')
+    afterPaint(() => void this.#load())
   }
 
   disconnectedCallback() {
@@ -97,12 +96,40 @@ class SheetBrowser extends HTMLElement {
 
   #restore() {
     const stored = recall()
-    const index = stored ? this.#themes.findIndex((theme) => theme.name === stored.name) : -1
 
-    if (index < 1) return
+    const tile = [...this.querySelectorAll<HTMLElement>('[data-sheet]')].find(
+      (sheet) => sheet.querySelector('span')?.textContent === stored?.name,
+    )
+
+    const index = Number(tile?.dataset.sheet ?? 0)
+
+    if (!stored || index < 1) return
     this.#tabs = this.#tabs.map((tab) => (tab.id === this.#active ? { ...tab, index } : tab))
-    this.#shown = this.#themes[index]
-    this.#draw()
+    fill(this.querySelector('[data-use]'), html(<SheetUse theme={stored} />))
+  }
+
+  #load(): Promise<void> {
+    this.#ready ??= palettes(palettesPath(null)).then(
+      (themes) => {
+        this.#themes = themes
+        this.#shown = themes[this.#at]
+
+        if (this.#at > 0) this.#draw()
+      },
+      () => {
+        this.#ready = null
+      },
+    )
+
+    return this.#ready
+  }
+
+  #when(act: () => void) {
+    if (this.#themes.length > 0) act()
+    else
+      void this.#load().then(() => {
+        if (this.#themes.length > 0) act()
+      })
   }
 
   #adopt(theme: Theme) {
