@@ -69,7 +69,7 @@ export function InspectorPopover({
               {`${ratio.toFixed(2)}:1`}
             </b>
             <Verdict ok={level !== null} />
-            <span class={level ? 'font-semibold text-success' : 'font-semibold text-destructive'} safe>
+            <span class={level ? 'font-semibold text-success' : 'font-semibold text-destructive'}>
               {level ?? 'under 4.5:1'}
             </span>
           </span>

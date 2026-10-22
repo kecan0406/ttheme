@@ -88,7 +88,7 @@ export function BuilderPage({
           <AboutPanel
             about={aboutOf(edit, 'made')}
             modes={modesOf(edit)}
-            link={shared ? <LinkSection shared={shared} /> : null}
+            link={shared ? <LinkSection shared={shared} /> : undefined}
           />
         </aside>
         <main id="content" aria-label="preview" data-stage class="mock-stage [grid-area:stage]">

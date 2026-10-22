@@ -102,7 +102,17 @@ export function ChangedLabel({ count }: { count: number }) {
   return (
     <>
       <i class={cn('size-1.75 flex-none rounded-full', count > 0 ? 'bg-warning' : 'bg-faint-foreground')} />
-      <span safe>{count === 0 ? 'nothing changed' : `${count} changed`}</span>
+      <span>
+        {count === 0 ? (
+          <>
+            <span class="max-[560px]:hidden">nothing</span>
+            <span class="hidden max-[560px]:inline">0</span>
+          </>
+        ) : (
+          count
+        )}
+        <span class="max-[560px]:sr-only"> changed</span>
+      </span>
     </>
   )
 }
@@ -207,7 +217,9 @@ export function BuilderBar({
             </Button>
             <Button size="sm" popovertarget="builder-add" data-add>
               <Icon node={Plus} />
-              add to ttheme
+              <span>
+                add<span class="max-[560px]:sr-only"> to ttheme</span>
+              </span>
             </Button>
           </>
         ) : null}
@@ -916,10 +928,10 @@ export function PicturesBox({ about }: { about: AboutView }) {
   )
 }
 
-export function AboutPanel({ about, modes, link }: { about: AboutView; modes: ModesView; link: JSX.Element | null }) {
+export function AboutPanel({ about, modes, link }: { about: AboutView; modes: ModesView; link?: JSX.Element }) {
   return (
     <section id="builder-about" role="tabpanel" aria-labelledby="builder-tab-about" data-panel-body="about" hidden>
-      {link}
+      {link ? link : null}
       <div class="grid gap-3 border-b border-border p-4">
         <SectionLabel icon={<Icon node={FileCode} />}>File</SectionLabel>
         <label for="builder-about-name" class="grid gap-1.5 text-sm">
