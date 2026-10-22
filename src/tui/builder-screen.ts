@@ -20,6 +20,7 @@ import { cells, printable } from '../core/text.ts'
 import { fit, spread, wrapText } from './ansi.ts'
 import type { Area } from './editor-backdrop.ts'
 import {
+  baseButton,
   channelSamples,
   contrastLine,
   detailChecks,
@@ -31,6 +32,7 @@ import {
   ink,
   lchShort,
   position,
+  ratioAt,
   roleSgr,
   spot,
 } from './editor-paint.ts'
@@ -338,6 +340,41 @@ export function planeAt(y: number, rows: number, x: number, width: number, hue: 
   return { lightness, chroma: share * reach(lightness, hue) }
 }
 
+function planeCell(one: { l: number; c: number; h: number }, width: number, rows: number) {
+  const sample = Math.max(
+    0,
+    Math.min(rows * 2 - 1, Math.round(((PLANE_TOP - one.l) / (PLANE_TOP - PLANE_BOTTOM)) * (rows * 2 - 1))),
+  )
+
+  return { row: Math.floor(sample / 2), col: Math.round(shareOf(one.l, one.c, one.h) * (width - 1)) }
+}
+
+export function onBase(e: PaletteEditor, target: EditorSpot, x: number, width: number): boolean {
+  const origin = e.origin()
+
+  if (!origin) {
+    return false
+  }
+
+  if (target.kind === 'plane') {
+    const cell = planeCell(origin.lch, width, target.rows)
+
+    return cell.row === target.row && cell.col === x
+  }
+
+  if (target.kind !== 'bar') {
+    return false
+  }
+
+  if (target.channel === CONTRAST) {
+    return ratioAt(origin.ratio, width) === x
+  }
+
+  const hue = CHANNELS[2] as (typeof CHANNELS)[number]
+
+  return target.channel === 2 && position(origin.lch.h, hue.min, hue.max, width) === x
+}
+
 function planeLines(
   p: Paint,
   at: { l: number; c: number; h: number },
@@ -346,17 +383,8 @@ function planeLines(
   rows: number,
   origin: { l: number; c: number; h: number } | undefined,
 ): string[] {
-  const cellOf = (one: { l: number; c: number; h: number }) => {
-    const sample = Math.max(
-      0,
-      Math.min(rows * 2 - 1, Math.round(((PLANE_TOP - one.l) / (PLANE_TOP - PLANE_BOTTOM)) * (rows * 2 - 1))),
-    )
-
-    return { row: Math.floor(sample / 2), col: Math.round(shareOf(one.l, one.c, one.h) * (width - 1)) }
-  }
-
-  const { row: markRow, col: markCol } = cellOf(at)
-  const was = origin ? cellOf(origin) : { row: -1, col: -1 }
+  const { row: markRow, col: markCol } = planeCell(at, width, rows)
+  const was = origin ? planeCell(origin, width, rows) : { row: -1, col: -1 }
 
   const color = (l: number, share: number) => {
     const one = srgb(l, share * reach(l, at.h), at.h) ?? [0, 0, 0]
@@ -436,10 +464,8 @@ function valueLine(e: PaletteEditor, p: Paint, width: number): string {
   const hex = e.list[slot] as Hex
   const at = e.lch[slot] as { l: number; c: number; h: number }
   const typed = e.typing !== undefined ? p.bold(`${e.typing}▏`) : keyZone('#', p.bold(colorText(e.format, hex, at)))
-  const was = e.start[slot] as Hex
-  const swatch = p.color ? `${p.fg(was)}${MARKS.swatch}${FG_RESET} ` : ''
 
-  return spread(typed, was !== hex ? p.dim(`was ${swatch}${was}`) : '', width)
+  return spread(typed, e.changed(slot) ? baseButton(p, e, width - cells(typed) - 1) : '', width)
 }
 
 function pickerLines(e: PaletteEditor, p: Paint, outer: number, room: number): Popup {

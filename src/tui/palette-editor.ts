@@ -152,6 +152,13 @@ interface Snapshot {
   signature: string[]
 }
 
+interface Step {
+  list: Hex[]
+  lch: Oklch[]
+  holds: Map<number, number>
+  unlinked: Set<number>
+}
+
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 function lowered(key: string): string {
@@ -189,9 +196,27 @@ export function gateRows(list: Hex[], signature: string[], waive: string[]): Gat
 
 const ALWAYS = new Set(['reset', 'reset-all', 'hex', 'paste', 'fix', 'open', 'tune', 'sig', 'follow'])
 
+const JUMPS = new Set(['jump', 'hex', 'paste', 'reset'])
+
 const NAME_CHAR = /^[a-z0-9@/-]$/
 
 const C_MAX = (CHANNELS[1] as Channel).max
+
+function handleOf(key: string, contrast: boolean): string | undefined {
+  if (key === 'up' || key === 'down' || key === 'pgup' || key === 'pgdn') {
+    return 'l'
+  }
+
+  if (key === 'left' || key === 'right' || key === 'shift-left' || key === 'shift-right') {
+    return contrast ? 'ratio' : key.startsWith('shift') ? 'h' : 'c'
+  }
+
+  if (key === ',' || key === '.') {
+    return contrast ? undefined : 'h'
+  }
+
+  return key === 'home' || key === 'end' || /^[0-9]$/.test(key) ? 'jump' : undefined
+}
 
 function alongside(range: { min: number; max: number; step: number; wraps?: boolean }, at: number): number {
   const top = range.wraps ? range.max - range.step : range.max
@@ -249,6 +274,9 @@ export class PaletteEditor {
   private history: Snapshot[] = []
   private future: Snapshot[] = []
   private lastEdit: string | undefined
+  private steps: Step[] = []
+  private redos: Step[] = []
+  private lastStep: string | undefined
   private links = new Map<number, number>()
   private unlinked = new Set<number>()
   private offsets = new Map<number, Oklch>()
@@ -299,6 +327,10 @@ export class PaletteEditor {
 
   changed(slot: number): boolean {
     return this.list[slot] !== this.original[slot]
+  }
+
+  based(): string {
+    return this.tone ? 'as the marketplace gives it' : 'as it opened'
   }
 
   visible(slot: number): boolean {
@@ -430,7 +462,16 @@ export class PaletteEditor {
         text: '↑↓  lightness  ·  ←→  chroma  ·  ⇧←→  hue by 5  ·  ,  .  hue by 1  ·  pgup  pgdn  lightness ×5  ·  home  end  the ends  ·  0-9  jump',
       },
       { label: '', text: 'enter  keeps  ·  a click outside the picker keeps', ...when(tuning, 'enter') },
-      { label: '', text: 'esc  undoes every slot the tune moved', ...when(tuning && !this.compare, 'esc') },
+      {
+        label: '',
+        text: `u  undoes a step  ·  ctrl+r  redoes it  ·  r  or a click on base${this.roomy ? ` or ${MARKS.off}` : ''}  puts the slot back ${this.based()}`,
+        ...when(tuning, 'u'),
+      },
+      {
+        label: '',
+        text: 'esc  cancels the tune and puts back every slot it moved',
+        ...when(tuning && !this.compare, 'esc'),
+      },
       {
         label: 'Contrast',
         text: `tab  while tuning  ·  ${MARKS.contrast} moves lightness until the ratio to the color it is read against changes  ·  home  the gate’s floor  ·  1-9  that ratio`,
@@ -466,7 +507,7 @@ export class PaletteEditor {
       { label: 'Type', text: '#  then #rrggbb, rgb(r g b) or oklch(l c h)  ·  a paste works too', ...when(true, '#') },
       {
         label: 'Slot',
-        text: `c  copies  ·  v  pastes  ·  r  puts it back as it opened, R all of them${this.tone ? '' : '  ·  *  marks it a signature color'}`,
+        text: `c  copies  ·  v  pastes  ·  r  puts it back ${this.based()}, R all of them${this.tone ? '' : '  ·  *  marks it a signature color'}`,
       },
       { label: 'Fix', text: 'f  moves the colors the gate misses', ...when(list, 'f') },
       ...(this.tone
@@ -485,8 +526,8 @@ export class PaletteEditor {
         ? []
         : [{ label: 'Import', text: 'I  takes colors from another palette or a share code', ...when(roomy, 'I') }]),
       { label: 'Gate', text: `${MARKS.miss}  marks every slot whose own checks miss, and each miss names its slots` },
-      { label: 'History', text: 'u  undo', ...when(list, 'u') },
-      { label: '', text: 'ctrl+r  redo', ...when(list, 'ctrl-r') },
+      { label: 'History', text: 'u  undo', ...when(list || tuning, 'u') },
+      { label: '', text: 'ctrl+r  redo', ...when(list || tuning, 'ctrl-r') },
       ...pictures,
       { label: 'Compare', text: 'space  shows the colors you started from, on the terminal too', ...when(true, ' ') },
       { label: 'Save', text: 's  saves', ...when(true, 's') },
@@ -505,7 +546,7 @@ export class PaletteEditor {
       [MARKS.miss, 'misses the gate'],
       [MARKS.on, 'changed'],
       [MARKS.linked, 'follows its normal'],
-      [MARKS.off, 'where it was'],
+      [MARKS.off, 'its base color'],
       [MARKS.contrast, 'contrast'],
     ]
   }
@@ -721,13 +762,17 @@ export class PaletteEditor {
 
     const at = Math.min(1, Math.max(0, fraction))
 
-    if (channel === CONTRAST) {
-      this.reach(21 ** at)
+    this.stepped('point', () => {
+      if (channel === CONTRAST) {
+        this.reach(21 ** at)
+      } else {
+        this.put(alongside(CHANNELS[channel] as Channel, at))
+      }
+    })
+  }
 
-      return
-    }
-
-    this.put(alongside(CHANNELS[channel] as Channel, at))
+  touch(): void {
+    this.lastStep = undefined
   }
 
   sow(field: number, fraction: number): void {
@@ -756,7 +801,7 @@ export class PaletteEditor {
       this.field = clamp(this.field, SEED_FIELDS.length - 1)
     } else if (this.mode === 'tune') {
       this.channel = 0
-      this.step(-step)
+      this.stepped('l', () => this.step(-step))
     } else {
       this.row = clamp(this.row, ROWS - 1)
       this.lastEdit = undefined
@@ -1170,10 +1215,12 @@ export class PaletteEditor {
       return
     }
 
-    this.channel = 0
-    this.put(lightness)
-    this.channel = 1
-    this.put(chroma)
+    this.stepped('point', () => {
+      this.channel = 0
+      this.put(lightness)
+      this.channel = 1
+      this.put(chroma)
+    })
   }
 
   private linkKey(): void {
@@ -1234,6 +1281,9 @@ export class PaletteEditor {
     this.tuneFrom = { list: this.list, lch: this.lch }
     this.holds = new Map()
     this.hold()
+    this.steps = []
+    this.redos = []
+    this.lastStep = undefined
     this.mode = 'tune'
   }
 
@@ -1250,11 +1300,108 @@ export class PaletteEditor {
   }
 
   private tuneKey(key: string): void {
+    const handle = handleOf(key, this.channel === CONTRAST)
+
+    if (handle) {
+      this.stepped(handle, () => this.move(key))
+    } else if (key === 'tab' || key === 'shift-tab') {
+      this.channel = this.channel === CONTRAST ? 0 : CONTRAST
+    } else if (key === 'a') {
+      this.rescope()
+    } else if (key === '#') {
+      this.typing = ''
+    } else if (key === 'l') {
+      this.linkKey()
+    } else if (key === 'r') {
+      this.take(this.original[this.slot()] as Hex, 'reset')
+    } else if (key === 'u') {
+      this.unstep()
+    } else if (key === 'ctrl-r') {
+      this.restep()
+    } else if (key === 's' || key === 'ctrl-s') {
+      this.tuneKey('enter')
+      this.save()
+    } else if (key === 'enter') {
+      if (this.tuneFrom && this.list.every((c, i) => c === this.tuneFrom?.list[i])) {
+        this.history.pop()
+      }
+
+      this.endTune()
+    } else if (key === 'esc') {
+      if (this.tuneFrom) {
+        this.list = this.tuneFrom.list
+        this.lch = this.tuneFrom.lch
+        this.history.pop()
+      }
+
+      this.endTune()
+    }
+  }
+
+  private stepped(handle: string, change: () => void): void {
+    const before: Step = {
+      list: this.list,
+      lch: this.lch,
+      holds: new Map(this.holds),
+      unlinked: new Set(this.unlinked),
+    }
+
+    change()
+
+    if (this.list.every((c, i) => c === before.list[i])) {
+      return
+    }
+
+    if (handle !== this.lastStep || JUMPS.has(handle)) {
+      this.steps.push(before)
+      this.redos = []
+    }
+
+    this.lastStep = handle
+  }
+
+  private unstep(): void {
+    const last = this.steps.pop()
+
+    if (!last) {
+      this.say('Nothing to undo')
+
+      return
+    }
+
+    this.redos.push(this.stepNow())
+    this.lay(last)
+  }
+
+  private restep(): void {
+    const next = this.redos.pop()
+
+    if (!next) {
+      this.say('Nothing to redo')
+
+      return
+    }
+
+    this.steps.push(this.stepNow())
+    this.lay(next)
+  }
+
+  private stepNow(): Step {
+    return { list: this.list, lch: this.lch, holds: this.holds, unlinked: this.unlinked }
+  }
+
+  private lay(step: Step): void {
+    this.list = step.list
+    this.lch = step.lch
+    this.holds = step.holds
+    this.unlinked = step.unlinked
+    this.lastStep = undefined
+  }
+
+  private move(key: string): void {
     const contrastOn = this.channel === CONTRAST
 
-    if (key === 'tab' || key === 'shift-tab') {
-      this.channel = contrastOn ? 0 : CONTRAST
-    } else if (key === 'up' || key === 'down' || key === 'pgup' || key === 'pgdn') {
+    if (key === 'up' || key === 'down' || key === 'pgup' || key === 'pgdn') {
       this.channel = 0
       this.step((key === 'up' || key === 'pgup' ? 1 : -1) * (key.startsWith('pg') ? FAST : 1))
     } else if (key === 'left' || key === 'right') {
@@ -1294,29 +1441,6 @@ export class PaletteEditor {
         const channel = CHANNELS[this.channel] as Channel
         this.put(channel.min + ((channel.max - channel.min) * Number(key)) / 10)
       }
-    } else if (key === 'a') {
-      this.rescope()
-    } else if (key === '#') {
-      this.typing = ''
-    } else if (key === 'l') {
-      this.linkKey()
-    } else if (key === 's' || key === 'ctrl-s') {
-      this.tuneKey('enter')
-      this.save()
-    } else if (key === 'enter') {
-      if (this.tuneFrom && this.list.every((c, i) => c === this.tuneFrom?.list[i])) {
-        this.history.pop()
-      }
-
-      this.endTune()
-    } else if (key === 'esc') {
-      if (this.tuneFrom) {
-        this.list = this.tuneFrom.list
-        this.lch = this.tuneFrom.lch
-        this.history.pop()
-      }
-
-      this.endTune()
     }
   }
 
@@ -1358,6 +1482,8 @@ export class PaletteEditor {
   private endTune(): void {
     this.tuneFrom = undefined
     this.holds = new Map()
+    this.steps = []
+    this.redos = []
     this.mode = 'list'
   }
 
@@ -1489,10 +1615,13 @@ export class PaletteEditor {
   private take(color: Hex, edit: string): void {
     if (this.mode === 'tune') {
       const slot = this.slot()
-      this.list = this.list.with(slot, color)
-      this.lch = this.lch.with(slot, this.lchOf(color))
-      this.holds.set(slot, (this.lch[slot] as Oklch).c)
-      this.trail([slot])
+
+      this.stepped(edit, () => {
+        this.list = this.list.with(slot, color)
+        this.lch = this.lch.with(slot, this.lchOf(color))
+        this.holds.set(slot, (this.lch[slot] as Oklch).c)
+        this.trail([slot])
+      })
     } else {
       this.set(this.slot(), color, edit)
     }

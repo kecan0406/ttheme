@@ -42,14 +42,26 @@ export function heldOf(e: PaletteEditor, at: Oklch): number | undefined {
   return e.held !== undefined && e.held - at.c > 0.0005 ? e.held : undefined
 }
 
+export function baseButton(p: Paint, e: PaletteEditor, room: number, value?: string): string {
+  const base = e.original[e.slot()] as Hex
+  const chip = buttonOf(p, 'base', 'idle')
+  const swatch = p.color ? `${p.fg(base)}${MARKS.swatch}${FG_RESET}` : ''
+  const shown = [value ?? base, base, ''].map((text) => [chip, swatch, text].filter(Boolean).join(' '))
+
+  return keyZone('r', shown.find((one) => cells(one) <= room) ?? chip)
+}
+
+export function ratioAt(ratio: number, width: number): number {
+  return Math.round((Math.log(Math.max(1, ratio)) / Math.log(21)) * (width - 1))
+}
+
 export function contrastLine(p: Paint, e: PaletteEditor, barWidth: number, origin?: number): string {
   const here = e.mode === 'tune' && e.channel === CONTRAST
   const ratio = e.ratio()
   const { floor } = e.partner()
-  const at = (r: number) => Math.round((Math.log(Math.max(1, r)) / Math.log(21)) * (barWidth - 1))
-  const pos = at(ratio)
-  const tick = floor === undefined ? -1 : at(floor)
-  const was = origin === undefined ? -1 : at(origin)
+  const pos = ratioAt(ratio, barWidth)
+  const tick = floor === undefined ? -1 : ratioAt(floor, barWidth)
+  const was = origin === undefined ? -1 : ratioAt(origin, barWidth)
   const line = here ? '━' : '─'
 
   const bar = Array.from({ length: barWidth }, (_, k) =>

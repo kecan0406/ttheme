@@ -75,6 +75,42 @@ test('esc in tune puts the slot back as it was', () => {
   assert.deepEqual(e.colors(), start)
 })
 
+test('u in the picker takes back one run of a handle at a time, ctrl+r brings it back, and enter keeps the tune as one step', () => {
+  const e = press(editor(), ...RED, 'tab', 'up', 'up', 'up')
+  const lifted = e.list[5]
+  press(e, 'left', 'left')
+  const dulled = e.list[5]
+  press(e, 'up')
+  assert.notEqual(e.list[5], dulled)
+  press(e, 'u')
+  assert.equal(e.list[5], dulled)
+  press(e, 'u')
+  assert.equal(e.list[5], lifted)
+  press(e, 'u')
+  assert.deepEqual(e.colors(), start)
+  assert.equal(e.mode, 'tune')
+  press(e, 'u')
+  assert.equal(e.notice, 'Nothing to undo')
+  press(e, 'ctrl-r', 'ctrl-r')
+  assert.equal(e.list[5], dulled)
+  press(e, 'enter', 'u')
+  assert.deepEqual(e.colors(), start)
+})
+
+test('in a tone the picker’s base and r are the marketplace’s color, not the tone it opened with', () => {
+  const tuned = { ...start, ansi: start.ansi.map((c, i) => (i === 1 ? '#ff728d' : c)) as string[] }
+  const e = press(editor({ colors: tuned, original: start, tone: true }), ...RED, 'tab', 'up')
+  const moved = e.list[5]
+  const drawn = renderEditor(e, 130, 38, false).join('\n')
+  assert.match(drawn, new RegExp(`base\\s+${start.ansi[1]}`))
+  assert.doesNotMatch(drawn, /#ff728d|was /)
+  press(e, 'r')
+  assert.equal(e.mode, 'tune')
+  assert.equal(e.list[5], start.ansi[1])
+  press(e, 'u')
+  assert.equal(e.list[5], moved)
+})
+
 test('# takes hex, rgb() or oklch(), and a paste sets the focused slot', () => {
   assert.equal(parseColor('#F00'), '#ff0000')
   assert.equal(parseColor('rgb(0 128 255)'), '#0080ff')
@@ -204,10 +240,11 @@ test('ctrl-c leaves the editor as esc does, asking first when something changed,
 test('while compare is on, the help offers no esc to leave or to undo a tune, since esc only turns compare off', () => {
   const tuning = press(editor(), 'tab', '9', ' ', '?')
 
-  for (const key of 'undoes every') {
+  for (const key of 'puts back every') {
     tuning.help?.key(key)
   }
 
+  assert.match(tuning.help?.shown()[0]?.text ?? '', /cancels the tune/)
   assert.equal(tuning.help?.chosen(), undefined)
   const listing = press(editor(), 'tab', '9', 'enter', ' ', '?')
 

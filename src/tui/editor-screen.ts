@@ -9,9 +9,10 @@ import { colorQuery, SLOT_CODES, slotColors } from '../terminals/osc.ts'
 import { CLEAR } from '../terminals/terminal.ts'
 import { fit, spread, wrapText } from './ansi.ts'
 import { barLine, type Hint, toned } from './bar.ts'
-import { type Look, pictureArea, planeAt, renderBuilder } from './builder-screen.ts'
+import { type Look, onBase, pictureArea, planeAt, renderBuilder } from './builder-screen.ts'
 import type { Backdrop } from './editor-backdrop.ts'
 import {
+  baseButton,
   channelSamples,
   contrastLine,
   detailChecks,
@@ -387,7 +388,7 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   const slot = e.slot()
   const hex = e.list[slot] as Hex
   const at = e.lch[slot] as Oklch
-  const was = e.start[slot] as Hex
+  const base = e.original[slot] as Hex
   const { name, about } = slotLabel(slot)
   const sig = e.signature.includes(SLOT_NAMES[slot] as string)
   const barWidth = Math.max(8, Math.min(64, width - 12))
@@ -404,10 +405,9 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   lines.push(`${block}${typed ?? lchLine(p, at)}`, `${block}${p.dim(`${hex} · rgb ${r} ${g} ${b}`)}`)
 
   if (e.view !== 'relations') {
-    const swatch = p.color ? `${p.fg(was)}${MARKS.swatch}${FG_RESET} ` : ''
-    lines.push(
-      `${block}${was !== hex ? p.dim(`was ${swatch}${oklchText(e.lchOf(was)).slice(6)} · ${was}`) : p.dim('as it opened')}`,
-    )
+    const room = width - cells(block)
+    const value = `${oklchText(e.lchOf(base)).slice(6)} · ${base}`
+    lines.push(`${block}${e.changed(slot) ? baseButton(p, e, room, value) : p.dim(e.based())}`)
   }
 
   lines.push('', ...channelLines(p, e, at, barWidth), contrastLine(p, e, barWidth), ...scopeLines(p, e))
@@ -549,13 +549,15 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['↑↓', 'L'],
       ['←→', e.channel === CONTRAST ? 'ratio' : 'C'],
       ['⇧←→', 'H'],
+      ['u', 'undo'],
+      ['r', 'back'],
       ['tab', MARKS.contrast],
       ...(e.slot() >= BASE.length ? ([['a', 'scope']] as Hint[]) : []),
       [e.channel === CONTRAST ? '1-9' : '0-9', e.channel === CONTRAST ? 'ratio' : 'jump'],
       ['#', 'type'],
       ['enter', 'keep'],
     ]
-    right = ['esc', 'undo']
+    right = ['esc', 'cancel']
   } else if (e.inspect) {
     badge = 'EDIT (INSPECT)'
     keys = [
@@ -695,7 +697,7 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
   return { lines, art: undefined }
 }
 
-const PICKER_KEYS = new Set(['tab', 'a', '#', 'l', 'enter', 'esc'])
+const PICKER_KEYS = new Set(['tab', 'a', '#', 'l', 'u', 'r', 'enter', 'esc'])
 const PICKER_SPOTS = new Set(['picker', 'plane', 'bar', 'channel', 'format', 'scope', 'open', 'slot'])
 
 function closesPicker(target: EditorSpot | undefined): boolean {
@@ -771,6 +773,16 @@ function pointEditor(e: PaletteEditor, hit: Hit | undefined, event: Mouse): void
     }
 
     return
+  }
+
+  if ((target.kind === 'plane' || target.kind === 'bar') && event.action === 'press') {
+    e.touch()
+
+    if (e.mode === 'tune' && e.roomy && onBase(e, target, hit.x, hit.width)) {
+      e.press('r')
+
+      return
+    }
   }
 
   if (target.kind === 'plane') {

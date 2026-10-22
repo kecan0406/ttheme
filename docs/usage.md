@@ -675,7 +675,9 @@ differs from the marketplace's colors, and `s` after it drops the tone. The keys
   point is a color, and the right edge is as vivid as that lightness goes — a
   hue bar, the `◐` contrast
   against the color it is read against with the gate's floor marked, the color as
-  Hex, RGB or OKLCH (a click on it types one), the link to its normal or bright
+  Hex, RGB or OKLCH (a click on it types one) and, once the slot moved, `base`
+  beside it with the color it goes back to — the `○` on the square, the hue bar
+  and `◐` —, the link to its normal or bright
   (`l`), and what the gate says when the slot misses. In Ghostty, kitty, iTerm2
   and Konsole it is drawn with pictures, as a raised panel with a smooth plane,
   round handles, a rainbow hue bar and the formats as one segmented control;
@@ -683,7 +685,10 @@ differs from the marketplace's colors, and `s` after it drops the tone. The keys
   lightness, `←→` chroma, `⇧←→` hue by five (`,` and `.` by one), `pgup`/`pgdn`
   lightness by five, `tab` goes to `◐`, `home`/`end` take the last channel
   moved to its ends, `0`–`9` jump along it, enter keeps and esc puts back every
-  slot the tune moved; `s` keeps and saves. On `◐`, `←→` move lightness until the contrast with the
+  slot the tune moved; `u` takes back one step — a run of one key's moves, a
+  jump, one drag — and ctrl+r brings it back, while `r`, a click on `base` or on
+  a `○` puts the slot back at its base color — as it opened, or for a tone the
+  marketplace's — with the picker still open; `s` keeps and saves. On `◐`, `←→` move lightness until the contrast with the
   color the slot is read against changes, `home` sets the gate's floor and `1`–`9`
   that ratio. `a` widens what moves — this slot, its pair, the six normal or bright
   accents, or all twelve — and each moves by the same step, keeping its own color.
@@ -707,8 +712,9 @@ differs from the marketplace's colors, and `s` after it drops the tone. The keys
   to the clipboard (OSC 52, so the terminal has to allow it; `ttheme share` prints
   the same code as a link), and `I` takes colors from another palette or a share
   link.
-- `c` and `v` copy a color between slots, `r` puts a slot back as it opened and
-  `R` all of them, `*` marks a signature color (a fourth drops the oldest, and
+- `c` and `v` copy a color between slots, `r` puts a slot back at its base color
+  — as it opened, or for a tone the marketplace's — and `R` all of them, `*`
+  marks a signature color (a fourth drops the oldest, and
   says so), `f` moves the colors the gate misses, `o` takes another palette's
   colors, `u` and ctrl+r undo and redo, and space shows the colors you started
   from. `?` opens the help, as in Browse, with the keys of the mode you are in;
