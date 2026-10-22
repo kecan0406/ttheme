@@ -32,12 +32,12 @@ import {
 import { type Start, typedDrop } from './find/attach.ts'
 import { type Help, type HelpSpot, overlay } from './help.ts'
 import { capped } from './keycaps.ts'
-import { CELL_QUERY, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
+import { CELL_QUERY, type Cell, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
 import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
 import { boxEdge, boxed, checkOf, hintOf, moreOf, pillOf } from './parts.ts'
 import type { Drawn, PickerLayer } from './picker-art.ts'
 import { Screen } from './screen.ts'
-import { FG_RESET, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './style.ts'
+import { FG_RESET, grounded, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './terminal.ts'
 import { cover, type Hit, keyZone } from './zones.ts'
 
@@ -620,15 +620,23 @@ export function drawEditor(e: PaletteEditor, cols: number, rows: number, color: 
     return drawn
   }
 
+  const p = painter(color)
+  const ground = drawn.mock && look.chrome?.[0] ? p.bg(look.chrome[0]) : ''
+  const solid = (box: string[]) => (ground ? box.map((line) => grounded(line, ground)) : box)
+
   if (e.help) {
-    return { lines: overlay(drawn.lines, e.help.box(painter(color), cols, rows - 1), cols, rows, 1), art: undefined }
+    return {
+      ...drawn,
+      lines: overlay(drawn.lines, solid(e.help.box(p, cols, rows - 1)), cols, rows, 1),
+      art: undefined,
+    }
   }
 
   if (!e.quitting) {
     return drawn
   }
 
-  const dialog = quitDialog(painter(color), e, cols)
+  const dialog = solid(quitDialog(p, e, cols))
   const col = Math.floor((cols - cells(dialog[0] as string)) / 2)
   const top = Math.max(0, Math.floor((drawn.lines.length - dialog.length) / 2))
 
@@ -662,7 +670,7 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
     const built = renderBuilder(e, cols, rows, color, look)
 
     if (built) {
-      return { lines: [...built.lines, footer(p, e, cols)], art: built.art }
+      return { ...built, lines: [...built.lines, footer(p, e, cols)] }
     }
   }
 
@@ -850,15 +858,19 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     let over = false
     const own = new Map<string, string>()
     const pixels = new PixelProbe()
+    const sizes = new CellProbe()
+    let measured: Cell | undefined
 
     const seen = await terminal.ask(
-      `${colorQuery(SLOT_CODES, '')}${pointing().length > 0 ? PIXEL_QUERY : ''}\x1b[c`,
+      `${colorQuery(SLOT_CODES, '')}${backdrop || layer ? CELL_QUERY : ''}${pointing().length > 0 ? PIXEL_QUERY : ''}\x1b[c`,
       (event) => {
         if (event.kind === 'color') {
           own.set(event.code, event.value)
 
           return undefined
         }
+
+        measured = sizes.see(event)
 
         return pixels.see(event)
       },
@@ -884,9 +896,10 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
           return undefined
         }
 
-        const { lines, art } = drawEditor(editor, terminal.cols, terminal.rows, surface.color, {
+        const { lines, art, mock } = drawEditor(editor, terminal.cols, terminal.rows, surface.color, {
           behind: editor.pic && backdrop?.laid === true,
           art: layer?.ready === true,
+          mock: layer?.ready === true,
           chrome,
         })
 
@@ -904,7 +917,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
                     pictureArea(terminal.cols, terminal.rows),
                   )
                 : backdrop?.clear()) ?? ''
-            }${layer?.draw(art) ?? ''}`,
+            }${layer?.draw(art, mock) ?? ''}`,
         }
       },
     })
@@ -946,7 +959,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
     terminal.write(CLEAR)
     terminal.onResize(() => {
       backdrop?.resized()
-      terminal.write(layer?.clear() ?? '')
+      layer?.resized()
       screen.reset(CLEAR)
       screen.request()
     })
@@ -956,7 +969,10 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
       backdrop.ready = () => screen.request()
     }
 
-    if (backdrop || layer) {
+    if (measured) {
+      backdrop?.measured(measured)
+      layer?.measured(measured)
+    } else if (backdrop || layer) {
       const probe = new CellProbe()
       void terminal
         .ask(CELL_QUERY, (event) => probe.see(event), 1000)

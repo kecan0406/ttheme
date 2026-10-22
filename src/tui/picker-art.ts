@@ -5,11 +5,14 @@ import { encodeRgba, type Rgba } from '../core/png.ts'
 import { colorless } from '../terminals/osc.ts'
 import { layersUnderCells, showsPictures } from '../terminals/terminal.ts'
 
+const STAGE_Z = -1073741836
+const TABS_Z = -1073741835
+const BODY_Z = -1073741834
 const PANEL_Z = -1073741828
 const ART_Z = -1073741827
 const ORIGIN_Z = -1073741826
 const THUMB_Z = -1073741825
-const FIRST_ID = 2 ** 31 - 64
+const FIRST_ID = 2 ** 31 - 128
 
 const NAMES = [
   'panel',
@@ -22,7 +25,22 @@ const NAMES = [
   'origin',
   'hue-origin',
   'contrast-origin',
+  'stage-top',
+  'stage-top-left',
+  'stage-top-right',
+  'stage-bottom',
+  'stage-bottom-left',
+  'stage-bottom-right',
+  'stage-left',
+  'stage-right',
+  'body-seam',
+  'body-left',
+  'body-right',
+  'body-bottom',
+  'tabs',
 ] as const
+
+export const LIGHTS: Hex[] = ['#ff5f57', '#febc2e', '#28c840']
 
 const CHUNK = 4096
 
@@ -47,6 +65,21 @@ export interface Box {
 export interface Drawn {
   lines: string[]
   art: Art | undefined
+  mock?: Mock
+}
+
+export interface Mock {
+  panel: Box
+  frame: Box
+  tabs: Box[]
+  active: number
+  stage: Hex
+  bar: Hex
+  track: Hex
+  tab: Hex
+  ink: Hex
+  body: Hex
+  dark: boolean
 }
 
 export interface Art {
@@ -517,6 +550,263 @@ function piecesOf(art: Art, cell: Cell): Piece[] {
   return pieces
 }
 
+interface Outline {
+  x0: number
+  y0: number
+  w: number
+  h: number
+  r: number
+  bar: number
+}
+
+function outlineOf(mock: Mock, cell: Cell): Outline {
+  const { panel, frame } = mock
+  const x0 = (frame.col + 0.5 - panel.col) * cell.w
+  const y0 = (frame.row + 0.5 - panel.row) * cell.h
+
+  return {
+    x0,
+    y0,
+    w: (frame.cols - 1) * cell.w,
+    h: (frame.rows - 1) * cell.h,
+    r: cell.h / 2,
+    bar: (frame.row + 2.5 - panel.row) * cell.h,
+  }
+}
+
+function clamp(v: number): number {
+  return Math.min(1, Math.max(0, v))
+}
+
+function stagePixels(mock: Mock, cell: Cell, box: Box, cols: number, rows: number): Rgba {
+  const image = canvas(cols * cell.w, rows * cell.h)
+  const { width, height, data } = image
+  const s = outlineOf(mock, cell)
+  const ox = (box.col - mock.panel.col) * cell.w
+  const oy = (box.row - mock.panel.row) * cell.h
+  const middle = s.y0 + cell.h
+  const unit = Math.min(cell.h, cell.w * 2.5)
+  const dot = 0.3 * unit
+  const lights = LIGHTS.map((hex, k) => ({ x: s.x0 + (1 + k) * unit, fill: rgb(hex) }))
+  const lift = cell.h * 0.3
+  const spread = 2 * (cell.h * 0.42) ** 2
+  const reach = cell.h * 1.5
+  const depth = mock.dark ? 0.5 : 0.18
+  const edge = mock.dark ? 0.14 : 0.16
+  const [sr, sg, sb] = rgb(mock.stage)
+  const [br, bg, bb] = rgb(mock.bar)
+  const [ir, ig, ib] = rgb(mock.ink)
+
+  for (let y = 0; y < height; y++) {
+    const gy = oy + y + 0.5
+    const lit = Math.abs(gy - middle) < dot + 1.5
+
+    for (let x = 0; x < width; x++) {
+      const gx = ox + x + 0.5
+      const d = roundRect(gx, gy, s.x0, s.y0, s.w, s.h, s.r)
+      let r = br
+      let g = bg
+      let b = bb
+
+      if (d < -1 && gy >= s.bar) {
+        r = sr
+        g = sg
+        b = sb
+      } else if (d >= -1 || gy >= s.bar) {
+        const fall = roundRect(gx, gy - lift, s.x0, s.y0, s.w, s.h, s.r)
+        const dark = 1 - (fall <= 0 ? depth : fall >= reach ? 0 : depth * Math.exp(-(fall * fall) / spread))
+        const cover = gy < s.bar ? clamp(0.5 - d) : 0
+        const ring = (clamp(1.5 - d) - clamp(0.5 - d)) * edge
+        r = sr * dark + (br - sr * dark) * cover
+        g = sg * dark + (bg - sg * dark) * cover
+        b = sb * dark + (bb - sb * dark) * cover
+        r += (ir - r) * ring
+        g += (ig - g) * ring
+        b += (ib - b) * ring
+      }
+
+      if (lit) {
+        for (const light of lights) {
+          if (Math.abs(gx - light.x) < dot + 1.5) {
+            const dl = Math.hypot(gx - light.x, gy - middle) - dot
+            const fill = clamp(0.5 - dl)
+            const rim = 1 - (fill - clamp(-0.5 - dl)) * 0.18
+            r = (r + ((light.fill[0] as number) - r) * fill) * rim
+            g = (g + ((light.fill[1] as number) - g) * fill) * rim
+            b = (b + ((light.fill[2] as number) - b) * fill) * rim
+          }
+        }
+      }
+
+      const i = (y * width + x) * 4
+      data[i] = Math.round(r)
+      data[i + 1] = Math.round(g)
+      data[i + 2] = Math.round(b)
+      data[i + 3] = 255
+    }
+  }
+
+  return image
+}
+
+function tabsPixels(mock: Mock, cell: Cell, box: Box): Rgba {
+  const image = canvas(box.cols * cell.w, box.rows * cell.h)
+  const at = (col: number) => (col - box.col) * cell.w
+  const middle = (mock.frame.row + 1.5 - box.row) * cell.h
+  const first = mock.tabs[0] as Box
+  const last = mock.tabs.at(-1) as Box
+  const chosen = mock.tabs[mock.active]
+  const x0 = at(first.col) - 0.1 * cell.h
+  const w = at(last.col + last.cols) + 0.1 * cell.h - x0
+  const track = rgbaOf(mock.track)
+  const lit = rgbaOf(mock.tab)
+
+  const seps = mock.tabs.slice(1).flatMap((tab, i) => {
+    const before = mock.tabs[i] as Box
+
+    return i === mock.active || i + 1 === mock.active
+      ? []
+      : [Math.floor((at(before.col + before.cols) + at(tab.col)) / 2) + 0.5]
+  })
+
+  for (let y = 0; y < image.height; y++) {
+    const gy = y + 0.5
+
+    for (let x = 0; x < image.width; x++) {
+      const gx = x + 0.5
+      blend(
+        image,
+        x,
+        y,
+        track,
+        clamp(0.5 - roundRect(gx, gy, x0, middle - 0.75 * cell.h, w, 1.5 * cell.h, 0.5 * cell.h)),
+      )
+
+      if (chosen) {
+        const block = roundRect(
+          gx,
+          gy,
+          at(chosen.col),
+          middle - 0.65 * cell.h,
+          chosen.cols * cell.w,
+          1.3 * cell.h,
+          0.4 * cell.h,
+        )
+
+        blend(image, x, y, lit, clamp(0.5 - block))
+      }
+
+      if (Math.abs(gy - middle) < 0.35 * cell.h) {
+        for (const sx of seps) {
+          blend(image, x, y, lit, clamp(1 - Math.abs(gx - sx)))
+        }
+      }
+    }
+  }
+
+  return image
+}
+
+function bodyPixels(mock: Mock, cell: Cell, box: Box, rows: number): Rgba {
+  const image = canvas(box.cols * cell.w, rows * cell.h)
+  const { width, height, data } = image
+  const s = outlineOf(mock, cell)
+  const ox = (box.col - mock.panel.col) * cell.w
+  const oy = (box.row - mock.panel.row) * cell.h
+  const [r, g, b] = rgb(mock.body)
+
+  for (let y = 0; y < height; y++) {
+    const gy = oy + y + 0.5
+    const below = clamp(gy - s.bar + 0.5)
+
+    if (below <= 0) {
+      continue
+    }
+
+    for (let x = 0; x < width; x++) {
+      const cover = below * clamp(0.5 - roundRect(ox + x + 0.5, gy, s.x0, s.y0, s.w, s.h, s.r))
+      const i = (y * width + x) * 4
+      data[i] = r
+      data[i + 1] = g
+      data[i + 2] = b
+      data[i + 3] = Math.round(cover * 255)
+    }
+  }
+
+  return image
+}
+
+function mockPieces(mock: Mock, cell: Cell): Piece[] {
+  const { panel, frame } = mock
+  const right = frame.col + frame.cols - 1
+  const bottom = frame.row + frame.rows - 1
+  const side = frame.rows - 4
+  const size = `${cell.w}x${cell.h} ${panel.cols}x${panel.rows} ${frame.col},${frame.row} ${frame.cols}x${frame.rows}`
+  const look = `${mock.stage} ${mock.bar} ${mock.ink} ${mock.dark}`
+
+  const band = (name: Name, box: Box, cols: number, rows: number): Piece => ({
+    name,
+    key: `${size} ${look}`,
+    box,
+    z: STAGE_Z,
+    paint: () => stagePixels(mock, cell, box, cols, rows),
+  })
+
+  const whole = (name: Name, box: Box) => band(name, box, box.cols, box.rows)
+
+  const body = (name: Name, box: Box, rows: number): Piece => ({
+    name,
+    key: `${size} ${mock.body}`,
+    box,
+    z: BODY_Z,
+    paint: () => bodyPixels(mock, cell, box, rows),
+  })
+
+  const top = frame.row + 3 - panel.row
+  const foot = panel.row + panel.rows - bottom
+  const end = panel.col + panel.cols
+  const first = mock.tabs[0]
+  const last = mock.tabs.at(-1)
+
+  const strip = first &&
+    last && { row: frame.row, col: first.col - 1, cols: last.col + last.cols - first.col + 2, rows: 3 }
+
+  const spans = mock.tabs.map((tab) => `${tab.col}+${tab.cols}`).join(',')
+
+  const tabs: Piece[] = strip
+    ? [
+        {
+          name: 'tabs',
+          key: `${cell.w}x${cell.h} ${mock.track} ${mock.tab} ${mock.active} ${spans}`,
+          box: strip,
+          z: TABS_Z,
+          paint: () => tabsPixels(mock, cell, strip),
+        },
+      ]
+    : []
+
+  return [
+    ...tabs,
+    whole('stage-top-left', { row: panel.row, col: panel.col, cols: frame.col + 10 - panel.col, rows: top }),
+    band('stage-top', { row: panel.row, col: frame.col + 10, cols: right - frame.col - 12, rows: top }, 1, top),
+    whole('stage-top-right', { row: panel.row, col: right - 2, cols: end - right + 2, rows: top }),
+    whole('stage-bottom-left', { row: bottom, col: panel.col, cols: frame.col + 3 - panel.col, rows: foot }),
+    band('stage-bottom', { row: bottom, col: frame.col + 3, cols: right - frame.col - 5, rows: foot }, 1, foot),
+    whole('stage-bottom-right', { row: bottom, col: right - 2, cols: end - right + 2, rows: foot }),
+    band(
+      'stage-left',
+      { row: frame.row + 3, col: panel.col, cols: frame.col - panel.col + 1, rows: side },
+      frame.col - panel.col + 1,
+      1,
+    ),
+    band('stage-right', { row: frame.row + 3, col: right, cols: end - right, rows: side }, end - right, 1),
+    body('body-seam', { row: frame.row + 2, col: frame.col, cols: frame.cols, rows: 1 }, 1),
+    body('body-left', { row: frame.row + 3, col: frame.col, cols: 1, rows: side }, 1),
+    body('body-right', { row: frame.row + 3, col: right, cols: 1, rows: side }, 1),
+    body('body-bottom', { row: bottom, col: frame.col, cols: frame.cols, rows: 1 }, 1),
+  ]
+}
+
 function transmit(id: number, png: Buffer): string {
   const data = png.toString('base64')
   const chunks = data.match(new RegExp(`.{1,${CHUNK}}`, 'g')) ?? ['']
@@ -541,6 +831,7 @@ function release(id: number): string {
 export class PickerLayer {
   private cell: Cell = { w: 0, h: 0 }
   private readonly shown = new Map<Name, Shown>()
+  private stale = false
 
   static of(env: Env, terminals: readonly string[]): PickerLayer | undefined {
     return colorless(env) || !showsPictures(env, terminals) || !layersUnderCells(env) ? undefined : new PickerLayer()
@@ -556,16 +847,22 @@ export class PickerLayer {
     }
   }
 
-  draw(art: Art | undefined): string {
+  resized(): void {
+    this.stale = true
+  }
+
+  draw(art: Art | undefined, mock?: Mock): string {
     if (!this.ready) {
       return ''
     }
 
-    const pieces = art ? piecesOf(art, this.cell) : []
+    const pieces = [...(art ? piecesOf(art, this.cell) : []), ...(mock ? mockPieces(mock, this.cell) : [])]
+    const fresh = this.stale
+    this.stale = false
     let out = ''
 
     for (const piece of pieces) {
-      out += this.put(piece)
+      out += this.put(piece, fresh)
     }
 
     for (const [name, shown] of this.shown) {
@@ -585,11 +882,11 @@ export class PickerLayer {
     return out
   }
 
-  private put(piece: Piece): string {
+  private put(piece: Piece, fresh: boolean): string {
     const at = `${piece.box.row};${piece.box.col};${piece.box.cols};${piece.box.rows}`
     const was = this.shown.get(piece.name)
 
-    if (was && was.key === piece.key) {
+    if (was && was.key === piece.key && !fresh) {
       if (was.at === at) {
         return ''
       }

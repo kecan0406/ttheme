@@ -314,8 +314,11 @@ changes palette. Preview spells slot 6 out in truecolor only while the terminal
 does not hold the palette it shows yet (iTerm2's hover).
 
 A few surfaces need a fixed distance from the background rather than a slot:
-the palette editor's stage, title bar, active tab and window border, and the
-selection where the terminal leaves OSC 17 unanswered. `SURFACES` holds how far
+the palette editor's stage, the shadow its window casts, its title bar, tab
+track and active tab, and the selection where the terminal leaves OSC 17
+unanswered. The pictures the editor draws (the picker's panel, the window's
+frame) take their fills from `SURFACES` too, and blend only their shadows and
+hairlines over what lies under them. `SURFACES` holds how far
 each mixes toward the foreground, and `surfaceOf` mixes it from colors the
 screen already knows — the palette it painted on the tab, or the answers to the
 query it made anyway, where the palette editor fills a slot the terminal left

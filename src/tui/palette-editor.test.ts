@@ -575,6 +575,6 @@ test('a picture behind the builder shows through its preview, which leaves the b
   const ground = `48;2;${rgb(start.background).join(';')}m`
   const opaque = renderEditor(editor(), 140, 40, true)
   const clear = renderEditor(editor(), 140, 40, true, { behind: true })
-  assert.ok(opaque.slice(5, 20).some((line) => line.includes(ground)))
-  assert.ok(!clear.slice(5, 20).some((line) => line.includes(ground)))
+  assert.ok(opaque.slice(6, 20).some((line) => line.includes(ground)))
+  assert.ok(!clear.slice(6, 20).some((line) => line.includes(ground)))
 })

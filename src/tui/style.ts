@@ -18,7 +18,7 @@ export const ROLES = {
 
 export type Role = keyof typeof ROLES
 
-export const SURFACES = { stage: 0.08, bar: 0.14, selection: 0.2, tab: 0.3, line: 0.45 } as const
+export const SURFACES = { shade: 0.04, stage: 0.08, bar: 0.14, selection: 0.2, tab: 0.3 } as const
 
 export type Surface = keyof typeof SURFACES
 
@@ -105,6 +105,38 @@ export function ansiSquares(colors: string[], after = FG_RESET): string {
 
 export function surfaceOf(ground: Hex, ink: Hex, name: Surface): Hex {
   return mix(ground, ink, SURFACES[name])
+}
+
+function dropsGround(params: string): boolean {
+  const codes = (params || '0').split(';').map(Number)
+
+  for (let i = 0; i < codes.length; i++) {
+    const code = codes[i] as number
+
+    if (code === 0 || code === 49) {
+      return true
+    }
+
+    if (code === 38 || code === 48) {
+      i += codes[i + 1] === 5 ? 2 : 4
+    }
+  }
+
+  return false
+}
+
+export function grounded(text: string, ground: string): string {
+  const [head = '', ...chunks] = text.split('\x1b[')
+
+  const tail = chunks.map((chunk) => {
+    const params = /^([0-9;]*)m/.exec(chunk)?.[1]
+
+    return params !== undefined && dropsGround(params)
+      ? `${csi(params)}${ground}${chunk.slice(params.length + 1)}`
+      : `\x1b[${chunk}`
+  })
+
+  return `${ground}${head}${tail.join('')}`
 }
 
 export function closing(text: string): string {

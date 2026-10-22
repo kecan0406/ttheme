@@ -11,6 +11,7 @@ import {
   validSpot,
 } from '../core/builder-layout.ts'
 import { type Hex, mix } from '../core/color.ts'
+import { isLight } from '../core/contrast.ts'
 import { srgb } from '../core/fix.ts'
 import { marksOf, PIXELS } from '../core/mark.ts'
 import { PLANE_BOTTOM, PLANE_TOP, reach, shareOf } from '../core/plane.ts'
@@ -39,7 +40,7 @@ import {
 import { capped } from './keycaps.ts'
 import { CHANNELS, CONTRAST, type PaletteEditor } from './palette-editor.ts'
 import { boxEdge, boxed, pillOf } from './parts.ts'
-import type { Art, Drawn } from './picker-art.ts'
+import { type Art, type Box, type Drawn, LIGHTS, type Mock } from './picker-art.ts'
 import { BG_RESET, FG_RESET, INK_RESET, MARKS, open, type Paint, painter, RESET, surfaceOf } from './style.ts'
 import { cover, keyZone, zone } from './zones.ts'
 
@@ -870,30 +871,30 @@ function menuRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefined 
   ]
 }
 
-const LIGHTS: Hex[] = ['#ff5f57', '#febc2e', '#28c840']
+function sceneAt(e: PaletteEditor): number {
+  const count = tabNames().length
 
-function titleBar(e: PaletteEditor, p: Paint, ui: Colors, width: number): Cellrow {
-  const bar = p.color ? `${p.bg(barOf(ui))}${p.fg(ui.foreground)}` : ''
-  const names = tabNames()
-  const at = ((e.scene % names.length) + names.length) % names.length
+  return ((e.scene % count) + count) % count
+}
+
+function titleBar(e: PaletteEditor, p: Paint, ui: Colors, width: number, flat: boolean): Cellrow {
+  const bar = p.color ? `${flat ? '' : p.bg(barOf(ui))}${p.fg(ui.foreground)}` : ''
+  const at = sceneAt(e)
+  const chosen = flat ? '' : p.bg(surfaceOf(ui.background, ui.foreground, 'tab'))
 
   const row: Cellrow = [
     { text: ' ', sgr: bar },
     ...LIGHTS.flatMap((hex) => [
-      { text: '●', sgr: p.color ? `${bar}${p.fg(hex)}` : '' },
+      { text: flat ? ' ' : '●', sgr: p.color ? `${bar}${p.fg(hex)}` : '' },
       { text: ' ', sgr: bar },
     ]),
     { text: '  ', sgr: bar },
-    ...names.flatMap((name, i): Cellrow => {
+    ...tabNames().flatMap((name, i): Cellrow => {
       const target: EditorSpot = { kind: 'scene', scene: i }
 
       return [
         i === at
-          ? {
-              text: ` ${name} `,
-              sgr: p.color ? `${bar}${p.bg(surfaceOf(ui.background, ui.foreground, 'tab'))}${open('bold')}` : '',
-              target,
-            }
+          ? { text: ` ${name} `, sgr: p.color ? `${bar}${chosen}${open('bold')}` : '', target }
           : { text: ` ${name} `, sgr: p.color ? `${bar}${open('dim')}` : '', target },
         { text: ' ', sgr: bar },
       ]
@@ -913,21 +914,48 @@ function barOf(ui: Colors): Hex {
   return surfaceOf(ui.background, ui.foreground, 'bar')
 }
 
-function frameRows(p: Paint, ui: Colors, layout: Layout): [number, number, Cellrow][] {
+function shadowOf(ui: Colors): Hex {
+  return surfaceOf(ui.background, ui.foreground, isLight(ui) ? 'selection' : 'shade')
+}
+
+function frameRows(p: Paint, ui: Colors, ground: Hex, layout: Layout): [number, number, Cellrow][] {
+  if (!p.color) {
+    return [...joints(layout.rules)].flatMap(([row, cols]) =>
+      [...cols].map(([col, text]): [number, number, Cellrow] => [row, col, [{ text, sgr: '' }]]),
+    )
+  }
+
   const { frame } = layout
-  const line = surfaceOf(ui.background, ui.foreground, 'line')
-  const edge = p.color ? `${p.bg(stageOf(ui))}${p.fg(line)}` : ''
-  const under = p.color ? `${p.bg(barOf(ui))}${p.fg(line)}` : ''
+  const left = frame.col
+  const right = frame.col + frame.cols - 1
+  const top = frame.row
+  const bottom = frame.row + frame.rows - 1
+  const across = right - left - 1
+  const stage = stageOf(ui)
+  const bar = barOf(ui)
+  const shadow = shadowOf(ui)
 
-  const ring = (row: number, col: number) =>
-    row === frame.row || row === frame.row + frame.rows - 1 || col === frame.col || col === frame.col + frame.cols - 1
+  const at = (row: number, col: number, text: string, ink: Hex, under: Hex): [number, number, Cellrow] => [
+    row,
+    col,
+    [{ text, sgr: `${p.bg(under)}${p.fg(ink)}` }],
+  ]
 
-  const out: [number, number, Cellrow][] = []
+  const out = [
+    at(top, left, '▗', bar, stage),
+    at(top, left + 1, '▄'.repeat(across), bar, stage),
+    at(top, right, '▖', bar, stage),
+    at(top + 1, left, '▐', bar, stage),
+    at(top + 1, right, '▌', bar, stage),
+    at(top + 2, left + 1, ' '.repeat(across), ground, ground),
+    at(bottom, left, '▝', ground, stage),
+    at(bottom, left + 1, '▀', ground, stage),
+    at(bottom, left + 2, '▀'.repeat(across - 1), ground, shadow),
+    at(bottom, right, '▘', ground, shadow),
+  ]
 
-  for (const [row, cols] of joints(layout.rules)) {
-    for (const [col, text] of cols) {
-      out.push([row, col, [{ text, sgr: ring(row, col) ? edge : under }]])
-    }
+  for (let row = top + 2; row < bottom; row++) {
+    out.push(at(row, left, '▐', ground, stage), at(row, right, '▌', ground, row === top + 2 ? stage : shadow))
   }
 
   return out
@@ -944,7 +972,35 @@ export function pictureArea(cols: number, rows: number): Area | undefined {
 export interface Look {
   behind?: boolean
   art?: boolean
+  mock?: boolean
   chrome?: readonly Hex[]
+}
+
+function mockOf(e: PaletteEditor, ui: Colors, ground: Hex, layout: Layout, title: Cellrow, rows: number): Mock {
+  const tabs: Box[] = []
+  let col = layout.title.col
+
+  for (const piece of title) {
+    if (piece.target?.kind === 'scene') {
+      tabs.push({ row: layout.title.row, col, cols: cells(piece.text), rows: 1 })
+    }
+
+    col += cells(piece.text)
+  }
+
+  return {
+    panel: { row: 2, col: layout.side + 1, cols: layout.width, rows: rows - 3 },
+    frame: layout.frame,
+    tabs,
+    active: sceneAt(e),
+    stage: stageOf(ui),
+    bar: barOf(ui),
+    track: surfaceOf(ui.background, ui.foreground, 'selection'),
+    tab: surfaceOf(ui.background, ui.foreground, 'tab'),
+    ink: ui.foreground,
+    body: ground,
+    dark: !isLight(ui),
+  }
 }
 
 export function renderBuilder(
@@ -974,7 +1030,8 @@ export function renderBuilder(
   const side = popped.lines
   const behind = look.behind === true
   const pinned = e.inspect ? validSpot(layout, e.spot) : undefined
-  const stage = p.color ? p.bg(stageOf(ui)) : ''
+  const pictured = p.color && look.mock === true
+  const stage = p.color && !pictured ? p.bg(stageOf(ui)) : ''
   const grid: Cellrow[] = Array.from({ length: rows - 3 }, () => [{ text: ' '.repeat(layout.width), sgr: stage }])
 
   const put = (row: number, col: number, cellrow: Cellrow) => {
@@ -987,8 +1044,10 @@ export function renderBuilder(
 
   const origin = layout.side + 1
 
-  for (const [row, col, cellrow] of frameRows(p, ui, layout)) {
-    put(row, col - origin, cellrow)
+  if (!pictured) {
+    for (const [row, col, cellrow] of frameRows(p, ui, c.background, layout)) {
+      put(row, col - origin, cellrow)
+    }
   }
 
   for (const tile of layout.tiles) {
@@ -997,7 +1056,8 @@ export function renderBuilder(
     })
   }
 
-  put(layout.title.row, layout.title.col - origin, titleBar(e, p, ui, layout.title.cols))
+  const title = titleBar(e, p, ui, layout.title.cols, pictured)
+  put(layout.title.row, layout.title.col - origin, title)
   const pop = pinned ? popoverRows(e, p, c) : undefined
 
   if (pinned && pop) {
@@ -1034,5 +1094,7 @@ export function renderBuilder(
     return `${fit(side[r] ?? '', layout.side)}${r === 1 ? p.dim('├') : divider}${right}`
   })
 
-  return { lines, art: popped.art }
+  return pictured
+    ? { lines, art: popped.art, mock: mockOf(e, ui, c.background, layout, title, rows) }
+    : { lines, art: popped.art }
 }

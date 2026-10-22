@@ -746,14 +746,17 @@ export class Keys {
 export class CellProbe {
   private window: { h: number; w: number } | undefined
   private grid: { h: number; w: number } | undefined
+  private cell: Cell | undefined
 
   see(event: Inbound): Cell | undefined {
-    if (event.kind !== 'size') {
-      return undefined
+    if (this.cell || event.kind !== 'size') {
+      return this.cell
     }
 
     if (event.of === 'cell') {
-      return { w: event.w, h: event.h }
+      this.cell = { w: event.w, h: event.h }
+
+      return this.cell
     }
 
     if (event.of === 'window') {
@@ -765,9 +768,11 @@ export class CellProbe {
     const shown = this.window
     const grid = this.grid
 
-    return shown && grid && grid.h > 0 && grid.w > 0
-      ? { h: Math.floor(shown.h / grid.h), w: Math.floor(shown.w / grid.w) }
-      : undefined
+    if (shown && grid && grid.h > 0 && grid.w > 0) {
+      this.cell = { h: Math.floor(shown.h / grid.h), w: Math.floor(shown.w / grid.w) }
+    }
+
+    return this.cell
   }
 }
 

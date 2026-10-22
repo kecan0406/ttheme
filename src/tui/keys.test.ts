@@ -32,6 +32,13 @@ test('a cell size divides the window by the grid where the terminal reports no c
   assert.deepEqual(cellOf('\x1b[6;34;14t\x1b[4;1020;1424t\x1b[8;30;100t'), { h: 34, w: 14 })
 })
 
+test('a cell size probe keeps its first answer, so iTerm2’s cell in pixels outlasts its window and grid in points', () => {
+  const probe = new CellProbe()
+  const answers = '\x1b[?1016;0$y\x1b]1337;ReportCellSize=17.0;8.0;2.0\x07\x1b[4;900;1500t\x1b[8;50;186t\x1b[?62;22;52c'
+  const seen = decode(answers).events.map((event) => probe.see(event))
+  assert.deepEqual(seen.at(-1), { w: 16, h: 34 })
+})
+
 test('a report that has not fully arrived is held, not read as keys', () => {
   assert.deepEqual(decode('\x1b]1337;ReportCellSize=17.0;7'), { events: [], rest: '\x1b]1337;ReportCellSize=17.0;7' })
   assert.deepEqual(decode('\x1b[6;34'), { events: [], rest: '\x1b[6;34' })

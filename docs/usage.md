@@ -668,7 +668,9 @@ differs from the marketplace's colors, and `s` after it drops the tone. The keys
   gate's rules, where `n` and `N` walk the slots that miss; the preview on the
   right; a bar on top. The preview is a terminal window, its frame and title bar
   in your terminal's own colors and everything inside it in the colors being
-  edited, with three tabs in its title bar — zsh (a diff, logs, and a shell whose
+  edited — drawn as a picture with rounded corners and a shadow in Ghostty,
+  kitty, iTerm2 and Konsole outside tmux, and in half-cell blocks elsewhere —,
+  with three tabs in its title bar — zsh (a diff, logs, and a shell whose
   `colortest` shows all sixteen colors before the selection and the cursor), nvim
   and htop — which `⇧←→`, or a click on a tab, switches. Below 96×28 the editor keeps
   its older layout, the slots beside the slot's details.
