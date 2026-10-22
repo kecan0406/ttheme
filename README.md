@@ -94,7 +94,7 @@ Both images are drawn from the official marketplace as it ships, so they always
 match what Browse offers. Every palette comes in a light and a dark mode:
 `init` asks which one every palette is worn in — `auto`, where Ghostty is wired,
 follows the system's appearance as Ghostty shows it — and `ttheme auto`,
-`ttheme light` or `ttheme dark` (or alt-c in `ttheme`, or `TTHEME_MODE` in the
+`ttheme light` or `ttheme dark` (or alt+c in `ttheme`, or `TTHEME_MODE` in the
 [settings](docs/usage.md#settings)) switches it later. `init` installs the catalogs you pick; Browse, the second tab of
 `ttheme`, adds or drops single palettes any time, and a merged palette reaches everyone
 with the next release — `ttheme update` brings it, and ttheme says when one is

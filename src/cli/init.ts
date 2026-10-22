@@ -61,6 +61,7 @@ import { detectTerminal, settingsFor, TRAITS } from '../terminals/terminal.ts'
 import type { Pointed, Setup } from '../terminals/types.ts'
 import { warpSettings } from '../terminals/warp.ts'
 import { windowsAppData } from '../terminals/windows-terminal.ts'
+import { cap } from '../tui/keycaps.ts'
 import { markOf } from '../tui/parts.ts'
 import { painter } from '../tui/style.ts'
 import { interactive } from '../tui/terminal.ts'
@@ -430,7 +431,7 @@ async function askMode(configHome: string, terminals: readonly Wired[]): Promise
 
   return accepted(
     await p.select<Setting>({
-      message: `Wear the palettes in ${modes} mode?\nEvery palette comes in both — ${picks.join(', ')} or alt-c in \`ttheme\` switches it later`,
+      message: `Wear the palettes in ${modes} mode?\nEvery palette comes in both — ${picks.join(', ')} or ${cap('alt+c')} in \`ttheme\` switches it later`,
       options: offered.map((value) => ({ value, label: value, hint: hints[value] })),
       initialValue: offered.includes('auto') ? 'auto' : offered.includes(was) ? was : modeFor(configHome),
     }),

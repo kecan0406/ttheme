@@ -95,7 +95,7 @@ command_for() {
 }
 
 scenario_env() {
-  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0 TTHEME_MARKETPLACE_LOOKUP=off TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off)
+  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0 TTHEME_MARKETPLACE_LOOKUP=off TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off TTHEME_KEYS=${KEYS:-text})
 }
 
 settle() {
@@ -214,10 +214,10 @@ run() {
 }
 
 look() {
-  local what=$1 size=$2 state=few target line out='' against='' here=$ROOT old l
+  local what=$1 size=$2 state=few target line out='' against='' here=$ROOT old l KEYS=text
   local -a keys flags parts
   if [[ -z $what || $size != <->x<-> ]]; then
-    print -u2 "usage: mise run look <scenario | browse | hub | pins | pin | edit:<palette> | kit:<part>> <cols>x<rows> [keys…] [--state ${(kj: | :)STATES}] [--rows a-b] [--cols a-b] [--emit png,txt,styles] [--against <git ref>] [--out <path>]"
+    print -u2 "usage: mise run look <scenario | browse | hub | pins | pin | edit:<palette> | kit:<part>> <cols>x<rows> [keys…] [--state ${(kj: | :)STATES}] [--rows a-b] [--cols a-b] [--emit png,txt,styles] [--keys mac|text] [--against <git ref>] [--out <path>]"
     print -u2 "scenarios, each a state, a screen and keys (keys given here come after its own):"
     for l in $SCENARIOS; do print -u2 "  ${${=l}[1]}"; done
     return 1
@@ -234,6 +234,7 @@ look() {
       --state) state=$2; shift 2 ;;
       --out) out=$2; shift 2 ;;
       --against) against=$2; shift 2 ;;
+      --keys) KEYS=$2; shift 2 ;;
       --rows|--cols|--emit) flags+=($1 $2); shift 2 ;;
       *) keys+=($1); shift ;;
     esac

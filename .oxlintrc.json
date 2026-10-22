@@ -200,6 +200,7 @@
       "files": [
         "src/tui/ansi.ts",
         "src/tui/field.ts",
+        "src/tui/keycaps.ts",
         "src/tui/keys.ts",
         "src/tui/motion.ts",
         "src/tui/pending.ts",
@@ -223,6 +224,7 @@
                   "./*/**",
                   "!./ansi.ts",
                   "!./field.ts",
+                  "!./keycaps.ts",
                   "!./keys.ts",
                   "!./motion.ts",
                   "!./pending.ts",
@@ -262,6 +264,7 @@
                   "./*/**",
                   "!./ansi.ts",
                   "!./field.ts",
+                  "!./keycaps.ts",
                   "!./keys.ts",
                   "!./motion.ts",
                   "!./pending.ts",

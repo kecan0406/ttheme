@@ -4,6 +4,7 @@ import { marketplaceOf, slugOf, topOf } from '../core/theme.ts'
 import { aliasesFor, containsText } from '../store/names.ts'
 import { OFFICIAL } from '../store/sources.ts'
 import { Field } from './field.ts'
+import { capped } from './keycaps.ts'
 import type { Inbound } from './keys.ts'
 import { chase } from './motion.ts'
 import { moreOf } from './parts.ts'
@@ -1115,7 +1116,7 @@ export class PalettePrompt {
     const hint =
       this.state === 'error'
         ? `${bar('└')} ${warn(this.error)}`
-        : `${bar('└')} ${dim(`↑↓ move${fold} · space pick · type to filter · enter ${go} · esc cancel`)}`
+        : `${bar('└')} ${dim(capped(`↑↓ move${fold} · space pick · type to filter · enter ${go} · esc cancel`))}`
 
     return [head, search, ...body, more, hint]
   }

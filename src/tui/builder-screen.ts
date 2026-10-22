@@ -36,6 +36,7 @@ import {
   roleSgr,
   spot,
 } from './editor-paint.ts'
+import { capped } from './keycaps.ts'
 import { CHANNELS, CONTRAST, type PaletteEditor } from './palette-editor.ts'
 import { boxEdge, boxed, pillOf } from './parts.ts'
 import type { Art, Drawn } from './picker-art.ts'
@@ -488,7 +489,7 @@ function pickerLines(e: PaletteEditor, p: Paint, outer: number, room: number): P
   const tab = (label: string, format: Format) =>
     spot({ kind: 'format', format }, e.format === format ? pillOf(p, label) : p.dim(` ${label} `))
 
-  const bottom = fit(` ${HINTS} `, outer - 4, false)
+  const bottom = fit(` ${capped(HINTS)} `, outer - 4, false)
 
   const lines = [
     `${p.dim('╭─')}${p.dim(left)}${p.dim('─'.repeat(dashes))}${p.dim(right)}${p.dim('─╮')}`,
@@ -570,7 +571,7 @@ function artLines(e: PaletteEditor, p: Paint, outer: number, room: number): Popu
     lines.push(padded(link))
   }
 
-  lines.push(...extra.map((line) => padded(line)), padded(p.dim(HINTS)))
+  lines.push(...extra.map((line) => padded(line)), padded(p.dim(capped(HINTS))))
 
   return {
     lines: lines.map((line) => spot({ kind: 'picker' }, line)),
@@ -806,7 +807,7 @@ function popoverRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefin
   const dim = p.color ? `${base}${open('dim')}` : ''
   const edge = (text: string): Piece => ({ text, sgr: dim })
   const top = '┌ Slots here '
-  const foot = '└ enter its slot · esc '
+  const foot = `└ ${capped('enter its slot · esc')} `
   const slots: [string, number][] = [['text', here.text]]
 
   if (here.ground !== here.text) {

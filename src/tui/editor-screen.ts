@@ -31,6 +31,7 @@ import {
 } from './editor-paint.ts'
 import { type Start, typedDrop } from './find/attach.ts'
 import { type Help, type HelpSpot, overlay } from './help.ts'
+import { capped } from './keycaps.ts'
 import { CELL_QUERY, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
 import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
 import { boxEdge, boxed, checkOf, hintOf, moreOf, pillOf } from './parts.ts'
@@ -195,7 +196,9 @@ function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
     }),
     '',
     ...wrapText(
-      'Seven seeds grow all twenty colors, each accent on the hue its ANSI role reads as — whatever the seeds, they pass the gate. enter moves on to tune each slot, and the seeds stay behind.',
+      capped(
+        'Seven seeds grow all twenty colors, each accent on the hue its ANSI role reads as — whatever the seeds, they pass the gate. enter moves on to tune each slot, and the seeds stay behind.',
+      ),
       LEFT - 4,
     ).map((line) => `  ${p.dim(line)}`),
     '',
@@ -647,7 +650,7 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
       `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${rows}`,
       e.quitting
         ? `Save changes?   ${[hintOf(p, 'y', 'save'), hintOf(p, 'n', 'discard'), hintOf(p, 'esc', 'keep editing')].join('   ')}`
-        : p.dim('esc cancels'),
+        : p.dim(capped('esc cancels')),
     ]
 
     return { lines: Array.from({ length: rows }, (_, i) => fit(small[i] ?? '', cols)), art: undefined }

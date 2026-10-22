@@ -1,4 +1,5 @@
 import type { Hex } from '../core/color.ts'
+import { cap } from './keycaps.ts'
 import { markOf, tabOf } from './parts.ts'
 import { painter } from './style.ts'
 import { zone } from './zones.ts'
@@ -47,5 +48,5 @@ export function hubBar(active: HubTab, color: boolean, inks?: readonly Hex[]): s
     return tabOf(p, title, name === active, (text) => zone(spot, text))
   })
 
-  return ` ${mark ? `${mark}  ` : ''}${tabs.join(' ')}  ${p.dim('tab next')}`
+  return ` ${mark ? `${mark}  ` : ''}${tabs.join(' ')}  ${p.dim(`${cap('tab')} next`)}`
 }

@@ -140,6 +140,7 @@ export function placeFor(work: string, term: Term, bin: string, slot: string): P
     TTHEME_NAMES: 'off',
     TTHEME_AUTO_UPDATE: 'off',
     TTHEME_MARKETPLACE_LOOKUP: 'off',
+    TTHEME_KEYS: 'text',
   }
 
   return place

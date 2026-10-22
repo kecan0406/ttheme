@@ -339,7 +339,7 @@ neither break up nor alias, and stays smooth when a small picture is enlarged.
 ## Original colors
 
 A picture keeps its own colors unless `TTHEME_BG_COLORS=tone` (in `ttheme
-config`, or alt-c in `preview`) draws every picture installed from then on that
+config`, or alt+c in `preview`) draws every picture installed from then on that
 way, and the `Colors` row of preview's image edit (or `c` in find's try view, for the
 picture about to be installed) switches one picture at a time,
 whatever the setting is — `←`/`→` on it, or `c` from any field, draw that picture
@@ -375,7 +375,7 @@ When a palette's colors change (`edit`, `update`, a new catalog), the next sync
 paints its pictures in the new tone under new names, carrying their tuning and
 their opacity: a picture keeps the opacity it was installed with, or the one you
 set, however the colors move. Changing
-`TTHEME_BG_BLUR` in `ttheme config` or preview's alt-c panel draws every picture
+`TTHEME_BG_BLUR` in `ttheme config` or preview's alt+c panel draws every picture
 again from its original, as does the first `init` of a version that draws them
 differently — pictures drawn in a palette's tone before `original` became the
 default are drawn again in their own colors at that first `init`, once, unless

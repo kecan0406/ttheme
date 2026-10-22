@@ -1,5 +1,6 @@
 import type { Hex } from '../core/color.ts'
 import { fit } from './ansi.ts'
+import { cap } from './keycaps.ts'
 import { FG_RESET, MARKS, type Paint } from './style.ts'
 import { keyZone } from './zones.ts'
 
@@ -42,7 +43,7 @@ export function pillOf(p: Paint, label: string): string {
 }
 
 export function hintOf(p: Paint, key: string, label: string): string {
-  return keyZone(key.split(' ')[0] ?? '', `${p.bold(key)} ${p.dim(label)}`)
+  return keyZone(key.split(' ')[0] ?? '', `${p.bold(cap(key))} ${p.dim(label)}`)
 }
 
 export function moreOf(step: number, count: number): string {

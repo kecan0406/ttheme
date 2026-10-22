@@ -4,6 +4,7 @@ import { isMainThread } from 'node:worker_threads'
 import { runCli } from './cli/cli.ts'
 import { keepDerived, saveDerived } from './store/derived.ts'
 import { cacheRoot } from './store/paths.ts'
+import { capsFor, useCaps } from './tui/keycaps.ts'
 
 if (isMainThread) {
   if (process.env.TTHEME_DEBUG && typeof Bun === 'undefined' && !process.sourceMapsEnabled) {
@@ -11,6 +12,7 @@ if (isMainThread) {
     process.exitCode = child.status ?? 1
   } else {
     keepDerived(import.meta.url, cacheRoot())
+    useCaps(capsFor(process.env, process.platform))
     process.exitCode = await runCli(process.argv.slice(2))
     saveDerived()
   }

@@ -68,6 +68,13 @@ tab row, and `ttheme` opens browse alone while no palette is installed. Piped,
 `ttheme` prints the palettes, one per line, as name, catalog (after its
 marketplace, for one that is not official) and source separated by tabs.
 
+This page writes keys by name — `enter`, `esc`, `tab`, `bksp`, `ctrl+r`,
+`alt+u`. On a Mac the screens draw them with Apple's symbols instead — `↩`,
+`⎋`, `⇥`, `⌫`, `⌃R`, `⌥U` — and over ssh, or on Linux, by name
+(`TTHEME_KEYS`). An `alt` key is the Option key there, which a terminal sends
+as Alt only when it is set to (Ghostty does for U.S. layouts by itself,
+`macos-option-as-alt`; Terminal.app's Use Option as Meta key, iTerm2's Esc+).
+
 ## The mouse
 
 Preview, browse, the palette editor and find take the mouse too, and every
@@ -89,7 +96,7 @@ when you click it (not over SSH, where the browser would open on the other
 machine); anywhere else a link opens with the terminal's own gesture —
 Shift-click in kitty, WezTerm and Alacritty, Shift+Cmd-click in Ghostty, Cmd-click
 in iTerm2. `TTHEME_MOUSE=off` leaves the mouse to the terminal everywhere, and
-alt-c in preview has it as `Mouse`. `init`'s picker, drawn under your prompt
+alt+c in preview has it as `Mouse`. `init`'s picker, drawn under your prompt
 rather than over the window, never takes the mouse, so the wheel keeps
 scrolling the terminal.
 
@@ -123,7 +130,7 @@ on the palette of the one you switch to. Warp itself takes about 0.6 s to show
 a change; with `TTHEME_WARP_FAST` on (the default) it takes about 0.2 s while
 your tabs wear different palettes, and for 3 s after the tab in front changes
 its own, so preview's second palette onwards shows that fast too.
-alt-c opens the [settings](#settings) in place — `↑`/`↓` (or `j`/`k`) pick one, `←`/`→` change it
+alt+c opens the [settings](#settings) in place — `↑`/`↓` (or `j`/`k`) pick one, `←`/`→` change it
 (the sort and the search hint animation change live), enter writes the changed
 lines to `config.zsh`, esc puts every value back. From 76
 columns on, a sample sits against the right edge of the window in the palette
@@ -327,7 +334,7 @@ turns tab-separated, and `NO_COLOR` is respected.
 
 With `TTHEME_TAB_PALETTE=seq`, new tabs take the next palette in the order they were added, with the counter shared across
 tabs — so opening four tabs walks you through four different characters rather
-than rolling the same one twice. Turned on through `ttheme config` or alt-c in
+than rolling the same one twice. Turned on through `ttheme config` or alt+c in
 `preview`, it also has Ghostty open new tabs through `launch-tab.zsh`, which
 paints the next palette before your shell starts; set any other way, the tab
 takes it once zsh starts.
@@ -337,21 +344,22 @@ takes it once zsh starts.
 Settings live in `~/.config/ttheme/config.zsh` — `init` seeds it with every
 setting at its default on a commented line, so a default a later version changes
 reaches you, and never overwrites a line you changed. `ttheme config` opens it in
-`$EDITOR` and alt-c in `preview` edits it in place. Only a value that differs from
+`$EDITOR` and alt+c in `preview` edits it in place. Only a value that differs from
 the default is left uncommented; setting one back comments it out again. Each line is a plain zsh
 `: ${VAR:=value}` assignment, so a variable exported before the layer loads
 still wins:
 
 | Setting | Default | |
 |---|---|---|
-| `TTHEME_MODE` | `dark` | the mode every palette is worn in, `auto`, `light` or `dark`, which `init` asks — where Ghostty is wired `auto` is preselected: the appearance Ghostty shows (the system's, or its `window-theme`), which any Ghostty tab at its prompt hears and hands to every tab in every wired terminal, a new Ghostty window opening in it from its first frame; the first appearance comes from the system when `auto` is set, and the switch takes as long as a change of the setting does. Ghostty treats its own `window-theme = auto` as `system` while a theme names both modes, so its window chrome follows the system rather than the background. Each palette carries both — an official one in its file, any other mirrored from the colors it was made in — and a tone tunes a palette in one mode. Changing it repaints every open tab, painted or not, and puts the pictures of the mode in place — `init` and `sync` draw the other mode's pictures ahead and keep them in `~/.cache/ttheme/drawn/`, so a switch lays files (0.2 s for 72 pictures, against 8 s when each was drawn again) and draws only a picture it has not kept; set it with `ttheme auto`, `ttheme light` or `ttheme dark` (which refuses where no wired terminal reports the appearance), in `ttheme config`, or in alt-c in `preview`, whose `Mode` row comes first. Terminal.app reads its profiles once, at launch, so until it restarts its tabs take the new mode as colors over your own profile, without the picture |
+| `TTHEME_MODE` | `dark` | the mode every palette is worn in, `auto`, `light` or `dark`, which `init` asks — where Ghostty is wired `auto` is preselected: the appearance Ghostty shows (the system's, or its `window-theme`), which any Ghostty tab at its prompt hears and hands to every tab in every wired terminal, a new Ghostty window opening in it from its first frame; the first appearance comes from the system when `auto` is set, and the switch takes as long as a change of the setting does. Ghostty treats its own `window-theme = auto` as `system` while a theme names both modes, so its window chrome follows the system rather than the background. Each palette carries both — an official one in its file, any other mirrored from the colors it was made in — and a tone tunes a palette in one mode. Changing it repaints every open tab, painted or not, and puts the pictures of the mode in place — `init` and `sync` draw the other mode's pictures ahead and keep them in `~/.cache/ttheme/drawn/`, so a switch lays files (0.2 s for 72 pictures, against 8 s when each was drawn again) and draws only a picture it has not kept; set it with `ttheme auto`, `ttheme light` or `ttheme dark` (which refuses where no wired terminal reports the appearance), in `ttheme config`, or in alt+c in `preview`, whose `Mode` row comes first. Terminal.app reads its profiles once, at launch, so until it restarts its tabs take the new mode as colors over your own profile, without the picture |
 | `TTHEME_TAB_PALETTE` | `off` | `off` keeps new tabs on the terminal's configured theme (`preview` → default changes it); `seq` gives every new tab the next palette. |
 | `TTHEME_ANNOUNCE` | `1` | `0` silences the one-line notice under "Last login:" |
 | `TTHEME_FX` | `typewriter` | search hint animation — `typewriter`, `decode` or `glitch` |
 | `TTHEME_SORT` | `abc` | `catalog` lists catalogs and palettes in the order they were added instead of by name — in `ttheme`, `preview` and, once exported, the `init` picker |
-| `TTHEME_MOUSE` | `on` | `off` leaves the mouse to the terminal in every screen, so a drag selects text and a click opens a link without a modifier, and the wheel scrolls the terminal ([the mouse](#the-mouse)). alt-c in `preview` has it as `Mouse`, and turning it off there lets go of the mouse at once |
-| `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt-c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
-| `TTHEME_BG_COLORS` | `original` | the colors a new background picture is drawn in: `original` keeps its own colors, `tone` tints it in one color of its palette. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Pictures drawn in a tone before this default changed are drawn again in their own colors at the next `init` update, once; an install whose `config.zsh` sets `tone` keeps them. Set it in `ttheme config`, or in alt-c in `preview`, whose `Colors` row offers `original` and `tone`. Like the blur, it is read from `config.zsh` itself |
+| `TTHEME_KEYS` | `auto` | how the screens write keys: `auto` draws Apple's symbols (`⌃R`, `⌥U`, `⇧⇥`, `↩`, `⎋`, `⌫`) when ttheme runs on a Mac and the names (`ctrl+r`, `alt+u`, `shift+tab`, `enter`, `esc`, `bksp`) on Linux, in WSL and over ssh, where the keyboard may not be a Mac's; `mac` or `text` picks one wherever it runs |
+| `TTHEME_MOUSE` | `on` | `off` leaves the mouse to the terminal in every screen, so a drag selects text and a click opens a link without a modifier, and the wheel scrolls the terminal ([the mouse](#the-mouse)). alt+c in `preview` has it as `Mouse`, and turning it off there lets go of the mouse at once |
+| `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt+c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
+| `TTHEME_BG_COLORS` | `original` | the colors a new background picture is drawn in: `original` keeps its own colors, `tone` tints it in one color of its palette. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Pictures drawn in a tone before this default changed are drawn again in their own colors at the next `init` update, once; an install whose `config.zsh` sets `tone` keeps them. Set it in `ttheme config`, or in alt+c in `preview`, whose `Colors` row offers `original` and `tone`. Like the blur, it is read from `config.zsh` itself |
 | `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
 | `TTHEME_NAMES` | `on` | characters' names in every language, which preview, browse and `find`'s search box match besides the palette names: `on` downloads them from aninames' weekly release into `~/.cache/ttheme/aninames/` (about 7 MB to download, about 65 MB there once the search index is built from them) and checks for a newer one once a day in the background; `off` leaves them as they are |
 | `TTHEME_AUTO_UPDATE` | `on` | the checks ttheme makes by itself once a day: whether npm has a newer ttheme, and the list of every marketplace whose auto-update is on ([Installing palettes](#installing-palettes)); `off` leaves both to `ttheme update`, as a `CI` environment does |

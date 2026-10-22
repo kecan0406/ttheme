@@ -10,6 +10,7 @@ import type { Framing } from '../../pictures/backdrop.ts'
 import { linked } from '../ansi.ts'
 import type { Tone } from '../bar.ts'
 import { type Help, type HelpSpot, type Legend, overlay, type Topic } from '../help.ts'
+import { cap, capped } from '../keycaps.ts'
 import { moreOf } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
 import { ansiBg, ansiFg, MARKS, open, painter, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
@@ -480,12 +481,12 @@ function foot(line: Line, cols: number, spec: Foot): void {
   let right = spec.right
 
   const size = () => {
-    const segs = [...(lead ? [partsWidth(lead)] : []), ...keys.map(([k, l]) => width(k) + 1 + width(l))]
+    const segs = [...(lead ? [partsWidth(lead)] : []), ...keys.map(([k, l]) => width(cap(k)) + 1 + width(l))]
 
     const left =
       (spec.badge ? width(spec.badge) + 4 : 0) + segs.reduce((n, w) => n + w, 0) + 3 * Math.max(0, segs.length - 1)
 
-    return left + (right ? 3 + width(right[0]) + 1 + width(right[1]) : 0)
+    return left + (right ? 3 + width(cap(right[0])) + 1 + width(right[1]) : 0)
   }
 
   while (size() > cols) {
@@ -513,7 +514,7 @@ function foot(line: Line, cols: number, spec: Foot): void {
   const segs: Part[][] = [
     ...(lead ? [lead] : []),
     ...keys.map(([k, l]): Part[] => [
-      [k, B, undefined, keyed(k)],
+      [cap(k), B, undefined, keyed(k)],
       [` ${l}`, D, undefined, keyed(k)],
     ]),
   ]
@@ -525,7 +526,7 @@ function foot(line: Line, cols: number, spec: Foot): void {
   if (right) {
     const key = keyed(right[0].split(' ')[0] ?? '')
     line.right(cols, [
-      [right[0], B, undefined, key],
+      [cap(right[0]), B, undefined, key],
       [` ${right[1]}`, D, undefined, key],
     ])
   }
@@ -957,10 +958,12 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
       ['█', accent],
     ])
 
-    const hint = view.suggest?.length ? '  ↑↓ pick  enter searches' : '  enter searches'
+    const hint = capped(view.suggest?.length ? '  ↑↓ pick  enter searches' : '  enter searches')
     line.put(
       c,
-      view.editing ? hint : `  A tag, a post URL or an id, or drop a picture or ctrl+v — ${view.tag || 'esc leaves'}`,
+      view.editing
+        ? hint
+        : `${capped('  A tag, a post URL or an id, or drop a picture or ctrl+v — ')}${view.tag || capped('esc leaves')}`,
       D,
     )
 
@@ -969,7 +972,12 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
 
   const c = line.run(0, [
     ['⌕ ', accent, undefined, { kind: 'query' }],
-    [view.tag || 'Nothing yet — / searches, ctrl+v pastes a picture', view.tag ? '' : D, undefined, { kind: 'query' }],
+    [
+      view.tag || capped('Nothing yet — / searches, ctrl+v pastes a picture'),
+      view.tag ? '' : D,
+      undefined,
+      { kind: 'query' },
+    ],
   ])
 
   const allowed = BLOCKS.filter((block) => !view.block.includes(block))
@@ -1281,7 +1289,7 @@ function grid(
     const [key, label] = TIPS[Math.floor(beat(view) / TIP_BEATS) % TIPS.length] as [string, string]
     lines[rows - 2]?.run(0, [
       ['Tip  ', D],
-      [key, B],
+      [cap(key), B],
       [` ${label}`, D],
     ])
   }
@@ -1298,8 +1306,8 @@ function grid(
     lines[GRID_TOP + 1]?.put(
       0,
       view.preset === 'cutouts'
-        ? `No transparent cutouts of ${view.tag} on ${where(view)} — c searches every post, tab tries ${view.nextSite}`
-        : `No posts of ${view.tag} on ${where(view)} — tab tries ${view.nextSite}`,
+        ? `No transparent cutouts of ${view.tag} on ${where(view)} — c searches every post, ${cap('tab')} tries ${view.nextSite}`
+        : `No posts of ${view.tag} on ${where(view)} — ${cap('tab')} tries ${view.nextSite}`,
       D,
     )
   }
@@ -1839,7 +1847,7 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
   if (cols < MIN.cols || rows < MIN.rows) {
     lines[0]?.put(0, 'ttheme find', B + accent)
     lines[1]?.put(0, `Needs ${MIN.cols}×${MIN.rows} — now ${cols}×${rows}`)
-    lines[2]?.put(0, 'esc quits', D, undefined, { kind: 'key', key: 'esc' })
+    lines[2]?.put(0, capped('esc quits'), D, undefined, { kind: 'key', key: 'esc' })
 
     return { lines: lines.map((l) => l.render()), images, zones: zonesOf(lines), loader: false, tick: false }
   }

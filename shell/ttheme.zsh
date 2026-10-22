@@ -29,6 +29,12 @@ typeset -gA TTHEME_MARKS=(
   contrast ◐ swatch ■ pictures ▣ sep · cut …
 )
 
+typeset -gA TTHEME_KEYCAPS=(
+  esc ⎋ enter ↩ tab ⇥ bksp ⌫ backspace ⌫ delete ⌦
+  pgup ⇞ pgdn ⇟ home ↖ end ↘
+)
+typeset -ga TTHEME_KEYMODS=(ctrl ⌃ alt ⌥ shift ⇧)
+
 __tt_palettes_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at
@@ -196,6 +202,8 @@ __tt_pins_load
 : ${TTHEME_SORT:=abc}
 
 : ${TTHEME_MOUSE:=on}
+
+: ${TTHEME_KEYS:=auto}
 
 : ${TTHEME_BG_BLUR:=0}
 
@@ -1016,7 +1024,8 @@ __tt_unpin_block() {
       bar+=" [${${lab[i]# }% }]"
     fi
   done
-  keys="←→ choose · enter unpin · esc keep"
+  __tt_capped "←→ choose · enter unpin · esc keep"
+  keys=$REPLY
   (( ${(m)#plain} + 3 + ${(m)#keys} <= width )) && bar+="   "$d$keys$z
   __tt_clip "$bar" $width
   bar=$REPLY
@@ -1201,6 +1210,85 @@ __tt_clip() {
   REPLY=$out…
   [[ $1 == *$'\e'* ]] && REPLY+=$TTHEME_SGR[reset]
   return 1
+}
+
+__tt_caps() {
+  [[ ${TTHEME_KEYS:-auto} == mac ]] && return 0
+  [[ ${TTHEME_KEYS:-auto} == auto && $OSTYPE == darwin* && -z $SSH_CONNECTION$SSH_CLIENT$SSH_TTY ]]
+}
+
+__tt_chord() {
+  local t=$1 k m g held=""
+  local -a parts
+  if [[ $t == ⇧?* && ${t#⇧} != *[^a-z]* && -n ${TTHEME_KEYCAPS[${t#⇧}]} ]]; then
+    REPLY=⇧${TTHEME_KEYCAPS[${t#⇧}]}
+    return 0
+  fi
+  parts=("${(@s:+:)t}")
+  (( ${#parts} >= 2 )) || return 1
+  k=$parts[-1]
+  parts[-1]=()
+  [[ -n $k ]] || return 1
+  for m in "${parts[@]}"; do
+    (( ${TTHEME_KEYMODS[(Ie)$m]} % 2 )) || return 1
+  done
+  for m g in $TTHEME_KEYMODS; do
+    (( ${parts[(Ie)$m]} )) && held+=$g
+  done
+  if [[ $k != *[^a-z]* && -n ${TTHEME_KEYCAPS[$k]} ]]; then
+    k=$TTHEME_KEYCAPS[$k]
+  elif (( ${#k} == 1 )); then
+    k=${(U)k}
+  fi
+  REPLY=$held$k
+}
+
+__tt_cap() {
+  local t
+  local -a out=()
+  REPLY=$1
+  __tt_caps || return 0
+  for t in "${(@s: :)1}"; do
+    if [[ -n $t && $t != *[^a-z]* && -n ${TTHEME_KEYCAPS[$t]} ]]; then
+      out+=($TTHEME_KEYCAPS[$t])
+    elif __tt_chord $t; then
+      out+=($REPLY)
+    else
+      out+=("$t")
+    fi
+  done
+  REPLY=${(j: :)out}
+}
+
+__tt_capped() {
+  local rest=$1 out="" gap word shown
+  local -i start=1
+  REPLY=$1
+  __tt_caps || return 0
+  while [[ -n $rest ]]; do
+    gap=${rest%%[^[:space:]]*}
+    if [[ -n $gap ]]; then
+      (( ${#gap} >= 2 )) && start=1
+      out+=$gap rest=${rest:${#gap}}
+      continue
+    fi
+    word=${rest%%[[:space:]]*}
+    rest=${rest:${#word}}
+    if (( start )) && [[ $word != *[^a-z]* && -n ${TTHEME_KEYCAPS[$word]} ]]; then
+      shown=$TTHEME_KEYCAPS[$word]
+    elif __tt_chord $word; then
+      shown=$REPLY
+    else
+      shown=$word
+    fi
+    out+=$shown
+    if [[ $word == $TTHEME_MARKS[sep] || $word == — || $word == *[,:.?!] ]]; then
+      start=1
+    else
+      start=0
+    fi
+  done
+  REPLY=$out
 }
 
 __tt_map_tip() {

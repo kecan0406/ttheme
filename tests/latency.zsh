@@ -102,7 +102,7 @@ prompts() { REPLY=$(( ${#${(@s:bench> :)BUF}} - 1 )) }
 
 start() {
   local name=$1 h=$WORK/$1 term=$TERMINAL
-  local -a env=(PATH=$PATH HOME=$h ZDOTDIR=$h XDG_CONFIG_HOME=$h/.config XDG_STATE_HOME=$h/.state XDG_CACHE_HOME=$h/.cache TERM=xterm-256color TTHEME_AUTO_UPDATE=off $EXTRA)
+  local -a env=(PATH=$PATH HOME=$h ZDOTDIR=$h XDG_CONFIG_HOME=$h/.config XDG_STATE_HOME=$h/.state XDG_CACHE_HOME=$h/.cache TERM=xterm-256color TTHEME_AUTO_UPDATE=off TTHEME_KEYS=text $EXTRA)
   [[ -n $term ]] || { [[ $name == (ref-|)terminal-app ]] && term=terminal-app || term=ghostty }
   env+=(${=IDENTITY[$term]})
   stop

@@ -390,7 +390,7 @@ panel below, preview's settings, the palette editor and find's grid.
 | `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter or the `+ Add marketplace` form's source, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks line says what browse's marks mean |
-| `alt-c` | settings | — |
+| `alt+c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
 | `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a catalog, stage its update; in the search, load the marketplace list again |
 | `shift+←` `shift+→` | example scene | — |
@@ -474,6 +474,19 @@ look, and never Title Case.
 - **As their owners spell them**: Ghostty, iTerm2, WezTerm, kitty, Alacritty,
   Warp, Windows Terminal, Konsole, Terminal.app, macOS, GitHub; acronyms in
   capitals (PNG, URL, OSC, ANSI).
+- **Keys as one name, drawn for the keyboard**: the source spells a key one
+  way — `enter`, `esc`, `tab`, `bksp`, `pgup`, `home`, `ctrl+r`, `alt+u`,
+  `shift+tab`, `⇧enter` — and a screen draws it through `cap` (a key hint,
+  which `hintOf` and find's foot do for it) or `capped` (a line that names
+  keys: Help's topics, a note), `src/tui/keycaps.ts`, and the shell layer
+  through `__tt_cap` and `__tt_capped`. On a Mac outside ssh they draw
+  Apple's symbols — ⌃ ⌥ ⇧ in Control, Option, Shift order, ↩ ⎋ ⇥ ⌫ ⇞ ⇟ ↖ ↘, a
+  chord's letter in capitals (`⌃R`) — and elsewhere the name as written
+  (`TTHEME_KEYS`). A named key turns into its symbol only where a key stands —
+  a line's start, after `·`, `—`, two spaces or a word ending in `,` `:` `.`
+  `?` `!` — so prose that uses the word (`another tab`) keeps it, and a chord
+  turns anywhere. There is no ⌘: a terminal keeps Command for itself. A click
+  zone always names the key as written.
 - **Lowercase**: key hints in footers and key bars (`↑↓ move · enter save`),
   and error messages, which read the same after the `ttheme:` prefix
   (`ttheme: not installed: kita`) and in a status line. A notice written for

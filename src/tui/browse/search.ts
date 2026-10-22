@@ -5,6 +5,7 @@ import { sameMarketplace, TOPIC } from '../../store/sources.ts'
 import { fit, wrapText } from '../ansi.ts'
 import type { Bar, Hint } from '../bar.ts'
 import { Field } from '../field.ts'
+import { capped } from '../keycaps.ts'
 import { PaletteList, rowSpot } from '../palette-prompt.ts'
 import { tabOf } from '../parts.ts'
 import { ansiSquares, MARKS, type Paint } from '../style.ts'
@@ -220,7 +221,7 @@ export class Search {
     const { p, staged, network } = this.host
 
     if (found.kind === 'back') {
-      return { title: p.bold('Back'), lines: ['Back to your marketplaces'], brief: 'enter goes back' }
+      return { title: p.bold('Back'), lines: ['Back to your marketplaces'], brief: capped('enter goes back') }
     }
 
     if (found.kind !== 'listed') {
@@ -248,7 +249,7 @@ export class Search {
 
     const note = known
       ? this.addedNote(known)
-      : (network.busy.get(m.source) ?? failure ?? 'space adds it, enter adds it and goes back')
+      : (network.busy.get(m.source) ?? failure ?? capped('space adds it, enter adds it and goes back'))
 
     return {
       title: p.bold(m.id),

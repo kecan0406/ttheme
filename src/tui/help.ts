@@ -2,6 +2,7 @@ import { cells } from '../core/text.ts'
 import { fit, pieces } from './ansi.ts'
 import type { Bar, Hint } from './bar.ts'
 import { Field } from './field.ts'
+import { capped } from './keycaps.ts'
 import { boxEdge, boxed, boxTitle, moreOf } from './parts.ts'
 import { MARKS, type Paint } from './style.ts'
 import { cover, unzoned, zone } from './zones.ts'
@@ -120,12 +121,12 @@ export class Help {
   box(p: Paint, cols: number, rows: number): string[] {
     const shown = this.shown()
     const pad = Math.max(8, ...this.topics.map((t) => t.label.length)) + 3
-    const widest = Math.min(MEASURE, Math.max(0, ...this.topics.map((t) => cells(t.text))))
+    const widest = Math.min(MEASURE, Math.max(0, ...this.topics.map((t) => cells(capped(t.text)))))
     const w = Math.max(24, Math.min(cols - 2, 8 + pad + widest))
     const inner = w - 4
     const side = (text: string) => zone({ kind: 'help' } satisfies HelpSpot, boxed(p, ` ${fit(text, inner)} `, w))
     const edge = (line: string) => zone({ kind: 'help' } satisfies HelpSpot, line)
-    const texts = shown.map((t) => wrap(t.text, Math.max(8, inner - 2 - pad)))
+    const texts = shown.map((t) => wrap(capped(t.text), Math.max(8, inner - 2 - pad)))
     const tall = (from: number, to: number) => texts.slice(from, to).reduce((sum, lines) => sum + lines.length, 0)
     const legend = this.legend.map(([mark, means]) => `${mark} ${means}`)
     const listed = lines(legend, inner - 2 - pad)

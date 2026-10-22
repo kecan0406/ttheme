@@ -9,6 +9,7 @@ import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
 import { Field } from '../field.ts'
 import { Help, type Legend, overlay, type Topic } from '../help.ts'
 import { HUB_UPDATE, type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
+import { capped } from '../keycaps.ts'
 import type { Mouse } from '../keys.ts'
 import { Glide } from '../motion.ts'
 import type { ReleaseLine } from '../notice.ts'
@@ -1090,7 +1091,7 @@ export class BrowsePanel {
       return {
         title: this.p.bold('Add marketplace'),
         lines: this.form.lines(width, this.side === 'form', this.beat),
-        brief: 'enter adds a repository or a folder',
+        brief: capped('enter adds a repository or a folder'),
       }
     }
 
@@ -1098,8 +1099,8 @@ export class BrowsePanel {
 
     return {
       title: this.p.bold('Search marketplace'),
-      lines: [...wrapText(what, width), '', ...wrapText('enter opens the search', width)],
-      brief: 'enter searches the marketplaces on GitHub',
+      lines: [...wrapText(what, width), '', ...wrapText(capped('enter opens the search'), width)],
+      brief: capped('enter searches the marketplaces on GitHub'),
     }
   }
 

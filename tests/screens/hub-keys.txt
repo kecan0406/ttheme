@@ -13,7 +13,7 @@
                      │  Example   ⇧←→  shell, code, diff, logs, monitor       │
                      │  Apply     enter  applies  ·  esc restores the tab     │
                      │  Edit      tab  →  ctrl+e  ·  its colors and picture   │
-                     │  Config    alt-c  ·  ↑↓ setting  ←→ value              │
+                     │  Config    alt+c  ·  ↑↓ setting  ←→ value              │
                      │            enter saves  ·  esc undoes                  │
                      │  Screens   shift+tab  ·  tab on a catalog              │
                      │  Close     ?  esc                                      │

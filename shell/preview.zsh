@@ -416,6 +416,8 @@ __tt_pv_bar() {
   local -i i at=${TTHEME_HUB_TABS[(Ie)preview]} len=${#TTHEME_HUB_TITLES}
   (( color )) || z= d= on=
   [[ ${rtype[cur]} == thm ]] && hint="⇧tab switch"
+  __tt_capped "$hint"
+  hint=$REPLY
   for title in $TTHEME_HUB_TITLES; do
     (( len += ${#title} + 2 ))
   done
@@ -496,8 +498,10 @@ __tt_pv_standing() {
 
 __tt_pv_foot() {
   setopt localoptions extendedglob
-  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] al=$TTHEME_SGR[alert] on=$pl badge="" pre="" lead="" note="" right="" ver="" text line plain hex tb=EDIT
+  local b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] y=$TTHEME_SGR[warn] al=$TTHEME_SGR[alert] on=$pl badge="" pre="" lead="" note="" right="" rk="" ver="" text line plain hex tb=EDIT ke ku REPLY
   local -a kk=() kl=() seg=()
+  __tt_cap esc; ke=$REPLY
+  __tt_cap alt+u; ku=$REPLY
   local -i end=$1 bw=$(( $1 - 1 )) i lwid rwid vwid rend room
   (( color )) || b= d= z= y= al= on=
   if (( color )) && [[ -n $applied && $applied != "$painted" ]]; then
@@ -506,9 +510,9 @@ __tt_pv_foot() {
     al=$TTHEME_SGR[reverse]$TTHEME_SGR[bold]$y
   fi
   if (( help == 2 )); then
-    badge=HELP right=$b"any key"$z$d" close"$z
+    badge=HELP rk=any right=$b"any key"$z$d" close"$z
   elif (( help )); then
-    badge=HELP right=$b"? esc"$z$d" close"$z
+    badge=HELP rk='?' right=$b"? $ke"$z$d" close"$z
   elif [[ -n $pick ]]; then
     badge='PREVIEW (APPLY)' pre="$pick → "
     (( te )) && badge="$tb (APPLY)"
@@ -533,15 +537,15 @@ __tt_pv_foot() {
       note="New tabs · the default palette"
     fi
     kk=(enter) kl=(confirm)
-    right=$b"esc"$z$d" back"$z
+    rk=esc right=$b$ke$z$d" back"$z
   elif (( te && tfocus == 0 )); then
     badge=$tb kk=(enter ↑↓ s ⇧enter) kl=("edit palette" move save apply)
     (( tbtn )) && kl[1]="reset palette"
     (( ${TTHEME_TUNED[(Ie)$tename]} )) && kk[2]=↑↓←→
-    right=$b"esc"$z$d" cancel"$z
+    rk=esc right=$b$ke$z$d" cancel"$z
   elif (( te && tfocus == 2 )); then
     badge=$tb kk=(enter ↑↓ s) kl=(apply move save)
-    right=$b"esc"$z$d" cancel"$z
+    rk=esc right=$b$ke$z$d" cancel"$z
   elif (( te )); then
     badge=$tb
     kk=(↑↓ ←→ s) kl=(field step save)
@@ -571,10 +575,10 @@ __tt_pv_foot() {
       kk=(enter ↑↓ s) kl=(find move save)
     fi
     kk+=(⇧enter) kl+=(apply)
-    right=$b"esc"$z$d" cancel"$z
+    rk=esc right=$b$ke$z$d" cancel"$z
   elif (( conf )); then
     badge=CONFIG kk=(↑↓ ←→ enter) kl=(setting value save)
-    right=$b"esc"$z$d" undo"$z
+    rk=esc right=$b$ke$z$d" undo"$z
   else
     badge=PREVIEW
     [[ -n $flt ]] && badge='PREVIEW (FILTER)'
@@ -593,13 +597,13 @@ __tt_pv_foot() {
     fi
     kk+=('?') kl+=(keys)
     if [[ -n $flt ]]; then
-      right=$b"esc"$z$d" clear filter"$z
+      rk=esc right=$b$ke$z$d" clear filter"$z
     else
-      right=$b"esc"$z$d" restore"$z
+      rk=esc right=$b$ke$z$d" restore"$z
       [[ -n $cdot ]] && right+=" $ac$cdot$z $cn"
     fi
     if (( hub && vnew )); then
-      ver=$b"alt+u"$z$d" update"$z"   "$d${vline%%  *}$z"  "
+      ver=$b$ku$z$d" update"$z"   "$d${vline%%  *}$z"  "
       if (( color )); then
         ver+=$al" ${vline#*  } "$z
       else
@@ -624,7 +628,8 @@ __tt_pv_foot() {
     [[ -n $lead ]] && seg+=("$pre$lead")
     [[ -n $note ]] && seg+=("$d$note$z")
     for (( i = 1; i <= ${#kk}; i++ )); do
-      seg+=("$b${kk[i]}$z$d ${kl[i]}$z")
+      __tt_cap "${kk[i]}"
+      seg+=("$b$REPLY$z$d ${kl[i]}$z")
     done
     line=${(j:   :)seg}
     if [[ -n $badge ]]; then
@@ -685,13 +690,13 @@ __tt_pv_foot() {
   fi
   [[ -n $note ]] && (( zc += ${(m)#note} + 3 ))
   for (( i = 1; i <= ${#kk}; i++ )); do
-    zw=$(( ${(m)#kk[i]} + 1 + ${(m)#kl[i]} ))
+    __tt_cap "${kk[i]}"
+    zw=$(( ${(m)#REPLY} + 1 + ${(m)#kl[i]} ))
     pvz+=("$ph $zc $(( zc + zw - 1 )) key ${kk[i]}")
     (( zc += zw + 3 ))
   done
   if [[ -n $right ]]; then
-    plain=${right//$'\e'\[[0-9;]##m/}
-    pvz+=("$ph $(( rend - rwid + 1 )) $rend key ${plain%% *}")
+    pvz+=("$ph $(( rend - rwid + 1 )) $rend key $rk")
   fi
   [[ -n $ver ]] && (( vnew )) && pvz+=("$ph $(( end - vwid + 1 )) $end key alt+u")
   return 0
@@ -762,7 +767,7 @@ __tt_pv_help() {
       "tab  →  ctrl+e  ·  its colors and picture"
     )
     hk+=(Config "")
-    hv+=("alt-c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")
+    hv+=("alt+c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")
     (( hub )) && { hk+=(Screens); hv+=("shift+tab  ·  tab on a catalog") }
   fi
   hk+=(Close)
@@ -782,7 +787,8 @@ __tt_pv_help() {
     tw=$(( w - 16 )) rows=$(( ph - 5 ))
   fi
   for (( i = 1; i <= ${#hk}; i++ )); do
-    __tt_pv_wrap "${hv[i]}" $tw
+    __tt_capped "${hv[i]}"
+    __tt_pv_wrap "$REPLY" $tw
     hl+=("${reply[@]}") hn+=(${#reply})
     (( used += ${#reply} ))
   done
@@ -1314,7 +1320,8 @@ __tt_pv_draw() {
   fi
   [[ $1 == hint ]] && (( ! wiped )) || pvz=()
   if (( pw < 40 || ph < 12 )); then
-    local -a small=(ttheme "Needs 40×12 — now ${pw}×${ph}" "esc quits") paint=("" "" "")
+    __tt_capped "esc quits"
+    local -a small=(ttheme "Needs 40×12 — now ${pw}×${ph}" "$REPLY") paint=("" "" "")
     (( color )) && paint=($TTHEME_SGR[bold]$ac "" $TTHEME_SGR[dim])
     for (( k = 1; k <= 3 && k <= ph; k++ )); do
       line=${small[k]}
@@ -2208,10 +2215,11 @@ __tt_pv_te_tile() {
     out+=$'\e['$(( y + r ))';'$col'H'$sty$side${(l:tc::░:)}$side$z
   done
   out+=$'\e['$(( y + 4 ))';'$col'H'$sty$bot$z$'\e['$(( y + 2 ))';'$(( col + tc + 4 ))'H'
+  __tt_cap enter
   if (( tfocus == 1 && tf == 5 )); then
-    out+=$b"enter"$z$d" finds one"$z
+    out+=$b$REPLY$z$d" finds one"$z
   else
-    out+=$d"enter finds one"$z
+    out+=$d"$REPLY finds one"$z
   fi
   return 0
 }
@@ -2290,7 +2298,7 @@ __tt_pv_te_editrow() {
   x+=16
   if (( ${TTHEME_TUNED[(Ie)$tename]} )); then
     out+="  "
-    (( tearm )) && reset="Reset? enter again"
+    (( tearm )) && { __tt_capped "Reset? enter again"; reset=$REPLY }
     __tt_pv_te_button 1 "$reset"
     pvz+=("$y $(( x + 2 )) $(( x + ${#reset} + 5 )) tereset")
     x+=$(( ${#reset} + 6 ))

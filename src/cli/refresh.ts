@@ -41,6 +41,7 @@ import {
   shownSource,
 } from '../store/sources.ts'
 import { moveTone } from '../store/tone.ts'
+import { cap } from '../tui/keycaps.ts'
 import { advise } from '../tui/notice.ts'
 import { pending } from '../tui/pending.ts'
 import { MARKS } from '../tui/style.ts'
@@ -416,7 +417,7 @@ export function updatesLine(home: string): string | undefined {
     return undefined
   }
 
-  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its marketplace' : 'their marketplaces'} — ctrl+r on a palette marked ${MARKS.update} in Browse (\`ttheme\`) takes it`
+  return `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} an update from ${names.length === 1 ? 'its marketplace' : 'their marketplaces'} — ${cap('ctrl+r')} on a palette marked ${MARKS.update} in Browse (\`ttheme\`) takes it`
 }
 
 export function applyRefreshed(home: string, done: Refreshed[]): string[] {
