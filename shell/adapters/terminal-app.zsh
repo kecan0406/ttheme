@@ -177,6 +177,8 @@ __tt_bg_cells() {
   bgch=$(( 2 * px[1] / cells[1] )) bgcw=$(( 2 * px[2] / cells[2] ))
 }
 
+__tt_cell() { return 1 }
+
 __tt_bg_send() { return 1 }
 
 __tt_bg_wipe() { REPLY="" }

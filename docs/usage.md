@@ -625,7 +625,10 @@ ttheme share rei --tone original # the palette as it was, when you tuned it in p
 ```
 
 `share` prints a link to a palette as you wear it, and in a terminal its QR code
-under it. The palette lives in the link itself (`tt4:…` after `/builder/`), so the page
+under it — a picture in Ghostty, kitty, iTerm2, WezTerm and Konsole outside tmux,
+half the text code's width and height, and down to a quarter of it in a small
+window, and text elsewhere.
+The palette lives in the link itself (`tt4:…` after `/builder/`), so the page
 needs nothing stored: it opens the builder on the palette — a mock terminal, its
 slots, the contrast gate and the posts of its pictures with their artists —, with
 the `ttheme add` command to copy, and a change there makes a copy of your own to
@@ -717,7 +720,10 @@ differs from the marketplace's colors, and `s` after it drops the tone. The keys
   cursor skips the rest), and `g`
   puts the palette's relations in the builder's place, beside the slots: the
   lightness and chroma of every ANSI color, normal and bright, its hue over the
-  role bands, and the misses between them; `g` again brings the builder back.
+  role bands, and the misses between them — drawn as pictures, to the pixel and
+  with each normal joined to its bright, where the picker is (Ghostty, kitty,
+  iTerm2 and Konsole outside tmux), and in text elsewhere; `g` again brings the
+  builder back.
 - `x` copies the share code, the `ttheme add` command with it, or the palette file
   to the clipboard (OSC 52, so the terminal has to allow it; `ttheme share` prints
   the same code as a link), and `I` takes colors from another palette or a share

@@ -2,6 +2,7 @@ import { type Hex, luminance, mix, rgb } from '../core/color.ts'
 import { edgeChroma, srgb } from '../core/fix.ts'
 import { PLANE_BOTTOM, PLANE_TOP, RAINBOW_C, RAINBOW_L, reach, shareOf } from '../core/plane.ts'
 import { encodeRgba, type Rgba } from '../core/png.ts'
+import { graphic } from '../terminals/graphics.ts'
 import { colorless } from '../terminals/osc.ts'
 import { layersUnderCells, showsPictures } from '../terminals/terminal.ts'
 
@@ -38,11 +39,18 @@ const NAMES = [
   'body-right',
   'body-bottom',
   'tabs',
+  'chart-lightness',
+  'chart-lightness-grid',
+  'chart-lightness-lit',
+  'chart-chroma',
+  'chart-chroma-grid',
+  'chart-chroma-lit',
+  'chart-hue',
+  'chart-hue-grid',
+  'chart-hue-lit',
 ] as const
 
 export const LIGHTS: Hex[] = ['#ff5f57', '#febc2e', '#28c840']
-
-const CHUNK = 4096
 
 type Env = Record<string, string | undefined>
 
@@ -66,6 +74,24 @@ export interface Drawn {
   lines: string[]
   art: Art | undefined
   mock?: Mock
+  charts?: Chart[]
+}
+
+interface Point {
+  x: number
+  y: number
+}
+
+export interface Chart {
+  name: 'lightness' | 'chroma' | 'hue'
+  box: Box
+  ink: Hex
+  rules: number[]
+  ticks: number[]
+  lit: { x: number; w: number; color: Hex }[]
+  bars: { x0: number; x1: number; y: number; color: Hex }[]
+  links: { from: Point; to: Point; color: Hex; alpha: number }[]
+  dots: (Point & { color: Hex; ring: boolean })[]
 }
 
 export interface Mock {
@@ -807,17 +833,159 @@ function mockPieces(mock: Mock, cell: Cell): Piece[] {
   ]
 }
 
-function transmit(id: number, png: Buffer): string {
-  const data = png.toString('base64')
-  const chunks = data.match(new RegExp(`.{1,${CHUNK}}`, 'g')) ?? ['']
+function inside(area: Rect): (x: number, y: number) => number {
+  return (x, y) =>
+    clamp(Math.min(x + 0.5, area.x + area.w) - Math.max(x - 0.5, area.x)) *
+    clamp(Math.min(y + 0.5, area.y + area.h) - Math.max(y - 0.5, area.y))
+}
 
-  return chunks
-    .map((chunk, i) => {
-      const more = i < chunks.length - 1 ? 1 : 0
+function stamp(image: Rgba, area: Rect, color: Color, cover: (x: number, y: number) => number): void {
+  const x1 = Math.min(image.width, Math.ceil(area.x + area.w))
+  const y1 = Math.min(image.height, Math.ceil(area.y + area.h))
 
-      return i === 0 ? `\x1b_Ga=t,f=100,i=${id},m=${more},q=2;${chunk}\x1b\\` : `\x1b_Gm=${more},q=2;${chunk}\x1b\\`
+  for (let y = Math.max(0, Math.floor(area.y)); y < y1; y++) {
+    for (let x = Math.max(0, Math.floor(area.x)); x < x1; x++) {
+      blend(image, x, y, color, clamp(cover(x + 0.5, y + 0.5)))
+    }
+  }
+}
+
+function toSegment(x: number, y: number, a: Point, b: Point): number {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const length = dx * dx + dy * dy
+  const t = length === 0 ? 0 : clamp(((x - a.x) * dx + (y - a.y) * dy) / length)
+
+  return Math.hypot(x - (a.x + t * dx), y - (a.y + t * dy))
+}
+
+function hairOf(cell: Cell): number {
+  return Math.max(1, Math.round(cell.h / 22))
+}
+
+function gridPixels(chart: Chart, cell: Cell): Rgba {
+  const across = chart.ticks.length > 0 ? chart.box.cols : 1
+  const down = chart.rules.length > 0 ? chart.box.rows : 1
+  const image = canvas(across * cell.w, down * cell.h)
+  const { width, height } = image
+  const hair = hairOf(cell)
+  const faint = rgbaOf(chart.ink, 0.14)
+
+  for (const y of chart.rules) {
+    const line = { x: 0, y: Math.min(height - hair, Math.floor(y * cell.h)), w: width, h: hair }
+    stamp(image, line, faint, inside(line))
+  }
+
+  for (const x of chart.ticks) {
+    const line = { x: Math.min(width - hair, Math.floor(x * cell.w)), y: 0, w: hair, h: height }
+    stamp(image, line, faint, inside(line))
+  }
+
+  return image
+}
+
+function litPixels(lit: Chart['lit'], cols: number, rows: number, cell: Cell): Rgba {
+  const image = canvas(cols * cell.w, rows * cell.h)
+
+  for (const { x, w, color } of lit) {
+    const band = { x: x * cell.w + 1, y: 1, w: w * cell.w - 2, h: image.height - 2 }
+    const r = Math.min(cell.w * 0.45, band.h / 2)
+    stamp(image, band, rgbaOf(color), (px, py) => 0.5 - roundRect(px, py, band.x, band.y, band.w, band.h, r))
+  }
+
+  return image
+}
+
+function markPixels(chart: Chart, cell: Cell): Rgba {
+  const image = canvas(chart.box.cols * cell.w, chart.box.rows * cell.h)
+  const at = (p: Point): Point => ({ x: p.x * cell.w, y: p.y * cell.h })
+  const hair = hairOf(cell)
+  const bar = Math.max(2, Math.round(cell.h * 0.18))
+  const radius = Math.max(3, Math.min(cell.w * 0.42, cell.h * 0.21))
+  const thick = Math.max(1.5, radius * 0.34)
+  const edge = rgbaOf(chart.ink, 0.38)
+
+  for (const { x0, x1, y, color } of chart.bars) {
+    const area = { x: x0 * cell.w, y: y * cell.h - bar / 2, w: (x1 - x0) * cell.w, h: bar }
+    stamp(image, area, rgbaOf(color), inside(area))
+  }
+
+  for (const { from, to, color, alpha } of chart.links) {
+    const a = at(from)
+    const b = at(to)
+
+    const area = {
+      x: Math.min(a.x, b.x) - 2,
+      y: Math.min(a.y, b.y) - 2,
+      w: Math.abs(a.x - b.x) + 4,
+      h: Math.abs(a.y - b.y) + 4,
+    }
+
+    stamp(image, area, rgbaOf(color, alpha), (px, py) => hair / 2 + 0.5 - toSegment(px, py, a, b))
+  }
+
+  for (const dot of chart.dots) {
+    const c = at(dot)
+    const area = { x: c.x - radius - 3, y: c.y - radius - 3, w: 2 * radius + 6, h: 2 * radius + 6 }
+    const from = (px: number, py: number) => Math.hypot(px - c.x, py - c.y)
+    stamp(image, area, edge, (px, py) => clamp(radius + 1.5 - from(px, py)) - clamp(radius + 0.5 - from(px, py)))
+
+    stamp(image, area, rgbaOf(dot.color), (px, py) => {
+      const d = from(px, py)
+
+      return dot.ring ? clamp(radius + 0.5 - d) - clamp(radius - thick + 0.5 - d) : radius + 0.5 - d
     })
-    .join('')
+  }
+
+  return image
+}
+
+function chartPieces(charts: readonly Chart[], cell: Cell): Piece[] {
+  const size = `${cell.w}x${cell.h}`
+
+  return charts.flatMap((chart) => {
+    const { box, name, ink } = chart
+
+    const pieces: Piece[] = [
+      {
+        name: `chart-${name}`,
+        key: `${size} ${box.cols}x${box.rows} ${ink} ${JSON.stringify([chart.bars, chart.links, chart.dots])}`,
+        box,
+        z: ORIGIN_Z,
+        paint: () => markPixels(chart, cell),
+      },
+    ]
+
+    if (chart.rules.length > 0 || chart.ticks.length > 0) {
+      pieces.push({
+        name: `chart-${name}-grid`,
+        key: `${size} ${box.cols}x${box.rows} ${ink} ${chart.rules} ${chart.ticks}`,
+        box,
+        z: ART_Z,
+        paint: () => gridPixels(chart, cell),
+      })
+    }
+
+    if (chart.lit.length > 0) {
+      const from = Math.min(...chart.lit.map((band) => band.x))
+      const to = Math.max(...chart.lit.map((band) => band.x + band.w))
+      const lit = chart.lit.map((band) => ({ ...band, x: band.x - from }))
+
+      pieces.push({
+        name: `chart-${name}-lit`,
+        key: `${size} ${box.rows} ${JSON.stringify(lit)}`,
+        box: { row: box.row, col: box.col + from, cols: to - from, rows: box.rows },
+        z: PANEL_Z,
+        paint: () => litPixels(lit, to - from, box.rows, cell),
+      })
+    }
+
+    return pieces
+  })
+}
+
+function transmit(id: number, png: Buffer): string {
+  return graphic(`a=t,f=100,i=${id}`, png.toString('base64'))
 }
 
 function place(id: number, box: Box, z: number): string {
@@ -851,12 +1019,17 @@ export class PickerLayer {
     this.stale = true
   }
 
-  draw(art: Art | undefined, mock?: Mock): string {
+  draw(art: Art | undefined, mock?: Mock, charts: readonly Chart[] = []): string {
     if (!this.ready) {
       return ''
     }
 
-    const pieces = [...(art ? piecesOf(art, this.cell) : []), ...(mock ? mockPieces(mock, this.cell) : [])]
+    const pieces = [
+      ...(art ? piecesOf(art, this.cell) : []),
+      ...(mock ? mockPieces(mock, this.cell) : []),
+      ...chartPieces(charts, this.cell),
+    ]
+
     const fresh = this.stale
     this.stale = false
     let out = ''

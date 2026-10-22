@@ -332,23 +332,27 @@ __tt_pv_claim() {
 }
 
 __tt_bg_cells() {
-  local REPLY resp line v f
+  local REPLY resp line v f probe=$'\e[16t'
   local -i l=2 r=2 t=2 b=2 bal=0 fs=0 sc=2
-  local -a files=(${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config{,.ghostty})
-  [[ $OSTYPE == darwin* ]] && files+=("$HOME/Library/Application Support/com.mitchellh.ghostty/config"{,.ghostty})
-  for f in $files; do
-    [[ -r $f ]] || continue
-    for line in "${(@f)$(<$f)}"; do
-      v=${${line#*=}// /}
-      case $line in
-        window-padding-x*=*) [[ $v == <->(|,<->) ]] && l=${v%%,*} r=${v##*,} ;;
-        window-padding-y*=*) [[ $v == <->(|,<->) ]] && t=${v%%,*} b=${v##*,} ;;
-        window-padding-balance*=*) case $v in (0|f|F|false) bal=0 ;; (1|t|T|true) bal=1 ;; (equal) bal=2 ;; esac ;;
-        font-size*=*) [[ $v == <->(|.<->) ]] && fs=${v%%.*} ;;
-      esac
+  local -a files
+  if [[ $1 != cell ]]; then
+    files=(${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config{,.ghostty})
+    [[ $OSTYPE == darwin* ]] && files+=("$HOME/Library/Application Support/com.mitchellh.ghostty/config"{,.ghostty})
+    for f in $files; do
+      [[ -r $f ]] || continue
+      for line in "${(@f)$(<$f)}"; do
+        v=${${line#*=}// /}
+        case $line in
+          window-padding-x*=*) [[ $v == <->(|,<->) ]] && l=${v%%,*} r=${v##*,} ;;
+          window-padding-y*=*) [[ $v == <->(|,<->) ]] && t=${v%%,*} b=${v##*,} ;;
+          window-padding-balance*=*) case $v in (0|f|F|false) bal=0 ;; (1|t|T|true) bal=1 ;; (equal) bal=2 ;; esac ;;
+          font-size*=*) [[ $v == <->(|.<->) ]] && fs=${v%%.*} ;;
+        esac
+      done
     done
-  done
-  __tt_ask $'\e_Ga=t,f=24,s=1,v=1,i=1,q=2;AAAA\e\\\e_Ga=p,i=1,p=9,P=999998,Q=1,C=1,q=1\e\\\e_Ga=d,d=i,i=1,p=9,q=2\e\\\e[16t' || return 0
+    probe=$'\e_Ga=t,f=24,s=1,v=1,i=1,q=2;AAAA\e\\\e_Ga=p,i=1,p=9,P=999998,Q=1,C=1,q=1\e\\\e_Ga=d,d=i,i=1,p=9,q=2\e\\'$probe
+  fi
+  __tt_ask $probe || return 0
   resp=$REPLY
   [[ $resp == *'[6;'<1->';'<1->t ]] || return 0
   [[ $resp == *$'\e_G'*';E'* ]] && bgrel=1

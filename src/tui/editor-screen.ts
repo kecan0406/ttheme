@@ -35,7 +35,7 @@ import { capped } from './keycaps.ts'
 import { CELL_QUERY, type Cell, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
 import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
 import { boxEdge, boxed, checkOf, hintOf, moreOf, pillOf } from './parts.ts'
-import type { Drawn, PickerLayer } from './picker-art.ts'
+import type { Chart, Drawn, PickerLayer } from './picker-art.ts'
 import { Screen } from './screen.ts'
 import { FG_RESET, grounded, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from './terminal.ts'
@@ -235,6 +235,9 @@ function sample(p: Paint, c: Colors, width: number, room: number, scene: number,
 
 const SHORT = ['Bk', 'Rd', 'Gr', 'Ye', 'Bl', 'Ma', 'Cy', 'Wh']
 
+const PLOT = 6
+const SPAN = 40
+
 function chart(
   p: Paint,
   e: PaletteEditor,
@@ -243,6 +246,7 @@ function chart(
   top: number,
   bottom: number,
   rows: number,
+  pictured: boolean,
 ): string[] {
   const step = (top - bottom) / (rows - 1)
   const lit = litColumns(e)
@@ -251,6 +255,10 @@ function chart(
 
   return Array.from({ length: rows }, (_, r) => {
     const label = r % 2 === 0 ? (top - step * r).toFixed(top >= 1 ? 1 : 2).replace(/^0(?=\.\d\d)/, '') : ''
+
+    if (pictured) {
+      return `${label.padStart(4)} ${p.dim(r % 2 === 0 ? '┤' : '│')}${' '.repeat(SPAN)}`
+    }
 
     const columns = Array.from({ length: 8 }, (_, k) => {
       const marks = [' ', ' ', ' ', ' ', ' ']
@@ -292,44 +300,145 @@ function axisLabels(p: Paint, e: PaletteEditor): string {
   return `      ${SHORT.map((name, k) => (lit.has(k) ? p.bold(` ${name}  `) : p.dim(` ${name}  `))).join('')}`
 }
 
-function hueLines(p: Paint, shown: Hex[]): string[] {
-  const c = colorsOf(shown)
+function bandAt(angle: number): number {
+  let best = -1
+  let gap = 999
 
-  const band = Array.from({ length: 40 }, (_, cell) => {
-    const angle = cell * 9 + 4.5
-    let best = -1
-    let gap = 999
+  for (const [role, hue] of ROLE_HUES) {
+    const d = hueGap(angle, hue.center)
 
-    for (const [role, hue] of ROLE_HUES) {
-      const d = hueGap(angle, hue.center)
-
-      if (d <= hue.width && d < gap) {
-        gap = d
-        best = role
-      }
+    if (d <= hue.width && d < gap) {
+      gap = d
+      best = role
     }
+  }
+
+  return best
+}
+
+function hueLines(p: Paint, shown: Hex[], pictured: boolean): string[] {
+  const c = colorsOf(shown)
+  const head = `${p.bold('Hue')}   ${p.dim('0°        90°       180°      270°      360°')}`
+
+  if (pictured) {
+    return [head, `${p.dim('bands')} ${' '.repeat(SPAN)}`, '', '']
+  }
+
+  const band = Array.from({ length: SPAN }, (_, cell) => {
+    const best = bandAt(cell * 9 + 4.5)
 
     return best < 0 ? ' ' : p.color ? `${p.fg(c.ansi[best] as Hex)}─` : '─'
   }).join('')
 
   const dots = (offset: number, glyph: string) => {
-    const cells = Array.from({ length: 40 }, () => ' ')
+    const cells = Array.from({ length: SPAN }, () => ' ')
 
     for (const role of ROLE_HUES.keys()) {
       const hex = c.ansi[role + offset] as Hex
-      const at = Math.min(39, Math.round(oklch(hex).h / 9))
+      const at = Math.min(SPAN - 1, Math.round(oklch(hex).h / 9))
       cells[at] = p.color ? `${p.fg(hex)}${glyph}${FG_RESET}` : glyph
     }
 
     return `      ${cells.join('')}`
   }
 
-  return [
-    `${p.bold('Hue')}   ${p.dim('0°        90°       180°      270°      360°')}`,
-    `${p.dim('bands')} ${band}${p.color ? FG_RESET : ''}`,
-    dots(0, MARKS.on),
-    dots(8, MARKS.off),
-  ]
+  return [head, `${p.dim('bands')} ${band}${p.color ? FG_RESET : ''}`, dots(0, MARKS.on), dots(8, MARKS.off)]
+}
+
+function levelChart(
+  name: 'lightness' | 'chroma',
+  e: PaletteEditor,
+  shown: Hex[],
+  pick: (o: Oklch) => number,
+  span: { top: number; bottom: number; rows: number },
+  ink: Hex,
+  row: number,
+): Chart {
+  const c = colorsOf(shown)
+  const { top, bottom, rows } = span
+  const yOf = (hex: Hex) => 0.5 + Math.min(1, Math.max(0, (top - pick(oklch(hex))) / (top - bottom))) * (rows - 1)
+  const dots: Chart['dots'] = []
+  const links: Chart['links'] = []
+
+  for (let k = 0; k < 8; k++) {
+    const normal = c.ansi[k] as Hex
+    const bright = c.ansi[k + 8] as Hex
+    const from = { x: k * 5 + 1.5, y: yOf(normal) }
+    const to = { x: k * 5 + 3.5, y: yOf(bright) }
+    links.push({ from, to, color: ink, alpha: 0.3 })
+    dots.push({ ...from, color: normal, ring: false }, { ...to, color: bright, ring: true })
+  }
+
+  return {
+    name,
+    box: { row, col: PLOT, cols: SPAN, rows },
+    ink,
+    rules: Array.from({ length: Math.ceil(rows / 2) }, (_, i) => i * 2 + 0.5),
+    ticks: [],
+    lit: [...litColumns(e)].map((k) => ({ x: k * 5, w: 5, color: c.selection })),
+    bars: [],
+    links,
+    dots,
+  }
+}
+
+function hueChart(shown: Hex[], ink: Hex, row: number): Chart {
+  const c = colorsOf(shown)
+  const bars: Chart['bars'] = []
+  const dots: Chart['dots'] = []
+  const links: Chart['links'] = []
+  const across = (degrees: number) => (degrees * SPAN) / 360
+  let from = 0
+  let held = bandAt(0)
+
+  for (let degrees = 0.25; degrees <= 360; degrees += 0.25) {
+    const role = degrees === 360 ? -2 : bandAt(degrees)
+
+    if (role !== held) {
+      if (held >= 0) {
+        bars.push({ x0: across(from), x1: across(degrees), y: 0.5, color: c.ansi[held] as Hex })
+      }
+
+      from = degrees
+      held = role
+    }
+  }
+
+  for (const role of ROLE_HUES.keys()) {
+    const normal = c.ansi[role] as Hex
+    const bright = c.ansi[role + 8] as Hex
+    const a = { x: across(oklch(normal).h), y: 1.5 }
+    const b = { x: across(oklch(bright).h), y: 2.5 }
+
+    if (!Number.isFinite(a.x) || !Number.isFinite(b.x)) {
+      continue
+    }
+
+    if (Math.abs(a.x - b.x) <= SPAN / 2) {
+      links.push({ from: a, to: b, color: normal, alpha: 0.55 })
+    } else {
+      const [low, high] = a.x < b.x ? [a, b] : [b, a]
+      const seam = low.y + ((high.y - low.y) * low.x) / (low.x + SPAN - high.x)
+      links.push(
+        { from: low, to: { x: 0, y: seam }, color: normal, alpha: 0.55 },
+        { from: { x: SPAN, y: seam }, to: high, color: normal, alpha: 0.55 },
+      )
+    }
+
+    dots.push({ ...a, color: normal, ring: false }, { ...b, color: bright, ring: true })
+  }
+
+  return {
+    name: 'hue',
+    box: { row, col: PLOT, cols: SPAN, rows: 3 },
+    ink,
+    rules: [],
+    ticks: [0, 90, 180, 270, 360].map(across),
+    lit: [],
+    bars,
+    links,
+    dots,
+  }
 }
 
 function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
@@ -358,22 +467,66 @@ function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
     : [p.dim(`${MARKS.ok} Every accent keeps its role and its bright`)]
 }
 
-function relations(p: Paint, e: PaletteEditor, width: number, height: number, full: boolean): string[] {
+interface Plotted {
+  lines: string[]
+  charts: Chart[]
+}
+
+function relations(
+  p: Paint,
+  e: PaletteEditor,
+  width: number,
+  height: number,
+  full: boolean,
+  ink: Hex | undefined,
+): Plotted {
   const shown = e.shown()
   const maxC = Math.max(...shown.slice(BASE.length).map((hex) => oklch(hex).c))
   const topC = Math.max(0.2, Math.ceil(maxC / 0.05) * 0.05)
+  const lines = [spread(p.bold('Lightness'), p.dim('● normal  ○ bright'), width)]
+  const charts: Chart[] = []
+  const pictures = (rows: number) => (width >= PLOT + SPAN && lines.length + rows <= height ? ink : undefined)
 
-  const lines = [
-    spread(p.bold('Lightness'), p.dim('● normal  ○ bright'), width),
-    ...chart(p, e, shown, (o) => o.l, 1, 0.3, 8),
-    axisLabels(p, e),
-  ]
+  const level = (
+    name: 'lightness' | 'chroma',
+    pick: (o: Oklch) => number,
+    top: number,
+    bottom: number,
+    rows: number,
+  ) => {
+    const drawn = pictures(rows)
 
-  if (full) {
-    lines.push('', p.bold('Chroma'), ...chart(p, e, shown, (o) => o.c, topC, 0, 5), '', ...hueLines(p, shown))
+    if (drawn) {
+      charts.push(levelChart(name, e, shown, pick, { top, bottom, rows }, drawn, lines.length))
+    }
+
+    lines.push(...chart(p, e, shown, pick, top, bottom, rows, drawn !== undefined))
   }
 
-  return [...lines, ...relationNotes(p, e, shown)].slice(0, height)
+  level('lightness', (o) => o.l, 1, 0.3, 8)
+  lines.push(axisLabels(p, e))
+
+  if (full) {
+    lines.push('', p.bold('Chroma'))
+    level('chroma', (o) => o.c, topC, 0, 5)
+    lines.push('')
+    const drawn = pictures(4)
+
+    if (drawn) {
+      charts.push(hueChart(shown, drawn, lines.length + 1))
+    }
+
+    lines.push(...hueLines(p, shown, drawn !== undefined))
+  }
+
+  return { lines: [...lines, ...relationNotes(p, e, shown)].slice(0, height), charts }
+}
+
+function moved(charts: readonly Chart[], rows: number, cols: number): Chart[] {
+  return charts.map((chart) => ({
+    ...chart,
+    box: { ...chart.box, row: chart.box.row + rows, col: chart.box.col + cols },
+  }))
 }
 
 function viewTabs(p: Paint, e: PaletteEditor, width: number): string {
@@ -387,7 +540,7 @@ function viewTabs(p: Paint, e: PaletteEditor, width: number): string {
   )
 }
 
-function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): string[] {
+function detailPane(p: Paint, e: PaletteEditor, width: number, height: number, ink: Hex | undefined): Plotted {
   const slot = e.slot()
   const hex = e.list[slot] as Hex
   const at = e.lch[slot] as Oklch
@@ -397,7 +550,9 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   const barWidth = Math.max(8, Math.min(64, width - 12))
 
   if (e.view === 'relations' && e.mode !== 'tune') {
-    return [viewTabs(p, e, width), '', ...relations(p, e, width, height - 2, true)]
+    const plotted = relations(p, e, width, height - 2, true, ink)
+
+    return { lines: [viewTabs(p, e, width), '', ...plotted.lines], charts: moved(plotted.charts, 2, 0) }
   }
 
   const right = slot >= BASE.length ? p.dim('Uses underlined below') : sig ? p.dim(`${MARKS.signature} signature`) : ''
@@ -416,9 +571,12 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
   lines.push('', ...channelLines(p, e, at, barWidth), contrastLine(p, e, barWidth), ...scopeLines(p, e))
 
   if (e.view === 'relations') {
-    lines.push('', ...relations(p, e, width, height - lines.length - 1, false))
+    lines.push('')
+    const plotted = relations(p, e, width, height - lines.length, false, ink)
+    const charts = moved(plotted.charts, lines.length, 0)
+    lines.push(...plotted.lines)
 
-    return lines
+    return { lines, charts }
   }
 
   lines.push(
@@ -441,7 +599,7 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number): 
     lines.push('', ...sample(p, colorsOf(e.shown()), width, room, e.scene, slot))
   }
 
-  return lines
+  return { lines, charts: [] }
 }
 
 function seedSide(p: Paint, e: PaletteEditor, width: number, height: number): string[] {
@@ -621,7 +779,7 @@ export function drawEditor(e: PaletteEditor, cols: number, rows: number, color: 
   }
 
   const p = painter(color)
-  const ground = drawn.mock && look.chrome?.[0] ? p.bg(look.chrome[0]) : ''
+  const ground = (drawn.mock || drawn.charts) && look.chrome?.[0] ? p.bg(look.chrome[0]) : ''
   const solid = (box: string[]) => (ground ? box.map((line) => grounded(line, ground)) : box)
 
   if (e.help) {
@@ -683,17 +841,23 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
   const state = `${e.dirty() ? `${p.warn(MARKS.on)} unsaved   ` : ''}${reset}${shelf}${failing === 0 ? p.ok(gate) : p.dim(gate)}`
   const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
   const height = rows - 4
+  const ink = color && look.art === true ? look.chrome?.[1] : undefined
   let body: string[]
+  let charts: Chart[] = []
 
   if (e.overlay === 'open') {
     body = openPane(p, e, cols, height)
   } else {
     const right = cols - LEFT - 2
     const left = e.mode === 'seeds' ? seedPane(p, e, height) : slotPane(p, e, height, LEFT - 1)
-    const side = e.mode === 'seeds' ? seedSide(p, e, right, height) : detailPane(p, e, right, height)
+
+    const side =
+      e.mode === 'seeds' ? { lines: seedSide(p, e, right, height), charts: [] } : detailPane(p, e, right, height, ink)
+
+    charts = moved(side.charts, 2, LEFT + 2)
     body = Array.from(
       { length: height },
-      (_, i) => `${fit(left[i] ?? '', LEFT)}${p.dim('│')} ${fit(side[i] ?? '', right)}`,
+      (_, i) => `${fit(left[i] ?? '', LEFT)}${p.dim('│')} ${fit(side.lines[i] ?? '', right)}`,
     )
   }
 
@@ -705,7 +869,7 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
     footer(p, e, cols),
   ]
 
-  return { lines, art: undefined }
+  return charts.length > 0 ? { lines, art: undefined, charts } : { lines, art: undefined }
 }
 
 const PICKER_KEYS = new Set(['tab', 'a', '#', 'l', 'u', 'r', 'enter', 'esc'])
@@ -896,7 +1060,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
           return undefined
         }
 
-        const { lines, art, mock } = drawEditor(editor, terminal.cols, terminal.rows, surface.color, {
+        const { lines, art, mock, charts } = drawEditor(editor, terminal.cols, terminal.rows, surface.color, {
           behind: editor.pic && backdrop?.laid === true,
           art: layer?.ready === true,
           mock: layer?.ready === true,
@@ -917,7 +1081,7 @@ export async function runEditor(options: EditorOptions, surface: Surface): Promi
                     pictureArea(terminal.cols, terminal.rows),
                   )
                 : backdrop?.clear()) ?? ''
-            }${layer?.draw(art, mock) ?? ''}`,
+            }${layer?.draw(art, mock, charts) ?? ''}`,
         }
       },
     })

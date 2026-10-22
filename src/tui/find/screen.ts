@@ -7,6 +7,7 @@ import { SCENES, sceneAt, sceneParts, WIDE } from '../../core/scenes.ts'
 import { cells as columns } from '../../core/text.ts'
 import { POSITIONS } from '../../core/theme.ts'
 import type { Framing } from '../../pictures/backdrop.ts'
+import { graphic } from '../../terminals/graphics.ts'
 import { linked } from '../ansi.ts'
 import type { Tone } from '../bar.ts'
 import { type Help, type HelpSpot, type Legend, overlay, type Topic } from '../help.ts'
@@ -264,15 +265,7 @@ export function transmit(p: Placement, files = true): string | undefined {
     return undefined
   }
 
-  const chunks = data.match(/.{1,4096}/g) ?? ['']
-
-  return chunks
-    .map((chunk, i) => {
-      const more = i < chunks.length - 1 ? 1 : 0
-
-      return i === 0 ? `\x1b_Ga=t,f=100,i=${p.id},m=${more},q=2;${chunk}\x1b\\` : `\x1b_Gm=${more},q=2;${chunk}\x1b\\`
-    })
-    .join('')
+  return graphic(`a=t,f=100,i=${p.id}`, data)
 }
 
 export function place(p: Placement, cell: { w: number; h: number }): string {

@@ -2003,9 +2003,11 @@ __tt_verb() {
   case $1 in
     add|update|marketplace|new) __tt_installs "$@"; return ;;
     edit|check|share)
-      local REPLY
+      local REPLY worn cell=""
       __tt_name_of "$TTHEME_SPEC"
-      TTHEME_WORN=${TTHEME_PALETTE[$REPLY]:+$REPLY} __tt_installs "$@"
+      worn=${TTHEME_PALETTE[$REPLY]:+$REPLY}
+      [[ $1 == share && -t 1 ]] && __tt_cell && cell=$REPLY
+      TTHEME_WORN=$worn TTHEME_CELL=$cell __tt_installs "$@"
       return ;;
     on|off) __tt_switch "$@"; return ;;
     info) TTHEME_ZSH=$ZSH_VERSION __tt_cli "$@"; return ;;

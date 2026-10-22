@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
@@ -13,8 +14,9 @@ import { type LocalMarketplace, localMarketplaces, marketplaceFiles, palettesDir
 import { configHome } from '../store/paths.ts'
 import { localIdentity, REPO_NAME, readMarketplaceInfo, shownSource } from '../store/sources.ts'
 import { readTone, tonedModes } from '../store/tone.ts'
+import { colorless } from '../terminals/osc.ts'
 import { pending, say } from '../tui/pending.ts'
-import { qrCode } from '../tui/qr.ts'
+import { qrModules, qrPicture, qrText } from '../tui/qr.ts'
 import { interactive } from '../tui/terminal.ts'
 import { draftFor, named } from './craft.ts'
 import { pickPalettes } from './installs.ts'
@@ -106,6 +108,14 @@ async function toned(
   )
 }
 
+const CELL = /^([1-9]\d{0,3})x([1-9]\d{0,3})$/
+
+function cellOf(env: NodeJS.ProcessEnv): { w: number; h: number } | undefined {
+  const size = CELL.exec(env.TTHEME_CELL ?? '')
+
+  return size && !colorless(env) && !env.TMUX ? { w: Number(size[1]), h: Number(size[2]) } : undefined
+}
+
 function showLink(link: string, note: (scanned: boolean) => string, smaller: string): void {
   console.log(link)
 
@@ -113,13 +123,16 @@ function showLink(link: string, note: (scanned: boolean) => string, smaller: str
     return
   }
 
-  const qr = qrCode(link)
+  const modules = qrModules(link)
   const cols = process.stdout.columns || 80
   const rows = process.stdout.rows || 24
-  const fits = qr !== undefined && qr.cols <= cols && qr.rows + 4 <= rows
+  const room = { cols, rows: rows - 4 }
+  const cell = cellOf(process.env)
+  const qr = modules && (cell ? qrPicture(modules, cell, room, randomInt(2 ** 24, 2 ** 30)) : qrText(modules))
+  const fits = qr !== undefined && qr.cols <= room.cols && qr.rows <= room.rows
 
   if (qr && fits) {
-    console.log(`\n${qr.lines.join('\n')}`)
+    process.stdout.write(`\n${qr.out}`)
   }
 
   console.error(`\n${note(fits)}`)

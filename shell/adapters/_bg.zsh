@@ -290,6 +290,15 @@ __tt_pv_bg_open() {
   (( TTHEME_TMUX )) || { __tt_bg_cells; TTHEME_TYPED= }
 }
 
+__tt_cell() {
+  local -i bgcw=0 bgch=0 bgrel=0 bgmx=0 bgmy=0
+  local bgpad=""
+  (( TTHEME_TMUX )) && return 1
+  __tt_bg_cells cell
+  (( bgcw && bgch )) || return 1
+  REPLY=${bgcw}x$bgch
+}
+
 __tt_pv_bg_show() {
   (( bgcw )) || return 0
   local name=$1 img="" op size fit=contain focus=-1 REPLY

@@ -103,6 +103,8 @@ __tt_cli_env() { : }
 
 __tt_links() { (( ${TTHEME_LINKS[(Ie)$TTHEME_ADAPTER]} )) }
 
+__tt_cell() { return 1 }
+
 __tt_pv_bg_open() { : }
 
 __tt_pv_bg_show() { : }
