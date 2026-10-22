@@ -1020,7 +1020,7 @@ class PaletteBuilder extends HTMLElement {
 
       if (code) {
         await webCheck(code)
-        location.assign(`/builder/${code}`)
+        location.assign(encodeURI(`/builder/${code}`))
 
         return
       }
