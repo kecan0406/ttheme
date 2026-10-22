@@ -1,4 +1,4 @@
-import { Menu } from 'lucide'
+import { Menu, Paintbrush, Store, SwatchBook } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import { OFFICIAL_URL } from '@/lib/gallery'
@@ -9,9 +9,9 @@ import { Mark } from './mark'
 import { Wordmark } from './wordmark'
 
 const NAV = [
-  { href: '/sheets', label: 'sheets' },
-  { href: '/marketplace', label: 'marketplace' },
-  { href: '/builder', label: 'builder' },
+  { href: '/sheets', label: 'sheets', icon: SwatchBook },
+  { href: '/marketplace', label: 'marketplace', icon: Store },
+  { href: '/builder', label: 'builder', icon: Paintbrush },
 ] as const
 
 export function SiteHeader({ current, fixed = false }: { current: string; fixed?: boolean }) {
@@ -49,7 +49,10 @@ export function SiteHeader({ current, fixed = false }: { current: string; fixed?
                 aria-current={item.href === current ? 'page' : undefined}
                 class="rounded-sm px-3 text-sm leading-13 font-medium text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary max-[720px]:px-2.5"
               >
-                <span>{item.label}</span>
+                <span class="max-[420px]:inline-flex max-[420px]:align-middle">
+                  <Icon node={item.icon} class="hidden size-4 max-[420px]:block" />
+                  <span class="max-[420px]:sr-only">{item.label}</span>
+                </span>
               </a>
             ))}
           </nav>

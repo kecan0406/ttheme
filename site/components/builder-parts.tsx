@@ -225,7 +225,7 @@ export function BuilderBar({
         ) : null}
         <Button size="sm" data-export-open aria-haspopup="dialog" hidden={link !== null}>
           <Icon node={Download} />
-          export
+          <span class="max-[360px]:sr-only">export</span>
         </Button>
       </div>
     </header>
