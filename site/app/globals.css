@@ -1367,6 +1367,17 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 }
 
 .mock [data-c] {
+  position: relative;
+  isolation: isolate;
+}
+
+.mock [data-c]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg);
+  opacity: 0;
   animation: mock-cursor 1.06s steps(1, end) infinite;
 }
 
@@ -1413,7 +1424,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 
 @keyframes mock-cursor {
   50% {
-    background-color: transparent;
+    opacity: 1;
   }
 }
 
@@ -1528,7 +1539,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 
 @media (prefers-reduced-motion: reduce) {
   .term-caret,
-  .mock [data-c] {
+  .mock [data-c]::after {
     animation: none;
   }
 }
