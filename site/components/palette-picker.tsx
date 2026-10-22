@@ -48,13 +48,13 @@ export function PaletteOptions({ themes, current }: { themes: Theme[]; current: 
 
 export function PalettePicker() {
   return (
-    <palette-picker class="inline-flex max-[720px]:w-full">
+    <palette-picker class="inline-flex header-menu:w-full">
       <button
         type="button"
         popovertarget="wear-picker"
         aria-haspopup="dialog"
         data-wear-trigger
-        class="inline-flex h-full w-48 cursor-pointer items-center gap-2 pr-2.5 pl-3.5 transition-colors outline-none hover:bg-muted/65 focus-visible:inset-ring-2 focus-visible:inset-ring-ring max-[720px]:h-8 max-[720px]:w-full"
+        class="inline-flex h-full w-48 cursor-pointer items-center gap-2 pr-2.5 pl-3.5 transition-colors outline-none hover:bg-muted/65 focus-visible:inset-ring-2 focus-visible:inset-ring-ring header-menu:h-8 header-menu:w-full"
       >
         <span class="sr-only">palette</span>
         <span

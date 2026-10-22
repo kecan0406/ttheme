@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 
 @custom-variant app (@media (width >= 900px) and (height >= 600px));
+@custom-variant header-menu (@container site-header (width < 720px));
+@custom-variant header-wide (@container site-header (width >= 720px));
+@custom-variant header-short (@container site-header (720px <= width < 800px));
+@custom-variant header-tight (@container site-header (width < 680px));
+@custom-variant header-icons (@container site-header (width < 380px));
 
 @font-face {
   font-family: 'Inter Fallback';
@@ -346,8 +351,12 @@ facet-ground .t2 {
 [data-site-header] {
   --fold: 0px;
   top: calc(var(--fold) * -1);
-  height: calc(var(--fold) + var(--spacing) * 13);
+  min-height: calc(var(--fold) + var(--spacing) * 13);
   padding-top: var(--fold);
+}
+
+[data-site-header] > div {
+  container: site-header / inline-size;
 }
 
 [data-site-header] :is(a, button, input):not(:popover-open *) {
@@ -405,7 +414,7 @@ facet-ground .t2 {
     animation-range: 0px var(--fold), normal;
   }
 
-  @media (width >= 720px) {
+  @container site-header (width >= 680px) {
     :root[data-unfold] [data-site-header] [data-wordmark] {
       animation:
         header-wordmark linear both,

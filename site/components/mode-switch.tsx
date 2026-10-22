@@ -29,14 +29,14 @@ export function ModeSwitch() {
     <mode-switch
       role="radiogroup"
       aria-label="mode"
-      class="flex max-[720px]:grid max-[720px]:grid-cols-3 max-[720px]:border-t max-[720px]:border-border"
+      class="flex header-menu:grid header-menu:grid-cols-3 header-menu:border-t header-menu:border-border"
     >
       {ITEMS.map((item) => (
         <label
           title={item.label}
           data-mode-item={item.value}
           class={cn(
-            'relative flex h-full w-8 cursor-pointer items-center justify-center border-l border-border text-soft-foreground transition-colors duration-150 hover:bg-muted/65 hover:text-foreground has-focus-visible:inset-ring-2 has-focus-visible:inset-ring-ring max-[720px]:h-8 max-[720px]:w-auto max-[720px]:first:border-l-0',
+            'relative flex h-full w-8 cursor-pointer items-center justify-center border-l border-border text-soft-foreground transition-colors duration-150 hover:bg-muted/65 hover:text-foreground has-focus-visible:inset-ring-2 has-focus-visible:inset-ring-ring header-menu:h-8 header-menu:w-auto header-menu:first:border-l-0',
             item.on,
           )}
         >
