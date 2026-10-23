@@ -96,6 +96,10 @@ __tt_terminal_wear() {
     TTHEME_TERMINAL_SHOWN=$want
     return 0
   fi
+  if [[ $REPLY == stale ]]; then
+    TTHEME_TERMINAL_SHOWN=$want
+    return 2
+  fi
   TTHEME_TERMINAL_SHOWN=""
   return 1
 }
@@ -104,10 +108,17 @@ __tt_osc_apply() {
   local -a p=(${=1})
   (( ${#p} >= 20 )) || return 1
   local REPLY
+  integer worn=1
   __tt_name_of "$1"
-  if ! __tt_terminal_wired || [[ ${TTHEME_PALETTE[$REPLY]} != "$1" ]] || ! __tt_terminal_wear $REPLY; then
+  if __tt_terminal_wired && [[ ${TTHEME_PALETTE[$REPLY]} == "$1" ]]; then
+    __tt_terminal_wear $REPLY
+    worn=$?
+  fi
+  if (( worn == 1 )); then
     [[ -n $TTHEME_TERMINAL_SHOWN ]] && __tt_terminal_switch "${TTHEME_TERMINAL_APP_BASE:-Basic}"
     TTHEME_TERMINAL_SHOWN=""
+  fi
+  if (( worn )); then
     __tt_osc_colors "$1"
     __tt_out "$REPLY"
   fi
@@ -246,7 +257,7 @@ __tt_terminal_lay() {
 }
 
 __tt_bg_done() {
-  local out=${TTHEME_TERMINAL_OUT[$1]} pal=${${1%% *}%:*}
+  local out=${TTHEME_TERMINAL_OUT[$1]} pal=${${1%% *}%:*} REPLY
   bgname=""
   if [[ $1 == -* ]]; then
     pal=${1#-}
@@ -254,10 +265,12 @@ __tt_bg_done() {
     __tt_palettes_load
     [[ ${TTHEME_TERMINAL_SHOWN%% *} == $pal ]] || return 0
     TTHEME_TERMINAL_SHOWN=""
-    __tt_terminal_wear $pal
+    __tt_terminal_wear $pal || painted=?
   elif [[ -n $out && -e $out ]]; then
     TTHEME_TERMINAL_VIEW=${1%% *} TTHEME_TERMINAL_LAID=$1
-    __tt_terminal_switch "ttheme · $pal" && TTHEME_TERMINAL_SHOWN="$pal -"
+    __tt_terminal_switch "ttheme · $pal"
+    [[ $REPLY == (worn|stale) ]] && TTHEME_TERMINAL_SHOWN="$pal -"
+    [[ $REPLY == stale ]] && painted=?
   else
     TTHEME_BG_FAILED[$1]=1
   fi
@@ -273,7 +286,7 @@ __tt_terminal_unview() {
   __tt_palettes_load
   [[ ${TTHEME_TERMINAL_SHOWN%% *} == $pal ]] || return 0
   TTHEME_TERMINAL_SHOWN=""
-  __tt_terminal_wear $pal
+  __tt_terminal_wear $pal || painted=?
 }
 
 __tt_pv_bg_show() {

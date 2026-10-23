@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Theme } from '../core/theme.ts'
 import { owned } from '../core/theme.ts'
-import type { Unwired, Wiring } from './types.ts'
+import type { Ctx, Out, Unwired, Wiring } from './types.ts'
 
 export function readText(path: string): string {
   return existsSync(path) ? readFileSync(path, 'utf8') : ''
@@ -47,4 +47,20 @@ export function themeFiles(wiring: Wiring, theme: Theme): { file: string; conten
 
     return file !== '' && !file.includes('/') ? [{ file, content: out.content }] : []
   })
+}
+
+export function pruneThemes(wiring: Wiring, ctx: Ctx, out: Out): void {
+  const dir = wiring.shelf?.dir(ctx)
+
+  if (!dir || !existsSync(dir)) {
+    return
+  }
+
+  const kept = new Set(ctx.themes.flatMap((theme) => themeFiles(wiring, theme).map(({ file }) => file)))
+
+  for (const file of readdirSync(dir)) {
+    if (file.startsWith(owned('')) && !kept.has(file)) {
+      out.remove(join(dir, file))
+    }
+  }
 }

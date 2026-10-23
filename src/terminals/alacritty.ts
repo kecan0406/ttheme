@@ -9,10 +9,11 @@ import {
   fromHome,
   GENERATED,
   MANAGED,
+  modeFor,
   removeBlock,
   upsertBlock,
 } from '../store/wiring.ts'
-import { readText, stripped, tilde } from './common.ts'
+import { pruneThemes, readText, stripped, tilde } from './common.ts'
 import { alacritty as emitter } from './emit/alacritty.ts'
 import type { At, Now, Wiring } from './types.ts'
 
@@ -119,7 +120,7 @@ function themes(at: At): string {
 }
 
 function themeOf(now: Now): string | undefined {
-  return now.startup ? join(themes(now), `${owned(now.startup)}.toml`) : undefined
+  return now.startup ? join(themes(now), `${owned(now.startup)}.${modeFor(now.configHome)}.toml`) : undefined
 }
 
 export const alacritty: Wiring = {
@@ -130,8 +131,20 @@ export const alacritty: Wiring = {
   offered: () => true,
   present: (setup) => existsSync(join(setup.configHome, 'alacritty')),
   sync(ctx, out) {
+    const theme = themeOf(ctx)
+    const ahead = theme === undefined || existsSync(theme)
+
+    if (ahead) {
+      out.write(alacrittyOwn(ctx.configHome), alacrittyOwnText(theme))
+    }
+
     out.themes(alacritty)
-    out.write(alacrittyOwn(ctx.configHome), alacrittyOwnText(themeOf(ctx)))
+    pruneThemes(alacritty, ctx, out)
+
+    if (!ahead) {
+      out.write(alacrittyOwn(ctx.configHome), alacrittyOwnText(theme))
+    }
+
     const config = alacrittyConfig(ctx)
 
     for (const file of config.leftover ?? []) {

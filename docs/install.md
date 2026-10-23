@@ -97,7 +97,7 @@ next one.
   `%LOCALAPPDATA%\Microsoft\Windows Terminal\Fragments\ttheme\ttheme.json`,
   with every installed scheme and the default palette on the profile init ran
   in — `settings.json` is never edited, only touched so the terminal reloads.
-- **Warp** gets a theme per palette, `~/.warp/themes/ttheme-<palette>.yaml`, and
+- **Warp** gets a theme per palette and mode, `~/.warp/themes/ttheme-<palette>.<mode>.<hash>.yaml`, and
   the default palette as the one `theme` key of `[appearance.themes]` in
   `~/.warp/settings.toml` — Warp applies it within a second, and `ttheme off`
   puts back the theme you had. That key is also how a tab wears a palette of its
@@ -163,19 +163,19 @@ cp ghostty/themes/ttheme-miku.* ~/.config/ghostty/themes/
 
 # kitty
 curl -L $REL/ttheme-kitty.tar.gz | tar xz
-cp kitty/themes/ttheme-miku.conf ~/.config/kitty/themes/
-#   kitty.conf:  include themes/ttheme-miku.conf
+cp kitty/themes/ttheme-miku.* ~/.config/kitty/themes/
+#   kitty.conf:  include themes/ttheme-miku.dark.conf   (or .light.conf)
 
 # alacritty
 curl -L $REL/ttheme-alacritty.tar.gz | tar xz
-cp alacritty/themes/ttheme-miku.toml ~/.config/alacritty/themes/
+cp alacritty/themes/ttheme-miku.* ~/.config/alacritty/themes/
 #   alacritty.toml:  [general]
-#                    import = ["~/.config/alacritty/themes/ttheme-miku.toml"]
+#                    import = ["~/.config/alacritty/themes/ttheme-miku.dark.toml"]
 
 # wezterm
 curl -L $REL/ttheme-wezterm.tar.gz | tar xz
-cp wezterm/colors/ttheme-miku.toml ~/.config/wezterm/colors/
-#   wezterm.lua:  config.color_scheme = "ttheme-miku"
+cp wezterm/colors/ttheme-miku.* ~/.config/wezterm/colors/
+#   wezterm.lua:  config.color_scheme = "ttheme-miku.dark"   (or "ttheme-miku.light")
 
 # iTerm2 — open a .itermcolors to add it to Settings > Profiles > Colors presets
 curl -L $REL/ttheme-iterm2.tar.gz | tar xz
@@ -187,7 +187,7 @@ curl -L $REL/ttheme-windows-terminal.tar.gz | tar xz
 
 # warp
 curl -L $REL/ttheme-warp.tar.gz | tar xz
-cp warp/themes/ttheme-miku.yaml ~/.warp/themes/
+cp warp/themes/ttheme-miku.* ~/.warp/themes/
 
 # konsole — then pick ttheme-miku under Edit Current Profile › Appearance
 curl -L $REL/ttheme-konsole.tar.gz | tar xz

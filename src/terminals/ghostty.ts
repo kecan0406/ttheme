@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Mode, Setting } from '../core/mode.ts'
 import { owned } from '../core/theme.ts'
@@ -12,7 +12,7 @@ import {
   upsertBlock,
   userSets,
 } from '../store/wiring.ts'
-import { blockKeys, readText, stripped, themeFiles, tilde } from './common.ts'
+import { blockKeys, pruneThemes, readText, stripped, tilde } from './common.ts'
 import { ghostty as emitter } from './emit/ghostty.ts'
 import type { At, Now, Wiring } from './types.ts'
 
@@ -97,14 +97,7 @@ export const ghostty: Wiring = {
   present: (setup) => existsSync(join(setup.configHome, 'ghostty')),
   sync(ctx, out) {
     out.themes(ghostty)
-    const dir = join(ctx.configHome, 'ghostty', 'themes')
-    const kept = new Set(ctx.themes.flatMap((theme) => themeFiles(ghostty, theme).map(({ file }) => file)))
-
-    for (const file of existsSync(dir) ? readdirSync(dir) : []) {
-      if (file.startsWith(owned('')) && !kept.has(file)) {
-        out.remove(join(dir, file))
-      }
-    }
+    pruneThemes(ghostty, ctx, out)
 
     out.write(ghosttyOwn(ctx.configHome), ownText(ctx))
     const file = ghosttyConfig(ctx.configHome)

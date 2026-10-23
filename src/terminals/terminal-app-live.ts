@@ -8,7 +8,7 @@ import { backgroundsDir } from '../pictures/backdrop.ts'
 import { readBackdrop } from '../pictures/conf.ts'
 import { rewrite } from '../store/edits.ts'
 import { readInstalled } from '../store/installed.ts'
-import { colorless, paletteOsc } from './osc.ts'
+import { colorless, paletteOsc, queryTerminalColors, restoreOsc, specColors } from './osc.ts'
 import { detectTerminal, type Live, SETTLE_MS } from './terminal.ts'
 import { canvasFor, heldIn, terminalPictures, terminalProfile, terminalScript, windowOf } from './terminal-app.ts'
 
@@ -110,7 +110,7 @@ export function terminalLive(
         entry.name === name
           ? () => {
               back()
-              tell('')
+              tell(paletteOsc(entry))
             }
           : () => show(entry.background, paletteOsc(entry)),
       )
@@ -124,12 +124,12 @@ export function terminalLive(
 
       return told.stdout?.trim() === 'worn' ? '' : paletteOsc(entry)
     },
-    saved: async () => new Map(),
-    restore() {
+    saved: async (look) => (look === undefined ? queryTerminalColors() : specColors(look)),
+    restore(saved) {
       stop()
-      spawnSync('osascript', [...args, base], { stdio: 'ignore' })
+      const told = spawnSync('osascript', [...args, base], { encoding: 'utf8' })
 
-      return ''
+      return told.stdout?.trim() === 'worn' ? '' : restoreOsc(saved)
     },
     stop,
   }

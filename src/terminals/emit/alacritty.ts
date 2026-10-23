@@ -1,5 +1,6 @@
+import { modeOf } from '../../core/mode.ts'
 import type { Theme } from '../../core/theme.ts'
-import { owned } from '../../core/theme.ts'
+import { inOther, owned } from '../../core/theme.ts'
 import { banner, type Emitter, type Output } from './types.ts'
 
 const NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
@@ -13,25 +14,26 @@ export const alacritty: Emitter = {
   limits: 'no runtime color API (OSC only)',
 
   emit(theme: Theme): Output[] {
-    const colors = [
-      ...banner(theme),
-      '',
-      '[colors.primary]',
-      `background = '${theme.background}'`,
-      `foreground = '${theme.foreground}'`,
-      '',
-      '[colors.cursor]',
-      `cursor = '${theme.cursor}'`,
-      `text = '${theme.background}'`,
-      '',
-      '[colors.selection]',
-      `background = '${theme.selectionBackground}'`,
-      `text = '${theme.foreground}'`,
-      '',
-      block('[colors.normal]', theme.ansi.slice(0, 8)),
-      block('[colors.bright]', theme.ansi.slice(8, 16)),
-    ].join('\n')
-
-    return [{ path: `alacritty/themes/${owned(theme.name)}.toml`, content: colors }]
+    return [theme, ...inOther(theme)].map((shade) => ({
+      path: `alacritty/themes/${owned(theme.name)}.${modeOf(shade)}.toml`,
+      content: [
+        ...banner(shade),
+        '',
+        '[colors.primary]',
+        `background = '${shade.background}'`,
+        `foreground = '${shade.foreground}'`,
+        '',
+        '[colors.cursor]',
+        `cursor = '${shade.cursor}'`,
+        `text = '${shade.background}'`,
+        '',
+        '[colors.selection]',
+        `background = '${shade.selectionBackground}'`,
+        `text = '${shade.foreground}'`,
+        '',
+        block('[colors.normal]', shade.ansi.slice(0, 8)),
+        block('[colors.bright]', shade.ansi.slice(8, 16)),
+      ].join('\n'),
+    }))
   },
 }

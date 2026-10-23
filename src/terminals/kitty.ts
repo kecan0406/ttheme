@@ -1,9 +1,10 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import type { Mode } from '../core/mode.ts'
 import { owned } from '../core/theme.ts'
 import { backgroundsDir } from '../pictures/backdrop.ts'
-import { fromHome, GENERATED, MANAGED, removeBlock, upsertBlock, userSets } from '../store/wiring.ts'
-import { blockKeys, readText, stripped, tilde } from './common.ts'
+import { fromHome, GENERATED, MANAGED, modeFor, removeBlock, upsertBlock, userSets } from '../store/wiring.ts'
+import { blockKeys, pruneThemes, readText, stripped, tilde } from './common.ts'
 import { kitty as emitter, kittyWatcher } from './emit/kitty.ts'
 import type { At, Now, Wiring } from './types.ts'
 
@@ -13,9 +14,10 @@ export function kittyBlock(tthemeDir: string, home: string): string {
   return `# ${MANAGED}\ninclude ${fromHome(own, home, '~') ?? own}`
 }
 
-export function kittyOwnText(theme: string | undefined, watcher: string, user = ''): string {
+export function kittyOwnText(theme: string | undefined, watcher: string, mode: Mode, user = ''): string {
   return [
     `# ${GENERATED}`,
+    `# mode ${mode}`,
     ...(theme ? [`include ${theme}`] : []),
     `watcher ${watcher}`,
     ...['window_logo_scale 100', 'window_logo_alpha 1'].filter((line) => !userSets(user, line.split(' ')[0] as string)),
@@ -40,9 +42,12 @@ function themes(at: At): string {
 }
 
 function ownText(now: Now): string {
+  const mode = modeFor(now.configHome)
+
   return kittyOwnText(
-    now.startup && join(themes(now), `${owned(now.startup)}.conf`),
+    now.startup && join(themes(now), `${owned(now.startup)}.${mode}.conf`),
     kittyWatcherPath(now.configHome),
+    mode,
     readText(kittyConfig(now.configHome)),
   )
 }
@@ -56,9 +61,10 @@ export const kitty: Wiring = {
   present: (setup) => existsSync(join(setup.configHome, 'kitty')),
   sync(ctx, out) {
     out.themes(kitty)
+    pruneThemes(kitty, ctx, out)
     out.write(
       kittyWatcherPath(ctx.configHome),
-      kittyWatcher({ themes: themes(ctx), backgrounds: backgroundsDir(ctx.configHome) }),
+      kittyWatcher({ themes: themes(ctx), backgrounds: backgroundsDir(ctx.configHome), own: kittyOwn(ctx.configHome) }),
     )
     out.write(kittyOwn(ctx.configHome), ownText(ctx))
     const file = kittyConfig(ctx.configHome)

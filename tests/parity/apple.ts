@@ -44,8 +44,12 @@ function mark(path: string, was: Bookmark | undefined): Bookmark | undefined {
   return existsSync(path) ? { path: real(path), ino: statSync(path).ino } : undefined
 }
 
+function loaded(name: string): boolean {
+  return name !== '' && existsSync(join(dir, 'loaded', name.replaceAll('/', '--')))
+}
+
 function current(prefs: Prefs, name: string): boolean {
-  if (!name || !existsSync(join(dir, 'loaded', name.replaceAll('/', '--')))) {
+  if (!loaded(name)) {
     return false
   }
 
@@ -69,10 +73,10 @@ function wear(tty: string, name: string, fallback: string): string {
     writeFileSync(tab, `${profile}\n`)
   }
 
-  if (current(prefs, name)) {
+  if (loaded(name)) {
     to(name)
 
-    return 'worn'
+    return current(prefs, name) ? 'worn' : 'stale'
   }
 
   if (now.startsWith(OURS) && fallback && current(prefs, fallback)) {

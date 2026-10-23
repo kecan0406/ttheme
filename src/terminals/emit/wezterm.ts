@@ -1,5 +1,7 @@
+import type { Mode } from '../../core/mode.ts'
+import { modeOf } from '../../core/mode.ts'
 import type { Theme } from '../../core/theme.ts'
-import { owned } from '../../core/theme.ts'
+import { inOther, owned } from '../../core/theme.ts'
 import { confReaderLua } from '../../pictures/conf.ts'
 import { GENERATED } from '../../store/wiring.ts'
 import { stemLua } from './stem.ts'
@@ -12,27 +14,36 @@ export const wezterm: Emitter = {
   limits: 'OSC repaints per pane, pictures show per window',
 
   emit(theme: Theme): Output[] {
-    const colors = [
-      '[metadata]',
-      `name = "${owned(theme.name)}"`,
-      `origin_url = "${theme.ansiSource}"`,
-      '',
-      '[colors]',
-      `foreground = "${theme.foreground}"`,
-      `background = "${theme.background}"`,
-      `cursor_bg = "${theme.cursor}"`,
-      `cursor_border = "${theme.cursor}"`,
-      `cursor_fg = "${theme.background}"`,
-      `selection_bg = "${theme.selectionBackground}"`,
-      `selection_fg = "${theme.foreground}"`,
-      '',
-      `ansi = ${list(theme.ansi.slice(0, 8))}`,
-      `brights = ${list(theme.ansi.slice(8, 16))}`,
-      '',
-    ].join('\n')
+    return [theme, ...inOther(theme)].map((shade) => {
+      const scheme = weztermScheme(theme.name, modeOf(shade))
 
-    return [{ path: `wezterm/colors/${owned(theme.name)}.toml`, content: colors }]
+      return {
+        path: `wezterm/colors/${scheme}.toml`,
+        content: [
+          '[metadata]',
+          `name = "${scheme}"`,
+          `origin_url = "${shade.ansiSource}"`,
+          '',
+          '[colors]',
+          `foreground = "${shade.foreground}"`,
+          `background = "${shade.background}"`,
+          `cursor_bg = "${shade.cursor}"`,
+          `cursor_border = "${shade.cursor}"`,
+          `cursor_fg = "${shade.background}"`,
+          `selection_bg = "${shade.selectionBackground}"`,
+          `selection_fg = "${shade.foreground}"`,
+          '',
+          `ansi = ${list(shade.ansi.slice(0, 8))}`,
+          `brights = ${list(shade.ansi.slice(8, 16))}`,
+          '',
+        ].join('\n'),
+      }
+    })
   },
+}
+
+export function weztermScheme(palette: string, mode: Mode): string {
+  return `${owned(palette)}.${mode}`
 }
 
 interface WeztermModule {
@@ -40,6 +51,7 @@ interface WeztermModule {
   colors: string
   backgrounds: string
   startup?: string
+  mode: Mode
   palettes: Theme[]
 }
 
@@ -53,7 +65,7 @@ export function weztermModule(m: WeztermModule): string {
     `local MODULE = ${lua(m.path)}`,
     `local COLORS = ${lua(m.colors)}`,
     `local BACKGROUNDS = ${lua(m.backgrounds)}`,
-    `local STARTUP = ${m.startup ? lua(owned(m.startup)) : 'nil'}`,
+    `local STARTUP = ${m.startup ? lua(weztermScheme(m.startup, m.mode)) : 'nil'}`,
     'local PALETTES = {',
     ...m.palettes.map((t) => `  [${lua(t.name)}] = ${lua(t.background)},`),
     '}',

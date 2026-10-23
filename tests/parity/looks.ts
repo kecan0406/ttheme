@@ -363,7 +363,8 @@ export function kittyColors(configHome: string): Colors {
 }
 
 export function kittyTheme(configHome: string, palette: string): Colors | undefined {
-  const file = join(configHome, 'kitty', 'themes', `ttheme-${fileStem(palette)}.conf`)
+  const mode = /^# mode (\S+)$/m.exec(read(join(configHome, 'ttheme', 'kitty.conf')))?.[1] ?? 'dark'
+  const file = join(configHome, 'kitty', 'themes', `ttheme-${fileStem(palette)}.${mode}.conf`)
 
   if (!existsSync(file)) {
     return undefined

@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { backgroundsDir } from '../pictures/backdrop.ts'
-import { fromHome, MANAGED } from '../store/wiring.ts'
-import { readText, stripped, tilde } from './common.ts'
+import { fromHome, MANAGED, modeFor } from '../store/wiring.ts'
+import { pruneThemes, readText, stripped, tilde } from './common.ts'
 import { wezterm as emitter, weztermModule } from './emit/wezterm.ts'
 import type { At, Wiring } from './types.ts'
 
@@ -69,6 +69,7 @@ export const wezterm: Wiring = {
   present: (setup) => existsSync(join(setup.configHome, 'wezterm')) || existsSync(join(setup.home, '.wezterm.lua')),
   sync(ctx, out) {
     out.themes(wezterm)
+    pruneThemes(wezterm, ctx, out)
     out.write(
       module(ctx),
       weztermModule({
@@ -76,6 +77,7 @@ export const wezterm: Wiring = {
         colors: colors(ctx),
         backgrounds: backgroundsDir(ctx.configHome),
         ...(ctx.startup ? { startup: ctx.startup } : {}),
+        mode: modeFor(ctx.configHome),
         palettes: ctx.themes,
       }),
     )

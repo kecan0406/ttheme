@@ -186,10 +186,10 @@ test('configFile appends a documented line when a setting is missing', () => {
 test("the kitty block includes ttheme's file, which wears the chosen palette and loads the watcher", () => {
   assert.equal(kittyBlock('/home/u/.config/ttheme', '/home/u'), `# ${MANAGED}\ninclude ~/.config/ttheme/kitty.conf`)
   assert.equal(
-    kittyOwnText('/cfg/kitty/themes/ttheme-miku.conf', '/cfg/ttheme/kitty.py'),
-    `# ${GENERATED}\ninclude /cfg/kitty/themes/ttheme-miku.conf\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\nwindow_logo_alpha 1\n`,
+    kittyOwnText('/cfg/kitty/themes/ttheme-miku.dark.conf', '/cfg/ttheme/kitty.py', 'dark'),
+    `# ${GENERATED}\n# mode dark\ninclude /cfg/kitty/themes/ttheme-miku.dark.conf\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\nwindow_logo_alpha 1\n`,
   )
-  assert.doesNotMatch(kittyOwnText(undefined, '/cfg/ttheme/kitty.py'), /include/)
+  assert.doesNotMatch(kittyOwnText(undefined, '/cfg/ttheme/kitty.py', 'light'), /include/)
 })
 
 test('upsertAlacrittyImport appends a [general] block to a config without one', () => {
@@ -257,8 +257,8 @@ test('withSetting rewrites the line a setting already has, and adds one when it 
 
 test("ttheme's kitty file leaves the logo settings the user set to the user", () => {
   assert.equal(
-    kittyOwnText(undefined, '/cfg/ttheme/kitty.py', 'window_logo_alpha 0.4\n'),
-    `# ${GENERATED}\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\n`,
+    kittyOwnText(undefined, '/cfg/ttheme/kitty.py', 'dark', 'window_logo_alpha 0.4\n'),
+    `# ${GENERATED}\n# mode dark\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\n`,
   )
 })
 

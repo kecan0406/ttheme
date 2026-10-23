@@ -120,9 +120,9 @@ function wear(T, tab, name, fallback) {
     return 'kept'
   }
   const { d, ws } = settings()
-  if (current(d, ws, name) && T.settingsSets.byName(name).exists()) {
+  if (T.settingsSets.byName(name).exists()) {
     tab.currentSettings = T.settingsSets.byName(name)
-    return 'worn'
+    return current(d, ws, name) ? 'worn' : 'stale'
   }
   if (tab.currentSettings.name().startsWith(OURS) && fallback && T.settingsSets.byName(fallback).exists()) {
     tab.currentSettings = T.settingsSets.byName(fallback)

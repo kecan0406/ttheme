@@ -1,5 +1,6 @@
+import { modeOf } from '../../core/mode.ts'
 import type { Theme } from '../../core/theme.ts'
-import { owned } from '../../core/theme.ts'
+import { inOther, owned } from '../../core/theme.ts'
 import { confReaderPython } from '../../pictures/conf.ts'
 import { GENERATED } from '../../store/wiring.ts'
 import { stemPython } from './stem.ts'
@@ -9,25 +10,27 @@ export const kitty: Emitter = {
   id: 'kitty',
 
   emit(theme: Theme): Output[] {
-    const colors = [
-      ...banner(theme),
-      `background ${theme.background}`,
-      `foreground ${theme.foreground}`,
-      `cursor ${theme.cursor}`,
-      `cursor_text_color ${theme.background}`,
-      `selection_background ${theme.selectionBackground}`,
-      `selection_foreground ${theme.foreground}`,
-      ...theme.ansi.map((c, i) => `color${i} ${c}`),
-      '',
-    ].join('\n')
-
-    return [{ path: `kitty/themes/${owned(theme.name)}.conf`, content: colors }]
+    return [theme, ...inOther(theme)].map((shade) => ({
+      path: `kitty/themes/${owned(theme.name)}.${modeOf(shade)}.conf`,
+      content: [
+        ...banner(shade),
+        `background ${shade.background}`,
+        `foreground ${shade.foreground}`,
+        `cursor ${shade.cursor}`,
+        `cursor_text_color ${shade.background}`,
+        `selection_background ${shade.selectionBackground}`,
+        `selection_foreground ${shade.foreground}`,
+        ...shade.ansi.map((c, i) => `color${i} ${c}`),
+        '',
+      ].join('\n'),
+    }))
   },
 }
 
 interface KittyWatcher {
   themes: string
   backgrounds: string
+  own: string
 }
 
 export function kittyWatcher(m: KittyWatcher): string {
@@ -37,6 +40,7 @@ export function kittyWatcher(m: KittyWatcher): string {
     '',
     `THEMES = ${JSON.stringify(m.themes)}`,
     `BACKGROUNDS = ${JSON.stringify(m.backgrounds)}`,
+    `OWN = ${JSON.stringify(m.own)}`,
     'PLACES = {',
     "    'top-left': 'top-left', 'top-center': 'top', 'top-right': 'top-right',",
     "    'center-left': 'left', 'center': 'center', 'center-center': 'center', 'center-right': 'right',",
@@ -106,8 +110,19 @@ export function kittyWatcher(m: KittyWatcher): string {
     '        shown.pop(window.id, None)',
     '',
     '',
+    'def mode():',
+    '    try:',
+    '        with open(OWN) as f:',
+    '            for line in f:',
+    "                if line.startswith('# mode '):",
+    '                    return line[7:].strip()',
+    '    except OSError:',
+    '        pass',
+    "    return 'dark'",
+    '',
+    '',
     'def theme(palette):',
-    "    path = os.path.join(THEMES, 'ttheme-' + stem(palette) + '.conf')",
+    "    path = os.path.join(THEMES, 'ttheme-' + stem(palette) + '.' + mode() + '.conf')",
     '    if not palette or not os.path.exists(path):',
     '        return None',
     '    from kitty.colors import parse_colors',
