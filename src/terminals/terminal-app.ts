@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
+import type { Hex } from '../core/color.ts'
 import { listed } from '../core/manifest.ts'
-import { type Canvas, decodePng, encodeRgb, flatten, pngHead } from '../core/png.ts'
+import { type Canvas, decodePng, encodeRgb, flatten, pngHead, type Rgba } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
 import { owned, POSITIONS, stem } from '../core/theme.ts'
 import { backgroundsDir, frameAt } from '../pictures/backdrop.ts'
@@ -31,6 +32,10 @@ export function terminalPictures(configHome: string): string {
 
 function terminalWindow(env: Host['env'], home: string): string {
   return join(env.XDG_STATE_HOME ?? join(home, '.local', 'state'), 'ttheme', 'terminal-app.window')
+}
+
+function laidAhead(env: Host['env'], home: string): string {
+  return join(env.XDG_CACHE_HOME ?? join(home, '.cache'), 'ttheme', 'terminal-app')
 }
 
 export const TERMINAL_JS = `ObjC.import('AppKit')
@@ -321,9 +326,11 @@ function versions(ctx: Ctx): string {
 
 function lay(ctx: Ctx): Map<string, string> {
   const dir = terminalPictures(ctx.configHome)
+  const ahead = laidAhead(ctx.host.env, ctx.home)
   const held = heldIn(dir)
   const window = windowOf(ctx.host.env, ctx.home)
   const laid = new Map<string, string>()
+  const kept = new Set<string>()
 
   const drop = (files: readonly string[]) => {
     for (const file of files) {
@@ -344,21 +351,31 @@ function lay(ctx: Ctx): Map<string, string> {
     }
 
     const canvas = canvasFor(head.width, head.height, picture, window)
+    let image: Rgba | undefined
 
-    const version = createHash('sha1')
-      .update(bytes)
-      .update(JSON.stringify([theme.background.toLowerCase(), picture.opacity, canvas]))
-      .digest('hex')
-      .slice(0, 8)
+    const nameOf = (background: Hex) =>
+      `${owned(theme.name)}.${createHash('sha1')
+        .update(bytes)
+        .update(JSON.stringify([background.toLowerCase(), picture.opacity, canvas]))
+        .digest('hex')
+        .slice(0, 8)}.png`
 
-    const file = `${owned(theme.name)}.${version}.png`
+    const drawn = (background: Hex) => {
+      image ??= decodePng(bytes)
+
+      return encodeRgb(flatten(image, background, picture.opacity, canvas))
+    }
+
+    const file = nameOf(theme.background)
     const path = join(dir, file)
+    const cached = join(ahead, file)
+    kept.add(file)
 
     if (!files.includes(file)) {
       let content: Buffer
 
       try {
-        content = encodeRgb(flatten(decodePng(bytes), theme.background, picture.opacity, canvas))
+        content = existsSync(cached) ? readFileSync(cached) : drawn(theme.background)
       } catch {
         drop(files)
         continue
@@ -377,11 +394,32 @@ function lay(ctx: Ctx): Map<string, string> {
       drop(files.filter((other) => other !== file))
     }
 
+    if (!existsSync(cached)) {
+      writeAtomic(cached, readFileSync(path))
+    }
+
+    if (theme.other) {
+      const other = nameOf(theme.other.background)
+      kept.add(other)
+
+      if (!existsSync(join(ahead, other))) {
+        try {
+          writeAtomic(join(ahead, other), drawn(theme.other.background))
+        } catch {}
+      }
+    }
+
     laid.set(theme.name, path)
   }
 
   for (const files of held.values()) {
     drop(files)
+  }
+
+  for (const file of existsSync(ahead) ? readdirSync(ahead) : []) {
+    if (LAID.test(file) && !kept.has(file)) {
+      rmSync(join(ahead, file), { force: true })
+    }
   }
 
   return laid

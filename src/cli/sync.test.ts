@@ -326,10 +326,17 @@ test('sync drops Warp themes into its themes folder and wires nothing else', () 
   const home = fixture()
   const written = sync(configHome, manifest, { terminals: ['warp'], palettes: ['gojo'] }, home)
   const plain = plainTheme(home, 'gojo')
+  const [light] = warpFiles(home, 'gojo', 'light')
   const theme = readFileSync(join(warpThemes(home), plain), 'utf8')
   assert.match(theme, /^background: "#11191c"$/m)
   assert.match(theme, /^details: darker$/m)
-  assert.deepEqual(written, [join(warpThemes(home), plain), join(configHome, 'ttheme', 'palettes.zsh')])
+  assert.ok(light)
+  assert.match(readFileSync(join(warpThemes(home), light), 'utf8'), /^details: lighter$/m)
+  assert.deepEqual(written, [
+    join(warpThemes(home), plain),
+    join(warpThemes(home), light),
+    join(configHome, 'ttheme', 'palettes.zsh'),
+  ])
 })
 
 test('sync puts the startup palette on Warp through its settings file, and gives the old theme back while off', () => {
@@ -492,8 +499,10 @@ function pictured(configHome: string, opacity: number): void {
   )
 }
 
-function warpFiles(home: string, name: string): string[] {
-  return readdirSync(warpThemes(home)).filter((file) => new RegExp(`^ttheme-${name}\\.[0-9a-f]{8}\\.yaml$`).test(file))
+function warpFiles(home: string, name: string, mode = 'dark'): string[] {
+  return readdirSync(warpThemes(home)).filter((file) =>
+    new RegExp(`^ttheme-${name}\\.${mode}\\.[0-9a-f]{8}\\.yaml$`).test(file),
+  )
 }
 
 function picturedThemes(home: string): string[] {

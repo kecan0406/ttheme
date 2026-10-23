@@ -13,15 +13,17 @@ __tt_wezterm_var() {
 }
 
 __tt_shown() {
-  [[ $2 != force && $TTHEME_WEZTERM_SHOWN == $1 ]] && return 1
-  TTHEME_WEZTERM_SHOWN=$1
-  __tt_wezterm_var ttheme_shown $1
+  local shown=$1
+  [[ -n $TTHEME_PAINTED && -n ${TTHEME_PALETTE[$1]} ]] && shown+=" ${${TTHEME_PALETTE[$1]}%% *}"
+  [[ $2 != force && $TTHEME_WEZTERM_SHOWN == "$shown" ]] && return 1
+  TTHEME_WEZTERM_SHOWN=$shown
+  __tt_wezterm_var ttheme_shown "$shown"
   return 1
 }
 
-__tt_bg_shown() { REPLY=$TTHEME_WEZTERM_SHOWN }
+__tt_bg_shown() { REPLY=${TTHEME_WEZTERM_SHOWN%% *} }
 
-__tt_bg_refresh() { __tt_wezterm_var ttheme_shown $TTHEME_WEZTERM_SHOWN }
+__tt_bg_refresh() { __tt_shown "${TTHEME_WEZTERM_SHOWN%% *}" force }
 
 __tt_bg_lasting() { return 1 }
 

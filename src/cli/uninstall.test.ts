@@ -196,7 +196,7 @@ test('uninstall puts back the Warp theme ttheme replaced', () => {
   put(settings, before)
   install(p, { terminals: ['warp'], palettes: ['gojo'] })
   install(p, { terminals: ['warp'], palettes: ['gojo'] })
-  assert.match(readFileSync(settings, 'utf8'), /ttheme-gojo\.[0-9a-f]{8}\.yaml/)
+  assert.match(readFileSync(settings, 'utf8'), /ttheme-gojo\.dark\.[0-9a-f]{8}\.yaml/)
 
   applyUninstall(planUninstall(p), p, host)
 
@@ -219,7 +219,7 @@ test('uninstall puts back a linked Warp settings file through its link, which an
   symlinkSync(real, settings)
   install(p, { terminals: ['warp'], palettes: ['gojo'] })
   install(p, { terminals: ['warp'], palettes: ['gojo'] })
-  assert.match(readFileSync(real, 'utf8'), /ttheme-gojo\.[0-9a-f]{8}\.yaml/)
+  assert.match(readFileSync(real, 'utf8'), /ttheme-gojo\.dark\.[0-9a-f]{8}\.yaml/)
   const link = lstatSync(settings).ino
 
   applyUninstall(planUninstall(p), p, host)

@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto'
 import { luminance } from '../../core/color.ts'
+import { modeOf } from '../../core/mode.ts'
 import type { Theme } from '../../core/theme.ts'
-import { owned } from '../../core/theme.ts'
+import { inOther, owned } from '../../core/theme.ts'
 import type { Emitter, Output } from './types.ts'
 
 const NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
@@ -15,16 +16,6 @@ function block(header: string, colors: readonly string[]): string[] {
   return [`  ${header}:`, ...NAMES.map((name, i) => `    ${name}: "${colors[i]}"`)]
 }
 
-function hashed(name: string, parts: string[], extension: string): string {
-  const hash = createHash('sha1')
-
-  for (const part of parts) {
-    hash.update(part)
-  }
-
-  return `${owned(name)}.${hash.digest('hex').slice(0, 8)}.${extension}`
-}
-
 export function warpPictureFile(name: string, image: string, background: string): string {
   let hash = 0x811c9dc5
 
@@ -36,7 +27,9 @@ export function warpPictureFile(name: string, image: string, background: string)
 }
 
 export function warpThemeFile(theme: WarpLook, picture?: WarpPicture): string {
-  return hashed(theme.name, [warpTheme(theme, picture)], 'yaml')
+  const hash = createHash('sha1').update(warpTheme(theme, picture)).digest('hex').slice(0, 8)
+
+  return `${owned(theme.name)}.${modeOf(theme)}.${hash}.yaml`
 }
 
 function warpOpacity(picture: WarpPicture): number {
@@ -66,6 +59,9 @@ export const warp: Emitter = {
   limits: 'no selection color, and Warp paints one theme app-wide',
 
   emit(theme: Theme): Output[] {
-    return [{ path: `warp/themes/${warpThemeFile(theme)}`, content: warpTheme(theme) }]
+    return [theme, ...inOther(theme)].map((shade) => ({
+      path: `warp/themes/${warpThemeFile(shade)}`,
+      content: warpTheme(shade),
+    }))
   },
 }

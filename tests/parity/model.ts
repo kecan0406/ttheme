@@ -445,7 +445,7 @@ const wezterm = (): Kind => {
         return image ? imageName(image) : 'none'
       }
 
-      return pictureOf(backgrounds(app.place), tab.vars.get('ttheme_shown'))
+      return pictureOf(backgrounds(app.place), tab.vars.get('ttheme_shown')?.split(' ')[0])
     },
     opacity(app, tab) {
       if (!wired) {
@@ -460,7 +460,7 @@ const wezterm = (): Kind => {
         return image ? String(Number(opacity)) : '-'
       }
 
-      return strengthOf(backgrounds(app.place), tab.vars.get('ttheme_shown'))
+      return strengthOf(backgrounds(app.place), tab.vars.get('ttheme_shown')?.split(' ')[0])
     },
   }
 }

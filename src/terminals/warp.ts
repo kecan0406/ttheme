@@ -10,14 +10,13 @@ import {
   readSync,
   rmSync,
   statSync,
-  utimesSync,
   writeFileSync,
 } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { Hex } from '../core/color.ts'
 import { decodePng, encodeRgb, flatIndexed, flatten } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
-import { owned, stem } from '../core/theme.ts'
+import { inOther, owned, stem } from '../core/theme.ts'
 import { backgroundsDir } from '../pictures/backdrop.ts'
 import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
 import { backupOnce, editUserFile, relink, spareBackup, symlinked, writeAtomic } from '../store/edits.ts'
@@ -176,7 +175,12 @@ function indexed(path: string): boolean {
 function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
   const dir = warpThemes(ctx.home)
   const pictures = backgroundsDir(ctx.configHome)
-  const kept = new Set([...files.values(), ...ctx.themes.map((theme) => warpThemeFile(theme))])
+
+  const kept = new Set([
+    ...files.values(),
+    ...ctx.themes.flatMap((theme) => [theme, ...inOther(theme)].map((shade) => warpThemeFile(shade))),
+  ])
+
   const current = warpThemeOf(readText(warpSettings(ctx.home, ctx.configHome))) ?? ''
   const others = new Set<string>()
 
@@ -196,22 +200,31 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
         }
       }
 
-      const path = join(dir, file)
+      out.write(join(dir, file), warpTheme(theme, laid))
 
-      if (!out.write(path, warpTheme(theme, laid))) {
-        const now = new Date()
-        utimesSync(path, now, now)
-      }
-
-      if (theme.other) {
-        const other = join(dir, warpPictureFile(theme.name, picture.image, theme.other.background))
-        others.add(other)
-
-        if (!existsSync(other) && !indexed(picture.image)) {
-          try {
-            layPicture(picture.image, other, theme.other.background)
-          } catch {}
+      for (const shade of inOther(theme)) {
+        const other: WarpPicture = {
+          image: join(dir, warpPictureFile(theme.name, picture.image, shade.background)),
+          opacity: picture.opacity,
         }
+
+        others.add(other.image)
+
+        if (indexed(picture.image)) {
+          continue
+        }
+
+        if (!existsSync(other.image)) {
+          try {
+            layPicture(picture.image, other.image, shade.background)
+          } catch {
+            continue
+          }
+        }
+
+        const name = warpThemeFile(shade, other)
+        kept.add(name)
+        out.write(join(dir, name), warpTheme(shade, other))
       }
     }
   }

@@ -1755,7 +1755,7 @@ __tt_config() {
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_BG_BLUR:='*} == "$blur" ]] || __tt_redraw
   [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_TAB_PALETTE:='*} == "$tab" ]] || { __tt_cli sync && __tt_reload }
   if [[ ${(M)${(@f)"$(<$TTHEME_CONFIG)"}:#': ${TTHEME_MODE:='*} != "$mode" ]]; then
-    __tt_resync
+    __tt_resync here
     print -r -- "Open tabs take the new mode; other settings apply in new tabs — $TTHEME_CONFIG"
     return 0
   fi
@@ -1776,7 +1776,7 @@ __tt_mode() {
   fi
   __tt_config_write TTHEME_MODE $want || { print -u2 -r -- "ttheme: could not write $TTHEME_CONFIG"; return 1 }
   TTHEME_MODE=$want
-  __tt_resync || return 1
+  __tt_resync here || return 1
   print -r -- "Open tabs take the $want mode, and so do new ones — $TTHEME_CONFIG"
 }
 
@@ -1786,6 +1786,7 @@ __tt_resync() {
   zstat -F %s.%N -A was +mtime -- $store 2>/dev/null
   __tt_cli sync || return 1
   __tt_reload
+  [[ $1 == here ]] && __tt_fresh
   zstat -F %s.%N -A now +mtime -- $store 2>/dev/null
   [[ $now[1] == "$was[1]" ]] || { (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER }
   return 0

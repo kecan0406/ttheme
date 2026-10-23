@@ -1116,10 +1116,10 @@ __tt_pv_redraw() {
     out=$saved
   else
     out=$(__tt_cli redraw 2>&1)
+    __tt_reload
   fi
 
   bgsrc=() resized=1 bgdim=()
-  __tt_reload
   (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER
   msg=${${out//$'\n'/ }:-"Saved · no background pictures to draw"} msgt=300
 }

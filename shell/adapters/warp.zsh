@@ -68,7 +68,7 @@ __tt_hear() {
 
 __tt_warp_value() {
   setopt localoptions extendedglob
-  local -a files=($TTHEME_WARP_THEMES/ttheme-${${1/@/--}/\//--}.[0-9a-f](#c8).yaml(Nom))
+  local -a files=($TTHEME_WARP_THEMES/ttheme-${${1/@/--}/\//--}.${TTHEME_MODE_WORN:-dark}.[0-9a-f](#c8).yaml(Nom))
   (( ${#files} )) || { REPLY=""; return 1 }
   REPLY="{ custom = { name = \"$1\", path = \"${files[1]:t}\" } }"
 }
@@ -97,7 +97,10 @@ __tt_warp_read() {
 }
 
 __tt_warp_set() {
+  local REPLY
+  local -a reply TTHEME_WARP_LINES
   __tt_bg_settle
+  __tt_warp_read && [[ $REPLY == "$1" ]] && return 0
   [[ $1 == *'path = "ttheme-'* ]] && __tt_warp_ripe $TTHEME_WARP_THEMES/${${1#*path = \"}%%\"*}
   __tt_warp_write "$1"
 }
@@ -549,10 +552,15 @@ __tt_warp_job() {
 }
 
 __tt_warp_plain() {
-  local REPLY
+  local REPLY want
+  local -a reply TTHEME_WARP_LINES
   __tt_warp_here && __tt_warp_want $1 || return 0
-  [[ $REPLY == *'path = "ttheme-'* ]] && __tt_warp_ripe $TTHEME_WARP_THEMES/${${REPLY#*path = \"}%%\"*}
-  __tt_warp_write "$REPLY" && __tt_warp_record $1
+  want=$REPLY
+  if ! __tt_warp_read || [[ $REPLY != "$want" ]]; then
+    [[ $want == *'path = "ttheme-'* ]] && __tt_warp_ripe $TTHEME_WARP_THEMES/${${want#*path = \"}%%\"*}
+    __tt_warp_write "$want" || return 1
+  fi
+  __tt_warp_record $1
 }
 
 __tt_bg_done() {

@@ -1240,9 +1240,9 @@ done
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/warp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/warpthemes TTHEME_TERMINALS=(warp)
   TTHEME_STARTUP=miku TTHEME_SPEC=$TTHEME_PALETTE[miku] TTHEME_WARP_FOLLOWS=0 WARP_TERMINAL_SESSION_UUID=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   unset TTHEME_PAINTED
-  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.00000000.yaml; done
+  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.dark.00000000.yaml; done
   touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
-  TTHEME_WARP_PLAIN="miku ttheme-miku.00000000.yaml kaito ttheme-kaito.00000000.yaml homura ttheme-homura.00000000.yaml"
+  TTHEME_WARP_PLAIN="miku ttheme-miku.dark.00000000.yaml kaito ttheme-kaito.dark.00000000.yaml homura ttheme-homura.dark.00000000.yaml"
   tab=$TTHEME_WARP_TABS/$WARP_TERMINAL_SESSION_UUID
   ours() { __tt_warp_value $1; print -r -- "theme = $REPLY" }
   recorded() { print -r -- "$$ $* ${TTHEME_PALETTES_AT:--} ${TTHEME_PINS_AT:--}" }
@@ -1306,12 +1306,12 @@ done
   __tt_apply "$TTHEME_PALETTE[miku]"
   [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours miku)"* ]] || { print -u2 "a Warp tab stayed off the theme after the follower that put another tab in front was gone"; exit 1 }
   rm -f $TTHEME_WARP_TABS/.active $TTHEME_WARP_TABS/.follow $XDG_CONFIG_HOME/held
-  print -r -- 'name: "kaito"' >| $TTHEME_WARP_THEMES/ttheme-kaito.0123abcd.yaml
+  print -r -- 'name: "kaito"' >| $TTHEME_WARP_THEMES/ttheme-kaito.dark.0123abcd.yaml
   at=$EPOCHREALTIME
   __tt_apply "$TTHEME_PALETTE[kaito]"
-  (( EPOCHREALTIME - at >= 0.25 )) && [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-kaito.0123abcd.yaml"'* ]] ||
+  (( EPOCHREALTIME - at >= 0.25 )) && [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-kaito.dark.0123abcd.yaml"'* ]] ||
     { print -u2 "Warp was pointed at a theme file too new for it to know yet"; exit 1 }
-  rm -f $TTHEME_WARP_THEMES/ttheme-kaito.0123abcd.yaml $TTHEME_HOME/warp.base
+  rm -f $TTHEME_WARP_THEMES/ttheme-kaito.dark.0123abcd.yaml $TTHEME_HOME/warp.base
   print -rl -- '[general]' 'x = 1' >| $XDG_CONFIG_HOME/dotwarp/settings.toml
   __tt_apply "$TTHEME_PALETTE[miku]"
   [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- '[general]' 'x = 1' '' '[appearance.themes]' "$(ours miku)")" ]] ||
@@ -1321,11 +1321,11 @@ done
   [[ "$(<$TTHEME_WARP_SETTINGS)" == *$'\ntheme = "dark"' && ! -e $TTHEME_HOME/warp.base ]] ||
     { print -u2 "a Warp reset while ttheme is off, over no theme of the user's, did not leave Warp's default"; cat $TTHEME_WARP_SETTINGS; exit 1 }
   __tt_apply "custom" && { print -u2 "Warp wore a spec that is no palette"; exit 1 }
-  : > $TTHEME_WARP_THEMES/ttheme-miku.0123abcd.yaml
-  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-miku.0123abcd.yaml
-  : > $TTHEME_WARP_THEMES/ttheme-miku.89abcdef.yaml
+  : > $TTHEME_WARP_THEMES/ttheme-miku.dark.0123abcd.yaml
+  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-miku.dark.0123abcd.yaml
+  : > $TTHEME_WARP_THEMES/ttheme-miku.dark.89abcdef.yaml
   REPLY=; __tt_warp_value miku
-  [[ $REPLY == '{ custom = { name = "miku", path = "ttheme-miku.89abcdef.yaml" } }' ]] ||
+  [[ $REPLY == '{ custom = { name = "miku", path = "ttheme-miku.dark.89abcdef.yaml" } }' ]] ||
     { print -u2 "a Warp palette with a picture did not wear its newest pictured theme: $REPLY"; exit 1 }
   rm -rf $TTHEME_WARP_TABS
 ) || exit 1
@@ -1336,9 +1336,9 @@ done
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/fwarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/fwarpthemes TTHEME_TERMINALS=(warp)
   TTHEME_STARTUP=miku TTHEME_WARP_DB=$XDG_CONFIG_HOME/fwarp/warp.sqlite
   print -rl -- '[appearance.themes]' 'theme = "Dracula"' > $TTHEME_WARP_SETTINGS
-  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.00000000.yaml; done
+  for name in miku kaito homura; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.dark.00000000.yaml; done
   touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
-  TTHEME_WARP_PLAIN="miku ttheme-miku.00000000.yaml kaito ttheme-kaito.00000000.yaml homura ttheme-homura.00000000.yaml"
+  TTHEME_WARP_PLAIN="miku ttheme-miku.dark.00000000.yaml kaito ttheme-kaito.dark.00000000.yaml homura ttheme-homura.dark.00000000.yaml"
   sqlite3 $TTHEME_WARP_DB "
     create table app (id integer primary key, active_window_id integer references windows(id));
     create table windows (id integer primary key not null, active_tab_index integer not null);
@@ -1415,10 +1415,10 @@ done
   sent=${(j::)${${${(ps:\e_G:)out}#*;}%$'\e\\'}}
   [[ $out == $'\e_Ga=t,f=100,i=7,m=1,q=2;'* && ${#${(M)${(ps:\e_G:)out}:#m=0,*}} == 1 && $sent != *[^A-Za-z0-9+/=]* && "$(print -rn -- $sent | base64 --decode | shasum)" == "$(shasum < $XDG_CONFIG_HOME/big.png)" ]] ||
     { print -u2 "a picture sent to Warp did not arrive whole in its chunks"; exit 1 }
-  print -rl -- 'name: "miku"' 'details: darker' 'terminal_colors:' >| $TTHEME_WARP_THEMES/ttheme-miku.00000000.yaml
-  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-miku.00000000.yaml
-  : >| $TTHEME_WARP_THEMES/ttheme-miku.89abcdef.yaml
-  TTHEME_WARP_PLAIN="miku ttheme-miku.00000000.yaml"
+  print -rl -- 'name: "miku"' 'details: darker' 'terminal_colors:' >| $TTHEME_WARP_THEMES/ttheme-miku.dark.00000000.yaml
+  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-miku.dark.00000000.yaml
+  : >| $TTHEME_WARP_THEMES/ttheme-miku.dark.89abcdef.yaml
+  TTHEME_WARP_PLAIN="miku ttheme-miku.dark.00000000.yaml"
   printf '\x89PNG\r\n\x1a\n\0\0\0\x0dIHDR\0\0\x06\x5a\0\0\x07\x60' >| $bgd/miku.0a1b2c3d.png
   : >| $bgd/miku.0a1b2c3d@fill-40.png
   print -rl -- 'background-image = miku.0a1b2c3d@fill-40.png' 'background-image-fit = cover' 'background-image-opacity = 0.19' >| $bgd/miku.conf
@@ -1437,6 +1437,10 @@ done
     : >| $TTHEME_WARP_SETTINGS
     t=$EPOCHREALTIME; __tt_warp_ripe $fresh; took=$(( EPOCHREALTIME - t ))
     (( took >= 0.6 && took < 0.9 )) || { print -u2 "a new theme was named $took s after a settings write Warp may not have read yet, instead of 0.7 s"; exit 1 }
+    print -rl -- '[appearance.themes]' 'theme = { custom = { name = "miku", path = "ttheme-miku.ripe.yaml" } }' >| $TTHEME_WARP_SETTINGS
+    : >| $fresh
+    t=$EPOCHREALTIME; __tt_warp_set '{ custom = { name = "miku", path = "ttheme-miku.ripe.yaml" } }'; took=$(( EPOCHREALTIME - t ))
+    (( took < 0.05 )) || { print -u2 "Warp's settings already named the theme, and the write still waited $took s for it to ripen"; exit 1 }
     rm -f $fresh $TTHEME_WARP_SETTINGS
   ) || exit 1
   zselect() { : }
@@ -1522,12 +1526,12 @@ done
   [[ $TTHEME_WARP_SHOWING == "$view" ]] || { print -u2 "closing preview took Warp off the view of a picture chosen to be shown"; exit 1 }
   bgname=miku bgview=()
   __tt_pv_bg_close > /dev/null
-  [[ -z $TTHEME_WARP_SHOWING && ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-miku.89abcdef.yaml"'* ]] ||
+  [[ -z $TTHEME_WARP_SHOWING && ! -e $TTHEME_WARP_THEMES/$view && "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-miku.dark.89abcdef.yaml"'* ]] ||
     { print -u2 "closing preview left up the view of a picture nobody kept"; exit 1 }
   bgsize[miku]=145
   __tt_warp_view miku > /dev/null
   __tt_bg_hide miku
-  (( ! TTHEME_BG_JOB )) && ! __tt_pv_bg_busy && [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-miku.00000000.yaml"'* ]] ||
+  (( ! TTHEME_BG_JOB )) && ! __tt_pv_bg_busy && [[ "$(<$TTHEME_WARP_SETTINGS)" == *'path = "ttheme-miku.dark.00000000.yaml"'* ]] ||
     { print -u2 "find opened over Warp's picture, which covers its loading bar, or a view laid meanwhile went up after it"; exit 1 }
   rm -f $bgd/miku.0a1b2c3d.png $bgd/miku.0a1b2c3d@fill-40.png $bgd/miku.conf $XDG_CONFIG_HOME/cli.log
 ) || exit 1
@@ -1621,6 +1625,11 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   __tt_resync || { print -u2 "a sync that moved the pictures failed"; exit 1 }
   [[ "$(<$calls)" == $'sync\nreload\nrefresh miku' ]] ||
     { print -u2 "a sync that moved the pictures did not refresh the terminal's pictures once: $(<$calls)"; exit 1 }
+  rm -f $calls
+  __tt_fresh() { print -r -- fresh >> $calls }
+  __tt_resync here || { print -u2 "a mode verb's sync failed"; exit 1 }
+  [[ "$(<$calls)" == $'sync\nreload\nfresh\nrefresh miku' ]] ||
+    { print -u2 "a mode verb's tab did not take the new palettes before its terminal refreshed the pictures: $(<$calls)"; exit 1 }
   rm -f $calls
   __tt_cli() { print -r -- "$*" >> $calls; return 1 }
   __tt_resync && { print -u2 "a failed sync was taken for a switch"; exit 1 }

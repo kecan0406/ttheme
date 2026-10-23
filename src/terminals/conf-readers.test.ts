@@ -88,7 +88,7 @@ test('the Lua reader reads a conf the way the TypeScript one does', { skip: !LUA
   const file = fixtureFiles(dir)
   const module = weztermModule({ path: join(dir, 'wezterm.lua'), colors: dir, backgrounds: dir, palettes: [] })
   const from = module.indexOf('local BACKGROUNDS')
-  const to = module.indexOf('local function layers(palette)')
+  const to = module.indexOf('local function layers(')
 
   assert.ok(from >= 0 && to > from)
 

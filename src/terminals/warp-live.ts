@@ -1,9 +1,11 @@
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import type { Mode } from '../core/mode.ts'
 import { owned } from '../core/theme.ts'
 import { editUserFile, relink, writeAtomic } from '../store/edits.ts'
 import { readInstalled, worn } from '../store/installed.ts'
+import { modeFor } from '../store/wiring.ts'
 import { type WarpLook, type WarpPicture, warpTheme } from './emit/warp.ts'
 import { colorless } from './osc.ts'
 import { detectTerminal, type Live } from './terminal.ts'
@@ -34,7 +36,7 @@ function wired(configHome: string): boolean {
   }
 }
 
-export function warpInstalled(dir: string, name: string): string | undefined {
+export function warpInstalled(dir: string, name: string, mode: Mode): string | undefined {
   const stem = owned(name)
 
   if (!existsSync(dir)) {
@@ -42,7 +44,10 @@ export function warpInstalled(dir: string, name: string): string | undefined {
   }
 
   const hashed = readdirSync(dir)
-    .filter((file) => file.startsWith(`${stem}.`) && /^[0-9a-f]{8}\.yaml$/.test(file.slice(stem.length + 1)))
+    .filter(
+      (file) =>
+        file.startsWith(`${stem}.${mode}.`) && /^[0-9a-f]{8}\.yaml$/.test(file.slice(stem.length + mode.length + 2)),
+    )
     .map((file) => ({ file, at: statSync(join(dir, file)).mtimeMs }))
     .sort((a, b) => b.at - a.at)
 
@@ -82,7 +87,8 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
   const base = warpBasePath(configHome)
   const views: string[] = []
   const own = env.TTHEME_WARP_WEARS ?? worn(readInstalled(configHome))
-  const picture = pictureOf(dir, own && warpInstalled(dir, own))
+  const mode = modeFor(configHome)
+  const picture = pictureOf(dir, own && warpInstalled(dir, own, mode))
   let settle: NodeJS.Timeout | undefined
   let known: NodeJS.Timeout | undefined
 
@@ -148,7 +154,7 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
     slots: [],
     paint: (entry) => {
       if (entry.name === own) {
-        show(entry, warpInstalled(dir, entry.name))
+        show(entry, warpInstalled(dir, entry.name, mode))
       } else if (picture) {
         show(entry, undefined, picture)
       } else {

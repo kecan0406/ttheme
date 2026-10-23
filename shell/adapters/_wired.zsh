@@ -58,6 +58,8 @@ __tt_reload_ghostty() {
   pkill -USR2 -x ghostty 2>/dev/null && TTHEME_GHOSTTY_SENT=1
 }
 
+__tt_reload_wezterm() { [[ -z $TTHEME_PAINTED ]] && (( $+functions[__tt_wezterm_var] )) && __tt_wezterm_var ttheme_reload 1; return 0 }
+
 __tt_ghostty_shown() {
   local f=${TTHEME_CONFIG:h}/backgrounds/shown.conf
   REPLY=""
