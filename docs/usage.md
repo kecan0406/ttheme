@@ -127,9 +127,10 @@ In Warp, which wears one theme for the whole app, the tab in front decides it:
 preview switches that theme as the focus moves — every Warp window at once —
 and so do `ttheme use` and a pin, while switching tabs or windows puts
 on the palette of the one you switch to. Warp itself takes about 0.6 s to show
-a change; with `TTHEME_WARP_FAST` on (the default) it takes about 0.2 s while
-your tabs wear different palettes, and for 3 s after the tab in front changes
-its own, so preview's second palette onwards shows that fast too.
+a change. In the tuning panel Warp shows a picture's size, position and
+opacity through its theme too, so a step shows there about 0.6 s after the key,
+while the panel itself answers at once: the picture is laid behind it, and keys
+pressed meanwhile fold into the last of them.
 alt+c opens the [settings](#settings) in place — `↑`/`↓` (or `j`/`k`) pick one, `←`/`→` change it
 (the sort and the search hint animation change live), enter writes the changed
 lines to `config.zsh`, esc puts every value back. From 76
@@ -360,7 +361,6 @@ still wins:
 | `TTHEME_MOUSE` | `on` | `off` leaves the mouse to the terminal in every screen, so a drag selects text and a click opens a link without a modifier, and the wheel scrolls the terminal ([the mouse](#the-mouse)). alt+c in `preview` has it as `Mouse`, and turning it off there lets go of the mouse at once |
 | `TTHEME_BG_BLUR` | `0` | softens every background picture behind the text: a blur of this many screen pixels, up to 8, where `0` keeps them sharp. Changing it draws every picture again from its original — from `ttheme config`, or from alt+c in `preview`, whose `Blur` row offers `off` to `4px`. It is read from `config.zsh` itself, not from a shell's variables, since the pictures it draws are shared by every tab |
 | `TTHEME_BG_COLORS` | `original` | the colors a new background picture is drawn in: `original` keeps its own colors, `tone` tints it in one color of its palette. It only decides what `find` and `add` install from now on — every picture switches on its own afterwards, from the `Colors` row of `preview`'s tuning panel — so changing it draws nothing again. Pictures drawn in a tone before this default changed are drawn again in their own colors at the next `init` update, once; an install whose `config.zsh` sets `tone` keeps them. Set it in `ttheme config`, or in alt+c in `preview`, whose `Colors` row offers `original` and `tone`. Like the blur, it is read from `config.zsh` itself |
-| `TTHEME_WARP_FAST` | `on` | in Warp, which reads its settings only half a second after they change, `on` keeps it rereading them while it is in front and your tabs wear different palettes (and for 3 s after the tab in front changes its own), so a tab you switch to shows its palette in about 0.2 s instead of 0.6 s. That costs about 8% CPU, as Activity Monitor counts it, for as long as it lasts — about 6% in Warp and 2% in ttheme's background process (measured with a Warp window in front); `off` leaves it to Warp. `init` asks when you wire Warp, and `ttheme config` changes it |
 | `TTHEME_NAMES` | `on` | characters' names in every language, which preview, browse and `find`'s search box match besides the palette names: `on` downloads them from aninames' weekly release into `~/.cache/ttheme/aninames/` (about 7 MB to download, about 65 MB there once the search index is built from them) and checks for a newer one once a day in the background; `off` leaves them as they are |
 | `TTHEME_AUTO_UPDATE` | `on` | the checks ttheme makes by itself once a day: whether npm has a newer ttheme, and the list of every marketplace whose auto-update is on ([Installing palettes](#installing-palettes)); `off` leaves both to `ttheme update`, as a `CI` environment does |
 | `TTHEME_MARKETPLACE_LOOKUP` | `on` | Browse downloads the list of marketplaces on GitHub — every repository carrying the `ttheme-marketplace` topic, read every half hour — by itself when Search marketplace opens. `off` waits for `space` or `ctrl+r` there |

@@ -1,6 +1,7 @@
 source "$TTHEME_HOME/adapters/_bg.zsh"
 
-typeset -g TTHEME_TERMINAL_BASE="" TTHEME_TERMINAL_VIEW=""
+typeset -g TTHEME_TERMINAL_BASE="" TTHEME_TERMINAL_VIEW="" TTHEME_TERMINAL_LAID=""
+typeset -gA TTHEME_TERMINAL_OUT=()
 typeset -gi TTHEME_TERMINAL_RFD=0 TTHEME_TERMINAL_WFD=0 TTHEME_TERMINAL_PID=0 TTHEME_TERMINAL_VIEWS=0 TTHEME_TERMINAL_RESHAPE=0
 (( ${+TTHEME_TERMINAL_SHOWN} )) || typeset -gx TTHEME_TERMINAL_SHOWN=""
 
@@ -184,14 +185,14 @@ __tt_bg_send() { return 1 }
 __tt_bg_wipe() { REPLY="" }
 
 __tt_bg_refresh() {
-  TTHEME_TERMINAL_VIEW=""
+  TTHEME_TERMINAL_VIEW="" TTHEME_TERMINAL_LAID=""
   __tt_palettes_load && __tt_terminal_follow
   return 0
 }
 
 __tt_pv_bg_open() {
   setopt localoptions nomonitor nonotify
-  bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bganchor=0
+  bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bganchor=0 TTHEME_BG_FAILED=()
   local REPLY
   __tt_bg_shown && bginc=$REPLY
   (( TTHEME_TMUX )) && return 0
@@ -210,13 +211,16 @@ __tt_terminal_tuned() {
 }
 
 __tt_terminal_view() {
-  local name=$1 pal=${1%:*} img out place stem REPLY
+  local name=$1 pal=${1%:*} img out place stem key REPLY
   local -a wh fr held
   local -i W=$(( pw * bgcw )) H=$(( ph * bgch ))
   stem=${${pal/@/--}/\//--}
   held=(${TTHEME_CONFIG:h}/terminal-app/ttheme-$stem.*.png(N))
   (( ${#held} && W && H )) || return 1
   __tt_bg_load $name
+  key="$name ${bgsize[$name]} ${bgpos[$name]} ${bgop[$name]} ${bgoff[$name]} $W $H"
+  [[ $key == "$TTHEME_TERMINAL_LAID" ]] && return 0
+  (( ${+TTHEME_BG_FAILED[$key]} )) && return 1
   if [[ ${bgsize[$name]} == fill ]]; then
     img=${bgfill[$name]}
     __tt_bg_dim "$img" || return 1
@@ -231,16 +235,40 @@ __tt_terminal_view() {
   fr=(${=REPLY})
   printf -v place '%dx%d%+d%+d' $fr
   out=${held[1]:h}/ttheme-$stem.v$$-$(( ++TTHEME_TERMINAL_VIEWS )).png
-  __tt_cli flatten "$img" "$out" "${${TTHEME_PALETTE[$pal]}%% *}" "$(( bgoff[$name] ? 0 : ${bgop[$name]} ))" ${W}x$H $place $held[1] >/dev/null 2>&1 || return 1
-  TTHEME_TERMINAL_VIEW=$name
-  __tt_terminal_switch "ttheme · $pal" && TTHEME_TERMINAL_SHOWN="$pal -"
+  TTHEME_TERMINAL_OUT[$key]=$out
+  __tt_bg_ask "$key" __tt_terminal_lay $stem "$img" "$out" "${${TTHEME_PALETTE[$pal]}%% *}" "$(( bgoff[$name] ? 0 : ${bgop[$name]} ))" ${W}x$H $place
+}
+
+__tt_terminal_lay() {
+  local -a held=(${TTHEME_CONFIG:h}/terminal-app/ttheme-$1.*.png(N))
+  (( ${#held} )) || return 1
+  __tt_cli flatten "${@[2,-1]}" $held[1] >/dev/null 2>&1
+}
+
+__tt_bg_done() {
+  local out=${TTHEME_TERMINAL_OUT[$1]} pal=${${1%% *}%:*}
+  bgname=""
+  if [[ $1 == -* ]]; then
+    pal=${1#-}
+    TTHEME_TERMINAL_VIEW="" TTHEME_TERMINAL_LAID=""
+    __tt_palettes_load
+    [[ ${TTHEME_TERMINAL_SHOWN%% *} == $pal ]] || return 0
+    TTHEME_TERMINAL_SHOWN=""
+    __tt_terminal_wear $pal
+  elif [[ -n $out && -e $out ]]; then
+    TTHEME_TERMINAL_VIEW=${1%% *} TTHEME_TERMINAL_LAID=$1
+    __tt_terminal_switch "ttheme · $pal" && TTHEME_TERMINAL_SHOWN="$pal -"
+  else
+    TTHEME_BG_FAILED[$1]=1
+  fi
   return 0
 }
 
 __tt_terminal_unview() {
+  __tt_bg_settle
   [[ -n $TTHEME_TERMINAL_VIEW ]] || return 0
   local pal=${TTHEME_TERMINAL_VIEW%:*}
-  TTHEME_TERMINAL_VIEW=""
+  TTHEME_TERMINAL_VIEW="" TTHEME_TERMINAL_LAID=""
   __tt_cli image $pal tuned >/dev/null 2>&1
   __tt_palettes_load
   [[ ${TTHEME_TERMINAL_SHOWN%% *} == $pal ]] || return 0
@@ -253,19 +281,20 @@ __tt_pv_bg_show() {
   bgname=$1
   if __tt_terminal_tuned $1; then
     __tt_terminal_view $1
-  elif [[ -n $TTHEME_TERMINAL_VIEW ]]; then
-    __tt_terminal_unview
+  elif [[ -n $TTHEME_TERMINAL_VIEW ]] || __tt_pv_bg_busy; then
+    __tt_bg_ask "-${1%:*}" __tt_cli image ${1%:*} tuned
   fi
   return 0
 }
 
 __tt_pv_bg_close() {
   setopt localoptions nomonitor nonotify
+  __tt_bg_settle
   (( ${+bgedit[$bgname]} )) || [[ -n $bgname && ${bgview[${bgname%:*}]} == "$bgname" ]] || __tt_terminal_unview
   (( TTHEME_TERMINAL_WFD )) && exec {TTHEME_TERMINAL_WFD}>&-
   (( TTHEME_TERMINAL_RFD )) && exec {TTHEME_TERMINAL_RFD}<&-
   (( TTHEME_TERMINAL_PID )) && { kill $TTHEME_TERMINAL_PID 2>/dev/null; wait $TTHEME_TERMINAL_PID 2>/dev/null }
-  TTHEME_TERMINAL_WFD=0 TTHEME_TERMINAL_RFD=0 TTHEME_TERMINAL_PID=0
+  TTHEME_TERMINAL_WFD=0 TTHEME_TERMINAL_RFD=0 TTHEME_TERMINAL_PID=0 TTHEME_TERMINAL_OUT=()
   __tt_pv_bg_lost
 }
 

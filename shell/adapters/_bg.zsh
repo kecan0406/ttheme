@@ -1,4 +1,71 @@
 typeset -ga TTHEME_BG_POSITIONS=(top-left top-center top-right center-left center center-right bottom-left bottom-center bottom-right)
+typeset -gi TTHEME_BG_JOB=0
+typeset -g TTHEME_BG_JOBKEY=""
+typeset -gF TTHEME_BG_ASKED=0
+typeset -ga TTHEME_BG_WANT=()
+typeset -gA TTHEME_BG_FAILED=()
+zmodload -F zsh/zselect b:zselect 2>/dev/null
+zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null
+
+__tt_bg_ask() {
+  local key=$1
+  shift
+  __tt_bg_reap
+  if (( TTHEME_BG_JOB )) && [[ $key == "$TTHEME_BG_JOBKEY" ]]; then
+    TTHEME_BG_WANT=()
+    return 0
+  fi
+  TTHEME_BG_WANT=("$key" "$@") TTHEME_BG_ASKED=$EPOCHREALTIME
+  msg="Loading the background" msgt=500
+  (( TTHEME_BG_JOB )) || __tt_bg_start
+  return 0
+}
+
+__tt_bg_start() {
+  local -a run=("${(@)TTHEME_BG_WANT[2,-1]}")
+  TTHEME_BG_JOBKEY=$TTHEME_BG_WANT[1] TTHEME_BG_WANT=()
+  "${run[@]}" </dev/null >/dev/null 2>&1 &!
+  TTHEME_BG_JOB=$!
+}
+
+__tt_bg_reap() {
+  (( TTHEME_BG_JOB )) && ! kill -0 $TTHEME_BG_JOB 2>/dev/null || return 1
+  __tt_bg_ended
+}
+
+__tt_bg_ended() {
+  local key=$TTHEME_BG_JOBKEY
+  TTHEME_BG_JOB=0 TTHEME_BG_JOBKEY=""
+  __tt_bg_done "$key"
+  return 0
+}
+
+__tt_bg_done() { bgname="" }
+
+__tt_bg_settle() {
+  TTHEME_BG_WANT=()
+  (( TTHEME_BG_JOB )) || return 0
+  local -F end=$(( EPOCHREALTIME + 3 ))
+  while kill -0 $TTHEME_BG_JOB 2>/dev/null; do
+    (( EPOCHREALTIME < end )) || { kill $TTHEME_BG_JOB 2>/dev/null; break }
+    zselect -t 1
+  done
+  __tt_bg_ended
+  [[ $msg == "Loading the background" ]] && msg="" msgt=0
+  return 0
+}
+
+__tt_pv_bg_busy() { (( TTHEME_BG_JOB || ${#TTHEME_BG_WANT} )) }
+
+__tt_pv_bg_poll() {
+  __tt_pv_bg_busy || return 1
+  local -i done=1
+  __tt_bg_reap && done=0
+  (( ! TTHEME_BG_JOB && ${#TTHEME_BG_WANT} && EPOCHREALTIME - TTHEME_BG_ASKED >= 0.15 )) && __tt_bg_start
+  __tt_pv_bg_busy && return $done
+  [[ $msg == "Loading the background" ]] && msg="" msgt=0
+  return 0
+}
 
 __tt_bg_saved() {
   __tt_pictured "$@"
@@ -284,7 +351,7 @@ __tt_bg_write() {
 }
 
 __tt_pv_bg_open() {
-  bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bgpad="" bganchor=0
+  bgcw=0 bgch=0 bginc="" bgrel=0 bgmx=0 bgmy=0 bgpad="" bganchor=0 TTHEME_BG_FAILED=()
   local REPLY
   __tt_bg_shown && bginc=$REPLY
   (( TTHEME_TMUX )) || { __tt_bg_cells; TTHEME_TYPED= }
@@ -344,7 +411,11 @@ __tt_pv_bg_show() {
     sf=(${=REPLY})
     if __tt_bg_place $wh[1] $wh[2] $sf $bgcw $bgch $size ${bgpos[$name]} $fit $focus $bgrel; then
       at=(${=REPLY})
-      __tt_bg_crop $img $wh[1] $wh[2] $at[8] $at[10] && id=${REPLY% *} at[8]=${REPLY##* }
+      __tt_bg_crop $img $wh[1] $wh[2] $at[8] $at[10]
+      case $? in
+        0) id=${REPLY% *} at[8]=${REPLY##* } ;;
+        2) bgname=""; return 0 ;;
+      esac
     fi
   fi
   [[ -n $bgshown && $bgshown != "$id" ]] && printf '\e_Ga=d,d=i,i=%d,p=%d,q=2\e\\' $bgshown $bgshown
@@ -746,7 +817,7 @@ __tt_pv_bg_panel() {
 }
 
 __tt_pv_bg_strip() {
-  local pal=$tune dir=${TTHEME_CONFIG:h}/backgrounds cur fill want sty top side bot cmd buf="" z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] REPLY
+  local pal=$tune dir=${TTHEME_CONFIG:h}/backgrounds cur thumb want sty top side bot cmd buf="" z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] REPLY
   local -a keys=(${=bgpics[$tune]}) wh pd
   local -i r0=$1 col=$2 end=$3 n=${#keys} at show tc tr=3 i k x r id slot first
   if (( n < 1 )); then
@@ -786,9 +857,9 @@ __tt_pv_bg_strip() {
       buf+=$'\e['$(( r0 + 2 + r ))';'$x'H'$sty$side$z$'\e['$(( r0 + 2 + r ))';'$(( x + tc + 1 ))'H'$sty$side$z
     done
     pd=(${=bgpic[$pal:$keys[k]]})
-    fill=$dir/$pd[2]
-    [[ -r $fill ]] || continue
-    __tt_bg_send $fill || continue
+    thumb=$dir/$pd[1]@thumb.png
+    [[ -r $thumb ]] || continue
+    __tt_bg_send $thumb || continue
     id=$REPLY
     want="$id $(( r0 + 2 )) $(( x + 1 )) $tc $tr"
     __tt_bg_lasting && [[ ${bgthumb[$slot]} == "$want" ]] && continue
@@ -818,6 +889,7 @@ __tt_pv_bg_strip_off() {
 }
 
 __tt_pv_bg_close() {
+  __tt_bg_settle
   (( bgcw )) && { printf '\e_Ga=d,d=A,q=2\e\\'; __tt_pv_bg_lost }
   [[ -z $bgcut ]] || { rm -rf -- $bgcut; bgcut="" }
 }
@@ -825,6 +897,7 @@ __tt_pv_bg_close() {
 __tt_pv_bg_save() {
   local img name note err REPLY
   local -a saved=()
+  __tt_bg_settle
   (( ${#bgedit} + ${#bgswap} )) || return 0
   for img in ${(ok)bgedit}; do
     if ! __tt_bg_write $img; then

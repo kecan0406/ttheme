@@ -17,6 +17,7 @@ export interface Held {
   tone?: Hex
   figure: Buffer
   picture: Buffer
+  thumb?: Buffer
 }
 
 interface Head {
@@ -26,6 +27,7 @@ interface Head {
   tone?: Hex
   figure: number
   picture: number
+  thumb?: number
 }
 
 let written = 0
@@ -60,10 +62,12 @@ export function recall(key: string): Held | undefined {
     const bytes = readFileSync(path)
     const size = bytes.readUInt32BE(0)
     const head = JSON.parse(bytes.toString('utf8', 4, 4 + size)) as Head
+    const at = 4 + size + head.figure + head.picture
     const figure = bytes.subarray(4 + size, 4 + size + head.figure)
-    const picture = bytes.subarray(4 + size + head.figure, 4 + size + head.figure + head.picture)
+    const picture = bytes.subarray(4 + size + head.figure, at)
+    const thumb = head.thumb ? bytes.subarray(at, at + head.thumb) : undefined
 
-    if (figure.length !== head.figure || picture.length !== head.picture) {
+    if (figure.length !== head.figure || picture.length !== head.picture || thumb?.length !== head.thumb) {
       return undefined
     }
 
@@ -77,6 +81,7 @@ export function recall(key: string): Held | undefined {
       ...(head.tone ? { tone: head.tone } : {}),
       figure,
       picture,
+      ...(thumb ? { thumb } : {}),
     }
   } catch {
     return undefined
@@ -92,12 +97,16 @@ export function remember(key: string, held: Held): void {
       ...(held.tone ? { tone: held.tone } : {}),
       figure: held.figure.length,
       picture: held.picture.length,
+      ...(held.thumb ? { thumb: held.thumb.length } : {}),
     } satisfies Head),
   )
 
   const size = Buffer.alloc(4)
   size.writeUInt32BE(head.length)
-  writeAtomic(join(dir(), key), Buffer.concat([size, head, held.figure, held.picture]))
+  writeAtomic(
+    join(dir(), key),
+    Buffer.concat([size, head, held.figure, held.picture, ...(held.thumb ? [held.thumb] : [])]),
+  )
 
   if (++written % PRUNED_EVERY === 0) {
     prune()

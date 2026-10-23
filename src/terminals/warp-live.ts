@@ -10,6 +10,7 @@ import { detectTerminal, type Live } from './terminal.ts'
 import {
   WARP_DEFAULT,
   warpBasePath,
+  warpReady,
   warpSettings,
   warpThemeOf,
   warpThemes,
@@ -20,8 +21,6 @@ import {
 type Env = Record<string, string | undefined>
 
 export const WARP_SETTLE = 150
-
-export const WARP_KNOWN = 260
 
 function ours(value: string | undefined): boolean {
   return value?.includes(`path = "${owned('')}`) === true
@@ -134,13 +133,13 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
       }
 
       const shown = theme
-      const age = Date.now() - statSync(join(dir, shown)).mtimeMs
+      const now = Date.now()
       known = setTimeout(
         () => {
           wear(warpThemeValue(look.name, shown))
           sweep(shown)
         },
-        Math.max(0, WARP_KNOWN - age),
+        Math.max(0, warpReady(join(dir, shown), settings, now) - now),
       )
     }, WARP_SETTLE)
   }

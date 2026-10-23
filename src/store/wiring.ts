@@ -89,10 +89,6 @@ const CONFIG_SETTINGS = {
     doc: '# the colors new background pictures are drawn in: original keeps its own, tone tints a picture in one color of its palette — preview switches each picture later (default original)',
     default: 'original',
   },
-  TTHEME_WARP_FAST: {
-    doc: '# Warp tab switches: on keeps Warp rereading its settings while it is in front with tabs of different palettes, so the tab you switch to shows its palette in about 0.2 s instead of 0.6 s — about 8% CPU meanwhile; off leaves it to Warp (default on)',
-    default: 'on',
-  },
   TTHEME_NAMES: {
     doc: "# character names in every language for searching palettes and find's search box, from aninames' weekly release: on downloads them (about 7 MB) and checks once a day in the background; off leaves them as they are (default on)",
     default: 'on',

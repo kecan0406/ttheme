@@ -208,23 +208,6 @@ test('init wears the first palette and leaves the new-tab setting at its default
   assert.equal(readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8').match(tab)?.[1], 'off')
 })
 
-test('init writes the Warp tab-switch answer only when it differs from the default, and an upgrade keeps it', () => {
-  const paths = makeFixture()
-
-  const fast = () =>
-    readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8')
-      .match(/^(# )?: \$\{TTHEME_WARP_FAST:=(\w+)\}$/m)
-      ?.slice(1)
-      .join('')
-
-  applyInit(planInit(options({ warpFast: false }), paths))
-  assert.equal(fast(), 'off')
-  applyInit(planUpgrade(installedState(paths.configHome) as Installed, paths))
-  assert.equal(fast(), 'off')
-  applyInit(planInit(options({ warpFast: true }), paths))
-  assert.equal(fast(), '# on')
-})
-
 test('init writes the mode it was given, and every palette is worn in it from the first table', () => {
   const paths = makeFixture()
   const config = join(paths.configHome, 'ttheme', 'config.zsh')

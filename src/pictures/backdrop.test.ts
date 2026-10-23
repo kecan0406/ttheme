@@ -48,8 +48,10 @@ import {
   readStore,
   retint,
   showImage,
+  thumbless,
   tryOn,
   tuneOf,
+  writeThumb,
   writeTune,
 } from './backdrop.ts'
 import { readBackdrop } from './conf.ts'
@@ -432,7 +434,7 @@ test('dropping a picture takes its files, tuning and original with it', () => {
   assert.ok(!existsSync(gone))
   assert.equal(shown(dir), 'safebooru_1')
   assert.deepEqual(readdirSync(join(dir, 'originals')), ['kagami-safebooru_1.png'])
-  assert.equal(readdirSync(dir).filter((file) => file.startsWith('kagami.') && file.endsWith('.png')).length, 2)
+  assert.equal(readdirSync(dir).filter((file) => file.startsWith('kagami.') && file.endsWith('.png')).length, 3)
 })
 
 test('the conf lists every picture preview can switch to with its artist, and one not shown drops by key', () => {
@@ -732,6 +734,34 @@ test('a palette that changes its tone paints its pictures again, under new names
   )
   assert.deepEqual(tuneOf(dir, after), { size: 60, position: 'center' })
   assert.equal(shownPath(dir), join(dir, after.fill))
+})
+
+test("every picture keeps a thumbnail of its fill for preview's strip, which a new tone repaints and one without gets back", () => {
+  const configHome = mkdtempSync(join(tmpdir(), 'ttheme-thumb-'))
+  const dir = backgroundsDir(configHome)
+  const image = figure()
+
+  installBackdrop(
+    configHome,
+    KAGAMI,
+    PAINT.hue,
+    image,
+    { site: 'safebooru', id: 40, ext: 'png', bytes: encodeRgba(image) },
+    { width: 400, height: 300 },
+    0,
+  )
+
+  const thumb = (picture: Picture) => decodePng(new Uint8Array(readFileSync(join(dir, `${picture.stem}@thumb.png`))))
+  const before = rackOf(configHome, 'kagami')[0] as Picture
+  const small = thumb(before)
+  assert.deepEqual([small.width, small.height, ...small.data.subarray(0, 3)], [213, 160, 0x9b, 0x86, 0xc8])
+  retint(configHome, new Map([['kagami', { ...PAINT, hue: { color: '#5fa8d3', opacity: 0.15 } }]]))
+  const after = rackOf(configHome, 'kagami')[0] as Picture
+  assert.deepEqual([...thumb(after).data.subarray(0, 3)], [0x5f, 0xa8, 0xd3])
+  rmSync(join(dir, `${after.stem}@thumb.png`))
+  assert.deepEqual(thumbless(configHome), [{ name: 'kagami', key: after.key }])
+  assert.equal(writeThumb(configHome, 'kagami', after.key), true)
+  assert.deepEqual([thumbless(configHome), thumb(after).height], [[], 160])
 })
 
 test('a picture drawn before its tone was kept is drawn again from its original, with its tuning and off switch', async () => {

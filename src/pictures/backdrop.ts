@@ -34,6 +34,7 @@ import {
   resample,
   resamplePlane,
   retone,
+  toneOf,
   transparency,
 } from '../core/png.ts'
 import { inert } from '../core/text.ts'
@@ -46,6 +47,7 @@ import { type Held, keyOf, known, recall, remember } from './drawn.ts'
 const FILL = { width: 2560, height: 1550 }
 const DRAWING = 3
 const FIGURE = 2560
+const THUMB = 160
 
 const WHITE = 0.99
 const LIFT = 2
@@ -855,7 +857,37 @@ function stemOf(name: string, key: string, figure: Uint8Array, fill: Uint8Array)
   return `${fileStem(name)}.${createHash('sha1').update(key).update(figure).update(fill).digest('hex').slice(0, 8)}`
 }
 
-function laid(stem: string, focus: number, figure: Buffer, fill: Buffer): Made {
+function thumbFile(stem: string): string {
+  return `${stem}@thumb.png`
+}
+
+function shrunk(width: number, height: number): { width: number; height: number } {
+  return height <= THUMB
+    ? { width, height }
+    : { width: Math.max(1, Math.round((width * THUMB) / height)), height: THUMB }
+}
+
+function thumbOfDrawing(drawing: Drawing, tone: Hex): Buffer {
+  const { width, height } = shrunk(drawing.fill.width, drawing.fill.height)
+  const box = { x: 0, y: 0, w: drawing.fill.width, h: drawing.fill.height }
+
+  return drawing.coloring === 'original'
+    ? encodeRgba(resample(drawing.fill, box, width, height))
+    : encodeMask(quantize(resamplePlane(drawing.fill, box, width, height)), tone)
+}
+
+function thumbOf(fill: Uint8Array): Buffer {
+  const image = decodePng(fill)
+  const tone = toneOf(fill)
+  const { width, height } = shrunk(image.width, image.height)
+  const box = { x: 0, y: 0, w: image.width, h: image.height }
+
+  return tone
+    ? encodeMask(quantize(resamplePlane(alphaOf(image), box, width, height)), tone)
+    : encodeRgba(resample(image, box, width, height))
+}
+
+function laid(stem: string, focus: number, figure: Buffer, fill: Buffer, thumb: Buffer): Made {
   const named = `${stem}@fill-${focus}.png`
 
   return {
@@ -864,6 +896,7 @@ function laid(stem: string, focus: number, figure: Buffer, fill: Buffer): Made {
     files: [
       [`${stem}.png`, figure],
       [named, fill],
+      [thumbFile(stem), thumb],
     ],
   }
 }
@@ -872,7 +905,41 @@ function made(name: string, key: string, drawing: Drawing, tone: Hex): Made {
   const figure = drawing.coloring === 'original' ? encodeRgba(drawing.figure) : encodeMask(drawing.figure, tone)
   const fill = drawing.coloring === 'original' ? encodeRgba(drawing.fill) : encodeMask(drawing.fill, tone)
 
-  return laid(stemOf(name, key, figure, fill), Math.round(drawing.focus * 100), figure, fill)
+  return laid(
+    stemOf(name, key, figure, fill),
+    Math.round(drawing.focus * 100),
+    figure,
+    fill,
+    thumbOfDrawing(drawing, tone),
+  )
+}
+
+export function thumbless(configHome: string): { name: string; key: string }[] {
+  const dir = backgroundsDir(configHome)
+  const files = new Set(listing(dir))
+
+  return Object.entries(readStore(dir).palettes).flatMap(([name, rack]) =>
+    rack.pictures.flatMap((picture) =>
+      files.has(picture.fill) && !files.has(thumbFile(picture.stem)) ? [{ name, key: picture.key }] : [],
+    ),
+  )
+}
+
+export function writeThumb(configHome: string, name: string, key: string): boolean {
+  const dir = backgroundsDir(configHome)
+  const picture = rackIn(readStore(dir), name)?.pictures.find((held) => held.key === key)
+
+  if (!picture) {
+    return false
+  }
+
+  try {
+    writeAtomic(join(dir, thumbFile(picture.stem)), thumbOf(new Uint8Array(readFileSync(join(dir, picture.fill)))))
+
+    return true
+  } catch {
+    return false
+  }
 }
 
 function paintOf(
@@ -1184,6 +1251,8 @@ function remembered(dir: string, name: string, picture: Picture): void {
   }
 
   try {
+    const thumb = join(dir, thumbFile(picture.stem))
+
     remember(key, {
       stem: picture.stem,
       fill: picture.fill,
@@ -1191,11 +1260,12 @@ function remembered(dir: string, name: string, picture: Picture): void {
       ...(picture.tone ? { tone: picture.tone } : {}),
       figure: readFileSync(join(dir, `${picture.stem}.png`)),
       picture: readFileSync(join(dir, picture.fill)),
+      ...(existsSync(thumb) ? { thumb: readFileSync(thumb) } : {}),
     })
   } catch {}
 }
 
-function toned(name: string, key: string, held: Held, tone: Hex | undefined): Made | undefined {
+function toned(name: string, key: string, held: Held & { thumb: Buffer }, tone: Hex | undefined): Made | undefined {
   if (tone === undefined || held.tone === tone) {
     return {
       stem: held.stem,
@@ -1203,15 +1273,17 @@ function toned(name: string, key: string, held: Held, tone: Hex | undefined): Ma
       files: [
         [`${held.stem}.png`, held.figure],
         [held.fill, held.picture],
+        [thumbFile(held.stem), held.thumb],
       ],
     }
   }
 
   const figure = held.tone === undefined ? undefined : retone(held.figure, tone)
   const fill = held.tone === undefined ? undefined : retone(held.picture, tone)
+  const thumb = held.tone === undefined ? undefined : retone(held.thumb, tone)
 
-  return figure && fill
-    ? laid(stemOf(name, key, figure, fill), Number(/@fill-(\d+)\.png$/.exec(held.fill)?.[1] ?? 50), figure, fill)
+  return figure && fill && thumb
+    ? laid(stemOf(name, key, figure, fill), Number(/@fill-(\d+)\.png$/.exec(held.fill)?.[1] ?? 50), figure, fill, thumb)
     : undefined
 }
 
@@ -1270,7 +1342,8 @@ function drawnFor(
   cut: boolean,
 ): Drawn | null {
   const key = cut ? undefined : drawnKey(dir, name, picture, size, blurring, coloring, isLight(paint.colors))
-  const held = key ? recall(key) : undefined
+  const recalled = key ? recall(key) : undefined
+  const held = key && recalled ? thumbed(key, recalled) : undefined
   const hit = held && toned(name, picture.key, held, coloring === 'tone' ? paint.hue.color : undefined)
 
   if (held && hit) {
@@ -1304,10 +1377,26 @@ function drawnFor(
       ...(coloring === 'tone' ? { tone: paint.hue.color } : {}),
       figure: result.files[0]?.[1] as Buffer,
       picture: result.files[1]?.[1] as Buffer,
+      thumb: result.files[2]?.[1] as Buffer,
     })
   }
 
   return { made: result, peak, image }
+}
+
+function thumbed(key: string, held: Held): (Held & { thumb: Buffer }) | undefined {
+  if (held.thumb) {
+    return { ...held, thumb: held.thumb }
+  }
+
+  try {
+    const whole = { ...held, thumb: thumbOf(held.picture) }
+    remember(key, whole)
+
+    return whole
+  } catch {
+    return undefined
+  }
 }
 
 export function redrawn(

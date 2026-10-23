@@ -170,7 +170,16 @@ __tt_bg_crop() {
   fi
   [[ -n $bgcut ]] || bgcut=$(mktemp -d) || return 1
   band=$bgcut/${${img:t}%.png}-$y-$h.png
-  [[ -r $band ]] || __tt_bg_bake $img $band $iw $h $iw $ih 0 $(( -y )) || return 1
+  if [[ ! -r $band ]]; then
+    (( ${+TTHEME_BG_FAILED[$band]} )) && return 1
+    __tt_bg_ask $band __tt_bg_bake $img $band $iw $h $iw $ih 0 $(( -y ))
+    return 2
+  fi
   __tt_bg_send $band
   REPLY="$REPLY 0"
+}
+
+__tt_bg_done() {
+  bgname=""
+  [[ $1 == /* && ! -r $1 ]] && TTHEME_BG_FAILED[$1]=1
 }

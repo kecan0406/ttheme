@@ -109,6 +109,10 @@ __tt_pv_bg_open() { : }
 
 __tt_pv_bg_show() { : }
 
+__tt_pv_bg_busy() { return 1 }
+
+__tt_pv_bg_poll() { return 1 }
+
 __tt_pv_bg_adjust() { : }
 
 __tt_pv_bg_state() { REPLY=""; return 1 }

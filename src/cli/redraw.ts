@@ -14,7 +14,9 @@ import {
   paintFor,
   rackIn,
   readStore,
+  thumbless,
   undrawn,
+  writeThumb,
 } from '../pictures/backdrop.ts'
 import { MATTING } from '../pictures/cutout.ts'
 import { prune, writable } from '../pictures/drawn.ts'
@@ -109,6 +111,8 @@ export async function redrawPictures(
   const total = hits.length + misses.length + primes.length
 
   if (total === 0) {
+    await shrinkBare(home)
+
     return 0
   }
 
@@ -189,12 +193,29 @@ export async function redrawPictures(
 
   applyRedraw(home, drawn)
   prune()
+  await shrinkBare(home)
 
   if (emit && drawn.length > 0) {
     refreshPictures(home, user)
   }
 
   return drawn.length
+}
+
+async function shrinkBare(home: string): Promise<void> {
+  const bare = thumbless(home)
+
+  if (bare.length <= 2) {
+    for (const { name, key } of bare) {
+      writeThumb(home, name, key)
+    }
+
+    return
+  }
+
+  const pool = new Pool(Math.min(WORKERS, availableParallelism() - 1, bare.length))
+  await pool.map(bare.map(({ name, key }) => ({ job: 'shrink' as const, home, name, key })))
+  pool.close()
 }
 
 export async function redrawColoring(

@@ -209,8 +209,6 @@ __tt_pins_load
 
 : ${TTHEME_BG_COLORS:=original}
 
-: ${TTHEME_WARP_FAST:=on}
-
 : ${TTHEME_MARKETPLACE_LOOKUP:=on}
 
 : ${TTHEME_AUTO_UPDATE:=on}

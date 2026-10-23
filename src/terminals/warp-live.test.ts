@@ -18,12 +18,12 @@ import { test } from 'node:test'
 import type { PaletteEntry } from '../core/manifest.ts'
 import type { Wired } from '../core/wired.ts'
 import { writeInstalled } from '../store/installed.ts'
-import { warpBasePath, warpSettings, warpThemeOf, warpThemes, warpThemeValue } from './warp.ts'
-import { WARP_KNOWN, WARP_SETTLE, warpInstalled, warpLive } from './warp-live.ts'
+import { WARP_SPACED, warpBasePath, warpSettings, warpThemeOf, warpThemes, warpThemeValue } from './warp.ts'
+import { WARP_SETTLE, warpInstalled, warpLive } from './warp-live.ts'
 
 const env = { TERM_PROGRAM: 'WarpTerminal' }
 
-const settled = () => new Promise((resolve) => setTimeout(resolve, WARP_SETTLE + WARP_KNOWN + 150))
+const settled = () => new Promise((resolve) => setTimeout(resolve, WARP_SETTLE + WARP_SPACED + 150))
 
 function palette(name: string, background: string): PaletteEntry {
   return {

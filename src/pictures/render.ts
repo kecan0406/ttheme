@@ -18,6 +18,7 @@ import {
   rackOf,
   type Tune,
   tryOn,
+  writeThumb,
   writeTune,
 } from './backdrop.ts'
 import { paletteMatch } from './fit.ts'
@@ -119,12 +120,19 @@ interface Prepare {
   coloring: Coloring
 }
 
+interface Shrink {
+  job: 'shrink'
+  home: string
+  name: string
+  key: string
+}
+
 export interface Look {
   match: number
   hash: string
 }
 
-type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw | Prepare
+type Task = Thumb | Band | Match | Twin | Show | Backdrop | Redraw | Prepare | Shrink
 
 type Lane = 'tile' | 'band' | 'view'
 
@@ -136,7 +144,7 @@ type Result<T extends Task> = T extends Match
     ? boolean
     : T extends Redraw
       ? Picture | null
-      : T extends Prepare
+      : T extends Prepare | Shrink
         ? boolean
         : T extends Show
           ? Shown
@@ -151,6 +159,7 @@ const LANES: Record<Task['job'], Lane> = {
   backdrop: 'view',
   redraw: 'view',
   prepare: 'view',
+  shrink: 'view',
 }
 
 let held: { from: string; clear: number; inked: Inked } | undefined
@@ -169,6 +178,10 @@ async function work(task: Task): Promise<number | boolean | Look | Picture | Sho
 
   if (task.job === 'prepare') {
     return prepareOne(task.home, task.name, task.key, task.paint, task.blur, task.coloring)
+  }
+
+  if (task.job === 'shrink') {
+    return writeThumb(task.home, task.name, task.key)
   }
 
   if (task.job === 'show') {

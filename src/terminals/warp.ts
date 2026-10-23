@@ -9,6 +9,7 @@ import {
   readFileSync,
   readSync,
   rmSync,
+  statSync,
   utimesSync,
   writeFileSync,
 } from 'node:fs'
@@ -102,8 +103,22 @@ function ours(content: string): boolean {
   return warpThemeOf(content)?.includes(`path = "${owned('')}`) === true
 }
 
+export const WARP_KNOWN = 260
+
+export const WARP_SPACED = 700
+
+const WARP_FRESH = 750
+
+const WARP_LATER_MS = 500
+
+export function warpReady(theme: string, settings: string, now = Date.now()): number {
+  const made = statSync(theme).mtimeMs
+
+  return now - made < WARP_FRESH ? Math.max(made + WARP_KNOWN, statSync(settings).mtimeMs + WARP_SPACED) : now
+}
+
 const WARP_LATER =
-  "setTimeout(() => { const fs = require('node:fs'); const [file, next, seen, theme, later, token] = process.argv.slice(-6); if (!fs.existsSync(later) || fs.readFileSync(later, 'utf8') !== token || fs.readFileSync(file, 'utf8') !== seen || !fs.existsSync(theme)) return; const real = fs.realpathSync(file); const tmp = real + '.ttheme-' + process.pid; fs.writeFileSync(tmp, next); fs.chmodSync(tmp, fs.statSync(real).mode & 0o7777); fs.renameSync(tmp, real); if (!fs.lstatSync(file).isSymbolicLink()) return; const link = file + '.ttheme-' + process.pid; fs.rmSync(link, { force: true }); fs.symlinkSync(fs.readlinkSync(file), link); fs.renameSync(link, file) }, 500)"
+  "const [file, next, seen, theme, later, token, wait] = process.argv.slice(-7); setTimeout(() => { const fs = require('node:fs'); if (!fs.existsSync(later) || fs.readFileSync(later, 'utf8') !== token || fs.readFileSync(file, 'utf8') !== seen || !fs.existsSync(theme)) return; const real = fs.realpathSync(file); const tmp = real + '.ttheme-' + process.pid; fs.writeFileSync(tmp, next); fs.chmodSync(tmp, fs.statSync(real).mode & 0o7777); fs.renameSync(tmp, real); if (!fs.lstatSync(file).isSymbolicLink()) return; const link = file + '.ttheme-' + process.pid; fs.rmSync(link, { force: true }); fs.symlinkSync(fs.readlinkSync(file), link); fs.renameSync(link, file) }, Number(wait))"
 
 interface Laid {
   files: Map<string, string>
@@ -293,7 +308,10 @@ function wearWarp(at: At, startup: string | undefined, laid: Laid, keep = false)
     const token = randomUUID()
     mkdirSync(dirname(later), { recursive: true })
     writeFileSync(later, token)
-    spawn(process.execPath, ['-e', WARP_LATER, file, next, content, join(warpThemes(at.home), theme), later, token], {
+    const shown = join(warpThemes(at.home), theme)
+    const now = Date.now()
+    const wait = String(Math.max(WARP_LATER_MS, warpReady(shown, file, now) - now))
+    spawn(process.execPath, ['-e', WARP_LATER, file, next, content, shown, later, token, wait], {
       detached: true,
       stdio: 'ignore',
     }).unref()

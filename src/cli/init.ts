@@ -30,16 +30,7 @@ import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, startupPalette, worn, writeInstalled } from '../store/installed.ts'
 import { configHome as configDir } from '../store/paths.ts'
 import { marketplacesOf, OFFICIAL } from '../store/sources.ts'
-import {
-  coloringFor,
-  configFile,
-  modeFor,
-  modeSetting,
-  settingValue,
-  upsertBlock,
-  withSetting,
-  zshrcBlock,
-} from '../store/wiring.ts'
+import { coloringFor, configFile, modeFor, modeSetting, upsertBlock, withSetting, zshrcBlock } from '../store/wiring.ts'
 import { tilde } from '../terminals/common.ts'
 import { WIRINGS, wirings } from '../terminals/index.ts'
 import { liveOf } from '../terminals/live.ts'
@@ -74,7 +65,6 @@ export interface InitOptions {
   terminals: Wired[]
   palettes: string[]
   off?: boolean
-  warpFast?: boolean
   mode?: Setting
   skills?: SkillTarget[]
 }
@@ -147,12 +137,9 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
   const configPath = join(home, 'config.zsh')
   const seeded = configFile(existsSync(configPath) ? readFileSync(configPath, 'utf8') : '')
 
-  const fast =
-    opts.warpFast === undefined ? seeded : withSetting(seeded, 'TTHEME_WARP_FAST', opts.warpFast ? 'on' : 'off')
-
   const settings = {
     file: configPath,
-    content: opts.mode === undefined ? fast : withSetting(fast, 'TTHEME_MODE', opts.mode),
+    content: opts.mode === undefined ? seeded : withSetting(seeded, 'TTHEME_MODE', opts.mode),
   }
 
   const installed: Installed = {
@@ -438,16 +425,6 @@ async function askMode(configHome: string, terminals: readonly Wired[]): Promise
   )
 }
 
-async function askWarpFast(configHome: string): Promise<boolean> {
-  return accepted(
-    await p.confirm({
-      message:
-        "Switch Warp to each tab's palette in about 0.2 s instead of 0.6 s?\nAbout 8% CPU while Warp is in front with tabs of different palettes — `ttheme config` changes it",
-      initialValue: settingValue(configHome, 'TTHEME_WARP_FAST') !== 'off',
-    }),
-  )
-}
-
 function verify(plan: InitPlan): void {
   const missing = [
     ...plan.copies.filter((c) => !existsSync(c.to)).map((c) => c.to),
@@ -701,7 +678,6 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   }
 
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
-  const warpFast = terminals.includes('warp') ? await askWarpFast(configHome) : undefined
   const mode = await askMode(configHome, terminals)
   const worn: Mode = mode === 'auto' ? (readAppearance() ?? systemAppearance(host) ?? 'dark') : mode
   const made = existing ? againManifest(existing, paths) : loadManifest(ROOT)
@@ -731,7 +707,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   )
 
   const skills = await askSkills(agentHomes(home, process.env), existing?.skills ?? [])
-  const opts: InitOptions = { terminals, palettes, off: !wear, warpFast, mode, skills }
+  const opts: InitOptions = { terminals, palettes, off: !wear, mode, skills }
   const plan = existing ? planAgain(existing, opts, paths) : planInit(opts, paths)
   p.note(
     [

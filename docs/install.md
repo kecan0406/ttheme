@@ -11,9 +11,7 @@ bash or fish — see [Shells](#shells).
 
 ## What init asks
 
-1. **Which terminals to wire** — the one you are in comes preselected. With
-   Warp among them, also whether to switch Warp to each tab's palette in about
-   0.2 s instead of 0.6 s, for some CPU while it does (`TTHEME_WARP_FAST`).
+1. **Which terminals to wire** — the one you are in comes preselected.
 2. **Auto, light or dark** — the mode every palette is worn in (`TTHEME_MODE`,
    `auto` preselected where Ghostty is among the terminals, since it follows the
    system's appearance as Ghostty shows it; otherwise what you wear now, `dark` on

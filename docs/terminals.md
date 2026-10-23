@@ -45,9 +45,8 @@ get it.
   color queries but paints one theme app-wide and never the background an OSC
   sets, so a Warp tab wears its palette through that theme: `ttheme use`,
   a pin, preview and browse switch it, and switching tabs or windows
-  puts on the palette of the one in front — about 0.2 s later with
-  `TTHEME_WARP_FAST` on, 0.6 s with it off, which is Warp's own wait before it
-  reloads its settings. Warp records no switch
+  puts on the palette of the one in front — about 0.6 s later, which is Warp's
+  own wait before it reloads its settings. Warp records no switch
   between split panes, so the panes of a tab share the palette the tab came to
   the front with. Where init did not wire Warp, `ttheme use` in a Warp tab shows
   what wiring it would edit and asks first; yes wires Warp then and there and
@@ -213,13 +212,10 @@ process — the first tab's prompt starts it, and it leaves with the last ttheme
 tab — watches the session database Warp rewrites on every tab and window
 switch, reads the tab in front through one `sqlite3` it keeps open, and puts
 that tab's palette on. Warp reloads `settings.toml` only once a change to it is
-half a second old, so while Warp is in front and your tabs wear different
-palettes the process rewrites the file's first byte with itself every 0.25 s
-(`TTHEME_WARP_FAST`, on by default): there is always an older change about to
-be reloaded, and the palette of a tab you switch to rides on it — about 0.2 s
-instead of 0.6 s, for about 8% CPU while it lasts. Nothing in the file changes;
-a `settings.toml` linked from a dotfiles repo gets an identical link put in its
-place instead, since Warp only notices changes inside its own folder.
+half a second old, so the palette of a tab you switch to shows about 0.6 s
+later. A `settings.toml` linked from a dotfiles repo gets an identical link put
+in its place after every change, since Warp only notices changes inside its own
+folder.
 A tab that never took a palette follows the default, and after `ttheme off` a
 tab painted before shows your own theme again, as Ghostty's tabs turn off — at
 once where they sit idle at their prompt, else at their next focus. Warp tells a shell waiting at its prompt nothing when its tab

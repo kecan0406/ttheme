@@ -1519,10 +1519,13 @@ __tt_pv_getch() {
     read -sk 1 -t $1 2>/dev/null
     return
   fi
-  local -F t=0.2 at
-  local -i quick=0
-  (( gstep )) && t=0.06
+  local -F t at
+  local -i quick=0 step
   while :; do
+    t=0.2
+    __tt_pv_bg_busy && t=0.05
+    (( gstep )) && t=0.06
+    step=$(( t * 100 + 0.5 ))
     at=$EPOCHREALTIME
     read -sk 1 -t $t 2>/dev/null && return 0
     if (( EPOCHREALTIME - at < t / 4 )); then
@@ -1532,12 +1535,13 @@ __tt_pv_getch() {
     fi
     [[ -t 0 ]] || return 1
     __tt_pv_size && return 1
+    __tt_pv_bg_poll && return 1
     if (( osdt > 0 )); then
-      (( osdt -= gstep ? 6 : 20 ))
+      (( osdt -= step ))
       (( osdt > 0 )) || return 1
     fi
     if (( msgt > 0 )); then
-      (( msgt -= gstep ? 6 : 20 ))
+      (( msgt -= step ))
       (( msgt > 0 )) || return 1
     fi
     (( vchk )) && __tt_pv_standing && return 1
