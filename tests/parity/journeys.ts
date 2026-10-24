@@ -43,6 +43,7 @@ export interface Probe {
   pin(dir: string, palette: string): void
   pinHost(host: string, palette: string): void
   wire(terminal: 'ghostty'): Promise<Elsewhere>
+  appear(mode: Mode): Promise<void>
 }
 
 export interface Journey {
@@ -811,6 +812,29 @@ export const JOURNEYS: Journey[] = [
       await ghostty.appear('dark')
       await ghostty.appear('light')
       await p.look('back', { want: 'kita', mode: 'light' })
+    },
+  },
+  {
+    id: 'auto-own',
+    about:
+      'with the mode on auto and no Ghostty wired, the appearance the terminal itself hears reaches every tab, painted or not, and new tabs',
+    async run(p) {
+      const a = await p.open()
+      const b = await p.open()
+      await p.type(b, 'ttheme use kita')
+      await p.launch(b, 'ttheme')
+      await p.keys(b, 'alt-c', 'left', 'left', 'enter', '1s')
+      await p.quit(b)
+      await p.appear('light')
+      await p.focus(b)
+      await p.look('painted', { want: 'kita', mode: 'light' })
+      await p.focus(a)
+      await p.look('unpainted', { want: 'konata', unpainted: true })
+      await p.open()
+      await p.look('new', { want: 'konata', repaints: 0 })
+      await p.focus(b)
+      await p.appear('dark')
+      await p.look('back', { want: 'kita', mode: 'dark' })
     },
   },
   {

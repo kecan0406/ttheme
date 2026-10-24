@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { Terminal } from '@xterm/headless'
 import type { Mode } from '../../src/core/mode.ts'
 import { TERMINAL_DOMAIN, terminalPictures } from '../../src/terminals/terminal-app.ts'
@@ -93,6 +93,7 @@ export class Tab {
   buf = ''
   focusing = false
   appearing = false
+  dark: boolean | undefined
   sync = false
   held = ''
   pending = 0
@@ -193,6 +194,31 @@ function vars(app: App, tab: Tab, data: string): void {
   }
 }
 
+function darkOf(color: string): boolean {
+  const [r = 0, g = 0, b = 0] = [1, 3, 5].map((at) => Number.parseInt(color.slice(at, at + 2), 16))
+
+  return 30 * r + 59 * g + 11 * b < 12750
+}
+
+function hooked(app: App, path: string | undefined): void {
+  if (!path || read(path).trim() === app.appearance) {
+    return
+  }
+
+  writeFileSync(path, `${app.appearance}\n`)
+  app.log(`hook ${app.appearance}`)
+
+  const shells = join(dirname(path), 'shells')
+
+  for (const name of existsSync(shells) ? readdirSync(shells) : []) {
+    if (/^\d+$/.test(name)) {
+      try {
+        process.kill(Number(name), 'SIGURG')
+      } catch {}
+    }
+  }
+}
+
 const ghostty = (): Kind => {
   let loaded: GhosttyLoad = { colors: OWN, picture: 'none', opacity: '-' }
   let seen = 0
@@ -257,12 +283,26 @@ const iterm2 = (): Kind => {
       delete slot.over
     }
 
+    app.darkened(tab)
     app.log(`profile ${card?.name ?? 'own'}`)
+  }
+
+  const reread = (app: App) => {
+    profiles = itermProfiles(app.place.home, app.appearance)
+
+    for (const tab of app.tabs) {
+      const card = profiles.get(tab.profile)
+
+      if (card) {
+        cards.set(tab, card)
+        app.rebase(tab, card.colors)
+      }
+    }
   }
 
   return {
     launch(app) {
-      profiles = itermProfiles(app.place.home)
+      profiles = itermProfiles(app.place.home, app.appearance)
       fallback = read(join(app.place.home, '.parity', 'defaults', ITERM_SUITE, 'Default Bookmark Guid')).trim() || 'own'
     },
     opening(app) {
@@ -285,18 +325,8 @@ const iterm2 = (): Kind => {
     watched: (app) => [
       join(app.place.home, 'Library', 'Application Support', 'iTerm2', 'DynamicProfiles', 'ttheme.json'),
     ],
-    changed(app) {
-      profiles = itermProfiles(app.place.home)
-
-      for (const tab of app.tabs) {
-        const card = profiles.get(tab.profile)
-
-        if (card) {
-          cards.set(tab, card)
-          app.rebase(tab, card.colors)
-        }
-      }
-    },
+    changed: reread,
+    appeared: reread,
     osc(app, tab, code, data) {
       if (code !== 1337) {
         return
@@ -370,6 +400,11 @@ const kitty = (): Kind => {
         vars(app, tab, data)
       }
     },
+    appeared(app) {
+      if (watching) {
+        hooked(app, /^# appearance (.+)$/m.exec(read(join(app.place.configHome, 'ttheme', 'kitty.conf')))?.[1])
+      }
+    },
     focused(app, tab) {
       if (watching) {
         tab.logo = pictureOf(backgrounds(app.place), tab.vars.get('ttheme_shown'))
@@ -425,6 +460,15 @@ const wezterm = (): Kind => {
 
       for (const tab of app.tabs) {
         app.rebase(tab, config)
+      }
+    },
+    appeared(app) {
+      if (wired) {
+        const quoted = /^local APPEARANCE = (".+")$/m.exec(
+          read(join(app.place.configHome, 'ttheme', 'wezterm.lua')),
+        )?.[1]
+
+        hooked(app, quoted && JSON.parse(quoted))
       }
     },
     osc(app, tab, code, data) {
@@ -853,6 +897,26 @@ export class App {
     for (const [code, slot] of tab.slots) {
       slot.base = colors.get(code) ?? slot.base
     }
+
+    this.darkened(tab)
+  }
+
+  darkened(tab: Tab): void {
+    if (this.behavior.appearance !== 'palette') {
+      return
+    }
+
+    const dark = darkOf(this.shown(tab, '11'))
+
+    if (dark === tab.dark) {
+      return
+    }
+
+    tab.dark = dark
+
+    if (tab.appearing) {
+      this.reply(tab, this.appearanceReport(tab))
+    }
   }
 
   shown(tab: Tab, code: string): string {
@@ -877,13 +941,15 @@ export class App {
     return new Map(tab.slots.keys().map((code) => [code, this.shown(tab, code)]))
   }
 
-  private appearanceReport(): string {
-    return `\x1b[?997;${this.appearance === 'dark' ? 1 : 2}n`
+  private appearanceReport(tab: Tab): string {
+    const dark = this.behavior.appearance === 'system' ? this.appearance === 'dark' : darkOf(this.shown(tab, '11'))
+
+    return `\x1b[?997;${dark ? 1 : 2}n`
   }
 
   report(tab: Tab): void {
-    if (tab.appearing) {
-      this.reply(tab, this.appearanceReport())
+    if (tab.appearing && this.behavior.appearance === 'system') {
+      this.reply(tab, this.appearanceReport(tab))
     }
   }
 
@@ -974,6 +1040,8 @@ export class App {
     if (tab.bgs.at(-1) !== bg) {
       tab.bgs.push(bg)
     }
+
+    this.darkened(tab)
   }
 
   private graphics(tab: Tab, data: string): void {
@@ -1089,8 +1157,8 @@ export class App {
     }
 
     if (prefix === '?' && final === 'n') {
-      if (params[0] === 996 && this.behavior.appearance) {
-        this.reply(tab, this.appearanceReport())
+      if (params[0] === 996 && this.behavior.appearance !== 'none') {
+        this.reply(tab, this.appearanceReport(tab))
       }
 
       return
@@ -1133,7 +1201,7 @@ export class App {
         }
       }
 
-      if (params.includes(2031) && this.behavior.appearance) {
+      if (params.includes(2031) && this.behavior.appearance !== 'none') {
         tab.appearing = set
       }
 
@@ -1275,6 +1343,7 @@ export class App {
     const tab = new Tab(n, session, opening.colors)
     tab.profile = opening.profile ?? ''
     tab.bgs.push(this.shown(tab, '11'))
+    tab.dark = darkOf(this.shown(tab, '11'))
     this.tabs.push(tab)
     const was = this.front
     this.front = tab

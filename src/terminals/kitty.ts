@@ -3,7 +3,17 @@ import { join } from 'node:path'
 import type { Mode } from '../core/mode.ts'
 import { owned } from '../core/theme.ts'
 import { backgroundsDir } from '../pictures/backdrop.ts'
-import { fromHome, GENERATED, MANAGED, modeFor, removeBlock, upsertBlock, userSets } from '../store/wiring.ts'
+import { appearancePath } from '../store/appearance.ts'
+import {
+  fromHome,
+  GENERATED,
+  MANAGED,
+  modeFor,
+  modeSetting,
+  removeBlock,
+  upsertBlock,
+  userSets,
+} from '../store/wiring.ts'
 import { blockKeys, pruneThemes, readText, stripped, tilde } from './common.ts'
 import { kitty as emitter, kittyWatcher } from './emit/kitty.ts'
 import type { At, Now, Wiring } from './types.ts'
@@ -14,10 +24,17 @@ export function kittyBlock(tthemeDir: string, home: string): string {
   return `# ${MANAGED}\ninclude ${fromHome(own, home, '~') ?? own}`
 }
 
-export function kittyOwnText(theme: string | undefined, watcher: string, mode: Mode, user = ''): string {
+export function kittyOwnText(
+  theme: string | undefined,
+  watcher: string,
+  mode: Mode,
+  user = '',
+  appearance?: string,
+): string {
   return [
     `# ${GENERATED}`,
     `# mode ${mode}`,
+    ...(appearance ? [`# appearance ${appearance}`] : []),
     ...(theme ? [`include ${theme}`] : []),
     `watcher ${watcher}`,
     ...['window_logo_scale 100', 'window_logo_alpha 1'].filter((line) => !userSets(user, line.split(' ')[0] as string)),
@@ -49,6 +66,7 @@ function ownText(now: Now): string {
     kittyWatcherPath(now.configHome),
     mode,
     readText(kittyConfig(now.configHome)),
+    modeSetting(now.configHome) === 'auto' ? appearancePath() : undefined,
   )
 }
 

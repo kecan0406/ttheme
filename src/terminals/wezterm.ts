@@ -1,7 +1,8 @@
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { backgroundsDir } from '../pictures/backdrop.ts'
-import { fromHome, MANAGED, modeFor } from '../store/wiring.ts'
+import { appearancePath } from '../store/appearance.ts'
+import { fromHome, MANAGED, modeFor, modeSetting } from '../store/wiring.ts'
 import { pruneThemes, readText, stripped, tilde } from './common.ts'
 import { wezterm as emitter, weztermModule } from './emit/wezterm.ts'
 import type { At, Wiring } from './types.ts'
@@ -79,6 +80,9 @@ export const wezterm: Wiring = {
         ...(ctx.startup ? { startup: ctx.startup } : {}),
         mode: modeFor(ctx.configHome),
         palettes: ctx.themes,
+        ...(modeSetting(ctx.configHome) === 'auto'
+          ? { appearance: appearancePath(), shells: join(dirname(appearancePath()), 'shells') }
+          : {}),
       }),
     )
     const config = weztermConfig(ctx.configHome, ctx.home)

@@ -150,7 +150,7 @@ test("sync forgets the appearance outside auto, takes the system's again on the 
     assert.ok(!existsSync(file))
     wear('auto', ['ghostty'], undefined)
     assert.equal(readFileSync(file, 'utf8'), 'light\n')
-    wear('auto', ['kitty'], 'Dark')
+    wear('auto', ['alacritty'], 'Dark')
     assert.equal(readFileSync(file, 'utf8'), 'dark\n')
   } finally {
     if (was === undefined) {

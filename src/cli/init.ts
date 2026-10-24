@@ -408,7 +408,7 @@ async function askMode(configHome: string, terminals: readonly Wired[]): Promise
   const was = modeSetting(configHome)
 
   const hints: Record<Setting, string> = {
-    auto: "the system's, as Ghostty shows it",
+    auto: "the system's, followed as it changes",
     light: 'dark text on a light background',
     dark: 'light text on a dark background',
   }
@@ -713,7 +713,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     [
       `Install ${palettes.length} palettes — ${catalogsOf(manifest, palettes).join(', ')}`,
       mode === 'auto'
-        ? 'Wear every palette in the mode Ghostty shows, which follows the system'
+        ? 'Wear every palette in the mode the system is in, following it as it changes'
         : `Wear every palette in its ${mode} mode`,
       `Copy ${plan.copies.length} files under ${configHome}`,
       `Write ${plan.settings.file}`,

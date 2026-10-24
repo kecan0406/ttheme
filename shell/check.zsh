@@ -714,6 +714,15 @@ TTHEME_STARTUP=
   __tt_appearance light
   sleep 0.3
   [[ $(<$ran) == remode ]] || { print -u2 "a prompt did not start a remode an hour after a failed one"; exit 1 }
+  rm -f $ran
+  TTHEME_APPEARANCE_AT=""
+  __tt_appeared
+  sleep 0.3
+  [[ $(<$ran) == remode ]] || { print -u2 "a prompt did not start a remode for the appearance a terminal's hook wrote"; exit 1 }
+  rm -f $ran
+  __tt_appeared
+  sleep 0.3
+  [[ ! -e $ran ]] || { print -u2 "a prompt started a remode again for an appearance it had already read"; exit 1 }
 ) || exit 1
 (
   unset CI
@@ -1047,6 +1056,21 @@ forks_of __tt_bg_send $bgd/kagami.png
     { print -u2 "hearing the appearance forks ($REPLY processes) or did not keep it"; exit 1 }
   forks_of __tt_appearance dark
   (( REPLY == 0 )) || { print -u2 "hearing the appearance the tab already wears forks ($REPLY processes)"; exit 1 }
+  TTHEME_APPEARANCE_AT=""
+  forks_of __tt_appeared
+  (( REPLY == 0 )) || { print -u2 "a prompt reading the appearance a terminal's hook left forks ($REPLY processes)"; exit 1 }
+  TTHEME_ITERM_SHOWN=miku TTHEME_ITERM_DYED=0
+  forks_of __tt_appearance_of light
+  (( REPLY == 0 )) || { print -u2 "reading an iTerm2 appearance report forks ($REPLY processes)"; exit 1 }
+  __tt_appearance_of light && [[ $REPLY == light ]] || { print -u2 "an iTerm2 tab showing miku's light mode was not heard as light"; exit 1 }
+  ! __tt_appearance_of dark || { print -u2 "an iTerm2 tab still showing the mode it wears was heard as a change"; exit 1 }
+  : >| $TTHEME_STATE_DIR/remode
+  __tt_appearance_of dark && [[ $REPLY == dark ]] || { print -u2 "an iTerm2 tab back in the mode it wears went unheard while a remode ran"; exit 1 }
+  rm -f $TTHEME_STATE_DIR/remode
+  TTHEME_ITERM_DYED=1
+  ! __tt_appearance_of light || { print -u2 "an iTerm2 tab an OSC color dyed was heard"; exit 1 }
+  TTHEME_ITERM_SHOWN="" TTHEME_ITERM_DYED=0
+  ! __tt_appearance_of light || { print -u2 "an iTerm2 tab on a profile of its own was heard"; exit 1 }
 ) || exit 1
 (
   typeset -A bgsent=() bgcost=()

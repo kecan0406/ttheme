@@ -115,7 +115,7 @@ test('the shell adapters open find and repaint in part exactly where TRAITS says
   )
   assert.deepEqual(
     adapters.filter((a) => /^__tt_reports_appearance\(\)/m.test(code(a))).sort(),
-    having((t) => TRAITS[t].appears === true),
+    having((t) => TRAITS[t].appears === 'reports'),
   )
 })
 

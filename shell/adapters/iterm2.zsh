@@ -16,6 +16,31 @@ __tt_reverts() { return 1 }
 
 __tt_follows_focus() { return 0 }
 
+__tt_reports_appearance() { (( ! TTHEME_TMUX )) }
+
+__tt_iterm_dark() { (( 30 * 16#${1[2,3]} + 59 * 16#${1[4,5]} + 11 * 16#${1[6,7]} < 12750 )) }
+
+__tt_appearance_of() {
+  local name=$TTHEME_ITERM_SHOWN worn other
+  integer heard=0 was=0 now=0
+  [[ -n $name ]] && (( ! TTHEME_ITERM_DYED )) || return 1
+  [[ $name == default ]] && name=$TTHEME_STARTUP
+  worn=${TTHEME_PALETTE[$name]%% *} other=${TTHEME_PALETTE_OTHER[$name]%% *}
+  [[ $worn == '#'* && $other == '#'* ]] || return 1
+  [[ $1 == dark ]] && heard=1
+  __tt_iterm_dark $worn && was=1
+  __tt_iterm_dark $other && now=1
+  (( was != now )) || return 1
+  if (( heard == was )); then
+    [[ -e $TTHEME_STATE_DIR/remode ]] || return 1
+    REPLY=$TTHEME_MODE_WORN
+  elif [[ $TTHEME_MODE_WORN == light ]]; then
+    REPLY=dark
+  else
+    REPLY=light
+  fi
+}
+
 __tt_takes_default() {
   local REPLY was=$TTHEME_ITERM_SHOWN
   (( ! TTHEME_ITERM_DYED )) || return 1

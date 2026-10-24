@@ -39,7 +39,7 @@ export interface Behavior {
   promptTrap: boolean
   cache: 'weak' | 'none'
   bookmarks: boolean
-  appearance: boolean
+  appearance: 'system' | 'palette' | 'none'
 }
 
 const EVERY = SLOT_CODES
@@ -62,7 +62,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     promptTrap: true,
     cache: 'none',
     bookmarks: false,
-    appearance: true,
+    appearance: 'system',
   },
   iterm2: {
     draws: EVERY,
@@ -80,7 +80,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     promptTrap: true,
     cache: 'none',
     bookmarks: false,
-    appearance: false,
+    appearance: 'palette',
   },
   kitty: {
     draws: EVERY,
@@ -98,7 +98,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     promptTrap: true,
     cache: 'none',
     bookmarks: false,
-    appearance: false,
+    appearance: 'palette',
   },
   alacritty: {
     draws: NO_SELECTION,
@@ -116,7 +116,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     promptTrap: true,
     cache: 'none',
     bookmarks: false,
-    appearance: false,
+    appearance: 'none',
   },
   wezterm: {
     draws: EVERY,
@@ -134,7 +134,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     promptTrap: true,
     cache: 'none',
     bookmarks: false,
-    appearance: false,
+    appearance: 'none',
   },
   'windows-terminal': {
     draws: EVERY,
@@ -152,7 +152,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     promptTrap: true,
     cache: 'none',
     bookmarks: false,
-    appearance: false,
+    appearance: 'none',
   },
   warp: {
     draws: ['10', ...ANSI],
@@ -170,7 +170,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     promptTrap: true,
     cache: 'none',
     bookmarks: false,
-    appearance: false,
+    appearance: 'none',
   },
   konsole: {
     draws: ['11', '10'],
@@ -188,7 +188,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     promptTrap: true,
     cache: 'weak',
     bookmarks: false,
-    appearance: false,
+    appearance: 'none',
   },
   'terminal-app': {
     draws: EVERY,
@@ -206,7 +206,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     promptTrap: true,
     cache: 'none',
     bookmarks: true,
-    appearance: false,
+    appearance: 'none',
   },
 }
 
@@ -240,7 +240,7 @@ export const MEASURED: { id: string; holds: (b: Behavior) => boolean }[] = [
   { id: 'picture-held', holds: (b) => b.bookmarks },
   { id: 'picture-renamed', holds: (b) => b.bookmarks },
   { id: 'picture-gone', holds: (b) => b.bookmarks },
-  { id: 'appearance-report', holds: (b) => b.appearance },
+  { id: 'appearance-report', holds: (b) => b.appearance === 'system' },
   { id: 'logo-over', holds: () => false },
 ]
 

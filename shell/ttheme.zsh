@@ -1,4 +1,4 @@
-typeset -g TTHEME_HOME=${${(%):-%x}:A:h} TTHEME_PALETTES_AT=""
+typeset -g TTHEME_HOME=${${(%):-%x}:A:h} TTHEME_PALETTES_AT="" TTHEME_APPEARANCE_AT=""
 
 zmodload -F zsh/stat b:zstat 2>/dev/null
 
@@ -78,6 +78,7 @@ __tt_fresh() {
     __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && __tt_sync; __tt_reloaded ${${1:-behind}:#woke}; [[ -z $held ]] || __tt_hold "$start" }
     [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
   fi
+  (( TTHEME_MODE_AUTO )) && __tt_appeared
   at=("")
   zstat -F %s.%N -A at +mtime -- $TTHEME_PINS_FILE 2>/dev/null
   [[ $at[1] == "$TTHEME_PINS_AT" ]] && return 0
@@ -586,21 +587,45 @@ __tt_appearance_on() {
 
 __tt_appearance_heard() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
-  if [[ $KEYS == *1n ]]; then
-    __tt_appearance dark
-  else
-    __tt_appearance light
-  fi
+  local REPLY seen=light
+  [[ $KEYS == *1n ]] && seen=dark
+  __tt_appearance_of $seen && __tt_appearance $REPLY
+  return 0
 }
 
 __tt_appearance() {
   local f=$TTHEME_STATE_DIR/appearance
   local -a at=()
   (( TTHEME_MODE_AUTO )) && __tt_active || return 0
-  [[ -r $f && "$(<$f)" == $1 ]] || __tt_put $f $1 2>/dev/null
+  [[ $1 == (dark|light) ]] || return 0
+  if [[ ! -r $f || "$(<$f)" != $1 ]]; then
+    __tt_put $f $1 2>/dev/null
+    zstat -F %s.%N -A at +mtime -- $f 2>/dev/null && TTHEME_APPEARANCE_AT=$at[1]
+  fi
   [[ $1 == $TTHEME_MODE_WORN ]] && return 0
+  __tt_modes
+  at=()
   zstat -A at +mtime -- $TTHEME_STATE_DIR/remode.failed 2>/dev/null && (( EPOCHSECONDS - at[1] < 3600 )) && return 0
   __tt_remode </dev/null >/dev/null 2>&1 &!
+}
+
+__tt_appeared() {
+  local f=$TTHEME_STATE_DIR/appearance
+  local -a at=("")
+  zstat -F %s.%N -A at +mtime -- $f 2>/dev/null
+  [[ $at[1] == "$TTHEME_APPEARANCE_AT" ]] && return 0
+  TTHEME_APPEARANCE_AT=$at[1]
+  [[ -n $at[1] ]] && __tt_appearance "$(<$f)"
+  return 0
+}
+
+__tt_modes() {
+  zmodload -F zsh/files b:zf_mkdir b:zf_rm 2>/dev/null
+  zmodload -F zsh/system b:zsystem p:sysparams 2>/dev/null
+  zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
+  [[ -e $TTHEME_STATE_DIR/mode.lock ]] && return 0
+  zf_mkdir -p $TTHEME_STATE_DIR 2>/dev/null
+  { : >>| $TTHEME_STATE_DIR/mode.lock } 2>/dev/null
 }
 
 __tt_remode() {
@@ -751,11 +776,7 @@ __tt_line_init() {
 
 __tt_bind_appearance() {
   local k
-  zmodload -F zsh/files b:zf_mkdir b:zf_rm 2>/dev/null
-  zmodload -F zsh/system b:zsystem p:sysparams 2>/dev/null
-  zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
-  zf_mkdir -p $TTHEME_STATE_DIR 2>/dev/null
-  [[ -e $TTHEME_STATE_DIR/mode.lock ]] || { : >>| $TTHEME_STATE_DIR/mode.lock } 2>/dev/null
+  __tt_modes
   zle -N __tt_appearance_heard
   TTHEME_APPEARANCE=1
   for k in emacs viins vicmd; do
@@ -1766,7 +1787,7 @@ __tt_mode() {
   local want=$1
   local -a lines=()
   if (( ! ${TTHEME_MODE_SETTINGS[(Ie)$want]} )); then
-    print -u2 -r -- "ttheme: $want needs a wired terminal that reports the system's appearance, which only Ghostty does — here: ${(j: · :)TTHEME_MODE_SETTINGS}"
+    print -u2 -r -- "ttheme: $want needs a wired terminal that reports the system's appearance — here: ${(j: · :)TTHEME_MODE_SETTINGS}"
     return 1
   fi
   [[ -r $TTHEME_CONFIG ]] && lines=("${(@f)$(<$TTHEME_CONFIG)}")

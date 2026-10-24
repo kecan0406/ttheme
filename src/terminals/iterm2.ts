@@ -5,6 +5,7 @@ import { backgroundsDir } from '../pictures/backdrop.ts'
 import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
 import type { Host } from '../store/host.ts'
 import type { Installed } from '../store/installed.ts'
+import { modeSetting } from '../store/wiring.ts'
 import { tilde } from './common.ts'
 import { iterm2 as emitter, itermProfiles } from './emit/iterm2.ts'
 import type { Ctx, Defaults, Moment, Wiring } from './types.ts'
@@ -39,6 +40,7 @@ function profiles(ctx: Ctx): string {
     ctx.themes.find((theme) => theme.name === ctx.startup),
     ctx.state.itermBase,
     keeps(ctx.state),
+    modeSetting(ctx.configHome) === 'auto',
   )
 }
 

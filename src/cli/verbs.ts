@@ -86,7 +86,8 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'auto',
     args: [],
-    about: "Wear every palette in the mode the system is in — where a wired terminal reports it, which is Ghostty's",
+    about:
+      'Wear every palette in the mode the system is in — following it as it changes, where a wired Ghostty, iTerm2, kitty or WezTerm reports it',
     section: 'startup',
     shell: true,
   },

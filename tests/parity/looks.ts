@@ -510,7 +510,7 @@ export interface ItermProfile {
   blend: number
 }
 
-export function itermProfiles(home: string): Map<string, ItermProfile> {
+export function itermProfiles(home: string, appearance: Mode = 'dark'): Map<string, ItermProfile> {
   const profiles = new Map<string, ItermProfile>()
   const file = join(home, 'Library', 'Application Support', 'iTerm2', 'DynamicProfiles', 'ttheme.json')
   let list: Record<string, unknown>[] = []
@@ -531,9 +531,11 @@ export function itermProfiles(home: string): Map<string, ItermProfile> {
 
   for (const profile of list) {
     const colors = new Map<string, string>()
+    const modes = profile['Use Separate Colors for Light and Dark Mode'] === true
+    const suffix = modes ? (appearance === 'dark' ? ' (Dark)' : ' (Light)') : ''
 
     for (const [key, code] of Object.entries(keys)) {
-      const c = profile[key] as Record<string, number> | undefined
+      const c = profile[`${key}${suffix}`] as Record<string, number> | undefined
 
       if (c) {
         colors.set(

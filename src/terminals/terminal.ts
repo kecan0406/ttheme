@@ -86,7 +86,7 @@ interface Traits {
   moves: boolean
   layers: boolean
   paints: boolean
-  appears?: true
+  appears?: 'reports' | 'hooks'
   repaint?: readonly number[]
   hex?: true
   schemes?: true
@@ -103,9 +103,18 @@ export const TRAITS: Record<Terminal, Traits> = {
     moves: true,
     layers: true,
     paints: true,
-    appears: true,
+    appears: 'reports',
   },
-  kitty: { links: true, pictures: true, bands: false, files: true, moves: true, layers: true, paints: true },
+  kitty: {
+    links: true,
+    pictures: true,
+    bands: false,
+    files: true,
+    moves: true,
+    layers: true,
+    paints: true,
+    appears: 'hooks',
+  },
   iterm2: {
     links: true,
     pictures: true,
@@ -114,6 +123,7 @@ export const TRAITS: Record<Terminal, Traits> = {
     moves: true,
     layers: true,
     paints: true,
+    appears: 'reports',
     repaint: [0, 1],
   },
   wezterm: {
@@ -124,6 +134,7 @@ export const TRAITS: Record<Terminal, Traits> = {
     moves: true,
     layers: false,
     paints: true,
+    appears: 'hooks',
     wipes: true,
     views: true,
   },
@@ -430,5 +441,5 @@ export function livePaint(
 }
 
 export function settingsFor(terminals: readonly Wired[]): readonly Setting[] {
-  return terminals.some((terminal) => TRAITS[terminal].appears) ? SETTINGS : MODES
+  return terminals.some((terminal) => TRAITS[terminal].appears !== undefined) ? SETTINGS : MODES
 }

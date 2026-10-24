@@ -276,6 +276,15 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
       await app.settle()
     },
     focus: (tab) => app.focus(tab),
+    async appear(mode) {
+      for (const one of [app, ...extra]) {
+        one.appear(mode)
+      }
+
+      for (const one of [app, ...extra]) {
+        await one.settle()
+      }
+    },
     async look(label, options) {
       const tab = options.at ?? app.front
 
@@ -349,7 +358,10 @@ function probe(app: App, fixture: Fixture, journey: Journey, facts: Facts, extra
         focus: (tab) => other.focus(tab),
         leave: () => other.leave(),
         async appear(mode) {
-          other.appear(mode)
+          for (const one of new Set([other, app, ...extra])) {
+            one.appear(mode)
+          }
+
           await other.settle()
           await app.settle()
         },

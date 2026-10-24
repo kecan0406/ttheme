@@ -1,6 +1,7 @@
 import { type Hex, rgb } from '../../core/color.ts'
+import { modeOf } from '../../core/mode.ts'
 import type { Theme } from '../../core/theme.ts'
-import { owned } from '../../core/theme.ts'
+import { inOther, owned } from '../../core/theme.ts'
 import type { ProfileBackground } from '../../pictures/conf.ts'
 import type { Emitter, Output } from './types.ts'
 
@@ -37,6 +38,18 @@ function itermColors(theme: Theme) {
   }
 }
 
+function bothModes(theme: Theme) {
+  const shades = [theme, ...inOther(theme)]
+
+  return Object.fromEntries(
+    (['Light', 'Dark'] as const).flatMap((mode) => {
+      const shade = shades.find((s) => modeOf(s) === mode.toLowerCase()) ?? theme
+
+      return Object.entries(itermColors(shade)).map(([key, value]) => [`${key} (${mode})`, value])
+    }),
+  )
+}
+
 function background(picture: ProfileBackground | undefined) {
   return picture
     ? {
@@ -53,14 +66,15 @@ export function itermProfiles(
   startup: Theme | undefined,
   parent?: string,
   plain = false,
+  modes = false,
 ): string {
   const profile = (theme: Theme, id: string) => ({
     Name: `ttheme · ${id}`,
     Guid: owned(id),
     ...(parent ? { 'Dynamic Profile Parent GUID': parent } : {}),
-    'Use Separate Colors for Light and Dark Mode': false,
+    'Use Separate Colors for Light and Dark Mode': modes,
     ...background(pictures.get(theme.name)),
-    ...itermColors(theme),
+    ...(modes ? bothModes(theme) : itermColors(theme)),
   })
 
   const bare = {
