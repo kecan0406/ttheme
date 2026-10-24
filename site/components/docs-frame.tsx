@@ -23,7 +23,7 @@ function DocsNav({ path }: { path: string }) {
       id="docs-menu"
       popover="auto"
       aria-label="docs"
-      class={`${GLASS} top-36 left-5 m-0 max-h-[calc(100dvh-10rem)] w-72 max-w-[calc(100vw-2.5rem)] content-start gap-1 overflow-y-auto rounded-xl p-3 text-foreground shadow-lg inset-auto open:grid docs-side:sticky docs-side:top-18 docs-side:grid docs-side:max-h-[calc(100dvh-6rem)] docs-side:w-auto docs-side:self-start docs-side:shadow-none`}
+      class={`${GLASS} top-34 left-5 m-0 max-h-[calc(100dvh-10rem)] w-72 max-w-[calc(100vw-2.5rem)] content-start gap-1 overflow-y-auto rounded-xl p-3 text-foreground shadow-lg inset-auto open:grid docs-side:sticky docs-side:top-(--clearance) docs-side:grid docs-side:max-h-[calc(100dvh_-_var(--clearance)_-_--spacing(3))] docs-side:w-auto docs-side:self-start docs-side:shadow-none`}
     >
       <search class="mb-1.5">
         <InputGroup>
@@ -100,14 +100,14 @@ function DocsToc({ toc }: { toc: Heading[] }) {
   return (
     <aside
       aria-labelledby="docs-toc"
-      class={`${GLASS} sticky top-18 hidden max-h-[calc(100dvh-6rem)] content-start gap-3 overflow-y-auto rounded-xl p-4 docs-toc:grid`}
+      class={`${GLASS} sticky top-(--clearance) hidden max-h-[calc(100dvh_-_var(--clearance)_-_--spacing(3))] content-start gap-3 overflow-y-auto rounded-xl p-4 docs-toc:grid`}
     >
       <p id="docs-toc" class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">
         on this page
       </p>
       <TocList toc={toc} />
       <a
-        href="#content"
+        href="#top"
         class="inline-flex items-center gap-1.5 justify-self-start text-xs font-medium text-soft-foreground transition-colors hover:text-foreground"
       >
         <Icon node={ArrowUp} class="size-3.5" />
@@ -174,8 +174,8 @@ export function DocsFrame({
   return (
     <div class="ground flex min-h-dvh flex-col">
       <SiteHeader current={DOCS_PATH} />
-      <div data-docs class="mx-auto w-[min(1280px,calc(100%-40px))] pt-5 pb-15">
-        <docs-page class="grid grid-cols-[minmax(0,1fr)] items-start gap-4.5 docs-side:grid-cols-[15.5rem_minmax(0,1fr)] docs-side:gap-6 docs-toc:grid-cols-[15.5rem_minmax(0,1fr)_13.5rem]">
+      <div data-docs class="mx-auto w-[min(1280px,calc(100%-40px))] pt-3 pb-12">
+        <docs-page class="grid grid-cols-[minmax(0,1fr)] items-start gap-3 docs-side:grid-cols-[15.5rem_minmax(0,1fr)] docs-toc:grid-cols-[15.5rem_minmax(0,1fr)_13.5rem]">
           <Button variant="outline" size="sm" popovertarget="docs-menu" class="justify-self-start docs-side:hidden">
             <Icon node={Menu} />
             pages
@@ -183,7 +183,7 @@ export function DocsFrame({
           <DocsNav path={path} />
           <main
             id="content"
-            class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 rounded-3xl border border-border bg-card px-4.5 pt-6 pb-6 text-card-foreground shadow-md docs-side:px-13 docs-side:pt-13"
+            class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 rounded-3xl border border-border bg-card px-4.5 pt-6 pb-6 text-card-foreground shadow-md docs-side:px-10 docs-side:pt-10"
           >
             {children}
             <footer class="grid gap-6 pt-6">

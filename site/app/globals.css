@@ -1551,7 +1551,6 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 }
 
 [data-doc-body] :is(h2, h3) {
-  scroll-margin-top: calc(var(--spacing) * 18);
   color: var(--foreground);
   text-wrap: balance;
 }
@@ -1572,13 +1571,53 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 }
 
 [data-doc-body] section[data-entry] {
+  --entry-lead: calc(var(--spacing) * 4.5);
   gap: calc(var(--spacing) * 2.5);
   border-top: 1px solid var(--border);
-  padding-top: calc(var(--spacing) * 4.5);
+  padding-top: var(--entry-lead);
 }
 
 [data-doc-body] section[data-entry] h3 {
   margin-top: 0;
+  scroll-margin-top: calc(var(--entry-lead) + 1px);
+}
+
+[data-doc-body] :is(h2, h3):target {
+  position: relative;
+}
+
+[data-doc-body] :is(h2, h3):target::before {
+  content: '';
+  position: absolute;
+  inset-block: 0.2em;
+  left: calc(var(--spacing) * -3);
+  width: calc(var(--spacing) * 1);
+  border-radius: calc(infinity * 1px);
+  background: var(--primary);
+  animation: docs-target 0.3s ease-out;
+}
+
+[data-doc-body] section[data-entry]:has(> h3:target) {
+  border-top-color: var(--primary);
+}
+
+@keyframes docs-target {
+  from {
+    opacity: 0;
+    scale: 1 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root:has([data-docs]) {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-doc-body] :is(h2, h3):target::before {
+    animation: none;
+  }
 }
 
 [data-doc-body] a {
@@ -1793,6 +1832,13 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   font-size: --theme(--text-sm inline);
 }
 
+[data-toc] {
+  --toc-dot-top: calc(var(--spacing) * 2.25);
+  --toc-dot-mid: calc(var(--toc-dot-top) + 3.5px);
+  position: relative;
+  isolation: isolate;
+}
+
 [data-toc] li a {
   position: relative;
   display: block;
@@ -1809,7 +1855,8 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 
 [data-toc] li a::before {
   position: absolute;
-  top: calc(var(--spacing) * 2.25);
+  z-index: 2;
+  top: var(--toc-dot-top);
   left: 0;
   box-sizing: border-box;
   border: 1px solid var(--input);
@@ -1859,8 +1906,188 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   background: var(--primary);
 }
 
+@supports (anchor-name: --toc-at) {
+  [data-toc] > li:first-child > a {
+    anchor-name: --toc-start;
+  }
+
+  [data-toc] a[aria-current='location'] {
+    anchor-name: --toc-at;
+  }
+
+  [data-toc] > li:first-child > a[aria-current='location'] {
+    anchor-name: --toc-start, --toc-at;
+  }
+
+  [data-toc] li a:is([data-done], [aria-current='location'])::before {
+    border-color: var(--primary);
+    background: var(--card);
+  }
+
+  [data-toc]::before,
+  [data-toc]::after {
+    content: '';
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+  }
+
+  [data-toc]::before {
+    z-index: 1;
+    top: calc(anchor(--toc-start top) + var(--toc-dot-mid));
+    bottom: calc(anchor(--toc-at top) - var(--toc-dot-mid));
+    left: 3px;
+    width: 1px;
+    background: var(--primary);
+    transition-property: bottom, opacity;
+  }
+
+  [data-toc]::after {
+    z-index: 3;
+    position-anchor: --toc-at;
+    top: calc(anchor(top) + var(--toc-dot-top));
+    left: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent);
+    transition-property: top, left, width, height, opacity;
+  }
+
+  [data-toc]:has(a[aria-current='location'])::before,
+  [data-toc]:has(a[aria-current='location'])::after {
+    opacity: 1;
+  }
+
+  [data-toc]:has(> li[data-depth='3'] > a[aria-current='location'])::after {
+    left: calc(var(--spacing) * 3);
+    width: 5px;
+    height: 5px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-toc]::before,
+    [data-toc]::after {
+      transition-property: opacity;
+    }
+  }
+}
+
+@supports (anchor-name: --docs-page) {
+  #docs-menu {
+    --glide-linger: 0.06s;
+    --glide-fade: 0.2s;
+    isolation: isolate;
+  }
+
+  #docs-menu::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    position-anchor: --docs-page;
+    top: anchor(top);
+    right: anchor(right);
+    bottom: anchor(bottom);
+    left: anchor(left);
+    border-radius: --theme(--radius-lg inline);
+    background: var(--accent);
+    opacity: 0;
+    pointer-events: none;
+    transition-property: opacity, top, right, bottom, left;
+    transition-duration: var(--glide-fade);
+    transition-timing-function: ease;
+    transition-delay: var(--glide-linger);
+  }
+
+  #docs-menu li a {
+    background-color: transparent;
+    transition:
+      color 0.15s ease,
+      anchor-name 0s calc(var(--glide-linger) + var(--glide-fade)) allow-discrete;
+  }
+
+  #docs-menu a[aria-current='page'],
+  #docs-menu li a:focus-visible {
+    anchor-name: --docs-page;
+  }
+
+  #docs-menu:has(li a:focus-visible) a[aria-current='page']:not(:focus-visible) {
+    anchor-name: none;
+  }
+
+  #docs-menu:has(section:not([hidden]) li:not([hidden]) > a[aria-current='page']) li a,
+  #docs-menu:has(li a:focus-visible) li a {
+    transition: color 0.15s ease;
+  }
+
+  #docs-menu:has(section:not([hidden]) li:not([hidden]) > a[aria-current='page'])::before,
+  #docs-menu:has(li a:focus-visible)::before {
+    opacity: 1;
+  }
+
+  #docs-menu:has(li a:focus-visible)::before {
+    transition-delay: 0s;
+  }
+
+  @media (hover: hover) {
+    #docs-menu:not(:has(li a:focus-visible)) li a:hover {
+      anchor-name: --docs-page;
+    }
+
+    #docs-menu:not(:has(li a:focus-visible)):has(li a:hover) a[aria-current='page']:not(:hover) {
+      anchor-name: none;
+    }
+
+    #docs-menu:has(li a:hover) li a {
+      transition: color 0.15s ease;
+    }
+
+    #docs-menu:has(li a:hover)::before {
+      opacity: 1;
+      transition-delay: 0s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #docs-menu::before {
+      transition-property: opacity;
+    }
+  }
+
+  [popovertarget='docs-menu'] {
+    anchor-name: --docs-pages;
+  }
+
+  #docs-menu:popover-open {
+    position-anchor: --docs-pages;
+    inset: max(var(--clearance), anchor(bottom) + var(--spacing) * 2) auto calc(var(--spacing) * 3) anchor(left);
+    max-height: calc(100dvh - var(--spacing) * 33);
+  }
+
+  @supports (max-height: stretch) {
+    #docs-menu:popover-open {
+      max-height: stretch;
+    }
+  }
+}
+
 @media (forced-colors: active) {
-  [data-toc] li a[aria-current='location']::before {
+  [data-toc] li a[aria-current='location']::before,
+  [data-toc]::before,
+  [data-toc]::after {
     background: Highlight;
+  }
+
+  [data-doc-body] :is(h2, h3):target::before {
+    background: Highlight;
+  }
+
+  #docs-menu::before {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+    background: transparent;
   }
 }

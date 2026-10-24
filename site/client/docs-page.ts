@@ -2,10 +2,20 @@ import { plural } from '@/lib/utils'
 import { announce } from './dom'
 import { composing, letter, typing } from './keys'
 
+function idOf(hash: string): string {
+  try {
+    return decodeURIComponent(hash.slice(1))
+  } catch {
+    return ''
+  }
+}
+
 class DocsPage extends HTMLElement {
   #spy: IntersectionObserver | null = null
 
-  #seen = new Map<string, boolean>()
+  #passed = new Map<string, boolean>()
+
+  #pinned: string | null = null
 
   #tallying = 0
 
@@ -68,8 +78,8 @@ class DocsPage extends HTMLElement {
   }
 
   #mark() {
-    const ids = [...this.#seen.keys()]
-    const current = ids.findLast((id) => this.#seen.get(id)) ?? ids.find((id) => !this.#seen.get(id))
+    const ids = [...this.#passed.keys()]
+    const current = this.#pinned ?? ids.findLast((id) => this.#passed.get(id)) ?? ids[0]
     const at = current === undefined ? -1 : ids.indexOf(current)
 
     for (const link of this.querySelectorAll<HTMLAnchorElement>('[data-toc] a')) {
@@ -81,36 +91,73 @@ class DocsPage extends HTMLElement {
     }
   }
 
+  #pin(id: string) {
+    this.#pinned = this.#passed.has(id) ? id : null
+    this.#mark()
+  }
+
+  #follow = (event: MouseEvent) => {
+    const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href^="#"]')
+
+    if (link) this.#pin(idOf(link.hash))
+  }
+
+  #arrive = () => {
+    this.#pin(idOf(location.hash))
+  }
+
+  #release = () => {
+    if (this.#pinned === null) return
+    this.#pinned = null
+    this.#mark()
+  }
+
   #watch() {
     const headings = [...this.querySelectorAll<HTMLElement>('#content :is(h2, h3)[id]')]
 
     if (headings.length === 0) return
-    this.#seen = new Map(headings.map((heading) => [heading.id, false]))
+    const padding = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
+
+    const margin = Math.max(
+      0,
+      ...headings.map((heading) => Number.parseFloat(getComputedStyle(heading).scrollMarginTop) || 0),
+    )
+
+    const line = Math.ceil(padding + margin) + 4
+    this.#passed = new Map(headings.map((heading) => [heading.id, false]))
     this.#spy = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          this.#seen.set(entry.target.id, entry.boundingClientRect.top < window.innerHeight * 0.3)
-        }
-
+        for (const entry of entries) this.#passed.set(entry.target.id, entry.boundingClientRect.top < line)
         this.#mark()
       },
-      { rootMargin: '0px 0px -70% 0px', threshold: [0, 1] },
+      { rootMargin: `-${line}px 0px 0px 0px`, threshold: [0, 1] },
     )
 
     for (const heading of headings) this.#spy.observe(heading)
+
+    if (location.hash) this.#arrive()
   }
 
   connectedCallback() {
     this.addEventListener('input', this.#input)
     this.addEventListener('keydown', this.#submit)
+    this.addEventListener('click', this.#follow)
     document.addEventListener('keydown', this.#keydown)
+    window.addEventListener('hashchange', this.#arrive)
+
+    for (const kind of ['wheel', 'touchstart', 'keydown'])
+      window.addEventListener(kind, this.#release, { passive: true })
     this.#watch()
   }
 
   disconnectedCallback() {
     this.removeEventListener('input', this.#input)
     this.removeEventListener('keydown', this.#submit)
+    this.removeEventListener('click', this.#follow)
     document.removeEventListener('keydown', this.#keydown)
+    window.removeEventListener('hashchange', this.#arrive)
+
+    for (const kind of ['wheel', 'touchstart', 'keydown']) window.removeEventListener(kind, this.#release)
     this.#spy?.disconnect()
     window.clearTimeout(this.#tallying)
   }
