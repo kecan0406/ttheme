@@ -1,4 +1,4 @@
-import { Menu, Paintbrush, Store, SwatchBook } from 'lucide'
+import { BookOpen, Menu, Paintbrush, Store, SwatchBook } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import { OFFICIAL_URL } from '@/lib/gallery'
@@ -12,6 +12,7 @@ const NAV = [
   { href: '/sheets', label: 'sheets', icon: SwatchBook },
   { href: '/marketplace', label: 'marketplace', icon: Store },
   { href: '/builder', label: 'builder', icon: Paintbrush },
+  { href: '/docs', label: 'docs', icon: BookOpen },
 ] as const
 
 export function SiteHeader({ current, fixed = false }: { current: string; fixed?: boolean }) {
@@ -24,7 +25,7 @@ export function SiteHeader({ current, fixed = false }: { current: string; fixed?
     >
       <div
         class={cn(
-          'mx-auto flex min-h-13 flex-wrap items-stretch justify-between gap-x-4',
+          'mx-auto flex min-h-13 flex-wrap items-stretch justify-between gap-x-4 header-icons:gap-x-3',
           fixed ? 'w-full px-5' : 'w-[min(1280px,calc(100%-40px))]',
         )}
       >
@@ -47,7 +48,7 @@ export function SiteHeader({ current, fixed = false }: { current: string; fixed?
               <a
                 href={item.href}
                 aria-current={item.href === current ? 'page' : undefined}
-                class="rounded-sm px-3 text-sm leading-13 font-medium text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary header-tight:px-2.5"
+                class="rounded-sm px-3 text-sm leading-13 font-medium text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary header-tight:px-2.5 header-icons:px-2"
               >
                 <span class="header-icons:inline-flex header-icons:align-middle">
                   <Icon node={item.icon} class="hidden size-4 header-icons:block" />

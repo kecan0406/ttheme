@@ -29,6 +29,20 @@ export function builderMeta(): Meta {
   }
 }
 
+export function docsMeta(): Meta {
+  return {
+    title: 'docs — install, wear and make terminal palettes · ttheme',
+    description: 'How to install ttheme, wear and pin palettes, and make palettes of your own.',
+  }
+}
+
+export function docMeta(title: string, group: string, description: string): Meta {
+  return {
+    title: `${title} — ${group} · ttheme docs`,
+    description,
+  }
+}
+
 export function marketplacesMeta(palettes: number): Meta {
   return {
     title: 'marketplace — official and community terminal themes · ttheme',

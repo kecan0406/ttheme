@@ -3,7 +3,10 @@ import { basename, dirname, join, parse } from 'node:path'
 import tailwind from '@tailwindcss/postcss'
 import postcss from 'postcss'
 import subsetFont from 'subset-font'
+import { EXIT_CODES } from '../src/cli/answer.ts'
 import { showcase } from '../src/cli/showcase.ts'
+import { DOCS_URL, docsOf, flagRows, headOf, SECTIONS, usageOf, VERB_SPECS } from '../src/cli/verbs.ts'
+import type { Commands } from './lib/commands'
 import { official, themes } from './lib/official'
 
 export const SITE = import.meta.dirname
@@ -24,6 +27,8 @@ const HTML = 'text/html; charset=utf-8'
 
 const SNAPSHOT = join(SITE, 'marketplaces.json')
 
+const COMMANDS = join(SITE, 'commands.json')
+
 const SHAPING =
   'rvrn ccmp liga locl mark mkmk rlig frac numr dnom calt clig curs kern rclt valt vert vkrn vpal vrt2 ltra ltrm rtla rtlm rand jalt chws vchw halt vhal palt Harf HARF Buzz BUZZ init medi fina isol med2 fin2 fin3 cswh mset stch ljmo vjmo tjmo abvs blws abvm blwm nukt akhn rphf rkrf pref blwf half abvf pstf cfar vatu cjct pres psts haln dist'.split(
     ' ',
@@ -39,7 +44,7 @@ const FACES = [
 
 const CJK = '@fontsource/biz-udgothic/700.css'
 
-const DRAWN = ['app', 'components', 'client', 'lib']
+const DRAWN = ['app', 'components', 'client', 'lib', '../docs']
 
 const LATIN_END = 0x24f
 
@@ -221,7 +226,7 @@ async function drawn(): Promise<string> {
 
   const sources = DRAWN.flatMap((dir) =>
     readdirSync(join(SITE, dir), { recursive: true, encoding: 'utf8' }).flatMap((file) =>
-      /\.(tsx?|css)$/.test(file) && !file.endsWith('.test.ts') ? [readFileSync(join(SITE, dir, file), 'utf8')] : [],
+      /\.(tsx?|css|md)$/.test(file) && !file.endsWith('.test.ts') ? [readFileSync(join(SITE, dir, file), 'utf8')] : [],
     ),
   )
 
@@ -307,10 +312,42 @@ export async function buildAssets(production: boolean): Promise<void> {
     reload: production ? '' : '/__reload',
   }
 
-  const path = join(SITE, 'assets.json')
-  const text = `${JSON.stringify(manifest, null, 2)}\n`
+  kept(join(SITE, 'assets.json'), `${JSON.stringify(manifest, null, 2)}\n`)
+}
 
+function kept(path: string, text: string): void {
   if (!existsSync(path) || readFileSync(path, 'utf8') !== text) writeFileSync(path, text)
+}
+
+export function commands(): void {
+  const shown = VERB_SPECS.filter((verb) => !verb.hidden)
+
+  const data: Commands = {
+    sections: SECTIONS.flatMap(({ section, title }) => {
+      const verbs = shown.filter((verb) => verb.section === section)
+
+      return verbs.length === 0
+        ? []
+        : [
+            {
+              title,
+              commands: verbs.map((verb) => ({
+                name: verb.name,
+                usage: `ttheme ${usageOf(verb)}`,
+                head: headOf(verb.about),
+                about: verb.about,
+                actions: verb.actions ?? [],
+                flags: flagRows(verb),
+                notes: verb.notes ?? [],
+                exits: verb.flags?.json !== undefined,
+              })),
+            },
+          ]
+    }),
+    exits: EXIT_CODES,
+  }
+
+  kept(COMMANDS, `${JSON.stringify(data, null, 2)}\n`)
 }
 
 export async function snapshot(fresh: boolean): Promise<void> {
@@ -390,8 +427,33 @@ async function output(): Promise<void> {
   )
 }
 
+async function docsChecked(): Promise<void> {
+  const { DOC_FILES, DOC_PAGES, DOCS_PATH } = await import('./lib/docs')
+
+  const written = readdirSync(join(SITE, '..', 'docs'), { recursive: true, encoding: 'utf8' })
+    .filter((file) => file.endsWith('.md'))
+    .map((file) => `docs/${file}`)
+
+  const loose = written.filter((file) => !DOC_FILES.includes(file))
+
+  const unlinked = VERB_SPECS.filter((verb) => !verb.hidden).flatMap((verb) => {
+    const url = new URL(docsOf(verb))
+    const page = DOC_PAGES.find((doc) => doc.path === url.pathname)
+
+    return page?.ids.includes(url.hash.slice(1)) ? [] : [url.href]
+  })
+
+  if (new URL(DOCS_URL).pathname !== DOCS_PATH) throw new Error(`the CLI's DOCS_URL is not ${DOCS_PATH}`)
+
+  if (loose.length > 0) throw new Error(`no page of site/lib/docs.ts lists ${loose.join(', ')}`)
+
+  if (unlinked.length > 0) throw new Error(`ttheme help links to ${unlinked.join(', ')}, which the docs do not hold`)
+}
+
 if (import.meta.main) {
   await snapshot(true)
+  commands()
+  await docsChecked()
   await buildAssets(true)
   await output()
   process.exit(0)

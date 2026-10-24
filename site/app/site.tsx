@@ -1,6 +1,7 @@
 import { Elysia, NotFound } from 'elysia'
 import assets from '@/assets.json' with { type: 'json' }
 import { BuilderPage } from '@/components/builder-page'
+import { DocsIndex, DocsPage } from '@/components/docs'
 import { Home } from '@/components/home'
 import { NoSuchMarketplace, NoSuchPalette } from '@/components/marketplace-frame'
 import { MarketplacePage } from '@/components/marketplace-page'
@@ -12,6 +13,7 @@ import { builderData, starts } from '@/lib/builder-page'
 import { type Card, cardAlt, cardPng } from '@/lib/card'
 import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
+import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts } from '@/lib/facts'
 import { marketplacePath, OFFICIAL, palettePath, palettesPath } from '@/lib/gallery'
 import { marketplaces } from '@/lib/marketplaces'
@@ -24,6 +26,8 @@ import { faviconIco, touchIconPng } from '@/lib/tab-icon'
 import { inMode, type Marketplace, type Theme } from '@/lib/themes'
 import {
   builderMeta,
+  docMeta,
+  docsMeta,
   marketplaceMeta,
   marketplacesMeta,
   paletteMeta,
@@ -46,6 +50,11 @@ const STORE = 'One ttheme marketplace: its repository, its palettes and how they
 const SITE_CARD: Card = { kind: 'site', theme: fallback, palettes: facts.palettes, catalogs: facts.catalogs }
 
 const CARD = { image: '/card.png', imageAlt: cardAlt(SITE_CARD) }
+
+const DOCS_TRAIL = [
+  { name: 'ttheme', path: '/' },
+  { name: 'docs', path: DOCS_PATH },
+]
 
 function cardOf(theme: Theme) {
   return { image: `${palettePath(theme)}/card.png`, imageAlt: cardAlt({ kind: 'palette', theme }) }
@@ -88,6 +97,8 @@ export const PRERENDERED: string[] = [
   '/sheets',
   '/marketplace',
   '/builder',
+  DOCS_PATH,
+  ...DOC_PAGES.map((doc) => doc.path),
   marketplacePath(null),
   ...themes.map(palettePath),
   ...marketplaces.flatMap((marketplace) => [marketplacePath(marketplace.id), ...marketplace.palettes.map(palettePath)]),
@@ -253,6 +264,34 @@ export const site = new Elysia({ name: 'site' })
       head: RESTORE_SCRIPT,
     }),
   )
+  .get(DOCS_PATH, () =>
+    page(
+      {
+        ...docsMeta(),
+        path: DOCS_PATH,
+        ...CARD,
+        ld: [crumbs(DOCS_TRAIL)],
+        cache: CATALOG,
+      },
+      <DocsIndex facts={facts} about={docsMeta().description} />,
+    ),
+  )
+  .get(`${DOCS_PATH}/:group/:slug`, ({ params }) => {
+    const doc = docAt(params.group, params.slug)
+
+    if (!doc) throw new NotFound()
+
+    return page(
+      {
+        ...docMeta(doc.title, doc.group.title, doc.description),
+        path: doc.path,
+        ...CARD,
+        ld: [crumbs([...DOCS_TRAIL, { name: doc.title, path: doc.path }])],
+        cache: CATALOG,
+      },
+      <DocsPage page={doc} facts={facts} />,
+    )
+  })
   .get(
     '/builder/palettes.json',
     { catalog: true },

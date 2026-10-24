@@ -30,7 +30,7 @@ test('the shell bakes pictures for exactly the wired terminals that cannot place
 })
 
 test('every wired terminal has its column in the support tables', () => {
-  for (const file of [['README.md'], ['docs', 'terminals.md']]) {
+  for (const file of [['README.md'], ['docs', 'reference', 'terminals.md']]) {
     const head = read(...file)
       .split('\n')
       .find((line) => line.startsWith('|') && line.includes('Ghostty'))

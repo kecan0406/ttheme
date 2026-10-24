@@ -16,9 +16,9 @@
 
 <p align="center">
   <a href="https://ttheme.dev/">Site</a> ·
+  <a href="https://ttheme.dev/docs">Docs</a> ·
   <a href="#palettes">Palettes</a> ·
-  <a href="docs/usage.md">Usage</a> ·
-  <a href="docs/terminals.md">Terminals</a> ·
+  <a href="https://ttheme.dev/docs/reference/terminals">Terminals</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -36,7 +36,7 @@
   accent stays in its role — red reads as an error, green as success — and apart
   from its neighbors at text size, red and green too for a deuteranope. The build
   fails if a palette regresses. Why each threshold sits where it does:
-  [docs/gate.md](docs/gate.md).
+  [the contrast gate](https://ttheme.dev/docs/reference/contrast-gate).
 - **Switched live, per tab.** Tabs in one window can wear different palettes,
   any tab can be repainted at any time, a directory can pin its own, and a new
   tab can take the next character.
@@ -57,26 +57,12 @@ exec zsh               # the ttheme command in this tab
 ttheme                 # preview and browse as tabs — tab switches
 ```
 
-<details>
-<summary><b>What init changes</b></summary>
-
-- Your terminal config and `~/.zshrc` get one line between `# ttheme begin` /
-  `# ttheme end` that loads a file ttheme keeps under `~/.config/ttheme`, and
-  only while it is there — so changing the default palette never touches your
-  config again, and a config synced to a machine without ttheme still works.
-  Everything outside the block is left alone, and what ttheme sets is colors —
-  no font, font size or shader — plus, in Ghostty while new tabs rotate
-  palettes, the `command` that opens them on the next one.
-- Each file is backed up once to `<file>.ttheme.bak` before the first edit, and
-  written through symlinks, so a dotfiles repo keeps its links.
-- A `command` or `shell-integration` you set in Ghostty stays yours, and every
-  file ttheme adds to a terminal's folders is named `ttheme-<palette>`.
-- `npx @kecan0406/ttheme@latest uninstall` lists and then reverses all of it.
-
-Per-terminal details, manual install from the release archives and building from
-a checkout are in [docs/install.md](docs/install.md).
-
-</details>
+ttheme adds one guarded line to each config it wires, sets colors only, and
+`npx @kecan0406/ttheme@latest uninstall` takes it all back out:
+[what changed, and how to undo it](https://ttheme.dev/docs/getting-started/what-changed).
+The [docs](https://ttheme.dev/docs) start from
+[install](https://ttheme.dev/docs/getting-started/install) and
+[your first palette](https://ttheme.dev/docs/getting-started/first-palette).
 
 ## Palettes
 
@@ -91,166 +77,90 @@ a checkout are in [docs/install.md](docs/install.md).
 </details>
 
 Both images are drawn from the official marketplace as it ships, so they always
-match what Browse offers. Every palette comes in a light and a dark mode:
-`init` asks which one every palette is worn in — `auto`, where Ghostty is wired,
-follows the system's appearance as Ghostty shows it — and `ttheme auto`,
-`ttheme light` or `ttheme dark` (or alt+c in `ttheme`, or `TTHEME_MODE` in the
-[settings](docs/usage.md#settings)) switches it later. `init` installs the catalogs you pick; Browse, the second tab of
-`ttheme`, adds or drops single palettes any time, and a merged palette reaches everyone
-with the next release — `ttheme update` brings it, and ttheme says when one is
-out.
+match what Browse offers. Every palette comes in a light and a dark mode, and
+`ttheme light`, `ttheme dark` or `ttheme auto` picks the one they are all worn in
+([light, dark and auto](https://ttheme.dev/docs/usage/modes)). Browse, the second
+tab of `ttheme`, adds or drops single palettes any time, and a merged palette
+reaches everyone with the next release.
 
-### Marketplaces
-
-Anyone can publish palettes from a GitHub repository. A marketplace is named
-`<owner>@<name>` — its repository's owner and the name its `ttheme-marketplace.toml` gives — and
-sits below the official catalogs in Preview and Browse, past a line, with
-the folders under its `palettes/` as catalogs:
-
-```
-▾ Evangelion
-    rei
-    asuka
-── Marketplaces ─────
-▾ alice@pastel
-  ▾ night
-      dusk
-      moon
-  ▸ day
-```
+Anyone can publish palettes from a GitHub repository as a marketplace, named
+`<owner>@<name>`:
 
 ```sh
-ttheme marketplace add alice/ttheme-pastel#v1      # add alice's marketplace, pinned to a tag
-ttheme add alice@pastel/dusk                       # and install one of its palettes
-ttheme                                             # shift+tab to Browse: marketplaces are cards there — add, remove, auto-update
+ttheme marketplace add alice/ttheme-pastel   # add alice's marketplace
+ttheme add alice@pastel/dusk                 # and install one of its palettes
 ```
 
-Browse handles marketplaces the way it handles palettes: in the same list it
-adds one by repository or folder, finds the public ones on GitHub, marks one for
-removal and switches its auto-update, and enter applies all of it with the
-palettes you picked. The official marketplace comes with ttheme and updates with it;
-a repository added with `ttheme marketplace add` asks whether its list updates on its own, and a
-palette you installed from it keeps its colors until you take its update —
-`ctrl+r` on a palette marked `⇡` in Browse. Nobody reviews a marketplace. Its
-palettes are colors and post numbers, never code, and the contrast gate's
-numbers are shown for them but never enforced — only the official marketplace is
-held to the gate. `ttheme update` updates ttheme and refreshes every marketplace now; `ttheme marketplace
-remove alice@pastel` drops one, and the palettes you installed from it keep
-working. The official palettes are a marketplace too (`official`). [The marketplaces
-page](https://ttheme.dev/marketplace) lists the public ones.
+Nobody reviews a marketplace. Its palettes are colors and post numbers, never
+code, and only the official marketplace is held to the contrast gate.
+[The marketplaces page](https://ttheme.dev/marketplace) lists the public ones, and
+[add and update palettes](https://ttheme.dev/docs/usage/palettes) covers the rest.
 
 ### Your own palettes
 
-`ttheme new rei` opens the palette editor on a blank palette: a few seeds grow
-twenty colors that pass the contrast gate, then each one is tuned in OKLCH while
-a mock terminal beside them shows the result. It makes `<you>@<marketplace>/rei`, named after your
-GitHub handle and a marketplace name the first `new` asks for, in
-`~/.config/ttheme/marketplace/<marketplace>`, and installs it; `--from rei` starts from
-rei's colors instead. `ttheme edit rei` opens the same editor — on any palette,
-the official ones included: one that is not yours keeps your changes as a tone
-over its own colors, and `R` then `s` in the editor puts them back. `ttheme check
---fix` writes colors that pass the gate (as a tone, for a palette that is not
-yours). Left without a palette, `edit` and `check` ask to use the one the tab
-wears.
+```sh
+ttheme new rei      # the palette editor, on a blank palette
+ttheme edit miku    # any palette; one that is not yours keeps your changes as a tone
+ttheme share rei    # a link that carries the palette, or a marketplace on GitHub
+```
 
-The same editor runs in a browser at [ttheme.dev/builder](https://ttheme.dev/builder):
-start from any palette, a share link or blank seeds, tune the twenty colors in both
-modes against the gate, and take the palette as a `.toml` file — `ttheme add
-~/Downloads/rei.toml` puts it in your local marketplace and installs it — as a
-link, or as a marketplace ready to push.
-
-A coding agent can make one for a character too. With the ttheme-palette skill it
-finds the character's official art, asks you which picture to measure, measures the
-hair, eyes and outfit with `ttheme palette`, and writes and installs the palette in
-your local marketplace, then tells you what it chose and why. Add the skill with
-`npx skills add kecan0406/ttheme` (Claude Code, Codex, Cline, Warp, Zed and others),
-`/plugin install ttheme-palette --marketplace kecan0406/ttheme` in Claude Code, or
-let `ttheme init` add it — then ask your agent to make a ttheme palette for a
-character.
-
-A local marketplace is already a repository layout: `palettes/*.toml` (a folder
-under it, such as `palettes/night/`, is a catalog, which a `[[catalog]]` table in
-`ttheme-marketplace.toml` may give an order, a title and a lead) and the
-`ttheme-marketplace.toml` that names it — nothing to build, since ttheme reads the
-files as pushed. `ttheme marketplace init <name>` makes one.
-
-`ttheme share` asks how to share, then which palettes, and prints a link and,
-when it fits the window, its QR code:
-
-- **A link** (the palette the tab wears is picked to start with) —
-  `https://ttheme.dev/builder/tt4:…` — carries the colors, in both modes where a palette keeps both, and the numbers of their background posts with
-  their framing, so nothing is uploaded: the page it opens is the builder on those palettes,
-  which draws each in a terminal, lists the posts and their artists, gives the
-  `ttheme add` command and lets you tune a copy, and its preview
-  image for chat apps is drawn in the palettes' colors. `ttheme add <link>` (or
-  the bare code at its end) installs them anywhere without a marketplace,
-  fetching those posts from the booru the way `find` does. A link of a few
-  palettes stays a small QR code; past that, share a marketplace.
-- **A marketplace on GitHub** — one of your local marketplaces, or a new one,
-  holding exactly the palettes you pick: a palette from elsewhere is copied in
-  with `meta.from` naming where it came from, and one you unpick is deleted from
-  the folder — the review warns when git has no copy of it, or it changed since
-  it was last committed. The first time it asks the repository's name and
-  who can see it, every time a description, then shows what it will push and
-  asks (no by default when it deletes anything), commits, and creates
-  the repository with `gh` (with the `ttheme-marketplace` topic when it is
-  public) or pushes to it. Its link is the repository, which
-  `ttheme marketplace add <owner>/<repo>` adds anywhere.
-
-`ttheme share <palette>`, or `ttheme share` into a pipe, shares that palette, or
-the one the tab wears, as a link without asking.
+The editor grows twenty colors that pass the gate from a few seeds, then tunes
+each one in OKLCH while a mock terminal shows the result. The same builder runs
+in a browser at [ttheme.dev/builder](https://ttheme.dev/builder), and a coding
+agent with the ttheme-palette skill (`npx skills add kecan0406/ttheme`, or
+`init` adds it) makes a palette from a character's official art.
+[Your own palette](https://ttheme.dev/docs/creating-palettes/your-own),
+[share a link](https://ttheme.dev/docs/creating-palettes/share) and
+[publish a marketplace](https://ttheme.dev/docs/creating-palettes/publish) walk
+through each.
 
 ## Usage
 
 | Command | |
 |---|---|
-| `ttheme` | Preview and Browse as tabs of one screen — `tab` and `shift+tab` switch. Preview tries palettes live: the tab repaints as the cursor moves, enter applies it to this tab or makes it the default. Browse picks palettes and marketplaces in one list: a marketplace's panel holds its palettes and its own `Update now`, `Auto-update` and `Remove marketplace` |
+| `ttheme` | Preview and Browse as tabs of one screen — the tab repaints as the cursor moves, `enter` applies |
 | `ttheme use <palette>` | Paint this tab (a unique prefix works) |
 | `ttheme default <palette>` | The palette new tabs open with |
-| `ttheme pin` / `unpin` | A palette for this directory, everything below it, its repository or an ssh host (`ssh:<host>`) — a panel shows what each choice reaches; `cd` or `ssh` in repaints, leaving restores |
-| `ttheme pins` | Map every pin as a file tree — the pinned directories in each palette's colors, with where you are marked, and every pinned ssh host |
-| `ttheme marketplace add <owner/repo>` | Add someone's marketplace (`#v1` pins it); `remove` drops one — Browse lists yours, finds the public ones and switches their auto-update |
-| `ttheme new <name>` | Make a palette of your own in the palette editor (`--from <palette>` starts from its colors); `edit`, `check`, `share` follow |
-| `ttheme palette <action>` | Make a character's palette from colors measured on its official art — what the ttheme-palette agent skill runs |
+| `ttheme pin` / `unpin` / `pins` | A palette for a directory, its repository or an ssh host — `cd` or `ssh` in repaints, leaving restores |
+| `ttheme auto` / `light` / `dark` | The mode every palette is worn in |
 | `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |
 | `ttheme config` | Settings in `$EDITOR` |
-| `ttheme auto` / `light` / `dark` | Wear every palette in the system's mode where a wired terminal reports it, or in its light or dark mode — open tabs repaint |
 
-`ttheme help` lists the everyday commands by task; `ttheme help all` adds the
-rest with their options, and examples. Preview's keys and the mouse, directory pins,
-rotating new tabs and every setting are in [docs/usage.md](docs/usage.md).
+`ttheme help` lists the everyday commands by task, and `ttheme help all` every
+one with its options. [Commands](https://ttheme.dev/docs/reference/commands),
+[settings](https://ttheme.dev/docs/reference/settings) and
+[keys](https://ttheme.dev/docs/reference/keys) list them all.
 
 ## Terminal support
 
 | | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Setup with `init`** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Runtime repaint** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **A palette per tab** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Background pictures** | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ |
+| **Follows the system's appearance** | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — |
 
 Nothing is emulated — a terminal that cannot express something does not get it.
-Any other terminal that speaks OSC 4/10/11 gets runtime repainting. A default
-set, a palette added or a picture tuned in one terminal reaches every other one
-you wired. Why each cell is what it is: [docs/terminals.md](docs/terminals.md).
-An editor such as Neovim keeps its own colorscheme inside its window — how the
-two share the screen, and how to let Neovim wear the palette instead:
-[docs/terminals.md#editors](docs/terminals.md#editors).
+A default set, a palette added or a picture tuned in one terminal reaches every
+other one you wired. [Terminal support](https://ttheme.dev/docs/reference/terminals)
+says what each one does, and how ttheme shares the screen with an editor such as
+Neovim.
 
 ## Background pictures
 
-A palette can wear a picture behind the text. ttheme ships none: in `ttheme`,
-`tab` on a palette opens its panel, and `f` there searches danbooru, konachan, yande.re and zerochan for the character live
-(safe-rated by default), or takes a picture you paste or drop, cuts the
-character out on macOS, tints it to the palette — or keeps its own colors — and
-installs it on your machine only. Ghostty shows the focused tab's picture, iTerm2, Konsole and Terminal.app one per tab, kitty one per
-window, WezTerm the active tab's per window, Warp the tab in front's, through its one app-wide theme. See [docs/backgrounds.md](docs/backgrounds.md).
+A palette can wear a picture behind the text. ttheme ships none: `tab` on a
+palette in `ttheme` opens its panel, and `f` there searches danbooru, konachan,
+yande.re and zerochan for the character (safe-rated by default), or takes a
+picture you paste or drop, cuts the character out on macOS, and installs it on
+your machine only. See [pictures](https://ttheme.dev/docs/usage/pictures).
 
 ## Contributing
 
 A palette is one TOML file of color values and post numbers — never images.
 Your own go in your own marketplace, with no review; the official marketplace takes pull
 requests, and [CONTRIBUTING.md](CONTRIBUTING.md) has its rules, the file format
-and the checks a palette must pass.
+and the checks a palette must pass. The docs are Markdown in [`docs/`](docs),
+which [ttheme.dev/docs](https://ttheme.dev/docs) renders.
 
 ## Credits
 

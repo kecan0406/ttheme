@@ -60,9 +60,9 @@ What `sync` carries into `palettes.zsh` for preview (`HUB_TABS`, `STANDING_LINES
 
 ## Where a change goes
 
-**A key on a Node screen.** First CONTRIBUTING.md's "Keys a screen takes": where typing filters (preview, Browse) a letter or digit is never a command, and a key already in its table is a collision to resolve, not to add beside. Then the handler (the table above), the help topic that names the key (`topics()` in `BrowsePanel` and `PaletteEditor`, `findTopics` for find; enter on a topic runs its key), the hint on the screen's key bar (the "Draws" column above names where each takes its keys; the key spelled as the source spells it and drawn through `cap`, `src/tui/keycaps.ts`), and `docs/usage.md`.
+**A key on a Node screen.** First CONTRIBUTING.md's "Keys a screen takes": where typing filters (preview, Browse) a letter or digit is never a command, and a key already in its table is a collision to resolve, not to add beside. Then the handler (the table above), the help topic that names the key (`topics()` in `BrowsePanel` and `PaletteEditor`, `findTopics` for find; enter on a topic runs its key), the hint on the screen's key bar (the "Draws" column above names where each takes its keys; the key spelled as the source spells it and drawn through `cap`, `src/tui/keycaps.ts`), and `docs/reference/keys.md`.
 
-**A key in preview or its panel.** A case in `__tt_pv_handle` (or the panel's `__tt_te_*`), `__tt_pv_help`, the bar in `__tt_pv_foot`, the panel's table in CONTRIBUTING.md, and `docs/usage.md`. A key is drawn through `__tt_cap` and `__tt_capped`.
+**A key in preview or its panel.** A case in `__tt_pv_handle` (or the panel's `__tt_te_*`), `__tt_pv_help`, the bar in `__tt_pv_foot`, the panel's table in CONTRIBUTING.md, and `docs/reference/keys.md`. A key is drawn through `__tt_cap` and `__tt_capped`.
 
 **A click.** Every click has a key that does the same. In a Node screen wrap the text in `zone(target, text)` (`keyZone` for a key hint — `hintOf` already does) while drawing, and pad before marking, since `.length` and `padEnd` count the marks; act in the screen's mouse handler, on the release (`count >= 2` is a double click). find hands rectangles in `Frame.zones` instead. In preview append to `pvz` where the thing is drawn and act in `__tt_pv_press` or `__tt_pv_release`. CONTRIBUTING.md's "The mouse".
 

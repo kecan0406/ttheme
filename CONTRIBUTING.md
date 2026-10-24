@@ -174,7 +174,7 @@ One palette per pull request. At most three open at a time.
 - Every palette passes the contrast gate in both modes: body text at 7:1, accents and black on
   the six accents at 4.5:1, ANSI 8 and white on it at 3:1, each accent in its
   role and apart from its neighbors at text size, red and green apart for a
-  deuteranope (`src/core/contrast.ts`; why each threshold: [docs/gate.md](docs/gate.md)).
+  deuteranope (`src/core/contrast.ts`; why each threshold: [docs/reference/contrast-gate.md](docs/reference/contrast-gate.md)).
   `mise run build` fails on a violation. A waiver needs `[contrast] waive = [...]`
   **plus** a `reason`; a waiver without one fails the test suite.
 
@@ -406,7 +406,7 @@ take the keys they list on their own last line while they are open. `find`
 is a screen of its own and keeps its own keys, and so does the palette editor
 (`new`, `edit`, and the Edit palette button of preview's panel); in both, as in
 browse, `?` opens the same help (`src/tui/help.ts`) with the keys of the mode
-the screen is in, which docs/usage.md describes. The editor's esc, once something changed, opens a
+the screen is in, which docs/reference/keys.md lists. The editor's esc, once something changed, opens a
 Save changes? dialog (`y` saves and leaves, `n` leaves without saving, esc keeps
 editing), and ctrl+c leaves from anywhere in it the same way — a tune it
 interrupts is kept, so it counts as a change — while a second ctrl+c in the

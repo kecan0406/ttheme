@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://www.schemastore.org/ttheme-marketplace.json",
   "title": "ttheme marketplace",
-  "description": "The ttheme-marketplace.toml at the root of a ttheme marketplace: a repository or folder whose palettes/*.toml and palettes/<catalog>/*.toml are the marketplace's palettes\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#marketplaces",
+  "description": "The ttheme-marketplace.toml at the root of a ttheme marketplace: a repository or folder whose palettes/*.toml and palettes/<catalog>/*.toml are the marketplace's palettes\nhttps://ttheme.dev/docs/creating-palettes/publish",
   "type": "object",
   "definitions": {
     "palette": {
@@ -23,7 +23,7 @@
       "type": "string"
     },
     "name": {
-      "description": "The marketplace's name: its palettes are <owner>@<name>/<palette>, where the owner is the repository's owner on GitHub\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#marketplaces",
+      "description": "The marketplace's name: its palettes are <owner>@<name>/<palette>, where the owner is the repository's owner on GitHub\nhttps://ttheme.dev/docs/creating-palettes/publish",
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
       "maxLength": 40
@@ -54,7 +54,7 @@
       "required": ["name"]
     },
     "catalog": {
-      "description": "The catalogs, the folders under palettes/, in the order ttheme lists them, each with an optional title in its original language and a lead palette whose colors stand for it; a folder no table names follows them, in name order\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#marketplaces",
+      "description": "The catalogs, the folders under palettes/, in the order ttheme lists them, each with an optional title in its original language and a lead palette whose colors stand for it; a folder no table names follows them, in name order\nhttps://ttheme.dev/docs/creating-palettes/publish",
       "type": "array",
       "items": {
         "type": "object",
@@ -80,7 +80,7 @@
       }
     },
     "renames": {
-      "description": "Palettes that were renamed or removed: an old name maps to its new name, or to false once it is gone. Installs of the old name follow the chain on the next update, so keep the entries after everyone has moved\nhttps://github.com/kecan0406/ttheme/blob/main/docs/usage.md#marketplaces",
+      "description": "Palettes that were renamed or removed: an old name maps to its new name, or to false once it is gone. Installs of the old name follow the chain on the next update, so keep the entries after everyone has moved\nhttps://ttheme.dev/docs/creating-palettes/publish",
       "type": "object",
       "propertyNames": {
         "$ref": "#/definitions/palette"

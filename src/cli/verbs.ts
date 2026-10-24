@@ -15,7 +15,7 @@ export interface Flag {
 
 export type Section = 'tab' | 'startup' | 'palettes' | 'own' | 'setup' | 'support'
 
-const SECTIONS: { section: Section; title: string }[] = [
+export const SECTIONS: { section: Section; title: string }[] = [
   { section: 'tab', title: 'This tab' },
   { section: 'startup', title: 'New tabs' },
   { section: 'palettes', title: 'Palettes' },
@@ -389,7 +389,7 @@ export const VERB_SPECS: VerbSpec[] = [
   },
 ]
 
-function usageOf(verb: VerbSpec): string {
+export function usageOf(verb: VerbSpec): string {
   const flags = Object.entries(verb.flags ?? {}).map(([name, { value }]) => `[--${name}${value ? ` ${value}` : ''}]`)
 
   return [verb.name, ...flags, ...verb.args].join(' ')
@@ -399,11 +399,11 @@ function columns(rows: [string, string][], width = WIDTH): string[] {
   return rows.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`)
 }
 
-function headOf(text: string): string {
+export function headOf(text: string): string {
   return text.split(' — ')[0] as string
 }
 
-function flagRows(verb: VerbSpec): [string, string][] {
+export function flagRows(verb: VerbSpec): [string, string][] {
   return Object.entries(verb.flags ?? {}).map(([name, { short, value, about }]) => [
     `${short ? `-${short}, ` : ''}--${name}${value ? ` ${value}` : ''}`,
     about,
@@ -458,6 +458,12 @@ export function briefText(color = false): string {
   return [...bannerOf(color), '', 'Use --help to list every command, or init to set ttheme up'].join('\n')
 }
 
+export const DOCS_URL = 'https://ttheme.dev/docs'
+
+export function docsOf(verb: VerbSpec): string {
+  return `${DOCS_URL}/reference/commands#${verb.name}`
+}
+
 export function commandHelp(verb: VerbSpec): string {
   const flags = flagRows(verb)
 
@@ -469,6 +475,8 @@ export function commandHelp(verb: VerbSpec): string {
     ...(flags.length > 0 ? ['', 'Options:', ...columns(flags)] : []),
     ...(verb.notes ? ['', ...verb.notes] : []),
     ...(verb.flags?.json ? ['', 'Exit codes:', ...columns(EXIT_CODES, 1)] : []),
+    '',
+    `Docs: ${docsOf(verb)}`,
   ].join('\n')
 }
 
@@ -492,6 +500,6 @@ export function helpText(all: boolean, shell = false, color = false): string {
     ]),
     ...(all ? ['', 'Examples:', ...columns(EXAMPLES, Math.max(...EXAMPLES.map(([left]) => left.length)))] : []),
     '',
-    'https://ttheme.dev',
+    `Docs: ${DOCS_URL}`,
   ].join('\n')
 }

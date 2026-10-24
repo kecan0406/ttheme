@@ -9,6 +9,7 @@ let failed = 0
 try {
   writeFileSync(join(stand, 'assets.json'), JSON.stringify({ css: '', js: '', builder: '', fonts: [], reload: '' }))
   writeFileSync(join(stand, 'marketplaces.json'), '[]')
+  writeFileSync(join(stand, 'commands.json'), JSON.stringify({ sections: [], exits: [] }))
   writeFileSync(
     join(stand, 'tsconfig.json'),
     JSON.stringify({
@@ -18,6 +19,7 @@ try {
         paths: {
           '@/assets.json': [join(stand, 'assets.json')],
           '@/marketplaces.json': [join(stand, 'marketplaces.json')],
+          '@/commands.json': [join(stand, 'commands.json')],
           '@/*': [join(SITE, '*')],
         },
       },

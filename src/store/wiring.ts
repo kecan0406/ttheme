@@ -52,7 +52,7 @@ export function zshrcBlock(): string {
 
 const CONFIG_HEADER = '# ttheme settings — uncomment a line to change it; exported variables win over this file'
 
-const CONFIG_SETTINGS = {
+export const CONFIG_SETTINGS = {
   TTHEME_MODE: {
     doc: '# the mode every palette is worn in: auto, which follows the appearance of the system where a wired Ghostty, iTerm2, kitty or WezTerm reports it, or light or dark, which each palette carries both of — changing it repaints every open tab (default dark)',
     default: 'dark',

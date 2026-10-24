@@ -4,6 +4,7 @@ declare namespace JSX {
   }
 
   interface IntrinsicElements {
+    'docs-page': HtmlTag
     'facet-ground': HtmlTag
     'kaomoji-rain': HtmlTag
     'lead-showcase': HtmlTag

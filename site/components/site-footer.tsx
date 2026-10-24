@@ -20,13 +20,14 @@ const COLUMNS: { title: string; links: { label: string; href: string; brand?: Si
     title: 'your own',
     links: [
       { label: 'make a palette', href: '/builder' },
-      { label: 'publish a marketplace', href: `${OFFICIAL_URL}#marketplaces` },
+      { label: 'publish a marketplace', href: '/docs/creating-palettes/publish' },
       { label: 'marketplaces on GitHub', href: 'https://github.com/topics/ttheme-marketplace', brand: siGithub },
     ],
   },
   {
     title: 'project',
     links: [
+      { label: 'docs', href: '/docs' },
       { label: 'github', href: OFFICIAL_URL, brand: siGithub },
       { label: 'npm', href: NPM_URL, brand: siNpm },
       { label: 'report a bug', href: `${OFFICIAL_URL}/issues/new/choose` },

@@ -2,9 +2,11 @@ import { existsSync, watch } from 'node:fs'
 import { join } from 'node:path'
 import { Elysia, file, NotFound, sse } from 'elysia'
 import { autoHead } from 'elysia/auto-head'
-import { ASSETS, buildAssets, IMMUTABLE, SITE, snapshot } from './build'
+import { ASSETS, buildAssets, commands, IMMUTABLE, SITE, snapshot } from './build'
 
 await snapshot(false)
+
+commands()
 
 await buildAssets(false)
 
