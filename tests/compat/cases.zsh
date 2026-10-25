@@ -58,6 +58,8 @@ __cc_dist() {
 
 __cc_report() { print -r -- "$1"$'\t'"$2"$'\t'"$3" >> $CC_DIR/results }
 
+__cc_unseen() { [[ $TTHEME_ADAPTER == warp && $OSTYPE == darwin* ]] }
+
 __cc_mode() {
   __cc_ask $'\e[?'$1'$p' || return 2
   [[ $REPLY == *$'\e[?'$1';'<->'$y'* ]] || { REPLY=""; return 2 }
@@ -359,7 +361,7 @@ __cc_follow() {
     __cc_report follow-belief skip "no layer or fewer than two palettes"
     return
   fi
-  if [[ $TTHEME_ADAPTER == warp ]]; then
+  if __cc_unseen; then
     __cc_report follow-default skip "Warp reads only the real ~/.warp, which the sandbox never touches"
     __cc_report follow-belief skip "Warp reads only the real ~/.warp, which the sandbox never touches"
     return
@@ -416,7 +418,7 @@ __cc_keep() {
     __cc_report keep-painted skip "no layer or fewer than three palettes"
     return
   fi
-  if [[ $TTHEME_ADAPTER == warp ]]; then
+  if __cc_unseen; then
     __cc_report keep-painted skip "Warp reads only the real ~/.warp, which the sandbox never touches"
     return
   fi
@@ -453,6 +455,14 @@ __cc_cases() {
     __cc_report layer pass "active, ${#TTHEME_PALETTE} palettes"
   else
     __cc_report layer fail "inactive"
+  fi
+
+  if [[ $TTHEME_ADAPTER == warp && -n $TTHEME_STARTUP ]] && ! __cc_unseen; then
+    spec=${${=TTHEME_PALETTE[$TTHEME_STARTUP]}[1]}
+    for (( r = 0; r < 50; r++ )); do
+      __cc_color 11 && __cc_near $spec $REPLY && break
+      sleep 0.1
+    done
   fi
 
   if __cc_color 11; then
@@ -527,21 +537,24 @@ __cc_cases() {
 
   (( $+functions[__tt_name_of] )) && __tt_name_of "$TTHEME_SPEC"
   other=${${TTHEME_ORDER:#$REPLY}[1]}
-  if [[ $TTHEME_ADAPTER == warp ]]; then
+  if __cc_unseen; then
     __cc_report wear skip "Warp reads only the real ~/.warp, which the sandbox never touches"
     __cc_report wear-painted skip "Warp reads only the real ~/.warp, which the sandbox never touches"
     __cc_report wear-ansi skip "Warp reads only the real ~/.warp, which the sandbox never touches"
   elif (( $+functions[ttheme] )) && [[ -n $other ]]; then
     ttheme use $other
-    sleep 0.1
     spec=${${=TTHEME_PALETTE[$other]}[1]}
+    for (( r = 0; r < 30; r++ )); do
+      sleep 0.1
+      __cc_color 11 && __cc_near $spec $REPLY && break
+    done
     local ansi=${${=TTHEME_PALETTE[$other]}[6]} got="" bg=""
     local -i blind=0
-    [[ -n ${(M)${(f)"$(<$CC_DIR/results)"}:#ansi-painted$'\t'fail*} ]] && blind=1
+    [[ -n ${(M)${(f)"$(<$CC_DIR/results)"}:#(ansi-painted|osc-ansi)$'\t'fail*} ]] && blind=1
     __cc_color '4;1' && got=$REPLY
     __cc_color 11 && bg=$REPLY
     if [[ $TTHEME_SPEC == ${TTHEME_PALETTE[$other]} ]] && __cc_near $spec $bg && (( blind )); then
-      __cc_report wear pass "ttheme use $other reads back $bg; ansi 1 is wear-ansi's to judge, since this terminal answers OSC 4 with what was set, not what it draws ($got)"
+      __cc_report wear pass "ttheme use $other reads back $bg; ansi 1 is wear-ansi's to judge, since this terminal does not answer OSC 4 with what it draws (${got:-no answer})"
     elif [[ $TTHEME_SPEC == ${TTHEME_PALETTE[$other]} ]] && __cc_near $spec $bg && __cc_near $ansi $got; then
       __cc_report wear pass "ttheme use $other reads back $bg, ansi 1 $got"
     else
@@ -559,7 +572,7 @@ __cc_cases() {
     __cc_report wear-ansi skip "nothing worn"
   fi
 
-  if [[ $TTHEME_ADAPTER == warp ]]; then
+  if __cc_unseen; then
     __cc_report reset-worn skip "Warp reads only the real ~/.warp, which the sandbox never touches"
   elif (( $+functions[__tt_mend] )) && [[ -n $other && $TTHEME_SPEC == ${TTHEME_PALETTE[$other]} ]]; then
     local -a worn=(${=TTHEME_PALETTE[$other]})
@@ -613,7 +626,10 @@ __cc_cases() {
     __cc_report restore skip "no layer or no starting color"
   else
     __tt_osc_reset
-    sleep 0.1
+    for (( r = 0; r < 30; r++ )); do
+      sleep 0.1
+      __cc_color 11 && __cc_near $start $REPLY && break
+    done
     if __cc_color 11 && __cc_near $start $REPLY; then
       __cc_report restore pass "back to $REPLY"
     else
@@ -705,7 +721,7 @@ __cc_back() {
     __cc_report on-belief skip "no layer or no default palette"
     return
   fi
-  if [[ $TTHEME_ADAPTER == warp ]]; then
+  if __cc_unseen; then
     __cc_report on-follow skip "Warp reads only the real ~/.warp, which the sandbox never touches"
     __cc_report on-belief skip "Warp reads only the real ~/.warp, which the sandbox never touches"
     return
@@ -730,7 +746,11 @@ __cc_back() {
   __tt_cli on > /dev/null
   __tt_reload
   sleep 1
-  (( TTHEME_FOCUS )) && __tt_focus
+  if (( TTHEME_FOCUS )); then
+    __tt_focus
+  else
+    __tt_prompt
+  fi
   shown=""
   for (( i = 0; i < 50; i++ )); do
     __cc_color 11 && shown=$REPLY

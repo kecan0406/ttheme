@@ -18,8 +18,9 @@ typeset -g ALACRITTY_APP=${TTHEME_ALACRITTY_APP:-/Applications/Alacritty.app}
 typeset -g ALACRITTY_GUI="alacritty --config-file $SANDBOX/"
 typeset -g WARP_LAUNCH=$HOME/.warp/launch_configurations/ttheme-sandbox.yaml
 typeset -g KONSOLE_GUI="konsole --separate --workdir $SANDBOX"
-typeset -g KONSOLE_SCREEN=${TTHEME_KONSOLE_SCREEN:-:77}
-typeset -gi PICTURED=0 BRING=0
+typeset -g XVFB=${TTHEME_XVFB_DISPLAY:-:77}
+typeset -gi PICTURED=0 BRING=0 LINUX=0
+[[ $OSTYPE == linux* ]] && LINUX=1
 typeset -ga FOREIGN=(GHOSTTY_RESOURCES_DIR GHOSTTY_BIN_DIR GHOSTTY_SHELL_FEATURES TERM_PROGRAM TERM_PROGRAM_VERSION
   COLORTERM TERMINFO KITTY_WINDOW_ID ITERM_SESSION_ID ITERM_PROFILE WEZTERM_PANE WEZTERM_EXECUTABLE WEZTERM_UNIX_SOCKET
   WT_SESSION WT_PROFILE_ID ALACRITTY_WINDOW_ID KONSOLE_VERSION KONSOLE_DBUS_SERVICE KONSOLE_DBUS_SESSION KONSOLE_DBUS_WINDOW)
@@ -40,7 +41,7 @@ fresh() {
   pkill -f -- $KITTY_GUI 2>/dev/null || :
   pkill -f -- $ALACRITTY_GUI 2>/dev/null || :
   pkill -f -- $KONSOLE_GUI 2>/dev/null || :
-  pkill -f -- "Xvfb $KONSOLE_SCREEN " 2>/dev/null || :
+  pkill -f -- "Xvfb $XVFB " 2>/dev/null || :
   quit_iterm
   defaults delete $SUITE 2>/dev/null || :
   rm -rf -- $SANDBOX $SUITE_DIR
@@ -114,7 +115,37 @@ wire() {
   print -r -- "palettes: $label"
 }
 
+xvfb_up() {
+  local i
+  pgrep -f -- "Xvfb $XVFB " > /dev/null && return 0
+  (( $+commands[Xvfb] && $+commands[xdotool] )) || return 1
+  Xvfb $XVFB -screen 0 1400x900x24 -nolisten tcp > /dev/null 2>&1 &!
+  for i in {1..50}; do
+    DISPLAY=$XVFB xdotool getdisplaygeometry > /dev/null 2>&1 && break
+    sleep 0.1
+  done
+  [[ $1 == composited ]] && (( $+commands[xcompmgr] )) && DISPLAY=$XVFB xcompmgr > /dev/null 2>&1 &!
+  return 0
+}
+
+open_linux() {
+  local behind=$1
+  local -a env=(${FOREIGN/#/-u}) set=(SHELL=${commands[zsh]:-/bin/zsh})
+  shift
+  if [[ -n $behind ]]; then
+    xvfb_up || return 1
+    env+=(-u WAYLAND_DISPLAY) set+=(DISPLAY=$XVFB)
+  fi
+  env $env $set "$@" > /dev/null 2>&1 &!
+}
+
 open_ghostty() {
+  if (( LINUX )); then
+    (( $+commands[ghostty] )) || return 1
+    open_linux "$1" ghostty --config-default-files=false --config-file=$SANDBOX/.config/ghostty/config \
+      --window-save-state=never --working-directory=$SANDBOX --gtk-single-instance=false
+    return
+  fi
   open -na Ghostty --args \
     --config-default-files=false \
     --config-file=$SANDBOX/.config/ghostty/config \
@@ -172,42 +203,64 @@ sandbox_shell() {
 }
 
 open_wezterm() {
+  if (( LINUX )); then
+    (( $+commands[wezterm-gui] )) || return 1
+    open_linux "$1" wezterm-gui --config-file $SANDBOX/.config/wezterm/wezterm.lua \
+      start --always-new-process --cwd $SANDBOX -- ${commands[zsh]:-/bin/zsh} -il
+    return
+  fi
   [[ -x $WEZTERM_APP/Contents/MacOS/wezterm-gui ]] || return 1
   env ${FOREIGN/#/-u} $WEZTERM_APP/Contents/MacOS/wezterm-gui --config-file $SANDBOX/.config/wezterm/wezterm.lua \
     start --always-new-process --cwd $SANDBOX -- /bin/zsh -il > /dev/null 2>&1 &!
 }
 
 open_kitty() {
+  if (( LINUX )); then
+    (( $+commands[kitty] )) || return 1
+    open_linux "$1" KITTY_CONFIG_DIRECTORY=$SANDBOX/.config/kitty kitty \
+      --config $SANDBOX/.config/kitty/kitty.conf --directory $SANDBOX ${commands[zsh]:-/bin/zsh} -il
+    return
+  fi
   [[ -x $KITTY_APP/Contents/MacOS/kitty ]] || return 1
   env ${FOREIGN/#/-u} KITTY_CONFIG_DIRECTORY=$SANDBOX/.config/kitty $KITTY_APP/Contents/MacOS/kitty \
     --config $SANDBOX/.config/kitty/kitty.conf --directory $SANDBOX /bin/zsh -il > /dev/null 2>&1 &!
 }
 
 open_alacritty() {
+  if (( LINUX )); then
+    (( $+commands[alacritty] )) || return 1
+    open_linux "$1" alacritty --config-file $SANDBOX/.config/alacritty/alacritty.toml \
+      --working-directory $SANDBOX -e ${commands[zsh]:-/bin/zsh} -il
+    return
+  fi
   [[ -x $ALACRITTY_APP/Contents/MacOS/alacritty ]] || return 1
   env ${FOREIGN/#/-u} $ALACRITTY_APP/Contents/MacOS/alacritty --config-file $SANDBOX/.config/alacritty/alacritty.toml \
     --working-directory $SANDBOX -e /bin/zsh -il > /dev/null 2>&1 &!
 }
 
 open_konsole() {
-  local behind=$1 i
+  local behind=$1
   local -a env=(${FOREIGN/#/-u})
   (( $+commands[konsole] && $+commands[dbus-run-session] )) || return 1
   if [[ -n $behind ]]; then
-    (( $+commands[Xvfb] && $+commands[xdotool] )) || return 1
-    Xvfb $KONSOLE_SCREEN -screen 0 1400x900x24 -nolisten tcp > /dev/null 2>&1 &!
-    for i in {1..50}; do
-      DISPLAY=$KONSOLE_SCREEN xdotool getdisplaygeometry > /dev/null 2>&1 && break
-      sleep 0.1
-    done
-    (( $+commands[xcompmgr] )) && DISPLAY=$KONSOLE_SCREEN xcompmgr > /dev/null 2>&1 &!
-    env+=(-u WAYLAND_DISPLAY DISPLAY=$KONSOLE_SCREEN QT_QPA_PLATFORM=xcb)
+    xvfb_up composited || return 1
+    env+=(-u WAYLAND_DISPLAY DISPLAY=$XVFB QT_QPA_PLATFORM=xcb)
   fi
   env $env dbus-run-session -- ${=KONSOLE_GUI} -e zsh -il > /dev/null 2>&1 &!
 }
 
 open_warp() {
   local behind=$1
+  if (( LINUX )); then
+    (( $+commands[warp-terminal] )) || return 1
+    if pgrep -x warp-terminal > /dev/null || pgrep -x warp > /dev/null; then
+      print -u2 "a Warp is already running, and the sandbox's has to be the only one, since a second start opens its window there"
+      return 1
+    fi
+    [[ -n $XDG_RUNTIME_DIR ]] || { mkdir -m 700 -p $SANDBOX/.run && export XDG_RUNTIME_DIR=$SANDBOX/.run }
+    open_linux "$behind" warp-terminal
+    return
+  fi
   [[ -d /Applications/Warp.app ]] || return 1
   sandbox_shell
   mkdir -p ${WARP_LAUNCH:h}
@@ -230,6 +283,22 @@ hand_back() {
   done
   [[ $front == <-> ]] || return 0
   osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($front).activateWithOptions(0)" > /dev/null
+}
+
+absent() {
+  if (( LINUX )); then
+    print -u2 -r -- "no $1 to open — it has to be on PATH, and --behind needs Xvfb and xdotool"
+  else
+    print -u2 -r -- "$2"
+  fi
+}
+
+told() {
+  if (( LINUX )); then
+    print -r -- "opened a separate $1 on it${2:+ on the private display $XVFB} — closing it quits only that one; files stay until the next run"
+  else
+    print -r -- "opened a separate $1 on it — ⌘Q quits only that one; files stay until the next run"
+  fi
 }
 
 usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole] [--pictured] [--zshenv FILE] [--empty | --mine | palette…]" }
@@ -279,37 +348,47 @@ main() {
   fi
   if (( $#wezterm )); then
     ( unset $FOREIGN; WEZTERM_PANE=0 wire $label $palettes )
-    open_wezterm || { print -u2 "no WezTerm at $WEZTERM_APP — TTHEME_WEZTERM_APP names another WezTerm.app"; return 1 }
+    open_wezterm "${behind:+1}" || { absent wezterm-gui "no WezTerm at $WEZTERM_APP — TTHEME_WEZTERM_APP names another WezTerm.app"; return 1 }
     (( $#behind )) && hand_back $front $WEZTERM_GUI
-    print -r -- "opened a separate WezTerm on it — ⌘Q quits only that one; files stay until the next run"
+    told WezTerm "${behind:+1}"
     return
   fi
   if (( $#kitty )); then
     ( unset $FOREIGN; KITTY_WINDOW_ID=1 wire $label $palettes )
-    open_kitty || { print -u2 "no kitty at $KITTY_APP — TTHEME_KITTY_APP names another kitty.app"; return 1 }
+    open_kitty "${behind:+1}" || { absent kitty "no kitty at $KITTY_APP — TTHEME_KITTY_APP names another kitty.app"; return 1 }
     (( $#behind )) && hand_back $front $KITTY_GUI
-    print -r -- "opened a separate kitty on it — ⌘Q quits only that one; files stay until the next run"
+    told kitty "${behind:+1}"
     return
   fi
   if (( $#alacritty )); then
     ( unset $FOREIGN; ALACRITTY_WINDOW_ID=1 wire $label $palettes )
-    open_alacritty || { print -u2 "no Alacritty at $ALACRITTY_APP — TTHEME_ALACRITTY_APP names another Alacritty.app"; return 1 }
+    open_alacritty "${behind:+1}" || { absent alacritty "no Alacritty at $ALACRITTY_APP — TTHEME_ALACRITTY_APP names another Alacritty.app"; return 1 }
     (( $#behind )) && hand_back $front $ALACRITTY_GUI
-    print -r -- "opened a separate Alacritty on it — ⌘Q quits only that one; files stay until the next run"
+    told Alacritty "${behind:+1}"
     return
   fi
   if (( $#warp )); then
-    mkdir -p $SANDBOX/.warp
-    print -rl -- '[appearance.themes]' 'theme = "dark"' > $SANDBOX/.warp/settings.toml
+    if (( LINUX )); then
+      mkdir -p $XDG_CONFIG_HOME/warp-terminal
+      print -rl -- '[appearance.themes]' 'theme = "dark"' > $XDG_CONFIG_HOME/warp-terminal/settings.toml
+      print -r -- '{"prefs":{"HasCompletedOnboarding":"true","HasCompletedHOAOnboarding":"true","SettingsFileMigrationComplete":"true"}}' > $XDG_CONFIG_HOME/warp-terminal/user_preferences.json
+    else
+      mkdir -p $SANDBOX/.warp
+      print -rl -- '[appearance.themes]' 'theme = "dark"' > $SANDBOX/.warp/settings.toml
+    fi
     ( unset $FOREIGN; TERM_PROGRAM=WarpTerminal wire $label $palettes )
-    open_warp "${behind:+1}" || { print -u2 "no Warp to open"; return 1 }
-    print -r -- "opened a Warp tab on it through ${WARP_LAUNCH/#$REAL_HOME/~} — exit leaves; files stay until the next run"
+    open_warp "${behind:+1}" || { absent warp-terminal "no Warp to open"; return 1 }
+    if (( LINUX )); then
+      told Warp "${behind:+1}"
+    else
+      print -r -- "opened a Warp tab on it through ${WARP_LAUNCH/#$REAL_HOME/~} — exit leaves; files stay until the next run"
+    fi
     return
   fi
   if (( $#konsole )); then
     ( unset $FOREIGN; KONSOLE_VERSION=1 wire $label $palettes )
     open_konsole "${behind:+1}" || { print -u2 "no Konsole to open — --konsole needs konsole and dbus-run-session, and --behind Xvfb and xdotool"; return 1 }
-    print -r -- "opened a separate Konsole on it${behind:+ on the private display $KONSOLE_SCREEN}, on a D-Bus session of its own — closing it quits only that one; files stay until the next run"
+    print -r -- "opened a separate Konsole on it${behind:+ on the private display $XVFB}, on a D-Bus session of its own — closing it quits only that one; files stay until the next run"
     return
   fi
   if (( $#tapp )); then
@@ -320,9 +399,9 @@ main() {
     return
   fi
   GHOSTTY_RESOURCES_DIR=${GHOSTTY_RESOURCES_DIR:-x} wire $label $palettes
-  open_ghostty || { print -u2 "no Ghostty to open — \`mise run sandbox --here\` runs it in this tab"; return 1 }
+  open_ghostty "${behind:+1}" || { absent ghostty "no Ghostty to open — \`mise run sandbox --here\` runs it in this tab"; return 1 }
   (( $#behind )) && hand_back $front "--config-file=$SANDBOX/"
-  print -r -- "opened a separate Ghostty on it — ⌘Q quits only that one; files stay until the next run"
+  told Ghostty "${behind:+1}"
 }
 
 main $@

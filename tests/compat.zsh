@@ -4,13 +4,23 @@ setopt err_return pipe_fail
 
 typeset -g ROOT=${${(%):-%x}:A:h:h}
 typeset -g SANDBOX=${${TMPDIR:-/tmp}%/}/ttheme-sandbox
-typeset -g OUT=${${TMPDIR:-/tmp}%/}/ttheme-compat
+typeset -g OUT=${TTHEME_COMPAT_OUT:-${${TMPDIR:-/tmp}%/}/ttheme-compat}
 typeset -g EXPECT=$ROOT/tests/compat/expect.tsv
-typeset -g KONSOLE_SCREEN=${TTHEME_KONSOLE_SCREEN:-:77}
+typeset -g XVFB=${TTHEME_XVFB_DISPLAY:-:77}
+typeset -g TIP=${TTHEME_GHOSTTY_TIP:-/opt/ghostty-tip/bin}
 typeset -ga TERMINALS=(ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole)
-typeset -gA FLAG=(ghostty '' iterm2 '--iterm --trust' wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app '--terminal-app --pictured' konsole --konsole)
-typeset -gA ADAPTER=(ghostty ghostty iterm2 iterm2 wezterm wezterm kitty kitty alacritty alacritty warp warp terminal-app terminal-app konsole konsole)
+typeset -ga LINUX_TERMINALS=(ghostty ghostty-tip kitty alacritty wezterm warp)
+typeset -gA FLAG=(ghostty '' ghostty-tip '' iterm2 '--iterm --trust' wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app '--terminal-app --pictured' konsole --konsole)
+typeset -gA ADAPTER=(ghostty ghostty ghostty-tip ghostty iterm2 iterm2 wezterm wezterm kitty kitty alacritty alacritty warp warp terminal-app terminal-app konsole konsole)
+typeset -gA PATTERN=(ghostty "--config-file=$SANDBOX/" ghostty-tip "--config-file=$SANDBOX/" iterm2 "iTerm2 -suite ttheme-sandbox"
+  wezterm "wezterm-gui --config-file $SANDBOX/" kitty "kitty --config $SANDBOX/" alacritty "alacritty --config-file $SANDBOX/"
+  warp /Applications/Warp.app/Contents/MacOS/ konsole "konsole --separate --workdir $SANDBOX")
+typeset -gi LINUX=0
 typeset -ga MEASURING=()
+if [[ $OSTYPE == linux* ]]; then
+  LINUX=1
+  PATTERN[warp]='^warp-terminal'
+fi
 
 abandon() {
   trap '' HUP INT TERM
@@ -23,6 +33,18 @@ trap 'abandon 130' INT
 trap 'abandon 143' TERM
 
 installed() {
+  if (( LINUX )); then
+    (( $+commands[Xvfb] && $+commands[xdotool] && $+commands[import] )) || return 1
+    case $1 in
+      ghostty|kitty|alacritty) (( $+commands[$1] )) ;;
+      ghostty-tip) [[ -x $TIP/ghostty ]] ;;
+      wezterm) (( $+commands[wezterm-gui] )) ;;
+      warp) (( $+commands[warp-terminal] )) ;;
+      konsole) (( $+commands[konsole] && $+commands[dbus-run-session] )) ;;
+      *) return 1 ;;
+    esac
+    return
+  fi
   case $1 in
     ghostty) [[ -d /Applications/Ghostty.app ]] ;;
     iterm2) [[ -d /Applications/iTerm.app ]] ;;
@@ -37,16 +59,11 @@ installed() {
 }
 
 pids_of() {
-  case $1 in
-    ghostty) pgrep -f -- "--config-file=$SANDBOX/" ;;
-    iterm2) pgrep -f -- "iTerm2 -suite ttheme-sandbox" ;;
-    wezterm) pgrep -f -- "wezterm-gui --config-file $SANDBOX/" ;;
-    kitty) pgrep -f -- "kitty --config $SANDBOX/" ;;
-    alacritty) pgrep -f -- "alacritty --config-file $SANDBOX/" ;;
-    warp) pgrep -f -- "/Applications/Warp.app/Contents/MacOS/" ;;
-    terminal-app) pgrep -x Terminal ;;
-    konsole) pgrep -f -- "konsole --separate --workdir $SANDBOX" ;;
-  esac | tr '\n' ' '
+  if [[ $1 == terminal-app ]]; then
+    pgrep -x Terminal
+  else
+    pgrep -f -- $PATTERN[$1]
+  fi | tr '\n' ' '
 }
 
 window_of() {
@@ -69,15 +86,33 @@ windows_of() {
       .filter(d => pids.includes(d.kCGWindowOwnerPID.js)).map(d => d.kCGWindowNumber.js).join(' ')"
 }
 
-sample() { osascript -l JavaScript $ROOT/tests/compat/sample.js $1 }
+x_window() {
+  local pid only
+  for only in --onlyvisible ""; do
+    for pid in ${=$(pids_of $1)}; do
+      REPLY=$(DISPLAY=$XVFB xdotool search $only --pid $pid 2>/dev/null | tail -1) || REPLY=""
+      if [[ -n $REPLY ]]; then
+        return 0
+      fi
+    done
+  done
+  REPLY=""
+  return 1
+}
+
+sample() {
+  if (( LINUX )); then
+    bun $ROOT/tests/compat/sample-png.ts $1
+  else
+    osascript -l JavaScript $ROOT/tests/compat/sample.js $1
+  fi
+}
 
 shoot() {
-  local term=$1 title=$2 old=$3 shot=$4 wid pid
-  if [[ $term == konsole ]]; then
-    for pid in ${=$(pids_of $term)}; do
-      wid=$(DISPLAY=$KONSOLE_SCREEN xdotool search --pid $pid 2>/dev/null | tail -1) && [[ -n $wid ]] && break
-    done
-    [[ -n $wid ]] && DISPLAY=$KONSOLE_SCREEN import -window $wid $shot 2>/dev/null
+  local term=$1 title=$2 old=$3 shot=$4 wid REPLY
+  if (( LINUX )); then
+    x_window $term || return 1
+    DISPLAY=$XVFB import -window $REPLY $shot 2>/dev/null
     return
   fi
   wid=$(window_of "$(pids_of $term)" $title $old)
@@ -85,20 +120,18 @@ shoot() {
 }
 
 nudge() {
-  local pid wid other
-  [[ $1 == konsole ]] && (( $+commands[xmessage] )) || return 1
-  for pid in ${=$(pids_of konsole)}; do
-    wid=$(DISPLAY=$KONSOLE_SCREEN xdotool search --pid $pid 2>/dev/null | tail -1) && [[ -n $wid ]] && break
-  done
-  [[ -n $wid ]] || return 1
-  DISPLAY=$KONSOLE_SCREEN xmessage -geometry +0+0 ttheme-compat > /dev/null 2>&1 &!
+  local pid wid other REPLY
+  (( LINUX && $+commands[xmessage] )) || return 1
+  x_window $1 || return 1
+  wid=$REPLY
+  DISPLAY=$XVFB xmessage -geometry +0+0 ttheme-compat > /dev/null 2>&1 &!
   pid=$!
   sleep 0.5
-  other=$(DISPLAY=$KONSOLE_SCREEN xdotool search --class xmessage 2>/dev/null | tail -1)
+  other=$(DISPLAY=$XVFB xdotool search --class xmessage 2>/dev/null | tail -1)
   [[ -n $other ]] || { kill $pid 2>/dev/null; return 1 }
-  DISPLAY=$KONSOLE_SCREEN xdotool windowfocus $wid; sleep 0.3
-  DISPLAY=$KONSOLE_SCREEN xdotool windowfocus $other; sleep 0.3
-  DISPLAY=$KONSOLE_SCREEN xdotool windowfocus $wid; sleep 0.3
+  DISPLAY=$XVFB xdotool windowfocus $wid; sleep 0.3
+  DISPLAY=$XVFB xdotool windowfocus $other; sleep 0.3
+  DISPLAY=$XVFB xdotool windowfocus $wid; sleep 0.3
   kill $pid 2>/dev/null
   return 0
 }
@@ -118,11 +151,7 @@ serve() {
     shot=$OUT/$term-${req:t:r}.png
     shoot $term $title "$old" $shot || continue
     for i in 1 2 3; do
-      if [[ $term == konsole ]]; then
-        color=$(bun $ROOT/tests/compat/sample-png.ts $shot 2>/dev/null)
-      else
-        color=$(sample $shot 2>/dev/null)
-      fi
+      color=$(sample $shot 2>/dev/null)
       [[ $color == *'#'* ]] && break
       sleep 0.3
     done
@@ -144,28 +173,29 @@ quit() {
       fi
       zsh $ROOT/tests/terminal-prefs.zsh restore
       ;;
-    ghostty) pkill -f -- "--config-file=$SANDBOX/" 2>/dev/null || : ;;
-    iterm2) pkill -f -- "iTerm2 -suite ttheme-sandbox" 2>/dev/null || : ;;
-    wezterm) pkill -f -- "wezterm-gui --config-file $SANDBOX/" 2>/dev/null || : ;;
-    kitty) pkill -f -- "kitty --config $SANDBOX/" 2>/dev/null || : ;;
-    alacritty) pkill -f -- "alacritty --config-file $SANDBOX/" 2>/dev/null || : ;;
-    warp) rm -f -- $HOME/.warp/launch_configurations/ttheme-sandbox.yaml ;;
-    konsole)
-      pkill -f -- "konsole --separate --workdir $SANDBOX" 2>/dev/null || :
-      pkill -f -- "Xvfb $KONSOLE_SCREEN " 2>/dev/null || :
+    warp)
+      if (( LINUX )); then
+        pkill -f -- $PATTERN[warp] 2>/dev/null || :
+      else
+        rm -f -- $HOME/.warp/launch_configurations/ttheme-sandbox.yaml
+      fi
       ;;
+    *) pkill -f -- $PATTERN[$1] 2>/dev/null || : ;;
   esac
+  (( LINUX )) && { pkill -f -- "Xvfb $XVFB " 2>/dev/null || : }
   return 0
 }
 
 measure() {
   local term=$1 hook i title=ttheme-compat-$1-$$ was=0 old=""
-  [[ $term == konsole ]] || old=$(windows_of "$(pids_of $term)")
+  local -a env=()
+  (( LINUX )) || [[ $term == konsole ]] || old=$(windows_of "$(pids_of $term)")
   [[ $term == terminal-app ]] && pgrep -x Terminal > /dev/null && was=1
+  [[ $term == ghostty-tip ]] && env=(PATH=$TIP:$PATH)
   hook=$(mktemp "${TMPDIR:-/tmp}/ttheme-compat.XXXXXX")
   print -rl -- "typeset -g CC_ADAPTER=$ADAPTER[$term] CC_TITLE=$title" "source ${(q)ROOT}/tests/compat/cases.zsh" > $hook
   MEASURING=($term $was)
-  if ! zsh $ROOT/tests/sandbox.zsh --behind ${=FLAG[$term]} --zshenv $hook miku asuka rei > /dev/null; then
+  if ! env $env zsh $ROOT/tests/sandbox.zsh --behind ${=FLAG[$term]} --zshenv $hook miku asuka rei > /dev/null; then
     rm -f $hook
     { quit $term $was } always { MEASURING=() }
     return 1
@@ -257,26 +287,53 @@ report() {
   (( ! broken ))
 }
 
-konsole_in_container() {
-  docker build -q -t ttheme-konsole -f "$ROOT/tests/compat/konsole.Dockerfile" "$ROOT/tests/compat" > /dev/null || return
-  docker run --rm -v "$ROOT":/work ttheme-konsole zsh tests/compat.zsh $@
+versions() {
+  local term
+  for term in $@; do
+    case $term in
+      ghostty) print -r -- "ghostty: $(ghostty +version 2>/dev/null | head -1)" ;;
+      ghostty-tip) print -r -- "ghostty-tip: $($TIP/ghostty +version 2>/dev/null | head -1)" ;;
+      kitty) print -r -- "kitty: $(kitty --version 2>/dev/null)" ;;
+      alacritty) print -r -- "alacritty: $(alacritty --version 2>/dev/null)" ;;
+      wezterm) print -r -- "wezterm: $(wezterm --version 2>/dev/null)" ;;
+      warp) print -r -- "warp: $(dpkg-query -W -f '${Version}' warp-terminal 2>/dev/null)" ;;
+    esac
+  done
+}
+
+in_container() {
+  local image=$1
+  shift
+  (( $+commands[docker] )) || { print -u2 "$image: these cases run in a container, which needs Docker"; return 1 }
+  print -r -- "$image: building tests/compat/$image.Dockerfile…"
+  docker build -q -t ttheme-$image -f "$ROOT/tests/compat/$image.Dockerfile" "$ROOT/tests/compat" > /dev/null || return
+  docker run --rm -v "$ROOT":/work -v "$OUT":"$OUT" -e TTHEME_COMPAT_OUT="$OUT" ttheme-$image zsh tests/compat.zsh $@
 }
 
 main() {
-  local -a upd
-  zparseopts -D -E -F -- -update=upd || { print -u2 "usage: compat [--update] [${(j:|:)TERMINALS}…]"; return 1 }
+  local -a upd linux
+  zparseopts -D -E -F -- -update=upd -linux=linux || { print -u2 "usage: compat [--update] [--linux] [terminal…]"; return 1 }
+  if (( $#linux )); then
+    EXPECT=$ROOT/tests/compat/expect-linux.tsv
+    TERMINALS=($LINUX_TERMINALS)
+  fi
   local -a terms=(${@:-$TERMINALS}) ran=()
   local term contained=0
   for term in $terms; do
     (( ${TERMINALS[(Ie)$term]} )) || { print -u2 "unknown terminal $term — one of $TERMINALS"; return 1 }
   done
-  if (( $# && ${terms[(Ie)konsole]} )) && ! installed konsole && (( $+commands[docker] )); then
+  mkdir -p $OUT
+  [[ -n $TTHEME_COMPAT_IMAGE ]] || rm -rf -- $OUT/*(N)
+  if (( $#linux )) && [[ $TTHEME_COMPAT_IMAGE != linux ]]; then
+    in_container linux $upd --linux $terms
+    return
+  fi
+  if (( ! $#linux && $# && ${terms[(Ie)konsole]} )) && ! installed konsole && (( $+commands[docker] )); then
     terms=(${terms:#konsole})
-    konsole_in_container $upd konsole || contained=1
+    in_container konsole $upd konsole || contained=1
     (( ${#terms} )) || return $contained
   fi
-  rm -rf -- $OUT
-  mkdir -p $OUT
+  (( $#linux )) && versions $terms
   for term in $terms; do
     if ! installed $term; then
       print -r -- "$term: not installed, skipped"
