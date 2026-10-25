@@ -6,7 +6,6 @@ import { Home } from '@/components/home'
 import { NoSuchMarketplace, NoSuchPalette } from '@/components/marketplace-frame'
 import { MarketplacePage } from '@/components/marketplace-page'
 import { Missing } from '@/components/missing'
-import { Sheets } from '@/components/sheets'
 import { MarketplaceWorkspace } from '@/components/workspace'
 import { RESTORE_SCRIPT } from '@/lib/builder'
 import { builderData, starts } from '@/lib/builder-page'
@@ -20,10 +19,8 @@ import { marketplaces } from '@/lib/marketplaces'
 import { fallback, gate, themes } from '@/lib/official'
 import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
 import { readShared, type Shared } from '@/lib/share'
-import { sheetNumber, sheetVars } from '@/lib/sheet'
-import { sheetScript } from '@/lib/sheet-script'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
-import { inMode, type Marketplace, type Theme } from '@/lib/themes'
+import type { Marketplace, Theme } from '@/lib/themes'
 import {
   builderMeta,
   docMeta,
@@ -32,7 +29,6 @@ import {
   marketplacesMeta,
   paletteMeta,
   sharedMeta,
-  sheetsMeta,
   siteMeta,
 } from '@/lib/titles'
 import { leadOf } from '@/lib/workspace'
@@ -94,7 +90,6 @@ function stockOf(id: string): Stock | undefined {
 
 export const PRERENDERED: string[] = [
   '/',
-  '/sheets',
   '/marketplace',
   '/builder',
   DOCS_PATH,
@@ -217,19 +212,6 @@ export const site = new Elysia({ name: 'site' })
         cache: CATALOG,
       },
       <Home themes={themes} facts={facts} />,
-    ),
-  )
-  .get('/sheets', () =>
-    page(
-      {
-        ...sheetsMeta(facts.palettes),
-        path: '/sheets',
-        ...CARD,
-        cache: CATALOG,
-        root: sheetVars(inMode(themes[0] as Theme, 'dark'), sheetNumber(themes, themes[0] as Theme), gate),
-        head: sheetScript(themes, gate),
-      },
-      <Sheets themes={themes} gate={gate} facts={facts} />,
     ),
   )
   .get('/marketplace', () =>

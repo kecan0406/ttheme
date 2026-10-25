@@ -13,7 +13,6 @@ const COLUMNS: { title: string; links: { label: string; href: string; brand?: Si
     links: [
       { label: 'every palette', href: '/marketplace' },
       { label: 'official', href: '/marketplace/official' },
-      { label: 'sheets', href: '/sheets' },
     ],
   },
   {
@@ -56,16 +55,6 @@ function OutLabel({ label }: { label: string }) {
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
 const SIGNS = [0, 1, 2]
-
-function Ribbon() {
-  return (
-    <div data-slot="ribbon" aria-hidden="true" class="grid h-1.5 grid-cols-16 gap-0.75">
-      {SLOTS.map((slot) => (
-        <i class="rounded-full forced-color-adjust-none" style={`background:var(--a${slot})`} />
-      ))}
-    </div>
-  )
-}
 
 function Signs() {
   return (
@@ -175,12 +164,10 @@ function Mega() {
 export function SiteFooter({
   facts,
   current = '',
-  ribbon = false,
   landing = false,
 }: {
   facts: Facts
   current?: string
-  ribbon?: boolean
   landing?: boolean
 }) {
   return (
@@ -189,7 +176,6 @@ export function SiteFooter({
       class="relative isolate mt-auto before:absolute before:inset-0 before:-z-1 before:border-t before:border-border before:bg-glass before:backdrop-blur-[14px] before:backdrop-saturate-130"
     >
       <div class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-6">
-        {ribbon ? <Ribbon /> : null}
         <div class="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 max-[640px]:grid-cols-2 max-[640px]:gap-6">
           {landing ? <Tagline facts={facts} /> : <Brand facts={facts} />}
           <Columns current={current} />

@@ -15,7 +15,6 @@ const badgeVariants = cva(
         tag: 'px-2.5 py-1 text-xs font-medium tracking-normal normal-case text-soft-foreground inset-ring inset-ring-border',
         success: 'text-success inset-ring inset-ring-success/45',
         warning: 'text-warning inset-ring inset-ring-warning/45',
-        tone: 'text-(--tone) inset-ring inset-ring-(--tone)/45',
         destructive: 'text-destructive inset-ring inset-ring-destructive/45',
         sticker:
           'rotate-[-4deg] bg-primary px-2.5 py-1 font-display text-xs font-extrabold tracking-normal normal-case text-primary-foreground shadow-[0_3px_0_rgb(0_0_0/25%)]',

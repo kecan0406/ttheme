@@ -1,6 +1,6 @@
 import { InspectorPopover } from '@/components/inspector-popover'
+import { contrast } from '@/lib/gate'
 import { html } from '@/lib/render'
-import { contrast } from '@/lib/sheet'
 import type { Named } from '@/lib/view-types'
 import { fill, reducedMotion } from './dom'
 

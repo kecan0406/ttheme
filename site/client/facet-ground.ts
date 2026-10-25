@@ -36,7 +36,7 @@ const FOLLOW_MS = 120
 const RISE_MS = 200
 const PRESS_MS = 1000
 const BUDGET = 8_000_000
-const STAGE = '[data-lead-preview], sheet-browser [data-session], [data-palette-preview]'
+const STAGE = '[data-lead-preview], [data-palette-preview]'
 
 function linear(value: number): number {
   return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4

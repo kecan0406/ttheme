@@ -14,13 +14,6 @@ export function siteMeta(palettes: number): Meta {
   }
 }
 
-export function sheetsMeta(palettes: number): Meta {
-  return {
-    title: `sheets — all ${palettes} palettes in a terminal · ttheme`,
-    description: `Browse all ${palettes} ttheme palettes one at a time in a terminal window, with their twenty slots and contrast readings.`,
-  }
-}
-
 export function builderMeta(): Meta {
   return {
     title: 'builder — make a terminal palette of your own · ttheme',

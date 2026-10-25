@@ -1,8 +1,8 @@
 import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
 import { Check } from 'lucide'
 import { Badge } from '@/components/ui/badge'
+import { luminance, passes } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
-import { luminance, passes } from '@/lib/sheet'
 import { type GateRule, paint, type Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 
@@ -26,23 +26,6 @@ export function SectionHead({ title, id, children }: PropsWithChildren<{ title: 
   )
 }
 
-const WORN = ['bg-(--sg0)', 'bg-(--sg1)', 'bg-(--sg2)']
-
-export function WornSignature() {
-  return (
-    <span aria-hidden="true" class="flex flex-none gap-1">
-      {WORN.map((tone) => (
-        <i
-          class={cn(
-            'size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none',
-            tone,
-          )}
-        />
-      ))}
-    </span>
-  )
-}
-
 export function Signature({ theme }: { theme: Theme }) {
   return (
     <span class="flex flex-none gap-1" role="img" aria-label={`signature ${theme.signature.join(' ')}`}>
@@ -53,23 +36,6 @@ export function Signature({ theme }: { theme: Theme }) {
         />
       ))}
     </span>
-  )
-}
-
-export function PropertyList({ rows }: { rows: [string, string][] }) {
-  return (
-    <dl class="grid grid-cols-[max-content_1fr] gap-x-3.5 gap-y-1.5 text-sm font-medium">
-      {rows.map(([label, value]) => (
-        <div class="contents">
-          <dt class="text-muted-foreground" safe>
-            {label}
-          </dt>
-          <dd class="tabular-nums [overflow-wrap:anywhere]" safe>
-            {value}
-          </dd>
-        </div>
-      ))}
-    </dl>
   )
 }
 

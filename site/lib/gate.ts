@@ -1,0 +1,30 @@
+import type { GateRule, Theme } from '@/lib/themes'
+
+function channel(hex: string, shift: number): number {
+  const value = ((Number.parseInt(hex.slice(1), 16) >> shift) & 255) / 255
+
+  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+}
+
+export function luminance(hex: string): number {
+  return 0.2126 * channel(hex, 16) + 0.7152 * channel(hex, 8) + 0.0722 * channel(hex, 0)
+}
+
+export function contrast(a: string, b: string): number {
+  const [la, lb] = [luminance(a), luminance(b)]
+
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
+}
+
+export function passes({ value, min, max }: { value: number; min?: number; max?: number }): boolean {
+  if (!Number.isFinite(value)) return true
+
+  if (min !== undefined) return value >= min
+
+  return max === undefined || value <= max
+}
+
+export function gatePassed(theme: Theme, gate: GateRule[]): number {
+  return gate.filter((rule, index) => passes({ value: theme.gate[index] as number, min: rule.min, max: rule.max }))
+    .length
+}

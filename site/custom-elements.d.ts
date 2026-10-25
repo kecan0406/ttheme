@@ -14,7 +14,6 @@ declare namespace JSX {
     'palette-builder': HtmlTag
     'palette-picker': HtmlTag
     'route-progress': HtmlTag
-    'sheet-browser': HtmlTag
     'sparkle-burst': HtmlTag
   }
 }

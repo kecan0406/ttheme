@@ -1,4 +1,4 @@
-import { BookOpen, Menu, Paintbrush, Store, SwatchBook } from 'lucide'
+import { BookOpen, Menu, Paintbrush, Store } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import { OFFICIAL_URL } from '@/lib/gallery'
@@ -9,7 +9,6 @@ import { Mark } from './mark'
 import { Wordmark } from './wordmark'
 
 const NAV = [
-  { href: '/sheets', label: 'sheets', icon: SwatchBook },
   { href: '/marketplace', label: 'marketplace', icon: Store },
   { href: '/builder', label: 'builder', icon: Paintbrush },
   { href: '/docs', label: 'docs', icon: BookOpen },

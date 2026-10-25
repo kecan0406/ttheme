@@ -9,7 +9,7 @@ import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import { CARD_REV, ORIGIN } from '@/lib/seo'
 import { SPECULATION_RULES } from '@/lib/speculation'
-import { rootStyle, themeIcon, type Vars, wearScript } from '@/lib/wear'
+import { rootStyle, themeIcon, wearScript } from '@/lib/wear'
 
 const RELOAD = `let s=null,b=null;const c=()=>{s?.close();s=null},f=()=>{if(document.visibilityState==='hidden'&&!document.prerendering)c();else if(!s){s=new EventSource('${assets.reload}');s.onmessage=(e)=>{b??=e.data;if(e.data!==b)location.reload()}}};document.addEventListener('visibilitychange',f);addEventListener('pageshow',f);addEventListener('pagehide',c);f()`
 
@@ -31,7 +31,6 @@ export interface Page {
   ld?: object[]
   status?: number
   cache: string
-  root?: Vars
   head?: string
   module?: string
 }
@@ -44,7 +43,6 @@ function Document({
   imageAlt,
   robots = INDEXABLE,
   ld = [],
-  root = [],
   head,
   module,
   children,
@@ -56,17 +54,11 @@ function Document({
   imageAlt?: string
   robots?: string
   ld?: object[]
-  root?: Vars
   head?: string
   module?: string
 }>) {
   return (
-    <html
-      lang="en"
-      data-mode="dark"
-      data-setting="dark"
-      style={[rootStyle(fallback), ...root.map(([name, value]) => `${name}:${value}`)].join(';')}
-    >
+    <html lang="en" data-mode="dark" data-setting="dark" style={rootStyle(fallback)}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -141,7 +133,7 @@ function Document({
 }
 
 export function page(
-  { title, description, path, image, imageAlt, robots, ld, status = 200, cache, root, head, module }: Page,
+  { title, description, path, image, imageAlt, robots, ld, status = 200, cache, head, module }: Page,
   body: JSX.Element,
 ): Response {
   const text = `<!doctype html>${html(
@@ -153,7 +145,6 @@ export function page(
       imageAlt={imageAlt}
       robots={robots}
       ld={ld}
-      root={root}
       head={head}
       module={module}
     >
