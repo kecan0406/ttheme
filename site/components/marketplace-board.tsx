@@ -26,7 +26,6 @@ import {
   type Peek,
   palettePath,
   peekOf,
-  repoUrl,
   type Shelf,
   SORTS,
   SOURCES,
@@ -37,7 +36,7 @@ import {
   shelvesMatching,
   starCount,
 } from '@/lib/gallery'
-import { BrandIcon, Icon, NewTab } from '@/lib/icons'
+import { BrandIcon, Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
@@ -211,32 +210,28 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
                 href={shelf.url}
                 target="_blank"
                 rel="noopener"
-                class="relative z-1 max-w-full min-w-0 shrink font-mono font-normal"
+                class="relative z-1 max-w-full min-w-0 shrink"
               >
                 <BrandIcon icon={siGithub} class="size-3 flex-none" />
-                <span class="truncate" safe>
+                <span class="truncate font-mono font-normal" safe>
                   {shelf.repo}
                 </span>
-                <NewTab class="size-3 flex-none" />
+                {shelf.stars === null ? null : (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      class="inline-flex flex-none items-center gap-1 border-l pl-2 font-bold text-foreground tabular-nums"
+                    >
+                      <span safe>{starCount(shelf.stars)}</span>
+                      <Icon node={Star} class="size-3.5 fill-current text-soft-foreground" />
+                    </span>
+                    <span class="sr-only" safe>
+                      {`, ${plural(shelf.stars, 'GitHub star')}`}
+                    </span>
+                  </>
+                )}
+                <span class="sr-only">, opens in a new tab</span>
               </LinkButton>
-              {shelf.stars === null ? null : (
-                <LinkButton
-                  variant="outline"
-                  size="xs"
-                  href={`${repoUrl(shelf.repo)}/stargazers`}
-                  target="_blank"
-                  rel="noopener"
-                  class="relative z-1"
-                >
-                  <b aria-hidden="true" class="font-bold text-foreground tabular-nums" safe>
-                    {starCount(shelf.stars)}
-                  </b>
-                  <Icon node={Star} class="size-3.5 fill-current" />
-                  <span class="sr-only" safe>
-                    {`${plural(shelf.stars, 'GitHub star')}, opens in a new tab`}
-                  </span>
-                </LinkButton>
-              )}
               {shelf.pushedAt === null ? null : (
                 <LinkButton
                   variant="outline"

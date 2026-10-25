@@ -23,6 +23,7 @@ jobs:
     outputs:
       changed: ${{ steps.compare.outputs.changed }}
       index: ${{ steps.compare.outputs.index }}
+      stars: ${{ steps.compare.outputs.stars }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,12 +45,17 @@ jobs:
           if curl -fsS https://kecan0406.github.io/ttheme/marketplaces.json | cmp -s - pages/marketplaces.json; then
             index=same
           fi
+          stars=same
+          if [ -f pages/stars.json ] && ! curl -fsS https://kecan0406.github.io/ttheme/stars.json | cmp -s - pages/stars.json; then
+            stars=changed
+          fi
           changed=true
-          if [ "$deployed" = "$GITHUB_SHA" ] && [ "$index" = same ]; then
+          if [ "$deployed" = "$GITHUB_SHA" ] && [ "$index" = same ] && [ "$stars" = same ]; then
             changed=false
           fi
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
           echo "index=$index" >> "$GITHUB_OUTPUT"
+          echo "stars=$stars" >> "$GITHUB_OUTPUT"
 
       - if: steps.compare.outputs.changed != 'false'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
@@ -74,7 +80,7 @@ jobs:
 
   site:
     needs: build
-    if: needs.build.outputs.index == 'changed'
+    if: needs.build.outputs.index == 'changed' || needs.build.outputs.stars == 'changed'
     runs-on: ubuntu-26.04
     permissions: {}
     steps:

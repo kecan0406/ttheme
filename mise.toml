@@ -216,7 +216,7 @@ dir = "{{config_root}}/site"
 run = "bun install --frozen-lockfile && bun check.ts"
 
 [tasks.pages]
-description = "gather what GitHub Pages serves into pages/: dist/manifest.json in the schema 1 shape installs from before the official palettes shipped with ttheme still fetch as their catalog, the README's pictures, and marketplaces.json, the list of every marketplace with the ttheme-marketplace topic that Browse's search reads (GITHUB_TOKEN when set)"
+description = "gather what GitHub Pages serves into pages/: dist/manifest.json in the schema 1 shape installs from before the official palettes shipped with ttheme still fetch as their catalog, the README's pictures, marketplaces.json, the list of every marketplace with the ttheme-marketplace topic that Browse's search reads, and stars.json, the ttheme repository's star count, which only tells pages.yml when to rebuild the site (GITHUB_TOKEN when set)"
 depends = ["build"]
 run = "rm -rf pages && bun src/cli/pages.ts pages && bun site/readme.ts pages"
 
