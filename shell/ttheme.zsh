@@ -75,7 +75,7 @@ __tt_fresh() {
   fi
   if [[ $at[1] != "$TTHEME_PALETTES_AT" ]]; then
     __tt_specs_named
-    __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && __tt_sync; __tt_reloaded ${${1:-behind}:#woke}; [[ -z $held ]] || __tt_hold "$start" }
+    __tt_palettes_load && { __tt_respec $reply; __tt_follow "$start" && { __tt_sync; __tt_followed }; __tt_reloaded ${${1:-behind}:#woke}; [[ -z $held ]] || __tt_hold "$start" }
     [[ -n $was && -z $TTHEME_STARTUP && -n $TTHEME_SPEC ]] && __tt_active && __tt_off_here
   fi
   (( TTHEME_MODE_AUTO )) && __tt_appeared
@@ -1638,13 +1638,14 @@ __tt_pins_map() {
 }
 
 __tt_keep() {
-  local note was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}"
+  local note was="$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" followed=""
   note=$(__tt_cli default "$1") || return 1
   [[ -r $TTHEME_HOME/palettes.zsh ]] && __tt_palettes_load && __tt_reloaded
   __tt_hold "$was"
-  __tt_follow "$was" && [[ -n $TTHEME_PAINTED ]] && __tt_reloaded
+  __tt_follow "$was" && followed=1 && [[ -n $TTHEME_PAINTED ]] && __tt_reloaded
   __tt_worn_shown $2
   __tt_reload
+  [[ -z $followed ]] || __tt_followed
   if __tt_color; then
     printf "${TTHEME_SGR[dim]}%s${TTHEME_SGR[reset]}\n" "${(@f)note}"
   else
@@ -1734,7 +1735,7 @@ __tt_installs() {
 
 __tt_installs_done() {
   [[ -r $TTHEME_HOME/palettes.zsh ]] || return 0
-  local was=$TTHEME_PALETTES_AT
+  local was=$TTHEME_PALETTES_AT followed=""
   local -a reply
   __tt_specs_named
   if __tt_palettes_load && [[ $TTHEME_PALETTES_AT != "$was" ]]; then
@@ -1743,9 +1744,11 @@ __tt_installs_done() {
   fi
   [[ "$TTHEME_STARTUP ${TTHEME_PALETTE[$TTHEME_STARTUP]}" == "$1" ]] && return 0
   __tt_hold "$1"
-  __tt_follow "$1" && [[ -n $TTHEME_PAINTED ]] && __tt_reloaded
+  __tt_follow "$1" && followed=1 && [[ -n $TTHEME_PAINTED ]] && __tt_reloaded
   __tt_worn_shown
   __tt_reload
+  [[ -z $followed ]] || __tt_followed
+  return 0
 }
 
 __tt_switch() {

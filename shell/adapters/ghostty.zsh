@@ -285,6 +285,20 @@ __tt_reset_reloaded() {
   done
 }
 
+__tt_followed() {
+  local REPLY bg=${TTHEME_SPEC%% *}
+  integer i
+  [[ -z $TTHEME_PAINTED && $bg == \#* ]] && (( ${TTHEME_TERMINALS[(Ie)ghostty]} && ! TTHEME_TMUX )) || return 0
+  zmodload -F zsh/zselect b:zselect 2>/dev/null
+  for (( i = 0; i < 20; i++ )); do
+    __tt_query_bg || return 0
+    [[ ${(L)REPLY} == ${(L)bg} ]] && return 0
+    __tt_out $'\e]104\e\\\e]110\e\\\e]111\e\\\e]112\e\\\e]117\e\\'
+    zselect -t 5
+  done
+  return 0
+}
+
 __tt_shown() {
   local dir=${TTHEME_CONFIG:h}/backgrounds was REPLY
   __tt_ghostty_publish "$1"
