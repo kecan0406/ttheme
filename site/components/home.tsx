@@ -91,24 +91,15 @@ function PerTab({ leads }: { leads: Theme[] }) {
 
   return (
     <article class="col-span-2 row-span-2 grid content-start gap-4.5 rounded-3xl border bg-muted p-6 max-[640px]:col-span-1">
-      <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div class="grid max-w-[60ch] gap-2">
-          <span class="text-3xl" role="img" aria-hidden="true">
-            🗂️
-          </span>
-          <h3 class="font-display text-base font-extrabold">a different one per tab</h3>
-          <p class="text-sm text-soft-foreground">
-            ttheme use paints just this tab, and ttheme pin keeps a palette for a folder. With seq, every new tab takes
-            the next palette in the order you installed them.
-          </p>
-        </div>
-        <code class="rounded-lg border bg-card px-3 py-1.5 font-mono text-xs text-soft-foreground">
-          TTHEME_TAB_PALETTE=seq
-        </code>
+      <div class="grid gap-2">
+        <span class="text-3xl" role="img" aria-hidden="true">
+          🗂️
+        </span>
+        <h3 class="font-display text-base font-extrabold">a different one per tab</h3>
       </div>
       <tab-showcase class="grid gap-2.5">
         <TabWindow tabs={tabs} active={0} next={leads[FIRST_TABS % leads.length] as Theme} />
-        <p class="text-xs text-muted-foreground">+ opens a tab on the next palette, as a new tab does under seq</p>
+        <p class="text-xs text-muted-foreground">+ opens a tab on the next palette</p>
       </tab-showcase>
     </article>
   )
