@@ -51,7 +51,7 @@ Settings you made yourself win:
 | Terminal | What it adds |
 |---|---|
 | Ghostty | an include of `~/.config/ttheme/ghostty.conf` in your config, and themes named `ttheme-<palette>.dark` and `.light` |
-| kitty | an include of `~/.config/ttheme/kitty.conf`, which also loads ttheme's watcher for pictures |
+| kitty | an include of `$HOME/.config/ttheme/kitty.conf`, which also loads ttheme's watcher for pictures |
 | Alacritty | an import of `~/.config/ttheme/alacritty.toml` in the `alacritty.toml` Alacritty reads first |
 | WezTerm | a block before `return config` that runs `~/.config/ttheme/wezterm.lua` |
 | iTerm2 | a `ttheme · <palette>` dynamic profile per palette, and `ttheme · default` as the default profile, built on yours so your font and keys carry over |

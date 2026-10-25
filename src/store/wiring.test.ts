@@ -184,7 +184,7 @@ test('configFile appends a documented line when a setting is missing', () => {
 })
 
 test("the kitty block includes ttheme's file, which wears the chosen palette and loads the watcher", () => {
-  assert.equal(kittyBlock('/home/u/.config/ttheme', '/home/u'), `# ${MANAGED}\ninclude ~/.config/ttheme/kitty.conf`)
+  assert.equal(kittyBlock('/home/u/.config/ttheme', '/home/u'), `# ${MANAGED}\ninclude $HOME/.config/ttheme/kitty.conf`)
   assert.equal(
     kittyOwnText('/cfg/kitty/themes/ttheme-miku.dark.conf', '/cfg/ttheme/kitty.py', 'dark'),
     `# ${GENERATED}\n# mode dark\ninclude /cfg/kitty/themes/ttheme-miku.dark.conf\nwatcher /cfg/ttheme/kitty.py\nwindow_logo_scale 100\nwindow_logo_alpha 1\n`,

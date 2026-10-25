@@ -21,7 +21,7 @@ import type { At, Now, Wiring } from './types.ts'
 export function kittyBlock(tthemeDir: string, home: string): string {
   const own = join(tthemeDir, 'kitty.conf')
 
-  return `# ${MANAGED}\ninclude ${fromHome(own, home, '~') ?? own}`
+  return `# ${MANAGED}\ninclude ${fromHome(own, home, '$HOME') ?? own}`
 }
 
 export function kittyOwnText(

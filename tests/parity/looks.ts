@@ -210,6 +210,10 @@ function expandHome(path: string, home: string): string {
   return path.startsWith('~/') ? join(home, path.slice(2)) : path
 }
 
+function expandVars(path: string, home: string): string {
+  return path.replace(/\$(?:\{(\w+)\}|(\w+))/g, (whole, braced, bare) => ((braced ?? bare) === 'HOME' ? home : whole))
+}
+
 function ghosttyTree(main: string, home: string) {
   const lines = ghosttyLines(main)
   const files: string[] = []
@@ -314,8 +318,8 @@ export function kittyFiles(configHome: string): string[] {
     files.push(file)
 
     for (const [, path = ''] of depth < 8 ? read(file).matchAll(/^\s*include\s+(.+?)\s*$/gm) : []) {
-      const full = expandHome(path, dirname(configHome))
-      walk(isAbsolute(full) ? full : join(dir, full), depth + 1)
+      const full = expandVars(path, dirname(configHome))
+      walk(isAbsolute(full) ? full : join(dirname(file), full), depth + 1)
     }
   }
 
@@ -343,7 +347,7 @@ export function kittyColors(configHome: string): Colors {
       }
 
       if (match[1] === 'include' && depth < 8) {
-        const path = expandHome(match[2] ?? '', dirname(configHome))
+        const path = expandHome(expandVars(match[2] ?? '', dirname(configHome)), dirname(configHome))
         apply(isAbsolute(path) ? path : join(dirname(file), path), depth + 1)
         continue
       }
