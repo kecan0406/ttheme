@@ -1,16 +1,15 @@
 import { escapeHtml } from '@kitajs/html'
 import { ArrowLeft, ArrowRight, Check, ChevronRight, Search, Star, TriangleAlert } from 'lucide'
-import { siGithub } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { catalogsOf, nativeLang } from '@/lib/catalogs'
-import type { Facts } from '@/lib/facts'
-import { INIT, OFFICIAL, palettePath, searchable } from '@/lib/gallery'
+import type { Facts, Repo } from '@/lib/facts'
+import { INIT, OFFICIAL_REPO, OFFICIAL_THEMES_URL, palettePath, repoUrl, searchable } from '@/lib/gallery'
 import { gatePassed } from '@/lib/gate'
-import { BrandIcon, Icon, NewTab } from '@/lib/icons'
+import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
@@ -20,6 +19,7 @@ import { AppBar } from './app-bar'
 import { ByMode } from './by-mode'
 import { CommandRow } from './command-row'
 import { GateList, SwatchGrid } from './palette-parts'
+import { RepoLink } from './repo-link'
 import { SiteHeader } from './site-header'
 import { TerminalFrame } from './terminal-frame'
 import { SCENES, type Scene, TerminalPreview } from './terminal-preview'
@@ -320,25 +320,26 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
   )
 }
 
-function MarketplaceFacts({ marketplace, count }: { marketplace: Marketplace | null; count: number }) {
-  if (!marketplace) return <span safe>{`${OFFICIAL} · ${plural(count, 'palette')} · comes with ttheme`}</span>
+function MarketplaceFacts({
+  marketplace,
+  count,
+  repo,
+}: {
+  marketplace: Marketplace | null
+  count: number
+  repo: Repo | null
+}) {
+  const stars = marketplace ? marketplace.stars : (repo?.stars ?? null)
+  const facts = [plural(count, 'palette'), ...(stars === null ? [] : [plural(stars, 'GitHub star')])]
 
   return (
     <span class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
-      <a
-        href={`https://github.com/${marketplace.repo}`}
-        target="_blank"
-        rel="noopener"
-        class="inline-flex min-w-0 items-center gap-1.5 transition-colors hover:text-foreground"
-      >
-        <BrandIcon icon={siGithub} class="size-3 flex-none" />
-        <span class="truncate" safe>
-          {marketplace.repo}
-        </span>
-        <NewTab class="size-3 flex-none" />
-      </a>
-      <span safe>{`· ${plural(count, 'palette')} · ${plural(marketplace.stars, 'GitHub star')}`}</span>
-      {marketplace.license ? (
+      <RepoLink
+        href={marketplace ? repoUrl(marketplace.repo) : OFFICIAL_THEMES_URL}
+        repo={marketplace ? marketplace.repo : OFFICIAL_REPO}
+      />
+      <span safe>{`· ${[...facts, ...(marketplace ? [] : ['comes with ttheme'])].join(' · ')}`}</span>
+      {!marketplace ? null : marketplace.license ? (
         <span safe>{`· ${marketplace.license}`}</span>
       ) : (
         <Badge variant="warning">no license stated</Badge>
@@ -369,7 +370,7 @@ export function MarketplaceWorkspace({
 
   return (
     <div class="ground flex min-h-dvh flex-col app:h-dvh app:overflow-hidden">
-      <SiteHeader current="/marketplace" fixed />
+      <SiteHeader current="/marketplace" facts={facts} fixed />
       <marketplace-workspace class="flex min-h-0 flex-1 flex-col app:flex-row">
         <aside
           aria-label="catalogs and palettes"
@@ -487,7 +488,7 @@ export function MarketplaceWorkspace({
         </script>
       </marketplace-workspace>
       <AppBar facts={facts}>
-        <MarketplaceFacts marketplace={marketplace} count={palettes.length} />
+        <MarketplaceFacts marketplace={marketplace} count={palettes.length} repo={facts.repo} />
       </AppBar>
     </div>
   )

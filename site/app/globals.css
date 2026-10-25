@@ -3,7 +3,7 @@
 @custom-variant app (@media (width >= 900px) and (height >= 600px));
 @custom-variant header-menu (@container site-header (width < 712px));
 @custom-variant header-wide (@container site-header (width >= 712px));
-@custom-variant header-short (@container site-header (712px <= width < 792px));
+@custom-variant header-short (@container site-header (712px <= width < 784px));
 @custom-variant header-tight (@container site-header (width < 680px));
 @custom-variant header-icons (@container site-header (width < 376px));
 @custom-variant bar-squeezed (@media (900px <= width < 1104px) and (height >= 600px));

@@ -4,9 +4,10 @@ import tailwind from '@tailwindcss/postcss'
 import postcss from 'postcss'
 import subsetFont from 'subset-font'
 import { EXIT_CODES } from '../src/cli/answer.ts'
-import { showcase } from '../src/cli/showcase.ts'
+import { repoFacts, showcase } from '../src/cli/showcase.ts'
 import { DOCS_URL, docsOf, flagRows, headOf, SECTIONS, usageOf, VERB_SPECS } from '../src/cli/verbs.ts'
 import type { Commands } from './lib/commands'
+import { OFFICIAL_REPO } from './lib/gallery'
 import { official, themes } from './lib/official'
 
 export const SITE = import.meta.dirname
@@ -26,6 +27,8 @@ export const SECURITY_HEADERS = {
 const HTML = 'text/html; charset=utf-8'
 
 const SNAPSHOT = join(SITE, 'marketplaces.json')
+
+const REPO = join(SITE, 'repo.json')
 
 const COMMANDS = join(SITE, 'commands.json')
 
@@ -350,16 +353,23 @@ export function commands(): void {
   kept(COMMANDS, `${JSON.stringify(data, null, 2)}\n`)
 }
 
-export async function snapshot(fresh: boolean): Promise<void> {
-  if (!fresh && existsSync(SNAPSHOT)) return
+async function fetched<T>(path: string, what: string, load: () => Promise<T>, empty: T, fresh: boolean) {
+  if (!fresh && existsSync(path)) return
 
   try {
-    writeFileSync(SNAPSHOT, `${JSON.stringify(await showcase(official, process.env.GITHUB_TOKEN))}\n`)
+    writeFileSync(path, `${JSON.stringify(await load())}\n`)
   } catch (error) {
-    if (fresh) throw new Error(`the marketplaces did not load — ${(error as Error).message}`)
-    process.stderr.write(`site: no marketplaces — ${(error as Error).message}\n`)
-    writeFileSync(SNAPSHOT, '[]\n')
+    if (fresh) throw new Error(`the ${what} did not load — ${(error as Error).message}`)
+    process.stderr.write(`site: no ${what} — ${(error as Error).message}\n`)
+    writeFileSync(path, `${JSON.stringify(empty)}\n`)
   }
+}
+
+export async function snapshot(fresh: boolean): Promise<void> {
+  const token = process.env.GITHUB_TOKEN
+
+  await fetched(SNAPSHOT, 'marketplaces', () => showcase(official, token), [], fresh)
+  await fetched(REPO, `stars of ${OFFICIAL_REPO}`, () => repoFacts(OFFICIAL_REPO, token), null, fresh)
 }
 
 async function prerender(bundle: string): Promise<Record<string, { path: string; contentType: string }>> {

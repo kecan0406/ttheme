@@ -1,26 +1,43 @@
 import type { PropsWithChildren } from '@kitajs/html'
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, type IconNode, Layers, Search, Store } from 'lucide'
+import {
+  ArrowDownAZ,
+  ArrowRight,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  type IconNode,
+  Layers,
+  Search,
+  Star,
+  Store,
+} from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button, buttonVariants, LinkButton } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupCount, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { catalogsOf, nativeLang } from '@/lib/catalogs'
 import {
+  FIRST_SORT,
   marketplacePath,
   OFFICIAL,
   type Peek,
   palettePath,
   peekOf,
+  repoUrl,
   type Shelf,
+  SORTS,
   SOURCES,
+  type Sort,
   type Source,
   START,
   searchable,
   shelvesMatching,
+  starCount,
 } from '@/lib/gallery'
-import { BrandIcon, Icon } from '@/lib/icons'
+import { BrandIcon, Icon, NewTab } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
@@ -30,6 +47,12 @@ import { TerminalPreview } from './terminal-preview'
 const DOTS = 9
 
 const SOURCE_ICONS: Record<Source, IconNode | null> = { all: null, official: Layers, community: Store }
+
+const SORT_LABELS = {
+  popular: { label: 'popular', icon: Star },
+  updated: { label: 'updated', icon: Clock },
+  name: { label: 'a–z', icon: ArrowDownAZ },
+} as const satisfies Record<Sort, { label: string; icon: IconNode }>
 
 interface Catalog {
   catalog: string | null
@@ -140,16 +163,19 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
   return (
     <article
       data-shelf={shelf.id}
+      data-stars={shelf.stars ?? 0}
+      data-pushed={shelf.pushedAt ?? ''}
       class="overflow-hidden rounded-3xl border bg-card shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-input hover:shadow-md has-[details[open]]:border-input"
     >
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2 p-3.5">
         <PeekWindow shelf={shelf} catalogs={catalogs} />
-        <div class="group/open relative flex min-w-0 flex-[1_1_20rem] items-center gap-4 self-stretch rounded-2xl p-4 transition-colors has-[a:hover]:bg-muted/65 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-ring">
+        <div class="group/open relative flex min-w-0 flex-[1_1_20rem] items-center gap-4 self-stretch rounded-2xl p-4 transition-colors has-[a[data-open]:hover]:bg-muted/65 has-[a[data-open]:focus-visible]:ring-2 has-[a[data-open]:focus-visible]:ring-ring">
           <div class="grid min-w-0 flex-1 gap-1.5">
             <span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               <h2 class="font-display text-display-sm font-black [overflow-wrap:anywhere]">
                 <a
                   href={marketplacePath(official ? null : shelf.id)}
+                  data-open
                   class="outline-none transition-colors after:absolute after:inset-0 after:rounded-2xl hover:text-primary"
                   safe
                 >
@@ -161,33 +187,78 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
                 {official ? 'official' : 'community'}
               </Badge>
             </span>
-            <span class="flex min-w-0 items-center gap-1.5 font-mono text-xs text-muted-foreground">
-              <BrandIcon icon={siGithub} class="size-3 flex-none" />
-              <span class="truncate" safe>
-                {shelf.repo}
-              </span>
-            </span>
             <p class="text-sm text-soft-foreground" safe>
               {shelf.about}
             </p>
-            <p class="mt-1 flex flex-wrap gap-x-4.5 gap-y-1 text-sm text-soft-foreground">
-              <span>
-                <b data-shelf-count class="font-mono font-normal text-foreground tabular-nums">
-                  {shelf.palettes.length}
-                </b>{' '}
-                palettes
-              </span>
-              <span>
-                updated{' '}
-                <b class="font-mono font-normal text-foreground" safe>
-                  {shelf.updated}
-                </b>
-              </span>
+            <p class="text-sm text-soft-foreground">
+              <b data-shelf-count class="font-mono font-normal text-foreground tabular-nums">
+                {shelf.palettes.length}
+              </b>{' '}
+              palettes
+              {shelf.version === null ? null : (
+                <>
+                  {' · ttheme '}
+                  <b class="font-mono font-normal text-foreground" safe>
+                    {`v${shelf.version}`}
+                  </b>
+                </>
+              )}
             </p>
+            <span class="mt-1 flex flex-wrap gap-1.5">
+              <LinkButton
+                variant="outline"
+                size="xs"
+                href={shelf.url}
+                target="_blank"
+                rel="noopener"
+                class="relative z-1 max-w-full min-w-0 shrink font-mono font-normal"
+              >
+                <BrandIcon icon={siGithub} class="size-3 flex-none" />
+                <span class="truncate" safe>
+                  {shelf.repo}
+                </span>
+                <NewTab class="size-3 flex-none" />
+              </LinkButton>
+              {shelf.stars === null ? null : (
+                <LinkButton
+                  variant="outline"
+                  size="xs"
+                  href={`${repoUrl(shelf.repo)}/stargazers`}
+                  target="_blank"
+                  rel="noopener"
+                  class="relative z-1"
+                >
+                  <b aria-hidden="true" class="font-bold text-foreground tabular-nums" safe>
+                    {starCount(shelf.stars)}
+                  </b>
+                  <Icon node={Star} class="size-3.5 fill-current" />
+                  <span class="sr-only" safe>
+                    {`${plural(shelf.stars, 'GitHub star')}, opens in a new tab`}
+                  </span>
+                </LinkButton>
+              )}
+              {shelf.pushedAt === null ? null : (
+                <LinkButton
+                  variant="outline"
+                  size="xs"
+                  href={shelf.commits}
+                  target="_blank"
+                  rel="noopener"
+                  class="relative z-1"
+                >
+                  <Icon node={Clock} class="size-3.5" />
+                  updated
+                  <b class="font-mono font-normal text-foreground" safe>
+                    {shelf.pushedAt}
+                  </b>
+                  <span class="sr-only">, opens in a new tab</span>
+                </LinkButton>
+              )}
+            </span>
           </div>
           <span
             aria-hidden="true"
-            class="grid size-10 flex-none place-items-center rounded-full border bg-card text-soft-foreground transition-[background-color,border-color,color,translate] duration-200 group-has-[a:hover]/open:border-primary group-has-[a:hover]/open:bg-primary group-has-[a:hover]/open:text-primary-foreground motion-safe:group-has-[a:hover]/open:translate-x-0.5"
+            class="grid size-10 flex-none place-items-center rounded-full border bg-card text-soft-foreground transition-[background-color,border-color,color,translate] duration-200 group-has-[a[data-open]:hover]/open:border-primary group-has-[a[data-open]:hover]/open:bg-primary group-has-[a[data-open]:hover]/open:text-primary-foreground motion-safe:group-has-[a[data-open]:hover]/open:translate-x-0.5"
           >
             <Icon node={ArrowRight} class="size-4.5" />
           </span>
@@ -262,20 +333,33 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
           </InputGroup>
         </search>
       </div>
-      <ToggleGroup variant="underline" label="source">
-        {SOURCES.map((source) => {
-          const icon = SOURCE_ICONS[source]
+      <div class="flex flex-wrap items-end">
+        <ToggleGroup variant="underline" label="source" class="w-auto flex-[1_1_auto]">
+          {SOURCES.map((source) => {
+            const icon = SOURCE_ICONS[source]
 
-          return (
-            <ToggleGroupItem variant="underline" name="source" value={source} checked={source === START.source}>
-              {icon ? <Icon node={icon} /> : null}
-              {source}
-              <ToggleGroupCount data-count={source}>{count(source)}</ToggleGroupCount>
+            return (
+              <ToggleGroupItem variant="underline" name="source" value={source} checked={source === START.source}>
+                {icon ? <Icon node={icon} /> : null}
+                {source}
+                <ToggleGroupCount data-count={source}>{count(source)}</ToggleGroupCount>
+              </ToggleGroupItem>
+            )
+          })}
+        </ToggleGroup>
+        <ToggleGroup variant="underline" label="sort" class="w-auto flex-[1_1_auto] justify-end gap-5">
+          <span aria-hidden="true" class="pb-3 text-sm text-muted-foreground">
+            sort
+          </span>
+          {SORTS.map((sort) => (
+            <ToggleGroupItem variant="underline" name="sort" value={sort} checked={sort === FIRST_SORT}>
+              <Icon node={SORT_LABELS[sort].icon} />
+              {SORT_LABELS[sort].label}
             </ToggleGroupItem>
-          )
-        })}
-      </ToggleGroup>
-      <div class="grid grid-cols-[minmax(0,1fr)] gap-4 pt-2">
+          ))}
+        </ToggleGroup>
+      </div>
+      <div data-shelves class="grid grid-cols-[minmax(0,1fr)] gap-4 pt-2">
         {shelves.map((shelf, index) => (
           <MarketplaceCard shelf={shelf} catalogs={catalogs[index] ?? []} />
         ))}

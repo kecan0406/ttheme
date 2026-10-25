@@ -16,11 +16,27 @@ interface Found {
   license: { spdx_id: string } | null
 }
 
+export interface RepoFacts {
+  stars: number
+  pushedAt: string
+}
+
+function authorized(token: string | undefined): Record<string, string> {
+  return token ? { authorization: `Bearer ${token}` } : {}
+}
+
 async function found(token: string | undefined): Promise<Found[]> {
   const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(`topic:${TOPIC}`)}&sort=stars&per_page=100`
-  const response = await reach(url, undefined, undefined, token ? { authorization: `Bearer ${token}` } : {})
+  const response = await reach(url, undefined, undefined, authorized(token))
 
   return ((await response.json()) as { items: Found[] }).items
+}
+
+export async function repoFacts(repo: string, token?: string): Promise<RepoFacts> {
+  const response = await reach(`https://api.github.com/repos/${repo}`, undefined, undefined, authorized(token))
+  const r = (await response.json()) as Pick<Found, 'stargazers_count' | 'pushed_at'>
+
+  return { stars: r.stargazers_count, pushedAt: r.pushed_at.slice(0, 10) }
 }
 
 async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {

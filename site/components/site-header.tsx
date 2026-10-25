@@ -1,9 +1,10 @@
-import { BookOpen, Menu, Paintbrush, Store } from 'lucide'
+import { BookOpen, Menu, Paintbrush, Star, Store } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
-import { OFFICIAL_URL } from '@/lib/gallery'
+import type { Facts } from '@/lib/facts'
+import { OFFICIAL_URL, starCount } from '@/lib/gallery'
 import { BrandIcon, Icon, NewTab } from '@/lib/icons'
-import { cn } from '@/lib/utils'
+import { cn, plural } from '@/lib/utils'
 import { HeaderBar } from './header-bar'
 import { Mark } from './mark'
 import { Wordmark } from './wordmark'
@@ -14,7 +15,9 @@ const NAV = [
   { href: '/docs', label: 'docs', icon: BookOpen },
 ] as const
 
-export function SiteHeader({ current, fixed = false }: { current: string; fixed?: boolean }) {
+export function SiteHeader({ current, facts, fixed = false }: { current: string; facts: Facts; fixed?: boolean }) {
+  const stars = facts.repo?.stars ?? null
+
   return (
     <header
       data-sticky
@@ -72,16 +75,34 @@ export function SiteHeader({ current, fixed = false }: { current: string; fixed?
           class="top-15 right-5 m-0 w-56 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid header-wide:static header-wide:my-2.5 header-wide:ml-auto header-wide:flex header-wide:w-auto header-wide:flex-wrap header-wide:items-center header-wide:justify-end header-wide:self-center header-wide:gap-2.5 header-wide:overflow-visible header-wide:border-0 header-wide:bg-transparent header-wide:p-0 header-wide:text-inherit header-wide:shadow-none"
         >
           <LinkButton
-            variant="ghost"
+            variant="outline"
             size="sm"
             href={OFFICIAL_URL}
             target="_blank"
             rel="noopener"
-            class="justify-start header-short:w-7.5 header-short:justify-center header-short:px-0"
+            class="h-8 justify-start gap-2 shadow-sm header-menu:rounded-xl header-short:w-8 header-short:justify-center header-short:px-0"
           >
             <BrandIcon icon={siGithub} />
-            <span class="header-short:sr-only">github</span>
-            <NewTab class="header-short:hidden" />
+            <span class={stars === null ? 'header-short:sr-only' : 'sr-only'}>github</span>
+            {stars === null ? null : (
+              <>
+                <span
+                  aria-hidden="true"
+                  class="inline-flex items-center gap-1.5 font-bold text-foreground tabular-nums header-short:hidden"
+                >
+                  <span safe>{starCount(stars)}</span>
+                  <Icon node={Star} class="size-3.5 fill-current text-soft-foreground" />
+                </span>
+                <span class="sr-only" safe>
+                  {plural(stars, 'star')}
+                </span>
+              </>
+            )}
+            {stars === null ? (
+              <NewTab class="header-short:hidden" />
+            ) : (
+              <span class="sr-only">, opens in a new tab</span>
+            )}
           </LinkButton>
           <HeaderBar />
         </div>

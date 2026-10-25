@@ -211,7 +211,7 @@ depends = ["build"]
 run = "bun install --frozen-lockfile && bun build.ts && ./node_modules/.bin/tsc --noEmit -p . && ./node_modules/.bin/tsc --noEmit -p client && ./node_modules/.bin/xss-scan && ./node_modules/.bin/xss-scan --cwd client -p tsconfig.json"
 
 [tasks."site:check"]
-description = "typecheck the showcase site's server and browser code as site:build does, without building it: the two files its build writes, assets.json and marketplaces.json, are typed from stand-ins in a temp dir, so it needs no network and writes nothing into site/"
+description = "typecheck the showcase site's server and browser code as site:build does, without building it: the files its build writes, assets.json, marketplaces.json, commands.json and repo.json, are typed from stand-ins in a temp dir, so it needs no network and writes nothing into site/"
 dir = "{{config_root}}/site"
 run = "bun install --frozen-lockfile && bun check.ts"
 

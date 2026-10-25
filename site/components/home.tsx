@@ -111,7 +111,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
 
   return (
     <lead-showcase class="ground flex min-h-dvh flex-col">
-      <SiteHeader current="/" />
+      <SiteHeader current="/" facts={facts} />
       <main id="content" class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-5">
         <section
           aria-label="ttheme"

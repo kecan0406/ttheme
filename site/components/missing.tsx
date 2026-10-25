@@ -5,7 +5,7 @@ import { SiteHeader } from './site-header'
 export function Missing({ title, text, facts }: { title: string; text: string; facts: Facts }) {
   return (
     <div class="ground flex min-h-dvh flex-col">
-      <SiteHeader current="" />
+      <SiteHeader current="" facts={facts} />
       <main id="content" class="mx-auto grid w-[min(1280px,calc(100%-40px))] grid-cols-[minmax(0,1fr)] gap-5 pt-5">
         <div class="grid justify-items-start gap-3 pt-5 pb-16">
           <h1 class="font-display text-display-lg font-black" safe>

@@ -13,7 +13,7 @@ import { type Card, cardAlt, cardPng } from '@/lib/card'
 import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
 import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
-import type { Facts } from '@/lib/facts'
+import type { Facts, Repo } from '@/lib/facts'
 import { marketplacePath, OFFICIAL, palettePath, palettesPath } from '@/lib/gallery'
 import { marketplaces } from '@/lib/marketplaces'
 import { fallback, gate, themes } from '@/lib/official'
@@ -32,10 +32,16 @@ import {
   siteMeta,
 } from '@/lib/titles'
 import { leadOf } from '@/lib/workspace'
+import repo from '@/repo.json' with { type: 'json' }
 import pkg from '../../package.json' with { type: 'json' }
 import { type Page, page } from './document'
 
-const facts: Facts = { palettes: themes.length, catalogs: catalogsOf(themes).length, version: pkg.version }
+const facts: Facts = {
+  palettes: themes.length,
+  catalogs: catalogsOf(themes).length,
+  version: pkg.version,
+  repo: repo as Repo | null,
+}
 
 const CATALOG = 'public, max-age=0, s-maxage=31536000'
 const RETRY = 'public, max-age=0, s-maxage=60'

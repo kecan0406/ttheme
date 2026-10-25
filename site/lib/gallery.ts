@@ -40,9 +40,47 @@ export function shelvesMatching(shelves: Searchable[][], filters: Filters): numb
 export interface Shelf {
   id: string
   repo: string
+  url: string
+  commits: string
   about: string
-  updated: string
+  stars: number | null
+  pushedAt: string | null
+  version: string | null
   palettes: Theme[]
+}
+
+export type Sort = 'popular' | 'updated' | 'name'
+
+export const SORTS: Sort[] = ['popular', 'updated', 'name']
+
+export const FIRST_SORT: Sort = 'popular'
+
+export interface Ranked {
+  id: string
+  stars: number
+  pushedAt: string
+}
+
+function byName(a: Ranked, b: Ranked): number {
+  return a.id.localeCompare(b.id)
+}
+
+function officialFirst(a: Ranked, b: Ranked): number {
+  return Number(b.id === OFFICIAL) - Number(a.id === OFFICIAL) || byName(a, b)
+}
+
+export const ORDERS: Record<Sort, (a: Ranked, b: Ranked) => number> = {
+  popular: (a, b) => b.stars - a.stars || officialFirst(a, b),
+  updated: (a, b) => b.pushedAt.localeCompare(a.pushedAt) || b.stars - a.stars || officialFirst(a, b),
+  name: byName,
+}
+
+export function rankOf(shelf: Pick<Shelf, 'id' | 'stars' | 'pushedAt'>): Ranked {
+  return { id: shelf.id, stars: shelf.stars ?? 0, pushedAt: shelf.pushedAt ?? '' }
+}
+
+export function starCount(stars: number): string {
+  return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(stars).toLowerCase()
 }
 
 export const OFFICIAL = 'official'
@@ -50,6 +88,14 @@ export const OFFICIAL = 'official'
 export const OFFICIAL_REPO = 'kecan0406/ttheme'
 
 export const OFFICIAL_URL = `https://github.com/${OFFICIAL_REPO}`
+
+export const OFFICIAL_THEMES_URL = `${OFFICIAL_URL}/tree/main/themes`
+
+export const OFFICIAL_COMMITS_URL = `${OFFICIAL_URL}/commits/main/themes`
+
+export function repoUrl(repo: string): string {
+  return `https://github.com/${repo}`
+}
 
 export const NPM_URL = 'https://www.npmjs.com/package/@kecan0406/ttheme'
 

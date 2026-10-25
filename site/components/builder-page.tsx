@@ -39,7 +39,7 @@ export function BuilderPage({
 
   return (
     <div class="ground flex min-h-dvh flex-col app:h-dvh app:overflow-hidden">
-      <SiteHeader current="/builder" fixed />
+      <SiteHeader current="/builder" facts={facts} fixed />
       <palette-builder class="builder-app">
         {shared && shared.palettes.length > 1 ? <LinkStrip shared={shared} /> : null}
         <div class="border-b border-border bg-sidebar [grid-area:tabs] app:border-r">

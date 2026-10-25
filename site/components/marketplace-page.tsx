@@ -1,7 +1,18 @@
 import { Store } from 'lucide'
 import { catalogsOf } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
-import { OFFICIAL, OFFICIAL_ABOUT, OFFICIAL_REPO, type Shelf } from '@/lib/gallery'
+import {
+  FIRST_SORT,
+  OFFICIAL,
+  OFFICIAL_ABOUT,
+  OFFICIAL_COMMITS_URL,
+  OFFICIAL_REPO,
+  OFFICIAL_THEMES_URL,
+  ORDERS,
+  rankOf,
+  repoUrl,
+  type Shelf,
+} from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import type { Marketplace, Theme } from '@/lib/themes'
 import { plural } from '@/lib/utils'
@@ -16,22 +27,32 @@ function inOrder(palettes: Theme[]): Theme[] {
 }
 
 function shelvesOf(themes: Theme[], marketplaces: Marketplace[], facts: Facts): Shelf[] {
-  return [
+  const shelves: Shelf[] = [
     {
       id: OFFICIAL,
       repo: OFFICIAL_REPO,
+      url: OFFICIAL_THEMES_URL,
+      commits: OFFICIAL_COMMITS_URL,
       about: OFFICIAL_ABOUT,
-      updated: `v${facts.version}`,
+      stars: facts.repo?.stars ?? null,
+      pushedAt: facts.repo?.pushedAt ?? null,
+      version: facts.version,
       palettes: inOrder(themes),
     },
     ...marketplaces.map((marketplace) => ({
       id: marketplace.id,
       repo: marketplace.repo,
+      url: repoUrl(marketplace.repo),
+      commits: `${repoUrl(marketplace.repo)}/commits`,
       about: marketplace.about,
-      updated: marketplace.pushedAt,
+      stars: marketplace.stars,
+      pushedAt: marketplace.pushedAt,
+      version: null,
       palettes: inOrder(marketplace.palettes),
     })),
   ]
+
+  return shelves.toSorted((a, b) => ORDERS[FIRST_SORT](rankOf(a), rankOf(b)))
 }
 
 export function MarketplacePage({

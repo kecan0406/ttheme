@@ -173,7 +173,7 @@ export function DocsFrame({
 }>) {
   return (
     <div class="ground flex min-h-dvh flex-col">
-      <SiteHeader current={DOCS_PATH} />
+      <SiteHeader current={DOCS_PATH} facts={facts} />
       <div data-docs class="mx-auto w-[min(1280px,calc(100%-40px))] pt-3 pb-12">
         <docs-page class="grid grid-cols-[minmax(0,1fr)] items-start gap-3 docs-side:grid-cols-[15.5rem_minmax(0,1fr)] docs-toc:grid-cols-[15.5rem_minmax(0,1fr)_13.5rem]">
           <Button variant="outline" size="sm" popovertarget="docs-menu" class="justify-self-start docs-side:hidden">

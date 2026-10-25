@@ -1,9 +1,13 @@
 import {
+  FIRST_SORT,
   type Filters,
   matches,
+  ORDERS,
   type Peek,
+  type Ranked,
   type Searchable,
   SOURCES,
+  type Sort,
   type Source,
   START,
   shelvesMatching,
@@ -21,6 +25,10 @@ function palettesOf(card: HTMLElement): Searchable[] {
 
 function shelfOf(element: Element): string {
   return element.closest<HTMLElement>('[data-shelf]')?.dataset.shelf ?? ''
+}
+
+function rankOf(card: HTMLElement): Ranked {
+  return { id: card.dataset.shelf ?? '', stars: Number(card.dataset.stars), pushedAt: card.dataset.pushed ?? '' }
 }
 
 class MarketplaceBoard extends HTMLElement {
@@ -44,6 +52,8 @@ class MarketplaceBoard extends HTMLElement {
 
   #change = (event: Event) => {
     const { name, value } = event.target as HTMLInputElement
+
+    if (name === 'sort') this.#sort(value as Sort)
 
     if (name !== 'source') return
     this.#filters = { ...this.#filters, source: value as Source }
@@ -105,8 +115,11 @@ class MarketplaceBoard extends HTMLElement {
       this.#open.add(shelfOf(details))
     const query = this.querySelector<HTMLInputElement>('input[name="query"]')?.value ?? ''
     const start = this.querySelector<HTMLInputElement>(`input[name="source"][value="${START.source}"]`)
+    const order = this.querySelector<HTMLInputElement>(`input[name="sort"][value="${FIRST_SORT}"]`)
 
     if (start) start.checked = true
+
+    if (order) order.checked = true
     this.#filters = { query, source: START.source }
     this.#render()
     this.#peeks = readJson<Record<string, Peek[]>>(this, 'script[data-peeks]')
@@ -134,6 +147,15 @@ class MarketplaceBoard extends HTMLElement {
 
   #filtering(): boolean {
     return this.#filters.query.trim() !== ''
+  }
+
+  #sort(sort: Sort) {
+    const list = this.querySelector('[data-shelves]')
+
+    if (!list) return
+    const cards = [...list.querySelectorAll<HTMLElement>(':scope > [data-shelf]')]
+
+    list.append(...cards.toSorted((a, b) => ORDERS[sort](rankOf(a), rankOf(b))))
   }
 
   #move(peek: HTMLElement, delta: number) {
