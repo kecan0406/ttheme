@@ -1062,7 +1062,9 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 }
 
 [data-slot='peek-window'],
-[data-slot='peek-window'] :not([data-slot='button'], [data-slot='button'] *) {
+[data-slot='peek-window'] :not([data-slot='button'], [data-slot='button'] *),
+[data-slot='tab-window'],
+[data-slot='tab-window'] :not([data-slot='button'], [data-slot='button'] *) {
   transition:
     color 0.4s cubic-bezier(0.3, 0.7, 0.2, 1),
     background-color 0.4s cubic-bezier(0.3, 0.7, 0.2, 1),
@@ -1071,7 +1073,9 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
 
 @media (prefers-reduced-motion: reduce) {
   [data-slot='peek-window'],
-  [data-slot='peek-window'] :not([data-slot='button'], [data-slot='button'] *) {
+  [data-slot='peek-window'] :not([data-slot='button'], [data-slot='button'] *),
+  [data-slot='tab-window'],
+  [data-slot='tab-window'] :not([data-slot='button'], [data-slot='button'] *) {
     transition: none;
   }
 }

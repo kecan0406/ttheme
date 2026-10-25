@@ -15,5 +15,6 @@ declare namespace JSX {
     'palette-picker': HtmlTag
     'route-progress': HtmlTag
     'sparkle-burst': HtmlTag
+    'tab-showcase': HtmlTag
   }
 }

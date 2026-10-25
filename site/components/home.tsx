@@ -13,6 +13,7 @@ import { CommandRow } from './command-row'
 import { Signature } from './palette-parts'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
+import { FIRST_TABS, TabWindow } from './tab-window'
 import { TerminalFrame, WINDOW_TITLE } from './terminal-frame'
 
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
@@ -30,11 +31,6 @@ function features(palettes: number, catalogs: number) {
       emoji: '🖥️',
       title: 'every terminal you use',
       text: 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp, Konsole and Terminal.app, all wired by one init.',
-    },
-    {
-      emoji: '🗂️',
-      title: 'a different one per tab',
-      text: 'ttheme use paints just this tab, and ttheme pin keeps a palette for a folder.',
     },
     {
       emoji: '🖼️',
@@ -88,6 +84,34 @@ function Step({ number, title, text, children }: PropsWithChildren<{ number: num
 
 export function LeadUse({ theme }: { theme: Theme }) {
   return <CommandRow command={`ttheme use ${theme.name}`} class="bg-card" />
+}
+
+function PerTab({ leads }: { leads: Theme[] }) {
+  const tabs = leads.slice(0, FIRST_TABS).map((theme, id) => ({ id, theme }))
+
+  return (
+    <article class="col-span-2 row-span-2 grid content-start gap-4.5 rounded-3xl border bg-muted p-6 max-[640px]:col-span-1">
+      <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div class="grid max-w-[60ch] gap-2">
+          <span class="text-3xl" role="img" aria-hidden="true">
+            🗂️
+          </span>
+          <h3 class="font-display text-base font-extrabold">a different one per tab</h3>
+          <p class="text-sm text-soft-foreground">
+            ttheme use paints just this tab, and ttheme pin keeps a palette for a folder. With seq, every new tab takes
+            the next palette in the order you installed them.
+          </p>
+        </div>
+        <code class="rounded-lg border bg-card px-3 py-1.5 font-mono text-xs text-soft-foreground">
+          TTHEME_TAB_PALETTE=seq
+        </code>
+      </div>
+      <tab-showcase class="grid gap-2.5">
+        <TabWindow tabs={tabs} active={0} next={leads[FIRST_TABS % leads.length] as Theme} />
+        <p class="text-xs text-muted-foreground">+ opens a tab on the next palette, as a new tab does under seq</p>
+      </tab-showcase>
+    </article>
+  )
 }
 
 export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
@@ -191,8 +215,9 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             everything a tab needs
           </h2>
           <div class="grid grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
+            <PerTab leads={leads} />
             {features(facts.palettes, facts.catalogs).map((feature) => (
-              <article class="row-span-3 grid grid-rows-subgrid gap-2 rounded-3xl border bg-muted p-6">
+              <article class="grid content-start gap-2 rounded-3xl border bg-muted p-6 max-[960px]:last:col-span-2 max-[640px]:last:col-span-1">
                 <span class="text-3xl" role="img" aria-hidden="true" safe>
                   {feature.emoji}
                 </span>
