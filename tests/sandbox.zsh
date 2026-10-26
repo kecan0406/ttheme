@@ -16,6 +16,8 @@ typeset -g KITTY_APP=${TTHEME_KITTY_APP:-/Applications/kitty.app}
 typeset -g KITTY_GUI="kitty --config $SANDBOX/"
 typeset -g ALACRITTY_APP=${TTHEME_ALACRITTY_APP:-/Applications/Alacritty.app}
 typeset -g ALACRITTY_GUI="alacritty --config-file $SANDBOX/"
+typeset -g RIO_APP=${TTHEME_RIO_APP:-/Applications/Rio.app}
+typeset -g RIO_GUI="rio --working-dir $SANDBOX"
 typeset -g WARP_LAUNCH=$HOME/.warp/launch_configurations/ttheme-sandbox.yaml
 typeset -g KONSOLE_GUI="konsole --separate --workdir $SANDBOX"
 typeset -g XVFB=${TTHEME_XVFB_DISPLAY:-:77}
@@ -238,6 +240,16 @@ open_alacritty() {
     --working-directory $SANDBOX -e /bin/zsh -il > /dev/null 2>&1 &!
 }
 
+open_rio() {
+  if (( LINUX )); then
+    (( $+commands[rio] )) || return 1
+    open_linux "$1" rio --working-dir $SANDBOX -e ${commands[zsh]:-/bin/zsh} -il
+    return
+  fi
+  [[ -x $RIO_APP/Contents/MacOS/rio ]] || return 1
+  env ${FOREIGN/#/-u} $RIO_APP/Contents/MacOS/rio --working-dir $SANDBOX -e /bin/zsh -il > /dev/null 2>&1 &!
+}
+
 open_konsole() {
   local behind=$1
   local -a env=(${FOREIGN/#/-u})
@@ -301,13 +313,13 @@ told() {
   fi
 }
 
-usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole] [--pictured] [--zshenv FILE] [--empty | --mine | palette…]" }
+usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole | --rio] [--pictured] [--zshenv FILE] [--empty | --mine | palette…]" }
 
 main() {
-  local -a here behind iterm wezterm kitty alacritty warp tapp konsole legacy trust empty mine pictured zshenv
+  local -a here behind iterm wezterm kitty alacritty warp tapp konsole rio legacy trust empty mine pictured zshenv
   zparseopts -D -E -F -- -here=here -behind=behind -iterm=iterm -wezterm=wezterm -kitty=kitty -alacritty=alacritty -warp=warp -terminal-app=tapp \
-    -konsole=konsole -legacy=legacy -trust=trust -empty=empty -mine=mine -pictured=pictured -zshenv:=zshenv || { usage; return 1 }
-  local -i other=$(( $#iterm + $#wezterm + $#kitty + $#alacritty + $#warp + $#tapp + $#konsole ))
+    -konsole=konsole -rio=rio -legacy=legacy -trust=trust -empty=empty -mine=mine -pictured=pictured -zshenv:=zshenv || { usage; return 1 }
+  local -i other=$(( $#iterm + $#wezterm + $#kitty + $#alacritty + $#warp + $#tapp + $#konsole + $#rio ))
   (( other > 1 || $#here && ($#behind || other) || ($#legacy || $#trust) && ! $#iterm || ($#empty || $#mine) && $# || $#empty && $#mine )) && { usage; return 1 }
   if (( $#mine )); then
     (( $#warp || $#tapp )) && { print -u2 -r -- "--mine stays out of --warp and --terminal-app, which wire the user's own app settings"; return 1 }
@@ -342,29 +354,36 @@ main() {
     iterm_suite $#legacy $#trust
     ( unset GHOSTTY_RESOURCES_DIR TERM_PROGRAM KITTY_WINDOW_ID; ITERM_SESSION_ID=w0 wire $label $palettes )
     open_iterm "${behind:+1}" || { print -u2 "no iTerm2 to open"; return 1 }
-    (( $#behind )) && hand_back $front $ITERM_SERVER
+    (( $#behind )) && hand_back "$front" $ITERM_SERVER
     print -r -- "opened a separate iTerm2 (settings suite $SUITE) on it — ⌘Q quits only that one; files stay until the next run"
     return
   fi
   if (( $#wezterm )); then
     ( unset $FOREIGN; WEZTERM_PANE=0 wire $label $palettes )
     open_wezterm "${behind:+1}" || { absent wezterm-gui "no WezTerm at $WEZTERM_APP — TTHEME_WEZTERM_APP names another WezTerm.app"; return 1 }
-    (( $#behind )) && hand_back $front $WEZTERM_GUI
+    (( $#behind )) && hand_back "$front" $WEZTERM_GUI
     told WezTerm "${behind:+1}"
     return
   fi
   if (( $#kitty )); then
     ( unset $FOREIGN; KITTY_WINDOW_ID=1 wire $label $palettes )
     open_kitty "${behind:+1}" || { absent kitty "no kitty at $KITTY_APP — TTHEME_KITTY_APP names another kitty.app"; return 1 }
-    (( $#behind )) && hand_back $front $KITTY_GUI
+    (( $#behind )) && hand_back "$front" $KITTY_GUI
     told kitty "${behind:+1}"
     return
   fi
   if (( $#alacritty )); then
     ( unset $FOREIGN; ALACRITTY_WINDOW_ID=1 wire $label $palettes )
     open_alacritty "${behind:+1}" || { absent alacritty "no Alacritty at $ALACRITTY_APP — TTHEME_ALACRITTY_APP names another Alacritty.app"; return 1 }
-    (( $#behind )) && hand_back $front $ALACRITTY_GUI
+    (( $#behind )) && hand_back "$front" $ALACRITTY_GUI
     told Alacritty "${behind:+1}"
+    return
+  fi
+  if (( $#rio )); then
+    ( unset $FOREIGN; TERM_PROGRAM=rio wire $label $palettes )
+    open_rio "${behind:+1}" || { absent rio "no Rio at $RIO_APP — TTHEME_RIO_APP names another Rio.app"; return 1 }
+    (( $#behind )) && hand_back "$front" $RIO_GUI
+    told Rio "${behind:+1}"
     return
   fi
   if (( $#warp )); then
@@ -400,7 +419,7 @@ main() {
   fi
   GHOSTTY_RESOURCES_DIR=${GHOSTTY_RESOURCES_DIR:-x} wire $label $palettes
   open_ghostty "${behind:+1}" || { absent ghostty "no Ghostty to open — \`mise run sandbox --here\` runs it in this tab"; return 1 }
-  (( $#behind )) && hand_back $front "--config-file=$SANDBOX/"
+  (( $#behind )) && hand_back "$front" "--config-file=$SANDBOX/"
   told Ghostty "${behind:+1}"
 }
 

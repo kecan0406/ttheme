@@ -50,6 +50,11 @@ RUN mkdir -p /etc/apt/keyrings \
   && echo "deb [signed-by=/etc/apt/keyrings/warpdotdev.gpg] https://releases.warp.dev/linux/deb stable main" > /etc/apt/sources.list.d/warpdotdev.list \
   && apt-get update && apt-get install -y --no-install-recommends warp-terminal=$WARP \
   && rm -rf /var/lib/apt/lists/*
+ARG RIO=0.5.28
+RUN arch=$(dpkg --print-architecture) \
+  && curl -fsSL --retry 5 --retry-all-errors -o /tmp/rio.deb https://github.com/raphamorim/rio/releases/download/v$RIO/rioterm_${RIO}_${arch}_x11.deb \
+  && apt-get update && apt-get install -y --no-install-recommends /tmp/rio.deb \
+  && rm -rf /var/lib/apt/lists/* /tmp/rio.deb
 RUN chsh -s /usr/bin/zsh root
 ARG NODE=v22.23.3
 RUN arch=$(dpkg --print-architecture | sed 's/amd64/x64/') \

@@ -195,7 +195,7 @@ wait_for = ["lint", "check", "test", "shell:check", "bin:check", "tui"]
 run = "bun tests/parity/run.ts"
 
 [tasks.compat]
-description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv; konsole named on a machine without it runs in a container (Ubuntu 24.04, Konsole 23.08 on Xvfb), and --linux runs the Linux builds in one (Ubuntu 26.04 on Xvfb, versions pinned) against tests/compat/expect-linux.tsv — `mise run compat [--update] [--linux] [ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole… | ghostty ghostty-tip kitty alacritty wezterm warp…]`"
+description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv; konsole named on a machine without it runs in a container (Ubuntu 24.04, Konsole 23.08 on Xvfb), and --linux runs the Linux builds in one (Ubuntu 26.04 on Xvfb, versions pinned) against tests/compat/expect-linux.tsv — `mise run compat [--update] [--linux] [ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole rio… | ghostty ghostty-tip kitty alacritty wezterm warp rio…]`"
 depends = ["build", "bin:build"]
 run = "zsh tests/compat.zsh"
 

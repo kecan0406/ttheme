@@ -1,55 +1,55 @@
-case	ghostty	ghostty-tip	kitty	alacritty	wezterm	warp
-detect	pass	pass	pass	pass	pass	pass
-layer	pass	pass	pass	pass	pass	pass
-osc-query	pass	pass	pass	pass	pass	pass
-osc-bg	pass	pass	pass	pass	pass	pass
-osc-fg	pass	pass	pass	pass	pass	pass
-osc-cursor	pass	pass	pass	pass	pass	pass
-osc-selection	fail	fail	pass	fail	pass	fail
-osc-ansi	pass	pass	pass	pass	pass	fail
-osc-reset	pass	pass	pass	pass	pass	pass
-drawn	pass	pass	pass	pass	pass	pass
-painted	pass	pass	pass	pass	pass	fail
-fg-painted	pass	pass	pass	pass	pass	pass
-ansi-painted	pass	pass	pass	pass	pass	pass
-focus-answer	pass	pass	fail	fail	fail	fail
-appearance-report	pass	pass	fail	fail	fail	fail
-follow-default	pass	pass	pass	pass	pass	pass
-follow-belief	pass	pass	pass	pass	pass	pass
-keep-painted	pass	pass	pass	pass	pass	pass
-on-follow	pass	pass	pass	pass	pass	pass
-on-belief	pass	pass	pass	pass	pass	pass
-system-theme	skip	skip	skip	skip	skip	pass
-wear	pass	pass	pass	pass	pass	pass
-wear-painted	pass	pass	pass	pass	pass	pass
-wear-ansi	pass	pass	pass	pass	pass	pass
-reset-worn	pass	pass	pass	pass	pass	fail
-reset-baseline	fail	fail	fail	fail	fail	fail
-restore	pass	pass	pass	pass	pass	pass
-layer-query	pass	pass	pass	pass	pass	pass
-layer-cells	pass	pass	pass	skip	pass	pass
-layer-base	skip	skip	skip	skip	skip	skip
-cell-size	pass	pass	pass	fail	pass	fail
-cell-points	pass	pass	pass	pass	pass	pass
-kitty-graphics	pass	pass	pass	fail	pass	pass
-kitty-shown	pass	pass	pass	skip	pass	fail
-kitty-under-bg	pass	pass	pass	skip	fail	skip
-kitty-el	pass	pass	pass	skip	fail	skip
-kitty-crop	pass	pass	pass	skip	pass	skip
-logo-over	fail	fail	fail	fail	fail	fail
-scheme-picture	fail	fail	fail	fail	fail	fail
-scheme-held	fail	fail	fail	fail	fail	fail
-scheme-released	fail	fail	fail	fail	fail	fail
-scheme-fresh	fail	fail	fail	fail	fail	fail
-profile-picture	fail	fail	fail	fail	fail	fail
-picture-held	fail	fail	fail	fail	fail	fail
-picture-renamed	fail	fail	fail	fail	fail	fail
-picture-gone	fail	fail	fail	fail	fail	fail
-sync-output	pass	pass	pass	pass	pass	pass
-sync-query	pass	pass	pass	pass	fail	pass
-keyboard-query	pass	pass	pass	pass	fail	pass
-keyboard-stack	pass	pass	pass	pass	skip	pass
-focus-report	pass	pass	pass	pass	pass	skip
-focus-event	pass	pass	pass	pass	pass	fail
-front-tty	skip	skip	fail	fail	fail	fail
-prompt-trap	pass	pass	pass	pass	pass	pass
+case	ghostty	ghostty-tip	kitty	alacritty	wezterm	warp	rio
+detect	pass	pass	pass	pass	pass	pass	pass
+layer	pass	pass	pass	pass	pass	pass	pass
+osc-query	pass	pass	pass	pass	pass	pass	pass
+osc-bg	pass	pass	pass	pass	pass	pass	pass
+osc-fg	pass	pass	pass	pass	pass	pass	pass
+osc-cursor	pass	pass	pass	pass	pass	pass	pass
+osc-selection	fail	fail	pass	fail	pass	fail	fail
+osc-ansi	pass	pass	pass	pass	pass	fail	pass
+osc-reset	pass	pass	pass	pass	pass	pass	pass
+drawn	pass	pass	pass	pass	pass	pass	pass
+painted	pass	pass	pass	pass	pass	fail	pass
+fg-painted	pass	pass	pass	pass	pass	pass	pass
+ansi-painted	pass	pass	pass	pass	pass	pass	pass
+focus-answer	pass	pass	fail	fail	fail	fail	fail
+appearance-report	pass	pass	fail	fail	fail	fail	fail
+follow-default	pass	pass	pass	pass	pass	pass	pass
+follow-belief	pass	pass	pass	pass	pass	pass	pass
+keep-painted	pass	pass	pass	pass	pass	pass	pass
+on-follow	pass	pass	pass	pass	pass	pass	pass
+on-belief	pass	pass	pass	pass	pass	pass	pass
+system-theme	skip	skip	skip	skip	skip	pass	skip
+wear	pass	pass	pass	pass	pass	pass	pass
+wear-painted	pass	pass	pass	pass	pass	pass	pass
+wear-ansi	pass	pass	pass	pass	pass	pass	pass
+reset-worn	pass	pass	pass	pass	pass	fail	pass
+reset-baseline	fail	fail	fail	fail	fail	fail	fail
+restore	pass	pass	pass	pass	pass	pass	pass
+layer-query	pass	pass	pass	pass	pass	pass	pass
+layer-cells	pass	pass	pass	skip	pass	pass	skip
+layer-base	skip	skip	skip	skip	skip	skip	skip
+cell-size	pass	pass	pass	fail	pass	fail	pass
+cell-points	pass	pass	pass	pass	pass	pass	pass
+kitty-graphics	pass	pass	pass	fail	pass	pass	pass
+kitty-shown	pass	pass	pass	skip	pass	fail	pass
+kitty-under-bg	pass	pass	pass	skip	fail	skip	pass
+kitty-el	pass	pass	pass	skip	fail	skip	pass
+kitty-crop	pass	pass	pass	skip	pass	skip	pass
+logo-over	fail	fail	fail	fail	fail	fail	fail
+scheme-picture	fail	fail	fail	fail	fail	fail	fail
+scheme-held	fail	fail	fail	fail	fail	fail	fail
+scheme-released	fail	fail	fail	fail	fail	fail	fail
+scheme-fresh	fail	fail	fail	fail	fail	fail	fail
+profile-picture	fail	fail	fail	fail	fail	fail	fail
+picture-held	fail	fail	fail	fail	fail	fail	fail
+picture-renamed	fail	fail	fail	fail	fail	fail	fail
+picture-gone	fail	fail	fail	fail	fail	fail	fail
+sync-output	pass	pass	pass	pass	pass	pass	pass
+sync-query	pass	pass	pass	pass	fail	pass	pass
+keyboard-query	pass	pass	pass	pass	fail	pass	pass
+keyboard-stack	pass	pass	pass	pass	skip	pass	pass
+focus-report	pass	pass	pass	pass	pass	skip	pass
+focus-event	pass	pass	pass	pass	pass	fail	pass
+front-tty	skip	skip	fail	fail	fail	fail	fail
+prompt-trap	pass	pass	pass	pass	pass	pass	pass

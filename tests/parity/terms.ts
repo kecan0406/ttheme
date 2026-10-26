@@ -125,7 +125,7 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     resets: true,
     baseline: false,
     focus: 'change',
-    cells: ['pixels'],
+    cells: ['pixels', 'points'],
     graphics: true,
     relative: false,
     syncQuery: true,

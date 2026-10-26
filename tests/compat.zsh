@@ -8,13 +8,13 @@ typeset -g OUT=${TTHEME_COMPAT_OUT:-${${TMPDIR:-/tmp}%/}/ttheme-compat}
 typeset -g EXPECT=$ROOT/tests/compat/expect.tsv
 typeset -g XVFB=${TTHEME_XVFB_DISPLAY:-:77}
 typeset -g TIP=${TTHEME_GHOSTTY_TIP:-/opt/ghostty-tip/bin}
-typeset -ga TERMINALS=(ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole)
-typeset -ga LINUX_TERMINALS=(ghostty ghostty-tip kitty alacritty wezterm warp)
-typeset -gA FLAG=(ghostty '' ghostty-tip '' iterm2 '--iterm --trust' wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app '--terminal-app --pictured' konsole --konsole)
-typeset -gA ADAPTER=(ghostty ghostty ghostty-tip ghostty iterm2 iterm2 wezterm wezterm kitty kitty alacritty alacritty warp warp terminal-app terminal-app konsole konsole)
+typeset -ga TERMINALS=(ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole rio)
+typeset -ga LINUX_TERMINALS=(ghostty ghostty-tip kitty alacritty wezterm warp rio)
+typeset -gA FLAG=(ghostty '' ghostty-tip '' iterm2 '--iterm --trust' wezterm --wezterm kitty --kitty alacritty --alacritty warp --warp terminal-app '--terminal-app --pictured' konsole --konsole rio --rio)
+typeset -gA ADAPTER=(ghostty ghostty ghostty-tip ghostty iterm2 iterm2 wezterm wezterm kitty kitty alacritty alacritty warp warp terminal-app terminal-app konsole konsole rio rio)
 typeset -gA PATTERN=(ghostty "--config-file=$SANDBOX/" ghostty-tip "--config-file=$SANDBOX/" iterm2 "iTerm2 -suite ttheme-sandbox"
   wezterm "wezterm-gui --config-file $SANDBOX/" kitty "kitty --config $SANDBOX/" alacritty "alacritty --config-file $SANDBOX/"
-  warp /Applications/Warp.app/Contents/MacOS/ konsole "konsole --separate --workdir $SANDBOX")
+  warp /Applications/Warp.app/Contents/MacOS/ konsole "konsole --separate --workdir $SANDBOX" rio "rio --working-dir $SANDBOX")
 typeset -gi LINUX=0
 typeset -ga MEASURING=()
 if [[ $OSTYPE == linux* ]]; then
@@ -36,7 +36,7 @@ installed() {
   if (( LINUX )); then
     (( $+commands[Xvfb] && $+commands[xdotool] && $+commands[import] )) || return 1
     case $1 in
-      ghostty|kitty|alacritty) (( $+commands[$1] )) ;;
+      ghostty|kitty|alacritty|rio) (( $+commands[$1] )) ;;
       ghostty-tip) [[ -x $TIP/ghostty ]] ;;
       wezterm) (( $+commands[wezterm-gui] )) ;;
       warp) (( $+commands[warp-terminal] )) ;;
@@ -54,6 +54,7 @@ installed() {
     warp) [[ -d /Applications/Warp.app ]] ;;
     terminal-app) [[ -d /System/Applications/Utilities/Terminal.app ]] ;;
     konsole) (( $+commands[konsole] && $+commands[dbus-run-session] && $+commands[Xvfb] && $+commands[xdotool] && $+commands[import] )) ;;
+    rio) [[ -x ${TTHEME_RIO_APP:-/Applications/Rio.app}/Contents/MacOS/rio ]] ;;
     *) return 1 ;;
   esac
 }
@@ -297,6 +298,7 @@ versions() {
       alacritty) print -r -- "alacritty: $(alacritty --version 2>/dev/null)" ;;
       wezterm) print -r -- "wezterm: $(wezterm --version 2>/dev/null)" ;;
       warp) print -r -- "warp: $(dpkg-query -W -f '${Version}' warp-terminal 2>/dev/null)" ;;
+      rio) print -r -- "rio: $(rio --version 2>/dev/null)" ;;
     esac
   done
 }
