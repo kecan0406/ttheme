@@ -169,7 +169,7 @@ test('a palette carries its other mode in [colors.light] or [colors.dark], which
   assert.throws(() => readTheme('d.toml', other('colors.light', '#202020', '#fafafa'), place), /must be light/)
   assert.throws(
     () => readTheme('d.toml', other('colors.light', '#fafafa', '#202020', '#fafafa'), place),
-    /three different colors in \[colors\.light\]/,
+    /three colors that differ in \[colors\.light\]/,
   )
   const catalogs = new Map([['neon', { name: 'neon' }]])
   assert.throws(

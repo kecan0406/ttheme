@@ -130,7 +130,7 @@ export function decodeJpeg(bytes: Uint8Array, limit: number): Rgba {
   }
 
   if (!image) {
-    throw new Error('not a JPEG image this decoder can read')
+    throw new Error('not a JPEG picture this decoder can read')
   }
 
   return {

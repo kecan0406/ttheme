@@ -301,7 +301,7 @@ export function decodeImage(bytes: Uint8Array, limit: number): Rgba {
     return decodeJpeg(bytes, limit)
   }
 
-  throw new Error('not a PNG or JPEG image')
+  throw new Error('not a PNG or JPEG picture')
 }
 
 interface Laid<T> {

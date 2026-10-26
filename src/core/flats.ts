@@ -271,7 +271,7 @@ export function cropProblem(image: Pick<Rgba, 'width' | 'height'>, crop: Crop): 
     return `a crop is four whole numbers x,y,w,h with w and h above 0`
 
   if (x + width > image.width || y + height > image.height)
-    return `the crop ${width}×${height} at ${x},${y} runs past the ${image.width}×${image.height} image`
+    return `the crop ${width}×${height} at ${x},${y} runs past the ${image.width}×${image.height} picture`
 
   return undefined
 }

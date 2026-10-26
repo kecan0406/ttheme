@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://www.schemastore.org/ttheme-palette.json",
   "title": "ttheme palette",
-  "description": "One ttheme palette: the colors a terminal wears and the character they come from\nhttps://github.com/kecan0406/ttheme/blob/main/CONTRIBUTING.md#the-file",
+  "description": "One ttheme palette: the colors a terminal shows and the character they come from\nhttps://github.com/kecan0406/ttheme/blob/main/CONTRIBUTING.md#the-file",
   "type": "object",
   "definitions": {
     "color": {
@@ -151,7 +151,7 @@
           "minItems": 1
         },
         "signature": {
-          "description": "The three slots that identify the character, which must be three different colors",
+          "description": "The palette's three colors that identify the character, which must differ",
           "type": "array",
           "items": {
             "$ref": "#/definitions/slot"
@@ -163,7 +163,7 @@
       "required": ["name", "signature"]
     },
     "colors": {
-      "description": "The colors the terminal wears, in the mode the palette was made in: light when its background is lighter than its foreground",
+      "description": "The colors the terminal shows, in the mode the palette was made in: light when its background is lighter than its foreground",
       "type": "object",
       "properties": {
         "background": {
@@ -206,7 +206,7 @@
       }
     },
     "contrast": {
-      "description": "Contrast gate rules this palette is let off, with the reason",
+      "description": "Contrast checks this palette is let off, with the reason",
       "type": "object",
       "properties": {
         "waive": {
@@ -234,7 +234,7 @@
               }
             ]
           },
-          "description": "Contrast gate rules this palette does not have to pass"
+          "description": "Contrast checks this palette does not have to pass"
         },
         "reason": {
           "description": "Why the waived rules do not apply; a waiver needs one",

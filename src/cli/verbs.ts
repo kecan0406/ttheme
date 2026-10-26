@@ -248,7 +248,7 @@ export const VERB_SPECS: VerbSpec[] = [
       '      "source": "https://…"',
       '    }',
       '  }',
-      '  slots         three slots in the order the character reads, the first the seed — background, foreground,',
+      '  slots         three colors in the order the character reads, the first the seed — background, foreground,',
       '                cursor, selection or ansi0–ansi15 — each ["<part>", "#rrggbb"] as measured',
       '  booru         the danbooru tag ttheme find searches (optional)',
       "  native_names  the names preview's search matches; left out, ttheme's name data fills them in (optional)",
@@ -329,7 +329,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'image',
     args: ['<palette>', '<action>', '[picture]'],
     about:
-      "Show one of a palette's saved backgrounds, remove one, draw one in its own colors or its palette's tone (or get the other ready before it is asked for), or pass on tuning — preview calls this",
+      "Show one of a palette's saved backgrounds, remove one, draw one in its own colors or tinted in its palette's color (or get the other ready before it is asked for), or pass on tuning — preview calls this",
     section: 'setup',
     hidden: true,
   },

@@ -83,7 +83,7 @@ The `$schema` line gives your editor completion and checks.
 name = "dusk"                              # the file's name
 native_names = ["夕暮れ"]                   # names preview's search matches
 # booru = "kaname_madoka"                  # for a character: the tag find searches
-signature = ["cursor", "ansi1", "ansi12"]  # the three slots that identify it
+signature = ["cursor", "ansi1", "ansi12"]  # the three colors that identify it
 
 [colors]
 background = "#201516"

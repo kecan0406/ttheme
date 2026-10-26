@@ -62,7 +62,7 @@ export function warpTheme(theme: WarpLook, picture?: WarpPicture): string {
 
 export const warp: Emitter = {
   id: 'warp',
-  limits: 'no selection color, and Warp paints one theme app-wide',
+  limits: 'no selection color, and Warp shows one theme app-wide',
 
   emit(theme: Theme): Output[] {
     return [theme, ...inOther(theme)].map((shade) => ({

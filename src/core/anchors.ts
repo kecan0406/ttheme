@@ -53,7 +53,7 @@ function anchorOf(path: string, value: unknown, problems: Problem[]): Anchor | u
 
 function slotsOf(path: string, value: unknown, problems: Problem[]): [string, Anchor][] {
   if (!isRecord(value)) {
-    problems.push({ path, problem: `must map ${SIGNATURE_SIZE} slots to ["<part>", "#rrggbb"]` })
+    problems.push({ path, problem: `must map ${SIGNATURE_SIZE} colors to ["<part>", "#rrggbb"]` })
 
     return []
   }
@@ -63,13 +63,16 @@ function slotsOf(path: string, value: unknown, problems: Problem[]): [string, An
   if (keys.length !== SIGNATURE_SIZE) {
     problems.push({
       path,
-      problem: `names ${keys.length} slots — the signature is ${SIGNATURE_SIZE}, in the order the character reads`,
+      problem: `names ${keys.length} colors — the signature is ${SIGNATURE_SIZE}, in the order the character reads`,
     })
   }
 
   return keys.flatMap((slot): [string, Anchor][] => {
     if (!SLOT_NAMES.includes(slot)) {
-      problems.push({ path: `${path}.${slot}`, problem: `is not a slot — one of ${SLOT_NAMES.join(', ')}` })
+      problems.push({
+        path: `${path}.${slot}`,
+        problem: `is not one of the palette's colors: ${SLOT_NAMES.join(', ')}`,
+      })
 
       return []
     }

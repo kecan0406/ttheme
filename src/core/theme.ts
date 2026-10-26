@@ -234,7 +234,7 @@ function slotColors(slots: Slots): Map<string, Hex> {
 
 function readSignature(file: string, value: unknown, slots: Slots): Signature {
   if (!Array.isArray(value) || value.length !== SIGNATURE_SIZE) {
-    fail(file, `meta.signature must name exactly ${SIGNATURE_SIZE} palette slots`)
+    fail(file, `meta.signature must name exactly ${SIGNATURE_SIZE} of the palette's colors`)
   }
 
   const known = slotColors(slots)
@@ -247,7 +247,10 @@ function readSignature(file: string, value: unknown, slots: Slots): Signature {
     const color = known.get(slot)
 
     if (color === undefined) {
-      fail(file, `${field} ${quoted(slot)} is not a palette slot — use ${NAMED_SLOTS.join(', ')} or ansi0-ansi15`)
+      fail(
+        file,
+        `${field} ${quoted(slot)} is not one of the palette's colors — use ${NAMED_SLOTS.join(', ')} or ansi0-ansi15`,
+      )
     }
 
     names.push(slot)
@@ -255,7 +258,7 @@ function readSignature(file: string, value: unknown, slots: Slots): Signature {
   }
 
   if (new Set(colors).size !== colors.length) {
-    fail(file, 'meta.signature slots must resolve to three different colors')
+    fail(file, 'meta.signature must name three colors that differ')
   }
 
   return { names, colors }
@@ -504,7 +507,7 @@ function readOther(file: string, colors: Record<string, unknown>, own: Shade, si
   const known = slotColors({ ...other, selection: other.selectionBackground })
 
   if (new Set(signature.map((slot) => known.get(slot))).size !== signature.length) {
-    fail(file, `meta.signature slots must resolve to three different colors in [colors.${want}] too`)
+    fail(file, `meta.signature must name three colors that differ in [colors.${want}] too`)
   }
 
   return other

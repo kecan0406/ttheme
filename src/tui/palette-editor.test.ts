@@ -185,7 +185,7 @@ test('f moves the colors the gate misses', () => {
 })
 
 test('esc asks to save changes: y saves, n leaves without saving, esc and other keys keep editing', () => {
-  const e = press(editor({ check: () => 'meta.signature slots must resolve to three different colors' }), 'tab', '9')
+  const e = press(editor({ check: () => 'meta.signature must name three colors that differ' }), 'tab', '9')
   press(e, 'enter', 's')
   assert.equal(e.result, undefined)
   assert.match(e.notice ?? '', /signature/)

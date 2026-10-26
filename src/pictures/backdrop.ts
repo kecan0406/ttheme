@@ -823,7 +823,7 @@ export function dropImage(configHome: string, name: string, key?: string) {
   const rack = rackIn(store, name)
 
   if (!rack) {
-    throw new Error(`${name} has no image`)
+    throw new Error(`${name} has no picture`)
   }
 
   const at = rack.pictures.findIndex((picture) => picture.key === (key ?? rack.active))
@@ -1144,7 +1144,7 @@ export function writeTune(
     cover = false
   } else if (size !== 'fill') {
     if (undrawn(picture)) {
-      throw new Error(`${picture.stem} was drawn before pictures kept their tone — init draws it again`)
+      throw new Error(`${picture.stem} was drawn before pictures kept their tint — init draws it again`)
     }
 
     const source = decodePng(new Uint8Array(readFileSync(figurePath)))

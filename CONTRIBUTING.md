@@ -146,8 +146,9 @@ One palette per pull request. At most three open at a time.
   table, with its `native` title and the `lead` palette whose signature colors
   the catalog, where `meta.order` puts its palettes — the tables follow that
   order. A palette file never repeats them.
-- `meta.signature` names three palette slots that must resolve to three
-  different colors — they are what the site draws as the palette's identity.
+- `meta.signature` names three of the palette's colors (`cursor`,
+  `foreground`, `background`, `selection`, `ansi0`–`ansi15`) that must differ
+  — they are what the site draws as the palette's identity.
 - `meta.booru` is the character's booru tag (`kaname_madoka`,
   `lucy_(cyberpunk)`), which `find` searches on danbooru, konachan,
   yande.re and zerochan when someone looks for a background. Check it on danbooru first —

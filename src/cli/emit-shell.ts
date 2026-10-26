@@ -60,7 +60,7 @@ export function palettesZsh(
     ...Object.entries(STANDING_LINES).map(([standing, line]) => `  ${standing} ${quote(line)}`),
     ')',
     '',
-    '# the palette new tabs open with, which the iTerm2 "ttheme · default" profile wears',
+    '# the palette new tabs open with, which the iTerm2 "ttheme · default" profile shows',
     `typeset -g TTHEME_STARTUP=${startup ?? ''}`,
     '',
     '# the mode TTHEME_PALETTE holds, whether TTHEME_MODE is auto — a tab whose terminal reports the appearance then follows it at its prompt — and the values TTHEME_MODE takes here',
@@ -120,7 +120,7 @@ export function palettesZsh(
     ...palettes.map((p) => entry(p, [p.background, p.foreground, p.cursor, p.selection, ...p.ansi].join(' '))),
     ')',
     '',
-    '# each palette in its other mode, so a tab still showing a palette in the mode it was worn in before can be told and repainted',
+    '# each palette in its other mode, so a tab still showing a palette in the mode it showed before can be told and repainted',
     'typeset -gA TTHEME_PALETTE_OTHER=(',
     ...palettes.flatMap((p) =>
       p.other
@@ -139,7 +139,7 @@ export function palettesZsh(
     ...palettes.map((p) => entry(p, marksOf(p.background, p.foreground, p.signature).join(' '))),
     ')',
     '',
-    "# the palettes whose colors your tone moves off their marketplace's (tone.json): lists mark them, and preview's panel offers to reset them",
+    "# the palettes whose colors your tuning moves off their marketplace's (tone.json): lists mark them, and preview's panel offers to reset them",
     `typeset -ga TTHEME_TUNED=(${palettes.flatMap((p) => (tuned.includes(p.name) ? [p.name] : [])).join(' ')})`,
     '',
     '# the order palettes were added: new tabs cycle through it and TTHEME_SORT=catalog lists it — the default role stays applyable but unlisted',

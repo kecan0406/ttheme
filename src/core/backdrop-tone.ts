@@ -43,7 +43,7 @@ function slotColor(colors: Colors, slot: string): Hex {
   const color = match ? colors.ansi[Number(match[1])] : undefined
 
   if (!color) {
-    throw new Error(`${colors.name} has no slot ${slot}`)
+    throw new Error(`${colors.name} has no color ${slot}`)
   }
 
   return color

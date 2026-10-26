@@ -31,13 +31,14 @@
 - **Colors from the character.** Every palette keeps the three colors that
   identify its character and borrows its ANSI ramp from an established scheme,
   harmonized so every official palette reads alike.
-- **Every palette passes an accessibility gate.** Body text at 7:1 against the
+- **Every palette passes the contrast checks.** Body text at 7:1 against the
   background (WCAG AAA), every meaningful ANSI color at 4.5:1 (WCAG AA), and each
   accent stays in its role — red reads as an error, green as success — and apart
   from its neighbors at text size, red and green too for a deuteranope. The build
-  fails if a palette regresses. Why each threshold sits where it does:
-  [the contrast checks](https://ttheme.dev/docs/reference/contrast-gate).
-- **Switched live, per tab.** Tabs in one window can wear different palettes,
+  fails if a palette regresses.
+  [Contrast checks](https://ttheme.dev/docs/reference/contrast-gate) says why
+  each threshold sits where it does.
+- **Switched live, per tab.** Tabs in one window can show different palettes,
   any tab can be repainted at any time, a directory can pin its own, and a new
   tab can take the next character.
 
@@ -76,9 +77,9 @@ The [docs](https://ttheme.dev/docs) start from
 <img src="https://kecan0406.github.io/ttheme/readme/palettes.svg" alt="Every official palette, grouped by catalog" width="856">
 </details>
 
-Both images are drawn from the official marketplace as it ships, so they always
+Both pictures are drawn from the official marketplace as it ships, so they always
 match what Browse offers. Every palette comes in a light and a dark mode, and
-`ttheme light`, `ttheme dark` or `ttheme auto` picks the one they are all worn in
+`ttheme light`, `ttheme dark` or `ttheme auto` picks the one they all show in
 ([light, dark and auto](https://ttheme.dev/docs/usage/modes)). Browse, the second
 tab of `ttheme`, adds or drops single palettes any time, and a merged palette
 reaches everyone with the next release.
@@ -100,11 +101,11 @@ code, and only the official marketplace is held to the contrast checks.
 
 ```sh
 ttheme new rei      # the palette editor, on a blank palette
-ttheme edit miku    # any palette; one that is not yours keeps your changes as a tone
+ttheme edit miku    # any palette; one that is not yours keeps your changes as your tuning
 ttheme share rei    # a link that carries the palette, or a marketplace on GitHub
 ```
 
-The editor grows twenty colors that pass the gate from a few seeds, then tunes
+The editor grows twenty colors that pass the contrast checks from a few seeds, then tunes
 each one in OKLCH while a mock terminal shows the result. The same builder runs
 in a browser at [ttheme.dev/builder](https://ttheme.dev/builder), and a coding
 agent with the ttheme-palette skill (`npx skills add kecan0406/ttheme`, or
@@ -119,11 +120,11 @@ through each.
 | Command | |
 |---|---|
 | `ttheme` | Preview and Browse as tabs of one screen — the tab repaints as the cursor moves, `enter` applies |
-| `ttheme use <palette>` | Paint this tab (a unique prefix works) |
+| `ttheme use <palette>` | Use a palette in this tab (a unique prefix works) |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` / `pins` | A palette for a directory, its repository or an ssh host — `cd` or `ssh` in repaints, leaving restores |
-| `ttheme auto` / `light` / `dark` | The mode every palette is worn in |
-| `ttheme on` / `off` | Wear the default again / give the terminal its own colors back |
+| `ttheme auto` / `light` / `dark` | The mode every palette shows in |
+| `ttheme on` / `off` | Use the default palette again / give the terminal its own colors back |
 | `ttheme config` | Settings in `$EDITOR` |
 
 `ttheme help` lists the everyday commands by task, and `ttheme help all` every
@@ -148,7 +149,7 @@ Neovim.
 
 ## Background pictures
 
-A palette can wear a picture behind the text. ttheme ships none: `tab` on a
+A palette can show a picture behind the text. ttheme ships none: `tab` on a
 palette in `ttheme` opens its panel, and `f` there searches danbooru, konachan,
 yande.re and zerochan for the character (safe-rated by default), or takes a
 picture you paste or drop, cuts the character out on macOS, and installs it on
@@ -156,7 +157,7 @@ your machine only. See [pictures](https://ttheme.dev/docs/usage/pictures).
 
 ## Contributing
 
-A palette is one TOML file of color values and post numbers — never images.
+A palette is one TOML file of color values and post numbers — never pictures.
 Your own go in your own marketplace, with no review; the official marketplace takes pull
 requests, and [CONTRIBUTING.md](CONTRIBUTING.md) has its rules, the file format
 and the checks a palette must pass. The docs are Markdown in [`docs/`](docs),
@@ -184,7 +185,7 @@ the work of the Independent JPEG Group.
 Palettes are inspired by characters from the listed works; this project is
 unaffiliated with and unendorsed by their rights holders. No character art,
 audio or trademarked asset is redistributed here — only color values.
-Terminal background images are downloaded from a booru only when you ask `find`
+Background pictures are downloaded from a booru only when you ask `find`
 for one, install a palette that names its post, or take an update that adds a
 post to a palette's list, built on your own machine and written to
 `~/.config/ttheme/backgrounds/`; none ship in this repository or on npm.
@@ -203,10 +204,10 @@ one on: a palette or a share code names a booru post by its number, and each
 machine fetches it from that booru itself. `find` names who drew each post and
 links the artwork's own page, the post and the artist's own pages — pixiv, X and
 Bluesky, and Fanbox, Skeb, Patreon or Fantia where they take support. An
-installed picture keeps them all, preview's image edit names the artist over the
+installed picture keeps them all, preview's Picture box names the artist over the
 picture with the same links, and a share link's page names them too. The
 pictures are for your own terminal — when you show one off, `y` in preview's
-image edit copies a line that credits the artist and links the artwork's page,
+Picture box copies a line that credits the artist and links the artwork's page,
 not the booru's copy.
 
 ## License

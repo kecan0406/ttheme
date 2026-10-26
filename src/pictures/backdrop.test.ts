@@ -518,7 +518,7 @@ test('removing the last picture leaves the palette bare', () => {
   assert.deepEqual(keys(dir), [])
   assert.ok(!existsSync(join(dir, 'kagami.conf')))
   assert.throws(() => showImage(configHome, 'kagami', 'safebooru_1'), /has no picture/)
-  assert.throws(() => dropImage(configHome, 'kagami'), /has no image/)
+  assert.throws(() => dropImage(configHome, 'kagami'), /has no picture/)
 })
 
 test('frameAt places a picture exactly as the shell layer does', () => {

@@ -139,7 +139,7 @@ const SOURCE: [string, string][] = [
   ['', "«5»import«» { «4»readFile«» } «5»from «2»'node:fs/promises'"],
   ['', "«5»import«» { «5»type «6»Hex«», «4»contrast«» } «5»from «2»'./color.ts'"],
   ['', ''],
-  ['', '«8»/** A palette read from disk and checked against the gate. */'],
+  ['', '«8»/** A palette read from disk and held to the contrast checks. */'],
   [ADDED, '«5»export interface «6»Palette «»{'],
   [ADDED, '  name: «6»string'],
   [ADDED, '  ansi: «6»Hex«»[]'],
