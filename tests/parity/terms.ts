@@ -11,6 +11,7 @@ export const TERMS = [
   'warp',
   'konsole',
   'terminal-app',
+  'rio',
 ] as const
 
 export type Term = (typeof TERMS)[number]
@@ -108,6 +109,24 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     focus: 'change',
     cells: ['points'],
     graphics: false,
+    relative: false,
+    syncQuery: true,
+    reload: 'keep',
+    pictures: 'none',
+    front: 'none',
+    promptTrap: true,
+    cache: 'none',
+    bookmarks: false,
+    appearance: 'none',
+  },
+  rio: {
+    draws: NO_SELECTION,
+    answers: NO_SELECTION,
+    resets: true,
+    baseline: false,
+    focus: 'change',
+    cells: ['pixels'],
+    graphics: true,
     relative: false,
     syncQuery: true,
     reload: 'keep',
@@ -254,6 +273,7 @@ export const WIRING: Record<Term, Wired | undefined> = {
   warp: 'warp',
   konsole: 'konsole',
   'terminal-app': 'terminal-app',
+  rio: 'rio',
 }
 
 export const CAPABILITIES = {
@@ -288,6 +308,8 @@ export function identity(term: Term, n: number, session: string) {
       }
     case 'terminal-app':
       return { TERM_PROGRAM: 'Apple_Terminal', TERM_SESSION_ID: `w0t${n}p0:${session}` }
+    case 'rio':
+      return { TERM_PROGRAM: 'rio' }
   }
 }
 

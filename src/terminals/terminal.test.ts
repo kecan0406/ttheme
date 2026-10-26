@@ -47,6 +47,7 @@ const ENVS: Record<string, string>[] = [
   { GHOSTTY_RESOURCES_DIR: '/x', TERM_PROGRAM: 'ghostty', CMUX_SURFACE_ID: 's1' },
   { KITTY_WINDOW_ID: '1', WEZTERM_PANE: '0' },
   { WEZTERM_PANE: '0', TERM_PROGRAM: 'Kaku' },
+  { TERM_PROGRAM: 'rio', GHOSTTY_RESOURCES_DIR: '/x' },
   { ITERM_SESSION_ID: 'w0', TERM_PROGRAM: 'tmux', TERM: 'foot' },
   { KONSOLE_VERSION: '230805' },
   { KONSOLE_VERSION: '230805', WT_SESSION: 'a-b' },

@@ -8,6 +8,7 @@ export const WIRED = [
   'warp',
   'konsole',
   'terminal-app',
+  'rio',
 ] as const
 
 export type Wired = (typeof WIRED)[number]

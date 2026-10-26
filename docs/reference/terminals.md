@@ -1,14 +1,14 @@
 # Terminal support
 
-ttheme wires nine terminals, and every one of them repaints per tab. Nothing is
+ttheme wires ten terminals, and every one of them repaints per tab. Nothing is
 emulated: a terminal that cannot express something does not get it.
 
-| | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| Set up by `init` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| A palette per tab | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Pictures | ✓ | ✓ | ✓ | – | ✓ | – | ✓ | ✓ | ✓ |
-| Follows the system's appearance | ✓ | ✓ | ✓ | – | ✓ | – | – | – | – |
+| | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app | Rio |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Set up by `init` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| A palette per tab | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Pictures | ✓ | ✓ | ✓ | – | ✓ | – | ✓ | ✓ | ✓ | – |
+| Follows the system's appearance | ✓ | ✓ | ✓ | – | ✓ | – | – | – | – | – |
 
 `init` offers iTerm2 and Terminal.app on macOS, Konsole on Linux, and Windows
 Terminal from WSL. "Follows the system's appearance" means the terminal tells ttheme when the
@@ -76,6 +76,17 @@ VTE-based one, gets `ttheme use` and nothing else.
 - **Kaku** is built on WezTerm, so wiring WezTerm sets it up too: `init` adds
   the same block to `~/.config/kaku/kaku.lua`. Kaku writes that file the first
   time it opens, so open Kaku once before `init`.
+
+## Rio
+
+- `init` puts `theme = "ttheme"` at the top of Rio's `config.toml`, and ttheme
+  keeps that theme in the default palette. Rio reloads by itself.
+- With a theme set, Rio uses the theme's colors in place of your own
+  `[colors]`. While ttheme is off, the theme holds a copy of your `[colors]`,
+  so Rio looks as it did before.
+- A config that already names a theme, or sets an `[adaptive-theme]`, keeps
+  it, and `init` says so.
+- Rio shows no picture ttheme can change per tab, so there are no pictures.
 
 ## Windows Terminal
 

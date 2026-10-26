@@ -9,7 +9,7 @@ shows every file it is about to change, and writes nothing until you say yes.
 - **zsh**, which macOS ships. Your own shell can be zsh, bash or fish: bash and
   fish get the `ttheme` command too, and it runs through zsh.
 - **A terminal ttheme wires**: Ghostty (and cmux), iTerm2, kitty, Alacritty,
-  WezTerm (and Kaku), Windows Terminal, Warp, Konsole or Terminal.app.
+  Rio, WezTerm (and Kaku), Windows Terminal, Warp, Konsole or Terminal.app.
   [Terminal support](../reference/terminals.md) says what each one can show.
 
 ## Run init

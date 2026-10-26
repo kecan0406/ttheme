@@ -25,6 +25,7 @@ typeset -gA IDENTITY=(
   konsole 'KONSOLE_VERSION=230805'
   terminal-app 'TERM_PROGRAM=Apple_Terminal'
   warp 'TERM_PROGRAM=WarpTerminal'
+  rio 'TERM_PROGRAM=rio'
 )
 trap 'stop; rm -rf $WORK' EXIT
 

@@ -5,7 +5,7 @@ export interface Meta {
   description: string
 }
 
-const TERMINALS = 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp, Konsole and Terminal.app'
+const TERMINALS = 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Rio, Windows Terminal, Warp, Konsole and Terminal.app'
 
 export function siteMeta(palettes: number): Meta {
   return {

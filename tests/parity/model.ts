@@ -27,6 +27,8 @@ import {
   pictureOf,
   read,
   rgbSpec,
+  rioColors,
+  rioFiles,
   specName,
   stamp,
   strengthOf,
@@ -436,6 +438,26 @@ const alacritty = (): Kind => {
   }
 }
 
+const rio = (): Kind => {
+  let config = OWN
+
+  return {
+    launch(app) {
+      config = rioColors(app.place.configHome)
+    },
+    opening: (app) => ({ argv: login(app), env: {}, colors: config }),
+    watched: (app) => rioFiles(app.place.configHome),
+    changed(app) {
+      config = rioColors(app.place.configHome)
+
+      for (const tab of app.tabs) {
+        app.rebase(tab, config)
+      }
+    },
+    picture: () => 'none',
+  }
+}
+
 const wezterm = (): Kind => {
   let config = OWN
   let wired = false
@@ -821,6 +843,7 @@ const KINDS: Record<Term, () => Kind> = {
   warp,
   konsole,
   'terminal-app': terminalApp,
+  rio,
 }
 
 export interface Look {

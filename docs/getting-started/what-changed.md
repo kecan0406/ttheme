@@ -44,7 +44,7 @@ Settings you made yourself win:
   `<file>.ttheme.bak`.
 - It writes through symlinks, so a dotfiles repository keeps its links.
 - Every file it adds to a terminal's own folders is named `ttheme-<palette>`,
-  so a theme of yours is never overwritten.
+  or `ttheme` for Rio's one theme, so a theme of yours is never overwritten.
 
 ## Terminal by terminal
 
@@ -53,6 +53,7 @@ Settings you made yourself win:
 | Ghostty | an include of `~/.config/ttheme/ghostty.conf` in your config, and themes named `ttheme-<palette>.dark` and `.light`; cmux reads the same config |
 | kitty | an include of `$HOME/.config/ttheme/kitty.conf`, which also loads ttheme's watcher for pictures |
 | Alacritty | an import of `~/.config/ttheme/alacritty.toml` in the `alacritty.toml` Alacritty reads first |
+| Rio | `theme = "ttheme"` at the top of `config.toml`, the `themes/ttheme.toml` it names, and themes named `ttheme-<palette>.dark.toml` and `.light.toml` beside it |
 | WezTerm | a block before `return config` that runs `~/.config/ttheme/wezterm.lua`, and the same block in Kaku's `~/.config/kaku/kaku.lua` once Kaku has made it |
 | iTerm2 | a `ttheme · <palette>` dynamic profile per palette, and `ttheme · default` as the default profile, built on yours so your font and keys carry over |
 | Windows Terminal | a fragment with every scheme; `settings.json` is only touched so it reloads |

@@ -15,6 +15,7 @@ const PROGRAM: Partial<Record<Terminal, string>> = {
   wezterm: 'WezTerm',
   'terminal-app': 'Apple_Terminal',
   warp: 'WarpTerminal',
+  rio: 'rio',
 }
 
 function terminalVersion(terminal: Terminal, env: Env): string | undefined {

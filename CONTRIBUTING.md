@@ -482,7 +482,7 @@ look, and never Title Case.
   tags, commands and flags (`ttheme use`, `--yes`) and key names
   (`enter`, `ctrl+v`). A line that starts with one keeps it as spelled.
 - **As their owners spell them**: Ghostty, cmux, iTerm2, WezTerm, Kaku, kitty,
-  Alacritty, Warp, Windows Terminal, Konsole, Terminal.app, macOS, GitHub;
+  Alacritty, Rio, Warp, Windows Terminal, Konsole, Terminal.app, macOS, GitHub;
   acronyms in capitals (PNG, URL, OSC, ANSI).
 - **Keys as one name, drawn for the keyboard**: the source spells a key one
   way — `enter`, `esc`, `tab`, `bksp`, `pgup`, `home`, `ctrl+r`, `alt+u`,

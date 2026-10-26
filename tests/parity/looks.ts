@@ -471,6 +471,46 @@ export function alacrittyColors(configHome: string): Colors {
   return filled(colors)
 }
 
+function rioPick(doc: Record<string, unknown>): Record<string, unknown> | undefined {
+  const c = doc.colors as Record<string, string> | undefined
+
+  if (!c) {
+    return undefined
+  }
+
+  return {
+    ...(c.background ? { 11: c.background } : {}),
+    ...(c.foreground ? { 10: c.foreground } : {}),
+    ...(c.cursor ? { 12: c.cursor } : {}),
+    ...(c['selection-background'] ? { 17: c['selection-background'] } : {}),
+    ...Object.fromEntries(
+      ALACRITTY_NAMES.flatMap((name, i) => [
+        ...(c[name] ? [[`4;${i}`, c[name]]] : []),
+        ...(c[`light-${name}`] ? [[`4;${i + 8}`, c[`light-${name}`]]] : []),
+      ]),
+    ),
+  }
+}
+
+export function rioFiles(configHome: string): string[] {
+  return [join(configHome, 'rio', 'config.toml')]
+}
+
+export function rioColors(configHome: string): Colors {
+  const [config = ''] = rioFiles(configHome)
+  let theme = ''
+
+  try {
+    theme = String((parseToml(read(config)) as { theme?: unknown }).theme ?? '')
+  } catch {
+    theme = ''
+  }
+
+  const file = theme ? join(configHome, 'rio', 'themes', `${theme}.toml`) : ''
+
+  return filled(tomlColors(read(file && existsSync(file) ? file : config), rioPick))
+}
+
 export function weztermColors(configHome: string): Colors {
   const module = read(join(configHome, 'ttheme', 'wezterm.lua'))
 

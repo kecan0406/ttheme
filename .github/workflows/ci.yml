@@ -41,7 +41,7 @@ jobs:
             slots: 4
           - terminals: kitty,alacritty,wezterm
             slots: 4
-          - terminals: konsole,terminal-app
+          - terminals: konsole,terminal-app,rio
             slots: 4
     steps:
       - name: install zsh in the background

@@ -30,7 +30,7 @@ function features(palettes: number, catalogs: number) {
     {
       emoji: '🖥️',
       title: 'every terminal you use',
-      text: 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Windows Terminal, Warp, Konsole and Terminal.app, all wired by one init.',
+      text: 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Rio, Windows Terminal, Warp, Konsole and Terminal.app, all wired by one init.',
     },
     {
       emoji: '🖼️',
@@ -135,7 +135,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
               in your terminal
             </h1>
             <p class="max-w-[52ch] text-base text-soft-foreground">
-              Character color palettes, measured from official art, for Ghostty, iTerm2, WezTerm, kitty, Alacritty,
+              Character color palettes, measured from official art, for Ghostty, iTerm2, WezTerm, kitty, Alacritty, Rio,
               Windows Terminal, Warp, Konsole and Terminal.app. One command, then every tab can show its own.
             </p>
             <div class="grid w-full gap-2.5">

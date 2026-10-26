@@ -305,6 +305,27 @@ test('sync wires the kaku.lua Kaku wrote through the WezTerm module, and makes n
   assert.ok(readFileSync(join(configHome, 'wezterm', 'wezterm.lua'), 'utf8').includes(weztermBlock(module, home)))
 })
 
+test('sync names one theme of its own at the top of Rio config, and keeps the user colors in it while off', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const config = join(configHome, 'rio', 'config.toml')
+  const own = join(configHome, 'rio', 'themes', 'ttheme.toml')
+  mkdirSync(join(configHome, 'rio'), { recursive: true })
+  writeFileSync(config, "[fonts]\nsize = 18\n\n[colors]\nbackground = '#101010'\n\n[window]\nopacity = 1.0\n")
+  sync(configHome, manifest, { terminals: ['rio'], palettes: ['gojo'], startup: 'gojo' }, home)
+  assert.match(readFileSync(config, 'utf8'), /^# ttheme begin\n.*\ntheme = "ttheme"\n# ttheme end\n\n\[fonts\]/)
+  assert.ok(existsSync(join(configHome, 'rio', 'themes', 'ttheme-gojo.dark.toml')))
+  assert.match(readFileSync(own, 'utf8'), /^background = '#11191c'$/m)
+
+  sync(configHome, manifest, { terminals: ['rio'], palettes: ['gojo'], off: true }, home)
+  assert.match(readFileSync(own, 'utf8'), /\n\[colors\]\nbackground = '#101010'\n$/)
+  assert.equal(readFileSync(config, 'utf8').match(/^theme = /gm)?.length, 1)
+
+  writeFileSync(config, 'theme = "dracula"\n')
+  sync(configHome, manifest, { terminals: ['rio'], palettes: ['gojo'], startup: 'gojo' }, home)
+  assert.equal(readFileSync(config, 'utf8'), 'theme = "dracula"\n')
+})
+
 test('sync drops an alacritty.toml that held only the ttheme block and hid the config Alacritty would read without it', () => {
   const home = fixture()
   const configHome = join(home, '.config')
