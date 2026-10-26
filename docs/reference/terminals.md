@@ -89,7 +89,20 @@ VTE-based one, gets `ttheme use` and nothing else.
 - Warp Preview, Dev and the open-source build keep settings of their own.
   The default palette goes into every one ttheme finds, and a tab paints the
   Warp it runs in.
-- With Warp's settings sync on, the theme goes to your account too.
+- Warp's theme picker lists each palette by its mode, as `miku · dark` and
+  `miku · light`, and a palette with a picture once more as
+  `miku · dark · picture`.
+- Warp's Enforce minimum contrast lifts text that reads below 4.5:1 toward
+  white or black: dim gray text gets lighter, and light text on a colored
+  background turns nearly black. While ttheme is on it sets that to Never, so
+  you see each palette's own colors, unless you chose a setting yourself.
+  `ttheme off` puts it back.
+- A theme you pick in Warp lasts until a tab puts a palette on again.
+  `ttheme off` gives back the one you picked last, not the one from before
+  ttheme.
+- With Warp's Settings sync on, the theme goes to your account too, so your
+  other devices take each palette a tab puts on: one without the same theme
+  file falls back to Warp's dark theme. `init` says so when a Warp has it on.
 
 ## Konsole
 

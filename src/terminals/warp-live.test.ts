@@ -18,6 +18,7 @@ import { test } from 'node:test'
 import type { PaletteEntry } from '../core/manifest.ts'
 import type { Wired } from '../core/wired.ts'
 import { writeInstalled } from '../store/installed.ts'
+import { warpTheme, warpThemeFile } from './emit/warp.ts'
 import { WARP_SPACED, warpBasePath, warpSettings, warpThemeOf, warpThemes, warpThemeValue } from './warp.ts'
 import { WARP_SETTLE, warpInstalled, warpLive } from './warp-live.ts'
 
@@ -52,9 +53,9 @@ function warp(terminals: Wired[] = ['warp']) {
   writeFileSync(settings, '[general]\nx = 1\n\n[appearance.themes]\ntheme = "Dracula"\n')
   const themes = warpThemes(home)
   mkdirSync(themes, { recursive: true })
-  writeFileSync(join(themes, 'ttheme-miku.yaml'), 'name: "miku"\n')
-  writeFileSync(join(themes, 'ttheme-miku.dark.0123abcd.yaml'), 'name: "miku"\n')
-  utimesSync(join(themes, 'ttheme-miku.yaml'), 1_600_000_000, 1_600_000_000)
+  writeFileSync(join(themes, 'ttheme-miku.dark.89abcdef.yaml'), 'name: "miku · dark"\n')
+  writeFileSync(join(themes, 'ttheme-miku.dark.0123abcd.yaml'), 'name: "miku · dark"\n')
+  utimesSync(join(themes, 'ttheme-miku.dark.89abcdef.yaml'), 1_600_000_000, 1_600_000_000)
   utimesSync(join(themes, 'ttheme-miku.dark.0123abcd.yaml'), 1_600_000_100, 1_600_000_100)
   const worn = () => warpThemeOf(readFileSync(settings, 'utf8'))
   const views = () => readdirSync(themes).filter((file) => file.includes('.view-'))
@@ -86,7 +87,7 @@ test("a hover in Warp puts on an installed palette's newest theme once the keys 
   assert.equal(live.paint(palette('rin', '#302010')), '')
   live.paint(palette('miku', '#0e2124'))
   await settled()
-  assert.equal(worn(), warpThemeValue('miku', 'ttheme-miku.dark.0123abcd.yaml'))
+  assert.equal(worn(), warpThemeValue('miku · dark', 'ttheme-miku.dark.0123abcd.yaml'))
   assert.equal(readFileSync(warpBasePath(configHome), 'utf8'), '"Dracula"')
   assert.deepEqual(views(), [])
 })
@@ -103,12 +104,12 @@ test('a hover in Warp writes a linked settings file through its link, which an i
   assert.ok(live)
   live.paint(palette('miku', '#0e2124'))
   await settled()
-  assert.equal(worn(), warpThemeValue('miku', 'ttheme-miku.dark.0123abcd.yaml'))
+  assert.equal(worn(), warpThemeValue('miku · dark', 'ttheme-miku.dark.0123abcd.yaml'))
   assert.equal(readlinkSync(settings), text)
   assert.notEqual(lstatSync(settings).ino, link)
 })
 
-test('an uninstalled palette reaches Warp through a short-lived theme', async () => {
+test('an uninstalled palette reaches Warp through a short-lived theme, and an installed one through its plain theme', async () => {
   const { home, configHome, themes, worn, views } = warp()
   const live = warpLive(env, true, configHome, home)
   assert.ok(live)
@@ -116,8 +117,14 @@ test('an uninstalled palette reaches Warp through a short-lived theme', async ()
   await settled()
   const [rin = ''] = views()
   assert.ok(rin.startsWith('ttheme-rin.view-'))
-  assert.equal(worn(), warpThemeValue('rin', rin))
+  assert.equal(worn(), warpThemeValue('rin · dark', rin))
   assert.match(readFileSync(join(themes, rin), 'utf8'), /^background: "#302010"$/m)
+  const kaito = palette('kaito', '#102030')
+  writeFileSync(join(themes, warpThemeFile(kaito)), warpTheme(kaito))
+  live.paint(kaito)
+  await settled()
+  assert.equal(worn(), warpThemeValue('kaito · dark', warpThemeFile(kaito)))
+  assert.deepEqual(views(), [])
 })
 
 test('closing a TUI in Warp puts back the theme the tab wore and takes its views away', async () => {

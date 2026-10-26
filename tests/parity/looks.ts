@@ -624,12 +624,12 @@ export function warpLook(settings: string, themes: string): WarpLook {
   const section = text.split(/^\[/m).find((part) => part.startsWith('appearance.themes]')) ?? ''
   const value = /^theme\s*=\s*(.*)$/m.exec(section)?.[1] ?? ''
   const path = /path = "([^"]+)"/.exec(value)?.[1]
+  const yaml = path ? read(isAbsolute(path) ? path : join(themes, path)) : ''
 
-  if (!path) {
+  if (!path || /^name: "(.*)"$/m.exec(yaml)?.[1] !== /name = "([^"]*)"/.exec(value)?.[1]) {
     return { colors: filled(new Map()), picture: 'none', opacity: '-' }
   }
 
-  const yaml = read(isAbsolute(path) ? path : join(themes, path))
   const colors = new Map<string, string>()
   const pick = (key: string) => hex(new RegExp(`^${key}:\\s*(\\S+)`, 'm').exec(yaml)?.[1])
 

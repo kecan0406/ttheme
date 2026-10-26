@@ -82,7 +82,13 @@ __tt_warp_value() {
   setopt localoptions extendedglob
   local -a files=($TTHEME_WARP_THEMES/ttheme-${${1/@/--}/\//--}.${TTHEME_MODE_WORN:-dark}.[0-9a-f](#c8).yaml(Nom))
   (( ${#files} )) || { REPLY=""; return 1 }
-  REPLY="{ custom = { name = \"$1\", path = \"${files[1]:t}\" } }"
+  __tt_warp_ref ${files[1]:t} $1
+}
+
+__tt_warp_ref() {
+  local f=$TTHEME_WARP_THEMES/$1 name=$2 line
+  [[ -r $f ]] && IFS= read -r line < $f && [[ $line == 'name: "'*'"' ]] && name=${${line#name: \"}%\"}
+  REPLY="{ custom = { name = \"$name\", path = \"$1\" } }"
 }
 
 __tt_warp_read() {
@@ -111,7 +117,7 @@ __tt_warp_read() {
   TTHEME_WARP_LINES=($at)
   (( at[2] )) && REPLY=${${reply[at[2]]#theme}##[[:space:]]#=[[:space:]]#}
   (( at[3] )) && TTHEME_WARP_HELD=${${reply[at[3]]#selected_system_themes}##[[:space:]]#=[[:space:]]#}
-  [[ $REPLY == '{ custom = { name = "'*'", path = "ttheme-'* ]] && TTHEME_WARP_WORN=${${REPLY#*name = \"}%%\"*}
+  [[ $REPLY == '{ custom = { name = "'*'", path = "ttheme-'* ]] && TTHEME_WARP_WORN=${${${REPLY#*name = \"}%%\"*}%% · *}
   return 0
 }
 
@@ -151,11 +157,11 @@ __tt_warp_write() {
   __tt_warp_read || return 1
   __tt_warp_says "$1" && return 0
   if [[ $1 == *'path = "ttheme-'* ]]; then
-    if [[ -z $TTHEME_WARP_WORN && ! -e $base ]]; then
+    if [[ $REPLY != *'path = "ttheme-'* ]]; then
       __tt_put $base "$REPLY" || return 1
     fi
     if (( TTHEME_WARP_OS )); then
-      [[ $TTHEME_WARP_HELD == *'path = "ttheme-'* || -e $held ]] || __tt_put $held "$TTHEME_WARP_HELD" || return 1
+      [[ $TTHEME_WARP_HELD == *'path = "ttheme-'* ]] || __tt_put $held "$TTHEME_WARP_HELD" || return 1
       pair="{ light = $1, dark = $1 }"
     fi
   elif [[ $TTHEME_WARP_HELD == *'path = "ttheme-'* ]]; then
@@ -206,7 +212,7 @@ __tt_warp_want() {
   local pal=$1 view=$2 base=$TTHEME_HOME/$TTHEME_WARP_NAME.base
   if [[ -n $pal && -n ${TTHEME_PALETTE[$pal]} ]]; then
     if [[ -n $view && -r $TTHEME_WARP_THEMES/$view ]]; then
-      REPLY="{ custom = { name = \"$pal\", path = \"$view\" } }"
+      __tt_warp_ref $view $pal
     else
       __tt_warp_value $pal
     fi
@@ -468,8 +474,8 @@ __tt_bg_refresh() { __tt_warp_unview }
 
 __tt_bg_hide() {
   local -A plain=(${=TTHEME_WARP_PLAIN})
-  local file=${plain[${${1/@/--}/\//--}]}
-  [[ -n $file ]] && __tt_warp_set "{ custom = { name = \"$1\", path = \"$file\" } }"
+  local file=${plain[${${1/@/--}/\//--}]} REPLY
+  [[ -n $file ]] && __tt_warp_ref $file $1 && __tt_warp_set "$REPLY"
   TTHEME_WARP_VIEW=""
 }
 
@@ -578,13 +584,14 @@ __tt_warp_ask() {
 }
 
 __tt_warp_job() {
-  local theme=$1 pal=$2 out=$3 op=$4 img=$5 canvas=$6 place=$7 base line
+  local theme=$1 pal=$2 out=$3 op=$4 img=$5 canvas=$6 place=$7 base line REPLY
   local -a lines
   local -A plain=(${=TTHEME_WARP_PLAIN})
   if [[ ! -e $TTHEME_WARP_THEMES/$theme ]]; then
     base=$TTHEME_WARP_THEMES/${plain[${${pal/@/--}/\//--}]}
     [[ -f $base ]] || return 1
     for line in "${(@f)$(<$base)}"; do
+      [[ -n $out && $line == 'name: "'*'"' ]] && line="${line%\"} · picture\""
       lines+=("$line")
       [[ -n $out && $line == details:* ]] && lines+=("background_image:" "  path: \"$out\"" "  opacity: $op")
     done
@@ -595,7 +602,8 @@ __tt_warp_job() {
   fi
   __tt_warp_ripe $TTHEME_WARP_THEMES/$theme
   __tt_warp_here || return 0
-  __tt_warp_write "{ custom = { name = \"$pal\", path = \"$theme\" } }" || return 1
+  __tt_warp_ref $theme $pal
+  __tt_warp_write "$REPLY" || return 1
   __tt_warp_record $pal $theme
 }
 

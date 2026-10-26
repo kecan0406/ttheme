@@ -1296,6 +1296,11 @@ done
   __tt_osc_reset
   [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours miku)"* && "$(<$tab)" == "$(recorded miku - -)" && -z ${TTHEME_PAINTED+x} ]] ||
     { print -u2 "a Warp reset did not put on the default palette new tabs open with: $(<$tab)"; exit 1 }
+  mine[6]='theme = "koi"'
+  print -rl -- "${mine[@]}" >| $XDG_CONFIG_HOME/dotwarp/settings.toml
+  __tt_apply "$TTHEME_PALETTE[kaito]"
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == *"$(ours kaito)"* && "$(<$TTHEME_HOME/warp.base)" == '"koi"' ]] ||
+    { print -u2 "a Warp paint over a theme picked in Warp kept the theme from before ttheme, which ttheme off then puts back: $(<$TTHEME_HOME/warp.base)"; exit 1 }
   TTHEME_STARTUP=
   __tt_osc_reset
   [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- "${mine[@]}")" && ! -e $TTHEME_HOME/warp.base ]] ||
@@ -1488,7 +1493,7 @@ done
   sent=${(j::)${${${(ps:\e_G:)out}#*;}%$'\e\\'}}
   [[ $out == $'\e_Ga=t,f=100,i=7,m=1,q=2;'* && ${#${(M)${(ps:\e_G:)out}:#m=0,*}} == 1 && $sent != *[^A-Za-z0-9+/=]* && "$(print -rn -- $sent | base64 --decode | shasum)" == "$(shasum < $XDG_CONFIG_HOME/big.png)" ]] ||
     { print -u2 "a picture sent to Warp did not arrive whole in its chunks"; exit 1 }
-  print -rl -- 'name: "miku"' 'details: darker' 'terminal_colors:' >| $TTHEME_WARP_THEMES/ttheme-miku.dark.00000000.yaml
+  print -rl -- 'name: "miku · dark"' 'details: darker' 'terminal_colors:' >| $TTHEME_WARP_THEMES/ttheme-miku.dark.00000000.yaml
   touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-miku.dark.00000000.yaml
   : >| $TTHEME_WARP_THEMES/ttheme-miku.dark.89abcdef.yaml
   TTHEME_WARP_PLAIN="miku ttheme-miku.dark.00000000.yaml"
@@ -1528,7 +1533,7 @@ done
   out=$REPLY
   [[ $out == $TTHEME_WARP_THEMES/ttheme-miku.????????.png && "$(<$XDG_CONFIG_HOME/cli.log)" == "flatten $bgd/miku.0a1b2c3d.png $out ${TTHEME_PALETTE[miku]%% *} 1 2912x2040 2459x2856+453-122" && $TTHEME_WARP_LAID == "$out" ]] ||
     { print -u2 "a Warp view did not lay its picture whole on the grid's canvas, into the file saving it shows: $(<$XDG_CONFIG_HOME/cli.log)"; exit 1 }
-  [[ "$(<$TTHEME_WARP_THEMES/$view)" == *$'details: darker\nbackground_image:\n  path: "'$out$'"\n  opacity: 19\nterminal_colors:'* && "$(<$TTHEME_WARP_SETTINGS)" == *"path = \"$view\""* ]] ||
+  [[ "$(<$TTHEME_WARP_THEMES/$view)" == $'name: "miku · dark · picture"\ndetails: darker\nbackground_image:\n  path: "'$out$'"\n  opacity: 19\nterminal_colors:'* && "$(<$TTHEME_WARP_SETTINGS)" == *"name = \"miku · dark · picture\", path = \"$view\""* ]] ||
     { print -u2 "Warp was not put on a view of the laid picture at its opacity:"; cat $TTHEME_WARP_THEMES/$view; exit 1 }
   [[ "$(<$TTHEME_HOME/warp.base)" == '"Dracula"' ]] || { print -u2 "a Warp view did not keep the user's theme where ttheme off finds it"; exit 1 }
   : >| $XDG_CONFIG_HOME/cli.log

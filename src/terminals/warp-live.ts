@@ -6,18 +6,18 @@ import { owned } from '../core/theme.ts'
 import { editUserFile, relink, writeAtomic } from '../store/edits.ts'
 import { readInstalled, worn } from '../store/installed.ts'
 import { modeFor } from '../store/wiring.ts'
-import { type WarpLook, type WarpPicture, warpTheme } from './emit/warp.ts'
+import { type WarpLook, type WarpPicture, warpTheme, warpThemeFile } from './emit/warp.ts'
 import { colorless } from './osc.ts'
 import { detectTerminal, type Live } from './terminal.ts'
 import {
   WARP_DEFAULT,
   warpChannelOf,
   warpReady,
+  warpRef,
   warpSettings,
   warpSystemOf,
   warpThemeOf,
   warpThemes,
-  warpThemeValue,
   warpWear,
 } from './warp.ts'
 
@@ -52,7 +52,7 @@ export function warpInstalled(dir: string, name: string, mode: Mode): string | u
     .map((file) => ({ file, at: statSync(join(dir, file)).mtimeMs }))
     .sort((a, b) => b.at - a.at)
 
-  return hashed[0]?.file ?? (existsSync(join(dir, `${stem}.yaml`)) ? `${stem}.yaml` : undefined)
+  return hashed[0]?.file
 }
 
 function pictureOf(dir: string, file: string | undefined): WarpPicture | undefined {
@@ -135,7 +135,7 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
       const now = Date.now()
       known = setTimeout(
         () => {
-          wear(warpThemeValue(look.name, shown))
+          wear(warpRef(dir, shown, look.name))
           sweep(shown)
         },
         Math.max(0, warpReady(join(dir, shown), settings, now) - now),
@@ -151,7 +151,8 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
       } else if (picture) {
         show(entry, undefined, picture)
       } else {
-        show(entry, existsSync(join(dir, `${owned(entry.name)}.yaml`)) ? `${owned(entry.name)}.yaml` : undefined)
+        const plain = warpThemeFile(entry)
+        show(entry, existsSync(join(dir, plain)) ? plain : undefined)
       }
 
       return ''

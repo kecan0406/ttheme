@@ -22,7 +22,7 @@ import { backgroundsDir } from '../pictures/backdrop.ts'
 import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
 import { backupOnce, editUserFile, relink, spareBackup, symlinked, writeAtomic } from '../store/edits.ts'
 import { dataHome, readText, tilde } from './common.ts'
-import { warp as emitter, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from './emit/warp.ts'
+import { warp as emitter, WARP_PART, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from './emit/warp.ts'
 import type { At, Ctx, Out, Unwired, Wiring } from './types.ts'
 
 export const WARP_CHANNELS = ['stable', 'preview', 'dev', 'oss'] as const
@@ -95,12 +95,24 @@ export function warpSystemPath(configHome: string, channel: WarpChannel = 'stabl
   return warpOwn(configHome, channel, 'system')
 }
 
+export function warpContrastPath(configHome: string, channel: WarpChannel = 'stable'): string {
+  return warpOwn(configHome, channel, 'contrast')
+}
+
 const WARP_SECTION = '[appearance.themes]'
+
+const WARP_ACCOUNT = '[account]'
+
+const WARP_TEXT = '[appearance.text]'
+
+const WARP_CONTRAST = 'enforce_minimum_contrast'
+
+const WARP_NEVER = '"never"'
 
 const WARP_SYSTEM = 'selected_system_themes'
 
-function warpSection(lines: string[]): [number, number] | undefined {
-  const start = lines.findIndex((line) => line.trim() === WARP_SECTION)
+function warpSection(lines: string[], header = WARP_SECTION): [number, number] | undefined {
+  const start = lines.findIndex((line) => line.trim() === header)
 
   if (start < 0) {
     return undefined
@@ -115,9 +127,9 @@ function keyed(key: string): RegExp {
   return new RegExp(`^${key}\\s*=\\s*`)
 }
 
-function warpKeyOf(content: string, key: string): string | undefined {
+function warpKeyOf(content: string, key: string, header = WARP_SECTION): string | undefined {
   const lines = content.split('\n')
-  const section = warpSection(lines)
+  const section = warpSection(lines, header)
 
   if (!section) {
     return undefined
@@ -136,8 +148,12 @@ export function warpSystemOf(content: string): string | undefined {
   return warpKeyOf(content, WARP_SYSTEM)
 }
 
-export function warpThemeValue(palette: string, file: string): string {
-  return `{ custom = { name = "${palette}", path = "${file}" } }`
+export function warpThemeValue(name: string, file: string): string {
+  return `{ custom = { name = "${name}", path = "${file}" } }`
+}
+
+export function warpRef(dir: string, file: string, palette: string): string {
+  return warpThemeValue(/^name: "([^"]*)"$/m.exec(readText(join(dir, file)))?.[1] ?? palette, file)
 }
 
 export function warpSystemValue(value: string): string {
@@ -145,15 +161,15 @@ export function warpSystemValue(value: string): string {
 }
 
 function warpWorn(value: string | undefined): string | undefined {
-  return ours(value) ? /name = "([^"]+)"/.exec(value ?? '')?.[1] : undefined
+  return ours(value) ? /name = "([^"]+)"/.exec(value ?? '')?.[1]?.split(WARP_PART)[0] : undefined
 }
 
-function withWarpKey(content: string, key: string, value: string | undefined): string {
+function withWarpKey(content: string, key: string, value: string | undefined, header = WARP_SECTION): string {
   const lines = content.split('\n')
-  const section = warpSection(lines)
+  const section = warpSection(lines, header)
 
   if (!section) {
-    return value === undefined ? content : `${content.replace(/\n*$/, '\n')}\n${WARP_SECTION}\n${key} = ${value}\n`
+    return value === undefined ? content : `${content.replace(/\n*$/, '\n')}\n${header}\n${key} = ${value}\n`
   }
 
   const at = lines.findIndex((l, i) => i > section[0] && i < section[1] && keyed(key).test(l))
@@ -175,14 +191,52 @@ function ours(value: string | undefined): boolean {
   return value?.includes(`path = "${owned('')}`) === true
 }
 
-function oursIn(content: string): boolean {
-  return ours(warpThemeOf(content)) || ours(warpSystemOf(content))
+export function warpBack(content: string, base: string, system: string, made = ''): string {
+  const theme = ours(warpThemeOf(content)) ? withWarpTheme(content, base || WARP_DEFAULT) : content
+  const back = ours(warpSystemOf(content)) ? withWarpKey(theme, WARP_SYSTEM, system || WARP_SYSTEM_DEFAULT) : theme
+
+  return withoutContrast(back, made)
 }
 
-export function warpBack(content: string, base: string, system: string): string {
-  const theme = ours(warpThemeOf(content)) ? withWarpTheme(content, base || WARP_DEFAULT) : content
+function withContrast(content: string, made: string): string {
+  const held = warpKeyOf(content, WARP_CONTRAST, WARP_TEXT)
 
-  return ours(warpSystemOf(content)) ? withWarpKey(theme, WARP_SYSTEM, system || WARP_SYSTEM_DEFAULT) : theme
+  if (held === undefined) {
+    writeAtomic(made, warpSection(content.split('\n'), WARP_TEXT) ? 'key' : 'table')
+
+    return withWarpKey(content, WARP_CONTRAST, WARP_NEVER, WARP_TEXT)
+  }
+
+  if (held !== WARP_NEVER) {
+    rmSync(made, { force: true })
+  }
+
+  return content
+}
+
+function withoutContrast(content: string, made: string): string {
+  if (made === '' || warpKeyOf(content, WARP_CONTRAST, WARP_TEXT) !== WARP_NEVER) {
+    return content
+  }
+
+  const lines = withWarpKey(content, WARP_CONTRAST, undefined, WARP_TEXT).split('\n')
+  const section = warpSection(lines, WARP_TEXT)
+
+  if (made !== 'table' || !section || lines.slice(section[0] + 1, section[1]).some((line) => line.trim() !== '')) {
+    return lines.join('\n')
+  }
+
+  const from = lines[section[0] - 1] === '' ? section[0] - 1 : section[0]
+  lines.splice(from, section[0] + 1 - from)
+
+  return lines.join('\n')
+}
+
+function letContrastGo(content: string, made: string): string {
+  const was = readText(made)
+  rmSync(made, { force: true })
+
+  return withoutContrast(content, was)
 }
 
 export function warpWear(content: string, value: string | undefined, configHome: string, channel: WarpChannel): string {
@@ -206,7 +260,7 @@ export function warpWear(content: string, value: string | undefined, configHome:
 
   const theme = warpThemeOf(content)
 
-  if (!ours(theme) && !existsSync(base)) {
+  if (!ours(theme)) {
     writeAtomic(base, theme ?? '')
   }
 
@@ -214,7 +268,7 @@ export function warpWear(content: string, value: string | undefined, configHome:
     return next
   }
 
-  if (!ours(held) && !existsSync(system)) {
+  if (!ours(held)) {
     writeAtomic(system, held ?? '')
   }
 
@@ -444,13 +498,11 @@ function wearWarp(
     return undefined
   }
 
-  if (theme === undefined && !oursIn(content)) {
-    return undefined
-  }
-
+  const made = warpContrastPath(at.configHome, channel)
   const back = ours(warpThemeOf(content)) ? readText(warpBasePath(at.configHome, channel)) || WARP_DEFAULT : undefined
-  const value = wear && theme !== undefined ? warpThemeValue(wear, theme) : back
-  const next = warpWear(content, value, at.configHome, channel)
+  const value = wear && theme !== undefined ? warpRef(shelf.dir, theme, wear) : back
+  const worn = warpWear(content, value, at.configHome, channel)
+  const next = keep ? worn : wear ? withContrast(worn, made) : letContrastGo(worn, made)
 
   if (next === content) {
     return undefined
@@ -527,11 +579,24 @@ export const warp: Wiring = {
           .flatMap((shelf) => shelf.channels)
           .map((channel) => warpSettings(ctx.home, ctx.configHome, channel))
           .filter((file) => existsSync(file))
-          .map((file) => `Edit ${tilde(file, ctx.home)} — [appearance.themes] theme; \`ttheme off\` puts yours back`)
+          .map((file) =>
+            warpKeyOf(readText(file), WARP_CONTRAST, WARP_TEXT) === undefined
+              ? `Edit ${tilde(file, ctx.home)} — [appearance.themes] theme and [appearance.text] ${WARP_CONTRAST}, so Warp shows the palettes’ own colors; \`ttheme off\` puts yours back`
+              : `Edit ${tilde(file, ctx.home)} — [appearance.themes] theme; \`ttheme off\` puts yours back`,
+          )
       : []
   },
-  notes: () => [
+  notes: (now) => [
     'Warp wears one theme for the whole app, set through its settings.toml — a tab that takes a palette (`ttheme use`, a pin, preview) switches it, and switching tabs puts on the palette of the tab in front, read from Warp’s session database with sqlite3',
+    ...WARP_CHANNELS.flatMap((channel) => {
+      const file = warpSettings(now.home, now.configHome, channel)
+
+      return warpKeyOf(readText(file), 'is_settings_sync_enabled', WARP_ACCOUNT) === 'true'
+        ? [
+            `${tilde(file, now.home)} has Warp’s Settings sync on, so every palette ttheme puts on, and the minimum contrast it turns off, reach your other devices — one without the same theme file falls back to Warp’s dark theme, and one running ttheme puts its own back; turn Settings sync off in Warp to keep them on this device`,
+          ]
+        : []
+    }),
   ],
   next: () => [],
   unwire(at) {
@@ -541,19 +606,19 @@ export const warp: Wiring = {
       const file = warpSettings(at.home, at.configHome, channel)
       const content = readText(file)
 
-      if (!oursIn(content)) {
+      const back = warpBack(
+        content,
+        readText(warpBasePath(at.configHome, channel)),
+        readText(warpSystemPath(at.configHome, channel)),
+        readText(warpContrastPath(at.configHome, channel)),
+      )
+
+      if (back === content) {
         unwired.removals.push(...spareBackup(file))
         continue
       }
 
-      unwired.edits.push({
-        file,
-        content: warpBack(
-          content,
-          readText(warpBasePath(at.configHome, channel)),
-          readText(warpSystemPath(at.configHome, channel)),
-        ),
-      })
+      unwired.edits.push({ file, content: back })
 
       if (symlinked(file)) {
         unwired.touches.push(file)
