@@ -15,7 +15,7 @@ const MARGIN = 72
 const MESH = facetMesh()
 
 const HEADLINE = [
-  { text: 'wear your', accent: false },
+  { text: 'use your', accent: false },
   { text: 'favorite', accent: false },
   { text: 'anime', accent: true },
   { text: 'character', accent: true },
@@ -508,7 +508,7 @@ export async function cardPng(card: Card, frame: Frame = { width: CARD_WIDTH, he
 
 export function cardAlt(card: Card): string {
   if (card.kind === 'site')
-    return `ttheme: wear your favorite anime character in your terminal, beside a terminal window wearing ${card.theme.name}`
+    return `ttheme: use your favorite anime character in your terminal, beside a terminal window showing ${card.theme.name}`
 
   if (card.kind === 'marketplace')
     return `${card.marketplace?.id ?? 'official'} marketplace: its name and description beside a terminal window listing its palettes`
@@ -518,5 +518,5 @@ export function cardAlt(card: Card): string {
   const { name, catalog } = card.theme
   const whose = card.kind === 'share' ? `${name}, a shared palette` : `${name}${catalog ? `, ${catalog}` : ''}`
 
-  return `${whose}: its name and three signature colors beside a terminal window wearing the palette`
+  return `${whose}: its name and three signature colors beside a terminal window showing the palette`
 }

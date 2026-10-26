@@ -81,7 +81,7 @@ function Brand({ facts }: { facts: Facts }) {
         <Mark />
         <Wordmark />
       </a>
-      <p class="text-xs font-medium tracking-wide text-muted-foreground">wear your favorite character</p>
+      <p class="text-xs font-medium tracking-wide text-muted-foreground">use your favorite character</p>
       <Badge variant="count">
         {facts.palettes} palettes · {facts.catalogs} catalogs
       </Badge>
@@ -92,7 +92,7 @@ function Brand({ facts }: { facts: Facts }) {
 function Tagline({ facts }: { facts: Facts }) {
   return (
     <div class="grid content-start justify-items-start gap-2.5 max-[640px]:col-span-2">
-      <p class="max-w-[18ch] font-display text-display-sm font-extrabold">wear your favorite character</p>
+      <p class="max-w-[18ch] font-display text-display-sm font-extrabold">use your favorite character</p>
       <span class="flex items-center gap-2.5">
         <Badge variant="count">
           {facts.palettes} palettes · {facts.catalogs} catalogs

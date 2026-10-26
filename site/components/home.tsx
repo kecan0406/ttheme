@@ -18,7 +18,7 @@ import { TerminalFrame, WINDOW_TITLE } from './terminal-frame'
 
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
-const LEAD = 'wear'
+const LEAD = 'use'
 
 function features(palettes: number, catalogs: number) {
   return [
