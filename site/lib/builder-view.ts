@@ -2,6 +2,7 @@ import {
   draftFrom,
   type Edit,
   listIn,
+  MOST_DRAFTS,
   madeMode,
   nameTrouble,
   signatureTrouble,
@@ -20,6 +21,7 @@ import { PLANE_BOTTOM, PLANE_TOP, shareOf } from '../../src/core/plane.ts'
 import { repoFor } from '../../src/core/scaffold.ts'
 import { SEED_FIELDS, type Seeds } from '../../src/core/seeds.ts'
 import { lchIn, lchTight, PAIRS, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
+import { ago } from '../../src/core/text.ts'
 import { nameProblem } from '../../src/core/theme.ts'
 import { partnerOf } from '../../src/core/tune.ts'
 
@@ -290,10 +292,57 @@ export interface DraftItem {
   current: boolean
 }
 
+export interface DraftGroup {
+  title: string
+  drafts: DraftItem[]
+}
+
+export interface DraftList {
+  count: number
+  most: number
+  query: string
+  groups: DraftGroup[]
+  deleted: string | null
+}
+
 export type StartList =
   | { state: 'loading' }
   | { state: 'failed' }
-  | { state: 'ready'; drafts: DraftItem[]; groups: StartGroup[]; query: string }
+  | { state: 'ready'; groups: StartGroup[]; query: string }
+
+const DAY = 86_400_000
+
+const WHEN = [
+  { title: 'today', days: 0 },
+  { title: 'yesterday', days: 1 },
+  { title: 'this week', days: 6 },
+]
+
+export function draftListOf(
+  drafts: Edit[],
+  current: string,
+  query: string,
+  deleted: string | null,
+  now: number,
+): DraftList {
+  const midnight = new Date(now).setHours(0, 0, 0, 0)
+  const q = query.trim().toLowerCase()
+  const shown = drafts.filter((draft) => !q || draft.name.includes(q)).toSorted((a, b) => b.at - a.at)
+  const titleOf = (at: number) => WHEN.find((when) => at >= midnight - when.days * DAY)?.title ?? 'older'
+
+  const groups = [...Map.groupBy(shown, (draft) => titleOf(draft.at))].map(([title, list]) => ({
+    title,
+    drafts: list.map((draft) => ({
+      id: draft.id,
+      name: draft.name,
+      when: ago(draft.at, now),
+      dots: dotsOf(draft.made, draft.signature),
+      current: draft.id === current,
+    })),
+  }))
+
+  return { count: drafts.length, most: MOST_DRAFTS, query, groups, deleted }
+}
 
 export function dotsOf(list: Hex[], signature: string[]): Hex[] {
   return signature.map((slot) => list[SLOT_NAMES.indexOf(slot)] ?? (list[0] as Hex))

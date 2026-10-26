@@ -1,3 +1,4 @@
+import { DraftEntries, DraftRoom } from '@/components/builder-drafts'
 import { FilePanel, LinkPanel, MarketSteps } from '@/components/builder-export'
 import {
   BarDots,
@@ -30,7 +31,9 @@ import {
   blankEdit,
   changedIn,
   changes,
+  dirty,
   draftFrom,
+  dropped,
   type Edit,
   editOf,
   followMirror,
@@ -40,17 +43,21 @@ import {
   modeOfView,
   nameTrouble,
   originIn,
+  RETURNS,
   resetAll,
+  restored,
   STORE,
   type Start,
   type Stored,
   storedOf,
+  TAB_KEY,
   type View,
   withSlot,
 } from '@/lib/builder'
 import {
   aboutOf,
   dotsOf,
+  draftListOf,
   exportProblem,
   fileOf,
   gateOf,
@@ -81,7 +88,6 @@ import { PLANE_BOTTOM, PLANE_TOP, reach } from '../../src/core/plane.ts'
 import { marketplaceToml, readmeOf, repoFor } from '../../src/core/scaffold.ts'
 import { grow, SEED_FIELDS, SEEDS, type Seeds } from '../../src/core/seeds.ts'
 import { lchIn, listOf, misses, SLOT_NAMES, slotLabel } from '../../src/core/slots.ts'
-import { ago } from '../../src/core/text.ts'
 import {
   brightLinks,
   following,
@@ -129,6 +135,19 @@ function readStore(): Stored | null {
     return storedOf(localStorage.getItem(STORE))
   } catch {
     return null
+  }
+}
+
+function tabDraft(stored: Stored | null): Edit | undefined {
+  try {
+    const entry = performance.getEntriesByType('navigation')[0]
+
+    if (!(entry instanceof PerformanceNavigationTiming) || !RETURNS.includes(entry.type)) return undefined
+    const id = sessionStorage.getItem(TAB_KEY)
+
+    return stored?.drafts.find((draft) => draft.id === id)
+  } catch {
+    return undefined
   }
 }
 
@@ -181,9 +200,10 @@ class PaletteBuilder extends HTMLElement {
   #loading: Promise<void> | null = null
   #startFailed = false
   #query = ''
+  #draftQuery = ''
+  #deleted: { edit: Edit; at: number } | null = null
   #stored: Stored | null = null
   #linkId: string | null = null
-  #linkKey = ''
   #credits = new Map<string, PictureCredit | null>()
   #saving = 0
   #market = { owner: '', name: '', description: '' }
@@ -210,14 +230,11 @@ class PaletteBuilder extends HTMLElement {
     this.#data = readJson<BuilderData>(this, 'script[data-builder]')
     this.#stored = readStore()
     const link = this.#data.link !== null
-    const current = link ? undefined : this.#stored?.drafts.find((draft) => draft.id === this.#stored?.current)
-    this.#edit = current ?? editOf(this.#data.first.draft, this.#data.first.name, link, freshId(), Date.now())
+    const back = link ? undefined : tabDraft(this.#stored)
+    this.#edit = back ?? editOf(this.#data.first.draft, this.#data.first.name, link, freshId(), Date.now())
 
-    if (link) {
-      this.#linkId = this.#edit.id
-      this.#linkKey = JSON.stringify(draftFrom(this.#edit))
-    }
-
+    if (link) this.#linkId = this.#edit.id
+    this.#mark()
     this.#relink()
     this.addEventListener('click', this.#click)
     this.addEventListener('input', this.#input)
@@ -228,6 +245,7 @@ class PaletteBuilder extends HTMLElement {
     this.querySelector('#builder-start')?.addEventListener('beforetoggle', this.#placeStart)
     this.querySelector('#builder-add')?.addEventListener('beforetoggle', this.#placeAdd)
     addEventListener('pagehide', this.#flush)
+    addEventListener('storage', this.#synced)
     const term = this.querySelector<HTMLElement>('[data-term]')
     term?.addEventListener('pointerover', this.#inspector.over)
     term?.addEventListener('pointerleave', this.#inspector.leave)
@@ -242,6 +260,7 @@ class PaletteBuilder extends HTMLElement {
 
     this.#fit()
     this.#render()
+    this.#renderDrafts()
     this.#tail()
     document.documentElement.removeAttribute('data-restoring')
 
@@ -256,6 +275,7 @@ class PaletteBuilder extends HTMLElement {
     this.removeEventListener('pointerdown', this.#press)
     this.removeEventListener('toggle', this.#toggled, true)
     removeEventListener('pagehide', this.#flush)
+    removeEventListener('storage', this.#synced)
     this.#sizer?.disconnect()
     cancelAnimationFrame(this.#sizing)
     this.#flush()
@@ -343,16 +363,84 @@ class PaletteBuilder extends HTMLElement {
     if (!this.#saving) return
     window.clearTimeout(this.#saving)
     this.#saving = 0
+    this.#mark()
 
     try {
-      const next = kept(this.#stored ?? { current: null, drafts: [] }, this.#state)
-      localStorage.setItem(STORE, JSON.stringify(next))
+      const stored = storedOf(localStorage.getItem(STORE))
+      const next = kept(stored, this.#state)
+
+      if (next !== stored) localStorage.setItem(STORE, JSON.stringify(next))
       this.#stored = next
     } catch {
       this.#stored = null
     }
 
     this.#renderStatus()
+    this.#renderDrafts()
+  }
+
+  #mark() {
+    try {
+      sessionStorage.setItem(TAB_KEY, this.#state.id)
+    } catch {}
+  }
+
+  #write(next: Stored) {
+    try {
+      localStorage.setItem(STORE, JSON.stringify(next))
+      this.#stored = next
+    } catch {
+      this.#stored = null
+    }
+  }
+
+  #synced = (event: StorageEvent) => {
+    if (event.key !== STORE) return
+    this.#stored = readStore()
+    this.#renderStatus()
+    this.#renderDrafts()
+  }
+
+  #renderDrafts() {
+    const drafts = this.#stored?.drafts ?? []
+    const list = draftListOf(drafts, this.#state.id, this.#draftQuery, this.#deleted?.edit.name ?? null, Date.now())
+    this.#fill(this.querySelector('[data-drafts-list]'), html(<DraftEntries list={list} />))
+    this.#fill(this.querySelector('[data-drafts-room]'), html(<DraftRoom list={list} />))
+    const count = this.querySelector<HTMLElement>('[data-drafts-count]')
+
+    if (count) {
+      count.hidden = drafts.length === 0
+      count.textContent = String(drafts.length)
+    }
+
+    const search = this.querySelector<HTMLElement>('[data-drafts-search]')
+
+    if (search) search.hidden = drafts.length === 0
+  }
+
+  #deleteDraft(id: string) {
+    const stored = readStore()
+    const at = stored?.drafts.findIndex((draft) => draft.id === id) ?? -1
+    const edit = stored?.drafts[at]
+
+    if (!stored || !edit || id === this.#state.id) return
+    this.#write(dropped(stored, id))
+    this.#deleted = { edit, at }
+    this.#renderDrafts()
+    this.querySelector<HTMLElement>('[data-draft-undo]')?.focus()
+    announce(`deleted ${edit.name}`)
+  }
+
+  #undoDelete() {
+    const gone = this.#deleted
+    const stored = readStore()
+
+    if (!gone || !stored) return
+    this.#write(restored(stored, gone.at, gone.edit))
+    this.#deleted = null
+    this.#renderDrafts()
+    this.querySelector<HTMLElement>(`[data-draft-open="${gone.edit.id}"]`)?.focus()
+    announce(`${gone.edit.name} is back`)
   }
 
   #schedule(work: () => void) {
@@ -423,7 +511,7 @@ class PaletteBuilder extends HTMLElement {
 
   #renderShared() {
     const on = this.#state.id === this.#linkId
-    const touched = on && JSON.stringify(draftFrom(this.#state)) !== this.#linkKey
+    const touched = on && dirty(this.#state)
 
     for (const part of this.querySelectorAll<HTMLElement>('[data-link-only]')) part.hidden = !on
     const add = this.querySelector<HTMLElement>('[data-add]')
@@ -761,8 +849,13 @@ class PaletteBuilder extends HTMLElement {
     const colors = this.querySelector<HTMLElement>('[data-panel-body="colors"]')
     const seeds = this.querySelector<HTMLElement>('[data-panel-body="seeds"]')
     const about = this.querySelector<HTMLElement>('[data-panel-body="about"]')
+    const drafts = this.querySelector<HTMLElement>('[data-panel-body="drafts"]')
 
     if (about) about.hidden = name !== 'about'
+
+    if (drafts) drafts.hidden = name !== 'drafts'
+
+    if (name === 'drafts') this.#renderDrafts()
 
     if (colors) colors.hidden = name !== 'colors' || this.#seeds !== null
 
@@ -861,16 +954,15 @@ class PaletteBuilder extends HTMLElement {
   }
 
   #startFrom(start: { name: string; draft: Draft }, own: boolean) {
+    this.#flush()
     this.#leaveSeeds(false)
     this.#edit = editOf(start.draft, start.name, own, freshId(), Date.now())
     this.#reset()
-
-    if (own) this.#save()
     this.#closeStart()
     announce(`started from ${start.name}`)
   }
 
-  #reset() {
+  #reset(panel = 'colors') {
     this.#view = 'made'
     this.#history = []
     this.#future = []
@@ -878,22 +970,27 @@ class PaletteBuilder extends HTMLElement {
     this.#settle()
     this.#relink()
     this.#close(false)
-    this.#showPanel('colors')
+    this.#mark()
+    this.#showPanel(panel)
     this.#render()
+    this.#renderDrafts()
   }
 
   #startDraft(id: string) {
+    if (id === this.#state.id) return this.#showPanel('colors')
+    this.#flush()
     const draft = this.#stored?.drafts.find((stored) => stored.id === id)
 
     if (!draft) return
     this.#leaveSeeds(false)
     this.#edit = { ...draft }
-    this.#reset()
-    this.#save()
-    this.#closeStart()
+    this.#deleted = null
+    this.#reset('drafts')
+    announce(`opened ${draft.name}`)
   }
 
   #startBlank() {
+    this.#flush()
     this.#leaveSeeds(false)
     this.#before = this.#state
     this.#seeds = { ...SEEDS }
@@ -979,27 +1076,12 @@ class PaletteBuilder extends HTMLElement {
 
   #renderStart() {
     const target = this.querySelector('[data-start-list]')
-    const stored = this.#stored?.drafts ?? []
-    const now = Date.now()
 
     const list: StartList = this.#startFailed
       ? { state: 'failed' }
       : !this.#starts
         ? { state: 'loading' }
-        : {
-            state: 'ready',
-            query: this.#query,
-            drafts: stored
-              .filter((draft) => !this.#query || draft.name.includes(this.#query.trim().toLowerCase()))
-              .map((draft) => ({
-                id: draft.id,
-                name: draft.name,
-                when: ago(draft.at, now),
-                dots: dotsOf(draft.made, draft.signature),
-                current: draft.id === this.#state.id,
-              })),
-            groups: groupsOf(this.#starts, this.#query),
-          }
+        : { state: 'ready', query: this.#query, groups: groupsOf(this.#starts, this.#query) }
 
     this.#fill(target, html(<StartEntries list={list} />))
   }
@@ -1367,9 +1449,14 @@ class PaletteBuilder extends HTMLElement {
     const start = from ? this.#starts?.find((one) => one.name === from) : undefined
 
     if (start) return this.#startFrom(start, false)
-    const draft = target.closest<HTMLElement>('[data-start-draft]')?.dataset.startDraft
+    const gone = target.closest<HTMLElement>('[data-draft-delete]')?.dataset.draftDelete
+
+    if (gone) return this.#deleteDraft(gone)
+    const draft = target.closest<HTMLElement>('[data-draft-open]')?.dataset.draftOpen
 
     if (draft) return this.#startDraft(draft)
+
+    if (target.closest('[data-draft-undo]')) return this.#undoDelete()
 
     if (target.closest('[data-start-retry]')) {
       this.#startFailed = false
@@ -1450,6 +1537,13 @@ class PaletteBuilder extends HTMLElement {
     if (input.matches('[data-start-search]')) {
       this.#query = input.value
       this.#renderStart()
+
+      return
+    }
+
+    if (input.matches('[data-draft-search]')) {
+      this.#draftQuery = input.value
+      this.#renderDrafts()
     }
   }
 

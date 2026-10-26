@@ -1,9 +1,9 @@
-import { BookOpen, Menu, Paintbrush, Star, Store } from 'lucide'
+import { BookOpen, Menu, Paintbrush, Store } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
 import { OFFICIAL_URL, starCount } from '@/lib/gallery'
-import { BrandIcon, Icon, NewTab } from '@/lib/icons'
+import { BrandIcon, GitHubStar, Icon, NewTab } from '@/lib/icons'
 import { cn, plural } from '@/lib/utils'
 import { HeaderBar } from './header-bar'
 import { Mark } from './mark'
@@ -74,24 +74,24 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
           popover="auto"
           class="top-15 right-5 m-0 w-56 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid header-wide:static header-wide:my-2.5 header-wide:ml-auto header-wide:flex header-wide:w-auto header-wide:flex-wrap header-wide:items-center header-wide:justify-end header-wide:self-center header-wide:gap-2.5 header-wide:overflow-visible header-wide:border-0 header-wide:bg-transparent header-wide:p-0 header-wide:text-inherit header-wide:shadow-none"
         >
+          <HeaderBar />
           <LinkButton
-            variant="outline"
+            variant="raised"
             size="sm"
             href={OFFICIAL_URL}
             target="_blank"
             rel="noopener"
-            class="h-8 justify-start gap-2 shadow-sm header-menu:rounded-xl header-short:w-8 header-short:justify-center header-short:px-0"
+            class="h-8 justify-start gap-2 header-menu:rounded-xl header-short:w-8 header-short:justify-center header-short:px-0"
           >
             <BrandIcon icon={siGithub} />
             <span class={stars === null ? 'header-short:sr-only' : 'sr-only'}>github</span>
             {stars === null ? null : (
               <>
-                <span
-                  aria-hidden="true"
-                  class="inline-flex items-center gap-1.5 font-bold text-foreground tabular-nums header-short:hidden"
-                >
-                  <span safe>{starCount(stars)}</span>
-                  <Icon node={Star} class="size-3.5 fill-current text-soft-foreground" />
+                <span aria-hidden="true" class="inline-flex items-center gap-1.5 header-short:hidden">
+                  <GitHubStar />
+                  <span class="font-bold text-foreground tabular-nums" safe>
+                    {starCount(stars)}
+                  </span>
                 </span>
                 <span class="sr-only" safe>
                   {plural(stars, 'star')}
@@ -104,7 +104,6 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
               <span class="sr-only">, opens in a new tab</span>
             )}
           </LinkButton>
-          <HeaderBar />
         </div>
       </div>
     </header>

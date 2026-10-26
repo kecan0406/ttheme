@@ -11,6 +11,7 @@ const tabVariants = cva(
           'relative flex-1 justify-center px-4 font-medium after:absolute after:inset-x-6 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 aria-selected:after:opacity-100',
         track:
           'relative flex-1 justify-center rounded-md px-3 text-xs before:absolute before:top-1/2 before:left-0 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-foreground/16 first:before:hidden aria-selected:bg-foreground/14 aria-selected:shadow-sm aria-selected:before:hidden [[aria-selected=true]+&]:before:hidden',
+        nav: 'relative gap-1.5 px-2.5 font-medium text-soft-foreground after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 aria-selected:after:opacity-100 [&>svg]:size-4 [&>svg]:flex-none',
       },
     },
     defaultVariants: {
@@ -62,4 +63,17 @@ function TabsTrigger({ class: className, variant = 'underline', selected, ...pro
   )
 }
 
-export { TabsList, TabsTrigger }
+function TabsCount({ class: className, ...props }: PropsWithChildren<Omit<JSX.HtmlTag, 'class'> & { class?: string }>) {
+  return (
+    <span
+      data-slot="tabs-count"
+      class={cn(
+        'min-w-4.5 rounded-full bg-muted px-1 text-center font-mono text-2xs leading-4.5 text-muted-foreground tabular-nums',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+export { TabsCount, TabsList, TabsTrigger }

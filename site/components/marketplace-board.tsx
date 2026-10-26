@@ -36,7 +36,7 @@ import {
   shelvesMatching,
   starCount,
 } from '@/lib/gallery'
-import { BrandIcon, Icon } from '@/lib/icons'
+import { BrandIcon, GitHubStar, Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import { paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
@@ -205,14 +205,14 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
             </p>
             <span class="mt-1 flex flex-wrap gap-1.5">
               <LinkButton
-                variant="outline"
+                variant="raised"
                 size="xs"
                 href={shelf.url}
                 target="_blank"
                 rel="noopener"
                 class="relative z-1 max-w-full min-w-0 shrink"
               >
-                <BrandIcon icon={siGithub} class="size-3 flex-none" />
+                <BrandIcon icon={siGithub} class="size-3.5 flex-none" />
                 <span class="truncate font-mono font-normal" safe>
                   {shelf.repo}
                 </span>
@@ -220,10 +220,10 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
                   <>
                     <span
                       aria-hidden="true"
-                      class="inline-flex flex-none items-center gap-1 border-l pl-2 font-bold text-foreground tabular-nums"
+                      class="inline-flex flex-none items-center gap-1.5 font-bold text-foreground tabular-nums"
                     >
+                      <GitHubStar />
                       <span safe>{starCount(shelf.stars)}</span>
-                      <Icon node={Star} class="size-3.5 fill-current text-soft-foreground" />
                     </span>
                     <span class="sr-only" safe>
                       {`, ${plural(shelf.stars, 'GitHub star')}`}

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import type { StartList } from '@/lib/builder-view'
 import { Icon } from '@/lib/icons'
 
-function Dots({ dots }: { dots: string[] }) {
+export function Dots({ dots }: { dots: string[] }) {
   return (
     <span aria-hidden="true" class="flex flex-none gap-0.75">
       {dots.map((hex) => (
@@ -17,10 +17,11 @@ function Dots({ dots }: { dots: string[] }) {
   )
 }
 
-const ITEM =
+export const ITEM =
   'flex h-8 w-full min-w-0 items-center gap-2.5 rounded-lg px-2 text-left text-sm outline-none hover:bg-accent focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-ring'
 
-const HEAD = 'flex items-baseline gap-2 px-2 pt-3 pb-1 text-2xs font-bold tracking-caps text-muted-foreground uppercase'
+export const HEAD =
+  'flex items-baseline gap-2 px-2 pt-3 pb-1 text-2xs font-bold tracking-caps text-muted-foreground uppercase'
 
 export function StartEntries({ list }: { list: StartList }) {
   if (list.state === 'loading') {
@@ -38,33 +39,8 @@ export function StartEntries({ list }: { list: StartList }) {
     )
   }
 
-  const empty = list.drafts.length === 0 && list.groups.length === 0
-
   return (
     <>
-      {list.drafts.length > 0 ? (
-        <section aria-label="drafts in this browser">
-          <p class={HEAD}>
-            drafts <span class="font-medium tracking-normal normal-case">in this browser</span>
-          </p>
-          {list.drafts.map((draft) => (
-            <button
-              type="button"
-              data-start-draft={draft.id}
-              aria-current={draft.current ? 'true' : undefined}
-              class={`${ITEM} aria-[current=true]:bg-accent`}
-            >
-              <Dots dots={draft.dots} />
-              <span class="min-w-0 flex-1 truncate font-display font-extrabold" translate="no" safe>
-                {draft.name}
-              </span>
-              <span class="flex-none text-xs text-muted-foreground" safe>
-                {draft.when}
-              </span>
-            </button>
-          ))}
-        </section>
-      ) : null}
       {list.groups.map((group) => (
         <section aria-label={group.title}>
           <p class={HEAD}>
@@ -93,7 +69,7 @@ export function StartEntries({ list }: { list: StartList }) {
           ))}
         </section>
       ))}
-      {empty ? (
+      {list.groups.length === 0 ? (
         <p class="px-2 py-6 text-center text-sm text-muted-foreground">
           {escapeHtml(`no palette matches '${list.query}'`)} <span aria-hidden="true">( ˘ω˘ )</span>
         </p>

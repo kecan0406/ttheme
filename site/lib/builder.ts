@@ -7,7 +7,11 @@ import { marketplaceOf, nameProblem, type SharedPicture, slugOf } from '../../sr
 
 export const STORE = 'ttheme-builder'
 
-export const MOST_DRAFTS = 12
+export const TAB_KEY = 'ttheme-builder-tab'
+
+export const MOST_DRAFTS = 30
+
+export const RETURNS = ['reload', 'back_forward']
 
 export const BLANK_NAME = 'my-palette'
 
@@ -38,6 +42,7 @@ export interface Edit {
   meta: Meta
   keep: boolean
   origin: { made: Hex[]; other: Side }
+  start: Draft
   source: string | null
   at: number
 }
@@ -52,7 +57,6 @@ export interface Start {
 }
 
 export interface Stored {
-  current: string | null
   drafts: Edit[]
 }
 
@@ -98,7 +102,7 @@ export function editOf(draft: Draft, source: string | null, own: boolean, id: st
     ? { ...rest, ...(base ? { base } : {}), ...(meta.waive ? { reason: `kept from ${source}` } : {}) }
     : meta
 
-  return {
+  return started({
     id,
     name: copy ? `${slugOf(source)}-tuned` : slugOf(draft.name),
     made,
@@ -109,11 +113,11 @@ export function editOf(draft: Draft, source: string | null, own: boolean, id: st
     origin: { made: [...made], other: copied(other) },
     source,
     at,
-  }
+  })
 }
 
 export function blankEdit(colors: Hex[], id: string, at: number): Edit {
-  return {
+  return started({
     id,
     name: BLANK_NAME,
     made: [...colors],
@@ -124,7 +128,11 @@ export function blankEdit(colors: Hex[], id: string, at: number): Edit {
     origin: { made: [...colors], other: { base: null, tuned: {} } },
     source: null,
     at,
-  }
+  })
+}
+
+function started(edit: Omit<Edit, 'start'>): Edit {
+  return { ...edit, start: structuredClone(draftFrom(edit)) }
 }
 
 export function madeMode(edit: Pick<Edit, 'made'>): Mode {
@@ -163,15 +171,17 @@ export function mirrored(edit: Pick<Edit, 'made' | 'signature' | 'meta' | 'name'
   return list
 }
 
-export function otherBase(edit: Edit): Hex[] {
+type Body = Pick<Edit, 'name' | 'made' | 'other' | 'signature' | 'meta' | 'keep'>
+
+export function otherBase(edit: Body): Hex[] {
   return edit.other.base ?? mirrored(edit)
 }
 
-export function otherList(edit: Edit): Hex[] {
+export function otherList(edit: Body): Hex[] {
   return otherBase(edit).map((hex, slot) => edit.other.tuned[slot] ?? hex)
 }
 
-export function writesOther(edit: Edit): boolean {
+export function writesOther(edit: Pick<Edit, 'other'>): boolean {
   return edit.other.base !== null || Object.keys(edit.other.tuned).length > 0
 }
 
@@ -223,7 +233,7 @@ export function nameTrouble(name: string): string | undefined {
   return nameProblem(name)
 }
 
-export function draftFrom(edit: Edit): Draft {
+export function draftFrom(edit: Body): Draft {
   const made = colorsOf(edit.made)
   const { meta } = edit
   const pictures = edit.keep ? (meta.pictures ?? []) : []
@@ -251,21 +261,38 @@ export function signatureTrouble(edit: Edit): string | undefined {
   return new Set(colors).size === 3 ? undefined : 'needs three slots of three different colors'
 }
 
+export function dirty(edit: Edit): boolean {
+  return JSON.stringify(draftFrom(edit)) !== JSON.stringify(edit.start)
+}
+
 export function storedOf(text: string | null): Stored {
   try {
     const value = JSON.parse(text ?? 'null') as Stored | null
 
-    if (value && Array.isArray(value.drafts)) return { current: value.current ?? null, drafts: value.drafts }
+    if (value && Array.isArray(value.drafts)) return { drafts: value.drafts }
   } catch {}
 
-  return { current: null, drafts: [] }
+  return { drafts: [] }
 }
 
 export function kept(stored: Stored, edit: Edit): Stored {
-  return {
-    current: edit.id,
-    drafts: [edit, ...stored.drafts.filter((d) => d.id !== edit.id)].slice(0, MOST_DRAFTS),
-  }
+  const others = stored.drafts.filter((draft) => draft.id !== edit.id)
+
+  if (dirty(edit)) return { drafts: [edit, ...others].slice(0, MOST_DRAFTS) }
+
+  return others.length === stored.drafts.length ? stored : { drafts: others }
 }
 
-export const RESTORE_SCRIPT = `(()=>{try{const s=JSON.parse(localStorage.getItem('${STORE}')||'null');if(s&&s.current&&Array.isArray(s.drafts)&&s.drafts.some((d)=>d&&d.id===s.current))document.documentElement.dataset.restoring=''}catch{}})()`
+export function dropped(stored: Stored, id: string): Stored {
+  return { drafts: stored.drafts.filter((draft) => draft.id !== id) }
+}
+
+export function restored(stored: Stored, at: number, edit: Edit): Stored {
+  const drafts = stored.drafts.filter((draft) => draft.id !== edit.id)
+
+  return { drafts: drafts.toSpliced(Math.min(at, drafts.length), 0, edit).slice(0, MOST_DRAFTS) }
+}
+
+const RETURNING = RETURNS.map((type) => `n.type==='${type}'`).join('||')
+
+export const RESTORE_SCRIPT = `(()=>{try{const n=performance.getEntriesByType('navigation')[0],i=sessionStorage.getItem('${TAB_KEY}'),s=JSON.parse(localStorage.getItem('${STORE}')||'null');if(n&&(${RETURNING})&&i&&s&&Array.isArray(s.drafts)&&s.drafts.some((d)=>d&&d.id===i))document.documentElement.dataset.restoring=''}catch{}})()`

@@ -1,5 +1,5 @@
 import { createElement } from '@kitajs/html'
-import { ArrowUpRight, type IconNode } from 'lucide'
+import { ArrowUpRight, type IconNode, Star } from 'lucide'
 import type { SimpleIcon } from 'simple-icons'
 
 export function Icon({ node, class: className }: { node: IconNode; class?: string }) {
@@ -36,6 +36,10 @@ export function BrandIcon({ icon, class: className }: { icon: SimpleIcon; class?
       <path d={icon.path} />
     </svg>
   )
+}
+
+export function GitHubStar() {
+  return <Icon node={Star} class="size-3.5 flex-none fill-current text-star" />
 }
 
 export function NewTab({ class: className }: { class?: string }) {

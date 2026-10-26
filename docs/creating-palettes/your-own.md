@@ -85,3 +85,5 @@ adds it as a plugin.
 browser: start from any palette, a share link or blank seeds, and tune both
 modes against the gate. It exports a palette file, which `ttheme add <file>.toml`
 installs into your own marketplace, a share link, or a marketplace ready to push.
+Every visit starts clean; a palette you changed stays in that browser as a
+draft, up to thirty, which its **drafts** tab lists and reopens.

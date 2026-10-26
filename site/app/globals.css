@@ -66,6 +66,10 @@
   --color-destructive: var(--destructive);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-star: var(--star);
+  --color-raised: var(--raised);
+  --color-raised-low: var(--raised-low);
+  --color-raised-edge: var(--raised-edge);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -196,6 +200,7 @@
   --elevation-md: 0 10px 30px -10px rgb(0 0 0 / 50%), 0 4px 10px -4px rgb(0 0 0 / 30%);
   --elevation-lg: 0 30px 70px -20px rgb(0 0 0 / 70%), 0 14px 30px -12px rgb(0 0 0 / 40%);
   --radius: 10px;
+  --star: #e3b341;
 }
 
 :root[data-mode='light'] {
@@ -203,6 +208,10 @@
   --elevation-sm: 0 1px 2px rgb(0 0 0 / 12%);
   --elevation-md: 0 10px 30px -10px rgb(0 0 0 / 22%), 0 4px 10px -4px rgb(0 0 0 / 12%);
   --elevation-lg: 0 30px 70px -20px rgb(0 0 0 / 30%), 0 14px 30px -12px rgb(0 0 0 / 16%);
+  --star: #bf8700;
+  --raised: var(--bg);
+  --raised-low: color-mix(in oklab, var(--fg) 7%, var(--bg));
+  --raised-shine: rgb(255 255 255 / 70%);
 }
 
 :root:not([data-mode='light']) [data-view='light'],
@@ -779,6 +788,10 @@ route-progress[data-state='done'],
   --glass: color-mix(in oklab, var(--bg) 72%, transparent);
   --glass-panel: color-mix(in oklab, color-mix(in oklab, var(--fg) 5%, var(--bg)) 70%, transparent);
   --sidebar: color-mix(in oklab, var(--fg) 3%, var(--bg));
+  --raised: color-mix(in oklab, var(--fg) 13%, var(--bg));
+  --raised-low: color-mix(in oklab, var(--fg) 5%, var(--bg));
+  --raised-edge: color-mix(in oklab, var(--fg) 22%, var(--bg));
+  --raised-shine: color-mix(in oklab, var(--fg) 16%, transparent);
 }
 
 @media (prefers-contrast: more) {
@@ -790,6 +803,7 @@ route-progress[data-state='done'],
     --input: color-mix(in oklab, var(--fg) 50%, var(--bg));
     --glass: color-mix(in oklab, var(--bg) 94%, transparent);
     --glass-panel: color-mix(in oklab, color-mix(in oklab, var(--fg) 5%, var(--bg)) 94%, transparent);
+    --raised-edge: color-mix(in oklab, var(--fg) 40%, var(--bg));
   }
 }
 

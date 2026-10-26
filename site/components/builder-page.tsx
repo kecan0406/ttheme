@@ -1,7 +1,20 @@
-import { TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { History, Info, Palette } from 'lucide'
+import { TabsCount, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { type BuilderData, editOf, madeMode, nameTrouble } from '@/lib/builder'
-import { aboutOf, dotsOf, fileOf, gateOf, marketOf, modesOf, rowsOf, seedRowsOf, slotVars } from '@/lib/builder-view'
+import {
+  aboutOf,
+  dotsOf,
+  draftListOf,
+  fileOf,
+  gateOf,
+  marketOf,
+  modesOf,
+  rowsOf,
+  seedRowsOf,
+  slotVars,
+} from '@/lib/builder-view'
 import type { Facts } from '@/lib/facts'
+import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
 import type { Shared } from '@/lib/share'
 import type { Pane } from '@/lib/view-types'
@@ -9,6 +22,7 @@ import { grow, SEEDS } from '../../src/core/seeds.ts'
 import { listOf, misses, slotLabel } from '../../src/core/slots.ts'
 import { brightLinks } from '../../src/core/tune.ts'
 import { AppBar } from './app-bar'
+import { DraftsPanel } from './builder-drafts'
 import { ExportDialog } from './builder-export'
 import { AddPopover, LinkSection, LinkStrip } from './builder-link'
 import { AboutPanel, BuilderBar, ColorsPanel, EditMode, SeedsPanel, StatusText } from './builder-parts'
@@ -43,24 +57,37 @@ export function BuilderPage({
       <palette-builder class="builder-app">
         {shared && shared.palettes.length > 1 ? <LinkStrip shared={shared} /> : null}
         <div class="border-b border-border bg-sidebar [grid-area:tabs] app:border-r">
-          <TabsList label="sidebar" class="h-full">
+          <TabsList label="sidebar" class="h-full gap-0.5 px-2">
             <TabsTrigger
-              variant="underline"
+              variant="nav"
               selected
               id="builder-tab-colors"
               aria-controls="builder-colors"
               data-panel="colors"
             >
+              <Icon node={Palette} />
               <span data-first-tab>colors</span>
             </TabsTrigger>
             <TabsTrigger
-              variant="underline"
+              variant="nav"
               selected={false}
               id="builder-tab-about"
               aria-controls="builder-about"
               data-panel="about"
             >
+              <Icon node={Info} />
               about
+            </TabsTrigger>
+            <TabsTrigger
+              variant="nav"
+              selected={false}
+              id="builder-tab-drafts"
+              aria-controls="builder-drafts"
+              data-panel="drafts"
+            >
+              <Icon node={History} />
+              drafts
+              <TabsCount data-drafts-count hidden />
             </TabsTrigger>
           </TabsList>
         </div>
@@ -90,6 +117,7 @@ export function BuilderPage({
             modes={modesOf(edit)}
             link={shared ? <LinkSection shared={shared} /> : undefined}
           />
+          <DraftsPanel list={draftListOf([], edit.id, '', null, 0)} />
         </aside>
         <main id="content" aria-label="preview" data-stage class="mock-stage [grid-area:stage]">
           <MockWindow
