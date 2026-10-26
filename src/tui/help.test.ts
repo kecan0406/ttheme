@@ -15,9 +15,9 @@ function topicsWithGaps(): Topic[] {
   const run = () => {}
 
   return [
-    { label: 'First', text: 'a  runs', run },
-    ...Array.from({ length: 12 }, (_, i) => ({ label: `Note${i}`, text: 'only words, nothing to run' })),
-    { label: 'Last', text: 'z  runs', run },
+    { group: 'First', keys: 'a', does: 'Runs', run },
+    ...Array.from({ length: 12 }, (_, i) => ({ group: `Note${i}`, keys: 'b', does: 'Only words, nothing to run' })),
+    { group: 'Last', keys: 'z', does: 'Runs', run },
   ]
 }
 
@@ -40,7 +40,15 @@ test('every topic can be reached in a short help, even the ones with nothing to 
 
 test('the help is never taller than the rows it was given, dropping its marks first', () => {
   const run = () => {}
-  const topics = Array.from({ length: 30 }, (_, i) => ({ label: `T${i}`, text: 'x  words', run }))
+
+  const topics = Array.from({ length: 30 }, (_, i) => ({
+    group: `T${i}`,
+    keys: 'x',
+    does: 'Words',
+    more: 'More words',
+    run,
+  }))
+
   const legend: [string, string][] = Array.from({ length: 8 }, (_, i) => [String(i), 'a mark'])
   const help = new Help(topics, legend)
 
@@ -85,18 +93,18 @@ function shellFunction(file: string, name: string): string {
   return found[0]
 }
 
-test("preview's help wraps every topic as the Node help does", () => {
+test("preview's help wraps every line as the Node help does", () => {
   const texts = [
-    '↑↓  home  end  pgup  pgdn',
-    '←→  ·  enter or space on a catalog',
-    'Any text  ·  bksp  ·  ctrl+u clears',
-    'enter  applies  ·  esc restores the tab',
-    '→  enter  ·  a marketplace into the panel, a catalog',
-    '↓  below its palettes, to its own actions  ·  enter  updates it, turns auto-update on or off, removes it',
-    'ctrl+r  on a palette marked ⇡  ·  takes what its marketplace gives now',
-    'pgup pgdn lightness ×5  ·  home end the ends  ·  0-9 jump to a tenth of the way',
+    'Move up or down',
+    'Open or close a catalog',
+    'Filter by name or title, in Japanese too',
+    'Use it in this tab, choosing where',
+    'Save the picture, then choose where to use the palette',
+    'Back to the list, dropping picture changes since the last save',
+    "Every palette in the system's mode, following it as it changes",
+    'enter  tab  two keys  apart',
     'a word much longer than any line it could be laid on, extraordinarily so, supercalifragilistic',
-    'ぼっち・ざ・ろっく  ·  けいおん!  ·  らき☆すた  ·  葬送のフリーレン',
+    'ぼっち・ざ・ろっく けいおん! らき☆すた 葬送のフリーレン',
   ]
 
   const widths = [6, 10, 14, 20, 26, 33, 41, 56, 72]

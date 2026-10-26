@@ -1,4 +1,4 @@
- [Preview]  Browse   tab next
+ [Preview]  Browse   tab Browse
  Preview (2/2)
  ╭─────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
@@ -18,7 +18,7 @@ Config
   Sort       [abc]  catalog
   Mouse      [on]  off
   Blur       [off]  1px   2px   3px   4px
-▶ Colors      original  [tone]
+▶ Pictures    original  [tinted]
 
 New pictures are tinted in the palette's color
- [CONFIG] ↑↓ setting   ←→ value   enter save                                               esc undo
+ [CONFIG] ↑↓ move   ←→ change   enter save                                               esc cancel

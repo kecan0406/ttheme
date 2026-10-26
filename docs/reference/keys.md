@@ -10,7 +10,7 @@ what they do sits on the arrows, `enter`, `space`, `tab`, `esc` and `ctrl` or
 
 `ctrl+j` and `ctrl+k` step a line like `↓` and `↑` on every list, filtering or
 not, so a screen that filters as you type still moves from the home row. Where
-pictures are listed (find's grid and its try view, and the Images row of the
+pictures are listed (find's grid and its try view, and the Pictures row of the
 palette panel) `h` and `l` move like `←` and `→`.
 
 ## Preview
@@ -19,15 +19,15 @@ The first tab of `ttheme`.
 
 | Key | Does |
 |---|---|
-| `↑` `↓` `ctrl+j` `ctrl+k` `home` `end` `pgup` `pgdn` | move; the tab wears the palette under the cursor |
+| `↑` `↓` `ctrl+j` `ctrl+k` `home` `end` `pgup` `pgdn` | move; the tab shows the palette under the cursor |
 | `←` `→`, or `enter` or `space` on a catalog | close and open a catalog |
 | any text, `bksp`, `ctrl+u` | filter by name or title, in Japanese too; `ctrl+u` clears |
 | `⇧←` `⇧→` | the sample's scene: shell, code, diff, logs, monitor |
-| `enter` | apply the palette, asking Default or This tab |
+| `enter` | use the palette, asking Default or This tab |
 | `tab` `→` `ctrl+e` | the palette's panel: its colors and picture |
-| `alt+c` | settings: `↑` `↓` a setting, `←` `→` its value, `enter` saves, `esc` undoes |
+| `alt+c` | settings: `↑` `↓` a setting, `←` `→` its value, `enter` saves, `esc` cancels |
 | `shift+tab`, or `tab` on a catalog | to Browse |
-| `esc` | clear the filter, then leave and restore the tab |
+| `esc` | clear the filter, then leave and put the tab back |
 
 ## The palette panel
 
@@ -36,16 +36,16 @@ The first tab of `ttheme`.
 | Key | Does |
 |---|---|
 | `↑` `↓` `j` `k` `ctrl+j` `ctrl+k` `home` `end` | the picture's rows, the palette, then Apply |
-| `←` `→` or `h` `l` on Images, or `,` `.` anywhere | pick one of the palette's pictures |
+| `←` `→` or `h` `l` on Pictures, or `,` `.` anywhere | pick one of the palette's pictures |
 | `enter` on the empty frame, or `f` | find a picture |
 | `←` `→` or `h` `l` on a row, `⇧` for ×10, `1`–`9` on Position | tune size, position or opacity |
 | `=` and `+` | reset this row, or every row |
-| `c` | the picture's own colors, or the palette's tone |
+| `c` | the picture's own colors, or tinted in the palette's color |
 | `space` | hide or show the picture |
 | `D` | remove the picture |
 | `y` | copy a line crediting the artist |
-| `enter` on Edit palette | tune the colors in the palette editor |
-| `enter` on Apply, or `⇧enter` anywhere | save and ask where to apply |
+| `enter` on Edit palette | change the colors in the palette editor |
+| `enter` on Apply, or `⇧enter` anywhere | save, then ask where to use it |
 | `s` | keep the picture's tuning |
 | `esc` | back to the list, dropping picture changes since `s` |
 
@@ -77,21 +77,21 @@ it and goes back to its card, and `ctrl+r` reloads the list.
 
 | Key | Does |
 |---|---|
-| `↑` `↓` `ctrl+j` `ctrl+k` | a slot |
+| `↑` `↓` `ctrl+j` `ctrl+k` | a color |
 | `←` `→` | its normal or bright |
 | `pgup` `pgdn` | the base colors, or the ANSI ones |
-| `enter` `tab` | open the picker under the slot |
-| `n` `N` | the next or previous slot the gate misses |
-| `f` | move the colors the gate misses until they pass |
+| `enter` `tab` | open the picker under the color |
+| `n` `N` | the next or previous color that fails a contrast check |
+| `f` | move the failing colors until they pass |
 | `g` | every ANSI color's lightness, chroma and hue at once |
-| `i`, or a click on the sample | find the slots a spot uses |
-| `w` | dim every part of the sample that does not use the slot |
-| `m` | only the slots that changed |
+| `i`, or a click on the sample | find the colors a spot uses |
+| `w` | dim every part of the sample that does not use the color |
+| `m` | only the colors that changed |
 | `⇧←` `⇧→` | another tab of the sample |
 | `l`, `=` | link a bright to its normal; snap it to its normal |
 | `#` | type a color: `#rrggbb`, `rgb(r g b)` or `oklch(l c h)` |
-| `c` `v` | copy and paste a color between slots |
-| `r` `R` | put back this slot, or every slot |
+| `c` `v` | copy a color and paste it into another |
+| `r` `R` | put back this color, or every color |
 | `*` | mark a signature color, on your own palette |
 | `o`, `I` | take colors from another palette, or a share code |
 | `x` | copy the share code, an add command or the file |
@@ -110,11 +110,11 @@ it and goes back to its card, and `ctrl+r` reloads the list.
 | `⇧←` `⇧→`, or `,` `.` | hue by 5, or by 1 |
 | `pgup` `pgdn` | lightness by 5 |
 | `home` `end`, `0`–`9` | the ends of the last channel moved, or a point along it |
-| `tab` | ◐: move lightness until the contrast changes; `home` the gate's floor, `1`–`9` a ratio |
-| `a` | widen what moves: this slot, its pair, the normals, the brights or every accent |
-| `u`, `ctrl+r`, `r` | undo a step, redo, put the slot back |
+| `tab` | ◐: set lightness by contrast; `home` the lowest ratio that passes, `1`–`9` a ratio |
+| `a` | widen what moves: this color, its pair, the normals, the brights or every accent |
+| `u`, `ctrl+r`, `r` | undo a step, redo, put the color back |
 | `enter` | keep |
-| `esc` | cancel, putting back every slot the tune moved |
+| `esc` | cancel, putting back every color the tune moved |
 
 ## find
 
@@ -141,10 +141,10 @@ it and goes back to its card, and `ctrl+r` reloads the list.
 | `←` `→` or `h` `l` | the neighbouring posts |
 | `enter` | install it |
 | `t` | tune size, position and opacity |
-| `c` | its own colors, or the palette's tone |
+| `c` | its own colors, or tinted in the palette's color |
 | `x` | cut the background out, or keep it |
 | `i` | the post's details |
-| `⇧←` `⇧→` | the sample's scene |
+| `⇧←` `⇧→` | switch the sample |
 | `esc` | back to the grid |
 
 ## Everywhere

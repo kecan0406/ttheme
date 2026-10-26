@@ -450,7 +450,7 @@ function baseFor(
     problems: [
       {
         path: `${anchors.name}.slots`,
-        problem: `no base scheme passes the gate with these anchors${gate ? ` — ${gate.slice(6).split('; ')[0]}` : ''}`,
+        problem: `no base scheme passes the contrast checks with these anchors${gate ? ` — ${gate.slice(6).split('; ')[0]}` : ''}`,
       },
     ],
   }
@@ -490,7 +490,7 @@ async function corpus(notes: string[]): Promise<(readonly [string, Shade | undef
     notes.push(`base schemes unavailable (${(error as Error).message})`)
   }
 
-  notes.push(`no base schemes to rank — the ANSI colors start from the gate's role centers`)
+  notes.push(`no base schemes to rank — the ANSI colors start from the centers of their roles`)
 
   return [[ROLE_BASE, roleBase()]]
 }
@@ -679,7 +679,7 @@ function madeLines(
       ),
       ...m.turned.map((t) => `  turned     ${t.slot} ${t.from} → ${t.to}  ${t.rule}`),
       ...m.lookalikes.map((pair) => `  reads as one  ${pair}`),
-      ...(m.gate.length > 0 ? m.gate.map((g) => `  gate       ${g}`) : ['  gate       clean']),
+      ...(m.gate.length > 0 ? m.gate.map((g) => `  contrast   ${g}`) : ['  contrast   clean']),
       `  ${m.changed ? (m.written ? 'wrote' : 'would write') : 'unchanged'}  ${m.file || '(no marketplace yet)'}`,
     ]
   })
@@ -688,7 +688,7 @@ function madeLines(
     ...notes.map((n) => `note: ${n}`),
     ...lines,
     ...(installed.length > 0
-      ? ['', `Installed ${installed.join(', ')} — \`ttheme use <name>\` wears one in a tab`]
+      ? ['', `Installed ${installed.join(', ')} — \`ttheme use <name>\` uses one in a tab`]
       : []),
     ...(official && !dry ? ['', 'Next: mise run build, then mise run ci'] : []),
   ]

@@ -1,24 +1,24 @@
- [Preview]  Browse   tab next
+ [Preview]  Browse   tab Browse
  Preview (2/2)
- ╭─────────────────────────────────────────────╮
+ ╭────────────╭─ Help ──────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
- ╰─────────────────────────────────────────────╯
-
-▌  ▸ Bocchi the Rock!╭─ Help ─────────────────────────────────────────────────╮
-   ▸ Lucky☆Star      │                                                        │
-                     │  Move      ↑↓  ctrl+j  ctrl+k  home  end  pgup  pgdn   │
-                     │  Catalogs  ←→  ·  enter or space on a catalog          │
-                     │  Filter    Any text  ·  bksp  ·  ctrl+u clears         │
-                     │            Names and titles, in Japanese too           │
-                     │  Example   ⇧←→  shell, code, diff, logs, monitor       │
-                     │  Apply     enter  applies  ·  esc restores the tab     │
-                     │  Edit      tab  →  ctrl+e  ·  its colors and picture   │
-                     │  Config    alt+c  ·  ↑↓ setting  ←→ value              │
-                     │            enter saves  ·  esc undoes                  │
-                     │  Screens   shift+tab  ·  tab on a catalog              │
-                     │  Close     ?  esc                                      │
-                     │                                                        │
-                     ╰────────────────────────────────────────────────────────╯
-
-
+ ╰────────────│  Move                                                               │
+              │    ↑↓  ctrl+j  ctrl+k     Move up or down                           │
+▌  ▸ Bocchi th│    pgup  pgdn  home  end  Move a page, or to either end             │
+   ▸ Lucky☆Sta│    ←→  space              Close or open a catalog                   │
+              │  Filter                                                             │
+              │    type                   Filter by name or title, in Japanese too  │
+              │    ctrl+u                 Clear the filter                          │
+              │  Palette                                                            │
+              │    ⇧←→                    Switch the sample                         │
+              │    enter                  Use it, choosing where                    │
+              │    tab  →  ctrl+e         Edit its colors and picture               │
+              │  Finish                                                             │
+              │    esc                    Cancel and put the tab back               │
+              │    alt+c                  Open the settings                         │
+              │    shift+tab              Switch to Browse                          │
+              │  Help                                                               │
+              │    ?  esc                 Close help                                │
+              │                                                                     │
+              ╰─────────────────────────────────────────────────────────────────────╯
  [HELP]                                                                                 ? esc close

@@ -32,7 +32,7 @@ function marketplace(source: string, id: string, names: string[], auto = false):
     shown: source === 'official' ? 'the official marketplace' : `github.com/${source}`,
     entries: names.map((n) => entry(id === 'official' ? n : `${id}/${n}`, id === 'official' ? 'Vocaloid' : undefined)),
     auto,
-    status: source === 'official' ? 'comes with ttheme' : 'updated just now',
+    status: source === 'official' ? 'updates with ttheme' : 'updated just now',
   }
 }
 
@@ -250,7 +250,7 @@ test('a marketplace opens in the panel beside the cards from 94 columns, and ove
   assert.match(wide.last, /╭─ official ─+╮$/m)
   assert.match(wide.last, /^ {4}● official +│/m)
   assert.match(wide.last, /│ ▌ {4}● miku +│$/m)
-  assert.match(wide.last, /├─+┤\n.*│ miku {2}Installed +│\n.*│ Gate \d+\/\d+ · /)
+  assert.match(wide.last, /├─+┤\n.*│ miku {2}Installed +│\n.*│ Contrast \d+\/\d+ · /)
   assert.match(wide.last, /\[BROWSE\] space pick {3}\? keys +esc back$/m)
   const narrow = await drive([...MIKU, '\x03'], { columns: 80 })
   assert.doesNotMatch(narrow.last, /● official/)
@@ -629,17 +629,18 @@ test('enter takes a marketplace into the panel, typing lands on the first match 
 })
 
 test('? shows the keys and marks over the list until ? or esc, typing filters them, and enter runs the one chosen', async () => {
-  const { last, frames, panel } = await drive(['?', ' ', '?', '\x1b'])
+  const { last, frames, panel } = await drive(['?', ' ', '?', '\x1b'], { rows: 30 })
   assert.match(frames, /╭─ Help ─+╮/)
-  assert.match(frames, /Marketplace {3}↓ {2}below its palettes, to its own actions/)
+  assert.match(frames, /Marketplaces +enter on \+ Add +Add one from GitHub or a folder/)
+  assert.match(frames, /↓ {2}past the palettes +Update, auto-update or remove it/)
   assert.match(frames, /Marks +● picked {3}○ not picked {3}▸ ▾ a catalog, closed or open/)
-  assert.match(frames, /⇡ has an update {3}↻ updates on its own {3}✗ misses the gate/)
+  assert.match(frames, /⇡ has an update {3}↻ updates on its own {3}✗ fails a contrast check/)
   assert.match(frames, /\[HELP\] ↑↓ choose {3}enter run {3}type to filter +\? esc close/)
   assert.doesNotMatch(last, /Help/)
   assert.deepEqual([...panel.picked].sort(), ['alice@pastel/dusk', 'miku'])
   const ran = await drive(['?', ...'search', '\r', '\x03'])
-  assert.match(ran.frames, /▶ Search +enter {2}on Search marketplace/)
-  assert.doesNotMatch(ran.frames.split('\u0001').at(-2) ?? '', /Pick {3,}space/)
+  assert.match(ran.frames, /▶ Marketplaces +enter on ⌕ Search +Find one on GitHub/)
+  assert.doesNotMatch(ran.frames.split('\u0001').at(-2) ?? '', /space +Pick or unpick/)
   assert.match(ran.last, /\[SEARCH\]/)
 })
 

@@ -29,23 +29,35 @@ const SHORT: Bar = {
     ['→', 'open'],
     ['?', 'keys'],
   ],
-  right: ['esc', 'restore'],
+  right: ['esc', 'cancel'],
 }
 
 const TOPICS: Topic[] = [
-  { label: 'Move', text: '↑↓  home  end  pgup  pgdn', run: () => {} },
-  { label: 'Open', text: '→  enter  ·  a marketplace into the panel, a catalog', run: () => {} },
-  { label: 'Pick', text: 'space  ·  a palette, a catalog, a marketplace', run: () => {} },
-  { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl+u clears' },
-  { label: 'Update', text: 'ctrl+r  on a palette marked ⇡  ·  takes what its marketplace gives now', run: () => {} },
-  { label: 'Close', text: '?  esc' },
+  { group: 'Move', keys: '↑↓  home  end  pgup  pgdn', does: 'Move up or down', run: () => {} },
+  { group: 'Move', keys: '→  enter', does: 'Open a marketplace or a catalog', run: () => {} },
+  {
+    group: 'Palettes',
+    keys: 'space',
+    does: 'Pick or unpick',
+    more: 'Apply installs what is picked and removes what is not.',
+    run: () => {},
+  },
+  { group: 'Palettes', keys: 'type', does: 'Filter the list' },
+  {
+    group: 'Palettes',
+    keys: 'ctrl+r',
+    does: 'Take an update (⇡)',
+    more: 'On a palette or a catalog marked ⇡. The update is installed when you apply.',
+    run: () => {},
+  },
+  { group: 'Help', keys: '?  esc', does: 'Close help' },
 ]
 
 const LEGEND: Legend = [
   [MARKS.on, 'picked'],
   [MARKS.off, 'not picked'],
   [MARKS.update, 'has an update'],
-  [MARKS.miss, 'misses the gate'],
+  [MARKS.miss, 'fails a contrast check'],
 ]
 
 const TONES: Tone[] = ['info', 'ok', 'warn', 'error']
@@ -106,7 +118,7 @@ function states(): string[] {
     '',
     heading('cut lists and checks'),
     `${p.dim(moreOf(-1, 4))}   ${p.dim(moreOf(1, 12))}`,
-    `${checkOf(p, true)} passes   ${checkOf(p, false)} misses   ${checkOf(p, undefined)} does not apply`,
+    `${checkOf(p, true)} passes   ${checkOf(p, false)} fails   ${checkOf(p, undefined)} does not apply`,
   ]
 }
 

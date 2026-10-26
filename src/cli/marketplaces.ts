@@ -228,7 +228,7 @@ async function addSource(home: string, arg: string): Promise<{ source: string; i
     const id = marketplaceId(localIdentity(source))
     register(home, source, id)
     const count = readMarketplaceDir(source, id, official(home)).length
-    console.log(`Added ${id} · ${shownSource(source)} — ${counted(count)}, read in place`)
+    console.log(`Added ${id} · ${shownSource(source)} — ${counted(count)}, always up to date`)
 
     return { source, id, fresh: true }
   }
@@ -310,11 +310,11 @@ function parseSourceOrNot(arg: string): string | undefined {
 
 export function lastUpdate(home: string, source: string, tries = readTries(), now = Date.now()): string {
   if (isLocal(source)) {
-    return 'read in place'
+    return 'always up to date'
   }
 
   if (source === OFFICIAL) {
-    return 'comes with ttheme'
+    return 'updates with ttheme'
   }
 
   const failed = tries[source]
@@ -514,7 +514,7 @@ function checkMarketplace(arg: string | undefined): number {
   for (const entry of entries) {
     const failing = gateLines(entry).filter((l) => l.startsWith('  ✗'))
     const shown = entry.catalog ? `${entry.catalog}/${slugOf(entry.name)}` : slugOf(entry.name)
-    console.log(`  ${shown}${failing.length > 0 ? `\n${failing.join('\n')}` : '  passes the gate'}`)
+    console.log(`  ${shown}${failing.length > 0 ? `\n${failing.join('\n')}` : '  passes every contrast check'}`)
   }
 
   for (const line of errors) {
@@ -573,5 +573,5 @@ function required(action: string, arg: string | undefined): string {
 export function localLine(home: string, source: string): string {
   const id = idOf(home, source)
 
-  return `${id} — ${counted(readMarketplaceDir(source, id, official(home), warning(false)).length)}, read in place`
+  return `${id} — ${counted(readMarketplaceDir(source, id, official(home), warning(false)).length)}, always up to date`
 }

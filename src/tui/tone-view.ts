@@ -5,7 +5,7 @@ import type { PaletteEntry } from '../core/manifest.ts'
 import type { Colors } from '../core/seeds.ts'
 import { BASE, gatedOf, lchTight, listOf, misses, PAIRS, SLOT_NAMES } from '../core/slots.ts'
 import { slotColors } from '../store/tone.ts'
-import { boxEdge, boxed } from './parts.ts'
+import { boxEdge, boxed, contrastOf, SEP } from './parts.ts'
 import { FG_RESET, MARKS, painter } from './style.ts'
 
 const WIDTH = 50
@@ -59,8 +59,8 @@ export function toneRows(base: PaletteEntry, worn: PaletteEntry, color: boolean,
     return ` ${swatch} ${lchTight(oklch(hex))}${mark}`
   }
 
-  const gate = failing === 0 ? 'passes the gate' : `${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
-  const notes = tuned > 0 ? [`${tuned} tuned · ${gate}`, gate] : [gate]
+  const gate = contrastOf(failing)
+  const notes = tuned > 0 ? [`${tuned} tuned${SEP}${gate.toLowerCase()}`, gate] : [gate]
 
   return [
     p.dim(boxEdge(width, 'top', headOf(width, ' Palette ', notes))),

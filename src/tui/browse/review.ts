@@ -7,6 +7,7 @@ import { type Bar, barLine, type Hint } from '../bar.ts'
 import { type HubTab, hubBar } from '../hub.ts'
 import { lineStep } from '../keys.ts'
 import { pageStep } from '../palette-prompt.ts'
+import { SEP } from '../parts.ts'
 import { MARKS, type Paint, SPINNER } from '../style.ts'
 import type { Staged } from './staged.ts'
 import type { BrowseResult, Report } from './types.ts'
@@ -158,7 +159,7 @@ export class Review {
     for (const m of staged.adds.values()) {
       const auto = m.source !== OFFICIAL && staged.auto(m) ? 'updates on its own' : ''
       rows.push(
-        `+ ${m.id}  ${p.dim([m.source === OFFICIAL ? 'The official marketplace' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(' · '))}`,
+        `+ ${m.id}  ${p.dim([m.source === OFFICIAL ? 'Built in' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(SEP))}`,
       )
     }
 
@@ -166,7 +167,7 @@ export class Review {
       const m = staged.marketplaces.find((x) => x.source === source)
       const stay = (m?.entries ?? []).filter((e) => !e.default && installed.has(e.name) && picked.has(e.name))
       rows.push(
-        `- ${m?.id ?? source}  ${p.dim([m?.shown ?? shownSource(source), stay.length > 0 ? `its ${counted(stay.length)} installed keep working` : ''].filter(Boolean).join(' · '))}`,
+        `- ${m?.id ?? source}  ${p.dim([m?.shown ?? shownSource(source), stay.length > 0 ? `its ${counted(stay.length)} installed keep working` : ''].filter(Boolean).join(SEP))}`,
       )
     }
 
@@ -202,7 +203,7 @@ export class Review {
         : []),
       ...(counts.length > 0
         ? [
-            ` ${p.bold('Palettes')} ${p.dim(`(${counts.join(' · ')})`)}`,
+            ` ${p.bold('Palettes')} ${p.dim(`(${counts.join(SEP)})`)}`,
             ...names.map((e) => palette('+', e)),
             ...dropped.map((e) => palette('-', e)),
             ...renewed.map((e) => palette(MARKS.update, e)),
@@ -225,7 +226,7 @@ export class Review {
       renewed > 0 ? `${renewed} updated` : '',
     ]
       .filter(Boolean)
-      .join(' · ')
+      .join(SEP)
   }
 
   private progressLines(): string[] {

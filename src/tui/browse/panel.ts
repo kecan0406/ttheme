@@ -6,6 +6,7 @@ import { isRemote } from '../../store/sources.ts'
 import { fit, wrapText } from '../ansi.ts'
 import type { Hint } from '../bar.ts'
 import { PaletteList } from '../palette-prompt.ts'
+import { SEP } from '../parts.ts'
 import { ansiFg, FG_RESET, MARKS, type Paint } from '../style.ts'
 import { button, cap, edge, FAILED, MIN_ITEMS, more, whereOf } from './draw.ts'
 import type { Network } from './network.ts'
@@ -104,7 +105,7 @@ export class Panel {
         ...(failure ? wrapText(failure, width).map((l) => p.error(l)) : []),
         ...(pending.length > 0 ? ['', ...pending.flatMap((s) => wrapText(s, width))] : []),
       ],
-      brief: [auto, ...pending].join(' · '),
+      brief: [auto, ...pending].join(SEP),
     }
   }
 
@@ -262,7 +263,7 @@ export class Panel {
 
       return [
         `${p.bold(row.name)}${row.native ? ` ${p.dim(row.native)}` : ''}`,
-        p.dim(`${counted(members.length)} · ${installed} installed`),
+        p.dim(`${counted(members.length)}${SEP}${installed} installed`),
         '',
       ]
     }
@@ -279,20 +280,20 @@ export class Panel {
 
     const e = row.entry
     const fails = gateFailures(e)
-    const gate = `Gate ${GATE_RULES.length - fails.length}/${GATE_RULES.length}`
+    const gate = `Contrast ${GATE_RULES.length - fails.length}/${GATE_RULES.length}`
     const pictures = e.pictures?.length ?? 0
 
     const extras = [
       ...(pictures > 0 ? [`${pictures} picture${pictures === 1 ? '' : 's'}`] : []),
       ...(e.from ? [`From ${e.from}`] : []),
       ...(e.base ? [`Base ${e.base}`] : []),
-    ].join(' · ')
+    ].join(SEP)
 
-    const others = fails.length > 1 ? ` · +${fails.length - 1}` : ''
+    const others = fails.length > 1 ? `${SEP}+${fails.length - 1}` : ''
 
     return [
       `${this.host.color ? p.bold(`${ansiFg(e.cursor)}${e.name}${FG_RESET}`) : e.name}  ${p.dim(this.state(e))}`,
-      fails[0] === undefined ? p.dim(`${gate} · passes`) : `${gate} · ${p.bold(MARKS.miss)} ${fails[0]}${others}`,
+      fails[0] === undefined ? p.dim(`${gate}${SEP}passes`) : `${gate}${SEP}${p.bold(MARKS.miss)} ${fails[0]}${others}`,
       fit(p.dim(extras), width),
     ]
   }
@@ -304,8 +305,12 @@ export class Panel {
     const state = now && was ? 'Installed' : now ? 'Will install' : was ? 'Will remove' : 'Not installed'
 
     const update =
-      now && staged.outdated(entry.name) ? (staged.renew.has(entry.name) ? ' · Will update' : ' · Update ready') : ''
+      now && staged.outdated(entry.name)
+        ? staged.renew.has(entry.name)
+          ? `${SEP}Will update`
+          : `${SEP}Update ready`
+        : ''
 
-    return `${state}${update}${this.host.startup === entry.name ? ' · Default' : ''}`
+    return `${state}${update}${this.host.startup === entry.name ? `${SEP}Default` : ''}`
   }
 }

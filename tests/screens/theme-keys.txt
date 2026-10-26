@@ -1,24 +1,24 @@
- ◆ konata · Lucky☆Star
-
- ╭─ Image ───────────────────────────────────────────────────────╮
- │ This term╭─ Help ───────────────────────────────────────────────────────────────────╮
- ╰──────────│                                                                          │
- ╭─ Palette │  Move      ↑↓ j k  the image, the palette, then Apply  ·  home  end      │
- │ Backgroun│  Image     Images  ←→  , .  pick one  ·  D removes it  ·  f  finds one   │
- │ Foregroun│            enter on the empty frame  ·  finds the first one              │
- │ Cursor   │            ←→ h l step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all      │
- │ Selection│            space  hides  ·  c  colors  ·  y  copies who drew it          │
- ├─ ANSI ───│  Palette   enter  ·  tunes its colors full screen, keeps its own tone    │
- │ Black    │            ?  there lists its keys  ·  esc leaves it                     │
- │ Red      │  Apply     enter on Apply, or ⇧enter anywhere  ·  saves, asks where      │
- │ Green    │  Save      s  ·  keeps the picture                                       │
- │ Yellow   │  Cancel    esc  ·  back to the list, dropping picture changes since s    │
- │ Blue     │  Close     ?  esc                                                        │
- │ Magenta  │                                                                          │
- │ Cyan     ╰──────────────────────────────────────────────────────────────────────────╯
- │ White        .83 .012 260°✗   .95 .020 257°                   │
- ├───────────────────────────────────────────────────────────────┤
- │ ▶ [Edit palette]  tunes its colors full screen                │
- ╰───────────────────────────────────────────────────────────────╯
-      Apply   saves and wears it in this tab
+ ◆ konata  Lu╭─ Help ────────────────────────────────────────────────────────────────╮
+             │                                                                       │
+ ╭─ Picture ─│  Move                                                                 │
+ │ This termi│    ↑↓  j  k   Move between rows                                       │
+ ╰───────────│    home  end  Go to the first or last row                             │
+ ╭─ Palette ─│  Picture                                                              │
+ │ Background│    ←→  ,  .   Choose a picture                                        │
+ │ Foreground│    f          Find a picture online                                   │
+ │ Cursor    │    D          Remove the picture                                      │
+ │ Selection │    ←→  h  l   Change size, position or opacity                        │
+ ├─ ANSI ────│    ⇧←→        Change it by 10                                         │
+ │ Black     │    1-9        Place it                                                │
+ │ Red       │    =  +       Reset this row, or every row                            │
+ │ Green     │    space      Hide or show the picture                                │
+ │ Yellow    │    c          Own colors or tinted                                    │
+ │ Blue      │    y          Copy the artist credit                                  │
+ │ Magenta   │  Palette                                                              │
+ │ Cyan      │    enter      Edit its colors full screen                             │
+ │ White     │  Finish                                                               │
+ ├───────────│    s          Save the picture                                        │
+ │ ▶ [Edit pa│  ↓ 3 more                                                             │
+ ╰───────────│                                                                       │
+      Apply  ╰───────────────────────────────────────────────────────────────────────╯
  [HELP]                                                                                 ? esc close

@@ -49,8 +49,7 @@ import { MARKS } from './style.ts'
 
 const ROWS = BASE.length + PAIRS.length
 
-const LEAVE =
-  'esc  ctrl+c  leaves, asking first when something changed: y saves, n discards, esc keeps editing  ·  ctrl+c  again discards'
+const LEAVE = 'Asks first when something changed: y saves, n discards, esc keeps editing. A second ctrl+c discards.'
 
 const UNBUILT = `The builder needs a window of at least ${TABS_COLS}×${TABS_ROWS}`
 
@@ -419,120 +418,202 @@ export class PaletteEditor {
     const others = (this.options.palettes ?? []).length > 0
     const roomy = list && this.roomy
     const when = (on: boolean, key: string) => (on ? { run: () => this.press(key) } : {})
-    const close: Topic = { label: 'Close', text: '?  esc', run: () => {} }
+    const close: Topic = { group: 'Help', keys: '?  esc', does: 'Close help', run: () => {} }
+
+    const leave = (on: boolean): Topic => ({
+      group: 'Finish',
+      keys: 'esc  ctrl+c',
+      does: 'Leave',
+      more: LEAVE,
+      ...when(on, 'esc'),
+    })
 
     const pictures: Topic[] = this.options.find
       ? [
           {
-            label: 'Pictures',
-            text: 'p  finds one on the boorus, tried on in these colors',
+            group: 'Picture',
+            keys: 'p',
+            does: 'Find a picture',
+            more: 'Searches the boorus and tries each picture on in these colors.',
             ...when(this.mode !== 'tune', 'p'),
           },
-          { label: '', text: 'b  shows or hides it behind the editor', ...when(list, 'b') },
+          { group: 'Picture', keys: 'b', does: 'Show or hide the picture', ...when(list, 'b') },
           {
-            label: '',
-            text: 'Drop a picture on the window, or paste one, its path or its link  ·  ctrl+v  takes the clipboard’s',
+            group: 'Picture',
+            keys: 'ctrl+v',
+            does: 'Paste a picture',
+            more: 'Drop a picture on the window, or paste one, its path or its link.',
           },
         ]
       : []
 
     if (this.mode === 'seeds') {
       return [
-        { label: 'Seeds', text: '↑↓  a seed  ·  ←→  a step  ·  ⇧←→  five steps, ten on the hue  ·  home  end' },
-        { label: 'Slots', text: 'enter  keeps these seeds and tunes the slots one by one', ...when(true, 'enter') },
-        { label: 'Open', text: 'o  starts from another palette’s colors', ...when(others, 'o') },
+        { group: 'Seeds', keys: '↑↓', does: 'Choose a seed' },
+        { group: 'Seeds', keys: '←→', does: 'Change it by a step' },
+        { group: 'Seeds', keys: '⇧←→', does: 'Change it by five steps', more: 'Ten steps on the hue.' },
+        { group: 'Seeds', keys: 'home  end', does: 'Set it to either end' },
+        {
+          group: 'Seeds',
+          keys: 'enter',
+          does: 'Keep the seeds and tune each color',
+          more: 'The seeds stay behind once you move on.',
+          ...when(true, 'enter'),
+        },
+        { group: 'Seeds', keys: 'o', does: 'Start from another palette', ...when(others, 'o') },
         ...pictures,
-        { label: 'Leave', text: LEAVE, ...when(true, 'esc') },
+        leave(true),
         close,
       ]
     }
 
     return [
+      { group: 'Move', keys: '↑↓', does: 'Move between colors' },
+      { group: 'Move', keys: '←→', does: 'Switch between normal and bright' },
+      { group: 'Move', keys: 'home  end', does: 'Go to the first or last color' },
+      { group: 'Move', keys: 'pgup  pgdn', does: 'Go to the base or the ANSI colors' },
       {
-        label: 'Move',
-        text: '↑↓  a slot  ·  ←→  normal or bright  ·  home  end  ·  pgup  the base colors  ·  pgdn  the ANSI ones',
-      },
-      {
-        label: 'Misses',
-        text: 'n  N  the next and last slot the gate misses',
+        group: 'Contrast',
+        keys: 'n  N',
+        does: 'Go to the next or previous color that fails',
         ...when(list && this.misses().size > 0, 'n'),
       },
-      { label: 'Tune', text: 'enter  tab  opens the picker under the slot', ...when(plain, 'enter') },
       {
-        label: '',
-        text: '↑↓  lightness  ·  ←→  chroma  ·  ⇧←→  hue by 5  ·  ,  .  hue by 1  ·  pgup  pgdn  lightness ×5  ·  home  end  the ends  ·  0-9  jump',
+        group: 'Contrast',
+        keys: 'f',
+        does: 'Fix the colors that fail',
+        more: 'Moves only the colors a contrast check fails, as little as it can.',
+        ...when(list, 'f'),
       },
-      { label: '', text: 'enter  keeps  ·  a click outside the picker keeps', ...when(tuning, 'enter') },
+      { group: 'Tune a color', keys: 'enter  tab', does: 'Open the picker', ...when(plain, 'enter') },
+      { group: 'Tune a color', keys: '↑↓', does: 'Lightness' },
       {
-        label: '',
-        text: `u  undoes a step  ·  ctrl+r  redoes it  ·  r  or a click on base${this.roomy ? ` or ${MARKS.off}` : ''}  puts the slot back ${this.based()}`,
-        ...when(tuning, 'u'),
+        group: 'Tune a color',
+        keys: '←→',
+        does: 'Chroma',
+        more: `Chroma stops at what sRGB can show. What lightness or hue took away comes back while you tune, marked ${MARKS.off}.`,
+      },
+      { group: 'Tune a color', keys: '⇧←→  ,  .', does: 'Hue by 5, or by 1' },
+      { group: 'Tune a color', keys: 'pgup  pgdn', does: 'Lightness by 5' },
+      {
+        group: 'Tune a color',
+        keys: 'home  end  0-9',
+        does: 'Jump the channel moved last',
+        more: 'home and end go to either end, a digit to that tenth of the way.',
       },
       {
-        label: '',
-        text: 'esc  cancels the tune and puts back every slot it moved',
-        ...when(tuning && !this.compare, 'esc'),
-      },
-      {
-        label: 'Contrast',
-        text: `tab  while tuning  ·  ${MARKS.contrast} moves lightness until the ratio to the color it is read against changes  ·  home  the gate’s floor  ·  1-9  that ratio`,
+        group: 'Tune a color',
+        keys: 'tab',
+        does: `Set lightness by contrast (${MARKS.contrast})`,
+        more: 'Lightness follows the contrast with the color it is read on. home takes the lowest that passes, 1-9 a ratio.',
         ...when(tuning, 'tab'),
       },
       {
-        label: 'Chroma',
-        text: `Stops at the sRGB edge  ·  what lightness or hue takes away comes back while you tune, where it fits again (${MARKS.off})`,
-      },
-      {
-        label: 'Scope',
-        text: 'a  while tuning  ·  this, pair, normals, brights or accents  ·  the slots in it move by the same step, each keeping its own color',
+        group: 'Tune a color',
+        keys: 'a',
+        does: 'Choose which colors move together',
+        more: 'This color, its pair, the normals, the brights or the accents. Each keeps its own color and moves by the same step.',
         ...when(tuning && ansi, 'a'),
       },
       {
-        label: 'Relations',
-        text: 'g  the lightness, chroma and hue of every ANSI color at once, and the relations the gate checks',
-        ...when(true, 'g'),
-      },
-      { label: 'Sample', text: '⇧←→  another tab  ·  the slot under the cursor is underlined where it is used' },
-      { label: 'Where', text: 'w  dims every part of the sample that does not use the slot', ...when(roomy, 'w') },
-      {
-        label: 'Inspect',
-        text: 'i  or a click on the sample finds the slots a spot uses  ·  ←→↑↓  move  ·  enter  goes to the slot  ·  esc  leaves',
-        ...when(roomy && !this.inspect, 'i'),
+        group: 'Tune a color',
+        keys: 'enter',
+        does: 'Keep',
+        more: 'A click outside the picker keeps too.',
+        ...when(tuning, 'enter'),
       },
       {
-        label: 'Link',
-        text: 'l  makes a bright follow its normal: tuning the normal moves it, tuning the bright alone unlinks it  ·  =  snaps it to its normal',
+        group: 'Tune a color',
+        keys: 'esc',
+        does: 'Cancel the tune',
+        more: 'Every color the tune moved goes back.',
+        ...when(tuning && !this.compare, 'esc'),
+      },
+      { group: 'Edit', keys: 'u', does: 'Undo', ...when(list || tuning, 'u') },
+      { group: 'Edit', keys: 'ctrl+r', does: 'Redo', ...when(list || tuning, 'ctrl-r') },
+      { group: 'Edit', keys: 'c', does: 'Copy the color' },
+      { group: 'Edit', keys: 'v', does: 'Paste a color' },
+      {
+        group: 'Edit',
+        keys: 'r',
+        does: `Put it back ${this.based()}`,
+        more: `A click on base${this.roomy ? ` or ${MARKS.off}` : ''} in the picker does the same.`,
+      },
+      { group: 'Edit', keys: 'R', does: 'Put every color back' },
+      {
+        group: 'Edit',
+        keys: '#',
+        does: 'Type a color',
+        more: '#rrggbb, rgb(r g b) or oklch(l c h). A paste works too.',
+        ...when(true, '#'),
+      },
+      ...(this.tone ? [] : [{ group: 'Edit', keys: '*', does: 'Mark it a signature color' }]),
+      {
+        group: 'Link',
+        keys: 'l',
+        does: 'Link a bright to its normal',
+        more: 'Tuning the normal moves a linked bright. Tuning the bright alone unlinks it.',
         ...when(ansi, 'l'),
       },
-      { label: 'Changed', text: 'm  shows only the slots that changed', ...when(roomy, 'm') },
-      { label: 'Type', text: '#  then #rrggbb, rgb(r g b) or oklch(l c h)  ·  a paste works too', ...when(true, '#') },
+      { group: 'Link', keys: '=', does: 'Snap the bright to its normal' },
       {
-        label: 'Slot',
-        text: `c  copies  ·  v  pastes  ·  r  puts it back ${this.based()}, R all of them${this.tone ? '' : '  ·  *  marks it a signature color'}`,
+        group: 'View',
+        keys: 'g',
+        does: 'Show the relations',
+        more: 'The lightness, chroma and hue of all sixteen ANSI colors at once, and the relations the contrast checks hold.',
+        ...when(true, 'g'),
       },
-      { label: 'Fix', text: 'f  moves the colors the gate misses', ...when(list, 'f') },
+      {
+        group: 'View',
+        keys: '⇧←→',
+        does: 'Switch the sample tab',
+        more: 'The color under the cursor is underlined where the sample uses it.',
+      },
+      { group: 'View', keys: 'w', does: 'Dim what does not use this color', ...when(roomy, 'w') },
+      {
+        group: 'View',
+        keys: 'i',
+        does: 'Inspect the sample',
+        more: 'A click on the sample does the same. Arrows move, enter goes to the color, esc leaves.',
+        ...when(roomy && !this.inspect, 'i'),
+      },
+      { group: 'View', keys: 'm', does: 'Show only the changed colors', ...when(roomy, 'm') },
+      {
+        group: 'View',
+        keys: 'space',
+        does: 'Compare with where you started',
+        more: 'Shows the colors you started from, on the terminal too.',
+        ...when(true, ' '),
+      },
       ...(this.tone
         ? []
-        : [{ label: 'Open', text: 'o  takes another palette’s colors', ...when(list && others, 'o') }]),
+        : [
+            {
+              group: 'Palette',
+              keys: 'o',
+              does: 'Take another palette’s colors',
+              ...when(list && others, 'o'),
+            },
+            {
+              group: 'Palette',
+              keys: 'I',
+              does: 'Import colors from a palette or a share code',
+              ...when(roomy, 'I'),
+            },
+          ]),
       ...(this.options.exports
         ? [
             {
-              label: 'Export',
-              text: 'x  copies the share code, an add command or the palette file',
+              group: 'Palette',
+              keys: 'x',
+              does: 'Copy the share code, an add command or the file',
               ...when(roomy, 'x'),
             },
           ]
         : []),
-      ...(this.tone
-        ? []
-        : [{ label: 'Import', text: 'I  takes colors from another palette or a share code', ...when(roomy, 'I') }]),
-      { label: 'Gate', text: `${MARKS.miss}  marks every slot whose own checks miss, and each miss names its slots` },
-      { label: 'History', text: 'u  undo', ...when(list || tuning, 'u') },
-      { label: '', text: 'ctrl+r  redo', ...when(list || tuning, 'ctrl-r') },
       ...pictures,
-      { label: 'Compare', text: 'space  shows the colors you started from, on the terminal too', ...when(true, ' ') },
-      { label: 'Save', text: 's  saves', ...when(true, 's') },
-      { label: 'Leave', text: LEAVE, ...when(plain && !this.compare, 'esc') },
+      { group: 'Finish', keys: 's', does: 'Save', ...when(true, 's') },
+      leave(plain && !this.compare),
       close,
     ]
   }
@@ -544,7 +625,7 @@ export class PaletteEditor {
 
     return [
       ...(this.tone ? [] : ([[MARKS.signature, 'signature color']] as Legend)),
-      [MARKS.miss, 'misses the gate'],
+      [MARKS.miss, 'fails a contrast check'],
       [MARKS.on, 'changed'],
       [MARKS.linked, 'follows its normal'],
       [MARKS.off, 'its base color'],
@@ -950,7 +1031,7 @@ export class PaletteEditor {
       if (this.clip) {
         this.set(this.slot(), this.clip, 'paste')
       } else {
-        this.say('Nothing copied yet — c copies a slot')
+        this.say('Nothing copied yet — c copies a color')
       }
     } else if (key === 'r') {
       this.set(this.slot(), this.original[this.slot()] as Hex, 'reset')
@@ -1258,7 +1339,7 @@ export class PaletteEditor {
     const bad = this.misses()
 
     if (bad.size === 0) {
-      this.say('The gate passes', 'ok')
+      this.say('Passes every contrast check', 'ok')
 
       return
     }
@@ -1476,7 +1557,7 @@ export class PaletteEditor {
     this.scope = scope
     this.hold()
     const n = this.scoped().length
-    this.say(n > 1 ? `${n} slots move together` : 'This slot moves alone')
+    this.say(n > 1 ? `${n} colors move together` : 'This color moves alone')
   }
 
   private endTune(): void {
@@ -1746,7 +1827,7 @@ export class PaletteEditor {
     this.say(
       whole
         ? `Signature: ${this.signature.join(', ')}${dropped ? ` — ${dropped} dropped` : ''}`
-        : `The signature needs three slots — ${this.signature.length} marked`,
+        : `The signature needs three colors — ${this.signature.length} marked`,
       whole ? 'ok' : 'warn',
     )
   }
@@ -1766,7 +1847,7 @@ export class PaletteEditor {
 
     if (moves.length === 0) {
       const passes = check(theme).length === 0
-      this.say(passes ? 'Already passes the gate' : 'No color change fixes it', passes ? 'ok' : 'warn')
+      this.say(passes ? 'Already passes every contrast check' : 'No color change fixes it', passes ? 'ok' : 'warn')
 
       return
     }
@@ -1784,7 +1865,7 @@ export class PaletteEditor {
     this.list = next
     this.lch = next.map((c, i) => (c === was[i] ? (this.lch[i] as Oklch) : this.lchOf(c)))
     this.say(
-      `Moved ${moves.length} ${moves.length === 1 ? 'color' : 'colors'}${left.length === 0 ? ' — passes the gate' : ' closer to the gate'}`,
+      `Moved ${moves.length} ${moves.length === 1 ? 'color' : 'colors'}${left.length === 0 ? ', and every check passes' : ', closer to passing'}`,
       left.length === 0 ? 'ok' : 'info',
     )
   }

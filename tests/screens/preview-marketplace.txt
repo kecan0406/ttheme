@@ -1,4 +1,4 @@
- [Preview]  Browse   ⇧tab switch
+ [Preview]  Browse   ⇧tab Browse
  Preview (2/2)
  ╭─────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
@@ -21,4 +21,4 @@
 
 
 
- [PREVIEW] enter apply   tab edit   ? keys                              esc restore   ttheme ‹version›
+ [PREVIEW] enter use   tab edit   ? keys                                 esc cancel   ttheme ‹version›

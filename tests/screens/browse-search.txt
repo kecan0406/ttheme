@@ -3,10 +3,10 @@
  │ ⌕ Search… ‹hint› │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
                                                    ╭─ Marketplaces ───────────────────────────────╮
-     ← Back                                        │ Repositories with the ttheme-marketplace     │
-                                                   │ topic, read every half hour into one list    │
+     ← Back                                        │ Marketplaces people publish on GitHub, under │
+                                                   │ the ttheme-marketplace topic                 │
  ▌ [⌕ Load the marketplace list]  space loads it   │                                              │
-                                                   │ Load the marketplace list · space loads it   │
+                                                   │ Load the marketplace list — space loads it   │
                                                    │                                              │
                                                    │ Not listed yet? + Add marketplace adds one   │
                                                    │ by its owner/repo                            │

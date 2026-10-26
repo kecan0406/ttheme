@@ -118,7 +118,7 @@ function browseIo(
           shown: shownSource(source),
           entries: inWear(home, readMarketplaceDir(source, id, cachedEntries(home, OFFICIAL), warning(false))),
           auto: false,
-          status: 'read in place',
+          status: 'always up to date',
         }
       }
 

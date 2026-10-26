@@ -1,24 +1,24 @@
-# Contrast gate
+# Contrast checks
 
-The contrast gate checks that a palette stays readable in a terminal: text
+The contrast checks make sure a palette stays readable in a terminal: text
 against its background, and the colors programs use to mean something. This page
 lists each rule and the reasoning and sources behind it.
 
 ## Check a palette
 
 ```sh
-ttheme check miku         # the gate's numbers, and colors that would pass
+ttheme check miku         # every check's numbers, and colors that would pass
 ttheme check --fix miku   # write those colors in
 ```
 
-The palette editor measures every slot as you tune it, Browse shows a
+The palette editor measures every color as you tune it, Browse shows a
 palette's score in its panel, and the [builder](https://ttheme.dev/builder)
-shows the gate under its mock terminal.
+shows the checks under its mock terminal.
 
 ## Principles
 
-**Every rule is a recommendation.** The gate tells a palette's author what it
-misses; it never refuses a palette. The official marketplace holds its own
+**Every rule is a recommendation.** The checks tell a palette's author what it
+fails; they never refuse a palette. The official marketplace holds its own
 palettes to every rule, and even there a palette can be let off one with a
 written reason.
 
@@ -28,7 +28,7 @@ brighten bold, and lean on red and green to mean failure and success. A rule
 earns its place by matching something programs actually draw by default.
 
 **Standards first, models where standards stop.** Where a contrast ratio
-answers the question, the gate uses the standard ratio. Where it cannot, such as
+answers the question, the checks use the standard ratio. Where it cannot, such as
 whether two colors at text size read as one or what a color-blind reader sees,
 it uses a published perception model rather than a guessed number.
 
@@ -36,7 +36,7 @@ it uses a published perception model rather than a guessed number.
 the same rules hold in both modes.
 
 **Say what cannot be fixed.** Some pairs programs draw cannot be readable in any
-palette. The gate leaves them out and says why.
+palette. The checks leave them out and say why.
 
 ## The rules
 
@@ -48,14 +48,14 @@ palette. The gate leaves them out and says why.
 | `light-ansi` | ANSI 7 and 15 on background ≥ 7:1 | WCAG AAA, body text |
 | `ansi8-visible` | ANSI 8 on background ≥ 3:1 | WCAG's floor for normal vision |
 | `selection` | foreground on the selection ≥ 7:1 | WCAG AAA, body text |
-| `ansi-role` | each accent's hue inside its role's band | the meaning of each ANSI slot |
+| `ansi-role` | each accent's hue inside its role's band | the meaning of each ANSI color |
 | `bright-follows` | a bright within 25° of its normal | terminals that brighten bold |
 | `distinct` | no two accents in a row that read as one color | a size model of color difference |
 | `ansi0-on-accents` | ANSI 0 as text on ANSI 1–6 ≥ 4.5:1 | WCAG AA, programs' colored grounds |
 | `ansi7-on-ansi8` | ANSI 7 as text on ANSI 8 ≥ 3:1 | fish's selection |
 | `cvd-red-green` | red and green apart for a deuteranope | a dichromat simulation |
 
-ANSI slots that a palette names in its signature, the colors that identify its
+ANSI colors that a palette names in its signature, the colors that identify its
 character, are exempt from `ansi-role`, and a pair of them from the comparisons.
 
 ### Body text: 7:1
@@ -84,7 +84,7 @@ grounds.
 
 The most common colored ground in a terminal carries black text: tmux's status
 line (before 3.8), htop's function-key bar and column header, `ls`'s colored
-directories, yazi. So the gate measures ANSI 0 as text on each of ANSI 1–6 at
+directories, yazi. So the checks measure ANSI 0 as text on each of ANSI 1–6 at
 the same AA level as any other text. In a dark palette ANSI 0 also stays dark
 (luminance 0.15 at most), as black should; in a light palette this rule is what
 makes ANSI 0 light.
@@ -98,7 +98,7 @@ as secondary text.
 
 ### Roles and brights
 
-Each ANSI slot has a meaning programs rely on, such as red for errors, green for
+Each ANSI color has a meaning programs rely on, such as red for errors, green for
 success and yellow for warnings, so each accent's hue stays inside its role's
 band. A color-naming model was not used for the bands: at the lightness that
 reads on a dark ground, such a model calls most reds pink, while a terminal's
@@ -112,11 +112,11 @@ in another. A bright therefore has to read as the same color as its normal.
 ### Colors that read as one
 
 Whether two colors can be told apart depends on how large they are, and a glyph
-is small. The gate uses Stone, Szafir and Setlur's model of noticeable color
+is small. The checks use Stone, Szafir and Setlur's model of noticeable color
 difference as a function of size: along each CIELAB axis the noticeable
 difference is `p · (A + B / s)`, with `A = (10.16, 10.68, 10.70)` and
 `B = (1.50, 3.08, 5.74)` for L\*, a\* and b\*, `s` the size in degrees and `p` the
-share of observers who notice. The gate takes `s = 1/3°`, the smallest size the
+share of observers who notice. The checks take `s = 1/3°`, the smallest size the
 model was fitted to, and `p = 0.5`: two accents in a row read as one color when
 they differ by less than 7.33 in L\*, 9.96 in a\* and 13.96 in b\* all at once. A
 terminal glyph is smaller still, so if anything the rule is lenient.
@@ -125,7 +125,7 @@ terminal glyph is smaller still, so if anything the rule is lenient.
 
 About 8% of men and 0.4% of women of European descent, and 4–6.5% of Chinese and
 Japanese men, have a red-green color vision deficiency (Birch, 2012). `git diff`,
-test runners and `ls` lean on exactly those two colors. The gate simulates a
+test runners and `ls` lean on exactly those two colors. The checks simulate a
 deuteranope, the most common form, with the dichromat projection of Viénot,
 Brettel and Mollon, and holds the simulated red and green, normal and bright, to
 the size model above. Separating them takes a difference in lightness, since
@@ -133,7 +133,7 @@ that is what a deuteranope still sees.
 
 ## The contrast formula
 
-The gate uses WCAG 2's relative luminance and contrast ratio, with the sRGB
+The checks use WCAG 2's relative luminance and contrast ratio, with the sRGB
 linearization constant WCAG 2.2 gives (0.04045).
 
 APCA was considered and is not used. Its license allows it for WCAG guidelines
@@ -150,14 +150,14 @@ and kitty take a WCAG ratio for the same adjustment.
 
 A palette is light when its background is lighter than its foreground. It
 mirrors the dark layout: ANSI 0 is light, ANSI 7 and 15 are dark, and ANSI 8
-stays a middle grey. Keeping the slot names literal, ANSI 0 dark and ANSI 7
+stays a middle grey. Keeping the color names literal, ANSI 0 dark and ANSI 7
 light, works only while accents stay at middle tones; once they are dark enough
 to read at 4.5:1 on a light ground, black text on them is lost, and that is the
 pair programs draw all the time. The mirror keeps every rule above unchanged in
 both modes. ANSI 8 must not move toward the background in either: suggestions
 drawn in it would disappear.
 
-## What the gate does not ask for
+## What the checks do not ask for
 
 - **White text on an accent, and the foreground on blue.** `ls` draws setuid and
   sticky directories as white on red and blue, yazi and fish draw counts and

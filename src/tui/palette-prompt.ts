@@ -7,7 +7,7 @@ import { Field } from './field.ts'
 import { capped } from './keycaps.ts'
 import { type Inbound, lineStep } from './keys.ts'
 import { chase } from './motion.ts'
-import { moreOf } from './parts.ts'
+import { moreOf, SEP } from './parts.ts'
 import { Inline } from './screen.ts'
 import { ansiBar, ansiFg, ansiSquares, FG_RESET, INK_RESET, MARKS, type Paint, painter } from './style.ts'
 import { HIDE_CURSOR, PASTES, within } from './terminal.ts'
@@ -1087,15 +1087,15 @@ export class PalettePrompt {
     const title = this.scope === 'catalog' ? 'Catalogs' : 'Palettes'
 
     if (this.state === 'submit') {
-      return [`${dim('◇')} ${title} ${dim(`· ${this.list.pickedCount()} picked`)}`]
+      return [`${dim('◇')} ${title} ${dim(`${MARKS.sep} ${this.list.pickedCount()} picked`)}`]
     }
 
     if (this.state === 'cancel') {
-      return [`${dim(`◇ ${title} · cancelled`)}`]
+      return [`${dim(`◇ ${title}${SEP}cancelled`)}`]
     }
 
     const typed = this.field.value
-    const head = `${bar(MARKS.current)} ${title} ${dim(`(${this.list.matched()}/${this.list.total()} · ${this.list.pickedCount()} picked)`)}`
+    const head = `${bar(MARKS.current)} ${title} ${dim(`(${this.list.matched()}/${this.list.total()}${SEP}${this.list.pickedCount()} picked)`)}`
     const example = this.hint.text()
     const search = `${bar('│')}    ${typed ? `${typed}_` : dim(`Search…${example ? ` e.g. ${example}` : ''}`)}`
     const { lines, above, below } = this.list.window()
@@ -1111,13 +1111,13 @@ export class PalettePrompt {
 
     const out = [above > 0 ? moreOf(-1, above) : '', below > 0 ? moreOf(1, below) : ''].filter(Boolean).join('  ')
     const more = out ? `${bar('│')} ${dim(out)}` : bar('│')
-    const fold = this.scope === 'catalog' ? '' : ' · ←→ fold'
+    const fold = this.scope === 'catalog' ? '' : '   ←→ fold'
     const go = this.go ?? (this.scope === 'catalog' ? 'continue' : 'install')
 
     const hint =
       this.state === 'error'
         ? `${bar('└')} ${warn(this.error)}`
-        : `${bar('└')} ${dim(capped(`↑↓ move${fold} · space pick · type to filter · enter ${go} · esc cancel`))}`
+        : `${bar('└')} ${dim(capped(`↑↓ move${fold}   space pick   type to filter   enter ${go}   esc cancel`))}`
 
     return [head, search, ...body, more, hint]
   }

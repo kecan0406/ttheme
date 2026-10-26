@@ -39,7 +39,7 @@ import {
 } from './editor-paint.ts'
 import { capped } from './keycaps.ts'
 import { CHANNELS, CONTRAST, type PaletteEditor } from './palette-editor.ts'
-import { boxEdge, boxed, pillOf } from './parts.ts'
+import { boxEdge, boxed, pillOf, SEP } from './parts.ts'
 import { type Art, type Box, type Drawn, LIGHTS, type Mock } from './picker-art.ts'
 import { BG_RESET, FG_RESET, INK_RESET, MARKS, open, type Paint, painter, RESET, surfaceOf } from './style.ts'
 import { cover, keyZone, zone } from './zones.ts'
@@ -302,12 +302,12 @@ function aboutBox(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, side: n
   const label = slotLabel(slot)
   const width = boxWidth(side)
   const inner = width - 2
-  const title = ` ${label.name}${slot >= BASE.length ? ` · ${label.about}` : ''} `
+  const title = ` ${label.name}${slot >= BASE.length ? ` (${label.about})` : ''} `
   const lines = [` ${p.dim(slotUse(slot))}`]
 
   if (slot >= 2) {
     const uses = usesOf(layout, slot).filter((use) => use.count > 0)
-    const here = uses.length > 0 ? uses.map((use) => `${use.name} ${use.count}`).join(' · ') : 'none'
+    const here = uses.length > 0 ? uses.map((use) => `${use.name} ${use.count}`).join(SEP) : 'none'
     const toggle = keyZone('w', e.where ? pillOf(p, 'w where') : p.dim('w where'))
     lines.push(spread(` ${p.dim('Shown in')} ${here}`, `${toggle} `, inner))
   }
@@ -413,7 +413,7 @@ function planeLines(
 
       line += p.color
         ? `${p.fg(color(lightnessAt(r * 2, rows), share))}${p.bg(color(lightnessAt(r * 2 + 1, rows), share))}▀${INK_RESET}`
-        : '·'
+        : '.'
     }
 
     return spot({ kind: 'plane', row: r, rows }, line)
@@ -450,10 +450,10 @@ function linkLine(e: PaletteEditor, p: Paint, width: number): string | undefined
 
   const choices = bright
     ? pair.on
-      ? [`⇠ Linked to ${other} · L ${lift}`, `⇠ ${other} · L ${lift}`, `⇠ ${other}`]
+      ? [`⇠ Linked to ${other}${SEP}L ${lift}`, `⇠ ${other}${SEP}L ${lift}`, `⇠ ${other}`]
       : [`Not linked to ${other}`, `Not linked`]
     : pair.on
-      ? [`Bright follows · L ${lift}`, `Bright follows`]
+      ? [`Bright follows${SEP}L ${lift}`, `Bright follows`]
       : ['Its bright moves on its own', 'Moves on its own']
 
   const text = choices.find((choice) => cells(choice) <= room) ?? choices.at(-1) ?? ''
@@ -661,7 +661,7 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
   const side = layout.side
   const failing = gateMisses(e)
   const dot = e.changedOnly ? p.warn(MARKS.on) : ' '
-  const gate = failing === 0 ? p.ok(`Gate ${MARKS.ok}`) : p.bold(`Gate ${MARKS.miss} ${failing}`)
+  const gate = failing === 0 ? p.ok(`Contrast ${MARKS.ok}`) : p.bold(`Contrast ${MARKS.miss} ${failing}`)
 
   const tabs = spread(
     ` ${p.bold('Colors')}  ${gate}`,
@@ -718,12 +718,12 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
 
 function topBar(e: PaletteEditor, p: Paint, width: number): string {
   const mark = p.accent(MARKS.current)
-  const titled = `${mark} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
+  const titled = `${mark} ${p.bold(e.options.title)}  ${p.dim(e.options.name)}`
   const dirty = e.dirty()
   const changes = e.changes()
   const dot = p.warn(MARKS.on)
   const unsaved = `${dot} ${p.dim('unsaved')}`
-  const counted = changes > 0 ? `${dot} ${p.dim(`unsaved · ${changes} changed`)}` : unsaved
+  const counted = changes > 0 ? `${dot} ${p.dim(`unsaved${SEP}${changes} changed`)}` : unsaved
   const states = dirty ? [counted, unsaved, dot] : ['']
 
   const buttons = [e.resettable() ? keyZone('R', p.dim('Reset')) : '', dirty ? keyZone('s', pillOf(p, 'Save')) : '']
@@ -807,8 +807,8 @@ function popoverRows(e: PaletteEditor, p: Paint, c: Colors): Cellrow[] | undefin
   const base = p.color ? `${p.bg(c.background)}${p.fg(c.foreground)}` : ''
   const dim = p.color ? `${base}${open('dim')}` : ''
   const edge = (text: string): Piece => ({ text, sgr: dim })
-  const top = '┌ Slots here '
-  const foot = `└ ${capped('enter its slot · esc')} `
+  const top = '┌ Colors here '
+  const foot = `└ ${capped('enter go to color   esc close')} `
   const slots: [string, number][] = [['text', here.text]]
 
   if (here.ground !== here.text) {

@@ -12,7 +12,7 @@ import { linked } from '../ansi.ts'
 import type { Tone } from '../bar.ts'
 import { type Help, type HelpSpot, type Legend, overlay, type Topic } from '../help.ts'
 import { cap, capped } from '../keycaps.ts'
-import { moreOf } from '../parts.ts'
+import { moreOf, SEP } from '../parts.ts'
 import { megabytes, progress } from '../pending.ts'
 import { ansiBg, ansiFg, MARKS, open, painter, RESET as R, SPINNER, slotBg, slotFg } from '../style.ts'
 import { hintKey, type KeySpot, type Zone } from '../zones.ts'
@@ -235,7 +235,7 @@ const TIPS: [string, string][] = [
   ['c', 'switches between cutouts and every post'],
   ['a', 'opens the advanced filters'],
   ['1-9', 'turn a tag of the tags row on or off'],
-  ['ctrl+v', 'tries on a picture from the clipboard — or drop one on the window'],
+  ['ctrl+v', 'tries on a picture from the clipboard'],
 ]
 
 export function heldFit(cols: number): number {
@@ -698,11 +698,11 @@ function details(lines: Line[], row: number, col: number, room: number, maxRow: 
   const file = [
     `${tile.width}×${tile.height}${info.ext ? ` ${info.ext.toUpperCase()}` : ''}`,
     ...(shown ? [megabytes(shown.bytes)] : []),
-  ].join(' · ')
+  ].join(SEP)
 
   const rated = [info.rating ?? '—', tile.score > 0 ? `★${tile.score}` : '', info.posted ?? '']
     .filter(Boolean)
-    .join(' · ')
+    .join(SEP)
 
   const tagRows = (tags: string[], most: number): Part[][] =>
     tags.length > 0 ? tagLines(tags, text, most).map((line): Part[] => [[line, '']]) : [[['—', D]]]
@@ -761,10 +761,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
     [view.palette, B + accent],
     ['  Background', D],
     ...(tile
-      ? [
-          [' · ', D] as Part,
-          ...reference(`${tile.site} ${tile.id}`, D, tile.page || undefined, siteColor(tile.siteAnsi)),
-        ]
+      ? [[SEP, D] as Part, ...reference(`${tile.site} ${tile.id}`, D, tile.page || undefined, siteColor(tile.siteAnsi))]
       : []),
   ])
   const track = Math.max(8, end - col - 21)
@@ -789,7 +786,7 @@ function tunePanel(lines: Line[], r0: number, col: number, end: number, view: Fi
         const line = lines[r0 + 2 + Math.floor((i - 1) / 3)]
         const at = col + 12 + ((i - 1) % 3) * 3
         line?.mark(at - 1, 3, { kind: 'place', at: i })
-        line?.put(at, here ? '■' : '·', here ? B + accent : D)
+        line?.put(at, here ? '■' : MARKS.sep, here ? B + accent : D)
       }
 
       value = POSITIONS[view.tune.at - 1] ?? 'center'
@@ -1004,15 +1001,15 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
 
 function transparent(shown: Shown): Part[] {
   if (shown.cut === 'on') {
-    return [[`Cut out · ${shown.clear}% transparent`, OK]]
+    return [[`Cut out${SEP}${shown.clear}% transparent`, OK]]
   }
 
   if (shown.cut === 'off') {
-    return [['Opaque · x cuts out', WARN]]
+    return [['Opaque — x cuts it out', WARN]]
   }
 
   if (shown.cut === 'failed') {
-    return [['Opaque · no cut-out', WARN]]
+    return [[`Opaque${SEP}no cut-out`, WARN]]
   }
 
   return [shown.clear > 0 ? [`${shown.clear}% transparent`, OK] : ['Opaque', WARN]]
@@ -1036,13 +1033,13 @@ function status(view: FindView, loading?: Part): Part[] | undefined {
   }
 
   if (view.waiting !== undefined) {
-    return [[`${view.slow ?? view.site} asked to slow down · ${view.waiting}s`, WARN]]
+    return [[`${view.slow ?? view.site} asked to slow down${SEP}${view.waiting}s`, WARN]]
   }
 
   if (view.fetching) {
     const { id, got, size } = view.fetching
 
-    return mention(`${spin(view)} Fetching ${named(id)} · ${progress(got, size)}`, id, WARN)
+    return mention(`${spin(view)} Fetching ${named(id)}${SEP}${progress(got, size)}`, id, WARN)
   }
 
   if (view.cutting !== undefined) {
@@ -1128,7 +1125,7 @@ function loader(lines: (Line | undefined)[], top: number, height: number, room: 
   lines[row0 + 4]?.center(
     room,
     view.sites.flatMap(({ name, arrived }, i): Part[] => [
-      ...(i ? ([['  ·  ', fg(mix(background, foreground, 0.25 * k))]] as Part[]) : []),
+      ...(i ? ([[`  ${MARKS.sep}  `, fg(mix(background, foreground, 0.25 * k))]] as Part[]) : []),
       [name, fg(mix(background, arrived ? mix(foreground, background, 0.2) : foreground, arrived ? k : 0.32 * k))],
     ]),
   )
@@ -1150,13 +1147,13 @@ function rail(lines: Line[], cols: number, view: FindView, height: number, conte
 
 function loading(view: FindView, waiting: boolean, shown: Tile[]): Part | undefined {
   if (waiting) {
-    return [`${spin(view)} ${stageLabel(view)}${stageCount(view, ' · ')}`, D]
+    return [`${spin(view)} ${stageLabel(view)}${stageCount(view, SEP)}`, D]
   }
 
   const due = shown.filter((tile) => !tile.missing)
   const ready = due.filter((tile) => tile.thumb).length
 
-  return ready < due.length ? [`${spin(view)} Loading thumbnails · ${ready}/${due.length}`, D] : undefined
+  return ready < due.length ? [`${spin(view)} Loading thumbnails${SEP}${ready}/${due.length}`, D] : undefined
 }
 
 function grid(
@@ -1308,7 +1305,7 @@ function grid(
   const stage = loading(view, waiting, shown)
   const lead = status(view, stage)
   foot(lines[rows - 1] as Line, cols, {
-    badge: 'IMAGE SEARCH',
+    badge: 'PICTURE SEARCH',
     lead,
     keys:
       quiet && lead?.[0] === stage
@@ -1317,7 +1314,7 @@ function grid(
             ['←↑↓→', 'move'],
             ['enter', 'try on'],
             ['tab', 'site'],
-            ['ctrl+v', 'picture'],
+            ['ctrl+v', 'paste'],
             ['s', 'settings'],
             ['/', 'search'],
             ['?', 'keys'],
@@ -1346,18 +1343,18 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
   ]
 
   if (tile.score > 0) {
-    meta.push([` · ★${tile.score}`, D])
+    meta.push([`${SEP}★${tile.score}`, D])
   }
 
   if (shown) {
-    meta.push([` · ${megabytes(shown.bytes)}`, D])
+    meta.push([`${SEP}${megabytes(shown.bytes)}`, D])
   }
 
   if (shown) {
     meta.push(['  ', ''], ...transparent(shown))
 
     if (view.coloring === 'original') {
-      meta.push([' · own colors', D])
+      meta.push([`${SEP}own colors`, D])
     }
   }
 
@@ -1386,18 +1383,18 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
 
   if (view.tuning) {
     foot(lines[rows - 1] as Line, cols, {
-      badge: 'IMAGE EDIT',
+      badge: 'PICTURE EDIT',
       lead: status(view),
       keys: [
-        ['↑↓', 'field'],
-        ['←→', 'step'],
+        ['↑↓', 'move'],
+        ['←→', 'change'],
         ['=', 'reset'],
         ['+', 'reset all'],
-        view.tuning.field === 1 ? ['1-9', 'place'] : ['⇧←→', '×10'],
+        view.tuning.field === 1 ? ['1-9', 'place'] : ['⇧←→', 'by 10'],
         ['c', 'colors'],
         ['enter', 'keep'],
       ],
-      right: ['esc', 'undo'],
+      right: ['esc', 'cancel'],
     })
 
     return
@@ -1405,7 +1402,7 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
 
   const lead = status(view)
   foot(lines[rows - 1] as Line, cols, {
-    badge: 'IMAGE PREVIEW',
+    badge: 'PICTURE PREVIEW',
     lead,
     keys:
       view.installing === undefined
@@ -1415,53 +1412,148 @@ function trial(lines: Line[], images: Placement[], cols: number, rows: number, v
             ['t', 'tune'],
             ['c', 'colors'],
             ['i', 'details'],
-            ...(view.details ? [] : [['⇧←→', 'example'] as [string, string]]),
+            ...(view.details ? [] : [['⇧←→', 'sample'] as [string, string]]),
             ...(view.shown?.cut === 'on' || view.shown?.cut === 'off' ? [['x', 'cut out'] as [string, string]] : []),
             ['?', 'keys'],
           ]
         : [],
-    right: view.installing === undefined ? ['esc', 'grid'] : undefined,
+    right: view.installing === undefined ? ['esc', 'back'] : undefined,
   })
 }
 
-type Key = [label: string, text: string, press?: string, then?: string]
+interface Key {
+  group: string
+  keys: string
+  does: string
+  more?: string
+  press?: string
+  after?: string
+}
+
+const OPEN: Key = {
+  group: 'Picture',
+  keys: 'o',
+  does: 'Open the artwork page',
+  more: 'O opens the post page.',
+  press: 'o',
+}
 
 const TUNE_KEYS: Key[] = [
-  ['Field', '↑↓  size, position, opacity'],
-  ['Step', '←→  ·  ⇧←→ ×10'],
-  ['Place', '1-9  the nine positions'],
-  ['Reset', '=  this field back to its default  ·  +  every field', '='],
-  ['Colors', "c  its own colors or the palette's tone, opacity back to its default", 'c'],
-  ['Keep', 'enter  back to try, installed with the picture', 'enter'],
-  ['Undo', 'esc', 'esc'],
+  { group: 'Tune', keys: '↑↓', does: 'Choose size, position or opacity' },
+  { group: 'Tune', keys: '←→', does: 'Change it' },
+  { group: 'Tune', keys: '⇧←→', does: 'Change it by 10' },
+  { group: 'Tune', keys: '1-9', does: 'Place it in one of nine spots' },
+  { group: 'Tune', keys: '=', does: 'Reset this one', press: '=' },
+  { group: 'Tune', keys: '+', does: 'Reset all three' },
+  {
+    group: 'Tune',
+    keys: 'c',
+    does: 'Own colors or tinted',
+    more: 'The opacity goes back to its default.',
+    press: 'c',
+  },
+  {
+    group: 'Finish',
+    keys: 'enter',
+    does: 'Keep and go back',
+    more: 'The tuning installs with the picture.',
+    press: 'enter',
+  },
+  { group: 'Finish', keys: 'esc', does: 'Undo and go back', press: 'esc' },
 ]
 
 const KEYS: Record<FindView['mode'], Key[]> = {
   grid: [
-    ['Move', '←↑↓→  h j k l  home  end  pgup  pgdn'],
-    ['Try on', 'enter', 'enter'],
-    ['Site', `tab  shift+tab  all, ${SITES.map((site) => site.name).join(', ')}`, 'tab'],
-    ['Posts', 'c  cutouts or every post', 'c'],
-    ['Search', '/  a tag, a post URL or an id', '/'],
-    ['Tags', "1-9  turn a tag of the tags row on or off — the palette's own, then danbooru's related characters"],
-    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window or paste its link', 'v'],
-    ['Unfold', 'space  a set of ×N', ' '],
-    ['Open', 'o  the artwork page in a browser  ·  O  the post page', 'o'],
-    ['Settings', 's  rating, block, posts, solo, order, sets, remove bg', 's'],
-    ['Advanced', 'a or Advanced › in settings  min score, min size, sites, hide, hide tags, PNG only', 's', 'a'],
-    ['Back', 'esc returns to preview', 'esc'],
+    { group: 'Move', keys: '←↑↓→  h j k l', does: 'Move between pictures' },
+    { group: 'Move', keys: 'pgup  pgdn  home  end', does: 'Move a page, or to either end' },
+    { group: 'Picture', keys: 'enter', does: 'Try it on', press: 'enter' },
+    { group: 'Picture', keys: 'space', does: 'Unfold a set of ×N', press: ' ' },
+    OPEN,
+    {
+      group: 'Picture',
+      keys: 'ctrl+v  v',
+      does: 'Try on a picture of your own',
+      more: 'From the clipboard. Dropping one on the window or pasting its link works too.',
+      press: 'v',
+    },
+    {
+      group: 'Search',
+      keys: 'tab  shift+tab',
+      does: 'Switch the site',
+      more: `all, ${SITES.map((site) => site.name).join(', ')}`,
+      press: 'tab',
+    },
+    { group: 'Search', keys: '/', does: 'Search a tag, a post link or an id', press: '/' },
+    {
+      group: 'Search',
+      keys: '1-9',
+      does: 'Turn a tag on or off',
+      more: "The tags row holds the palette's own tags, then danbooru's related characters.",
+    },
+    { group: 'Search', keys: 'c', does: 'Cutouts or every post', press: 'c' },
+    {
+      group: 'Search',
+      keys: 's',
+      does: 'Open the settings',
+      more: 'Rating, block, posts, solo, order, sets and remove bg.',
+      press: 's',
+    },
+    {
+      group: 'Search',
+      keys: 'a',
+      does: 'Open the advanced filters',
+      more: 'Min score, min size, sites, hide, hide tags and PNG only. Advanced › in the settings opens them too.',
+      press: 's',
+      after: 'a',
+    },
+    { group: 'Finish', keys: 'esc', does: 'Back to preview', press: 'esc' },
   ],
   try: [
-    ['Browse', '←→  h l'],
-    ['Install', 'enter', 'enter'],
-    ['Tune', 't  size, position and opacity, installed with the picture', 't'],
-    ['Colors', "c  its own colors or the palette's tone, installed with the picture", 'c'],
-    ['Details', 'i  characters, series, tags, rating and file, under Post, Source and Artist', 'i'],
-    ['Example', `⇧←→  ${SCENES.map((scene) => scene.name.toLowerCase()).join(', ')}`],
-    ['Cut out', 'x  the background off or on, on an opaque picture', 'x'],
-    ['Open', 'o  the artwork page in a browser  ·  O  the post page', 'o'],
-    ['Your own', 'ctrl+v or v  a picture from the clipboard · drop one on the window', 'v'],
-    ['Grid', 'esc', 'esc'],
+    { group: 'Move', keys: '←→  h l', does: 'Next or previous post' },
+    { group: 'Picture', keys: 'enter', does: 'Install it', press: 'enter' },
+    {
+      group: 'Picture',
+      keys: 't',
+      does: 'Tune size, position and opacity',
+      more: 'The tuning installs with the picture.',
+      press: 't',
+    },
+    {
+      group: 'Picture',
+      keys: 'c',
+      does: 'Own colors or tinted',
+      more: 'The picture installs in the colors shown.',
+      press: 'c',
+    },
+    {
+      group: 'Picture',
+      keys: 'x',
+      does: 'Cut the background out or put it back',
+      more: 'On an opaque picture.',
+      press: 'x',
+    },
+    {
+      group: 'Picture',
+      keys: 'i',
+      does: 'Show the details',
+      more: 'Characters, series, tags, rating and file, under Post, Source and Artist.',
+      press: 'i',
+    },
+    {
+      group: 'Picture',
+      keys: '⇧←→',
+      does: 'Switch the sample',
+      more: SCENES.map((scene) => scene.name).join(', '),
+    },
+    OPEN,
+    {
+      group: 'Picture',
+      keys: 'ctrl+v  v',
+      does: 'Try on a picture of your own',
+      more: 'From the clipboard, or drop one on the window.',
+      press: 'v',
+    },
+    { group: 'Finish', keys: 'esc', does: 'Back to the grid', press: 'esc' },
   ],
 }
 
@@ -1475,7 +1567,7 @@ export function findTopics(view: FindView, press: (key: string) => void): Topic[
   const cuts = view.shown?.cut === 'on' || view.shown?.cut === 'off'
 
   return [
-    ...(view.tuning ? TUNE_KEYS : KEYS[view.mode]).map(([label, text, key, then]): Topic => {
+    ...(view.tuning ? TUNE_KEYS : KEYS[view.mode]).map(({ press: key, after, ...topic }): Topic => {
       const runs = key !== undefined && (key !== 'x' || cuts)
 
       const run = () => {
@@ -1483,14 +1575,14 @@ export function findTopics(view: FindView, press: (key: string) => void): Topic[
           press(key)
         }
 
-        if (then !== undefined) {
-          press(then)
+        if (after !== undefined) {
+          press(after)
         }
       }
 
-      return { label, text, ...(runs ? { run } : {}) }
+      return { ...topic, ...(runs ? { run } : {}) }
     }),
-    { label: 'Close', text: '?  esc', run: () => {} },
+    { group: 'Help', keys: '?  esc', does: 'Close help', run: () => {} },
   ]
 }
 
@@ -1647,7 +1739,7 @@ function tally(view: FindView): string {
     ({ site, count }) => `${site} ${count === undefined ? 'no count' : count.toLocaleString('en-US')}`,
   )
 
-  return `${view.tag}: ${each.join(' · ')}`
+  return `${view.tag}: ${each.join(SEP)}`
 }
 
 function panelKeys(view: FindView, row: Row | undefined): Foot {
@@ -1660,7 +1752,7 @@ function panelKeys(view: FindView, row: Row | undefined): Foot {
         ['enter', page],
         ['s', 'save'],
       ],
-      right: ['esc', 'undo'],
+      right: ['esc', 'cancel'],
     }
   }
 
@@ -1683,19 +1775,19 @@ function panelKeys(view: FindView, row: Row | undefined): Foot {
         ['enter', 'type'],
         ['s', 'save'],
       ],
-      right: ['esc', 'undo'],
+      right: ['esc', 'cancel'],
     }
   }
 
   return {
     keys: [
-      ['↑↓', 'setting'],
-      ['←→', 'value'],
+      ['↑↓', 'move'],
+      ['←→', 'change'],
       ['a', page],
       ...(row.multi ? ([['space', 'toggle']] as [string, string][]) : []),
       ['enter', 'save'],
     ],
-    right: ['esc', 'undo'],
+    right: ['esc', 'cancel'],
   }
 }
 
@@ -1723,7 +1815,7 @@ function panel(lines: Line[], cols: number, rows: number, view: FindView, accent
     ...view.settings.map((row) => wrapped(row.about, text).length),
   )
 
-  const worst = `${view.tag}: ${SITES.map((site) => `${site.name} 0,000,000`).join(' · ')}`
+  const worst = `${view.tag}: ${SITES.map((site) => `${site.name} 0,000,000`).join(SEP)}`
   const countRoom = view.tag ? Math.max(wrapped(worst, text).length, wrapped(tally(view), text).length) : 0
   const h = body + aboutRoom + countRoom + 8
   const x = Math.floor((cols - w) / 2)

@@ -2,7 +2,7 @@
 
 `ttheme new` opens the palette editor on a blank palette. You tune twenty
 colors while a mock terminal shows them in a shell, an editor and a process
-monitor, and the contrast gate checks every slot as you go.
+monitor, and the contrast checks measure every color as you go.
 
 ```sh
 ttheme new rei               # from blank
@@ -11,24 +11,24 @@ ttheme edit rei              # change it later
 ```
 
 The editor needs a window of 80×24. From 96×28 it becomes the builder: the
-slots on the left, the mock terminal on the right.
+colors on the left, the mock terminal on the right.
 
 ## Start from the seeds
 
 A blank palette starts on the seeds: the background and foreground lightness, a
 hue and tint for the neutrals and the cursor, and one lightness and chroma the
-accents share. Whatever you pick, the twenty colors they grow pass the gate.
-`enter` moves on to the slots, and the seeds stay behind.
+accents share. Whatever you pick, the twenty colors they grow pass every
+contrast check. `enter` moves on to the colors, and the seeds stay behind.
 
 `--from` and `edit` skip the seeds.
 
-## Tune a slot
+## Tune a color
 
-The twenty slots are the background, foreground, cursor and selection, then
+The twenty colors are the background, foreground, cursor and selection, then
 the eight ANSI colors with their bright pairs. Each shows as lightness, chroma
 and hue (OKLCH).
 
-- `↑` `↓` pick a slot, and `enter` or a click opens its picker.
+- `↑` `↓` pick a color, and `enter` or a click opens its picker.
 - In the picker, `↑` `↓` move lightness, `←` `→` chroma, and `⇧←` `⇧→` hue.
 - `#` takes a color as `#rrggbb`, `rgb(…)` or `oklch(…)`, and so does a paste.
 - `enter` keeps the color, `esc` puts it back, and `u` takes back one step.
@@ -38,15 +38,15 @@ normal moves the bright too. `l` links and unlinks a pair.
 
 ## Check it as you go
 
-- `✗` marks a slot whose own checks miss, and the Gate box at the bottom lists
-  every rule it fails. `n` and `N` walk the slots that miss.
-- `f` moves the missing colors until they pass.
-- `i` inspects the mock terminal: it names the slots a spot is drawn with.
+- `✗` marks a color that fails a check, and the Contrast box at the bottom lists
+  every check that fails. `n` and `N` walk the colors that fail.
+- `f` moves the failing colors until they pass.
+- `i` inspects the mock terminal: it names the colors a spot is drawn with.
 - `g` shows how all sixteen ANSI colors relate in lightness, chroma and hue.
 - `?` lists every key of the mode you are in.
 
-The gate advises: a palette that misses it still saves, and `ttheme check`
-prints the numbers. [The contrast gate](../reference/contrast-gate.md) explains
+The checks only advise: a palette that fails one still saves, and `ttheme check`
+prints the numbers. [Contrast checks](../reference/contrast-gate.md) explains
 each rule.
 
 ## Save
@@ -60,15 +60,15 @@ each palette is `palettes/<palette>.toml`, named
 
 ## A picture for it
 
-`p` in the editor opens find on the colors being edited. Dropping or pasting an
-image on the window tries it on at once. The picture shows behind the editor,
+`p` in the editor opens find on the colors being edited. Dropping or pasting a
+picture on the window tries it on at once. The picture shows behind the editor,
 tinted with your colors; `b` hides it.
 
 ## With a coding agent
 
 `init` offers the `ttheme-palette` skill to coding agents such as Claude Code.
 Ask one for a character's palette and it researches the character, measures
-the colors on official art, and lets ttheme harmonize, gate and install the
+the colors on official art, and lets ttheme harmonize, check and install the
 result. It works through `ttheme palette`, whose `measure`, `consensus` and
 `make` steps you can run yourself too, each printing JSON with `--json`.
 
@@ -83,7 +83,7 @@ adds it as a plugin.
 
 [ttheme.dev/builder](https://ttheme.dev/builder) is the same builder in the
 browser: start from any palette, a share link or blank seeds, and tune both
-modes against the gate. It exports a palette file, which `ttheme add <file>.toml`
+modes against the contrast checks. It exports a palette file, which `ttheme add <file>.toml`
 installs into your own marketplace, a share link, or a marketplace ready to push.
 Every visit starts clean; a palette you changed stays in that browser as a
 draft, up to thirty, which its **drafts** tab lists and reopens.

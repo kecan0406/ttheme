@@ -350,10 +350,11 @@ lists in `keep`), then the key on the right, and cuts what still does not fit;
 once the line fits, each key it dropped comes back in its own place if it fits
 there, so a long key dropped late never leaves room a shorter one could use.
 In Browse, the palette editor and find `?` opens `Help` (`src/tui/help.ts`): the
-topics of the mode the screen is in, where `↑` `↓` reach every topic and enter
-runs the key a topic names — Browse and the editor offer that only where the key
-does something —, a filter that typing fills, and a Marks line saying what the
-screen's marks mean. A long topic wraps at its `·` parts, the topics scroll in a
+topics of the mode the screen is in, in two columns under their group's name —
+the keys, then what they do —, where `↑` `↓` reach every topic and enter runs
+the key a topic names (Browse and the editor offer that only where the key does
+something), a filter that typing fills, the chosen topic's `more` under the list,
+and a Marks list saying what the screen's marks mean. The topics scroll in a
 short window, the box takes every click inside it and blanks the column beside
 it where that column holds another box's edge, so two edges never touch, and
 the screen under it keeps no click zones but on its key bar (find clears its
@@ -386,7 +387,7 @@ and `ctrl+k` move like them on every list, filter or not (a terminal sends
 `ctrl+j` as a line feed, which no screen reads as `enter`: that is `\r`;
 `lineStep` in `src/tui/keys.ts` is the one table, and a screen without a filter
 also passes `letters` for `j` and `k`). The
-screens that list pictures — find's grid and its try view, and the Images row of
+screens that list pictures — find's grid and its try view, and the Pictures row of
 the panel below — also take `h` and `l` as `←` and `→`.
 
 | Key | Preview | Browse |
@@ -394,15 +395,15 @@ the panel below — also take `h` and `l` as `←` and `→`.
 | any character | filters | filters every marketplace, landing on the first match in the panel; in the search, filters the marketplace list at once; in the `+ Add marketplace` form, types the source |
 | `↑` `↓` `ctrl+j` `ctrl+k` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
 | `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces; `→` on `+ Add marketplace` moves into its form in the panel and on `Search marketplace` opens the search, and `←` in either goes back |
-| `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `+ Add marketplace`, move into its form in the panel, and there fetch the source typed and land in the panel of the marketplace it stages; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; on a palette, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
-| `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel, asking first when something is staged; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
+| `enter` | open or close a catalog; on a palette, use it, asking where | on a marketplace, move into its panel; there, open or close a catalog, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `+ Add marketplace`, move into its form in the panel, and there fetch the source typed and land in the panel of the marketplace it stages; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; on a palette, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
+| `esc` | clear the filter, then put the tab back and close | clear the filter, then leave the panel, then cancel, asking first when something is staged; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
 | `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter or the `+ Add marketplace` form's source, clear it |
-| `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks line says what browse's marks mean |
+| `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks list says what browse's marks mean |
 | `alt+c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
 | `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a catalog, stage its update; in the search, load the marketplace list again |
-| `shift+←` `shift+→` | example scene | — |
+| `shift+←` `shift+→` | switch the sample | — |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |
 | `ctrl+c` | quit | cancel, asking first when something is staged (`y` applies, `n` or a second ctrl+c discards, esc stays) |
@@ -423,13 +424,13 @@ Preview's panel (`tab`, `→` or `ctrl+e` on a palette) has no filter, so it use
 letters too. It is one list — the picture's fields, an Edit palette button, then
 an Apply button — and the part the cursor is in takes the keys:
 
-| Key | Image | Edit palette | Apply |
+| Key | Picture | Edit palette | Apply |
 |---|---|---|---|
-| `↑` `↓` `j` `k` | Images, then colors, size, position, opacity, and past the last one Edit palette | the picture, Apply | Edit palette, the top |
+| `↑` `↓` `j` `k` | Pictures, then colors, size, position, opacity, and past the last one Edit palette | the picture, Apply | Edit palette, the top |
 | `home` `end` | the top, Apply | same | same |
-| `←` `→` `h` `l` | on Images, another picture; on a field, a step | the Edit palette and Reset palette buttons | — |
+| `←` `→` `h` `l` | on Pictures, another picture; on a field, a step | the Edit palette and Reset palette buttons | — |
 | `⇧←` `⇧→` | ×10 | — | — |
-| `enter` | on the empty frame under Images of a palette with no picture, find one | open the palette editor on it | apply, saving first and asking where |
+| `enter` | on the empty frame under Pictures of a palette with no picture, find one | open the palette editor on it | apply, saving first and asking where |
 | `1`-`9` | place | — | — |
 | `f` | find a picture | — | — |
 | `=` `+` | reset a field, all | — | — |
@@ -496,11 +497,49 @@ look, and never Title Case.
   `?` `!` — so prose that uses the word (`another tab`) keeps it, and a chord
   turns anywhere. There is no ⌘: a terminal keeps Command for itself. A click
   zone always names the key as written.
-- **Lowercase**: key hints in footers and key bars (`↑↓ move · enter save`),
+- **Lowercase**: key hints in footers and key bars (`↑↓ move   enter save`),
   and error messages, which read the same after the `ttheme:` prefix
   (`ttheme: not installed: kita`) and in a status line. A notice written for
   the screen (`No picture on the clipboard`) is not an error.
-- **Capitals**: only a mode badge (`PREVIEW`, `BROWSE`, `SEARCH`, `EDIT`, `IMAGE SEARCH`, `IMAGE PREVIEW`, `IMAGE EDIT`, `HELP`, `CONFIG`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
+- **Capitals**: only a mode badge (`PREVIEW`, `BROWSE`, `SEARCH`, `EDIT`, `PICTURE SEARCH`, `PICTURE PREVIEW`, `PICTURE EDIT`, `HELP`, `CONFIG`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
+
+A key hint is the key and one or two lowercase words: a verb, or the name of
+what the key opens or switches (`settings`, `keys`, `colors`, `sample`). The
+same action takes the same word on every screen — `move`, `open`, `close`,
+`back`, `pick`, `change`, `reset`, `use`, `apply`, `save`, `undo`, `clear` and,
+for `esc`, one of four: `back` (one level up), `cancel` (leave, dropping what
+changed), `close` (an overlay) and `clear` (a field). A question's own answers
+are the exception (`y save`, `n discard`, `esc keep editing`). A tab hint names
+the screen it goes to (`tab Browse`).
+
+A Help topic is its keys, as typed and apart by two spaces, and what they do: a
+verb phrase in sentence case, about six words, with no period (`Open the
+picker`), or the name of the value a key moves (`↑↓  Lightness`). How it works,
+the exceptions and the numbers go in the topic's `more`, which shows only for
+the topic chosen; a longer story belongs in `docs/`. A line that describes the
+row under the cursor (a panel's foot, a button's note) says what the person gets
+in one sentence, never how ttheme does it.
+
+`·` has one job: it stands between short facts on one line (`6 available ·
+1 installed`, `1920×1080 PNG · 2.1 MB`), written through `SEP`
+(`src/tui/parts.ts`), and `style.test.ts` fails on a `·` written anywhere else
+in `src/tui/`. Keys in a bar are apart by three spaces, names in a list by
+commas, a title and its subject by two spaces, and what to do after a state by
+` — ` (`Opaque — x cuts it out`).
+
+One concept takes one word, on the screens and in `docs/`, whatever the code
+calls it; `src/tui/words.test.ts` fails on the words in the left column:
+
+| Not | But | For |
+|---|---|---|
+| wear, paint | use (a palette in a tab), shows (what a tab has on) | the palette a tab shows |
+| gate, misses | contrast checks, fails | the readability rules a palette is measured by |
+| tone | tuning, tuned | the colors you changed over a marketplace's palette |
+| tone | tinted | a picture drawn in one color of its palette (`tone` stays only as the value `config.zsh` holds) |
+| image | picture | a background picture |
+| Comes with ttheme, The official marketplace | Built in | the official marketplace |
+| Read in place | Always up to date | a marketplace in a folder |
+| slot | color | one of a palette's twenty colors, outside the code |
 
 Counts on screen come from the palettes listed, never from the rows being drawn. A
 folded catalog still reports how many of its palettes are picked, and the

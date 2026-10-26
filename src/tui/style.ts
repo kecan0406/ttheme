@@ -47,6 +47,7 @@ export const MARKS = {
   swatch: '■',
   pictures: '▣',
   sep: '·',
+  none: '–',
   cut: '…',
 } as const
 

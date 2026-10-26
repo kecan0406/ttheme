@@ -105,7 +105,7 @@ ttheme marketplace check ./ttheme-pastel
 
 It reads the folder as an install would and lists every problem: a palette that
 does not parse, a key ttheme does not know, a rename that loops, a catalog table
-with no folder, and the [contrast gate](../reference/contrast-gate.md) for each
+with no folder, and the [contrast checks](../reference/contrast-gate.md) for each
 palette. It writes nothing.
 
 ## Rename or retire a palette

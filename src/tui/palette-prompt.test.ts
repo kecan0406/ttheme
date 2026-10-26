@@ -195,7 +195,7 @@ test('right unfolds a catalog and space picks the palette under the cursor', asy
   assert.match(frames, /▸ Madoka Magica \(0\/2\)/)
   assert.match(frames, /Palettes \(4\/4 · 0 picked\)/)
   assert.match(frames, /│ {4}Search…/)
-  assert.match(frames, /space pick · type to filter · enter install/)
+  assert.match(frames, /space pick {3}type to filter {3}enter install/)
 })
 
 test('catalogs fold back and cursor moves across them', async () => {

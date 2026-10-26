@@ -8,12 +8,13 @@ import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
 import { Field } from '../field.ts'
 import { Help, type Legend, overlay, type Topic } from '../help.ts'
-import { HUB_UPDATE, type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
+import { HUB_UPDATE, type HubTab, hubBar, hubGoto, hubNext, hubTo } from '../hub.ts'
 import { capped } from '../keycaps.ts'
 import { lineStep, type Mouse } from '../keys.ts'
 import { Glide } from '../motion.ts'
 import type { ReleaseLine } from '../notice.ts'
 import { type Card, PaletteList, pageStep, paletteExample, type RowSpot, SearchHint } from '../palette-prompt.ts'
+import { SEP } from '../parts.ts'
 import { Screen } from '../screen.ts'
 import { MARKS, type Paint, painter } from '../style.ts'
 import { ALT_SCREEN, HIDE_CURSOR, NO_WRAP, PASTES, pointing, within } from '../terminal.ts'
@@ -959,7 +960,7 @@ export class BrowsePanel {
 
     return {
       added: m !== undefined,
-      lines: [this.p.dim(m ? whereOf(m.source) : 'Not added'), this.p.dim(counts.join(' · '))],
+      lines: [this.p.dim(m ? whereOf(m.source) : 'Not added'), this.p.dim(counts.join(SEP))],
     }
   }
 
@@ -1028,12 +1029,12 @@ export class BrowsePanel {
       return this.search.counts()
     }
 
-    const updating = this.network.updating() ? 'Updating… · ' : ''
+    const updating = this.network.updating() ? `Updating…${SEP}` : ''
     const list = this.list
     const dropped = this.staged.removes.size
-    const removing = dropped > 0 ? ` · ${dropped} marketplace${dropped === 1 ? '' : 's'} to remove` : ''
+    const removing = dropped > 0 ? `${SEP}${dropped} marketplace${dropped === 1 ? '' : 's'} to remove` : ''
 
-    return `${updating}${list.matched()}/${list.total()} · ${list.pickedCount()} picked${removing}`
+    return `${updating}${list.matched()}/${list.total()}${SEP}${list.pickedCount()} picked${removing}`
   }
 
   private searchText(): string {
@@ -1097,7 +1098,7 @@ export class BrowsePanel {
       }
     }
 
-    const what = `The marketplaces anyone publishes on GitHub with the ${TOPIC} topic, listed every half hour`
+    const what = `Marketplaces people publish on GitHub, under the ${TOPIC} topic`
 
     return {
       title: this.p.bold('Search marketplace'),
@@ -1155,7 +1156,7 @@ export class BrowsePanel {
       badge: filter ? 'BROWSE (FILTER)' : 'BROWSE',
       ...(this.notice ? { lead: toned(this.p, this.notice.tone, this.notice.text) } : {}),
       keys: [...(this.side === 'panel' ? this.panel.keys(apply) : this.cardKeys(apply)), ...tail],
-      right: filter ? ['esc', 'clear filter'] : this.side === 'panel' ? ['esc', 'back'] : ['esc', 'cancel'],
+      right: filter ? ['esc', 'clear'] : this.side === 'panel' ? ['esc', 'back'] : ['esc', 'cancel'],
       ...(this.standing ? { standing: this.standing } : {}),
     }
   }
@@ -1303,23 +1304,48 @@ export class BrowsePanel {
 
   private topics(): Topic[] {
     const screens: Topic[] = this.hub
-      ? [{ label: 'Screens', text: 'tab  ·  shift+tab', run: () => this.key('tab') }]
+      ? [
+          {
+            group: 'Help',
+            keys: 'tab  shift+tab',
+            does: `Switch to ${hubNext(this.hub)}`,
+            run: () => this.key('tab'),
+          },
+        ]
       : []
 
-    const close: Topic = { label: 'Close', text: '?  esc', run: () => {} }
+    const close: Topic = { group: 'Help', keys: '?  esc', does: 'Close help', run: () => {} }
+
+    const moving: Topic[] = [
+      { group: 'Move', keys: '↑↓  ctrl+j  ctrl+k', does: 'Move up or down' },
+      { group: 'Move', keys: 'pgup  pgdn  home  end', does: 'Move a page, or to either end' },
+    ]
+
+    const filtering: Topic[] = [
+      { group: 'Filter', keys: 'type', does: 'Filter the list' },
+      { group: 'Filter', keys: 'ctrl+u', does: 'Clear the filter' },
+    ]
 
     if (this.showing === 'search') {
       return [
-        { label: 'Move', text: '↑↓  ctrl+j  ctrl+k  home  end  pgup  pgdn' },
-        { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl+u clears' },
-        { label: 'Add', text: 'space  adds it  ·  again to undo', run: () => this.take(false) },
-        { label: '', text: 'enter  adds it and goes back to its card', run: () => this.take(true) },
+        ...moving,
+        { group: 'Move', keys: '←  esc', does: 'Back to Browse', run: () => this.closeSearch() },
+        ...filtering,
         {
-          label: 'Reload',
-          text: 'ctrl+r  the list, which GitHub fills every half hour',
+          group: 'Add',
+          keys: 'space',
+          does: 'Add it, or undo the add',
+          more: 'An added marketplace is fetched at once and kept when you apply.',
+          run: () => this.take(false),
+        },
+        { group: 'Add', keys: 'enter', does: 'Add it and go to its card', run: () => this.take(true) },
+        {
+          group: 'Add',
+          keys: 'ctrl+r',
+          does: 'Load the list again',
+          more: 'The list is gathered from GitHub every half hour.',
           run: () => this.search.load(),
         },
-        { label: 'Back', text: '←  esc  ·  ← Back', run: () => this.closeSearch() },
         ...screens,
         close,
       ]
@@ -1330,24 +1356,39 @@ export class BrowsePanel {
     const when = (on: boolean, run: () => void) => (on ? { run } : {})
 
     return [
-      { label: 'Move', text: '↑↓  ctrl+j  ctrl+k  home  end  pgup  pgdn' },
+      ...moving,
       {
-        label: 'Open',
-        text: '→  enter  ·  a marketplace into the panel, a catalog',
+        group: 'Move',
+        keys: '→  enter',
+        does: 'Open a marketplace or a catalog',
         ...when(!form, () => this.key('right')),
       },
       {
-        label: 'Back',
-        text: '←  esc  ·  from the panel to the marketplaces',
+        group: 'Move',
+        keys: '←  esc',
+        does: 'Back to the marketplaces',
         ...when(panel || form, () => this.back()),
       },
-      { label: 'Pick', text: 'space  ·  a palette, a catalog, a marketplace', ...when(!form, () => this.key(' ')) },
-      { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl+u clears' },
-      { label: 'Marketplace', text: '↓  below its palettes, to its own actions' },
-      { label: '', text: 'enter  updates it, turns auto-update on or off, removes it' },
       {
-        label: 'Add',
-        text: 'enter  on + Add marketplace  ·  a repository or a folder, in the panel',
+        group: 'Palettes',
+        keys: 'space',
+        does: 'Pick or unpick',
+        more: 'Apply installs what is picked and removes what is not. Picking a catalog or a marketplace picks every palette in it.',
+        ...when(!form, () => this.key(' ')),
+      },
+      {
+        group: 'Palettes',
+        keys: 'ctrl+r',
+        does: `Take an update (${MARKS.update})`,
+        more: `On a palette or a catalog marked ${MARKS.update}. The update is installed when you apply.`,
+        ...when(panel, () => this.key('ctrl-r')),
+      },
+      ...filtering,
+      {
+        group: 'Marketplaces',
+        keys: 'enter on + Add',
+        does: 'Add one from GitHub or a folder',
+        more: 'Type owner/repo, owner/repo#v1 for a tag or a branch, or the path of a folder.',
         ...when(!form, () => {
           this.back()
           this.list.select('extra new')
@@ -1355,8 +1396,9 @@ export class BrowsePanel {
         }),
       },
       {
-        label: 'Search',
-        text: 'enter  on Search marketplace  ·  finds one on GitHub',
+        group: 'Marketplaces',
+        keys: 'enter on ⌕ Search',
+        does: 'Find one on GitHub',
         ...when(!form, () => {
           this.back()
           this.list.select('extra search')
@@ -1364,15 +1406,18 @@ export class BrowsePanel {
         }),
       },
       {
-        label: 'Update',
-        text: `ctrl+r  on a palette marked ${MARKS.update}`,
-        ...when(panel, () => this.key('ctrl-r')),
+        group: 'Marketplaces',
+        keys: '↓  past the palettes',
+        does: 'Update, auto-update or remove it',
+        more: 'A marketplace keeps its own actions under its palettes in the panel.',
       },
       {
-        label: 'Apply',
-        text: 'enter  reviews and applies  ·  esc cancels',
+        group: 'Finish',
+        keys: 'enter',
+        does: 'Review and apply',
         ...when(this.staged.dirty(), () => this.review.open()),
       },
+      { group: 'Finish', keys: 'esc', does: 'Leave, asking first about changes not applied' },
       ...screens,
       close,
     ]
@@ -1385,7 +1430,7 @@ export class BrowsePanel {
       [`${MARKS.closed} ${MARKS.opened}`, 'a catalog, closed or open'],
       [MARKS.update, 'has an update'],
       [MARKS.auto, 'updates on its own'],
-      [MARKS.miss, 'misses the gate'],
+      [MARKS.miss, 'fails a contrast check'],
       [MARKS.star, 'stars on GitHub'],
     ]
   }

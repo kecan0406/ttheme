@@ -126,6 +126,6 @@ test('a tag a site sends with control or direction characters is drawn without t
 test('the Advanced topic of the help opens the settings first, since the grid takes no a of its own', () => {
   const pressed: string[] = []
   const topics = findTopics(viewOf({ panel: undefined }), (key) => pressed.push(key))
-  topics.find((t) => t.label === 'Advanced')?.run?.()
+  topics.find((t) => t.does === 'Open the advanced filters')?.run?.()
   assert.deepEqual(pressed, ['s', 'a'])
 })

@@ -587,7 +587,7 @@ export const warp: Wiring = {
       : []
   },
   notes: (now) => [
-    'Warp wears one theme for the whole app, set through its settings.toml — a tab that takes a palette (`ttheme use`, a pin, preview) switches it, and switching tabs puts on the palette of the tab in front, read from Warp’s session database with sqlite3',
+    'Warp shows one theme for the whole app, set through its settings.toml — a tab that takes a palette (`ttheme use`, a pin, preview) switches it, and switching tabs puts on the palette of the tab in front, read from Warp’s session database with sqlite3',
     ...WARP_CHANNELS.flatMap((channel) => {
       const file = warpSettings(now.home, now.configHome, channel)
 

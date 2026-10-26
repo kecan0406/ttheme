@@ -1,7 +1,7 @@
 # Light, dark and auto
 
 Every palette comes in a light and a dark mode. One setting picks the mode all
-of them are worn in, and `auto` follows your system's appearance as it changes.
+of them show in, and `auto` follows your system's appearance as it changes.
 
 ## Switch the mode
 
@@ -11,7 +11,7 @@ ttheme dark    # light text on a dark background
 ttheme auto    # the system's appearance, followed as it changes
 ```
 
-A switch repaints every open tab, painted or not, in every terminal you wired,
+A switch repaints every open tab, whether you set its palette or not, in every terminal you wired,
 and moves each palette's pictures to the new mode. `alt+c` in `ttheme` has the
 same setting as its **Mode** row, and `init` asks for it the first time.
 
@@ -33,12 +33,12 @@ When nothing reports it, `auto` starts from the system's setting.
 ## Where the light mode comes from
 
 The official palettes carry both modes in their files, each passing the same
-[contrast gate](../reference/contrast-gate.md). A marketplace palette made in
+[contrast checks](../reference/contrast-gate.md). A marketplace palette made in
 one mode gets the other by the same rules: each color keeps its hue, its
 lightness moves to the other side, and the colors that identify the character
 are kept apart.
 
-A [tone](../creating-palettes/tune.md) belongs to the mode it was tuned in, so
+Your [tuning](../creating-palettes/tune.md) belongs to the mode it was made in, so
 a palette can be tuned differently in light and dark.
 
 ## In your editor

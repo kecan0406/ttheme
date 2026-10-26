@@ -11,7 +11,7 @@ ttheme
 
 Preview lists your palettes under their catalogs, one catalog per series.
 
-- `↑` `↓` move, and the tab wears each palette the moment the cursor lands on it.
+- `↑` `↓` move, and the tab shows each palette the moment the cursor lands on it.
 - `→` or `enter` opens a catalog, `←` closes it.
 - Typing filters the list. It matches palette and catalog names, and a
   character's names in Japanese too, so `hitori` and `ひとり` both find
@@ -28,11 +28,11 @@ Preview lists your palettes under their catalogs, one catalog per series.
 `enter` on a palette asks where it goes:
 
 - **Default** makes it the palette new tabs open with, in every terminal you
-  wired. Open tabs you have not painted by hand follow it.
-- **This tab** paints this tab alone. Other tabs keep what they wear.
+  wired. Open tabs where you have not used a palette by hand follow it.
+- **This tab** uses it in this tab alone. Other tabs keep what they show.
 
 While new tabs rotate through your palettes
-([new tabs](../usage/tabs.md#a-new-palette-for-every-tab)), `enter` paints this
+([new tabs](../usage/tabs.md#a-new-palette-for-every-tab)), `enter` uses it in this
 tab at once. `esc` leaves Preview and puts the tab back the way it was.
 
 When you already know the name, skip Preview:

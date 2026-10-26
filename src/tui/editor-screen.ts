@@ -34,7 +34,7 @@ import { type Help, type HelpSpot, overlay } from './help.ts'
 import { capped } from './keycaps.ts'
 import { CELL_QUERY, type Cell, CellProbe, type Mouse, PIXEL_QUERY, PixelProbe } from './keys.ts'
 import { CHANNELS, CONTRAST, type Edited, type EditorOptions, PaletteEditor, SCOPES } from './palette-editor.ts'
-import { boxEdge, boxed, checkOf, hintOf, moreOf, pillOf } from './parts.ts'
+import { boxEdge, boxed, checkOf, contrastOf, hintOf, moreOf, pillOf, SEP } from './parts.ts'
 import type { Chart, Drawn, PickerLayer } from './picker-art.ts'
 import { Screen } from './screen.ts'
 import { FG_RESET, grounded, INK_RESET, MARKS, type Paint, painter, RESET, surfaceOf } from './style.ts'
@@ -82,7 +82,7 @@ function scopeLines(p: Paint, e: PaletteEditor): string[] {
   return [
     `${p.dim('Scope')}  ${items.join('  ')}`,
     p.dim(
-      n > 1 ? `${n} slots move by the same step, each keeping its own color` : 'This slot moves alone · a widens it',
+      n > 1 ? `${n} colors move by the same step, each keeping its own color` : 'This color moves alone — a adds more',
     ),
   ]
 }
@@ -197,7 +197,7 @@ function seedPane(p: Paint, e: PaletteEditor, height: number): string[] {
     '',
     ...wrapText(
       capped(
-        'Seven seeds grow all twenty colors, each accent on the hue its ANSI role reads as — whatever the seeds, they pass the gate. enter moves on to tune each slot, and the seeds stay behind.',
+        'Seven seeds grow all twenty colors, each accent on the hue its ANSI role reads as. Whatever the seeds, they pass every contrast check. enter moves on to tune each color, and the seeds stay behind.',
       ),
       LEFT - 4,
     ).map((line) => `  ${p.dim(line)}`),
@@ -451,12 +451,12 @@ function relationNotes(p: Paint, e: PaletteEditor, shown: Hex[]): string[] {
       .filter(({ gap }) => gap > 25)
       .map(
         ({ normal, gap }) =>
-          `${name(normal)} ${hue(normal)}° → bright ${hue(normal + 8)}° · ${gap.toFixed(0)}° apart · ≤ 25°`,
+          `${name(normal)} ${hue(normal)}° → bright ${hue(normal + 8)}°${SEP}${gap.toFixed(0)}° apart${SEP}≤ 25°`,
       ),
     ...offRole(theme).map(({ slot, over }) => {
       const band = ROLE_HUES.get(roleOf(slot)) as { name: string; center: number; width: number }
 
-      return `${name(slot)} ${hue(slot)}° · ${over.toFixed(0)}° outside ${band.name} ${band.center}±${band.width}°`
+      return `${name(slot)} ${hue(slot)}°${SEP}${over.toFixed(0)}° outside ${band.name} ${band.center}±${band.width}°`
     }),
     ...lookalikes(theme).map(([a, b]) => `${name(a)} and ${name(b).toLowerCase()} read as one color`),
     ...confusions(theme).map(([a, b]) => `${name(a)} and ${name(b).toLowerCase()} read as one to a deuteranope`),
@@ -560,11 +560,11 @@ function detailPane(p: Paint, e: PaletteEditor, width: number, height: number, i
   const block = p.color ? `${p.fg(hex)}${'█'.repeat(8)}${FG_RESET}  ` : ''
   const typed = e.typing !== undefined ? `${p.bold(`${e.typing}▏`)}` : undefined
   const [r, g, b] = rgb(hex)
-  lines.push(`${block}${typed ?? lchLine(p, at)}`, `${block}${p.dim(`${hex} · rgb ${r} ${g} ${b}`)}`)
+  lines.push(`${block}${typed ?? lchLine(p, at)}`, `${block}${p.dim(`${hex}${SEP}rgb ${r} ${g} ${b}`)}`)
 
   if (e.view !== 'relations') {
     const room = width - cells(block)
-    const value = `${oklchText(e.lchOf(base)).slice(6)} · ${base}`
+    const value = `${oklchText(e.lchOf(base)).slice(6)}${SEP}${base}`
     lines.push(`${block}${e.changed(slot) ? baseButton(p, e, room, value) : p.dim(e.based())}`)
   }
 
@@ -683,7 +683,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   } else if (e.menu) {
     badge = e.menu === 'export' ? 'EDIT (EXPORT)' : 'EDIT (IMPORT)'
     keys = [
-      ['↑↓', 'item'],
+      ['↑↓', 'move'],
       ['enter', 'choose'],
     ]
     right = ['esc', 'close']
@@ -695,12 +695,12 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   } else if (e.mode === 'seeds') {
     badge = 'EDIT (SEEDS)'
     keys = [
-      ['↑↓', 'seed'],
-      ['←→', 'step'],
-      ['⇧←→', '×5'],
-      ['enter', 'tune the slots'],
+      ['↑↓', 'move'],
+      ['←→', 'change'],
+      ['⇧←→', 'by 5'],
+      ['enter', 'tune colors'],
       ['o', 'open a palette'],
-      ['p', 'picture'],
+      ['p', 'find picture'],
       ['?', 'keys'],
     ]
     right = ['esc', 'cancel']
@@ -711,7 +711,7 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['←→', e.channel === CONTRAST ? 'ratio' : 'C'],
       ['⇧←→', 'H'],
       ['u', 'undo'],
-      ['r', 'back'],
+      ['r', 'reset'],
       ['tab', MARKS.contrast],
       ...(e.slot() >= BASE.length ? ([['a', 'scope']] as Hint[]) : []),
       [e.channel === CONTRAST ? '1-9' : '0-9', e.channel === CONTRAST ? 'ratio' : 'jump'],
@@ -722,25 +722,25 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   } else if (e.inspect) {
     badge = 'EDIT (INSPECT)'
     keys = [
-      ['←→↑↓', 'spot'],
+      ['←→↑↓', 'move'],
       ['⇧←→', 'tab'],
-      ['enter', 'its slot'],
-      ['i', 'leave'],
+      ['enter', 'go to color'],
+      ['i', 'back'],
     ]
-    right = ['esc', 'leave']
+    right = ['esc', 'back']
   } else {
     keys = [
-      ['↑↓', 'slot'],
+      ['↑↓', 'move'],
       ['←→', 'normal or bright'],
       ['enter', 'tune'],
       ['l', 'link'],
       ['m', 'changed'],
-      ['g', e.view === 'slot' ? 'relations' : 'slot'],
-      ...(e.misses().size > 0 ? ([['n', 'next miss']] as Hint[]) : []),
+      ['g', e.view === 'slot' ? 'relations' : 'colors'],
+      ...(e.misses().size > 0 ? ([['n', 'next failing']] as Hint[]) : []),
       ['#', 'type'],
-      ['f', 'fix'],
-      ['p', 'picture'],
-      ['b', 'picture layer'],
+      ['f', 'fix contrast'],
+      ['p', 'find picture'],
+      ['b', 'picture'],
       ['x', 'export'],
       ['s', 'save'],
       ['?', 'keys'],
@@ -833,13 +833,12 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
   }
 
   const failing = gateMisses(e)
-  const missed = `${MARKS.miss} ${failing} ${failing === 1 ? 'miss' : 'misses'} in the gate`
-  const gate = failing === 0 ? `${MARKS.ok} Passes the gate` : missed
+  const gate = `${failing === 0 ? MARKS.ok : MARKS.miss} ${contrastOf(failing)}`
   const shown = `${MARKS.pictures} ${e.pictures} ${e.pictures === 1 ? 'picture' : 'pictures'}`
   const shelf = e.pictures > 0 ? p.dim(`${shown}   `) : ''
   const reset = e.resettable() ? `${keyZone('R', p.dim('Reset'))}   ` : ''
   const state = `${e.dirty() ? `${p.warn(MARKS.on)} unsaved   ` : ''}${reset}${shelf}${failing === 0 ? p.ok(gate) : p.dim(gate)}`
-  const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)} ${p.dim(`· ${e.options.name}`)}`
+  const title = `${p.accent(MARKS.current)} ${p.bold(e.options.title)}  ${p.dim(e.options.name)}`
   const height = rows - 4
   const ink = color && look.art === true ? look.chrome?.[1] : undefined
   let body: string[]

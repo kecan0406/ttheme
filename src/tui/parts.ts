@@ -46,12 +46,20 @@ export function hintOf(p: Paint, key: string, label: string): string {
   return keyZone(key.split(' ')[0] ?? '', `${p.bold(cap(key))} ${p.dim(label)}`)
 }
 
+export const SEP = ` ${MARKS.sep} `
+
+export function contrastOf(failing: number): string {
+  return failing === 0
+    ? 'Passes every contrast check'
+    : `Fails ${failing} contrast ${failing === 1 ? 'check' : 'checks'}`
+}
+
 export function moreOf(step: number, count: number): string {
   return `${step < 0 ? MARKS.above : MARKS.below} ${count} more`
 }
 
 export function checkOf(p: Paint, ok: boolean | undefined): string {
-  return ok === undefined ? p.dim(MARKS.sep) : ok ? p.dim(MARKS.ok) : p.bold(MARKS.miss)
+  return ok === undefined ? p.dim(MARKS.none) : ok ? p.dim(MARKS.ok) : p.bold(MARKS.miss)
 }
 
 const CORNERS = { top: '╭╮', mid: '├┤', bottom: '╰╯' }

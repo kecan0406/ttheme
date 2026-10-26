@@ -7,7 +7,7 @@ import type { Bar, Hint } from '../bar.ts'
 import { Field } from '../field.ts'
 import { capped } from '../keycaps.ts'
 import { PaletteList, rowSpot } from '../palette-prompt.ts'
-import { tabOf } from '../parts.ts'
+import { SEP, tabOf } from '../parts.ts'
 import { ansiSquares, MARKS, type Paint } from '../style.ts'
 import { button, EMPTY, lit } from './draw.ts'
 import type { Network } from './network.ts'
@@ -115,7 +115,7 @@ export class Search {
       ...(this.listing?.offline ? [`offline, from ${ago(this.listing.at)}`] : []),
     ]
 
-    return parts.length > 0 ? parts.join(' · ') : 'on GitHub'
+    return parts.length > 0 ? parts.join(SEP) : 'on GitHub'
   }
 
   bar(): Bar {
@@ -124,7 +124,7 @@ export class Search {
     return {
       badge: 'SEARCH',
       keys: [...this.keys(), ...(typed ? [['bksp', 'edit'] as Hint] : []), ['?', 'keys']],
-      right: typed ? ['esc', 'clear search'] : ['esc', 'back'],
+      right: typed ? ['esc', 'clear'] : ['esc', 'back'],
     }
   }
 
@@ -213,7 +213,7 @@ export class Search {
 
     return lit(
       focused,
-      `${rowSpot(at, 'box', `${known ? MARKS.on : MARKS.off} `)}${m.id}${after(facts.join(' · '))}${failure ? `  ${p.error(failure)}` : ''}`,
+      `${rowSpot(at, 'box', `${known ? MARKS.on : MARKS.off} `)}${m.id}${after(facts.join(SEP))}${failure ? `  ${p.error(failure)}` : ''}`,
     )
   }
 
@@ -226,19 +226,19 @@ export class Search {
 
     if (found.kind !== 'listed') {
       const [text, note] = this.stateOf()
-      const what = `Repositories with the ${TOPIC} topic, read every half hour into one list`
+      const what = `Marketplaces people publish on GitHub, under the ${TOPIC} topic`
 
       return {
         title: p.bold('Marketplaces'),
         lines: [
           ...wrapText(what, width),
           '',
-          ...wrapText([text, note].filter(Boolean).join(' · '), width),
+          ...wrapText([text, note].filter(Boolean).join(' — '), width),
           ...(this.loadError ? wrapText(this.loadError, width).map((l) => p.error(l)) : []),
           '',
           ...wrapText('Not listed yet? + Add marketplace adds one by its owner/repo', width),
         ],
-        brief: [text, note].filter(Boolean).join(' · '),
+        brief: [text, note].filter(Boolean).join(' — '),
       }
     }
 
@@ -256,13 +256,13 @@ export class Search {
       lines: [
         p.dim(m.source),
         ...wrapText(m.about, width).map((l) => p.dim(l)),
-        p.dim([`${MARKS.star} ${m.stars}`, ...(m.updated ? [`updated ${m.updated}`] : [])].join(' · ')),
+        p.dim([`${MARKS.star} ${m.stars}`, ...(m.updated ? [`updated ${m.updated}`] : [])].join(SEP)),
         '',
         ...wrapText(note, width).map((l) => (failure ? p.error(l) : l)),
         '',
         ...this.paletteLines(m, width),
       ],
-      brief: [counted(m.palettes.length), note].join(' · '),
+      brief: [counted(m.palettes.length), note].join(SEP),
       ...(failure ? { failed: true } : {}),
     }
   }

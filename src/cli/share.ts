@@ -69,11 +69,11 @@ async function askTone(names: string[], renamed: boolean): Promise<Tone> {
 
   return asked(
     await p.select({
-      message: single ? `Share ${single} as…` : `${listed(names)} carry your tone — share them as…`,
+      message: single ? `Share ${single} as…` : `${listed(names)} carry your tuning — share them as…`,
       options: [
         {
           value: 'tuned' as const,
-          label: 'Your tone',
+          label: 'Your tuning',
           ...(renamed ? { hint: `named ${single ? tunedName(single) : '<palette>-tuned'}` } : {}),
         },
         { value: 'original' as const, label: single ? 'The original' : 'The originals' },
@@ -179,8 +179,8 @@ export async function runShare(names: readonly string[], tone?: Tone): Promise<v
         tuned.length === 0
           ? ''
           : !many && tunedOne
-            ? `\nIt carries your tone, named ${tunedName(tunedOne.entry.name)} so it does not clash with ${tunedOne.entry.name}`
-            : '\nThe ones with your tone are named <palette>-tuned, so they do not clash with the originals'
+            ? `\nIt carries your tuning, named ${tunedName(tunedOne.entry.name)} so it does not clash with ${tunedOne.entry.name}`
+            : '\nThe ones with your tuning are named <palette>-tuned, so they do not clash with the originals'
       }`,
     many ? ', or share them as a marketplace, whose link stays short' : '',
   )

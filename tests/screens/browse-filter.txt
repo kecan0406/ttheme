@@ -3,7 +3,7 @@
  │ ⌕ ki_                                                                                          │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
                                                  ╭─ official ─────────────────────────────────────╮
-    + Add marketplace   owner/repo or a folder   │ Comes with ttheme                              │
+    + Add marketplace   owner/repo or a folder   │ Updates with ttheme                            │
     ⌕ Search marketplace   find one on GitHub    │                                                │
                                                  │    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっ…  │
     ● official                                   │ ▌    ● kita                                    │
@@ -16,9 +16,9 @@
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │ kita  Installed                                │
-                                                 │ Gate 8/12 · ✗ accent hue outside its ANSI rol… │
+                                                 │ Contrast 8/12 · ✗ accent hue outside its ANSI… │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │    × Remove marketplace                        │
                                                  ╰────────────────────────────────────────────────╯
- [BROWSE (FILTER)] space pick   bksp edit   ? keys                                 esc clear filter
+ [BROWSE (FILTER)] space pick   bksp edit   ? keys                                        esc clear

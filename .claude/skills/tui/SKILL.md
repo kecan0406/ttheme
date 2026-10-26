@@ -56,13 +56,13 @@ Preview draws in zsh what the Node screens draw in TypeScript, so several things
 - The hub's tab bar: `hubBar` (`src/tui/hub.ts`) over Browse and `__tt_pv_bar` over Preview. Draw the `hub-few` and `hub-browse` scenarios with `mise run look` and compare their row 0.
 - The release line at the right end of the key bar: `releaseOf` (`src/tui/bar.ts`) and preview's `__tt_pv_standing` and `__tt_pv_foot`. Only the wording is shared, `STANDING_LINES` (`src/tui/notice.ts`) carried as `TTHEME_STANDING`.
 
-What `sync` carries into `palettes.zsh` for preview (`HUB_TABS`, `STANDING_LINES`, `TTHEME_MARK_INKS`, the help text) comes from `src/cli/emit-shell.ts`, so a change to one of those sources reaches preview only after a `sync`.
+What `sync` carries into `palettes.zsh` for preview (`HUB_TABS`, `STANDING_LINES`, `TTHEME_MARK_INKS`, its help, `PREVIEW_KEYS` from `src/tui/preview-keys.ts`) comes from `src/cli/emit-shell.ts`, so a change to one of those sources reaches preview only after a `sync`.
 
 ## Where a change goes
 
 **A key on a Node screen.** First CONTRIBUTING.md's "Keys a screen takes": where typing filters (preview, Browse) a letter or digit is never a command, and a key already in its table is a collision to resolve, not to add beside. Then the handler (the table above), the help topic that names the key (`topics()` in `BrowsePanel` and `PaletteEditor`, `findTopics` for find; enter on a topic runs its key), the hint on the screen's key bar (the "Draws" column above names where each takes its keys; the key spelled as the source spells it and drawn through `cap`, `src/tui/keycaps.ts`), and `docs/reference/keys.md`.
 
-**A key in preview or its panel.** A case in `__tt_pv_handle` (or the panel's `__tt_te_*`), `__tt_pv_help`, the bar in `__tt_pv_foot`, the panel's table in CONTRIBUTING.md, and `docs/reference/keys.md`. A key is drawn through `__tt_cap` and `__tt_capped`.
+**A key in preview or its panel.** A case in `__tt_pv_handle` (or the panel's `__tt_te_*`), its line in `PREVIEW_KEYS` (`src/tui/preview-keys.ts`, which `__tt_pv_help` reads through `palettes.zsh`), the bar in `__tt_pv_foot`, the panel's table in CONTRIBUTING.md, and `docs/reference/keys.md`. A key is drawn through `__tt_cap` and `__tt_capped`.
 
 **A click.** Every click has a key that does the same. In a Node screen wrap the text in `zone(target, text)` (`keyZone` for a key hint — `hintOf` already does) while drawing, and pad before marking, since `.length` and `padEnd` count the marks; act in the screen's mouse handler, on the release (`count >= 2` is a double click). find hands rectangles in `Frame.zones` instead. In preview append to `pvz` where the thing is drawn and act in `__tt_pv_press` or `__tt_pv_release`. CONTRIBUTING.md's "The mouse".
 
@@ -70,7 +70,7 @@ What `sync` carries into `palettes.zsh` for preview (`HUB_TABS`, `STANDING_LINES
 
 **A shared part** — the key bar, a notice, Help, a button, a box, the empty, loading and failed lines, `↑ n more`. Change it in `bar.ts`, `help.ts`, `parts.ts` or `notice.ts` rather than growing a copy in one screen, and look at every state it takes at once: `mise run look kit:<part> <cols>x<rows>` (`tests/kit.ts`: `bar`, `buttons`, `states`, `boxes`, `help`, `help-filtered`, `help-empty`, `help-short`).
 
-**Words.** CONTRIBUTING.md's "Writing the text": sentence case, values and keys as typed, key hints and errors lowercase, one wording per state, counts from the palettes listed and never from the rows drawn. Text someone else wrote goes through `inert`, `inertLines`, `quoted` or `escaped` (`src/core/text.ts`).
+**Words.** CONTRIBUTING.md's "Writing the text": sentence case, values and keys as typed, key hints and errors lowercase, one wording per state, counts from the palettes listed and never from the rows drawn, the key bar's verbs, a Help topic's `keys`, `does` and `more`, `·` only between facts through `SEP`, and the word list `src/tui/words.test.ts` holds the screens and `docs/` to. Text someone else wrote goes through `inert`, `inertLines`, `quoted` or `escaped` (`src/core/text.ts`).
 
 **A new Node screen.** A model whose `view()` returns its rows; open it with `within`, draw through a `Screen` over that `view`, take events with `terminal.loop`; let `Terminal` set the modes (`pointing()` for the mouse), never write them or call `setRawMode` by hand; `?` opens `Help`, the bar is `barLine`, ctrl+c leaves, asking first while something is held; clack only for inline questions, never a `Prompt` subclass. Add it to `.oxlintrc.json`'s lists only if it is runtime or a part. Give it a line in `SCENARIOS` (`tests/tui.zsh`: name, state, target, keys, where `Enter@ADD` presses enter and waits for `ADD` on screen; a new target needs a case in `command_for`), then `mise run tui --update <name>`.
 

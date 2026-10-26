@@ -209,7 +209,7 @@ te=1 tfocus=1 tename=kagami bgcw=8 tune=kagami tpick=kagami tf=1 help=0 pick= co
 out=; __tt_pv_foot 80
 [[ $out == *"f find"* && $out == *"s save"* ]] || { print -u2 "an EDIT bar on a picture with several images dropped the find or save key: $out"; exit 1 }
 out=; __tt_pv_foot 200
-[[ $out == *"image ×3"* ]] || { print -u2 "the EDIT bar did not count the palette's pictures: $out"; exit 1 }
+[[ $out == *"picture ×3"* ]] || { print -u2 "the EDIT bar did not count the palette's pictures: $out"; exit 1 }
 [[ $out == *"space show"* && $out != *"c colors"* ]] ||
   { print -u2 "the EDIT bar of a hidden picture offered the colors key: $out"; exit 1 }
 (
@@ -359,10 +359,10 @@ REPLY=; __tt_bg_coloring kagami:safebooru_3
   { print -u2 "the conf's colors line did not reach its picture: active=$first other=$REPLY (${(kv)bgcolors})"; exit 1 }
 te=1 tfocus=1 tename=kagami bgcw=8 tune=kagami tpick=kagami:safebooru_3 tf=4 color=0 out= off=0 msgt=0 help=0 pick= conf=0 flt=
 __tt_pv_bg_panel kagami:safebooru_3 4 1 60
-[[ $out == *Colors* && $out == *"[original]"* && $out == *" tone "* ]] ||
+[[ $out == *Colors* && $out == *"[original]"* && $out == *" tinted "* ]] ||
   { print -u2 "the tuning panel did not show the picture's colors: $out"; exit 1 }
 out=; __tt_pv_foot 200
-[[ $out == *switch* && $out != *"= reset"* && $out == *"+ reset all"* ]] ||
+[[ $out == *"←→ change"* && $out != *"= reset"* && $out == *"+ reset all"* ]] ||
   { print -u2 "the Colors row's hints kept the field reset: $out"; exit 1 }
 print -l "# image safebooru_2 2/3" "# picture safebooru_2 kagami.1a2b3c4d kagami.1a2b3c4d@fill-42.png 0.2 -" \
   "# picture safebooru_3 kagami.cccccccc kagami.cccccccc@fill-40.png 0.1 -" \
@@ -434,7 +434,7 @@ tune= tpick= bgcw=0 out=
 (
   te=1 bgcw=8 color=0 split=0 sw=0 pw=100 ph=30 help=1 out=
   __tt_pv_help
-  [[ $out == *"c  colors"* ]] ||
+  [[ $out == *"Own colors or tinted"* ]] ||
     { print -u2 "the help did not name the colors key: $out"; exit 1 }
 ) || exit 1
 TTHEME_STARTUP=miku
@@ -871,7 +871,7 @@ TTHEME_STARTUP=
     { print -u2 "unpin offered the wrong scopes: ${(j:|:)lab}"; print -rlu2 -- $drops; exit 1 }
   COLUMNS=100 LINES=30 __tt_unpin_block 2
   want=(
-    "[UNPIN]  This directory  [And below]  ~/code    ←→ choose · enter unpin · esc keep"
+    "[UNPIN]  This directory  [And below]  ~/code    ←→ choose   enter unpin   esc keep"
     "~/code                konata  and below"
     "└── acme/"
     "    ├── docs/ ← here  rei     and below  × unpin"
@@ -1666,12 +1666,12 @@ out=$(PATH=$XDG_CONFIG_HOME/fakebin:$PATH XDG_CACHE_HOME=/c __tt_cli --version)
   __tt_reload() { : }
   __tt_bg_refresh() { print -r -- refresh >> $calls }
   TTHEME_MODE_SETTINGS=(light dark)
-  out=$(ttheme dark 2>&1) && [[ $out == *"already worn in its dark mode"* && ! -e $calls ]] ||
+  out=$(ttheme dark 2>&1) && [[ $out == *"already shows in its dark mode"* && ! -e $calls ]] ||
     { print -u2 "ttheme dark ran a sync with nothing to change: $out"; exit 1 }
   ttheme light > /dev/null || { print -u2 "ttheme light failed"; exit 1 }
   [[ "$(<$TTHEME_CONFIG)" == *$'\n'': ${TTHEME_MODE:=light}'* && "$(<$calls)" == sync ]] ||
     { print -u2 "ttheme light did not write the setting once and sync"; exit 1 }
-  out=$(ttheme light 2>&1) && [[ $out == *"already worn in its light mode"* && "$(<$calls)" == sync ]] ||
+  out=$(ttheme light 2>&1) && [[ $out == *"already shows in its light mode"* && "$(<$calls)" == sync ]] ||
     { print -u2 "ttheme light synced again with nothing to change: $out"; exit 1 }
   ttheme dark > /dev/null || { print -u2 "ttheme dark failed"; exit 1 }
   [[ "$(<$TTHEME_CONFIG)" != *$'\n'': ${TTHEME_MODE:=light}'* && "$(<$TTHEME_CONFIG)" == *'# : ${TTHEME_MODE:=dark}'* ]] ||

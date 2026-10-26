@@ -30,6 +30,12 @@ export function hubGoto(active: HubTab, step: number): number {
   return HUB_SWITCH + ((at + step + HUB_TABS.length) % HUB_TABS.length) + 1
 }
 
+export function hubNext(active: HubTab, step = 1): string {
+  const at = HUB_TABS.findIndex((tab) => tab.name === active)
+
+  return HUB_TABS[(at + step + HUB_TABS.length) % HUB_TABS.length]?.title ?? ''
+}
+
 export function hubTo(tab: HubTab): number {
   return HUB_SWITCH + HUB_TABS.findIndex((one) => one.name === tab) + 1
 }
@@ -48,5 +54,5 @@ export function hubBar(active: HubTab, color: boolean, inks?: readonly Hex[]): s
     return tabOf(p, title, name === active, (text) => zone(spot, text))
   })
 
-  return ` ${mark ? `${mark}  ` : ''}${tabs.join(' ')}  ${p.dim(`${cap('tab')} next`)}`
+  return ` ${mark ? `${mark}  ` : ''}${tabs.join(' ')}  ${p.dim(`${cap('tab')} ${hubNext(active)}`)}`
 }

@@ -3,7 +3,7 @@
  │ ⌕ Search… ‹hint› │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
                                                  ╭─ official ─────────────────────────────────────╮
-    + Add marketplace   owner/repo or a folder   │ Comes with ttheme                              │
+    + Add marketplace   owner/repo or a folder   │ Updates with ttheme                            │
     ⌕ Search marketplace   find one on GitHub    │                                                │
                                                  │    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっ…  │
     ● official                                   │ ▌    ● bocchi                                  │
@@ -16,7 +16,7 @@
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │ bocchi  Will install                           │
-                                                 │ Gate 8/12 · ✗ accent hue outside its ANSI rol… │
+                                                 │ Contrast 8/12 · ✗ accent hue outside its ANSI… │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
                                                  │    × Remove marketplace                        │

@@ -9,7 +9,7 @@ it from there.
 ```sh
 ttheme share rei       # one palette
 ttheme share           # asks how to share, then which palettes
-ttheme share | pbcopy  # the palette this tab wears, straight to the clipboard
+ttheme share | pbcopy  # the palette this tab shows, straight to the clipboard
 ```
 
 `share` prints the link, and in a terminal its QR code under it. The QR code is
@@ -27,7 +27,7 @@ pictures, checked by a hash so a mistyped link is refused.
 ## Open a link
 
 The link opens [the builder](https://ttheme.dev/builder) on the palette: a mock
-terminal in its colors, its slots, the contrast gate, and its pictures' posts
+terminal in its colors, its color list, the contrast checks, and its pictures' posts
 with their artists. A change there makes a copy of your own, which the builder
 exports as a palette file.
 

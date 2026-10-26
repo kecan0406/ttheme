@@ -70,7 +70,7 @@ const RUNS = new Map<string, Verb['run']>([
         throw new UsageError('name a palette', verbNamed('share'))
       }
 
-      console.error(`Sharing ${worn}, the palette this tab wears`)
+      console.error(`Sharing ${worn}, the palette this tab shows`)
 
       return runShare([worn], asked)
     },
@@ -130,7 +130,7 @@ async function paletteOf([name]: string[], verb: string): Promise<string> {
 
   if (chosen === undefined) {
     const worn = process.env.TTHEME_WORN
-    throw new UsageError(`name a palette${worn ? ` — this tab wears ${worn}` : ''}`, verbNamed(verb))
+    throw new UsageError(`name a palette${worn ? ` — this tab shows ${worn}` : ''}`, verbNamed(verb))
   }
 
   return chosen

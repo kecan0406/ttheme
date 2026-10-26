@@ -89,7 +89,7 @@ export class AddForm {
       'Enter marketplace source:',
       p.dim('Examples:'),
       ...['owner/repo (GitHub)', 'owner/repo#v1 (a tag or branch)', '~/path/to/marketplace (a folder)'].map((l) =>
-        p.dim(` · ${l}`),
+        p.dim(`  ${l}`),
       ),
       '',
       ...framed(p, width, text).map((line) => zone({ kind: 'form' } satisfies Spot, line)),

@@ -41,12 +41,12 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'use',
     args: ['<palette>'],
-    about: 'Paint this tab — a unique prefix works: ttheme use ho',
+    about: 'Use a palette in this tab — a unique prefix works: ttheme use ho',
     section: 'tab',
     shell: true,
   },
   { name: 'default', args: ['<palette>'], about: 'Make a palette the one new tabs open with', section: 'startup' },
-  { name: 'on', args: [], about: 'Wear the default palette in new tabs again', section: 'startup' },
+  { name: 'on', args: [], about: 'Use the default palette in new tabs again', section: 'startup' },
   {
     name: 'off',
     args: [],
@@ -64,7 +64,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'unpin',
     args: ['[dir|ssh:<host>]'],
-    about: "Drop a pin — this directory's, every one below it, the one above that paints it, or an ssh host's",
+    about: "Drop a pin — this directory's, every one below it, the one above that covers it, or an ssh host's",
     section: 'tab',
     shell: true,
   },
@@ -87,21 +87,21 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'auto',
     args: [],
     about:
-      'Wear every palette in the mode the system is in — following it as it changes, where a wired Ghostty, iTerm2, kitty or WezTerm reports it',
+      'Show every palette in the mode the system is in — following it as it changes, where a wired Ghostty, iTerm2, kitty or WezTerm reports it',
     section: 'startup',
     shell: true,
   },
   {
     name: 'light',
     args: [],
-    about: 'Wear every palette in its light mode — every open tab repaints, and new tabs open in it',
+    about: 'Show every palette in its light mode — every open tab repaints, and new tabs open in it',
     section: 'startup',
     shell: true,
   },
   {
     name: 'dark',
     args: [],
-    about: 'Wear every palette in its dark mode — every open tab repaints, and new tabs open in it',
+    about: 'Show every palette in its dark mode — every open tab repaints, and new tabs open in it',
     section: 'startup',
     shell: true,
   },
@@ -151,7 +151,7 @@ export const VERB_SPECS: VerbSpec[] = [
       ],
       [
         'check [dir]',
-        "Check a marketplace's folder before you push it — ttheme-marketplace.toml, every palette, the renames and the gate; nothing is written",
+        "Check a marketplace's folder before you push it — ttheme-marketplace.toml, every palette, the renames and the contrast checks; nothing is written",
       ],
     ],
     section: 'palettes',
@@ -182,14 +182,14 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'edit',
     args: ['[palette]'],
     about:
-      "Change a palette in the palette editor — your own in its file, any other as your tone over its marketplace's colors, which R and s in the editor put back; with none named, asks to edit the one this tab wears",
+      "Change a palette in the palette editor — your own in its file, any other as your tuning over its marketplace's colors, which R and s in the editor put back; with none named, asks to edit the one this tab shows",
     section: 'own',
   },
   {
     name: 'check',
     args: ['[palette]'],
     about:
-      'Measure a palette against the contrast gate — where it misses, suggest colors that pass; with none named, asks to check the one this tab wears',
+      'Check a palette against the contrast checks — where one fails, suggest colors that pass; with none named, asks to check the one this tab shows',
     section: 'own',
     more: true,
     flags: { fix: { type: 'boolean', about: 'Write the suggested colors into your palette' } },
@@ -212,7 +212,7 @@ export const VERB_SPECS: VerbSpec[] = [
       ],
       [
         'make [palette]',
-        'Turn an anchors file into palettes — ranks base schemes, harmonizes, fixes the ANSI roles and runs the gate, then writes them into your local marketplace and installs them',
+        'Turn an anchors file into palettes — ranks base schemes, harmonizes, fixes the ANSI roles and runs the contrast checks, then writes them into your local marketplace and installs them',
       ],
     ],
     flags: {
@@ -262,7 +262,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'share',
     args: ['[palette]'],
     about:
-      "Share palettes as a link or a GitHub marketplace — asks which and which palettes, then prints the link and its QR code; ttheme add <link> installs a link's palettes, pictures included, and ttheme marketplace add <owner>/<repo> adds the marketplace, which gh creates and sharing it again updates; a palette named, or a link into a pipe, shares that palette, or the one this tab wears, as a link without asking",
+      "Share palettes as a link or a GitHub marketplace — asks which and which palettes, then prints the link and its QR code; ttheme add <link> installs a link's palettes, pictures included, and ttheme marketplace add <owner>/<repo> adds the marketplace, which gh creates and sharing it again updates; a palette named, or a link into a pipe, shares that palette, or the one this tab shows, as a link without asking",
     section: 'own',
     flags: {
       tone: {
@@ -291,7 +291,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'wire',
     args: ['<terminal>'],
     about:
-      'Wire one more terminal into this setup, after showing what it edits — the shell offers it in a terminal that paints only through the config init would have wired',
+      'Wire one more terminal into this setup, after showing what it edits — the shell offers it in a terminal that shows colors only through the config init would have wired',
     section: 'setup',
     hidden: true,
   },
@@ -449,7 +449,7 @@ const WIDTH = Math.max(
 const EXAMPLES: [string, string][] = [
   ['npx @kecan0406/ttheme init -y', 'Wire the terminals found here, no prompts'],
   ['ttheme add homura madoka', 'Install two palettes'],
-  ['ttheme use homura', 'Paint this tab with one'],
+  ['ttheme use homura', 'Use one in this tab'],
   ['ttheme marketplace add alice/ttheme-pastel', "alice's marketplace, alice@pastel — ttheme add alice@pastel/dusk"],
   ['ttheme new rei --from rei', 'Your own rei, <you>@<marketplace>/rei, to edit and share'],
 ]

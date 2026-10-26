@@ -110,8 +110,8 @@ export const iterm2: Wiring = {
     if (ctx.startup) {
       lines.push(
         pointed?.restart
-          ? `Restart iTerm2    New tabs open on "ttheme · default", which wears ${ctx.startup}`
-          : `iTerm2 default    "ttheme · default" wears ${ctx.startup} and follows \`ttheme default\``,
+          ? `Restart iTerm2    New tabs open on "ttheme · default", which shows ${ctx.startup}`
+          : `iTerm2 default    "ttheme · default" shows ${ctx.startup} and follows \`ttheme default\``,
       )
     }
 

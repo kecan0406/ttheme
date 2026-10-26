@@ -171,7 +171,7 @@ export function runOff(): void {
 
   const pointed = commit(home, readMarketplaces(home), state, { ...state, off: true })
   const name = startupPalette(state)
-  console.log(`Off · new tabs open in the terminal's own colors${name ? ` — \`ttheme on\` wears ${name} again` : ''}`)
+  console.log(`Off · new tabs open in the terminal's own colors${name ? ` — \`ttheme on\` uses ${name} again` : ''}`)
 
   for (const wiring of wirings(state.terminals)) {
     if (pointed.get(wiring.id)?.restart) {

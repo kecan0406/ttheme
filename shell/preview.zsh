@@ -411,11 +411,12 @@ __tt_pv_bg_profiles() {
 }
 
 __tt_pv_bar() {
-  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] on=$pl line=" " title hint="tab next" mk up mo
+  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] on=$pl line=" " title hint mk up mo
   local -a ink
   local -i i at=${TTHEME_HUB_TABS[(Ie)preview]} len=${#TTHEME_HUB_TITLES}
   (( color )) || z= d= on=
-  [[ ${rtype[cur]} == thm ]] && hint="⇧tab switch"
+  hint="tab ${TTHEME_HUB_TITLES[at % ${#TTHEME_HUB_TITLES} + 1]}"
+  [[ ${rtype[cur]} == thm ]] && hint="⇧tab ${TTHEME_HUB_TITLES[(at + ${#TTHEME_HUB_TITLES} - 2) % ${#TTHEME_HUB_TITLES} + 1]}"
   __tt_capped "$hint"
   hint=$REPLY
   for title in $TTHEME_HUB_TITLES; do
@@ -548,37 +549,37 @@ __tt_pv_foot() {
     rk=esc right=$b$ke$z$d" cancel"$z
   elif (( te )); then
     badge=$tb
-    kk=(↑↓ ←→ s) kl=(field step save)
+    kk=(↑↓ ←→ s) kl=(move change save)
     if [[ -n $tune ]] && (( tf == 5 )); then
       __tt_pv_bg_images $tune
-      kl[2]="image ×$REPLY"
+      kl[2]="picture ×$REPLY"
       (( REPLY > 1 )) || { kk[2]=() kl[2]=() }
       __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
       __tt_pv_bg_pickkey
-      [[ -n ${bgcred[$tune:$REPLY]} ]] && { kk+=(y); kl+=(credit) }
+      [[ -n ${bgcred[$tune:$REPLY]} ]] && { kk+=(y); kl+=("copy credit") }
       kk+=(D) kl+=(remove)
     elif [[ -n $tune ]]; then
       __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
       if (( tf == 2 )); then
         kl[2]=move kk+=(1-9 '=' +) kl+=(place reset "reset all")
       elif (( tf == 4 )); then
-        kl[2]=switch kk+=(+) kl+=("reset all")
+        kl[2]=change kk+=(+) kl+=("reset all")
       else
-        kk+=('=' + ⇧←→) kl+=(reset "reset all" ×10)
+        kk+=('=' + ⇧←→) kl+=(reset "reset all" "by 10")
       fi
       (( bgoff[$tpick] )) && { kk+=(space); kl+=(show) } || { kk+=(c space); kl+=(colors hide) }
       __tt_pv_bg_pickkey
-      [[ -n ${bgcred[$tune:$REPLY]} ]] && { kk+=(y); kl+=(credit) }
+      [[ -n ${bgcred[$tune:$REPLY]} ]] && { kk+=(y); kl+=("copy credit") }
       __tt_pv_bg_images $tune
-      (( REPLY > 1 )) && { kk+=(', .' D); kl+=("image ×$REPLY" remove) }
+      (( REPLY > 1 )) && { kk+=(', .' D); kl+=("picture ×$REPLY" remove) }
     else
       kk=(enter ↑↓ s) kl=(find move save)
     fi
     kk+=(⇧enter) kl+=(apply)
     rk=esc right=$b$ke$z$d" cancel"$z
   elif (( conf )); then
-    badge=CONFIG kk=(↑↓ ←→ enter) kl=(setting value save)
-    rk=esc right=$b$ke$z$d" undo"$z
+    badge=CONFIG kk=(↑↓ ←→ enter) kl=(move change save)
+    rk=esc right=$b$ke$z$d" cancel"$z
   else
     badge=PREVIEW
     [[ -n $flt ]] && badge='PREVIEW (FILTER)'
@@ -591,15 +592,15 @@ __tt_pv_foot() {
         kk=(→) kl=(open)
       fi
     else
-      kk=(enter tab) kl=(apply edit)
-      (( split )) && { kk+=(⇧←→); kl+=(example) }
+      kk=(enter tab) kl=(use edit)
+      (( split )) && { kk+=(⇧←→); kl+=(sample) }
       [[ -n $flt ]] && { kk+=(bksp); kl+=(edit) }
     fi
     kk+=('?') kl+=(keys)
     if [[ -n $flt ]]; then
-      rk=esc right=$b$ke$z$d" clear filter"$z
+      rk=esc right=$b$ke$z$d" clear"$z
     else
-      rk=esc right=$b$ke$z$d" restore"$z
+      rk=esc right=$b$ke$z$d" cancel"$z
       [[ -n $cdot ]] && right+=" $ac$cdot$z $cn"
     fi
     if (( hub && vnew )); then
@@ -704,32 +705,20 @@ __tt_pv_foot() {
 
 __tt_pv_wrap() {
   setopt localoptions extendedglob
-  local sep="  $TTHEME_MARKS[sep]  " mk=$TTHEME_MARKS[sep] line="" part word rest joined REPLY
+  local line="" rest=${1##[[:space:]]#} joined REPLY
   local -a match mbegin mend
   local -i w=$2 i
   reply=()
-  for part in "${(@ps:$sep:)1}"; do
-    joined=${line:+$line$sep}$part
-    if (( ${(m)#joined} <= w )); then
-      line=$joined
-    elif [[ -n $line ]] && (( ${(m)#part} <= w )); then
-      reply+=("${${line%%[[:space:]]#}%%[[:space:]]##$mk}")
-      line=$part
-    else
-      [[ -n $line ]] && line+=$sep
-      rest=${part##[[:space:]]#}
-      while [[ $rest == (#b)([^[:space:]]##)([[:space:]]#)(*) ]]; do
-        word=$match[1]$match[2] rest=$match[3] joined=$line$match[1]
-        if [[ -n ${line//[[:space:]]} ]] && (( ${(m)#joined} > w )); then
-          reply+=("${${line%%[[:space:]]#}%%[[:space:]]##$mk}")
-          line=""
-        fi
-        line+=$word
-      done
-      line=${line%%[[:space:]]#}
+  while [[ $rest == (#b)([^[:space:]]##)([[:space:]]#)(*) ]]; do
+    rest=$match[3] joined=$line$match[1]
+    if [[ -n ${line//[[:space:]]} ]] && (( ${(m)#joined} > w )); then
+      reply+=("${line%%[[:space:]]#}")
+      line=""
     fi
+    line+=$match[1]$match[2]
   done
-  [[ -n $line ]] && reply+=("${${line%%[[:space:]]#}%%[[:space:]]##$mk}")
+  line=${line%%[[:space:]]#}
+  [[ -n $line ]] && reply+=("$line")
   (( ${#reply} )) || reply=("")
   for (( i = 1; i <= ${#reply}; i++ )); do
     (( ${(m)#reply[i]} > w )) && { __tt_clip "${reply[i]}" $w; reply[i]=$REPLY }
@@ -738,59 +727,37 @@ __tt_pv_wrap() {
 }
 
 __tt_pv_help() {
-  local back="the tab" z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank
-  [[ -n ${TTHEME_PALETTE[$cn]} ]] && back=$cn
-  local -a hk=() hv=()
-  if (( te )); then
-    hk=(Move Image "" "" "" Palette "" Apply Save Cancel)
-    hv=(
-      "↑↓ j k  the image, the palette, then Apply  ·  home  end"
-      "Images  ←→  , .  pick one  ·  D removes it  ·  f  finds one"
-      "enter on the empty frame  ·  finds the first one"
-      "←→ h l step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all"
-      "space  hides  ·  c  colors  ·  y  copies who drew it"
-      "enter  ·  tunes its colors full screen, keeps its own tone"
-      "?  there lists its keys  ·  esc leaves it"
-      "enter on Apply, or ⇧enter anywhere  ·  saves, asks where"
-      "s  ·  keeps the picture"
-      "esc  ·  back to the list, dropping picture changes since s"
-    )
-  else
-    hk=(Move Catalogs Filter "" Example Apply Edit)
-    hv=(
-      "↑↓  ctrl+j  ctrl+k  home  end  pgup  pgdn"
-      "←→  ·  enter or space on a catalog"
-      "Any text  ·  bksp  ·  ctrl+u clears"
-      "Names and titles, in Japanese too"
-      "⇧←→  ${(Lj:, :)TTHEME_SCENES}"
-      "enter  applies  ·  esc restores $back"
-      "tab  →  ctrl+e  ·  its colors and picture"
-    )
-    hk+=(Config "")
-    hv+=("alt+c  ·  ↑↓ setting  ←→ value" "enter saves  ·  esc undoes")
-    (( hub )) && { hk+=(Screens); hv+=("shift+tab  ·  tab on a catalog") }
-  fi
-  hk+=(Close)
-  if (( help == 2 )); then
-    hv+=("any key  ·  ? brings this back")
-  else
-    hv+=("?  esc")
-  fi
+  local z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] blank where=list
+  (( te )) && where=panel
+  local -a hg=() hk=() hd=() hl=() hn=() wn=() reply=()
+  local -i i j k r x y w hh floor tw kw=0 dw=0 rows used n c0 r0
+  for (( i = 1; i + 3 <= ${#TTHEME_PREVIEW_KEYS}; i += 4 )); do
+    case $TTHEME_PREVIEW_KEYS[i] in
+      $where) ;;
+      hub) (( hub && ! te )) || continue ;;
+      help) (( help == 2 )) && continue ;;
+      first) (( help == 2 )) || continue ;;
+      *) continue ;;
+    esac
+    __tt_capped "$TTHEME_PREVIEW_KEYS[i+2]"
+    hg+=("$TTHEME_PREVIEW_KEYS[i+1]") hk+=("$REPLY") hd+=("$TTHEME_PREVIEW_KEYS[i+3]")
+    (( ${(m)#REPLY} > kw )) && kw=${(m)#REPLY}
+    (( ${(m)#hd[-1]} > dw )) && dw=${(m)#hd[-1]}
+  done
   (( color )) || z= b= d=
-  local -i i j k r x y w hh floor tw rows used n
-  local -a hl=() hn=()
   if (( split && sw >= 48 )); then
-    tw=$(( se - sc - 9 )) rows=$(( ph - 4 ))
+    c0=$sc r0=4 tw=$(( se - sc + 1 - kw - 4 )) rows=$(( ph - 4 ))
   else
-    w=$(( pw - 2 < 58 ? pw - 2 : 58 ))
-    (( te )) && w=$(( pw - 2 < 76 ? pw - 2 : 76 ))
-    tw=$(( w - 16 )) rows=$(( ph - 5 ))
+    w=$(( kw + dw + 10 ))
+    (( w > pw - 2 )) && w=$(( pw - 2 ))
+    tw=$(( w - 10 - kw )) rows=$(( ph - 5 ))
   fi
+  (( tw < 8 )) && tw=8
   for (( i = 1; i <= ${#hk}; i++ )); do
-    __tt_capped "${hv[i]}"
-    __tt_pv_wrap "$REPLY" $tw
-    hl+=("${reply[@]}") hn+=(${#reply})
-    (( used += ${#reply} ))
+    __tt_pv_wrap "${hd[i]}" $tw
+    hl+=("${reply[@]}") wn+=(${#reply}) hn+=(${#reply})
+    [[ ${hg[i]} != "${hg[i-1]}" ]] && (( hn[i]++ ))
+    (( used += hn[i] ))
   done
   n=${#hk}
   if (( used > rows )); then
@@ -799,39 +766,32 @@ __tt_pv_help() {
       (( used += hn[n + 1] ))
     done
   fi
-  if (( split && sw >= 48 )); then
-    r=4
-    for (( i = 1; i <= n; i++ )); do
-      out+=$'\e['$r';'$sc'H'$b${hk[i]}$z
-      for (( j = 1; j <= hn[i]; j++, r++ )); do
-        (( ++k ))
-        out+=$'\e['$r';'$(( sc + 10 ))'H'${hl[k]}
-      done
+  if (( ! split || sw < 48 )); then
+    hh=$(( used + 4 ))
+    x=$(( (pw - w) / 2 + 1 )) y=$(( (ph - hh) / 2 ))
+    floor=$(( te && ! split ? 4 : pvhd + 2 ))
+    (( y < floor )) && y=$floor
+    (( y > ph - hh )) && y=$(( ph - hh ))
+    (( y < 1 )) && y=1
+    blank=${(l:w:: :)}
+    out+=$'\e['$y';'$x'H'"╭─ Help ${(l:$(( w - 9 ))::─:)}╮"
+    for (( r = y + 1; r < y + hh - 1; r++ )); do
+      out+=$'\e['$r';'$x'H'$blank$'\e['$r';'$x'H│'$'\e['$r';'$(( x + w - 1 ))'H│'
     done
-    (( n < ${#hk} )) && out+=$'\e['$r';'$sc'H'$d$TTHEME_MARKS[below]" $(( ${#hk} - n )) more"$z
-    return 0
+    out+=$'\e['$(( y + hh - 1 ))';'$x'H'"╰${(l:$(( w - 2 ))::─:)}╯"
+    c0=$(( x + 3 )) r0=$(( y + 2 ))
   fi
-  hh=$(( used + 4 ))
-  x=$(( (pw - w) / 2 + 1 )) y=$(( (ph - hh) / 2 ))
-  floor=$(( te && ! split ? 4 : pvhd + 2 ))
-  (( y < floor )) && y=$floor
-  (( y > ph - hh )) && y=$(( ph - hh ))
-  (( y < 1 )) && y=1
-  blank=${(l:w:: :)}
-  out+=$'\e['$y';'$x'H'"╭─ Help ${(l:$(( w - 9 ))::─:)}╮"
-  for (( r = y + 1; r < y + hh - 1; r++ )); do
-    out+=$'\e['$r';'$x'H'$blank$'\e['$r';'$x'H│'$'\e['$r';'$(( x + w - 1 ))'H│'
-  done
-  r=$(( y + 2 ))
+  r=$r0
   for (( i = 1; i <= n; i++ )); do
-    out+=$'\e['$r';'$(( x + 3 ))'H'$b${hk[i]}$z
-    for (( j = 1; j <= hn[i]; j++, r++ )); do
+    [[ ${hg[i]} != "${hg[i-1]}" ]] && out+=$'\e['$(( r++ ))';'$c0'H'$b${hg[i]}$z
+    for (( j = 1; j <= wn[i]; j++, r++ )); do
       (( ++k ))
-      out+=$'\e['$r';'$(( x + 13 ))'H'${hl[k]}
+      (( j == 1 )) && out+=$'\e['$r';'$(( c0 + 2 ))'H'$b${hk[i]}$z
+      out+=$'\e['$r';'$(( c0 + 4 + kw ))'H'${hl[k]}
     done
   done
-  (( n < ${#hk} )) && out+=$'\e['$r';'$(( x + 3 ))'H'$d$TTHEME_MARKS[below]" $(( ${#hk} - n )) more"$z
-  out+=$'\e['$(( y + hh - 1 ))';'$x'H'"╰${(l:$(( w - 2 ))::─:)}╯"
+  (( n < ${#hk} )) && out+=$'\e['$r';'$c0'H'$d$TTHEME_MARKS[below]" $(( ${#hk} - n )) more"$z
+  return 0
 }
 
 __tt_pv_specimen() {
@@ -967,7 +927,7 @@ __tt_pv_tune_stage() {
       bgview[$tune]=$tpick bgswap[$tune]=${tpick##*:}
     fi
   fi
-  (( changed )) && msg="Kept · saved when preview closes" msgt=200
+  (( changed )) && msg="Kept, and saved when preview closes" msgt=200
   tune="" tpick="" tsnaps=() bgname=""
 }
 
@@ -1121,7 +1081,7 @@ __tt_pv_redraw() {
 
   bgsrc=() resized=1 bgdim=()
   (( $+functions[__tt_bg_refresh] )) && __tt_bg_refresh $TTHEME_ORDER
-  msg=${${out//$'\n'/ }:-"Saved · no background pictures to draw"} msgt=300
+  msg=${${out//$'\n'/ }:-"Saved, with no pictures to draw"} msgt=300
 }
 
 __tt_pv_conf_panel() {
@@ -1436,7 +1396,7 @@ __tt_pv_draw() {
     else
       [[ -n $an ]] && src=${TTHEME_SRC[$an]}
       (( ${#an} + 2 + ${#src} > sw )) && src=""
-      __tt_pv_head 1 $sc $se ${an:-custom} "" "$src"
+      __tt_pv_head 1 $sc $se ${an:-"Terminal colors"} "" "$src"
       __tt_pv_specimen
     fi
     (( help && sw < 48 )) && __tt_pv_help
@@ -2204,7 +2164,7 @@ __tt_pv_te_head() {
   __tt_te_unsaved && (( room -= 11 ))
   line=$b$ac$TTHEME_MARKS[current]$z" "$b$tename$z
   __tt_shelf $tename
-  line+=" "$d"· $REPLY"$z
+  line+="  "$d$REPLY$z
   __tt_clip "$line" $room
   out+=$'\e[1;'$col'H'$REPLY$z
   __tt_te_unsaved && out+=$'\e[1;'$(( end - 8 ))'H'$y$TTHEME_MARKS[on]$z" "$d"unsaved"$z
@@ -2239,7 +2199,7 @@ __tt_pv_te_ghost() {
   local -i r0=$1 col=$2 T=$(( $3 - $2 - 21 )) i
   (( color )) || z= d=
   (( T < 8 )) && T=8
-  out+=$'\e['$r0';'$col'H  '$d"Colors"$'\e['$r0';'$(( col + 12 ))'H'" original  tone "$z
+  out+=$'\e['$r0';'$col'H  '$d"Colors"$'\e['$r0';'$(( col + 12 ))'H'" original  tinted "$z
   out+=$'\e['$(( r0 + 1 ))';'$col'H  '$d"Size"$'\e['$(( r0 + 1 ))';'$(( col + 12 ))'H'${(l:T::─:)}$z
   for (( i = 1; i <= 9; i++ )); do
     out+=$'\e['$(( r0 + 3 + (i - 1) / 3 ))';'$(( col + 12 + (i - 1) % 3 * 3 ))'H'$d"·"$z
@@ -2285,7 +2245,7 @@ __tt_pv_te_images() {
     note="$n/$(( ${#held} ? ${#held} : 1 ))"
   fi
   (( tfocus == 1 && tf == 5 )) && st=$ac$TTHEME_MARKS[focus]$z" " tt=$b
-  out+=$'\e['$y';'$col'H'$st$tt"Images"$z$'\e['$y';'$(( end - ${#note} + 1 ))'H'$d$note$z
+  out+=$'\e['$y';'$col'H'$st$tt"Pictures"$z$'\e['$y';'$(( end - ${#note} + 1 ))'H'$d$note$z
   pvz+=("$y $col $end teimg")
 }
 
@@ -2298,7 +2258,7 @@ __tt_pv_te_button() {
 }
 
 __tt_pv_te_editrow() {
-  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold] note="tunes its colors full screen"
+  local z=$TTHEME_SGR[reset] d=$TTHEME_SGR[dim] b=$TTHEME_SGR[bold] note="changes its colors full screen"
   local -i y=$1 col=$2 end=$3 x=$(( $2 + 2 ))
   local reset="Reset palette"
   (( color )) || z= d= b=
@@ -2313,7 +2273,7 @@ __tt_pv_te_editrow() {
     pvz+=("$y $(( x + 2 )) $(( x + ${#reset} + 5 )) tereset")
     x+=$(( ${#reset} + 6 ))
     (( tfocus == 0 && tbtn )) && note="back to its own colors"
-    (( tearm )) && note="drops your tone"
+    (( tearm )) && note="drops your tuning"
   fi
   (( ${#note} <= end - x - 3 )) && out+="  "$d$note$z
 }
@@ -2339,7 +2299,7 @@ __tt_pv_te_panel() {
     y=$r0
     st=""
     [[ -n $tune ]] && { (( bgoff[$tpick] )) && st=off || st=on }
-    __tt_pv_te_edge $y $col $W ╭ ╮ "$fs" "$hs" Image "$st"
+    __tt_pv_te_edge $y $col $W ╭ ╮ "$fs" "$hs" Picture "$st"
     __tt_pv_te_sides $(( y + 1 )) $(( y + I - 2 )) $col $W "$fs"
     __tt_pv_te_edge $(( y + I - 1 )) $col $W ╰ ╯ "$fs"
     if (( pics )); then
@@ -2403,7 +2363,7 @@ __tt_pv_te_panel() {
   elif (( canpick )); then
     note="saves, then asks where"
   else
-    note="saves and wears it in this tab"
+    note="saves and uses it in this tab"
   fi
   out+=$'\e['$y';'$ix'H'
   if (( tfocus == 2 )); then
@@ -2623,8 +2583,8 @@ __tt_preview() {
   local -F mlast=0
   local mact="" mzone="" pvmouse="" pasted=""
   local -a pvz=()
-  local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=(Mode "New tabs" Announce "Search fx" Sort Mouse Blur Colors)
-  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "original tone") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "original tone")
+  local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=(Mode "New tabs" Announce "Search fx" Sort Mouse Blur Pictures)
+  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "original tone") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "original tinted")
   local -A cnote=(
     TTHEME_MODE:auto "Every palette in the system's mode, following it as it changes"
     TTHEME_MODE:light "Every palette in its light mode" TTHEME_MODE:dark "Every palette in its dark mode"

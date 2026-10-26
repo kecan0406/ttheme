@@ -660,7 +660,7 @@ __tt_pv_bg_pick() {
   local cur=${tpick##*:} REPLY
   local -i n=${#keys} at
   if (( n < 2 )); then
-    msg="$tune has one image" msgt=200
+    msg="$tune has one picture" msgt=200
     return 0
   fi
   [[ $tpick == *:* ]] || cur=${bgact[$tune]}
@@ -702,7 +702,7 @@ __tt_pv_bg_recolor() {
   want=original
   [[ $REPLY == original ]] && want=tone
   msg="Drawing in its own colors"
-  [[ $want == tone ]] && msg="Drawing in the palette's tone"
+  [[ $want == tone ]] && msg="Tinting it in the palette's color"
   msgt=300
   printf '\e[?2026h'
   __tt_pv_draw
@@ -728,7 +728,7 @@ __tt_pv_bg_recolor() {
 }
 
 __tt_pv_bg_panel() {
-  local name=$1 z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] c=$ac val sty mark choice REPLY
+  local name=$1 z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] c=$ac val sty mark choice shown REPLY
   local -a labs=(Size Position Opacity Colors) at=(1 4 7 0) def=(${=bgdef[$1]})
   local -i r0=$2 col=$3 end=$4 off=${bgoff[$1]} T=$(( $4 - $3 - 21 )) lo=20 hi=100 k i r knob pos=${bgpos[$1]} o tuned
   (( color )) || z= b= d= c=
@@ -750,16 +750,17 @@ __tt_pv_bg_panel() {
       __tt_bg_coloring $name
       val=$REPLY
       out+=$'\e['$r';'$(( col + 12 ))'H'
-      pvz+=("$r $(( col + 12 )) $(( col + 21 )) colors original" "$r $(( col + 23 )) $(( col + 28 )) colors tone")
+      pvz+=("$r $(( col + 12 )) $(( col + 21 )) colors original" "$r $(( col + 23 )) $(( col + 30 )) colors tone")
       for choice in original tone; do
+        shown=${${choice:#tone}:-tinted}
         if (( ! color )); then
-          if [[ $choice == $val ]]; then out+="[$choice] "; else out+=" $choice  "; fi
+          if [[ $choice == $val ]]; then out+="[$shown] "; else out+=" $shown  "; fi
         elif [[ $choice != $val ]]; then
-          out+=$d" $choice "$z" "
+          out+=$d" $shown "$z" "
         elif (( tf == k && ! off )); then
-          out+=$pl" $choice "$z" "
+          out+=$pl" $shown "$z" "
         else
-          out+=$sty" $choice "$z" "
+          out+=$sty" $shown "$z" "
         fi
       done
       continue

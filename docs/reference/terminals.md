@@ -23,8 +23,8 @@ VTE-based one, gets `ttheme use` and nothing else.
 - **Colors only.** ttheme sets no font, font size or shader anywhere.
 - **One state.** Whichever terminal you run a command in, the change reaches
   every terminal you wired.
-- **Repaints itself.** A tab only ever repaints itself, so a palette you painted
-  by hand stays until you change it.
+- **Repaints itself.** A tab only ever repaints itself, so a palette you used
+  there by hand stays until you change it.
 
 ## Ghostty
 
@@ -43,8 +43,8 @@ VTE-based one, gets `ttheme use` and nothing else.
 - Each palette gets a `ttheme · <palette>` profile, and `ttheme · default` is
   the default profile, built on your own so your font and keys carry over.
 - The first time ttheme switches a tab's profile, iTerm2 asks whether a control
-  sequence may do that. **Always Allow** lets a tab wear its palette's profile,
-  colors and picture in one step. Refused, tabs still wear the colors without
+  sequence may do that. **Always Allow** lets a tab switch to its palette's profile,
+  colors and picture in one step. Refused, tabs still show the colors without
   the picture.
 - iTerm2 reads its default profile at launch, so restart it once after `init`.
 - Pictures need iTerm2 3.7 or newer.
@@ -78,17 +78,17 @@ VTE-based one, gets `ttheme use` and nothing else.
 
 ## Warp
 
-- Warp wears one theme for the whole app, so the tab in front decides it, and
+- Warp shows one theme for the whole app, so the tab in front decides it, and
   switching tabs puts on the palette of the one you switch to.
 - Following the tab in front needs `sqlite3`, which macOS ships. Without it, a
   tab puts its palette back at its next prompt.
 - Split panes of one tab share its palette.
-- With Sync with OS on, the palette goes in both its light and dark slots, so
+- With Sync with OS on, the palette goes in as both its light and dark theme, so
   the system's appearance never switches it away. `ttheme off` gives yours
   back.
 - Warp Preview, Dev and the open-source build keep settings of their own.
-  The default palette goes into every one ttheme finds, and a tab paints the
-  Warp it runs in.
+  The default palette goes into every one ttheme finds, and a tab sets the theme of
+  the Warp it runs in.
 - Warp's theme picker lists each palette by its mode, as `miku · dark` and
   `miku · light`, and a palette with a picture once more as
   `miku · dark · picture`.
@@ -117,7 +117,7 @@ VTE-based one, gets `ttheme use` and nothing else.
 
 - Each palette gets a `ttheme · <palette>` profile, a copy of your default one
   in its colors and with its picture. Restart Terminal.app once after `init`.
-- A tab wears a palette by switching to its profile, through Terminal.app's own
+- A tab shows a palette by switching to its profile, through Terminal.app's own
   scripting.
 - A profile stretches its picture over the window, so ttheme lays it out for
   your window's shape. find is not offered, since Terminal.app cannot draw a
@@ -128,23 +128,23 @@ VTE-based one, gets `ttheme use` and nothing else.
 
 An editor's colorscheme and ttheme share the screen without overlapping.
 
-- **Neovim** with `termguicolors` paints every cell itself, so its colorscheme
+- **Neovim** with `termguicolors` draws every cell itself, so its colorscheme
   decides the editor and the palette shows around it. It reads the terminal's
   background at start, so a colorscheme with light and dark variants follows
   the palette's mode.
-- **Wear the palette in the editor** with `set notermguicolors`: Neovim's
-  default colorscheme then uses the 16 ANSI colors, so each tab's editor wears
+- **Show the palette in the editor** with `set notermguicolors`: Neovim's
+  default colorscheme then uses the 16 ANSI colors, so each tab's editor shows
   its tab's palette.
 - **256 colors** stay as every terminal ships them, so a colorscheme written
   for the 256-color palette looks the way its author made it.
 - **Color resets**: Neovim and some plugins put the terminal's colors back as
-  they exit. A painted tab repaints itself after the command in Ghostty, kitty,
+  they exit. A tab showing a palette repaints itself after the command in Ghostty, kitty,
   Alacritty, WezTerm and Windows Terminal; iTerm2 lands on the palette's
   profile; Terminal.app and Konsole ignore resets.
 
 ## tmux
 
 Inside tmux the colors belong to the terminal tab, not the pane. ttheme passes
-its colors through to the terminal, and a pane wears its palette again when it
+its colors through to the terminal, and a pane shows its palette again when it
 takes focus. Preview draws no picture inside tmux, and find is not offered
 there.

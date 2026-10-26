@@ -124,6 +124,18 @@ test('a mark means one thing', () => {
   assert.equal(new Set(glyphs).size, glyphs.length)
 })
 
+test('a screen writes · only between facts, through SEP, never as a word of its own', () => {
+  const raw = readdirSync(join(root, 'src', 'tui'), { recursive: true, encoding: 'utf8' })
+    .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts') && file !== 'style.ts')
+    .flatMap((file) =>
+      read('src', 'tui', file)
+        .split('\n')
+        .flatMap((line, i) => (line.includes(MARKS.sep) ? [`src/tui/${file}:${i + 1} ${line.trim()}`] : [])),
+    )
+
+  assert.deepEqual(raw, [])
+})
+
 test('the shell layer gives each mark the glyph style.ts gives it', () => {
   const block = read('shell', 'ttheme.zsh').match(MARK_TABLE)?.[1] ?? ''
   const table = Object.fromEntries([...block.matchAll(/(\S+) (\S+)/g)].map(([, key, glyph]) => [key, glyph]))

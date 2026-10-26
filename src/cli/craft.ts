@@ -57,7 +57,7 @@ export async function thisTab(): Promise<string | undefined> {
     return undefined
   }
 
-  const yes = await p.confirm({ message: `Use ${worn}, the palette this tab wears?` })
+  const yes = await p.confirm({ message: `Use ${worn}, the palette this tab shows?` })
 
   if (p.isCancel(yes) || !yes) {
     throw new Cancelled()
@@ -122,7 +122,7 @@ export function adopt(home: string, code: string, manifest: Manifest): Adopted {
     if (twin && wears(twin) !== wears(entry)) {
       refused.push({
         name: entry.name,
-        why: `is already in ${marketplaceOf(entry.name) ?? 'the official marketplace'} and differs — \`ttheme add ${entry.name}\` wears that one`,
+        why: `is already in ${marketplaceOf(entry.name) ?? 'the official marketplace'} and differs — \`ttheme add ${entry.name}\` installs that one`,
       })
     } else {
       entries.push(entry)
@@ -360,7 +360,7 @@ export async function runNew(name: string, from: string | undefined, into: strin
     available(home, manifest).palettes.filter((e) => e.name === full),
     now.terminals,
   )
-  console.log(`\n\`ttheme use ${full}\` wears it · \`ttheme edit ${full}\` opens it again`)
+  console.log(`\n\`ttheme use ${full}\` uses it   \`ttheme edit ${full}\` opens it again`)
 }
 
 function failuresOf(name: string, source: string, manifest: Manifest, mode: Mode): string[] {
@@ -458,13 +458,13 @@ export async function runEdit(name: string): Promise<void> {
   }
 
   console.log(
-    `Saved ${full}${state.palettes.includes(full) ? ' — new tabs and `ttheme use` wear it' : ` — \`ttheme add ${full}\` installs it`}`,
+    `Saved ${full}${state.palettes.includes(full) ? ' — new tabs and `ttheme use` use it' : ` — \`ttheme add ${full}\` installs it`}`,
   )
   const failing = failuresOf(full, after, manifest, mode)
 
   if (failing.length > 0) {
     console.log(
-      `\nIt misses the contrast gate:\n${failing.join('\n')}\n\`ttheme check --fix ${full}\` suggests colors that pass`,
+      `\nIt fails these contrast checks:\n${failing.join('\n')}\n\`ttheme check --fix ${full}\` suggests colors that pass`,
     )
   }
 }
@@ -570,7 +570,7 @@ export function runCheck(name: string, fix = false): number {
   const failures = gateFailures(entry)
 
   if (failures.length === 0) {
-    console.log('\nPasses the gate')
+    console.log('\nPasses every contrast check')
 
     return 0
   }
@@ -600,7 +600,7 @@ export function runCheck(name: string, fix = false): number {
     writeTone(home, withTone(readTone(home), entry.name, modeOf(base), overrideOf(base, listOf(colorsOfTheme(theme)))))
     sync(home, manifest, state)
     console.log(
-      `\nSaved as your tone of ${entry.name} — R then s in \`ttheme edit ${entry.name}\` puts its own colors back`,
+      `\nSaved as your tuning of ${entry.name} — R then s in \`ttheme edit ${entry.name}\` puts its own colors back`,
     )
 
     return left.length === 0 ? 0 : 1

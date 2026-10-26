@@ -1,6 +1,6 @@
 # Pin to a folder or ssh host
 
-A pin gives a folder, or an ssh host, its own palette. A tab wears it while it is
+A pin gives a folder, or an ssh host, its own palette. A tab shows it while it is
 there and takes back what it wore when it leaves.
 
 ## Pin this folder
@@ -22,9 +22,9 @@ how far the pin reaches with `←` `→`:
 The panel beside the list shows the pins around it as a tree, as they will be,
 before you confirm.
 
-From then on, a tab that `cd`s into the folder wears its palette, and `cd`ing
-out puts back what it wore. If you painted the tab by hand in between, your
-pick stays. The nearest pin above a folder wins, so a project can wear one
+From then on, a tab that `cd`s into the folder shows its palette, and `cd`ing
+out puts back what it showed. If you used a palette in the tab by hand in
+between, your pick stays. The nearest pin above a folder wins, so a project can use one
 palette and a subfolder another.
 
 ## Pin an ssh host
@@ -34,7 +34,7 @@ ttheme pin ssh:tusa     # one host
 ttheme pin ssh:*.prod   # every host ending in .prod
 ```
 
-The tab wears the palette from the moment you run `ssh tusa` until the prompt
+The tab shows the palette from the moment you run `ssh tusa` until the prompt
 comes back. The host is the name you type after `ssh`, so a `Host` from
 `~/.ssh/config` works as it is. `*` and `?` match as they do there, a host's own
 pin wins over a pattern, and a longer pattern wins over a shorter one.

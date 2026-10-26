@@ -101,7 +101,7 @@ const NAV: Group[] = [
       { slug: 'settings', label: 'settings', text: settings, made: 'settings' },
       { slug: 'keys', label: 'keys', text: keys },
       { slug: 'terminals', label: 'terminal support', text: terminals },
-      { slug: 'contrast-gate', label: 'contrast gate', text: contrastGate },
+      { slug: 'contrast-gate', label: 'contrast checks', text: contrastGate },
     ],
   },
 ]

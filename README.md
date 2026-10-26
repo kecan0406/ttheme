@@ -36,7 +36,7 @@
   accent stays in its role — red reads as an error, green as success — and apart
   from its neighbors at text size, red and green too for a deuteranope. The build
   fails if a palette regresses. Why each threshold sits where it does:
-  [the contrast gate](https://ttheme.dev/docs/reference/contrast-gate).
+  [the contrast checks](https://ttheme.dev/docs/reference/contrast-gate).
 - **Switched live, per tab.** Tabs in one window can wear different palettes,
   any tab can be repainted at any time, a directory can pin its own, and a new
   tab can take the next character.
@@ -92,7 +92,7 @@ ttheme add alice@pastel/dusk                 # and install one of its palettes
 ```
 
 Nobody reviews a marketplace. Its palettes are colors and post numbers, never
-code, and only the official marketplace is held to the contrast gate.
+code, and only the official marketplace is held to the contrast checks.
 [The marketplaces page](https://ttheme.dev/marketplace) lists the public ones, and
 [add and update palettes](https://ttheme.dev/docs/usage/palettes) covers the rest.
 

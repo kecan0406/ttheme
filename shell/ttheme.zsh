@@ -26,7 +26,7 @@ typeset -gA TTHEME_MARKS=(
   ok ✓ miss ✗ above ↑ below ↓
   update ⇡ auto ↻ remove × undo ↶
   star ★ link ⧉ search ⌕ linked ⇠
-  contrast ◐ swatch ■ pictures ▣ sep · cut …
+  contrast ◐ swatch ■ pictures ▣ sep · none – cut …
 )
 
 typeset -gA TTHEME_KEYCAPS=(
@@ -1043,7 +1043,7 @@ __tt_unpin_block() {
       bar+=" [${${lab[i]# }% }]"
     fi
   done
-  __tt_capped "←→ choose · enter unpin · esc keep"
+  __tt_capped "←→ choose   enter unpin   esc keep"
   keys=$REPLY
   (( ${(m)#plain} + 3 + ${(m)#keys} <= width )) && bar+="   "$d$keys$z
   __tt_clip "$bar" $width
@@ -1790,12 +1790,12 @@ __tt_mode() {
   local want=$1
   local -a lines=()
   if (( ! ${TTHEME_MODE_SETTINGS[(Ie)$want]} )); then
-    print -u2 -r -- "ttheme: $want needs a wired terminal that reports the system's appearance — here: ${(j: · :)TTHEME_MODE_SETTINGS}"
+    print -u2 -r -- "ttheme: $want needs a wired terminal that reports the system's appearance — here: ${(j:, :)TTHEME_MODE_SETTINGS}"
     return 1
   fi
   [[ -r $TTHEME_CONFIG ]] && lines=("${(@f)$(<$TTHEME_CONFIG)}")
   if [[ -n ${(M)lines:#": \${TTHEME_MODE:=$want}"} ]] || [[ $want == dark && -z ${(M)lines:#': ${TTHEME_MODE:='*} ]]; then
-    print -r -- "Every palette is already worn in its $want mode"
+    print -r -- "Every palette already shows in its $want mode"
     return 0
   fi
   __tt_config_write TTHEME_MODE $want || { print -u2 -r -- "ttheme: could not write $TTHEME_CONFIG"; return 1 }

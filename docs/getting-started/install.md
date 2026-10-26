@@ -21,12 +21,12 @@ npx @kecan0406/ttheme@latest init
 It asks, in this order:
 
 1. **Which terminals to wire.** The one you are in comes preselected.
-2. **Which mode to wear the palettes in**: `auto`, `light` or `dark`. Every
+2. **Which mode to show the palettes in**: `auto`, `light` or `dark`. Every
    palette comes in both. `auto` follows your system's appearance and is offered
    where Ghostty, iTerm2, kitty or WezTerm is wired.
 3. **Which catalogs to install.** `space` marks a catalog and `enter` moves on.
    You can add or drop single palettes later.
-4. **Whether to wear them.** With one palette picked, whether every tab wears
+4. **Whether to use them.** With one palette picked, whether every tab uses
    it. With several, whether to pick the default in `ttheme` afterwards.
 5. **Whether to add the palette skill to your coding agents**, when it finds
    Claude Code or another agent's folder. Ask the agent for a character's

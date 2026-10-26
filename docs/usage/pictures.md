@@ -2,7 +2,7 @@
 
 A palette can carry a picture of its character behind your text. ttheme finds
 one on the image boards, cuts the character out, and keeps it faint enough that
-your text still passes the contrast gate.
+your text still passes the contrast checks.
 
 ## Where pictures show
 
@@ -23,7 +23,7 @@ ttheme ships no pictures. They are downloaded to your machine and stay in
 ## Find one
 
 In `ttheme`, put the cursor on a palette and press `tab` to open its panel. The
-**Images** row at the top holds the palette's pictures. On an empty frame,
+**Pictures** row at the top holds the palette's pictures. On an empty frame,
 `enter` opens **find**, and `f` does from anywhere in the panel.
 
 find searches danbooru, konachan, yande.re and zerochan for the character and
@@ -43,7 +43,7 @@ opens the post.
 
 ## Try it on
 
-`enter` on a thumbnail paints the whole window the way the installed picture
+`enter` on a thumbnail shows the whole window the way the installed picture
 will look, over a sample of a shell session.
 
 - On macOS 14 or newer, an opaque picture has its character cut out by the
@@ -58,7 +58,7 @@ picture.
 
 ## Your own picture
 
-Drop an image file on the window while find is open, or paste one: a file
+Drop a picture file on the window while find is open, or paste one: a file
 copied in Finder, its path or a link. `ctrl+v` reads the clipboard itself, which
 is how a screenshot gets in. PNG and JPEG work everywhere; macOS also converts
 HEIC, WebP, GIF and TIFF.
@@ -69,7 +69,7 @@ The panel tunes the picture in place, row by row:
 
 | Row | `←` `→` change |
 |---|---|
-| **Images** | which of the palette's pictures shows |
+| **Pictures** | which of the palette's pictures shows |
 | **Colors** | its own colors, or one color of the palette |
 | **Size** | from 20% up to the whole picture (100%), then larger around the face, up to **fill** |
 | **Position** | the nine anchors; `1`–`9` jump to one |
@@ -80,13 +80,13 @@ picture, `s` saves, and `esc` drops what you changed since the last save. A
 saved change reaches every terminal you wired.
 
 The opacity starts at the highest value at which the palette's text still
-passes the [contrast gate](../reference/contrast-gate.md). You can raise it
+passes the [contrast checks](../reference/contrast-gate.md). You can raise it
 further; the panel does not stop you.
 
 ## Several pictures
 
 A palette keeps every picture you install on it. `,` and `.` move along the
-Images row from any row, and `s` makes the one you land on the palette's
+Pictures row from any row, and `s` makes the one you land on the palette's
 picture. `D` removes the picture under the cursor, files and all.
 
 ## Credit the artist
@@ -104,7 +104,7 @@ The panel names the artist and links their pages under the picture.
 
 | Setting | Does |
 |---|---|
-| `TTHEME_BG_COLORS` | the colors new pictures are drawn in: `original` or `tone` |
+| `TTHEME_BG_COLORS` | the colors new pictures are drawn in: `original`, their own, or `tone`, tinted in one color of the palette |
 | `TTHEME_BG_BLUR` | softens every picture by up to 8 screen pixels |
 | `TTHEME_FIND_RATING`, `TTHEME_FIND_BLOCK` | what find lists |
 

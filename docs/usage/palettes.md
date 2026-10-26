@@ -18,7 +18,7 @@ the panel beside it lists that marketplace's catalogs and palettes.
 
 The tab repaints as the cursor lands on a palette in the panel, and the panel's
 foot says whether it is installed and how it scores on the
-[contrast gate](../reference/contrast-gate.md).
+[contrast checks](../reference/contrast-gate.md).
 
 ## From the command line
 
@@ -39,7 +39,7 @@ catalogs.
 ```sh
 ttheme marketplace add alice/ttheme-pastel      # a GitHub repository
 ttheme marketplace add alice/ttheme-pastel#v1   # pinned to a tag, branch or commit
-ttheme marketplace add ./my-marketplace         # a folder, read in place
+ttheme marketplace add ./my-marketplace         # a folder, always up to date
 ttheme marketplace remove alice@pastel          # installed palettes keep working
 ```
 
@@ -47,7 +47,7 @@ In Browse, `+ Add marketplace` takes the same sources, and
 `⌕ Search marketplace` lists every public marketplace on GitHub, read every half
 hour. `space` there adds one.
 
-Only the official palettes are held to the contrast gate before they ship. A
+Only the official palettes must pass every contrast check before they ship. A
 marketplace palette installs whatever its numbers, and Browse shows them.
 
 ## Update
@@ -63,7 +63,7 @@ Other marketplaces are fetched again.
 An installed palette keeps the colors it was installed with until you take its
 update. `ttheme update` names the palettes that have one, and Browse marks them
 `⇡`: `ctrl+r` there stages one, or every one under a catalog, for `enter` to
-apply. A tone you tuned stays on top of the update.
+apply. Your tuning stays on top of the update.
 
 ## Updates on their own
 

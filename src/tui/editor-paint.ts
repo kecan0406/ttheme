@@ -6,7 +6,7 @@ import { BASE, type Check, type Format, ruleSlots, slotChecks, slotLabel } from 
 import { cells } from '../core/text.ts'
 import { fit, spread } from './ansi.ts'
 import { type Channel, CONTRAST, gateRows, type PaletteEditor, type Scope } from './palette-editor.ts'
-import { boxEdge, boxed, boxTitle, buttonOf, checkOf, hintOf, moreOf } from './parts.ts'
+import { boxEdge, boxed, boxTitle, buttonOf, checkOf, hintOf, moreOf, SEP } from './parts.ts'
 import { FG_RESET, INK_RESET, MARKS, open, type Paint } from './style.ts'
 import { type KeySpot, keyZone, zone } from './zones.ts'
 
@@ -83,7 +83,7 @@ export function fixHint(e: PaletteEditor, slot: number): string | undefined {
     return slot - BASE.length < 8 ? '= makes the bright follow its normal' : '= on the normal makes this follow it'
   }
 
-  return 'f moves the colors the gate misses'
+  return 'f moves the colors that fail'
 }
 
 export function detailChecks(e: PaletteEditor, slot: number, at: Oklch): Check[] {
@@ -117,7 +117,7 @@ function gateLines(p: Paint, e: PaletteEditor, room: number, wide = LEFT): strin
     const first = r.slots[0]
     const to = (line: string) => (first === undefined ? line : spot({ kind: 'slot', slot: first }, line))
 
-    return names.length > 0 ? [to(row), to(`    ${p.dim(fit(names.join(' · '), width - 2))}`)] : [to(row)]
+    return names.length > 0 ? [to(row), to(`    ${p.dim(fit(names.join(', '), width - 2))}`)] : [to(row)]
   })
 
   const fits = (n: number) => rules.slice(0, n).flat().length + (n < rules.length ? 1 : 0) <= room
@@ -221,7 +221,7 @@ export function gateBox(p: Paint, e: PaletteEditor, room: number, width: number)
   }
 
   const failing = gateMisses(e)
-  const title = failing === 0 ? ` Gate ${MARKS.ok} passes ` : ` Gate ${MARKS.miss} ${failing} · n next `
+  const title = failing === 0 ? ` Contrast ${MARKS.ok} passes ` : ` Contrast ${MARKS.miss} ${failing}  n next `
 
   return [
     boxTitle(width, title, p.dim, failing === 0 ? p.ok : p.dim),
@@ -248,7 +248,7 @@ export function quitDialog(p: Paint, e: PaletteEditor, cols: number): string[] {
   return [
     boxTitle(width, ' Save changes? ', p.dim, p.bold),
     row(''),
-    row(`  ${parts.length > 0 ? parts.join(' · ') : 'Unsaved changes'}`),
+    row(`  ${parts.length > 0 ? parts.join(SEP) : 'Unsaved changes'}`),
     row(''),
     row(`${' '.repeat(Math.max(0, Math.floor((width - 2 - cells(buttons)) / 2)))}${buttons}`),
     row(''),

@@ -144,7 +144,7 @@ test('* marks a signature color, keeping the last three and saying which one wen
 test('the older screen counts the rules the gate misses, as its Gate box and the builder do', () => {
   const dim = { ...start, ansi: start.ansi.map((hex, i) => (i >= 1 && i <= 6 ? start.background : hex)) }
   const e = editor({ colors: dim })
-  const count = Number(/✗ (\d+) misses in the gate/.exec(screen(e))?.[1])
+  const count = Number(/✗ Fails (\d+) contrast checks?/.exec(screen(e))?.[1])
   assert.equal(count, gateMisses(e))
   assert.ok(count < check(gatedOf(e.list, e.signature, e.waive)).length)
 })
@@ -152,7 +152,7 @@ test('the older screen counts the rules the gate misses, as its Gate box and the
 test('a ratio just under its floor misses the gate in the count as on the slots, though it reads as the floor', () => {
   const e = editor({ colors: { ...start, foreground: '#64b198', selection: '#06070a' } })
   assert.equal(gateMisses(e), 1)
-  assert.match(screen(e), /✗ 1 miss in the gate/)
+  assert.match(screen(e), /✗ Fails 1 contrast check\b/)
   assert.ok(e.misses().has(1))
 })
 
@@ -181,7 +181,7 @@ test('f moves the colors the gate misses', () => {
   const dim = { ...start, ansi: start.ansi.map((c, i) => (i === 1 ? '#301010' : c)) }
   const e = press(editor({ colors: dim }), 'f')
   assert.notEqual(e.colors().ansi[1], '#301010')
-  assert.match(e.notice ?? '', /Moved \d+ colors? — passes the gate/)
+  assert.match(e.notice ?? '', /Moved \d+ colors?, and every check passes/)
 })
 
 test('esc asks to save changes: y saves, n leaves without saving, esc and other keys keep editing', () => {
@@ -240,15 +240,15 @@ test('ctrl-c leaves the editor as esc does, asking first when something changed,
 test('while compare is on, the help offers no esc to leave or to undo a tune, since esc only turns compare off', () => {
   const tuning = press(editor(), 'tab', '9', ' ', '?')
 
-  for (const key of 'puts back every') {
+  for (const key of 'cancel the tune') {
     tuning.help?.key(key)
   }
 
-  assert.match(tuning.help?.shown()[0]?.text ?? '', /cancels the tune/)
+  assert.match(tuning.help?.shown()[0]?.does ?? '', /Cancel the tune/)
   assert.equal(tuning.help?.chosen(), undefined)
   const listing = press(editor(), 'tab', '9', 'enter', ' ', '?')
 
-  for (const key of 'asking first') {
+  for (const key of 'second ctrl+c') {
     listing.help?.key(key)
   }
 
@@ -307,9 +307,9 @@ test('the top bar keeps Reset and Save however long the name, giving up the coun
     assert.match(top(cols), /Reset {2}\S*Save/)
   }
 
-  assert.match(top(200), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● unsaved · 1 changed {3}Reset/)
-  assert.match(top(120), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
-  assert.match(top(112), /◆ Edit palette · kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
+  assert.match(top(200), /◆ Edit palette {2}kec@dust\/a-rather-long-palette-name {3}● unsaved · 1 changed {3}Reset/)
+  assert.match(top(120), /◆ Edit palette {2}kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
+  assert.match(top(112), /◆ Edit palette {2}kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
   assert.match(top(108), /│◆ kec@dust\/a-rather-long-palette-name {3}● unsaved {3}Reset/)
   assert.match(top(100), /│◆ kec@dust\/a-rather-long-palette-name {3}● {3}Reset/)
   assert.match(top(96), /│◆ kec@dust\/a-rather-long-palette-\S+… {3}● {3}Reset/)
@@ -406,8 +406,8 @@ test('n and N walk the slots the gate misses, and each gate miss names its slots
   assert.equal(e.slot(), 15)
   press(e, 'N')
   assert.equal(e.slot(), 7)
-  assert.match(screen(e), /Yellow · Bright yellow/)
-  assert.match(press(editor(), 'n').notice ?? '', /gate passes/)
+  assert.match(screen(e), /Yellow, Bright yellow/)
+  assert.match(press(editor(), 'n').notice ?? '', /Passes every contrast check/)
 })
 
 test('g shows every ANSI color’s lightness, chroma and hue beside the slots', () => {

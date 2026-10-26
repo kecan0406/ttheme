@@ -418,7 +418,7 @@ async function askMode(configHome: string, terminals: readonly Wired[]): Promise
 
   return accepted(
     await p.select<Setting>({
-      message: `Wear the palettes in ${modes} mode?\nEvery palette comes in both — ${picks.join(', ')} or ${cap('alt+c')} in \`ttheme\` switches it later`,
+      message: `Show the palettes in ${modes} mode?\nEvery palette comes in both — ${picks.join(', ')} or ${cap('alt+c')} in \`ttheme\` switches it later`,
       options: offered.map((value) => ({ value, label: value, hint: hints[value] })),
       initialValue: offered.includes('auto') ? 'auto' : offered.includes(was) ? was : modeFor(configHome),
     }),
@@ -462,12 +462,12 @@ function startupLines(installed: Installed, painted: boolean): string[] {
   if (!startup) {
     return [
       'Default    none — new tabs keep the terminal colors',
-      `Turn on    \`ttheme on\` wears ${startupPalette(installed)}`,
+      `Turn on    \`ttheme on\` uses ${startupPalette(installed)}`,
     ]
   }
 
   return [
-    `Default    ${startup}${painted ? ' — this tab wears it already' : ''}`,
+    `Default    ${startup}${painted ? ' — this tab shows it already' : ''}`,
     'Change it  `ttheme`, enter on a palette, then default',
   ]
 }
@@ -703,7 +703,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
 
   const wear = accepted(
     await p.confirm({
-      message: choose ? 'Pick a default palette in ttheme once installed?' : `Wear ${first} in every tab?`,
+      message: choose ? 'Pick a default palette in ttheme once installed?' : `Use ${first} in every tab?`,
       initialValue: existing ? !existing.off : true,
     }),
   )
@@ -715,8 +715,8 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
     [
       `Install ${palettes.length} palettes — ${catalogsOf(manifest, palettes).join(', ')}`,
       mode === 'auto'
-        ? 'Wear every palette in the mode the system is in, following it as it changes'
-        : `Wear every palette in its ${mode} mode`,
+        ? 'Show every palette in the mode the system is in, following it as it changes'
+        : `Show every palette in its ${mode} mode`,
       `Copy ${plan.copies.length} files under ${configHome}`,
       `Write ${plan.settings.file}`,
       ...plan.edits.map((e) => `Edit ${e.file} — a ttheme block: ${e.about}`),
@@ -728,9 +728,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
       'Each config is backed up once to <file>.ttheme.bak before the first edit — `npx @kecan0406/ttheme uninstall` takes it all out',
       wear
         ? choose
-          ? `Open ttheme — every tab wears the palette picked there, ${first} until then`
-          : `Paint every tab with ${first}, this one now`
-        : 'Leave the terminal colors as they are — `ttheme on` wears a palette later',
+          ? `Open ttheme — every tab uses the palette picked there, ${first} until then`
+          : `Use ${first} in every tab, this one now`
+        : 'Leave the terminal colors as they are — `ttheme on` uses a palette later',
       ...(wear && first
         ? wirings(terminals).flatMap((wiring) =>
             wiring.defaults ? [`Make "${wiring.defaults.profile(first)}" the ${wiring.name} default profile`] : [],
