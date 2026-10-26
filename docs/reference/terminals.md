@@ -37,6 +37,11 @@ VTE-based one, gets `ttheme use` and nothing else.
   its own arrives, since Ghostty draws a tab the moment it shows it.
 - Each palette ships as `ttheme-<palette>.dark` and `.light`, so under `auto`
   Ghostty switches new windows by itself.
+- **cmux** runs on Ghostty and reads Ghostty's config, so wiring Ghostty sets it
+  up too. It picks up ttheme's changes by itself, with no reload sent. It shows
+  the one picture that config names, as Ghostty does, so a picture put up in
+  Ghostty shows in cmux as well. A cmux tab busy with a program catches up at
+  its next prompt rather than when it comes to the front.
 
 ## iTerm2
 
@@ -68,6 +73,9 @@ VTE-based one, gets `ttheme use` and nothing else.
 - `init` adds a block before your config's `return config`, and WezTerm reloads
   by itself.
 - The picture belongs to the window and follows its active tab.
+- **Kaku** is built on WezTerm, so wiring WezTerm sets it up too: `init` adds
+  the same block to `~/.config/kaku/kaku.lua`. Kaku writes that file the first
+  time it opens, so open Kaku once before `init`.
 
 ## Windows Terminal
 

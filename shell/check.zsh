@@ -129,6 +129,14 @@ __tt_bg_load wall
   rm -f $bgd/kagami.png $bgd/kagami.tune.conf $bgd/kagami@60-center-1600x960.png $XDG_CONFIG_HOME/bake.log $XDG_CONFIG_HOME/cli.log
 ) || exit 1
 [[ "$(<$TTHEME_CONFIG)" == "$TTHEME_CONFIG_TEMPLATE" ]] || { print -u2 "config seed drifted from the template"; exit 1 }
+(
+  source $XDG_CONFIG_HOME/ttheme/adapters/_wired.zsh
+  TTHEME_TMUX=0 TTHEME_GHOSTTY_EMBEDDED=1 TTHEME_GHOSTTY_SENT=0
+  kill() { print -u2 "a Ghostty built into another app was sent a signal: kill $*"; exit 1 }
+  pkill() { print -u2 "a Ghostty built into another app signaled every Ghostty: pkill $*"; exit 1 }
+  __tt_reload_ghostty || { print -u2 "a Ghostty built into another app failed to reload"; exit 1 }
+  (( TTHEME_GHOSTTY_SENT )) || { print -u2 "a claim in a Ghostty built into another app did not wait for it to read the picture"; exit 1 }
+) || exit 1
 reloads=0
 TTHEME_TERMINALS=(ghostty)
 __tt_reload_ghostty() { (( ++reloads )) }

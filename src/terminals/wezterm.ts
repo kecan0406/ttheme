@@ -53,6 +53,21 @@ function weztermConfig(configHome: string, home: string): string {
   return existsSync(dotfile) ? dotfile : join(configHome, 'wezterm', 'wezterm.lua')
 }
 
+function kakuConfig(configHome: string): string {
+  return join(configHome, 'kaku', 'kaku.lua')
+}
+
+function configs(at: At): string[] {
+  const own = weztermConfig(at.configHome, at.home)
+  const kaku = kakuConfig(at.configHome)
+
+  if (!existsSync(kaku)) {
+    return [own]
+  }
+
+  return existsSync(own) ? [own, kaku] : [kaku]
+}
+
 function colors(at: At): string {
   return join(at.configHome, 'wezterm', 'colors')
 }
@@ -85,34 +100,42 @@ export const wezterm: Wiring = {
           : {}),
       }),
     )
-    const config = weztermConfig(ctx.configHome, ctx.home)
-    const wired = upsertLuaBlock(readText(config), weztermBlock(module(ctx), ctx.home))
 
-    if (wired !== undefined) {
-      out.wire(config, wired)
+    for (const config of configs(ctx)) {
+      const wired = upsertLuaBlock(readText(config), weztermBlock(module(ctx), ctx.home))
+
+      if (wired !== undefined) {
+        out.wire(config, wired)
+      }
     }
   },
   plan(ctx) {
-    const config = weztermConfig(ctx.configHome, ctx.home)
-
-    return upsertLuaBlock(readText(config), '') !== undefined
-      ? [
+    return configs(ctx)
+      .filter((config) => upsertLuaBlock(readText(config), '') !== undefined)
+      .map(
+        (config) =>
           `Edit ${tilde(config, ctx.home)} — a ttheme block before \`return config\`: color_scheme_dirs, color_scheme, pictures`,
-        ]
-      : []
+      )
   },
   notes(ctx) {
-    const config = weztermConfig(ctx.configHome, ctx.home)
-
-    return existsSync(config) && upsertLuaBlock(readText(config), '') === undefined
-      ? [
+    return configs(ctx)
+      .filter((config) => existsSync(config) && upsertLuaBlock(readText(config), '') === undefined)
+      .map(
+        (config) =>
           `${config} has no \`return config\` line — ttheme left it alone; call \`dofile("${module(ctx)}")(config)\` from it yourself`,
-        ]
-      : []
+      )
   },
-  next: () => ['WezTerm           Reloads its config by itself'],
+  next: (now) => [
+    ...(configs(now).includes(weztermConfig(now.configHome, now.home))
+      ? ['WezTerm           Reloads its config by itself']
+      : []),
+    ...(existsSync(kakuConfig(now.configHome)) ? ['Kaku              Reloads its config by itself'] : []),
+  ],
   unwire: (at) => ({
-    edits: stripped(weztermConfig(at.configHome, at.home), removeLuaBlock),
+    edits: [
+      ...stripped(weztermConfig(at.configHome, at.home), removeLuaBlock),
+      ...stripped(kakuConfig(at.configHome), removeLuaBlock),
+    ],
     removals: [],
     touches: [],
   }),

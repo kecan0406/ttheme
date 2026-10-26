@@ -35,7 +35,7 @@ __tt_ghostty_follows() {
   local -a at
   (( TTHEME_GHOSTTY_FOLLOWS < 0 )) || return $(( ! TTHEME_GHOSTTY_FOLLOWS ))
   TTHEME_GHOSTTY_FOLLOWS=0
-  [[ $TERM_PROGRAM == ghostty && -o interactive && -n $TTY ]] && (( $+commands[osascript] && ! TTHEME_TMUX )) || return 1
+  [[ $TERM_PROGRAM == ghostty && -z $TTHEME_GHOSTTY_EMBEDDED && -o interactive && -n $TTY ]] && (( $+commands[osascript] && ! TTHEME_TMUX )) || return 1
   if zstat -A at +mtime -- $TTHEME_GHOSTTY_TABS/.blind 2>/dev/null && [[ "$(<$TTHEME_GHOSTTY_TABS/.blind)" == "${TERM_PROGRAM_VERSION:--}" ]]; then
     zmodload -F zsh/datetime p:EPOCHSECONDS 2>/dev/null
     (( EPOCHSECONDS - at[1] < 86400 )) && return 1

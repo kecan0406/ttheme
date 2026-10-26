@@ -223,7 +223,7 @@ typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
   elif [[ $TERM_PROGRAM == WarpTerminal ]]; then
     typeset -g TTHEME_ADAPTER=warp
   elif [[ -n $GHOSTTY_RESOURCES_DIR || $TERM_PROGRAM == ghostty ]]; then
-    typeset -g TTHEME_ADAPTER=ghostty
+    typeset -g TTHEME_ADAPTER=ghostty TTHEME_GHOSTTY_EMBEDDED=${CMUX_SURFACE_ID:+1}
   elif [[ -n $KITTY_WINDOW_ID ]]; then
     typeset -g TTHEME_ADAPTER=kitty
   elif [[ -n $WEZTERM_PANE ]]; then

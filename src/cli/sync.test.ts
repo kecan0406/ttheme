@@ -279,6 +279,32 @@ test('sync wires an existing wezterm.lua before its last return, and leaves one 
   assert.equal(readFileSync(dotfile, 'utf8'), 'return { font_size = 13 }\n')
 })
 
+test('sync wires the kaku.lua Kaku wrote through the WezTerm module, and makes no wezterm.lua beside it', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const kaku = join(configHome, 'kaku', 'kaku.lua')
+
+  const own =
+    "local wezterm = require 'wezterm'\nlocal config = {}\nconfig.color_scheme = 'Kaku Dark'\n\nreturn config\n"
+
+  mkdirSync(join(configHome, 'kaku'), { recursive: true })
+  writeFileSync(kaku, own)
+  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['gojo'] }, home)
+  const module = join(configHome, 'ttheme', 'wezterm.lua')
+  assert.equal(
+    readFileSync(kaku, 'utf8'),
+    `${own.replace('return config\n', '')}-- ttheme begin\n${weztermBlock(module, home)}\n-- ttheme end\n\nreturn config\n`,
+  )
+  assert.ok(!existsSync(join(configHome, 'wezterm', 'wezterm.lua')))
+
+  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['gojo'] }, home)
+  assert.ok(!existsSync(join(configHome, 'wezterm', 'wezterm.lua')))
+
+  writeFileSync(join(configHome, 'wezterm', 'wezterm.lua'), 'local config = {}\nreturn config\n')
+  sync(configHome, manifest, { terminals: ['wezterm'], palettes: ['gojo'] }, home)
+  assert.ok(readFileSync(join(configHome, 'wezterm', 'wezterm.lua'), 'utf8').includes(weztermBlock(module, home)))
+})
+
 test('sync drops an alacritty.toml that held only the ttheme block and hid the config Alacritty would read without it', () => {
   const home = fixture()
   const configHome = join(home, '.config')

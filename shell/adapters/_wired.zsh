@@ -47,6 +47,10 @@ __tt_ghostty_owner() {
 
 __tt_reload_ghostty() {
   local REPLY owner=$TTHEME_GHOSTTY_PID
+  if [[ -n $TTHEME_GHOSTTY_EMBEDDED ]] && (( ! TTHEME_TMUX )); then
+    TTHEME_GHOSTTY_SENT=1
+    return 0
+  fi
   if (( TTHEME_TMUX )); then
     __tt_ghostty_owner "$(tmux display -p '#{client_pid}' 2>/dev/null)"
     owner=$REPLY

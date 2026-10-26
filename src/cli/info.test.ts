@@ -7,6 +7,14 @@ test('a terminal reports its version from TERM_PROGRAM_VERSION', () => {
     describeTerminal({ TERM_PROGRAM: 'ghostty', TERM_PROGRAM_VERSION: '1.3.1' }),
     'ghostty 1.3.1 · tmux no · ssh no',
   )
+  assert.equal(
+    describeTerminal({ TERM_PROGRAM: 'ghostty', TERM_PROGRAM_VERSION: '1.3.1', CMUX_SURFACE_ID: 's1' }),
+    'ghostty 1.3.1 in cmux · tmux no · ssh no',
+  )
+  assert.equal(
+    describeTerminal({ WEZTERM_PANE: '0', TERM_PROGRAM: 'Kaku', TERM_PROGRAM_VERSION: '0.27.0' }),
+    'wezterm in Kaku 0.27.0 · tmux no · ssh no',
+  )
 })
 
 test('inside tmux the version in TERM_PROGRAM_VERSION is tmux, not the terminal', () => {

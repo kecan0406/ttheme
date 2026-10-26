@@ -50,10 +50,10 @@ Settings you made yourself win:
 
 | Terminal | What it adds |
 |---|---|
-| Ghostty | an include of `~/.config/ttheme/ghostty.conf` in your config, and themes named `ttheme-<palette>.dark` and `.light` |
+| Ghostty | an include of `~/.config/ttheme/ghostty.conf` in your config, and themes named `ttheme-<palette>.dark` and `.light`; cmux reads the same config |
 | kitty | an include of `$HOME/.config/ttheme/kitty.conf`, which also loads ttheme's watcher for pictures |
 | Alacritty | an import of `~/.config/ttheme/alacritty.toml` in the `alacritty.toml` Alacritty reads first |
-| WezTerm | a block before `return config` that runs `~/.config/ttheme/wezterm.lua` |
+| WezTerm | a block before `return config` that runs `~/.config/ttheme/wezterm.lua`, and the same block in Kaku's `~/.config/kaku/kaku.lua` once Kaku has made it |
 | iTerm2 | a `ttheme · <palette>` dynamic profile per palette, and `ttheme · default` as the default profile, built on yours so your font and keys carry over |
 | Windows Terminal | a fragment with every scheme; `settings.json` is only touched so it reloads |
 | Warp | a theme per palette in `~/.warp/themes`, and the default palette as the `theme` key in `~/.warp/settings.toml` (and in `selected_system_themes` while Warp follows the system; Warp Preview's `~/.warp-preview` the same way), and `enforce_minimum_contrast = "never"` under `[appearance.text]` unless you set that yourself |

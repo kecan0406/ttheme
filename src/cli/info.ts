@@ -29,6 +29,27 @@ function terminalVersion(terminal: Terminal, env: Env): string | undefined {
   return program !== undefined && env.TERM_PROGRAM === program ? env.TERM_PROGRAM_VERSION : undefined
 }
 
+function hostOf(terminal: Terminal, env: Env): string | undefined {
+  if (terminal === 'ghostty' && env.CMUX_SURFACE_ID) {
+    return 'cmux'
+  }
+
+  if (terminal === 'wezterm' && env.TERM_PROGRAM === 'Kaku') {
+    return env.TERM_PROGRAM_VERSION ? `Kaku ${env.TERM_PROGRAM_VERSION}` : 'Kaku'
+  }
+
+  return undefined
+}
+
+function named(terminal: Terminal, env: Env): string {
+  const version = terminalVersion(terminal, env)
+  const host = hostOf(terminal, env)
+
+  return host
+    ? `${terminal}${version ? ` ${version}` : ''} in ${host}`
+    : `${terminal} ${version ?? '(version unknown)'}`
+}
+
 export function describeTerminal(env: Env): string {
   const terminal = detectTerminal(env)
   const program = env.TERM_PROGRAM && env.TERM_PROGRAM !== 'tmux' ? env.TERM_PROGRAM : undefined
@@ -38,7 +59,7 @@ export function describeTerminal(env: Env): string {
       ? `unknown${program ? ` (TERM_PROGRAM=${program})` : ''}`
       : terminal === 'editor'
         ? `editor (${editorOf(env)})`
-        : `${terminal} ${terminalVersion(terminal, env) ?? '(version unknown)'}`
+        : named(terminal, env)
 
   const tmuxVersion = env.TERM_PROGRAM === 'tmux' ? env.TERM_PROGRAM_VERSION : undefined
 
