@@ -511,6 +511,56 @@ export function rioColors(configHome: string): Colors {
   return filled(tomlColors(read(file && existsSync(file) ? file : config), rioPick))
 }
 
+function yamlOf(file: string): Record<string, unknown> {
+  try {
+    const doc = Bun.YAML.parse(read(file))
+
+    return doc !== null && typeof doc === 'object' && !Array.isArray(doc) ? (doc as Record<string, unknown>) : {}
+  } catch {
+    return {}
+  }
+}
+
+function contourPick(doc: Record<string, unknown>): Map<string, string> {
+  const c = doc as Record<string, Record<string, string> | undefined>
+
+  const picked: [string, string | undefined][] = [
+    ['11', c.default?.background],
+    ['10', c.default?.foreground],
+    ['12', c.cursor?.default],
+    ['17', c.selection?.background],
+    ...ALACRITTY_NAMES.flatMap((name, i): [string, string | undefined][] => [
+      [`4;${i}`, c.normal?.[name]],
+      [`4;${i + 8}`, c.bright?.[name]],
+    ]),
+  ]
+
+  return new Map(
+    picked.flatMap(([code, value]) => {
+      const color = hex(value)
+
+      return color ? [[code, color] as const] : []
+    }),
+  )
+}
+
+export function contourProfile(configHome: string): string {
+  const dir = join(configHome, 'contour')
+
+  return String(
+    yamlOf(join(dir, 'settings.yml')).default_profile ?? yamlOf(join(dir, 'contour.yml')).default_profile ?? 'main',
+  )
+}
+
+export function contourColors(configHome: string, appearance: Mode, profile = contourProfile(configHome)): Colors {
+  const dir = join(configHome, 'contour')
+  const body = yamlOf(join(dir, 'profiles', `${profile}.yml`))
+  const colors = body.colors as string | Record<string, string> | undefined
+  const scheme = typeof colors === 'string' ? colors : colors?.[appearance]
+
+  return filled(scheme ? contourPick(yamlOf(join(dir, 'colorschemes', `${scheme}.yml`))) : new Map())
+}
+
 export function weztermColors(configHome: string): Colors {
   const module = read(join(configHome, 'ttheme', 'wezterm.lua'))
 

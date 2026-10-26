@@ -43,6 +43,10 @@ export function detectTerminal(env: Env): Terminal {
     return 'rio'
   }
 
+  if (env.TERM_PROGRAM === 'contour') {
+    return 'contour'
+  }
+
   if (env.GHOSTTY_RESOURCES_DIR || env.TERM_PROGRAM === 'ghostty') {
     return 'ghostty'
   }
@@ -144,6 +148,16 @@ export const TRAITS: Record<Terminal, Traits> = {
   },
   alacritty: { links: true, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
   rio: { links: true, pictures: false, bands: false, files: true, moves: true, layers: true, paints: true },
+  contour: {
+    links: true,
+    pictures: false,
+    bands: false,
+    files: true,
+    moves: true,
+    layers: true,
+    paints: true,
+    appears: 'reports',
+  },
   'windows-terminal': {
     links: true,
     pictures: false,

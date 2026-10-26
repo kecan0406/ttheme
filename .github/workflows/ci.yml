@@ -39,7 +39,7 @@ jobs:
             slots: 6
           - terminals: windows-terminal,ghostty,iterm2
             slots: 4
-          - terminals: kitty,alacritty,wezterm
+          - terminals: kitty,alacritty,wezterm,contour
             slots: 4
           - terminals: konsole,terminal-app,rio
             slots: 4

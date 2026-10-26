@@ -9,7 +9,8 @@ shows every file it is about to change, and writes nothing until you say yes.
 - **zsh**, which macOS ships. Your own shell can be zsh, bash or fish: bash and
   fish get the `ttheme` command too, and it runs through zsh.
 - **A terminal ttheme wires**: Ghostty (and cmux), iTerm2, kitty, Alacritty,
-  Rio, WezTerm (and Kaku), Windows Terminal, Warp, Konsole or Terminal.app.
+  Rio, Contour, WezTerm (and Kaku), Windows Terminal, Warp, Konsole or
+  Terminal.app.
   [Terminal support](../reference/terminals.md) says what each one can show.
 
 ## Run init
@@ -44,8 +45,8 @@ ttheme      # pick a palette
 ```
 
 From bash, run `exec bash -l`; from fish, `exec fish`. New tabs pick ttheme up
-by themselves. iTerm2, Konsole and Terminal.app read their profiles only when
-they start, so quit and reopen them once.
+by themselves. iTerm2, Konsole, Terminal.app and Contour read their profiles
+only when they start, so quit and reopen them once.
 
 Next: [your first palette](first-palette.md).
 

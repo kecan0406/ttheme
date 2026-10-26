@@ -224,6 +224,8 @@ typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
     typeset -g TTHEME_ADAPTER=warp
   elif [[ $TERM_PROGRAM == rio ]]; then
     typeset -g TTHEME_ADAPTER=rio
+  elif [[ $TERM_PROGRAM == contour ]]; then
+    typeset -g TTHEME_ADAPTER=contour
   elif [[ -n $GHOSTTY_RESOURCES_DIR || $TERM_PROGRAM == ghostty ]]; then
     typeset -g TTHEME_ADAPTER=ghostty TTHEME_GHOSTTY_EMBEDDED=${CMUX_SURFACE_ID:+1}
   elif [[ -n $KITTY_WINDOW_ID ]]; then

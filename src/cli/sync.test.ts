@@ -24,6 +24,7 @@ import { writeOfficial } from '../store/available.ts'
 import type { Host } from '../store/host.ts'
 import { type Installed, readInstalled, startupPalette, writeInstalled } from '../store/installed.ts'
 import { upsertAlacrittyImport } from '../terminals/alacritty.ts'
+import { removeContourDefault } from '../terminals/contour.ts'
 import { ghostty } from '../terminals/emit/ghostty.ts'
 import { warpPictureFile } from '../terminals/emit/warp.ts'
 import { itermProfilesPath } from '../terminals/iterm2.ts'
@@ -324,6 +325,30 @@ test('sync names one theme of its own at the top of Rio config, and keeps the us
   writeFileSync(config, 'theme = "dracula"\n')
   sync(configHome, manifest, { terminals: ['rio'], palettes: ['gojo'], startup: 'gojo' }, home)
   assert.equal(readFileSync(config, 'utf8'), 'theme = "dracula"\n')
+})
+
+test('sync makes Contour open on a profile of its own over the default one, and gives the default back on uninstall', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const dir = join(configHome, 'contour')
+  const settings = join(dir, 'settings.yml')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(settings, 'default_profile: work\nreflow_on_resize: true\n')
+  sync(configHome, manifest, { terminals: ['contour'], palettes: ['gojo'], startup: 'gojo' }, home)
+  const wired = readFileSync(settings, 'utf8')
+  assert.match(
+    wired,
+    /^# ttheme begin\n.*\n# was: default_profile: work\ndefault_profile: ttheme\n# ttheme end\nreflow_on_resize: true\n$/,
+  )
+  assert.equal(wired.match(/^default_profile:/gm)?.length, 1)
+  assert.equal(readFileSync(join(dir, 'profiles', 'ttheme.yml'), 'utf8').split('\n')[1], 'colors: ttheme.dark')
+  assert.match(readFileSync(join(dir, 'colorschemes', 'ttheme.dark.yml'), 'utf8'), /^ {4}background: '#11191c'$/m)
+  assert.ok(existsSync(join(dir, 'colorschemes', 'ttheme-gojo.dark.yml')))
+
+  sync(configHome, manifest, { terminals: ['contour'], palettes: ['gojo'], off: true }, home)
+  assert.equal(readFileSync(join(dir, 'profiles', 'ttheme.yml'), 'utf8').split('\n')[1], '{}')
+  assert.equal(readFileSync(settings, 'utf8'), wired)
+  assert.equal(removeContourDefault(wired), 'default_profile: work\nreflow_on_resize: true\n')
 })
 
 test('sync drops an alacritty.toml that held only the ttheme block and hid the config Alacritty would read without it', () => {

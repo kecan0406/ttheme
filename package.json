@@ -12,7 +12,7 @@
     "shell",
     "!shell/check.zsh"
   ],
-  "description": "Character terminal palettes for Ghostty, iTerm2, kitty, Alacritty, Rio, WezTerm, Windows Terminal, Warp, Konsole and Terminal.app",
+  "description": "Character terminal palettes for Ghostty, iTerm2, kitty, Alacritty, Rio, Contour, WezTerm, Windows Terminal, Warp, Konsole and Terminal.app",
   "license": "MIT",
   "author": "kecan0406",
   "repository": {

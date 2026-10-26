@@ -1,55 +1,55 @@
-case	ghostty	iterm2	wezterm	kitty	alacritty	warp	terminal-app	konsole	rio
-detect	pass	pass	pass	pass	pass	pass	pass	pass	?
-layer	pass	pass	pass	pass	pass	pass	pass	pass	?
-osc-query	pass	pass	pass	pass	pass	pass	pass	pass	?
-osc-bg	pass	pass	pass	pass	pass	pass	pass	pass	?
-osc-fg	pass	pass	pass	pass	pass	pass	pass	pass	?
-osc-cursor	pass	pass	pass	pass	pass	pass	pass	fail	?
-osc-selection	fail	pass	pass	pass	fail	fail	pass	fail	?
-osc-ansi	pass	pass	pass	pass	pass	fail	pass	pass	?
-osc-reset	pass	pass	pass	pass	pass	pass	fail	fail	?
-drawn	pass	pass	pass	pass	skip	pass	pass	pass	?
-painted	pass	pass	pass	pass	pass	fail	pass	pass	?
-fg-painted	pass	pass	pass	pass	pass	pass	pass	pass	?
-ansi-painted	pass	pass	pass	pass	pass	pass	pass	fail	?
-focus-answer	pass	fail	fail	fail	fail	fail	fail	fail	?
-appearance-report	pass	fail	fail	fail	fail	?	fail	fail	?
-follow-default	pass	pass	pass	pass	pass	skip	pass	pass	?
-follow-belief	pass	pass	pass	pass	pass	skip	pass	pass	?
-keep-painted	pass	pass	pass	pass	pass	skip	pass	pass	?
-on-follow	pass	pass	pass	pass	pass	skip	pass	pass	?
-on-belief	pass	pass	pass	pass	pass	skip	pass	pass	?
-system-theme	skip	skip	skip	skip	skip	skip	skip	skip	?
-wear	pass	pass	pass	pass	pass	skip	pass	pass	?
-wear-painted	pass	pass	pass	pass	pass	skip	pass	pass	?
-wear-ansi	pass	pass	pass	pass	pass	skip	pass	pass	?
-reset-worn	pass	pass	pass	pass	pass	skip	pass	pass	?
-reset-baseline	fail	pass	fail	fail	fail	fail	fail	fail	?
-restore	pass	pass	pass	pass	pass	pass	pass	pass	?
-layer-query	pass	pass	pass	pass	pass	pass	pass	pass	?
-layer-cells	pass	pass	pass	pass	skip	pass	pass	pass	?
-layer-base	skip	skip	skip	skip	skip	skip	pass	skip	?
-cell-size	pass	pass	pass	pass	fail	fail	fail	pass	?
-cell-points	pass	pass	pass	pass	pass	pass	pass	pass	?
-kitty-graphics	pass	pass	pass	pass	fail	pass	fail	pass	?
-kitty-shown	pass	pass	pass	pass	skip	pass	skip	pass	?
-kitty-under-bg	pass	pass	fail	pass	skip	fail	skip	pass	?
-kitty-el	pass	pass	fail	pass	skip	pass	skip	pass	?
-kitty-crop	pass	fail	pass	pass	skip	fail	skip	pass	?
-logo-over	fail	fail	fail	fail	fail	fail	fail	fail	?
-scheme-picture	fail	fail	fail	fail	fail	fail	fail	pass	?
-scheme-held	fail	fail	fail	fail	fail	fail	fail	pass	?
-scheme-released	fail	fail	fail	fail	fail	fail	fail	pass	?
-scheme-fresh	fail	fail	fail	fail	fail	fail	fail	pass	?
-profile-picture	fail	fail	fail	fail	fail	fail	pass	fail	?
-picture-held	fail	fail	fail	fail	fail	fail	pass	fail	?
-picture-renamed	fail	fail	fail	fail	fail	fail	pass	fail	?
-picture-gone	fail	fail	fail	fail	fail	fail	pass	fail	?
-sync-output	pass	pass	pass	pass	pass	pass	skip	skip	?
-sync-query	pass	pass	fail	pass	pass	pass	pass	pass	?
-keyboard-query	pass	pass	fail	pass	pass	?	fail	fail	?
-keyboard-stack	pass	pass	skip	pass	pass	?	skip	skip	?
-focus-report	pass	pass	pass	pass	pass	fail	skip	skip	?
-focus-event	skip	skip	skip	skip	skip	skip	pass	pass	?
-front-tty	pass	fail	fail	fail	fail	fail	fail	fail	?
-prompt-trap	pass	pass	pass	pass	pass	pass	pass	pass	?
+case	ghostty	iterm2	wezterm	kitty	alacritty	warp	terminal-app	konsole	rio	contour
+detect	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+layer	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+osc-query	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+osc-bg	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+osc-fg	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+osc-cursor	pass	pass	pass	pass	pass	pass	pass	fail	?	?
+osc-selection	fail	pass	pass	pass	fail	fail	pass	fail	?	?
+osc-ansi	pass	pass	pass	pass	pass	fail	pass	pass	?	?
+osc-reset	pass	pass	pass	pass	pass	pass	fail	fail	?	?
+drawn	pass	pass	pass	pass	skip	pass	pass	pass	?	?
+painted	pass	pass	pass	pass	pass	fail	pass	pass	?	?
+fg-painted	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+ansi-painted	pass	pass	pass	pass	pass	pass	pass	fail	?	?
+focus-answer	pass	fail	fail	fail	fail	fail	fail	fail	?	?
+appearance-report	pass	fail	fail	fail	fail	?	fail	fail	?	?
+follow-default	pass	pass	pass	pass	pass	skip	pass	pass	?	?
+follow-belief	pass	pass	pass	pass	pass	skip	pass	pass	?	?
+keep-painted	pass	pass	pass	pass	pass	skip	pass	pass	?	?
+on-follow	pass	pass	pass	pass	pass	skip	pass	pass	?	?
+on-belief	pass	pass	pass	pass	pass	skip	pass	pass	?	?
+system-theme	skip	skip	skip	skip	skip	skip	skip	skip	?	?
+wear	pass	pass	pass	pass	pass	skip	pass	pass	?	?
+wear-painted	pass	pass	pass	pass	pass	skip	pass	pass	?	?
+wear-ansi	pass	pass	pass	pass	pass	skip	pass	pass	?	?
+reset-worn	pass	pass	pass	pass	pass	skip	pass	pass	?	?
+reset-baseline	fail	pass	fail	fail	fail	fail	fail	fail	?	?
+restore	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+layer-query	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+layer-cells	pass	pass	pass	pass	skip	pass	pass	pass	?	?
+layer-base	skip	skip	skip	skip	skip	skip	pass	skip	?	?
+cell-size	pass	pass	pass	pass	fail	fail	fail	pass	?	?
+cell-points	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+kitty-graphics	pass	pass	pass	pass	fail	pass	fail	pass	?	?
+kitty-shown	pass	pass	pass	pass	skip	pass	skip	pass	?	?
+kitty-under-bg	pass	pass	fail	pass	skip	fail	skip	pass	?	?
+kitty-el	pass	pass	fail	pass	skip	pass	skip	pass	?	?
+kitty-crop	pass	fail	pass	pass	skip	fail	skip	pass	?	?
+logo-over	fail	fail	fail	fail	fail	fail	fail	fail	?	?
+scheme-picture	fail	fail	fail	fail	fail	fail	fail	pass	?	?
+scheme-held	fail	fail	fail	fail	fail	fail	fail	pass	?	?
+scheme-released	fail	fail	fail	fail	fail	fail	fail	pass	?	?
+scheme-fresh	fail	fail	fail	fail	fail	fail	fail	pass	?	?
+profile-picture	fail	fail	fail	fail	fail	fail	pass	fail	?	?
+picture-held	fail	fail	fail	fail	fail	fail	pass	fail	?	?
+picture-renamed	fail	fail	fail	fail	fail	fail	pass	fail	?	?
+picture-gone	fail	fail	fail	fail	fail	fail	pass	fail	?	?
+sync-output	pass	pass	pass	pass	pass	pass	skip	skip	?	?
+sync-query	pass	pass	fail	pass	pass	pass	pass	pass	?	?
+keyboard-query	pass	pass	fail	pass	pass	?	fail	fail	?	?
+keyboard-stack	pass	pass	skip	pass	pass	?	skip	skip	?	?
+focus-report	pass	pass	pass	pass	pass	fail	skip	skip	?	?
+focus-event	skip	skip	skip	skip	skip	skip	pass	pass	?	?
+front-tty	pass	fail	fail	fail	fail	fail	fail	fail	?	?
+prompt-trap	pass	pass	pass	pass	pass	pass	pass	pass	?	?

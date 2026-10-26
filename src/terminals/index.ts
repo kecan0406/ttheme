@@ -1,5 +1,6 @@
 import { WIRED, type Wired } from '../core/wired.ts'
 import { alacritty } from './alacritty.ts'
+import { contour } from './contour.ts'
 import { ghostty } from './ghostty.ts'
 import { iterm2 } from './iterm2.ts'
 import { kitty } from './kitty.ts'
@@ -22,6 +23,7 @@ export const WIRINGS: Record<Wired, Wiring> = {
   konsole,
   'terminal-app': terminalApp,
   rio,
+  contour,
 }
 
 export function wirings(ids: readonly Wired[] = WIRED): Wiring[] {

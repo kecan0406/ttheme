@@ -1,14 +1,14 @@
 # Terminal support
 
-ttheme wires ten terminals, and every one of them repaints per tab. Nothing is
+ttheme wires eleven terminals, and every one of them repaints per tab. Nothing is
 emulated: a terminal that cannot express something does not get it.
 
-| | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app | Rio |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| Set up by `init` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| A palette per tab | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Pictures | ✓ | ✓ | ✓ | – | ✓ | – | ✓ | ✓ | ✓ | – |
-| Follows the system's appearance | ✓ | ✓ | ✓ | – | ✓ | – | – | – | – | – |
+| | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app | Rio | Contour |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Set up by `init` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| A palette per tab | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Pictures | ✓ | ✓ | ✓ | – | ✓ | – | ✓ | ✓ | ✓ | – | – |
+| Follows the system's appearance | ✓ | ✓ | ✓ | – | ✓ | – | – | – | – | – | ✓ |
 
 `init` offers iTerm2 and Terminal.app on macOS, Konsole on Linux, and Windows
 Terminal from WSL. "Follows the system's appearance" means the terminal tells ttheme when the
@@ -87,6 +87,27 @@ VTE-based one, gets `ttheme use` and nothing else.
 - A config that already names a theme, or sets an `[adaptive-theme]`, keeps
   it, and `init` says so.
 - Rio shows no picture ttheme can change per tab, so there are no pictures.
+
+## Contour
+
+- `init` adds a `ttheme` profile, built on your default one so your font and
+  keys carry over, and makes it the default in Contour's `settings.yml`.
+- Contour reads its profiles when it starts, so restart it once after `init`.
+  Until then, and after a new default, ttheme gives every tab the default
+  palette itself.
+- Contour does not yet draw a background it is given while it runs
+  ([contour#2182](https://github.com/contour-terminal/contour/issues/2182)). A
+  tab that uses another palette, or follows a new default, takes its text,
+  cursor and ANSI colors but keeps the background of the palette Contour
+  started with. Once Contour draws it, the tab shows the whole palette, with
+  nothing to update in ttheme.
+- `ttheme off` reaches a running Contour at its next start. Until then its tabs
+  keep the palette that was the default.
+- Under `auto`, Contour switches between the palette's dark and light colors
+  by itself. When the system switches, Contour puts every tab back on its
+  profile's colors, so a tab that uses another palette takes it back after its
+  next command.
+- Contour shows no picture ttheme can change per tab, so there are no pictures.
 
 ## Windows Terminal
 

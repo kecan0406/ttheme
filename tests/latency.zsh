@@ -26,6 +26,7 @@ typeset -gA IDENTITY=(
   terminal-app 'TERM_PROGRAM=Apple_Terminal'
   warp 'TERM_PROGRAM=WarpTerminal'
   rio 'TERM_PROGRAM=rio'
+  contour 'TERM_PROGRAM=contour'
 )
 trap 'stop; rm -rf $WORK' EXIT
 

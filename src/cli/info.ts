@@ -16,6 +16,7 @@ const PROGRAM: Partial<Record<Terminal, string>> = {
   'terminal-app': 'Apple_Terminal',
   warp: 'WarpTerminal',
   rio: 'rio',
+  contour: 'contour',
 }
 
 function terminalVersion(terminal: Terminal, env: Env): string | undefined {

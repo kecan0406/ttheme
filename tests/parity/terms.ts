@@ -12,6 +12,7 @@ export const TERMS = [
   'konsole',
   'terminal-app',
   'rio',
+  'contour',
 ] as const
 
 export type Term = (typeof TERMS)[number]
@@ -118,6 +119,24 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     cache: 'none',
     bookmarks: false,
     appearance: 'none',
+  },
+  contour: {
+    draws: EVERY.filter((code) => code !== '11'),
+    answers: EVERY,
+    resets: true,
+    baseline: false,
+    focus: 'change',
+    cells: ['pixels', 'points'],
+    graphics: true,
+    relative: false,
+    syncQuery: true,
+    reload: 'none',
+    pictures: 'none',
+    front: 'none',
+    promptTrap: true,
+    cache: 'none',
+    bookmarks: false,
+    appearance: 'system',
   },
   rio: {
     draws: NO_SELECTION,
@@ -274,6 +293,7 @@ export const WIRING: Record<Term, Wired | undefined> = {
   konsole: 'konsole',
   'terminal-app': 'terminal-app',
   rio: 'rio',
+  contour: 'contour',
 }
 
 export const CAPABILITIES = {
@@ -310,6 +330,8 @@ export function identity(term: Term, n: number, session: string) {
       return { TERM_PROGRAM: 'Apple_Terminal', TERM_SESSION_ID: `w0t${n}p0:${session}` }
     case 'rio':
       return { TERM_PROGRAM: 'rio' }
+    case 'contour':
+      return { TERM_PROGRAM: 'contour' }
   }
 }
 

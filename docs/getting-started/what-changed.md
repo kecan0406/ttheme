@@ -44,7 +44,8 @@ Settings you made yourself win:
   `<file>.ttheme.bak`.
 - It writes through symlinks, so a dotfiles repository keeps its links.
 - Every file it adds to a terminal's own folders is named `ttheme-<palette>`,
-  or `ttheme` for Rio's one theme, so a theme of yours is never overwritten.
+  or `ttheme` for Rio's one theme and Contour's profile and its two color
+  schemes, so a theme of yours is never overwritten.
 
 ## Terminal by terminal
 
@@ -60,9 +61,10 @@ Settings you made yourself win:
 | Warp | a theme per palette in `~/.warp/themes`, and the default palette as the `theme` key in `~/.warp/settings.toml` (and in `selected_system_themes` while Warp follows the system; Warp Preview's `~/.warp-preview` the same way), and `enforce_minimum_contrast = "never"` under `[appearance.text]` unless you set that yourself |
 | Konsole | a color scheme and a `ttheme · <palette>` profile per palette, built on your default profile |
 | Terminal.app | a `ttheme · <palette>` profile per palette, copied from your default one |
+| Contour | `default_profile: ttheme` at the top of `settings.yml` (a `default_profile` of yours stays in a comment there, for `uninstall`), the `profiles/ttheme.yml` it names, built on your default profile, its colors in `colorschemes/ttheme.dark.yml` and `.light.yml`, and themes named `ttheme-<palette>.dark.yml` and `.light.yml` beside them |
 
-Profiles are read when the app starts, so iTerm2, Konsole and Terminal.app need
-one restart after `init`.
+Profiles are read when the app starts, so iTerm2, Konsole, Terminal.app and
+Contour need one restart after `init`.
 
 ## Turn it off
 

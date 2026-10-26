@@ -9,6 +9,7 @@ import { type Bookmark, prefsOf, tabFile } from './apple.ts'
 import {
   alacrittyColors,
   alacrittyFiles,
+  contourColors,
   fileStem,
   type GhosttyLoad,
   ghosttyLoad,
@@ -458,6 +459,31 @@ const rio = (): Kind => {
   }
 }
 
+const contour = (): Kind => {
+  let modes: Record<Mode, Colors> = { dark: OWN, light: OWN }
+
+  return {
+    launch(app) {
+      modes = {
+        dark: contourColors(app.place.configHome, 'dark'),
+        light: contourColors(app.place.configHome, 'light'),
+      }
+    },
+    opening: (app) => ({ argv: login(app), env: {}, colors: modes[app.appearance] }),
+    appeared(app) {
+      for (const tab of app.tabs) {
+        for (const slot of tab.slots.values()) {
+          slot.over = undefined
+        }
+
+        app.rebase(tab, modes[app.appearance])
+        app.report(tab)
+      }
+    },
+    picture: () => 'none',
+  }
+}
+
 const wezterm = (): Kind => {
   let config = OWN
   let wired = false
@@ -844,6 +870,7 @@ const KINDS: Record<Term, () => Kind> = {
   konsole,
   'terminal-app': terminalApp,
   rio,
+  contour,
 }
 
 export interface Look {

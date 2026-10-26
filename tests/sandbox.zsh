@@ -18,6 +18,8 @@ typeset -g ALACRITTY_APP=${TTHEME_ALACRITTY_APP:-/Applications/Alacritty.app}
 typeset -g ALACRITTY_GUI="alacritty --config-file $SANDBOX/"
 typeset -g RIO_APP=${TTHEME_RIO_APP:-/Applications/Rio.app}
 typeset -g RIO_GUI="rio --working-dir $SANDBOX"
+typeset -g CONTOUR_APP=${TTHEME_CONTOUR_APP:-/Applications/contour.app}
+typeset -g CONTOUR_GUI="contour working-directory $SANDBOX"
 typeset -g WARP_LAUNCH=$HOME/.warp/launch_configurations/ttheme-sandbox.yaml
 typeset -g KONSOLE_GUI="konsole --separate --workdir $SANDBOX"
 typeset -g XVFB=${TTHEME_XVFB_DISPLAY:-:77}
@@ -250,6 +252,16 @@ open_rio() {
   env ${FOREIGN/#/-u} $RIO_APP/Contents/MacOS/rio --working-dir $SANDBOX -e /bin/zsh -il > /dev/null 2>&1 &!
 }
 
+open_contour() {
+  if (( LINUX )); then
+    (( $+commands[contour] )) || return 1
+    open_linux "$1" contour working-directory $SANDBOX ${commands[zsh]:-/bin/zsh} -il
+    return
+  fi
+  [[ -x $CONTOUR_APP/Contents/MacOS/contour ]] || return 1
+  env ${FOREIGN/#/-u} $CONTOUR_APP/Contents/MacOS/contour working-directory $SANDBOX /bin/zsh -il > /dev/null 2>&1 &!
+}
+
 open_konsole() {
   local behind=$1
   local -a env=(${FOREIGN/#/-u})
@@ -313,13 +325,13 @@ told() {
   fi
 }
 
-usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole | --rio] [--pictured] [--zshenv FILE] [--empty | --mine | palette…]" }
+usage() { print -u2 "usage: sandbox [--here | --behind] [--iterm [--legacy] [--trust] | --wezterm | --kitty | --alacritty | --warp | --terminal-app | --konsole | --rio | --contour] [--pictured] [--zshenv FILE] [--empty | --mine | palette…]" }
 
 main() {
-  local -a here behind iterm wezterm kitty alacritty warp tapp konsole rio legacy trust empty mine pictured zshenv
+  local -a here behind iterm wezterm kitty alacritty warp tapp konsole rio contour legacy trust empty mine pictured zshenv
   zparseopts -D -E -F -- -here=here -behind=behind -iterm=iterm -wezterm=wezterm -kitty=kitty -alacritty=alacritty -warp=warp -terminal-app=tapp \
-    -konsole=konsole -rio=rio -legacy=legacy -trust=trust -empty=empty -mine=mine -pictured=pictured -zshenv:=zshenv || { usage; return 1 }
-  local -i other=$(( $#iterm + $#wezterm + $#kitty + $#alacritty + $#warp + $#tapp + $#konsole + $#rio ))
+    -konsole=konsole -rio=rio -contour=contour -legacy=legacy -trust=trust -empty=empty -mine=mine -pictured=pictured -zshenv:=zshenv || { usage; return 1 }
+  local -i other=$(( $#iterm + $#wezterm + $#kitty + $#alacritty + $#warp + $#tapp + $#konsole + $#rio + $#contour ))
   (( other > 1 || $#here && ($#behind || other) || ($#legacy || $#trust) && ! $#iterm || ($#empty || $#mine) && $# || $#empty && $#mine )) && { usage; return 1 }
   if (( $#mine )); then
     (( $#warp || $#tapp )) && { print -u2 -r -- "--mine stays out of --warp and --terminal-app, which wire the user's own app settings"; return 1 }
@@ -377,6 +389,13 @@ main() {
     open_alacritty "${behind:+1}" || { absent alacritty "no Alacritty at $ALACRITTY_APP — TTHEME_ALACRITTY_APP names another Alacritty.app"; return 1 }
     (( $#behind )) && hand_back "$front" $ALACRITTY_GUI
     told Alacritty "${behind:+1}"
+    return
+  fi
+  if (( $#contour )); then
+    ( unset $FOREIGN; TERM_PROGRAM=contour wire $label $palettes )
+    open_contour "${behind:+1}" || { absent contour "no Contour at $CONTOUR_APP — TTHEME_CONTOUR_APP names another contour.app"; return 1 }
+    (( $#behind )) && hand_back "$front" $CONTOUR_GUI
+    told Contour "${behind:+1}"
     return
   fi
   if (( $#rio )); then
