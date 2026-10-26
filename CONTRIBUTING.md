@@ -381,12 +381,18 @@ the arrows alone or with `shift`, `enter`, `space`, `esc`, or `ctrl` or `alt`
 with a letter — and this table is where to look before binding one. A binding
 on a key already in it is a collision: move one of them, or pick another key.
 `j` and `k` move like `↓` and `↑` only on the screens that have no filter: the
-panel below, preview's settings, the palette editor and find's grid.
+panel below, preview's settings, the palette editor and find's grid. `ctrl+j`
+and `ctrl+k` move like them on every list, filter or not (a terminal sends
+`ctrl+j` as a line feed, which no screen reads as `enter`: that is `\r`;
+`lineStep` in `src/tui/keys.ts` is the one table, and a screen without a filter
+also passes `letters` for `j` and `k`). The
+screens that list pictures — find's grid and its try view, and the Images row of
+the panel below — also take `h` and `l` as `←` and `→`.
 
 | Key | Preview | Browse |
 |---|---|---|
 | any character | filters | filters every marketplace, landing on the first match in the panel; in the search, filters the marketplace list at once; in the `+ Add marketplace` form, types the source |
-| `↑` `↓` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
+| `↑` `↓` `ctrl+j` `ctrl+k` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
 | `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces; `→` on `+ Add marketplace` moves into its form in the panel and on `Search marketplace` opens the search, and `←` in either goes back |
 | `enter` | open or close a catalog; on a palette, apply it, asking where | on a marketplace, move into its panel; there, open or close a catalog, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `+ Add marketplace`, move into its form in the panel, and there fetch the source typed and land in the panel of the marketplace it stages; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; on a palette, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
 | `esc` | clear the filter, then restore and close | clear the filter, then leave the panel, then cancel, asking first when something is staged; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
@@ -421,7 +427,7 @@ an Apply button — and the part the cursor is in takes the keys:
 |---|---|---|---|
 | `↑` `↓` `j` `k` | Images, then colors, size, position, opacity, and past the last one Edit palette | the picture, Apply | Edit palette, the top |
 | `home` `end` | the top, Apply | same | same |
-| `←` `→` | on Images, another picture; on a field, a step | — | — |
+| `←` `→` `h` `l` | on Images, another picture; on a field, a step | the Edit palette and Reset palette buttons | — |
 | `⇧←` `⇧→` | ×10 | — | — |
 | `enter` | on the empty frame under Images of a palette with no picture, find one | open the palette editor on it | apply, saving first and asking where |
 | `1`-`9` | place | — | — |

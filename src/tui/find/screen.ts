@@ -1438,7 +1438,7 @@ const TUNE_KEYS: Key[] = [
 
 const KEYS: Record<FindView['mode'], Key[]> = {
   grid: [
-    ['Move', '←↑↓→  j k  home  end  pgup  pgdn'],
+    ['Move', '←↑↓→  h j k l  home  end  pgup  pgdn'],
     ['Try on', 'enter', 'enter'],
     ['Site', `tab  shift+tab  all, ${SITES.map((site) => site.name).join(', ')}`, 'tab'],
     ['Posts', 'c  cutouts or every post', 'c'],
@@ -1452,7 +1452,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
     ['Back', 'esc returns to preview', 'esc'],
   ],
   try: [
-    ['Browse', '←→'],
+    ['Browse', '←→  h l'],
     ['Install', 'enter', 'enter'],
     ['Tune', 't  size, position and opacity, installed with the picture', 't'],
     ['Colors', "c  its own colors or the palette's tone, installed with the picture", 'c'],

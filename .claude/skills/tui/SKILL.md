@@ -92,7 +92,7 @@ Before "fixing" one of these, read where it was decided.
 | A cut line ends in `closing(head)`, not `RESET` | A full reset would end a painted row's background | `.claude/rules/tui.md` |
 | A Node screen leaves the modes a program around it set | They are `assume`d: set, never put back, since preview keeps them | CLAUDE.md, the Node screens bullet |
 | …yet the mouse mode is claimed, never assumed | It goes off with the screen that took it, and preview turns its own back on | CLAUDE.md, the mouse bullet |
-| No `/` to search; `j` and `k` do not move in preview or Browse | Typing filters at once, so letters are never commands there | CONTRIBUTING.md, Keys a screen takes |
+| No `/` to search; `j` and `k` do not move in preview or Browse (`ctrl+j` and `ctrl+k` do, through `lineStep` in `keys.ts`) | Typing filters at once, so letters are never commands there | CONTRIBUTING.md, Keys a screen takes |
 | `↑` `↓` wrap and the wheel does not | Lists wrap on keys; the wheel moves a row | CONTRIBUTING.md, Keys a screen takes and The mouse |
 | A click acts on the release | A screen that closes on a click must read the release, or it lands in the shell | CONTRIBUTING.md, The mouse |
 | A wheel event within `WHEEL_GAP` of the last one the same way is dropped | Ghostty sends three per notch | CLAUDE.md, the mouse bullet |

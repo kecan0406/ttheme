@@ -5,6 +5,7 @@ import { OFFICIAL, shownSource } from '../../store/sources.ts'
 import { fit, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint } from '../bar.ts'
 import { type HubTab, hubBar } from '../hub.ts'
+import { lineStep } from '../keys.ts'
 import { pageStep } from '../palette-prompt.ts'
 import { MARKS, type Paint, SPINNER } from '../style.ts'
 import type { Staged } from './staged.ts'
@@ -57,7 +58,7 @@ export class Review {
       }
     }
 
-    const page = key === 'up' ? -1 : key === 'down' ? 1 : pageStep(key, this.host.span())
+    const page = lineStep(key) ?? pageStep(key, this.host.span())
 
     if (page !== undefined) {
       this.scroll(page)

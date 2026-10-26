@@ -10,7 +10,7 @@ import { Field } from '../field.ts'
 import { Help, type Legend, overlay, type Topic } from '../help.ts'
 import { HUB_UPDATE, type HubTab, hubBar, hubGoto, hubTo } from '../hub.ts'
 import { capped } from '../keycaps.ts'
-import type { Mouse } from '../keys.ts'
+import { lineStep, type Mouse } from '../keys.ts'
 import { Glide } from '../motion.ts'
 import type { ReleaseLine } from '../notice.ts'
 import { type Card, PaletteList, pageStep, paletteExample, type RowSpot, SearchHint } from '../palette-prompt.ts'
@@ -334,6 +334,7 @@ export class BrowsePanel {
     const found = panel ? undefined : this.focusedFound()
     const opens = found?.kind === 'new' || found?.kind === 'search'
     const page = pageStep(key, (panel ? this.panel.inside : this.list).page())
+    const line = lineStep(key)
 
     if (key === 'enter') {
       if (this.onAction()) {
@@ -359,8 +360,8 @@ export class BrowsePanel {
       this.help = new Help(this.topics(), this.legend())
     } else if (page !== undefined) {
       this.move(page)
-    } else if (key === 'up' || key === 'down') {
-      this.move(key === 'up' ? -1 : 1)
+    } else if (line !== undefined) {
+      this.move(line)
     } else if (key === 'right') {
       if (panel) {
         this.panel.inside.fold(true)
@@ -398,6 +399,7 @@ export class BrowsePanel {
 
   private searchKey(key: string): void {
     const page = pageStep(key, this.search.results.page())
+    const line = lineStep(key)
 
     if (key === 'enter' || key === ' ') {
       this.take(key === 'enter')
@@ -409,8 +411,8 @@ export class BrowsePanel {
       this.help = new Help(this.topics(), this.legend())
     } else if (page !== undefined) {
       this.move(page)
-    } else if (key === 'up' || key === 'down') {
-      this.move(key === 'up' ? -1 : 1)
+    } else if (line !== undefined) {
+      this.move(line)
     } else if (key === 'tab' || key === 'shift-tab') {
       if (this.hub) {
         this.leave(hubGoto(this.hub, key === 'tab' ? 1 : -1))
@@ -1308,7 +1310,7 @@ export class BrowsePanel {
 
     if (this.showing === 'search') {
       return [
-        { label: 'Move', text: '↑↓  home  end  pgup  pgdn' },
+        { label: 'Move', text: '↑↓  ctrl+j  ctrl+k  home  end  pgup  pgdn' },
         { label: 'Filter', text: 'Any text  ·  bksp  ·  ctrl+u clears' },
         { label: 'Add', text: 'space  adds it  ·  again to undo', run: () => this.take(false) },
         { label: '', text: 'enter  adds it and goes back to its card', run: () => this.take(true) },
@@ -1328,7 +1330,7 @@ export class BrowsePanel {
     const when = (on: boolean, run: () => void) => (on ? { run } : {})
 
     return [
-      { label: 'Move', text: '↑↓  home  end  pgup  pgdn' },
+      { label: 'Move', text: '↑↓  ctrl+j  ctrl+k  home  end  pgup  pgdn' },
       {
         label: 'Open',
         text: '→  enter  ·  a marketplace into the panel, a catalog',

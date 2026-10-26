@@ -44,6 +44,7 @@ import type { Tone } from './bar.ts'
 import { edit } from './field.ts'
 import { pastedRefs, type Start } from './find/attach.ts'
 import { Help, type Legend, type Topic } from './help.ts'
+import { lineStep } from './keys.ts'
 import { MARKS } from './style.ts'
 
 const ROWS = BASE.length + PAIRS.length
@@ -702,7 +703,8 @@ export class PaletteEditor {
       return
     }
 
-    const step = key === 'j' ? 'down' : key === 'k' ? 'up' : key
+    const line = lineStep(key, true)
+    const step = line === undefined ? key : line < 0 ? 'up' : 'down'
 
     if (this.mode === 'seeds') {
       this.seedKey(step)
@@ -1047,11 +1049,12 @@ export class PaletteEditor {
 
   private menuKey(key: string): void {
     const count = this.menu === 'export' ? 3 : 2
+    const line = lineStep(key, true)
 
     if (key === 'esc') {
       this.menu = undefined
-    } else if (key === 'up' || key === 'down' || key === 'k' || key === 'j') {
-      this.entry = (this.entry + (key === 'up' || key === 'k' ? count - 1 : 1)) % count
+    } else if (line !== undefined) {
+      this.entry = (this.entry + (line < 0 ? count - 1 : 1)) % count
     } else if (key === 'enter') {
       this.choose(this.entry)
     }
@@ -1118,15 +1121,12 @@ export class PaletteEditor {
     const ways = new Map<string, 'left' | 'right' | 'up' | 'down' | 'next' | 'previous'>([
       ['left', 'left'],
       ['right', 'right'],
-      ['up', 'up'],
-      ['k', 'up'],
-      ['down', 'down'],
-      ['j', 'down'],
       ['tab', 'next'],
       ['shift-tab', 'previous'],
     ])
 
-    const way = ways.get(key)
+    const line = lineStep(key, true)
+    const way = line === undefined ? ways.get(key) : line < 0 ? 'up' : 'down'
 
     if (key === 'i' || key === 'esc') {
       this.inspect = false
@@ -1654,13 +1654,14 @@ export class PaletteEditor {
 
   private openKey(key: string): void {
     const choices = this.choices()
+    const line = lineStep(key)
 
     if (key === 'esc') {
       this.overlay = undefined
       this.filter = ''
-    } else if (key === 'up' || key === 'down') {
+    } else if (line !== undefined) {
       const n = Math.max(1, choices.length)
-      this.pick = (this.pick + (key === 'up' ? n - 1 : 1)) % n
+      this.pick = (this.pick + (line < 0 ? n - 1 : 1)) % n
     } else if (key === 'home' || key === 'end') {
       this.pick = key === 'home' ? 0 : Math.max(0, choices.length - 1)
     } else if (key === 'enter') {

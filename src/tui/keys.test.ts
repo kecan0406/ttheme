@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { CellProbe, CLICK_GAP, decode, ESC_WAIT, type Inbound, Keys, keysOf } from './keys.ts'
+import { CellProbe, CLICK_GAP, decode, ESC_WAIT, type Inbound, Keys, keysOf, lineStep } from './keys.ts'
 
 function cellOf(input: string): { h: number; w: number } | undefined {
   const probe = new CellProbe()
@@ -46,15 +46,33 @@ test('a report that has not fully arrived is held, not read as keys', () => {
 
 test('keys name the picture paste keys, focus reports and control keys', () => {
   assert.deepEqual(keysOf('\x16\x1bv\x1b[I\x1b[O\x1b'), ['ctrl-v', 'alt-v', 'focus-in', 'focus-out', 'esc'])
-  assert.deepEqual(keysOf('\x12\x13\x15\x03\r\t\x7f'), [
+  assert.deepEqual(keysOf('\x12\x13\x15\x03\r\n\v\t\x7f'), [
     'ctrl-r',
     'ctrl-s',
     'ctrl-u',
     'ctrl-c',
     'enter',
+    'ctrl-j',
+    'ctrl-k',
     'tab',
     'backspace',
   ])
+  assert.deepEqual(keysOf('\x1b[106;5u\x1b[107;5u'), ['ctrl-j', 'ctrl-k'])
+})
+
+test('a line key steps one line, and the letters j and k only where the screen has no filter', () => {
+  assert.deepEqual(
+    ['up', 'ctrl-k', 'down', 'ctrl-j'].map((key) => lineStep(key)),
+    [-1, -1, 1, 1],
+  )
+  assert.deepEqual(
+    ['k', 'j', 'enter'].map((key) => lineStep(key)),
+    [undefined, undefined, undefined],
+  )
+  assert.deepEqual(
+    ['k', 'j', 'ctrl-j'].map((key) => lineStep(key, true)),
+    [-1, 1, 1],
+  )
 })
 
 test('pastes and protocol replies come apart from keys, in order, and unfinished ones wait', () => {

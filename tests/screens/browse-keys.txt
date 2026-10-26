@@ -3,7 +3,7 @@
  │ ⌕╭─ Help ───────────────────────────────────────────────────────────────────────────────────╮  │
  ╰─ │ ⌕ Type to filter                                                                         │ ─╯
     │                                                                                          │ ─╮
-    │   Move          ↑↓  home  end  pgup  pgdn                                                │  │
+    │   Move          ↑↓  ctrl+j  ctrl+k  home  end  pgup  pgdn                                │  │
     │ ▶ Open          →  enter  ·  a marketplace into the panel, a catalog                     │  │
     │   Back          ←  esc  ·  from the panel to the marketplaces                            │  │
  ▌  │   Pick          space  ·  a palette, a catalog, a marketplace                            │  │

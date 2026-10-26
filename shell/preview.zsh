@@ -747,7 +747,7 @@ __tt_pv_help() {
       "↑↓ j k  the image, the palette, then Apply  ·  home  end"
       "Images  ←→  , .  pick one  ·  D removes it  ·  f  finds one"
       "enter on the empty frame  ·  finds the first one"
-      "←→ step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all"
+      "←→ h l step  ⇧←→ ×10  1-9 place  ·  =  resets  ·  +  all"
       "space  hides  ·  c  colors  ·  y  copies who drew it"
       "enter  ·  tunes its colors full screen, keeps its own tone"
       "?  there lists its keys  ·  esc leaves it"
@@ -758,7 +758,7 @@ __tt_pv_help() {
   else
     hk=(Move Catalogs Filter "" Example Apply Edit)
     hv=(
-      "↑↓  home  end  pgup  pgdn"
+      "↑↓  ctrl+j  ctrl+k  home  end  pgup  pgdn"
       "←→  ·  enter or space on a catalog"
       "Any text  ·  bksp  ·  ctrl+u clears"
       "Names and titles, in Japanese too"
@@ -1004,7 +1004,7 @@ __tt_pv_conf() {
     down|j) cf=$(( cf < ${#cvars} ? cf + 1 : 1 )) ;;
     left|sleft) __tt_pv_conf_step -1 ;;
     right|sright) __tt_pv_conf_step 1 ;;
-    $'\r'|$'\n') __tt_pv_conf_save ;;
+    $'\r') __tt_pv_conf_save ;;
     esc) __tt_pv_unconf ;;
     '?') help=1 ;;
   esac
@@ -1559,6 +1559,8 @@ __tt_pv_read() {
   fi
   key=$REPLY
   [[ $key == ç ]] && key=altc
+  [[ $key == $'\n' ]] && key=down
+  [[ $key == $'\v' ]] && key=up
   [[ $key == $'\e' ]] || return 0
   local seq=""
   if ! __tt_pv_getch 0.05; then
@@ -1838,7 +1840,7 @@ __tt_pv_pick() {
     esc) pick="" ;;
     left|stab) pk=$(( (pk + ${#plabel} - 2) % ${#plabel} + 1 )) ;;
     right|$'\t') pk=$(( pk % ${#plabel} + 1 )) ;;
-    $'\r'|$'\n'|senter)
+    $'\r'|senter)
       sel=$pick picked=$pk
       return 1
       ;;
@@ -2094,7 +2096,7 @@ __tt_te_palette() {
   tearm=0
   (( ${TTHEME_TUNED[(Ie)$tename]} )) || tbtn=0
   case $key in
-    $'\r'|$'\n')
+    $'\r')
       if (( tbtn )); then
         tearm=$armed
         __tt_te_resetting
@@ -2102,7 +2104,7 @@ __tt_te_palette() {
         __tt_te_edit
       fi
       ;;
-    left|right) (( ${TTHEME_TUNED[(Ie)$tename]} )) && tbtn=$(( ! tbtn )) ;;
+    left|right|h|l) (( ${TTHEME_TUNED[(Ie)$tename]} )) && tbtn=$(( ! tbtn )) ;;
     s) __tt_te_save ;;
     esc) (( armed )) || __tt_te_close ;;
     up|k)
@@ -2125,6 +2127,10 @@ __tt_pv_te_image() {
   i=${order[(Ie)$tf]}
   (( i )) || { tf=5; i=1 }
   case $key in
+    h) key=left ;;
+    l) key=right ;;
+  esac
+  case $key in
     s) __tt_te_save ;;
     esc) __tt_te_close ;;
     up|k)
@@ -2143,7 +2149,7 @@ __tt_pv_te_image() {
       ;;
     home) tf=5 ;;
     end) __tt_te_to_apply ;;
-    $'\r'|$'\n') [[ -n $tune ]] || __tt_te_find ;;
+    $'\r') [[ -n $tune ]] || __tt_te_find ;;
     f) __tt_te_find ;;
     left|right|sleft|sright)
       if (( tf == 5 )); then
@@ -2167,7 +2173,7 @@ __tt_pv_te_image() {
 
 __tt_te_button() {
   case $key in
-    $'\r'|$'\n') __tt_te_apply; return $? ;;
+    $'\r') __tt_te_apply; return $? ;;
     s) __tt_te_save ;;
     esc) __tt_te_close ;;
     up|k) __tt_te_to_palette ;;
@@ -2482,7 +2488,7 @@ __tt_pv_handle() {
         fi
       fi
       ;;
-    $'\r'|$'\n'|senter)
+    $'\r'|senter)
       if [[ ${rtype[cur]} == thm ]]; then
         if (( canpick )); then
           pick=${rval[cur]} pk=$pkdef
@@ -2653,7 +2659,7 @@ __tt_preview() {
   local tty=""
   local -i TTHEME_RAW=0
   {
-    tty=$(stty -g 2>/dev/null) && stty -echo -icanon -ixon min 1 time 0 2>/dev/null || tty=""
+    tty=$(stty -g 2>/dev/null) && stty -echo -icanon -icrnl -ixon min 1 time 0 2>/dev/null || tty=""
     TTHEME_RAW=$(( ${#tty} > 0 ))
     __tt_pv_bg_open
     printf '\e[?2026h\e[?1049h\e[?7l\e[?25l\e[?2004h'

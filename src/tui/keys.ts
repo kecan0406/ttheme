@@ -68,7 +68,6 @@ const CSI_KEYS = new Map([
 
 const NAMED = new Map([
   ['\r', 'enter'],
-  ['\n', 'enter'],
   ['\t', 'tab'],
   ['\b', 'backspace'],
   ['\x7f', 'backspace'],
@@ -88,9 +87,24 @@ const CTRL_ALIASES = new Map([
   ['[', 'esc'],
   ['h', 'backspace'],
   ['i', 'tab'],
-  ['j', 'enter'],
   ['m', 'enter'],
 ])
+
+const LINES = new Map<string, -1 | 1>([
+  ['up', -1],
+  ['ctrl-k', -1],
+  ['down', 1],
+  ['ctrl-j', 1],
+])
+
+const LINE_LETTERS = new Map<string, -1 | 1>([
+  ['k', -1],
+  ['j', 1],
+])
+
+export function lineStep(key: string, letters = false): -1 | 1 | undefined {
+  return LINES.get(key) ?? (letters ? LINE_LETTERS.get(key) : undefined)
+}
 
 const NOT_TEXT = 8 | 16 | 32
 

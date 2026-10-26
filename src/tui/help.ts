@@ -3,6 +3,7 @@ import { fit, pieces } from './ansi.ts'
 import type { Bar, Hint } from './bar.ts'
 import { Field } from './field.ts'
 import { capped } from './keycaps.ts'
+import { lineStep } from './keys.ts'
 import { boxEdge, boxed, boxTitle, moreOf } from './parts.ts'
 import { MARKS, type Paint } from './style.ts'
 import { cover, unzoned, zone } from './zones.ts'
@@ -69,8 +70,10 @@ export class Help {
       return 'stay'
     }
 
-    if (key === 'up' || key === 'down') {
-      this.step(key === 'up' ? -1 : 1)
+    const line = lineStep(key)
+
+    if (line !== undefined) {
+      this.step(line)
 
       return 'stay'
     }

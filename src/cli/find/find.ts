@@ -114,7 +114,7 @@ import {
   type Tuning,
 } from '../../tui/find/screen.ts'
 import { Help } from '../../tui/help.ts'
-import { CELL_QUERY, CellProbe, type Inbound, type Mouse } from '../../tui/keys.ts'
+import { CELL_QUERY, CellProbe, type Inbound, lineStep, type Mouse } from '../../tui/keys.ts'
 import {
   FOCUS,
   HIDE_CURSOR,
@@ -1470,17 +1470,16 @@ class Finder {
     const moves = new Map([
       ['left', -1],
       ['right', 1],
-      ['up', -perRow],
-      ['down', perRow],
-      ['k', -perRow],
-      ['j', perRow],
+      ['h', -1],
+      ['l', 1],
       ['pgup', -perRow * rowsVis],
       ['pgdn', perRow * rowsVis],
       ['home', -view.focus],
       ['end', view.tiles.length],
     ])
 
-    const move = moves.get(key)
+    const line = lineStep(key, true)
+    const move = line === undefined ? moves.get(key) : line * perRow
 
     if (move !== undefined) {
       this.focus(view.focus + move)
@@ -1569,9 +1568,10 @@ class Finder {
     }
 
     const page = pageOf(view)
+    const line = lineStep(key)
 
-    if (key === 'up' || key === 'down') {
-      const k = page.indexOf(at) + (key === 'up' ? -1 : 1)
+    if (line !== undefined) {
+      const k = page.indexOf(at) + line
       view.panel = page[(k + page.length) % page.length] ?? at
       this.paint.draw()
 
@@ -1809,10 +1809,11 @@ class Finder {
     const view = this.view
     const text = view.editing ?? ''
     const shown = view.suggest ?? []
+    const line = lineStep(key)
 
-    if ((key === 'up' || key === 'down') && shown.length > 0) {
+    if (line !== undefined && shown.length > 0) {
       const at = view.pick ?? shown.length
-      const next = (at + (key === 'down' ? 1 : shown.length)) % (shown.length + 1)
+      const next = (at + (line > 0 ? 1 : shown.length)) % (shown.length + 1)
       view.pick = next === shown.length ? undefined : next
       this.paint.draw()
 
@@ -2068,8 +2069,8 @@ class Finder {
       return
     }
 
-    if (key === 'left' || key === 'right') {
-      this.direction = key === 'left' ? -1 : 1
+    if (key === 'left' || key === 'right' || key === 'h' || key === 'l') {
+      this.direction = key === 'left' || key === 'h' ? -1 : 1
       this.focus(view.focus + this.direction)
 
       return
@@ -2143,8 +2144,10 @@ class Finder {
     const panel = view.tuning as TunePanel
     const tune = view.tune
 
-    if (key === 'up' || key === 'down') {
-      panel.field = (panel.field + (key === 'up' ? 2 : 1)) % 3
+    const line = lineStep(key)
+
+    if (line !== undefined) {
+      panel.field = (panel.field + (line < 0 ? 2 : 1)) % 3
       this.paint.draw()
 
       return

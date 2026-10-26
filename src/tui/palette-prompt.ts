@@ -5,7 +5,7 @@ import { aliasesFor, containsText } from '../store/names.ts'
 import { OFFICIAL } from '../store/sources.ts'
 import { Field } from './field.ts'
 import { capped } from './keycaps.ts'
-import type { Inbound } from './keys.ts'
+import { type Inbound, lineStep } from './keys.ts'
 import { chase } from './motion.ts'
 import { moreOf } from './parts.ts'
 import { Inline } from './screen.ts'
@@ -1058,6 +1058,7 @@ export class PalettePrompt {
     }
 
     const page = pageStep(key, this.list.maxItems)
+    const line = lineStep(key)
 
     if (key === 'esc' || key === 'ctrl-c') {
       this.state = 'cancel'
@@ -1068,8 +1069,8 @@ export class PalettePrompt {
       } else {
         this.state = 'submit'
       }
-    } else if (key === 'up' || key === 'down') {
-      this.list.move(key === 'up' ? -1 : 1)
+    } else if (line !== undefined) {
+      this.list.move(line)
     } else if (key === 'left' || key === 'right') {
       this.list.fold(key === 'right')
     } else if (page !== undefined) {

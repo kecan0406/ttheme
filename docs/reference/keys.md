@@ -8,13 +8,18 @@ Preview and Browse filter as you type, so a letter is never a command there:
 what they do sits on the arrows, `enter`, `space`, `tab`, `esc` and `ctrl` or
 `alt` with a key. Every click has a key that does the same.
 
+`ctrl+j` and `ctrl+k` step a line like `↓` and `↑` on every list, filtering or
+not, so a screen that filters as you type still moves from the home row. Where
+pictures are listed (find's grid and its try view, and the Images row of the
+palette panel) `h` and `l` move like `←` and `→`.
+
 ## Preview
 
 The first tab of `ttheme`.
 
 | Key | Does |
 |---|---|
-| `↑` `↓` `home` `end` `pgup` `pgdn` | move; the tab wears the palette under the cursor |
+| `↑` `↓` `ctrl+j` `ctrl+k` `home` `end` `pgup` `pgdn` | move; the tab wears the palette under the cursor |
 | `←` `→`, or `enter` or `space` on a catalog | close and open a catalog |
 | any text, `bksp`, `ctrl+u` | filter by name or title, in Japanese too; `ctrl+u` clears |
 | `⇧←` `⇧→` | the sample's scene: shell, code, diff, logs, monitor |
@@ -30,10 +35,10 @@ The first tab of `ttheme`.
 
 | Key | Does |
 |---|---|
-| `↑` `↓` `j` `k` `home` `end` | the picture's rows, the palette, then Apply |
-| `←` `→` on Images, or `,` `.` anywhere | pick one of the palette's pictures |
+| `↑` `↓` `j` `k` `ctrl+j` `ctrl+k` `home` `end` | the picture's rows, the palette, then Apply |
+| `←` `→` or `h` `l` on Images, or `,` `.` anywhere | pick one of the palette's pictures |
 | `enter` on the empty frame, or `f` | find a picture |
-| `←` `→` on a row, `⇧` for ×10, `1`–`9` on Position | tune size, position or opacity |
+| `←` `→` or `h` `l` on a row, `⇧` for ×10, `1`–`9` on Position | tune size, position or opacity |
 | `=` and `+` | reset this row, or every row |
 | `c` | the picture's own colors, or the palette's tone |
 | `space` | hide or show the picture |
@@ -50,7 +55,7 @@ The second tab of `ttheme`.
 
 | Key | Does |
 |---|---|
-| `↑` `↓` `home` `end` `pgup` `pgdn` | move |
+| `↑` `↓` `ctrl+j` `ctrl+k` `home` `end` `pgup` `pgdn` | move |
 | `→` `enter` | a marketplace into the panel, or open a catalog |
 | `←` `esc` | from the panel back to the marketplaces |
 | any text, `bksp`, `ctrl+u` | filter every marketplace |
@@ -72,7 +77,7 @@ it and goes back to its card, and `ctrl+r` reloads the list.
 
 | Key | Does |
 |---|---|
-| `↑` `↓` | a slot |
+| `↑` `↓` `ctrl+j` `ctrl+k` | a slot |
 | `←` `→` | its normal or bright |
 | `pgup` `pgdn` | the base colors, or the ANSI ones |
 | `enter` `tab` | open the picker under the slot |
@@ -100,7 +105,7 @@ it and goes back to its card, and `ctrl+r` reloads the list.
 
 | Key | Does |
 |---|---|
-| `↑` `↓` | lightness |
+| `↑` `↓` `ctrl+j` `ctrl+k` | lightness |
 | `←` `→` | chroma |
 | `⇧←` `⇧→`, or `,` `.` | hue by 5, or by 1 |
 | `pgup` `pgdn` | lightness by 5 |
@@ -117,7 +122,7 @@ it and goes back to its card, and `ctrl+r` reloads the list.
 
 | Key | Does |
 |---|---|
-| `←` `↑` `↓` `→` `j` `k` `home` `end` `pgup` `pgdn` | move |
+| `←` `↑` `↓` `→` `h` `j` `k` `l` `ctrl+j` `ctrl+k` `home` `end` `pgup` `pgdn` | move |
 | `enter` | try the picture on |
 | `tab` `shift+tab` | all sites, or one at a time |
 | `c` | cutouts only, or every post |
@@ -133,7 +138,7 @@ it and goes back to its card, and `ctrl+r` reloads the list.
 
 | Key | Does |
 |---|---|
-| `←` `→` | the neighbouring posts |
+| `←` `→` or `h` `l` | the neighbouring posts |
 | `enter` | install it |
 | `t` | tune size, position and opacity |
 | `c` | its own colors, or the palette's tone |

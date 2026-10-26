@@ -1016,7 +1016,7 @@ __tt_key() {
       fi
       ;;
     $'\t') REPLY=tab ;;
-    $'\r'|$'\n') REPLY=enter ;;
+    $'\r') REPLY=enter ;;
     q|$'\x03') REPLY=esc ;;
     *) REPLY=$c ;;
   esac
@@ -1075,7 +1075,7 @@ __tt_unpin_choose() {
   local -a block=()
   chosen=0
   {
-    tty=$(stty -g 2>/dev/null && stty -echo -icanon -ixon min 1 time 0 2>/dev/null)
+    tty=$(stty -g 2>/dev/null && stty -echo -icanon -icrnl -ixon min 1 time 0 2>/dev/null)
     print -rn -- $'\e[?25l\e[?2004h'
     while :; do
       __tt_unpin_block $at
