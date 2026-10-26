@@ -19,11 +19,23 @@ function folded(): number {
   const header = document.querySelector('[data-site-header]')
 
   if (!header) return 0
+
+  if (header.hasAttribute('data-fixed')) return CSS.supports('animation-timeline', 'scroll()') ? 1 : 0
   const fold = Number.parseFloat(getComputedStyle(header).paddingTop)
 
   if (!(fold > 0)) return 0
 
   return Math.round(Math.min(1, Math.max(0, -header.getBoundingClientRect().top / fold)) * 1000) / 1000
+}
+
+function edges(): [number, number] | null {
+  const row = document.querySelector('[data-site-header] > div')
+  const first = row?.firstElementChild
+  const last = row?.lastElementChild
+
+  if (!first || !last) return null
+
+  return [Math.round(first.getBoundingClientRect().left), Math.round(last.getBoundingClientRect().right)]
 }
 
 function underlined(): string | null {
@@ -75,6 +87,8 @@ function leave(event: NavigateEvent) {
         l: light,
         p: point,
         f: folded(),
+        k: document.querySelector('[data-site-header][data-fixed]') ? 1 : 0,
+        x: edges(),
         g: underlined(),
       }),
     )

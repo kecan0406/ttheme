@@ -389,7 +389,8 @@ facet-ground .t2 {
   [data-site-header]::before,
   [data-site-header] > div,
   [data-site-header] [data-wordmark] {
-    animation: linear both;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
     animation-timeline: scroll(root);
     animation-range: 0px var(--fold);
   }
@@ -445,6 +446,53 @@ facet-ground .t2 {
 :root [data-site-header][data-fixed] > div,
 :root [data-site-header][data-fixed] [data-wordmark] {
   animation: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  [data-site-header][data-fixed] {
+    --fold-was: calc(var(--spacing) * 8);
+  }
+
+  @media (width < 720px) {
+    [data-site-header][data-fixed] {
+      --fold-was: calc(var(--spacing) * 4);
+    }
+  }
+
+  :root[data-unfold] [data-site-header] > div > * {
+    --shift: var(--shift-r, 0px);
+    animation: row-shift 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.06s backwards;
+  }
+
+  :root[data-unfold] [data-site-header] > div > :first-child {
+    --shift: var(--shift-l, 0px);
+  }
+
+  :root[data-unfold] [data-site-header][data-fixed]::before {
+    animation: glass-unfold 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.06s backwards;
+  }
+
+  :root[data-unfold] [data-site-header][data-fixed] > div {
+    animation: row-fold 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.06s backwards;
+  }
+
+  @container site-header (width >= 680px) {
+    :root[data-unfold] [data-site-header][data-fixed] [data-wordmark] {
+      animation: wordmark-unfold 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.06s backwards;
+    }
+  }
+}
+
+@keyframes row-shift {
+  from {
+    translate: var(--shift) 0;
+  }
+}
+
+@keyframes row-fold {
+  from {
+    translate: 0 calc(var(--fold-was) / 2 * (1 - var(--unfold)));
+  }
 }
 
 @supports (animation-timeline: view()) {
