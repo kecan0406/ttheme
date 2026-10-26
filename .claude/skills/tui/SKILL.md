@@ -105,7 +105,7 @@ Before "fixing" one of these, read where it was decided.
 
 ## Checking a change
 
-Run the check that answers the change in hand, once — not every one below:
+A round of changes with the user runs none of these unless it asks to see the screen, and the whole `mise run ci` runs once, right before the change reaches `main` (CLAUDE.md). When one is run, run the check that answers the change in hand, once — not every one below:
 
 - `mise run look <scenario | browse | hub | edit:<palette> | kit:<part>> <cols>x<rows> [keys…] --against HEAD` draws the screen before and after the change and prints the rows that differ; `--emit txt,styles --rows a-b` for a change to color, since `tests/screens/` hold the `NO_COLOR` tier only.
 - `mise run tui [names]` compares every screen in `tests/screens/`; `--update` accepts what they draw now.
