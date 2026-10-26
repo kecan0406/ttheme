@@ -10,7 +10,8 @@ description = "emit themes for every terminal ttheme wires into dist/"
 run = "bun src/bin.ts build"
 
 [tasks.test]
-description = "unit tests, including the contrast gate"
+description = "unit tests, including the contrast gate and the site's, whose packages site:install puts in first"
+depends = ["site:install"]
 run = "bun test"
 
 [tasks.check]
@@ -210,10 +211,17 @@ dir = "{{config_root}}/site"
 depends = ["build"]
 run = "bun install --frozen-lockfile && bun build.ts && ./node_modules/.bin/tsc --noEmit -p . && ./node_modules/.bin/tsc --noEmit -p client && ./node_modules/.bin/xss-scan && ./node_modules/.bin/xss-scan --cwd client -p tsconfig.json"
 
+[tasks."site:install"]
+description = "install the showcase site's packages, once for every task that needs them: bun test runs the site's tests too, so a test task beside site:check no longer races its install"
+hide = true
+dir = "{{config_root}}/site"
+run = "bun install --frozen-lockfile"
+
 [tasks."site:check"]
 description = "typecheck the showcase site's server and browser code and run xss-scan over both as site:build does, without building it: the files its build writes, assets.json, marketplaces.json, commands.json and repo.json, are typed from stand-ins in a temp dir, so it needs no network and writes nothing into site/"
 dir = "{{config_root}}/site"
-run = "bun install --frozen-lockfile && bun check.ts && ./node_modules/.bin/xss-scan && ./node_modules/.bin/xss-scan --cwd client -p tsconfig.json"
+depends = ["site:install"]
+run = "bun check.ts && ./node_modules/.bin/xss-scan && ./node_modules/.bin/xss-scan --cwd client -p tsconfig.json"
 
 [tasks.pages]
 description = "gather what GitHub Pages serves into pages/: dist/manifest.json in the schema 1 shape installs from before the official palettes shipped with ttheme still fetch as their catalog, the README's pictures, marketplaces.json, the list of every marketplace with the ttheme-marketplace topic that Browse's search reads, and stars.json, the ttheme repository's star count, which only tells pages.yml when to rebuild the site (GITHUB_TOKEN when set)"
