@@ -19,6 +19,7 @@ follow-belief	pass	pass	pass	pass	pass	pass
 keep-painted	pass	pass	pass	pass	pass	pass
 on-follow	pass	pass	pass	pass	pass	pass
 on-belief	pass	pass	pass	pass	pass	pass
+system-theme	skip	skip	skip	skip	skip	pass
 wear	pass	pass	pass	pass	pass	pass
 wear-painted	pass	pass	pass	pass	pass	pass
 wear-ansi	pass	pass	pass	pass	pass	pass

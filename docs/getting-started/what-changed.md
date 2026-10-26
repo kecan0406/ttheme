@@ -56,7 +56,7 @@ Settings you made yourself win:
 | WezTerm | a block before `return config` that runs `~/.config/ttheme/wezterm.lua` |
 | iTerm2 | a `ttheme · <palette>` dynamic profile per palette, and `ttheme · default` as the default profile, built on yours so your font and keys carry over |
 | Windows Terminal | a fragment with every scheme; `settings.json` is only touched so it reloads |
-| Warp | a theme per palette in `~/.warp/themes`, and the default palette as the `theme` key in `~/.warp/settings.toml` |
+| Warp | a theme per palette in `~/.warp/themes`, and the default palette as the `theme` key in `~/.warp/settings.toml` (and in `selected_system_themes` while Warp follows the system; Warp Preview's `~/.warp-preview` the same way) |
 | Konsole | a color scheme and a `ttheme · <palette>` profile per palette, built on your default profile |
 | Terminal.app | a `ttheme · <palette>` profile per palette, copied from your default one |
 

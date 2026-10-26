@@ -1355,6 +1355,55 @@ done
 ) || exit 1
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+  mkdir -p $XDG_CONFIG_HOME/oswarp $XDG_CONFIG_HOME/oswarpthemes
+  rm -f $TTHEME_HOME/warp.base $TTHEME_HOME/warp.system
+  TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/oswarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/oswarpthemes TTHEME_TERMINALS=(warp)
+  TTHEME_STARTUP=miku TTHEME_WARP_FOLLOWS=0 WARP_TERMINAL_SESSION_UUID=cccccccccccccccccccccccccccccccc
+  for name in miku kaito; do print -r -- "name: \"$name\"" > $TTHEME_WARP_THEMES/ttheme-$name.dark.00000000.yaml; done
+  touch -t 202001010000 $TTHEME_WARP_THEMES/ttheme-*.yaml
+  mine=('[appearance.themes]' 'system_theme = true' 'selected_system_themes = { light = "solarized_light", dark = "dracula" }' 'theme = "koi"')
+  print -rl -- "${mine[@]}" > $TTHEME_WARP_SETTINGS
+  __tt_apply "$TTHEME_PALETTE[kaito]"
+  __tt_warp_value kaito
+  kaito=$REPLY
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- "${(@)mine[1,2]}" "selected_system_themes = { light = $kaito, dark = $kaito }" "theme = $kaito")" ]] ||
+    { print -u2 "a Warp that follows the system did not get the palette in both of its system slots:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
+  [[ "$(<$TTHEME_HOME/warp.system)" == '{ light = "solarized_light", dark = "dracula" }' ]] ||
+    { print -u2 "a Warp paint did not keep the user's system themes where ttheme off finds them"; exit 1 }
+  TTHEME_STARTUP=
+  __tt_osc_reset
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- "${mine[@]}")" && ! -e $TTHEME_HOME/warp.system && ! -e $TTHEME_HOME/warp.base ]] ||
+    { print -u2 "a Warp reset while ttheme is off did not give the user's system themes back:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
+  print -rl -- '[appearance.themes]' 'system_theme = true' >| $TTHEME_WARP_SETTINGS
+  TTHEME_STARTUP=miku
+  __tt_apply "$TTHEME_PALETTE[miku]"
+  TTHEME_STARTUP=
+  __tt_osc_reset
+  [[ "$(<$TTHEME_WARP_SETTINGS)" == "$(print -rl -- '[appearance.themes]' 'theme = "dark"' "selected_system_themes = $TTHEME_WARP_PAIR" 'system_theme = true')" ]] ||
+    { print -u2 "a Warp reset while ttheme is off, over no system themes of the user's, did not leave Warp's defaults:"; cat $TTHEME_WARP_SETTINGS; exit 1 }
+  rm -rf $TTHEME_WARP_TABS
+) || exit 1
+(
+  for want in 'dev.warp.Warp-Preview - warp-preview warp-terminal-preview' \
+    'com.mitchellh.ghostty v0.2026.10.20.08.25.preview_00 warp-preview warp-terminal-preview' \
+    'dev.warp.Warp-Stable v0.2026.10.21.08.25.stable_02 warp warp-terminal' \
+    '- v0.2026.06.09.19.54.dev_00 warp-dev warp-terminal-dev' \
+    'dev.warp.WarpOss - warp-oss warp-oss' \
+    '- - warp warp-terminal'; do
+    w=(${=want})
+    __CFBundleIdentifier=${w[1]#-} TERM_PROGRAM_VERSION=${w[2]#-}
+    source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
+    if [[ $OSTYPE == darwin* ]]; then
+      at=$HOME/.$w[3]/settings.toml
+    else
+      at=${XDG_CONFIG_HOME:-$HOME/.config}/$w[4]/settings.toml
+    fi
+    [[ $TTHEME_WARP_SETTINGS == "$at" && $TTHEME_WARP_TABS == "$TTHEME_STATE_DIR/$w[3]" ]] ||
+      { print -u2 "a Warp tab ($want) took another channel's settings or records: $TTHEME_WARP_SETTINGS $TTHEME_WARP_TABS"; exit 1 }
+  done
+) || exit 1
+(
+  source $XDG_CONFIG_HOME/ttheme/adapters/warp.zsh
   (( $+commands[sqlite3] )) || { print -u2 "sqlite3 is missing — Warp's tab switches are read with it"; exit 1 }
   mkdir -p $XDG_CONFIG_HOME/fwarp $XDG_CONFIG_HOME/fwarpthemes
   TTHEME_WARP_SETTINGS=$XDG_CONFIG_HOME/fwarp/settings.toml TTHEME_WARP_THEMES=$XDG_CONFIG_HOME/fwarpthemes TTHEME_TERMINALS=(warp)

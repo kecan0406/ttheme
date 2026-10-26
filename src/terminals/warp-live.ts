@@ -11,13 +11,14 @@ import { colorless } from './osc.ts'
 import { detectTerminal, type Live } from './terminal.ts'
 import {
   WARP_DEFAULT,
-  warpBasePath,
+  warpChannelOf,
   warpReady,
   warpSettings,
+  warpSystemOf,
   warpThemeOf,
   warpThemes,
   warpThemeValue,
-  withWarpTheme,
+  warpWear,
 } from './warp.ts'
 
 type Env = Record<string, string | undefined>
@@ -77,14 +78,14 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
     return undefined
   }
 
-  const settings = warpSettings(home, configHome)
+  const channel = warpChannelOf(env)
+  const settings = warpSettings(home, configHome, channel)
 
   if (!existsSync(settings) || !wired(configHome)) {
     return undefined
   }
 
-  const dir = warpThemes(home)
-  const base = warpBasePath(configHome)
+  const dir = warpThemes(home, channel)
   const views: string[] = []
   const own = env.TTHEME_WARP_WEARS ?? worn(readInstalled(configHome))
   const mode = modeFor(configHome)
@@ -94,22 +95,14 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
 
   const wear = (value: string) => {
     const content = readFileSync(settings, 'utf8')
-    const was = warpThemeOf(content)
+    const next = warpWear(content, value, configHome, channel)
 
-    if (was === value) {
+    if (next === content) {
       return
     }
 
-    if (ours(value) && !ours(was) && !existsSync(base)) {
-      writeAtomic(base, was ?? '')
-    }
-
-    editUserFile(settings, withWarpTheme(content, value))
+    editUserFile(settings, next)
     relink(settings)
-
-    if (!ours(value)) {
-      rmSync(base, { force: true })
-    }
   }
 
   const sweep = (keep?: string) => {
@@ -171,8 +164,13 @@ export function warpLive(env: Env, tty: boolean, configHome: string, home = home
 
       if (value) {
         wear(value)
-      } else if (ours(warpThemeOf(readFileSync(settings, 'utf8')))) {
-        wear(WARP_DEFAULT)
+      } else {
+        const content = readFileSync(settings, 'utf8')
+        const theme = warpThemeOf(content)
+
+        if (ours(theme) || ours(warpSystemOf(content))) {
+          wear(ours(theme) || theme === undefined ? WARP_DEFAULT : theme)
+        }
       }
 
       sweep()

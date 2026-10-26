@@ -27,7 +27,17 @@ import { upsertAlacrittyImport } from '../terminals/alacritty.ts'
 import { ghostty } from '../terminals/emit/ghostty.ts'
 import { warpPictureFile } from '../terminals/emit/warp.ts'
 import { itermProfilesPath } from '../terminals/iterm2.ts'
-import { warpSettings, warpThemes, warpThemeValue } from '../terminals/warp.ts'
+import {
+  WARP_SYSTEM_DEFAULT,
+  type WarpChannel,
+  warpChannelOf,
+  warpSettings,
+  warpSystemOf,
+  warpSystemValue,
+  warpThemeOf,
+  warpThemes,
+  warpThemeValue,
+} from '../terminals/warp.ts'
 import { weztermBlock } from '../terminals/wezterm.ts'
 import { wtFragmentPath } from '../terminals/windows-terminal.ts'
 import { forget, pointDefaults, refreshPictures, resolve, sync, wiringNotes, withBases } from './sync.ts'
@@ -491,6 +501,89 @@ test('sync adds the Warp theme table when there is none, gives Warp its default 
   assert.match(readFileSync(settings, 'utf8'), /^theme = "dark"$/m)
 })
 
+test("sync puts the palette in both of Warp's system slots while Warp follows the system, and gives the user's back while off", () => {
+  const configHome = fixture()
+  const home = fixture()
+  const state: Installed = { terminals: ['warp'], palettes: ['gojo'] }
+  sync(configHome, manifest, state, home)
+  const settings = warpSettings(home, configHome)
+  mkdirSync(dirname(settings), { recursive: true })
+
+  const mine =
+    '[appearance.themes]\nsystem_theme = true\nselected_system_themes = { light = "solarized_light", dark = "dracula" }\ntheme = "koi"\n'
+
+  writeFileSync(settings, mine)
+  sync(configHome, manifest, state, home)
+  const gojo = warpThemeValue('gojo', plainTheme(home, 'gojo'))
+  const worn = readFileSync(settings, 'utf8')
+  assert.equal(warpThemeOf(worn), gojo)
+  assert.equal(warpSystemOf(worn), warpSystemValue(gojo))
+  sync(configHome, manifest, { ...state, off: true }, home)
+  assert.equal(readFileSync(settings, 'utf8'), mine)
+  writeFileSync(settings, '[appearance.themes]\nsystem_theme = true\n')
+  sync(configHome, manifest, state, home)
+  assert.equal(warpSystemOf(readFileSync(settings, 'utf8')), warpSystemValue(gojo))
+  sync(configHome, manifest, { ...state, off: true }, home)
+  assert.equal(warpSystemOf(readFileSync(settings, 'utf8')), WARP_SYSTEM_DEFAULT)
+})
+
+test('a Warp tab names its channel by its app, else by the channel its version carries, else stable', () => {
+  assert.equal(warpChannelOf({ __CFBundleIdentifier: 'dev.warp.Warp-Preview' }), 'preview')
+  assert.equal(warpChannelOf({ __CFBundleIdentifier: 'dev.warp.WarpOss' }), 'oss')
+  assert.equal(
+    warpChannelOf({
+      __CFBundleIdentifier: 'dev.warp.Warp-Stable',
+      TERM_PROGRAM_VERSION: 'v0.2026.10.21.08.25.stable_02',
+    }),
+    'stable',
+  )
+  assert.equal(
+    warpChannelOf({
+      __CFBundleIdentifier: 'com.mitchellh.ghostty',
+      TERM_PROGRAM_VERSION: 'v0.2026.10.20.08.25.preview_00',
+    }),
+    'preview',
+  )
+  assert.equal(warpChannelOf({ TERM_PROGRAM_VERSION: 'v0.2026.06.09.19.54.dev_00' }), 'dev')
+  assert.equal(warpChannelOf({}), 'stable')
+})
+
+test('sync wears the startup palette in every Warp channel it finds, each through its own settings, and writes a themes folder they share once', () => {
+  const configHome = fixture()
+  const home = fixture()
+  const state: Installed = { terminals: ['warp'], palettes: ['gojo'] }
+  mkdirSync(dirname(warpThemes(home, 'preview')), { recursive: true })
+  sync(configHome, manifest, state, home)
+  assert.ok(!existsSync(dirname(warpThemes(home))))
+  const preview = warpSettings(home, configHome, 'preview')
+  mkdirSync(dirname(preview), { recursive: true })
+  writeFileSync(preview, '[appearance.themes]\ntheme = "koi"\n')
+  sync(configHome, manifest, state, home)
+  assert.equal(warpThemeOf(readFileSync(preview, 'utf8')), warpThemeValue('gojo', plainTheme(home, 'gojo', 'preview')))
+  sync(configHome, manifest, { ...state, off: true }, home)
+  assert.equal(readFileSync(preview, 'utf8'), '[appearance.themes]\ntheme = "koi"\n')
+
+  const linked = fixture()
+  mkdirSync(warpThemes(linked), { recursive: true })
+  mkdirSync(dirname(warpThemes(linked, 'preview')), { recursive: true })
+  symlinkSync(warpThemes(linked), warpThemes(linked, 'preview'))
+  const written = sync(configHome, manifest, state, linked)
+  assert.ok(written.every((file) => !file.startsWith(warpThemes(linked, 'preview'))))
+  const both = (['stable', 'preview'] as const).map((channel) => warpSettings(linked, configHome, channel))
+
+  for (const file of both) {
+    mkdirSync(dirname(file), { recursive: true })
+    writeFileSync(file, '[appearance.themes]\ntheme = "koi"\n')
+  }
+
+  sync(configHome, manifest, state, linked)
+  const gojo = warpThemeValue('gojo', plainTheme(linked, 'gojo'))
+  assert.deepEqual(
+    both.map((file) => warpThemeOf(readFileSync(file, 'utf8'))),
+    [gojo, gojo],
+  )
+})
+
 function pictured(configHome: string, opacity: number): void {
   const dir = join(configHome, 'ttheme', 'backgrounds')
   mkdirSync(dir, { recursive: true })
@@ -501,8 +594,8 @@ function pictured(configHome: string, opacity: number): void {
   )
 }
 
-function warpFiles(home: string, name: string, mode = 'dark'): string[] {
-  return readdirSync(warpThemes(home)).filter((file) =>
+function warpFiles(home: string, name: string, mode = 'dark', channel: WarpChannel = 'stable'): string[] {
+  return readdirSync(warpThemes(home, channel)).filter((file) =>
     new RegExp(`^ttheme-${name}\\.${mode}\\.[0-9a-f]{8}\\.yaml$`).test(file),
   )
 }
@@ -513,9 +606,9 @@ function picturedThemes(home: string): string[] {
   )
 }
 
-function plainTheme(home: string, name: string): string {
-  const [plain] = warpFiles(home, name).filter(
-    (file) => !readFileSync(join(warpThemes(home), file), 'utf8').includes('background_image'),
+function plainTheme(home: string, name: string, channel: WarpChannel = 'stable'): string {
+  const [plain] = warpFiles(home, name, 'dark', channel).filter(
+    (file) => !readFileSync(join(warpThemes(home, channel), file), 'utf8').includes('background_image'),
   )
 
   return plain ?? `no plain theme for ${name}`

@@ -50,7 +50,7 @@ import {
 } from '../terminals/shells.ts'
 import { detectTerminal, settingsFor, TRAITS } from '../terminals/terminal.ts'
 import type { Pointed, Setup } from '../terminals/types.ts'
-import { warpSettings } from '../terminals/warp.ts'
+import { warpChannelOf, warpSettings } from '../terminals/warp.ts'
 import { windowsAppData } from '../terminals/windows-terminal.ts'
 import { cap } from '../tui/keycaps.ts'
 import { markOf } from '../tui/parts.ts'
@@ -697,7 +697,9 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const choose =
     palettes.length > 1 &&
     (TRAITS[detected].paints ||
-      (detected === 'warp' && terminals.includes('warp') && existsSync(warpSettings(home, configHome))))
+      (detected === 'warp' &&
+        terminals.includes('warp') &&
+        existsSync(warpSettings(home, configHome, warpChannelOf(process.env)))))
 
   const wear = accepted(
     await p.confirm({

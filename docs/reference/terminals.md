@@ -83,6 +83,12 @@ VTE-based one, gets `ttheme use` and nothing else.
 - Following the tab in front needs `sqlite3`, which macOS ships. Without it, a
   tab puts its palette back at its next prompt.
 - Split panes of one tab share its palette.
+- With Sync with OS on, the palette goes in both its light and dark slots, so
+  the system's appearance never switches it away. `ttheme off` gives yours
+  back.
+- Warp Preview, Dev and the open-source build keep settings of their own.
+  The default palette goes into every one ttheme finds, and a tab paints the
+  Warp it runs in.
 - With Warp's settings sync on, the theme goes to your account too.
 
 ## Konsole

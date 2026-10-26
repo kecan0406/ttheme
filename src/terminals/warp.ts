@@ -8,11 +8,12 @@ import {
   readdirSync,
   readFileSync,
   readSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import type { Hex } from '../core/color.ts'
 import { decodePng, encodeRgb, flatIndexed, flatten } from '../core/png.ts'
 import type { Theme } from '../core/theme.ts'
@@ -22,29 +23,81 @@ import { type ProfileBackground, readBackdrop } from '../pictures/conf.ts'
 import { backupOnce, editUserFile, relink, spareBackup, symlinked, writeAtomic } from '../store/edits.ts'
 import { dataHome, readText, tilde } from './common.ts'
 import { warp as emitter, type WarpPicture, warpPictureFile, warpTheme, warpThemeFile } from './emit/warp.ts'
-import type { At, Ctx, Out, Wiring } from './types.ts'
+import type { At, Ctx, Out, Unwired, Wiring } from './types.ts'
 
-export function warpThemes(home: string): string {
-  return process.platform === 'darwin' ? join(home, '.warp', 'themes') : join(dataHome(home), 'warp-terminal', 'themes')
+export const WARP_CHANNELS = ['stable', 'preview', 'dev', 'oss'] as const
+
+export type WarpChannel = (typeof WARP_CHANNELS)[number]
+
+const WARP_APPS: Record<WarpChannel, string> = {
+  stable: 'dev.warp.Warp-Stable',
+  preview: 'dev.warp.Warp-Preview',
+  dev: 'dev.warp.Warp-Dev',
+  oss: 'dev.warp.WarpOss',
 }
 
-export function warpSettings(home: string, configHome: string): string {
+export function warpChannelOf(env: Record<string, string | undefined>): WarpChannel {
+  const app = WARP_CHANNELS.find((channel) => WARP_APPS[channel] === env.__CFBundleIdentifier)
+
+  if (app) {
+    return app
+  }
+
+  const tag = /\.(preview|dev)_\d/.exec(env.TERM_PROGRAM_VERSION ?? '')?.[1]
+
+  return tag === 'preview' || tag === 'dev' ? tag : 'stable'
+}
+
+const WARP_FOLDERS: Record<WarpChannel, string> = {
+  stable: 'warp-terminal',
+  preview: 'warp-terminal-preview',
+  dev: 'warp-terminal-dev',
+  oss: 'warp-oss',
+}
+
+function warpFolder(channel: WarpChannel): string {
+  if (process.platform === 'darwin') {
+    return channel === 'stable' ? '.warp' : `.warp-${channel}`
+  }
+
+  return WARP_FOLDERS[channel]
+}
+
+export function warpThemes(home: string, channel: WarpChannel = 'stable'): string {
   return process.platform === 'darwin'
-    ? join(home, '.warp', 'settings.toml')
-    : join(configHome, 'warp-terminal', 'settings.toml')
+    ? join(home, warpFolder(channel), 'themes')
+    : join(dataHome(home), warpFolder(channel), 'themes')
+}
+
+export function warpSettings(home: string, configHome: string, channel: WarpChannel = 'stable'): string {
+  return process.platform === 'darwin'
+    ? join(home, warpFolder(channel), 'settings.toml')
+    : join(configHome, warpFolder(channel), 'settings.toml')
+}
+
+export function warpChannels(home: string): WarpChannel[] {
+  return WARP_CHANNELS.filter((channel) => existsSync(dirname(warpThemes(home, channel))))
 }
 
 export const WARP_DEFAULT = '"dark"'
 
-export function warpBasePath(configHome: string): string {
-  return join(configHome, 'ttheme', 'warp.base')
+export const WARP_SYSTEM_DEFAULT = '{ light = "light", dark = "dark" }'
+
+function warpOwn(configHome: string, channel: WarpChannel, kind: string): string {
+  return join(configHome, 'ttheme', `${channel === 'stable' ? 'warp' : `warp-${channel}`}.${kind}`)
 }
 
-function warpLaterPath(configHome: string): string {
-  return join(configHome, 'ttheme', 'warp.later')
+export function warpBasePath(configHome: string, channel: WarpChannel = 'stable'): string {
+  return warpOwn(configHome, channel, 'base')
+}
+
+export function warpSystemPath(configHome: string, channel: WarpChannel = 'stable'): string {
+  return warpOwn(configHome, channel, 'system')
 }
 
 const WARP_SECTION = '[appearance.themes]'
+
+const WARP_SYSTEM = 'selected_system_themes'
 
 function warpSection(lines: string[]): [number, number] | undefined {
   const start = lines.findIndex((line) => line.trim() === WARP_SECTION)
@@ -58,7 +111,11 @@ function warpSection(lines: string[]): [number, number] | undefined {
   return [start, next < 0 ? lines.length : next]
 }
 
-export function warpThemeOf(content: string): string | undefined {
+function keyed(key: string): RegExp {
+  return new RegExp(`^${key}\\s*=\\s*`)
+}
+
+function warpKeyOf(content: string, key: string): string | undefined {
   const lines = content.split('\n')
   const section = warpSection(lines)
 
@@ -66,40 +123,102 @@ export function warpThemeOf(content: string): string | undefined {
     return undefined
   }
 
-  const line = lines.slice(section[0] + 1, section[1]).find((l) => /^theme\s*=/.test(l))
+  const line = lines.slice(section[0] + 1, section[1]).find((l) => keyed(key).test(l))
 
-  return line?.replace(/^theme\s*=\s*/, '').trim()
+  return line?.replace(keyed(key), '').trim()
+}
+
+export function warpThemeOf(content: string): string | undefined {
+  return warpKeyOf(content, 'theme')
+}
+
+export function warpSystemOf(content: string): string | undefined {
+  return warpKeyOf(content, WARP_SYSTEM)
 }
 
 export function warpThemeValue(palette: string, file: string): string {
   return `{ custom = { name = "${palette}", path = "${file}" } }`
 }
 
-function warpWorn(value: string | undefined): string | undefined {
-  return value?.includes(`path = "${owned('')}`) === true ? /name = "([^"]+)"/.exec(value)?.[1] : undefined
+export function warpSystemValue(value: string): string {
+  return `{ light = ${value}, dark = ${value} }`
 }
 
-export function withWarpTheme(content: string, value: string | undefined): string {
+function warpWorn(value: string | undefined): string | undefined {
+  return ours(value) ? /name = "([^"]+)"/.exec(value ?? '')?.[1] : undefined
+}
+
+function withWarpKey(content: string, key: string, value: string | undefined): string {
   const lines = content.split('\n')
   const section = warpSection(lines)
 
   if (!section) {
-    return value === undefined ? content : `${content.replace(/\n*$/, '\n')}\n${WARP_SECTION}\ntheme = ${value}\n`
+    return value === undefined ? content : `${content.replace(/\n*$/, '\n')}\n${WARP_SECTION}\n${key} = ${value}\n`
   }
 
-  const at = lines.findIndex((l, i) => i > section[0] && i < section[1] && /^theme\s*=/.test(l))
+  const at = lines.findIndex((l, i) => i > section[0] && i < section[1] && keyed(key).test(l))
 
   if (at >= 0) {
-    lines.splice(at, 1, ...(value === undefined ? [] : [`theme = ${value}`]))
+    lines.splice(at, 1, ...(value === undefined ? [] : [`${key} = ${value}`]))
   } else if (value !== undefined) {
-    lines.splice(section[0] + 1, 0, `theme = ${value}`)
+    lines.splice(section[0] + 1, 0, `${key} = ${value}`)
   }
 
   return lines.join('\n')
 }
 
-function ours(content: string): boolean {
-  return warpThemeOf(content)?.includes(`path = "${owned('')}`) === true
+export function withWarpTheme(content: string, value: string | undefined): string {
+  return withWarpKey(content, 'theme', value)
+}
+
+function ours(value: string | undefined): boolean {
+  return value?.includes(`path = "${owned('')}`) === true
+}
+
+function oursIn(content: string): boolean {
+  return ours(warpThemeOf(content)) || ours(warpSystemOf(content))
+}
+
+export function warpBack(content: string, base: string, system: string): string {
+  const theme = ours(warpThemeOf(content)) ? withWarpTheme(content, base || WARP_DEFAULT) : content
+
+  return ours(warpSystemOf(content)) ? withWarpKey(theme, WARP_SYSTEM, system || WARP_SYSTEM_DEFAULT) : theme
+}
+
+export function warpWear(content: string, value: string | undefined, configHome: string, channel: WarpChannel): string {
+  const base = warpBasePath(configHome, channel)
+  const system = warpSystemPath(configHome, channel)
+  const held = warpSystemOf(content)
+  const next = value === undefined ? content : withWarpTheme(content, value)
+
+  if (value === undefined || !ours(value)) {
+    rmSync(base, { force: true })
+
+    if (!ours(held)) {
+      return next
+    }
+
+    const back = withWarpKey(next, WARP_SYSTEM, readText(system) || WARP_SYSTEM_DEFAULT)
+    rmSync(system, { force: true })
+
+    return back
+  }
+
+  const theme = warpThemeOf(content)
+
+  if (!ours(theme) && !existsSync(base)) {
+    writeAtomic(base, theme ?? '')
+  }
+
+  if (warpKeyOf(content, 'system_theme') !== 'true') {
+    return next
+  }
+
+  if (!ours(held) && !existsSync(system)) {
+    writeAtomic(system, held ?? '')
+  }
+
+  return withWarpKey(next, WARP_SYSTEM, warpSystemValue(value))
 }
 
 export const WARP_KNOWN = 260
@@ -124,12 +243,35 @@ interface Laid {
   fresh: Set<string>
 }
 
+interface WarpShelf {
+  dir: string
+  channels: WarpChannel[]
+}
+
+function shelvesOf(home: string): WarpShelf[] {
+  const found = warpChannels(home)
+  const shelves: (WarpShelf & { real: string })[] = []
+
+  for (const channel of found.length > 0 ? found : (['stable'] as const)) {
+    const dir = warpThemes(home, channel)
+    const real = existsSync(dir) ? realpathSync(dir) : dir
+    const same = shelves.find((shelf) => shelf.real === real)
+
+    if (same) {
+      same.channels.push(channel)
+    } else {
+      shelves.push({ dir, real, channels: [channel] })
+    }
+  }
+
+  return shelves
+}
+
 function laidOf(dir: string, theme: Theme, picture: ProfileBackground): WarpPicture {
   return { image: join(dir, warpPictureFile(theme.name, picture.image, theme.background)), opacity: picture.opacity }
 }
 
-function laidFiles(ctx: Ctx): Laid {
-  const dir = warpThemes(ctx.home)
+function laidFiles(ctx: Ctx, dir: string): Laid {
   const pictures = backgroundsDir(ctx.configHome)
   const files = new Map<string, string>()
   const fresh = new Set<string>()
@@ -172,8 +314,8 @@ function indexed(path: string): boolean {
   }
 }
 
-function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
-  const dir = warpThemes(ctx.home)
+function writePictures(ctx: Ctx, out: Out, files: Map<string, string>, shelf: WarpShelf): void {
+  const { dir } = shelf
   const pictures = backgroundsDir(ctx.configHome)
 
   const kept = new Set([
@@ -181,7 +323,11 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
     ...ctx.themes.flatMap((theme) => [theme, ...inOther(theme)].map((shade) => warpThemeFile(shade))),
   ])
 
-  const current = warpThemeOf(readText(warpSettings(ctx.home, ctx.configHome))) ?? ''
+  const current = shelf.channels
+    .map((channel) => readText(warpSettings(ctx.home, ctx.configHome, channel)))
+    .flatMap((content) => [warpThemeOf(content) ?? '', warpSystemOf(content) ?? ''])
+    .join('\n')
+
   const others = new Set<string>()
 
   for (const theme of ctx.themes) {
@@ -261,20 +407,28 @@ function writePictures(ctx: Ctx, out: Out, files: Map<string, string>): void {
   }
 }
 
-function kept(startup: string | undefined, laid: Laid): string | undefined {
+function kept(startup: string | undefined, laid: Laid, channel: WarpChannel): string | undefined {
   const tab = process.env.TTHEME_WARP_WEARS
 
-  return startup !== undefined && tab !== undefined && laid.files.has(tab) ? tab : startup
+  return startup !== undefined && tab !== undefined && laid.files.has(tab) && channel === warpChannelOf(process.env)
+    ? tab
+    : startup
 }
 
-function wearWarp(at: At, startup: string | undefined, laid: Laid, keep = false): string | undefined {
-  const file = warpSettings(at.home, at.configHome)
+function wearWarp(
+  at: At,
+  shelf: WarpShelf,
+  channel: WarpChannel,
+  startup: string | undefined,
+  laid: Laid,
+  keep = false,
+): string | undefined {
+  const file = warpSettings(at.home, at.configHome, channel)
 
   if (!existsSync(file)) {
     return undefined
   }
 
-  const base = warpBasePath(at.configHome)
   const content = readFileSync(file, 'utf8')
   const wear = keep ? warpWorn(warpThemeOf(content)) : startup
 
@@ -282,46 +436,32 @@ function wearWarp(at: At, startup: string | undefined, laid: Laid, keep = false)
     return undefined
   }
 
-  const later = warpLaterPath(at.configHome)
+  const later = warpOwn(at.configHome, channel, 'later')
   rmSync(later, { force: true })
-  let value: string
+  const theme = wear ? laid.files.get(wear) : undefined
 
-  if (wear) {
-    if (!ours(content) && !existsSync(base)) {
-      mkdirSync(dirname(base), { recursive: true })
-      writeFileSync(base, warpThemeOf(content) ?? '')
-    }
-
-    const file = laid.files.get(wear)
-
-    if (file === undefined) {
-      return undefined
-    }
-
-    value = warpThemeValue(wear, file)
-  } else {
-    if (!ours(content)) {
-      return undefined
-    }
-
-    value = (existsSync(base) && readFileSync(base, 'utf8')) || WARP_DEFAULT
-    rmSync(base, { force: true })
+  if (wear && theme === undefined) {
+    return undefined
   }
 
-  const next = withWarpTheme(content, value)
+  if (theme === undefined && !oursIn(content)) {
+    return undefined
+  }
+
+  const back = ours(warpThemeOf(content)) ? readText(warpBasePath(at.configHome, channel)) || WARP_DEFAULT : undefined
+  const value = wear && theme !== undefined ? warpThemeValue(wear, theme) : back
+  const next = warpWear(content, value, at.configHome, channel)
 
   if (next === content) {
     return undefined
   }
-
-  const theme = wear === undefined ? undefined : laid.files.get(wear)
 
   if (theme !== undefined && laid.fresh.has(theme)) {
     backupOnce(file)
     const token = randomUUID()
     mkdirSync(dirname(later), { recursive: true })
     writeFileSync(later, token)
-    const shown = join(warpThemes(at.home), theme)
+    const shown = join(shelf.dir, theme)
     const now = Date.now()
     const wait = String(Math.max(WARP_LATER_MS, warpReady(shown, file, now) - now))
     spawn(process.execPath, ['-e', WARP_LATER, file, next, content, shown, later, token, wait], {
@@ -340,33 +480,54 @@ export const warp: Wiring = {
   id: 'warp',
   name: 'Warp',
   emitter,
-  shelf: { from: 'themes', dir: (at) => warpThemes(at.home) },
+  shelf: { from: 'themes', dir: (at) => (shelvesOf(at.home)[0] as WarpShelf).dir },
   bakes: true,
   offered: (_, host) => host.platform !== 'win32',
-  present: (setup) => existsSync(dirname(warpThemes(setup.home))),
+  present: (setup) => warpChannels(setup.home).length > 0,
   sync(ctx, out) {
-    const laid = laidFiles(ctx)
     out.themes(warp)
-    writePictures(ctx, out, laid.files)
-    const file = wearWarp(ctx, kept(ctx.startup, laid), laid)
 
-    if (file) {
-      out.note(file)
+    for (const [i, shelf] of shelvesOf(ctx.home).entries()) {
+      if (i > 0) {
+        for (const theme of ctx.themes) {
+          for (const { path, content } of emitter.emit?.(theme) ?? []) {
+            out.write(join(shelf.dir, basename(path)), content)
+          }
+        }
+      }
+
+      const laid = laidFiles(ctx, shelf.dir)
+      writePictures(ctx, out, laid.files, shelf)
+
+      for (const channel of shelf.channels) {
+        const file = wearWarp(ctx, shelf, channel, kept(ctx.startup, laid, channel), laid)
+
+        if (file) {
+          out.note(file)
+        }
+      }
     }
   },
   pictures(ctx, out) {
-    const laid = laidFiles(ctx)
-    writePictures(ctx, out, laid.files)
-    wearWarp(ctx, undefined, laid, true)
+    for (const shelf of shelvesOf(ctx.home)) {
+      const laid = laidFiles(ctx, shelf.dir)
+      writePictures(ctx, out, laid.files, shelf)
+
+      for (const channel of shelf.channels) {
+        wearWarp(ctx, shelf, channel, undefined, laid, true)
+      }
+    }
   },
   layer: (ctx) => ({
     TTHEME_WARP_PLAIN: ctx.themes.map((theme) => `${stem(theme.name)} ${warpThemeFile(theme)}`).join(' '),
   }),
   plan(ctx) {
-    const file = warpSettings(ctx.home, ctx.configHome)
-
-    return ctx.startup && existsSync(file)
-      ? [`Edit ${tilde(file, ctx.home)} — [appearance.themes] theme; \`ttheme off\` puts yours back`]
+    return ctx.startup
+      ? shelvesOf(ctx.home)
+          .flatMap((shelf) => shelf.channels)
+          .map((channel) => warpSettings(ctx.home, ctx.configHome, channel))
+          .filter((file) => existsSync(file))
+          .map((file) => `Edit ${tilde(file, ctx.home)} — [appearance.themes] theme; \`ttheme off\` puts yours back`)
       : []
   },
   notes: () => [
@@ -374,15 +535,31 @@ export const warp: Wiring = {
   ],
   next: () => [],
   unwire(at) {
-    const file = warpSettings(at.home, at.configHome)
-    const content = readText(file)
+    const unwired: Unwired = { edits: [], removals: [], touches: [] }
 
-    return {
-      edits: ours(content)
-        ? [{ file, content: withWarpTheme(content, readText(warpBasePath(at.configHome)) || WARP_DEFAULT) }]
-        : [],
-      removals: ours(content) ? [] : spareBackup(file),
-      touches: ours(content) && symlinked(file) ? [file] : [],
+    for (const channel of WARP_CHANNELS) {
+      const file = warpSettings(at.home, at.configHome, channel)
+      const content = readText(file)
+
+      if (!oursIn(content)) {
+        unwired.removals.push(...spareBackup(file))
+        continue
+      }
+
+      unwired.edits.push({
+        file,
+        content: warpBack(
+          content,
+          readText(warpBasePath(at.configHome, channel)),
+          readText(warpSystemPath(at.configHome, channel)),
+        ),
+      })
+
+      if (symlinked(file)) {
+        unwired.touches.push(file)
+      }
     }
+
+    return unwired
   },
 }

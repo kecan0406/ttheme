@@ -711,6 +711,59 @@ __cc_cases() {
   __cc_follow
   __cc_keep
   __cc_back
+  __cc_system
+}
+
+__cc_system() {
+  local start=$TTHEME_STARTUP target want was mine line own="" shown=""
+  local -a others=(${TTHEME_ORDER:#$TTHEME_STARTUP}) lines=()
+  local -i i
+  if [[ $TTHEME_ADAPTER != warp ]]; then
+    __cc_report system-theme skip "only Warp keeps a theme of its own for each appearance"
+    return
+  fi
+  if __cc_unseen; then
+    __cc_report system-theme skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+    return
+  fi
+  target=$others[1]
+  if (( ! $+functions[ttheme] )) || [[ -z $start || -z $target || ! -w $TTHEME_WARP_SETTINGS ]]; then
+    __cc_report system-theme skip "no layer, fewer than two palettes or no settings.toml"
+    return
+  fi
+  want=${${=TTHEME_PALETTE[$target]}[1]} was=${${=TTHEME_PALETTE[$start]}[1]}
+  mine=$(<$TTHEME_WARP_SETTINGS)
+  for line in "${(@f)mine}"; do
+    lines+=("$line")
+    [[ $line == '[appearance.themes]' ]] &&
+      lines+=('system_theme = true' 'selected_system_themes = { light = "solarized_light", dark = "dracula" }')
+  done
+  print -rl -- "${lines[@]}" > $TTHEME_WARP_SETTINGS.cc && mv -f $TTHEME_WARP_SETTINGS.cc $TTHEME_WARP_SETTINGS
+  for (( i = 0; i < 50; i++ )); do
+    sleep 0.1
+    __cc_color 11 && own=$REPLY
+    [[ -n $own ]] && ! __cc_near $was $own 3 && break
+  done
+  if (( i == 50 )); then
+    __cc_report system-theme skip "Warp kept $start once it followed the system, so its own system themes were never shown"
+  else
+    ttheme use $target
+    for (( i = 0; i < 50; i++ )); do
+      __cc_color 11 && shown=$REPLY
+      [[ -n $shown ]] && __cc_near $want $shown 3 && break
+      sleep 0.1
+    done
+    if [[ -n $shown ]] && __cc_near $want $shown 3; then
+      __cc_report system-theme pass "following the system, Warp showed its own $own, and ttheme use $target showed $shown"
+    else
+      __cc_report system-theme fail "following the system, ttheme use $target left Warp on ${shown:-no answer}, its own system theme $own"
+    fi
+  fi
+  print -r -- "$mine" > $TTHEME_WARP_SETTINGS.cc && mv -f $TTHEME_WARP_SETTINGS.cc $TTHEME_WARP_SETTINGS
+  rm -f $TTHEME_HOME/$TTHEME_WARP_NAME.system
+  __tt_osc_reset
+  sleep 0.3
+  printf '\e[H\e[2J'
 }
 
 __cc_back() {

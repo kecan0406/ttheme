@@ -1,7 +1,19 @@
 source "$TTHEME_HOME/adapters/_bg.zsh"
 
-typeset -g TTHEME_WARP_SETTINGS=$HOME/.warp/settings.toml TTHEME_WARP_THEMES=$HOME/.warp/themes TTHEME_WARP_WORN=""
-typeset -g TTHEME_WARP_TABS=$TTHEME_STATE_DIR/warp TTHEME_WARP_DB="" TTHEME_WARP_ID="" TTHEME_WARP_LAST="" TTHEME_WARP_SEEN=""
+typeset -g TTHEME_WARP_NAME=warp TTHEME_WARP_APP=dev.warp.Warp-Stable TTHEME_WARP_DIR=warp-terminal
+case ${__CFBundleIdentifier-}/${TERM_PROGRAM_VERSION-} in
+  dev.warp.Warp-Stable/*) ;;
+  dev.warp.Warp-Preview/* | */*.preview_[0-9]*)
+    TTHEME_WARP_NAME=warp-preview TTHEME_WARP_APP=dev.warp.Warp-Preview TTHEME_WARP_DIR=warp-terminal-preview ;;
+  dev.warp.Warp-Dev/* | */*.dev_[0-9]*)
+    TTHEME_WARP_NAME=warp-dev TTHEME_WARP_APP=dev.warp.Warp-Dev TTHEME_WARP_DIR=warp-terminal-dev ;;
+  dev.warp.WarpOss/*)
+    TTHEME_WARP_NAME=warp-oss TTHEME_WARP_APP=dev.warp.WarpOss TTHEME_WARP_DIR=warp-oss ;;
+esac
+typeset -g TTHEME_WARP_SETTINGS=$HOME/.$TTHEME_WARP_NAME/settings.toml TTHEME_WARP_THEMES=$HOME/.$TTHEME_WARP_NAME/themes TTHEME_WARP_WORN=""
+typeset -g TTHEME_WARP_TABS=$TTHEME_STATE_DIR/$TTHEME_WARP_NAME TTHEME_WARP_DB="" TTHEME_WARP_ID="" TTHEME_WARP_LAST="" TTHEME_WARP_SEEN=""
+typeset -g TTHEME_WARP_HELD="" TTHEME_WARP_PAIR='{ light = "light", dark = "dark" }'
+typeset -gi TTHEME_WARP_OS=0
 typeset -g TTHEME_WARP_SHOWING="" TTHEME_WARP_VIEW="" TTHEME_WARP_CODE=""
 typeset -gi TTHEME_WARP_VIEWS=0 TTHEME_WARP_FOLLOWS=-1 TTHEME_WARP_UP=0 TTHEME_WARP_SQLPID=0 TTHEME_WARP_HOLD=0
 typeset -gF TTHEME_WARP_LIVED=0
@@ -9,8 +21,8 @@ typeset -ga TTHEME_WARP_LAID=() TTHEME_WARP_MADE=()
 typeset -gA TTHEME_WARP_WAITED=() TTHEME_WARP_KNOWN=()
 typeset -g TTHEME_WARP_SQL='with t as (select id, window_id, row_number() over (partition by window_id order by id) - 1 as ix from tabs) select lower(hex(p.uuid)) from app a join windows w on w.id = a.active_window_id join t on t.window_id = w.id and t.ix = w.active_tab_index join pane_nodes n on n.tab_id = t.id and n.is_leaf join pane_leaves l on l.pane_node_id = n.id and l.is_focused join terminal_panes p on p.id = n.id'
 if [[ $OSTYPE != darwin* ]]; then
-  TTHEME_WARP_SETTINGS=${XDG_CONFIG_HOME:-$HOME/.config}/warp-terminal/settings.toml
-  TTHEME_WARP_THEMES=${XDG_DATA_HOME:-$HOME/.local/share}/warp-terminal/themes
+  TTHEME_WARP_SETTINGS=${XDG_CONFIG_HOME:-$HOME/.config}/$TTHEME_WARP_DIR/settings.toml
+  TTHEME_WARP_THEMES=${XDG_DATA_HOME:-$HOME/.local/share}/$TTHEME_WARP_DIR/themes
 fi
 
 zmodload -F zsh/files b:zf_rm b:zf_mkdir 2>/dev/null
@@ -76,31 +88,47 @@ __tt_warp_value() {
 __tt_warp_read() {
   setopt localoptions extendedglob
   local f=$TTHEME_WARP_SETTINGS line
-  local -a at=(0 0)
+  local -a at=(0 0 0)
   integer i s=0
-  reply=() REPLY="" TTHEME_WARP_WORN=""
+  reply=() REPLY="" TTHEME_WARP_WORN="" TTHEME_WARP_HELD="" TTHEME_WARP_OS=0
   [[ -r $f ]] || return 1
   reply=("${(@f)$(<$f)}")
   for (( i = 1; i <= $#reply; i++ )); do
     line=${reply[i]}
     if (( s )); then
       [[ $line == [[:space:]]#\[* ]] && break
-      [[ $line == theme[[:space:]]#=* ]] && { at=($s $i); break }
+      if [[ $line == theme[[:space:]]#=* ]]; then
+        at[2]=$i
+      elif [[ $line == selected_system_themes[[:space:]]#=* ]]; then
+        at[3]=$i
+      elif [[ $line == system_theme[[:space:]]#=[[:space:]]#true* ]]; then
+        TTHEME_WARP_OS=1
+      fi
     elif [[ $line == [[:space:]]#'[appearance.themes]'[[:space:]]# ]]; then
-      s=$i at=($s 0)
+      s=$i at[1]=$i
     fi
   done
   TTHEME_WARP_LINES=($at)
   (( at[2] )) && REPLY=${${reply[at[2]]#theme}##[[:space:]]#=[[:space:]]#}
+  (( at[3] )) && TTHEME_WARP_HELD=${${reply[at[3]]#selected_system_themes}##[[:space:]]#=[[:space:]]#}
   [[ $REPLY == '{ custom = { name = "'*'", path = "ttheme-'* ]] && TTHEME_WARP_WORN=${${REPLY#*name = \"}%%\"*}
   return 0
+}
+
+__tt_warp_says() {
+  [[ $REPLY == "$1" ]] || return 1
+  if [[ $1 == *'path = "ttheme-'* ]]; then
+    (( ! TTHEME_WARP_OS )) || [[ $TTHEME_WARP_HELD == "{ light = $1, dark = $1 }" ]]
+  else
+    [[ $TTHEME_WARP_HELD != *'path = "ttheme-'* ]]
+  fi
 }
 
 __tt_warp_set() {
   local REPLY
   local -a reply TTHEME_WARP_LINES
   __tt_bg_settle
-  __tt_warp_read && [[ $REPLY == "$1" ]] && return 0
+  __tt_warp_read && __tt_warp_says "$1" && return 0
   [[ $1 == *'path = "ttheme-'* ]] && __tt_warp_ripe $TTHEME_WARP_THEMES/${${1#*path = \"}%%\"*}
   __tt_warp_write "$1"
 }
@@ -117,15 +145,34 @@ __tt_warp_ripe() {
 }
 
 __tt_warp_write() {
-  local REPLY
+  local REPLY pair base=$TTHEME_HOME/$TTHEME_WARP_NAME.base held=$TTHEME_HOME/$TTHEME_WARP_NAME.system
   local -a at reply TTHEME_WARP_LINES
+  integer back=0
   __tt_warp_read || return 1
-  [[ $REPLY == "$1" ]] && return 0
-  if [[ $1 == *'path = "ttheme-'* && -z $TTHEME_WARP_WORN && ! -e $TTHEME_HOME/warp.base ]]; then
-    __tt_put $TTHEME_HOME/warp.base "$REPLY" || return 1
+  __tt_warp_says "$1" && return 0
+  if [[ $1 == *'path = "ttheme-'* ]]; then
+    if [[ -z $TTHEME_WARP_WORN && ! -e $base ]]; then
+      __tt_put $base "$REPLY" || return 1
+    fi
+    if (( TTHEME_WARP_OS )); then
+      [[ $TTHEME_WARP_HELD == *'path = "ttheme-'* || -e $held ]] || __tt_put $held "$TTHEME_WARP_HELD" || return 1
+      pair="{ light = $1, dark = $1 }"
+    fi
+  elif [[ $TTHEME_WARP_HELD == *'path = "ttheme-'* ]]; then
+    [[ -r $held ]] && pair=$(<$held)
+    [[ -n $pair ]] || pair=$TTHEME_WARP_PAIR
+    back=1
   fi
   [[ -e $TTHEME_WARP_SETTINGS.ttheme.bak ]] || __tt_put $TTHEME_WARP_SETTINGS.ttheme.bak "${reply[@]}"
   at=($TTHEME_WARP_LINES)
+  if [[ -n $pair ]]; then
+    if (( at[3] )); then
+      reply[at[3]]="selected_system_themes = $pair"
+    else
+      reply[at[1]]=("${reply[at[1]]}" "selected_system_themes = $pair")
+      (( at[2] )) && at[2]=$(( at[2] + 1 ))
+    fi
+  fi
   if (( at[2] )); then
     reply[at[2]]="theme = $1"
   elif (( at[1] )); then
@@ -134,6 +181,7 @@ __tt_warp_write() {
     reply+=("" "[appearance.themes]" "theme = $1")
   fi
   __tt_put $TTHEME_WARP_SETTINGS "${reply[@]}" || return 1
+  (( back )) && zf_rm -f -- $held 2>/dev/null
   __tt_warp_relink
 }
 
@@ -155,7 +203,7 @@ __tt_warp_wearing() {
 }
 
 __tt_warp_want() {
-  local pal=$1 view=$2 base=$TTHEME_HOME/warp.base
+  local pal=$1 view=$2 base=$TTHEME_HOME/$TTHEME_WARP_NAME.base
   if [[ -n $pal && -n ${TTHEME_PALETTE[$pal]} ]]; then
     if [[ -n $view && -r $TTHEME_WARP_THEMES/$view ]]; then
       REPLY="{ custom = { name = \"$pal\", path = \"$view\" } }"
@@ -178,7 +226,7 @@ __tt_warp_wear() {
   local value=$1
   [[ $value != *'path = "ttheme-'* || -e $TTHEME_WARP_THEMES/${${value#*path = \"}%%\"*} ]] || return 1
   __tt_warp_set "$value" || return 1
-  [[ $value == *'path = "ttheme-'* ]] || zf_rm -f -- $TTHEME_HOME/warp.base 2>/dev/null
+  [[ $value == *'path = "ttheme-'* ]] || zf_rm -f -- $TTHEME_HOME/$TTHEME_WARP_NAME.base 2>/dev/null
   return 0
 }
 
@@ -217,9 +265,9 @@ __tt_warp_db() {
   local -a db
   [[ -n $TTHEME_WARP_DB ]] && return 0
   if [[ $OSTYPE == darwin* ]]; then
-    db=($HOME/Library/Group\ Containers/*.dev.warp/Library/Application\ Support/dev.warp.Warp-Stable/warp.sqlite(N) $HOME/Library/Application\ Support/dev.warp.Warp-Stable/warp.sqlite(N))
+    db=($HOME/Library/Group\ Containers/*.dev.warp/Library/Application\ Support/$TTHEME_WARP_APP/warp.sqlite(N) $HOME/Library/Application\ Support/$TTHEME_WARP_APP/warp.sqlite(N))
   else
-    db=(${XDG_STATE_HOME:-$HOME/.local/state}/warp-terminal/warp.sqlite(N))
+    db=(${XDG_STATE_HOME:-$HOME/.local/state}/$TTHEME_WARP_DIR/warp.sqlite(N))
   fi
   TTHEME_WARP_DB=${db[1]}
   [[ -n $TTHEME_WARP_DB ]]
@@ -556,7 +604,7 @@ __tt_warp_plain() {
   local -a reply TTHEME_WARP_LINES
   __tt_warp_here && __tt_warp_want $1 || return 0
   want=$REPLY
-  if ! __tt_warp_read || [[ $REPLY != "$want" ]]; then
+  if ! __tt_warp_read || ! __tt_warp_says "$want"; then
     [[ $want == *'path = "ttheme-'* ]] && __tt_warp_ripe $TTHEME_WARP_THEMES/${${want#*path = \"}%%\"*}
     __tt_warp_write "$want" || return 1
   fi
@@ -601,7 +649,7 @@ __tt_pv_bg_show() {
       __tt_warp_value ${1%:*}
       want=$REPLY
       __tt_warp_read
-      [[ $REPLY == "$want" ]] || __tt_warp_set "$want"
+      __tt_warp_says "$want" || __tt_warp_set "$want"
     fi
   fi
   return 0
