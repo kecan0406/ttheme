@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "the-devil-is-a-part-timer/chiho"
+signature = ["cursor", "ansi6", "ansi3"]
+ansi_source = "Pencil Dark + Ente Isla"
+
+[colors]
+background = "#211512"
+foreground = "#fddbd3"
+cursor = "#cc8472"
+selection_background = "#273f58"
+ansi = [
+  "#2e211e",
+  "#f2697f",
+  "#c3c748",
+  "#f7a987",
+  "#9e87e3",
+  "#e09ccd",
+  "#69b9ab",
+  "#e6d0cb",
+
+  "#85736f",
+  "#f39fa4",
+  "#dbe56f",
+  "#ffd4ad",
+  "#b1a1e8",
+  "#ffbcf9",
+  "#93d5d9",
+  "#ffe9e4",
+]
+
+[colors.light]
+background = "#fff8f6"
+foreground = "#2d1b16"
+cursor = "#965342"
+selection_background = "#c1d9f9"
+ansi = [
+  "#fff1ed",
+  "#bb274a",
+  "#36581e",
+  "#9b4e28",
+  "#6d4acb",
+  "#944785",
+  "#005b50",
+  "#372926",
+
+  "#85736f",
+  "#8d3942",
+  "#2c4a16",
+  "#734d24",
+  "#5a45a1",
+  "#813782",
+  "#004a4e",
+  "#2d1b16",
+]

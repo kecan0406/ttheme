@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "higurashi/rika"
+signature = ["cursor", "ansi13", "foreground"]
+ansi_source = "Nocturnal Winter"
+
+[colors]
+background = "#16171f"
+foreground = "#e3e1e9"
+cursor = "#818bd9"
+selection_background = "#3c3b54"
+ansi = [
+  "#23232b",
+  "#f1669a",
+  "#69d6a4",
+  "#b0c166",
+  "#6793f3",
+  "#ff88d4",
+  "#00bdcd",
+  "#d5d3de",
+
+  "#777680",
+  "#f3a4a4",
+  "#74f5bb",
+  "#cee46b",
+  "#96a9e8",
+  "#ffc1d0",
+  "#00dbed",
+  "#edecfe",
+]
+
+[colors.light]
+background = "#fbf8ff"
+foreground = "#1f1f25"
+cursor = "#515fc7"
+selection_background = "#d7d4f4"
+ansi = [
+  "#f4f2fd",
+  "#b72762",
+  "#005c3e",
+  "#815e00",
+  "#235fc5",
+  "#b31e8d",
+  "#005961",
+  "#2b2b34",
+
+  "#777680",
+  "#8a3c3c",
+  "#004c33",
+  "#6e5000",
+  "#3250a2",
+  "#7e4254",
+  "#004a51",
+  "#1d1f2b",
+]

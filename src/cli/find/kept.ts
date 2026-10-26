@@ -12,8 +12,8 @@ import {
   type Site,
   uncredited,
 } from '../../core/booru.ts'
+import { shelfOf } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
-import { shelfOf } from '../../core/theme.ts'
 import { origins } from '../../pictures/backdrop.ts'
 import {
   cacheDir,
@@ -165,10 +165,13 @@ export class Kept {
     const found = origins(this.home)
     const known = this.keep<string>(site, 'owners.json')
 
+    const works = this.manifest.works
+    const shelf = shelfOf(this.entry, works)
+
     const siblings = this.manifest.palettes.flatMap((sibling) => {
       const origin = found.get(sibling.name)
 
-      return shelfOf(sibling) === shelfOf(this.entry) && sibling.name !== this.entry.name && origin?.site === site.key
+      return shelfOf(sibling, works) === shelf && sibling.name !== this.entry.name && origin?.site === site.key
         ? [{ name: sibling.name, id: origin.id }]
         : []
     })

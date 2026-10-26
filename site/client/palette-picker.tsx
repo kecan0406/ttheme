@@ -1,7 +1,7 @@
 import { PaletteOptions } from '@/components/palette-picker'
 import { palettesPath } from '@/lib/gallery'
 import { html } from '@/lib/render'
-import type { Theme } from '@/lib/themes'
+import { BUILTIN, type Theme } from '@/lib/themes'
 import { fill, tally } from './dom'
 import { composing } from './keys'
 import { palettes } from './palettes'
@@ -55,7 +55,7 @@ class PalettePicker extends HTMLElement {
   }
 
   #load = (): Promise<void> => {
-    this.#loading ??= palettes(palettesPath(null))
+    this.#loading ??= palettes(palettesPath(BUILTIN))
       .then((themes) => {
         this.#themes = themes
         fill(this.#list, html(<PaletteOptions themes={themes} current={current()} />))

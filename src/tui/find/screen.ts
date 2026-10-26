@@ -1488,7 +1488,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
       group: 'Search',
       keys: '1-9',
       does: 'Turn a tag on or off',
-      more: "The tags row holds the palette's own tags, then danbooru's related characters.",
+      more: "The tags row holds the character's own tags, then danbooru's related characters.",
     },
     { group: 'Search', keys: 'c', does: 'Cutouts or every post', press: 'c' },
     {

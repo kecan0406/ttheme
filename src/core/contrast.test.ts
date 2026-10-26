@@ -1,13 +1,11 @@
 import assert from 'node:assert/strict'
-import { join } from 'node:path'
 import { test } from 'node:test'
-import { loadThemes } from '../cli/build.ts'
-import { ROOT } from '../root.ts'
+import { BUILTIN_DIR, COMMONS_DIR, loadBuiltin, loadCommons } from '../cli/build.ts'
 import { contrast, luminance } from './color.ts'
 import { check, RULES } from './contrast.ts'
 import { inOther, rotation } from './theme.ts'
 
-const themes = loadThemes(join(ROOT, 'themes'))
+const { themes, fallback } = loadBuiltin(BUILTIN_DIR, loadCommons(COMMONS_DIR))
 
 test('color math matches known WCAG values', () => {
   assert.equal(luminance('#000000'), 0)
@@ -44,9 +42,9 @@ test('palette data is structurally sound', () => {
   }
 })
 
-test('the rotation excludes the default role', () => {
-  const names = rotation(themes).map((t) => t.name)
-  assert.ok(!names.includes('neutral'), 'neutral must sit out of the rotation')
+test('the rotation leaves out the fallback palette', () => {
+  const names = rotation(themes, fallback).map((t) => t.name)
+  assert.ok(!names.includes('ttheme/neutral'), 'neutral must sit out of the rotation')
   assert.ok(names.length >= 1)
 })
 

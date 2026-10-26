@@ -2,16 +2,16 @@ import assert from 'node:assert/strict'
 import { PassThrough } from 'node:stream'
 import { test } from 'node:test'
 import cells from 'fast-string-width'
+import type { Work } from '../../core/commons.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
-import type { Listed, Listing } from '../../store/marketplace-index.ts'
+import type { Listed, ListedPalette, ListedWork, Listing } from '../../store/marketplace-index.ts'
 import { BrowsePanel } from './browse.ts'
 import type { BrowseIo, Marketplace } from './types.ts'
 
-function entry(name: string, catalog?: string): PaletteEntry {
+function entry(name: string, subject?: string): PaletteEntry {
   return {
     name,
-    ...(catalog ? { catalog } : {}),
-    order: 1,
+    ...(subject ? { subject } : {}),
     ansiSource: 'Test',
     background: '#000000',
     foreground: '#eeeeee',
@@ -25,32 +25,45 @@ function entry(name: string, catalog?: string): PaletteEntry {
   }
 }
 
+const works: Work[] = [
+  { id: 'vocaloid', name: 'Vocaloid', characters: [{ id: 'miku' }, { id: 'rin' }, { id: 'luka' }] },
+]
+
 function marketplace(source: string, id: string, names: string[], auto = false): Marketplace {
   return {
     source,
     id,
-    shown: source === 'official' ? 'the official marketplace' : `github.com/${source}`,
-    entries: names.map((n) => entry(id === 'official' ? n : `${id}/${n}`, id === 'official' ? 'Vocaloid' : undefined)),
+    shown: source === 'ttheme' ? 'the built-in marketplace' : `github.com/${source}`,
+    entries: names.map((n) => entry(`${id}/${n}`, id === 'ttheme' ? `vocaloid/${n}` : undefined)),
+    works: [],
     auto,
-    status: source === 'official' ? 'updates with ttheme' : 'updated just now',
+    status: source === 'ttheme' ? 'updates with ttheme' : 'updated just now',
   }
 }
 
-function listedOf(source: string, id: string, stars: number, about: string, names: string[]): Listed {
-  const palettes = names.map((name) => {
+function listedOf(
+  source: string,
+  id: string,
+  stars: number,
+  about: string,
+  names: string[],
+  shelves: { subjects?: Record<string, string>; works?: ListedWork[] } = {},
+): Listed {
+  const palettes = names.map((name): ListedPalette => {
     const { background, foreground, cursor, selection, ansi, signatureSlots } = entry(name)
+    const subject = shelves.subjects?.[name]
 
-    return { name, background, foreground, cursor, selection, ansi, signatureSlots }
+    return { name, ...(subject ? { subject } : {}), background, foreground, cursor, selection, ansi, signatureSlots }
   })
 
-  return { id, source, about, stars, updated: '2026-10-09', palettes }
+  return { id, source, about, stars, updated: '2026-10-09', palettes, works: shelves.works ?? [] }
 }
 
 function listing(...marketplaces: Listed[]): Listing {
   return { marketplaces, at: Date.now() }
 }
 
-const official = marketplace('official', 'official', ['miku', 'rin'])
+const builtin = marketplace('ttheme', 'ttheme', ['miku', 'rin'])
 const pastel = marketplace('alice/ttheme-pastel', 'alice@pastel', ['dusk', 'dawn'])
 
 const FRAME = '\u0001'
@@ -193,9 +206,10 @@ async function drive(
   output.on('data', (chunk: Buffer) => glass.feed(chunk.toString()))
 
   const panel = new BrowsePanel({
-    marketplaces: opts.marketplaces ?? [official, pastel],
+    marketplaces: opts.marketplaces ?? [builtin, pastel],
     kept: [],
-    installed: opts.installed ?? ['miku', 'alice@pastel/dusk'],
+    installed: opts.installed ?? ['ttheme/miku', 'alice@pastel/dusk'],
+    works,
     ...(opts.updates ? { updates: opts.updates } : {}),
     due: opts.due ?? [],
     io: opts.io ?? io(),
@@ -247,14 +261,14 @@ const AUTO = [DOWN, RIGHT, UP, UP, '\r']
 
 test('a marketplace opens in the panel beside the cards from 94 columns, and over them in a narrower window', async () => {
   const wide = await drive([...MIKU, '\x03'])
-  assert.match(wide.last, /╭─ official ─+╮$/m)
-  assert.match(wide.last, /^ {4}● official +│/m)
+  assert.match(wide.last, /╭─ ttheme ─+╮$/m)
+  assert.match(wide.last, /^ {4}● ttheme +│/m)
   assert.match(wide.last, /│ ▌ {4}● miku +│$/m)
-  assert.match(wide.last, /├─+┤\n.*│ miku {2}Installed +│\n.*│ Contrast \d+\/\d+ · /)
+  assert.match(wide.last, /├─+┤\n.*│ ttheme\/miku {2}Installed +│\n.*│ Contrast \d+\/\d+ · /)
   assert.match(wide.last, /\[BROWSE\] space pick {3}\? keys +esc back$/m)
   const narrow = await drive([...MIKU, '\x03'], { columns: 80 })
-  assert.doesNotMatch(narrow.last, /● official/)
-  assert.match(narrow.last, /^ ╭─ official ─+╮$/m)
+  assert.doesNotMatch(narrow.last, /● ttheme/)
+  assert.match(narrow.last, /^ ╭─ ttheme ─+╮$/m)
   assert.match(narrow.last, /^ │ ▌ {4}● miku +│$/m)
 })
 
@@ -274,10 +288,10 @@ test('the Remove marketplace row asks first, and on yes takes the marketplace of
   assert.ok(panel.picked.has('alice@pastel/dusk'))
   assert.match(frames, /Remove alice@pastel\? Its installed palettes stay installed {3}y remove {3}n keep +esc back/)
   assert.match(frames, /\(\d+\/\d+ · 2 picked · 1 marketplace to remove\)/)
-  const gone = await drive([...REMOVE, '\x1b', 'n'], { installed: ['miku'] })
+  const gone = await drive([...REMOVE, '\x1b', 'n'], { installed: ['ttheme/miku'] })
   assert.deepEqual(gone.panel.removes, ['alice/ttheme-pastel'])
   assert.doesNotMatch(gone.last, /^ {4}[●○] alice@pastel/m)
-  assert.match(gone.last, /^ ▌ {2}● official +│/m)
+  assert.match(gone.last, /^ ▌ {2}● ttheme +│/m)
   const kept = await drive([DOWN, RIGHT, UP, '\r', 'n', '\x1b', '\x1b'])
   assert.deepEqual(kept.panel.removes, [])
   assert.match(kept.frames, /\[BROWSE\] alice@pastel kept {3}enter remove/)
@@ -358,15 +372,15 @@ test('esc in the form goes back to the marketplaces keeping what was typed, and 
 })
 
 test('a marketplace due at open refreshes in the background and its new palettes appear', async () => {
-  const fresh = marketplace('official', 'official', ['miku', 'rin', 'luka'], true)
+  const fresh = marketplace('alice/ttheme-pastel', 'alice@pastel', ['dusk', 'dawn', 'noon'], true)
 
   const { panel, frames } = await drive([20, '\x1b'], {
-    due: ['official'],
+    due: ['alice/ttheme-pastel'],
     io: io({
       refresh: (source) =>
         Promise.resolve({
           marketplace: fresh,
-          refreshed: { source, id: 'official', count: 3, change: { added: ['luka'], changed: [], gone: [] } },
+          refreshed: { source, id: 'alice@pastel', count: 3, change: { added: ['noon'], changed: [], gone: [] } },
           updates: [],
         }),
     }),
@@ -428,10 +442,9 @@ test('a window short on rows folds the heading and the search box into one line'
 
 test('a long list says how many rows lie above and below the window', async () => {
   const many = marketplace(
-    'official',
-    'official',
+    'ttheme',
+    'ttheme',
     Array.from({ length: 30 }, (_, i) => `p${String(i).padStart(2, '0')}`),
-    true,
   )
 
   const top = await drive([RIGHT, RIGHT, '\x1b', '\x1b'], { marketplaces: [many], rows: 14, installed: [] })
@@ -451,7 +464,7 @@ test('a long list says how many rows lie above and below the window', async () =
 test('a marketplace’s card says where it comes from, what it holds and when it was updated, and the panel beside it what is in it and what can be done to it', async () => {
   const { last } = await drive([DOWN, '\x1b'], { columns: 120 })
   assert.match(last, /^ {4}\+ Add marketplace {3}owner\/repo or a folder +│/m)
-  assert.match(last, /^ {4}● official +│[^\n]*\n {6}Built in +│[^\n]*\n {6}2 available · 1 installed +│/m)
+  assert.match(last, /^ {4}● ttheme +│[^\n]*\n {6}Built in +│[^\n]*\n {6}2 available · 1 installed +│/m)
   assert.match(last, /^ ▌ {2}● alice@pastel +│/m)
   assert.match(last, /^ ▌ {4}alice\/ttheme-pastel +│/m)
   assert.match(last, /^ ▌ {4}2 available · 1 installed · Updated just now +│/m)
@@ -591,7 +604,7 @@ test('a source the form cannot read or fetch says why under the field, and one a
   assert.match(frames, /│ offline +│$/m)
   assert.deepEqual(panel.adds, [])
   assert.match(last, /╭─ alice@pastel ─+╮$/m)
-  assert.match(last, /│ ▌ {2}● dusk +│$/m)
+  assert.match(last, /│ ▌ {2}○ dawn +│\n.*│ {4}● dusk +│$/m)
 })
 
 test('enter with something staged opens a review of it, and esc goes back to the list', async () => {
@@ -600,7 +613,7 @@ test('enter with something staged opens a review of it, and esc goes back to the
   assert.match(frames, /Marketplaces \(1\)/)
   assert.match(frames, /- alice@pastel +github\.com\/alice\/ttheme-pastel · its 1 palette installed keep working/)
   assert.match(frames, /Palettes \(1 to install\)/)
-  assert.match(frames, /\+ rin +Vocaloid/)
+  assert.match(frames, /\+ ttheme\/rin +Vocaloid/)
   assert.match(frames, /\[BROWSE \(APPLY\)\] enter apply +esc back/)
   const first = frames.indexOf('Review changes')
   assert.ok(frames.indexOf('Browse (', first) > 0)
@@ -620,12 +633,12 @@ test('enter takes a marketplace into the panel, typing lands on the first match 
   const opened = await drive(['\r', '\x1b', '\x1b'])
   assert.equal(opened.result, 'cancel')
   assert.match(opened.frames, /│ ▌ {2}▸ Vocaloid \(1\/2\) +│$/m)
-  assert.match(opened.last, /^ ▌ {2}● official +│/m)
+  assert.match(opened.last, /^ ▌ {2}● ttheme +│/m)
   const filtered = await drive(['r', 'i', '\x1b', '\x1b', '\x1b'])
   assert.equal(filtered.result, 'cancel')
   assert.match(filtered.frames, /│ ⌕ ri_ +│[\s\S]*│ ▌ {4}○ rin +│$/m)
   assert.match(filtered.frames, /│ ⌕ Search…[^\n]*\n[\s\S]*│ ▌ {4}○ rin +│$/m)
-  assert.match(filtered.last, /^ ▌ {2}● official +│/m)
+  assert.match(filtered.last, /^ ▌ {2}● ttheme +│/m)
 })
 
 test('? shows the keys and marks over the list until ? or esc, typing filters them, and enter runs the one chosen', async () => {
@@ -633,11 +646,11 @@ test('? shows the keys and marks over the list until ? or esc, typing filters th
   assert.match(frames, /╭─ Help ─+╮/)
   assert.match(frames, /Marketplaces +enter on \+ Add +Add one from GitHub or a folder/)
   assert.match(frames, /↓ {2}past the palettes +Update, auto-update or remove it/)
-  assert.match(frames, /Marks +● picked {3}○ not picked {3}▸ ▾ a catalog, closed or open/)
+  assert.match(frames, /Marks +● picked {3}○ not picked {3}▸ ▾ a work, closed or open/)
   assert.match(frames, /⇡ has an update {3}↻ updates on its own {3}✗ fails a contrast check/)
   assert.match(frames, /\[HELP\] ↑↓ choose {3}enter run {3}type to filter +\? esc close/)
   assert.doesNotMatch(last, /Help/)
-  assert.deepEqual([...panel.picked].sort(), ['alice@pastel/dusk', 'miku'])
+  assert.deepEqual([...panel.picked].sort(), ['alice@pastel/dusk', 'ttheme/miku'])
   const ran = await drive(['?', ...'search', '\r', '\x03'])
   assert.match(ran.frames, /▶ Marketplaces +enter on ⌕ Search +Find one on GitHub/)
   assert.doesNotMatch(ran.frames.split('\u0001').at(-2) ?? '', /space +Pick or unpick/)
@@ -705,4 +718,45 @@ test('ctrl+r stages the update of an installed palette marked ⇡, and does noth
   assert.match(taken.frames, /Applied \(1 updated\)/)
   const none = await drive([...'miku', '\x12', '\x03'], { updates: ['alice@pastel/dusk'] })
   assert.deepEqual(none.panel.renew, [])
+})
+
+test('a marketplace’s palettes sit on its works’ shelves in the panel, named from its own works where the commons has none, its originals after them', async () => {
+  const neon: Marketplace = {
+    ...marketplace('bob/ttheme-neon', 'bob@neon', []),
+    entries: [
+      entry('bob@neon/haze'),
+      entry('bob@neon/glow', 'neon-city/glow'),
+      entry('bob@neon/hatsune', 'vocaloid/miku'),
+    ],
+    works: [{ id: 'neon-city', name: 'Neon City', native: 'ネオン', characters: [{ id: 'glow' }] }],
+  }
+
+  const marketplaces = [builtin, pastel, neon]
+  const { last } = await drive([DOWN, DOWN, '\x1b'], { columns: 120, marketplaces })
+  assert.match(last, /╭─ bob@neon ─+╮$/m)
+  assert.match(last, /│ {4}▸ Neon City \(0\/1\) ネオン +│$\n.*│ {4}▸ Vocaloid \(0\/1\) +│$\n.*│ {4}○ haze +│$/m)
+
+  const { frames, panel } = await drive([DOWN, DOWN, RIGHT, RIGHT, DOWN, ' ', '\r', 20, '\x1b', '\x03', '\x03'], {
+    columns: 120,
+    marketplaces,
+  })
+
+  assert.match(frames, /│ ▌ {2}▾ Neon City \(0\/1\) ネオン +│$\n.*│ {6}○ glow +│$/m)
+  assert.ok(panel.picked.has('bob@neon/glow'))
+  assert.match(frames, /\+ bob@neon\/glow +Neon City/)
+})
+
+test('Search marketplace describes a listed marketplace’s palettes under their works, its originals after them', async () => {
+  const index = () =>
+    Promise.resolve(
+      listing(
+        listedOf('bob/ttheme-neon', 'bob@neon', 12, 'Neon palettes', ['glow', 'haze', 'miku'], {
+          subjects: { glow: 'neon-city/glow', miku: 'vocaloid/miku' },
+          works: [{ id: 'neon-city', name: 'Neon City' }],
+        }),
+      ),
+    )
+
+  const { frames } = await drive([...SEARCH, 20, '\x1b', '\x1b'], { io: io({ index }), rows: 30 })
+  assert.match(frames, /│ Neon City +│\n.*│ {3}glow +│\n.*│ Vocaloid +│\n.*│ {3}miku +│\n.*│ {3}haze +│/)
 })

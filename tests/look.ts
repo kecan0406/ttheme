@@ -69,14 +69,14 @@ const [top, bottom] = span(values.rows, rows)
 const [left, right] = span(values.cols, cols)
 const cropped = values.rows !== undefined || values.cols !== undefined
 
-const fixture = JSON.parse(readFileSync(join(import.meta.dirname, 'fixture.json'), 'utf8')) as {
+const fixture = JSON.parse(readFileSync(join(import.meta.dirname, 'fixture', 'builtin.json'), 'utf8')) as {
   palettes: (Shown & { default?: boolean })[]
 }
 
 const shown = fixture.palettes.find((p) => p.default) ?? fixture.palettes[0]
 
 if (!shown) {
-  throw new Error('tests/fixture.json has no palette')
+  throw new Error('tests/fixture/builtin.json has no palette')
 }
 
 function hex(n: number): string {

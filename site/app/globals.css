@@ -889,8 +889,8 @@ route-progress[data-state='done'],
   }
 
   [data-slot='signature-dots'],
-  [data-slot='catalog-tile'],
-  [data-slot='catalog-swatch'],
+  [data-slot='work-tile'],
+  [data-slot='work-swatch'],
   [data-slot='palette-dots'] {
     forced-color-adjust: none;
   }
@@ -944,8 +944,8 @@ route-progress[data-state='done'],
   content: var(--palette-name);
 }
 
-[data-text='catalog']::after {
-  content: var(--palette-catalog);
+[data-text='work']::after {
+  content: var(--palette-work);
 }
 
 @supports (content: 'a' / '') {
@@ -1078,7 +1078,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     calc(var(--spacing) * 6) 0 var(--sg2);
 }
 
-[data-slot='catalog-tile'] {
+[data-slot='work-tile'] {
   display: grid;
   flex: none;
   place-items: center;
@@ -1089,7 +1089,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   box-shadow: 0 0 0 1px var(--border);
 }
 
-[data-slot='catalog-tile']::before {
+[data-slot='work-tile']::before {
   content: '';
   width: var(--spacing);
   height: var(--spacing);
@@ -1100,7 +1100,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     calc(var(--spacing) * 1.5) 0 var(--sg2);
 }
 
-[data-slot='catalog-swatch'] {
+[data-slot='work-swatch'] {
   display: flex;
   flex: none;
   align-items: center;
@@ -1112,7 +1112,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   box-shadow: 0 0 0 1px var(--border);
 }
 
-[data-slot='catalog-swatch']::before {
+[data-slot='work-swatch']::before {
   content: '';
   width: calc(var(--spacing) * 1.5);
   height: calc(var(--spacing) * 4);
@@ -1142,11 +1142,11 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   }
 }
 
-[data-slot='marketplace-catalogs'] {
+[data-slot='marketplace-works'] {
   interpolate-size: allow-keywords;
 }
 
-[data-slot='marketplace-catalogs']::details-content {
+[data-slot='marketplace-works']::details-content {
   height: 0;
   overflow: clip;
   transition:
@@ -1154,11 +1154,11 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     content-visibility 0.22s allow-discrete;
 }
 
-[data-slot='marketplace-catalogs'][open]::details-content {
+[data-slot='marketplace-works'][open]::details-content {
   height: auto;
 }
 
-[data-slot='marketplace-catalogs'] > :not(summary) {
+[data-slot='marketplace-works'] > :not(summary) {
   opacity: 0;
   translate: 0 -6px;
   transition:
@@ -1166,21 +1166,21 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     translate 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-[data-slot='marketplace-catalogs'][open] > :not(summary) {
+[data-slot='marketplace-works'][open] > :not(summary) {
   opacity: 1;
   translate: 0;
 }
 
 @starting-style {
-  [data-slot='marketplace-catalogs'][open] > :not(summary) {
+  [data-slot='marketplace-works'][open] > :not(summary) {
     opacity: 0;
     translate: 0 -6px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-slot='marketplace-catalogs']::details-content,
-  [data-slot='marketplace-catalogs'] > :not(summary) {
+  [data-slot='marketplace-works']::details-content,
+  [data-slot='marketplace-works'] > :not(summary) {
     transition: none;
   }
 }

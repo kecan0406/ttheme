@@ -2,11 +2,11 @@
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ ki_                                                                                          │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                 ╭─ official ─────────────────────────────────────╮
+                                                 ╭─ ttheme ───────────────────────────────────────╮
     + Add marketplace   owner/repo or a folder   │ Updates with ttheme                            │
     ⌕ Search marketplace   find one on GitHub    │                                                │
                                                  │    ▾ Bocchi the Rock! (1/1) ぼっち・ざ・ろっ…  │
-    ● official                                   │ ▌    ● kita                                    │
+    ● ttheme                                     │ ▌    ● kita                                    │
       Built in                                   │                                                │
       1 of 6 match · 2 installed                 │                                                │
                                                  │                                                │
@@ -15,7 +15,7 @@
                                                  │                                                │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
-                                                 │ kita  Installed                                │
+                                                 │ ttheme/kita  Installed                         │
                                                  │ Contrast 8/12 · ✗ accent hue outside its ANSI… │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤

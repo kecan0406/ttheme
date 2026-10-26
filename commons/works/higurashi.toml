@@ -1,0 +1,28 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Higurashi"
+native = "ひぐらしのなく頃に"
+lead = "higurashi/hinamizawa"
+
+[[character]]
+id = "rena"
+native = ["竜宮レナ"]
+danbooru = "ryuuguu_rena"
+
+[[character]]
+id = "mion"
+native = ["園崎魅音"]
+danbooru = "sonozaki_mion"
+
+[[character]]
+id = "rika"
+native = ["古手梨花"]
+danbooru = "furude_rika"
+
+[[character]]
+id = "satoko"
+native = ["北条沙都子"]
+danbooru = "houjou_satoko"
+
+[[character]]
+id = "hinamizawa"
+native = ["雛見沢"]

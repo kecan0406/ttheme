@@ -1,0 +1,31 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Call of the Night"
+native = "よふかしのうた"
+lead = "call-of-the-night/nazuna"
+
+[[character]]
+id = "nazuna"
+native = ["七草ナズナ"]
+danbooru = "nanakusa_nazuna_(yofukashi_no_uta)"
+sites = { konachan = "nanakusa_nazuna", yande = "nanakusa_nazuna", zerochan = "nanakusa_nazuna" }
+
+[[character]]
+id = "kou"
+native = ["夜守コウ"]
+danbooru = "yamori_kou"
+sites = { konachan = [] }
+
+[[character]]
+id = "seri"
+native = ["桔梗セリ"]
+danbooru = "kikyou_seri"
+sites = { konachan = [], zerochan = "kikiyou_seri" }
+
+[[character]]
+id = "anko"
+native = ["鶯アンコ"]
+danbooru = "uguisu_anko"
+sites = { konachan = [] }
+
+[[character]]
+id = "yofukashi"

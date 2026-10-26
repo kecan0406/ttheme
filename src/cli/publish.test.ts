@@ -4,8 +4,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { type Work, workToml } from '../core/commons.ts'
 import { readMarketplaceInfo } from '../store/sources.ts'
-import { unsaved, withCatalogs, withDescription, withoutCatalogs } from './publish.ts'
+import { proposalsFor, unsaved, withCharacter, withDescription } from './publish.ts'
 
 const toml = `"$schema" = "https://www.schemastore.org/ttheme-marketplace.json"
 name = "pastel"
@@ -13,13 +14,9 @@ name = "pastel"
 [owner]
 name = "alice"
 
-[[catalog]]
-name = "K-On!"
-native = "けいおん！"
-
-[[catalog]]
-name = "Vocaloid"
-native = "ボーカロイド"
+[renames]
+old-dusk = "dusk"
+gone = false
 
 [metadata]
 description = "not the marketplace's"
@@ -35,19 +32,14 @@ test('a description goes in after the name, is replaced in place, and comes out 
   assert.equal(withDescription(toml, undefined), toml)
 })
 
-test('a hand-written description over several lines is replaced whole, and a catalog named in single quotes comes out', () => {
-  const written = toml
-    .replace('name = "pastel"\n', 'name = "pastel"\ndescription = """\nSoft colors"""\n')
-    .replace('name = "K-On!"', "name = 'K-On!'")
+test('a hand-written description over several lines is replaced whole, and the tables after it stay as they were', () => {
+  const written = toml.replace('name = "pastel"\n', 'name = "pastel"\ndescription = """\nSoft colors"""\n')
 
   assert.equal(readMarketplaceInfo(written, 'x').description, 'Soft colors')
   const replaced = withDescription(written, 'Softer')
   assert.equal(readMarketplaceInfo(replaced, 'x').description, 'Softer')
-  assert.equal(withDescription(written, undefined), toml.replace('name = "K-On!"', "name = 'K-On!'"))
-  assert.deepEqual(
-    readMarketplaceInfo(withoutCatalogs(written, new Set(['K-On!'])), 'x').catalogs.map((c) => c.name),
-    ['Vocaloid'],
-  )
+  assert.deepEqual(readMarketplaceInfo(replaced, 'x').renames, { 'old-dusk': 'dusk', gone: false })
+  assert.equal(withDescription(written, undefined), toml)
 })
 
 test('a description written on the line after its quotes, starting with a bracket, is replaced whole, with LF or CRLF line ends', () => {
@@ -57,32 +49,62 @@ test('a description written on the line after its quotes, starting with a bracke
     assert.equal(readMarketplaceInfo(text, 'x').description, '[WIP] Soft colors')
     const info = readMarketplaceInfo(withDescription(text, 'Softer'), 'x')
     assert.equal(info.description, 'Softer')
-    assert.deepEqual(
-      info.catalogs.map((c) => c.name),
-      ['K-On!', 'Vocaloid'],
-    )
+    assert.deepEqual(info.renames, { 'old-dusk': 'dusk', gone: false })
     assert.equal(readMarketplaceInfo(withDescription(text, undefined), 'x').description, undefined)
   }
 })
 
-test('catalog tables are added at the end and only the ones named come out', () => {
-  const without = withoutCatalogs(toml, new Set(['K-On!']))
-  const info = readMarketplaceInfo(without, 'x')
+test('a proposal takes a character once, and leaves a work that already lists it as it was', () => {
+  const work: Work = { id: 'k-on', name: 'K-On!', native: 'けいおん！', characters: [{ id: 'yui' }] }
+  const azusa = { id: 'azusa', native: ['中野梓'], danbooru: 'nakano_azusa' }
+  const grown = withCharacter(work, azusa)
+  assert.deepEqual(grown, { ...work, characters: [{ id: 'yui' }, azusa] })
+  assert.equal(withCharacter(grown, { id: 'azusa' }), grown)
+  assert.equal(withCharacter(work, undefined), work)
+})
+
+test('a marketplace proposes what the commons lacks of the works its palettes are of, into the proposals it holds', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-proposals-'))
+  const commons: Work[] = [{ id: 'k-on', name: 'K-On!', native: 'けいおん！', characters: [{ id: 'yui' }] }]
+  const azusa = { id: 'azusa', danbooru: 'nakano_azusa' }
+
+  const known: Work[] = [
+    { id: 'k-on', name: 'K-On!', native: 'けいおん！', characters: [{ id: 'yui' }, azusa] },
+    { id: 'neon', name: 'Neon', characters: [{ id: 'volt' }, { id: 'arcade' }] },
+  ]
+
+  mkdirSync(join(dir, 'works'))
+  writeFileSync(join(dir, 'works', 'neon.toml'), workToml({ id: 'neon', name: 'Neon', characters: [{ id: 'volt' }] }))
+  writeFileSync(join(dir, 'works', 'broken.toml'), 'name = \n')
+
   assert.deepEqual(
-    info.catalogs.map((c) => c.name),
-    ['Vocaloid'],
-  )
-  assert.match(without, /name = "alice"\n\n\[\[catalog\]\]\nname = "Vocaloid"/)
-  assert.match(without, /\[metadata\]\ndescription = "not the marketplace's"\n$/)
-  const back = readMarketplaceInfo(withCatalogs(without, [{ name: 'K-On!', native: 'けいおん！' }]), 'x')
-  assert.deepEqual(
-    back.catalogs.map((c) => [c.name, c.native]),
+    proposalsFor(known, commons, dir, [
+      'k-on/yui',
+      'k-on/azusa',
+      'k-on/mio',
+      'neon/volt',
+      'neon/arcade',
+      'nowhere/x',
+      'broken/y',
+      undefined,
+    ]),
     [
-      ['Vocaloid', 'ボーカロイド'],
-      ['K-On!', 'けいおん！'],
+      {
+        work: { id: 'k-on', name: 'K-On!', native: 'けいおん！', characters: [azusa, { id: 'mio' }] },
+        path: join(dir, 'works', 'k-on.toml'),
+      },
+      {
+        work: { id: 'neon', name: 'Neon', characters: [{ id: 'volt' }, { id: 'arcade' }] },
+        path: join(dir, 'works', 'neon.toml'),
+      },
+      {
+        work: { id: 'nowhere', name: 'nowhere', characters: [{ id: 'x' }] },
+        path: join(dir, 'works', 'nowhere.toml'),
+      },
     ],
   )
-  assert.equal(withoutCatalogs(toml, new Set()), toml)
+
+  assert.deepEqual(proposalsFor(known, commons, dir, ['neon/volt', 'k-on/yui']), [])
 })
 
 test('a palette file git never committed, or changed since it was, is one share must warn it deletes, a committed one is not', async () => {

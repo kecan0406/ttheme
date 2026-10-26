@@ -6,8 +6,9 @@ import type { Facts } from '@/lib/facts'
 import { INIT, marketplacePath } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { paint, type Theme } from '@/lib/themes'
+import { BUILTIN, paint, type Theme } from '@/lib/themes'
 import { headlineEm } from '@/lib/wear'
+import { leadsOf } from '@/lib/works'
 import { HeroScenes } from './cli-scenes'
 import { CommandRow } from './command-row'
 import { Signature } from './palette-parts'
@@ -20,12 +21,12 @@ const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
 const LEAD = 'use'
 
-function features(palettes: number, catalogs: number) {
+function features(palettes: number, works: number) {
   return [
     {
       emoji: '🎨',
       title: 'a palette per character',
-      text: `${palettes} palettes across ${catalogs} catalogs, each measured from the character's official art, with three signature colors you will recognise.`,
+      text: `${palettes} palettes across ${works} works, each measured from the character's official art, with three signature colors you will recognise.`,
     },
     {
       emoji: '🖥️',
@@ -58,7 +59,7 @@ const STEPS = [
   },
   {
     title: 'browse',
-    text: 'Pick more in Browse, the second tab of ttheme, catalog by catalog.',
+    text: 'Pick more in Browse, the second tab of ttheme, work by work.',
     command: 'ttheme',
   },
 ]
@@ -106,7 +107,7 @@ function PerTab({ leads }: { leads: Theme[] }) {
 }
 
 export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
-  const leads = themes.filter((theme) => theme.lead)
+  const leads = leadsOf(themes)
   const theme = leads[0] as Theme
 
   return (
@@ -120,7 +121,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
         >
           <div class="@container grid justify-items-start gap-6">
             <Badge variant="sticker">
-              {facts.palettes} palettes · {facts.catalogs} catalogs <span aria-hidden="true">✦</span>
+              {facts.palettes} palettes · {facts.works} works <span aria-hidden="true">✦</span>
             </Badge>
             <h1 class="font-display text-display-xl font-black" style={`--lead-prefix:${headlineEm(`${LEAD} `)}`}>
               {LEAD}{' '}
@@ -140,7 +141,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             </p>
             <div class="grid w-full gap-2.5">
               <div class="flex w-full flex-wrap items-center gap-3">
-                <LinkButton variant="pop" size="lg" href={marketplacePath(null)}>
+                <LinkButton variant="pop" size="lg" href={marketplacePath(BUILTIN)}>
                   browse the palettes
                   <Icon node={ArrowRight} />
                 </LinkButton>
@@ -159,7 +160,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
               raised
               heading={
                 <span data-lead-title aria-hidden="true" translate="no" class={WINDOW_TITLE}>
-                  ttheme · <span data-text="name" /> · <span data-text="catalog" />
+                  ttheme · <span data-text="name" /> · <span data-text="work" />
                 </span>
               }
               controls={
@@ -207,7 +208,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
           </h2>
           <div class="grid grid-cols-3 gap-4 max-[960px]:grid-cols-2 max-[640px]:grid-cols-1">
             <PerTab leads={leads} />
-            {features(facts.palettes, facts.catalogs).map((feature) => (
+            {features(facts.palettes, facts.works).map((feature) => (
               <article class="grid content-start gap-2 rounded-3xl border bg-muted p-6 max-[960px]:last:col-span-2 max-[640px]:last:col-span-1">
                 <span class="text-3xl" role="img" aria-hidden="true" safe>
                   {feature.emoji}
@@ -258,7 +259,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                 </span>
                 <span class="flex items-center justify-between gap-2">
                   <span class="min-w-0 truncate text-xs opacity-70" safe>
-                    {lead.catalog}
+                    {lead.work?.name ?? ''}
                   </span>
                   <span aria-hidden="true">
                     <Signature theme={lead} />

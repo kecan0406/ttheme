@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Black Bullet"
+native = "ブラック・ブレット"
+lead = "black-bullet/enju"
+
+[[character]]
+id = "rentaro"
+native = ["里見蓮太郎"]
+danbooru = "satomi_rentarou"
+
+[[character]]
+id = "enju"
+native = ["藍原延珠"]
+danbooru = "aihara_enju"
+
+[[character]]
+id = "kisara"
+native = ["天童木更"]
+danbooru = "tendou_kisara"
+
+[[character]]
+id = "tina"
+native = ["ティナ・スプラウト"]
+danbooru = "tina_sprout"
+
+[[character]]
+id = "kohina"
+native = ["蛭子小比奈"]
+danbooru = "hiruko_kohina"
+
+[[character]]
+id = "kagetane"
+native = ["蛭子影胤"]
+danbooru = "hiruko_kagetane"

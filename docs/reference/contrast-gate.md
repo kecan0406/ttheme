@@ -18,7 +18,7 @@ shows the checks under its mock terminal.
 ## Principles
 
 **Every rule is a recommendation.** The checks tell a palette's author what it
-fails; they never refuse a palette. The official marketplace holds its own
+fails; they never refuse a palette. The built-in marketplace holds its own
 palettes to every rule, and even there a palette can be let off one with a
 written reason.
 

@@ -1,0 +1,5 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "pastel"
+
+[[character]]
+id = "sakura"

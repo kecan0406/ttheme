@@ -1,9 +1,15 @@
-import type { Theme } from '@/lib/themes'
+import { BUILTIN, isBuiltin, shortName, type Theme } from '@/lib/themes'
 import { wearStyle } from '@/lib/wear'
 
-export type Source = 'all' | 'official' | 'community'
+export type Source = 'all' | 'builtin' | 'community'
 
-export const SOURCES: Source[] = ['all', 'official', 'community']
+export const SOURCES: Source[] = ['all', 'builtin', 'community']
+
+export const SOURCE_LABELS = {
+  all: 'all',
+  builtin: 'built-in',
+  community: 'community',
+} as const satisfies Record<Source, string>
 
 export interface Filters {
   query: string
@@ -14,20 +20,26 @@ export const START: Filters = { query: '', source: 'all' }
 
 export interface Searchable {
   text: string
-  official: boolean
+  builtin: boolean
+}
+
+export function searchText(theme: Theme): string {
+  const works = [theme.work, ...theme.also].flatMap((work) => (work ? [work.name, work.native ?? ''] : []))
+
+  return [theme.id, ...works, theme.character?.id ?? '', ...(theme.character?.native ?? [])]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
 }
 
 export function searchable(theme: Theme): Searchable {
-  return {
-    text: `${theme.id} ${theme.catalog ?? ''} ${theme.native ?? ''}`.toLowerCase(),
-    official: theme.marketplace === null,
-  }
+  return { text: searchText(theme), builtin: isBuiltin(theme) }
 }
 
-export function matches({ text, official }: Searchable, { query, source }: Filters): boolean {
-  if (source === 'official' && !official) return false
+export function matches({ text, builtin }: Searchable, { query, source }: Filters): boolean {
+  if (source === 'builtin' && !builtin) return false
 
-  if (source === 'community' && official) return false
+  if (source === 'community' && builtin) return false
   const q = query.trim().toLowerCase()
 
   return !q || text.includes(q)
@@ -65,13 +77,13 @@ function byName(a: Ranked, b: Ranked): number {
   return a.id.localeCompare(b.id)
 }
 
-function officialFirst(a: Ranked, b: Ranked): number {
-  return Number(b.id === OFFICIAL) - Number(a.id === OFFICIAL) || byName(a, b)
+function builtinFirst(a: Ranked, b: Ranked): number {
+  return Number(b.id === BUILTIN) - Number(a.id === BUILTIN) || byName(a, b)
 }
 
 export const ORDERS: Record<Sort, (a: Ranked, b: Ranked) => number> = {
-  popular: (a, b) => b.stars - a.stars || officialFirst(a, b),
-  updated: (a, b) => b.pushedAt.localeCompare(a.pushedAt) || b.stars - a.stars || officialFirst(a, b),
+  popular: (a, b) => b.stars - a.stars || builtinFirst(a, b),
+  updated: (a, b) => b.pushedAt.localeCompare(a.pushedAt) || b.stars - a.stars || builtinFirst(a, b),
   name: byName,
 }
 
@@ -83,15 +95,13 @@ export function starCount(stars: number): string {
   return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(stars).toLowerCase()
 }
 
-export const OFFICIAL = 'official'
+export const REPO = 'kecan0406/ttheme'
 
-export const OFFICIAL_REPO = 'kecan0406/ttheme'
+export const REPO_URL = `https://github.com/${REPO}`
 
-export const OFFICIAL_URL = `https://github.com/${OFFICIAL_REPO}`
+export const BUILTIN_URL = `${REPO_URL}/tree/main/builtin`
 
-export const OFFICIAL_THEMES_URL = `${OFFICIAL_URL}/tree/main/themes`
-
-export const OFFICIAL_COMMITS_URL = `${OFFICIAL_URL}/commits/main/themes`
+export const BUILTIN_COMMITS_URL = `${REPO_URL}/commits/main/builtin`
 
 export function repoUrl(repo: string): string {
   return `https://github.com/${repo}`
@@ -101,18 +111,18 @@ export const NPM_URL = 'https://www.npmjs.com/package/@kecan0406/ttheme'
 
 export const INIT = 'npx @kecan0406/ttheme init'
 
-export const OFFICIAL_ABOUT = "The palettes that come with ttheme, each measured from the character's official art."
+export const BUILTIN_ABOUT = "The palettes that come with ttheme, each measured from the character's official art."
 
-export function marketplacePath(id: string | null): string {
-  return `/marketplace/${id === null ? OFFICIAL : encodeURIComponent(id).replaceAll('%40', '@')}`
+export function marketplacePath(id: string): string {
+  return `/marketplace/${encodeURIComponent(id).replaceAll('%40', '@')}`
 }
 
 export function palettePath(theme: Pick<Theme, 'marketplace' | 'name'>): string {
   return `${marketplacePath(theme.marketplace)}/${encodeURIComponent(theme.name)}`
 }
 
-export function palettesPath(id: string | null): string {
-  return id === null ? '/palettes.json' : `${marketplacePath(id)}/palettes.json`
+export function palettesPath(id: string): string {
+  return `${marketplacePath(id)}/palettes.json`
 }
 
 export interface Peek {
@@ -121,14 +131,10 @@ export interface Peek {
   style: string
 }
 
-export function windowTitle(theme: Pick<Theme, 'name'>, catalog: string | null): string {
-  return [catalog, theme.name].filter(Boolean).join(' · ')
-}
-
-export function peekOf(lead: Theme, catalog: string | null): Peek {
+export function peekOf(lead: Theme, work: string | null): Peek {
   return {
-    title: windowTitle(lead, catalog),
-    use: lead.marketplace ? lead.id : lead.name,
+    title: [work, lead.name].filter(Boolean).join(' · '),
+    use: shortName(lead.id),
     style: wearStyle(lead),
   }
 }

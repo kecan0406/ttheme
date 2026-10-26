@@ -1,0 +1,38 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "VA-11 Hall-A"
+native = "VA-11 Hall-A ヴァルハラ"
+lead = "va-11-hall-a/jill"
+
+[[character]]
+id = "jill"
+native = ["ジル・スティングレイ"]
+danbooru = "jill_stingray"
+sites = { zerochan = "julianne_stingray" }
+
+[[character]]
+id = "dorothy"
+native = ["ドロシー・ヘイズ"]
+danbooru = "dorothy_haze"
+sites = { konachan = [], zerochan = [] }
+
+[[character]]
+id = "alma"
+native = ["アルマ・アルマス"]
+danbooru = "alma_armas"
+sites = { konachan = [] }
+
+[[character]]
+id = "stella"
+native = ["ステラ・ホシイ"]
+danbooru = "stella_hoshii"
+sites = { konachan = [] }
+
+[[character]]
+id = "sei"
+native = ["セイ・P・アサギリ"]
+danbooru = "sei_asagiri"
+sites = { konachan = [] }
+
+[[character]]
+id = "valhalla"
+native = ["ヴァルハラ"]

@@ -7,8 +7,7 @@ import { parseIndex, type Shown } from './marketplace-index.ts'
 function palette(name: string): PaletteEntry {
   return {
     name,
-    catalog: 'Neon',
-    order: 1,
+    subject: 'neon/glow',
     ansiSource: 'Test',
     background: '#000000',
     foreground: '#eeeeee',
@@ -32,6 +31,7 @@ function shown(id: string, add: string, stars: number, about: string): Shown {
     pushedAt: '2026-10-09',
     license: null,
     palettes: [palette('glow'), palette('haze')],
+    works: [{ id: 'neon', name: 'Neon' }],
   }
 }
 
@@ -51,7 +51,7 @@ test('the index the CI writes reads back as it was, most starred first', () => {
   )
   assert.deepEqual(read[0]?.palettes[0], {
     name: 'glow',
-    catalog: 'Neon',
+    subject: 'neon/glow',
     background: '#000000',
     foreground: '#eeeeee',
     cursor: '#ffffff',

@@ -70,7 +70,8 @@ __tt_ghostty_shown() {
   [[ -r $f ]] || return 1
   REPLY=${${"$(<$f)"}##*\?}
   REPLY=${REPLY%.conf}
-  REPLY=${${REPLY/--/@}/--//}
+  [[ $REPLY == *--*--* ]] && REPLY=${REPLY/--/@}
+  REPLY=${REPLY/--//}
 }
 
 __tt_pictured_ghostty() {

@@ -3,6 +3,7 @@ import { basename, dirname, isAbsolute, join } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
 import type { Mode } from '../../src/core/mode.ts'
 import { decodePng, type Rgba } from '../../src/core/png.ts'
+import { owned, stem } from '../../src/core/theme.ts'
 import { readBackdrop } from '../../src/pictures/conf.ts'
 import { SLOT_CODES } from '../../src/terminals/osc.ts'
 import { type Colors, OWN, SEEN } from './terms.ts'
@@ -68,12 +69,10 @@ export function filled(partial: Colors): Colors {
   return new Map(SLOT_CODES.map((code) => [code, partial.get(code) ?? (OWN.get(code) as string)]))
 }
 
-export function stemName(stem: string): string {
-  return stem.replace('--', '@').replace('--', '/')
-}
+export function stemName(stemmed: string): string {
+  const parts = stemmed.split('--')
 
-export function fileStem(name: string): string {
-  return name.replace('@', '--').replace('/', '--')
+  return parts.length === 3 ? `${parts[0]}@${parts[1]}/${parts[2]}` : parts.join('/')
 }
 
 export function palettesOf(home: string): Map<string, Colors> {
@@ -175,7 +174,7 @@ export function pictured(file: string): boolean {
 }
 
 export function pictureOf(backgrounds: string, palette: string | undefined): string {
-  return palette && pictured(join(backgrounds, `${fileStem(palette)}.conf`)) ? palette : 'none'
+  return palette && pictured(join(backgrounds, `${stem(palette)}.conf`)) ? palette : 'none'
 }
 
 export function strength(file: string): string {
@@ -183,7 +182,7 @@ export function strength(file: string): string {
 }
 
 export function strengthOf(backgrounds: string, palette: string | undefined): string {
-  return palette ? strength(join(backgrounds, `${fileStem(palette)}.conf`)) : '-'
+  return palette ? strength(join(backgrounds, `${stem(palette)}.conf`)) : '-'
 }
 
 export function imageName(path: string): string {
@@ -368,7 +367,7 @@ export function kittyColors(configHome: string): Colors {
 
 export function kittyTheme(configHome: string, palette: string): Colors | undefined {
   const mode = /^# mode (\S+)$/m.exec(read(join(configHome, 'ttheme', 'kitty.conf')))?.[1] ?? 'dark'
-  const file = join(configHome, 'kitty', 'themes', `ttheme-${fileStem(palette)}.${mode}.conf`)
+  const file = join(configHome, 'kitty', 'themes', `${owned(palette)}.${mode}.conf`)
 
   if (!existsSync(file)) {
     return undefined

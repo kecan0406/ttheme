@@ -38,6 +38,7 @@ import type {
 } from '@/lib/builder-view'
 import { Icon } from '@/lib/icons'
 import type { Mode } from '@/lib/mode'
+import { shortName } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { FORMATS, planeRows, type SlotView } from '@/lib/view-types'
 import { PLANE_BOTTOM, PLANE_TOP } from '../../src/core/plane.ts'
@@ -81,7 +82,7 @@ export function StartLabel({ source }: { source: string | null }) {
         <>
           <span>from</span>
           <span class="min-w-0 truncate font-semibold text-foreground" translate="no" safe>
-            {source}
+            {shortName(source)}
           </span>
         </>
       ) : (
@@ -789,14 +790,6 @@ export function FileNote({ about }: { about: AboutView }) {
       <code class="rounded-sm bg-muted px-1 font-mono text-soft-foreground" translate="no" safe>
         {about.file}
       </code>
-      {about.base ? (
-        <>
-          {' · its ANSI colors from '}
-          <span class="font-medium text-soft-foreground" translate="no" safe>
-            {about.base}
-          </span>
-        </>
-      ) : null}
       {about.from ? (
         <>
           {' · copied from '}
@@ -931,14 +924,15 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
             class="h-9 text-sm"
           />
         </label>
-        <label for="builder-booru" class="grid gap-1.5 text-sm">
-          <span class="text-muted-foreground">character tag</span>
+        <label for="builder-subject" class="grid gap-1.5 text-sm">
+          <span class="text-muted-foreground">subject</span>
           <Input
-            id="builder-booru"
-            data-meta="booru"
-            value={about.booru}
-            placeholder="hatsune_miku"
-            maxlength="80"
+            id="builder-subject"
+            data-meta="subject"
+            value={about.subject}
+            aria-invalid={String(about.unread)}
+            placeholder="vocaloid/miku"
+            maxlength="81"
             spellcheck="false"
             autocomplete="off"
             autocapitalize="none"

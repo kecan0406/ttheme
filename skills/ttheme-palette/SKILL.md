@@ -15,13 +15,15 @@ Exit codes: 0 done, 1 failed, 2 nothing changed, 3 your input is invalid (the JS
 
 ## 1. Scope
 
-One character, or a series' cast (5–7: the protagonists and the characters the series is known by). First make sure the character has no palette yet: `ttheme check <name>` describes one that exists, official or the user's, and says so when there is none. A series is a catalog: a folder of its own in the user's marketplace, named with the series' title as its fans write it in English, in its short form where one is common (`Frieren`, `Bocchi the Rock!`), with its official title (`--native`) and the character the series is known by as its lead (`--lead`). A single character goes loose, without `--catalog`, unless the user's marketplace already has that series' catalog. Use one production's design for the whole cast.
+One character, or a work's cast (5–7: the protagonists and the characters the work is known by). A palette is the user's take on a character: one that ttheme ships, or another marketplace has, does not stop you — every list shows the takes on one character side by side. `ttheme check <name>` describes a palette by that name, built-in or the user's, and says so when there is none; a palette of the user's own by that name would be written over, so pick another name or ask. Use one production's design for the whole cast.
 
-A palette is named the way the series and its fans name the character (`gojo`, `nanami`), or by codename or avatar where that is how the character is known (`joker`, `kirito`).
+Every character belongs to a work — a series, a game, a franchise — in the commons, ttheme's one list of works and their characters, which every marketplace's palettes name. `make` finds the character there by its danbooru tag and makes it the palette's `subject`. When the commons does not hold the character, pass `--work <id>`: the work's id is its English title as fans write it, short form where one is common, in lowercase letters, digits and single hyphens (`frieren`, `bocchi-the-rock`) — `~/.config/ttheme/commons.json` lists the works the commons holds (`works`, each an `id` and a `name`), so use the id there when the work is one of them. For a work the commons lacks, add `--work-name "<English title>"` and `--work-native "<official title>"`. `make` then writes the character, or the whole work, into the user's marketplace's `works/` folder, where it shows as any other until the commons takes it in.
+
+A palette is named the way the work and its fans name the character (`gojo`, `nanami`), or by codename or avatar where that is how the character is known (`joker`, `kirito`).
 
 ## 2. Research
 
-Search the web for the character's appearance — hair, eyes, signature item, costume — so you know what to look for in the picture. Find the character's danbooru tag (`https://danbooru.donmai.us/wiki_pages/<tag>`); it is what ttheme searches for the palette's background pictures. Check it with `ttheme palette consensus <tag> --json` now: `posts` 0 means danbooru has no such tag, and `current`, when present, is the name it goes by today — use that. Keep the rest of the result for step 5.
+Search the web for the character's appearance — hair, eyes, signature item, costume — so you know what to look for in the picture. Find the character's danbooru tag (`https://danbooru.donmai.us/wiki_pages/<tag>`); it is who the character is to ttheme: it finds the character in the commons by it, and searches it for the palette's background pictures. Check it with `ttheme palette consensus <tag> --json` now: `posts` 0 means danbooru has no such tag, and `current`, when present, is the name it goes by today — use that. Keep the rest of the result for step 5.
 
 ## 3. Find a picture and ask the user
 
@@ -85,15 +87,15 @@ The anchors file's `slots` names three of the palette's colors per character, in
 }
 ```
 
-One file holds the whole cast. `ttheme help palette` lists every field (`native_names` is filled from ttheme's name data when you leave it out).
+One file holds the whole cast. `ttheme help palette` lists every field (`native_names`, the character's names in its original language, is filled from ttheme's name data when you leave it out, and recorded only for a character the commons does not hold yet).
 
 ## 7. Make
 
 ```
-ttheme palette make --anchors anchors.json [--catalog "<Series>" --native "<official title>" --lead <name>] --dry-run --json
+ttheme palette make --anchors anchors.json [--work <work> [--work-name "<English title>" --work-native "<official title>"]] --dry-run --json
 ```
 
-ranks base schemes for the ANSI colors, harmonizes every color into ttheme's envelope, keeps the anchors' colors as far as readability allows, fixes the ANSI roles and runs the contrast checks — and shows the result without writing. Read each palette in it: `colors` (all twenty), `nativeNames` (the names ttheme filled in — set `native_names` in the anchors yourself when they hold a series title or a nickname), `signature` (each signature color's part, `measured` and `final` color and `delta`, the ΔE2000 between them, with `far` set when a cursor or selection moved more than 10 and `turned` when a hue moved more than 12°), `turned` (the ANSI colors the role fixer moved, and why), `lookalikes` (signature colors that read as one at text size) and `gate` (contrast checks it still fails, normally none); `shift` is a color's hue move in degrees, `changed` says the file would differ from what is there, `written` that it was written, and `notes` carries what ttheme noticed on the way (a base scheme list it could not fetch, a tag danbooru renamed). A color that came out `far` or `turned` usually means the anchor or the color it went into is wrong — go back to step 6 rather than accept it. Then run the same command without `--dry-run`: the palettes are written into the user's local marketplace (`--in <marketplace>` when they have several) and installed. Exit 2 means they were already there unchanged.
+ranks base schemes for the ANSI colors, harmonizes every color into ttheme's envelope, keeps the anchors' colors as far as readability allows, fixes the ANSI roles and runs the contrast checks — and shows the result without writing. Read each palette in it: `subject` (the work and character it is of — check it names the character you meant; a palette with none is an original, so pass `--work` when it is missing), `colors` (all twenty), `nativeNames` (the names ttheme filled in — set `native_names` in the anchors yourself when they hold a series title or a nickname), `signature` (each signature color's part, `measured` and `final` color and `delta`, the ΔE2000 between them, with `far` set when a cursor or selection moved more than 10 and `turned` when a hue moved more than 12°), `turned` (the ANSI colors the role fixer moved, and why), `lookalikes` (signature colors that read as one at text size) and `gate` (contrast checks it still fails, normally none); `shift` is a color's hue move in degrees, `changed` says the file would differ from what is there, `written` that it was written, and `notes` carries what ttheme noticed on the way (a base scheme list it could not fetch, a tag danbooru renamed, a character the commons holds under another work than `--work`). `works` lists what `make` adds to the marketplace's `works/`: each `work`, the `characters` it records there and the `file`, with `changed` and `written` as for a palette. A color that came out `far` or `turned` usually means the anchor or the color it went into is wrong — go back to step 6 rather than accept it. Then run the same command without `--dry-run`: the palettes are written into the user's local marketplace (`--in <marketplace>` when they have several) and installed. Exit 2 means they were already there unchanged.
 
 If `make` says the user has no marketplace yet, make one: `ttheme marketplace init <name>`, with a name the user gave or `characters`. Their palettes are named `<GitHub handle>@<marketplace>/<palette>`; when ttheme cannot read the handle from `gh` it says so — ask the user for it then and pass `--owner <handle>`.
 
@@ -101,7 +103,8 @@ If `make` says the user has no marketplace yet, make one: `ttheme marketplace in
 
 Tell the user, per palette, in their language:
 
-- its full name and `ttheme use <owner>@<marketplace>/<name>` to use it in a tab — the short name alone does not find it (you cannot change their tab from your shell);
+- its full name and `ttheme use <owner>@<marketplace>/<name>` to use it in a tab — the short name alone works only while no other installed palette has it (you cannot change their tab from your shell);
+- the work and character it is of, and whether you added them to the marketplace's `works/` because the commons did not hold them;
 - which picture you measured;
 - each signature color: the part, the measured color, the final color and ΔE, and why that part (an official color, chromatic hair, or consensus with its share and post count);
 - the base scheme, the colors the role fixer turned and why, and any contrast check it still fails;
@@ -111,4 +114,4 @@ Then, once: `ttheme edit <full name>` tunes it by hand, `ttheme` opens Preview, 
 
 ## Inside the ttheme repository
 
-The official palettes follow the same steps from a checkout, with `bun src/bin.ts palette make … --in themes`: `make` then writes `themes/palettes/<catalog>/<name>.toml` with `meta.order` (a new catalog gets the block after the current maximum) and the other mode as `[colors.light]` or `[colors.dark]`, which the build requires. Finish with `mise run build` and `mise run ci`; a palette change ships as a patch release.
+The built-in palettes follow the same steps from a checkout, with `bun src/bin.ts palette make … --in builtin`: `make` then writes `builtin/palettes/<name>.toml` with its `subject` and its other mode as `[colors.light]` or `[colors.dark]`, which the build requires, and records a character or a work the commons lacks in `commons/works/<work>.toml` rather than in a `works/` proposal. A built-in palette always names a subject, so pass `--work` for a character the commons does not hold yet. Finish with `mise run build` and `mise run ci`; a palette change ships as a patch release.

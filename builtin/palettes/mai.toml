@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "nichijou/mai"
+signature = ["cursor", "selection", "ansi1"]
+ansi_source = "Spacegray Eighties + Nichijou"
+
+[colors]
+background = "#1b1713"
+foreground = "#ebe1d9"
+cursor = "#766f69"
+selection_background = "#383430"
+ansi = [
+  "#28231e",
+  "#d17f85",
+  "#a5cc86",
+  "#ecb245",
+  "#6799d4",
+  "#da9cdb",
+  "#4fbbbb",
+  "#dcd3cc",
+
+  "#7d7670",
+  "#f3a0a1",
+  "#aaedaa",
+  "#ffd976",
+  "#88ace8",
+  "#ffbcf6",
+  "#70d7d2",
+  "#f6ece4",
+]
+
+[colors.light]
+background = "#fff8f4"
+foreground = "#231f1a"
+cursor = "#5f5953"
+selection_background = "#c7c0ba"
+ansi = [
+  "#fcf2ea",
+  "#9e4851",
+  "#385920",
+  "#835c00",
+  "#30669d",
+  "#8e4895",
+  "#005a5a",
+  "#302b26",
+
+  "#7d7670",
+  "#8c3a3f",
+  "#0a4d1c",
+  "#6f5000",
+  "#2e558d",
+  "#81387e",
+  "#004b48",
+  "#231f1a",
+]

@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "evangelion/asuka"
+signature = ["cursor", "ansi11", "ansi4"]
+ansi_source = "GitLab Dark"
+
+[colors]
+background = "#211513"
+foreground = "#fddbd5"
+cursor = "#ed664f"
+selection_background = "#5b322e"
+ansi = [
+  "#2e211e",
+  "#e77461",
+  "#d0c444",
+  "#ffa765",
+  "#639ad0",
+  "#ff8eac",
+  "#76bb70",
+  "#e6d0cc",
+
+  "#857370",
+  "#f1a296",
+  "#e7e086",
+  "#ffd795",
+  "#97ade8",
+  "#ffc1ce",
+  "#9bd684",
+  "#ffe9e5",
+]
+
+[colors.light]
+background = "#fff8f6"
+foreground = "#2d1b18"
+cursor = "#c13621"
+selection_background = "#ffcbc5"
+ansi = [
+  "#fff0ee",
+  "#b33826",
+  "#385821",
+  "#965200",
+  "#2a679a",
+  "#b0345e",
+  "#185c1d",
+  "#372926",
+
+  "#857370",
+  "#8a3d33",
+  "#2e4a1a",
+  "#714f00",
+  "#30529a",
+  "#7e4252",
+  "#184d0a",
+  "#2d1b18",
+]

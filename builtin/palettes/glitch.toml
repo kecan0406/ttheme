@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "doki-doki-literature-club/glitch"
+signature = ["cursor", "ansi10", "ansi12"]
+ansi_source = "Neon + DDLC"
+
+[colors]
+background = "#1d151b"
+foreground = "#f3dcea"
+cursor = "#d767c5"
+selection_background = "#443858"
+ansi = [
+  "#2a2127",
+  "#f06893",
+  "#a9d45b",
+  "#ffa75f",
+  "#918af3",
+  "#fc87e7",
+  "#66b0f9",
+  "#e0d0d9",
+
+  "#80747b",
+  "#f39eb2",
+  "#81f68d",
+  "#ffd5b6",
+  "#8eabe8",
+  "#ffbdef",
+  "#a2cbf2",
+  "#ffe7f5",
+]
+
+[colors.light]
+background = "#fff7f9"
+foreground = "#291c25"
+cursor = "#a83e9a"
+selection_background = "#e1d0f8"
+ansi = [
+  "#ffeff7",
+  "#b72a60",
+  "#3d5800",
+  "#995000",
+  "#594ae1",
+  "#b115a4",
+  "#005389",
+  "#332930",
+
+  "#80747b",
+  "#8e3751",
+  "#004e19",
+  "#724d2d",
+  "#2e5494",
+  "#803b76",
+  "#184566",
+  "#291c25",
+]

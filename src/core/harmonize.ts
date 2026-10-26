@@ -103,7 +103,7 @@ export function harmonized(theme: Anchored): Shade {
 
   if (dark.length > 0) {
     throw new Error(
-      `${theme.name}: ${dark.join(', ')} hold${dark.length === 1 ? 's' : ''} an anchor darker than T${DARK_ANCHOR_TONE}, which a text color can only show as a pastel — put the darkest identity color in selection_background and name selection in meta.signature`,
+      `${theme.name}: ${dark.join(', ')} hold${dark.length === 1 ? 's' : ''} an anchor darker than T${DARK_ANCHOR_TONE}, which a text color can only show as a pastel — put the darkest identity color in selection_background and name selection in signature`,
     )
   }
 

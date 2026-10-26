@@ -1,30 +1,31 @@
 import { Check, ChevronDown, Search } from 'lucide'
-import { catalogsOf } from '@/lib/catalogs'
+import { searchText } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import type { Theme } from '@/lib/themes'
+import { byWork } from '@/lib/works'
 import { Signature } from './palette-parts'
 
 export function PaletteOptions({ themes, current }: { themes: Theme[]; current: string }) {
   return (
     <>
-      {catalogsOf(themes).map((shelf) => (
-        <fieldset aria-label={shelf.catalog ?? 'other'} data-shelf class="m-0 grid min-w-0 gap-0.5 border-0 p-0">
+      {byWork(themes).map((shelf) => (
+        <fieldset aria-label={shelf.work?.name ?? 'originals'} data-shelf class="m-0 grid min-w-0 gap-0.5 border-0 p-0">
           <p
             aria-hidden="true"
             translate="no"
             class="sticky top-0 z-1 truncate bg-popover px-2.5 py-1.5 text-2xs font-bold tracking-caps text-muted-foreground uppercase"
             safe
           >
-            {shelf.catalog ?? 'other'}
+            {shelf.work?.name ?? 'originals'}
           </p>
           {shelf.themes.map((theme) => (
             <button
               type="button"
               role="option"
               tabindex="-1"
-              id={`wear-option-${theme.name}`}
+              id={`wear-option-${shelf.key}-${theme.name}`}
               data-name={theme.name}
-              data-text={`${theme.name} ${theme.catalog ?? ''} ${theme.native ?? ''}`.toLowerCase()}
+              data-text={searchText(theme)}
               aria-selected={String(theme.name === current)}
               class="group/option flex scroll-mt-8 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-[background-color] hover:bg-muted aria-selected:bg-accent"
             >

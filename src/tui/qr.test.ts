@@ -23,7 +23,7 @@ test('a picture QR takes the largest module up to half a cell that fits, and non
 })
 
 test('a picture QR fills whole cells with every module where the code has it', () => {
-  const modules = qrModules('https://ttheme.dev/builder/tt4:abc') as boolean[][]
+  const modules = qrModules('https://ttheme.dev/builder/tt5:abc') as boolean[][]
   const cell = { w: 16, h: 34 }
   const qr = qrPicture(modules, cell, { cols: 100, rows: 30 }, 7)
 

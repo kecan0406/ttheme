@@ -6,9 +6,9 @@ import subsetFont from 'subset-font'
 import { EXIT_CODES } from '../src/cli/answer.ts'
 import { repoFacts, showcase } from '../src/cli/showcase.ts'
 import { DOCS_URL, docsOf, flagRows, headOf, SECTIONS, usageOf, VERB_SPECS } from '../src/cli/verbs.ts'
+import { themes } from './lib/builtin'
 import type { Commands } from './lib/commands'
-import { OFFICIAL_REPO } from './lib/gallery'
-import { official, themes } from './lib/official'
+import { REPO } from './lib/gallery'
 
 export const SITE = import.meta.dirname
 export const ASSETS = join(SITE, 'public', 'assets')
@@ -28,7 +28,7 @@ const HTML = 'text/html; charset=utf-8'
 
 const SNAPSHOT = join(SITE, 'marketplaces.json')
 
-const REPO = join(SITE, 'repo.json')
+const REPO_FILE = join(SITE, 'repo.json')
 
 const COMMANDS = join(SITE, 'commands.json')
 
@@ -234,7 +234,11 @@ async function drawn(): Promise<string> {
   )
 
   const text = [
-    ...palettes.flatMap((theme) => [theme.name, theme.catalog ?? '', theme.native ?? '', theme.ansiSource]),
+    ...palettes.flatMap((theme) => [
+      theme.name,
+      theme.ansiSource,
+      ...[theme.work, ...theme.also].flatMap((work) => (work ? [work.name, work.native ?? ''] : [])),
+    ]),
     ...marketplaces.flatMap((marketplace) => [marketplace.id, marketplace.about]),
     ...sources,
   ].join('')
@@ -368,8 +372,8 @@ async function fetched<T>(path: string, what: string, load: () => Promise<T>, em
 export async function snapshot(fresh: boolean): Promise<void> {
   const token = process.env.GITHUB_TOKEN
 
-  await fetched(SNAPSHOT, 'marketplaces', () => showcase(official, token), [], fresh)
-  await fetched(REPO, `stars of ${OFFICIAL_REPO}`, () => repoFacts(OFFICIAL_REPO, token), null, fresh)
+  await fetched(SNAPSHOT, 'marketplaces', () => showcase(token), [], fresh)
+  await fetched(REPO_FILE, `stars of ${REPO}`, () => repoFacts(REPO, token), null, fresh)
 }
 
 async function prerender(bundle: string): Promise<Record<string, { path: string; contentType: string }>> {

@@ -3,6 +3,7 @@ import { FolderOpen, Search, Sprout, Star } from 'lucide'
 import { Button } from '@/components/ui/button'
 import type { StartList } from '@/lib/builder-view'
 import { Icon } from '@/lib/icons'
+import { CODE, SHARE_URL } from '../../src/core/draft.ts'
 
 export function Dots({ dots }: { dots: string[] }) {
   return (
@@ -56,8 +57,15 @@ export function StartEntries({ list }: { list: StartList }) {
           {group.palettes.map((item) => (
             <button type="button" data-start-from={item.name} class={ITEM}>
               <Dots dots={item.dots} />
-              <span class="min-w-0 flex-1 truncate font-display font-extrabold" translate="no" safe>
-                {item.label}
+              <span class="min-w-0 flex-1 truncate" translate="no">
+                <span class="font-display font-extrabold" safe>
+                  {item.label}
+                </span>
+                {item.publisher ? (
+                  <span class="pl-1.5 font-mono text-xs text-muted-foreground" safe>
+                    {item.publisher}
+                  </span>
+                ) : null}
               </span>
               {item.lead ? (
                 <span class="flex-none text-muted-foreground">
@@ -105,7 +113,7 @@ export function StartPopover() {
             spellcheck="false"
             autocapitalize="none"
             autocorrect="off"
-            placeholder="https://ttheme.dev/builder/tt4:…"
+            placeholder={`${SHARE_URL}${CODE}…`}
             class="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs outline-none placeholder:text-faint-foreground hover:border-input focus-visible:border-ring"
           />
           <div class="flex flex-wrap items-center gap-2">

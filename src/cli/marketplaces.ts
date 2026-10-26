@@ -3,13 +3,32 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:f
 import { basename, join, relative } from 'node:path'
 import * as p from '@clack/prompts'
 import { parse } from 'smol-toml'
-import { listed, type PaletteEntry, parseManifest } from '../core/manifest.ts'
+import {
+  aboutOf,
+  type Commons,
+  followSubject,
+  mergeWorks,
+  parseCommons,
+  type Work,
+  workKeys,
+  workOf,
+} from '../core/commons.ts'
+import { listed, type PaletteEntry } from '../core/manifest.ts'
 import { gateLines } from '../core/own.ts'
 import { marketplaceNameProblem, marketplaceToml, readmeOf } from '../core/scaffold.ts'
-import { ago, counted, escaped, inertLines } from '../core/text.ts'
-import { type Identity, MARKETPLACE_FILE, marketplaceId, marketplaceOf, slugOf, unknownKeys } from '../core/theme.ts'
+import { ago, counted, escaped, inertLines, quoted } from '../core/text.ts'
+import {
+  BUILTIN,
+  type Identity,
+  MARKETPLACE_FILE,
+  marketplaceId,
+  publisherOf,
+  slugOf,
+  unknownKeys,
+  workIdOf,
+} from '../core/theme.ts'
 import { ROOT } from '../root.ts'
-import { idOf, nameOf, readMarketplaces } from '../store/available.ts'
+import { commonsPath, idOf, nameOf, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
 import { type Installed, readInstalled, writeInstalled } from '../store/installed.ts'
 import {
@@ -19,11 +38,11 @@ import {
   palettesDir,
   readMarketplaceDir,
   warning,
+  workFiles,
 } from '../store/local.ts'
 import { configHome } from '../store/paths.ts'
 import {
   autoUpdates,
-  CATALOG_KEYS,
   cachePath,
   defaultLocal,
   isLocal,
@@ -31,7 +50,6 @@ import {
   localIdentity,
   MARKETPLACE_KEYS,
   marketplacesOf,
-  OFFICIAL,
   OWNER_KEYS,
   parseSource,
   refOf,
@@ -102,18 +120,10 @@ async function handle(home: string, state: Installed, owner?: string): Promise<s
   return author
 }
 
-function marketplaceOfPalette(name: string): string {
-  return marketplaceOf(name) ?? OFFICIAL
-}
+export function commonsFor(home: string): Commons {
+  const path = [join(ROOT, 'dist', 'commons.json'), commonsPath(home)].find((at) => existsSync(at))
 
-function official(home: string): PaletteEntry[] {
-  return readMarketplaces(home).palettes.filter((e) => marketplaceOf(e.name) === undefined)
-}
-
-function officialFor(home: string): PaletteEntry[] {
-  const path = join(ROOT, 'dist', 'manifest.json')
-
-  return existsSync(path) ? parseManifest(readFileSync(path, 'utf8')).palettes : official(home)
+  return path ? parseCommons(readFileSync(path, 'utf8')) : { works: [], renames: {} }
 }
 
 export function withMarketplaces(
@@ -227,20 +237,20 @@ async function addSource(home: string, arg: string): Promise<{ source: string; i
   if (isLocal(source)) {
     const id = marketplaceId(localIdentity(source))
     register(home, source, id)
-    const count = readMarketplaceDir(source, id, official(home)).length
+    const count = readMarketplaceDir(source, id).entries.length
     console.log(`Added ${id} · ${shownSource(source)} — ${counted(count)}, always up to date`)
 
     return { source, id, fresh: true }
   }
 
   const fetched = await fetching(home, source)
-  const auto = source === OFFICIAL ? undefined : await askAuto(fetched.id)
+  const auto = source === BUILTIN ? undefined : await askAuto(fetched.id)
   register(home, source, fetched.id, auto)
   storeMarketplace(home, fetched)
   const count = counted(listed(fetched.entries).length)
   console.log(
-    source === OFFICIAL
-      ? `Added the official marketplace — ${count}`
+    source === BUILTIN
+      ? `Added the built-in marketplace — ${count}`
       : `Added ${fetched.id} · ${shownSource(source)} — ${count}${auto ? ', updating on its own' : ''}`,
   )
 
@@ -259,7 +269,7 @@ async function addMarketplace(arg: string): Promise<void> {
     console.log(
       '\nThe Browse tab of `ttheme` picks them · `ttheme share` puts the folder on GitHub, where `ttheme marketplace add <owner>/<repo>` adds it anywhere',
     )
-  } else if (source === OFFICIAL) {
+  } else if (source === BUILTIN) {
     console.log('\nThe Browse tab of `ttheme` picks them')
   } else {
     console.log(`\nThe Browse tab of \`ttheme\` picks them, or \`ttheme add ${id}/<palette>\``)
@@ -287,7 +297,7 @@ function removeMarketplace(name: string): void {
   }
 
   const id = nameOf(home, source)
-  const kept = state.palettes.filter((n) => marketplaceOfPalette(n) === id)
+  const kept = state.palettes.filter((n) => publisherOf(n) === id)
   const remaining = sources.filter((s) => s !== source)
   const next = withMarketplaces(state, remaining, state.updates ?? {})
   writeInstalled(home, next)
@@ -313,7 +323,7 @@ export function lastUpdate(home: string, source: string, tries = readTries(), no
     return 'always up to date'
   }
 
-  if (source === OFFICIAL) {
+  if (source === BUILTIN) {
     return 'updates with ttheme'
   }
 
@@ -427,11 +437,110 @@ async function initMarketplace(arg: string | undefined, owner?: string): Promise
   const dir = arg && pathLike(arg) ? parseSource(arg) : defaultLocal(home, name)
   await initLocal(home, dir, name, owner)
   console.log(
-    '\n`ttheme new <palette> --from <palette>` puts palettes in it, and a folder under palettes/ shelves them in a catalog — `ttheme share` puts it on GitHub, where others add it',
+    '\n`ttheme new <palette> --from <palette>` puts palettes in it — `ttheme share` puts it on GitHub, where others add it',
   )
 }
 
-function checkMarketplace(arg: string | undefined): number {
+interface Findings {
+  errors: string[]
+  warnings: string[]
+}
+
+function unknownIn(dir: string, files: readonly { path: string }[], keysOf: (file: string, text: string) => string[]) {
+  return files.flatMap(({ path }) => {
+    let keys: string[]
+
+    try {
+      keys = keysOf(path, readFileSync(path, 'utf8'))
+    } catch {
+      keys = []
+    }
+
+    return keys.map((key) => `${escaped(relative(dir, path))}: unknown key ${escaped(key)} — ttheme ignores it`)
+  })
+}
+
+function folded(dir: string): string[] {
+  const at = palettesDir(dir)
+
+  if (!existsSync(at)) {
+    return []
+  }
+
+  return readdirSync(at, { recursive: true, encoding: 'utf8' })
+    .filter((path) => path.includes('/') && path.endsWith('.toml'))
+    .sort()
+    .map((path) => `palettes/${escaped(path)}: ttheme reads palettes/ alone, not the folders in it — move it up`)
+}
+
+function againstCommons(entries: readonly PaletteEntry[], works: readonly Work[], commons: Commons): Findings {
+  const known = mergeWorks(commons.works, works)
+  const findings: Findings = { errors: [], warnings: [] }
+
+  for (const entry of entries) {
+    if (entry.subject === undefined) {
+      continue
+    }
+
+    const file = `palettes/${slugOf(entry.name)}.toml`
+    const subject = followSubject(commons.renames, entry.subject)
+
+    if (subject !== entry.subject) {
+      findings.warnings.push(`${file}: the commons calls ${entry.subject} ${subject} now — name it that way`)
+    }
+
+    if (!aboutOf(known, subject)?.known) {
+      findings.errors.push(
+        `${file}: ${subject} is in neither the commons nor works/ — propose it in works/${workIdOf(subject)}.toml`,
+      )
+    }
+  }
+
+  const owners = new Map(
+    commons.works.flatMap((w) => w.characters.flatMap((c) => (c.danbooru ? [[c.danbooru, `${w.id}/${c.id}`]] : []))),
+  )
+
+  for (const work of works) {
+    const held = workOf(commons.works, work.id)
+    const file = `works/${work.id}.toml`
+    const fresh = work.characters.filter((c) => !held?.characters.some((h) => h.id === c.id))
+
+    if (held && fresh.length === 0) {
+      findings.warnings.push(
+        `${file}: the commons holds ${work.id} and each character it lists — ttheme reads nothing from it`,
+      )
+    } else if (held) {
+      findings.warnings.push(
+        ...work.characters
+          .filter((c) => !fresh.includes(c))
+          .map((c) => `${file}: the commons holds ${work.id}/${c.id} — its entry there wins`),
+      )
+    }
+
+    for (const c of fresh) {
+      const subject = `${work.id}/${c.id}`
+      const owner = c.danbooru === undefined ? undefined : owners.get(c.danbooru)
+
+      if (c.danbooru !== undefined && owner !== undefined && owner !== subject) {
+        findings.errors.push(
+          `${file}: ${subject} is ${quoted(c.danbooru)} on danbooru, which is ${owner} already — name ${owner} instead`,
+        )
+      } else if (c.danbooru !== undefined) {
+        owners.set(c.danbooru, subject)
+      }
+
+      for (const other of c.also ?? []) {
+        if (other === work.id || !workOf(known, other)) {
+          findings.errors.push(`${file}: ${subject} lists ${quoted(other)} in also, which is not another work`)
+        }
+      }
+    }
+  }
+
+  return findings
+}
+
+export function checkMarketplace(arg: string | undefined, commons = commonsFor(configHome())): number {
   const dir = arg ? parseSource(arg) : process.cwd()
   const path = join(dir, MARKETPLACE_FILE)
 
@@ -465,55 +574,32 @@ function checkMarketplace(arg: string | undefined): number {
     warnings.push(`${MARKETPLACE_FILE}: unknown key owner.${escaped(key)} — ttheme ignores it`)
   }
 
-  for (const [i, table] of (Array.isArray(doc.catalog) ? (doc.catalog as Record<string, unknown>[]) : []).entries()) {
-    for (const key of Object.keys(table).filter((k) => !CATALOG_KEYS.includes(k))) {
-      warnings.push(`${MARKETPLACE_FILE}: unknown key catalog[${i}].${escaped(key)} — ttheme ignores it`)
-    }
-  }
-
   if (!info.description) {
     warnings.push(`${MARKETPLACE_FILE}: no description — Browse and the marketplace page show one`)
   }
 
   const id = marketplaceId(info)
 
-  const entries = readMarketplaceDir(dir, id, officialFor(configHome()), (where, message) =>
-    errors.push(`${escaped(relative(dir, where))}: ${message.replace(`${escaped(basename(where))}: `, '')}`),
+  const { entries, works } = readMarketplaceDir(dir, id, (where, message) =>
+    errors.push(
+      `${escaped(relative(dir, where))}: ${message.replace(`${escaped(where)}: `, '').replace(`${escaped(basename(where))}: `, '')}`,
+    ),
   )
 
-  for (const file of marketplaceFiles(dir)) {
-    let keys: string[]
-
-    try {
-      keys = unknownKeys(file.path, readFileSync(file.path, 'utf8'))
-    } catch {
-      keys = []
-    }
-
-    for (const key of keys) {
-      warnings.push(`${escaped(relative(dir, file.path))}: unknown key ${escaped(key)} — ttheme ignores it`)
-    }
-  }
-
-  for (const catalog of info.catalogs) {
-    const inside = entries.filter((e) => e.catalog === catalog.name)
-
-    if (inside.length === 0) {
-      warnings.push(`${MARKETPLACE_FILE}: catalog ${catalog.name} has no folder under palettes/ — ttheme ignores it`)
-    } else if (catalog.lead && !inside.some((e) => slugOf(e.name) === catalog.lead)) {
-      warnings.push(
-        `${MARKETPLACE_FILE}: catalog ${catalog.name} leads with ${catalog.lead}, which is not in it — its first palette leads instead`,
-      )
-    }
-  }
+  errors.push(...folded(dir))
+  warnings.push(...unknownIn(dir, marketplaceFiles(dir), unknownKeys), ...unknownIn(dir, workFiles(dir), workKeys))
 
   const renames = renameProblems(info.renames, new Set(entries.map((e) => slugOf(e.name))))
   errors.push(...renames.errors.map((e) => `${MARKETPLACE_FILE}: ${e}`))
   warnings.push(...renames.warnings.map((w) => `${MARKETPLACE_FILE}: ${w}`))
 
+  const findings = againstCommons(entries, works, commons)
+  errors.push(...findings.errors)
+  warnings.push(...findings.warnings)
+
   for (const entry of entries) {
     const failing = gateLines(entry).filter((l) => l.startsWith('  ✗'))
-    const shown = entry.catalog ? `${entry.catalog}/${slugOf(entry.name)}` : slugOf(entry.name)
+    const shown = `${slugOf(entry.name)}${entry.subject ? ` · ${entry.subject}` : ''}`
     console.log(`  ${shown}${failing.length > 0 ? `\n${failing.join('\n')}` : '  passes every contrast check'}`)
   }
 
@@ -527,7 +613,7 @@ function checkMarketplace(arg: string | undefined): number {
 
   const tally = (n: number, what: string) => `${n} ${what}${n === 1 ? '' : 's'}`
   console.log(
-    `\n${id} · ${counted(entries.length)} · ${tally(errors.length, 'error')} · ${tally(warnings.length, 'warning')}`,
+    `\n${id} · ${counted(entries.length)}${works.length > 0 ? ` · ${tally(works.length, 'work')} proposed` : ''} · ${tally(errors.length, 'error')} · ${tally(warnings.length, 'warning')}`,
   )
 
   return errors.length > 0 ? 1 : 0
@@ -573,5 +659,5 @@ function required(action: string, arg: string | undefined): string {
 export function localLine(home: string, source: string): string {
   const id = idOf(home, source)
 
-  return `${id} — ${counted(readMarketplaceDir(source, id, official(home), warning(false)).length)}, always up to date`
+  return `${id} — ${counted(readMarketplaceDir(source, id, warning(false)).entries.length)}, always up to date`
 }

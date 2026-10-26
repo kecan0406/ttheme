@@ -1,0 +1,28 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "neon/arcade"
+signature = ["cursor", "selection", "ansi4"]
+
+[colors]
+background = "#140504"
+foreground = "#ffedeb"
+cursor = "#ff958d"
+selection_background = "#5c1717"
+ansi = [
+  "#271513",
+  "#ff716d",
+  "#00bead",
+  "#e48f00",
+  "#829eff",
+  "#ff62b3",
+  "#58a8ff",
+  "#e5d3d1",
+
+  "#7f605d",
+  "#ffaaa7",
+  "#00e6a5",
+  "#ffae84",
+  "#c4b9ff",
+  "#ffa7bd",
+  "#98c8ff",
+  "#fff6f5",
+]

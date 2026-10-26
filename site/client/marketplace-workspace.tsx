@@ -1,7 +1,7 @@
 import { GatePanel, InstallPanes, PaletteFacts, ScenePanes, SlotsPanel, WorkspaceHead } from '@/components/workspace'
 import { palettePath, palettesPath } from '@/lib/gallery'
 import { html } from '@/lib/render'
-import type { Theme } from '@/lib/themes'
+import { BUILTIN, type Theme } from '@/lib/themes'
 import { paletteMeta } from '@/lib/titles'
 import { wearStyle } from '@/lib/wear'
 import { nameAt, neighbors, type WorkspaceData } from '@/lib/workspace'
@@ -131,7 +131,7 @@ class MarketplaceWorkspace extends HTMLElement {
   }
 
   #load(): Promise<void> {
-    this.#ready ??= palettes(palettesPath(this.#data.where?.id ?? null)).then(
+    this.#ready ??= palettes(palettesPath(this.#data.where?.id ?? BUILTIN)).then(
       (list) => {
         this.#palettes = list
         this.#theme = this.#named(this.#data.current)

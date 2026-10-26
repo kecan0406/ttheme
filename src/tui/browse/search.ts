@@ -1,12 +1,13 @@
+import { aboutOf, mergeWorks, workOf } from '../../core/commons.ts'
 import { swatch } from '../../core/manifest.ts'
 import { ago, cells, counted, inert } from '../../core/text.ts'
-import { type Listed, type Listing, listedMatches } from '../../store/marketplace-index.ts'
+import { type Listed, type ListedPalette, type Listing, listedMatches } from '../../store/marketplace-index.ts'
 import { sameMarketplace, TOPIC } from '../../store/sources.ts'
 import { fit, wrapText } from '../ansi.ts'
 import type { Bar, Hint } from '../bar.ts'
 import { Field } from '../field.ts'
 import { capped } from '../keycaps.ts'
-import { PaletteList, rowSpot } from '../palette-prompt.ts'
+import { byWorkName, PaletteList, rowSpot } from '../palette-prompt.ts'
 import { SEP, tabOf } from '../parts.ts'
 import { ansiSquares, MARKS, type Paint } from '../style.ts'
 import { button, EMPTY, lit } from './draw.ts'
@@ -37,6 +38,7 @@ export class Search {
     this.host = host
     this.results = new PaletteList<Row>({
       entries: [],
+      works: [],
       picked: new Set(),
       layout: 'marketplaces',
       mode: 'cards',
@@ -286,16 +288,22 @@ export class Search {
   }
 
   private paletteLines(m: Listed, width: number): string[] {
-    const { p } = this.host
+    const { p, staged } = this.host
     const pad = Math.min(Math.max(...m.palettes.map((e) => cells(e.name))), Math.max(8, width - 16))
-    let shelf: string | undefined
 
-    return m.palettes.flatMap((e) => {
-      const head = e.catalog !== shelf && e.catalog ? [p.dim(e.catalog)] : []
-      shelf = e.catalog
-      const squares = this.host.color ? `  ${ansiSquares(swatch(e))}` : ''
+    const works = mergeWorks(
+      staged.works(),
+      m.works.map((w) => ({ ...w, characters: [] })),
+    )
 
-      return [...head, `  ${fit(e.name, pad)}${squares}`]
-    })
+    const shelves = Map.groupBy(m.palettes, (e) => aboutOf(works, e.subject)?.work.id ?? '')
+    const ids = [...shelves.keys()].filter(Boolean).sort(byWorkName(works))
+
+    const line = (e: ListedPalette) => `  ${fit(e.name, pad)}${this.host.color ? `  ${ansiSquares(swatch(e))}` : ''}`
+
+    return [
+      ...ids.flatMap((id) => [p.dim(workOf(works, id)?.name ?? id), ...(shelves.get(id) ?? []).map(line)]),
+      ...(shelves.get('') ?? []).map(line),
+    ]
   }
 }

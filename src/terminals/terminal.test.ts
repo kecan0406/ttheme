@@ -15,13 +15,11 @@ const read = (...path: string[]) => readFileSync(join(root, ...path), 'utf8')
 
 const miku: PaletteEntry = {
   name: 'miku',
-  catalog: 'Vocaloid',
   ansiSource: 'Test',
   background: '#0e2124',
   foreground: '#e0f4f2',
   cursor: '#39c5bb',
   selection: '#1b3b3e',
-  order: 2,
   signature: ['#39c5bb', '#ff91c7', '#aab0ff'],
   signatureSlots: ['cursor', 'ansi1', 'ansi12'],
   ansi: Array.from({ length: 16 }, (_, i) => `#0000${i.toString(16).padStart(2, '0')}`),

@@ -12,7 +12,6 @@ function entry(name: string): PaletteEntry {
     foreground: '#eeeeee',
     cursor: '#ffffff',
     selection: '#222222',
-    order: 1,
     signature: ['#ffffff', '#eeeeee', '#000000'],
     signatureSlots: ['foreground', 'cursor', 'background'],
     ansi: Array.from({ length: 16 }, () => '#808080'),
@@ -32,11 +31,12 @@ test('a chase covers 40% of what is left, always at least one step, and starts c
 })
 
 test('a list that glides shows the window it left until stepped, and one that does not shows the cursor at once', () => {
-  const names = Array.from({ length: 40 }, (_, i) => `palette${String(i).padStart(2, '0')}`)
+  const names = Array.from({ length: 40 }, (_, i) => `kec@shop/palette${String(i).padStart(2, '0')}`)
 
   const make = () =>
     new PaletteList({
       entries: names.map(entry),
+      works: [],
       picked: new Set(),
       layout: 'marketplaces',
       mode: 'inside',

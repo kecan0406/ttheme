@@ -1,0 +1,29 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Umineko"
+native = "うみねこのなく頃に"
+lead = "umineko/beatrice"
+
+[[character]]
+id = "battler"
+native = ["右代宮戦人"]
+danbooru = "ushiromiya_battler"
+
+[[character]]
+id = "beatrice"
+native = ["ベアトリーチェ"]
+danbooru = "beatrice_(umineko)"
+sites = { konachan = "beatrice", yande = "beatrice", zerochan = "beatrice_(umineko_no_naku_koro_ni)" }
+
+[[character]]
+id = "bernkastel"
+native = ["フレデリカ・ベルンカステル"]
+danbooru = "frederica_bernkastel"
+
+[[character]]
+id = "lambdadelta"
+native = ["ラムダデルタ"]
+danbooru = "lambdadelta"
+
+[[character]]
+id = "rokkenjima"
+native = ["六軒島"]

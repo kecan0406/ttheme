@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "black-bullet/enju"
+signature = ["cursor", "ansi11", "ansi3"]
+ansi_source = "Dogxi Misty + Varanium"
+
+[colors]
+background = "#201512"
+foreground = "#fddbd3"
+cursor = "#db8068"
+selection_background = "#1a4252"
+ansi = [
+  "#2e211d",
+  "#f16d5b",
+  "#d6c32e",
+  "#ffa76f",
+  "#8293d0",
+  "#ff8fa7",
+  "#75bb75",
+  "#e6d0ca",
+
+  "#85736f",
+  "#f3a195",
+  "#f5df2f",
+  "#ffd87f",
+  "#98a9e6",
+  "#ffc2cc",
+  "#97d59e",
+  "#ffe9e4",
+]
+
+[colors.light]
+background = "#fff8f6"
+foreground = "#2d1b16"
+cursor = "#ad5139"
+selection_background = "#b6ddf1"
+ansi = [
+  "#fff1ed",
+  "#bd291c",
+  "#395922",
+  "#a04b00",
+  "#475fab",
+  "#b03659",
+  "#165c22",
+  "#372926",
+
+  "#85736f",
+  "#8c3c32",
+  "#2f4a1b",
+  "#6b5100",
+  "#35509f",
+  "#7e434f",
+  "#054c26",
+  "#2d1b16",
+]

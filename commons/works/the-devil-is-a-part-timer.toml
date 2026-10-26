@@ -1,0 +1,35 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "The Devil Is a Part-Timer!"
+native = "はたらく魔王さま!"
+lead = "the-devil-is-a-part-timer/urushihara"
+
+[[character]]
+id = "maou"
+native = ["真奥貞夫"]
+danbooru = "maou_sadao"
+
+[[character]]
+id = "emi"
+native = ["遊佐恵美"]
+danbooru = "yusa_emi"
+
+[[character]]
+id = "chiho"
+native = ["佐々木千穂"]
+danbooru = "sasaki_chiho"
+
+[[character]]
+id = "ashiya"
+native = ["芦屋四郎"]
+danbooru = "ashiya_shirou"
+
+[[character]]
+id = "urushihara"
+native = ["漆原半蔵"]
+danbooru = "urushihara_hanzou"
+sites = { konachan = ["hanzou_urushihara", "urushihara_hanzo"], zerochan = "urushihara_hanzo" }
+
+[[character]]
+id = "suzuno"
+native = ["鎌月鈴乃"]
+danbooru = "kamazuki_suzuno"

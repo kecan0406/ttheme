@@ -51,10 +51,11 @@ Preview does it in zsh: `__tt_pv_getch` reads a key, decoding a mouse report thr
 
 ## Copies that change together
 
-Preview draws in zsh what the Node screens draw in TypeScript, so several things exist twice. Change both sides in one change. Three pairs fail a test when they drift — the roles and marks, the keycaps and help's wrap, which `.claude/rules/tui.md` describes. Two fail nothing:
+Preview draws in zsh what the Node screens draw in TypeScript, so several things exist twice. Change both sides in one change. Three pairs fail a test when they drift — the roles and marks, the keycaps and help's wrap, which `.claude/rules/tui.md` describes. Three fail nothing:
 
 - The hub's tab bar: `hubBar` (`src/tui/hub.ts`) over Browse and `__tt_pv_bar` over Preview. Draw the `hub-few` and `hub-browse` scenarios with `mise run look` and compare their row 0.
 - The release line at the right end of the key bar: `releaseOf` (`src/tui/bar.ts`) and preview's `__tt_pv_standing` and `__tt_pv_foot`. Only the wording is shared, `STANDING_LINES` (`src/tui/notice.ts`) carried as `TTHEME_STANDING`.
+- The world view: preview's list (`__tt_pv_rows`, from `TTHEME_ORDER` or `TTHEME_ABC`, `TTHEME_WORKS`, `TTHEME_ALSO`, `TTHEME_WORK_NAME` and `TTHEME_WORK_NATIVE`) and `PaletteList`'s `world` layout (`pickerRows`, `seatsOf`, `byWorkName`) shelve the same palettes the same way — the works by name, a palette under every work its character's `also` names, then `── Originals` by publisher, `ttheme` first — and preview's filter matches what `matchesPalette` matches. `mise run look preview-open` draws preview's; init's picker has no scenario, so compare it by hand. CLAUDE.md's names bullet holds the rules.
 
 What `sync` carries into `palettes.zsh` for preview (`HUB_TABS`, `STANDING_LINES`, `TTHEME_MARK_INKS`, its help, `PREVIEW_KEYS` from `src/tui/preview-keys.ts`) comes from `src/cli/emit-shell.ts`, so a change to one of those sources reaches preview only after a `sync`.
 

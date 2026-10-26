@@ -1,6 +1,6 @@
 import { type Hex, isHex } from './color.ts'
 import { SLOT_NAMES } from './slots.ts'
-import { nameProblem, textProblem } from './theme.ts'
+import { slugProblem, textProblem } from './theme.ts'
 
 export interface Anchor {
   part: string
@@ -108,10 +108,10 @@ function namesOf(path: string, value: unknown, problems: Problem[]): string[] | 
 
 function entryOf(name: string, value: unknown, problems: Problem[]): Anchors | undefined {
   const before = problems.length
-  const slug = nameProblem(name)
+  const slug = slugProblem(name)
 
-  if (slug !== undefined || name.includes('/')) {
-    problems.push({ path: name, problem: `is not a palette name — it ${slug ?? 'names a marketplace'}` })
+  if (slug !== undefined) {
+    problems.push({ path: name, problem: `is not a palette name — it ${slug}` })
   }
 
   if (!isRecord(value)) {

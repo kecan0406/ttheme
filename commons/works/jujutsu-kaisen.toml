@@ -1,0 +1,43 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Jujutsu Kaisen"
+native = "呪術廻戦"
+lead = "jujutsu-kaisen/gojo"
+
+[[character]]
+id = "gojo"
+native = ["五条悟"]
+danbooru = "gojo_satoru"
+sites = { konachan = "gojou_satoru", yande = "gojou_satoru", zerochan = "gojou_satoru" }
+
+[[character]]
+id = "yuji"
+native = ["虎杖悠仁"]
+danbooru = "itadori_yuji"
+sites = { konachan = "itadori_yuuji", yande = "itadori_yuuji", zerochan = "itadori_yuuji" }
+
+[[character]]
+id = "megumi"
+native = ["伏黒恵"]
+danbooru = "fushiguro_megumi"
+
+[[character]]
+id = "nobara"
+native = ["釘崎野薔薇"]
+danbooru = "kugisaki_nobara"
+
+[[character]]
+id = "nanami"
+native = ["七海建人"]
+danbooru = "nanami_kento"
+
+[[character]]
+id = "geto"
+native = ["夏油傑"]
+danbooru = "geto_suguru"
+sites = { konachan = [], yande = "getou_suguru", zerochan = "getou_suguru" }
+
+[[character]]
+id = "sukuna"
+native = ["両面宿儺"]
+danbooru = "ryoumen_sukuna_(jujutsu_kaisen)"
+sites = { konachan = [], yande = [], zerochan = "sukuna" }

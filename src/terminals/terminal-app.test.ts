@@ -5,16 +5,14 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { pointDefaults, sync, withBases } from '../cli/sync.ts'
-import { type Manifest, type PaletteEntry, SCHEMA } from '../core/manifest.ts'
+import type { Manifest, PaletteEntry } from '../core/manifest.ts'
 import type { Host } from '../store/host.ts'
 import type { Installed } from '../store/installed.ts'
 import { TERMINAL_JS, terminalScript } from './terminal-app.ts'
 
-function entry(name: string, order: number, partial: Partial<PaletteEntry> = {}): PaletteEntry {
+function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    catalog: 'Jujutsu Kaisen',
-    order,
     ansiSource: 'Horizon + Jujutsu',
     background: '#11191c',
     foreground: '#e3e2e7',
@@ -30,10 +28,10 @@ function entry(name: string, order: number, partial: Partial<PaletteEntry> = {})
 }
 
 const manifest: Manifest = {
-  schema: SCHEMA,
   version: '0.1.0',
   gate: [],
-  palettes: [entry('neutral', 1, { default: true }), entry('gojo', 2, { background: '#101010' }), entry('geto', 3)],
+  works: [],
+  palettes: [entry('neutral', { default: true }), entry('gojo', { background: '#101010' }), entry('geto')],
 }
 
 interface Terminal {

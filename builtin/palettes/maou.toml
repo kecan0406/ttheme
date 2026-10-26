@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "the-devil-is-a-part-timer/maou"
+signature = ["cursor", "selection", "ansi3"]
+ansi_source = "Electron Highlighter + Ente Isla"
+
+[colors]
+background = "#211512"
+foreground = "#fddbd4"
+cursor = "#df7259"
+selection_background = "#842329"
+ansi = [
+  "#2e211e",
+  "#eb7072",
+  "#c0c926",
+  "#e3b463",
+  "#b580dc",
+  "#ee94c8",
+  "#59bf6f",
+  "#e6d0cb",
+
+  "#85736f",
+  "#f3a0a0",
+  "#dbe63d",
+  "#ffd6a9",
+  "#be9ce8",
+  "#ffbfe0",
+  "#76db88",
+  "#ffe9e4",
+]
+
+[colors.light]
+background = "#fff8f6"
+foreground = "#2d1b17"
+cursor = "#af4932"
+selection_background = "#ff8888"
+ansi = [
+  "#fff0ed",
+  "#b7303b",
+  "#36591d",
+  "#815d12",
+  "#8741bb",
+  "#a33c7f",
+  "#005d26",
+  "#372926",
+
+  "#85736f",
+  "#8c3a3e",
+  "#2c4a16",
+  "#714d1e",
+  "#6a3ea1",
+  "#7f3f65",
+  "#004d1e",
+  "#2d1b17",
+]

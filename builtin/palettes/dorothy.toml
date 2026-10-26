@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "va-11-hall-a/dorothy"
+signature = ["cursor", "ansi4", "ansi5"]
+ansi_source = "Cyberpunk + Glitch City"
+
+[colors]
+background = "#201515"
+foreground = "#fbdbdc"
+cursor = "#ed6376"
+selection_background = "#573243"
+ansi = [
+  "#2d2021",
+  "#f26884",
+  "#d5c326",
+  "#feaa2f",
+  "#00a1d7",
+  "#de94fe",
+  "#7ab3f0",
+  "#e5cfd0",
+
+  "#857374",
+  "#f39fab",
+  "#e6e334",
+  "#ffd6a9",
+  "#7fb1e8",
+  "#ffbeea",
+  "#9ed0ee",
+  "#ffe9e9",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1c"
+cursor = "#c2304c"
+selection_background = "#fec9de"
+ansi = [
+  "#fff0f0",
+  "#bb2650",
+  "#395822",
+  "#8c5800",
+  "#006b90",
+  "#962fc5",
+  "#00538a",
+  "#36292a",
+
+  "#857374",
+  "#8d3849",
+  "#2d4919",
+  "#714d1e",
+  "#1e5889",
+  "#803c70",
+  "#094760",
+  "#2d1b1c",
+]

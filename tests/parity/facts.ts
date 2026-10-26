@@ -208,12 +208,12 @@ export function readCompat(file = EXPECT): Compat {
 }
 
 export const BRIDGES: { id: string; holds: (fact: (id: string) => string | undefined) => boolean }[] = [
-  { id: 'follow-default', holds: (fact) => fact('default-here.here.colors') === 'miku' },
+  { id: 'follow-default', holds: (fact) => fact('default-here.here.colors') === 'ttheme/miku' },
   { id: 'follow-belief', holds: (fact) => !(fact('default-here.here.issue') ?? '').includes('wears') },
-  { id: 'keep-painted', holds: (fact) => fact('default-keeps.here.colors') === 'rei' },
-  { id: 'on-follow', holds: (fact) => fact('on.other.colors') === 'konata' },
+  { id: 'keep-painted', holds: (fact) => fact('default-keeps.here.colors') === 'ttheme/rei' },
+  { id: 'on-follow', holds: (fact) => fact('on.other.colors') === 'ttheme/konata' },
   { id: 'on-belief', holds: (fact) => !(fact('on.other.issue') ?? '').includes('wears') },
-  { id: 'reset-worn', holds: (fact) => fact('program-reset.after.colors') === 'miku' },
+  { id: 'reset-worn', holds: (fact) => fact('program-reset.after.colors') === 'ttheme/miku' },
 ]
 
 export function unmeasured(compat: Compat, term: Term): string[] | undefined {

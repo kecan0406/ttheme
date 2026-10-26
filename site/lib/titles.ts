@@ -1,4 +1,5 @@
-import type { Marketplace, Theme } from '@/lib/themes'
+import { type Marketplace, shortName, type Theme } from '@/lib/themes'
+import { plural } from '@/lib/utils'
 
 export interface Meta {
   title: string
@@ -39,28 +40,30 @@ export function docMeta(title: string, group: string, description: string): Meta
 
 export function marketplacesMeta(palettes: number): Meta {
   return {
-    title: 'marketplace — official and community terminal themes · ttheme',
-    description: `The ${palettes} official ttheme palettes and the marketplaces anyone publishes from a GitHub repository.`,
+    title: 'marketplace — built-in and community terminal themes · ttheme',
+    description: `The ${palettes} palettes built into ttheme and the marketplaces anyone publishes from a GitHub repository.`,
   }
 }
 
-export function marketplaceMeta(marketplace: Marketplace | null, palettes: number, catalogs: number): Meta {
+export function marketplaceMeta(marketplace: Marketplace | null, palettes: number, works: number): Meta {
   if (!marketplace)
     return {
-      title: `official marketplace — ${palettes} character terminal themes · ttheme`,
-      description: `${palettes} terminal color schemes that come with ttheme: one per character in ${catalogs} series, each measured from the character's official art.`,
+      title: `built-in marketplace — ${palettes} character terminal themes · ttheme`,
+      description: `${palettes} terminal color schemes that come with ttheme: one per character from ${plural(works, 'work')}, each measured from the character's official art.`,
     }
 
   return {
     title: `${marketplace.id} — ${palettes} terminal themes · ttheme`,
-    description: `${marketplace.about} — ${palettes} color schemes in ${catalogs} catalogs. Add it with ttheme marketplace add ${marketplace.add}.`,
+    description: `${marketplace.about} — ${plural(palettes, 'color scheme')}${works > 0 ? ` from ${plural(works, 'work')}` : ''}. Add it with ttheme marketplace add ${marketplace.add}.`,
   }
 }
 
-export function paletteMeta({ id, name, catalog, background, foreground }: Theme): Meta {
+export function paletteMeta(theme: Theme): Meta {
+  const { name, work, background, foreground } = theme
+
   return {
-    title: `${name} terminal theme${catalog ? ` — ${catalog}` : ''} · ttheme`,
-    description: `${name} — ${catalog ? `${catalog} ` : ''}color scheme for your terminal: ${background} background, ${foreground} text, 16 ANSI colors. Install with ttheme use ${id}.`,
+    title: `${name} terminal theme${work ? ` — ${work.name}` : ''} · ttheme`,
+    description: `${name} — ${work ? `${work.name} ` : ''}color scheme for your terminal: ${background} background, ${foreground} text, 16 ANSI colors. Install with ttheme use ${shortName(theme.id)}.`,
   }
 }
 

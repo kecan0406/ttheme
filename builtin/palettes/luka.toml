@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "vocaloid/luka"
+signature = ["cursor", "ansi3", "ansi2"]
+ansi_source = "Rose Pine"
+
+[colors]
+background = "#1f1517"
+foreground = "#f9dbe1"
+cursor = "#ffbacc"
+selection_background = "#4d3747"
+ansi = [
+  "#2c2123",
+  "#e96e93",
+  "#8ac9e8",
+  "#e6b26a",
+  "#8395c6",
+  "#d69fd5",
+  "#85afd4",
+  "#e4d0d3",
+
+  "#837376",
+  "#f39eb3",
+  "#9de8f5",
+  "#fdd5bc",
+  "#98aadc",
+  "#f9bff8",
+  "#a8cbe2",
+  "#ffe8ec",
+]
+
+[colors.light]
+background = "#fff8f8"
+foreground = "#2c1b1f"
+cursor = "#ba6d84"
+selection_background = "#eecee3"
+ansi = [
+  "#fff0f2",
+  "#b13360",
+  "#005772",
+  "#845b1b",
+  "#4d6296",
+  "#894d8d",
+  "#2e5276",
+  "#35292c",
+
+  "#837376",
+  "#8e3752",
+  "#004a52",
+  "#714d34",
+  "#3a538d",
+  "#7b3c80",
+  "#244659",
+  "#2c1b1f",
+]

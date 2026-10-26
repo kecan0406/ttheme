@@ -3,7 +3,8 @@ import type { Hex } from '../../core/color.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import { marksOf } from '../../core/mark.ts'
 import { cells, inert } from '../../core/text.ts'
-import { isRemote, OFFICIAL, TOPIC } from '../../store/sources.ts'
+import { BUILTIN } from '../../core/theme.ts'
+import { isRemote, TOPIC } from '../../store/sources.ts'
 import { clip, fit, pieces, spread, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint, type Tone, toned } from '../bar.ts'
 import { Field } from '../field.ts'
@@ -112,6 +113,7 @@ export class BrowsePanel {
     })
     this.list = new PaletteList<Row>({
       entries: this.staged.entries(),
+      works: this.staged.works(),
       picked: this.staged.picked,
       layout: 'marketplaces',
       mode: 'cards',
@@ -565,7 +567,7 @@ export class BrowsePanel {
 
     if (fresh || top !== this.open) {
       this.open = top
-      this.panel.inside.setEntries(top === undefined ? [] : this.staged.membersOf(top))
+      this.panel.inside.setEntries(top === undefined ? [] : this.staged.membersOf(top), this.staged.works())
     }
 
     if (this.side === 'panel' && this.panel.inside.size() === 0) {
@@ -777,7 +779,7 @@ export class BrowsePanel {
   }
 
   private reload(): void {
-    this.list.setEntries(this.staged.entries())
+    this.list.setEntries(this.staged.entries(), this.staged.works())
     this.follow(true)
   }
 
@@ -955,7 +957,7 @@ export class BrowsePanel {
       ...(installed > 0 || !m ? [`${installed} installed`] : []),
       ...(adding > 0 ? [`${adding} to install`] : []),
       ...(dropping > 0 ? [`${dropping} to remove`] : []),
-      ...(m && m.source !== OFFICIAL && !(this.staged.adds.has(m.source) && isRemote(m.source)) ? [cap(m.status)] : []),
+      ...(m && m.source !== BUILTIN && !(this.staged.adds.has(m.source) && isRemote(m.source)) ? [cap(m.status)] : []),
     ]
 
     return {
@@ -1360,7 +1362,7 @@ export class BrowsePanel {
       {
         group: 'Move',
         keys: '→  enter',
-        does: 'Open a marketplace or a catalog',
+        does: 'Open a marketplace or a work',
         ...when(!form, () => this.key('right')),
       },
       {
@@ -1373,14 +1375,14 @@ export class BrowsePanel {
         group: 'Palettes',
         keys: 'space',
         does: 'Pick or unpick',
-        more: 'Apply installs what is picked and removes what is not. Picking a catalog or a marketplace picks every palette in it.',
+        more: 'Apply installs what is picked and removes what is not. Picking a work or a marketplace picks every palette in it.',
         ...when(!form, () => this.key(' ')),
       },
       {
         group: 'Palettes',
         keys: 'ctrl+r',
         does: `Take an update (${MARKS.update})`,
-        more: `On a palette or a catalog marked ${MARKS.update}. The update is installed when you apply.`,
+        more: `On a palette or a work marked ${MARKS.update}. The update is installed when you apply.`,
         ...when(panel, () => this.key('ctrl-r')),
       },
       ...filtering,
@@ -1427,7 +1429,7 @@ export class BrowsePanel {
     return [
       [MARKS.on, 'picked'],
       [MARKS.off, 'not picked'],
-      [`${MARKS.closed} ${MARKS.opened}`, 'a catalog, closed or open'],
+      [`${MARKS.closed} ${MARKS.opened}`, 'a work, closed or open'],
       [MARKS.update, 'has an update'],
       [MARKS.auto, 'updates on its own'],
       [MARKS.miss, 'fails a contrast check'],

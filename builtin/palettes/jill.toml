@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "va-11-hall-a/jill"
+signature = ["cursor", "ansi1", "ansi5"]
+ansi_source = "TokyoNight"
+
+[colors]
+background = "#15181e"
+foreground = "#dee2f2"
+cursor = "#7aa2f7"
+selection_background = "#333d5b"
+ansi = [
+  "#21242b",
+  "#ec6d85",
+  "#64d6a3",
+  "#efb081",
+  "#6c94e9",
+  "#c1a0fe",
+  "#71b1eb",
+  "#d3d4de",
+
+  "#757780",
+  "#f39ec6",
+  "#82f2be",
+  "#fad7be",
+  "#90aae8",
+  "#d0ccff",
+  "#a3cbf3",
+  "#eaedfe",
+]
+
+[colors.light]
+background = "#faf9ff"
+foreground = "#1b1f2b"
+cursor = "#236ddf"
+selection_background = "#ccd6fc"
+ansi = [
+  "#f2f3fd",
+  "#b52f51",
+  "#005c3e",
+  "#8d5628",
+  "#2f60b8",
+  "#7647c7",
+  "#005485",
+  "#292c33",
+
+  "#757780",
+  "#8d3365",
+  "#004c33",
+  "#6d4e35",
+  "#205697",
+  "#514e8a",
+  "#194567",
+  "#1b1f2b",
+]

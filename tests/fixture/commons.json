@@ -1,0 +1,71 @@
+{
+  "works": [
+    {
+      "id": "bocchi-the-rock",
+      "name": "Bocchi the Rock!",
+      "native": "ぼっち・ざ・ろっく!",
+      "lead": "bocchi-the-rock/bocchi",
+      "characters": [
+        {
+          "id": "bocchi",
+          "native": ["後藤ひとり"],
+          "danbooru": "gotoh_hitori",
+          "sites": {
+            "konachan": ["gotou_hitori"],
+            "yande": ["gotou_hitori"],
+            "zerochan": ["gotou_hitori"]
+          }
+        },
+        {
+          "id": "kita",
+          "native": ["喜多郁代"],
+          "danbooru": "kita_ikuyo"
+        },
+        {
+          "id": "nijika",
+          "native": ["伊地知虹夏"],
+          "danbooru": "ijichi_nijika"
+        },
+        {
+          "id": "ryo",
+          "native": ["山田リョウ"],
+          "danbooru": "yamada_ryo",
+          "sites": {
+            "konachan": ["yamada_ryou"],
+            "yande": ["yamada_ryou"],
+            "zerochan": ["yamada_ryou"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lucky-star",
+      "name": "Lucky☆Star",
+      "native": "らき☆すた",
+      "lead": "lucky-star/konata",
+      "characters": [
+        {
+          "id": "kagami",
+          "native": ["柊かがみ"],
+          "danbooru": "hiiragi_kagami"
+        },
+        {
+          "id": "konata",
+          "native": ["泉こなた"],
+          "danbooru": "izumi_konata"
+        },
+        {
+          "id": "miyuki",
+          "native": ["高良みゆき"],
+          "danbooru": "takara_miyuki"
+        },
+        {
+          "id": "tsukasa",
+          "native": ["柊つかさ"],
+          "danbooru": "hiiragi_tsukasa"
+        }
+      ]
+    }
+  ],
+  "renames": {}
+}

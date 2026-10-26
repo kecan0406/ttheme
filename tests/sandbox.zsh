@@ -103,7 +103,7 @@ fs.writeFileSync(made, `${JSON.stringify(next, null, 2)}\n`)
 }
 
 wire() {
-  local label=$1
+  local label=$1 named
   shift
   node $ROOT/bin/ttheme.js init --yes > /dev/null
   (( $# == 0 )) || node $SANDBOX/.config/ttheme/ttheme.js add $@ > /dev/null
@@ -112,8 +112,8 @@ wire() {
     node $ROOT/bin/ttheme.js init --yes > /dev/null
   fi
   if (( PICTURED && $# )); then
-    bun $ROOT/tests/picture.ts $SANDBOX/.config ${@[-1]}
-    node $SANDBOX/.config/ttheme/ttheme.js image ${@[-1]} tuned > /dev/null
+    named=$(bun $ROOT/tests/picture.ts $SANDBOX/.config ${@[-1]})
+    node $SANDBOX/.config/ttheme/ttheme.js image $named tuned > /dev/null
   fi
   print -r -- "ttheme sandbox — $SANDBOX"
   print -r -- "palettes: $label"
@@ -345,7 +345,7 @@ main() {
   elif (( $#empty )); then
     label="none, \`ttheme\` picks them"
   elif (( ! $#palettes )); then
-    palettes=(${(f)"$(node -p "require(process.argv[1]).palettes.map((p) => p.name).join('\\n')" $ROOT/dist/manifest.json)"})
+    palettes=(${(f)"$(node -p "require(process.argv[1]).palettes.map((p) => p.name).join('\\n')" $ROOT/dist/builtin.json)"})
     label="all $#palettes"
   fi
   fresh

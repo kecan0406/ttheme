@@ -2,11 +2,11 @@
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
-                                                 ╭─ official ─────────────────────────────────────╮
+                                                 ╭─ ttheme ───────────────────────────────────────╮
     + Add marketplace   owner/repo or a folder   │ Updates with ttheme                            │
     ⌕ Search marketplace   find one on GitHub    │                                                │
                                                  │    ▾ Bocchi the Rock! (2/3) ぼっち・ざ・ろっ…  │
-    ● official                                   │ ▌    ● bocchi                                  │
+    ● ttheme                                     │ ▌    ● bocchi                                  │
       Built in                                   │      ● kita                                    │
       6 available · 2 installed · 1 to install   │      ○ ryo                                     │
                                                  │    ▸ Lucky☆Star (1/3) らき☆すた                │
@@ -15,7 +15,7 @@
                                                  │                                                │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤
-                                                 │ bocchi  Will install                           │
+                                                 │ ttheme/bocchi  Will install                    │
                                                  │ Contrast 8/12 · ✗ accent hue outside its ANSI… │
                                                  │                                                │
                                                  ├────────────────────────────────────────────────┤

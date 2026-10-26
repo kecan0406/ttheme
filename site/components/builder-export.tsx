@@ -66,7 +66,6 @@ export function LinkPanel({ view }: { view: LinkView }) {
 
   return (
     <>
-      {view.clash ? <Problem text={view.clash} /> : null}
       <CommandRow command={`ttheme add ${view.link}`} class="bg-card" />
       <img
         src={`/builder/${view.code}/card.png`}

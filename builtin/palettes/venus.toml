@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "sailor-moon/venus"
+signature = ["cursor", "ansi3", "ansi12"]
+ansi_source = "Earthsong"
+
+[colors]
+background = "#1e160d"
+foreground = "#f5dfc6"
+cursor = "#e29800"
+selection_background = "#4d3a1e"
+ansi = [
+  "#2a2218",
+  "#f16e41",
+  "#c7c726",
+  "#f5ae2e",
+  "#3b9fcd",
+  "#ff8aa9",
+  "#34beae",
+  "#e1d2c2",
+
+  "#817567",
+  "#f3a288",
+  "#e8e230",
+  "#feda63",
+  "#33badd",
+  "#ffbfcd",
+  "#00dec9",
+  "#ffebd4",
+]
+
+[colors.light]
+background = "#fff8f4"
+foreground = "#291e0e"
+cursor = "#a26c00"
+selection_background = "#f1d3ac"
+ansi = [
+  "#fff1e4",
+  "#ae3e14",
+  "#37591f",
+  "#865b00",
+  "#006b90",
+  "#b3305e",
+  "#005b52",
+  "#332b20",
+
+  "#817567",
+  "#8b3e23",
+  "#2d4919",
+  "#675300",
+  "#005d71",
+  "#804252",
+  "#004b43",
+  "#291e0e",
+]

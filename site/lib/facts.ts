@@ -5,7 +5,7 @@ export interface Repo {
 
 export interface Facts {
   palettes: number
-  catalogs: number
+  works: number
   version: string
   repo: Repo | null
 }

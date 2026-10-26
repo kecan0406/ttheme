@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "steins-gate/mayuri"
+signature = ["cursor", "foreground", "ansi13"]
+ansi_source = "Iceberg Dark"
+
+[colors]
+background = "#11191c"
+foreground = "#e0e2eb"
+cursor = "#9bd5f0"
+selection_background = "#2b3f57"
+ansi = [
+  "#1d2529",
+  "#d97798",
+  "#92ceac",
+  "#bcc078",
+  "#6e9abf",
+  "#a5aee1",
+  "#75b5c7",
+  "#ced6db",
+
+  "#70787d",
+  "#f39cb8",
+  "#adeac7",
+  "#dde297",
+  "#84b0d5",
+  "#d8caff",
+  "#90d0e4",
+  "#e1f0f9",
+]
+
+[colors.light]
+background = "#f4faff"
+foreground = "#1c2026"
+cursor = "#4b8ca7"
+selection_background = "#c4d9f7"
+ansi = [
+  "#edf5fa",
+  "#a24266",
+  "#1f5a3f",
+  "#7c5f1e",
+  "#3a678a",
+  "#525fa0",
+  "#055868",
+  "#262d31",
+
+  "#70787d",
+  "#8f3458",
+  "#0c4c32",
+  "#6c5011",
+  "#2a597a",
+  "#5a4b8a",
+  "#004958",
+  "#142128",
+]

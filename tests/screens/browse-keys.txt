@@ -4,7 +4,7 @@
  ╰─── │                                                                                      │ ───╯
       │   Move          ↑↓  ctrl+j  ctrl+k     Move up or down                               │ ───╮
     + │                 pgup  pgdn  home  end  Move a page, or to either end                 │    │
-    ⌕ │ ▶               →  enter               Open a marketplace or a catalog               │    │
+    ⌕ │ ▶               →  enter               Open a marketplace or a work                  │    │
       │                 ←  esc                 Back to the marketplaces                      │ …  │
  ▌  ● │   Palettes      space                  Pick or unpick                                │    │
  ▌    │                 ctrl+r                 Take an update (⇡)                            │    │

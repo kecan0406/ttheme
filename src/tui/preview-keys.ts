@@ -10,7 +10,7 @@ export interface PreviewKey {
 export const PREVIEW_KEYS: readonly PreviewKey[] = [
   { where: 'list', group: 'Move', keys: '↑↓  ctrl+j  ctrl+k', does: 'Move up or down' },
   { where: 'list', group: 'Move', keys: 'pgup  pgdn  home  end', does: 'Move a page, or to either end' },
-  { where: 'list', group: 'Move', keys: '←→  space', does: 'Close or open a catalog' },
+  { where: 'list', group: 'Move', keys: '←→  space', does: 'Close or open a shelf' },
   { where: 'list', group: 'Filter', keys: 'type', does: 'Filter by name or title, in Japanese too' },
   { where: 'list', group: 'Filter', keys: 'ctrl+u', does: 'Clear the filter' },
   { where: 'list', group: 'Palette', keys: '⇧←→', does: 'Switch the sample' },

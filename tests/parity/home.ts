@@ -1,15 +1,15 @@
 import { Database } from 'bun:sqlite'
 import { chmodSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { PaletteEntry } from '../../src/core/manifest.ts'
+import { find, readPackaged } from '../../src/store/available.ts'
 import { TERMINAL_DOMAIN } from '../../src/terminals/terminal-app.ts'
 import { installTestPicture } from '../picture.ts'
 import { COLS, ITERM_SUITE, type Place, ROWS, warpPaths } from './model.ts'
 import { BEHAVIOR, OWN, type Term, WIRING, WT_PROFILE } from './terms.ts'
 
-export const PALETTES = ['konata', 'kita', 'miku', 'rei']
-export const PICTURED = ['konata', 'kita']
-export const STARTUP = 'konata'
+export const PALETTES = ['ttheme/konata', 'ttheme/kita', 'ttheme/miku', 'ttheme/rei']
+export const PICTURED = ['ttheme/konata', 'ttheme/kita']
+export const STARTUP = 'ttheme/konata'
 
 const SHIMS = {
   ps: 'exit 0',
@@ -286,15 +286,9 @@ export async function build(
   }
 
   await cli(place, 'add', ...PALETTES)
-  const manifest = JSON.parse(readFileSync(join(repo, 'dist', 'manifest.json'), 'utf8')) as { palettes: PaletteEntry[] }
+  const { palettes } = readPackaged(repo).builtin
   PICTURED.forEach((name, i) => {
-    const entry = manifest.palettes.find((p) => p.name === name)
-
-    if (!entry) {
-      throw new Error(`no ${name} in the catalog`)
-    }
-
-    installTestPicture(place.configHome, entry, 1000 + i, { width: 800, height: 510 })
+    installTestPicture(place.configHome, find(palettes, name), 1000 + i, { width: 800, height: 510 })
   })
   await cli(place, 'default', STARTUP)
   writeFileSync(

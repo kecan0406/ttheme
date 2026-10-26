@@ -1,10 +1,9 @@
-import { catalogsOf } from '@/lib/catalogs'
 import { FACET_HEIGHT, FACET_LAMP, FACET_WIDTH, facetCorners, facetMesh, facetPoints, shade } from '@/lib/facets'
 import { INIT } from '@/lib/gallery'
 import { type Raster, raster } from '@/lib/raster'
-import type { Marketplace, Theme } from '@/lib/themes'
+import { BUILTIN, isBuiltin, type Marketplace, shortName, type Theme } from '@/lib/themes'
 import { INK, wordmarkSvg } from '@/lib/wordmark'
-import { leadOf } from '@/lib/workspace'
+import { leadsOf, worksIn } from '@/lib/works'
 import { GLYPH, glyphSvg, marksOf } from '../../src/core/mark.ts'
 import { liftOk, mixOk } from '../../src/core/oklab.ts'
 
@@ -32,7 +31,7 @@ export type Card =
   | { kind: 'palette' | 'share'; theme: Theme }
   | { kind: 'marketplace'; marketplace: Marketplace | null; palettes: Theme[] }
   | { kind: 'bundle'; palettes: Theme[] }
-  | { kind: 'site'; theme: Theme; palettes: number; catalogs: number }
+  | { kind: 'site'; theme: Theme; palettes: number; works: number }
 
 type Part = [text: string, fill: string, options?: { bold?: boolean; background?: string }]
 
@@ -322,9 +321,9 @@ function listing(
 }
 
 function listed(palettes: Theme[], count: number): Theme[] {
-  const leads = catalogsOf(palettes).map(({ themes }) => leadOf(themes))
+  const leads = leadsOf(palettes)
 
-  return [...leads, ...palettes.filter((theme) => !leads.includes(theme))].slice(0, count)
+  return [...new Set([...leads, ...palettes])].slice(0, count)
 }
 
 function windowOf(kit: Raster, theme: Theme, k: Tones, title: string, { width, height }: Frame) {
@@ -355,7 +354,7 @@ function windowOf(kit: Raster, theme: Theme, k: Tones, title: string, { width, h
 }
 
 function windowTitle(theme: Theme): string {
-  const full = [theme.catalog, theme.name].filter(Boolean).join(' · ')
+  const full = [theme.work?.name, theme.name].filter(Boolean).join(' · ')
 
   return full.length <= 26 ? full : clip(theme.name, 26)
 }
@@ -378,8 +377,8 @@ function palette(kit: Raster, card: Extract<Card, { kind: 'palette' | 'share' }>
   ]
 
   const below = 300 + (rows.length - 1) * size * 0.92
-  const label = card.kind === 'share' ? 'shared palette' : (theme.catalog ?? theme.marketplace ?? 'palette')
-  const sub = card.kind === 'palette' && theme.catalog ? theme.marketplace : null
+  const label = card.kind === 'share' ? 'shared palette' : (theme.work?.name ?? theme.marketplace)
+  const sub = card.kind === 'palette' && theme.work && !isBuiltin(theme) ? theme.marketplace : null
   const ui = kit.family.ui
   out.push(
     text(label, {
@@ -399,24 +398,24 @@ function palette(kit: Raster, card: Extract<Card, { kind: 'palette' | 'share' }>
 
   out.push(dots(theme.signature, MARGIN, frame.height - MARGIN - 22, 22, 14))
   out.push(window.drawn)
-  out.push(shell(kit, theme, k, theme.id, window.body.x, window.body.y, window.body.width))
+  out.push(shell(kit, theme, k, shortName(theme.id), window.body.x, window.body.y, window.body.width))
 
   return sheet(frame, theme, k, window.shadow, out.join(''))
 }
 
 function marketplace(kit: Raster, card: Extract<Card, { kind: 'marketplace' }>, frame: Frame): string {
   const { marketplace: market, palettes } = card
-  const theme = leadOf(catalogsOf(palettes)[0]?.themes ?? palettes)
+  const theme = leadsOf(palettes)[0] as Theme
   const k = tones(theme)
-  const catalogs = catalogsOf(palettes).length
+  const works = worksIn(palettes)
 
   const about = market
     ? market.about
-    : `${palettes.length} palettes in ${catalogs} series, each measured from the character's official art`
+    : `${palettes.length} palettes from ${works} works, each measured from the character's official art`
 
   const command = market ? `ttheme marketplace add ${market.add}` : INIT
   const window = windowOf(kit, theme, k, 'ttheme marketplace', frame)
-  const { size, rows } = rowsOf(kit, market?.id ?? 'official', window.left, 110, 56)
+  const { size, rows } = rowsOf(kit, market?.id ?? BUILTIN, window.left, 110, 56)
   const top = 250 + (rows.length - 1) * size * 0.92 + 58
 
   const out = [
@@ -427,8 +426,7 @@ function marketplace(kit: Raster, card: Extract<Card, { kind: 'marketplace' }>, 
       .map((row, at) => text(row, { x: MARGIN, y: top + at * 38, size: 28, fill: k.muted, family: kit.family.ui })),
   ]
 
-  const unit = market ? 'catalogs' : 'series'
-  const facts = `${palettes.length} palettes · ${catalogs} ${unit}`
+  const facts = `${palettes.length} palettes · ${works} works`
   out.push(text(facts, { x: MARGIN, y: frame.height - MARGIN, size: 28, fill: k.soft, family: kit.family.ui }))
   out.push(window.drawn)
   out.push(listing(kit, command, listed(palettes, 7), k, theme.ansi[3] as string, window.body))
@@ -486,7 +484,7 @@ function site(kit: Raster, card: Extract<Card, { kind: 'site' }>, frame: Frame):
 
   const last = first + (HEADLINE.length - 1) * size * 0.94
   out.push(text(TAGLINE, { x: MARGIN, y: last + 52, size: 30, fill: k.soft, family: kit.family.ui }))
-  const facts = `${card.palettes} palettes · ${card.catalogs} series`
+  const facts = `${card.palettes} palettes · ${card.works} works`
   out.push(text(facts, { x: MARGIN, y: frame.height - MARGIN, size: 28, fill: k.muted, family: kit.family.ui }))
   out.push(window.drawn)
   out.push(shell(kit, theme, k, theme.name, window.body.x, window.body.y, window.body.width))
@@ -511,12 +509,12 @@ export function cardAlt(card: Card): string {
     return `ttheme: use your favorite anime character in your terminal, beside a terminal window showing ${card.theme.name}`
 
   if (card.kind === 'marketplace')
-    return `${card.marketplace?.id ?? 'official'} marketplace: its name and description beside a terminal window listing its palettes`
+    return `${card.marketplace?.id ?? BUILTIN} marketplace: its name and description beside a terminal window listing its palettes`
 
   if (card.kind === 'bundle')
     return `${card.palettes.length} shared palettes: their count beside a terminal window listing them with their signature colors`
-  const { name, catalog } = card.theme
-  const whose = card.kind === 'share' ? `${name}, a shared palette` : `${name}${catalog ? `, ${catalog}` : ''}`
+  const { name, work } = card.theme
+  const whose = card.kind === 'share' ? `${name}, a shared palette` : `${name}${work ? `, ${work.name}` : ''}`
 
   return `${whose}: its name and three signature colors beside a terminal window showing the palette`
 }

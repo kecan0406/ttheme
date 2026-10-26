@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "oregairu/yukino"
+signature = ["cursor", "ansi1", "foreground"]
+ansi_source = "Mariana + Service Club"
+
+[colors]
+background = "#12181d"
+foreground = "#e0e3e5"
+cursor = "#7faed1"
+selection_background = "#333f49"
+ansi = [
+  "#1e242a",
+  "#da7b78",
+  "#91cdae",
+  "#b2c365",
+  "#629bcb",
+  "#b3aae4",
+  "#67b7c8",
+  "#cfd5dc",
+
+  "#71787e",
+  "#f3a0b6",
+  "#afe9cb",
+  "#d2e48a",
+  "#84b0d7",
+  "#d3ccff",
+  "#8fd1e1",
+  "#e3effb",
+]
+
+[colors.light]
+background = "#f6faff"
+foreground = "#1c2022"
+cursor = "#497999"
+selection_background = "#ccd9e5"
+ansi = [
+  "#eef4fb",
+  "#a84141",
+  "#1f5a42",
+  "#815e00",
+  "#296895",
+  "#6a57a1",
+  "#005866",
+  "#272d32",
+
+  "#71787e",
+  "#8c3754",
+  "#104b36",
+  "#6f5000",
+  "#2a597b",
+  "#5a4b88",
+  "#004955",
+  "#162129",
+]

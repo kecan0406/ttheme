@@ -1,9 +1,10 @@
+import type { WorkRef } from '@/lib/themes'
 import type { Hex } from '../../src/core/color.ts'
 import type { Draft } from '../../src/core/draft.ts'
 import { mirror } from '../../src/core/mirror.ts'
 import { type Mode, modeOf, otherOf } from '../../src/core/mode.ts'
 import { colorsOf, listOf, SLOT_NAMES } from '../../src/core/slots.ts'
-import { marketplaceOf, nameProblem, type SharedPicture, slugOf } from '../../src/core/theme.ts'
+import { type SharedPicture, slugOf, slugProblem, subjectProblem } from '../../src/core/theme.ts'
 
 export const STORE = 'ttheme-builder'
 
@@ -18,11 +19,9 @@ export const BLANK_NAME = 'my-palette'
 export const BLANK_SIGNATURE = ['cursor', 'ansi5', 'ansi4']
 
 export interface Meta {
-  base?: string
+  subject?: string
   from?: string
   ansiSource?: string
-  booru?: string
-  booruSites?: Record<string, string[]>
   waive?: string[]
   reason?: string
   pictures?: SharedPicture[]
@@ -47,13 +46,18 @@ export interface Edit {
   at: number
 }
 
-export interface Start {
+export interface Opening {
   name: string
-  shelf: string
-  native: string | null
-  lead: boolean
-  dots: Hex[]
   draft: Draft
+}
+
+export interface Start extends Opening {
+  shelf: string
+  work: Pick<WorkRef, 'name' | 'native' | 'lang'> | null
+  publisher: string
+  lead: boolean
+  words: string
+  dots: Hex[]
 }
 
 export interface Stored {
@@ -61,11 +65,10 @@ export interface Stored {
 }
 
 export interface BuilderData {
-  first: Start
+  first: Opening
   link: string | null
   panes: string[]
   uses: number[][]
-  official: string[]
 }
 
 export type View = 'made' | 'other'
@@ -80,11 +83,9 @@ function copied(side: Side): Side {
 
 export function metaOf(draft: Draft): Meta {
   return {
-    ...(draft.base ? { base: draft.base } : {}),
+    ...(draft.subject ? { subject: draft.subject } : {}),
     ...(draft.from ? { from: draft.from } : {}),
     ...(draft.ansiSource ? { ansiSource: draft.ansiSource } : {}),
-    ...(draft.booru ? { booru: draft.booru } : {}),
-    ...(draft.booruSites ? { booruSites: draft.booruSites } : {}),
     ...(draft.waive && draft.waive.length > 0 ? { waive: draft.waive, reason: draft.reason ?? '' } : {}),
     ...(draft.pictures && draft.pictures.length > 0 ? { pictures: draft.pictures } : {}),
   }
@@ -95,12 +96,8 @@ export function editOf(draft: Draft, source: string | null, own: boolean, id: st
   const other = sideOf(draft)
   const meta = metaOf(draft)
   const copy = !own && source !== null
-  const { ansiSource: _, base: __, ...rest } = meta
-  const base = copy && !marketplaceOf(source) ? source : draft.base
 
-  const kept: Meta = copy
-    ? { ...rest, ...(base ? { base } : {}), ...(meta.waive ? { reason: `kept from ${source}` } : {}) }
-    : meta
+  const kept: Meta = copy ? { ...meta, from: source, ...(meta.waive ? { reason: `kept from ${source}` } : {}) } : meta
 
   return started({
     id,
@@ -228,9 +225,11 @@ export function resetAll(edit: Edit): Edit {
 }
 
 export function nameTrouble(name: string): string | undefined {
-  if (name.includes('/') || name.includes('@')) return 'takes lowercase letters, digits and single hyphens'
+  return slugProblem(name)
+}
 
-  return nameProblem(name)
+export function subjectTrouble(subject: string | undefined): string | undefined {
+  return subject === undefined ? undefined : subjectProblem(subject)
 }
 
 export function draftFrom(edit: Body): Draft {
@@ -240,11 +239,9 @@ export function draftFrom(edit: Body): Draft {
 
   return {
     name: edit.name,
-    ...(meta.base ? { base: meta.base } : {}),
+    ...(meta.subject ? { subject: meta.subject } : {}),
     ...(meta.from ? { from: meta.from } : {}),
     ...(meta.ansiSource ? { ansiSource: meta.ansiSource } : {}),
-    ...(meta.booru ? { booru: meta.booru } : {}),
-    ...(meta.booru && meta.booruSites ? { booruSites: meta.booruSites } : {}),
     signature: [...edit.signature],
     ...made,
     ...(writesOther(edit) ? { other: colorsOf(otherList(edit)) } : {}),

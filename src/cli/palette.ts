@@ -5,9 +5,19 @@ import { type Anchors, type Problem, readAnchors } from '../core/anchors.ts'
 import { bestBase, parseScheme, type Ranked, ROLE_BASE, roleBase } from '../core/base.ts'
 import { AGENT, MAX_PIXELS } from '../core/booru.ts'
 import type { Hex } from '../core/color.ts'
+import {
+  aboutOf,
+  type Commons,
+  mergeWorks,
+  WORKS_DIR,
+  type Work,
+  workIdProblem,
+  workOf,
+  workToml,
+} from '../core/commons.ts'
 import { hairOf, readRelated, type Tagged, type Verdict, verdictOf, worn } from '../core/consensus.ts'
 import { check } from '../core/contrast.ts'
-import { type Draft, paletteToml } from '../core/draft.ts'
+import { paletteToml } from '../core/draft.ts'
 import { type Crop, cropProblem, type Flat, flatsOf } from '../core/flats.ts'
 import { type Departure, departures } from '../core/harmonize.ts'
 import { hctOf } from '../core/hct.ts'
@@ -16,27 +26,29 @@ import { lookalikes, mirrored, withSlot } from '../core/mirror.ts'
 import { decodeImage, encodeRgba, type Rgba, resample } from '../core/png.ts'
 import type { Colors } from '../core/seeds.ts'
 import {
-  type Catalog,
-  catalogProblem,
+  BUILTIN,
+  characterIdOf,
   MARKETPLACE_FILE,
   readTheme,
   type Shade,
   type Theme,
   textProblem,
+  toml,
+  workIdOf,
 } from '../core/theme.ts'
 import { artDir, artKey, fetchArt } from '../pictures/art.ts'
 import { reach, readMarketplaces } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
-import { marketplaceFiles } from '../store/local.ts'
+import { marketplaceFiles, palettesDir, readMarketplaceDir, warning, worksDir } from '../store/local.ts'
 import { namesOf } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
 import { readSchemes, schemesDir, syncSchemes } from '../store/schemes.ts'
-import { localIdentity } from '../store/sources.ts'
 import { normalize } from '../tui/find/attach.ts'
 import { EXIT, emit, InputError } from './answer.ts'
+import { loadCommons } from './build.ts'
 import { install } from './craft.ts'
-import { ensureLocal } from './marketplaces.ts'
-import { withCatalogs } from './publish.ts'
+import { commonsFor, ensureLocal } from './marketplaces.ts'
+import { withCharacter } from './publish.ts'
 
 export interface PaletteFlags {
   json?: boolean
@@ -44,9 +56,9 @@ export interface PaletteFlags {
   crop?: string
   quant?: string
   anchors?: string
-  catalog?: string
-  native?: string
-  lead?: string
+  work?: string
+  'work-name'?: string
+  'work-native'?: string
   in?: string
   'dry-run'?: boolean
 }
@@ -71,6 +83,7 @@ interface Measured {
 
 interface Made {
   name: string
+  subject?: string
   file: string
   changed: boolean
   written: boolean
@@ -352,23 +365,56 @@ function readAnchorsFile(path: string | undefined): Anchors[] {
 
 interface Target {
   dir: string
-  id?: string
-  official: boolean
-  catalogs: Catalog[]
+  id: string
+  builtin: boolean
+  commons: Commons
+  proposals: Work[]
+  records: string
+}
+
+interface Recorded {
+  work: string
+  characters: string[]
+  file: string
+  changed: boolean
+  written: boolean
+  text: string
+}
+
+function builtinIn(dir: string): boolean {
+  const path = join(dir, MARKETPLACE_FILE)
+
+  return existsSync(path) && toml(MARKETPLACE_FILE, readFileSync(path, 'utf8')).name === BUILTIN
 }
 
 async function targetOf(into: string | undefined, dry: boolean): Promise<Target | undefined> {
   const home = configHome()
   const dir = into === undefined ? undefined : expand(into)
 
-  const official = dir && existsSync(join(dir, MARKETPLACE_FILE)) ? localIdentity(dir) : undefined
+  if (dir && builtinIn(dir)) {
+    const commons = join(dir, '..', 'commons')
 
-  if (dir && official?.name === 'official') return { dir, official: true, catalogs: official.catalogs }
+    return {
+      dir,
+      id: BUILTIN,
+      builtin: true,
+      commons: loadCommons(commons),
+      proposals: [],
+      records: join(commons, WORKS_DIR),
+    }
+  }
 
   try {
     const local = await ensureLocal(home, into)
 
-    return { dir: local.dir, id: local.id, official: false, catalogs: localIdentity(local.dir).catalogs }
+    return {
+      dir: local.dir,
+      id: local.id,
+      builtin: false,
+      commons: commonsFor(home),
+      proposals: readMarketplaceDir(local.dir, local.id, warning(false)).works,
+      records: worksDir(local.dir),
+    }
   } catch (error) {
     if (dry) return undefined
 
@@ -397,24 +443,26 @@ function nativeNamesOf(anchors: Anchors, booru: string | undefined): string[] | 
   return names.length > 0 ? names.slice(0, NATIVE_MOST) : undefined
 }
 
-function shelvedIn(dir: string, catalogs: readonly Catalog[]): Theme[] {
-  const known = new Map(catalogs.map((c) => [c.name, c]))
+function taggedIn(works: readonly Work[], tags: readonly (string | undefined)[]): string | undefined {
+  for (const work of works) {
+    const character = work.characters.find((c) => c.danbooru !== undefined && tags.includes(c.danbooru))
 
-  return marketplaceFiles(dir, catalogs)
-    .filter((f) => f.catalog !== undefined)
-    .map((f) => readTheme(f.path, readFileSync(f.path, 'utf8'), { name: f.slug, catalog: f.catalog, catalogs: known }))
+    if (character) return `${work.id}/${character.id}`
+  }
+
+  return undefined
 }
 
-function ordersIn(themes: readonly Theme[]): Map<string, number[]> {
-  return new Map(
-    [...Map.groupBy(themes, (t) => t.catalog as string)].map(([catalog, held]) => [catalog, held.map((t) => t.order)]),
+function shippedIn(dir: string): Theme[] {
+  return marketplaceFiles(dir).map((f) =>
+    readTheme(f.path, readFileSync(f.path, 'utf8'), { name: `${BUILTIN}/${f.slug}`, builtin: true }),
   )
 }
 
-function codenameIn(themes: readonly Theme[], catalog: string): string {
-  return (
-    themes.find((t) => t.catalog === catalog && t.ansiSource.includes(' + '))?.ansiSource.split(' + ')[1] ?? catalog
-  )
+function codenameIn(shipped: readonly Theme[], work: Work): string {
+  const named = shipped.find((t) => t.subject && workIdOf(t.subject) === work.id && t.ansiSource.includes(' + '))
+
+  return named?.ansiSource.split(' + ')[1] ?? work.name
 }
 
 function anchoredOf(anchors: Anchors): Shade & { name: string; signatureSlots: string[] } {
@@ -456,26 +504,6 @@ function baseFor(
   }
 }
 
-function draftOf(
-  anchors: Anchors,
-  best: Ranked,
-  booru: string | undefined,
-  source: string,
-  extra: Pick<Draft, 'order' | 'other'>,
-): Draft {
-  const nativeNames = nativeNamesOf(anchors, booru)
-
-  return {
-    name: anchors.name,
-    ...(nativeNames ? { nativeNames } : {}),
-    ...extra,
-    ansiSource: source,
-    ...(booru ? { booru } : {}),
-    signature: anchors.slots.map(([slot]) => slot),
-    ...colorsOfTheme(best.shade),
-  }
-}
-
 async function corpus(notes: string[]): Promise<(readonly [string, Shade | undefined])[]> {
   try {
     const synced = await syncSchemes()
@@ -495,6 +523,29 @@ async function corpus(notes: string[]): Promise<(readonly [string, Shade | undef
   return [[ROLE_BASE, roleBase()]]
 }
 
+function workProblems(flags: PaletteFlags): Problem[] {
+  const problems: Problem[] = []
+  const work = flags.work
+
+  if (work !== undefined && workIdProblem(work)) {
+    problems.push({ path: 'work', problem: workIdProblem(work) as string })
+  }
+
+  for (const key of ['work-name', 'work-native'] as const) {
+    const value = flags[key]
+
+    if (value !== undefined && textProblem(value)) {
+      problems.push({ path: key, problem: textProblem(value) as string })
+    }
+
+    if (value !== undefined && work === undefined) {
+      problems.push({ path: key, problem: `--${key} names a work — pass --work too` })
+    }
+  }
+
+  return problems
+}
+
 async function make(only: string | undefined, flags: PaletteFlags): Promise<number> {
   const dry = flags['dry-run'] === true
   const all = readAnchorsFile(flags.anchors)
@@ -506,48 +557,20 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
     ])
   }
 
-  const catalog = flags.catalog
-  const problems: Problem[] = []
-
-  if (catalog !== undefined && catalogProblem(catalog)) {
-    problems.push({ path: 'catalog', problem: catalogProblem(catalog) as string })
-  }
-
-  if (flags.native !== undefined && textProblem(flags.native)) {
-    problems.push({ path: 'native', problem: textProblem(flags.native) as string })
-  }
-
-  if ((flags.native !== undefined || flags.lead !== undefined) && catalog === undefined) {
-    problems.push({ path: 'catalog', problem: '--native and --lead name a catalog — pass --catalog too' })
-  }
-
-  const target = await targetOf(flags.in, dry)
-
-  if (target?.official && catalog === undefined) {
-    problems.push({ path: 'catalog', problem: 'an official palette sits in a catalog — pass --catalog' })
-  }
-
-  const table = catalog === undefined ? undefined : target?.catalogs.find((c) => c.name === catalog)
-  const lead = flags.lead ?? table?.lead
-
-  if (flags.lead !== undefined && !chosen.some((a) => a.name === flags.lead)) {
-    const shelved = target ? marketplaceFiles(target.dir, target.catalogs) : []
-
-    if (!shelved.some((f) => f.slug === flags.lead && f.catalog === catalog)) {
-      problems.push({ path: 'lead', problem: `one of the palettes in ${catalog}` })
-    }
-  }
+  const problems = workProblems(flags)
 
   if (problems.length > 0) throw new InputError('the options do not fit together', problems)
 
+  const target = await targetOf(flags.in, dry)
+  const commons = target?.commons ?? commonsFor(configHome())
+  const known = mergeWorks(commons.works, target?.proposals ?? [])
+  const held = (id: string) => workOf(target?.builtin ? commons.works : (target?.proposals ?? []), id)
+  const shipped = target?.builtin ? shippedIn(target.dir) : []
   const notes: string[] = []
   const schemes = await corpus(notes)
-  const shelved = target?.official ? shelvedIn(target.dir, target.catalogs) : []
-  const orders = ordersIn(shelved)
-  const highest = Math.max(0, ...[...orders.values()].flat())
-  let next = catalog && orders.has(catalog) ? Math.max(...(orders.get(catalog) as number[])) + 1 : highest + 1
   const made: Made[] = []
   const failed: Problem[] = []
+  const records = new Map<string, { work: Work; characters: string[] }>()
 
   for (const anchors of chosen) {
     const { ranked, problems: why } = baseFor(anchors, schemes)
@@ -562,43 +585,75 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
 
     if (current && current !== anchors.booru) notes.push(`${anchors.name}: danbooru calls ${anchors.booru} ${current}`)
 
-    const other = target?.official
+    const tagged = booru ? taggedIn(known, [booru, anchors.booru]) : undefined
+    const subject = tagged ?? (flags.work ? `${flags.work}/${anchors.name}` : undefined)
+
+    if (tagged && flags.work && workIdOf(tagged) !== flags.work) {
+      notes.push(`${anchors.name}: the commons holds ${booru} as ${tagged} — the palette names that`)
+    }
+
+    if (target?.builtin && subject === undefined) {
+      failed.push({ path: anchors.name, problem: 'a built-in palette names its work — pass --work' })
+      continue
+    }
+
+    const about = aboutOf(known, subject)
+    const nativeNames = !subject ? undefined : about?.known ? about.character?.native : nativeNamesOf(anchors, booru)
+
+    if (subject && !about?.known) {
+      const id = workIdOf(subject)
+      const was = records.get(id)
+      const commonsWork = workOf(commons.works, id)
+      const title = commonsWork?.name ?? flags['work-name']
+      const native = commonsWork?.native ?? flags['work-native']
+
+      if (!was && !held(id) && title === undefined) {
+        failed.push({ path: 'work-name', problem: `${id} is a new work — name it with --work-name` })
+        continue
+      }
+
+      const character = characterIdOf(subject) as string
+
+      const added = withCharacter(
+        was?.work ?? held(id) ?? { id, name: title as string, ...(native ? { native } : {}), characters: [] },
+        { id: character, ...(nativeNames ? { native: nativeNames } : {}), ...(booru ? { danbooru: booru } : {}) },
+      )
+
+      records.set(id, { work: added, characters: [...(was?.characters ?? []), character] })
+    }
+
+    const other = target?.builtin
       ? colorsOfTheme(
           mirrored({ ...ranked.shade, name: anchors.name, signatureSlots: anchors.slots.map(([s]) => s), waive: [] })
             .shade,
         )
       : undefined
 
-    const source = target?.official && catalog ? `${ranked.name} + ${codenameIn(shelved, catalog)}` : ranked.name
-    const order = target?.official ? next++ : undefined
-
-    const draft = draftOf(anchors, ranked, booru, source, { ...(order ? { order } : {}), ...(other ? { other } : {}) })
-    const text = paletteToml(draft)
-
-    const file = target ? join(target.dir, 'palettes', ...(catalog ? [catalog] : []), `${anchors.name}.toml`) : ''
-
-    const clash =
-      target &&
-      marketplaceFiles(target.dir, target.catalogs).find((f) => f.slug === anchors.name && f.catalog !== catalog)
-
-    if (clash) {
-      failed.push({
-        path: anchors.name,
-        problem: `${target?.id ?? 'the marketplace'} already has ${anchors.name}${clash.catalog ? ` in ${clash.catalog}` : ''} — a name is used once in a marketplace`,
-      })
-      continue
-    }
-
+    const work = subject ? (records.get(workIdOf(subject))?.work ?? aboutOf(known, subject)?.work) : undefined
+    const source = target?.builtin && work ? `${ranked.name} + ${codenameIn(shipped, work)}` : ranked.name
+    const name = target ? `${target.id}/${anchors.name}` : anchors.name
     const signatureSlots = anchors.slots.map(([slot]) => slot)
+
+    const text = paletteToml({
+      name,
+      ...(subject ? { subject } : {}),
+      ansiSource: source,
+      signature: signatureSlots,
+      ...colorsOfTheme(ranked.shade),
+      ...(other ? { other } : {}),
+    })
+
+    const file = target ? join(palettesDir(target.dir), `${anchors.name}.toml`) : ''
     const theme = { ...ranked.shade, name: anchors.name, signatureSlots, waive: [] }
 
     made.push({
-      name: target?.id ? `${target.id}/${anchors.name}` : anchors.name,
+      name,
+      ...(subject ? { subject } : {}),
       file,
       changed: file === '' || !existsSync(file) || readFileSync(file, 'utf8') !== text,
       written: false,
       ...(anchors.source ? { source: anchors.source } : {}),
-      ...(draft.nativeNames ? { nativeNames: draft.nativeNames } : {}),
+      ...(nativeNames ? { nativeNames } : {}),
       colors: colorsOfTheme(ranked.shade),
       base: ranked.name,
       signature: departures(
@@ -619,24 +674,29 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
 
   if (failed.length > 0) throw new InputError(`${failed.length} palette(s) cannot be made`, failed)
 
-  const catalogText =
-    target && catalog && !table
-      ? withCatalogs(readFileSync(join(target.dir, MARKETPLACE_FILE), 'utf8'), [
-          { name: catalog, ...(flags.native ? { native: flags.native } : {}), ...(lead ? { lead } : {}) },
-        ])
-      : undefined
+  const recorded: Recorded[] = [...records].map(([work, { work: record, characters }]) => {
+    const file = target ? join(target.records, `${work}.toml`) : ''
+    const text = workToml(record)
+
+    return {
+      work,
+      characters,
+      file,
+      changed: file === '' || !existsSync(file) || readFileSync(file, 'utf8') !== text,
+      written: false,
+      text,
+    }
+  })
 
   let installed: string[] = []
 
   if (!dry && target) {
-    for (const m of made.filter((x) => x.changed)) {
-      writeAtomic(m.file, m.text)
-      m.written = true
+    for (const item of [...made, ...recorded].filter((x) => x.changed)) {
+      writeAtomic(item.file, item.text)
+      item.written = true
     }
 
-    if (catalogText !== undefined) writeAtomic(join(target.dir, MARKETPLACE_FILE), catalogText)
-
-    if (!target.official) {
+    if (!target.builtin) {
       const home = configHome()
       installed = install(
         home,
@@ -646,33 +706,39 @@ async function make(only: string | undefined, flags: PaletteFlags): Promise<numb
     }
   }
 
-  const changed = made.some((m) => m.changed) || catalogText !== undefined || installed.length > 0
+  const changed = made.some((m) => m.changed) || recorded.some((r) => r.changed) || installed.length > 0
   const status = dry || changed ? 'done' : 'unchanged'
 
   if (flags.json) {
     emit({
       status,
       dryRun: dry,
-      ...(target?.id ? { marketplace: target.id } : {}),
+      ...(target ? { marketplace: target.id } : {}),
       notes,
       palettes: made.map(({ text: _, ...m }) => ({ ...m, installed: installed.includes(m.name) })),
+      works: recorded.map(({ text: _, ...r }) => r),
     })
   } else {
-    console.log(madeLines(made, { dry, installed, notes, official: target?.official === true }).join('\n'))
+    console.log(madeLines(made, recorded, { dry, installed, notes, builtin: target?.builtin === true }).join('\n'))
   }
 
   return status === 'unchanged' ? EXIT.unchanged : EXIT.done
 }
 
+function wrote(item: { changed: boolean; written: boolean; file: string }): string {
+  return `${item.changed ? (item.written ? 'wrote' : 'would write') : 'unchanged'}  ${item.file || '(no marketplace yet)'}`
+}
+
 function madeLines(
   made: Made[],
-  { dry, installed, notes, official }: { dry: boolean; installed: string[]; notes: string[]; official: boolean },
+  recorded: Recorded[],
+  { dry, installed, notes, builtin }: { dry: boolean; installed: string[]; notes: string[]; builtin: boolean },
 ): string[] {
   const lines = made.flatMap((m) => {
     const part = Math.max(0, ...m.signature.map((d) => d.part.length))
 
     return [
-      `${m.name} · base ${m.base}`,
+      `${m.name}${m.subject ? ` · ${m.subject}` : ''} · base ${m.base}`,
       ...m.signature.map(
         (d) =>
           `  ${d.slot.padEnd(10)} ${d.part.padEnd(part)}  ${d.measured} → ${d.final}  ΔE ${d.delta.toFixed(1)}${d.far || d.turned ? '  far from its anchor' : ''}`,
@@ -680,16 +746,17 @@ function madeLines(
       ...m.turned.map((t) => `  turned     ${t.slot} ${t.from} → ${t.to}  ${t.rule}`),
       ...m.lookalikes.map((pair) => `  reads as one  ${pair}`),
       ...(m.gate.length > 0 ? m.gate.map((g) => `  contrast   ${g}`) : ['  contrast   clean']),
-      `  ${m.changed ? (m.written ? 'wrote' : 'would write') : 'unchanged'}  ${m.file || '(no marketplace yet)'}`,
+      `  ${wrote(m)}`,
     ]
   })
 
   return [
     ...notes.map((n) => `note: ${n}`),
     ...lines,
+    ...recorded.flatMap((r) => [`${r.work} · ${r.characters.join(', ')}`, `  ${wrote(r)}`]),
     ...(installed.length > 0
       ? ['', `Installed ${installed.join(', ')} — \`ttheme use <name>\` uses one in a tab`]
       : []),
-    ...(official && !dry ? ['', 'Next: mise run build, then mise run ci'] : []),
+    ...(builtin && !dry ? ['', 'Next: mise run build, then mise run ci'] : []),
   ]
 }

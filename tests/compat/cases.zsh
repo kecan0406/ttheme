@@ -326,7 +326,11 @@ __cc_profiles() {
   laid=$held[1]
   stem=${${laid:t}#ttheme-}
   stem=${stem%%.*}
-  pal=${${stem/--/@}/--//}
+  if [[ $stem == *--*--* ]]; then
+    pal=${${stem/--/@}/--//}
+  else
+    pal=${stem/--//}
+  fi
   bg=${${=TTHEME_PALETTE[$pal]}[1]}
   printf '\e[H\e[2J'
   print -rn -- $green | base64 -d > $laid

@@ -185,7 +185,7 @@ test('f moves the colors the gate misses', () => {
 })
 
 test('esc asks to save changes: y saves, n leaves without saving, esc and other keys keep editing', () => {
-  const e = press(editor({ check: () => 'meta.signature must name three colors that differ' }), 'tab', '9')
+  const e = press(editor({ check: () => 'signature must name three colors that differ' }), 'tab', '9')
   press(e, 'enter', 's')
   assert.equal(e.result, undefined)
   assert.match(e.notice ?? '', /signature/)
@@ -545,8 +545,8 @@ test('a paste into the palette picker keeps only what a typed key could add, so 
 })
 
 test('a share code pasted into the editor takes its colors, and a plain paste is still a color', () => {
-  const e = editor({ decode: (text) => (text === 'tt4:dawn' ? other : undefined) })
-  e.paste('tt4:dawn')
+  const e = editor({ decode: (text) => (text === 'tt5:dawn' ? other : undefined) })
+  e.paste('tt5:dawn')
   assert.deepEqual(e.colors(), other)
   press(e, 'u')
   assert.deepEqual(e.colors(), start)

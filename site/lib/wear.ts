@@ -65,7 +65,7 @@ export function headlineEm(text: string): number {
 export function wearScript(fallback: Theme): string {
   const light = json(wearVars(inMode(fallback, 'light')))
 
-  return `(function(){try{var h=document.documentElement,s=h.style,m=document.querySelector('meta[name=theme-color]'),c=document.querySelector('link[rel=icon]'),a=[${ADVANCES.join(',')}],g='${GLYPHS}',q=localStorage.getItem('${MODE_KEY}'),l=q==='light'||(q==='auto'&&matchMedia('(prefers-color-scheme: light)').matches),d=l?'light':'dark',w=JSON.parse(localStorage.getItem('${WEAR_KEY}')),v=w&&w.v&&w.v[d],i,e=0,k,n,o,B,F,L,M,K=${json(MARKS)};h.setAttribute('data-mode',d);h.setAttribute('data-setting',q==='light'||q==='auto'?q:'dark');if(!v||!v.length){if(!l)return;v=${light};w=null}for(i=0;i<v.length;i++)if(v[i][0].indexOf('--')===0){s.setProperty(v[i][0],v[i][1]);if(m&&v[i][0]==='--bg')m.content=v[i][1]}s.colorScheme=l?'light only':'dark only';n=w&&w.t&&w.t.name;if(typeof n==='string'){h.setAttribute('data-picked','');for(i=0;i<n.length;i++){k=g.indexOf(n[i]);e+=(k<0?${WIDEST}:a[k])+(${TRACKING})}s.setProperty('--palette-name',JSON.stringify(n));s.setProperty('--palette-catalog',JSON.stringify(w.t.catalog||''));s.setProperty('--palette-em',String(e/1000))}o=function(x){for(var z=0;z<v.length;z++)if(v[z][0]===x)return v[z][1]};B=o('--bg');F=o('--fg');L=${LIFT};M=[L(o('--sg0'),B,F),L(o('--sg1'),B,F),L(o('--sg2'),B,F)];for(i=0;i<3;i++)s.setProperty(K[i],M[i]);if(c)c.href=(${ICON})(B,F,M)}catch(x){}})()`
+  return `(function(){try{var h=document.documentElement,s=h.style,m=document.querySelector('meta[name=theme-color]'),c=document.querySelector('link[rel=icon]'),a=[${ADVANCES.join(',')}],g='${GLYPHS}',q=localStorage.getItem('${MODE_KEY}'),l=q==='light'||(q==='auto'&&matchMedia('(prefers-color-scheme: light)').matches),d=l?'light':'dark',w=JSON.parse(localStorage.getItem('${WEAR_KEY}')),v=w&&w.v&&w.v[d],i,e=0,k,n,o,B,F,L,M,K=${json(MARKS)};h.setAttribute('data-mode',d);h.setAttribute('data-setting',q==='light'||q==='auto'?q:'dark');if(!v||!v.length){if(!l)return;v=${light};w=null}for(i=0;i<v.length;i++)if(v[i][0].indexOf('--')===0){s.setProperty(v[i][0],v[i][1]);if(m&&v[i][0]==='--bg')m.content=v[i][1]}s.colorScheme=l?'light only':'dark only';n=w&&w.t&&w.t.name;if(typeof n==='string'){h.setAttribute('data-picked','');for(i=0;i<n.length;i++){k=g.indexOf(n[i]);e+=(k<0?${WIDEST}:a[k])+(${TRACKING})}s.setProperty('--palette-name',JSON.stringify(n));s.setProperty('--palette-work',JSON.stringify(w.t.work&&w.t.work.name||''));s.setProperty('--palette-em',String(e/1000))}o=function(x){for(var z=0;z<v.length;z++)if(v[z][0]===x)return v[z][1]};B=o('--bg');F=o('--fg');L=${LIFT};M=[L(o('--sg0'),B,F),L(o('--sg1'),B,F),L(o('--sg2'),B,F)];for(i=0;i<3;i++)s.setProperty(K[i],M[i]);if(c)c.href=(${ICON})(B,F,M)}catch(x){}})()`
 }
 
 export const SLOTS = ['--bg', '--fg', '--cu', '--se', ...Array.from({ length: 16 }, (_, index) => `--a${index}`)]
@@ -76,7 +76,7 @@ export const LABEL = '--wear-name'
 
 export const SIGNS = [LABEL, ...TONES]
 
-const OWN = ['--palette-name', '--palette-catalog', '--palette-em']
+const OWN = ['--palette-name', '--palette-work', '--palette-em']
 
 export type Vars = [string, string][]
 
@@ -114,7 +114,11 @@ export function withMarks(vars: Vars): Vars {
 }
 
 export function wearOwn(theme: Theme): Vars {
-  return named(OWN, [JSON.stringify(theme.name), JSON.stringify(theme.catalog ?? ''), String(headlineEm(theme.name))])
+  return named(OWN, [
+    JSON.stringify(theme.name),
+    JSON.stringify(theme.work?.name ?? ''),
+    String(headlineEm(theme.name)),
+  ])
 }
 
 export function wearStyle(theme: Theme): string {

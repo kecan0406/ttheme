@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "va-11-hall-a/sei"
+signature = ["cursor", "ansi12", "ansi9"]
+ansi_source = "Blue Matrix"
+
+[colors]
+background = "#101916"
+foreground = "#d4e7df"
+cursor = "#7bcdb5"
+selection_background = "#293f59"
+ansi = [
+  "#1c2622",
+  "#e57440",
+  "#39da9f",
+  "#afc531",
+  "#6792de",
+  "#b79fff",
+  "#3cb9d6",
+  "#cdd7d2",
+
+  "#6f7975",
+  "#f3a09b",
+  "#61f8a3",
+  "#d0e664",
+  "#a2a6e8",
+  "#d8c8ff",
+  "#2adcdf",
+  "#e0f2ea",
+]
+
+[colors.light]
+background = "#f2fcf6"
+foreground = "#13231e"
+cursor = "#378b76"
+selection_background = "#c2d9f9"
+ansi = [
+  "#ecf6f0",
+  "#a64514",
+  "#005c3f",
+  "#815e00",
+  "#3462ab",
+  "#6c4acd",
+  "#005869",
+  "#252e2b",
+
+  "#6f7975",
+  "#8c3b39",
+  "#004d2a",
+  "#6f5000",
+  "#464ca1",
+  "#624889",
+  "#004a4c",
+  "#13231e",
+]

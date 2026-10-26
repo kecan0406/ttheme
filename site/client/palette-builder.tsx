@@ -28,6 +28,7 @@ import { PaneBody } from '@/components/mock-window'
 import { GateRows } from '@/components/slot-list'
 import { TitleDots } from '@/components/workspace-shell'
 import {
+  BLANK_NAME,
   type BuilderData,
   blankEdit,
   changedIn,
@@ -51,6 +52,7 @@ import {
   type Start,
   type Stored,
   storedOf,
+  subjectTrouble,
   TAB_KEY,
   type View,
   withSlot,
@@ -76,11 +78,11 @@ import {
   slotVars,
   statusOf,
 } from '@/lib/builder-view'
-import { nativeLang } from '@/lib/catalogs'
 import type { Mode } from '@/lib/mode'
 import { html } from '@/lib/render'
 import { gridText, scenePanes } from '@/lib/scene-panes'
 import { hueTrack } from '@/lib/slot-view'
+import { BUILTIN } from '@/lib/themes'
 import { FORMATS, type Picture, type PictureCredit, type SlotFormat } from '@/lib/view-types'
 import { textDraft, webCheck, webCode } from '@/lib/web-code'
 import { type Hex, mix, type Oklch } from '../../src/core/color.ts'
@@ -154,25 +156,19 @@ function tabDraft(stored: Stored | null): Edit | undefined {
 
 function groupsOf(starts: Start[], query: string): StartGroup[] {
   const q = query.trim().toLowerCase()
+  const hits = starts.filter((start) => !q || start.words.includes(q))
 
-  const hits = starts.filter(
-    (start) =>
-      !q ||
-      start.name.toLowerCase().includes(q) ||
-      start.shelf.toLowerCase().includes(q) ||
-      (start.native ?? '').toLowerCase().includes(q),
-  )
-
-  return [...Map.groupBy(hits, (start) => start.shelf)].map(([shelf, palettes]) => {
-    const native = palettes[0]?.native ?? null
+  return [...Map.groupBy(hits, (start) => start.shelf)].map(([, palettes]) => {
+    const { work, publisher } = palettes[0] as Start
 
     return {
-      title: shelf,
-      native,
-      lang: nativeLang({ native, marketplace: palettes[0]?.name.includes('@') ? shelf : null }),
+      title: work?.name ?? 'originals',
+      native: work ? work.native : publisher,
+      lang: work?.lang ?? undefined,
       palettes: palettes.map((start) => ({
         name: start.name,
         label: start.name.slice(start.name.indexOf('/') + 1),
+        publisher: work && start.publisher !== BUILTIN ? start.publisher : null,
         dots: start.dots,
         lead: start.lead,
       })),
@@ -599,9 +595,12 @@ class PaletteBuilder extends HTMLElement {
       this.#fill(pictures, html(<PicturesBox about={about} />))
 
     for (const input of this.querySelectorAll<HTMLInputElement>('[data-meta]')) {
-      const value = input.dataset.meta === 'booru' ? about.booru : about.ansiSource
+      const subject = input.dataset.meta === 'subject'
+      const value = subject ? about.subject : about.ansiSource
 
       if (input.value !== value && document.activeElement !== input) input.value = value
+
+      if (subject) input.setAttribute('aria-invalid', String(about.unread))
     }
 
     const ansi = this.querySelector<HTMLElement>('[data-ansi-from]')
@@ -1119,7 +1118,7 @@ class PaletteBuilder extends HTMLElement {
         return
       }
 
-      const draft = textDraft(file ?? 'palette.toml', text)
+      const draft = textDraft(file ?? `${BLANK_NAME}.toml`, text)
       this.#startFrom({ name: draft.name, draft }, true)
     } catch (failure) {
       say(`${file ?? (codeOf(text) ? 'the link' : 'the text')} does not open — ${(failure as Error).message}`)
@@ -1172,35 +1171,28 @@ class PaletteBuilder extends HTMLElement {
     const key = JSON.stringify(draft)
     const panel = this.querySelector('[data-export-panel="link"]')
 
-    const clash = this.#data?.official.includes(edit.name)
-      ? `${edit.name} is an official palette's name — where it is installed, a link under that name is turned away. Rename it in the bar first.`
-      : null
-
     if (problem) {
       this.#link = null
-      this.#fill(
-        panel,
-        html(<LinkPanel view={{ name: edit.name, link: null, code: null, failed: problem, clash: null }} />),
-      )
+      this.#fill(panel, html(<LinkPanel view={{ name: edit.name, link: null, code: null, failed: problem }} />))
 
       return
     }
 
     if (this.#link?.key === key) {
-      this.#fill(panel, html(<LinkPanel view={{ ...this.#link.view, name: edit.name, clash }} />))
+      this.#fill(panel, html(<LinkPanel view={{ ...this.#link.view, name: edit.name }} />))
 
       return
     }
 
-    this.#fill(panel, html(<LinkPanel view={{ name: edit.name, link: null, code: null, failed: null, clash }} />))
+    this.#fill(panel, html(<LinkPanel view={{ name: edit.name, link: null, code: null, failed: null }} />))
 
     try {
       const code = await webCode([draft as Draft])
 
       if (key !== JSON.stringify(exportProblem(this.#state) ? null : draftFrom(this.#state))) return
-      this.#link = { key, view: { name: edit.name, link: shareLink(code), code, failed: null, clash } }
+      this.#link = { key, view: { name: edit.name, link: shareLink(code), code, failed: null } }
     } catch (failure) {
-      this.#link = { key, view: { name: edit.name, link: null, code: null, failed: (failure as Error).message, clash } }
+      this.#link = { key, view: { name: edit.name, link: null, code: null, failed: (failure as Error).message } }
     }
 
     this.#fill(this.querySelector('[data-export-panel="link"]'), html(<LinkPanel view={this.#link.view} />))
@@ -1523,10 +1515,13 @@ class PaletteBuilder extends HTMLElement {
     if (seed) return this.#schedule(() => this.#seed(seed, Number(input.value)))
     const meta = input.dataset.meta
 
-    if (meta === 'ansiSource' || meta === 'booru') {
+    if (meta === 'ansiSource' || meta === 'subject') {
       const value = input.value.trim()
       const { [meta]: _, ...rest } = this.#state.meta
       this.#edit = { ...this.#state, meta: value ? { ...rest, [meta]: value } : rest, at: Date.now() }
+
+      if (meta === 'subject')
+        input.setAttribute('aria-invalid', String(subjectTrouble(value || undefined) !== undefined))
       this.#renderExport()
       this.#renderShared()
       this.#save()

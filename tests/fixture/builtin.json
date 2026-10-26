@@ -1,0 +1,492 @@
+{
+  "version": "0.0.0-fixture",
+  "gate": [
+    {
+      "rule": "foreground",
+      "label": "foreground on background",
+      "unit": "ratio",
+      "min": 7
+    },
+    {
+      "rule": "accents",
+      "label": "weakest accent on background",
+      "unit": "ratio",
+      "min": 4.5
+    },
+    {
+      "rule": "ansi0-dark",
+      "label": "ansi0 luminance",
+      "unit": "luminance",
+      "max": 0.15
+    },
+    {
+      "rule": "light-ansi",
+      "label": "ansi7 and ansi15 on background",
+      "unit": "ratio",
+      "min": 7
+    },
+    {
+      "rule": "ansi8-visible",
+      "label": "ansi8 on background",
+      "unit": "ratio",
+      "min": 3
+    },
+    {
+      "rule": "selection",
+      "label": "foreground on selection",
+      "unit": "ratio",
+      "min": 7
+    },
+    {
+      "rule": "ansi-role",
+      "label": "accent hue outside its ANSI role",
+      "unit": "degrees",
+      "max": 0
+    },
+    {
+      "rule": "bright-follows",
+      "label": "widest normal to bright hue gap",
+      "unit": "degrees",
+      "max": 25
+    },
+    {
+      "rule": "distinct",
+      "label": "accent pairs that read as one color",
+      "unit": "pairs",
+      "max": 0
+    },
+    {
+      "rule": "ansi0-on-accents",
+      "label": "ansi0 on the weakest accent",
+      "unit": "ratio",
+      "min": 4.5
+    },
+    {
+      "rule": "ansi7-on-ansi8",
+      "label": "ansi7 on ansi8",
+      "unit": "ratio",
+      "min": 3
+    },
+    {
+      "rule": "cvd-red-green",
+      "label": "red and green a deuteranope confuses",
+      "unit": "pairs",
+      "max": 0
+    }
+  ],
+  "palettes": [
+    {
+      "name": "ttheme/bocchi",
+      "subject": "bocchi-the-rock/bocchi",
+      "ansiSource": "Sakura + Kessoku",
+      "background": "#201517",
+      "foreground": "#fadbe1",
+      "cursor": "#feabc0",
+      "selection": "#51344e",
+      "signature": ["#feabc0", "#86a1d3", "#ffa7ca"],
+      "signatureSlots": ["cursor", "ansi4", "ansi9"],
+      "ansi": [
+        "#2c2123",
+        "#fd729f",
+        "#daa200",
+        "#fea49a",
+        "#86a1d3",
+        "#f979c8",
+        "#abb772",
+        "#d6c2c5",
+        "#847376",
+        "#ffa7ca",
+        "#ffc30f",
+        "#ffd3ce",
+        "#e5abff",
+        "#ffaeda",
+        "#ccd890",
+        "#ffe8ec"
+      ],
+      "other": {
+        "background": "#fff8f8",
+        "foreground": "#2c1b1f",
+        "cursor": "#bf627d",
+        "selection": "#f4cbec",
+        "ansi": [
+          "#fff0f2",
+          "#c01261",
+          "#5b5203",
+          "#9a5201",
+          "#476494",
+          "#b61b8b",
+          "#335a2f",
+          "#35292c",
+          "#847376",
+          "#8e335f",
+          "#3a4714",
+          "#6f4f36",
+          "#4d46b9",
+          "#843776",
+          "#1b4b2b",
+          "#2c1b1f"
+        ]
+      },
+      "gate": [13.788, 6.818, 0.017, 10.484, 3.975, 8.347, 27.294, 52.561, 1, 5.969, 2.637, 0],
+      "backdrop": {
+        "slot": "cursor",
+        "color": "#feabc0",
+        "opacity": 0.13
+      }
+    },
+    {
+      "name": "ttheme/kagami",
+      "subject": "lucky-star/kagami",
+      "ansiSource": "Nightfox + Ryouou",
+      "background": "#19161e",
+      "foreground": "#e8dff1",
+      "cursor": "#9b86c8",
+      "selection": "#2f3f55",
+      "signature": ["#9b86c8", "#9099f2", "#d58c98"],
+      "signatureSlots": ["cursor", "ansi4", "ansi1"],
+      "ansi": [
+        "#25222a",
+        "#d58c98",
+        "#76b4c9",
+        "#f7a895",
+        "#9099f2",
+        "#b49cd1",
+        "#70b8e8",
+        "#cbc4cf",
+        "#7a757f",
+        "#ffa3e6",
+        "#97d5eb",
+        "#ffd3c8",
+        "#b0bff9",
+        "#d4bbfe",
+        "#a2d8ff",
+        "#f4eafd"
+      ],
+      "other": {
+        "background": "#fef7ff",
+        "foreground": "#221d2a",
+        "cursor": "#7559b0",
+        "selection": "#c8d8f4",
+        "ansi": [
+          "#f8f1fd",
+          "#9a4a5a",
+          "#215b42",
+          "#955417",
+          "#4855d0",
+          "#735699",
+          "#00567b",
+          "#2e2b33",
+          "#7a757f",
+          "#9a216a",
+          "#184c36",
+          "#6f4e36",
+          "#3a5199",
+          "#624497",
+          "#004766",
+          "#221d2a"
+        ]
+      },
+      "gate": [13.837, 6.83, 0.017, 10.5, 3.982, 8.281, 55.031, 31.399, 1, 5.984, 2.637, 1],
+      "backdrop": {
+        "slot": "cursor",
+        "color": "#9b86c8",
+        "opacity": 0.19
+      }
+    },
+    {
+      "name": "ttheme/kita",
+      "subject": "bocchi-the-rock/kita",
+      "ansiSource": "Wild Cherry + Kessoku",
+      "background": "#201513",
+      "foreground": "#fddbd6",
+      "cursor": "#ee6555",
+      "selection": "#5a323b",
+      "signature": ["#ee6555", "#49c262", "#e1b557"],
+      "signatureSlots": ["cursor", "ansi2", "ansi3"],
+      "ansi": [
+        "#2e211f",
+        "#ff728d",
+        "#49c262",
+        "#e1b557",
+        "#eb76d2",
+        "#d792a9",
+        "#abb772",
+        "#d8c2be",
+        "#857370",
+        "#ffaca2",
+        "#fdc083",
+        "#ffd5b2",
+        "#c7b7ff",
+        "#ffb3b2",
+        "#b5d6ec",
+        "#ffe9e6"
+      ],
+      "other": {
+        "background": "#fff8f7",
+        "foreground": "#2d1b18",
+        "cursor": "#c52e24",
+        "selection": "#ffcad3",
+        "ansi": [
+          "#fff0ee",
+          "#c1184d",
+          "#005d22",
+          "#805e00",
+          "#8346bb",
+          "#974a68",
+          "#335a2f",
+          "#362927",
+          "#857370",
+          "#8b3c34",
+          "#364c15",
+          "#724d29",
+          "#5a45a0",
+          "#853d51",
+          "#284a39",
+          "#2d1b18"
+        ]
+      },
+      "gate": [13.819, 6.828, 0.018, 10.509, 3.976, 8.331, 26.003, 120.562, 1, 5.943, 2.643, 0],
+      "backdrop": {
+        "slot": "cursor",
+        "color": "#ee6555",
+        "opacity": 0.19
+      }
+    },
+    {
+      "name": "ttheme/konata",
+      "subject": "lucky-star/konata",
+      "ansiSource": "Dark Modern + Ryouou",
+      "background": "#13181e",
+      "foreground": "#dae3f1",
+      "cursor": "#5f95ca",
+      "selection": "#3b3e42",
+      "signature": ["#5f95ca", "#64be79", "#8fc6ff"],
+      "signatureSlots": ["cursor", "ansi2", "ansi12"],
+      "ansi": [
+        "#1f242a",
+        "#e07ae5",
+        "#64be79",
+        "#9bc976",
+        "#63a5e8",
+        "#d187ff",
+        "#4abcee",
+        "#c2c7cf",
+        "#73777f",
+        "#fca1ff",
+        "#00e3e4",
+        "#37f9b8",
+        "#8fc6ff",
+        "#d0bcff",
+        "#97daff",
+        "#e6effc"
+      ],
+      "other": {
+        "background": "#f8f9ff",
+        "foreground": "#17202a",
+        "cursor": "#336d9f",
+        "selection": "#d5d7dc",
+        "ansi": [
+          "#f0f4fc",
+          "#b62767",
+          "#005d2a",
+          "#5c6907",
+          "#1367a6",
+          "#9523d8",
+          "#005774",
+          "#282d33",
+          "#73777f",
+          "#a8005a",
+          "#134b3b",
+          "#4d5811",
+          "#00588f",
+          "#5e4699",
+          "#004861",
+          "#17202a"
+        ]
+      },
+      "gate": [13.796, 6.863, 0.017, 10.504, 3.971, 8.312, 41.557, 45.671, 2, 6.01, 2.645, 1],
+      "backdrop": {
+        "slot": "cursor",
+        "color": "#5f95ca",
+        "opacity": 0.18
+      }
+    },
+    {
+      "name": "ttheme/neutral",
+      "ansiSource": "Nvim Dark",
+      "background": "#17171f",
+      "foreground": "#e3e0f3",
+      "cursor": "#cdcdff",
+      "selection": "#3e3c4c",
+      "signature": ["#cdcdff", "#72a7c9", "#c796c8"],
+      "signatureSlots": ["cursor", "ansi4", "ansi5"],
+      "ansi": [
+        "#23232b",
+        "#ca8fb2",
+        "#5db9c3",
+        "#f7a895",
+        "#72a7c9",
+        "#c796c8",
+        "#65bbe3",
+        "#c7c5d0",
+        "#777680",
+        "#edaed3",
+        "#7fdae5",
+        "#ffd3c9",
+        "#a1c3f2",
+        "#dabaf5",
+        "#95dbff",
+        "#eeecfe"
+      ],
+      "other": {
+        "background": "#fcf8ff",
+        "foreground": "#1e1e2b",
+        "cursor": "#7f81c0",
+        "selection": "#d9d5e9",
+        "ansi": [
+          "#f5f2fd",
+          "#905066",
+          "#225a42",
+          "#955417",
+          "#316988",
+          "#835187",
+          "#005773",
+          "#2c2b34",
+          "#777680",
+          "#873c58",
+          "#1b4b36",
+          "#6f4f36",
+          "#285789",
+          "#69448c",
+          "#004860",
+          "#1e1e2b"
+        ]
+      },
+      "gate": [13.762, 6.857, 0.017, 10.456, 3.977, 8.296, 38.63, 19.145, 2, 6.002, 2.63, 2],
+      "backdrop": {
+        "slot": "cursor",
+        "color": "#cdcdff",
+        "opacity": 0.12
+      },
+      "default": true
+    },
+    {
+      "name": "ttheme/ryo",
+      "subject": "bocchi-the-rock/ryo",
+      "ansiSource": "TokyoNight Storm",
+      "background": "#19180d",
+      "foreground": "#e7e3c8",
+      "cursor": "#d6d233",
+      "selection": "#333d5b",
+      "signature": ["#d6d233", "#779ff4", "#67bae9"],
+      "signatureSlots": ["cursor", "ansi4", "ansi6"],
+      "ansi": [
+        "#252419",
+        "#f38235",
+        "#9bb649",
+        "#d8b86a",
+        "#779ff4",
+        "#f184a3",
+        "#67bae9",
+        "#cac7b6",
+        "#797769",
+        "#ffae7e",
+        "#bbd766",
+        "#fbd987",
+        "#38d3e4",
+        "#ffb1c4",
+        "#75e4d4",
+        "#f2efd3"
+      ],
+      "other": {
+        "background": "#fefae7",
+        "foreground": "#21200f",
+        "cursor": "#8b8800",
+        "selection": "#ccd6fc",
+        "ansi": [
+          "#f8f4e2",
+          "#a44524",
+          "#335a16",
+          "#7d5f1b",
+          "#2460c1",
+          "#af3460",
+          "#005677",
+          "#2d2d21",
+          "#797769",
+          "#8d3c20",
+          "#294a11",
+          "#6d500b",
+          "#265878",
+          "#883b53",
+          "#004954",
+          "#21200f"
+        ]
+      },
+      "gate": [13.771, 6.835, 0.017, 10.491, 3.953, 8.278, 7.194, 58.056, 0, 5.985, 2.654, 2],
+      "backdrop": {
+        "slot": "cursor",
+        "color": "#d6d233",
+        "opacity": 0.12
+      }
+    },
+    {
+      "name": "ttheme/tsukasa",
+      "subject": "lucky-star/tsukasa",
+      "ansiSource": "Sublette + Ryouou",
+      "background": "#1b161d",
+      "foreground": "#eddeef",
+      "cursor": "#c8a6da",
+      "selection": "#3b3e40",
+      "signature": ["#c8a6da", "#eede89", "#8b9bf1"],
+      "signatureSlots": ["cursor", "ansi11", "ansi4"],
+      "ansi": [
+        "#27222a",
+        "#f374c0",
+        "#00bdd0",
+        "#faa78d",
+        "#8b9bf1",
+        "#b999d4",
+        "#53b9ff",
+        "#cdc3ce",
+        "#7c747e",
+        "#ffa8c5",
+        "#00e2e8",
+        "#eede89",
+        "#b1bdff",
+        "#d7baff",
+        "#85ddff",
+        "#f8e9fb"
+      ],
+      "other": {
+        "background": "#fff7fc",
+        "foreground": "#251d29",
+        "cursor": "#9168aa",
+        "selection": "#d5d7da",
+        "ansi": [
+          "#fbf0fb",
+          "#ba1f68",
+          "#225a42",
+          "#865e00",
+          "#3f58ce",
+          "#79529d",
+          "#005580",
+          "#302a32",
+          "#7c747e",
+          "#8e355a",
+          "#1b4a36",
+          "#60550d",
+          "#3c4ea2",
+          "#654298",
+          "#00485c",
+          "#251d29"
+        ]
+      },
+      "gate": [13.82, 6.833, 0.017, 10.426, 3.949, 8.361, 40.522, 60.751, 0, 5.974, 2.64, 1],
+      "backdrop": {
+        "slot": "cursor",
+        "color": "#c8a6da",
+        "opacity": 0.14
+      }
+    }
+  ]
+}

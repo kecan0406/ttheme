@@ -1,4 +1,4 @@
-◆ Edit palette  konata                                                     ✗ Fails 5 contrast checks
+◆ Edit palette  ttheme/konata                                              ✗ Fails 5 contrast checks
 
 ╭─ Base ────────────────────────────────────────╮ │ Background  background
 │▌ Background›  .21 .014 253°                   │ │

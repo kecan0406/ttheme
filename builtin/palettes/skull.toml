@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "persona-5/skull"
+signature = ["cursor", "ansi1", "foreground"]
+ansi_source = "Desert"
+
+[colors]
+background = "#1b170c"
+foreground = "#eee2c2"
+cursor = "#f5cf00"
+selection_background = "#4c3b15"
+ansi = [
+  "#272418",
+  "#f16c61",
+  "#a6ce4e",
+  "#cbbd66",
+  "#8b90d9",
+  "#e29eb8",
+  "#5cbaad",
+  "#dbd4c2",
+
+  "#7c7767",
+  "#f3a37c",
+  "#c2eb56",
+  "#f0e02f",
+  "#82a8e6",
+  "#ffc0ce",
+  "#00dfca",
+  "#f8edd1",
+]
+
+[colors.light]
+background = "#fff9ee"
+foreground = "#251f0b"
+cursor = "#9e8500"
+selection_background = "#efd4a1"
+ansi = [
+  "#fbf3e0",
+  "#bd2825",
+  "#315a13",
+  "#7f5e10",
+  "#5259bc",
+  "#954b6b",
+  "#005b52",
+  "#302c20",
+
+  "#7c7767",
+  "#884018",
+  "#284a0f",
+  "#6e5000",
+  "#2c558e",
+  "#7f4253",
+  "#004b43",
+  "#241f0e",
+]

@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "umineko/lambdadelta"
+signature = ["cursor", "ansi3", "ansi4"]
+ansi_source = "Neon Purple + Truth"
+
+[colors]
+background = "#1f1519"
+foreground = "#f7dbe5"
+cursor = "#e463a5"
+selection_background = "#433859"
+ansi = [
+  "#2c2125",
+  "#ef679a",
+  "#abd051",
+  "#c5c036",
+  "#00a1d7",
+  "#ff88d4",
+  "#75b0e6",
+  "#e2d0d5",
+
+  "#827378",
+  "#f39eb9",
+  "#f0e028",
+  "#f1dcac",
+  "#80b1e6",
+  "#ffbee6",
+  "#99cdec",
+  "#ffe8ef",
+]
+
+[colors.light]
+background = "#fff8f8"
+foreground = "#2b1b22"
+cursor = "#b23b7c"
+selection_background = "#e0d0f9"
+ansi = [
+  "#fff0f4",
+  "#b52b67",
+  "#315a14",
+  "#696600",
+  "#006b90",
+  "#b31e8e",
+  "#005484",
+  "#34292d",
+
+  "#827378",
+  "#8e3658",
+  "#2e491a",
+  "#62532e",
+  "#205888",
+  "#7e3e6f",
+  "#034761",
+  "#2b1b22",
+]

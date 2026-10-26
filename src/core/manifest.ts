@@ -1,26 +1,20 @@
 import pkg from '../../package.json' with { type: 'json' }
 import { backdropTone } from './backdrop-tone.ts'
 import { isHex } from './color.ts'
+import type { Work } from './commons.ts'
 import { GATE_RULES, type GateRule, measure } from './contrast.ts'
 import { memo } from './memo.ts'
 import { mirror } from './mirror.ts'
 import { type Mode, modeOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
 import type { Shade, SharedPicture, Theme } from './theme.ts'
-import { catalogProblem, nameProblem, textProblem } from './theme.ts'
+import { nameProblem, subjectProblem, textProblem } from './theme.ts'
 
 export interface PaletteEntry {
   name: string
-  base?: string
+  subject?: string
   from?: string
-  catalog?: string
-  native?: string
-  nativeNames?: string[]
-  lead?: boolean
-  order: number
   ansiSource: string
-  booru?: string
-  booruSites?: Record<string, string[]>
   default?: boolean
   background: string
   foreground: string
@@ -36,13 +30,15 @@ export interface PaletteEntry {
   pictures?: SharedPicture[]
 }
 
-export const SCHEMA = 1
-
-export interface Manifest {
-  schema: number
+export interface Bundle {
   version: string
   gate: GateRule[]
   palettes: PaletteEntry[]
+}
+
+export interface Manifest extends Bundle {
+  works: Work[]
+  renames?: Record<string, string>
 }
 
 export function colorsOfTheme(theme: Shade): Colors {
@@ -137,17 +133,9 @@ export function paletteEntry(t: Theme): PaletteEntry {
 
   return {
     name: t.name,
-    ...(t.base ? { base: t.base } : {}),
+    ...(t.subject ? { subject: t.subject } : {}),
     ...(t.from ? { from: t.from } : {}),
-    ...(t.catalog ? { catalog: t.catalog } : {}),
-    ...(t.native ? { native: t.native } : {}),
-    ...(t.nativeNames ? { nativeNames: t.nativeNames } : {}),
-    ...(t.lead ? { lead: true } : {}),
-    order: t.order,
     ansiSource: t.ansiSource,
-    ...(t.booru ? { booru: t.booru } : {}),
-    ...(t.booruSites ? { booruSites: t.booruSites } : {}),
-    ...(t.role === 'default' ? { default: true } : {}),
     background: t.background,
     foreground: t.foreground,
     cursor: t.cursor,
@@ -166,17 +154,9 @@ export function paletteEntry(t: Theme): PaletteEntry {
 export function toTheme(entry: PaletteEntry): Theme {
   return {
     name: entry.name,
-    ...(entry.base ? { base: entry.base } : {}),
+    ...(entry.subject ? { subject: entry.subject } : {}),
     ...(entry.from ? { from: entry.from } : {}),
-    ...(entry.catalog ? { catalog: entry.catalog } : {}),
-    ...(entry.native ? { native: entry.native } : {}),
-    ...(entry.nativeNames ? { nativeNames: entry.nativeNames } : {}),
-    lead: entry.lead === true,
-    order: entry.order,
-    ...(entry.default ? { role: 'default' as const } : {}),
     ansiSource: entry.ansiSource,
-    ...(entry.booru ? { booru: entry.booru } : {}),
-    ...(entry.booruSites ? { booruSites: entry.booruSites } : {}),
     background: entry.background,
     foreground: entry.foreground,
     cursor: entry.cursor,
@@ -234,33 +214,33 @@ export function listed(palettes: PaletteEntry[]): PaletteEntry[] {
 }
 
 export function emptyManifest(): Manifest {
-  return { schema: SCHEMA, version: pkg.version, gate: GATE_RULES, palettes: [] }
+  return { version: pkg.version, gate: GATE_RULES, palettes: [], works: [] }
 }
 
-export function parseManifest(source: string): Manifest {
+export function parseBuiltin(source: string): Bundle {
   let doc: unknown
 
   try {
     doc = JSON.parse(source)
   } catch {
-    throw new Error('the manifest is not valid JSON')
+    throw new Error('the built-in palettes are not valid JSON')
   }
 
-  const manifest = doc as Manifest
+  const bundle = doc as Bundle
 
-  if (typeof manifest?.version !== 'string' || !Array.isArray(manifest.palettes)) {
-    throw new Error('the manifest has no version or palettes')
+  if (typeof bundle?.version !== 'string' || !Array.isArray(bundle.palettes) || !Array.isArray(bundle.gate)) {
+    throw new Error('the built-in palettes have no version, gate or palettes')
   }
 
-  for (const p of manifest.palettes) {
+  for (const p of bundle.palettes) {
     const problem = entryProblem(p)
 
     if (problem) {
-      throw new Error(`manifest entry ${JSON.stringify(p?.name)} ${problem}`)
+      throw new Error(`the built-in palette ${JSON.stringify(p?.name)} ${problem}`)
     }
   }
 
-  return manifest
+  return { version: bundle.version, gate: bundle.gate, palettes: bundle.palettes }
 }
 
 export function entryProblem(p: PaletteEntry): string | undefined {
@@ -268,12 +248,14 @@ export function entryProblem(p: PaletteEntry): string | undefined {
     return 'is missing name or its 16 ANSI colors'
   }
 
-  const named = [p.name, p.base, p.from]
-    .map((name) => (name === undefined ? undefined : nameProblem(name)))
-    .find(Boolean)
+  const named = [p.name, p.from].map((name) => (name === undefined ? undefined : nameProblem(name))).find(Boolean)
 
   if (named) {
     return named
+  }
+
+  if (p.subject !== undefined && (typeof p.subject !== 'string' || subjectProblem(p.subject))) {
+    return `names the subject ${JSON.stringify(p.subject)}, which is not <work> or <work>/<character>`
   }
 
   if (![p.background, p.foreground, p.cursor, p.selection, ...p.ansi].every((c) => typeof c === 'string' && isHex(c))) {
@@ -295,13 +277,5 @@ export function entryProblem(p: PaletteEntry): string | undefined {
     return 'holds an other mode that is not 20 "#rrggbb" colors'
   }
 
-  const shelved = typeof p.catalog === 'string' ? catalogProblem(p.catalog) : undefined
-
-  if (shelved) {
-    return shelved
-  }
-
-  return [p.native ?? '-', p.catalog ?? '-', p.ansiSource]
-    .map((field) => (typeof field === 'string' ? textProblem(field) : 'has a field that is not text'))
-    .find(Boolean)
+  return typeof p.ansiSource === 'string' ? textProblem(p.ansiSource) : 'has a field that is not text'
 }

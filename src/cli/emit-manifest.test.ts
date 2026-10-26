@@ -1,102 +1,58 @@
 import assert from 'node:assert/strict'
-import { join } from 'node:path'
 import { test } from 'node:test'
 import pkg from '../../package.json' with { type: 'json' }
-import { type Manifest, type PaletteEntry, parseManifest, SCHEMA, swatch } from '../core/manifest.ts'
-import { ROOT } from '../root.ts'
-import { loadThemes } from './build.ts'
-import { manifest, type SchemaOneEntry, schemaOne } from './emit-manifest.ts'
+import { aboutOf, leadOf, parseCommons } from '../core/commons.ts'
+import { parseBuiltin, swatch } from '../core/manifest.ts'
+import { BUILTIN_DIR, COMMONS_DIR, loadBuiltin, loadCommons } from './build.ts'
+import { bundleJson, bundleOf, commonsJson } from './emit-manifest.ts'
 
-const published = manifest(loadThemes(join(ROOT, 'themes')))
-const { schema, version, gate: rules, palettes: entries } = published
-const pages = schemaOne(published)
+const commons = loadCommons(COMMONS_DIR)
+const { themes, fallback } = loadBuiltin(BUILTIN_DIR, commons)
+const bundle = bundleOf(themes, fallback)
+const { version, gate: rules, palettes: entries } = bundle
 
-test('manifest states which build produced it', () => {
+test('the built-in palettes state which build produced them', () => {
   assert.equal(version, pkg.version)
 })
 
-test('manifest states the schema it is written in', () => {
-  assert.equal(schema, SCHEMA)
+test('the built-in palettes and the commons the build writes are ones every reader accepts', () => {
+  assert.equal(parseBuiltin(bundleJson(bundle)).palettes.length, entries.length)
+  assert.deepEqual(parseCommons(commonsJson(commons)), commons)
 })
 
-type RequiredKeys<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T]
+test('the built-in palettes mark exactly one fallback palette, and it is of no work', () => {
+  assert.deepEqual(
+    entries.filter((e) => e.default).map((e) => [e.name, e.subject]),
+    [['ttheme/neutral', undefined]],
+  )
+})
 
-const SCHEMA_1_FIELDS = {
-  name: 1,
-  group: 1,
-  order: 1,
-  ansiSource: 1,
-  background: 1,
-  foreground: 1,
-  cursor: 1,
-  selection: 1,
-  signature: 1,
-  signatureSlots: 1,
-  ansi: 1,
-  gate: 1,
-  backdrop: 1,
-} satisfies Record<RequiredKeys<SchemaOneEntry>, 1>
-
-const SCHEMA_1_DOCUMENT = {
-  schema: 1,
-  version: 1,
-  gate: 1,
-  palettes: 1,
-} satisfies Record<RequiredKeys<Manifest>, 1>
-
-const SCHEMA_1_GATE = [
-  'foreground',
-  'accents',
-  'ansi0-dark',
-  'light-ansi',
-  'ansi8-visible',
-  'selection',
-  'ansi-role',
-  'bright-follows',
-  'distinct',
-]
-
-test('every entry Pages serves keeps the fields a schema 1 reader needs — dropping or renaming one is a new SCHEMA', () => {
-  for (const e of pages.palettes) {
-    for (const field of Object.keys(SCHEMA_1_FIELDS)) {
-      assert.ok(field in e, `${e.name}: ${field} is gone, so older ttheme would misread it — raise SCHEMA`)
+test('every built-in palette is of a work or a character the commons holds', () => {
+  for (const e of entries) {
+    if (e.subject !== undefined) {
+      assert.equal(aboutOf(commons.works, e.subject)?.known, true, `${e.name}: ${e.subject}`)
     }
   }
 })
 
-test('the manifest Pages serves keeps the top-level fields a schema 1 reader needs — dropping or renaming one is a new SCHEMA', () => {
-  for (const field of Object.keys(SCHEMA_1_DOCUMENT)) {
-    assert.ok(field in pages, `${field} is gone, so older ttheme would misread the manifest — raise SCHEMA`)
+test('every work that holds a built-in palette has its original-language title and a lead the commons holds', () => {
+  const held = new Set(entries.flatMap((e) => (e.subject ? [aboutOf(commons.works, e.subject)?.work.id] : [])))
+
+  for (const work of commons.works.filter((w) => held.has(w.id))) {
+    assert.ok(work.native, `${work.id}: no native title`)
+    assert.equal(aboutOf(commons.works, leadOf(work))?.known, true, `${work.id}: lead ${leadOf(work)}`)
   }
 })
 
-test('gate measurements keep the order schema 1 readers index them by — a new rule goes on the end', () => {
-  assert.deepEqual(
-    rules.slice(0, SCHEMA_1_GATE.length).map((rule) => rule.rule),
-    SCHEMA_1_GATE,
-  )
+test('the commons carries the danbooru tag find searches, and a palette of a place or a thing, or of no work, has none', () => {
+  const byName = new Map(entries.map((e) => [e.name, e]))
+  const tag = (name: string) => aboutOf(commons.works, byName.get(name)?.subject)?.character?.danbooru
+  assert.equal(tag('ttheme/kagami'), 'hiiragi_kagami')
+  assert.equal(tag('ttheme/magi'), undefined)
+  assert.equal(tag('ttheme/neutral'), undefined)
 })
 
-test('the manifest the build writes is one every reader accepts', () => {
-  const read = parseManifest(JSON.stringify(published))
-  assert.equal(read.schema, SCHEMA)
-  assert.equal(read.palettes.length, entries.length)
-})
-
-test('manifest carries every theme in display order', () => {
-  assert.ok(entries.length > 0)
-  const runs = entries.filter((e, i) => e.catalog !== entries[i - 1]?.catalog).length
-  assert.equal(runs, new Set(entries.map((e) => e.catalog)).size, 'catalogs must be contiguous')
-})
-
-test('manifest marks exactly one default palette', () => {
-  assert.deepEqual(
-    entries.filter((e) => e.default).map((e) => e.name),
-    ['neutral'],
-  )
-})
-
-test('manifest entries carry the full palette the picker renders and paints', () => {
+test('the built-in palettes carry the full palette the picker renders and paints', () => {
   for (const e of entries) {
     assert.equal(e.ansi.length, 16, `${e.name}: expected 16 ansi colors`)
 
@@ -108,7 +64,7 @@ test('manifest entries carry the full palette the picker renders and paints', ()
   }
 })
 
-test('manifest carries a signature drawn from each palette', () => {
+test('the built-in palettes carry a signature drawn from each palette', () => {
   for (const e of entries) {
     assert.equal(e.signature.length, 3, `${e.name}: expected 3 signature colors`)
     assert.equal(new Set(e.signature).size, 3, `${e.name}: signature colors must differ`)
@@ -120,7 +76,7 @@ test('manifest carries a signature drawn from each palette', () => {
   }
 })
 
-test('manifest carries the signature slots each signature color was drawn from', () => {
+test('the built-in palettes carry the signature slots each signature color was drawn from', () => {
   for (const e of entries) {
     assert.equal(e.signatureSlots.length, e.signature.length, `${e.name}: signature slots must match colors`)
 
@@ -138,7 +94,7 @@ test('manifest carries the signature slots each signature color was drawn from',
   }
 })
 
-test('manifest publishes the gate every palette was measured against', () => {
+test('the built-in palettes publish the gate every palette was measured against', () => {
   assert.ok(rules.length > 0)
 
   for (const rule of rules) {
@@ -162,30 +118,6 @@ test('manifest publishes the gate every palette was measured against', () => {
       }
     }
   }
-})
-
-test('every catalog names one lead palette and one native title', () => {
-  const catalogs = new Map<string | undefined, PaletteEntry[]>()
-
-  for (const e of entries) {
-    const members = catalogs.get(e.catalog)
-
-    if (members) members.push(e)
-    else catalogs.set(e.catalog, [e])
-  }
-
-  assert.ok(!catalogs.has(undefined), 'every official palette sits in a catalog')
-
-  for (const [catalog, members] of catalogs) {
-    assert.equal(members.filter((e) => e.lead).length, 1, `${catalog}: expected exactly one lead palette`)
-    assert.equal(new Set(members.map((e) => e.native)).size, 1, `${catalog}: native title must match across it`)
-  }
-})
-
-test('manifest carries the booru tag find searches, and leaves it off palettes without a character', () => {
-  const byName = new Map(entries.map((e) => [e.name, e]))
-  assert.equal(byName.get('kagami')?.booru, 'hiiragi_kagami')
-  assert.equal(byName.get('neutral')?.booru, undefined)
 })
 
 test('a swatch shows six different colors: the foreground, the signature, then red and green', () => {

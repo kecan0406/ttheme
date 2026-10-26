@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "undertale/undyne"
+signature = ["cursor", "ansi2", "ansi3"]
+ansi_source = "Sea Shells + Determination"
+
+[colors]
+background = "#201513"
+foreground = "#fddbd6"
+cursor = "#ee6557"
+selection_background = "#244056"
+ansi = [
+  "#2e211f",
+  "#f16e4e",
+  "#74ccee",
+  "#ffa945",
+  "#948dd6",
+  "#c2a0ee",
+  "#83b1e3",
+  "#e6d0cc",
+
+  "#857370",
+  "#f3a195",
+  "#9de9f1",
+  "#ffcfb0",
+  "#9da7e8",
+  "#d5c9ff",
+  "#a8cbf2",
+  "#ffe9e6",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#2d1b18"
+cursor = "#c52e26"
+selection_background = "#bedaf6"
+ansi = [
+  "#fff0ee",
+  "#b2391c",
+  "#00576e",
+  "#905500",
+  "#6055b8",
+  "#7d4bb1",
+  "#1f5380",
+  "#362927",
+
+  "#857370",
+  "#8c3c32",
+  "#004a4f",
+  "#764b2b",
+  "#3e4ea2",
+  "#5e4989",
+  "#1f4566",
+  "#2d1b18",
+]

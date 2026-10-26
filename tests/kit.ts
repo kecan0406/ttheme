@@ -34,7 +34,7 @@ const SHORT: Bar = {
 
 const TOPICS: Topic[] = [
   { group: 'Move', keys: '↑↓  home  end  pgup  pgdn', does: 'Move up or down', run: () => {} },
-  { group: 'Move', keys: '→  enter', does: 'Open a marketplace or a catalog', run: () => {} },
+  { group: 'Move', keys: '→  enter', does: 'Open a marketplace or a work', run: () => {} },
   {
     group: 'Palettes',
     keys: 'space',
@@ -47,7 +47,7 @@ const TOPICS: Topic[] = [
     group: 'Palettes',
     keys: 'ctrl+r',
     does: 'Take an update (⇡)',
-    more: 'On a palette or a catalog marked ⇡. The update is installed when you apply.',
+    more: 'On a palette or a work marked ⇡. The update is installed when you apply.',
     run: () => {},
   },
   { group: 'Help', keys: '?  esc', does: 'Close help' },

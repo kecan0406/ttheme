@@ -1,19 +1,21 @@
 import { existsSync, mkdirSync, readFileSync, statSync, utimesSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { listed, type PaletteEntry, parseManifest } from '../core/manifest.ts'
+import { WORKS_DIR, type Work } from '../core/commons.ts'
+import { listed, type PaletteEntry } from '../core/manifest.ts'
 import { untar } from '../core/tarball.ts'
 import { counted } from '../core/text.ts'
-import { MARKETPLACE_FILE, marketplaceId, slugOf } from '../core/theme.ts'
+import { BUILTIN, MARKETPLACE_FILE, marketplaceId, slugOf } from '../core/theme.ts'
 import { moveRacks } from '../pictures/backdrop.ts'
 import {
   type Archive,
   archiveId,
+  builtinPath,
   Missing,
-  officialPath,
   type ReadMarketplace,
   reach,
   readArchive,
+  readBundled,
   readCachedArchive,
   readMarketplaces,
   updatesOf,
@@ -35,7 +37,6 @@ import {
   type MarketplaceInfo,
   marketplacesDir,
   marketplacesOf,
-  OFFICIAL,
   type Refreshed,
   refOf,
   shownSource,
@@ -53,6 +54,7 @@ export const REFRESH_AFTER = 24 * 60 * 60 * 1000
 export const RETRY_AFTER = 60 * 60 * 1000
 export const AUTO_TIMEOUT = 5_000
 const ARCHIVE_MOST = 16 * 1024 * 1024
+const MARKETPLACE_PATH = new RegExp(`^(?:palettes|${WORKS_DIR})/[^/]+\\.toml$`)
 
 export interface Tried {
   at: number
@@ -63,11 +65,12 @@ export interface FetchedMarketplace {
   source: string
   id: string
   entries: PaletteEntry[]
+  works: Work[]
   archive: Archive
   info: MarketplaceInfo
 }
 
-export type Fetched = FetchedMarketplace | { source: string; id: string; entries: PaletteEntry[] }
+export type Fetched = FetchedMarketplace | { source: string; id: string; entries: PaletteEntry[]; works: Work[] }
 
 function triesPath(): string {
   return join(process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state'), 'ttheme', 'marketplaces.json')
@@ -136,7 +139,7 @@ function archiveOf(tarball: Uint8Array, etag: string | null): Archive {
   const files = Object.fromEntries(
     untar(tarball)
       .entries()
-      .filter(([path]) => path === MARKETPLACE_FILE || (path.startsWith('palettes/') && path.endsWith('.toml')))
+      .filter(([path]) => path === MARKETPLACE_FILE || MARKETPLACE_PATH.test(path))
       .map(([path, data]) => [path, text.decode(data)]),
   )
 
@@ -197,14 +200,10 @@ export async function fetchArchive(
   return archiveOf(await archiveBytes(response), response.headers.get('etag'))
 }
 
-export function fromArchive(source: string, archive: Archive, official: PaletteEntry[]): FetchedMarketplace {
-  const { id, info, entries } = readArchive(source, archive, official, warning(false))
+export function fromArchive(source: string, archive: Archive): FetchedMarketplace {
+  const { id, info, entries, works } = readArchive(source, archive, warning(false))
 
-  return { source, id, entries, archive, info }
-}
-
-function officialOf(home: string): PaletteEntry[] {
-  return cachedEntries(home, OFFICIAL)
+  return { source, id, entries, works, archive, info }
 }
 
 export async function fetchMarketplace(
@@ -213,12 +212,12 @@ export async function fetchMarketplace(
   timeout?: number,
   signal?: AbortSignal,
 ): Promise<Fetched> {
-  if (source === OFFICIAL) {
-    if (!existsSync(officialPath(home))) {
-      throw new Error(`the official marketplace is not on this machine — \`${UPDATE_COMMAND}\` puts it back`)
+  if (source === BUILTIN) {
+    if (!existsSync(builtinPath(home))) {
+      throw new Error(`the built-in palettes are not on this machine — \`${UPDATE_COMMAND}\` puts them back`)
     }
 
-    return { source, id: OFFICIAL, entries: cachedEntries(home, OFFICIAL) }
+    return { source, id: BUILTIN, entries: cachedEntries(home, BUILTIN), works: [] }
   }
 
   const archive = await fetchArchive(source, timeout, signal)
@@ -227,7 +226,7 @@ export async function fetchMarketplace(
     throw new Error(`${shownSource(source)} answered as if nothing had changed`)
   }
 
-  return fromArchive(source, archive, officialOf(home))
+  return fromArchive(source, archive)
 }
 
 export function storeMarketplace(home: string, fetched: Fetched): void {
@@ -249,11 +248,11 @@ function cachedArchive(home: string, source: string): Archive | undefined {
 
 export function cachedEntries(home: string, source: string): PaletteEntry[] {
   try {
-    if (source === OFFICIAL) {
-      return parseManifest(readFileSync(officialPath(home), 'utf8')).palettes
+    if (source === BUILTIN) {
+      return readBundled(home).builtin.palettes
     }
 
-    return readArchive(source, readCachedArchive(home, source), officialOf(home), warning(false)).entries
+    return readArchive(source, readCachedArchive(home, source), warning(false)).entries
   } catch {
     return []
   }
@@ -278,7 +277,7 @@ async function fetchNewer(home: string, source: string, timeout?: number): Promi
   const cached = cachedArchive(home, source)
   const archive = await fetchArchive(source, timeout, undefined, cached?.etag)
 
-  return archive && fromArchive(source, archive, officialOf(home))
+  return archive && fromArchive(source, archive)
 }
 
 export async function refreshMarketplace(home: string, source: string, timeout?: number): Promise<Refreshed> {
@@ -344,20 +343,16 @@ export function updateNote(r: Refreshed): string | undefined {
   return changed(r.change) ? `Updated ${refreshLine(r)}` : undefined
 }
 
-export function cachedMarketplace(
-  home: string,
-  source: string,
-  official = officialOf(home),
-): ReadMarketplace | undefined {
+export function cachedMarketplace(home: string, source: string): ReadMarketplace | undefined {
   try {
     if (isLocal(source)) {
       const info = localIdentity(source)
       const id = marketplaceId(info)
 
-      return { id, info, entries: readMarketplaceDir(source, id, official, warning(false)) }
+      return { id, info, ...readMarketplaceDir(source, id, warning(false)) }
     }
 
-    return isRemote(source) ? readArchive(source, readCachedArchive(home, source), official, warning(false)) : undefined
+    return isRemote(source) ? readArchive(source, readCachedArchive(home, source), warning(false)) : undefined
   } catch {
     return undefined
   }
@@ -369,11 +364,10 @@ function followMarketplaces(home: string): string[] {
   }
 
   const state = readInstalled(home)
-  const official = officialOf(home)
   const moves: Moves = { renamed: new Map(), removed: [] }
 
   for (const source of marketplacesOf(state.marketplaces)) {
-    const marketplace = cachedMarketplace(home, source, official)
+    const marketplace = cachedMarketplace(home, source)
 
     if (marketplace) {
       plan(

@@ -1,4 +1,4 @@
-ttheme: unknown palette 'ryo' pinned to ~/notes/**
+ttheme: unknown palette 'ttheme/ryo' pinned to ~/notes/**
 [UNPIN]  This directory  [~/work]   ←→ choose   enter unpin   esc keep
 ~/work            konata  and below  × unpin
 └── site/ ← here  kita    this directory

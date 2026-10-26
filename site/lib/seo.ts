@@ -1,6 +1,6 @@
 import { escapeHtml } from '@kitajs/html'
 import type { Facts } from '@/lib/facts'
-import { NPM_URL, OFFICIAL_REPO, OFFICIAL_URL } from '@/lib/gallery'
+import { NPM_URL, REPO, REPO_URL } from '@/lib/gallery'
 import { siteMeta } from '@/lib/titles'
 import pkg from '../../package.json' with { type: 'json' }
 import { SHARE_URL } from '../../src/core/draft.ts'
@@ -10,7 +10,7 @@ export const ORIGIN = new URL(SHARE_URL).origin
 
 export const CARD_REV = `${pkg.version}-${revision('./card.ts', '../../src/core/mark.ts', './wordmark.ts', './raster.ts', '../../src/core/oklab.ts', './embed.ts')}`
 
-const [OWNER] = OFFICIAL_REPO.split('/') as [string]
+const [OWNER] = REPO.split('/') as [string]
 
 export const ROBOTS = `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`
 
@@ -31,7 +31,7 @@ export function siteGraph({ palettes, version }: Facts) {
         name: 'ttheme',
         url: `${ORIGIN}/`,
         description: siteMeta(palettes).description,
-        codeRepository: OFFICIAL_URL,
+        codeRepository: REPO_URL,
         programmingLanguage: ['TypeScript', 'Zsh'],
         runtimePlatform: 'Node.js, zsh',
         license: 'https://opensource.org/licenses/MIT',

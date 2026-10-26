@@ -1,0 +1,41 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Madoka Magica"
+native = "魔法少女まどか☆マギカ"
+lead = "madoka-magica/madoka"
+
+[[character]]
+id = "madoka"
+native = ["鹿目まどか"]
+danbooru = "kaname_madoka"
+
+[[character]]
+id = "homura"
+native = ["暁美ほむら"]
+danbooru = "akemi_homura"
+
+[[character]]
+id = "sayaka"
+native = ["美樹さやか"]
+danbooru = "miki_sayaka"
+
+[[character]]
+id = "kyoko"
+native = ["佐倉杏子"]
+danbooru = "sakura_kyoko"
+sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakura_kyouko" }
+
+[[character]]
+id = "mami"
+native = ["巴マミ"]
+danbooru = "tomoe_mami"
+
+[[character]]
+id = "nagisa"
+native = ["百江なぎさ"]
+danbooru = "momoe_nagisa"
+
+[[character]]
+id = "kyubey"
+native = ["キュゥべえ"]
+danbooru = "kyubey"
+sites = { konachan = "kyuubee", zerochan = "kyubee" }

@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "monogatari/tsubasa"
+signature = ["cursor", "foreground", "ansi12"]
+ansi_source = "Kanso Ink"
+
+[colors]
+background = "#201517"
+foreground = "#dfe3e1"
+cursor = "#fbafc0"
+selection_background = "#3a3e45"
+ansi = [
+  "#2d2123",
+  "#d17f84",
+  "#cec474",
+  "#f0ad7c",
+  "#6f9cc5",
+  "#d8a0c8",
+  "#7bb5d0",
+  "#e4d0d3",
+
+  "#847376",
+  "#f39faa",
+  "#ebe08e",
+  "#fdd5b8",
+  "#78b3cb",
+  "#f1c3f6",
+  "#9fccf2",
+  "#ffe8ec",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#1c2020"
+cursor = "#bb667c"
+selection_background = "#d4d7e0"
+ansi = [
+  "#fff0f2",
+  "#9f4850",
+  "#3b5826",
+  "#8f5526",
+  "#38678d",
+  "#8c4d7f",
+  "#11576e",
+  "#35292b",
+
+  "#847376",
+  "#8d3948",
+  "#2e491b",
+  "#714d30",
+  "#185c71",
+  "#73427e",
+  "#114666",
+  "#2c1b1f",
+]

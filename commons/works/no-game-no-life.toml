@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "No Game No Life"
+native = "ノーゲーム・ノーライフ"
+lead = "no-game-no-life/jibril"
+
+[[character]]
+id = "sora"
+native = ["空"]
+danbooru = "sora_(no_game_no_life)"
+
+[[character]]
+id = "shiro"
+native = ["白"]
+danbooru = "shiro_(no_game_no_life)"
+
+[[character]]
+id = "steph"
+native = ["ステファニー・ドーラ"]
+danbooru = "stephanie_dora"
+sites = { konachan = [] }
+
+[[character]]
+id = "jibril"
+native = ["ジブリール"]
+danbooru = "jibril_(no_game_no_life)"
+sites = { konachan = "jibril" }
+
+[[character]]
+id = "izuna"
+native = ["初瀬いづな"]
+danbooru = "hatsuse_izuna"
+
+[[character]]
+id = "tet"
+native = ["テト"]
+danbooru = "teto_(no_game_no_life)"
+sites = { konachan = "tet_(no_game_no_life)", yande = "tet_(no_game_no_life)", zerochan = "tet_(no_game_no_life)" }

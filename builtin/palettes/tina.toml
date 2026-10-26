@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "black-bullet/tina"
+signature = ["cursor", "ansi6", "selection"]
+ansi_source = "Galizur + Varanium"
+
+[colors]
+background = "#1b170c"
+foreground = "#eee2c5"
+cursor = "#ead082"
+selection_background = "#2c4a5e"
+ansi = [
+  "#282318",
+  "#f16d40",
+  "#afcd33",
+  "#dcb831",
+  "#6b9bbd",
+  "#fe8fab",
+  "#71b7bd",
+  "#dcd4c2",
+
+  "#7d7667",
+  "#f3a288",
+  "#c9ea4f",
+  "#ffdb42",
+  "#00b9e0",
+  "#ffc1cf",
+  "#20dfc9",
+  "#f9edd0",
+]
+
+[colors.light]
+background = "#fff8f0"
+foreground = "#251f0d"
+cursor = "#9a853f"
+selection_background = "#91afc6"
+ansi = [
+  "#fcf3e0",
+  "#af3d13",
+  "#335918",
+  "#805d00",
+  "#366888",
+  "#af355d",
+  "#00595f",
+  "#302c20",
+
+  "#7d7667",
+  "#8b3e23",
+  "#2a4a12",
+  "#6f5000",
+  "#005d72",
+  "#7e4253",
+  "#004b43",
+  "#251f0d",
+]

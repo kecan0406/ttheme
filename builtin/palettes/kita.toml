@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "bocchi-the-rock/kita"
+signature = ["cursor", "ansi2", "ansi3"]
+ansi_source = "Wild Cherry + Kessoku"
+
+[colors]
+background = "#201513"
+foreground = "#fddbd6"
+cursor = "#ee6555"
+selection_background = "#5a323b"
+ansi = [
+  "#2e211f",
+  "#f26883",
+  "#61d976",
+  "#e1b557",
+  "#b77cf3",
+  "#e29cb8",
+  "#70bb9a",
+  "#e6d0cc",
+
+  "#857370",
+  "#f3a198",
+  "#ccec9f",
+  "#ffd5b2",
+  "#b1a1e8",
+  "#ffc1ce",
+  "#abd0bd",
+  "#ffe9e6",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#2d1b18"
+cursor = "#c52e24"
+selection_background = "#ffcad3"
+ansi = [
+  "#fff0ee",
+  "#bb264f",
+  "#005d22",
+  "#805e00",
+  "#8a2cdf",
+  "#974a6d",
+  "#005c41",
+  "#362927",
+
+  "#857370",
+  "#8c3c35",
+  "#31490e",
+  "#724d29",
+  "#5a45a1",
+  "#7e4252",
+  "#27493a",
+  "#2d1b18",
+]

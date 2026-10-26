@@ -1,4 +1,7 @@
 import type { Mode } from '@/lib/mode'
+import type { BUILTIN as Builtin } from '../../src/core/theme.ts'
+
+export const BUILTIN: typeof Builtin = 'ttheme'
 
 export interface GateRule {
   rule: string
@@ -18,13 +21,27 @@ export interface Shade {
   gate: number[]
 }
 
+export interface WorkRef {
+  id: string
+  name: string
+  native: string | null
+  lang: string | null
+  lead: string
+}
+
+export interface CharacterRef {
+  id: string
+  native: string[]
+}
+
 export interface Theme extends Shade {
   id: string
-  marketplace: string | null
+  marketplace: string
   name: string
-  catalog: string | null
-  native: string | null
-  lead: boolean
+  subject: string | null
+  work: WorkRef | null
+  also: WorkRef[]
+  character: CharacterRef | null
   from: string | null
   ansiSource: string
   signatureSlots: string[]
@@ -43,8 +60,12 @@ export interface Marketplace {
   palettes: Theme[]
 }
 
-export function shelfOf(theme: Pick<Theme, 'marketplace' | 'catalog'>): string {
-  return [theme.marketplace, theme.catalog].filter((part) => part !== null).join(' / ')
+export function isBuiltin(theme: Pick<Theme, 'marketplace'>): boolean {
+  return theme.marketplace === BUILTIN
+}
+
+export function shortName(name: string): string {
+  return name.startsWith(`${BUILTIN}/`) ? name.slice(BUILTIN.length + 1) : name
 }
 
 export function shadeOf(theme: Shade): Shade {

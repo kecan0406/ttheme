@@ -40,7 +40,7 @@ home() {
   [[ -n $tab ]] || return 0
   mkdir -p $h/.config/ttheme
   cp -R $src/ttheme.zsh $src/preview.zsh(N) $src/adapters $ROOT/dist/shell/palettes.zsh $h/.config/ttheme/
-  print -rl -- 'typeset -ga TTHEME_TERMINALS=(konsole warp)' "typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'" 'typeset -g TTHEME_STARTUP=konata' >> $h/.config/ttheme/palettes.zsh
+  print -rl -- 'typeset -ga TTHEME_TERMINALS=(konsole warp)' "typeset -g TTHEME_KONSOLE_BASE='ColorScheme=Breeze;UseCustomCursorColor=false'" 'typeset -g TTHEME_STARTUP=ttheme/konata' >> $h/.config/ttheme/palettes.zsh
   mkdir -p $h/.warp/themes $h/.config/warp-terminal $h/.local/share/warp-terminal/themes
   print -rl -- '[appearance.themes]' 'theme = "dark"' | tee $h/.warp/settings.toml > $h/.config/warp-terminal/settings.toml
   ( source $h/.config/ttheme/palettes.zsh; for n in $TTHEME_ORDER; do : > $h/.warp/themes/ttheme-${${n/@/--}/\//--}.yaml; done )
@@ -493,7 +493,7 @@ check() {
   flow off
   home paste off
   mkdir -p $WORK/paste/a/b
-  print -rl -- "$WORK/paste/a kita" "$WORK/paste/a/b rei" > $WORK/paste/.config/ttheme/pins
+  print -rl -- "$WORK/paste/a ttheme/kita" "$WORK/paste/a/b ttheme/rei" > $WORK/paste/.config/ttheme/pins
   pasting paste
   home back off
   print -r -- "const { execSync } = require('node:child_process'); if (process.argv[2] === 'browse') { execSync('stty rows 10 cols 30', { stdio: 'inherit' }); process.exit(21) } process.exit(1)" > $WORK/back/.config/ttheme/ttheme.js

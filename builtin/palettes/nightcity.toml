@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "cyberpunk-edgerunners/nightcity"
+signature = ["cursor", "ansi13", "ansi14"]
+ansi_source = "Vibrant Ink"
+
+[colors]
+background = "#19180d"
+foreground = "#e8e3c7"
+cursor = "#e2d61a"
+selection_background = "#423f14"
+ansi = [
+  "#252418",
+  "#e7724b",
+  "#bbca26",
+  "#daba00",
+  "#19a6a6",
+  "#ff8bc1",
+  "#50bca3",
+  "#d9d5c3",
+
+  "#7a7768",
+  "#f3a187",
+  "#bbed5c",
+  "#e8e330",
+  "#00bcdb",
+  "#ffbdf3",
+  "#00dddd",
+  "#f4eed2",
+]
+
+[colors.light]
+background = "#fef9e7"
+foreground = "#22200f"
+cursor = "#918900"
+selection_background = "#dfd9a0"
+ansi = [
+  "#f9f4e1",
+  "#a84320",
+  "#36591c",
+  "#805d00",
+  "#006f6f",
+  "#b22b77",
+  "#005b4b",
+  "#2e2c20",
+
+  "#7a7768",
+  "#8b3d23",
+  "#274b0c",
+  "#6e4f00",
+  "#005d6e",
+  "#803a7a",
+  "#004a4a",
+  "#22200f",
+]

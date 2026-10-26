@@ -12,18 +12,17 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { type Manifest, type PaletteEntry, SCHEMA } from '../core/manifest.ts'
+import type { Manifest, PaletteEntry } from '../core/manifest.ts'
 import { backupPath } from '../store/edits.ts'
 import type { Host } from '../store/host.ts'
 import { type Installed, writeInstalled } from '../store/installed.ts'
 import { sync } from './sync.ts'
 import { applyUninstall, planUninstall, type UninstallPaths } from './uninstall.ts'
 
-function entry(name: string, order: number): PaletteEntry {
+function entry(name: string): PaletteEntry {
   return {
     name,
-    catalog: 'Jujutsu Kaisen',
-    order,
+    subject: `jujutsu-kaisen/${name.slice(name.indexOf('/') + 1)}`,
     ansiSource: 'Horizon + Jujutsu',
     background: '#11191c',
     foreground: '#e3e2e7',
@@ -38,10 +37,10 @@ function entry(name: string, order: number): PaletteEntry {
 }
 
 const manifest: Manifest = {
-  schema: SCHEMA,
   version: '0.1.0',
   gate: [],
-  palettes: [entry('gojo', 1), entry('geto', 2)],
+  palettes: [entry('ttheme/gojo'), entry('ttheme/geto')],
+  works: [],
 }
 
 const host: Host = { platform: 'linux', env: {}, run: () => undefined }
@@ -75,8 +74,16 @@ test('uninstall gives every config back as it was and deletes only what ttheme w
   const mine = join(p.configHome, 'ghostty', 'themes', 'gojo')
   put(ghostty, 'font-size = 13\ntheme = Dracula\n')
   put(mine, 'background = #000000\n')
-  install(p, { terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'], palettes: ['gojo', 'geto'], startup: 'gojo' })
-  install(p, { terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'], palettes: ['gojo', 'geto'], startup: 'geto' })
+  install(p, {
+    terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'],
+    palettes: ['ttheme/gojo', 'ttheme/geto'],
+    startup: 'ttheme/gojo',
+  })
+  install(p, {
+    terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'],
+    palettes: ['ttheme/gojo', 'ttheme/geto'],
+    startup: 'ttheme/geto',
+  })
   assert.equal(readFileSync(backupPath(ghostty), 'utf8'), 'font-size = 13\ntheme = Dracula\n')
   assert.ok(!existsSync(backupPath(kitty)))
 
@@ -88,7 +95,7 @@ test('uninstall gives every config back as it was and deletes only what ttheme w
   assert.ok(!existsSync(join(p.configHome, 'alacritty', 'alacritty.toml')))
   assert.ok(!existsSync(join(p.configHome, 'wezterm', 'wezterm.lua')))
   assert.equal(readFileSync(mine, 'utf8'), 'background = #000000\n')
-  assert.ok(!existsSync(join(p.configHome, 'ghostty', 'themes', 'ttheme-gojo.dark')))
+  assert.ok(!existsSync(join(p.configHome, 'ghostty', 'themes', 'ttheme-ttheme--gojo.dark')))
   assert.ok(!existsSync(join(p.configHome, 'ttheme')))
   assert.deepEqual(planUninstall(p), { edits: [], removals: [], touches: [] })
 })
@@ -96,7 +103,11 @@ test('uninstall gives every config back as it was and deletes only what ttheme w
 test("uninstall also deletes the palette files ttheme 1.0.34 and older wrote without its prefix, and nothing of the user's", () => {
   const p = paths()
   const at = (...parts: string[]) => join(p.configHome, ...parts)
-  install(p, { terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'], palettes: ['gojo'], startup: 'gojo' })
+  install(p, {
+    terminals: ['ghostty', 'kitty', 'alacritty', 'wezterm'],
+    palettes: ['ttheme/gojo'],
+    startup: 'ttheme/gojo',
+  })
 
   const old = [
     [at('ghostty', 'themes', 'geto'), '# geto — Jujutsu Kaisen (呪術廻戦)\n# ANSI: Horizon\nbackground = #11191c\n'],
@@ -130,7 +141,7 @@ test('uninstall keeps the backup when the config changed after ttheme first edit
   const p = paths()
   const ghostty = join(p.configHome, 'ghostty', 'config')
   put(ghostty, 'font-size = 13\n')
-  install(p, { terminals: ['ghostty'], palettes: ['gojo'] })
+  install(p, { terminals: ['ghostty'], palettes: ['ttheme/gojo'] })
   writeFileSync(ghostty, `window-padding-x = 4\n${readFileSync(ghostty, 'utf8')}`)
 
   applyUninstall(planUninstall(p), p, host)
@@ -144,7 +155,7 @@ test('uninstall gives back a config that ended without a newline or with blank l
     const p = paths()
     const ghostty = join(p.configHome, 'ghostty', 'config')
     put(ghostty, mine)
-    install(p, { terminals: ['ghostty'], palettes: ['gojo'] })
+    install(p, { terminals: ['ghostty'], palettes: ['ttheme/gojo'] })
 
     applyUninstall(planUninstall(p), p, host)
 
@@ -174,7 +185,7 @@ test('a config kept as a symlink stays one through install and uninstall', () =>
   put(real, 'font-size = 13\n')
   mkdirSync(join(ghostty, '..'), { recursive: true })
   symlinkSync(real, ghostty)
-  install(p, { terminals: ['ghostty'], palettes: ['gojo'] })
+  install(p, { terminals: ['ghostty'], palettes: ['ttheme/gojo'] })
   assert.ok(lstatSync(ghostty).isSymbolicLink())
   assert.match(readFileSync(real, 'utf8'), /# ttheme begin/)
 
@@ -194,9 +205,9 @@ test('uninstall puts back the Warp theme ttheme replaced', () => {
 
   const before = '[appearance.themes]\ntheme = "Dracula"\n'
   put(settings, before)
-  install(p, { terminals: ['warp'], palettes: ['gojo'] })
-  install(p, { terminals: ['warp'], palettes: ['gojo'] })
-  assert.match(readFileSync(settings, 'utf8'), /ttheme-gojo\.dark\.[0-9a-f]{8}\.yaml/)
+  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
+  assert.match(readFileSync(settings, 'utf8'), /ttheme-ttheme--gojo\.dark\.[0-9a-f]{8}\.yaml/)
 
   applyUninstall(planUninstall(p), p, host)
 
@@ -217,9 +228,9 @@ test('uninstall puts back a linked Warp settings file through its link, which an
   put(real, before)
   mkdirSync(join(settings, '..'), { recursive: true })
   symlinkSync(real, settings)
-  install(p, { terminals: ['warp'], palettes: ['gojo'] })
-  install(p, { terminals: ['warp'], palettes: ['gojo'] })
-  assert.match(readFileSync(real, 'utf8'), /ttheme-gojo\.dark\.[0-9a-f]{8}\.yaml/)
+  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
+  assert.match(readFileSync(real, 'utf8'), /ttheme-ttheme--gojo\.dark\.[0-9a-f]{8}\.yaml/)
   const link = lstatSync(settings).ino
 
   applyUninstall(planUninstall(p), p, host)
@@ -239,9 +250,9 @@ test('uninstall drops the Warp backup that ttheme off already made true again', 
 
   const before = '[appearance.themes]\ntheme = "Dracula"\n'
   put(settings, before)
-  install(p, { terminals: ['warp'], palettes: ['gojo'], off: true })
-  install(p, { terminals: ['warp'], palettes: ['gojo'] })
-  install(p, { terminals: ['warp'], palettes: ['gojo'], off: true })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'], off: true })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'] })
+  install(p, { terminals: ['warp'], palettes: ['ttheme/gojo'], off: true })
   assert.equal(readFileSync(settings, 'utf8'), before)
   assert.ok(existsSync(backupPath(settings)))
 

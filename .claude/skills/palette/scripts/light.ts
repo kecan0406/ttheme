@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { basename, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { deltaE } from '../../../../src/core/color.ts'
 import { check } from '../../../../src/core/contrast.ts'
@@ -12,7 +12,7 @@ import { withTable } from '../../../../src/core/own.ts'
 import type { Shade } from '../../../../src/core/theme.ts'
 
 interface ThemeDoc {
-  meta: { name: string; signature: string[] }
+  signature: string[]
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
   contrast?: { waive?: string[] }
 }
@@ -48,13 +48,14 @@ function member(file: string, source: string): Member {
     ansi: c.ansi,
   }
   const waive = doc.contrast?.waive ?? []
-  const { shade, moves } = mirrored({ ...own, name: doc.meta.name, signatureSlots: doc.meta.signature, waive })
+  const name = basename(file, '.toml')
+  const { shade, moves } = mirrored({ ...own, name, signatureSlots: doc.signature, waive })
 
   return {
     file,
     source,
-    name: doc.meta.name,
-    signature: doc.meta.signature,
+    name,
+    signature: doc.signature,
     waive,
     to: otherOf(modeOf(own)),
     shade,
@@ -69,7 +70,7 @@ function textOf(m: Member): string {
   return withTable(cleared, table, colorsToml(colorsOfTheme(m.shade), table).join('\n'), 'colors')
 }
 
-export async function mirrorCatalogs(files: string[], sources = new Map<string, string>()): Promise<Mirrored[]> {
+export async function mirrorPalettes(files: string[], sources = new Map<string, string>()): Promise<Mirrored[]> {
   const given = new Map([...sources].map(([file, text]) => [resolve(file), text]))
 
   return Promise.all(
@@ -82,7 +83,7 @@ export async function mirrorCatalogs(files: string[], sources = new Map<string, 
 }
 
 export async function writeMirrors(files: string[], sources = new Map<string, string>()): Promise<Mirrored[]> {
-  const made = await mirrorCatalogs(files, sources)
+  const made = await mirrorPalettes(files, sources)
   for (const m of made) writeFileSync(m.file, m.text)
   return made
 }
@@ -94,18 +95,18 @@ if (import.meta.main) {
     options: { variants: { type: 'string' }, write: { type: 'boolean' } },
   })
   if (positionals.length === 0) {
-    console.error('usage: bun light.ts [--write] [--variants <variants.json>] <theme.toml> [...]')
+    console.error('usage: bun light.ts [--write] [--variants <variants.json>] builtin/palettes/<palette>.toml [...]')
     process.exit(1)
   }
   const out: Record<string, Partial<Record<Mode, { label: string; colors: Record<string, unknown> }>>> = {}
-  const made = values.write ? await writeMirrors(positionals) : await mirrorCatalogs(positionals)
+  const made = values.write ? await writeMirrors(positionals) : await mirrorPalettes(positionals)
   let failed = 0
   for (const m of made) {
     const doc = Bun.TOML.parse(m.text) as unknown as ThemeDoc
     const left = check({
       ...m.shade,
       name: m.name,
-      signatureSlots: doc.meta.signature,
+      signatureSlots: doc.signature,
       waive: doc.contrast?.waive ?? [],
     })
     console.log(`${m.name}: ${m.to}`)

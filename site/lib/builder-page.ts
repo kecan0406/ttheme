@@ -1,40 +1,42 @@
-import type { BuilderData, Start } from '@/lib/builder'
-import { fallback, official } from '@/lib/official'
+import type { BuilderData, Opening, Start } from '@/lib/builder'
+import { entries, fallback, themes } from '@/lib/builtin'
+import { searchText } from '@/lib/gallery'
+import { stocks } from '@/lib/marketplaces'
 import { gridText, scenePanes } from '@/lib/scene-panes'
 import type { Shared } from '@/lib/share'
-import { shelfOf } from '@/lib/themes'
+import type { Theme } from '@/lib/themes'
 import type { Pane } from '@/lib/view-types'
-import snapshot from '@/marketplaces.json' with { type: 'json' }
+import { byWork, leadOf } from '@/lib/works'
 import { type Draft, draftOf } from '../../src/core/draft.ts'
-import { listed, type PaletteEntry } from '../../src/core/manifest.ts'
-import type { Shown } from '../../src/store/marketplace-index.ts'
-
-function startOf(entry: PaletteEntry, name: string, shelf: string): Start {
-  return {
-    name,
-    shelf,
-    native: entry.native ?? null,
-    lead: entry.lead === true,
-    dots: entry.signature,
-    draft: draftOf(entry, name),
-  }
-}
+import type { PaletteEntry } from '../../src/core/manifest.ts'
 
 export function starts(): Start[] {
-  const shelf = (entry: PaletteEntry) => entry.catalog ?? 'official'
-
-  return [
-    ...listed(official).map((entry) => startOf(entry, entry.name, shelf(entry))),
-    ...(snapshot as Shown[]).flatMap((marketplace) =>
-      marketplace.palettes.map((entry) =>
-        startOf(
-          entry,
-          `${marketplace.id}/${entry.name}`,
-          entry.catalog ? `${marketplace.id} · ${entry.catalog}` : marketplace.id,
-        ),
-      ),
+  const listed = [
+    ...entries.map((entry, at) => [themes[at] as Theme, entry] as const),
+    ...stocks.flatMap((stock) =>
+      stock.entries.map((entry, at) => [stock.marketplace.palettes[at] as Theme, entry] as const),
     ),
   ]
+
+  const entryOf = new Map(listed)
+
+  return byWork(listed.map(([theme]) => theme)).flatMap((shelf) => {
+    const lead = leadOf(shelf)
+    const work = shelf.work && { name: shelf.work.name, native: shelf.work.native, lang: shelf.work.lang }
+
+    return shelf.themes.map(
+      (theme): Start => ({
+        name: theme.id,
+        draft: draftOf(entryOf.get(theme) as PaletteEntry, theme.id),
+        shelf: shelf.key,
+        work,
+        publisher: theme.marketplace,
+        lead: work !== null && theme === lead,
+        words: searchText(theme),
+        dots: theme.signature,
+      }),
+    )
+  })
 }
 
 export interface BuilderPageData {
@@ -45,30 +47,27 @@ export interface BuilderPageData {
 
 const GRID = { cols: 120, rows: 34 }
 
-function linkStart({ drafts, index, entry, theme }: Shared): Start {
-  const draft = drafts[index] as Draft
+function opening(shared: Shared | null): Opening {
+  if (shared) {
+    const draft = shared.drafts[shared.index] as Draft
 
-  return {
-    name: draft.name,
-    shelf: shelfOf(theme),
-    native: null,
-    lead: false,
-    dots: entry.signature,
-    draft,
+    return { name: draft.name, draft }
   }
+
+  const lead = entries.find((entry) => entry.name === fallback.id) as PaletteEntry
+
+  return { name: lead.name, draft: draftOf(lead) }
 }
 
 export function builderData(shared: Shared | null): BuilderPageData {
-  const lead = official.find((entry) => entry.name === fallback.name) as PaletteEntry
   const { panes, uses } = scenePanes(GRID.cols, GRID.rows)
 
   return {
     data: {
-      first: shared ? linkStart(shared) : startOf(lead, lead.name, lead.catalog ?? 'official'),
+      first: opening(shared),
       link: shared?.code ?? null,
       panes: panes.map((pane) => pane.name),
       uses,
-      official: listed(official).map((entry) => entry.name),
     },
     panes,
     grid: gridText(GRID.cols, GRID.rows),

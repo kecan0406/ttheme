@@ -46,7 +46,7 @@ test('marketplace check names a chain that loops or ends off the marketplace, an
 test('pins follow a renamed palette and drop a removed one, leaving the rest of the file as it was', () => {
   const home = mkdtempSync(join(tmpdir(), 'ttheme-pins-'))
   mkdirSync(join(home, 'ttheme'))
-  writeFileSync(pinsPath(home), `~/a/**        ${ID}/dawn\nssh:box       ${ID}/old\n/srv two/**   konata\n`)
+  writeFileSync(pinsPath(home), `~/a/**        ${ID}/dawn\nssh:box       ${ID}/old\n/srv two/**   ttheme/konata\n`)
   movePins(home, new Map([[`${ID}/dawn`, `${ID}/dusk`]]), [`${ID}/old`])
-  assert.equal(readFileSync(pinsPath(home), 'utf8'), `~/a/**        ${ID}/dusk\n/srv two/**   konata\n`)
+  assert.equal(readFileSync(pinsPath(home), 'utf8'), `~/a/**        ${ID}/dusk\n/srv two/**   ttheme/konata\n`)
 })

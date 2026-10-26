@@ -4,13 +4,13 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, uti
 import { dirname, join } from 'node:path'
 import { Terminal } from '@xterm/headless'
 import type { Mode } from '../../src/core/mode.ts'
+import { owned } from '../../src/core/theme.ts'
 import { TERMINAL_DOMAIN, terminalPictures } from '../../src/terminals/terminal-app.ts'
 import { type Bookmark, prefsOf, tabFile } from './apple.ts'
 import {
   alacrittyColors,
   alacrittyFiles,
   contourColors,
-  fileStem,
   type GhosttyLoad,
   ghosttyLoad,
   hex,
@@ -700,9 +700,7 @@ const konsole = (): Kind => {
         return
       }
 
-      const file = name.startsWith('ttheme · ')
-        ? `ttheme-${fileStem(name.slice('ttheme · '.length))}.profile`
-        : 'Own.profile'
+      const file = name.startsWith('ttheme · ') ? `${owned(name.slice('ttheme · '.length))}.profile` : 'Own.profile'
 
       profile = file
       app.log(`default profile ${file}`)

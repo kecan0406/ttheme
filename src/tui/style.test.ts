@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { loadThemes } from '../cli/build.ts'
+import { BUILTIN_DIR, COMMONS_DIR, loadBuiltin, loadCommons } from '../cli/build.ts'
 import { contrast } from '../core/color.ts'
 import { ROOT } from '../root.ts'
 import {
@@ -102,10 +102,10 @@ test('a role closes exactly what it opens, so it never ends a painted row early'
   }
 })
 
-test('the accent slot, the chip’s slot 8 and the danger slot 1 read on every official background, and the surfaces step away from the accent in order', () => {
+test('the accent slot, the chip’s slot 8 and the danger slot 1 read on every built-in background, and the surfaces step away from the accent in order', () => {
   const names = Object.keys(SURFACES) as Surface[]
 
-  for (const theme of loadThemes(join(root, 'themes'))) {
+  for (const theme of loadBuiltin(BUILTIN_DIR, loadCommons(COMMONS_DIR)).themes) {
     assert.ok(contrast(theme.ansi[6] as string, theme.background) >= 3, theme.name)
     assert.ok(contrast(theme.ansi[8] as string, theme.background) >= 3, theme.name)
     assert.ok(contrast(theme.foreground, theme.ansi[8] as string) >= 3, theme.name)

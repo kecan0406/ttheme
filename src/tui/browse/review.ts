@@ -1,7 +1,9 @@
 import type { Hex } from '../../core/color.ts'
+import { aboutOf } from '../../core/commons.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
 import { counted, inert } from '../../core/text.ts'
-import { OFFICIAL, shownSource } from '../../store/sources.ts'
+import { BUILTIN } from '../../core/theme.ts'
+import { shownSource } from '../../store/sources.ts'
 import { fit, wrapText } from '../ansi.ts'
 import { type Bar, barLine, type Hint } from '../bar.ts'
 import { type HubTab, hubBar } from '../hub.ts'
@@ -157,9 +159,9 @@ export class Review {
     const rows: string[] = []
 
     for (const m of staged.adds.values()) {
-      const auto = m.source !== OFFICIAL && staged.auto(m) ? 'updates on its own' : ''
+      const auto = m.source !== BUILTIN && staged.auto(m) ? 'updates on its own' : ''
       rows.push(
-        `+ ${m.id}  ${p.dim([m.source === OFFICIAL ? 'Built in' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(SEP))}`,
+        `+ ${m.id}  ${p.dim([m.source === BUILTIN ? 'Built in' : m.shown, counted(m.entries.filter((e) => !e.default).length), auto].filter(Boolean).join(SEP))}`,
       )
     }
 
@@ -188,8 +190,11 @@ export class Review {
     const { names, dropped } = staged.pending()
     const renew = new Set(staged.result().renew)
     const renewed = staged.entries().filter((e) => renew.has(e.name))
+    const works = staged.works()
     const width = Math.max(0, ...[...names, ...dropped, ...renewed].map((e) => e.name.length))
-    const palette = (sign: string, e: PaletteEntry) => `   ${sign} ${e.name.padEnd(width)}  ${p.dim(e.catalog ?? '')}`
+
+    const palette = (sign: string, e: PaletteEntry) =>
+      `   ${sign} ${e.name.padEnd(width)}  ${p.dim(aboutOf(works, e.subject)?.work.name ?? '')}`
 
     const counts = [
       names.length > 0 ? `${names.length} to install` : '',

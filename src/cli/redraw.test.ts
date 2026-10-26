@@ -3,7 +3,7 @@ import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { inMode, type Manifest, type PaletteEntry, SCHEMA } from '../core/manifest.ts'
+import { inMode, type Manifest, type PaletteEntry } from '../core/manifest.ts'
 import { encodeRgba, type Rgba } from '../core/png.ts'
 import {
   backgroundsDir,
@@ -14,7 +14,7 @@ import {
   paintFor,
   rackOf,
 } from '../pictures/backdrop.ts'
-import { readAvailable, writeOfficial } from '../store/available.ts'
+import { readAvailable, writeBundled } from '../store/available.ts'
 import { readInstalled, writeInstalled } from '../store/installed.ts'
 import { moveColors } from './init.ts'
 import { redrawColoring, redrawPictures } from './redraw.ts'
@@ -22,9 +22,8 @@ import { redrawColoring, redrawPictures } from './redraw.ts'
 process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'ttheme-redraw-cache-'))
 
 const GOJO: PaletteEntry = {
-  name: 'gojo',
-  catalog: 'Jujutsu Kaisen',
-  order: 1,
+  name: 'ttheme/gojo',
+  subject: 'jujutsu-kaisen/gojo',
   ansiSource: 'Horizon + Jujutsu',
   background: '#11191c',
   foreground: '#e3e2e7',
@@ -37,7 +36,7 @@ const GOJO: PaletteEntry = {
   backdrop: { slot: 'cursor', color: '#7cc1d6', opacity: 0.2 },
 }
 
-const MANIFEST: Manifest = { schema: SCHEMA, version: '0.1.0', gate: [], palettes: [GOJO] }
+const MANIFEST: Manifest = { version: '0.1.0', gate: [], palettes: [GOJO], works: [] }
 
 function figure(): Rgba {
   const data = new Uint8Array(16 * 16 * 4)
@@ -55,14 +54,14 @@ function home(mode: 'dark' | 'light'): string {
   const configHome = mkdtempSync(join(tmpdir(), 'ttheme-redraw-'))
   mkdirSync(join(configHome, 'ttheme'), { recursive: true })
   writeFileSync(join(configHome, 'ttheme', 'config.zsh'), `: \${TTHEME_MODE:=${mode}}\n`)
-  writeOfficial(configHome, MANIFEST)
-  writeInstalled(configHome, { terminals: [], palettes: ['gojo'] })
+  writeBundled(configHome, { builtin: MANIFEST, commons: { works: [], renames: {} } })
+  writeInstalled(configHome, { terminals: [], palettes: ['ttheme/gojo'] })
 
   return configHome
 }
 
 function install(configHome: string, id = 7, original?: Uint8Array): Picture {
-  const worn = readAvailable(configHome).palettes.find((entry) => entry.name === 'gojo') as PaletteEntry
+  const worn = readAvailable(configHome).palettes.find((entry) => entry.name === 'ttheme/gojo') as PaletteEntry
   const image = figure()
 
   installBackdrop(
@@ -75,7 +74,7 @@ function install(configHome: string, id = 7, original?: Uint8Array): Picture {
     0,
   )
 
-  return rackOf(configHome, 'gojo')[0] as Picture
+  return rackOf(configHome, 'ttheme/gojo')[0] as Picture
 }
 
 test('a mode switch lays the drawing of the other ink that was got ready, with no original to read, and it is the one a fresh install gives', async () => {
@@ -84,9 +83,9 @@ test('a mode switch lays the drawing of the other ink that was got ready, with n
   const lines: string[] = []
   assert.equal(await redrawPictures(configHome, (line) => lines.push(line), configHome, { emit: false }), 0)
   assert.deepEqual(lines, ['Drawing 1 background picture for the other mode'])
-  const dark = readAvailable(configHome).palettes.find((entry) => entry.name === 'gojo') as PaletteEntry
+  const dark = readAvailable(configHome).palettes.find((entry) => entry.name === 'ttheme/gojo') as PaletteEntry
   const light = paintFor(inMode(dark, 'light'))
-  assert.equal(cached(configHome, 'gojo', before, light, 0, 'tone'), true)
+  assert.equal(cached(configHome, 'ttheme/gojo', before, light, 0, 'tone'), true)
 
   writeFileSync(join(configHome, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=light}\n')
   const original = join(backgroundsDir(configHome), before.original as string)
@@ -100,7 +99,7 @@ test('a mode switch lays the drawing of the other ink that was got ready, with n
     chmodSync(original, 0o644)
   }
 
-  const swapped = rackOf(configHome, 'gojo')[0] as Picture
+  const swapped = rackOf(configHome, 'ttheme/gojo')[0] as Picture
   assert.deepEqual([swapped.light, swapped.tone], [true, light.hue.color])
   assert.notEqual(swapped.stem, before.stem)
 
@@ -118,16 +117,16 @@ test('an update moves every tone picture to its own colors once, and leaves an i
 
   await moveColors(configHome, () => {}, configHome)
 
-  const moved = rackOf(configHome, 'gojo')[0] as Picture
+  const moved = rackOf(configHome, 'ttheme/gojo')[0] as Picture
   assert.equal(moved.coloring, 'original')
   assert.notEqual(moved.stem, before.stem)
   assert.equal(readInstalled(configHome).colorsMoved, true)
 
-  await redrawColoring(configHome, 'gojo', 'tone', moved.key, configHome)
-  assert.equal((rackOf(configHome, 'gojo')[0] as Picture).coloring, 'tone')
+  await redrawColoring(configHome, 'ttheme/gojo', 'tone', moved.key, configHome)
+  assert.equal((rackOf(configHome, 'ttheme/gojo')[0] as Picture).coloring, 'tone')
 
   await moveColors(configHome, () => {}, configHome)
-  assert.equal((rackOf(configHome, 'gojo')[0] as Picture).coloring, 'tone')
+  assert.equal((rackOf(configHome, 'ttheme/gojo')[0] as Picture).coloring, 'tone')
 
   const toneHome = home('dark')
   writeFileSync(join(toneHome, 'ttheme', 'config.zsh'), ': ${TTHEME_MODE:=dark}\n: ${TTHEME_BG_COLORS:=tone}\n')
@@ -135,7 +134,7 @@ test('an update moves every tone picture to its own colors once, and leaves an i
 
   await moveColors(toneHome, () => {}, toneHome)
 
-  assert.equal((rackOf(toneHome, 'gojo')[0] as Picture).coloring, 'tone')
+  assert.equal((rackOf(toneHome, 'ttheme/gojo')[0] as Picture).coloring, 'tone')
   assert.equal(readInstalled(toneHome).colorsMoved, true)
 })
 
@@ -143,14 +142,14 @@ test('a picture whose original cannot be read stays in its tone without keeping 
   const configHome = home('dark')
   install(configHome)
   install(configHome, 8, new Uint8Array([8]))
-  const coloring = (key: string) => rackOf(configHome, 'gojo').find((picture) => picture.key === key)?.coloring
+  const coloring = (key: string) => rackOf(configHome, 'ttheme/gojo').find((picture) => picture.key === key)?.coloring
 
   await moveColors(configHome, () => {}, configHome)
   assert.equal(coloring('safebooru_7'), 'original')
   assert.equal(coloring('safebooru_8'), 'tone')
   assert.equal(readInstalled(configHome).colorsMoved, true)
 
-  await redrawColoring(configHome, 'gojo', 'tone', 'safebooru_7', configHome)
+  await redrawColoring(configHome, 'ttheme/gojo', 'tone', 'safebooru_7', configHome)
   await moveColors(configHome, () => {}, configHome)
   assert.equal(coloring('safebooru_7'), 'tone')
 })

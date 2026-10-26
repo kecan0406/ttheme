@@ -36,6 +36,7 @@ export class Panel {
     this.host = host
     this.inside = new PaletteList<Row>({
       entries: [],
+      works: [],
       picked: host.staged.picked,
       layout: 'marketplaces',
       mode: 'inside',
@@ -73,7 +74,7 @@ export class Panel {
       return [['enter', this.verb(row.extra.action, this.host.source())]]
     }
 
-    if (row?.kind === 'catalog' && list.foldable()) {
+    if (row?.kind === 'shelf' && list.foldable()) {
       return [row.expanded ? ['←', 'close'] : ['→', 'open'], ['space', 'pick']]
     }
 
@@ -257,12 +258,12 @@ export class Panel {
     const { p, staged } = this.host
     const row = this.inside.focusedRow()
 
-    if (row?.kind === 'catalog') {
+    if (row?.kind === 'shelf') {
       const members = this.inside.inside(row)
       const installed = members.filter((e) => staged.installed.has(e.name)).length
 
       return [
-        `${p.bold(row.name)}${row.native ? ` ${p.dim(row.native)}` : ''}`,
+        `${p.bold(row.title)}${row.native ? ` ${p.dim(row.native)}` : ''}`,
         p.dim(`${counted(members.length)}${SEP}${installed} installed`),
         '',
       ]
@@ -286,7 +287,6 @@ export class Panel {
     const extras = [
       ...(pictures > 0 ? [`${pictures} picture${pictures === 1 ? '' : 's'}`] : []),
       ...(e.from ? [`From ${e.from}`] : []),
-      ...(e.base ? [`Base ${e.base}`] : []),
     ].join(SEP)
 
     const others = fails.length > 1 ? `${SEP}+${fails.length - 1}` : ''

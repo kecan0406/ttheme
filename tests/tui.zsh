@@ -10,15 +10,15 @@ fi
 typeset -g ROOT=${${(%):-%x}:A:h:h}
 typeset -g SOCKET=ttheme-tui-$$
 typeset -g SCREENS=$ROOT/tests/screens
-typeset -g FIXTURE=$ROOT/tests/fixture.json
+typeset -g FIXTURE=$ROOT/tests/fixture
 typeset -g COLS=100 ROWS=24
 typeset -gi PAINTED=0
 
 typeset -gA STATES=(
   empty  ''
-  few    'konata kita'
-  marketplace 'konata fix@shop/arcade'
-  pinned 'konata kita'
+  few    'ttheme/konata ttheme/kita'
+  marketplace 'ttheme/konata fix@shop/arcade fix@shop/dusk'
+  pinned 'ttheme/konata ttheme/kita'
 )
 
 typeset -ga SCENARIOS=(
@@ -46,7 +46,7 @@ typeset -ga SCENARIOS=(
   'theme-keys      few    hub  Down Right Down Right@Palette ?@Help'
   'editor-keys     few    hub  Down Right Down Tab@Palette Enter@slot ?@Help'
   'browse-marketplace   marketplace browse   Down Right Right Down'
-  'preview-marketplace  marketplace hub  Down Right Down Right Down'
+  'preview-marketplace  marketplace hub  Down Right Down'
   'hub-marketplace      marketplace hub'
   'pins-map        pinned pins'
   'pin-scope       pinned pin      Right Down Enter@PIN Left'
@@ -60,7 +60,7 @@ fixture_home() {
   home=$(mktemp -d)
   env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off ZDOTDIR=$home GHOSTTY_RESOURCES_DIR=x \
     node $ROOT/bin/ttheme.js init --yes < /dev/null > /dev/null
-  cp $FIXTURE $home/ttheme/official.json
+  cp $FIXTURE/builtin.json $FIXTURE/commons.json $home/ttheme/
   if [[ $state == marketplace ]]; then
     cp -R $ROOT/tests/marketplace $home/shop
     env -i PATH=$PATH HOME=$home XDG_CONFIG_HOME=$home TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off \
@@ -73,7 +73,7 @@ fixture_home() {
   fi
   if [[ $state == pinned ]]; then
     mkdir -p $home/work/.git $home/work/api/v2 $home/work/site $home/notes
-    print -l '~/work/**  konata' '~/work/site  kita' '~/notes/**  ryo' '/nonexistent-ttheme/archive/**  kita' 'ssh:tusa  konata' 'ssh:*.prod  kita' > $home/ttheme/pins
+    print -l '~/work/**  ttheme/konata' '~/work/site  ttheme/kita' '~/notes/**  ttheme/ryo' '/nonexistent-ttheme/archive/**  ttheme/kita' 'ssh:tusa  ttheme/konata' 'ssh:*.prod  ttheme/kita' > $home/ttheme/pins
   fi
   print -r -- $home
 }

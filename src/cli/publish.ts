@@ -1,9 +1,13 @@
 import { execFile } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { promisify } from 'node:util'
 import { parse } from 'smol-toml'
-import type { Catalog } from '../core/theme.ts'
+import { aboutOf, type Character, type Work, workOf, workToml } from '../core/commons.ts'
+import { readWorkFiles } from '../core/own.ts'
+import { available, readBundled, readMarketplaces } from '../store/available.ts'
+import { writeAtomic } from '../store/edits.ts'
+import { warning, workFiles, worksDir } from '../store/local.ts'
 import { TOPIC } from '../store/sources.ts'
 
 const exec = promisify(execFile)
@@ -220,51 +224,60 @@ export function withDescription(text: string, description: string | undefined): 
   return `${top.slice(0, at)}${name[0].endsWith('\n') ? '' : '\n'}${line}${top.slice(at)}${rest}`
 }
 
-export function withCatalogs(text: string, catalogs: readonly Catalog[]): string {
-  return catalogs.reduce(
-    (out, c) =>
-      `${out.replace(/\n*$/, '\n')}\n[[catalog]]\nname = ${JSON.stringify(c.name)}\n${c.native === undefined ? '' : `native = ${JSON.stringify(c.native)}\n`}${c.lead === undefined ? '' : `lead = ${JSON.stringify(c.lead)}\n`}`,
-    text,
+export function withCharacter(work: Work, character: Character | undefined): Work {
+  return character === undefined || work.characters.some((c) => c.id === character.id)
+    ? work
+    : { ...work, characters: [...work.characters, character] }
+}
+
+export interface Proposal {
+  work: Work
+  path: string
+}
+
+function bare({ id, name, native }: Work): Work {
+  return { id, name, ...(native ? { native } : {}), characters: [] }
+}
+
+export function proposalsFor(
+  known: readonly Work[],
+  commons: readonly Work[],
+  dir: string,
+  subjects: readonly (string | undefined)[],
+): Proposal[] {
+  const files = workFiles(dir)
+  const texts = new Map(files.map((file) => [file.id, readFileSync(file.path, 'utf8')]))
+  const held = new Map(readWorkFiles(files, (file) => texts.get(file.id) ?? '', warning(false)).map((w) => [w.id, w]))
+  const proposed = new Map<string, Work>()
+
+  for (const subject of subjects) {
+    const about = aboutOf(known, subject)
+
+    if (!about || aboutOf(commons, subject)?.known || (texts.has(about.work.id) && !held.has(about.work.id))) {
+      continue
+    }
+
+    const id = about.work.id
+    const at = proposed.get(id) ?? held.get(id) ?? bare(workOf(commons, id) ?? about.work)
+    proposed.set(id, withCharacter(at, about.character))
+  }
+
+  return [...proposed.values()].flatMap((work) =>
+    texts.get(work.id) === workToml(work) ? [] : [{ work, path: join(worksDir(dir), `${work.id}.toml`) }],
   )
 }
 
-export function withoutCatalogs(text: string, names: ReadonlySet<string>): string {
-  if (names.size === 0) {
-    return text
+export function writeProposals(home: string, dir: string, subjects: readonly (string | undefined)[]): Proposal[] {
+  const proposals = proposalsFor(
+    available(home, readMarketplaces(home, false), false).works,
+    readBundled(home).commons.works,
+    dir,
+    subjects,
+  )
+
+  for (const { work, path } of proposals) {
+    writeAtomic(path, workToml(work))
   }
 
-  const lines = text.split('\n')
-  const kept: string[] = []
-  let dropping = false
-
-  for (const [i, line] of lines.entries()) {
-    if (/^\s*\[/.test(line)) {
-      if (dropping && kept.length > 0 && kept.at(-1)?.trim() !== '') {
-        kept.push('')
-      }
-
-      dropping = false
-
-      if (/^\s*\[\[\s*catalog\s*\]\]/.test(line)) {
-        const end = lines.findIndex((next, j) => j > i && /^\s*\[/.test(next))
-        const block = lines.slice(i + 1, end < 0 ? undefined : end).join('\n')
-        const name = /^\s*name\s*=\s*(?:"((?:[^"\\]|\\.)*)"|'([^'\n]*)')/m.exec(block)
-        const quoted = name?.[1]
-        const literal = quoted === undefined ? (name?.[2] ?? '') : (JSON.parse(`"${quoted}"`) as string)
-        dropping = name !== null && names.has(literal)
-
-        if (dropping) {
-          while (kept.length > 0 && kept.at(-1)?.trim() === '') {
-            kept.pop()
-          }
-        }
-      }
-    }
-
-    if (!dropping) {
-      kept.push(line)
-    }
-  }
-
-  return `${kept.join('\n').replace(/\n*$/, '')}\n`
+  return proposals
 }

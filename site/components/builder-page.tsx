@@ -164,7 +164,7 @@ export function BuilderPage({
         {shared ? <AddPopover shared={shared} /> : null}
         <ExportDialog
           file={fileOf(edit)}
-          link={{ name: edit.name, link: null, code: null, failed: null, clash: null }}
+          link={{ name: edit.name, link: null, code: null, failed: null }}
           market={marketOf('', '')}
           description=""
         />

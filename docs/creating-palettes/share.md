@@ -17,12 +17,16 @@ a picture in Ghostty, kitty, iTerm2, WezTerm and Konsole outside tmux, and text
 elsewhere.
 
 ```text
-https://ttheme.dev/builder/tt4:…
+https://ttheme.dev/builder/tt5:…
 ```
 
 One link can carry several palettes. Everything after `/builder/` is the code:
-each palette's name, its twenty colors, its signature and the posts of its
-pictures, checked by a hash so a mistyped link is refused.
+each palette's name, its twenty colors and its other mode where it keeps one,
+its signature, the work or character it is of and the posts of its pictures,
+checked by a hash so a mistyped link is refused. A palette from a marketplace
+goes by its full name, such as `ttheme/rei`; one that lives in no marketplace,
+such as a tuned copy, goes by its own name and says which palette it came
+from.
 
 ## Open a link
 
@@ -34,15 +38,16 @@ exports as a palette file.
 ## Install a link
 
 ```sh
-ttheme add https://ttheme.dev/builder/tt4:…
-ttheme add tt4:…              # the bare code works too
+ttheme add https://ttheme.dev/builder/tt5:…
+ttheme add tt5:…              # the bare code works too
 ttheme add ~/Downloads/rei.toml   # a file the builder exported
 ```
 
 A link installs its palettes as they are, with the pictures it names. A link to
-a palette you already have, such as an official one, installs yours when the
-colors match and leaves it out when they differ. A palette file joins your own
-marketplace, where you can edit it.
+a palette you already have, such as a built-in one, installs yours when the
+colors match and leaves it out when they differ. A palette the link carries
+that lives in no marketplace joins your own, as a palette file does, where you
+can edit it.
 
 In the palette editor, pasting a link takes its colors into the palette you are
 editing, and `x` copies the palette's code, its `ttheme add` command or its file.

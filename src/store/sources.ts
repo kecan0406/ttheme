@@ -3,23 +3,20 @@ import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { parse } from 'smol-toml'
 import { escaped, inert } from '../core/text.ts'
-import { type Catalog, type Identity, MARKETPLACE_FILE, nameProblem, readCatalogs } from '../core/theme.ts'
-
-export const OFFICIAL = 'official'
+import { BUILTIN, type Identity, MARKETPLACE_FILE, nameProblem, slugProblem } from '../core/theme.ts'
 
 export const MARKETPLACE_KEYS = [
   '$schema',
   'name',
   'description',
   'owner',
-  'catalog',
   'renames',
   'force_remove_deleted_palettes',
   'metadata',
+  'fallback',
 ]
 
 export const OWNER_KEYS = ['name', 'email', 'url']
-export const CATALOG_KEYS = ['name', 'native', 'lead']
 export const TOPIC = 'ttheme-marketplace'
 
 const OWNER = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i
@@ -31,7 +28,7 @@ export function installedPath(configHome: string): string {
 }
 
 export function marketplacesOf(marketplaces: string[] | undefined): string[] {
-  return marketplaces ?? [OFFICIAL]
+  return marketplaces ?? [BUILTIN]
 }
 
 export function marketplaceSources(configHome: string): string[] {
@@ -42,7 +39,7 @@ export function marketplaceSources(configHome: string): string[] {
       Array.isArray(marketplaces) ? marketplaces.filter((m): m is string => typeof m === 'string') : undefined,
     )
   } catch {
-    return [OFFICIAL]
+    return [BUILTIN]
   }
 }
 
@@ -51,7 +48,7 @@ export function isLocal(source: string): boolean {
 }
 
 export function isRemote(source: string): boolean {
-  return source !== OFFICIAL && !isLocal(source)
+  return source !== BUILTIN && !isLocal(source)
 }
 
 export function repoOf(source: string): string {
@@ -79,8 +76,8 @@ function refProblem(ref: string): boolean {
 }
 
 export function parseSource(arg: string, cwd = process.cwd()): string {
-  if (arg === OFFICIAL) {
-    return OFFICIAL
+  if (arg === BUILTIN) {
+    return BUILTIN
   }
 
   if (arg === '~' || arg.startsWith('~/')) {
@@ -158,7 +155,6 @@ export interface Owner {
 export interface MarketplaceInfo extends Identity {
   about: Owner
   description?: string
-  catalogs: Catalog[]
   renames: Record<string, string | false>
   forceRemove: boolean
 }
@@ -187,7 +183,7 @@ function renamesOf(where: string, raw: unknown) {
   const renames: Record<string, string | false> = {}
 
   for (const [from, to] of Object.entries(raw)) {
-    if (nameProblem(from) || (to !== false && (typeof to !== 'string' || nameProblem(to)))) {
+    if (slugProblem(from) || (to !== false && (typeof to !== 'string' || slugProblem(to)))) {
       throw new Error(`${where}: renames.${escaped(from)} must map a palette name to a palette name, or to false`)
     }
 
@@ -235,7 +231,6 @@ export function readMarketplaceInfo(text: string, where: string): MarketplaceInf
     name,
     about: { ...about, ...(email ? { email } : {}), ...(url ? { url } : {}) },
     ...(description ? { description } : {}),
-    catalogs: readCatalogs(where, doc.catalog),
     renames: renamesOf(where, doc.renames),
     forceRemove: force === true,
   }
@@ -252,8 +247,8 @@ export function localIdentity(dir: string): MarketplaceInfo {
 }
 
 export function shownSource(source: string): string {
-  if (source === OFFICIAL) {
-    return 'the official marketplace'
+  if (source === BUILTIN) {
+    return 'the built-in marketplace'
   }
 
   if (!isLocal(source)) {

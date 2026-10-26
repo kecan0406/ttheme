@@ -1,4 +1,5 @@
 import pkg from '../../package.json' with { type: 'json' }
+import { CODE, SHARE_URL } from '../core/draft.ts'
 import { WIRED } from '../core/wired.ts'
 import { markOf } from '../tui/parts.ts'
 import { type Paint, painter } from '../tui/style.ts'
@@ -116,14 +117,14 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'add',
     args: ['<palette...>'],
-    about:
-      'Install palettes — from your marketplaces, from a share link (ttheme add https://ttheme.dev/builder/tt4:…), or from a palette file, which joins your local marketplace: ttheme add ~/Downloads/kisara.toml',
+    about: `Install palettes — from your marketplaces, from a share link (ttheme add ${SHARE_URL}${CODE}…), whose tuned palettes join your local marketplace, or from a palette file, which joins it under its file's name: ttheme add ~/Downloads/kisara.toml`,
     section: 'palettes',
     flags: {
       in: {
         type: 'string',
         value: '<marketplace>',
-        about: 'The local marketplace a palette file goes into — when you have more than one',
+        about:
+          'The local marketplace a palette file, or a tuned palette from a link, goes into — when you have more than one',
       },
     },
   },
@@ -131,7 +132,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'update',
     args: ['[marketplace...]'],
     about:
-      'Update ttheme and refresh your marketplaces — official palettes come with ttheme; an installed palette from another marketplace keeps its colors until ctrl+r on it in Browse takes its update',
+      'Update ttheme and refresh your marketplaces — the built-in palettes come with ttheme; an installed palette from another marketplace keeps its colors until ctrl+r on it in Browse takes its update',
     section: 'palettes',
   },
   {
@@ -142,7 +143,7 @@ export const VERB_SPECS: VerbSpec[] = [
     actions: [
       [
         'add <source>',
-        'Add a marketplace — a repository (alice/ttheme-pastel, #v1 pins a tag or branch), a folder, or official; asks whether it updates on its own',
+        'Add a marketplace — a repository (alice/ttheme-pastel, #v1 pins a tag or branch), a folder, or ttheme for the built-in one; asks whether it updates on its own',
       ],
       ['remove <marketplace>', 'Drop one by its name (alice@pastel) — the palettes you installed from it keep working'],
       [
@@ -151,7 +152,7 @@ export const VERB_SPECS: VerbSpec[] = [
       ],
       [
         'check [dir]',
-        "Check a marketplace's folder before you push it — ttheme-marketplace.toml, every palette, the renames and the contrast checks; nothing is written",
+        "Check a marketplace's folder before you push it — ttheme-marketplace.toml, every palette, the works it proposes against the commons, the renames and the contrast checks; nothing is written",
       ],
     ],
     section: 'palettes',
@@ -170,7 +171,11 @@ export const VERB_SPECS: VerbSpec[] = [
       'Make a palette of your own in the palette editor — <you>@<marketplace>/<name>, from blank, installed at once',
     section: 'own',
     flags: {
-      from: { type: 'string', value: '<palette>', about: "Start from this palette's colors instead of blank" },
+      from: {
+        type: 'string',
+        value: '<palette>',
+        about: 'Start from this palette — its colors, and the work or character it is of — instead of blank',
+      },
       in: {
         type: 'string',
         value: '<marketplace>',
@@ -198,7 +203,7 @@ export const VERB_SPECS: VerbSpec[] = [
     name: 'palette',
     args: ['<action>', '[arg]'],
     about:
-      "Make a character's palette from colors measured on its official art — the steps the ttheme-palette agent skill takes, each printing JSON with --json",
+      "Make a character's palette from colors measured on its art — the steps the ttheme-palette agent skill takes, each printing JSON with --json",
     section: 'own',
     more: true,
     actions: [
@@ -212,7 +217,7 @@ export const VERB_SPECS: VerbSpec[] = [
       ],
       [
         'make [palette]',
-        'Turn an anchors file into palettes — ranks base schemes, harmonizes, fixes the ANSI roles and runs the contrast checks, then writes them into your local marketplace and installs them',
+        'Turn an anchors file into palettes — ranks base schemes, harmonizes, fixes the ANSI roles and runs the contrast checks, then writes them into your local marketplace, proposes in its works/ each work or character the commons lacks, and installs them',
       ],
     ],
     flags: {
@@ -228,9 +233,13 @@ export const VERB_SPECS: VerbSpec[] = [
         about: "measure: group near-duplicate colors — a JPEG's, an antialiased edge's — into n levels a channel",
       },
       anchors: { type: 'string', value: '<file>', about: 'make: the anchors file' },
-      catalog: { type: 'string', value: '<name>', about: 'make: the catalog folder the palettes go in' },
-      native: { type: 'string', value: '<title>', about: "make: a new catalog's official title" },
-      lead: { type: 'string', value: '<palette>', about: 'make: the palette that stands for a new catalog' },
+      work: {
+        type: 'string',
+        value: '<work>',
+        about: 'make: the work the characters are from, by its id — the name of its file in commons/works/',
+      },
+      'work-name': { type: 'string', value: '<name>', about: "make: a new work's name, as lists show it" },
+      'work-native': { type: 'string', value: '<title>', about: "make: a new work's title in its own language" },
       in: {
         type: 'string',
         value: '<marketplace>',
@@ -250,8 +259,9 @@ export const VERB_SPECS: VerbSpec[] = [
       '  }',
       '  slots         three colors in the order the character reads, the first the seed — background, foreground,',
       '                cursor, selection or ansi0–ansi15 — each ["<part>", "#rrggbb"] as measured',
-      '  booru         the danbooru tag ttheme find searches (optional)',
-      "  native_names  the names preview's search matches; left out, ttheme's name data fills them in (optional)",
+      "  booru         the character's danbooru tag — a character the commons knows by it is the one the palette",
+      '                is of; otherwise it is recorded with the new character (optional)',
+      "  native_names  the new character's names in its own language; left out, ttheme's name data fills them in (optional)",
       '  source        where the colors were measured (optional)',
       '',
       'With --json each action prints one object on stdout, its status done, unchanged or error;',
@@ -269,7 +279,8 @@ export const VERB_SPECS: VerbSpec[] = [
         type: 'string',
         value: '<tuned|original>',
         choices: ['tuned', 'original'],
-        about: 'Share the palettes you tuned as you tuned them, or as they were — asked when you omit this',
+        about:
+          'Share the palettes you tuned as you tuned them, named <palette>-tuned, or as they were — asked when you omit this',
       },
     },
   },

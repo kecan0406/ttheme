@@ -1,0 +1,19 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Steins;Gate"
+native = "シュタインズ・ゲート"
+lead = "steins-gate/kurisu"
+
+[[character]]
+id = "kurisu"
+native = ["牧瀬紅莉栖"]
+danbooru = "makise_kurisu"
+
+[[character]]
+id = "mayuri"
+native = ["椎名まゆり"]
+danbooru = "shiina_mayuri"
+
+[[character]]
+id = "suzuha"
+native = ["阿万音鈴羽"]
+danbooru = "amane_suzuha"

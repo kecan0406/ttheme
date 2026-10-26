@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "sailor-moon/jupiter"
+signature = ["cursor", "ansi1", "ansi11"]
+ansi_source = "Everforest Dark Hard + Senshi"
+
+[colors]
+background = "#131913"
+foreground = "#d9e6d5"
+cursor = "#36a455"
+selection_background = "#4d3743"
+ansi = [
+  "#1f251e",
+  "#de787a",
+  "#a7cb91",
+  "#c8bc73",
+  "#56a1a1",
+  "#e997ac",
+  "#7eb889",
+  "#cfd7cc",
+
+  "#727970",
+  "#f3a185",
+  "#b3ee6e",
+  "#ffd794",
+  "#3dbcc5",
+  "#ffc0ce",
+  "#78daa1",
+  "#e4f2e1",
+]
+
+[colors.light]
+background = "#f4fcf0"
+foreground = "#172218"
+cursor = "#007934"
+selection_background = "#efcfde"
+ansi = [
+  "#eff6ea",
+  "#ab3d44",
+  "#39582a",
+  "#6d6425",
+  "#1a6e6e",
+  "#9e4661",
+  "#015d43",
+  "#272e27",
+
+  "#727970",
+  "#8b3d20",
+  "#244b06",
+  "#704f00",
+  "#005e64",
+  "#7f4253",
+  "#004d2d",
+  "#172218",
+]

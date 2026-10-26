@@ -1,8 +1,9 @@
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { aboutOf, type Work } from '../core/commons.ts'
 import { inMode, listed, type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
-import { marketplaceOf, owned } from '../core/theme.ts'
+import { owned, publisherOf } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
 import { freshenConfs, paintFor, retint } from '../pictures/backdrop.ts'
 import { forgetAppearance, knowAppearance } from '../store/appearance.ts'
@@ -25,8 +26,8 @@ export function resolve(manifest: Manifest, names: string[]): PaletteEntry[] {
   const missing = names.filter((n) => !known.has(n))
 
   if (missing.length > 0) {
-    const present = new Set(manifest.palettes.flatMap((p) => marketplaceOf(p.name) ?? []))
-    const marketplaces = [...new Set(missing.flatMap((n) => marketplaceOf(n) ?? [])).difference(present)]
+    const present = new Set(manifest.palettes.map((p) => publisherOf(p.name)))
+    const marketplaces = [...new Set(missing.flatMap((n) => publisherOf(n) || [])).difference(present)]
 
     const hint =
       marketplaces.length > 0
@@ -108,7 +109,8 @@ export function sync(
   home = homedir(),
   host: Host = systemHost(),
 ): string[] {
-  const kept = resolve(untuned(configHome, manifest), state.palettes)
+  const view = untuned(configHome, manifest)
+  const kept = resolve(view, state.palettes)
 
   if (modeSetting(configHome) === 'auto') {
     knowAppearance(host, !settingsFor(state.terminals).includes('auto'))
@@ -133,8 +135,8 @@ export function sync(
     wiring.sync(ctx, out)
   }
 
-  out.written.push(writeTable(ctx, host, out.repainted))
-  writeAliases(configHome, entries, home)
+  out.written.push(writeTable(ctx, view.works, host, out.repainted))
+  writeAliases(configHome, entries, view.works, home)
 
   return out.written
 }
@@ -142,53 +144,62 @@ export function sync(
 export function refreshAliases(configHome: string, home = homedir()): void {
   if (!existsSync(join(configHome, 'ttheme', 'palettes.zsh'))) return
   const names = new Set(readInstalled(configHome).palettes)
+  const { palettes, works } = readAvailable(configHome)
   writeAliases(
     configHome,
-    readAvailable(configHome).palettes.filter((entry) => names.has(entry.name)),
+    palettes.filter((entry) => names.has(entry.name)),
+    works,
     home,
   )
 }
 
-function writeAliases(configHome: string, entries: PaletteEntry[], home: string): void {
+function writeAliases(configHome: string, entries: PaletteEntry[], works: readonly Work[], home: string): void {
   const file = join(configHome, 'ttheme', 'aliases.zsh')
-  const content = aliasesZsh(aliasesFor(entries, home))
+  const content = aliasesZsh(aliasesFor(entries, works, home))
 
   if (readText(file) !== content) {
     writeAtomic(file, content)
   }
 }
 
-function aliasesFor(entries: PaletteEntry[], home: string) {
-  const tags = entries.flatMap((entry) => (entry.booru ? [entry.booru] : []))
-  const known = paletteAliases(tags, home)
+function aliasesFor(entries: PaletteEntry[], works: readonly Work[], home: string) {
+  const characters = entries.flatMap((entry) => {
+    const character = aboutOf(works, entry.subject)?.character
+
+    return character?.danbooru ? [{ name: entry.name, tag: character.danbooru, own: character.native ?? [] }] : []
+  })
+
+  const known = paletteAliases(
+    characters.map((c) => c.tag),
+    home,
+  )
+
   const out: Record<string, string[]> = {}
 
-  for (const entry of entries) {
-    const own = new Set(entry.nativeNames ?? [])
-    const names = (entry.booru ? (known.get(entry.booru) ?? []) : []).filter((name) => !own.has(name))
+  for (const { name, tag, own } of characters) {
+    const names = (known.get(tag) ?? []).filter((alias) => !own.includes(alias))
 
-    if (names.length > 0) out[entry.name] = names
+    if (names.length > 0) out[name] = names
   }
 
   return out
 }
 
-function writeTable(ctx: Ctx, host: Host, repainted: boolean): string {
+function writeTable(ctx: Ctx, works: readonly Work[], host: Host, repainted: boolean): string {
   const table = join(ctx.configHome, 'ttheme', 'palettes.zsh')
 
-  const content = palettesZsh(
-    ctx.entries,
-    ctx.startup,
-    ctx.state.terminals,
-    layer(ctx, host),
-    tunedNames(readTone(ctx.configHome), ctx.entries),
-    marketplacesOf(ctx.state.marketplaces).map((source) => nameOf(ctx.configHome, source) ?? source),
-    {
+  const content = palettesZsh(ctx.entries, works, {
+    startup: ctx.startup,
+    terminals: ctx.state.terminals,
+    layer: layer(ctx, host),
+    tuned: tunedNames(readTone(ctx.configHome), ctx.entries),
+    marketplaces: marketplacesOf(ctx.state.marketplaces).map((source) => nameOf(ctx.configHome, source) ?? source),
+    mode: {
       worn: modeFor(ctx.configHome),
       auto: modeSetting(ctx.configHome) === 'auto',
       settings: settingsFor(ctx.state.terminals),
     },
-  )
+  })
 
   if (repainted || readText(table) !== content) {
     writeAtomic(table, content)
@@ -206,14 +217,15 @@ export function refreshPictures(configHome: string, home = homedir(), host: Host
     return
   }
 
-  const ctx = context(configHome, resolve(readAvailable(configHome), state.palettes), state, home, host)
+  const view = readAvailable(configHome)
+  const ctx = context(configHome, resolve(view, state.palettes), state, home, host)
   const out = writer(ctx)
 
   for (const wiring of pictured) {
     wiring.pictures?.(ctx, out)
   }
 
-  writeTable(ctx, host, false)
+  writeTable(ctx, view.works, host, false)
 }
 
 export function aligns(terminals: readonly Wired[]): boolean {

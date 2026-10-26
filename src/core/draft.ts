@@ -4,21 +4,9 @@ import { RULES } from './contrast.ts'
 import type { PaletteEntry } from './manifest.ts'
 import { modeOf, otherOf } from './mode.ts'
 import type { Colors } from './seeds.ts'
-import {
-  type Catalog,
-  marketplaceOf,
-  nameProblem,
-  PALETTE_SCHEMA_URL,
-  type Place,
-  POSITIONS,
-  readTheme,
-  type SharedPicture,
-  slugOf,
-  type Theme,
-  toml,
-} from './theme.ts'
+import { PALETTE_SCHEMA_URL, POSITIONS, readTheme, type SharedPicture, slugOf, type Theme } from './theme.ts'
 
-export const CODE = 'tt4:'
+export const CODE = 'tt5:'
 export const SHARE_URL = 'https://ttheme.dev/builder/'
 export const SUM = 4
 export const UNPACKED = 64 * 1024
@@ -29,14 +17,9 @@ const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_
 
 export interface Draft {
   name: string
-  nativeNames?: string[]
-  order?: number
-  base?: string
+  subject?: string
   from?: string
-  catalog?: string
   ansiSource?: string
-  booru?: string
-  booruSites?: Record<string, string[]>
   signature: string[]
   background: string
   foreground: string
@@ -47,11 +30,6 @@ export interface Draft {
   waive?: string[]
   reason?: string
   pictures?: SharedPicture[]
-}
-
-export interface Shelf {
-  catalog?: string
-  catalogs?: readonly Catalog[]
 }
 
 export interface Sealed {
@@ -96,23 +74,10 @@ export function colorsToml(c: Colors, table: string): string[] {
 export function paletteToml(d: Draft): string {
   const lines = [
     `"$schema" = ${q(PALETTE_SCHEMA_URL)}`,
-    '',
-    '[meta]',
-    `name = ${q(slugOf(d.name))}`,
-    ...(d.nativeNames ? [`native_names = [${d.nativeNames.map(q).join(', ')}]`] : []),
-    ...(d.order === undefined ? [] : [`order = ${d.order}`]),
-    ...(d.base ? [`base = ${q(d.base)}`] : []),
+    ...(d.subject ? [`subject = ${q(d.subject)}`] : []),
     ...(d.from ? [`from = ${q(d.from)}`] : []),
-    ...(d.ansiSource ? [`ansi_source = ${q(d.ansiSource)}`] : []),
-    ...(d.booru ? [`booru = ${q(d.booru)}`] : []),
     `signature = [${d.signature.map(q).join(', ')}]`,
-    ...(d.booruSites
-      ? [
-          '',
-          '[meta.booru_sites]',
-          ...Object.entries(d.booruSites).map(([site, tags]) => `${site} = [${tags.map(q).join(', ')}]`),
-        ]
-      : []),
+    ...(d.ansiSource ? [`ansi_source = ${q(d.ansiSource)}`] : []),
     '',
     ...colorsToml(d, 'colors'),
     ...(d.other ? ['', ...colorsToml(d.other, `colors.${otherOf(modeOf(d))}`)] : []),
@@ -128,12 +93,9 @@ export function paletteToml(d: Draft): string {
 export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string): Draft {
   return {
     name,
-    ...(entry.base ? { base: entry.base } : {}),
+    ...(entry.subject ? { subject: entry.subject } : {}),
     ...(entry.from ? { from: entry.from } : {}),
-    ...(entry.catalog ? { catalog: entry.catalog } : {}),
     ansiSource: entry.ansiSource,
-    ...(entry.booru ? { booru: entry.booru } : {}),
-    ...(entry.booruSites ? { booruSites: entry.booruSites } : {}),
     signature: entry.signatureSlots,
     background: entry.background,
     foreground: entry.foreground,
@@ -148,44 +110,8 @@ export function draftOf(entry: PaletteEntry, name = entry.name, reason?: string)
   }
 }
 
-export function basesOf(entries: PaletteEntry[]): Map<string, { order: number }> {
-  return new Map(
-    entries.flatMap((e) => (e.default || marketplaceOf(e.name) ? [] : [[e.name, { order: e.order }] as const])),
-  )
-}
-
-function placeFor(name: string, entries: PaletteEntry[], foreign: boolean, shelf: Shelf): Place {
-  return {
-    name,
-    ...(shelf.catalog === undefined ? {} : { catalog: shelf.catalog }),
-    catalogs: new Map((shelf.catalogs ?? []).map((c) => [c.name, c])),
-    bases: basesOf(entries),
-    open: true,
-    ...(foreign ? { foreign: true as const } : {}),
-  }
-}
-
-export function paletteSlug(file: string, text: string): string {
-  const meta = toml(file, text).meta
-  const slug = meta && typeof meta === 'object' && 'name' in meta ? meta.name : undefined
-
-  if (typeof slug !== 'string' || nameProblem(slug)) {
-    throw new Error(`${file} names no palette — its [meta] needs name = "<palette>"`)
-  }
-
-  return slug
-}
-
-export function readOwnText(
-  name: string,
-  source: string,
-  entries: PaletteEntry[],
-  foreign = false,
-  shelf: Shelf = {},
-): Theme {
-  const slug = slugOf(name)
-
-  return { ...readTheme(`${slug}.toml`, source, placeFor(slug, entries, foreign, shelf)), name }
+export function readOwnText(name: string, source: string, foreign = false): Theme {
+  return readTheme(`${slugOf(name)}.toml`, source, { name, ...(foreign ? { foreign: true as const } : {}) })
 }
 
 class Writer {
@@ -328,10 +254,9 @@ function writeDraft(w: Writer, d: Draft): void {
     w.u8(SLOTS.indexOf(slot))
   }
 
-  w.str(d.base)
-  w.str(d.catalog)
+  w.str(d.subject)
+  w.str(d.from)
   w.str(d.ansiSource)
-  w.str(d.booru)
   w.u16((d.waive ?? []).reduce((mask, rule) => mask | (1 << RULES.indexOf(rule)), 0))
   w.str(d.waive && d.waive.length > 0 ? d.reason : '')
   const pictures = d.pictures ?? []
@@ -349,6 +274,12 @@ function writeDraft(w: Writer, d: Draft): void {
     w.u8(p.position === undefined ? 0 : (POSITIONS as readonly string[]).indexOf(p.position) + 1)
     w.u16(p.opacity === undefined ? 0 : Math.round(p.opacity * 1000) + 1)
   }
+
+  w.u8(d.other ? 1 : 0)
+
+  for (const c of d.other ? colorList(d.other) : []) {
+    w.color(c)
+  }
 }
 
 export function codeBody(drafts: readonly Draft[]): Uint8Array {
@@ -361,13 +292,6 @@ export function codeBody(drafts: readonly Draft[]): Uint8Array {
 
   for (const d of drafts) {
     writeDraft(w, d)
-    w.u8(d.other ? 1 : 0)
-
-    for (const c of d.other ? colorList(d.other) : []) {
-      w.color(c)
-    }
-
-    w.str(d.from)
   }
 
   return w.body()
@@ -456,10 +380,9 @@ function readDraft(r: Reader): Draft {
   const { background, foreground, cursor, selection, ansi } = readColors(r)
 
   const signature = [r.u8(), r.u8(), r.u8()].map((i) => SLOTS[i] ?? `slot${i}`)
-  const base = r.str()
-  const catalog = r.str()
+  const subject = r.str()
+  const from = r.str()
   const ansiSource = r.str()
-  const booru = r.str()
   const mask = r.u16()
   const reason = r.str()
   const waive = RULES.filter((_, i) => mask & (1 << i))
@@ -480,18 +403,26 @@ function readDraft(r: Reader): Draft {
     }
   })
 
+  const carries = r.u8()
+
+  if (carries > 1) {
+    throw new Error('the share code holds a palette it cannot read — was it copied whole?')
+  }
+
+  const other = carries === 1 ? readColors(r) : undefined
+
   return {
     name,
-    ...(base ? { base } : {}),
-    ...(catalog ? { catalog } : {}),
+    ...(subject ? { subject } : {}),
+    ...(from ? { from } : {}),
     ...(ansiSource ? { ansiSource } : {}),
-    ...(booru ? { booru } : {}),
     signature,
     background,
     foreground,
     cursor,
     selection,
     ansi,
+    ...(other ? { other } : {}),
     ...(waive.length > 0 ? { waive, reason } : {}),
     ...(pictures.length > 0 ? { pictures } : {}),
   }
@@ -499,20 +430,7 @@ function readDraft(r: Reader): Draft {
 
 export function draftsOf(body: Uint8Array): Draft[] {
   const r = new Reader(body)
-
-  const drafts = Array.from({ length: r.u8() }, (): Draft => {
-    const draft = readDraft(r)
-    const carries = r.u8()
-
-    if (carries > 1) {
-      throw new Error('the share code holds a palette it cannot read — was it copied whole?')
-    }
-
-    const other = carries === 1 ? readColors(r) : undefined
-    const from = r.str()
-
-    return { ...draft, ...(other ? { other } : {}), ...(from ? { from } : {}) }
-  })
+  const drafts = Array.from({ length: r.u8() }, () => readDraft(r))
 
   r.end()
 

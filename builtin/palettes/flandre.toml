@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "touhou-project/flandre"
+signature = ["cursor", "ansi11", "ansi12"]
+ansi_source = "Molokai"
+
+[colors]
+background = "#201514"
+foreground = "#fcdbd9"
+cursor = "#ee6466"
+selection_background = "#59323e"
+ansi = [
+  "#2d2120",
+  "#f2697f",
+  "#d7c52e",
+  "#e8b543",
+  "#6998f3",
+  "#f988ec",
+  "#6bb5f3",
+  "#e5cfce",
+
+  "#857372",
+  "#f39ead",
+  "#d1ed64",
+  "#ede05d",
+  "#6ab2e8",
+  "#ffbcf6",
+  "#99d2e9",
+  "#ffe9e8",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1a"
+cursor = "#c42f3a"
+selection_background = "#ffc9d7"
+ansi = [
+  "#fff0ef",
+  "#bb274a",
+  "#395922",
+  "#805e00",
+  "#2460be",
+  "#ac1ea8",
+  "#005483",
+  "#362928",
+
+  "#857372",
+  "#8e374c",
+  "#2a4a12",
+  "#5d5600",
+  "#005a86",
+  "#81387e",
+  "#00495b",
+  "#2d1b1a",
+]

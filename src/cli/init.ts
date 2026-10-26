@@ -5,9 +5,10 @@ import { dirname, join } from 'node:path'
 import * as p from '@clack/prompts'
 import pkg from '../../package.json' with { type: 'json' }
 import { Cancelled } from '../core/cancelled.ts'
-import { inMode, type Manifest, type PaletteEntry, parseManifest } from '../core/manifest.ts'
+import { aboutOf, worldOrder } from '../core/commons.ts'
+import { inMode, type Manifest } from '../core/manifest.ts'
 import type { Mode, Setting } from '../core/mode.ts'
-import { marketplaceOf, shelfOf } from '../core/theme.ts'
+import { BUILTIN, isBuiltin, publisherOf } from '../core/theme.ts'
 import { WIRED, type Wired } from '../core/wired.ts'
 import { backgroundsDir, coloringOf, decodable, readStore } from '../pictures/backdrop.ts'
 import { ROOT } from '../root.ts'
@@ -24,12 +25,12 @@ import {
   skillPath,
 } from '../store/agent-skills.ts'
 import { readAppearance, systemAppearance } from '../store/appearance.ts'
-import { available, readMarketplaces, writeOfficial } from '../store/available.ts'
+import { available, type Bundled, readMarketplaces, readPackaged, writeBundled } from '../store/available.ts'
 import { editUserFile, writeAtomic } from '../store/edits.ts'
 import { type Host, systemHost } from '../store/host.ts'
 import { type Installed, readInstalled, startupPalette, worn, writeInstalled } from '../store/installed.ts'
 import { configHome as configDir } from '../store/paths.ts'
-import { marketplacesOf, OFFICIAL } from '../store/sources.ts'
+import { marketplacesOf } from '../store/sources.ts'
 import { coloringFor, configFile, modeFor, modeSetting, upsertBlock, withSetting, zshrcBlock } from '../store/wiring.ts'
 import { tilde } from '../terminals/common.ts'
 import { WIRINGS, wirings } from '../terminals/index.ts'
@@ -87,7 +88,7 @@ interface InitPlan {
   writes: { file: string; content: string; about: string }[]
   settings: { file: string; content: string }
   forget: string[]
-  manifest: Manifest
+  bundled: Bundled
   installed: Installed
   notes: string[]
 }
@@ -96,8 +97,8 @@ function copyDir(from: string, to: string): InitPlan['copies'] {
   return readdirSync(from).map((f) => ({ from: join(from, f), to: join(to, f) }))
 }
 
-function loadManifest(root: string): Manifest {
-  return parseManifest(readFileSync(join(root, 'dist', 'manifest.json'), 'utf8'))
+function manifestOf({ builtin, commons }: Bundled): Manifest {
+  return { ...builtin, works: commons.works, renames: commons.renames }
 }
 
 export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
@@ -177,7 +178,7 @@ export function planInit(opts: InitOptions, paths: InitPaths): InitPlan {
     writes,
     settings,
     forget,
-    manifest: loadManifest(paths.root),
+    bundled: readPackaged(paths.root),
     installed,
     notes,
   }
@@ -191,24 +192,25 @@ export function installedState(configHome: string): Installed | undefined {
   }
 }
 
-function currentPalettes(configHome: string, official: Manifest): PaletteEntry[] {
+function currentView(configHome: string, bundled: Bundled): Manifest {
   try {
-    return available(configHome, readMarketplaces(configHome, false, official), false).palettes
+    return available(configHome, readMarketplaces(configHome, false, bundled), false)
   } catch {
-    return []
+    return { ...manifestOf(bundled), palettes: [] }
   }
 }
 
 export function againManifest(state: Installed, paths: InitPaths): Manifest {
-  const bundled = loadManifest(paths.root)
-  const official = marketplacesOf(state.marketplaces).includes(OFFICIAL) ? bundled.palettes : []
-  const names = new Set(official.map((e) => e.name))
+  const bundled = readPackaged(paths.root)
+  const builtin = marketplacesOf(state.marketplaces).includes(BUILTIN) ? bundled.builtin.palettes : []
+  const names = new Set(builtin.map((e) => e.name))
+  const current = currentView(paths.configHome, bundled)
 
-  const others = currentPalettes(paths.configHome, bundled).filter(
-    (e) => !names.has(e.name) && (marketplaceOf(e.name) !== undefined || state.palettes.includes(e.name)),
+  const others = current.palettes.filter(
+    (e) => !names.has(e.name) && (!isBuiltin(e.name) || state.palettes.includes(e.name)),
   )
 
-  return { ...bundled, palettes: [...official, ...others] }
+  return { ...manifestOf(bundled), works: current.works, palettes: [...builtin, ...others] }
 }
 
 function keptStartup(state: Installed, palettes: string[]): string | undefined {
@@ -242,7 +244,7 @@ export function planUpgrade(state: Installed, paths: InitPaths): InitPlan {
   const plan = planInit({ terminals: state.terminals, palettes: state.palettes, off: state.off }, paths)
 
   const known = new Set(
-    [...plan.manifest.palettes, ...currentPalettes(paths.configHome, plan.manifest)].map((e) => e.name),
+    [...plan.bundled.builtin.palettes, ...currentView(paths.configHome, plan.bundled).palettes].map((e) => e.name),
   )
 
   const palettes = state.palettes.filter((n) => known.has(n))
@@ -333,10 +335,7 @@ export function applyInit(plan: InitPlan, host: Host = systemHost()): Map<Wired,
     plan.home,
   )
 
-  if (marketplacesOf(installed.marketplaces).includes(OFFICIAL)) {
-    writeOfficial(configHome, plan.manifest)
-  }
-
+  writeBundled(configHome, plan.bundled)
   writeInstalled(configHome, installed)
   sync(configHome, readMarketplaces(configHome), installed, plan.home, host)
 
@@ -391,7 +390,7 @@ async function askSkills(agents: AgentHomes, ours: readonly SkillTarget[]): Prom
 
   return accepted(
     await p.multiselect<SkillTarget>({
-      message: `Add the ${SKILL} skill for your coding agents?\nAsk one to make a palette for a character and it measures the colors on official art`,
+      message: `Add the ${SKILL} skill for your coding agents?\nAsk one to make a palette for a character and it measures the colors on the character's art`,
       options: offered.map((target) => ({
         value: target,
         label: SKILL_LABELS[target],
@@ -438,8 +437,13 @@ function verify(plan: InitPlan): void {
   }
 }
 
-function catalogsOf(manifest: Manifest, names: string[]): string[] {
-  return [...new Set(manifest.palettes.filter((e) => names.includes(e.name)).map(shelfOf))]
+function shelvesOf(manifest: Manifest, names: readonly string[]): string[] {
+  const picked = worldOrder(
+    manifest.palettes.filter((e) => names.includes(e.name)),
+    manifest.works,
+  )
+
+  return [...new Set(picked.map((e) => aboutOf(manifest.works, e.subject)?.work.name ?? publisherOf(e.name)))]
 }
 
 function paintStartup(manifest: Manifest, installed: Installed, configHome: string): boolean {
@@ -484,14 +488,15 @@ function reopen(shell: Shell): string {
 
 function receipt(
   plan: InitPlan,
+  manifest: Manifest,
   opts: InitOptions,
   painted: boolean,
   pointed: ReadonlyMap<Wired, Pointed>,
   here: Shell,
 ): void {
-  const catalogs = catalogsOf(plan.manifest, opts.palettes)
+  const shelves = shelvesOf(manifest, opts.palettes)
   p.note(
-    [`${catalogs.join(', ')} (${opts.palettes.length})`, ...startupLines(plan.installed, painted)].join('\n'),
+    [`${shelves.join(', ')} (${opts.palettes.length})`, ...startupLines(plan.installed, painted)].join('\n'),
     `Installed ${opts.palettes.length} palettes`,
   )
   p.note(
@@ -680,12 +685,12 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const terminals = await askTerminals(detected, existing?.terminals ?? preselected, paths, host)
   const mode = await askMode(configHome, terminals)
   const worn: Mode = mode === 'auto' ? (readAppearance() ?? systemAppearance(host) ?? 'dark') : mode
-  const made = existing ? againManifest(existing, paths) : loadManifest(ROOT)
+  const made = existing ? againManifest(existing, paths) : manifestOf(readPackaged(ROOT))
   const manifest = { ...made, palettes: made.palettes.map((entry) => inMode(entry, worn)) }
 
   const palettes = existing
     ? await pickPalettes(manifest, existing.palettes, 'palette', true)
-    : await pickPalettes(manifest, [], 'catalog', true)
+    : await pickPalettes(manifest, [], 'work', true)
 
   if (!palettes) {
     p.cancel('Nothing changed')
@@ -713,7 +718,7 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   const plan = existing ? planAgain(existing, opts, paths) : planInit(opts, paths)
   p.note(
     [
-      `Install ${palettes.length} palettes — ${catalogsOf(manifest, palettes).join(', ')}`,
+      `Install ${palettes.length} palettes — ${shelvesOf(manifest, palettes).join(', ')}`,
       mode === 'auto'
         ? 'Show every palette in the mode the system is in, following it as it changes'
         : `Show every palette in its ${mode} mode`,
@@ -757,5 +762,5 @@ export async function runInit(flags: { yes?: boolean } = {}): Promise<void> {
   }
 
   const installed = readInstalled(configHome)
-  receipt({ ...plan, manifest, installed }, opts, paintStartup(manifest, installed, configHome), pointed, here)
+  receipt({ ...plan, installed }, manifest, opts, paintStartup(manifest, installed, configHome), pointed, here)
 }

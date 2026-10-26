@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "persona-5/oracle"
+signature = ["cursor", "ansi2", "ansi4"]
+ansi_source = "Monokai Remastered"
+
+[colors]
+background = "#1f160e"
+foreground = "#f9dec8"
+cursor = "#fd971f"
+selection_background = "#384037"
+ansi = [
+  "#2c2219",
+  "#f16d52",
+  "#9ad24a",
+  "#ffa851",
+  "#a980f3",
+  "#ff8cab",
+  "#68bc82",
+  "#e3d1c4",
+
+  "#837469",
+  "#f3a191",
+  "#e6e535",
+  "#ffd87d",
+  "#a2a5e8",
+  "#ffc0ce",
+  "#83d99c",
+  "#ffeadb",
+]
+
+[colors.light]
+background = "#fff8f5"
+foreground = "#2b1d0f"
+cursor = "#b06400"
+selection_background = "#d1dacd"
+ansi = [
+  "#fff1e8",
+  "#b6341b",
+  "#385900",
+  "#945300",
+  "#7b38e1",
+  "#b1325f",
+  "#005d30",
+  "#352a21",
+
+  "#837469",
+  "#8c3c2e",
+  "#454500",
+  "#6e5000",
+  "#474ba2",
+  "#7f4253",
+  "#004d27",
+  "#2b1d0f",
+]

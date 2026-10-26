@@ -1,0 +1,8 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "REFLEC BEAT"
+
+[[character]]
+id = "pastel-kun"
+native = ["パステルくん", "ぱすてるくん"]
+danbooru = "pastel-kun"
+sites = { konachan = [], yande = [], zerochan = [] }

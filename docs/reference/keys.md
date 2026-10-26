@@ -20,13 +20,13 @@ The first tab of `ttheme`.
 | Key | Does |
 |---|---|
 | `↑` `↓` `ctrl+j` `ctrl+k` `home` `end` `pgup` `pgdn` | move; the tab shows the palette under the cursor |
-| `←` `→`, or `enter` or `space` on a catalog | close and open a catalog |
-| any text, `bksp`, `ctrl+u` | filter by name or title, in Japanese too; `ctrl+u` clears |
+| `←` `→`, or `enter` or `space` on a work | close and open a work |
+| any text, `bksp`, `ctrl+u` | filter by palette, work or character, in their original language too; `ctrl+u` clears |
 | `⇧←` `⇧→` | the sample's scene: shell, code, diff, logs, monitor |
 | `enter` | use the palette, asking Default or This tab |
 | `tab` `→` `ctrl+e` | the palette's panel: its colors and picture |
 | `alt+c` | settings: `↑` `↓` a setting, `←` `→` its value, `enter` saves, `esc` cancels |
-| `shift+tab`, or `tab` on a catalog | to Browse |
+| `shift+tab`, or `tab` on a work | to Browse |
 | `esc` | clear the filter, then leave and put the tab back |
 
 ## The palette panel
@@ -56,14 +56,14 @@ The second tab of `ttheme`.
 | Key | Does |
 |---|---|
 | `↑` `↓` `ctrl+j` `ctrl+k` `home` `end` `pgup` `pgdn` | move |
-| `→` `enter` | a marketplace into the panel, or open a catalog |
+| `→` `enter` | a marketplace into the panel, or open a work |
 | `←` `esc` | from the panel back to the marketplaces |
 | any text, `bksp`, `ctrl+u` | filter every marketplace |
-| `space` | mark a palette, a catalog or a whole marketplace |
+| `space` | mark a palette, a work or a whole marketplace |
 | `↓` past the last palette, then `enter` | the marketplace's own actions: update, auto-update, remove |
 | `enter` on `+ Add marketplace` | add a repository or a folder, in the panel |
 | `enter` on `⌕ Search marketplace` | find one on GitHub |
-| `ctrl+r` on a palette marked `⇡` | stage its update |
+| `ctrl+r` on a palette marked `⇡`, or on a work | stage its update, or every update under the work |
 | `enter` on a palette | review and apply what you marked |
 | `tab` `shift+tab` | to Preview |
 | `esc` | clear the filter, then leave |

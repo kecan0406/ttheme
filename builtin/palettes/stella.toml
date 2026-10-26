@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "va-11-hall-a/stella"
+signature = ["cursor", "ansi2", "ansi13"]
+ansi_source = "Scarlet Protocol + Glitch City"
+
+[colors]
+background = "#201515"
+foreground = "#fcdbdb"
+cursor = "#ee636d"
+selection_background = "#573245"
+ansi = [
+  "#2d2121",
+  "#f26a73",
+  "#3cdb8a",
+  "#ffa768",
+  "#a286e2",
+  "#ff86dc",
+  "#74aef9",
+  "#e5cfcf",
+
+  "#857373",
+  "#f3a09e",
+  "#a6f87d",
+  "#ffd5b4",
+  "#bd9fe8",
+  "#f4c0ff",
+  "#a6caf2",
+  "#ffe9e8",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1b"
+cursor = "#c42e42"
+selection_background = "#fdc9e0"
+ansi = [
+  "#fff0f0",
+  "#bc263c",
+  "#005d34",
+  "#9c4e01",
+  "#7149c9",
+  "#b41498",
+  "#005193",
+  "#362929",
+
+  "#857373",
+  "#8c3b3c",
+  "#194d00",
+  "#724d2b",
+  "#6441a1",
+  "#773d89",
+  "#1e4566",
+  "#2d1b1b",
+]

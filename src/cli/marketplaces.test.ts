@@ -5,11 +5,11 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { paletteToml } from '../core/draft.ts'
-import { escaped } from '../core/text.ts'
-import { runMarketplace } from './marketplaces.ts'
+import { escaped, quoted } from '../core/text.ts'
+import { checkMarketplace, runMarketplace } from './marketplaces.ts'
 
 const palette = {
-  name: 'x',
+  name: 'ann@pastel/x',
   ansiSource: 'Test',
   signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
@@ -52,5 +52,65 @@ test('marketplace check spells out the control characters and direction marks of
   assert.ok(said.every((line) => !/[\p{Cc}\p{Bidi_Control}]/u.test(line.replaceAll('\n', ''))))
   assert.ok(said.includes(`  ! ttheme-marketplace.toml: unknown key ${escaped(odd)} — ttheme ignores it`))
   assert.ok(said.includes(`  ! palettes/${escaped(odd)}.toml: unknown key colors.${escaped(odd)} — ttheme ignores it`))
-  assert.ok(said.some((line) => line.startsWith(`  ✗ palettes/${escaped(odd)}.toml: meta.name "x" does not match`)))
+  assert.ok(
+    said.includes(
+      `  ✗ palettes/${escaped(odd)}.toml: the file name ${quoted(odd)} takes lowercase letters, digits and single hyphens — it is the palette's name`,
+    ),
+  )
+})
+
+function heard<T>(run: () => T) {
+  const said: string[] = []
+  const hear = (...parts: unknown[]) => void said.push(parts.join(' '))
+  const log = spyOn(console, 'log').mockImplementation(hear)
+  const error = spyOn(console, 'error').mockImplementation(hear)
+
+  try {
+    return { result: run(), said }
+  } finally {
+    log.mockRestore()
+    error.mockRestore()
+  }
+}
+
+test('marketplace check holds the palettes and the works they propose to the commons', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ttheme-check-'))
+
+  const put = (path: string, text: string) => {
+    mkdirSync(join(dir, path, '..'), { recursive: true })
+    writeFileSync(join(dir, path), text)
+  }
+
+  put('ttheme-marketplace.toml', 'name = "pastel"\ndescription = "Soft"\n\n[owner]\nname = "ann"\n')
+  put('palettes/rei.toml', paletteToml({ ...palette, subject: 'evangelion/rei' }))
+  put('palettes/azusa.toml', paletteToml({ ...palette, subject: 'k-on/azusa' }))
+  put('palettes/ayanami.toml', paletteToml({ ...palette, subject: 'eva/rei' }))
+  put('palettes/dawn.toml', paletteToml({ ...palette, subject: 'nowhere/dawn' }))
+  put('palettes/K-On!/yui.toml', paletteToml(palette))
+  put('works/k-on.toml', 'name = "K-On!"\n\n[[character]]\nid = "azusa"\ndanbooru = "nakano_azusa"\n')
+  put(
+    'works/evangelion.toml',
+    'name = "Evangelion"\nlogo = "eva.png"\n\n[[character]]\nid = "rei"\n\n[[character]]\nid = "rei2"\ndanbooru = "ayanami_rei"\nalso = ["k-on", "lost"]\n',
+  )
+
+  const commons = {
+    works: [{ id: 'evangelion', name: 'Evangelion', characters: [{ id: 'rei', danbooru: 'ayanami_rei' }] }],
+    renames: { eva: 'evangelion' },
+  }
+
+  const { result, said } = heard(() => checkMarketplace(dir, commons))
+
+  assert.equal(result, 1)
+  assert.deepEqual(
+    said.filter((line) => line.startsWith('  ✗') || line.startsWith('  !')),
+    [
+      '  ✗ palettes/K-On!/yui.toml: ttheme reads palettes/ alone, not the folders in it — move it up',
+      '  ✗ palettes/dawn.toml: nowhere/dawn is in neither the commons nor works/ — propose it in works/nowhere.toml',
+      '  ✗ works/evangelion.toml: evangelion/rei2 is "ayanami_rei" on danbooru, which is evangelion/rei already — name evangelion/rei instead',
+      '  ✗ works/evangelion.toml: evangelion/rei2 lists "lost" in also, which is not another work',
+      '  ! works/evangelion.toml: unknown key logo — ttheme ignores it',
+      '  ! palettes/ayanami.toml: the commons calls eva/rei evangelion/rei now — name it that way',
+      '  ! works/evangelion.toml: the commons holds evangelion/rei — its entry there wins',
+    ],
+  )
 })

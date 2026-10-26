@@ -1,23 +1,15 @@
 import { isHex } from '../core/color.ts'
+import { aboutOf, followSubject, type Sort, type Work } from '../core/commons.ts'
 import { inMode, listed, type PaletteEntry } from '../core/manifest.ts'
 import { counted } from '../core/text.ts'
-import { alphabetical, marketplaceId, marketplaceOf } from '../core/theme.ts'
+import { BUILTIN, marketplaceId, publisherOf } from '../core/theme.ts'
 import { available, idOf, readKept, readMarketplaces, shown, updatesOf } from '../store/available.ts'
 import { type Installed, readInstalled, worn, writeInstalled } from '../store/installed.ts'
 import { readMarketplaceDir, warning } from '../store/local.ts'
 import { readIndex } from '../store/marketplace-index.ts'
 import { knowAliases } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
-import {
-  autoUpdates,
-  isLocal,
-  isRemote,
-  localIdentity,
-  marketplacesOf,
-  OFFICIAL,
-  repoOf,
-  shownSource,
-} from '../store/sources.ts'
+import { autoUpdates, isLocal, isRemote, localIdentity, marketplacesOf, repoOf, shownSource } from '../store/sources.ts'
 import { readTone, tunedNames } from '../store/tone.ts'
 import { modeFor } from '../store/wiring.ts'
 import { liveOf } from '../terminals/live.ts'
@@ -47,14 +39,34 @@ import {
 import { autoWanted, releaseLine } from './release.ts'
 import { commit, forget } from './sync.ts'
 
-function inWear(home: string, entries: readonly PaletteEntry[]): PaletteEntry[] {
+type Renames = Readonly<Record<string, string>>
+
+function inWear(home: string, entries: readonly PaletteEntry[], renames: Renames): PaletteEntry[] {
   const mode = modeFor(home)
 
-  return entries.map((entry) => inMode(entry, mode))
+  return entries.map((entry) => {
+    const subject = entry.subject === undefined ? undefined : followSubject(renames, entry.subject)
+
+    return inMode(subject === undefined || subject === entry.subject ? entry : { ...entry, subject }, mode)
+  })
 }
 
-function marketplaceState(home: string, state: Installed, source: string, tries: Record<string, Tried>): Marketplace {
-  const marketplace = source === OFFICIAL ? undefined : cachedMarketplace(home, source)
+function sortOf(value: string | undefined): Sort {
+  return value === 'cast' ? 'cast' : 'abc'
+}
+
+function tagsOf(entries: readonly PaletteEntry[], works: readonly Work[]): string[] {
+  return [...new Set(entries.flatMap((e) => aboutOf(works, e.subject)?.character?.danbooru ?? []))]
+}
+
+function marketplaceState(
+  home: string,
+  state: Installed,
+  source: string,
+  tries: Record<string, Tried>,
+  renames: Renames,
+): Marketplace {
+  const marketplace = source === BUILTIN ? undefined : cachedMarketplace(home, source)
   let id: string
 
   try {
@@ -68,7 +80,8 @@ function marketplaceState(home: string, state: Installed, source: string, tries:
     id,
     ...(marketplace?.info.description ? { description: marketplace.info.description } : {}),
     shown: shownSource(source),
-    entries: inWear(home, source === OFFICIAL ? cachedEntries(home, source) : (marketplace?.entries ?? [])),
+    entries: inWear(home, source === BUILTIN ? cachedEntries(home, source) : (marketplace?.entries ?? []), renames),
+    works: marketplace?.works ?? [],
     auto: autoUpdates(source, state.updates),
     status: lastUpdate(home, source, tries),
   }
@@ -81,6 +94,7 @@ function updateNames(home: string): string[] {
 function browseIo(
   home: string,
   state: Installed,
+  renames: Renames,
   fetched: Map<string, Fetched>,
   lookups: AbortSignal,
   apply: BrowseIo['apply'],
@@ -88,7 +102,7 @@ function browseIo(
   return {
     refresh: async (source) => {
       if (isLocal(source)) {
-        const marketplace = marketplaceState(home, state, source, readTries())
+        const marketplace = marketplaceState(home, state, source, readTries(), renames)
 
         return {
           marketplace,
@@ -104,19 +118,25 @@ function browseIo(
 
       const refreshed = await refreshMarketplace(home, source, AUTO_TIMEOUT)
 
-      return { marketplace: marketplaceState(home, state, source, readTries()), refreshed, updates: updateNames(home) }
+      return {
+        marketplace: marketplaceState(home, state, source, readTries(), renames),
+        refreshed,
+        updates: updateNames(home),
+      }
     },
     fetch: async (source) => {
       if (isLocal(source)) {
         const info = localIdentity(source)
         const id = marketplaceId(info)
+        const { entries, works } = readMarketplaceDir(source, id, warning(false))
 
         return {
           source,
           id,
           ...(info.description ? { description: info.description } : {}),
           shown: shownSource(source),
-          entries: inWear(home, readMarketplaceDir(source, id, cachedEntries(home, OFFICIAL), warning(false))),
+          entries: inWear(home, entries, renames),
+          works,
           auto: false,
           status: 'always up to date',
         }
@@ -130,7 +150,8 @@ function browseIo(
         id: got.id,
         ...('info' in got && got.info.description ? { description: got.info.description } : {}),
         shown: shownSource(source),
-        entries: inWear(home, got.entries),
+        entries: inWear(home, got.entries, renames),
+        works: got.works,
         auto: autoUpdates(source, {}),
         status: 'not added yet',
       }
@@ -150,7 +171,7 @@ function marketplaceChanges(result: BrowseResult, marketplaces: Marketplace[], w
   const lines: string[] = []
 
   for (const m of result.adds) {
-    const auto = m.source !== OFFICIAL && (result.auto[m.source] ?? m.auto)
+    const auto = m.source !== BUILTIN && (result.auto[m.source] ?? m.auto)
     lines.push(
       `Added ${m.id} · ${m.shown} — ${counted(listed(m.entries).length)}${auto ? ', updating on its own' : ''}`,
     )
@@ -159,7 +180,7 @@ function marketplaceChanges(result: BrowseResult, marketplaces: Marketplace[], w
   for (const source of result.removes) {
     const id = marketplaces.find((m) => m.source === source)?.id ?? source
     lines.push(`Removed ${id} · ${shownSource(source)}`)
-    const kept = wanted.filter((name) => (marketplaceOf(name) ?? OFFICIAL) === id)
+    const kept = wanted.filter((name) => publisherOf(name) === id)
 
     if (kept.length > 0) {
       lines.push(keptNote(kept))
@@ -272,15 +293,23 @@ export async function runBrowse(): Promise<number> {
   const was = readKept(home)
   const tries = readTries()
   const auto = autoWanted()
-  const marketplaces = marketplacesOf(state.marketplaces).map((source) => marketplaceState(home, state, source, tries))
+  const manifest = readMarketplaces(home)
+  const renames = manifest.renames ?? {}
+  const view = shown(home, manifest, false)
+
+  const marketplaces = marketplacesOf(state.marketplaces).map((source) =>
+    marketplaceState(home, state, source, tries, renames),
+  )
+
   const names = new Set(marketplaces.flatMap((m) => m.entries.map((e) => e.name)))
 
   const kept = inWear(
     home,
     was.filter((e) => state.palettes.includes(e.name) && !names.has(e.name)),
+    renames,
   )
 
-  knowAliases([...marketplaces.flatMap((m) => m.entries), ...kept])
+  knowAliases(tagsOf([...marketplaces.flatMap((m) => m.entries), ...kept], view.works))
   const fetched = new Map<string, Fetched>()
   const lookups = new AbortController()
   const tty = process.stdout.isTTY === true
@@ -299,14 +328,15 @@ export async function runBrowse(): Promise<number> {
     kept,
     installed: state.palettes,
     updates: updateNames(home),
-    tuned: tunedNames(readTone(home), shown(home, readMarketplaces(home), false).palettes),
+    tuned: tunedNames(readTone(home), view.palettes),
+    works: view.works,
+    sort: sortOf(process.env.TTHEME_SORT),
     ...(startup ? { startup } : {}),
     ...(hub ? { hub, release: () => releaseLine(), ...(mark.length === 3 ? { mark } : {}) } : {}),
     due: auto ? dueSources(home, state) : [],
-    io: browseIo(home, state, fetched, lookups.signal, (result, report) =>
+    io: browseIo(home, state, renames, fetched, lookups.signal, (result, report) =>
       into({ say: report.say, set: report.status }, () => applyBrowse(home, marketplaces, result, fetched)),
     ),
-    ...(process.env.TTHEME_SORT === 'catalog' ? {} : { order: alphabetical }),
     color: !colorless(),
     lookups: process.env.TTHEME_MARKETPLACE_LOOKUP !== 'off',
     fx: promptFx(process.env.TTHEME_FX),

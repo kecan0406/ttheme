@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "code-geass/kallen"
+signature = ["cursor", "selection", "ansi12"]
+ansi_source = "Kolorit + Geass"
+
+[colors]
+background = "#201516"
+foreground = "#fbdbde"
+cursor = "#a3485a"
+selection_background = "#2e4b54"
+ansi = [
+  "#2d2122",
+  "#f26885",
+  "#cfc435",
+  "#fcaa3c",
+  "#8791c0",
+  "#ff89d0",
+  "#74aef9",
+  "#e5d0d1",
+
+  "#847374",
+  "#f39eac",
+  "#ece14f",
+  "#ffd6a9",
+  "#b0a3db",
+  "#ffbfe1",
+  "#a6caf2",
+  "#ffe9ea",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1d"
+cursor = "#8e384a"
+selection_background = "#92b0bb"
+ansi = [
+  "#fff0f1",
+  "#bb2651",
+  "#385921",
+  "#8d5700",
+  "#51609d",
+  "#b32288",
+  "#005193",
+  "#36292a",
+
+  "#847374",
+  "#8e384b",
+  "#2e4a1a",
+  "#714d1e",
+  "#594a90",
+  "#7f3f66",
+  "#1e4566",
+  "#2d1b1d",
+]

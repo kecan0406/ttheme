@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from '@kitajs/html'
-import type { Theme } from '@/lib/themes'
+import { shortName, type Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 
@@ -210,7 +210,7 @@ export function SceneLines({ theme, scene, own = false }: { theme: Theme; scene:
 
   if (scene === 'colors') return <Colors />
 
-  return <Shell use={own ? null : theme.marketplace ? theme.id : theme.name} />
+  return <Shell use={own ? null : shortName(theme.id)} />
 }
 
 export function TerminalPreview({

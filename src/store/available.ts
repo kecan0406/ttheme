@@ -1,17 +1,27 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import {
+  aboutOf,
+  type Commons,
+  followSubject,
+  mergeWorks,
+  parseCommons,
+  shelfOf,
+  type Work,
+  wordsOf,
+} from '../core/commons.ts'
 import { boundOf, GATE_RULES, measure, missedRules, shownOf } from '../core/contrast.ts'
 import {
-  emptyManifest,
+  type Bundle,
   entryProblem,
   inMode,
   type Manifest,
   type PaletteEntry,
-  parseManifest,
+  parseBuiltin,
   toTheme,
 } from '../core/manifest.ts'
-import { marketplaceLayout, type Report, readMarketplaceFiles } from '../core/own.ts'
-import { type Identity, MARKETPLACE_FILE, marketplaceId, marketplaceOf, shelfOf } from '../core/theme.ts'
+import { marketplaceLayout, type Report, readMarketplaceFiles, readWorkFiles, workLayout } from '../core/own.ts'
+import { BUILTIN, type Identity, isBuiltin, MARKETPLACE_FILE, marketplaceId, slugOf } from '../core/theme.ts'
 import { writeAtomic } from './edits.ts'
 import { readLocal, warning } from './local.ts'
 import { aliasesFor, containsText } from './names.ts'
@@ -22,7 +32,6 @@ import {
   localIdentity,
   type MarketplaceInfo,
   marketplaceSources,
-  OFFICIAL,
   readMarketplaceInfo,
   remoteOwner,
   shownSource,
@@ -32,12 +41,42 @@ import { modeFor } from './wiring.ts'
 
 const TIMEOUT = 20_000
 
-export function officialPath(configHome: string): string {
-  return join(configHome, 'ttheme', 'official.json')
+export function builtinPath(configHome: string): string {
+  return join(configHome, 'ttheme', 'builtin.json')
 }
 
-export function writeOfficial(configHome: string, manifest: Manifest): void {
-  writeAtomic(officialPath(configHome), `${JSON.stringify(manifest, null, 2)}\n`)
+export function commonsPath(configHome: string): string {
+  return join(configHome, 'ttheme', 'commons.json')
+}
+
+export interface Bundled {
+  builtin: Bundle
+  commons: Commons
+}
+
+export function writeBundled(configHome: string, { builtin, commons }: Bundled): void {
+  writeAtomic(builtinPath(configHome), `${JSON.stringify(builtin, null, 2)}\n`)
+  writeAtomic(commonsPath(configHome), `${JSON.stringify(commons, null, 2)}\n`)
+}
+
+export function readPackaged(root: string): Bundled {
+  return {
+    builtin: parseBuiltin(readFileSync(join(root, 'dist', 'builtin.json'), 'utf8')),
+    commons: parseCommons(readFileSync(join(root, 'dist', 'commons.json'), 'utf8')),
+  }
+}
+
+export function readBundled(configHome: string): Bundled {
+  const path = builtinPath(configHome)
+
+  if (!existsSync(path) || !existsSync(commonsPath(configHome))) {
+    throw new Error(`no built-in palettes at ${path} — run \`ttheme init\` first`)
+  }
+
+  return {
+    builtin: parseBuiltin(readFileSync(path, 'utf8')),
+    commons: parseCommons(readFileSync(commonsPath(configHome), 'utf8')),
+  }
 }
 
 export interface Archive {
@@ -45,26 +84,34 @@ export interface Archive {
   files: Record<string, string>
 }
 
-export function readMarketplaces(configHome: string, warn = true, official?: Manifest): Manifest {
-  const sources = marketplaceSources(configHome)
-  const path = officialPath(configHome)
-  let base = emptyManifest()
-
-  if (sources.includes(OFFICIAL)) {
-    if (official) {
-      base = official
-    } else {
-      if (!existsSync(path)) {
-        throw new Error(`no official marketplace at ${path} — run \`ttheme init\` first`)
-      }
-
-      base = parseManifest(readFileSync(path, 'utf8'))
-    }
+function followed(entries: PaletteEntry[], renames: Readonly<Record<string, string>>): PaletteEntry[] {
+  if (Object.keys(renames).length === 0) {
+    return entries
   }
 
-  const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source, base.palettes, warn))
+  return entries.map((e) => {
+    const subject = e.subject === undefined ? undefined : followSubject(renames, e.subject)
 
-  return { ...base, palettes: [...base.palettes, ...remote] }
+    return subject === e.subject ? e : { ...e, subject }
+  })
+}
+
+export function readMarketplaces(configHome: string, warn = true, bundled?: Bundled): Manifest {
+  const sources = marketplaceSources(configHome)
+  const { builtin, commons } = bundled ?? readBundled(configHome)
+  const remote = sources.filter(isRemote).flatMap((source) => readCached(configHome, source, warn) ?? [])
+  const palettes = [...(sources.includes(BUILTIN) ? builtin.palettes : []), ...remote.flatMap((m) => m.entries)]
+
+  return {
+    version: builtin.version,
+    gate: builtin.gate,
+    palettes: followed(palettes, commons.renames),
+    works: mergeWorks(
+      commons.works,
+      remote.flatMap((m) => m.works),
+    ),
+    renames: commons.renames,
+  }
 }
 
 function parseArchive(source: string): Archive {
@@ -108,8 +155,8 @@ export function archiveId(source: string, archive: Archive): string {
 }
 
 export function idOf(configHome: string, source: string): string {
-  if (source === OFFICIAL) {
-    return OFFICIAL
+  if (source === BUILTIN) {
+    return BUILTIN
   }
 
   return isLocal(source)
@@ -129,42 +176,41 @@ export interface ReadMarketplace {
   id: string
   info: MarketplaceInfo
   entries: PaletteEntry[]
+  works: Work[]
 }
 
-export function readArchive(
-  source: string,
-  archive: Archive,
-  official: PaletteEntry[],
-  report: Report,
-): ReadMarketplace {
+export function readArchive(source: string, archive: Archive, report: Report): ReadMarketplace {
   const info = archiveInfo(source, archive)
   const id = remoteId(source, info)
   const shown = shownSource(source)
   const texts = new Map(Object.entries(archive.files).map(([path, text]) => [`${shown}/${path}`, text]))
-  const files = marketplaceLayout(Object.keys(archive.files), (path) => `${shown}/${path}`)
+  const paths = Object.keys(archive.files)
+  const at = (path: string) => `${shown}/${path}`
+  const read = (file: { path: string }) => texts.get(file.path) ?? ''
 
   return {
     id,
     info,
-    entries: readMarketplaceFiles(files, (file) => texts.get(file.path) ?? '', id, official, report, true),
+    entries: readMarketplaceFiles(marketplaceLayout(paths, at), read, id, report, true),
+    works: readWorkFiles(workLayout(paths, at), read, report, true),
   }
 }
 
-function readCached(configHome: string, source: string, official: PaletteEntry[], warn: boolean): PaletteEntry[] {
+function readCached(configHome: string, source: string, warn: boolean): ReadMarketplace | undefined {
   const path = cachePath(configHome, source)
 
   if (!existsSync(path)) {
-    return []
+    return undefined
   }
 
   try {
-    return readArchive(source, readCachedArchive(configHome, source), official, warning(false)).entries
+    return readArchive(source, readCachedArchive(configHome, source), warning(false))
   } catch (error) {
     if (warn) {
       process.stderr.write(`ttheme: skipping ${path} — ${(error as Error).message}\n`)
     }
 
-    return []
+    return undefined
   }
 }
 
@@ -196,22 +242,51 @@ export function updatesOf(configHome: string, manifest: Manifest): PaletteEntry[
   return manifest.palettes.filter((p) => {
     const was = kept.get(p.name)
 
-    return marketplaceOf(p.name) !== undefined && was !== undefined && looks(was) !== looks(p)
+    return !isBuiltin(p.name) && was !== undefined && looks(was) !== looks(p)
   })
+}
+
+function withSubject(entry: PaletteEntry, subject: string | undefined): PaletteEntry {
+  if (entry.subject === subject) {
+    return entry
+  }
+
+  const { subject: _, ...rest } = entry
+
+  return subject === undefined ? rest : { ...rest, subject }
 }
 
 export function untuned(configHome: string, manifest: Manifest, warn = true): Manifest {
   const kept = readKept(configHome)
-  const pinned = new Map(kept.filter((p) => marketplaceOf(p.name) !== undefined).map((p) => [p.name, p]))
+  const pinned = new Map(kept.filter((p) => !isBuiltin(p.name)).map((p) => [p.name, p]))
+  const local = readLocal(configHome, warn)
+  const renames = manifest.renames ?? {}
 
-  const palettes = [
-    ...manifest.palettes.map((p) => pinned.get(p.name) ?? p),
-    ...readLocal(configHome, manifest.palettes, warn),
-  ]
+  const palettes = followed(
+    [
+      ...manifest.palettes.map((p) => {
+        const was = pinned.get(p.name)
+
+        return was ? withSubject(was, p.subject) : p
+      }),
+      ...local.entries,
+    ],
+    renames,
+  )
 
   const known = new Set(palettes.map((p) => p.name))
 
-  return { ...manifest, palettes: [...palettes, ...kept.filter((p) => !known.has(p.name))] }
+  return {
+    ...manifest,
+    palettes: [
+      ...palettes,
+      ...followed(
+        kept.filter((p) => !known.has(p.name)),
+        renames,
+      ),
+    ],
+    works: mergeWorks(manifest.works, local.works),
+  }
 }
 
 export function shown(configHome: string, manifest: Manifest, warn = true): Manifest {
@@ -278,14 +353,26 @@ export function gateFailures(palette: PaletteEntry): string[] {
   )
 }
 
-export function find(palettes: PaletteEntry[], name: string): PaletteEntry {
-  const hit = palettes.find((p) => p.name === name)
+export function find(palettes: PaletteEntry[], name: string, installed: readonly string[] = []): PaletteEntry {
+  const exact = palettes.find((p) => p.name === name)
 
-  if (!hit) {
-    throw new Error(`no palette named ${name} in your marketplaces — ${nearest(palettes, [name])}`)
+  if (exact) {
+    return exact
   }
 
-  return hit
+  const same = palettes.filter((p) => slugOf(p.name) === name)
+  const mine = same.filter((p) => installed.includes(p.name))
+  const hit = mine.length === 1 ? mine[0] : same.length === 1 ? same[0] : undefined
+
+  if (hit) {
+    return hit
+  }
+
+  if (same.length > 1) {
+    throw new Error(`${name} is ${same.map((p) => p.name).join(', ')} — name the one you mean`)
+  }
+
+  throw new Error(`no palette named ${name} in your marketplaces — ${nearest(palettes, [name])}`)
 }
 
 export function nearest(palettes: PaletteEntry[], names: string[]): string {
@@ -293,7 +380,7 @@ export function nearest(palettes: PaletteEntry[], names: string[]): string {
   const named = palettes.filter((p) => needles.some((n) => p.name.includes(n)))
 
   const shelved = palettes.filter(
-    (p) => !named.includes(p) && needles.some((n) => shelfOf(p).toLowerCase().includes(n)),
+    (p) => !named.includes(p) && needles.some((n) => (p.subject ?? '').toLowerCase().includes(n)),
   )
 
   const near = [...named, ...shelved].map((p) => p.name).slice(0, 3)
@@ -301,22 +388,28 @@ export function nearest(palettes: PaletteEntry[], names: string[]): string {
   return near.length > 0 ? `did you mean: ${near.join(', ')}?` : 'the Browse tab of `ttheme` shows what is there'
 }
 
-export function search(palettes: PaletteEntry[], query: string): PaletteEntry[] {
-  return palettes.filter((p) =>
-    containsText(
-      [p.name, shelfOf(p), p.native ?? '', p.ansiSource, ...(p.nativeNames ?? []), ...aliasesFor(p.booru)],
+export function search(palettes: PaletteEntry[], works: readonly Work[], query: string): PaletteEntry[] {
+  return palettes.filter((p) => {
+    const about = aboutOf(works, p.subject)
+
+    return containsText(
+      [p.name, shelfOf(p, works), p.ansiSource, ...wordsOf(about), ...aliasesFor(about?.character?.danbooru)],
       query,
-    ),
-  )
+    )
+  })
 }
 
-export function booruTags(palettes: PaletteEntry[], near: PaletteEntry, token: string): PaletteEntry[] {
+export function booruTags(
+  palettes: PaletteEntry[],
+  works: readonly Work[],
+  near: PaletteEntry,
+  token: string,
+): PaletteEntry[] {
   const needle = token.toLowerCase()
-  const rank = (p: PaletteEntry) => (p.name === near.name ? 0 : shelfOf(p) === shelfOf(near) ? 1 : 2)
+  const home = aboutOf(works, near.subject)?.work.id
+  const rank = (p: PaletteEntry) => (p.name === near.name ? 0 : aboutOf(works, p.subject)?.work.id === home ? 1 : 2)
 
-  return palettes.filter((p) => p.booru?.toLowerCase().includes(needle)).sort((a, b) => rank(a) - rank(b))
-}
-
-export function siteTags(entry: PaletteEntry, site: string): string[] {
-  return entry.booruSites?.[site] ?? (entry.booru ? [entry.booru] : [])
+  return palettes
+    .filter((p) => aboutOf(works, p.subject)?.character?.danbooru?.toLowerCase().includes(needle))
+    .sort((a, b) => rank(a) - rank(b))
 }

@@ -1,0 +1,24 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Lucky☆Star"
+native = "らき☆すた"
+lead = "lucky-star/konata"
+
+[[character]]
+id = "konata"
+native = ["泉こなた"]
+danbooru = "izumi_konata"
+
+[[character]]
+id = "kagami"
+native = ["柊かがみ"]
+danbooru = "hiiragi_kagami"
+
+[[character]]
+id = "tsukasa"
+native = ["柊つかさ"]
+danbooru = "hiiragi_tsukasa"
+
+[[character]]
+id = "miyuki"
+native = ["高良みゆき"]
+danbooru = "takara_miyuki"

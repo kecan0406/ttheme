@@ -6,8 +6,8 @@ set the palette new tabs open with, or let every new tab take the next character
 ## Use a palette in this tab
 
 ```sh
-ttheme use miku   # this tab only
-ttheme use ho     # a unique prefix is enough
+ttheme use miku          # this tab only
+ttheme use ttheme/miku   # by its full name, when two of yours are called miku
 ```
 
 A tab only ever repaints itself, so the palette you use there stays until you
@@ -26,9 +26,10 @@ palette and then **Default** does the same.
 
 ## A new palette for every tab
 
-Set `TTHEME_TAB_PALETTE` to `seq` and each new tab takes the next palette, in
-the order you installed them. The count is shared by every tab, so four new
-tabs give four different characters.
+Set `TTHEME_TAB_PALETTE` to `seq` and each new tab takes the next palette:
+work by work, each work's characters in the order of its cast, then the
+originals. The count is shared by every tab, so four new tabs give four
+different characters.
 
 ```sh
 ttheme config   # set TTHEME_TAB_PALETTE=seq

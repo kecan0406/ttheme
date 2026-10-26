@@ -1,34 +1,35 @@
 import { writeFileSync } from 'node:fs'
-import { basename, dirname, resolve } from 'node:path'
+import { basename } from 'node:path'
 import { parseArgs } from 'node:util'
 import { deltaE, oklch } from '../../../../src/core/color.ts'
 import { check } from '../../../../src/core/contrast.ts'
 import { fixRoles } from '../../../../src/core/fix.ts'
-import type { Theme } from '../../../../src/core/theme.ts'
+import { type Theme, workIdOf } from '../../../../src/core/theme.ts'
 import { writeMirrors } from './light.ts'
 
 interface ThemeDoc {
-  meta: { name: string; signature: string[] }
+  subject?: string
+  signature: string[]
   colors: { background: string; foreground: string; cursor: string; selection_background: string; ansi: string[] }
   contrast?: { waive?: string[] }
 }
 
-const catalogOf = (file: string) => basename(dirname(resolve(file)))
+const workOf = (doc: ThemeDoc) => (doc.subject ? workIdOf(doc.subject) : 'original')
 
-function gated(doc: ThemeDoc, ansi: string[]): Theme {
+function gated(name: string, doc: ThemeDoc, ansi: string[]): Theme {
   return {
-    name: doc.meta.name,
+    name,
     background: doc.colors.background,
     foreground: doc.colors.foreground,
     selectionBackground: doc.colors.selection_background,
     ansi,
-    signatureSlots: doc.meta.signature,
+    signatureSlots: doc.signature,
     waive: doc.contrast?.waive ?? [],
   } as unknown as Theme
 }
 
-function fix(doc: ThemeDoc): { ansi: string[]; moves: { slot: number; rule: string }[] } {
-  const { theme, moves } = fixRoles(gated(doc, doc.colors.ansi))
+function fix(name: string, doc: ThemeDoc): { ansi: string[]; moves: { slot: number; rule: string }[] } {
+  const { theme, moves } = fixRoles(gated(name, doc, doc.colors.ansi))
   return {
     ansi: theme.ansi,
     moves: moves.map((m) => ({ slot: Number(m.slot.slice(4)), rule: m.rule })),
@@ -50,7 +51,7 @@ const { values, positionals } = parseArgs({
   allowPositionals: true,
 })
 if (positionals.length === 0) {
-  console.error('usage: bun ansi-roles.ts [--write] [--report <file.json>] themes/palettes/<catalog>/<a>.toml [...]')
+  console.error('usage: bun ansi-roles.ts [--write] [--report <file.json>] builtin/palettes/<palette>.toml [...]')
   process.exit(1)
 }
 
@@ -60,8 +61,9 @@ let failed = 0
 for (const file of positionals) {
   const text = await Bun.file(file).text()
   const doc = Bun.TOML.parse(text) as unknown as ThemeDoc
-  const { ansi, moves } = fix(doc)
-  const left = check(gated(doc, ansi))
+  const name = basename(file, '.toml')
+  const { ansi, moves } = fix(name, doc)
+  const left = check(gated(name, doc, ansi))
   failed += left.length
   const net = [...new Set(moves.map((m) => m.slot))].map((slot) => {
     const from = doc.colors.ansi[slot] as string
@@ -77,7 +79,7 @@ for (const file of positionals) {
     }
   })
   if (net.length > 0 || left.length > 0) {
-    console.log(`\n── ${doc.meta.name} · ${catalogOf(file)}`)
+    console.log(`\n── ${name} · ${workOf(doc)}`)
     for (const n of net)
       console.log(
         `  ansi${n.slot}  ${n.from} → ${n.to}  ${n.hueFrom}° → ${n.hueTo}°  ΔE ${n.de}  ${n.rules.join(', ')}`,
@@ -85,9 +87,9 @@ for (const file of positionals) {
     for (const v of left) console.log(`  still: ${v.rule} — ${v.detail}`)
   }
   report.push({
-    name: doc.meta.name,
-    catalog: catalogOf(file),
-    signature: doc.meta.signature,
+    name,
+    work: workOf(doc),
+    signature: doc.signature,
     background: doc.colors.background,
     foreground: doc.colors.foreground,
     cursor: doc.colors.cursor,

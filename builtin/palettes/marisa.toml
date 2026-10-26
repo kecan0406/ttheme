@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "touhou-project/marisa"
+signature = ["cursor", "foreground", "ansi1"]
+ansi_source = "Apple Classic"
+
+[colors]
+background = "#1b170c"
+foreground = "#efe1bf"
+cursor = "#f5cf00"
+selection_background = "#473d15"
+ansi = [
+  "#272418",
+  "#f16d55",
+  "#aacf39",
+  "#cebe00",
+  "#b77cf3",
+  "#ff8dab",
+  "#59be81",
+  "#dbd4c2",
+
+  "#7c7767",
+  "#f2a46f",
+  "#c0ec58",
+  "#f0e049",
+  "#bf9fe8",
+  "#ffc1ce",
+  "#72db9a",
+  "#f8edd1",
+]
+
+[colors.light]
+background = "#fff9ee"
+foreground = "#261f09"
+cursor = "#9e8500"
+selection_background = "#e7d7a1"
+ansi = [
+  "#fbf3e0",
+  "#b9301b",
+  "#335a16",
+  "#815e00",
+  "#8a2cdf",
+  "#b1335e",
+  "#005d34",
+  "#302c20",
+
+  "#7c7767",
+  "#804619",
+  "#284b0e",
+  "#6e5000",
+  "#683f9e",
+  "#7e4252",
+  "#004d2a",
+  "#241f0e",
+]

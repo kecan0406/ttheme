@@ -1,10 +1,10 @@
 import type { PropsWithChildren } from '@kitajs/html'
 import assets from '@/assets.json' with { type: 'json' }
 import { FacetGround } from '@/components/facet-ground'
+import { fallback } from '@/lib/builtin'
 import { CARD_HEIGHT, CARD_WIDTH } from '@/lib/card'
 import { HANDOFF_SCRIPT } from '@/lib/handoff'
 import { KEYS_SCRIPT } from '@/lib/keys'
-import { fallback } from '@/lib/official'
 import { html, json } from '@/lib/render'
 import { ROUTE_SCRIPT } from '@/lib/route-progress'
 import { CARD_REV, ORIGIN } from '@/lib/seo'

@@ -1,0 +1,24 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Monogatari"
+native = "〈物語〉シリーズ"
+lead = "monogatari/hitagi"
+
+[[character]]
+id = "hitagi"
+native = ["戦場ヶ原ひたぎ"]
+danbooru = "senjougahara_hitagi"
+
+[[character]]
+id = "shinobu"
+native = ["忍野忍"]
+danbooru = "oshino_shinobu"
+
+[[character]]
+id = "tsubasa"
+native = ["羽川翼"]
+danbooru = "hanekawa_tsubasa"
+
+[[character]]
+id = "nadeko"
+native = ["千石撫子"]
+danbooru = "sengoku_nadeko"

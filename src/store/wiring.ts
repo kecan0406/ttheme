@@ -70,7 +70,7 @@ export const CONFIG_SETTINGS = {
     default: 'typewriter',
   },
   TTHEME_SORT: {
-    doc: '# catalogs and palettes in ttheme and preview: abc sorts them by name, catalog keeps the order they were added (default abc)',
+    doc: "# works and their characters in ttheme and preview: abc sorts both by name, cast keeps each work's characters in the order its commons file lists them (default abc)",
     default: 'abc',
   },
   TTHEME_MOUSE: {

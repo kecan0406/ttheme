@@ -16,13 +16,14 @@ import {
 import { dropImage, showImage } from '../pictures/backdrop.ts'
 import { find, readAvailable } from '../store/available.ts'
 import { rewrite, writeAtomic } from '../store/edits.ts'
+import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { prepareColoring, redrawColoring } from './redraw.ts'
 import { refreshPictures } from './sync.ts'
 
-export async function runImage(name: string, action: string, key?: string): Promise<number> {
+export async function runImage(asked: string, action: string, key?: string): Promise<number> {
   const home = configHome()
-  find(readAvailable(home).palettes, name)
+  const { name } = find(readAvailable(home).palettes, asked, readInstalled(home).palettes)
 
   if (action === 'show') {
     if (!key) {

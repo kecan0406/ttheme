@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "oregairu/yuigahama"
+signature = ["cursor", "ansi13", "ansi1"]
+ansi_source = "Snazzy Soft + Service Club"
+
+[colors]
+background = "#201511"
+foreground = "#fddbd1"
+cursor = "#f7a98f"
+selection_background = "#1a4252"
+ansi = [
+  "#2d211d",
+  "#de7a69",
+  "#d0c526",
+  "#e0b55e",
+  "#9a88e7",
+  "#ff8fa3",
+  "#7eb887",
+  "#e6d0c9",
+
+  "#85736d",
+  "#f3a193",
+  "#ede12a",
+  "#ffd88c",
+  "#b0a1e8",
+  "#ffc3c2",
+  "#98d5a0",
+  "#ffe9e3",
+]
+
+[colors.light]
+background = "#fff8f6"
+foreground = "#2d1b15"
+cursor = "#ba6548"
+selection_background = "#b6ddf1"
+ansi = [
+  "#fff1ed",
+  "#ab402f",
+  "#385921",
+  "#7f5e0b",
+  "#674bd0",
+  "#b03654",
+  "#115c3b",
+  "#362925",
+
+  "#85736e",
+  "#8c3c30",
+  "#2e4a1a",
+  "#6e5000",
+  "#5945a1",
+  "#7d4545",
+  "#004c32",
+  "#2d1b15",
+]

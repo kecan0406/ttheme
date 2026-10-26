@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "steins-gate/kurisu"
+signature = ["cursor", "ansi1", "ansi6"]
+ansi_source = "Duotone Dark"
+
+[colors]
+background = "#1f160d"
+foreground = "#f9dec8"
+cursor = "#e0913f"
+selection_background = "#4d3a28"
+ansi = [
+  "#2c2219",
+  "#f26c68",
+  "#b9cb27",
+  "#e2b46f",
+  "#8e91c7",
+  "#f392bb",
+  "#7facf9",
+  "#e3d1c4",
+
+  "#837469",
+  "#f3a287",
+  "#d4e845",
+  "#ffd79d",
+  "#a4a7de",
+  "#ffc1d8",
+  "#98cdf3",
+  "#ffeadb",
+]
+
+[colors.light]
+background = "#fff8f5"
+foreground = "#2b1d0f"
+cursor = "#a5610e"
+selection_background = "#efd2b9"
+ansi = [
+  "#fff1e8",
+  "#be262d",
+  "#35591b",
+  "#815d20",
+  "#585da4",
+  "#a73b71",
+  "#144f98",
+  "#352a21",
+
+  "#837469",
+  "#8b3e22",
+  "#2b4a15",
+  "#714e0d",
+  "#494e93",
+  "#7e415c",
+  "#004766",
+  "#2b1d0f",
+]

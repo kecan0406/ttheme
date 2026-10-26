@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "umineko/rokkenjima"
+signature = ["cursor", "ansi3", "ansi4"]
+ansi_source = "Sequoia Retro Dark + Truth"
+
+[colors]
+background = "#1d170c"
+foreground = "#f2e0c5"
+cursor = "#e8b246"
+selection_background = "#3f3c4a"
+ansi = [
+  "#292318",
+  "#cd836a",
+  "#b8c884",
+  "#ffa48e",
+  "#6a9bbd",
+  "#f492bb",
+  "#73b8ad",
+  "#dfd3c2",
+
+  "#807667",
+  "#f29e83",
+  "#d4e49d",
+  "#ffd0b5",
+  "#71b4c8",
+  "#f6c0e9",
+  "#8ed4c8",
+  "#feebd0",
+]
+
+[colors.light]
+background = "#fff8f3"
+foreground = "#271e0d"
+cursor = "#a27400"
+selection_background = "#dad4e6"
+ansi = [
+  "#fff2e1",
+  "#92523c",
+  "#3c5728",
+  "#a24731",
+  "#356888",
+  "#a83a70",
+  "#055a52",
+  "#322b1f",
+
+  "#807667",
+  "#8d3c21",
+  "#2f491c",
+  "#754b30",
+  "#065d6f",
+  "#794171",
+  "#004b43",
+  "#271e0d",
+]

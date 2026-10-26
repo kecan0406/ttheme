@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "k-on/ritsu"
+signature = ["cursor", "ansi1", "ansi6"]
+ansi_source = "Acid Lime"
+
+[colors]
+background = "#19180d"
+foreground = "#e8e3c7"
+cursor = "#e1d626"
+selection_background = "#433e1a"
+ansi = [
+  "#252418",
+  "#f26b6a",
+  "#aecd34",
+  "#cabe00",
+  "#00a2d5",
+  "#ff8cbe",
+  "#00c383",
+  "#d9d5c3",
+
+  "#7a7768",
+  "#f3a282",
+  "#c9ea50",
+  "#efdf26",
+  "#4ab7e8",
+  "#ffc1d8",
+  "#83db66",
+  "#f4eed2",
+]
+
+[colors.light]
+background = "#fef9e7"
+foreground = "#22200f"
+cursor = "#918900"
+selection_background = "#e1d8a7"
+ansi = [
+  "#f8f4e1",
+  "#be2631",
+  "#335917",
+  "#805d00",
+  "#006b8e",
+  "#b12d73",
+  "#005c3c",
+  "#2e2c20",
+
+  "#7a7768",
+  "#8b3e1c",
+  "#2a4a12",
+  "#6e5000",
+  "#005c7b",
+  "#7e415c",
+  "#0f4d00",
+  "#22200f",
+]

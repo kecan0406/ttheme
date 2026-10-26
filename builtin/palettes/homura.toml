@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "madoka-magica/homura"
+signature = ["cursor", "foreground", "ansi5"]
+ansi_source = "Monokai Pro Machine"
+
+[colors]
+background = "#19161e"
+foreground = "#d8e5e2"
+cursor = "#9f79fb"
+selection_background = "#453858"
+ansi = [
+  "#25222b",
+  "#f0679a",
+  "#69d6a4",
+  "#f9ab6f",
+  "#8c90d2",
+  "#bca3fb",
+  "#7dafe7",
+  "#d8d2dd",
+
+  "#7a757f",
+  "#f39fba",
+  "#74f4bb",
+  "#fbd7bc",
+  "#a3a6e2",
+  "#dac9ff",
+  "#a7caf3",
+  "#f3eafd",
+]
+
+[colors.light]
+background = "#fef7ff"
+foreground = "#162220"
+cursor = "#7a3afa"
+selection_background = "#e2d0f8"
+ansi = [
+  "#f8f1fd",
+  "#b52a67",
+  "#005c3e",
+  "#965212",
+  "#535ab3",
+  "#6f4cc2",
+  "#165385",
+  "#2e2b33",
+
+  "#7a757f",
+  "#8d3658",
+  "#004c33",
+  "#6e4e33",
+  "#33539a",
+  "#5d4a8a",
+  "#1d4468",
+  "#211e2b",
+]

@@ -2,12 +2,11 @@ import assert from 'node:assert/strict'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-
+import { BUILTIN } from '../core/theme.ts'
 import {
   archiveUrl,
   autoUpdates,
   cachePath,
-  OFFICIAL,
   parseSource,
   readMarketplaceInfo,
   refOf,
@@ -16,13 +15,13 @@ import {
   shownSource,
 } from './sources.ts'
 
-test('a marketplace is added by its repository, a path or official', () => {
+test('a marketplace is added by its repository, a path or ttheme', () => {
   assert.equal(parseSource('Alice/anime'), 'alice/anime')
   assert.equal(parseSource('https://github.com/alice/anime.git'), 'alice/anime')
   assert.equal(parseSource('./mine', '/work'), '/work/mine')
   assert.equal(parseSource('/srv/marketplace'), '/srv/marketplace')
   assert.equal(parseSource('~/marketplace'), join(homedir(), 'marketplace'))
-  assert.equal(parseSource('official'), OFFICIAL)
+  assert.equal(parseSource('ttheme'), BUILTIN)
 
   for (const bad of ['alice', 'a/b/c', '-alice/x', 'al ice/x', 'alice/../x']) {
     assert.throws(() => parseSource(bad), /is not a marketplace/, bad)
@@ -48,9 +47,9 @@ test('a repository takes a tag, branch or commit after #, which the fetch follow
   assert.ok(!sameMarketplace('alice/anime', 'alice/other'))
 })
 
-test('only a repository updates on its own, once turned on — the official marketplace comes with ttheme', () => {
-  assert.equal(autoUpdates(OFFICIAL, undefined), false)
-  assert.equal(autoUpdates(OFFICIAL, { official: true }), false)
+test('only a repository updates on its own, once turned on — the built-in marketplace comes with ttheme', () => {
+  assert.equal(autoUpdates(BUILTIN, undefined), false)
+  assert.equal(autoUpdates(BUILTIN, { ttheme: true }), false)
   assert.equal(autoUpdates('alice/anime', undefined), false)
   assert.equal(autoUpdates('alice/anime', { 'alice/anime': true }), true)
   assert.equal(autoUpdates('/srv/marketplace', { '/srv/marketplace': true }), false)

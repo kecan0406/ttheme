@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "umineko/beatrice"
+signature = ["cursor", "foreground", "ansi9"]
+ansi_source = "Batman + Truth"
+
+[colors]
+background = "#19180d"
+foreground = "#f4e1b0"
+cursor = "#e1d61b"
+selection_background = "#473d12"
+ansi = [
+  "#252418",
+  "#a29900",
+  "#aacf67",
+  "#c3c100",
+  "#58a1a1",
+  "#e89aad",
+  "#87b78a",
+  "#d9d5c3",
+
+  "#7a7768",
+  "#c0b958",
+  "#cdea81",
+  "#eee061",
+  "#6eb7b7",
+  "#ffc0ce",
+  "#a2d3a4",
+  "#f4efd2",
+]
+
+[colors.light]
+background = "#fef9e7"
+foreground = "#281f01"
+cursor = "#918900"
+selection_background = "#e7d79e"
+ansi = [
+  "#f8f4e1",
+  "#6b6500",
+  "#305a11",
+  "#805d00",
+  "#1d6e6e",
+  "#9c4860",
+  "#2d5934",
+  "#2e2c20",
+
+  "#7a7768",
+  "#5b5700",
+  "#294a10",
+  "#6e5000",
+  "#005f5f",
+  "#7f4253",
+  "#1a4b2b",
+  "#22200f",
+]

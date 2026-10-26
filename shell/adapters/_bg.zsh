@@ -574,7 +574,7 @@ __tt_pv_bg_findable() {
 }
 
 __tt_pv_bg_find() {
-  local name=$1 err var
+  local name=$1 err var lab REPLY
   local -i rc n=${#TTHEME_SCENES}
   local -x TTHEME_SCENE="" TTHEME_BG_MARGIN=""
   (( n )) && TTHEME_SCENE=${(L)TTHEME_SCENES[(scene % n + n) % n + 1]}
@@ -591,14 +591,16 @@ __tt_pv_bg_find() {
   done
   [[ -r $TTHEME_CONFIG ]] && source $TTHEME_CONFIG
   err=${${err//$'\n'/ }## #}
+  __tt_label $name
+  lab=$REPLY
   if (( rc == 1 )); then
-    msg=${err:-"Find failed for $name"} msgt=300
+    msg=${err:-"Find failed for $lab"} msgt=300
   fi
   (( rc == 0 )) || return 1
   __tt_pv_bg_reset $name
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
-  msg=${err:-"Background · $name"} msgt=200
+  msg=${err:-"Background · $lab"} msgt=200
   return 0
 }
 
@@ -660,7 +662,8 @@ __tt_pv_bg_pick() {
   local cur=${tpick##*:} REPLY
   local -i n=${#keys} at
   if (( n < 2 )); then
-    msg="$tune has one picture" msgt=200
+    __tt_label $tune
+    msg="$REPLY has one picture" msgt=200
     return 0
   fi
   [[ $tpick == *:* ]] || cur=${bgact[$tune]}
@@ -676,7 +679,7 @@ __tt_pv_bg_pick() {
 }
 
 __tt_pv_bg_drop() {
-  local name=$tune key=${tpick##*:} err
+  local name=$tune key=${tpick##*:} err REPLY
   local -i rc
   [[ $tpick == *:* ]] || key=${bgact[$name]}
   __tt_pv_untune
@@ -689,7 +692,8 @@ __tt_pv_bg_drop() {
   __tt_pv_bg_reset $name
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
-  msg=${err:-"Background · $name"} msgt=$(( rc ? 300 : 200 ))
+  __tt_label $name
+  msg=${err:-"Background · $REPLY"} msgt=$(( rc ? 300 : 200 ))
   [[ -r ${TTHEME_CONFIG:h}/backgrounds/${${name/@/--}/\//--}.conf ]] || return 0
   __tt_pv_tune_open $name
 }
@@ -715,7 +719,8 @@ __tt_pv_bg_recolor() {
   __tt_pv_bg_reset $name
   __tt_bg_load $name
   bgload[$name]="" bgedit[$name]=1
-  msg=${err:-"Background · $name"} msgt=$(( rc ? 300 : 200 ))
+  __tt_label $name
+  msg=${err:-"Background · $REPLY"} msgt=$(( rc ? 300 : 200 ))
   [[ -r ${TTHEME_CONFIG:h}/backgrounds/${${name/@/--}/\//--}.conf ]] || return 0
   (( rc )) || bgprep[$name:$key:$want]=1
   __tt_pv_tune_open $name
@@ -896,13 +901,14 @@ __tt_pv_bg_close() {
 }
 
 __tt_pv_bg_save() {
-  local img name note err REPLY
+  local img name lab note err REPLY
   local -a saved=()
   __tt_bg_settle
   (( ${#bgedit} + ${#bgswap} )) || return 0
   for img in ${(ok)bgedit}; do
     if ! __tt_bg_write $img; then
-      print -u2 "ttheme: could not save the background of ${img%:*}"
+      __tt_label ${img%:*}
+      print -u2 "ttheme: could not save the background of $REPLY"
       continue
     fi
     (( ${saved[(Ie)${img%:*}]} )) || saved+=(${img%:*})
@@ -915,15 +921,17 @@ __tt_pv_bg_save() {
     (( ${saved[(Ie)$name]} )) || saved+=($name)
   done
   for name in $saved; do
+    __tt_label $name
+    lab=$REPLY
     __tt_pv_shows $name
     img=$REPLY
     if [[ ! -r ${TTHEME_CONFIG:h}/backgrounds/${${name/@/--}/\//--}.conf ]]; then
-      note="Background · $name none"
+      note="Background · $lab none"
     elif (( bgoff[$img] )); then
-      note="Background · $name off"
+      note="Background · $lab off"
     else
       __tt_bg_label $img
-      note="Background · $name $REPLY"
+      note="Background · $lab $REPLY"
     fi
     if __tt_color; then
       printf "${TTHEME_SGR[dim]}%s${TTHEME_SGR[reset]}\n" "$note"

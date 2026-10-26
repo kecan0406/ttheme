@@ -1,0 +1,40 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Sword Art Online"
+native = "ソードアート・オンライン"
+lead = "sword-art-online/sinon"
+
+[[character]]
+id = "kirito"
+native = ["キリト", "桐ヶ谷和人"]
+danbooru = "kirito"
+sites = { konachan = "kirigaya_kazuto", zerochan = "kirigaya_kazuto" }
+
+[[character]]
+id = "asuna"
+native = ["アスナ", "結城明日奈"]
+danbooru = "asuna_(sao)"
+sites = { konachan = "yuuki_asuna", yande = "asuna_(sword_art_online)", zerochan = "yuuki_asuna" }
+
+[[character]]
+id = "sinon"
+native = ["シノン", "朝田詩乃"]
+danbooru = "sinon"
+sites = { konachan = "shinon_(sao)", zerochan = "sinon_(ggo)" }
+
+[[character]]
+id = "leafa"
+native = ["リーファ", "桐ヶ谷直葉"]
+danbooru = "leafa_(sao)"
+sites = { konachan = "leafa", yande = "leafa", zerochan = "lyfa_(alo)" }
+
+[[character]]
+id = "alice"
+native = ["アリス・ツーベルク", "アリス・シンセシス・サーティ"]
+danbooru = "alice_zuberg"
+sites = { zerochan = "alice_schuberg" }
+
+[[character]]
+id = "yuuki"
+native = ["ユウキ", "紺野木綿季"]
+danbooru = "yuuki_(sao)"
+sites = { konachan = "konno_yuuki", yande = "konno_yuuki", zerochan = "konno_yuuki" }

@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "black-bullet/rentaro"
+signature = ["cursor", "selection", "foreground"]
+ansi_source = "Tomorrow Night + Varanium"
+
+[colors]
+background = "#14181e"
+foreground = "#dfe3e7"
+cursor = "#4e6692"
+selection_background = "#3c4568"
+ansi = [
+  "#21242b",
+  "#db7699",
+  "#86d0ab",
+  "#f2af7b",
+  "#8793c6",
+  "#b7a9e0",
+  "#75b5c7",
+  "#d2d4de",
+
+  "#74777f",
+  "#f39eba",
+  "#a1ecc6",
+  "#fad8bf",
+  "#89aed8",
+  "#d8caff",
+  "#90d0e4",
+  "#e9eefe",
+]
+
+[colors.light]
+background = "#f9f9ff"
+foreground = "#1b2023"
+cursor = "#3d5580"
+selection_background = "#a1aad2"
+ansi = [
+  "#f2f3fd",
+  "#a34167",
+  "#045c3f",
+  "#8f5522",
+  "#4e60a1",
+  "#69589e",
+  "#055868",
+  "#292c33",
+
+  "#74777f",
+  "#8e3559",
+  "#004c33",
+  "#6d4e35",
+  "#31577d",
+  "#5a4b8a",
+  "#004958",
+  "#1a202b",
+]

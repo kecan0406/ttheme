@@ -1,0 +1,9 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Lain"
+native = "serial experiments lain"
+lead = "lain/lain"
+
+[[character]]
+id = "lain"
+native = ["岩倉玲音"]
+danbooru = "iwakura_lain"

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { PaletteEntry } from '../core/manifest.ts'
 import { inert } from '../core/text.ts'
-import { nameProblem } from '../core/theme.ts'
+import { nameProblem, subjectProblem, textProblem } from '../core/theme.ts'
 import { reach } from './available.ts'
 import { writeAtomic } from './edits.ts'
 import { containsText } from './names.ts'
@@ -17,7 +17,7 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/
 
 export interface ListedPalette {
   name: string
-  catalog?: string
+  subject?: string
   background: string
   foreground: string
   cursor: string
@@ -33,6 +33,13 @@ export interface Listed {
   stars: number
   updated: string
   palettes: ListedPalette[]
+  works: ListedWork[]
+}
+
+export interface ListedWork {
+  id: string
+  name: string
+  native?: string
 }
 
 export interface Listing {
@@ -81,11 +88,11 @@ function readPalette(id: string, value: unknown): ListedPalette | undefined {
     return undefined
   }
 
-  const catalog = word(v.catalog)
+  const subject = typeof v.subject === 'string' && !subjectProblem(v.subject) ? v.subject : undefined
 
   return {
     name,
-    ...(catalog ? { catalog } : {}),
+    ...(subject ? { subject } : {}),
     background,
     foreground,
     cursor,
@@ -93,6 +100,22 @@ function readPalette(id: string, value: unknown): ListedPalette | undefined {
     ansi: ansi.filter((c): c is string => c !== undefined),
     signatureSlots: slots,
   }
+}
+
+function readListedWork(value: unknown): ListedWork | undefined {
+  if (typeof value !== 'object' || value === null) {
+    return undefined
+  }
+
+  const v = value as Record<string, unknown>
+  const name = word(v.name)
+  const native = word(v.native)
+
+  if (typeof v.id !== 'string' || subjectProblem(v.id) || v.id.includes('/') || !name || textProblem(name)) {
+    return undefined
+  }
+
+  return { id: v.id, name, ...(native && !textProblem(native) ? { native } : {}) }
 }
 
 function readListed(value: unknown): Listed | undefined {
@@ -129,7 +152,15 @@ function readListed(value: unknown): Listed | undefined {
   const stars = typeof v.stars === 'number' && Number.isFinite(v.stars) && v.stars >= 0 ? Math.floor(v.stars) : 0
   const updated = word(v.updated) ?? ''
 
-  return { id, source, about: word(v.about) ?? '', stars, updated: DAY.test(updated) ? updated : '', palettes }
+  return {
+    id,
+    source,
+    about: word(v.about) ?? '',
+    stars,
+    updated: DAY.test(updated) ? updated : '',
+    palettes,
+    works: (Array.isArray(v.works) ? v.works : []).flatMap((w) => readListedWork(w) ?? []),
+  }
 }
 
 export function parseIndex(text: string): Listed[] {
@@ -207,7 +238,10 @@ export async function readIndex(signal?: AbortSignal, path = indexCache(), url =
 }
 
 export function listedMatches(m: Listed, query: string): boolean {
-  return containsText([m.id, m.source, m.about, ...m.palettes.flatMap((e) => [e.name, e.catalog ?? ''])], query)
+  return containsText(
+    [m.id, m.source, m.about, ...m.palettes.flatMap((e) => [e.name, e.subject ?? '']), ...m.works.map((w) => w.name)],
+    query,
+  )
 }
 
 export interface Shown {
@@ -219,4 +253,5 @@ export interface Shown {
   pushedAt: string
   license: string | null
   palettes: PaletteEntry[]
+  works: ListedWork[]
 }

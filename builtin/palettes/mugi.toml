@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "k-on/mugi"
+signature = ["cursor", "ansi3", "ansi4"]
+ansi_source = "Tomorrow Night Eighties"
+
+[colors]
+background = "#1f1518"
+foreground = "#f9dbe2"
+cursor = "#f4a7c0"
+selection_background = "#463c29"
+ansi = [
+  "#2c2124",
+  "#e87084",
+  "#d0c46f",
+  "#e5b451",
+  "#679acd",
+  "#dd9ec8",
+  "#65b6df",
+  "#e3d0d4",
+
+  "#837377",
+  "#f39faa",
+  "#ebe088",
+  "#fbd7b8",
+  "#95abe8",
+  "#ffbeea",
+  "#a7caf2",
+  "#ffe8ed",
+]
+
+[colors.light]
+background = "#fff8f8"
+foreground = "#2c1b20"
+cursor = "#b96181"
+selection_background = "#e5d5bb"
+ansi = [
+  "#fff0f2",
+  "#b23450",
+  "#3a5824",
+  "#815d00",
+  "#306797",
+  "#914a7f",
+  "#005774",
+  "#35292c",
+
+  "#837377",
+  "#8d3948",
+  "#2e491a",
+  "#6e4e2f",
+  "#30529d",
+  "#803c70",
+  "#1f4566",
+  "#2c1b20",
+]

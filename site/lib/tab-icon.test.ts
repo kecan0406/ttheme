@@ -4,12 +4,13 @@ import { faviconIco, touchIconPng } from '@/lib/tab-icon'
 import type { Theme } from '@/lib/themes'
 
 const theme: Theme = {
-  id: 'kyubey',
-  marketplace: null,
+  id: 'ttheme/kyubey',
+  marketplace: 'ttheme',
   name: 'kyubey',
-  catalog: 'Madoka Magica',
-  native: null,
-  lead: false,
+  subject: 'madoka-magica/kyubey',
+  work: { id: 'madoka-magica', name: 'Madoka Magica', native: null, lang: null, lead: 'madoka-magica/madoka' },
+  also: [],
+  character: { id: 'kyubey', native: [] },
   from: null,
   ansiSource: 'test',
   background: '#fff8f7',

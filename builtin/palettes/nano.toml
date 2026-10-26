@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "nichijou/nano"
+signature = ["cursor", "ansi1", "selection"]
+ansi_source = "Tomorrow Night Eighties + Nichijou"
+
+[colors]
+background = "#171819"
+foreground = "#e3e2e4"
+cursor = "#707072"
+selection_background = "#353432"
+ansi = [
+  "#232425",
+  "#d37f7e",
+  "#9acd9a",
+  "#e5b451",
+  "#679acd",
+  "#d3a0d3",
+  "#53babb",
+  "#d5d4d6",
+
+  "#777779",
+  "#f3a09f",
+  "#b5eab5",
+  "#ffd78e",
+  "#7dafe4",
+  "#f7c0f6",
+  "#71d7d7",
+  "#efedef",
+]
+
+[colors.light]
+background = "#faf9fb"
+foreground = "#1f2021"
+cursor = "#595a5c"
+selection_background = "#c4c1be"
+ansi = [
+  "#f5f3f5",
+  "#a14648",
+  "#2c5a31",
+  "#815d00",
+  "#306797",
+  "#874e8b",
+  "#005a5b",
+  "#2b2c2e",
+
+  "#777779",
+  "#8c3a3d",
+  "#1c4b25",
+  "#6f4f00",
+  "#1e5888",
+  "#793e7e",
+  "#004a4b",
+  "#1f2021",
+]

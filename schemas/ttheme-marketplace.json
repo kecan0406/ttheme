@@ -2,11 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://www.schemastore.org/ttheme-marketplace.json",
   "title": "ttheme marketplace",
-  "description": "The ttheme-marketplace.toml at the root of a ttheme marketplace: a repository or folder whose palettes/*.toml and palettes/<catalog>/*.toml are the marketplace's palettes\nhttps://ttheme.dev/docs/creating-palettes/publish",
+  "description": "The ttheme-marketplace.toml at the root of a ttheme marketplace: a repository or folder whose palettes/*.toml are the marketplace's palettes and whose works/*.toml propose works and characters the commons does not hold yet\nhttps://ttheme.dev/docs/creating-palettes/publish",
   "type": "object",
   "definitions": {
     "palette": {
-      "description": "A palette's bare name, its file name under palettes/ without .toml",
+      "description": "A palette's name within the marketplace, its file name under palettes/ without .toml",
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
       "maxLength": 40
@@ -23,14 +23,14 @@
       "type": "string"
     },
     "name": {
-      "description": "The marketplace's name: its palettes are <owner>@<name>/<palette>, where the owner is the repository's owner on GitHub\nhttps://ttheme.dev/docs/creating-palettes/publish",
+      "description": "The marketplace's name: its palettes are <owner>@<name>/<palette>, where the owner is the repository's owner on GitHub. The built-in marketplace alone is named ttheme, and its palettes ttheme/<palette>\nhttps://ttheme.dev/docs/creating-palettes/publish",
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
       "maxLength": 40
     },
     "description": {
       "$ref": "#/definitions/text",
-      "description": "What the marketplace holds, shown in ttheme browse, ttheme marketplace and the marketplace page"
+      "description": "What the marketplace holds, shown in Browse, ttheme marketplace and the marketplace page"
     },
     "owner": {
       "description": "Who keeps the marketplace",
@@ -52,32 +52,6 @@
         }
       },
       "required": ["name"]
-    },
-    "catalog": {
-      "description": "The catalogs, the folders under palettes/, in the order ttheme lists them, each with an optional title in its original language and a lead palette whose colors stand for it; a folder no table names follows them, in name order\nhttps://ttheme.dev/docs/creating-palettes/publish",
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The catalog's folder under palettes/, spelled as it is there",
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "native": {
-            "description": "The catalog's title in its original language, shown dim beside it",
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "lead": {
-            "$ref": "#/definitions/palette",
-            "description": "The palette whose colors stand for the catalog in the lists"
-          }
-        },
-        "required": ["name"]
-      }
     },
     "renames": {
       "description": "Palettes that were renamed or removed: an old name maps to its new name, or to false once it is gone. Installs of the old name follow the chain on the next update, so keep the entries after everyone has moved\nhttps://ttheme.dev/docs/creating-palettes/publish",
@@ -104,7 +78,24 @@
     "metadata": {
       "description": "Anything else the owner wants to keep here; ttheme does not read it",
       "type": "object"
+    },
+    "fallback": {
+      "$ref": "#/definitions/palette",
+      "description": "The built-in marketplace's own key: its palette that stays out of every list and the new-tab rotation, still used by name. Any other marketplace leaves it out"
     }
   },
-  "required": ["name", "owner"]
+  "required": ["name"],
+  "if": {
+    "properties": {
+      "name": {
+        "const": "ttheme"
+      }
+    }
+  },
+  "then": {
+    "required": ["fallback"]
+  },
+  "else": {
+    "required": ["owner"]
+  }
 }

@@ -16,12 +16,9 @@ export interface Neighbors {
   next: Theme
 }
 
-export function leadOf(themes: Theme[]): Theme {
-  return themes.find((theme) => theme.lead) ?? (themes[0] as Theme)
-}
-
 export function neighbors(theme: Theme, palettes: Theme[]): Neighbors {
-  const shelf = palettes.filter((other) => other.catalog === theme.catalog)
+  const home = theme.work?.id ?? null
+  const shelf = palettes.filter((other) => (other.work?.id ?? null) === home)
   const at = shelf.indexOf(theme)
 
   return {

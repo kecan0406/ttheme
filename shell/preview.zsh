@@ -1,10 +1,11 @@
 __tt_pv_norm() { REPLY=${(L)1//[^[:alnum:]]/} }
 
 __tt_pv_seek() {
-  local t part key REPLY
+  local t s w part key REPLY
   for t in ${(k)TTHEME_PALETTE}; do
-    key=""
-    for part in "$t" "${TTHEME_MARKETPLACE[$t]}" "${TTHEME_NATIVE[$t]}" "${TTHEME_CATALOG[$t]}" "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
+    key="" s=${TTHEME_SUBJECT[$t]}
+    w=${s%%/*}
+    for part in "$t" "${t##*/}" "${t%%/*}" "${TTHEME_WORK_NAME[$w]}" "${TTHEME_WORK_NATIVE[$w]}" "${${(M)s:#*/*}#*/}" "${(@s:|:)TTHEME_NATIVE_NAMES[$t]}" "${TTHEME_CHARACTER[$t]}" "${(@s:|:)TTHEME_ALIASES[$t]}"; do
       [[ -n $part ]] || continue
       __tt_pv_norm "$part"
       key+="|$REPLY"
@@ -25,9 +26,9 @@ __tt_pv_alias() {
 }
 
 __tt_pv_rows() {
-  rtype=() rval=() rcnt=()
-  local g t c ruled="" nflt="" REPLY
-  local -a ts cs loose inside
+  rtype=() rval=() rcnt=() rtop=()
+  local g t ruled="" nflt="" REPLY
+  local -a ts
   if [[ -n $flt ]]; then
     (( ${#pvseek} )) || __tt_pv_seek
     __tt_pv_norm "$flt"
@@ -39,39 +40,20 @@ __tt_pv_rows() {
       [[ -z $flt || ${pvseek[$t]} == *$nflt* ]] && ts+=($t)
     done
     [[ -n $flt ]] && (( ! ${#ts} )) && continue
-    if [[ $g == *@* && -z $ruled ]]; then
+    if [[ -z $ruled ]] && (( ! ${+TTHEME_WORK_NAME[$g]} )); then
       ruled=1
-      (( ${#rtype} )) && { rtype+=(rule); rval+=(''); rcnt+=(0) }
+      (( ${#rtype} )) && { rtype+=(rule); rval+=(''); rcnt+=(0); rtop+=('') }
     fi
-    rtype+=(hdr); rval+=($g); rcnt+=(${#ts})
+    rtype+=(hdr); rval+=($g); rcnt+=(${#ts}); rtop+=($g)
     [[ -n $flt || -n ${exp[$g]} ]] || continue
-    cs=() loose=()
-    for t in $ts; do
-      c=${TTHEME_CATALOG[$t]}
-      if [[ -n $c && $g == *@* ]]; then
-        (( ${cs[(Ie)$c]} )) || cs+=($c)
-      else
-        loose+=($t)
-      fi
-    done
-    for c in $cs; do
-      inside=()
-      for t in $ts; do
-        [[ ${TTHEME_CATALOG[$t]} == "$c" ]] && inside+=($t)
-      done
-      rtype+=(cat); rval+=("$g/$c"); rcnt+=(${#inside})
-      if [[ -n $flt || -n ${exp[$g/$c]} ]]; then
-        for t in $inside; do rtype+=(thm); rval+=($t); rcnt+=(0); done
-      fi
-    done
-    for t in $loose; do rtype+=(thm); rval+=($t); rcnt+=(0); done
+    for t in $ts; do rtype+=(thm); rval+=($t); rcnt+=(0); rtop+=($g); done
   done
 }
 
 __tt_pv_at() {
   local i
   for (( i = 1; i <= ${#rval}; i++ )); do
-    [[ ${rtype[i]} == (hdr|cat) && ${rval[i]} == "$1" ]] && { cur=$i; return 0 }
+    [[ ${rtype[i]} == hdr && ${rval[i]} == "$1" ]] && { cur=$i; return 0 }
   done
   return 0
 }
@@ -91,12 +73,12 @@ __tt_pv_first() {
 }
 
 __tt_pv_goto() {
-  local name=$1 i g=${TTHEME_MARKETPLACE[$1]:-${TTHEME_CATALOG[$1]:-Other}} c=${TTHEME_CATALOG[$1]}
-  exp[$g]=1
-  [[ -n $c && $g == *@* ]] && exp[$g/$c]=1
+  local name=$1 home=${TTHEME_SUBJECT[$1]%%/*} i
+  [[ -n $home ]] || home=${1%%/*}
+  exp[$home]=1
   __tt_pv_rows
   for (( i = 1; i <= ${#rval}; i++ )); do
-    [[ ${rtype[i]} == thm && ${rval[i]} == $name ]] && { cur=$i; return 0 }
+    [[ ${rtype[i]} == thm && ${rval[i]} == $name && ${rtop[i]} == "$home" ]] && { cur=$i; return 0 }
   done
   cur=1
 }
@@ -144,16 +126,12 @@ __tt_pv_toggle() {
 
 __tt_pv_left() {
   [[ -n $flt ]] && return 0
-  if [[ ${rtype[cur]} == (hdr|cat) ]]; then
-    if [[ -n ${exp[${rval[cur]}]} ]]; then
-      __tt_pv_toggle
-    elif [[ ${rtype[cur]} == cat ]]; then
-      __tt_pv_at ${rval[cur]%%/*}
-    fi
+  if [[ ${rtype[cur]} == hdr ]]; then
+    [[ -n ${exp[${rval[cur]}]} ]] && __tt_pv_toggle
     return 0
   fi
-  local g=${TTHEME_MARKETPLACE[${rval[cur]}]:-${TTHEME_CATALOG[${rval[cur]}]:-Other}} c=${TTHEME_CATALOG[${rval[cur]}]}
-  [[ -n $c && $g == *@* ]] && g=$g/$c
+  local g=${rtop[cur]}
+  [[ -n $g ]] || return 0
   exp[$g]=""
   __tt_pv_rows
   __tt_pv_at $g
@@ -230,19 +208,21 @@ __tt_pv_hl() {
 }
 
 __tt_pv_fit() {
-  local extra=$1
+  local extra=$1 cut=""
   REPLY=""
   [[ -n $extra ]] || return 0
-  while [[ -n $extra ]] && (( ${(m)#extra} + 3 > w )); do
+  [[ -n $2 ]] && (( ${(m)#extra} + 3 > w )) && cut=$TTHEME_MARKS[cut]
+  while [[ -n $extra ]] && (( ${(m)#extra} + ${#cut} + 3 > w )); do
     extra=${extra[1,-2]}
   done
   [[ -n $extra ]] || return 0
+  extra+=$cut
   (( w -= ${(m)#extra} + 2 ))
   REPLY="  "$d$extra$r
 }
 
 __tt_pv_row() {
-  local t=${rval[$1]} b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] r=$TTHEME_SGR[/match] z=$TTHEME_SGR[reset] on="" gut="  " base="" lead=$TTHEME_SGR[dim] mark=" " name arrow=$TTHEME_MARKS[closed] ind="   " hl extra part
+  local t=${rval[$1]} b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] r=$TTHEME_SGR[/match] z=$TTHEME_SGR[reset] on="" gut="  " base="" lead=$TTHEME_SGR[dim] mark=" " name arrow=$TTHEME_MARKS[closed] hl by="" extra part
   local -i w
   (( color )) || b= d= r= z= lead=
   if (( $1 == cur )); then
@@ -250,13 +230,13 @@ __tt_pv_row() {
     (( color )) && on=$sb
   fi
   if [[ ${rtype[$1]} == rule ]]; then
-    name='── Marketplaces '
+    name='── Originals '
     REPLY="   "$d$name${(l:lw - 4 - ${#name}::─:)}$z
     return 0
   fi
   if [[ ${rtype[$1]} == hdr ]]; then
     [[ -n $flt || -n ${exp[$t]} ]] && arrow=$TTHEME_MARKS[opened]
-    name=$t
+    name=${TTHEME_WORK_NAME[$t]:-$t}
     (( ${(m)#name} > lw - 10 )) && name="${name[1,lw-11]}…"
     base=$b
     if (( color )) && [[ $t == "$ag" ]]; then
@@ -267,27 +247,10 @@ __tt_pv_row() {
     __tt_pv_hl "$name" "$base"
     hl=$REPLY
     w=$(( lw - 6 - ${(m)#name} - ${#rcnt[$1]} ))
-    __tt_pv_alias "$t" "${TTHEME_NATIVE[${${=tmembers[$t]}[1]}]}"
-    __tt_pv_fit "$REPLY"
+    __tt_pv_fit "${TTHEME_WORK_NATIVE[$t]}" cut
     extra=$REPLY
     (( w < 1 )) && w=1
     REPLY=$gut$on" "$lead$arrow$r" "$base$hl$r$extra${(l:w:: :)}$d${rcnt[$1]}$r" "$z
-    return 0
-  fi
-  if [[ ${rtype[$1]} == cat ]]; then
-    [[ -n $flt || -n ${exp[$t]} ]] && arrow=$TTHEME_MARKS[opened]
-    name=${t#*/}
-    (( ${(m)#name} > lw - 12 )) && name="${name[1,lw-13]}…"
-    base=$b
-    if (( color )) && [[ $t == "$acat" ]]; then
-      base+=$ac lead=$ac
-    elif (( $1 == cur )); then
-      lead=""
-    fi
-    __tt_pv_hl "$name" "$base"
-    w=$(( lw - 8 - ${(m)#name} - ${#rcnt[$1]} ))
-    (( w < 1 )) && w=1
-    REPLY=$gut$on"   "$lead$arrow$r" "$base$REPLY$r${(l:w:: :)}$d${rcnt[$1]}$r" "$z
     return 0
   fi
   if (( $1 == cur )); then
@@ -296,9 +259,9 @@ __tt_pv_row() {
     mark=$ac$cdot$r
   fi
   name=${t##*/}
-  [[ -n ${TTHEME_CATALOG[$t]} && -n ${TTHEME_MARKETPLACE[$t]} ]] && ind="     "
+  [[ ${t%%/*} != ttheme ]] && (( ${+TTHEME_WORK_NAME[${rtop[$1]}]} )) && by=${t%%/*}
   (( ${TTHEME_TUNED[(Ie)$t]} )) && w=-2
-  (( ${(m)#name} > lw - 17 - ${#ind} + w )) && name="${name[1,lw-18-${#ind}+w]}…"
+  (( ${(m)#name} > lw - 20 + w )) && name="${name[1,lw-21+w]}…"
   __tt_pv_hl "$name" "$base"
   hl=$REPLY
   if (( w )); then
@@ -311,14 +274,19 @@ __tt_pv_row() {
   done
   if (( color )); then
     [[ -n ${tstrip[$t]} ]] || __tt_pv_strip $t
-    w=$(( w + lw - 16 - ${#ind} - ${#name} ))
-    __tt_pv_fit "$extra"
-    (( w < 1 )) && w=1
-    REPLY=$gut$on"$ind$mark $base$hl$r$REPLY${(l:w:: :)}${tstrip[$t]} "$z
+    w=$(( w + lw - 19 - ${#name} ))
   else
-    w=$(( w + lw - 4 - ${#ind} - ${#name} ))
-    __tt_pv_fit "$extra"
-    REPLY="$gut$ind$mark $hl$REPLY"
+    w=$(( w + lw - 7 - ${#name} ))
+  fi
+  __tt_pv_fit "$by" cut
+  by=$REPLY
+  __tt_pv_fit "$extra"
+  extra=$REPLY
+  if (( color )); then
+    (( w < 1 )) && w=1
+    REPLY=$gut$on"   $mark $base$hl$r$by$extra${(l:w:: :)}${tstrip[$t]} "$z
+  else
+    REPLY="$gut   $mark $hl$by$extra"
   fi
 }
 
@@ -515,7 +483,8 @@ __tt_pv_foot() {
   elif (( help )); then
     badge=HELP rk='?' right=$b"? $ke"$z$d" close"$z
   elif [[ -n $pick ]]; then
-    badge='PREVIEW (APPLY)' pre="$pick → "
+    __tt_label "$pick"
+    badge='PREVIEW (APPLY)' pre="$REPLY → "
     (( te )) && badge="$tb (APPLY)"
     for (( i = 1; i <= ${#plabel}; i++ )); do
       (( i > 1 )) && lead+=" "
@@ -585,7 +554,7 @@ __tt_pv_foot() {
     [[ -n $flt ]] && badge='PREVIEW (FILTER)'
     if (( ! ${#rval} )); then
       kk=(bksp) kl=(edit)
-    elif [[ ${rtype[cur]} == (hdr|cat) ]]; then
+    elif [[ ${rtype[cur]} == hdr ]]; then
       if [[ -z $flt && -n ${exp[${rval[cur]}]} ]]; then
         kk=(←) kl=(close)
       elif [[ -z $flt ]]; then
@@ -1165,7 +1134,7 @@ __tt_pv_flush() {
 }
 
 __tt_pv_reach() {
-  local key=${pkeys[pk]} base top k home=${HOME:a} here=${PWD:a} htip="" d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] REPLY
+  local key=${pkeys[pk]} base top k lab home=${HOME:a} here=${PWD:a} htip="" d=$TTHEME_SGR[dim] z=$TTHEME_SGR[reset] REPLY
   local -A own=() below=() parent=() mark=() tstrip=()
   local -a roots=() lp=() lpw=() ll=() lat=() lpal=() lnote=() lflag=() reply was=()
   local -A TTHEME_PINS=("${(@kv)TTHEME_PINS}")
@@ -1173,8 +1142,12 @@ __tt_pv_reach() {
   (( color )) || d= z=
   (( room < 2 )) && room=2
   if [[ $key == ssh:* ]]; then
-    __tt_pin_scope "$key"
-    [[ -n ${TTHEME_PINS[$key]} && $TTHEME_PINS[$key] != "$pick" ]] && was+=("${TTHEME_PINS[$key]} · $REPLY")
+    if [[ -n ${TTHEME_PINS[$key]} && $TTHEME_PINS[$key] != "$pick" ]]; then
+      __tt_label "${TTHEME_PINS[$key]}"
+      lab=$REPLY
+      __tt_pin_scope "$key"
+      was+=("$lab · $REPLY")
+    fi
     TTHEME_PINS[$key]=$pick
     mark[$key]=new
     __tt_map_ssh
@@ -1186,8 +1159,10 @@ __tt_pv_reach() {
       __tt_pin_base "$k"
       [[ $REPLY == "$base" ]] || continue
       if [[ $k != "$key" || $TTHEME_PINS[$k] != "$pick" ]]; then
+        __tt_label "${TTHEME_PINS[$k]}"
+        lab=$REPLY
         __tt_pin_scope "$k"
-        was+=("${TTHEME_PINS[$k]} · $REPLY")
+        was+=("$lab · $REPLY")
       fi
       unset "TTHEME_PINS[$k]"
     done
@@ -1213,8 +1188,10 @@ __tt_pv_reach() {
     fi
     reach+=("$REPLY")
   done
+  __tt_label "$pick"
+  lab=$REPLY
   __tt_pin_scope "$key"
-  __tt_clip "→ $base · $REPLY" $(( $1 - ${(m)#pick} - 2 ))
+  __tt_clip "→ $base · $REPLY" $(( $1 - ${(m)#lab} - 2 ))
   rsub=$REPLY
   [[ $key == /* ]] || return 0
   __tt_here_fit "Then here" $1
@@ -1222,7 +1199,7 @@ __tt_pv_reach() {
 }
 
 __tt_pv_draw() {
-  local out line cnt ex ag="" acat="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" nflt="" rsub="" REPLY
+  local out line cnt ex ag="" ac="" gc="" pl="" hm="" sb="" dd="" zz="" state=on src="" wk="" nflt="" rsub="" REPLY
   local -i lw sw split sc se=$(( pw - 1 )) h k i N=${#rval} mt=${#TTHEME_ORDER} wiped=0 tall=$(( ph >= 22 )) hd
   local -a held
   bgstrip=""
@@ -1262,13 +1239,14 @@ __tt_pv_draw() {
         pl+=$ac hm+=$ac
       fi
     fi
-    if [[ ${rtype[cur]} == thm ]]; then
-      ag=${TTHEME_MARKETPLACE[${rval[cur]}]:-${TTHEME_CATALOG[${rval[cur]}]:-Other}}
-      [[ -n ${TTHEME_MARKETPLACE[${rval[cur]}]} && -n ${TTHEME_CATALOG[${rval[cur]}]} ]] && acat=$ag/${TTHEME_CATALOG[${rval[cur]}]}
-    fi
+    [[ ${rtype[cur]} == thm ]] && ag=${rtop[cur]}
   fi
   if [[ -n $flt ]]; then
-    local -a mm=(${(M)rtype:#thm})
+    local -a mm=()
+    for (( i = 1; i <= N; i++ )); do
+      [[ ${rtype[i]} == thm ]] && mm+=(${rval[i]})
+    done
+    mm=(${(u)mm})
     mt=${#mm}
   fi
   cnt="$mt/${#TTHEME_ORDER}"
@@ -1363,10 +1341,7 @@ __tt_pv_draw() {
         __tt_pv_row $i
         line=$REPLY
         pvz+=("$(( hd + 2 + k )) 1 $lw row $i")
-        case ${rtype[i]} in
-          hdr) pvz+=("$(( hd + 2 + k )) 3 5 fold $i") ;;
-          cat) pvz+=("$(( hd + 2 + k )) 5 7 fold $i") ;;
-        esac
+        [[ ${rtype[i]} == hdr ]] && pvz+=("$(( hd + 2 + k )) 3 5 fold $i")
       fi
     elif (( k == h && N > h && top + h <= N )); then
       line="   "$dd"…"$zz
@@ -1380,7 +1355,8 @@ __tt_pv_draw() {
       __tt_pv_head 1 $sc $se Help
       __tt_pv_help
     elif (( ${#reach} )); then
-      __tt_pv_head 1 $sc $se "$pick" "$rsub"
+      __tt_label "$pick"
+      __tt_pv_head 1 $sc $se "$REPLY" "$rsub"
       for (( k = 1; k <= ${#reach} && k + 2 < ph; k++ )); do
         out+=$'\e['$(( k + 2 ))';'$sc'H'${reach[k]}
       done
@@ -1393,16 +1369,21 @@ __tt_pv_draw() {
     elif (( te )); then
       __tt_pv_te_head $sc $se
       __tt_pv_te_panel $sc $se 3 $(( ph - 1 ))
+    elif [[ -n $an ]]; then
+      __tt_work_of $an
+      wk=$REPLY
+      __tt_label $an
+      __tt_pv_head 1 $sc $se "$REPLY" "$wk" "${TTHEME_SRC[$an]}"
+      __tt_pv_specimen
     else
-      [[ -n $an ]] && src=${TTHEME_SRC[$an]}
-      (( ${#an} + 2 + ${#src} > sw )) && src=""
-      __tt_pv_head 1 $sc $se ${an:-"Terminal colors"} "" "$src"
+      __tt_pv_head 1 $sc $se "Terminal colors"
       __tt_pv_specimen
     fi
     (( help && sw < 48 )) && __tt_pv_help
   else
     if (( ${#reach} )); then
-      __tt_pv_head $(( ph - 1 - ${#reach} )) 1 $se "$pick" "$rsub"
+      __tt_label "$pick"
+      __tt_pv_head $(( ph - 1 - ${#reach} )) 1 $se "$REPLY" "$rsub"
       for (( k = 1; k <= ${#reach}; k++ )); do
         out+=$'\e['$(( ph - 1 - ${#reach} + k ))';1H'${reach[k]}
       done
@@ -1417,14 +1398,26 @@ __tt_pv_draw() {
 }
 
 __tt_pv_tops() {
-  local k g
+  local k s w
+  local -a by=()
   tops=() tmembers=()
   __tt_order
   for k in $reply; do
-    g=${TTHEME_MARKETPLACE[$k]:-${TTHEME_CATALOG[$k]:-Other}}
-    [[ -n ${tmembers[$g]} ]] || tops+=($g)
-    tmembers[$g]+=" $k"
+    s=${TTHEME_SUBJECT[$k]}
+    if [[ -z $s ]]; then
+      w=${k%%/*}
+      [[ -n ${tmembers[$w]} ]] || by+=($w)
+      tmembers[$w]+=" $k"
+      continue
+    fi
+    for w in ${s%%/*} ${=TTHEME_ALSO[$k]}; do
+      tmembers[$w]+=" $k"
+    done
   done
+  for w in $TTHEME_WORKS; do
+    [[ -n ${tmembers[$w]} ]] && tops+=($w)
+  done
+  tops+=($by)
 }
 
 __tt_pv_canpick() {
@@ -1460,10 +1453,11 @@ __tt_pv_init() {
 }
 
 __tt_pv_roll() {
-  expal=${TTHEME_ORDER[RANDOM % ${#TTHEME_ORDER} + 1]}
+  gseed=$RANDOM exnext=$(( SECONDS + 3 ))
+  (( ${#TTHEME_ORDER} && ${#tops} )) || return 0
+  expal=${${TTHEME_ORDER[RANDOM % ${#TTHEME_ORDER} + 1]}##*/}
   extop=${tops[RANDOM % ${#tops} + 1]}
-  gseed=$RANDOM
-  exnext=$(( SECONDS + 3 ))
+  extop=${TTHEME_WORK_NAME[$extop]:-$extop}
 }
 
 __tt_pv_size() {
@@ -1725,7 +1719,7 @@ __tt_pv_release() {
       __tt_pv_handle
       return
       ;;
-    fold) __tt_pv_free && [[ ${rtype[cur]} == (hdr|cat) ]] && __tt_pv_toggle ;;
+    fold) __tt_pv_free && [[ ${rtype[cur]} == hdr ]] && __tt_pv_toggle ;;
     more)
       __tt_pv_free || return 0
       key=pgdn
@@ -1893,10 +1887,11 @@ __tt_te_read() {
 }
 
 __tt_te_open() {
-  local name=$1
+  local name=$1 REPLY
   tename=$name tfocus=0 teframe=() tetop=0 msgt=0 te=1 tbtn=0 tearm=0
   if ! __tt_te_read; then
-    msg="Could not read the colors of $name" msgt=300
+    __tt_label $name
+    msg="Could not read the colors of $REPLY" msgt=300
     tename="" te=0
     return 0
   fi
@@ -1988,7 +1983,7 @@ __tt_te_follow() {
 }
 
 __tt_te_edit() {
-  local name=$tename err back=$applied was=${TTHEME_PALETTE[$tename]}
+  local name=$tename err back=$applied was=${TTHEME_PALETTE[$tename]} REPLY
   local -i rc
   __tt_te_save_image
   __tt_pv_untune
@@ -2011,14 +2006,15 @@ __tt_te_edit() {
     __tt_te_read
     msg=${err:-"Saved"} msgt=200
   elif (( rc == 1 )); then
-    msg=${err:-"Could not tune the colors of $name"} msgt=300
+    __tt_label $name
+    msg=${err:-"Could not tune the colors of $REPLY"} msgt=300
   fi
   __tt_pv_bg_state $name && __tt_pv_tune_open $name
   return 0
 }
 
 __tt_te_reset() {
-  local name=$tename err was=${TTHEME_PALETTE[$tename]}
+  local name=$tename err was=${TTHEME_PALETTE[$tename]} REPLY
   local -i rc
   __tt_te_save_image
   __tt_pv_untune
@@ -2037,7 +2033,8 @@ __tt_te_reset() {
     __tt_te_read
     msg=${err:-"Back to the original colors"} msgt=200
   elif (( rc == 1 )); then
-    msg=${err:-"Could not reset the colors of $name"} msgt=300
+    __tt_label $name
+    msg=${err:-"Could not reset the colors of $REPLY"} msgt=300
   fi
   __tt_pv_bg_state $name && __tt_pv_tune_open $name
   return 0
@@ -2162,9 +2159,10 @@ __tt_pv_te_head() {
   local -i col=$1 end=$2 room=$(( $2 - $1 + 1 ))
   (( color )) || z= d= b= y=
   __tt_te_unsaved && (( room -= 11 ))
-  line=$b$ac$TTHEME_MARKS[current]$z" "$b$tename$z
-  __tt_shelf $tename
-  line+="  "$d$REPLY$z
+  __tt_label $tename
+  line=$b$ac$TTHEME_MARKS[current]$z" "$b$REPLY$z
+  __tt_work_of $tename
+  [[ -n $REPLY ]] && line+="  "$d$REPLY$z
   __tt_clip "$line" $room
   out+=$'\e[1;'$col'H'$REPLY$z
   __tt_te_unsaved && out+=$'\e[1;'$(( end - 8 ))'H'$y$TTHEME_MARKS[on]$z" "$d"unsaved"$z
@@ -2386,7 +2384,8 @@ __tt_pv_te_draw() {
   if [[ -n $pick && $mode == pin ]]; then
     __tt_pv_reach $se $(( ph - 13 ))
     if (( ${#reach} )); then
-      __tt_pv_head $(( ph - 1 - ${#reach} )) 1 $se "$pick" "$rsub"
+      __tt_label "$pick"
+      __tt_pv_head $(( ph - 1 - ${#reach} )) 1 $se "$REPLY" "$rsub"
       for (( i = 1; i <= ${#reach}; i++ )); do
         out+=$'\e['$(( ph - 1 - ${#reach} + i ))$';1H\e[K'${reach[i]}
       done
@@ -2456,7 +2455,7 @@ __tt_pv_handle() {
           sel=${rval[cur]}
           return 1
         fi
-      elif [[ ${rtype[cur]} == (hdr|cat) ]]; then
+      elif [[ ${rtype[cur]} == hdr ]]; then
         __tt_pv_toggle
       fi
       ;;
@@ -2479,7 +2478,7 @@ __tt_pv_handle() {
     right)
       if [[ ${rtype[cur]} == thm ]]; then
         __tt_te_open ${rval[cur]}
-      elif [[ ${rtype[cur]} == (hdr|cat) && -z ${exp[${rval[cur]}]} ]]; then
+      elif [[ ${rtype[cur]} == hdr && -z ${exp[${rval[cur]}]} ]]; then
         __tt_pv_toggle
       fi
       ;;
@@ -2505,7 +2504,7 @@ __tt_pv_handle() {
         [[ ${rtype[cur]} == rule ]] && cur=$(( cur + 1 ))
       fi
       ;;
-    ' ') [[ ${rtype[cur]} == (hdr|cat) ]] && __tt_pv_toggle ;;
+    ' ') [[ ${rtype[cur]} == hdr ]] && __tt_pv_toggle ;;
     $'\t')
       if [[ ${rtype[cur]} == thm ]]; then
         __tt_te_open ${rval[cur]}
@@ -2584,14 +2583,14 @@ __tt_preview() {
   local mact="" mzone="" pvmouse="" pasted=""
   local -a pvz=()
   local -a cvars=(TTHEME_MODE TTHEME_TAB_PALETTE TTHEME_ANNOUNCE TTHEME_FX TTHEME_SORT TTHEME_MOUSE TTHEME_BG_BLUR TTHEME_BG_COLORS) clabel=(Mode "New tabs" Announce "Search fx" Sort Mouse Blur Pictures)
-  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "abc catalog" "on off" "0 1 2 3 4" "original tone") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "abc catalog" "on off" "off 1px 2px 3px 4px" "original tinted")
+  local -a cchoice=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "1 0" "typewriter decode glitch" "abc cast" "on off" "0 1 2 3 4" "original tone") cshow=("${(j: :)TTHEME_MODE_SETTINGS}" "off seq" "on off" "typewriter decode glitch" "abc cast" "on off" "off 1px 2px 3px 4px" "original tinted")
   local -A cnote=(
     TTHEME_MODE:auto "Every palette in the system's mode, following it as it changes"
     TTHEME_MODE:light "Every palette in its light mode" TTHEME_MODE:dark "Every palette in its dark mode"
     TTHEME_TAB_PALETTE:seq "New tabs rotate through palettes" TTHEME_TAB_PALETTE:off "New tabs keep the terminal theme"
     TTHEME_ANNOUNCE:1 "Shows the palette notice" TTHEME_ANNOUNCE:0 "Silences the palette notice"
     TTHEME_FX:typewriter "The search hint types itself" TTHEME_FX:decode "The search hint decodes" TTHEME_FX:glitch "The search hint glitches in"
-    TTHEME_SORT:abc "Catalogs and palettes by name" TTHEME_SORT:catalog "Catalogs in the order added"
+    TTHEME_SORT:abc "Works and characters by name" TTHEME_SORT:cast "Characters in their cast order"
     TTHEME_MOUSE:on "Clicks, the wheel and drags work in ttheme's screens" TTHEME_MOUSE:off "The terminal keeps the mouse, so a drag selects text"
     TTHEME_BG_BLUR:0 "Pictures stay sharp" TTHEME_BG_BLUR:1 "Pictures soften a little behind the text"
     TTHEME_BG_BLUR:2 "Pictures soften behind the text" TTHEME_BG_BLUR:3 "Pictures blur behind the text"
@@ -2603,7 +2602,7 @@ __tt_preview() {
   [[ $mode == pin ]] && __tt_pin_scopes "$pdir"
   __tt_pv_canpick
   __tt_pv_size
-  local -a tops=() rtype=() rval=() rcnt=() reply=()
+  local -a tops=() rtype=() rval=() rcnt=() rtop=() reply=()
   local -A tmembers=() exp=() tstrip=()
   __tt_color && color=1
   __tt_pv_init

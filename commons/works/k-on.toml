@@ -1,0 +1,29 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "K-On!"
+native = "けいおん!"
+lead = "k-on/yui"
+
+[[character]]
+id = "yui"
+native = ["平沢唯"]
+danbooru = "hirasawa_yui"
+
+[[character]]
+id = "ritsu"
+native = ["田井中律"]
+danbooru = "tainaka_ritsu"
+
+[[character]]
+id = "mio"
+native = ["秋山澪"]
+danbooru = "akiyama_mio"
+
+[[character]]
+id = "mugi"
+native = ["琴吹紬"]
+danbooru = "kotobuki_tsumugi"
+
+[[character]]
+id = "azusa"
+native = ["中野梓"]
+danbooru = "nakano_azusa"

@@ -1,6 +1,7 @@
+import { mergeWorks, type Sort, type Work, worldOrder } from '../../core/commons.ts'
 import type { PaletteEntry } from '../../core/manifest.ts'
-import { marketplaceOf } from '../../core/theme.ts'
-import { OFFICIAL, type Refreshed, sameMarketplace } from '../../store/sources.ts'
+import { publisherOf } from '../../core/theme.ts'
+import { type Refreshed, sameMarketplace } from '../../store/sources.ts'
 import type { BrowseResult, Marketplace } from './types.ts'
 
 export class Staged {
@@ -14,25 +15,35 @@ export class Staged {
   marketplaces: Marketplace[]
   private updates: Set<string>
   private readonly kept: PaletteEntry[]
-  private readonly order: (entries: PaletteEntry[]) => PaletteEntry[]
+  private readonly base: readonly Work[]
+  private readonly sort: Sort
 
   constructor(opts: {
     marketplaces: Marketplace[]
     kept: PaletteEntry[]
     installed: string[]
     updates?: string[]
-    order?: (entries: PaletteEntry[]) => PaletteEntry[]
+    works: readonly Work[]
+    sort?: Sort
   }) {
     this.marketplaces = opts.marketplaces
     this.kept = opts.kept
     this.installed = new Set(opts.installed)
     this.updates = new Set(opts.updates ?? [])
-    this.order = opts.order ?? ((entries) => entries)
+    this.base = opts.works
+    this.sort = opts.sort ?? 'abc'
     this.picked = new Set(opts.installed)
   }
 
   active(): Marketplace[] {
     return [...this.marketplaces.filter((m) => !this.removes.has(m.source)), ...this.adds.values()]
+  }
+
+  works(): Work[] {
+    return mergeWorks(
+      this.base,
+      [...this.marketplaces, ...this.adds.values()].flatMap((m) => m.works),
+    )
   }
 
   entries(): PaletteEntry[] {
@@ -47,11 +58,11 @@ export class Staged {
       }
     }
 
-    return this.order([...listed, ...orphans.values()])
+    return worldOrder([...listed, ...orphans.values()], this.works(), this.sort)
   }
 
   membersOf(top: string): PaletteEntry[] {
-    return this.entries().filter((e) => (marketplaceOf(e.name) ?? OFFICIAL) === top)
+    return this.entries().filter((e) => publisherOf(e.name) === top)
   }
 
   tops(): string[] {

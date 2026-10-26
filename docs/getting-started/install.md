@@ -25,8 +25,9 @@ It asks, in this order:
 2. **Which mode to show the palettes in**: `auto`, `light` or `dark`. Every
    palette comes in both. `auto` follows your system's appearance and is offered
    where Ghostty, iTerm2, kitty or WezTerm is wired.
-3. **Which catalogs to install.** `space` marks a catalog and `enter` moves on.
-   You can add or drop single palettes later.
+3. **Which palettes to install**, listed by work. `space` marks a palette or
+   a whole work, and `enter` moves on. You can add or drop single palettes
+   later.
 4. **Whether to use them.** With one palette picked, whether every tab uses
    it. With several, whether to pick the default in `ttheme` afterwards.
 5. **Whether to add the palette skill to your coding agents**, when it finds
@@ -70,23 +71,25 @@ pick one. Without a terminal to ask in, `init` stops unless it has `--yes`.
 ## By hand
 
 Each [release](https://github.com/kecan0406/ttheme/releases/latest) carries one
-archive per terminal, holding the theme files alone. Copy a palette's file into
-your terminal's themes folder and point your config at it:
+archive per terminal, holding the built-in palettes' theme files alone, each
+named for the palette's full name: `ttheme/miku` is `ttheme-ttheme--miku`.
+Copy a palette's file into your terminal's themes folder and point your config
+at it:
 
 ```sh
 curl -L https://github.com/kecan0406/ttheme/releases/latest/download/ttheme-ghostty.tar.gz | tar xz
-cp ghostty/themes/ttheme-miku.* ~/.config/ghostty/themes/
+cp ghostty/themes/ttheme-ttheme--miku.* ~/.config/ghostty/themes/
 ```
 
 | Terminal | Archive | Then |
 |---|---|---|
-| Ghostty | `ttheme-ghostty.tar.gz` | `theme = ttheme-miku.dark`, or `theme = light:ttheme-miku.light,dark:ttheme-miku.dark` |
-| kitty | `ttheme-kitty.tar.gz` | `include themes/ttheme-miku.dark.conf` |
-| Alacritty | `ttheme-alacritty.tar.gz` | `import = ["~/.config/alacritty/themes/ttheme-miku.dark.toml"]` under `[general]` |
-| WezTerm | `ttheme-wezterm.tar.gz` | `config.color_scheme = "ttheme-miku.dark"` |
+| Ghostty | `ttheme-ghostty.tar.gz` | `theme = ttheme-ttheme--miku.dark`, or `theme = light:ttheme-ttheme--miku.light,dark:ttheme-ttheme--miku.dark` |
+| kitty | `ttheme-kitty.tar.gz` | `include themes/ttheme-ttheme--miku.dark.conf` |
+| Alacritty | `ttheme-alacritty.tar.gz` | `import = ["~/.config/alacritty/themes/ttheme-ttheme--miku.dark.toml"]` under `[general]` |
+| WezTerm | `ttheme-wezterm.tar.gz` | `config.color_scheme = "ttheme-ttheme--miku.dark"` |
 | iTerm2 | `ttheme-iterm2.tar.gz` | open a `.itermcolors` to add it to Settings › Profiles › Colors |
 | Windows Terminal | `ttheme-windows-terminal.tar.gz` | copy `ttheme.json` into `%LOCALAPPDATA%\Microsoft\Windows Terminal\Fragments\ttheme\` |
-| Warp | `ttheme-warp.tar.gz` | copy a `ttheme-miku.dark.*.yaml` into `~/.warp/themes/` |
+| Warp | `ttheme-warp.tar.gz` | copy a `ttheme-ttheme--miku.dark.*.yaml` into `~/.warp/themes/` |
 | Konsole | `ttheme-konsole.tar.gz` | copy the `.colorscheme` into `~/.local/share/konsole/` and pick it in the profile |
 
 Most terminals get each palette in both modes, `.dark` and `.light`.

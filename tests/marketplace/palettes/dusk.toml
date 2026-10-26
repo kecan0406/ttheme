@@ -1,5 +1,4 @@
-[meta]
-name = "dusk"
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
 signature = ["cursor", "selection", "ansi4"]
 
 [colors]

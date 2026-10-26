@@ -1,0 +1,34 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Oregairu"
+native = "やはり俺の青春ラブコメはまちがっている。"
+lead = "oregairu/iroha"
+
+[[character]]
+id = "hachiman"
+native = ["比企谷八幡"]
+danbooru = "hikigaya_hachiman"
+
+[[character]]
+id = "yukino"
+native = ["雪ノ下雪乃"]
+danbooru = "yukinoshita_yukino"
+
+[[character]]
+id = "yuigahama"
+native = ["由比ヶ浜結衣"]
+danbooru = "yuigahama_yui"
+
+[[character]]
+id = "iroha"
+native = ["一色いろは"]
+danbooru = "isshiki_iroha"
+
+[[character]]
+id = "komachi"
+native = ["比企谷小町"]
+danbooru = "hikigaya_komachi"
+
+[[character]]
+id = "haruno"
+native = ["雪ノ下陽乃"]
+danbooru = "yukinoshita_haruno"

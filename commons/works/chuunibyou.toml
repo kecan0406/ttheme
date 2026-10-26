@@ -1,0 +1,29 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Chuunibyou"
+native = "中二病でも恋がしたい!"
+lead = "chuunibyou/rikka"
+
+[[character]]
+id = "rikka"
+native = ["小鳥遊六花"]
+danbooru = "takanashi_rikka"
+
+[[character]]
+id = "yuuta"
+native = ["富樫勇太"]
+danbooru = "togashi_yuuta"
+
+[[character]]
+id = "shinka"
+native = ["丹生谷森夏"]
+danbooru = "nibutani_shinka"
+
+[[character]]
+id = "dekomori"
+native = ["凸守早苗"]
+danbooru = "dekomori_sanae"
+
+[[character]]
+id = "kumin"
+native = ["五月七日くみん"]
+danbooru = "tsuyuri_kumin"

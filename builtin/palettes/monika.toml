@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "doki-doki-literature-club/monika"
+signature = ["cursor", "foreground", "ansi3"]
+ansi_source = "Hipster Green + DDLC"
+
+[colors]
+background = "#141911"
+foreground = "#d4e8cc"
+cursor = "#80ad64"
+selection_background = "#26442c"
+ansi = [
+  "#20251c",
+  "#ec7045",
+  "#7dd662",
+  "#c2c207",
+  "#00a5b4",
+  "#ff8caa",
+  "#45bda4",
+  "#d2d6c9",
+
+  "#74796d",
+  "#f3a086",
+  "#acef8a",
+  "#cbea4e",
+  "#00bae7",
+  "#ffc1ce",
+  "#3ddeb3",
+  "#e8f1db",
+]
+
+[colors.light]
+background = "#f7fbed"
+foreground = "#142312"
+cursor = "#517b38"
+selection_background = "#bde0bf"
+ansi = [
+  "#f1f5e7",
+  "#ab4119",
+  "#115d00",
+  "#676700",
+  "#006e78",
+  "#b1325e",
+  "#005b4c",
+  "#292e24",
+
+  "#74796d",
+  "#8c3d22",
+  "#184d00",
+  "#4b5b00",
+  "#005c74",
+  "#7e4252",
+  "#004c3a",
+  "#1a2214",
+]

@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Code Geass"
+native = "コードギアス 反逆のルルーシュ"
+lead = "code-geass/lelouch"
+
+[[character]]
+id = "lelouch"
+native = ["ルルーシュ・ランペルージ"]
+danbooru = "lelouch_vi_britannia"
+sites = { konachan = "lelouch_lamperouge", yande = "lelouch_lamperouge", zerochan = "lelouch_lamperouge" }
+
+[[character]]
+id = "suzaku"
+native = ["枢木スザク"]
+danbooru = "kururugi_suzaku"
+
+[[character]]
+id = "cc"
+native = ["シーツー", "C.C."]
+danbooru = "c.c."
+
+[[character]]
+id = "kallen"
+native = ["カレン・シュタットフェルト", "紅月カレン"]
+danbooru = "kouzuki_kallen"
+sites = { konachan = "kallen_stadtfeld", yande = "kallen_stadtfeld", zerochan = "kallen_stadtfeld" }
+
+[[character]]
+id = "nunnally"
+native = ["ナナリー・ランペルージ"]
+danbooru = "nunnally_vi_britannia"
+sites = { konachan = "nunnally_lamperouge", yande = "nunnally_lamperouge", zerochan = "nunnally_lamperouge" }
+
+[[character]]
+id = "euphemia"
+native = ["ユーフェミア・リ・ブリタニア"]
+danbooru = "euphemia_li_britannia"

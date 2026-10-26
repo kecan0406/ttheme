@@ -5,9 +5,9 @@ colors while a mock terminal shows them in a shell, an editor and a process
 monitor, and the contrast checks measure every color as you go.
 
 ```sh
-ttheme new rei               # from blank
-ttheme new rei --from miku   # starting from another palette's colors
-ttheme edit rei              # change it later
+ttheme new dusk                    # from blank
+ttheme new rei --from ttheme/rei   # starting from another palette's colors
+ttheme edit dusk                   # change it later
 ```
 
 The editor needs a window of 80×24. From 96×28 it becomes the builder: the
@@ -58,6 +58,11 @@ Your palettes are files in a marketplace of your own on your machine. The first
 each palette is `palettes/<palette>.toml`, named
 `<you>@<marketplace>/<palette>`.
 
+A palette made `--from` another keeps the work or character that one is of, so
+lists shelve it beside it, and names the palette it came from. One made from
+blank is an original until its file names a `subject`
+([a palette file](publish.md#a-palette-file)).
+
 ## A picture for it
 
 `p` in the editor opens find on the colors being edited. Dropping or pasting a
@@ -69,8 +74,10 @@ tinted with your colors; `b` hides it.
 `init` offers the `ttheme-palette` skill to coding agents such as Claude Code.
 Ask one for a character's palette and it researches the character, measures
 the colors on official art, and lets ttheme harmonize, check and install the
-result. It works through `ttheme palette`, whose `measure`, `consensus` and
-`make` steps you can run yourself too, each printing JSON with `--json`.
+result as a palette of that character — adding the character, or its whole
+work, to your marketplace's `works/` when the commons does not hold it yet. It
+works through `ttheme palette`, whose `measure`, `consensus` and `make` steps
+you can run yourself too, each printing JSON with `--json`.
 
 ```sh
 npx skills add kecan0406/ttheme   # the same skill, for Claude Code, Codex, Cline and others

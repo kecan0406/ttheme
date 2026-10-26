@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "k-on/mio"
+signature = ["cursor", "ansi4", "foreground"]
+ansi_source = "Ardoise + HTT"
+
+[colors]
+background = "#14181e"
+foreground = "#dfe3e9"
+cursor = "#84aadc"
+selection_background = "#373e47"
+ansi = [
+  "#20242a",
+  "#f1649a",
+  "#64d6a2",
+  "#f7ae75",
+  "#5f95f3",
+  "#bba2ff",
+  "#00bdca",
+  "#d1d4dd",
+
+  "#73777f",
+  "#f3a0bb",
+  "#6cf5b9",
+  "#ffce80",
+  "#7aafe8",
+  "#d9caff",
+  "#52d8e8",
+  "#e7eefd",
+]
+
+[colors.light]
+background = "#f8f9ff"
+foreground = "#1b2025"
+cursor = "#4d76a7"
+selection_background = "#d1d8e3"
+ansi = [
+  "#f0f3fd",
+  "#b62868",
+  "#005c3d",
+  "#935319",
+  "#2061bc",
+  "#6e4bc8",
+  "#005960",
+  "#282c33",
+
+  "#73777f",
+  "#8c3759",
+  "#004c33",
+  "#724e00",
+  "#18588b",
+  "#5b4b89",
+  "#004a51",
+  "#18202b",
+]

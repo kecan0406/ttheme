@@ -55,6 +55,7 @@
         "src/cli/release.ts",
         "src/core/anchors.ts",
         "src/core/booru.ts",
+        "src/core/commons.ts",
         "src/core/consensus.ts",
         "src/core/draft.ts",
         "src/core/manifest.ts",

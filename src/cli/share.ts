@@ -1,24 +1,26 @@
 import { randomInt } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { existsSync, readFileSync, rmSync } from 'node:fs'
+import { join } from 'node:path'
 import * as p from '@clack/prompts'
 import { Cancelled } from '../core/cancelled.ts'
+import { workToml } from '../core/commons.ts'
 import { type Draft, paletteToml, readOwnText, shareLink } from '../core/draft.ts'
 import type { Manifest, PaletteEntry } from '../core/manifest.ts'
 import { shareCode } from '../core/own.ts'
 import { readmeOf, repoFor } from '../core/scaffold.ts'
-import { MARKETPLACE_FILE, marketplaceOf, nameProblem, slugOf } from '../core/theme.ts'
-import { available, readMarketplaces, untuned } from '../store/available.ts'
+import { MARKETPLACE_FILE, publisherOf, slugOf, slugProblem } from '../core/theme.ts'
+import { available, find, readBundled, readMarketplaces, untuned } from '../store/available.ts'
 import { writeAtomic } from '../store/edits.ts'
+import { readInstalled } from '../store/installed.ts'
 import { type LocalMarketplace, localMarketplaces, marketplaceFiles, palettesDir } from '../store/local.ts'
 import { configHome } from '../store/paths.ts'
-import { localIdentity, REPO_NAME, readMarketplaceInfo, shownSource } from '../store/sources.ts'
+import { REPO_NAME, readMarketplaceInfo, shownSource } from '../store/sources.ts'
 import { readTone, tonedModes } from '../store/tone.ts'
 import { colorless } from '../terminals/osc.ts'
 import { pending, say } from '../tui/pending.ts'
 import { qrModules, qrPicture, qrText } from '../tui/qr.ts'
 import { interactive } from '../tui/terminal.ts'
-import { draftFor, named } from './craft.ts'
+import { draftFor } from './craft.ts'
 import { pickPalettes } from './installs.ts'
 import { newLocal } from './marketplaces.ts'
 import {
@@ -26,6 +28,7 @@ import {
   createRepo,
   describeRepo,
   isPublic,
+  proposalsFor,
   pushRepo,
   type Repo,
   remoteOf,
@@ -34,9 +37,7 @@ import {
   repoUrl,
   toolsProblem,
   unsaved,
-  withCatalogs,
   withDescription,
-  withoutCatalogs,
 } from './publish.ts'
 
 export type Tone = 'tuned' | 'original'
@@ -60,7 +61,17 @@ function listed(names: readonly string[]): string {
 }
 
 function tunedName(name: string): string {
-  return `${name}-tuned`
+  return `${slugOf(name)}-tuned`
+}
+
+function freeName(name: string, used: ReadonlySet<string>): string {
+  let free = name
+
+  for (let n = 2; used.has(free); n++) {
+    free = `${name}-${n}`
+  }
+
+  return free
 }
 
 async function askTone(names: string[], renamed: boolean): Promise<Tone> {
@@ -91,9 +102,10 @@ async function toned(
 ): Promise<Toned[]> {
   const view = untuned(home, manifest)
   const tones = readTone(home)
+  const installed = readInstalled(home).palettes
 
   const pairs = names.map((name) => {
-    const original = named(view, name, home)
+    const original = find(view.palettes, name, installed)
 
     return { original, tuned: tonedModes(original, tones) }
   })
@@ -149,28 +161,26 @@ function showLink(link: string, note: (scanned: boolean) => string, smaller: str
 export async function runShare(names: readonly string[], tone?: Tone): Promise<void> {
   const home = configHome()
   const manifest = readMarketplaces(home)
-  const shared = await toned(home, manifest, names, tone, true)
+  const shared = [...new Map((await toned(home, manifest, names, tone, true)).map((s) => [s.entry.name, s])).values()]
+  const used = new Set<string>()
 
   const drafts: Draft[] = shared.map(({ entry, tuned }) => {
     const draft = draftFor(home, entry)
-
-    if (!tuned) {
-      return draft
-    }
-
-    const name = tunedName(entry.name)
-    const problem = nameProblem(name)
+    const name = tuned ? freeName(tunedName(entry.name), used) : draft.name
+    const problem = tuned ? slugProblem(name) : undefined
 
     if (problem) {
       throw new Error(`${name} ${problem} — share the original, or tune a palette with a shorter name`)
     }
 
-    return { ...draft, name, from: entry.from ?? entry.name }
+    used.add(name)
+
+    return tuned ? { ...draft, name, from: entry.name } : draft
   })
 
   const [first] = drafts
   const many = drafts.length > 1
-  const tuned = shared.filter((s) => s.tuned)
+  const tuned = shared.flatMap((s, i) => (s.tuned ? [{ from: s.entry.name, as: drafts[i]?.name }] : []))
   const [tunedOne] = tuned
   showLink(
     shareLink(shareCode(drafts)),
@@ -179,8 +189,8 @@ export async function runShare(names: readonly string[], tone?: Tone): Promise<v
         tuned.length === 0
           ? ''
           : !many && tunedOne
-            ? `\nIt carries your tuning, named ${tunedName(tunedOne.entry.name)} so it does not clash with ${tunedOne.entry.name}`
-            : '\nThe ones with your tuning are named <palette>-tuned, so they do not clash with the originals'
+            ? `\nIt carries your tuning as ${tunedOne.as}, made from ${tunedOne.from} — ttheme add puts it in the receiver's own marketplace`
+            : "\nThe ones you tuned travel as <palette>-tuned — ttheme add puts them in the receiver's own marketplace"
       }`,
     many ? ', or share them as a marketplace, whose link stays short' : '',
   )
@@ -213,13 +223,7 @@ export async function runShareAsked(tone?: Tone): Promise<void> {
   const manifest = readMarketplaces(home)
   const worn = process.env.TTHEME_WORN
 
-  const picked = await pickPalettes(
-    { ...manifest, palettes: available(home, manifest, false).palettes },
-    worn ? [worn] : [],
-    'palette',
-    true,
-    'share',
-  )
+  const picked = await pickPalettes(available(home, manifest, false), worn ? [worn] : [], 'palette', true, 'share')
 
   if (!picked) {
     throw new Cancelled()
@@ -264,11 +268,6 @@ interface Copy {
   draft: Draft
   path: string
   kind: 'add' | 'update' | 'replace'
-  replaces?: string
-}
-
-function slugProblem(slug: string): string | undefined {
-  return nameProblem(slug) ? 'takes lowercase letters, digits and single hyphens, 40 at most' : undefined
 }
 
 async function settle(
@@ -310,10 +309,6 @@ function fromOf(entry: PaletteEntry): string {
   return entry.from ?? entry.name
 }
 
-function baseOf(entry: PaletteEntry, official: ReadonlySet<string>): string | undefined {
-  return official.has(entry.name) && !entry.default ? entry.name : entry.base
-}
-
 async function copiesFor(
   home: string,
   manifest: Manifest,
@@ -323,11 +318,9 @@ async function copiesFor(
   dropped: readonly PaletteEntry[],
   tone: Tone | undefined,
 ): Promise<Copy[]> {
-  const files = new Map(marketplaceFiles(marketplace.dir).map((f) => [f.slug, f.path]))
+  const files = new Set(marketplaceFiles(marketplace.dir).map((f) => f.slug))
   const keptBy = new Map(kept.map((e) => [slugOf(e.name), e]))
   const leaving = new Set(dropped.map((e) => slugOf(e.name)))
-  const catalogs = localIdentity(marketplace.dir).catalogs
-  const official = new Set(manifest.palettes.filter((e) => !marketplaceOf(e.name)).map((e) => e.name))
   const copies: Copy[] = []
   const used = new Set<string>()
   const taken = (slug: string) => used.has(slug) || keptBy.has(slug) || (files.has(slug) && !leaving.has(slug))
@@ -361,19 +354,9 @@ async function copiesFor(
     used.add(slug)
     keptBy.delete(slug)
     const full = `${marketplace.id}/${slug}`
-    const base = baseOf(entry, official)
-    const { base: _, ...draft } = draftFor(home, entry)
-    const copy: Draft = { ...draft, name: full, from: fromOf(entry), ...(base ? { base } : {}) }
-    readOwnText(
-      full,
-      paletteToml(copy),
-      manifest.palettes,
-      false,
-      entry.catalog ? { catalog: entry.catalog, catalogs } : {},
-    )
-    const path = join(palettesDir(marketplace.dir), ...(entry.catalog ? [entry.catalog] : []), `${slug}.toml`)
-    const replaces = kind === 'add' ? undefined : files.get(slug)
-    copies.push({ entry, slug, draft: copy, path, kind, ...(replaces ? { replaces } : {}) })
+    const copy: Draft = { ...draftFor(home, entry), name: full, from: fromOf(entry) }
+    readOwnText(full, paletteToml(copy))
+    copies.push({ entry, slug, draft: copy, path: join(palettesDir(marketplace.dir), `${slug}.toml`), kind })
   }
 
   return copies
@@ -423,21 +406,6 @@ async function askDescription(current: string | undefined): Promise<string | und
   return text === '' ? undefined : text
 }
 
-function emptied(dir: string, paths: readonly string[]): Set<string> {
-  const shelves = new Set<string>()
-
-  for (const path of paths) {
-    const folder = dirname(path)
-
-    if (folder !== palettesDir(dir) && existsSync(folder) && readdirSync(folder).length === 0) {
-      rmdirSync(folder)
-      shelves.add(folder.slice(palettesDir(dir).length + 1))
-    }
-  }
-
-  return shelves
-}
-
 async function shareMarketplace(tone?: Tone): Promise<void> {
   const problem = await toolsProblem()
 
@@ -454,11 +422,12 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
   }
 
   const manifest = readMarketplaces(home)
-  const all = available(home, manifest, false).palettes
-  const own = all.filter((e) => marketplaceOf(e.name) === marketplace.id)
+  const view = available(home, manifest, false)
+  const all = view.palettes
+  const own = all.filter((e) => publisherOf(e.name) === marketplace.id)
 
   const names = await pickPalettes(
-    { ...manifest, palettes: all },
+    view,
     own.map((e) => e.name),
     'palette',
     true,
@@ -477,11 +446,16 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
     home,
     manifest,
     marketplace,
-    all.filter((e) => chosen.has(e.name) && marketplaceOf(e.name) !== marketplace.id),
+    all.filter((e) => chosen.has(e.name) && publisherOf(e.name) !== marketplace.id),
     kept,
     dropped,
     tone,
   )
+
+  const proposals = proposalsFor(view.works, readBundled(home).commons.works, marketplace.dir, [
+    ...kept.map((entry) => entry.subject),
+    ...copies.map((copy) => copy.draft.subject),
+  ])
 
   const repo = remote ?? (await askRepo(marketplace))
 
@@ -516,14 +490,13 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
   ]
 
   const named = (kind: Copy['kind']) =>
-    copies
-      .filter((c) => c.kind === kind)
-      .map((c) => (c.draft.from === c.slug || kind === 'update' ? c.slug : `${c.slug} (from ${c.draft.from})`))
+    copies.filter((c) => c.kind === kind).map((c) => (kind === 'update' ? c.slug : `${c.slug} (from ${c.draft.from})`))
 
   const added = named('add')
   const updated = named('update')
   const replaced = named('replace')
   const removed = dropped.map((e) => slugOf(e.name))
+  const works = proposals.map((proposal) => proposal.work.id)
 
   const lines = [
     `Repository   ${repoUrl(repo)} · ${open ? 'public' : 'private'}${remote ? '' : ' · new'}`,
@@ -532,6 +505,7 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
     ...(added.length > 0 ? [`Add          ${added.join(', ')}`] : []),
     ...(updated.length > 0 ? [`Update       ${updated.join(', ')}`] : []),
     ...(replaced.length > 0 ? [`Replace      ${replaced.join(', ')}`] : []),
+    ...(works.length > 0 ? [`Propose      ${works.join(', ')} — what the commons lacks of them, in works/`] : []),
     ...(removed.length > 0
       ? [
           `Remove       ${removed.join(', ')} — deleted from ${shownSource(marketplace.dir)}${lost.map((l) => `, and ${l}`).join('')}`,
@@ -539,7 +513,7 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
       : []),
   ]
 
-  const changes = copies.length + drops.length > 0 || description !== was
+  const changes = copies.length + drops.length + proposals.length > 0 || description !== was
 
   if (changes || !remote) {
     p.note(lines.join('\n'), `Share ${marketplace.id}`)
@@ -562,26 +536,14 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
   }
 
   for (const copy of copies) {
-    if (copy.replaces && copy.replaces !== copy.path) {
-      rmSync(copy.replaces)
-    }
-
-    mkdirSync(dirname(copy.path), { recursive: true })
     writeAtomic(copy.path, paletteToml(copy.draft))
   }
 
-  const gone = emptied(marketplace.dir, [...drops, ...copies.flatMap((c) => c.replaces ?? [])])
-  const shelves = new Set(localIdentity(marketplace.dir).catalogs.map((c) => c.name))
+  for (const proposal of proposals) {
+    writeAtomic(proposal.path, workToml(proposal.work))
+  }
 
-  const fresh = new Map(
-    copies.flatMap((c) =>
-      c.entry.catalog && c.entry.native && !shelves.has(c.entry.catalog)
-        ? [[c.entry.catalog, { name: c.entry.catalog, native: c.entry.native }] as const]
-        : [],
-    ),
-  )
-
-  const after = withCatalogs(withoutCatalogs(withDescription(before, description), gone), [...fresh.values()])
+  const after = withDescription(before, description)
   readMarketplaceInfo(after, tomlPath)
 
   if (after !== before) {
@@ -608,6 +570,7 @@ async function shareMarketplace(tone?: Tone): Promise<void> {
           ? `Update ${listed([...slugs('update'), ...slugs('replace')])}`
           : '',
         removed.length > 0 ? `Remove ${listed(removed)}` : '',
+        works.length > 0 ? `Propose ${listed(works)}` : '',
       ]
         .filter(Boolean)
         .join('; ')

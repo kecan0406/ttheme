@@ -11,7 +11,7 @@ function spans(line: () => string) {
 }
 
 test('a zone is plain text outside a frame, so a view drawn elsewhere carries no marks', () => {
-  assert.equal(zone('tab', 'Catalog'), 'Catalog')
+  assert.equal(zone('tab', 'Browse'), 'Browse')
 })
 
 test('a frame lifts its marks out and keeps the columns they wrapped, past wide text and colors', () => {

@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "lucky-star/miyuki"
+signature = ["cursor", "selection", "ansi1"]
+ansi_source = "Tinacious Design Dark + Ryouou"
+
+[colors]
+background = "#201517"
+foreground = "#fadbe1"
+cursor = "#ffc1d0"
+selection_background = "#6e00ab"
+ansi = [
+  "#2c2123",
+  "#d17e8b",
+  "#d6c42f",
+  "#ffa76d",
+  "#828df3",
+  "#d597ff",
+  "#6bb0f9",
+  "#e4d0d3",
+
+  "#847376",
+  "#f39db7",
+  "#f5e030",
+  "#fdd5b8",
+  "#a0a6e8",
+  "#ffbdf0",
+  "#aac9f3",
+  "#ffe8ec",
+]
+
+[colors.light]
+background = "#fff8f8"
+foreground = "#2c1b1f"
+cursor = "#b77285"
+selection_background = "#d290ff"
+ansi = [
+  "#fff0f2",
+  "#9d4858",
+  "#395922",
+  "#995100",
+  "#4151e3",
+  "#8d37c8",
+  "#00538c",
+  "#35292c",
+
+  "#847376",
+  "#8e3557",
+  "#2e491b",
+  "#714d30",
+  "#434ca2",
+  "#803a77",
+  "#1e446b",
+  "#2c1b1f",
+]

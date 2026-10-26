@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import { test } from 'node:test'
 import { type Colors, toneFor } from '../core/backdrop-tone.ts'
-import { type Manifest, type PaletteEntry, SCHEMA, toTheme } from '../core/manifest.ts'
+import { type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
 import { WIRED, type Wired } from '../core/wired.ts'
 import { installBackdrop } from '../pictures/backdrop.ts'
 import type { Output } from '../terminals/emit/types.ts'
@@ -12,7 +12,7 @@ import { WIRINGS } from '../terminals/index.ts'
 import { sync } from './sync.ts'
 
 const colors: Colors = {
-  name: 'gojo',
+  name: 'ttheme/gojo',
   background: '#11191c',
   foreground: '#e3e2e7',
   cursor: '#7cc1d6',
@@ -20,9 +20,8 @@ const colors: Colors = {
 }
 
 const entry: PaletteEntry = {
-  name: 'gojo',
-  catalog: 'Jujutsu Kaisen',
-  order: 1,
+  name: 'ttheme/gojo',
+  subject: 'jujutsu-kaisen/gojo',
   ansiSource: 'Horizon + Jujutsu',
   background: '#11191c',
   foreground: '#e3e2e7',
@@ -42,7 +41,7 @@ const entry: PaletteEntry = {
   },
 }
 
-const manifest: Manifest = { schema: SCHEMA, version: '0.1.0', gate: [], palettes: [entry] }
+const manifest: Manifest = { version: '0.1.0', gate: [], palettes: [entry], works: [] }
 
 function fixture(): string {
   return mkdtempSync(join(tmpdir(), 'ttheme-archive-'))
@@ -78,7 +77,7 @@ function installOf(id: Wired): Map<string, string> {
 
   const state = {
     terminals: [id],
-    palettes: ['gojo'],
+    palettes: ['ttheme/gojo'],
     ...(id === 'windows-terminal' ? { wtHome: join(home, 'wt'), wtProfile: 'the profile' } : {}),
   }
 
@@ -91,7 +90,7 @@ function installOf(id: Wired): Map<string, string> {
 function installPicture(home: string): void {
   installBackdrop(
     home,
-    { ...colors, name: 'gojo' },
+    { ...colors, name: 'ttheme/gojo' },
     toneFor(colors, 'cursor'),
     { width: 4, height: 4, data: new Uint8Array(64).fill(90) },
     { site: 'yande', id: 9, ext: 'png', bytes: new Uint8Array([9]) },
@@ -155,7 +154,7 @@ function iterm2Agrees(archive: Output[], install: Map<string, string>): void {
     }
   ).Profiles
 
-  const profile = profiles.find((p) => p.Name === 'ttheme · gojo')
+  const profile = profiles.find((p) => p.Name === 'ttheme · ttheme/gojo')
 
   assert.ok(profile, 'the install wrote no profile for the palette')
   assert.ok(shipped.size > 0, 'the archive shipped no colors')
@@ -177,7 +176,7 @@ function windowsTerminalAgrees(archive: Output[], install: Map<string, string>):
 }
 
 function konsoleAgrees(archive: Output[], install: Map<string, string>): void {
-  const scheme = install.get('ttheme-gojo.colorscheme') as string
+  const scheme = install.get('ttheme-ttheme--gojo.colorscheme') as string
 
   assert.equal(
     without(scheme, /^(Wallpaper|FillStyle|Anchor|WallpaperOpacity)=/),
@@ -188,12 +187,16 @@ function konsoleAgrees(archive: Output[], install: Map<string, string>): void {
 }
 
 const DECLARED: Partial<Record<Wired, Record<string, string>>> = {
-  iterm2: { 'ttheme-gojo.itermcolors': 'the install writes a dynamic profile per palette, not a color scheme plist' },
+  iterm2: {
+    'ttheme-ttheme--gojo.itermcolors': 'the install writes a dynamic profile per palette, not a color scheme plist',
+  },
   'windows-terminal': {
-    'ttheme-gojo.json': 'the install keeps the scheme in its fragment',
+    'ttheme-ttheme--gojo.json': 'the install keeps the scheme in its fragment',
     'ttheme.json': "the install's fragment names the profile to update; the archive's registers the schemes alone",
   },
-  konsole: { 'ttheme-gojo.colorscheme': "the install's scheme carries the palette's picture; the archive's has none" },
+  konsole: {
+    'ttheme-ttheme--gojo.colorscheme': "the install's scheme carries the palette's picture; the archive's has none",
+  },
 }
 
 const CHECKERS: Partial<Record<Wired, (archive: Output[], install: Map<string, string>) => void>> = {

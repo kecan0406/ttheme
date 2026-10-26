@@ -9,13 +9,16 @@ ttheme
 
 ## Try palettes on
 
-Preview lists your palettes under their catalogs, one catalog per series.
+Preview lists your palettes under their works — a series, a game, a
+franchise — each work by its name with its title in its original language
+beside it. Palettes of no work, the originals, follow under a line of their
+own, by marketplace.
 
 - `↑` `↓` move, and the tab shows each palette the moment the cursor lands on it.
-- `→` or `enter` opens a catalog, `←` closes it.
-- Typing filters the list. It matches palette and catalog names, and a
-  character's names in Japanese too, so `hitori` and `ひとり` both find
-  `bocchi`.
+- `→` or `enter` opens a work, `←` closes it.
+- Typing filters the list. It matches palette names, works and characters, and
+  a character's names in its original language too, so `hitori` and `ひとり`
+  both find `bocchi`.
 - From 76 columns on, a sample beside the list shows the palette in a shell
   session, code, a diff, logs and a process monitor. `⇧←` `⇧→` switch the scene.
 - A palette with a picture shows it behind the list in the terminals that draw
@@ -38,10 +41,14 @@ tab at once. `esc` leaves Preview and puts the tab back the way it was.
 When you already know the name, skip Preview:
 
 ```sh
-ttheme use miku      # this tab
-ttheme use ho        # a unique prefix is enough
-ttheme default miku  # the default for new tabs
+ttheme use miku          # this tab
+ttheme use ttheme/miku   # the full name, when two marketplaces have a miku
+ttheme default miku      # the default for new tabs
 ```
+
+Every palette has a full name — `ttheme/miku` for a built-in one — and the
+name alone is enough while only one of yours has it
+([names](../usage/palettes.md#names)).
 
 ## Get more palettes
 

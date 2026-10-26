@@ -1,13 +1,23 @@
 import { existsSync } from 'node:fs'
-import { codeOf, SHARE_URL } from '../core/draft.ts'
+import { aboutOf, type Sort, worldOrder } from '../core/commons.ts'
+import { CODE, codeOf, SHARE_URL } from '../core/draft.ts'
 import type { Manifest, PaletteEntry } from '../core/manifest.ts'
-import { alphabetical } from '../core/theme.ts'
+import { BUILTIN, nameProblem } from '../core/theme.ts'
 import type { Wired } from '../core/wired.ts'
-import { available, nameOf, readKept, readMarketplaces, updatesOf, writeKept } from '../store/available.ts'
+import {
+  available,
+  find,
+  nameOf,
+  readKept,
+  readMarketplaces,
+  untuned,
+  updatesOf,
+  writeKept,
+} from '../store/available.ts'
 import { readInstalled, startupPalette } from '../store/installed.ts'
 import { knowAliases } from '../store/names.ts'
 import { configHome } from '../store/paths.ts'
-import { installedPath, isLocal, marketplaceSources, OFFICIAL, type Refreshed, shownSource } from '../store/sources.ts'
+import { installedPath, isLocal, marketplaceSources, type Refreshed, shownSource } from '../store/sources.ts'
 import { wirings } from '../terminals/index.ts'
 import { liveOf } from '../terminals/live.ts'
 import { colorless } from '../terminals/osc.ts'
@@ -30,7 +40,7 @@ export async function runAdd(asked: string[], into?: string): Promise<void> {
   const link = asked.find((n) => /^https?:\/\//i.test(n.trim()) && !codeOf(n))
 
   if (link) {
-    throw new Error(`${link} is not a share link — one reads ${SHARE_URL}tt4:…`)
+    throw new Error(`${link} is not a share link — one reads ${SHARE_URL}${CODE}…`)
   }
 
   const home = configHome()
@@ -43,10 +53,10 @@ export async function runAdd(asked: string[], into?: string): Promise<void> {
     const code = codeOf(n)
 
     if (isPaletteFile(n)) {
-      listed.push(await takeFile(home, n, manifest, into))
+      listed.push(await takeFile(home, n, into))
       manifest = readMarketplaces(home)
     } else if (code) {
-      const adopted = adopt(home, code, manifest)
+      const adopted = await adopt(home, code, manifest, into)
       refused.push(...adopted.refused)
 
       for (const entry of adopted.entries) {
@@ -54,7 +64,9 @@ export async function runAdd(asked: string[], into?: string): Promise<void> {
         listed.push(entry.name)
       }
     } else {
-      listed.push(n)
+      listed.push(
+        nameProblem(n) ? find(untuned(home, manifest, false).palettes, n, readInstalled(home).palettes).name : n,
+      )
     }
   }
 
@@ -100,10 +112,14 @@ export async function runAdd(asked: string[], into?: string): Promise<void> {
   reload(next.palettes.length)
 }
 
-export function runDefault(name: string): void {
+export function runDefault(asked: string): void {
   const home = configHome()
   const manifest = readMarketplaces(home)
   const state = readInstalled(home)
+
+  const name = state.palettes.includes(asked)
+    ? asked
+    : find(untuned(home, manifest, false).palettes, asked, state.palettes).name
 
   if (!state.palettes.includes(name)) {
     throw new Error(`${name} is not installed — \`ttheme add ${name}\` first`)
@@ -235,7 +251,7 @@ export async function runUpdate(asked: string[] = []): Promise<number> {
     console.log(release.note)
   }
 
-  const marketplaces = (named.length > 0 ? named : all).filter((source) => source !== OFFICIAL)
+  const marketplaces = (named.length > 0 ? named : all).filter((source) => source !== BUILTIN)
 
   if (named.length === 0 && marketplaces.length === 0) {
     console.log('No marketplaces to update — `ttheme marketplace add <owner>/<repo>` adds one')
@@ -338,14 +354,16 @@ export async function pickPalettes(
   required = false,
   go?: string,
 ): Promise<string[] | undefined> {
-  const entries = process.env.TTHEME_SORT === 'catalog' ? manifest.palettes : alphabetical(manifest.palettes)
-  knowAliases(entries)
+  const sort: Sort = process.env.TTHEME_SORT === 'cast' ? 'cast' : 'abc'
+  const entries = worldOrder(manifest.palettes, manifest.works, sort)
+  knowAliases(entries.flatMap((e) => aboutOf(manifest.works, e.subject)?.character?.danbooru ?? []))
   const tty = process.stdout.isTTY === true
   const live = liveOf(process.env, tty, configHome())
   const saved = live ? await live.saved() : new Map<string, string>()
 
   const prompt = new PalettePrompt({
     entries,
+    works: manifest.works,
     scope,
     installed,
     required,

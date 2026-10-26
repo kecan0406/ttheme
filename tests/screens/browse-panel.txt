@@ -1,4 +1,4 @@
- Browse (10/10 · 2 picked)
+ Browse (10/10 · 3 picked)
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -6,13 +6,13 @@
     + Add marketplace   owner/repo or a folder        │ Always up to date                         │
     ⌕ Search marketplace   find one on GitHub         │                                           │
                                                       │ ▌  ▸ neon (1/2)                           │
-    ● official                                        │    ▸ pastel (0/1)                         │
-      Built in                                        │    ○ dusk                                 │
+    ● ttheme                                          │    ▸ pastel (0/1)                         │
+      Built in                                        │    ● dusk                                 │
       6 available · 1 installed                       │                                           │
                                                       │                                           │
     ● fix@shop                                        │                                           │
       ~/shop                                          │                                           │
-      4 available · 1 installed · Always up to date   │                                           │
+      4 available · 2 installed · Always up to date   │                                           │
                                                       │                                           │
                                                       ├───────────────────────────────────────────┤
                                                       │ neon                                      │

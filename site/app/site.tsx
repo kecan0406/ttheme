@@ -9,18 +9,17 @@ import { Missing } from '@/components/missing'
 import { MarketplaceWorkspace } from '@/components/workspace'
 import { RESTORE_SCRIPT } from '@/lib/builder'
 import { builderData, starts } from '@/lib/builder-page'
+import { fallback, gate, themes } from '@/lib/builtin'
 import { type Card, cardAlt, cardPng } from '@/lib/card'
-import { catalogsOf } from '@/lib/catalogs'
 import { creditsOf } from '@/lib/credits'
 import { DOC_PAGES, DOCS_PATH, docAt } from '@/lib/docs'
 import type { Facts, Repo } from '@/lib/facts'
-import { marketplacePath, OFFICIAL, palettePath, palettesPath } from '@/lib/gallery'
+import { marketplacePath, palettePath, palettesPath } from '@/lib/gallery'
 import { marketplaces } from '@/lib/marketplaces'
-import { fallback, gate, themes } from '@/lib/official'
 import { crumbs, ROBOTS, siteGraph, sitemapXml } from '@/lib/seo'
 import { readShared, type Shared } from '@/lib/share'
 import { faviconIco, touchIconPng } from '@/lib/tab-icon'
-import type { Marketplace, Theme } from '@/lib/themes'
+import { BUILTIN, type Marketplace, type Theme } from '@/lib/themes'
 import {
   builderMeta,
   docMeta,
@@ -31,25 +30,25 @@ import {
   sharedMeta,
   siteMeta,
 } from '@/lib/titles'
-import { leadOf } from '@/lib/workspace'
+import { leadsOf, worksIn } from '@/lib/works'
 import repo from '@/repo.json' with { type: 'json' }
 import pkg from '../../package.json' with { type: 'json' }
 import { type Page, page } from './document'
 
 const facts: Facts = {
   palettes: themes.length,
-  catalogs: catalogsOf(themes).length,
+  works: worksIn(themes),
   version: pkg.version,
   repo: repo as Repo | null,
 }
 
-const CATALOG = 'public, max-age=0, s-maxage=31536000'
+const FIXED = 'public, max-age=0, s-maxage=31536000'
 const RETRY = 'public, max-age=0, s-maxage=60'
 const CREDITS = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800'
 
 const STORE = 'One ttheme marketplace: its repository, its palettes and how they do on the contrast checks'
 
-const SITE_CARD: Card = { kind: 'site', theme: fallback, palettes: facts.palettes, catalogs: facts.catalogs }
+const SITE_CARD: Card = { kind: 'site', theme: fallback, palettes: facts.palettes, works: facts.works }
 
 const CARD = { image: '/card.png', imageAlt: cardAlt(SITE_CARD) }
 
@@ -88,7 +87,7 @@ type Stock = {
 }
 
 function stockOf(id: string): Stock | undefined {
-  if (id === OFFICIAL) return { marketplace: null, palettes: themes }
+  if (id === BUILTIN) return { marketplace: null, palettes: themes }
   const marketplace = marketplaces.find((entry) => entry.id === id)
 
   return marketplace && { marketplace, palettes: marketplace.palettes }
@@ -100,25 +99,25 @@ export const PRERENDERED: string[] = [
   '/builder',
   DOCS_PATH,
   ...DOC_PAGES.map((doc) => doc.path),
-  marketplacePath(null),
+  marketplacePath(BUILTIN),
   ...themes.map(palettePath),
   ...marketplaces.flatMap((marketplace) => [marketplacePath(marketplace.id), ...marketplace.palettes.map(palettePath)]),
 ]
 
 export const DATA: string[] = [
-  palettesPath(null),
+  palettesPath(BUILTIN),
   '/builder/palettes.json',
   ...marketplaces.map((marketplace) => palettesPath(marketplace.id)),
 ]
 
 function workspace(marketplace: Marketplace | null, palettes: Theme[], theme: Theme | null): Response {
-  const shown = theme ?? leadOf(catalogsOf(palettes)[0]?.themes ?? palettes)
-  const id = marketplace?.id ?? OFFICIAL
+  const shown = theme ?? (leadsOf(palettes)[0] as Theme)
+  const id = marketplace?.id ?? BUILTIN
 
   const trail = [
     { name: 'ttheme', path: '/' },
     { name: 'marketplace', path: '/marketplace' },
-    { name: id, path: marketplacePath(marketplace?.id ?? null) },
+    { name: id, path: marketplacePath(id) },
   ]
 
   const head = theme
@@ -129,15 +128,15 @@ function workspace(marketplace: Marketplace | null, palettes: Theme[], theme: Th
         ld: [crumbs([...trail, { name: theme.name, path: palettePath(theme) }])],
       }
     : {
-        ...marketplaceMeta(marketplace, palettes.length, catalogsOf(palettes).length),
-        path: marketplacePath(marketplace?.id ?? null),
-        image: `${marketplacePath(marketplace?.id ?? null)}/card.png`,
+        ...marketplaceMeta(marketplace, palettes.length, worksIn(palettes)),
+        path: marketplacePath(id),
+        image: `${marketplacePath(id)}/card.png`,
         imageAlt: cardAlt(marketplaceCard(marketplace, palettes)),
         ld: [crumbs(trail)],
       }
 
   return page(
-    { ...head, cache: CATALOG },
+    { ...head, cache: FIXED },
     <MarketplaceWorkspace
       marketplace={marketplace}
       palettes={palettes}
@@ -202,9 +201,9 @@ export const site = new Elysia({ name: 'site' })
     )
   })
   .macro({
-    catalog: {
+    fixed: {
       afterHandle({ set }) {
-        set.headers['cache-control'] = CATALOG
+        set.headers['cache-control'] = FIXED
       },
     },
   })
@@ -215,7 +214,7 @@ export const site = new Elysia({ name: 'site' })
         path: '/',
         ...CARD,
         ld: [siteGraph(facts)],
-        cache: CATALOG,
+        cache: FIXED,
       },
       <Home themes={themes} facts={facts} />,
     ),
@@ -232,7 +231,7 @@ export const site = new Elysia({ name: 'site' })
             { name: 'marketplace', path: '/marketplace' },
           ]),
         ],
-        cache: CATALOG,
+        cache: FIXED,
       },
       <MarketplacePage themes={themes} marketplaces={marketplaces} facts={facts} />,
     ),
@@ -248,7 +247,7 @@ export const site = new Elysia({ name: 'site' })
           { name: 'builder', path: '/builder' },
         ]),
       ],
-      cache: CATALOG,
+      cache: FIXED,
       head: RESTORE_SCRIPT,
     }),
   )
@@ -259,7 +258,7 @@ export const site = new Elysia({ name: 'site' })
         path: DOCS_PATH,
         ...CARD,
         ld: [crumbs(DOCS_TRAIL)],
-        cache: CATALOG,
+        cache: FIXED,
       },
       <DocsIndex facts={facts} about={docsMeta().description} />,
     ),
@@ -275,14 +274,14 @@ export const site = new Elysia({ name: 'site' })
         path: doc.path,
         ...CARD,
         ld: [crumbs([...DOCS_TRAIL, { name: doc.title, path: doc.path }])],
-        cache: CATALOG,
+        cache: FIXED,
       },
       <DocsPage page={doc} facts={facts} />,
     )
   })
   .get(
     '/builder/palettes.json',
-    { catalog: true },
+    { fixed: true },
     () => new Response(JSON.stringify(starts()), { headers: { 'content-type': 'application/json; charset=utf-8' } }),
   )
   .get('/builder/:code', ({ params, query, request }) => {
@@ -311,7 +310,7 @@ export const site = new Elysia({ name: 'site' })
       image: `${path}/card.png`,
       imageAlt: cardAlt(sharedCard(found)),
       robots: 'noindex',
-      cache: CATALOG,
+      cache: FIXED,
     })
   })
   .group('/builder/:code', (scope) =>
@@ -321,7 +320,7 @@ export const site = new Elysia({ name: 'site' })
 
         return found instanceof Error ? status(404, gone(found.message)) : { found }
       })
-      .get('/card.png', { catalog: true }, async ({ found }) => png(await cardPng(sharedCard(found))))
+      .get('/card.png', { fixed: true }, async ({ found }) => png(await cardPng(sharedCard(found))))
       .get('/credits.json', async ({ found }) => {
         const { pictures, complete } = await creditsOf(found)
 
@@ -343,23 +342,18 @@ export const site = new Elysia({ name: 'site' })
   .group('/marketplace/:id', (scope) =>
     scope
       .derive(({ params, status }) => stockOf(params.id) ?? status(404, gone('no such marketplace')))
-      .get('/card.png', { catalog: true }, async ({ marketplace, palettes }) =>
+      .get('/card.png', { fixed: true }, async ({ marketplace, palettes }) =>
         png(await cardPng(marketplaceCard(marketplace, palettes))),
       )
-      .get('/palettes.json', { catalog: true }, ({ palettes }) => text(JSON.stringify(palettes), 'application/json'))
-      .get('/:name/card.png', { catalog: true }, async ({ palettes, params }) => {
+      .get('/palettes.json', { fixed: true }, ({ palettes }) => text(JSON.stringify(palettes), 'application/json'))
+      .get('/:name/card.png', { fixed: true }, async ({ palettes, params }) => {
         const theme = palettes.find((entry) => entry.name === params.name)
 
         return theme ? png(await cardPng({ kind: 'palette', theme })) : gone('no such palette')
       }),
   )
-  .get('/card.png', { catalog: true }, async () => png(await cardPng(SITE_CARD)))
-  .get('/apple-touch-icon.png', { catalog: true }, () => png(touchIconPng(fallback)))
-  .get('/favicon.ico', { catalog: true }, () => image(faviconIco(fallback), 'image/x-icon'))
-  .get('/robots.txt', { catalog: true }, () => text(ROBOTS, 'text/plain'))
-  .get('/sitemap.xml', { catalog: true }, () => text(sitemapXml(PRERENDERED), 'application/xml'))
-  .get(
-    '/palettes.json',
-    { catalog: true },
-    () => new Response(JSON.stringify(themes), { headers: { 'content-type': 'application/json; charset=utf-8' } }),
-  )
+  .get('/card.png', { fixed: true }, async () => png(await cardPng(SITE_CARD)))
+  .get('/apple-touch-icon.png', { fixed: true }, () => png(touchIconPng(fallback)))
+  .get('/favicon.ico', { fixed: true }, () => image(faviconIco(fallback), 'image/x-icon'))
+  .get('/robots.txt', { fixed: true }, () => text(ROBOTS, 'text/plain'))
+  .get('/sitemap.xml', { fixed: true }, () => text(sitemapXml(PRERENDERED), 'application/xml'))

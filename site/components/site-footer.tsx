@@ -1,8 +1,9 @@
 import { type SimpleIcon, siGithub, siNpm } from 'simple-icons'
 import { Badge } from '@/components/ui/badge'
 import type { Facts } from '@/lib/facts'
-import { NPM_URL, OFFICIAL_URL } from '@/lib/gallery'
+import { marketplacePath, NPM_URL, REPO_URL } from '@/lib/gallery'
 import { BrandIcon, NewTab } from '@/lib/icons'
+import { BUILTIN } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { Mark } from './mark'
 import { Wordmark } from './wordmark'
@@ -12,7 +13,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; brand?: Si
     title: 'browse',
     links: [
       { label: 'every palette', href: '/marketplace' },
-      { label: 'official', href: '/marketplace/official' },
+      { label: 'built-in', href: marketplacePath(BUILTIN) },
     ],
   },
   {
@@ -27,9 +28,9 @@ const COLUMNS: { title: string; links: { label: string; href: string; brand?: Si
     title: 'project',
     links: [
       { label: 'docs', href: '/docs' },
-      { label: 'github', href: OFFICIAL_URL, brand: siGithub },
+      { label: 'github', href: REPO_URL, brand: siGithub },
       { label: 'npm', href: NPM_URL, brand: siNpm },
-      { label: 'report a bug', href: `${OFFICIAL_URL}/issues/new/choose` },
+      { label: 'report a bug', href: `${REPO_URL}/issues/new/choose` },
     ],
   },
 ]
@@ -83,7 +84,7 @@ function Brand({ facts }: { facts: Facts }) {
       </a>
       <p class="text-xs font-medium tracking-wide text-muted-foreground">use your favorite character</p>
       <Badge variant="count">
-        {facts.palettes} palettes · {facts.catalogs} catalogs
+        {facts.palettes} palettes · {facts.works} works
       </Badge>
     </div>
   )
@@ -95,7 +96,7 @@ function Tagline({ facts }: { facts: Facts }) {
       <p class="max-w-[18ch] font-display text-display-sm font-extrabold">use your favorite character</p>
       <span class="flex items-center gap-2.5">
         <Badge variant="count">
-          {facts.palettes} palettes · {facts.catalogs} catalogs
+          {facts.palettes} palettes · {facts.works} works
         </Badge>
         <Signs />
       </span>

@@ -41,6 +41,7 @@ import {
   tagList,
   tagsOf,
 } from '../../core/booru.ts'
+import { type About, aboutOf, siteTags, type Work } from '../../core/commons.ts'
 import type { Manifest, PaletteEntry } from '../../core/manifest.ts'
 import { SCENES } from '../../core/scenes.ts'
 import { POSITIONS } from '../../core/theme.ts'
@@ -61,7 +62,7 @@ import { canRemoveBackground, keepable, removeBackground } from '../../pictures/
 import { type Frame, fitOrder, interleave, type Pick } from '../../pictures/fit.ts'
 import { type Look, Renderer, type Shown } from '../../pictures/render.ts'
 import { kinKeys, near, type Size, sameKeys, sameSet } from '../../pictures/works.ts'
-import { booruTags, find, readAvailable, siteTags } from '../../store/available.ts'
+import { booruTags, find, readAvailable } from '../../store/available.ts'
 import { writeAtomic } from '../../store/edits.ts'
 import { readInstalled } from '../../store/installed.ts'
 import { nameHits, primeNames } from '../../store/names.ts'
@@ -341,6 +342,26 @@ function heldOf(home: string, name: string): Held[] {
   })
 }
 
+function tagOf(works: readonly Work[], entry: PaletteEntry): string {
+  return aboutOf(works, entry.subject)?.character?.danbooru ?? ''
+}
+
+function charactersOf(works: readonly Work[]): Map<string, About> {
+  const known = new Map<string, About>()
+
+  for (const work of works) {
+    for (const character of work.characters) {
+      const about = aboutOf(works, `${work.id}/${character.id}`)
+
+      if (character.danbooru && about && !known.has(character.danbooru)) {
+        known.set(character.danbooru, about)
+      }
+    }
+  }
+
+  return known
+}
+
 function completable(token: string): boolean {
   return token.length >= 2 && !/^\d+$/.test(token) && !token.includes('://') && !/^[\w.]+:\d+$/.test(token)
 }
@@ -542,6 +563,8 @@ class Finder {
   private readonly home: string
   private readonly manifest: Manifest
   private readonly entry: PaletteEntry
+  private readonly about: About | undefined
+  private readonly characters: ReadonlyMap<string, About>
   private readonly tagged: ReadonlySet<string>
   private readonly blurring: number
   private readonly start: Start | undefined
@@ -553,7 +576,15 @@ class Finder {
     this.home = home
     this.manifest = manifest
     this.entry = entry
-    this.tagged = new Set(manifest.palettes.flatMap((p) => (p.booru ? [p.booru] : [])))
+    this.about = aboutOf(manifest.works, entry.subject)
+    this.characters = charactersOf(manifest.works)
+    this.tagged = new Set(
+      manifest.palettes.flatMap((p) => {
+        const tag = tagOf(manifest.works, p)
+
+        return tag ? [tag] : []
+      }),
+    )
     this.tone = backdropTone(entry, entry.signatureSlots)
     this.blurring = blurOf(home)
     const untuned: Tuning = { size: 'fill', at: TOP_RIGHT, opacity: this.tone.opacity }
@@ -1898,13 +1929,7 @@ class Finder {
       return
     }
 
-    const ours = typed
-      ? booruTags(this.manifest.palettes, this.entry, token).map((p) => ({
-          value: p.booru as string,
-          count: 0,
-          palette: p.name,
-        }))
-      : []
+    const ours = typed ? this.ownTags(token) : []
 
     const known = [...new Map([...ours.slice(0, KNOWN), ...named].map((item) => [item.value, item] as const)).values()]
     view.suggest = known.length > 0 ? known : undefined
@@ -2334,9 +2359,23 @@ class Finder {
   }
 
   private namesOf(tag: string, site: string): string[] {
-    const owner = tag === this.entry.booru ? this.entry : this.manifest.palettes.find((p) => p.booru === tag)
+    const owner = tag === this.about?.character?.danbooru ? this.about : this.characters.get(tag)
 
     return owner ? siteTags(owner, site) : [tag]
+  }
+
+  private ownTags(token: string): { value: string; count: number; palette: string }[] {
+    const firsts = new Map<string, string>()
+
+    for (const p of booruTags(this.manifest.palettes, this.manifest.works, this.entry, token)) {
+      const tag = tagOf(this.manifest.works, p)
+
+      if (!firsts.has(tag)) {
+        firsts.set(tag, p.name)
+      }
+    }
+
+    return [...firsts].map(([value, palette]) => ({ value, count: 0, palette }))
   }
 
   private syncChips(): void {
@@ -3612,7 +3651,8 @@ export async function findFor(
   entry: PaletteEntry,
   start?: Start,
 ): Promise<{ saved: string | undefined; installs: number }> {
-  const finder = new Finder(home, readAvailable(home), entry, entry.booru ?? '', start)
+  const manifest = readAvailable(home)
+  const finder = new Finder(home, manifest, entry, tagOf(manifest.works, entry), start)
   await finder.run()
 
   if (viewsInWindow(process.env)) {
@@ -3631,7 +3671,7 @@ export async function runFind(name: string): Promise<number> {
     throw new Error('needs a terminal')
   }
 
-  const finder = new Finder(home, manifest, entry, entry.booru ?? '')
+  const finder = new Finder(home, manifest, entry, tagOf(manifest.works, entry))
   const code = await finder.run()
 
   if (finder.saved && code !== 0) {

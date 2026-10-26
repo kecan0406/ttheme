@@ -44,8 +44,10 @@ Settings you made yourself win:
   `<file>.ttheme.bak`.
 - It writes through symlinks, so a dotfiles repository keeps its links.
 - Every file it adds to a terminal's own folders is named `ttheme-<palette>`,
-  or `ttheme` for Rio's one theme and Contour's profile and its two color
-  schemes, so a theme of yours is never overwritten.
+  where `<palette>` is the palette's full name with `/` and `@` written as `--`
+  (`ttheme-ttheme--miku` for `ttheme/miku`), or `ttheme` for Rio's one theme
+  and Contour's profile and its two color schemes, so a theme of yours is never
+  overwritten.
 
 ## Terminal by terminal
 

@@ -20,12 +20,13 @@ function theme(mode: 'dark' | 'light'): Theme {
 
   return {
     ...made,
-    id: 'x',
-    marketplace: null,
+    id: 'ttheme/x',
+    marketplace: 'ttheme',
     name: 'x',
-    catalog: null,
-    native: null,
-    lead: false,
+    subject: null,
+    work: null,
+    also: [],
+    character: null,
     from: null,
     ansiSource: 'test',
     signatureSlots: ['cursor', 'foreground', 'ansi1'],

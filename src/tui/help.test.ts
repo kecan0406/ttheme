@@ -96,7 +96,7 @@ function shellFunction(file: string, name: string): string {
 test("preview's help wraps every line as the Node help does", () => {
   const texts = [
     'Move up or down',
-    'Open or close a catalog',
+    'Open or close a work',
     'Filter by name or title, in Japanese too',
     'Use it in this tab, choosing where',
     'Save the picture, then choose where to use the palette',

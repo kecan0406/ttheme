@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto'
 import { basename } from 'node:path'
 import { brotliCompressSync, brotliDecompressSync, deflateRawSync, inflateRawSync } from 'node:zlib'
+import { readWork, WORKS_DIR, type Work } from './commons.ts'
 import { boundOf, GATE_RULES, measure, missedRules, shownOf } from './contrast.ts'
 import {
-  basesOf,
   checked,
   codeBody,
   colorsToml,
@@ -20,8 +20,8 @@ import {
 import { type PaletteEntry, paletteEntry, toTheme } from './manifest.ts'
 import { memo } from './memo.ts'
 import type { Colors } from './seeds.ts'
-import { escaped, quoted } from './text.ts'
-import { type Catalog, catalogProblem, nameProblem, textProblem } from './theme.ts'
+import { quoted } from './text.ts'
+import { nameProblem, slugProblem } from './theme.ts'
 
 const PACKS: ((bytes: Uint8Array) => Uint8Array)[] = [
   (bytes) => bytes,
@@ -38,68 +38,37 @@ const UNPACKS: ((bytes: Uint8Array) => Uint8Array)[] = [
 export interface MarketplaceFile {
   path: string
   slug: string
-  catalog?: string
+}
+
+export interface WorkFile {
+  path: string
+  id: string
 }
 
 function byName(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0
 }
 
-export function marketplaceLayout(
-  paths: Iterable<string>,
-  at: (path: string) => string,
-  catalogs: readonly Catalog[] = [],
-): MarketplaceFile[] {
-  const shelved: { file: MarketplaceFile; name: string }[] = []
-  const loose: { file: MarketplaceFile; name: string }[] = []
+function flatToml(paths: Iterable<string>, folder: string): { path: string; stem: string }[] {
+  const found: { path: string; stem: string }[] = []
 
   for (const path of paths) {
-    const [top, first, second, ...deeper] = path.split('/')
+    const [top, file, ...deeper] = path.split('/')
 
-    if (top !== 'palettes' || !first || first.startsWith('.') || deeper.length > 0) {
-      continue
-    }
-
-    if (second === undefined) {
-      if (first.endsWith('.toml')) {
-        loose.push({ file: { path: at(path), slug: basename(first, '.toml') }, name: first })
-      }
-    } else if (second.endsWith('.toml')) {
-      shelved.push({ file: { path: at(path), slug: basename(second, '.toml'), catalog: first }, name: second })
+    if (top === folder && file && !file.startsWith('.') && file.endsWith('.toml') && deeper.length === 0) {
+      found.push({ path, stem: basename(file, '.toml') })
     }
   }
 
-  const listed = (catalog = '') => {
-    const at = catalogs.findIndex((c) => c.name === catalog)
-
-    return at < 0 ? catalogs.length : at
-  }
-
-  shelved.sort(
-    (a, b) =>
-      listed(a.file.catalog) - listed(b.file.catalog) ||
-      byName(a.file.catalog ?? '', b.file.catalog ?? '') ||
-      byName(a.name, b.name),
-  )
-  loose.sort((a, b) => byName(a.name, b.name))
-
-  return [...shelved, ...loose].map(({ file }) => file)
+  return found.sort((a, b) => byName(a.stem, b.stem))
 }
 
-function marketplaceFileProblem(file: MarketplaceFile, seen: ReadonlyMap<string, MarketplaceFile>): string | undefined {
-  const twin = seen.get(file.slug)
+export function marketplaceLayout(paths: Iterable<string>, at: (path: string) => string): MarketplaceFile[] {
+  return flatToml(paths, 'palettes').map(({ path, stem }) => ({ path: at(path), slug: stem }))
+}
 
-  if (twin) {
-    return `${escaped(file.slug)} is also ${twin.catalog ? `in ${escaped(twin.catalog)}` : 'outside a catalog'} — a palette name is used once in a marketplace`
-  }
-
-  if (file.catalog === undefined) {
-    return undefined
-  }
-
-  const problem = textProblem(file.catalog)
-
-  return problem ? `the catalog folder ${quoted(file.catalog)} ${problem}` : undefined
+export function workLayout(paths: Iterable<string>, at: (path: string) => string): WorkFile[] {
+  return flatToml(paths, WORKS_DIR).map(({ path, stem }) => ({ path: at(path), id: stem }))
 }
 
 export type Report = (where: string, message: string) => void
@@ -108,32 +77,42 @@ export function readMarketplaceFiles(
   files: MarketplaceFile[],
   read: (file: MarketplaceFile) => string,
   id: string,
-  entries: PaletteEntry[],
   report: Report,
   foreign = false,
-  catalogs: readonly Catalog[] = [],
 ): PaletteEntry[] {
-  const seen = new Map<string, MarketplaceFile>()
-  const place = JSON.stringify([foreign, catalogs, [...basesOf(entries)]])
-
   return files.flatMap((file) => {
     try {
-      const problem = marketplaceFileProblem(file, seen)
+      const problem = slugProblem(file.slug)
 
       if (problem) {
-        throw new Error(problem)
+        throw new Error(`the file name ${quoted(file.slug)} ${problem} — it is the palette's name`)
       }
 
-      seen.set(file.slug, file)
-      const shelf = { ...(file.catalog === undefined ? {} : { catalog: file.catalog }), catalogs }
       const name = `${id}/${file.slug}`
       const text = read(file)
 
       return [
-        memo('entry', `${place}${JSON.stringify([name, file.catalog ?? null, text])}`, () =>
-          paletteEntry(readOwnText(name, text, entries, foreign, shelf)),
-        ),
+        memo('entry', JSON.stringify([foreign, name, text]), () => paletteEntry(readOwnText(name, text, foreign))),
       ]
+    } catch (error) {
+      report(file.path, (error as Error).message)
+
+      return []
+    }
+  })
+}
+
+export function readWorkFiles(
+  files: WorkFile[],
+  read: (file: WorkFile) => string,
+  report: Report,
+  foreign = false,
+): Work[] {
+  return files.flatMap((file) => {
+    try {
+      const text = read(file)
+
+      return [memo('work', JSON.stringify([foreign, file.id, text]), () => readWork(file.path, text, file.id, foreign))]
     } catch (error) {
       report(file.path, (error as Error).message)
 
@@ -148,27 +127,15 @@ function checksum(bytes: Uint8Array): Uint8Array {
   return createHash('sha256').update(bytes).digest().subarray(0, SUM)
 }
 
-export function readCodes(code: string, entries: PaletteEntry[]): PaletteEntry[] {
+export function readCodes(code: string): PaletteEntry[] {
   return fromCode(code).map((draft) => {
-    const named = nameProblem(draft.name)
+    const named = slugProblem(draft.name) && nameProblem(draft.name)
 
     if (named) {
       throw new Error(`the share code's palette ${quoted(draft.name)} ${named}`)
     }
 
-    const entry = paletteEntry(readOwnText(draft.name, paletteToml(draft), entries, true))
-
-    if (!draft.catalog) {
-      return entry
-    }
-
-    const problem = catalogProblem(draft.catalog)
-
-    if (problem) {
-      throw new Error(`the share code's catalog ${quoted(draft.catalog)} ${problem}`)
-    }
-
-    return { ...entry, catalog: draft.catalog }
+    return paletteEntry(readOwnText(draft.name, paletteToml(draft), true))
   })
 }
 

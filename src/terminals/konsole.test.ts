@@ -5,18 +5,16 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { commit, sync, wiringNext, wiringPlan } from '../cli/sync.ts'
 import { applyUninstall, planUninstall } from '../cli/uninstall.ts'
-import { type Manifest, type PaletteEntry, SCHEMA, toTheme } from '../core/manifest.ts'
+import { type Manifest, type PaletteEntry, toTheme } from '../core/manifest.ts'
 import { backupPath } from '../store/edits.ts'
 import type { Host } from '../store/host.ts'
 import { type Installed, writeInstalled } from '../store/installed.ts'
 import { konsoleScheme } from './emit/konsole.ts'
 import { baseLook, iniValue, konsole, konsoleData, konsoleProfile, konsolerc, withDefaultProfile } from './konsole.ts'
 
-function entry(name: string, order: number, partial: Partial<PaletteEntry> = {}): PaletteEntry {
+function entry(name: string, partial: Partial<PaletteEntry> = {}): PaletteEntry {
   return {
     name,
-    catalog: 'Jujutsu Kaisen',
-    order,
     ansiSource: 'Horizon + Jujutsu',
     background: '#11191c',
     foreground: '#e3e2e7',
@@ -32,14 +30,14 @@ function entry(name: string, order: number, partial: Partial<PaletteEntry> = {})
 }
 
 const manifest: Manifest = {
-  schema: SCHEMA,
   version: '0.1.0',
   gate: [],
+  works: [],
   palettes: [
-    entry('neutral', 1, { default: true }),
-    entry('gojo', 2, { cursor: '#ff0000' }),
-    entry('geto', 3),
-    entry('kec@dust/fern', 4),
+    entry('neutral', { default: true }),
+    entry('gojo', { cursor: '#ff0000' }),
+    entry('geto'),
+    entry('kec@dust/fern'),
   ],
 }
 
@@ -112,7 +110,7 @@ function bus(konsoles: { service: string; loaded: string[] }[]) {
 }
 
 test('a color scheme carries all thirty of Konsole entries: normal, intense from the brights, faint halfway to the background', () => {
-  const theme = toTheme(entry('gojo', 2))
+  const theme = toTheme(entry('gojo'))
   const scheme = konsoleScheme(theme)
   const groups = [...scheme.matchAll(/^\[(\w+)\]$/gm)].map(([, group]) => group)
   assert.equal(new Set(groups).size, 31)

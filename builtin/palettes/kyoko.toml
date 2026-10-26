@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "madoka-magica/kyoko"
+signature = ["cursor", "ansi11", "foreground"]
+ansi_source = "Cursor Dark + Magica"
+
+[colors]
+background = "#201515"
+foreground = "#e2e2e2"
+cursor = "#ee636b"
+selection_background = "#59323d"
+ansi = [
+  "#2d2120",
+  "#e9707e",
+  "#d8c141",
+  "#ffa76f",
+  "#9d8ec3",
+  "#e09ebc",
+  "#8ab1dc",
+  "#e5cfcf",
+
+  "#857372",
+  "#f39fa2",
+  "#edde80",
+  "#ffd6a7",
+  "#b3a3da",
+  "#ffc0dc",
+  "#a8cbf2",
+  "#ffe9e8",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#1e2020"
+cursor = "#c42e40"
+selection_background = "#ffc9d6"
+ansi = [
+  "#fff0ef",
+  "#b43349",
+  "#395823",
+  "#a04b00",
+  "#6b589d",
+  "#944b70",
+  "#2a5379",
+  "#362929",
+
+  "#857372",
+  "#8d3a40",
+  "#2f4a1b",
+  "#714e1c",
+  "#5c498e",
+  "#7f4061",
+  "#1f4566",
+  "#2d1b1b",
+]

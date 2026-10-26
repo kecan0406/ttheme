@@ -11,6 +11,7 @@ import {
 } from '../core/builder-layout.ts'
 import { contrast, type Hex, isHex, type Oklch } from '../core/color.ts'
 import { boundOf, check, GATE_RULES, measure, missedRules, ROLES, shownOf } from '../core/contrast.ts'
+import { CODE } from '../core/draft.ts'
 import { fixGate } from '../core/fix.ts'
 import { PLANE_CHROMA } from '../core/plane.ts'
 import { type Colors, grow, nudge, SEED_FIELDS, SEEDS, type Seeds } from '../core/seeds.ts'
@@ -1150,7 +1151,9 @@ export class PaletteEditor {
         this.openPalettes()
       } else {
         this.say(
-          this.options.decode ? 'Paste a share link or a tt4: code into this window' : 'Share codes are not read here',
+          this.options.decode
+            ? `Paste a share link or a ${CODE} code into this window`
+            : 'Share codes are not read here',
           this.options.decode ? 'info' : 'warn',
         )
       }

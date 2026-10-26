@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { toneFor } from '../src/core/backdrop-tone.ts'
 import type { PaletteEntry } from '../src/core/manifest.ts'
 import { colorsOf, installBackdrop } from '../src/pictures/backdrop.ts'
+import { find, readPackaged } from '../src/store/available.ts'
 
 export function installTestPicture(
   configHome: string,
@@ -41,16 +41,8 @@ export function installTestPicture(
 
 if (import.meta.main) {
   const [configHome = '', name = ''] = process.argv.slice(2)
-
-  const manifest = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'dist', 'manifest.json'), 'utf8')) as {
-    palettes: PaletteEntry[]
-  }
-
-  const entry = manifest.palettes.find((p) => p.name === name)
-
-  if (!entry) {
-    throw new Error(`no ${name} in the catalog`)
-  }
+  const entry = find(readPackaged(join(import.meta.dirname, '..')).builtin.palettes, name)
 
   installTestPicture(configHome, entry, 1000, { width: 1160, height: 706 })
+  process.stdout.write(`${entry.name}\n`)
 }

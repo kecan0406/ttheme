@@ -10,7 +10,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@kecan0406/ttheme"><img src="https://img.shields.io/npm/v/@kecan0406/ttheme?style=flat-square" alt="npm version"></a>
   <a href="https://github.com/kecan0406/ttheme/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/kecan0406/ttheme/ci.yml?branch=main&style=flat-square&label=ci" alt="CI status"></a>
-  <a href="https://ttheme.dev/"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fkecan0406.github.io%2Fttheme%2Fmanifest.json&query=%24.palettes.length&label=palettes&style=flat-square&color=c796c8" alt="official palettes"></a>
+  <a href="https://ttheme.dev/"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2F%40kecan0406%2Fttheme%2Fdist%2Fbuiltin.json&query=%24.palettes.length&label=palettes&style=flat-square&color=c796c8" alt="built-in palettes"></a>
   <a href="LICENSE"><img src="https://img.shields.io/npm/l/@kecan0406/ttheme?style=flat-square" alt="MIT license"></a>
 </p>
 
@@ -30,7 +30,7 @@
 
 - **Colors from the character.** Every palette keeps the three colors that
   identify its character and borrows its ANSI ramp from an established scheme,
-  harmonized so every official palette reads alike.
+  harmonized so every built-in palette reads alike.
 - **Every palette passes the contrast checks.** Body text at 7:1 against the
   background (WCAG AAA), every meaningful ANSI color at 4.5:1 (WCAG AA), and each
   accent stays in its role — red reads as an error, green as success — and apart
@@ -50,7 +50,7 @@ npx @kecan0406/ttheme@latest init
 
 It needs Node 22 or newer and zsh, which macOS ships — bash and fish get the
 `ttheme` command too, run through zsh. It asks which terminals to wire and which
-catalogs to install, shows every file it is about to change, and writes nothing
+palettes to install, shows every file it is about to change, and writes nothing
 until you confirm. Then:
 
 ```sh
@@ -68,24 +68,29 @@ The [docs](https://ttheme.dev/docs) start from
 ## Palettes
 
 <p align="center">
-  <a href="https://ttheme.dev/"><img src="https://kecan0406.github.io/ttheme/readme/catalogs.svg" alt="One card per catalog, drawn in its lead palette" width="856"></a>
+  <a href="https://ttheme.dev/"><img src="https://kecan0406.github.io/ttheme/readme/works.svg" alt="One card per work, drawn in its lead's palette" width="856"></a>
 </p>
 
 <details>
 <summary><b>Every palette</b></summary>
 <br>
-<img src="https://kecan0406.github.io/ttheme/readme/palettes.svg" alt="Every official palette, grouped by catalog" width="856">
+<img src="https://kecan0406.github.io/ttheme/readme/palettes.svg" alt="Every built-in palette, by work" width="856">
 </details>
 
-Both pictures are drawn from the official marketplace as it ships, so they always
-match what Browse offers. Every palette comes in a light and a dark mode, and
+Both pictures are drawn from the built-in marketplace as it ships, so they
+always match what Browse offers. A palette is a take on a work — a series, a
+game, a franchise — or on one of its characters, and those come from the
+commons: one list of works and characters that no marketplace owns, so
+palettes of one character sit side by side wherever they come from. A palette
+of neither is an original. Every palette comes in a light and a dark mode, and
 `ttheme light`, `ttheme dark` or `ttheme auto` picks the one they all show in
-([light, dark and auto](https://ttheme.dev/docs/usage/modes)). Browse, the second
-tab of `ttheme`, adds or drops single palettes any time, and a merged palette
-reaches everyone with the next release.
+([light, dark and auto](https://ttheme.dev/docs/usage/modes)). Browse, the
+second tab of `ttheme`, adds or drops single palettes any time, and a merged
+palette reaches everyone with the next release.
 
 Anyone can publish palettes from a GitHub repository as a marketplace, named
-`<owner>@<name>`:
+`<owner>@<name>`, whose palettes are `<owner>@<name>/<palette>` as the built-in
+ones are `ttheme/<palette>`:
 
 ```sh
 ttheme marketplace add alice/ttheme-pastel   # add alice's marketplace
@@ -93,16 +98,16 @@ ttheme add alice@pastel/dusk                 # and install one of its palettes
 ```
 
 Nobody reviews a marketplace. Its palettes are colors and post numbers, never
-code, and only the official marketplace is held to the contrast checks.
+code, and only the built-in marketplace is held to the contrast checks.
 [The marketplaces page](https://ttheme.dev/marketplace) lists the public ones, and
 [add and update palettes](https://ttheme.dev/docs/usage/palettes) covers the rest.
 
 ### Your own palettes
 
 ```sh
-ttheme new rei      # the palette editor, on a blank palette
+ttheme new dusk     # the palette editor, on a blank palette
 ttheme edit miku    # any palette; one that is not yours keeps your changes as your tuning
-ttheme share rei    # a link that carries the palette, or a marketplace on GitHub
+ttheme share dusk   # a link that carries the palette, or a marketplace on GitHub
 ```
 
 The editor grows twenty colors that pass the contrast checks from a few seeds, then tunes
@@ -120,7 +125,7 @@ through each.
 | Command | |
 |---|---|
 | `ttheme` | Preview and Browse as tabs of one screen — the tab repaints as the cursor moves, `enter` applies |
-| `ttheme use <palette>` | Use a palette in this tab (a unique prefix works) |
+| `ttheme use <palette>` | Use a palette in this tab — `rei`, or `ttheme/rei` when two have that name |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` / `pins` | A palette for a directory, its repository or an ssh host — `cd` or `ssh` in repaints, leaving restores |
 | `ttheme auto` / `light` / `dark` | The mode every palette shows in |
@@ -158,9 +163,10 @@ your machine only. See [pictures](https://ttheme.dev/docs/usage/pictures).
 ## Contributing
 
 A palette is one TOML file of color values and post numbers — never pictures.
-Your own go in your own marketplace, with no review; the official marketplace takes pull
-requests, and [CONTRIBUTING.md](CONTRIBUTING.md) has its rules, the file format
-and the checks a palette must pass. The docs are Markdown in [`docs/`](docs),
+Your own go in your own marketplace, with no review; the built-in marketplace
+and the commons of works and characters take pull requests, and
+[CONTRIBUTING.md](CONTRIBUTING.md) has their rules, the file formats and the
+checks a palette must pass. The docs are Markdown in [`docs/`](docs),
 which [ttheme.dev/docs](https://ttheme.dev/docs) renders.
 
 ## Credits
@@ -171,7 +177,7 @@ Base ANSI ramps come from
 author. Two palettes are sourced directly instead: `miku` from
 [vauxe/hatsune-miku-theme](https://github.com/vauxe/hatsune-miku-theme) (MIT)
 and `magi` from [lotap/magi-theme](https://github.com/lotap/magi-theme) (MIT).
-Every palette records its input in `meta.ansi_source`, and only that input's
+Every built-in palette records its input in `ansi_source`, and only that input's
 hues survive: the harmonizer normalizes lightness and saturation away and
 rotates each non-signature hue toward the palette's own seed, so no scheme is
 reproduced here.

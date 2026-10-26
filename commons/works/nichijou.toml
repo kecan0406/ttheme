@@ -1,0 +1,37 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Nichijou"
+native = "日常"
+lead = "nichijou/sakamoto"
+
+[[character]]
+id = "yukko"
+native = ["相生祐子"]
+danbooru = "aioi_yuuko"
+sites = { yande = "aioi_yuko" }
+
+[[character]]
+id = "naganohara"
+native = ["長野原みお"]
+danbooru = "naganohara_mio"
+
+[[character]]
+id = "mai"
+native = ["水上麻衣"]
+danbooru = "minakami_mai"
+
+[[character]]
+id = "nano"
+native = ["東雲なの"]
+danbooru = "shinonome_nano"
+
+[[character]]
+id = "hakase"
+native = ["東雲はかせ"]
+danbooru = "professor_shinonome"
+sites = { konachan = "hakase_(nichijou)", yande = "hakase", zerochan = "shinonome_hakase" }
+
+[[character]]
+id = "sakamoto"
+native = ["阪本"]
+danbooru = "sakamoto_(nichijou)"
+sites = { yande = "sakamoto" }

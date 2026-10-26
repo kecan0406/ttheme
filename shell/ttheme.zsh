@@ -38,7 +38,7 @@ typeset -ga TTHEME_KEYMODS=(ctrl ⌃ alt ⌥ shift ⇧)
 __tt_palettes_load() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   local -a at
-  unset TTHEME_PALETTE TTHEME_MARKETPLACE TTHEME_CATALOG TTHEME_NATIVE TTHEME_SRC
+  unset TTHEME_PALETTE TTHEME_SUBJECT TTHEME_ALSO TTHEME_SHORT TTHEME_SRC
   source $TTHEME_HOME/palettes.zsh || return 1
   zstat -F %s.%N -A at +mtime -- $TTHEME_HOME/palettes.zsh 2>/dev/null
   TTHEME_PALETTES_AT=$at[1]
@@ -384,9 +384,11 @@ __tt_announce() {
   local REPLY
   __tt_name_of "$TTHEME_SPEC"
   [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || return 0
-  local name=$REPLY
-  __tt_shelf $name
-  local grp=$REPLY src=${TTHEME_SRC[$name]:-unknown}
+  local full=$REPLY name
+  __tt_label $full
+  name=$REPLY
+  __tt_shelf $full
+  local grp=$REPLY src=${TTHEME_SRC[$full]:-unknown}
   if ! __tt_color; then
     print -r -- "$name · $grp · ANSI $src"
     return 0
@@ -935,6 +937,8 @@ __tt_pin_save() {
       TTHEME_SPEC=
     fi
   fi
+  __tt_label "$name"
+  name=$REPLY
   __tt_pin_where "$key"
   k=$REPLY
   __tt_pin_scope "$key"
@@ -950,16 +954,18 @@ __tt_pin_save() {
 }
 
 __tt_unpin_drop() {
-  local k REPLY where
+  local k REPLY where name
   local -a gone=()
   local -i dirs=0
   for k in "$@"; do
     [[ -n ${TTHEME_PINS[$k]} ]] || continue
     [[ $k == /* ]] && dirs=1
+    __tt_label "${TTHEME_PINS[$k]}"
+    name=$REPLY
     __tt_pin_where "$k"
     where=$REPLY
     __tt_pin_scope "$k"
-    gone+=("Unpinned · ${TTHEME_PINS[$k]} on $where · $REPLY")
+    gone+=("Unpinned · $name on $where · $REPLY")
     unset "TTHEME_PINS[$k]"
   done
   if ! __tt_pins_write; then
@@ -1324,7 +1330,9 @@ __tt_map_tip() {
 
 __tt_map_chip() {
   local -a p=(${=TTHEME_PALETTE[$1]})
-  local bg=${p[1]#\#} fg=${p[2]#\#} name=$1
+  local bg=${p[1]#\#} fg=${p[2]#\#} name
+  __tt_label "$1"
+  name=$REPLY
   (( ${#name} > $2 )) && name=${name[1,$2-1]}…
   if (( ! color )); then
     printf -v REPLY '%-*s' $2 "$name"
@@ -1352,7 +1360,8 @@ __tt_here_line() {
     where=$REPLY
   fi
   [[ $rule == *"/**" ]] && where+=" and below"
-  __tt_map_chip "$name" ${#name}
+  __tt_label "$name"
+  __tt_map_chip "$name" ${#REPLY}
   reply=("$1 · $REPLY" "pinned to $where")
   REPLY="$1 · $REPLY pinned to $where"
 }
@@ -1403,11 +1412,11 @@ __tt_map_chain() {
 }
 
 __tt_map_line() {
-  local at=$1 name=${own[$1]:-${below[$1]}} note="" flag=""
+  local at=$1 name=${own[$1]:-${below[$1]}} note="" flag="" REPLY
   if [[ -n $name ]]; then
     if [[ -n ${own[$at]} ]]; then
       note="this directory"
-      [[ -n ${below[$at]} ]] && note+=" · ${below[$at]} below"
+      [[ -n ${below[$at]} ]] && __tt_label "${below[$at]}" && note+=" · $REPLY below"
     else
       note="and below"
     fi
@@ -1482,7 +1491,8 @@ __tt_map_fit() {
   for (( i = 1; i <= ${#ll}; i++ )); do
     lw+=($(( lpw[i] + ${(m)#ll[i]} )))
     [[ ${lat[i]} == "$here" ]] && (( lw[i] += 7 ))
-    (( ${#lpal[i]} > namew )) && namew=${#lpal[i]}
+    __tt_label "$lpal[i]"
+    (( ${#REPLY} > namew )) && namew=${#REPLY}
   done
   for (( lvl = 0; lvl < 4; lvl++ )); do
     rw=() maxw=0 need=0
@@ -1658,17 +1668,27 @@ __tt_keep() {
 }
 
 __tt_order() {
-  if [[ $TTHEME_SORT == catalog ]]; then
+  if [[ $TTHEME_SORT == cast ]]; then
     reply=($TTHEME_ORDER)
   else
     reply=($TTHEME_ABC)
   fi
 }
 
+__tt_work_of() {
+  local w=${TTHEME_SUBJECT[$1]%%/*}
+  REPLY=${w:+${TTHEME_WORK_NAME[$w]:-$w}}
+}
+
 __tt_shelf() {
-  local m=${TTHEME_MARKETPLACE[$1]} c=${TTHEME_CATALOG[$1]}
-  REPLY=${m:+$m${c:+ / }}$c
-  REPLY=${REPLY:-Other}
+  __tt_work_of $1
+  REPLY=${1%%/*}${REPLY:+ / $REPLY}
+}
+
+__tt_label() {
+  REPLY=$1
+  [[ ${TTHEME_SHORT[${1##*/}]} == "$1" ]] && REPLY=${1##*/}
+  return 0
 }
 
 __tt_menu() {
@@ -1870,25 +1890,20 @@ __tt_config_write() {
 }
 
 __tt_resolve() {
-  local name=$1 k
+  local name=$1
+  local -a m=(${=TTHEME_SHORT[$name]})
   if [[ -n ${TTHEME_PALETTE[$name]} ]]; then
     REPLY=$name
     return 0
-  fi
-  local -a m=()
-  for k in ${(k)TTHEME_PALETTE}; do
-    [[ $k == $name* ]] && m+=$k
-  done
-  if (( ${#m} == 1 )); then
+  elif (( ${#m} == 1 )) && [[ -n ${TTHEME_PALETTE[$m[1]]} ]]; then
     REPLY=$m[1]
     return 0
   elif (( ${#m} > 1 )); then
-    m=(${(o)m})
-    print -u2 "ttheme: multiple palettes start with '$name': $m"
+    print -u2 -r -- "ttheme: $name is ${(j:, :)m} — name the one you mean"
   elif m=(${(o)${(M)${(k)TTHEME_PALETTE}:#*$name*}}) && (( ${#m} )); then
-    print -u2 "ttheme: unknown palette '$name' — did you mean: ${(j:, :)m[1,3]}?"
+    print -u2 -r -- "ttheme: unknown palette '$name' — did you mean: ${(j:, :)m[1,3]}?"
   else
-    print -u2 "ttheme: unknown palette '$name' — run \`ttheme\` to list palettes"
+    print -u2 -r -- "ttheme: unknown palette '$name' — run \`ttheme\` to list palettes"
   fi
   return 1
 }
@@ -2072,13 +2087,30 @@ __tt_verb() {
 }
 
 if (( ${+functions[compdef]} )); then
+  __tt_complete_names() {
+    local n
+    reply=()
+    if [[ $PREFIX == *[/@]* ]]; then
+      reply=($TTHEME_ORDER)
+      return 0
+    fi
+    for n in $TTHEME_ORDER; do
+      if [[ ${TTHEME_SHORT[${n##*/}]} == *' '* ]]; then
+        reply+=($n)
+      else
+        reply+=(${n##*/})
+      fi
+    done
+  }
+
   __tt_complete() {
     emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
     local -a reply
     if (( CURRENT == 2 )); then
       compadd -- $TTHEME_VERBS help
     elif [[ $words[2] == (use|default|edit) && $CURRENT == 3 ]]; then
-      compadd -- $TTHEME_ORDER
+      __tt_complete_names
+      compadd -- $reply
     elif [[ $words[2] == share && $words[CURRENT-1] == --tone ]]; then
       compadd -- tuned original
     elif [[ $words[2] == (check|share) ]]; then
@@ -2090,14 +2122,15 @@ if (( ${+functions[compdef]} )); then
         [[ $word != -* && $prev != --tone ]] && named=1
         prev=$word
       done
-      (( named )) || compadd -- $TTHEME_ORDER
+      (( named )) || { __tt_complete_names; compadd -- $reply }
       (( flagged )) || compadd -- $flag
     elif [[ $words[2] == add && $words[CURRENT-1] == --in ]]; then
       _files -/
     elif [[ $words[2] == add ]]; then
       _files -g '*.toml'
     elif [[ $words[2] == new && $words[CURRENT-1] == --from ]]; then
-      compadd -- $TTHEME_ORDER
+      __tt_complete_names
+      compadd -- $reply
     elif [[ $words[2] == new && $words[CURRENT-1] == --in ]]; then
       _files -/
     elif [[ $words[2] == new ]]; then
@@ -2113,13 +2146,13 @@ if (( ${+functions[compdef]} )); then
       _files
     elif [[ $words[2] == palette ]]; then
       [[ $words[3] == measure && $CURRENT == 4 ]] && _files -g '*.(png|jpg|jpeg|webp)'
-      compadd -- --json --preview --crop --quant --anchors --catalog --native --lead --in --dry-run
+      compadd -- --json --preview --crop --quant --anchors --work --work-name --work-native --in --dry-run
     elif [[ $words[2] == marketplace && $words[3] == (add|init|check) && $CURRENT == 4 ]]; then
       _files -/
     elif [[ $words[2] == marketplace && $words[3] == remove && $CURRENT == 4 ]]; then
       compadd -- $TTHEME_MARKETPLACES
     elif [[ $words[2] == update ]]; then
-      reply=(${TTHEME_MARKETPLACES:#official})
+      reply=(${TTHEME_MARKETPLACES:#ttheme})
       compadd -- ${reply:|words}
     elif [[ $words[2] == (pin|unpin) && $CURRENT == 3 ]]; then
       reply=(${${(M)${(k)TTHEME_PINS}:#ssh:*}#ssh:})

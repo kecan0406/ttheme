@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "touhou-project/patchouli"
+signature = ["cursor", "ansi5", "ansi3"]
+ansi_source = "SeedFlip Ultraviolet"
+
+[colors]
+background = "#1b161d"
+foreground = "#ecdef0"
+cursor = "#c67ffb"
+selection_background = "#443858"
+ansi = [
+  "#27222a",
+  "#ef679a",
+  "#67d7a4",
+  "#d6bb29",
+  "#858cf3",
+  "#f789f0",
+  "#48b4f9",
+  "#dbd1dc",
+
+  "#7c757e",
+  "#f39eb9",
+  "#7cf5bd",
+  "#f3dbb7",
+  "#9fa6e8",
+  "#f7bfff",
+  "#9dccf3",
+  "#f8e9fb",
+]
+
+[colors.light]
+background = "#fff7fd"
+foreground = "#241d29"
+cursor = "#9f33ec"
+selection_background = "#e1d0f8"
+ansi = [
+  "#fbf0fb",
+  "#b52b67",
+  "#005c3e",
+  "#736300",
+  "#474fe3",
+  "#a824aa",
+  "#00557e",
+  "#302a32",
+
+  "#7c757e",
+  "#8e3658",
+  "#004c33",
+  "#67522d",
+  "#424da2",
+  "#793b89",
+  "#0c4667",
+  "#241d29",
+]

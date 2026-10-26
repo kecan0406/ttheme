@@ -56,7 +56,7 @@ function Mark({ slot }: { slot: string }) {
 }
 
 export function TabSession({ theme }: { theme: Theme }) {
-  const file = `themes/palettes/${theme.catalog ? `${theme.catalog}/` : ''}${theme.name}.toml`
+  const file = `builtin/palettes/${theme.name}.toml`
 
   return (
     <pre translate="no" class="overflow-hidden px-4.5 pt-3 pb-4 font-mono text-code whitespace-pre text-(--fg)">
@@ -66,7 +66,7 @@ export function TabSession({ theme }: { theme: Theme }) {
       </Line>
       <Line>
         <span class="bg-(--se)" safe>
-          {` ${theme.catalog ?? ''} `}
+          {` ${theme.work?.name ?? ''} `}
         </span>
       </Line>
       <Line>
@@ -104,7 +104,7 @@ export function TabSession({ theme }: { theme: Theme }) {
       </Line>
       <Line>
         <Prompt />
-        <span safe>{`grep -H '^cursor' themes/palettes/*/${theme.name}.toml`}</span>
+        <span safe>{`grep -H '^cursor' ${file}`}</span>
       </Line>
       {[theme.cursor, theme.other.cursor].map((cursor) => (
         <Line>

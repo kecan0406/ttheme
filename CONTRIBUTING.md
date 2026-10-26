@@ -1,8 +1,13 @@
 # Contributing a palette
 
-`themes/` is the official marketplace: `themes/ttheme-marketplace.toml` and
-`themes/palettes/<catalog>/<palette>.toml`. A merged palette ships with the next
-release, and `ttheme update` brings it to everyone.
+A ttheme palette is someone's reading of a character or a work, in twenty
+colors. The built-in palettes are the `ttheme` marketplace, which ships inside
+the package: `builtin/ttheme-marketplace.toml` and
+`builtin/palettes/<palette>.toml`. What they are of lives apart from them, in
+the commons: `commons/works/<work>.toml`, one file per work with its
+characters, which every marketplace's palettes name and no marketplace owns. A
+merged palette ships with the next release, and `ttheme update` brings it to
+everyone.
 
 ## Your own marketplace first
 
@@ -10,10 +15,11 @@ You do not need this repository to share a palette. Every palette you make
 lives in a marketplace of your own, and anyone can add it:
 
 ```sh
-ttheme marketplace init dust      # <you>@dust, in ~/.config/ttheme/marketplace/dust
-ttheme new rei                    # <you>@dust/rei, from blank in the palette editor (--from rei starts from rei)
-ttheme edit rei                   # the same editor; the gate's numbers are shown, never enforced — another marketplace's palette is tuned as a tone
-ttheme share                      # A marketplace on GitHub: creates the repository with gh and pushes, and again whenever it changes
+ttheme marketplace init dust       # <you>@dust, in ~/.config/ttheme/marketplace/dust
+ttheme new rei --from ttheme/rei   # <you>@dust/rei: your own rei, starting from the built-in one's colors
+ttheme new dusk                    # <you>@dust/dusk: an original, from blank in the palette editor
+ttheme edit dusk                   # the same editor; the contrast checks' numbers are shown, never enforced
+ttheme share                       # A marketplace on GitHub: creates the repository with gh and pushes, and again whenever it changes
 ```
 
 A marketplace is a repository with `palettes/<palette>.toml` and a
@@ -24,7 +30,7 @@ marketplace:
 ```toml
 "$schema" = "https://www.schemastore.org/ttheme-marketplace.json"
 name = "dust"                              # <owner>@dust
-description = "Palettes from my favourite shows"   # browse and the marketplace page show it
+description = "Palettes from my favourite shows"   # Browse and the marketplace page show it
 
 [owner]
 name = "you"                               # your GitHub handle
@@ -37,44 +43,129 @@ gone = false                               # removed — taken off the machines 
 
 # force_remove_deleted_palettes = true     # also take off a palette that just disappears
 # [metadata]                               # anything of your own; ttheme does not read it
+```
 
-[[catalog]]                                # optional: the folder palettes/night/
-name = "night"
-native = "夜"                              # shown dim beside it
-lead = "dusk"                              # the palette whose colors stand for it
+```text
+ttheme-marketplace.toml
+palettes/
+  rei.toml        # subject = "evangelion/rei"
+  dusk.toml       # no subject: an original
+works/
+  my-show.toml    # a work the commons does not hold yet
 ```
 
 The `"$schema"` lines give an editor completion and checks (Even Better TOML
 reads them, and SchemaStore matches `ttheme-marketplace.toml` by name); ttheme
-ignores them. Run `ttheme marketplace check` in the folder before you push: it reads
-every file as an install would, warns about keys ttheme does not know and about a
-`[[catalog]]` table with no folder or a lead outside it, follows the renames and
-prints the gate. Added from GitHub, a marketplace is
-`<repository owner>@<name>` and its palettes are `<owner>@<name>/<palette>`;
-the TOML files name them bare (`name = "rei"`). A folder under `palettes/` is a
-catalog — `palettes/neon/arcade.toml` puts arcade in the neon catalog — so every
-list shows the marketplace, then its catalogs, then their palettes, below the
-official catalogs; a file straight under `palettes/` sits in no catalog, after
-them. The `[[catalog]]` tables are optional: their order is the catalogs' order,
-and a folder no table names follows them by name, led by its first palette. The
-catalog is not part of the name (still `<owner>@<name>/arcade`), so a palette
-name is used once in a marketplace. A marketplace palette has no `order`
-and no `role`; `meta.base` names the official palette it varies, which only says
-where its ANSI colors came from, and `meta.from` the palette it was copied from
-(`<owner>@<marketplace>/<palette>`, or an official palette's name), which
-`ttheme share` writes when it copies one in and Browse and the site show. Give the
-repository the `ttheme-marketplace` topic — `ttheme share` does for a public one —
-and Browse's search and the
+ignores them. Run `ttheme marketplace check` in the folder before you push: it
+reads every file as an install would, follows the renames and prints the
+contrast checks. It fails on a palette file in a folder under `palettes/`,
+which no install reads, a subject neither the commons nor your `works/` holds,
+a proposed character whose danbooru tag the commons holds under another
+subject, and an `also` that names no work; it warns about keys ttheme does not
+know, a subject the commons has renamed and a proposal the commons already
+covers.
+
+Added from GitHub, a marketplace is `<repository owner>@<name>` and its
+palettes are `<owner>@<name>/<palette>`, where `<palette>` is the file's name.
+`palettes/` holds files only: one in a folder under it is not read. Every
+palette goes by such a full name — a built-in one by `ttheme/<palette>` — and
+a name typed alone, such as `rei`, means the one palette of that name, or the
+installed one when several share it.
+
+A palette says what it is of in `subject`: a work in the commons
+(`subject = "undertale"`) or one of its characters
+(`subject = "evangelion/rei"`). Every list shelves it under that work, beside
+the built-in palettes and every other marketplace's of the same work, so your
+rei sits next to `ttheme/rei`. A palette with no subject is an original, listed
+under its marketplace after the works. `from` names the palette it was copied
+from (`ttheme/rei`, `alice@pastel/dusk`), which `ttheme new --from` and
+`ttheme share` write and Browse and the site show, and `ansi_source` what its
+ANSI colors came from, `original` when the file leaves it out.
+
+When the commons does not hold your palette's work or character yet, propose
+it in `works/<work>.toml`, in the commons' own format (below). An install takes
+a proposed work the commons lacks and the characters a commons work lacks; the
+commons wins every work it holds, so a proposal never renames a work or changes
+a character already there. Proposing it to the commons too, as a pull request
+here, settles its id, title and cast for every marketplace.
+
+Give the repository the `ttheme-marketplace` topic — `ttheme share` does for a
+public one — and Browse's search and the
 [marketplace page](https://ttheme.dev/marketplace) find it.
 
-Open a pull request here when a palette belongs in the official marketplace: it
-then has to pass the contrast gate and everything below.
+Open a pull request here when a palette belongs in the built-in marketplace: it
+then has to pass the contrast checks and everything below.
+
+## Works and characters
+
+The commons is the list of works and characters palettes are of:
+`commons/works/<work>.toml`, one file per work. Every built-in palette's
+subject is in it — `mise run build` refuses one that is not — so a palette of a
+new work or character comes in the same pull request as the record that adds
+it:
+
+```toml
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Madoka Magica"                     # as lists show it; they sort the works by it
+native = "魔法少女まどか☆マギカ"              # its title in the original language, shown dim beside it
+lead = "madoka-magica/madoka"              # optional: who stands for the work, the first character by default
+
+[[character]]                              # in cast order
+id = "madoka"                              # her palettes' subject is madoka-magica/madoka
+native = ["鹿目まどか"]                      # her names in the original language, the full name first
+danbooru = "kaname_madoka"                 # her danbooru tag: who she is
+
+[[character]]
+id = "kyoko"
+native = ["佐倉杏子"]
+danbooru = "sakura_kyoko"
+sites = { konachan = "sakura_kyouko", yande = "sakura_kyouko", zerochan = "sakura_kyouko" }
+```
+
+- One work per franchise: the file's name is the work's id (`madoka-magica`),
+  in lowercase letters, digits and single hyphens and never `ttheme`, and
+  `name` is its English title as fans write it. A sequel, a spin-off or a game
+  of the same franchise joins its work's file rather than starting another.
+- The `[[character]]` tables come in cast order — the order the work's own
+  materials list its cast, the leads first — which `TTHEME_SORT=cast` lists a
+  work's palettes in. A palette may be of the work itself
+  (`subject = "undertale"`): a place, an object or an idea from it rather than
+  one character.
+- `lead` names who stands for the work where one palette stands for all of it:
+  the character it is known by, whatever their colors, or the work itself.
+- `danbooru` is who the character is: its danbooru tag (`kaname_madoka`,
+  `lucy_(cyberpunk)`), checked on danbooru first — a character tag with posts.
+  No two characters in the commons share one, so a character is never added
+  twice under two works. `find` searches it for pictures, and the character's
+  names in every language reach the search through it. A work's own subject
+  has none.
+- `native` lists the character's names in its original language (or the
+  Japanese release's), which search matches alongside the palette's name: the
+  full name first, then any other it goes by — a code name, an avatar name, a
+  civilian one (`["雨宮蓮", "来栖暁", "ジョーカー"]`). Check them against the
+  tag's danbooru wiki, whose other names list them; a name may not contain `|`.
+- `also` names the other works a character appears in, whose shelves list its
+  palettes too (`also = ["pop-n-music"]` for a jubeat character who is in pop'n
+  music as well). The character stays in its home work alone.
+- `sites` gives the tag on a site that names the character otherwise: one tag,
+  or a list `find` searches together where the site can (any number on
+  konachan and yande.re, two on danbooru, one on zerochan), and `[]` for a site
+  that has none, which `find` then skips. A site it leaves out is searched for
+  the danbooru tag. It is a search term; posts go in a palette's
+  `[[picture]]`, by number.
+- An id that has to move — a work renamed, a character's id corrected — moves
+  in `commons/renames.toml`, which maps the old subject to the new
+  (`"old-work" = "new-work"` moves a work and its characters,
+  `"evangelion/eva-01" = "evangelion/eva01"` one character). Every
+  marketplace's palettes that name the old subject follow it. Keep the entry,
+  and never give an old id to something else.
 
 ## What this project accepts
 
-**Color values and post numbers only.** A palette is twenty hex colors, a
-name, the catalog it belongs to and, optionally, the numbers of booru posts
-that suit it as a background. That is the whole contribution, released under the
+**Color values, names and post numbers only.** A palette is twenty hex colors
+in each mode, the work or character it is of and, optionally, the numbers of
+booru posts that suit it as a background; a work is its title, its characters'
+names and their booru tags. That is the whole contribution, released under the
 project's MIT license.
 
 **No images.** This repository does not accept, host or redistribute character
@@ -106,18 +197,13 @@ the pictures you have up.
 
 ## The file
 
-One file — copy any of `themes/palettes/<catalog>/*.toml` into its catalog's folder:
+One file — copy any of `builtin/palettes/*.toml`:
 
 ```toml
 "$schema" = "https://www.schemastore.org/ttheme-palette.json"
-
-[meta]
-name = "madoka"                            # must match the filename
-native_names = ["鹿目まどか"]               # the character's names in Japanese, preview searches them
-order = 15                                 # position in the rotation
+subject = "madoka-magica/madoka"           # the work and character in the commons
+signature = ["cursor", "ansi1", "ansi3"]   # the three colors the site draws as its identity
 ansi_source = "Elegant + Magica"           # what the harmonizer was fed
-booru = "kaname_madoka"                    # booru character tag find searches
-signature = ["cursor", "ansi1", "ansi3"]   # the three slots the site draws as identity
 
 [colors]
 background = "#201516"
@@ -131,47 +217,37 @@ background = "#fff8f7"
 ...
 ```
 
-The file's folder is its catalog (`themes/palettes/Madoka Magica/madoka.toml`).
-The catalog's `native` title and its lead live once, in its `[[catalog]]` table
-in `themes/ttheme-marketplace.toml`, never in a palette file.
+The file's name is the palette's: `builtin/palettes/madoka.toml` is
+`ttheme/madoka`. The folder holds files only — the shelf a palette sits on is
+its subject's work, whose title, cast and lead live once, in
+`commons/works/<work>.toml`, never in a palette file.
 
 ## Rules
 
 One palette per pull request. At most three open at a time.
 
-- `themes/palettes/<catalog>/<name>.toml`, where `<name>` matches `meta.name` and
-  is lowercase.
-- The catalog folder needs a matching `[[catalog]]` in
-  `themes/ttheme-marketplace.toml`. Adding a new catalog means adding that
-  table, with its `native` title and the `lead` palette whose signature colors
-  the catalog, where `meta.order` puts its palettes — the tables follow that
-  order. A palette file never repeats them.
-- `meta.signature` names three of the palette's colors (`cursor`,
+- `builtin/palettes/<name>.toml`, where `<name>` is lowercase letters, digits
+  and single hyphens, and no other built-in palette has it.
+- `subject` names a work or a character the commons holds: a new one comes
+  with its record in `commons/works/` in the same pull request, and
+  `mise run build` refuses a subject the commons lacks. The one built-in
+  palette with no subject, `neutral`, is the marketplace's `fallback`: no list
+  or new-tab rotation shows it, while `ttheme use neutral` still uses it in a
+  tab.
+- `signature` names three of the palette's colors (`cursor`,
   `foreground`, `background`, `selection`, `ansi0`–`ansi15`) that must differ
   — they are what the site draws as the palette's identity.
-- `meta.booru` is the character's booru tag (`kaname_madoka`,
-  `lucy_(cyberpunk)`), which `find` searches on danbooru, konachan,
-  yande.re and zerochan when someone looks for a background. Check it on danbooru first —
-  it should be a character tag with posts. Leave it out for
-  palettes that are not one character (a place, a concept). It is a search
-  term; posts go in `[[picture]]`, by number.
-- `meta.native_names` lists the character's names in its original language (or
-  the Japanese release's), which `preview` searches alongside the palette and
-  catalog names: the full name first, then any other it goes by — a code name, an
-  avatar name, a civilian one (`["雨宮蓮", "来栖暁", "ジョーカー"]`). A place,
-  concept or machine takes its own Japanese name. Check them against the tag's
-  danbooru wiki, whose other names list them; a name may not contain `|`.
-- `meta.ansi_source` records what the ANSI ramp was actually derived from, and
-  must stay accurate. Take base schemes from
+- `ansi_source` records what the ANSI ramp was actually derived from, and
+  must stay accurate; a built-in palette cannot leave it out. Take base schemes
+  from
   [mbadolato/iTerm2-Color-Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes),
   or from a source whose license permits it — say which in the PR.
 - `[colors]` is the palette in the mode it was made in, and `[colors.light]`
   (`[colors.dark]` for a light palette) the same palette in the other one, which
-  people who wear the other mode see. Write it with
+  people who use the other mode see. Write it with
   `bun .claude/skills/palette/scripts/light.ts --write <file>`, which mirrors
-  `[colors]` into the other mode and rewrites the other palettes in its catalog
-  folder too, keeping their signatures as far apart as in the mode they were made
-  in; `mise run build` refuses an official palette without it.
+  `[colors]` into the other mode; `mise run build` refuses a built-in palette
+  without it.
 - Every palette passes the contrast gate in both modes: body text at 7:1, accents and black on
   the six accents at 4.5:1, ANSI 8 and white on it at 3:1, each accent in its
   role and apart from its neighbors at text size, red and green apart for a
@@ -196,7 +272,7 @@ never wraps), and `sed -i`, `date` and `stat` differ too. Shell code that has to
 work on both should not lean on either's output format.
 
 ```sh
-mise run build                # regenerates dist/ for every terminal — fails on bad contrast
+mise run build                # regenerates dist/ for every terminal — fails on bad contrast or a subject the commons lacks
 mise run build --only kitty   # just one terminal's subtree
 mise run compat               # the terminal compatibility cases, in each installed terminal
 mise run compat konsole       # the same cases in Konsole, from a Linux container (needs Docker)
@@ -232,7 +308,7 @@ names, and one that explains nothing fails. A change that moves a fact fails
 until `mise run parity --update` records it; `--only`, `--journey` and `--show
 journey.label` narrow a run and print what a tab shows.
 
-Every official palette passes the gate unwaived — `kyubey` runs tightest,
+Every built-in palette passes the gate unwaived — `kyubey` runs tightest,
 since as the one light palette every accent has to darken enough to hold
 against a near-white background. If a palette genuinely has to break a rule,
 waive it by name and say why:
@@ -259,9 +335,10 @@ for leaving it out. The repository's own agent rules are in `AGENTS.md`.
 ## Working on the TUIs
 
 Every screen `ttheme` draws is captured and compared against `tests/screens/`.
-The scenarios run in tmux at a fixed 100×24 against `tests/fixture.json` — seven
-palettes across three catalogs, pinned so that adding a palette never rewrites a
-screen.
+The scenarios run in tmux at a fixed 100×24 against `tests/fixture/` — seven
+built-in palettes in `builtin.json` and their two works, `bocchi-the-rock` and
+`lucky-star`, in `commons.json` — pinned so that adding a palette never
+rewrites a screen.
 
 ```sh
 mise run tui                  # compare (part of `mise run ci`)
@@ -299,7 +376,7 @@ that closes exactly that, so a role inside a painted row never ends the row:
 |---|---|---|
 | `dim` | counts, key hint labels, notes, a tab that is off, box edges, a gate pass ✓ | `2` … `22` |
 | `bold` | titles, key names, a gate miss ✗ | `1` … `22` |
-| `accent` | the current ◆, an active catalog, the ▶ and frame of the part in focus | slot 6 |
+| `accent` | the current ◆, an active work, the ▶ and frame of the part in focus | slot 6 |
 | `pill` | a tab or a choice that is on, a mode badge | reverse, bold, slot 6 |
 | `chip` | a button that is not under the cursor | bold on slot 8 |
 | `danger` | the button that removes something, while the cursor is on it | reverse, bold, slot 1 |
@@ -310,7 +387,7 @@ that closes exactly that, so a role inside a painted row never ends the row:
 
 The accent is the terminal's slot 6 everywhere, never a palette's cursor: it
 follows whatever the tab wears without asking the terminal anything, reads on
-every official background, and stays right in the scrollback after the tab
+every built-in background, and stays right in the scrollback after the tab
 changes palette. Preview spells slot 6 out in truecolor only while the terminal
 does not hold the palette it shows yet (iTerm2's hover).
 
@@ -335,7 +412,7 @@ that hand text back unchanged when color is off, and `src/tui/parts.ts` holds
 the parts several screens draw: `tabOf`, `pillOf`, `hintOf`, `checkOf`,
 `boxEdge` and `boxed`. Glyphs that mean a state are in `MARKS`, one meaning
 each: ▌ the cursor's row, ◆ the palette worn or handled, ▶ the part in focus, ✦ a signature slot,
-▸ ▾ a closed and an open catalog, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more
+▸ ▾ a closed and an open work, ● ○ on and off, ✓ ✗ pass and miss, ↑ ↓ more
 rows, ⇡ an update, ↻ auto-update, × a removal, ↶ taking one back, ★ stars, ⧉ a link, ⌕ search, ⇠ a bright that
 follows its normal, ◐ contrast, ■ a swatch, ▣ pictures.
 
@@ -370,7 +447,7 @@ the same marks from `TTHEME_MARKS` beside it (`$TTHEME_MARKS[current]`).
 truecolor `printf` format in the shell layer is a palette's color and passes)
 and on a mark written literally in the shell layer — all but ↑ ↓ × ■ · …, which
 also read as text there; it also checks that every role closes what it opens,
-that slot 6 and the surfaces hold on every official palette, and that no glyph
+that slot 6 and the surfaces hold on every built-in palette, and that no glyph
 in `MARKS` means two things. The screens in `tests/screens/` run
 under `NO_COLOR`, so look at a change to color in a real terminal too.
 
@@ -395,15 +472,15 @@ the panel below — also take `h` and `l` as `←` and `→`.
 |---|---|---|
 | any character | filters | filters every marketplace, landing on the first match in the panel; in the search, filters the marketplace list at once; in the `+ Add marketplace` form, types the source |
 | `↑` `↓` `ctrl+j` `ctrl+k` `pgup` `pgdn` `home` `end` | move, wrapping | move, wrapping; in a marketplace's panel `↓` past the last palette reaches its actions and `↑` from the first wraps onto them, while the page keys stay among the palettes |
-| `←` `→` | close or open a catalog; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a catalog, and `←` at its top level goes back to the marketplaces; `→` on `+ Add marketplace` moves into its form in the panel and on `Search marketplace` opens the search, and `←` in either goes back |
-| `enter` | open or close a catalog; on a palette, use it, asking where | on a marketplace, move into its panel; there, open or close a catalog, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `+ Add marketplace`, move into its form in the panel, and there fetch the source typed and land in the panel of the marketplace it stages; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; on a palette, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
+| `←` `→` | close or open a work; `→` on a palette opens its panel | `→` on a marketplace moves into its panel; there, close or open a work, and `←` at its top level goes back to the marketplaces; `→` on `+ Add marketplace` moves into its form in the panel and on `Search marketplace` opens the search, and `←` in either goes back |
+| `enter` | open or close a work; on a palette, use it, asking where | on a marketplace, move into its panel; there, open or close a work, or do the action under the palettes (`Update now`, `Auto-update`, `Remove marketplace`); on `+ Add marketplace`, move into its form in the panel, and there fetch the source typed and land in the panel of the marketplace it stages; on `Search marketplace`, open the search, and there add a marketplace and go back to its card, or go back on `← Back`; on a palette, review every pick and marketplace change, then apply it — with nothing changed, it does nothing; close the result |
 | `esc` | clear the filter, then put the tab back and close | clear the filter, then leave the panel, then cancel, asking first when something is staged; in the `+ Add marketplace` form, go back, dropping a fetch still running; in the search, clear it, then go back |
-| `space` | fold or open a catalog | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
+| `space` | fold or open a work | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter or the `+ Add marketplace` form's source, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks list says what browse's marks mean |
 | `alt+c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
-| `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a catalog, stage its update; in the search, load the marketplace list again |
+| `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a work, stage its update; in the search, load the marketplace list again |
 | `shift+←` `shift+→` | switch the sample | — |
 | `tab` | on a palette, open its panel; elsewhere, the next screen of the bare `ttheme` | next screen of the bare `ttheme` |
 | `shift+tab` | previous screen of the bare `ttheme` | previous screen of the bare `ttheme` |
@@ -453,7 +530,7 @@ moves the cursor a row and never wraps.
 A button row is an icon, its label and the value after them (`↻ Auto-update   on`,
 `+ Add marketplace`) marked as one zone, so a click anywhere on the item acts and
 the blank after it does not. The icon and label sit on a chip — `chip`, slot 8,
-which every official palette keeps 3.6:1 or more away from its background — and
+which every built-in palette keeps 3.6:1 or more away from its background — and
 the chip under the cursor is a `pill`; a button that removes something stays a grey `chip` until the cursor reaches it and then is a red `danger` chip, not a `pill` (red text on the grey chip reads at 1.4–1.7:1, so red is only ever a fill, slot 1 under the background's own color); one with nothing to do is dim, with no chip. A status that is not a
 control, like a card's `↻ auto-update` badge, gets no zone of its own.
 
@@ -537,12 +614,14 @@ calls it — never the words in the left column:
 | tone | tuning, tuned | the colors you changed over a marketplace's palette |
 | tone | tinted | a picture drawn in one color of its palette (`tone` stays only as the value `config.zsh` holds) |
 | image | picture | a background picture |
-| Comes with ttheme, The official marketplace | Built in | the official marketplace |
+| official, comes with ttheme | built-in (`Built in` on Browse's card) | the `ttheme` marketplace that ships inside ttheme, and its palettes |
+| catalog, series | work | a series, a game or a franchise: the shelf a palette sits on |
+| loose, uncategorized | original | a palette that is of no work or character |
 | Read in place | Always up to date | a marketplace in a folder |
 | slot | color | one of a palette's twenty colors, outside the code |
 
 Counts on screen come from the palettes listed, never from the rows being drawn. A
-folded catalog still reports how many of its palettes are picked, and the
+folded work still reports how many of its palettes are picked, and the
 filtered total counts what matches, not what fits on screen. The cursor and the
 scroll window are the only things allowed to read the drawn rows.
 

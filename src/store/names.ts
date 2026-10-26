@@ -505,11 +505,8 @@ function aliasMap(tags: readonly string[], home: string): Map<string, string[]> 
   return new Map(tags.map((tag) => [tag, aliasesIn(fresh, tag)]))
 }
 
-export function knowAliases(entries: readonly { booru?: string }[], home = homedir()): void {
-  paletteAliases(
-    entries.flatMap((entry) => (entry.booru ? [entry.booru] : [])),
-    home,
-  )
+export function knowAliases(tags: readonly string[], home = homedir()): void {
+  paletteAliases(tags, home)
 }
 
 interface NameHit {

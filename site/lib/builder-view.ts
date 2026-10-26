@@ -6,6 +6,7 @@ import {
   madeMode,
   nameTrouble,
   signatureTrouble,
+  subjectTrouble,
   type View,
   writesOther,
 } from '@/lib/builder'
@@ -221,7 +222,6 @@ export interface SeedRow {
 export interface AboutView {
   name: string
   file: string
-  base: string | null
   from: string | null
   signature: string[]
   slots: string[]
@@ -230,7 +230,8 @@ export interface AboutView {
   background: string
   trouble: boolean
   ansiSource: string
-  booru: string
+  subject: string
+  unread: boolean
   pictures: Picture[]
   keep: boolean
 }
@@ -259,7 +260,6 @@ export interface LinkView {
   link: string | null
   code: string | null
   failed: string | null
-  clash: string | null
 }
 
 export interface MarketView {
@@ -273,6 +273,7 @@ export interface MarketView {
 export interface StartItem {
   name: string
   label: string
+  publisher: string | null
   dots: string[]
   lead: boolean
 }
@@ -373,7 +374,6 @@ export function aboutOf(edit: Edit, view: View): AboutView {
   return {
     name: edit.name,
     file: `${edit.name}.toml`,
-    base: edit.meta.base ?? null,
     from: edit.meta.from ?? null,
     signature: edit.signature,
     slots: SLOT_NAMES,
@@ -382,7 +382,8 @@ export function aboutOf(edit: Edit, view: View): AboutView {
     background: list[0] as Hex,
     trouble: signatureTrouble(edit) !== undefined,
     ansiSource: edit.meta.ansiSource ?? '',
-    booru: edit.meta.booru ?? '',
+    subject: edit.meta.subject ?? '',
+    unread: subjectTrouble(edit.meta.subject) !== undefined,
     pictures: (edit.meta.pictures ?? []).map(pictureOf),
     keep: edit.keep,
   }
@@ -394,7 +395,10 @@ export function exportProblem(edit: Edit): string | undefined {
   if (named) return `The name ${named} — fix it in the bar first.`
   const signed = signatureTrouble(edit)
 
-  return signed ? `The signature ${signed} — pick them in the about tab.` : undefined
+  if (signed) return `The signature ${signed} — pick them in the about tab.`
+  const subject = subjectTrouble(edit.meta.subject)
+
+  return subject ? `The subject ${subject} — fix it in the about tab.` : undefined
 }
 
 export function fileOf(edit: Edit): FileView {
@@ -404,7 +408,7 @@ export function fileOf(edit: Edit): FileView {
 
   if (!read) {
     try {
-      readOwnText(edit.name, text, [])
+      readOwnText(edit.name, text)
     } catch (error) {
       read = `It would not read back — ${(error as Error).message}`
     }

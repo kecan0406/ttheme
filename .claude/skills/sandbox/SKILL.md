@@ -39,12 +39,12 @@ A flow that needs both — "keep from preview, then does only this Ghostty reloa
 
 ```zsh
 S=.claude/skills/sandbox/scripts/shell.zsh
-zsh $S start gojo konata          # build, wire, install these palettes, print the first screen
-                                  # no palettes installs all of them; --empty none (init's new-user state);
-                                  # --mine the user's own install, copied (palettes, default, marketplaces, pins, tone, pictures, settings)
-zsh $S send 'ttheme pins' Enter   # tmux key names; prints the screen once it settles
+zsh $S start ttheme/gojo ttheme/konata   # build, wire, install these palettes, print the first screen
+                                        # no palettes installs all of them; --empty none (init's new-user state);
+                                        # --mine the user's own install, copied (palettes, default, marketplaces, pins, tone, pictures, settings)
+zsh $S send 'ttheme pins' Enter         # tmux key names; prints the screen once it settles
 zsh $S send Down Right Enter
-zsh $S show -e                    # current screen with SGR colors — shows which option is highlighted
+zsh $S show -e                          # current screen with SGR colors — shows which option is highlighted
 zsh $S stop
 ```
 
@@ -56,7 +56,7 @@ tmux swallows palette OSCs, so colors on this screen mean nothing — measure th
 
 ```zsh
 G=.claude/skills/sandbox/scripts/ghostty.zsh
-zsh $G --shots <scratchpad>/paint gojo konata -- 'ttheme use gojo' 'sb_report "fg $(sb_color fg) ansi1 $(sb_color 1)"'
+zsh $G --shots <scratchpad>/paint ttheme/gojo ttheme/konata -- 'ttheme use ttheme/gojo' 'sb_report "fg $(sb_color fg) ansi1 $(sb_color 1)"'
 ```
 
 The script starts a fresh sandbox with those palettes (every palette when none are named, none with `--empty`, the user's own install with `--mine`; `--pictured` puts a test picture on the last one named, as a find install would) and opens a second Ghostty instance on it — its own config only, no saved window state — then hands focus back to whatever the user had in front as soon as the window exists. The commands after `--` run once, at the first prompt of that first window. Then it prints the results and closes the instance; `--keep` leaves it open. Anything longer than a line or two goes in a file in the scratchpad, passed as `-- "source <file>"`; the arguments are joined with `; ` and nested quotes get painful fast.
@@ -101,7 +101,7 @@ In Ghostty mode the shell's `HOME` is the user's real home, because macOS `login
 
 ```zsh
 I=.claude/skills/sandbox/scripts/iterm.zsh
-zsh $I --shots <scratchpad>/it gojo miku -- 'ttheme use gojo' 'sb_wear miku' 'sleep 1' 'sb_report "bg $(sb_color bg)"'
+zsh $I --shots <scratchpad>/it ttheme/gojo ttheme/miku -- 'ttheme use ttheme/gojo' 'sb_wear ttheme/miku' 'sleep 1' 'sb_report "bg $(sb_color bg)"'
 ```
 
 `--pictured` works as in Ghostty mode. `mise run sandbox --iterm` wires the sandbox as `init` does for iTerm2 (`ttheme · <palette>` profiles in `$SANDBOX/Library/Application Support/iTerm2/DynamicProfiles/ttheme.json`) and starts a second iTerm2 with `-suite ttheme-sandbox`: its own preferences (`~/Library/Preferences/ttheme-sandbox.plist`), its own `~/Library/Application Support/ttheme-sandbox/` with its own `iTermServer`, so the user's iTerm2 — running or not — is never touched. Every run deletes both and rebuilds. The launch arguments keep Sparkle and window restoration out of the user's `com.googlecode.iterm2` domain; check that domain is unchanged after a series (`defaults read com.googlecode.iterm2`). It comes to the front for about a quarter second at launch and hands focus straight back; nothing after that takes focus, SetProfile and kitty graphics included.
@@ -136,7 +136,7 @@ Measured on 3.7.2, 2026-09-22 — know these before reading results:
 
 ```zsh
 W=.claude/skills/sandbox/scripts/window.zsh
-zsh $W --warp --shots <scratchpad>/w rei asuka -- "sb_drive 'ttheme' 2 text:rei 1 right end f 12 shot:find"
+zsh $W --warp --shots <scratchpad>/w ttheme/rei ttheme/asuka -- "sb_drive 'ttheme' 2 text:rei 1 right end f 12 shot:find"
 ```
 
 `--warp` opens a Warp window through a launch configuration, in the user's own Warp — it cannot be pointed at another home. It opens Warp from `env -i`, so a Warp the run starts is the one a Dock click starts. The tab's first shell is the user's own, running their ttheme, before `sandbox.command` execs the sandbox shell; and opening the window makes Warp save its session, which wakes the user's own follower, so their Warp may take the palette of their tab in front (measured 2026-09-30: `rei` became `hakase`) — tell the user. Screenshots take the newest Warp window; at the end the run hangs up that window's shell instead of quitting the app. The shell's `HOME` is the sandbox, but Warp itself reads only the real `~/.warp`, so what the adapter writes to `$SANDBOX/.warp` never reaches the screen. To see a theme or picture change for real, link it for one run (`rm -rf $HOME/.warp && ln -s <real home>/.warp $HOME/.warp` first in the commands), back up the real `settings.toml` and `~/.warp/themes` before, and put both back after — the themes first, then the settings a second later: that run changes the user's Warp theme, a `sync` inside it deletes other palettes' pictured themes, and a settings file naming a theme Warp has not seen yet leaves Warp on its default until the settings change again.
@@ -149,7 +149,7 @@ Measured on Warp 0.2026.09.16, 2026-09-28: `CSI 14t` and `CSI 18t` answer in poi
 
 ```zsh
 W=.claude/skills/sandbox/scripts/window.zsh
-TTHEME_KITTY_APP=<kitty.app> zsh $W --kitty --shots <scratchpad>/k asuka gojo -- 'ttheme use gojo' 'sb_report "ansi1 $(sb_color 1)"'
+TTHEME_KITTY_APP=<kitty.app> zsh $W --kitty --shots <scratchpad>/k ttheme/asuka ttheme/gojo -- 'ttheme use ttheme/gojo' 'sb_report "ansi1 $(sb_color 1)"'
 ```
 
 `--kitty`, `--alacritty` or `--wezterm` picks the terminal; `TTHEME_KITTY_APP`, `TTHEME_ALACRITTY_APP` and `TTHEME_WEZTERM_APP` name an app outside `/Applications` (none of the three is installed on the user's machine — download the release into the scratchpad and point at it). `--terminal-app` opens a window in the user's own Terminal.app (from `env -i`, as `--warp` does), whose first shell is the user's own login shell; the commands run in the sandbox shell `sandbox.command` execs from it, and the run hangs that shell up at the end and quits Terminal.app if it was not running before. Its `init` wires Terminal.app, which writes `ttheme · <palette>` profiles and the default into the user's real Terminal settings — macOS keeps them per user, whatever `HOME` says — so the run saves them first (`tests/terminal-prefs.zsh save`, kept in `$TMPDIR` until a restore) and puts them back at its end, `--keep` excepted: run `zsh tests/terminal-prefs.zsh restore` after closing a kept window. Terminal.app reads its settings at launch, so the wired look shows only when the run starts Terminal itself; compare `defaults export com.apple.Terminal -` before and after a series. Measured on Terminal 2.15 (macOS 27), 2026-10-02: a new window opens on the startup palette's profile; `ttheme default` switches a running Terminal's default through AppleScript from its own tab without a permission prompt; `ttheme off` moves the tab onto the user's own profile, which drops the colors an OSC set. `--pictured` puts a test picture on the last palette named before Terminal starts, so its profile carries one; `sb_drive` hands its child the real tab's tty there (`SB_TTY`), since the layer finds the tab it switches by `tty`. Measured on 2.15, 2026-10-03: a profile's picture is stretched over the whole view, drawn over any background an OSC set, and a see-through pixel shows light grey (`#cbcbcb`), whatever the background; a picture file is read once per path for the session, but the profile finds the file again by its identity each time a tab takes it, so one written in place and renamed shows its new content, and one removed shows none; `CSI 14t` answers in points, `CSI 16t` not at all; a one-shot `terminal-app.js tab` takes about 170 ms, `serve` 16–33 ms a switch; and Terminal prints a kitty APC's payload as text. The user's own login shell starts each Terminal window first, so it rewrites the user's `colors.terminal-app` in their state dir with the sandbox's colors — delete it after a series. Everything else is Ghostty mode's: the commands run at the first prompt with `sb_color`, `sb_query`, `sb_report` and `sb_shot`, and the same report comes back.

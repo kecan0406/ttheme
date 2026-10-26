@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "no-game-no-life/steph"
+signature = ["cursor", "ansi4", "ansi12"]
+ansi_source = "Catppuccin Mocha + Blank"
+
+[colors]
+background = "#201516"
+foreground = "#fbdbde"
+cursor = "#e9607c"
+selection_background = "#483b38"
+ansi = [
+  "#2d2122",
+  "#dc7790",
+  "#d2c45e",
+  "#efae7a",
+  "#7391f3",
+  "#df9ebd",
+  "#86b880",
+  "#e5cfd1",
+
+  "#847374",
+  "#eca1b2",
+  "#eae08e",
+  "#ffd5b7",
+  "#7fb1d2",
+  "#ffbfde",
+  "#a3d59e",
+  "#ffe9ea",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1d"
+cursor = "#bb3456"
+selection_background = "#e7d3ce"
+ansi = [
+  "#fff0f1",
+  "#a6405d",
+  "#395922",
+  "#8c5727",
+  "#2458db",
+  "#924b74",
+  "#115c3b",
+  "#36292a",
+
+  "#847374",
+  "#883c51",
+  "#2e491a",
+  "#724c2e",
+  "#245a77",
+  "#7d4068",
+  "#014d33",
+  "#2d1b1d",
+]

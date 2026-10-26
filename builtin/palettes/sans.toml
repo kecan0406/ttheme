@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "undertale/sans"
+signature = ["cursor", "foreground", "ansi11"]
+ansi_source = "Galaxy"
+
+[colors]
+background = "#12181d"
+foreground = "#dee3eb"
+cursor = "#3ec1ff"
+selection_background = "#2f3e59"
+ansi = [
+  "#1e2529",
+  "#f2649a",
+  "#69d5a3",
+  "#91ca43",
+  "#369beb",
+  "#b3a5ff",
+  "#16b8f1",
+  "#cfd5dc",
+
+  "#71787e",
+  "#f39eb9",
+  "#89f2c0",
+  "#e4e43b",
+  "#77b0e8",
+  "#e2c7ff",
+  "#97cfed",
+  "#e3f0fa",
+]
+
+[colors.light]
+background = "#f5faff"
+foreground = "#1b2026"
+cursor = "#0082b2"
+selection_background = "#c8d7f9"
+ansi = [
+  "#eef4fb",
+  "#b72767",
+  "#005c3e",
+  "#456e00",
+  "#0067a6",
+  "#714ac3",
+  "#005774",
+  "#262d32",
+
+  "#71787e",
+  "#8e3658",
+  "#004c33",
+  "#585800",
+  "#0f588b",
+  "#654789",
+  "#004860",
+  "#152129",
+]

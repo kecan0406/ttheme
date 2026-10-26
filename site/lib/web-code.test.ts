@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test'
 import { brotliCompressSync } from 'node:zlib'
-import { codeBody, type Draft, paletteToml, sealed } from '../../src/core/draft.ts'
-import { fromCode } from '../../src/core/own.ts'
+import { CODE, codeBody, type Draft, paletteToml, sealed } from '../../src/core/draft.ts'
+import { fromCode, readCodes } from '../../src/core/own.ts'
 import { textDraft, webCheck, webCode } from './web-code'
 
 const ansi = [
@@ -25,9 +25,9 @@ const ansi = [
 
 const draft: Draft = {
   name: 'rei-tuned',
-  base: 'alice',
+  subject: 'evangelion/rei',
+  from: 'ttheme/rei',
   ansiSource: 'alice',
-  booru: 'alice_zuberg',
   signature: ['cursor', 'selection', 'ansi5'],
   background: '#1b170c',
   foreground: '#ede2c6',
@@ -48,8 +48,11 @@ const draft: Draft = {
 
 test('a link the builder makes in a browser is one the CLI reads, both modes, waiver and pictures included', async () => {
   const code = await webCode([draft])
-  expect(code).toMatch(/^tt4:[A-Za-z0-9_-]+$/)
+  expect(code).toMatch(new RegExp(`^${CODE}[A-Za-z0-9_-]+$`))
   expect(fromCode(code)).toEqual([draft])
+  expect(readCodes(code).map((entry) => [entry.name, entry.subject, entry.from])).toEqual([
+    [draft.name, draft.subject, draft.from],
+  ])
 })
 
 async function packedAs(method: number, bytes: Uint8Array): Promise<string> {
@@ -64,6 +67,6 @@ test('the builder sends a link of any packing to its page, and turns away a code
   await expect(webCheck(`${code.slice(0, 6)}${code[6] === 'A' ? 'B' : 'A'}${code.slice(7)}`)).rejects.toThrow(/add up/)
 })
 
-test('a palette file the builder writes opens back as the same palette', () => {
+test('a palette file the builder writes opens back as the same palette, named by its file', () => {
   expect(textDraft('rei-tuned (1).toml', paletteToml(draft))).toEqual(draft)
 })

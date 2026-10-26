@@ -2,7 +2,7 @@ import { BookOpen, Menu, Paintbrush, Store } from 'lucide'
 import { siGithub } from 'simple-icons'
 import { Button, LinkButton } from '@/components/ui/button'
 import type { Facts } from '@/lib/facts'
-import { OFFICIAL_URL, starCount } from '@/lib/gallery'
+import { REPO_URL, starCount } from '@/lib/gallery'
 import { BrandIcon, GitHubStar, Icon, NewTab } from '@/lib/icons'
 import { cn, plural } from '@/lib/utils'
 import { HeaderBar } from './header-bar'
@@ -78,7 +78,7 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
           <LinkButton
             variant="raised"
             size="sm"
-            href={OFFICIAL_URL}
+            href={REPO_URL}
             target="_blank"
             rel="noopener"
             class="h-8 justify-start gap-2 header-menu:rounded-xl header-short:w-8 header-short:justify-center header-short:px-0"

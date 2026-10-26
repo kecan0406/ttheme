@@ -1,43 +1,38 @@
 import { Store } from 'lucide'
-import { catalogsOf } from '@/lib/catalogs'
 import type { Facts } from '@/lib/facts'
 import {
+  BUILTIN_ABOUT,
+  BUILTIN_COMMITS_URL,
+  BUILTIN_URL,
   FIRST_SORT,
-  OFFICIAL,
-  OFFICIAL_ABOUT,
-  OFFICIAL_COMMITS_URL,
-  OFFICIAL_REPO,
-  OFFICIAL_THEMES_URL,
   ORDERS,
+  REPO,
   rankOf,
   repoUrl,
   type Shelf,
 } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
-import type { Marketplace, Theme } from '@/lib/themes'
+import { BUILTIN, type Marketplace, type Theme } from '@/lib/themes'
 import { plural } from '@/lib/utils'
+import { byWork } from '@/lib/works'
 import { CommandRow } from './command-row'
 import { MarketplaceBoard } from './marketplace-board'
 import { MarketplaceFrame } from './marketplace-frame'
 
 const PUBLISH = ['ttheme marketplace init', 'ttheme marketplace check']
 
-function inOrder(palettes: Theme[]): Theme[] {
-  return catalogsOf(palettes).flatMap((shelf) => shelf.themes)
-}
-
-function shelvesOf(themes: Theme[], marketplaces: Marketplace[], facts: Facts): Shelf[] {
+function listingsOf(themes: Theme[], marketplaces: Marketplace[], facts: Facts): Shelf[] {
   const shelves: Shelf[] = [
     {
-      id: OFFICIAL,
-      repo: OFFICIAL_REPO,
-      url: OFFICIAL_THEMES_URL,
-      commits: OFFICIAL_COMMITS_URL,
-      about: OFFICIAL_ABOUT,
+      id: BUILTIN,
+      repo: REPO,
+      url: BUILTIN_URL,
+      commits: BUILTIN_COMMITS_URL,
+      about: BUILTIN_ABOUT,
       stars: facts.repo?.stars ?? null,
       pushedAt: facts.repo?.pushedAt ?? null,
       version: facts.version,
-      palettes: inOrder(themes),
+      palettes: themes,
     },
     ...marketplaces.map((marketplace) => ({
       id: marketplace.id,
@@ -48,7 +43,7 @@ function shelvesOf(themes: Theme[], marketplaces: Marketplace[], facts: Facts): 
       stars: marketplace.stars,
       pushedAt: marketplace.pushedAt,
       version: null,
-      palettes: inOrder(marketplace.palettes),
+      palettes: marketplace.palettes,
     })),
   ]
 
@@ -64,13 +59,12 @@ export function MarketplacePage({
   marketplaces: Marketplace[]
   facts: Facts
 }) {
-  const shelves = shelvesOf(themes, marketplaces, facts)
+  const shelves = listingsOf(themes, marketplaces, facts)
   const palettes = shelves.reduce((sum, shelf) => sum + shelf.palettes.length, 0)
 
-  const catalogs = shelves.reduce(
-    (sum, shelf) => sum + catalogsOf(shelf.palettes).filter((entry) => entry.catalog !== null).length,
-    0,
-  )
+  const works = new Set(
+    byWork(shelves.flatMap((shelf) => shelf.palettes)).flatMap((shelf) => (shelf.work ? [shelf.work.id] : [])),
+  ).size
 
   return (
     <MarketplaceFrame facts={facts} current="/marketplace">
@@ -78,9 +72,7 @@ export function MarketplacePage({
         <div class="grid gap-1.5">
           <h1 class="font-display text-display-lg font-black">marketplace</h1>
           <p class="text-sm font-medium text-muted-foreground" safe>
-            {[plural(shelves.length, 'marketplace'), plural(palettes, 'palette'), plural(catalogs, 'catalog')].join(
-              ' · ',
-            )}
+            {[plural(shelves.length, 'marketplace'), plural(palettes, 'palette'), plural(works, 'work')].join(' · ')}
           </p>
         </div>
       </MarketplaceBoard>

@@ -1,14 +1,4 @@
-import {
-  checked,
-  codeBody,
-  type Draft,
-  draftOf,
-  opened,
-  paletteSlug,
-  readOwnText,
-  sealed,
-  smallest,
-} from '../../src/core/draft.ts'
+import { checked, codeBody, type Draft, draftOf, opened, readOwnText, sealed, smallest } from '../../src/core/draft.ts'
 import { paletteEntry } from '../../src/core/manifest.ts'
 
 async function digest(bytes: Uint8Array): Promise<Uint8Array> {
@@ -55,8 +45,12 @@ export async function webCheck(code: string): Promise<void> {
   checked(sealedCode, await digest(sealedCode.packed))
 }
 
+export function fileSlug(file: string): string {
+  return file.replace(/\.toml$/i, '').replace(/ \(\d+\)$/, '')
+}
+
 export function textDraft(file: string, text: string): Draft {
-  const theme = readOwnText(paletteSlug(file, text), text, [], true)
+  const theme = readOwnText(fileSlug(file), text, true)
 
   return draftOf(paletteEntry(theme), theme.name, theme.waiveReason)
 }

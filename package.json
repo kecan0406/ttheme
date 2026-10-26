@@ -7,7 +7,8 @@
   },
   "files": [
     "bin",
-    "dist/manifest.json",
+    "dist/builtin.json",
+    "dist/commons.json",
     "skills",
     "shell",
     "!shell/check.zsh"

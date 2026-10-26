@@ -1,5 +1,6 @@
 import { cells } from '../../core/text.ts'
-import { isRemote, OFFICIAL, parseSource, shownSource } from '../../store/sources.ts'
+import { BUILTIN } from '../../core/theme.ts'
+import { isRemote, parseSource, shownSource } from '../../store/sources.ts'
 import { fit } from '../ansi.ts'
 import { rowSpot } from '../palette-prompt.ts'
 import { boxEdge, buttonOf, moreOf } from '../parts.ts'
@@ -20,7 +21,7 @@ export function more(p: Paint, step: number, count: number, pane?: string): stri
 export function typedSource(text: string): string | undefined {
   const typed = text.trim()
 
-  if (typed !== OFFICIAL && !typed.includes('/') && !typed.startsWith('~')) {
+  if (typed !== BUILTIN && !typed.includes('/') && !typed.startsWith('~')) {
     return undefined
   }
 
@@ -32,7 +33,7 @@ export function typedSource(text: string): string | undefined {
 }
 
 export function whereOf(source: string): string {
-  return source === OFFICIAL ? 'Built in' : isRemote(source) ? source : shownSource(source)
+  return source === BUILTIN ? 'Built in' : isRemote(source) ? source : shownSource(source)
 }
 
 export function cap(text: string): string {

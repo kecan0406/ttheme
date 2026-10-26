@@ -18,16 +18,15 @@ import { Button, buttonVariants, LinkButton } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupCount, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { catalogsOf, nativeLang } from '@/lib/catalogs'
 import {
   FIRST_SORT,
   marketplacePath,
-  OFFICIAL,
   type Peek,
   palettePath,
   peekOf,
   type Shelf,
   SORTS,
+  SOURCE_LABELS,
   SOURCES,
   type Sort,
   type Source,
@@ -38,14 +37,15 @@ import {
 } from '@/lib/gallery'
 import { BrandIcon, GitHubStar, Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { paint, type Theme } from '@/lib/themes'
+import { BUILTIN, paint, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
+import { byWork, leadOf, leadsOf } from '@/lib/works'
 import { TerminalFrame } from './terminal-frame'
 import { TerminalPreview } from './terminal-preview'
 
 const DOTS = 9
 
-const SOURCE_ICONS: Record<Source, IconNode | null> = { all: null, official: Layers, community: Store }
+const SOURCE_ICONS: Record<Source, IconNode | null> = { all: null, builtin: Layers, community: Store }
 
 const SORT_LABELS = {
   popular: { label: 'popular', icon: Star },
@@ -53,8 +53,8 @@ const SORT_LABELS = {
   name: { label: 'a–z', icon: ArrowDownAZ },
 } as const satisfies Record<Sort, { label: string; icon: IconNode }>
 
-interface Catalog {
-  catalog: string | null
+interface Stack {
+  work: string | null
   name: string
   note: string | null
   lang: string | undefined
@@ -62,25 +62,35 @@ interface Catalog {
   lead: Theme
 }
 
-function catalogsIn(shelf: Shelf): Catalog[] {
-  return catalogsOf(shelf.palettes).flatMap(({ catalog, themes }) => {
-    const lead = themes.find((theme) => theme.lead) ?? themes[0]
+function stacksIn(shelf: Shelf): Stack[] {
+  return byWork(shelf.palettes).map((group) => {
+    const { work, themes } = group
+    const lead = leadOf(group)
 
-    if (!lead) return []
-    const note = catalog === null ? null : (lead.native ?? `led by ${lead.name}`)
-    const lang = catalog === null ? undefined : nativeLang(lead)
-
-    return [{ catalog, name: catalog ?? 'other palettes', note, lang, themes, lead }]
+    return {
+      work: work?.name ?? null,
+      name: work?.name ?? 'originals',
+      note: work ? (work.native ?? `led by ${lead.name}`) : null,
+      lang: work?.lang ?? undefined,
+      themes,
+      lead,
+    }
   })
 }
 
-function CatalogSwatch({ theme }: { theme: Theme }) {
+function peeksIn(shelf: Shelf, stacks: Stack[]): Stack[] {
+  const first = leadsOf(shelf.palettes)[0]
+
+  return [...stacks.filter((stack) => stack.lead === first), ...stacks.filter((stack) => stack.lead !== first)]
+}
+
+function WorkSwatch({ theme }: { theme: Theme }) {
   const style = [
     `--bg:${paint(theme, (shade) => shade.background)}`,
     ...theme.signature.map((_, index) => `--sg${index}:${paint(theme, (shade) => shade.signature[index] as string)}`),
   ].join(';')
 
-  return <span aria-hidden="true" data-slot="catalog-swatch" style={style} />
+  return <span aria-hidden="true" data-slot="work-swatch" style={style} />
 }
 
 function PaletteDots({ themes }: { themes: Theme[] }) {
@@ -92,43 +102,43 @@ function PaletteDots({ themes }: { themes: Theme[] }) {
   return <span aria-hidden="true" data-slot="palette-dots" style={style} />
 }
 
-function CatalogCard({ catalog, official }: { catalog: Catalog; official: boolean }) {
+function StackCard({ stack, builtin }: { stack: Stack; builtin: boolean }) {
   return (
     <a
-      href={palettePath(catalog.lead)}
-      data-catalog
-      data-search={catalog.themes.map((theme) => searchable(theme).text).join('\n')}
-      data-official={official}
+      href={palettePath(stack.lead)}
+      data-stack
+      data-search={stack.themes.map((theme) => searchable(theme).text).join('\n')}
+      data-builtin={builtin}
       class="grid gap-3 rounded-xl border bg-card px-3.5 py-3 shadow-sm transition-[translate,border-color,box-shadow] duration-200 outline-none hover:border-input hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring motion-safe:hover:-translate-y-0.5"
     >
       <span class="flex min-w-0 items-center gap-2.5">
-        <CatalogSwatch theme={catalog.lead} />
+        <WorkSwatch theme={stack.lead} />
         <span class="grid min-w-0">
           <span class="truncate font-display text-base leading-snug font-extrabold" safe>
-            {catalog.name}
+            {stack.name}
           </span>
-          {catalog.note === null ? null : (
-            <span lang={catalog.lang} class="truncate font-display text-xs font-extrabold text-muted-foreground" safe>
-              {catalog.note}
+          {stack.note === null ? null : (
+            <span lang={stack.lang} class="truncate font-display text-xs font-extrabold text-muted-foreground" safe>
+              {stack.note}
             </span>
           )}
         </span>
       </span>
       <span class="flex items-center justify-between gap-2 border-t pt-2.5">
-        <PaletteDots themes={catalog.themes} />
+        <PaletteDots themes={stack.themes} />
         <span class="font-mono text-xs text-muted-foreground" safe>
-          {plural(catalog.themes.length, 'palette')}
+          {plural(stack.themes.length, 'palette')}
         </span>
       </span>
     </a>
   )
 }
 
-function PeekWindow({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[] }) {
-  const first = catalogs[0]
+function PeekWindow({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
+  const first = stacks[0]
 
   if (!first) return null
-  const peek = peekOf(first.lead, first.catalog)
+  const peek = peekOf(first.lead, first.work)
 
   return (
     <TerminalFrame
@@ -138,7 +148,7 @@ function PeekWindow({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[] }) 
       title={peek.title}
       class="min-w-0 flex-[0_1_440px]"
       controls={
-        catalogs.length > 1 ? (
+        stacks.length > 1 ? (
           <>
             <Button variant="scene" size="icon-sm" aria-label="previous palette" data-peek-step="-1">
               <Icon node={ChevronLeft} />
@@ -155,9 +165,9 @@ function PeekWindow({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[] }) 
   )
 }
 
-function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[] }) {
-  const official = shelf.id === OFFICIAL
-  const named = catalogs.filter((catalog) => catalog.catalog !== null).length
+function MarketplaceCard({ shelf, stacks }: { shelf: Shelf; stacks: Stack[] }) {
+  const builtin = shelf.id === BUILTIN
+  const works = stacks.filter((stack) => stack.work !== null).length
 
   return (
     <article
@@ -167,13 +177,13 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
       class="overflow-hidden rounded-3xl border bg-card shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-input hover:shadow-md has-[details[open]]:border-input"
     >
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2 p-3.5">
-        <PeekWindow shelf={shelf} catalogs={catalogs} />
+        <PeekWindow shelf={shelf} stacks={peeksIn(shelf, stacks)} />
         <div class="group/open relative flex min-w-0 flex-[1_1_20rem] items-center gap-4 self-stretch rounded-2xl p-4 transition-colors has-[a[data-open]:hover]:bg-muted/65 has-[a[data-open]:focus-visible]:ring-2 has-[a[data-open]:focus-visible]:ring-ring">
           <div class="grid min-w-0 flex-1 gap-1.5">
             <span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               <h2 class="font-display text-display-sm font-black [overflow-wrap:anywhere]">
                 <a
-                  href={marketplacePath(official ? null : shelf.id)}
+                  href={marketplacePath(shelf.id)}
                   data-open
                   class="outline-none transition-colors after:absolute after:inset-0 after:rounded-2xl hover:text-primary"
                   safe
@@ -181,10 +191,12 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
                   {shelf.id}
                 </a>
               </h2>
-              <Badge>
-                <Icon node={official ? Layers : Store} />
-                {official ? 'official' : 'community'}
-              </Badge>
+              {builtin ? (
+                <Badge>
+                  <Icon node={Layers} />
+                  built-in
+                </Badge>
+              ) : null}
             </span>
             <p class="text-sm text-soft-foreground" safe>
               {shelf.about}
@@ -259,25 +271,24 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
           </span>
         </div>
       </div>
-      <details data-slot="marketplace-catalogs" class="group/catalogs">
+      <details data-slot="marketplace-works" class="group/works">
         <summary class="group/toggle flex cursor-pointer list-none items-center gap-3 px-5 pt-0.5 pb-4 outline-none before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border [&::-webkit-details-marker]:hidden">
           <span
             class={cn(
               buttonVariants({ variant: 'outline', size: 'sm' }),
-              'pr-2.5 pl-3.5 group-hover/toggle:border-input group-hover/toggle:bg-secondary group-hover/toggle:text-foreground group-focus-visible/toggle:ring-2 group-focus-visible/toggle:ring-ring group-focus-visible/toggle:ring-offset-2 group-focus-visible/toggle:ring-offset-background group-active/toggle:scale-96 group-open/catalogs:border-input group-open/catalogs:text-foreground',
+              'pr-2.5 pl-3.5 group-hover/toggle:border-input group-hover/toggle:bg-secondary group-hover/toggle:text-foreground group-focus-visible/toggle:ring-2 group-focus-visible/toggle:ring-ring group-focus-visible/toggle:ring-offset-2 group-focus-visible/toggle:ring-offset-background group-active/toggle:scale-96 group-open/works:border-input group-open/works:text-foreground',
             )}
           >
-            <b class="font-mono font-normal text-foreground tabular-nums">{named}</b>{' '}
-            {named === 1 ? 'catalog' : 'catalogs'}
+            <b class="font-mono font-normal text-foreground tabular-nums">{works}</b> {works === 1 ? 'work' : 'works'}
             <Icon
               node={ChevronDown}
-              class="transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-open/catalogs:rotate-180"
+              class="transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-open/works:rotate-180"
             />
           </span>
         </summary>
         <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,14rem),1fr))] gap-2.5 border-t bg-muted/65 px-5 pt-4.5 pb-5">
-          {catalogs.map((catalog) => (
-            <CatalogCard catalog={catalog} official={official} />
+          {stacks.map((stack) => (
+            <StackCard stack={stack} builtin={builtin} />
           ))}
         </div>
       </details>
@@ -287,12 +298,12 @@ function MarketplaceCard({ shelf, catalogs }: { shelf: Shelf; catalogs: Catalog[
 
 export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shelves: Shelf[] }>) {
   const found = shelves.map((shelf) => shelf.palettes.map(searchable))
-  const catalogs = shelves.map(catalogsIn)
+  const stacks = shelves.map(stacksIn)
 
   const peeks: Record<string, Peek[]> = Object.fromEntries(
     shelves.map((shelf, index) => [
       shelf.id,
-      (catalogs[index] ?? []).map((catalog) => peekOf(catalog.lead, catalog.catalog)),
+      peeksIn(shelf, stacks[index] ?? []).map((stack) => peekOf(stack.lead, stack.work)),
     ]),
   )
 
@@ -310,7 +321,7 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
             <InputGroupInput
               type="search"
               name="query"
-              placeholder="search marketplaces, catalogs, palettes"
+              placeholder="search marketplaces, works, palettes"
               aria-label="search marketplaces"
               aria-keyshortcuts="Meta+K Control+K"
               spellcheck="false"
@@ -336,7 +347,7 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
             return (
               <ToggleGroupItem variant="underline" name="source" value={source} checked={source === START.source}>
                 {icon ? <Icon node={icon} /> : null}
-                {source}
+                {SOURCE_LABELS[source]}
                 <ToggleGroupCount data-count={source}>{count(source)}</ToggleGroupCount>
               </ToggleGroupItem>
             )
@@ -356,14 +367,14 @@ export function MarketplaceBoard({ shelves, children }: PropsWithChildren<{ shel
       </div>
       <div data-shelves class="grid grid-cols-[minmax(0,1fr)] gap-4 pt-2">
         {shelves.map((shelf, index) => (
-          <MarketplaceCard shelf={shelf} catalogs={catalogs[index] ?? []} />
+          <MarketplaceCard shelf={shelf} stacks={stacks[index] ?? []} />
         ))}
       </div>
       <div data-empty hidden class="py-15 text-center text-muted-foreground">
         <strong class="block font-semibold text-foreground">
           <span data-empty-title>no palette matches these filters</span> <span aria-hidden="true">( ˘ω˘ )</span>
         </strong>
-        clear a filter, or search for a catalog instead.
+        clear a filter, or search for a work instead.
       </div>
       <script type="application/json" data-peeks>
         {json(peeks)}

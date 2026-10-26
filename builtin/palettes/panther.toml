@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "persona-5/panther"
+signature = ["cursor", "ansi3", "ansi4"]
+ansi_source = "Warm Neon + Phantom"
+
+[colors]
+background = "#201514"
+foreground = "#fcdbd8"
+cursor = "#ee6460"
+selection_background = "#5c3233"
+ansi = [
+  "#2d2120",
+  "#f26c67",
+  "#a2d460",
+  "#bcc326",
+  "#7490f3",
+  "#ff8bc2",
+  "#71b1f7",
+  "#e6d0ce",
+
+  "#857371",
+  "#f3a09e",
+  "#e2e391",
+  "#f1dd9f",
+  "#aea4e8",
+  "#ffc1cf",
+  "#a8cbf2",
+  "#ffe9e7",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#2d1b1a"
+cursor = "#c42f33"
+selection_background = "#ffcaca"
+ansi = [
+  "#fff0ef",
+  "#be262c",
+  "#2e5a0b",
+  "#636800",
+  "#2457df",
+  "#b22b78",
+  "#00538c",
+  "#362928",
+
+  "#857371",
+  "#8c3b3c",
+  "#2d4a19",
+  "#625423",
+  "#55489f",
+  "#7e4253",
+  "#1f4566",
+  "#2d1b1a",
+]

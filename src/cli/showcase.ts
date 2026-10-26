@@ -1,8 +1,9 @@
+import type { Work } from '../core/commons.ts'
 import { listed, type PaletteEntry } from '../core/manifest.ts'
 import { inert } from '../core/text.ts'
 import { slugOf } from '../core/theme.ts'
 import { reach } from '../store/available.ts'
-import type { Listed, ListedPalette, Shown } from '../store/marketplace-index.ts'
+import type { Listed, ListedPalette, ListedWork, Shown } from '../store/marketplace-index.ts'
 import { TOPIC } from '../store/sources.ts'
 import { fetchArchive, fromArchive } from './refresh.ts'
 
@@ -39,7 +40,11 @@ export async function repoFacts(repo: string, token?: string): Promise<RepoFacts
   return { stars: r.stargazers_count, pushedAt: r.pushed_at.slice(0, 10) }
 }
 
-async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {
+function listedWork({ id, name, native }: Work): ListedWork {
+  return { id, name, ...(native ? { native } : {}) }
+}
+
+async function shown(r: Found): Promise<Shown[]> {
   const source = `${r.owner.login.toLowerCase()}/${r.name}`
 
   try {
@@ -49,7 +54,7 @@ async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {
       return []
     }
 
-    const { id, entries, info } = fromArchive(source, archive, official)
+    const { id, entries, works, info } = fromArchive(source, archive)
     const palettes = listed(entries).map((e) => ({ ...e, name: slugOf(e.name) }))
 
     return palettes.length === 0
@@ -64,6 +69,7 @@ async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {
             pushedAt: r.pushed_at.slice(0, 10),
             license: r.license && r.license.spdx_id !== 'NOASSERTION' ? r.license.spdx_id : null,
             palettes,
+            works: works.map(listedWork),
           },
         ]
   } catch (error) {
@@ -73,14 +79,14 @@ async function shown(r: Found, official: PaletteEntry[]): Promise<Shown[]> {
   }
 }
 
-export async function showcase(official: PaletteEntry[], token?: string): Promise<Shown[]> {
-  return (await Promise.all((await found(token)).map((r) => shown(r, official)))).flat()
+export async function showcase(token?: string): Promise<Shown[]> {
+  return (await Promise.all((await found(token)).map(shown))).flat()
 }
 
 function listedPalette(entry: PaletteEntry): ListedPalette {
   return {
     name: entry.name,
-    ...(entry.catalog ? { catalog: entry.catalog } : {}),
+    ...(entry.subject ? { subject: entry.subject } : {}),
     background: entry.background,
     foreground: entry.foreground,
     cursor: entry.cursor,
@@ -99,12 +105,13 @@ export function indexText(shown: Shown[]): string {
       stars: m.stars,
       updated: m.pushedAt,
       palettes: m.palettes.map(listedPalette),
+      works: m.works,
     }))
     .sort((a, b) => b.stars - a.stars || a.id.localeCompare(b.id))
 
   return `${JSON.stringify({ marketplaces })}\n`
 }
 
-export async function buildIndex(official: PaletteEntry[], token?: string): Promise<string> {
-  return indexText(await showcase(official, token))
+export async function buildIndex(token?: string): Promise<string> {
+  return indexText(await showcase(token))
 }

@@ -1,6 +1,6 @@
 # Tune a palette
 
-You can change any palette's colors, an official one included, without making a
+You can change any palette's colors, a built-in one included, without making a
 copy. Your tuning is kept apart from the palette: just the colors you moved,
 laid over the colors its marketplace gives.
 
@@ -48,5 +48,6 @@ does the same: `enter`, then `enter` again to confirm.
 ## Share a tuned palette
 
 `ttheme share miku` asks whether to share your tuning or the original. A tuned
-palette goes out as `miku-tuned`, since `miku` belongs to the original wherever
-it is installed. [Share a link](share.md) covers the rest.
+palette goes out as `miku-tuned`, a palette of no marketplace, since `miku`
+belongs to the original wherever it is installed: whoever adds the link keeps
+it in their own marketplace. [Share a link](share.md) covers the rest.

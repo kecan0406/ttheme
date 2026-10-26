@@ -1,4 +1,4 @@
-import { shelfOf, type Theme } from '../../core/theme.ts'
+import type { Theme } from '../../core/theme.ts'
 
 export interface Output {
   path: string
@@ -13,8 +13,5 @@ export interface Emitter {
 }
 
 export function banner(theme: Theme): string[] {
-  return [
-    `# ${theme.name} — ${shelfOf(theme)}${theme.native ? ` (${theme.native})` : ''}`,
-    `# ANSI: ${theme.ansiSource}`,
-  ]
+  return [`# ${theme.name}${theme.subject ? ` — ${theme.subject}` : ''}`, `# ANSI: ${theme.ansiSource}`]
 }

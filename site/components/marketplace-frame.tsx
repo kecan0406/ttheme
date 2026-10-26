@@ -1,6 +1,6 @@
 import { escapeHtml, type PropsWithChildren } from '@kitajs/html'
 import type { Facts } from '@/lib/facts'
-import { marketplacePath, OFFICIAL } from '@/lib/gallery'
+import { marketplacePath } from '@/lib/gallery'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 
@@ -70,7 +70,7 @@ export function NoSuchMarketplace({ id, facts }: { id: string; facts: Facts }) {
 }
 
 export function NoSuchPalette({ id, name, facts }: { id: string; name: string; facts: Facts }) {
-  const home = marketplacePath(id === OFFICIAL ? null : id)
+  const home = marketplacePath(id)
 
   return (
     <MarketplaceFrame facts={facts}>

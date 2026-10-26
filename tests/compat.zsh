@@ -197,7 +197,7 @@ measure() {
   hook=$(mktemp "${TMPDIR:-/tmp}/ttheme-compat.XXXXXX")
   print -rl -- "typeset -g CC_ADAPTER=$ADAPTER[$term] CC_TITLE=$title" "source ${(q)ROOT}/tests/compat/cases.zsh" > $hook
   MEASURING=($term $was)
-  if ! env $env zsh $ROOT/tests/sandbox.zsh --behind ${=FLAG[$term]} --zshenv $hook miku asuka rei > /dev/null; then
+  if ! env $env zsh $ROOT/tests/sandbox.zsh --behind ${=FLAG[$term]} --zshenv $hook ttheme/miku ttheme/asuka ttheme/rei > /dev/null; then
     rm -f $hook
     { quit $term $was } always { MEASURING=() }
     return 1

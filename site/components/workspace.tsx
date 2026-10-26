@@ -5,16 +5,16 @@ import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { catalogsOf, nativeLang } from '@/lib/catalogs'
 import type { Facts, Repo } from '@/lib/facts'
-import { INIT, OFFICIAL_REPO, OFFICIAL_THEMES_URL, palettePath, repoUrl, searchable } from '@/lib/gallery'
+import { BUILTIN_URL, INIT, palettePath, REPO, repoUrl, searchText } from '@/lib/gallery'
 import { gatePassed } from '@/lib/gate'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes'
+import { type GateRule, type Marketplace, paint, shortName, type Theme } from '@/lib/themes'
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
-import { leadOf, neighbors, type Where, type WorkspaceData } from '@/lib/workspace'
+import { byWork, leadOf, leadsOf } from '@/lib/works'
+import { neighbors, type Where, type WorkspaceData } from '@/lib/workspace'
 import { ByMode } from './by-mode'
 import { CommandRow } from './command-row'
 import { GateList, SwatchGrid } from './palette-parts'
@@ -65,7 +65,7 @@ const POPOVER =
 function commandOf(step: Step, theme: Theme, where: Where): string {
   if (step === 'init') return INIT
 
-  if (step === 'use') return `ttheme use ${theme.id}`
+  if (step === 'use') return `ttheme use ${shortName(theme.id)}`
 
   return where ? `ttheme marketplace add ${where.add} && ttheme add ${theme.id}` : `ttheme add ${theme.name}`
 }
@@ -90,11 +90,11 @@ function ribbon(theme: Theme): string {
   return `linear-gradient(90deg,${stops.join(',')})`
 }
 
-function CatalogTile({ theme }: { theme: Theme }) {
+function WorkTile({ theme }: { theme: Theme }) {
   return (
     <span
       aria-hidden="true"
-      data-slot="catalog-tile"
+      data-slot="work-tile"
       style={[`--bg:${paint(theme, (shade) => shade.background)}`, ...signs(theme)].join(';')}
     />
   )
@@ -126,14 +126,14 @@ export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: stri
         </span>
       </TitleLine>
       <TitleMeta>
-        {theme.catalog ? (
+        {theme.work ? (
           <span class="flex-none text-soft-foreground" safe>
-            {theme.catalog}
+            {theme.work.name}
           </span>
         ) : null}
-        {theme.native ? (
-          <span class="flex-none" lang={nativeLang(theme)} safe>
-            {theme.native}
+        {theme.work?.native ? (
+          <span class="flex-none" lang={theme.work.lang ?? undefined} safe>
+            {theme.work.native}
           </span>
         ) : null}
         <span class="truncate font-mono" translate="no" safe>
@@ -174,7 +174,7 @@ export function ScenePanes({ theme }: { theme: Theme }) {
             <b>[ttheme]</b> 0:all*
           </span>
           <span class="truncate" translate="no" safe>
-            {`"${theme.name}"${theme.catalog ? ` ${theme.catalog}` : ''}`}
+            {`"${theme.name}"${theme.work ? ` ${theme.work.name}` : ''}`}
           </span>
         </p>
       </div>
@@ -215,7 +215,7 @@ export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes
         {`ansi from ${theme.ansiSource}`}
       </span>
       <span class="ml-auto font-mono text-xs text-muted-foreground" safe>
-        {`${at} of ${count}${theme.catalog ? ` in ${theme.catalog}` : ''}`}
+        {`${at} of ${count}${theme.work ? ` in ${theme.work.name}` : ''}`}
       </span>
     </>
   )
@@ -255,17 +255,19 @@ export function SlotsPanel({ theme }: { theme: Theme }) {
 function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
   return (
     <nav
-      aria-label="catalogs"
+      aria-label="works"
       data-tree
       class="grid max-h-80 min-h-0 content-start gap-px overflow-y-auto overscroll-contain px-3 pt-3 pb-2 app:max-h-none app:flex-1"
     >
-      {catalogsOf(palettes).map(({ catalog, themes }, index) => {
-        const lead = leadOf(themes)
+      {byWork(palettes).map((shelf, index) => {
+        const { work, themes } = shelf
+        const lead = leadOf(shelf)
         const open = themes.includes(current)
-        const list = `workspace-catalog-${index}`
+        const list = `workspace-work-${index}`
+        const title = work?.name ?? 'originals'
 
         return (
-          <div data-group data-name={`${catalog ?? 'other palettes'} ${lead.native ?? ''}`.toLowerCase()} class="grid">
+          <div data-group data-name={`${title} ${work?.native ?? ''}`.toLowerCase()} class="grid">
             <button
               type="button"
               data-toggle
@@ -277,22 +279,22 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
                 node={ChevronRight}
                 class="size-3.5 flex-none text-faint-foreground transition-transform duration-150 group-aria-expanded/toggle:rotate-90 motion-reduce:transition-none"
               />
-              <CatalogTile theme={lead} />
+              <WorkTile theme={lead} />
               <span class="min-w-0 flex-1 truncate" safe>
-                {catalog ?? 'other palettes'}
+                {title}
               </span>
               <span data-count class="flex-none font-mono text-xs font-normal text-muted-foreground tabular-nums">
                 {escapeHtml(String(themes.length))}
               </span>
             </button>
             <ul id={list} hidden={!open} class="grid gap-px pt-0.5 pb-2 pl-7.5">
-              {catalog && lead.native ? (
-                <li class="px-2.5 pb-1 text-xs text-muted-foreground" lang={nativeLang(lead)} safe>
-                  {lead.native}
+              {work?.native ? (
+                <li class="px-2.5 pb-1 text-xs text-muted-foreground" lang={work.lang ?? undefined} safe>
+                  {work.native}
                 </li>
               ) : null}
               {themes.map((theme) => (
-                <li data-search={searchable(theme).text}>
+                <li data-search={searchText(theme)}>
                   <a
                     href={palettePath(theme)}
                     data-pick={theme.name}
@@ -303,7 +305,7 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
                     <span class="min-w-0 flex-1 truncate" translate="no" safe>
                       {theme.name}
                     </span>
-                    {theme.lead ? (
+                    {work && theme === lead ? (
                       <>
                         <Icon node={Star} class="size-3 flex-none text-soft-foreground" />
                         <span class="sr-only">, lead</span>
@@ -338,8 +340,8 @@ function MarketplaceFacts({
   return (
     <span class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
       <RepoLink
-        href={marketplace ? repoUrl(marketplace.repo) : OFFICIAL_THEMES_URL}
-        repo={marketplace ? marketplace.repo : OFFICIAL_REPO}
+        href={marketplace ? repoUrl(marketplace.repo) : BUILTIN_URL}
+        repo={marketplace ? marketplace.repo : REPO}
       />
       <span safe>{`· ${[...facts, ...(marketplace ? [] : ['built in'])].join(' · ')}`}</span>
       {!marketplace ? null : marketplace.license ? (
@@ -367,8 +369,7 @@ export function MarketplaceWorkspace({
   heading?: string
 }) {
   const where: Where = marketplace ? { id: marketplace.id, repo: marketplace.repo, add: marketplace.add } : null
-  const first = catalogsOf(palettes)[0]?.themes ?? palettes
-  const data: WorkspaceData = { where, gate, start: leadOf(first).name, current: theme.name }
+  const data: WorkspaceData = { where, gate, start: (leadsOf(palettes)[0] as Theme).name, current: theme.name }
   const { prev, next } = neighbors(theme, palettes)
 
   return (
@@ -379,7 +380,7 @@ export function MarketplaceWorkspace({
     >
       <marketplace-workspace class="workspace">
         <WorkspaceSide
-          aria-label="catalogs and palettes"
+          aria-label="works and palettes"
           head={
             <search class="w-full">
               <InputGroup>
@@ -389,8 +390,8 @@ export function MarketplaceWorkspace({
                 <InputGroupInput
                   type="search"
                   name="query"
-                  placeholder="search catalogs, palettes"
-                  aria-label="search catalogs and palettes"
+                  placeholder="search works, palettes"
+                  aria-label="search works and palettes"
                   aria-keyshortcuts="Meta+K Control+K"
                   spellcheck="false"
                   autocomplete="off"

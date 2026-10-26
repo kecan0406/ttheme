@@ -1,0 +1,41 @@
+"$schema" = "https://www.schemastore.org/ttheme-work.json"
+name = "Persona 5"
+native = "ペルソナ5"
+lead = "persona-5/joker"
+
+[[character]]
+id = "joker"
+native = ["雨宮蓮", "来栖暁", "ジョーカー"]
+danbooru = "amamiya_ren"
+
+[[character]]
+id = "skull"
+native = ["坂本竜司", "スカル"]
+danbooru = "sakamoto_ryuji"
+sites = { konachan = "sakamoto_ryuuji", yande = "sakamoto_ryuuji", zerochan = "sakamoto_ryuuji" }
+
+[[character]]
+id = "panther"
+native = ["高巻杏", "パンサー"]
+danbooru = "takamaki_ann"
+sites = { konachan = "takamaki_anne", yande = "takamaki_anne", zerochan = "takamaki_anne" }
+
+[[character]]
+id = "fox"
+native = ["喜多川祐介", "フォックス"]
+danbooru = "kitagawa_yusuke"
+sites = { yande = "kitagawa_yuusuke", zerochan = "kitagawa_yuusuke" }
+
+[[character]]
+id = "queen"
+native = ["新島真", "クイーン"]
+danbooru = "niijima_makoto"
+
+[[character]]
+id = "oracle"
+native = ["佐倉双葉", "ナビ"]
+danbooru = "sakura_futaba"
+
+[[character]]
+id = "velvet"
+native = ["ベルベットルーム"]

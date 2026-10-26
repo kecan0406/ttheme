@@ -18,9 +18,9 @@ import { composing, letter, typing } from './keys'
 const TURN_MS = 2000
 
 function palettesOf(card: HTMLElement): Searchable[] {
-  const official = card.hasAttribute('data-official')
+  const builtin = card.hasAttribute('data-builtin')
 
-  return (card.dataset.search ?? '').split('\n').map((text) => ({ text, official }))
+  return (card.dataset.search ?? '').split('\n').map((text) => ({ text, builtin }))
 }
 
 function shelfOf(element: Element): string {
@@ -179,9 +179,9 @@ class MarketplaceBoard extends HTMLElement {
 
   #render(): number {
     const shelves = [...this.querySelectorAll<HTMLElement>('[data-shelf]')]
-    const cards = shelves.map((shelf) => [...shelf.querySelectorAll<HTMLElement>('[data-catalog]')])
+    const cards = shelves.map((shelf) => [...shelf.querySelectorAll<HTMLElement>('[data-stack]')])
     const members = cards.map((group) => group.map(palettesOf))
-    const found = members.map((group) => group.flat())
+    const found = members.map((group) => [...new Map(group.flat().map((palette) => [palette.text, palette])).values()])
 
     for (const source of SOURCES) {
       const label = this.querySelector(`[data-count="${source}"]`)
@@ -193,12 +193,11 @@ class MarketplaceBoard extends HTMLElement {
     let shown = 0
 
     for (const [index, shelf] of shelves.entries()) {
-      const matched = (members[index] ?? []).map(
-        (palettes) => palettes.filter((palette) => matches(palette, this.#filters)).length,
-      )
+      const hit = (palettes: Searchable[]) => palettes.filter((palette) => matches(palette, this.#filters))
 
-      for (const [at, card] of (cards[index] ?? []).entries()) card.hidden = matched[at] === 0
-      const visible = matched.reduce((sum, count) => sum + count, 0)
+      for (const [at, card] of (cards[index] ?? []).entries())
+        card.hidden = hit(members[index]?.[at] ?? []).length === 0
+      const visible = hit(found[index] ?? []).length
       const total = found[index]?.length ?? 0
       const count = shelf.querySelector('[data-shelf-count]')
 

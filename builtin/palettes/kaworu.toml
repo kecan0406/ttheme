@@ -1,0 +1,54 @@
+"$schema" = "https://www.schemastore.org/ttheme-palette.json"
+subject = "evangelion/kaworu"
+signature = ["cursor", "foreground", "ansi1"]
+ansi_source = "Spacegray"
+
+[colors]
+background = "#201515"
+foreground = "#dfe3ea"
+cursor = "#ee636e"
+selection_background = "#423959"
+ansi = [
+  "#2d2021",
+  "#e4747f",
+  "#cfc36b",
+  "#efae7a",
+  "#9e8ec3",
+  "#e29eb8",
+  "#8ab784",
+  "#e5cfcf",
+
+  "#857373",
+  "#f39fa4",
+  "#ebe084",
+  "#ffd5b6",
+  "#b4a2d9",
+  "#ffc0d8",
+  "#a3d39f",
+  "#ffe9e8",
+]
+
+[colors.light]
+background = "#fff8f7"
+foreground = "#1b2025"
+cursor = "#c83045"
+selection_background = "#ded1f9"
+ansi = [
+  "#fff0f0",
+  "#b0384a",
+  "#395822",
+  "#8c5727",
+  "#6c589d",
+  "#954b6b",
+  "#1e5b3c",
+  "#362929",
+
+  "#857373",
+  "#8d3942",
+  "#2e491a",
+  "#724d2d",
+  "#5e488d",
+  "#7f415d",
+  "#034d33",
+  "#2d1b1b",
+]

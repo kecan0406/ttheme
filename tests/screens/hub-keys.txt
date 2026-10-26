@@ -5,7 +5,7 @@
  ╰────────────│  Move                                                               │
               │    ↑↓  ctrl+j  ctrl+k     Move up or down                           │
 ▌  ▸ Bocchi th│    pgup  pgdn  home  end  Move a page, or to either end             │
-   ▸ Lucky☆Sta│    ←→  space              Close or open a catalog                   │
+   ▸ Lucky☆Sta│    ←→  space              Close or open a shelf                     │
               │  Filter                                                             │
               │    type                   Filter by name or title, in Japanese too  │
               │    ctrl+u                 Clear the filter                          │

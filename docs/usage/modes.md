@@ -32,7 +32,7 @@ When nothing reports it, `auto` starts from the system's setting.
 
 ## Where the light mode comes from
 
-The official palettes carry both modes in their files, each passing the same
+The built-in palettes carry both modes in their files, each passing the same
 [contrast checks](../reference/contrast-gate.md). A marketplace palette made in
 one mode gets the other by the same rules: each color keeps its hue, its
 lightness moves to the other side, and the colors that identify the character

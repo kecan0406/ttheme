@@ -1,9 +1,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fallback, themes } from '@/lib/official'
+import { fallback, themes } from '@/lib/builtin'
 import { type Raster, raster } from '@/lib/raster'
 import { inMode, type Theme } from '@/lib/themes'
 import { INK, wordmarkSvg } from '@/lib/wordmark'
+import { byWork, leadOf, leadsOf } from '@/lib/works'
 import { GLYPH, glyphSvg, marksOf, tileBody } from '../src/core/mark.ts'
 import { mixOk } from '../src/core/oklab.ts'
 
@@ -52,27 +53,26 @@ function svg(height: number, body: string[]) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${height}" viewBox="0 0 ${WIDTH} ${height}" font-family="${FONT}">${body.join('')}</svg>`
 }
 
-function catalogs(themes: Theme[]) {
-  const leads = themes.filter((theme) => theme.lead)
+function works(themes: Theme[]) {
+  const shelves = byWork(themes)
 
   return svg(
-    rows(leads.length),
+    rows(shelves.length),
     grid(
-      leads.map((theme) => [theme, theme.catalog ?? '', theme.native ?? '']),
+      shelves.map((shelf) => [leadOf(shelf), shelf.work?.name ?? 'originals', shelf.work?.native ?? '']),
       0,
     ),
   )
 }
 
 function palettes(themes: Theme[]) {
-  const shelves = Map.groupBy(themes, (theme) => theme.catalog ?? '')
   const body: string[] = []
   let top = 0
 
-  for (const [catalog, members] of shelves) {
-    const native = members[0]?.native
+  for (const { work, themes: members } of byWork(themes)) {
+    const native = work?.native
     body.push(
-      `<text x="0" y="${top + 20}" fill="${MUTED}" font-size="14" font-weight="700">${xml(catalog)}${native ? ` <tspan font-weight="400">${xml(native)}</tspan>` : ''}</text>`,
+      `<text x="0" y="${top + 20}" fill="${MUTED}" font-size="14" font-weight="700">${xml(work?.name ?? 'originals')}${native ? ` <tspan font-weight="400">${xml(native)}</tspan>` : ''}</text>`,
     )
     top += HEAD
     body.push(
@@ -133,7 +133,7 @@ const out = join(process.argv[2] ?? '.', 'readme')
 
 mkdirSync(out, { recursive: true })
 
-writeFileSync(join(out, 'catalogs.svg'), catalogs(themes))
+writeFileSync(join(out, 'works.svg'), works(themes))
 
 writeFileSync(join(out, 'palettes.svg'), palettes(themes))
 
@@ -148,8 +148,7 @@ writeFileSync(
   social(
     kit,
     inMode(fallback, 'dark'),
-    themes
-      .filter((theme) => theme.lead)
+    leadsOf(themes)
       .slice(0, 9)
       .map((theme) => inMode(theme, 'dark')),
   ),
