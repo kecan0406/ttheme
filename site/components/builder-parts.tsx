@@ -285,7 +285,7 @@ export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: stri
     >
       <div class="flex h-13 items-center gap-2 border-b border-border pr-3 pl-4 text-sm font-semibold">
         <Verdict ok={gate.passed === gate.lines.length} />
-        <span data-seed-gate safe>{`${gate.passed} / ${gate.lines.length} floors`}</span>
+        <span data-seed-gate safe>{`${gate.passed} / ${gate.lines.length} pass`}</span>
         <span class="font-medium text-muted-foreground">at every seed</span>
       </div>
       <div data-seed-fields class="grid gap-4 px-4">
@@ -462,7 +462,7 @@ export function ColorsPanel({
       <p data-rows-empty hidden={!rows.empty} class="px-4 py-6 text-center text-sm text-muted-foreground">
         nothing changed yet <span aria-hidden="true">( ˘ω˘ )</span>
       </p>
-      <Group name="gate" count={`${gate.passed}/${gate.lines.length}`} id="builder-gate" counts="gate">
+      <Group name="contrast" count={`${gate.passed}/${gate.lines.length}`} id="builder-gate" counts="gate">
         <div data-draft data-gate-rows>
           <GateRows lines={gate.lines} names={names} />
         </div>
@@ -908,7 +908,7 @@ export function AboutPanel({ about, modes, link }: { about: AboutView; modes: Mo
           <SignatureDots about={about} />
         </div>
         <p data-signature-trouble hidden={!about.trouble} class="text-xs text-destructive">
-          pick three slots of three different colors
+          pick three colors that differ
         </p>
       </div>
       <div class="grid gap-2.5 border-b border-border p-4">
@@ -970,7 +970,7 @@ export function EditMode({ made, editing }: { made: Mode; editing: Mode }) {
           data-edit-mode={mode}
           aria-pressed={String(mode === editing)}
           aria-label={`edit the ${mode} colors${mode === made ? ', the mode it was made in' : ''}`}
-          title={mode === made ? `${mode} · made in` : mode}
+          title={mode === made ? `${mode}, the mode it was made in` : mode}
           class="relative flex h-full w-8 cursor-pointer items-center justify-center rounded-full text-(--fg)/62 transition-colors duration-150 outline-none hover:text-(--fg) focus-visible:inset-ring-2 focus-visible:inset-ring-ring aria-pressed:bg-(--cu) aria-pressed:text-(--bg)"
         >
           <Icon node={mode === 'dark' ? Moon : Sun} class="size-3.5" />

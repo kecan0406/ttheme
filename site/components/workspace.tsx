@@ -192,13 +192,13 @@ export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes
 
   return (
     <>
-      <Button variant="outline" size="sm" popovertarget="workspace-slots" aria-label="slots, copy a color">
+      <Button variant="outline" size="sm" popovertarget="workspace-slots" aria-label="colors, copy one">
         <span
           aria-hidden="true"
           class="h-2 w-16 rounded-full forced-color-adjust-none"
           style={`background:${ribbon(theme)}`}
         />
-        slots
+        colors
       </Button>
       <ByMode
         theme={theme}
@@ -228,9 +228,9 @@ export function GatePanel({ theme, gate, where }: { theme: Theme; gate: GateRule
       render={(shown) => (
         <>
           <div class="grid gap-0.5">
-            <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">contrast gate</p>
+            <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">contrast checks</p>
             <p class="text-sm text-soft-foreground" safe>
-              {`${shown.name} clears ${gatePassed(shown, gate)} of ${gate.length} floors${where ? ' · advisory, never enforced' : ''}`}
+              {`${shown.name} passes ${gatePassed(shown, gate)} of ${gate.length}${where ? ', which only advise' : ''}`}
             </p>
           </div>
           <GateList theme={shown} gate={gate} />
@@ -244,7 +244,7 @@ export function SlotsPanel({ theme }: { theme: Theme }) {
   return (
     <>
       <div class="flex items-baseline justify-between gap-3">
-        <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">slots</p>
+        <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">colors</p>
         <p class="text-xs text-muted-foreground">click a color to copy it</p>
       </div>
       <ByMode theme={theme} render={(shown) => <SwatchGrid theme={shown} />} />
@@ -341,7 +341,7 @@ function MarketplaceFacts({
         href={marketplace ? repoUrl(marketplace.repo) : OFFICIAL_THEMES_URL}
         repo={marketplace ? marketplace.repo : OFFICIAL_REPO}
       />
-      <span safe>{`· ${[...facts, ...(marketplace ? [] : ['comes with ttheme'])].join(' · ')}`}</span>
+      <span safe>{`· ${[...facts, ...(marketplace ? [] : ['built in'])].join(' · ')}`}</span>
       {!marketplace ? null : marketplace.license ? (
         <span safe>{`· ${marketplace.license}`}</span>
       ) : (
@@ -477,7 +477,7 @@ export function MarketplaceWorkspace({
             id="workspace-gate"
             popover="auto"
             role="dialog"
-            aria-label="contrast gate"
+            aria-label="contrast checks"
             data-gate-panel
             class={POPOVER}
           >

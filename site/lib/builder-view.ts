@@ -433,10 +433,10 @@ export function statusOf(edit: Edit, kept: boolean, saved: boolean): StatusView 
 
   if (!kept) return { ok: false, text: 'this browser keeps no drafts — export before you leave' }
 
-  if (!saved) return { ok: true, text: `${edit.name} · a change keeps it in this browser` }
+  if (!saved) return { ok: true, text: `${edit.name} — a change keeps it in this browser` }
 
   return named
-    ? { ok: false, text: `kept in this browser · the name ${named}` }
+    ? { ok: false, text: `kept in this browser, but the name ${named}` }
     : { ok: true, text: `kept in this browser as ${edit.name}${writesOther(edit) ? ' · both modes' : ''}` }
 }
 

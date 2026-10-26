@@ -16,14 +16,14 @@ export interface SettingGroup {
 
 const ONLINE = new Set(['TTHEME_NAMES', 'TTHEME_AUTO_UPDATE', 'TTHEME_MARKETPLACE_LOOKUP'])
 
-const GROUPS = ['Wearing palettes', 'Pictures', 'Downloads and updates', 'find'] as const
+const GROUPS = ['Palettes and screens', 'Pictures', 'Downloads and updates', 'find'] as const
 
 function groupOf(name: string): (typeof GROUPS)[number] {
   if (name.startsWith('TTHEME_FIND_')) return 'find'
 
   if (name.startsWith('TTHEME_BG_')) return 'Pictures'
 
-  return ONLINE.has(name) ? 'Downloads and updates' : 'Wearing palettes'
+  return ONLINE.has(name) ? 'Downloads and updates' : 'Palettes and screens'
 }
 
 function settingOf(name: string, doc: string): Setting {

@@ -241,7 +241,7 @@ function shell(kit: Raster, theme: Theme, k: Tones, use: string, x: number, y: n
       ],
     )
   lines.push(
-    [['painted this tab', ansi(8)]],
+    [['this tab only', ansi(8)]],
     [prompt(), ['git diff --stat', k.foreground]],
     [
       [' src/colors.ts | 12 ', k.foreground],

@@ -136,7 +136,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             </h1>
             <p class="max-w-[52ch] text-base text-soft-foreground">
               Character color palettes, measured from official art, for Ghostty, iTerm2, WezTerm, kitty, Alacritty,
-              Windows Terminal, Warp, Konsole and Terminal.app. One command, then every tab can wear its own.
+              Windows Terminal, Warp, Konsole and Terminal.app. One command, then every tab can show its own.
             </p>
             <div class="grid w-full gap-2.5">
               <div class="flex w-full flex-wrap items-center gap-3">
@@ -228,7 +228,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
             <h2 id="characters" class="font-display text-display-lg font-black">
               pick a character
             </h2>
-            <p class="text-soft-foreground">The page wears whichever you pick, the way your terminal would.</p>
+            <p class="text-soft-foreground">The page shows whichever you pick, the way your terminal would.</p>
           </div>
           <div
             role="radiogroup"
@@ -279,7 +279,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
                 <CommandRow command={step.command} class="bg-card" />
               </Step>
             ))}
-            <Step number={3} title="wear" text="Paints this tab. Every other tab keeps its own.">
+            <Step number={3} title="use" text="This tab only. Every other tab keeps its own.">
               <div data-lead-use class="contents">
                 <LeadUse theme={theme} />
               </div>

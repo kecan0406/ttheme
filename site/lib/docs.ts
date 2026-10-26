@@ -69,7 +69,7 @@ const NAV: Group[] = [
     pages: [
       { slug: 'install', label: 'install', text: install },
       { slug: 'first-palette', label: 'your first palette', text: firstPalette },
-      { slug: 'what-changed', label: 'what changed · undo it', text: whatChanged },
+      { slug: 'what-changed', label: 'what changed, how to undo', text: whatChanged },
     ],
   },
   {

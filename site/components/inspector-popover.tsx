@@ -55,7 +55,7 @@ export function InspectorPopover({
       />
       <div class="overflow-hidden rounded-xl">
         <div class="flex items-center justify-between gap-3 border-b border-border bg-muted px-3 py-2">
-          <span class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">slots</span>
+          <span class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">colors</span>
           <span class="truncate font-mono text-xs text-soft-foreground" safe>
             {snippet}
           </span>

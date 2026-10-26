@@ -47,7 +47,7 @@ const CATALOG = 'public, max-age=0, s-maxage=31536000'
 const RETRY = 'public, max-age=0, s-maxage=60'
 const CREDITS = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800'
 
-const STORE = 'One ttheme marketplace: its repository, its palettes and how they measure against the contrast gate'
+const STORE = 'One ttheme marketplace: its repository, its palettes and how they do on the contrast checks'
 
 const SITE_CARD: Card = { kind: 'site', theme: fallback, palettes: facts.palettes, catalogs: facts.catalogs }
 

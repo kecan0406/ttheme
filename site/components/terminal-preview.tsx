@@ -78,7 +78,7 @@ function Shell({ use }: { use: string | null }) {
         )}
       </L>
       <L>
-        <C n={8}>painted this tab</C>
+        <C n={8}>this tab only</C>
       </L>
       <L>
         <Prompt />
@@ -147,7 +147,7 @@ function Test() {
         <C n={8}>src/contrast.test.ts:</C>
       </L>
       <L>
-        <C n={2}>✓</C> gate passes every palette <C n={8}>[4.1ms]</C>
+        <C n={2}>✓</C> every palette passes the contrast checks <C n={8}>[4.1ms]</C>
       </L>
       <L>
         <C n={2}>✓</C> a waiver needs a reason <C n={8}>[0.3ms]</C>

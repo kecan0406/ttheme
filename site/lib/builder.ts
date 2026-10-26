@@ -256,9 +256,9 @@ export function draftFrom(edit: Body): Draft {
 export function signatureTrouble(edit: Edit): string | undefined {
   const colors = edit.signature.map((slot) => edit.made[SLOT_NAMES.indexOf(slot)])
 
-  if (edit.signature.length !== 3 || colors.some((hex) => hex === undefined)) return 'needs three slots'
+  if (edit.signature.length !== 3 || colors.some((hex) => hex === undefined)) return 'needs three colors'
 
-  return new Set(colors).size === 3 ? undefined : 'needs three slots of three different colors'
+  return new Set(colors).size === 3 ? undefined : 'needs three different colors'
 }
 
 export function dirty(edit: Edit): boolean {

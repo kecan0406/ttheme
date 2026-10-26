@@ -648,7 +648,7 @@ class PaletteBuilder extends HTMLElement {
     const gate = gateOf(this.#state.made, this.#state.signature, [])
     const passed = this.querySelector('[data-seed-gate]')
 
-    if (passed) passed.textContent = `${gate.passed} / ${gate.lines.length} floors`
+    if (passed) passed.textContent = `${gate.passed} / ${gate.lines.length} pass`
   }
 
   #panel(): string {

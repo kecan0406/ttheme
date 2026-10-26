@@ -18,14 +18,14 @@ export function builderMeta(): Meta {
   return {
     title: 'builder — make a terminal palette of your own · ttheme',
     description:
-      'Tune twenty terminal colors against the contrast gate, in dark and light, then take the palette as a .toml file, a share link or a marketplace of your own.',
+      'Tune twenty terminal colors against the contrast checks, in dark and light, then take the palette as a .toml file, a share link or a marketplace of your own.',
   }
 }
 
 export function docsMeta(): Meta {
   return {
-    title: 'docs — install, wear and make terminal palettes · ttheme',
-    description: 'How to install ttheme, wear and pin palettes, and make palettes of your own.',
+    title: 'docs — install, use and make terminal palettes · ttheme',
+    description: 'How to install ttheme, use and pin palettes, and make palettes of your own.',
   }
 }
 

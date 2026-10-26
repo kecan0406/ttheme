@@ -17,7 +17,7 @@ export function Marks({ signature, miss }: { signature: boolean; miss: boolean }
       {miss ? (
         <span class="text-xs leading-none font-bold text-destructive">
           <span aria-hidden="true">✗</span>
-          <span class="sr-only">misses the gate</span>
+          <span class="sr-only">fails a contrast check</span>
         </span>
       ) : null}
     </>
@@ -85,7 +85,7 @@ export function GateRows({ lines, names }: { lines: GateLine[]; names: string[] 
                 ? `≤ ${rule.max}`
                 : `over ${rule.max}`
 
-        const named = [...new Set(slots)].map((slot) => names[slot] ?? '').join(' · ')
+        const named = [...new Set(slots)].map((slot) => names[slot] ?? '').join(', ')
 
         return (
           <li class="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 py-2 pr-3 pl-4">

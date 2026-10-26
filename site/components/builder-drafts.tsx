@@ -11,7 +11,7 @@ export function DraftRoom({ list }: { list: DraftList }) {
 
   return (
     <span class={cn('font-mono text-xs tabular-nums', full ? 'text-warning' : 'text-muted-foreground')} safe>
-      {full ? `${list.count} / ${list.most} · the oldest goes next` : `${list.count} / ${list.most}`}
+      {full ? `${list.count} / ${list.most}, the oldest goes next` : `${list.count} / ${list.most}`}
     </span>
   )
 }

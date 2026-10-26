@@ -110,12 +110,12 @@ export function GateButton({
   ...props
 }: Omit<JSX.HtmlButtonTag, 'class'> & { passed: number; total: number; waived?: number }) {
   const clear = passed === total
-  const label = `contrast gate, ${passed} of ${total} floors${waived > 0 ? `, ${waived} waived` : ''}`
+  const label = `contrast checks, ${passed} of ${total} pass${waived > 0 ? `, ${waived} waived` : ''}`
 
   return (
     <Button variant="outline" size="sm" aria-label={label} {...props}>
       <Icon node={clear ? Check : TriangleAlert} class={clear ? 'text-success' : 'text-warning'} />
-      <span safe>{`gate ${passed}/${total}`}</span>
+      <span safe>{`contrast ${passed}/${total}`}</span>
       {waived > 0 ? (
         <span class="font-medium text-muted-foreground" safe>
           {`· ${waived} waived`}
