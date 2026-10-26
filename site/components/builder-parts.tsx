@@ -2,6 +2,7 @@ import {
   ArrowDown,
   Blend,
   Check,
+  ChevronDown,
   Copy,
   Download,
   Eye,
@@ -44,6 +45,7 @@ import { Mark } from './mark'
 import { SectionLabel } from './palette-parts'
 import { PictureList } from './picture-list'
 import { GateRows, Group, Marks, Swatch, Verdict } from './slot-list'
+import { GateButton, TITLE, TitleDots, TitleLine, TitleMeta, WorkspaceBar } from './workspace-shell'
 
 const PLANE_THUMB =
   'pointer-events-none absolute size-3.5 -translate-1/2 rounded-full border-2 border-white shadow-sm ring-1 ring-black/55'
@@ -74,32 +76,23 @@ function RowMarks({ row }: { row: RowView }) {
 export function StartLabel({ source }: { source: string | null }) {
   return (
     <>
-      <Icon node={Sparkles} />
-      <span>start</span>
+      <Icon node={Sparkles} class="size-3.5" />
       {source ? (
-        <span
-          class="min-w-0 truncate font-display font-extrabold text-foreground bar-squeezed:hidden"
-          translate="no"
-          safe
-        >
-          {source}
-        </span>
-      ) : null}
+        <>
+          <span>from</span>
+          <span class="min-w-0 truncate font-semibold text-foreground" translate="no" safe>
+            {source}
+          </span>
+        </>
+      ) : (
+        <span>start</span>
+      )}
     </>
   )
 }
 
-export function BarDots({ dots }: { dots: string[] }) {
-  return (
-    <>
-      {dots.map((hex) => (
-        <i
-          class="size-3 rounded-full ring-1 ring-border inset-ring inset-ring-black/14 forced-color-adjust-none"
-          style={`background:${hex}`}
-        />
-      ))}
-    </>
-  )
+export function MadeLabel({ mode }: { mode: Mode }) {
+  return <span safe>{`made in ${mode}`}</span>
 }
 
 export function ChangedLabel({ count }: { count: number }) {
@@ -125,6 +118,7 @@ export function BuilderBar({
   name,
   problem,
   source,
+  made,
   dots,
   changed,
   link,
@@ -132,60 +126,65 @@ export function BuilderBar({
   name: string
   problem: string | undefined
   source: string | null
+  made: Mode
   dots: string[]
   changed: number
   link: string | null
 }) {
   return (
-    <header
+    <WorkspaceBar
       data-bar
-      class="relative z-10 flex min-w-0 items-center justify-between gap-3 border-b border-border bg-background pr-4 pl-3.5 [grid-area:bar] max-[760px]:flex-wrap max-[760px]:px-4 max-[760px]:py-3"
+      class="relative z-10 [grid-area:bar] max-[760px]:flex-wrap max-[760px]:px-4 max-[760px]:py-3"
     >
-      <div class="flex min-w-0 items-center gap-2.5">
-        <Button
-          variant="outline"
-          size="sm"
-          popovertarget="builder-start"
-          aria-haspopup="dialog"
-          data-start
-          class="max-w-60 min-w-28 shrink bar-squeezed:min-w-auto"
-        >
-          <span data-start-label class="flex min-w-0 items-center gap-2">
-            <StartLabel source={source} />
+      <div class={TITLE}>
+        <TitleLine>
+          <div data-draft class="relative -ml-1 max-w-85 min-w-14">
+            <input
+              data-name
+              aria-label="palette name"
+              aria-invalid={problem ? 'true' : 'false'}
+              aria-describedby="builder-name-problem"
+              value={name}
+              maxlength="40"
+              spellcheck="false"
+              autocomplete="off"
+              autocapitalize="none"
+              autocorrect="off"
+              translate="no"
+              class="h-7.5 max-w-full min-w-full [field-sizing:content] rounded-t-sm border-b-[1.5px] border-dashed border-transparent bg-transparent px-1 font-display text-display-sm font-black text-ellipsis outline-none hover:border-input focus:border-primary focus:bg-muted aria-invalid:border-destructive"
+            />
+            <p
+              id="builder-name-problem"
+              data-name-problem
+              role="status"
+              hidden={!problem}
+              class="absolute top-full left-1 z-30 mt-1 rounded-lg border border-border bg-popover px-2 py-0.75 text-xs whitespace-nowrap text-destructive shadow-md"
+              safe
+            >
+              {problem ? `the name ${problem}` : ''}
+            </p>
+          </div>
+          <span data-draft data-bar-dots aria-hidden="true" class="flex flex-none gap-1">
+            <TitleDots dots={dots} />
           </span>
-        </Button>
-        <span aria-hidden="true" class="text-base text-faint-foreground">
-          /
-        </span>
-        <div data-draft class="relative max-w-85 min-w-14">
-          <input
-            data-name
-            aria-label="palette name"
-            aria-invalid={problem ? 'true' : 'false'}
-            aria-describedby="builder-name-problem"
-            value={name}
-            maxlength="40"
-            spellcheck="false"
-            autocomplete="off"
-            autocapitalize="none"
-            autocorrect="off"
-            translate="no"
-            class="h-9.5 max-w-full min-w-full [field-sizing:content] rounded-t-sm border-b-[1.5px] border-dashed border-transparent bg-transparent px-1 font-display text-display-sm font-black text-ellipsis outline-none hover:border-input focus:border-primary focus:bg-muted aria-invalid:border-destructive"
-          />
-          <p
-            id="builder-name-problem"
-            data-name-problem
-            role="status"
-            hidden={!problem}
-            class="absolute top-full left-1 z-30 mt-1 rounded-lg border border-border bg-popover px-2 py-0.75 text-xs whitespace-nowrap text-destructive shadow-md"
-            safe
+        </TitleLine>
+        <TitleMeta>
+          <button
+            type="button"
+            popovertarget="builder-start"
+            aria-haspopup="dialog"
+            data-start
+            class="-ml-1.5 inline-flex h-5 min-w-0 cursor-pointer items-center gap-1 rounded-full px-1.5 text-soft-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:inset-ring-2 focus-visible:inset-ring-ring aria-expanded:bg-muted"
           >
-            {problem ? `the name ${problem}` : ''}
-          </p>
-        </div>
-        <span data-draft data-bar-dots aria-hidden="true" class="flex flex-none gap-1">
-          <BarDots dots={dots} />
-        </span>
+            <span data-start-label class="flex min-w-0 items-center gap-1.5">
+              <StartLabel source={source} />
+            </span>
+            <Icon node={ChevronDown} class="size-3 flex-none opacity-70" />
+          </button>
+          <span data-made-label class="flex-none">
+            <MadeLabel mode={made} />
+          </span>
+        </TitleMeta>
       </div>
       <div class="flex flex-none items-center gap-1 max-[760px]:w-full">
         <Button variant="outline" size="sm" data-changed aria-pressed="false" class="max-[760px]:mr-auto">
@@ -232,7 +231,7 @@ export function BuilderBar({
           <span class="max-[360px]:sr-only">export</span>
         </Button>
       </div>
-    </header>
+    </WorkspaceBar>
   )
 }
 
@@ -314,17 +313,7 @@ export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: stri
 export function GateSummary({ gate, misses }: { gate: Gate; misses: number }) {
   return (
     <>
-      <button
-        type="button"
-        data-gate-jump
-        class="inline-flex h-8 min-w-0 items-center gap-2 rounded-full pr-2.5 pl-1.5 text-sm font-semibold outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <Verdict ok={gate.passed === gate.lines.length} />
-        <span safe>{`${gate.passed} / ${gate.lines.length} floors`}</span>
-        <span class="truncate font-medium text-muted-foreground" safe>
-          {gate.waived > 0 ? `contrast gate · ${gate.waived} waived` : 'contrast gate'}
-        </span>
-      </button>
+      <GateButton passed={gate.passed} total={gate.lines.length} waived={gate.waived} data-gate-jump />
       {misses > 0 ? (
         <Button variant="outline" size="sm" data-next-miss class="flex-none">
           next miss
@@ -424,13 +413,11 @@ export function PairRows({ pairs }: { pairs: PairView[] }) {
 
 export function ColorsPanel({
   gate,
-  misses,
   rows,
   format,
   names,
 }: {
   gate: Gate
-  misses: number
   rows: Rows
   format: RowFormat
   names: string[]
@@ -443,13 +430,6 @@ export function ColorsPanel({
       data-panel-body="colors"
       class="relative pb-6"
     >
-      <div
-        data-draft
-        data-gate-summary
-        class="flex h-13 items-center justify-between gap-2 border-b border-border pr-3 pl-2.5"
-      >
-        <GateSummary gate={gate} misses={misses} />
-      </div>
       <div class="flex h-11 items-center justify-between gap-2 border-b border-border pr-3 pl-4">
         <span class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">values</span>
         <ToggleGroup label="values in the list">
@@ -982,7 +962,7 @@ export function EditMode({ made, editing }: { made: Mode; editing: Mode }) {
   return (
     <fieldset
       aria-label="mode to edit"
-      class="flex h-7.5 min-w-0 flex-none items-center gap-0.5 rounded-full bg-foreground/8 p-0.5"
+      class="flex h-7.5 min-w-0 flex-none items-center gap-0.5 rounded-full bg-(--fg)/8 p-0.5"
     >
       {(['dark', 'light'] as const).map((mode) => (
         <button
@@ -991,7 +971,7 @@ export function EditMode({ made, editing }: { made: Mode; editing: Mode }) {
           aria-pressed={String(mode === editing)}
           aria-label={`edit the ${mode} colors${mode === made ? ', the mode it was made in' : ''}`}
           title={mode === made ? `${mode} · made in` : mode}
-          class="relative flex h-full w-8 cursor-pointer items-center justify-center rounded-full text-soft-foreground transition-colors duration-150 outline-none hover:text-foreground focus-visible:inset-ring-2 focus-visible:inset-ring-ring aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+          class="relative flex h-full w-8 cursor-pointer items-center justify-center rounded-full text-(--fg)/62 transition-colors duration-150 outline-none hover:text-(--fg) focus-visible:inset-ring-2 focus-visible:inset-ring-ring aria-pressed:bg-(--cu) aria-pressed:text-(--bg)"
         >
           <Icon node={mode === 'dark' ? Moon : Sun} class="size-3.5" />
           <i

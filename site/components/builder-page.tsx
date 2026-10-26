@@ -6,6 +6,7 @@ import {
   dotsOf,
   draftListOf,
   fileOf,
+  type Gate,
   gateOf,
   marketOf,
   modesOf,
@@ -21,23 +22,43 @@ import type { Pane } from '@/lib/view-types'
 import { grow, SEEDS } from '../../src/core/seeds.ts'
 import { listOf, misses, slotLabel } from '../../src/core/slots.ts'
 import { brightLinks } from '../../src/core/tune.ts'
-import { AppBar } from './app-bar'
 import { DraftsPanel } from './builder-drafts'
 import { ExportDialog } from './builder-export'
 import { AddPopover, LinkSection, LinkStrip } from './builder-link'
-import { AboutPanel, BuilderBar, ColorsPanel, EditMode, SeedsPanel, StatusText } from './builder-parts'
+import { AboutPanel, BuilderBar, ColorsPanel, EditMode, GateSummary, SeedsPanel, StatusText } from './builder-parts'
 import { StartPopover } from './builder-start'
 import { MockWindow } from './mock-window'
-import { SiteHeader } from './site-header'
+import { WorkspacePage, WorkspaceSide, WorkspaceStage } from './workspace-shell'
+
+function BuilderFacts({ gate, missed, ansi, grid }: { gate: Gate; missed: number; ansi: string; grid: string }) {
+  return (
+    <>
+      <span data-draft data-gate-summary class="contents">
+        <GateSummary gate={gate} misses={missed} />
+      </span>
+      <span data-draft data-ansi-from hidden={!ansi} class="text-xs text-muted-foreground" safe>
+        {ansi ? `ansi from ${ansi}` : ''}
+      </span>
+      <span class="ml-auto font-mono text-xs text-muted-foreground">
+        <span class="sr-only">terminal size </span>
+        <span data-grid safe>
+          {grid}
+        </span>
+      </span>
+    </>
+  )
+}
 
 export function BuilderPage({
   data,
   panes,
+  grid,
   facts,
   shared,
 }: {
   data: BuilderData
   panes: Pane[]
+  grid: string
   facts: Facts
   shared: Shared | null
 }) {
@@ -50,82 +71,94 @@ export function BuilderPage({
   const rows = rowsOf(list, edit.signature, missed, new Set(), 'hex', null, linked, false)
   const mode = madeMode(edit)
   const seeded = listOf(grow(SEEDS))
+  const about = aboutOf(edit, 'made')
 
   return (
-    <div class="ground flex min-h-dvh flex-col app:h-dvh app:overflow-hidden">
-      <SiteHeader current="/builder" facts={facts} fixed />
-      <palette-builder class="builder-app">
+    <WorkspacePage
+      current="/builder"
+      facts={facts}
+      status={
+        <span data-status class="flex min-w-0 items-center gap-2">
+          <StatusText status={{ ok: true, text: 'your drafts stay in this browser' }} />
+        </span>
+      }
+    >
+      <palette-builder class="workspace" data-stack="window">
         {shared && shared.palettes.length > 1 ? <LinkStrip shared={shared} /> : null}
-        <div class="border-b border-border bg-sidebar [grid-area:tabs] app:border-r">
-          <TabsList label="sidebar" class="h-full gap-0.5 px-2">
-            <TabsTrigger
-              variant="nav"
-              selected
-              id="builder-tab-colors"
-              aria-controls="builder-colors"
-              data-panel="colors"
-            >
-              <Icon node={Palette} />
-              <span data-first-tab>colors</span>
-            </TabsTrigger>
-            <TabsTrigger
-              variant="nav"
-              selected={false}
-              id="builder-tab-about"
-              aria-controls="builder-about"
-              data-panel="about"
-            >
-              <Icon node={Info} />
-              about
-            </TabsTrigger>
-            <TabsTrigger
-              variant="nav"
-              selected={false}
-              id="builder-tab-drafts"
-              aria-controls="builder-drafts"
-              data-panel="drafts"
-            >
-              <Icon node={History} />
-              drafts
-              <TabsCount data-drafts-count hidden />
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <WorkspaceSide
+          aria-label="palette"
+          head={
+            <TabsList label="sidebar" class="h-full gap-0.5">
+              <TabsTrigger
+                variant="nav"
+                selected
+                id="builder-tab-colors"
+                aria-controls="builder-colors"
+                data-panel="colors"
+              >
+                <Icon node={Palette} />
+                <span data-first-tab>colors</span>
+              </TabsTrigger>
+              <TabsTrigger
+                variant="nav"
+                selected={false}
+                id="builder-tab-about"
+                aria-controls="builder-about"
+                data-panel="about"
+              >
+                <Icon node={Info} />
+                about
+              </TabsTrigger>
+              <TabsTrigger
+                variant="nav"
+                selected={false}
+                id="builder-tab-drafts"
+                aria-controls="builder-drafts"
+                data-panel="drafts"
+              >
+                <Icon node={History} />
+                drafts
+                <TabsCount data-drafts-count hidden />
+              </TabsTrigger>
+            </TabsList>
+          }
+        >
+          <div
+            data-side
+            class="app:min-h-0 app:flex-1 app:overflow-y-auto app:overscroll-contain app:[scrollbar-color:var(--border)_transparent] app:[scrollbar-width:thin]"
+          >
+            <SeedsPanel
+              seeds={seedRowsOf(SEEDS)}
+              list={seeded}
+              gate={gateOf(seeded, ['cursor', 'ansi5', 'ansi4'], [])}
+            />
+            <ColorsPanel gate={gate} rows={rows} format="hex" names={list.map((_, slot) => slotLabel(slot).name)} />
+            <AboutPanel
+              about={about}
+              modes={modesOf(edit)}
+              link={shared ? <LinkSection shared={shared} /> : undefined}
+            />
+            <DraftsPanel list={draftListOf([], edit.id, '', null, 0)} />
+          </div>
+        </WorkspaceSide>
         <BuilderBar
           name={edit.name}
           problem={nameTrouble(edit.name)}
           source={data.first.name}
+          made={mode}
           dots={dotsOf(list, edit.signature)}
           changed={0}
           link={shared?.link ?? null}
         />
-        <aside
-          aria-label="palette"
-          data-side
-          class="bg-sidebar [grid-area:side] app:min-h-0 app:overflow-y-auto app:overscroll-contain app:border-r app:border-border app:[scrollbar-color:var(--border)_transparent] app:[scrollbar-width:thin]"
-        >
-          <SeedsPanel seeds={seedRowsOf(SEEDS)} list={seeded} gate={gateOf(seeded, ['cursor', 'ansi5', 'ansi4'], [])} />
-          <ColorsPanel
-            gate={gate}
-            misses={missed.size}
-            rows={rows}
-            format="hex"
-            names={list.map((_, slot) => slotLabel(slot).name)}
-          />
-          <AboutPanel
-            about={aboutOf(edit, 'made')}
-            modes={modesOf(edit)}
-            link={shared ? <LinkSection shared={shared} /> : undefined}
-          />
-          <DraftsPanel list={draftListOf([], edit.id, '', null, 0)} />
-        </aside>
-        <main id="content" aria-label="preview" data-stage class="mock-stage [grid-area:stage]">
-          <MockWindow
-            panes={panes}
-            prefix="builder"
-            style={slotVars(list)}
-            controls={<EditMode made={mode} editing={mode} />}
-          />
+        <main id="content" aria-label="preview" data-stage class="flex min-h-0 min-w-0 flex-col [grid-area:stage]">
+          <WorkspaceStage facts={<BuilderFacts gate={gate} missed={missed.size} ansi={about.ansiSource} grid={grid} />}>
+            <MockWindow
+              panes={panes}
+              prefix="builder"
+              style={slotVars(list)}
+              controls={<EditMode made={mode} editing={mode} />}
+            />
+          </WorkspaceStage>
         </main>
         <StartPopover />
         {shared ? <AddPopover shared={shared} /> : null}
@@ -139,11 +172,6 @@ export function BuilderPage({
           {json(data)}
         </script>
       </palette-builder>
-      <AppBar facts={facts}>
-        <span data-status class="flex min-w-0 items-center gap-2">
-          <StatusText status={{ ok: true, text: 'your drafts stay in this browser' }} />
-        </span>
-      </AppBar>
-    </div>
+    </WorkspacePage>
   )
 }

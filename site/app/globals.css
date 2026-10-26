@@ -1212,32 +1212,13 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     calc(var(--dot-step) * 8) 0 var(--dot8, transparent);
 }
 
-.mock-stage {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  min-height: 0;
-  padding: 16px;
-  overflow: hidden;
-  background-color: var(--background);
-  background-image: radial-gradient(circle, color-mix(in oklab, var(--foreground) 10%, transparent) 1px, transparent 1.6px);
-  background-size: 18px 18px;
-}
-
 .mock {
   --fs: 13px;
   --lh: calc(var(--fs) * 1.5385);
   display: flex;
+  flex: 1;
   flex-direction: column;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) * 1.4);
-  background: var(--card);
-  box-shadow: var(--elevation-lg);
+  min-height: 0;
 }
 
 .mock-term {
@@ -1384,44 +1365,60 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
   }
 }
 
-.builder-app {
+.workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto 48px auto;
-  grid-template-areas: 'bar' 'stage' 'tabs' 'side';
   align-content: start;
 }
 
-.builder-app:has(> [data-strip]) {
-  grid-template-rows: auto auto auto 48px auto;
-  grid-template-areas: 'strip' 'bar' 'stage' 'tabs' 'side';
-}
-
 @media not all and (min-width: 900px) and (min-height: 600px) {
-  .builder-app [data-stage] {
+  .workspace {
+    grid-template-areas: 'side' 'bar' 'stage';
+  }
+
+  .workspace:has(> [data-strip]) {
+    grid-template-areas: 'strip' 'side' 'bar' 'stage';
+  }
+
+  .workspace[data-stack='window'] {
+    grid-template-areas: 'bar' 'stage' 'side';
+  }
+
+  .workspace[data-stack='window']:has(> [data-strip]) {
+    grid-template-areas: 'strip' 'bar' 'stage' 'side';
+  }
+
+  .workspace[data-stack='window'] [data-stage] {
     position: sticky;
     top: calc(var(--spacing) * 13);
     z-index: 5;
     height: min(340px, 46dvh);
+    border-bottom: 1px solid var(--border);
+    background: var(--glass);
+    backdrop-filter: blur(14px) saturate(1.3);
+  }
+
+  .workspace[data-stack='window'] [data-slot='workspace-stage'] {
+    flex: 1;
+    min-height: 0;
+    gap: calc(var(--spacing) * 2);
     padding: 12px;
   }
 
-  .builder-app .mock {
+  palette-builder .mock {
     --fs: 11px;
-    width: 100%;
-    height: 100%;
   }
 
-  .builder-app .mock-term {
+  palette-builder .mock-term {
     overflow: auto;
   }
 
-  .builder-app .mock-pane {
+  palette-builder .mock-pane {
     width: max-content;
     min-width: 100%;
   }
 
-  .builder-app [data-picker] {
+  palette-builder [data-picker] {
     position: fixed;
     inset: auto 0 0;
     top: auto !important;
@@ -1431,29 +1428,30 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     overscroll-behavior: contain;
   }
 
-  .builder-app [data-picker-card] {
+  palette-builder [data-picker-card] {
     border-radius: calc(var(--radius) * 2.2) calc(var(--radius) * 2.2) 0 0;
     padding-bottom: max(14px, env(safe-area-inset-bottom));
   }
 }
 
 @variant app {
-  .builder-app {
+  .workspace {
     flex: 1;
     min-height: 0;
-    grid-template-columns: 344px minmax(0, 1fr);
-    grid-template-rows: 56px minmax(0, 1fr);
-    grid-template-areas: 'tabs bar' 'side stage';
+    grid-template-columns: 332px minmax(0, 1fr);
+    grid-template-rows: 64px minmax(0, 1fr);
+    grid-template-areas: 'side bar' 'side stage';
+    align-content: stretch;
   }
 
-  .builder-app:has(> [data-strip]) {
-    grid-template-rows: 48px 56px minmax(0, 1fr);
-    grid-template-areas: 'strip strip' 'tabs bar' 'side stage';
+  .workspace:has(> [data-strip]) {
+    grid-template-rows: 48px 64px minmax(0, 1fr);
+    grid-template-areas: 'strip strip' 'side bar' 'side stage';
   }
 }
 
-:root[data-restoring] .builder-app [data-draft],
-:root[data-restoring] .builder-app .mock-term {
+:root[data-restoring] palette-builder [data-draft],
+:root[data-restoring] palette-builder .mock-term {
   visibility: hidden;
   animation: builder-reveal 0s linear 2.5s forwards;
 }

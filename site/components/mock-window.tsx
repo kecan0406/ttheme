@@ -1,8 +1,7 @@
 import { escapeHtml } from '@kitajs/html'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Pane, Run } from '@/lib/view-types'
-
-const LIGHTS = ['#ff5f57', '#febc2e', '#28c840']
+import { TerminalFrame } from './terminal-frame'
 
 function Line({ runs }: { runs: Run[] }) {
   return (
@@ -70,13 +69,13 @@ export function MockWindow({
   controls?: JSX.Element
 }) {
   return (
-    <div data-mock class="mock" style={style}>
-      <div class="flex h-10 flex-none items-center gap-3 bg-card pr-1.5 pl-3.5">
-        <span aria-hidden="true" class="flex gap-2">
-          {LIGHTS.map((color) => (
-            <i class="size-3 rounded-full inset-ring inset-ring-black/18" style={`background:${color}`} />
-          ))}
-        </span>
+    <TerminalFrame
+      data-mock
+      class="mock"
+      style={style}
+      raised
+      controls={controls}
+      tabs={
         <TabsList label="terminal tabs" variant="track" class="flex-1">
           {panes.map((pane, i) => (
             <TabsTrigger
@@ -86,18 +85,21 @@ export function MockWindow({
               aria-controls={`${prefix}-pane-${pane.name}`}
               data-pane={pane.name}
             >
+              <span data-mark aria-hidden="true">
+                ❯
+              </span>
               {escapeHtml(pane.name)}
             </TabsTrigger>
           ))}
         </TabsList>
-        {controls ? controls : null}
-      </div>
+      }
+    >
       <div data-term class="mock-term">
         {panes.map((pane, i) => (
           <PaneView pane={pane} first={i === 0} prefix={prefix} />
         ))}
         <div data-inspector hidden class="pointer-events-none absolute z-20 data-pinned:pointer-events-auto" />
       </div>
-    </div>
+    </TerminalFrame>
   )
 }

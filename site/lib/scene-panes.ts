@@ -14,6 +14,10 @@ function runOf(part: Part): Run {
   }
 }
 
+export function gridText(cols: number, rows: number): string {
+  return `${cols}×${rows}`
+}
+
 export interface Scenes {
   panes: Pane[]
   uses: number[][]

@@ -1,6 +1,6 @@
 import type { BuilderData, Start } from '@/lib/builder'
 import { fallback, official } from '@/lib/official'
-import { scenePanes } from '@/lib/scene-panes'
+import { gridText, scenePanes } from '@/lib/scene-panes'
 import type { Shared } from '@/lib/share'
 import { shelfOf } from '@/lib/themes'
 import type { Pane } from '@/lib/view-types'
@@ -40,7 +40,10 @@ export function starts(): Start[] {
 export interface BuilderPageData {
   data: BuilderData
   panes: Pane[]
+  grid: string
 }
+
+const GRID = { cols: 120, rows: 34 }
 
 function linkStart({ drafts, index, entry, theme }: Shared): Start {
   const draft = drafts[index] as Draft
@@ -57,7 +60,7 @@ function linkStart({ drafts, index, entry, theme }: Shared): Start {
 
 export function builderData(shared: Shared | null): BuilderPageData {
   const lead = official.find((entry) => entry.name === fallback.name) as PaletteEntry
-  const { panes, uses } = scenePanes(120, 34)
+  const { panes, uses } = scenePanes(GRID.cols, GRID.rows)
 
   return {
     data: {
@@ -68,5 +71,6 @@ export function builderData(shared: Shared | null): BuilderPageData {
       official: listed(official).map((entry) => entry.name),
     },
     panes,
+    grid: gridText(GRID.cols, GRID.rows),
   }
 }

@@ -10,7 +10,7 @@ const tabVariants = cva(
         underline:
           'relative flex-1 justify-center px-4 font-medium after:absolute after:inset-x-6 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 aria-selected:after:opacity-100',
         track:
-          'relative flex-1 justify-center rounded-md px-3 text-xs before:absolute before:top-1/2 before:left-0 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-foreground/16 first:before:hidden aria-selected:bg-foreground/14 aria-selected:shadow-sm aria-selected:before:hidden [[aria-selected=true]+&]:before:hidden',
+          'relative flex-1 justify-center gap-1.5 rounded-md px-3 text-xs font-medium text-(--fg)/62 before:absolute before:top-1/2 before:left-0 before:h-3.5 before:w-px before:-translate-y-1/2 before:bg-(--fg)/16 first:before:hidden hover:text-(--fg) aria-selected:bg-(--fg)/16 aria-selected:text-(--fg) aria-selected:shadow-sm aria-selected:before:hidden [[aria-selected=true]+&]:before:hidden [&>[data-mark]]:text-(--fg)/30 aria-selected:[&>[data-mark]]:text-(--a5)',
         nav: 'relative gap-1.5 px-2.5 font-medium text-soft-foreground after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 aria-selected:after:opacity-100 [&>svg]:size-4 [&>svg]:flex-none',
       },
     },
@@ -26,7 +26,7 @@ type TabProps = PropsWithChildren<
 
 const LISTS = {
   plain: '',
-  track: 'h-7.5 rounded-lg bg-foreground/6 p-0.5',
+  track: 'h-7.5 rounded-lg bg-(--fg)/6 p-0.5',
 }
 
 function TabsList({

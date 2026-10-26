@@ -12,7 +12,7 @@ const LINKS: { label: string; href: string; brand?: SimpleIcon }[] = [
 
 export function AppBar({ facts, children }: PropsWithChildren<{ facts: Facts }>) {
   return (
-    <footer class="flex flex-none flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t bg-sidebar px-5 py-1.5 text-xs text-muted-foreground app:h-7 app:py-0">
+    <footer class="flex flex-none flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border bg-glass px-5 py-1.5 text-xs text-muted-foreground backdrop-blur-[14px] backdrop-saturate-130 app:h-7 app:py-0">
       {children}
       <nav aria-label="project" class="flex flex-wrap items-center gap-x-3.5 gap-y-1">
         <span>MIT</span>

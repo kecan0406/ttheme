@@ -42,7 +42,7 @@ export function LinkStrip({ shared }: { shared: Shared }) {
     <nav
       data-strip
       aria-label="palettes in this link"
-      class="flex min-w-0 items-center gap-1.5 overflow-x-auto border-b border-border bg-background px-4 py-2 [grid-area:strip] [scrollbar-width:none] app:py-0"
+      class="flex min-w-0 items-center gap-1.5 overflow-x-auto px-4 py-2 [grid-area:strip] [scrollbar-width:none] app:py-0"
     >
       <span class="mr-2 flex-none text-xs font-medium text-muted-foreground" safe>
         {`${shared.palettes.length} palettes`}

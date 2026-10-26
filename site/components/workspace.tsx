@@ -1,5 +1,5 @@
 import { escapeHtml } from '@kitajs/html'
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Search, Star, TriangleAlert } from 'lucide'
+import { ArrowLeft, ArrowRight, ChevronRight, Search, Star } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -15,14 +15,23 @@ import { type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { leadOf, neighbors, type Where, type WorkspaceData } from '@/lib/workspace'
-import { AppBar } from './app-bar'
 import { ByMode } from './by-mode'
 import { CommandRow } from './command-row'
 import { GateList, SwatchGrid } from './palette-parts'
 import { RepoLink } from './repo-link'
-import { SiteHeader } from './site-header'
 import { TerminalFrame } from './terminal-frame'
 import { SCENES, type Scene, TerminalPreview } from './terminal-preview'
+import {
+  GateButton,
+  TITLE,
+  TitleDots,
+  TitleLine,
+  TitleMeta,
+  WorkspaceBar,
+  WorkspacePage,
+  WorkspaceSide,
+  WorkspaceStage,
+} from './workspace-shell'
 
 type Step = 'add' | 'use' | 'init'
 
@@ -93,38 +102,44 @@ function CatalogTile({ theme }: { theme: Theme }) {
 
 export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: string }) {
   const name = 'truncate font-display text-display-sm font-black'
+  const dots = [0, 1, 2].map((index) => paint(theme, (shade) => shade.signature[index] as string))
 
   return (
     <>
       {heading ? (
-        <>
-          <h1 class="sr-only" safe>
-            {heading}
-          </h1>
+        <h1 class="sr-only" safe>
+          {heading}
+        </h1>
+      ) : null}
+      <TitleLine>
+        {heading ? (
           <h2 class={name} translate="no" safe>
             {theme.name}
           </h2>
-        </>
-      ) : (
-        <h1 class={name} translate="no" safe>
-          {theme.name}
-        </h1>
-      )}
-      <p class="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted-foreground">
+        ) : (
+          <h1 class={name} translate="no" safe>
+            {theme.name}
+          </h1>
+        )}
+        <span aria-hidden="true" class="flex flex-none gap-1">
+          <TitleDots dots={dots} />
+        </span>
+      </TitleLine>
+      <TitleMeta>
         {theme.catalog ? (
-          <span class="text-soft-foreground" safe>
+          <span class="flex-none text-soft-foreground" safe>
             {theme.catalog}
           </span>
         ) : null}
         {theme.native ? (
-          <span lang={nativeLang(theme)} safe>
+          <span class="flex-none" lang={nativeLang(theme)} safe>
             {theme.native}
           </span>
         ) : null}
         <span class="truncate font-mono" translate="no" safe>
           {palettePath(theme)}
         </span>
-      </p>
+      </TitleMeta>
     </>
   )
 }
@@ -172,23 +187,6 @@ export function ScenePanes({ theme }: { theme: Theme }) {
   )
 }
 
-function GateButton({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
-  const passed = gatePassed(theme, gate)
-  const clear = passed === gate.length
-
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      popovertarget="workspace-gate"
-      aria-label={`contrast gate, ${passed} of ${gate.length} floors`}
-    >
-      <Icon node={clear ? Check : TriangleAlert} class={clear ? 'text-success' : 'text-warning'} />
-      {escapeHtml(`gate ${passed}/${gate.length}`)}
-    </Button>
-  )
-}
-
 export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes: Theme[]; gate: GateRule[] }) {
   const { at, count } = neighbors(theme, palettes)
 
@@ -202,7 +200,12 @@ export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes
         />
         slots
       </Button>
-      <ByMode theme={theme} render={(shown) => <GateButton theme={shown} gate={gate} />} />
+      <ByMode
+        theme={theme}
+        render={(shown) => (
+          <GateButton passed={gatePassed(shown, gate)} total={gate.length} popovertarget="workspace-gate" />
+        )}
+      />
       {theme.from ? (
         <span class="text-xs text-muted-foreground" safe>
           {`from ${theme.from}`}
@@ -254,7 +257,7 @@ function Tree({ palettes, current }: { palettes: Theme[]; current: Theme }) {
     <nav
       aria-label="catalogs"
       data-tree
-      class="-mx-1 grid max-h-80 min-h-0 content-start gap-px overflow-y-auto overscroll-contain px-1 pb-2 app:max-h-none app:flex-1"
+      class="grid max-h-80 min-h-0 content-start gap-px overflow-y-auto overscroll-contain px-3 pt-3 pb-2 app:max-h-none app:flex-1"
     >
       {catalogsOf(palettes).map(({ catalog, themes }, index) => {
         const lead = leadOf(themes)
@@ -369,46 +372,50 @@ export function MarketplaceWorkspace({
   const { prev, next } = neighbors(theme, palettes)
 
   return (
-    <div class="ground flex min-h-dvh flex-col app:h-dvh app:overflow-hidden">
-      <SiteHeader current="/marketplace" facts={facts} fixed />
-      <marketplace-workspace class="flex min-h-0 flex-1 flex-col app:flex-row">
-        <aside
+    <WorkspacePage
+      current="/marketplace"
+      facts={facts}
+      status={<MarketplaceFacts marketplace={marketplace} count={palettes.length} repo={facts.repo} />}
+    >
+      <marketplace-workspace class="workspace">
+        <WorkspaceSide
           aria-label="catalogs and palettes"
-          class="flex flex-col gap-3 border-b bg-sidebar px-3 pt-3.5 app:min-h-0 app:w-74 app:flex-none app:border-r app:border-b-0"
+          head={
+            <search class="w-full">
+              <InputGroup>
+                <InputGroupAddon>
+                  <Icon node={Search} />
+                </InputGroupAddon>
+                <InputGroupInput
+                  type="search"
+                  name="query"
+                  placeholder="search catalogs, palettes"
+                  aria-label="search catalogs and palettes"
+                  aria-keyshortcuts="Meta+K Control+K"
+                  spellcheck="false"
+                  autocomplete="off"
+                  autocapitalize="none"
+                  autocorrect="off"
+                  enterkeyhint="search"
+                />
+                <InputGroupAddon align="inline-end">
+                  <Kbd>
+                    <span data-key="apple">⌘</span>
+                    <span data-key="other">ctrl</span>k
+                  </Kbd>
+                </InputGroupAddon>
+              </InputGroup>
+            </search>
+          }
         >
-          <search>
-            <InputGroup>
-              <InputGroupAddon>
-                <Icon node={Search} />
-              </InputGroupAddon>
-              <InputGroupInput
-                type="search"
-                name="query"
-                placeholder="search catalogs, palettes"
-                aria-label="search catalogs and palettes"
-                aria-keyshortcuts="Meta+K Control+K"
-                spellcheck="false"
-                autocomplete="off"
-                autocapitalize="none"
-                autocorrect="off"
-                enterkeyhint="search"
-              />
-              <InputGroupAddon align="inline-end">
-                <Kbd>
-                  <span data-key="apple">⌘</span>
-                  <span data-key="other">ctrl</span>k
-                </Kbd>
-              </InputGroupAddon>
-            </InputGroup>
-          </search>
           <Tree palettes={palettes} current={theme} />
-        </aside>
-        <main id="content" data-mode-scope class="flex min-w-0 flex-1 flex-col app:min-h-0">
-          <div class="group/install flex flex-wrap items-center gap-x-5 gap-y-3 border-b px-5 py-3">
-            <div data-head class="grid min-w-0 flex-[1_1_14rem] gap-0.5">
+        </WorkspaceSide>
+        <main id="content" data-mode-scope class="flex min-w-0 flex-col [grid-area:bar/bar/stage/stage] app:min-h-0">
+          <WorkspaceBar class="group/install flex-wrap">
+            <div data-head class={cn(TITLE, 'flex-[1_1_14rem]')}>
               <WorkspaceHead theme={theme} heading={heading} />
             </div>
-            <div class="flex min-w-0 flex-[1_1_30rem] items-center gap-2.5">
+            <div class="flex min-w-0 flex-[1_1_20rem] flex-wrap items-center gap-2.5">
               <ToggleGroup label="install step" class="flex-none">
                 {STEPS.map(({ step, label }) => (
                   <ToggleGroupItem name="install" value={step} checked={step === 'add'}>
@@ -416,7 +423,7 @@ export function MarketplaceWorkspace({
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
-              <div data-install class="min-w-0 flex-1">
+              <div data-install class="min-w-0 flex-1 basis-56">
                 <InstallPanes theme={theme} where={where} />
               </div>
             </div>
@@ -428,8 +435,8 @@ export function MarketplaceWorkspace({
                 <Icon node={ArrowRight} />
               </Button>
             </div>
-          </div>
-          <div class="flex flex-col gap-3.5 bg-muted/60 px-8 pt-6 pb-4 max-[720px]:px-4 app:min-h-0 app:flex-1">
+          </WorkspaceBar>
+          <WorkspaceStage facts={<PaletteFacts theme={theme} palettes={palettes} gate={gate} />}>
             <TerminalFrame
               role="region"
               aria-label="preview"
@@ -465,10 +472,7 @@ export function MarketplaceWorkspace({
                 <ScenePanes theme={theme} />
               </div>
             </TerminalFrame>
-            <div data-facts class="flex flex-none flex-wrap items-center gap-x-3 gap-y-2">
-              <PaletteFacts theme={theme} palettes={palettes} gate={gate} />
-            </div>
-          </div>
+          </WorkspaceStage>
           <div
             id="workspace-gate"
             popover="auto"
@@ -487,9 +491,6 @@ export function MarketplaceWorkspace({
           {json(data)}
         </script>
       </marketplace-workspace>
-      <AppBar facts={facts}>
-        <MarketplaceFacts marketplace={marketplace} count={palettes.length} repo={facts.repo} />
-      </AppBar>
-    </div>
+    </WorkspacePage>
   )
 }

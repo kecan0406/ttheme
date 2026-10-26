@@ -1,7 +1,6 @@
 import { DraftEntries, DraftRoom } from '@/components/builder-drafts'
 import { FilePanel, LinkPanel, MarketSteps } from '@/components/builder-export'
 import {
-  BarDots,
   BaseRows,
   ChangedLabel,
   Checks,
@@ -9,6 +8,7 @@ import {
   FileNote,
   GateSummary,
   Lch,
+  MadeLabel,
   MarkTile,
   Modes,
   PairRows,
@@ -26,6 +26,7 @@ import {
 import { StartEntries } from '@/components/builder-start'
 import { PaneBody } from '@/components/mock-window'
 import { GateRows } from '@/components/slot-list'
+import { TitleDots } from '@/components/workspace-shell'
 import {
   type BuilderData,
   blankEdit,
@@ -78,7 +79,7 @@ import {
 import { nativeLang } from '@/lib/catalogs'
 import type { Mode } from '@/lib/mode'
 import { html } from '@/lib/render'
-import { scenePanes } from '@/lib/scene-panes'
+import { gridText, scenePanes } from '@/lib/scene-panes'
 import { hueTrack } from '@/lib/slot-view'
 import { FORMATS, type Picture, type PictureCredit, type SlotFormat } from '@/lib/view-types'
 import { textDraft, webCheck, webCode } from '@/lib/web-code'
@@ -469,7 +470,7 @@ class PaletteBuilder extends HTMLElement {
       mock?.style.setProperty(name, value)
     }
 
-    this.#fill(this.querySelector('[data-bar-dots]'), html(<BarDots dots={dotsOf(list, edit.signature)} />))
+    this.#fill(this.querySelector('[data-bar-dots]'), html(<TitleDots dots={dotsOf(list, edit.signature)} />))
     this.#fill(this.querySelector('[data-changed-label]'), html(<ChangedLabel count={changes(edit)} />))
     this.querySelector('[data-changed]')?.setAttribute('aria-pressed', String(this.#only))
     this.#enable('[data-undo]', this.#history.length > 0)
@@ -491,6 +492,7 @@ class PaletteBuilder extends HTMLElement {
     if (count) count.textContent = `${gate.passed}/${gate.lines.length}`
     const made = madeMode(edit)
     const editing = modeOfView(edit, this.#view)
+    this.#fill(this.querySelector('[data-made-label]'), html(<MadeLabel mode={made} />))
 
     for (const button of this.querySelectorAll<HTMLElement>('[data-edit-mode]')) {
       button.setAttribute('aria-pressed', String(button.dataset.editMode === editing))
@@ -600,6 +602,13 @@ class PaletteBuilder extends HTMLElement {
       const value = input.dataset.meta === 'booru' ? about.booru : about.ansiSource
 
       if (input.value !== value && document.activeElement !== input) input.value = value
+    }
+
+    const ansi = this.querySelector<HTMLElement>('[data-ansi-from]')
+
+    if (ansi) {
+      ansi.hidden = about.ansiSource === ''
+      ansi.textContent = about.ansiSource ? `ansi from ${about.ansiSource}` : ''
     }
   }
 
@@ -825,6 +834,9 @@ class PaletteBuilder extends HTMLElement {
 
     if (grid === this.#grid) return
     this.#grid = grid
+    const size = this.querySelector('[data-grid]')
+
+    if (size) size.textContent = gridText(cols, rows)
     const { panes, uses } = scenePanes(cols, rows)
 
     for (const one of panes) fill(this.querySelector(`[data-pane-panel="${one.name}"]`), html(<PaneBody pane={one} />))

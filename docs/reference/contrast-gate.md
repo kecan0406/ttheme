@@ -13,7 +13,7 @@ ttheme check --fix miku   # write those colors in
 
 The palette editor measures every slot as you tune it, Browse shows a
 palette's score in its panel, and the [builder](https://ttheme.dev/builder)
-shows the gate beside its mock terminal.
+shows the gate under its mock terminal.
 
 ## Principles
 

@@ -51,6 +51,7 @@ export function TerminalFrame({
         <div class="flex h-10 flex-none items-center gap-3 pr-1.5 pl-3.5">
           <Lights class="flex-none" />
           {tabs}
+          {controls ? controls : null}
           {mode ? <WindowMode /> : null}
         </div>
       ) : (
