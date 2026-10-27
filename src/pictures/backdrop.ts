@@ -225,7 +225,7 @@ function inkOf(image: Rgba, lift: number, light: boolean): Mask {
     const luma = 0.299 * (src[at] as number) + 0.587 * (src[at + 1] as number) + 0.114 * (src[at + 2] as number)
     const level = (light ? 255 - luma : luma) * lift
 
-    data[i] = ((level > 255 ? 255 : level) * a) / 255 + 0.5
+    data[i] = (Math.min(255, level) * a) / 255 + 0.5
   }
 
   return { width: image.width, height: image.height, data }

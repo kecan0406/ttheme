@@ -796,12 +796,12 @@ export function resample(image: Rgba, box: Box, width: number, height: number): 
         }
 
         let v = (sums[i] as number) / a
-        out[o + i] = (v < 0 ? 0 : v > 255 ? 255 : v) + 0.5
+        out[o + i] = Math.max(0, Math.min(255, v)) + 0.5
         v = (sums[i + 1] as number) / a
-        out[o + i + 1] = (v < 0 ? 0 : v > 255 ? 255 : v) + 0.5
+        out[o + i + 1] = Math.max(0, Math.min(255, v)) + 0.5
         v = (sums[i + 2] as number) / a
-        out[o + i + 2] = (v < 0 ? 0 : v > 255 ? 255 : v) + 0.5
-        out[o + i + 3] = (a > 255 ? 255 : a) + 0.5
+        out[o + i + 2] = Math.max(0, Math.min(255, v)) + 0.5
+        out[o + i + 3] = Math.min(255, a) + 0.5
       }
     },
   )
@@ -911,7 +911,7 @@ export function quantize(plane: Plane): Mask {
 
   for (let i = 0; i < data.length; i++) {
     const v = plane.data[i] as number
-    data[i] = (v < 0 ? 0 : v > 255 ? 255 : v) + 0.5
+    data[i] = Math.max(0, Math.min(255, v)) + 0.5
   }
 
   return { width: plane.width, height: plane.height, data }
