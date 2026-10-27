@@ -69,8 +69,12 @@ export const CONFIG_SETTINGS = {
     doc: '# search hint animation: typewriter, decode or glitch (default typewriter)',
     default: 'typewriter',
   },
+  TTHEME_GROUP: {
+    doc: '# how ttheme lists the palettes: work shelves them by work, marketplace by marketplace, each holding its works — alt+g in ttheme changes it and the sort (default work)',
+    default: 'work',
+  },
   TTHEME_SORT: {
-    doc: "# works and their characters in ttheme and preview: abc sorts both by name, cast keeps each work's characters in the order its commons file lists them (default abc)",
+    doc: "# a work's characters in ttheme's list: abc by name, cast in the order the work's commons file lists them (default abc)",
     default: 'abc',
   },
   TTHEME_MOUSE: {

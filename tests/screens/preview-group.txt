@@ -1,0 +1,24 @@
+ [Preview]  Browse   ⇧tab Browse
+ Preview (3/3)    [Group marketplace / Sort A-Z]
+ ╭──────────────────────────── ╭─ Group ───────╮
+ │ ⌕ Search… ‹hint› │
+ ╰──────────────────────────── │▶● marketplace │
+                               ├─ Sort ────────┤
+   ▾ ttheme                    │ ● A-Z         │
+     ▾ Lucky☆Star  らき☆すた   │ ○ Cast order  │
+▌      ■ konata                ╰───────────────╯
+   ▸ fix@shop                                 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+ [GROUP] Saved · ~/ttheme/config.zsh                                                      esc close

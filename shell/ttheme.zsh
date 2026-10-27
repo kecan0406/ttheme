@@ -200,6 +200,8 @@ __tt_pins_load
 
 : ${TTHEME_FX:=typewriter}
 
+: ${TTHEME_GROUP:=work}
+
 : ${TTHEME_SORT:=abc}
 
 : ${TTHEME_MOUSE:=on}

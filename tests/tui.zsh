@@ -40,7 +40,8 @@ typeset -ga SCENARIOS=(
   'hub-keys        few    hub      ?@Help'
   'preview-open    few    hub  Down Right'
   'preview-config  few    hub  M-c'
-  'preview-colors  few    hub  M-c Down Down Down Down Down Down Down Right'
+  'preview-colors  few    hub  M-c Down Down Down Down Down Down Right'
+  'preview-group   marketplace hub  M-g Down Space'
   'theme-edit      few    hub  Down Right Down Tab@Palette'
   'theme-editor    few    hub  Down Right Down Tab@Palette Enter@slot'
   'theme-keys      few    hub  Down Right Down Right@Palette ?@Help'
@@ -95,7 +96,7 @@ command_for() {
 }
 
 scenario_env() {
-  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_SORT=abc TTHEME_ANNOUNCE=0 TTHEME_MARKETPLACE_LOOKUP=off TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off TTHEME_KEYS=${KEYS:-text})
+  reply=(XDG_CONFIG_HOME=$1 HOME=$1 TTHEME_FORCE=1 TTHEME_GROUP=work TTHEME_SORT=abc TTHEME_ANNOUNCE=0 TTHEME_MARKETPLACE_LOOKUP=off TTHEME_NAMES=off TTHEME_AUTO_UPDATE=off TTHEME_KEYS=${KEYS:-text})
 }
 
 settle() {

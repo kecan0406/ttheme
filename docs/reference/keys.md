@@ -25,6 +25,7 @@ The first tab of `ttheme`.
 | `⇧←` `⇧→` | the sample's scene: shell, code, diff, logs, monitor |
 | `enter` | use the palette, asking Default or This tab |
 | `tab` `→` `ctrl+e` | the palette's panel: its colors and picture |
+| `alt+g`, or a click on the chip above the list | group and sort the list: `↑` `↓` a choice, `space` or `enter` picks it and saves it, `esc` closes |
 | `alt+c` | settings: `↑` `↓` a setting, `←` `→` its value, `enter` saves, `esc` cancels |
 | `shift+tab`, or `tab` on a work | to Browse |
 | `esc` | clear the filter, then leave and put the tab back |

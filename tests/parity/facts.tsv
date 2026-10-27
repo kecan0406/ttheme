@@ -21,7 +21,7 @@ use-plain.used.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
 use-plain.used.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-hub.preview.text	txt:c612806d45	=	=	=	=	=	=	=	=	=	=	=
+hub.preview.text	txt:4e5296c1c0	=	=	=	=	=	=	=	=	=	=	=
 hub.preview.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.browse.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 hub.browse.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
@@ -29,7 +29,7 @@ hub.browse.text	txt:14a0b38a2d	=	=	=	=	=	=	=	=	=	=	=
 hub.browse.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 hub.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-hub.back.text	txt:c612806d45	=	=	=	=	=	=	=	=	=	=	=
+hub.back.text	txt:4e5296c1c0	=	=	=	=	=	=	=	=	=	=	=
 hub.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
 hub.closed.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 hub.closed.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
@@ -159,7 +159,7 @@ editor-terminal.after.text	txt:1b7974a0e0	=	=	=	=	=	=	=	=	=	=	=
 editor-terminal.after.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.hover.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 preview-hover.hover.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-hover.hover.text	txt:d16e6613cf	=	=	=	=	=	=	=	=	=	=	=
+preview-hover.hover.text	txt:c9499b3407	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.hover.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
@@ -175,7 +175,7 @@ preview-default-same.followed.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
 preview-default-same.followed.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-tab.pick.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 preview-tab.pick.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-tab.pick.text	txt:6cedec3d49	=	=	=	=	=	=	=	=	=	=	=
+preview-tab.pick.text	txt:3532a5778f	=	=	=	=	=	=	=	=	=	=	=
 preview-tab.pick.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-tab.kept.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 preview-tab.kept.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
@@ -195,7 +195,7 @@ preview-default.new.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
 preview-default.new.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-tune.tune.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 preview-tune.tune.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
-preview-tune.tune.text	txt:ffa74e18c1	=	=	=	txt:941231c41c	=	txt:941231c41c	=	txt:9fed779c22	txt:6822c0a4e8	txt:941231c41c	txt:941231c41c
+preview-tune.tune.text	txt:2d475f47f9	=	=	=	txt:36abbd7128	=	txt:36abbd7128	=	txt:fd9aefa41a	txt:7ccb90d84b	txt:36abbd7128	txt:36abbd7128
 preview-tune.tune.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-tune.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 preview-tune.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
@@ -203,7 +203,7 @@ preview-tune.back.wears	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 preview-tune.back.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-config.panel.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 preview-config.panel.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none
-preview-config.panel.text	txt:16042a079a	=	=	=	=	=	=	=	=	=	=	=
+preview-config.panel.text	txt:bac3d4f0a0	=	=	=	=	=	=	=	=	=	=	=
 preview-config.panel.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-config.back.colors	ttheme/konata	=	=	=	=	=	=	=	=	=	=	=
 preview-config.back.picture	ttheme/konata	=	=	=	none	=	none	=	=	=	none	none

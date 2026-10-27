@@ -352,6 +352,24 @@ plain=${out//$'\e[K'/}
     [[ $REPLY == "kec@bemani / pop'n music" ]] || { print -u2 "a palette's shelf was not its publisher and its work: $REPLY"; exit 1 }
     REPLY=; __tt_shelf alice@pastel/mint
     [[ $REPLY == alice@pastel ]] || { print -u2 "an original's shelf was not its publisher alone: $REPLY"; exit 1 }
+    TTHEME_SORT=abc TTHEME_GROUP=marketplace flt= cur=0 exp=() rows=()
+    __tt_pv_tops
+    [[ $tops == "ttheme alice@pastel kec@bemani" ]] ||
+      { print -u2 "TTHEME_GROUP=marketplace did not list the marketplaces, the built-in one first: $tops"; exit 1 }
+    for g in $tops ttheme/evangelion ttheme/vocaloid kec@bemani/evangelion kec@bemani/pop-n-music kec@bemani/sound-voltex; do exp[$g]=1; done
+    __tt_pv_rows
+    for (( i = 1; i <= ${#rval}; i++ )); do
+      __tt_pv_row $i
+      rows+=("${${${REPLY//  ##/ }# }% }")
+    done
+    want=("$o ttheme 5" "$o Evangelion エヴァンゲリオン 2" asuka rei "$o Vocaloid 2" kaito miku neutral "$o alice@pastel 1" mint
+      "$o kec@bemani 3" "$o Evangelion エヴァンゲリオン 1" rei "$o pop'n music 1" rasis "$o Sound Voltex 1" rasis dusk)
+    [[ ${(F)rows} == ${(F)want} ]] ||
+      { print -u2 "preview's list grouped by marketplace did not read as each marketplace, its works, then its originals:"; print -rlu2 -- $rows; exit 1 }
+    cur=${rval[(Ie)kec@bemani/rasis]} exp=() TTHEME_GROUP=work
+    __tt_pv_regroup
+    [[ ${rval[cur]} == kec@bemani/rasis && ${rtop[cur]} == pop-n-music && -n ${exp[pop-n-music]} ]] ||
+      { print -u2 "regrouping did not keep the cursor on its palette, its work opened: ${rval[cur]} under ${rtop[cur]}"; exit 1 }
   ) || exit 1
   (
     local seq p s

@@ -31,6 +31,7 @@ KEYS = {
     'ctrl-u': '\x15',
     'shift-tab': '\x1b[Z',
     'alt-c': '\x1bc',
+    'alt-g': '\x1bg',
     'ctrl-v': '\x16',
     'alt-v': '\x1bv',
     'focus-in': '\x1b[I',

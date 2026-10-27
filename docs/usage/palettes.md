@@ -21,6 +21,16 @@ A character who appears in more than one work, such as a crossover guest, is
 listed under each of them. A marketplace can also bring a work or a character
 the commons does not hold yet, which then shows as any other.
 
+The chip at the top of Preview's list says how the list is grouped and sorted.
+Click it or press `alt+g` to change either, and your pick is saved at once:
+
+- **work**, the default: a shelf for each work, as above.
+- **marketplace**: a shelf for each marketplace, the built-in `ttheme` first,
+  holding its works and then its originals.
+
+Sort decides the order of a work's characters: `abc` by name, `cast` in the
+order the work lists its cast.
+
 ## Names
 
 Every palette has a full name: `ttheme/rei` for a built-in one,

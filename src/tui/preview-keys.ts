@@ -1,7 +1,7 @@
 import { hubNext } from './hub.ts'
 
 export interface PreviewKey {
-  where: 'list' | 'panel' | 'hub' | 'help' | 'first'
+  where: 'list' | 'panel' | 'group' | 'hub' | 'help' | 'first'
   group: string
   keys: string
   does: string
@@ -17,6 +17,7 @@ export const PREVIEW_KEYS: readonly PreviewKey[] = [
   { where: 'list', group: 'Palette', keys: 'enter', does: 'Use it, choosing where' },
   { where: 'list', group: 'Palette', keys: 'tab  →  ctrl+e', does: 'Edit its colors and picture' },
   { where: 'list', group: 'Finish', keys: 'esc', does: 'Cancel and put the tab back' },
+  { where: 'list', group: 'Finish', keys: 'alt+g', does: 'Group and sort the list' },
   { where: 'list', group: 'Finish', keys: 'alt+c', does: 'Open the settings' },
   { where: 'hub', group: 'Finish', keys: 'shift+tab', does: `Switch to ${hubNext('preview')}` },
   { where: 'panel', group: 'Move', keys: '↑↓  j  k', does: 'Move between rows' },
@@ -35,6 +36,9 @@ export const PREVIEW_KEYS: readonly PreviewKey[] = [
   { where: 'panel', group: 'Finish', keys: 's', does: 'Save the picture' },
   { where: 'panel', group: 'Finish', keys: '⇧enter', does: 'Save, then choose where to use it' },
   { where: 'panel', group: 'Finish', keys: 'esc', does: 'Back to the list, dropping changes since the last save' },
+  { where: 'group', group: 'Move', keys: '↑↓  j  k', does: 'Move between choices' },
+  { where: 'group', group: 'Choose', keys: 'space  enter', does: 'Pick it, saved at once' },
+  { where: 'group', group: 'Finish', keys: 'esc  alt+g', does: 'Close the menu' },
   { where: 'help', group: 'Help', keys: '?  esc', does: 'Close help' },
   { where: 'first', group: 'Help', keys: 'any key', does: 'Close help, and ? opens it again' },
 ]

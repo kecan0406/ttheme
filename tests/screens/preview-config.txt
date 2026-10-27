@@ -1,5 +1,5 @@
  [Preview]  Browse   tab Browse
- Preview (2/2)
+ Preview (2/2)           [Group work / Sort A-Z]
  ╭─────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰─────────────────────────────────────────────╯
@@ -10,12 +10,12 @@
 
 
 
+
 Config
 ▶ Mode        auto   light  [dark]
   New tabs   [off]  seq
   Announce    on  [off]
   Search fx  [typewriter]  decode   glitch
-  Sort       [abc]  cast
   Mouse      [on]  off
   Blur       [off]  1px   2px   3px   4px
   Pictures   [original]  tinted

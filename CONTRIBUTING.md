@@ -480,6 +480,7 @@ the panel below — also take `h` and `l` as `←` and `→`.
 | `space` | fold or open a work | pick — on a marketplace's card, all of it; on one of its actions, do it; on `+ Add marketplace` or `Search marketplace`, open it; in the search, add a marketplace (again to undo) or load the list again |
 | `bksp` `ctrl+u` | edit the filter, clear it | edit the filter or the `+ Add marketplace` form's source, clear it |
 | `?` | keys, which preview also shows when it opens beside its list until any key closes them | the help: typing filters it, `↑` `↓` choose a topic and enter runs it, esc clears the filter and then closes it, and its Marks list says what browse's marks mean |
+| `alt+g` | the group menu: how the list is grouped and sorted | — |
 | `alt+c` | settings | — |
 | `ctrl+e` | open the palette's panel | — |
 | `ctrl+r` | — | in a marketplace's panel, on a palette marked `⇡` or a work, stage its update; in the search, load the marketplace list again |
@@ -581,7 +582,7 @@ look, and never Title Case.
   and error messages, which read the same after the `ttheme:` prefix
   (`ttheme: not installed: kita`) and in a status line. A notice written for
   the screen (`No picture on the clipboard`) is not an error.
-- **Capitals**: only a mode badge (`PREVIEW`, `BROWSE`, `SEARCH`, `EDIT`, `PICTURE SEARCH`, `PICTURE PREVIEW`, `PICTURE EDIT`, `HELP`, `CONFIG`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
+- **Capitals**: only a mode badge (`PREVIEW`, `BROWSE`, `SEARCH`, `EDIT`, `PICTURE SEARCH`, `PICTURE PREVIEW`, `PICTURE EDIT`, `HELP`, `CONFIG`, `GROUP`). The tabs of the bare `ttheme` (`Preview`, `Browse`) are tab labels, so sentence case.
 
 A key hint is the key and one or two lowercase words: a verb, or the name of
 what the key opens or switches (`settings`, `keys`, `colors`, `sample`). The

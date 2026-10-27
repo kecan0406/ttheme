@@ -1,12 +1,11 @@
  [Preview]  Browse   tab Browse
- Preview (2/2)
- ╭────────────╭─ Help ──────────────────────────────────────────────────────────────╮
+ Preview (2/2)╭─ Help ──────────────────────────────────────────────────────────────╮
+ ╭────────────│                                                                     │
  │ ⌕ Search… ‹hint› │
- ╰────────────│  Move                                                               │
-              │    ↑↓  ctrl+j  ctrl+k     Move up or down                           │
-▌  ▸ Bocchi th│    pgup  pgdn  home  end  Move a page, or to either end             │
-   ▸ Lucky☆Sta│    ←→  space              Close or open a shelf                     │
-              │  Filter                                                             │
+ ╰────────────│    ↑↓  ctrl+j  ctrl+k     Move up or down                           │
+              │    pgup  pgdn  home  end  Move a page, or to either end             │
+▌  ▸ Bocchi th│    ←→  space              Close or open a shelf                     │
+   ▸ Lucky☆Sta│  Filter                                                             │
               │    type                   Filter by name or title, in Japanese too  │
               │    ctrl+u                 Clear the filter                          │
               │  Palette                                                            │
@@ -15,6 +14,7 @@
               │    tab  →  ctrl+e         Edit its colors and picture               │
               │  Finish                                                             │
               │    esc                    Cancel and put the tab back               │
+              │    alt+g                  Group and sort the list                   │
               │    alt+c                  Open the settings                         │
               │    shift+tab              Switch to Browse                          │
               │  Help                                                               │
