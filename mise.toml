@@ -273,7 +273,7 @@ else
   mise run ci
 fi
 npm version "$version" -m "Bump version to %s"
-git push --atomic --follow-tags origin main
+git push --atomic --follow-tags origin HEAD:main
 tag="v$version"
 run=
 for _ in $(seq 30); do
