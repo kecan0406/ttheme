@@ -573,21 +573,14 @@ __tt_pv_foot() {
       kl[2]="picture ×$REPLY"
       (( REPLY > 1 )) || { kk[2]=() kl[2]=() }
       __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
-      __tt_pv_bg_pickkey
-      [[ -n ${bgcred[$tune:$REPLY]} ]] && { kk+=(y); kl+=("copy credit") }
       kk+=(D) kl+=(remove)
     elif [[ -n $tune ]]; then
       __tt_pv_bg_findable $tune && { kk+=(f); kl+=(find) }
-      if (( tf == 2 )); then
-        kl[2]=move kk+=(1-9 '=' +) kl+=(place reset "reset all")
-      elif (( tf == 4 )); then
-        kl[2]=change kk+=(+) kl+=("reset all")
-      else
-        kk+=('=' + ⇧←→) kl+=(reset "reset all" "by 10")
-      fi
-      (( bgoff[$tpick] )) && { kk+=(space); kl+=(show) } || { kk+=(c space); kl+=(colors hide) }
-      __tt_pv_bg_pickkey
-      [[ -n ${bgcred[$tune:$REPLY]} ]] && { kk+=(y); kl+=("copy credit") }
+      (( tf == 2 )) && { kl[2]=move; kk+=(1-9); kl+=(place) }
+      (( tf == 4 && ! bgoff[$tpick] )) && { kk+=(c); kl+=(colors) }
+      (( tf < 4 )) && __tt_pv_bg_tuned $tpick $tf && { kk+=('='); kl+=(reset) }
+      __tt_pv_bg_tuned $tpick 0 && { kk+=(+); kl+=("reset all") }
+      (( bgoff[$tpick] )) && { kk+=(space); kl+=(show) }
       __tt_pv_bg_images $tune
       (( REPLY > 1 )) && { kk+=(', .' D); kl+=("picture ×$REPLY" remove) }
     else

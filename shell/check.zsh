@@ -455,7 +455,7 @@ __tt_pv_bg_panel ttheme/kagami:safebooru_3 4 1 60
 [[ $out == *Colors* && $out == *"[original]"* && $out == *" tinted "* ]] ||
   { print -u2 "the tuning panel did not show the picture's colors: $out"; exit 1 }
 out=; __tt_pv_foot 200
-[[ $out == *"←→ change"* && $out != *"= reset"* && $out == *"+ reset all"* ]] ||
+[[ $out == *"←→ change"* && $out == *"c colors"* && $out != *"= reset"* ]] ||
   { print -u2 "the Colors row's hints kept the field reset: $out"; exit 1 }
 print -l "# image safebooru_2 2/3" "# picture safebooru_2 ttheme--kagami.1a2b3c4d ttheme--kagami.1a2b3c4d@fill-42.png 0.2 -" \
   "# picture safebooru_3 ttheme--kagami.cccccccc ttheme--kagami.cccccccc@fill-40.png 0.1 -" \
@@ -488,8 +488,8 @@ te=0 tune= tpick= bgcw=0 out=
   rm -f $bgd/cli.log
   __tt_pv_tune > /dev/null
   [[ ! -e $bgd/cli.log ]] || { print -u2 "c drew a hidden picture again"; exit 1 }
-  bgoff[ttheme/kagami]=0 out=; __tt_pv_foot 200
-  [[ $out == *"c colors"* ]] || { print -u2 "the EDIT bar did not offer the colors key: $out"; exit 1 }
+  bgoff[ttheme/kagami]=0 tf=4 out=; __tt_pv_foot 200; tf=1
+  [[ $out == *"c colors"* ]] || { print -u2 "the EDIT bar did not offer the colors key on the Colors row: $out"; exit 1 }
   __tt_pv_tune > /dev/null
   REPLY=; __tt_bg_coloring $tpick
   [[ "$(<$bgd/cli.log)" == "image ttheme/kagami original safebooru_2" && $REPLY == original && $tf == 1 && $tune == ttheme/kagami && $bgsrc[ttheme/kagami] == *5e5e5e5e* ]] ||

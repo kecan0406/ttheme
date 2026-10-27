@@ -460,7 +460,9 @@ and preview's chip in `__tt_pv_chip`), and it is the first thing a narrow
 window takes off its row: preview's chip lets it go when fewer than two blank
 columns would follow it, and the editor's top bar before it gives up the
 `unsaved` count. A key that a control carries leaves the key bar, and one that
-no control carries stays on it, so a key is drawn once.
+no control carries stays on it, so a key is drawn once. A bar names only the
+keys that do something where the cursor stands: preview's picture rows show
+`=` and `+` while a row is off its default.
 In Browse, the palette editor and find `?` opens `Help` (`src/tui/help.ts`): the
 topics of the mode the screen is in, in two columns under their group's name —
 the keys, then what they do —, where `↑` `↓` reach every topic and enter runs

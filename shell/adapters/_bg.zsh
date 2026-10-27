@@ -732,9 +732,20 @@ __tt_pv_bg_recolor() {
   tf=$row
 }
 
+__tt_pv_bg_tuned() {
+  [[ -n ${bgdef[$1]} ]] || return 1
+  local -a def=(${=bgdef[$1]})
+  case $2 in
+    1) [[ ${bgsize[$1]} != "$def[1]" ]] ;;
+    2) (( ${bgpos[$1]} != def[2] )) ;;
+    3) (( ${bgop[$1]} * 1000 + 0.5 != ${def[3]:-1} * 1000 + 0.5 )) ;;
+    *) (( ${bgoff[$1]:-0} )) || __tt_pv_bg_tuned $1 1 || __tt_pv_bg_tuned $1 2 || __tt_pv_bg_tuned $1 3 ;;
+  esac
+}
+
 __tt_pv_bg_panel() {
   local name=$1 z=$TTHEME_SGR[reset] b=$TTHEME_SGR[bold] d=$TTHEME_SGR[dim] c=$ac val sty mark choice shown REPLY
-  local -a labs=(Size Position Opacity Colors) at=(1 4 7 0) def=(${=bgdef[$1]})
+  local -a labs=(Size Position Opacity Colors) at=(1 4 7 0)
   local -i r0=$2 col=$3 end=$4 off=${bgoff[$1]} T=$(( $4 - $3 - 21 )) lo=20 hi=100 k i r knob pos=${bgpos[$1]} o tuned
   (( color )) || z= b= d= c=
   (( T < 8 )) && T=8
@@ -785,7 +796,7 @@ __tt_pv_bg_panel() {
         fi
       done
       val=${TTHEME_BG_POSITIONS[pos]}
-      tuned=$(( pos != def[2] ))
+      __tt_pv_bg_tuned $name 2 && tuned=1 || tuned=0
     else
       if (( k == 1 )); then
         if [[ ${bgsize[$name]} == fill ]]; then
@@ -793,10 +804,9 @@ __tt_pv_bg_panel() {
         else
           knob=$(( (${bgsize[$name]} - lo) * (T - 1) / (hi - lo + 1) )) val=${bgsize[$name]}%
         fi
-        tuned=0
-        [[ ${bgsize[$name]} == "$def[1]" ]] || tuned=1
+        __tt_pv_bg_tuned $name 1 && tuned=1 || tuned=0
       else
-        tuned=$(( ${bgop[$name]} * 1000 + 0.5 != ${def[3]:-1} * 1000 + 0.5 ))
+        __tt_pv_bg_tuned $name 3 && tuned=1 || tuned=0
         val=${bgop[$name]}
         o=$(( val * 100 + 0.5 ))
         knob=$(( o * (T - 1) / 100 ))
