@@ -1,5 +1,5 @@
 import { escapeHtml } from '@kitajs/html'
-import { ArrowLeft, ArrowRight, ChevronRight, Search, Star } from 'lucide'
+import { ChevronRight, Search, Star } from 'lucide'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -33,20 +33,6 @@ import {
   WorkspaceStage,
 } from './workspace-shell'
 
-type Step = 'add' | 'use' | 'init'
-
-const STEPS: { step: Step; label: string }[] = [
-  { step: 'add', label: 'add' },
-  { step: 'use', label: 'use' },
-  { step: 'init', label: 'first time' },
-]
-
-const STEP_SHOWN: Record<Step, string> = {
-  add: 'group-has-[input[value=add]:checked]/install:flex',
-  use: 'group-has-[input[value=use]:checked]/install:flex',
-  init: 'group-has-[input[value=init]:checked]/install:flex',
-}
-
 type View = 'all' | Scene
 
 const VIEWS: View[] = ['all', ...SCENES]
@@ -62,12 +48,8 @@ const VIEW_SHOWN: Record<View, string> = {
 const POPOVER =
   'm-0 w-96 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-lg inset-auto open:flex'
 
-function commandOf(step: Step, theme: Theme, where: Where): string {
-  if (step === 'init') return INIT
-
-  if (step === 'use') return `ttheme use ${theme.id}`
-
-  return where ? `ttheme marketplace add ${where.add} && ttheme add ${theme.id}` : `ttheme add ${theme.id}`
+function installOf(where: Where): string {
+  return where ? `ttheme marketplace add ${where.add}` : INIT
 }
 
 function signs(theme: Theme): string[] {
@@ -140,16 +122,6 @@ export function WorkspaceHead({ theme, place, heading }: { theme: Theme; place: 
           {place}
         </span>
       </TitleMeta>
-    </>
-  )
-}
-
-export function InstallPanes({ theme, where }: { theme: Theme; where: Where }) {
-  return (
-    <>
-      {STEPS.map(({ step }) => (
-        <CommandRow command={commandOf(step, theme, where)} class={cn('hidden bg-card', STEP_SHOWN[step])} />
-      ))}
     </>
   )
 }
@@ -360,7 +332,7 @@ export function MarketplaceWorkspace({
 }) {
   const where: Where = marketplace ? { id: marketplace.id, repo: marketplace.repo, add: marketplace.add } : null
   const data: WorkspaceData = { where, gate, start: (leadsOf(palettes)[0] as Theme).name, current: theme.name }
-  const { prev, next, at, count } = neighbors(theme, palettes)
+  const { at, count } = neighbors(theme, palettes)
 
   return (
     <WorkspacePage
@@ -402,29 +374,12 @@ export function MarketplaceWorkspace({
           <Tree palettes={palettes} current={theme} />
         </WorkspaceSide>
         <main id="content" data-mode-scope class="flex min-w-0 flex-col [grid-area:bar/bar/stage/stage] app:min-h-0">
-          <WorkspaceBar class="group/install flex-wrap">
+          <WorkspaceBar class="flex-wrap">
             <div data-head class={cn(TITLE, 'flex-[1_1_14rem]')}>
               <WorkspaceHead theme={theme} place={`${at} of ${count}`} heading={heading} />
             </div>
-            <div class="flex min-w-0 flex-[1_1_20rem] flex-wrap items-center gap-2.5">
-              <ToggleGroup label="install step" class="flex-none">
-                {STEPS.map(({ step, label }) => (
-                  <ToggleGroupItem name="install" value={step} checked={step === 'add'}>
-                    {escapeHtml(label)}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-              <div data-install class="min-w-0 flex-1 basis-56">
-                <InstallPanes theme={theme} where={where} />
-              </div>
-            </div>
-            <div class="flex flex-none gap-2">
-              <Button variant="outline" size="icon" data-step="-1" aria-label={`previous palette, ${prev.name}`}>
-                <Icon node={ArrowLeft} />
-              </Button>
-              <Button variant="outline" size="icon" data-step="1" aria-label={`next palette, ${next.name}`}>
-                <Icon node={ArrowRight} />
-              </Button>
+            <div class="min-w-0 flex-[1_1_20rem]">
+              <CommandRow command={installOf(where)} class="bg-card" />
             </div>
           </WorkspaceBar>
           <WorkspaceStage facts={<PaletteFacts theme={theme} gate={gate} />}>
