@@ -165,22 +165,22 @@ editor-terminal.after.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
 editor-terminal.after.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
 editor-terminal.after.text	txt:1b7974a0e0	=	=	=	=	=	=	=	=	=	=	=
 editor-terminal.after.issue	-	=	=	=	=	=	=	=	=	=	=	=
-tmux.in.colors	ttheme/kita	=	=	=	=	=	bg:ttheme/miku fg:ttheme/miku cursor:ttheme/kita ansi:ttheme/miku	ttheme/miku	=	bg:ttheme/miku fg:ttheme/miku cursor:ttheme/kita ansi:ttheme/miku	bg:ttheme/miku fg:ttheme/miku cursor:ttheme/kita ansi:ttheme/miku	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/kita ansi:ttheme/miku
-tmux.in.picture	ttheme/kita	=	=	=	none	=	none	none	=	none	none	none
+tmux.in.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
+tmux.in.picture	ttheme/kita	=	=	=	none	=	none	=	=	none	none	none
 tmux.in.wears	ttheme/kita	=	=	=	=	=	=	=	=	=	=	=
-tmux.in.issue	-	=	=	=	=	=	=	wears	=	=	=	=
-tmux.out.colors	ttheme/miku	=	=	=	=	=	=	=	=	bg:ttheme/miku fg:ttheme/miku cursor:ttheme/kita ansi:ttheme/miku	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
+tmux.in.issue	-	=	=	=	=	=	=	=	=	=	=	=
+tmux.out.colors	ttheme/miku	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
 tmux.out.picture	none	=	=	=	=	=	=	=	=	=	=	=
 tmux.out.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
 tmux.out.issue	-	=	=	=	=	=	=	=	=	=	=	=
-tmux-behind.behind.colors	ttheme/miku	=	=	=	=	=	bg:ttheme/konata fg:ttheme/konata cursor:ttheme/miku ansi:ttheme/konata	ttheme/rei	=	bg:ttheme/konata fg:ttheme/konata cursor:ttheme/miku ansi:ttheme/konata	bg:ttheme/konata fg:ttheme/konata cursor:ttheme/miku ansi:ttheme/konata	bg:ttheme/konata fg:ttheme/konata cursor:ttheme/miku ansi:ttheme/konata
+tmux-behind.behind.colors	ttheme/miku	=	=	=	=	=	=	ttheme/rei	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku	=	bg:ttheme/konata fg:ttheme/miku cursor:ttheme/miku ansi:ttheme/miku
 tmux-behind.behind.picture	none	=	=	=	=	=	=	=	=	ttheme/konata	=	=
 tmux-behind.behind.wears	ttheme/miku	=	=	=	=	=	=	=	=	=	=	=
 tmux-behind.behind.issue	-	=	=	=	=	=	=	wears	=	=	=	=
-tmux-behind.pane.colors	ttheme/rei	=	=	=	=	=	ttheme/konata	ttheme/konata	=	bg:ttheme/konata fg:ttheme/konata cursor:ttheme/miku ansi:ttheme/konata	ttheme/konata	ttheme/konata
-tmux-behind.pane.picture	none	=	=	=	=	=	=	ttheme/konata	=	ttheme/konata	=	=
-tmux-behind.pane.wears	ttheme/rei	=	=	=	=	=	none	none	=	none	none	none
-tmux-behind.pane.issue	-	=	=	=	=	=	wears	wears	=	=	wears	wears
+tmux-behind.pane.colors	ttheme/rei	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei	=	bg:ttheme/konata fg:ttheme/rei cursor:ttheme/rei ansi:ttheme/rei
+tmux-behind.pane.picture	none	=	=	=	=	=	=	=	=	ttheme/konata	=	=
+tmux-behind.pane.wears	ttheme/rei	=	=	=	=	=	=	=	=	=	=	=
+tmux-behind.pane.issue	-	=	=	=	=	=	=	=	=	=	=	=
 preview-hover.hover.colors	ttheme/kita	=	=	=	=	=	=	=	=	=	=	bg:ttheme/konata fg:ttheme/kita cursor:ttheme/kita ansi:ttheme/kita
 preview-hover.hover.picture	ttheme/kita	=	=	=	none	=	none	=	=	=	none	none
 preview-hover.hover.text	txt:c9499b3407	=	=	=	=	=	=	=	=	=	=	=

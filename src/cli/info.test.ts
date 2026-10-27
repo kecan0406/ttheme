@@ -27,6 +27,19 @@ test('inside tmux the version in TERM_PROGRAM_VERSION is tmux, not the terminal'
     }),
     'ghostty (version unknown) · tmux 3.5a · ssh no',
   )
+  assert.equal(
+    describeTerminal({
+      TERM_PROGRAM: 'tmux',
+      TERM_PROGRAM_VERSION: '3.6',
+      TMUX: '/tmp/tmux-501/default,1,0',
+      TTHEME_ADAPTER: 'warp',
+    }),
+    'warp (version unknown) · tmux 3.6 · ssh no',
+  )
+  assert.equal(
+    describeTerminal({ TERM_PROGRAM: 'tmux', TMUX: '/tmp/tmux-501/default,1,0', TTHEME_ADAPTER: 'constructor' }),
+    'unknown · tmux yes · ssh no',
+  )
 })
 
 test('Konsole spells its version out of KONSOLE_VERSION', () => {

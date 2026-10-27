@@ -191,3 +191,8 @@ Inside tmux the colors belong to the terminal tab, not the pane. ttheme passes
 its colors through to the terminal, and a pane shows its palette again when it
 takes focus. Preview draws no picture inside tmux, and find is not offered
 there.
+
+ttheme tells which terminal holds tmux by the one the tmux server started in,
+so a server started in Warp and attached from Rio still counts as Warp. In
+Terminal.app a palette used in a pane brings its colors but not its picture,
+since a pane cannot move the tab to another profile.

@@ -218,8 +218,7 @@ __tt_pins_load
 
 typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
 
-() {
-  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+__tt_detect() {
   if [[ -n $NVIM || -n $VIM_TERMINAL || -n $INSIDE_EMACS || $TERM_PROGRAM == vscode ]]; then
     typeset -g TTHEME_ADAPTER=editor
   elif [[ $TERM_PROGRAM == WarpTerminal ]]; then
@@ -249,6 +248,15 @@ typeset -g TTHEME_STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/ttheme
   else
     typeset -g TTHEME_ADAPTER=unknown
   fi
+}
+
+() {
+  emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  __tt_detect
+  [[ $TTHEME_ADAPTER == unknown && -n $TMUX && $TERM_PROGRAM == tmux ]] || return 0
+  local outer
+  outer=$(tmux show-environment -g TERM_PROGRAM 2>/dev/null) && [[ $outer == TERM_PROGRAM=* ]] || outer=TERM_PROGRAM=
+  TERM_PROGRAM=${outer#TERM_PROGRAM=} __tt_detect
 }
 
 typeset -g TTHEME_TMUX=0 TTHEME_MUXED=0
@@ -761,6 +769,7 @@ __tt_ran() {
 __tt_unmux() {
   emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
   (( TTHEME_MUXED )) || return 0
+  __tt_pv_forget
   __tt_rewear force
   TTHEME_MUXED=0
 }
@@ -2055,7 +2064,7 @@ __tt_verb() {
       TTHEME_WORN=$worn TTHEME_CELL=$cell __tt_installs "$@"
       return ;;
     on|off) __tt_switch "$@"; return ;;
-    info) TTHEME_ZSH=$ZSH_VERSION __tt_cli "$@"; return ;;
+    info) TTHEME_ZSH=$ZSH_VERSION TTHEME_ADAPTER=$TTHEME_ADAPTER __tt_cli "$@"; return ;;
   esac
   __tt_arity "$@" || return
   [[ $1 == config ]] && { __tt_config; return }

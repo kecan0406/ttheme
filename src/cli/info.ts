@@ -5,7 +5,7 @@ import pkg from '../../package.json' with { type: 'json' }
 import { readInstalled } from '../store/installed.ts'
 import { configHome } from '../store/paths.ts'
 import { SETTING_NAMES, settingDefault } from '../store/wiring.ts'
-import { detectTerminal, editorOf, type Terminal } from '../terminals/terminal.ts'
+import { detectTerminal, editorOf, type Terminal, TRAITS } from '../terminals/terminal.ts'
 
 type Env = Record<string, string | undefined>
 
@@ -53,7 +53,8 @@ function named(terminal: Terminal, env: Env): string {
 }
 
 export function describeTerminal(env: Env): string {
-  const terminal = detectTerminal(env)
+  const told = env.TTHEME_ADAPTER
+  const terminal = told && Object.hasOwn(TRAITS, told) ? (told as Terminal) : detectTerminal(env)
   const program = env.TERM_PROGRAM && env.TERM_PROGRAM !== 'tmux' ? env.TERM_PROGRAM : undefined
 
   const name =

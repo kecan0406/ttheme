@@ -137,7 +137,7 @@ capture() {
     cmd=$(command_for $target $home)
     scenario_env $home
     tmux -L $SOCKET kill-server 2>/dev/null || true
-    tmux -L $SOCKET new-session -d -x $COLS -y $ROWS \
+    env -u TERM_PROGRAM -u TERM_PROGRAM_VERSION tmux -L $SOCKET new-session -d -x $COLS -y $ROWS \
       "env -u GHOSTTY_RESOURCES_DIR -u KITTY_WINDOW_ID -u WEZTERM_PANE -u ALACRITTY_WINDOW_ID -u ITERM_SESSION_ID -u NO_COLOR $reply $paint zsh -f -c '${cmd}; sleep 60'"
     settle
     for key in "$@"; do
