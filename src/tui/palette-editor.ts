@@ -575,7 +575,7 @@ export class PaletteEditor {
         group: 'View',
         keys: 'i',
         does: 'Inspect the sample',
-        more: 'A click on the sample does the same. Arrows move, enter goes to the color, esc leaves.',
+        more: 'A click on the sample does the same. Arrows move, enter goes to the color, esc goes back.',
         ...when(roomy && !this.inspect, 'i'),
       },
       { group: 'View', keys: 'm', does: 'Show only the changed colors', ...when(roomy, 'm') },

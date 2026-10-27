@@ -592,7 +592,7 @@ __tt_pv_foot() {
     badge=GROUP kk=(↑↓ space) kl=(move pick)
     rk=esc right=$b$ke$z$d" close"$z
   elif (( conf )); then
-    badge=CONFIG kk=(↑↓ ←→ enter) kl=(move change save)
+    badge=SETTINGS kk=(↑↓ ←→ enter) kl=(move change save)
     rk=esc right=$b$ke$z$d" cancel"$z
   else
     badge=PREVIEW
@@ -1416,7 +1416,7 @@ __tt_pv_draw() {
   fi
   [[ $1 == hint ]] && (( ! wiped )) || pvz=()
   if (( pw < 40 || ph < 12 )); then
-    __tt_capped "esc quits"
+    __tt_capped "esc cancel"
     local -a small=(ttheme "Needs 40×12 — now ${pw}×${ph}" "$REPLY") paint=("" "" "")
     (( color )) && paint=($TTHEME_SGR[bold]$ac "" $TTHEME_SGR[dim])
     for (( k = 1; k <= 3 && k <= ph; k++ )); do
@@ -1527,7 +1527,7 @@ __tt_pv_draw() {
       __tt_tilde "$TTHEME_CONFIG"
       src=$REPLY
       (( 8 + ${#src} > sw )) && src=""
-      __tt_pv_head 1 $sc $se Config "" "$src"
+      __tt_pv_head 1 $sc $se Settings "" "$src"
       __tt_pv_conf_panel 4 $sc $se
     elif (( te )); then
       __tt_pv_te_head $sc $se
@@ -1551,7 +1551,7 @@ __tt_pv_draw() {
         out+=$'\e['$(( ph - 1 - ${#reach} + k ))';1H'${reach[k]}
       done
     elif (( conf )); then
-      __tt_pv_head $(( ph - 3 - ${#cvars} )) 1 $lw Config
+      __tt_pv_head $(( ph - 3 - ${#cvars} )) 1 $lw Settings
       __tt_pv_conf_panel $(( ph - 2 - ${#cvars} )) 1 $lw
     fi
     (( help )) && __tt_pv_help

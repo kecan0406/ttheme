@@ -806,7 +806,7 @@ function drawFrame(e: PaletteEditor, cols: number, rows: number, color: boolean,
       `Needs ${MIN_COLS}×${MIN_ROWS} — now ${cols}×${rows}`,
       e.quitting
         ? `Save changes?   ${[hintOf(p, 'y', 'save'), hintOf(p, 'n', 'discard'), hintOf(p, 'esc', 'keep editing')].join('   ')}`
-        : p.dim(capped('esc cancels')),
+        : p.dim(capped('esc cancel')),
     ]
 
     return { lines: Array.from({ length: rows }, (_, i) => fit(small[i] ?? '', cols)), art: undefined }

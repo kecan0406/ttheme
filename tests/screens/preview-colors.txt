@@ -11,7 +11,7 @@
 
 
 
-Config
+Settings
   Mode        auto   light  [dark]
   New tabs   [off]  seq
   Announce    on  [off]
@@ -21,4 +21,4 @@ Config
 ▶ Pictures    original  [tinted]
 
 New pictures are tinted in the palette's color
- [CONFIG] ↑↓ move   ←→ change   enter save                                               esc cancel
+ [SETTINGS] ↑↓ move   ←→ change   enter save                                             esc cancel

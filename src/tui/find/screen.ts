@@ -709,7 +709,7 @@ function details(lines: Line[], row: number, col: number, room: number, maxRow: 
 
   const said: [string, Part[][]][] = [
     ['Characters', tagRows(info.characters, 2)],
-    ['Series', tagRows(info.series, 1)],
+    ['Work', tagRows(info.series, 1)],
     ['Tags', tagRows(info.tags, 3)],
     ['Rating', [[[rated, rated === '—' ? D : '']]]],
     ['File', [[[file, ''], ...(shown ? ([['  ', '']] as Part[]) : []), ...(shown ? transparent(shown) : [])]]],
@@ -953,7 +953,7 @@ function query(line: Line, cols: number, view: FindView, accent: string): void {
       c,
       view.editing
         ? hint
-        : `${capped('  A tag, a post URL or an id, or drop a picture or ctrl+v — ')}${view.tag || capped('esc leaves')}`,
+        : `${capped('  A tag, a post URL or an id, or drop a picture or ctrl+v — ')}${view.tag || capped('esc back')}`,
       D,
     )
 
@@ -1536,7 +1536,7 @@ const KEYS: Record<FindView['mode'], Key[]> = {
       group: 'Picture',
       keys: 'i',
       does: 'Show the details',
-      more: 'Characters, series, tags, rating and file, under Post, Source and Artist.',
+      more: 'Characters, works, tags, rating and file, under Post, Source and Artist.',
       press: 'i',
     },
     {
@@ -1932,7 +1932,7 @@ export function renderFind(view: FindView, cols: number, rows: number): Frame {
   if (cols < MIN.cols || rows < MIN.rows) {
     lines[0]?.put(0, 'ttheme find', B + accent)
     lines[1]?.put(0, `Needs ${MIN.cols}×${MIN.rows} — now ${cols}×${rows}`)
-    lines[2]?.put(0, capped('esc quits'), D, undefined, { kind: 'key', key: 'esc' })
+    lines[2]?.put(0, capped('esc back'), D, undefined, { kind: 'key', key: 'esc' })
 
     return { lines: lines.map((l) => l.render()), images, zones: zonesOf(lines), loader: false, tick: false }
   }
