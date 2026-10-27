@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
+import { Popover } from '@/components/ui/popover'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { Facts, Repo } from '@/lib/facts'
 import { BUILTIN_URL, INIT, palettePath, REPO, repoUrl, searchText } from '@/lib/gallery'
@@ -14,23 +15,23 @@ import { type GateRule, type Marketplace, paint, type Theme } from '@/lib/themes
 import { cn, plural } from '@/lib/utils'
 import { wearStyle } from '@/lib/wear'
 import { byWork, leadOf, leadsOf } from '@/lib/works'
-import { neighbors, type Where, type WorkspaceData } from '@/lib/workspace'
+import type { Where, WorkspaceData } from '@/lib/workspace'
 import { ByMode } from './by-mode'
 import { CommandRow } from './command-row'
-import { GateList, SwatchGrid } from './palette-parts'
+import { ChecksHead, GateList, SwatchGrid } from './palette-parts'
 import { RepoLink } from './repo-link'
 import { TerminalFrame } from './terminal-frame'
 import { SCENES, type Scene, TerminalPreview } from './terminal-preview'
 import {
   GateButton,
-  TITLE,
   TitleDots,
+  TitleFacts,
   TitleLine,
-  TitleMeta,
   WorkspaceBar,
   WorkspacePage,
   WorkspaceSide,
   WorkspaceStage,
+  WorkspaceTitle,
 } from './workspace-shell'
 
 type View = 'all' | Scene
@@ -44,9 +45,6 @@ const VIEW_SHOWN: Record<View, string> = {
   test: 'group-has-[input[value=test]:checked]/preview:block',
   colors: 'group-has-[input[value=colors]:checked]/preview:block',
 }
-
-const POPOVER =
-  'm-0 w-96 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-lg inset-auto open:flex'
 
 function installOf(where: Where): string {
   return where ? `ttheme marketplace add ${where.add}` : INIT
@@ -82,7 +80,7 @@ function WorkTile({ theme }: { theme: Theme }) {
   )
 }
 
-export function WorkspaceHead({ theme, place, heading }: { theme: Theme; place: string; heading?: string }) {
+export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: string }) {
   const name = 'truncate font-display text-display-sm font-black'
   const dots = [0, 1, 2].map((index) => paint(theme, (shade) => shade.signature[index] as string))
 
@@ -107,21 +105,6 @@ export function WorkspaceHead({ theme, place, heading }: { theme: Theme; place: 
           <TitleDots dots={dots} />
         </span>
       </TitleLine>
-      <TitleMeta>
-        {theme.work ? (
-          <span class="flex-none text-soft-foreground" safe>
-            {theme.work.name}
-          </span>
-        ) : null}
-        {theme.work?.native ? (
-          <span class="flex-none" lang={theme.work.lang ?? undefined} safe>
-            {theme.work.native}
-          </span>
-        ) : null}
-        <span class="flex-none font-mono tabular-nums" safe>
-          {place}
-        </span>
-      </TitleMeta>
     </>
   )
 }
@@ -162,10 +145,10 @@ export function ScenePanes({ theme }: { theme: Theme }) {
 export function PaletteFacts({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
   return (
     <>
-      <Button variant="outline" size="sm" popovertarget="workspace-slots" aria-label="colors, copy one">
+      <Button variant="muted" size="chip" popovertarget="workspace-slots" aria-label="colors, copy one">
         <span
           aria-hidden="true"
-          class="h-2 w-16 rounded-full forced-color-adjust-none"
+          class="h-1.75 w-11 rounded-full forced-color-adjust-none"
           style={`background:${ribbon(theme)}`}
         />
         colors
@@ -186,12 +169,9 @@ export function GatePanel({ theme, gate, where }: { theme: Theme; gate: GateRule
       theme={theme}
       render={(shown) => (
         <>
-          <div class="grid gap-0.5">
-            <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">contrast checks</p>
-            <p class="text-sm text-soft-foreground" safe>
-              {`${shown.name} passes ${gatePassed(shown, gate)} of ${gate.length}${where ? ', which only advise' : ''}`}
-            </p>
-          </div>
+          <ChecksHead
+            summary={`${shown.name} passes ${gatePassed(shown, gate)} of ${gate.length}${where ? ', which only advise' : ''}`}
+          />
           <GateList theme={shown} gate={gate} />
         </>
       )}
@@ -332,7 +312,6 @@ export function MarketplaceWorkspace({
 }) {
   const where: Where = marketplace ? { id: marketplace.id, repo: marketplace.repo, add: marketplace.add } : null
   const data: WorkspaceData = { where, gate, start: (leadsOf(palettes)[0] as Theme).name, current: theme.name }
-  const { at, count } = neighbors(theme, palettes)
 
   return (
     <WorkspacePage
@@ -375,14 +354,19 @@ export function MarketplaceWorkspace({
         </WorkspaceSide>
         <main id="content" data-mode-scope class="flex min-w-0 flex-col [grid-area:bar/bar/stage/stage] app:min-h-0">
           <WorkspaceBar class="flex-wrap">
-            <div data-head class={cn(TITLE, 'flex-[1_1_14rem]')}>
-              <WorkspaceHead theme={theme} place={`${at} of ${count}`} heading={heading} />
-            </div>
-            <div class="min-w-0 flex-[1_1_20rem]">
+            <WorkspaceTitle class="flex-[1_1_14rem]">
+              <div data-head class="contents">
+                <WorkspaceHead theme={theme} heading={heading} />
+              </div>
+              <TitleFacts data-facts>
+                <PaletteFacts theme={theme} gate={gate} />
+              </TitleFacts>
+            </WorkspaceTitle>
+            <div class="max-w-full min-w-0 flex-[0_1_auto]">
               <CommandRow command={installOf(where)} class="bg-card" />
             </div>
           </WorkspaceBar>
-          <WorkspaceStage facts={<PaletteFacts theme={theme} gate={gate} />}>
+          <WorkspaceStage>
             <TerminalFrame
               role="region"
               aria-label="preview"
@@ -419,19 +403,12 @@ export function MarketplaceWorkspace({
               </div>
             </TerminalFrame>
           </WorkspaceStage>
-          <div
-            id="workspace-gate"
-            popover="auto"
-            role="dialog"
-            aria-label="contrast checks"
-            data-gate-panel
-            class={POPOVER}
-          >
+          <Popover id="workspace-gate" label="contrast checks" inset="padded" data-gate-panel>
             <GatePanel theme={theme} gate={gate} where={where} />
-          </div>
-          <div id="workspace-slots" popover="auto" role="dialog" aria-label="slots" data-slots-panel class={POPOVER}>
+          </Popover>
+          <Popover id="workspace-slots" label="slots" inset="padded" data-slots-panel>
             <SlotsPanel theme={theme} />
-          </div>
+          </Popover>
         </main>
         <script type="application/json" data-workspace>
           {json(data)}

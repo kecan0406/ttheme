@@ -35,19 +35,12 @@ export function Verdict({ ok }: { ok: boolean | null }) {
   )
 }
 
-export function Group({
-  name,
-  count,
-  id,
-  counts,
-  children,
-}: PropsWithChildren<{ name: string; count: string; id?: string; counts?: string }>) {
+export function Group({ name, count, children }: PropsWithChildren<{ name: string; count: string }>) {
   return (
-    <details open id={id} data-group={name} class="group/group border-b border-border">
+    <details open data-group={name} class="group/group border-b border-border">
       <summary class="flex h-10 cursor-pointer list-none items-center gap-2 px-4 text-2xs font-bold tracking-caps text-muted-foreground uppercase outline-none select-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
         <span safe>{name}</span>
         <span
-          data-count={counts}
           class="inline-flex h-4.5 items-center rounded-sm border border-border px-1.5 font-mono font-medium tracking-normal normal-case"
           safe
         >

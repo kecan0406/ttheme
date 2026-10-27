@@ -6,6 +6,17 @@ import { Icon } from '@/lib/icons'
 import { type GateRule, paint, type Theme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 
+export function ChecksHead({ summary }: { summary: string }) {
+  return (
+    <div class="grid gap-0.5">
+      <p class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">contrast checks</p>
+      <p class="text-sm text-soft-foreground" safe>
+        {summary}
+      </p>
+    </div>
+  )
+}
+
 export function SectionLabel({ icon, children }: PropsWithChildren<{ icon: JSX.Element }>) {
   return (
     <p class="mb-2.5 inline-flex items-center gap-2 text-2xs font-bold tracking-caps text-muted-foreground uppercase [&_svg]:size-3.25">

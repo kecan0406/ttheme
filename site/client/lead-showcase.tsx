@@ -35,15 +35,6 @@ class LeadShowcase extends HTMLElement {
     if (step) this.#step(Number(step.dataset.pick))
   }
 
-  #change = (event: Event) => {
-    const input = event.target
-
-    if (!(input instanceof HTMLInputElement) || input.name !== 'lead') return
-    const lead = this.#leads.find((theme) => theme.name === input.value)
-
-    if (lead) choose(lead)
-  }
-
   #hidden = () => this.#hold('hidden', document.hidden)
 
   #enter = () => this.#hold('pointer', true)
@@ -55,7 +46,7 @@ class LeadShowcase extends HTMLElement {
   }
 
   #keydown = (event: KeyboardEvent) => {
-    if (event.repeat && (event.target as Element).matches('input[name="lead"], [data-pick]')) event.preventDefault()
+    if (event.repeat && (event.target as Element).matches('[data-pick]')) event.preventDefault()
   }
 
   get #hero(): HTMLElement | null {
@@ -78,14 +69,12 @@ class LeadShowcase extends HTMLElement {
     this.#leads = readJson<Theme[]>(this, 'script[data-leads]')
     this.#shown = (this.#leads[0] as Theme).name
     this.addEventListener('click', this.#click)
-    this.addEventListener('change', this.#change)
     this.addEventListener('keydown', this.#keydown)
     this.#off = onWear((theme) => this.#pick(theme))
     this.#offMode = onMode(() => this.#remode())
     const stored = recall()
 
     if (stored && stored.name !== this.#shown) this.#draw(stored)
-    else this.#check(this.#shown)
     this.#mark(stored === null)
     delete document.documentElement.dataset.picked
 
@@ -110,7 +99,6 @@ class LeadShowcase extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListener('click', this.#click)
-    this.removeEventListener('change', this.#change)
     this.removeEventListener('keydown', this.#keydown)
     this.#off()
     this.#offMode()
@@ -207,12 +195,6 @@ class LeadShowcase extends HTMLElement {
 
     if (sparkles instanceof SparkleBurst) sparkles.burst()
     fill(this.querySelector('[data-lead-use]'), html(<LeadUse theme={theme} />))
-    this.#check(theme.name)
-  }
-
-  #check(name: string) {
-    for (const input of this.querySelectorAll<HTMLInputElement>('input[name="lead"]'))
-      input.checked = input.value === name
   }
 }
 

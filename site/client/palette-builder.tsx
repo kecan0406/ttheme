@@ -6,6 +6,7 @@ import {
   Checks,
   ContrastHead,
   FileNote,
+  GateChecks,
   GateSummary,
   Lch,
   MarkTile,
@@ -24,7 +25,6 @@ import {
 } from '@/components/builder-parts'
 import { StartEntries } from '@/components/builder-start'
 import { PaneBody } from '@/components/mock-window'
-import { GateRows } from '@/components/slot-list'
 import { TitleDots } from '@/components/workspace-shell'
 import {
   BLANK_NAME,
@@ -104,6 +104,7 @@ import { zip } from '../../src/core/zip.ts'
 import { announce, fill, readJson, reducedMotion } from './dom'
 import { Inspector } from './inspector'
 import { composing, typing } from './keys'
+import { placeUnder } from './place'
 import { tabKey } from './tabs'
 
 interface Snapshot {
@@ -111,8 +112,6 @@ interface Snapshot {
   other: Edit['other']
   signature: string[]
 }
-
-const ORDER = [0, 1, 2, 3, ...Array.from({ length: 8 }, (_, k) => [4 + k, 12 + k]).flat()]
 
 const SAVE_MS = 400
 
@@ -240,6 +239,7 @@ class PaletteBuilder extends HTMLElement {
     this.addEventListener('toggle', this.#toggled, true)
     this.querySelector('#builder-start')?.addEventListener('beforetoggle', this.#placeStart)
     this.querySelector('#builder-add')?.addEventListener('beforetoggle', this.#placeAdd)
+    this.querySelector('#builder-gate')?.addEventListener('beforetoggle', this.#placeGate)
     addEventListener('pagehide', this.#flush)
     addEventListener('storage', this.#synced)
     const term = this.querySelector<HTMLElement>('[data-term]')
@@ -486,12 +486,9 @@ class PaletteBuilder extends HTMLElement {
     const empty = this.querySelector<HTMLElement>('[data-rows-empty]')
 
     if (empty) empty.hidden = !(this.#only && rows.empty)
-    this.#fill(this.querySelector('[data-gate-summary]'), html(<GateSummary gate={gate} misses={missed.size} />))
+    this.#fill(this.querySelector('[data-gate-summary]'), html(<GateSummary gate={gate} />))
     const names = this.#named().map((slot) => slot.name)
-    this.#fill(this.querySelector('[data-gate-rows]'), html(<GateRows lines={gate.lines} names={names} />))
-    const count = this.querySelector('[data-count="gate"]')
-
-    if (count) count.textContent = `${gate.passed}/${gate.lines.length}`
+    this.#fill(this.querySelector('[data-gate-checks]'), html(<GateChecks gate={gate} names={names} />))
     const made = madeMode(edit)
     const editing = modeOfView(edit, this.#view)
 
@@ -907,30 +904,6 @@ class PaletteBuilder extends HTMLElement {
     announce(`editing the ${mode} colors`)
   }
 
-  #nextMiss() {
-    const list = this.#list()
-    const missed = misses(list, this.#state.signature, this.#state.meta.waive ?? [])
-
-    if (missed.size === 0) return
-    const from = this.#open === null ? -1 : ORDER.indexOf(this.#open)
-    const next = ORDER.slice(from + 1).find((slot) => missed.has(slot)) ?? ORDER.find((slot) => missed.has(slot))
-
-    if (next === undefined) return
-
-    if (this.#only && !changedIn(this.#state, this.#view).has(next)) this.#only = false
-    this.#openSlot(next)
-    this.querySelector<HTMLElement>(`[data-slot-open="${next}"]`)?.focus()
-  }
-
-  #toGate() {
-    this.#showPanel('colors')
-    const gate = this.querySelector<HTMLDetailsElement>('#builder-gate')
-
-    if (!gate) return
-    gate.open = true
-    gate.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' })
-  }
-
   #undo(back: boolean) {
     const from = back ? this.#history : this.#future
     const to = back ? this.#future : this.#history
@@ -1043,10 +1016,14 @@ class PaletteBuilder extends HTMLElement {
     const pop = event.target as HTMLElement
     const button = this.querySelector('[data-add]')
 
-    if ((event as ToggleEvent).newState !== 'open' || !button) return
-    const spot = button.getBoundingClientRect()
-    pop.style.top = `${spot.bottom + 8}px`
-    pop.style.right = `${Math.max(16, window.innerWidth - spot.right)}px`
+    if ((event as ToggleEvent).newState === 'open' && button) placeUnder(pop, button, 'right')
+  }
+
+  #placeGate = (event: Event) => {
+    const pop = event.target as HTMLElement
+    const button = this.querySelector('[popovertarget="builder-gate"]')
+
+    if ((event as ToggleEvent).newState === 'open' && button) placeUnder(pop, button, 'left')
   }
 
   #placeStart = (event: Event) => {
@@ -1054,9 +1031,7 @@ class PaletteBuilder extends HTMLElement {
     const button = this.querySelector('[data-start]')
 
     if ((event as ToggleEvent).newState !== 'open' || !button) return
-    const spot = button.getBoundingClientRect()
-    pop.style.top = `${spot.bottom + 8}px`
-    pop.style.left = `${Math.max(16, Math.min(spot.left, window.innerWidth - 416))}px`
+    placeUnder(pop, button, 'left')
     void this.#loadStarts()
     this.#renderStart()
   }
@@ -1363,9 +1338,6 @@ class PaletteBuilder extends HTMLElement {
       return
     }
 
-    if (target.closest('[data-gate-jump]')) return this.#toGate()
-
-    if (target.closest('[data-next-miss]')) return this.#nextMiss()
     const link = target.closest<HTMLElement>('[data-link]')?.dataset.link
 
     if (link) return this.#toggleLink(Number(link))
@@ -1387,6 +1359,12 @@ class PaletteBuilder extends HTMLElement {
 
     if (opener) {
       const slot = Number(opener.dataset.slotOpen)
+      const checks = opener.closest<HTMLElement>('#builder-gate')
+
+      if (checks) {
+        checks.hidePopover()
+        this.#showPanel('colors')
+      }
 
       if (this.#open === slot && !opener.closest('[data-inspector]')) return this.#close(true)
 

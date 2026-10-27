@@ -364,7 +364,7 @@ facet-ground .t2 {
   --fold: 0px;
   top: calc(var(--fold) * -1);
   min-height: calc(var(--fold) + var(--spacing) * 13);
-  padding-top: var(--fold);
+  padding-top: calc(var(--fold) / 2);
 }
 
 [data-site-header] > div {
@@ -396,7 +396,12 @@ facet-ground .t2 {
   }
 
   [data-site-header]::before {
-    animation-name: glass-in;
+    opacity: 0;
+    animation-name: glass-on;
+  }
+
+  [data-site-header][data-fixed]::before {
+    opacity: 1;
   }
 
   [data-site-header] > div {
@@ -413,7 +418,7 @@ facet-ground .t2 {
 
   :root[data-unfold] [data-site-header]::before {
     animation:
-      glass-in linear both,
+      glass-on linear both,
       glass-unfold 0.4s cubic-bezier(0.3, 0.7, 0.2, 1) 0.06s backwards;
     animation-timeline: scroll(root), auto;
     animation-range: 0px var(--fold), normal;
@@ -513,9 +518,15 @@ facet-ground .t2 {
   }
 }
 
+@keyframes glass-on {
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes header-row {
-  from {
-    translate: 0 calc(var(--fold) / -2);
+  to {
+    translate: 0 calc(var(--fold) / 2);
   }
 }
 
@@ -539,7 +550,7 @@ facet-ground .t2 {
 
 @keyframes row-unfold {
   from {
-    translate: 0 calc(var(--fold) / -2 * (1 - var(--unfold)));
+    translate: 0 calc(var(--fold) / 2 * var(--unfold));
   }
 }
 
@@ -1402,7 +1413,7 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     flex: 1;
     min-height: 0;
     gap: calc(var(--spacing) * 2);
-    padding: 12px;
+    padding-block: 12px;
   }
 
   palette-builder .mock {
@@ -1439,13 +1450,13 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     flex: 1;
     min-height: 0;
     grid-template-columns: 332px minmax(0, 1fr);
-    grid-template-rows: 56px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas: 'side bar' 'side stage';
     align-content: stretch;
   }
 
   .workspace:has(> [data-strip]) {
-    grid-template-rows: 48px 56px minmax(0, 1fr);
+    grid-template-rows: 48px auto minmax(0, 1fr);
     grid-template-areas: 'strip strip' 'side bar' 'side stage';
   }
 }

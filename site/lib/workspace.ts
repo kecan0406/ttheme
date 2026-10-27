@@ -10,8 +10,6 @@ export interface WorkspaceData {
 }
 
 export interface Neighbors {
-  at: number
-  count: number
   prev: Theme
   next: Theme
 }
@@ -22,8 +20,6 @@ export function neighbors(theme: Theme, palettes: Theme[]): Neighbors {
   const at = shelf.indexOf(theme)
 
   return {
-    at: at + 1,
-    count: shelf.length,
     prev: shelf[(at - 1 + shelf.length) % shelf.length] as Theme,
     next: shelf[(at + 1) % shelf.length] as Theme,
   }

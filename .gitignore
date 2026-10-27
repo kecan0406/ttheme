@@ -17,3 +17,4 @@ pages/
 *.avif
 *.gif
 !docs/demo.gif
+!site/app/terminals/*.png

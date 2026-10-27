@@ -24,7 +24,7 @@ import { brightLinks } from '../../src/core/tune.ts'
 import { DraftsPanel } from './builder-drafts'
 import { ExportDialog } from './builder-export'
 import { AddPopover, LinkSection, LinkStrip } from './builder-link'
-import { AboutPanel, BuilderBar, ColorsPanel, EditMode, SeedsPanel, StatusText } from './builder-parts'
+import { AboutPanel, BuilderBar, ColorsPanel, EditMode, GatePopover, SeedsPanel, StatusText } from './builder-parts'
 import { StartPopover } from './builder-start'
 import { MockWindow } from './mock-window'
 import { WorkspacePage, WorkspaceSide, WorkspaceStage } from './workspace-shell'
@@ -110,7 +110,7 @@ export function BuilderPage({
               list={seeded}
               gate={gateOf(seeded, ['cursor', 'ansi5', 'ansi4'], [])}
             />
-            <ColorsPanel gate={gate} rows={rows} format="hex" names={list.map((_, slot) => slotLabel(slot).name)} />
+            <ColorsPanel rows={rows} format="hex" />
             <AboutPanel
               about={about}
               modes={modesOf(edit)}
@@ -126,7 +126,6 @@ export function BuilderPage({
           dots={dotsOf(list, edit.signature)}
           changed={0}
           gate={gate}
-          misses={missed.size}
           link={shared?.link ?? null}
         />
         <main id="content" aria-label="preview" data-stage class="flex min-h-0 min-w-0 flex-col [grid-area:stage]">
@@ -140,6 +139,7 @@ export function BuilderPage({
           </WorkspaceStage>
         </main>
         <StartPopover />
+        <GatePopover gate={gate} names={list.map((_, slot) => slotLabel(slot).name)} />
         {shared ? <AddPopover shared={shared} /> : null}
         <ExportDialog
           file={fileOf(edit)}

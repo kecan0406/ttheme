@@ -11,6 +11,8 @@ const buttonVariants = cva(
         outline:
           'border-border bg-card text-soft-foreground hover:border-input hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary aria-pressed:border-primary aria-pressed:text-foreground',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-muted',
+        muted:
+          'bg-muted text-soft-foreground hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary aria-expanded:text-foreground',
         raised:
           'border-raised-edge bg-linear-to-b from-raised to-raised-low text-soft-foreground shadow-[inset_0_1px_0_var(--raised-shine),var(--elevation-sm)] hover:border-input hover:text-foreground',
         ghost:
@@ -25,6 +27,7 @@ const buttonVariants = cva(
         lg: 'h-11 px-6 text-base',
         sm: 'h-7.5 px-3',
         xs: 'h-7 gap-1.5 px-2.5 text-xs',
+        chip: "h-6.5 gap-1.5 px-2.5 text-xs font-medium [&_svg:not([class*='size-'])]:size-3.5",
         icon: 'size-9',
         'icon-sm': 'size-7.5',
         'icon-round': 'size-8',

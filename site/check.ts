@@ -7,7 +7,10 @@ const stand = mkdtempSync(join(tmpdir(), 'ttheme-site-check-'))
 let failed = 0
 
 try {
-  writeFileSync(join(stand, 'assets.json'), JSON.stringify({ css: '', js: '', builder: '', fonts: [], reload: '' }))
+  writeFileSync(
+    join(stand, 'assets.json'),
+    JSON.stringify({ css: '', js: '', builder: '', fonts: [], terminals: {}, reload: '' }),
+  )
   writeFileSync(join(stand, 'marketplaces.json'), '[]')
   writeFileSync(join(stand, 'repo.json'), 'null')
   writeFileSync(join(stand, 'commands.json'), JSON.stringify({ sections: [], exits: [] }))

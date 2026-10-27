@@ -316,10 +316,21 @@ export async function buildAssets(production: boolean): Promise<void> {
     css: shelf.url('site'),
     ...(await client(production)),
     fonts: PRELOAD.map((name) => shelf.url(name)),
+    terminals: terminalIcons(shelf),
     reload: production ? '' : '/__reload',
   }
 
   kept(join(SITE, 'assets.json'), `${JSON.stringify(manifest, null, 2)}\n`)
+}
+
+function terminalIcons(shelf: Shelf): Record<string, string> {
+  const folder = join(SITE, 'app', 'terminals')
+
+  return Object.fromEntries(
+    readdirSync(folder)
+      .sort()
+      .map((file) => [parse(file).name, `/assets/${shelf.put(file, readFileSync(join(folder, file)))}`]),
+  )
 }
 
 function kept(path: string, text: string): void {

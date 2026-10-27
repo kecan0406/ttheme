@@ -8,13 +8,12 @@ import { nameAt, neighbors, type WorkspaceData } from '@/lib/workspace'
 import { announce, fill, readJson, tally } from './dom'
 import { bare, composing, letter, typing } from './keys'
 import { afterPaint, palettes } from './palettes'
+import { placeUnder } from './place'
 
 const STEPS = new Map([
   ['ArrowRight', 1],
   ['ArrowLeft', -1],
 ])
-
-const GAP = 6
 
 function owned(target: EventTarget | null): boolean {
   return typing(target) || (target instanceof Element && target.closest('[role="radiogroup"], [popover]') !== null)
@@ -85,10 +84,7 @@ class MarketplaceWorkspace extends HTMLElement {
     const panel = event.target as HTMLElement
     const trigger = this.querySelector<HTMLElement>(`[popovertarget="${panel.id}"]`)
 
-    if (!trigger) return
-    const box = trigger.getBoundingClientRect()
-    panel.style.bottom = `${window.innerHeight - box.top + GAP}px`
-    panel.style.right = `${Math.max(16, window.innerWidth - box.right)}px`
+    if (trigger) placeUnder(panel, trigger, 'left')
   }
 
   connectedCallback() {
@@ -223,14 +219,12 @@ class MarketplaceWorkspace extends HTMLElement {
     if (theme === this.#theme) return
     this.#theme = theme
     const { gate, where } = this.#data
-    const palettes = this.#palettes
     this.querySelector('[data-palette-preview]')?.setAttribute('style', wearStyle(theme))
     fill(this.querySelector('[data-scenes]'), html(<ScenePanes theme={theme} />))
     fill(this.querySelector('[data-facts]'), html(<PaletteFacts theme={theme} gate={gate} />))
     fill(this.querySelector('[data-gate-panel]'), html(<GatePanel theme={theme} gate={gate} where={where} />))
     fill(this.querySelector('[data-slots-panel]'), html(<SlotsPanel theme={theme} />))
-    const { at, count } = neighbors(theme, palettes)
-    fill(this.querySelector('[data-head]'), html(<WorkspaceHead theme={theme} place={`${at} of ${count}`} />))
+    fill(this.querySelector('[data-head]'), html(<WorkspaceHead theme={theme} />))
 
     for (const link of this.querySelectorAll('a[data-pick]')) {
       if (link.getAttribute('data-pick') === theme.name) link.setAttribute('aria-current', 'page')

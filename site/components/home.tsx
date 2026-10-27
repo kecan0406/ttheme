@@ -5,16 +5,16 @@ import type { Facts } from '@/lib/facts'
 import { INIT, marketplacePath } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { json } from '@/lib/render'
-import { BUILTIN, paint, type Theme } from '@/lib/themes'
+import { BUILTIN, type Theme } from '@/lib/themes'
 import { headlineEm } from '@/lib/wear'
 import { leadsOf } from '@/lib/works'
 import { HeroScenes } from './cli-scenes'
 import { CommandRow } from './command-row'
-import { Signature } from './palette-parts'
 import { SiteFooter } from './site-footer'
 import { SiteHeader } from './site-header'
 import { FIRST_TABS, TabWindow } from './tab-window'
 import { TerminalFrame, WINDOW_TITLE } from './terminal-frame'
+import { TerminalList } from './terminal-list'
 
 const SLOTS = Array.from({ length: 16 }, (_, index) => index)
 
@@ -24,12 +24,12 @@ const FEATURES = [
   {
     emoji: '🎨',
     title: 'a palette per character',
-    text: "Each measured from the character's official art, with three signature colors you will recognise.",
+    text: "Each one built around the character, with three signature colors you'll recognise at a glance.",
   },
   {
-    emoji: '🖥️',
-    title: 'every terminal you use',
-    text: 'Ghostty, iTerm2, WezTerm, kitty, Alacritty, Rio, Contour, Windows Terminal, Warp, Konsole and Terminal.app, all wired by one init.',
+    emoji: '🛍️',
+    title: 'more from the community',
+    text: 'Browse palettes other fans publish, and add a whole marketplace with one command.',
   },
   {
     emoji: '🖼️',
@@ -44,7 +44,7 @@ const FEATURES = [
   {
     emoji: '🍀',
     title: 'free and open',
-    text: 'MIT licensed, and anyone can publish a marketplace of their own palettes from a GitHub repository.',
+    text: 'MIT licensed, free to use and to change.',
   },
 ]
 
@@ -97,13 +97,20 @@ function PerTab({ leads }: { leads: Theme[] }) {
       </div>
       <tab-showcase class="grid gap-2.5">
         <TabWindow tabs={tabs} active={0} next={leads[FIRST_TABS % leads.length] as Theme} />
-        <p class="text-xs text-muted-foreground">+ opens a tab on the next palette</p>
       </tab-showcase>
     </article>
   )
 }
 
-export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
+export function Home({
+  themes,
+  facts,
+  terminals,
+}: {
+  themes: Theme[]
+  facts: Facts
+  terminals: Record<string, string>
+}) {
   const leads = leadsOf(themes)
   const theme = leads[0] as Theme
 
@@ -129,22 +136,19 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
               <br />
               in your terminal
             </h1>
-            <p class="max-w-[52ch] text-base text-soft-foreground">
-              Character color palettes, measured from official art, for Ghostty, iTerm2, WezTerm, kitty, Alacritty, Rio,
-              Contour, Windows Terminal, Warp, Konsole and Terminal.app. One command, then every tab can show its own.
-            </p>
-            <div class="grid w-full gap-2.5">
-              <div class="flex w-full flex-wrap items-center gap-3">
-                <LinkButton variant="pop" size="lg" href={marketplacePath(BUILTIN)}>
-                  browse the palettes
-                  <Icon node={ArrowRight} />
-                </LinkButton>
-                <CommandRow command={INIT} class="min-w-70 flex-1 bg-card" />
-              </div>
-              <p class="text-xs text-muted-foreground">
-                Needs Node 22+ and zsh · shows every file it changes before writing ·{' '}
-                <code class="font-mono">uninstall</code> in place of <code class="font-mono">init</code> undoes it
+            <div class="grid max-w-[52ch] gap-2">
+              <p class="text-base text-soft-foreground">
+                Who's your favorite? The one from the game you keep replaying, or the anime you rewatch every year? Now
+                you can be together in your terminal!
               </p>
+              <p class="text-xs text-muted-foreground">Waifu, husbando, best girl: all welcome.</p>
+            </div>
+            <div class="flex w-full flex-wrap items-center gap-3">
+              <LinkButton variant="pop" size="lg" href={marketplacePath(BUILTIN)}>
+                browse the palettes
+                <Icon node={ArrowRight} />
+              </LinkButton>
+              <CommandRow command={INIT} class="min-w-70 flex-1 bg-card" />
             </div>
           </div>
 
@@ -218,51 +222,7 @@ export function Home({ themes, facts }: { themes: Theme[]; facts: Facts }) {
           </div>
         </section>
 
-        <section aria-labelledby="characters" class="grid gap-6 py-12">
-          <div class="grid gap-2">
-            <h2 id="characters" class="font-display text-display-lg font-black">
-              pick a character
-            </h2>
-            <p class="text-soft-foreground">The page shows whichever you pick, the way your terminal would.</p>
-          </div>
-          <div
-            role="radiogroup"
-            aria-labelledby="characters"
-            class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"
-          >
-            {leads.map((lead, index) => (
-              <label
-                translate="no"
-                style={`background:${paint(lead, (shade) => shade.background)};color:${paint(lead, (shade) => shade.foreground)}`}
-                class="grid cursor-pointer grid-cols-[minmax(0,1fr)] gap-1 rounded-2xl border border-[color-mix(in_oklab,currentColor_14%,transparent)] px-4 pt-3.5 pb-4 shadow-sm transition-[translate,scale,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-98 active:duration-500 active:ease-spring has-checked:ring-2 has-checked:ring-ring has-checked:ring-offset-2 has-checked:ring-offset-background has-focus-visible:outline-2 has-focus-visible:outline-offset-4 has-focus-visible:outline-ring motion-reduce:hover:translate-y-0"
-              >
-                <input
-                  type="radio"
-                  name="lead"
-                  value={lead.name}
-                  checked={index === 0}
-                  autocomplete="off"
-                  class="sr-only"
-                />
-                <span
-                  class="font-display text-display-sm font-black [overflow-wrap:anywhere]"
-                  style={`color:${paint(lead, (shade) => shade.cursor)}`}
-                  safe
-                >
-                  {lead.name}
-                </span>
-                <span class="flex items-center justify-between gap-2">
-                  <span class="min-w-0 truncate text-xs opacity-70" safe>
-                    {lead.work?.name ?? ''}
-                  </span>
-                  <span aria-hidden="true">
-                    <Signature theme={lead} />
-                  </span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </section>
+        <TerminalList icons={terminals} />
 
         <section aria-labelledby="install" class="grid gap-6 py-12">
           <h2 id="install" class="font-display text-display-lg font-black">

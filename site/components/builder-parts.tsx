@@ -1,5 +1,4 @@
 import {
-  ArrowDown,
   Blend,
   Check,
   ChevronDown,
@@ -23,6 +22,7 @@ import {
 } from 'lucide'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Popover } from '@/components/ui/popover'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type {
   AboutView,
@@ -43,10 +43,10 @@ import { cn } from '@/lib/utils'
 import { FORMATS, planeRows, type SlotView } from '@/lib/view-types'
 import { PLANE_BOTTOM, PLANE_TOP } from '../../src/core/plane.ts'
 import { Mark } from './mark'
-import { SectionLabel } from './palette-parts'
+import { ChecksHead, SectionLabel } from './palette-parts'
 import { PictureList } from './picture-list'
 import { GateRows, Group, Marks, Swatch, Verdict } from './slot-list'
-import { GateButton, TitleDots, TitleLine, WorkspaceBar } from './workspace-shell'
+import { GateButton, TitleDots, TitleFacts, TitleLine, WorkspaceBar, WorkspaceTitle } from './workspace-shell'
 
 const PLANE_THUMB =
   'pointer-events-none absolute size-3.5 -translate-1/2 rounded-full border-2 border-white shadow-sm ring-1 ring-black/55'
@@ -118,7 +118,6 @@ export function BuilderBar({
   dots,
   changed,
   gate,
-  misses,
   link,
 }: {
   name: string
@@ -127,61 +126,62 @@ export function BuilderBar({
   dots: string[]
   changed: number
   gate: Gate
-  misses: number
   link: string | null
 }) {
   return (
-    <WorkspaceBar
-      data-bar
-      class="relative z-10 [grid-area:bar] max-[760px]:flex-wrap max-[760px]:px-4 max-[760px]:py-3"
-    >
-      <TitleLine>
-        <div data-draft class="relative -ml-1 max-w-85 min-w-14">
-          <input
-            data-name
-            aria-label="palette name"
-            aria-invalid={problem ? 'true' : 'false'}
-            aria-describedby="builder-name-problem"
-            value={name}
-            maxlength="40"
-            spellcheck="false"
-            autocomplete="off"
-            autocapitalize="none"
-            autocorrect="off"
-            translate="no"
-            class="h-7.5 max-w-full min-w-full [field-sizing:content] rounded-t-sm border-b-[1.5px] border-dashed border-transparent bg-transparent px-1 font-display text-display-sm font-black text-ellipsis outline-none hover:border-input focus:border-primary focus:bg-muted aria-invalid:border-destructive"
-          />
-          <p
-            id="builder-name-problem"
-            data-name-problem
-            role="status"
-            hidden={!problem}
-            class="absolute top-full left-1 z-30 mt-1 rounded-lg border border-border bg-popover px-2 py-0.75 text-xs whitespace-nowrap text-destructive shadow-md"
-            safe
-          >
-            {problem ? `the name ${problem}` : ''}
-          </p>
-        </div>
-        <span data-draft data-bar-dots aria-hidden="true" class="flex flex-none gap-1">
-          <TitleDots dots={dots} />
-        </span>
-        <button
-          type="button"
-          popovertarget="builder-start"
-          aria-haspopup="dialog"
-          data-start
-          class="inline-flex h-6.5 min-w-0 cursor-pointer items-center gap-1 rounded-full bg-muted px-2.5 text-xs text-soft-foreground outline-none hover:bg-secondary hover:text-foreground focus-visible:inset-ring-2 focus-visible:inset-ring-ring aria-expanded:bg-secondary"
-        >
-          <span data-start-label class="flex min-w-0 items-center gap-1.5">
-            <StartLabel source={source} />
+    <WorkspaceBar data-bar class="relative z-10 [grid-area:bar] max-[760px]:flex-wrap max-[760px]:py-3">
+      <WorkspaceTitle>
+        <TitleLine>
+          <div data-draft class="relative -ml-1 max-w-85 min-w-14">
+            <input
+              data-name
+              aria-label="palette name"
+              aria-invalid={problem ? 'true' : 'false'}
+              aria-describedby="builder-name-problem"
+              value={name}
+              maxlength="40"
+              spellcheck="false"
+              autocomplete="off"
+              autocapitalize="none"
+              autocorrect="off"
+              translate="no"
+              class="h-7.5 max-w-full min-w-full [field-sizing:content] rounded-t-sm border-b-[1.5px] border-dashed border-transparent bg-transparent px-1 font-display text-display-sm font-black text-ellipsis outline-none hover:border-input focus:border-primary focus:bg-muted aria-invalid:border-destructive"
+            />
+            <p
+              id="builder-name-problem"
+              data-name-problem
+              role="status"
+              hidden={!problem}
+              class="absolute top-full left-1 z-30 mt-1 rounded-lg border border-border bg-popover px-2 py-0.75 text-xs whitespace-nowrap text-destructive shadow-md"
+              safe
+            >
+              {problem ? `the name ${problem}` : ''}
+            </p>
+          </div>
+          <span data-draft data-bar-dots aria-hidden="true" class="flex flex-none gap-1">
+            <TitleDots dots={dots} />
           </span>
-          <Icon node={ChevronDown} class="size-3 flex-none opacity-70" />
-        </button>
-      </TitleLine>
+        </TitleLine>
+        <TitleFacts>
+          <Button
+            variant="muted"
+            size="chip"
+            popovertarget="builder-start"
+            aria-haspopup="dialog"
+            data-start
+            class="min-w-0 font-normal"
+          >
+            <span data-start-label class="flex min-w-0 items-center gap-1.5">
+              <StartLabel source={source} />
+            </span>
+            <Icon node={ChevronDown} class="size-3 flex-none opacity-70" />
+          </Button>
+          <span data-draft data-gate-summary class="flex flex-none">
+            <GateSummary gate={gate} />
+          </span>
+        </TitleFacts>
+      </WorkspaceTitle>
       <div class="flex flex-none items-center gap-2 max-[760px]:w-full max-[760px]:flex-wrap">
-        <span data-draft data-gate-summary class="flex flex-none items-center gap-1 max-[760px]:mr-auto">
-          <GateSummary gate={gate} misses={misses} />
-        </span>
         <Button variant="outline" size="sm" data-changed aria-pressed="false" hidden={changed === 0}>
           <span data-changed-label class="flex items-center gap-1.5">
             <ChangedLabel count={changed} />
@@ -305,22 +305,36 @@ export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: stri
   )
 }
 
-export function GateSummary({ gate, misses }: { gate: Gate; misses: number }) {
+export function GateSummary({ gate }: { gate: Gate }) {
+  return (
+    <GateButton
+      passed={gate.passed}
+      total={gate.lines.length}
+      waived={gate.waived}
+      popovertarget="builder-gate"
+      aria-haspopup="dialog"
+    />
+  )
+}
+
+export function GateChecks({ gate, names }: { gate: Gate; names: string[] }) {
   return (
     <>
-      <GateButton
-        passed={gate.passed}
-        total={gate.lines.length}
-        waived={gate.waived}
-        word="max-[560px]:hidden bar-squeezed:hidden"
-        data-gate-jump
-      />
-      {misses > 0 ? (
-        <Button variant="outline" size="icon-sm" data-next-miss aria-label="next miss" title="next miss">
-          <Icon node={ArrowDown} />
-        </Button>
-      ) : null}
+      <div class="px-4 pt-4 pb-1">
+        <ChecksHead summary={`passes ${gate.passed} of ${gate.lines.length}`} />
+      </div>
+      <GateRows lines={gate.lines} names={names} />
     </>
+  )
+}
+
+export function GatePopover({ gate, names }: { gate: Gate; names: string[] }) {
+  return (
+    <Popover id="builder-gate" label="contrast checks">
+      <div data-draft data-gate-checks class="contents">
+        <GateChecks gate={gate} names={names} />
+      </div>
+    </Popover>
   )
 }
 
@@ -411,17 +425,7 @@ export function PairRows({ pairs }: { pairs: PairView[] }) {
   )
 }
 
-export function ColorsPanel({
-  gate,
-  rows,
-  format,
-  names,
-}: {
-  gate: Gate
-  rows: Rows
-  format: RowFormat
-  names: string[]
-}) {
+export function ColorsPanel({ rows, format }: { rows: Rows; format: RowFormat }) {
   return (
     <section
       id="builder-colors"
@@ -462,11 +466,6 @@ export function ColorsPanel({
       <p data-rows-empty hidden={!rows.empty} class="px-4 py-6 text-center text-sm text-muted-foreground">
         nothing changed yet <span aria-hidden="true">( ˘ω˘ )</span>
       </p>
-      <Group name="contrast" count={`${gate.passed}/${gate.lines.length}`} id="builder-gate" counts="gate">
-        <div data-draft data-gate-rows>
-          <GateRows lines={gate.lines} names={names} />
-        </div>
-      </Group>
       <div data-picker hidden class="absolute inset-x-3 z-20" />
     </section>
   )

@@ -214,7 +214,7 @@ export const site = new Elysia({ name: 'site' })
         ld: [siteGraph(facts)],
         cache: FIXED,
       },
-      <Home themes={themes} facts={facts} />,
+      <Home themes={themes} facts={facts} terminals={assets.terminals} />,
     ),
   )
   .get('/marketplace', () =>

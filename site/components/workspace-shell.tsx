@@ -9,7 +9,7 @@ import { SiteHeader } from './site-header'
 
 type Props = PropsWithChildren<Omit<JSX.HtmlTag, 'class'> & { class?: string }>
 
-export const TITLE = 'grid min-w-0 gap-0.5'
+const INSET = 'px-5 app:px-6 app:xl:px-10'
 
 export function WorkspacePage({
   current,
@@ -46,9 +46,21 @@ export function WorkspaceBar({ class: className, children, ...props }: Props) {
   return (
     <div
       data-slot="workspace-bar"
-      class={cn('flex min-h-14 min-w-0 items-center justify-between gap-x-5 gap-y-3 px-5 py-1.5', className)}
+      class={cn(
+        'flex min-h-16 min-w-0 items-center justify-between gap-x-5 gap-y-3 pt-4 app:min-h-15 app:pt-3',
+        INSET,
+        className,
+      )}
       {...props}
     >
+      {children}
+    </div>
+  )
+}
+
+export function WorkspaceTitle({ class: className, children, ...props }: Props) {
+  return (
+    <div class={cn('grid min-w-0 gap-1.5', className)} {...props}>
       {children}
     </div>
   )
@@ -58,17 +70,11 @@ export function TitleLine({ children }: PropsWithChildren) {
   return <div class="flex min-w-0 items-center gap-2.5">{children}</div>
 }
 
-export function TitleMeta({ class: className, children, ...props }: Props) {
+export function TitleFacts({ class: className, children, ...props }: Props) {
   return (
-    <p
-      class={cn(
-        '-ml-1.5 flex h-5 min-w-0 items-center gap-x-2.5 overflow-hidden pl-1.5 text-xs whitespace-nowrap text-muted-foreground',
-        className,
-      )}
-      {...props}
-    >
+    <div class={cn('flex min-w-0 flex-wrap items-center gap-1.5', className)} {...props}>
       {children}
-    </p>
+    </div>
   )
 }
 
@@ -85,22 +91,14 @@ export function TitleDots({ dots }: { dots: string[] }) {
   )
 }
 
-export function WorkspaceStage({ facts, class: className, children, ...props }: Props & { facts?: JSX.Element }) {
+export function WorkspaceStage({ class: className, children, ...props }: Props) {
   return (
     <div
       data-slot="workspace-stage"
-      class={cn(
-        'flex min-w-0 flex-col gap-3.5 px-6 pt-5 pb-4 max-[720px]:px-4 xl:px-10 xl:pt-7 xl:pb-5 app:min-h-0 app:flex-1',
-        className,
-      )}
+      class={cn('flex min-w-0 flex-col gap-3.5 pt-3 pb-4 app:min-h-0 app:flex-1 app:pb-3', INSET, className)}
       {...props}
     >
       {children}
-      {facts ? (
-        <div data-facts class="flex flex-none flex-wrap items-center gap-x-3 gap-y-2">
-          {facts}
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -109,19 +107,15 @@ export function GateButton({
   passed,
   total,
   waived = 0,
-  word,
   ...props
-}: Omit<JSX.HtmlButtonTag, 'class'> & { passed: number; total: number; waived?: number; word?: string }) {
+}: Omit<JSX.HtmlButtonTag, 'class'> & { passed: number; total: number; waived?: number }) {
   const clear = passed === total
   const label = `contrast checks, ${passed} of ${total} pass${waived > 0 ? `, ${waived} waived` : ''}`
 
   return (
-    <Button variant="outline" size="sm" aria-label={label} {...props}>
+    <Button variant="muted" size="chip" aria-label={label} {...props}>
       <Icon node={clear ? Check : TriangleAlert} class={clear ? 'text-success' : 'text-warning'} />
-      <span>
-        <span class={word}>contrast </span>
-        <span safe>{`${passed}/${total}`}</span>
-      </span>
+      <span safe>{`contrast ${passed}/${total}`}</span>
       {waived > 0 ? (
         <span class="font-medium text-muted-foreground" safe>
           {`· ${waived} waived`}

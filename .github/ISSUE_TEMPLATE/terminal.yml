@@ -1,0 +1,36 @@
+name: Terminal request
+description: Ask for ttheme to support a terminal it does not wire yet
+labels: [enhancement]
+body:
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal
+      description: Its name and where it lives, for example foot, https://codeberg.org/dnkl/foot.
+    validations:
+      required: true
+  - type: dropdown
+    id: systems
+    attributes:
+      label: Where you use it
+      multiple: true
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: wanted
+    attributes:
+      label: What you would like it to do
+      options:
+        - label: A palette per tab
+        - label: A picture behind the text
+        - label: Follow the system's light or dark mode
+  - type: textarea
+    id: colors
+    attributes:
+      label: How it takes colors
+      description: A config file, a themes folder, OSC color sequences, a profile, a plugin API… Links to its docs help. Optional.
