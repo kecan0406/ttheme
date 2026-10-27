@@ -1,7 +1,7 @@
 # Terminal support
 
-ttheme wires eleven terminals, and every one of them repaints per tab. Nothing is
-emulated: a terminal that cannot express something does not get it.
+ttheme wires eleven terminals, and every one of them repaints per tab. Nothing
+is emulated: a terminal that cannot express something does not get it.
 
 | | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app | Rio | Contour |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
@@ -11,9 +11,10 @@ emulated: a terminal that cannot express something does not get it.
 | Follows the system's appearance | ✓ | ✓ | ✓ | – | ✓ | – | – | – | – | – | ✓ |
 
 `init` offers iTerm2 and Terminal.app on macOS, Konsole on Linux, and Windows
-Terminal from WSL. "Follows the system's appearance" means the terminal tells ttheme when the
-system switches between light and dark, for [auto](../usage/modes.md). Once one
-wired terminal does, every terminal you wired switches with it.
+Terminal from WSL. "Follows the system's appearance" means the terminal tells
+ttheme when the system switches between light and dark, for
+[auto](../usage/modes.md). Once one wired terminal does, every terminal you
+wired switches with it.
 
 Any other terminal that speaks the OSC color sequences, such as foot or a
 VTE-based one, gets `ttheme use` and nothing else.
@@ -48,9 +49,9 @@ VTE-based one, gets `ttheme use` and nothing else.
 - Each palette gets a `ttheme · <palette>` profile, and `ttheme · default` is
   the default profile, built on your own so your font and keys carry over.
 - The first time ttheme switches a tab's profile, iTerm2 asks whether a control
-  sequence may do that. **Always Allow** lets a tab switch to its palette's profile,
-  colors and picture in one step. Refused, tabs still show the colors without
-  the picture.
+  sequence may do that. **Always Allow** lets a tab switch to its palette's
+  profile, colors and picture in one step. Refused, tabs still show the colors
+  without the picture.
 - iTerm2 reads its default profile at launch, so restart it once after `init`.
 - Pictures need iTerm2 3.7 or newer.
 
@@ -82,11 +83,10 @@ VTE-based one, gets `ttheme use` and nothing else.
 - `init` puts `theme = "ttheme"` at the top of Rio's `config.toml`, and ttheme
   keeps that theme in the default palette. Rio reloads by itself.
 - A reload redraws every tab on the default palette's background, so when the
-  default changes, a tab that uses another palette paints itself again right
-  after.
-- With a theme set, Rio uses the theme's colors in place of your own
-  `[colors]`. While ttheme is off, the theme holds a copy of your `[colors]`,
-  so Rio looks as it did before.
+  default changes, a tab that uses another palette uses it again right after.
+- With a theme set, Rio uses the theme's colors in place of your own `[colors]`.
+  While ttheme is off, the theme holds a copy of your `[colors]`, so Rio looks
+  as it did before.
 - A config that already names a theme, or sets an `[adaptive-theme]`, keeps
   it, and `init` says so.
 - Rio shows no picture ttheme can change per tab, so there are no pictures.
@@ -129,8 +129,8 @@ VTE-based one, gets `ttheme use` and nothing else.
 - With Sync with OS on, the palette goes in as both its light and dark theme, so
   the system's appearance never switches it away. `ttheme off` gives yours
   back.
-- Warp Preview, Dev and the open-source build keep settings of their own.
-  The default palette goes into every one ttheme finds, and a tab sets the theme of
+- Warp Preview, Dev and the open-source build keep settings of their own. The
+  default palette goes into every one ttheme finds, and a tab sets the theme of
   the Warp it runs in.
 - Warp's theme picker lists each palette by its mode, as `miku · dark` and
   `miku · light`, and a palette with a picture once more as
@@ -181,9 +181,9 @@ An editor's colorscheme and ttheme share the screen without overlapping.
 - **256 colors** stay as every terminal ships them, so a colorscheme written
   for the 256-color palette looks the way its author made it.
 - **Color resets**: Neovim and some plugins put the terminal's colors back as
-  they exit. A tab showing a palette repaints itself after the command in Ghostty, kitty,
-  Alacritty, WezTerm and Windows Terminal; iTerm2 lands on the palette's
-  profile; Terminal.app and Konsole ignore resets.
+  they exit. A tab showing a palette repaints itself after the command in
+  Ghostty, kitty, Alacritty, WezTerm and Windows Terminal; iTerm2 lands on the
+  palette's profile; Terminal.app and Konsole ignore resets.
 
 ## tmux
 

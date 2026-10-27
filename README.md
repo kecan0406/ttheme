@@ -169,8 +169,8 @@ Your own go in your own marketplace, with no review; the built-in marketplace
 and the commons of works and characters take pull requests, and
 [CONTRIBUTING.md](CONTRIBUTING.md) has their rules, the file formats and the
 checks a palette must pass; [HACKING.md](HACKING.md) says how the code is put
-together. The docs are Markdown in [`docs/`](docs),
-which [ttheme.dev/docs](https://ttheme.dev/docs) renders.
+together. The docs are Markdown in [`docs/`](docs), which
+[ttheme.dev/docs](https://ttheme.dev/docs) renders.
 
 ## Credits
 

@@ -30,8 +30,8 @@ ttheme marketplace add alice/ttheme-pastel#v1   # pinned to a tag, branch or com
 ```
 
 A public repository with the `ttheme-marketplace` topic shows in Browse's
-`⌕ Search marketplace` and on [ttheme.dev/marketplace](https://ttheme.dev/marketplace)
-within the hour.
+`⌕ Search marketplace` and on
+[ttheme.dev/marketplace](https://ttheme.dev/marketplace) within the hour.
 
 ## The layout
 
@@ -101,9 +101,9 @@ number, which an install fetches. The schema names every field.
 
 ## A work the commons lacks
 
-The commons is ttheme's list of works and characters, in the ttheme
-repository. When your palette is of a work it does not hold, or of a character
-missing from a work it does, describe it in `works/<work>.toml`:
+The commons is ttheme's list of works and characters, in the ttheme repository.
+When your palette is of a work it does not hold, or of a character missing from
+a work it does, describe it in `works/<work>.toml`:
 
 ```toml title="works/starfall-academy.toml"
 "$schema" = "https://www.schemastore.org/ttheme-work.json"

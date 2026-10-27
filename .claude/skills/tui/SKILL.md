@@ -7,7 +7,7 @@ metadata:
 
 # Finding your way around the screens
 
-This is a map, not the reference. The facts are kept where they already are — CLAUDE.md (the Node runtime, the mouse, Browse, the palette editor), HACKING.md's "Working on the TUIs" (the roles and marks, the key tables, the mouse, the text rules) and `.claude/rules/tui.md`, which loads only once a file under `src/tui/` is read with the Read tool — and this file says which of them to open for the change in hand. Where a name here and the code disagree, the code is right and this file is fixed.
+This is a map, not the reference. The facts are kept where they already are — CLAUDE.md (the Node runtime, the mouse, Browse, the palette editor), HACKING.md's "Working on the TUIs" (the roles and marks, the key tables, the mouse), `.claude/rules/text.md` (the text rules) and `.claude/rules/tui.md`, which loads only once a file under `src/tui/` is read with the Read tool — and this file says which of them to open for the change in hand. Where a name here and the code disagree, the code is right and this file is fixed.
 
 Look at a screen before reading the code that draws it: `mise run look <scenario> <cols>x<rows> [keys…]` writes a PNG and a text grid (`mise run look` alone lists the scenarios).
 
@@ -71,7 +71,7 @@ What `sync` carries into `palettes.zsh` for preview (`HUB_TABS`, `STANDING_LINES
 
 **A shared part** — the key bar, a notice, Help, a button, a box, the empty, loading and failed lines, `↑ n more`. Change it in `bar.ts`, `help.ts`, `parts.ts` or `notice.ts` rather than growing a copy in one screen, and look at every state it takes at once: `mise run look kit:<part> <cols>x<rows>` (`tests/kit.ts`: `bar`, `buttons`, `states`, `boxes`, `help`, `help-filtered`, `help-empty`, `help-short`).
 
-**Words.** HACKING.md's "Writing the text": sentence case, values and keys as typed, key hints and errors lowercase, one wording per state, counts from the palettes listed and never from the rows drawn, the key bar's verbs, a Help topic's `keys`, `does` and `more`, `·` only between facts through `SEP`, and the word list there, which the screens and `docs/` keep to. Text someone else wrote goes through `inert`, `inertLines`, `quoted` or `escaped` (`src/core/text.ts`).
+**Words.** `.claude/rules/text.md`: sentence case, values and keys as typed, key hints and errors lowercase, one wording per state, counts from the palettes listed and never from the rows drawn, the key bar's verbs, a Help topic's `keys`, `does` and `more`, `·` only between facts through `SEP`, and the word list there, which the screens and `docs/` keep to. Text someone else wrote goes through `inert`, `inertLines`, `quoted` or `escaped` (`src/core/text.ts`).
 
 **A new Node screen.** A model whose `view()` returns its rows; open it with `within`, draw through a `Screen` over that `view`, take events with `terminal.loop`; let `Terminal` set the modes (`pointing()` for the mouse), never write them or call `setRawMode` by hand; `?` opens `Help`, the bar is `barLine`, ctrl+c leaves, asking first while something is held; clack only for inline questions, never a `Prompt` subclass. Add it to `.oxlintrc.json`'s lists only if it is runtime or a part. Give it a line in `SCENARIOS` (`tests/tui.zsh`: name, state, target, keys, where `Enter@ADD` presses enter and waits for `ADD` on screen; a new target needs a case in `command_for`), then `mise run tui --update <name>`.
 
