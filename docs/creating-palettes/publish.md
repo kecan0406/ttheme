@@ -67,8 +67,9 @@ sunset = false   # gone: installs drop it
 ```
 
 `force_remove_deleted_palettes = true` drops a palette from everyone's install
-when its file disappears, instead of keeping their copy. The `$schema` line
-gives your editor completion and checks.
+when its file disappears, instead of keeping their copy. `[owner]` also takes
+`email` and `url`, and `[metadata]` holds anything of your own, which ttheme
+does not read. The `$schema` line gives your editor completion and checks.
 
 ## A palette file
 
@@ -91,7 +92,8 @@ ansi = [ ... 16 colors ... ]
 `undertale`, or one of its characters, such as `evangelion/rei`. ttheme's lists
 shelve it under that work, beside every other marketplace's palettes of it. A
 palette without one is an original, which lists under your marketplace.
-`ansi_source` reads `original` when you leave it out.
+`from` names the palette it was first copied from, and a copy of a copy keeps
+it. `ansi_source` reads `original` when you leave it out.
 
 `[colors.light]` (or `[colors.dark]`) may hold the palette in its other mode;
 without it, ttheme mirrors one. `[[picture]]` tables list background posts by
@@ -129,8 +131,9 @@ ttheme marketplace check ./ttheme-pastel
 It reads the folder as an install would and lists every problem: a palette that
 does not parse, a palette file in a folder under `palettes/`, which no install
 reads, a subject neither the commons nor your `works/` holds, a character you
-propose that the commons already holds under another name, a key ttheme does
-not know, a rename that loops, and the
+propose that the commons already holds under another name, a subject the
+commons has renamed, a work you propose that the commons already holds, a key
+ttheme does not know, a rename that loops, and the
 [contrast checks](../reference/contrast-gate.md) for each palette. It writes
 nothing.
 

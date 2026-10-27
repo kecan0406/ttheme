@@ -7,7 +7,7 @@ metadata:
 
 # Finding your way around the screens
 
-This is a map, not the reference. The facts are kept where they already are — CLAUDE.md (the Node runtime, the mouse, Browse, the palette editor), CONTRIBUTING.md's "Working on the TUIs" (the roles and marks, the key tables, the mouse, the text rules) and `.claude/rules/tui.md`, which loads only once a file under `src/tui/` is read with the Read tool — and this file says which of them to open for the change in hand. Where a name here and the code disagree, the code is right and this file is fixed.
+This is a map, not the reference. The facts are kept where they already are — CLAUDE.md (the Node runtime, the mouse, Browse, the palette editor), HACKING.md's "Working on the TUIs" (the roles and marks, the key tables, the mouse, the text rules) and `.claude/rules/tui.md`, which loads only once a file under `src/tui/` is read with the Read tool — and this file says which of them to open for the change in hand. Where a name here and the code disagree, the code is right and this file is fixed.
 
 Look at a screen before reading the code that draws it: `mise run look <scenario> <cols>x<rows> [keys…]` writes a PNG and a text grid (`mise run look` alone lists the scenarios).
 
@@ -61,17 +61,17 @@ What `sync` carries into `palettes.zsh` for preview (`HUB_TABS`, `STANDING_LINES
 
 ## Where a change goes
 
-**A key on a Node screen.** First CONTRIBUTING.md's "Keys a screen takes": where typing filters (preview, Browse) a letter or digit is never a command, and a key already in its table is a collision to resolve, not to add beside. Then the handler (the table above), the help topic that names the key (`topics()` in `BrowsePanel` and `PaletteEditor`, `findTopics` for find; enter on a topic runs its key), the hint on the screen's key bar (the "Draws" column above names where each takes its keys; the key spelled as the source spells it and drawn through `cap`, `src/tui/keycaps.ts`), and `docs/reference/keys.md`.
+**A key on a Node screen.** First HACKING.md's "Keys a screen takes": where typing filters (preview, Browse) a letter or digit is never a command, and a key already in its table is a collision to resolve, not to add beside. Then the handler (the table above), the help topic that names the key (`topics()` in `BrowsePanel` and `PaletteEditor`, `findTopics` for find; enter on a topic runs its key), the hint on the screen's key bar (the "Draws" column above names where each takes its keys; the key spelled as the source spells it and drawn through `cap`, `src/tui/keycaps.ts`), and `docs/reference/keys.md`.
 
-**A key in preview or its panel.** A case in `__tt_pv_handle` (or the panel's `__tt_te_*`), its line in `PREVIEW_KEYS` (`src/tui/preview-keys.ts`, which `__tt_pv_help` reads through `palettes.zsh`), the bar in `__tt_pv_foot`, the panel's table in CONTRIBUTING.md, and `docs/reference/keys.md`. A key is drawn through `__tt_cap` and `__tt_capped`.
+**A key in preview or its panel.** A case in `__tt_pv_handle` (or the panel's `__tt_te_*`), its line in `PREVIEW_KEYS` (`src/tui/preview-keys.ts`, which `__tt_pv_help` reads through `palettes.zsh`), the bar in `__tt_pv_foot`, the panel's table in HACKING.md, and `docs/reference/keys.md`. A key is drawn through `__tt_cap` and `__tt_capped`.
 
-**A click.** Every click has a key that does the same. In a Node screen wrap the text in `zone(target, text)` (`keyZone` for a key hint — `hintOf` already does) while drawing, and pad before marking, since `.length` and `padEnd` count the marks; act in the screen's mouse handler, on the release (`count >= 2` is a double click). find hands rectangles in `Frame.zones` instead. In preview append to `pvz` where the thing is drawn and act in `__tt_pv_press` or `__tt_pv_release`. CONTRIBUTING.md's "The mouse".
+**A click.** Every click has a key that does the same. In a Node screen wrap the text in `zone(target, text)` (`keyZone` for a key hint — `hintOf` already does) while drawing, and pad before marking, since `.length` and `padEnd` count the marks; act in the screen's mouse handler, on the release (`count >= 2` is a double click). find hands rectangles in `Frame.zones` instead. In preview append to `pvz` where the thing is drawn and act in `__tt_pv_press` or `__tt_pv_release`. HACKING.md's "The mouse".
 
 **A color, a mark, a badge.** A role from `ROLES` (through `painter`), a glyph from `MARKS`, a part from `src/tui/parts.ts`; a palette's own colors go out as hex (`ansiFg`, `ansiBar`, `ansiSquares`). Which is chrome and which is content: `.claude/rules/tui.md`. In zsh, `TTHEME_SGR` and `TTHEME_MARKS`. `src/tui/style.test.ts` fails on any other SGR or mark.
 
 **A shared part** — the key bar, a notice, Help, a button, a box, the empty, loading and failed lines, `↑ n more`. Change it in `bar.ts`, `help.ts`, `parts.ts` or `notice.ts` rather than growing a copy in one screen, and look at every state it takes at once: `mise run look kit:<part> <cols>x<rows>` (`tests/kit.ts`: `bar`, `buttons`, `states`, `boxes`, `help`, `help-filtered`, `help-empty`, `help-short`).
 
-**Words.** CONTRIBUTING.md's "Writing the text": sentence case, values and keys as typed, key hints and errors lowercase, one wording per state, counts from the palettes listed and never from the rows drawn, the key bar's verbs, a Help topic's `keys`, `does` and `more`, `·` only between facts through `SEP`, and the word list there, which the screens and `docs/` keep to. Text someone else wrote goes through `inert`, `inertLines`, `quoted` or `escaped` (`src/core/text.ts`).
+**Words.** HACKING.md's "Writing the text": sentence case, values and keys as typed, key hints and errors lowercase, one wording per state, counts from the palettes listed and never from the rows drawn, the key bar's verbs, a Help topic's `keys`, `does` and `more`, `·` only between facts through `SEP`, and the word list there, which the screens and `docs/` keep to. Text someone else wrote goes through `inert`, `inertLines`, `quoted` or `escaped` (`src/core/text.ts`).
 
 **A new Node screen.** A model whose `view()` returns its rows; open it with `within`, draw through a `Screen` over that `view`, take events with `terminal.loop`; let `Terminal` set the modes (`pointing()` for the mouse), never write them or call `setRawMode` by hand; `?` opens `Help`, the bar is `barLine`, ctrl+c leaves, asking first while something is held; clack only for inline questions, never a `Prompt` subclass. Add it to `.oxlintrc.json`'s lists only if it is runtime or a part. Give it a line in `SCENARIOS` (`tests/tui.zsh`: name, state, target, keys, where `Enter@ADD` presses enter and waits for `ADD` on screen; a new target needs a case in `command_for`), then `mise run tui --update <name>`.
 
@@ -93,12 +93,12 @@ Before "fixing" one of these, read where it was decided.
 | A cut line ends in `closing(head)`, not `RESET` | A full reset would end a painted row's background | `.claude/rules/tui.md` |
 | A Node screen leaves the modes a program around it set | They are `assume`d: set, never put back, since preview keeps them | CLAUDE.md, the Node screens bullet |
 | …yet the mouse mode is claimed, never assumed | It goes off with the screen that took it, and preview turns its own back on | CLAUDE.md, the mouse bullet |
-| No `/` to search; `j` and `k` do not move in preview or Browse (`ctrl+j` and `ctrl+k` do, through `lineStep` in `keys.ts`) | Typing filters at once, so letters are never commands there | CONTRIBUTING.md, Keys a screen takes |
-| `↑` `↓` wrap and the wheel does not | Lists wrap on keys; the wheel moves a row | CONTRIBUTING.md, Keys a screen takes and The mouse |
-| A click acts on the release | A screen that closes on a click must read the release, or it lands in the shell | CONTRIBUTING.md, The mouse |
+| No `/` to search; `j` and `k` do not move in preview or Browse (`ctrl+j` and `ctrl+k` do, through `lineStep` in `keys.ts`) | Typing filters at once, so letters are never commands there | HACKING.md, Keys a screen takes |
+| `↑` `↓` wrap and the wheel does not | Lists wrap on keys; the wheel moves a row | HACKING.md, Keys a screen takes and The mouse |
+| A click acts on the release | A screen that closes on a click must read the release, or it lands in the shell | HACKING.md, The mouse |
 | A wheel event within `WHEEL_GAP` of the last one the same way is dropped | Ghostty sends three per notch | CLAUDE.md, the mouse bullet |
 | init's picker ignores the mouse | It draws below the prompt with no row of its own, and the wheel must keep scrolling the terminal | CLAUDE.md, the mouse bullet |
-| The accent is slot 6, not the palette's cursor | It follows whatever the tab wears and stays right in the scrollback | CONTRIBUTING.md, Drawing the screens |
+| The accent is slot 6, not the palette's cursor | It follows whatever the tab wears and stays right in the scrollback | HACKING.md, Drawing the screens |
 | The palette editor never sets the terminal's colors | Only its mock window shows the draft; its own rows keep the terminal's | CLAUDE.md, the palette editor bullets |
 | Keys read `⌃⌥⇧↩` on a Mac and names in the tests | `capsFor` decides once per run, and every harness that compares screens sets `TTHEME_KEYS=text` | `.claude/rules/tui.md` |
 | `Screen` rewrites whole rows, not cells | A frame's cost was measured in its `view()`, not the write | CLAUDE.md, the Node screens bullet |
