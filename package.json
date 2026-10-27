@@ -13,7 +13,7 @@
     "shell",
     "!shell/check.zsh"
   ],
-  "description": "Character terminal palettes for Ghostty, iTerm2, kitty, Alacritty, Rio, Contour, WezTerm, Windows Terminal, Warp, Konsole and Terminal.app",
+  "description": "Your favorite anime and game characters' colors in your terminal, one tab at a time",
   "license": "MIT",
   "author": "kecan0406",
   "repository": {
