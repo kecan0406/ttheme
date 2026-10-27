@@ -1900,15 +1900,6 @@ __tt_resolve() {
     return 0
   elif (( ${#m} > 1 )); then
     print -u2 -r -- "ttheme: $name is ${(j:, :)m} — name the one you mean"
-    return 1
-  fi
-  m=(${(M)${(k)TTHEME_PALETTE}:#$name*} ${(M)${(k)TTHEME_PALETTE}:#*/$name*})
-  m=(${(ou)m})
-  if (( ${#m} == 1 )); then
-    REPLY=$m[1]
-    return 0
-  elif (( ${#m} > 1 )); then
-    print -u2 -r -- "ttheme: multiple palettes start with '$name': ${(j:, :)m}"
   elif m=(${(o)${(M)${(k)TTHEME_PALETTE}:#*$name*}}) && (( ${#m} )); then
     print -u2 -r -- "ttheme: unknown palette '$name' — did you mean: ${(j:, :)m[1,3]}?"
   else

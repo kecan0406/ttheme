@@ -42,7 +42,7 @@ export const VERB_SPECS: VerbSpec[] = [
   {
     name: 'use',
     args: ['<palette>'],
-    about: 'Use a palette in this tab — its name alone, or a unique start of it: ttheme use ho',
+    about: 'Use a palette in this tab — by its name alone where one installed palette has it: ttheme use rei',
     section: 'tab',
     shell: true,
   },

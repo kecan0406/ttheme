@@ -126,7 +126,7 @@ through each.
 | Command | |
 |---|---|
 | `ttheme` | Preview and Browse as tabs of one screen — the tab repaints as the cursor moves, `enter` applies |
-| `ttheme use <palette>` | Use a palette in this tab — `rei` or a unique start of it, or `ttheme/rei` when two have that name |
+| `ttheme use <palette>` | Use a palette in this tab — `rei`, or `ttheme/rei` when two have that name |
 | `ttheme default <palette>` | The palette new tabs open with |
 | `ttheme pin` / `unpin` / `pins` | A palette for a directory, its repository or an ssh host — `cd` or `ssh` in repaints, leaving restores |
 | `ttheme auto` / `light` / `dark` | The mode every palette shows in |

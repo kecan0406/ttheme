@@ -7,7 +7,6 @@ set the palette new tabs open with, or let every new tab take the next character
 
 ```sh
 ttheme use miku          # this tab only
-ttheme use ho            # a unique start of a name is enough
 ttheme use ttheme/miku   # by its full name, when two of yours are called miku
 ```
 

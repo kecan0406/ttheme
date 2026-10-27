@@ -42,7 +42,6 @@ When you already know the name, skip Preview:
 
 ```sh
 ttheme use miku          # this tab
-ttheme use ho            # a unique start of a name is enough
 ttheme use ttheme/miku   # the full name, when two marketplaces have a miku
 ttheme default miku      # the default for new tabs
 ```
