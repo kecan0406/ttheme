@@ -1,6 +1,6 @@
 name: Terminal request
 description: Ask for ttheme to support a terminal it does not wire yet
-labels: [enhancement]
+labels: [terminal]
 body:
   - type: input
     id: terminal
