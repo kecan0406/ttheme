@@ -27,7 +27,7 @@ export interface Ctx extends Now {
 }
 
 export interface Out {
-  write(path: string, content: string): boolean
+  write(path: string, content: string, aside?: string): boolean
   wire(path: string, content: string): void
   note(path: string): void
   remove(path: string): void

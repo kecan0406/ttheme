@@ -1,15 +1,18 @@
 import { Database } from 'bun:sqlite'
-import { chmodSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { rm } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { find, readPackaged } from '../../src/store/available.ts'
 import { TERMINAL_DOMAIN } from '../../src/terminals/terminal-app.ts'
 import { installTestPicture } from '../picture.ts'
-import { COLS, ITERM_SUITE, type Place, ROWS, warpPaths } from './model.ts'
+import { COLS, ITERM_SUITE, lingering, type Place, ROWS, warpPaths } from './model.ts'
 import { BEHAVIOR, OWN, type Term, WIRING, WT_PROFILE } from './terms.ts'
 
 export const PALETTES = ['ttheme/konata', 'ttheme/kita', 'ttheme/miku', 'ttheme/rei']
 export const PICTURED = ['ttheme/konata', 'ttheme/kita']
 export const STARTUP = 'ttheme/konata'
+
+let removals = 0
 
 const SHIMS = {
   ps: 'exit 0',
@@ -26,8 +29,10 @@ const SHIMS = {
     "enc() { printf '%s' \"$1\" | sed 's|/|--|g'; }",
     'case "$*" in',
     '  *terminal-app.js*)',
+    '    printf "%s\\n" "$4" >> "$HOME/.parity/signals"',
     `    shift 3; exec '${process.execPath}' '${join(import.meta.dirname, 'apple.ts')}' "$@" ;;`,
     "  *'on run argv'*)",
+    '    printf "default\\n" >> "$HOME/.parity/signals"',
     '    while [ "$1" = -e ]; do shift 2; done',
     '    [ -f "$term/loaded/$(enc "$2")" ] || { echo missing; exit 0; }',
     '    [ "$1" = default ] && printf \'%s\\n\' "$2" > "$term/default"',
@@ -49,7 +54,8 @@ const SHIMS = {
     '[ -s "$front" ] || { echo none; exit 0; }',
     'answer',
   ].join('\n'),
-  pkill: 'case " $* " in *" -USR2 "*" ghostty "*) printf \'reload\\n\' >> "$HOME/.parity/reloads" ;; esac\nexit 0',
+  pkill:
+    'case " $* " in *" -USR2 "*" ghostty "*) printf \'reload\\n\' >> "$HOME/.parity/reloads"; printf \'reload\\n\' >> "$HOME/.parity/signals" ;; esac\nexit 0',
   pgrep:
     'case " $* " in *" -x Terminal "*) [ -f "$HOME/.parity/terminal.running" ] && echo 4242 && exit 0 ;; esac\nexit 1',
   defaults: [
@@ -67,17 +73,55 @@ const SHIMS = {
     'case " $* " in',
     '  *" org.freedesktop.DBus.ListNames "*) printf \'   string "%s"\\n\' "$(cat "$running")" ;;',
     '  *" org.freedesktop.DBus.Introspectable.Introspect "*) printf \'<node name="1"/>\\n\' ;;',
-    '  *".setDefaultProfile "*) for a; do case "$a" in string:*) printf "%s\\n" "${a#string:}" > "$HOME/.parity/konsole.default" ;; esac; done ;;',
+    '  *".setDefaultProfile "*) printf "setDefaultProfile\\n" >> "$HOME/.parity/signals"; for a; do case "$a" in string:*) printf "%s\\n" "${a#string:}" > "$HOME/.parity/konsole.default" ;; esac; done ;;',
     '  *".defaultProfile "*) printf \'   string "%s"\\n\' "$(cat "$HOME/.parity/konsole.default" 2>/dev/null)" ;;',
     'esac',
   ].join('\n'),
 } satisfies Record<string, string>
 
+const RUNNING = [
+  "const { mkdirSync, rmSync, writeFileSync } = require('node:fs')",
+  "const { join } = require('node:path')",
+  "const child = require('node:child_process')",
+  "const dir = process.env.HOME && join(process.env.HOME, '.parity', 'running')",
+  "const evals = (args) => Array.isArray(args) && args.some((arg) => arg === '-e' || arg === '--eval')",
+  'const mark = (pid) => {',
+  '  mkdirSync(dir, { recursive: true })',
+  "  writeFileSync(join(dir, String(pid)), '')",
+  '}',
+  'if (dir) {',
+  '  const spawn = child.spawn',
+  '  child.spawn = function (command, args, ...rest) {',
+  '    const made = spawn.call(this, command, args, ...rest)',
+  '    if (evals(args) && made.pid) mark(made.pid)',
+  '    return made',
+  '  }',
+  "  require('node:module').syncBuiltinESMExports()",
+  '  if (evals(process.execArgv)) {',
+  '    mark(process.pid)',
+  "    process.on('exit', () => rmSync(join(dir, String(process.pid)), { force: true }))",
+  '  }',
+  '}',
+  '',
+].join('\n')
+
 export function shims(work: string): string {
   const bin = join(work, 'bin')
   mkdirSync(bin, { recursive: true })
 
-  for (const [name, body] of Object.entries(SHIMS)) {
+  const node = nodePath()
+  const running = join(bin, 'parity-node.cjs')
+  writeFileSync(running, RUNNING)
+
+  const bodies = {
+    ...SHIMS,
+    node: [
+      `[ -d "$HOME/.parity" ] && printf '%s\\n' "$2" >> "$HOME/.parity/cli"`,
+      `NODE_OPTIONS="--require=\\"${running}\\"\${NODE_OPTIONS:+ $NODE_OPTIONS}" exec '${node}' "$@"`,
+    ].join('\n'),
+  }
+
+  for (const [name, body] of Object.entries(bodies)) {
     const file = join(bin, name)
     writeFileSync(file, `#!/bin/sh\n${body}\n`)
     chmodSync(file, 0o755)
@@ -96,12 +140,19 @@ function need(command: string): string {
   return found
 }
 
-function nodeDir(): string {
-  const real = Bun.spawnSync([need('node'), '-p', 'process.execPath'])
-    .stdout.toString()
-    .trim()
+let nodeReal: string | undefined
 
-  return dirname(real || need('node'))
+function nodePath(): string {
+  nodeReal ??=
+    Bun.spawnSync([need('node'), '-p', 'process.execPath'])
+      .stdout.toString()
+      .trim() || need('node')
+
+  return nodeReal
+}
+
+function nodeDir(): string {
+  return dirname(nodePath())
 }
 
 export function placeFor(work: string, term: Term, bin: string, slot: string): Place {
@@ -122,7 +173,17 @@ export function placeFor(work: string, term: Term, bin: string, slot: string): P
 
   const zsh = need('zsh')
   place.env = {
-    PATH: [bin, nodeDir(), dirname(zsh), dirname(need('sqlite3')), '/usr/bin', '/bin', '/usr/sbin', '/sbin'].join(':'),
+    PATH: [
+      bin,
+      nodeDir(),
+      dirname(zsh),
+      dirname(need('sqlite3')),
+      dirname(need('tmux')),
+      '/usr/bin',
+      '/bin',
+      '/usr/sbin',
+      '/sbin',
+    ].join(':'),
     HOME: home,
     ZDOTDIR: home,
     XDG_CONFIG_HOME: configHome,
@@ -136,6 +197,7 @@ export function placeFor(work: string, term: Term, bin: string, slot: string): P
     USER: process.env.USER ?? 'parity',
     LOGNAME: process.env.USER ?? 'parity',
     TMPDIR: join(root, 'tmp'),
+    TMUX_TMPDIR: work,
     TTHEME_ITERM_SUITE: ITERM_SUITE,
     TTHEME_AUTO_UPDATE: 'off',
     TTHEME_MARKETPLACE_LOOKUP: 'off',
@@ -198,6 +260,7 @@ function prepare(place: Place, term: Term): void {
   write(join(place.home, '.parity', 'defaults', ITERM_SUITE, 'PreventEscapeSequenceFromChangingProfile'), '0\n')
   write(join(place.home, '.parity', 'defaults', '-g', 'AppleInterfaceStyle'), 'Dark\n')
   write(join(place.home, '.parity', 'color-scheme'), "'prefer-dark'\n")
+  write(join(place.home, '.parity', 'tmux.conf'), TMUX_CONF)
 
   if (term === 'terminal-app') {
     write(join(place.home, '.parity', 'defaults', TERMINAL_DOMAIN, 'Default Window Settings'), 'Own\n')
@@ -236,6 +299,14 @@ function prepare(place: Place, term: Term): void {
     )
   }
 }
+
+const TMUX_CONF = [
+  'set -g status off',
+  'set -sg escape-time 10',
+  'set -g default-terminal screen-256color',
+  'set -g destroy-unattached on',
+  '',
+].join('\n')
 
 export const HARNESS = [
   "PROMPT='pt> '",
@@ -295,20 +366,25 @@ export async function build(
     `${readFileSync(join(place.home, '.zshrc'), 'utf8')}${HARNESS}${BEHAVIOR[term].promptTrap ? '' : "trap '' URG\n"}`,
   )
   await run(place, ['zsh', '-i', '-c', 'exit'], { GHOSTTY_RESOURCES_DIR: '' })
+
+  for (const end = performance.now() + 10000; lingering(place) && performance.now() < end; ) {
+    await Bun.sleep(20)
+  }
+
   const snapshot = join(place.root, 'snapshot')
   await run(place, ['cp', '-a', place.home, snapshot])
 
   return { term, place, snapshot }
 }
 
-export async function reap(place: Place): Promise<void> {
+export async function reap(dir: string): Promise<void> {
   const proc = Bun.spawn(['ps', '-A', '-ww', '-o', 'pid=,args='], { stdout: 'pipe', stderr: 'ignore' })
   const out = await new Response(proc.stdout).text()
 
   const pids = out.split('\n').flatMap((line) => {
     const match = /^\s*(\d+)\s+(.*)$/.exec(line)
 
-    return match?.[2]?.includes(place.home) && !match[2].startsWith('ps ') ? [Number(match[1])] : []
+    return match?.[2]?.includes(dir) && !match[2].startsWith('ps ') ? [Number(match[1])] : []
   })
 
   for (const pid of pids) {
@@ -319,9 +395,16 @@ export async function reap(place: Place): Promise<void> {
 }
 
 export async function restore(fixture: Fixture): Promise<void> {
-  await reap(fixture.place)
-  rmSync(fixture.place.home, { recursive: true, force: true })
+  await reap(fixture.place.home)
+  const gone = `${fixture.place.home}.gone-${++removals}`
+
+  try {
+    renameSync(fixture.place.home, gone)
+  } catch {}
+
+  const removal = rm(gone, { recursive: true, force: true })
   await run(fixture.place, ['cp', '-a', fixture.snapshot, fixture.place.home])
+  await removal
 }
 
 export function workDir(): string {

@@ -43,9 +43,9 @@ typeset -ga SCENARIOS=(
   'preview-colors  few    hub  M-c Down Down Down Down Down Down Right'
   'preview-group   marketplace hub  M-g Down Space'
   'theme-edit      few    hub  Down Right Down Tab@Palette'
-  'theme-editor    few    hub  Down Right Down Tab@Palette Enter@slot'
+  'theme-editor    few    hub  Down Right Down Tab@Palette Enter@Contrast'
   'theme-keys      few    hub  Down Right Down Right@Palette ?@Help'
-  'editor-keys     few    hub  Down Right Down Tab@Palette Enter@slot ?@Help'
+  'editor-keys     few    hub  Down Right Down Tab@Palette Enter@Contrast ?@Help'
   'browse-marketplace   marketplace browse   Down Right Right Down'
   'preview-marketplace  marketplace hub  Down Right Down'
   'hub-marketplace      marketplace hub'
@@ -115,6 +115,8 @@ await() {
     tmux -L $SOCKET capture-pane -p 2>/dev/null | grep -qF -- "$1" && return 0
     sleep 0.1
   done
+  print -u2 "      $1 never showed"
+  return 1
 }
 
 normalize() {
@@ -184,7 +186,7 @@ chosen() {
 }
 
 run() {
-  local mode=$1 line name state target failed=0 golden actual
+  local mode=$1 line name state target failed=0 lost=0 golden actual
   local -a reply
   shift
   chosen $@
@@ -195,7 +197,11 @@ run() {
     name=$parts[1] state=$parts[2] target=$parts[3]
     local -a keys=(${parts[4,-1]})
     golden=$SCREENS/$name.txt
-    actual=$(capture $state $target $keys)
+    if ! actual=$(capture $state $target $keys); then
+      print -u2 "  ✗ $name — a key's screen never came"
+      lost=1
+      continue
+    fi
     if [[ $mode == update ]]; then
       print -r -- $actual > $golden
       print "  updated $name"
@@ -210,7 +216,9 @@ run() {
       failed=1
     fi
   done
-  (( failed )) && { print -u2 "\ntui: screens changed — look at the diff, then \`mise run tui --update${*:+ ${(j: :)${(q)@}}}\` if it is right"; return 1 }
+  (( lost )) && print -u2 "\ntui: a screen never drew the text a key waits for, the word after @ in tests/tui.zsh's SCENARIOS"
+  (( failed )) && print -u2 "\ntui: screens changed — look at the diff, then \`mise run tui --update${*:+ ${(j: :)${(q)@}}}\` if it is right"
+  (( lost || failed )) && return 1
   print "\ntui ok — ${#picked} screens"
 }
 

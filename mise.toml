@@ -31,7 +31,12 @@ description = "oxlint with the vendored anti-slop rules"
 run = "oxlint"
 
 [tasks."shell:check"]
-description = "syntax-check and exercise the zsh layer, and validate the emitted Ghostty files when ghostty is installed"
+description = "syntax-check and exercise the zsh layer, and validate the emitted Ghostty files when ghostty is installed: shell/check.zsh, latency.zsh check, the fork ratchet and the Ghostty files, side by side"
+depends = ["shell:layer", "shell:latency", "forks", "shell:ghostty"]
+
+[tasks."shell:layer"]
+description = "syntax-check every file of the zsh layer and run shell/check.zsh on a layer assembled in a temp dir"
+hide = true
 depends = ["build"]
 run = '''
 set -e
@@ -39,13 +44,22 @@ for f in shell/*.zsh shell/adapters/*.zsh; do
   zsh -n "$f"
 done
 zsh shell/check.zsh
-zsh tests/latency.zsh check
-zsh tests/latency.zsh forks
+'''
+
+[tasks."shell:latency"]
+description = "latency.zsh check: the startup queries keep the keys typed ahead and stderr, preview never echoes keys, and the rest of its orders"
+hide = true
+depends = ["build"]
+run = "zsh tests/latency.zsh check"
+
+[tasks."shell:ghostty"]
+description = "ghostty +validate-config on every emitted Ghostty theme, eight at a time, where a ghostty binary exists"
+hide = true
+depends = ["build"]
+run = '''
 if command -v ghostty >/dev/null 2>&1; then
-  for f in dist/ghostty/themes/*; do
-    ghostty +validate-config --config-file="$PWD/$f" ||
-      { echo "shell:check failed: $f"; exit 1; }
-  done
+  ls -d "$PWD"/dist/ghostty/themes/* |
+    xargs -P 8 -I{} sh -c 'ghostty +validate-config --config-file="$1" > /dev/null || { echo "shell:check failed: $1"; exit 255; }' _ {}
 else
   echo "shell:check skipped the Ghostty files — no ghostty binary on this machine"
 fi
@@ -194,6 +208,16 @@ depends = ["build", "bin:build"]
 wait_for = ["lint", "check", "test", "shell:check", "bin:check", "tui"]
 run = "bun tests/parity/run.ts"
 
+[tasks.costs]
+description = "the cost ratchet: what each action costs in the parity model of each terminal — the CLI runs it starts, the reload signals and profile switches it sends, the files it writes and the entries it makes in the folders the terminal watches — against tests/costs.tsv: more fails as a regression, fewer fails until --update locks it in — `mise run costs [--update] [--only <terminal,…>] [--show]`"
+depends = ["build", "bin:build"]
+run = "bun tests/costs.ts"
+
+[tasks.walk]
+description = "walk the parity model at random: seeded sequences of tabs, uses, defaults, off and on, pins, resets, mode switches and preview, held after every step to what any terminal must keep (the shell believes what the tab shows, the tab shows its palette's picture, no escape reaches the screen as text), a failure walked again, shrunk and printed as a journey to start from — `mise run walk [--only <terminal,…>] [--runs N] [--steps N] [--seed N] [--jitter] [--whole] [--slots N]`"
+depends = ["build", "bin:build"]
+run = "bun tests/parity/walk.ts"
+
 [tasks.compat]
 description = "run the terminal compatibility cases in each installed terminal and compare them with tests/compat/expect.tsv; konsole named on a machine without it runs in a container (Ubuntu 24.04, Konsole 23.08 on Xvfb), and --linux runs the Linux builds in one (Ubuntu 26.04 on Xvfb, versions pinned) against tests/compat/expect-linux.tsv — `mise run compat [--update] [--linux] [ghostty iterm2 wezterm kitty alacritty warp terminal-app konsole rio contour… | ghostty ghostty-tip kitty alacritty wezterm warp rio contour…]`"
 depends = ["build", "bin:build"]
@@ -275,7 +299,7 @@ run = "zsh tests/checked.zsh begin"
 
 [tasks."ci:checks"]
 description = "every check the ci workflow runs but the parity walk, which it walks in parallel jobs, a few terminals each"
-depends = ["lint", "check", "test", "shell:check", "bin:check", "tui", "site:check"]
+depends = ["lint", "check", "test", "shell:check", "bin:check", "tui", "site:check", "costs"]
 
 [tasks.ci]
 description = "everything the ci workflow runs, the parity walk after the rest — and, once it passes, marks the tree it checked, which `mise run release` then does not check again"

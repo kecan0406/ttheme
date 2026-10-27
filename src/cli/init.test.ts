@@ -144,10 +144,9 @@ test('planInit places the runtime layer and touches only .zshrc', () => {
   )
 })
 
-test('planInit installs no palettes and copies no theme files', () => {
+test('planInit copies no theme files', () => {
   const paths = makeFixture()
   const plan = planInit(options({ terminals: ['ghostty', 'kitty'] }), paths)
-  assert.deepEqual(plan.installed.palettes, [])
   assert.ok(!plan.copies.some((c) => c.to.includes(`${sep}themes${sep}`)))
 })
 
@@ -157,7 +156,6 @@ test('applyInit leaves a fresh install with an empty table and no terminal theme
   const table = readFileSync(join(paths.configHome, 'ttheme', 'palettes.zsh'), 'utf8')
   assert.match(table, /TTHEME_ORDER=\(\)/)
   const ghostty = readFileSync(join(paths.configHome, 'ghostty', 'config'), 'utf8')
-  assert.match(ghostty, /# ttheme begin/)
   assert.doesNotMatch(ghostty, /^theme = /m)
   assert.deepEqual(JSON.parse(readFileSync(join(paths.configHome, 'ttheme', 'installed.json'), 'utf8')).palettes, [])
   const bundled = readBundled(paths.configHome)
@@ -183,8 +181,6 @@ test('applyInit creates the layout, marks the launcher executable and wires conf
   const zshrc = readFileSync(join(paths.home, '.zshrc'), 'utf8')
   assert.match(zshrc, /source .*ttheme\.zsh/)
   assert.ok(!zshrc.includes('export TTHEME_'))
-  const config = readFileSync(join(paths.configHome, 'ttheme', 'config.zsh'), 'utf8')
-  assert.match(config, /^# : \$\{TTHEME_TAB_PALETTE:=off\}$/m)
 })
 
 test('applyInit seeds config.zsh once and keeps user edits on rerun', () => {

@@ -15,15 +15,20 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
-      - name: install zsh in the background
-        run: (set +e; sudo apt-get install -y zsh tmux sqlite3 || { sudo apt-get update && sudo apt-get install -y zsh tmux sqlite3; }; echo $? > "$RUNNER_TEMP/apt.rc") > "$RUNNER_TEMP/apt.log" 2>&1 &
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - id: zsh
+        uses: ./.github/actions/zsh
       - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
       - run: bun install --frozen-lockfile
       - name: zsh installed
         run: until [ -s "$RUNNER_TEMP/apt.rc" ]; do sleep 0.2; done; cat "$RUNNER_TEMP/apt.log"; exit "$(cat "$RUNNER_TEMP/apt.rc")"
+      - if: steps.zsh.outputs.saved != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/zsh-debs
+          key: ${{ steps.zsh.outputs.key }}
       - run: mise run ci:checks
 
   parity:
@@ -44,11 +49,11 @@ jobs:
           - terminals: konsole,terminal-app,rio
             slots: 4
     steps:
-      - name: install zsh in the background
-        run: (set +e; sudo apt-get install -y zsh tmux sqlite3 || { sudo apt-get update && sudo apt-get install -y zsh tmux sqlite3; }; echo $? > "$RUNNER_TEMP/apt.rc") > "$RUNNER_TEMP/apt.log" 2>&1 &
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - id: zsh
+        uses: ./.github/actions/zsh
       - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
       - run: bun install --frozen-lockfile
       - name: zsh installed

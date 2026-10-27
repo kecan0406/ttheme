@@ -53,3 +53,4 @@ focus-report	pass	pass	pass	pass	pass	fail	skip	skip	?	?
 focus-event	skip	skip	skip	skip	skip	skip	pass	pass	?	?
 front-tty	pass	fail	fail	fail	fail	fail	fail	fail	?	?
 prompt-trap	pass	pass	pass	pass	pass	pass	pass	pass	?	?
+linked-settings	?	?	?	?	?	?	?	?	?	?

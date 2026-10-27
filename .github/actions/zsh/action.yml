@@ -1,0 +1,23 @@
+name: zsh
+description: Start installing zsh, tmux and sqlite3 in the background, zsh from a cache of its packages keyed by the version apt would install, so a slow mirror costs one run per zsh version; a later step waits on $RUNNER_TEMP/apt.rc
+outputs:
+  saved:
+    description: true when the cache already held this zsh's packages
+    value: ${{ steps.cache.outputs.cache-hit }}
+  key:
+    description: the cache key this zsh's packages go under
+    value: ${{ steps.cache.outputs.cache-primary-key }}
+runs:
+  using: composite
+  steps:
+    - id: version
+      shell: bash
+      run: |
+        echo "zsh=$(apt-cache policy zsh | sed -n 's/^ *Candidate: //p')" >> "$GITHUB_OUTPUT"
+    - id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/zsh-debs
+        key: zsh-${{ runner.arch }}-${{ steps.version.outputs.zsh }}
+    - shell: bash
+      run: (sh "$GITHUB_ACTION_PATH/install.sh"; echo $? > "$RUNNER_TEMP/apt.rc") > "$RUNNER_TEMP/apt.log" 2>&1 &

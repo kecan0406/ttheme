@@ -53,6 +53,8 @@ export interface Journey {
   run(p: Probe): Promise<void>
 }
 
+const TMUX = 'tmux -L pt$$ -f ~/.parity/tmux.conf new-session'
+
 const BUSY = `zsh -fc 'stty raw -echo; printf "\\e[?1004hbusy>"; exec cat >/dev/null'`
 
 export const JOURNEYS: Journey[] = [
@@ -167,6 +169,19 @@ export const JOURNEYS: Journey[] = [
       p.config(': ${TTHEME_TAB_PALETTE:=seq}')
       const a = await p.open()
       await p.type(a, 'ttheme off')
+      await p.open()
+      await p.look('new', { want: 'own' })
+    },
+  },
+  {
+    id: 'off-use',
+    about:
+      'a palette used while ttheme is off stays in its tab, and a tab opened after it opens in the terminal’s own colors, with no picture',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme off')
+      await p.type(a, 'ttheme use kita')
+      await p.look('used', { want: 'ttheme/kita' })
       await p.open()
       await p.look('new', { want: 'own' })
     },
@@ -364,6 +379,41 @@ export const JOURNEYS: Journey[] = [
       await p.type(a, 'ttheme use kita')
       await p.type(a, 'clear; NVIM=/tmp/nvim.sock zsh -ic "ttheme use konata"')
       await p.look('after', { want: 'ttheme/kita', text: true })
+    },
+  },
+  {
+    id: 'tmux',
+    about:
+      'inside a real tmux, ttheme use paints the terminal’s tab through tmux, and leaving tmux gives the tab back what its own shell wears',
+    async run(p) {
+      const a = await p.open()
+      await p.type(a, 'ttheme use miku')
+      await p.launch(a, TMUX)
+      await p.type(a, 'ttheme use kita')
+      await p.look('in', { want: 'ttheme/kita' })
+      await p.type(a, 'exit')
+      await p.look('out', { want: 'ttheme/miku' })
+    },
+  },
+  {
+    id: 'tmux-behind',
+    about:
+      'inside a real tmux, only the pane in front acts on a pin set in another tab, so a pane behind never repaints the terminal’s tab, and takes its pin once tmux brings it to the front',
+    async run(p) {
+      const a = await p.open()
+      await p.launch(a, TMUX)
+      await p.type(a, 'mkdir -p ~/work && cd ~/work')
+      await p.type(a, 'tmux split-window -c ~')
+      await p.type(a, 'ttheme use miku')
+      const b = await p.open()
+      await p.type(b, 'cd ~/work')
+      await p.launch(b, 'ttheme pin')
+      await p.keys(b, 'r', 'e', 'i', 'enter', 'enter')
+      await p.back(b)
+      await p.look('behind', { want: 'ttheme/miku', at: a })
+      await p.focus(a)
+      await p.keys(a, '\x02', 'o')
+      await p.look('pane', { want: 'ttheme/rei' })
     },
   },
   {

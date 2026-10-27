@@ -1,0 +1,131 @@
+name: nightly
+
+on:
+  schedule:
+    - cron: '23 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  terminals:
+    name: real terminals (${{ matrix.lane }})
+    runs-on: ubuntu-26.04
+    timeout-minutes: 150
+    permissions:
+      contents: read
+      issues: write
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [pinned, latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/zsh
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+      - run: bun install --frozen-lockfile
+      - name: zsh installed
+        run: until [ -s "$RUNNER_TEMP/apt.rc" ]; do sleep 0.2; done; cat "$RUNNER_TEMP/apt.log"; exit "$(cat "$RUNNER_TEMP/apt.rc")"
+      - name: newest releases
+        if: matrix.lane == 'latest'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: zsh tests/compat/latest.zsh >> "$GITHUB_ENV"
+      - id: compat
+        env:
+          TTHEME_COMPAT_OUT: ${{ runner.temp }}/ttheme-compat
+        run: |
+          set +e
+          mise run compat --linux 2>&1 | tee "$RUNNER_TEMP/compat.log"
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+      - name: tell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: zsh tests/nightly.zsh "Real terminals (${{ matrix.lane }} builds) left their expected results" "${{ steps.compat.outputs.code }}" "$RUNNER_TEMP/compat.log"
+      - if: steps.compat.outputs.code != '0'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: screenshots-${{ matrix.lane }}
+          path: ${{ runner.temp }}/ttheme-compat
+      - if: steps.compat.outputs.code != '0'
+        run: exit 1
+
+  walk:
+    name: random walks
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/zsh
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+      - run: bun install --frozen-lockfile
+      - name: zsh installed
+        run: until [ -s "$RUNNER_TEMP/apt.rc" ]; do sleep 0.2; done; cat "$RUNNER_TEMP/apt.log"; exit "$(cat "$RUNNER_TEMP/apt.rc")"
+      - id: walk
+        run: |
+          set +e
+          mise run walk --runs 6 --steps 14 --seed "${{ github.run_number }}000" --jitter 2>&1 | tee "$RUNNER_TEMP/walk.log"
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+      - name: tell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: zsh tests/nightly.zsh "Random walks of the parity model failed" "${{ steps.walk.outputs.code }}" "$RUNNER_TEMP/walk.log"
+      - if: steps.walk.outputs.code != '0'
+        run: exit 1
+
+  flakes:
+    name: journeys walked again (${{ matrix.terminals }})
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      issues: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - terminals: warp
+            slots: 6
+          - terminals: windows-terminal,ghostty,iterm2
+            slots: 4
+          - terminals: kitty,alacritty,wezterm,contour
+            slots: 4
+          - terminals: konsole,terminal-app,rio
+            slots: 4
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/zsh
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+      - run: bun install --frozen-lockfile
+      - name: zsh installed
+        run: until [ -s "$RUNNER_TEMP/apt.rc" ]; do sleep 0.2; done; cat "$RUNNER_TEMP/apt.log"; exit "$(cat "$RUNNER_TEMP/apt.rc")"
+      - id: flakes
+        env:
+          TTHEME_PARITY_AGAIN: ${{ runner.temp }}/again.tsv
+        run: |
+          set +e
+          for run in 1 2 3; do
+            mise run parity --only ${{ matrix.terminals }} --slots ${{ matrix.slots }} > "$RUNNER_TEMP/parity-$run.log" 2>&1
+          done
+          bun tests/parity/again.ts "$TTHEME_PARITY_AGAIN" 3 2>&1 | tee "$RUNNER_TEMP/flakes.log"
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+      - name: tell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: zsh tests/nightly.zsh "The parity walk needed second walks on main (${{ matrix.terminals }})" "${{ steps.flakes.outputs.code }}" "$RUNNER_TEMP/flakes.log"
+      - if: steps.flakes.outputs.code != '0'
+        run: exit 1

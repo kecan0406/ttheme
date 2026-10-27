@@ -189,6 +189,25 @@ __cc_seen() {
   __cc_report $1 $miss "${${miss:#fail}:+the window does not redraw while it is covered: }wanted $want over ${from:-?}, the window shows ${shot:-nothing}"
 }
 
+__cc_drew() {
+  local want=$2 from=$3 got
+  local -i near far
+  REPLY=""
+  (( CC_DRAWN )) || return 2
+  printf '\e[H\e[2J'
+  sleep 0.3
+  __cc_shot $1 || return 2
+  local shot=$REPLY
+  for got in ${(M)${=shot}:#\#*}; do
+    __cc_near $want $got 24 || continue
+    __cc_dist $want $got; near=$REPLY
+    __cc_dist $from $got; far=$REPLY
+    (( near < far )) && return 0
+  done
+  REPLY=${shot:-nothing}
+  return 1
+}
+
 __cc_roundtrip() {
   local id=$1 slot=$2 want=$3
   printf '\e]%s;%s\e\\' $slot $want
@@ -358,7 +377,7 @@ __cc_profiles() {
 __cc_follow() {
   local before=$TTHEME_STARTUP target shown="" worn want was
   local -a others=(${TTHEME_ORDER:#$before})
-  local -i i
+  local -i i drew
   target=$others[1]
   if (( ! $+functions[ttheme] )) || [[ -z $before || -z $target ]]; then
     __cc_report follow-default skip "no layer or fewer than two palettes"
@@ -392,7 +411,13 @@ __cc_follow() {
   __tt_name_of "$TTHEME_SPEC"
   worn=$REPLY
   if [[ -n $shown ]] && __cc_near $want $shown; then
-    __cc_report follow-default pass "a tab that never painted took the new default $target"
+    drew=0
+    __cc_drew follow-drawn $want $was || drew=$?
+    if (( drew == 1 )); then
+      __cc_report follow-default fail "a tab that never painted answers the new default $target but draws $REPLY"
+    else
+      __cc_report follow-default pass "a tab that never painted took the new default $target${${drew:#0}:+, read from its answer alone}"
+    fi
     if [[ $worn == $target ]]; then
       __cc_report follow-belief pass "the shell wears $worn too"
     else
@@ -417,6 +442,7 @@ __cc_follow() {
 __cc_keep() {
   local before=$TTHEME_STARTUP paint target shown="" want
   local -a others=(${TTHEME_ORDER:#$before})
+  local -i drew=0
   paint=$others[1] target=$others[2]
   if (( ! $+functions[ttheme] )) || [[ -z $before || -z $target ]]; then
     __cc_report keep-painted skip "no layer or fewer than three palettes"
@@ -433,7 +459,12 @@ __cc_keep() {
   sleep 3
   __cc_color 11 && shown=$REPLY
   if [[ -n $shown ]] && __cc_near $want $shown; then
-    __cc_report keep-painted pass "a tab painted $paint kept it through ttheme default $target"
+    __cc_drew keep-drawn $want ${${=TTHEME_PALETTE[$target]}[1]} || drew=$?
+    if (( drew == 1 )); then
+      __cc_report keep-painted fail "a tab painted $paint answers it through ttheme default $target but draws $REPLY"
+    else
+      __cc_report keep-painted pass "a tab painted $paint kept it through ttheme default $target${${drew:#0}:+, read from its answer alone}"
+    fi
   else
     __cc_report keep-painted fail "a tab painted $paint shows ${shown:-nothing} after ttheme default $target"
   fi
@@ -581,8 +612,8 @@ __cc_cases() {
   elif (( $+functions[__tt_mend] )) && [[ -n $other && $TTHEME_SPEC == ${TTHEME_PALETTE[$other]} ]]; then
     local -a worn=(${=TTHEME_PALETTE[$other]})
     local rbg="" rcur=""
-    local -i deaf=0
-    [[ -n ${(M)${(f)"$(<$CC_DIR/results)"}:#osc-cursor$'\t'fail*} ]] && deaf=1
+    local -i deaf=0 drew=0
+    [[ -n ${(M)${(f)"$(<$CC_DIR/results)"}:#(osc-cursor|painted)$'\t'fail*} ]] && deaf=1
     printf '\e]112\e\\\e]111\e\\'
     sleep 0.1
     TTHEME_RAN=1
@@ -591,7 +622,12 @@ __cc_cases() {
     __cc_color 11 && rbg=$REPLY
     (( deaf )) || { __cc_color 12 && rcur=$REPLY }
     if [[ -n $rbg ]] && __cc_near $worn[1] $rbg && { (( deaf )) || { [[ -n $rcur ]] && __cc_near $worn[3] $rcur } }; then
-      __cc_report reset-worn pass "after a program's OSC 111 and 112 and the next prompt the tab still wears $other: $rbg, cursor ${rcur:-unread, since this terminal answers no OSC 12}"
+      __cc_drew reset-drawn $worn[1] ${${=TTHEME_PALETTE[$TTHEME_STARTUP]}[1]} || drew=$?
+      if (( drew == 1 )); then
+        __cc_report reset-worn fail "after a program's OSC 111 and 112 and the next prompt the tab answers $other's $rbg but draws $REPLY"
+      else
+        __cc_report reset-worn pass "after a program's OSC 111 and 112 and the next prompt the tab still wears $other: $rbg, cursor ${rcur:-unread, since this terminal answers no OSC 12 or draws from its own state rather than an OSC's}${${drew:#0}:+, read from its answers alone}"
+      fi
     else
       __cc_report reset-worn fail "after a program's OSC 111 and 112 and the next prompt the tab shows ${rbg:-no answer}, cursor ${rcur:-no answer}, not $other's $worn[1] and $worn[3]"
     fi
@@ -716,6 +752,7 @@ __cc_cases() {
   __cc_keep
   __cc_back
   __cc_system
+  __cc_linked
 }
 
 __cc_system() {
@@ -770,9 +807,50 @@ __cc_system() {
   printf '\e[H\e[2J'
 }
 
-__cc_back() {
-  local start=$TTHEME_STARTUP want shown="" worn
+__cc_linked() {
+  local start=$TTHEME_STARTUP target want dir=$HOME/.cc-dotfiles shown=""
+  local -a others=(${TTHEME_ORDER:#$TTHEME_STARTUP})
   local -i i
+  if [[ $TTHEME_ADAPTER != warp ]]; then
+    __cc_report linked-settings skip "only Warp keeps the theme a tab wears in a file of the user's that a dotfiles folder may link"
+    return
+  fi
+  if __cc_unseen; then
+    __cc_report linked-settings skip "Warp reads only the real ~/.warp, which the sandbox never touches"
+    return
+  fi
+  target=$others[1]
+  if (( ! $+functions[ttheme] )) || [[ -z $start || -z $target || ! -f $TTHEME_WARP_SETTINGS || -L $TTHEME_WARP_SETTINGS ]]; then
+    __cc_report linked-settings skip "no layer, fewer than two palettes or no plain settings.toml"
+    return
+  fi
+  want=${${=TTHEME_PALETTE[$target]}[1]}
+  mkdir -p $dir
+  mv -f $TTHEME_WARP_SETTINGS $dir/settings.toml
+  ln -s $dir/settings.toml $TTHEME_WARP_SETTINGS
+  sleep 1
+  ttheme use $target
+  for (( i = 0; i < 50; i++ )); do
+    __cc_color 11 && shown=$REPLY
+    [[ -n $shown ]] && __cc_near $want $shown 3 && break
+    sleep 0.1
+  done
+  if [[ -n $shown ]] && __cc_near $want $shown 3; then
+    __cc_report linked-settings pass "with settings.toml a link into another folder, ttheme use $target showed $shown"
+  else
+    __cc_report linked-settings fail "with settings.toml a link into another folder, ttheme use $target left Warp on ${shown:-no answer}"
+  fi
+  rm -f $TTHEME_WARP_SETTINGS
+  mv -f $dir/settings.toml $TTHEME_WARP_SETTINGS
+  rmdir $dir 2>/dev/null
+  __tt_osc_reset
+  sleep 0.3
+  printf '\e[H\e[2J'
+}
+
+__cc_back() {
+  local start=$TTHEME_STARTUP want shown="" worn own
+  local -i i drew=0
   if (( ! $+functions[ttheme] )) || [[ -z $start ]]; then
     __cc_report on-follow skip "no layer or no default palette"
     __cc_report on-belief skip "no layer or no default palette"
@@ -800,6 +878,7 @@ __cc_back() {
     __cc_report on-belief skip "the tab kept $start through ttheme off"
     return
   fi
+  own=$shown
   __tt_cli on > /dev/null
   __tt_reload
   sleep 1
@@ -817,7 +896,12 @@ __cc_back() {
   worn=""
   [[ -n $TTHEME_SPEC ]] && __tt_name_of "$TTHEME_SPEC" && worn=$REPLY
   if [[ -n $shown ]] && __cc_near $want $shown 3; then
-    __cc_report on-follow pass "a tab that went off took the default $start back at its focus"
+    __cc_drew on-drawn $want $own || drew=$?
+    if (( drew == 1 )); then
+      __cc_report on-follow fail "a tab that went off answers the default $start at its focus but draws $REPLY"
+    else
+      __cc_report on-follow pass "a tab that went off took the default $start back at its focus${${drew:#0}:+, read from its answer alone}"
+    fi
     if [[ $worn == $start ]]; then
       __cc_report on-belief pass "the shell wears $worn too"
     else

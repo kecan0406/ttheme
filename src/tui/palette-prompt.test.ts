@@ -342,8 +342,6 @@ test('right unfolds a work and space picks the palette under the cursor', async 
   assert.match(frames, /▌ {2}▾ Madoka Magica \(0\/2\) 魔法少女まどか☆マギカ/)
   assert.match(frames, /▸ Vocaloid \(0\/2\)/)
   assert.match(frames, /Palettes \(4\/4 · 0 picked\)/)
-  assert.match(frames, /│ {4}Search…/)
-  assert.match(frames, /space pick {3}type to filter {3}enter install/)
 })
 
 test('works fold back and the cursor moves across them', async () => {

@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path'
 import { Terminal } from '@xterm/headless'
 import type { Mode } from '../../src/core/mode.ts'
 import { owned } from '../../src/core/theme.ts'
+import { listing } from '../../src/store/edits.ts'
 import { TERMINAL_DOMAIN, terminalPictures } from '../../src/terminals/terminal-app.ts'
 import { type Bookmark, prefsOf, tabFile } from './apple.ts'
 import {
@@ -64,6 +65,27 @@ export function backgrounds(place: Place): string {
   return join(place.configHome, 'ttheme', 'backgrounds')
 }
 
+export function lingering(place: Place): boolean {
+  const running = join(place.home, '.parity', 'running')
+  const pids = [Number(read(join(place.stateHome, 'ttheme', 'remode')).trim()), ...listing(running).map(Number)]
+
+  return pids.some((pid) => {
+    if (!(pid > 0)) {
+      return false
+    }
+
+    try {
+      process.kill(pid, 0)
+
+      return true
+    } catch {
+      rmSync(join(running, String(pid)), { force: true })
+
+      return false
+    }
+  })
+}
+
 export function warpPaths(place: Place): { settings: string; themes: string; db: string } {
   return process.platform === 'darwin'
     ? {
@@ -92,6 +114,7 @@ export class Tab {
   readonly vars = new Map<string, string>()
   readonly decoder = new TextDecoder()
   raw = ''
+  private counted = 0
   state: 'text' | 'esc' | 'csi' | 'osc' | 'osc-esc' | 'str' | 'str-esc' = 'text'
   buf = ''
   focusing = false
@@ -121,8 +144,17 @@ export class Tab {
     }
   }
 
+  append(text: string): void {
+    const from = Math.max(0, this.raw.length - PROMPT.length + 1)
+    this.raw += text
+
+    for (let at = this.raw.indexOf(PROMPT, from); at >= 0; at = this.raw.indexOf(PROMPT, at + PROMPT.length)) {
+      this.counted++
+    }
+  }
+
   prompts(): number {
-    return this.raw.split(PROMPT).length - 1
+    return this.counted
   }
 
   write(data: string): void {
@@ -169,6 +201,7 @@ interface Kind {
   unchanged?(app: App): boolean
   changed?(app: App): void
   osc?(app: App, tab: Tab, code: number, data: string): void
+  colored?(app: App, tab: Tab, code: string): void
   focused?(app: App, tab: Tab): void
   appeared?(app: App): void
   owes?(app: App): boolean
@@ -441,8 +474,10 @@ const alacritty = (): Kind => {
 
 const rio = (): Kind => {
   let config = OWN
+  const reloaded = new Set<Tab>()
 
   return {
+    delay: 250,
     launch(app) {
       config = rioColors(app.place.configHome)
     },
@@ -453,8 +488,17 @@ const rio = (): Kind => {
 
       for (const tab of app.tabs) {
         app.rebase(tab, config)
+        reloaded.add(tab)
+      }
+
+      app.log('reload')
+    },
+    colored(_, tab, code) {
+      if (code === '11') {
+        reloaded.delete(tab)
       }
     },
+    background: (_, tab) => (reloaded.has(tab) ? config.get('11') : undefined),
     picture: () => 'none',
   }
 }
@@ -884,6 +928,7 @@ export class App {
   readonly journal: string[] = []
   front: Tab | undefined
   appearance: Mode = 'dark'
+  jitter: (() => number) | undefined
   activity = performance.now()
   private away = false
   private later = 0
@@ -913,8 +958,9 @@ export class App {
 
   poll(): void {
     const files = this.kind.watched?.(this) ?? []
+    const moved = files.filter((file) => stamp(file) !== (this.stamps.get(file) ?? '-'))
 
-    if (!files.some((file) => stamp(file) !== (this.stamps.get(file) ?? '-'))) {
+    if (moved.length === 0) {
       return
     }
 
@@ -925,9 +971,10 @@ export class App {
     }
 
     this.activity = performance.now()
-    const delay = this.kind.delay ?? 0
+    const written = Math.max(...moved.map((file) => Number(stamp(file).split(':')[0]) || Date.now()))
+    const delay = (this.kind.delay ?? this.jitter?.() ?? 0) - Math.max(0, Date.now() - written)
 
-    if (delay === 0) {
+    if (delay <= 0) {
       this.kind.changed?.(this)
 
       return
@@ -1056,6 +1103,7 @@ export class App {
     }
 
     slot.over = color
+    this.kind.colored?.(this, tab, code)
     this.painted(tab)
   }
 
@@ -1077,6 +1125,8 @@ export class App {
       } else {
         delete slot.over
       }
+
+      this.kind.colored?.(this, tab, code)
     }
 
     this.painted(tab)
@@ -1404,7 +1454,7 @@ export class App {
         rows: ROWS,
         data: (_, bytes) => {
           const text = tab.decoder.decode(bytes, { stream: true })
-          tab.raw += text
+          tab.append(text)
           this.activity = performance.now()
           this.feed(tab, text)
         },
@@ -1522,23 +1572,8 @@ export class App {
     }
   }
 
-  private async busy(): Promise<boolean> {
-    const remode = Number(read(join(this.place.stateHome, 'ttheme', 'remode')).trim())
-
-    if (remode > 0) {
-      try {
-        process.kill(remode, 0)
-
-        return true
-      } catch {}
-    }
-
-    const proc = Bun.spawn(['ps', '-A', '-ww', '-o', 'args='], { stdout: 'pipe', stderr: 'ignore' })
-    const out = await new Response(proc.stdout).text()
-
-    return out
-      .split('\n')
-      .some((line) => line.includes(this.place.home) && / -e /.test(line) && !line.startsWith('ps '))
+  private busy(): boolean {
+    return lingering(this.place)
   }
 
   async settle(quiet = this.term === 'warp' ? 450 : 250): Promise<void> {
@@ -1557,7 +1592,7 @@ export class App {
       const idle = this.later === 0 && this.tabs.every((tab) => tab.pending === 0)
 
       if (idle && now - this.activity >= quiet) {
-        if (!(await this.busy())) {
+        if (!this.busy()) {
           return
         }
 

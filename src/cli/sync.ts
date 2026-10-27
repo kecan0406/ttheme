@@ -55,14 +55,14 @@ function writer(ctx: Ctx): Out & { written: string[]; repainted: boolean } {
   const out = {
     written,
     repainted: false,
-    write(path: string, content: string): boolean {
+    write(path: string, content: string, aside?: string): boolean {
       written.push(path)
 
       if (existsSync(path) && readFileSync(path, 'utf8') === content) {
         return false
       }
 
-      writeAtomic(path, content)
+      writeAtomic(path, content, aside)
 
       return true
     },

@@ -1,4 +1,5 @@
 import {
+  appendFileSync,
   chmodSync,
   copyFileSync,
   existsSync,
@@ -14,7 +15,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs'
-import { dirname } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 
 export function backupPath(path: string): string {
   return `${path}.ttheme.bak`
@@ -38,10 +39,18 @@ export function listing(dir: string): string[] {
   }
 }
 
-export function writeAtomic(path: string, content: string | Uint8Array): void {
+function traced(...paths: string[]): void {
+  const log = process.env.TTHEME_WRITES
+
+  if (log) {
+    appendFileSync(log, paths.map((path) => `${path}\n`).join(''))
+  }
+}
+
+export function writeAtomic(path: string, content: string | Uint8Array, aside?: string): void {
   const real = existsSync(path) ? realpathSync(path) : path
   mkdirSync(dirname(real), { recursive: true })
-  const tmp = `${real}.ttheme-${process.pid}`
+  const tmp = join(aside ?? dirname(real), `${basename(real)}.ttheme-${process.pid}`)
   writeFileSync(tmp, content)
 
   if (existsSync(real)) {
@@ -49,6 +58,7 @@ export function writeAtomic(path: string, content: string | Uint8Array): void {
   }
 
   renameSync(tmp, real)
+  traced(tmp, real)
 }
 
 export function rewrite(from: string, to: string, content: Uint8Array): void {
@@ -57,6 +67,8 @@ export function rewrite(from: string, to: string, content: Uint8Array): void {
   if (from !== to) {
     renameSync(from, to)
   }
+
+  traced(...new Set([from, to]))
 }
 
 export function symlinked(path: string): boolean {
@@ -79,6 +91,7 @@ export function relink(path: string): void {
 
   try {
     renameSync(tmp, path)
+    traced(tmp, path)
   } catch {
     rmSync(tmp, { force: true })
   }

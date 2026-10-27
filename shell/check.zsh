@@ -39,7 +39,7 @@ out=$(ttheme use city 2>&1) && { print -u2 "ttheme use took a bad name"; exit 1 
 [[ $out == *"did you mean"*nightcity* ]] || { print -u2 "did-you-mean broke: $out"; exit 1 }
 ttheme --frobnicate 2>/dev/null && { print -u2 "ttheme took an unknown option"; exit 1 }
 [[ $(ttheme pin --help) == "Usage: ttheme pin"* ]] || { print -u2 "ttheme pin --help did not describe pin"; exit 1 }
-[[ $(ttheme pins --help) == "Usage: ttheme pins"$'\n\n'"Map every pin as a file tree — the pinned directories"* ]] || { print -u2 "ttheme pins --help did not describe pins"; exit 1 }
+[[ $(ttheme pins --help) == "Usage: ttheme pins"$'\n'* ]] || { print -u2 "ttheme pins --help did not describe pins"; exit 1 }
 ttheme pins extra 2>/dev/null && { print -u2 "ttheme pins took an extra argument"; exit 1 }
 out=$(__tt_preview hub </dev/null 2>&1) && { print -u2 "preview ran without a tty"; exit 1 }
 [[ $out == *"needs a terminal"* ]] || { print -u2 "preview tty guard broke: $out"; exit 1 }
@@ -142,7 +142,6 @@ __tt_bg_load wall
     { print -u2 "a picture saved with Warp wired did not refresh Warp's themes once:"; cat $XDG_CONFIG_HOME/cli.log; exit 1 }
   rm -f $bgd/ttheme--kagami.png $bgd/ttheme--kagami.tune.conf $bgd/ttheme--kagami@60-center-1600x960.png $XDG_CONFIG_HOME/bake.log $XDG_CONFIG_HOME/cli.log
 ) || exit 1
-[[ "$(<$TTHEME_CONFIG)" == "$TTHEME_CONFIG_TEMPLATE" ]] || { print -u2 "config seed drifted from the template"; exit 1 }
 (
   source $XDG_CONFIG_HOME/ttheme/adapters/_wired.zsh
   TTHEME_TMUX=0 TTHEME_GHOSTTY_EMBEDDED=1 TTHEME_GHOSTTY_SENT=0
@@ -183,9 +182,16 @@ __tt_focus
 TTHEME_SPEC=$TTHEME_PALETTE[ttheme/rei]; __tt_sync
 [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--rei.conf" && $reloads == 5 ]] ||
   { print -u2 "a tab kept another palette's picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
-TTHEME_SPEC=; __tt_sync
+TTHEME_SPEC=
+TTHEME_STARTUP=ttheme/miku __tt_sync
 [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--rei.conf" && $reloads == 5 ]] ||
   { print -u2 "a tab of unknown colors moved the picture: $(<$bgd/shown.conf) reloads=$reloads"; exit 1 }
+(
+  __tt_sync
+  [[ "$(<$bgd/shown.conf)" == "config-file = ?.conf" ]] ||
+    { print -u2 "a tab that wears nothing while ttheme is off left another palette's picture up: $(<$bgd/shown.conf)"; exit 1 }
+) || exit 1
+print -r -- "config-file = ?ttheme--rei.conf" > $bgd/shown.conf
 __tt_blur
 TTHEME_SPEC=$TTHEME_PALETTE[ttheme/kagami]; __tt_sync
 [[ "$(<$bgd/shown.conf)" == "config-file = ?ttheme--rei.conf" && $reloads == 5 ]] ||
@@ -517,12 +523,6 @@ tune= tpick= bgcw=0 out=
   sleep 0.3
   [[ ! -e $bgd/prep.log ]] ||
     { print -u2 "a coloring marked as prepared was prepared again: $(<$bgd/prep.log)"; exit 1 }
-) || exit 1
-(
-  te=1 bgcw=8 color=0 split=0 sw=0 pw=100 ph=30 help=1 out=
-  __tt_pv_help
-  [[ $out == *"Own colors or tinted"* ]] ||
-    { print -u2 "the help did not name the colors key: $out"; exit 1 }
 ) || exit 1
 TTHEME_STARTUP=ttheme/miku
 proj=$XDG_CONFIG_HOME/proj

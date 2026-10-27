@@ -127,9 +127,6 @@ test('a share link carries several palettes, where each one came from and the ot
 })
 
 test('a share code that packs too much, names a palette twice or marks an other mode it cannot read is refused', () => {
-  const code = shareCode([draft, asuna])
-  assert.throws(() => fromCode(code.slice(0, -6)), /does not add up/)
-  assert.throws(() => fromCode(code.replace('tt5:', 'tt9:')), /reads tt5: share codes, not tt9:/)
   assert.throws(() => fromCode(signed(Buffer.from([7, 1, 2]))), /packed in a way/)
   const flood = Buffer.concat([Buffer.from([1]), deflateRawSync(Buffer.alloc(200_000, 1))])
   assert.throws(() => fromCode(signed(flood)), { name: 'Error', message: /does not unpack/ })

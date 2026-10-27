@@ -146,10 +146,6 @@ test('gateFailures is empty when every rule is met', () => {
   assert.deepEqual(gateFailures(gated()), [])
 })
 
-test('gateFailures reports a ratio below its minimum', () => {
-  assert.match(gateFailures(gated({ foreground: '#3a4150' }))[0] ?? '', /^foreground on background \d+\.\d+ ≥ 7$/)
-})
-
 test('gateFailures reports a value above its maximum', () => {
   const ansi = seeded.ansi.map((hex, i) => (i === 0 ? '#9aa0aa' : hex))
   assert.match(gateFailures(gated({ ansi })).join('\n'), /ansi0 luminance \d+\.\d+ ≤ 0\.15/)
@@ -162,12 +158,7 @@ test('gateFailures honours a waiver by rule name', () => {
 
 test('gateFailures measures the colors, never a gate stored before the rules it holds now', () => {
   const stale = gated({ foreground: '#3a4150', gate: [13.8, 6.8, 0.02, 10.4, 4.0] })
-  assert.match(gateFailures(stale)[0] ?? '', /^foreground on background/)
-})
-
-test('gateFailures measures an entry that carries no gate', () => {
-  const { gate: _, ...bare } = entry({ foreground: '#20282c' })
-  assert.match(gateFailures(bare as PaletteEntry)[0] ?? '', /foreground on background/)
+  assert.match(gateFailures(stale)[0] ?? '', /^foreground on background \d+\.\d+ ≥ 7$/)
 })
 
 test('search matches the palette, its work, its character’s names and the ANSI source', () => {

@@ -289,29 +289,78 @@ report() {
   (( ! broken ))
 }
 
-versions() {
-  local term
-  for term in $@; do
-    case $term in
-      ghostty) print -r -- "ghostty: $(ghostty +version 2>/dev/null | head -1)" ;;
-      ghostty-tip) print -r -- "ghostty-tip: $($TIP/ghostty +version 2>/dev/null | head -1)" ;;
-      kitty) print -r -- "kitty: $(kitty --version 2>/dev/null)" ;;
-      alacritty) print -r -- "alacritty: $(alacritty --version 2>/dev/null)" ;;
-      wezterm) print -r -- "wezterm: $(wezterm --version 2>/dev/null)" ;;
-      warp) print -r -- "warp: $(dpkg-query -W -f '${Version}' warp-terminal 2>/dev/null)" ;;
-      rio) print -r -- "rio: $(rio --version 2>/dev/null)" ;;
-      contour) print -r -- "contour: $(contour version 2>/dev/null | head -1)" ;;
+version_of() {
+  local app=""
+  REPLY=""
+  if (( LINUX )); then
+    case $1 in
+      ghostty) REPLY=$(ghostty +version 2>/dev/null | head -1) ;;
+      ghostty-tip) REPLY=$($TIP/ghostty +version 2>/dev/null | head -1) ;;
+      kitty) REPLY=$(kitty --version 2>/dev/null) ;;
+      alacritty) REPLY=$(alacritty --version 2>/dev/null) ;;
+      wezterm) REPLY=$(wezterm --version 2>/dev/null) ;;
+      warp) REPLY=$(dpkg-query -W -f '${Version}' warp-terminal 2>/dev/null) ;;
+      rio) REPLY=$(rio --version 2>/dev/null) ;;
+      contour) REPLY=$(contour version 2>/dev/null | head -1) ;;
+      konsole) REPLY=$(konsole --version 2>/dev/null | head -1) ;;
     esac
+  else
+    case $1 in
+      ghostty) app=/Applications/Ghostty.app ;;
+      iterm2) app=/Applications/iTerm.app ;;
+      wezterm) app=${TTHEME_WEZTERM_APP:-/Applications/WezTerm.app} ;;
+      kitty) app=${TTHEME_KITTY_APP:-/Applications/kitty.app} ;;
+      alacritty) app=${TTHEME_ALACRITTY_APP:-/Applications/Alacritty.app} ;;
+      warp) app=/Applications/Warp.app ;;
+      terminal-app) app=/System/Applications/Utilities/Terminal.app ;;
+      rio) app=${TTHEME_RIO_APP:-/Applications/Rio.app} ;;
+      contour) app=${TTHEME_CONTOUR_APP:-/Applications/contour.app} ;;
+    esac
+    [[ -n $app ]] && REPLY=$(defaults read $app/Contents/Info.plist CFBundleShortVersionString 2>/dev/null)
+  fi
+  REPLY=${${REPLY//[[:space:]]/ }:-?}
+}
+
+versions() {
+  local term REPLY
+  for term in $@; do
+    version_of $term
+    print -r -- "$term: $REPLY"
   done
 }
 
+commit_of() {
+  REPLY=${TTHEME_COMPAT_COMMIT:-}
+  [[ -n $REPLY ]] && return
+  REPLY=$(git -C $ROOT rev-parse --short=10 HEAD 2>/dev/null) || { REPLY='?'; return }
+  git -C $ROOT diff --quiet HEAD 2>/dev/null || REPLY+=+
+}
+
+record() {
+  local term=$1 file=$ROOT/tests/compat/measured.tsv REPLY version day
+  version_of $term
+  version=$REPLY
+  commit_of
+  day=$(date -u +%Y-%m-%d)
+  [[ -r $file ]] || print -r -- $'expect\tterminal\tversion\tmeasured\tcommit' > $file
+  local -a rows=("${(@f)$(<$file)}")
+  local head=$rows[1]
+  rows=(${rows[2,-1]:#${EXPECT:t:r}$'\t'$term$'\t'*})
+  rows+=("${EXPECT:t:r}"$'\t'"$term"$'\t'"$version"$'\t'"$day"$'\t'"$REPLY")
+  print -rl -- $head ${(o)rows} > $file
+}
+
 in_container() {
-  local image=$1
+  local image=$1 tag=ttheme-$1 arg REPLY
+  local -a build=()
   shift
   (( $+commands[docker] )) || { print -u2 "$image: these cases run in a container, which needs Docker"; return 1 }
-  print -r -- "$image: building tests/compat/$image.Dockerfile…"
-  docker build -q -t ttheme-$image -f "$ROOT/tests/compat/$image.Dockerfile" "$ROOT/tests/compat" > /dev/null || return
-  docker run --rm -v "$ROOT":/work -v "$OUT":"$OUT" -e TTHEME_COMPAT_OUT="$OUT" ttheme-$image zsh tests/compat.zsh $@
+  for arg in ${=TTHEME_COMPAT_BUILD_ARGS}; do build+=(--build-arg $arg); done
+  (( $#build )) && tag+=-custom
+  print -r -- "$image: building tests/compat/$image.Dockerfile…${build:+ ${(j: :)${=TTHEME_COMPAT_BUILD_ARGS}}}"
+  docker build -q -t $tag $build -f "$ROOT/tests/compat/$image.Dockerfile" "$ROOT/tests/compat" > /dev/null || return
+  commit_of
+  docker run --rm -v "$ROOT":/work -v "$OUT":"$OUT" -e TTHEME_COMPAT_OUT="$OUT" -e TTHEME_COMPAT_COMMIT="$REPLY" $tag zsh tests/compat.zsh $@
 }
 
 main() {
@@ -353,7 +402,10 @@ main() {
   done
   (( ${#ran} )) || return 1
   if (( $#upd )); then
-    for term in $ran; do update $term; done
+    for term in $ran; do
+      update $term
+      record $term
+    done
   fi
   report $ran && (( ! contained ))
 }

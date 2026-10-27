@@ -270,6 +270,7 @@ typeset -gi TTHEME_RECHECK=0 TTHEME_FOCUS=0 TTHEME_FRONT=-1 TTHEME_RAN=0 TTHEME_
 __tt_put() {
   local f=${1:A}
   shift
+  [[ -n $TTHEME_WRITES ]] && print -rl -- $f.$$ $f >> $TTHEME_WRITES
   if zmodload -F zsh/files b:zf_mv 2>/dev/null; then
     print -rl -- "$@" >| $f.$$ && zf_mv -f -- $f.$$ $f && return 0
   else
@@ -563,7 +564,7 @@ __tt_chpwd() {
 
 __tt_worn_shown() {
   local REPLY
-  [[ -n $TTHEME_SPEC ]] || return 1
+  [[ -n $TTHEME_SPEC ]] || { __tt_unworn $1; return }
   __tt_name_of "$TTHEME_SPEC"
   [[ -n ${TTHEME_PALETTE[$REPLY]} ]] || return 1
   __tt_shown "$REPLY" $1

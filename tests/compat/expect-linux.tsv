@@ -14,16 +14,16 @@ fg-painted	pass	pass	pass	pass	pass	pass	pass	pass
 ansi-painted	pass	pass	pass	pass	pass	pass	pass	pass
 focus-answer	pass	pass	fail	fail	fail	fail	fail	fail
 appearance-report	pass	pass	fail	fail	fail	fail	fail	pass
-follow-default	pass	pass	pass	pass	pass	pass	pass	pass
+follow-default	pass	pass	pass	pass	pass	pass	pass	fail
 follow-belief	pass	pass	pass	pass	pass	pass	pass	pass
-keep-painted	pass	pass	pass	pass	pass	pass	pass	pass
+keep-painted	pass	pass	pass	pass	pass	pass	pass	fail
 on-follow	pass	pass	pass	pass	pass	pass	pass	pass
 on-belief	pass	pass	pass	pass	pass	pass	pass	pass
 system-theme	skip	skip	skip	skip	skip	pass	skip	skip
 wear	pass	pass	pass	pass	pass	pass	pass	pass
 wear-painted	pass	pass	pass	pass	pass	pass	pass	fail
 wear-ansi	pass	pass	pass	pass	pass	pass	pass	pass
-reset-worn	pass	pass	pass	pass	pass	fail	pass	pass
+reset-worn	pass	pass	pass	pass	pass	pass	pass	fail
 reset-baseline	fail	fail	fail	fail	fail	fail	fail	fail
 restore	pass	pass	pass	pass	pass	pass	pass	pass
 layer-query	pass	pass	pass	pass	pass	pass	pass	pass
@@ -53,3 +53,4 @@ focus-report	pass	pass	pass	pass	pass	skip	pass	pass
 focus-event	pass	pass	pass	pass	pass	fail	pass	pass
 front-tty	skip	skip	fail	fail	fail	fail	fail	fail
 prompt-trap	pass	pass	pass	pass	pass	pass	pass	pass
+linked-settings	skip	skip	skip	skip	skip	pass	skip	skip

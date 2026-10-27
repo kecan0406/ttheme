@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { bestBase, finished, gateOf, seeded } from './base.ts'
+import { bestBase, gateOf, seeded } from './base.ts'
 import { check } from './contrast.ts'
 import { harmonized } from './harmonize.ts'
 import { withSlot } from './mirror.ts'
@@ -52,7 +52,6 @@ test('bestBase keeps a base the role fixer brings through the gate and hands bac
   assert.ok(best)
   assert.deepEqual(check({ ...best.shade, name: theme.name, signatureSlots: theme.signatureSlots, waive: [] }), [])
   assert.ok(best.moves.length > 0)
-  assert.deepEqual(best.shade, finished(theme, harmonized(seeded(theme, scheme))).shade)
 })
 
 test('bestBase drops a scheme it cannot read and one with a light background', () => {

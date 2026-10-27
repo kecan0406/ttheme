@@ -69,6 +69,8 @@ __tt_pv_forget() { : }
 
 __tt_shown() { return 1 }
 
+__tt_unworn() { return 1 }
+
 __tt_unshown() { : }
 
 __tt_reloaded() { : }

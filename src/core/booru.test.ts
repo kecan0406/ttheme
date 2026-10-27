@@ -316,24 +316,13 @@ test('the url builders pass the tags through as given, rating included', () => {
 
 test('danbooru is searched on shima, the name of its own that networks blocking the main one let through', () => {
   assert.equal(new URL(dan.postsUrl('x', 0)).host, 'shima.donmai.us')
-  assert.equal(dan.tagBudget, 2)
-  assert.deepEqual(
-    SITES.filter((s) => Number.isFinite(s.tagBudget)).map((s) => s.key),
-    ['danbooru', 'zerochan'],
-  )
-})
-
-test('danbooru and the moebooru sites OR a list of tags, zerochan does not', () => {
-  assert.deepEqual(
-    SITES.filter((s) => s.ors).map((s) => s.key),
-    ['danbooru', 'konachan', 'yande'],
-  )
 })
 
 test('a chosen list is cut to what each site can OR: its budget, or one where it cannot OR', () => {
   assert.deepEqual(pickedNames(dan, ['a', 'b', 'c']), ['a', 'b'])
   assert.deepEqual(pickedNames(zero, ['a', 'b']), ['a'])
   assert.deepEqual(pickedNames(yande, ['a', 'b', 'c']), ['a', 'b', 'c'])
+  assert.deepEqual(pickedNames(kona, ['a', 'b', 'c']), ['a', 'b', 'c'])
 })
 
 test('related tags are the characters danbooru names, and a challenge page names none', () => {

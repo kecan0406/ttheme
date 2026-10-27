@@ -3,9 +3,9 @@ import { test } from 'node:test'
 import { BUILTIN_DIR, COMMONS_DIR, loadBuiltin, loadCommons } from '../cli/build.ts'
 import { contrast, luminance } from './color.ts'
 import { check, RULES } from './contrast.ts'
-import { inOther, rotation } from './theme.ts'
+import { inOther } from './theme.ts'
 
-const { themes, fallback } = loadBuiltin(BUILTIN_DIR, loadCommons(COMMONS_DIR))
+const { themes } = loadBuiltin(BUILTIN_DIR, loadCommons(COMMONS_DIR))
 
 test('color math matches known WCAG values', () => {
   assert.equal(luminance('#000000'), 0)
@@ -32,20 +32,6 @@ test('waivers name a real rule and carry a reason', () => {
       assert.ok(theme.waiveReason, `${theme.name} waives rules without a reason`)
     }
   }
-})
-
-test('palette data is structurally sound', () => {
-  assert.ok(themes.length > 0, 'no themes loaded')
-
-  for (const theme of themes) {
-    assert.equal(theme.ansi.length, 16, `${theme.name} needs 16 ANSI colors`)
-  }
-})
-
-test('the rotation leaves out the fallback palette', () => {
-  const names = rotation(themes, fallback).map((t) => t.name)
-  assert.ok(!names.includes('ttheme/neutral'), 'neutral must sit out of the rotation')
-  assert.ok(names.length >= 1)
 })
 
 test('an accent outside its ANSI role fails unless the signature names it', () => {

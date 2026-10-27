@@ -81,6 +81,9 @@ VTE-based one, gets `ttheme use` and nothing else.
 
 - `init` puts `theme = "ttheme"` at the top of Rio's `config.toml`, and ttheme
   keeps that theme in the default palette. Rio reloads by itself.
+- A reload redraws every tab on the default palette's background, so when the
+  default changes, a tab that uses another palette paints itself again right
+  after.
 - With a theme set, Rio uses the theme's colors in place of your own
   `[colors]`. While ttheme is off, the theme holds a copy of your `[colors]`,
   so Rio looks as it did before.

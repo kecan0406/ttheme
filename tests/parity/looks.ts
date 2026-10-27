@@ -75,8 +75,24 @@ export function stemName(stemmed: string): string {
   return parts.length === 3 ? `${parts[0]}@${parts[1]}/${parts[2]}` : parts.join('/')
 }
 
+const tables = new Map<string, { stamp: string; palettes: Map<string, Colors> }>()
+
 export function palettesOf(home: string): Map<string, Colors> {
-  const text = read(join(home, '.config', 'ttheme', 'palettes.zsh'))
+  const file = join(home, '.config', 'ttheme', 'palettes.zsh')
+  const now = stamp(file)
+  const kept = tables.get(file)
+
+  if (kept?.stamp === now) {
+    return kept.palettes
+  }
+
+  const palettes = paletteTable(read(file))
+  tables.set(file, { stamp: now, palettes })
+
+  return palettes
+}
+
+function paletteTable(text: string): Map<string, Colors> {
   const block = /typeset -gA TTHEME_PALETTE=\(\n([\s\S]*?)\n\)/.exec(text)?.[1] ?? ''
   const palettes = new Map<string, Colors>()
 
@@ -454,8 +470,20 @@ function alacrittyTree(file: string, home: string, depth: number): string[] {
   ]
 }
 
+const trees = new Map<string, { files: string[]; stamps: string }>()
+
 export function alacrittyFiles(configHome: string): string[] {
-  return alacrittyTree(join(configHome, 'alacritty', 'alacritty.toml'), dirname(configHome), 0)
+  const root = join(configHome, 'alacritty', 'alacritty.toml')
+  const kept = trees.get(root)
+
+  if (kept && kept.files.map(stamp).join('|') === kept.stamps) {
+    return kept.files
+  }
+
+  const files = alacrittyTree(root, dirname(configHome), 0)
+  trees.set(root, { files, stamps: files.map(stamp).join('|') })
+
+  return files
 }
 
 export function alacrittyColors(configHome: string): Colors {

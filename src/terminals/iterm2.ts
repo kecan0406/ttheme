@@ -13,7 +13,11 @@ import type { Ctx, Defaults, Moment, Wiring } from './types.ts'
 const ITERM_DEFAULT = 'ttheme-default'
 
 export function itermProfilesPath(home: string): string {
-  return join(home, 'Library', 'Application Support', 'iTerm2', 'DynamicProfiles', 'ttheme.json')
+  return join(itermSupport(home), 'DynamicProfiles', 'ttheme.json')
+}
+
+function itermSupport(home: string): string {
+  return join(home, 'Library', 'Application Support', 'iTerm2')
 }
 
 function keeps(state: Installed): boolean {
@@ -91,12 +95,12 @@ export const iterm2: Wiring = {
   emitter,
   bakes: true,
   offered: (_, host) => host.platform === 'darwin',
-  present: (setup) => existsSync(join(setup.home, 'Library', 'Application Support', 'iTerm2')),
+  present: (setup) => existsSync(itermSupport(setup.home)),
   sync(ctx, out) {
-    out.write(itermProfilesPath(ctx.home), profiles(ctx))
+    out.write(itermProfilesPath(ctx.home), profiles(ctx), itermSupport(ctx.home))
   },
   pictures(ctx, out) {
-    out.write(itermProfilesPath(ctx.home), profiles(ctx))
+    out.write(itermProfilesPath(ctx.home), profiles(ctx), itermSupport(ctx.home))
   },
   layer: (now, host) => ({
     TTHEME_ITERM_SWITCH: switches(host) ? '1' : '',

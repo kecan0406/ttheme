@@ -15,15 +15,15 @@ RUN curl -fsSL --retry 5 --retry-all-errors https://release.files.ghostty.org/$G
 
 FROM zig AS ghostty-tip
 ARG GHOSTTY_TIP=c7cbc9bfd44cb11a9c7eae00f1166624671e363b
-ARG ZIG=0.16.0
+ARG ZIG_TIP=0.16.0
 ARG BLUEPRINT=v0.20.4
 RUN git clone -q --depth 1 --branch $BLUEPRINT https://gitlab.gnome.org/GNOME/blueprint-compiler.git /tmp/blueprint \
   && meson setup /tmp/blueprint/build /tmp/blueprint --prefix=/usr/local && meson install -C /tmp/blueprint/build
-RUN curl -fsSL --retry 5 --retry-all-errors https://ziglang.org/download/$ZIG/zig-$(uname -m)-linux-$ZIG.tar.xz | tar -xJ -C /opt
+RUN curl -fsSL --retry 5 --retry-all-errors https://ziglang.org/download/$ZIG_TIP/zig-$(uname -m)-linux-$ZIG_TIP.tar.xz | tar -xJ -C /opt
 WORKDIR /src
 RUN git init -q && git remote add origin https://github.com/ghostty-org/ghostty.git \
   && git fetch -q --depth 1 origin $GHOSTTY_TIP && git checkout -q FETCH_HEAD \
-  && /opt/zig-$(uname -m)-linux-$ZIG/zig build -Doptimize=ReleaseFast -Dcpu=baseline --prefix /opt/ghostty-tip
+  && /opt/zig-$(uname -m)-linux-$ZIG_TIP/zig build -Doptimize=ReleaseFast -Dcpu=baseline --prefix /opt/ghostty-tip
 
 FROM ubuntu:26.04
 ENV DEBIAN_FRONTEND=noninteractive
@@ -48,7 +48,7 @@ ARG WARP=0.2026.10.21.08.25.stable.02
 RUN mkdir -p /etc/apt/keyrings \
   && curl -fsSL --retry 5 --retry-all-errors https://releases.warp.dev/linux/keys/warp.asc | gpg --dearmor > /etc/apt/keyrings/warpdotdev.gpg \
   && echo "deb [signed-by=/etc/apt/keyrings/warpdotdev.gpg] https://releases.warp.dev/linux/deb stable main" > /etc/apt/sources.list.d/warpdotdev.list \
-  && apt-get update && apt-get install -y --no-install-recommends warp-terminal=$WARP \
+  && apt-get update && apt-get install -y --no-install-recommends warp-terminal${WARP:+=$WARP} \
   && rm -rf /var/lib/apt/lists/*
 ARG RIO=0.5.28
 RUN arch=$(dpkg --print-architecture) \

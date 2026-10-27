@@ -35,7 +35,6 @@ export interface Behavior {
   graphics: boolean
   relative: boolean
   syncQuery: boolean
-  reload: 'keep' | 'reset' | 'none'
   pictures: 'app' | 'tab' | 'window' | 'none'
   front: 'tty' | 'none'
   promptTrap: boolean
@@ -58,7 +57,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: true,
     relative: true,
     syncQuery: true,
-    reload: 'keep',
     pictures: 'app',
     front: 'tty',
     promptTrap: true,
@@ -76,7 +74,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: true,
     relative: false,
     syncQuery: true,
-    reload: 'keep',
     pictures: 'tab',
     front: 'none',
     promptTrap: true,
@@ -94,7 +91,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: true,
     relative: true,
     syncQuery: true,
-    reload: 'reset',
     pictures: 'window',
     front: 'none',
     promptTrap: true,
@@ -112,7 +108,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: false,
     relative: false,
     syncQuery: true,
-    reload: 'keep',
     pictures: 'none',
     front: 'none',
     promptTrap: true,
@@ -130,7 +125,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: true,
     relative: false,
     syncQuery: true,
-    reload: 'none',
     pictures: 'none',
     front: 'none',
     promptTrap: true,
@@ -148,7 +142,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: true,
     relative: false,
     syncQuery: true,
-    reload: 'keep',
     pictures: 'none',
     front: 'none',
     promptTrap: true,
@@ -166,7 +159,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: true,
     relative: false,
     syncQuery: false,
-    reload: 'keep',
     pictures: 'window',
     front: 'none',
     promptTrap: true,
@@ -184,7 +176,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: false,
     relative: false,
     syncQuery: true,
-    reload: 'reset',
     pictures: 'none',
     front: 'none',
     promptTrap: true,
@@ -202,7 +193,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: true,
     relative: false,
     syncQuery: true,
-    reload: 'none',
     pictures: 'app',
     front: 'none',
     promptTrap: true,
@@ -220,7 +210,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: true,
     relative: false,
     syncQuery: true,
-    reload: 'none',
     pictures: 'tab',
     front: 'none',
     promptTrap: true,
@@ -238,7 +227,6 @@ export const BEHAVIOR: Record<Term, Behavior> = {
     graphics: false,
     relative: false,
     syncQuery: true,
-    reload: 'none',
     pictures: 'tab',
     front: 'none',
     promptTrap: true,

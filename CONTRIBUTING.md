@@ -264,7 +264,7 @@ mise run ci
 
 That runs lint, typecheck, tests, the build with its contrast gate, the shell
 check, the Ghostty config check, the node bundle check, the TUI screens, the
-site's typecheck and the parity walk — exactly what CI runs.
+site's typecheck, the cost ratchet and the parity walk — exactly what CI runs.
 
 CI runs on Ubuntu, so the tools are GNU's; macOS ships BSD's, which forgive
 more. If a shell step passes for you and fails there, look at those first —
@@ -277,7 +277,10 @@ mise run build                # regenerates dist/ for every terminal — fails o
 mise run build --only kitty   # just one terminal's subtree
 mise run compat               # the terminal compatibility cases, in each installed terminal
 mise run compat konsole       # the same cases in Konsole, from a Linux container (needs Docker)
+mise run compat --linux       # the same cases in the terminals' Linux builds, in a container (needs Docker)
 mise run parity               # every journey in a model of every terminal, held to one spec
+mise run walk                 # seeded random walks of that model, held to what every tab must keep
+mise run costs                # what each action costs: CLI runs, reload signals, files written
 ```
 
 `mise run compat` opens each installed terminal behind your windows on a
@@ -289,17 +292,23 @@ its prompt runs a signal's trap at once, and whether a tab that never painted
 follows a new default and a tab that went off takes it back —
 and compares them with `tests/compat/expect.tsv`: a case that used to pass and
 fails is a regression and fails the run, and `--update` records what was
-measured. Konsole runs on Linux alone, so `mise run compat konsole` on a machine
-without it runs its cases on a private display in a container, where moving
-focus takes nothing from you.
+measured, and which version on which day at which commit, in
+`tests/compat/measured.tsv`. A case about what a tab shows reads it off the
+screen where a screenshot can be taken, not only off the colors the terminal
+answers, since a terminal can answer one color and draw another. Konsole runs
+on Linux alone, so `mise run compat konsole` on a machine without it runs its
+cases on a private display in a container, where moving focus takes nothing
+from you. The nightly workflow runs `mise run compat --linux` against the
+pinned builds and against each terminal's newest release, and files an issue
+when either leaves its expected results.
 
 Every terminal is held to one spec, Ghostty included. Each journey in
 `tests/parity/journeys.ts` says what the tab in front shows at every look —
 which palette, which picture — and `mise run parity` (part of CI) walks the
 journeys — a new tab, `ttheme use`, `default`, `off` and `on` across tabs,
 preview, pins, browse, pictures tuned or dropped in another tab, a default
-reaching Ghostty — in a model of each terminal built from what `mise run
-compat` measured, and records what every tab shows against that spec in
+reaching Ghostty, a real tmux in front of a tab — in a model of each terminal
+built from what `mise run compat` measured, and records what every tab shows against that spec in
 `tests/parity/facts.tsv` (a screen's spec is the one Ghostty drew). Each miss
 needs a line in `tests/parity/gaps.tsv` saying whether the terminal cannot
 express it, ttheme could close it, or it was left out on purpose, and why; a
@@ -308,6 +317,21 @@ so once, in an `@pictures` or `@wired` line. A line must explain every fact it
 names, and one that explains nothing fails. A change that moves a fact fails
 until `mise run parity --update` records it; `--only`, `--journey` and `--show
 journey.label` narrow a run and print what a tab shows.
+
+The journeys are the cases someone thought of. `mise run walk` walks the same
+model at random — tabs opened and focused, `use`, `default`, `off` and `on`,
+pins, a program's reset, a mode switch, preview — and after every step holds
+each tab to what it must keep whatever the journey: the shell believes what
+the tab shows, the tab shows its palette's picture, and no escape reaches the
+screen as text. `--jitter` makes every terminal's reload land up to 0.3 s
+late, as real ones do. A failure is walked again, shrunk to the fewest steps
+that still fail, and printed as a journey to start from; a seed replays it.
+
+`mise run costs` (part of CI) holds what each action costs in each terminal's
+model to `tests/costs.tsv`: the CLI runs it starts, the reload signals and
+profile switches it sends, the files it writes and the entries it makes in the
+folders the terminal watches. More fails as a regression; fewer fails until
+`mise run costs --update` locks it in.
 
 Every built-in palette passes the gate unwaived — `kyubey` runs tightest,
 since as the one light palette every accent has to darken enough to hold
@@ -339,7 +363,9 @@ Every screen `ttheme` draws is captured and compared against `tests/screens/`.
 The scenarios run in tmux at a fixed 100×24 against `tests/fixture/` — seven
 built-in palettes in `builtin.json` and their two works, `bocchi-the-rock` and
 `lucky-star`, in `commons.json` — pinned so that adding a palette never
-rewrites a screen.
+rewrites a screen. A key written `key@text` in a scenario waits for the screen
+to draw `text` before the next key, and text that never shows within 15 s
+fails the scenario rather than letting it be compared late.
 
 ```sh
 mise run tui                  # compare (part of `mise run ci`)

@@ -33,10 +33,20 @@ test('every terminal ttheme knows runs the journeys, the reference first', () =>
   }
 })
 
+const shards = (name: string) =>
+  [
+    ...readFileSync(join(import.meta.dirname, '..', '..', '.github', 'workflows', name), 'utf8').matchAll(
+      /^\s+- terminals: (.+)\n\s+slots: (\d+)$/gm,
+    ),
+  ].map(([, terminals = '', slots = '']) => `${terminals} ${slots}`)
+
 test("the ci workflow's parity jobs walk every terminal, each once", () => {
-  const workflow = readFileSync(join(import.meta.dirname, '..', '..', '.github', 'workflows', 'ci.yml'), 'utf8')
-  const walked = [...workflow.matchAll(/^\s+- terminals: (.+)$/gm)].flatMap(([, list = '']) => list.split(','))
+  const walked = shards('ci.yml').flatMap((shard) => (shard.split(' ')[0] ?? '').split(','))
   assert.deepEqual(walked.toSorted(), [...TERMS].toSorted())
+})
+
+test("the nightly walks parity again in the ci workflow's shards", () => {
+  assert.deepEqual(shards('nightly.yml'), shards('ci.yml'))
 })
 
 test("the model's terminals behave the way mise run compat measured them", () => {

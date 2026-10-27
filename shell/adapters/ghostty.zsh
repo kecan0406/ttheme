@@ -310,6 +310,8 @@ __tt_shown() {
   [[ -r $dir/${${1/@/--}/\//--}.conf || ( -n $was && -r $dir/${${was/@/--}/\//--}.conf ) ]]
 }
 
+__tt_unworn() { [[ -z $TTHEME_STARTUP ]] && __tt_shown "" $1 }
+
 __tt_ghostty_took() {
   local f=${TTHEME_CONFIG:h}/backgrounds/shown.conf
   local -A st

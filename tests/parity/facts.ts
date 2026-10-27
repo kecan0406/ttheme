@@ -1,11 +1,13 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { CAPABILITIES, type Capability, MEASURED, REFERENCE, TERMS, type Term } from './terms.ts'
 
 const HERE = import.meta.dirname
 export const FACTS = join(HERE, 'facts.tsv')
 const GAPS = join(HERE, 'gaps.tsv')
 const EXPECT = join(HERE, '..', 'compat', 'expect.tsv')
+const EXPECT_LINUX = join(HERE, '..', 'compat', 'expect-linux.tsv')
+export const MEASURES = join(HERE, '..', 'compat', 'measured.tsv')
 
 export type Facts = Record<string, string>
 
@@ -177,6 +179,10 @@ export function glob(pattern: string, id: string): boolean {
 }
 
 export function explained(gaps: readonly Gap[], term: Term, id: string, needs: readonly Capability[]): Gap | undefined {
+  if (id.endsWith('.error')) {
+    return undefined
+  }
+
   return (
     gaps.find((gap) => {
       const capability = lacking(gap)
@@ -192,19 +198,93 @@ export interface Compat {
   cases: readonly string[]
   columns: readonly string[]
   result(term: Term, id: string): string | undefined
+  source(term: Term, id: string): string | undefined
 }
 
-export function readCompat(file = EXPECT): Compat {
+const decides = (value: string | undefined) => value === 'pass' || value === 'fail'
+
+function compatTable(file: string) {
   const [head = [], ...rows] = readFileSync(file, 'utf8')
     .trim()
     .split('\n')
     .map((line) => line.split('\t'))
 
   return {
+    name: basename(file, '.tsv'),
     cases: rows.map((row) => row[0] ?? ''),
     columns: head.slice(1),
-    result: (term, id) => rows.find((row) => row[0] === id)?.[head.indexOf(term)],
+    result: (term: string, id: string) => rows.find((row) => row[0] === id)?.[head.indexOf(term)],
   }
+}
+
+export function readCompat(...files: string[]): Compat {
+  const tables = (files.length > 0 ? files : [EXPECT, EXPECT_LINUX]).map(compatTable)
+  const decided = (term: Term, id: string) => tables.find((table) => decides(table.result(term, id)))
+
+  return {
+    cases: [...new Set(tables.flatMap((table) => table.cases))],
+    columns: [...new Set(tables.flatMap((table) => table.columns))],
+    result: (term, id) => decided(term, id)?.result(term, id) ?? tables[0]?.result(term, id),
+    source: (term, id) => decided(term, id)?.name,
+  }
+}
+
+export interface Measured {
+  expect: string
+  term: string
+  version: string
+  measured: string
+  commit: string
+}
+
+export function readMeasured(file = MEASURES): Measured[] {
+  const [, ...rows] = readFileSync(file, 'utf8').trim().split('\n')
+
+  return rows.map((line) => {
+    const [expect = '', term = '', version = '?', measured = '?', commit = '?'] = line.split('\t')
+
+    return { expect, term, version, measured, commit }
+  })
+}
+
+const OWN_FILES = (term: string) => {
+  const id = term === 'ghostty-tip' ? 'ghostty' : term
+
+  return [
+    `shell/adapters/${id}.zsh`,
+    `src/terminals/${id}.ts`,
+    `src/terminals/${id}-*.ts`,
+    `src/terminals/emit/${id}.ts`,
+  ]
+}
+
+function git(...args: string[]) {
+  try {
+    const run = Bun.spawnSync(['git', '-C', join(HERE, '..', '..'), ...args], { stderr: 'ignore' })
+
+    return { ok: run.exitCode === 0, out: run.stdout.toString().trim() }
+  } catch {
+    return { ok: false, out: '' }
+  }
+}
+
+export function staleMeasures(): { row: Measured; since: string[] }[] | undefined {
+  if (git('rev-parse', '--is-shallow-repository').out !== 'false') {
+    return undefined
+  }
+
+  return readMeasured().flatMap((row) => {
+    const commit = row.commit.replace(/\+$/, '')
+    const range = git('log', '--format=%h %cs', `${commit}..HEAD`, '--', ...OWN_FILES(row.term))
+
+    const since = range.ok
+      ? range.out
+      : git('log', '--format=%h %cs', `--since=${row.measured}T23:59:59`, '--', ...OWN_FILES(row.term)).out
+
+    const commits = since.split('\n').filter(Boolean)
+
+    return commits.length > 0 ? [{ row, since: commits }] : []
+  })
 }
 
 export const BRIDGES: { id: string; holds: (fact: (id: string) => string | undefined) => boolean }[] = [

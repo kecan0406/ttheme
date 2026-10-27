@@ -40,10 +40,6 @@ export function hubTo(tab: HubTab): number {
   return HUB_SWITCH + HUB_TABS.findIndex((one) => one.name === tab) + 1
 }
 
-export function hubTarget(code: number): HubTab | undefined {
-  return HUB_TABS[code - HUB_SWITCH - 1]?.name
-}
-
 export function hubBar(active: HubTab, color: boolean, inks?: readonly Hex[]): string {
   const p = painter(color)
   const mark = markOf(p, inks)
