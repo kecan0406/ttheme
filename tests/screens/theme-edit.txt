@@ -21,4 +21,4 @@
  │ ▶ [Edit palette]  changes its colors full screen              │
  ╰───────────────────────────────────────────────────────────────╯
       Apply   saves and uses it in this tab
- [EDIT] enter edit palette   ↑↓ move   s save   ⇧enter apply                             esc cancel
+ [EDIT] enter edit palette   ↑↓ move   s save   ⇧enter apply   ? keys                    esc cancel

@@ -1,5 +1,5 @@
  [Preview]  Browse   ⇧tab Browse
- Preview (3/3)    [Group marketplace / Sort A-Z]
+ Preview (3/3)    [Group marketplace / Sort A-Z]  alt+g
  ╭──────────────────────────── ╭─ Group ───────╮
  │ ⌕ Search… ‹hint› │
  ╰──────────────────────────── │▶● marketplace │

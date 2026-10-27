@@ -733,15 +733,9 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
       ['↑↓', 'move'],
       ['←→', 'normal or bright'],
       ['enter', 'tune'],
-      ['l', 'link'],
-      ['m', 'changed'],
-      ['g', e.view === 'slot' ? 'relations' : 'colors'],
-      ...(e.misses().size > 0 ? ([['n', 'next failing']] as Hint[]) : []),
       ['#', 'type'],
-      ['f', 'fix contrast'],
+      ['g', e.view === 'slot' ? 'relations' : 'colors'],
       ['p', 'find picture'],
-      ['b', 'picture'],
-      ['x', 'export'],
       ['s', 'save'],
       ['?', 'keys'],
     ]
@@ -749,15 +743,11 @@ function footer(p: Paint, e: PaletteEditor, width: number): string {
   }
 
   if (!e.options.find) {
-    keys = keys.filter(([key]) => key !== 'p' && key !== 'b')
-  }
-
-  if (!e.options.exports || !e.roomy) {
-    keys = keys.filter(([key]) => key !== 'x')
+    keys = keys.filter(([key]) => key !== 'p')
   }
 
   if (!e.roomy) {
-    keys = keys.filter(([key]) => key !== 'i' && key !== 'm')
+    keys = keys.filter(([key]) => key !== 'i')
   }
 
   if (e.notice) {

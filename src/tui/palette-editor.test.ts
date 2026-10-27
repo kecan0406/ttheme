@@ -304,7 +304,7 @@ test('the top bar keeps Reset and Save however long the name, giving up the coun
   const top = (cols: number) => renderEditor(e, cols, 40, false)[0] ?? ''
 
   for (const cols of [96, 100, 112, 120, 140, 200]) {
-    assert.match(top(cols), /Reset {2}\S*Save/)
+    assert.match(top(cols), /Reset(?: R)? {2}\S*Save/)
   }
 
   assert.match(top(200), /◆ Edit palette {2}kec@dust\/a-rather-long-palette-name {3}● unsaved · 1 changed {3}Reset/)

@@ -555,15 +555,15 @@ __tt_pv_foot() {
     else
       note="New tabs · the default palette"
     fi
-    kk=(enter) kl=(confirm)
+    kk=(←→ enter) kl=(choose confirm)
     rk=esc right=$b$ke$z$d" back"$z
   elif (( te && tfocus == 0 )); then
-    badge=$tb kk=(enter ↑↓ s ⇧enter) kl=("edit palette" move save apply)
+    badge=$tb kk=(enter ↑↓ s ⇧enter '?') kl=("edit palette" move save apply keys)
     (( tbtn )) && kl[1]="reset palette"
     (( ${TTHEME_TUNED[(Ie)$tename]} )) && kk[2]=↑↓←→
     rk=esc right=$b$ke$z$d" cancel"$z
   elif (( te && tfocus == 2 )); then
-    badge=$tb kk=(enter ↑↓ s) kl=(apply move save)
+    badge=$tb kk=(enter ↑↓ s '?') kl=(apply move save keys)
     rk=esc right=$b$ke$z$d" cancel"$z
   elif (( te )); then
     badge=$tb
@@ -593,7 +593,7 @@ __tt_pv_foot() {
     else
       kk=(enter ↑↓ s) kl=(find move save)
     fi
-    kk+=(⇧enter) kl+=(apply)
+    kk+=(⇧enter '?') kl+=(apply keys)
     rk=esc right=$b$ke$z$d" cancel"$z
   elif (( gmenu )); then
     badge=GROUP kk=(↑↓ space) kl=(move pick)
@@ -617,7 +617,7 @@ __tt_pv_foot() {
       (( split )) && { kk+=(⇧←→); kl+=(sample) }
       [[ -n $flt ]] && { kk+=(bksp); kl+=(edit) }
     fi
-    kk+=('?') kl+=(keys)
+    kk+=(alt+c '?') kl+=(settings keys)
     if [[ -n $flt ]]; then
       rk=esc right=$b$ke$z$d" clear"$z
     else
@@ -1028,13 +1028,16 @@ __tt_pv_gmenu() {
 }
 
 __tt_pv_chip() {
-  local text
-  local -i room=$2 at
+  local text key
+  local -i room=$2 at end=$lw gap
   text="Group $TTHEME_GROUP / Sort ${gshow[$TTHEME_SORT]:-$TTHEME_SORT}"
   (( ${(m)#text} + 2 > room )) && text="$TTHEME_GROUP / ${gshow[$TTHEME_SORT]:-$TTHEME_SORT}"
   REPLY=""
   (( ${(m)#text} + 2 <= room )) || return 0
+  __tt_cap alt+g
+  key=$REPLY
   at=$(( lw - ${(m)#text} - 1 ))
+  gap=$(( (split ? sc - 1 : se) - lw - ${(m)#key} - 2 ))
   if (( ! color )); then
     REPLY=$'\e['$at'G'"[$text]"
   elif (( gmenu )); then
@@ -1042,7 +1045,11 @@ __tt_pv_chip() {
   else
     REPLY=$'\e['$at'G'$TTHEME_SGR[chip]" $text "$TTHEME_SGR[/chip]
   fi
-  pvz+=("$1 $at $lw group")
+  if (( gap >= 2 )); then
+    (( color )) && REPLY+="  "$TTHEME_SGR[dim]$key$TTHEME_SGR[/dim] || REPLY+="  $key"
+    end=$(( lw + 2 + ${(m)#key} ))
+  fi
+  pvz+=("$1 $at $end group")
 }
 
 __tt_pv_gdraw() {
@@ -1831,6 +1838,7 @@ __tt_pv_word() {
     ⇧enter) REPLY=senter ;;
     alt+u) REPLY=altu ;;
     alt+g) REPLY=altg ;;
+    alt+c) REPLY=altc ;;
     ←) REPLY=left ;;
     →) REPLY=right ;;
     '?'|'#'|[a-zA-Z]|'='|'+') REPLY=$1 ;;

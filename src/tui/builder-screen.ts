@@ -39,7 +39,7 @@ import {
 } from './editor-paint.ts'
 import { capped } from './keycaps.ts'
 import { CHANNELS, CONTRAST, type PaletteEditor } from './palette-editor.ts'
-import { boxEdge, boxed, pillOf, SEP } from './parts.ts'
+import { boxEdge, boxed, keyAfter, pillOf, SEP } from './parts.ts'
 import { type Art, type Box, type Drawn, LIGHTS, type Mock } from './picker-art.ts'
 import { BG_RESET, FG_RESET, INK_RESET, MARKS, open, type Paint, painter, RESET, surfaceOf } from './style.ts'
 import { cover, keyZone, zone } from './zones.ts'
@@ -663,11 +663,10 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
   const dot = e.changedOnly ? p.warn(MARKS.on) : ' '
   const gate = failing === 0 ? p.ok(`Contrast ${MARKS.ok}`) : p.bold(`Contrast ${MARKS.miss} ${failing}`)
 
-  const tabs = spread(
-    ` ${p.bold('Colors')}  ${gate}`,
-    keyZone('m', `${e.changedOnly ? p.bold('⧩ changed') : p.dim('⧩ changed')}${dot} `),
-    side,
-  )
+  const head = ` ${p.bold('Colors')}  ${gate}`
+  const toggle = `${e.changedOnly ? p.bold('⧩ changed') : p.dim('⧩ changed')}${dot}`
+  const keyed = keyZone('m', `${keyAfter(p, toggle, 'm')} `)
+  const tabs = spread(head, cells(head) + cells(keyed) + 1 <= side ? keyed : keyZone('m', `${toggle} `), side)
 
   const body = height - 1
   const missed = e.misses()
@@ -716,6 +715,8 @@ function sidebar(e: PaletteEditor, p: Paint, c: Colors, layout: Layout, height: 
   return { lines: [tabs, ...rows.slice(0, body)], anchor: anchor === undefined ? undefined : anchor + 1 }
 }
 
+type Side = [buttons: string, right: string]
+
 function topBar(e: PaletteEditor, p: Paint, width: number): string {
   const mark = p.accent(MARKS.current)
   const titled = `${mark} ${p.bold(e.options.title)}  ${p.dim(e.options.name)}`
@@ -725,35 +726,56 @@ function topBar(e: PaletteEditor, p: Paint, width: number): string {
   const unsaved = `${dot} ${p.dim('unsaved')}`
   const counted = changes > 0 ? `${dot} ${p.dim(`unsaved${SEP}${changes} changed`)}` : unsaved
   const states = dirty ? [counted, unsaved, dot] : ['']
-
-  const buttons = [e.resettable() ? keyZone('R', p.dim('Reset')) : '', dirty ? keyZone('s', pillOf(p, 'Save')) : '']
-    .filter(Boolean)
-    .join('  ')
-
-  const button = (word: string, label: string, on: boolean) => keyZone(word, on ? pillOf(p, label) : p.dim(label))
   const pictures = e.options.find || e.pictures > 0
 
-  const right = [
-    ...(pictures
-      ? [
-          button(
-            'b',
-            `${MARKS.pictures} ${e.pictures > 0 ? `${e.pictures} ` : ''}Picture`,
-            e.pic && (e.pictures > 0 || !!e.options.find),
-          ),
-        ]
-      : []),
-    ...(e.options.exports ? [button('x', 'Export ▾', e.menu === 'export')] : []),
-  ].join('  ')
+  const button = (word: string, label: string, on: boolean, keyed: boolean) => {
+    const shown = on ? pillOf(p, label) : p.dim(label)
 
-  const room = width - cells(`${right} `) - 1
-  const line = (head: string, state: string) => [head, state, buttons].filter(Boolean).join('   ')
+    return keyZone(word, keyed ? keyAfter(p, shown, word) : shown)
+  }
+
+  const sideOf = (keyed: boolean): Side => [
+    [e.resettable() ? button('R', 'Reset', false, keyed) : '', dirty ? keyZone('s', pillOf(p, 'Save')) : '']
+      .filter(Boolean)
+      .join('  '),
+    [
+      ...(pictures
+        ? [
+            button(
+              'b',
+              `${MARKS.pictures} ${e.pictures > 0 ? `${e.pictures} ` : ''}Picture`,
+              e.pic && (e.pictures > 0 || !!e.options.find),
+              keyed,
+            ),
+          ]
+        : []),
+      ...(e.options.exports ? [button('x', 'Export ▾', e.menu === 'export', keyed)] : []),
+    ].join('  '),
+  ]
+
+  const lean = sideOf(false)
+  const line = (head: string, state: string, [buttons]: Side) => [head, state, buttons].filter(Boolean).join('   ')
+  const room = ([, right]: Side) => width - cells(`${right} `) - 1
+
+  const tries: [string, Side][] = [
+    [states[0] ?? '', sideOf(true)],
+    ...states.map((state): [string, Side] => [state, lean]),
+  ]
+
+  for (const head of [titled, `${mark} ${p.dim(e.options.name)}`]) {
+    for (const [state, side] of tries) {
+      const bar = line(head, state, side)
+
+      if (cells(bar) <= room(side)) {
+        return spread(bar, `${side[1]} `, width)
+      }
+    }
+  }
+
   const last = states.at(-1) ?? ''
-  const named = `${mark} ${p.dim(fit(e.options.name, room - cells(line(mark, last)) - 1, false))}`
-  const fitting = (head: string) => states.map((state) => line(head, state)).find((bar) => cells(bar) <= room)
-  const left = fitting(titled) ?? fitting(`${mark} ${p.dim(e.options.name)}`) ?? line(named, last)
+  const named = `${mark} ${p.dim(fit(e.options.name, room(lean) - cells(line(mark, last, lean)) - 1, false))}`
 
-  return spread(left, `${right} `, width)
+  return spread(line(named, last, lean), `${lean[1]} `, width)
 }
 
 const GROUND: EditorSpot = { kind: 'open', slot: 0 }

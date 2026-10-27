@@ -1,4 +1,4 @@
- Preview (2/2)           [Group work / Sort A-Z]
+ Preview (2/2)           [Group work / Sort A-Z]  alt+g
  ╭─────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰─────────────────────────────────────────────╯
@@ -21,4 +21,4 @@ kita  → ~/work · this directory
 
 Replaces konata on ~/work · and below
 Then here · kita pinned to this directory
- [PREVIEW (PIN)] kita → [This directory]  And below    ~/work   enter confirm              esc back
+ [PREVIEW (PIN)] kita → [This directory]  And below    ←→ choose   enter confirm           esc back

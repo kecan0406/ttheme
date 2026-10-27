@@ -1,7 +1,8 @@
 # Keys
 
 Every screen lists its own keys with `?`, for the mode it is in. This page
-gathers them. Keys are written by name here; on a Mac the screens draw Apple's
+gathers them. A key drawn dim after a chip or a button is that control's own
+key. Keys are written by name here; on a Mac the screens draw Apple's
 symbols instead (`↩` for `enter`, `⎋` for `esc`, `⌃R` for `ctrl+r`).
 
 Preview and Browse filter as you type, so a letter is never a command there:

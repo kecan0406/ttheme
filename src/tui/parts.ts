@@ -46,6 +46,10 @@ export function hintOf(p: Paint, key: string, label: string): string {
   return keyZone(key.split(' ')[0] ?? '', `${p.bold(cap(key))} ${p.dim(label)}`)
 }
 
+export function keyAfter(p: Paint, label: string, key: string): string {
+  return `${label} ${p.dim(cap(key))}`
+}
+
 export const SEP = ` ${MARKS.sep} `
 
 export function contrastOf(failing: number): string {

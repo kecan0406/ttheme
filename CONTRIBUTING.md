@@ -454,6 +454,13 @@ then keys from the end (never the first, `?`, `enter` or the ones a screen
 lists in `keep`), then the key on the right, and cuts what still does not fit;
 once the line fits, each key it dropped comes back in its own place if it fits
 there, so a long key dropped late never leaves room a shorter one could use.
+A control with a key of its own — a chip or a toggle that `enter` does not
+reach — wears that key after its label, dim (`keyAfter` in `src/tui/parts.ts`,
+and preview's chip in `__tt_pv_chip`), and it is the first thing a narrow
+window takes off its row: preview's chip lets it go when fewer than two blank
+columns would follow it, and the editor's top bar before it gives up the
+`unsaved` count. A key that a control carries leaves the key bar, and one that
+no control carries stays on it, so a key is drawn once.
 In Browse, the palette editor and find `?` opens `Help` (`src/tui/help.ts`): the
 topics of the mode the screen is in, in two columns under their group's name —
 the keys, then what they do —, where `↑` `↓` reach every topic and enter runs

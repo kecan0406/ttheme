@@ -1,4 +1,4 @@
- Preview (2/2)           [Group work / Sort A-Z]
+ Preview (2/2)           [Group work / Sort A-Z]  alt+g
  ╭─────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰─────────────────────────────────────────────╯
@@ -21,4 +21,4 @@ ssh
 └── tusa    kita  while connected  new
 
 Replaces konata on ssh tusa · while connected
- [PREVIEW (PIN)] kita → [This host]   ssh tusa   enter confirm                             esc back
+ [PREVIEW (PIN)] kita → [This host]   ssh tusa   ←→ choose   enter confirm                 esc back

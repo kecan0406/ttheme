@@ -1,5 +1,5 @@
  [Preview]  Browse   tab Browse
- Preview (2/2)           [Group work / Sort A-Z]
+ Preview (2/2)           [Group work / Sort A-Z]  alt+g
  ╭─────────────────────────────────────────────╮
  │ ⌕ Search… ‹hint› │
  ╰─────────────────────────────────────────────╯
@@ -21,4 +21,4 @@
 
 
 
- [PREVIEW] → open   ? keys                                               esc cancel   ttheme ‹version›
+ [PREVIEW] → open   alt+c settings   ? keys                              esc cancel   ttheme ‹version›
