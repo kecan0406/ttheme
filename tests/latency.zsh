@@ -221,6 +221,8 @@ typing() {
   done
   upto false 0.3 $name || :
   local -i from=${#BUF}
+  upto 'calm $from' 6 $name || { fail "$name: preview never settled into redrawing its search row alone after the keys"; return 1 }
+  from=$REPLY
   upto 'ticks $from && (( REPLY >= 8 || $#reply ))' 6 $name || { fail "$name: preview's search hint never animated while it sat idle"; return 1 }
   (( ! $#reply )) || { fail "$name: while preview sat idle, its search hint redrew the whole screen (${reply[1]} characters) instead of its search row"; return 1 }
   zpty -w -n sh $'\e'
@@ -585,6 +587,23 @@ bench() {
     done
     print
   done
+}
+
+calm() {
+  local frame
+  local -a frames=("${(@ps:\e[?2026h:)${BUF[$1+1,-1]}}")
+  local -i at=$(( $1 + ${#frames[1]} )) hints=0
+  REPLY=$1
+  for frame in ${frames[2,-1]}; do
+    (( at += 8 + ${#frame} ))
+    [[ $frame == *$'\e[?2026l'* ]] || continue
+    if [[ $frame == *$'\n'* ]]; then
+      REPLY=$at hints=0
+    else
+      (( ++hints ))
+    fi
+  done
+  (( hints >= 2 ))
 }
 
 ticks() {
