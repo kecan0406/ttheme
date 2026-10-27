@@ -1,7 +1,10 @@
-import { ChevronRight } from 'lucide'
+import { ArrowRight, ChevronRight } from 'lucide'
+import { CommandRow } from '@/components/command-row'
+import { LinkButton } from '@/components/ui/button'
 import { COMMANDS, type Command, sectionId } from '@/lib/commands'
-import { DOC_PAGES, DOCS, DOCS_PATH, type DocPage, guideOf } from '@/lib/docs'
+import { DOC_PAGES, DOCS, DOCS_PATH, type DocPage, docAt, guideOf } from '@/lib/docs'
 import type { Facts } from '@/lib/facts'
+import { INIT } from '@/lib/gallery'
 import { Icon } from '@/lib/icons'
 import { renderInline } from '@/lib/markdown'
 import { SETTING_GROUPS } from '@/lib/settings'
@@ -188,6 +191,34 @@ export function DocsPage({ page, facts }: { page: DocPage; facts: Facts }) {
   )
 }
 
+function StartHere() {
+  const intro = docAt('getting-started', 'introduction')
+  const quick = docAt('getting-started', 'quickstart')
+
+  return intro && quick ? (
+    <section aria-labelledby="start-here" class="grid gap-3.5 rounded-xl border border-border bg-muted/65 p-4.5">
+      <div class="grid gap-1">
+        <h2 id="start-here" class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">
+          start here
+        </h2>
+        <p class="max-w-[62ch] text-pretty text-foreground" safe>
+          {quick.description}
+        </p>
+      </div>
+      <CommandRow command={INIT} class="bg-card" />
+      <div class="flex flex-wrap gap-2">
+        <LinkButton href={quick.path}>
+          <span safe>{quick.title.toLowerCase()}</span>
+          <Icon node={ArrowRight} />
+        </LinkButton>
+        <LinkButton href={intro.path} variant="outline">
+          <span safe>{intro.title.toLowerCase()}</span>
+        </LinkButton>
+      </div>
+    </section>
+  ) : null
+}
+
 export function DocsIndex({ facts, about }: { facts: Facts; about: string }) {
   const [first] = DOC_PAGES
 
@@ -199,6 +230,7 @@ export function DocsIndex({ facts, about }: { facts: Facts; about: string }) {
           {about}
         </p>
       </header>
+      <StartHere />
       <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,17rem),1fr))] items-start gap-3">
         {DOCS.map((group) => (
           <section

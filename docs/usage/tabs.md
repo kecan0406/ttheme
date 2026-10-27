@@ -10,8 +10,8 @@ ttheme use miku          # this tab only
 ttheme use ttheme/miku   # by its full name, when two of yours are called miku
 ```
 
-A tab only ever repaints itself, so the palette you use there stays until you
-change it. A mistyped name gets a suggestion instead of an error wall.
+A tab only ever changes its own colors, so the palette you use there stays
+until you change it. A mistyped name gets a suggestion instead of an error wall.
 
 ## Set the default
 
@@ -61,8 +61,8 @@ terminal that reports focus.
 
 Some programs put the terminal's colors back as they exit, such as Neovim with
 its default cursor or a background sync plugin. After each command, a tab
-showing a palette checks its colors and repaints itself if they changed. That takes about a
-quarter of a millisecond in Ghostty and needs no process.
+showing a palette checks its colors and puts the palette back if they changed.
+That takes about a quarter of a millisecond in Ghostty and needs no process.
 
 ## Shells inside other programs
 

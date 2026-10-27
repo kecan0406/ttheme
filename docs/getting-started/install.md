@@ -39,14 +39,27 @@ and asks once more. Cancelling before that changes nothing.
 
 ## Start using it
 
-```sh
+New tabs pick ttheme up by themselves. In the tab you ran `init` from, start
+your shell again, then pick a palette:
+
+```sh tab="zsh"
 exec zsh    # the ttheme command in this tab
 ttheme      # pick a palette
 ```
 
-From bash, run `exec bash -l`; from fish, `exec fish`. New tabs pick ttheme up
-by themselves. iTerm2, Konsole, Terminal.app and Contour read their profiles
-only when they start, so quit and reopen them once.
+```sh tab="bash"
+exec bash -l
+ttheme
+```
+
+```sh tab="fish"
+exec fish
+ttheme
+```
+
+> [!TIP]
+> iTerm2, Konsole, Terminal.app and Contour read their profiles only when they
+> start, so quit and reopen them once.
 
 Next: [your first palette](first-palette.md).
 
@@ -62,7 +75,11 @@ a day ttheme checks npm by itself and says when a newer version is out.
 
 ## Without questions
 
-`init --yes` (or `-y`) answers every question for you. Over an install it
+```sh
+npx @kecan0406/ttheme@latest init --yes
+```
+
+`--yes` (or `-y`) answers every question for you. Over an install it
 updates in place and keeps everything. On a first install it wires the terminal
 you are in and installs no palettes, so your colors stay as they are until you
 pick one. Without a terminal to ask in, `init` stops unless it has `--yes`.
@@ -108,13 +125,5 @@ mise run bin:build && node bin/ttheme.js init
 
 ## When something goes wrong
 
-```sh
-ttheme info                                 # what a bug report needs
-npx @kecan0406/ttheme@latest info           # the same, before ttheme is set up
-TTHEME_DEBUG=1 ttheme use miku              # where an error came from
-```
-
-[Report a bug](https://github.com/kecan0406/ttheme/issues/new?template=bug.yml)
-with the output of `ttheme info`: it names ttheme's version, your system, shell
-and terminal, the terminals you wired and the settings you changed, so nothing
-has to be typed by hand.
+[Troubleshooting](troubleshooting.md) has fixes for the problems people meet
+most, and what a bug report needs.

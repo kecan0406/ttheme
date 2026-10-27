@@ -7,6 +7,9 @@ import tune from '../../docs/creating-palettes/tune.md' with { type: 'text' }
 import yourOwn from '../../docs/creating-palettes/your-own.md' with { type: 'text' }
 import firstPalette from '../../docs/getting-started/first-palette.md' with { type: 'text' }
 import install from '../../docs/getting-started/install.md' with { type: 'text' }
+import introduction from '../../docs/getting-started/introduction.md' with { type: 'text' }
+import quickstart from '../../docs/getting-started/quickstart.md' with { type: 'text' }
+import troubleshooting from '../../docs/getting-started/troubleshooting.md' with { type: 'text' }
 import whatChanged from '../../docs/getting-started/what-changed.md' with { type: 'text' }
 import commands from '../../docs/reference/commands.md' with { type: 'text' }
 import contrastGate from '../../docs/reference/contrast-gate.md' with { type: 'text' }
@@ -67,41 +70,44 @@ const NAV: Group[] = [
     slug: 'getting-started',
     title: 'Getting started',
     pages: [
-      { slug: 'install', label: 'install', text: install },
-      { slug: 'first-palette', label: 'your first palette', text: firstPalette },
-      { slug: 'what-changed', label: 'what changed, how to undo', text: whatChanged },
+      { slug: 'introduction', label: 'What is ttheme', text: introduction },
+      { slug: 'quickstart', label: 'Quick start', text: quickstart },
+      { slug: 'install', label: 'Install', text: install },
+      { slug: 'first-palette', label: 'Your first palette', text: firstPalette },
+      { slug: 'what-changed', label: 'What changed, how to undo', text: whatChanged },
+      { slug: 'troubleshooting', label: 'Troubleshooting', text: troubleshooting },
     ],
   },
   {
     slug: 'usage',
     title: 'Usage',
     pages: [
-      { slug: 'tabs', label: 'this tab, new tabs, default', text: tabs },
-      { slug: 'pins', label: 'pin to a folder or ssh host', text: pins },
-      { slug: 'modes', label: 'light, dark, auto', text: modes },
-      { slug: 'pictures', label: 'pictures', text: pictures },
-      { slug: 'palettes', label: 'add and update palettes', text: palettes },
+      { slug: 'tabs', label: 'This tab, new tabs, default', text: tabs },
+      { slug: 'pins', label: 'Pin to a folder or ssh host', text: pins },
+      { slug: 'modes', label: 'Light, dark, auto', text: modes },
+      { slug: 'pictures', label: 'Pictures', text: pictures },
+      { slug: 'palettes', label: 'Add and update palettes', text: palettes },
     ],
   },
   {
     slug: 'creating-palettes',
     title: 'Creating palettes',
     pages: [
-      { slug: 'your-own', label: 'your own palette', text: yourOwn },
-      { slug: 'tune', label: 'tune a palette', text: tune },
-      { slug: 'share', label: 'share a link', text: share },
-      { slug: 'publish', label: 'publish a marketplace', text: publish },
+      { slug: 'your-own', label: 'Your own palette', text: yourOwn },
+      { slug: 'tune', label: 'Tune a palette', text: tune },
+      { slug: 'share', label: 'Share a link', text: share },
+      { slug: 'publish', label: 'Publish a marketplace', text: publish },
     ],
   },
   {
     slug: 'reference',
     title: 'Reference',
     pages: [
-      { slug: 'commands', label: 'commands', text: commands, made: 'commands' },
-      { slug: 'settings', label: 'settings', text: settings, made: 'settings' },
-      { slug: 'keys', label: 'keys', text: keys },
-      { slug: 'terminals', label: 'terminal support', text: terminals },
-      { slug: 'contrast-gate', label: 'contrast checks', text: contrastGate },
+      { slug: 'commands', label: 'Commands', text: commands, made: 'commands' },
+      { slug: 'settings', label: 'Settings', text: settings, made: 'settings' },
+      { slug: 'keys', label: 'Keys', text: keys },
+      { slug: 'terminals', label: 'Terminal support', text: terminals },
+      { slug: 'contrast-gate', label: 'Contrast checks', text: contrastGate },
     ],
   },
 ]

@@ -19,13 +19,31 @@ class DocsPage extends HTMLElement {
 
   #tallying = 0
 
+  #frame = 0
+
+  #sized: ResizeObserver | null = null
+
+  #fit = () => {
+    if (this.#frame !== 0) return
+    this.#frame = requestAnimationFrame(() => {
+      this.#frame = 0
+      const nav = this.querySelector<HTMLElement>('#docs-menu')
+      const main = this.querySelector<HTMLElement>('#content')
+
+      if (!nav || !main) return
+      const top = Number.parseFloat(getComputedStyle(nav).top) || 0
+      const room = Math.max(0, Math.floor(main.getBoundingClientRect().bottom - top))
+      this.style.setProperty('--docs-room', `${room}px`)
+    })
+  }
+
   #input = (event: Event) => {
     const field = event.target as HTMLInputElement
 
     if (field.name !== 'docs-query') return
     const shown = this.#filter(field.value)
     window.clearTimeout(this.#tallying)
-    this.#tallying = window.setTimeout(() => announce(shown === 0 ? 'no page matches' : plural(shown, 'page')), 500)
+    this.#tallying = window.setTimeout(() => announce(shown === 0 ? 'No page matches' : plural(shown, 'page')), 500)
   }
 
   #submit = (event: KeyboardEvent) => {
@@ -147,7 +165,14 @@ class DocsPage extends HTMLElement {
 
     for (const kind of ['wheel', 'touchstart', 'keydown'])
       window.addEventListener(kind, this.#release, { passive: true })
+    window.addEventListener('scroll', this.#fit, { passive: true })
+    window.addEventListener('resize', this.#fit, { passive: true })
+    const main = this.querySelector('#content')
+    this.#sized = new ResizeObserver(this.#fit)
+
+    if (main) this.#sized.observe(main)
     this.#watch()
+    this.#fit()
   }
 
   disconnectedCallback() {
@@ -158,6 +183,11 @@ class DocsPage extends HTMLElement {
     window.removeEventListener('hashchange', this.#arrive)
 
     for (const kind of ['wheel', 'touchstart', 'keydown']) window.removeEventListener(kind, this.#release)
+    window.removeEventListener('scroll', this.#fit)
+    window.removeEventListener('resize', this.#fit)
+    this.#sized?.disconnect()
+    cancelAnimationFrame(this.#frame)
+    this.#frame = 0
     this.#spy?.disconnect()
     window.clearTimeout(this.#tallying)
   }

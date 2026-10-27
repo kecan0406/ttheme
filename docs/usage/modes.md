@@ -11,9 +11,10 @@ ttheme dark    # light text on a dark background
 ttheme auto    # the system's appearance, followed as it changes
 ```
 
-A switch repaints every open tab, whether you set its palette or not, in every terminal you wired,
-and moves each palette's pictures to the new mode. `alt+c` in `ttheme` has the
-same setting as its **Mode** row, and `init` asks for it the first time.
+A switch changes every open tab, whether you set its palette or not, in every
+terminal you wired, and moves each palette's pictures to the new mode. `alt+c`
+in `ttheme` has the same setting as its **Mode** row, and `init` asks for it the
+first time.
 
 ## How auto works
 

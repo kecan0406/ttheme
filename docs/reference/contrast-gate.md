@@ -115,7 +115,7 @@ Whether two colors can be told apart depends on how large they are, and a glyph
 is small. The checks use Stone, Szafir and Setlur's model of noticeable color
 difference as a function of size: along each CIELAB axis the noticeable
 difference is `p · (A + B / s)`, with `A = (10.16, 10.68, 10.70)` and
-`B = (1.50, 3.08, 5.74)` for L\*, a\* and b\*, `s` the size in degrees and `p` the
+`B = (1.50, 3.08, 5.74)` for L\*, a\* and b\*, *s* the size in degrees and *p* the
 share of observers who notice. The checks take `s = 1/3°`, the smallest size the
 model was fitted to, and `p = 0.5`: two accents in a row read as one color when
 they differ by less than 7.33 in L\*, 9.96 in a\* and 13.96 in b\* all at once. A

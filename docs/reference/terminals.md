@@ -1,6 +1,6 @@
 # Terminal support
 
-ttheme wires eleven terminals, and every one of them repaints per tab. Nothing
+ttheme wires eleven terminals, and every one of them shows a palette per tab. Nothing
 is emulated: a terminal that cannot express something does not get it.
 
 | | Ghostty | iTerm2 | kitty | Alacritty | WezTerm | Windows Terminal | Warp | Konsole | Terminal.app | Rio | Contour |
@@ -24,8 +24,8 @@ VTE-based one, gets `ttheme use` and nothing else.
 - **Colors only.** ttheme sets no font, font size or shader anywhere.
 - **One state.** Whichever terminal you run a command in, the change reaches
   every terminal you wired.
-- **Repaints itself.** A tab only ever repaints itself, so a palette you used
-  there by hand stays until you change it.
+- **Changes itself alone.** A tab only ever changes its own colors, so a
+  palette you used there by hand stays until you change it.
 
 ## Ghostty
 
@@ -151,7 +151,7 @@ VTE-based one, gets `ttheme use` and nothing else.
 
 - Each palette gets a color scheme and a `ttheme · <palette>` profile built on
   your default one. Konsole reads its profiles at launch, so restart it once.
-- A tab repaints by switching color scheme, and shows its picture as the
+- A tab changes palette by switching color scheme, and shows its picture as the
   scheme's wallpaper. Konsole 23.08 draws a wallpaper only where a compositor
   runs.
 - Links open only where your profile allows escape sequences for links.
@@ -181,7 +181,7 @@ An editor's colorscheme and ttheme share the screen without overlapping.
 - **256 colors** stay as every terminal ships them, so a colorscheme written
   for the 256-color palette looks the way its author made it.
 - **Color resets**: Neovim and some plugins put the terminal's colors back as
-  they exit. A tab showing a palette repaints itself after the command in
+  they exit. A tab showing a palette shows it again after the command in
   Ghostty, kitty, Alacritty, WezTerm and Windows Terminal; iTerm2 lands on the
   palette's profile; Terminal.app and Konsole ignore resets.
 

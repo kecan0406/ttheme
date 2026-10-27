@@ -23,9 +23,9 @@ function DocsNav({ path }: { path: string }) {
       id="docs-menu"
       popover="auto"
       aria-label="docs"
-      class={`${GLASS} top-34 left-5 m-0 max-h-[calc(100dvh-10rem)] w-72 max-w-[calc(100vw-2.5rem)] content-start gap-1 overflow-y-auto rounded-xl p-3 text-foreground shadow-lg inset-auto open:grid docs-side:sticky docs-side:top-(--clearance) docs-side:grid docs-side:max-h-[calc(100dvh_-_var(--clearance)_-_--spacing(3))] docs-side:w-auto docs-side:self-start docs-side:shadow-none`}
+      class={`${GLASS} top-34 left-5 m-0 max-h-[calc(100dvh-10rem)] w-72 max-w-[calc(100vw-2.5rem)] content-start gap-1 overflow-y-auto rounded-xl p-3 text-foreground shadow-lg inset-auto open:grid docs-side:sticky docs-side:top-(--clearance) docs-side:grid docs-side:max-h-[min(100dvh_-_var(--clearance)_-_--spacing(3),var(--docs-room,100dvh))] docs-side:w-auto docs-side:self-start docs-side:shadow-none`}
     >
-      <search class="mb-1.5">
+      <search data-docs-search>
         <InputGroup>
           <InputGroupAddon>
             <Icon node={Search} />
@@ -33,8 +33,8 @@ function DocsNav({ path }: { path: string }) {
           <InputGroupInput
             type="search"
             name="docs-query"
-            placeholder="search docs"
-            aria-label="search docs"
+            placeholder="Search docs"
+            aria-label="Search docs"
             aria-keyshortcuts="Meta+K Control+K"
             spellcheck="false"
             autocomplete="off"
@@ -76,7 +76,7 @@ function DocsNav({ path }: { path: string }) {
         </section>
       ))}
       <p data-none hidden class="px-2.5 py-3 text-sm text-muted-foreground">
-        no page matches ( ˘ω˘ )
+        No page matches ( ˘ω˘ )
       </p>
     </nav>
   )
@@ -100,10 +100,10 @@ function DocsToc({ toc }: { toc: Heading[] }) {
   return (
     <aside
       aria-labelledby="docs-toc"
-      class={`${GLASS} sticky top-(--clearance) hidden max-h-[calc(100dvh_-_var(--clearance)_-_--spacing(3))] content-start gap-3 overflow-y-auto rounded-xl p-4 docs-toc:grid`}
+      class={`${GLASS} sticky top-(--clearance) hidden max-h-[min(100dvh_-_var(--clearance)_-_--spacing(3),var(--docs-room,100dvh))] content-start gap-3 overflow-y-auto rounded-xl p-4 docs-toc:grid`}
     >
       <p id="docs-toc" class="text-2xs font-bold tracking-caps text-muted-foreground uppercase">
-        on this page
+        On this page
       </p>
       <TocList toc={toc} />
       <a
@@ -111,7 +111,7 @@ function DocsToc({ toc }: { toc: Heading[] }) {
         class="inline-flex items-center gap-1.5 justify-self-start text-xs font-medium text-soft-foreground transition-colors hover:text-foreground"
       >
         <Icon node={ArrowUp} class="size-3.5" />
-        back to top
+        Back to top
       </a>
     </aside>
   )
@@ -121,7 +121,7 @@ export function TocDetails({ toc }: { toc: Heading[] }) {
   return toc.length === 0 ? null : (
     <details class="group/toc rounded-xl border border-border bg-muted/65 docs-toc:hidden">
       <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-sm font-medium text-soft-foreground [&::-webkit-details-marker]:hidden">
-        on this page
+        On this page
         <Icon node={ChevronDown} class="size-4 transition-transform group-open/toc:rotate-180" />
       </summary>
       <div class="px-4 pb-3">
@@ -178,7 +178,7 @@ export function DocsFrame({
         <docs-page class="grid grid-cols-[minmax(0,1fr)] items-start gap-3 docs-side:grid-cols-[15.5rem_minmax(0,1fr)] docs-toc:grid-cols-[15.5rem_minmax(0,1fr)_13.5rem]">
           <Button variant="outline" size="sm" popovertarget="docs-menu" class="justify-self-start docs-side:hidden">
             <Icon node={Menu} />
-            pages
+            Pages
           </Button>
           <DocsNav path={path} />
           <main

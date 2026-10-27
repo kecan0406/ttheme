@@ -1,10 +1,29 @@
 # Your first palette
 
-Run `ttheme` on its own. It opens Preview, where every palette you installed
-repaints the tab as the cursor lands on it, so you choose by looking.
+Run `ttheme` on its own. It opens Preview, where the tab shows every palette
+you installed as the cursor lands on it, so you choose by looking.
 
 ```sh
 ttheme
+```
+
+```screen title="ttheme"
+ >ω   Preview   Browse   ⇧tab Browse       konata  Lucky☆Star
+ ⌕ Search… e.g. kita | Lucky☆St…  2/2      Shell  Code  Diff  Logs  Monitor
+
+   ▸ Bocchi the Rock!  ぼっち・ざ…  1      ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀
+   ▾ Lucky☆Star  らき☆すた          1
+▌    ■ konata             ■ ■ ■ ■ ■ ■      ~/code/demo on main +2 ~1
+                                           ❯ git status -sb
+                                            M src/main.rs
+                                           ?? notes.md
+
+                                           ❯ cargo test
+                                            ✓ parses config
+                                            ✗ renders frame
+
+                                           ❯ echo selected text
+  PREVIEW   enter use   tab edit   ⇧←→ sample   ? keys               esc cancel
 ```
 
 ## Try palettes on

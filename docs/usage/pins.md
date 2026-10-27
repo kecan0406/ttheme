@@ -1,7 +1,7 @@
 # Pin to a folder or ssh host
 
 A pin gives a folder, or an ssh host, its own palette. A tab shows it while it is
-there and takes back what it wore when it leaves.
+there and puts back what it showed before when it leaves.
 
 ## Pin this folder
 
@@ -36,8 +36,9 @@ ttheme pin ssh:*.prod   # every host ending in .prod
 
 The tab shows the palette from the moment you run `ssh tusa` until the prompt
 comes back. The host is the name you type after `ssh`, so a `Host` from
-`~/.ssh/config` works as it is. `*` and `?` match as they do there, a host's own
-pin wins over a pattern, and a longer pattern wins over a shorter one.
+`~/.ssh/config` works as it is. Patterns such as `prod-*` or `db?` match as they
+do there, a host's own pin wins over a pattern, and a longer pattern wins over a
+shorter one.
 
 Only a session counts: `ssh tusa`, `ssh -p 2222 bob@tusa` or
 `ssh -t tusa tmux attach`. A remote command without `-t`, `scp`, `rsync`, `git`

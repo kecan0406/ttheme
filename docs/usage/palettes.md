@@ -61,7 +61,7 @@ palettes by work, its originals after them.
 - `enter` on a palette reviews everything you marked, and `enter` again applies
   it. Nothing is written before that.
 
-The tab repaints as the cursor lands on a palette in the panel, and the panel's
+The tab shows each palette the cursor lands on in the panel, and the panel's
 foot says whether it is installed and how it scores on the
 [contrast checks](../reference/contrast-gate.md).
 
