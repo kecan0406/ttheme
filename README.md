@@ -12,6 +12,7 @@
   <a href="https://github.com/kecan0406/ttheme/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/kecan0406/ttheme/ci.yml?branch=main&style=flat-square&label=ci" alt="CI status"></a>
   <a href="https://ttheme.dev/"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2F%40kecan0406%2Fttheme%2Fdist%2Fbuiltin.json&query=%24.palettes.length&label=palettes&style=flat-square&color=c796c8" alt="built-in palettes"></a>
   <a href="LICENSE"><img src="https://img.shields.io/npm/l/@kecan0406/ttheme?style=flat-square" alt="MIT license"></a>
+  <a href="https://index.githits.dev/repositories/github.com/kecan0406/ttheme/"><img src="https://index.githits.dev/badge/repositories/github.com/kecan0406/ttheme/index-status.svg" alt="GitHits index status"></a>
 </p>
 
 <p align="center">
