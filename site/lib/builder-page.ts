@@ -2,7 +2,7 @@ import type { BuilderData, Opening, Start } from '@/lib/builder'
 import { entries, fallback, themes } from '@/lib/builtin'
 import { searchText } from '@/lib/gallery'
 import { stocks } from '@/lib/marketplaces'
-import { gridText, scenePanes } from '@/lib/scene-panes'
+import { scenePanes } from '@/lib/scene-panes'
 import type { Shared } from '@/lib/share'
 import type { Theme } from '@/lib/themes'
 import type { Pane } from '@/lib/view-types'
@@ -42,7 +42,6 @@ export function starts(): Start[] {
 export interface BuilderPageData {
   data: BuilderData
   panes: Pane[]
-  grid: string
 }
 
 const GRID = { cols: 120, rows: 34 }
@@ -70,6 +69,5 @@ export function builderData(shared: Shared | null): BuilderPageData {
       uses,
     },
     panes,
-    grid: gridText(GRID.cols, GRID.rows),
   }
 }

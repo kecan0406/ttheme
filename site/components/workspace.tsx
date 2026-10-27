@@ -100,7 +100,7 @@ function WorkTile({ theme }: { theme: Theme }) {
   )
 }
 
-export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: string }) {
+export function WorkspaceHead({ theme, place, heading }: { theme: Theme; place: string; heading?: string }) {
   const name = 'truncate font-display text-display-sm font-black'
   const dots = [0, 1, 2].map((index) => paint(theme, (shade) => shade.signature[index] as string))
 
@@ -136,8 +136,8 @@ export function WorkspaceHead({ theme, heading }: { theme: Theme; heading?: stri
             {theme.work.native}
           </span>
         ) : null}
-        <span class="truncate font-mono" translate="no" safe>
-          {palettePath(theme)}
+        <span class="flex-none font-mono tabular-nums" safe>
+          {place}
         </span>
       </TitleMeta>
     </>
@@ -187,9 +187,7 @@ export function ScenePanes({ theme }: { theme: Theme }) {
   )
 }
 
-export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes: Theme[]; gate: GateRule[] }) {
-  const { at, count } = neighbors(theme, palettes)
-
+export function PaletteFacts({ theme, gate }: { theme: Theme; gate: GateRule[] }) {
   return (
     <>
       <Button variant="outline" size="sm" popovertarget="workspace-slots" aria-label="colors, copy one">
@@ -206,17 +204,6 @@ export function PaletteFacts({ theme, palettes, gate }: { theme: Theme; palettes
           <GateButton passed={gatePassed(shown, gate)} total={gate.length} popovertarget="workspace-gate" />
         )}
       />
-      {theme.from ? (
-        <span class="text-xs text-muted-foreground" safe>
-          {`from ${theme.from}`}
-        </span>
-      ) : null}
-      <span class="text-xs text-muted-foreground" safe>
-        {`ansi from ${theme.ansiSource}`}
-      </span>
-      <span class="ml-auto font-mono text-xs text-muted-foreground" safe>
-        {`${at} of ${count}${theme.work ? ` in ${theme.work.name}` : ''}`}
-      </span>
     </>
   )
 }
@@ -248,6 +235,9 @@ export function SlotsPanel({ theme }: { theme: Theme }) {
         <p class="text-xs text-muted-foreground">click a color to copy it</p>
       </div>
       <ByMode theme={theme} render={(shown) => <SwatchGrid theme={shown} />} />
+      <p class="text-xs text-muted-foreground" safe>
+        {`ansi from ${theme.ansiSource}${theme.from ? ` · from ${theme.from}` : ''}`}
+      </p>
     </>
   )
 }
@@ -370,7 +360,7 @@ export function MarketplaceWorkspace({
 }) {
   const where: Where = marketplace ? { id: marketplace.id, repo: marketplace.repo, add: marketplace.add } : null
   const data: WorkspaceData = { where, gate, start: (leadsOf(palettes)[0] as Theme).name, current: theme.name }
-  const { prev, next } = neighbors(theme, palettes)
+  const { prev, next, at, count } = neighbors(theme, palettes)
 
   return (
     <WorkspacePage
@@ -383,7 +373,7 @@ export function MarketplaceWorkspace({
           aria-label="works and palettes"
           head={
             <search class="w-full">
-              <InputGroup>
+              <InputGroup class="h-9">
                 <InputGroupAddon>
                   <Icon node={Search} />
                 </InputGroupAddon>
@@ -414,7 +404,7 @@ export function MarketplaceWorkspace({
         <main id="content" data-mode-scope class="flex min-w-0 flex-col [grid-area:bar/bar/stage/stage] app:min-h-0">
           <WorkspaceBar class="group/install flex-wrap">
             <div data-head class={cn(TITLE, 'flex-[1_1_14rem]')}>
-              <WorkspaceHead theme={theme} heading={heading} />
+              <WorkspaceHead theme={theme} place={`${at} of ${count}`} heading={heading} />
             </div>
             <div class="flex min-w-0 flex-[1_1_20rem] flex-wrap items-center gap-2.5">
               <ToggleGroup label="install step" class="flex-none">
@@ -437,7 +427,7 @@ export function MarketplaceWorkspace({
               </Button>
             </div>
           </WorkspaceBar>
-          <WorkspaceStage facts={<PaletteFacts theme={theme} palettes={palettes} gate={gate} />}>
+          <WorkspaceStage facts={<PaletteFacts theme={theme} gate={gate} />}>
             <TerminalFrame
               role="region"
               aria-label="preview"

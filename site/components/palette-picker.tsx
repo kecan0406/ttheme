@@ -49,13 +49,13 @@ export function PaletteOptions({ themes, current }: { themes: Theme[]; current: 
 
 export function PalettePicker() {
   return (
-    <palette-picker class="inline-flex header-menu:w-full">
+    <palette-picker class="inline-flex header-menu:flex-1">
       <button
         type="button"
         popovertarget="wear-picker"
         aria-haspopup="dialog"
         data-wear-trigger
-        class="inline-flex h-full w-48 cursor-pointer items-center gap-2 pr-2.5 pl-3.5 transition-colors outline-none hover:bg-muted/65 focus-visible:inset-ring-2 focus-visible:inset-ring-ring header-menu:h-8 header-menu:w-full"
+        class="inline-flex h-8 w-48 cursor-pointer items-center gap-2 rounded-full border border-border bg-card pr-2.5 pl-3.5 shadow-sm transition-colors outline-none hover:bg-muted/65 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background [&:has(+:popover-open)]:bg-muted/65 header-menu:w-full"
       >
         <span class="sr-only">palette</span>
         <span
@@ -75,7 +75,7 @@ export function PalettePicker() {
         popover="auto"
         role="dialog"
         aria-label="pick a palette"
-        class="m-0 w-64 max-w-[calc(100vw-2rem)] flex-col gap-2 overflow-hidden rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:flex"
+        class="m-0 w-48 max-w-[calc(100vw-2rem)] flex-col gap-2 overflow-hidden rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:flex"
       >
         <label class="relative block">
           <Icon

@@ -70,13 +70,13 @@ class PalettePicker extends HTMLElement {
 
   #place = (event: Event) => {
     if ((event as ToggleEvent).newState !== 'open') return
-    const trigger = this.querySelector('[data-wear-trigger]') as HTMLElement
-    const box = (this.closest('[data-slot="header-bar"]') ?? trigger).getBoundingClientRect()
+    const box = (this.querySelector('[data-wear-trigger]') as HTMLElement).getBoundingClientRect()
     const panel = this.#panel
-    panel.style.top = `${box.bottom + 8}px`
-    const width = Math.min(256, window.innerWidth - 32)
-    panel.style.right = `${Math.max(16, Math.min(window.innerWidth - box.right, window.innerWidth - width - 16))}px`
-    panel.style.left = 'auto'
+    const width = Math.min(box.width, window.innerWidth - 32)
+    panel.style.top = `${box.bottom + 6}px`
+    panel.style.left = `${Math.max(16, Math.min(box.left, window.innerWidth - width - 16))}px`
+    panel.style.right = 'auto'
+    panel.style.width = `${width}px`
   }
 
   #press = (event: Event) => {

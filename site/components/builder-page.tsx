@@ -6,7 +6,6 @@ import {
   dotsOf,
   draftListOf,
   fileOf,
-  type Gate,
   gateOf,
   marketOf,
   modesOf,
@@ -25,40 +24,19 @@ import { brightLinks } from '../../src/core/tune.ts'
 import { DraftsPanel } from './builder-drafts'
 import { ExportDialog } from './builder-export'
 import { AddPopover, LinkSection, LinkStrip } from './builder-link'
-import { AboutPanel, BuilderBar, ColorsPanel, EditMode, GateSummary, SeedsPanel, StatusText } from './builder-parts'
+import { AboutPanel, BuilderBar, ColorsPanel, EditMode, SeedsPanel, StatusText } from './builder-parts'
 import { StartPopover } from './builder-start'
 import { MockWindow } from './mock-window'
 import { WorkspacePage, WorkspaceSide, WorkspaceStage } from './workspace-shell'
 
-function BuilderFacts({ gate, missed, ansi, grid }: { gate: Gate; missed: number; ansi: string; grid: string }) {
-  return (
-    <>
-      <span data-draft data-gate-summary class="contents">
-        <GateSummary gate={gate} misses={missed} />
-      </span>
-      <span data-draft data-ansi-from hidden={!ansi} class="text-xs text-muted-foreground" safe>
-        {ansi ? `ansi from ${ansi}` : ''}
-      </span>
-      <span class="ml-auto font-mono text-xs text-muted-foreground">
-        <span class="sr-only">terminal size </span>
-        <span data-grid safe>
-          {grid}
-        </span>
-      </span>
-    </>
-  )
-}
-
 export function BuilderPage({
   data,
   panes,
-  grid,
   facts,
   shared,
 }: {
   data: BuilderData
   panes: Pane[]
-  grid: string
   facts: Facts
   shared: Shared | null
 }) {
@@ -88,35 +66,35 @@ export function BuilderPage({
         <WorkspaceSide
           aria-label="palette"
           head={
-            <TabsList label="sidebar" class="h-full gap-0.5">
+            <TabsList label="sidebar" variant="track" class="w-full">
               <TabsTrigger
-                variant="nav"
+                variant="track"
                 selected
                 id="builder-tab-colors"
                 aria-controls="builder-colors"
                 data-panel="colors"
               >
-                <Icon node={Palette} />
+                <Icon node={Palette} class="size-3.5" />
                 <span data-first-tab>colors</span>
               </TabsTrigger>
               <TabsTrigger
-                variant="nav"
+                variant="track"
                 selected={false}
                 id="builder-tab-about"
                 aria-controls="builder-about"
                 data-panel="about"
               >
-                <Icon node={Info} />
+                <Icon node={Info} class="size-3.5" />
                 about
               </TabsTrigger>
               <TabsTrigger
-                variant="nav"
+                variant="track"
                 selected={false}
                 id="builder-tab-drafts"
                 aria-controls="builder-drafts"
                 data-panel="drafts"
               >
-                <Icon node={History} />
+                <Icon node={History} class="size-3.5" />
                 drafts
                 <TabsCount data-drafts-count hidden />
               </TabsTrigger>
@@ -145,13 +123,14 @@ export function BuilderPage({
           name={edit.name}
           problem={nameTrouble(edit.name)}
           source={data.first.name}
-          made={mode}
           dots={dotsOf(list, edit.signature)}
           changed={0}
+          gate={gate}
+          misses={missed.size}
           link={shared?.link ?? null}
         />
         <main id="content" aria-label="preview" data-stage class="flex min-h-0 min-w-0 flex-col [grid-area:stage]">
-          <WorkspaceStage facts={<BuilderFacts gate={gate} missed={missed.size} ansi={about.ansiSource} grid={grid} />}>
+          <WorkspaceStage>
             <MockWindow
               panes={panes}
               prefix="builder"

@@ -1,4 +1,4 @@
-import { MODE_KEY, type Mode, modeFor, type Setting, settingOf } from '@/lib/mode'
+import { MODE_KEY, type Mode, modeFor, nextOf, type Setting, settingOf } from '@/lib/mode'
 
 const system = matchMedia('(prefers-color-scheme: light)')
 
@@ -6,12 +6,16 @@ export function setting(): Setting {
   try {
     return settingOf(localStorage.getItem(MODE_KEY))
   } catch {
-    return 'dark'
+    return 'auto'
   }
 }
 
 export function mode(): Mode {
   return modeFor(setting(), system.matches)
+}
+
+export function nextSetting(): Setting {
+  return nextOf(setting(), system.matches)
 }
 
 export function store(next: Setting) {
@@ -22,9 +26,16 @@ export function store(next: Setting) {
   } catch {}
 }
 
-export function watch(listener: () => void) {
-  system.addEventListener('change', listener)
-  window.addEventListener('storage', (event) => {
+export function watch(listener: () => void): () => void {
+  const stored = (event: StorageEvent) => {
     if (event.key === MODE_KEY) listener()
-  })
+  }
+
+  system.addEventListener('change', listener)
+  window.addEventListener('storage', stored)
+
+  return () => {
+    system.removeEventListener('change', listener)
+    window.removeEventListener('storage', stored)
+  }
 }

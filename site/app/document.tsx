@@ -58,7 +58,7 @@ function Document({
   module?: string
 }>) {
   return (
-    <html lang="en" data-mode="dark" data-setting="dark" style={rootStyle(fallback)}>
+    <html lang="en" data-mode="dark" data-setting="auto" style={rootStyle(fallback)}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

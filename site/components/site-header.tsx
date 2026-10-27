@@ -50,8 +50,9 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
               <a
                 href={item.href}
                 aria-current={item.href === current ? 'page' : undefined}
-                class="rounded-sm px-3 text-sm leading-13 font-medium text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary header-tight:px-2.5 header-icons:px-2"
+                class="rounded-sm px-3 text-sm leading-13 font-medium whitespace-nowrap text-soft-foreground underline decoration-transparent decoration-2 underline-offset-4 aria-[current=page]:text-foreground aria-[current=page]:decoration-primary header-tight:px-2.5 header-icons:px-2"
               >
+                <Icon node={item.icon} class="mr-1.5 inline-block size-4 align-middle header-icons:hidden" />
                 <span class="header-icons:inline-flex header-icons:align-middle">
                   <Icon node={item.icon} class="hidden size-4 header-icons:block" />
                   <span class="header-icons:sr-only">{item.label}</span>
@@ -72,7 +73,7 @@ export function SiteHeader({ current, facts, fixed = false }: { current: string;
         <div
           id="site-menu"
           popover="auto"
-          class="top-15 right-5 m-0 w-56 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid header-wide:static header-wide:my-2.5 header-wide:ml-auto header-wide:flex header-wide:w-auto header-wide:flex-wrap header-wide:items-center header-wide:justify-end header-wide:self-center header-wide:gap-2.5 header-wide:overflow-visible header-wide:border-0 header-wide:bg-transparent header-wide:p-0 header-wide:text-inherit header-wide:shadow-none"
+          class="top-15 right-5 m-0 w-64 gap-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg inset-auto open:grid header-wide:static header-wide:my-2.5 header-wide:ml-auto header-wide:flex header-wide:w-auto header-wide:flex-wrap header-wide:items-center header-wide:justify-end header-wide:self-center header-wide:gap-2.5 header-wide:overflow-visible header-wide:border-0 header-wide:bg-transparent header-wide:p-0 header-wide:text-inherit header-wide:shadow-none"
         >
           <HeaderBar />
           <LinkButton

@@ -2,14 +2,20 @@ export type Mode = 'dark' | 'light'
 
 export type Setting = Mode | 'auto'
 
-export const SETTINGS: readonly Setting[] = ['dark', 'light', 'auto']
-
 export const MODE_KEY = 'ttheme-site-mode'
 
 export const MODE_EVENT = 'ttheme:mode'
 
 export function settingOf(value: string | null): Setting {
-  return value === 'light' || value === 'auto' ? value : 'dark'
+  return value === 'dark' || value === 'light' ? value : 'auto'
+}
+
+export function nextOf(setting: Setting, systemLight: boolean): Setting {
+  const system = modeFor('auto', systemLight)
+
+  if (setting === 'auto') return otherOf(system)
+
+  return setting === system ? 'auto' : system
 }
 
 export function modeFor(setting: Setting, systemLight: boolean): Mode {

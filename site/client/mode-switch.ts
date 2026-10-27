@@ -1,33 +1,29 @@
-import { settingOf } from '@/lib/mode'
-import { setting } from './mode'
+import { nextSetting, setting, watch } from './mode'
 import { choosing } from './wear'
 
 class ModeSwitch extends HTMLElement {
+  #unwatch: (() => void) | undefined
+
   connectedCallback() {
     this.#sync()
-    this.addEventListener('change', this.#change)
+    this.addEventListener('click', this.#click)
     window.addEventListener('pageshow', this.#sync)
-    window.addEventListener('storage', this.#sync)
+    this.#unwatch = watch(this.#sync)
   }
 
   disconnectedCallback() {
-    this.removeEventListener('change', this.#change)
+    this.removeEventListener('click', this.#click)
     window.removeEventListener('pageshow', this.#sync)
-    window.removeEventListener('storage', this.#sync)
+    this.#unwatch?.()
   }
 
   #sync = () => {
-    const now = setting()
-
-    for (const radio of this.querySelectorAll<HTMLInputElement>('input[type="radio"]'))
-      radio.checked = radio.value === now
+    this.querySelector('button')?.setAttribute('title', `${setting()} · click for ${nextSetting()}`)
   }
 
-  #change = (event: Event) => {
-    const radio = event.target
-
-    if (!(radio instanceof HTMLInputElement) || !radio.checked) return
-    choosing(settingOf(radio.value))
+  #click = () => {
+    choosing(nextSetting())
+    this.#sync()
   }
 }
 

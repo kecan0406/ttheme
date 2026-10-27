@@ -177,11 +177,11 @@ function sharedCard(found: Shared): Card {
 }
 
 function builder(found: Shared | null, head: Page): Response {
-  const { data, panes, grid } = builderData(found)
+  const { data, panes } = builderData(found)
 
   return page(
     { ...head, module: assets.builder },
-    <BuilderPage data={data} panes={panes} grid={grid} facts={facts} shared={found} />,
+    <BuilderPage data={data} panes={panes} facts={facts} shared={found} />,
   )
 }
 

@@ -8,7 +8,6 @@ import {
   FileNote,
   GateSummary,
   Lch,
-  MadeLabel,
   MarkTile,
   Modes,
   PairRows,
@@ -80,7 +79,7 @@ import {
 } from '@/lib/builder-view'
 import type { Mode } from '@/lib/mode'
 import { html } from '@/lib/render'
-import { gridText, scenePanes } from '@/lib/scene-panes'
+import { scenePanes } from '@/lib/scene-panes'
 import { hueTrack } from '@/lib/slot-view'
 import { BUILTIN } from '@/lib/themes'
 import { FORMATS, type Picture, type PictureCredit, type SlotFormat } from '@/lib/view-types'
@@ -467,11 +466,18 @@ class PaletteBuilder extends HTMLElement {
     }
 
     this.#fill(this.querySelector('[data-bar-dots]'), html(<TitleDots dots={dotsOf(list, edit.signature)} />))
-    this.#fill(this.querySelector('[data-changed-label]'), html(<ChangedLabel count={changes(edit)} />))
-    this.querySelector('[data-changed]')?.setAttribute('aria-pressed', String(this.#only))
+    const edits = changes(edit)
+    const shown = this.querySelector<HTMLElement>('[data-changed]')
+    this.#fill(this.querySelector('[data-changed-label]'), html(<ChangedLabel count={edits} />))
+
+    if (shown) {
+      shown.hidden = edits === 0 && !this.#only
+      shown.setAttribute('aria-pressed', String(this.#only))
+    }
+
     this.#enable('[data-undo]', this.#history.length > 0)
     this.#enable('[data-redo]', this.#future.length > 0)
-    this.#enable('[data-reset]', changes(edit) > 0)
+    this.#enable('[data-reset]', edits > 0)
     this.#renderName()
 
     const rows = rowsOf(list, edit.signature, missed, changed, this.#rows, this.#open, this.#linked(), this.#only)
@@ -488,7 +494,6 @@ class PaletteBuilder extends HTMLElement {
     if (count) count.textContent = `${gate.passed}/${gate.lines.length}`
     const made = madeMode(edit)
     const editing = modeOfView(edit, this.#view)
-    this.#fill(this.querySelector('[data-made-label]'), html(<MadeLabel mode={made} />))
 
     for (const button of this.querySelectorAll<HTMLElement>('[data-edit-mode]')) {
       button.setAttribute('aria-pressed', String(button.dataset.editMode === editing))
@@ -601,13 +606,6 @@ class PaletteBuilder extends HTMLElement {
       if (input.value !== value && document.activeElement !== input) input.value = value
 
       if (subject) input.setAttribute('aria-invalid', String(about.unread))
-    }
-
-    const ansi = this.querySelector<HTMLElement>('[data-ansi-from]')
-
-    if (ansi) {
-      ansi.hidden = about.ansiSource === ''
-      ansi.textContent = about.ansiSource ? `ansi from ${about.ansiSource}` : ''
     }
   }
 
@@ -833,9 +831,6 @@ class PaletteBuilder extends HTMLElement {
 
     if (grid === this.#grid) return
     this.#grid = grid
-    const size = this.querySelector('[data-grid]')
-
-    if (size) size.textContent = gridText(cols, rows)
     const { panes, uses } = scenePanes(cols, rows)
 
     for (const one of panes) fill(this.querySelector(`[data-pane-panel="${one.name}"]`), html(<PaneBody pane={one} />))

@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { modeFor, settingOf } from '@/lib/mode'
+import { modeFor, nextOf, settingOf } from '@/lib/mode'
 import { inMode, paint, pair, pinned, type Shade, shades, type Theme } from '@/lib/themes'
 
 function shade(background: string, foreground: string): Shade {
@@ -65,12 +65,16 @@ test('a color is a light-dark pair, and one color where both modes agree or the 
   expect(pair('#fff', '#fff')).toBe('#fff')
 })
 
-test('the setting reads dark unless the visitor chose light or auto, and auto follows the system', () => {
-  expect(settingOf(null)).toBe('dark')
-  expect(settingOf('sepia')).toBe('dark')
+test('the setting reads auto unless the visitor chose dark or light, auto follows the system, and the switch steps away from what the page shows', () => {
+  expect(settingOf(null)).toBe('auto')
+  expect(settingOf('sepia')).toBe('auto')
+  expect(settingOf('dark')).toBe('dark')
   expect(settingOf('light')).toBe('light')
-  expect(settingOf('auto')).toBe('auto')
   expect(modeFor('auto', true)).toBe('light')
   expect(modeFor('auto', false)).toBe('dark')
   expect(modeFor('dark', true)).toBe('dark')
+  expect(nextOf('auto', false)).toBe('light')
+  expect(nextOf('light', false)).toBe('dark')
+  expect(nextOf('dark', false)).toBe('auto')
+  expect(nextOf('auto', true)).toBe('dark')
 })

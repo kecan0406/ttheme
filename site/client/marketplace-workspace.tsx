@@ -233,13 +233,13 @@ class MarketplaceWorkspace extends HTMLElement {
     const { gate, where } = this.#data
     const palettes = this.#palettes
     this.querySelector('[data-palette-preview]')?.setAttribute('style', wearStyle(theme))
-    fill(this.querySelector('[data-head]'), html(<WorkspaceHead theme={theme} />))
     fill(this.querySelector('[data-install]'), html(<InstallPanes theme={theme} where={where} />))
     fill(this.querySelector('[data-scenes]'), html(<ScenePanes theme={theme} />))
-    fill(this.querySelector('[data-facts]'), html(<PaletteFacts theme={theme} palettes={palettes} gate={gate} />))
+    fill(this.querySelector('[data-facts]'), html(<PaletteFacts theme={theme} gate={gate} />))
     fill(this.querySelector('[data-gate-panel]'), html(<GatePanel theme={theme} gate={gate} where={where} />))
     fill(this.querySelector('[data-slots-panel]'), html(<SlotsPanel theme={theme} />))
-    const { prev, next } = neighbors(theme, palettes)
+    const { prev, next, at, count } = neighbors(theme, palettes)
+    fill(this.querySelector('[data-head]'), html(<WorkspaceHead theme={theme} place={`${at} of ${count}`} />))
     this.querySelector('[data-step="-1"]')?.setAttribute('aria-label', `previous palette, ${prev.name}`)
     this.querySelector('[data-step="1"]')?.setAttribute('aria-label', `next palette, ${next.name}`)
 

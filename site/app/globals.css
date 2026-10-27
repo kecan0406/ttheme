@@ -1,11 +1,11 @@
 @import 'tailwindcss';
 
 @custom-variant app (@media (width >= 900px) and (height >= 600px));
-@custom-variant header-menu (@container site-header (width < 712px));
-@custom-variant header-wide (@container site-header (width >= 712px));
-@custom-variant header-short (@container site-header (712px <= width < 784px));
+@custom-variant header-menu (@container site-header (width < 720px));
+@custom-variant header-wide (@container site-header (width >= 720px));
+@custom-variant header-short (@container site-header (720px <= width < 792px));
 @custom-variant header-tight (@container site-header (width < 680px));
-@custom-variant header-icons (@container site-header (width < 376px));
+@custom-variant header-icons (@container site-header (width < 440px));
 @custom-variant bar-squeezed (@media (900px <= width < 1104px) and (height >= 600px));
 @custom-variant docs-side (@container docs (width >= 760px));
 @custom-variant docs-toc (@container docs (width >= 1080px));
@@ -1439,13 +1439,13 @@ palette-picker:has([data-search]:focus) [role='option'][data-active] {
     flex: 1;
     min-height: 0;
     grid-template-columns: 332px minmax(0, 1fr);
-    grid-template-rows: 64px minmax(0, 1fr);
+    grid-template-rows: 56px minmax(0, 1fr);
     grid-template-areas: 'side bar' 'side stage';
     align-content: stretch;
   }
 
   .workspace:has(> [data-strip]) {
-    grid-template-rows: 48px 64px minmax(0, 1fr);
+    grid-template-rows: 48px 56px minmax(0, 1fr);
     grid-template-areas: 'strip strip' 'side bar' 'side stage';
   }
 }

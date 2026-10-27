@@ -1,49 +1,25 @@
 import { Monitor, Moon, Sun } from 'lucide'
+import { Button } from '@/components/ui/button'
 import { Icon } from '@/lib/icons'
-import type { Setting } from '@/lib/mode'
 import { cn } from '@/lib/utils'
 
 const ITEMS = [
-  {
-    value: 'dark',
-    label: 'dark',
-    icon: Moon,
-    on: 'in-data-[setting=dark]:bg-accent in-data-[setting=dark]:text-foreground',
-  },
-  {
-    value: 'light',
-    label: 'light',
-    icon: Sun,
-    on: 'in-data-[setting=light]:bg-accent in-data-[setting=light]:text-foreground',
-  },
-  {
-    value: 'auto',
-    label: 'auto, follows the system',
-    icon: Monitor,
-    on: 'in-data-[setting=auto]:bg-accent in-data-[setting=auto]:text-foreground',
-  },
-] as const satisfies readonly { value: Setting; label: string; icon: typeof Moon; on: string }[]
+  { label: 'dark', icon: Moon, shown: 'in-data-[setting=dark]:flex' },
+  { label: 'light', icon: Sun, shown: 'in-data-[setting=light]:flex' },
+  { label: 'auto, follows the system', icon: Monitor, shown: 'in-data-[setting=auto]:flex' },
+] as const satisfies readonly { label: string; icon: typeof Moon; shown: string }[]
 
 export function ModeSwitch() {
   return (
-    <mode-switch
-      role="radiogroup"
-      aria-label="mode"
-      class="flex header-menu:grid header-menu:grid-cols-3 header-menu:border-t header-menu:border-border"
-    >
-      {ITEMS.map((item) => (
-        <label
-          title={item.label}
-          data-mode-item={item.value}
-          class={cn(
-            'relative flex h-full w-8 cursor-pointer items-center justify-center border-l border-border text-soft-foreground transition-colors duration-150 hover:bg-muted/65 hover:text-foreground has-focus-visible:inset-ring-2 has-focus-visible:inset-ring-ring header-menu:h-8 header-menu:w-auto header-menu:first:border-l-0',
-            item.on,
-          )}
-        >
-          <input type="radio" class="sr-only" name="mode" value={item.value} aria-label={item.label} />
-          <Icon node={item.icon} class="size-4" />
-        </label>
-      ))}
+    <mode-switch class="flex">
+      <Button variant="outline" size="icon-round" class="shadow-sm">
+        {ITEMS.map((item) => (
+          <span class={cn('hidden size-full items-center justify-center', item.shown)}>
+            <Icon node={item.icon} />
+            <span class="sr-only">mode {item.label}</span>
+          </span>
+        ))}
+      </Button>
     </mode-switch>
   )
 }

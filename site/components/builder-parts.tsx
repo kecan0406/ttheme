@@ -46,7 +46,7 @@ import { Mark } from './mark'
 import { SectionLabel } from './palette-parts'
 import { PictureList } from './picture-list'
 import { GateRows, Group, Marks, Swatch, Verdict } from './slot-list'
-import { GateButton, TITLE, TitleDots, TitleLine, TitleMeta, WorkspaceBar } from './workspace-shell'
+import { GateButton, TitleDots, TitleLine, WorkspaceBar } from './workspace-shell'
 
 const PLANE_THUMB =
   'pointer-events-none absolute size-3.5 -translate-1/2 rounded-full border-2 border-white shadow-sm ring-1 ring-black/55'
@@ -92,10 +92,6 @@ export function StartLabel({ source }: { source: string | null }) {
   )
 }
 
-export function MadeLabel({ mode }: { mode: Mode }) {
-  return <span safe>{`made in ${mode}`}</span>
-}
-
 export function ChangedLabel({ count }: { count: number }) {
   return (
     <>
@@ -119,17 +115,19 @@ export function BuilderBar({
   name,
   problem,
   source,
-  made,
   dots,
   changed,
+  gate,
+  misses,
   link,
 }: {
   name: string
   problem: string | undefined
   source: string | null
-  made: Mode
   dots: string[]
   changed: number
+  gate: Gate
+  misses: number
   link: string | null
 }) {
   return (
@@ -137,73 +135,69 @@ export function BuilderBar({
       data-bar
       class="relative z-10 [grid-area:bar] max-[760px]:flex-wrap max-[760px]:px-4 max-[760px]:py-3"
     >
-      <div class={TITLE}>
-        <TitleLine>
-          <div data-draft class="relative -ml-1 max-w-85 min-w-14">
-            <input
-              data-name
-              aria-label="palette name"
-              aria-invalid={problem ? 'true' : 'false'}
-              aria-describedby="builder-name-problem"
-              value={name}
-              maxlength="40"
-              spellcheck="false"
-              autocomplete="off"
-              autocapitalize="none"
-              autocorrect="off"
-              translate="no"
-              class="h-7.5 max-w-full min-w-full [field-sizing:content] rounded-t-sm border-b-[1.5px] border-dashed border-transparent bg-transparent px-1 font-display text-display-sm font-black text-ellipsis outline-none hover:border-input focus:border-primary focus:bg-muted aria-invalid:border-destructive"
-            />
-            <p
-              id="builder-name-problem"
-              data-name-problem
-              role="status"
-              hidden={!problem}
-              class="absolute top-full left-1 z-30 mt-1 rounded-lg border border-border bg-popover px-2 py-0.75 text-xs whitespace-nowrap text-destructive shadow-md"
-              safe
-            >
-              {problem ? `the name ${problem}` : ''}
-            </p>
-          </div>
-          <span data-draft data-bar-dots aria-hidden="true" class="flex flex-none gap-1">
-            <TitleDots dots={dots} />
-          </span>
-        </TitleLine>
-        <TitleMeta>
-          <button
-            type="button"
-            popovertarget="builder-start"
-            aria-haspopup="dialog"
-            data-start
-            class="-ml-1.5 inline-flex h-5 min-w-0 cursor-pointer items-center gap-1 rounded-full px-1.5 text-soft-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:inset-ring-2 focus-visible:inset-ring-ring aria-expanded:bg-muted"
+      <TitleLine>
+        <div data-draft class="relative -ml-1 max-w-85 min-w-14">
+          <input
+            data-name
+            aria-label="palette name"
+            aria-invalid={problem ? 'true' : 'false'}
+            aria-describedby="builder-name-problem"
+            value={name}
+            maxlength="40"
+            spellcheck="false"
+            autocomplete="off"
+            autocapitalize="none"
+            autocorrect="off"
+            translate="no"
+            class="h-7.5 max-w-full min-w-full [field-sizing:content] rounded-t-sm border-b-[1.5px] border-dashed border-transparent bg-transparent px-1 font-display text-display-sm font-black text-ellipsis outline-none hover:border-input focus:border-primary focus:bg-muted aria-invalid:border-destructive"
+          />
+          <p
+            id="builder-name-problem"
+            data-name-problem
+            role="status"
+            hidden={!problem}
+            class="absolute top-full left-1 z-30 mt-1 rounded-lg border border-border bg-popover px-2 py-0.75 text-xs whitespace-nowrap text-destructive shadow-md"
+            safe
           >
-            <span data-start-label class="flex min-w-0 items-center gap-1.5">
-              <StartLabel source={source} />
-            </span>
-            <Icon node={ChevronDown} class="size-3 flex-none opacity-70" />
-          </button>
-          <span data-made-label class="flex-none">
-            <MadeLabel mode={made} />
+            {problem ? `the name ${problem}` : ''}
+          </p>
+        </div>
+        <span data-draft data-bar-dots aria-hidden="true" class="flex flex-none gap-1">
+          <TitleDots dots={dots} />
+        </span>
+        <button
+          type="button"
+          popovertarget="builder-start"
+          aria-haspopup="dialog"
+          data-start
+          class="inline-flex h-6.5 min-w-0 cursor-pointer items-center gap-1 rounded-full bg-muted px-2.5 text-xs text-soft-foreground outline-none hover:bg-secondary hover:text-foreground focus-visible:inset-ring-2 focus-visible:inset-ring-ring aria-expanded:bg-secondary"
+        >
+          <span data-start-label class="flex min-w-0 items-center gap-1.5">
+            <StartLabel source={source} />
           </span>
-        </TitleMeta>
-      </div>
-      <div class="flex flex-none items-center gap-1 max-[760px]:w-full">
-        <Button variant="outline" size="sm" data-changed aria-pressed="false" class="max-[760px]:mr-auto">
+          <Icon node={ChevronDown} class="size-3 flex-none opacity-70" />
+        </button>
+      </TitleLine>
+      <div class="flex flex-none items-center gap-2 max-[760px]:w-full max-[760px]:flex-wrap">
+        <span data-draft data-gate-summary class="flex flex-none items-center gap-1 max-[760px]:mr-auto">
+          <GateSummary gate={gate} misses={misses} />
+        </span>
+        <Button variant="outline" size="sm" data-changed aria-pressed="false" hidden={changed === 0}>
           <span data-changed-label class="flex items-center gap-1.5">
             <ChangedLabel count={changed} />
           </span>
         </Button>
-        <Button variant="ghost" size="icon-sm" data-undo aria-label="undo" disabled>
-          <Icon node={Undo2} />
-        </Button>
-        <Button variant="ghost" size="icon-sm" data-redo aria-label="redo" disabled>
-          <Icon node={Redo2} />
-        </Button>
-        <Button variant="ghost" size="sm" data-reset disabled={changed === 0}>
-          <Icon node={RotateCcw} />
-          <span class="max-[1280px]:sr-only">reset</span>
-        </Button>
-        <span aria-hidden="true" class="mx-1 h-5 w-px bg-border" />
+        <span class="flex flex-none">
+          <Button variant="ghost" size="icon-sm" data-undo aria-label="undo" title="undo" disabled>
+            <Icon node={Undo2} />
+          </Button>
+          <Button variant="ghost" size="icon-sm" data-redo aria-label="redo" title="redo" disabled>
+            <Icon node={Redo2} />
+          </Button>
+          <Button variant="ghost" size="icon-sm" data-reset aria-label="reset" title="reset" disabled={changed === 0}>
+            <Icon node={RotateCcw} />
+          </Button>
+        </span>
         {link ? (
           <>
             <Button
@@ -229,7 +223,7 @@ export function BuilderBar({
         ) : null}
         <Button size="sm" data-export-open aria-haspopup="dialog" hidden={link !== null}>
           <Icon node={Download} />
-          <span class="max-[360px]:sr-only">export</span>
+          <span class="max-[360px]:sr-only bar-squeezed:sr-only">export</span>
         </Button>
       </div>
     </WorkspaceBar>
@@ -314,11 +308,16 @@ export function SeedsPanel({ seeds, list, gate }: { seeds: SeedRow[]; list: stri
 export function GateSummary({ gate, misses }: { gate: Gate; misses: number }) {
   return (
     <>
-      <GateButton passed={gate.passed} total={gate.lines.length} waived={gate.waived} data-gate-jump />
+      <GateButton
+        passed={gate.passed}
+        total={gate.lines.length}
+        waived={gate.waived}
+        word="max-[560px]:hidden bar-squeezed:hidden"
+        data-gate-jump
+      />
       {misses > 0 ? (
-        <Button variant="outline" size="sm" data-next-miss class="flex-none">
-          next miss
-          <Icon node={ArrowDown} class="size-3.5" />
+        <Button variant="outline" size="icon-sm" data-next-miss aria-label="next miss" title="next miss">
+          <Icon node={ArrowDown} />
         </Button>
       ) : null}
     </>
